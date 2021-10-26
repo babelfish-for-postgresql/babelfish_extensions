@@ -1,5 +1,7 @@
 package com.sqlsamples;
 
+import org.apache.log4j.*;
+
 import java.io.BufferedWriter;
 import java.io.IOException;
 import java.sql.SQLException;
@@ -9,22 +11,21 @@ import org.postgresql.util.PSQLException;
 import static com.sqlsamples.Config.outputErrorCode;
 
 public class HandleException {
-    
-    //function to handle SQL exception if compareWithFile mode is used
-    //if compareWithFile mode is on, writes error message to a file if executed statement throws SQL exception
-    static boolean handleSQLExceptionWithFile(SQLException e, BufferedWriter bw){
-        
+
+    // function to handle SQL exception
+    // writes error message to a file
+    static void handleSQLExceptionWithFile(SQLException e, BufferedWriter bw, Logger logger){
         try {
             if (outputErrorCode) {
                 bw.write("~~ERROR (Code: " + e.getErrorCode() + ")~~");
                 bw.newLine();
                 bw.newLine();
 
-                //Ensure SQLState is printed as part of pg error message
+                // Ensure SQLState is printed as part of pg error message
                 if (e instanceof PSQLException) {
                     String errorMsg = e.getMessage();
 
-                    //Do not print error location as part of error message
+                    // Do not print error location as part of error message
                     int index = errorMsg.indexOf("Location:");
 
                     if (index != -1) {
@@ -42,9 +43,7 @@ public class HandleException {
             bw.newLine();
             bw.newLine();
         } catch (IOException ioe) {
-            ioe.printStackTrace();
+            logger.error("IO Exception: " + ioe.getMessage(), ioe);
         }
-
-        return false;
     }
 }

@@ -22,6 +22,7 @@ public class TestQueryFile {
     static String sqlServerGeneratedFilesDirectoryPath = testFileRoot + "/sql_expected/";
     static String outputFilesDirectoryPath = testFileRoot + "/output/";
     static Logger summaryLogger = Logger.getLogger("testSummaryLogger");    //logger to write summary of tests executed
+    static Logger logger = Logger.getLogger("eventLoggger");                //logger to log any test framework events
     static ArrayList<AbstractMap.SimpleEntry<String, Boolean>> summaryMap = new ArrayList<>(); //map to store test names and status
     static ArrayList<AbstractMap.SimpleEntry<String, ArrayList<Integer>>> testCountMap = new ArrayList<>(); //map to store test names and number of tests passed
     static ArrayList <String> fileList = new ArrayList<>();
@@ -31,8 +32,7 @@ public class TestQueryFile {
     static File diffFile;
     
     String inputFileName;
-    Connection connection_sql;  //connection object for SQL server
-    Connection connection_bbl;  //connection object for Babel instance
+    Connection connection_bbl;  // connection object for Babel instance
     
     public static void createTestFilesListUtil(String directory, String testToRun) {
         File dir = new File(directory);
@@ -48,7 +48,7 @@ public class TestQueryFile {
                 if (file.isDirectory()) {
                     createTestFilesListUtil(file.getAbsolutePath(), testToRun);
                 } else {
-                    //append filename to arraylist and omit extension
+                    // append filename to arraylist and omit extension
                     String fileName = file.getName().replaceFirst("[.][^.]+$", "");
 
                     if (testToRun.equals("all") || testToRun.equals(fileName)) {
@@ -77,13 +77,13 @@ public class TestQueryFile {
     public static void execCommand(String cmd) throws ClassNotFoundException {
         String[] command = cmd.split("#!#");
 
-        String URL = properties.getProperty("fileGenerator_URL");
-        String tsql_port = properties.getProperty("fileGenerator_tsql_port");
-        String psql_port = properties.getProperty("fileGenerator_psql_port");
-        String databaseName = properties.getProperty("fileGenerator_databaseName");
-        String physicalDatabaseName = properties.getProperty("fileGenerator_physicalDatabaseName");
-        String user = properties.getProperty("fileGenerator_user");
-        String password = properties.getProperty("fileGenerator_password");
+        String URL = properties.getProperty("URL");
+        String tsql_port = properties.getProperty("tsql_port");
+        String psql_port = properties.getProperty("psql_port");
+        String databaseName = properties.getProperty("databaseName");
+        String physicalDatabaseName = properties.getProperty("physicalDatabaseName");
+        String user = properties.getProperty("user");
+        String password = properties.getProperty("password");
         String connectionString;
 
         if (command[1].equalsIgnoreCase("sqlserver")) {
@@ -123,7 +123,7 @@ public class TestQueryFile {
         } else throw new ClassNotFoundException("Driver not found for: " + JDBCDriver +". Choose from either 'sqlserver' or 'postgresql'");
     }
 
-    //test data is seeded from here
+    // test data is seeded from here
     static Stream<String> inputFileNames() {
         File dir = new File(inputFilesDirectoryPath);
         File scheduleFile = new File(scheduleFileName);
@@ -142,32 +142,32 @@ public class TestQueryFile {
         return fileList.stream();
     }
 
-    //configure logger for summary file and setup initial directory structure
+    // configure logger for summary file and setup initial directory structure
     @BeforeAll
     public static void setup() throws IOException {
         String testRunDir = "Info/" + timestamp + "/";
         new File(testRunDir).mkdirs();
         
-        if (compareWithFile) {
-            new File(outputFilesDirectoryPath).mkdirs();
-            diffFile = new File(testRunDir + timestamp + ".diff");
-            diffFile.createNewFile();
-        }
+        new File(outputFilesDirectoryPath).mkdirs();
+        diffFile = new File(testRunDir + timestamp + ".diff");
+        diffFile.createNewFile();
         
         String logSummaryFile = testRunDir + timestamp + "_runSummary";
         configureSummaryLogger(logSummaryFile, summaryLogger);
+
+        String logFile = testRunDir + timestamp;
+        configureLogger(logFile, logger);
         
         summaryLogger.info("Started test suite. Now running tests...");
     }
     
-    //close connections that are not null after every test
+    // close connections that are not null after every test
     @AfterEach
     public void closeConnections() throws SQLException {
-        if (connection_sql != null) connection_sql.close();
         if (connection_bbl != null) connection_bbl.close();
     }
 
-    //write summary log after all tests have been executed
+    // write summary log after all tests have been executed
     @AfterAll
     public static void logSummary() {
         int passed = 0;
@@ -181,14 +181,14 @@ public class TestQueryFile {
         summaryLogger.info("################################  SUMMARY  ################################");
         summaryLogger.info("###########################################################################");
 
-        //get max length of test name (used for pretty print in logs)
+        // get max length of test name (used for pretty print in logs)
         for(AbstractMap.SimpleEntry<String, Boolean> set: summaryMap){
             String testMethodName = set.getKey();
             int len = testMethodName.length();
             if(len > maxlen) maxlen = len;
         }
         
-        //for every test in map, log test name and status
+        // for every test in map, log test name and status
         int i;
         
         for (i = 0; i < summaryMap.size(); i++) {
@@ -196,12 +196,6 @@ public class TestQueryFile {
 
             boolean status = summaryMap.get(i).getValue();
             int testsPassed = 0, totalTests = 0;
-
-            if (!compareWithFile){
-                testsPassed = testCountMap.get(i).getValue().get(0);
-                totalTests = testsPassed + testCountMap.get(i).getValue().get(1);
-                testStats = "  ( " + (testsPassed + "    ").substring(0, 4) + "out of " + (totalTests + "    ").substring(0, 4) + "passed )";
-            }
 
             if(status){
                 //extra spaces for right side padding
@@ -221,17 +215,17 @@ public class TestQueryFile {
         summaryLogger.info("TESTS FAILED:\t" + failed);
         summaryLogger.info("###########################################################################");
         
-        if (compareWithFile && performanceTest) {
+        if (performanceTest) {
             performanceSummary(exec_times);
         }
         
-        //print absolute path to file containing diff
-        if(failed > 0 && compareWithFile) {
+        // print absolute path to file containing diff
+        if(failed > 0) {
             summaryLogger.info("Output diff can be found in '" + diffFile.getAbsolutePath() + "'");
         }
 
-        //displays content of file holding diff to console
-        if(compareWithFile && printLogsToConsole) {
+        // displays content of file holding diff to console
+        if(printLogsToConsole) {
             System.out.println("############################# DIFF STARTS HERE #############################");
             try (BufferedReader br = new BufferedReader(new FileReader(diffFile))) {
                 String line;
@@ -245,14 +239,14 @@ public class TestQueryFile {
         }
     }
 
-    //generates performance report which has mean, median, mode of query execution times
+    // generates performance report which has mean, median, mode of query execution times
     static void performanceSummary(ArrayList<Long> exec_times) {
 
         com.sqlsamples.Statistics stats = new com.sqlsamples.Statistics(exec_times.stream().filter(Objects::nonNull).mapToDouble(i -> i).toArray());
 
         HashMap <String, com.sqlsamples.Statistics> statisticsHashMap = new HashMap<String, com.sqlsamples.Statistics>() {
             {
-                put(fileGenerator_connectionString, stats);
+                put(connectionString, stats);
             }
         };
 
@@ -267,7 +261,7 @@ public class TestQueryFile {
         String expectedFilePath = expectedFile.getAbsolutePath();
         ProcessBuilder diffProcessBuilder;
 
-        //if expected file is generated from SQL Server, do not compare error code and message
+        // if expected file is generated from SQL Server, do not compare error code and message
         if (expectedFilePath.contains("sql_expected")) {
             diffProcessBuilder = new ProcessBuilder("diff", "-a", "-u", "-I", "~~ERROR", expectedFilePath, outputFilePath);
         } else {
@@ -301,7 +295,7 @@ public class TestQueryFile {
         return false;
     }
 
-    //parameterized test
+    // parameterized test
     @ParameterizedTest(name="{0}")
     @MethodSource("inputFileNames")
     public void TestQueryBatch(String inputFileName) throws SQLException, ClassNotFoundException, Throwable {
@@ -315,82 +309,47 @@ public class TestQueryFile {
             return;
         } else {
             selectDriver();
-
-            if(!compareWithFile) {
-                connection_sql = DriverManager.getConnection(sqlServer_connectionString);
-                connection_bbl = DriverManager.getConnection(babel_connectionString);
-            } else {
-                connection_bbl = DriverManager.getConnection(fileGenerator_connectionString);
-            }
+            connection_bbl = DriverManager.getConnection(connectionString);
         }
 
-	//summaryMap.put(this.inputFileName, false);
         summaryLogger.info("RUNNING " + inputFileName);
-        String loggerName = inputFileName;
-        String logFilePath = "Info/" + timestamp +"/" + inputFileName + "/logs";
-
-        if(!compareWithFile){
-            new File(logFilePath).mkdirs();
-        }
-
-        String logFile = logFilePath + "/" + inputFileName + timestamp;
-
-        Logger logger = Logger.getLogger(loggerName);
-        configureLogger(logger, logFile);
 
         logger.info("Running " + inputFileName + "...");
 
         String testFilePath = filePaths.get(inputFileName);
         
-        boolean result; //whether test passed or failed
-        ArrayList<Integer> comparisonResults;
+        boolean result; // whether test passed or failed
         int failed;
         
-        if(!compareWithFile){
-            comparisonResults = batch_run.batch_run_sql(connection_sql, connection_bbl, null, testFilePath, logger);
-            failed = comparisonResults.get(1);
+        File outputFile = new File(outputFilesDirectoryPath + inputFileName + ".out");
 
-            result = failed == 0;
-            summaryMap.add(new AbstractMap.SimpleEntry<>(inputFileName, result)); //add test name and result to map
-            testCountMap.add(new AbstractMap.SimpleEntry<>(inputFileName, comparisonResults));   //add test name and tests passed and failed to map
+        // generate buffer reader associated with the file
+        FileWriter fw = new FileWriter(outputFile);
+        BufferedWriter bw = new BufferedWriter(fw);
+        batch_run.batch_run_sql(connection_bbl, bw, testFilePath, logger);
+        bw.close();
+        
+        File expectedFile = new File(generatedFilesDirectoryPath + inputFileName + ".out");
+        File sqlExpectedFile = new File(sqlServerGeneratedFilesDirectoryPath + inputFileName + ".out");
+
+        if (expectedFile.exists()) {
+            // get the diff
+            result = compareOutFiles(outputFile, expectedFile);
+        } else if (sqlExpectedFile.exists()) {
+            // get the diff
+            result = compareOutFiles(outputFile, sqlExpectedFile);
         } else {
-            
-            File outputFile = new File(generatedFilesDirectoryPath + inputFileName + ".out");
+            result = false;
+        }
 
-            if (compareWithFile) {
-                outputFile = new File(outputFilesDirectoryPath + inputFileName + ".out");
-            }
+        summaryMap.add(new AbstractMap.SimpleEntry<>(inputFileName, result)); //add test name and result to map
 
-            //generate buffer reader associated with the file
-            FileWriter fw = new FileWriter(outputFile);
-            BufferedWriter bw = new BufferedWriter(fw);
-            batch_run.batch_run_sql(connection_sql, connection_bbl, bw, testFilePath, logger);
-            bw.close();
-            
-            if (compareWithFile) {
-                File expectedFile = new File(generatedFilesDirectoryPath + inputFileName + ".out");
-                File sqlExpectedFile = new File(sqlServerGeneratedFilesDirectoryPath + inputFileName + ".out");
-
-                if (expectedFile.exists()) {
-                    //get the diff
-                    result = compareOutFiles(outputFile, expectedFile);
-                } else if (sqlExpectedFile.exists()) {
-                    //get the diff
-                    result = compareOutFiles(outputFile, sqlExpectedFile);
-                } else {
-                    result = false;
-                }
-            } else result = true;
-
-            summaryMap.add(new AbstractMap.SimpleEntry<>(inputFileName, result)); //add test name and result to map
-
-	        try {
-                Assertions.assertTrue(result);
-            } catch (AssertionError e) {
-                Throwable throwable = new Throwable(inputFileName + " FAILED! Output diff can be found in '" + diffFile.getAbsolutePath() + "'");
-                throwable.setStackTrace(new StackTraceElement[0]);
-                throw throwable;
-            }
+        try {
+            Assertions.assertTrue(result);
+        } catch (AssertionError e) {
+            Throwable throwable = new Throwable(inputFileName + " FAILED! Output diff can be found in '" + diffFile.getAbsolutePath() + "'");
+            throwable.setStackTrace(new StackTraceElement[0]);
+            throw throwable;
         }
     }
 }
