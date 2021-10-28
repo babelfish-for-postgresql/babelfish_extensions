@@ -1,0 +1,26 @@
+-- psql
+ALTER SYSTEM SET babelfishpg_tsql.migration_mode = 'multi-db';
+SELECT pg_reload_conf();
+GO
+
+-- tsql
+CREATE DATABASE db1;
+GO
+
+CREATE DATABASE db2;
+GO
+
+SELECT name, compatibility_level, collation_name FROM sys.databases ORDER BY name;
+GO
+
+SELECT name, snapshot_isolation_state, catalog_collation_type_desc FROM sys.databases ORDER BY name;
+GO
+
+DROP DATABASE db1;
+DROP DATABASE db2;
+GO
+
+-- psql
+ALTER SYSTEM SET babelfishpg_tsql.migration_mode = 'single-db';
+SELECT pg_reload_conf();
+GO

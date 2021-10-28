@@ -1,0 +1,123 @@
+-- Test numeric in cast function
+select cast(1.123 as numeric(38, 10));
+go
+~~START~~
+numeric
+1.1230000000
+~~END~~
+
+select cast(1.123 as numeric(39, 10));
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: The size (39) given to the type 'numeric' exceeds the maximum allowed (38))~~
+
+
+-- Test decimal in cast function
+select cast(1.123 as decimal(38, 10));
+go
+~~START~~
+numeric
+1.1230000000
+~~END~~
+
+select cast(1.123 as decimal(39, 10));
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: The size (39) given to the type 'decimal' exceeds the maximum allowed (38))~~
+
+
+-- Test dec in cast function
+select cast(1.123 as dec(38, 10));
+go
+~~START~~
+numeric
+1.1230000000
+~~END~~
+
+select cast(1.123 as dec(39, 10));
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: The size (39) given to the type 'decimal' exceeds the maximum allowed (38))~~
+
+
+-- Test numeric in create table
+create table t1 (col numeric(38,37));
+drop table t1;
+go
+
+create table t1 (col numeric(39, 37));
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: The size (39) given to the type 'numeric' exceeds the maximum allowed (38))~~
+
+
+-- Test decimal in create table
+create table t1 (col decimal(38,37));
+drop table t1;
+go
+
+create table t1 (col decimal(39, 37));
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: The size (39) given to the type 'decimal' exceeds the maximum allowed (38))~~
+
+
+-- Test dec in create table
+create table t1 (col decimal(38,37));
+drop table t1;
+go
+
+create table t1 (col decimal(39, 37));
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: The size (39) given to the type 'decimal' exceeds the maximum allowed (38))~~
+
+
+-- Test default precision and scale is set to 18, 0
+create table t1 (col numeric);
+insert into t1 values (1.2);
+insert into t1 values (123456789012345678);
+select * from t1;
+go
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~START~~
+numeric
+1
+123456789012345678
+~~END~~
+
+insert into t1 values (1234567890123456789);
+select * from t1;
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: numeric field overflow)~~
+
+
+drop table t1;
+go
+
+-- Test default scale is set to 0 if only precision is specified
+create table t1 (col numeric(4));
+insert into t1 values (1.2);
+select * from t1;
+go
+~~ROW COUNT: 1~~
+
+~~START~~
+numeric
+1
+~~END~~
+
+
+drop table t1;
+go

@@ -1,0 +1,15 @@
+#single parameter bind in target list
+prepst#!#SELECT @a#!#INT|-|a|-|1
+prepst#!#exec#!#INT|-|a|-|1
+prepst#!#exec#!#INT|-|a|-|1
+prepst#!#exec#!#INT|-|a|-|1
+#no parameter bind
+prepst#!#SELECT 1#!#
+prepst#!#exec#!#
+prepst#!#exec#!#
+prepst#!#exec#!#
+#empty query
+prepst#!# #!#
+prepst#!#exec#!#
+prepst#!#exec#!#
+prepst#!#exec#!#

@@ -1,0 +1,31 @@
+select 'foo' where 'bar ' = 'bar';
+go
+~~START~~
+varchar
+foo
+~~END~~
+
+
+select 'foo' where 0xAE = 0xAE00;
+go
+~~START~~
+varchar
+foo
+~~END~~
+
+
+select 'foo' where 101.5E5 = 1015E4;
+go
+~~START~~
+varchar
+foo
+~~END~~
+
+
+select 'foo' where (select 'bar ') = (select 'bar');
+go
+~~START~~
+varchar
+foo
+~~END~~
+

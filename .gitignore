@@ -1,0 +1,12 @@
+*.a
+*.control
+*.DS_Store
+*.o
+*.so
+test/JDBC/Info/
+test/JDBC/output/*
+test/JDBC/target/classes/*
+test/JDBC/target/maven-archiver/*
+test/JDBC/target/maven-status/*
+test/JDBC/target/surefire-reports/*
+test/JDBC/target/test-classes/*

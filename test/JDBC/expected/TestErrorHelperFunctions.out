@@ -1,0 +1,168 @@
+create table testErrorHF(c1 int not null);
+insert into testErrorHF values(1);
+GO
+~~ROW COUNT: 1~~
+
+
+begin try
+	insert into testErrorHF values('abc');
+end try
+begin catch
+	select @@error, @@pgerror;
+end catch
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: invalid input syntax for type integer: "abc")~~
+
+
+select @@error, @@pgerror;
+GO
+~~START~~
+int#!#varchar
+33557097#!#22P02
+~~END~~
+
+
+insert into testErrorHF values(null);
+GO
+~~ERROR (Code: 515)~~
+
+~~ERROR (Message: null value in column "c1" of relation "testerrorhf" violates not-null constraint)~~
+
+
+select @@error, @@pgerror;
+GO
+~~START~~
+int#!#varchar
+515#!#23502
+~~END~~
+
+
+select * from fn_mapped_system_error_list();
+GO
+~~START~~
+int
+102
+132
+133
+134
+135
+136
+141
+142
+153
+155
+180
+217
+219
+220
+232
+266
+289
+293
+306
+346
+352
+477
+487
+506
+512
+515
+517
+545
+547
+550
+556
+574
+628
+1034
+1049
+1051
+1205
+1505
+1715
+1752
+1765
+1768
+1776
+1778
+1801
+1946
+2627
+2714
+2732
+2747
+2787
+3609
+3616
+3623
+3701
+3723
+3726
+3728
+3729
+3732
+3902
+3903
+3914
+3930
+4514
+4708
+4712
+4901
+4920
+6401
+8003
+8004
+8007
+8009
+8011
+8016
+8018
+8023
+8028
+8029
+8031
+8032
+8037
+8043
+8047
+8050
+8057
+8058
+8106
+8107
+8115
+8134
+8143
+8152
+8159
+8179
+9441
+9451
+9809
+10610
+10727
+10733
+10793
+11555
+11700
+11701
+11702
+11703
+11705
+11706
+11708
+11709
+11717
+16901
+16902
+16903
+16915
+16916
+16948
+16950
+18456
+~~END~~
+

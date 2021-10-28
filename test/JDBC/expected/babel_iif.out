@@ -1,0 +1,95 @@
+select iif (2 < 1, cast('2020-10-20 09:00:00' as datetime), cast('2020-10-21' as date));
+go
+~~START~~
+datetime
+2020-10-21 00:00:00.0
+~~END~~
+
+select iif (2 > 1, cast('abc' as varchar(3)), cast('cba' as char(3)));
+go
+~~START~~
+varchar
+abc
+~~END~~
+
+select iif (2 > 1, cast(3.14 as float), cast(31.4 as numeric(3, 1)));
+go
+~~START~~
+float
+3.14
+~~END~~
+
+select iif (2 > 1, cast(3.14 as float), cast(1 as int));
+go
+~~START~~
+float
+3.14
+~~END~~
+
+select iif (2 > 1, cast('$123.123' as money), cast(3.14 as float));
+go
+~~START~~
+float
+123.123
+~~END~~
+
+select iif (2 > 1, cast('2020-10-20 09:00:00' as datetime), cast('09:00:00' as time));
+go
+~~START~~
+datetime
+2020-10-20 09:00:00.0
+~~END~~
+
+select iif (2 > 1, cast(3.14 as float), cast('$123.123' as money));
+go
+~~START~~
+float
+3.14
+~~END~~
+
+
+-- Error, unknown literal cannot fit target type typinput func
+select iif (2 > 1, 1, 'abc');
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: invalid input syntax for type integer: "abc")~~
+
+-- Error, different categories
+select iif (2 > 1, cast(1 as int), cast('abc' as varchar(3)));
+go
+~~START~~
+int
+1
+~~END~~
+
+select iif (2 > 1, cast(0 as bit), cast(1 as int));
+go
+~~START~~
+int
+0
+~~END~~
+
+
+-- Null handling
+select iif (2 > 1, null, 0);
+go
+~~START~~
+int
+<NULL>
+~~END~~
+
+select iif (null, 1, 0);
+go
+~~START~~
+int
+0
+~~END~~
+
+select iif (null, null, null);
+go
+~~START~~
+int
+<NULL>
+~~END~~
+

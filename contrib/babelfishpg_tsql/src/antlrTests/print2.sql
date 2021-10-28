@@ -1,0 +1,13 @@
+DO $$
+BEGIN
+  PRINT 1
+  PRINT 2
+
+  BEGIN
+    PRINT 3
+	PRINT 4
+  END
+
+  DROP TABLE [foo]
+END
+$$ LANGUAGE 'pltsql'

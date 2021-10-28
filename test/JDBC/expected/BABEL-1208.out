@@ -1,0 +1,110 @@
+create table babel_1208_t1 (a uniqueidentifier);
+GO
+insert into babel_1208_t1 values (convert(uniqueidentifier, 0x00));
+insert into babel_1208_t1 values (convert(uniqueidentifier, 0x1));
+insert into babel_1208_t1 values (convert(uniqueidentifier, 0x01));
+insert into babel_1208_t1 values (convert(uniqueidentifier, 0x123));
+insert into babel_1208_t1 values (convert(uniqueidentifier, 0x00010203040506070809));
+insert into babel_1208_t1 values (convert(uniqueidentifier, 0x000102030405060708090a0b0c0d0e0f));
+insert into babel_1208_t1 values (convert(uniqueidentifier, 0x000102030405060708090a0b0c0d0e0f1011121314));
+GO
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+select * from babel_1208_t1 order by a;
+GO
+~~START~~
+uniqueidentifier
+00000000-0000-0000-0000-000000000000
+00000001-0000-0000-0000-000000000000
+00000001-0000-0000-0000-000000000000
+00002301-0000-0000-0000-000000000000
+03020100-0504-0706-0809-000000000000
+03020100-0504-0706-0809-0A0B0C0D0E0F
+03020100-0504-0706-0809-0A0B0C0D0E0F
+~~END~~
+
+
+-- customer scenario
+CREATE TABLE babel_1208_t2([SourceActivityTypeId] [uniqueidentifier] NOT NULL)
+go
+ALTER TABLE babel_1208_t2 ADD DEFAULT (CONVERT([uniqueidentifier],0x00)) FOR [SourceActivityTypeId]
+GO
+INSERT INTO babel_1208_t2 values (default), (default);
+GO
+~~ROW COUNT: 2~~
+
+SELECT * FROM babel_1208_t2 order by 1;
+GO
+~~START~~
+uniqueidentifier
+00000000-0000-0000-0000-000000000000
+00000000-0000-0000-0000-000000000000
+~~END~~
+
+
+-- implicit castings
+CREATE FUNCTION babel_1208_f_binary(@v binary(16)) RETURNS binary(16) AS BEGIN RETURN @v; END
+GO
+--SELECT babel_1208_f_binary(a) FROM babel_1208_t1;
+GO
+
+CREATE FUNCTION babel_1208_f_varbinary(@v varbinary(16)) RETURNS varbinary(16) AS BEGIN RETURN @v; END
+GO
+SELECT babel_1208_f_varbinary(a) FROM babel_1208_t1;
+GO
+~~START~~
+varbinary
+00000000000000000000000000000000
+01000000000000000000000000000000
+01000000000000000000000000000000
+01230000000000000000000000000000
+00010203040506070809000000000000
+000102030405060708090A0B0C0D0E0F
+000102030405060708090A0B0C0D0E0F
+~~END~~
+
+
+
+create table babel_1208_t3 (c1 binary(16), c2 varbinary(16));
+GO
+insert into babel_1208_t3 values (0x000102030405060708090a0b0c0d0e0f, 0x000102030405060708090a0b0c0d0e0f);
+GO
+~~ROW COUNT: 1~~
+
+
+CREATE FUNCTION babel_1208_f_uuid(@u uniqueidentifier) RETURNS uniqueidentifier AS BEGIN RETURN @u; END
+GO
+
+SELECT babel_1208_f_uuid(c1) binary_in, babel_1208_f_uuid(c2) varbinary_in from babel_1208_t3
+GO
+~~START~~
+uniqueidentifier#!#uniqueidentifier
+03020100-0504-0706-0809-0A0B0C0D0E0F#!#03020100-0504-0706-0809-0A0B0C0D0E0F
+~~END~~
+
+
+-- cleanup
+drop table babel_1208_t1;
+GO
+drop table babel_1208_t2;
+GO
+drop table babel_1208_t3;
+GO
+drop function babel_1208_f_binary;
+GO
+drop function babel_1208_f_varbinary;
+GO
+drop function babel_1208_f_uuid;
+GO

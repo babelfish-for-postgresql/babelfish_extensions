@@ -1,0 +1,224 @@
+-- Verify correct value of ANSI_NULLS
+select sessionproperty('ANSI_NULLS');
+go
+~~START~~
+sql_variant
+1
+~~END~~
+
+
+create table testTbl(fname varchar(10));
+insert into testTbl values (null), ('Jenny');
+select * from testTbl
+go
+~~ROW COUNT: 2~~
+
+~~START~~
+varchar
+<NULL>
+Jenny
+~~END~~
+
+
+select * from testTbl where fname=null;
+go
+~~START~~
+varchar
+~~END~~
+
+
+select * from testTbl where fname<>null;
+go
+~~START~~
+varchar
+~~END~~
+
+
+drop table testTbl;
+go
+
+-- Verify correct value of ANSI_PADDING
+select sessionproperty('ANSI_PADDING');
+go
+~~START~~
+sql_variant
+1
+~~END~~
+
+
+create table testTbl (
+    is_char_null char(10) null,
+    is_char_notnull char(10) not null,
+    is_varchar_null varchar(10) null,
+    is_varchar_notnull varchar(10) not null
+);
+go
+
+insert into testTbl values
+    ('aaa','aaa','aaa','aaa'),
+    ('aaa  ','aaa  ','aaa  ','aaa  ');
+go
+~~ROW COUNT: 2~~
+
+
+select datalength(is_char_null) as is_char_null_len,
+    datalength(is_char_notnull) as is_char_notnull_len,
+    datalength(is_varchar_null) as is_varchar_null_len,
+    datalength(is_varchar_notnull) as is_varchar_notnull_len
+from testTbl;
+go
+~~START~~
+int#!#int#!#int#!#int
+10#!#10#!#3#!#3
+10#!#10#!#5#!#5
+~~END~~
+
+
+SELECT
+    is_char_null+'|' as is_char_null,
+    is_char_notnull+'|' as is_char_notnull,
+    is_varchar_null+'|' as is_varchar_null,
+    is_varchar_notnull+'|' as is_varchar_notnull
+from testTbl;
+go
+~~START~~
+text#!#text#!#text#!#text
+aaa       |#!#aaa       |#!#aaa|#!#aaa|
+aaa       |#!#aaa       |#!#aaa  |#!#aaa  |
+~~END~~
+
+
+drop table testTbl;
+go
+
+-- Verify correct value of ANSI_WARNINGS
+select sessionproperty('ANSI_WARNINGS');
+go
+~~START~~
+sql_variant
+1
+~~END~~
+
+
+create table testTbl(fname varchar(10));
+go
+
+insert into testTbl values (null), ('Jenny Matthews');
+go
+~~ERROR (Code: 8152)~~
+
+~~ERROR (Message: value too long for type character varying(10))~~
+
+
+drop table testTbl;
+go
+
+-- Verify correct value of ARITHABORT
+select sessionproperty('ARITHABORT');
+go
+~~START~~
+sql_variant
+1
+~~END~~
+
+
+select 25/0;
+go
+~~ERROR (Code: 8134)~~
+
+~~ERROR (Message: division by zero)~~
+
+
+-- Verify correct value of CONCAT_NULL_YIELDS_NULL
+select sessionproperty('CONCAT_NULL_YIELDS_NULL');
+go
+~~START~~
+sql_variant
+1
+~~END~~
+
+
+select 'test'+null;
+go
+~~START~~
+text
+<NULL>
+~~END~~
+
+
+select concat('test', null);
+go
+~~START~~
+text
+test
+~~END~~
+
+
+select concat(null, 'test');
+go
+~~START~~
+text
+test
+~~END~~
+
+
+-- Verify correct value of NUMERIC_ROUNDABORT
+select sessionproperty('NUMERIC_ROUNDABORT');
+go
+~~START~~
+sql_variant
+0
+~~END~~
+
+
+create table testTbl(size int)
+go
+
+insert into testTbl values (707072), (1024000);
+go
+~~ROW COUNT: 2~~
+
+
+select (100 / SUM((((size) * 8.00) / 1024))) from testTbl as T;
+go
+~~START~~
+numeric
+0.0073942620526
+~~END~~
+
+
+drop table testTbl;
+go
+
+-- Verify correct value of QUOTED_IDENTIFIER
+select sessionproperty('QUOTED_IDENTIFIER');
+go
+~~START~~
+sql_variant
+1
+~~END~~
+
+
+select 'Hello, world!';
+go
+~~START~~
+varchar
+Hello, world!
+~~END~~
+
+
+select "Hello, world!";
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: column "hello, world!" does not exist)~~
+
+
+-- Test invalid property
+select sessionproperty('nonexistent_property');
+go
+~~START~~
+sql_variant
+<NULL>
+~~END~~
+

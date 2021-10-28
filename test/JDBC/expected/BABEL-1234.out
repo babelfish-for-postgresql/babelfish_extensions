@@ -1,0 +1,7 @@
+SELECT CAST(0 AS BIT) AS N'AdminConnection';
+GO
+~~START~~
+bit
+0
+~~END~~
+

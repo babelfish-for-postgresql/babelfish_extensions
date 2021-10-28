@@ -1,0 +1,39 @@
+/*
+ * All objects created by the included files will be created in sys
+ */
+
+
+CREATE SCHEMA sys;
+GRANT USAGE ON SCHEMA sys TO PUBLIC;
+
+
+SELECT set_config('search_path', 'sys, '||current_setting('search_path'), false);
+
+#include "money/fixeddecimal--1.1.0_base_parallel.sql"
+#include "money/fixeddecimal--parallelaggs.sql"
+#include "money/fixeddecimal--brin.sql"
+#include "bpchar.sql"
+#include "varchar.sql"
+#include "numerics.sql"
+#include "strings.sql"
+#include "bit.sql"
+#include "varbinary.sql"
+#include "binary.sql"
+#include "uniqueidentifier.sql"
+#include "datetime.sql"
+#include "datetime2.sql"
+#include "smalldatetime.sql"
+#include "datetimeoffset.sql"
+#include "sqlvariant.sql"
+#include "string_operators.sql"
+#include "coerce.sql"
+
+#include "utils.sql"
+
+/*
+ * Remove schema sys from search_path otherwise it causes BABEL-257 for some reason
+ * Notice schema sys will be automatically added to implicitly-searched namespaces by
+ * recomputeNamespacePath() in tsql dialect
+ */
+SELECT set_config('search_path', trim(leading 'sys, ' from current_setting('search_path')), false);
+RESET client_min_messages;

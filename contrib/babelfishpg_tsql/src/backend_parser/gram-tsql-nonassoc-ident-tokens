@@ -1,0 +1,1 @@
+IDENTITY_P TSQL_PERSISTED TSQL_ROWGUIDCOL /* these tokens can follow b_expr. To resolve ambiguity, we need to assign the same priority with IDENT. please see the comment in gram.y for details */

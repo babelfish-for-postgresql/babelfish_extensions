@@ -1,0 +1,16 @@
+use master;
+go
+
+create schema babel_2437_schema;
+go
+
+create table babel_2437_schema.t1 (a int primary key);
+go
+
+create table babel_2437_schema.t2 (b int, FOREIGN KEY (b) REFERENCES babel_2437_schema.t1 (a) ON DELETE CASCADE ON UPDATE CASCADE);
+go
+
+drop table if exists babel_2437_schema.t2;
+drop table if exists babel_2437_schema.t1;
+drop schema babel_2437_schema;
+go

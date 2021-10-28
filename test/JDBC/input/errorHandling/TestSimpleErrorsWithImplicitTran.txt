@@ -1,0 +1,9 @@
+#Setup
+SET IMPLICIT_TRANSACTIONS ON
+
+#Run error handling tests
+include#!#input/errorHandling/TestSimpleErrors.sql
+
+#Cleanup
+IF @@trancount > 0 ROLLBACK
+SET IMPLICIT_TRANSACTIONS OFF

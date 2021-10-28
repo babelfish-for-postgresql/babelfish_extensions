@@ -1,0 +1,162 @@
+declare @date1 DATE;
+declare @date2 DATE; 
+set @date1 = '2012-12-31'
+set @date2 = '2013-01-01'
+SELECT DATEDIFF(month, @date1, @date2) as momth_diff
+go
+
+declare @date1 DATE;
+declare @date2 DATE; 
+set @date1 = '2012-12-31'
+set @date2 = '2013-01-01'
+SELECT DATEDIFF(mm, @date1, @date2) as mm_diff
+go
+
+declare @date1 DATE;
+declare @date2 DATE; 
+set @date1 = '2012-12-31'
+set @date2 = '2013-01-01'
+SELECT DATEDIFF(day, @date1, @date2) as day_diff
+go
+
+declare @date1 DATE;
+declare @date2 DATE; 
+set @date1 = '2012-12-31'
+set @date2 = '2013-01-01'
+SELECT DATEDIFF(dd, @date1, @date2) as dd_diff
+go
+
+declare @date1 DATE;
+declare @date2 DATE; 
+set @date1 = '2012-12-31'
+set @date2 = '2013-01-01'
+SELECT DATEDIFF(year, @date1, @date2) as year_diff
+go
+
+declare @date1 DATE;
+declare @date2 DATE; 
+set @date1 = '2012-12-31'
+set @date2 = '2013-01-01'
+SELECT DATEDIFF(yyyy, @date1, @date2) as yyyy_diff
+go
+
+declare @date1 DATE;
+declare @date2 DATE; 
+set @date1 = '2012-12-31'
+set @date2 = '2013-01-01'
+SELECT DATEDIFF(yy, @date1, @date2) as yy_diff
+go
+
+declare @date1 DATE;
+declare @date2 DATE; 
+set @date1 = '2012-12-31'
+set @date2 = '2013-01-01'
+SELECT DATEDIFF(dayofyear, @date1, @date2) as yy_diff
+go
+
+declare @date1 DATE;
+declare @date2 DATE; 
+set @date1 = '2012-12-31'
+set @date2 = '2013-01-01'
+SELECT DATEDIFF(dy, @date1, @date2) as yy_diff
+go
+
+declare @date1 DATE;
+declare @date2 DATE; 
+set @date1 = '2012-12-31'
+set @date2 = '2013-01-01'
+SELECT DATEDIFF(y, @date1, @date2) as yy_diff -- BABEL-1063
+SELECT DATEADD(y, 1, @date1) as yy_add -- BABEL-1063
+go
+
+declare @date1 DATE;
+declare @date2 DATE; 
+set @date1 = '2012-12-31'
+set @date2 = '2013-01-01'
+SELECT DATEDIFF(quarter, @date1, @date2) as quarter_diff
+go
+
+declare @date1 DATE;
+declare @date2 DATE; 
+set @date1 = '2012-12-31'
+set @date2 = '2013-01-01'
+SELECT DATEDIFF(qq, @date1, @date2) as qq_diff
+go
+
+-- BABEL-1626
+declare @date1 datetimeoffset(6)
+declare @date2 datetimeoffset(6)
+set @date1 = '1912-12-31 12:24:32 +10:0'
+set @date2 = '1913-01-01 12:25:32 +10:0'
+SELECT DATEDIFF(day, @date1, @date2) as day_diff
+go
+
+declare @date1 datetimeoffset(6)
+declare @date2 datetimeoffset(6)
+set @date1 = '1912-12-31 12:24:32 +10:0'
+set @date2 = '1913-01-01 12:25:32 +10:0'
+SELECT DATEDIFF(dd, @date1, @date2) as dd_diff
+go
+
+declare @date1 datetimeoffset(6)
+declare @date2 datetimeoffset(6)
+set @date1 = '1912-12-31 12:24:32 +10:0'
+set @date2 = '1913-01-01 12:25:32 +10:0'
+SELECT DATEDIFF(month, @date1, @date2) as momth_diff
+go
+
+declare @date1 datetimeoffset(6)
+declare @date2 datetimeoffset(6)
+set @date1 = '1912-12-31 12:24:32 +10:0'
+set @date2 = '1913-01-01 12:25:32 +10:0'
+SELECT DATEDIFF(mm, @date1, @date2) as mm_diff
+go
+
+declare @date1 datetimeoffset(6)
+declare @date2 datetimeoffset(6)
+set @date1 = '1912-12-31 12:24:32 +10:0'
+set @date2 = '1913-01-01 12:25:32 +10:0'
+SELECT DATEDIFF(year, @date1, @date2) as year_diff
+go
+
+declare @date1 datetimeoffset(6)
+declare @date2 datetimeoffset(6)
+set @date1 = '1912-12-31 12:24:32 +10:0'
+set @date2 = '1913-01-01 12:25:32 +10:0'
+SELECT DATEDIFF(yyyy, @date1, @date2) as yyyy_diff
+go
+
+declare @date1 datetimeoffset(6)
+declare @date2 datetimeoffset(6)
+set @date1 = '1912-12-31 12:24:32 +10:0'
+set @date2 = '1913-01-01 12:25:32 +10:0'
+SELECT DATEDIFF(yy, @date1, @date2) as yy_diff
+go
+
+declare @date1 datetimeoffset(6)
+declare @date2 datetimeoffset(6)
+set @date1 = '1912-12-31 12:24:32 +10:0'
+set @date2 = '1913-01-01 12:25:32 +10:0'
+SELECT DATEDIFF(quarter, @date1, @date2) as quarter_diff
+go
+
+declare @date1 datetimeoffset(6)
+declare @date2 datetimeoffset(6)
+set @date1 = '1912-12-31 12:24:32 +10:0'
+set @date2 = '1913-01-01 12:25:32 +10:0'
+SELECT DATEDIFF(qq, @date1, @date2) as qq_diff
+go
+
+declare @date1 datetimeoffset(6)
+declare @date2 datetimeoffset(6)
+set @date1 = '1912-12-31 12:24:32.001 +10:0'
+set @date2 = '1912-12-31 12:24:32.002 +10:0'
+SELECT DATEDIFF(nanosecond, @date1, @date2) as nanosecond_diff
+go
+
+declare @date1 datetimeoffset(6)
+declare @date2 datetimeoffset(6)
+set @date1 = '1912-12-31 12:24:32.001 +10:0'
+set @date2 = '1912-12-31 12:24:32.002 +10:0'
+SELECT DATEDIFF(ns, @date1, @date2) as ns_diff
+go

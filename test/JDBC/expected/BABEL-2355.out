@@ -1,0 +1,31 @@
+
+-- All following procedures should report error.
+-- Before the fix for BABEL-2355, all these 
+-- procedures lead to crash.
+CREATE PROC babel_2355_proc1 AS
+DECLARE @a DECIMAL(38, 39)
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: NUMERIC scale 39 must be between 0 and precision 38)~~
+
+
+CREATE PROC babel_2355_proc2 AS
+DECLARE @a INTA
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: type "inta" does not exist)~~
+
+
+DROP PROC babel_2355_proc1
+DROP PROC babel_2355_proc2
+go
+~~ERROR (Code: 3701)~~
+
+~~ERROR (Message: could not find a procedure named "babel_2355_proc1")~~
+
+~~ERROR (Code: 3701)~~
+
+~~ERROR (Message: could not find a procedure named "babel_2355_proc2")~~
+

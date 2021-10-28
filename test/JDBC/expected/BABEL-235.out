@@ -1,0 +1,123 @@
+EXEC sp_babelfish_configure 'babelfishpg_tsql.escape_hatch_session_settings', 'strict';
+GO
+
+SET ANSI_DEFAULTS ON;
+GO
+
+-- Test invalid setting
+SET ANSI_DEFAULTS OFF;
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: OFF setting is not allowed for option ANSI_NULL_DFLT_ON, ANSI_PADDING and ANSI_WARNINGS. Please use babelfishpg_tsql.escape_hatch_session_settings to ignore)~~
+
+
+-- Test ANSI_DEFAULTS can be set to OFF when ESCAPE_HATCH_SESSION_SETTINGS = 'ignore'
+EXEC sp_babelfish_configure 'babelfishpg_tsql.escape_hatch_session_settings', 'ignore';
+GO
+SET ANSI_DEFAULTS OFF;
+GO
+
+-- expect OFF
+SELECT CURRENT_SETTING('babelfishpg_tsql.ansi_nulls', true);
+GO
+~~START~~
+text
+off
+~~END~~
+
+-- expect ON
+SELECT CURRENT_SETTING('babelfishpg_tsql.ansi_warnings', true);
+GO
+~~START~~
+text
+on
+~~END~~
+
+-- expect ON
+SELECT CURRENT_SETTING('babelfishpg_tsql.ansi_null_dflt_on', true);
+GO
+~~START~~
+text
+on
+~~END~~
+
+-- expect ON
+SELECT CURRENT_SETTING('babelfishpg_tsql.ansi_padding', true);
+GO
+~~START~~
+text
+on
+~~END~~
+
+-- expect OFF
+SELECT CURRENT_SETTING('babelfishpg_tsql.implicit_transactions', true);
+GO
+~~START~~
+text
+off
+~~END~~
+
+-- expect OFF
+SELECT CURRENT_SETTING('babelfishpg_tsql.quoted_identifier', true);
+GO
+~~START~~
+text
+off
+~~END~~
+
+
+SET ANSI_DEFAULTS ON;
+GO
+
+-- expect ON
+SELECT CURRENT_SETTING('babelfishpg_tsql.ansi_nulls', true);
+GO
+~~START~~
+text
+on
+~~END~~
+
+-- expect ON
+SELECT CURRENT_SETTING('babelfishpg_tsql.ansi_warnings', true);
+GO
+~~START~~
+text
+on
+~~END~~
+
+-- expect ON
+SELECT CURRENT_SETTING('babelfishpg_tsql.ansi_null_dflt_on', true);
+GO
+~~START~~
+text
+on
+~~END~~
+
+-- expect ON
+SELECT CURRENT_SETTING('babelfishpg_tsql.ansi_padding', true);
+GO
+~~START~~
+text
+on
+~~END~~
+
+-- expect ON
+SELECT CURRENT_SETTING('babelfishpg_tsql.implicit_transactions', true);
+GO
+~~START~~
+text
+on
+~~END~~
+
+-- expect ON
+SELECT CURRENT_SETTING('babelfishpg_tsql.quoted_identifier', true);
+GO
+~~START~~
+text
+on
+~~END~~
+
+
+EXEC sp_babelfish_configure 'babelfishpg_tsql.escape_hatch_session_settings', 'ignore';
+GO

@@ -1,0 +1,64 @@
+CREATE TABLE t_babel_1201 (a int);
+INSERT INTO t_babel_1201 values (1);
+GO
+
+-- create view with schemabinding
+CREATE VIEW v_babel_1201 WITH SCHEMABINDING AS SELECT * FROM t_babel_1201;
+GO
+SELECT * FROM v_babel_1201;
+GO
+
+-- create trigger with schemabinding
+CREATE TABLE t_babel_1201_2 (c varchar(20));
+GO
+CREATE TRIGGER tr_babel_1201 on t_babel_1201 AFTER INSERT AS INSERT INTO t_babel_1201_2 values ('triggered');
+GO
+INSERT INTO t_babel_1201 values (2);
+GO
+SELECT * FROM t_babel_1201_2;
+GO
+
+-- create procedure with schemabinding
+CREATE PROCEDURE p_babel_1201 (@v int) WITH SCHEMABINDING AS BEGIN PRINT CAST(@v AS VARCHAR(10)) END;
+GO
+EXEC p_babel_1201 1
+GO
+
+-- create function with schemabinding
+CREATE FUNCTION f_babel_1201_1 (@v int) RETURNS INT WITH SCHEMABINDING AS BEGIN RETURN @v+1 END;
+GO
+SELECT f_babel_1201_1(1)
+GO
+
+CREATE FUNCTION f_babel_1201_2 (@v int) RETURNS TABLE WITH SCHEMABINDING AS RETURN select @v+1 as a;
+GO
+SELECT f_babel_1201_2(2)
+GO
+
+-- create function with other function options
+CREATE FUNCTION f_babel_1201_3 (@v int) RETURNS INT WITH SCHEMABINDING, RETURNS NULL ON NULL INPUT AS BEGIN RETURN @v+1 END;
+GO
+SELECT f_babel_1201_3(3)
+GO
+
+CREATE FUNCTION f_babel_1201_4 (@v int) RETURNS INT WITH RETURNS NULL ON NULL INPUT, SCHEMABINDING AS BEGIN RETURN @v+1 END;
+GO
+SELECT f_babel_1201_4(4)
+GO
+
+-- create function with duplicate schemabinding
+CREATE FUNCTION f_babel_1201_5 (@v int) RETURNS INT WITH SCHEMABINDING, SCHEMABINDING AS BEGIN RETURN @v+1 END;
+GO
+SELECT f_babel_1201_5(5)
+GO
+
+DROP FUNCTION f_babel_1201_1;
+DROP FUNCTION f_babel_1201_2;
+DROP FUNCTION f_babel_1201_3;
+DROP FUNCTION f_babel_1201_4;
+DROP FUNCTION f_babel_1201_5;
+DROP PROCEDURE p_babel_1201;
+DROP VIEW v_babel_1201;
+DROP TRIGGER tr_babel_1201;
+DROP TABLE t_babel_1201;
+GO

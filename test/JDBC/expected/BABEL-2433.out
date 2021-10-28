@@ -1,0 +1,70 @@
+USE master;
+GO
+
+create table obytt (a int);
+insert into obytt values (1);
+go
+~~ROW COUNT: 1~~
+
+
+select a as B from obytt order by b;
+go
+~~START~~
+int
+1
+~~END~~
+
+
+select a as B from obytt order by B;
+go
+~~START~~
+int
+1
+~~END~~
+
+
+-- ORDER BY b+3 is not allowed in either the tsql or the postgres dialect
+-- error is: column "b" does not exist
+select a as B from obytt order by b+3;
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: column "b" does not exist)~~
+
+
+-- However, order by a+3 is allowed because a is a column name
+select a+3 as B from obytt order by a+3;
+go
+~~START~~
+int
+4
+~~END~~
+
+
+-- and it is done case-insensitively if the db collation is CI
+select a+3 as B from obytt order by a+3;
+go
+~~START~~
+int
+4
+~~END~~
+
+  
+select a+3 as B from obytt order by a;
+go
+~~START~~
+int
+4
+~~END~~
+
+
+select a+3 as b from obytt order by B;
+go
+~~START~~
+int
+4
+~~END~~
+
+
+drop table obytt;
+go

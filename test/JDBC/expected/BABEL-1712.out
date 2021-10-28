@@ -1,0 +1,77 @@
+--Under Single-DB mode
+USE master;
+GO
+CREATE DATABASE db1;
+GO
+USE db1;
+GO
+CREATE schema test;
+GO
+SELECT nspname FROM pg_namespace WHERE nspname = 'test';
+GO
+~~START~~
+varchar
+test
+~~END~~
+
+CREATE table t1 ( a int, b int); -- should be created into dbo.t1
+GO
+INSERT INTO t1 VALUES ( 1, 1);
+GO
+~~ROW COUNT: 1~~
+
+SELECT * FROM t1;
+GO
+~~START~~
+int#!#int
+1#!#1
+~~END~~
+
+-- cross DB reference
+USE master;
+GO
+SELECT * FROM t1; -- doesn't exist expected, querying master.dbo.t1
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: relation "t1" does not exist)~~
+
+SELECT * FROM db1.dbo.t1;
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Cross DB query is not supported)~~
+
+SELECT * FROM dbo.t1; -- error expected, querying master.dbo.t1
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: relation "master_dbo.t1" does not exist)~~
+
+-- search path
+USE db1;
+GO
+CREATE TABLE test.t1 ( a int, b int, c int);
+GO
+INSERT INTO test.t1 VALUES (1,2,3);
+GO
+~~ROW COUNT: 1~~
+
+SELECT * FROM t1; -- selecting 2 column db1.dbo.t1
+GO
+~~START~~
+int#!#int
+1#!#1
+~~END~~
+
+SELECT * FROM test.t1; -- selecting 3 column db1.test.t1
+GO
+~~START~~
+int#!#int#!#int
+1#!#2#!#3
+~~END~~
+
+USE MASTER;
+GO
+DROP DATABASE db1;
+GO

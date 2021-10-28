@@ -1,0 +1,546 @@
+CREATE TABLE decimal_table(num decimal(5, 2));
+
+prepst#!#INSERT INTO decimal_table(num) VALUES(?) #!#decimal|-|a|-|3|-|5|-|2
+~~ROW COUNT: 1~~
+
+prepst#!#exec#!#decimal|-|a|-|123.456|-|5|-|2
+~~ROW COUNT: 1~~
+
+prepst#!#exec#!#decimal|-|a|-|123.4|-|5|-|2
+~~ROW COUNT: 1~~
+
+prepst#!#exec#!#decimal|-|a|-|123|-|5|-|2
+~~ROW COUNT: 1~~
+
+prepst#!#exec#!#decimal|-|a|-|123.45|-|5|-|2
+~~ROW COUNT: 1~~
+
+prepst#!#exec#!#decimal|-|a|-|<NULL>|-|5|-|2
+~~ROW COUNT: 1~~
+
+prepst#!#exec#!#decimal|-|a|-|-123.456|-|5|-|2
+~~ROW COUNT: 1~~
+
+prepst#!#exec#!#decimal|-|a|-|-123.4|-|5|-|2
+~~ROW COUNT: 1~~
+
+prepst#!#exec#!#decimal|-|a|-|-123|-|5|-|2
+~~ROW COUNT: 1~~
+
+#prepst#!#exec#!#decimal|-|a|-|0|-|5|-|2
+prepst#!#exec#!#decimal|-|a|-|-1|-|3|-|2
+~~ROW COUNT: 1~~
+
+prepst#!#exec#!#decimal|-|a|-|-123|-|9|-|2
+~~ROW COUNT: 1~~
+
+
+SELECT * FROM decimal_table;
+~~START~~
+numeric
+3.00
+123.46
+123.40
+123.00
+123.45
+<NULL>
+-123.46
+-123.40
+-123.00
+-1.00
+-123.00
+~~END~~
+
+
+DROP TABLE decimal_table;
+
+CREATE TABLE decimal_table(num decimal(38, 3));
+
+prepst#!#INSERT INTO decimal_table(num) VALUES(?) #!#decimal|-|a1|-|3|-|5|-|2
+~~ROW COUNT: 1~~
+
+prepst#!#exec#!#decimal|-|a1|-|123.456|-|5|-|2
+~~ROW COUNT: 1~~
+
+prepst#!#exec#!#decimal|-|a1|-|123.4|-|5|-|2
+~~ROW COUNT: 1~~
+
+prepst#!#exec#!#decimal|-|a1|-|123|-|5|-|2
+~~ROW COUNT: 1~~
+
+prepst#!#exec#!#decimal|-|a1|-|123.45|-|5|-|2
+~~ROW COUNT: 1~~
+
+prepst#!#exec#!#decimal|-|a1|-|<NULL>|-|5|-|2
+~~ROW COUNT: 1~~
+
+prepst#!#exec#!#decimal|-|a1|-|-123.456|-|5|-|2
+~~ROW COUNT: 1~~
+
+prepst#!#exec#!#decimal|-|a1|-|-123.4|-|5|-|2
+~~ROW COUNT: 1~~
+
+prepst#!#exec#!#decimal|-|a1|-|-123|-|5|-|2
+~~ROW COUNT: 1~~
+
+#prepst#!#exec#!#decimal|-|a1|-|0|-|5|-|2
+prepst#!#exec#!#decimal|-|a1|-|-1|-|3|-|2
+~~ROW COUNT: 1~~
+
+prepst#!#exec#!#decimal|-|a1|-|-123|-|9|-|2
+~~ROW COUNT: 1~~
+
+
+prepst#!#exec#!#decimal|-|a1|-|2147483647|-|10|-|0
+~~ROW COUNT: 1~~
+
+prepst#!#exec#!#decimal|-|a1|-|-2147483647|-|10|-|0
+~~ROW COUNT: 1~~
+
+prepst#!#exec#!#decimal|-|a1|-|2147483646|-|10|-|0
+~~ROW COUNT: 1~~
+
+prepst#!#exec#!#decimal|-|a1|-|-2147483646|-|10|-|0
+~~ROW COUNT: 1~~
+
+prepst#!#exec#!#decimal|-|a1|-|2147483648|-|10|-|0
+~~ROW COUNT: 1~~
+
+prepst#!#exec#!#decimal|-|a1|-|-2147483648|-|10|-|0
+~~ROW COUNT: 1~~
+
+
+SELECT * FROM decimal_table;
+~~START~~
+numeric
+3.000
+123.456
+123.400
+123.000
+123.450
+<NULL>
+-123.456
+-123.400
+-123.000
+-1.000
+-123.000
+2147483647.000
+-2147483647.000
+2147483646.000
+-2147483646.000
+2147483648.000
+-2147483648.000
+~~END~~
+
+
+DROP TABLE decimal_table;
+
+# JIRA 507, WORKING FOR BABEL
+#CREATE TABLE decimal_table(num decimal(39, 20));
+
+CREATE TABLE decimal_table(num decimal(38, 20));
+
+prepst#!#INSERT INTO decimal_table(num) VALUES(?) #!#decimal|-|a2|-|3|-|5|-|2
+~~ROW COUNT: 1~~
+
+prepst#!#exec#!#decimal|-|a2|-|123.456|-|5|-|2
+~~ROW COUNT: 1~~
+
+prepst#!#exec#!#decimal|-|a2|-|123.4|-|5|-|2
+~~ROW COUNT: 1~~
+
+prepst#!#exec#!#decimal|-|a2|-|123|-|5|-|2
+~~ROW COUNT: 1~~
+
+prepst#!#exec#!#decimal|-|a2|-|123.45|-|5|-|2
+~~ROW COUNT: 1~~
+
+prepst#!#exec#!#decimal|-|a2|-|<NULL>|-|5|-|2
+~~ROW COUNT: 1~~
+
+prepst#!#exec#!#decimal|-|a2|-|-123.456|-|5|-|2
+~~ROW COUNT: 1~~
+
+prepst#!#exec#!#decimal|-|a2|-|-123.4|-|5|-|2
+~~ROW COUNT: 1~~
+
+prepst#!#exec#!#decimal|-|a2|-|-123|-|5|-|2
+~~ROW COUNT: 1~~
+
+#prepst#!#exec#!#decimal|-|a2|-|0|-|5|-|2
+prepst#!#exec#!#decimal|-|a2|-|-1|-|3|-|2
+~~ROW COUNT: 1~~
+
+prepst#!#exec#!#decimal|-|a2|-|-123|-|9|-|2
+~~ROW COUNT: 1~~
+
+prepst#!#exec#!#decimal|-|a2|-|2147483647|-|10|-|0
+~~ROW COUNT: 1~~
+
+SELECT * FROM decimal_table;
+~~START~~
+numeric
+3.00000000000000000000
+123.45600000000000000000
+123.40000000000000000000
+123.00000000000000000000
+123.45000000000000000000
+<NULL>
+-123.45600000000000000000
+-123.40000000000000000000
+-123.00000000000000000000
+-1.00000000000000000000
+-123.00000000000000000000
+2147483647.00000000000000000000
+~~END~~
+
+
+DROP TABLE decimal_table;
+
+CREATE TABLE decimal_table(num decimal(38, 20));
+prepst#!#INSERT INTO decimal_table(num) VALUES(?) #!#decimal|-|a3|-|3|-|5|-|2
+~~ROW COUNT: 1~~
+
+prepst#!#exec#!#decimal|-|a3|-|123.456|-|5|-|2
+~~ROW COUNT: 1~~
+
+prepst#!#exec#!#decimal|-|a3|-|123.4|-|5|-|2
+~~ROW COUNT: 1~~
+
+prepst#!#exec#!#decimal|-|a3|-|123|-|5|-|2
+~~ROW COUNT: 1~~
+
+prepst#!#exec#!#decimal|-|a3|-|123.45|-|5|-|2
+~~ROW COUNT: 1~~
+
+prepst#!#exec#!#decimal|-|a3|-|<NULL>|-|5|-|2
+~~ROW COUNT: 1~~
+
+prepst#!#exec#!#decimal|-|a3|-|-123.456|-|5|-|2
+~~ROW COUNT: 1~~
+
+prepst#!#exec#!#decimal|-|a3|-|-123.4|-|5|-|2
+~~ROW COUNT: 1~~
+
+prepst#!#exec#!#decimal|-|a3|-|-123|-|5|-|2
+~~ROW COUNT: 1~~
+
+#prepst#!#exec#!#decimal|-|a3|-|0|-|5|-|2
+prepst#!#exec#!#decimal|-|a3|-|-1|-|3|-|2
+~~ROW COUNT: 1~~
+
+prepst#!#exec#!#decimal|-|a3|-|-123|-|9|-|2
+~~ROW COUNT: 1~~
+
+prepst#!#exec#!#decimal|-|a3|-|2147483647|-|10|-|0
+~~ROW COUNT: 1~~
+
+SELECT * FROM decimal_table;
+~~START~~
+numeric
+3.00000000000000000000
+123.45600000000000000000
+123.40000000000000000000
+123.00000000000000000000
+123.45000000000000000000
+<NULL>
+-123.45600000000000000000
+-123.40000000000000000000
+-123.00000000000000000000
+-1.00000000000000000000
+-123.00000000000000000000
+2147483647.00000000000000000000
+~~END~~
+
+
+DROP TABLE decimal_table;
+
+CREATE TABLE decimal_table(num decimal(38, 21));
+prepst#!#INSERT INTO decimal_table(num) VALUES(?) #!#decimal|-|a4|-|3|-|5|-|2
+~~ROW COUNT: 1~~
+
+prepst#!#exec#!#decimal|-|a4|-|123.456|-|5|-|2
+~~ROW COUNT: 1~~
+
+prepst#!#exec#!#decimal|-|a4|-|123.4|-|5|-|2
+~~ROW COUNT: 1~~
+
+prepst#!#exec#!#decimal|-|a4|-|123|-|5|-|2
+~~ROW COUNT: 1~~
+
+prepst#!#exec#!#decimal|-|a4|-|123.45|-|5|-|2
+~~ROW COUNT: 1~~
+
+prepst#!#exec#!#decimal|-|a4|-|<NULL>|-|5|-|2
+~~ROW COUNT: 1~~
+
+prepst#!#exec#!#decimal|-|a4|-|-123.456|-|5|-|2
+~~ROW COUNT: 1~~
+
+prepst#!#exec#!#decimal|-|a4|-|-123.4|-|5|-|2
+~~ROW COUNT: 1~~
+
+prepst#!#exec#!#decimal|-|a4|-|-123|-|5|-|2
+~~ROW COUNT: 1~~
+
+#prepst#!#exec#!#decimal|-|a4|-|0|-|5|-|2
+prepst#!#exec#!#decimal|-|a4|-|-1|-|3|-|2
+~~ROW COUNT: 1~~
+
+prepst#!#exec#!#decimal|-|a4|-|-123|-|9|-|2
+~~ROW COUNT: 1~~
+
+prepst#!#exec#!#decimal|-|a4|-|2147483647|-|10|-|0
+~~ROW COUNT: 1~~
+
+SELECT * FROM decimal_table;
+~~START~~
+numeric
+3.000000000000000000000
+123.456000000000000000000
+123.400000000000000000000
+123.000000000000000000000
+123.450000000000000000000
+<NULL>
+-123.456000000000000000000
+-123.400000000000000000000
+-123.000000000000000000000
+-1.000000000000000000000
+-123.000000000000000000000
+2147483647.000000000000000000000
+~~END~~
+
+
+DROP TABLE decimal_table;
+
+CREATE TABLE decimal_table(num decimal(38, 22));
+prepst#!#INSERT INTO decimal_table(num) VALUES(?) #!#decimal|-|a5|-|3|-|5|-|2
+~~ROW COUNT: 1~~
+
+prepst#!#exec#!#decimal|-|a5|-|123.456|-|5|-|2
+~~ROW COUNT: 1~~
+
+prepst#!#exec#!#decimal|-|a5|-|123.4|-|5|-|2
+~~ROW COUNT: 1~~
+
+prepst#!#exec#!#decimal|-|a5|-|123|-|5|-|2
+~~ROW COUNT: 1~~
+
+prepst#!#exec#!#decimal|-|a5|-|123.45|-|5|-|2
+~~ROW COUNT: 1~~
+
+prepst#!#exec#!#decimal|-|a5|-|<NULL>|-|5|-|2
+~~ROW COUNT: 1~~
+
+prepst#!#exec#!#decimal|-|a5|-|-123.456|-|5|-|2
+~~ROW COUNT: 1~~
+
+prepst#!#exec#!#decimal|-|a5|-|-123.4|-|5|-|2
+~~ROW COUNT: 1~~
+
+prepst#!#exec#!#decimal|-|a5|-|-123|-|5|-|2
+~~ROW COUNT: 1~~
+
+#prepst#!#exec#!#decimal|-|a5|-|0|-|5|-|2
+prepst#!#exec#!#decimal|-|a5|-|-1|-|3|-|2
+~~ROW COUNT: 1~~
+
+prepst#!#exec#!#decimal|-|a5|-|-123|-|9|-|2
+~~ROW COUNT: 1~~
+
+prepst#!#exec#!#decimal|-|a5|-|2147483647|-|10|-|0
+~~ROW COUNT: 1~~
+
+SELECT * FROM decimal_table;
+~~START~~
+numeric
+3.0000000000000000000000
+123.4560000000000000000000
+123.4000000000000000000000
+123.0000000000000000000000
+123.4500000000000000000000
+<NULL>
+-123.4560000000000000000000
+-123.4000000000000000000000
+-123.0000000000000000000000
+-1.0000000000000000000000
+-123.0000000000000000000000
+2147483647.0000000000000000000000
+~~END~~
+
+
+DROP TABLE decimal_table;
+
+CREATE TABLE decimal_table(num decimal(38, 23));
+prepst#!#INSERT INTO decimal_table(num) VALUES(?) #!#decimal|-|a6|-|3|-|5|-|2
+~~ROW COUNT: 1~~
+
+prepst#!#exec#!#decimal|-|a6|-|123.456|-|5|-|2
+~~ROW COUNT: 1~~
+
+prepst#!#exec#!#decimal|-|a6|-|123.4|-|5|-|2
+~~ROW COUNT: 1~~
+
+prepst#!#exec#!#decimal|-|a6|-|123|-|5|-|2
+~~ROW COUNT: 1~~
+
+prepst#!#exec#!#decimal|-|a6|-|123.45|-|5|-|2
+~~ROW COUNT: 1~~
+
+prepst#!#exec#!#decimal|-|a6|-|<NULL>|-|5|-|2
+~~ROW COUNT: 1~~
+
+prepst#!#exec#!#decimal|-|a6|-|-123.456|-|5|-|2
+~~ROW COUNT: 1~~
+
+prepst#!#exec#!#decimal|-|a6|-|-123.4|-|5|-|2
+~~ROW COUNT: 1~~
+
+prepst#!#exec#!#decimal|-|a6|-|-123|-|5|-|2
+~~ROW COUNT: 1~~
+
+#prepst#!#exec#!#decimal|-|a6|-|0|-|5|-|2
+prepst#!#exec#!#decimal|-|a6|-|-1|-|3|-|2
+~~ROW COUNT: 1~~
+
+prepst#!#exec#!#decimal|-|a6|-|-123|-|9|-|2
+~~ROW COUNT: 1~~
+
+prepst#!#exec#!#decimal|-|a6|-|2147483647|-|10|-|0
+~~ROW COUNT: 1~~
+
+SELECT * FROM decimal_table;
+~~START~~
+numeric
+3.00000000000000000000000
+123.45600000000000000000000
+123.40000000000000000000000
+123.00000000000000000000000
+123.45000000000000000000000
+<NULL>
+-123.45600000000000000000000
+-123.40000000000000000000000
+-123.00000000000000000000000
+-1.00000000000000000000000
+-123.00000000000000000000000
+2147483647.00000000000000000000000
+~~END~~
+
+
+DROP TABLE decimal_table;
+
+CREATE TABLE decimal_table(num decimal(38, 25));
+prepst#!#INSERT INTO decimal_table(num) VALUES(?) #!#decimal|-|a7|-|3|-|5|-|2
+~~ROW COUNT: 1~~
+
+prepst#!#exec#!#decimal|-|a7|-|123.456|-|5|-|2
+~~ROW COUNT: 1~~
+
+prepst#!#exec#!#decimal|-|a7|-|123.4|-|5|-|2
+~~ROW COUNT: 1~~
+
+prepst#!#exec#!#decimal|-|a7|-|123|-|5|-|2
+~~ROW COUNT: 1~~
+
+prepst#!#exec#!#decimal|-|a7|-|123.45|-|5|-|2
+~~ROW COUNT: 1~~
+
+prepst#!#exec#!#decimal|-|a7|-|<NULL>|-|5|-|2
+~~ROW COUNT: 1~~
+
+prepst#!#exec#!#decimal|-|a7|-|-123.456|-|5|-|2
+~~ROW COUNT: 1~~
+
+prepst#!#exec#!#decimal|-|a7|-|-123.4|-|5|-|2
+~~ROW COUNT: 1~~
+
+prepst#!#exec#!#decimal|-|a7|-|-123|-|5|-|2
+~~ROW COUNT: 1~~
+
+#prepst#!#exec#!#decimal|-|a7|-|0|-|5|-|2
+prepst#!#exec#!#decimal|-|a7|-|-1|-|3|-|2
+~~ROW COUNT: 1~~
+
+prepst#!#exec#!#decimal|-|a7|-|-123|-|9|-|2
+~~ROW COUNT: 1~~
+
+prepst#!#exec#!#decimal|-|a7|-|247483647|-|10|-|0
+~~ROW COUNT: 1~~
+
+prepst#!#exec#!#decimal|-|a7|-|-247483647|-|10|-|0
+~~ROW COUNT: 1~~
+
+SELECT * FROM decimal_table;
+~~START~~
+numeric
+3.0000000000000000000000000
+123.4560000000000000000000000
+123.4000000000000000000000000
+123.0000000000000000000000000
+123.4500000000000000000000000
+<NULL>
+-123.4560000000000000000000000
+-123.4000000000000000000000000
+-123.0000000000000000000000000
+-1.0000000000000000000000000
+-123.0000000000000000000000000
+247483647.0000000000000000000000000
+-247483647.0000000000000000000000000
+~~END~~
+
+
+DROP TABLE decimal_table;
+
+
+CREATE TABLE decimal_table(num decimal(38, 25));
+
+insert into decimal_table values (2147483647)
+~~ROW COUNT: 1~~
+
+insert into decimal_table values (-2147483647)
+~~ROW COUNT: 1~~
+
+
+insert into decimal_table values (2147483646)
+~~ROW COUNT: 1~~
+
+insert into decimal_table values (-2147483646)
+~~ROW COUNT: 1~~
+
+
+insert into decimal_table values (2147483648)
+~~ROW COUNT: 1~~
+
+insert into decimal_table values (-2147483648)
+~~ROW COUNT: 1~~
+
+
+#insert into decimal_table values(123456789123456789.1234567891234567891234567);
+#insert into decimal_table values(1234567891234567891.1234567891234567891234567);
+#insert into decimal_table values(123456789123456789.12345678912345678912345678);
+insert into decimal_table values(0.0);
+~~ROW COUNT: 1~~
+
+insert into decimal_table values(0.0000000000000000000000000);
+~~ROW COUNT: 1~~
+
+insert into decimal_table values(0.00000000000000000000000000);
+~~ROW COUNT: 1~~
+
+
+SELECT * FROM decimal_table;
+~~START~~
+numeric
+2147483647.0000000000000000000000000
+-2147483647.0000000000000000000000000
+2147483646.0000000000000000000000000
+-2147483646.0000000000000000000000000
+2147483648.0000000000000000000000000
+-2147483648.0000000000000000000000000
+0E-25
+0E-25
+0E-25
+~~END~~
+
+
+DROP TABLE decimal_table;

@@ -1,0 +1,59 @@
+-- NOTE: this test should not run in parallel due to DB config change.
+GO
+
+-- tsql
+
+-- VariableSetStmt doens't work in JDBC. use workaround
+DECLARE @orig_force_parallel_mode varchar(10);
+SET @orig_force_parallel_mode = (SELECT current_setting('force_parallel_mode'));
+SELECT 'enable force_parallel_mode' FROM (SELECT
+		set_config('force_parallel_mode', 'on', false)) sq;
+GO
+~~START~~
+varchar
+enable force_parallel_mode
+~~END~~
+
+
+-- tsql
+create table babel_1363_t1 (a int);
+insert into babel_1363_t1 values (1), (2), (3), (4), (5), (6);
+GO
+~~ROW COUNT: 6~~
+
+
+-- psql     currentSchema=master_dbo,public
+explain (costs off) select * from babel_1363_t1;
+GO
+~~START~~
+text
+Seq Scan on babel_1363_t1
+~~END~~
+
+
+-- tsql
+select * from babel_1363_t1;
+GO
+~~START~~
+int
+1
+2
+3
+4
+5
+6
+~~END~~
+
+
+-- tsql
+DECLARE @orig_force_parallel_mode varchar(10);
+SET @orig_force_parallel_mode = (SELECT current_setting('force_parallel_mode'));
+SELECT 'reset force_parallel_mode' FROM (SELECT
+		set_config('force_parallel_mode', @orig_force_parallel_mode, false)) sq;
+GO
+~~START~~
+varchar
+reset force_parallel_mode
+~~END~~
+
+

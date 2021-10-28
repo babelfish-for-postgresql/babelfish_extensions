@@ -1,0 +1,102 @@
+CREATE TABLE FLOAT_dt (a FLOAT)
+prepst#!# INSERT INTO FLOAT_dt(a) values(?) #!#FLOAT|-|a|-|0
+~~ROW COUNT: 1~~
+
+prepst#!#exec#!#FLOAT|-|a|-|1.050
+~~ROW COUNT: 1~~
+
+prepst#!#exec#!#FLOAT|-|a|-|01.05
+~~ROW COUNT: 1~~
+
+prepst#!#exec#!#FLOAT|-|a|-|0001202
+~~ROW COUNT: 1~~
+
+prepst#!#exec#!#FLOAT|-|a|-|-024112329
+~~ROW COUNT: 1~~
+
+prepst#!#exec#!#FLOAT|-|a|-|-02.5
+~~ROW COUNT: 1~~
+
+prepst#!#exec#!#FLOAT|-|a|-|0000000000000000086
+~~ROW COUNT: 1~~
+
+prepst#!#exec#!#FLOAT|-|a|-|-1.79E+308
+~~ROW COUNT: 1~~
+
+prepst#!#exec#!#FLOAT|-|a|-|1.79E+308
+~~ROW COUNT: 1~~
+
+prepst#!#exec#!#FLOAT|-|a|-|<NULL>
+~~ROW COUNT: 1~~
+
+SELECT * FROM FLOAT_dt;
+~~START~~
+float
+0.0
+1.05
+1.05
+1202.0
+-2.4112329E7
+-2.5
+86.0
+-1.79E308
+1.79E308
+<NULL>
+~~END~~
+
+INSERT INTO FLOAT_dt(a) values(0)
+~~ROW COUNT: 1~~
+
+INSERT INTO FLOAT_dt(a) values(1.050)
+~~ROW COUNT: 1~~
+
+INSERT INTO FLOAT_dt(a) values(01.05)
+~~ROW COUNT: 1~~
+
+INSERT INTO FLOAT_dt(a) values(-004)
+~~ROW COUNT: 1~~
+
+INSERT INTO FLOAT_dt(a) values(-0122455324.5)
+~~ROW COUNT: 1~~
+
+INSERT INTO FLOAT_dt(a) values(-000002)
+~~ROW COUNT: 1~~
+
+INSERT INTO FLOAT_dt(a) values(0000000000000000086)
+~~ROW COUNT: 1~~
+
+INSERT INTO FLOAT_dt(a) values(-1.79E+308)
+~~ROW COUNT: 1~~
+
+INSERT INTO FLOAT_dt(a) values(1.79E+308)
+~~ROW COUNT: 1~~
+
+INSERT INTO FLOAT_dt(a) values(NULL)
+~~ROW COUNT: 1~~
+
+SELECT * FROM FLOAT_dt;
+~~START~~
+float
+0.0
+1.05
+1.05
+1202.0
+-2.4112329E7
+-2.5
+86.0
+-1.79E308
+1.79E308
+<NULL>
+0.0
+1.05
+1.05
+-4.0
+-1.224553245E8
+-2.0
+86.0
+-1.79E308
+1.79E308
+<NULL>
+~~END~~
+
+DROP TABLE FLOAT_dt;

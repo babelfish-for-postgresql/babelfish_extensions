@@ -1,0 +1,62 @@
+SELECT sys.babelfish_set_role(session_user);
+~~START~~
+int
+1
+~~END~~
+
+
+# Babel-1294 Support application_name in pg_stat_activity
+select application_name from pg_stat_activity where pid = pg_backend_pid();
+~~START~~
+text
+Microsoft JDBC Driver for SQL Server
+~~END~~
+
+
+# BABEL-1326: Support query in pg_stat_activity
+select query from pg_stat_activity where pid = pg_backend_pid();
+~~START~~
+text
+select query from pg_stat_activity where pid = pg_backend_pid();
+~~END~~
+
+
+# BABEL-1326: Checking if the right query is returned for Prepexec with batch too
+prepst#!#select query from pg_stat_activity where pid = pg_backend_pid();select ? as a#!#int|-|a|-|1
+~~START~~
+text
+select query from pg_stat_activity where pid = pg_backend_pid();select @P0 as a
+~~END~~
+
+~~START~~
+int
+1
+~~END~~
+
+prepst#!#exec#!#int|-|a|-|1
+~~START~~
+text
+select query from pg_stat_activity where pid = pg_backend_pid();select @P0 as a
+~~END~~
+
+~~START~~
+int
+1
+~~END~~
+
+
+# BABEL-1326: Checking if the right query is returned from a procedure and a nested procedure as well
+Create procedure proc_pg_stat_activity as begin select query from pg_stat_activity where pid = pg_backend_pid(); end;
+exec proc_pg_stat_activity;
+~~START~~
+text
+exec proc_pg_stat_activity;
+~~END~~
+
+Create procedure proc1_pg_stat_activity as begin exec proc_pg_stat_activity end;
+exec proc1_pg_stat_activity;
+~~START~~
+text
+exec proc1_pg_stat_activity;
+~~END~~
+

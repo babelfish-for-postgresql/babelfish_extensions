@@ -1,0 +1,7 @@
+--psql
+SELECT * FROM sys.babelfish_inconsistent_metadata();
+GO
+~~START~~
+varchar#!#varchar#!#varchar#!#text
+~~END~~
+

@@ -1,0 +1,273 @@
+-- test LIKE to ILIKE transformation
+create table like_tesing1 (c1 varchar(20), c2 char(20), c3 nvarchar(20))
+GO
+insert into like_tesing1 values ('JONES','JONES','JONES')
+GO
+~~ROW COUNT: 1~~
+
+insert into like_tesing1 values ('JoneS','JoneS','JoneS')
+GO
+~~ROW COUNT: 1~~
+
+insert into like_tesing1 values ('jOnes','jOnes','jOnes')
+GO
+~~ROW COUNT: 1~~
+
+insert into like_tesing1 values ('abcD','AbcD','ABCd')
+GO
+~~ROW COUNT: 1~~
+
+insert into like_tesing1 values ('äbĆD','äḃcD','äƀCd')
+GO
+~~ROW COUNT: 1~~
+
+-- test that like is case-insenstive
+select c1 from like_tesing1 where c1 LIKE 'jones'
+GO
+~~START~~
+varchar
+JONES
+JoneS
+jOnes
+~~END~~
+
+select c1 from like_tesing1 where c1 LIKE 'Jon%'
+GO
+~~START~~
+varchar
+JONES
+JoneS
+jOnes
+~~END~~
+
+select c1 from like_tesing1 where c1 LIKE 'jone_'
+GO
+~~START~~
+varchar
+JONES
+JoneS
+jOnes
+~~END~~
+
+select c1 from like_tesing1 where c1 LIKE '_one_'
+GO
+~~START~~
+varchar
+JONES
+JoneS
+jOnes
+~~END~~
+
+-- test that like is accent-senstive for CI_AS collation
+select c1 from like_tesing1 where c1 LIKE 'ab%'
+GO
+~~START~~
+varchar
+abcD
+~~END~~
+
+select c1 from like_tesing1 where c1 LIKE 'äb%'
+GO
+~~START~~
+varchar
+äb?D
+~~END~~
+
+select c1 from like_tesing1 where c1 LIKE 'äḃĆ_'
+GO
+~~START~~
+varchar
+~~END~~
+
+-- test not like
+select c1 from like_tesing1 where c1 NOT LIKE 'jones'
+GO
+~~START~~
+varchar
+abcD
+äb?D
+~~END~~
+
+select c1 from like_tesing1 where c1 NOT LIKE 'jone%'
+GO
+~~START~~
+varchar
+abcD
+äb?D
+~~END~~
+
+-- wild card literals are transformed to equal
+select c1 from like_tesing1 where c1 LIKE '\%ones'
+GO
+~~START~~
+varchar
+~~END~~
+
+select c1 from like_tesing1 where c1 LIKE '\_ones'
+GO
+~~START~~
+varchar
+~~END~~
+
+-- test combining with other string functions
+select c1 from like_tesing1 where c1 LIKE lower('_ones')
+GO
+~~START~~
+varchar
+JONES
+JoneS
+jOnes
+~~END~~
+
+select c1 from like_tesing1 where c1 LIKE upper('_ones')
+GO
+~~START~~
+varchar
+JONES
+JoneS
+jOnes
+~~END~~
+
+select c1 from like_tesing1 where c1 LIKE concat('_on','_s')
+GO
+~~START~~
+varchar
+JONES
+JoneS
+jOnes
+~~END~~
+
+select c1 from like_tesing1 where c1 LIKE concat('a','%d')
+GO
+~~START~~
+varchar
+abcD
+~~END~~
+
+select c1 from like_tesing1 where c1 NOT LIKE lower('%s')
+GO
+~~START~~
+varchar
+abcD
+äb?D
+~~END~~
+
+-- test sub-queries
+Select count(*) from like_tesing1 where c1 LIKE (select c1 from like_tesing1 where c1 LIKE 'AbcD')
+GO
+~~START~~
+int
+1
+~~END~~
+
+Select count(*) from like_tesing1 where c2 NOT LIKE (select c2 from like_tesing1 where c2 NOT LIKE 'jo%' AND c2 NOT LIKE 'ä%')
+GO
+~~START~~
+int
+4
+~~END~~
+
+Select count(*) from like_tesing1 where c3 LIKE (select c3 from like_tesing1 where c3 NOT LIKE'jo%' AND c3 NOT LIKE 'ä%')
+GO
+~~START~~
+int
+1
+~~END~~
+
+with p1 as (select c1 from like_tesing1 where c1 LIKE '__Ć_'),
+p2 as (select c3 from like_tesing1 where c3 LIKE 'äƀ__')
+select * from p1 union all select * from p2
+GO
+~~START~~
+varchar
+äb?D
+ä?Cd
+~~END~~
+
+-- test case expression
+select c1,(case when c1 LIKE 'j%' then 1 when c1 NOT LIKE 'j%' then 2 end) from like_tesing1
+GO
+~~START~~
+varchar#!#int
+JONES#!#1
+JoneS#!#1
+jOnes#!#1
+abcD#!#2
+äb?D#!#2
+~~END~~
+
+-- test that LIKE transformation is only applied for SQL_LATIN1_GENERAL_CI_AS column
+create table like_tesing2(c1 varchar(20) COLLATE SQL_Latin1_General_CP1_CS_AS)
+GO
+insert into like_tesing2 values ('JONES')
+GO
+~~ROW COUNT: 1~~
+
+insert into like_tesing2 values ('JoneS')
+GO
+~~ROW COUNT: 1~~
+
+insert into like_tesing2 values ('abcD')
+GO
+~~ROW COUNT: 1~~
+
+insert into like_tesing2 values ('äbĆD')
+GO
+~~ROW COUNT: 1~~
+
+select * from like_tesing2 where c1 LIKE 'jo%'
+GO
+~~START~~
+varchar
+~~END~~
+
+select * from like_tesing2 where c1 NOT LIKE 'j%'
+GO
+~~START~~
+varchar
+JONES
+JoneS
+abcD
+äb?D
+~~END~~
+
+select * from like_tesing2 where c1 LIKE 'AB%'
+GO
+~~START~~
+varchar
+~~END~~
+
+-- test eplicitly specify collation as CI_AS, like transformation is also applied.
+SELECT CASE WHEN 'JONES' like 'jo%' THEN 1 ELSE 0 END
+GO
+~~START~~
+int
+0
+~~END~~
+
+SELECT CASE WHEN 'JONES' COLLATE SQL_Latin1_General_CP1_CI_AS like 'jo%' THEN 1 ELSE 0 END
+GO
+~~START~~
+int
+1
+~~END~~
+
+-- test when pattern is NULL
+SELECT CASE WHEN 'JONES' like '' THEN 1 ELSE 0 END
+GO
+~~START~~
+int
+0
+~~END~~
+
+SELECT * from like_tesing1 where c1 like ''
+GO
+~~START~~
+varchar#!#char#!#nvarchar
+~~END~~
+
+
+drop table like_tesing1
+GO
+drop table like_tesing2
+GO

@@ -1,0 +1,74 @@
+SET QUOTED_IDENTIFIER OFF
+GO
+
+--  should return literal
+SELECT 'literal'
+GO
+~~START~~
+varchar
+literal
+~~END~~
+
+
+-- should report that column "ident" does not exist
+SELECT [ident]
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: column "ident" does not exist)~~
+
+
+-- should return string
+SELECT "string"
+GO
+~~START~~
+varchar
+string
+~~END~~
+
+
+-- should report error (double-quoted string literals cannot contain single-quotes while QUOTED_IDENTIFIER=OFF)
+SELECT "f'oo"
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: double-quoted string literals cannot contain single-quotes while QUOTED_IDENTIFIER=OFF)~~
+
+
+
+--------------------------------------------------------------------------------
+SET QUOTED_IDENTIFIER ON
+GO
+
+--  should return literal
+SELECT 'literal'
+GO
+~~START~~
+varchar
+literal
+~~END~~
+
+
+-- should report that column "ident" does not exist
+SELECT [ident]
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: column "ident" does not exist)~~
+
+
+-- should report that column "ident" does not exist
+SELECT "ident"
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: column "ident" does not exist)~~
+
+
+-- should report that column "f'oo" does not exist
+SELECT "f'oo"
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: column "f'oo" does not exist)~~
+

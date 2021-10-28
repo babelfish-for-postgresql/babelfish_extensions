@@ -1,0 +1,226 @@
+SELECT 1 a
+go
+~~START~~
+int
+1
+~~END~~
+
+
+SELECT 1 'a'
+go
+~~START~~
+int
+1
+~~END~~
+
+
+SELECT 1 "a"
+go
+~~START~~
+int
+1
+~~END~~
+
+
+SELECT a=1
+go
+~~START~~
+int
+1
+~~END~~
+
+
+SELECT 'a'=1
+go
+~~START~~
+int
+1
+~~END~~
+
+
+SELECT "a"=1
+go
+~~START~~
+int
+1
+~~END~~
+
+
+-- column alias using PG reserved keyword but non-reserved keyword in T-SQL
+SELECT 1 year
+go
+~~START~~
+int
+1
+~~END~~
+
+
+SELECT 1 'year'
+go
+~~START~~
+int
+1
+~~END~~
+
+
+SELECT 1 "year"
+go
+~~START~~
+int
+1
+~~END~~
+
+
+SELECT year=1
+go
+~~START~~
+int
+1
+~~END~~
+
+
+SELECT 'year'=1
+go
+~~START~~
+int
+1
+~~END~~
+
+
+SELECT "year"=1
+go
+~~START~~
+int
+1
+~~END~~
+
+
+CREATE TABLE t_567 (a int);
+INSERT INTO t_567 VALUES (42);
+GO
+~~ROW COUNT: 1~~
+
+SELECT a year from t_567;
+GO
+~~START~~
+int
+42
+~~END~~
+
+SELECT a 'year' from t_567;
+GO
+~~START~~
+int
+42
+~~END~~
+
+SELECT a "year" from t_567;
+GO
+~~START~~
+int
+42
+~~END~~
+
+SELECT year=a from t_567;
+GO
+~~START~~
+int
+42
+~~END~~
+
+SELECT 'year'=a from t_567;
+GO
+~~START~~
+int
+42
+~~END~~
+
+SELECT "year"=a from t_567;
+GO
+~~START~~
+int
+42
+~~END~~
+
+DROP TABLE t_567;
+GO
+
+-- double quoted alias having escapted charcter
+SELECT 1 """col"""
+go
+~~START~~
+int
+1
+~~END~~
+
+
+SELECT """col"""=1
+go
+~~START~~
+int
+1
+~~END~~
+
+
+-- column alias with squred bracket
+SELECT 1 ["col"]
+go
+~~START~~
+int
+1
+~~END~~
+
+
+SELECT ["col"]=1
+go
+~~START~~
+int
+1
+~~END~~
+
+
+-- BABEL-2116: regression in a complex query. Plase note column alias LastRefreshed is specificed and expression refers to a local tsql variable
+CREATE PROC [GetLandingPageDetails] AS
+BEGIN
+  SET TRANSACTION ISOLATION LEVEL READ UNCOMMITTED;
+  DECLARE @MaxDateHeapUsage DATE;
+  DECLARE @MaxDateAuditorSummary DATE
+  DECLARE @MaxDateBadCname DATE
+  DECLARE @MaxDateCPUSummary DATE
+  DECLARE @MaxDDLAudit DATE
+  DECLARE @MaxDateLinkServerSecurity DATE;
+  SELECT @MaxDateLinkServerSecurity = CAST(MAX(LinkServerCodeLastCheck) AS DATE)  FROM MCPBI.dbo.LinkServerRemediation (NOLOCK);
+  SELECT @MaxDateHeapUsage = MAX(ForDate)  FROM dbo.HeapUsageSummary (NOLOCK);
+  SELECT @MaxDateAuditorSummary = MAX(ExecutionDate)  FROM dbo.AuditorSummary (NOLOCK);
+  SELECT @MaxDateBadCname = d.Date  FROM MCPData.Dimension.Date AS d (NOLOCK)  WHERE d.DateID = (SELECT MAX(b.DateID) FROM dbo.BadCNameUsage AS b (NOLOCK));
+  SELECT @MaxDateCPUSummary = MAX(EndDate)  FROM CPUSummary_TeamNames_Monthly (NOLOCK);
+  SELECT @MaxDDLAudit = CAST(MAX(LastCheckUTC) AS DATE)  FROM MCPInventory.Metric.DBA_tblAuditDDL (NOLOCK);
+  WITH rptUsage  AS (SELECT rud.Path,  rud.Name,  COUNT(*) AS RunCount FROM ReportServer.dbo.vwReportUsageDetails AS rud JOIN MCPInventory.Pub.vw_vw_WD_HRIS_Model AS hrd  ON ('AQR\' + hrd.DomainId) COLLATE Latin1_General_100_CI_AS_KS_WS = rud.UserName  WHERE hrd.GroupName != 'DBA'  AND rud.Name IS NOT NULL  AND rud.Path <> '/HeapUsageSummary'  GROUP BY rud.Path,  rud.Name)
+  SELECT bil.Name,  bil.Description,  bil.rptLink,  bil.DataRefreshCycle,  LastRefreshed = CASE  WHEN bil.DependsOnTable = 'AuditorSummary' THEN @MaxDateAuditorSummary  WHEN bil.DependsOnTable = 'HeapUsageSummary' THEN @MaxDateHeapUsage  WHEN bil.DependsOnTable = 'BadCNameUsage' THEN @MaxDateBadCname  WHEN bil.DependsOnTable = 'CPUSummary_TeamNames_Monthly' THEN @MaxDateCPUSummary  WHEN bil.DependsOnTable = 'Metric.DBA_tblAuditDDL' THEN @MaxDDLAudit  WHEN bil.DependsOnTable = 'MCPBI.dbo.LinkServerRemediation' THEN @MaxDateLinkServerSecurity END,  ISNULL(ru.RunCount, 0) AS UsageInLast60Days,  bil.isProd  FROM SSRS.BIReportsList AS bil  LEFT JOIN rptUsage AS ru  ON bil.rptName COLLATE Latin1_General_100_CI_AS_KS_WS = ru.Name  WHERE bil.isProd = 1;
+END;
+GO
+
+CREATE PROC [GetLandingPageDetails_2] AS
+BEGIN
+  SET TRANSACTION ISOLATION LEVEL READ UNCOMMITTED;
+  DECLARE @MaxDateHeapUsage DATE;
+  DECLARE @MaxDateAuditorSummary DATE
+  DECLARE @MaxDateBadCname DATE
+  DECLARE @MaxDateCPUSummary DATE
+  DECLARE @MaxDDLAudit DATE
+  DECLARE @MaxDateLinkServerSecurity DATE;
+  SELECT @MaxDateLinkServerSecurity = CAST(MAX(LinkServerCodeLastCheck) AS DATE)  FROM MCPBI.dbo.LinkServerRemediation (NOLOCK);
+  SELECT @MaxDateHeapUsage = MAX(ForDate)  FROM dbo.HeapUsageSummary (NOLOCK);
+  SELECT @MaxDateAuditorSummary = MAX(ExecutionDate)  FROM dbo.AuditorSummary (NOLOCK);
+  SELECT @MaxDateBadCname = d.Date  FROM MCPData.Dimension.Date AS d (NOLOCK)  WHERE d.DateID = (SELECT MAX(b.DateID) FROM dbo.BadCNameUsage AS b (NOLOCK));
+  SELECT @MaxDateCPUSummary = MAX(EndDate)  FROM CPUSummary_TeamNames_Monthly (NOLOCK);
+  SELECT @MaxDDLAudit = CAST(MAX(LastCheckUTC) AS DATE)  FROM MCPInventory.Metric.DBA_tblAuditDDL (NOLOCK);
+  WITH rptUsage  AS (SELECT rud.Path,  rud.Name,  COUNT(*) AS RunCount FROM ReportServer.dbo.vwReportUsageDetails AS rud JOIN MCPInventory.Pub.vw_vw_WD_HRIS_Model AS hrd  ON ('AQR\' + hrd.DomainId) COLLATE Latin1_General_100_CI_AS_KS_WS = rud.UserName  WHERE hrd.GroupName != 'DBA'  AND rud.Name IS NOT NULL  AND rud.Path <> '/HeapUsageSummary'  GROUP BY rud.Path,  rud.Name)
+  SELECT bil.Name,  bil.Description,  bil.rptLink,  bil.DataRefreshCycle,  CASE  WHEN bil.DependsOnTable = 'AuditorSummary' THEN @MaxDateAuditorSummary  WHEN bil.DependsOnTable = 'HeapUsageSummary' THEN @MaxDateHeapUsage  WHEN bil.DependsOnTable = 'BadCNameUsage' THEN @MaxDateBadCname  WHEN bil.DependsOnTable = 'CPUSummary_TeamNames_Monthly' THEN @MaxDateCPUSummary  WHEN bil.DependsOnTable = 'Metric.DBA_tblAuditDDL' THEN @MaxDDLAudit  WHEN bil.DependsOnTable = 'MCPBI.dbo.LinkServerRemediation' THEN @MaxDateLinkServerSecurity END LastRefereshed,  ISNULL(ru.RunCount, 0) AS UsageInLast60Days,  bil.isProd  FROM SSRS.BIReportsList AS bil  LEFT JOIN rptUsage AS ru  ON bil.rptName COLLATE Latin1_General_100_CI_AS_KS_WS = ru.Name  WHERE bil.isProd = 1;
+END;
+GO
+
+DROP PROC [GetLandingPageDetails]
+GO
+DROP PROC [GetLandingPageDetails_2]
+GO

@@ -1,0 +1,111 @@
+DECLARE @a varchar
+SELECT @a = '12345678901234567890123456789012345';
+SELECT LEN(@a), DATALENGTH(@a)
+SELECT @a
+GO
+~~START~~
+int#!#int
+1#!#1
+~~END~~
+
+~~START~~
+varchar
+1
+~~END~~
+
+
+DECLARE @a nvarchar
+SELECT @a = '12345678901234567890123456789012345';
+SELECT LEN(@a), DATALENGTH(@a)
+SELECT @a
+GO
+~~START~~
+int#!#int
+1#!#1
+~~END~~
+
+~~START~~
+nvarchar
+1
+~~END~~
+
+
+DECLARE @a sys.varchar
+SELECT @a = '12345678901234567890123456789012345';
+SELECT LEN(@a), DATALENGTH(@a)
+SELECT @a
+GO
+~~START~~
+int#!#int
+1#!#1
+~~END~~
+
+~~START~~
+varchar
+1
+~~END~~
+
+
+DECLARE @a pg_catalog.varchar
+SELECT @a = '12345678901234567890123456789012345';
+SELECT LEN(@a), DATALENGTH(@a)
+SELECT @a
+GO
+~~START~~
+int#!#int
+35#!#35
+~~END~~
+
+~~START~~
+varchar
+12345678901234567890123456789012345
+~~END~~
+
+
+DECLARE @a char
+SELECT @a = '12345678901234567890123456789012345';
+SELECT LEN(@a), DATALENGTH(@a)
+SELECT @a
+GO
+~~START~~
+int#!#int
+1#!#1
+~~END~~
+
+~~START~~
+char
+1
+~~END~~
+
+
+DECLARE @a nchar
+SELECT @a = '12345678901234567890123456789012345';
+SELECT LEN(@a), DATALENGTH(@a)
+SELECT @a
+GO
+~~START~~
+int#!#int
+1#!#1
+~~END~~
+
+~~START~~
+nchar
+1
+~~END~~
+
+
+DECLARE @a sys.char
+SELECT @a = '12345678901234567890123456789012345';
+SELECT LEN(@a), DATALENGTH(@a)
+SELECT @a
+GO
+~~START~~
+int#!#int
+1#!#1
+~~END~~
+
+~~START~~
+char
+1
+~~END~~
+

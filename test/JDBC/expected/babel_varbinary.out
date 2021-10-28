@@ -1,0 +1,206 @@
+-- [BABEL-448] Test support of unquoted hexadecimal string input
+select 0x1a2b3c4f;
+go
+~~START~~
+varbinary
+1A2B3C4F
+~~END~~
+
+select 0X1A2B3C4F;
+go
+~~START~~
+varbinary
+1A2B3C4F
+~~END~~
+
+select pg_typeof(0X1A2B3C4F);
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: data type regtype is not supported yet)~~
+
+
+-- BABEL-631 Test odd number of hex digigts is allowed
+select 0xF;
+go
+~~START~~
+varbinary
+0F
+~~END~~
+
+select 0x1;
+go
+~~START~~
+varbinary
+01
+~~END~~
+
+select 0x0;
+go
+~~START~~
+varbinary
+00
+~~END~~
+
+select 0x1F1;
+go
+~~START~~
+varbinary
+01F1
+~~END~~
+
+
+-- invalid hex input
+select 0x1G2A;
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: invalid hexadecimal digit: "S")~~
+
+
+-- test insert of hex string
+create table t1(a varbinary(8), b binary(8));
+insert into t1 values(0x1a2b3c4f, cast('1a2b3c4f' as binary(8)));
+insert into t1 values(cast('1a2b3c4f' as varbinary(8)), cast('1a2b3c4f' as binary(8)));
+go
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+
+-- 0x1a2b3c4f and '1a2b3c4f' are different as varbinary
+select * from t1;
+go
+~~START~~
+varbinary#!#binary
+1A2B3C4F#!#3161326233633466
+3161326233633466#!#3161326233633466
+~~END~~
+
+
+-- test bitwise operators on hex string and int
+select 0x1F & 10;
+go
+~~START~~
+int
+10
+~~END~~
+
+select 10 & 0x1F;
+go
+~~START~~
+int
+10
+~~END~~
+
+select 0x1F | 10;
+go
+~~START~~
+int
+31
+~~END~~
+
+select 10 | 0x1F;
+go
+~~START~~
+int
+31
+~~END~~
+
+select 0x1F ^ 10;
+go
+~~START~~
+int
+21
+~~END~~
+
+select 10 ^ 0x1F;
+go
+~~START~~
+int
+21
+~~END~~
+
+select 0x1F * 10;
+go
+~~START~~
+bigint
+310
+~~END~~
+
+select 10 * 0x1F;
+go
+~~START~~
+bigint
+310
+~~END~~
+
+select 0x1F / 10;
+go
+~~START~~
+bigint
+3
+~~END~~
+
+select 100 / 0x1F;
+go
+~~START~~
+bigint
+3
+~~END~~
+
+
+-- division by 0
+select 0x1F / 0;
+go
+~~ERROR (Code: 8134)~~
+
+~~ERROR (Message: division by zero)~~
+
+select 10 / 0x00;
+go
+~~ERROR (Code: 8134)~~
+
+~~ERROR (Message: division by zero)~~
+
+
+-- test hex string in procedure
+create procedure test_hex_bitop as
+begin
+	select 0x1A2B3C4F ^ 101;
+end;
+go
+
+execute test_hex_bitop;
+go
+~~START~~
+int
+439041066
+~~END~~
+
+
+create procedure test_hex_insert as
+begin
+	insert into t1 values(0x1f, cast('1f' as binary(2)));
+end;
+go
+
+execute test_hex_insert;
+go
+~~ROW COUNT: 1~~
+
+select * from t1;
+go
+~~START~~
+varbinary#!#binary
+1A2B3C4F#!#3161326233633466
+3161326233633466#!#3161326233633466
+1F#!#3166000000000000
+~~END~~
+
+
+-- clean up
+drop table t1;
+drop procedure test_hex_bitop;
+drop procedure test_hex_insert;
+go

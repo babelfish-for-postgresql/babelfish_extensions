@@ -1,0 +1,116 @@
+-- simple case
+CREATE TABLE t1 ( a INT PRIMARY KEY)
+GO
+
+CREATE TABLE t2 ( a INT REFERENCES t1(a))
+GO
+
+
+INSERT INTO t1 VALUES(1)
+GO
+~~ROW COUNT: 1~~
+
+
+INSERT INTO t2 VALUES(1)
+GO
+~~ROW COUNT: 1~~
+
+
+
+
+-- test TSQL specific types
+CREATE TABLE t3 ( a UNIQUEIDENTIFIER PRIMARY KEY)
+GO
+
+CREATE TABLE t4 ( a UNIQUEIDENTIFIER REFERENCES t3(a))
+GO
+
+INSERT INTO t3 VALUES('123e4567-e89b-12d3-a456-426614174000')
+GO
+~~ROW COUNT: 1~~
+
+
+INSERT INTO t4 VALUES('123e4567-e89b-12d3-a456-426614174000')
+GO
+~~ROW COUNT: 1~~
+
+
+
+
+CREATE TABLE t5 (a SQL_VARIANT PRIMARY KEY)
+GO
+
+CREATE TABLE t6 (a SQL_VARIANT REFERENCES t5(a))
+GO
+
+INSERT INTO t5 VALUES('123')
+GO
+~~ROW COUNT: 1~~
+
+
+INSERT INTO t6 VALUES('123')
+GO
+~~ROW COUNT: 1~~
+
+
+
+
+-- other scenarios may trigger modified codes
+CREATE TABLE t7 ( a INT PRIMARY KEY)
+GO
+
+CREATE TABLE t8 ( a INT REFERENCES t7(a) ON DELETE RESTRICT)
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: syntax error near 'RESTRICT' at line 1 and character position 51)~~
+
+
+
+INSERT INTO t7 VALUES(1)
+GO
+~~ROW COUNT: 1~~
+
+
+INSERT INTO t8 VALUES(1)
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: relation "t8" does not exist)~~
+
+
+DELETE FROM t7 WHERE a = 1
+GO
+~~ROW COUNT: 1~~
+
+
+
+-- drop tables (dependent table first)
+DROP TABLE t2
+GO
+
+DROP TABLE t1
+GO
+
+DROP TABLE t4
+GO
+
+DROP TABLE t3
+GO
+
+DROP TABLE t6
+GO
+
+DROP TABLE t5
+GO
+
+DROP TABLE t8
+GO
+~~ERROR (Code: 3701)~~
+
+~~ERROR (Message: table "t8" does not exist)~~
+
+
+DROP TABLE t7
+GO
+

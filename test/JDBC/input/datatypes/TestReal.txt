@@ -1,0 +1,24 @@
+CREATE TABLE REAL_dt (a REAL)
+prepst#!# INSERT INTO REAL_dt(a) values(@a) #!#REAL|-|a|-|0
+prepst#!#exec#!#REAL|-|a|-|1.050
+prepst#!#exec#!#REAL|-|a|-|01.05
+prepst#!#exec#!#REAL|-|a|-|0001202
+prepst#!#exec#!#REAL|-|a|-|-024112329
+prepst#!#exec#!#REAL|-|a|-|-02.5
+prepst#!#exec#!#REAL|-|a|-|0000000000000000086
+prepst#!#exec#!#REAL|-|a|-|-3.40E+38
+prepst#!#exec#!#REAL|-|a|-|3.40E+38
+prepst#!#exec#!#REAL|-|a|-|<NULL>
+SELECT * FROM REAL_dt;
+INSERT INTO REAL_dt(a) values(0)
+INSERT INTO REAL_dt(a) values(1.050)
+INSERT INTO REAL_dt(a) values(01.05)
+INSERT INTO REAL_dt(a) values(-004)
+INSERT INTO REAL_dt(a) values(-0122455324.5)
+INSERT INTO REAL_dt(a) values(-000002)
+INSERT INTO REAL_dt(a) values(0000000000000000086)
+INSERT INTO REAL_dt(a) values(-3.40E+38)
+INSERT INTO REAL_dt(a) values(3.40E+38)
+INSERT INTO REAL_dt(a) values(NULL)
+SELECT * FROM REAL_dt;
+DROP TABLE REAL_dt;

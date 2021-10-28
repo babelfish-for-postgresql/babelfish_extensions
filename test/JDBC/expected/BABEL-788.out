@@ -1,0 +1,258 @@
+
+drop table if exists babel_788_int;
+GO
+
+create table babel_788_int(a int null, b int not null);
+GO
+
+insert babel_788_int values (1, 10);
+insert babel_788_int values (3, 7);
+insert babel_788_int values (null, 8);
+GO
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+
+select * from babel_788_int order by a;
+GO
+~~START~~
+int#!#int
+<NULL>#!#8
+1#!#10
+3#!#7
+~~END~~
+
+select * from babel_788_int order by a asc;
+GO
+~~START~~
+int#!#int
+<NULL>#!#8
+1#!#10
+3#!#7
+~~END~~
+
+select * from babel_788_int order by a desc;
+GO
+~~START~~
+int#!#int
+3#!#7
+1#!#10
+<NULL>#!#8
+~~END~~
+
+
+select * from babel_788_int order by b;
+GO
+~~START~~
+int#!#int
+3#!#7
+<NULL>#!#8
+1#!#10
+~~END~~
+
+select * from babel_788_int order by b asc;
+GO
+~~START~~
+int#!#int
+3#!#7
+<NULL>#!#8
+1#!#10
+~~END~~
+
+select * from babel_788_int order by b desc;
+GO
+~~START~~
+int#!#int
+1#!#10
+<NULL>#!#8
+3#!#7
+~~END~~
+
+
+select * from babel_788_int order by a + b;
+GO
+~~START~~
+int#!#int
+<NULL>#!#8
+3#!#7
+1#!#10
+~~END~~
+
+select * from babel_788_int order by a + b asc;
+GO
+~~START~~
+int#!#int
+<NULL>#!#8
+3#!#7
+1#!#10
+~~END~~
+
+select * from babel_788_int order by a + b desc;
+GO
+~~START~~
+int#!#int
+1#!#10
+3#!#7
+<NULL>#!#8
+~~END~~
+
+
+select * from (select top(2) a from babel_788_int order by 1) s;
+GO
+~~START~~
+int
+<NULL>
+1
+~~END~~
+
+
+drop table if exists babel_788_select_into;
+GO
+select top(2) a into babel_788_select_into from babel_788_int order by 1;
+GO
+select * from babel_788_select_into;
+GO
+~~START~~
+int
+<NULL>
+1
+~~END~~
+
+
+drop table if exists babel_788_subquery_select_into;
+GO
+select * into babel_788_subquery_select_into from (select top(2) a from babel_788_int order by 1) s;
+GO
+select * from babel_788_subquery_select_into;
+GO
+~~START~~
+int
+<NULL>
+1
+~~END~~
+
+
+drop table if exists babel_788_int;
+GO
+drop table if exists babel_788_select_into;
+GO
+drop table if exists babel_788_subquery_select_into;
+GO
+
+drop table if exists babel_788_varchar;
+GO
+
+create table babel_788_varchar(a varchar(2) null, b varchar(2) not null);
+GO
+
+insert babel_788_varchar values ('1', '10');
+insert babel_788_varchar values ('3', '7');
+insert babel_788_varchar values ('', ' ');
+insert babel_788_varchar values (null, '8');
+GO
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+
+select * from babel_788_varchar order by a;
+GO
+~~START~~
+varchar#!#varchar
+<NULL>#!#8
+#!# 
+1#!#10
+3#!#7
+~~END~~
+
+select * from babel_788_varchar order by a asc;
+GO
+~~START~~
+varchar#!#varchar
+<NULL>#!#8
+#!# 
+1#!#10
+3#!#7
+~~END~~
+
+select * from babel_788_varchar order by a desc;
+GO
+~~START~~
+varchar#!#varchar
+3#!#7
+1#!#10
+#!# 
+<NULL>#!#8
+~~END~~
+
+
+select * from babel_788_varchar order by b;
+GO
+~~START~~
+varchar#!#varchar
+#!# 
+1#!#10
+3#!#7
+<NULL>#!#8
+~~END~~
+
+select * from babel_788_varchar order by b asc;
+GO
+~~START~~
+varchar#!#varchar
+#!# 
+1#!#10
+3#!#7
+<NULL>#!#8
+~~END~~
+
+select * from babel_788_varchar order by b desc;
+GO
+~~START~~
+varchar#!#varchar
+<NULL>#!#8
+3#!#7
+1#!#10
+#!# 
+~~END~~
+
+
+select * from babel_788_varchar order by a + b;
+GO
+~~START~~
+varchar#!#varchar
+<NULL>#!#8
+#!# 
+1#!#10
+3#!#7
+~~END~~
+
+select * from babel_788_varchar order by a + b asc;
+GO
+~~START~~
+varchar#!#varchar
+<NULL>#!#8
+#!# 
+1#!#10
+3#!#7
+~~END~~
+
+select * from babel_788_varchar order by a + b desc;
+GO
+~~START~~
+varchar#!#varchar
+3#!#7
+1#!#10
+#!# 
+<NULL>#!#8
+~~END~~
+
+drop table if exists babel_788_varchar;
+GO

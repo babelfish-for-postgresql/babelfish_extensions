@@ -1,0 +1,12 @@
+# Schedule File for JDBC Test Framework for local run
+# 1. Lines starting with '#' will be treated as comments
+# 2. To run a postgres command:	cmd#!#postgresql#!#<enter postgres command>
+# 3. To run a T-SQL command: cmd#!#sqlserver#!#<enter T-SQL command>
+# 4. Keyword "all" is equivalent to running all test files in
+#    input folder
+# 5. To add a test, add test name (without extension Eg. BABEL-TEST) on a
+#    new line
+# 6. If you want the framework to not run certain files, use: ignore#!#<test name>
+
+all
+

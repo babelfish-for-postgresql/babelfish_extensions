@@ -1,0 +1,38 @@
+CREATE TABLE sql_variant_test(a sql_variant, b sql_variant);
+GO
+
+INSERT INTO sql_variant_test VALUES (NULL,NULL);
+GO
+~~ROW COUNT: 1~~
+
+
+SELECT * FROM sql_variant_test;
+GO
+~~START~~
+sql_variant#!#sql_variant
+<NULL>#!#<NULL>
+~~END~~
+
+
+DROP TABLE sql_variant_test;
+GO
+
+select cast(cast(NULL as bit) as sql_variant);
+select cast(cast(NULL as VARCHAR(2)) as sql_variant);
+select cast(null as sql_variant);
+GO
+~~START~~
+sql_variant
+<NULL>
+~~END~~
+
+~~START~~
+sql_variant
+<NULL>
+~~END~~
+
+~~START~~
+sql_variant
+<NULL>
+~~END~~
+

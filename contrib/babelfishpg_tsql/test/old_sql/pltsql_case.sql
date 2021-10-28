@@ -1,0 +1,18 @@
+--
+-- PLTSQL -- CASE expression
+--
+
+CREATE FUNCTION case_in_assignment() RETURNS void AS $$
+DECLARE @a text,
+        @b int = 1,
+        @c text = 'one';
+BEGIN
+    SET @a = CASE @b WHEN 1 THEN @c ELSE 'other value' END
+    PRINT @a
+    SET @b = 3
+    SET @a = CASE @b WHEN 1 THEN @c ELSE 'other value' END
+    PRINT @a
+END
+$$ LANGUAGE pltsql;
+
+SELECT case_in_assignment();

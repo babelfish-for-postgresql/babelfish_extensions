@@ -1,0 +1,228 @@
+CREATE TABLE numeric_table(num numeric(5, 2));
+
+prepst#!#INSERT INTO numeric_table(num) VALUES(@a) #!#numeric|-|a|-|3|-|5|-|2
+prepst#!#exec#!#numeric|-|a|-|123.456|-|5|-|2
+prepst#!#exec#!#numeric|-|a|-|123.4|-|5|-|2
+prepst#!#exec#!#numeric|-|a|-|123|-|5|-|2
+prepst#!#exec#!#numeric|-|a|-|123.45|-|5|-|2
+prepst#!#exec#!#numeric|-|a|-|<NULL>|-|5|-|2
+prepst#!#exec#!#numeric|-|a|-|-123.456|-|5|-|2
+prepst#!#exec#!#numeric|-|a|-|-123.4|-|5|-|2
+prepst#!#exec#!#numeric|-|a|-|-123|-|5|-|2
+#prepst#!#exec#!#numeric|-|a|-|0|-|5|-|2
+prepst#!#exec#!#numeric|-|a|-|-1|-|3|-|2
+prepst#!#exec#!#numeric|-|a|-|-123|-|9|-|2
+
+SELECT * FROM numeric_table;
+
+DROP TABLE numeric_table;
+
+CREATE TABLE numeric_table(num numeric(38, 3));
+
+prepst#!#INSERT INTO numeric_table(num) VALUES(@a1) #!#numeric|-|a1|-|3|-|5|-|2
+prepst#!#exec#!#numeric|-|a1|-|123.456|-|5|-|2
+prepst#!#exec#!#numeric|-|a1|-|123.4|-|5|-|2
+prepst#!#exec#!#numeric|-|a1|-|123|-|5|-|2
+prepst#!#exec#!#numeric|-|a1|-|123.45|-|5|-|2
+prepst#!#exec#!#numeric|-|a1|-|<NULL>|-|5|-|2
+prepst#!#exec#!#numeric|-|a1|-|-123.456|-|5|-|2
+prepst#!#exec#!#numeric|-|a1|-|-123.4|-|5|-|2
+prepst#!#exec#!#numeric|-|a1|-|-123|-|5|-|2
+#prepst#!#exec#!#numeric|-|a1|-|0|-|5|-|2
+prepst#!#exec#!#numeric|-|a1|-|-1|-|3|-|2
+prepst#!#exec#!#numeric|-|a1|-|-123|-|9|-|2
+
+prepst#!#exec#!#numeric|-|a1|-|2147483647|-|10|-|0
+prepst#!#exec#!#numeric|-|a1|-|-2147483647|-|10|-|0
+prepst#!#exec#!#numeric|-|a1|-|2147483646|-|10|-|0
+prepst#!#exec#!#numeric|-|a1|-|-2147483646|-|10|-|0
+prepst#!#exec#!#numeric|-|a1|-|2147483648|-|10|-|0
+prepst#!#exec#!#numeric|-|a1|-|-2147483648|-|10|-|0
+
+SELECT * FROM numeric_table;
+
+DROP TABLE numeric_table;
+
+# JIRA 507, WORKING FOR BABEL
+#CREATE TABLE numeric_table(num numeric(39, 20));
+
+CREATE TABLE numeric_table(num numeric(38, 20));
+
+prepst#!#INSERT INTO numeric_table(num) VALUES(@a2) #!#numeric|-|a2|-|3|-|5|-|2
+prepst#!#exec#!#numeric|-|a2|-|123.456|-|5|-|2
+prepst#!#exec#!#numeric|-|a2|-|123.4|-|5|-|2
+prepst#!#exec#!#numeric|-|a2|-|123|-|5|-|2
+prepst#!#exec#!#numeric|-|a2|-|123.45|-|5|-|2
+prepst#!#exec#!#numeric|-|a2|-|<NULL>|-|5|-|2
+prepst#!#exec#!#numeric|-|a2|-|-123.456|-|5|-|2
+prepst#!#exec#!#numeric|-|a2|-|-123.4|-|5|-|2
+prepst#!#exec#!#numeric|-|a2|-|-123|-|5|-|2
+#prepst#!#exec#!#numeric|-|a2|-|0|-|5|-|2
+prepst#!#exec#!#numeric|-|a2|-|-1|-|3|-|2
+prepst#!#exec#!#numeric|-|a2|-|-123|-|9|-|2
+prepst#!#exec#!#numeric|-|a2|-|2147483647|-|10|-|0
+SELECT * FROM numeric_table;
+
+DROP TABLE numeric_table;
+
+CREATE TABLE numeric_table(num numeric(38, 20));
+prepst#!#INSERT INTO numeric_table(num) VALUES(@a3) #!#numeric|-|a3|-|3|-|5|-|2
+prepst#!#exec#!#numeric|-|a3|-|123.456|-|5|-|2
+prepst#!#exec#!#numeric|-|a3|-|123.4|-|5|-|2
+prepst#!#exec#!#numeric|-|a3|-|123|-|5|-|2
+prepst#!#exec#!#numeric|-|a3|-|123.45|-|5|-|2
+prepst#!#exec#!#numeric|-|a3|-|<NULL>|-|5|-|2
+prepst#!#exec#!#numeric|-|a3|-|-123.456|-|5|-|2
+prepst#!#exec#!#numeric|-|a3|-|-123.4|-|5|-|2
+prepst#!#exec#!#numeric|-|a3|-|-123|-|5|-|2
+#prepst#!#exec#!#numeric|-|a3|-|0|-|5|-|2
+prepst#!#exec#!#numeric|-|a3|-|-1|-|3|-|2
+prepst#!#exec#!#numeric|-|a3|-|-123|-|9|-|2
+prepst#!#exec#!#numeric|-|a3|-|2147483647|-|10|-|0
+SELECT * FROM numeric_table;
+
+DROP TABLE numeric_table;
+
+CREATE TABLE numeric_table(num numeric(38, 21));
+prepst#!#INSERT INTO numeric_table(num) VALUES(@a4) #!#numeric|-|a4|-|3|-|5|-|2
+prepst#!#exec#!#numeric|-|a4|-|123.456|-|5|-|2
+prepst#!#exec#!#numeric|-|a4|-|123.4|-|5|-|2
+prepst#!#exec#!#numeric|-|a4|-|123|-|5|-|2
+prepst#!#exec#!#numeric|-|a4|-|123.45|-|5|-|2
+prepst#!#exec#!#numeric|-|a4|-|<NULL>|-|5|-|2
+prepst#!#exec#!#numeric|-|a4|-|-123.456|-|5|-|2
+prepst#!#exec#!#numeric|-|a4|-|-123.4|-|5|-|2
+prepst#!#exec#!#numeric|-|a4|-|-123|-|5|-|2
+#prepst#!#exec#!#numeric|-|a4|-|0|-|5|-|2
+prepst#!#exec#!#numeric|-|a4|-|-1|-|3|-|2
+prepst#!#exec#!#numeric|-|a4|-|-123|-|9|-|2
+prepst#!#exec#!#numeric|-|a4|-|2147483647|-|10|-|0
+SELECT * FROM numeric_table;
+
+DROP TABLE numeric_table;
+
+CREATE TABLE numeric_table(num numeric(38, 22));
+prepst#!#INSERT INTO numeric_table(num) VALUES(@a5) #!#numeric|-|a5|-|3|-|5|-|2
+prepst#!#exec#!#numeric|-|a5|-|123.456|-|5|-|2
+prepst#!#exec#!#numeric|-|a5|-|123.4|-|5|-|2
+prepst#!#exec#!#numeric|-|a5|-|123|-|5|-|2
+prepst#!#exec#!#numeric|-|a5|-|123.45|-|5|-|2
+prepst#!#exec#!#numeric|-|a5|-|<NULL>|-|5|-|2
+prepst#!#exec#!#numeric|-|a5|-|-123.456|-|5|-|2
+prepst#!#exec#!#numeric|-|a5|-|-123.4|-|5|-|2
+prepst#!#exec#!#numeric|-|a5|-|-123|-|5|-|2
+#prepst#!#exec#!#numeric|-|a5|-|0|-|5|-|2
+prepst#!#exec#!#numeric|-|a5|-|-1|-|3|-|2
+prepst#!#exec#!#numeric|-|a5|-|-123|-|9|-|2
+prepst#!#exec#!#numeric|-|a5|-|2147483647|-|10|-|0
+SELECT * FROM numeric_table;
+
+DROP TABLE numeric_table;
+
+CREATE TABLE numeric_table(num numeric(38, 23));
+prepst#!#INSERT INTO numeric_table(num) VALUES(@a6) #!#numeric|-|a6|-|3|-|5|-|2
+prepst#!#exec#!#numeric|-|a6|-|123.456|-|5|-|2
+prepst#!#exec#!#numeric|-|a6|-|123.4|-|5|-|2
+prepst#!#exec#!#numeric|-|a6|-|123|-|5|-|2
+prepst#!#exec#!#numeric|-|a6|-|123.45|-|5|-|2
+prepst#!#exec#!#numeric|-|a6|-|<NULL>|-|5|-|2
+prepst#!#exec#!#numeric|-|a6|-|-123.456|-|5|-|2
+prepst#!#exec#!#numeric|-|a6|-|-123.4|-|5|-|2
+prepst#!#exec#!#numeric|-|a6|-|-123|-|5|-|2
+#prepst#!#exec#!#numeric|-|a6|-|0|-|5|-|2
+prepst#!#exec#!#numeric|-|a6|-|-1|-|3|-|2
+prepst#!#exec#!#numeric|-|a6|-|-123|-|9|-|2
+prepst#!#exec#!#numeric|-|a6|-|2147483647|-|10|-|0
+SELECT * FROM numeric_table;
+
+DROP TABLE numeric_table;
+
+CREATE TABLE numeric_table(num numeric(38, 25));
+prepst#!#INSERT INTO numeric_table(num) VALUES(@a7) #!#numeric|-|a7|-|3|-|5|-|2
+prepst#!#exec#!#numeric|-|a7|-|123.456|-|5|-|2
+prepst#!#exec#!#numeric|-|a7|-|123.4|-|5|-|2
+prepst#!#exec#!#numeric|-|a7|-|123|-|5|-|2
+prepst#!#exec#!#numeric|-|a7|-|123.45|-|5|-|2
+prepst#!#exec#!#numeric|-|a7|-|<NULL>|-|5|-|2
+prepst#!#exec#!#numeric|-|a7|-|-123.456|-|5|-|2
+prepst#!#exec#!#numeric|-|a7|-|-123.4|-|5|-|2
+prepst#!#exec#!#numeric|-|a7|-|-123|-|5|-|2
+#prepst#!#exec#!#numeric|-|a7|-|0|-|5|-|2
+prepst#!#exec#!#numeric|-|a7|-|-1|-|3|-|2
+prepst#!#exec#!#numeric|-|a7|-|-123|-|9|-|2
+prepst#!#exec#!#numeric|-|a7|-|247483647|-|10|-|0
+prepst#!#exec#!#numeric|-|a7|-|-247483647|-|10|-|0
+SELECT * FROM numeric_table;
+
+DROP TABLE numeric_table;
+
+
+CREATE TABLE numeric_table(num numeric(38, 25));
+
+insert into numeric_table values (2147483647)
+insert into numeric_table values (-2147483647)
+
+insert into numeric_table values (2147483646)
+insert into numeric_table values (-2147483646)
+
+insert into numeric_table values (2147483648)
+insert into numeric_table values (-2147483648)
+
+#insert into numeric_table values(123456789123456789.1234567891234567891234567);
+#insert into numeric_table values(1234567891234567891.1234567891234567891234567);
+#insert into numeric_table values(123456789123456789.12345678912345678912345678);
+insert into numeric_table values(0.0);
+insert into numeric_table values(0.0000000000000000000000000);
+insert into numeric_table values(0.00000000000000000000000000);
+
+SELECT * FROM numeric_table;
+
+DROP TABLE numeric_table;
+
+# BABEL-1459
+declare @numvar numeric(5,4); set @numvar=-0.010; SELECT @numvar as N'@var';
+declare @numvar numeric(4,4); set @numvar=-0.010; SELECT @numvar as N'@var';
+declare @numvar numeric(5,4); set @numvar=1.01; SELECT @numvar as N'@var';
+declare @numvar numeric(4,4); set @numvar=0.01; SELECT @numvar as N'@var';
+declare @numvar numeric(4,4); set @numvar=0; SELECT @numvar as N'@var';
+
+# BABEL-2048
+CREATE TABLE babel_2048_t1(a int, b NUMERIC(19,4), c NUMERIC(20, 9), d FLOAT);
+INSERT INTO babel_2048_t1 VALUES (1, 2.3, 3.123456789, 4.123456789);
+select b - 1 from babel_2048_t1;
+select b - a from babel_2048_t1;
+select a - b from babel_2048_t1;
+select a + b from babel_2048_t1;
+select a * b from babel_2048_t1;
+select a / b from babel_2048_t1;
+select b / a from babel_2048_t1;
+select b * NULL from babel_2048_t1;
+select b / NULL from babel_2048_t1;
+select b - NULL from babel_2048_t1;
+select b + NULL from babel_2048_t1;
+select SQRT(a / b) from babel_2048_t1;
+select ROUND(a / b, 3) from babel_2048_t1;
+select SQRT(7);
+select ROUND(10.1234567, 5);
+
+# test operation between int and numeric(20, 9)
+select a+c, a-c, a*c, a/c, a%c, a%NULL from babel_2048_t1;
+# test operation between numeric and numeric
+select b+c, b-c, b*c, b/c, b%c, b%NULL from babel_2048_t1;
+# test operation between numeric and float
+select c+d, c-d, c*d, c/d, c%d, c%NULL from babel_2048_t1;
+
+# test NULLIF with numeric args
+select nullif(c, b) from babel_2048_t1;
+
+# test Coalesce with numeric args
+select coalesce(NULL, NULL, b) from babel_2048_t1;
+
+# test Case expression with numeric args
+INSERT INTO babel_2048_t1 VALUES (2, 3.7, 4.123456789, 5.123456789);
+select case when a <= 1 then b - a when a > 1 then c - a end from babel_2048_t1;
+
+# test Max() and Min() with numeric args
+select Max(c-b), Min(c-b) from babel_2048_t1;
+
+drop table babel_2048_t1;

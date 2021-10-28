@@ -1,0 +1,15 @@
+SELECT is_member(CAST('fake_role' AS varchar))
+GO
+~~START~~
+int
+<NULL>
+~~END~~
+
+
+SELECT is_member(NULL)
+GO
+~~START~~
+int
+<NULL>
+~~END~~
+

@@ -1,0 +1,78 @@
+SELECT DATEPART(weekday, CAST( '2021-12-31' as DATE));
+GO
+~~START~~
+int
+6
+~~END~~
+
+
+SELECT @@DATEFIRST;
+GO
+~~START~~
+int
+7
+~~END~~
+
+
+SET DATEFIRST 1
+GO
+
+SELECT @@DATEFIRST;
+GO
+~~START~~
+int
+1
+~~END~~
+
+
+SELECT DATEPART(weekday, CAST( '2021-12-31' as DATE));
+GO
+~~START~~
+int
+5
+~~END~~
+
+
+-- reset it to 7
+SET DATEFIRST 7
+GO
+
+SELECT @@DATEFIRST;
+GO
+~~START~~
+int
+7
+~~END~~
+
+
+SELECT DATEPART(weekday, CAST( '2021-12-31' as DATE));
+GO
+~~START~~
+int
+6
+~~END~~
+
+
+-- invalid settings
+SET DATEFIRST 0
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: 0 is outside the valid range for parameter "babelfishpg_tsql.datefirst" (1 .. 7))~~
+
+
+SET DATEFIRST 8
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: 8 is outside the valid range for parameter "babelfishpg_tsql.datefirst" (1 .. 7))~~
+
+
+SELECT @@DATEFIRST;
+GO
+~~START~~
+int
+7
+~~END~~
+
+

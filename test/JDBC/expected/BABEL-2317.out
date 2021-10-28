@@ -1,0 +1,47 @@
+CREATE TABLE t_2317 (c1 int IDENTITY PRIMARY KEY, c2 int default 42);
+INSERT INTO t_2317 DEFAULT VALUES;
+INSERT t_2317 DEFAULT VALUES;
+INSERT INTO t_2317 with (dummy_hint) DEFAULT VALUES;
+GO
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+
+SELECT * FROM t_2317;
+GO
+~~START~~
+int#!#int
+1#!#42
+2#!#42
+3#!#42
+~~END~~
+
+
+-- not yet supported since conflict at backend parser
+INSERT INTO t_2317 output inserted.* DEFAULT VALUES;
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: 'DEFAULT VALUES with OUTPUT clause' is not currently supported in Babelfish)~~
+
+CREATE TABLE t_2317_2 (d1 int, d2 int);
+GO
+INSERT INTO t_2317 output inserted.c1, inserted.c2 INTO t_2317_2 DEFAULT VALUES;
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: 'DEFAULT VALUES with OUTPUT clause' is not currently supported in Babelfish)~~
+
+INSERT INTO t_2317 output inserted.c1, inserted.c2 INTO t_2317_2(d1, d2) DEFAULT VALUES;
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: 'DEFAULT VALUES with OUTPUT clause' is not currently supported in Babelfish)~~
+
+
+DROP TABLE t_2317;
+DROP TABLE t_2317_2;
+GO

@@ -1,0 +1,79 @@
+CREATE TABLE EasDateTime (EasDateTime pg_catalog.timestamp, LastUpdDateTime pg_catalog.timestamp, LastCompressionMaxDate pg_catalog.timestamp, CompressionRate real);
+GO
+
+-- Test ITVF - column references such as "easdatetime" in the query collides
+-- with the column names of the returned rows - should not throw error
+CREATE FUNCTION CalculateEasDateTime (  @InputDate DATETIME = NULL ) RETURNS TABLE AS  RETURN (
+WITH
+RawValues  AS (SELECT EasDateTime,  LastUpdDateTime,  LastCompressionMaxDate,  ISNULL(CompressionRate, 1.0) AS compressionrate,  ISNULL(NULL, CURRENT_TIMESTAMP) AS currdatetime  FROM EasDateTime),
+
+RawValues2  AS (SELECT ISNULL(EasDateTime, currdatetime) AS easdatetime,  ISNULL(LastUpdDateTime, currdatetime) AS lastupddatetime,  LastCompressionMaxDate,  currdatetime,  compressionrate  FROM RawValues),
+
+Calcs  AS (SELECT easdatetime,  lastupddatetime,  LastCompressionMaxDate,  compressionrate,  currdatetime,  CASE  WHEN easdatetime IS NULL THEN  currdatetime  ELSE  DATEADD(s, DATEDIFF(s, lastupddatetime, currdatetime) * compressionrate, easdatetime)  END AS adjeasdatetime  FROM RawValues2),
+
+UnionedWithDefaults  AS (SELECT easdatetime,  lastupddatetime,  LastCompressionMaxDate,  compressionrate,  currdatetime,  adjeasdatetime AdjDatetimeWithoutCap,  2 WeightToForceDefault  FROM Calcs  UNION  SELECT GETDATE() easdatetime,  GETDATE() lastupddatetime,  GETDATE() LastCompressionMaxDate,  1.0 compressionrate,  GETDATE() currdatetime,  GETDATE() AdjDatetimeWithoutCap,  1 WeightToForceDefault)
+
+SELECT TOP 1  easdatetime,  lastupddatetime,  LastCompressionMaxDate,  compressionrate,  currdatetime,  AdjDatetimeWithoutCap  FROM UnionedWithDefaults  ORDER BY WeightToForceDefault DESC
+);
+GO
+
+SELECT count(*) FROM CalculateEasDateTime();
+GO
+
+-- Test MSTVF - the return parameter @tableVar should be added to the namespace
+-- so that it can prevent duplicate parameter/variable names
+-- Correct case - no duplicate
+create function mstvf(@i int) returns @tableVar table
+(
+	a text not null,
+	b int primary key,
+	c int
+)
+as
+begin
+	insert into @tableVar values('hello1', 1, 100);
+	insert into @tableVar values('hello2', 2, 200);
+	return;
+end;
+GO
+select * from mstvf(1);
+GO
+
+-- Duplicate parameter name - should throw error
+create function mstvf_dup_input_arg(@tableVar int) returns @tableVar table
+(
+	a text not null,
+	b int primary key,
+	c int
+)
+as
+begin
+	insert into @tableVar values('hello1', 1, 100);
+	insert into @tableVar values('hello2', 2, 200);
+	return;
+end;
+GO
+
+-- Duplicate variable name - should throw error
+create function mstvf_dup_local_arg(@i int) returns @tableVar table
+(
+	a text not null,
+	b int primary key,
+	c int
+)
+as
+begin
+	declare @tableVar int;
+	insert into @tableVar values('hello1', 1, 100);
+	insert into @tableVar values('hello2', 2, 200);
+	return;
+end;
+GO
+
+-- cleanup
+DROP FUNCTION CalculateEasDateTime;
+GO
+DROP TABLE EasDateTime;
+GO
+drop function mstvf;
+go

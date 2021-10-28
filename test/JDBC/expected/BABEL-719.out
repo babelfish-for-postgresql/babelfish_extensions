@@ -1,0 +1,129 @@
+use master;
+go
+
+select $12.4524
+go
+~~START~~
+numeric
+12.4524
+~~END~~
+
+
+select +$12.4524
+go
+~~START~~
+numeric
+12.4524
+~~END~~
+
+
+select -$12.4524
+go
+~~START~~
+numeric
+-12.4524
+~~END~~
+
+
+select $+12.4524
+go
+~~START~~
+numeric
+12.4524
+~~END~~
+
+
+select $-12.4524
+go
+~~START~~
+numeric
+-12.4524
+~~END~~
+
+
+select abs($12.4524)
+go
+~~START~~
+numeric
+12.4524
+~~END~~
+
+
+select abs(+$12.4524)
+go
+~~START~~
+numeric
+12.4524
+~~END~~
+
+
+select abs(-$12.4524)
+go
+~~START~~
+numeric
+12.4524
+~~END~~
+
+
+select abs($+12.4524)
+go
+~~START~~
+numeric
+12.4524
+~~END~~
+
+
+select abs($-12.4524)
+go
+~~START~~
+numeric
+12.4524
+~~END~~
+
+
+-- udf accepting float
+create function f719(@a float) returns int as begin return floor(@a) end
+go
+
+select f719($12.4524)
+go
+~~START~~
+int
+12
+~~END~~
+
+
+select f719(+$12.4524)
+go
+~~START~~
+int
+12
+~~END~~
+
+
+select f719(-$12.4524)
+go
+~~START~~
+int
+-13
+~~END~~
+
+
+select f719($+12.4524)
+go
+~~START~~
+int
+12
+~~END~~
+
+
+select f719($-12.4524)
+go
+~~START~~
+int
+-13
+~~END~~
+
+
+drop function f719
+go

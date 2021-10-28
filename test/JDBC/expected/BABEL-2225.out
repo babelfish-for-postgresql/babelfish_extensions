@@ -1,0 +1,40 @@
+CREATE SEQUENCE seq_2225 INCREMENT BY 6 MINVALUE 5 MAXVALUE 10;
+GO
+~~ERROR (Code: 11701)~~
+
+~~ERROR (Message: The absolute value of the increment must be less than or equal to the difference between the minimum and maximum value of the sequence object.)~~
+
+
+CREATE SEQUENCE seq_2225 INCREMENT BY 6 MINVALUE 5 MAXVALUE 11;
+GO
+
+ALTER SEQUENCE seq_2225 MAXVALUE 10;
+GO
+~~ERROR (Code: 11701)~~
+
+~~ERROR (Message: The absolute value of the increment must be less than or equal to the difference between the minimum and maximum value of the sequence object.)~~
+
+
+ALTER SEQUENCE seq_2225 INCREMENT BY 7;
+GO
+~~ERROR (Code: 11701)~~
+
+~~ERROR (Message: The absolute value of the increment must be less than or equal to the difference between the minimum and maximum value of the sequence object.)~~
+
+
+DROP SEQUENCE seq_2225;
+GO
+
+-- Test with extreme values
+CREATE SEQUENCE seq_2225 INCREMENT BY -9223372036854775808 MINVALUE 0 MAXVALUE 9223372036854775807;
+GO
+~~ERROR (Code: 11701)~~
+
+~~ERROR (Message: The absolute value of the increment must be less than or equal to the difference between the minimum and maximum value of the sequence object.)~~
+
+
+CREATE SEQUENCE seq_2225 INCREMENT BY -9223372036854775808 MINVALUE -9223372036854775808 MAXVALUE 9223372036854775807;
+GO
+
+DROP SEQUENCE seq_2225;
+GO

@@ -1,0 +1,20 @@
+USE master
+GO
+
+create table [dbo].[t23]([id] int, [a] money, [b] datetime)
+go
+
+exec sp_describe_undeclared_parameters
+N'INSERT INTO [dbo].[t23]([id],[a],[b]) values (@P1,@P2,@P3)'
+go
+~~START~~
+int#!#varchar#!#int#!#nvarchar#!#smallint#!#tinyint#!#tinyint#!#int#!#varchar#!#varchar#!#varchar#!#nvarchar#!#int#!#varchar#!#varchar#!#varchar#!#bit#!#bit#!#bit#!#bit#!#bit#!#varchar#!#int#!#int
+1#!#@p1#!#0#!##!#4#!#32#!#0#!#<NULL>#!##!##!##!##!#<NULL>#!##!##!##!#0#!#0#!#0#!#0#!#0#!##!#0#!#0
+2#!#@p2#!#0#!##!#21#!#0#!#0#!#<NULL>#!##!##!##!##!#<NULL>#!##!##!##!#0#!#0#!#0#!#0#!#0#!##!#0#!#0
+3#!#@p3#!#0#!##!#16#!#0#!#0#!#<NULL>#!##!##!##!##!#<NULL>#!##!##!##!#0#!#0#!#0#!#0#!#0#!##!#0#!#0
+~~END~~
+
+
+-- cleanup
+drop table [dbo].[t23];
+go

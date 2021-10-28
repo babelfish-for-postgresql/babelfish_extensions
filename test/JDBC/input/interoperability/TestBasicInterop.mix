@@ -1,0 +1,129 @@
+-- tsql
+CREATE PROCEDURE tsql_interop_proc1
+AS
+SELECT CAST('$1.0909' AS money);
+EXEC [public].pg_interop_proc2;
+BEGIN TRANSACTION;
+COMMIT;
+GO
+-- psql
+CREATE PROCEDURE pg_interop_proc1()
+AS
+$$
+BEGIN
+    CALL master_dbo.tsql_interop_proc1();
+END
+$$ LANGUAGE PLPGSQL;
+GO
+CREATE PROCEDURE pg_interop_proc2()
+AS
+$$
+BEGIN
+    COMMIT;
+END
+$$ LANGUAGE PLPGSQL;
+GO
+
+-- tsql
+EXEC [public].pg_interop_proc1
+GO
+-- psql
+CALL pg_interop_proc1()
+GO
+DROP PROCEDURE pg_interop_proc1
+GO
+DROP PROCEDURE pg_interop_proc2
+GO
+
+-- tsql
+DROP PROCEDURE tsql_interop_proc1
+GO
+
+-- tsql
+CREATE PROCEDURE tsql_interop_proc1
+AS
+EXEC [public].pg_interop_proc1;
+GO
+-- psql
+CREATE PROCEDURE pg_interop_proc1()
+AS
+$$
+BEGIN
+    CALL master_dbo.tsql_interop_proc2();
+END
+$$ LANGUAGE PLPGSQL;
+GO
+-- tsql
+CREATE PROCEDURE tsql_interop_proc2
+AS
+SELECT 1/0;
+GO
+
+-- tsql
+EXEC tsql_interop_proc1
+GO
+-- psql
+CALL master_dbo.tsql_interop_proc1()
+GO
+
+-- tsql
+CREATE PROCEDURE tsql_interop_proc_sp_exec
+AS
+DECLARE @SQLString NVARCHAR(100);
+SET @SQLString = N'commit;';
+EXEC sp_executesql @SQLString;
+GO
+
+-- psql
+CREATE PROCEDURE pg_interop_proc_sp_exec()
+AS
+$$
+BEGIN
+	CALL master_dbo.tsql_interop_proc_sp_exec();
+END
+$$ LANGUAGE PLPGSQL;
+GO
+
+-- tsql
+BEGIN TRAN;
+EXEC [public].pg_interop_proc_sp_exec
+GO
+
+-- tsql
+SELECT CONVERT(datetime, '2021-12-30')
+GO
+
+-- tsql
+SELECT DATETIME2('9999-99-99');
+DROP PROCEDURE  wrongProcedure;
+GO
+
+--tsql
+SELECT CONVERT(varchar(50), GETDATE(), 200);
+GO
+
+--tsql
+select set_config('babelfishpg_tsql.auto_commit_batch', 'off', false);
+CREATE TABLE batch_table(c1 int);
+GO
+
+--psql
+SELECT * FROM batch_table;
+DROP TABLE batch_table;
+GO
+
+-- psql
+DROP PROCEDURE pg_interop_proc1
+GO
+
+-- tsql
+DROP PROCEDURE tsql_interop_proc1
+GO
+DROP PROCEDURE tsql_interop_proc2
+GO
+DROP PROCEDURE tsql_interop_proc_sp_exec
+GO
+
+-- psql
+DROP PROCEDURE pg_interop_proc_sp_exec
+GO

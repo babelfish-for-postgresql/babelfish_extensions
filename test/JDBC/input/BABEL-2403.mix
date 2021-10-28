@@ -1,0 +1,3 @@
+--psql
+SELECT * FROM sys.babelfish_inconsistent_metadata();
+GO

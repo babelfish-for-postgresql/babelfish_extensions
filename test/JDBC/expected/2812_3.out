@@ -1,0 +1,264 @@
+# Executing test ErrorHandling1
+--Pre
+GO
+
+
+create procedure ErrorHandling1 as
+begin
+glärg buh
+if @@error > 0 select cast('STATEMENT TERMINATING ERROR' as text);
+select @@trancount;
+end
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: syntax error near 'buh' at line 3 and character position 6)~~
+
+
+if @@error > 0 select cast('Compile time error' as text);
+if @@trancount > 0 rollback transaction;
+drop procedure ErrorHandling1;
+set xact_abort OFF;
+set implicit_transactions OFF;
+GO
+~~START~~
+text
+Compile time error
+~~END~~
+
+~~ERROR (Code: 3701)~~
+
+~~ERROR (Message: could not find a procedure named "errorhandling1")~~
+
+GO
+
+
+--Pre
+GO
+begin transaction
+GO
+# Executing test ErrorHandling1
+
+create procedure ErrorHandling1 as
+begin
+glärg buh
+if @@error > 0 select cast('STATEMENT TERMINATING ERROR' as text);
+end
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: syntax error near 'buh' at line 3 and character position 6)~~
+
+
+declare @err int = @@error; if (@err > 0 and @@trancount > 0) select cast('BATCH ONLY TERMINATING' as text) else if @err > 0 select cast('BATCH TERMINATING\ txn rolledback' as text);
+if @@trancount > 0 rollback transaction;
+drop procedure ErrorHandling1;
+set xact_abort OFF;
+set implicit_transactions OFF;
+GO
+~~START~~
+text
+BATCH TERMINATING\ txn rolledback
+~~END~~
+
+~~ERROR (Code: 3701)~~
+
+~~ERROR (Message: could not find a procedure named "errorhandling1")~~
+
+
+GO
+GO
+
+
+-- Checking xact_abort_flag for compile time error --
+set xact_abort ON;
+GO
+--Pre
+GO
+begin transaction
+GO
+# Executing test ErrorHandling1
+
+create procedure ErrorHandling1 as
+begin
+glärg buh
+if @@error > 0 select cast('STATEMENT TERMINATING ERROR' as text);
+end
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: syntax error near 'buh' at line 3 and character position 6)~~
+
+
+declare @err int = @@error; if (@err > 0 and @@trancount > 0) select cast('BATCH ONLY TERMINATING' as text) else if @err > 0 select cast('BATCH TERMINATING\ txn rolledback' as text);
+if @@trancount > 0 rollback transaction;
+drop procedure ErrorHandling1;
+set xact_abort OFF;
+set implicit_transactions OFF;
+GO
+~~START~~
+text
+BATCH TERMINATING\ txn rolledback
+~~END~~
+
+~~ERROR (Code: 3701)~~
+
+~~ERROR (Message: could not find a procedure named "errorhandling1")~~
+
+
+GO
+GO
+set xact_abort OFF;
+GO
+
+# Executing test ErrorHandling10000000
+-- Next portion is for runtime error --
+--Pre
+GO
+
+
+create procedure ErrorHandling1 as
+begin
+glärg buh
+if @@error > 0 select cast('STATEMENT TERMINATING ERROR' as text);
+select @@trancount;
+end
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: syntax error near 'buh' at line 3 and character position 6)~~
+
+
+if @@error > 0 select cast('CURRENT BATCH TERMINATING ERROR' as text);
+GO
+~~START~~
+text
+CURRENT BATCH TERMINATING ERROR
+~~END~~
+
+
+create procedure ErrorHandling2 as
+begin
+exec ErrorHandling1;
+if @@error > 0 select cast('CURRENT BATCH TERMINATING ERROR' as text);
+end
+GO
+
+begin transaction;
+GO
+exec ErrorHandling2;
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: procedure errorhandling1() does not exist)~~
+
+declare @err int = @@error; if (@err > 0 and @@trancount > 0) select cast('BATCH ONLY TERMINATING' as text) else if @err > 0 select cast('BATCH TERMINATING\ txn rolledback' as text);
+if @@trancount > 0 rollback transaction;
+drop procedure ErrorHandling1;
+drop procedure ErrorHandling2;
+set xact_abort OFF;
+set implicit_transactions OFF;
+GO
+~~START~~
+text
+BATCH TERMINATING\ txn rolledback
+~~END~~
+
+~~ERROR (Code: 3701)~~
+
+~~ERROR (Message: could not find a procedure named "errorhandling1")~~
+
+GO
+
+
+set xact_abort ON;
+GO
+# Executing test ErrorHandling10000000
+--Pre
+GO
+
+
+create procedure ErrorHandling1 as
+begin
+glärg buh
+if @@error > 0 select cast('STATEMENT TERMINATING ERROR' as text);
+select @@trancount;
+end
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: syntax error near 'buh' at line 3 and character position 6)~~
+
+
+if @@error > 0 select cast('CURRENT BATCH TERMINATING ERROR' as text);
+GO
+~~START~~
+text
+CURRENT BATCH TERMINATING ERROR
+~~END~~
+
+
+create procedure ErrorHandling2 as
+begin
+exec ErrorHandling1;
+if @@error > 0 select cast('CURRENT BATCH TERMINATING ERROR' as text);
+end
+GO
+
+begin transaction;
+GO
+exec ErrorHandling2;
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: procedure errorhandling1() does not exist)~~
+
+declare @err int = @@error; if (@err > 0 and @@trancount > 0) select cast('BATCH ONLY TERMINATING' as text) else if @err > 0 select cast('BATCH TERMINATING\ txn rolledback' as text);
+if @@trancount > 0 rollback transaction;
+drop procedure ErrorHandling1;
+drop procedure ErrorHandling2;
+set xact_abort OFF;
+set implicit_transactions OFF;
+GO
+~~START~~
+text
+BATCH TERMINATING\ txn rolledback
+~~END~~
+
+~~ERROR (Code: 3701)~~
+
+~~ERROR (Message: could not find a procedure named "errorhandling1")~~
+
+GO
+
+
+
+set xact_abort OFF;
+GO
+
+# Executing test ErrorHandling10000000
+-- Error classification is done --
+--Pre
+GO
+
+
+begin try
+select 1
+glärg buh
+end try
+begin catch
+	select xact_state();
+end catch
+if @@trancount > 0 rollback transaction;
+drop procedure ErrorHandling1;
+drop procedure ErrorHandling2;
+set xact_abort OFF;
+set implicit_transactions OFF;
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: syntax error near 'end' at line 4 and character position 0)~~
+
+GO
+
+

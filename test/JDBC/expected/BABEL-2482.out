@@ -1,0 +1,43 @@
+USE master
+go
+
+-- create user defined type
+create type dbo.inttype from int;
+GO
+
+-- create stored procedure with arg & default referencing UDT
+create proc p4 @v dbo.inttype = cast (1 as dbo.inttype) as SELECT @v;
+GO
+
+-- execute default value
+EXEC p4
+GO
+~~START~~
+int
+1
+~~END~~
+
+
+-- execute non-default value
+EXEC p4 10
+GO
+~~START~~
+int
+10
+~~END~~
+
+
+-- test select case
+select cast (1 as dbo.inttype);
+GO
+~~START~~
+int
+1
+~~END~~
+
+
+DROP PROCEDURE p4
+GO
+
+DROP TYPE dbo.inttype;
+GO

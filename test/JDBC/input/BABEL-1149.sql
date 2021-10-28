@@ -1,0 +1,62 @@
+-- test inline TVF which uses RETURN_QUERY statement - shouldn't send Done
+-- tokens
+create function itvf_1149 (@number int) returns table as return (select 1 as a, 2 as b);
+GO
+
+select * from itvf_1149(5);
+GO
+
+-- test multi-statement TVF which uses DECL_TABLE, INSERT/UPDATE/DELETE and
+-- RETURN_TABLE statements - shouldn't send Done tokens
+create function mstvf_1149(@i int) returns @tableVar table (a nvarchar(10), b int, c int)
+as
+begin
+insert into @tableVar values('hello1', 1, 100);
+insert into @tableVar values('hello2', 2, 200);
+insert into @tableVar values('hello3', 3, 300);
+update @tableVar set b = 2 where b = 3;
+delete @tableVar where b = 2;
+return;
+end;
+GO
+
+select * from mstvf_1149(10);
+GO
+
+-- test user-defined function with DMLs on table variables - shouldn't send Done
+-- tokens
+create function func_1149(@i int) returns int as begin
+declare @a as table (a int, b int)
+insert into @a values (100, 200)
+return 1;
+end;
+GO
+
+select func_1149(1);
+GO
+
+-- test inline code blocks with DMLs on table variables - should send Done
+-- tokens
+declare @a table (a int, b int);
+insert into @a values(1, 100);
+GO
+
+-- test procedure with DMLs on table variables - should send Done tokens
+create procedure proc_1149 as
+declare @a table (a int, b int);
+insert into @a values(1, 100);
+update @a set b = 200;
+GO
+
+exec proc_1149
+GO
+
+-- cleanup
+drop function itvf_1149;
+GO
+drop function mstvf_1149;
+GO
+drop function func_1149;
+GO
+drop procedure proc_1149;
+GO

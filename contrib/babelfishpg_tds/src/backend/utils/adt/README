@@ -1,0 +1,62 @@
+contrib/babelfishpg_tds/backend/utils/adt/README
+
+We have copied some files from backend PostgreSQL code to utilize
+some of the APIs defined in them. We have created our own wrapper
+functions in TDS extension that make use of these APIs.
+
+1.	numeric.c
+
+	a.	init_var
+
+		Allocate memory to NumericVar variable. We utilize this in
+		converting the input string to numeric value in TDS receiver
+		side.
+
+	b.	set_var_from_str
+
+		Parse a string and put the number into a numeric variable.
+		We utilize this in converting the input string to numeric
+		value in TDS receiver side.
+
+	c.	make_result
+
+		Create the packed db numeric format in palloc()'d memory from
+		a variable (that we got from set_var_from_str()). We utilize
+		this in converting the input string to numeric value in TDS
+		receiver side.
+
+	d.	numeric_get_typmod
+
+		Get precision and scale from numeric value. We need to send
+		both the precision and scale as part of column meta data
+		for numeric and decimal datatypes.
+
+	e.	free_var
+
+		Free up memory used by NumericVar variable. We utilize this in
+		converting the input string to numeric value in TDS receiver
+		side.
+
+2.	varchar.c
+
+	a.	varchar_input
+
+		Convert input C string to SQL varchar(n). Used at TDS side to
+		convert NVarchar, NChar and NText values into Datum.
+
+3.	xml.c
+
+	a.	xmlFreeDoc
+
+		Free up structures used by a XML document when we convert
+		XML data to Datum at TDS side.
+
+	b.	xml_parse
+
+		Check if input is well-formed XML data when we convert XML
+		data to Datum at TDS side.
+
+	c.	parse_xml_decl
+
+		Parse XML decalaration when we convert XML data to Datum
+		at TDS side.

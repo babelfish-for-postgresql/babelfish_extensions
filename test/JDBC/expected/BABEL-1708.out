@@ -1,0 +1,174 @@
+-- Test valid maximum/minimum values for smallmoney
+SELECT CAST($214748.3647 AS smallmoney);
+GO
+~~START~~
+smallmoney
+214748.3647
+~~END~~
+
+
+SELECT CAST(-214748.3648 AS smallmoney);
+GO
+~~START~~
+smallmoney
+-214748.3648
+~~END~~
+
+
+SELECT CAST('214748.3647' AS smallmoney);
+GO
+~~START~~
+smallmoney
+214748.3647
+~~END~~
+
+
+SELECT CAST('-214748.3648' AS smallmoney);
+GO
+~~START~~
+smallmoney
+-214748.3648
+~~END~~
+
+
+-- Test valid maximum/minimum values for money
+SELECT CAST($922337203685477.5807 AS money);
+GO
+~~START~~
+money
+922337203685477.5807
+~~END~~
+
+
+SELECT CAST(-922337203685477.5808 AS money);
+GO
+~~START~~
+money
+-922337203685477.5808
+~~END~~
+
+
+SELECT CAST('922337203685477.5807' AS money);
+GO
+~~START~~
+money
+922337203685477.5807
+~~END~~
+
+
+SELECT CAST('-922337203685477.5808' AS money);
+GO
+~~START~~
+money
+-922337203685477.5808
+~~END~~
+
+
+-- Test out of range value for smallmoney
+SELECT CAST($214748.3648 AS smallmoney);
+GO
+~~START~~
+smallmoney
+~~ERROR (Code: 220)~~
+
+~~ERROR (Message: value for domain smallmoney violates check constraint "smallmoney_check")~~
+
+
+SELECT CAST(-214748.3649 AS smallmoney);
+GO
+~~START~~
+smallmoney
+~~ERROR (Code: 220)~~
+
+~~ERROR (Message: value for domain smallmoney violates check constraint "smallmoney_check")~~
+
+
+SELECT CAST('214748.3648' AS smallmoney);
+GO
+~~START~~
+smallmoney
+~~ERROR (Code: 220)~~
+
+~~ERROR (Message: value for domain smallmoney violates check constraint "smallmoney_check")~~
+
+
+SELECT CAST('-214748.3649' AS smallmoney);
+GO
+~~START~~
+smallmoney
+~~ERROR (Code: 220)~~
+
+~~ERROR (Message: value for domain smallmoney violates check constraint "smallmoney_check")~~
+
+
+-- Test out of range values for money
+SELECT CAST($922337203685477.5808 AS money);
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: value "922337203685477.5808" is out of range for type fixeddecimal)~~
+
+
+SELECT CAST(-922337203685477.5809 AS money);
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: value "-922337203685477.5809" is out of range for type fixeddecimal)~~
+
+
+SELECT CAST('922337203685477.5808' AS money);
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: value "922337203685477.5808" is out of range for type fixeddecimal)~~
+
+
+SELECT CAST('-922337203685477.5809' AS money);
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: value "-922337203685477.5809" is out of range for type fixeddecimal)~~
+
+
+-- Test table insert of max/min/out of range values
+CREATE TABLE t1 (a smallmoney, b money)
+GO
+
+-- Insert valid values
+INSERT INTO t1 VALUES ($214748.3647, 0), (-214748.3648, 0), (0, 922337203685477.5807), (0, -922337203685477.5808)
+GO
+~~ROW COUNT: 4~~
+
+
+-- Insert invalid values
+INSERT INTO t1 VALUES ($214748.3648, 0)
+GO
+~~ERROR (Code: 220)~~
+
+~~ERROR (Message: value for domain smallmoney violates check constraint "smallmoney_check")~~
+
+
+INSERT INTO t1 VALUES (-214748.3649, 0)
+GO
+~~ERROR (Code: 220)~~
+
+~~ERROR (Message: value for domain smallmoney violates check constraint "smallmoney_check")~~
+
+
+INSERT INTO t1 VALUES (0, 922337203685477.5808)
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: value "922337203685477.5808" is out of range for type fixeddecimal)~~
+
+
+INSERT INTO t1 VALUES (0, -922337203685477.5809)
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: value "-922337203685477.5809" is out of range for type fixeddecimal)~~
+
+
+-- Clean up
+DROP TABLE t1;
+GO

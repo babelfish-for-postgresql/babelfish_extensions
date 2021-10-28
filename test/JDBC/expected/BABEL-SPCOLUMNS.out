@@ -1,0 +1,100 @@
+USE master
+GO
+CREATE DATABASE mydb1
+GO
+USE mydb1
+GO
+
+-- Error: have to provide table name
+EXEC sp_columns
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: procedure sp_columns() does not exist)~~
+
+
+-- Testing a few different types
+CREATE table t_time (a time)
+GO
+EXEC sp_columns @table_name = 't_time'
+GO
+~~START~~
+varchar#!#varchar#!#varchar#!#varchar#!#smallint#!#varchar#!#int#!#int#!#smallint#!#smallint#!#smallint#!#varchar#!#nvarchar#!#smallint#!#smallint#!#int#!#int#!#varchar#!#tinyint
+mydb1#!#dbo#!#t_time#!#a#!#-154#!#time#!#<NULL>#!#32#!#<NULL>#!#<NULL>#!#1#!#<NULL>#!#<NULL>#!#-154#!#0#!#<NULL>#!#1#!#YES#!#0
+~~END~~
+
+
+CREATE table t_text(a text)
+GO
+exec sp_columns @table_name = 't_text'
+GO
+~~START~~
+varchar#!#varchar#!#varchar#!#varchar#!#smallint#!#varchar#!#int#!#int#!#smallint#!#smallint#!#smallint#!#varchar#!#nvarchar#!#smallint#!#smallint#!#int#!#int#!#varchar#!#tinyint
+~~END~~
+
+
+CREATE table t_int (a int)
+GO
+exec sp_columns @table_name = 't_int'
+GO
+~~START~~
+varchar#!#varchar#!#varchar#!#varchar#!#smallint#!#varchar#!#int#!#int#!#smallint#!#smallint#!#smallint#!#varchar#!#nvarchar#!#smallint#!#smallint#!#int#!#int#!#varchar#!#tinyint
+mydb1#!#dbo#!#t_int#!#a#!#4#!#int#!#32#!#4#!#0#!#2#!#1#!#<NULL>#!#<NULL>#!#4#!#<NULL>#!#<NULL>#!#1#!#YES#!#38
+~~END~~
+
+
+CREATE table t_money(a money)
+GO
+exec sp_columns @table_name = 't_money'
+GO
+~~START~~
+varchar#!#varchar#!#varchar#!#varchar#!#smallint#!#varchar#!#int#!#int#!#smallint#!#smallint#!#smallint#!#varchar#!#nvarchar#!#smallint#!#smallint#!#int#!#int#!#varchar#!#tinyint
+mydb1#!#dbo#!#t_money#!#a#!#3#!#money#!#<NULL>#!#21#!#<NULL>#!#<NULL>#!#1#!#<NULL>#!#<NULL>#!#3#!#<NULL>#!#<NULL>#!#1#!#YES#!#110
+~~END~~
+
+
+-- Testing all parameters
+EXEC sp_columns @table_name = 't_int', @table_owner = 'dbo', @table_qualifier = 'mydb1', @column_name = 'a'
+GO
+~~START~~
+varchar#!#varchar#!#varchar#!#varchar#!#smallint#!#varchar#!#int#!#int#!#smallint#!#smallint#!#smallint#!#varchar#!#nvarchar#!#smallint#!#smallint#!#int#!#int#!#varchar#!#tinyint
+mydb1#!#dbo#!#t_int#!#a#!#4#!#int#!#32#!#4#!#0#!#2#!#1#!#<NULL>#!#<NULL>#!#4#!#<NULL>#!#<NULL>#!#1#!#YES#!#38
+~~END~~
+
+EXEC sp_columns 't_int', 'dbo', 'mydb1', 'a'
+GO
+~~START~~
+varchar#!#varchar#!#varchar#!#varchar#!#smallint#!#varchar#!#int#!#int#!#smallint#!#smallint#!#smallint#!#varchar#!#nvarchar#!#smallint#!#smallint#!#int#!#int#!#varchar#!#tinyint
+mydb1#!#dbo#!#t_int#!#a#!#4#!#int#!#32#!#4#!#0#!#2#!#1#!#<NULL>#!#<NULL>#!#4#!#<NULL>#!#<NULL>#!#1#!#YES#!#38
+~~END~~
+
+
+-- sp_columns_100, wild card matching enabled
+EXEC sp_columns_100 '%_money', 'dbo', NULL, NULL, 0, 2, 1
+GO
+~~START~~
+varchar#!#varchar#!#varchar#!#varchar#!#smallint#!#varchar#!#int#!#int#!#smallint#!#smallint#!#smallint#!#varchar#!#nvarchar#!#smallint#!#smallint#!#int#!#int#!#varchar#!#smallint#!#smallint#!#smallint#!#smallint#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#tinyint
+mydb1#!#dbo#!#t_money#!#a#!#3#!#money#!#<NULL>#!#21#!#<NULL>#!#<NULL>#!#1#!#<NULL>#!#<NULL>#!#3#!#<NULL>#!#<NULL>#!#1#!#YES#!#0#!#0#!#0#!#0#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#110
+~~END~~
+
+
+-- no wild card matching
+EXEC sp_columns_100 '%_money', 'dbo', NULL, NULL, 0, 2, 0
+GO
+~~START~~
+varchar#!#varchar#!#varchar#!#varchar#!#smallint#!#varchar#!#int#!#int#!#smallint#!#smallint#!#smallint#!#varchar#!#nvarchar#!#smallint#!#smallint#!#int#!#int#!#varchar#!#smallint#!#smallint#!#smallint#!#smallint#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#tinyint
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: structure of query does not match function result type)~~
+
+
+drop table t_int
+drop table t_text
+drop table t_time
+drop table t_money
+GO
+
+USE master
+GO
+DROP DATABASE mydb1
+GO

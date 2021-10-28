@@ -1,0 +1,51 @@
+-- mixed-case column name. select via lowercase name
+create table t2432 ([COL_longer_than_63_0abcdefgij1abcdefgij2abcdefgij3abcdefgij4abcdefgij5abcdefgij6abcdefgij7abcdefgij8abcdefghij9abcdefghij] int);
+insert into t2432 values (1);
+GO
+~~ROW COUNT: 1~~
+
+
+select [col_longer_than_63_0abcdefgij1abcdefgij2abcdefgij3abcdefgij4abcdefgij5abcdefgij6abcdefgij7abcdefgij8abcdefghij9abcdefghij] from t2432;
+GO
+~~START~~
+int
+1
+~~END~~
+
+
+select col_longer_than_63_0abcdefgij1abcdefgij2abcdefgij3abcdefgij4abcdefgij5abcdefgij6abcdefgij7abcdefgij8abcdefghij9abcdefghij from t2432;
+GO
+~~START~~
+int
+1
+~~END~~
+
+
+drop table t2432;
+GO
+
+-- lowercase column name. select via mixed-case name
+create table t2432_2 ([col_longer_than_63_0abcdefgij1abcdefgij2abcdefgij3abcdefgij4abcdefgij5abcdefgij6abcdefgij7abcdefgij8abcdefghij9abcdefghij] int);
+insert into t2432_2 values (1);
+GO
+~~ROW COUNT: 1~~
+
+
+select [COL_longer_than_63_0abcdefgij1abcdefgij2abcdefgij3abcdefgij4abcdefgij5abcdefgij6abcdefgij7abcdefgij8abcdefghij9abcdefghij] from t2432_2;
+GO
+~~START~~
+int
+1
+~~END~~
+
+
+select COL_longer_than_63_0abcdefgij1abcdefgij2abcdefgij3abcdefgij4abcdefgij5abcdefgij6abcdefgij7abcdefgij8abcdefghij9abcdefghij from t2432_2;
+GO
+~~START~~
+int
+1
+~~END~~
+
+
+drop table t2432_2;
+GO

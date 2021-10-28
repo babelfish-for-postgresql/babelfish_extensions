@@ -1,0 +1,292 @@
+-- tsql
+CREATE PROCEDURE tsql_interop_proc
+AS
+CREATE TABLE procTab1(c1 money, c2 char);
+BEGIN TRY
+    SELECT xact_state();
+    INSERT INTO procTab1 values($1,'a');
+    INSERT INTO procTab1 values('i','a');
+END TRY
+BEGIN CATCH
+    SELECT xact_state();
+    SELECT @@trancount;
+END CATCH
+GO
+
+-- psql
+CREATE PROCEDURE psql_interop_proc()
+AS
+$$
+BEGIN
+    CALL master_dbo.tsql_interop_proc();
+END
+$$ LANGUAGE PLPGSQL;
+GO
+
+-- tsql
+EXEC [public].psql_interop_proc
+GO
+SELECT * FROM procTab1
+GO
+EXEC tsql_interop_proc
+GO
+SELECT * FROM procTab1
+GO
+DROP TABLE procTab1
+GO
+BEGIN TRANSACTION
+GO
+EXEC [public].psql_interop_proc
+GO
+SELECT * FROM procTab1
+GO
+COMMIT
+GO
+DROP TABLE procTab1
+GO
+
+/* TODO: BABEL-2377 */
+/* -- psql */
+/* CALL psql_interop_proc(); */
+/* GO */
+/* SELECT * FROM procTab1; */
+/* GO */
+
+-- tsql
+SET IMPLICIT_TRANSACTIONS ON
+GO
+EXEC [public].psql_interop_proc
+GO
+SELECT * FROM procTab1
+GO
+IF @@TRANCOUNT > 0 ROLLBACK;
+GO
+SET IMPLICIT_TRANSACTIONS OFF
+GO
+DROP PROCEDURE tsql_interop_proc
+GO
+
+-- tsql
+CREATE PROCEDURE tsql_interop_proc
+AS
+CREATE TABLE procTab1(c1 money, c2 char);
+BEGIN TRY
+    SELECT xact_state();
+    INSERT INTO procTab1 values($1,'a');
+    EXEC psql_interop_proc1;
+END TRY
+BEGIN CATCH
+    SELECT xact_state();
+    SELECT @@TRANCOUNT;
+END CATCH
+GO
+
+-- psql
+CREATE PROCEDURE psql_interop_proc1()
+AS
+$$
+BEGIN
+    INSERT INTO procTab1(c1,c2) values('i','a');
+END
+$$ LANGUAGE PLPGSQL;
+GO
+
+/* -- psql */
+/* CALL psql_interop_proc(); */
+/* GO */
+/* SELECT * FROM procTab1; */
+/* GO */
+
+-- tsql
+EXEC [public].psql_interop_proc;
+GO
+SELECT * FROM procTab1
+GO
+DROP PROCEDURE tsql_interop_proc
+GO
+
+-- psql
+DROP PROCEDURE psql_interop_proc1
+GO
+
+-- tsql
+CREATE PROCEDURE tsql_interop_proc
+AS
+BEGIN TRY
+	RAISERROR ('raiserror 16', 16, 1);
+END TRY
+BEGIN CATCH
+	SELECT 'CATCH in Procedure 1';
+	SELECT
+		ERROR_LINE() AS line,
+		ERROR_MESSAGE() AS msg,
+		ERROR_NUMBER() AS num,
+		ERROR_PROCEDURE() AS proc_,
+		ERROR_SEVERITY() AS sev,
+		ERROR_STATE() AS state;
+	THROW;
+END CATCH
+GO
+EXEC [public].psql_interop_proc;
+GO
+
+/* -- psql */
+/* CALL psql_interop_proc(); */
+/* GO */
+
+DROP PROCEDURE tsql_interop_proc
+GO
+
+-- tsql
+CREATE PROCEDURE tsql_interop_proc2
+AS
+BEGIN TRY
+	RAISERROR ('raiserror 16', 16, 1);
+END TRY
+BEGIN CATCH
+	SELECT 'CATCH in Procedure 1';
+	SELECT
+		ERROR_LINE() AS line,
+		ERROR_MESSAGE() AS msg,
+		ERROR_NUMBER() AS num,
+		ERROR_PROCEDURE() AS proc_,
+		ERROR_SEVERITY() AS sev,
+		ERROR_STATE() AS state;
+
+	THROW;
+END CATCH
+GO
+
+CREATE PROCEDURE tsql_interop_proc
+AS
+BEGIN TRY
+	EXEC tsql_interop_proc2;
+END TRY
+BEGIN CATCH
+	SELECT 'CATCH in Procedure 2';
+	SELECT
+		ERROR_NUMBER() AS num,
+		ERROR_PROCEDURE() AS proc_,
+		ERROR_SEVERITY() AS sev,
+		ERROR_STATE() AS state;
+	THROW;
+END CATCH
+GO
+
+EXEC [public].psql_interop_proc;
+GO
+
+/* -- psql */
+/* CALL psql_interop_proc(); */
+/* GO */
+
+DROP PROCEDURE tsql_interop_proc2
+GO
+
+-- tsql
+CREATE PROCEDURE tsql_interop_proc2
+AS
+    EXEC [public].psql_interop_proc2;
+GO
+
+-- psql
+CREATE PROCEDURE psql_interop_proc2()
+AS
+$$
+BEGIN
+    SELECT 100/0;
+END
+$$ LANGUAGE PLPGSQL;
+GO
+
+-- tsql
+EXEC [public].psql_interop_proc;
+GO
+
+/* -- psql */
+/* CALL psql_interop_proc(); */
+/* GO */
+
+-- psql
+DROP PROCEDURE psql_interop_proc2
+GO
+
+-- tsql
+DROP PROCEDURE tsql_interop_proc
+GO
+DROP PROCEDURE tsql_interop_proc2
+GO
+
+-- tsql
+CREATE PROCEDURE tsql_interop_proc
+AS
+BEGIN TRY
+    SELECT 100/0;
+    RAISERROR('Hello %s', 16, 1, 'World');
+END TRY
+BEGIN CATCH
+    SELECT xact_state();
+END CATCH
+GO
+
+-- tsql
+EXEC [public].psql_interop_proc;
+GO
+
+/* -- psql */
+/* CALL psql_interop_proc(); */
+/* GO */
+
+-- tsql
+SET XACT_ABORT OFF;
+GO
+EXEC [public].psql_interop_proc
+GO
+SET XACT_ABORT ON;
+GO
+DROP PROCEDURE tsql_interop_proc
+GO
+
+-- tsql
+CREATE PROCEDURE tsql_interop_proc
+AS
+    RAISERROR('Hello %s', 16, 1, 'World');
+    SELECT xact_state();
+    SELECT @@trancount;
+GO
+
+-- tsql
+EXEC [public].psql_interop_proc
+GO
+
+-- psql
+CALL psql_interop_proc();
+GO
+
+-- tsql
+SET XACT_ABORT OFF;
+GO
+SET IMPLICIT_TRANSACTIONS ON
+GO
+EXEC [public].psql_interop_proc
+GO
+EXEC tsql_interop_proc
+GO
+
+-- psql
+CALL psql_interop_proc();
+GO
+
+-- tsql
+SET IMPLICIT_TRANSACTIONS OFF
+GO
+SET XACT_ABORT ON;
+GO
+
+-- psql
+DROP PROCEDURE psql_interop_proc
+GO
+
+-- tsql
+DROP PROCEDURE tsql_interop_proc
+GO

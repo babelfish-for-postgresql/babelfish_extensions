@@ -1,0 +1,748 @@
+-- tsql
+CREATE PROCEDURE tsql_interop_proc1
+AS
+UPDATE procTab1 SET c1=10 where c2='b';
+INSERT INTO procTab1 values(1,'a');
+INSERT INTO procTab1 values(2,'b');
+EXEC psql_interop_proc2;
+GO
+
+-- psql     currentSchema=master_dbo,public
+CREATE PROCEDURE psql_interop_proc1()
+AS
+$$
+BEGIN
+    CREATE TABLE procTab1(c1 int);
+    ALTER TABLE procTab1 OWNER TO master_dbo;
+    INSERT INTO procTab1 values (5);
+    ALTER TABLE procTab1 ADD c2 char;
+    CALL tsql_interop_proc1();
+END
+$$ LANGUAGE PLPGSQL;
+GO
+
+CREATE PROCEDURE psql_interop_proc2()
+AS
+$$
+BEGIN
+    INSERT INTO procTab1(c1,c2) values (3,'c');
+    UPDATE procTab1 SET c1=10 where c2='b';
+    INSERT INTO procTab1(c1,c2) values (4,'d');
+    DELETE FROM procTab1 where c2='a';
+END
+$$ LANGUAGE PLPGSQL;
+GO
+
+-- tsql
+BEGIN TRANSACTION
+GO
+EXEC psql_interop_proc1
+GO
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+COMMIT 
+GO
+SELECT * FROM procTab1 order by c1
+GO
+~~START~~
+int#!#char
+3#!#c
+4#!#d
+5#!#<NULL>
+10#!#b
+~~END~~
+
+
+-- psql     currentSchema=master_dbo,public
+BEGIN TRANSACTION
+GO
+CALL tsql_interop_proc1()
+GO
+COMMIT  
+GO
+SELECT * FROM procTab1
+GO
+~~START~~
+int4#!#bpchar
+5#!#<NULL>
+3#!#c
+4#!#d
+3#!#c
+10#!#b
+10#!#b
+4#!#d
+~~END~~
+
+
+-- psql     currentSchema=master_dbo,public
+BEGIN TRANSACTION
+GO
+CALL tsql_interop_proc1()
+GO
+ROLLBACK 
+GO
+SELECT * FROM procTab1
+GO
+~~START~~
+int4#!#bpchar
+5#!#<NULL>
+3#!#c
+4#!#d
+3#!#c
+10#!#b
+10#!#b
+4#!#d
+~~END~~
+
+
+-- tsql 
+BEGIN TRANSACTION
+GO
+SAVE TRANSACTION sp1
+GO
+EXEC tsql_interop_proc1
+GO
+~~ROW COUNT: 2~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+INSERT INTO procTab1(c1,c2) values(11,'e')
+GO
+~~ROW COUNT: 1~~
+
+ROLLBACK TRANSACTION sp1 
+GO
+SELECT * FROM procTab1
+GO
+~~START~~
+int#!#char
+5#!#<NULL>
+3#!#c
+4#!#d
+3#!#c
+10#!#b
+10#!#b
+4#!#d
+~~END~~
+
+ROLLBACK 
+GO
+SELECT * FROM procTab1
+GO
+~~START~~
+int#!#char
+5#!#<NULL>
+3#!#c
+4#!#d
+3#!#c
+10#!#b
+10#!#b
+4#!#d
+~~END~~
+
+
+-- tsql
+DROP TABLE procTab1
+GO
+
+-- psql     currentSchema=master_dbo,public
+DROP PROCEDURE psql_interop_proc2
+GO
+
+-- psql     currentSchema=master_dbo,public
+CREATE PROCEDURE psql_interop_proc2()
+AS
+$$
+DECLARE myvar varchar(1) = 'f';
+BEGIN
+    UPDATE procTab1 SET c2=myvar WHERE c1 BETWEEN 2 AND 10;
+    INSERT INTO procTab1(c1,c2) values(12,'x');
+    COMMIT;
+END
+$$ LANGUAGE PLPGSQL;
+GO
+
+-- tsql
+BEGIN TRANSACTION
+GO
+EXEC psql_interop_proc1
+GO
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: invalid transaction termination)~~
+
+SELECT * FROM procTab1
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: relation "proctab1" does not exist)~~
+
+DROP PROCEDURE psql_interop_proc2
+GO
+
+-- psql     currentSchema=master_dbo,public
+CREATE PROCEDURE psql_interop_proc2()
+AS
+$$
+BEGIN
+    UPDATE procTab1 SET c1=c1+2 WHERE c1 BETWEEN 2 AND 10;
+    SAVEPOINT sp1;
+    INSERT INTO procTab1(c1,c2) values(13,'w');
+    EXECUTE "ROLLBACK TO $1" USING sp1;
+    ROLLBACK;
+END
+$$ LANGUAGE PLPGSQL;
+GO
+
+-- tsql
+BEGIN TRANSACTION
+GO
+EXEC psql_interop_proc1
+GO
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: unsupported transaction command in PL/pgSQL)~~
+
+SELECT * FROM procTab1
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: relation "proctab1" does not exist)~~
+
+
+-- psql     currentSchema=master_dbo,public
+DROP PROCEDURE psql_interop_proc2
+GO
+
+-- psql     currentSchema=master_dbo,public
+CREATE PROCEDURE psql_interop_proc2()
+AS
+$$
+BEGIN
+    UPDATE procTab1 SET c1=c1+2 WHERE c1 BETWEEN 2 AND 10;
+    INSERT INTO procTab1(c1,c2) values(13,'w');
+    ROLLBACK;
+END
+$$ LANGUAGE PLPGSQL;
+GO
+
+-- tsql
+BEGIN TRANSACTION
+GO
+EXEC psql_interop_proc1
+GO
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: invalid transaction termination)~~
+
+SELECT * FROM procTab1
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: relation "proctab1" does not exist)~~
+
+
+-- tsql
+BEGIN TRANSACTION
+GO
+SAVE TRANSACTION sp1;
+GO
+EXEC psql_interop_proc1
+GO
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: invalid transaction termination)~~
+
+SELECT * FROM procTab1
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: relation "proctab1" does not exist)~~
+
+
+-- tsql
+BEGIN TRANSACTION
+GO
+EXEC psql_interop_proc1
+GO
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: invalid transaction termination)~~
+
+SELECT * FROM procTab1
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: relation "proctab1" does not exist)~~
+
+
+-- psql     currentSchema=master_dbo,public
+DROP PROCEDURE psql_interop_proc2
+GO
+
+-- tsql
+DROP PROCEDURE tsql_interop_proc1
+GO
+
+-- tsql
+CREATE PROCEDURE tsql_interop_proc1
+AS
+BEGIN TRANSACTION;
+UPDATE procTab1 SET c1=10 where c2='b';
+INSERT INTO procTab1 values(1,'a');
+INSERT INTO procTab1 values(2,'b');
+EXEC psql_interop_proc2;
+GO
+
+-- psql     currentSchema=master_dbo,public
+CREATE PROCEDURE psql_interop_proc2()
+AS
+$$
+BEGIN
+    UPDATE procTab1 SET c1=c1+2 WHERE c1 BETWEEN 2 AND 10;
+    SAVEPOINT sp1;
+    INSERT INTO procTab1(c1,c2) values(13,'w');
+    EXECUTE "ROLLBACK TO $1" USING sp1;
+    COMMIT;
+END
+$$ LANGUAGE PLPGSQL;
+GO
+
+-- tsql
+EXEC psql_interop_proc1
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: invalid transaction command)~~
+
+SELECT * FROM procTab1
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: relation "proctab1" does not exist)~~
+
+
+-- psql     currentSchema=master_dbo,public
+DROP PROCEDURE psql_interop_proc2
+GO
+
+-- tsql
+DROP PROCEDURE tsql_interop_proc1
+GO
+
+-- tsql
+CREATE PROCEDURE tsql_interop_proc1
+AS
+BEGIN TRANSACTION;
+UPDATE procTab1 SET c1=10 where c2='b';
+SAVE TRANSACTION sp1;
+INSERT INTO procTab1 values(1,'a');
+ROLLBACK TRANSACTION sp1;
+INSERT INTO procTab1 values(2,'b');
+EXEC psql_interop_proc2;
+GO
+
+-- psql     currentSchema=master_dbo,public
+CREATE PROCEDURE psql_interop_proc2()
+AS
+$$
+BEGIN
+    UPDATE procTab1 SET c1=c1+2 WHERE c1 BETWEEN 2 AND 10;
+    SAVEPOINT sp2;
+    INSERT INTO procTab1(c1,c2) values(13,'w');
+    EXECUTE "ROLLBACK TO $1" USING sp2;
+    COMMIT;
+END
+$$ LANGUAGE PLPGSQL;
+GO
+
+-- tsql
+EXEC psql_interop_proc1
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: invalid transaction command)~~
+
+SELECT * FROM procTab1
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: relation "proctab1" does not exist)~~
+
+
+-- psql     currentSchema=master_dbo,public
+DROP PROCEDURE psql_interop_proc2
+GO
+
+-- psql     currentSchema=master_dbo,public
+CREATE PROCEDURE psql_interop_proc2()
+AS
+$$
+BEGIN
+    UPDATE procTab1 SET c1=c1+2 WHERE c1 BETWEEN 2 AND 10;
+    INSERT INTO procTab1(c1,c2) values(13,'w');
+    COMMIT;
+END
+$$ LANGUAGE PLPGSQL;
+GO
+
+-- tsql
+EXEC psql_interop_proc1
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: invalid transaction command)~~
+
+SELECT * FROM procTab1
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: relation "proctab1" does not exist)~~
+
+DROP PROCEDURE tsql_interop_proc1
+GO
+
+-- tsql
+CREATE PROCEDURE tsql_interop_proc1
+AS
+DECLARE @dt DATETIME = '2019-12-31 14:43:35.863';
+CREATE TABLE procTab1(c1 int, c2 char);
+SELECT CONVERT(varchar(30), @dt, 1);
+INSERT INTO procTab1 values(1,'a');
+ROLLBACK TRANSACTION sp1;
+INSERT INTO procTab1 values(2,'b');
+SELECT CONVERT(varchar(30), CAST('2017-08-25' AS date), 102);
+GO
+
+-- psql     currentSchema=master_dbo,public
+BEGIN TRANSACTION
+GO
+SAVEPOINT sp1
+GO
+CALL tsql_interop_proc1()
+GO
+~~ERROR (Code: 0)~~
+
+~~ERROR (Message: ERROR: invalid transaction command
+  Where: PL/tsql function tsql_interop_proc1() line 5 at SQL statement
+    Server SQLState: 2D000)~~
+
+COMMIT
+GO
+SELECT * FROM procTab1
+GO
+~~ERROR (Code: 0)~~
+
+~~ERROR (Message: ERROR: relation "proctab1" does not exist
+  Position: 15
+    Server SQLState: 42P01)~~
+
+
+-- tsql
+BEGIN TRANSACTION
+GO
+SAVE TRANSACTION sp1
+GO
+EXEC tsql_interop_proc1
+GO
+~~START~~
+varchar
+12/31/19
+~~END~~
+
+~~ROW COUNT: 1~~
+
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: relation "proctab1" does not exist)~~
+
+ROLLBACK
+GO
+~~ERROR (Code: 3903)~~
+
+~~ERROR (Message: ROLLBACK can only be used in transaction blocks)~~
+
+SELECT * FROM procTab1
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: relation "proctab1" does not exist)~~
+
+
+-- tsql
+CREATE PROCEDURE tsql_interop_proc
+AS
+DECLARE @handle int;
+EXEC SP_PREPEXEC @handle OUT, NULL, 'SELECT ''OK'''
+EXEC SP_EXECUTE @handle
+EXEC SP_EXECUTE @handle
+EXEC SP_UNPREPARE @handle
+EXEC ('select datetimefromparts(2016, 12, 26, 23, 30, 5, 32);')
+GO
+
+-- psql     currentSchema=master_dbo,public
+CREATE PROCEDURE psql_interop_proc()
+AS
+$$
+BEGIN
+CALL tsql_interop_proc();
+END
+$$ LANGUAGE PLPGSQL;
+GO
+
+-- tsql
+BEGIN TRANSACTION
+GO
+EXEC psql_interop_proc;
+GO
+~~START~~
+varchar
+OK
+~~END~~
+
+~~START~~
+varchar
+OK
+~~END~~
+
+~~START~~
+varchar
+OK
+~~END~~
+
+~~START~~
+datetime
+2016-12-26 23:30:05.033
+~~END~~
+
+COMMIT 
+GO
+DROP PROCEDURE tsql_interop_proc
+GO
+
+-- tsql
+CREATE PROCEDURE tsql_interop_proc
+AS
+DECLARE @handle INT;
+DECLARE @batch VARCHAR(500);
+SET @batch = 'begin transaction; insert into t1 values(1); commit;'
+EXEC sp_prepare @handle OUT, NULL, @batch
+EXEC sp_execute @handle
+BEGIN TRANSACTION;
+EXEC sp_execute @handle
+ROLLBACK;
+EXEC SP_UNPREPARE @handle;
+GO
+
+-- tsql
+CREATE TABLE t1 (a INT);
+GO
+EXEC psql_interop_proc;
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: invalid transaction command)~~
+
+SELECT count(*) FROM t1;
+GO
+~~START~~
+int
+0
+~~END~~
+
+DROP PROCEDURE tsql_interop_proc
+GO
+DROP TABLE t1
+GO
+
+-- tsql
+CREATE PROCEDURE tsql_interop_proc
+AS
+DECLARE @handle int;
+DECLARE @inner_handle int;
+DECLARE @batch VARCHAR(500);
+SET @batch = 'EXEC SP_PREPARE @inner_handle OUT, NULL, ''SELECT 1'' '
+EXEC SP_PREPARE @handle out, '@inner_handle int OUT', @batch
+EXEC SP_EXECUTE @handle, @inner_handle OUT
+BEGIN TRANSACTION;
+EXEC SP_EXECUTE @inner_handle
+ROLLBACK;
+EXEC SP_UNPREPARE @inner_handle  -- unprepare inner first
+EXEC SP_UNPREPARE @handle
+GO
+
+-- tsql
+EXEC psql_interop_proc;
+GO
+~~START~~
+int
+~~END~~
+
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: invalid transaction command)~~
+
+DROP PROCEDURE tsql_interop_proc
+GO
+
+-- tsql
+CREATE PROCEDURE tsql_interop_proc
+AS
+CREATE TABLE cursorTab(a INT, b SMALLINT, c BIGINT, d TINYINT, e BIT);
+INSERT INTO cursorTab values(0, 0, 0, 0, 0);
+INSERT INTO cursorTab values(1, 2, 3, 4, 1);
+INSERT INTO cursorTab values(4, 5, 6, 7, 4);
+DECLARE @cursor_handle int;
+EXEC sp_cursoropen @cursor_handle OUTPUT, 'select a,b,c,d from cursorTab', 2, 1;
+EXEC sp_cursorfetch @cursor_handle, 2, 0, 2;
+EXEC sp_cursoroption @cursor_handle, 1, 2;
+BEGIN TRANSACTION;
+EXEC sp_cursor @cursor_handle, 40, 1, '';
+COMMIT;
+EXEC sp_cursorclose @cursor_handle;
+GO
+
+EXEC psql_interop_proc;
+GO
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~START~~
+int#!#smallint#!#bigint#!#tinyint
+0#!#0#!#0#!#0
+1#!#2#!#3#!#4
+~~END~~
+
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: invalid transaction command)~~
+
+DROP PROCEDURE tsql_interop_proc
+GO
+
+-- tsql
+CREATE PROCEDURE tsql_interop_proc
+AS
+SELECT DATEPART(weekday, CAST( '2021-12-31' as DATE));
+SELECT DATENAME(year, cast('2002-05-23 23:41:29.998' as smalldatetime));
+SELECT @@DATEFIRST;
+SELECT dateadd(year, 2, CAST('20060830' AS datetime));
+SELECT
+    lower(cast('A ' as char(5))),
+    left(cast('a  ' as char(5)), 2),
+    charindex(cast('a ' as char(5)), 'a  '),
+    ascii(cast('a ' as char(5))),
+    datalength(cast('123 ' as char(5))),
+    length(cast('123 ' as char(5))),
+    len(cast('123 ' as char(5)));
+BEGIN TRANSACTION;
+SELECT cast(cast('2021-08-15 ' as char(11)) as sys.smalldatetime);
+COMMIT;
+GO
+
+EXEC tsql_interop_proc;
+GO
+~~START~~
+int
+6
+~~END~~
+
+~~START~~
+text
+2002
+~~END~~
+
+~~START~~
+int
+7
+~~END~~
+
+~~START~~
+datetime
+2008-08-30 00:00:00.0
+~~END~~
+
+~~START~~
+text#!#text#!#int#!#int#!#int#!#int#!#int
+a    #!#a #!#0#!#97#!#5#!#5#!#3
+~~END~~
+
+~~START~~
+smalldatetime
+2021-08-15 00:00:00.0
+~~END~~
+
+EXEC psql_interop_proc;
+GO
+~~START~~
+int
+6
+~~END~~
+
+~~START~~
+text
+2002
+~~END~~
+
+~~START~~
+int
+7
+~~END~~
+
+~~START~~
+datetime
+2008-08-30 00:00:00.0
+~~END~~
+
+~~START~~
+text#!#text#!#int#!#int#!#int#!#int#!#int
+a    #!#a #!#0#!#97#!#5#!#5#!#3
+~~END~~
+
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: invalid transaction command)~~
+
+DROP PROCEDURE tsql_interop_proc
+GO
+
+-- psql     currentSchema=master_dbo,public
+DROP PROCEDURE psql_interop_proc1
+GO
+DROP PROCEDURE psql_interop_proc2
+GO
+
+-- tsql
+DROP PROCEDURE tsql_interop_proc1
+GO
+
+-- psql     currentSchema=master_dbo,public
+DROP PROCEDURE psql_interop_proc
+GO

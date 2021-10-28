@@ -1,0 +1,67 @@
+SELECT 
+	current_setting('babelfishpg_tsql.quoted_identifier', true), 
+	current_setting('babelfishpg_tsql.nocount', true), 
+	current_setting('babelfishpg_tsql.concat_null_yields_null', true);
+GO
+~~START~~
+text#!#text#!#text
+on#!#off#!#on
+~~END~~
+
+
+SET NOCOUNT, CONCAT_NULL_YIELDS_NULL, QUOTED_IDENTIFIER ON;
+GO
+
+SET NOCOUNT, CONCAT_NULL_YIELDS_NULL, QUOTED_IDENTIFIER OFF;
+GO
+
+SELECT 
+	current_setting('babelfishpg_tsql.quoted_identifier', true), 
+	current_setting('babelfishpg_tsql.nocount', true), 
+	current_setting('babelfishpg_tsql.concat_null_yields_null', true);
+GO
+~~START~~
+text#!#text#!#text
+off#!#off#!#off
+~~END~~
+
+
+-- error expected
+SET NOCOUNT, CONCAT_NULL_YIELDS_NULL, QUOTED_IDENTIFIER, NOTHING ON;
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: syntax error near 'NOTHING' at line 2 and character position 57)~~
+
+
+-- value shall not change
+SELECT 
+	current_setting('babelfishpg_tsql.quoted_identifier', true), 
+	current_setting('babelfishpg_tsql.nocount', true), 
+	current_setting('babelfishpg_tsql.concat_null_yields_null', true);
+GO
+~~START~~
+text#!#text#!#text
+off#!#off#!#off
+~~END~~
+
+
+-- error expected 2
+SET NOCOUNT, CONCAT_NULL_YIELDS_NULL, QUOTED_IDENTIFIER, LANGUAGE ON;
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: syntax error near 'LANGUAGE' at line 2 and character position 57)~~
+
+
+-- value shall not change
+SELECT 
+	current_setting('babelfishpg_tsql.quoted_identifier', true), 
+	current_setting('babelfishpg_tsql.nocount', true), 
+	current_setting('babelfishpg_tsql.concat_null_yields_null', true);
+GO
+~~START~~
+text#!#text#!#text
+off#!#off#!#off
+~~END~~
+

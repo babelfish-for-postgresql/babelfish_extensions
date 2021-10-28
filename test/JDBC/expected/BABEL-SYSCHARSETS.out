@@ -1,0 +1,10 @@
+USE master
+go
+
+select * from sys.syscharsets;
+go
+~~START~~
+int#!#int#!#int#!#int#!#nvarchar#!#nvarchar#!#varbinary#!#image
+1001#!#1#!#0#!#0#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>
+~~END~~
+

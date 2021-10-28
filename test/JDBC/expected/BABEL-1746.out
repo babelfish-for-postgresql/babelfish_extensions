@@ -1,0 +1,13 @@
+DROP DATABASE master;
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Cannot drop database "master", because it is a system database)~~
+
+
+DROP DATABASE tempdb;
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Cannot drop database "tempdb", because it is a system database)~~
+

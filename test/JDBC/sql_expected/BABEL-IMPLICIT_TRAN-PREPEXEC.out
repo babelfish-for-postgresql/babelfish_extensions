@@ -1,0 +1,128 @@
+EXEC sp_babelfish_configure 'babelfishpg_tsql.escape_hatch_unique_constraint', 'ignore';
+CREATE TABLE impl_txn_prepexec_table (a varchar(15) UNIQUE, b nvarchar(25), c int PRIMARY KEY, d char(15) DEFAULT 'Whoops!', e nchar(25), f datetime, g numeric(4,1) CHECK (g >= 103.5))
+
+prepst#!#INSERT INTO impl_txn_prepexec_table VALUES (?, ?, ?, ?, ?, ?, ?)#!#varchar|-|a|-|Apple#!#nvarchar|-|b|-|red#!#int|-|c|-|1#!#char|-|d|-|Delhi#!#nchar|-|e|-|Sad😞#!#datetime|-|f|-|2000-12-13 12:58:23.123#!#numeric|-|g|-|123.1|-|4|-|1
+~~ROW COUNT: 1~~
+
+
+SET IMPLICIT_TRANSACTIONS ON
+
+SELECT @@TRANCOUNT
+~~START~~
+int
+0
+~~END~~
+
+prepst#!#SELECT * FROM impl_txn_prepexec_table WHERE a = ? AND b = ? AND c = ?#!#varchar|-|p1|-|Apple#!#nvarchar|-|p2|-|red#!#int|-|p3|-|1
+~~START~~
+varchar#!#nvarchar#!#int#!#char#!#nchar#!#datetime#!#numeric
+Apple#!#red#!#1#!#Delhi          #!#Sad😞                    #!#2000-12-13 12:58:23.123#!#123.1
+~~END~~
+
+SELECT @@TRANCOUNT
+~~START~~
+int
+1
+~~END~~
+
+IF @@TRANCOUNT > 0 COMMIT
+
+SELECT @@TRANCOUNT
+~~START~~
+int
+0
+~~END~~
+
+prepst#!#exec#!#varchar|-|p1|-|Apple#!#nvarchar|-|p2|-|red#!#int|-|p3|-|2
+~~START~~
+varchar#!#nvarchar#!#int#!#char#!#nchar#!#datetime#!#numeric
+~~END~~
+
+SELECT @@TRANCOUNT
+~~START~~
+int
+1
+~~END~~
+
+IF @@TRANCOUNT > 0 COMMIT
+
+SELECT @@TRANCOUNT
+~~START~~
+int
+0
+~~END~~
+
+prepst#!#exec#!#varchar|-|p1|-|Apple#!#nvarchar|-|p2|-|green#!#int|-|p3|-|1
+~~START~~
+varchar#!#nvarchar#!#int#!#char#!#nchar#!#datetime#!#numeric
+~~END~~
+
+SELECT @@TRANCOUNT
+~~START~~
+int
+1
+~~END~~
+
+IF @@TRANCOUNT > 0 COMMIT
+
+SELECT @@TRANCOUNT
+~~START~~
+int
+0
+~~END~~
+
+prepst#!#SELECT 12, 34, 56 FROM (SELECT * FROM impl_txn_prepexec_table WHERE a = ? AND b = ? AND c = ?) AS dummy_table#!#varchar|-|p1|-|Apple#!#nvarchar|-|p2|-|red#!#int|-|p3|-|1
+~~START~~
+int#!#int#!#int
+12#!#34#!#56
+~~END~~
+
+SELECT @@TRANCOUNT
+~~START~~
+int
+1
+~~END~~
+
+IF @@TRANCOUNT > 0 COMMIT
+
+SELECT @@TRANCOUNT
+~~START~~
+int
+0
+~~END~~
+
+prepst#!#exec#!#varchar|-|p1|-|Apple#!#nvarchar|-|p2|-|red#!#int|-|p3|-|2
+~~START~~
+int#!#int#!#int
+~~END~~
+
+SELECT @@TRANCOUNT
+~~START~~
+int
+1
+~~END~~
+
+IF @@TRANCOUNT > 0 COMMIT
+
+SELECT @@TRANCOUNT
+~~START~~
+int
+0
+~~END~~
+
+prepst#!#exec#!#varchar|-|p1|-|Apple#!#nvarchar|-|p2|-|green#!#int|-|p3|-|1
+~~START~~
+int#!#int#!#int
+~~END~~
+
+SELECT @@TRANCOUNT
+~~START~~
+int
+1
+~~END~~
+
+IF @@TRANCOUNT > 0 COMMIT
+
+SET IMPLICIT_TRANSACTIONS OFF
+DROP TABLE impl_txn_prepexec_table
+EXEC sp_babelfish_configure 'babelfishpg_tsql.escape_hatch_unique_constraint', 'strict';

@@ -1,0 +1,116 @@
+USE master;
+GO
+
+CREATE SCHEMA test
+GO
+
+CREATE TABLE t (a int)
+GO
+
+CREATE PROCEDURE foo AS SELECT 1
+GO
+
+CREATE PROCEDURE test.bar AS SELECT 2
+GO
+
+SELECT * FROM t
+GO
+~~START~~
+int
+~~END~~
+
+
+SELECT * FROM ..t
+GO
+~~START~~
+int
+~~END~~
+
+
+SELECT * FROM master..t
+GO
+~~START~~
+int
+~~END~~
+
+
+SELECT * FROM .fake_schema.t
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: relation "master_fake_schema.t" does not exist)~~
+
+
+EXEC test.bar
+GO
+~~START~~
+int
+2
+~~END~~
+
+
+EXEC .test.bar
+GO
+~~START~~
+int
+2
+~~END~~
+
+
+EXEC master..bar
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: procedure master_dbo.bar() does not exist)~~
+
+
+EXEC ..bar
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: procedure master_dbo.bar() does not exist)~~
+
+
+EXEC foo
+GO
+~~START~~
+int
+1
+~~END~~
+
+
+EXEC ..foo
+GO
+~~START~~
+int
+1
+~~END~~
+
+
+EXEC master..foo
+GO
+~~START~~
+int
+1
+~~END~~
+
+
+EXEC .schema.foo
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: syntax error near 'schema' at line 1 and character position 6)~~
+
+
+DROP TABLE t
+GO
+
+DROP PROCEDURE foo
+GO
+
+DROP PROCEDURE test.bar
+GO
+
+DROP SCHEMA test
+GO
+
