@@ -2,10 +2,10 @@ name: CI
 on:
   push:
     branches:
-      - main
+      - BABEL_1_X_DEV
   pull_request:
     branches:
-      - main
+      - BABEL_1_X_DEV
 
 jobs:
   extension-tests:
@@ -16,7 +16,7 @@ jobs:
       - name: Clone, build, and run tests for Postgres engine
         run: |
           cd ..
-          git clone --branch 13_4 https://github.com/babelfish-for-postgresql/postgresql_modified_for_babelfish.git
+          git clone https://github.com/babelfish-for-postgresql/postgresql_modified_for_babelfish.git
           sudo apt-get update
           sudo apt-get install uuid-dev openjdk-8-jre libicu-dev libxml2-dev openssl libssl-dev python-dev libossp-uuid-dev libpq-dev cmake pkg-config g++ build-essential bison 
           cd postgresql_modified_for_babelfish
