@@ -2,10 +2,10 @@ name: CI
 on:
   push:
     branches:
-      - main
+      - BABEL_1_X_DEV
   pull_request:
     branches:
-      - main
+      - BABEL_1_X_DEV
 
 jobs:
   extension-tests:
