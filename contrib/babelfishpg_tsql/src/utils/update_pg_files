@@ -1,0 +1,35 @@
+#!/bin/bash
+
+export PLPGSQL=${PGSRC}/src/pl/plpgsql/src
+
+PLPGSQL_SED_FILES=$(cat <<- ENDFILES
+	plpgsql.h
+	pl_comp.c
+	pl_exec.c
+	pl_funcs.c
+	pl_handler.c
+	pl_scanner.c
+ENDFILES
+)
+
+PLPGSQL_COPY_FILES=$(cat <<- ENDFILES
+	pl_reserved_kwlist.h
+	pl_unreserved_kwlist.h
+ENDFILES
+)
+
+for fi in ${PLPGSQL_SED_FILES}
+do
+	echo "Renaming identifiers in ${fi}"
+	sed 's/plpgsql/pltsql/g;s/PLPGSQL/PLTSQL/g;s/PLpgSQL/PLtsql/g;s#PL/pgSQL#PL/tsql#g' < ${PLPGSQL}/${fi} > ./${fi}
+done
+
+for fi in ${PLPGSQL_COPY_FILES}
+do
+    cp --verbose ${PLPGSQL}/${fi} ./${fi}
+done
+
+# Generate plerrcodes.h by processing src/backend/utils/errcodes.txt
+perl ${PLPGSQL}/generate-plerrcodes.pl ${PGSRC}/src/backend/utils/errcodes.txt > ./plerrcodes.h
+
+

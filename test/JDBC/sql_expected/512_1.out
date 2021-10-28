@@ -1,0 +1,276 @@
+# Executing test ErrorHandling1
+--Pre
+CREATE TABLE t512(c1 int); 
+INSERT INTO t512 VALUES(1), (5);
+GO
+~~ROW COUNT: 2~~
+
+
+
+create procedure ErrorHandling1 as
+begin
+--Generate the error
+SELECT * FROM t512 WHERE c1 = (SELECT c1 FROM t512);
+if @@error > 0 select cast('STATEMENT TERMINATING ERROR' as text);
+select @@trancount;
+end
+GO
+
+if @@error > 0 select cast('Compile time error' as text);
+if @@trancount > 0 rollback transaction;
+drop procedure ErrorHandling1;
+set xact_abort OFF;
+set implicit_transactions OFF;
+GO
+--Post
+DROP TABLE t512;
+GO
+
+
+--Pre
+CREATE TABLE t512(c1 int); 
+INSERT INTO t512 VALUES(1), (5);
+GO
+~~ROW COUNT: 2~~
+
+begin transaction
+GO
+# Executing test ErrorHandling1
+
+create procedure ErrorHandling1 as
+begin
+--Generate the error
+SELECT * FROM t512 WHERE c1 = (SELECT c1 FROM t512);
+if @@error > 0 select cast('STATEMENT TERMINATING ERROR' as text);
+end
+GO
+
+declare @err int = @@error; if (@err > 0 and @@trancount > 0) select cast('BATCH ONLY TERMINATING' as text) else if @err > 0 select cast('BATCH TERMINATING\ txn rolledback' as text);
+if @@trancount > 0 rollback transaction;
+drop procedure ErrorHandling1;
+set xact_abort OFF;
+set implicit_transactions OFF;
+GO
+~~ERROR (Code: 3701)~~
+
+~~ERROR (Message: Cannot drop the procedure 'ErrorHandling1', because it does not exist or you do not have permission.)~~
+
+
+GO
+--Post
+DROP TABLE t512;
+GO
+
+
+-- Checking xact_abort_flag for compile time error --
+set xact_abort ON;
+GO
+--Pre
+CREATE TABLE t512(c1 int); 
+INSERT INTO t512 VALUES(1), (5);
+GO
+~~ROW COUNT: 2~~
+
+begin transaction
+GO
+# Executing test ErrorHandling1
+
+create procedure ErrorHandling1 as
+begin
+--Generate the error
+SELECT * FROM t512 WHERE c1 = (SELECT c1 FROM t512);
+if @@error > 0 select cast('STATEMENT TERMINATING ERROR' as text);
+end
+GO
+
+declare @err int = @@error; if (@err > 0 and @@trancount > 0) select cast('BATCH ONLY TERMINATING' as text) else if @err > 0 select cast('BATCH TERMINATING\ txn rolledback' as text);
+if @@trancount > 0 rollback transaction;
+drop procedure ErrorHandling1;
+set xact_abort OFF;
+set implicit_transactions OFF;
+GO
+~~ERROR (Code: 3701)~~
+
+~~ERROR (Message: Cannot drop the procedure 'ErrorHandling1', because it does not exist or you do not have permission.)~~
+
+
+GO
+--Post
+DROP TABLE t512;
+GO
+set xact_abort OFF;
+GO
+
+# Executing test ErrorHandling10000000
+-- Next portion is for runtime error --
+--Pre
+CREATE TABLE t512(c1 int); 
+INSERT INTO t512 VALUES(1), (5);
+GO
+~~ROW COUNT: 2~~
+
+
+
+create procedure ErrorHandling1 as
+begin
+--Generate the error
+SELECT * FROM t512 WHERE c1 = (SELECT c1 FROM t512);
+if @@error > 0 select cast('STATEMENT TERMINATING ERROR' as text);
+select @@trancount;
+end
+GO
+
+if @@error > 0 select cast('CURRENT BATCH TERMINATING ERROR' as text);
+GO
+
+create procedure ErrorHandling2 as
+begin
+exec ErrorHandling1;
+if @@error > 0 select cast('CURRENT BATCH TERMINATING ERROR' as text);
+end
+GO
+
+begin transaction;
+GO
+exec ErrorHandling2;
+GO
+~~START~~
+int
+~~ERROR (Code: 512)~~
+
+~~ERROR (Message: Subquery returned more than 1 value. This is not permitted when the subquery follows =, !=, <, <= , >, >= or when the subquery is used as an expression.)~~
+
+~~START~~
+text
+STATEMENT TERMINATING ERROR
+~~END~~
+
+~~START~~
+int
+1
+~~END~~
+
+declare @err int = @@error; if (@err > 0 and @@trancount > 0) select cast('BATCH ONLY TERMINATING' as text) else if @err > 0 select cast('BATCH TERMINATING\ txn rolledback' as text);
+if @@trancount > 0 rollback transaction;
+drop procedure ErrorHandling1;
+drop procedure ErrorHandling2;
+set xact_abort OFF;
+set implicit_transactions OFF;
+GO
+--Post
+DROP TABLE t512;
+GO
+
+
+set xact_abort ON;
+GO
+# Executing test ErrorHandling10000000
+--Pre
+CREATE TABLE t512(c1 int); 
+INSERT INTO t512 VALUES(1), (5);
+GO
+~~ROW COUNT: 2~~
+
+
+
+create procedure ErrorHandling1 as
+begin
+--Generate the error
+SELECT * FROM t512 WHERE c1 = (SELECT c1 FROM t512);
+if @@error > 0 select cast('STATEMENT TERMINATING ERROR' as text);
+select @@trancount;
+end
+GO
+
+if @@error > 0 select cast('CURRENT BATCH TERMINATING ERROR' as text);
+GO
+
+create procedure ErrorHandling2 as
+begin
+exec ErrorHandling1;
+if @@error > 0 select cast('CURRENT BATCH TERMINATING ERROR' as text);
+end
+GO
+
+begin transaction;
+GO
+exec ErrorHandling2;
+GO
+~~START~~
+int
+~~ERROR (Code: 512)~~
+
+~~ERROR (Message: Subquery returned more than 1 value. This is not permitted when the subquery follows =, !=, <, <= , >, >= or when the subquery is used as an expression.)~~
+
+declare @err int = @@error; if (@err > 0 and @@trancount > 0) select cast('BATCH ONLY TERMINATING' as text) else if @err > 0 select cast('BATCH TERMINATING\ txn rolledback' as text);
+if @@trancount > 0 rollback transaction;
+drop procedure ErrorHandling1;
+drop procedure ErrorHandling2;
+set xact_abort OFF;
+set implicit_transactions OFF;
+GO
+~~START~~
+text
+BATCH TERMINATING\ txn rolledback
+~~END~~
+
+--Post
+DROP TABLE t512;
+GO
+
+
+
+set xact_abort OFF;
+GO
+
+# Executing test ErrorHandling10000000
+-- Error classification is done --
+--Pre
+CREATE TABLE t512(c1 int); 
+INSERT INTO t512 VALUES(1), (5);
+GO
+~~ROW COUNT: 2~~
+
+
+
+begin try
+select 1
+--Generate the error
+SELECT * FROM t512 WHERE c1 = (SELECT c1 FROM t512);
+end try
+begin catch
+	select xact_state();
+end catch
+if @@trancount > 0 rollback transaction;
+drop procedure ErrorHandling1;
+drop procedure ErrorHandling2;
+set xact_abort OFF;
+set implicit_transactions OFF;
+GO
+~~START~~
+int
+1
+~~END~~
+
+~~START~~
+int
+~~END~~
+
+~~START~~
+smallint
+0
+~~END~~
+
+~~ERROR (Code: 3701)~~
+
+~~ERROR (Message: Cannot drop the procedure 'ErrorHandling1', because it does not exist or you do not have permission.)~~
+
+~~ERROR (Code: 3701)~~
+
+~~ERROR (Message: Cannot drop the procedure 'ErrorHandling2', because it does not exist or you do not have permission.)~~
+
+--Post
+DROP TABLE t512;
+GO
+
+

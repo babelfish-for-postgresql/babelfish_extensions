@@ -1,0 +1,15 @@
+CREATE TABLE test_cursors_fetch_next(a INT, b SMALLINT, c BIGINT, d TINYINT, e BIT);
+INSERT INTO test_cursors_fetch_next values(0, 0, 0, 0, 0)
+INSERT INTO test_cursors_fetch_next values(NULL, NULL, NULL, NULL, NULL)
+INSERT INTO test_cursors_fetch_next values(1, 2, 3, 4, 1)
+INSERT INTO test_cursors_fetch_next values(211234, 9780, 891372401, 56, 1)
+# SET escape_hatch_session_settings to ignore CURSOR_CLOSE_ON_COMMIT
+EXEC sp_babelfish_configure 'babelfishpg_tsql.escape_hatch_session_settings', 'ignore';
+cursor#!#open#!#SELECT * FROM test_cursors_fetch_next#!#TYPE_SCROLL_INSENSITIVE#!#CONCUR_READ_ONLY#!#CLOSE_CURSORS_AT_COMMIT
+cursor#!#fetch#!#afterlast
+cursor#!#fetch#!#prev
+cursor#!#fetch#!#beforefirst
+cursor#!#fetch#!#next
+cursor#!#close
+DROP TABLE test_cursors_fetch_next
+EXEC sp_babelfish_configure 'babelfishpg_tsql.escape_hatch_session_settings', 'strict';

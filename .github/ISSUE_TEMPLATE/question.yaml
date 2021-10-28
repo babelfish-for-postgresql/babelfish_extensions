@@ -1,0 +1,42 @@
+name: Babelfish for PostgreSQL Question
+description: Make a question to maintainers
+title: "[Question]: "
+labels: ["question", "untriaged"]
+assignees:
+  - amazon-auto
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for using Babelfish!
+  - type: input
+    id: contact
+    attributes:
+      label: Contact Details
+      description: How can we get in touch with you if we need more info?
+      placeholder: ex. email@example.com
+    validations:
+      required: false
+  - type: textarea
+    id: what-question
+    attributes:
+      label: What's the question?
+      description: Tell us about your doubts.
+      placeholder: Do your question as detailed as possible.
+      value: "I have a question!"
+    validations:
+      required: true
+  - type: textarea
+    id: logs
+    attributes:
+      label: Relevant log output or information
+      description: Please copy and paste any relevant log output. This will be automatically formatted into code, so no need for backticks.
+      render: shell
+  - type: checkboxes
+    id: terms
+    attributes:
+      label: Code of Conduct
+      description: By submitting this issue, you agree to follow our [Code of Conduct](https://aws.github.io/code-of-conduct-faq)
+      options:
+        - label: I agree to follow this project's Code of Conduct
+          required: true

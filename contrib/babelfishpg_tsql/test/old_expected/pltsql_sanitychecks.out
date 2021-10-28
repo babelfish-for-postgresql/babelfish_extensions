@@ -1,0 +1,22 @@
+--
+-- PLTSQL -- Sanity checks
+--           This is supposed to be the last PL/TSQL test category.
+--
+--
+-- None of these #test* local temporary tables should be visible to us.
+SELECT * FROM "#test";
+ERROR:  relation "#test" does not exist
+LINE 1: SELECT * FROM "#test";
+                      ^
+SELECT * FROM "#test2";
+ERROR:  relation "#test2" does not exist
+LINE 1: SELECT * FROM "#test2";
+                      ^
+SELECT * FROM "#test3";
+ERROR:  relation "#test3" does not exist
+LINE 1: SELECT * FROM "#test3";
+                      ^
+SELECT * FROM "#test4";
+ERROR:  relation "#test4" does not exist
+LINE 1: SELECT * FROM "#test4";
+                      ^

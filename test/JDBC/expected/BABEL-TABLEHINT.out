@@ -1,0 +1,215 @@
+create sequence t1_sec start with 1;
+go
+create table t1 (id int default nextval('t1_sec'), a int);
+go
+
+-- Only checking the syntax. 
+-- INSERT
+insert into t1 with() (a) values (1);             -- syntax error
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: syntax error near ')' at line 3 and character position 20)~~
+
+insert into t1 with((nowait)) (a) values (2);      -- syntax error
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: syntax error near '(' at line 1 and character position 20)~~
+
+insert into t1 with('nowait') (a) values (3);      -- syntax error
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: syntax error near ''nowait'' at line 1 and character position 20)~~
+
+insert into t1 with(123nowait) (a) values (4);     -- syntax error
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: syntax error near '123' at line 1 and character position 20)~~
+
+insert into t1 with($nowait) (a) values (5);       -- syntax error
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: syntax error near '$' at line 1 and character position 20)~~
+
+insert into t1 with(nowait.serializable) (a) values (6);  -- syntax error
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: syntax error near '.' at line 1 and character position 26)~~
+
+insert into t1 with(nowait) (a) values (7);
+go
+~~ROW COUNT: 1~~
+
+insert into t1 with(nowait serializable) (a) values (8);
+go
+~~ROW COUNT: 1~~
+
+insert into t1 with(nowait, serializable) (a) values (9);
+go
+~~ROW COUNT: 1~~
+
+select * from t1 order by id;
+go
+~~START~~
+int#!#int
+1#!#7
+2#!#8
+3#!#9
+~~END~~
+
+
+-- DELETE
+delete from t1 with (nowait) where a = 7;
+go
+~~ROW COUNT: 1~~
+
+delete from t1 with (nowait serializable) where a = 8;
+go
+~~ROW COUNT: 1~~
+
+delete from t1 with (nowait, serializable) where a = 9;
+go
+~~ROW COUNT: 1~~
+
+select * from t1 order by id;
+go
+~~START~~
+int#!#int
+~~END~~
+
+
+-- UPDATE
+insert into t1 (a) values (1), (2), (3);
+go
+~~ROW COUNT: 3~~
+
+select * from t1 order by id;
+go
+~~START~~
+int#!#int
+4#!#1
+5#!#2
+6#!#3
+~~END~~
+
+update t1 with (nowait)
+set a = 11 where a = 1;
+go
+~~ROW COUNT: 1~~
+
+update t1 with (nowait serializable) 
+set a = 22 where a = 2;
+go
+~~ROW COUNT: 1~~
+
+update t1 with (nowait, serializable)
+set a = 33 where a = 3;
+go
+~~ROW COUNT: 1~~
+
+select * from t1 order by id;
+go
+~~START~~
+int#!#int
+4#!#11
+5#!#22
+6#!#33
+~~END~~
+
+
+-- SELECT
+select * from t1 with (nowait) order by id;
+go
+~~START~~
+int#!#int
+4#!#11
+5#!#22
+6#!#33
+~~END~~
+
+select * from t1 with (nowait serializable) order by id;
+go
+~~START~~
+int#!#int
+4#!#11
+5#!#22
+6#!#33
+~~END~~
+
+select * from t1 with (nowait, serializable) order by id;
+go
+~~START~~
+int#!#int
+4#!#11
+5#!#22
+6#!#33
+~~END~~
+
+
+select * from t1 with (index=i1) order by id;
+go
+~~START~~
+int#!#int
+4#!#11
+5#!#22
+6#!#33
+~~END~~
+
+select * from t1 with (index(i1)) order by id;
+go
+~~START~~
+int#!#int
+4#!#11
+5#!#22
+6#!#33
+~~END~~
+
+select * from t1 with (index(i1, i2)) order by id;
+go
+~~START~~
+int#!#int
+4#!#11
+5#!#22
+6#!#33
+~~END~~
+
+select count(*) from t1 s1 with (index(i1,i2)) join t1 s2 with (index=i3) on s1.a=s2.a;
+go
+~~START~~
+int
+3
+~~END~~
+
+
+-- BABEL-1148: Use table hints w/o WITH keyword
+select * from t1 (tablock) order by id; -- success 
+go
+~~START~~
+int#!#int
+4#!#11
+5#!#22
+6#!#33
+~~END~~
+
+select * from t1 (tablock, index(i1)) order by id; -- syntax error
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: syntax error near 'index' at line 1 and character position 27)~~
+
+-- BABEL-1263: syntax "FROM [table] ([table_hint]) [alias]" should be supported
+Select * FROM t1 n1 (Nolock) WHERE (Select Count(*) FROM t1 (Nolock) n2) <= 0;
+go
+~~START~~
+int#!#int
+~~END~~
+
+
+-- Clean up
+drop table t1;
+go

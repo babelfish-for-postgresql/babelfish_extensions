@@ -1,0 +1,111 @@
+create database db1
+go
+use db1
+go
+create table t_sptables(a int)
+go
+
+-- syntax error: @table_name is required
+exec sys.sp_tables
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: procedure sys.sp_tables() does not exist)~~
+
+
+exec sp_tables @table_name = 't_sptables'
+go
+~~START~~
+text#!#varchar#!#varchar#!#text#!#varchar
+db1#!#dbo#!#t_sptables#!#TABLE#!#<NULL>
+~~END~~
+
+
+exec sp_tables @table_name = 't_sptables', @table_owner = 'dbo'
+go
+~~START~~
+text#!#varchar#!#varchar#!#text#!#varchar
+db1#!#dbo#!#t_sptables#!#TABLE#!#<NULL>
+~~END~~
+
+
+exec sp_tables @table_name = 't_sptables', @table_qualifier = 'db1'
+go
+~~START~~
+text#!#varchar#!#varchar#!#text#!#varchar
+db1#!#dbo#!#t_sptables#!#TABLE#!#<NULL>
+~~END~~
+
+
+exec sp_tables @table_name = 't_sptables', @table_type = "'TABLE'"
+go
+~~START~~
+text#!#varchar#!#varchar#!#text#!#varchar
+db1#!#dbo#!#t_sptables#!#TABLE#!#<NULL>
+~~END~~
+
+
+exec sp_tables @table_name = 't_sptables', @table_type = "'TABLE','VIEW'"
+go
+~~START~~
+text#!#varchar#!#varchar#!#text#!#varchar
+db1#!#dbo#!#t_sptables#!#TABLE#!#<NULL>
+~~END~~
+
+
+-- pattern matching is default to be ON
+exec sp_tables @table_name = 't_spt%'
+go
+~~START~~
+text#!#varchar#!#varchar#!#text#!#varchar
+db1#!#dbo#!#t_sptables#!#TABLE#!#<NULL>
+~~END~~
+
+
+-- pattern matching set to OFF
+exec sp_tables @table_name = 't_spt%', @fUsePattern = '0'
+go
+~~START~~
+text#!#varchar#!#varchar#!#text#!#varchar
+~~END~~
+
+
+exec sp_tables @table_name = 't_sptables_nonexist'
+go
+~~START~~
+text#!#varchar#!#varchar#!#text#!#varchar
+~~END~~
+
+
+-- unnamed invocation
+exec sp_tables 't_sptables', 'dbo', 'db1'
+go
+~~START~~
+text#!#varchar#!#varchar#!#text#!#varchar
+db1#!#dbo#!#t_sptables#!#TABLE#!#<NULL>
+~~END~~
+
+
+-- case-insensative invocation
+EXEC SP_TABLES @TABLE_NAME = 't_sptables', @TABLE_OWNER = 'dbo', @TABLE_QUALIFIER = 'db1'
+GO
+~~START~~
+text#!#varchar#!#varchar#!#text#!#varchar
+db1#!#dbo#!#t_sptables#!#TABLE#!#<NULL>
+~~END~~
+
+
+-- failed query in BABEL-1782
+exec [sys].sp_tables N't23',N'dbo',NULL,N'''TABLE''',@fUsePattern=1;
+go
+~~START~~
+text#!#varchar#!#varchar#!#text#!#varchar
+~~END~~
+
+
+drop table t_sptables
+go
+use master
+go
+drop database db1
+go

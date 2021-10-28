@@ -1,0 +1,48 @@
+SET blah ON;
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: unrecognized configuration parameter: blah)~~
+
+
+SET blahblah oh_yes;
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: unrecognized configuration parameter: blahblah)~~
+
+
+SET auto_commit_batch on; -- existing bbf GUC
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: unrecognized configuration parameter: auto_commit_batch)~~
+
+
+-- should fail even if escape_hatch_session_settings = 'ignore'
+EXEC sp_babelfish_configure 'babelfishpg_tsql.escape_hatch_session_settings', 'ignore';
+GO
+
+SET blah ON;
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: unrecognized configuration parameter: blah)~~
+
+
+SET blahblah oh_yes;
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: unrecognized configuration parameter: blahblah)~~
+
+
+SET auto_commit_batch on; -- existing bbf GUC
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: unrecognized configuration parameter: auto_commit_batch)~~
+
+
+EXEC sp_babelfish_configure 'babelfishpg_tsql.escape_hatch_session_settings', 'strict';
+GO

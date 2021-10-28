@@ -1,0 +1,28 @@
+/*
+ * All objects created by the included files will be created in sys
+ */
+
+SELECT set_config('search_path', 'sys, '||current_setting('search_path'), false);
+
+#include "datatype.sql"
+#include "datatype_string_operators.sql"
+#include "sys.sql"
+#include "sys_languages.sql"
+#include "sys_function_helpers.sql"
+#include "sys_functions.sql"
+#include "sys_cast.sql"
+#include "coerce.sql"
+#include "sys_views.sql"
+#include "collation.sql"
+#include "sys_procedures.sql"
+#include "ownership.sql"
+#include "import_export_compatibility.sql"
+#include "babelfishpg_tsql.sql"
+
+/*
+ * Remove schema sys from search_path otherwise it causes BABEL-257 for some reason
+ * Notice schema sys will be automatically added to implicitly-searched namespaces by
+ * recomputeNamespacePath() in tsql dialect
+ */
+SELECT set_config('search_path', trim(leading 'sys, ' from current_setting('search_path')), false);
+RESET client_min_messages;

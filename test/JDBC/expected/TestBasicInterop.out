@@ -1,0 +1,188 @@
+-- tsql
+CREATE PROCEDURE tsql_interop_proc1
+AS
+SELECT CAST('$1.0909' AS money);
+EXEC [public].pg_interop_proc2;
+BEGIN TRANSACTION;
+COMMIT;
+GO
+-- psql
+CREATE PROCEDURE pg_interop_proc1()
+AS
+$$
+BEGIN
+    CALL master_dbo.tsql_interop_proc1();
+END
+$$ LANGUAGE PLPGSQL;
+GO
+CREATE PROCEDURE pg_interop_proc2()
+AS
+$$
+BEGIN
+    COMMIT;
+END
+$$ LANGUAGE PLPGSQL;
+GO
+
+-- tsql
+EXEC [public].pg_interop_proc1
+GO
+~~START~~
+money
+1.0909
+~~END~~
+
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: invalid transaction command)~~
+
+-- psql
+CALL pg_interop_proc1()
+GO
+~~ERROR (Code: 0)~~
+
+~~ERROR (Message: ERROR: invalid transaction command
+  Where: PL/tsql function master_dbo.tsql_interop_proc1() line 3 at SQL statement
+SQL statement "CALL master_dbo.tsql_interop_proc1()"
+PL/pgSQL function pg_interop_proc1() line 3 at CALL
+    Server SQLState: 2D000)~~
+
+DROP PROCEDURE pg_interop_proc1
+GO
+DROP PROCEDURE pg_interop_proc2
+GO
+
+-- tsql
+DROP PROCEDURE tsql_interop_proc1
+GO
+
+-- tsql
+CREATE PROCEDURE tsql_interop_proc1
+AS
+EXEC [public].pg_interop_proc1;
+GO
+-- psql
+CREATE PROCEDURE pg_interop_proc1()
+AS
+$$
+BEGIN
+    CALL master_dbo.tsql_interop_proc2();
+END
+$$ LANGUAGE PLPGSQL;
+GO
+-- tsql
+CREATE PROCEDURE tsql_interop_proc2
+AS
+SELECT 1/0;
+GO
+
+-- tsql
+EXEC tsql_interop_proc1
+GO
+~~ERROR (Code: 8134)~~
+
+~~ERROR (Message: division by zero)~~
+
+-- psql
+CALL master_dbo.tsql_interop_proc1()
+GO
+~~ERROR (Code: 0)~~
+
+~~ERROR (Message: ERROR: division by zero
+  Where: SQL statement "SELECT 1/0"
+PL/tsql function master_dbo.tsql_interop_proc2() line 1 at SQL statement
+SQL statement "CALL master_dbo.tsql_interop_proc2()"
+PL/pgSQL function pg_interop_proc1() line 3 at CALL
+SQL statement "EXEC [public].pg_interop_proc1"
+PL/tsql function master_dbo.tsql_interop_proc1() line 1 at EXEC
+    Server SQLState: 22012)~~
+
+
+-- tsql
+CREATE PROCEDURE tsql_interop_proc_sp_exec
+AS
+DECLARE @SQLString NVARCHAR(100);
+SET @SQLString = N'commit;';
+EXEC sp_executesql @SQLString;
+GO
+
+-- psql
+CREATE PROCEDURE pg_interop_proc_sp_exec()
+AS
+$$
+BEGIN
+	CALL master_dbo.tsql_interop_proc_sp_exec();
+END
+$$ LANGUAGE PLPGSQL;
+GO
+
+-- tsql
+BEGIN TRAN;
+EXEC [public].pg_interop_proc_sp_exec
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: cannot commit while a subtransaction is active)~~
+
+
+-- tsql
+SELECT CONVERT(datetime, '2021-12-30')
+GO
+~~START~~
+datetime
+2021-12-30 00:00:00.0
+~~END~~
+
+
+-- tsql
+SELECT DATETIME2('9999-99-99');
+DROP PROCEDURE  wrongProcedure;
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: date/time field value out of range: "9999-99-99")~~
+
+
+--tsql
+SELECT CONVERT(varchar(50), GETDATE(), 200);
+GO
+~~START~~
+varchar
+<NULL>
+~~END~~
+
+
+--tsql
+select set_config('babelfishpg_tsql.auto_commit_batch', 'off', false);
+CREATE TABLE batch_table(c1 int);
+GO
+~~START~~
+text
+off
+~~END~~
+
+
+--psql
+SELECT * FROM batch_table;
+DROP TABLE batch_table;
+GO
+~~START~~
+int
+~~END~~
+
+
+-- psql
+DROP PROCEDURE pg_interop_proc1
+GO
+
+-- tsql
+DROP PROCEDURE tsql_interop_proc1
+GO
+DROP PROCEDURE tsql_interop_proc2
+GO
+DROP PROCEDURE tsql_interop_proc_sp_exec
+GO
+
+-- psql
+DROP PROCEDURE pg_interop_proc_sp_exec
+GO

@@ -1,0 +1,39 @@
+SELECT set_config('babelfishpg_tsql.escape_hatch_for_replication', 'ignore', 'false')
+GO
+~~START~~
+text
+ignore
+~~END~~
+
+
+-- Test 'NOT FOR REPLICATION' syntax
+create table testing1(col nvarchar(60));
+GO
+create trigger notify on testing1 after insert
+NOT FOR REPLICATION
+as
+begin
+  PRINT 'trigger invoked'
+end
+;
+GO
+
+insert into testing1 (col) select N'Muffler';
+GO
+~~ROW COUNT: 1~~
+
+
+drop trigger notify;
+GO
+
+-- clean up
+drop table testing1;
+GO
+
+SELECT set_config('babelfishpg_tsql.escape_hatch_for_replication', 'strict', 'false')
+GO
+~~START~~
+text
+strict
+~~END~~
+

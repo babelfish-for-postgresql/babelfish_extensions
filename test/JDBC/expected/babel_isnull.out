@@ -1,0 +1,215 @@
+-- tsql
+CREATE TABLE test_numeric (
+    num1 int, 
+    num2 numeric
+);
+INSERT INTO test_numeric(num1, num2) 
+VALUES
+    (10, NULL),
+    (20, 2000),
+    (30, 3000),
+    (NULL, 4000),
+    (50, NULL);
+GO
+~~ROW COUNT: 5~~
+
+
+-- psql     currentSchema=master_dbo,public
+SELECT * FROM test_numeric;
+GO
+~~START~~
+int4#!#numeric
+10#!#<NULL>
+20#!#2000
+30#!#3000
+<NULL>#!#4000
+50#!#<NULL>
+~~END~~
+
+
+SELECT ISNULL(SUM(num1 - ISNULL(num2, 0)), 0)
+FROM test_numeric
+GO
+~~ERROR (Code: 0)~~
+
+~~ERROR (Message: ERROR: function isnull(numeric, integer) does not exist
+  Hint: No function matches the given name and argument types. You might need to add explicit type casts.
+  Position: 26
+    Server SQLState: 42883)~~
+
+
+-- tsql
+-- Prove that a user may replace null values with a specified value using ISNULL
+SELECT ISNULL(SUM(num1 - ISNULL(num2, 0)), 0)
+FROM test_numeric
+GO
+~~START~~
+numeric
+-4890
+~~END~~
+
+
+DROP TABLE test_numeric
+GO
+
+-- Test cases with timestamps and sub-queries inside ISNULL
+CREATE TABLE test_timestamp (
+    serial_no numeric,
+    ts datetime2, 
+)
+GO
+
+INSERT INTO test_timestamp(serial_no, ts) 
+VALUES
+    (1, NULL),
+    (2, '2020-06-22 00:10:00'),
+    (3, '2020-07-23 00:10:00'),
+    (4, '2020-08-24 00:10:00'),
+    (5, NULL),
+    (6, '2020-09-25 00:10:00')
+GO
+~~ROW COUNT: 6~~
+
+
+SELECT * FROM test_timestamp
+GO
+~~START~~
+numeric#!#datetime2
+1#!#<NULL>
+2#!#2020-06-22 00:10:00.000000
+3#!#2020-07-23 00:10:00.000000
+4#!#2020-08-24 00:10:00.000000
+5#!#<NULL>
+6#!#2020-09-25 00:10:00.000000
+~~END~~
+
+
+SELECT ISNULL(ts, '2021-01-01 00:00:00')
+FROM test_timestamp
+GO
+~~START~~
+datetime2
+2021-01-01 00:00:00.000000
+2020-06-22 00:10:00.000000
+2020-07-23 00:10:00.000000
+2020-08-24 00:10:00.000000
+2021-01-01 00:00:00.000000
+2020-09-25 00:10:00.000000
+~~END~~
+
+
+CREATE TABLE default_time (
+    ts datetime2
+)
+GO
+
+INSERT INTO default_time(ts) VALUES('1970-01-01 00:00:00')
+GO
+~~ROW COUNT: 1~~
+
+
+SELECT ISNULL(ts, (SELECT ts FROM default_time))
+FROM test_timestamp
+GO
+~~START~~
+datetime2
+1970-01-01 00:00:00.000000
+2020-06-22 00:10:00.000000
+2020-07-23 00:10:00.000000
+2020-08-24 00:10:00.000000
+1970-01-01 00:00:00.000000
+2020-09-25 00:10:00.000000
+~~END~~
+
+
+DROP TABLE test_timestamp
+GO
+DROP TABLE default_time
+GO
+
+-- Test cases with characters and casts
+CREATE TABLE test_char (
+    name varchar(20),
+    employee_type numeric,
+    age numeric 
+)
+GO
+
+INSERT INTO test_char(name, employee_type, age) 
+VALUES
+    ('John', 1, 45),
+    (NULL, 0, 21),
+    ('Jake', 3, 33),
+    ('Jack', 1, 64),
+    ('Jane', NULL, 51)
+GO
+~~ROW COUNT: 5~~
+
+
+SELECT * FROM test_char
+GO
+~~START~~
+varchar#!#numeric#!#numeric
+John#!#1#!#45
+<NULL>#!#0#!#21
+Jake#!#3#!#33
+Jack#!#1#!#64
+Jane#!#<NULL>#!#51
+~~END~~
+
+
+SELECT ISNULL(name, 'Unknown'), ISNULL(employee_type, 'N/A'), age
+FROM test_char
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: invalid input syntax for type numeric: "N/A")~~
+
+
+DROP TABLE test_char
+GO
+
+-- Test cases for incorrect number of arguments
+CREATE TABLE test_args (
+    word char(10)
+)
+GO
+INSERT INTO test_args(word)
+VALUES
+    ('hello'),
+    (NULL),
+    ('goodbye')
+GO
+~~ROW COUNT: 3~~
+
+
+SELECT ISNULL() from test_args
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: syntax error at or near ")")~~
+
+SELECT ISNULL(word) FROM test_args
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: syntax error at or near ")")~~
+
+SELECT ISNULL(word, 'no', 'yes') FROM test_args
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: syntax error at or near ",")~~
+
+
+-- Test case for varbinary
+SELECT ISNULL(null, CAST(0xfe AS VARBINARY))
+GO
+~~START~~
+varbinary
+FE
+~~END~~
+
+
+DROP TABLE test_args
+GO

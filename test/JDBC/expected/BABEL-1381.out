@@ -1,0 +1,149 @@
+CREATE PROCEDURE p_babel_1381_tinyint (@a tinyint OUTPUT) AS
+BEGIN
+  SET @a=42;
+  select @a as a;
+END;
+GO
+
+EXEC p_babel_1381_tinyint 1;
+GO
+~~START~~
+tinyint
+42
+~~END~~
+
+
+CREATE PROCEDURE p_babel_1381_nchar (@a nchar OUTPUT) AS
+BEGIN
+  SET @a='helloworld';
+  select @a as a;
+END;
+GO
+
+EXEC p_babel_1381_nchar 'a';
+GO
+~~START~~
+nchar
+h
+~~END~~
+
+
+CREATE PROCEDURE p_babel_1381_nchar_10 (@a nchar(10) OUTPUT) AS
+BEGIN
+  SET @a='helloworld';
+  select @a as a;
+END;
+GO
+
+EXEC p_babel_1381_nchar_10 'a';
+GO
+~~START~~
+nchar
+helloworld
+~~END~~
+
+
+CREATE PROCEDURE p_babel_1381_varchar (@a varchar OUTPUT) AS
+BEGIN
+  SET @a='helloworld';
+  select @a as a;
+END;
+GO
+
+EXEC p_babel_1381_varchar 'a';
+GO
+~~START~~
+varchar
+h
+~~END~~
+
+
+CREATE PROCEDURE p_babel_1381_varchar_10 (@a varchar(10) OUTPUT) AS
+BEGIN
+  SET @a='helloworld';
+  select @a as a;
+END;
+GO
+
+EXEC p_babel_1381_varchar_10 'a';
+GO
+~~START~~
+varchar
+helloworld
+~~END~~
+
+
+CREATE PROCEDURE p_babel_1381_nvarchar (@a nvarchar OUTPUT) AS
+BEGIN
+  SET @a='helloworld';
+  select @a as a;
+END;
+GO
+
+EXEC p_babel_1381_varchar 'a';
+GO
+~~START~~
+varchar
+h
+~~END~~
+
+
+CREATE PROCEDURE p_babel_1381_nvarchar_10 (@a nvarchar(10) OUTPUT) AS
+BEGIN
+  SET @a='helloworld';
+  select @a as a;
+END;
+GO
+
+EXEC p_babel_1381_nvarchar_10 'a';
+GO
+~~START~~
+nvarchar
+helloworld
+~~END~~
+
+
+CREATE PROCEDURE p_babel_1381_binary (@a binary OUTPUT) AS
+BEGIN
+  SET @a=0xabcdef;
+  select @a as a;
+END;
+GO
+
+EXEC p_babel_1381_binary 0x1;
+GO
+~~START~~
+binary
+AB
+~~END~~
+
+
+CREATE PROCEDURE p_babel_1381_varbinary (@a varbinary OUTPUT) AS
+BEGIN
+  SET @a=0xabcdef;
+  select @a as a;
+END;
+GO
+
+EXEC p_babel_1381_varbinary 0x1;
+GO
+~~START~~
+varbinary
+AB
+~~END~~
+
+
+CREATE PROCEDURE p_babel_1381_varbinary_10 (@a varbinary(10) OUTPUT) AS
+BEGIN
+  SET @a=0xabcdef;
+  select @a as a;
+END;
+GO
+
+EXEC p_babel_1381_varbinary_10 0x1;
+GO
+~~START~~
+varbinary
+ABCDEF
+~~END~~
+

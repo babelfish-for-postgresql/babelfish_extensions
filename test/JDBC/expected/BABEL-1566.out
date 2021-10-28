@@ -1,0 +1,52 @@
+-- Test CHECKSUM function works on string input
+select CHECKSUM('abcd');
+go
+~~START~~
+int
+-486772404
+~~END~~
+
+
+-- Test CHECKSUM function works on scalar input
+select CHECKSUM(123);
+go
+~~START~~
+int
+539801954
+~~END~~
+
+
+select CHECKSUM(10.12345);
+go
+~~START~~
+int
+819228203
+~~END~~
+
+
+-- Test CHECKSUM works on table column
+create table t1 (a int, b varchar(10));
+insert into t1 values (12345, 'abcd');
+insert into t1 values (12345, 'abcd');
+insert into t1 values (23456, 'bcd');
+go
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+
+select CHECKSUM(a), CHECKSUM(b) from t1;
+go
+~~START~~
+int#!#int
+-2105750770#!#-486772404
+-2105750770#!#-486772404
+-1379210184#!#-726154620
+~~END~~
+
+
+-- clean up
+drop table t1;
+go

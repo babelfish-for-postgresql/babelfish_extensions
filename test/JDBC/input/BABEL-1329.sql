@@ -1,0 +1,26 @@
+SELECT HASHBYTES('sha2_256', 'abc')
+GO
+
+SELECT HASHBYTES('sha256', 'abc')
+GO
+
+SELECT HASHBYTES('sha512', 'abc')
+GO
+
+SELECT HASHBYTES('', '')
+GO
+
+SELECT HASHBYTES('md5', 'abc')
+GO
+
+SELECT HASHBYTES('sha2_512', 'abc')
+GO
+
+SELECT HASHBYTES('md2', 'abc')
+GO
+
+SELECT HASHBYTES('md4', 'abc')
+GO
+
+SELECT HASHBYTES('asdf', 'asdf')
+GO

@@ -1,0 +1,37 @@
+
+create table t_2419 (a varchar(10));
+insert into t_2419 values ('correct');
+select a 'alias_longer_than_63_0abcdefgij1abcdefgij2abcdefgij3abcdefgij4abcdefgij5abcdefgij6abcdefgij7abcdefgij8abcdefghij9abcdefghij'
+from t_2419
+order by alias_longer_than_63_0abcdefgij1abcdefgij2abcdefgij3abcdefgij4abcdefgij5abcdefgij6abcdefgij7abcdefgij8abcdefghij9abcdefghij
+go
+~~ROW COUNT: 1~~
+
+~~START~~
+varchar
+correct
+~~END~~
+
+
+select a 'alias_longer_than_63_0abcdefgij1abcdefgij2abcdefgij3abcdefgij4abcdefgij5abcdefgij6abcdefgij7abcdefgij8abcdefghij9abcdefghij'
+from t_2419
+order by [alias_longer_than_63_0abcdefgij1abcdefgij2abcdefgij3abcdefgij4abcdefgij5abcdefgij6abcdefgij7abcdefgij8abcdefghij9abcdefghij]
+go
+~~START~~
+varchar
+correct
+~~END~~
+
+
+select a 'alias_longer_than_63_0abcdefgij1abcdefgij2abcdefgij3abcdefgij4abcdefgij5abcdefgij6abcdefgij7abcdefgij8abcdefghij9abcdefghij'
+from t_2419
+order by [ALIAS_longer_than_63_0abcdefgij1abcdefgij2abcdefgij3abcdefgij4abcdefgij5abcdefgij6abcdefgij7abcdefgij8abcdefghij9abcdefghij]
+go
+~~START~~
+varchar
+correct
+~~END~~
+
+
+drop table t_2419;
+go

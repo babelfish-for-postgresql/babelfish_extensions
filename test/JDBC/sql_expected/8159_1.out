@@ -1,0 +1,61 @@
+
+-- simple batch start
+GO
+
+
+CREATE VIEW v8159(c1, c2) 
+AS 
+SELECT 
+ 'a' AS c1
+GO
+~~ERROR (Code: 8159)~~
+
+~~ERROR (Message: 'v8159' has fewer columns than were specified in the column list.)~~
+
+DROP VIEW v8159
+GO
+~~ERROR (Code: 3701)~~
+
+~~ERROR (Message: Cannot drop the view 'v8159', because it does not exist or you do not have permission.)~~
+
+
+SET XACT_ABORT ON;
+GO
+
+begin transaction
+GO
+GO
+
+
+CREATE VIEW v8159(c1, c2) 
+AS 
+SELECT 
+ 'a' AS c1
+GO
+~~ERROR (Code: 8159)~~
+
+~~ERROR (Message: 'v8159' has fewer columns than were specified in the column list.)~~
+
+
+if (@@trancount > 0) select cast('Does not respect xact_abort flag' as text) else select cast('Respects xact_abort flag' as text)
+GO
+~~START~~
+text
+Respects xact_abort flag
+~~END~~
+
+
+if (@@trancount > 0) rollback tran
+GO
+
+DROP VIEW v8159
+GO
+~~ERROR (Code: 3701)~~
+
+~~ERROR (Message: Cannot drop the view 'v8159', because it does not exist or you do not have permission.)~~
+
+
+SET XACT_ABORT OFF;
+GO
+
+

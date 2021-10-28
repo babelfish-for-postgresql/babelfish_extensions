@@ -1,0 +1,20 @@
+ set_config 
+------------
+ tsql
+(1 row)
+
+psql:../sql/top_percent_keywords.sql:4: ERROR:  TOP # PERCENT is not yet supported
+LINE 1: SELECT TOP 5 PERCENT relpages FROM pg_class;
+               ^
+psql:../sql/top_percent_keywords.sql:5: ERROR:  syntax error at or near "percent"
+LINE 1: CREATE TABLE percent(top int);
+                     ^
+ set_config 
+------------
+ postgres
+(1 row)
+
+psql:../sql/top_percent_keywords.sql:10: ERROR:  syntax error at or near "5"
+LINE 1: SELECT TOP 5 PERCENT relpages FROM pg_class;
+                   ^
+CREATE TABLE

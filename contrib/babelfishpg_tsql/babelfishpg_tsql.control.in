@@ -1,0 +1,7 @@
+# babelfishpg_tsql extension
+comment = 'Transact SQL compatibility'
+default_version = '@EXTVERSION@'
+module_pathname = '@MODULEPATH@'
+relocatable = true
+superuser = true
+requires = 'uuid-ossp, babelfishpg_common'

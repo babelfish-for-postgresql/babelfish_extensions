@@ -1,0 +1,22 @@
+CREATE TABLE BABEL_1502_t(
+                Id nvarchar(100) NOT NULL,
+                Gastly nvarchar(100) NULL,
+                FawfulId nvarchar(100) NOT NULL,
+                SwankyId nvarchar(100) NOT NULL,
+                WrinklyId nvarchar(100) NOT NULL,
+                Sandshrew int NULL,
+                Charmeleon int NULL,
+                Omastar nvarchar(100) NULL,
+                KamekId nvarchar(100) NOT NULL,
+                ThwompId nvarchar(100) NOT NULL,
+                Uuid uniqueidentifier NOT NULL,
+                UpdatedAt datetime NOT NULL,
+                ValidatedAt datetime NULL,
+                PublishedAt datetime NULL,
+                ImportedAt datetime NULL,
+                DistributedAt datetime NULL,
+                Mankey int NOT NULL,
+                FuzzyId nvarchar(100) NULL,
+                UpdatedBy varchar(200) NULL,
+CONSTRAINT PK_Sylux PRIMARY KEY (Id)
+go

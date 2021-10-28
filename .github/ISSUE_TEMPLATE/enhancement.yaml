@@ -1,0 +1,62 @@
+name: Babelfish for PostgreSQL Extensions Feature Request Form
+description: Propose an enhancement for Babelfish for PostgreSQL Extensions
+title: "[Enhancement]: "
+labels: ["enhancement", "untriaged"]
+assignees:
+  - amazon-auto
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for taking the time to fill out this bug report!
+  - type: input
+    id: contact
+    attributes:
+      label: Contact Details
+      description: How can we get in touch with you if we need more info?
+      placeholder: ex. email@example.com
+    validations:
+      required: false
+  - type: textarea
+    id: what-intends
+    attributes:
+      label: What this feature/enhancement tries to solve?
+      description: Be explanatory, as detailed as you can.
+      placeholder: Tell us what you have in mind!
+      value: "This is my feature request!"
+    validations:
+      required: true
+  - type: textarea
+    id: brief-desc-implementation
+    attributes:
+      label: If want to provide us a more details about how to implement.
+      description: Share with us if you have more details about the implementation.
+    validations:
+      required: false 
+  - type: dropdown
+    id: version
+    attributes:
+      label: Version
+      description: What version of our software are you running?
+      options:
+        - babelfishpg_tsql (Default)
+        - babelfishpg_tds
+        - babelfishpg_money
+        - babelfishpg_common
+        - fixeddecimal
+    validations:
+      required: true
+  - type: textarea
+    id: docs
+    attributes:
+      label: Relevant documentation
+      description: Please attach relevant documentation.
+      render: shell
+  - type: checkboxes
+    id: terms
+    attributes:
+      label: Code of Conduct
+      description: By submitting this issue, you agree to follow our [Code of Conduct](https://aws.github.io/code-of-conduct-faq)
+      options:
+        - label: I agree to follow this project's Code of Conduct
+          required: true

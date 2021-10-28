@@ -1,0 +1,60 @@
+CREATE TABLE CHAR_dt (a CHAR(24), b NCHAR(24))
+prepst#!# INSERT INTO CHAR_dt(a, b) values(?, ?) #!#CHAR|-|a|-|Dipesh#!#NCHAR|-|b|-|Dhameliya
+~~ROW COUNT: 1~~
+
+prepst#!#exec#!#CHAR|-|a|-| Dipesh #!#NCHAR|-|b|-| Dhameliya
+~~ROW COUNT: 1~~
+
+prepst#!#exec#!#CHAR|-|a|-|   D#!#NCHAR|-|b|-|   🤣😃
+~~ROW COUNT: 1~~
+
+prepst#!#exec#!#CHAR|-|a|-| #!#NCHAR|-|b|-| 
+~~ROW COUNT: 1~~
+
+prepst#!#exec#!#CHAR|-|a|-| #!#NCHAR|-|b|-|😊😋😎😍😅😆
+~~ROW COUNT: 1~~
+
+prepst#!#exec#!#CHAR|-|a|-|<NULL>#!#NCHAR|-|b|-|<NULL>
+~~ROW COUNT: 1~~
+
+SELECT * FROM CHAR_dt;
+~~START~~
+char#!#nchar
+Dipesh                  #!#Dhameliya               
+ Dipesh                 #!# Dhameliya              
+   D                    #!#   🤣😃                 
+                        #!#                        
+                        #!#😊😋😎😍😅😆            
+<NULL>#!#<NULL>
+~~END~~
+
+INSERT INTO CHAR_dt(a,b) values('Dipesh','Dhameliya')
+~~ROW COUNT: 1~~
+
+INSERT INTO CHAR_dt(a,b) values(' Dipesh',' Dhameliya')
+~~ROW COUNT: 1~~
+
+#INSERT INTO CHAR_dt(a,b) values('   D',N'   🤣😃')
+INSERT INTO CHAR_dt(a,b) values(' ',' ')
+~~ROW COUNT: 1~~
+
+#INSERT INTO CHAR_dt(a,b) values(' ',N'😊😋😎😍😅😆')
+INSERT INTO CHAR_dt(a,b) values(NULL,NULL)
+~~ROW COUNT: 1~~
+
+SELECT * FROM CHAR_dt;
+~~START~~
+char#!#nchar
+Dipesh                  #!#Dhameliya               
+ Dipesh                 #!# Dhameliya              
+   D                    #!#   🤣😃                 
+                        #!#                        
+                        #!#😊😋😎😍😅😆            
+<NULL>#!#<NULL>
+Dipesh                  #!#Dhameliya               
+ Dipesh                 #!# Dhameliya              
+                        #!#                        
+<NULL>#!#<NULL>
+~~END~~
+
+DROP TABLE CHAR_dt;

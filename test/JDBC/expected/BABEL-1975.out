@@ -1,0 +1,73 @@
+EXEC sp_babelfish_configure 'babelfishpg_tsql.escape_hatch_session_settings', 'strict';
+GO
+
+DROP TABLE if EXISTS t1;
+CREATE TABLE t1 (c1 int);
+INSERT INTO t1 values (1);
+INSERT INTO t1 values (2);
+INSERT INTO t1 values (NULL);
+GO
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+
+SELECT * FROM t1;
+SELECT @@rowcount;
+GO
+~~START~~
+int
+1
+2
+<NULL>
+~~END~~
+
+~~START~~
+int
+3
+~~END~~
+
+
+SET ROWCOUNT 0;
+SELECT @@rowcount;
+GO
+~~START~~
+int
+0
+~~END~~
+
+
+SELECT * FROM t1;
+SELECT @@rowcount;
+GO
+~~START~~
+int
+1
+2
+<NULL>
+~~END~~
+
+~~START~~
+int
+3
+~~END~~
+
+
+-- test invalid settings
+SET ROWCOUNT 1;
+SELECT @@rowcount;
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Settings other than 0 are not allowed for option ROWCOUNT. please use babelfishpg_tsql.escape_hatch_session_settings to ignore)~~
+
+
+-- clean up
+DROP TABLE t1;
+GO
+
+-- reset to default
+EXEC sp_babelfish_configure 'babelfishpg_tsql.escape_hatch_session_settings', 'ignore';
+GO

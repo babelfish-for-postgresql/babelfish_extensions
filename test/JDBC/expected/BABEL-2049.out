@@ -1,0 +1,119 @@
+create table t_babel_2049 (a int, b int);
+insert into t_babel_2049 values (10, 1);
+go
+~~ROW COUNT: 1~~
+
+
+declare @v int=1;
+set @v+=10
+select @v
+go
+~~START~~
+int
+11
+~~END~~
+
+
+declare @v int=11;
+set @v-=10;
+select @v;
+go
+~~START~~
+int
+1
+~~END~~
+
+
+declare @v int=2;
+set @v*=10;
+select @v;
+go
+~~START~~
+int
+20
+~~END~~
+
+
+declare @v int=20;
+set @v/=10;
+select @v;
+go
+~~START~~
+int
+2
+~~END~~
+
+
+declare @v int=24;
+set @v%=10;
+select @v;
+go
+~~START~~
+int
+4
+~~END~~
+
+
+declare @v int=63;
+set @v&=10;
+select @v;
+go
+~~START~~
+int
+10
+~~END~~
+
+
+declare @v int=7;
+set @v|=10;
+select @v;
+go
+~~START~~
+int
+15
+~~END~~
+
+
+declare @v int=7;
+set @v^=10;
+select @v;
+go
+~~START~~
+int
+13
+~~END~~
+
+
+declare @a int=-10;
+declare @v int=1;
+set @v+=abs(@a)
+select @v
+go
+~~START~~
+int
+11
+~~END~~
+
+
+declare @v int=1;
+set @v+=-10;
+select @v
+go
+~~START~~
+int
+-9
+~~END~~
+
+
+declare @v int=1;
+set @v+=+10;
+select @v
+go
+~~START~~
+int
+11
+~~END~~
+
+
+drop table t_babel_2049;
+go

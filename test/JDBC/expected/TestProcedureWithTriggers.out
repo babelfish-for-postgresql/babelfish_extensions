@@ -1,0 +1,1402 @@
+-- psql     currentSchema=master_dbo,public
+CREATE PROCEDURE psql_interop_proc1()
+AS
+$$
+BEGIN
+    CREATE TABLE triggerTab1(c1 int, c2 varchar(30));
+    CREATE TABLE triggerTab2(c1 int);
+    INSERT INTO triggerTab1 VALUES(1, 'first');
+    INSERT INTO triggerTab2 VALUES(1);
+END
+$$ LANGUAGE PLPGSQL;
+GO
+
+-- tsql
+EXEC psql_interop_proc1
+GO
+
+CREATE TRIGGER txnTrig1 ON triggerTab1 AFTER INSERT AS
+INSERT INTO triggerTab2 VALUES(4);
+UPDATE triggerTab2 set c1 = c1+2;
+GO
+
+CREATE TRIGGER txnTrig2 ON triggerTab2 FOR UPDATE AS
+INSERT INTO triggerTab2 VALUES(2);
+UPDATE triggerTab1 set c1 = c1+2;
+DELETE FROM triggerTab2;
+INSERT INTO triggerTab2 values(2);
+GO
+
+-- psql     currentSchema=master_dbo,public
+CREATE PROCEDURE psql_interop_proc2()
+AS
+$$
+BEGIN
+    INSERT INTO triggerTab1 VALUES(2, 'second');
+    INSERT INTO triggerTab1 VALUES(3, 'third');
+END
+$$ LANGUAGE PLPGSQL;
+GO
+
+-- tsql
+CREATE PROCEDURE tsql_interop_proc
+AS
+INSERT INTO triggerTab1 VALUES(2, 'second');
+INSERT INTO triggerTab1 VALUES(3, 'third');
+GO
+
+-- tsql
+EXEC tsql_interop_proc
+GO
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 2~~
+
+~~ROW COUNT: 3~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 2~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 3~~
+
+~~ROW COUNT: 3~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 2~~
+
+~~ROW COUNT: 1~~
+
+SELECT * from triggerTab1 ORDER BY c1;
+GO
+~~START~~
+int#!#varchar
+5#!#first
+5#!#third
+6#!#second
+~~END~~
+
+
+EXEC psql_interop_proc2
+GO
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 4~~
+
+~~ROW COUNT: 3~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 2~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 5~~
+
+~~ROW COUNT: 3~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 2~~
+
+SELECT * from triggerTab2 ORDER BY c1;
+GO
+~~START~~
+int
+2
+~~END~~
+
+
+-- psql     currentSchema=master_dbo,public
+CALL tsql_interop_proc();
+GO
+SELECT * from triggerTab1 ORDER BY c1;
+GO
+~~START~~
+int4#!#varchar
+5#!#third
+6#!#second
+9#!#third
+10#!#second
+13#!#first
+13#!#third
+14#!#second
+~~END~~
+
+
+CALL psql_interop_proc2();
+GO
+SELECT * from triggerTab2 ORDER BY c1;
+GO
+~~START~~
+int4
+2
+~~END~~
+
+
+-- tsql
+BEGIN TRANSACTION
+GO
+EXEC tsql_interop_proc
+GO
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 10~~
+
+~~ROW COUNT: 3~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 2~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 11~~
+
+~~ROW COUNT: 3~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 2~~
+
+~~ROW COUNT: 1~~
+
+SELECT * from triggerTab1 ORDER BY c1;
+GO
+~~START~~
+int#!#varchar
+5#!#third
+6#!#second
+9#!#third
+10#!#second
+13#!#third
+14#!#second
+17#!#third
+18#!#second
+21#!#first
+21#!#third
+22#!#second
+~~END~~
+
+COMMIT
+GO
+
+-- psql     currentSchema=master_dbo,public
+BEGIN TRANSACTION
+GO
+CALL tsql_interop_proc();
+GO
+SELECT * from triggerTab1 ORDER BY c1;
+GO
+~~START~~
+int4#!#varchar
+5#!#third
+6#!#second
+9#!#third
+10#!#second
+13#!#third
+14#!#second
+17#!#third
+18#!#second
+21#!#third
+22#!#second
+25#!#first
+25#!#third
+26#!#second
+~~END~~
+
+ROLLBACK
+GO
+
+-- tsql
+BEGIN TRANSACTION
+GO
+EXEC psql_interop_proc2
+GO
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 12~~
+
+~~ROW COUNT: 3~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 2~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 13~~
+
+~~ROW COUNT: 3~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 2~~
+
+SELECT * from triggerTab2 ORDER BY c1;
+GO
+~~START~~
+int
+2
+~~END~~
+
+ROLLBACK
+GO
+
+-- psql     currentSchema=master_dbo,public
+BEGIN TRANSACTION
+GO
+CALL psql_interop_proc2();
+GO
+SELECT * from triggerTab2 ORDER BY c1;
+GO
+~~START~~
+int4
+2
+~~END~~
+
+COMMIT
+GO
+
+-- tsql
+BEGIN TRANSACTION
+GO
+SAVE TRANSACTION sp1;
+GO
+EXEC psql_interop_proc2
+GO
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 14~~
+
+~~ROW COUNT: 3~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 2~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 15~~
+
+~~ROW COUNT: 3~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 2~~
+
+ROLLBACK TRANSACTION sp1;
+GO
+SELECT * from triggerTab1 ORDER BY c1;
+GO
+~~START~~
+int#!#varchar
+5#!#third
+6#!#second
+9#!#third
+10#!#second
+13#!#third
+14#!#second
+17#!#third
+18#!#second
+21#!#third
+22#!#second
+25#!#first
+25#!#third
+26#!#second
+~~END~~
+
+COMMIT
+GO
+
+-- tsql
+BEGIN TRANSACTION
+GO
+SAVE TRANSACTION sp1;
+GO
+EXEC tsql_interop_proc
+GO
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 14~~
+
+~~ROW COUNT: 3~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 2~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 15~~
+
+~~ROW COUNT: 3~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 2~~
+
+~~ROW COUNT: 1~~
+
+ROLLBACK TRANSACTION sp1;
+GO
+SELECT * from triggerTab2 ORDER BY c1;
+GO
+~~START~~
+int
+2
+~~END~~
+
+COMMIT
+GO
+
+-- psql     currentSchema=master_dbo,public
+BEGIN TRANSACTION
+GO
+SAVEPOINT sp1;
+GO
+CALL tsql_interop_proc();
+GO
+ROLLBACK TO sp1;
+GO
+SELECT * from triggerTab2 ORDER BY c1;
+GO
+~~START~~
+int4
+2
+~~END~~
+
+COMMIT
+GO
+
+-- tsql
+DROP PROCEDURE tsql_interop_proc;
+GO
+
+CREATE PROCEDURE tsql_interop_proc
+AS
+BEGIN TRANSACTION;
+INSERT INTO triggerTab1 VALUES(2, 'second');
+COMMIT;
+GO
+
+-- tsql
+EXEC tsql_interop_proc
+GO
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 14~~
+
+~~ROW COUNT: 3~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 2~~
+
+~~ROW COUNT: 1~~
+
+SELECT * from triggerTab1 ORDER BY c1;
+GO
+~~START~~
+int#!#varchar
+4#!#second
+7#!#third
+8#!#second
+11#!#third
+12#!#second
+15#!#third
+16#!#second
+19#!#third
+20#!#second
+23#!#third
+24#!#second
+27#!#first
+27#!#third
+28#!#second
+~~END~~
+
+
+-- psql     currentSchema=master_dbo,public
+CALL tsql_interop_proc();
+GO
+~~ERROR (Code: 0)~~
+
+~~ERROR (Message: ERROR: invalid transaction command
+  Where: PL/tsql function tsql_interop_proc() line 1 at SQL statement
+    Server SQLState: 2D000)~~
+
+SELECT * from triggerTab2 ORDER BY c1;
+GO
+~~START~~
+int4
+2
+~~END~~
+
+
+-- tsql
+DROP PROCEDURE tsql_interop_proc;
+GO
+
+CREATE PROCEDURE tsql_interop_proc
+AS
+BEGIN TRANSACTION;
+INSERT INTO triggerTab1 VALUES(2, 'second');
+ROLLBACK;
+INSERT INTO triggerTab1 VALUES(3, 'third');
+GO
+
+-- tsql
+EXEC tsql_interop_proc
+GO
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 15~~
+
+~~ROW COUNT: 3~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 2~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 15~~
+
+~~ROW COUNT: 3~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 2~~
+
+~~ROW COUNT: 1~~
+
+SELECT * from triggerTab1 ORDER BY c1;
+GO
+~~START~~
+int#!#varchar
+5#!#third
+6#!#second
+9#!#third
+10#!#second
+13#!#third
+14#!#second
+17#!#third
+18#!#second
+21#!#third
+22#!#second
+25#!#third
+26#!#second
+29#!#first
+29#!#third
+30#!#second
+~~END~~
+
+
+-- psql     currentSchema=master_dbo,public
+CALL tsql_interop_proc();
+GO
+~~ERROR (Code: 0)~~
+
+~~ERROR (Message: ERROR: invalid transaction command
+  Where: PL/tsql function tsql_interop_proc() line 1 at SQL statement
+    Server SQLState: 2D000)~~
+
+SELECT * from triggerTab2 ORDER BY c1;
+GO
+~~START~~
+int4
+2
+~~END~~
+
+
+-- tsql
+DROP PROCEDURE tsql_interop_proc;
+GO
+
+CREATE PROCEDURE tsql_interop_proc
+AS
+BEGIN TRANSACTION;
+INSERT INTO triggerTab1 VALUES(2, 'second');
+SAVE TRANSACTION sp1;
+INSERT INTO triggerTab1 VALUES(3, 'third');
+ROLLBACK TRANSACTION sp1;
+COMMIT;
+GO
+
+-- tsql
+EXEC tsql_interop_proc
+GO
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 16~~
+
+~~ROW COUNT: 3~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 2~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 17~~
+
+~~ROW COUNT: 3~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 2~~
+
+~~ROW COUNT: 1~~
+
+SELECT * FROM triggerTab1 ORDER BY c1;
+GO
+~~START~~
+int#!#varchar
+4#!#second
+7#!#third
+8#!#second
+11#!#third
+12#!#second
+15#!#third
+16#!#second
+19#!#third
+20#!#second
+23#!#third
+24#!#second
+27#!#third
+28#!#second
+31#!#first
+31#!#third
+32#!#second
+~~END~~
+
+
+-- psql     currentSchema=master_dbo,public
+CALL tsql_interop_proc();
+GO
+~~ERROR (Code: 0)~~
+
+~~ERROR (Message: ERROR: invalid transaction command
+  Where: PL/tsql function tsql_interop_proc() line 1 at SQL statement
+    Server SQLState: 2D000)~~
+
+SELECT * FROM triggerTab2 ORDER BY c1;
+GO
+~~START~~
+int4
+2
+~~END~~
+
+
+-- tsql
+DROP TRIGGER txnTrig1;
+GO
+DROP TRIGGER txnTrig2;
+GO
+DROP TABLE triggerTab1;
+GO
+DROP TABLE triggerTab2;
+GO
+CREATE PROCEDURE tsql_create_table
+AS
+    CREATE TABLE triggerTab1(c1 int, c2 varchar(30));
+    CREATE TABLE triggerTab2(c1 int);
+    INSERT INTO triggerTab1 VALUES(1, 'first');
+    INSERT INTO triggerTab2 VALUES(1);
+GO
+EXEC tsql_create_table;
+GO
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+
+-- psql     currentSchema=master_dbo,public
+CREATE FUNCTION trigger_txnTrig3()
+   RETURNS TRIGGER
+   LANGUAGE PLPGSQL
+AS $$
+BEGIN
+    UPDATE triggerTab1 set c1 = c1/2;
+    DELETE FROM triggerTab2;
+    RETURN NEW;
+END;
+$$
+GO
+
+CREATE TRIGGER txnTrig3
+AFTER DELETE ON triggerTab1
+FOR EACH ROW
+EXECUTE PROCEDURE trigger_txnTrig3();
+GO
+
+-- tsql
+CREATE TRIGGER txnTrig1 ON triggerTab1 AFTER INSERT AS
+INSERT INTO triggerTab2 VALUES(4);
+UPDATE triggerTab2 set c1 = c1+2;
+GO
+
+CREATE TRIGGER txnTrig2 ON triggerTab2 FOR UPDATE AS
+INSERT INTO triggerTab2 VALUES(2);
+UPDATE triggerTab1 set c1 = c1+2;
+DELETE FROM triggerTab2;
+INSERT INTO triggerTab2 values(2);
+GO
+
+-- psql     currentSchema=master_dbo,public
+CALL psql_interop_proc2();
+GO
+SELECT * FROM triggerTab1 ORDER BY c1;
+GO
+~~START~~
+int4#!#"sys"."varchar"
+5#!#first
+5#!#third
+6#!#second
+~~END~~
+
+
+-- tsql
+BEGIN TRANSACTION
+GO
+EXEC psql_interop_proc2;
+GO
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 4~~
+
+~~ROW COUNT: 3~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 2~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 5~~
+
+~~ROW COUNT: 3~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 2~~
+
+SELECT * FROM triggerTab2 ORDER BY c1;
+GO
+~~START~~
+int
+2
+~~END~~
+
+COMMIT
+GO
+
+-- tsql
+DROP TRIGGER txnTrig1;
+GO
+DROP TRIGGER txnTrig2;
+GO
+DROP TRIGGER txnTrig3;
+GO
+DROP FUNCTION trigger_txnTrig3;
+GO
+
+-- tsql
+CREATE TRIGGER txnTrig1 ON triggerTab1 AFTER INSERT AS
+SELECT * FROM inserted;
+UPDATE triggerTab2 set c1 = c1+2;
+COMMIT;
+GO
+
+CREATE TRIGGER txnTrig2 ON triggerTab2 FOR UPDATE AS
+INSERT INTO triggerTab2 VALUES(2);
+SELECT * FROM deleted;
+DELETE FROM triggerTab1;
+GO
+
+DROP PROCEDURE tsql_interop_proc
+GO
+CREATE PROCEDURE tsql_interop_proc
+AS
+BEGIN TRANSACTION;
+INSERT INTO triggerTab1 VALUES(3, 'third');
+GO
+
+-- tsql
+EXEC tsql_interop_proc
+GO
+~~START~~
+int#!#varchar
+3#!#third
+~~END~~
+
+~~ROW COUNT: 1~~
+
+~~START~~
+int
+2
+~~END~~
+
+~~ROW COUNT: 6~~
+
+~~ROW COUNT: 1~~
+
+~~ERROR (Code: 3609)~~
+
+~~ERROR (Message: The transaction ended in the trigger. The batch has been aborted.)~~
+
+SELECT * from triggerTab1 ORDER BY c1;
+GO
+~~START~~
+int#!#varchar
+~~END~~
+
+
+-- psql     currentSchema=master_dbo,public
+CALL tsql_interop_proc();
+GO
+~~ERROR (Code: 0)~~
+
+~~ERROR (Message: ERROR: invalid transaction command
+  Where: PL/tsql function tsql_interop_proc() line 1 at SQL statement
+    Server SQLState: 2D000)~~
+
+SELECT * from triggerTab1 ORDER BY c1;
+GO
+~~START~~
+int4#!#"sys"."varchar"
+~~END~~
+
+
+-- tsql
+DROP TRIGGER txnTrig1;
+GO
+CREATE TRIGGER txnTrig1 ON triggerTab1 AFTER INSERT AS
+BEGIN TRANSACTION;
+UPDATE triggerTab2 set c1 = c1+2;
+COMMIT;
+GO
+
+DROP PROCEDURE tsql_interop_proc;
+GO
+CREATE PROCEDURE tsql_interop_proc
+AS
+INSERT INTO triggerTab1 VALUES(2, 'second');
+GO
+
+-- tsql
+EXEC tsql_interop_proc
+GO
+~~ROW COUNT: 1~~
+
+~~START~~
+int
+4
+2
+~~END~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 2~~
+
+~~ROW COUNT: 1~~
+
+SELECT * from triggerTab2 ORDER BY c1;
+GO
+~~START~~
+int
+2
+4
+6
+~~END~~
+
+
+-- psql     currentSchema=master_dbo,public
+CALL tsql_interop_proc();
+GO
+~~ERROR (Code: 0)~~
+
+~~ERROR (Message: ERROR: invalid transaction command
+  Where: PL/tsql function txntrig1() line 1 at SQL statement
+PL/tsql function tsql_interop_proc() line 1 at SQL statement
+    Server SQLState: 2D000)~~
+
+SELECT * from triggerTab2 ORDER BY c1;
+GO
+~~START~~
+int4
+2
+4
+6
+~~END~~
+
+
+-- tsql
+DROP TRIGGER txnTrig1;
+GO
+
+CREATE TRIGGER txnTrig1 ON triggerTab1 AFTER INSERT AS
+BEGIN TRANSACTION;
+SELECT * FROM inserted;
+UPDATE triggerTab2 set c1 = c1+2;
+GO
+
+DROP PROCEDURE tsql_interop_proc;
+GO
+CREATE PROCEDURE tsql_interop_proc
+AS
+INSERT INTO triggerTab1 VALUES(3, 'third');
+SAVE TRANSACTION sp1;
+INSERT INTO triggerTab2 VALUES(3);
+ROLLBACK TRANSACTION sp1;
+COMMIT;
+GO
+
+-- tsql
+EXEC tsql_interop_proc
+GO
+~~START~~
+int#!#varchar
+3#!#third
+~~END~~
+
+~~ROW COUNT: 1~~
+
+~~START~~
+int
+6
+4
+2
+~~END~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 3~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+SELECT * from triggerTab2 ORDER BY c1;
+GO
+~~START~~
+int
+2
+4
+6
+8
+~~END~~
+
+
+-- psql     currentSchema=master_dbo,public
+CALL tsql_interop_proc();
+GO
+~~ERROR (Code: 0)~~
+
+~~ERROR (Message: ERROR: invalid transaction command
+  Where: PL/tsql function txntrig1() line 1 at SQL statement
+PL/tsql function tsql_interop_proc() line 1 at SQL statement
+    Server SQLState: 2D000)~~
+
+SELECT * from triggerTab1 ORDER BY c1;
+GO
+~~START~~
+int4#!#"sys"."varchar"
+~~END~~
+
+
+-- tsql
+DROP TRIGGER txnTrig1;
+GO
+
+CREATE TRIGGER txnTrig1 ON triggerTab1 AFTER INSERT AS
+SAVE TRANSACTION sp1;
+SELECT * FROM inserted;
+UPDATE triggerTab2 set c1 = c1+2;
+GO
+
+DROP PROCEDURE tsql_interop_proc;
+GO
+CREATE PROCEDURE tsql_interop_proc
+AS
+BEGIN TRANSACTION;
+INSERT INTO triggerTab1 VALUES(3, 'third');
+INSERT INTO triggerTab2 VALUES(3);
+ROLLBACK TRANSACTION sp1;
+COMMIT;
+GO
+
+-- tsql
+EXEC tsql_interop_proc
+GO
+~~START~~
+int#!#varchar
+3#!#third
+~~END~~
+
+~~ROW COUNT: 1~~
+
+~~START~~
+int
+8
+6
+4
+2
+~~END~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 4~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+SELECT * from triggerTab2 ORDER BY c1;
+GO
+~~START~~
+int
+2
+4
+6
+8
+~~END~~
+
+
+-- psql     currentSchema=master_dbo,public
+CALL tsql_interop_proc();
+GO
+~~ERROR (Code: 0)~~
+
+~~ERROR (Message: ERROR: invalid transaction command
+  Where: PL/tsql function tsql_interop_proc() line 1 at SQL statement
+    Server SQLState: 2D000)~~
+
+SELECT * from triggerTab1 ORDER BY c1;
+GO
+~~START~~
+int4#!#"sys"."varchar"
+3#!#third
+~~END~~
+
+
+-- tsql
+DROP TRIGGER txnTrig1;
+GO
+
+CREATE TRIGGER txnTrig1 ON triggerTab1 AFTER INSERT AS
+ROLLBACK TRANSACTION sp1;
+UPDATE triggerTab2 set c1 = c1+2;
+GO
+
+DROP PROCEDURE tsql_interop_proc;
+GO
+CREATE PROCEDURE tsql_interop_proc
+AS
+BEGIN TRANSACTION;
+SAVE TRANSACTION sp1;
+INSERT INTO triggerTab1 VALUES(3, 'third');
+INSERT INTO triggerTab2 VALUES(3);
+COMMIT;
+GO
+
+-- tsql
+EXEC tsql_interop_proc
+GO
+~~ROW COUNT: 1~~
+
+~~START~~
+int
+8
+6
+4
+2
+~~END~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 4~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+SELECT * from triggerTab2 ORDER BY c1;
+GO
+~~START~~
+int
+2
+3
+4
+6
+8
+10
+~~END~~
+
+
+-- psql     currentSchema=master_dbo,public
+CALL tsql_interop_proc();
+GO
+~~ERROR (Code: 0)~~
+
+~~ERROR (Message: ERROR: invalid transaction command
+  Where: PL/tsql function tsql_interop_proc() line 1 at SQL statement
+    Server SQLState: 2D000)~~
+
+SELECT * from triggerTab1 ORDER BY c1;
+GO
+~~START~~
+int4#!#"sys"."varchar"
+~~END~~
+
+
+-- tsql
+DROP TRIGGER txnTrig1;
+GO
+
+CREATE TRIGGER txnTrig1 ON triggerTab1 AFTER INSERT AS
+SELECT * FROM inserted;
+SAVE TRANSACTION sp1;
+UPDATE triggerTab2 set c1 = c1+2;
+ROLLBACK TRANSACTION sp1;
+GO
+
+DROP PROCEDURE tsql_interop_proc;
+GO
+CREATE PROCEDURE tsql_interop_proc
+AS
+BEGIN TRANSACTION;
+INSERT INTO triggerTab1 VALUES(3, 'third');
+INSERT INTO triggerTab2 VALUES(3);
+COMMIT;
+GO
+
+-- tsql
+EXEC tsql_interop_proc
+GO
+~~START~~
+int#!#varchar
+3#!#third
+~~END~~
+
+~~ROW COUNT: 1~~
+
+~~START~~
+int
+10
+8
+6
+4
+2
+3
+~~END~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 6~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+SELECT * from triggerTab2 ORDER BY c1;
+GO
+~~START~~
+int
+2
+3
+3
+4
+6
+8
+10
+~~END~~
+
+
+-- psql     currentSchema=master_dbo,public
+CALL tsql_interop_proc();
+GO
+~~ERROR (Code: 0)~~
+
+~~ERROR (Message: ERROR: invalid transaction command
+  Where: PL/tsql function tsql_interop_proc() line 1 at SQL statement
+    Server SQLState: 2D000)~~
+
+SELECT * from triggerTab1 ORDER BY c1;
+GO
+~~START~~
+int4#!#"sys"."varchar"
+3#!#third
+~~END~~
+
+
+-- tsql
+DROP TRIGGER txnTrig1;
+GO
+
+CREATE TRIGGER txnTrig1 ON triggerTab1 AFTER INSERT AS
+SELECT * FROM inserted;
+SAVE TRANSACTION sp1;
+UPDATE triggerTab2 set c1 = c1+2;
+COMMIT;
+GO
+
+DROP PROCEDURE tsql_interop_proc;
+GO
+CREATE PROCEDURE tsql_interop_proc
+AS
+BEGIN TRANSACTION;
+INSERT INTO triggerTab1 VALUES(3, 'third');
+INSERT INTO triggerTab2 VALUES(3);
+GO
+
+-- tsql
+EXEC tsql_interop_proc
+GO
+~~START~~
+int#!#varchar
+3#!#third
+~~END~~
+
+~~ROW COUNT: 1~~
+
+~~START~~
+int
+10
+8
+6
+4
+2
+3
+3
+~~END~~
+
+~~ROW COUNT: 2~~
+
+~~ROW COUNT: 7~~
+
+~~ERROR (Code: 3609)~~
+
+~~ERROR (Message: The transaction ended in the trigger. The batch has been aborted.)~~
+
+SELECT * from triggerTab2 ORDER BY c1;
+GO
+~~START~~
+int
+2
+4
+5
+5
+6
+8
+10
+12
+~~END~~
+
+
+-- psql     currentSchema=master_dbo,public
+CALL tsql_interop_proc();
+GO
+~~ERROR (Code: 0)~~
+
+~~ERROR (Message: ERROR: invalid transaction command
+  Where: PL/tsql function tsql_interop_proc() line 1 at SQL statement
+    Server SQLState: 2D000)~~
+
+SELECT * from triggerTab1 ORDER BY c1;
+GO
+~~START~~
+int4#!#"sys"."varchar"
+~~END~~
+
+
+-- tsql
+DROP TRIGGER txnTrig1;
+GO
+DROP TRIGGER txnTrig2;
+GO
+
+CREATE TRIGGER txnTrig1 ON triggerTab1 AFTER INSERT AS
+SELECT * FROM inserted;
+SAVE TRANSACTION sp1;
+SELECT dateadd(year, 2, CAST('20060830' AS datetime));
+UPDATE triggerTab2 set c1 = c1+2;
+GO
+
+CREATE TRIGGER txnTrig2 ON triggerTab2 FOR UPDATE AS
+SELECT * FROM inserted;
+INSERT INTO triggerTab2 VALUES(2);
+SELECT * FROM deleted;
+EXEC tsql_interop_proc1;
+SELECT * FROM table_interop('tsql_interop','psql_interop');
+ROLLBACK TRANSACTION sp1;
+DELETE FROM triggerTab1;
+GO
+
+CREATE PROCEDURE tsql_interop_proc1
+AS
+SELECT datepart(week, CAST('2007-04-21' AS date)), datepart(weekday, CAST('2007-04-21' AS date));
+GO
+
+DROP PROCEDURE tsql_interop_proc;
+GO
+CREATE PROCEDURE tsql_interop_proc
+AS
+BEGIN TRANSACTION;
+INSERT INTO triggerTab1 VALUES(3, 'third');
+INSERT INTO triggerTab2 VALUES(3);
+COMMIT;
+GO
+
+CREATE FUNCTION table_interop (@arg1 varchar(5), @arg2 varchar(10))
+RETURNS TABLE AS RETURN
+(SELECT @arg1 as a, @arg2 as b)
+GO
+
+-- tsql
+EXEC tsql_interop_proc
+GO
+~~START~~
+int#!#varchar
+3#!#third
+~~END~~
+
+~~START~~
+datetime
+2008-08-30 00:00:00.0
+~~END~~
+
+~~START~~
+int
+14
+12
+10
+8
+6
+7
+7
+4
+~~END~~
+
+~~ROW COUNT: 1~~
+
+~~START~~
+int
+12
+10
+8
+6
+4
+5
+5
+2
+~~END~~
+
+~~START~~
+int#!#int
+16#!#7
+~~END~~
+
+~~START~~
+varchar#!#varchar
+tsql_#!#psql_inter
+~~END~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 8~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+SELECT * from triggerTab2 ORDER BY c1;
+GO
+~~START~~
+int
+2
+3
+4
+5
+5
+6
+8
+10
+12
+~~END~~
+
+DROP TRIGGER txnTrig1;
+GO
+DROP TRIGGER txnTrig2;
+GO
+
+-- psql     currentSchema=master_dbo,public
+DROP PROCEDURE psql_interop_proc1;
+GO
+DROP PROCEDURE psql_interop_proc2;
+GO
+
+-- tsql
+DROP FUNCTION table_interop;
+GO
+DROP PROCEDURE tsql_create_table;
+GO
+DROP PROCEDURE tsql_interop_proc;
+GO
+DROP PROCEDURE tsql_interop_proc1;
+GO
+DROP TABLE triggerTab1;
+GO
+DROP TABLE triggerTab2;
+GO

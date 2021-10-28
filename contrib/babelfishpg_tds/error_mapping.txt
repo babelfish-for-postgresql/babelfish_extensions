@@ -1,0 +1,169 @@
+#
+#	error_mapping.txt
+#
+# This file contains all possible error messages with error code 
+# which can be sent to end user along with their corresponding 
+# TSQL error code.
+# Any newly added error message should be reflected here as well. 
+#
+# File generated from this file one is: error_mapping.h
+#
+# Format of this file is, one error per line with following structure:
+# sqlstate errcode_macro_name error_message tsql_error_code tsql_severity_level error_msg_keywords\n
+
+# error_msg_keywords can contain more than 1 key words concatenated by "#".
+# If correct tsql error details could be identified by PG error code + error message_id (untranslated error message) 
+# then error_msg_keywords can be empty.
+
+# don't forget new line at the end. 
+#
+# Empty line and line starts with hash are treated as comment. 
+#
+
+0A000 ERRCODE_FEATURE_NOT_SUPPORTED	"mixture of ISO syntax and T-SQL extended syntax"	SQL_ERROR_1049	15
+42601 ERRCODE_SYNTAX_ERROR	"syntax error near %s at line %lu and character position %lu"	SQL_ERROR_1051	16	"VARYING"
+42601 ERRCODE_SYNTAX_ERROR	"syntax error near %s at line %lu and character position %lu"	SQL_ERROR_142	15	"REFERENCES"
+42601 ERRCODE_SYNTAX_ERROR	"syntax error near %s at line %lu and character position %lu"	SQL_ERROR_10727	15	"INSERT"
+42601 ERRCODE_SYNTAX_ERROR	"syntax error near %s at line %lu and character position %lu"	SQL_ERROR_10727	15	"DELETE"
+42601 ERRCODE_SYNTAX_ERROR	"syntax error near %s at line %lu and character position %lu"	SQL_ERROR_10727	15	"UPDATE"
+42601 ERRCODE_SYNTAX_ERROR	"syntax error near %s at line %lu and character position %lu"	SQL_ERROR_10733	15	"MERGE"
+42601 ERRCODE_SYNTAX_ERROR	"syntax error near %s at line %lu and character position %lu"	SQL_ERROR_11717	15	"OVER"
+42601 ERRCODE_SYNTAX_ERROR	"syntax error near %s at line %lu and character position %lu"	SQL_ERROR_487	15	"BEGIN"
+42601 ERRCODE_SYNTAX_ERROR	"syntax error near %s at line %lu and character position %lu"	SQL_ERROR_11709	15	"WITH"
+42601 ERRCODE_SYNTAX_ERROR	"syntax error near %s at line %lu and character position %lu"	SQL_ERROR_153	15	"FILEGROWTH"
+42601 ERRCODE_SYNTAX_ERROR	"Too many substitution parameters for RAISERROR. Cannot exceed 20 substitution parameters."	SQL_ERROR_2747	16
+P0001 ERRCODE_RAISE_EXCEPTION	"%s"	SQL_ERROR_289	16 "Cannot construct data type datetime, some of the arguments have values which are not valid."
+42601 ERRCODE_SYNTAX_ERROR	"A SELECT statement that assigns a value to a variable must not be combined with data-retrieval operations"	SQL_ERROR_141	15
+09000 ERRCODE_TRIGGERED_ACTION_EXCEPTION "An error was raised during trigger execution. The batch has been aborted and the user transaction, if any, has been rolled back." SQL_ERROR_3616 16
+42601 ERRCODE_SYNTAX_ERROR	"duplicate declaration"	SQL_ERROR_134	15
+42804 ERRCODE_DATATYPE_MISMATCH	"variable \"%s\" must be of type cursor or refcursor"	SQL_ERROR_16948	16
+2200N ERRCODE_INVALID_XML_CONTENT	"%s"	SQL_ERROR_9451 16 "invalid XML content"
+2200N ERRCODE_INVALID_XML_CONTENT	"%s"	SQL_ERROR_9441 16 "invalid XML content#invalid XML declaration"
+P0001 ERRCODE_RAISE_EXCEPTION	"%s"	SQL_ERROR_9809 16 "is not supported for conversions from"
+22003 ERRCODE_NUMERIC_VALUE_OUT_OF_RANGE	"\"%s\" is out of range for type real"	SQL_ERROR_232	16
+42809 ERRCODE_WRONG_OBJECT_TYPE	"\"%s\" is not a table" SQL_ERROR_4708	16
+42601 ERRCODE_SYNTAX_ERROR	"%s at or near \"%s\""	SQL_ERROR_1051	15 "VARYING"
+42601 ERRCODE_SYNTAX_ERROR	"%s at or near \"%s\""	SQL_ERROR_3914	16 "SAVE"
+42601 ERRCODE_SYNTAX_ERROR	"%s at or near \"%s\""	SQL_ERROR_1034	15 "duplicate trigger events specified"
+42601 ERRCODE_SYNTAX_ERROR	"%s at or near \"%s\""	SQL_ERROR_10793 15 "INDEX"
+42601 ERRCODE_SYNTAX_ERROR	"%s at or near \"%s\""	SQL_ERROR_11555 15 "NOT"
+25P01 ERRCODE_NO_ACTIVE_SQL_TRANSACTION	"%s can only be used in transaction blocks"	SQL_ERROR_3902	16 "COMMIT"
+25P01 ERRCODE_NO_ACTIVE_SQL_TRANSACTION	"%s can only be used in transaction blocks"	SQL_ERROR_3903	16 "ROLLBACK"
+25P01 ERRCODE_NO_ACTIVE_SQL_TRANSACTION	"%s can only be used in transaction blocks"	SQL_ERROR_628	16 "SAVEPOINT"
+25P01 ERRCODE_NO_ACTIVE_SQL_TRANSACTION	"%s can only be used in transaction blocks"	SQL_ERROR_3903	16 "ROLLBACK TO SAVEPOINT"
+25001 ERRCODE_ACTIVE_SQL_TRANSACTION	"%s cannot run inside a transaction block"	SQL_ERROR_574	16
+42809 ERRCODE_WRONG_OBJECT_TYPE "\"%s\" is not a table or materialized view" SQL_ERROR_10610 16
+42809 ERRCODE_WRONG_OBJECT_TYPE "%s parameter should be of %s type"     SQL_ERROR_16902 16
+22004 ERRCODE_NULL_VALUE_NOT_ALLOWED    "%s parameter should not be null"       SQL_ERROR_16902 16
+42601 ERRCODE_SYNTAX_ERROR	"argument name \"%s\" used more than once"	SQL_ERROR_8143	16
+22003 ERRCODE_NUMERIC_VALUE_OUT_OF_RANGE	"bigint out of range"	SQL_ERROR_8115	16
+55006 ERRCODE_OBJECT_IN_USE	"cannot %s \"%s\" because it is being used by active queries in this session"	SQL_ERROR_556 16
+2BP01 ERRCODE_DEPENDENT_OBJECTS_STILL_EXIST	"cannot drop %s because %s requires it"	SQL_ERROR_3723	16
+2BP01 ERRCODE_DEPENDENT_OBJECTS_STILL_EXIST	"cannot drop %s because other objects depend on it" SQL_ERROR_3732 16 "type"
+2BP01 ERRCODE_DEPENDENT_OBJECTS_STILL_EXIST	"cannot drop %s because other objects depend on it" SQL_ERROR_3729 16 "function"
+2BP01 ERRCODE_DEPENDENT_OBJECTS_STILL_EXIST	"cannot drop %s because other objects depend on it" SQL_ERROR_3726 16 "table"
+2201E ERRCODE_INVALID_ARGUMENT_FOR_LOG	"cannot take logarithm of a negative number" SQL_ERROR_3623 16
+2201F ERRCODE_INVALID_ARGUMENT_FOR_POWER_FUNCTION	"cannot take square root of a negative number" SQL_ERROR_3623 16
+0A000 ERRCODE_FEATURE_NOT_SUPPORTED	"cannot truncate a table referenced in a foreign key constraint"	SQL_ERROR_4712	16
+22023 ERRCODE_INVALID_PARAMETER_VALUE	"CACHE (%s) must be greater than zero" SQL_ERROR_11706	16
+23514 ERRCODE_CHECK_VIOLATION	"check constraint \"%s\" of relation \"%s\" is violated by some row"	SQL_ERROR_547	16
+2F005 ERRCODE_S_R_E_FUNCTION_EXECUTED_NO_RETURN_STATEMENT	"The transaction ended in the trigger. The batch has been aborted."	SQL_ERROR_3609 16
+23502 ERRCODE_NOT_NULL_VIOLATION	"column \"%s\" of relation \"%s\" contains null values"	SQL_ERROR_4901 16
+42601 ERRCODE_SYNTAX_ERROR	"column \"%s\" of relation \"%s\" is a generated column"	SQL_ERROR_1752	16
+XX000 ERRCODE_INTERNAL_ERROR	"CREATE FUNCTION failed because a column name is not specified for column %d" SQL_ERROR_4514 16
+42601 ERRCODE_SYNTAX_ERROR	"CREATE VIEW specifies more column names than columns"	SQL_ERROR_8159	16
+42704 ERRCODE_UNDEFINED_OBJECT	"constraint \"%s\" of relation \"%s\" does not exist" SQL_ERROR_3728	16
+23505 ERRCODE_UNIQUE_VIOLATION	"could not create unique index \"%s\""	SQL_ERROR_1505	16
+42883 ERRCODE_UNDEFINED_FUNCTION	"could not find a function named \"%s\""	SQL_ERROR_3701	11
+42883 ERRCODE_UNDEFINED_FUNCTION	"could not find a procedure named \"%s\""	SQL_ERROR_3701	11
+42883 ERRCODE_UNDEFINED_FUNCTION	"could not identify an equality operator for type %s"	SQL_ERROR_306	16
+42883 ERRCODE_UNDEFINED_FUNCTION	"could not identify an ordering operator for type %s"	SQL_ERROR_306	16
+42P03 ERRCODE_DUPLICATE_CURSOR		"cursor \"%s\" already exists" SQL_ERROR_16915	16
+42704 ERRCODE_UNDEFINED_OBJECT          "cursor %d doesn't exist"       SQL_ERROR_16916 16
+22004 ERRCODE_NULL_VALUE_NOT_ALLOWED	"cursor variable \"%s\" is null"	SQL_ERROR_16950	16
+42P04 ERRCODE_DUPLICATE_DATABASE 	"database \"%s\" already exists" SQL_ERROR_1801 16
+3D000 ERRCODE_UNDEFINED_DATABASE	"database \"%s\" does not exist"	SQL_ERROR_3701	11
+22008 ERRCODE_DATETIME_VALUE_OUT_OF_RANGE	"data out of range for datetime" SQL_ERROR_517 16
+40P01 ERRCODE_T_R_DEADLOCK_DETECTED	"deadlock detected" SQL_ERROR_1205 13
+22012 ERRCODE_DIVISION_BY_ZERO	"division by zero"	SQL_ERROR_8134	16
+0A000 ERRCODE_FEATURE_NOT_SUPPORTED	"Do not support BREAK outside of a WHILE loop, line %d"	SQL_ERROR_135 15
+0A000 ERRCODE_FEATURE_NOT_SUPPORTED	"Do not support CONTINUE outside of a WHILE loop, line %d" SQL_ERROR_136 15
+23505 ERRCODE_UNIQUE_VIOLATION	"duplicate key value violates unique constraint \"%s\""	SQL_ERROR_2627	14
+42703 ERRCODE_UNDEFINED_COLUMN	"Explicit value must be specified for identity column in table '%s' when IDENTITY_INSERT is set to ON" SQL_ERROR_545	16
+42804 ERRCODE_DATATYPE_MISMATCH	"foreign key constraint \"%s\" cannot be implemented" SQL_ERROR_1778	16
+22013 ERRCODE_INVALID_PRECEDING_OR_FOLLOWING_SIZE	"frame ending offset must not be negative"	SQL_ERROR_102	15
+22013 ERRCODE_INVALID_PRECEDING_OR_FOLLOWING_SIZE	"frame starting offset must not be negative"	SQL_ERROR_102	15
+42723 ERRCODE_DUPLICATE_FUNCTION	"function \"%s\" already exists with same argument types"	SQL_ERROR_2714	16
+54023 ERRCODE_TOO_MANY_ARGUMENTS	"functions cannot have more than %d argument" SQL_ERROR_180	15
+0A000 ERRCODE_FEATURE_NOT_SUPPORTED	"GOTO target Label %s not defined"	SQL_ERROR_133 15
+23001 ERRCODE_RESTRICT_VIOLATION	"IDENTITY_INSERT is already ON for table \'%s.%s.%s\'"	SQL_ERROR_8107	16
+22023 ERRCODE_INVALID_PARAMETER_VALUE	"INCREMENT must not be zero" SQL_ERROR_11700 16
+22003 ERRCODE_NUMERIC_VALUE_OUT_OF_RANGE	"input is out of range"	SQL_ERROR_3623	16
+54000 ERRCODE_PROGRAM_LIMIT_EXCEEDED	"index row size %zu exceeds btree version %u maximum %zu for index \"%s\""	SQL_ERROR_1946	16
+23503 ERRCODE_FOREIGN_KEY_VIOLATION	"insert or update on table \"%s\" violates foreign key constraint \"%s\""	SQL_ERROR_547	16
+22003 ERRCODE_NUMERIC_VALUE_OUT_OF_RANGE	"integer out of range"	SQL_ERROR_8115	16
+42601 ERRCODE_SYNTAX_ERROR	"invalid %s action for foreign key constraint containing generated column"	SQL_ERROR_1715 16 "ON UPDATE"
+42601 ERRCODE_SYNTAX_ERROR	"invalid %s action for foreign key constraint containing generated column"	SQL_ERROR_1765 16 "ON DELETE"
+22003 ERRCODE_NUMERIC_VALUE_OUT_OF_RANGE 	"invalid characters found: cannot cast value \"%s\" to money" SQL_ERROR_293 16
+22023 ERRCODE_INVALID_PARAMETER_VALUE   "invalid cursor fetch type %X"  SQL_ERROR_155	15
+22023 ERRCODE_INVALID_PARAMETER_VALUE	"Invalid format specification: %s"	SQL_ERROR_2787 16
+22023 ERRCODE_INVALID_PARAMETER_VALUE   "invalid nrow value 0 for cursor type %X"       SQL_ERROR_16902 16
+08P01 ERRCODE_PROTOCOL_VIOLATION "Invalid parameter %d (\"%s\"): Data type 0x%02X is a deprecated large object, or LOB, but is marked as output parameter. Deprecated types are not supported as output parameters. Use current large object types instead." SQL_ERROR_8018 16
+22025 ERRCODE_INVALID_ESCAPE_SEQUENCE	"invalid escape string" SQL_ERROR_506 16
+0A000 ERRCODE_FEATURE_NOT_SUPPORTED	"Label %s not unique wihtin one procedure in line %d, previous defined in line %d"	SQL_ERROR_132 15
+08004 ERRCODE_SQLSERVER_REJECTED_ESTABLISHMENT_OF_SQLCONNECTION "Login failed for user \"%s\"" SQL_ERROR_18456 14
+22023 ERRCODE_INVALID_PARAMETER_VALUE	"MAXVALUE (%s) is out of range for sequence data type tinyint" SQL_ERROR_11708 16
+22023 ERRCODE_INVALID_PARAMETER_VALUE	"MAXVALUE (%s) is out of range for sequence data type %s" SQL_ERROR_11708 16
+22023 ERRCODE_INVALID_PARAMETER_VALUE 	"MINVALUE (%s) must be less than MAXVALUE (%s)" SQL_ERROR_11705	16
+21000 ERRCODE_CARDINALITY_VIOLATION	"more than one row returned by a subquery used as an expression"	SQL_ERROR_512	16
+23514 ERRCODE_CHECK_VIOLATION	"new row for relation \"%s\" violates check constraint \"%s\""	SQL_ERROR_547	16
+44000 ERRCODE_WITH_CHECK_OPTION_VIOLATION	"new row violates check option for view \"%s\"" SQL_ERROR_550	16
+23502 ERRCODE_NOT_NULL_VIOLATION	"null value in column \"%s\" of relation \"%s\" violates not-null constraint"	SQL_ERROR_515	16
+22023 ERRCODE_INVALID_PARAMETER_VALUE	"msg_id argument of RAISERROR should be no less than 50000"	SQL_ERROR_2732 16
+42704 ERRCODE_UNDEFINED_OBJECT	"Prepared statement not found: %d"	SQL_ERROR_8179	16
+22004 ERRCODE_NULL_VALUE_NOT_ALLOWED	"Prepared statement not found: %d"	SQL_ERROR_8179 16
+42809 ERRCODE_WRONG_OBJECT_TYPE	"referenced relation \"%s\" is not a table"	SQL_ERROR_1768 16
+42P07 ERRCODE_DUPLICATE_TABLE	"relation \"%s\" already exists"	SQL_ERROR_2714	16
+3B001 ERRCODE_S_E_INVALID_SPECIFICATION	"savepoint \"%s\" does not exist"	SQL_ERROR_6401	16
+22023 ERRCODE_INVALID_PARAMETER_VALUE	"sequence type must be smallint, integer, or bigint"	SQL_ERROR_11702 16
+22003 ERRCODE_NUMERIC_VALUE_OUT_OF_RANGE	"smallint out of range"	SQL_ERROR_220	16
+54001 ERRCODE_STATEMENT_TOO_COMPLEX	"stack depth limit exceeded"	SQL_ERROR_217	16
+0A000 ERRCODE_FEATURE_NOT_SUPPORTED	"SP_PREPEXECRPC not supported yet"	SQL_ERROR_16901	16
+22023 ERRCODE_INVALID_PARAMETER_VALUE	"START value (%s) cannot be greater than MAXVALUE (%s)" SQL_ERROR_11703 16
+22023 ERRCODE_INVALID_PARAMETER_VALUE	"START value (%s) cannot be less than MINVALUE (%s)" SQL_ERROR_11703 16
+42703 ERRCODE_UNDEFINED_COLUMN	"Table '%s.%s' does not have the identity property. Cannot perform SET operation."	SQL_ERROR_8106 16
+08P01 ERRCODE_PROTOCOL_VIOLATION "Table-valued parameter %d (\"%s\"), row %d, column %d: Data type 0x%02X (user-defined table type). The specified column is computed or default and has ordering or uniqueness set. Ordering and uniqueness can only be set on columns that have client supplied data." SQL_ERROR_8057 16
+2202H ERRCODE_INVALID_TABLESAMPLE_ARGUMENT	"TABLESAMPLE parameter cannot be null"	SQL_ERROR_477	15
+2202G ERRCODE_INVALID_TABLESAMPLE_REPEAT	"TABLESAMPLE REPEATABLE parameter cannot be null"	SQL_ERROR_477	15
+22023 ERRCODE_INVALID_PARAMETER_VALUE "The absolute value of the increment must be less than or equal to the difference between the minimum and maximum value of the sequence object." SQL_ERROR_11701 16
+40000 ERRCODE_TRANSACTION_ROLLBACK      "The current transaction cannot be committed and cannot support operations that write to the log file. Roll back the transaction." SQL_ERROR_3930 16
+XX000 ERRCODE_INTERNAL_ERROR	"The parameter \"%s\" can not be declared READONLY since it is not a table-valued parameter."	SQL_ERROR_346	15
+XX000 ERRCODE_INTERNAL_ERROR	"The table-valued parameter \"%s\" must be declared with the READONLY option."	SQL_ERROR_352	15
+08P01 ERRCODE_PROTOCOL_VIOLATION "The incoming tabular data stream (TDS) remote procedure call (RPC) protocol stream is incorrect. Parameter %d (\"%s\"): Data type 0x%02X has an invalid data length or metadata length." SQL_ERROR_8016 16
+08P01 ERRCODE_PROTOCOL_VIOLATION "The incoming tabular data stream (TDS) remote procedure call (RPC) protocol stream is incorrect. Parameter %d (\"%s\"): Data type 0x%02X (sql_variant) has an invalid length for type-specific metadata." SQL_ERROR_8011 16
+08P01 ERRCODE_PROTOCOL_VIOLATION "The incoming tabular data stream (TDS) remote procedure call (RPC) protocol stream is incorrect. Parameter %d (\"%s\"): Data type 0x%02X is unknown." SQL_ERROR_8009 16
+08P01 ERRCODE_PROTOCOL_VIOLATION "The incoming tabular data stream (TDS) remote procedure call (RPC) protocol stream is incorrect. Parameter %d (\"%s\"): The chunking format is incorrect for a large object parameter of type 0x%02X." SQL_ERROR_8007 16
+08P01 ERRCODE_PROTOCOL_VIOLATION "The incoming tabular data stream (TDS) remote procedure call (RPC) protocol stream is incorrect. Parameter %d (\"%s\"): The supplied length is not valid for data type CHAR/NCHAR/VARCHAR/NVARCHAR. Check the source data for invalid lengths. An example of an invalid length is data of nchar type with an odd length in bytes." SQL_ERROR_8028 16
+08P01 ERRCODE_PROTOCOL_VIOLATION "The incoming tabular data stream (TDS) remote procedure call (RPC) protocol stream is incorrect. Parameter %d (\"%s\"): The supplied value is not a valid instance of data type Numeric/Decimal. Check the source data for invalid values. An example of an invalid value is data of numeric type with scale greater than precision" SQL_ERROR_8023 16
+08P01 ERRCODE_PROTOCOL_VIOLATION "The incoming tabular data stream (TDS) remote procedure call (RPC) protocol stream is incorrect. The RPC name is invalid." SQL_ERROR_8004 16
+08P01 ERRCODE_PROTOCOL_VIOLATION "The incoming tabular data stream (TDS) remote procedure call (RPC) protocol stream is incorrect. Too many parameters were provided in this RPC request. The maximum is %d" SQL_ERROR_8003 16
+08P01 ERRCODE_PROTOCOL_VIOLATION "The incoming tabular data stream (TDS) remote procedure call (RPC) protocol stream is incorrect. Table-valued parameter %d (\"%s\"), row %d, column %d: Data type 0x%02X (user-defined table type) has a non-zero length database name specified. Database name is not allowed with a table-valued parameter, only schema name and type name are valid." SQL_ERROR_8047 16
+08P01 ERRCODE_PROTOCOL_VIOLATION "The incoming tabular data stream (TDS) remote procedure call (RPC) protocol stream is incorrect. Table-valued parameter %d (\"%s\"), row %d, column %d: Data type 0x%02X (user-defined table type) has an invalid column count specified." SQL_ERROR_8050 16
+08P01 ERRCODE_PROTOCOL_VIOLATION "The incoming tabular data stream (TDS) remote procedure call (RPC) protocol stream is incorrect. Table-valued parameter %d (\"%s\"), row %d, column %d: Data type 0x%02X (user-defined table type) unexpected token encountered processing a table-valued parameter." SQL_ERROR_8029 16
+08P01 ERRCODE_PROTOCOL_VIOLATION "The incoming tabular data stream (TDS) remote procedure call (RPC) protocol stream is incorrect. Table-valued parameter %d (\"%s\"), row %d, column %d: Data type 0x%02X has an invalid data length or metadata length." SQL_ERROR_8037 16
+08P01 ERRCODE_PROTOCOL_VIOLATION "The incoming tabular data stream (TDS) remote procedure call (RPC) protocol stream is incorrect. Table-valued parameter %d (\"%s\"), row %d, column %d: Data type 0x%02X is unknown." SQL_ERROR_8032 16
+08P01 ERRCODE_PROTOCOL_VIOLATION "The incoming tabular data stream (TDS) remote procedure call (RPC) protocol stream is incorrect. Table-valued parameter %d (\"%s\"), row %d, column %d: The chunking format is incorrect for a large object parameter of data type 0x%02X." SQL_ERROR_8031 16
+08P01 ERRCODE_PROTOCOL_VIOLATION "The incoming tabular data stream (TDS) remote procedure call (RPC) protocol stream is incorrect. Table-valued parameter %d (\"%s\"), row %d, column %d: The supplied value is not a valid instance of data type Numeric/Decimal. Check the source data for invalid values. An example of an invalid value is data of numeric type with scale greater than precision." SQL_ERROR_8043 16
+08P01 ERRCODE_PROTOCOL_VIOLATION "The incoming tabular data stream (TDS) remote procedure call (RPC) protocol stream is incorrect. Table-valued parameter %d, to a parameterized string has no table type defined." SQL_ERROR_8058 16
+08P01 ERRCODE_PROTOCOL_VIOLATION        "The minimum number of parameters should be %d" SQL_ERROR_16903 16
+42830 ERRCODE_INVALID_FOREIGN_KEY	"there is no unique constraint matching given keys for referenced table \"%s\"" SQL_ERROR_1776 16
+40002 ERRCODE_T_R_INTEGRITY_CONSTRAINT_VIOLATION	"Transaction count after execution indicates a mismatch number of BEGIN and COMMIT statements. Previous count %u current count %u"	SQL_ERROR_266 16
+42704 ERRCODE_UNDEFINED_OBJECT	"trigger \"%s\" does not exist"	SQL_ERROR_3701	11
+42704 ERRCODE_UNDEFINED_OBJECT	"trigger \"%s\" for table \"%s\" does not exist" SQL_ERROR_4920	16
+42710 ERRCODE_DUPLICATE_OBJECT	"type \"%s\" already exists"	SQL_ERROR_219 16
+23503 ERRCODE_FOREIGN_KEY_VIOLATION	"update or delete on table \"%s\" violates foreign key constraint \"%s\" on table \"%s\""	SQL_ERROR_547	16
+22001 ERRCODE_STRING_DATA_RIGHT_TRUNCATION	"value too long for type character(%d)"	SQL_ERROR_8152	16
+22001 ERRCODE_STRING_DATA_RIGHT_TRUNCATION	"value too long for type character varying(%d)"	SQL_ERROR_8152	16
+23514 ERRCODE_CHECK_VIOLATION	"value for domain %s violates check constraint \"%s\""	SQL_ERROR_220	16
+42P01 ERRCODE_UNDEFINED_TABLE 	"view \"%s\" does not exist"		SQL_ERROR_3701	16
+42P01 ERRCODE_UNDEFINED_TABLE	"table \"%s\" does not exist"		SQL_ERROR_3701	16

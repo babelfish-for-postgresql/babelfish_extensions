@@ -1,0 +1,208 @@
+-- test adding with varbinary
+SELECT (123 + 0x42);
+SELECT (0x42 + 123);
+GO
+~~START~~
+bigint
+189
+~~END~~
+
+~~START~~
+bigint
+189
+~~END~~
+
+
+-- test subtracting with varbinary
+SELECT (123 - 0x42);
+SELECT (0x42 - 123);
+GO
+~~START~~
+bigint
+57
+~~END~~
+
+~~START~~
+bigint
+-57
+~~END~~
+
+
+-- test multiplication with varbinary
+SELECT (123 * CAST(123 AS varbinary(4)));
+SELECT (CAST(123 AS varbinary(4)) * 123);
+GO
+~~START~~
+bigint
+15129
+~~END~~
+
+~~START~~
+bigint
+15129
+~~END~~
+
+
+-- test division with varbinary
+SELECT (12345 / CAST(12 AS varbinary(4)));
+SELECT (CAST(12345 AS varbinary(4)) / 12);
+GO
+~~START~~
+bigint
+1028
+~~END~~
+
+~~START~~
+bigint
+1028
+~~END~~
+
+
+-- test & operator with varbinary
+SELECT (CAST(123 AS varbinary(1)) & 21);
+SELECT (CAST(123 AS varbinary(2)) & 321);
+SELECT (CAST(12345 AS varbinary(4)) & 54321);
+GO
+~~START~~
+int
+17
+~~END~~
+
+~~START~~
+int
+65
+~~END~~
+
+~~START~~
+int
+4145
+~~END~~
+
+
+SELECT (CAST(9876543210 AS BIGINT) & CAST(1234567890 AS varbinary(8)));
+SELECT (543210 & CAST(12345 AS varbinary(4)));
+SELECT (CAST(321 AS smallint) & CAST(123 AS varbinary(2)));
+SELECT (CAST(12 AS tinyint) & CAST(21 AS varbinary(1)));
+GO
+~~START~~
+bigint
+1217397442
+~~END~~
+
+~~START~~
+int
+40
+~~END~~
+
+~~START~~
+smallint
+65
+~~END~~
+
+~~START~~
+smallint
+4
+~~END~~
+
+
+-- test | operator with varbinary
+SELECT (CAST(123 AS varbinary(1)) | 21);
+SELECT (CAST(123 AS varbinary(2)) | 321);
+SELECT (CAST(12345 AS varbinary(4)) | 54321);
+GO
+~~START~~
+int
+127
+~~END~~
+
+~~START~~
+int
+379
+~~END~~
+
+~~START~~
+int
+62521
+~~END~~
+
+
+SELECT (CAST(9876543210 AS BIGINT) | CAST(1234567890 AS varbinary(8)));
+SELECT (543210 | CAST(12345 AS varbinary(4)));
+SELECT (CAST(321 AS smallint) | CAST(123 AS varbinary(2)));
+SELECT (CAST(12 AS tinyint) | CAST(21 AS varbinary(1)));
+GO
+~~START~~
+bigint
+9893713658
+~~END~~
+
+~~START~~
+int
+555515
+~~END~~
+
+~~START~~
+smallint
+379
+~~END~~
+
+~~START~~
+smallint
+29
+~~END~~
+
+
+-- test ^ operator with varbinary
+SELECT (17 ^ 5);
+GO
+~~START~~
+int
+20
+~~END~~
+
+
+SELECT (CAST(123 AS varbinary(1)) ^ 21);
+SELECT (CAST(123 AS varbinary(2)) ^ 321);
+SELECT (CAST(12345 AS varbinary(4)) ^ 54321);
+GO
+~~START~~
+int
+110
+~~END~~
+
+~~START~~
+int
+314
+~~END~~
+
+~~START~~
+int
+58376
+~~END~~
+
+
+SELECT (CAST(9876543210 AS BIGINT) ^ CAST(1234567890 AS varbinary(8)));
+SELECT (543210 ^ CAST(12345 AS varbinary(4)));
+SELECT (CAST(321 AS smallint) ^ CAST(123 AS varbinary(2)));
+SELECT (CAST(12 AS tinyint) ^ CAST(21 AS varbinary(1)));
+GO
+~~START~~
+bigint
+8676316216
+~~END~~
+
+~~START~~
+int
+555475
+~~END~~
+
+~~START~~
+smallint
+314
+~~END~~
+
+~~START~~
+smallint
+25
+~~END~~
+

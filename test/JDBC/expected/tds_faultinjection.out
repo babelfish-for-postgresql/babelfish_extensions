@@ -1,0 +1,79 @@
+---- Inject an error in tds comm layer while reading the request
+---- Test both SQL Batch and prepare exec
+--SELECT inject_fault('tds_comm_throw_error', 2);
+--SELECT 1;
+--prepst#!# SELECT @a #!#BIGINT|-|a|-|0
+
+---- test normal execution
+--SELECT 1;
+
+-- Inject a pre-parsing error
+-- Test both SQL Batch and prepare exec
+SELECT inject_fault('pre_parsing_throw_error', 2);
+~~START~~
+text
+enabled, pending occurrences: 2
+~~END~~
+
+SELECT 1;
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: error triggered from fault injection)~~
+
+prepst#!# SELECT ? #!#BIGINT|-|a|-|0
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: error triggered from fault injection)~~
+
+
+-- test normal execution
+SELECT 1;
+~~START~~
+int
+1
+~~END~~
+
+
+-- Inject a post-parsing error
+-- Test both SQL Batch and prepare exec
+SELECT inject_fault('post_parsing_throw_error', 2);
+~~START~~
+text
+enabled, pending occurrences: 2
+~~END~~
+
+SELECT 1;
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: error triggered from fault injection)~~
+
+prepst#!# SELECT ? #!#BIGINT|-|a|-|0
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: error triggered from fault injection)~~
+
+
+-- test normal execution
+SELECT 1;
+~~START~~
+int
+1
+~~END~~
+
+
+-- Inject fault to tamper TDS request
+-- Test both SQL Batch and prepare exec (but prepare exec is failing now)
+SELECT inject_fault('pre_parsing_tamper_request', 1);
+~~START~~
+text
+enabled, pending occurrences: 1
+~~END~~
+
+SELECT 1;
+~~START~~
+int
+1
+~~END~~
+
+--prepst#!# SELECT @a #!#BIGINT|-|a|-|0
+

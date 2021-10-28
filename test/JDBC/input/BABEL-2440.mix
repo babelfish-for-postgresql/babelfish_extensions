@@ -1,0 +1,38 @@
+-- tsql
+SELECT session_user, current_user, db_name();
+GO
+
+CREATE LOGIN r1 WITH PASSWORD = '123';
+GO
+
+-- tsql user=r1 password=123
+SELECT session_user, current_user, db_name();
+GO
+
+ALTER LOGIN r1 WITH PASSWORD = 'abc';
+GO
+
+SELECT session_user, current_user, db_name();
+GO
+
+ALTER LOGIN r1 WITH PASSWORD = '123abc' OLD_PASSWORD = 'abc';
+GO
+
+SELECT set_config('babelfishpg_tsql.escape_hatch_login_old_password', 'ignore', 'false')
+GO
+
+ALTER LOGIN r1 WITH PASSWORD = '123abc' OLD_PASSWORD = 'abc';
+GO
+
+SELECT set_config('babelfishpg_tsql.escape_hatch_login_old_password', 'strict', 'false')
+GO
+
+SELECT session_user, current_user, db_name();
+GO
+
+-- tsql
+ALTER LOGIN r1 WITH PASSWORD = 'abc';
+GO
+
+DROP LOGIN r1;
+GO

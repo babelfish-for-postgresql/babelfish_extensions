@@ -1,0 +1,74 @@
+name: Babelfish for PostgreSQL Extensions Bug Report
+description: File a bug report for Babelfish Extensions
+title: "[Bug]: "
+labels: ["bug", "triage"]
+assignees:
+  - amazon-auto
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for taking the time to fill out this bug report!
+  - type: input
+    id: contact
+    attributes:
+      label: Contact Details
+      description: How can we get in touch with you if we need more info?
+      placeholder: ex. email@example.com
+    validations:
+      required: false
+  - type: textarea
+    id: what-happened
+    attributes:
+      label: What happened?
+      description: Also tell us, what did you expect to happen?
+      placeholder: Tell us what you see!
+      value: "A bug happened!"
+    validations:
+      required: true
+  - type: dropdown
+    id: version
+    attributes:
+      label: Version
+      description: What version of our software are you running?
+      options:
+        - 13_4 (Default)
+    validations:
+      required: true
+  - type: dropdown
+    id: version
+    attributes:
+      label: Version
+      description: What version of our software are you running?
+      options:
+        - babelfishpg_tsql (Default)
+        - babelfishpg_tds
+        - babelfishpg_money
+        - babelfishpg_common
+        - fixeddecimal
+    validations:
+      required: true
+  - type: dropdown
+    id: os
+    attributes:
+      label: What flavour of Linux are you running into the bug?
+      multiple: true
+      options:
+        - Ubuntu (Default)
+        - Fedora
+        - Amazon Linux
+        - Other
+  - type: textarea
+    id: logs
+    attributes:
+      label: Relevant log output
+      description: Please copy and paste any relevant log output. This will be automatically formatted into code, so no need for backticks.
+      render: shell
+  - type: checkboxes
+    id: terms
+    attributes:
+      label: Code of Conduct
+      description: By submitting this issue, you agree to follow our [Code of Conduct](https://aws.github.io/code-of-conduct-faq)
+      options:
+        - label: I agree to follow this project's Code of Conduct
+          required: true

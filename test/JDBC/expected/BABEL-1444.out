@@ -1,0 +1,263 @@
+USE MASTER;
+GO
+
+DECLARE @usr CHAR(30)
+DECLARE @cur_usr CHAR(30)
+SET @usr = user
+SET @cur_usr = current_user
+SELECT 'user: '+ @usr
+SELECT 'current_user: '+ @cur_usr
+GO
+~~START~~
+text
+user: dbo                           
+~~END~~
+
+~~START~~
+text
+current_user: dbo                           
+~~END~~
+
+
+CREATE TABLE dbo.t1
+(id INT IDENTITY(100, 1) NOT NULL,
+ description VARCHAR(30) NOT NULL,
+ usr VARCHAR(30) NOT NULL DEFAULT USER,
+ cur_usr VARCHAR(30) NOT NULL DEFAULT CURRENT_USER);
+GO
+
+INSERT INTO dbo.t1 (description) VALUES ('Orange');
+INSERT INTO dbo.t1 (description) VALUES ('Blue');
+INSERT INTO dbo.t1 (description, usr) VALUES ('Green', 'Bob');
+INSERT INTO dbo.t1 (description, cur_usr) VALUES ('Purple', 'Alice');
+INSERT INTO dbo.t1 (description, usr, cur_usr) VALUES ('Red', 'Mike', 'Dave');
+GO
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+
+SELECT * FROM dbo.t1 ORDER BY id;  
+GO
+~~START~~
+int#!#varchar#!#varchar#!#varchar
+100#!#Orange#!#dbo#!#dbo
+101#!#Blue#!#dbo#!#dbo
+102#!#Green#!#Bob#!#dbo
+103#!#Purple#!#dbo#!#Alice
+104#!#Red#!#Mike#!#Dave
+~~END~~
+
+
+DROP TABLE dbo.t1;
+GO
+
+-- Test properties after USE
+CREATE DATABASE db1;
+GO
+
+SELECT current_setting('role');
+GO
+~~START~~
+text
+master_dbo
+~~END~~
+
+SELECT current_setting('search_path');
+GO
+~~START~~
+text
+master_dbo, "$user", sys, pg_catalog
+~~END~~
+
+SELECT session_user, current_user, user;
+GO
+~~START~~
+varchar#!#varchar#!#nvarchar
+jdbc_user#!#dbo#!#dbo
+~~END~~
+
+SELECT user_name();
+GO
+~~START~~
+nvarchar
+dbo
+~~END~~
+
+
+USE db1;
+GO
+
+SELECT current_setting('role');
+GO
+~~START~~
+text
+dbo
+~~END~~
+
+SELECT current_setting('search_path');
+GO
+~~START~~
+text
+dbo, "$user", sys, pg_catalog
+~~END~~
+
+SELECT session_user, current_user, user;
+GO
+~~START~~
+varchar#!#varchar#!#nvarchar
+jdbc_user#!#dbo#!#dbo
+~~END~~
+
+SELECT user_name();
+GO
+~~START~~
+nvarchar
+dbo
+~~END~~
+
+
+-- Error: Test DROP
+DROP DATABASE db1;
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Cannot drop database "db1" because it is currently in use)~~
+
+
+SELECT current_setting('role');
+GO
+~~START~~
+text
+dbo
+~~END~~
+
+SELECT current_setting('search_path');
+GO
+~~START~~
+text
+dbo, "$user", sys, pg_catalog
+~~END~~
+
+SELECT session_user, current_user, user;
+GO
+~~START~~
+varchar#!#varchar#!#nvarchar
+jdbc_user#!#dbo#!#dbo
+~~END~~
+
+SELECT user_name();
+GO
+~~START~~
+nvarchar
+dbo
+~~END~~
+
+
+-- Test DROP when using another database
+USE MASTER;
+GO
+
+SELECT current_setting('role');
+GO
+~~START~~
+text
+master_dbo
+~~END~~
+
+SELECT current_setting('search_path');
+GO
+~~START~~
+text
+master_dbo, "$user", sys, pg_catalog
+~~END~~
+
+SELECT session_user, current_user, user;
+GO
+~~START~~
+varchar#!#varchar#!#nvarchar
+jdbc_user#!#dbo#!#dbo
+~~END~~
+
+SELECT user_name();
+GO
+~~START~~
+nvarchar
+dbo
+~~END~~
+
+
+DROP DATABASE db1;
+GO
+
+SELECT current_setting('role');
+GO
+~~START~~
+text
+master_dbo
+~~END~~
+
+SELECT current_setting('search_path');
+GO
+~~START~~
+text
+master_dbo, "$user", sys, pg_catalog
+~~END~~
+
+SELECT session_user, current_user, user;
+GO
+~~START~~
+varchar#!#varchar#!#nvarchar
+jdbc_user#!#dbo#!#dbo
+~~END~~
+
+SELECT user_name();
+GO
+~~START~~
+nvarchar
+dbo
+~~END~~
+
+
+-- Test CREATE
+CREATE DATABASE db1;
+GO
+
+SELECT current_setting('role');
+GO
+~~START~~
+text
+master_dbo
+~~END~~
+
+SELECT current_setting('search_path');
+GO
+~~START~~
+text
+master_dbo, "$user", sys, pg_catalog
+~~END~~
+
+SELECT session_user, current_user, user;
+GO
+~~START~~
+varchar#!#varchar#!#nvarchar
+jdbc_user#!#dbo#!#dbo
+~~END~~
+
+SELECT user_name();
+GO
+~~START~~
+nvarchar
+dbo
+~~END~~
+
+
+-- Clean up
+DROP DATABASE db1;
+GO

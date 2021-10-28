@@ -1,0 +1,38 @@
+use master;
+go
+
+-- sql batch
+SELECT NULLIF(NULL, 2);
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: The first argument to NULLIF cannot be a constant NULL.)~~
+
+
+-- create procedure -> should throw compile-time error
+CREATE PROCEDURE p_2234 AS
+  SELECT NULLIF(NULL, 2);
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: The first argument to NULLIF cannot be a constant NULL.)~~
+
+
+-- NULL variable should be allowed
+declare @a int;
+set @a = NULL;
+select nullif(@a, 2);
+go
+~~START~~
+int
+<NULL>
+~~END~~
+
+
+-- mixed case nullif
+SELECT NuLlIf(nULL, 2);
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: The first argument to NULLIF cannot be a constant NULL.)~~
+

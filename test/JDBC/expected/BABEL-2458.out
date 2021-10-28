@@ -1,0 +1,137 @@
+-- psql
+SHOW "babelfishpg_tsql.migration_mode"; -- make sure it is single-db mode
+GO
+~~START~~
+text
+single-db
+~~END~~
+
+
+-- tsql
+USE master -- 1. test master DB
+GO
+
+CREATE SCHEMA test2458;
+GO
+CREATE SCHEMA master;
+GO
+CREATE SCHEMA xyz_sfab;
+GO
+-- test very long schema name
+CREATE SCHEMA wqreqwreqwerqwereqwrqreqwrqwrqwerqewreqwreqwrewqreerweqrqwreqwreqreqewrqwereqrrereqwerqwereqwrw;
+GO
+
+-- test sys.schemas return logical schema name
+-- test schema_id and schema_name to handle logical name
+SELECT name, schema_name(schema_id(name)) FROM sys.schemas where name = 'test2458';
+SELECT name, schema_name(schema_id(name)) FROM sys.schemas where name = 'master';
+SELECT name, schema_name(schema_id(name)) FROM sys.schemas where name = 'xyz_sfab';
+SELECT name, schema_name(schema_id(name)) FROM sys.schemas where name = 'dbo';
+GO
+~~START~~
+varchar#!#varchar
+test2458#!#test2458
+~~END~~
+
+~~START~~
+varchar#!#varchar
+master#!#master
+~~END~~
+
+~~START~~
+varchar#!#varchar
+xyz_sfab#!#xyz_sfab
+~~END~~
+
+~~START~~
+varchar#!#varchar
+dbo#!#dbo
+~~END~~
+
+
+SELECT COUNT(*) FROM sys.schemas where schema_name(schema_id(name)) = 'wqreqwreqwerqwereqwrqreqwrqwrqwerqewreqwreqwrewqreerweqrqwreqwreqreqewrqwereqrrereqwerqwereqwrw';
+GO
+~~START~~
+int
+1
+~~END~~
+
+
+-- cleanup
+DROP SCHEMA test2458;
+GO
+DROP SCHEMA master;
+GO
+DROP SCHEMA xyz_sfab;
+GO
+DROP SCHEMA wqreqwreqwerqwereqwrqreqwrqwrqwerqewreqwreqwrewqreerweqrqwreqwreqreqewrqwereqrrereqwerqwereqwrw;
+GO
+
+
+CREATE DATABASE db_a; -- 2. test single-db mode user DB
+GO
+
+USE db_a;
+GO
+
+CREATE SCHEMA test2458;
+GO
+CREATE SCHEMA master;
+GO
+CREATE SCHEMA xyz_sfab;
+GO
+-- test very long schema name
+CREATE SCHEMA wqreqwreqwerqwereqwrqreqwrqwrqwerqewreqwreqwrewqreerweqrqwreqwreqreqewrqwereqrrereqwerqwereqwrw;
+GO
+
+-- test sys.schemas return logical schema name
+-- test schema_id and schema_name to handle logical name
+SELECT name, schema_name(schema_id(name)) FROM sys.schemas where name = 'test2458';
+SELECT name, schema_name(schema_id(name)) FROM sys.schemas where name = 'master';
+SELECT name, schema_name(schema_id(name)) FROM sys.schemas where name = 'xyz_sfab';
+SELECT name, schema_name(schema_id(name)) FROM sys.schemas where name = 'dbo';
+GO
+~~START~~
+varchar#!#varchar
+test2458#!#test2458
+~~END~~
+
+~~START~~
+varchar#!#varchar
+master#!#master
+~~END~~
+
+~~START~~
+varchar#!#varchar
+xyz_sfab#!#xyz_sfab
+~~END~~
+
+~~START~~
+varchar#!#varchar
+dbo#!#dbo
+~~END~~
+
+
+SELECT COUNT(*) FROM sys.schemas where schema_name(schema_id(name)) = 'wqreqwreqwerqwereqwrqreqwrqwrqwerqewreqwreqwrewqreerweqrqwreqwreqreqewrqwereqrrereqwerqwereqwrw';
+GO
+~~START~~
+int
+1
+~~END~~
+
+
+-- cleanup
+DROP SCHEMA test2458;
+GO
+DROP SCHEMA master;
+GO
+DROP SCHEMA xyz_sfab;
+GO
+DROP SCHEMA wqreqwreqwerqwereqwrqreqwrqwrqwerqewreqwreqwrewqreerweqrqwreqwreqreqewrqwereqrrereqwerqwereqwrw;
+GO
+
+USE master;
+GO
+
+DROP DATABASE db_a;
+GO

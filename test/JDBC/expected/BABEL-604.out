@@ -1,0 +1,46 @@
+create table employees(@pers_id int, @fname nvarchar(20), @lname nvarchar(30), sal money)
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: syntax error near '@pers_id' at line 1 and character position 23)~~
+
+
+create procedure p_employee_select as begin select * from employees end
+GO
+
+call p_employee_select
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: column "p_employee_select" does not exist)~~
+
+
+call p_employee_select
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: column "p_employee_select" does not exist)~~
+
+
+create procedure p as select 2; select 1;
+go
+execute p;
+go
+~~START~~
+int
+2
+~~END~~
+
+~~START~~
+int
+1
+~~END~~
+
+
+drop procedure p_employee_select, p;
+drop table employees;
+go
+~~ERROR (Code: 3701)~~
+
+~~ERROR (Message: table "employees" does not exist)~~
+

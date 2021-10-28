@@ -1,0 +1,94 @@
+--
+-- PLTSQL -- PRINT Statement
+--
+CREATE FUNCTION print_with_semicolon() RETURNS void AS $$
+BEGIN
+    PRINT 'PRINT with a semicolon.';
+END
+$$ LANGUAGE pltsql;
+SELECT print_with_semicolon();
+INFO:  PRINT with a semicolon.
+ print_with_semicolon 
+----------------------
+ 
+(1 row)
+
+CREATE FUNCTION print_without_semicolon() RETURNS void AS $$
+BEGIN
+    PRINT 'PRINT without a semicolon.'
+END
+$$ LANGUAGE pltsql;
+SELECT print_without_semicolon();
+INFO:  PRINT without a semicolon.
+ print_without_semicolon 
+-------------------------
+ 
+(1 row)
+
+CREATE FUNCTION multiple_prints_with_mixed_termination() RETURNS void AS $$
+BEGIN
+    PRINT 'First PRINT without a semicolon.'
+    PRINT 'Second PRINT without a semicolon.'
+    PRINT 'Third PRINT with a semicolon.';
+END
+$$ LANGUAGE pltsql;
+SELECT multiple_prints_with_mixed_termination();
+INFO:  First PRINT without a semicolon.
+INFO:  Second PRINT without a semicolon.
+INFO:  Third PRINT with a semicolon.
+ multiple_prints_with_mixed_termination 
+----------------------------------------
+ 
+(1 row)
+
+CREATE FUNCTION multiple_prints_same_line() RETURNS void AS $$
+BEGIN
+    PRINT 'First PRINT';PRINT 'Second PRINT'
+    PRINT 'Third PRINT'; PRINT 'Fourth PRINT'
+    PRINT 'Fifth PRINT' PRINT 'Sixth PRINT'
+END
+$$ LANGUAGE pltsql;
+SELECT multiple_prints_same_line();
+INFO:  First PRINT
+INFO:  Second PRINT
+INFO:  Third PRINT
+INFO:  Fourth PRINT
+INFO:  Fifth PRINT
+INFO:  Sixth PRINT
+ multiple_prints_same_line 
+---------------------------
+ 
+(1 row)
+
+CREATE FUNCTION error_print_noarg() RETURNS void AS $$
+BEGIN
+    PRINT
+END
+$$ LANGUAGE pltsql;
+ERROR:  syntax error at end of input
+LINE 5: $$ LANGUAGE pltsql;
+        ^
+CREATE FUNCTION error_print_noarg_semicolon() RETURNS void AS $$
+BEGIN
+    PRINT;
+END
+$$ LANGUAGE pltsql;
+ERROR:  Incorrect syntax at or near ";"
+LINE 3:     PRINT;
+                 ^
+CREATE FUNCTION error_print_multipleargs() RETURNS void AS $$
+BEGIN
+    PRINT 'first' 'second'
+END
+$$ LANGUAGE pltsql;
+ERROR:  syntax error at or near "'second'"
+LINE 3:     PRINT 'first' 'second'
+                          ^
+CREATE FUNCTION error_print_multipleargs_comma() RETURNS void AS $$
+BEGIN
+    PRINT 'first','second'
+END
+$$ LANGUAGE pltsql;
+ERROR:  syntax error at or near ","
+LINE 3:     PRINT 'first','second'
+                         ^

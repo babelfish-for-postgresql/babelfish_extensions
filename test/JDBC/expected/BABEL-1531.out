@@ -1,0 +1,58 @@
+SELECT CONVERT(varchar(50), CAST($23.12 AS money), 0);
+GO
+~~START~~
+varchar
+ 23.12                                            
+~~END~~
+
+SELECT CONVERT(varchar(50), CAST($23.12 AS money), 2);
+GO
+~~START~~
+varchar
+ 23.1200                                          
+~~END~~
+
+SELECT CONVERT(varchar(50), CAST($23.12 as money));
+GO
+~~START~~
+varchar
+ 23.12                                            
+~~END~~
+
+SELECT CONVERT(float, CAST($23.12 as money));
+GO
+~~START~~
+float
+23.12
+~~END~~
+
+SELECT CONVERT(decimal, CAST($23.12 as money));
+GO
+~~START~~
+numeric
+23
+~~END~~
+
+SELECT CONVERT(numeric, CAST($23.12 as money));
+GO
+~~START~~
+numeric
+23
+~~END~~
+
+SELECT CONVERT(numeric(10,4), CAST($23.12 as money));
+GO
+~~START~~
+numeric
+23.1200
+~~END~~
+
+declare @mon money;
+set @mon = $23.12;
+SELECT CONVERT(varchar(50), @mon);
+GO
+~~START~~
+varchar
+ 23.12                                            
+~~END~~
+

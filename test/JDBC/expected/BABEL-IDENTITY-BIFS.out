@@ -1,0 +1,877 @@
+CREATE SCHEMA ident_bifs;
+GO
+
+-- Test standard INSERTs
+SELECT IDENT_SEED('ident_bifs.t1');
+go
+~~START~~
+numeric
+<NULL>
+~~END~~
+
+SELECT IDENT_INCR('ident_bifs.t1');
+go
+~~START~~
+numeric
+<NULL>
+~~END~~
+
+SELECT IDENT_CURRENT('ident_bifs.t1');
+go
+~~START~~
+numeric
+<NULL>
+~~END~~
+
+CREATE TABLE ident_bifs.t1(id INT IDENTITY, c1 INT);
+go
+SELECT @@IDENTITY;
+go
+~~START~~
+numeric
+<NULL>
+~~END~~
+
+SELECT IDENT_SEED('ident_bifs.t1');
+go
+~~START~~
+numeric
+1
+~~END~~
+
+SELECT IDENT_INCR('ident_bifs.t1');
+go
+~~START~~
+numeric
+1
+~~END~~
+
+SELECT IDENT_CURRENT('ident_bifs.t1');
+go
+~~START~~
+numeric
+1
+~~END~~
+
+INSERT INTO ident_bifs.t1 (c1) VALUES (42);
+go
+~~ROW COUNT: 1~~
+
+INSERT INTO ident_bifs.t1 (c1) VALUES (42);
+go
+~~ROW COUNT: 1~~
+
+INSERT INTO ident_bifs.t1 (c1) VALUES (42);
+go
+~~ROW COUNT: 1~~
+
+INSERT INTO ident_bifs.t1 (c1) VALUES (42);
+go
+~~ROW COUNT: 1~~
+
+INSERT INTO ident_bifs.t1 (c1) VALUES (42);
+go
+~~ROW COUNT: 1~~
+
+SELECT @@IDENTITY;
+go
+~~START~~
+numeric
+5
+~~END~~
+
+SELECT IDENT_CURRENT('ident_bifs.t1');
+go
+~~START~~
+numeric
+5
+~~END~~
+
+
+-- Test IDENTITY_INSERT
+SET IDENTITY_INSERT ident_bifs.t1 ON;
+go
+INSERT INTO ident_bifs.t1 (id, c1) VALUES (10, 42);
+go
+~~ROW COUNT: 1~~
+
+SELECT @@IDENTITY;
+go
+~~START~~
+numeric
+10
+~~END~~
+
+SELECT IDENT_CURRENT('ident_bifs.t1');
+go
+~~START~~
+numeric
+10
+~~END~~
+
+INSERT INTO ident_bifs.t1 (id, c1) VALUES (-5, 42);
+go
+~~ROW COUNT: 1~~
+
+SELECT @@IDENTITY;
+go
+~~START~~
+numeric
+-5
+~~END~~
+
+SELECT IDENT_CURRENT('ident_bifs.t1');
+go
+~~START~~
+numeric
+10
+~~END~~
+
+SET IDENTITY_INSERT ident_bifs.t1 OFF;
+go
+
+-- Test follow-up INSERTs
+INSERT INTO ident_bifs.t1 (c1) VALUES (42);
+go
+~~ROW COUNT: 1~~
+
+SELECT @@IDENTITY;
+go
+~~START~~
+numeric
+11
+~~END~~
+
+SELECT IDENT_CURRENT('ident_bifs.t1');
+go
+~~START~~
+numeric
+11
+~~END~~
+
+INSERT INTO ident_bifs.t1 (c1) VALUES (42);
+go
+~~ROW COUNT: 1~~
+
+SELECT @@IDENTITY;
+go
+~~START~~
+numeric
+12
+~~END~~
+
+SELECT IDENT_CURRENT('ident_bifs.t1');
+go
+~~START~~
+numeric
+12
+~~END~~
+
+
+-- Test new table with IDENTITY_INSERT
+CREATE TABLE ident_bifs.t2(id INT IDENTITY, c1 INT);
+go
+SET IDENTITY_INSERT ident_bifs.t2 ON;
+go
+INSERT INTO ident_bifs.t2 (id, c1) VALUES (10, 42);
+go
+~~ROW COUNT: 1~~
+
+SELECT @@IDENTITY;
+go
+~~START~~
+numeric
+10
+~~END~~
+
+SELECT IDENT_CURRENT('ident_bifs.t2');
+go
+~~START~~
+numeric
+10
+~~END~~
+
+SET IDENTITY_INSERT ident_bifs.t2 OFF;
+go
+
+-- Test follow-up INSERTs
+INSERT INTO ident_bifs.t2 (c1) VALUES (42);
+go
+~~ROW COUNT: 1~~
+
+SELECT @@IDENTITY;
+go
+~~START~~
+numeric
+11
+~~END~~
+
+SELECT IDENT_CURRENT('ident_bifs.t2');
+go
+~~START~~
+numeric
+11
+~~END~~
+
+INSERT INTO ident_bifs.t2 (c1) VALUES (42);
+go
+~~ROW COUNT: 1~~
+
+SELECT @@IDENTITY;
+go
+~~START~~
+numeric
+12
+~~END~~
+
+SELECT IDENT_CURRENT('ident_bifs.t2');
+go
+~~START~~
+numeric
+12
+~~END~~
+
+
+-- Test follow-up INSERTs to the previous table
+INSERT INTO ident_bifs.t1 (c1) VALUES (42);
+go
+~~ROW COUNT: 1~~
+
+SELECT @@IDENTITY;
+go
+~~START~~
+numeric
+13
+~~END~~
+
+SELECT IDENT_CURRENT('ident_bifs.t1');
+go
+~~START~~
+numeric
+13
+~~END~~
+
+INSERT INTO ident_bifs.t1 (c1) VALUES (42);
+go
+~~ROW COUNT: 1~~
+
+SELECT @@IDENTITY;
+go
+~~START~~
+numeric
+14
+~~END~~
+
+SELECT IDENT_CURRENT('ident_bifs.t1');
+go
+~~START~~
+numeric
+14
+~~END~~
+
+
+-- Test standard INSERTs with decrementing values
+CREATE TABLE ident_bifs.t3(id INT IDENTITY(5, -25), c1 INT);
+go
+SELECT @@IDENTITY;
+go
+~~START~~
+numeric
+14
+~~END~~
+
+SELECT IDENT_SEED('ident_bifs.t3');
+go
+~~START~~
+numeric
+5
+~~END~~
+
+SELECT IDENT_INCR('ident_bifs.t3');
+go
+~~START~~
+numeric
+-25
+~~END~~
+
+SELECT IDENT_CURRENT('ident_bifs.t3');
+go
+~~START~~
+numeric
+5
+~~END~~
+
+INSERT INTO ident_bifs.t3 (c1) VALUES (42);
+go
+~~ROW COUNT: 1~~
+
+INSERT INTO ident_bifs.t3 (c1) VALUES (42);
+go
+~~ROW COUNT: 1~~
+
+INSERT INTO ident_bifs.t3 (c1) VALUES (42);
+go
+~~ROW COUNT: 1~~
+
+INSERT INTO ident_bifs.t3 (c1) VALUES (42);
+go
+~~ROW COUNT: 1~~
+
+INSERT INTO ident_bifs.t3 (c1) VALUES (42);
+go
+~~ROW COUNT: 1~~
+
+SELECT @@IDENTITY;
+go
+~~START~~
+numeric
+-95
+~~END~~
+
+SELECT IDENT_CURRENT('ident_bifs.t3');
+go
+~~START~~
+numeric
+-95
+~~END~~
+
+
+-- Test IDENTITY_INSERT
+SET IDENTITY_INSERT ident_bifs.t3 ON;
+go
+INSERT INTO ident_bifs.t3 (id, c1) VALUES (-500, 42);
+go
+~~ROW COUNT: 1~~
+
+SELECT @@IDENTITY;
+go
+~~START~~
+numeric
+-500
+~~END~~
+
+SELECT IDENT_CURRENT('ident_bifs.t3');
+go
+~~START~~
+numeric
+-500
+~~END~~
+
+INSERT INTO ident_bifs.t3 (id, c1) VALUES (10, 42);
+go
+~~ROW COUNT: 1~~
+
+SELECT @@IDENTITY;
+go
+~~START~~
+numeric
+10
+~~END~~
+
+SELECT IDENT_CURRENT('ident_bifs.t3');
+go
+~~START~~
+numeric
+-500
+~~END~~
+
+SET IDENTITY_INSERT ident_bifs.t3 OFF;
+go
+
+-- Test follow-up INSERTs
+INSERT INTO ident_bifs.t3 (c1) VALUES (42);
+go
+~~ROW COUNT: 1~~
+
+SELECT @@IDENTITY;
+go
+~~START~~
+numeric
+-525
+~~END~~
+
+SELECT IDENT_CURRENT('ident_bifs.t3');
+go
+~~START~~
+numeric
+-525
+~~END~~
+
+INSERT INTO ident_bifs.t3 (c1) VALUES (42);
+go
+~~ROW COUNT: 1~~
+
+SELECT @@IDENTITY;
+go
+~~START~~
+numeric
+-550
+~~END~~
+
+SELECT IDENT_CURRENT('ident_bifs.t3');
+go
+~~START~~
+numeric
+-550
+~~END~~
+
+
+-- Test new table with IDENTITY_INSERT
+CREATE TABLE ident_bifs.t4(id INT IDENTITY(-10, -1), c1 INT);
+go
+SELECT IDENT_SEED('ident_bifs.t4');
+go
+~~START~~
+numeric
+-10
+~~END~~
+
+SELECT IDENT_INCR('ident_bifs.t4');
+go
+~~START~~
+numeric
+-1
+~~END~~
+
+SELECT IDENT_CURRENT('ident_bifs.t4');
+go
+~~START~~
+numeric
+-10
+~~END~~
+
+SET IDENTITY_INSERT ident_bifs.t4 ON;
+go
+INSERT INTO ident_bifs.t4 (id, c1) VALUES (-50, 42);
+go
+~~ROW COUNT: 1~~
+
+SELECT @@IDENTITY;
+go
+~~START~~
+numeric
+-50
+~~END~~
+
+SELECT IDENT_CURRENT('ident_bifs.t4');
+go
+~~START~~
+numeric
+-50
+~~END~~
+
+SET IDENTITY_INSERT ident_bifs.t4 OFF;
+go
+
+-- Test follow-up INSERTs
+INSERT INTO ident_bifs.t4 (c1) VALUES (42);
+go
+~~ROW COUNT: 1~~
+
+SELECT @@IDENTITY;
+go
+~~START~~
+numeric
+-51
+~~END~~
+
+SELECT IDENT_CURRENT('ident_bifs.t4');
+go
+~~START~~
+numeric
+-51
+~~END~~
+
+INSERT INTO ident_bifs.t4 (c1) VALUES (42);
+go
+~~ROW COUNT: 1~~
+
+SELECT @@IDENTITY;
+go
+~~START~~
+numeric
+-52
+~~END~~
+
+SELECT IDENT_CURRENT('ident_bifs.t4');
+go
+~~START~~
+numeric
+-52
+~~END~~
+
+
+-- Test follow-up INSERTs to the previous table
+INSERT INTO ident_bifs.t3 (c1) VALUES (42);
+go
+~~ROW COUNT: 1~~
+
+SELECT @@IDENTITY;
+go
+~~START~~
+numeric
+-575
+~~END~~
+
+SELECT IDENT_CURRENT('ident_bifs.t3');
+go
+~~START~~
+numeric
+-575
+~~END~~
+
+INSERT INTO ident_bifs.t3 (c1) VALUES (42);
+go
+~~ROW COUNT: 1~~
+
+SELECT @@IDENTITY;
+go
+~~START~~
+numeric
+-600
+~~END~~
+
+SELECT IDENT_CURRENT('ident_bifs.t3');
+go
+~~START~~
+numeric
+-600
+~~END~~
+
+
+-- Test multi-inserts
+SET IDENTITY_INSERT ident_bifs.t1 ON;
+go
+INSERT INTO ident_bifs.t1 (id, c1) VALUES (10, 42), (9999,42), (0, 42), (-100, 42);
+go
+~~ROW COUNT: 4~~
+
+SELECT @@IDENTITY;
+go
+~~START~~
+numeric
+-100
+~~END~~
+
+SELECT IDENT_CURRENT('ident_bifs.t1');
+go
+~~START~~
+numeric
+9999
+~~END~~
+
+SET IDENTITY_INSERT ident_bifs.t1 OFF;
+go
+
+CREATE PROCEDURE ident_bifs.insertLoopT1
+AS BEGIN
+DECLARE @N INT
+SET @N = 1
+SET IDENTITY_INSERT ident_bifs.t1 ON
+WHILE (@N < 10)
+BEGIN
+	INSERT INTO ident_bifs.t1 (id, c1) VALUES (@N*42, 42)
+	SET @N = @N + 1
+END
+SET IDENTITY_INSERT ident_bifs.t1 OFF
+END;
+go
+
+EXEC ident_bifs.insertLoopT1;
+go
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+SELECT @@IDENTITY;
+go
+~~START~~
+numeric
+378
+~~END~~
+
+SELECT IDENT_CURRENT('ident_bifs.t1');
+go
+~~START~~
+numeric
+9999
+~~END~~
+
+
+-- Update the last identity value as a reference
+INSERT INTO ident_bifs.t2 (c1) VALUES (42);
+go
+~~ROW COUNT: 1~~
+
+SELECT @@IDENTITY;
+go
+~~START~~
+numeric
+13
+~~END~~
+
+SELECT IDENT_CURRENT('ident_bifs.t2');
+go
+~~START~~
+numeric
+13
+~~END~~
+
+
+-- Insert select and check that the last value changed to what is expected
+SET IDENTITY_INSERT ident_bifs.t2 ON;
+go
+INSERT INTO ident_bifs.t2 (id, c1) SELECT * FROM ident_bifs.t1;
+go
+~~ROW COUNT: 24~~
+
+SELECT @@IDENTITY;
+go
+~~START~~
+numeric
+378
+~~END~~
+
+SELECT IDENT_CURRENT('ident_bifs.t2');
+go
+~~START~~
+numeric
+9999
+~~END~~
+
+SET IDENTITY_INSERT ident_bifs.t2 OFF;
+go
+
+-- Check value of each table in the session so far
+SELECT IDENT_CURRENT('ident_bifs.t1');
+go
+~~START~~
+numeric
+9999
+~~END~~
+
+SELECT IDENT_CURRENT('ident_bifs.t2');
+go
+~~START~~
+numeric
+9999
+~~END~~
+
+SELECT IDENT_CURRENT('ident_bifs.t3');
+go
+~~START~~
+numeric
+-600
+~~END~~
+
+SELECT IDENT_CURRENT('ident_bifs.t4');
+go
+~~START~~
+numeric
+-52
+~~END~~
+
+
+-- Test with table in default schema
+CREATE TABLE id_bifs_t1(id INT IDENTITY(64, 32), c1 INT);
+go
+SELECT IDENT_SEED('id_bifs_t1');
+go
+~~START~~
+numeric
+64
+~~END~~
+
+SELECT IDENT_INCR('id_bifs_t1');
+go
+~~START~~
+numeric
+32
+~~END~~
+
+SELECT IDENT_CURRENT('id_bifs_t1');
+go
+~~START~~
+numeric
+64
+~~END~~
+
+INSERT INTO id_bifs_t1 (c1) VALUES (8);
+go
+~~ROW COUNT: 1~~
+
+SELECT IDENT_CURRENT('id_bifs_t1');
+go
+~~START~~
+numeric
+64
+~~END~~
+
+SELECT @@IDENTITY;
+go
+~~START~~
+numeric
+64
+~~END~~
+
+
+-- Test camel case
+CREATE TABLE [ident_bifs].[ID_BIFs_T2](id INT IDENTITY(0, -128), c1 INT);
+go
+SELECT IDENT_SEED('[ident_bifs].[ID_BIFs_T2]');
+go
+~~START~~
+numeric
+0
+~~END~~
+
+SELECT IDENT_INCR('[ident_bifs].[ID_BIFs_T2]');
+go
+~~START~~
+numeric
+-128
+~~END~~
+
+SELECT IDENT_CURRENT('[ident_bifs].[ID_BIFs_T2]');
+go
+~~START~~
+numeric
+0
+~~END~~
+
+INSERT INTO [ident_bifs].[ID_BIFs_T2] (c1) VALUES (8);
+go
+~~ROW COUNT: 1~~
+
+SELECT IDENT_CURRENT('[ident_bifs].[ID_BIFs_T2]');
+go
+~~START~~
+numeric
+0
+~~END~~
+
+INSERT INTO [ident_bifs].[ID_BIFs_T2] (c1) VALUES (8);
+go
+~~ROW COUNT: 1~~
+
+SELECT IDENT_CURRENT('[ident_bifs].[ID_BIFs_T2]');
+go
+~~START~~
+numeric
+-128
+~~END~~
+
+SELECT @@IDENTITY;
+go
+~~START~~
+numeric
+-128
+~~END~~
+
+
+-- Test faulty input
+SELECT IDENT_SEED('[ident_bifs].ID_BIFs_T2');
+go
+~~START~~
+numeric
+0
+~~END~~
+
+SELECT IDENT_INCR('[ident_bifs].[ID_BIFs_T2');
+go
+~~START~~
+numeric
+<NULL>
+~~END~~
+
+SELECT IDENT_CURRENT('[ident_bifs].ID_BIFs_T2]');
+go
+~~START~~
+numeric
+<NULL>
+~~END~~
+
+SELECT IDENT_SEED('[ident_bifs].[[ID_BIFs_T2]]');
+go
+~~START~~
+numeric
+<NULL>
+~~END~~
+
+SELECT IDENT_INCR('[ident_bifs].[[ID_BIFs_T2]');
+go
+~~START~~
+numeric
+<NULL>
+~~END~~
+
+SELECT IDENT_CURRENT('[ident_bifs].ID_[BIFs]_T2');
+go
+~~START~~
+numeric
+<NULL>
+~~END~~
+
+SELECT IDENT_SEED('');
+go
+~~START~~
+numeric
+<NULL>
+~~END~~
+
+SELECT IDENT_INCR('');
+go
+~~START~~
+numeric
+<NULL>
+~~END~~
+
+SELECT IDENT_CURRENT('');
+go
+~~START~~
+numeric
+<NULL>
+~~END~~
+
+SELECT IDENT_SEED(NULL);
+go
+~~START~~
+numeric
+<NULL>
+~~END~~
+
+SELECT IDENT_INCR(NULL);
+go
+~~START~~
+numeric
+<NULL>
+~~END~~
+
+SELECT IDENT_CURRENT(NULL);
+go
+~~START~~
+numeric
+<NULL>
+~~END~~
+
+
+DROP PROC ident_bifs.insertLoopT1;
+go
+DROP TABLE ident_bifs.t1, ident_bifs.t2, ident_bifs.t3, ident_bifs.t4, id_bifs_t1, ident_bifs.ID_BIFs_T2;
+go
+DROP SCHEMA ident_bifs;
+GO

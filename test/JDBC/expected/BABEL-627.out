@@ -1,0 +1,25 @@
+USE master;
+GO
+
+-- run built-in functions with master dbo
+select dateadd(year, 2, CAST('20060830' AS datetime));
+GO
+~~START~~
+datetime
+2008-08-30 00:00:00.0
+~~END~~
+
+select datediff(year, CAST('2037-03-01 23:30:05.523' AS datetime), CAST('2036-02-28 23:30:05.523' AS datetime));
+GO
+~~START~~
+int
+-1
+~~END~~
+
+select datepart(week, CAST('2007-04-21' AS date)), datepart(weekday, CAST('2007-04-21' AS date));
+GO
+~~START~~
+int#!#int
+16#!#7
+~~END~~
+

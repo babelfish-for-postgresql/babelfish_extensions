@@ -1,0 +1,10 @@
+-- create procedure with incomplete definition
+create procedure [p_employee_insert]
+@person_id int, @fname varchar(20), @lname varchar(30), @sal money
+as
+begin
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: syntax error near '<EOF>' at line 6 and character position 0)~~
+

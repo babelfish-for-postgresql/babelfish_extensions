@@ -1,0 +1,411 @@
+-- psql
+ALTER SYSTEM SET babelfishpg_tsql.migration_mode = 'multi-db';
+ALTER SYSTEM SET babelfishpg_tsql.allow_antlr_to_unsupported_grammar_for_testing = true;
+SELECT pg_reload_conf();
+GO
+~~START~~
+bool
+t
+~~END~~
+
+
+-- tsql
+CREATE DATABASE db1;
+GO
+
+USE db1;
+GO
+
+-- Create Basic Table
+CREATE SCHEMA babel1454;
+GO
+
+SELECT nspname FROM pg_namespace WHERE nspname = 'db1_babel1454';
+GO
+~~START~~
+varchar
+db1_babel1454
+~~END~~
+
+
+CREATE TABLE babel1454.t1 ( a int, b int ); 
+GO
+
+
+
+-- Test Insert
+INSERT INTO db1.babel1454.t1 VALUES ( 1, 2);
+GO
+~~ROW COUNT: 1~~
+
+
+INSERT INTO babel1454.t1 VALUES (2, 3);
+GO
+~~ROW COUNT: 1~~
+
+
+INSERT INTO babel1454.t1 SELECT a + 10, b + 10 from db1.babel1454.t1;
+GO
+~~ROW COUNT: 2~~
+
+
+SELECT * FROM db1.babel1454.t1 ORDER BY 1,2;
+GO
+~~START~~
+int#!#int
+1#!#2
+2#!#3
+11#!#12
+12#!#13
+~~END~~
+
+
+-- Test Delete
+DELETE FROM db1.babel1454.t1 where babel1454.t1.b = 2;
+GO
+~~ROW COUNT: 1~~
+
+
+DELETE FROM babel1454.t1 where db1.babel1454.t1.a = 2;
+GO
+~~ROW COUNT: 1~~
+
+
+SELECT * FROM db1.babel1454.t1 ORDER BY 1,2;
+GO
+~~START~~
+int#!#int
+11#!#12
+12#!#13
+~~END~~
+
+
+-- Test Update
+UPDATE babel1454.t1 SET a = babel1454.t1.a - 10, b = b - 10 WHERE db1.babel1454.t1.b = 12;
+GO
+~~ROW COUNT: 1~~
+
+
+UPDATE babel1454.t1 SET a = db1.babel1454.t1.a - 10, b = db1.babel1454.t1.b - 10 WHERE babel1454.t1.b = 13;
+GO
+~~ROW COUNT: 1~~
+
+
+SELECT * FROM db1.babel1454.t1 ORDER BY 1,2;
+GO
+~~START~~
+int#!#int
+1#!#2
+2#!#3
+~~END~~
+
+
+-- Test Select
+SELECT db1.babel1454.t1.a , babel1454.t1.b FROM babel1454.t1 ORDER BY babel1454.t1.a, db1.babel1454.t1.b;
+GO
+~~START~~
+int#!#int
+1#!#2
+2#!#3
+~~END~~
+
+
+WITH cte as (
+SELECT db1.babel1454.t1.a , babel1454.t1.b FROM babel1454.t1 ORDER BY babel1454.t1.a, db1.babel1454.t1.b
+)
+SELECT * FROM cte;
+GO
+~~START~~
+int#!#int
+1#!#2
+2#!#3
+~~END~~
+
+
+SELECT distinct(db1.babel1454.t1.a)  FROM babel1454.t1 ORDER BY 1;
+GO
+~~START~~
+int
+1
+2
+~~END~~
+
+
+SELECT sum(db1.babel1454.t1.a)  FROM babel1454.t1 GROUP BY babel1454.t1.b ORDER BY 1;
+GO
+~~START~~
+bigint
+1
+2
+~~END~~
+
+
+SELECT COUNT(*) FROM db1.babel1454.t1 inner join babel1454.t1 as t2 on db1.babel1454.t1.a = t2.a;
+GO
+~~START~~
+int
+2
+~~END~~
+
+
+-- Alter table stmt
+ALTER TABLE db1.babel1454.t1 ADD c int;
+GO
+
+ALTER TABLE babel1454.t1 ADD d int;
+GO
+
+-- CRANT  (error message will tell if mapping is correct )
+GRANT ALL ON db1.babel1454.t2 TO PUBLIC;
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: relation "db1_babel1454.t2" does not exist)~~
+
+
+GRANT ALL ON babel1454.t2 TO PUBLIC;
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: relation "db1_babel1454.t2" does not exist)~~
+
+
+GRANT ALL ON db1.babel1454.foo TO PUBLIC;
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: relation "db1_babel1454.foo" does not exist)~~
+
+
+GRANT ALL ON babel1454.foo TO PUBLIC;
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: relation "db1_babel1454.foo" does not exist)~~
+
+
+GRANT ALL ON db1.babel1454.foo TO PUBLIC;
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: relation "db1_babel1454.foo" does not exist)~~
+
+
+GRANT ALL ON babel1454.foo TO PUBLIC;
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: relation "db1_babel1454.foo" does not exist)~~
+
+
+GRANT ALL ON dummy_schema TO PUBLIC;
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: relation "dummy_schema" does not exist)~~
+
+
+GRANT ALL ON db1.dummy_schema TO PUBLIC;
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: schema "db1_db1" does not exist)~~
+
+
+GRANT ALL ON babel1454.dummy_type TO PUBLIC;
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: relation "db1_babel1454.dummy_type" does not exist)~~
+
+
+GRANT ALL ON db1.babel1454.dummy_type TO PUBLIC;
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: relation "db1_babel1454.dummy_type" does not exist)~~
+
+
+
+--GRANT ALL ON ALL TABLES IN SCHEMA dummy_schema TO DUMMY;
+--GO
+-- DROP stmt
+DROP TABLE db1.dummy_schema.t2;
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: schema "db1_dummy_schema" does not exist)~~
+
+
+DROP TABLE dummy_schema.t2;
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: schema "db1_dummy_schema" does not exist)~~
+
+
+DROP SCHEMA dummy_schema;
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: schema "db1_dummy_schema" does not exist)~~
+
+
+-- Trigger
+CREATE TRIGGER tri on db1.babel1454.t1 AFTER INSERT 
+AS BEGIN
+END;
+GO
+
+CREATE TRIGGER tri2 on babel1454.t1 AFTER INSERT 
+AS BEGIN
+END;
+GO
+
+DROP TRIGGER tri;
+GO
+
+DROP TRIGGER tri2;
+GO
+
+-- Truncate
+TRUNCATE TABLE db1.babel1454.t1;
+GO
+
+TRUNCATE TABLE babel1454.t1;
+GO
+
+-- Index
+CREATE INDEX babel1454_t1_i1 ON db1.babel1454.t1 ( a , b );
+GO
+
+CREATE INDEX babel1454_t1_i2 ON db1.babel1454.t1 ( a );
+GO
+
+
+
+-- Create Function
+-- CREATE FUNCTION doesn't allow to use [dbname].
+--CREATE FUNCTION db1.babel1454.foo() RETURNS INT AS BEGIN RETURN 0; END
+--GO
+CREATE FUNCTION babel1454.foo2() RETURNS INT AS BEGIN RETURN 0; END
+GO
+
+
+
+
+-- ALTER FUNCTION doesn't allow to use [dbname].
+--ALTER FUNCTION db1.babel1454.foo2() IMMUTABLE;
+--GO
+-- We don't support T-SQL ALTER FUNCTION properly
+--ALTER FUNCTION babel1454.foo() IMMUTABLE;
+--GO
+-- DROP FUNCTION doesn't allow to use [dbname].
+--DROP FUNCTION db1.babel1454.foo();
+--GO
+DROP FUNCTION babel1454.foo2;
+GO
+
+
+
+
+
+
+
+-- Rename
+-- ALTER ... RENAME is not valid in T-SQL
+--ALTER FUNCTION db1.dummy.foo() RENAME TO foo2;
+--GO
+--ALTER FUNCTION dummy.foo RENAME TO foo2;
+--GO
+--ALTER SCHEMA dummy RENAME TO DUMMY2;
+--GO
+--ALTER TABLE db1.dummy.t1 RENAME TO dummy;
+--GO
+--ALTER TABLE dummy.t1 RENAME TO dummy;
+--GO
+-- Create View
+CREATE VIEW babel1454.v1 AS SELECT db1.babel1454.t1.b from babel1454.t1;
+GO
+
+DROP VIEW babel1454.v1;
+GO
+
+
+-- CREATE SEQUENCE doesn't allow to use [dbname].
+--CREATE SEQUENCE db1.babel1454.seq1;
+--GO
+CREATE SEQUENCE babel1454.seq2;
+GO
+
+
+-- ALTER SEQUENCE doesn't allow to use [dbname].
+--ALTER SEQUENCE db1.babel1454.seq2 RESTART WITH 2;
+--GO
+ALTER SEQUENCE babel1454.seq2 RESTART WITH 2;
+GO
+
+
+
+
+
+
+
+
+
+
+-- Alter owner
+-- ALTER ... OWNER is not valid in T-SQL
+--ALTER PROCEDURE db1.dummy.foo() OWNER TO DUMMY;
+--GO
+--ALTER PROCEDURE dummy.foo OWNER TO DUMMY;
+--GO
+--ALTER TABLE dummy.foo OWNER TO DUMMY;
+--GO
+--ALTER TABLE db1.dummy.foo OWNER TO DUMMY;
+--GO
+--ALTER SCHEMA dummy2 OWNER TO jdbc_test;
+--GO
+-- Create Statistics
+-- CREATE STATISTICS in T-SQL and postgres is not compatible
+--CREATE STATISTICS mystat ON a,b FROM db1.dummy.t1;
+--GO
+--CREATE STATISTICS mystat2 ON b,b FROM dummy.t1;
+--GO
+-- CALL
+EXEC dummy.foo
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: schema "db1_dummy" does not exist)~~
+
+
+EXEC db1.dummy.foo
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: schema "db1_dummy" does not exist)~~
+
+
+--- Cleanup
+DROP TABLE babel1454.t1;
+DROP SEQUENCE babel1454.seq2;
+DROP SCHEMA babel1454;
+GO
+
+USE MASTER;
+GO
+
+DROP DATABASE db1;
+GO
+
+-- psql
+ALTER SYSTEM SET babelfishpg_tsql.migration_mode = 'single-db';
+ALTER SYSTEM SET babelfishpg_tsql.allow_antlr_to_unsupported_grammar_for_testing = false;
+SELECT pg_reload_conf();
+GO
+~~START~~
+bool
+t
+~~END~~
+

@@ -1,0 +1,31 @@
+-- tsql
+USE master
+go
+
+-- tsql
+CREATE SCHEMA abc;
+GO
+
+-- psql
+DROP SCHEMA master_abc;
+GO
+
+-- psql
+ALTER SCHEMA master_abc RENAME TO abc;
+GO
+
+-- psql
+CREATE SCHEMA master_xyz;
+GO
+
+-- tsql
+DROP SCHEMA xyz;
+GO
+
+-- psql
+DROP SCHEMA master_xyz;
+GO
+
+-- tsql
+DROP SCHEMA abc;
+GO

@@ -1,0 +1,121 @@
+-- Test implicit cast: bit -> int2/int4/int8
+CREATE FUNCTION implicit_2int2(@i INT2)
+RETURNS INT
+AS
+BEGIN
+    RETURN (@i)
+END;
+GO
+SELECT implicit_2int2(CAST(1 AS bit));
+GO
+~~START~~
+int
+1
+~~END~~
+
+
+CREATE FUNCTION implicit_2int4(@i INT4)
+RETURNS INT
+AS
+BEGIN
+    RETURN (@i)
+END;
+GO
+SELECT implicit_2int4(CAST(1 AS bit));
+GO
+~~START~~
+int
+1
+~~END~~
+
+
+CREATE FUNCTION implicit_2int8(@i INT8)
+RETURNS INT
+AS
+BEGIN
+    RETURN (@i)
+END;
+GO
+SELECT implicit_2int8(CAST(1 AS bit));
+GO
+~~START~~
+int
+1
+~~END~~
+
+
+-- Test implicit cast: int2/int4/int8 -> bit
+CREATE FUNCTION implicit_2bit(@i bit)
+RETURNS bit
+AS
+BEGIN
+    RETURN (@i)
+END;
+GO
+SELECT implicit_2bit(CAST(1 AS INT2));
+GO
+~~START~~
+bit
+1
+~~END~~
+
+SELECT implicit_2bit(CAST(1 AS INT4));
+GO
+~~START~~
+bit
+1
+~~END~~
+
+SELECT implicit_2bit(CAST(1 AS INT8));
+GO
+~~START~~
+bit
+1
+~~END~~
+
+
+
+
+-- Test ISNULL() with bit and int arguments
+SELECT ISNULL(CAST(1 AS bit), CAST(1 AS INT2))
+GO
+~~START~~
+bit
+1
+~~END~~
+
+SELECT ISNULL(CAST(1 AS bit), CAST(1 AS INT4))
+GO
+~~START~~
+bit
+1
+~~END~~
+
+SELECT ISNULL(CAST(1 AS bit), CAST(1 AS INT8))
+GO
+~~START~~
+bit
+1
+~~END~~
+
+SELECT ISNULL(CAST(1 AS INT2), CAST(1 AS bit))
+GO
+~~START~~
+smallint
+1
+~~END~~
+
+SELECT ISNULL(CAST(1 AS INT4), CAST(1 AS bit))
+GO
+~~START~~
+int
+1
+~~END~~
+
+SELECT ISNULL(CAST(1 AS INT8), CAST(1 AS bit))
+GO
+~~START~~
+bigint
+1
+~~END~~
+

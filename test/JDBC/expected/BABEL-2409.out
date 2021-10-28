@@ -1,0 +1,45 @@
+-- tsql
+USE master
+go
+
+-- tsql
+CREATE SCHEMA abc;
+GO
+
+-- psql
+DROP SCHEMA master_abc;
+GO
+~~ERROR (Code: 0)~~
+
+~~ERROR (Message: ERROR: Could not drop schema created under T-SQL dialect: "master_abc"
+    Server SQLState: XX000)~~
+
+
+-- psql
+ALTER SCHEMA master_abc RENAME TO abc;
+GO
+~~ERROR (Code: 0)~~
+
+~~ERROR (Message: ERROR: Could not rename schema created under T-SQL dialect: "master_abc"
+    Server SQLState: XX000)~~
+
+
+-- psql
+CREATE SCHEMA master_xyz;
+GO
+
+-- tsql
+DROP SCHEMA xyz;
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Could not drop schema created under PostgreSQL dialect: "master_xyz")~~
+
+
+-- psql
+DROP SCHEMA master_xyz;
+GO
+
+-- tsql
+DROP SCHEMA abc;
+GO

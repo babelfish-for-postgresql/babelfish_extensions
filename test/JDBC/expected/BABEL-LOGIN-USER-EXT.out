@@ -1,0 +1,521 @@
+-- psql
+ALTER SYSTEM SET babelfishpg_tsql.allow_antlr_to_unsupported_grammar_for_testing = true;
+SELECT pg_reload_conf();
+GO
+~~START~~
+bool
+t
+~~END~~
+
+
+-- tsql
+-- Test initialization
+SELECT COUNT(*) FROM sys.babelfish_authid_login_ext;
+go
+~~START~~
+int
+1
+~~END~~
+
+
+CREATE LOGIN r1 WITH PASSWORD = 'abc';
+go
+
+SELECT COUNT(*) FROM sys.babelfish_authid_login_ext;
+go
+~~START~~
+int
+2
+~~END~~
+
+
+-- Test initialization with password
+CREATE LOGIN r2 WITH PASSWORD = '123'
+go
+
+SELECT COUNT(*) FROM sys.babelfish_authid_login_ext;
+go
+~~START~~
+int
+3
+~~END~~
+
+
+-- Test altering the login ability
+SELECT rolcanlogin FROM pg_catalog.pg_roles WHERE rolname = 'r1';
+go
+~~START~~
+bit
+1
+~~END~~
+
+SELECT name, is_disabled FROM sys.server_principals WHERE name = 'r1';
+go
+~~START~~
+varchar#!#int
+r1#!#0
+~~END~~
+
+
+ALTER LOGIN r1 disable;
+go
+
+SELECT rolcanlogin FROM pg_catalog.pg_roles WHERE rolname = 'r1';
+go
+~~START~~
+bit
+0
+~~END~~
+
+SELECT name, is_disabled FROM sys.server_principals WHERE name = 'r1';
+go
+~~START~~
+varchar#!#int
+r1#!#1
+~~END~~
+
+
+ALTER LOGIN r1 enable;
+go
+
+SELECT rolcanlogin FROM pg_catalog.pg_roles WHERE rolname = 'r1';
+go
+~~START~~
+bit
+1
+~~END~~
+
+SELECT name, is_disabled FROM sys.server_principals WHERE name = 'r1';
+go
+~~START~~
+varchar#!#int
+r1#!#0
+~~END~~
+
+
+-- Test altering the password
+ALTER LOGIN r2 WITH PASSWORD = '456'
+go
+
+-- Test dropping
+DROP LOGIN r1;
+go
+
+SELECT COUNT(*) FROM sys.babelfish_authid_login_ext;
+go
+~~START~~
+int
+2
+~~END~~
+
+
+DROP LOGIN r2;
+go
+
+SELECT COUNT(*) FROM sys.babelfish_authid_login_ext;
+go
+~~START~~
+int
+1
+~~END~~
+
+
+-- Test membership
+CREATE LOGIN r3 WITH PASSWORD = '789';
+GO
+
+SELECT COUNT(*) FROM pg_auth_members
+WHERE roleid = (SELECT oid FROM pg_roles WHERE rolname = 'sysadmin')
+AND "member" = (SELECT oid FROM pg_roles WHERE rolname = 'r3');
+GO
+~~START~~
+int
+0
+~~END~~
+
+
+ALTER SERVER ROLE sysadmin ADD MEMBER r3;
+GO
+
+SELECT COUNT(*) FROM pg_auth_members
+WHERE roleid = (SELECT oid FROM pg_roles WHERE rolname = 'sysadmin')
+AND "member" = (SELECT oid FROM pg_roles WHERE rolname = 'r3');
+GO
+~~START~~
+int
+1
+~~END~~
+
+
+ALTER SERVER ROLE sysadmin DROP MEMBER r3;
+GO
+
+SELECT COUNT(*) FROM pg_auth_members
+WHERE roleid = (SELECT oid FROM pg_roles WHERE rolname = 'sysadmin')
+AND "member" = (SELECT oid FROM pg_roles WHERE rolname = 'r3');
+GO
+~~START~~
+int
+0
+~~END~~
+
+
+DROP LOGIN r3;
+GO
+
+-- Test error cases
+ALTER SERVER ROLE db_owner ADD MEMBER dummy;
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: only sysadmin role is supported in ALTER SERVER ROLE statement)~~
+
+
+ALTER SERVER ROLE db_owner DROP MEMBER dummy;
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: only sysadmin role is supported in ALTER SERVER ROLE statement)~~
+
+
+ALTER SERVER ROLE sysadmin ADD MEMBER jdbc_user;
+GO
+
+ALTER SERVER ROLE sysadmin DROP MEMBER jdbc_user;
+GO
+
+-- Test CREATE User
+CREATE USER user1;
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: CREATE USER not supported)~~
+
+
+-- Test User functions
+USE MASTER;
+GO
+
+SELECT user_name();
+GO
+~~START~~
+nvarchar
+dbo
+~~END~~
+
+
+SELECT user_name(user_id());
+GO
+~~START~~
+nvarchar
+dbo
+~~END~~
+
+
+SELECT user_name(user_id('guest'));
+GO
+~~START~~
+nvarchar
+guest
+~~END~~
+
+
+SELECT rolname FROM pg_roles WHERE oid = user_id('dbo');
+GO
+~~START~~
+varchar
+master_dbo
+~~END~~
+
+
+SELECT rolname FROM pg_roles WHERE oid = user_id('guest');
+GO
+~~START~~
+varchar
+master_guest
+~~END~~
+
+
+USE TEMPDB;
+GO
+
+SELECT user_name();
+GO
+~~START~~
+nvarchar
+dbo
+~~END~~
+
+
+SELECT user_name(user_id());
+GO
+~~START~~
+nvarchar
+dbo
+~~END~~
+
+
+SELECT user_name(user_id('guest'));
+GO
+~~START~~
+nvarchar
+guest
+~~END~~
+
+
+SELECT rolname FROM pg_roles WHERE oid = user_id('dbo');
+GO
+~~START~~
+varchar
+tempdb_dbo
+~~END~~
+
+
+SELECT rolname FROM pg_roles WHERE oid = user_id('guest');
+GO
+~~START~~
+varchar
+tempdb_guest
+~~END~~
+
+
+CREATE DATABASE db1;
+GO
+
+USE db1;
+GO
+
+SELECT user_name();
+GO
+~~START~~
+nvarchar
+dbo
+~~END~~
+
+
+SELECT user_name(user_id());
+GO
+~~START~~
+nvarchar
+dbo
+~~END~~
+
+
+SELECT user_name(user_id('guest'));
+GO
+~~START~~
+nvarchar
+dbo
+~~END~~
+
+
+SELECT rolname FROM pg_roles WHERE oid = user_id('dbo');
+GO
+~~START~~
+varchar
+dbo
+~~END~~
+
+
+SELECT rolname FROM pg_roles WHERE oid = user_id('guest');
+GO
+~~START~~
+varchar
+~~END~~
+
+
+-- Expect NULL
+SELECT user_name(-1);
+GO
+~~START~~
+nvarchar
+<NULL>
+~~END~~
+
+
+SELECT user_id('master_dbo');
+GO
+~~START~~
+int
+<NULL>
+~~END~~
+
+
+-- Test Login functions
+CREATE LOGIN login1 WITH PASSWORD = '456';
+GO
+
+SELECT name FROM sys.server_principals WHERE principal_id = suser_id('login1');
+GO
+~~START~~
+varchar
+login1
+~~END~~
+
+
+SELECT name FROM sys.server_principals WHERE name = suser_name(suser_id('login1'));
+GO
+~~START~~
+varchar
+login1
+~~END~~
+
+
+-- Expect NULL
+SELECT suser_name(-1);
+GO
+~~START~~
+nvarchar
+<NULL>
+~~END~~
+
+
+USE MASTER;
+GO
+
+DROP DATABASE db1;
+GO
+
+DROP LOGIN login1;
+GO
+
+-- psql
+ALTER SYSTEM SET babelfishpg_tsql.migration_mode = 'multi-db';
+SELECT pg_reload_conf();
+GO
+~~START~~
+bool
+t
+~~END~~
+
+
+-- tsql
+-- Test multi-db mode
+USE master;
+GO
+
+CREATE DATABASE db1;
+GO
+
+CREATE DATABASE db2;
+GO
+
+USE db1;
+GO
+
+SELECT user_name(user_id('dbo'));
+GO
+~~START~~
+nvarchar
+dbo
+~~END~~
+
+
+SELECT user_name(user_id('guest'));
+GO
+~~START~~
+nvarchar
+dbo
+~~END~~
+
+
+SELECT rolname FROM pg_roles WHERE oid = user_id('dbo');
+GO
+~~START~~
+varchar
+db1_dbo
+~~END~~
+
+
+SELECT rolname FROM pg_roles WHERE oid = user_id('guest');
+GO
+~~START~~
+varchar
+~~END~~
+
+
+USE db2;
+GO
+
+SELECT user_name(user_id('dbo'));
+GO
+~~START~~
+nvarchar
+dbo
+~~END~~
+
+
+SELECT user_name(user_id('guest'));
+GO
+~~START~~
+nvarchar
+dbo
+~~END~~
+
+
+SELECT rolname FROM pg_roles WHERE oid = user_id('dbo');
+GO
+~~START~~
+varchar
+db2_dbo
+~~END~~
+
+
+SELECT rolname FROM pg_roles WHERE oid = user_id('guest');
+GO
+~~START~~
+varchar
+~~END~~
+
+
+USE MASTER;
+GO
+
+SELECT user_name(user_id('dbo'));
+GO
+~~START~~
+nvarchar
+dbo
+~~END~~
+
+
+SELECT user_name(user_id('guest'));
+GO
+~~START~~
+nvarchar
+guest
+~~END~~
+
+
+SELECT rolname FROM pg_roles WHERE oid = user_id('dbo');
+GO
+~~START~~
+varchar
+master_dbo
+~~END~~
+
+
+SELECT rolname FROM pg_roles WHERE oid = user_id('guest');
+GO
+~~START~~
+varchar
+master_guest
+~~END~~
+
+
+DROP DATABASE db1;
+GO
+
+DROP DATABASE db2;
+GO
+
+-- psql
+ALTER SYSTEM SET babelfishpg_tsql.migration_mode = 'single-db';
+ALTER SYSTEM SET babelfishpg_tsql.allow_antlr_to_unsupported_grammar_for_testing = false;
+SELECT pg_reload_conf();
+GO
+~~START~~
+bool
+t
+~~END~~
+

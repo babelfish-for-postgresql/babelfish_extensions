@@ -1,0 +1,177 @@
+CREATE TABLE t8134 (a INT)
+GO
+CREATE TABLE tmp (a INT)
+GO
+
+CREATE TRIGGER tr1 ON t8134
+AFTER INSERT AS
+    BEGIN TRY
+		INSERT INTO tmp VALUES (1);
+        SELECT 1/0;
+		INSERT INTO tmp VALUES (2);
+    END TRY
+    BEGIN CATCH
+        SELECT XACT_STATE() AS "XACT_STATE"
+    END CATCH
+GO
+
+INSERT INTO t8134 VALUES (1);
+GO
+
+SELECT * FROM tmp;
+GO
+
+CREATE TABLE t8134_1 (a INT)
+GO
+CREATE TABLE tmp_1 (a INT)
+GO
+
+CREATE TRIGGER tr2 ON t8134_1
+AFTER INSERT AS
+    INSERT INTO tmp_1 VALUES (555);
+GO
+
+INSERT INTO t8134_1 VALUES (1);
+INSERT INTO t8134 VALUES (1);
+GO
+
+SELECT * FROM tmp_1;
+GO
+
+SELECT * FROM tmp;
+GO
+
+SELECT * FROM t8134_1;
+GO
+
+TRUNCATE TABLE tmp_1;
+GO
+
+BEGIN TRAN;
+GO
+
+INSERT INTO t8134_1 VALUES (1);
+INSERT INTO t8134 VALUES (1);
+GO
+
+SELECT * FROM tmp_1;
+GO
+
+SELECT * FROM tmp;
+GO
+
+SELECT @@trancount;
+GO
+
+SELECT * FROM t8134_1;
+GO
+
+TRUNCATE TABLE tmp;
+GO
+
+DROP TRIGGER tr1;
+GO
+
+CREATE TRIGGER tr1 ON t8134
+AFTER INSERT AS
+    SELECT 1/0;
+GO
+
+INSERT INTO tmp VALUES (666);
+INSERT INTO t8134 VALUES (1);
+INSERT INTO tmp VALUES (777);
+GO
+
+SELECT * FROM tmp;
+GO
+
+DROP TRIGGER tr1;
+GO
+
+DROP TRIGGER tr2;
+GO
+
+CREATE TABLE t1 (a INT);
+GO
+
+CREATE TABLE t2 (a INT);
+GO
+
+create trigger tr2 on t2 
+after insert as 
+begin try 
+	insert into t1 values(1); 
+end try 
+begin catch 
+	print 'tr2'; 
+	select @@trancount; 
+end catch;
+GO
+
+create trigger tr1 on t1 
+after insert as 
+begin try 
+	select 1/0; 
+end try 
+begin catch 
+	print 'tr1'; 
+	select @@trancount; 
+	rollback tran; 
+end catch
+GO
+
+INSERT INTO t2 VALUES (1);
+GO
+
+DROP TRIGGER tr1;
+GO
+
+CREATE TRIGGER tr1 ON t1
+AFTER INSERT AS
+    BEGIN TRY
+        SELECT 1/0
+    END TRY
+    BEGIN CATCH
+        SELECT XACT_STATE() AS "XACT_STATE" --Should be -1
+        COMMIT
+    END CATCH
+go
+INSERT INTO t1 VALUES(1)
+go
+SELECT @@TRANCOUNT AS "TRANCOUNT" --Should be 0
+go
+
+DROP TRIGGER tr1;
+GO
+
+CREATE TRIGGER tr1 ON t1
+AFTER INSERT AS
+    BEGIN TRY
+        SELECT 1/0
+    END TRY
+    BEGIN CATCH
+        SELECT XACT_STATE() AS "XACT_STATE" --Should be -1
+        ROLLBACK
+    END CATCH
+go
+INSERT INTO t1 VALUES(1)
+go
+SELECT @@TRANCOUNT AS "TRANCOUNT" --Should be 0
+go
+
+DROP TRIGGER tr1;
+GO
+DROP TRIGGER tr2;
+GO
+DROP TABLE t2;
+GO
+DROP TABLE t1;
+GO
+DROP TABLE t8134;
+GO
+DROP TABLE t8134_1;
+GO
+DROP TABLE tmp;
+GO
+DROP TABLE tmp_1;
+GO

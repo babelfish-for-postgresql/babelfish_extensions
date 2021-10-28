@@ -1,0 +1,44 @@
+CREATE PROCEDURE my_test @a int, @b int
+AS
+PRINT @a + @b
+GO
+
+CREATE PROCEDURE caller @a int, @b int
+AS
+EXEC my_test(@a,@b)
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: syntax error near '@a' at line 3 and character position 13)~~
+
+
+EXEC my_test(1,2)
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: syntax error near '1' at line 1 and character position 13)~~
+
+
+EXEC my_test 1, (1,2)
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: syntax error near '(' at line 1 and character position 16)~~
+
+
+EXECUTE my_test(1,2)
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: syntax error near '1' at line 1 and character position 16)~~
+
+
+EXECUTE my_test 1, (1,2)
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: syntax error near '(' at line 1 and character position 19)~~
+
+
+drop procedure my_test
+GO

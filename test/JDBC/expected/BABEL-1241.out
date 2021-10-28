@@ -1,0 +1,133 @@
+create table t_babel_1241 (a int, b int);
+insert into t_babel_1241 values (10, 1);
+go
+~~ROW COUNT: 1~~
+
+
+declare @v int=1;
+select @v+=a from t_babel_1241;
+select @v
+go
+~~START~~
+int
+11
+~~END~~
+
+
+declare @v int=11;
+select @v-=a from t_babel_1241;
+select @v;
+go
+~~START~~
+int
+1
+~~END~~
+
+
+declare @v int=2;
+select @v*=a from t_babel_1241;
+select @v;
+go
+~~START~~
+int
+20
+~~END~~
+
+
+declare @v int=20;
+select @v/=a from t_babel_1241;
+select @v;
+go
+~~START~~
+int
+2
+~~END~~
+
+
+declare @v int=24;
+select @v%=a from t_babel_1241;
+select @v;
+go
+~~START~~
+int
+4
+~~END~~
+
+
+declare @v int=63;
+select @v&=a from t_babel_1241;
+select @v;
+go
+~~START~~
+int
+10
+~~END~~
+
+
+declare @v int=7;
+select @v|=a from t_babel_1241;
+select @v;
+go
+~~START~~
+int
+15
+~~END~~
+
+
+declare @v int=7;
+select @v^=a from t_babel_1241;
+select @v;
+go
+~~START~~
+int
+13
+~~END~~
+
+
+-- many compound operator
+declare @v int=1;
+declare @v2 int=2;
+declare @v3 int=3;
+select @v+=a, @v2-=a, @v3*=a from t_babel_1241;
+select @v, @v2, @v3;
+go
+~~START~~
+int#!#int#!#int
+11#!#-8#!#30
+~~END~~
+
+
+-- compound operator on same target (we don't support this)
+declare @v int=1;
+select @v+=a, @v-=b from t_babel_1241;
+select @v
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Babelfish does not support assignment to the same variable in SELECT. variable name: "@v")~~
+
+
+-- compound operator and equal operator
+declare @v int=1;
+declare @v2 int=2;
+select @v+=a, @v2=b from t_babel_1241;
+select @v, @v2;
+go
+~~START~~
+int#!#int
+11#!#1
+~~END~~
+
+
+-- compound operator and non-assignment. error should be thrown
+declare @v int=1;
+declare @v2 int=2;
+select @v+=a, b from t_babel_1241;
+go
+~~ERROR (Code: 141)~~
+
+~~ERROR (Message: A SELECT statement that assigns a value to a variable must not be combined with data-retrieval operations)~~
+
+
+drop table t_babel_1241;
+go

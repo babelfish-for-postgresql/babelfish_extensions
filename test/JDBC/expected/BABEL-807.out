@@ -1,0 +1,24 @@
+-- supported collation
+SELECT COLLATIONPROPERTY('Traditional_Spanish_CS_AS', 'CodePage'), COLLATIONPROPERTY('Traditional_Spanish_CS_AS', 'ComparisonStyle'), COLLATIONPROPERTY('Traditional_Spanish_CS_AS', 'Version'), COLLATIONPROPERTY('Traditional_Spanish_CS_AS', 'LCID');
+go
+~~START~~
+sql_variant#!#sql_variant#!#sql_variant#!#sql_variant
+1252#!#196608#!#0#!#1034
+~~END~~
+
+
+SELECT COLLATIONPROPERTY('Traditional_Spanish_CS_AS', 'INVALID');
+go
+~~START~~
+sql_variant
+<NULL>
+~~END~~
+
+
+SELECT COLLATIONPROPERTY('INVALID', 'LCID');
+go
+~~START~~
+sql_variant
+<NULL>
+~~END~~
+

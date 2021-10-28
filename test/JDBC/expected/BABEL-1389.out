@@ -1,0 +1,76 @@
+-- Test @@OPTIONS value changes when unsetting/setting CONCAT_NULL_YIELDS_NULL
+SELECT @@OPTIONS AS OriginalOptionsValue;
+SET CONCAT_NULL_YIELDS_NULL OFF;
+SELECT 'abc' + NULL AS ResultWhen_OFF, @@OPTIONS AS OptionsValueWhen_OFF;
+GO
+~~START~~
+int
+5496
+~~END~~
+
+~~START~~
+text#!#int
+abc#!#1400
+~~END~~
+
+
+SET CONCAT_NULL_YIELDS_NULL ON;
+SELECT 'abc' + NULL AS ResultWhen_ON, @@OPTIONS AS OptionsValueWhen_ON;
+GO
+~~START~~
+text#!#int
+<NULL>#!#5496
+~~END~~
+
+
+-- Test @@OPTIONS value changes with the setting of other options
+SET IMPLICIT_TRANSACTIONS ON;
+SELECT @@OPTIONS;
+SET IMPLICIT_TRANSACTIONS OFF;
+GO
+~~START~~
+int
+5498
+~~END~~
+
+
+SET ANSI_NULLS OFF;
+SELECT @@OPTIONS;
+SET ANSI_NULLS ON;
+GO
+~~START~~
+int
+5464
+~~END~~
+
+
+SET QUOTED_IDENTIFIER ON;
+SELECT @@OPTIONS;
+SET QUOTED_IDENTIFIER OFF;
+GO
+~~START~~
+int
+5496
+~~END~~
+
+
+SET NOCOUNT ON;
+SELECT @@OPTIONS;
+SET NOCOUNT OFF;
+GO
+~~START~~
+int
+5752
+~~END~~
+
+
+SET XACT_ABORT ON;
+SELECT @@OPTIONS;
+SET XACT_ABORT OFF;
+GO
+~~START~~
+int
+21624
+~~END~~
+
+

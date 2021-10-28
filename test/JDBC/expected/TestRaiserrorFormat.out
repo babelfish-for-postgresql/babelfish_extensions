@@ -1,0 +1,113 @@
+RAISERROR('%s', 16, 1, 'Hi');
+go
+~~ERROR (Code: 50000)~~
+
+~~ERROR (Message: Hi)~~
+
+
+RAISERROR('Hello %s', 16, 1, 'World');
+go
+~~ERROR (Code: 50000)~~
+
+~~ERROR (Message: Hello World)~~
+
+
+DECLARE @str VARCHAR(20) = 'Multiple variable inputs';
+DECLARE @p1 TINYINT = 1;
+DECLARE @p2 SMALLINT = 2;
+DECLARE @p3 INT = 3;
+DECLARE @p4 CHAR(5) = 'four';
+DECLARE @p5 VARCHAR(5) = 'five';
+DECLARE @p6 NCHAR(5) = 'six';
+DECLARE @p7 NVARCHAR(5) = 'seven';
+RAISERROR('%s: %d%d%d%s%s%s%s', 16, 1, @str, @p1, @p2, @p3, @p4, @p5, @p6, @p7);
+go
+~~ERROR (Code: 50000)~~
+
+~~ERROR (Message: Multiple variable in: 123four fivesix  seven)~~
+
+
+RAISERROR('More than 20 args', 16, 1, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21);
+go
+~~ERROR (Code: 2747)~~
+
+~~ERROR (Message: Too many substitution parameters for RAISERROR. Cannot exceed 20 substitution parameters.)~~
+
+
+RAISERROR('Signed integer i: %i, %i', 16, 1, 5, -5);
+go
+~~ERROR (Code: 50000)~~
+
+~~ERROR (Message: Signed integer i: 5, -5)~~
+
+
+RAISERROR('Unsigned integer u: %u, %u', 16, 1, 5, -5);
+go
+~~ERROR (Code: 50000)~~
+
+~~ERROR (Message: Unsigned integer u: 5, 4294967291)~~
+
+
+RAISERROR('Unsigned octal o: %o, %o', 16, 1, 5, -5);
+go
+~~ERROR (Code: 50000)~~
+
+~~ERROR (Message: Unsigned octal o: 5, 37777777773)~~
+
+
+RAISERROR('Unsigned hexadecimal x: %x, %X, %X, %X, %x', 16, 1, 11, 11, -11, 50, -50);
+go
+~~ERROR (Code: 50000)~~
+
+~~ERROR (Message: Unsigned hexadecimal x: b, B, FFFFFFF5, 32, ffffffce)~~
+
+
+RAISERROR('Not enough args: %d, %d', 16, 1, 1, 2, 3, 4);
+go
+~~ERROR (Code: 50000)~~
+
+~~ERROR (Message: Not enough args: 1, 2)~~
+
+
+RAISERROR('No arg for placeholder: %s', 16, 1);
+go
+~~ERROR (Code: 50000)~~
+
+~~ERROR (Message: No arg for placeholder: (null))~~
+
+
+RAISERROR('Invalid placeholder: %m', 16, 1, 0);
+go
+~~ERROR (Code: 2787)~~
+
+~~ERROR (Message: Invalid format specification: %m)~~
+
+
+RAISERROR('Null arg for placeholder: %s', 16, 1, NULL);
+go
+~~ERROR (Code: 50000)~~
+
+~~ERROR (Message: Null arg for placeholder: (null))~~
+
+
+-- Datatype mismatch
+RAISERROR('Mismatch datatype: %d', 16, 1, 'string');
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Param 1 expected format type %d but received type "varchar")~~
+
+
+RAISERROR('Mismatch datatype: %o', 16, 1, N'string');
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Param 1 expected format type %o but received type character varying)~~
+
+
+RAISERROR('Mismatch datatype: %s', 16, 1, 123);
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Param 1 expected format type %s but received type integer)~~
+

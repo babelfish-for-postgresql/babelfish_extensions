@@ -1,0 +1,41 @@
+USE master
+go
+
+CREATE DATABASE babel_2418_db
+go
+
+USE babel_2418_db
+go
+
+CREATE SCHEMA babel_2418_schema1
+go
+
+CREATE SCHEMA babel_2418_schema2
+go
+
+SELECT nspname FROM sys.babelfish_namespace_ext;
+go
+~~START~~
+varchar
+master_dbo
+tempdb_dbo
+dbo
+babel_2418_schema1
+babel_2418_schema2
+~~END~~
+
+
+USE master
+go
+
+DROP DATABASE babel_2418_db
+go
+
+SELECT nspname FROM sys.babelfish_namespace_ext;
+go
+~~START~~
+varchar
+master_dbo
+tempdb_dbo
+~~END~~
+

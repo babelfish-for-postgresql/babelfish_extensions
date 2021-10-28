@@ -1,0 +1,161 @@
+-- tsql
+CREATE PROCEDURE tsql_interop_proc1
+AS
+UPDATE procTab1 SET c1=10 where c2='b';
+INSERT INTO procTab1 values(1,'a');
+INSERT INTO procTab1 values(2,'b');
+EXEC psql_interop_proc2;
+GO
+
+-- psql     currentSchema=master_dbo,public
+CREATE PROCEDURE psql_interop_proc1()
+AS
+$$
+BEGIN
+    CREATE TABLE procTab1(c1 int);
+    INSERT INTO procTab1 values (5);
+    ALTER TABLE procTab1 ADD c2 char;
+    CALL tsql_interop_proc1();
+END
+$$ LANGUAGE PLPGSQL;
+GO
+
+CREATE PROCEDURE psql_interop_proc2()
+AS
+$$
+BEGIN
+    INSERT INTO procTab1(c1,c2) values (3,'c');
+    UPDATE procTab1 SET c1=10 where c2='b';
+    INSERT INTO procTab1(c1,c2) values (4,'d');
+    DELETE FROM procTab1 where c2='a';
+END
+$$ LANGUAGE PLPGSQL;
+GO
+
+-- tsql
+EXEC psql_interop_proc1
+GO
+SELECT * FROM procTab1 order by c1
+GO
+
+-- psql     currentSchema=master_dbo,public
+CALL tsql_interop_proc1()
+GO
+SELECT DISTINCT c1 FROM procTab1
+GO
+
+-- tsql
+DROP TABLE procTab1
+GO
+DROP PROCEDURE tsql_interop_proc1
+GO
+
+-- tsql
+CREATE PROCEDURE tsql_interop_proc1
+AS
+DECLARE @SQLString NVARCHAR(100);
+SET @SQLString = N'ALTER TABLE procTab1 ALTER COLUMN c2 varchar(10);';
+EXEC sp_executesql @SQLString;
+INSERT INTO procTab1(c1,c2) values(11,'abc');
+UPDATE procTab1 SET c1=c1+1 WHERE c2 IS NULL OR c2='a';
+EXEC psql_interop_proc3;
+GO
+
+-- psql     currentSchema=master_dbo,public
+CREATE PROCEDURE psql_interop_proc3()
+AS
+$$
+DECLARE myvar varchar(10) = 'def';
+BEGIN
+UPDATE procTab1 SET c2=myvar WHERE c1 BETWEEN 2 AND 10;
+INSERT INTO procTab1(c1,c2) values(12,'xyz');
+END
+$$ LANGUAGE PLPGSQL;
+GO
+
+-- tsql
+EXEC psql_interop_proc1
+GO
+SELECT * FROM procTab1 WHERE c2 LIKE 'a%'
+GO
+DROP TABLE procTab1
+GO
+
+-- tsql
+CREATE PROCEDURE tsql_interop_proc
+AS
+DECLARE @handle int;
+EXEC SP_PREPARE @handle OUT, NULL, 'SELECT ''OK'''
+EXEC SP_EXECUTE @handle
+EXEC SP_UNPREPARE @handle
+GO
+
+-- psql     currentSchema=master_dbo,public
+CREATE PROCEDURE psql_interop_proc()
+AS
+$$
+BEGIN
+CALL tsql_interop_proc();
+END
+$$ LANGUAGE PLPGSQL;
+GO
+
+-- tsql
+EXEC psql_interop_proc;
+GO
+DROP PROCEDURE tsql_interop_proc
+GO
+
+-- tsql
+CREATE PROCEDURE tsql_interop_proc
+AS
+CREATE TABLE cursorTab(a INT, b SMALLINT, c BIGINT, d TINYINT, e BIT);
+INSERT INTO cursorTab values(0, 0, 0, 0, 0);
+INSERT INTO cursorTab values(1, 2, 3, 4, 1);
+DECLARE @cursor_handle int;
+EXEC sp_cursoropen @cursor_handle OUTPUT, 'select a,b,c,d from cursorTab', 2, 1;
+EXEC sp_cursorfetch @cursor_handle, 2, 0, 2;
+EXEC sp_cursoroption @cursor_handle, 1, 2;
+EXEC sp_cursor @cursor_handle, 40, 1, '';
+EXEC sp_cursorclose @cursor_handle;
+GO
+
+EXEC psql_interop_proc;
+GO
+DROP TABLE cursorTab
+GO
+DROP PROCEDURE tsql_interop_proc
+GO
+
+-- tsql
+CREATE PROCEDURE tsql_interop_proc
+AS
+BEGIN TRY
+    SELECT 1/0;
+END TRY
+BEGIN CATCH
+    SELECT 1;
+END CATCH
+GO
+
+-- tsql
+EXEC psql_interop_proc
+GO
+DROP PROCEDURE tsql_interop_proc
+GO
+
+-- psql     currentSchema=master_dbo,public
+DROP PROCEDURE psql_interop_proc1
+GO
+DROP PROCEDURE psql_interop_proc2
+GO
+DROP PROCEDURE psql_interop_proc3
+GO
+
+-- tsql
+DROP PROCEDURE tsql_interop_proc1
+GO
+
+-- psql     currentSchema=master_dbo,public
+DROP PROCEDURE psql_interop_proc
+GO

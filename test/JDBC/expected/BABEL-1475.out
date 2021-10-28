@@ -1,0 +1,144 @@
+-- Test DAY function for computed columns
+CREATE TABLE dateFunctions (dt1 datetime2, dt2 datetimeoffset(6), day1 as DAY(dt1), day2 as DAY(dt2));
+INSERT INTO dateFunctions (dt1, dt2) values ('2007-01-01 13:10:10.1111111', '1912-10-25 12:24:32 +10:0');
+SELECT day1, day2 from dateFunctions;
+DROP TABLE dateFunctions;
+GO
+~~ROW COUNT: 1~~
+
+~~START~~
+int#!#int
+1#!#25
+~~END~~
+
+
+-- Test MONTH function for computed columns
+CREATE TABLE dateFunctions (dt1 datetime2, dt2 datetimeoffset(6), month1 as MONTH(dt1), month2 as MONTH(dt2));
+INSERT INTO dateFunctions (dt1, dt2) values ('2007-01-01 13:10:10.1111111', '1912-10-25 12:24:32 +10:0');
+SELECT month1, month2 from dateFunctions;
+DROP TABLE dateFunctions;
+GO
+~~ROW COUNT: 1~~
+
+~~START~~
+int#!#int
+1#!#10
+~~END~~
+
+
+-- Test YEAR function for computed columns
+CREATE TABLE dateFunctions (dt1 datetime2, dt2 datetimeoffset(6), year1 as YEAR(dt1), year2 as YEAR(dt2));
+INSERT INTO dateFunctions (dt1, dt2) values ('2007-01-01 13:10:10.1111111', '1912-10-25 12:24:32 +10:0');
+SELECT year1, year2 from dateFunctions;
+DROP TABLE dateFunctions;
+GO
+~~ROW COUNT: 1~~
+
+~~START~~
+int#!#int
+2007#!#1912
+~~END~~
+
+
+
+-- Test DATEADD function for computed columns
+-- WRONG OUTPUT with datetimeoffset
+-- CREATE TABLE dateFunctions (dt1 datetime2, dt2 datetimeoffset(6), addMonthInDate1 as DATEADD(month,1,dt1), addMonthInDate2 as DATEADD(month,1,dt2));
+-- INSERT INTO dateFunctions (dt1, dt2) values ('2007-01-01 13:10:10.1111111', '1912-10-25 12:24:32 +10:0');
+-- SELECT addMonthInDate1, addMonthInDate2 from dateFunctions;
+-- DROP TABLE dateFunctions;
+-- GO
+-- Test DATEDIFF function with DATE datatype for computed columns
+CREATE TABLE dateFunctions (dt1 date, dt2 date, diffMonthInDates as DATEDIFF(month,dt1,dt2));
+INSERT INTO dateFunctions (dt1, dt2) values ('2007-01-01', '1912-10-25');
+SELECT diffMonthInDates from dateFunctions;
+DROP TABLE dateFunctions;
+GO
+~~ROW COUNT: 1~~
+
+~~START~~
+int
+-1131
+~~END~~
+
+
+-- Test DATEDIFF function with DATETIME2 datatype for computed columns
+CREATE TABLE dateFunctions (dt1 datetime2, dt2 datetime2, diffMonthInDates as DATEDIFF(month,dt1,dt2));
+INSERT INTO dateFunctions (dt1, dt2) values ('2007-01-01 13:10:10', '1912-10-25 12:24:32');
+SELECT diffMonthInDates from dateFunctions;
+DROP TABLE dateFunctions;
+GO
+~~ROW COUNT: 1~~
+
+~~START~~
+int
+-1131
+~~END~~
+
+
+
+-- Test DATEDIFF function with DATETIMEOFFSET datatype for computed columns
+-- CREATE TABLE dateFunctions (dt1 datetimeoffset(6), dt2 datetimeoffset(6), diffMonthInDates as DATEDIFF(month,dt1,dt2));
+-- INSERT INTO dateFunctions (dt1, dt2) values ('2007-01-01 13:10:10', '1912-10-25 12:24:32');
+-- SELECT diffMonthInDates from dateFunctions;
+-- DROP TABLE dateFunctions;
+-- GO
+-- Test DATEFROMPARTS function for computed columns
+CREATE TABLE dateFunctions (year int, month int, day int, dateresult as DATEFROMPARTS(year, month, day));
+INSERT INTO dateFunctions (year, month, day) values (1912, 10, 25);
+SELECT dateresult from dateFunctions;
+DROP TABLE dateFunctions;
+GO
+~~ROW COUNT: 1~~
+
+~~START~~
+date
+1912-10-25
+~~END~~
+
+
+-- Test DATENAME function for computed columns
+CREATE TABLE dateFunctions (dt date, year as DATENAME(year, dt), month as DATENAME(month, dt), weekday as DATENAME(dow, dt), dayofyear as DATENAME(dayofyear, dt), day as DATENAME(day, dt));
+INSERT INTO dateFunctions (dt) values ('1912-10-25');
+SELECT year, month, weekday, dayofyear, day from dateFunctions;
+DROP TABLE dateFunctions;
+GO
+~~ROW COUNT: 1~~
+
+~~START~~
+text#!#text#!#text#!#text#!#text
+1912#!#October#!#Friday#!#299#!#25
+~~END~~
+
+
+-- Test DATEPART function for computed columns
+CREATE TABLE dateFunctions (dt1 datetime2, dt2 datetimeoffset(6), datepart1 as DATEPART(month, dt1), datepart2 as DATEPART(month, dt2));
+INSERT INTO dateFunctions (dt1, dt2) values ('2007-01-01 13:10:10.111111', '1912-10-25 12:24:32 +10:0');
+SELECT datepart1, datepart2 from dateFunctions;
+DROP TABLE dateFunctions;
+GO
+~~ROW COUNT: 1~~
+
+~~START~~
+int#!#int
+1#!#10
+~~END~~
+
+
+-- Test DATEPART function for computed columns
+CREATE TABLE dateFunctions (dt1 datetime2, dt2 datetimeoffset(6), datepart1 as DATEPART(dow, dt1), datepart2 as DATEPART(dow, dt2));
+INSERT INTO dateFunctions (dt1, dt2) values ('2007-01-01 13:10:10.1111111', '1912-10-25 12:24:32 +10:0');
+SELECT datepart1, datepart2 from dateFunctions;
+DROP TABLE dateFunctions;
+GO
+~~ROW COUNT: 1~~
+
+~~START~~
+int#!#int
+2#!#6
+~~END~~
+
+
+
+
+

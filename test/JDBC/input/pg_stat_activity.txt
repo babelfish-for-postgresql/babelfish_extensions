@@ -1,0 +1,17 @@
+SELECT sys.babelfish_set_role(session_user);
+
+# Babel-1294 Support application_name in pg_stat_activity
+select application_name from pg_stat_activity where pid = pg_backend_pid();
+
+# BABEL-1326: Support query in pg_stat_activity
+select query from pg_stat_activity where pid = pg_backend_pid();
+
+# BABEL-1326: Checking if the right query is returned for Prepexec with batch too
+prepst#!#select query from pg_stat_activity where pid = pg_backend_pid();select @a as a#!#int|-|a|-|1
+prepst#!#exec#!#int|-|a|-|1
+
+# BABEL-1326: Checking if the right query is returned from a procedure and a nested procedure as well
+Create procedure proc_pg_stat_activity as begin select query from pg_stat_activity where pid = pg_backend_pid(); end;
+exec proc_pg_stat_activity;
+Create procedure proc1_pg_stat_activity as begin exec proc_pg_stat_activity end;
+exec proc1_pg_stat_activity;

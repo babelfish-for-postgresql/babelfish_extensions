@@ -1,0 +1,4 @@
+comment = 'babelfishpg_money'
+default_version = '1.1.0'
+relocatable = false
+module_pathname = '$libdir/babelfishpg_money'

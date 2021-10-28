@@ -1,0 +1,5 @@
+create procedure empty_proc as ;
+go
+
+drop procedure empty_proc;
+go

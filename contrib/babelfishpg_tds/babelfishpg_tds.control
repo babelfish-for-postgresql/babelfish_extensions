@@ -1,0 +1,7 @@
+# TDS extension
+comment = 'TDS protocol extension'
+default_version = '1.0.0'
+module_pathname = '$libdir/babelfishpg_tds'
+relocatable = true
+superuser = true
+requires = 'babelfishpg_tsql'

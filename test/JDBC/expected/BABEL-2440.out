@@ -1,0 +1,80 @@
+-- tsql
+SELECT session_user, current_user, db_name();
+GO
+~~START~~
+varchar#!#varchar#!#nvarchar
+jdbc_user#!#dbo#!#master
+~~END~~
+
+
+CREATE LOGIN r1 WITH PASSWORD = '123';
+GO
+
+-- tsql user=r1 password=123
+SELECT session_user, current_user, db_name();
+GO
+~~START~~
+varchar#!#varchar#!#nvarchar
+r1#!#guest#!#master
+~~END~~
+
+
+ALTER LOGIN r1 WITH PASSWORD = 'abc';
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Current login does not have privileges to alter password)~~
+
+
+SELECT session_user, current_user, db_name();
+GO
+~~START~~
+varchar#!#varchar#!#nvarchar
+r1#!#guest#!#master
+~~END~~
+
+
+ALTER LOGIN r1 WITH PASSWORD = '123abc' OLD_PASSWORD = 'abc';
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: 'OLD_PASSWORD' is not currently supported in Babelfish. please use babelfishpg_tsql.escape_hatch_login_old_password to ignore)~~
+
+
+SELECT set_config('babelfishpg_tsql.escape_hatch_login_old_password', 'ignore', 'false')
+GO
+~~START~~
+text
+ignore
+~~END~~
+
+
+ALTER LOGIN r1 WITH PASSWORD = '123abc' OLD_PASSWORD = 'abc';
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Current login does not have privileges to alter password)~~
+
+
+SELECT set_config('babelfishpg_tsql.escape_hatch_login_old_password', 'strict', 'false')
+GO
+~~START~~
+text
+strict
+~~END~~
+
+
+SELECT session_user, current_user, db_name();
+GO
+~~START~~
+varchar#!#varchar#!#nvarchar
+r1#!#guest#!#master
+~~END~~
+
+
+-- tsql
+ALTER LOGIN r1 WITH PASSWORD = 'abc';
+GO
+
+DROP LOGIN r1;
+GO

@@ -1,0 +1,47 @@
+-- test serverproperty() function
+-- invalid property name, should reutnr NULL
+select serverproperty('invalid property');
+go
+~~START~~
+sql_variant
+
+~~END~~
+
+-- valid supported properties
+select serverproperty('collation');
+go
+~~START~~
+sql_variant
+sql_latin1_general_cp1_ci_as
+~~END~~
+
+select 'true' where serverproperty('collationId') >= 0;
+go
+~~START~~
+varchar
+true
+~~END~~
+
+select serverproperty('IsSingleUser');
+go
+~~START~~
+sql_variant
+0
+~~END~~
+
+select serverproperty('ServerName');
+go
+~~START~~
+sql_variant
+BABELFISH
+~~END~~
+
+
+-- BABEL-1286
+SELECT SERVERPROPERTY('babelfish');
+go
+~~START~~
+sql_variant
+1
+~~END~~
+

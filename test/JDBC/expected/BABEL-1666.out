@@ -1,0 +1,39 @@
+create procedure p_babel_1666 as
+  declare @p1 decimal(5,2);
+  set @p1 = 3.14;
+  select @p1;
+  return @p1;
+go
+
+declare @a decimal(5,2);
+exec @a = p_babel_1666;
+select @a;
+go
+~~START~~
+numeric
+3.14
+~~END~~
+
+~~START~~
+numeric
+3.00
+~~END~~
+
+
+declare @i int;
+exec @i = p_babel_1666;
+select @i;
+go
+~~START~~
+numeric
+3.14
+~~END~~
+
+~~START~~
+int
+3
+~~END~~
+
+
+drop procedure p_babel_1666
+go
