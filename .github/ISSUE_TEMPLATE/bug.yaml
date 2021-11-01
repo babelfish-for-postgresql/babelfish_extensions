@@ -36,10 +36,10 @@ body:
     validations:
       required: true
   - type: dropdown
-    id: version
+    id: extension
     attributes:
-      label: Version
-      description: What version of our software are you running?
+      label: Extension
+      description: What extension is the problem occurring with?
       options:
         - babelfishpg_tsql (Default)
         - babelfishpg_tds
