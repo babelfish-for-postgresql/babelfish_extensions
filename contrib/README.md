@@ -189,8 +189,11 @@ The following build instructions comply with Ubuntu 20.04 and Amazon Linux 2 env
     CREATE DATABASE babelfish_db OWNER babelfish_user;
     \c babelfish_db
     CREATE EXTENSION IF NOT EXISTS "babelfishpg_tds" CASCADE;
+    GRANT ALL ON SCHEMA sys to babelfish_user;
     ALTER SYSTEM SET babelfishpg_tsql.database_name = 'babelfish_db';
+    ALTER SYSTEM SET babelfishpg_tds.set_db_session_property = true;
     ALTER DATABASE babelfish_db SET babelfishpg_tsql.migration_mode = 'single-db'|'multi-db';
+    SELECT pg_reload_conf();
     CALL SYS.INITIALIZE_BABELFISH('babelfish_user');
     ```
       - If you run into errors connecting to psql such as `psql: error: could not connect to server: No such file or directory` try giving permissions by using this command instead:
