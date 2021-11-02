@@ -1,7 +1,7 @@
 ## Babelfish for PostgreSQL
 
 [![Build Status](https://github.com/babelfish-for-postgresql/babelfish_extensions/workflows/CI/badge.svg)](https://github.com/babelfish-for-postgresql/babelfish_extensions/actions?query=workflow%3A%22CI%22)
-[![License: Apache 2.0](https://img.shields.io/badge/license-Apache_2.0-blue.svg)](LICENSE.Apache2)
+[![License: Apache 2.0](https://img.shields.io/badge/license-Apache--2.0-blue.svg)](LICENSE.Apache2)
 [![License: PostgreSQL](https://img.shields.io/badge/license-PostgreSQL-blue.svg)](LICENSE.PostgreSQL)
 
 Babelfish adds additional syntax, functions, data types, and more to PostgreSQL
