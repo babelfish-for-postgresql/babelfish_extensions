@@ -81,7 +81,7 @@ The following build instructions comply with Ubuntu 20.04 and Amazon Linux 2 env
     unzip -d antlr4 antlr4-cpp-runtime-4.9.2-source.zip 
     cd antlr4
     mkdir build && cd build 
-    cmake .. -D ANTLR_JAR_LOCATION=/usr/local/lib/antlr-4.9.2-complete.jar -DCMAKE_INSTALL_PREFIX=/usr/local -DWITH_DEMO=True
+    cmake .. -DANTLR_JAR_LOCATION=/usr/local/lib/antlr-4.9.2-complete.jar -DCMAKE_INSTALL_PREFIX=/usr/local -DWITH_DEMO=True
     make
     sudo make install
     ```
@@ -101,7 +101,7 @@ The following build instructions comply with Ubuntu 20.04 and Amazon Linux 2 env
         /usr/local/share/cmake-3.21/Modules/FindPkgConfig.cmake:776 (_pkg_check_modules_internal)
         CMakeLists.txt:44 (pkg_check_modules)
     ```
-    Check that you have `uuid-devel` installed. If so, go to `antlr4/CMakeLists.txt` and comment out the line `pkg_check_modules(UUID REQUIRED uuid)`.
+    Check that you have `uuid-devel` installed. If so, go to `antlr4/CMakeLists.txt` and comment out the line `pkg_check_modules(UUID REQUIRED uuid)` by adding a `#` to the beginning of the line.
 
     More information about installing ANTLR4 can be found [at this link](https://www.cs.upc.edu/~padro/CL/practica/install.html).
 
