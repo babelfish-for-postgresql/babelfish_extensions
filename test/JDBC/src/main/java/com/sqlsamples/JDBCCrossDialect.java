@@ -1,24 +1,28 @@
 package com.sqlsamples;
 
+import org.apache.log4j.*;
+
 import java.util.*;
+import java.io.BufferedWriter;
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.SQLException;
 
 import static com.sqlsamples.Config.*;
+import static com.sqlsamples.HandleException.handleSQLExceptionWithFile;
 
 public class JDBCCrossDialect {
 
-    String URL = properties.getProperty("fileGenerator_URL");
-    String tsql_port = properties.getProperty("fileGenerator_tsql_port");
-    String psql_port = properties.getProperty("fileGenerator_psql_port");
-    String databaseName = properties.getProperty("fileGenerator_databaseName");
-    String physicalDatabaseName = properties.getProperty("fileGenerator_physicalDatabaseName");
-    String user = properties.getProperty("fileGenerator_user");
-    String password = properties.getProperty("fileGenerator_password");
+    String URL = properties.getProperty("URL");
+    String tsql_port = properties.getProperty("tsql_port");
+    String psql_port = properties.getProperty("psql_port");
+    String databaseName = properties.getProperty("databaseName");
+    String physicalDatabaseName = properties.getProperty("physicalDatabaseName");
+    String user = properties.getProperty("user");
+    String password = properties.getProperty("password");
 
-    //Key is the username, password and database name concatenated
-    //Value is the connection object craeted using the above 3 attributes
+    // Key is the username, password and database name concatenated
+    // Value is the connection object created using the above 3 attributes
     HashMap<String, Connection> tsqlConnectionMap = new HashMap<>();
     HashMap<String, Connection> psqlConnectionMap = new HashMap<>();
 
@@ -30,7 +34,7 @@ public class JDBCCrossDialect {
 
     JDBCCrossDialect (Connection connection) {
 
-        //Add already established connection to appropriate hash map
+        // Add already established connection to appropriate hash map
         if (JDBCDriver.equalsIgnoreCase("sqlserver"))
             tsqlConnectionMap.put(user, connection);
 
@@ -39,10 +43,10 @@ public class JDBCCrossDialect {
     }
 
     void getConnectionAttributes (String strLine) {
-        //Extract username, password and database from string
+        // Extract username, password and database from string
         String[] connAttributes = strLine.split("\\s+");
 
-        //First two elements of array will be "--" and ("tsql" or "psql")
+        // First two elements of array will be "--" and ("tsql" or "psql")
         for (int i = 2; i < connAttributes.length; i++) {
             String connAttribute = connAttributes[i];
 
@@ -57,7 +61,7 @@ public class JDBCCrossDialect {
             }
         }
 
-        //If a connection attribute is not provided, we take the value from config file
+        // If a connection attribute is not provided, we take the value from config file
         if (newUser == null)
             newUser = user;
 
@@ -77,29 +81,31 @@ public class JDBCCrossDialect {
         newDatabase = null;
     }
 
-    Connection getTsqlConnection (String strLine) {
+    Connection getTsqlConnection (String strLine, BufferedWriter bw, Logger logger) {
 
         Connection tsqlConnection = null;
 
         getConnectionAttributes(strLine);
 
         try {
-            //Use sqlserver JDBC driver
+            // Use sqlserver JDBC driver
             Class.forName("com.microsoft.sqlserver.jdbc.SQLServerDriver");
 
-            //if we already have opened a tsql connection then reuse that
+            // if we already have opened a tsql connection then reuse that
             tsqlConnection = tsqlConnectionMap.get(newUser + newPassword + newDatabase);
 
             if (tsqlConnection == null) {
-                //Create a new connection on tsql port and use that
+                // Create a new connection on tsql port and use that
                 String connectionString = createSQLServerConnectionString(URL, tsql_port, newDatabase, newUser, newPassword);
                 tsqlConnection = DriverManager.getConnection(connectionString);
 
                 tsqlConnectionMap.put(newUser + newPassword + newDatabase, tsqlConnection);
             }
 
-        } catch (ClassNotFoundException | SQLException e) {
-            e.printStackTrace();
+        } catch (ClassNotFoundException e) {
+            logger.error("Class Not Found Exception: " + e.getMessage(), e);
+        } catch (SQLException se) {
+            handleSQLExceptionWithFile(se, bw, logger);
         }
 
         resetConnectionAttributes();
@@ -107,20 +113,20 @@ public class JDBCCrossDialect {
         return tsqlConnection;
     }
 
-    Connection getPsqlConnection (String strLine) {
+    Connection getPsqlConnection (String strLine, BufferedWriter bw, Logger logger) {
 
         Connection psqlConnection = null;
 
         getConnectionAttributes(strLine);
 
         try {
-            //Use postgresql JDBC driver
+            // Use postgresql JDBC driver
             Class.forName("org.postgresql.Driver");
 
-            //if we already have opened a psql connection then reuse that
+            // if we already have opened a psql connection then reuse that
             psqlConnection = psqlConnectionMap.get(newUser + newPassword + newPhysicalDatabase + searchPath);
 
-            //Create a new connection on psql port and use that
+            // Create a new connection on psql port and use that
             if (psqlConnection == null) {
                 String connectionString = createPostgreSQLConnectionString(URL, psql_port, newPhysicalDatabase, newUser, newPassword);
 
@@ -132,8 +138,10 @@ public class JDBCCrossDialect {
                 psqlConnectionMap.put(newUser + newPassword + newPhysicalDatabase + searchPath, psqlConnection);
             }
 
-        } catch (ClassNotFoundException | SQLException e) {
-            e.printStackTrace();
+        } catch (ClassNotFoundException e) {
+            logger.error("Class Not Found Exception: " + e.getMessage(), e);
+        } catch (SQLException se) {
+            handleSQLExceptionWithFile(se, bw, logger);
         }
 
         resetConnectionAttributes();
@@ -141,22 +149,22 @@ public class JDBCCrossDialect {
         return psqlConnection;
     }
 
-    void closeConnectionsUtil (HashMap<String, Connection> connectionMap) {
+    void closeConnectionsUtil (HashMap<String, Connection> connectionMap, BufferedWriter bw, Logger logger) {
         connectionMap.forEach(
             (connectionAttribute, connection) -> {
                 if (connection != null) {
                     try {
                         connection.close();
                     } catch (SQLException e) {
-                        e.printStackTrace();
+                        handleSQLExceptionWithFile(e, bw, logger);
                     }
                 }
             }
         );
     }
 
-    void closeConnections () {
-        closeConnectionsUtil(tsqlConnectionMap);
-        closeConnectionsUtil(psqlConnectionMap);
+    void closeConnections (BufferedWriter bw, Logger logger) {
+        closeConnectionsUtil(tsqlConnectionMap, bw, logger);
+        closeConnectionsUtil(psqlConnectionMap, bw, logger);
     }
 }

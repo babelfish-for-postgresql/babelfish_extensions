@@ -17,7 +17,7 @@ public class Statistics {
     }
     
     public double median() {
-        return descriptiveStatistics.getPercentile(0.50);
+        return descriptiveStatistics.getPercentile(50);
     }
     
     public double stddev() {
