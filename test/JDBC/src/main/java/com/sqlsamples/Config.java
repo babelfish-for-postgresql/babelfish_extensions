@@ -11,9 +11,7 @@ import static java.util.Objects.isNull;
 public class Config {
     
     static Properties properties = readConfig();
-    static boolean compareWithFile = Boolean.parseBoolean(properties.getProperty("compareWithFile"));
     static String inputFilesDirectoryPath = properties.getProperty("inputFilesPath");
-    static boolean runInParallel = Boolean.parseBoolean(properties.getProperty("runInParallel"));
     static boolean printLogsToConsole = Boolean.parseBoolean(properties.getProperty("printLogsToConsole"));
     static String JDBCDriver = properties.getProperty("driver");
     static boolean performanceTest = Boolean.parseBoolean(properties.getProperty("performanceTest"));
@@ -22,11 +20,9 @@ public class Config {
     static String scheduleFileName = properties.getProperty("scheduleFile");
     static String testFileRoot = properties.getProperty("testFileRoot");
 
-    static String sqlServer_connectionString = constructConnectionString("sql");
-    static String babel_connectionString = constructConnectionString("babel");
-    static String fileGenerator_connectionString = constructConnectionString("fileGenerator");
+    static String connectionString = constructConnectionString();
 
-    //read configuration from text file "config.txt" and load it as properties
+    // read configuration from text file "config.txt" and load it as properties
     static Properties readConfig() {
         Properties prop = new Properties();
         String filePath = System.getProperty("babel-config-file");
@@ -41,13 +37,13 @@ public class Config {
             if (file.isFile()) {
                 fis = new FileInputStream(file);
             } else {
-                //try alternate path
+                // try alternate path
                 fis = new FileInputStream("src/main/resources/config.txt");
             }
 
             prop.load(fis);
 
-            //override configuration if system environment variables are defined
+            // override configuration if system environment variables are defined
             String env, property;
 
             for(Map.Entry<Object, Object> entry : prop.entrySet()){
@@ -68,26 +64,15 @@ public class Config {
         return prop;
     }
 
-    //configure properties of logger
-    public static void configureLogger(Logger logger, String logFileName) throws IOException {
-
-        if(compareWithFile){
-            //disable logging if we are comparing against expected output
-            logger.setLevel(Level.OFF);
-        } else {
-            logger.setLevel(Level.DEBUG);
-            PatternLayout pattern = new PatternLayout("%m%n");
-            FileAppender fileAppender = new FileAppender(pattern, logFileName+ ".log");
-            logger.addAppender(fileAppender);
-
-            if(printLogsToConsole){
-                ConsoleAppender consoleAppender = new ConsoleAppender(pattern);
-                logger.addAppender(consoleAppender);
-            }
-        }
+    // configure properties of logger
+    public static void configureLogger(String logFileName, Logger logger) throws IOException {
+        logger.setLevel(Level.ERROR);
+        PatternLayout pattern = new PatternLayout("%d{yyyy-MM-dd HH:mm:ss,SSS} %-5p - %m%n");
+        FileAppender fileAppender = new FileAppender(pattern, logFileName+ ".log");
+        logger.addAppender(fileAppender);
     }
 
-    //configure properties of summary logger
+    // configure properties of summary logger
     public static void configureSummaryLogger(String logFileName, Logger summaryLogger) throws IOException {
         Logger.getRootLogger().setLevel(Level.DEBUG);
         PatternLayout pattern = new PatternLayout("%m%n");
@@ -107,30 +92,23 @@ public class Config {
                 + databaseName + "?" + "user=" + user + "&" + "password=" + password;
     }
     
-    private static String constructConnectionString(String prefix) {
+    private static String constructConnectionString() {
 
-        String URL = properties.getProperty(prefix + "_URL");
-        String port = properties.getProperty(prefix + "_port");
-        String databaseName = properties.getProperty(prefix + "_databaseName");
-        String physicalDatabaseName = properties.getProperty(prefix + "_physicalDatabaseName");
-        String user = properties.getProperty(prefix + "_user");
-        String password = properties.getProperty(prefix + "_password");
+        String URL = properties.getProperty("URL");
+        String port = properties.getProperty("port");
+        String databaseName = properties.getProperty("databaseName");
+        String physicalDatabaseName = properties.getProperty("physicalDatabaseName");
+        String user = properties.getProperty("user");
+        String password = properties.getProperty("password");
 
-        //return connection strings
-        switch (prefix) {
-            case "fileGenerator":
-                if (JDBCDriver.equalsIgnoreCase("sqlserver")) {
-                    String tsql_port = properties.getProperty(prefix + "_tsql_port");
-                    return createSQLServerConnectionString(URL, tsql_port, databaseName, user, password);
-                } else if (JDBCDriver.equalsIgnoreCase("postgresql")) {
-                    String psql_port = properties.getProperty(prefix + "_psql_port");
-                    return createPostgreSQLConnectionString(URL, psql_port, physicalDatabaseName, user, password);
-                } else System.out.println("Incorrect driver specified in config.txt . Please specify either \"sqlserver\" or \"postgresql\"");
-                break;
-            case "sql":
-            case "babel":
-                return createSQLServerConnectionString(URL, port, databaseName, user, password);
-        }
+        // return connection strings
+        if (JDBCDriver.equalsIgnoreCase("sqlserver")) {
+            String tsql_port = properties.getProperty("tsql_port");
+            return createSQLServerConnectionString(URL, tsql_port, databaseName, user, password);
+        } else if (JDBCDriver.equalsIgnoreCase("postgresql")) {
+            String psql_port = properties.getProperty("psql_port");
+            return createPostgreSQLConnectionString(URL, psql_port, physicalDatabaseName, user, password);
+        } else System.out.println("Incorrect driver specified in config.txt . Please specify either \"sqlserver\" or \"postgresql\"");
         
         return null;
     }
