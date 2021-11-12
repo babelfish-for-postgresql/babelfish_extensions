@@ -144,7 +144,7 @@ sub simple_parse {
 			$_[2] = 1;
 			next;
 		}
-		elsif ($arr[$fieldIndexer] =~ /^<.*>{$/) # special handling for lex grammar "<...>{" not to add #line directive
+		elsif ($arr[$fieldIndexer] =~ /^<.*>\{$/) # special handling for lex grammar "<...>{" not to add #line directive
 		{
 			$_[3]++; # $brace_indent
 			next;
