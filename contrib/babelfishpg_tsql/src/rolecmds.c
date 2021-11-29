@@ -85,6 +85,7 @@ create_bbf_authid_login_ext(CreateRoleStmt *stmt)
 	Oid			roleid;
 	ListCell	*option;
 	char		*default_database = NULL;
+	NameData	rolname;
 
 	/* Extract options from the statement node tree */
 	foreach(option, stmt->options)
@@ -116,8 +117,9 @@ create_bbf_authid_login_ext(CreateRoleStmt *stmt)
 	/* Build a tuple to insert */
 	MemSet(new_record_login_ext, 0, sizeof(new_record_login_ext));
 	MemSet(new_record_nulls_login_ext, false, sizeof(new_record_nulls_login_ext));
+	namestrcpy(&rolname, stmt->role);
 
-	new_record_login_ext[LOGIN_EXT_ROLNAME] = CStringGetDatum(stmt->role);
+	new_record_login_ext[LOGIN_EXT_ROLNAME] = NameGetDatum(&rolname);
 	new_record_login_ext[LOGIN_EXT_IS_DISABLED] = Int32GetDatum(0);
 	new_record_login_ext[LOGIN_EXT_TYPE] = CStringGetTextDatum("S");
 	new_record_login_ext[LOGIN_EXT_CREDENTIAL_ID] = Int32GetDatum(-1); /* placeholder */
