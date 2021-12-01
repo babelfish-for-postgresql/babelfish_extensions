@@ -45,7 +45,6 @@ body:
         - babelfishpg_tds
         - babelfishpg_money
         - babelfishpg_common
-        - fixeddecimal
     validations:
       required: true
   - type: dropdown

@@ -26,6 +26,15 @@ body:
       value: "I have a question!"
     validations:
       required: true
+  - type: dropdown
+    id: version
+    attributes:
+      label: Version
+      description: What version of our software are you running?
+      options:
+        - BABEL_1_X_DEV (Default)
+    validations:
+      required: false
   - type: textarea
     id: logs
     attributes:

@@ -33,19 +33,6 @@ body:
       description: Share with us if you have more details about the implementation.
     validations:
       required: false 
-  - type: dropdown
-    id: version
-    attributes:
-      label: Version
-      description: What version of our software are you running?
-      options:
-        - babelfishpg_tsql (Default)
-        - babelfishpg_tds
-        - babelfishpg_money
-        - babelfishpg_common
-        - fixeddecimal
-    validations:
-      required: true
   - type: textarea
     id: docs
     attributes:
