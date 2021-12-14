@@ -3,7 +3,7 @@ package com.sqlsamples;
 import com.microsoft.sqlserver.jdbc.SQLServerCallableStatement;
 import com.microsoft.sqlserver.jdbc.SQLServerDataTable;
 import microsoft.sql.DateTimeOffset;
-import org.apache.log4j.Logger;
+import org.apache.logging.log4j.Logger;
 
 import javax.imageio.ImageIO;
 import java.awt.image.BufferedImage;

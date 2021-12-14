@@ -1,6 +1,6 @@
 package com.sqlsamples;
 
-import org.apache.log4j.*;
+import org.apache.logging.log4j.*;
 
 import java.util.*;
 import java.io.BufferedWriter;

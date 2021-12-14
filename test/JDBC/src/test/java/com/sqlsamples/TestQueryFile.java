@@ -1,6 +1,7 @@
 package com.sqlsamples;
 
-import org.apache.log4j.Logger;
+import org.apache.logging.log4j.Logger;
+import org.apache.logging.log4j.LogManager;
 import org.junit.jupiter.api.*;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.MethodSource;
@@ -21,8 +22,8 @@ public class TestQueryFile {
     static String generatedFilesDirectoryPath = testFileRoot + "/expected/";
     static String sqlServerGeneratedFilesDirectoryPath = testFileRoot + "/sql_expected/";
     static String outputFilesDirectoryPath = testFileRoot + "/output/";
-    static Logger summaryLogger = Logger.getLogger("testSummaryLogger");    //logger to write summary of tests executed
-    static Logger logger = Logger.getLogger("eventLoggger");                //logger to log any test framework events
+    static Logger summaryLogger = LogManager.getLogger("testSummaryLogger");    //logger to write summary of tests executed
+    static Logger logger = LogManager.getLogger("eventLoggger");                //logger to log any test framework events
     static ArrayList<AbstractMap.SimpleEntry<String, Boolean>> summaryMap = new ArrayList<>(); //map to store test names and status
     static ArrayList<AbstractMap.SimpleEntry<String, ArrayList<Integer>>> testCountMap = new ArrayList<>(); //map to store test names and number of tests passed
     static ArrayList <String> fileList = new ArrayList<>();

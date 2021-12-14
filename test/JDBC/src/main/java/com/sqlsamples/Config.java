@@ -1,6 +1,13 @@
 package com.sqlsamples;
 
-import org.apache.log4j.*;
+import org.apache.logging.log4j.*;
+import org.apache.logging.log4j.core.LoggerContext;
+import org.apache.logging.log4j.core.appender.*;
+import org.apache.logging.log4j.core.config.AppenderRef;
+import org.apache.logging.log4j.core.config.Configuration;
+import org.apache.logging.log4j.core.config.Configurator;
+import org.apache.logging.log4j.core.config.LoggerConfig;
+import org.apache.logging.log4j.core.layout.PatternLayout;
 
 import java.io.*;
 import java.util.Map;
@@ -66,20 +73,43 @@ public class Config {
 
     // configure properties of logger
     public static void configureLogger(String logFileName, Logger logger) throws IOException {
-        logger.setLevel(Level.ERROR);
-        PatternLayout pattern = new PatternLayout("%d{yyyy-MM-dd HH:mm:ss,SSS} %-5p - %m%n");
-        FileAppender fileAppender = new FileAppender(pattern, logFileName+ ".log");
-        logger.addAppender(fileAppender);
+        LoggerContext context = LoggerContext.getContext(false);
+        Configuration config = context.getConfiguration();
+
+        PatternLayout pattern = PatternLayout.newBuilder().withPattern("%d{yyyy-MM-dd HH:mm:ss,SSS} %-5p - %m%n").build();
+        FileAppender fileAppender = FileAppender.newBuilder().setName("fileAppender").setLayout(pattern).withFileName(logFileName+ ".log").build();
+
+        AppenderRef ref = AppenderRef.createAppenderRef("fileAppender", null, null);
+        AppenderRef[] refs = new AppenderRef[] { ref };
+        LoggerConfig loggerConfig = LoggerConfig.createLogger(false, Level.ERROR, logger.getName(), null, refs, null, config, null);
+        loggerConfig.addAppender(fileAppender, null, null);
+
+        config.addLogger(logger.getName(), loggerConfig); /* 2 */
+        context.updateLoggers();
     }
 
     // configure properties of summary logger
     public static void configureSummaryLogger(String logFileName, Logger summaryLogger) throws IOException {
-        Logger.getRootLogger().setLevel(Level.DEBUG);
-        PatternLayout pattern = new PatternLayout("%m%n");
-        FileAppender fileAppender = new FileAppender(pattern, logFileName+ ".log");
-        ConsoleAppender consoleAppender = new ConsoleAppender(pattern);
-        summaryLogger.addAppender(fileAppender);
-        summaryLogger.addAppender(consoleAppender);
+        Logger rootLogger = LogManager.getRootLogger();
+        Configurator.setLevel(rootLogger.getName(), Level.DEBUG);
+
+        LoggerContext context = LoggerContext.getContext(false);
+        Configuration config = context.getConfiguration();
+
+        PatternLayout pattern = PatternLayout.newBuilder().withPattern("%m%n").build();
+        FileAppender fileAppender = FileAppender.newBuilder().setName("summaryFileAppender").setLayout(pattern).withFileName(logFileName+ ".log").build();
+        ConsoleAppender consoleAppender = ConsoleAppender.newBuilder().setName("summaryConsoleAppender").setLayout(pattern).build();
+
+        AppenderRef fileRef = AppenderRef.createAppenderRef("summaryFileAppender", null, null);
+        AppenderRef consoleRef = AppenderRef.createAppenderRef("summaryConsoleAppender", null, null);
+
+        AppenderRef[] refs = new AppenderRef[] { fileRef, consoleRef };
+        LoggerConfig loggerConfig = LoggerConfig.createLogger(false, summaryLogger.getLevel(), summaryLogger.getName(), null, refs, null, config, null);
+        loggerConfig.addAppender(fileAppender, null, null);
+        loggerConfig.addAppender(consoleAppender, null, null);
+
+        config.addLogger(summaryLogger.getName(), loggerConfig);
+        context.updateLoggers();
     }
     
     static String createSQLServerConnectionString(String URL, String port, String databaseName, String user, String password) {
