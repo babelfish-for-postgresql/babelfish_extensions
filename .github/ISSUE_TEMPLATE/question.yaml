@@ -2,8 +2,6 @@ name: Babelfish for PostgreSQL Question
 description: Make a question to maintainers
 title: "[Question]: "
 labels: ["question", "untriaged"]
-assignees:
-  - amazon-auto
 body:
   - type: markdown
     attributes:
