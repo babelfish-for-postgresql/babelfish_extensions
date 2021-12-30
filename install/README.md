@@ -14,11 +14,24 @@ sudo sh centos.centos8.prerequisites.sh
 sudo sh install.sh
 ```
 
+## Installing for Centos 7
+For centos8 you need to run the following commands:
+``` sh
+sudo sh centos.centos7.prerequisites.sh
+sudo sh install.sh
+```
 ## Installing for Ubuntu 20.04
 
 For Ubuntu 20 you need to run the following commands:
 ``` sh
 sudo sh ubuntu.20.04.prerequisites.sh
+sudo sh install.sh
+```
+
+## Installing for Amazon Linux 2
+For Amazon linux 2 you need to run following commands:
+``` sh
+sudo sh amazonlinux.2.prerequisites.sh
 sudo sh install.sh
 ```
 
