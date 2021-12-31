@@ -2,38 +2,16 @@
 
 This directory contains scripts for installing Babelfish for PostgreSQL. 
 
-The installation process consist in two steps, one for for installting the pre-requisites and another for downloading and compiling babelfish. 
+By running the install.sh script it will perform the installation process for your linux distribution. 
 
-At this point we only have quickstart scripts for Centos8 and Ubuntu 20. 
+Currently the supported linux distribution for this script are:
 
-## Installing for Centos 8 
-
-For centos8 you need to run the following commands:
-``` sh
-sudo sh centos.centos8.prerequisites.sh
-sudo sh install.sh
-```
-
-## Installing for Centos 7
-For centos8 you need to run the following commands:
-``` sh
-sudo sh centos.centos7.prerequisites.sh
-sudo sh install.sh
-```
-## Installing for Ubuntu 20.04
-
-For Ubuntu 20 you need to run the following commands:
-``` sh
-sudo sh ubuntu.20.04.prerequisites.sh
-sudo sh install.sh
-```
-
-## Installing for Amazon Linux 2
-For Amazon linux 2 you need to run following commands:
-``` sh
-sudo sh amazonlinux.2.prerequisites.sh
-sudo sh install.sh
-```
+- Centos 7
+- Centos 8
+- Ubuntu 20.04
+- Debian bullseye
+- Fedora 36
+- Amazon Linux 2
 
 ## Install instructions configurations
 The are some environment variable that can be set in order to customize the installation script. 

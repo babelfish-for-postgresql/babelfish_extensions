@@ -1,0 +1,26 @@
+#!/bin/sh
+copy_antlr_runtime(){
+  cp /usr/local/lib/libantlr4-runtime.so.4.9.3 "$INSTALLATION_PATH/lib"
+}
+extension_prerequisites(){
+  dnf install -y java unzip curl git
+  dnf install -y cmake libuuid-devel
+}
+antlr_download(){
+  # Dowloads the compressed Antlr4 Runtime sources on /opt/antlr4-cpp-runtime-4.9.2-source.zip 
+  curl https://www.antlr.org/download/antlr4-cpp-runtime-4.9.3-source.zip \
+    --output /opt/antlr4-cpp-runtime-4.9.3-source.zip 
+  
+  # Uncompress the source into /opt/antlr4
+  unzip -d /opt/antlr4 /opt/antlr4-cpp-runtime-4.9.3-source.zip
+  
+  mkdir /opt/antlr4/build 
+  cd /opt/antlr4/build
+}
+core_prerequisites(){
+  dnf install -y gcc gcc-c++ kernel-devel make
+  dnf install -y bison flex libxml2-devel readline-devel zlib-devel
+  dnf install -y uuid-devel pkg-config openssl-devel
+  dnf install -y libicu-devel postgresql-devel perl
+  dnf install -y wget
+}

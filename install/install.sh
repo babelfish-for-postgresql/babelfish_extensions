@@ -9,6 +9,51 @@ export EXTENSIONS_SOURCE_CODE_PATH="$BABELFISH_CODE_PATH/babelfish_extensions"
 export PG_CONFIG="$BABELFISH_INSTALLATION_PATH/bin/pg_config"
 export cmake=/usr/bin/cmake
 
+get_distro_id(){
+  ID=$(grep "^ID=" /etc/os-release | cut -d "=" -f 2 | sed -e 's/^"//' -e 's/"$//')
+  NAME=$(grep "^VERSION_ID=" /etc/os-release | cut -d "=" -f 2 | sed -e 's/^"//' -e 's/"$//')
+  echo "$ID.$NAME"
+}
+
+antlr_download(){
+  curl https://www.antlr.org/download/antlr4-cpp-runtime-4.9.2-source.zip \
+    --output /opt/antlr4-cpp-runtime-4.9.2-source.zip 
+
+  # Uncompress the source into /opt/antlr4
+  unzip -d /opt/antlr4 /opt/antlr4-cpp-runtime-4.9.2-source.zip
+
+  mkdir /opt/antlr4/build 
+  cd /opt/antlr4/build || exit 1
+}
+
+compile_antlr(){
+  # Generates the make files for the build
+  cmake .. -DANTLR_JAR_LOCATION="$EXTENSIONS_SOURCE_CODE_PATH/contrib/babelfishpg_tsql/antlr/thirdparty/antlr/antlr-4.9.2-complete.jar" \
+          -DCMAKE_INSTALL_PREFIX=/usr/local -DWITH_DEMO=True
+  # Compiles and install
+  make
+  make install
+}
+
+copy_antlr_runtime(){
+  cp /usr/local/lib/libantlr4-runtime.so.4.9.2 "$BABELFISH_INSTALLATION_PATH/lib"
+}
+
+configure_antlr(){
+  antlr_download
+
+  compile_antlr
+
+  copy_antlr_runtime
+}
+
+DISTRO_ID=$(get_distro_id)
+
+. "$PWD/prerequisites/$DISTRO_ID"
+
+core_prerequisites
+extension_prerequisites
+
 if ! id "$BABELFISH_CODE_USER" > /dev/null
 then
   useradd "$BABELFISH_CODE_USER" 
@@ -68,24 +113,7 @@ cd "$BABELFISH_CODE_PATH/postgresql_modified_for_babelfish/contrib" || exit 1
 
 runuser -u "$BABELFISH_CODE_USER" make install # Installs the PostgreSQL default extensions
 
-# Dowloads the compressed Antlr4 Runtime sources on /opt/antlr4-cpp-runtime-4.9.2-source.zip 
-curl https://www.antlr.org/download/antlr4-cpp-runtime-4.9.2-source.zip \
-  --output /opt/antlr4-cpp-runtime-4.9.2-source.zip 
-
-# Uncompress the source into /opt/antlr4
-unzip -d /opt/antlr4 /opt/antlr4-cpp-runtime-4.9.2-source.zip
-
-mkdir /opt/antlr4/build 
-cd /opt/antlr4/build || exit 1
-
-# Generates the make files for the build
-cmake .. -DANTLR_JAR_LOCATION="$EXTENSIONS_SOURCE_CODE_PATH/contrib/babelfishpg_tsql/antlr/thirdparty/antlr/antlr-4.9.2-complete.jar" \
-         -DCMAKE_INSTALL_PREFIX=/usr/local -DWITH_DEMO=True
-# Compiles and install
-make
-make install
-
-cp /usr/local/lib/libantlr4-runtime.so.4.9.2 "$BABELFISH_INSTALLATION_PATH/lib"
+configure_antlr
 
 # Install babelfishpg_money extension
 cd "$EXTENSIONS_SOURCE_CODE_PATH/contrib/babelfishpg_money" || exit 1
