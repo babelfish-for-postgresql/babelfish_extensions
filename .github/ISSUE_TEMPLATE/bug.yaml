@@ -6,12 +6,12 @@ body:
   - type: markdown
     attributes:
       value: |
-        Thanks for taking the time to fill out this bug report!
+        Thank you for taking the time to fill out this bug report.
   - type: input
     id: contact
     attributes:
       label: Contact Details
-      description: How can we get in touch with you if we need more info?
+      description: Please provide an email address where we can contact you for more information.
       placeholder: ex. email@example.com
     validations:
       required: false
@@ -19,8 +19,8 @@ body:
     id: what-happened
     attributes:
       label: What happened?
-      description: Also tell us, what did you expect to happen?
-      placeholder: Tell us what you see!
+      description: Please provide details about the bug, and the steps needed to recreate the bug.
+      placeholder: Tell us about the bug.
       value: "A bug happened!"
     validations:
       required: true
@@ -28,7 +28,7 @@ body:
     id: version
     attributes:
       label: Version
-      description: What version of our software are you running?
+      description: What version of Babelfish are you running?
       options:
         - BABEL_1_X_DEV (Default)
     validations:
@@ -37,7 +37,7 @@ body:
     id: extension
     attributes:
       label: Extension
-      description: What extension is the problem occurring with?
+      description: If known, what extension is the problem occurring with?
       options:
         - babelfishpg_tsql (Default)
         - babelfishpg_tds
@@ -48,7 +48,7 @@ body:
   - type: dropdown
     id: os
     attributes:
-      label: What flavour of Linux are you running into the bug?
+      label: What flavor of Linux are you using when you see the bug?
       multiple: true
       options:
         - Ubuntu (Default)
@@ -65,7 +65,7 @@ body:
     id: terms
     attributes:
       label: Code of Conduct
-      description: By submitting this issue, you agree to follow our [Code of Conduct](https://aws.github.io/code-of-conduct-faq)
+      description: By submitting this issue, you agree to follow our [Code of Conduct](https://aws.github.io/code-of-conduct-faq).
       options:
-        - label: I agree to follow this project's Code of Conduct
+        - label: I agree to follow this project's Code of Conduct.
           required: true

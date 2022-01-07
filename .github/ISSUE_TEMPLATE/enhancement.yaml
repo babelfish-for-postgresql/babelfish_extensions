@@ -6,42 +6,42 @@ body:
   - type: markdown
     attributes:
       value: |
-        Thanks for taking the time to fill out this bug report!
+        Thank you for taking the time to fill out this bug report.
   - type: input
     id: contact
     attributes:
       label: Contact Details
-      description: How can we get in touch with you if we need more info?
+      description: Please provide an email address where we can contact you for more information.
       placeholder: ex. email@example.com
     validations:
       required: false
   - type: textarea
     id: what-intends
     attributes:
-      label: What this feature/enhancement tries to solve?
-      description: Be explanatory, as detailed as you can.
-      placeholder: Tell us what you have in mind!
+      label: What is the issue this feature/enhancement tries to resolve?
+      description: Provide as many details about the feature as possible.
+      placeholder: Provide as many feature details as possible.
       value: "This is my feature request!"
     validations:
       required: true
   - type: textarea
     id: brief-desc-implementation
     attributes:
-      label: If want to provide us a more details about how to implement.
-      description: Share with us if you have more details about the implementation.
+      label: Provide implementation details (if possible) for the feature.
+      description: Share implementation details for the feature.
     validations:
       required: false 
   - type: textarea
     id: docs
     attributes:
-      label: Relevant documentation
-      description: Please attach relevant documentation.
+      label: Relevant documentation.
+      description: Please attach documentation relevant to the feature.
       render: shell
   - type: checkboxes
     id: terms
     attributes:
       label: Code of Conduct
-      description: By submitting this issue, you agree to follow our [Code of Conduct](https://aws.github.io/code-of-conduct-faq)
+      description: By submitting this issue, you agree to follow our [Code of Conduct](https://aws.github.io/code-of-conduct-faq).
       options:
-        - label: I agree to follow this project's Code of Conduct
+        - label: I agree to follow this project's Code of Conduct.
           required: true
