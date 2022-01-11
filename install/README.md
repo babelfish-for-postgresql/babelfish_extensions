@@ -1,10 +1,8 @@
 # Quick install scripts
 
-This directory contains scripts for installing Babelfish for PostgreSQL. 
+This directory contains scripts that install Babelfish for PostgreSQL. Select the install.sh script for your Linux platform to install Babelfish on your system.
 
-By running the install.sh script it will perform the installation process for your linux distribution. 
-
-Currently the supported linux distribution for this script are:
+Currently the supported Linux distributions are:
 
 - Centos 7
 - Centos 8
@@ -14,7 +12,8 @@ Currently the supported linux distribution for this script are:
 - Amazon Linux 2
 
 ## Install instructions configurations
-The are some environment variable that can be set in order to customize the installation script. 
+
+You can use environment variables to customize the installation script:
 
 | Variable | Description | Default |
 | -------- | ----------- | ------- |

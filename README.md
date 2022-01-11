@@ -12,8 +12,8 @@ found [here](https://github.com/babelfish-for-postgresql/postgresql_modified_for
 
 Build instructions can be found [here](https://github.com/babelfish-for-postgresql/babelfish_extensions/blob/BABEL_1_X_DEV/contrib/README.md).
 
-Quick install instructions can be found [here](https://github.com/babelfish-for-postgresql/babelfish_extensions/blob/BABEL_1_X_DEV/install/README.md)
- 
+Quick install instructions can be found in the `install` folder, more information can be found in the [install/README.md](https://github.com/babelfish-for-postgresql/babelfish_extensions/blob/BABEL_1_X_DEV/install/README.md) file. 
+
 More information about Babelfish can be found at [babelfishpg.org](https://babelfishpg.org).
 
 Babelfish would not be possible without the work and dedication of the hundreds
