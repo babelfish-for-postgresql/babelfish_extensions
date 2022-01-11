@@ -2,10 +2,6 @@ name: Babelfish for PostgreSQL Question
 description: Ask a question of the Babelfish maintainers
 title: "[Question]: "
 labels: ["question", "untriaged"]
-assignees:
-  - nasbyj
-  - rcv-aws
-  - gopinathpai
 body:
   - type: markdown
     attributes:

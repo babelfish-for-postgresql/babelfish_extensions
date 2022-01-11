@@ -2,10 +2,6 @@ name: Babelfish for PostgreSQL Extensions Feature Request Form
 description: Propose an enhancement for Babelfish for PostgreSQL Extensions
 title: "[Enhancement]: "
 labels: ["enhancement", "untriaged"]
-assignees:
-  - nasbyj
-  - rcv-aws
-  - gopinathpai
 body:
   - type: markdown
     attributes:

@@ -2,10 +2,6 @@ name: Babelfish for PostgreSQL Extensions Bug Report
 description: File a bug report for Babelfish Extensions
 title: "[Bug]: "
 labels: ["bug", "triage"]
-assignees:
-  - nasbyj
-  - rcv-aws
-  - gopinathpai
 body:
   - type: markdown
     attributes:
