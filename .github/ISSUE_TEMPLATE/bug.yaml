@@ -21,7 +21,7 @@ body:
       label: What happened?
       description: Please provide details about the bug, and the steps needed to recreate the bug.
       placeholder: Tell us about the bug.
-      value: "A bug happened!"
+      value: "Tell us about the bug."
     validations:
       required: true
   - type: dropdown

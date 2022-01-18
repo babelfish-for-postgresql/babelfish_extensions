@@ -21,7 +21,7 @@ body:
       label: What's your question?
       description: Tell us about your question in detail.
       placeholder: Provide as much information about your question as possible.
-      value: "I have a question!"
+      value: "Tell us about your question."
     validations:
       required: true
   - type: dropdown

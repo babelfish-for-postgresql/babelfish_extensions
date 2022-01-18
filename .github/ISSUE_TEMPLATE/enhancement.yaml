@@ -21,7 +21,7 @@ body:
       label: What is the issue this feature/enhancement tries to resolve?
       description: Provide as many details about the feature as possible.
       placeholder: Provide as many feature details as possible.
-      value: "This is my feature request!"
+      value: "Please describe the feature."
     validations:
       required: true
   - type: textarea
