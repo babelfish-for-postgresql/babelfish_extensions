@@ -20,7 +20,7 @@ body:
     id: version
     attributes:
       label: Version
-      description: What version of Babelfish are you running?
+      description: Which version of Babelfish are you running?
       options:
         - BABEL_1_X_DEV (Default)
     validations:
@@ -29,18 +29,18 @@ body:
     id: extension
     attributes:
       label: Extension
-      description: If known, what extension is the problem occurring with?
+      description: Which extension is the problem occurring with?
       options:
         - babelfishpg_tsql (Default)
         - babelfishpg_tds
         - babelfishpg_money
         - babelfishpg_common
     validations:
-      required: true
+      required: false
   - type: dropdown
     id: os
     attributes:
-      label: What flavor of Linux are you using when you see the bug?
+      label: Which flavor of Linux are you using when you see the bug?
       multiple: true
       options:
         - Ubuntu (Default)

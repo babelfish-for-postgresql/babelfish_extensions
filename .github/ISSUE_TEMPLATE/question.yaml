@@ -20,7 +20,7 @@ body:
     id: version
     attributes:
       label: Version
-      description: What version of Babelfish are you running?
+      description: Which version of Babelfish are you running?
       options:
         - BABEL_1_X_DEV (Default)
     validations:
