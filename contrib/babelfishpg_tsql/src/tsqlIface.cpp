@@ -50,6 +50,7 @@ extern "C"
 
 static void toDotRecursive(ParseTree *t, const std::vector<std::string> &ruleNames, const std::string &sourceText);
 class tsqlBuilder;
+class PLtsql_expr_query_mutator;
 
 bool handleBatchLevelStatment(tree::ParseTree *tree);
 bool handleITVFBody(TSqlParser::Func_body_return_select_bodyContext *body);
@@ -74,12 +75,11 @@ static void *makeBatch(TSqlParser::Tsql_fileContext *ctx, tsqlBuilder &builder);
 
 static void process_execsql_destination(TSqlParser::Dml_statementContext *ctx, PLtsql_stmt_execsql *stmt);
 static void process_execsql_remove_unsupported_tokens(TSqlParser::Dml_statementContext *ctx, PLtsql_stmt_execsql *stmt);
-static void remove_unsupported_tokens_from_select(TSqlParser::Select_statement_standaloneContext *ctx, PLtsql_expr *expr, ParserRuleContext *baseCtx);
 static bool post_process_create_table(TSqlParser::Create_tableContext *ctx, PLtsql_stmt_execsql *stmt, TSqlParser::Ddl_statementContext *baseCtx);
 static bool post_process_alter_table(TSqlParser::Alter_tableContext *ctx, PLtsql_stmt_execsql *stmt, TSqlParser::Ddl_statementContext *baseCtx);
 static bool post_process_create_index(TSqlParser::Create_indexContext *ctx, PLtsql_stmt_execsql *stmt, TSqlParser::Ddl_statementContext *baseCtx);
 static bool post_process_create_database(TSqlParser::Create_databaseContext *ctx, PLtsql_stmt_execsql *stmt, TSqlParser::Ddl_statementContext *baseCtx);
-static char *generate_itvf_query(char *query, ParserRuleContext *baseCtx);
+static void post_process_table_source(TSqlParser::Table_source_itemContext *ctx, PLtsql_expr *expr, ParserRuleContext *baseCtx);
 static PLtsql_var *lookup_cursor_variable(const char *varname);
 static PLtsql_var *build_cursor_variable(const char *curname, int lineno);
 static int read_extended_cursor_option(TSqlParser::Declare_cursor_optionsContext *ctx, int current_cursor_option);
@@ -97,9 +97,12 @@ static bool string_matches(const char *str, const char *pattern);
 static void check_param_type(tsql_exec_param *param, bool is_output, Oid typoid, const char *param_str);
 static PLtsql_expr *getNthParamExpr(std::vector<tsql_exec_param *> &params, size_t n);
 static const char* rewrite_assign_operator(tree::TerminalNode *aop);
-TSqlParser::Query_specificationContext *get_query_specification(TSqlParser::Select_statement_standaloneContext *ctx);
+TSqlParser::Query_specificationContext *get_query_specification(TSqlParser::Select_statementContext *sctx);
 static bool is_quotation_needed_for_column_alias(TSqlParser::Column_aliasContext *ctx);
 static bool is_compiling_create_function();
+static void process_select_statement_standalone(
+	PLtsql_expr *expr, ParserRuleContext* baseCtx, TSqlParser::Select_statement_standaloneContext *standaloneCtx, 
+	bool itvf, PLtsql_expr_query_mutator *mutator);
 
 static void
 breakHere()
@@ -719,7 +722,7 @@ public:
 	//////////////////////////////////////////////////////////////////////////////
 	// Non-container statement management
 	//////////////////////////////////////////////////////////////////////////////
-	
+
    	void enterDml_statement(TSqlParser::Dml_statementContext *ctx) override
 	{
 		// We ran into a DML clause while walking down the ANTLR parse
@@ -732,7 +735,7 @@ public:
 		// the string that makes up the statement, store that string
 		// inside of the PLtsql_stmt_execsql, and send that string
 		// to the main SQL parser when we execute the statement.
-		
+
 		graft(makeSQL(ctx), peekContainer());
 
 		// clean up local_id positions maps before entering
@@ -772,74 +775,27 @@ public:
 
 		// post-processing of execsql stmt query
 		PLtsql_expr_query_mutator mutator(stmt->sqlstmt, ctx);
-
-		// update stmt->sqlstmt with adding quote to tsql local_id (starting with '@') because backend parser is expecting that.
-		for (auto &entry : local_id_positions)
-		{
-			std::string quoted_local_id = std::string("\"") + entry.second + "\"";
-			mutator.add(entry.first, entry.second, quoted_local_id);
-		}
-		local_id_positions.clear();
-
-        // process qualified names with ..
-        for (auto &entry : full_object_name_positions)
-        {
-            mutator.add(entry.first, entry.second.first, entry.second.second);
-        }
-        full_object_name_positions.clear();
-
-		// handle special alias syntax and quote alias
 		if (ctx->select_statement_standalone())
 		{
-			TSqlParser::Query_specificationContext *qctx = get_query_specification(ctx->select_statement_standalone());
-			Assert(qctx);
-			Assert(qctx->select_list());
-			std::vector<TSqlParser::Select_list_elemContext *> select_elems = qctx->select_list()->select_list_elem();
-
-			for (size_t i=0; i<select_elems.size(); ++i)
-			{
-				TSqlParser::Select_list_elemContext *elem = select_elems[i];
-				if (elem->expression_elem() && elem->expression_elem()->EQUAL())
-				{
-					/* rewrite "SELECT COL=expr" to "SELECT expr as "COL"" */
-					auto expr_elem = elem->expression_elem();
-
-					/* 1. remove "COL=" */
-					std::string orig_text = ::getFullText(expr_elem->column_alias());
-					mutator.add(expr_elem->column_alias()->start->getStartIndex(), orig_text, "");
-
-					orig_text = ::getFullText(elem->expression_elem()->EQUAL());
-					mutator.add(elem->expression_elem()->EQUAL()->getSymbol()->getStartIndex(), orig_text, "");
-
-					/* 2. append "AS COL" to the end of expr */
-					std::string repl_text(" AS ");
-					if (is_quotation_needed_for_column_alias(expr_elem->column_alias()))
-						repl_text += "\"" + ::getFullText(expr_elem->column_alias()) + "\"";
-					else
-						repl_text += ::getFullText(expr_elem->column_alias());
-					mutator.add(expr_elem->expression()->stop->getStopIndex()+1, "", repl_text);
-				}
-				else if ((elem->column_elem() && elem->column_elem()->as_column_alias()) ||
-				  (elem->expression_elem() && elem->expression_elem()->as_column_alias()))
-				{
-					/* if AS is missing, add it. */
-					auto column_alias_as = ((elem->column_elem() && elem->column_elem()->as_column_alias()) ? elem->column_elem()->as_column_alias() : elem->expression_elem()->as_column_alias());
-					if (!column_alias_as->AS())
-					{
-						std::string orig_text = ::getFullText(column_alias_as->column_alias());
-						std::string repl_text = std::string("AS ");
-
-						if (is_quotation_needed_for_column_alias(column_alias_as->column_alias()))
-							repl_text += std::string("\"") + orig_text + "\"";
-						else
-							repl_text += orig_text;
-
-						mutator.add(column_alias_as->start->getStartIndex(), "", "AS ");
-					}
-				}
-			}
+			process_select_statement_standalone(stmt->sqlstmt, ctx, ctx->select_statement_standalone(), false, &mutator);
 		}
+		else
+		{
+			// update stmt->sqlstmt with adding quote to tsql local_id (starting with '@') because backend parser is expecting that.
+			for (auto &entry : local_id_positions)
+			{
+				std::string quoted_local_id = std::string("\"") + entry.second + "\"";
+				mutator.add(entry.first, entry.second, quoted_local_id);
+			}
+			local_id_positions.clear();
 
+			// process qualified names with ..
+			for (auto &entry : full_object_name_positions)
+			{
+				mutator.add(entry.first, entry.second.first, entry.second.second);
+			}
+			full_object_name_positions.clear();
+		}
 		mutator.run();
 	}
 
@@ -905,6 +861,9 @@ public:
 		std::vector<PLtsql_stmt *> result = makeAnother(ctx);
 		for (PLtsql_stmt *stmt : result)
 			graft(stmt, peekContainer());
+
+		// clean up local_id positions maps before entering
+		local_id_positions.clear();
 	}
 
     void enterCfl_statement(TSqlParser::Cfl_statementContext *ctx) override
@@ -1330,6 +1289,133 @@ public:
     }
 };
 
+/* Necessary mutations for select_statement_standalone
+ * Be aware that if itvf is false, then this function clears local_id_positions and full_object_name_positions.
+ * TODO: Currently, we cannot handle select_statement not in select_statement_standalone, e.g., subquery, derived table, etc.
+ */
+static void process_select_statement_standalone(
+	PLtsql_expr *expr, ParserRuleContext* baseCtx,
+	TSqlParser::Select_statement_standaloneContext *standaloneCtx, bool itvf,
+	PLtsql_expr_query_mutator *mutator)
+{
+	Assert(mutator);
+	Assert(standaloneCtx);
+	auto *selectCtx = standaloneCtx->select_statement();
+	TSqlParser::Query_specificationContext *qctx = get_query_specification(selectCtx);
+	Assert(qctx);
+	Assert(qctx->select_list());
+
+	/* remove unsupported_tokens */
+	if (qctx->table_sources())
+	{
+		for (auto tctx : qctx->table_sources()->table_source_item()) // from-clause (to remove hints)
+			post_process_table_source(tctx, expr, baseCtx);
+	}
+	if (selectCtx->for_clause()) // for xml
+	{
+		Assert(selectCtx->for_clause()->XML()); // we only support FOR XML
+		Assert(selectCtx->for_clause()->RAW() || selectCtx->for_clause()->PATH());
+	}
+	for (auto octx : selectCtx->option_clause()) // query hint
+		removeCtxStringFromQuery(expr, octx, baseCtx);
+
+	if (itvf)
+	{
+		/*
+		 * For inline table-valued function, we need to save another version of the query
+		 * statement that we can call SPI_prepare to generate a plan, in order to figure
+		 * out the column definition list. So, we replace all variable references by
+		 * "CAST(NULL AS <type>)" in order to get the correct columnn list from
+		 * planning.
+		 */
+		size_t base_index = baseCtx->getStart()->getStartIndex();
+		if (base_index == INVALID_INDEX)
+			throw PGErrorWrapperException(ERROR, ERRCODE_SYNTAX_ERROR, "can't generate an internal query", 0);
+
+		auto *query = expr->query;
+		for (const auto &entry : local_id_positions)
+		{
+			const std::string& local_id = entry.second;
+			size_t offset = entry.first - base_index;
+			if (strncmp(local_id.c_str(), query+offset, local_id.length()) == 0) // local_id maybe already deleted in some cases such as select-assignment. check here if it still exists)
+			{
+				int dno;
+				PLtsql_nsitem *nse = pltsql_ns_lookup(pltsql_ns_top(), false, local_id.c_str(), nullptr, nullptr, nullptr);
+				if (nse)
+					dno = nse->itemno;
+				else
+					throw PGErrorWrapperException(ERROR, ERRCODE_SYNTAX_ERROR, format_errmsg("\"%s\" is not a known variable", local_id.c_str()), 0);
+
+				PLtsql_var *var = (PLtsql_var *) pltsql_Datums[dno];
+				std::string repl_text = std::string("CAST(NULL AS ") + std::string(var->datatype->typname) + std::string(")");
+				mutator->add(entry.first, entry.second, repl_text);
+			}
+		}
+	}
+	else
+	{
+		// update stmt->sqlstmt with adding quote to tsql local_id (starting with '@') because backend parser is expecting that.
+		for (auto &entry : local_id_positions)
+		{
+			std::string quoted_local_id = std::string("\"") + entry.second + "\"";
+			mutator->add(entry.first, entry.second, quoted_local_id);
+		}
+		local_id_positions.clear();
+
+		// process qualified names with ..
+		for (auto &entry : full_object_name_positions)
+		{
+			mutator->add(entry.first, entry.second.first, entry.second.second);
+		}
+		full_object_name_positions.clear();
+	}
+
+	/* handle special alias syntax and quote alias */
+	std::vector<TSqlParser::Select_list_elemContext *> select_elems = qctx->select_list()->select_list_elem();
+	for (size_t i=0; i<select_elems.size(); ++i)
+	{
+		TSqlParser::Select_list_elemContext *elem = select_elems[i];
+		if (elem->expression_elem() && elem->expression_elem()->EQUAL())
+		{
+			/* rewrite "SELECT COL=expr" to "SELECT expr as "COL"" */
+			auto expr_elem = elem->expression_elem();
+
+			/* 1. remove "COL=" */
+			std::string orig_text = ::getFullText(expr_elem->column_alias());
+			mutator->add(expr_elem->column_alias()->start->getStartIndex(), orig_text, "");
+
+			orig_text = ::getFullText(elem->expression_elem()->EQUAL());
+			mutator->add(elem->expression_elem()->EQUAL()->getSymbol()->getStartIndex(), orig_text, "");
+
+			/* 2. append "AS COL" to the end of expr */
+			std::string repl_text(" AS ");
+			if (is_quotation_needed_for_column_alias(expr_elem->column_alias()))
+				repl_text += "\"" + ::getFullText(expr_elem->column_alias()) + "\"";
+			else
+				repl_text += ::getFullText(expr_elem->column_alias());
+			mutator->add(expr_elem->expression()->stop->getStopIndex()+1, "", repl_text);
+		}
+		else if ((elem->column_elem() && elem->column_elem()->as_column_alias()) ||
+			(elem->expression_elem() && elem->expression_elem()->as_column_alias()))
+		{
+			/* if AS is missing, add it. */
+			auto column_alias_as = ((elem->column_elem() && elem->column_elem()->as_column_alias()) ? elem->column_elem()->as_column_alias() : elem->expression_elem()->as_column_alias());
+			if (!column_alias_as->AS())
+			{
+				std::string orig_text = ::getFullText(column_alias_as->column_alias());
+				std::string repl_text = std::string("AS ");
+
+				if (is_quotation_needed_for_column_alias(column_alias_as->column_alias()))
+					repl_text += std::string("\"") + orig_text + "\"";
+				else
+					repl_text += orig_text;
+
+				mutator->add(column_alias_as->start->getStartIndex(), "", "AS ");
+			}
+		}
+	}
+}
+
 ////////////////////////////////////////////////////////////////////////////////
 // Error listener
 ////////////////////////////////////////////////////////////////////////////////
@@ -1694,6 +1780,11 @@ rewriteBatchLevelStatement(PLtsql_expr *expr, TSqlParser::Batch_level_statementC
 			bool all_removed = removeTokenFromOptionList(expr, options, commas, ctx, getToken);
 			if (all_removed)
 				removeTokenStringFromQuery(expr, cctx->WITH(0), ctx);
+		}
+		if (cctx->select_statement_standalone()) {
+			PLtsql_expr_query_mutator mutator(expr, ctx);
+			process_select_statement_standalone(expr, ctx, cctx->select_statement_standalone(), false, &mutator);
+			mutator.run();
 		}
 	}
 
@@ -2507,21 +2598,20 @@ makeReturnQueryStmt(TSqlParser::Select_statement_standaloneContext *ctx, bool it
 
 	result->cmd_type = PLTSQL_STMT_RETURN_QUERY;
 	result->lineno =getLineOfStartToken(ctx);
-	result->query = makeTsqlExpr(ctx, false);
+
+	auto *expr = makeTsqlExpr(ctx, false);
+	PLtsql_expr_query_mutator expr_mutator(expr, ctx);
+	result->query = expr;
 	if (itvf)
-		result->query->itvf_query = generate_itvf_query(result->query->query, ctx);
-
-	// post-processing of execsql stmt query
-	PLtsql_expr_query_mutator mutator(result->query, ctx);
-
-	// update stmt->sqlstmt with adding quote to tsql local_id (starting with '@') because backend parser is expecting that.
-	for (auto &entry : local_id_positions)
 	{
-		std::string quoted_local_id = std::string("\"") + entry.second + "\"";
-		mutator.add(entry.first, entry.second, quoted_local_id);
+		auto *itvf_expr = makeTsqlExpr(ctx, false);
+		PLtsql_expr_query_mutator itvf_mutator(itvf_expr, ctx);
+		process_select_statement_standalone(itvf_expr, ctx, ctx, true, &itvf_mutator);
+		itvf_mutator.run();
+		result->query->itvf_query = itvf_expr->query;
 	}
-	local_id_positions.clear();
-
+	process_select_statement_standalone(result->query, ctx, ctx, false, &expr_mutator);
+	expr_mutator.run();
 	return result;
 }
 
@@ -2914,7 +3004,11 @@ makeSetStatement(TSqlParser::Set_statementContext *ctx)
 		TSqlParser::Select_statement_standaloneContext *sctx = ctx->select_statement_standalone();
 		Assert(sctx);
 
-		curvar->cursor_explicit_expr = makeTsqlExpr(sctx, false);
+		auto expr = makeTsqlExpr(sctx, false);
+		PLtsql_expr_query_mutator mutator(expr, sctx);
+		process_select_statement_standalone(expr, sctx, sctx, false, &mutator);
+		mutator.run();
+		curvar->cursor_explicit_expr = expr;
 		curvar->cursor_explicit_argrow = -1;
 		curvar->cursor_options = CURSOR_OPT_FAST_PLAN | cursor_option | PGTSQL_CURSOR_ANONYMOUS;
 		curvar->isconst = true;
@@ -3121,7 +3215,9 @@ makeDeclareCursorStatement(TSqlParser::Declare_cursorContext *ctx)
 	if (sctx)
 	{
 		auto expr = makeTsqlExpr(sctx, false);
-		remove_unsupported_tokens_from_select(sctx, expr, sctx);
+		PLtsql_expr_query_mutator mutator(expr, sctx);
+		process_select_statement_standalone(expr, sctx, sctx, false, &mutator);
+		mutator.run();
 		curvar->cursor_explicit_expr = expr;
 		curvar->cursor_explicit_argrow = -1;
 		curvar->isconst = true;
@@ -3452,7 +3548,7 @@ void add_assignment_target_field(PLtsql_row *target, antlr4::tree::TerminalNode 
 
 void process_execsql_destination_select(TSqlParser::Select_statement_standaloneContext* ctx, PLtsql_stmt_execsql *stmt)
 {
-	TSqlParser::Query_specificationContext *qctx = get_query_specification(ctx);
+	TSqlParser::Query_specificationContext *qctx = get_query_specification(ctx->select_statement());
 	Assert(qctx);
 
 	/* check select stmt has INTO-clause */
@@ -3652,32 +3748,9 @@ static void post_process_table_source(TSqlParser::Table_source_itemContext *ctx,
 		removeCtxStringFromQuery(expr, ctx->join_hint(), baseCtx);
 }
 
-static void remove_unsupported_tokens_from_select(TSqlParser::Select_statement_standaloneContext *ctx, PLtsql_expr *expr, ParserRuleContext *baseCtx)
-{
-	TSqlParser::Query_specificationContext *qctx = get_query_specification(ctx);
-
-	if (qctx->table_sources())
-		for (auto tctx : qctx->table_sources()->table_source_item()) // from-clause (to remove hints)
-			post_process_table_source(tctx, expr, baseCtx);
-
-	auto sctx = ctx->select_statement();
-	if (sctx->for_clause()) // for xml
-	{
-		Assert(sctx->for_clause()->XML()); // we only support FOR XML
-		Assert(sctx->for_clause()->RAW() || sctx->for_clause()->PATH());
-	}
-
-	for (auto octx : sctx->option_clause()) // query hint
-		removeCtxStringFromQuery(expr, octx, baseCtx);
-}
-
 void process_execsql_remove_unsupported_tokens(TSqlParser::Dml_statementContext *ctx, PLtsql_stmt_execsql *stmt)
 {
-	if (ctx->select_statement_standalone())
-	{
-		remove_unsupported_tokens_from_select(ctx->select_statement_standalone(), stmt->sqlstmt, ctx);
-	}
-	else if (ctx->insert_statement())
+	if (ctx->insert_statement())
 	{
 		auto ictx = ctx->insert_statement();
 		if (ictx->with_table_hints() && ictx->with_table_hints()->WITH()) // table hints
@@ -4416,52 +4489,6 @@ getNthParamExpr(std::vector<tsql_exec_param *> &params, size_t n)
 		return NULL;
 }
 
-/*
- * For inline table-valued function, we need to save an version of the query
- * statement that we can call SPI_prepare to generate a plan, in order to figure
- * out the column definition list. So, we replace all variable references by
- * "CAST(NULL AS <type>)" in order to get the correct columnn list from
- * planning.
- */
-char *
-generate_itvf_query(char *query, ParserRuleContext *baseCtx)
-{
-	StringInfoData ds;
-	initStringInfo(&ds);
-
-	// base index where the current stmt starts from whole input stream.
-	size_t base_index = baseCtx->getStart()->getStartIndex();
-	if (base_index == INVALID_INDEX)
-		throw PGErrorWrapperException(ERROR, ERRCODE_SYNTAX_ERROR, "can't generate an internal query", 0);
-
-	size_t cursor = 0; // cursor to query where next copy should starts
-	for (const auto &entry : local_id_positions)
-	{
-		const std::string& local_id = entry.second;
-		size_t offset = entry.first - base_index;
-		if (strncmp(local_id.c_str(), query+offset, local_id.length()) == 0) // local_id maybe already deleted in some cases such as select-assignment. check here if it still exists)
-		{
-			int dno;
-			PLtsql_nsitem *nse = pltsql_ns_lookup(pltsql_ns_top(), false, local_id.c_str(), nullptr, nullptr, nullptr);
-			if (nse)
-				dno = nse->itemno;
-			else
-				throw PGErrorWrapperException(ERROR, ERRCODE_SYNTAX_ERROR, format_errmsg("\"%s\" is not a known variable", local_id.c_str()), 0);
-
-			PLtsql_var *var = (PLtsql_var *) pltsql_Datums[dno];
-
-			appendBinaryStringInfo(&ds, query+cursor, offset - cursor); // copy substring of expr->query. ranged [cursor, offset)
-			appendStringInfo(&ds, "CAST(NULL AS %s)", var->datatype->typname);
-			cursor = offset + local_id.length();
-		}
-	}
-	if (cursor < strlen(query))
-		appendStringInfoString(&ds, query + cursor); // copy remaining expr->query
-
-	// update query string with quoted one
-	return pstrdup(ds.data);
-}
-
 static const char*
 rewrite_assign_operator(tree::TerminalNode *aop)
 {
@@ -4486,10 +4513,9 @@ rewrite_assign_operator(tree::TerminalNode *aop)
 }
 
 TSqlParser::Query_specificationContext *
-get_query_specification(TSqlParser::Select_statement_standaloneContext* ctx)
+get_query_specification(TSqlParser::Select_statementContext* sctx)
 {
-	Assert(ctx->select_statement());
-	TSqlParser::Select_statementContext *sctx = ctx->select_statement();
+	Assert(sctx);
 	Assert(sctx->query_expression());
 	TSqlParser::Query_expressionContext *qectx = sctx->query_expression();
 	TSqlParser::Query_specificationContext *qctx = qectx->query_specification();
