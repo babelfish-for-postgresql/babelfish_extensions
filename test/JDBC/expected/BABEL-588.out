@@ -1746,7 +1746,7 @@ SELECT * from trigger_history
 go
 ~~START~~
 char#!#int#!#int#!#varchar#!#int#!#varchar
-INS#!#1#!#10#!#vanilla insert#!#0#!#t1
+INS#!#1#!#10#!#vanilla insert#!#1#!#t1
 ~~END~~
 
 
