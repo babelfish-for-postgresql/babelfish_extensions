@@ -1226,6 +1226,12 @@ int dispatch_stmt_handle_error(PLtsql_execstate *estate,
 	return rc;
 }
 
+bool is_recursive_trigger(PLtsql_execstate *estate){
+	if (estate == NULL)
+		return false;
+	return is_part_of_pltsql_trigger(estate); 
+}
+
 #define INITIAL_ERR_STACK_SIZE 8
 int exec_stmt_iterative(PLtsql_execstate *estate, ExecCodes *exec_codes, ExecConfig_t *config)
 {
