@@ -2309,7 +2309,7 @@ exec_stmt_assign(PLtsql_execstate *estate, PLtsql_stmt_assign *stmt)
 
 	exec_assign_expr(estate, estate->datums[stmt->varno], stmt->expr);
 
-        exec_set_rowcount(1);
+	exec_set_rowcount(1);
 
 	return PLTSQL_RC_OK;
 }
@@ -4765,8 +4765,13 @@ exec_stmt_execsql(PLtsql_execstate *estate,
 				 expr->query, SPI_result_code_string(rc));
 			break;
 	}
+
 	if (enable_txn_in_triggers)
 	{
+		if (!stmt->need_to_push_result) // before trigger execution , set the rowcount
+		{
+			exec_set_rowcount(SPI_processed);
+		}
 		/* Close nesting level on engine side */
 		EndCompositeTriggers(false);
 		estate->tsql_trigger_flags &= ~TSQL_TRIGGER_STARTED;
