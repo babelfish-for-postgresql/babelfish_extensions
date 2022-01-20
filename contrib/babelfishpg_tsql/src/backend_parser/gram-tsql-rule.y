@@ -2731,11 +2731,11 @@ tsql_top_clause:
 						A_Const* n = (A_Const *)$3;
 						if(n->val.type == T_Integer && n->val.val.ival == 100)
 						{
-								$$ = makeNullAConst(@1);
+								$$ = NULL;
 						}
 						else if(n->val.type == T_Float && atof(n->val.val.str) == 100.0)
 						{
-								$$ = makeNullAConst(@1);
+								$$ = NULL;
 						}
 						else
 						{
@@ -2760,11 +2760,11 @@ tsql_top_clause:
 					A_Const* n = (A_Const *)$2;
 					if(n->val.type == T_Integer && n->val.val.ival == 100)
 					{
-							$$ = makeNullAConst(@1);
+							$$ = NULL;
 					}
 					else if(n->val.type == T_Float && atof(n->val.val.str) == 100.0)
 					{
-							$$ = makeNullAConst(@1);
+							$$ = NULL;
 					}
 					else
 					{

@@ -97,8 +97,7 @@ select top (select a from babel_1161_t31 where a2 = 'b') * from babel_1161_t32 o
 GO
 
 -- empty scalar subquery
--- note: we have a bug here: BABEL-1181
--- please update the comment and expected output once the bug is fixed.
+-- SELECT TOP (NULL) should throw error
 select top (select a from babel_1161_t31 where a2 = 'c') * from babel_1161_t32 order by b;
 GO
 
