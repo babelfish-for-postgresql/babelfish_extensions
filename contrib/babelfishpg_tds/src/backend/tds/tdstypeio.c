@@ -48,6 +48,8 @@
 
 #define TDS_RETURN_DATUM(x)		return ((Datum) (x))
 
+#define VARCHAR_MAX 2147483647
+
 #define GetPgOid(pgTypeOid, finfo) \
 do { \
 	pgTypeOid = (finfo->ttmbasetypeid != InvalidOid) ? \
@@ -2146,27 +2148,35 @@ TdsSendTypeBinary(FmgrInfo *finfo, Datum value, void *vMetaData)
 int
 TdsSendTypeVarchar(FmgrInfo *finfo, Datum value, void *vMetaData)
 {
-	int 			rc = EOF, len = 0;
+	int 			rc = EOF,
+				len,		/* number of bytes used to store the string. */
+				actualLen,	/* Number of bytes that would be needed to store given string in given encoding. */
+				maxLen;		/* max size of given column in bytes */
 	char 			*destBuf, *buf = OutputFunctionCall(finfo, value);
 	TdsColumnMetaData	*col = (TdsColumnMetaData *)vMetaData;
 
 	len = strlen(buf);
 	destBuf = server_to_any(buf, len, col->encoding);
-	if (destBuf != buf)
-	{
-		len = strlen(destBuf);
-	}
 
-	if (col->metaEntry.type2.maxSize != 0xffff)
+	maxLen = col->metaEntry.type2.maxSize;
+	actualLen = (buf != destBuf) ? strlen(destBuf) : len;
+
+	if (maxLen != 0xffff)
 	{
-		if ((rc = TdsPutInt16LE(len)) == 0)
-			rc = TdsPutbytes(destBuf, len);
+		if (unlikely(actualLen > maxLen))
+			elog(ERROR, "Number of bytes for the field of varchar(n) exeeds max specified for the field.");
+
+		if ((rc = TdsPutInt16LE(actualLen)) == 0)
+			rc = TdsPutbytes(destBuf, actualLen);
 	}
 	else
 	{
+		/* We can store upto 2GB (2^31 - 1 bytes) for the varchar(max). */ 
+		if (unlikely(actualLen > VARCHAR_MAX))
+			elog(ERROR, "Number of bytes required for the field of varchar(max) exeeds 2GB");
 		TDSInstrumentation(INSTR_TDS_DATATYPE_VARCHAR_MAX);
 
-		rc = TdsSendPlpDataHelper(destBuf, len);
+		rc = TdsSendPlpDataHelper(destBuf, actualLen);
 	}
 
 	pfree(buf);
@@ -2176,15 +2186,23 @@ TdsSendTypeVarchar(FmgrInfo *finfo, Datum value, void *vMetaData)
 int
 TdsSendTypeChar(FmgrInfo *finfo, Datum value, void *vMetaData)
 {	
-	int			rc = EOF, len;
+	int			rc = EOF,
+				maxLen,		/* max size of given column in bytes */
+				actualLen,	/* Number of bytes that would be needed to store given string in given encoding. */
+				len;		/* number of bytes used to store the string. */
 	char			*destBuf, *buf = OutputFunctionCall(finfo, value);
 	TdsColumnMetaData	*col = (TdsColumnMetaData *)vMetaData;
 
-	len = col->metaEntry.type2.maxSize;
+	len = strlen(buf);
 	destBuf = server_to_any(buf, len, col->encoding);
 
-	if ((rc = TdsPutUInt16LE(len)) == 0)
-		rc = TdsPutbytes(destBuf, len);
+	maxLen = col->metaEntry.type2.maxSize;
+	actualLen = (buf != destBuf) ? strlen(destBuf) : len;
+	if (unlikely(maxLen != actualLen))
+		elog(ERROR, "Number of bytes required for the field of char(n) does not match with max bytes specified of the field");
+
+	if ((rc = TdsPutUInt16LE(actualLen)) == 0)
+		rc = TdsPutbytes(destBuf, actualLen);
 
 	pfree(buf);
 	return rc;
