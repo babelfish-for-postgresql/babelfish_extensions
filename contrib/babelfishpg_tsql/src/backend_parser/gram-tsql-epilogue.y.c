@@ -1172,12 +1172,13 @@ static List *
 get_transformed_output_list(List *tsql_output_clause)
 {
 	List 		*transformed_returning_list = NIL, *queue = NIL, *output_list = NIL;
+	List		*ins_colnames = NIL, *del_colnames = NIL;
 	ListCell 	*o_target, *expr;
 	char 		col_alias_arr[NAMEDATALEN];
 	char 		*col_alias = NULL;
 	PLtsql_execstate *estate;
 	int 		i = 0;
-	bool 		local_variable = false, ins_star = false, del_star = false;
+	bool 		local_variable = false, ins_star = false, del_star = false, is_duplicate = false;
 	
 	estate = get_current_tsql_estate();
 
@@ -1200,9 +1201,14 @@ get_transformed_output_list(List *tsql_output_clause)
 				{
 					if (IsA((Node*) llast(cref->fields), String))
 					{
-						snprintf(col_alias_arr, NAMEDATALEN, "sys_gen##%pdel_%s", (void*) tsql_output_clause, strVal(llast(cref->fields)));
-						col_alias = pstrdup(col_alias_arr);
-						target->name = col_alias;
+						is_duplicate = returning_list_has_column_name(del_colnames, strVal(llast(cref->fields)));
+						if (!is_duplicate)
+						{
+							snprintf(col_alias_arr, NAMEDATALEN, "sys_gen##%pdel_%s", (void*) tsql_output_clause, strVal(llast(cref->fields)));
+							col_alias = pstrdup(col_alias_arr);
+							target->name = col_alias;
+							del_colnames = lappend(del_colnames, strVal(llast(cref->fields)));
+						}
 					}
 					else if (IsA((Node*) llast(cref->fields), A_Star))
 						ins_star = true;
@@ -1212,9 +1218,14 @@ get_transformed_output_list(List *tsql_output_clause)
 				{
 					if (IsA((Node*) llast(cref->fields), String))
 					{
-						snprintf(col_alias_arr, NAMEDATALEN, "sys_gen##%pins_%s", (void*) tsql_output_clause, strVal(llast(cref->fields)));
-						col_alias = pstrdup(col_alias_arr);
-						target->name = col_alias;
+						is_duplicate = returning_list_has_column_name(ins_colnames, strVal(llast(cref->fields)));
+						if (!is_duplicate)
+						{
+							snprintf(col_alias_arr, NAMEDATALEN, "sys_gen##%pins_%s", (void*) tsql_output_clause, strVal(llast(cref->fields)));
+							col_alias = pstrdup(col_alias_arr);
+							target->name = col_alias;
+							ins_colnames = lappend(ins_colnames, strVal(llast(cref->fields)));
+						}
 					}
 					else if (IsA((Node*) llast(cref->fields), A_Star))
 						del_star = true;
@@ -1266,4 +1277,31 @@ get_transformed_output_list(List *tsql_output_clause)
 		}
 	}
 	return transformed_returning_list;
+}
+
+/*
+* returning_list_has_column_name() checks whether a particular column name already
+* exists in the transformed returning list for OUTPUT clause. Such a scenario is 
+* possible because get_transformed_output_list() removes functions and expressions 
+* and only retains the column names.
+*/
+static bool
+returning_list_has_column_name(List *existing_colnames, char *current_colname)
+{
+	ListCell *name;
+	bool is_duplicate = false;
+
+	if (existing_colnames == NIL)
+		return false;
+
+	foreach(name, existing_colnames)
+	{
+		char *colname = (char*) lfirst(name);
+		if (!strcmp(colname, current_colname))
+		{
+			is_duplicate = true;
+			break;
+		}
+	}
+	return is_duplicate;
 }

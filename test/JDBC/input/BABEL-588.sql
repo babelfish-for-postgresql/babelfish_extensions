@@ -1024,3 +1024,49 @@ DROP TABLE t1
 go
 DROP TABLE t2
 go
+
+
+-- [BABEL-2522] Test specific cases that trigger ambiguous column errors
+CREATE TABLE dml_table(
+        c1PK    INT     PRIMARY KEY
+        , c2FLOAT       FLOAT   NOT NULL
+)
+go
+
+CREATE TABLE output_FLOAT(
+        c1INT   INT     PRIMARY KEY
+        , c2FLOAT   FLOAT   NULL
+)
+go
+
+INSERT INTO dml_table
+OUTPUT INSERTED.c1PK, INSERTED.c1PK / 21 INTO output_FLOAT( c1INT, c2FLOAT )
+VALUES ( 4, 4567.890 )
+go
+
+SELECT * FROM dml_table
+go
+
+SELECT * from output_FLOAT
+go
+
+DELETE output_FLOAT
+go
+
+UPDATE dml_table SET c1PK = 5
+OUTPUT DELETED.c1PK, INSERTED.c1PK + DELETED.c1PK INTO output_FLOAT( c1INT, c2FLOAT )
+WHERE c1PK = 4
+go
+
+SELECT * FROM dml_table
+go
+
+SELECT * FROM output_FLOAT
+go
+
+-- Cleanup
+DROP TABLE dml_table
+go
+
+DROP TABLE output_FLOAT
+go
