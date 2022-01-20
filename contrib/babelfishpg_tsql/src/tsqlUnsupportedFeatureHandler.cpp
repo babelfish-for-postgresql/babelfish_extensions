@@ -59,7 +59,7 @@ declare_escape_hatch(escape_hatch_session_settings);
 
 extern std::string getFullText(antlr4::ParserRuleContext *context);
 extern std::string stripQuoteFromId(TSqlParser::IdContext *context);
-extern TSqlParser::Query_specificationContext *get_query_specification(TSqlParser::Select_statement_standaloneContext *ctx);
+extern TSqlParser::Query_specificationContext *get_query_specification(TSqlParser::Select_statementContext *ctx);
 
 using namespace std;
 using namespace antlr4;
@@ -113,7 +113,7 @@ protected:
 		antlrcpp::Any visitDdl_statement(TSqlParser::Ddl_statementContext *ctx) override;
 
 		// DML
-		antlrcpp::Any visitSelect_statement_standalone(TSqlParser::Select_statement_standaloneContext *ctx) override;
+		antlrcpp::Any visitSelect_statement(TSqlParser::Select_statementContext *ctx) override;
 		antlrcpp::Any visitInsert_statement(TSqlParser::Insert_statementContext *ctx) override;
 		antlrcpp::Any visitUpdate_statement(TSqlParser::Update_statementContext *ctx) override;
 		antlrcpp::Any visitDelete_statement(TSqlParser::Delete_statementContext *ctx) override;
@@ -986,7 +986,7 @@ antlrcpp::Any TsqlUnsupportedFeatureHandlerImpl::visitDdl_statement(TSqlParser::
 	return visitChildren(ctx);
 }
 
-antlrcpp::Any TsqlUnsupportedFeatureHandlerImpl::visitSelect_statement_standalone(TSqlParser::Select_statement_standaloneContext *ctx)
+antlrcpp::Any TsqlUnsupportedFeatureHandlerImpl::visitSelect_statement(TSqlParser::Select_statementContext *ctx)
 {
 	auto qctx = get_query_specification(ctx);
 	if (qctx && qctx->select_list())
@@ -997,6 +997,12 @@ antlrcpp::Any TsqlUnsupportedFeatureHandlerImpl::visitSelect_statement_standalon
 				handle(INSTR_UNSUPPORTED_TSQL_SELECT_DOLLAR_IDENTITY, "$IDENTITY");
 			if (elem->column_elem() && elem->column_elem()->DOLLAR_ROWGUID())
 				handle(INSTR_UNSUPPORTED_TSQL_SELECT_DOLLAR_ROWGUID, "$ROWGUID");
+			if (elem->expression_elem() && elem->expression_elem()->EQUAL())
+			{
+				TSqlParser::Select_statement_standaloneContext *pctx = dynamic_cast<TSqlParser::Select_statement_standaloneContext *>(ctx->parent);
+				if (!pctx)
+					handle(INSTR_UNSUPPORTED_TSQL_SELECT_COL_ALIAS, "ALIAS = EXPRESSION in subquery, derived table, or common table expression");
+			}
 		}
 	}
 
