@@ -32,4 +32,6 @@ extern int exec_stmt_iterative(PLtsql_execstate *estate, ExecCodes *exec_codes,
                                ExecConfig_t *config);
 extern void free_exec_codes(ExecCodes *exec_codes);
 
+extern bool is_recursive_trigger(PLtsql_execstate *estate);
+
 #endif  /* EXECUTOR_H */

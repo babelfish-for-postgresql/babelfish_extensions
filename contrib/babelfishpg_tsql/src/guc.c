@@ -44,6 +44,7 @@ bool	pltsql_cursor_close_on_commit = false;
 bool	pltsql_disable_batch_auto_commit = false;
 bool	pltsql_disable_internal_savepoint = false;
 bool	pltsql_disable_txn_in_triggers = false;
+bool    pltsql_recursive_triggers = false;
 bool  pltsql_noexec = false;
 bool  pltsql_showplan_all = false;
 bool  pltsql_showplan_text = false;
@@ -694,6 +695,15 @@ define_custom_variables(void)
 							 false,
 							 PGC_SUSET,
 							 GUC_NO_SHOW_ALL | GUC_NOT_IN_SAMPLE | GUC_DISALLOW_IN_AUTO_FILE,
+							 NULL, NULL, NULL);
+
+	DefineCustomBoolVariable("babelfishpg_tsql.recursive_triggers",
+							 gettext_noop("SQL-Server compatibility recursive_triggers option"),
+							 NULL,
+							 &pltsql_recursive_triggers,
+							 false,
+							 PGC_USERSET,
+							 GUC_NOT_IN_SAMPLE | GUC_DISALLOW_IN_FILE | GUC_DISALLOW_IN_AUTO_FILE,
 							 NULL, NULL, NULL);
 
 	DefineCustomBoolVariable("babelfishpg_tsql.noexec",

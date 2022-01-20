@@ -282,7 +282,7 @@ TdsDefineGucs(void)
 		true,
 		PGC_SUSET,
 		GUC_NO_SHOW_ALL | GUC_NOT_IN_SAMPLE,
-		NULL, NULL, NULL);
+		NULL, NULL, NULL);	
 
 /* the guc is accessible only if it's compiled with fault injection flag */
 #ifdef FAULT_INJECTOR

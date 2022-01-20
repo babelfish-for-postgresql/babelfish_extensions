@@ -81,6 +81,7 @@
 #include "access/xact.h"
 
 extern bool escape_hatch_unique_constraint;
+extern bool pltsql_recursive_triggers;
 
 extern List *babelfishpg_tsql_raw_parser(const char *str);
 extern bool install_backend_gram_hooks();
@@ -2607,9 +2608,15 @@ pltsql_call_handler(PG_FUNCTION_ARGS)
 		 * Determine if called as function or trigger and call appropriate
 		 * subhandler
 		 */
-		if (CALLED_AS_TRIGGER(fcinfo))
-			retval = PointerGetDatum(pltsql_exec_trigger(func,
+		if (CALLED_AS_TRIGGER(fcinfo)){
+			if (!pltsql_recursive_triggers && save_cur_estate!=NULL 
+			&& is_recursive_trigger(save_cur_estate)){
+				retval = (Datum) 0;
+			}else{
+				retval = PointerGetDatum(pltsql_exec_trigger(func,
 														  (TriggerData *) fcinfo->context));
+			}
+		}
 		else if (CALLED_AS_EVENT_TRIGGER(fcinfo))
 		{
 			pltsql_exec_event_trigger(func,
