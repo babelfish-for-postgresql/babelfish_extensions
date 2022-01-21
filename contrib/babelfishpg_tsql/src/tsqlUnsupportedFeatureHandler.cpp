@@ -179,6 +179,7 @@ protected:
 		antlrcpp::Any visitFunc_proc_name_schema(TSqlParser::Func_proc_name_schemaContext *ctx) override;
 		antlrcpp::Any visitFunc_proc_name_database_schema(TSqlParser::Func_proc_name_database_schemaContext *ctx) override;
 		antlrcpp::Any visitFunc_proc_name_server_database_schema(TSqlParser::Func_proc_name_server_database_schemaContext *ctx) override;
+		antlrcpp::Any visitFull_object_name(TSqlParser::Full_object_nameContext *ctx) override;
 
 		// methods call (XML, hierachy, spatial)
 		antlrcpp::Any visitXml_nodes_method(TSqlParser::Xml_nodes_methodContext *ctx) override { handle(INSTR_UNSUPPORTED_TSQL_XML_NODES, "XML NODES"); return visitChildren(ctx); }
@@ -1281,6 +1282,9 @@ antlrcpp::Any TsqlUnsupportedFeatureHandlerImpl::visitFunc_proc_name_database_sc
 
 antlrcpp::Any TsqlUnsupportedFeatureHandlerImpl::visitFunc_proc_name_server_database_schema(TSqlParser::Func_proc_name_server_database_schemaContext *ctx)
 {
+	if (ctx->DOT().size() >= 3 && ctx->server) /* server.db.schema.funcname */
+		handle(INSTR_UNSUPPORTED_TSQL_SERVERNAME_IN_NAME, "servername");
+
 	if (ctx->DOT().empty())
 	{
 		// check some built-in functions/procedures
@@ -1289,6 +1293,14 @@ antlrcpp::Any TsqlUnsupportedFeatureHandlerImpl::visitFunc_proc_name_server_data
 		if (pg_strcasecmp("COLUMNS_UPDATED", getFullText(ctx->procedure).c_str()) == 0)
 			handle(INSTR_UNSUPPORTED_TSQL_COLUMNS_UPDATED_FUNC, "COLUMNS_UPDATED FUNC IN TRIGGER");
 	}
+
+	return visitChildren(ctx);
+}
+
+antlrcpp::Any TsqlUnsupportedFeatureHandlerImpl::visitFull_object_name(TSqlParser::Full_object_nameContext *ctx)
+{
+	if (ctx->DOT().size() >= 3 && ctx->server) /* server.db.schema.funcname */
+		handle(INSTR_UNSUPPORTED_TSQL_SERVERNAME_IN_NAME, "servername");
 
 	return visitChildren(ctx);
 }

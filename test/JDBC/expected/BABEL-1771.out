@@ -68,7 +68,7 @@ EXEC ..bar
 GO
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: procedure master_dbo.bar() does not exist)~~
+~~ERROR (Message: procedure bar() does not exist)~~
 
 
 EXEC foo
