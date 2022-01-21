@@ -85,13 +85,13 @@ typedef struct
  */
 typedef enum {
 	APPLOCKMODE_NOLOCK,
+	APPLOCKMODE_INTENTEXCLUSIVE,
 	APPLOCKMODE_INTENTSHARED,
 	APPLOCKMODE_SHARED,
 	APPLOCKMODE_UPDATE,
-	APPLOCKMODE_INTENTEXCLUSIVE,
 	APPLOCKMODE_EXCLUSIVE,
 	APPLOCKMODE_SHAREDINTENTEXCLUSIVE,
-	APPLOCKMODE_UPDATEINTENTEXCLUSIVE,
+	APPLOCKMODE_UPDATEINTENTEXCLUSIVE
 } Applock_All_Lockmode;
 
 /*
@@ -101,13 +101,13 @@ typedef enum {
 static const char *AppLockModeStrings[] =
 {
 	"NoLock",
+	"IntentExclusive",
 	"IntentShared",
 	"Shared",
 	"Update",
-	"IntentExclusive",
-	"Exclusive"
+	"Exclusive",
 	"SharedIntentExclusive",
-	"UpdateIntentExclusive",
+	"UpdateIntentExclusive"
 };
 
 static void ApplockPrintMessage(const char *fmt, ...) {
