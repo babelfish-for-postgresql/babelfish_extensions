@@ -52,6 +52,13 @@ static void toDotRecursive(ParseTree *t, const std::vector<std::string> &ruleNam
 class tsqlBuilder;
 class PLtsql_expr_query_mutator;
 
+// helper template function to get certain token from given context.
+// use template here because there is no mid-level base class for similar contexts.
+template <class T>
+using GetTokenFunc = std::function <antlr4::tree::TerminalNode * (T)>;
+template <class T>
+using GetCtxFunc = std::function <ParserRuleContext * (T)>;
+
 bool handleBatchLevelStatment(tree::ParseTree *tree);
 bool handleITVFBody(TSqlParser::Func_body_return_select_bodyContext *body);
 
@@ -80,6 +87,7 @@ static bool post_process_alter_table(TSqlParser::Alter_tableContext *ctx, PLtsql
 static bool post_process_create_index(TSqlParser::Create_indexContext *ctx, PLtsql_stmt_execsql *stmt, TSqlParser::Ddl_statementContext *baseCtx);
 static bool post_process_create_database(TSqlParser::Create_databaseContext *ctx, PLtsql_stmt_execsql *stmt, TSqlParser::Ddl_statementContext *baseCtx);
 static void post_process_table_source(TSqlParser::Table_source_itemContext *ctx, PLtsql_expr *expr, ParserRuleContext *baseCtx);
+static void post_process_declare_cursor_statement(PLtsql_stmt_decl_cursor *stmt, TSqlParser::Declare_cursorContext *ctx);
 static PLtsql_var *lookup_cursor_variable(const char *varname);
 static PLtsql_var *build_cursor_variable(const char *curname, int lineno);
 static int read_extended_cursor_option(TSqlParser::Declare_cursor_optionsContext *ctx, int current_cursor_option);
@@ -103,6 +111,62 @@ static bool is_compiling_create_function();
 static void process_select_statement_standalone(
 	PLtsql_expr *expr, ParserRuleContext* baseCtx, TSqlParser::Select_statement_standaloneContext *standaloneCtx, 
 	bool itvf, PLtsql_expr_query_mutator *mutator);
+template <class T> static std::string rewrite_omitted_db_and_schema_name(T ctx, GetCtxFunc<T> getDatabase, GetCtxFunc<T> getSchema);
+
+/*
+ * Structure / Utility function for general purpose of query string modification
+ *
+ * The difficulty of query string modification is that, upper-level general grammar (i.e. dml_clause, ddl_clause, ...)
+ * actaully creates PLtsql_stmt but logic of query modification is available in low-level fine-grained grammar (i.e. full_object_name, select_list, ...)
+ * We can't modify the query string in enter/exit function of low-evel grammar because it may append query string in middle of query
+ * so it may lead to inconsistency between query string and token index information obtained from ANTLR parser.
+ * (i.e. if we rewrite "SELECT 'a'=1 from T" to "SELECT 1 as 'a' FROM T", T appears poisition 22 after rewriting but ANTLR token still keeps position 19)
+ *
+ * To resolve this issue, each low-level grammar just register rewritten-query-fragement to a map (rewritten_query_fragment)
+ * and all the rewriting will be done by upper-level grammar rule at once by using PLtsql_expr_query_mutator
+ *
+ * Here is general code snippet (but different patterns in specific query statement like itvf, batch-level statement)
+ *
+ * void enterUpperLevelGrammar() { // DML, DDL, ...
+ *   ...
+ *   clear_rewritten_query_fragment(); // clean-up before collecting rewriting information
+ * }
+ *
+ * void exitLowLevelGrammar() { // fine-grained grammar needs actual rewirting
+ *   ...
+ *   // register rewritten query
+ *   rewritten_query_fragment.emplace(std::make_pair(original_string_position, std::make_pair(original_string, rewritten_string));
+ * }
+ *
+ * void exitUpperLevelGrammar() {
+ *   ...
+ *   PLtsql_expr* expr = ...; acutal payload query string for PLtsql_stmt;
+ *   PLtsql_expr_query_mutator mutator(expr, ctx);
+ *
+ *   add_rewritten_query_fragment_to_mutator(&mutator); // move information of rewritten_query_fragment to mutator.
+ *
+ *   mutator.run(); // expr->query will be rewitten here
+ *   clear_rewritten_query_fragment();
+ * }
+ */
+
+// general-purpose map to store query fragement which needs to be rewritten
+// intentionally use std::map to access positions by sorted order.
+// global object is enough because no nesting is expected.
+static std::map<size_t, pair<std::string, std::string>> rewritten_query_fragment;
+
+// Keeping poisitions of local_ids to quote them.
+// local_id can be rewritten in differeny way in some cases (itvf), don't use rewritten_query_fragment.
+// TODO: incorporate local_id_positions with rewritten_query_fragment
+static std::map<size_t, std::string> local_id_positions;
+
+// should be called before visiting subclause to make PLtsql_stmt.
+static void clear_rewritten_query_fragment();
+
+// add information of rewritten_query_fragment information to mutator
+static void add_rewritten_query_fragment_to_mutator(PLtsql_expr_query_mutator *mutator);
+
+
 
 static void
 breakHere()
@@ -212,14 +276,6 @@ getPLtsql_fragment(ParseTree *node)
 }
 
 static List *rootInitializers = NIL;
-
-// Keeping poisitions of local_ids to quote them.
-// intentionally use std::map to access positions by sorted order.
-// global object is enough because no nesting is expected.
-static std::map<size_t, std::string> local_id_positions;
-
-// Note locations that have qualified names that need to be replaced
-static std::map<size_t, pair<std::string, std::string>> full_object_name_positions;
 
 FormattedMessage
 format_errmsg(const char *fmt, const char *arg0)
@@ -355,6 +411,21 @@ void PLtsql_expr_query_mutator::run()
 
 	// update query string with quoted one
 	expr->query = pstrdup(ds.data);
+}
+
+static void
+clear_rewritten_query_fragment()
+{
+	rewritten_query_fragment.clear();
+	local_id_positions.clear();
+}
+
+static void
+add_rewritten_query_fragment_to_mutator(PLtsql_expr_query_mutator *mutator)
+{
+	Assert(mutator);
+	for (auto &entry : rewritten_query_fragment)
+		mutator->add(entry.first, entry.second.first, entry.second.second);
 }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -738,11 +809,8 @@ public:
 
 		graft(makeSQL(ctx), peekContainer());
 
-		// clean up local_id positions maps before entering
-		local_id_positions.clear();
-
-        // clean up full_object_name positions maps before entering
-        full_object_name_positions.clear();
+		// prepare rewriting
+		clear_rewritten_query_fragment();
 	}
 
 	void exitDml_statement(TSqlParser::Dml_statementContext *ctx) override
@@ -779,7 +847,7 @@ public:
 		{
 			process_select_statement_standalone(stmt->sqlstmt, ctx, ctx->select_statement_standalone(), false, &mutator);
 		}
-		else
+		else /* non-select dml */
 		{
 			// update stmt->sqlstmt with adding quote to tsql local_id (starting with '@') because backend parser is expecting that.
 			for (auto &entry : local_id_positions)
@@ -787,16 +855,13 @@ public:
 				std::string quoted_local_id = std::string("\"") + entry.second + "\"";
 				mutator.add(entry.first, entry.second, quoted_local_id);
 			}
-			local_id_positions.clear();
-
-			// process qualified names with ..
-			for (auto &entry : full_object_name_positions)
-			{
-				mutator.add(entry.first, entry.second.first, entry.second.second);
-			}
-			full_object_name_positions.clear();
 		}
+
+		/* common routine for select and non-select */
+		add_rewritten_query_fragment_to_mutator(&mutator);
+
 		mutator.run();
+		clear_rewritten_query_fragment();
 	}
 
 	void enterBatch_level_statement(TSqlParser::Batch_level_statementContext *ctx) override
@@ -809,6 +874,9 @@ public:
 	{
 		// See the comments in enterDml_statement() for an explanation of this code
 		graft(makeSQL(ctx), peekContainer());
+
+		// clean up object_name positions maps before entering
+		rewritten_query_fragment.clear();
 	}
 
 	void exitDdl_statement(TSqlParser::Ddl_statementContext *ctx) override
@@ -843,7 +911,18 @@ public:
 		}
 
 		if (nop)
+		{
 			make_nop((PLtsql_stmt *) stmt, peekContainer());
+			return;
+		}
+		else
+		{
+			// post-processing of execsql stmt query
+			PLtsql_expr_query_mutator mutator(stmt->sqlstmt, ctx);
+			add_rewritten_query_fragment_to_mutator(&mutator);
+			mutator.run();
+		}
+		clear_rewritten_query_fragment();
 	}
 
 	void enterAnother_statement(TSqlParser::Another_statementContext *ctx) override
@@ -862,8 +941,19 @@ public:
 		for (PLtsql_stmt *stmt : result)
 			graft(stmt, peekContainer());
 
-		// clean up local_id positions maps before entering
-		local_id_positions.clear();
+		clear_rewritten_query_fragment();
+	}
+
+	void exitAnother_statement(TSqlParser::Another_statementContext *ctx) override
+	{
+		// currently, declare_cursor only need rewriting because it contains select statement
+		if (ctx->cursor_statement() && ctx->cursor_statement()->declare_cursor())
+		{
+			PLtsql_stmt_decl_cursor *decl_cursor_stmt = (PLtsql_stmt_decl_cursor *) getPLtsql_fragment(ctx);
+			post_process_declare_cursor_statement(decl_cursor_stmt, ctx->cursor_statement()->declare_cursor());
+		}
+
+		clear_rewritten_query_fragment();
 	}
 
     void enterCfl_statement(TSqlParser::Cfl_statementContext *ctx) override
@@ -876,7 +966,9 @@ public:
 		// makeCfl() to create the appropriate PLtsql_stmt and then graft that
 		// into the topmost container.
 		graft(makeCfl(ctx, *this), peekContainer());
-    }
+
+		clear_rewritten_query_fragment();
+	}
 
 	//////////////////////////////////////////////////////////////////////////////
 	// Special handling of non-statement context
@@ -897,30 +989,59 @@ public:
 		}
 	}
 
-    void enterFull_object_name(TSqlParser::Full_object_nameContext *ctx) override
-    {
-        if (ctx->children.size() == 3)
-        {
-            // Match ..bar
-            if (ctx->DOT().size() == 2 && !ctx->database && !ctx->schema)
-            {
-                full_object_name_positions.emplace(std::make_pair(ctx->start->getStartIndex(), std::make_pair(::getFullText(ctx->DOT()[0]), "master.dbo")));
-            }
-        }
-        else if (ctx->children.size() == 4)
-        {
-            // Match foo..bar
-            if (ctx->DOT().size() == 2 && ctx->database && !ctx->schema)
-            {
-                full_object_name_positions.emplace(std::make_pair(ctx->DOT()[0]->getSymbol()->getStartIndex(), std::make_pair(::getFullText(ctx->DOT()[0]), ".dbo")));
-            }
-            // Match .foo.bar
-            else if (ctx->DOT().size() == 2 && !ctx->database && ctx->schema)
-            {
-                full_object_name_positions.emplace(std::make_pair(ctx->start->getStartIndex(), std::make_pair(::getFullText(ctx->DOT()[0]), "master.")));
-            }
-        }
-    }
+	void enterFull_object_name(TSqlParser::Full_object_nameContext *ctx) override
+	{
+		GetCtxFunc<TSqlParser::Full_object_nameContext *> getDatabase = [](TSqlParser::Full_object_nameContext *o) { return o->database; };
+		GetCtxFunc<TSqlParser::Full_object_nameContext *> getSchema = [](TSqlParser::Full_object_nameContext *o) { return o->schema; };
+		std::string rewritten_name = rewrite_omitted_db_and_schema_name(ctx, getDatabase, getSchema);
+		if (!rewritten_name.empty())
+			rewritten_query_fragment.emplace(std::make_pair(ctx->start->getStartIndex(), std::make_pair(::getFullText(ctx), rewritten_name)));
+	}
+
+	void enterTable_name(TSqlParser::Table_nameContext *ctx) override
+	{
+		GetCtxFunc<TSqlParser::Table_nameContext *> getDatabase = [](TSqlParser::Table_nameContext *o) { return o->database; };
+		GetCtxFunc<TSqlParser::Table_nameContext *> getSchema = [](TSqlParser::Table_nameContext *o) { return o->schema; };
+		std::string rewritten_name = rewrite_omitted_db_and_schema_name(ctx, getDatabase, getSchema);
+		if (!rewritten_name.empty())
+			rewritten_query_fragment.emplace(std::make_pair(ctx->start->getStartIndex(), std::make_pair(::getFullText(ctx), rewritten_name)));
+	}
+
+	void enterSimple_name(TSqlParser::Simple_nameContext *ctx) override
+	{
+		GetCtxFunc<TSqlParser::Simple_nameContext *> getDatabase = [](TSqlParser::Simple_nameContext *o) { return nullptr; }; // can't exist
+		GetCtxFunc<TSqlParser::Simple_nameContext *> getSchema = [](TSqlParser::Simple_nameContext *o) { return o->schema; };
+		std::string rewritten_name = rewrite_omitted_db_and_schema_name(ctx, getDatabase, getSchema);
+		if (!rewritten_name.empty())
+			rewritten_query_fragment.emplace(std::make_pair(ctx->start->getStartIndex(), std::make_pair(::getFullText(ctx), rewritten_name)));
+	}
+
+	void enterFunc_proc_name_schema(TSqlParser::Func_proc_name_schemaContext *ctx) override
+	{
+		GetCtxFunc<TSqlParser::Func_proc_name_schemaContext *> getDatabase = [](TSqlParser::Func_proc_name_schemaContext *o) { return nullptr; }; // can't exist
+		GetCtxFunc<TSqlParser::Func_proc_name_schemaContext *> getSchema = [](TSqlParser::Func_proc_name_schemaContext *o) { return o->schema; };
+		std::string rewritten_name = rewrite_omitted_db_and_schema_name(ctx, getDatabase, getSchema);
+		if (!rewritten_name.empty())
+			rewritten_query_fragment.emplace(std::make_pair(ctx->start->getStartIndex(), std::make_pair(::getFullText(ctx), rewritten_name)));
+	}
+
+	void enterFunc_proc_name_database_schema(TSqlParser::Func_proc_name_database_schemaContext *ctx) override
+	{
+		GetCtxFunc<TSqlParser::Func_proc_name_database_schemaContext *> getDatabase = [](TSqlParser::Func_proc_name_database_schemaContext *o) { return o->database; };
+		GetCtxFunc<TSqlParser::Func_proc_name_database_schemaContext *> getSchema = [](TSqlParser::Func_proc_name_database_schemaContext *o) { return o->schema; };
+		std::string rewritten_name = rewrite_omitted_db_and_schema_name(ctx, getDatabase, getSchema);
+		if (!rewritten_name.empty())
+			rewritten_query_fragment.emplace(std::make_pair(ctx->start->getStartIndex(), std::make_pair(::getFullText(ctx), rewritten_name)));
+	}
+
+	void enterFunc_proc_name_server_database_schema(TSqlParser::Func_proc_name_server_database_schemaContext *ctx) override
+	{
+		GetCtxFunc<TSqlParser::Func_proc_name_server_database_schemaContext *> getDatabase = [](TSqlParser::Func_proc_name_server_database_schemaContext *o) { return o->database; };
+		GetCtxFunc<TSqlParser::Func_proc_name_server_database_schemaContext *> getSchema = [](TSqlParser::Func_proc_name_server_database_schemaContext *o) { return o->schema; };
+		std::string rewritten_name = rewrite_omitted_db_and_schema_name(ctx, getDatabase, getSchema);
+		if (!rewritten_name.empty())
+			rewritten_query_fragment.emplace(std::make_pair(ctx->start->getStartIndex(), std::make_pair(::getFullText(ctx), rewritten_name)));
+	}
 
 	//////////////////////////////////////////////////////////////////////////////
 	// function/procedure call analysis
@@ -950,14 +1071,14 @@ public:
 	//////////////////////////////////////////////////////////////////////////////
 	void enterFunc_body_return_select_body(TSqlParser::Func_body_return_select_bodyContext *ctx) override
 	{
-		// local_ids information will be collected.
-		local_id_positions.clear();
+		// prepare rewriting
+		clear_rewritten_query_fragment();
 	}
 
 	void exitFunc_body_return_select_body(TSqlParser::Func_body_return_select_bodyContext *ctx) override
 	{
 		handleITVFBody(ctx);
-		local_id_positions.clear();
+		clear_rewritten_query_fragment();
 	}
 
 	void enterExecute_body_batch(TSqlParser::Execute_body_batchContext *ctx) override
@@ -1289,8 +1410,8 @@ public:
     }
 };
 
-/* Necessary mutations for select_statement_standalone
- * Be aware that if itvf is false, then this function clears local_id_positions and full_object_name_positions.
+/*
+ * Necessary mutations for select_statement_standalone
  * TODO: Currently, we cannot handle select_statement not in select_statement_standalone, e.g., subquery, derived table, etc.
  */
 static void process_select_statement_standalone(
@@ -1360,14 +1481,6 @@ static void process_select_statement_standalone(
 			std::string quoted_local_id = std::string("\"") + entry.second + "\"";
 			mutator->add(entry.first, entry.second, quoted_local_id);
 		}
-		local_id_positions.clear();
-
-		// process qualified names with ..
-		for (auto &entry : full_object_name_positions)
-		{
-			mutator->add(entry.first, entry.second.first, entry.second.second);
-		}
-		full_object_name_positions.clear();
 	}
 
 	/* handle special alias syntax and quote alias */
@@ -1610,11 +1723,6 @@ void report_antlr_error(ANTLR_result r)
 #pragma GCC diagnostic pop
 } // extern "C"
 
-// helper template function to remove certain token from comma-separated list. (designed to be used for a clause such as "WITH <opt1>, <opt2>, <opt3>".
-// use template here because there is no base class for T. F is function pointer (or lambda) to return interesting token which wants to be removed.
-template <class T>
-using GetTokenFunc = std::function <antlr4::tree::TerminalNode * (T)>;
-
 template <class T>
 bool
 removeTokenFromOptionList(PLtsql_expr *expr, std::vector<T>& options, std::vector<antlr4::tree::TerminalNode *>& commas, antlr4::ParserRuleContext *ctx, GetTokenFunc<T> getTokenFunc)
@@ -1657,6 +1765,9 @@ removeTokenFromOptionList(PLtsql_expr *expr, std::vector<T>& options, std::vecto
 void
 rewriteBatchLevelStatement(PLtsql_expr *expr, TSqlParser::Batch_level_statementContext *ctx)
 {
+	// rewrite batch-level stmt query
+	PLtsql_expr_query_mutator mutator(expr, ctx);
+
 	/*
 	 * remove unnecessary create-options such as SCHEMABINDING.
 	 * basically, we check SCHEMABINDING is specified of each kind of statement
@@ -1782,9 +1893,7 @@ rewriteBatchLevelStatement(PLtsql_expr *expr, TSqlParser::Batch_level_statementC
 				removeTokenStringFromQuery(expr, cctx->WITH(0), ctx);
 		}
 		if (cctx->select_statement_standalone()) {
-			PLtsql_expr_query_mutator mutator(expr, ctx);
 			process_select_statement_standalone(expr, ctx, cctx->select_statement_standalone(), false, &mutator);
-			mutator.run();
 		}
 	}
 
@@ -1795,6 +1904,60 @@ rewriteBatchLevelStatement(PLtsql_expr *expr, TSqlParser::Batch_level_statementC
 	if (ctx->create_or_alter_trigger() && ctx->create_or_alter_trigger()->create_or_alter_dml_trigger())
 		if (ctx->create_or_alter_trigger()->create_or_alter_dml_trigger()->for_replication())
 			removeCtxStringFromQuery(expr, ctx->create_or_alter_trigger()->create_or_alter_dml_trigger()->for_replication(), ctx);
+
+	// handle ommited database/schema name
+	{
+		ParserRuleContext *nctx = nullptr;
+		std::string rewritten_name = "";
+
+		if (ctx->create_or_alter_function() || ctx->create_or_alter_procedure())
+		{
+			GetCtxFunc<TSqlParser::Func_proc_name_schemaContext *> getDatabase = [](TSqlParser::Func_proc_name_schemaContext *o) { return nullptr; }; // can't exist
+			GetCtxFunc<TSqlParser::Func_proc_name_schemaContext *> getSchema = [](TSqlParser::Func_proc_name_schemaContext *o) { return o->schema; };
+
+			if (ctx->create_or_alter_function())
+			{
+				nctx = ctx->create_or_alter_function()->func_proc_name_schema();
+				rewritten_name = rewrite_omitted_db_and_schema_name((TSqlParser::Func_proc_name_schemaContext *) nctx, getDatabase, getSchema);
+			}
+			else if (ctx->create_or_alter_procedure())
+			{
+				nctx = ctx->create_or_alter_procedure()->func_proc_name_schema();
+				rewritten_name = rewrite_omitted_db_and_schema_name((TSqlParser::Func_proc_name_schemaContext *) nctx, getDatabase, getSchema);
+			}
+		}
+		else if (ctx->create_or_alter_trigger() || ctx->create_or_alter_view())
+		{
+			GetCtxFunc<TSqlParser::Simple_nameContext *> getDatabase = [](TSqlParser::Simple_nameContext *o) { return nullptr; }; // can't exist
+			GetCtxFunc<TSqlParser::Simple_nameContext *> getSchema = [](TSqlParser::Simple_nameContext *o) { return o->schema; };
+
+			if (ctx->create_or_alter_trigger() && ctx->create_or_alter_trigger()->create_or_alter_dml_trigger())
+			{
+				nctx = ctx->create_or_alter_trigger()->create_or_alter_dml_trigger()->simple_name();
+				rewritten_name = rewrite_omitted_db_and_schema_name((TSqlParser::Simple_nameContext *) nctx, getDatabase, getSchema);
+			}
+			else if (ctx->create_or_alter_trigger() && ctx->create_or_alter_trigger()->create_or_alter_ddl_trigger())
+			{
+				nctx = ctx->create_or_alter_trigger()->create_or_alter_ddl_trigger()->simple_name();
+				rewritten_name = rewrite_omitted_db_and_schema_name((TSqlParser::Simple_nameContext *) nctx, getDatabase, getSchema);
+			}
+			else if (ctx->create_or_alter_view())
+			{
+				nctx = ctx->create_or_alter_view()->simple_name();
+				rewritten_name = rewrite_omitted_db_and_schema_name((TSqlParser::Simple_nameContext *) nctx, getDatabase, getSchema);
+			}
+		}
+
+		// object name should be rewritten
+		if (!rewritten_name.empty())
+		{
+			Assert(nctx != nullptr);
+			mutator.add(nctx->start->getStartIndex(), ::getFullText(nctx), rewritten_name);
+		}
+	}
+
+	mutator.run();
+	clear_rewritten_query_fragment();
 }
 
 bool
@@ -2607,10 +2770,12 @@ makeReturnQueryStmt(TSqlParser::Select_statement_standaloneContext *ctx, bool it
 		auto *itvf_expr = makeTsqlExpr(ctx, false);
 		PLtsql_expr_query_mutator itvf_mutator(itvf_expr, ctx);
 		process_select_statement_standalone(itvf_expr, ctx, ctx, true, &itvf_mutator);
+		add_rewritten_query_fragment_to_mutator(&itvf_mutator);
 		itvf_mutator.run();
 		result->query->itvf_query = itvf_expr->query;
 	}
 	process_select_statement_standalone(result->query, ctx, ctx, false, &expr_mutator);
+	add_rewritten_query_fragment_to_mutator(&expr_mutator);
 	expr_mutator.run();
 	return result;
 }
@@ -3005,9 +3170,12 @@ makeSetStatement(TSqlParser::Set_statementContext *ctx)
 		Assert(sctx);
 
 		auto expr = makeTsqlExpr(sctx, false);
+
 		PLtsql_expr_query_mutator mutator(expr, sctx);
 		process_select_statement_standalone(expr, sctx, sctx, false, &mutator);
+		add_rewritten_query_fragment_to_mutator(&mutator);
 		mutator.run();
+
 		curvar->cursor_explicit_expr = expr;
 		curvar->cursor_explicit_argrow = -1;
 		curvar->cursor_options = CURSOR_OPT_FAST_PLAN | cursor_option | PGTSQL_CURSOR_ANONYMOUS;
@@ -3162,8 +3330,17 @@ makeExecuteStatement(TSqlParser::Execute_statementContext *ctx)
 			}
 		}
 
+		std::string rewritten_name = "";
+		if (body->func_proc_name_server_database_schema())
+		{
+			// rewrite func/proc name if database/schema is omitted (i.e. EXEC ..proc1)
+			GetCtxFunc<TSqlParser::Func_proc_name_server_database_schemaContext *> getDatabase = [](TSqlParser::Func_proc_name_server_database_schemaContext *o) { return o->database; };
+			GetCtxFunc<TSqlParser::Func_proc_name_server_database_schemaContext *> getSchema = [](TSqlParser::Func_proc_name_server_database_schemaContext *o) { return o->schema; };
+			rewritten_name = rewrite_omitted_db_and_schema_name((TSqlParser::Func_proc_name_server_database_schemaContext *) func_proc_name, getDatabase, getSchema);
+		}
+
 		std::stringstream ss;
-		ss << "EXEC " << ::getFullText(func_proc_name);
+		ss << "EXEC " << (!rewritten_name.empty() ? rewritten_name : ::getFullText(func_proc_name));
 		if (func_proc_args)
 			ss << " " << ::getFullText(func_proc_args);
 		std::string expr_query = ss.str();
@@ -3215,9 +3392,6 @@ makeDeclareCursorStatement(TSqlParser::Declare_cursorContext *ctx)
 	if (sctx)
 	{
 		auto expr = makeTsqlExpr(sctx, false);
-		PLtsql_expr_query_mutator mutator(expr, sctx);
-		process_select_statement_standalone(expr, sctx, sctx, false, &mutator);
-		mutator.run();
 		curvar->cursor_explicit_expr = expr;
 		curvar->cursor_explicit_argrow = -1;
 		curvar->isconst = true;
@@ -4055,6 +4229,23 @@ post_process_create_database(TSqlParser::Create_databaseContext *ctx, PLtsql_stm
 	return false;
 }
 
+static void
+post_process_declare_cursor_statement(PLtsql_stmt_decl_cursor *stmt, TSqlParser::Declare_cursorContext *ctx)
+{
+	if (stmt->cursor_explicit_expr)
+	{
+		PLtsql_expr *expr = stmt->cursor_explicit_expr;
+
+		auto sctx = ctx->select_statement_standalone();
+		Assert(sctx);
+
+		PLtsql_expr_query_mutator mutator(expr, sctx);
+		process_select_statement_standalone(expr, sctx, sctx, false, &mutator);
+		add_rewritten_query_fragment_to_mutator(&mutator);
+		mutator.run();
+	}
+}
+
 static PLtsql_var *
 lookup_cursor_variable(const char *varname)
 {
@@ -4443,19 +4634,19 @@ check_dup_declare(const char *name)
 static bool
 is_sp_proc(ParserRuleContext *func_proc_name)
 {
-	const std::string name_str = ::getFullText(func_proc_name).c_str();
+	std::string name_str = ::getFullText(func_proc_name);
 	return string_matches(name_str.c_str(), "sp_cursor") ||
-	       string_matches(name_str.c_str(), "sp_cursoropen") ||
-	       string_matches(name_str.c_str(), "sp_cursorprepare") ||
-	       string_matches(name_str.c_str(), "sp_cursorexecute") ||
-	       string_matches(name_str.c_str(), "sp_cursorprepexec") ||
-	       string_matches(name_str.c_str(), "sp_cursorunprepare") ||
-	       string_matches(name_str.c_str(), "sp_cursorfetch") ||
-	       string_matches(name_str.c_str(), "sp_cursoroption") ||
-	       string_matches(name_str.c_str(), "sp_cursorclose") ||
-	       string_matches(name_str.c_str(), "sp_executesql") ||
-	       string_matches(name_str.c_str(), "sp_execute") ||
-	       string_matches(name_str.c_str(), "sp_prepexec");
+		string_matches(name_str.c_str(), "sp_cursoropen") ||
+		string_matches(name_str.c_str(), "sp_cursorprepare") ||
+		string_matches(name_str.c_str(), "sp_cursorexecute") ||
+		string_matches(name_str.c_str(), "sp_cursorprepexec") ||
+		string_matches(name_str.c_str(), "sp_cursorunprepare") ||
+		string_matches(name_str.c_str(), "sp_cursorfetch") ||
+		string_matches(name_str.c_str(), "sp_cursoroption") ||
+		string_matches(name_str.c_str(), "sp_cursorclose") ||
+		string_matches(name_str.c_str(), "sp_executesql") ||
+		string_matches(name_str.c_str(), "sp_execute") ||
+		string_matches(name_str.c_str(), "sp_prepexec");
 }
 
 static bool
@@ -4559,4 +4750,52 @@ is_compiling_create_function()
 	if (pltsql_curr_compile->fn_is_trigger != PLTSQL_NOT_TRIGGER) /* except trigger */
 		return false;
 	return true;
+}
+
+/* if no rewriting necessary, return empty string */
+template<class T>
+std::string
+rewrite_omitted_db_and_schema_name(T ctx, GetCtxFunc<T> getDatabase, GetCtxFunc<T> getSchema)
+{
+	if (ctx->DOT().size() == 1)
+	{
+		auto schema = getSchema(ctx);
+
+		// .object -> dbo.object
+		if (!schema)
+			return "dbo" + ::getFullText(ctx);
+		else
+			return "";
+	}
+	if (ctx->DOT().size() >= 2)
+	{
+		std::string name = ::getFullText(ctx);
+		if (ctx->DOT().size() == 3)
+		{
+			// we can assume servername is null because unsupported-feature error should be thrown
+			// so we can remove the first leading dot. the remaining name should be handled with the same with two dots case
+			name = name.substr(1);
+		}
+
+		auto database = getDatabase(ctx);
+		auto schema = getSchema(ctx);
+
+		// ..object -> object
+		if (!database && !schema)
+			return name.substr(2);
+		// db..object -> db.dbo.object
+		else if (database && !schema)
+		{
+			size_t first_dot_index = name.find('.');
+			Assert(first_dot_index != std::string::npos);
+			Assert(name[first_dot_index+1] == '.'); /* next character should be also '.' */
+			return name.substr(0,first_dot_index + 1) + "dbo" + name.substr(first_dot_index + 1);
+		}
+		// .schema.object -> schema.object
+		else if (!database && schema)
+			return name.substr(1);
+		else
+			return "";
+	}
+	return "";
 }
