@@ -1,0 +1,56 @@
+use master;
+go
+
+create table t2145(c1 int);
+go
+
+-- PG backend error
+SELECT PERCENTILE_CONT(0.5) WITHIN GROUP (ORDER BY c1) OVER (PARTITION BY c1) as pc FROM t2145;
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: OVER is not supported for ordered-set aggregate percentile_cont)~~
+
+
+-- antlr error
+SELECT PERCENTILE_CONT(0.5) WITHIN GROUP (ORDER BY c1) OVER (ORDER BY c1) as pc FROM t2145;
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: PERCENTILE_CONT cannot have ORDER BY in OVER clause)~~
+
+
+-- antlr error
+SELECT PERCENTILE_CONT(0.5) WITHIN GROUP (ORDER BY c1) OVER (ORDER BY c1 ROWS BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW) as pc FROM t2145;
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: PERCENTILE_CONT cannot have a window frame)~~
+
+
+-- PG backend error
+SELECT PERCENTILE_DISC(0.5) WITHIN GROUP (ORDER BY c1) OVER (PARTITION BY c1) as pc FROM t2145;
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: OVER is not supported for ordered-set aggregate percentile_disc)~~
+
+
+-- antlr error
+SELECT PERCENTILE_DISC(0.5) WITHIN GROUP (ORDER BY c1) OVER (ORDER BY c1) as pc FROM t2145;
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: PERCENTILE_DISC cannot have ORDER BY in OVER clause)~~
+
+
+-- antlr error
+SELECT PERCENTILE_DISC(0.5) WITHIN GROUP (ORDER BY c1) OVER (ORDER BY c1 ROWS BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW) as pc FROM t2145;
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: PERCENTILE_DISC cannot have a window frame)~~
+
+
+drop table t2145;
+go
