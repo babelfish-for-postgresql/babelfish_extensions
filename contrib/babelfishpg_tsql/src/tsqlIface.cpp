@@ -1067,6 +1067,25 @@ public:
 		}
 	}
 
+	void exitANALYTIC_WINDOWED_FUNC(TSqlParser::ANALYTIC_WINDOWED_FUNCContext *ctx) override
+	{
+		auto actx = ctx->analytic_windowed_function();
+		Assert(actx);
+
+		if (actx->PERCENTILE_CONT() || actx->PERCENTILE_DISC())
+		{
+			if (actx->over_clause())
+			{
+				std::string funcName = actx->PERCENTILE_CONT() ? ::getFullText(actx->PERCENTILE_CONT()) : ::getFullText(actx->PERCENTILE_DISC());
+
+				if (actx->over_clause()->row_or_range_clause())
+					throw PGErrorWrapperException(ERROR, ERRCODE_INVALID_PARAMETER_VALUE, format_errmsg("%s cannot have a window frame", funcName.c_str()), 0);
+				else if (actx->over_clause()->order_by_clause())
+					throw PGErrorWrapperException(ERROR, ERRCODE_INVALID_PARAMETER_VALUE, format_errmsg("%s cannot have ORDER BY in OVER clause", funcName.c_str()), 0);
+			}
+		}
+	}
+
 	//////////////////////////////////////////////////////////////////////////////
 	// statement analysis
 	//////////////////////////////////////////////////////////////////////////////

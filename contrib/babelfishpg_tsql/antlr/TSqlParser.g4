@@ -3944,7 +3944,7 @@ analytic_windowed_function
     : first_last=(FIRST_VALUE | LAST_VALUE) LR_BRACKET expression RR_BRACKET over_clause
     | lag_lead=(LAG | LEAD) LR_BRACKET expression  (COMMA expression (COMMA expression)? )? RR_BRACKET over_clause
     | rank=(CUME_DIST | PERCENT_RANK) LR_BRACKET RR_BRACKET OVER LR_BRACKET (PARTITION BY expression_list)? order_by_clause RR_BRACKET
-    | pct=(PERCENTILE_CONT | PERCENTILE_DISC) LR_BRACKET expression RR_BRACKET WITHIN GROUP LR_BRACKET ORDER BY expression (ASC | DESC)? RR_BRACKET OVER LR_BRACKET (PARTITION BY expression_list)? RR_BRACKET
+    | pct=(PERCENTILE_CONT | PERCENTILE_DISC) LR_BRACKET expression RR_BRACKET WITHIN GROUP LR_BRACKET ORDER BY expression (ASC | DESC)? RR_BRACKET over_clause
     ;
     
 all_distinct_expression
