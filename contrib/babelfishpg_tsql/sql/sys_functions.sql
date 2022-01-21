@@ -922,6 +922,22 @@ END
 $body$
 LANGUAGE plpgsql IMMUTABLE;
 
+ -- Duplicate functions with arg TEXT since ANYELEMENT cannot handle type unknown.
+CREATE OR REPLACE FUNCTION sys.dateadd(IN datepart PG_CATALOG.TEXT, IN num INTEGER, IN startdate TEXT) RETURNS DATETIME
+AS
+$body$
+BEGIN
+    IF pg_typeof(startdate) = 'sys.DATETIMEOFFSET'::regtype THEN
+        return sys.dateadd_internal_df(datepart, num,
+                     startdate);
+    ELSE
+        return sys.dateadd_internal(datepart, num,
+                     startdate);
+    END IF;
+END;
+$body$
+LANGUAGE plpgsql IMMUTABLE;
+
 CREATE OR REPLACE FUNCTION sys.dateadd(IN datepart PG_CATALOG.TEXT, IN num INTEGER, IN startdate ANYELEMENT) RETURNS ANYELEMENT
 AS
 $body$
@@ -1279,6 +1295,23 @@ SELECT
     ELSE
         sys.datepart(dp, arg)::TEXT
     END 
+$BODY$
+STRICT
+LANGUAGE sql IMMUTABLE;
+
+-- Duplicate functions with arg TEXT since ANYELEMENT cannot handle type unknown.
+CREATE OR REPLACE FUNCTION sys.datename(IN dp PG_CATALOG.TEXT, IN arg TEXT) RETURNS TEXT AS
+$BODY$
+SELECT
+    CASE
+    WHEN dp = 'month'::text THEN
+        to_char(arg::date, 'TMMonth')
+    -- '1969-12-28' is a Sunday
+    WHEN dp = 'dow'::text THEN
+        to_char(arg::date, 'TMDay')
+    ELSE
+        sys.datepart(dp, arg)::TEXT
+    END
 $BODY$
 STRICT
 LANGUAGE sql IMMUTABLE;
