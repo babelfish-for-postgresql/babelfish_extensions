@@ -74,6 +74,9 @@ GO
 exec sp_getapplock @Resource = 'test1', @LockMode = 'shared', @LockOwner = 'session';
 GO
 
+select APPLOCK_MODE ('dbo', 'test1', 'session'); -- should show 'Shared'
+go
+
 exec sp_getapplock @Resource = 'test1', @LockMode = 'update', @LockOwner = 'session';
 GO
 
@@ -83,7 +86,28 @@ go
 exec sp_releaseapplock @Resource = 'test1', @LockOwner = 'session';
 GO
 
-select APPLOCK_MODE ('dbo', 'test1', 'session'); -- should show 'Shared'
+exec sp_releaseapplock @Resource = 'test1', @LockOwner = 'session';
+GO
+
+exec sp_getapplock @Resource = 'test1', @LockMode = 'update', @LockOwner = 'session';
+GO
+
+exec sp_getapplock @Resource = 'test1', @LockMode = 'IntentExclusive', @LockOwner = 'session';
+GO
+
+select APPLOCK_MODE ('dbo', 'test1', 'session'); -- should show 'UpdateIntentExclusive'
+go
+
+exec sp_releaseapplock @Resource = 'test1', @LockOwner = 'session';
+GO
+
+exec sp_releaseapplock @Resource = 'test1', @LockOwner = 'session';
+GO
+
+exec sp_getapplock @Resource = 'test1', @LockMode = 'exclusive', @LockOwner = 'session';
+GO
+
+select APPLOCK_MODE ('dbo', 'test1', 'session'); -- should show "Exclusive"
 go
 
 exec sp_releaseapplock @Resource = 'test1', @LockOwner = 'session';
