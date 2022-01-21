@@ -17,6 +17,7 @@
 
 #include "access/transam.h"
 #include "nodes/parsenodes.h"
+#include "pgstat.h"
 #include "storage/proc.h"
 
 #include "src/include/tds_instr.h"
@@ -317,6 +318,7 @@ ProcessTxnMgmtRequest(TDSRequest request)
 	TDSRequestTxnMgmt	req;
 	InlineCodeBlock *codeblock = makeNode(InlineCodeBlock);
 	int				cmd_type = TDS_CMD_UNKNOWN;
+	char 		*activity;
 	LOCAL_FCINFO(fcinfo,1);
 
 	TdsErrorContext->err_text = "Processing Transaction Management Request";
@@ -346,6 +348,10 @@ ProcessTxnMgmtRequest(TDSRequest request)
 	{
 		case TDS_TM_BEGIN_XACT:
 			{
+				activity = psprintf("TDS_TM_BEGIN_XACT: %s", req->query.data);
+				pgstat_report_activity(STATE_RUNNING, activity);
+				pfree(activity);
+
 				cmd_type = TDS_CMD_BEGIN;
 
 				/*
@@ -363,6 +369,10 @@ ProcessTxnMgmtRequest(TDSRequest request)
 			break;
 		case TDS_TM_COMMIT_XACT:
 			{
+				activity = psprintf("TDS_TM_COMMIT_XACT: %s", req->query.data);
+				pgstat_report_activity(STATE_RUNNING, activity);
+				pfree(activity);
+
 				cmd_type = TDS_CMD_COMMIT;
 
 				/*
@@ -382,6 +392,10 @@ ProcessTxnMgmtRequest(TDSRequest request)
 			break;
 		case TDS_TM_ROLLBACK_XACT:
 			{
+				activity = psprintf("TDS_TM_ROLLBACK_XACT: %s", req->query.data);
+				pgstat_report_activity(STATE_RUNNING, activity);
+				pfree(activity);
+
 				cmd_type = TDS_CMD_ROLLBACK;
 
 				/*

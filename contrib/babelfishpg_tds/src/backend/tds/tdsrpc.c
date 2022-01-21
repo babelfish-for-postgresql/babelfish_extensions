@@ -11,6 +11,7 @@
 #include "miscadmin.h"
 #include "parser/parser.h"
 #include "parser/scansup.h"
+#include "pgstat.h"
 #include "tcop/pquery.h"
 #include "tcop/tcopprot.h"
 #include "utils/builtins.h"
@@ -481,6 +482,7 @@ SPExecuteSQL(TDSRequestSP req)
 	Datum retval;
 	Datum *values; 
 	bool *nulls;
+	char *activity;
 
 	TdsErrorContext->err_text = "Processing SP_EXECUTESQL Request";
 	if ((req->nTotalParams + 2) > FUNC_MAX_ARGS)
@@ -494,6 +496,10 @@ SPExecuteSQL(TDSRequestSP req)
 
 	initStringInfo(&s);
 	FillQueryFromParameterToken(req, &s);
+
+	activity = psprintf("SP_EXECUTESQL: %s", s.data);
+	pgstat_report_activity(STATE_RUNNING, activity);
+	pfree(activity);
 
 	codeblock = makeNode(InlineCodeBlock);
 	codeblock->source_text = s.data;
@@ -589,6 +595,7 @@ SPPrepare(TDSRequestSP req)
 	Datum retval;
 	Datum *values;
 	bool *nulls;
+	char *activity;
 
 	TdsErrorContext->err_text = "Processing SP_PREPARE Request";
 	TDSInstrumentation(INSTR_TDS_SP_PREPARE);
@@ -604,6 +611,10 @@ SPPrepare(TDSRequestSP req)
 
 	initStringInfo(&s);
 	FillQueryFromParameterToken(req, &s);
+
+	activity = psprintf("SP_PREPARE: %s", s.data);
+	pgstat_report_activity(STATE_RUNNING, activity);
+	pfree(activity);
 
 	MemSet(fcinfo, 0, SizeForFunctionCallInfo(FUNC_MAX_ARGS));
 
@@ -672,7 +683,10 @@ SPExecute(TDSRequestSP req)
 	Datum *values;
 	bool *nulls;
 
+	char *activity = psprintf("SP_EXECUTE Handle: %d", req->handle);
 	TdsErrorContext->err_text = "Processing SP_EXECUTE Request";
+	pgstat_report_activity(STATE_RUNNING, activity);
+	pfree(activity);
 	TDSInstrumentation(INSTR_TDS_SP_EXECUTE);
 
 	tvp_lookup_list = NIL;
@@ -780,6 +794,7 @@ SPPrepExec(TDSRequestSP req)
 	Datum retval;
 	Datum *values;
 	bool *nulls;
+	char *activity;
 
 	tvp_lookup_list = NIL;
 	TdsErrorContext->err_text = "Processing SP_PREPEXEC Request";
@@ -795,6 +810,10 @@ SPPrepExec(TDSRequestSP req)
 
 	initStringInfo(&s);
 	FillQueryFromParameterToken(req, &s);
+
+	activity = psprintf("SP_PREPEXEC: %s", s.data);
+	pgstat_report_activity(STATE_RUNNING, activity);
+	pfree(activity);
 
 	codeblock = makeNode(InlineCodeBlock);
 	codeblock->source_text = s.data;
@@ -1003,6 +1022,7 @@ SPCustomType(TDSRequestSP req)
 	Datum retval;
 	Datum *values;
 	bool *nulls;
+	char *activity;
 
 	TdsErrorContext->err_text = "Processing SP_CUSTOMTYPE Request";
 	if ((req->nTotalParams + 2) > FUNC_MAX_ARGS)
@@ -1016,6 +1036,10 @@ SPCustomType(TDSRequestSP req)
 
 	initStringInfo(&s);
 	FillStoredProcedureCallFromParameterToken(req, &s);
+
+	activity = psprintf("SP_CUSTOMTYPE: %s", s.data);
+	pgstat_report_activity(STATE_RUNNING, activity);
+	pfree(activity);
 
 	codeblock = makeNode(InlineCodeBlock);
 	codeblock->source_text = s.data;
@@ -1113,7 +1137,11 @@ static void
 SPUnprepare(TDSRequestSP req)
 {
 	LOCAL_FCINFO(fcinfo, FUNC_MAX_ARGS);
+
+	char *activity = psprintf("SP_UNPREPARE Handle: %d", req->handle);
 	TdsErrorContext->err_text = "Processing SP_UNPREPARE Request";
+	pgstat_report_activity(STATE_RUNNING, activity);
+	pfree(activity);
 
 	TDSInstrumentation(INSTR_TDS_SP_UNPREPARE);
 
@@ -2283,12 +2311,17 @@ HandleSPCursorOpenCommon(TDSRequestSP req)
 	{
 		if (req->spType == SP_CURSOREXEC)
 		{
+			char *activity = psprintf("SP_CURSOREXEC Handle: %d", (int)req->cursorPreparedHandle);
+			pgstat_report_activity(STATE_RUNNING, activity);
+			pfree(activity);
+
 			ret = pltsql_plugin_handler_ptr->sp_cursorexecute_callback((int)req->cursorPreparedHandle, (int *)&req->cursorHandle, &req->scrollopt, &req->ccopt,
 																	   NULL /* TODO row_count */, req->nTotalParams, req->boundParamsData, req->boundParamsNullList);
 		}
 
 		else
 		{
+			char *activity;
 			initStringInfo(&buf);
 			/* fetch the query */
 			FillQueryFromParameterToken(req, &buf);
@@ -2296,14 +2329,26 @@ HandleSPCursorOpenCommon(TDSRequestSP req)
 			switch (req->spType)
 			{
 			case SP_CURSOROPEN:
+				activity = psprintf("SP_CURSOROPEN: %s", buf.data);
+				pgstat_report_activity(STATE_RUNNING, activity);
+				pfree(activity);
+
 				ret = pltsql_plugin_handler_ptr->sp_cursoropen_callback((int *)&req->cursorHandle, buf.data, &req->scrollopt, &req->ccopt,
 																		NULL /* TODO row_count */, req->nTotalParams, req->boundParamsData, req->boundParamsNullList);
 				break;
 			case SP_CURSORPREPARE:
+				activity = psprintf("SP_CURSORPREPARE: %s", buf.data);
+				pgstat_report_activity(STATE_RUNNING, activity);
+				pfree(activity);
+
 				ret = pltsql_plugin_handler_ptr->sp_cursorprepare_callback((int *)&req->cursorPreparedHandle, buf.data, curoptions, &req->scrollopt, &req->ccopt,
 																		   (int)req->nTotalBindParams, req->boundParamsOidList);
 				break;
 			case SP_CURSORPREPEXEC:
+				activity = psprintf("SP_CURSORPREPEXEC: %s", buf.data);
+				pgstat_report_activity(STATE_RUNNING, activity);
+				pfree(activity);
+
 				ret = pltsql_plugin_handler_ptr->sp_cursorprepexec_callback((int *)&req->cursorPreparedHandle, (int *)&req->cursorHandle, buf.data, curoptions, &req->scrollopt, &req->ccopt,
 																			NULL /* TODO row_count */, req->nTotalParams, (int)req->nTotalBindParams, req->boundParamsOidList, req->boundParamsData, req->boundParamsNullList);
 				break;
@@ -2506,8 +2551,12 @@ HandleSPCursorFetchRequest(TDSRequestSP req)
 	int fetchType;
 	int rownum;
 	int nrows;
+	char *activity = psprintf("SP_CURSORFETCH Handle: %d", (int)req->cursorHandle);
 
 	TdsErrorContext->err_text = "Processing SP_CURSORFETCH Request";
+	pgstat_report_activity(STATE_RUNNING, activity);
+	pfree(activity);
+
 	FetchAndValidateCursorFetchOptions(req, &fetchType, &rownum, &nrows);
 
 	TDSStatementBeginCallback(NULL, NULL);
@@ -2548,8 +2597,11 @@ static void
 HandleSPCursorCloseRequest(TDSRequestSP req)
 {
 	int ret;
+	char *activity = psprintf("SP_CURSORCLOSE Handle: %d", (int)req->cursorHandle);
 
 	TdsErrorContext->err_text = "Processing SP_CURSORCLOSE Request";
+	pgstat_report_activity(STATE_RUNNING, activity);
+	pfree(activity);
 	TDSStatementBeginCallback(NULL, NULL);
 
 	/* close the cursor */
@@ -2587,8 +2639,11 @@ static void
 HandleSPCursorUnprepareRequest(TDSRequestSP req)
 {
 	int ret;
+	char *activity = psprintf("SP_CURSORUNPREPARE Handle: %d", (int)req->cursorPreparedHandle);
 
 	TdsErrorContext->err_text = "Processing SP_CURSORUNPREPARE Request";
+	pgstat_report_activity(STATE_RUNNING, activity);
+	pfree(activity);
 	TDSStatementBeginCallback(NULL, NULL);
 
 	/* close the cursor */
@@ -2629,6 +2684,10 @@ HandleSPCursorOptionRequest(TDSRequestSP req)
 	ParameterToken token;
 	int code;
 	int value;
+
+	char *activity = psprintf("SP_CURSOROPTION Handle: %d", (int)req->cursorHandle);
+	pgstat_report_activity(STATE_RUNNING, activity);
+	pfree(activity);
 
 	TDSStatementBeginCallback(NULL, NULL);
 
@@ -2694,6 +2753,7 @@ HandleSPCursorRequest(TDSRequestSP req)
 	int optype;
 	int rownum;
 
+	pgstat_report_activity(STATE_RUNNING, "SP_CURSOR");
 	for (i = 0; i < req->nTotalBindParams; i++)
 		values = lappend(values, &req->boundParamsData[i]);
 
@@ -2734,7 +2794,7 @@ HandleSPCursorRequest(TDSRequestSP req)
 
 		if (ret > 0)
 			ereport(ERROR, (errcode(ERRCODE_INTERNAL_ERROR),
-							errmsg("sp_cursoroption failed: %d", ret)));
+							errmsg("sp_cursor failed: %d", ret)));
 	}
 
 	PG_CATCH();
