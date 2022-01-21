@@ -623,7 +623,7 @@ CREATE DATABASE db_unsupported_l3 WITH DEFAULT_LANGUAGE = Deutsch;
 GO
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: 'DEFAULT_LANGUAGE' is not currently supported in Babelfish. please use babelfishpg_tsql.escape_hatch_language_non_english to ignore)~~
+~~ERROR (Message: 'Deutsch' is not currently supported in Babelfish. please use babelfishpg_tsql.escape_hatch_language_non_english to ignore)~~
 
 
 CREATE LOGIN u_unsupported with password='12345678', default_language=english;
@@ -636,7 +636,7 @@ ALTER LOGIN u_unsupported with default_language=spanish;
 GO
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: 'default_language' is not currently supported in Babelfish. please use babelfishpg_tsql.escape_hatch_language_non_english to ignore)~~
+~~ERROR (Message: 'spanish' is not currently supported in Babelfish. please use babelfishpg_tsql.escape_hatch_language_non_english to ignore)~~
 
 
 DROP LOGIN u_unsupported;
@@ -646,7 +646,7 @@ CREATE LOGIN u_unsupported_2 with password='12345678', default_language=spanish;
 GO
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: 'default_language' is not currently supported in Babelfish. please use babelfishpg_tsql.escape_hatch_language_non_english to ignore)~~
+~~ERROR (Message: 'spanish' is not currently supported in Babelfish. please use babelfishpg_tsql.escape_hatch_language_non_english to ignore)~~
 
 
 SELECT set_config('babelfishpg_tsql.escape_hatch_language_non_english', 'ignore', 'false')
