@@ -1,0 +1,24 @@
+USE master
+go
+
+CREATE LOGIN babel_2602_user WITH PASSWORD = '123'
+go
+
+CREATE DATABASE babel_2602_db
+go
+
+-- tsql user=babel_2602_user password=123
+-- The query should fail rather than crash
+DROP DATABASE babel_2602_db
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: must be owner of database babel_2602_db)~~
+
+
+-- tsql
+DROP LOGIN babel_2602_user
+go
+
+DROP DATABASE babel_2602_db
+go
