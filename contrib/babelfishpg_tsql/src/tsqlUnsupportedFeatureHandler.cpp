@@ -761,10 +761,10 @@ antlrcpp::Any TsqlUnsupportedFeatureHandlerImpl::visitCreate_database(TSqlParser
 				if (cdoctx->id())
 				{
 					if (!isDefaultLanguage(cdoctx->id()))
-						handle(INSTR_UNSUPPORTED_TSQL_CREATE_DATABASE_WITH_DEFAULT_LANGUAGE, cdoctx->DEFAULT_LANGUAGE(), &st_escape_hatch_language_non_english);
+						handle(INSTR_UNSUPPORTED_TSQL_CREATE_DATABASE_WITH_DEFAULT_LANGUAGE, ::getFullText(cdoctx->id()).c_str(), &st_escape_hatch_language_non_english);
 				}
 				else // lcid
-					handle(INSTR_UNSUPPORTED_TSQL_CREATE_DATABASE_WITH_DEFAULT_LANGUAGE, cdoctx->DEFAULT_LANGUAGE());
+					handle(INSTR_UNSUPPORTED_TSQL_CREATE_DATABASE_WITH_DEFAULT_LANGUAGE, "DEFAULT LANGUAGE with lcid");
 			}
 			if (cdoctx->DEFAULT_FULLTEXT_LANGUAGE())
 				handle(INSTR_UNSUPPORTED_TSQL_CREATE_DATABASE_WITH_DEFAULT_FULLTEXT_LANGUAGE, cdoctx->DEFAULT_FULLTEXT_LANGUAGE(), &st_escape_hatch_fulltext);
@@ -843,10 +843,10 @@ antlrcpp::Any TsqlUnsupportedFeatureHandlerImpl::visitCreate_login(TSqlParser::C
 			if (option->id())
 			{
 				if (!isDefaultLanguage(option->id()))
-					handle(INSTR_UNSUPPORTED_TSQL_CREATE_LOGIN_WITH_DEFAULT_LANGUAGE, option->DEFAULT_LANGUAGE(), &st_escape_hatch_language_non_english);
+					handle(INSTR_UNSUPPORTED_TSQL_CREATE_LOGIN_WITH_DEFAULT_LANGUAGE, ::getFullText(option->id()).c_str(), &st_escape_hatch_language_non_english);
 			}
 			else // lcid (we can't assure lcid is default or not. to be safe, throw unsupported-feature error)
-				handle(INSTR_UNSUPPORTED_TSQL_CREATE_LOGIN_WITH_DEFAULT_LANGUAGE, option->DEFAULT_LANGUAGE());
+				handle(INSTR_UNSUPPORTED_TSQL_CREATE_LOGIN_WITH_DEFAULT_LANGUAGE, "DEFAULT LANGUAGE with lcid");
 		}
 		else if (option->SID())
 			handle(INSTR_UNSUPPORTED_TSQL_CREATE_LOGIN_MISC_OPTIONS, option->SID(), &st_escape_hatch_login_misc_options);
@@ -865,10 +865,10 @@ antlrcpp::Any TsqlUnsupportedFeatureHandlerImpl::visitCreate_login(TSqlParser::C
 			if (option->id())
 			{
 				if (!isDefaultLanguage(option->id()))
-					handle(INSTR_UNSUPPORTED_TSQL_CREATE_LOGIN_WITH_DEFAULT_LANGUAGE, option->DEFAULT_LANGUAGE(), &st_escape_hatch_language_non_english);
+					handle(INSTR_UNSUPPORTED_TSQL_CREATE_LOGIN_WITH_DEFAULT_LANGUAGE, ::getFullText(option->id()).c_str(), &st_escape_hatch_language_non_english);
 			}
 			else // lcid (we can't assure lcid is default or not. to be safe, throw unsupported-feature error)
-				handle(INSTR_UNSUPPORTED_TSQL_CREATE_LOGIN_WITH_DEFAULT_LANGUAGE, option->DEFAULT_LANGUAGE());
+				handle(INSTR_UNSUPPORTED_TSQL_CREATE_LOGIN_WITH_DEFAULT_LANGUAGE, "DEFAULT LANGUAGE with lcid");
 		}
 	}
 	return visitChildren(ctx);
@@ -899,10 +899,10 @@ antlrcpp::Any TsqlUnsupportedFeatureHandlerImpl::visitAlter_login(TSqlParser::Al
 			if (option->id())
 			{
 				if (!isDefaultLanguage(option->id()))
-					handle(INSTR_UNSUPPORTED_TSQL_ALTER_LOGIN_WITH_DEFAULT_LANGUAGE, option->DEFAULT_LANGUAGE(), &st_escape_hatch_language_non_english);
+					handle(INSTR_UNSUPPORTED_TSQL_ALTER_LOGIN_WITH_DEFAULT_LANGUAGE, ::getFullText(option->id()).c_str(), &st_escape_hatch_language_non_english);
 			}
 			else // lcid (we can't assure lcid is default or not. to be safe, throw unsupported-feature error)
-				handle(INSTR_UNSUPPORTED_TSQL_ALTER_LOGIN_WITH_DEFAULT_LANGUAGE, option->DEFAULT_LANGUAGE());
+				handle(INSTR_UNSUPPORTED_TSQL_ALTER_LOGIN_WITH_DEFAULT_LANGUAGE, "DEFAULT LANGUAGE with lcid");
 		}
 	}
 
