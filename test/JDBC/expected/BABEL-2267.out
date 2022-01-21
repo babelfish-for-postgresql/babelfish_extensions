@@ -1,0 +1,26 @@
+use master;
+go
+
+create table t2267(a int);
+go
+
+DECLARE c CURSOR READ_ONLY FOR SELECT * FROM t1058 FOR READ ONLY
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: both READ_ONLY and FOR READ ONLY cannot be specified on a cursor declaration)~~
+
+
+DECLARE c CURSOR SCROLL_LOCKS FOR SELECT * FROM t1058 FOR READ ONLY
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: 'SCROLL_LOCKS' is not currently supported in Babelfish)~~
+
+
+DECLARE c CURSOR OPTIMISTIC FOR SELECT * FROM t1058 FOR READ ONLY
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: 'OPTIMISTIC' is not currently supported in Babelfish)~~
+

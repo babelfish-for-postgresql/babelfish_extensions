@@ -3382,6 +3382,18 @@ makeDeclareCursorStatement(TSqlParser::Declare_cursorContext *ctx)
 			cursor_option |= CURSOR_OPT_SCROLL;
 	}
 
+	if (ctx->READ() && ctx->ONLY())
+	{
+		if (cursor_option & TSQL_CURSOR_OPT_READ_ONLY)
+			throw PGErrorWrapperException(ERROR, ERRCODE_FEATURE_NOT_SUPPORTED, "both READ_ONLY and FOR READ ONLY cannot be specified on a cursor declaration", 0);
+
+		// note: SCROLL_LOCKS and OPTIMISTIC is not supported. so unsupported-feature error should be thrown already.
+		if (cursor_option & TSQL_CURSOR_OPT_SCROLL_LOCKS)
+			throw PGErrorWrapperException(ERROR, ERRCODE_FEATURE_NOT_SUPPORTED, "both SCROLL_LOCKS and FOR READ ONLY cannot be specified on a cursor declaration", 0);
+		if (cursor_option & TSQL_CURSOR_OPT_OPTIMISTIC)
+			throw PGErrorWrapperException(ERROR, ERRCODE_FEATURE_NOT_SUPPORTED, "both OPTIMISTIC and FOR READ ONLY cannot be specified on a cursor declaration", 0);
+	}
+
 	/*
 	 * Other than pl/pgsql, T-SQL can distinguish a constant cursor (DECLARE CURSOR FOR QUERY)
 	 * from a cursor variable (DECLARE @curvar CURSOR; SET @curvar = CURSOR FOR query).
