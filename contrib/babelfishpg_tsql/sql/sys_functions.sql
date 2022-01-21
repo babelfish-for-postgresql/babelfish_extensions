@@ -854,6 +854,18 @@ create or replace function sys.RAND(x in int)returns double precision
 AS 'babelfishpg_tsql', 'tsql_random'
 LANGUAGE C IMMUTABLE STRICT COST 1 PARALLEL RESTRICTED;
 
+create or replace function sys.square(in x double precision) returns double precision
+AS
+$BODY$
+DECLARE
+	res double precision;
+BEGIN
+	res = pow(x, 2::float);
+	return res;
+END;
+$BODY$
+LANGUAGE plpgsql STABLE RETURNS NULL ON NULL INPUT;
+
 CREATE OR REPLACE FUNCTION sys.datepart(IN datepart PG_CATALOG.TEXT, IN arg anyelement) RETURNS INTEGER
 AS
 $body$

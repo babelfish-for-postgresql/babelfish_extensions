@@ -177,6 +177,7 @@ TdsIoFunctionRawData TdsIoFunctionRawData_data[] =
     {"pg_catalog", "xml", TDS_TYPE_XML, -1, 1, TDS_SEND_XML, TDS_RECV_XML},
     {"sys", "sql_variant", TDS_TYPE_SQLVARIANT, -1, 4, TDS_SEND_SQLVARIANT, TDS_RECV_SQLVARIANT},
     {"sys", "datetimeoffset", TDS_TYPE_DATETIMEOFFSET, 10, 1, TDS_SEND_DATETIMEOFFSET, TDS_RECV_DATETIMEOFFSET},
+    {"sys", "fixeddecimal", TDS_TYPE_MONEYN, 8, 1, TDS_SEND_MONEY, TDS_RECV_INVALID},
 
     /* Mapping TDS listener sender to basic Postgres datatypes. */
     {"pg_catalog", "oid", TDS_TYPE_INTEGER, 4, 1, TDS_SEND_INTEGER, TDS_RECV_INVALID},
