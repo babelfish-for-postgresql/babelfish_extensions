@@ -106,6 +106,7 @@ static void check_param_type(tsql_exec_param *param, bool is_output, Oid typoid,
 static PLtsql_expr *getNthParamExpr(std::vector<tsql_exec_param *> &params, size_t n);
 static const char* rewrite_assign_operator(tree::TerminalNode *aop);
 TSqlParser::Query_specificationContext *get_query_specification(TSqlParser::Select_statementContext *sctx);
+static bool is_top_level_query_specification(TSqlParser::Query_specificationContext *ctx);
 static bool is_quotation_needed_for_column_alias(TSqlParser::Column_aliasContext *ctx);
 static bool is_compiling_create_function();
 static void process_select_statement_standalone(
@@ -1061,6 +1062,48 @@ public:
 					auto first_arg = ctx->function_arg_list()->expression().front();
 					if (first_arg->constant() && first_arg->constant()->NULL_P())
 						throw PGErrorWrapperException(ERROR, ERRCODE_INVALID_PARAMETER_VALUE, "The first argument to NULLIF cannot be a constant NULL.", 0);
+				}
+			}
+		}
+	}
+
+	//////////////////////////////////////////////////////////////////////////////
+	// statement analysis
+	//////////////////////////////////////////////////////////////////////////////
+
+	void exitQuery_specification(TSqlParser::Query_specificationContext *ctx) override
+	{
+		Assert(ctx->select_list());
+		std::vector<TSqlParser::Select_list_elemContext *> select_elems = ctx->select_list()->select_list_elem();
+		for (size_t i=0; i<select_elems.size(); ++i)
+		{
+			TSqlParser::Select_list_elemContext *elem = select_elems[i];
+
+			if (elem->EQUAL() || elem->assignment_operator())
+			{
+				/* check if assignment is used in top-level select */
+				if (!is_top_level_query_specification(ctx))
+					throw PGErrorWrapperException(ERROR, ERRCODE_SYNTAX_ERROR, "variable assignment can be used only in top-level SELECT", 0);
+
+				/* check if assignment is involved with sql_union */
+				auto pctx = ctx->parent;
+				while (pctx)
+				{
+					if (dynamic_cast<TSqlParser::Query_expressionContext *>(pctx))
+					{
+						TSqlParser::Query_expressionContext *qectx = static_cast<TSqlParser::Query_expressionContext *>(pctx);
+						if (!qectx->sql_union().empty())
+							throw PGErrorWrapperException(ERROR, ERRCODE_SYNTAX_ERROR, "variable assignment cannot be used with UNION, EXCEPT or INTERSECT", 0);
+					}
+					else if (dynamic_cast<TSqlParser::Sql_unionContext *>(pctx))
+					{
+						throw PGErrorWrapperException(ERROR, ERRCODE_SYNTAX_ERROR, "variable assignment cannot be used in UNION, EXCEPT or INTERSECT", 0);
+					}
+
+					else
+						break; /* no interest */
+
+					pctx = pctx->parent;
 				}
 			}
 		}
@@ -4733,6 +4776,32 @@ get_query_specification(TSqlParser::Select_statementContext* sctx)
 			qctx = qectx->query_specification();
 	}
 	return qctx;
+}
+
+bool
+is_top_level_query_specification(TSqlParser::Query_specificationContext *ctx)
+{
+	/*
+	 * in ANTLR t-sql grammar, top-level select statement is represented as select_statement_standalone.
+	 * subquery, derived table, cte can contain query specification via select statement but it is just a select_statement not via select_statement_standalone.
+	 * To figure out the query-specification is corresponding to top-level select statement,
+	 * iterate its ancestors and check if encoutering subquery, derived_table or common_table_expression.
+	 * if it is query specification in top-level statement, it will never meet those grammar element.
+	 */
+	Assert(ctx);
+
+	auto pctx = ctx->parent;
+	while (pctx)
+	{
+		if (dynamic_cast<TSqlParser::Derived_tableContext *>(pctx) ||
+		    dynamic_cast<TSqlParser::SubqueryContext *>(pctx) ||
+		    dynamic_cast<TSqlParser::Common_table_expressionContext *>(pctx) ||
+		    dynamic_cast<TSqlParser::Declare_xmlnamespaces_statementContext *>(pctx)) // not supported in BBF. excluding it from top-level select statement just in case.
+			return false;
+
+		pctx = pctx->parent;
+	}
+	return true;
 }
 
 static bool
