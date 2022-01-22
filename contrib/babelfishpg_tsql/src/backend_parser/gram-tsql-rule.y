@@ -2242,9 +2242,10 @@ tsql_xml_common_directive:
 			| TSQL_ROOT '(' Sconst ')'					{ $$ = makeStringConst($3, -1); }
 		;
 
+
 /* Create Function and Create Trigger in one statement */
 tsql_CreateTrigStmt:
-			CREATE TRIGGER name ON qualified_name
+			CREATE TRIGGER tsql_triggername ON qualified_name
 			tsql_TriggerActionTime tsql_TriggerEvents tsql_opt_not_for_replication
 			AS tokens_remaining
 				{
@@ -2256,7 +2257,7 @@ tsql_CreateTrigStmt:
 					DefElem *body = makeDefElem("as", (Node *) list_make1(makeString($10)), @10);
 					DefElem *trigStmt = makeDefElem("trigStmt", (Node *) n1, @1);
 
-					n1->trigname = $3;
+ 					n1->trigname = ((Value *)list_nth($3,0))->val.str;
 					n1->relation = $5;
 					/*
 					 * Function with the same name as the
@@ -2264,7 +2265,17 @@ tsql_CreateTrigStmt:
 					 * this create trigger command.
 					 */
 					n1->funcname = list_make1(makeString(n1->trigname));
-					n1->args = NIL;
+ 					if (list_length($3) > 1){
+	 					n1->trigname = ((Value *)list_nth($3,1))->val.str;
+						/*
+						* Used a hack way to pass the schema name from args, in CR-58614287
+						* Args will be set back to NIL in pl_handler pltsql_pre_parse_analyze()
+						* before calling backend functios
+						*/
+	 					n1->args = list_make1(makeString(((Value *)list_nth($3,0))->val.str));
+	 				}else{
+						n1->args = NIL;
+					}
 					/* TSQL only support statement level triggers as part of the
 					 * syntax, n1->row is false for AFTER, BEFORE and INSTEAD OF
 					 * triggers.
@@ -2334,6 +2345,10 @@ tsql_CreateTrigStmt:
 					$$ = (Node *) n2;
 				}
 	   ;
+
+ tsql_triggername: 
+	 		ColId									{ $$ = list_make1(makeString($1)); };
+	 		| ColId '.' ColId						{ $$ = list_make2(makeString($1),makeString($3)); };					
 
 tsql_TriggerActionTime:
 			TriggerActionTime

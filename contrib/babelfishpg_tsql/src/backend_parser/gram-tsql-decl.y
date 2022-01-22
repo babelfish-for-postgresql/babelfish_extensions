@@ -64,6 +64,7 @@
 %type <str> datepart_arg datediff_arg dateadd_arg
 %type <str> tsql_type_function_name
 %type <list> tsql_createproc_args tsql_createfunc_args
+%type <list> tsql_triggername
 
 %type <node> tsql_top_clause opt_top_clause
 

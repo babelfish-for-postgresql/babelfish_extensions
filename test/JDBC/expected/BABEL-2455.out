@@ -271,7 +271,7 @@ CREATE TRIGGER .tr2455 on t2455_base AFTER INSERT AS print 'triggered';
 go
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: syntax error at or near ".")~~
+~~ERROR (Message: Cannot create trigger 'dbo.tr2455' because its schema is different from the schema of the target table or view.)~~
 
 DROP TRIGGER .tr2455;
 go
@@ -314,7 +314,7 @@ CREATE TRIGGER .s2455.tr2455 on t2455_base AFTER INSERT AS print 'triggered';
 go
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: syntax error at or near ".")~~
+~~ERROR (Message: Cannot create trigger 's2455.tr2455' because its schema is different from the schema of the target table or view.)~~
 
 DROP TRIGGER .s2455.tr2455;
 go
