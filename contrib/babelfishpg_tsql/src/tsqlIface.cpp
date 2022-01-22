@@ -1128,6 +1128,31 @@ public:
 		}
 	}
 
+	void exitColumn_def_table_constraints(TSqlParser::Column_def_table_constraintsContext *ctx)
+	{
+		/*
+		 * It is not documented but it seems T-SQL allows that column-definition is followed by table-constraint without COMMA.
+		 * PG backend parser will throw a syntax error when this kind of query is inputted.
+		 * It is not easy to add a rule accepting this syntax to backend parser because of many shift/reduce conflicts.
+		 * To handle this case, add a compensation COMMA between column-definition and table-constraint here.
+		 *
+		 * This handling should be only applied to table-constraint following column-definition. Other cases (such as two column definitions without comma) should still throw a syntax error.
+		 */
+
+		ParseTree* prev_child = nullptr;
+		for (ParseTree* child : ctx->children)
+		{
+			TSqlParser::Column_def_table_constraintContext* cdtctx = dynamic_cast<TSqlParser::Column_def_table_constraintContext*>(child);
+			if (cdtctx && cdtctx->table_constraint())
+			{
+				TSqlParser::Column_def_table_constraintContext* prev_cdtctx = (prev_child ? dynamic_cast<TSqlParser::Column_def_table_constraintContext*>(prev_child) : nullptr);
+				if (prev_cdtctx && (prev_cdtctx->column_definition() || prev_cdtctx->materialized_column_definition()))
+					rewritten_query_fragment.emplace(std::make_pair(cdtctx->start->getStartIndex(), std::make_pair("", ","))); // add comma
+			}
+			prev_child = child;
+		}
+	}
+
 	//////////////////////////////////////////////////////////////////////////////
 	// Special handling of ITVF
 	//////////////////////////////////////////////////////////////////////////////
