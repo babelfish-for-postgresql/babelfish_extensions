@@ -992,7 +992,6 @@ public:
 		}
 	}
 
-
 	/* Column Name */
 
 	void exitSimple_column_name(TSqlParser::Simple_column_nameContext *ctx) override

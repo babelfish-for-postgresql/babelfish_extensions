@@ -14,6 +14,7 @@
 /* Core Session Properties */
 
 static int16 current_db_id = 0;
+static char current_db_name[MAX_BBF_NAMEDATALEND+1] = {'\0'};
 static Oid current_user_id = InvalidOid;
 void reset_cached_batch(void);
 
@@ -23,16 +24,22 @@ get_cur_db_id(void)
 	return current_db_id;
 }
 
-void
-set_cur_db_id(int16 id)
-{
-	current_db_id = id;
-}
-
 char *
 get_cur_db_name(void)
 {
-	return get_db_name(current_db_id);
+	return pstrdup(current_db_name);
+}
+
+void
+set_cur_db(int16 id, const char *name)
+{
+	int len = strlen(name);
+
+	Assert(len <= MAX_BBF_NAMEDATALEND);
+
+	current_db_id = id;
+	strncpy(current_db_name, name, len);
+	current_db_name[len] = '\0';
 }
 
 void
@@ -69,7 +76,7 @@ set_session_properties(const char *db_name)
 	current_user_id = get_role_oid(role, false);
 
 	/* set current DB */
-	set_cur_db_id(db_id);
+	set_cur_db(db_id, db_name);
 
 	/* set search path */
 	path = psprintf(buffer, get_dbo_schema_name(db_name));

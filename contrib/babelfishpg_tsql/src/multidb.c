@@ -15,8 +15,6 @@
 #include "multidb.h"
 #include "session.h"
 
-#define MAX_BBF_NAMEDATALEND (2*NAMEDATALEN + 2)  /* two identifiers + 1 '_' + 1 terminator */
-
 /* rewrite function for data structures */
 static void rewrite_rangevar(RangeVar *rv);
 static void rewrite_objectwithargs(ObjectWithArgs *obj);
