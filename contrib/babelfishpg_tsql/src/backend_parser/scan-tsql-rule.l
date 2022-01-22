@@ -194,6 +194,9 @@
 														 yyextra->keywordlist);
 						switch(yyextra->keyword_tokens[kwnum])
 						{
+							case TSQL_CERTIFICATE:
+							case TSQL_CHECK_EXPIRATION:
+							case TSQL_CHECK_POLICY:
 							case TSQL_CHOOSE:
 							case TSQL_CLUSTERED:
 							case TSQL_COLUMNSTORE:
@@ -204,8 +207,11 @@
 							case TSQL_D:
 							case TSQL_DAYOFYEAR:
 							case TSQL_DD:
+							case TSQL_DEFAULT_DATABASE:
+							case TSQL_DEFAULT_LANGUAGE:
 							case TSQL_DW:
 							case TSQL_DY:
+							case TSQL_HASHED:
 							case TSQL_HH:
 							case TSQL_ISO_WEEK:
 							case TSQL_ISOWK:
@@ -217,10 +223,12 @@
 							case TSQL_MILLISECOND:
 							case TSQL_MM:
 							case TSQL_MS:
+							case TSQL_MUST_CHANGE:
 							case TSQL_N:
 							case TSQL_NONCLUSTERED:
 							case TSQL_NANOSECOND:
 							case TSQL_NS:
+							case TSQL_OLD_PASSWORD:
 							case TSQL_PERSISTED:
 							case TSQL_Q:
 							case TSQL_QQ:
@@ -273,6 +281,8 @@
 							case TSQL_READPAST:
 							case TSQL_XLOCK:
 							case TSQL_NOEXPAND:
+							case TSQL_SID:
+							case TSQL_WINDOWS:
 								/* Only a keyword in tsql */
 								if (sql_dialect == SQL_DIALECT_TSQL)
 									return yyextra->keyword_tokens[kwnum];
