@@ -10,11 +10,13 @@
 #include "parser/parse_utilcmd.h"
 #include "parser/parse_target.h"
 #include "parser/parser.h"
+#include "parser/scanner.h"
 #include "parser/scansup.h"
 #include "utils/rel.h"
 #include "utils/relcache.h"
 #include "utils/syscache.h"
 
+#include "backend_parser/scanner.h"
 #include "hooks.h"
 #include "catalog.h"
 #include "rolecmds.h"
@@ -39,6 +41,7 @@ static void resolve_target_list_unknowns(ParseState *pstate, List *targetlist);
 static inline bool is_identifier_char(char c);
 
 /* Save hook values in case of unload */
+static core_yylex_hook_type prev_core_yylex_hook = NULL;
 static pre_transform_returning_hook_type prev_pre_transform_returning_hook = NULL;
 static post_transform_insert_row_hook_type prev_post_transform_insert_row_hook = NULL;
 static pre_transform_target_entry_hook_type prev_pre_transform_target_entry_hook = NULL;
@@ -56,6 +59,9 @@ InstallExtendedHooks(void)
 	IsExtendedCatalogHook = &IsPLtsqlExtendedCatalog;
 
 	assign_object_access_hook_drop_role();
+
+	prev_core_yylex_hook = core_yylex_hook;
+	core_yylex_hook = pgtsql_core_yylex;
 
 	get_output_clause_status_hook = get_output_clause_transformation_info;
 	pre_output_clause_transformation_hook = output_update_self_join_transformation;
@@ -85,6 +91,7 @@ UninstallExtendedHooks(void)
 
 	uninstall_object_access_hook_drop_role();
 
+	core_yylex_hook = prev_core_yylex_hook;
 	get_output_clause_status_hook = NULL;
 	pre_output_clause_transformation_hook = NULL;
 	pre_transform_returning_hook = prev_pre_transform_returning_hook;

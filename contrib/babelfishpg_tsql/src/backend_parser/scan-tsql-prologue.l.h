@@ -32,3 +32,8 @@ int dialect_selector = 0;
 		*yylloc = 0;                              \
 		return first_token;                       \
 	}
+
+/* need to undef to prevent an infinite-loop calling
+ * pgtsql_core_yylex(...) inside pgtsql_core_yylex(...)
+ */
+#undef PG_YYLEX
