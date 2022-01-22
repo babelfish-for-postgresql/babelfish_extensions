@@ -1,0 +1,152 @@
+create table t1(c1 int)
+GO
+
+insert into t1 values(1)
+GO
+~~ROW COUNT: 1~~
+
+
+alter table t1 add c2 char
+GO
+
+select * from t1;
+GO
+~~START~~
+int#!#char
+1#!#<NULL>
+~~END~~
+
+
+insert into t1 values(1, 'a')
+GO
+~~ROW COUNT: 1~~
+
+
+select * from t1;
+GO
+~~START~~
+int#!#char
+1#!#<NULL>
+1#!#a
+~~END~~
+
+
+drop table t1;
+GO
+
+create table t1(c1 int)
+GO
+
+insert into t1 values(1)
+GO
+~~ROW COUNT: 1~~
+
+
+alter table t1 add c2 varchar
+GO
+
+select * from t1;
+GO
+~~START~~
+int#!#varchar
+1#!#<NULL>
+~~END~~
+
+
+insert into t1 values(1, 'a')
+GO
+~~ROW COUNT: 1~~
+
+
+select * from t1;
+GO
+~~START~~
+int#!#varchar
+1#!#<NULL>
+1#!#a
+~~END~~
+
+
+drop table t1;
+GO
+
+create table t2 (a varchar(1))
+GO
+
+insert into t2 values ('D')
+GO
+~~ROW COUNT: 1~~
+
+
+alter table t2 alter column a char
+GO
+
+select * from t2;
+GO
+~~START~~
+char
+D
+~~END~~
+
+
+drop table t2;
+GO
+
+create table t2 (a varchar(2))
+GO
+
+insert into t2 values ('De')
+GO
+~~ROW COUNT: 1~~
+
+
+insert into t2 values ('D')
+GO
+~~ROW COUNT: 1~~
+
+
+alter table t2 alter column a char
+GO
+~~ERROR (Code: 8152)~~
+
+~~ERROR (Message: value too long for type character(1))~~
+
+
+select * from t2;
+GO
+~~START~~
+varchar
+De
+D
+~~END~~
+
+
+alter table t2 alter column a char(2)
+GO
+
+select * from t2;
+GO
+~~START~~
+char
+De
+D 
+~~END~~
+
+
+insert into t2 values ('A')
+GO
+~~ROW COUNT: 1~~
+
+
+select * from t2;
+GO
+~~START~~
+char
+De
+D 
+A 
+~~END~~
+
+
+drop table t2;
+GO
