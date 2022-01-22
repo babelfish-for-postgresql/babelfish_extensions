@@ -275,6 +275,7 @@ do_create_bbf_db(const char *dbname, List *options, const char *owner)
 {
 	int16       dbid;
 	int16 		old_dbid;
+	char		*old_dbname;
 	Oid         datdba;
 	Datum		*new_record;
 	bool        *new_record_nulls;
@@ -396,7 +397,8 @@ do_create_bbf_db(const char *dbname, List *options, const char *owner)
 	SetConfigOption("role", "sysadmin", PGC_SUSET, PGC_S_DATABASE_USER);
 
 	old_dbid = get_cur_db_id();
-	set_cur_db_id(dbid);  /* tempororaily set current dbid as the new id */
+	old_dbname = get_cur_db_name();
+	set_cur_db(dbid, dbname);  /* tempororaily set current dbid as the new id */
 
 	PG_TRY();
 	{
@@ -426,7 +428,7 @@ do_create_bbf_db(const char *dbname, List *options, const char *owner)
 			/* make sure later steps can see the object created here */
 			CommandCounterIncrement();
 		}
-		set_cur_db_id(old_dbid);
+		set_cur_db(old_dbid, old_dbname);
 	}
 	PG_CATCH();
 	{
@@ -435,7 +437,7 @@ do_create_bbf_db(const char *dbname, List *options, const char *owner)
 						prev_current_user,
 						PGC_SUSET,
 						PGC_S_DATABASE_USER);
-		set_cur_db_id(old_dbid);
+		set_cur_db(old_dbid, old_dbname);
 		PG_RE_THROW();
 	}
 	PG_END_TRY();
