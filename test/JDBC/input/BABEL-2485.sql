@@ -1,0 +1,74 @@
+use master;
+go
+
+create table t2485_certificate(certificate varchar(10));
+insert into t2485_certificate values ('ok');
+select certificate from t2485_certificate;
+drop table t2485_certificate;
+go
+
+create table t2485_check_expiration(check_expiration varchar(10));
+insert into t2485_check_expiration values ('ok');
+select check_expiration from t2485_check_expiration;
+drop table t2485_check_expiration;
+go
+
+create table t2485_check_policy(check_policy varchar(10));
+insert into t2485_check_policy values ('ok');
+select check_policy from t2485_check_policy;
+drop table t2485_check_policy;
+go
+
+create table t2485_credential(credential varchar(10));
+insert into t2485_credential values ('ok');
+select credential from t2485_credential;
+drop table t2485_credential;
+go
+
+create table t2485_default_database(default_database varchar(10));
+insert into t2485_default_database values ('ok');
+select default_database from t2485_default_database;
+drop table t2485_default_database;
+go
+
+create table t2485_default_language(default_language varchar(10));
+insert into t2485_default_language values ('ok');
+select default_language from t2485_default_language;
+drop table t2485_default_language;
+go
+
+create table t2485_hashed(hashed varchar(10));
+insert into t2485_hashed values ('ok');
+select hashed from t2485_hashed;
+drop table t2485_hashed;
+go
+
+create table t2485_must_change(must_change varchar(10));
+insert into t2485_must_change values ('ok');
+select must_change from t2485_must_change;
+drop table t2485_must_change;
+go
+
+create table t2485_old_password(old_password varchar(10));
+insert into t2485_old_password values ('ok');
+select old_password from t2485_old_password;
+drop table t2485_old_password;
+go
+
+create table t2485_sid(sid varchar(10));
+insert into t2485_sid values ('ok');
+select sid from t2485_sid;
+drop table t2485_sid;
+go
+
+create table t2485_unlock(unlock varchar(10));
+insert into t2485_unlock values ('ok');
+select unlock from t2485_unlock;
+drop table t2485_unlock;
+go
+
+create table t2485_windows(windows varchar(10));
+insert into t2485_windows values ('ok');
+select windows from t2485_windows;
+drop table t2485_windows;
+go

@@ -83,11 +83,11 @@ tsql_login_option_list1:
 				{
 					$$ = lcons(makeDefElem("password", $4, @1), $6);
 				}
-			| WITH PASSWORD '=' TSQL_XCONST HASHED opt_must_change
+			| WITH PASSWORD '=' TSQL_XCONST TSQL_HASHED opt_must_change
 				{
 					$$ = list_make1(makeDefElem("password", NULL, @1));
 				}
-			| WITH PASSWORD '=' TSQL_XCONST HASHED opt_must_change tsql_login_option_list2
+			| WITH PASSWORD '=' TSQL_XCONST TSQL_HASHED opt_must_change tsql_login_option_list2
 				{
 					$$ = lcons(makeDefElem("password", NULL, @1), $7);
 				}
@@ -109,43 +109,43 @@ tsql_login_option_list2:
 		;
 
 tsql_login_option_elem:
-			SID '=' TSQL_XCONST
+			TSQL_SID '=' TSQL_XCONST
 				{
 					$$ = NULL;
 				}
-			| DEFAULT_DATABASE '=' NonReservedWord
+			| TSQL_DEFAULT_DATABASE '=' NonReservedWord
 				{
 					$$ = makeDefElem("default_database",
 									 (Node *)makeString($3),
 									 @1);
 				}
-			| DEFAULT_LANGUAGE '=' NonReservedWord
+			| TSQL_DEFAULT_LANGUAGE '=' NonReservedWord
 				{
 					$$ = NULL;
 				}
-			| CHECK_EXPIRATION '=' opt_boolean_or_string
+			| TSQL_CHECK_EXPIRATION '=' opt_boolean_or_string
 				{
 					$$ = NULL;
 				}
-			| CHECK_POLICY '=' opt_boolean_or_string
+			| TSQL_CHECK_POLICY '=' opt_boolean_or_string
 				{
 					$$ = NULL;
 				}
-			| CREDENTIAL '=' NonReservedWord
+			| TSQL_CREDENTIAL '=' NonReservedWord
 				{
 					$$ = NULL;
 				}
 		;
 
 opt_must_change:
-			MUST_CHANGE
+			TSQL_MUST_CHANGE
 			| /*EMPTY*/
 		;
 
 tsql_login_sources:
 			TSQL_WINDOWS
 			| TSQL_WINDOWS WITH tsql_windows_options_list
-			| CERTIFICATE NonReservedWord
+			| TSQL_CERTIFICATE NonReservedWord
 			| ASYMMETRIC KEY NonReservedWord
 		;
 
@@ -155,8 +155,8 @@ tsql_windows_options_list:
 		;
 
 tsql_windows_options:
-			DEFAULT_DATABASE '=' NonReservedWord
-			| DEFAULT_LANGUAGE '=' NonReservedWord
+			TSQL_DEFAULT_DATABASE '=' NonReservedWord
+			| TSQL_DEFAULT_LANGUAGE '=' NonReservedWord
 		;
 
 CreateUserStmt:
@@ -215,7 +215,7 @@ tsql_AlterLoginStmt:
 						n->options = list_concat(n->options, $5);
 					$$ = (Node *)n;
 				}
-			| ALTER TSQL_LOGIN RoleSpec add_drop CREDENTIAL NonReservedWord
+			| ALTER TSQL_LOGIN RoleSpec add_drop TSQL_CREDENTIAL NonReservedWord
 				{
 					AlterRoleStmt *n = makeNode(AlterRoleStmt);
 					n->role = $3;
@@ -258,17 +258,17 @@ tsql_alter_login_option_elem:
 				{
 					$$ = makeDefElem("password", $3, @1);
 				}
-			| PASSWORD '=' TSQL_XCONST HASHED tsql_alter_login_password_option1
+			| PASSWORD '=' TSQL_XCONST TSQL_HASHED tsql_alter_login_password_option1
 				{
 					$$ = makeDefElem("password", NULL, @1);
 				}
-			| DEFAULT_DATABASE '=' NonReservedWord
+			| TSQL_DEFAULT_DATABASE '=' NonReservedWord
 				{
 					$$ = makeDefElem("default_database",
 									 (Node *)makeString($3),
 									 @1);;
 				}
-			| DEFAULT_LANGUAGE '=' NonReservedWord
+			| TSQL_DEFAULT_LANGUAGE '=' NonReservedWord
 				{
 					$$ = NULL;
 				}
@@ -276,26 +276,26 @@ tsql_alter_login_option_elem:
 				{
 					$$ = NULL;
 				}
-			| CHECK_EXPIRATION '=' opt_boolean_or_string
+			| TSQL_CHECK_EXPIRATION '=' opt_boolean_or_string
 				{
 					$$ = NULL;
 				}
-			| CHECK_POLICY '=' opt_boolean_or_string
+			| TSQL_CHECK_POLICY '=' opt_boolean_or_string
 				{
 					$$ = NULL;
 				}
-			| CREDENTIAL '=' NonReservedWord
+			| TSQL_CREDENTIAL '=' NonReservedWord
 				{
 					$$ = NULL;
 				}
-			| NO CREDENTIAL
+			| NO TSQL_CREDENTIAL
 				{
 					$$ = NULL;
 				}
 		;
 
 tsql_alter_login_password_option1:
-			OLD_PASSWORD '=' tsql_nchar
+			TSQL_OLD_PASSWORD '=' tsql_nchar
 			| tsql_alter_login_password_option2_list
 			| /*EMPTY*/
 		;
@@ -306,8 +306,8 @@ tsql_alter_login_password_option2_list:
 		;
 
 tsql_alter_login_password_option2:
-			MUST_CHANGE
-			| UNLOCK
+			TSQL_MUST_CHANGE
+			| TSQL_UNLOCK
 		;
 
 tsql_DropLoginStmt:
@@ -3666,14 +3666,21 @@ unreserved_keyword:
 			| TSQL_AUTO
 			| TSQL_BASE64
 			| TSQL_CALLER
+			| TSQL_CERTIFICATE
+			| TSQL_CHECK_EXPIRATION
+			| TSQL_CHECK_POLICY
+			| TSQL_CREDENTIAL
 			| TSQL_CLUSTERED
 			| TSQL_COLUMNSTORE
 			| TSQL_D
 			| TSQL_DAYOFYEAR
 			| TSQL_DD
+			| TSQL_DEFAULT_DATABASE
+			| TSQL_DEFAULT_LANGUAGE
 			| TSQL_DW
 			| TSQL_DY
 			| TSQL_EXPLICIT
+			| TSQL_HASHED
 			| TSQL_HH
 			| TSQL_IDENTITY_INSERT
 			| TSQL_ISOWK
@@ -3686,6 +3693,7 @@ unreserved_keyword:
 			| TSQL_MILLISECOND
 			| TSQL_MM
 			| TSQL_MS
+			| TSQL_MUST_CHANGE
 			| TSQL_N
 			| TSQL_NANOSECOND
 			| TSQL_NOCHECK
@@ -3693,6 +3701,7 @@ unreserved_keyword:
 			| TSQL_NOLOCK
 			| TSQL_NONCLUSTERED
 			| TSQL_NS
+			| TSQL_OLD_PASSWORD
 			| TSQL_PAGLOCK
 			| TSQL_PATH
 			| TSQL_PERSISTED
@@ -3712,6 +3721,7 @@ unreserved_keyword:
 			| TSQL_S
 			| TSQL_SAVE
 			| TSQL_SCHEMABINDING
+			| TSQL_SID
 			| TSQL_SS
 			| TSQL_TABLOCK
 			| TSQL_TABLOCKX
@@ -3719,9 +3729,11 @@ unreserved_keyword:
 			| TSQL_TRAN
 			| TSQL_TZ
 			| TSQL_TZOFFSET
+			| TSQL_UNLOCK
 			| TSQL_UPDLOCK
 			| TSQL_WEEK
 			| TSQL_WEEKDAY
+			| TSQL_WINDOWS
 			| TSQL_WK
 			| TSQL_WW
 			| TSQL_XLOCK
