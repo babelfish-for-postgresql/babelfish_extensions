@@ -387,6 +387,30 @@ pltsql_pre_parse_analyze(ParseState *pstate, RawStmt *parseTree)
 	if (sql_dialect != SQL_DIALECT_TSQL)
 		return;
 
+	if (parseTree->stmt->type == T_CreateFunctionStmt ){
+		ListCell 		*option;
+		CreateTrigStmt *trigStmt;
+		char* trig_schema;
+		foreach (option, ((CreateFunctionStmt *) parseTree->stmt)->options){
+			DefElem *defel = (DefElem *) lfirst(option);
+			if (strcmp(defel->defname, "trigStmt") == 0)
+			{
+				trigStmt = (CreateTrigStmt *) defel->arg;
+				if (trigStmt->args != NIL){
+					trig_schema = ((Value*)list_nth(((CreateTrigStmt *) trigStmt)->args,0))->val.str;
+					if ((trigStmt->relation->schemaname != NULL && strcasecmp(trig_schema, trigStmt->relation->schemaname)!=0)
+					|| trigStmt->relation->schemaname == NULL){
+					ereport(ERROR,
+						(errcode(ERRCODE_INTERNAL_ERROR),
+						 errmsg("Cannot create trigger '%s.%s' because its schema is different from the schema of the target table or view.",
+						   trig_schema , trigStmt->trigname)));
+					}
+					trigStmt->args = NIL;
+				}
+			}
+		}
+	}
+
 	if (enable_schema_mapping())
 		rewrite_object_refs(parseTree->stmt);
 
