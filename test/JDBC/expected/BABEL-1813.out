@@ -1,0 +1,162 @@
+use master;
+go
+
+-- basic operations
+create table t1813 (a int, b int, collation int not null);
+go
+insert into t1813 (a, collation) values (1, 2);
+go
+~~ROW COUNT: 1~~
+
+select a, b, collation from t1813;
+go
+~~START~~
+int#!#int#!#int
+1#!#<NULL>#!#2
+~~END~~
+
+select a, b, t1813.collation from t1813;
+go
+~~START~~
+int#!#int#!#int
+1#!#<NULL>#!#2
+~~END~~
+
+alter table t1813 add binary binary; -- column "binary" whose type is binary
+go
+insert into t1813(collation,binary) values (3, 0x04);
+go
+~~ROW COUNT: 1~~
+
+create unique index i1813 on t1813(collation);
+go
+insert into t1813(collation,binary) values (4, 0x05);
+insert into t1813(collation,binary) values (4, 0x05);
+go
+~~ROW COUNT: 1~~
+
+~~ERROR (Code: 2627)~~
+
+~~ERROR (Message: duplicate key value violates unique constraint "i1813t18132835522bc8db62c2e7873fbd5c7ec927")~~
+
+select abs(-collation)*2 c, binary from t1813;
+go
+~~START~~
+int#!#binary
+4#!#<NULL>
+6#!#04
+8#!#05
+~~END~~
+
+update t1813 set collation = 5 output deleted.collation where collation = 2;
+go
+~~START~~
+int
+2
+~~END~~
+
+delete from t1813 output collation where collation = 4;
+go
+~~START~~
+int
+4
+~~END~~
+
+select collation from t1813 order by collation;
+go
+~~START~~
+int
+3
+5
+~~END~~
+
+select [collation] from t1813 order by collation;
+go
+~~START~~
+int
+3
+5
+~~END~~
+
+select t1813.[collation] from t1813 order by collation;
+go
+~~START~~
+int
+3
+5
+~~END~~
+
+select COLLATION from t1813 order by COLLATION;
+go
+~~START~~
+int
+3
+5
+~~END~~
+
+select CoLlAtIoN from t1813 order by CoLlAtIoN;
+go
+~~START~~
+int
+3
+5
+~~END~~
+
+drop table t1813;
+go
+
+-- test all keywords
+create table t1813_binary(binary int);
+go
+drop table t1813_binary;
+go
+
+create table t1813_collation(collation int);
+go
+drop table t1813_collation;
+go
+
+create table t1813_concurrently(concurrently int);
+go
+drop table t1813_concurrently;
+go
+
+create table t1813_current_schema(current_schema int);
+go
+drop table t1813_current_schema;
+go
+
+create table t1813_freeze(freeze int);
+go
+drop table t1813_freeze;
+go
+
+create table t1813_ilike(ilike int);
+go
+drop table t1813_ilike;
+go
+
+create table t1813_isnull(isnull int);
+go
+drop table t1813_isnull;
+go
+
+create table t1813_natural(natural int);
+go
+drop table t1813_natural;
+go
+
+create table t1813_notnull(notnull int);
+go
+drop table t1813_notnull;
+go
+
+create table t1813_overlaps(overlaps int);
+go
+drop table t1813_overlaps;
+go
+
+create table t1813_similar(similar int);
+go
+drop table t1813_similar;
+go

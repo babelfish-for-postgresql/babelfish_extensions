@@ -48,7 +48,7 @@ dbo
 ~~END~~
 
 
-SELECT current_schema;
+SELECT current_schema();
 GO
 ~~START~~
 varchar
