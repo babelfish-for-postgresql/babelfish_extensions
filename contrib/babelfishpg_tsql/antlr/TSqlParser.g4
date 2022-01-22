@@ -3153,7 +3153,7 @@ column_def_table_constraint
 // https://msdn.microsoft.com/en-us/library/ms187742.aspx
 // emprically found: ROWGUIDCOL can be in various locations
 column_definition
-    : id (data_type system_versioning_column? | AS expression PERSISTED? ) ( special_column_option | (COLLATE id) | null_notnull )*
+    : simple_column_name (data_type system_versioning_column? | AS expression PERSISTED? ) ( special_column_option | (COLLATE id) | null_notnull )*
       ( column_constraint? IDENTITY (LR_BRACKET sign? seed=DECIMAL COMMA sign? increment=DECIMAL RR_BRACKET)? )? for_replication? ROWGUIDCOL?
       column_constraint* column_inline_index?
     ;
@@ -4953,7 +4953,7 @@ full_column_name
     ;
 
 column_name_list_with_order
-    : id (ASC | DESC)? (COMMA id (ASC | DESC)?)*
+    : simple_column_name (ASC | DESC)? (COMMA simple_column_name (ASC | DESC)?)*
     ;
 
 //For some reason, tsql allows any number of prefixes:  Here, h is the column: a.b.c.d.e.f.g.h
@@ -4966,12 +4966,16 @@ insert_column_id
     ;
 
 column_name_list
-    : col+=id (COMMA col+=id)*
+    : col+=simple_column_name (COMMA col+=simple_column_name)*
     ;
 
 cursor_name
     : id
     | LOCAL_ID
+    ;
+
+simple_column_name
+    : id
     ;
 
 // https://msdn.microsoft.com/en-us/library/ms175874.aspx

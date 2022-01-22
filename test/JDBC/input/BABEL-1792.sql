@@ -35,7 +35,7 @@ GO
 SELECT current_user;
 GO
 
-SELECT current_schema;
+SELECT current_schema();
 GO
 
 INSERT INTO t1 (id, c1) VALUES (4, 16);

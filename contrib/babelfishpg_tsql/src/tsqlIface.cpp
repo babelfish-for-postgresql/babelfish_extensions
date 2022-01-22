@@ -113,6 +113,8 @@ static void process_select_statement_standalone(
 	PLtsql_expr *expr, ParserRuleContext* baseCtx, TSqlParser::Select_statement_standaloneContext *standaloneCtx, 
 	bool itvf, PLtsql_expr_query_mutator *mutator);
 template <class T> static std::string rewrite_omitted_db_and_schema_name(T ctx, GetCtxFunc<T> getDatabase, GetCtxFunc<T> getSchema);
+static bool does_column_name_need_delimiter(TSqlParser::IdContext *id);
+static std::string delimit_identifier(TSqlParser::IdContext *id);
 
 /*
  * Structure / Utility function for general purpose of query string modification
@@ -989,6 +991,32 @@ public:
 			local_id_positions.emplace(std::make_pair(ctx->start->getStartIndex(), local_id_str));
 		}
 	}
+
+
+	/* Column Name */
+
+	void exitSimple_column_name(TSqlParser::Simple_column_nameContext *ctx) override
+	{
+		if (does_column_name_need_delimiter(ctx->id()))
+			rewritten_query_fragment.emplace(std::make_pair(ctx->id()->start->getStartIndex(), std::make_pair(::getFullText(ctx->id()), delimit_identifier(ctx->id()))));
+	}
+
+	void exitInsert_column_id(TSqlParser::Insert_column_idContext *ctx) override
+	{
+		// qualifed identifier doesn't need delimiter
+		if (ctx->DOT().empty() && does_column_name_need_delimiter(ctx->id().back()))
+			rewritten_query_fragment.emplace(std::make_pair(ctx->id().back()->start->getStartIndex(), std::make_pair(::getFullText(ctx->id().back()), delimit_identifier(ctx->id().back()))));
+	}
+
+	void exitFull_column_name(TSqlParser::Full_column_nameContext *ctx) override
+	{
+		// qualifed identifier doesn't need delimiter
+		if (ctx->DOT().empty() && does_column_name_need_delimiter(ctx->column_name))
+			rewritten_query_fragment.emplace(std::make_pair(ctx->column_name->start->getStartIndex(), std::make_pair(::getFullText(ctx->column_name), delimit_identifier(ctx->column_name))));
+	}
+
+
+	/* Object Name */
 
 	void enterFull_object_name(TSqlParser::Full_object_nameContext *ctx) override
 	{
@@ -4923,4 +4951,41 @@ rewrite_omitted_db_and_schema_name(T ctx, GetCtxFunc<T> getDatabase, GetCtxFunc<
 			return "";
 	}
 	return "";
+}
+
+/*
+ * PG keyword define as TYPE_FUNC_NAME_KEYWORD but treated as normal unreserved keyword (or not a keyword) in T-SQL.
+ * TODO: we may generate this list automatically by using kwlist.h and antlr grammar.
+ */
+static const char *column_names_to_be_delimited[] = {
+  "binary",
+  "collation",
+  "concurrently",
+  "current_schema",
+  "freeze",
+  "ilike",
+  "isnull",
+  "natural",
+  "notnull",
+  "overlaps",
+  "similar"
+};
+
+static bool
+does_column_name_need_delimiter(TSqlParser::IdContext *id)
+{
+	if (!id->ID() && !id->keyword())
+		return false; // already delimited
+
+	std::string id_str = ::getFullText(id);
+	for (const char *keyword : column_names_to_be_delimited)
+		if (pg_strcasecmp(keyword, id_str.c_str()) == 0)
+			return true;
+	return false;
+}
+
+static std::string
+delimit_identifier(TSqlParser::IdContext *id)
+{
+	return std::string("[") + ::getFullText(id) + "]";
 }
