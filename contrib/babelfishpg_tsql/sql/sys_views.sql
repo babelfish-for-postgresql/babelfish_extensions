@@ -63,6 +63,7 @@ select
   , 0 as is_tracked_by_cdc 
 from pg_class t inner join pg_namespace s on s.oid = t.relnamespace 
 where t.relkind = 'v'
+and has_schema_privilege(s.oid, 'USAGE')
 and has_table_privilege(quote_ident(s.nspname) ||'.'||quote_ident(t.relname), 'SELECT,INSERT,UPDATE,DELETE,TRUNCATE,TRIGGER')
 and s.nspname not in ('information_schema', 'pg_catalog');
 GRANT SELECT ON sys.views TO PUBLIC;
@@ -111,7 +112,8 @@ left join pg_collation coll on coll.oid = t.typcollation
 where not a.attisdropped
 -- r = ordinary table, i = index, S = sequence, t = TOAST table, v = view, m = materialized view, c = composite type, f = foreign table, p = partitioned table
 and c.relkind in ('r', 'v', 'm', 'f', 'p')
-and has_column_privilege(quote_ident(s.nspname) ||'.'||quote_ident(c.relname), a.attname, 'SELECT,INSERT,UPDATE,REFERENCES');
+and has_column_privilege(quote_ident(s.nspname) ||'.'||quote_ident(c.relname), a.attname, 'SELECT,INSERT,UPDATE,REFERENCES')
+and has_schema_privilege(s.oid, 'USAGE');
 GRANT SELECT ON sys.all_columns TO PUBLIC;
 
 create or replace view sys.all_views as
@@ -133,6 +135,7 @@ select
   , 0 as is_tracked_by_cdc
 from pg_class t inner join pg_namespace s on s.oid = t.relnamespace
 where t.relkind = 'v'
+and has_schema_privilege(s.oid, 'USAGE')
 and has_table_privilege(quote_ident(s.nspname) ||'.'||quote_ident(t.relname), 'SELECT,INSERT,UPDATE,DELETE,TRUNCATE,TRIGGER');
 GRANT SELECT ON sys.all_views TO PUBLIC;
 
@@ -181,6 +184,7 @@ where not a.attisdropped
 -- r = ordinary table, i = index, S = sequence, t = TOAST table, v = view, m = materialized view, c = composite type, f = foreign table, p = partitioned table
 and c.relkind in ('r', 'v', 'm', 'f', 'p')
 and s.nspname not in ('information_schema', 'pg_catalog')
+and has_schema_privilege(s.oid, 'USAGE')
 and has_column_privilege(quote_ident(s.nspname) ||'.'||quote_ident(c.relname), a.attname, 'SELECT,INSERT,UPDATE,REFERENCES');
 GRANT SELECT ON sys.columns TO PUBLIC;
 
@@ -300,6 +304,7 @@ left join pg_collation coll on coll.oid = t.typcollation
 where not a.attisdropped
 and pg_get_serial_sequence(quote_ident(s.nspname)||'.'||quote_ident(c.relname), a.attname)  is not null
 and s.nspname not in ('information_schema', 'pg_catalog')
+and has_schema_privilege(s.oid, 'USAGE')
 and has_sequence_privilege(pg_get_serial_sequence(quote_ident(s.nspname)||'.'||quote_ident(c.relname), a.attname), 'USAGE,SELECT,UPDATE');
 GRANT SELECT ON sys.identity_columns TO PUBLIC;
 
@@ -680,6 +685,7 @@ select
     , t.is_published
     , t.is_schema_published
 from  sys.tables t
+where has_schema_privilege(t.schema_id, 'USAGE')
 union all
 select
 	v.name
@@ -695,6 +701,7 @@ select
     , v.is_published
     , v.is_schema_published
 from  sys.all_views v
+where has_schema_privilege(v.schema_id, 'USAGE')
 union all
 select
 	f.name
@@ -710,6 +717,7 @@ select
     , f.is_published
     , f.is_schema_published
  from sys.foreign_keys f
+ where has_schema_privilege(f.schema_id, 'USAGE')
  union all
 select
 	p.name
@@ -725,6 +733,7 @@ select
     , p.is_published
     , p.is_schema_published
  from sys.key_constraints p
+ where has_schema_privilege(p.schema_id, 'USAGE')
 union all
 select
 	pr.name
@@ -740,6 +749,7 @@ select
     , pr.is_published
     , pr.is_schema_published
  from sys.procedures pr
+ where has_schema_privilege(pr.schema_id, 'USAGE')
 union all
 select
   p.relname as name
@@ -756,7 +766,8 @@ select
   , 0 as is_schema_published
 from pg_class p
 inner join pg_namespace s on s.oid = p.relnamespace
-where p.relkind = 'S';
+where p.relkind = 'S'
+and has_schema_privilege(s.oid, 'USAGE');
 GRANT SELECT ON sys.all_objects TO PUBLIC;
 
 create or replace view sys.system_objects as
