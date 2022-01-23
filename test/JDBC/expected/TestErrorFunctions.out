@@ -188,7 +188,7 @@ CATCH in Procedure 1
 
 ~~START~~
 int#!#nvarchar#!#int#!#nvarchar#!#int#!#int
-2#!#raiserror 16#!#50000#!#errorfuncproc1#!#16#!#1
+3#!#raiserror 16#!#50000#!#errorfuncproc1#!#16#!#1
 ~~END~~
 
 ~~START~~
@@ -198,7 +198,7 @@ CATCH in Procedure 2
 
 ~~START~~
 int#!#nvarchar#!#int#!#nvarchar#!#int#!#int
-2#!#raiserror 16#!#50000#!#errorfuncproc1#!#16#!#1
+3#!#raiserror 16#!#50000#!#errorfuncproc1#!#16#!#1
 ~~END~~
 
 ~~ERROR (Code: 50000)~~

@@ -1,0 +1,26 @@
+use master;
+go
+-- 1
+-- 2
+BEGIN TRY -- 3
+  -- Generate a divide-by-zero error. -- 4
+  SELECT 1/0; -- 5: error
+END TRY
+BEGIN CATCH
+  SELECT ERROR_LINE() AS ErrorLine;
+END CATCH;
+GO
+-- 1
+-- 2
+CREATE PROCEDURE sp_2288 -- 3
+AS -- 4
+  SELECT 'dummy' -- 5
+  SELECT 1/0; -- 6: error
+GO
+BEGIN TRY
+  EXEC sp_2288
+END TRY
+BEGIN CATCH
+  SELECT ERROR_LINE() AS ErrorLine;
+END CATCH;
+GO
