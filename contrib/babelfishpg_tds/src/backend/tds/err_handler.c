@@ -237,7 +237,12 @@ get_tsql_error_details(ErrorData *edata,
 		 */
 		if (!flag)
 		{
-			*tsql_error_code	= ERRCODE_PLTSQL_ERROR_NOT_MAPPED;
+			TDSInstrumentation(INSTR_TDS_UNMAPPED_ERROR);
+
+			elog(LOG, "Unmapped error found. Code: %d, Message: %s, File: %s, Line: %d, Context: %s",
+				edata->sqlerrcode, edata->message, edata->filename, edata->lineno, error_context);
+
+			*tsql_error_code = ERRCODE_PLTSQL_ERROR_NOT_MAPPED;
 			*tsql_error_severity = 16;
 			return false;
 		}
