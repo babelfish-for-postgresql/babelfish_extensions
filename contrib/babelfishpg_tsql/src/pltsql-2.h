@@ -296,7 +296,6 @@ typedef struct PLtsql_stmt_restore_ctx_partial
     int                  lineno;
 } PLtsql_stmt_restore_ctx_partial;
 
-extern int pltsql_error_lineno;
 extern char *yytext;
 
 /*

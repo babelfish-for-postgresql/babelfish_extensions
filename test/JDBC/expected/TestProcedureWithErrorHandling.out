@@ -243,7 +243,7 @@ CATCH in Procedure 1
 
 ~~START~~
 int#!#nvarchar#!#int#!#nvarchar#!#int#!#int
-2#!#raiserror 16#!#50000#!#tsql_interop_proc#!#16#!#1
+4#!#raiserror 16#!#50000#!#tsql_interop_proc#!#16#!#1
 ~~END~~
 
 ~~ERROR (Code: 50000)~~
@@ -303,7 +303,7 @@ CATCH in Procedure 1
 
 ~~START~~
 int#!#nvarchar#!#int#!#nvarchar#!#int#!#int
-2#!#raiserror 16#!#50000#!#tsql_interop_proc2#!#16#!#1
+4#!#raiserror 16#!#50000#!#tsql_interop_proc2#!#16#!#1
 ~~END~~
 
 ~~START~~

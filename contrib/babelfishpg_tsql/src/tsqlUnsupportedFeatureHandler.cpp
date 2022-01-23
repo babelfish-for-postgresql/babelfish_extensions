@@ -61,6 +61,9 @@ extern std::string getFullText(antlr4::ParserRuleContext *context);
 extern std::string stripQuoteFromId(TSqlParser::IdContext *context);
 extern TSqlParser::Query_specificationContext *get_query_specification(TSqlParser::Select_statementContext *ctx);
 
+extern std::pair<int,int> getLineAndPos(antlr4::ParserRuleContext *ctx);
+extern std::pair<int,int> getLineAndPos(antlr4::tree::TerminalNode *node);
+
 using namespace std;
 using namespace antlr4;
 using namespace tree;
@@ -82,9 +85,9 @@ protected:
 
 		/* handler */
 		void handle(PgTsqlInstrMetricType tm_type, antlr4::tree::TerminalNode *node, escape_hatch_t* eh);
-		void handle(PgTsqlInstrMetricType tm_type, const char *featureName, escape_hatch_t* eh);
+		void handle(PgTsqlInstrMetricType tm_type, const char *featureName, escape_hatch_t* eh, std::pair<int,int> line_and_pos);
 		void handle(PgTsqlInstrMetricType tm_type, antlr4::tree::TerminalNode *node) { handle(tm_type, node, nullptr); }
-		void handle(PgTsqlInstrMetricType tm_type, const char *featureName) { handle(tm_type, featureName, nullptr); }
+		void handle(PgTsqlInstrMetricType tm_type, const char *featureName, std::pair<int,int> line_and_pos) { handle(tm_type, featureName, nullptr, line_and_pos); }
 
 		/* listener interfaces */
 		// Batch-level DDLs
@@ -117,35 +120,35 @@ protected:
 		antlrcpp::Any visitInsert_statement(TSqlParser::Insert_statementContext *ctx) override;
 		antlrcpp::Any visitUpdate_statement(TSqlParser::Update_statementContext *ctx) override;
 		antlrcpp::Any visitDelete_statement(TSqlParser::Delete_statementContext *ctx) override;
-		antlrcpp::Any visitMerge_statement(TSqlParser::Merge_statementContext *ctx) override { handle(INSTR_UNSUPPORTED_TSQL_MERGE, "MERGE"); return visitChildren(ctx); }
-		antlrcpp::Any visitBulk_insert_statement(TSqlParser::Bulk_insert_statementContext *ctx) override { handle(INSTR_UNSUPPORTED_TSQL_BULK_INSERT, "BULK INSERT"); return visitChildren(ctx); }
+		antlrcpp::Any visitMerge_statement(TSqlParser::Merge_statementContext *ctx) override { handle(INSTR_UNSUPPORTED_TSQL_MERGE, "MERGE", getLineAndPos(ctx)); return visitChildren(ctx); }
+		antlrcpp::Any visitBulk_insert_statement(TSqlParser::Bulk_insert_statementContext *ctx) override { handle(INSTR_UNSUPPORTED_TSQL_BULK_INSERT, "BULK INSERT", getLineAndPos(ctx)); return visitChildren(ctx); }
 
 		// CFL
-		antlrcpp::Any visitWaitfor_statement(TSqlParser::Waitfor_statementContext *ctx) override { handle(INSTR_UNSUPPORTED_TSQL_WAIT_FOR, "WAITFOR"); return visitChildren(ctx); }
+		antlrcpp::Any visitWaitfor_statement(TSqlParser::Waitfor_statementContext *ctx) override { handle(INSTR_UNSUPPORTED_TSQL_WAIT_FOR, "WAITFOR", getLineAndPos(ctx)); return visitChildren(ctx); }
 
 		// Another
 		antlrcpp::Any visitSet_statement(TSqlParser::Set_statementContext *ctx) override;
 		antlrcpp::Any visitCursor_statement(TSqlParser::Cursor_statementContext *ctx) override;
 		antlrcpp::Any visitTransaction_statement(TSqlParser::Transaction_statementContext *ctx) override;
-		antlrcpp::Any visitDeclare_xmlnamespaces_statement(TSqlParser::Declare_xmlnamespaces_statementContext *ctx) override { handle(INSTR_UNSUPPORTED_TSQL_WITH_XMLNAMESPACES, "WITH XMLNAMESPACES"); return visitChildren(ctx); }
-		antlrcpp::Any visitConversation_statement(TSqlParser::Conversation_statementContext *ctx) override { handle(INSTR_UNSUPPORTED_TSQL_CREATE_CONVERSATION_STMT, "conversation statements"); return visitChildren(ctx); }
-		antlrcpp::Any visitCreate_contract(TSqlParser::Create_contractContext *ctx) override { handle(INSTR_UNSUPPORTED_TSQL_CREATE_CONTRACT, "CREATE CONTRACT"); return visitChildren(ctx); }
-		antlrcpp::Any visitCreate_queue(TSqlParser::Create_queueContext *ctx) override { handle(INSTR_UNSUPPORTED_TSQL_CREATE_QUEUE, "CREATE QUEUE"); return visitChildren(ctx); }
-		antlrcpp::Any visitAlter_queue(TSqlParser::Alter_queueContext *ctx) override { handle(INSTR_UNSUPPORTED_TSQL_ALTER_QUEUE, "ALTER QUEUE"); return visitChildren(ctx); }
-		antlrcpp::Any visitKill_statement(TSqlParser::Kill_statementContext *ctx) override { handle(INSTR_UNSUPPORTED_TSQL_KILL, "KILL"); return visitChildren(ctx); }
-		antlrcpp::Any visitMessage_statement(TSqlParser::Message_statementContext *ctx) override { handle(INSTR_UNSUPPORTED_TSQL_CREATE_MESSAGE, "CREATE MESSAGE"); return visitChildren(ctx); }
+		antlrcpp::Any visitDeclare_xmlnamespaces_statement(TSqlParser::Declare_xmlnamespaces_statementContext *ctx) override { handle(INSTR_UNSUPPORTED_TSQL_WITH_XMLNAMESPACES, "WITH XMLNAMESPACES", getLineAndPos(ctx)); return visitChildren(ctx); }
+		antlrcpp::Any visitConversation_statement(TSqlParser::Conversation_statementContext *ctx) override { handle(INSTR_UNSUPPORTED_TSQL_CREATE_CONVERSATION_STMT, "conversation statements", getLineAndPos(ctx)); return visitChildren(ctx); }
+		antlrcpp::Any visitCreate_contract(TSqlParser::Create_contractContext *ctx) override { handle(INSTR_UNSUPPORTED_TSQL_CREATE_CONTRACT, "CREATE CONTRACT", getLineAndPos(ctx)); return visitChildren(ctx); }
+		antlrcpp::Any visitCreate_queue(TSqlParser::Create_queueContext *ctx) override { handle(INSTR_UNSUPPORTED_TSQL_CREATE_QUEUE, "CREATE QUEUE", getLineAndPos(ctx)); return visitChildren(ctx); }
+		antlrcpp::Any visitAlter_queue(TSqlParser::Alter_queueContext *ctx) override { handle(INSTR_UNSUPPORTED_TSQL_ALTER_QUEUE, "ALTER QUEUE", getLineAndPos(ctx)); return visitChildren(ctx); }
+		antlrcpp::Any visitKill_statement(TSqlParser::Kill_statementContext *ctx) override { handle(INSTR_UNSUPPORTED_TSQL_KILL, "KILL", getLineAndPos(ctx)); return visitChildren(ctx); }
+		antlrcpp::Any visitMessage_statement(TSqlParser::Message_statementContext *ctx) override { handle(INSTR_UNSUPPORTED_TSQL_CREATE_MESSAGE, "CREATE MESSAGE", getLineAndPos(ctx)); return visitChildren(ctx); }
 		antlrcpp::Any visitSecurity_statement(TSqlParser::Security_statementContext *ctx) override;
-		antlrcpp::Any visitSetuser_statement(TSqlParser::Setuser_statementContext *ctx) override { handle(INSTR_UNSUPPORTED_TSQL_SET_USER, "SET USER"); return visitChildren(ctx); }
-		antlrcpp::Any visitReconfigure_statement(TSqlParser::Reconfigure_statementContext *ctx) override { handle(INSTR_UNSUPPORTED_TSQL_RECONFIGURE, "RECONFIGURE"); return visitChildren(ctx); }
-		antlrcpp::Any visitShutdown_statement(TSqlParser::Shutdown_statementContext *ctx) override { handle(INSTR_UNSUPPORTED_TSQL_SHUTDOWN, "SHUTDOWN"); return visitChildren(ctx); }
+		antlrcpp::Any visitSetuser_statement(TSqlParser::Setuser_statementContext *ctx) override { handle(INSTR_UNSUPPORTED_TSQL_SET_USER, "SET USER", getLineAndPos(ctx)); return visitChildren(ctx); }
+		antlrcpp::Any visitReconfigure_statement(TSqlParser::Reconfigure_statementContext *ctx) override { handle(INSTR_UNSUPPORTED_TSQL_RECONFIGURE, "RECONFIGURE", getLineAndPos(ctx)); return visitChildren(ctx); }
+		antlrcpp::Any visitShutdown_statement(TSqlParser::Shutdown_statementContext *ctx) override { handle(INSTR_UNSUPPORTED_TSQL_SHUTDOWN, "SHUTDOWN", getLineAndPos(ctx)); return visitChildren(ctx); }
 
-		antlrcpp::Any visitDbcc_statement(TSqlParser::Dbcc_statementContext *ctx) override { handle(INSTR_UNSUPPORTED_TSQL_DBCC, "DBCC"); return visitChildren(ctx); }
-		antlrcpp::Any visitBackup_statement(TSqlParser::Backup_statementContext *ctx) override { handle(INSTR_UNSUPPORTED_TSQL_BACKUP, "BACKUP"); return visitChildren(ctx); }
-		antlrcpp::Any visitRestore_statement(TSqlParser::Restore_statementContext *ctx) override { handle(INSTR_UNSUPPORTED_TSQL_RESTORE, "RESTORE"); return visitChildren(ctx); }
-		antlrcpp::Any visitCheckpoint_statement(TSqlParser::Checkpoint_statementContext *ctx) override { handle(INSTR_UNSUPPORTED_TSQL_CHECKPOINT, "CHECKPOINT"); return visitChildren(ctx); }
-		antlrcpp::Any visitReadtext_statement(TSqlParser::Readtext_statementContext *ctx) override { handle(INSTR_UNSUPPORTED_TSQL_READTEXT, "READTEXT"); return visitChildren(ctx); }
-		antlrcpp::Any visitWritetext_statement(TSqlParser::Writetext_statementContext *ctx) override { handle(INSTR_UNSUPPORTED_TSQL_WRITETEXT, "WRITETEXT"); return visitChildren(ctx); }
-		antlrcpp::Any visitUpdatetext_statement(TSqlParser::Updatetext_statementContext *ctx) override { handle(INSTR_UNSUPPORTED_TSQL_UPDATETEXT, "UPDATETEXT"); return visitChildren(ctx); }
+		antlrcpp::Any visitDbcc_statement(TSqlParser::Dbcc_statementContext *ctx) override { handle(INSTR_UNSUPPORTED_TSQL_DBCC, "DBCC", getLineAndPos(ctx)); return visitChildren(ctx); }
+		antlrcpp::Any visitBackup_statement(TSqlParser::Backup_statementContext *ctx) override { handle(INSTR_UNSUPPORTED_TSQL_BACKUP, "BACKUP", getLineAndPos(ctx)); return visitChildren(ctx); }
+		antlrcpp::Any visitRestore_statement(TSqlParser::Restore_statementContext *ctx) override { handle(INSTR_UNSUPPORTED_TSQL_RESTORE, "RESTORE", getLineAndPos(ctx)); return visitChildren(ctx); }
+		antlrcpp::Any visitCheckpoint_statement(TSqlParser::Checkpoint_statementContext *ctx) override { handle(INSTR_UNSUPPORTED_TSQL_CHECKPOINT, "CHECKPOINT", getLineAndPos(ctx)); return visitChildren(ctx); }
+		antlrcpp::Any visitReadtext_statement(TSqlParser::Readtext_statementContext *ctx) override { handle(INSTR_UNSUPPORTED_TSQL_READTEXT, "READTEXT", getLineAndPos(ctx)); return visitChildren(ctx); }
+		antlrcpp::Any visitWritetext_statement(TSqlParser::Writetext_statementContext *ctx) override { handle(INSTR_UNSUPPORTED_TSQL_WRITETEXT, "WRITETEXT", getLineAndPos(ctx)); return visitChildren(ctx); }
+		antlrcpp::Any visitUpdatetext_statement(TSqlParser::Updatetext_statementContext *ctx) override { handle(INSTR_UNSUPPORTED_TSQL_UPDATETEXT, "UPDATETEXT", getLineAndPos(ctx)); return visitChildren(ctx); }
 
 		// common clauses used in CREATE/ALTER TABLE/INDEX
 		antlrcpp::Any visitColumn_constraint(TSqlParser::Column_constraintContext *ctx) override;
@@ -167,12 +170,12 @@ protected:
 
 		// functions and expression
 		antlrcpp::Any visitAggregate_windowed_function(TSqlParser::Aggregate_windowed_functionContext *ctx) override;
-		antlrcpp::Any visitRowset_function(TSqlParser::Rowset_functionContext *ctx) override { handle(INSTR_UNSUPPORTED_TSQL_ROWSET_FUNCTION, "rowset function"); return visitChildren(ctx); }
+		antlrcpp::Any visitRowset_function(TSqlParser::Rowset_functionContext *ctx) override { handle(INSTR_UNSUPPORTED_TSQL_ROWSET_FUNCTION, "rowset function", getLineAndPos(ctx)); return visitChildren(ctx); }
 		antlrcpp::Any visitTrigger_column_updated(TSqlParser::Trigger_column_updatedContext *ctx) override; // UPDATE() in trigger
-		antlrcpp::Any visitFREE_TEXT(TSqlParser::FREE_TEXTContext *ctx) override { handle(INSTR_UNSUPPORTED_TSQL_FREETEXT, "FREETEXT"); return visitChildren(ctx); }
-		antlrcpp::Any visitNextvaluefor(TSqlParser::NextvalueforContext *ctx) override { handle(INSTR_UNSUPPORTED_TSQL_NEXT_VALUE_FOR, "NEXT VALUE FOR"); return visitChildren(ctx); }
-		antlrcpp::Any visitOdbcscalar(TSqlParser::OdbcscalarContext *ctx) override { handle(INSTR_UNSUPPORTED_TSQL_ODBC_SCALAR_FUNCTION, "ODBC scalar functions"); return visitChildren(ctx); }
-		antlrcpp::Any visitPartition_function_call(TSqlParser::Partition_function_callContext *ctx) override { handle(INSTR_UNSUPPORTED_TSQL_PARTITION_FUNCTION, "partition function"); return visitChildren(ctx); }
+		antlrcpp::Any visitFREE_TEXT(TSqlParser::FREE_TEXTContext *ctx) override { handle(INSTR_UNSUPPORTED_TSQL_FREETEXT, "FREETEXT", getLineAndPos(ctx)); return visitChildren(ctx); }
+		antlrcpp::Any visitNextvaluefor(TSqlParser::NextvalueforContext *ctx) override { handle(INSTR_UNSUPPORTED_TSQL_NEXT_VALUE_FOR, "NEXT VALUE FOR", getLineAndPos(ctx)); return visitChildren(ctx); }
+		antlrcpp::Any visitOdbcscalar(TSqlParser::OdbcscalarContext *ctx) override { handle(INSTR_UNSUPPORTED_TSQL_ODBC_SCALAR_FUNCTION, "ODBC scalar functions", getLineAndPos(ctx)); return visitChildren(ctx); }
+		antlrcpp::Any visitPartition_function_call(TSqlParser::Partition_function_callContext *ctx) override { handle(INSTR_UNSUPPORTED_TSQL_PARTITION_FUNCTION, "partition function", getLineAndPos(ctx)); return visitChildren(ctx); }
 		antlrcpp::Any visitExpression(TSqlParser::ExpressionContext *ctx) override;
 		antlrcpp::Any visitExecute_parameter(TSqlParser::Execute_parameterContext *ctx) override;
 
@@ -182,17 +185,17 @@ protected:
 		antlrcpp::Any visitFull_object_name(TSqlParser::Full_object_nameContext *ctx) override;
 
 		// methods call (XML, hierachy, spatial)
-		antlrcpp::Any visitXml_nodes_method(TSqlParser::Xml_nodes_methodContext *ctx) override { handle(INSTR_UNSUPPORTED_TSQL_XML_NODES, "XML NODES"); return visitChildren(ctx); }
-		antlrcpp::Any visitXml_value_method(TSqlParser::Xml_value_methodContext *ctx) override { handle(INSTR_UNSUPPORTED_TSQL_XML_VALUE, "XML VALUE"); return visitChildren(ctx); }
-		antlrcpp::Any visitXml_query_method(TSqlParser::Xml_query_methodContext *ctx) override { handle(INSTR_UNSUPPORTED_TSQL_XML_QUERY, "XML QUERY"); return visitChildren(ctx); }
-		antlrcpp::Any visitXml_exist_method(TSqlParser::Xml_exist_methodContext *ctx) override { handle(INSTR_UNSUPPORTED_TSQL_XML_EXIST, "XML EXIST"); return visitChildren(ctx); }
-		antlrcpp::Any visitXml_modify_method(TSqlParser::Xml_modify_methodContext *ctx) override { handle(INSTR_UNSUPPORTED_TSQL_XML_MODIFY, "XML MODIFY"); return visitChildren(ctx); }
-		antlrcpp::Any visitXml_value_call(TSqlParser::Xml_value_callContext *ctx) override { handle(INSTR_UNSUPPORTED_TSQL_XML_VALUE, "XML VALUE"); return visitChildren(ctx); }
-		antlrcpp::Any visitXml_query_call(TSqlParser::Xml_query_callContext *ctx) override { handle(INSTR_UNSUPPORTED_TSQL_XML_QUERY, "XML QUERY"); return visitChildren(ctx); }
-		antlrcpp::Any visitXml_exist_call(TSqlParser::Xml_exist_callContext *ctx) override { handle(INSTR_UNSUPPORTED_TSQL_XML_EXIST, "XML EXIST"); return visitChildren(ctx); }
-		antlrcpp::Any visitXml_modify_call(TSqlParser::Xml_modify_callContext *ctx) override { handle(INSTR_UNSUPPORTED_TSQL_XML_MODIFY, "XML MODIFY"); return visitChildren(ctx); }
-		antlrcpp::Any visitHierarchyid_methods(TSqlParser::Hierarchyid_methodsContext *ctx) override { handle(INSTR_UNSUPPORTED_TSQL_HIERARCHYID_METHOD, "HIERARCHYID methods"); return visitChildren(ctx); }
-		antlrcpp::Any visitSpatial_methods(TSqlParser::Spatial_methodsContext *ctx) override { handle(INSTR_UNSUPPORTED_TSQL_SPATIAL_METHOD, "spatial methods"); return visitChildren(ctx); }
+		antlrcpp::Any visitXml_nodes_method(TSqlParser::Xml_nodes_methodContext *ctx) override { handle(INSTR_UNSUPPORTED_TSQL_XML_NODES, "XML NODES", getLineAndPos(ctx)); return visitChildren(ctx); }
+		antlrcpp::Any visitXml_value_method(TSqlParser::Xml_value_methodContext *ctx) override { handle(INSTR_UNSUPPORTED_TSQL_XML_VALUE, "XML VALUE", getLineAndPos(ctx)); return visitChildren(ctx); }
+		antlrcpp::Any visitXml_query_method(TSqlParser::Xml_query_methodContext *ctx) override { handle(INSTR_UNSUPPORTED_TSQL_XML_QUERY, "XML QUERY", getLineAndPos(ctx)); return visitChildren(ctx); }
+		antlrcpp::Any visitXml_exist_method(TSqlParser::Xml_exist_methodContext *ctx) override { handle(INSTR_UNSUPPORTED_TSQL_XML_EXIST, "XML EXIST", getLineAndPos(ctx)); return visitChildren(ctx); }
+		antlrcpp::Any visitXml_modify_method(TSqlParser::Xml_modify_methodContext *ctx) override { handle(INSTR_UNSUPPORTED_TSQL_XML_MODIFY, "XML MODIFY", getLineAndPos(ctx)); return visitChildren(ctx); }
+		antlrcpp::Any visitXml_value_call(TSqlParser::Xml_value_callContext *ctx) override { handle(INSTR_UNSUPPORTED_TSQL_XML_VALUE, "XML VALUE", getLineAndPos(ctx)); return visitChildren(ctx); }
+		antlrcpp::Any visitXml_query_call(TSqlParser::Xml_query_callContext *ctx) override { handle(INSTR_UNSUPPORTED_TSQL_XML_QUERY, "XML QUERY", getLineAndPos(ctx)); return visitChildren(ctx); }
+		antlrcpp::Any visitXml_exist_call(TSqlParser::Xml_exist_callContext *ctx) override { handle(INSTR_UNSUPPORTED_TSQL_XML_EXIST, "XML EXIST", getLineAndPos(ctx)); return visitChildren(ctx); }
+		antlrcpp::Any visitXml_modify_call(TSqlParser::Xml_modify_callContext *ctx) override { handle(INSTR_UNSUPPORTED_TSQL_XML_MODIFY, "XML MODIFY", getLineAndPos(ctx)); return visitChildren(ctx); }
+		antlrcpp::Any visitHierarchyid_methods(TSqlParser::Hierarchyid_methodsContext *ctx) override { handle(INSTR_UNSUPPORTED_TSQL_HIERARCHYID_METHOD, "HIERARCHYID methods", getLineAndPos(ctx)); return visitChildren(ctx); }
+		antlrcpp::Any visitSpatial_methods(TSqlParser::Spatial_methodsContext *ctx) override { handle(INSTR_UNSUPPORTED_TSQL_SPATIAL_METHOD, "spatial methods", getLineAndPos(ctx)); return visitChildren(ctx); }
 
 		// built-in functions
 		antlrcpp::Any visitBif_cast_parse(TSqlParser::Bif_cast_parseContext *ctx) override;
@@ -220,10 +223,10 @@ std::unique_ptr<TsqlUnsupportedFeatureHandler> TsqlUnsupportedFeatureHandler::cr
 
 void TsqlUnsupportedFeatureHandlerImpl::handle(PgTsqlInstrMetricType tm_type, antlr4::tree::TerminalNode *node, escape_hatch_t* eh)
 {
-	handle(tm_type, (node ? node->getText().c_str() : ""), eh);
+	handle(tm_type, (node ? node->getText().c_str() : ""), eh, getLineAndPos(node));
 }
 
-void TsqlUnsupportedFeatureHandlerImpl::handle(PgTsqlInstrMetricType tm_type, const char *featureName, escape_hatch_t* eh)
+void TsqlUnsupportedFeatureHandlerImpl::handle(PgTsqlInstrMetricType tm_type, const char *featureName, escape_hatch_t* eh, std::pair<int,int> line_and_pos)
 {
 	++count;
 
@@ -235,16 +238,16 @@ void TsqlUnsupportedFeatureHandlerImpl::handle(PgTsqlInstrMetricType tm_type, co
 	if (throw_error && (!eh || (*eh->val) != EH_IGNORE)) // if escape hatch is given, check the current value is 'ignore'
 	{
 		if (eh)
-			throw PGErrorWrapperException(ERROR, ERRCODE_FEATURE_NOT_SUPPORTED, format_errmsg("\'%s\' is not currently supported in Babelfish. please use babelfishpg_tsql.%s to ignore", featureName, eh->name), 0);
+			throw PGErrorWrapperException(ERROR, ERRCODE_FEATURE_NOT_SUPPORTED, format_errmsg("\'%s\' is not currently supported in Babelfish. please use babelfishpg_tsql.%s to ignore", featureName, eh->name), line_and_pos);
 		else
-			throw PGErrorWrapperException(ERROR, ERRCODE_FEATURE_NOT_SUPPORTED, format_errmsg("\'%s\' is not currently supported in Babelfish", featureName), 0);
+			throw PGErrorWrapperException(ERROR, ERRCODE_FEATURE_NOT_SUPPORTED, format_errmsg("\'%s\' is not currently supported in Babelfish", featureName), line_and_pos);
 	}
 }
 
 antlrcpp::Any TsqlUnsupportedFeatureHandlerImpl::visitCreate_or_alter_function(TSqlParser::Create_or_alter_functionContext *ctx)
 {
 	if (ctx->ALTER())
-		handle(INSTR_UNSUPPORTED_TSQL_ALTER_FUNCTION, "ALTER FUNCTION");
+		handle(INSTR_UNSUPPORTED_TSQL_ALTER_FUNCTION, "ALTER FUNCTION", getLineAndPos(ctx->ALTER()));
 
 	std::vector<TSqlParser::Function_optionContext *> options;
 	if (ctx->func_body_returns_select())
@@ -268,7 +271,7 @@ antlrcpp::Any TsqlUnsupportedFeatureHandlerImpl::visitCreate_or_alter_function(T
 		{
 			/* SCHEMABINDING is different from other case because it should throw an error when it is *NOT* given. handle an error manually */
 			if (throw_error)
-				throw PGErrorWrapperException(ERROR, ERRCODE_FEATURE_NOT_SUPPORTED, format_errmsg("\'SCHEMABINDING\' option should be given to create a %s in Babelfish", "function"), 0);
+				throw PGErrorWrapperException(ERROR, ERRCODE_FEATURE_NOT_SUPPORTED, format_errmsg("\'SCHEMABINDING\' option should be given to create a %s in Babelfish", "function"), getLineAndPos(ctx));
 			else
 				++count;
 		}
@@ -281,13 +284,13 @@ antlrcpp::Any TsqlUnsupportedFeatureHandlerImpl::visitCreate_or_alter_function(T
 		else if (option->NATIVE_COMPILATION())
 			handle(INSTR_UNSUPPORTED_TSQL_ALTER_FUNCTION_NATIVE_COMPILATION_OPTION, option->NATIVE_COMPILATION());
 		else if (option->execute_as_clause())
-			handle(INSTR_UNSUPPORTED_TSQL_EXECUTE_AS_STMT, "EXECUTE AS");
+			handle(INSTR_UNSUPPORTED_TSQL_EXECUTE_AS_STMT, "EXECUTE AS", getLineAndPos(option->execute_as_clause()));
 	}
 
 	if (ctx->func_body_returns_scalar() && ctx->func_body_returns_scalar()->external_name())
-		handle(INSTR_UNSUPPORTED_TSQL_ALTER_FUNCTION_EXTERNAL_NAME_OPTION, "EXTERNAL NAME");
+		handle(INSTR_UNSUPPORTED_TSQL_ALTER_FUNCTION_EXTERNAL_NAME_OPTION, "EXTERNAL NAME", getLineAndPos(ctx->func_body_returns_scalar()->external_name()));
 	if (ctx->func_body_returns_table_clr() && ctx->func_body_returns_table_clr()->external_name())
-		handle(INSTR_UNSUPPORTED_TSQL_ALTER_FUNCTION_EXTERNAL_NAME_OPTION, "EXTERNAL NAME");
+		handle(INSTR_UNSUPPORTED_TSQL_ALTER_FUNCTION_EXTERNAL_NAME_OPTION, "EXTERNAL NAME", getLineAndPos(ctx->func_body_returns_table_clr()->external_name()));
 
 	return visitChildren(ctx);
 }
@@ -295,7 +298,7 @@ antlrcpp::Any TsqlUnsupportedFeatureHandlerImpl::visitCreate_or_alter_function(T
 antlrcpp::Any TsqlUnsupportedFeatureHandlerImpl::visitCreate_or_alter_procedure(TSqlParser::Create_or_alter_procedureContext *ctx)
 {
 	if (ctx->ALTER())
-		handle(INSTR_UNSUPPORTED_TSQL_ALTER_PROCEDURE, "ALTER PROCEDURE");
+		handle(INSTR_UNSUPPORTED_TSQL_ALTER_PROCEDURE, "ALTER PROCEDURE", getLineAndPos(ctx->ALTER()));
 
 	/* escape hatch of SCHEMABINDING option*/
 	if (escape_hatch_schemabinding_procedure != EH_IGNORE)
@@ -309,7 +312,7 @@ antlrcpp::Any TsqlUnsupportedFeatureHandlerImpl::visitCreate_or_alter_procedure(
 		{
 			/* SCHEMABINDING is different from other case because it should throw an error when it is *NOT* given. handle an error manually */
 			if (throw_error)
-				throw PGErrorWrapperException(ERROR, ERRCODE_FEATURE_NOT_SUPPORTED, format_errmsg("\'SCHEMABINDING\' option should be given to create a %s in Babelfish", "procedure"), 0);
+				throw PGErrorWrapperException(ERROR, ERRCODE_FEATURE_NOT_SUPPORTED, format_errmsg("\'SCHEMABINDING\' option should be given to create a %s in Babelfish", "procedure"), getLineAndPos(ctx));
 			else
 				++count;
 		}
@@ -327,14 +330,14 @@ antlrcpp::Any TsqlUnsupportedFeatureHandlerImpl::visitCreate_or_alter_procedure(
 		else if (option->RECOMPILE())
 			handle(INSTR_UNSUPPORTED_TSQL_ALTER_PROCEDURE_RECOMPILE_OPTION, option->RECOMPILE());
 		else if (option->execute_as_clause())
-			handle(INSTR_UNSUPPORTED_TSQL_EXECUTE_AS_STMT, "EXECUTE AS");
+			handle(INSTR_UNSUPPORTED_TSQL_EXECUTE_AS_STMT, "EXECUTE AS", getLineAndPos(option->execute_as_clause()));
 	}
 
 	if (ctx->atomic_proc_body())
-		handle(INSTR_UNSUPPORTED_TSQL_ALTER_PROCEDURE_ATOMIC_WITH_OPTION, "ATOMIC WITH");
+		handle(INSTR_UNSUPPORTED_TSQL_ALTER_PROCEDURE_ATOMIC_WITH_OPTION, "ATOMIC WITH", getLineAndPos(ctx->atomic_proc_body()));
 
 	if (ctx->external_name())
-		handle(INSTR_UNSUPPORTED_TSQL_ALTER_PROCEDURE_EXTERNAL_NAME_OPTION, "EXTERNAL NAME");
+		handle(INSTR_UNSUPPORTED_TSQL_ALTER_PROCEDURE_EXTERNAL_NAME_OPTION, "EXTERNAL NAME", getLineAndPos(ctx->external_name()));
 
 	return visitChildren(ctx);
 }
@@ -342,7 +345,7 @@ antlrcpp::Any TsqlUnsupportedFeatureHandlerImpl::visitCreate_or_alter_procedure(
 antlrcpp::Any TsqlUnsupportedFeatureHandlerImpl::visitCreate_or_alter_trigger(TSqlParser::Create_or_alter_triggerContext *ctx)
 {
 	if (ctx->create_or_alter_ddl_trigger())
-		handle(INSTR_UNSUPPORTED_TSQL_DDL_TRIGGER, "DDL trigger");
+		handle(INSTR_UNSUPPORTED_TSQL_DDL_TRIGGER, "DDL trigger", getLineAndPos(ctx->create_or_alter_ddl_trigger()));
 
 	/* escape hatch of SCHEMABINDING option*/
 	if (escape_hatch_schemabinding_trigger != EH_IGNORE)
@@ -365,7 +368,7 @@ antlrcpp::Any TsqlUnsupportedFeatureHandlerImpl::visitCreate_or_alter_trigger(TS
 		{
 			/* SCHEMABINDING is different from other case because it should throw an error when it is *NOT* given. handle an error manually */
 			if (throw_error)
-				throw PGErrorWrapperException(ERROR, ERRCODE_FEATURE_NOT_SUPPORTED, format_errmsg("\'SCHEMABINDING\' option should be given to create a %s in Babelfish", "trigger"), 0);
+				throw PGErrorWrapperException(ERROR, ERRCODE_FEATURE_NOT_SUPPORTED, format_errmsg("\'SCHEMABINDING\' option should be given to create a %s in Babelfish", "trigger"), getLineAndPos(ctx));
 			else
 				++count;
 		}
@@ -376,13 +379,13 @@ antlrcpp::Any TsqlUnsupportedFeatureHandlerImpl::visitCreate_or_alter_trigger(TS
 		auto dctx = ctx->create_or_alter_dml_trigger();
 
 		if (dctx->ALTER())
-			handle(INSTR_UNSUPPORTED_TSQL_DML_ALTER_TRIGGER, "ALTER TRIGGER");
+			handle(INSTR_UNSUPPORTED_TSQL_DML_ALTER_TRIGGER, "ALTER TRIGGER", getLineAndPos(dctx->ALTER()));
 
 		if (dctx->INSTEAD())
-			handle(INSTR_UNSUPPORTED_TSQL_DML_INSTEAD_OF_TRIGGER, "Instead of Trigger");
+			handle(INSTR_UNSUPPORTED_TSQL_DML_INSTEAD_OF_TRIGGER, "Instead of Trigger", getLineAndPos(dctx->INSTEAD()));
 
 		if (dctx->APPEND()) // WITH APPEND
-			handle(INSTR_UNSUPPORTED_TSQL_DML_WITH_APPEND_TRIGGER, "WITH APPEND");
+			handle(INSTR_UNSUPPORTED_TSQL_DML_WITH_APPEND_TRIGGER, "WITH APPEND", getLineAndPos(dctx->APPEND()));
 
 		if (dctx->for_replication())
 			handle_for_replication(dctx->for_replication());
@@ -396,7 +399,7 @@ antlrcpp::Any TsqlUnsupportedFeatureHandlerImpl::visitCreate_or_alter_trigger(TS
 		}
 
 		if (dctx->external_name())
-			handle(INSTR_UNSUPPORTED_TSQL_DML_TRIGGER_EXTERNAL_NAME_OPTION, "EXERNAL NAME");
+			handle(INSTR_UNSUPPORTED_TSQL_DML_TRIGGER_EXTERNAL_NAME_OPTION, "EXERNAL NAME", getLineAndPos(dctx->external_name()));
 	}
 	else /* DDL trigger */
 	{
@@ -411,7 +414,7 @@ antlrcpp::Any TsqlUnsupportedFeatureHandlerImpl::visitCreate_or_alter_trigger(TS
 		}
 
 		if (dctx->external_name())
-			handle(INSTR_UNSUPPORTED_TSQL_DDL_TRIGGER_EXTERNAL_NAME_OPTION, "EXERNAL NAME");
+			handle(INSTR_UNSUPPORTED_TSQL_DDL_TRIGGER_EXTERNAL_NAME_OPTION, "EXERNAL NAME", getLineAndPos(dctx->external_name()));
 	}
 
 	return visitChildren(ctx);
@@ -420,7 +423,7 @@ antlrcpp::Any TsqlUnsupportedFeatureHandlerImpl::visitCreate_or_alter_trigger(TS
 antlrcpp::Any TsqlUnsupportedFeatureHandlerImpl::visitCreate_or_alter_view(TSqlParser::Create_or_alter_viewContext *ctx)
 {
 	if (ctx->ALTER())
-		handle(INSTR_UNSUPPORTED_TSQL_ALTER_VIEW, "ALTER VIEW");
+		handle(INSTR_UNSUPPORTED_TSQL_ALTER_VIEW, "ALTER VIEW", getLineAndPos(ctx->ALTER()));
 
 	/* escape hatch of SCHEMABINDING option*/
 	if (escape_hatch_schemabinding_view != EH_IGNORE)
@@ -434,7 +437,7 @@ antlrcpp::Any TsqlUnsupportedFeatureHandlerImpl::visitCreate_or_alter_view(TSqlP
 		{
 			/* SCHEMABINDING is different from other case because it should throw an error when it is *NOT* given. handle an error manually */
 			if (throw_error)
-				throw PGErrorWrapperException(ERROR, ERRCODE_FEATURE_NOT_SUPPORTED, format_errmsg("\'SCHEMABINDING\' option should be given to create a %s in Babelfish", "view"), 0);
+				throw PGErrorWrapperException(ERROR, ERRCODE_FEATURE_NOT_SUPPORTED, format_errmsg("\'SCHEMABINDING\' option should be given to create a %s in Babelfish", "view"), getLineAndPos(ctx));
 			else
 				++count;
 		}
@@ -462,9 +465,9 @@ void TsqlUnsupportedFeatureHandlerImpl::handle_storage_partition(TSqlParser::Sto
 		return;
 
 	if (ctx->id().size() < 2) // filegroup
-		handle(INSTR_UNSUPPORTED_TSQL_FILEGROUP, "filegroup", &st_escape_hatch_storage_options);
+		handle(INSTR_UNSUPPORTED_TSQL_FILEGROUP, "filegroup", &st_escape_hatch_storage_options, getLineAndPos(ctx));
 	else if (ctx->id().size() == 2) // partitioning
-		handle(INSTR_UNSUPPORTED_TSQL_PARTITION_SCHEME, "partition scheme", &st_escape_hatch_storage_on_partition);
+		handle(INSTR_UNSUPPORTED_TSQL_PARTITION_SCHEME, "partition scheme", &st_escape_hatch_storage_on_partition, getLineAndPos(ctx));
 }
 
 void TsqlUnsupportedFeatureHandlerImpl::handle_for_replication(TSqlParser::For_replicationContext *ctx)
@@ -473,9 +476,9 @@ void TsqlUnsupportedFeatureHandlerImpl::handle_for_replication(TSqlParser::For_r
 		return;
 
 	if (ctx->NOT())
-		handle(INSTR_UNSUPPORTED_TSQL_NOT_FOR_REPLICATION, "NOT FOR REPLICATION", &st_escape_hatch_for_replication);
+		handle(INSTR_UNSUPPORTED_TSQL_NOT_FOR_REPLICATION, "NOT FOR REPLICATION", &st_escape_hatch_for_replication, getLineAndPos(ctx));
 	else
-		handle(INSTR_UNSUPPORTED_TSQL_FOR_REPLICATION, "FOR REPLICATION", &st_escape_hatch_for_replication);
+		handle(INSTR_UNSUPPORTED_TSQL_FOR_REPLICATION, "FOR REPLICATION", &st_escape_hatch_for_replication, getLineAndPos(ctx));
 }
 
 antlrcpp::Any TsqlUnsupportedFeatureHandlerImpl::visitColumn_constraint(TSqlParser::Column_constraintContext *ctx)
@@ -559,39 +562,39 @@ antlrcpp::Any TsqlUnsupportedFeatureHandlerImpl::visitIndex_option(TSqlParser::I
 		std::string id_str = getFullText(ctx->id()[0]);
 
 		if (pg_strcasecmp(id_str.c_str(), "pad_index") == 0)
-			handle(INSTR_UNSUPPORTED_TSQL_INDEX_OPTION_MISC, "PAD_INDEX", &st_escape_hatch_storage_options);
+			handle(INSTR_UNSUPPORTED_TSQL_INDEX_OPTION_MISC, "PAD_INDEX", &st_escape_hatch_storage_options, getLineAndPos(ctx->id()[0]));
 		else if (pg_strcasecmp(id_str.c_str(), "fillfactor") == 0)
-			handle(INSTR_UNSUPPORTED_TSQL_INDEX_OPTION_FILLFACTOR, "FILLFACTOR", &st_escape_hatch_storage_options);
+			handle(INSTR_UNSUPPORTED_TSQL_INDEX_OPTION_FILLFACTOR, "FILLFACTOR", &st_escape_hatch_storage_options, getLineAndPos(ctx->id()[0]));
 		else if (pg_strcasecmp(id_str.c_str(), "sort_in_tempdb") == 0)
-			handle(INSTR_UNSUPPORTED_TSQL_INDEX_OPTION_MISC, "SORT_IN_TEMPDB"); /* seems like it will affect functionality. do not use escape hatch */
+			handle(INSTR_UNSUPPORTED_TSQL_INDEX_OPTION_MISC, "SORT_IN_TEMPDB", getLineAndPos(ctx->id()[0])); /* seems like it will affect functionality. do not use escape hatch */
 		else if (pg_strcasecmp(id_str.c_str(), "ignore_dup_key") == 0)
-			handle(INSTR_UNSUPPORTED_TSQL_INDEX_OPTION_MISC, "IGNORE_DUP_KEY", &st_escape_hatch_storage_options);
+			handle(INSTR_UNSUPPORTED_TSQL_INDEX_OPTION_MISC, "IGNORE_DUP_KEY", &st_escape_hatch_storage_options, getLineAndPos(ctx->id()[0]));
 		else if (pg_strcasecmp(id_str.c_str(), "statistics_norecompute") == 0)
-			handle(INSTR_UNSUPPORTED_TSQL_INDEX_OPTION_MISC, "STATISTICS_NORECOMPUTE", &st_escape_hatch_storage_options);
+			handle(INSTR_UNSUPPORTED_TSQL_INDEX_OPTION_MISC, "STATISTICS_NORECOMPUTE", &st_escape_hatch_storage_options, getLineAndPos(ctx->id()[0]));
 		else if (pg_strcasecmp(id_str.c_str(), "statistics_incremental") == 0)
-			handle(INSTR_UNSUPPORTED_TSQL_INDEX_OPTION_MISC, "STATISTICS_INCREMENTAL", &st_escape_hatch_storage_options);
+			handle(INSTR_UNSUPPORTED_TSQL_INDEX_OPTION_MISC, "STATISTICS_INCREMENTAL", &st_escape_hatch_storage_options, getLineAndPos(ctx->id()[0]));
 		else if (pg_strcasecmp(id_str.c_str(), "drop_existing") == 0)
-			handle(INSTR_UNSUPPORTED_TSQL_INDEX_OPTION_MISC, "DROP_EXISTING"); /* seems like it will affect functionality. do not use escape hatch */
+			handle(INSTR_UNSUPPORTED_TSQL_INDEX_OPTION_MISC, "DROP_EXISTING", getLineAndPos(ctx->id()[0])); /* seems like it will affect functionality. do not use escape hatch */
 		else if (pg_strcasecmp(id_str.c_str(), "online") == 0)
-			handle(INSTR_UNSUPPORTED_TSQL_INDEX_OPTION_MISC, "ONLINE"); /* seems like it will affect functionality. do not use escape hatch */
+			handle(INSTR_UNSUPPORTED_TSQL_INDEX_OPTION_MISC, "ONLINE", getLineAndPos(ctx->id()[0])); /* seems like it will affect functionality. do not use escape hatch */
 		else if (pg_strcasecmp(id_str.c_str(), "resumable") == 0)
-			handle(INSTR_UNSUPPORTED_TSQL_INDEX_OPTION_MISC, "RESUMABLE"); /* online index option */
+			handle(INSTR_UNSUPPORTED_TSQL_INDEX_OPTION_MISC, "RESUMABLE", getLineAndPos(ctx->id()[0])); /* online index option */
 		else if (pg_strcasecmp(id_str.c_str(), "max_duration") == 0)
-			handle(INSTR_UNSUPPORTED_TSQL_INDEX_OPTION_MISC, "MAX_DURATION"); /* online index option */
+			handle(INSTR_UNSUPPORTED_TSQL_INDEX_OPTION_MISC, "MAX_DURATION", getLineAndPos(ctx->id()[0])); /* online index option */
 		else if (pg_strcasecmp(id_str.c_str(), "allow_row_locks") == 0)
-			handle(INSTR_UNSUPPORTED_TSQL_INDEX_OPTION_MISC, "ALLOW_ROW_LOCKS", &st_escape_hatch_storage_options);
+			handle(INSTR_UNSUPPORTED_TSQL_INDEX_OPTION_MISC, "ALLOW_ROW_LOCKS", &st_escape_hatch_storage_options, getLineAndPos(ctx->id()[0]));
 		else if (pg_strcasecmp(id_str.c_str(), "allow_page_locks") == 0)
-			handle(INSTR_UNSUPPORTED_TSQL_INDEX_OPTION_MISC, "ALLOW_PAGE_LOCKS", &st_escape_hatch_storage_options);
+			handle(INSTR_UNSUPPORTED_TSQL_INDEX_OPTION_MISC, "ALLOW_PAGE_LOCKS", &st_escape_hatch_storage_options, getLineAndPos(ctx->id()[0]));
 		else if (pg_strcasecmp(id_str.c_str(), "optimize_for_sequential_key") == 0)
-			handle(INSTR_UNSUPPORTED_TSQL_INDEX_OPTION_MISC, "OPTIMIZE_FOR_SEQUENTIAL_KEY", &st_escape_hatch_storage_options);
+			handle(INSTR_UNSUPPORTED_TSQL_INDEX_OPTION_MISC, "OPTIMIZE_FOR_SEQUENTIAL_KEY", &st_escape_hatch_storage_options, getLineAndPos(ctx->id()[0]));
 		else if (pg_strcasecmp(id_str.c_str(), "maxdop") == 0)
-			handle(INSTR_UNSUPPORTED_TSQL_INDEX_OPTION_MISC, "MAXDOP", &st_escape_hatch_storage_options);
+			handle(INSTR_UNSUPPORTED_TSQL_INDEX_OPTION_MISC, "MAXDOP", &st_escape_hatch_storage_options, getLineAndPos(ctx->id()[0]));
 		else if (pg_strcasecmp(id_str.c_str(), "data_compression") == 0)
-			handle(INSTR_UNSUPPORTED_TSQL_INDEX_OPTION_MISC, "DATA_COMPRESSION", &st_escape_hatch_storage_options);
+			handle(INSTR_UNSUPPORTED_TSQL_INDEX_OPTION_MISC, "DATA_COMPRESSION", &st_escape_hatch_storage_options, getLineAndPos(ctx->id()[0]));
 		else
 		{
 			if (throw_error)
-				throw PGErrorWrapperException(ERROR, ERRCODE_SYNTAX_ERROR, format_errmsg("unknown index option: %s", id_str.c_str()), 0);
+				throw PGErrorWrapperException(ERROR, ERRCODE_SYNTAX_ERROR, format_errmsg("unknown index option: %s", id_str.c_str()), getLineAndPos(ctx->id()[0]));
 		}
 	}
 
@@ -608,7 +611,7 @@ antlrcpp::Any TsqlUnsupportedFeatureHandlerImpl::visitTable_constraint(TSqlParse
 
 	// please note that, in 'ingore' mode, we will not rewrite a query in ANTLR. The corresponding logic is implemented in backend parser.
 	if (ctx->DEFAULT())
-		handle(INSTR_UNSUPPORTED_TSQL_CONSTRAINT_DEFAULT, "CONSTRAINT DEFAULT", &st_escape_hatch_constraint_name_for_default);
+		handle(INSTR_UNSUPPORTED_TSQL_CONSTRAINT_DEFAULT, "CONSTRAINT DEFAULT", &st_escape_hatch_constraint_name_for_default, getLineAndPos(ctx->DEFAULT()));
 
 	// ctx->with_index_options() will be handled by visitIndex_option(). do nothing here.
 
@@ -624,7 +627,7 @@ antlrcpp::Any TsqlUnsupportedFeatureHandlerImpl::visitColumn_def_table_constrain
 	// ctx->table_constraint() will he handled by visitTable_constraint(). do nothing here.
 
 	if (ctx->period_for_system_time())
-		handle(INSTR_UNSUPPORTED_TSQL_PERIOD_FOR_SYSTEM_TIME, "PERIOD FOR SYSTEM_TIME");
+		handle(INSTR_UNSUPPORTED_TSQL_PERIOD_FOR_SYSTEM_TIME, "PERIOD FOR SYSTEM_TIME", getLineAndPos(ctx->period_for_system_time()));
 	return visitChildren(ctx);
 }
 
@@ -632,7 +635,7 @@ antlrcpp::Any TsqlUnsupportedFeatureHandlerImpl::visitTable_name(TSqlParser::Tab
 {
 	std::string val = stripQuoteFromId(ctx->id().back());
 	if ((pg_strncasecmp("##", val.c_str(), 2) == 0))
-		handle(INSTR_UNSUPPORTED_TSQL_GLOBAL_TEMPORARY_TABLE, "GLOBAL TEMPORARY TABLE");
+		handle(INSTR_UNSUPPORTED_TSQL_GLOBAL_TEMPORARY_TABLE, "GLOBAL TEMPORARY TABLE", getLineAndPos(ctx));
 
 	return visitChildren(ctx);
 }
@@ -677,21 +680,21 @@ antlrcpp::Any TsqlUnsupportedFeatureHandlerImpl::visitAlter_table(TSqlParser::Al
 		Assert(ctx->column_definition());
 		auto cdctx = ctx->column_definition();
 		if (!cdctx->COLLATE().empty())
-			handle(INSTR_UNSUPPORTED_TSQL_ALTER_TABLE_ALTER_COLUMN_COLLATE, "COLLATE in ALTER TABLE ALTER COLUMN");
+			handle(INSTR_UNSUPPORTED_TSQL_ALTER_TABLE_ALTER_COLUMN_COLLATE, "COLLATE in ALTER TABLE ALTER COLUMN", getLineAndPos(cdctx));
 		if (!cdctx->null_notnull().empty())
 		{
 			if (cdctx->null_notnull()[0]->NOT())
-				handle(INSTR_UNSUPPORTED_TSQL_ALTER_TABLE_ALTER_COLUMN_NOT_NULL, "NOT NULL in ALTER TABLE ALTER COLUMN");
+				handle(INSTR_UNSUPPORTED_TSQL_ALTER_TABLE_ALTER_COLUMN_NOT_NULL, "NOT NULL in ALTER TABLE ALTER COLUMN", getLineAndPos(cdctx));
 			else
-				handle(INSTR_UNSUPPORTED_TSQL_ALTER_TABLE_ALTER_COLUMN_NULL, "NULL in ALTER TABLE ALTER COLUMN");
+				handle(INSTR_UNSUPPORTED_TSQL_ALTER_TABLE_ALTER_COLUMN_NULL, "NULL in ALTER TABLE ALTER COLUMN", getLineAndPos(cdctx));
 		}
 	}
 
 	if (ctx->ADD() && ctx->WITH())
-		handle(INSTR_UNSUPPORTED_TSQL_ALTER_TABLE_CONSTRAINT_NO_CHECK_ADD, "ALTER TABLE WITH [NO]CHECK ADD", &st_escape_hatch_nocheck_add_constraint);
+		handle(INSTR_UNSUPPORTED_TSQL_ALTER_TABLE_CONSTRAINT_NO_CHECK_ADD, "ALTER TABLE WITH [NO]CHECK ADD", &st_escape_hatch_nocheck_add_constraint, getLineAndPos(ctx->ADD()));
 
 	if (ctx->CONSTRAINT())
-		handle(INSTR_UNSUPPORTED_TSQL_ALTER_TABLE_CONSTRAINT_NO_CHECK, "ALTER TABLE [NO]CHECK", &st_escape_hatch_nocheck_existing_constraint);
+		handle(INSTR_UNSUPPORTED_TSQL_ALTER_TABLE_CONSTRAINT_NO_CHECK, "ALTER TABLE [NO]CHECK", &st_escape_hatch_nocheck_existing_constraint, getLineAndPos(ctx->CONSTRAINT()));
 
 	// unsupported generally
 	if (ctx->CHANGE_TRACKING())
@@ -725,7 +728,7 @@ antlrcpp::Any TsqlUnsupportedFeatureHandlerImpl::visitCreate_index(TSqlParser::C
 			if (!option->EQUAL()) // backend only supports index option formed like <storage_parameter>=<value>
 			{
 				std::string option_name = (!option->id().empty() ? getFullText(option->id()[0]) : std::string("unknown index option"));
-				handle(INSTR_UNSUPPORTED_TSQL_INDEX_OPTION_UNKNOWN, option_name.c_str());
+				handle(INSTR_UNSUPPORTED_TSQL_INDEX_OPTION_UNKNOWN, option_name.c_str(), getLineAndPos(option));
 			}
 		}
 	}
@@ -735,7 +738,7 @@ antlrcpp::Any TsqlUnsupportedFeatureHandlerImpl::visitCreate_index(TSqlParser::C
 
 antlrcpp::Any TsqlUnsupportedFeatureHandlerImpl::visitAlter_index(TSqlParser::Alter_indexContext *ctx)
 {
-	handle(INSTR_UNSUPPORTED_TSQL_ALTER_INDEX, "ALTER INDEX");
+	handle(INSTR_UNSUPPORTED_TSQL_ALTER_INDEX, "ALTER INDEX", getLineAndPos(ctx));
 	return visitChildren(ctx);
 }
 
@@ -745,7 +748,7 @@ antlrcpp::Any TsqlUnsupportedFeatureHandlerImpl::visitCreate_database(TSqlParser
 		handle(INSTR_UNSUPPORTED_TSQL_CREATE_DATABASE_CONTAINMENT, ctx->CONTAINMENT(), &st_escape_hatch_database_misc_options);
 
 	if (!ctx->ON().empty())
-		handle(INSTR_UNSUPPORTED_TSQL_CREATE_DATABASE_ON, "CREATE DATABASE ON <database-file-spec>");
+		handle(INSTR_UNSUPPORTED_TSQL_CREATE_DATABASE_ON, "CREATE DATABASE ON <database-file-spec>", getLineAndPos(ctx->ON()[0]));
 
 	if (ctx->COLLATE())
 		handle(INSTR_UNSUPPORTED_TSQL_CREATE_DATABASE_COLLATE, ctx->COLLATE());
@@ -761,10 +764,10 @@ antlrcpp::Any TsqlUnsupportedFeatureHandlerImpl::visitCreate_database(TSqlParser
 				if (cdoctx->id())
 				{
 					if (!isDefaultLanguage(cdoctx->id()))
-						handle(INSTR_UNSUPPORTED_TSQL_CREATE_DATABASE_WITH_DEFAULT_LANGUAGE, ::getFullText(cdoctx->id()).c_str(), &st_escape_hatch_language_non_english);
+						handle(INSTR_UNSUPPORTED_TSQL_CREATE_DATABASE_WITH_DEFAULT_LANGUAGE, ::getFullText(cdoctx->id()).c_str(), &st_escape_hatch_language_non_english, getLineAndPos(cdoctx));
 				}
 				else // lcid
-					handle(INSTR_UNSUPPORTED_TSQL_CREATE_DATABASE_WITH_DEFAULT_LANGUAGE, "DEFAULT LANGUAGE with lcid");
+					handle(INSTR_UNSUPPORTED_TSQL_CREATE_DATABASE_WITH_DEFAULT_LANGUAGE, "DEFAULT LANGUAGE with lcid", getLineAndPos(cdoctx));
 			}
 			if (cdoctx->DEFAULT_FULLTEXT_LANGUAGE())
 				handle(INSTR_UNSUPPORTED_TSQL_CREATE_DATABASE_WITH_DEFAULT_FULLTEXT_LANGUAGE, cdoctx->DEFAULT_FULLTEXT_LANGUAGE(), &st_escape_hatch_fulltext);
@@ -790,39 +793,39 @@ antlrcpp::Any TsqlUnsupportedFeatureHandlerImpl::visitCreate_database(TSqlParser
 
 antlrcpp::Any TsqlUnsupportedFeatureHandlerImpl::visitAlter_database(TSqlParser::Alter_databaseContext *ctx)
 {
-	handle(INSTR_UNSUPPORTED_TSQL_ALTER_DATABASE, "ALTER DATABASE");
+	handle(INSTR_UNSUPPORTED_TSQL_ALTER_DATABASE, "ALTER DATABASE", getLineAndPos(ctx));
 	return visitChildren(ctx);
 }
 
 antlrcpp::Any TsqlUnsupportedFeatureHandlerImpl::visitCreate_fulltext_index(TSqlParser::Create_fulltext_indexContext *ctx)
 {
-	handle(INSTR_UNSUPPORTED_TSQL_CREATE_FULLTEXT_INDEX, "CREATE FULLTEXT INDEX", &st_escape_hatch_fulltext);
+	handle(INSTR_UNSUPPORTED_TSQL_CREATE_FULLTEXT_INDEX, "CREATE FULLTEXT INDEX", &st_escape_hatch_fulltext, getLineAndPos(ctx));
 	return visitChildren(ctx);
 }
 
 antlrcpp::Any TsqlUnsupportedFeatureHandlerImpl::visitAlter_fulltext_index(TSqlParser::Alter_fulltext_indexContext *ctx)
 {
-	handle(INSTR_UNSUPPORTED_TSQL_ALTER_FULLTEXT_INDEX, "ALTER FULLTEXT INDEX", &st_escape_hatch_fulltext);
+	handle(INSTR_UNSUPPORTED_TSQL_ALTER_FULLTEXT_INDEX, "ALTER FULLTEXT INDEX", &st_escape_hatch_fulltext, getLineAndPos(ctx));
 	return visitChildren(ctx);
 }
 
 antlrcpp::Any TsqlUnsupportedFeatureHandlerImpl::visitDrop_fulltext_index(TSqlParser::Drop_fulltext_indexContext *ctx)
 {
-	handle(INSTR_UNSUPPORTED_TSQL_DROP_FULLTEXT_INDEX, "DROP FULLTEXT INDEX", &st_escape_hatch_fulltext);
+	handle(INSTR_UNSUPPORTED_TSQL_DROP_FULLTEXT_INDEX, "DROP FULLTEXT INDEX", &st_escape_hatch_fulltext, getLineAndPos(ctx));
 	return visitChildren(ctx);
 }
 
 antlrcpp::Any TsqlUnsupportedFeatureHandlerImpl::visitCreate_type(TSqlParser::Create_typeContext *ctx)
 {
 	if (ctx->table_options() && ctx->table_options()->WITH())
-		handle(INSTR_UNSUPPORTED_TSQL_CREATE_TYPE_TABLE_OPTION, "table option in CREATE TYPE");
+		handle(INSTR_UNSUPPORTED_TSQL_CREATE_TYPE_TABLE_OPTION, "table option in CREATE TYPE", getLineAndPos(ctx->table_options()->WITH()));
 	return visitChildren(ctx);
 }
 
 antlrcpp::Any TsqlUnsupportedFeatureHandlerImpl::visitCreate_login(TSqlParser::Create_loginContext *ctx)
 {
 	if (ctx->password_hash)
-		handle(INSTR_UNSUPPORTED_TSQL_LOGIN_HASHED_PASSWORD, "hashed password", &st_escape_hatch_login_hashed_password);
+		handle(INSTR_UNSUPPORTED_TSQL_LOGIN_HASHED_PASSWORD, "hashed password", &st_escape_hatch_login_hashed_password, getLineAndPos(ctx));
 
 	if (ctx->MUST_CHANGE())
 		handle(INSTR_UNSUPPORTED_TSQL_LOGIN_PASSWORD_MUST_CHANGE, ctx->MUST_CHANGE(), &st_escape_hatch_login_password_must_change);
@@ -843,10 +846,10 @@ antlrcpp::Any TsqlUnsupportedFeatureHandlerImpl::visitCreate_login(TSqlParser::C
 			if (option->id())
 			{
 				if (!isDefaultLanguage(option->id()))
-					handle(INSTR_UNSUPPORTED_TSQL_CREATE_LOGIN_WITH_DEFAULT_LANGUAGE, ::getFullText(option->id()).c_str(), &st_escape_hatch_language_non_english);
+					handle(INSTR_UNSUPPORTED_TSQL_CREATE_LOGIN_WITH_DEFAULT_LANGUAGE, ::getFullText(option->id()).c_str(), &st_escape_hatch_language_non_english, getLineAndPos(option));
 			}
 			else // lcid (we can't assure lcid is default or not. to be safe, throw unsupported-feature error)
-				handle(INSTR_UNSUPPORTED_TSQL_CREATE_LOGIN_WITH_DEFAULT_LANGUAGE, "DEFAULT LANGUAGE with lcid");
+				handle(INSTR_UNSUPPORTED_TSQL_CREATE_LOGIN_WITH_DEFAULT_LANGUAGE, "DEFAULT LANGUAGE with lcid", getLineAndPos(option));
 		}
 		else if (option->SID())
 			handle(INSTR_UNSUPPORTED_TSQL_CREATE_LOGIN_MISC_OPTIONS, option->SID(), &st_escape_hatch_login_misc_options);
@@ -865,10 +868,10 @@ antlrcpp::Any TsqlUnsupportedFeatureHandlerImpl::visitCreate_login(TSqlParser::C
 			if (option->id())
 			{
 				if (!isDefaultLanguage(option->id()))
-					handle(INSTR_UNSUPPORTED_TSQL_CREATE_LOGIN_WITH_DEFAULT_LANGUAGE, ::getFullText(option->id()).c_str(), &st_escape_hatch_language_non_english);
+					handle(INSTR_UNSUPPORTED_TSQL_CREATE_LOGIN_WITH_DEFAULT_LANGUAGE, ::getFullText(option->id()).c_str(), &st_escape_hatch_language_non_english, getLineAndPos(option));
 			}
 			else // lcid (we can't assure lcid is default or not. to be safe, throw unsupported-feature error)
-				handle(INSTR_UNSUPPORTED_TSQL_CREATE_LOGIN_WITH_DEFAULT_LANGUAGE, "DEFAULT LANGUAGE with lcid");
+				handle(INSTR_UNSUPPORTED_TSQL_CREATE_LOGIN_WITH_DEFAULT_LANGUAGE, "DEFAULT LANGUAGE with lcid", getLineAndPos(option));
 		}
 	}
 	return visitChildren(ctx);
@@ -879,7 +882,7 @@ antlrcpp::Any TsqlUnsupportedFeatureHandlerImpl::visitAlter_login(TSqlParser::Al
 	for (auto option : ctx->alter_login_set_option())
 	{
 		if (option->password_hash)
-			handle(INSTR_UNSUPPORTED_TSQL_LOGIN_HASHED_PASSWORD, "hashed password", &st_escape_hatch_login_hashed_password);
+			handle(INSTR_UNSUPPORTED_TSQL_LOGIN_HASHED_PASSWORD, "hashed password", &st_escape_hatch_login_hashed_password, getLineAndPos(option));
 		else if (option->OLD_PASSWORD())
 			handle(INSTR_UNSUPPORTED_TSQL_LOGIN_OLD_PASSWORD, option->OLD_PASSWORD(), &st_escape_hatch_login_old_password);
 		else if (option->MUST_CHANGE(0))
@@ -899,10 +902,10 @@ antlrcpp::Any TsqlUnsupportedFeatureHandlerImpl::visitAlter_login(TSqlParser::Al
 			if (option->id())
 			{
 				if (!isDefaultLanguage(option->id()))
-					handle(INSTR_UNSUPPORTED_TSQL_ALTER_LOGIN_WITH_DEFAULT_LANGUAGE, ::getFullText(option->id()).c_str(), &st_escape_hatch_language_non_english);
+					handle(INSTR_UNSUPPORTED_TSQL_ALTER_LOGIN_WITH_DEFAULT_LANGUAGE, ::getFullText(option->id()).c_str(), &st_escape_hatch_language_non_english, getLineAndPos(option));
 			}
 			else // lcid (we can't assure lcid is default or not. to be safe, throw unsupported-feature error)
-				handle(INSTR_UNSUPPORTED_TSQL_ALTER_LOGIN_WITH_DEFAULT_LANGUAGE, "DEFAULT LANGUAGE with lcid");
+				handle(INSTR_UNSUPPORTED_TSQL_ALTER_LOGIN_WITH_DEFAULT_LANGUAGE, "DEFAULT LANGUAGE with lcid", getLineAndPos(option));
 		}
 	}
 
@@ -982,7 +985,7 @@ antlrcpp::Any TsqlUnsupportedFeatureHandlerImpl::visitDdl_statement(TSqlParser::
 	else
 		std::transform(featureName.begin(), featureName.end(), featureName.begin(), ::toupper);
 
-	handle(INSTR_UNSUPPORTED_TSQL_UNKNOWN_DDL, featureName.c_str());
+	handle(INSTR_UNSUPPORTED_TSQL_UNKNOWN_DDL, featureName.c_str(), getLineAndPos(ctx));
 
 	return visitChildren(ctx);
 }
@@ -995,14 +998,14 @@ antlrcpp::Any TsqlUnsupportedFeatureHandlerImpl::visitSelect_statement(TSqlParse
 		for (auto elem : qctx->select_list()->select_list_elem())
 		{
 			if (elem->column_elem() && elem->column_elem()->DOLLAR_IDENTITY())
-				handle(INSTR_UNSUPPORTED_TSQL_SELECT_DOLLAR_IDENTITY, "$IDENTITY");
+				handle(INSTR_UNSUPPORTED_TSQL_SELECT_DOLLAR_IDENTITY, "$IDENTITY", getLineAndPos(elem));
 			if (elem->column_elem() && elem->column_elem()->DOLLAR_ROWGUID())
-				handle(INSTR_UNSUPPORTED_TSQL_SELECT_DOLLAR_ROWGUID, "$ROWGUID");
+				handle(INSTR_UNSUPPORTED_TSQL_SELECT_DOLLAR_ROWGUID, "$ROWGUID", getLineAndPos(elem));
 			if (elem->expression_elem() && elem->expression_elem()->EQUAL())
 			{
 				TSqlParser::Select_statement_standaloneContext *pctx = dynamic_cast<TSqlParser::Select_statement_standaloneContext *>(ctx->parent);
 				if (!pctx)
-					handle(INSTR_UNSUPPORTED_TSQL_SELECT_COL_ALIAS, "ALIAS = EXPRESSION in subquery, derived table, or common table expression");
+					handle(INSTR_UNSUPPORTED_TSQL_SELECT_COL_ALIAS, "ALIAS = EXPRESSION in subquery, derived table, or common table expression", getLineAndPos(elem));
 			}
 		}
 	}
@@ -1013,19 +1016,19 @@ antlrcpp::Any TsqlUnsupportedFeatureHandlerImpl::visitSelect_statement(TSqlParse
 antlrcpp::Any TsqlUnsupportedFeatureHandlerImpl::visitInsert_statement(TSqlParser::Insert_statementContext *ctx)
 {
 	if (ctx->insert_statement_value() && ctx->insert_statement_value()->DEFAULT() && ctx->output_clause())
-		handle(INSTR_UNSUPPORTED_TSQL_INSERT_STMT_DEFAULT_VALUE, "DEFAULT VALUES with OUTPUT clause"); /* backend paser can't handle DEFAULT VALUES with output clause yet */
+		handle(INSTR_UNSUPPORTED_TSQL_INSERT_STMT_DEFAULT_VALUE, "DEFAULT VALUES with OUTPUT clause", getLineAndPos(ctx->output_clause())); /* backend parser can't handle DEFAULT VALUES with output clause yet */
 	return visitChildren(ctx);
 }
 
 antlrcpp::Any TsqlUnsupportedFeatureHandlerImpl::visitUpdate_statement(TSqlParser::Update_statementContext *ctx)
 {
 	if (ctx->CURRENT()) // CURRENT OF
-		handle(INSTR_UNSUPPORTED_TSQL_UPDATE_WHERE_CURRENT_OF, "CURRENT OF");
+		handle(INSTR_UNSUPPORTED_TSQL_UPDATE_WHERE_CURRENT_OF, "CURRENT OF", getLineAndPos(ctx->CURRENT()));
 
 	for (auto elem : ctx->update_elem())
 	{
 		if (elem->DOT())
-			handle(INSTR_UNSUPPORTED_TSQL_UPDATE_WITH_METHOD_NAME, "UPDATE with method name");
+			handle(INSTR_UNSUPPORTED_TSQL_UPDATE_WITH_METHOD_NAME, "UPDATE with method name", getLineAndPos(elem));
 	}
 
 	return visitChildren(ctx);
@@ -1034,7 +1037,7 @@ antlrcpp::Any TsqlUnsupportedFeatureHandlerImpl::visitUpdate_statement(TSqlParse
 antlrcpp::Any TsqlUnsupportedFeatureHandlerImpl::visitDelete_statement(TSqlParser::Delete_statementContext *ctx)
 {
 	if (ctx->CURRENT()) // CURRENT OF
-		handle(INSTR_UNSUPPORTED_TSQL_DELETE_WHERE_CURRENT_OF, "CURRENT OF");
+		handle(INSTR_UNSUPPORTED_TSQL_DELETE_WHERE_CURRENT_OF, "CURRENT OF", getLineAndPos(ctx->CURRENT()));
 	return visitChildren(ctx);
 }
 
@@ -1072,15 +1075,15 @@ antlrcpp::Any TsqlUnsupportedFeatureHandlerImpl::visitSet_statement(TSqlParser::
 			/* don't strip id here. let them throw an "unrecognized SET option" error in tsqlIface */
 			std::string val = getFullText(sctx->id().front());
 			if (pg_strcasecmp("DATEFORMAT", val.c_str()) == 0)
-				handle(INSTR_UNSUPPORTED_TSQL_OPTION_DATEFORMAT, "DATEFORMAT", &st_escape_hatch_session_settings);
+				handle(INSTR_UNSUPPORTED_TSQL_OPTION_DATEFORMAT, "DATEFORMAT", &st_escape_hatch_session_settings, getLineAndPos(sctx));
 			if (pg_strcasecmp("DEADLOCK_PRIORITY", val.c_str()) == 0)
-				handle(INSTR_UNSUPPORTED_TSQL_OPTION_DEADLOCK_PRIORITY, "DEADLOCK_PRIORITY", &st_escape_hatch_session_settings);
+				handle(INSTR_UNSUPPORTED_TSQL_OPTION_DEADLOCK_PRIORITY, "DEADLOCK_PRIORITY", &st_escape_hatch_session_settings, getLineAndPos(sctx));
 			if (pg_strcasecmp("LOCK_TIMEOUT", val.c_str()) == 0)
-				handle(INSTR_UNSUPPORTED_TSQL_OPTION_LOCK_TIMEOUT, "LOCK_TIMEOUT", &st_escape_hatch_session_settings);
+				handle(INSTR_UNSUPPORTED_TSQL_OPTION_LOCK_TIMEOUT, "LOCK_TIMEOUT", &st_escape_hatch_session_settings, getLineAndPos(sctx));
 			if (pg_strcasecmp("CONTEXT_INFO", val.c_str()) == 0)
-				handle(INSTR_UNSUPPORTED_TSQL_OPTION_CONTEXT_INFO, "CONTEXT_INFO", &st_escape_hatch_session_settings);
+				handle(INSTR_UNSUPPORTED_TSQL_OPTION_CONTEXT_INFO, "CONTEXT_INFO", &st_escape_hatch_session_settings, getLineAndPos(sctx));
 			if (pg_strcasecmp("QUERY_GOVERNOR_COST_LIMIT", val.c_str()) == 0)
-				handle(INSTR_UNSUPPORTED_TSQL_OPTION_QUERY_GOVERNOR_COST_LIMIT, "QUERY_GOVERNOR_COST_LIMIT", &st_escape_hatch_session_settings);
+				handle(INSTR_UNSUPPORTED_TSQL_OPTION_QUERY_GOVERNOR_COST_LIMIT, "QUERY_GOVERNOR_COST_LIMIT", &st_escape_hatch_session_settings, getLineAndPos(sctx));
 
 			/* let invalid SET-option be handled by tsqlIface */
 		}
@@ -1089,7 +1092,7 @@ antlrcpp::Any TsqlUnsupportedFeatureHandlerImpl::visitSet_statement(TSqlParser::
 			handle(INSTR_UNSUPPORTED_TSQL_OPTION_STATISTICS, sctx->STATISTICS(), &st_escape_hatch_session_settings);
 
 		if (sctx->xml_modify_method())
-			handle(INSTR_UNSUPPORTED_TSQL_OPTION_XML_METHOD, "xml modify method");
+			handle(INSTR_UNSUPPORTED_TSQL_OPTION_XML_METHOD, "xml modify method", getLineAndPos(sctx));
 	}
 
 	return visitChildren(ctx);
@@ -1098,18 +1101,18 @@ antlrcpp::Any TsqlUnsupportedFeatureHandlerImpl::visitSet_statement(TSqlParser::
 antlrcpp::Any TsqlUnsupportedFeatureHandlerImpl::visitCursor_statement(TSqlParser::Cursor_statementContext *ctx)
 {
 	if (ctx->GLOBAL())
-		handle(INSTR_UNSUPPORTED_TSQL_GLOBAL_CURSOR, "GLOBAL CURSOR");
+		handle(INSTR_UNSUPPORTED_TSQL_GLOBAL_CURSOR, "GLOBAL CURSOR", getLineAndPos(ctx->GLOBAL()));
 
 	if (ctx->declare_cursor())
 	{
 		for (auto option : ctx->declare_cursor()->declare_cursor_options())
 		{
 			if (option->GLOBAL())
-				handle(INSTR_UNSUPPORTED_TSQL_GLOBAL_CURSOR, "GLOBAL CURSOR");
+				handle(INSTR_UNSUPPORTED_TSQL_GLOBAL_CURSOR, "GLOBAL CURSOR", getLineAndPos(option->GLOBAL()));
 			if (option->KEYSET())
-				handle(INSTR_UNSUPPORTED_TSQL_KEYSET_CURSOR, "KEYSET CURSOR");
+				handle(INSTR_UNSUPPORTED_TSQL_KEYSET_CURSOR, "KEYSET CURSOR", getLineAndPos(option->KEYSET()));
 			if (option->DYNAMIC())
-				handle(INSTR_UNSUPPORTED_TSQL_DYNAMIC_CURSOR, "DYNAMIC CURSOR");
+				handle(INSTR_UNSUPPORTED_TSQL_DYNAMIC_CURSOR, "DYNAMIC CURSOR", getLineAndPos(option->DYNAMIC()));
 			if (option->SCROLL_LOCKS())
 				handle(INSTR_UNSUPPORTED_TSQL_CURSOR_SCROLL_LOCKS_OPTION, option->SCROLL_LOCKS());
 			if (option->OPTIMISTIC())
@@ -1130,26 +1133,26 @@ antlrcpp::Any TsqlUnsupportedFeatureHandlerImpl::visitTransaction_statement(TSql
 antlrcpp::Any TsqlUnsupportedFeatureHandlerImpl::visitSecurity_statement(TSqlParser::Security_statementContext *ctx)
 {
 	if (ctx->execute_as_statement())
-		handle(INSTR_UNSUPPORTED_TSQL_EXECUTE_AS_STMT, "EXECUTE AS");
+		handle(INSTR_UNSUPPORTED_TSQL_EXECUTE_AS_STMT, "EXECUTE AS", getLineAndPos(ctx));
 	else if (ctx->revert_statement())
-		handle(INSTR_UNSUPPORTED_TSQL_REVERT_STMT, "REVERT");
+		handle(INSTR_UNSUPPORTED_TSQL_REVERT_STMT, "REVERT", getLineAndPos(ctx));
 	else if (ctx->grant_statement())
 	{
 		if (!pltsql_allow_antlr_to_unsupported_grammar_for_testing)
-			handle(INSTR_UNSUPPORTED_TSQL_GRANT_STMT, "GRANT");
+			handle(INSTR_UNSUPPORTED_TSQL_GRANT_STMT, "GRANT", getLineAndPos(ctx));
 	}
 	else if (ctx->revoke_statement())
-		handle(INSTR_UNSUPPORTED_TSQL_REVOKE_STMT, "REVOKE");
+		handle(INSTR_UNSUPPORTED_TSQL_REVOKE_STMT, "REVOKE", getLineAndPos(ctx));
 	else if (ctx->deny_statement())
-		handle(INSTR_UNSUPPORTED_TSQL_DENY_STMT, "DENY");
+		handle(INSTR_UNSUPPORTED_TSQL_DENY_STMT, "DENY", getLineAndPos(ctx));
 	else if (ctx->open_key())
-		handle(INSTR_UNSUPPORTED_TSQL_OPEN_KEY, "OPEN KEY");
+		handle(INSTR_UNSUPPORTED_TSQL_OPEN_KEY, "OPEN KEY", getLineAndPos(ctx));
 	else if (ctx->close_key())
-		handle(INSTR_UNSUPPORTED_TSQL_CLOSE_KEY, "CLOSE KEY");
+		handle(INSTR_UNSUPPORTED_TSQL_CLOSE_KEY, "CLOSE KEY", getLineAndPos(ctx));
 	else if (ctx->create_key())
-		handle(INSTR_UNSUPPORTED_TSQL_CREATE_KEY, "CREATE KEY");
+		handle(INSTR_UNSUPPORTED_TSQL_CREATE_KEY, "CREATE KEY", getLineAndPos(ctx));
 	else if (ctx->create_certificate())
-		handle(INSTR_UNSUPPORTED_TSQL_CREATE_CERTIFICATE, "CREATE CERTIFICATE");
+		handle(INSTR_UNSUPPORTED_TSQL_CREATE_CERTIFICATE, "CREATE CERTIFICATE", getLineAndPos(ctx));
 
 	return visitChildren(ctx);
 }
@@ -1169,44 +1172,44 @@ antlrcpp::Any TsqlUnsupportedFeatureHandlerImpl::visitTable_source_item(TSqlPars
 antlrcpp::Any TsqlUnsupportedFeatureHandlerImpl::visitFor_clause(TSqlParser::For_clauseContext *ctx)
 {
 	if (ctx->BROWSE())
-		handle(INSTR_UNSUPPORTED_TSQL_FOR_BROWSE_CLAUSE, "FOR BROWSE");
+		handle(INSTR_UNSUPPORTED_TSQL_FOR_BROWSE_CLAUSE, "FOR BROWSE", getLineAndPos(ctx->BROWSE()));
 	if (ctx->XML())
 	{
 		// RAW and PATH is supported
 		if (ctx->AUTO())
-			handle(INSTR_UNSUPPORTED_TSQL_XML_OPTION_AUTO, "FOR XML AUTO mode");
+			handle(INSTR_UNSUPPORTED_TSQL_XML_OPTION_AUTO, "FOR XML AUTO mode", getLineAndPos(ctx->AUTO()));
 		if (ctx->EXPLICIT())
-			handle(INSTR_UNSUPPORTED_TSQL_XML_OPTION_EXPLICIT, "FOR XML EXPLICIT mode");
+			handle(INSTR_UNSUPPORTED_TSQL_XML_OPTION_EXPLICIT, "FOR XML EXPLICIT mode", getLineAndPos(ctx->EXPLICIT()));
 		if (!ctx->XMLDATA().empty())
-			handle(INSTR_UNSUPPORTED_TSQL_XMLDATA, "XMLDATA");
+			handle(INSTR_UNSUPPORTED_TSQL_XMLDATA, "XMLDATA", getLineAndPos(ctx->XMLDATA()[0]));
 	}
 	else if (ctx->JSON())
-		handle(INSTR_UNSUPPORTED_TSQL_FOR_JSON_CLAUSE, "FOR JSON");
+		handle(INSTR_UNSUPPORTED_TSQL_FOR_JSON_CLAUSE, "FOR JSON", getLineAndPos(ctx->JSON()));
 	return visitChildren(ctx);
 }
 
 antlrcpp::Any TsqlUnsupportedFeatureHandlerImpl::visitWith_table_hints(TSqlParser::With_table_hintsContext *ctx)
 {
-	handle(INSTR_UNSUPPORTED_TSQL_TABLE_HINTS, "table hint", &st_escape_hatch_table_hints);
+	handle(INSTR_UNSUPPORTED_TSQL_TABLE_HINTS, "table hint", &st_escape_hatch_table_hints, getLineAndPos(ctx));
 	return visitChildren(ctx);
 }
 
 antlrcpp::Any TsqlUnsupportedFeatureHandlerImpl::visitOption_clause(TSqlParser::Option_clauseContext *ctx)
 {
-	handle(INSTR_UNSUPPORTED_TSQL_QUERY_HINTS, "query hint", &st_escape_hatch_query_hints);
+	handle(INSTR_UNSUPPORTED_TSQL_QUERY_HINTS, "query hint", &st_escape_hatch_query_hints, getLineAndPos(ctx));
 	return visitChildren(ctx);
 }
 
 antlrcpp::Any TsqlUnsupportedFeatureHandlerImpl::visitJoin_hint(TSqlParser::Join_hintContext *ctx)
 {
-	handle(INSTR_UNSUPPORTED_TSQL_JOIN_HINTS, "join hint", &st_escape_hatch_join_hints);
+	handle(INSTR_UNSUPPORTED_TSQL_JOIN_HINTS, "join hint", &st_escape_hatch_join_hints, getLineAndPos(ctx));
 	return visitChildren(ctx);
 }
 
 antlrcpp::Any TsqlUnsupportedFeatureHandlerImpl::visitGroup_by_item(TSqlParser::Group_by_itemContext *ctx)
 {
 	if (ctx->with_distributed_agg())
-		handle(INSTR_UNSUPPORTED_TSQL_WITH_DISTRIBUTED_AGG, "WITH DISTRIBUTED AGG");
+		handle(INSTR_UNSUPPORTED_TSQL_WITH_DISTRIBUTED_AGG, "WITH DISTRIBUTED AGG", getLineAndPos(ctx->with_distributed_agg()));
 	return visitChildren(ctx);
 }
 
@@ -1237,11 +1240,11 @@ antlrcpp::Any TsqlUnsupportedFeatureHandlerImpl::visitExpression(TSqlParser::Exp
 			handle(INSTR_UNSUPPORTED_TSQL_EXPRESSION_DEFAULT, ctx->DEFAULT());
 	}
 	if (ctx->hierarchyid_coloncolon_methods())
-		handle(INSTR_UNSUPPORTED_TSQL_EXPRESSION_HIERARCHID, "hierarchid");
+		handle(INSTR_UNSUPPORTED_TSQL_EXPRESSION_HIERARCHID, "hierarchid", getLineAndPos(ctx->hierarchyid_coloncolon_methods()));
 	if (ctx->odbc_literal())
-		handle(INSTR_UNSUPPORTED_TSQL_EXPRESSION_ODBC_LITERAL, "odbc literal");
+		handle(INSTR_UNSUPPORTED_TSQL_EXPRESSION_ODBC_LITERAL, "odbc literal", getLineAndPos(ctx->odbc_literal()));
 	if (ctx->DOLLAR_ACTION())
-		handle(INSTR_UNSUPPORTED_TSQL_EXPRESSION_DOLLAR_ACTION, "$ACTION");
+		handle(INSTR_UNSUPPORTED_TSQL_EXPRESSION_DOLLAR_ACTION, "$ACTION", getLineAndPos(ctx->DOLLAR_ACTION()));
 	return visitChildren(ctx);
 }
 
@@ -1254,7 +1257,7 @@ antlrcpp::Any TsqlUnsupportedFeatureHandlerImpl::visitExecute_parameter(TSqlPars
 
 antlrcpp::Any TsqlUnsupportedFeatureHandlerImpl::visitTrigger_column_updated(TSqlParser::Trigger_column_updatedContext *ctx)
 {
-	handle(INSTR_UNSUPPORTED_TSQL_UPDATE_FUNC_IN_TRIGGER, "UPDATE FUNC IN TRIGGER");
+	handle(INSTR_UNSUPPORTED_TSQL_UPDATE_FUNC_IN_TRIGGER, "UPDATE FUNC IN TRIGGER", getLineAndPos(ctx));
 	return visitChildren(ctx);
 }
 
@@ -1283,7 +1286,7 @@ antlrcpp::Any TsqlUnsupportedFeatureHandlerImpl::visitFunc_proc_name_database_sc
 antlrcpp::Any TsqlUnsupportedFeatureHandlerImpl::visitFunc_proc_name_server_database_schema(TSqlParser::Func_proc_name_server_database_schemaContext *ctx)
 {
 	if (ctx->DOT().size() >= 3 && ctx->server) /* server.db.schema.funcname */
-		handle(INSTR_UNSUPPORTED_TSQL_SERVERNAME_IN_NAME, "servername");
+		handle(INSTR_UNSUPPORTED_TSQL_SERVERNAME_IN_NAME, "servername", getLineAndPos(ctx));
 
 	if (ctx->DOT().empty())
 	{
@@ -1291,7 +1294,7 @@ antlrcpp::Any TsqlUnsupportedFeatureHandlerImpl::visitFunc_proc_name_server_data
 		checkUnsupportedSystemProcedure(ctx->procedure);
 
 		if (pg_strcasecmp("COLUMNS_UPDATED", getFullText(ctx->procedure).c_str()) == 0)
-			handle(INSTR_UNSUPPORTED_TSQL_COLUMNS_UPDATED_FUNC, "COLUMNS_UPDATED FUNC IN TRIGGER");
+			handle(INSTR_UNSUPPORTED_TSQL_COLUMNS_UPDATED_FUNC, "COLUMNS_UPDATED FUNC IN TRIGGER", getLineAndPos(ctx));
 	}
 
 	return visitChildren(ctx);
@@ -1300,7 +1303,7 @@ antlrcpp::Any TsqlUnsupportedFeatureHandlerImpl::visitFunc_proc_name_server_data
 antlrcpp::Any TsqlUnsupportedFeatureHandlerImpl::visitFull_object_name(TSqlParser::Full_object_nameContext *ctx)
 {
 	if (ctx->DOT().size() >= 3 && ctx->server) /* server.db.schema.funcname */
-		handle(INSTR_UNSUPPORTED_TSQL_SERVERNAME_IN_NAME, "servername");
+		handle(INSTR_UNSUPPORTED_TSQL_SERVERNAME_IN_NAME, "servername", getLineAndPos(ctx));
 
 	return visitChildren(ctx);
 }
@@ -1325,9 +1328,9 @@ antlrcpp::Any TsqlUnsupportedFeatureHandlerImpl::visitData_type(TSqlParser::Data
 	{
 		std::string val = stripQuoteFromId(ctx->simple_name()->id().back());
 		if (pg_strcasecmp("timestamp", val.c_str()) == 0)
-			handle(INSTR_TSQL_TIMESTAMP_DATATYPE, "TIMESTAMP datatype");
+			handle(INSTR_TSQL_TIMESTAMP_DATATYPE, "TIMESTAMP datatype", getLineAndPos(ctx));
 		else if (pg_strcasecmp("rowversion", val.c_str()) == 0)
-			handle(INSTR_TSQL_ROWVERSION_DATATYPE, "ROWVERSION datatype");
+			handle(INSTR_TSQL_ROWVERSION_DATATYPE, "ROWVERSION datatype", getLineAndPos(ctx));
 	}
 
 	if (ctx->NATIONAL())
@@ -1562,5 +1565,5 @@ void TsqlUnsupportedFeatureHandlerImpl::checkUnsupportedSystemProcedure(TSqlPars
 	std::string val = stripQuoteFromId(ctx);
 	for (size_t i=0; i<NUM_UNSUPPORTED_PROCEDURES; ++i)
 		if (pg_strcasecmp(unsupported_sp_procedures[i], val.c_str()) == 0)
-			handle(INSTR_UNSUPPORTED_TSQL_NOT_IMPLEMENTED_SYSTEM_PROCEDURE, val.c_str());
+			handle(INSTR_UNSUPPORTED_TSQL_NOT_IMPLEMENTED_SYSTEM_PROCEDURE, val.c_str(), getLineAndPos(ctx));
 }

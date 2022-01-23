@@ -34,21 +34,34 @@ struct FormattedMessage
  * please note that direclty calling ereport(ERROR) in cpp code may cause a leakage because it interrupts program-counter so
  * cpp object's destructor may not be called ever. With PGErrorWrapperException, the error is caught the bottom stack of cpp code
  * and it will be translated to C structure. then all cpp objects are destoryed and ereport will be called.
+ *
+ * lineno is additionally needed due to TDS protocol
  */
 class PGErrorWrapperException
 {
 public:
-	PGErrorWrapperException(int lv, int code, const char *msg, int pos)
-		: elevel(lv), ecode(code), emsg(msg), epos(pos)
+	PGErrorWrapperException(int lv, int code, const char *msg, int lineno, int pos)
+		: elevel(lv), ecode(code), emsg(msg), elineno(lineno), epos(pos)
 	{}
 
-	PGErrorWrapperException(int lv, int code, FormattedMessage&& fmt, int pos)
-		: elevel(lv), ecode(code), emsg(fmt.fmt), epos(pos)
+	PGErrorWrapperException(int lv, int code, FormattedMessage&& fmt, int lineno, int pos)
+		: elevel(lv), ecode(code), emsg(fmt.fmt), elineno(lineno), epos(pos)
+	{
+		eargs = std::move(fmt.args);
+	}
+
+	PGErrorWrapperException(int lv, int code, const char *msg, std::pair<int,int> line_and_pos) // sugar
+		: elevel(lv), ecode(code), emsg(msg), elineno(line_and_pos.first), epos(line_and_pos.second)
+	{}
+
+	PGErrorWrapperException(int lv, int code, FormattedMessage&& fmt, std::pair<int,int> line_and_pos) // sugar
+		: elevel(lv), ecode(code), emsg(fmt.fmt), elineno(line_and_pos.first), epos(line_and_pos.second)
 	{
 		eargs = std::move(fmt.args);
 	}
 
 	int get_errcode() const { return ecode; }
+	int get_errorline() const { return elineno; }
 	int get_errpos() const { return epos; }
 	const char *get_errmsg() const { return emsg; }
 	const std::vector<const void *> &get_errargs() const { return eargs; }
@@ -57,6 +70,7 @@ protected:
 	int elevel;
 	int ecode;
 	const char *emsg;
+	int elineno; /* error line. not converted to PG error. instead, directly set via global variable which will be read by TDS */
 	int epos;
 	std::vector<const void *> eargs;
 };
