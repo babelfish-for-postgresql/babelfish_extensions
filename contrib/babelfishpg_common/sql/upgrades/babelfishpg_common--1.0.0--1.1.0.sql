@@ -248,3 +248,8 @@ ALTER OPERATOR FAMILY sys.fixeddecimal_ops USING hash ADD
     FUNCTION    1   hash_numeric(NUMERIC);
 
 
+-- Any casting from (var)binary to float4 and float8 is not allowed. drop CAST
+DROP CAST IF EXISTS (sys.BBF_BINARY as REAL);
+DROP CAST IF EXISTS (sys.BBF_BINARY as DOUBLE PRECISION);
+DROP CAST IF EXISTS (sys.BBF_VARBINARY as REAL);
+DROP CAST IF EXISTS (sys.BBF_VARBINARY as DOUBLE PRECISION);
