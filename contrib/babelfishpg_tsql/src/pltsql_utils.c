@@ -12,22 +12,14 @@
 #include "utils/builtins.h"
 #include "utils/elog.h"
 #include "utils/syscache.h"
+#include "datatypes.h"
 
 bool suppress_string_truncation_error = false;
 
 bool pltsql_suppress_string_truncation_error(void);
 
-static Oid tsql_bpchar_oid = InvalidOid;
-static Oid tsql_nchar_oid = InvalidOid;
-static Oid tsql_varchar_oid = InvalidOid;
-static Oid tsql_nvarchar_oid = InvalidOid;
-
-static Oid lookup_tsql_datatype_oid(const char *typename);
-static bool is_tsql_bpchar_datatype(Oid oid);
-static bool is_tsql_nchar_datatype(Oid oid);
-static bool is_tsql_varchar_datatype(Oid oid);
-static bool is_tsql_nvarchar_datatype(Oid oid);
 bool is_tsql_any_char_datatype(Oid oid); /* sys.char / sys.nchar / sys.varchar / sys.nvarchar */
+bool is_tsql_invalid_datatype_for_declarestmt(Oid oid);
 
 /* 
  * Following the rule for locktag fields of advisory locks:
@@ -689,58 +681,19 @@ update_ViewStmt(Node *n, const char *view_schema)
 		stmt->view->schemaname = pstrdup(view_schema);
 }
 
-static Oid
-lookup_tsql_datatype_oid(const char *typename)
-{
-	Oid nspoid;
-	Oid typoid;
-
-	nspoid = get_namespace_oid("sys", true);
-	if (nspoid == InvalidOid)
-		return InvalidOid;
-
-	typoid = GetSysCacheOid2(TYPENAMENSP, Anum_pg_type_oid, CStringGetDatum(typename), ObjectIdGetDatum(nspoid));
-	return typoid;
-}
-
-static bool
-is_tsql_bpchar_datatype(Oid oid)
-{
-	if (tsql_bpchar_oid == InvalidOid)
-		tsql_bpchar_oid = lookup_tsql_datatype_oid("bpchar");
-	return tsql_bpchar_oid == oid;
-}
-
-static bool
-is_tsql_nchar_datatype(Oid oid)
-{
-	if (tsql_nchar_oid == InvalidOid)
-		tsql_nchar_oid = lookup_tsql_datatype_oid("nchar");
-	return tsql_nchar_oid == oid;
-}
-
-static bool
-is_tsql_varchar_datatype(Oid oid)
-{
-	if (tsql_varchar_oid == InvalidOid)
-		tsql_varchar_oid = lookup_tsql_datatype_oid("varchar");
-	return tsql_varchar_oid == oid;
-}
-
-static bool
-is_tsql_nvarchar_datatype(Oid oid)
-{
-	if (tsql_nvarchar_oid == InvalidOid)
-		tsql_nvarchar_oid = lookup_tsql_datatype_oid("nvarchar");
-	return tsql_nvarchar_oid == oid;
-}
-
 bool is_tsql_any_char_datatype(Oid oid)
 {
 	return is_tsql_bpchar_datatype(oid) ||
 		is_tsql_nchar_datatype(oid) ||
 		is_tsql_varchar_datatype(oid) ||
 		is_tsql_nvarchar_datatype(oid);
+}
+
+bool is_tsql_invalid_datatype_for_declarestmt(Oid oid)
+{
+	return is_tsql_text_datatype(oid) ||
+		is_tsql_ntext_datatype(oid) ||
+		is_tsql_image_datatype(oid);
 }
 
 /*

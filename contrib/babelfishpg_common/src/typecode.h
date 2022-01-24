@@ -61,4 +61,20 @@ typedef struct ht_oid2typecode_entry {
 
 extern Oid get_type_oid(int type_code);
 
+extern Oid tsql_bpchar_oid;
+extern Oid tsql_nchar_oid;
+extern Oid tsql_varchar_oid;
+extern Oid tsql_nvarchar_oid;
+extern Oid tsql_ntext_oid;
+extern Oid tsql_image_oid;
+
+extern Oid lookup_tsql_datatype_oid(const char *typename);
+extern bool is_tsql_bpchar_datatype(Oid oid);
+extern bool is_tsql_nchar_datatype(Oid oid);
+extern bool is_tsql_varchar_datatype(Oid oid);
+extern bool is_tsql_nvarchar_datatype(Oid oid);
+extern bool is_tsql_text_datatype(Oid oid);
+extern bool is_tsql_ntext_datatype(Oid oid);
+extern bool is_tsql_image_datatype(Oid oid);
+
 #endif

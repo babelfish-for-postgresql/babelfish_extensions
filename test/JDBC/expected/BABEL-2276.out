@@ -1,0 +1,18 @@
+declare @v_2276 text;
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: The text, ntext, and image data types are invalid for local variables.)~~
+
+declare @v_2276 ntext;
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: The text, ntext, and image data types are invalid for local variables.)~~
+
+declare @v_2276 image;
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: The text, ntext, and image data types are invalid for local variables.)~~
+

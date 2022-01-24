@@ -190,3 +190,78 @@ Oid get_type_oid(int type_code)
 {
 	return type_infos[type_code].oid;
 }
+
+Oid tsql_bpchar_oid = InvalidOid;
+Oid tsql_nchar_oid = InvalidOid;
+Oid tsql_varchar_oid = InvalidOid;
+Oid tsql_nvarchar_oid = InvalidOid;
+Oid tsql_ntext_oid = InvalidOid;
+Oid tsql_image_oid = InvalidOid;
+
+Oid
+lookup_tsql_datatype_oid(const char *typename)
+{
+	Oid nspoid;
+	Oid typoid;
+
+	nspoid = get_namespace_oid("sys", true);
+	if (nspoid == InvalidOid)
+		return InvalidOid;
+
+	typoid = GetSysCacheOid2(TYPENAMENSP, Anum_pg_type_oid, CStringGetDatum(typename), ObjectIdGetDatum(nspoid));
+	return typoid;
+}
+
+bool
+is_tsql_bpchar_datatype(Oid oid)
+{
+	if (tsql_bpchar_oid == InvalidOid)
+		tsql_bpchar_oid = lookup_tsql_datatype_oid("bpchar");
+	return tsql_bpchar_oid == oid;
+}
+
+bool
+is_tsql_nchar_datatype(Oid oid)
+{
+	if (tsql_nchar_oid == InvalidOid)
+		tsql_nchar_oid = lookup_tsql_datatype_oid("nchar");
+	return tsql_nchar_oid == oid;
+}
+
+bool
+is_tsql_varchar_datatype(Oid oid)
+{
+	if (tsql_varchar_oid == InvalidOid)
+		tsql_varchar_oid = lookup_tsql_datatype_oid("varchar");
+	return tsql_varchar_oid == oid;
+}
+
+bool
+is_tsql_nvarchar_datatype(Oid oid)
+{
+	if (tsql_nvarchar_oid == InvalidOid)
+		tsql_nvarchar_oid = lookup_tsql_datatype_oid("nvarchar");
+	return tsql_nvarchar_oid == oid;
+}
+
+bool
+is_tsql_text_datatype(Oid oid)
+{
+	return TEXTOID == oid;
+}
+
+bool
+is_tsql_ntext_datatype(Oid oid)
+{
+	if (tsql_ntext_oid == InvalidOid)
+		tsql_ntext_oid = lookup_tsql_datatype_oid("ntext");
+	return tsql_ntext_oid == oid;
+}
+
+bool
+is_tsql_image_datatype(Oid oid)
+{
+	if (tsql_image_oid == InvalidOid)
+		tsql_image_oid = lookup_tsql_datatype_oid("image");
+	return tsql_image_oid == oid;
+}

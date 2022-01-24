@@ -172,7 +172,7 @@ go
 
 -- Test for BABEL-2586
 -- Check if we can get the correct default db after multiple operations
-DECLARE @default_db TEXT
+DECLARE @default_db VARCHAR(10)
 SET @default_db = sys.babelfish_get_login_default_db('jdbc_user');
 SELECT CASE WHEN @default_db = 'master' THEN 'correct' ELSE 'error' END;
 go
