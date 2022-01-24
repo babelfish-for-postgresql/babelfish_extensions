@@ -93,6 +93,7 @@ extern Datum init_tsql_coerce_hash_tab(PG_FUNCTION_ARGS);
 extern Datum init_tsql_datatype_precedence_hash_tab(PG_FUNCTION_ARGS);
 extern Datum init_tsql_cursor_hash_tab(PG_FUNCTION_ARGS);
 extern PLtsql_execstate *get_current_tsql_estate(void);
+extern void pre_check_trigger_schema(List *object, bool missing_ok);
 static void  get_language_procs(const char *langname, Oid *compiler, Oid *validator);
 extern bool pltsql_suppress_string_truncation_error();
 static Oid bbf_table_var_lookup(const char *relname, Oid relnamespace);
@@ -407,6 +408,20 @@ pltsql_pre_parse_analyze(ParseState *pstate, RawStmt *parseTree)
 					}
 					trigStmt->args = NIL;
 				}
+			}
+		}
+	}
+
+	if(parseTree->stmt->type == T_DropStmt){
+		DropStmt *dropStmt;
+		dropStmt = (DropStmt *) parseTree->stmt;
+		if (dropStmt->removeType == OBJECT_TRIGGER){
+			ListCell   *cell1;
+			// in case we have multi triggers in one stmt
+			foreach(cell1, dropStmt->objects)
+			{
+				Node *object = lfirst(cell1);
+				pre_check_trigger_schema(castNode(List, object), dropStmt->missing_ok);
 			}
 		}
 	}

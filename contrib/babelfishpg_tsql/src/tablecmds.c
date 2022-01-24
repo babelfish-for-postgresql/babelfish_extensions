@@ -31,6 +31,10 @@
 #include "utils/fmgroids.h"
 #include "utils/syscache.h"
 #include "utils/lsyscache.h"
+#include "utils/builtins.h"
+
+#include "../src/multidb.h"
+#include "../src/session.h"
 
 const char* ATTOPTION_BBF_ORIGINAL_NAME = "bbf_original_name";
 
@@ -56,6 +60,86 @@ static bool checkAllowedTsqlAttoptions(Node *options);
 static object_access_hook_type prev_object_access_hook = NULL;
 static InvokePreDropColumnHook_type prev_InvokePreDropColumnHook = NULL;
 static InvokePreAddConstraintsHook_type prev_InvokePreAddConstraintsHook = NULL;
+
+void pre_check_trigger_schema(List *object, bool missing_ok);
+
+void pre_check_trigger_schema(List *object, bool missing_ok){
+	Relation	relation = NULL;
+	const char *depname;
+	Relation	tgrel;
+	ScanKeyData		key;
+	SysScanDesc tgscan;
+	HeapTuple	tuple;
+	Oid schema_oid;
+	char *schema_name = NULL;
+	char *trigger_schema = NULL;
+	Oid reloid = InvalidOid;
+
+	/* Extract name of dependent object. */
+	depname = strVal(llast(object));
+	if (list_length(object) > 1){
+		trigger_schema = ((Value *)list_nth(object,0))->val.str;
+	}
+	/* 
+	* Get the table name of the trigger from pg_trigger. We know that
+	* trigger names are forced to be unique in the tsql dialect, so we
+	* can rely on searching for trigger name to find the corresponding
+	* relation name.
+	*/
+	tgrel = table_open(TriggerRelationId, AccessShareLock);
+	ScanKeyInit(&key,
+					Anum_pg_trigger_tgname,
+					BTEqualStrategyNumber, F_NAMEEQ,
+					CStringGetDatum(depname));
+
+	tgscan = systable_beginscan(tgrel, TriggerRelidNameIndexId, false,
+									NULL, 1, &key);
+
+	while (HeapTupleIsValid(tuple = systable_getnext(tgscan)))
+	{
+		Form_pg_trigger pg_trigger = (Form_pg_trigger) GETSTRUCT(tuple);
+		
+		if (namestrcmp(&(pg_trigger->tgname), depname) == 0)
+		{
+			reloid = OidIsValid(pg_trigger->tgrelid) ? pg_trigger->tgrelid :
+						InvalidOid;
+			relation = RelationIdGetRelation(reloid); 
+			schema_oid = get_rel_namespace(reloid);
+            schema_name = get_namespace_name(schema_oid);
+			if ((list_length(object) > 1 && 
+			strcasecmp(schema_name , get_physical_schema_name(get_cur_db_name(),trigger_schema)) != 0 && !missing_ok)){
+				ereport(ERROR,
+				(errcode(ERRCODE_UNDEFINED_OBJECT),
+				errmsg("trigger \"%s.%s\" does not exist",
+						trigger_schema ,depname)));
+			} else if (list_length(object) == 1 && strcasecmp(schema_name, get_dbo_schema_name(get_cur_db_name())) != 0
+			&& !missing_ok){
+				ereport(ERROR,
+					(errcode(ERRCODE_UNDEFINED_OBJECT),
+					errmsg("trigger \"%s\" does not exist",
+						depname)));
+			}
+			RelationClose(relation);
+		}
+	}
+	systable_endscan(tgscan);
+	table_close(tgrel, AccessShareLock);
+	if (!relation && !missing_ok)
+	{
+		ereport(ERROR,
+			(errcode(ERRCODE_UNDEFINED_OBJECT),
+			errmsg("trigger \"%s\" does not exist",
+				depname)));
+	}	
+	if (!OidIsValid(reloid))
+	{
+		if (relation != NULL)
+			table_close(relation, AccessShareLock);
+
+		relation = NULL;		/* department of accident prevention */
+	}
+
+}
 
 static void lookup_and_drop_triggers(ObjectAccessType access, Oid classId, 
                                                 Oid relOid, int subId, void *arg)

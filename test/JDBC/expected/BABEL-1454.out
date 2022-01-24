@@ -262,10 +262,10 @@ AS BEGIN
 END;
 GO
 
-DROP TRIGGER tri;
+DROP TRIGGER babel1454.tri;
 GO
 
-DROP TRIGGER tri2;
+DROP TRIGGER babel1454.tri2;
 GO
 
 -- Truncate
