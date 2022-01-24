@@ -41,6 +41,7 @@ extern "C"
 
 	extern PLtsql_type *parse_datatype(const char *string, int location);
 	extern bool is_tsql_any_char_datatype(Oid oid);
+	extern bool is_tsql_invalid_datatype_for_declarestmt(Oid oid);
 
 	extern int CurrentLineNumber;
 
@@ -3218,6 +3219,10 @@ makeDeclareStmt(TSqlParser::Declare_statementContext *ctx)
 				{
 					std::string newTypeStr = typeStr + "(1)"; /* in T-SQL, length-less (N)(VAR)CHAR's length is treated as 1 */
 					type = parse_datatype(newTypeStr.c_str(), 0);
+				}
+				else if (is_tsql_invalid_datatype_for_declarestmt(type->typoid))
+				{
+					throw PGErrorWrapperException(ERROR, ERRCODE_DATATYPE_MISMATCH, "The text, ntext, and image data types are invalid for local variables.", getLineAndPos(local->data_type()));
 				}
 
 				var = pltsql_build_variable(name, 0, type, true);
