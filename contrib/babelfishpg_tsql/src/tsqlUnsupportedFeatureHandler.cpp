@@ -1257,7 +1257,7 @@ antlrcpp::Any TsqlUnsupportedFeatureHandlerImpl::visitExecute_parameter(TSqlPars
 
 antlrcpp::Any TsqlUnsupportedFeatureHandlerImpl::visitTrigger_column_updated(TSqlParser::Trigger_column_updatedContext *ctx)
 {
-	handle(INSTR_UNSUPPORTED_TSQL_UPDATE_FUNC_IN_TRIGGER, "UPDATE FUNC IN TRIGGER", getLineAndPos(ctx));
+	handle(INSTR_UNSUPPORTED_TSQL_UPDATE_FUNC_IN_TRIGGER, "UPDATE() function in  trigger", getLineAndPos(ctx));
 	return visitChildren(ctx);
 }
 
