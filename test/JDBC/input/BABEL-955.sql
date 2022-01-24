@@ -34,8 +34,13 @@ go
 drop schema test2;
 go
 
--- Will add optional schemaid in another CR/design for drop triggers
 drop trigger tr1
+go
+
+drop trigger test2.tr1
+go
+
+drop trigger test1.tr1
 go
 
 drop table test1.t1

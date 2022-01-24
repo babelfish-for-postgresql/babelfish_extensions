@@ -46,8 +46,21 @@ go
 drop schema test2;
 go
 
--- Will add optional schemaid in another CR/design for drop triggers
 drop trigger tr1
+go
+~~ERROR (Code: 3701)~~
+
+~~ERROR (Message: trigger "tr1" does not exist)~~
+
+
+drop trigger test2.tr1
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: trigger "test2.tr1" does not exist)~~
+
+
+drop trigger test1.tr1
 go
 
 drop table test1.t1

@@ -781,7 +781,7 @@ def_arg:	func_type tsql_on_ident_partitions_list			{ $$ = (Node *)$1; }
 		;
 
 DropStmt:
-			DROP drop_type_name_on_any_name name
+			DROP drop_type_name_on_any_name tsql_triggername
 				{
 					DropStmt *n = makeNode(DropStmt);
 
@@ -793,13 +793,13 @@ DropStmt:
 								 parser_errposition(@1)));
 					}
 					n->removeType = OBJECT_TRIGGER;
-					n->objects = list_make1(list_make1(makeString($3)));
+					n->objects = list_make1($3);
 					n->behavior = DROP_CASCADE;
 					n->missing_ok = false;
 					n->concurrent = false;
 					$$ = (Node *) n;
 				}
-			| DROP drop_type_name_on_any_name IF_P EXISTS name
+			| DROP drop_type_name_on_any_name IF_P EXISTS tsql_triggername
 				{
 					DropStmt *n = makeNode(DropStmt);
 
@@ -811,7 +811,7 @@ DropStmt:
 								 parser_errposition(@1)));
 					}
 					n->removeType = OBJECT_TRIGGER;
-					n->objects = list_make1(list_make1(makeString($5)));
+					n->objects = list_make1($5);
 					n->behavior = DROP_CASCADE;
 					n->missing_ok = true;
 					n->concurrent = false;
