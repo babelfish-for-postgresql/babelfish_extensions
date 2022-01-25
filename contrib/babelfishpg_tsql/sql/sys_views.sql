@@ -525,7 +525,7 @@ select
   , null::oid as root
   , 0 as minlen
   , 1 as keycnt
-  , 0 as groupid
+  , null::integer as groupid
   , 0 as dpages
   , 0 as reserved
   , 0 as used
@@ -535,17 +535,17 @@ select
   , 0 as reserved4
   , 0 as xmaxlen
   , null::integer as maxirow
-  , 0 as OrigFillFactor
+  , 90 as OrigFillFactor
   , 0 as StatVersion
   , 0 as reserved2
   , null::integer as FirstIAM
   , 0 as impid
   , 0 as lockflags
   , 0 as pgmodctr
-  , null::bytea as keys
-  , i.name
-  , null::bytea as statblob
-  , 800 as maxlen
+  , null::sys.varbinary(816) as keys
+  , i.name as name
+  , null::sys.image as statblob
+  , 0 as maxlen
   , 0 as rows
 from sys.indexes i;
 GRANT SELECT ON sys.sysindexes TO PUBLIC;
