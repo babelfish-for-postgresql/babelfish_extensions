@@ -321,7 +321,7 @@ tsql_DropLoginStmt:
 		;
 
 tsql_nchar:
-			VARCHAR Sconst { $$ = (Node *)makeString($2); }
+			TSQL_NVARCHAR Sconst { $$ = (Node *)makeString($2); }
 			| Sconst { $$ = (Node *)makeString($1); }
 		;
 
@@ -1380,7 +1380,7 @@ target_el:
 					$$->val = (Node *)$1;
 					$$->location = @1;
 				}
-			| 	a_expr AS VARCHAR Sconst
+			| 	a_expr AS TSQL_NVARCHAR Sconst
 				/*
 				 * This rule is to support SELECT 1 AS N'col' query in Babelfish.
 				 * For vanilla PG, the syntax is valid as well
@@ -1406,6 +1406,14 @@ AexprConst:
 			TSQL_XCONST
 				{
 					$$ = makeTSQLHexStringConst($1, @1);
+				}
+			| TSQL_NVARCHAR Sconst
+				{
+					/* This is to support N'str' in various locations */
+					TypeName *t = makeTypeNameFromNameList(list_make2(makeString("sys"), makeString("nvarchar")));
+					t->location = @1;
+					t->typmods = list_make1(makeIntConst(TSQLMaxTypmod, -1));
+					$$ = makeStringConstCast($2, @2, t);
 				}
 		;
 
@@ -3674,6 +3682,9 @@ createdb_opt_item:
 			{
 				$$ = makeDefElem("collate", (Node *) makeString($2), @1);
 			}
+			;
+col_name_keyword:
+			  TSQL_NVARCHAR
 			;
 
 unreserved_keyword:

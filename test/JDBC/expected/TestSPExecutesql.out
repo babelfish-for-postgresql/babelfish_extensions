@@ -8,7 +8,7 @@ SET @SQLString = N'SELECT N''hello world'';';
 EXEC sp_executesql @SQLString;
 go
 ~~START~~
-varchar
+nvarchar
 hello world
 ~~END~~
 
