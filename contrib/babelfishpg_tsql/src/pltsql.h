@@ -1619,6 +1619,7 @@ extern PLtsql_protocol_plugin **pltsql_protocol_plugin_ptr;
 #define IS_TDS_CLIENT() (*pltsql_protocol_plugin_ptr && \
 						 (*pltsql_protocol_plugin_ptr)->is_tds_client)
 
+extern Oid procid_var;
 extern uint64 rowcount_var;
 extern int latest_error_code;
 extern int latest_pg_error_code;

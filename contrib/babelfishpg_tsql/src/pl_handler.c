@@ -132,6 +132,7 @@ extern int CurrentLineNumber;
 static non_tsql_proc_entry_hook_type prev_non_tsql_proc_entry_hook = NULL;
 static void pltsql_non_tsql_proc_entry(int proc_count, int sys_func_count);
 static bool get_attnotnull(Oid relid, AttrNumber attnum);
+static void set_procid(Oid oid);
 
 PG_FUNCTION_INFO_V1(pltsql_inline_handler);
 
@@ -157,6 +158,8 @@ static const struct config_enum_entry schema_mapping_options[] = {
 	{"schema", PLTSQL_SCHEMA, false},
 	{NULL, 0, false}
 };
+
+Oid procid_var = InvalidOid;
 
 int			pltsql_variable_conflict = PLTSQL_RESOLVE_ERROR;
 
@@ -213,6 +216,12 @@ pltsql_resetcache_hook_type prev_pltsql_resetcache_hook = NULL;
 CLUSTER_COLLATION_OID_hook_type prev_CLUSTER_COLLATION_OID_hook = NULL;
 PreCreateCollation_hook_type prev_PreCreateCollation_hook = NULL;
 TranslateCollation_hook_type prev_TranslateCollation_hook = NULL;
+
+static void
+set_procid(Oid oid)
+{
+	procid_var = oid;
+}
 
 static void
 assign_identity_insert(const char *newval, void *extra)
@@ -2602,6 +2611,7 @@ pltsql_call_handler(PG_FUNCTION_ARGS)
 	int                     save_nestlevel;
 	MemoryContext	savedPortalCxt;
 	bool support_tsql_trans = pltsql_support_tsql_transactions();
+	Oid prev_procid = InvalidOid;
 
 	create_queryEnv2(CacheMemoryContext, false);
 
@@ -2641,8 +2651,11 @@ pltsql_call_handler(PG_FUNCTION_ARGS)
 	func->use_count++;
 
 	save_nestlevel = pltsql_new_guc_nest_level();
+
+	prev_procid = procid_var;
 	PG_TRY();
 	{
+		set_procid(func->fn_oid);
 		/*
 		 * Determine if called as function or trigger and call appropriate
 		 * subhandler
@@ -2664,9 +2677,12 @@ pltsql_call_handler(PG_FUNCTION_ARGS)
 		}
 		else
 			retval = pltsql_exec_function(func, fcinfo, NULL, false);
+
+		set_procid(prev_procid);
 	}
 	PG_CATCH();
 	{
+		set_procid(prev_procid);
 		/* Decrement use-count, restore cur_estate, and propagate error */
 		func->use_count--;
 		func->cur_estate = save_cur_estate;
