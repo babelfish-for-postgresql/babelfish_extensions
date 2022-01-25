@@ -2333,7 +2333,7 @@ _PG_init(void)
 		(*pltsql_protocol_plugin_ptr)->sqlvariant_get_pg_base_type = &TdsGetPGbaseType;
 		(*pltsql_protocol_plugin_ptr)->sqlvariant_get_variant_base_type = &TdsGetVariantBaseType;
 		(*pltsql_protocol_plugin_ptr)->pltsql_read_proc_return_status = &pltsql_proc_return_code;
-		(*pltsql_protocol_plugin_ptr)->sp_cursoropen_callback = &execute_sp_cursoropen;
+		(*pltsql_protocol_plugin_ptr)->sp_cursoropen_callback = &execute_sp_cursoropen_old;
 		(*pltsql_protocol_plugin_ptr)->sp_cursorclose_callback = &execute_sp_cursorclose;
 		(*pltsql_protocol_plugin_ptr)->sp_cursorfetch_callback = &execute_sp_cursorfetch;
 		(*pltsql_protocol_plugin_ptr)->sp_cursorexecute_callback = &execute_sp_cursorexecute;

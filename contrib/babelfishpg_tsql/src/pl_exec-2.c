@@ -68,16 +68,10 @@ extern void pltsql_update_cursor_last_operation(char *curname, int last_operatio
 extern bool pltsql_declare_cursor(PLtsql_execstate *estate, PLtsql_var *var, PLtsql_expr* explicit_expr, int cursor_options);
 extern char *pltsql_demangle_curname(char *curname);
 
-extern int execute_sp_cursor(int cursor_handle, int opttype, int rownum, const char *tablename, List* values);
-extern int execute_sp_cursoropen(int *cursor_handle, const char *stmt, int *scrollopt, int *ccopt, int *row_count, int nparams, Datum *values, const char *nulls);
-extern int execute_sp_cursorprepare(int *stmt_handle, const char *stmt, int options, int *scrollopt, int *ccopt, int nBindParams, Oid *boundParamsOidList);
-extern int execute_sp_cursorexecute(int stmt_handle, int *cursor_handle, int *scrollopt, int *ccopt, int *rowcount, int nparams, Datum *values, const char *nulls);
-extern int execute_sp_cursorprepexec(int *stmt_handle, int *cursor_handle, const char *stmt, int options, int *scrollopt, int *ccopt, int *row_count, int nparams,  int nBindParams, Oid *boundParamsOidList, Datum *values, const char *nulls);
-extern int execute_sp_cursorunprepare(int stmt_handle);
-extern int execute_sp_cursorfetch(int cursor_handle, int *pfetchtype, int *prownum, int *pnrows);
-extern int execute_sp_cursoroption(int cursor_handle, int code, int value);
-extern int execute_sp_cursoroption2(int cursor_handle, int code, const char *value);
-extern int execute_sp_cursorclose(int cursor_handle);
+extern void enable_sp_cursor_find_param_hook(void);
+extern void disable_sp_cursor_find_param_hook(void);
+extern void add_sp_cursor_param(char *name);
+extern void reset_sp_cursor_params();
 
 extern void pltsql_commit_not_required_impl_txn(PLtsql_execstate *estate);
 
@@ -1278,6 +1272,82 @@ execute_batch(PLtsql_execstate *estate, char *batch, InlineCodeBlockArgs *args, 
 	return PLTSQL_RC_OK;
 }
 
+static InlineCodeBlockArgs *
+evaluate_sp_cursor_param_def(PLtsql_execstate *estate, PLtsql_expr *stmt_param_def, const char* proc_name)
+{
+	InlineCodeBlockArgs *args = NULL;
+	Datum	paramdef;
+	char	*paramdefstr;
+	bool	isnull;
+	Oid	restype;
+	int32	restypmod;
+
+	args = create_args(0);
+
+	if (stmt_param_def == NULL)
+		return args;
+
+	/* Evaluate the parameter definition */
+	paramdef = exec_eval_expr(estate, stmt_param_def, &isnull, &restype, &restypmod);
+	if (!isnull)
+	{
+		paramdefstr = convert_value_to_string(estate, paramdef, restype);
+		if (strlen(paramdefstr) > 0) /* empty string should be treated as same as NULL */
+		{
+			read_param_def(args, paramdefstr);
+
+			reset_sp_cursor_params();
+			for (int i=0; i<args->numargs; ++i)
+			{
+				if (args->argmodes[i] != FUNC_PARAM_IN)
+					ereport(ERROR, (errcode(ERRCODE_NULL_VALUE_NOT_ALLOWED),
+						errmsg("output argument is not supported in %s yet", proc_name)));
+
+				add_sp_cursor_param(args->argnames[i]);
+			}
+		}
+	}
+
+	return args;
+}
+
+static void
+evaluate_sp_cursor_param_values(PLtsql_execstate *estate, int paramno, List *params, Datum **values, char **nulls)
+{
+	Oid rettype;
+	int32 rettypmod;
+	ListCell *lc;
+	int i = 0;
+	bool isnull;
+
+	if (paramno <= 0)
+		return;
+
+	Assert(values); /* should be provided by caller */
+	Assert(nulls); /* should be provided by caller */
+
+	(*values) = (Datum *) palloc0(sizeof(Datum) * paramno);
+	(*nulls) = (char *) palloc0(sizeof(char) * paramno);
+
+	foreach(lc, params)
+	{
+		tsql_exec_param *p = (tsql_exec_param *) lfirst(lc);
+		PLtsql_expr *expr = p->expr;
+		if (p->name != NULL)
+			ereport(ERROR, (errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+				errmsg("named argument is not supported in sp_cursoropen yet")));
+		if (p->mode != FUNC_PARAM_IN)
+			ereport(ERROR, (errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+				errmsg("output argument is not supported in sp_cursoropen yet")));
+
+		(*values)[i] = exec_eval_expr(estate, expr, &isnull, &rettype, &rettypmod);
+		if (isnull)
+			(*nulls)[i] = 'n';
+		++i;
+	}
+	Assert(i == paramno);
+}
+
 static int
 exec_stmt_exec_sp(PLtsql_execstate *estate, PLtsql_stmt_exec_sp *stmt)
 {
@@ -1330,8 +1400,14 @@ exec_stmt_exec_sp(PLtsql_execstate *estate, PLtsql_stmt_exec_sp *stmt)
 		{
 			int scrollopt;
 			int ccopt;
+			int rowcount;
 			bool scrollopt_null = true;
 			bool ccopt_null = true;
+			bool rowcount_null = true;
+			InlineCodeBlockArgs *args = NULL;
+			int paramno = stmt->paramno;
+			Datum *values = NULL;
+			char *nulls = NULL;
 
 			/* evaulate query string */
 			val = exec_eval_expr(estate, stmt->query, &isnull, &restype, &restypmod);
@@ -1344,13 +1420,37 @@ exec_stmt_exec_sp(PLtsql_execstate *estate, PLtsql_stmt_exec_sp *stmt)
 				scrollopt = exec_eval_int(estate, stmt->opt1, &scrollopt_null);
 			if (stmt->opt2 != NULL)
 				ccopt = exec_eval_int(estate, stmt->opt2, &ccopt_null);
+			if (stmt->opt3 != NULL)
+				rowcount = exec_eval_int(estate, stmt->opt3, &rowcount_null);
 
-			ret = execute_sp_cursoropen(&cursor_handle,
-			                            querystr,
-			                            (scrollopt_null ? NULL : &scrollopt),
-			                            (ccopt_null ? NULL : &ccopt),
-			                            NULL, /* TODO: row count */
-			                            0, NULL, NULL); /* TODO: parameter handling */
+			/* evalaute parameter definition */
+			args = evaluate_sp_cursor_param_def(estate, stmt->param_def, "sp_cursoropen");
+			if (args->numargs != stmt->paramno)
+				ereport(ERROR, (errcode(ERRCODE_SYNTAX_ERROR),
+						errmsg("param definition mismatches with inputs")));
+
+			/* evaluate parameter values */
+			evaluate_sp_cursor_param_values(estate, paramno, stmt->params, &values, &nulls);
+
+			enable_sp_cursor_find_param_hook();
+			PG_TRY();
+			{
+				ret = execute_sp_cursoropen(&cursor_handle,
+				                           querystr,
+				                            (scrollopt_null ? NULL : &scrollopt),
+				                           (ccopt_null ? NULL : &ccopt),
+				                           (rowcount_null ? NULL : &rowcount),
+				                           paramno, args->numargs, args->argtypes,
+				                           values, nulls);
+			}
+			PG_CATCH();
+			{
+				disable_sp_cursor_find_param_hook();
+				PG_RE_THROW();
+			}
+			PG_END_TRY();
+			disable_sp_cursor_find_param_hook();
+
 			if (ret > 0)
 				ereport(ERROR, (errcode(ERRCODE_INTERNAL_ERROR),
 					errmsg("sp_cursoropen failed: %d", ret)));
@@ -1365,6 +1465,7 @@ exec_stmt_exec_sp(PLtsql_execstate *estate, PLtsql_stmt_exec_sp *stmt)
 			int ccopt;
 			bool scrollopt_null = true;
 			bool ccopt_null = true;
+			InlineCodeBlockArgs *args = NULL;
 
 			/* evaulate query string */
 			val = exec_eval_expr(estate, stmt->query, &isnull, &restype, &restypmod);
@@ -1383,12 +1484,27 @@ exec_stmt_exec_sp(PLtsql_execstate *estate, PLtsql_stmt_exec_sp *stmt)
 				ereport(ERROR, (errcode(ERRCODE_NULL_VALUE_NOT_ALLOWED),
 					errmsg("options argument of sp_cursorprepare is null")));
 
-			ret = execute_sp_cursorprepare(&prepared_handle,
-			                               querystr,
-			                               options,
-			                               (scrollopt_null ? NULL : &scrollopt),
-			                               (ccopt_null ? NULL : &ccopt),
-										   0, NULL);
+			/* evalaute parameter definition */
+			args = evaluate_sp_cursor_param_def(estate, stmt->param_def, "sp_cursorprepare");
+
+			enable_sp_cursor_find_param_hook();
+			PG_TRY();
+			{
+				ret = execute_sp_cursorprepare(&prepared_handle,
+			                                 querystr,
+			                                 options,
+			                                 (scrollopt_null ? NULL : &scrollopt),
+			                                 (ccopt_null ? NULL : &ccopt),
+			                                 args->numargs, args->argtypes);
+			}
+			PG_CATCH();
+			{
+				disable_sp_cursor_find_param_hook();
+				PG_RE_THROW();
+			}
+			PG_END_TRY();
+			disable_sp_cursor_find_param_hook();
+
 			if (ret > 0)
 				ereport(ERROR, (errcode(ERRCODE_INTERNAL_ERROR),
 					errmsg("sp_cursorprepare failed: %d", ret)));
@@ -1400,8 +1516,13 @@ exec_stmt_exec_sp(PLtsql_execstate *estate, PLtsql_stmt_exec_sp *stmt)
 		{
 			int scrollopt;
 			int ccopt;
+			int rowcount;
 			bool scrollopt_null = true;
 			bool ccopt_null = true;
+			bool rowcount_null = true;
+			int paramno = stmt->paramno;
+			Datum *values = NULL;
+			char *nulls = NULL;
 
 			prepared_handle = exec_eval_int(estate, stmt->handle, &isnull);
 			if (isnull)
@@ -1412,14 +1533,18 @@ exec_stmt_exec_sp(PLtsql_execstate *estate, PLtsql_stmt_exec_sp *stmt)
 				scrollopt = exec_eval_int(estate, stmt->opt1, &scrollopt_null);
 			if (stmt->opt2 != NULL)
 				ccopt = exec_eval_int(estate, stmt->opt2, &ccopt_null);
+			if (stmt->opt3 != NULL)
+				rowcount = exec_eval_int(estate, stmt->opt3, &rowcount_null);
 
-			/* TODO: param handling */
+			/* evaluate parameter values */
+			evaluate_sp_cursor_param_values(estate, paramno, stmt->params, &values, &nulls);
+
 			ret = execute_sp_cursorexecute(prepared_handle,
 			                               &cursor_handle,
 			                               (scrollopt_null ? NULL : &scrollopt),
 			                               (ccopt_null ? NULL : &ccopt),
-			                               NULL, /* TODO: row count */
-			                               0, NULL, NULL); /* TODO: parameter handling */
+			                               (rowcount_null ? NULL : &rowcount),
+			                               paramno, values, nulls);
 			if (ret > 0)
 				ereport(ERROR, (errcode(ERRCODE_INTERNAL_ERROR),
 					errmsg("sp_cursorexecute failed: %d", ret)));
@@ -1429,11 +1554,16 @@ exec_stmt_exec_sp(PLtsql_execstate *estate, PLtsql_stmt_exec_sp *stmt)
 		}
 		case PLTSQL_EXEC_SP_CURSORPREPEXEC:
 		{
-			int options;
 			int scrollopt;
 			int ccopt;
+			int rowcount;
 			bool scrollopt_null = true;
 			bool ccopt_null = true;
+			bool rowcount_null = true;
+			InlineCodeBlockArgs *args = NULL;
+			int paramno = stmt->paramno;
+			Datum *values = NULL;
+			char *nulls = NULL;
 
 			/* evaulate query string */
 			val = exec_eval_expr(estate, stmt->query, &isnull, &restype, &restypmod);
@@ -1446,17 +1576,39 @@ exec_stmt_exec_sp(PLtsql_execstate *estate, PLtsql_stmt_exec_sp *stmt)
 				scrollopt = exec_eval_int(estate, stmt->opt1, &scrollopt_null);
 			if (stmt->opt2 != NULL)
 				ccopt = exec_eval_int(estate, stmt->opt2, &ccopt_null);
-			Assert(stmt->opt3);
-			options = exec_eval_int(estate, stmt->opt3, &isnull);
+			if (stmt->opt3 != NULL)
+				rowcount = exec_eval_int(estate, stmt->opt3, &rowcount_null);
 
-			ret = execute_sp_cursorprepexec(&prepared_handle,
-			                                &cursor_handle,
-			                                querystr,
-			                                options,
-			                                (scrollopt_null ? NULL : &scrollopt),
-			                                (ccopt_null ? NULL : &ccopt),
-			                                NULL, /* TODO: row count */
-			                                0, 0, NULL, NULL, NULL); /* TODO: parameter handling */
+			/* evalaute parameter definition */
+			args = evaluate_sp_cursor_param_def(estate, stmt->param_def, "sp_cursorprepexec");
+			if (args->numargs != stmt->paramno)
+				ereport(ERROR, (errcode(ERRCODE_SYNTAX_ERROR),
+						errmsg("param definition mismatches with inputs")));
+
+			/* evaluate parameter values */
+			evaluate_sp_cursor_param_values(estate, paramno, stmt->params, &values, &nulls);
+
+			enable_sp_cursor_find_param_hook();
+			PG_TRY();
+			{
+				ret = execute_sp_cursorprepexec(&prepared_handle,
+				                               &cursor_handle,
+				                               querystr,
+				                               1, /* options: unlike documenation, sp_cursorprepexec doens't take an option value*/
+				                               (scrollopt_null ? NULL : &scrollopt),
+				                               (ccopt_null ? NULL : &ccopt),
+				                               (rowcount_null ? NULL : &rowcount),
+				                               paramno, args->numargs,
+				                               args->argtypes, values, nulls);
+			}
+			PG_CATCH();
+			{
+				disable_sp_cursor_find_param_hook();
+				PG_RE_THROW();
+			}
+			PG_END_TRY();
+			disable_sp_cursor_find_param_hook();
+
 			if (ret > 0)
 				ereport(ERROR, (errcode(ERRCODE_INTERNAL_ERROR),
 					errmsg("sp_cursorprepexec failed: %d", ret)));

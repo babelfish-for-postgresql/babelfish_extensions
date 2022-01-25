@@ -6,6 +6,7 @@
 #include "executor/spi.h"
 #include "libpq/libpq-be.h"
 #include "miscadmin.h"
+#include "parser/parse_expr.h"
 #include "utils/builtins.h"
 #include "utils/lsyscache.h"
 #include "utils/memutils.h"
@@ -35,6 +36,17 @@ void pltsql_init_anonymous_cursors(PLtsql_execstate *estate);
 void pltsql_cleanup_local_cursors(PLtsql_execstate *estate);
 
 char *pltsql_demangle_curname(char *curname);
+
+/* sp_cursor parameter handling */
+static lookup_param_hook_type prev_lookup_param_hook;
+static List *sp_cursor_params = NIL;
+
+static Node *sp_cursor_find_param(ParseState *pstate, ColumnRef *cref);
+
+void enable_sp_cursor_find_param_hook(void);
+void disable_sp_cursor_find_param_hook(void);
+void add_sp_cursor_param(char *name);
+void reset_sp_cursor_params(void);
 
 /* cursor information hashtab */
 typedef struct cursorhashent
@@ -311,6 +323,99 @@ char *pltsql_demangle_curname(char *curname)
 
 	len = infix_substr - curname;
 	return pnstrdup(curname, len);
+}
+
+/*
+ * sp_cursor parameter handling
+ *
+ * Other than sp_prepare series using inline_handler,
+ * sp_cursor series need to exploit lower level SPI routine but its interface doesn't input a hook to handle parameters
+ *
+ * We will exploit exisiting lookup_param_hook to match parameter name.
+ * This hook is already used to sp_cursor series call via TDS RPC (not a procedure call)
+ * so sp_cursor behavior will be consistent regardless of whther it is called by EXEC in language side or TDS RPC directly.
+ */
+
+Node *
+sp_cursor_find_param(ParseState *pstate, ColumnRef *cref)
+{
+	ParamRef *pref;
+	char *colname;
+	ListCell *cell;
+	int i = 1;
+	int param_no = 0;
+	Node *result;
+
+	if (prev_lookup_param_hook)
+	{
+		Node *found = (*prev_lookup_param_hook) (pstate, cref);
+		if (found)
+			return found;
+	}
+
+	if (list_length(cref->fields) != 1)
+		return NULL;
+
+	if (sp_cursor_params == NIL)
+		return NULL;
+
+	colname = strVal(linitial(cref->fields));
+	foreach(cell, sp_cursor_params)
+	{
+		const char *param_name = lfirst(cell);
+		if (pg_strcasecmp(colname, param_name) == 0)
+		{
+			param_no = i;
+			break;
+		}
+		++i;
+	}
+
+	if (param_no == 0)
+		return NULL; /* not found */
+
+	pref = makeNode(ParamRef);
+	pref->number = param_no;
+	pref->location = cref->location;
+
+	/*
+	 * The core parser knows nothing about Params.  If a hook is supplied,
+	 * call it.  If not, or if the hook returns NULL, throw a generic error.
+	 */
+	if (pstate->p_paramref_hook != NULL)
+		result = pstate->p_paramref_hook(pstate, pref);
+	else
+		result = NULL;
+
+	if (result == NULL)
+		ereport(ERROR,
+				(errcode(ERRCODE_UNDEFINED_PARAMETER),
+				 errmsg("there is no parameter $%d", pref->number),
+				 parser_errposition(pstate, pref->location)));
+
+	return result;
+}
+
+void enable_sp_cursor_find_param_hook()
+{
+	prev_lookup_param_hook = lookup_param_hook;
+	lookup_param_hook = sp_cursor_find_param;
+}
+
+void disable_sp_cursor_find_param_hook()
+{
+	lookup_param_hook = prev_lookup_param_hook;
+	prev_lookup_param_hook = NULL;
+}
+
+void add_sp_cursor_param(char *name)
+{
+	sp_cursor_params = lappend(sp_cursor_params, name);
+}
+
+void reset_sp_cursor_params()
+{
+	sp_cursor_params = NIL;
 }
 
 void pltsql_create_cursor_htab()
@@ -897,7 +1002,13 @@ int execute_sp_cursor(int cursor_handle, int opttype, int rownum, const char *ta
 	return 0;
 }
 
-int execute_sp_cursoropen(int *cursor_handle, const char *stmt, int *pscrollopt, int *pccopt, int *row_count, int nparams, Datum *values, const char *nulls)
+int execute_sp_cursoropen(int *cursor_handle, const char *stmt, int *pscrollopt, int *pccopt, int *row_count, int nparams, int nBindParams, Oid *boundParamsOidList, Datum *values, const char *nulls)
+{
+	return execute_sp_cursoropen_common(NULL, cursor_handle, stmt, pscrollopt, pccopt, row_count, nparams, nBindParams, boundParamsOidList, values, nulls, true/*prepare*/, false/*save_plan*/, true/*execute*/);
+}
+
+/* old interface to be compatabile with TDS */
+int execute_sp_cursoropen_old(int *cursor_handle, const char *stmt, int *pscrollopt, int *pccopt, int *row_count, int nparams, Datum *values, const char *nulls)
 {
 	return execute_sp_cursoropen_common(NULL, cursor_handle, stmt, pscrollopt, pccopt, row_count, nparams, 0, NULL, values, nulls, true/*prepare*/, false/*save_plan*/, true/*execute*/);
 }
@@ -915,7 +1026,6 @@ int execute_sp_cursorexecute(int stmt_handle, int *cursor_handle, int *pscrollop
 
 int execute_sp_cursorprepexec(int *stmt_handle, int *cursor_handle, const char *stmt, int options, int *pscrollopt, int *pccopt, int *row_count, int nparams, int nBindParams, Oid *boundParamsOidList, Datum *values, const char *nulls)
 {
-	/* TODO: options handling */
 	return execute_sp_cursoropen_common(stmt_handle, cursor_handle, stmt, pscrollopt, pccopt, row_count, nparams, nBindParams, boundParamsOidList, values, nulls, true/*prepare*/, true/*save_plan*/, true/*execute*/);
 }
 
@@ -1249,13 +1359,13 @@ execute_sp_cursoropen_common(int* stmt_handle, int *cursor_handle, const char *s
 		elog(ERROR, "SPI_connect failed: %s", SPI_result_code_string(rc));
 	PortalContext = savedPortalCxt;
 
+	/* cursor options */
+	scrollopt = (pscrollopt ? *pscrollopt : 0);
+	ccopt = (pccopt ? *pccopt : 0);
+	cursor_options = validate_and_get_sp_cursoropen_params(scrollopt, ccopt);
+
 	if (prepare)
 	{
-		/* cursor options */
-		scrollopt = (pscrollopt ? *pscrollopt : 0);
-		ccopt = (pccopt ? *pccopt : 0);
-		cursor_options = validate_and_get_sp_cursoropen_params(scrollopt, ccopt);
-		
 		/* prepare plan and insert a cursor entry */
 		plan = SPI_prepare_cursor(stmt, nBindParams, boundParamsOidList, cursor_options);
 		if (plan == NULL)
@@ -1294,6 +1404,10 @@ execute_sp_cursoropen_common(int* stmt_handle, int *cursor_handle, const char *s
 		char curname[NAMEDATALEN];
 		bool snapshot_pushed = false;
 
+		if (SPI_getargcount(plan) != nparams)
+			ereport(ERROR, (errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+					errmsg("the numeber of arguments in plan mismatches with inputs")));
+
 		read_only = (cursor_options & TSQL_CURSOR_OPT_READ_ONLY);
 
 		*cursor_handle = get_next_cursor_handle();
@@ -1325,7 +1439,11 @@ execute_sp_cursoropen_common(int* stmt_handle, int *cursor_handle, const char *s
 			hentry->tupdesc = CreateTupleDescCopy(portal->tupDesc);
 			MemoryContextSwitchTo(oldcontext);
 
-			/* TODO: row_count handling */
+			/*
+			 * row_count can be ignored if AUTO_FETCH is not specified.
+			 * Currently we don't support AUTO_FETCH so we do not need to handle row_count
+			 */
+			Assert(row_count == NULL || (scrollopt & SP_CURSOR_SCROLLOPT_AUTO_FETCH) == 0);
 		}
 		PG_CATCH();
 		{

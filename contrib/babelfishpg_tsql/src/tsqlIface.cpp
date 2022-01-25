@@ -4664,9 +4664,12 @@ makeSpStatement(ParserRuleContext *sp_name, TSqlParser::Execute_statement_argCon
 		result->cursor_handleno = params[1]->varno;
 		result->opt1 = getNthParamExpr(params, 3);
 		result->opt2 = getNthParamExpr(params, 4);
-
-		/* TODO: rowcount handling */
-		/* TODO: parameter handling */
+		result->opt3 = getNthParamExpr(params, 5);
+		for (size_t i = 5; i < paramno; i++)
+		{
+			result->params = lappend(result->params, params[i]);
+			result->paramno++;
+		}
 	}
 	else if (string_matches(name_str.c_str(), "sp_cursorfetch"))
 	{
@@ -4688,9 +4691,13 @@ makeSpStatement(ParserRuleContext *sp_name, TSqlParser::Execute_statement_argCon
 		result->query = getNthParamExpr(params, 2);
 		result->opt1 = getNthParamExpr(params, 3);
 		result->opt2 = getNthParamExpr(params, 4);
-		
-		/* TODO: rowcount handling */
-		/* TODO: parameter handling */
+		result->opt3 = getNthParamExpr(params, 5);
+		result->param_def = getNthParamExpr(params, 6);
+		for (size_t i = 6; i < paramno; i++)
+		{
+			result->params = lappend(result->params, params[i]);
+			result->paramno++;
+		}
 	}
 	else if (string_matches(name_str.c_str(), "sp_cursoroption"))
 	{
@@ -4708,7 +4715,7 @@ makeSpStatement(ParserRuleContext *sp_name, TSqlParser::Execute_statement_argCon
 
 		check_param_type(params[0], true, INT4OID, "prepared_handle");
 		result->prepared_handleno = params[0]->varno;
-		/* TODO: param handling */
+		result->param_def = getNthParamExpr(params, 2);
 		result->query = getNthParamExpr(params, 3);
 		result->opt3 = getNthParamExpr(params, 4);
 		result->opt1 = getNthParamExpr(params, 5);
@@ -4723,13 +4730,16 @@ makeSpStatement(ParserRuleContext *sp_name, TSqlParser::Execute_statement_argCon
 		result->prepared_handleno = params[0]->varno;
 		check_param_type(params[1], true, INT4OID, "cursor");
 		result->cursor_handleno = params[1]->varno;
-		/* TODO: param handling */
+		result->param_def = getNthParamExpr(params, 3);
 		result->query = getNthParamExpr(params, 4);
-		result->opt3 = getNthParamExpr(params, 5);
-		result->opt1 = getNthParamExpr(params, 6);
-		result->opt2 = getNthParamExpr(params, 7);
-		/* TODO: rowcount handling */
-		/* TODO: parameter handling */
+		result->opt1 = getNthParamExpr(params, 5);
+		result->opt2 = getNthParamExpr(params, 6);
+		result->opt3 = getNthParamExpr(params, 7);
+		for (size_t i = 7; i < paramno; i++)
+		{
+			result->params = lappend(result->params, params[i]);
+			result->paramno++;
+		}
 	}
 	else if (string_matches(name_str.c_str(), "sp_cursorunprepare"))
 	{
