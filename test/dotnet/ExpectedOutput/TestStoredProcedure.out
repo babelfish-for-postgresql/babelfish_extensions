@@ -51,7 +51,7 @@
 --OUT PARAMETERS--
 a
 Int32
-
+100
 
 #Q#sp_test1
 #D#int
@@ -59,7 +59,7 @@ Int32
 --OUT PARAMETERS--
 a
 Int32
-1
+100
 
 #Q#DROP PROCEDURE sp_test1
 #Q#CREATE PROCEDURE sp_test2 (@a SMALLINT OUTPUT) AS BEGIN SET @a=100; Select @a as a; END;
@@ -76,7 +76,7 @@ Int32
 --OUT PARAMETERS--
 a
 Int16
-
+100
 
 #Q#sp_test2
 #D#smallint
@@ -84,7 +84,7 @@ Int16
 --OUT PARAMETERS--
 a
 Int16
-10
+100
 
 #Q#DROP PROCEDURE sp_test2
 #Q#CREATE PROCEDURE sp_test3 (@a BIGINT OUTPUT) AS BEGIN SET @a=100; Select @a as a; END;
@@ -101,7 +101,7 @@ Int16
 --OUT PARAMETERS--
 a
 Int64
-
+100
 
 #Q#sp_test3
 #D#bigint
@@ -109,7 +109,7 @@ Int64
 --OUT PARAMETERS--
 a
 Int64
-10
+100
 
 #Q#DROP PROCEDURE sp_test3
 #Q#CREATE PROCEDURE sp_test4 (@a tinyint OUTPUT) AS BEGIN SET @a=100; Select @a as a; END;
@@ -126,7 +126,7 @@ Int64
 --OUT PARAMETERS--
 a
 Byte
-
+100
 
 #Q#sp_test4
 #D#tinyint
@@ -134,7 +134,7 @@ Byte
 --OUT PARAMETERS--
 a
 Byte
-10
+100
 
 #Q#DROP PROCEDURE sp_test4
 #Q#CREATE PROCEDURE sp_test5 (@a float OUTPUT) AS BEGIN SET @a=100.12; Select @a as a; END;
@@ -151,7 +151,7 @@ Byte
 --OUT PARAMETERS--
 a
 Double
-
+100.12
 
 #Q#sp_test5
 #D#float
@@ -159,7 +159,7 @@ Double
 --OUT PARAMETERS--
 a
 Double
-10.1
+100.12
 
 #Q#DROP PROCEDURE sp_test5
 #Q#CREATE PROCEDURE sp_test6 (@a varchar OUTPUT) AS BEGIN SET @a='helloworld'; Select @a as a; END;
@@ -176,7 +176,7 @@ h
 --OUT PARAMETERS--
 a
 AnsiString
-
+h
 
 #Q#sp_test6
 #D#varchar
@@ -184,7 +184,7 @@ h
 --OUT PARAMETERS--
 a
 AnsiString
-hello
+h
 
 #Q#DROP PROCEDURE sp_test6
 #Q#CREATE PROCEDURE sp_test9 (@a nvarchar OUTPUT) AS BEGIN SET @a='helloworld'; Select @a as a; END;
@@ -201,7 +201,7 @@ h
 --OUT PARAMETERS--
 a
 AnsiString
-
+h
 
 #Q#sp_test9
 #D#nvarchar
@@ -209,7 +209,7 @@ h
 --OUT PARAMETERS--
 a
 AnsiString
-hello
+h
 
 #Q#DROP PROCEDURE sp_test9
 #Q#CREATE PROCEDURE sp_test11 (@a decimal(10,4) OUTPUT) AS BEGIN SET @a=100.41; Select @a as a; END;
@@ -226,7 +226,7 @@ hello
 --OUT PARAMETERS--
 a
 Decimal
-
+100.410
 
 #Q#sp_test11
 #D#decimal
@@ -234,7 +234,7 @@ Decimal
 --OUT PARAMETERS--
 a
 Decimal
-123.00
+100.41
 
 #Q#DROP PROCEDURE sp_test11
 #Q#CREATE PROCEDURE sp_test14 (@a date output) AS BEGIN SET @a='1999-1-3'; Select @a as a; END;
@@ -251,7 +251,7 @@ Decimal
 --OUT PARAMETERS--
 a
 Date
-
+01/03/1999 00:00:00
 
 #Q#sp_test14
 #D#date
@@ -259,7 +259,7 @@ Date
 --OUT PARAMETERS--
 a
 Date
-12/31/9999 00:00:00
+01/03/1999 00:00:00
 
 #Q#DROP PROCEDURE sp_test14
 #Q#CREATE PROCEDURE sp_test15 (@a time(4) OUTPUT) AS BEGIN SET @a='11:25:07.123'; Select @a as a; END;
@@ -276,7 +276,7 @@ Date
 --OUT PARAMETERS--
 a
 Time
-
+11:25:07.1230000
 
 #Q#sp_test15
 #D#time
@@ -284,7 +284,7 @@ Time
 --OUT PARAMETERS--
 a
 Time
-12:45:37.1230000
+11:25:07.1230000
 
 #Q#DROP PROCEDURE sp_test15
 #Q#CREATE PROCEDURE sp_test16 (@a datetime output) AS BEGIN SET @a='2004-05-18 13:59:59.995'; Select @a as a; END;
@@ -301,7 +301,7 @@ Time
 --OUT PARAMETERS--
 a
 DateTime
-
+05/18/2004 13:59:59
 
 #Q#sp_test16
 #D#datetime
@@ -309,7 +309,7 @@ DateTime
 --OUT PARAMETERS--
 a
 DateTime
-02/28/2000 23:59:59
+05/18/2004 13:59:59
 
 #Q#DROP PROCEDURE sp_test16
 #Q#CREATE PROCEDURE sp_test17 (@a datetime2(5) OUTPUT) AS BEGIN SET @a='2014-10-2 1:45:37.123456'; Select @a as a; END;
@@ -326,7 +326,7 @@ DateTime
 --OUT PARAMETERS--
 a
 DateTime2
-
+10/02/2014 01:45:37
 
 #Q#sp_test17
 #D#datetime2
@@ -334,7 +334,7 @@ DateTime2
 --OUT PARAMETERS--
 a
 DateTime2
-10/23/2016 12:45:37
+10/02/2014 01:45:37
 
 #Q#DROP PROCEDURE sp_test17
 #Q#CREATE PROCEDURE sp_test18 (@a smalldatetime output) AS BEGIN SET @a='2010-02-03 12:58:23'; Select @a as a; END;
@@ -351,7 +351,7 @@ DateTime2
 --OUT PARAMETERS--
 a
 DateTime
-
+02/03/2010 12:58:00
 
 #Q#sp_test18
 #D#smalldatetime
@@ -359,7 +359,7 @@ DateTime
 --OUT PARAMETERS--
 a
 DateTime
-12/13/2000 12:58:00
+02/03/2010 12:58:00
 
 #Q#DROP PROCEDURE sp_test18
 #Q#DROP PROCEDURE sp_test20
