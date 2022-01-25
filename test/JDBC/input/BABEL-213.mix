@@ -1,0 +1,352 @@
+-- scalar udf returning int
+CREATE FUNCTION babel_213_int_func(
+ @param1 INT,
+ @param2 INT
+)
+RETURNS INT
+AS
+BEGIN
+ RETURN @param1 * @param2;
+END;
+GO
+
+DECLARE @retval int;
+EXEC @retval = babel_213_int_func 100, 200;
+SELECT @retval;
+GO
+
+-- using execute
+DECLARE @retval int;
+EXECUTE @retval = babel_213_int_func 100, 200;
+SELECT @retval;
+GO
+
+-- no retval
+EXEC babel_213_int_func 100, 200;
+GO
+
+-- scalar udf returning char
+CREATE FUNCTION babel_213_char_func(
+ @param1 CHAR(100),
+ @param2 CHAR(100)
+)
+RETURNS CHAR(200)
+AS
+BEGIN
+ RETURN CONCAT(@param1, @param2);
+END;
+GO
+
+DECLARE @retval char(200);
+EXEC @retval = babel_213_char_func 'foo', 'bar';
+SELECT @retval;
+GO
+
+-- scalar udf returning varchar
+CREATE FUNCTION babel_213_varchar_func(
+ @param1 VARCHAR(100),
+ @param2 VARCHAR(100),
+ @param3 VARCHAR(100)
+)
+RETURNS VARCHAR(300)
+AS
+BEGIN
+ RETURN CONCAT(@param1, @param2, @param3);
+END;
+GO
+
+DECLARE @retval varchar(300);
+EXEC @retval = babel_213_varchar_func 'foo', 'bar', 'abc';
+SELECT @retval;
+GO
+
+-- scalar udf returning null
+CREATE FUNCTION babel_213_null_func(
+ @param1 INT,
+ @param2 INT
+)
+RETURNS INT
+AS
+BEGIN
+ RETURN NULL;
+END;
+GO
+
+DECLARE @retval int;
+EXEC @retval = babel_213_null_func 100, 200;
+SELECT ISNULL(@retval, -1);
+GO
+
+-- sql_variant
+CREATE FUNCTION babel_213_sql_variant_func(@v int)
+RETURNS sql_variant
+AS
+BEGIN
+ declare @babel_213_var sql_variant;
+ select @babel_213_var = cast(@v as varchar(10));
+ return @babel_213_var
+END;
+GO
+
+DECLARE @retval sql_variant;
+EXEC @retval = babel_213_sql_variant_func 42;
+SELECT sql_variant_property(@retval, 'basetype');
+GO
+
+
+--uniqueidentifier
+CREATE FUNCTION babel_213_uniqueidentifier_func(@n int)
+RETURNS uniqueidentifier
+AS
+BEGIN
+ declare @id uniqueidentifier;
+ IF @n = 1
+  select @id = CAST('1E984725-C51C-4BF4-9960-E1C80E27ABA0' AS uniqueidentifier);
+ ELSE
+  select @id = CAST('2E984725-C51C-4BF4-9960-E1C80E27ABA0' AS uniqueidentifier);
+ return @id
+END;
+GO
+
+DECLARE @retval uniqueidentifier;
+EXEC @retval = babel_213_uniqueidentifier_func 1;
+SELECT @retval;
+GO
+
+
+-- scalar udf which can cause an error
+CREATE FUNCTION babel_213_div_func(
+ @param1 INT,
+ @param2 INT
+)
+RETURNS INT
+AS
+BEGIN
+ RETURN @param1 / @param2;
+END;
+GO
+
+DECLARE @retval int;
+EXEC @retval = babel_213_div_func 100, 0;
+SELECT @retval;
+GO
+
+-- assignment to different type
+-- char(200)->int (error should be thrwon)
+DECLARE @retval int;
+EXEC @retval = babel_213_char_func 'foo', 'bar';
+SELECT @retval;
+GO
+
+DECLARE @retval char(200);
+EXEC @retval = babel_213_int_func 100, 200;
+SELECT @retval;
+GO
+
+
+--nested scalar udf
+CREATE FUNCTION babel_213_n1_func(
+ @param1 INT
+)
+RETURNS INT
+AS
+BEGIN
+ RETURN @param1 + 1;
+END;
+GO
+
+CREATE FUNCTION babel_213_n2_func(
+ @param1 INT
+)
+RETURNS INT
+AS
+BEGIN
+ RETURN babel_213_n1_func(@param1) + 40;
+END;
+GO
+
+DECLARE @retval int;
+EXEC @retval = babel_213_n2_func 1;
+SELECT @retval;
+GO
+
+
+--nested scalar udf returning string
+CREATE FUNCTION babel_213_str_n1_func(
+ @param1 VARCHAR(10),
+ @param2 VARCHAR(10)
+)
+RETURNS VARCHAR(20)
+AS
+BEGIN
+ RETURN CONCAT(@param1, @param2);
+END;
+GO
+
+CREATE FUNCTION babel_213_str_n2_func(
+ @param1 VARCHAR(10),
+ @param2 VARCHAR(10)
+)
+RETURNS VARCHAR(40)
+AS
+BEGIN
+ RETURN CONCAT(babel_213_str_n1_func(@param1, 'def'), babel_213_str_n1_func(@param2, 'lmn'));
+END;
+GO
+
+DECLARE @retval VARCHAR(40);
+EXEC @retval = babel_213_str_n2_func 'abc', 'ghi';
+SELECT @retval;
+GO
+
+
+-- pl/pgsql
+-- psql currentSchema=master_dbo,public
+CREATE FUNCTION babel_213_int_plpgsql_func(
+ param1 INT,
+ param2 INT
+)
+RETURNS INT
+AS $$
+BEGIN
+ RETURN param1 * param2;
+END;
+$$ LANGUAGE plpgsql;
+GO
+
+-- tsql
+use master;
+go
+DECLARE @retval int;
+EXEC @retval = babel_213_int_plpgsql_func 100, 200;
+SELECT @retval;
+GO
+
+
+-- function name having whitespace
+CREATE FUNCTION [babel_213 space func](
+ @param1 INT,
+ @param2 INT
+)
+RETURNS INT
+AS
+BEGIN
+ RETURN @param1 * @param2;
+END;
+GO
+
+DECLARE @retval int;
+EXEC @retval = [babel_213 space func] 100, 200;
+SELECT @retval;
+GO
+
+
+CREATE FUNCTION [babel_213 space func no arg]()
+RETURNS INT
+AS
+BEGIN
+ RETURN 42;
+END;
+GO
+
+DECLARE @retval int;
+EXEC @retval = [babel_213 space func no arg];
+SELECT @retval;
+GO
+
+
+-- with schema
+CREATE SCHEMA babel_213_schema
+GO
+
+CREATE FUNCTION babel_213_schema.babel_213_int_func(
+ @param1 INT,
+ @param2 INT
+)
+RETURNS INT
+AS
+BEGIN
+ RETURN @param1 * @param2;
+END;
+GO
+
+DECLARE @retval int;
+EXEC @retval = babel_213_schema.babel_213_int_func 100, 200;
+SELECT @retval;
+GO
+
+
+-- space between schema and funcname
+DECLARE @retval int;
+EXEC @retval = babel_213_schema . babel_213_int_func 100, 200;
+SELECT @retval;
+GO
+
+
+-- schema and function name with space
+create SCHEMA [babel_213_schema with space]
+GO
+
+CREATE FUNCTION [babel_213_schema with space].[babel_213_int_func with space](
+ @param1 INT,
+ @param2 INT
+)
+RETURNS INT
+AS
+BEGIN
+ RETURN @param1 * @param2;
+END;
+GO
+
+DECLARE @retval int;
+EXEC @retval = [babel_213_schema with space] . [babel_213_int_func with space] 100, 200;
+SELECT @retval;
+GO
+
+
+-- babel 647: real-world scenario
+CREATE TABLE babel_647_employees (salary MONEY);
+insert into babel_647_employees VALUES (1.0);
+insert into babel_647_employees VALUES (10.0);
+insert into babel_647_employees VALUES (100.0);
+GO
+
+CREATE FUNCTION babel_647_employee_totalsalary(@how_many INT)
+RETURNS MONEY
+AS
+BEGIN
+ DECLARE @total_sal money;
+
+ SELECT @total_sal = SUM(salary) FROM (select TOP (@how_many) salary FROM babel_647_employees) AS top_employees
+
+ IF (@total_sal IS NULL)
+  SET @total_sal = 0
+ RETURN @total_sal;
+END;
+GO
+
+DECLARE @retval money;
+EXEC @retval = babel_647_employee_totalsalary 2;
+SELECT @retval;
+GO
+
+DROP FUNCTION babel_213_int_func;
+DROP FUNCTION babel_213_char_func;
+DROP FUNCTION babel_213_varchar_func;
+DROP FUNCTION babel_213_null_func;
+DROP FUNCTION babel_213_sql_variant_func;
+DROP FUNCTION babel_213_uniqueidentifier_func;
+DROP FUNCTION babel_213_div_func;
+DROP FUNCTION babel_213_n2_func;
+DROP FUNCTION babel_213_n1_func;
+DROP FUNCTION babel_213_str_n2_func;
+DROP FUNCTION babel_213_str_n1_func;
+DROP FUNCTION [babel_213 space func];
+DROP FUNCTION [babel_213 space func no arg];
+DROP FUNCTION babel_647_employee_totalsalary;
+DROP FUNCTION babel_213_schema.babel_213_int_func;
+DROP SCHEMA babel_213_schema;
+DROP FUNCTION [babel_213_schema with space].[babel_213_int_func with space];
+DROP SCHEMA [babel_213_schema with space];
+DROP TABLE babel_647_employees;
+GO

@@ -1,0 +1,1772 @@
+use master;
+go
+
+CREATE FUNCTION babel_637_int_multiply (@a int, @b int)
+RETURNS int AS
+BEGIN
+  RETURN @a * @b;
+END;
+GO
+
+-- reported case: numeric->int4
+SELECT babel_637_int_multiply(21.1, 2.2);
+GO
+~~START~~
+int
+42
+~~END~~
+
+
+-- reported case: varbinary->int4
+SELECT babel_637_int_multiply(0xe, 0xe);
+GO
+~~START~~
+int
+196
+~~END~~
+
+
+-- case expession. should pick float since it has higher precedence
+SELECT cast(pg_typeof(case when 2 > 1 then cast(3.14 as double precision) else cast(42 as int) end) as varchar(20)) as return_type;
+GO
+~~START~~
+varchar
+double precision
+~~END~~
+
+
+SELECT cast(pg_typeof(case when 2 > 1 then cast(42 as int) else cast(3.14 as double precision) end) as varchar(20)) as reutrn_type;
+GO
+~~START~~
+varchar
+double precision
+~~END~~
+
+
+--union-all
+SELECT cast(pg_typeof(T.c1) as varchar(20)) as return_type from (SELECT cast(3.14 as double precision) c1 UNION ALL SELECT cast(42 as int) c1) T
+GO
+~~START~~
+varchar
+double precision
+double precision
+~~END~~
+
+
+SELECT cast(pg_typeof(T.c1) as varchar(20)) as return_type from (SELECT cast(42 as int) c1 UNION ALL SELECT cast(3.14 as double precision) c1) T
+GO
+~~START~~
+varchar
+double precision
+double precision
+~~END~~
+
+
+
+-- all number type to double precision
+CREATE FUNCTION babel_637_double_precision (@a double precision)
+RETURNS double precision AS
+BEGIN
+  RETURN @a;
+END;
+GO
+
+SELECT babel_637_double_precision(cast(41.9 as double precision));
+GO
+~~START~~
+float
+41.9
+~~END~~
+
+
+SELECT babel_637_double_precision(cast(123456789012.1 as double precision));
+GO
+~~START~~
+float
+1.234567890121E11
+~~END~~
+
+
+SELECT babel_637_double_precision(cast(41.9 as float));
+GO
+~~START~~
+float
+41.9
+~~END~~
+
+
+SELECT babel_637_double_precision(cast(123456789012.1 as float));
+GO
+~~START~~
+float
+1.234567890121E11
+~~END~~
+
+
+SELECT babel_637_double_precision(cast(41.9 as fixeddecimal));
+GO
+~~START~~
+float
+41.9
+~~END~~
+
+
+SELECT babel_637_double_precision(cast(123456789012.1 as fixeddecimal));
+GO
+~~START~~
+float
+1.234567890121E11
+~~END~~
+
+
+SELECT babel_637_double_precision(cast(41.9 as numeric(18,4)));
+GO
+~~START~~
+float
+41.9
+~~END~~
+
+
+SELECT babel_637_double_precision(cast(123456789012.1 as numeric(18,4)));
+GO
+~~START~~
+float
+1.234567890121E11
+~~END~~
+
+
+SELECT babel_637_double_precision(cast(41.9 as money));
+GO
+~~START~~
+float
+41.9
+~~END~~
+
+
+SELECT babel_637_double_precision(cast(922337203685475.5807 as money));
+GO
+~~START~~
+float
+9.223372036854755E14
+~~END~~
+
+
+SELECT babel_637_double_precision(cast(41.9 as smallmoney));
+GO
+~~START~~
+float
+41.9
+~~END~~
+
+
+SELECT babel_637_double_precision(cast(214746.3647 as smallmoney));
+GO
+~~START~~
+float
+214746.3647
+~~END~~
+
+
+SELECT babel_637_double_precision(cast(41 as bigint));
+GO
+~~START~~
+float
+41.0
+~~END~~
+
+
+SELECT babel_637_double_precision(cast(9223372036854775806 as bigint));
+GO
+~~START~~
+float
+9.223372036854776E18
+~~END~~
+
+
+SELECT babel_637_double_precision(cast(41 as int));
+GO
+~~START~~
+float
+41.0
+~~END~~
+
+
+SELECT babel_637_double_precision(cast(2147483646 as int));
+GO
+~~START~~
+float
+2.147483646E9
+~~END~~
+
+
+SELECT babel_637_double_precision(cast(41 as smallint));
+GO
+~~START~~
+float
+41.0
+~~END~~
+
+
+SELECT babel_637_double_precision(cast(32766 as smallint));
+GO
+~~START~~
+float
+32766.0
+~~END~~
+
+
+SELECT babel_637_double_precision(cast(41 as tinyint));
+GO
+~~START~~
+float
+41.0
+~~END~~
+
+
+SELECT babel_637_double_precision(cast(254 as tinyint));
+GO
+~~START~~
+float
+254.0
+~~END~~
+
+
+
+-- all number type to float
+CREATE FUNCTION babel_637_float (@a float)
+RETURNS float AS
+BEGIN
+  RETURN @a;
+END;
+GO
+
+SELECT babel_637_float(cast(41.9 as double precision));
+GO
+~~START~~
+float
+41.9
+~~END~~
+
+
+SELECT babel_637_float(cast(123456789012.1 as double precision));
+GO
+~~START~~
+float
+1.234567890121E11
+~~END~~
+
+
+SELECT babel_637_float(cast(41.9 as float));
+GO
+~~START~~
+float
+41.9
+~~END~~
+
+
+SELECT babel_637_float(cast(123456789012.1 as float));
+GO
+~~START~~
+float
+1.234567890121E11
+~~END~~
+
+
+SELECT babel_637_float(cast(41.9 as fixeddecimal));
+GO
+~~START~~
+float
+41.9
+~~END~~
+
+
+SELECT babel_637_float(cast(123456789012.1 as fixeddecimal));
+GO
+~~START~~
+float
+1.234567890121E11
+~~END~~
+
+
+SELECT babel_637_float(cast(41.9 as numeric(8,4)));
+GO
+~~START~~
+float
+41.9
+~~END~~
+
+
+SELECT babel_637_float(cast(123456789012.1 as numeric(18,4)));
+GO
+~~START~~
+float
+1.234567890121E11
+~~END~~
+
+
+SELECT babel_637_float(cast(41.9 as money));
+GO
+~~START~~
+float
+41.9
+~~END~~
+
+
+SELECT babel_637_float(cast(922337203685475.5807 as money));
+GO
+~~START~~
+float
+9.223372036854755E14
+~~END~~
+
+
+SELECT babel_637_float(cast(41.9 as smallmoney));
+GO
+~~START~~
+float
+41.9
+~~END~~
+
+
+SELECT babel_637_float(cast(214746.3647 as smallmoney));
+GO
+~~START~~
+float
+214746.3647
+~~END~~
+
+
+SELECT babel_637_float(cast(41 as bigint));
+GO
+~~START~~
+float
+41.0
+~~END~~
+
+
+SELECT babel_637_float(cast(9223372036854775806 as bigint));
+GO
+~~START~~
+float
+9.223372036854776E18
+~~END~~
+
+
+SELECT babel_637_float(cast(41 as int));
+GO
+~~START~~
+float
+41.0
+~~END~~
+
+
+SELECT babel_637_float(cast(2147483646 as int));
+GO
+~~START~~
+float
+2.147483646E9
+~~END~~
+
+
+SELECT babel_637_float(cast(41 as smallint));
+GO
+~~START~~
+float
+41.0
+~~END~~
+
+
+SELECT babel_637_float(cast(32766 as smallint));
+GO
+~~START~~
+float
+32766.0
+~~END~~
+
+
+SELECT babel_637_float(cast(41 as tinyint));
+GO
+~~START~~
+float
+41.0
+~~END~~
+
+
+SELECT babel_637_float(cast(254 as tinyint));
+GO
+~~START~~
+float
+254.0
+~~END~~
+
+
+
+-- all number type to fixeddecimal
+CREATE FUNCTION babel_637_add_one_fixeddecimal (@a fixeddecimal)
+RETURNS fixeddecimal AS
+BEGIN
+  RETURN @a + 1;
+END;
+GO
+
+SELECT babel_637_add_one_fixeddecimal(cast(41.9 as double precision));
+GO
+~~START~~
+money
+42.9000
+~~END~~
+
+
+SELECT babel_637_add_one_fixeddecimal(cast(123456789012.1 as double precision));
+GO
+~~START~~
+money
+123456789013.1000
+~~END~~
+
+
+SELECT babel_637_add_one_fixeddecimal(cast(41.9 as float));
+GO
+~~START~~
+money
+42.9000
+~~END~~
+
+
+SELECT babel_637_add_one_fixeddecimal(cast(123456789012.1 as float));
+GO
+~~START~~
+money
+123456789013.1000
+~~END~~
+
+
+SELECT babel_637_add_one_fixeddecimal(cast(41.9 as fixeddecimal));
+GO
+~~START~~
+money
+42.9000
+~~END~~
+
+
+SELECT babel_637_add_one_fixeddecimal(cast(123456789012.1 as fixeddecimal));
+GO
+~~START~~
+money
+123456789013.1000
+~~END~~
+
+
+SELECT babel_637_add_one_fixeddecimal(cast(41.9 as numeric(8,4)));
+GO
+~~START~~
+money
+42.9000
+~~END~~
+
+
+SELECT babel_637_add_one_fixeddecimal(cast(123456789012.1 as numeric(18,4)));
+GO
+~~START~~
+money
+123456789013.1000
+~~END~~
+
+
+SELECT babel_637_add_one_fixeddecimal(cast(41.9 as money));
+GO
+~~START~~
+money
+42.9000
+~~END~~
+
+
+SELECT babel_637_add_one_fixeddecimal(cast(922337203685475.5807 as money));
+GO
+~~START~~
+money
+922337203685476.5807
+~~END~~
+
+
+SELECT babel_637_add_one_fixeddecimal(cast(41.9 as smallmoney));
+GO
+~~START~~
+money
+42.9000
+~~END~~
+
+
+SELECT babel_637_add_one_fixeddecimal(cast(214746.3647 as smallmoney));
+GO
+~~START~~
+money
+214747.3647
+~~END~~
+
+
+SELECT babel_637_add_one_fixeddecimal(cast(41 as bigint));
+GO
+~~START~~
+money
+42.0000
+~~END~~
+
+
+SELECT babel_637_add_one_fixeddecimal(cast(9223372036854775806 as bigint));
+GO
+~~START~~
+money
+-1.0000
+~~END~~
+
+
+SELECT babel_637_add_one_fixeddecimal(cast(41 as int));
+GO
+~~START~~
+money
+42.0000
+~~END~~
+
+
+SELECT babel_637_add_one_fixeddecimal(cast(2147483646 as int));
+GO
+~~START~~
+money
+2147483647.0000
+~~END~~
+
+
+SELECT babel_637_add_one_fixeddecimal(cast(41 as smallint));
+GO
+~~START~~
+money
+42.0000
+~~END~~
+
+
+SELECT babel_637_add_one_fixeddecimal(cast(32766 as smallint));
+GO
+~~START~~
+money
+32767.0000
+~~END~~
+
+
+SELECT babel_637_add_one_fixeddecimal(cast(41 as tinyint));
+GO
+~~START~~
+money
+42.0000
+~~END~~
+
+
+SELECT babel_637_add_one_fixeddecimal(cast(254 as tinyint));
+GO
+~~START~~
+money
+255.0000
+~~END~~
+
+
+
+-- all number type to numeric
+CREATE FUNCTION babel_637_add_one_numeric (@a numeric)
+RETURNS numeric AS
+BEGIN
+  RETURN @a + 1;
+END;
+GO
+
+SELECT babel_637_add_one_numeric(cast(41.9 as double precision));
+GO
+~~START~~
+numeric
+43
+~~END~~
+
+
+SELECT babel_637_add_one_numeric(cast(123456789012.1 as double precision));
+GO
+~~START~~
+numeric
+123456789013
+~~END~~
+
+
+SELECT babel_637_add_one_numeric(cast(41.9 as float));
+GO
+~~START~~
+numeric
+43
+~~END~~
+
+
+SELECT babel_637_add_one_numeric(cast(123456789012.1 as float));
+GO
+~~START~~
+numeric
+123456789013
+~~END~~
+
+
+SELECT babel_637_add_one_numeric(cast(41.9 as fixeddecimal));
+GO
+~~START~~
+numeric
+43
+~~END~~
+
+
+SELECT babel_637_add_one_numeric(cast(123456789012.1 as fixeddecimal));
+GO
+~~START~~
+numeric
+123456789013
+~~END~~
+
+
+SELECT babel_637_add_one_numeric(cast(41.9 as numeric(8,4)));
+GO
+~~START~~
+numeric
+43
+~~END~~
+
+
+SELECT babel_637_add_one_numeric(cast(123456789012.1 as numeric(18,4)));
+GO
+~~START~~
+numeric
+123456789013
+~~END~~
+
+
+SELECT babel_637_add_one_numeric(cast(41.9 as money));
+GO
+~~START~~
+numeric
+43
+~~END~~
+
+
+SELECT babel_637_add_one_numeric(cast(922337203685475.5807 as money));
+GO
+~~START~~
+numeric
+922337203685477
+~~END~~
+
+
+SELECT babel_637_add_one_numeric(cast(41.9 as smallmoney));
+GO
+~~START~~
+numeric
+43
+~~END~~
+
+
+SELECT babel_637_add_one_numeric(cast(214746.3647 as smallmoney));
+GO
+~~START~~
+numeric
+214747
+~~END~~
+
+
+SELECT babel_637_add_one_numeric(cast(41 as bigint));
+GO
+~~START~~
+numeric
+42
+~~END~~
+
+
+SELECT babel_637_add_one_numeric(cast(9223372036854775806 as bigint));
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: numeric field overflow)~~
+
+
+SELECT babel_637_add_one_numeric(cast(41 as int));
+GO
+~~START~~
+numeric
+42
+~~END~~
+
+
+SELECT babel_637_add_one_numeric(cast(2147483646 as int));
+GO
+~~START~~
+numeric
+2147483647
+~~END~~
+
+
+SELECT babel_637_add_one_numeric(cast(41 as smallint));
+GO
+~~START~~
+numeric
+42
+~~END~~
+
+
+SELECT babel_637_add_one_numeric(cast(32766 as smallint));
+GO
+~~START~~
+numeric
+32767
+~~END~~
+
+
+SELECT babel_637_add_one_numeric(cast(41 as tinyint));
+GO
+~~START~~
+numeric
+42
+~~END~~
+
+
+SELECT babel_637_add_one_numeric(cast(254 as tinyint));
+GO
+~~START~~
+numeric
+255
+~~END~~
+
+
+
+-- all number type to money
+CREATE FUNCTION babel_637_add_one_money (@a money)
+RETURNS money AS
+BEGIN
+  RETURN @a + 1;
+END;
+GO
+
+SELECT babel_637_add_one_money(cast(41.9 as double precision));
+GO
+~~START~~
+money
+42.9000
+~~END~~
+
+
+SELECT babel_637_add_one_money(cast(123456789012.1 as double precision));
+GO
+~~START~~
+money
+123456789013.1000
+~~END~~
+
+
+SELECT babel_637_add_one_money(cast(41.9 as float));
+GO
+~~START~~
+money
+42.9000
+~~END~~
+
+
+SELECT babel_637_add_one_money(cast(123456789012.1 as float));
+GO
+~~START~~
+money
+123456789013.1000
+~~END~~
+
+
+SELECT babel_637_add_one_money(cast(41.9 as fixeddecimal));
+GO
+~~START~~
+money
+42.9000
+~~END~~
+
+
+SELECT babel_637_add_one_money(cast(123456789012.1 as fixeddecimal));
+GO
+~~START~~
+money
+123456789013.1000
+~~END~~
+
+
+SELECT babel_637_add_one_money(cast(41.9 as numeric(8,4)));
+GO
+~~START~~
+money
+42.9000
+~~END~~
+
+
+SELECT babel_637_add_one_money(cast(123456789012.1 as numeric(18,4)));
+GO
+~~START~~
+money
+123456789013.1000
+~~END~~
+
+
+SELECT babel_637_add_one_money(cast(41.9 as money));
+GO
+~~START~~
+money
+42.9000
+~~END~~
+
+
+SELECT babel_637_add_one_money(cast(922337203685475.5807 as money));
+GO
+~~START~~
+money
+922337203685476.5807
+~~END~~
+
+
+SELECT babel_637_add_one_money(cast(41.9 as smallmoney));
+GO
+~~START~~
+money
+42.9000
+~~END~~
+
+
+SELECT babel_637_add_one_money(cast(214746.3647 as smallmoney));
+GO
+~~START~~
+money
+214747.3647
+~~END~~
+
+
+SELECT babel_637_add_one_money(cast(41 as bigint));
+GO
+~~START~~
+money
+42.0000
+~~END~~
+
+
+SELECT babel_637_add_one_money(cast(9223372036854775806 as bigint));
+GO
+~~START~~
+money
+-1.0000
+~~END~~
+
+
+SELECT babel_637_add_one_money(cast(41 as int));
+GO
+~~START~~
+money
+42.0000
+~~END~~
+
+
+SELECT babel_637_add_one_money(cast(2147483646 as int));
+GO
+~~START~~
+money
+2147483647.0000
+~~END~~
+
+
+SELECT babel_637_add_one_money(cast(41 as smallint));
+GO
+~~START~~
+money
+42.0000
+~~END~~
+
+
+SELECT babel_637_add_one_money(cast(32766 as smallint));
+GO
+~~START~~
+money
+32767.0000
+~~END~~
+
+
+SELECT babel_637_add_one_money(cast(41 as tinyint));
+GO
+~~START~~
+money
+42.0000
+~~END~~
+
+
+SELECT babel_637_add_one_money(cast(254 as tinyint));
+GO
+~~START~~
+money
+255.0000
+~~END~~
+
+
+
+-- all number type to smallmoney
+CREATE FUNCTION babel_637_add_one_smallmoney (@a smallmoney)
+RETURNS smallmoney AS
+BEGIN
+  RETURN @a + 1;
+END;
+GO
+
+SELECT babel_637_add_one_smallmoney(cast(41.9 as double precision));
+GO
+~~START~~
+smallmoney
+42.9000
+~~END~~
+
+
+SELECT babel_637_add_one_smallmoney(cast(123456789012.1 as double precision));
+GO
+~~START~~
+smallmoney
+~~ERROR (Code: 220)~~
+
+~~ERROR (Message: value for domain smallmoney violates check constraint "smallmoney_check")~~
+
+
+SELECT babel_637_add_one_smallmoney(cast(41.9 as float));
+GO
+~~START~~
+smallmoney
+42.9000
+~~END~~
+
+
+SELECT babel_637_add_one_smallmoney(cast(123456789012.1 as float));
+GO
+~~START~~
+smallmoney
+~~ERROR (Code: 220)~~
+
+~~ERROR (Message: value for domain smallmoney violates check constraint "smallmoney_check")~~
+
+
+SELECT babel_637_add_one_smallmoney(cast(41.9 as fixeddecimal));
+GO
+~~START~~
+smallmoney
+42.9000
+~~END~~
+
+
+SELECT babel_637_add_one_smallmoney(cast(123456789012.1 as fixeddecimal));
+GO
+~~START~~
+smallmoney
+~~ERROR (Code: 220)~~
+
+~~ERROR (Message: value for domain smallmoney violates check constraint "smallmoney_check")~~
+
+
+SELECT babel_637_add_one_smallmoney(cast(41.9 as numeric(8,4)));
+GO
+~~START~~
+smallmoney
+42.9000
+~~END~~
+
+
+SELECT babel_637_add_one_smallmoney(cast(123456789012.1 as numeric(18,4)));
+GO
+~~START~~
+smallmoney
+~~ERROR (Code: 220)~~
+
+~~ERROR (Message: value for domain smallmoney violates check constraint "smallmoney_check")~~
+
+
+SELECT babel_637_add_one_smallmoney(cast(41.9 as money));
+GO
+~~START~~
+smallmoney
+42.9000
+~~END~~
+
+
+SELECT babel_637_add_one_smallmoney(cast(922337203685475.5807 as money));
+GO
+~~START~~
+smallmoney
+~~ERROR (Code: 220)~~
+
+~~ERROR (Message: value for domain smallmoney violates check constraint "smallmoney_check")~~
+
+
+SELECT babel_637_add_one_smallmoney(cast(41.9 as smallmoney));
+GO
+~~START~~
+smallmoney
+42.9000
+~~END~~
+
+
+SELECT babel_637_add_one_smallmoney(cast(214746.3647 as smallmoney));
+GO
+~~START~~
+smallmoney
+214747.3647
+~~END~~
+
+
+SELECT babel_637_add_one_smallmoney(cast(41 as bigint));
+GO
+~~START~~
+smallmoney
+42.0000
+~~END~~
+
+
+SELECT babel_637_add_one_smallmoney(cast(9223372036854775806 as bigint));
+GO
+~~START~~
+smallmoney
+-1.0000
+~~END~~
+
+
+SELECT babel_637_add_one_smallmoney(cast(41 as int));
+GO
+~~START~~
+smallmoney
+42.0000
+~~END~~
+
+
+SELECT babel_637_add_one_smallmoney(cast(2147483646 as int));
+GO
+~~START~~
+smallmoney
+~~ERROR (Code: 220)~~
+
+~~ERROR (Message: value for domain smallmoney violates check constraint "smallmoney_check")~~
+
+
+SELECT babel_637_add_one_smallmoney(cast(41 as smallint));
+GO
+~~START~~
+smallmoney
+42.0000
+~~END~~
+
+
+SELECT babel_637_add_one_smallmoney(cast(32766 as smallint));
+GO
+~~START~~
+smallmoney
+32767.0000
+~~END~~
+
+
+SELECT babel_637_add_one_smallmoney(cast(41 as tinyint));
+GO
+~~START~~
+smallmoney
+42.0000
+~~END~~
+
+
+SELECT babel_637_add_one_smallmoney(cast(254 as tinyint));
+GO
+~~START~~
+smallmoney
+255.0000
+~~END~~
+
+
+
+-- all number type to bigint
+CREATE FUNCTION babel_637_add_one_bigint (@a bigint)
+RETURNS bigint AS
+BEGIN
+  RETURN @a + 1;
+END;
+GO
+
+SELECT babel_637_add_one_bigint(cast(41.9 as double precision));
+GO
+~~START~~
+bigint
+42
+~~END~~
+
+
+SELECT babel_637_add_one_bigint(cast(123456789012.1 as double precision));
+GO
+~~START~~
+bigint
+123456789013
+~~END~~
+
+
+SELECT babel_637_add_one_bigint(cast(41.9 as float));
+GO
+~~START~~
+bigint
+42
+~~END~~
+
+
+SELECT babel_637_add_one_bigint(cast(123456789012.1 as float));
+GO
+~~START~~
+bigint
+123456789013
+~~END~~
+
+
+SELECT babel_637_add_one_bigint(cast(41.9 as fixeddecimal));
+GO
+~~START~~
+bigint
+43
+~~END~~
+
+
+SELECT babel_637_add_one_bigint(cast(123456789012.1 as fixeddecimal));
+GO
+~~START~~
+bigint
+123456789013
+~~END~~
+
+
+SELECT babel_637_add_one_bigint(cast(41.9 as numeric(8,4)));
+GO
+~~START~~
+bigint
+42
+~~END~~
+
+
+SELECT babel_637_add_one_bigint(cast(123456789012.1 as numeric(18,4)));
+GO
+~~START~~
+bigint
+123456789013
+~~END~~
+
+
+SELECT babel_637_add_one_bigint(cast(41.9 as money));
+GO
+~~START~~
+bigint
+43
+~~END~~
+
+
+SELECT babel_637_add_one_bigint(cast(922337203685475.5807 as money));
+GO
+~~START~~
+bigint
+922337203685477
+~~END~~
+
+
+SELECT babel_637_add_one_bigint(cast(41.9 as smallmoney));
+GO
+~~START~~
+bigint
+43
+~~END~~
+
+
+SELECT babel_637_add_one_bigint(cast(214746.3647 as smallmoney));
+GO
+~~START~~
+bigint
+214747
+~~END~~
+
+
+SELECT babel_637_add_one_bigint(cast(41 as bigint));
+GO
+~~START~~
+bigint
+42
+~~END~~
+
+
+SELECT babel_637_add_one_bigint(cast(9223372036854775806 as bigint));
+GO
+~~START~~
+bigint
+9223372036854775807
+~~END~~
+
+
+SELECT babel_637_add_one_bigint(cast(41 as int));
+GO
+~~START~~
+bigint
+42
+~~END~~
+
+
+SELECT babel_637_add_one_bigint(cast(2147483646 as int));
+GO
+~~START~~
+bigint
+2147483647
+~~END~~
+
+
+SELECT babel_637_add_one_bigint(cast(41 as smallint));
+GO
+~~START~~
+bigint
+42
+~~END~~
+
+
+SELECT babel_637_add_one_bigint(cast(32766 as smallint));
+GO
+~~START~~
+bigint
+32767
+~~END~~
+
+
+SELECT babel_637_add_one_bigint(cast(41 as tinyint));
+GO
+~~START~~
+bigint
+42
+~~END~~
+
+
+SELECT babel_637_add_one_bigint(cast(254 as tinyint));
+GO
+~~START~~
+bigint
+255
+~~END~~
+
+
+
+-- all number type to int4
+CREATE FUNCTION babel_637_add_one_int4 (@a int)
+RETURNS int AS
+BEGIN
+  RETURN @a + 1;
+END;
+GO
+
+SELECT babel_637_add_one_int4(cast(41.9 as double precision));
+GO
+~~START~~
+int
+42
+~~END~~
+
+
+SELECT babel_637_add_one_int4(cast(123456789012.1 as double precision));
+GO
+~~ERROR (Code: 8115)~~
+
+~~ERROR (Message: integer out of range)~~
+
+
+SELECT babel_637_add_one_int4(cast(41.9 as float));
+GO
+~~START~~
+int
+42
+~~END~~
+
+
+SELECT babel_637_add_one_int4(cast(123456789012.1 as float));
+GO
+~~ERROR (Code: 8115)~~
+
+~~ERROR (Message: integer out of range)~~
+
+
+SELECT babel_637_add_one_int4(cast(41.9 as fixeddecimal));
+GO
+~~START~~
+int
+43
+~~END~~
+
+
+SELECT babel_637_add_one_int4(cast(123456789012.1 as fixeddecimal));
+GO
+~~START~~
+int
+~~ERROR (Code: 8115)~~
+
+~~ERROR (Message: integer out of range)~~
+
+
+SELECT babel_637_add_one_int4(cast(41.9 as numeric(8,4)));
+GO
+~~START~~
+int
+42
+~~END~~
+
+
+SELECT babel_637_add_one_int4(cast(123456789012.1 as numeric(18,4)));
+GO
+~~START~~
+int
+~~ERROR (Code: 8115)~~
+
+~~ERROR (Message: integer out of range)~~
+
+
+SELECT babel_637_add_one_int4(cast(41.9 as money));
+GO
+~~START~~
+int
+43
+~~END~~
+
+
+SELECT babel_637_add_one_int4(cast(922337203685475.5807 as money));
+GO
+~~START~~
+int
+~~ERROR (Code: 8115)~~
+
+~~ERROR (Message: integer out of range)~~
+
+
+SELECT babel_637_add_one_int4(cast(41.9 as smallmoney));
+GO
+~~START~~
+int
+43
+~~END~~
+
+
+SELECT babel_637_add_one_int4(cast(214746.3647 as smallmoney));
+GO
+~~START~~
+int
+214747
+~~END~~
+
+
+SELECT babel_637_add_one_int4(cast(41 as bigint));
+GO
+~~START~~
+int
+42
+~~END~~
+
+
+SELECT babel_637_add_one_int4(cast(9223372036854775806 as bigint));
+GO
+~~ERROR (Code: 8115)~~
+
+~~ERROR (Message: integer out of range)~~
+
+
+SELECT babel_637_add_one_int4(cast(41 as int));
+GO
+~~START~~
+int
+42
+~~END~~
+
+
+SELECT babel_637_add_one_int4(cast(2147483646 as int));
+GO
+~~START~~
+int
+2147483647
+~~END~~
+
+
+SELECT babel_637_add_one_int4(cast(41 as smallint));
+GO
+~~START~~
+int
+42
+~~END~~
+
+
+SELECT babel_637_add_one_int4(cast(32766 as smallint));
+GO
+~~START~~
+int
+32767
+~~END~~
+
+
+SELECT babel_637_add_one_int4(cast(41 as tinyint));
+GO
+~~START~~
+int
+42
+~~END~~
+
+
+SELECT babel_637_add_one_int4(cast(254 as tinyint));
+GO
+~~START~~
+int
+255
+~~END~~
+
+
+
+-- all number type to smallint
+CREATE FUNCTION babel_637_add_one_smallint (@a smallint)
+RETURNS smallint AS
+BEGIN
+  RETURN @a + 1;
+END;
+GO
+
+SELECT babel_637_add_one_smallint(cast(41.9 as double precision));
+GO
+~~START~~
+smallint
+42
+~~END~~
+
+
+SELECT babel_637_add_one_smallint(cast(123456789012.1 as double precision));
+GO
+~~ERROR (Code: 220)~~
+
+~~ERROR (Message: smallint out of range)~~
+
+
+SELECT babel_637_add_one_smallint(cast(41.9 as float));
+GO
+~~START~~
+smallint
+42
+~~END~~
+
+
+SELECT babel_637_add_one_smallint(cast(123456789012.1 as float));
+GO
+~~ERROR (Code: 220)~~
+
+~~ERROR (Message: smallint out of range)~~
+
+
+SELECT babel_637_add_one_smallint(cast(41.9 as fixeddecimal));
+GO
+~~START~~
+smallint
+43
+~~END~~
+
+
+SELECT babel_637_add_one_smallint(cast(123456789012.1 as fixeddecimal));
+GO
+~~START~~
+smallint
+~~ERROR (Code: 220)~~
+
+~~ERROR (Message: smallint out of range)~~
+
+
+SELECT babel_637_add_one_smallint(cast(41.9 as numeric(8,4)));
+GO
+~~START~~
+smallint
+42
+~~END~~
+
+
+SELECT babel_637_add_one_smallint(cast(123456789012.1 as numeric(18,4)));
+GO
+~~START~~
+smallint
+~~ERROR (Code: 220)~~
+
+~~ERROR (Message: smallint out of range)~~
+
+
+SELECT babel_637_add_one_smallint(cast(41.9 as money));
+GO
+~~START~~
+smallint
+43
+~~END~~
+
+
+SELECT babel_637_add_one_smallint(cast(922337203685475.5807 as money));
+GO
+~~START~~
+smallint
+~~ERROR (Code: 220)~~
+
+~~ERROR (Message: smallint out of range)~~
+
+
+SELECT babel_637_add_one_smallint(cast(41.9 as smallmoney));
+GO
+~~START~~
+smallint
+43
+~~END~~
+
+
+SELECT babel_637_add_one_smallint(cast(214746.3647 as smallmoney));
+GO
+~~START~~
+smallint
+~~ERROR (Code: 220)~~
+
+~~ERROR (Message: smallint out of range)~~
+
+
+SELECT babel_637_add_one_smallint(cast(41 as bigint));
+GO
+~~START~~
+smallint
+42
+~~END~~
+
+
+SELECT babel_637_add_one_smallint(cast(9223372036854775806 as bigint));
+GO
+~~ERROR (Code: 220)~~
+
+~~ERROR (Message: smallint out of range)~~
+
+
+SELECT babel_637_add_one_smallint(cast(41 as int));
+GO
+~~START~~
+smallint
+42
+~~END~~
+
+
+SELECT babel_637_add_one_smallint(cast(2147483646 as int));
+GO
+~~ERROR (Code: 220)~~
+
+~~ERROR (Message: smallint out of range)~~
+
+
+SELECT babel_637_add_one_smallint(cast(41 as smallint));
+GO
+~~START~~
+smallint
+42
+~~END~~
+
+
+SELECT babel_637_add_one_smallint(cast(32766 as smallint));
+GO
+~~START~~
+smallint
+32767
+~~END~~
+
+
+SELECT babel_637_add_one_smallint(cast(41 as tinyint));
+GO
+~~START~~
+smallint
+42
+~~END~~
+
+
+SELECT babel_637_add_one_smallint(cast(254 as tinyint));
+GO
+~~START~~
+smallint
+255
+~~END~~
+
+
+
+-- all number type to tinyint
+CREATE FUNCTION babel_637_add_one_tinyint (@a tinyint)
+RETURNS tinyint AS
+BEGIN
+  RETURN @a + 1;
+END;
+GO
+
+SELECT babel_637_add_one_tinyint(cast(41.9 as double precision));
+GO
+~~START~~
+tinyint
+42
+~~END~~
+
+
+SELECT babel_637_add_one_tinyint(cast(123456789012.1 as double precision));
+GO
+~~ERROR (Code: 220)~~
+
+~~ERROR (Message: smallint out of range)~~
+
+
+SELECT babel_637_add_one_tinyint(cast(41.9 as float));
+GO
+~~START~~
+tinyint
+42
+~~END~~
+
+
+SELECT babel_637_add_one_tinyint(cast(123456789012.1 as float));
+GO
+~~ERROR (Code: 220)~~
+
+~~ERROR (Message: smallint out of range)~~
+
+
+SELECT babel_637_add_one_tinyint(cast(41.9 as fixeddecimal));
+GO
+~~START~~
+tinyint
+43
+~~END~~
+
+
+SELECT babel_637_add_one_tinyint(cast(123456789012.1 as fixeddecimal));
+GO
+~~START~~
+tinyint
+~~ERROR (Code: 220)~~
+
+~~ERROR (Message: smallint out of range)~~
+
+
+SELECT babel_637_add_one_tinyint(cast(41.9 as numeric(8,4)));
+GO
+~~START~~
+tinyint
+42
+~~END~~
+
+
+SELECT babel_637_add_one_tinyint(cast(123456789012.1 as numeric(18,4)));
+GO
+~~START~~
+tinyint
+~~ERROR (Code: 220)~~
+
+~~ERROR (Message: smallint out of range)~~
+
+
+SELECT babel_637_add_one_tinyint(cast(41.9 as money));
+GO
+~~START~~
+tinyint
+43
+~~END~~
+
+
+SELECT babel_637_add_one_tinyint(cast(922337203685475.5807 as money));
+GO
+~~START~~
+tinyint
+~~ERROR (Code: 220)~~
+
+~~ERROR (Message: smallint out of range)~~
+
+
+SELECT babel_637_add_one_tinyint(cast(41.9 as smallmoney));
+GO
+~~START~~
+tinyint
+43
+~~END~~
+
+
+SELECT babel_637_add_one_tinyint(cast(214746.3647 as smallmoney));
+GO
+~~START~~
+tinyint
+~~ERROR (Code: 220)~~
+
+~~ERROR (Message: smallint out of range)~~
+
+
+SELECT babel_637_add_one_tinyint(cast(41 as bigint));
+GO
+~~START~~
+tinyint
+42
+~~END~~
+
+
+SELECT babel_637_add_one_tinyint(cast(9223372036854775806 as bigint));
+GO
+~~ERROR (Code: 220)~~
+
+~~ERROR (Message: smallint out of range)~~
+
+
+SELECT babel_637_add_one_tinyint(cast(41 as int));
+GO
+~~START~~
+tinyint
+42
+~~END~~
+
+
+SELECT babel_637_add_one_tinyint(cast(2147483646 as int));
+GO
+~~ERROR (Code: 220)~~
+
+~~ERROR (Message: smallint out of range)~~
+
+
+SELECT babel_637_add_one_tinyint(cast(41 as smallint));
+GO
+~~START~~
+tinyint
+42
+~~END~~
+
+
+SELECT babel_637_add_one_tinyint(cast(32766 as smallint));
+GO
+~~START~~
+tinyint
+~~ERROR (Code: 220)~~
+
+~~ERROR (Message: value for domain tinyint violates check constraint "tinyint_check")~~
+
+
+SELECT babel_637_add_one_tinyint(cast(41 as tinyint));
+GO
+~~START~~
+tinyint
+42
+~~END~~
+
+
+SELECT babel_637_add_one_tinyint(cast(254 as tinyint));
+GO
+~~START~~
+tinyint
+255
+~~END~~
+
+
+DROP FUNCTION babel_637_int_multiply;
+DROP FUNCTION babel_637_double_precision;
+DROP FUNCTION babel_637_float;
+DROP FUNCTION babel_637_add_one_fixeddecimal;
+DROP FUNCTION babel_637_add_one_numeric;
+DROP FUNCTION babel_637_add_one_money;
+DROP FUNCTION babel_637_add_one_smallmoney;
+DROP FUNCTION babel_637_add_one_bigint;
+DROP FUNCTION babel_637_add_one_int4;
+DROP FUNCTION babel_637_add_one_smallint;
+DROP FUNCTION babel_637_add_one_tinyint;
+GO
