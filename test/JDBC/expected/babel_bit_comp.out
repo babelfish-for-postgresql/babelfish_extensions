@@ -1,0 +1,264 @@
+CREATE TABLE t1 (a bit, b int);
+GO
+INSERT INTO t1 VALUES (1, 1);
+GO
+~~ROW COUNT: 1~~
+
+INSERT INTO t1 VALUES (0, 0);
+GO
+~~ROW COUNT: 1~~
+
+
+SELECT a FROM t1 WHERE a = 0;
+GO
+~~START~~
+bit
+0
+~~END~~
+
+SELECT a FROM t1 WHERE a = 1;
+GO
+~~START~~
+bit
+1
+~~END~~
+
+SELECT a FROM t1 WHERE a = -1;
+GO
+~~START~~
+bit
+1
+~~END~~
+
+
+SELECT a FROM t1 WHERE a <> 0;
+GO
+~~START~~
+bit
+1
+~~END~~
+
+SELECT a FROM t1 WHERE a <> 1;
+GO
+~~START~~
+bit
+0
+~~END~~
+
+SELECT a FROM t1 WHERE a <> -1;
+GO
+~~START~~
+bit
+0
+~~END~~
+
+
+SELECT a FROM t1 WHERE a > 0;
+GO
+~~START~~
+bit
+1
+~~END~~
+
+SELECT a FROM t1 WHERE a > 1;
+GO
+~~START~~
+bit
+~~END~~
+
+SELECT a FROM t1 WHERE a > -1;
+GO
+~~START~~
+bit
+~~END~~
+
+
+SELECT a FROM t1 WHERE a >= 0 ORDER BY b;
+GO
+~~START~~
+bit
+0
+1
+~~END~~
+
+SELECT a FROM t1 WHERE a >= 1;
+GO
+~~START~~
+bit
+1
+~~END~~
+
+SELECT a FROM t1 WHERE a >= -1;
+GO
+~~START~~
+bit
+1
+~~END~~
+
+
+SELECT a FROM t1 WHERE a < 0;
+GO
+~~START~~
+bit
+~~END~~
+
+SELECT a FROM t1 WHERE a < 1;
+GO
+~~START~~
+bit
+0
+~~END~~
+
+SELECT a FROM t1 WHERE a < -1;
+GO
+~~START~~
+bit
+0
+~~END~~
+
+
+SELECT a FROM t1 WHERE a <= 0;
+GO
+~~START~~
+bit
+0
+~~END~~
+
+SELECT a FROM t1 WHERE a <= 1 ORDER BY b;
+GO
+~~START~~
+bit
+0
+1
+~~END~~
+
+SELECT a FROM t1 WHERE a <= -1 ORDER BY b;
+GO
+~~START~~
+bit
+0
+1
+~~END~~
+
+
+CREATE TABLE t2 ( a INT);
+GO
+INSERT INTO t2 VALUES (1);
+GO
+~~ROW COUNT: 1~~
+
+INSERT INTO t2 VALUES (0);
+GO
+~~ROW COUNT: 1~~
+
+INSERT INTO t2 VALUES (-1);
+GO
+~~ROW COUNT: 1~~
+
+
+SELECT a FROM t2 WHERE a = CAST(0 AS bit);
+GO
+~~START~~
+int
+0
+~~END~~
+
+SELECT a FROM t2 WHERE a = CAST(1 AS bit) ORDER BY a;
+GO
+~~START~~
+int
+-1
+1
+~~END~~
+
+
+SELECT a FROM t2 WHERE a <> CAST(0 AS bit) ORDER BY a;
+GO
+~~START~~
+int
+-1
+1
+~~END~~
+
+SELECT a FROM t2 WHERE a <> CAST(1 AS bit);
+GO
+~~START~~
+int
+0
+~~END~~
+
+
+SELECT a FROM t2 WHERE a > CAST(0 AS bit) ORDER BY a;
+GO
+~~START~~
+int
+-1
+1
+~~END~~
+
+SELECT a FROM t2 WHERE a > CAST(1 AS bit);
+GO
+~~START~~
+int
+~~END~~
+
+
+SELECT a FROM t2 WHERE a >= CAST(0 AS bit) ORDER BY a;
+GO
+~~START~~
+int
+-1
+0
+1
+~~END~~
+
+SELECT a FROM t2 WHERE a >= CAST(1 AS bit) ORDER BY a;
+GO
+~~START~~
+int
+-1
+1
+~~END~~
+
+
+SELECT a FROM t2 WHERE a < CAST(0 AS bit);
+GO
+~~START~~
+int
+~~END~~
+
+SELECT a FROM t2 WHERE a < CAST(1 AS bit);
+GO
+~~START~~
+int
+0
+~~END~~
+
+
+SELECT a FROM t2 WHERE a <= CAST(0 AS bit);
+GO
+~~START~~
+int
+0
+~~END~~
+
+SELECT a FROM t2 WHERE a <= CAST(1 AS bit) ORDER BY a;
+GO
+~~START~~
+int
+-1
+0
+1
+~~END~~
+
+
+reset babelfishpg_tsql.sql_dialect;
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: syntax error near '.' at line 1 and character position 22)~~
+
+DROP TABLE t1;
+GO
+DROP TABLE t2;
+GO
