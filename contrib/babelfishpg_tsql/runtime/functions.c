@@ -21,6 +21,7 @@
 #include "utils/syscache.h"
 #include "utils/varlena.h"
 #include "utils/queryenvironment.h"
+#include "utils/float.h"
 #include <math.h>
 
 #include "../src/babelfish_version.h"
@@ -50,6 +51,7 @@ PG_FUNCTION_INFO_V1(schema_name);
 PG_FUNCTION_INFO_V1(datefirst);
 PG_FUNCTION_INFO_V1(options);
 PG_FUNCTION_INFO_V1(default_domain);
+PG_FUNCTION_INFO_V1(tsql_exp);
 
 /* Not supported -- only syntax support */
 PG_FUNCTION_INFO_V1(procid);
@@ -518,4 +520,23 @@ default_domain(PG_FUNCTION_ARGS)
 		PG_RETURN_VARCHAR_P(tsql_varchar_input(login_domainname, strlen(login_domainname), -1));
 	else
 		PG_RETURN_NULL();
+}
+
+/*
+ *		tsql_exp			- returns the exponential function of arg1
+ */
+Datum
+tsql_exp(PG_FUNCTION_ARGS)
+{
+	float8		arg1 = PG_GETARG_FLOAT8(0);
+	float8		result;
+
+	errno = 0;
+	result = exp(arg1);
+	if (errno == ERANGE && result != 0 && !isinf(result))
+		result = get_float8_infinity();
+
+	if (unlikely(isinf(result)) && !isinf(arg1))
+		float_overflow_error();
+	PG_RETURN_FLOAT8(result);
 }
