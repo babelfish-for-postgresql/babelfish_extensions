@@ -37,7 +37,11 @@
 /* Hooks for engine*/
 extern find_coercion_pathway_hook_type find_coercion_pathway_hook;
 extern determine_datatype_precedence_hook_type determine_datatype_precedence_hook;
+extern validate_implicit_conversion_from_string_literal_hook_type validate_implicit_conversion_from_string_literal_hook;
 extern func_select_candidate_hook_type func_select_candidate_hook;
+
+extern bool is_tsql_binary_datatype(Oid oid);
+extern bool is_tsql_varbinary_datatype(Oid oid);
 
 /* Memory Context */
 static MemoryContext pltsql_coercion_context = NULL;
@@ -677,6 +681,21 @@ tsql_func_select_candidate(int nargs,
 	return NULL;
 }
 
+static void
+tsql_validate_implicit_conversion_from_string_literal(Const *newcon, const char *value)
+{
+	if (newcon->constisnull)
+		return;
+	if (is_tsql_binary_datatype(newcon->consttype))
+		ereport(ERROR,
+		  (errcode(ERRCODE_CANNOT_COERCE),
+		   errmsg("cannot coerce string literal to binary datatype")));
+	if (is_tsql_varbinary_datatype(newcon->consttype))
+		ereport(ERROR,
+		  (errcode(ERRCODE_CANNOT_COERCE),
+		   errmsg("cannot coerce string literal to varbinary datatype")));
+}
+
 PG_FUNCTION_INFO_V1(init_tsql_datatype_precedence_hash_tab);
 
 Datum
@@ -734,6 +753,7 @@ init_tsql_datatype_precedence_hash_tab(PG_FUNCTION_ARGS)
 	/* Register Hooks */
 	determine_datatype_precedence_hook = tsql_has_higher_precedence;
 	func_select_candidate_hook = tsql_func_select_candidate;
+	validate_implicit_conversion_from_string_literal_hook = tsql_validate_implicit_conversion_from_string_literal;
 
 	PG_RETURN_INT32(0);
 }

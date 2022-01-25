@@ -87,3 +87,129 @@ DROP PROCEDURE p453;
 DROP TABLE t453_real;
 DROP TABLE t453_dp;
 GO
+
+
+-- test for string-literal to (var)binary
+CREATE TABLE t453_bin(a binary(4));
+CREATE TABLE t453_varbin(a varbinary(4));
+GO
+
+INSERT INTO t453_bin VALUES ('ab');
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: cannot coerce string literal to binary datatype)~~
+
+INSERT INTO t453_varbin VALUES ('ab');
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: cannot coerce string literal to varbinary datatype)~~
+
+
+INSERT INTO t453_bin VALUES ('');
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: cannot coerce string literal to binary datatype)~~
+
+INSERT INTO t453_varbin VALUES ('');
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: cannot coerce string literal to varbinary datatype)~~
+
+
+DECLARE @var CHAR(10) = 'ab';
+INSERT INTO t453_bin VALUES (@var);
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Implicit conversion from data type char to binary is not allowed. Use the CONVERT function to run this query.)~~
+
+DECLARE @var CHAR(10) = 'ab';
+INSERT INTO t453_varbin VALUES (@var);
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Implicit conversion from data type bpchar to varbinary is not allowed. Use the CONVERT function to run this query.)~~
+
+
+DECLARE @var VARCHAR(10) = 'ab';
+INSERT INTO t453_bin VALUES (@var);
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Implicit conversion from data type varchar to binary is not allowed. Use the CONVERT function to run this query.)~~
+
+DECLARE @var VARCHAR(10) = 'ab';
+INSERT INTO t453_varbin VALUES (@var);
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Implicit conversion from data type varchar to varbinary is not allowed. Use the CONVERT function to run this query.)~~
+
+
+
+-- valid
+INSERT INTO t453_bin VALUES (NULL);
+INSERT INTO t453_varbin VALUES (NULL);
+GO
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+
+INSERT INTO t453_bin VALUES (0xab);
+INSERT INTO t453_varbin VALUES (0xab);
+GO
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+
+INSERT INTO t453_bin VALUES (0xabcd1234);
+INSERT INTO t453_varbin VALUES (0xabcd1234);
+GO
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+
+INSERT INTO t453_bin VALUES (1);
+INSERT INTO t453_varbin VALUES (1);
+GO
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+
+DECLARE @var VARCHAR(10) = 'ab';
+INSERT INTO t453_bin VALUES (convert(binary(4), @var));
+GO
+~~ROW COUNT: 1~~
+
+DECLARE @var VARCHAR(10) = 'ab';
+INSERT INTO t453_varbin VALUES (convert(binary(4), @var));
+GO
+~~ROW COUNT: 1~~
+
+
+SELECT count(*) FROM t453_bin;
+GO
+~~START~~
+int
+5
+~~END~~
+
+SELECT count(*) FROM t453_varbin;
+GO
+~~START~~
+int
+5
+~~END~~
+
+
+DROP TABLE t453_bin;
+DROP TABLE t453_varbin;
+GO

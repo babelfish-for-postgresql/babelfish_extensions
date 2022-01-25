@@ -197,6 +197,8 @@ Oid tsql_varchar_oid = InvalidOid;
 Oid tsql_nvarchar_oid = InvalidOid;
 Oid tsql_ntext_oid = InvalidOid;
 Oid tsql_image_oid = InvalidOid;
+Oid tsql_binary_oid = InvalidOid;
+Oid tsql_varbinary_oid = InvalidOid;
 
 Oid
 lookup_tsql_datatype_oid(const char *typename)
@@ -264,4 +266,20 @@ is_tsql_image_datatype(Oid oid)
 	if (tsql_image_oid == InvalidOid)
 		tsql_image_oid = lookup_tsql_datatype_oid("image");
 	return tsql_image_oid == oid;
+}
+
+bool
+is_tsql_binary_datatype(Oid oid)
+{
+	if (tsql_binary_oid == InvalidOid)
+		tsql_binary_oid = lookup_tsql_datatype_oid("bbf_binary");
+	return tsql_binary_oid == oid;
+}
+
+bool
+is_tsql_varbinary_datatype(Oid oid)
+{
+	if (tsql_varbinary_oid == InvalidOid)
+		tsql_varbinary_oid = lookup_tsql_datatype_oid("bbf_varbinary");
+	return tsql_varbinary_oid == oid;
 }
