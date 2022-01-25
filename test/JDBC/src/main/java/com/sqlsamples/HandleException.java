@@ -35,7 +35,13 @@ public class HandleException {
                     }
                     bw.write("~~ERROR (Message: "+ errorMsg + "  Server SQLState: " + e.getSQLState() + ")~~");
                 } else {
-                    bw.write("~~ERROR (Message: "+ e.getMessage() + ")~~");
+                    String errorMsg = e.getMessage();
+                    //Do not print ClientConnectionId as part of error message
+                    int index = errorMsg.indexOf("ClientConnectionId");
+                    if (index != -1) {
+                        errorMsg = errorMsg.substring(0, index);
+                    }
+                    bw.write("~~ERROR (Message: "+ errorMsg + ")~~");
                 }
             } else {
                 bw.write("~~ERROR~~");
