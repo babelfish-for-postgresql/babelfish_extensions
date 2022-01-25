@@ -1488,7 +1488,7 @@ const char *unsupported_sp_procedures[] = {
 	"sp_unbindefault",
 	"sp_unbindrule",
 	"sp_updateextendedproperty",
-	"sp_updatestats",
+	//"sp_updatestats",
 	//"sp_unprepare",
 	"sp_validname",
 	"sp_who",

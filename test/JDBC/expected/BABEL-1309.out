@@ -1,0 +1,46 @@
+exec sp_updatestats;
+go
+
+exec sp_updatestats 'no';
+go
+
+exec sp_updatestats 'resample';
+go
+
+exec sp_updatestats @resample='resample';
+go
+
+exec sp_updatestats resample;
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: column "resample" does not exist)~~
+
+
+exec sp_updatestats @resample;
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: column "@resample" does not exist)~~
+
+
+exec sp_updatestats @resample='sdlfkjsdf';
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Invalid option name sdlfkjsdf)~~
+
+
+exec sp_updatestats 'resdflskjf';
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Invalid option name resdflskjf)~~
+
+
+exec sp_updatestats @random_option='resample';
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: procedure sp_updatestats(@random_option => unknown) does not exist)~~
+
