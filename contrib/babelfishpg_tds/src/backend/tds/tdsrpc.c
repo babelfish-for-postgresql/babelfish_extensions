@@ -1997,6 +1997,9 @@ FillStoredProcedureCallFromParameterToken(TDSRequestSP req, StringInfo inBuf)
 			appendStringInfo(inBuf, "@p%d", paramno);
 		else
 			appendStringInfo(inBuf, "%s = %s", name->data, name->data);
+		/* If this is an OUT parameter, mark it */
+		if(token->flags & SP_FLAGS_BYREFVALUE)
+			appendStringInfo(inBuf, " OUT");
 		token = token->next;
 		paramno++;
 	}
@@ -2009,6 +2012,9 @@ FillStoredProcedureCallFromParameterToken(TDSRequestSP req, StringInfo inBuf)
 			appendStringInfo(inBuf, ", @P%d", paramno);
 		else
 			appendStringInfo(inBuf, ", %s = %s", name->data, name->data);
+		/* If this is an OUT parameter, mark it */
+		if(token->flags & SP_FLAGS_BYREFVALUE)
+			appendStringInfo(inBuf, " OUT");
 		paramno++;
 	}
 
