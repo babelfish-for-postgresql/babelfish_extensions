@@ -102,7 +102,7 @@ RAISERROR('Mismatch datatype: %o', 16, 1, N'string');
 go
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: Param 1 expected format type %o but received type character varying)~~
+~~ERROR (Message: Param 1 expected format type %o but received type nvarchar)~~
 
 
 RAISERROR('Mismatch datatype: %s', 16, 1, 123);

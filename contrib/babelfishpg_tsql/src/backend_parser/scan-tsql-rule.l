@@ -25,10 +25,10 @@
 					SET_YYLLOC();
 					yyless(1);	/* eat only 'n' this time */
 
-					/* Cast national character to varchar for BABEL */
+					/* Cast national character to nvarchar for BABEL */
 					if (sql_dialect == SQL_DIALECT_TSQL)
 					{
-						kwnum = ScanKeywordLookup("varchar",
+						kwnum = ScanKeywordLookup("nvarchar",
 												yyextra->keywordlist);
 					}
 					else
@@ -313,17 +313,26 @@
 									return VALUES;
 							case CHARACTER:
 							case CHAR_P:
-								if (sql_dialect == SQL_DIALECT_TSQL) {
+								if (sql_dialect == SQL_DIALECT_TSQL)
+								{
 									/*
 									 * Without this, gram.y puts 'pg_catalog.bpchar' explicitly,
 									 * so there will be no chance to lookup the search path
 									 */
-									ident = "bpchar";
-									yylval->str = ident;
+									yylval->str = pstrdup("bpchar");
 									return IDENT;
-								} else {
+								}
+								else
+								{
 									return yyextra->keyword_tokens[kwnum];
 								}
+							case TSQL_NVARCHAR:
+								if (sql_dialect == SQL_DIALECT_TSQL)
+								{
+									yylval->str = pstrdup("nvarchar");
+									return IDENT;
+								}
+								break;
 							default:
 								return yyextra->keyword_tokens[kwnum];
 						}
