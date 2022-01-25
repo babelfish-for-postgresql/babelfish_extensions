@@ -4,6 +4,8 @@
 DROP VIEW IF EXISTS sys.columns CASCADE;
 -- Drop cascades to sys.spt_columns_view_managed
 
+DROP VIEW IF EXISTS sys.sysindexes;
+
 CREATE FUNCTION sys.columns_internal()
 RETURNS TABLE (
     out_object_id int,
