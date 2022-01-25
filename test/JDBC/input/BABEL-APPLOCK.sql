@@ -120,6 +120,9 @@ go
 SELECT APPLOCK_TEST('dbo', 'lock1', 'Exclusive', 'Session');
 GO
 
+SELECT APPLOCK_TEST('public', 'MyAppLock', 'Shared', 'Transaction') -- should throw error
+GO
+
 BEGIN TRAN
 SELECT APPLOCK_TEST('dbo', 'lock1', 'Shared', 'Transaction');
 COMMIT

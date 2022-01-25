@@ -817,6 +817,11 @@ APPLOCK_TEST(PG_FUNCTION_ARGS)
 	ApplockGetStringArg(2, lockmode);
 	ApplockGetStringArg(3, lockowner);
 
+	if (pg_strcasecmp(lockowner, "Transaction") == 0 && !IsTransactionBlockActive())
+		ereport(ERROR,
+				(errcode(ERRCODE_LOCK_NOT_AVAILABLE),
+				errmsg("The statement or function must be executed in the context of a user transaction.")));
+
 	/* 
 	 * Pass the arguments and a time out of 0 (no wait) to the internal 
 	 * getapplock function. Suppress the warning messages as they would be
