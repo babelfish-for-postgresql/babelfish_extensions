@@ -84,10 +84,7 @@ trancount(PG_FUNCTION_ARGS)
 Datum
 procid(PG_FUNCTION_ARGS)
 {
-	ereport(ERROR,
-			(errcode(ERRCODE_SYNTAX_ERROR),
-			errmsg("syntax not supported with babel yet")));
-	PG_RETURN_UINT32(1);
+	PG_RETURN_OID(procid_var);
 }
 
 /*
