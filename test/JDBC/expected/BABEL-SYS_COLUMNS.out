@@ -1,0 +1,51 @@
+-- Tests for sys.columns catalog view
+-- Test precision and scale for all numeric datatypes
+create table t1(a int, b float, c bigint, d numeric, e smallint, f tinyint, g decimal, h money, i smallmoney);
+go
+select name, column_id, precision, scale from sys.columns where object_id=OBJECT_ID('t1');
+go
+~~START~~
+varchar#!#int#!#int#!#int
+a#!#1#!#32#!#0
+b#!#2#!#53#!#0
+c#!#3#!#64#!#0
+d#!#4#!#18#!#0
+e#!#5#!#16#!#0
+f#!#6#!#16#!#0
+g#!#7#!#0#!#0
+h#!#8#!#0#!#0
+i#!#9#!#0#!#0
+~~END~~
+
+
+-- Test identity and computed columns
+create table t2(a int, b int IDENTITY(1,1), c as a * b);
+go
+select name, column_id, is_identity, is_computed from sys.columns where object_id=OBJECT_ID('t2');
+go
+~~START~~
+varchar#!#int#!#smallint#!#smallint
+a#!#1#!#0#!#0
+b#!#2#!#1#!#0
+c#!#3#!#0#!#1
+~~END~~
+
+
+-- Test ansi padded columns
+create table t3(a char(10), b nchar(10), c binary(10));
+go
+select name, column_id, is_ansi_padded from sys.columns where object_id=OBJECT_ID('t3');
+go
+~~START~~
+varchar#!#int#!#smallint
+a#!#1#!#1
+b#!#2#!#1
+c#!#3#!#1
+~~END~~
+
+
+-- Cleanup
+drop table t1;
+drop table t2;
+drop table t3;
+go
