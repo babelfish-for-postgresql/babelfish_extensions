@@ -1891,7 +1891,8 @@ TdsGetMetaData(bytea *result, int pgBaseType, int *scale, int *precision, int *m
  * Functions in cursor.c
  */
 int execute_sp_cursor(int cursor_handle, int opttype, int rownum, const char *tablename, List* values);
-int execute_sp_cursoropen(int *cursor_handle, const char *stmt, int *scrollopt, int *ccopt, int *row_count, int nparams, Datum *values, const char *nulls);
+int execute_sp_cursoropen_old(int *cursor_handle, const char *stmt, int *scrollopt, int *ccopt, int *row_count, int nparams, Datum *values, const char *nulls); /* old interface to be compatabile with TDS */
+int execute_sp_cursoropen(int *cursor_handle, const char *stmt, int *scrollopt, int *ccopt, int *row_count, int nparams, int nBindParams, Oid *boundParamsOidList, Datum *values, const char *nulls);
 int execute_sp_cursorprepare(int *stmt_handle, const char *stmt, int options, int *scrollopt, int *ccopt, int nBindParams, Oid *boundParamsOidList);
 int execute_sp_cursorexecute(int stmt_handle, int *cursor_handle, int *scrollopt, int *ccopt, int *rowcount, int nparams, Datum *values, const char *nulls);
 int execute_sp_cursorprepexec(int *stmt_handle, int *cursor_handle, const char *stmt, int options, int *scrollopt, int *ccopt, int *row_count, int nparams, int nBindParams, Oid *boundParamsOidList, Datum *values, const char *nulls);
