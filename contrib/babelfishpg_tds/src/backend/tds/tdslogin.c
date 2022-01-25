@@ -47,6 +47,7 @@
 #include "libpq/libpq.h"
 #include "libpq/pqformat.h"
 #include "tcop/pquery.h"
+#include "parser/scansup.h"
 #include "utils/guc.h"
 #include "utils/lsyscache.h"
 #include "utils/memdebug.h"
@@ -1097,13 +1098,25 @@ ProcessLoginInternal(Port *port)
 	ValidateLoginRequest(request);
 
 	/*
-	 * Copy the username and database name in port structure so that no one
+	 * Downcase and copy the username and database name in port structure so that no one
 	 * messes up with the local copy.
 	 */
 	if (request->username != NULL)
+	{
+		request->username = downcase_identifier(request->username,
+												strlen(request->username),
+												false,
+												false);
 		port->user_name = pstrdup(request->username);
+	}
 	if (request->database != NULL)
+	{
+		request->database = downcase_identifier(request->database, 
+												strlen(request->database),
+												false,
+												false);
 		port->database_name = pstrdup(request->database);
+	}
 
 	/*
 	 * We set application name in port structure in case we want to log
