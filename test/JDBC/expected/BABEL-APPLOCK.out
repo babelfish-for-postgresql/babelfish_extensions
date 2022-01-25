@@ -150,6 +150,15 @@ smallint
 ~~END~~
 
 
+SELECT APPLOCK_TEST('public', 'MyAppLock', 'Shared', 'Transaction') -- should throw error
+GO
+~~START~~
+smallint
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: The statement or function must be executed in the context of a user transaction.)~~
+
+
 BEGIN TRAN
 SELECT APPLOCK_TEST('dbo', 'lock1', 'Shared', 'Transaction');
 COMMIT
