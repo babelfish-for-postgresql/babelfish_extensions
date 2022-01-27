@@ -178,7 +178,8 @@ typedef enum PLtsql_stmt_type
     PLTSQL_STMT_INIT_VARS,
     PLTSQL_STMT_SAVE_CTX,
     PLTSQL_STMT_RESTORE_CTX_FULL,
-    PLTSQL_STMT_RESTORE_CTX_PARTIAL
+    PLTSQL_STMT_RESTORE_CTX_PARTIAL,
+    PLTSQL_STMT_INSERT_BULK
 } PLtsql_stmt_type;
 
 /*
@@ -902,6 +903,16 @@ typedef struct PLtsql_stmt_exit
 	char	   *label;			/* NULL if it's an unlabelled EXIT/CONTINUE */
 	PLtsql_expr *cond;
 } PLtsql_stmt_exit;
+
+/*
+ * INSERT BULK statement
+ */
+typedef struct PLtsql_stmt_insert_bulk
+{
+    PLtsql_stmt_type cmd_type;
+    int         lineno;
+    char  *table_name;
+} PLtsql_stmt_insert_bulk;
 
 /*
  * RETURN statement

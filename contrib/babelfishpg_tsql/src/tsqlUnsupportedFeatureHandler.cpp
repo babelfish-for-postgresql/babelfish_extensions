@@ -121,7 +121,7 @@ protected:
 		antlrcpp::Any visitUpdate_statement(TSqlParser::Update_statementContext *ctx) override;
 		antlrcpp::Any visitDelete_statement(TSqlParser::Delete_statementContext *ctx) override;
 		antlrcpp::Any visitMerge_statement(TSqlParser::Merge_statementContext *ctx) override { handle(INSTR_UNSUPPORTED_TSQL_MERGE, "MERGE", getLineAndPos(ctx)); return visitChildren(ctx); }
-		antlrcpp::Any visitBulk_insert_statement(TSqlParser::Bulk_insert_statementContext *ctx) override { handle(INSTR_UNSUPPORTED_TSQL_BULK_INSERT, "BULK INSERT", getLineAndPos(ctx)); return visitChildren(ctx); }
+		antlrcpp::Any visitBulk_insert_statement(TSqlParser::Bulk_insert_statementContext *ctx) override;
 
 		// CFL
 		antlrcpp::Any visitWaitfor_statement(TSqlParser::Waitfor_statementContext *ctx) override { handle(INSTR_UNSUPPORTED_TSQL_WAIT_FOR, "WAITFOR", getLineAndPos(ctx)); return visitChildren(ctx); }
@@ -1039,6 +1039,11 @@ antlrcpp::Any TsqlUnsupportedFeatureHandlerImpl::visitDelete_statement(TSqlParse
 	if (ctx->CURRENT()) // CURRENT OF
 		handle(INSTR_UNSUPPORTED_TSQL_DELETE_WHERE_CURRENT_OF, "CURRENT OF", getLineAndPos(ctx->CURRENT()));
 	return visitChildren(ctx);
+}
+
+antlrcpp::Any TsqlUnsupportedFeatureHandlerImpl::visitBulk_insert_statement(TSqlParser::Bulk_insert_statementContext *ctx)
+{
+    return visitChildren(ctx);
 }
 
 antlrcpp::Any TsqlUnsupportedFeatureHandlerImpl::visitSet_statement(TSqlParser::Set_statementContext *ctx)

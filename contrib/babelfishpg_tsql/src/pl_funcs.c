@@ -330,6 +330,8 @@ pltsql_stmt_typename(PLtsql_stmt *stmt)
 			return "THROW";
 		case PLTSQL_STMT_USEDB:
 			return "USE";
+        case PLTSQL_STMT_INSERT_BULK:
+            return "INSERT BULK";
         /* TSQL-only executable node */
         case PLTSQL_STMT_INIT_VARS:
             return "INIT_VARS";

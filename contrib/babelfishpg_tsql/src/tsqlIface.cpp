@@ -72,7 +72,7 @@ PLtsql_stmt *makeCfl(TSqlParser::Cfl_statementContext *ctx, tsqlBuilder &builder
 PLtsql_stmt *makeSQL(ParserRuleContext *ctx);
 std::vector<PLtsql_stmt *> makeAnother(TSqlParser::Another_statementContext *ctx);
 PLtsql_stmt *makeExecBodyBatch(TSqlParser::Execute_body_batchContext *ctx);
-
+PLtsql_stmt *makeInsertBulkStatement(TSqlParser::Dml_statementContext *ctx);
 PLtsql_expr *makeTsqlExpr(const std::string &fragment, bool addSelect);
 PLtsql_expr *makeTsqlExpr(ParserRuleContext *ctx, bool addSelect);
 void * makeBlockStmt(ParserRuleContext *ctx, tsqlBuilder &builder);
@@ -886,7 +886,14 @@ public:
 		// inside of the PLtsql_stmt_execsql, and send that string
 		// to the main SQL parser when we execute the statement.
 
-		graft(makeSQL(ctx), peekContainer());
+        if (ctx->bulk_insert_statement())
+        {
+            graft(makeInsertBulkStatement(ctx), peekContainer());
+        }
+        else
+        {
+            graft(makeSQL(ctx), peekContainer());
+        }
 
 		// prepare rewriting
 		clear_rewritten_query_fragment();
@@ -894,6 +901,11 @@ public:
 
 	void exitDml_statement(TSqlParser::Dml_statementContext *ctx) override
 	{
+        if (ctx->bulk_insert_statement())
+        {
+            clear_rewritten_query_fragment();
+            return;
+        }
 		PLtsql_stmt_execsql *stmt = (PLtsql_stmt_execsql *) getPLtsql_fragment(ctx);
 		Assert(stmt);
 
@@ -3507,6 +3519,36 @@ makeSetStatement(TSqlParser::Set_statementContext *ctx)
 	}
 	else
 		return nullptr;
+}
+
+PLtsql_stmt *
+makeInsertBulkStatement(TSqlParser::Dml_statementContext *ctx)
+{
+    PLtsql_stmt_insert_bulk *stmt = (PLtsql_stmt_insert_bulk *) palloc0(sizeof(*stmt));
+    TSqlParser::Bulk_insert_statementContext *bulk_ctx = ctx->bulk_insert_statement();
+    string table_name;
+
+    Assert(bulk_ctx);
+
+    stmt->cmd_type = PLTSQL_STMT_INSERT_BULK;
+    if (bulk_ctx->ddl_object())
+    {
+        if (bulk_ctx->ddl_object()->local_id())
+        {
+            table_name = ::getFullText(bulk_ctx->ddl_object()->local_id());
+        }
+        else if (bulk_ctx->ddl_object()->full_object_name())
+        {
+            table_name = ::getFullText(bulk_ctx->ddl_object()->full_object_name());
+        }
+        if (!table_name.empty())
+        {
+            stmt->table_name = pstrdup(downcase_truncate_identifier(table_name.c_str(), table_name.length(), true));
+        }
+    }
+
+    attachPLtsql_fragment(ctx, (PLtsql_stmt *) stmt);
+    return (PLtsql_stmt *) stmt;
 }
 
 PLtsql_stmt *

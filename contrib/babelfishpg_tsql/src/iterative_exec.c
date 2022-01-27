@@ -717,6 +717,9 @@ static inline int dispatch_stmt(PLtsql_execstate *estate, PLtsql_stmt *stmt)
 		case PLTSQL_STMT_USEDB:
 			exec_stmt_usedb(estate, (PLtsql_stmt_usedb *) stmt);
 			break;
+        case PLTSQL_STMT_INSERT_BULK:
+            exec_stmt_insert_bulk(estate, (PLtsql_stmt_insert_bulk *) stmt);
+            break;
         /* TSQL-only executable node */
         case PLTSQL_STMT_INIT_VARS:
             exec_stmt_init_vars(estate, (PLtsql_stmt_init_vars *) stmt);
