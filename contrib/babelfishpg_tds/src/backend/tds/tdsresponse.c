@@ -394,7 +394,7 @@ PrintTupPrepareInfo(DR_printtup *myState, TupleDesc typeinfo, int numAttrs)
 	}
 }
 
-/* look for a typmod to return during a numeric expression */
+/* look for a typmod to return from a numeric expression */
 static int32
 resolve_numeric_typmod_from_exp(Node *expr)
 {
@@ -524,13 +524,19 @@ resolve_numeric_typmod_from_exp(Node *expr)
 					return -1;
 			}
 
-			/* handle precision overflow, use max allowed precision:38 */
-			if (precision > TDS_MAX_NUM_PRECISION)
+			/*
+			 * Mitigate precision overflow if integral precision <= 38
+			 * Otherwise it simply won't fit in 38 precision and let an
+			 * overflow error be thrown in PrepareRowDescription.
+			 */
+			if (precision > TDS_MAX_NUM_PRECISION &&
+			    precision - scale <= TDS_MAX_NUM_PRECISION)
 			{
-				int delta = precision - TDS_MAX_NUM_PRECISION;
-				precision = TDS_MAX_NUM_PRECISION;
-				scale = Max(scale - delta, 0);
+			    int delta = precision - TDS_MAX_NUM_PRECISION;
+			    precision = TDS_MAX_NUM_PRECISION;
+			    scale = Max(scale - delta, 0);
 			}
+
 			return ((precision << 16) | scale) + VARHDRSZ;
 		}
 		case T_FuncExpr:
@@ -571,12 +577,12 @@ resolve_numeric_typmod_from_exp(Node *expr)
 		}
 		case T_CoalesceExpr:
 		{
-			/* Find max possible precision and scale in a CoalesceExpr */
+			/* Find max possible integral_precision and scale (fractional precision) in a CoalesceExpr */
 			CoalesceExpr *coale = (CoalesceExpr *) expr;
 			ListCell *lc;
 			Node *arg;
 			int32 arg_typmod;
-			uint8_t precision, max_precision = 0, scale, max_scale = 0;
+			uint8_t precision, max_integral_precision = 0, scale, max_scale = 0;
 
 			Assert(coale->args != NIL);
 
@@ -594,19 +600,19 @@ resolve_numeric_typmod_from_exp(Node *expr)
 				scale = (arg_typmod - VARHDRSZ) & 0xffff;
 				precision = ((arg_typmod - VARHDRSZ) >> 16) & 0xffff;
 				max_scale = Max(scale, max_scale);
-				max_precision = Max(precision, max_precision);
+				max_integral_precision = Max(precision - scale, max_integral_precision);
 			}
-			return ((max_precision << 16) | max_scale) + VARHDRSZ;
+			return (((max_integral_precision + max_scale) << 16) | max_scale) + VARHDRSZ;
 		}
 		case T_CaseExpr:
 		{
-			/* Find max possible precision and scale in a CaseExpr */
+			/* Find max possible integral_precision and scale (fractional precision) in a CoalesceExpr */
 			CaseExpr *case_expr = (CaseExpr *) expr;
 			ListCell *lc;
 			CaseWhen *casewhen;
 			Node *casewhen_result;
 			int32 typmod;
-			uint8_t precision, max_precision = 0, scale, max_scale = 0;
+			uint8_t precision, max_integral_precision = 0, scale, max_scale = 0;
 
 			Assert(case_expr->args != NIL);
 
@@ -625,9 +631,9 @@ resolve_numeric_typmod_from_exp(Node *expr)
 				scale = (typmod - VARHDRSZ) & 0xffff;
 				precision = ((typmod - VARHDRSZ) >> 16) & 0xffff;
 				max_scale = Max(scale, max_scale);
-				max_precision = Max(precision, max_precision);
+				max_integral_precision = Max(precision - scale, max_integral_precision);
 			}
-			return ((max_precision << 16) | max_scale) + VARHDRSZ;
+			return (((max_integral_precision + max_scale) << 16) | max_scale) + VARHDRSZ;
 		}
 		case T_Aggref:
 		{
@@ -1408,6 +1414,11 @@ PrepareRowDescription(TupleDesc typeinfo, List *targetlist, int16 *formats,
 					{
 						scale = (atttypmod - VARHDRSZ) & 0xffff;
 						precision = ((atttypmod - VARHDRSZ) >> 16) & 0xffff;
+						if (precision > TDS_MAX_NUM_PRECISION)
+						{
+						    ereport(ERROR, (errcode(ERRCODE_NUMERIC_VALUE_OUT_OF_RANGE),
+								    errmsg("Arithmetic overflow error for data type numeric.")));
+						}
 					}
 					else
 					{

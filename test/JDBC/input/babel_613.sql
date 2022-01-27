@@ -30,11 +30,9 @@ select abs(a) from t1;
 go
 
 -- test overflow error, max precision is 38 for TSQL client.
--- expect error msg in tsql client, but not psql client.
--- Since we only detect this overflow in TdsSendTypeNumeric().
 -- BABEL-2656
--- select power(10.0, 100);
--- go
+select power(10.0, 100);
+go
 
 -- test Nullif expression
 select nullif(a, b) from t1;
@@ -58,14 +56,26 @@ go
 
 -- test Coalesece expr
 -- BABEL-2656
--- select coalesce(a, b) from t1;
--- go
+select coalesce(a, b) from t1;
+go
 
 -- test Union All
 select a from t1 Union All
 select b from t1;
 go
 
+-- test overflow from multiplication of columns
+create table t2 (a numeric(38, 1), b numeric(38, 1))
+insert into t1 values (1234567890123456789012345678901234567.1), (1234567890123456789012345678901234567.2)
+go
+
+select * from t2
+go
+
+select a * b from t2;
+go
+
 -- clean up
 drop table t1;
+drop table t2;
 go
