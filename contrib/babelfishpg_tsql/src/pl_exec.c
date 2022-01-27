@@ -9745,6 +9745,7 @@ static void
 pltsql_init_exec_error_data(PLtsqlErrorData *error_data)
 {
 	error_data->xact_abort_on = false;
+	error_data->rethrow_error = false;
 	error_data->trigger_error = false;
 	error_data->error_estate = NULL;
 	error_data->error_procedure = NULL;
@@ -9757,6 +9758,7 @@ static void
 pltsql_copy_exec_error_data(PLtsqlErrorData *src, PLtsqlErrorData *dst)
 {
 	dst->xact_abort_on = src->xact_abort_on;
+	dst->rethrow_error = src->rethrow_error;
 	dst->trigger_error = src->trigger_error;
 	dst->error_procedure = src->error_procedure;
 	dst->error_estate = src->error_estate;

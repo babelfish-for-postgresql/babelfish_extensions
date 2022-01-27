@@ -17,7 +17,7 @@ static int exec_stmt_throw(PLtsql_execstate *estate, PLtsql_stmt_throw *stmt);
 static void restore_ctx_full(PLtsql_execstate *estate);
 static ErrorData * restore_ctx_partial1(PLtsql_execstate *estate);
 static void restore_ctx_partial2(PLtsql_execstate *estate);
-static void set_exec_error_data(char *procedure, int number, int severity, int state);
+static void set_exec_error_data(char *procedure, int number, int severity, int state, bool rethrow);
 static void reset_exec_error_data(PLtsql_execstate *estate);
 static void assert_equal_estate_err(PLtsql_estate_err *err1, PLtsql_estate_err *err2);
 static void read_raiserror_params(PLtsql_execstate *estate, List *params, int paramno,
@@ -184,7 +184,7 @@ static int exec_stmt_raiserror(PLtsql_execstate *estate, PLtsql_stmt_raiserror *
 		elevel = ERROR;
 		proc_name = get_proc_name(estate);
 		/* Update error data info in exec_state_call_stack */
-		set_exec_error_data(proc_name, msg_id, severity, state);
+		set_exec_error_data(proc_name, msg_id, severity, state, false /* rethrow */);
 	}
 	ereport(elevel, (errcode(ERRCODE_PLTSQL_RAISERROR), 
 			errmsg_internal("%s", msg)));
@@ -218,7 +218,8 @@ static int exec_stmt_throw(PLtsql_execstate *estate, PLtsql_stmt_throw *stmt)
 		set_exec_error_data(estate->cur_error->procedure,
 							estate->cur_error->number,
 							estate->cur_error->severity,
-							estate->cur_error->state);
+							estate->cur_error->state,
+							true /* rethrow */);
 		ReThrowError(estate->cur_error->error);
 	}
 	else
@@ -231,7 +232,7 @@ static int exec_stmt_throw(PLtsql_execstate *estate, PLtsql_stmt_throw *stmt)
 		exec_eval_cleanup(estate);
 
 		/* Update error data info in exec_state_call_stack */
-		set_exec_error_data(proc_name, err_no, 16, state);
+		set_exec_error_data(proc_name, err_no, 16, state, false /* rethrow */);
 		ereport(ERROR, (errcode(ERRCODE_PLTSQL_THROW), 
 				errmsg_internal("%s", msg)));
 	}
@@ -965,6 +966,9 @@ bool abort_execution(PLtsql_execstate *estate, ErrorData *edata, bool *terminate
 	if (is_part_of_pltsql_trigger(estate) || exec_state_call_stack->error_data.trigger_error)
 		return true;
 
+	if (exec_state_call_stack->error_data.rethrow_error)
+		return true;
+
 	/* Any error inside try catch block */
 	if (is_part_of_pltsql_trycatch_block(estate))
 		return true;
@@ -1450,8 +1454,9 @@ void free_exec_codes(ExecCodes *exec_codes)
  **************************************************************************************/
 
 static 
-void set_exec_error_data(char *procedure, int number, int severity, int state)
+void set_exec_error_data(char *procedure, int number, int severity, int state, bool rethrow)
 {
+	exec_state_call_stack->error_data.rethrow_error = rethrow;
 	exec_state_call_stack->error_data.error_procedure = procedure;
 	exec_state_call_stack->error_data.error_number = number;
 	exec_state_call_stack->error_data.error_severity = severity;
@@ -1462,6 +1467,7 @@ static
 void reset_exec_error_data(PLtsql_execstate *estate)
 {
 	exec_state_call_stack->error_data.xact_abort_on = false;
+	exec_state_call_stack->error_data.rethrow_error = false;
 	if (estate->trigdata == NULL && estate->evtrigdata == NULL)
 		exec_state_call_stack->error_data.trigger_error = false;
 	exec_state_call_stack->error_data.error_estate = NULL;

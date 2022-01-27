@@ -1649,6 +1649,7 @@ extern char* pltsql_version;
 typedef struct PLtsqlErrorData
 {
 	bool				xact_abort_on;
+	bool				rethrow_error;
 	bool				trigger_error;
 	PLtsql_execstate	*error_estate;
 	char				*error_procedure;
