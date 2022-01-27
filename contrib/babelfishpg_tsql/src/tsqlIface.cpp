@@ -55,6 +55,7 @@ extern "C"
 static void toDotRecursive(ParseTree *t, const std::vector<std::string> &ruleNames, const std::string &sourceText);
 class tsqlBuilder;
 class PLtsql_expr_query_mutator;
+class tsqlSelectStatementMutator;
 
 // helper template function to get certain token from given context.
 // use template here because there is no mid-level base class for similar contexts.
@@ -63,14 +64,14 @@ using GetTokenFunc = std::function <antlr4::tree::TerminalNode * (T)>;
 template <class T>
 using GetCtxFunc = std::function <ParserRuleContext * (T)>;
 
-bool handleBatchLevelStatement(tree::ParseTree *tree);
+void handleBatchLevelStatement(TSqlParser::Batch_level_statementContext *ctx, tsqlSelectStatementMutator *ssm);
 bool handleITVFBody(TSqlParser::Func_body_return_select_bodyContext *body);
 
 PLtsql_stmt_block *makeEmptyBlockStmt(int lineno);
 
 PLtsql_stmt *makeCfl(TSqlParser::Cfl_statementContext *ctx, tsqlBuilder &builder);
 PLtsql_stmt *makeSQL(ParserRuleContext *ctx);
-std::vector<PLtsql_stmt *> makeAnother(TSqlParser::Another_statementContext *ctx);
+std::vector<PLtsql_stmt *> makeAnother(TSqlParser::Another_statementContext *ctx, tsqlBuilder &builder);
 PLtsql_stmt *makeExecBodyBatch(TSqlParser::Execute_body_batchContext *ctx);
 PLtsql_stmt *makeInsertBulkStatement(TSqlParser::Dml_statementContext *ctx);
 PLtsql_expr *makeTsqlExpr(const std::string &fragment, bool addSelect);
@@ -91,7 +92,7 @@ static bool post_process_alter_table(TSqlParser::Alter_tableContext *ctx, PLtsql
 static bool post_process_create_index(TSqlParser::Create_indexContext *ctx, PLtsql_stmt_execsql *stmt, TSqlParser::Ddl_statementContext *baseCtx);
 static bool post_process_create_database(TSqlParser::Create_databaseContext *ctx, PLtsql_stmt_execsql *stmt, TSqlParser::Ddl_statementContext *baseCtx);
 static void post_process_table_source(TSqlParser::Table_source_itemContext *ctx, PLtsql_expr *expr, ParserRuleContext *baseCtx);
-static void post_process_declare_cursor_statement(PLtsql_stmt_decl_cursor *stmt, TSqlParser::Declare_cursorContext *ctx);
+static void post_process_declare_cursor_statement(PLtsql_stmt_decl_cursor *stmt, TSqlParser::Declare_cursorContext *ctx, tsqlBuilder &builder);
 static PLtsql_var *lookup_cursor_variable(const char *varname);
 static PLtsql_var *build_cursor_variable(const char *curname, int lineno);
 static int read_extended_cursor_option(TSqlParser::Declare_cursor_optionsContext *ctx, int current_cursor_option);
@@ -113,9 +114,9 @@ TSqlParser::Query_specificationContext *get_query_specification(TSqlParser::Sele
 static bool is_top_level_query_specification(TSqlParser::Query_specificationContext *ctx);
 static bool is_quotation_needed_for_column_alias(TSqlParser::Column_aliasContext *ctx);
 static bool is_compiling_create_function();
-static void process_select_statement_standalone(
-	PLtsql_expr *expr, ParserRuleContext* baseCtx, TSqlParser::Select_statement_standaloneContext *standaloneCtx, 
-	bool itvf, PLtsql_expr_query_mutator *mutator);
+static void process_query_specification(TSqlParser::Query_specificationContext *qctx, PLtsql_expr_query_mutator *mutator);
+static void process_select_statement(TSqlParser::Select_statementContext *selectCtx, PLtsql_expr_query_mutator *mutator);
+static void process_select_statement_standalone(TSqlParser::Select_statement_standaloneContext *standaloneCtx, PLtsql_expr_query_mutator *mutator, tsqlBuilder &builder);
 template <class T> static std::string rewrite_omitted_db_and_schema_name(T ctx, GetCtxFunc<T> getDatabase, GetCtxFunc<T> getSchema);
 static bool does_column_name_need_delimiter(TSqlParser::IdContext *id);
 static std::string delimit_identifier(TSqlParser::IdContext *id);
@@ -428,16 +429,19 @@ public:
 
 	void run();
 
+	PLtsql_expr *expr;
+	ParserRuleContext* ctx;
+
 protected:
 	// intentionally use std::map to iterate it via sorted order.
 	std::map<int, std::pair<std::string, std::string>> m; // pos -> (orig_text, repl_text)
 
-	PLtsql_expr *expr;
 	int base_idx;
 };
 
 PLtsql_expr_query_mutator::PLtsql_expr_query_mutator(PLtsql_expr *e, ParserRuleContext* baseCtx)
 	: expr(e)
+	, ctx(baseCtx)
 	, base_idx(-1)
 {
 	if (!e)
@@ -508,6 +512,50 @@ add_rewritten_query_fragment_to_mutator(PLtsql_expr_query_mutator *mutator)
 }
 
 ////////////////////////////////////////////////////////////////////////////////
+// tsql Select Statement Mutator
+////////////////////////////////////////////////////////////////////////////////
+class tsqlSelectStatementMutator : public TSqlParserBaseListener
+{
+	/*
+	 * For some cases, e.g., batch level statement, declare statement, etc, we cannot rely only on tsqlBuilder.
+	 * However, we need to mutate select statements regardless of having tsqlBuilder.
+	 * This mutator should be used for the case where tsqlBuilder::exitSelect_statement() cannot be called.
+	 */
+public:
+    tree::ParseTreeProperty<void *> *code;
+    const std::vector<std::string> &ruleNames;
+    TSqlParser::Tsql_fileContext *root;
+
+    int nodeID = 0;
+    tree::ParseTree *parser;
+    MyInputStream &stream;
+
+	PLtsql_expr_query_mutator *mutator;
+
+public:
+    tsqlSelectStatementMutator(tree::ParseTree *p, const std::vector<std::string> &rules, MyInputStream &s)
+		: code(new tree::ParseTreeProperty<void *>()),
+		  ruleNames(rules),
+		  root(nullptr),
+		  parser(p),
+		  stream(s)
+    {
+    }
+
+	void exitSelect_statement(TSqlParser::Select_statementContext *ctx) override
+	{
+		if (mutator)
+			process_select_statement(ctx, mutator);
+	}
+
+	void exitQuery_specification(TSqlParser::Query_specificationContext *ctx) override
+	{
+		if (mutator)
+			process_query_specification(ctx, mutator);
+	}
+};
+
+////////////////////////////////////////////////////////////////////////////////
 // tsqlBuilder
 ////////////////////////////////////////////////////////////////////////////////
 
@@ -542,6 +590,7 @@ public:
 
 	std::vector<ParserRuleContext *> containers;
 	std::unordered_map<ParserRuleContext  *, List *> bodies;
+	std::unique_ptr<PLtsql_expr_query_mutator> statementMutator;
 	
     tsqlBuilder(tree::ParseTree *p, const std::vector<std::string> &rules, MyInputStream &s)
 		: code(new tree::ParseTreeProperty<void *>()),
@@ -551,6 +600,7 @@ public:
 		  stream(s)
     {
 		rootInitializers = NIL;
+		statementMutator = nullptr;
     }
 
 	~tsqlBuilder()
@@ -897,6 +947,9 @@ public:
 
 		// prepare rewriting
 		clear_rewritten_query_fragment();
+		PLtsql_stmt_execsql *stmt = (PLtsql_stmt_execsql *) getPLtsql_fragment(ctx);
+		Assert(stmt);
+		statementMutator = std::make_unique<PLtsql_expr_query_mutator>(stmt->sqlstmt, ctx);
 	}
 
 	void exitDml_statement(TSqlParser::Dml_statementContext *ctx) override
@@ -908,6 +961,7 @@ public:
         }
 		PLtsql_stmt_execsql *stmt = (PLtsql_stmt_execsql *) getPLtsql_fragment(ctx);
 		Assert(stmt);
+		Assert(stmt->sqlstmt = statementMutator->expr);
 
 		process_execsql_destination(ctx, stmt);
 
@@ -941,26 +995,25 @@ public:
 		}
 
 		// post-processing of execsql stmt query
-		PLtsql_expr_query_mutator mutator(stmt->sqlstmt, ctx);
-		if (ctx->select_statement_standalone())
+		for (auto &entry : local_id_positions)
 		{
-			process_select_statement_standalone(stmt->sqlstmt, ctx, ctx->select_statement_standalone(), false, &mutator);
-		}
-		else /* non-select dml */
-		{
-			// update stmt->sqlstmt with adding quote to tsql local_id (starting with '@') because backend parser is expecting that.
-			for (auto &entry : local_id_positions)
-			{
-				std::string quoted_local_id = std::string("\"") + entry.second + "\"";
-				mutator.add(entry.first, entry.second, quoted_local_id);
-			}
+			// Adding quote to tsql local_id (starting with '@') because backend parser is expecting that.
+			std::string quoted_local_id = std::string("\"") + entry.second + "\"";
+			statementMutator->add(entry.first, entry.second, quoted_local_id);
 		}
 
 		/* common routine for select and non-select */
-		add_rewritten_query_fragment_to_mutator(&mutator);
+		add_rewritten_query_fragment_to_mutator(statementMutator.get());
 
-		mutator.run();
+		statementMutator->run();
+		statementMutator = nullptr;
 		clear_rewritten_query_fragment();
+	}
+
+	void exitSelect_statement(TSqlParser::Select_statementContext *selectCtx) override
+	{
+		if (statementMutator)
+			process_select_statement(selectCtx, statementMutator.get());
 	}
 
 	void enterBatch_level_statement(TSqlParser::Batch_level_statementContext *ctx) override
@@ -1036,7 +1089,7 @@ public:
 		//
 		// Please note that one "another_statement" may return a list of PLtsql_stmt
 		// in case of DECLARE multiple variable with initializers at a time.
-		std::vector<PLtsql_stmt *> result = makeAnother(ctx);
+		std::vector<PLtsql_stmt *> result = makeAnother(ctx, *this);
 		for (PLtsql_stmt *stmt : result)
 			graft(stmt, peekContainer());
 
@@ -1049,7 +1102,7 @@ public:
 		if (ctx->cursor_statement() && ctx->cursor_statement()->declare_cursor())
 		{
 			PLtsql_stmt_decl_cursor *decl_cursor_stmt = (PLtsql_stmt_decl_cursor *) getPLtsql_fragment(ctx);
-			post_process_declare_cursor_statement(decl_cursor_stmt, ctx->cursor_statement()->declare_cursor());
+			post_process_declare_cursor_statement(decl_cursor_stmt, ctx->cursor_statement()->declare_cursor(), *this);
 		}
 
 		clear_rewritten_query_fragment();
@@ -1216,40 +1269,8 @@ public:
 
 	void exitQuery_specification(TSqlParser::Query_specificationContext *ctx) override
 	{
-		Assert(ctx->select_list());
-		std::vector<TSqlParser::Select_list_elemContext *> select_elems = ctx->select_list()->select_list_elem();
-		for (size_t i=0; i<select_elems.size(); ++i)
-		{
-			TSqlParser::Select_list_elemContext *elem = select_elems[i];
-
-			if (elem->EQUAL() || elem->assignment_operator())
-			{
-				/* check if assignment is used in top-level select */
-				if (!is_top_level_query_specification(ctx))
-					throw PGErrorWrapperException(ERROR, ERRCODE_SYNTAX_ERROR, "variable assignment can be used only in top-level SELECT", getLineAndPos(elem));
-
-				/* check if assignment is involved with sql_union */
-				auto pctx = ctx->parent;
-				while (pctx)
-				{
-					if (dynamic_cast<TSqlParser::Query_expressionContext *>(pctx))
-					{
-						TSqlParser::Query_expressionContext *qectx = static_cast<TSqlParser::Query_expressionContext *>(pctx);
-						if (!qectx->sql_union().empty())
-							throw PGErrorWrapperException(ERROR, ERRCODE_SYNTAX_ERROR, "variable assignment cannot be used with UNION, EXCEPT or INTERSECT", getLineAndPos(elem));
-					}
-					else if (dynamic_cast<TSqlParser::Sql_unionContext *>(pctx))
-					{
-						throw PGErrorWrapperException(ERROR, ERRCODE_SYNTAX_ERROR, "variable assignment cannot be used in UNION, EXCEPT or INTERSECT", getLineAndPos(elem));
-					}
-
-					else
-						break; /* no interest */
-
-					pctx = pctx->parent;
-				}
-			}
-		}
+		if (statementMutator)
+			process_query_specification(ctx, statementMutator.get());
 	}
 
 	void exitColumn_def_table_constraints(TSqlParser::Column_def_table_constraintsContext *ctx)
@@ -1621,21 +1642,71 @@ public:
     }
 };
 
+////////////////////////////////////////////////////////////////////////////////
+// Error listener
+////////////////////////////////////////////////////////////////////////////////
+
+class MyParserErrorListener: public antlr4::BaseErrorListener
+{
+	virtual void syntaxError(antlr4::Recognizer *recognizer, antlr4::Token *offendingSymbol, size_t line, size_t charPositionInLine, const std::string &msg, std::exception_ptr e) override
+	{
+		/*
+		 * ErrorData->cursorpos indicates character position from the beginning of query.
+		 * This a character position not a byte-offset meaning multi-byte character is counted as 1.
+		 * antlr4::Token::startIndex() returns the similar thing but it does not count '\n'. add (line#-1) here to adjust the index accordingly.
+		 *
+		 * TODO: from the connection of Windows, the query string may contain '\r'. We need more investigation here.
+		 */
+		int errorpos = offendingSymbol->getStartIndex() + line - 1;
+
+		throw PGErrorWrapperException(ERROR, ERRCODE_SYNTAX_ERROR, format_errmsg("syntax error near %s at line %lu and character position %lu", recognizer->getTokenErrorDisplay(offendingSymbol).c_str(), line, charPositionInLine), line, errorpos);
+	}
+};
+
 /*
- * Necessary mutations for select_statement_standalone
- * TODO: Currently, we cannot handle select_statement not in select_statement_standalone, e.g., subquery, derived table, etc.
+ * Necessary checks and mutations for query_specification
  */
-static void process_select_statement_standalone(
-	PLtsql_expr *expr, ParserRuleContext* baseCtx,
-	TSqlParser::Select_statement_standaloneContext *standaloneCtx, bool itvf,
+static void process_query_specification(
+	TSqlParser::Query_specificationContext *qctx,
 	PLtsql_expr_query_mutator *mutator)
 {
-	Assert(mutator);
-	Assert(standaloneCtx);
-	auto *selectCtx = standaloneCtx->select_statement();
-	TSqlParser::Query_specificationContext *qctx = get_query_specification(selectCtx);
-	Assert(qctx);
 	Assert(qctx->select_list());
+	std::vector<TSqlParser::Select_list_elemContext *> select_elems = qctx->select_list()->select_list_elem();
+	for (size_t i=0; i<select_elems.size(); ++i)
+	{
+		TSqlParser::Select_list_elemContext *elem = select_elems[i];
+
+		if (elem->EQUAL() || elem->assignment_operator())
+		{
+			/* check if assignment is used in top-level select */
+			if (!is_top_level_query_specification(qctx))
+				throw PGErrorWrapperException(ERROR, ERRCODE_SYNTAX_ERROR, "variable assignment can be used only in top-level SELECT", getLineAndPos(elem));
+
+			/* check if assignment is involved with sql_union */
+			auto pctx = qctx->parent;
+			while (pctx)
+			{
+				if (dynamic_cast<TSqlParser::Query_expressionContext *>(pctx))
+				{
+					TSqlParser::Query_expressionContext *qectx = static_cast<TSqlParser::Query_expressionContext *>(pctx);
+					if (!qectx->sql_union().empty())
+						throw PGErrorWrapperException(ERROR, ERRCODE_SYNTAX_ERROR, "variable assignment cannot be used with UNION, EXCEPT or INTERSECT", getLineAndPos(elem));
+				}
+				else if (dynamic_cast<TSqlParser::Sql_unionContext *>(pctx))
+				{
+					throw PGErrorWrapperException(ERROR, ERRCODE_SYNTAX_ERROR, "variable assignment cannot be used in UNION, EXCEPT or INTERSECT", getLineAndPos(elem));
+				}
+
+				else
+					break; /* no interest */
+
+				pctx = pctx->parent;
+			}
+		}
+	}
+
+	PLtsql_expr *expr = mutator->expr;
+	ParserRuleContext* baseCtx = mutator->ctx;
 
 	/* remove unsupported_tokens */
 	if (qctx->table_sources())
@@ -1643,59 +1714,8 @@ static void process_select_statement_standalone(
 		for (auto tctx : qctx->table_sources()->table_source_item()) // from-clause (to remove hints)
 			post_process_table_source(tctx, expr, baseCtx);
 	}
-	if (selectCtx->for_clause()) // for xml
-	{
-		Assert(selectCtx->for_clause()->XML()); // we only support FOR XML
-		Assert(selectCtx->for_clause()->RAW() || selectCtx->for_clause()->PATH());
-	}
-	for (auto octx : selectCtx->option_clause()) // query hint
-		removeCtxStringFromQuery(expr, octx, baseCtx);
-
-	if (itvf)
-	{
-		/*
-		 * For inline table-valued function, we need to save another version of the query
-		 * statement that we can call SPI_prepare to generate a plan, in order to figure
-		 * out the column definition list. So, we replace all variable references by
-		 * "CAST(NULL AS <type>)" in order to get the correct columnn list from
-		 * planning.
-		 */
-		size_t base_index = baseCtx->getStart()->getStartIndex();
-		if (base_index == INVALID_INDEX)
-			throw PGErrorWrapperException(ERROR, ERRCODE_SYNTAX_ERROR, "can't generate an internal query", getLineAndPos(baseCtx));
-
-		auto *query = expr->query;
-		for (const auto &entry : local_id_positions)
-		{
-			const std::string& local_id = entry.second;
-			size_t offset = entry.first - base_index;
-			if (strncmp(local_id.c_str(), query+offset, local_id.length()) == 0) // local_id maybe already deleted in some cases such as select-assignment. check here if it still exists)
-			{
-				int dno;
-				PLtsql_nsitem *nse = pltsql_ns_lookup(pltsql_ns_top(), false, local_id.c_str(), nullptr, nullptr, nullptr);
-				if (nse)
-					dno = nse->itemno;
-				else
-					throw PGErrorWrapperException(ERROR, ERRCODE_SYNTAX_ERROR, format_errmsg("\"%s\" is not a known variable", local_id.c_str()), getLineAndPos(baseCtx));
-
-				PLtsql_var *var = (PLtsql_var *) pltsql_Datums[dno];
-				std::string repl_text = std::string("CAST(NULL AS ") + std::string(var->datatype->typname) + std::string(")");
-				mutator->add(entry.first, entry.second, repl_text);
-			}
-		}
-	}
-	else
-	{
-		// update stmt->sqlstmt with adding quote to tsql local_id (starting with '@') because backend parser is expecting that.
-		for (auto &entry : local_id_positions)
-		{
-			std::string quoted_local_id = std::string("\"") + entry.second + "\"";
-			mutator->add(entry.first, entry.second, quoted_local_id);
-		}
-	}
 
 	/* handle special alias syntax and quote alias */
-	std::vector<TSqlParser::Select_list_elemContext *> select_elems = qctx->select_list()->select_list_elem();
 	for (size_t i=0; i<select_elems.size(); ++i)
 	{
 		TSqlParser::Select_list_elemContext *elem = select_elems[i];
@@ -1740,26 +1760,41 @@ static void process_select_statement_standalone(
 	}
 }
 
-////////////////////////////////////////////////////////////////////////////////
-// Error listener
-////////////////////////////////////////////////////////////////////////////////
-
-class MyParserErrorListener: public antlr4::BaseErrorListener
+/*
+ * Necessary mutations for select_statement_standalone which cannot be covered by tsqlBuilder
+ */
+static void process_select_statement_standalone(
+	TSqlParser::Select_statement_standaloneContext *standaloneCtx,
+	PLtsql_expr_query_mutator *mutator, tsqlBuilder &builder)
 {
-	virtual void syntaxError(antlr4::Recognizer *recognizer, antlr4::Token *offendingSymbol, size_t line, size_t charPositionInLine, const std::string &msg, std::exception_ptr e) override
-	{
-		/*
-		 * ErrorData->cursorpos indicates character position from the beginning of query.
-		 * This a character position not a byte-offset meaning multi-byte character is counted as 1.
-		 * antlr4::Token::startIndex() returns the similar thing but it does not count '\n'. add (line#-1) here to adjust the index accordingly.
-		 *
-		 * TODO: from the connection of Windows, the query string may contain '\r'. We need more investigation here.
-		 */
-		int errorpos = offendingSymbol->getStartIndex() + line - 1;
+	Assert(mutator);
+	auto ssm = std::make_unique<tsqlSelectStatementMutator>(
+		builder.parser, builder.ruleNames, builder.stream);
+	ssm->mutator = mutator;
+	antlr4::tree::ParseTreeWalker walker;
+	walker.walk(ssm.get(), standaloneCtx);
+}
 
-		throw PGErrorWrapperException(ERROR, ERRCODE_SYNTAX_ERROR, format_errmsg("syntax error near %s at line %lu and character position %lu", recognizer->getTokenErrorDisplay(offendingSymbol).c_str(), line, charPositionInLine), line, errorpos);
+/*
+ * Necessary mutations for select_statement
+ */
+static void process_select_statement(
+	TSqlParser::Select_statementContext *selectCtx,
+	PLtsql_expr_query_mutator *mutator)
+{
+	/* remove unsupported_tokens */
+	if (selectCtx->for_clause()) // for xml
+	{
+		Assert(selectCtx->for_clause()->XML()); // we only support FOR XML
+		Assert(selectCtx->for_clause()->RAW() || selectCtx->for_clause()->PATH());
 	}
-};
+
+	Assert(mutator);
+	PLtsql_expr *expr = mutator->expr;
+	ParserRuleContext* baseCtx = mutator->ctx;
+	for (auto octx : selectCtx->option_clause()) // query hint
+		removeCtxStringFromQuery(expr, octx, baseCtx);
+}
 
 ////////////////////////////////////////////////////////////////////////////////
 // Entry point for ANTLR parser
@@ -1841,8 +1876,14 @@ antlr_parser_cpp(const char *sourceText)
 
 		// for batch-level statement (i.e. create procedure), we don't need to create actual PLtsql_stmt* by tsqlBuilder.
 		// We can just relay the query string to backend parser via one PLtsql_stmt_execsql.
-		if (handleBatchLevelStatement(tree))
+		TSqlParser::Tsql_fileContext *tsql_file = dynamic_cast<TSqlParser::Tsql_fileContext *>(tree);
+		if (tsql_file && tsql_file->batch_level_statement())
 		{
+			/* By tsql grammar, batch-level statement can exist in tsql_file only
+			 * and there should be exactly one batch_level_statement there
+			 */
+			auto ssm = std::make_unique<tsqlSelectStatementMutator>(tree, parser.getRuleNames(), sourceStream);
+			handleBatchLevelStatement(tsql_file->batch_level_statement(), ssm.get());
 			result.success = true;
 			return result;
 		}
@@ -1977,10 +2018,12 @@ removeTokenFromOptionList(PLtsql_expr *expr, std::vector<T>& options, std::vecto
 }
 
 void
-rewriteBatchLevelStatement(PLtsql_expr *expr, TSqlParser::Batch_level_statementContext *ctx)
+rewriteBatchLevelStatement(
+	TSqlParser::Batch_level_statementContext *ctx, tsqlSelectStatementMutator *ssm, PLtsql_expr *expr)
 {
 	// rewrite batch-level stmt query
 	PLtsql_expr_query_mutator mutator(expr, ctx);
+	ssm->mutator = &mutator;
 
 	/*
 	 * remove unnecessary create-options such as SCHEMABINDING.
@@ -2106,9 +2149,6 @@ rewriteBatchLevelStatement(PLtsql_expr *expr, TSqlParser::Batch_level_statementC
 			if (all_removed)
 				removeTokenStringFromQuery(expr, cctx->WITH(0), ctx);
 		}
-		if (cctx->select_statement_standalone()) {
-			process_select_statement_standalone(expr, ctx, cctx->select_statement_standalone(), false, &mutator);
-		}
 	}
 
 	/* for_replication */
@@ -2170,7 +2210,12 @@ rewriteBatchLevelStatement(PLtsql_expr *expr, TSqlParser::Batch_level_statementC
 		}
 	}
 
+	// Run select statement mutator
+	antlr4::tree::ParseTreeWalker walker;
+	walker.walk(ssm, ctx);
+
 	mutator.run();
+	ssm->mutator = nullptr;
 	clear_rewritten_query_fragment();
 }
 
@@ -2214,23 +2259,15 @@ get_start_token_of_batch_level_stmt_body(TSqlParser::Batch_level_statementContex
 	return nullptr;
 }
 
-bool
-handleBatchLevelStatement(tree::ParseTree *tree)
+void
+handleBatchLevelStatement(TSqlParser::Batch_level_statementContext *ctx, tsqlSelectStatementMutator *ssm)
 {
-	TSqlParser::Tsql_fileContext *tsql_file = dynamic_cast<TSqlParser::Tsql_fileContext *>(tree);
-	if (!tsql_file)
-		return false;
-
-		// by tsql grammar, batch-level statement can exist in tsql_file only and there should be exactly one batch_level_statement there
-	if (!tsql_file->batch_level_statement())
-		return false;
-
 	// batch-level statment can be inputted in SQL batch only (by inline_handler) or has empty body. getLineNo() will not be affected by uninitialized pltsql_curr_compile_body_lineno.
-	Assert(pltsql_curr_compile->fn_oid == InvalidOid || tsql_file->batch_level_statement()->SEMI());
+	Assert(pltsql_curr_compile->fn_oid == InvalidOid || ctx->SEMI());
 
 	PLtsql_stmt_block *result = (PLtsql_stmt_block *) palloc0(sizeof(*result));
 	result->cmd_type = PLTSQL_STMT_BLOCK;
-	result->lineno = getLineNo(tsql_file->batch_level_statement());
+	result->lineno = getLineNo(ctx);
 	result->label = NULL;
 	result->body = NIL;
 	result->n_initvars = 0;
@@ -2239,23 +2276,22 @@ handleBatchLevelStatement(tree::ParseTree *tree)
 
 	PLtsql_stmt_init *init = (PLtsql_stmt_init *) palloc0(sizeof(*init));
 	init->cmd_type = PLTSQL_STMT_INIT;
-	init->lineno = getLineNo(tsql_file->batch_level_statement());
+	init->lineno = getLineNo(ctx);
 	init->label = NULL;
 	init->inits = rootInitializers;
 
 	result->body = list_make1(init);
 	// create PLtsql_stmt_execsql to wrap all query string
-	PLtsql_stmt_execsql *execsql = (PLtsql_stmt_execsql *) makeSQL(tsql_file->batch_level_statement());
-	rewriteBatchLevelStatement(execsql->sqlstmt, tsql_file->batch_level_statement());
+	PLtsql_stmt_execsql *execsql = (PLtsql_stmt_execsql *) makeSQL(ctx);
+
+	rewriteBatchLevelStatement(ctx, ssm, execsql->sqlstmt);
 	lappend(result->body, execsql);
 
-	Token* start_body_token = get_start_token_of_batch_level_stmt_body(tsql_file->batch_level_statement());
+	Token* start_body_token = get_start_token_of_batch_level_stmt_body(ctx);
 
 	pltsql_curr_compile_body_position = (start_body_token ? start_body_token->getStartIndex() : 0);
 	pltsql_curr_compile_body_lineno = (start_body_token ? start_body_token->getLine() : 0);
 	pltsql_parse_result = result;
-
-	return true;
 }
 
 bool
@@ -3024,20 +3060,46 @@ makeReturnQueryStmt(TSqlParser::Select_statement_standaloneContext *ctx, bool it
 	result->lineno =getLineNo(ctx);
 
 	auto *expr = makeTsqlExpr(ctx, false);
-	PLtsql_expr_query_mutator expr_mutator(expr, ctx);
 	result->query = expr;
 	if (itvf)
 	{
 		auto *itvf_expr = makeTsqlExpr(ctx, false);
 		PLtsql_expr_query_mutator itvf_mutator(itvf_expr, ctx);
-		process_select_statement_standalone(itvf_expr, ctx, ctx, true, &itvf_mutator);
+
+		/*
+		 * For inline table-valued function, we need to save another version of the query
+		 * statement that we can call SPI_prepare to generate a plan, in order to figure
+		 * out the column definition list. So, we replace all variable references by
+		 * "CAST(NULL AS <type>)" in order to get the correct columnn list from
+		 * planning.
+		 */
+		size_t base_index = ctx->getStart()->getStartIndex();
+		if (base_index == INVALID_INDEX)
+			throw PGErrorWrapperException(ERROR, ERRCODE_SYNTAX_ERROR, "can't generate an internal query", getLineAndPos(ctx));
+
+		auto *query = itvf_expr->query;
+		for (const auto &entry : local_id_positions)
+		{
+			const std::string& local_id = entry.second;
+			size_t offset = entry.first - base_index;
+			if (strncmp(local_id.c_str(), query+offset, local_id.length()) == 0) // local_id maybe already deleted in some cases such as select-assignment. check here if it still exists)
+			{
+				int dno;
+				PLtsql_nsitem *nse = pltsql_ns_lookup(pltsql_ns_top(), false, local_id.c_str(), nullptr, nullptr, nullptr);
+				if (nse)
+					dno = nse->itemno;
+				else
+					throw PGErrorWrapperException(ERROR, ERRCODE_SYNTAX_ERROR, format_errmsg("\"%s\" is not a known variable", local_id.c_str()), getLineAndPos(ctx));
+
+				PLtsql_var *var = (PLtsql_var *) pltsql_Datums[dno];
+				std::string repl_text = std::string("CAST(NULL AS ") + std::string(var->datatype->typname) + std::string(")");
+				itvf_mutator.add(entry.first, entry.second, repl_text);
+			}
+		}
 		add_rewritten_query_fragment_to_mutator(&itvf_mutator);
 		itvf_mutator.run();
 		result->query->itvf_query = itvf_expr->query;
 	}
-	process_select_statement_standalone(result->query, ctx, ctx, false, &expr_mutator);
-	add_rewritten_query_fragment_to_mutator(&expr_mutator);
-	expr_mutator.run();
 	return result;
 }
 
@@ -3349,7 +3411,7 @@ static bool is_valid_set_option(std::string val)
 }
 
 PLtsql_stmt *
-makeSetStatement(TSqlParser::Set_statementContext *ctx)
+makeSetStatement(TSqlParser::Set_statementContext *ctx, tsqlBuilder &builder)
 {
 
 	auto *expr = ctx->expression();
@@ -3437,7 +3499,7 @@ makeSetStatement(TSqlParser::Set_statementContext *ctx)
 		auto expr = makeTsqlExpr(sctx, false);
 
 		PLtsql_expr_query_mutator mutator(expr, sctx);
-		process_select_statement_standalone(expr, sctx, sctx, false, &mutator);
+		process_select_statement_standalone(sctx, &mutator, builder);
 		add_rewritten_query_fragment_to_mutator(&mutator);
 		mutator.run();
 
@@ -3914,7 +3976,7 @@ makeTransactionStatement(TSqlParser::Transaction_statementContext *ctx)
 }
 
 std::vector<PLtsql_stmt *>
-makeAnother(TSqlParser::Another_statementContext *ctx)
+makeAnother(TSqlParser::Another_statementContext *ctx, tsqlBuilder &builder)
 {
 	std::vector<PLtsql_stmt *> result;
 
@@ -3924,7 +3986,7 @@ makeAnother(TSqlParser::Another_statementContext *ctx)
 		result.insert(result.end(), decl_result.begin(), decl_result.end());
 	}
 	else if (ctx->set_statement())
-		result.push_back(makeSetStatement(ctx->set_statement()));
+		result.push_back(makeSetStatement(ctx->set_statement(), builder));
 	else if (ctx->execute_statement())
 		result.push_back(makeExecuteStatement(ctx->execute_statement()));
 	else if (ctx->cursor_statement())
@@ -4537,7 +4599,7 @@ post_process_create_database(TSqlParser::Create_databaseContext *ctx, PLtsql_stm
 }
 
 static void
-post_process_declare_cursor_statement(PLtsql_stmt_decl_cursor *stmt, TSqlParser::Declare_cursorContext *ctx)
+post_process_declare_cursor_statement(PLtsql_stmt_decl_cursor *stmt, TSqlParser::Declare_cursorContext *ctx, tsqlBuilder &builder)
 {
 	if (stmt->cursor_explicit_expr)
 	{
@@ -4547,7 +4609,7 @@ post_process_declare_cursor_statement(PLtsql_stmt_decl_cursor *stmt, TSqlParser:
 		Assert(sctx);
 
 		PLtsql_expr_query_mutator mutator(expr, sctx);
-		process_select_statement_standalone(expr, sctx, sctx, false, &mutator);
+		process_select_statement_standalone(sctx, &mutator, builder);
 		add_rewritten_query_fragment_to_mutator(&mutator);
 		mutator.run();
 	}

@@ -1001,12 +1001,6 @@ antlrcpp::Any TsqlUnsupportedFeatureHandlerImpl::visitSelect_statement(TSqlParse
 				handle(INSTR_UNSUPPORTED_TSQL_SELECT_DOLLAR_IDENTITY, "$IDENTITY", getLineAndPos(elem));
 			if (elem->column_elem() && elem->column_elem()->DOLLAR_ROWGUID())
 				handle(INSTR_UNSUPPORTED_TSQL_SELECT_DOLLAR_ROWGUID, "$ROWGUID", getLineAndPos(elem));
-			if (elem->expression_elem() && elem->expression_elem()->EQUAL())
-			{
-				TSqlParser::Select_statement_standaloneContext *pctx = dynamic_cast<TSqlParser::Select_statement_standaloneContext *>(ctx->parent);
-				if (!pctx)
-					handle(INSTR_UNSUPPORTED_TSQL_SELECT_COL_ALIAS, "ALIAS = EXPRESSION in subquery, derived table, or common table expression", getLineAndPos(elem));
-			}
 		}
 	}
 
