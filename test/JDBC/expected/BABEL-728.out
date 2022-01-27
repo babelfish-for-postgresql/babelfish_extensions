@@ -1,0 +1,651 @@
+select sign()
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: function sign() does not exist)~~
+
+
+select sign(NULL)
+go
+~~START~~
+float
+<NULL>
+~~END~~
+
+
+select sign(123.23)
+go
+~~START~~
+numeric
+1
+~~END~~
+
+
+select sign(123)
+go
+~~START~~
+int
+1
+~~END~~
+
+
+select sign(0.0)
+go
+~~START~~
+numeric
+0
+~~END~~
+
+
+select sign(0)
+go
+~~START~~
+int
+0
+~~END~~
+
+
+select sign(-123)
+go
+~~START~~
+int
+-1
+~~END~~
+
+
+select sign(-123.23)
+go
+~~START~~
+numeric
+-1
+~~END~~
+
+
+select sign('sdflkjs')
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: invalid input syntax for type double precision: "sdflkjs")~~
+
+
+select sign('123123.913');
+go
+~~START~~
+float
+1.0
+~~END~~
+
+
+select sign(cast(-123.123 as int))
+go
+~~START~~
+int
+-1
+~~END~~
+
+
+select sign(cast(0 as int))
+go
+~~START~~
+int
+0
+~~END~~
+
+
+select sign(cast(123.123 as int))
+go
+~~START~~
+int
+1
+~~END~~
+
+
+select sign(cast(456 as int))
+go
+~~START~~
+int
+1
+~~END~~
+
+
+select sign(cast(0.0006 as int))
+go
+~~START~~
+int
+0
+~~END~~
+
+
+select sign(cast(-123.123 as smallint))
+go
+~~START~~
+int
+-1
+~~END~~
+
+
+select sign(cast(0 as smallint))
+go
+~~START~~
+int
+0
+~~END~~
+
+
+select sign(cast(123.123 as smallint))
+go
+~~START~~
+int
+1
+~~END~~
+
+
+select sign(cast(456 as smallint))
+go
+~~START~~
+int
+1
+~~END~~
+
+
+select sign(cast(0.0006 as smallint))
+go
+~~START~~
+int
+0
+~~END~~
+
+
+select sign(cast(0 as tinyint))
+go
+~~START~~
+int
+0
+~~END~~
+
+
+select sign(cast(13.13 as tinyint))
+go
+~~START~~
+int
+1
+~~END~~
+
+
+select sign(cast(0.0006 as tinyint))
+go
+~~START~~
+int
+0
+~~END~~
+
+
+select sign(cast(-123.123 as bigint))
+go
+~~START~~
+bigint
+-1
+~~END~~
+
+
+select sign(cast(0 as bigint))
+go
+~~START~~
+bigint
+0
+~~END~~
+
+
+select sign(cast(123.123 as bigint))
+go
+~~START~~
+bigint
+1
+~~END~~
+
+
+select sign(cast(456 as bigint))
+go
+~~START~~
+bigint
+1
+~~END~~
+
+
+select sign(cast(0.0006 as bigint))
+go
+~~START~~
+bigint
+0
+~~END~~
+
+
+select sign(cast(-123.123 as money))
+go
+~~START~~
+money
+-1.0000
+~~END~~
+
+
+select sign(cast(0 as money))
+go
+~~START~~
+money
+0.0000
+~~END~~
+
+
+select sign(cast(123.123 as money))
+go
+~~START~~
+money
+1.0000
+~~END~~
+
+
+select sign(cast(456 as money))
+go
+~~START~~
+money
+1.0000
+~~END~~
+
+
+select sign(cast(0.0006 as money))
+go
+~~START~~
+money
+1.0000
+~~END~~
+
+
+select sign(cast(-123.123 as smallmoney))
+go
+~~START~~
+money
+-1.0000
+~~END~~
+
+
+select sign(cast(0 as smallmoney))
+go
+~~START~~
+money
+0.0000
+~~END~~
+
+
+select sign(cast(123.123 as smallmoney))
+go
+~~START~~
+money
+1.0000
+~~END~~
+
+
+select sign(cast(456 as smallmoney))
+go
+~~START~~
+money
+1.0000
+~~END~~
+
+
+select sign(cast(0.0006 as smallmoney))
+go
+~~START~~
+money
+1.0000
+~~END~~
+
+
+select sign(cast(-123.123 as numeric))
+go
+~~START~~
+numeric
+-1
+~~END~~
+
+
+select sign(cast(0 as numeric))
+go
+~~START~~
+numeric
+0
+~~END~~
+
+
+select sign(cast(123.123 as numeric))
+go
+~~START~~
+numeric
+1
+~~END~~
+
+
+select sign(cast(456 as numeric))
+go
+~~START~~
+numeric
+1
+~~END~~
+
+
+select sign(cast(0.0006 as numeric))
+go
+~~START~~
+numeric
+0
+~~END~~
+
+
+select sign(cast(-123.123 as decimal))
+go
+~~START~~
+numeric
+-1
+~~END~~
+
+
+select sign(cast(0 as decimal))
+go
+~~START~~
+numeric
+0
+~~END~~
+
+
+select sign(cast(123.123 as decimal))
+go
+~~START~~
+numeric
+1
+~~END~~
+
+
+select sign(cast(456 as decimal))
+go
+~~START~~
+numeric
+1
+~~END~~
+
+
+select sign(cast(0.0006 as decimal))
+go
+~~START~~
+numeric
+0
+~~END~~
+
+
+select sign(cast(-123.123 as float))
+go
+~~START~~
+float
+-1.0
+~~END~~
+
+
+select sign(cast(0 as float))
+go
+~~START~~
+float
+0.0
+~~END~~
+
+
+select sign(cast(123.123 as float))
+go
+~~START~~
+float
+1.0
+~~END~~
+
+
+select sign(cast(456 as float))
+go
+~~START~~
+float
+1.0
+~~END~~
+
+
+select sign(cast(0.0006 as float))
+go
+~~START~~
+float
+1.0
+~~END~~
+
+
+select sign(cast(-123.123 as real))
+go
+~~START~~
+float
+-1.0
+~~END~~
+
+
+select sign(cast(0 as real))
+go
+~~START~~
+float
+0.0
+~~END~~
+
+
+select sign(cast(123.123 as real))
+go
+~~START~~
+float
+1.0
+~~END~~
+
+
+select sign(cast(456 as real))
+go
+~~START~~
+float
+1.0
+~~END~~
+
+
+select sign(cast(0.0006 as real))
+go
+~~START~~
+float
+1.0
+~~END~~
+
+
+select sign(cast(0 as binary))
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: cannot cast type "binary" to "float")~~
+
+
+select sign(cast(456 as binary))
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: cannot cast type "binary" to "float")~~
+
+
+select sign(cast(0 as varbinary))
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: cannot cast type varbinary to "float")~~
+
+
+select sign(cast(456 as varbinary))
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: cannot cast type varbinary to "float")~~
+
+
+select sign(cast('-123.123' as varchar))
+go
+~~START~~
+float
+-1.0
+~~END~~
+
+
+select sign(cast('0' as varchar))
+go
+~~START~~
+float
+0.0
+~~END~~
+
+
+select sign(cast('123.123' as varchar))
+go
+~~START~~
+float
+1.0
+~~END~~
+
+
+select sign(cast('-123.123' as nvarchar))
+go
+~~START~~
+float
+-1.0
+~~END~~
+
+
+select sign(cast('0' as nvarchar))
+go
+~~START~~
+float
+0.0
+~~END~~
+
+
+select sign(cast('123.123' as nvarchar))
+go
+~~START~~
+float
+1.0
+~~END~~
+
+
+select sign(cast('-123.123' as text))
+go
+~~START~~
+float
+-1.0
+~~END~~
+
+
+select sign(cast('0' as text))
+go
+~~START~~
+float
+0.0
+~~END~~
+
+
+select sign(cast('123.123' as text))
+go
+~~START~~
+float
+1.0
+~~END~~
+
+
+select sign(cast('-123.123' as real))
+go
+~~START~~
+float
+-1.0
+~~END~~
+
+
+select sign(cast('0' as real))
+go
+~~START~~
+float
+0.0
+~~END~~
+
+
+select sign(cast('123.123' as real))
+go
+~~START~~
+float
+1.0
+~~END~~
+
+
+select sign(cast('-123.123' as binary))
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: cannot cast type "binary" to "float")~~
+
+
+select sign(cast('0' as binary))
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: cannot cast type "binary" to "float")~~
+
+
+select sign(cast('123.123' as binary))
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: cannot cast type "binary" to "float")~~
+
+
+select sign(cast('-123.123' as varbinary))
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: cannot cast type varbinary to "float")~~
+
+
+select sign(cast('0' as varbinary))
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: cannot cast type varbinary to "float")~~
+
+
+select sign(cast('123.123' as varbinary))
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: cannot cast type varbinary to "float")~~
+
+
+select sign(cast('-123.123' as ntext))
+go
+~~START~~
+float
+-1.0
+~~END~~
+
+
+select sign(cast('0' as ntext))
+go
+~~START~~
+float
+0.0
+~~END~~
+
+
+select sign(cast('123.123' as ntext))
+go
+~~START~~
+float
+1.0
+~~END~~
+
