@@ -307,6 +307,11 @@ GetTDSRequest(bool *resetProtocol)
 					request = GetTxnMgmtRequest(&message);
 				}
 				break;
+			case TDS_BULK_LOAD: /* Bulk Load request */
+				{
+					request = GetBulkLoadRequest(&message);
+				}
+				break;
 			case TDS_ATTENTION: 	/* Attention request */
 				{
 					/* Return an empty request with the attention type. */
@@ -379,6 +384,11 @@ ProcessTDSRequest(TDSRequest request)
 			case TDS_REQUEST_ATTN:
 				{
 					TdsSendDone(TDS_TOKEN_DONE, TDS_DONE_ATTN, 0xfd, 0);
+				}
+				break;
+			case TDS_REQUEST_BULK_LOAD:
+				{
+					ProcessBCPRequest(request);
 				}
 				break;
 			default:

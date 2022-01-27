@@ -227,6 +227,34 @@ typedef struct TvpData
 	TvpRowData 		*rowData;     /* Linked List holding each row. */
 } TvpData;
 
+typedef struct BulkLoadColMetaData
+{
+	int 		userType;
+	uint16 		flags;
+	uint8_t 	columnTdsType;
+
+	/* For numeric and decimal. */
+	uint8_t 	scale;
+	uint8_t 	precision;
+
+	/* For String Datatpes. */
+	uint32_t 	collation;
+	uint8_t 	sortId;
+
+	uint32_t 	maxLen;
+
+	uint32_t 	colNameLen;
+	char 		*colName;
+} BulkLoadColMetaData;
+
+typedef struct BulkLoadRowData
+{
+	/* Array of length col count, holds value of each column in that row. */
+	StringInfo columnValues;
+
+	char *isNull;
+} BulkLoadRowData;
+
 /* Map TVP to its underlying table, either by relid or by table name. */
 typedef struct TvpLookupItem
 {
@@ -420,5 +448,22 @@ extern Datum TdsRecvTypeXml(const char *, const ParameterToken);
 extern Datum TdsRecvTypeTable(const char *, const ParameterToken);
 extern Datum TdsRecvTypeSqlvariant(const char *message, const ParameterToken);
 extern Datum TdsRecvTypeDatetimeoffset(const char *message, const ParameterToken);
+
+extern Datum TdsTypeBitToDatum(StringInfo buf);
+extern Datum TdsTypeIntegerToDatum(StringInfo buf, int maxLen);
+extern Datum TdsTypeFloatToDatum(StringInfo buf, int maxLen);
+extern Datum TdsTypeVarcharToDatum(StringInfo buf, Oid pgTypeOid, uint32_t collation);
+extern Datum TdsTypeNCharToDatum(StringInfo buf);
+extern Datum TdsTypeNumericToDatum(StringInfo buf, int scale);
+extern Datum TdsTypeVarbinaryToDatum(StringInfo buf);
+extern Datum TdsTypeDatetime2ToDatum(StringInfo buf, int scale, int len);
+extern Datum TdsTypeDatetimeToDatum(StringInfo buf);
+extern Datum TdsTypeDateToDatum(StringInfo buf);
+extern Datum TdsTypeTimeToDatum(StringInfo buf, int scale, int len);
+extern Datum TdsTypeDatetimeoffsetToDatum(StringInfo buf, int scale, int len);
+extern Datum TdsTypeMoneyToDatum(StringInfo buf);
+extern Datum TdsTypeXMLToDatum(StringInfo buf);
+extern Datum TdsTypeUIDToDatum(StringInfo buf);
+extern Datum TdsTypeSqlVariantToDatum(StringInfo buf);
 
 #endif	/* TDS_TYPEIO_H */

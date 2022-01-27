@@ -101,7 +101,7 @@ static Node *get_underlying_node_from_implicit_casting(Node *n, NodeTag underlyi
 
 int pltsql_proc_return_code;
 
-
+char *bulk_load_table_name = NULL;
 
 PLtsql_execstate *get_current_tsql_estate()
 {
@@ -2458,9 +2458,116 @@ exec_stmt_insert_execute_select(PLtsql_execstate *estate, PLtsql_expr *query)
 
 int exec_stmt_insert_bulk(PLtsql_execstate *estate, PLtsql_stmt_insert_bulk *stmt)
 {
-    // TODO implement
+  
+	MemoryContext	oldContext;
+	oldContext = MemoryContextSwitchTo(TopMemoryContext);
 
-    return PLTSQL_RC_OK;
+	/* save the table name for the next Bulk load Request */
+	bulk_load_table_name = palloc(strlen(stmt->table_name) * sizeof(char) + 1);
+	memcpy(bulk_load_table_name, stmt->table_name, strlen(stmt->table_name));
+	bulk_load_table_name[(int)strlen(stmt->table_name)] = '\0';
+	MemoryContextSwitchTo(oldContext);
+
+	return PLTSQL_RC_OK;
+}
+
+int
+execute_bulk_load_insert(int ncol, int nrow, Oid *argtypes,
+				Datum *Values, const char *Nulls)
+{
+	int rc;
+	int retValue = -1;
+	StringInfo src = makeStringInfo();
+	StringInfo bindParams = makeStringInfo();
+	int count = 1;
+
+	elog(DEBUG2, "Insert Bulk operation on destination table: %s", bulk_load_table_name);
+	appendStringInfo(src, "Insert into %s values ", bulk_load_table_name);
+	for (int i = 0; i < nrow; i++)
+	{
+		for (int j = 0; j < ncol; j++)
+			appendStringInfo(bindParams, ",$%d", count++);
+
+		bindParams->data[0] = ' ';
+		appendStringInfo(src, "(%s),", bindParams->data);
+		resetStringInfo(bindParams);
+	}
+	src->data[src->len - 1] = ' '; /* Taking care of the last ',' */
+
+	set_config_option("babelfishpg_tsql.sql_dialect", "postgres",
+						  (superuser() ? PGC_SUSET : PGC_USERSET),
+						  PGC_S_SESSION, GUC_ACTION_SAVE, true, 0, false);
+
+	PushActiveSnapshot(GetTransactionSnapshot());
+
+	PG_TRY();
+	{
+		if ((rc = SPI_connect()) < 0)
+			elog(ERROR, "SPI_connect() failed with return code %d", rc);
+
+		rc = SPI_execute_with_args(src->data,
+				ncol * nrow, argtypes,
+				Values, Nulls,
+				false, 1);
+
+		retValue = SPI_processed;
+
+		SPI_finish();
+		PopActiveSnapshot();
+
+		set_config_option("babelfishpg_tsql.sql_dialect", "tsql",
+									(superuser() ? PGC_SUSET :  PGC_USERSET),
+										PGC_S_SESSION, GUC_ACTION_SAVE, true, 0, false);
+	}
+	PG_CATCH();
+	{
+		MemoryContext oldcontext;
+		SPI_finish();
+		PopActiveSnapshot();
+		oldcontext = CurrentMemoryContext;
+
+		/*
+		 * If a transaction block is already in progress then abort it,
+		 * else rollback entire transaction.
+		 */
+		if (!IsTransactionBlockActive())
+		{
+			AbortCurrentTransaction();
+			StartTransactionCommand();
+		}
+		else
+			pltsql_rollback_txn();
+		MemoryContextSwitchTo(oldcontext);
+
+		set_config_option("babelfishpg_tsql.sql_dialect", "tsql",
+									(superuser() ? PGC_SUSET : PGC_USERSET),
+										PGC_S_SESSION, GUC_ACTION_SAVE, true, 0, false);
+
+		PG_RE_THROW();
+	}
+	PG_END_TRY();
+
+	if (rc != SPI_OK_INSERT)
+		ereport(ERROR, (errcode(ERRCODE_INTERNAL_ERROR),
+			errmsg("Failed to insert in the table %s for bulk load", bulk_load_table_name)));
+
+	/* Cleanup all the pointers. */
+	if (bulk_load_table_name)
+		pfree(bulk_load_table_name);
+	if (bindParams)
+	{
+		if (bindParams->data)
+			pfree(bindParams->data);
+		pfree(bindParams);
+	}
+	if (src)
+	{
+		if (src->data)
+			pfree(src->data);
+		pfree(src);
+	}
+
+	return retValue;
 }
 
 int
