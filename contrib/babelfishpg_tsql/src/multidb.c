@@ -301,11 +301,16 @@ rewrite_object_refs(Node *stmt)
 			rewrite_plain_name(create_func->funcname);
 			if (list_length(create_func->options) == 3)
 			{
-				DefElem *trigStmt = (DefElem *) lthird(create_func->options);
-				if (strncmp(trigStmt->defname, "trigStmt", 8) == 0)
+				DefElem *defElem = (DefElem *) lthird(create_func->options);
+				if (strncmp(defElem->defname, "trigStmt", 8) == 0)
 				{
-					CreateTrigStmt *create_trigger = (CreateTrigStmt *) trigStmt->arg;
+					CreateTrigStmt *create_trigger = (CreateTrigStmt *) defElem->arg;
 					rewrite_rangevar(create_trigger->relation);
+				}
+				else if (strncmp(defElem->defname, "tbltypStmt", 10) == 0)
+				{
+					CreateStmt *tbltypStmt = (CreateStmt *) defElem->arg;
+					rewrite_rangevar(tbltypStmt->relation);
 				}
 			}
 			break;
