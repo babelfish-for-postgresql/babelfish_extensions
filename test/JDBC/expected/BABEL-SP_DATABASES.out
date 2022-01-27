@@ -1,0 +1,37 @@
+create database db1;
+go
+use db1;
+go
+create table t_spdatabases(a int);
+go
+insert into t_spdatabases(a) values(10);
+go
+~~ROW COUNT: 1~~
+
+insert into t_spdatabases(a) values(10);
+go
+~~ROW COUNT: 1~~
+
+insert into t_spdatabases(a) values(10);
+go
+~~ROW COUNT: 1~~
+
+insert into t_spdatabases(a) values(10);
+go
+~~ROW COUNT: 1~~
+
+
+select * from sys.sp_databases_view where database_name='db1';
+go
+~~START~~
+varchar#!#int#!#varchar
+db1#!#8#!#<NULL>
+~~END~~
+
+
+drop table t_spdatabases;
+go
+use master;
+go
+drop database db1;
+go

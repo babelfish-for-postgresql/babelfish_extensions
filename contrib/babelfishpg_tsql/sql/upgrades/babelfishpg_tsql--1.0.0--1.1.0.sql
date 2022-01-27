@@ -499,3 +499,37 @@ SELECT sys.exp(arg::DOUBLE PRECISION);
 $BODY$
 LANGUAGE SQL IMMUTABLE PARALLEL SAFE;
 GRANT EXECUTE ON FUNCTION sys.exp(NUMERIC) TO PUBLIC;
+
+-- BABEL-2259: Support sp_databases System Stored Procedure
+-- Lists databases that either reside in an instance of the SQL Server or
+-- are accessible through a database gateway
+DROP VIEW IF EXISTS sys.sp_databases_view CASCADE;
+
+CREATE OR REPLACE VIEW sys.sp_databases_view AS
+	SELECT CAST(database_name AS sys.SYSNAME),
+	-- DATABASE_SIZE returns a NULL value for databases larger than 2.15 TB
+	CASE WHEN (sum(table_size)/1024.0) > 2.15 * 1024.0 * 1024.0 * 1024.0 THEN NULL
+		ELSE CAST((sum(table_size)/1024.0) AS int) END as database_size,
+	CAST(NULL AS sys.VARCHAR(254)) as remarks
+	FROM (
+		SELECT pg_catalog.pg_namespace.oid as schema_oid,
+		pg_catalog.pg_namespace.nspname as schema_name,
+		INT.name AS database_name,
+		coalesce(pg_relation_size(pg_catalog.pg_class.oid), 0) as table_size
+		FROM
+		sys.babelfish_namespace_ext EXT
+		JOIN sys.babelfish_sysdatabases INT ON EXT.dbid = INT.dbid
+		JOIN pg_catalog.pg_namespace ON pg_catalog.pg_namespace.nspname = EXT.nspname
+		LEFT JOIN pg_catalog.pg_class ON relnamespace = pg_catalog.pg_namespace.oid
+	) t
+	GROUP BY database_name;
+GRANT SELECT on sys.sp_databases_view TO PUBLIC;
+
+CREATE OR REPLACE PROCEDURE sys.sp_databases ()
+AS $$
+BEGIN
+	SELECT * from sys.sp_databases_view;
+END;
+$$
+LANGUAGE 'pltsql';
+GRANT EXECUTE on PROCEDURE sys.sp_databases TO PUBLIC;
