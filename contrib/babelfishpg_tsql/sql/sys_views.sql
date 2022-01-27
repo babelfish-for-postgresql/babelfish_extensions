@@ -222,7 +222,7 @@ BEGIN
 		INNER JOIN pg_namespace s ON s.oid = c.relnamespace
 		INNER JOIN information_schema.columns isc ON c.relname = isc.table_name AND s.nspname = isc.table_schema AND a.attname = isc.column_name
 		LEFT JOIN pg_attrdef d ON c.oid = d.adrelid AND a.attnum = d.adnum
-		LEFT JOIN pg_collation coll ON coll.oid = t.typcollation
+		LEFT JOIN pg_collation coll ON coll.oid = a.attcollation
 		WHERE NOT a.attisdropped
 		-- r = ordinary table, i = index, S = sequence, t = TOAST table, v = view, m = materialized view, c = composite type, f = foreign table, p = partitioned table
 		AND c.relkind IN ('r', 'v', 'm', 'f', 'p')
