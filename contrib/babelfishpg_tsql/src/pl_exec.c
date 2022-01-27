@@ -2226,6 +2226,10 @@ exec_stmt(PLtsql_execstate *estate, PLtsql_stmt *stmt)
 			rc = exec_stmt_exit(estate, (PLtsql_stmt_exit *) stmt);
 			break;
 
+        case PLTSQL_STMT_INSERT_BULK:
+            rc = exec_stmt_insert_bulk(estate, (PLtsql_stmt_insert_bulk *) stmt);
+            break;
+
 		case PLTSQL_STMT_RETURN:
 			rc = exec_stmt_return(estate, (PLtsql_stmt_return *) stmt);
 			break;

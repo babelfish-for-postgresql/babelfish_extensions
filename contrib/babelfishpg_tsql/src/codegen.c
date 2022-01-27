@@ -296,6 +296,7 @@ static bool stmt_default_act(Walker_context *ctx, PLtsql_stmt *stmt)
 		case PLTSQL_STMT_RAISERROR:
 		case PLTSQL_STMT_THROW:
 		case PLTSQL_STMT_USEDB:
+        case PLTSQL_STMT_INSERT_BULK:
         /* TSQL-only executable node */
         case PLTSQL_STMT_INIT_VARS:
         case PLTSQL_STMT_SAVE_CTX:

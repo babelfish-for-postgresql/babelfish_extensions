@@ -40,6 +40,7 @@ static int exec_run_dml_with_output(PLtsql_execstate *estate, PLtsql_stmt_push_r
 									Portal portal, PLtsql_expr *expr, CmdType cmd, ParamListInfo paramLI);
 static int exec_stmt_usedb(PLtsql_execstate *estate, PLtsql_stmt_usedb *stmt);
 static int exec_stmt_insert_execute_select(PLtsql_execstate *estate, PLtsql_expr *expr);
+static int exec_stmt_insert_bulk(PLtsql_execstate *estate, PLtsql_stmt_insert_bulk *expr);
 extern Datum pltsql_inline_handler(PG_FUNCTION_ARGS);
 
 static char *transform_tsql_temp_tables(char * dynstmt);
@@ -178,6 +179,10 @@ exec_tsql_stmt(PLtsql_execstate *estate, PLtsql_stmt *stmt, PLtsql_stmt *save_es
 		case PLTSQL_STMT_RETURN_TABLE:
 			rc = exec_stmt_return_table(estate, (PLtsql_stmt_return_query *) stmt);
 			break;
+
+        case PLTSQL_STMT_INSERT_BULK:
+            rc = exec_stmt_insert_bulk(estate, (PLtsql_stmt_insert_bulk *) stmt);
+	        break;
 
 		default:
 			estate->err_stmt = save_estmt;
@@ -2449,6 +2454,13 @@ exec_stmt_insert_execute_select(PLtsql_execstate *estate, PLtsql_expr *query)
 	exec_eval_cleanup(estate);
 
 	return PLTSQL_RC_OK;
+}
+
+int exec_stmt_insert_bulk(PLtsql_execstate *estate, PLtsql_stmt_insert_bulk *stmt)
+{
+    // TODO implement
+
+    return PLTSQL_RC_OK;
 }
 
 int

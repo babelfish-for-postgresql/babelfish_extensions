@@ -1740,6 +1740,7 @@ insert_statement_value
 
 bulk_insert_statement
     : BULK INSERT ddl_object FROM STRING ( WITH LR_BRACKET bulk_insert_option (COMMA? bulk_insert_option)* RR_BRACKET )? SEMI?
+    | INSERT BULK ddl_object (LR_BRACKET (insert_bulk_column_definition (COMMA insert_bulk_column_definition)*)? column_constraint* COMMA? RR_BRACKET)
     ;
 
 bulk_insert_option
@@ -3157,7 +3158,14 @@ column_definition
       ( column_constraint? IDENTITY (LR_BRACKET sign? seed=DECIMAL COMMA sign? increment=DECIMAL RR_BRACKET)? )? for_replication? ROWGUIDCOL?
       column_constraint* column_inline_index?
     ;
-	    
+
+// Temporary workaround for COLLATE default in INSERT BULK
+insert_bulk_column_definition
+    : simple_column_name (data_type system_versioning_column? | AS expression PERSISTED? ) ( special_column_option | (COLLATE (id | DEFAULT)) | null_notnull )*
+      ( column_constraint? IDENTITY (LR_BRACKET sign? seed=DECIMAL COMMA sign? increment=DECIMAL RR_BRACKET)? )? for_replication? ROWGUIDCOL?
+      column_constraint* column_inline_index?
+    ;
+
 column_inline_index
     : INDEX id (CLUSTERED | NONCLUSTERED)?
       (WHERE where=search_condition)?

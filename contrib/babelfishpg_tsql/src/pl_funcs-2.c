@@ -356,6 +356,7 @@ free_stmt2(PLtsql_stmt *stmt)
 		}
 	    case PLTSQL_STMT_LABEL:
 		case PLTSQL_STMT_USEDB:
+        case PLTSQL_STMT_INSERT_BULK:
 		{
 			/* Nothing to free */
 			break;
@@ -406,6 +407,7 @@ void dump_stmt_label(PLtsql_stmt_label *stmt_label);
 void dump_stmt_raiserror(PLtsql_stmt_raiserror *stmt_raiserror);
 void dump_stmt_throw(PLtsql_stmt_throw *stmt_throw);
 void dump_stmt_usedb(PLtsql_stmt_usedb *stmt_usedb);
+void dump_stmt_insert_bulk(PLtsql_stmt_insert_bulk *stmt_insert_bulk);
 void dump_stmt_try_catch(PLtsql_stmt_try_catch *stmt_try_catch);
 void dump_stmt_query_set(PLtsql_stmt_query_set *query_set);
 void dump_stmt_exec_batch(PLtsql_stmt_exec_batch *exec_batch);
@@ -504,6 +506,12 @@ void
 dump_stmt_usedb(PLtsql_stmt_usedb *stmt_usedb)
 {
 	printf("USE %s\n", stmt_usedb->db_name);
+}
+
+void
+dump_stmt_insert_bulk(PLtsql_stmt_insert_bulk *stmt_insert_bulk)
+{
+    printf("INSERT BULK %s\n", stmt_insert_bulk->table_name);
 }
 
 void
@@ -623,6 +631,11 @@ dump_stmt2(PLtsql_stmt *stmt)
 			dump_stmt_usedb((PLtsql_stmt_usedb *) stmt);
 			break;
 		}
+        case PLTSQL_STMT_INSERT_BULK:
+        {
+            dump_stmt_insert_bulk((PLtsql_stmt_insert_bulk *) stmt);
+            break;
+        }
         default:
             elog(ERROR, "unrecognized cmd_type: %d", stmt->cmd_type);
             break;

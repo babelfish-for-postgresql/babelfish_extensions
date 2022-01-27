@@ -97,6 +97,7 @@ bool stmt_walker(PLtsql_stmt *stmt, WalkerFunc walker, void *context)
 		case PLTSQL_STMT_RAISERROR:
 		case PLTSQL_STMT_THROW:
         case PLTSQL_STMT_USEDB:
+        case PLTSQL_STMT_INSERT_BULK:
             break;
         /* TSQL-only executable node */
         case PLTSQL_STMT_INIT_VARS:
@@ -189,6 +190,7 @@ bool general_walker_func(PLtsql_stmt *stmt, void *context)
 		DISPATCH(RAISERROR, raiserror)
 		DISPATCH(THROW, throw)
         DISPATCH(USEDB, usedb)
+        DISPATCH(INSERT_BULK, insert_bulk)
 
         /* TSQL-only executable node */
         DISPATCH(INIT_VARS, init_vars)
