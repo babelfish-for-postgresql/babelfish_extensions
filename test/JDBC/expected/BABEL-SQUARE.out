@@ -94,8 +94,6 @@ GO
 -- Float overflow: expect error
 SELECT square(CAST('-1.79E+308' AS float));
 GO
-~~START~~
-float
 ~~ERROR (Code: 33557097)~~
 
 ~~ERROR (Message: value out of range: overflow)~~

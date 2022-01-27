@@ -437,7 +437,7 @@ BEGIN
  return res;
 END;
 $BODY$
-LANGUAGE plpgsql STABLE RETURNS NULL ON NULL INPUT;
+LANGUAGE plpgsql PARALLEL SAFE IMMUTABLE RETURNS NULL ON NULL INPUT;
 
 create or replace view  sys.sysindexes as
 select
