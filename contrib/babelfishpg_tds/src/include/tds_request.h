@@ -30,6 +30,7 @@ typedef enum TDSRequestType
 	TDS_REQUEST_SQL_BATCH = 1,	/* a simple SQL batch */
 	TDS_REQUEST_SP_NUMBER = 2,	/* numbered SP like sp_execute */
 	TDS_REQUEST_TXN_MGMT  = 3,		/* transaction management request */
+	TDS_REQUEST_BULK_LOAD = 4,  /* bulk load request */
 	TDS_REQUEST_ATTN			/* attention request */
 } TDSRequestType;
 
@@ -170,6 +171,17 @@ typedef struct TDSRequestSPData
 	int		paramIndex;
 } TDSRequestSPData;
 typedef TDSRequestSPData *TDSRequestSP;
+
+typedef struct TDSRequestBulkLoadData
+{
+	TDSRequestType			reqType;
+	int 					colCount;
+	int 					rowCount;
+
+	BulkLoadColMetaData 	*colMetaData; /* Array of each column's metadata. */
+	List 					*rowData;     /* List holding each row. */
+} TDSRequestBulkLoadData;
+typedef TDSRequestBulkLoadData *TDSRequestBulkLoad;
 
 /* Default handle value for a RPC request which doesn't use any handle */
 /*
@@ -543,7 +555,6 @@ SetColMetadataForTvp(ParameterToken temp,const StringInfo message, uint64_t *off
 					colmetadata[i].precision = messageData[(*offset)++];
 					colmetadata[i].scale 	 = messageData[(*offset)++];
 				break;
-				// case DATETIMEOFFSET: 	/* TODO, not implemented yet */
 				case TDS_TYPE_CHAR:
 				case TDS_TYPE_VARCHAR:
 				case TDS_TYPE_NCHAR:
@@ -861,5 +872,9 @@ extern void ProcessRPCRequest(TDSRequest request);
 extern TDSRequest GetTxnMgmtRequest(const StringInfo message);
 extern void ProcessTxnMgmtRequest(TDSRequest request);
 extern int TestTxnMgmtRequest(TDSRequest request, const char *expectedStr);
+
+/* Functions in tdsbulkload.c */
+extern TDSRequest GetBulkLoadRequest(StringInfo message);
+extern void ProcessBCPRequest(TDSRequest request);
 
 #endif	/* TDS_REQUEST_H */

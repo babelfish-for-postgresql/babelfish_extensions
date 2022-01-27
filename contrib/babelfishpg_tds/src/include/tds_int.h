@@ -62,6 +62,7 @@
 #define TDS_QUERY				0x01
 #define TDS_RPC					0x03
 #define TDS_RESPONSE			0x04
+#define TDS_BULK_LOAD 			0x07
 #define TDS_TXN					0x0E
 #define TDS_LOGIN7				0x10
 #define TDS_PRELOGIN			0x12

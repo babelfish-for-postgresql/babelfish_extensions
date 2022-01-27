@@ -84,6 +84,7 @@ Datum TdsTypeDatetime2ToDatum(StringInfo buf, int scale, int len);
 Datum TdsTypeDatetimeToDatum(StringInfo buf);
 Datum TdsTypeDateToDatum(StringInfo buf);
 Datum TdsTypeTimeToDatum(StringInfo buf, int scale, int len);
+Datum TdsTypeDatetimeoffsetToDatum(StringInfo buf, int scale, int len);
 Datum TdsTypeMoneyToDatum(StringInfo buf);
 Datum TdsTypeXMLToDatum(StringInfo buf);
 Datum TdsTypeUIDToDatum(StringInfo buf);
@@ -1020,6 +1021,45 @@ TdsTypeTimeToDatum(StringInfo buf, int scale, int len)
 	PG_RETURN_TIMEADT((TimeADT)result);
 }
 
+/* Helper Function to convert Datetimeoffset value into Datum. */
+Datum
+TdsTypeDatetimeoffsetToDatum(StringInfo buf, int scale, int len)
+{
+	uint64_t 	numMicro = 0;
+	uint32_t	numDays = 0;
+	int16_t		timezone = 0;
+	tsql_datetimeoffset *tdt = (tsql_datetimeoffset *) palloc0(DATETIMEOFFSET_LEN);
+	TimestampTz	timestamp;
+	/*
+	 * if Datetimeoffset data has no specific scale specified in the query, default scale
+	 * to be considered is 7 always. However, setting default scale to 6 since
+	 * postgres supports upto 6 digits after decimal point
+	 */
+	if (scale == 0xFF)
+		scale = 6;
+
+	memcpy(&numMicro, &buf->data[buf->cursor], len - 5);
+	buf->cursor += len - 5;
+
+	memcpy(&numDays, &buf->data[buf->cursor], 3);
+	buf->cursor += 3;
+
+	memcpy(&timezone, &buf->data[buf->cursor], 2);
+	buf->cursor += 2;
+
+	timezone *= -1;
+	TdsGetTimestampFromDayTime(numDays, numMicro, (int)timezone, &timestamp, scale);
+
+	timestamp -= (timezone * SECS_PER_MINUTE * USECS_PER_SEC);
+	/* since reverse is done in tm2timestamp() */
+	timestamp -= (timezone * USECS_PER_SEC);
+
+	tdt->tsql_ts = timestamp;
+	tdt->tsql_tz = timezone;
+
+	PG_RETURN_DATETIMEOFFSET(tdt);
+}
+
 /* Helper Function to convert Money value into Datum. */
 Datum
 TdsTypeMoneyToDatum(StringInfo buf)
@@ -1889,6 +1929,9 @@ TdsRecvTypeTable(const char *message, const ParameterToken token)
 						break;
 						case TDS_TYPE_TIME:
 							values[i] = TdsTypeTimeToDatum(temp, colMetaData[currentColumn].scale, temp->len);
+						break;
+						case TDS_TYPE_DATETIMEOFFSET:
+							values[i] = TdsTypeDatetimeoffsetToDatum(temp, colMetaData[currentColumn].scale, temp->len);
 						break;
 						case TDS_TYPE_DATETIME2:
 							values[i] = TdsTypeDatetime2ToDatum(temp, colMetaData[currentColumn].scale, temp->len);
@@ -3314,50 +3357,17 @@ TdsSendTypeSqlvariant(FmgrInfo *finfo, Datum value, void *vMetaData)
 Datum
 TdsRecvTypeDatetimeoffset(const char *message, const ParameterToken token)
 {
-	int             scale = 0, len = 0;
 	StringInfo      buf = TdsGetStringInfoBufferFromToken(message, token);
-	uint64_t        numMicro = 0;
-	uint32_t	numDays = 0;
-	int16_t		timezone = 0;
-	TimestampTz	timestamp;
-	tsql_datetimeoffset *tdt = (tsql_datetimeoffset *) palloc0(DATETIMEOFFSET_LEN);
-
+	Datum 	result;
 	TdsColumnMetaData       col = token->paramMeta;
-	scale = col.metaEntry.type6.scale;
+	int scale = col.metaEntry.type6.scale;
 
 	TDSInstrumentation(INSTR_TDS_DATATYPE_DATETIME_OFFSET);
 
-	/*
-	 * if Datetimeoffset data has no specific scale specified in the query, default scale
-	 * to be considered is 7 always. However, setting default scale to 6 since
-	 * postgres supports upto 6 digits after decimal point
-	 */
-	if (scale == 0xFF)
-		scale = 6;
-
-	len = token->len;
-
-	memcpy(&numMicro, &buf->data[buf->cursor], len - 5);
-	buf->cursor += len - 5;
-
-	memcpy(&numDays, &buf->data[buf->cursor], 3);
-	buf->cursor += 3;
-	
-	memcpy(&timezone, &buf->data[buf->cursor], 2);
-	buf->cursor += 2;
-
-	timezone *= -1;
-	TdsGetTimestampFromDayTime(numDays, numMicro, (int)timezone, &timestamp, scale);
-	
-	timestamp -= (timezone * SECS_PER_MINUTE * USECS_PER_SEC);	
-	/* since reverse is done in tm2timestamp() */
-	timestamp -= (timezone * USECS_PER_SEC);
-
-	tdt->tsql_ts = timestamp;
-	tdt->tsql_tz = timezone;
+	result = TdsTypeDatetimeoffsetToDatum(buf, scale, token->len);
 
 	pfree(buf);
-	PG_RETURN_DATETIMEOFFSET(tdt);
+	return result;
 }
 
 int

@@ -1544,6 +1544,9 @@ typedef struct PLtsql_protocol_plugin
 
 	int* (*get_mapped_error_list) (void);
 
+	int (*bulk_load_callback) (int ncol, int nrow, Oid *argtypes,
+									Datum *Values, const char *Nulls);
+
 } PLtsql_protocol_plugin;
 
 /*
@@ -1680,6 +1683,8 @@ extern Portal pltsql_snapshot_portal;
 extern int pltsql_non_tsql_proc_entry_count;
 extern int pltsql_sys_func_entry_count;
 
+extern char *bulk_load_table_name;
+
 /**********************************************************************
  * Function declarations
  **********************************************************************/
@@ -1751,6 +1756,8 @@ extern Datum sp_prepare(PG_FUNCTION_ARGS);
 extern Datum sp_unprepare(PG_FUNCTION_ARGS);
 extern bool pltsql_support_tsql_transactions(void);
 extern bool pltsql_sys_function_pop(void);
+extern int execute_bulk_load_insert(int ncol, int nrow, Oid *argtypes,
+									Datum *Values, const char *Nulls);
 /*
  * Functions in pl_exec.c
  */
