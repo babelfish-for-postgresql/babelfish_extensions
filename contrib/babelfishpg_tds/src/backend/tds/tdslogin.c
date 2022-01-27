@@ -49,6 +49,7 @@
 #include "tcop/pquery.h"
 #include "parser/scansup.h"
 #include "utils/guc.h"
+#include "utils/acl.h"
 #include "utils/lsyscache.h"
 #include "utils/memdebug.h"
 #include "utils/memutils.h"
@@ -2000,6 +2001,28 @@ TdsSendLoginAck(Port *port)
 			snprintf(old, sizeof(old), "%u", tds_default_packet_size);
 			snprintf(new, sizeof(new), "%u", request->packetSize);
 			TdsSendEnvChange(TDS_ENVID_BLOCKSIZE, new, old);
+		}
+
+		/* Check if the user is a valid babelfish login.
+		 * We will only allow following users to login:
+		 * 1. An existing PG user that we have initialised with sys.babelfish_initialize()
+		 * 2. A Postgres SUPERUSER. 
+		 * 3. New users created using CREATE LOGIN command through TDS endpoint. */
+		if (port->user_name != NULL && port->user_name[0] != '\0')
+		{
+			bool login_exist;
+			Oid roleid;
+
+			StartTransactionCommand();
+			roleid = get_role_oid(port->user_name, false);
+			login_exist = pltsql_plugin_handler_ptr->pltsql_is_login(roleid);
+			CommitTransactionCommand();
+
+			/* Throw error if this user is not one of the type mentioned above */
+			if(!login_exist && !superuser_arg(roleid))
+				ereport(ERROR,
+						(errcode(ERRCODE_UNDEFINED_OBJECT),
+						 errmsg("\"%s\" is not a babelfish user", port->user_name)));
 		}
 
 		if (tds_enable_db_session_property)
