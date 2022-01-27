@@ -1,9 +1,37 @@
 -- psql
 ALTER SYSTEM SET babelfishpg_tsql.allow_antlr_to_unsupported_grammar_for_testing = true;
 SELECT pg_reload_conf();
+CREATE USER foo WITH LOGIN PASSWORD 'abc';
+CREATE USER su_user WITH SUPERUSER LOGIN PASSWORD 'abc';
 GO
 
+-- tsql      user=foo      password=abc
+-- Login with non babelfish user should fail
+go
+
+-- Login with a superuser should succeed
+-- tsql      user=su_user      password=abc
+SELECT 1;
+go
+
+-- psql
+DROP USER IF EXISTS foo;
+DROP USER IF EXISTS su_user;
+go
+
+-- Create Login through tsql
 -- tsql
+CREATE LOGIN r1 WITH PASSWORD = 'abc';
+go
+
+-- Login with a Babelfish user should succeed
+-- tsql      user=r1      password=abc
+SELECT 1;
+go
+
+-- tsql
+DROP LOGIN r1;
+go
 -- Test initialization
 SELECT COUNT(*) FROM sys.babelfish_authid_login_ext;
 go

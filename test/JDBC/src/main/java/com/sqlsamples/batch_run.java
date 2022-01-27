@@ -223,6 +223,8 @@ public class batch_run {
                                                     (psqlDialect = strLine.toLowerCase().startsWith("-- psql")))) {
                     // Cross dialect testing
 
+                    Connection connection = null;
+
                     bw.write(strLine);
                     bw.newLine();
 
@@ -232,13 +234,13 @@ public class batch_run {
                      * assign it to existing connection object.
                      */
                     if (tsqlDialect) {
-                        con_bbl = jdbcCrossDialect.getTsqlConnection(strLine, bw, logger);
+                        connection = jdbcCrossDialect.getTsqlConnection(strLine, bw, logger);
                     } else if (psqlDialect) {
-                        con_bbl = jdbcCrossDialect.getPsqlConnection(strLine, bw, logger);
+                        connection = jdbcCrossDialect.getPsqlConnection(strLine, bw, logger);
                     }
 
-                    // Ensure connection object is not null
-                    assert(con_bbl != null);
+                    // Ensure con_bbl is never null
+                    if (connection != null) con_bbl = connection;
 
                 } else {
                     // execute statement as a normal SQL statement

@@ -1538,6 +1538,8 @@ typedef struct PLtsql_protocol_plugin
 
 	int16 (*pltsql_get_database_oid) (const char *dbname);
 
+	bool (*pltsql_is_login) (Oid role_oid);
+
 	char* (*pltsql_get_login_default_db) (char *login_name);
 
 	int* (*get_mapped_error_list) (void);

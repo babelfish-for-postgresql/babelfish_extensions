@@ -2357,6 +2357,7 @@ _PG_init(void)
 		(*pltsql_protocol_plugin_ptr)->pltsql_get_errdata = &pltsql_get_errdata;
 		(*pltsql_protocol_plugin_ptr)->pltsql_get_database_oid = &get_db_id;
 		(*pltsql_protocol_plugin_ptr)->pltsql_get_login_default_db = &get_login_default_db;
+		(*pltsql_protocol_plugin_ptr)->pltsql_is_login = &is_login;
 	}
 
 	*pltsql_config_ptr = &myConfig;
