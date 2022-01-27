@@ -7,7 +7,7 @@ go
 drop view if exists babel_2514_view;
 go
 create view babel_2514_view as (
-	select 'value' = '1'
+	select (select 'value' = '1')
 );
 go
 select * from babel_2514_view;
@@ -20,7 +20,7 @@ go
 create function babel_2514_func()
 	returns table as return 
 	(
-		select 'value' = '1'
+		select * from (select 'value' = '1') col1
 	)
 go
 select babel_2514_func();
@@ -28,7 +28,7 @@ go
 drop function if exists babel_2514_func;
 go
 
-DECLARE babel_2514_cursor CURSOR FOR select 'value' = '1';
+DECLARE babel_2514_cursor CURSOR FOR select * from (select 'value' = '1') col1;
 OPEN babel_2514_cursor
 FETCH NEXT FROM babel_2514_cursor;
 close babel_2514_cursor;
@@ -36,7 +36,7 @@ deallocate babel_2514_cursor;
 go
 
 declare @babel_2514_cursor cursor
-set @babel_2514_cursor = CURSOR FOR select 'value' = '1';
+set @babel_2514_cursor = CURSOR FOR select * from (select 'value' = '1') col1;
 open @babel_2514_cursor;
 fetch next from @babel_2514_cursor;
 go
@@ -114,4 +114,15 @@ go
 select babel_2514_complex_func('abc def', ' ');
 go
 drop function if exists babel_2514_complex_func;
+go
+
+drop view if exists babel_2514_complex_view;
+go
+create view babel_2514_complex_view as (
+	select (select a = 1) col1, * from (select b = 2 union all select b = 3) t
+);
+go
+select * from babel_2514_complex_view;
+go
+drop view if exists babel_2514_complex_view;
 go
