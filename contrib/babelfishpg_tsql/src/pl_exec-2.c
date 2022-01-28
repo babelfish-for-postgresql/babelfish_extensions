@@ -2458,14 +2458,48 @@ exec_stmt_insert_execute_select(PLtsql_execstate *estate, PLtsql_expr *query)
 
 int exec_stmt_insert_bulk(PLtsql_execstate *estate, PLtsql_stmt_insert_bulk *stmt)
 {
+	char *bulk_load_schema_name = NULL;
 	MemoryContext	oldContext;
+	Oid rel_oid = InvalidOid;
+	Oid schema_oid = InvalidOid;
+
+	if (!stmt->db_name || stmt->db_name[0] == '\0')
+		stmt->db_name = get_cur_db_name();
+	if (stmt->schema_name && stmt->db_name)
+	{
+		bulk_load_schema_name = get_physical_schema_name(stmt->db_name,
+													   stmt->schema_name);
+		schema_oid = LookupExplicitNamespace(bulk_load_schema_name, true);
+		if (!OidIsValid(schema_oid))
+			ereport(ERROR,
+					(errcode(ERRCODE_UNDEFINED_SCHEMA),
+						errmsg("schema \"%s\" does not exist",
+							stmt->schema_name)));
+	}
+
+
 	oldContext = MemoryContextSwitchTo(TopMemoryContext);
 
 	/* save the table name for the next Bulk load Request */
-	bulk_load_table_name = palloc(strlen(stmt->table_name) * sizeof(char) + 1);
-	memcpy(bulk_load_table_name, stmt->table_name, strlen(stmt->table_name));
-	bulk_load_table_name[(int)strlen(stmt->table_name)] = '\0';
+	if (bulk_load_schema_name)
+	{
+		rel_oid = get_relname_relid(stmt->table_name, schema_oid);
+		bulk_load_table_name = psprintf("%s.%s", bulk_load_schema_name, stmt->table_name);
+		pfree(bulk_load_schema_name);
+	}
+	else
+	{
+		rel_oid = RelnameGetRelid(stmt->table_name);
+		bulk_load_table_name = pstrdup(stmt->table_name);
+	}
+
 	MemoryContextSwitchTo(oldContext);
+
+	if (!OidIsValid(rel_oid))
+		ereport(ERROR,
+				(errcode(ERRCODE_UNDEFINED_TABLE),
+						errmsg("relation \"%s\" does not exist",
+							stmt->table_name)));
 
 	return PLTSQL_RC_OK;
 }
@@ -2565,7 +2599,7 @@ execute_bulk_load_insert(int ncol, int nrow, Oid *argtypes,
 			pfree(src->data);
 		pfree(src);
 	}
-
+	bulk_load_table_name = NULL;
 	return retValue;
 }
 

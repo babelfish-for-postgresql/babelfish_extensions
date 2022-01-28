@@ -912,6 +912,8 @@ typedef struct PLtsql_stmt_insert_bulk
     PLtsql_stmt_type cmd_type;
     int         lineno;
     char  *table_name;
+    char  *schema_name;
+    char  *db_name;
 } PLtsql_stmt_insert_bulk;
 
 /*
