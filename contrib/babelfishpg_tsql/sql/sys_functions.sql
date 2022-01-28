@@ -1858,19 +1858,17 @@ RETURNS integer
 LANGUAGE plpgsql
 STRICT
 AS $$
-declare pg_table text;
-declare pg_schema text;
+
+declare extra_bytes CONSTANT integer := 4;
 declare return_value integer;
 begin
-	pg_table := (select c.relname from pg_catalog.pg_class c where c."oid" = object_id);
-	pg_schema := (select n.nspname from pg_catalog.pg_class c inner join pg_catalog.pg_namespace n on c.relnamespace = n."oid" where c."oid" = object_id);
 	return_value := (
 					select 
-						case  property_name 
+						case  LOWER(property_name)
 							when 'charmaxlen' then 
-								(select c.character_maximum_length from information_schema.columns as c where c.table_schema = pg_schema and c.table_name = pg_table and c.column_name = property)
-							when 'AllowsNull' then
-								(select CASE WHEN a.attnotnull THEN 0 ELSE 1 END AS is_nullable from pg_catalog.pg_attribute a)
+								(select CASE WHEN a.atttypmod > 0 THEN a.atttypmod - extra_bytes ELSE NULL END  from pg_catalog.pg_attribute a where a.attrelid = object_id and a.attname = property)
+							when 'allowsnull' then
+								(select CASE WHEN a.attnotnull THEN 0 ELSE 1 END from pg_catalog.pg_attribute a where a.attrelid = object_id and a.attname = property)
 							else
 								null
 						end
@@ -1882,3 +1880,6 @@ EXCEPTION
  		RETURN NULL;
 END;
 $$;
+
+COMMENT ON FUNCTION sys.columnproperty 
+IS 'This function returns column or parameter information. Currently only works with "charmaxlen", and "allowsnull" otherwise returns 0.';
