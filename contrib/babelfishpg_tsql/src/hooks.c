@@ -1,6 +1,8 @@
 #include "postgres.h"
 
+#include "catalog/heap.h"
 #include "catalog/namespace.h"
+#include "commands/tablecmds.h"
 #include "nodes/makefuncs.h"
 #include "nodes/nodeFuncs.h"
 #include "parser/parse_clause.h"
@@ -12,6 +14,7 @@
 #include "parser/parser.h"
 #include "parser/scanner.h"
 #include "parser/scansup.h"
+#include "utils/builtins.h"
 #include "utils/rel.h"
 #include "utils/relcache.h"
 #include "utils/syscache.h"
@@ -39,6 +42,12 @@ static void pre_transform_target_entry(ResTarget *res, ParseState *pstate, Parse
 static bool tle_name_comparison(const char *tlename, const char *identifier);
 static void resolve_target_list_unknowns(ParseState *pstate, List *targetlist);
 static inline bool is_identifier_char(char c);
+static int find_attr_by_name_from_relation(Relation rd, const char *attname, bool sysColOK);
+
+/*****************************************
+ * 			Commands Hooks
+ *****************************************/
+static int find_attr_by_name_from_column_def_list(const char *attributeName, List *schema);
 
 /* Save hook values in case of unload */
 static core_yylex_hook_type prev_core_yylex_hook = NULL;
@@ -47,6 +56,8 @@ static post_transform_insert_row_hook_type prev_post_transform_insert_row_hook =
 static pre_transform_target_entry_hook_type prev_pre_transform_target_entry_hook = NULL;
 static tle_name_comparison_hook_type prev_tle_name_comparison_hook = NULL;
 static resolve_target_list_unknowns_hook_type prev_resolve_target_list_unknowns_hook = NULL;
+static find_attr_by_name_from_column_def_list_hook_type prev_find_attr_by_name_from_column_def_list_hook = NULL;
+static find_attr_by_name_from_relation_hook_type prev_find_attr_by_name_from_relation_hook = NULL;
 
 /*****************************************
  * 			Install / Uninstall
@@ -82,6 +93,12 @@ InstallExtendedHooks(void)
 
 	prev_resolve_target_list_unknowns_hook = resolve_target_list_unknowns_hook;
 	resolve_target_list_unknowns_hook = resolve_target_list_unknowns;
+
+	prev_find_attr_by_name_from_column_def_list_hook = find_attr_by_name_from_column_def_list_hook;
+	find_attr_by_name_from_column_def_list_hook = find_attr_by_name_from_column_def_list;
+
+	prev_find_attr_by_name_from_relation_hook = find_attr_by_name_from_relation_hook;
+	find_attr_by_name_from_relation_hook = find_attr_by_name_from_relation;
 }
 
 void
@@ -100,6 +117,8 @@ UninstallExtendedHooks(void)
 	pre_transform_target_entry_hook = prev_pre_transform_target_entry_hook;
 	tle_name_comparison_hook = prev_tle_name_comparison_hook;
 	resolve_target_list_unknowns_hook = prev_resolve_target_list_unknowns_hook;
+	find_attr_by_name_from_column_def_list_hook = prev_find_attr_by_name_from_column_def_list_hook;
+	find_attr_by_name_from_relation_hook = prev_find_attr_by_name_from_relation_hook;
 }
 
 /*****************************************
@@ -566,6 +585,92 @@ is_identifier_char(char c)
 		      c == '_' || c == '$' || c == '#');
 
 	return valid;
+}
+
+static int
+find_attr_by_name_from_column_def_list(const char *attributeName, List *schema)
+{
+	char *attrname = downcase_identifier(attributeName, strlen(attributeName), false, false);
+	int attrlen = strlen(attrname);
+	int i = 1;
+	ListCell *s;
+
+	foreach(s, schema)
+	{
+		ColumnDef  *def = lfirst(s);
+
+		if (strlen(def->colname) == attrlen)
+		{
+			char *defname;
+
+			if (strcmp(attributeName, def->colname) == 0) // compare with original strings
+				return i;
+
+			defname = downcase_identifier(def->colname, strlen(def->colname), false, false);
+			if (strncmp(attrname, defname, attrlen) == 0) // compare with downcased strings
+				return i;
+		}
+		i++;
+	}
+
+	return InvalidAttrNumber;
+}
+
+/* specialAttNum()
+ *
+ * Check attribute name to see if it is "special", e.g. "xmin".
+ * - thomas 2000-02-07
+ *
+ * Note: this only discovers whether the name could be a system attribute.
+ * Caller needs to ensure that it really is an attribute of the rel.
+ */
+static int
+specialAttNum(const char *attname)
+{
+	const FormData_pg_attribute *sysatt;
+
+	sysatt = SystemAttributeByName(attname);
+	if (sysatt != NULL)
+		return sysatt->attnum;
+	return InvalidAttrNumber;
+}
+
+static int
+find_attr_by_name_from_relation(Relation rd, const char *attname, bool sysColOK)
+{
+	int i;
+
+	for (i = 0; i < RelationGetNumberOfAttributes(rd); i++)
+	{
+		Form_pg_attribute att = TupleDescAttr(rd->rd_att, i);
+		const char *origname = NameStr(att->attname);
+		int rdattlen = strlen(origname);
+		const char *rdattname;
+
+		if (strlen(attname) == rdattlen && !att->attisdropped)
+		{
+			if (namestrcmp(&(att->attname), attname) == 0) // compare with original strings
+				return i + 1;
+
+			/*
+			 * Currently, we don't have any cases where attname needs to be downcased
+			 * If exists, we have to take a deeper look
+			 * whether the downcasing is needed here or gram.y
+			 */
+			rdattname = downcase_identifier(origname, rdattlen, false, false);
+			if (strcmp(rdattname, attname) == 0) // compare with downcased strings
+				return i + 1;
+		}
+	}
+
+	if (sysColOK)
+	{
+		if ((i = specialAttNum(attname)) != InvalidAttrNumber)
+			return i;
+	}
+
+	/* on failure */
+	return InvalidAttrNumber;
 }
 
 static void
