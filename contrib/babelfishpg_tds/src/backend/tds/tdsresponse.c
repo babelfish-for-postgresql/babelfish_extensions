@@ -545,9 +545,9 @@ resolve_numeric_typmod_from_exp(Node *expr)
 			Oid     func_oid = InvalidOid;
 			int rettypmod = -1;
 
-			/* Function argument list can be empty */
-			if (func->args == NIL)
-				return -1;
+			/* Be smart about length-coercion functions... */
+			if (exprIsLengthCoercion(expr, &rettypmod))
+			        return rettypmod;
 
 			/*
 			 * Look up the return type typmod from a persistent
@@ -558,7 +558,8 @@ resolve_numeric_typmod_from_exp(Node *expr)
 
 			if(func->funcresulttype != VOIDOID)
 				rettypmod = pltsql_plugin_handler_ptr->pltsql_read_numeric_typmod(func_oid,
-								func->args->length, func->funcresulttype);
+								func->args == NIL ? 0 : func->args->length,
+								func->funcresulttype);
 			return rettypmod;
 		}
 		case T_NullIfExpr:
@@ -651,6 +652,15 @@ resolve_numeric_typmod_from_exp(Node *expr)
 			PlaceHolderVar *phv = (PlaceHolderVar *) expr;
 
 			return resolve_numeric_typmod_from_exp((Node *) phv->phexpr);
+		}
+		case T_RelabelType:
+		{
+			 RelabelType *rlt = (RelabelType *) expr;
+
+			 if (rlt->resulttypmod != -1)
+			   return rlt->resulttypmod;
+			 else
+			   return resolve_numeric_typmod_from_exp((Node *) rlt->arg);
 		}
 		/* TODO handle more Expr types if needed */
 		default:
