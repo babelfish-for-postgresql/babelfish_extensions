@@ -1,3 +1,4 @@
+-- tsql
 DROP VIEW IF EXISTS v_perms_by_name;
 GO
 
@@ -102,9 +103,73 @@ int
 ~~END~~
 
 
+-- psql
+-- don't have permission
+REVOKE SELECT ON master_dbo.t_perms_by_name FROM master_dbo;
+GO
+
+-- tsql
+SELECT * from sys.HAS_PERMS_BY_NAME('dbo.t_perms_by_name','OBJECT', 'SELECT');
+GO
+~~START~~
+int
+0
+~~END~~
+
+
+SELECT * from sys.HAS_PERMS_BY_NAME('dbo.t_perms_by_name','OBJECT', 'UPDATE');
+GO
+~~START~~
+int
+1
+~~END~~
+
+
+-- psql
+REVOKE SELECT ON master_dbo.v_perms_by_name FROM master_dbo;
+GO
+
+-- tsql
+SELECT * from sys.HAS_PERMS_BY_NAME('dbo.v_perms_by_name','OBJECT', 'SELECT');
+GO
+~~START~~
+int
+0
+~~END~~
+
+
+SELECT * from sys.HAS_PERMS_BY_NAME('dbo.v_perms_by_name','OBJECT', 'UPDATE');
+GO
+~~START~~
+int
+1
+~~END~~
+
+
+-- psql
+GRANT SELECT ON master_dbo.t_perms_by_name TO master_dbo;
+GRANT SELECT ON master_dbo.v_perms_by_name TO master_dbo;
+GO
+
+-- tsql
+SELECT * from sys.HAS_PERMS_BY_NAME('dbo.t_perms_by_name','OBJECT', 'SELECT');
+GO
+~~START~~
+int
+1
+~~END~~
+
+
+SELECT * from sys.HAS_PERMS_BY_NAME('dbo.v_perms_by_name','OBJECT', 'SELECT');
+GO
+~~START~~
+int
+1
+~~END~~
+
+
 DROP VIEW IF EXISTS v_perms_by_name;
 GO
 
 DROP TABLE IF EXISTS t_perms_by_name;
 GO
-
