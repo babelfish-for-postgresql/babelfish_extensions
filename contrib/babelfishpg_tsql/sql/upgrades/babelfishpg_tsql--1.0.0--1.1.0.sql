@@ -626,6 +626,7 @@ CREATE OR REPLACE FUNCTION sys.lock_timeout()
          RETURN NULL;
  END;
  $$;
+ GRANT EXECUTE ON FUNCTION sys.lock_timeout() TO PUBLIC;
 
  CREATE OR REPLACE FUNCTION sys.max_connections()
  RETURNS integer
@@ -641,6 +642,7 @@ CREATE OR REPLACE FUNCTION sys.lock_timeout()
          RETURN NULL;
  END;
  $$;
+ GRANT EXECUTE ON FUNCTION sys.max_connections() TO PUBLIC;
 
  CREATE OR REPLACE FUNCTION sys.type_name(type_id oid)
  RETURNS text
@@ -656,6 +658,7 @@ CREATE OR REPLACE FUNCTION sys.lock_timeout()
          RETURN NULL;
  END;
  $$;
+ GRANT EXECUTE ON FUNCTION sys.type_name(type_id oid) TO PUBLIC;
 
  CREATE OR REPLACE FUNCTION sys.trigger_nestlevel()
  RETURNS integer
@@ -671,6 +674,7 @@ CREATE OR REPLACE FUNCTION sys.lock_timeout()
          RETURN NULL;
  END;
  $$;
+ GRANT EXECUTE ON FUNCTION sys.trigger_nestlevel() TO PUBLIC;
 
  CREATE OR REPLACE FUNCTION sys.dm_exec_sql_text(
      IN handle_id integer, 
@@ -681,8 +685,30 @@ CREATE OR REPLACE FUNCTION sys.lock_timeout()
      select a.query into result from pg_catalog.pg_stat_activity as a where a.pid = handle_id;
  END
  $BODY$ language plpgsql;
-  
- CREATE OR REPLACE FUNCTION sys.has_perms_by_name(
+GRANT EXECUTE ON FUNCTION sys.dm_exec_sql_text(IN handle_id integer, OUT result text) TO PUBLIC;
+
+CREATE OR REPLACE FUNCTION sys.babelfish_split_schema_object_name(delimited_name TEXT, out schema_name TEXT, out object_name TEXT)
+as
+$$
+SELECT 
+    CASE 
+        WHEN a[3] is not null then null -- currently only support up to two part names
+	    WHEN a[2] is null then null     -- no schema name given, only the object name
+        ELSE a[1]
+    END as schema_name,
+       
+    CASE
+	    WHEN a[3] is not null then null -- currently only support up to two part names
+	    WHEN a[2] is null then a[1]
+        ELSE a[2]
+   END as object_name
+FROM (
+	SELECT string_to_array(delimited_name, '.') as a
+) t
+$$
+Language SQL;
+
+CREATE OR REPLACE FUNCTION sys.has_perms_by_name(
     securable text, 
     securable_class text, 
     permission text
@@ -697,7 +723,7 @@ DECLARE
     object_n text;
 BEGIN
     return_value := NULL;
-    SELECT s.schema_name, s.object_name into schema_n, object_n FROM babelfish_split_schema_object_name(securable) s;
+    SELECT s.schema_name, s.object_name into schema_n, object_n FROM sys.babelfish_split_schema_object_name(securable) s;
 	
 	-- translate schema name from bbf to postgres, e.g. dbo -> master_dbo
 	schema_n := (
@@ -724,6 +750,7 @@ BEGIN
  		RETURN NULL;
 END;
 $$;
+GRANT EXECUTE ON FUNCTION sys.has_perms_by_name(securable text, securable_class text, permission text) TO PUBLIC;
 
 COMMENT ON FUNCTION sys.has_perms_by_name
 IS 'This function returns permission information. Currently only works with "table-like" objects, otherwise returns NULL.';
@@ -745,6 +772,7 @@ IS 'This function returns permission information. Currently only works with "tab
  END;
  $function$
  ;
+ GRANT EXECUTE ON FUNCTION sys.schema_name() TO PUBLIC;
   
  CREATE OR REPLACE FUNCTION sys.original_login()
  RETURNS text
@@ -760,6 +788,7 @@ IS 'This function returns permission information. Currently only works with "tab
   		RETURN NULL;
  END;
  $$;
+ GRANT EXECUTE ON FUNCTION sys.original_login() TO PUBLIC;
 
  CREATE OR REPLACE FUNCTION sys.columnproperty(object_id oid, property name, property_name text)
  RETURNS integer
@@ -787,6 +816,7 @@ IS 'This function returns permission information. Currently only works with "tab
   		RETURN NULL;
  END;
  $$;
+ GRANT EXECUTE ON FUNCTION sys.columnproperty(object_id oid, property name, property_name text) TO PUBLIC;
 
  COMMENT ON FUNCTION sys.columnproperty 
  IS 'This function returns column or parameter information. Currently only works with "charmaxlen", and "allowsnull" otherwise returns 0.';
@@ -891,75 +921,6 @@ CREATE OR REPLACE VIEW sys.check_constraints AS
  FROM pg_catalog.pg_constraint as c
  WHERE c.contype = 'c' and c.conrelid != 0;
  GRANT SELECT ON sys.check_constraints TO PUBLIC;
-  
-CREATE OR REPLACE VIEW sys.dm_exec_sessions
- AS
- select a.pid as session_id
-   , a.backend_start as login_time
-   , a.client_hostname::sys.nvarchar(128) as host_name
-   , a.application_name::sys.nvarchar(128) as program_name
-   , a.pid as host_process_id
-   , 0 as client_version
-   , backend_type::sys.nvarchar(32) as client_interface_name
-   , null::integer as security_id
-   , a.usename::sys.nvarchar(128) as login_name
-   , null::nvarchar(128) as nt_domain
-   , null::nvarchar(128) as nt_user_name
-   , a.state::sys.nvarchar(32) as status
-   , null::nvarchar(128) as context_info
-   , null::integer as cpu_time
-   , null::integer as memory_usage
-   , null::integer as total_scheduled_time
-   , null::integer as total_elapsed_time
-   , a.client_port as endpoint_id
-   , a.query_start as last_request_start_time
-   , a.state_change as last_request_end_time
-   , null::bigint as "reads"
-   , null::bigint as "writes"
-   , null::bigint as logical_reads
-   , case when a.client_port > 0 then 1 else 0 end as is_user_process
-   , (select s.setting FROM pg_catalog.pg_settings s where name = 'babelfish_pg_tsql.text_size') as text_size
-   , (select s.setting FROM pg_catalog.pg_settings s where name = 'babelfish_pg_tsql.language')::sys.nvarchar(128) as language
-   , 'ymd'::sys.nvarchar(3) as date_format-- Bld 173 lacks support for SET DATEFORMAT and always expects ymd
-   , (select s.setting FROM pg_catalog.pg_settings s where name = 'datefirst') as date_first -- Bld 173 lacks support for SET DATEFIRST and always returns 7
-   , null::sys.bit as quoted_identifier
-   , null::sys.bit as arithabort
-   , null::sys.bit as ansi_null_dflt_on
-   , null::sys.bit as ansi_defaults
-   , null::sys.bit as ansi_warnings
-   , null::sys.bit as ansi_padding
-   , null::sys.bit as ansi_nulls
-   , null::sys.bit as concat_null_yields_null
-   , 0 as transaction_isolation_level
-   , (select s.setting FROM pg_catalog.pg_settings s where name = 'lock_timeout') as lock_timeout
-   , 0 as deadlock_priority
-   , a.datid as database_id
-   , 0 as authenticating_database_id
-   , a.wait_event_type
-   , a.wait_event
-   , a.xact_start
-   , a.backend_xid
-   , a.backend_xmin
-   , a.backend_type
-   , a.query
-   , a.client_port
- from pg_catalog.pg_stat_activity a;
- GRANT SELECT ON sys.dm_exec_sessions TO PUBLIC;
-  
- CREATE OR REPLACE VIEW sys.dm_exec_connections
- as
- select a.pid as session_id
-   , a.pid as most_recent_session_id
-   , a.backend_start::sys.datetime2 as connect_time
-   , 'TCP' as net_transport
-   , null::sys.nvarchar(40) as protocol_type
-   , a.client_addr as client_net_address
-   , a.client_port as client_tcp_port
-   , a.pid as most_recent_sql_handle
-   , a.pid as connection_id
- from pg_catalog.pg_stat_activity a;
- GRANT SELECT ON sys.dm_exec_connections TO PUBLIC;
-
 
 create or replace view sys.indexes as
 select
