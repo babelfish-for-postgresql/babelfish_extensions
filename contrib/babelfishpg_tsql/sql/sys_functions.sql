@@ -1800,7 +1800,7 @@ begin
 END
 $BODY$ language plpgsql;
 
-create or replace function sys.has_perms_by_name(
+CREATE OR REPLACE FUNCTION sys.has_perms_by_name(
     securable text, 
     securable_class text, 
     permission text
@@ -1811,14 +1811,41 @@ CALLED ON NULL INPUT
 AS $$
 DECLARE 
     return_value integer;
-    cur_database text;
-begin
-    RETURN 1;
-EXCEPTION
-    WHEN others THEN
-        RETURN 1;
+    schema_n text;
+    object_n text;
+BEGIN
+    return_value := NULL;
+    SELECT s.schema_name, s.object_name into schema_n, object_n FROM babelfish_split_schema_object_name(securable) s;
+	
+	-- translate schema name from bbf to postgres, e.g. dbo -> master_dbo
+	schema_n := (
+        select 
+			case when schema_n is null then ( current_schema() )
+			else 
+	    		(select nspname from sys.babelfish_namespace_ext ext where ext.orig_name = schema_n and  ext.dbid::oid = sys.db_id()::oid)
+			end as scheman);
+	
+	return_value := (
+		select
+		  -- check if object_n is a 'table-like' object.
+		  case (select count(relname) from pg_catalog.pg_class  where relname = object_n and
+                           relnamespace = (select oid from pg_catalog.pg_namespace where nspname = schema_n))
+		       when 1 then
+		          has_table_privilege(concat(schema_n,'.',object_n), permission)::integer
+		  -- check other cases here  
+		  end
+	);
+	
+	RETURN return_value;
+	EXCEPTION 
+	WHEN others THEN
+ 		RETURN NULL;
 END;
 $$;
+
+COMMENT ON FUNCTION sys.has_perms_by_name
+IS 'This function returns permission information. Currently only works with "table-like" objects, otherwise returns NULL.';
+
 
 CREATE OR REPLACE FUNCTION sys.schema_name()
 RETURNS text

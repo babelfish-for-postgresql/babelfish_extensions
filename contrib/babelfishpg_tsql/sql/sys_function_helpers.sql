@@ -10061,6 +10061,27 @@ $BODY$
 $BODY$
 LANGUAGE SQL;
 
+CREATE OR REPLACE FUNCTION sys.babelfish_split_schema_object_name(delimited_name TEXT, out schema_name TEXT, out object_name TEXT)
+as
+$$
+SELECT 
+    CASE 
+        WHEN a[3] is not null then null -- currently only support up to two part names
+	    WHEN a[2] is null then null     -- no schema name given, only the object name
+        ELSE a[1]
+    END as schema_name,
+       
+    CASE
+	    WHEN a[3] is not null then null -- currently only support up to two part names
+	    WHEN a[2] is null then a[1]
+        ELSE a[2]
+   END as object_name
+FROM (
+	SELECT string_to_array(delimited_name, '.') as a
+) t
+$$
+Language SQL;
+
 -- internal table function for sp_cursor_list and sp_decribe_cursor
 CREATE OR REPLACE FUNCTION sys.babelfish_cursor_list(cursor_source integer)
 RETURNS table (
