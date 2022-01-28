@@ -20,6 +20,7 @@
 #include "mb/pg_wchar.h"
 #include "parser/parse_coerce.h"
 #include "parser/parse_func.h"
+#include "parser/parse_type.h"
 #include "utils/builtins.h"
 #include "utils/float.h"
 #include "utils/guc.h"
@@ -37,8 +38,8 @@
 /* Hooks for engine*/
 extern find_coercion_pathway_hook_type find_coercion_pathway_hook;
 extern determine_datatype_precedence_hook_type determine_datatype_precedence_hook;
-extern validate_implicit_conversion_from_string_literal_hook_type validate_implicit_conversion_from_string_literal_hook;
 extern func_select_candidate_hook_type func_select_candidate_hook;
+extern coerce_string_literal_hook_type coerce_string_literal_hook;
 
 extern bool is_tsql_binary_datatype(Oid oid);
 extern bool is_tsql_varbinary_datatype(Oid oid);
@@ -60,9 +61,7 @@ typedef struct tsql_cast_raw_info
     char castmethod;
 } tsql_cast_raw_info_t;
 
-#define TOTAL_TSQL_CAST_COUNT 173
-
-tsql_cast_raw_info_t tsql_cast_raw_infos[TOTAL_TSQL_CAST_COUNT] =
+tsql_cast_raw_info_t tsql_cast_raw_infos[] =
 {
     {PG_CAST_ENTRY, "pg_catalog", "float8", "pg_catalog", "float4", NULL, 'i', 'f'},
     {PG_CAST_ENTRY, "pg_catalog", "float8", "pg_catalog", "numeric", NULL, 'i', 'f'},
@@ -183,33 +182,23 @@ tsql_cast_raw_info_t tsql_cast_raw_infos[TOTAL_TSQL_CAST_COUNT] =
 // string -> float8 via I/O
     {TSQL_CAST_WITHOUT_FUNC_ENTRY, "pg_catalog", "text", "pg_catalog", "float8", NULL, 'i', 'i'},
     {TSQL_CAST_WITHOUT_FUNC_ENTRY, "pg_catalog", "bpchar", "pg_catalog", "float8", NULL, 'i', 'i'},
-	{TSQL_CAST_WITHOUT_FUNC_ENTRY, "sys", "bpchar", "pg_catalog", "float8", NULL, 'i', 'i'},
     {TSQL_CAST_WITHOUT_FUNC_ENTRY, "pg_catalog", "varchar", "pg_catalog", "float8", NULL, 'i', 'i'},
-	{TSQL_CAST_WITHOUT_FUNC_ENTRY, "sys", "varchar", "pg_catalog", "float8", NULL, 'i', 'i'},
 // string -> float4 via I/O
     {TSQL_CAST_WITHOUT_FUNC_ENTRY, "pg_catalog", "text", "pg_catalog", "float4", NULL, 'i', 'i'},
     {TSQL_CAST_WITHOUT_FUNC_ENTRY, "pg_catalog", "bpchar", "pg_catalog", "float4", NULL, 'i', 'i'},
-	{TSQL_CAST_WITHOUT_FUNC_ENTRY, "sys", "bpchar", "pg_catalog", "float4", NULL, 'i', 'i'},
     {TSQL_CAST_WITHOUT_FUNC_ENTRY, "pg_catalog", "varchar", "pg_catalog", "float4", NULL, 'i', 'i'},
-	{TSQL_CAST_WITHOUT_FUNC_ENTRY, "sys", "varchar", "pg_catalog", "float4", NULL, 'i', 'i'},
 // string -> int2 via I/O
     {TSQL_CAST_WITHOUT_FUNC_ENTRY, "pg_catalog", "text", "pg_catalog", "int2", NULL, 'i', 'i'},
     {TSQL_CAST_WITHOUT_FUNC_ENTRY, "pg_catalog", "bpchar", "pg_catalog", "int2", NULL, 'i', 'i'},
-	{TSQL_CAST_WITHOUT_FUNC_ENTRY, "sys", "bpchar", "pg_catalog", "int2", NULL, 'i', 'i'},
     {TSQL_CAST_WITHOUT_FUNC_ENTRY, "pg_catalog", "varchar", "pg_catalog", "int2", NULL, 'i', 'i'},
-	{TSQL_CAST_WITHOUT_FUNC_ENTRY, "sys", "varchar", "pg_catalog", "int2", NULL, 'i', 'i'},
 // string -> int4 via I/O
     {TSQL_CAST_WITHOUT_FUNC_ENTRY, "pg_catalog", "text", "pg_catalog", "int4", NULL, 'i', 'i'},
     {TSQL_CAST_WITHOUT_FUNC_ENTRY, "pg_catalog", "bpchar", "pg_catalog", "int4", NULL, 'i', 'i'},
-	{TSQL_CAST_WITHOUT_FUNC_ENTRY, "sys", "bpchar", "pg_catalog", "int4", NULL, 'i', 'i'},
     {TSQL_CAST_WITHOUT_FUNC_ENTRY, "pg_catalog", "varchar", "pg_catalog", "int4", NULL, 'i', 'i'},
-	{TSQL_CAST_WITHOUT_FUNC_ENTRY, "sys", "varchar", "pg_catalog", "int4", NULL, 'i', 'i'},
 // string -> int8 via I/O
     {TSQL_CAST_WITHOUT_FUNC_ENTRY, "pg_catalog", "text", "pg_catalog", "int8", NULL, 'i', 'i'},
     {TSQL_CAST_WITHOUT_FUNC_ENTRY, "pg_catalog", "bpchar", "pg_catalog", "int8", NULL, 'i', 'i'},
-	{TSQL_CAST_WITHOUT_FUNC_ENTRY, "sys", "bpchar", "pg_catalog", "int8", NULL, 'i', 'i'},
     {TSQL_CAST_WITHOUT_FUNC_ENTRY, "pg_catalog", "varchar", "pg_catalog", "int8", NULL, 'i', 'i'},
-	{TSQL_CAST_WITHOUT_FUNC_ENTRY, "sys", "varchar", "pg_catalog", "int8", NULL, 'i', 'i'},
 // string -> numeric via I/O
     {TSQL_CAST_WITHOUT_FUNC_ENTRY, "pg_catalog", "text", "pg_catalog", "numeric", NULL, 'i', 'i'},
     {TSQL_CAST_WITHOUT_FUNC_ENTRY, "pg_catalog", "bpchar", "pg_catalog", "numeric", NULL, 'i', 'i'},
@@ -271,6 +260,8 @@ tsql_cast_raw_info_t tsql_cast_raw_infos[TOTAL_TSQL_CAST_COUNT] =
     {TSQL_CAST_WITHOUT_FUNC_ENTRY, "sys", "uniqueidentifier", "pg_catalog", "varchar", NULL, 'i', 'i'},
 	{TSQL_CAST_WITHOUT_FUNC_ENTRY, "sys", "uniqueidentifier", "sys", "varchar", NULL, 'i', 'i'},
 };
+
+#define TOTAL_TSQL_CAST_COUNT (sizeof(tsql_cast_raw_infos)/sizeof(tsql_cast_raw_infos[0]))
 
 typedef struct tsql_precedence_info
 {
@@ -682,18 +673,68 @@ tsql_func_select_candidate(int nargs,
 }
 
 static void
-tsql_validate_implicit_conversion_from_string_literal(Const *newcon, const char *value)
+tsql_coerce_string_literal_hook(Const *newcon, char *value, CoercionContext ccontext)
 {
+	Type baseType = typeidType(newcon->consttype);
+
 	if (newcon->constisnull)
-		return;
-	if (is_tsql_binary_datatype(newcon->consttype))
-		ereport(ERROR,
-		  (errcode(ERRCODE_CANNOT_COERCE),
-		   errmsg("cannot coerce string literal to binary datatype")));
-	if (is_tsql_varbinary_datatype(newcon->consttype))
-		ereport(ERROR,
-		  (errcode(ERRCODE_CANNOT_COERCE),
-		   errmsg("cannot coerce string literal to varbinary datatype")));
+	{
+		newcon->constvalue = stringTypeDatum(baseType, NULL, newcon->consttypmod);
+	}
+	else
+	{
+		int i;
+
+		if (ccontext != COERCION_EXPLICIT)
+		{
+			/* T-SQL may forbid casting from string literal to certain datatypes (i.e. binary, varbinary) */
+			if (is_tsql_binary_datatype(newcon->consttype))
+				ereport(ERROR,
+					(errcode(ERRCODE_CANNOT_COERCE),
+						errmsg("cannot coerce string literal to binary datatype")));
+			if (is_tsql_varbinary_datatype(newcon->consttype))
+				ereport(ERROR,
+					(errcode(ERRCODE_CANNOT_COERCE),
+						errmsg("cannot coerce string literal to varbinary datatype")));
+		}
+
+		/* T-SQL treats an empty string literal as 0 in certain datatypes, e.g., INT, FLOAT, etc. */
+		for (i = strlen(value) - 1; i >= 0; i--)
+		{
+			if (value[i] != ' ')
+				break;
+		}
+
+		if (i == -1)
+		{
+			/* i == 1 means the value does not contain any characters but spaces */
+			switch (newcon->consttype)
+			{
+				case INT2OID:
+					newcon->constvalue = Int16GetDatum(0);
+					break;
+				case INT4OID:
+					newcon->constvalue = Int32GetDatum(0);
+					break;
+				case INT8OID:
+					newcon->constvalue = Int64GetDatum(0);
+					break;
+				case FLOAT4OID:
+					newcon->constvalue = Float4GetDatum(0);
+					break;
+				case FLOAT8OID:
+					newcon->constvalue = Float8GetDatum(0);
+					break;
+				default:
+					newcon->constvalue = stringTypeDatum(baseType, value, newcon->consttypmod);
+			}
+		}
+		else
+		{
+			newcon->constvalue = stringTypeDatum(baseType, value, newcon->consttypmod);
+		}
+	}
+	ReleaseSysCache(baseType);
 }
 
 PG_FUNCTION_INFO_V1(init_tsql_datatype_precedence_hash_tab);
@@ -753,7 +794,7 @@ init_tsql_datatype_precedence_hash_tab(PG_FUNCTION_ARGS)
 	/* Register Hooks */
 	determine_datatype_precedence_hook = tsql_has_higher_precedence;
 	func_select_candidate_hook = tsql_func_select_candidate;
-	validate_implicit_conversion_from_string_literal_hook = tsql_validate_implicit_conversion_from_string_literal;
+	coerce_string_literal_hook = tsql_coerce_string_literal_hook;
 
 	PG_RETURN_INT32(0);
 }
