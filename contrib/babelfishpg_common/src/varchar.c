@@ -23,6 +23,8 @@
 #include "parser/parser.h"      /* only needed for GUC variables */
 #include "utils/array.h"
 #include "utils/builtins.h"
+#include "utils/float.h"
+#include "utils/int8.h"
 #include "utils/pg_locale.h"
 #include "utils/varlena.h"
 #include "mb/pg_wchar.h"
@@ -33,6 +35,7 @@ void TsqlCheckUTF16Length_bpchar(const char *s, int32 len, int32 maxlen, int cha
 void TsqlCheckUTF16Length_bpchar_input(const char *s, int32 len, int32 maxlen, int charlen);
 void TsqlCheckUTF16Length_varchar_input(const char *s, int32 len, int32 maxlen);
 void *tsql_varchar_input(const char *s, size_t len, int32 atttypmod);
+static inline int varcharTruelen(VarChar *arg);
 
 /*
  * GetUTF8CodePoint - extract the next Unicode code point from 1..4
@@ -294,6 +297,12 @@ PG_FUNCTION_INFO_V1(bpcharin);
 PG_FUNCTION_INFO_V1(bpchar);
 PG_FUNCTION_INFO_V1(bpcharrecv);
 
+PG_FUNCTION_INFO_V1(bpchar2int2);
+PG_FUNCTION_INFO_V1(bpchar2int4);
+PG_FUNCTION_INFO_V1(bpchar2int8);
+PG_FUNCTION_INFO_V1(bpchar2float4);
+PG_FUNCTION_INFO_V1(bpchar2float8);
+
 PG_FUNCTION_INFO_V1(varcharin);
 PG_FUNCTION_INFO_V1(varchar);
 PG_FUNCTION_INFO_V1(varcharrecv);
@@ -305,6 +314,12 @@ PG_FUNCTION_INFO_V1(varchargt);
 PG_FUNCTION_INFO_V1(varcharge);
 PG_FUNCTION_INFO_V1(varcharcmp);
 PG_FUNCTION_INFO_V1(hashvarchar);
+
+PG_FUNCTION_INFO_V1(varchar2int2);
+PG_FUNCTION_INFO_V1(varchar2int4);
+PG_FUNCTION_INFO_V1(varchar2int8);
+PG_FUNCTION_INFO_V1(varchar2float4);
+PG_FUNCTION_INFO_V1(varchar2float8);
 
 /*****************************************************************************
  *	 varchar - varchar(n)
@@ -460,6 +475,214 @@ varchar(PG_FUNCTION_ARGS)
 
 	PG_RETURN_VARCHAR_P((VarChar *) cstring_to_text_with_len(s_data,
 															 maxmblen));
+}
+
+static char *
+varchar2cstring(const VarChar *source)
+{
+	const char *s_data = VARDATA_ANY(source);
+	int len = VARSIZE_ANY_EXHDR(source);
+
+	char *result = (char *) palloc(len + 1);
+	memcpy(result, s_data, len);
+	result[len] = '\0';
+
+	return result;
+}
+
+Datum
+varchar2int2(PG_FUNCTION_ARGS)
+{
+	VarChar *source = PG_GETARG_VARCHAR_PP(0);
+	if (varcharTruelen(source) == 0)
+		PG_RETURN_INT16(0);
+
+	PG_RETURN_INT16(pg_strtoint16(varchar2cstring(source)));
+}
+
+Datum
+varchar2int4(PG_FUNCTION_ARGS)
+{
+	VarChar *source = PG_GETARG_VARCHAR_PP(0);
+	if (varcharTruelen(source) == 0)
+		PG_RETURN_INT32(0);
+
+	PG_RETURN_INT32(pg_strtoint32(varchar2cstring(source)));
+}
+
+Datum
+varchar2int8(PG_FUNCTION_ARGS)
+{
+	int64 result;
+	VarChar *source = PG_GETARG_VARCHAR_PP(0);
+	if (varcharTruelen(source) == 0)
+		PG_RETURN_INT64(0);
+
+	(void) scanint8(varchar2cstring(source), false, &result);
+	PG_RETURN_INT64(result);
+}
+
+static Datum
+cstring2float4(char *num)
+{
+	/* This came from float4in() in backend/utils/adt/float.c */
+	char *orig_num;
+	float val;
+	char *endptr;
+	/*
+	 * endptr points to the first character _after_ the sequence we recognized
+	 * as a valid floating point number. orig_num points to the original input
+	 * string.
+	 */
+	orig_num = num;
+
+	/* skip leading whitespace */
+	while (*num != '\0' && isspace((unsigned char) *num))
+		num++;
+
+	/*
+	 * Check for an empty-string input to begin with, to avoid the vagaries of
+	 * strtod() on different platforms.
+	 */
+	if (*num == '\0')
+		ereport(ERROR,
+				(errcode(ERRCODE_INVALID_TEXT_REPRESENTATION),
+				 errmsg("invalid input syntax for type %s: \"%s\"",
+						"real", orig_num)));
+
+	errno = 0;
+	val = strtof(num, &endptr);
+
+	/* did we not see anything that looks like a double? */
+	if (endptr == num || errno != 0)
+	{
+		int			save_errno = errno;
+
+		/*
+		 * C99 requires that strtof() accept NaN, [+-]Infinity, and [+-]Inf,
+		 * but not all platforms support all of these (and some accept them
+		 * but set ERANGE anyway...)  Therefore, we check for these inputs
+		 * ourselves if strtof() fails.
+		 *
+		 * Note: C99 also requires hexadecimal input as well as some extended
+		 * forms of NaN, but we consider these forms unportable and don't try
+		 * to support them.  You can use 'em if your strtof() takes 'em.
+		 */
+		if (pg_strncasecmp(num, "NaN", 3) == 0)
+		{
+			val = get_float4_nan();
+			endptr = num + 3;
+		}
+		else if (pg_strncasecmp(num, "Infinity", 8) == 0)
+		{
+			val = get_float4_infinity();
+			endptr = num + 8;
+		}
+		else if (pg_strncasecmp(num, "+Infinity", 9) == 0)
+		{
+			val = get_float4_infinity();
+			endptr = num + 9;
+		}
+		else if (pg_strncasecmp(num, "-Infinity", 9) == 0)
+		{
+			val = -get_float4_infinity();
+			endptr = num + 9;
+		}
+		else if (pg_strncasecmp(num, "inf", 3) == 0)
+		{
+			val = get_float4_infinity();
+			endptr = num + 3;
+		}
+		else if (pg_strncasecmp(num, "+inf", 4) == 0)
+		{
+			val = get_float4_infinity();
+			endptr = num + 4;
+		}
+		else if (pg_strncasecmp(num, "-inf", 4) == 0)
+		{
+			val = -get_float4_infinity();
+			endptr = num + 4;
+		}
+		else if (save_errno == ERANGE)
+		{
+			/*
+			 * Some platforms return ERANGE for denormalized numbers (those
+			 * that are not zero, but are too close to zero to have full
+			 * precision).  We'd prefer not to throw error for that, so try to
+			 * detect whether it's a "real" out-of-range condition by checking
+			 * to see if the result is zero or huge.
+			 *
+			 * Use isinf() rather than HUGE_VALF on VS2013 because it
+			 * generates a spurious overflow warning for -HUGE_VALF.  Also use
+			 * isinf() if HUGE_VALF is missing.
+			 */
+			if (val == 0.0 ||
+#if !defined(HUGE_VALF) || (defined(_MSC_VER) && (_MSC_VER < 1900))
+				isinf(val)
+#else
+				(val >= HUGE_VALF || val <= -HUGE_VALF)
+#endif
+				)
+				ereport(ERROR,
+						(errcode(ERRCODE_NUMERIC_VALUE_OUT_OF_RANGE),
+						 errmsg("\"%s\" is out of range for type real",
+								orig_num)));
+		}
+		else
+			ereport(ERROR,
+					(errcode(ERRCODE_INVALID_TEXT_REPRESENTATION),
+					 errmsg("invalid input syntax for type %s: \"%s\"",
+							"real", orig_num)));
+	}
+#ifdef HAVE_BUGGY_SOLARIS_STRTOD
+	else
+	{
+		/*
+		 * Many versions of Solaris have a bug wherein strtod sets endptr to
+		 * point one byte beyond the end of the string when given "inf" or
+		 * "infinity".
+		 */
+		if (endptr != num && endptr[-1] == '\0')
+			endptr--;
+	}
+#endif							/* HAVE_BUGGY_SOLARIS_STRTOD */
+
+	/* skip trailing whitespace */
+	while (*endptr != '\0' && isspace((unsigned char) *endptr))
+		endptr++;
+
+	/* if there is any junk left at the end of the string, bail out */
+	if (*endptr != '\0')
+		ereport(ERROR,
+				(errcode(ERRCODE_INVALID_TEXT_REPRESENTATION),
+				 errmsg("invalid input syntax for type %s: \"%s\"",
+						"real", orig_num)));
+
+	PG_RETURN_FLOAT4(val);
+}
+
+Datum
+varchar2float4(PG_FUNCTION_ARGS)
+{
+	VarChar *source = PG_GETARG_VARCHAR_PP(0);
+
+	if (varcharTruelen(source) == 0)
+		PG_RETURN_FLOAT4(0);
+
+	return cstring2float4(varchar2cstring(source));
+}
+
+Datum
+varchar2float8(PG_FUNCTION_ARGS)
+{
+	VarChar *source = PG_GETARG_VARCHAR_PP(0);
+	char *num;
+
+	if (varcharTruelen(source) == 0)
+		PG_RETURN_FLOAT8(0);
+
+	num = varchar2cstring(source);
+	PG_RETURN_FLOAT8(float8in_internal(num, NULL, "double precision", num));
 }
 
 /*****************************************************************************
@@ -678,6 +901,75 @@ bpchar(PG_FUNCTION_ARGS)
 		memset(r + len, ' ', maxlen - len);
 
 	PG_RETURN_BPCHAR_P(result);
+}
+
+static char *
+bpchar2cstring(const BpChar *source)
+{
+	const char *s_data = VARDATA_ANY(source);
+	int len = VARSIZE_ANY_EXHDR(source);
+
+	char *result = (char *) palloc(len + 1);
+	memcpy(result, s_data, len);
+	result[len] = '\0';
+
+	return result;
+}
+
+Datum
+bpchar2int2(PG_FUNCTION_ARGS)
+{
+	BpChar *source = PG_GETARG_BPCHAR_PP(0);
+	if (bpchartruelen(VARDATA_ANY(source), VARSIZE_ANY_EXHDR(source)) == 0)
+		PG_RETURN_INT16(0);
+
+	PG_RETURN_INT16(pg_strtoint16(bpchar2cstring(source)));
+}
+
+Datum
+bpchar2int4(PG_FUNCTION_ARGS)
+{
+	BpChar *source = PG_GETARG_BPCHAR_PP(0);
+	if (bpchartruelen(VARDATA_ANY(source), VARSIZE_ANY_EXHDR(source)) == 0)
+		PG_RETURN_INT32(0);
+
+	PG_RETURN_INT32(pg_strtoint32(bpchar2cstring(source)));
+}
+
+Datum
+bpchar2int8(PG_FUNCTION_ARGS)
+{
+	int64 result;
+	BpChar *source = PG_GETARG_BPCHAR_PP(0);
+	if (bpchartruelen(VARDATA_ANY(source), VARSIZE_ANY_EXHDR(source)) == 0)
+		PG_RETURN_INT64(0);
+
+	(void) scanint8(bpchar2cstring(source), false, &result);
+	PG_RETURN_INT64(result);
+}
+
+Datum
+bpchar2float4(PG_FUNCTION_ARGS)
+{
+	BpChar *source = PG_GETARG_BPCHAR_PP(0);
+
+	if (bpchartruelen(VARDATA_ANY(source), VARSIZE_ANY_EXHDR(source)) == 0)
+		PG_RETURN_FLOAT4(0);
+
+	return cstring2float4(bpchar2cstring(source));
+}
+
+Datum
+bpchar2float8(PG_FUNCTION_ARGS)
+{
+	BpChar *source = PG_GETARG_BPCHAR_PP(0);
+	char *num;
+
+	if (bpchartruelen(VARDATA_ANY(source), VARSIZE_ANY_EXHDR(source)) == 0)
+		PG_RETURN_FLOAT8(0);
+
+	num = bpchar2cstring(source);
+	PG_RETURN_FLOAT8(float8in_internal(num, NULL, "double precision", num));
 }
 
 static inline int
