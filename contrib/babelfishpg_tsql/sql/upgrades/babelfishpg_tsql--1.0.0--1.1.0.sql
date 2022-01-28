@@ -821,6 +821,7 @@ IS 'This function returns permission information. Currently only works with "tab
  COMMENT ON FUNCTION sys.columnproperty 
  IS 'This function returns column or parameter information. Currently only works with "charmaxlen", and "allowsnull" otherwise returns 0.';
 
+DROP VIEW IF EXISTS sys.default_constraints;
 CREATE OR REPLACE VIEW sys.default_constraints
  AS
  select 'DF_' || o.relname || '_' || d.oid as name
@@ -842,6 +843,7 @@ CREATE OR REPLACE VIEW sys.default_constraints
  inner join pg_catalog.pg_class as o on (d.adrelid = o.oid);
  GRANT SELECT ON sys.default_constraints TO PUBLIC;
   
+ DROP VIEW IF EXISTS sys.computed_columns;
  CREATE OR REPLACE VIEW sys.computed_columns
  AS 
  SELECT d.adrelid AS object_id
@@ -858,6 +860,7 @@ CREATE OR REPLACE VIEW sys.default_constraints
  WHERE a.attgenerated = 's';
  GRANT SELECT ON sys.computed_columns TO PUBLIC;
   
+DROP VIEW IF EXISTS sys.index_columns;
 CREATE OR REPLACE VIEW sys.index_columns
  as
  select i.indrelid as object_id
@@ -872,6 +875,7 @@ CREATE OR REPLACE VIEW sys.index_columns
  inner join pg_catalog.pg_attribute a on i.indexrelid = a.attrelid;
  GRANT SELECT ON sys.index_columns TO PUBLIC;
   
+ DROP VIEW IF EXISTS sys.configurations;
  CREATE OR REPLACE VIEW sys.configurations
  AS 
  SELECT row_number() OVER (ORDER BY s.category, s.name) AS configuration_id
@@ -898,6 +902,7 @@ CREATE OR REPLACE VIEW sys.index_columns
  FROM pg_settings s;
  GRANT SELECT ON sys.configurations TO PUBLIC;
   
+DROP VIEW IF EXISTS sys.check_constraints;
 CREATE OR REPLACE VIEW sys.check_constraints AS
  SELECT CAST(c.conname as sys.sysname) as name
    , oid as object_id

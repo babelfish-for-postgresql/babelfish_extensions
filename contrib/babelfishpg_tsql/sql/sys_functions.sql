@@ -1854,10 +1854,6 @@ IS 'This function returns permission information. Currently only works with "tab
 
 
 
-COMMENT ON FUNCTION sys.has_perms_by_name
-IS 'This function returns permission information. Currently only works with "table-like" objects, otherwise returns NULL.';
-
-
 CREATE OR REPLACE FUNCTION sys.schema_name()
 RETURNS text
 LANGUAGE plpgsql
