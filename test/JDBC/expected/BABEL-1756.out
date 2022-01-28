@@ -5,12 +5,6 @@ SELECT colid, name, collation_100 FROM sys.spt_tablecollations_view WHERE object
 GO
 ~~START~~
 smallint#!#varchar#!#nvarchar
--6#!#tableoid#!#<NULL>
--5#!#cmax#!#<NULL>
--4#!#xmax#!#<NULL>
--3#!#cmin#!#<NULL>
--2#!#xmin#!#<NULL>
--1#!#ctid#!#<NULL>
 1#!#test_collation#!#default
 ~~END~~
 

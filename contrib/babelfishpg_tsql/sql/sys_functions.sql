@@ -1729,3 +1729,156 @@ SELECT
 $BODY$
 LANGUAGE SQL IMMUTABLE PARALLEL SAFE;
 GRANT EXECUTE ON FUNCTION sys.sign(TEXT) TO PUBLIC;
+
+CREATE OR REPLACE FUNCTION sys.lock_timeout()
+RETURNS integer
+LANGUAGE plpgsql
+STRICT
+AS $$
+declare return_value integer;
+begin
+    return_value := (select s.setting FROM pg_catalog.pg_settings s where name = 'lock_timeout');
+    RETURN return_value::integer;
+EXCEPTION
+    WHEN others THEN
+        RETURN NULL;
+END;
+$$;
+
+CREATE OR REPLACE FUNCTION sys.max_connections()
+RETURNS integer
+LANGUAGE plpgsql
+STRICT
+AS $$
+declare return_value integer;
+begin
+    return_value := (select s.setting FROM pg_catalog.pg_settings s where name = 'max_connections');
+    RETURN return_value::integer;
+EXCEPTION
+    WHEN others THEN
+        RETURN NULL;
+END;
+$$;
+
+CREATE OR REPLACE FUNCTION sys.type_name(type_id oid)
+RETURNS text
+LANGUAGE plpgsql
+STRICT
+AS $$
+declare return_value text;
+begin
+    return_value := (select format_type(type_id, null));
+    RETURN return_value::text;
+EXCEPTION
+    WHEN others THEN
+        RETURN NULL;
+END;
+$$;
+
+CREATE OR REPLACE FUNCTION sys.trigger_nestlevel()
+RETURNS integer
+LANGUAGE plpgsql
+STRICT
+AS $$
+declare return_value integer;
+begin
+    return_value := (select pg_trigger_depth());
+    RETURN return_value::integer;
+EXCEPTION
+    WHEN others THEN
+        RETURN NULL;
+END;
+$$;
+
+CREATE OR REPLACE FUNCTION sys.dm_exec_sql_text(
+    IN handle_id integer, 
+    OUT result text
+)
+AS $BODY$
+begin
+    select a.query into result from pg_catalog.pg_stat_activity as a where a.pid = handle_id;
+END
+$BODY$ language plpgsql;
+
+create or replace function sys.has_perms_by_name(
+    securable text, 
+    securable_class text, 
+    permission text
+)
+RETURNS integer
+LANGUAGE plpgsql
+CALLED ON NULL INPUT
+AS $$
+DECLARE 
+    return_value integer;
+    cur_database text;
+begin
+    RETURN 1;
+EXCEPTION
+    WHEN others THEN
+        RETURN 1;
+END;
+$$;
+
+CREATE OR REPLACE FUNCTION sys.schema_name()
+RETURNS text
+LANGUAGE plpgsql
+STRICT
+AS $function$
+declare return_value text;
+begin
+    return_value := (select orig_name from sys.babelfish_namespace_ext ext  
+                    where ext.nspname = (select current_schema()) and  ext.dbid::oid = sys.db_id()::oid);
+    
+    RETURN return_value::text;
+EXCEPTION 
+    WHEN others THEN
+        RETURN NULL;
+END;
+$function$
+;
+
+CREATE OR REPLACE FUNCTION sys.original_login()
+RETURNS text
+LANGUAGE plpgsql
+STRICT
+AS $$
+declare return_value text;
+begin
+	return_value := (select session_user);
+    RETURN return_value::text;
+EXCEPTION 
+	WHEN others THEN
+ 		RETURN NULL;
+END;
+$$;
+
+CREATE OR REPLACE FUNCTION sys.columnproperty(object_id oid, property name, property_name text)
+RETURNS integer
+LANGUAGE plpgsql
+STRICT
+AS $$
+declare pg_table text;
+declare pg_schema text;
+declare return_value integer;
+begin
+	pg_table := (select c.relname from pg_catalog.pg_class c where c."oid" = object_id);
+	pg_schema := (select n.nspname from pg_catalog.pg_class c inner join pg_catalog.pg_namespace n on c.relnamespace = n."oid" where c."oid" = object_id);
+	return_value := (
+					select 
+						case  property_name 
+							when 'charmaxlen' then 
+								(select c.character_maximum_length from information_schema.columns as c where c.table_schema = pg_schema and c.table_name = pg_table and c.column_name = property)
+							when 'AllowsNull' then
+								(select CASE WHEN a.attnotnull THEN 0 ELSE 1 END AS is_nullable from pg_catalog.pg_attribute a)
+							else
+								null
+						end
+					);
+	
+  RETURN return_value::integer;
+EXCEPTION 
+	WHEN others THEN
+ 		RETURN NULL;
+END;
+$$;
