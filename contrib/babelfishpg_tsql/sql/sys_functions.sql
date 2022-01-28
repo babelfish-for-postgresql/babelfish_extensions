@@ -1784,7 +1784,7 @@ AS $$
 declare return_value integer;
 begin
     return_value := (select pg_trigger_depth());
-    RETURN return_value::integer;
+    RETURN return_value;
 EXCEPTION
     WHEN others THEN
         RETURN NULL;
