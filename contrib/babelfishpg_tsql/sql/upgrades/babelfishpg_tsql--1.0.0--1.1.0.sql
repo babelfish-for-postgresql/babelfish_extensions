@@ -875,59 +875,59 @@ WHERE a.attgenerated = 's';
 GRANT SELECT ON sys.computed_columns TO PUBLIC;
   
 DROP VIEW IF EXISTS sys.index_columns;
-CREATE OR REPLACE VIEW sys.index_columns
- as
- select i.indrelid as object_id
-   , i.indexrelid as index_id
-   , a.attrelid as index_column_id
-   , a.attnum as column_id
-   , a.attnum as key_ordinal
-   , 0 as partition_ordinal
-   , 0 as is_descending_key
-   , 1 as is_included_column
- from pg_index as i
- inner join pg_catalog.pg_attribute a on i.indexrelid = a.attrelid;
- GRANT SELECT ON sys.index_columns TO PUBLIC;
-  
- DROP VIEW IF EXISTS sys.configurations;
+create or replace view sys.index_columns
+as
+select i.indrelid::integer as object_id
+  , i.indexrelid::integer as index_id
+  , a.attrelid::integer as index_column_id
+  , a.attnum::integer as column_id
+  , a.attnum::sys.tinyint as key_ordinal
+  , 0::sys.tinyint as partition_ordinal
+  , 0::sys.bit as is_descending_key
+  , 1::sys.bit as is_included_column
+from pg_index as i
+inner join pg_catalog.pg_attribute a on i.indexrelid = a.attrelid;
+GRANT SELECT ON sys.index_columns TO PUBLIC;
+
+DROP VIEW IF EXISTS sys.configurations;
 CREATE OR REPLACE VIEW sys.configurations
 AS 
-SELECT row_number() OVER (ORDER BY s.category, s.name) AS configuration_id
-  , s.name
+SELECT CAST(row_number() OVER (ORDER BY s.category, s.name) as integer) AS configuration_id
+  , s.name::sys.nvarchar(35)
   , s.setting::sys.sql_variant AS value
   , s.min_val::sys.sql_variant AS minimum
   , s.max_val::sys.sql_variant AS maximum
   , s.setting::sys.sql_variant AS value_in_use
-  , s.short_desc AS description
-  , CASE WHEN s.context in ('user', 'superuser', 'backend', 'superuser-backend', 'sighup') THEN 1 ELSE 0 END AS is_dynamic
-  , 0 AS is_advanced
+  , s.short_desc::sys.nvarchar(255) AS description
+  , CASE WHEN s.context in ('user', 'superuser', 'backend', 'superuser-backend', 'sighup') THEN 1::sys.bit ELSE 0::sys.bit END AS is_dynamic
+  , 0::sys.bit AS is_advanced
 FROM pg_settings s;
 GRANT SELECT ON sys.configurations TO PUBLIC;
-  
+ 
 DROP VIEW IF EXISTS sys.check_constraints;
-CREATE OR REPLACE VIEW sys.check_constraints AS
- SELECT CAST(c.conname as sys.sysname) as name
-   , oid as object_id
-   , c.connamespace as principal_id 
-   , c.connamespace as schema_id
-   , conrelid as parent_object_id
-   , 'C' as type
-   , 'CHECK_CONSTRAINT'::sys.nvarchar(60) as type_desc
-   , null::sys.datetime as create_date
-   , null::sys.datetime as modify_date
-   , 0 as is_ms_shipped
-   , 0 as is_published
-   , 0 as is_schema_published
-   , 0 as is_disabled
-   , 0 as is_not_for_replication
-   , 0 as is_not_trusted
-   , c.conkey[1] AS parent_column_id
-   , substring(pg_get_constraintdef(c.oid) from 7) AS definition
-   , 1 as uses_database_collation
-   , 0 as is_system_named
- FROM pg_catalog.pg_constraint as c
- WHERE c.contype = 'c' and c.conrelid != 0;
- GRANT SELECT ON sys.check_constraints TO PUBLIC;
+CREATE or replace VIEW sys.check_constraints AS
+SELECT CAST(c.conname as sys.sysname) as name
+  , oid::integer as object_id
+  , c.connamespace::integer as principal_id 
+  , c.connamespace::integer as schema_id
+  , conrelid::integer as parent_object_id
+  , 'C'::char(2) as type
+  , 'CHECK_CONSTRAINT'::sys.nvarchar(60) as type_desc
+  , null::sys.datetime as create_date
+  , null::sys.datetime as modify_date
+  , 0::sys.bit as is_ms_shipped
+  , 0::sys.bit as is_published
+  , 0::sys.bit as is_schema_published
+  , 0::sys.bit as is_disabled
+  , 0::sys.bit as is_not_for_replication
+  , 0::sys.bit as is_not_trusted
+  , c.conkey[1]::integer AS parent_column_id
+  , substring(pg_get_constraintdef(c.oid) from 7) AS definition
+  , 1::sys.bit as uses_database_collation
+  , 0::sys.bit as is_system_named
+FROM pg_catalog.pg_constraint as c
+WHERE c.contype = 'c' and c.conrelid != 0;
+GRANT SELECT ON sys.check_constraints TO PUBLIC;
 
 create or replace view sys.indexes as
 select
