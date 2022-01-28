@@ -179,7 +179,7 @@ GetBulkLoadRequest(StringInfo message)
 			default:
 			    ereport(ERROR,
 						(errcode(ERRCODE_PROTOCOL_VIOLATION),
-						errmsg("The incoming tabular data stream (TDS) remote procedure call (RPC) protocol stream is incorrect. "
+						errmsg("The incoming tabular data stream (TDS) is incorrect. "
 							"Data type 0x%02X is unknown.", colmetadata[currentColumn].columnTdsType)));
 		}
 
