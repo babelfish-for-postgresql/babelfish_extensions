@@ -1744,6 +1744,7 @@ EXCEPTION
         RETURN NULL;
 END;
 $$;
+GRANT EXECUTE ON FUNCTION sys.lock_timeout() TO PUBLIC;
 
 CREATE OR REPLACE FUNCTION sys.max_connections()
 RETURNS integer
@@ -1759,6 +1760,7 @@ EXCEPTION
         RETURN NULL;
 END;
 $$;
+GRANT EXECUTE ON FUNCTION sys.max_connections() TO PUBLIC;
 
 CREATE OR REPLACE FUNCTION sys.type_name(type_id oid)
 RETURNS text
@@ -1774,6 +1776,7 @@ EXCEPTION
         RETURN NULL;
 END;
 $$;
+GRANT EXECUTE ON FUNCTION sys.type_name(type_id oid) TO PUBLIC;
 
 CREATE OR REPLACE FUNCTION sys.trigger_nestlevel()
 RETURNS integer
@@ -1789,6 +1792,7 @@ EXCEPTION
         RETURN NULL;
 END;
 $$;
+GRANT EXECUTE ON FUNCTION sys.trigger_nestlevel() TO PUBLIC;
 
 CREATE OR REPLACE FUNCTION sys.dm_exec_sql_text(
     IN handle_id integer, 
@@ -1799,6 +1803,7 @@ begin
     select a.query into result from pg_catalog.pg_stat_activity as a where a.pid = handle_id;
 END
 $BODY$ language plpgsql;
+GRANT EXECUTE ON FUNCTION sys.dm_exec_sql_text(IN handle_id integer, OUT result text) TO PUBLIC;
 
 CREATE OR REPLACE FUNCTION sys.has_perms_by_name(
     securable text, 
@@ -1815,7 +1820,7 @@ DECLARE
     object_n text;
 BEGIN
     return_value := NULL;
-    SELECT s.schema_name, s.object_name into schema_n, object_n FROM babelfish_split_schema_object_name(securable) s;
+    SELECT s.schema_name, s.object_name into schema_n, object_n FROM sys.babelfish_split_schema_object_name(securable) s;
 	
 	-- translate schema name from bbf to postgres, e.g. dbo -> master_dbo
 	schema_n := (
@@ -1842,6 +1847,12 @@ BEGIN
  		RETURN NULL;
 END;
 $$;
+GRANT EXECUTE ON FUNCTION sys.has_perms_by_name(securable text, securable_class text, permission text) TO PUBLIC;
+
+COMMENT ON FUNCTION sys.has_perms_by_name
+IS 'This function returns permission information. Currently only works with "table-like" objects, otherwise returns NULL.';
+
+
 
 COMMENT ON FUNCTION sys.has_perms_by_name
 IS 'This function returns permission information. Currently only works with "table-like" objects, otherwise returns NULL.';
@@ -1864,6 +1875,7 @@ EXCEPTION
 END;
 $function$
 ;
+GRANT EXECUTE ON FUNCTION sys.schema_name() TO PUBLIC;
 
 CREATE OR REPLACE FUNCTION sys.original_login()
 RETURNS text
@@ -1879,6 +1891,7 @@ EXCEPTION
  		RETURN NULL;
 END;
 $$;
+GRANT EXECUTE ON FUNCTION sys.original_login() TO PUBLIC;
 
 CREATE OR REPLACE FUNCTION sys.columnproperty(object_id oid, property name, property_name text)
 RETURNS integer
@@ -1907,6 +1920,7 @@ EXCEPTION
  		RETURN NULL;
 END;
 $$;
+GRANT EXECUTE ON FUNCTION sys.columnproperty(object_id oid, property name, property_name text) TO PUBLIC;
 
 COMMENT ON FUNCTION sys.columnproperty 
 IS 'This function returns column or parameter information. Currently only works with "charmaxlen", and "allowsnull" otherwise returns 0.';
