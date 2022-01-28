@@ -1738,7 +1738,7 @@ AS $$
 declare return_value integer;
 begin
     return_value := (select s.setting FROM pg_catalog.pg_settings s where name = 'lock_timeout');
-    RETURN return_value::integer;
+    RETURN return_value;
 EXCEPTION
     WHEN others THEN
         RETURN NULL;
@@ -1754,7 +1754,7 @@ AS $$
 declare return_value integer;
 begin
     return_value := (select s.setting FROM pg_catalog.pg_settings s where name = 'max_connections');
-    RETURN return_value::integer;
+    RETURN return_value;
 EXCEPTION
     WHEN others THEN
         RETURN NULL;
@@ -1763,14 +1763,12 @@ $$;
 GRANT EXECUTE ON FUNCTION sys.max_connections() TO PUBLIC;
 
 CREATE OR REPLACE FUNCTION sys.type_name(type_id oid)
-RETURNS text
+RETURNS sys.sysname
 LANGUAGE plpgsql
 STRICT
 AS $$
-declare return_value text;
 begin
-    return_value := (select format_type(type_id, null));
-    RETURN return_value::text;
+    RETURN (select format_type(type_id, null))::sys.sysname;
 EXCEPTION
     WHEN others THEN
         RETURN NULL;
@@ -1794,21 +1792,10 @@ END;
 $$;
 GRANT EXECUTE ON FUNCTION sys.trigger_nestlevel() TO PUBLIC;
 
-CREATE OR REPLACE FUNCTION sys.dm_exec_sql_text(
-    IN handle_id integer, 
-    OUT result text
-)
-AS $BODY$
-begin
-    select a.query into result from pg_catalog.pg_stat_activity as a where a.pid = handle_id;
-END
-$BODY$ language plpgsql;
-GRANT EXECUTE ON FUNCTION sys.dm_exec_sql_text(IN handle_id integer, OUT result text) TO PUBLIC;
-
 CREATE OR REPLACE FUNCTION sys.has_perms_by_name(
-    securable text, 
-    securable_class text, 
-    permission text
+    securable sys.SYSNAME, 
+    securable_class sys.nvarchar(60), 
+    permission sys.SYSNAME
 )
 RETURNS integer
 LANGUAGE plpgsql
@@ -1838,6 +1825,7 @@ BEGIN
 		       when 1 then
 		          has_table_privilege(concat(schema_n,'.',object_n), permission)::integer
 		  -- check other cases here  
+          -- TODO implement functionality for other object types.
 		  end
 	);
 	
@@ -1847,24 +1835,20 @@ BEGIN
  		RETURN NULL;
 END;
 $$;
-GRANT EXECUTE ON FUNCTION sys.has_perms_by_name(securable text, securable_class text, permission text) TO PUBLIC;
+GRANT EXECUTE ON FUNCTION sys.has_perms_by_name(securable sys.SYSNAME, securable_class sys.nvarchar(60), permission sys.SYSNAME) TO PUBLIC;
 
 COMMENT ON FUNCTION sys.has_perms_by_name
 IS 'This function returns permission information. Currently only works with "table-like" objects, otherwise returns NULL.';
 
 
-
 CREATE OR REPLACE FUNCTION sys.schema_name()
-RETURNS text
+RETURNS sys.sysname
 LANGUAGE plpgsql
 STRICT
 AS $function$
-declare return_value text;
 begin
-    return_value := (select orig_name from sys.babelfish_namespace_ext ext  
-                    where ext.nspname = (select current_schema()) and  ext.dbid::oid = sys.db_id()::oid);
-    
-    RETURN return_value::text;
+    RETURN (select orig_name from sys.babelfish_namespace_ext ext  
+                    where ext.nspname = (select current_schema()) and  ext.dbid::oid = sys.db_id()::oid)::sys.sysname;
 EXCEPTION 
     WHEN others THEN
         RETURN NULL;
@@ -1874,14 +1858,13 @@ $function$
 GRANT EXECUTE ON FUNCTION sys.schema_name() TO PUBLIC;
 
 CREATE OR REPLACE FUNCTION sys.original_login()
-RETURNS text
+RETURNS sys.sysname
 LANGUAGE plpgsql
 STRICT
 AS $$
 declare return_value text;
 begin
-	return_value := (select session_user);
-    RETURN return_value::text;
+	RETURN (select session_user)::sys.sysname;
 EXCEPTION 
 	WHEN others THEN
  		RETURN NULL;
