@@ -886,9 +886,9 @@ select 'DF_' || o.relname || '_' || d.oid as name
   , null::timestamp as modified_date
   , 0 as is_ms_shipped
   , 0 as is_published
+  , 0 as is_schema_published
   , d.adnum as parent_column_id
   , pg_get_expr(d.adbin, d.adrelid) as definition
-  , d.adbin
   , 1 as is_system_named
 from pg_catalog.pg_attrdef as d
 inner join pg_catalog.pg_class as o on (d.adrelid = o.oid);
@@ -901,10 +901,40 @@ SELECT d.adrelid AS object_id
   , a.attnum AS column_id
   , a.atttypid AS system_type_id
   , a.atttypid AS user_type_id
+  , 0 AS max_length
+  , null::integer AS precision
+  , null::integer AS scale
+  , null::varchar AS collation_name
+  , 0 AS is_nullable
+  , 0 AS is_ansi_padded
+  , 0 AS is_rowguidcol
+  , 0 AS is_identity
+  , 0 AS is_filestream
+  , 0 AS is_replicated
+  , 0 AS is_non_sql_subscribed
+  , 0 AS is_merge_published
+  , 0 AS is_dts_replicated
+  , 0 AS is_xml_document
+  , 0 AS xml_collection_id
+  , 0 AS default_object_id
+  , 0 AS rule_object_id
+  , pg_get_expr(d.adbin, d.adrelid) AS definition
+  , 1 AS uses_database_collation
   , 0 AS is_persisted
   , 1 AS is_computed
-  , 1 AS uses_database_collation
-  , pg_get_expr(d.adbin, d.adrelid) AS definition
+  , 0 AS is_sparse
+  , 0 AS is_column_set
+  , 0 AS generated_always_type
+  , 'NOT_APPLICABLE'::varchar(60) as generated_always_type_desc
+  , null::integer AS encryption_type
+  , null::varchar AS encryption_type_desc
+  , null::varchar AS encryption_algorithm_name
+  , null::integer AS column_encryption_key_id
+  , null::varchar AS column_encryption_key_database_name
+  , 0 AS is_hidden
+  , 0 AS is_masked
+  , null::integer AS graph_type
+  , null::varchar AS graph_type_desc
 FROM pg_attrdef d
 JOIN pg_attribute a ON d.adrelid = a.attrelid AND d.adnum = a.attnum
 WHERE a.attgenerated = 's';
@@ -935,18 +965,6 @@ SELECT row_number() OVER (ORDER BY s.category, s.name) AS configuration_id
   , s.short_desc AS description
   , CASE WHEN s.context in ('user', 'superuser', 'backend', 'superuser-backend', 'sighup') THEN 1 ELSE 0 END AS is_dynamic
   , 0 AS is_advanced
-  , s.category
-  , s.extra_desc
-  , s.context
-  , s.unit
-  , s.vartype
-  , s.source
-  , s.enumvals
-  , s.boot_val
-  , s.reset_val
-  , s.sourcefile
-  , s.sourceline
-  , s.pending_restart
 FROM pg_settings s;
 GRANT SELECT ON sys.configurations TO PUBLIC;
 
