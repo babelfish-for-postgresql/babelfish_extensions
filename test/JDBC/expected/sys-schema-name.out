@@ -1,0 +1,15 @@
+SELECT * FROM sys.schema_name() 
+GO
+~~START~~
+varchar
+dbo
+~~END~~
+
+
+SELECT sys.schema_name()
+GO
+~~START~~
+varchar
+dbo
+~~END~~
+

@@ -1,0 +1,44 @@
+SELECT COUNT(*) FROM sys.all_columns WHERE object_id = object_id('sys.schemas');
+GO
+~~START~~
+int
+3
+~~END~~
+
+
+SELECT name FROM sys.schemas 
+WHERE name = 'dbo';
+GO
+~~START~~
+varchar
+dbo
+~~END~~
+
+
+CREATE SCHEMA sys_schema_test1;
+CREATE SCHEMA sys_schema_test2;
+GO
+
+SELECT name FROM sys.schemas 
+WHERE name in ('dbo', 'sys_schema_test1', 'sys_schema_test2');
+GO
+~~START~~
+varchar
+dbo
+sys_schema_test1
+sys_schema_test2
+~~END~~
+
+
+DROP SCHEMA sys_schema_test1;
+DROP SCHEMA sys_schema_test2;
+GO
+
+SELECT name FROM sys.schemas 
+WHERE name in ('dbo', 'sys_schema_test1', 'sys_schema_test2');
+GO
+~~START~~
+varchar
+dbo
+~~END~~
+

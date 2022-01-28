@@ -1,0 +1,26 @@
+SELECT * FROM sys.datefirst()
+GO
+~~START~~
+int
+7
+~~END~~
+
+
+SET datefirst 3
+GO
+
+SELECT @@datefirst
+GO
+~~START~~
+int
+3
+~~END~~
+
+
+SELECT sys.datefirst()
+GO
+~~START~~
+int
+3
+~~END~~
+

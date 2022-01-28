@@ -1,0 +1,58 @@
+SELECT * FROM trigger_nestlevel()
+GO
+~~START~~
+int
+0
+~~END~~
+
+
+SET trigger_nestlevel 3
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: unrecognized configuration parameter: trigger_nestlevel)~~
+
+
+DROP TABLE IF EXISTS t1
+GO
+
+CREATE TABLE t1(c1 int)
+GO
+
+CREATE TRIGGER trigger1 ON t1
+AFTER INSERT
+AS
+BEGIN
+   IF (trigger_nestlevel()) = 1
+     BEGIN
+        INSERT INTO t1(c1) VALUES (1); -- trigger_nestlevel should be 1 on first trigger call, so this should execute once & only once
+     END
+END
+GO
+
+INSERT INTO t1(c1) VALUES (0);
+GO
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+
+SELECT * FROM t1
+GO
+~~START~~
+int
+0
+1
+~~END~~
+
+
+DROP TABLE t1
+GO
+
+SELECT trigger_nestlevel()
+GO
+~~START~~
+int
+0
+~~END~~
+
