@@ -2458,7 +2458,6 @@ exec_stmt_insert_execute_select(PLtsql_execstate *estate, PLtsql_expr *query)
 
 int exec_stmt_insert_bulk(PLtsql_execstate *estate, PLtsql_stmt_insert_bulk *stmt)
 {
-  
 	MemoryContext	oldContext;
 	oldContext = MemoryContextSwitchTo(TopMemoryContext);
 
