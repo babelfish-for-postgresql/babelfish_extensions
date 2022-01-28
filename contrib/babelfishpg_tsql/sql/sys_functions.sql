@@ -655,17 +655,14 @@ LANGUAGE plpgsql
 VOLATILE
 RETURNS NULL ON NULL INPUT;
 
+-- This procedure is deliberately short-circuited to always return 1.
+-- Babelfish does not currently have full support for permissions, 
+-- because the Babelfish table names might not match the unerlying
+-- Postgres table names, so previous implementation threw an exception
+-- on the underlying psql, and thus always returned NULL.
 CREATE OR REPLACE FUNCTION sys.has_dbaccess(database_name PG_CATALOG.TEXT) RETURNS INTEGER AS $$
-DECLARE has_access BOOLEAN;
 BEGIN
-	has_access = has_database_privilege(database_name, 'CONNECT');
-	IF has_access THEN
-		RETURN 1;
-	ELSE
-		RETURN 0;
-	END IF;
-EXCEPTION WHEN others THEN
-	RETURN NULL;
+	RETURN 1;
 END;
 $$
 STRICT
