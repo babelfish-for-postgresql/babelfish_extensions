@@ -813,16 +813,16 @@ select 'DF_' || o.relname || '_' || d.oid as name
   , null::int as principal_id
   , o.relnamespace as schema_id
   , d.adrelid as parent_object_id
-  , 'D' as type
+  , 'D'::char(2) as type
   , 'DEFAULT_CONSTRAINT'::sys.nvarchar(60) AS type_desc
   , null::timestamp as create_date
   , null::timestamp as modified_date
-  , 0 as is_ms_shipped
-  , 0 as is_published
-  , 0 as is_schema_published
-  , d.adnum as parent_column_id
+  , 0::sys.bit as is_ms_shipped
+  , 0::sys.bit as is_published
+  , 0::sys.bit as is_schema_published
+  , d.adnum::int as parent_column_id
   , pg_get_expr(d.adbin, d.adrelid) as definition
-  , 1 as is_system_named
+  , 1::sys.bit as is_system_named
 from pg_catalog.pg_attrdef as d
 inner join pg_catalog.pg_class as o on (d.adrelid = o.oid);
 GRANT SELECT ON sys.default_constraints TO PUBLIC;
