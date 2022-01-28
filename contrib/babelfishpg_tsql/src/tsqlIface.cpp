@@ -3586,31 +3586,50 @@ makeSetStatement(TSqlParser::Set_statementContext *ctx, tsqlBuilder &builder)
 PLtsql_stmt *
 makeInsertBulkStatement(TSqlParser::Dml_statementContext *ctx)
 {
-    PLtsql_stmt_insert_bulk *stmt = (PLtsql_stmt_insert_bulk *) palloc0(sizeof(*stmt));
-    TSqlParser::Bulk_insert_statementContext *bulk_ctx = ctx->bulk_insert_statement();
-    string table_name;
+	PLtsql_stmt_insert_bulk *stmt = (PLtsql_stmt_insert_bulk *) palloc0(sizeof(*stmt));
+	TSqlParser::Bulk_insert_statementContext *bulk_ctx = ctx->bulk_insert_statement();
 
-    Assert(bulk_ctx);
+	std::string table_name;
+	std::string schema_name;
+	std::string db_name;
 
-    stmt->cmd_type = PLTSQL_STMT_INSERT_BULK;
-    if (bulk_ctx->ddl_object())
-    {
-        if (bulk_ctx->ddl_object()->local_id())
-        {
-            table_name = ::getFullText(bulk_ctx->ddl_object()->local_id());
-        }
-        else if (bulk_ctx->ddl_object()->full_object_name())
-        {
-            table_name = ::getFullText(bulk_ctx->ddl_object()->full_object_name());
-        }
-        if (!table_name.empty())
-        {
-            stmt->table_name = pstrdup(downcase_truncate_identifier(table_name.c_str(), table_name.length(), true));
-        }
-    }
+	if (!bulk_ctx)
+	{
+		return nullptr;
+	}
 
-    attachPLtsql_fragment(ctx, (PLtsql_stmt *) stmt);
-    return (PLtsql_stmt *) stmt;
+	stmt->cmd_type = PLTSQL_STMT_INSERT_BULK;
+	if (bulk_ctx->ddl_object())
+	{
+		if (bulk_ctx->ddl_object()->local_id())
+		{
+			table_name = ::getFullText(bulk_ctx->ddl_object()->local_id()).c_str();
+		}
+		else if (bulk_ctx->ddl_object()->full_object_name())
+		{
+			if (bulk_ctx->ddl_object()->full_object_name()->object_name)
+				table_name = stripQuoteFromId(bulk_ctx->ddl_object()->full_object_name()->object_name);
+			if (bulk_ctx->ddl_object()->full_object_name()->schema)
+				schema_name = stripQuoteFromId(bulk_ctx->ddl_object()->full_object_name()->schema);
+			if (bulk_ctx->ddl_object()->full_object_name()->database)
+				db_name = stripQuoteFromId(bulk_ctx->ddl_object()->full_object_name()->database);
+		}
+		if (!table_name.empty())
+		{
+			stmt->table_name = pstrdup(downcase_truncate_identifier(table_name.c_str(), table_name.length(), true));
+		}
+		if (!schema_name.empty())
+		{
+			stmt->schema_name = pstrdup(downcase_truncate_identifier(schema_name.c_str(), schema_name.length(), true));
+		}
+		if (!db_name.empty())
+		{
+			stmt->db_name = pstrdup(downcase_truncate_identifier(db_name.c_str(), db_name.length(), true));
+		}
+	}
+
+	attachPLtsql_fragment(ctx, (PLtsql_stmt *) stmt);
+	return (PLtsql_stmt *) stmt;
 }
 
 PLtsql_stmt *
