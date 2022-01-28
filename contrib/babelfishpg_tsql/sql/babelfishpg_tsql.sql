@@ -610,7 +610,7 @@ BEGIN
     from
         sys.spt_tablecollations_view s_tcv
     where
-        s_tcv.object_id = sys.object_id("@object") AND
+        s_tcv.object_id = sys.object_id(@object) AND
         s_tcv.name NOT IN ('cmin', 'cmax', 'xmin', 'xmax', 'ctid', 'tableoid')
     order by colid;
 END;
