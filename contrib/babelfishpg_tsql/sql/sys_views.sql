@@ -113,7 +113,8 @@ where not a.attisdropped
 -- r = ordinary table, i = index, S = sequence, t = TOAST table, v = view, m = materialized view, c = composite type, f = foreign table, p = partitioned table
 and c.relkind in ('r', 'v', 'm', 'f', 'p')
 and has_column_privilege(quote_ident(s.nspname) ||'.'||quote_ident(c.relname), a.attname, 'SELECT,INSERT,UPDATE,REFERENCES')
-and has_schema_privilege(s.oid, 'USAGE');
+and has_schema_privilege(s.oid, 'USAGE')
+and a.attnum > 0;
 GRANT SELECT ON sys.all_columns TO PUBLIC;
 
 create or replace view sys.all_views as
@@ -411,6 +412,7 @@ select
   , 0 as has_filter
   , null::varchar as filter_definition
   , 0 as auto_created
+  , c.oid as index_id
 from pg_class c
 inner join pg_namespace s on s.oid = c.relnamespace
 inner join pg_index i on i.indexrelid = c.oid
@@ -870,3 +872,172 @@ SELECT 1001 as type,
   NULL::varbinary(6000) binarydefinition ,
   NULL::image definition;
 GRANT SELECT ON sys.syscharsets TO PUBLIC;
+
+create or replace view sys.default_constraints
+AS
+select 'DF_' || o.relname || '_' || d.oid as name
+  , d.oid as object_id
+  , null::int as principal_id
+  , o.relnamespace as schema_id
+  , d.adrelid as parent_object_id
+  , 'D' as type
+  , 'DEFAULT_CONSTRAINT'::sys.nvarchar(60) AS type_desc
+  , null::timestamp as create_date
+  , null::timestamp as modified_date
+  , 0 as is_ms_shipped
+  , 0 as is_published
+  , d.adnum as parent_column_id
+  , pg_get_expr(d.adbin, d.adrelid) as definition
+  , d.adbin
+  , 1 as is_system_named
+from pg_catalog.pg_attrdef as d
+inner join pg_catalog.pg_class as o on (d.adrelid = o.oid);
+GRANT SELECT ON sys.default_constraints TO PUBLIC;
+
+CREATE OR REPLACE VIEW sys.computed_columns
+AS 
+SELECT d.adrelid AS object_id
+  , a.attname AS name
+  , a.attnum AS column_id
+  , a.atttypid AS system_type_id
+  , a.atttypid AS user_type_id
+  , 0 AS is_persisted
+  , 1 AS is_computed
+  , 1 AS uses_database_collation
+  , pg_get_expr(d.adbin, d.adrelid) AS definition
+FROM pg_attrdef d
+JOIN pg_attribute a ON d.adrelid = a.attrelid AND d.adnum = a.attnum
+WHERE a.attgenerated = 's';
+GRANT SELECT ON sys.computed_columns TO PUBLIC;
+
+create or replace view sys.index_columns
+as
+select i.indrelid as object_id
+  , i.indexrelid as index_id
+  , a.attrelid as index_column_id
+  , a.attnum as column_id
+  , a.attnum as key_ordinal
+  , 0 as partition_ordinal
+  , 0 as is_descending_key
+  , 1 as is_included_column
+from pg_index as i
+inner join pg_catalog.pg_attribute a on i.indexrelid = a.attrelid;
+GRANT SELECT ON sys.index_columns TO PUBLIC;
+
+CREATE OR REPLACE VIEW sys.configurations
+AS 
+SELECT row_number() OVER (ORDER BY s.category, s.name) AS configuration_id
+  , s.name
+  , s.setting::sys.sql_variant AS value
+  , s.min_val::sys.sql_variant AS minimum
+  , s.max_val::sys.sql_variant AS maximum
+  , s.setting::sys.sql_variant AS value_in_use
+  , s.short_desc AS description
+  , CASE WHEN s.context in ('user', 'superuser', 'backend', 'superuser-backend', 'sighup') THEN 1 ELSE 0 END AS is_dynamic
+  , 0 AS is_advanced
+  , s.category
+  , s.extra_desc
+  , s.context
+  , s.unit
+  , s.vartype
+  , s.source
+  , s.enumvals
+  , s.boot_val
+  , s.reset_val
+  , s.sourcefile
+  , s.sourceline
+  , s.pending_restart
+FROM pg_settings s;
+GRANT SELECT ON sys.configurations TO PUBLIC;
+
+CREATE or replace VIEW sys.check_constraints AS
+SELECT CAST(c.conname as sys.sysname) as name
+  , oid as object_id
+  , c.connamespace as principal_id 
+  , c.connamespace as schema_id
+  , conrelid as parent_object_id
+  , 'C' as type
+  , 'CHECK_CONSTRAINT'::sys.nvarchar(60) as type_desc
+  , null::sys.datetime as create_date
+  , null::sys.datetime as modify_date
+  , 0 as is_ms_shipped
+  , 0 as is_published
+  , 0 as is_schema_published
+  , 0 as is_disabled
+  , 0 as is_not_for_replication
+  , 0 as is_not_trusted
+  , c.conkey[1] AS parent_column_id
+  , substring(pg_get_constraintdef(c.oid) from 7) AS definition
+  , 1 as uses_database_collation
+  , 0 as is_system_named
+FROM pg_catalog.pg_constraint as c
+WHERE c.contype = 'c' and c.conrelid != 0;
+GRANT SELECT ON sys.check_constraints TO PUBLIC;
+
+create or replace view sys.dm_exec_sessions
+as
+select a.pid as session_id
+  , a.backend_start as login_time
+  , a.client_hostname::sys.nvarchar(128) as host_name
+  , a.application_name::sys.nvarchar(128) as program_name
+  , a.pid as host_process_id
+  , 0 as client_version
+  , backend_type::sys.nvarchar(32) as client_interface_name
+  , null::integer as security_id
+  , a.usename::sys.nvarchar(128) as login_name
+  , null::nvarchar(128) as nt_domain
+  , null::nvarchar(128) as nt_user_name
+  , a.state::sys.nvarchar(32) as status
+  , null::nvarchar(128) as context_info
+  , null::integer as cpu_time
+  , null::integer as memory_usage
+  , null::integer as total_scheduled_time
+  , null::integer as total_elapsed_time
+  , a.client_port as endpoint_id
+  , a.query_start as last_request_start_time
+  , a.state_change as last_request_end_time
+  , null::bigint as "reads"
+  , null::bigint as "writes"
+  , null::bigint as logical_reads
+  , case when a.client_port > 0 then 1 else 0 end as is_user_process
+  , (select s.setting FROM pg_catalog.pg_settings s where name = 'babelfish_pg_tsql.text_size') as text_size
+  , (select s.setting FROM pg_catalog.pg_settings s where name = 'babelfish_pg_tsql.language')::sys.nvarchar(128) as language
+  , 'ymd'::sys.nvarchar(3) as date_format-- Bld 173 lacks support for SET DATEFORMAT and always expects ymd
+  , (select s.setting FROM pg_catalog.pg_settings s where name = 'datefirst') as date_first -- Bld 173 lacks support for SET DATEFIRST and always returns 7
+  , null::sys.bit as quoted_identifier
+  , null::sys.bit as arithabort
+  , null::sys.bit as ansi_null_dflt_on
+  , null::sys.bit as ansi_defaults
+  , null::sys.bit as ansi_warnings
+  , null::sys.bit as ansi_padding
+  , null::sys.bit as ansi_nulls
+  , null::sys.bit as concat_null_yields_null
+  , 0 as transaction_isolation_level
+  , (select s.setting FROM pg_catalog.pg_settings s where name = 'lock_timeout') as lock_timeout
+  , 0 as deadlock_priority
+  , a.datid as database_id
+  , 0 as authenticating_database_id
+  , a.wait_event_type
+  , a.wait_event
+  , a.xact_start
+  , a.backend_xid
+  , a.backend_xmin
+  , a.backend_type
+  , a.query
+  , a.client_port
+from pg_catalog.pg_stat_activity a;
+GRANT SELECT ON sys.dm_exec_sessions TO PUBLIC;
+
+create or replace view sys.dm_exec_connections
+as
+select a.pid as session_id
+  , a.pid as most_recent_session_id
+  , a.backend_start::sys.datetime2 as connect_time
+  , 'TCP' as net_transport
+  , null::sys.nvarchar(40) as protocol_type
+  , a.client_addr as client_net_address
+  , a.client_port as client_tcp_port
+  , a.pid as most_recent_sql_handle
+  , a.pid as connection_id
+from pg_catalog.pg_stat_activity a;
+GRANT SELECT ON sys.dm_exec_connections TO PUBLIC;
