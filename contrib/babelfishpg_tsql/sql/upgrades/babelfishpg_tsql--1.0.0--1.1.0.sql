@@ -620,7 +620,7 @@ CREATE OR REPLACE FUNCTION sys.lock_timeout()
  declare return_value integer;
  begin
      return_value := (select s.setting FROM pg_catalog.pg_settings s where name = 'lock_timeout');
-     RETURN return_value::integer;
+     RETURN return_value;
  EXCEPTION
      WHEN others THEN
          RETURN NULL;
@@ -628,37 +628,35 @@ CREATE OR REPLACE FUNCTION sys.lock_timeout()
  $$;
  GRANT EXECUTE ON FUNCTION sys.lock_timeout() TO PUBLIC;
 
- CREATE OR REPLACE FUNCTION sys.max_connections()
- RETURNS integer
- LANGUAGE plpgsql
- STRICT
- AS $$
- declare return_value integer;
- begin
-     return_value := (select s.setting FROM pg_catalog.pg_settings s where name = 'max_connections');
-     RETURN return_value::integer;
- EXCEPTION
-     WHEN others THEN
-         RETURN NULL;
- END;
- $$;
- GRANT EXECUTE ON FUNCTION sys.max_connections() TO PUBLIC;
+CREATE OR REPLACE FUNCTION sys.max_connections()
+RETURNS integer
+LANGUAGE plpgsql
+STRICT
+AS $$
+declare return_value integer;
+begin
+    return_value := (select s.setting FROM pg_catalog.pg_settings s where name = 'max_connections');
+    RETURN return_value;
+EXCEPTION
+    WHEN others THEN
+        RETURN NULL;
+END;
+$$;
+GRANT EXECUTE ON FUNCTION sys.max_connections() TO PUBLIC;
 
  CREATE OR REPLACE FUNCTION sys.type_name(type_id oid)
- RETURNS text
- LANGUAGE plpgsql
- STRICT
- AS $$
- declare return_value text;
- begin
-     return_value := (select format_type(type_id, null));
-     RETURN return_value::text;
- EXCEPTION
-     WHEN others THEN
-         RETURN NULL;
- END;
- $$;
- GRANT EXECUTE ON FUNCTION sys.type_name(type_id oid) TO PUBLIC;
+RETURNS sys.sysname
+LANGUAGE plpgsql
+STRICT
+AS $$
+begin
+    RETURN (select format_type(type_id, null))::sys.sysname;
+EXCEPTION
+    WHEN others THEN
+        RETURN NULL;
+END;
+$$;
+GRANT EXECUTE ON FUNCTION sys.type_name(type_id oid) TO PUBLIC;
 
  CREATE OR REPLACE FUNCTION sys.trigger_nestlevel()
  RETURNS integer
@@ -668,24 +666,13 @@ CREATE OR REPLACE FUNCTION sys.lock_timeout()
  declare return_value integer;
  begin
      return_value := (select pg_trigger_depth());
-     RETURN return_value::integer;
+     RETURN return_value;
  EXCEPTION
      WHEN others THEN
          RETURN NULL;
  END;
  $$;
  GRANT EXECUTE ON FUNCTION sys.trigger_nestlevel() TO PUBLIC;
-
- CREATE OR REPLACE FUNCTION sys.dm_exec_sql_text(
-     IN handle_id integer, 
-     OUT result text
- )
- AS $BODY$
- begin
-     select a.query into result from pg_catalog.pg_stat_activity as a where a.pid = handle_id;
- END
- $BODY$ language plpgsql;
-GRANT EXECUTE ON FUNCTION sys.dm_exec_sql_text(IN handle_id integer, OUT result text) TO PUBLIC;
 
 CREATE OR REPLACE FUNCTION sys.babelfish_split_schema_object_name(delimited_name TEXT, out schema_name TEXT, out object_name TEXT)
 as
@@ -709,9 +696,9 @@ $$
 Language SQL;
 
 CREATE OR REPLACE FUNCTION sys.has_perms_by_name(
-    securable text, 
-    securable_class text, 
-    permission text
+    securable sys.SYSNAME, 
+    securable_class sys.nvarchar(60), 
+    permission sys.SYSNAME
 )
 RETURNS integer
 LANGUAGE plpgsql
@@ -727,20 +714,21 @@ BEGIN
 	
 	-- translate schema name from bbf to postgres, e.g. dbo -> master_dbo
 	schema_n := (
-      select 
-			  case when schema_n is null then ( current_schema() )
-			  else 
+        select 
+			case when schema_n is null then ( current_schema() )
+			else 
 	    		(select nspname from sys.babelfish_namespace_ext ext where ext.orig_name = schema_n and  ext.dbid::oid = sys.db_id()::oid)
-			  end as scheman);
+			end as scheman);
 	
 	return_value := (
 		select
 		  -- check if object_n is a 'table-like' object.
 		  case (select count(relname) from pg_catalog.pg_class  where relname = object_n and
-                                  relnamespace = (select oid from pg_catalog.pg_namespace where nspname = schema_n))
+                           relnamespace = (select oid from pg_catalog.pg_namespace where nspname = schema_n))
 		       when 1 then
 		          has_table_privilege(concat(schema_n,'.',object_n), permission)::integer
 		  -- check other cases here  
+          -- TODO implement functionality for other object types.
 		  end
 	);
 	
@@ -750,45 +738,41 @@ BEGIN
  		RETURN NULL;
 END;
 $$;
-GRANT EXECUTE ON FUNCTION sys.has_perms_by_name(securable text, securable_class text, permission text) TO PUBLIC;
+GRANT EXECUTE ON FUNCTION sys.has_perms_by_name(securable sys.SYSNAME, securable_class sys.nvarchar(60), permission sys.SYSNAME) TO PUBLIC;
 
 COMMENT ON FUNCTION sys.has_perms_by_name
 IS 'This function returns permission information. Currently only works with "table-like" objects, otherwise returns NULL.';
 
- CREATE OR REPLACE FUNCTION sys.schema_name()
- RETURNS text
- LANGUAGE plpgsql
- STRICT
- AS $function$
- declare return_value text;
- begin
-     return_value := (select orig_name from sys.babelfish_namespace_ext ext  
-                     where ext.nspname = (select current_schema()) and  ext.dbid::oid = sys.db_id()::oid);
+CREATE OR REPLACE FUNCTION sys.schema_name()
+RETURNS sys.sysname
+LANGUAGE plpgsql
+STRICT
+AS $function$
+begin
+    RETURN (select orig_name from sys.babelfish_namespace_ext ext  
+                    where ext.nspname = (select current_schema()) and  ext.dbid::oid = sys.db_id()::oid)::sys.sysname;
+EXCEPTION 
+    WHEN others THEN
+        RETURN NULL;
+END;
+$function$
+;
+GRANT EXECUTE ON FUNCTION sys.schema_name() TO PUBLIC;
   
-     RETURN return_value::text;
- EXCEPTION 
-     WHEN others THEN
-         RETURN NULL;
- END;
- $function$
- ;
- GRANT EXECUTE ON FUNCTION sys.schema_name() TO PUBLIC;
-  
- CREATE OR REPLACE FUNCTION sys.original_login()
- RETURNS text
- LANGUAGE plpgsql
- STRICT
- AS $$
- declare return_value text;
- begin
- 	return_value := (select session_user);
-     RETURN return_value::text;
- EXCEPTION 
- 	WHEN others THEN
-  		RETURN NULL;
- END;
- $$;
- GRANT EXECUTE ON FUNCTION sys.original_login() TO PUBLIC;
+CREATE OR REPLACE FUNCTION sys.original_login()
+RETURNS sys.sysname
+LANGUAGE plpgsql
+STRICT
+AS $$
+declare return_value text;
+begin
+	RETURN (select session_user)::sys.sysname;
+EXCEPTION 
+	WHEN others THEN
+ 		RETURN NULL;
+END;
+$$;
+GRANT EXECUTE ON FUNCTION sys.original_login() TO PUBLIC;
 
  CREATE OR REPLACE FUNCTION sys.columnproperty(object_id oid, property name, property_name text)
  RETURNS integer
@@ -822,43 +806,73 @@ IS 'This function returns permission information. Currently only works with "tab
  IS 'This function returns column or parameter information. Currently only works with "charmaxlen", and "allowsnull" otherwise returns 0.';
 
 DROP VIEW IF EXISTS sys.default_constraints;
-CREATE OR REPLACE VIEW sys.default_constraints
- AS
- select 'DF_' || o.relname || '_' || d.oid as name
-   , d.oid as object_id
-   , null::int as principal_id
-   , o.relnamespace as schema_id
-   , d.adrelid as parent_object_id
-   , 'D' as type
-   , 'DEFAULT_CONSTRAINT'::sys.nvarchar(60) AS type_desc
-   , null::timestamp as create_date
-   , null::timestamp as modified_date
-   , 0 as is_ms_shipped
-   , 0 as is_published
-   , d.adnum as parent_column_id
-   , pg_get_expr(d.adbin, d.adrelid) as definition
-   , d.adbin
-   , 1 as is_system_named
- from pg_catalog.pg_attrdef as d
- inner join pg_catalog.pg_class as o on (d.adrelid = o.oid);
- GRANT SELECT ON sys.default_constraints TO PUBLIC;
+create or replace view sys.default_constraints
+AS
+select 'DF_' || o.relname || '_' || d.oid as name
+  , d.oid as object_id
+  , null::int as principal_id
+  , o.relnamespace as schema_id
+  , d.adrelid as parent_object_id
+  , 'D' as type
+  , 'DEFAULT_CONSTRAINT'::sys.nvarchar(60) AS type_desc
+  , null::timestamp as create_date
+  , null::timestamp as modified_date
+  , 0 as is_ms_shipped
+  , 0 as is_published
+  , 0 as is_schema_published
+  , d.adnum as parent_column_id
+  , pg_get_expr(d.adbin, d.adrelid) as definition
+  , 1 as is_system_named
+from pg_catalog.pg_attrdef as d
+inner join pg_catalog.pg_class as o on (d.adrelid = o.oid);
+GRANT SELECT ON sys.default_constraints TO PUBLIC;
   
- DROP VIEW IF EXISTS sys.computed_columns;
- CREATE OR REPLACE VIEW sys.computed_columns
- AS 
- SELECT d.adrelid AS object_id
-   , a.attname AS name
-   , a.attnum AS column_id
-   , a.atttypid AS system_type_id
-   , a.atttypid AS user_type_id
-   , 0 AS is_persisted
-   , 1 AS is_computed
-   , 1 AS uses_database_collation
-   , pg_get_expr(d.adbin, d.adrelid) AS definition
- FROM pg_attrdef d
- JOIN pg_attribute a ON d.adrelid = a.attrelid AND d.adnum = a.attnum
- WHERE a.attgenerated = 's';
- GRANT SELECT ON sys.computed_columns TO PUBLIC;
+DROP VIEW IF EXISTS sys.computed_columns;
+CREATE OR REPLACE VIEW sys.computed_columns
+AS 
+SELECT d.adrelid AS object_id
+  , a.attname AS name
+  , a.attnum AS column_id
+  , a.atttypid AS system_type_id
+  , a.atttypid AS user_type_id
+  , 0 AS max_length
+  , null::integer AS precision
+  , null::integer AS scale
+  , null::varchar AS collation_name
+  , 0 AS is_nullable
+  , 0 AS is_ansi_padded
+  , 0 AS is_rowguidcol
+  , 0 AS is_identity
+  , 0 AS is_filestream
+  , 0 AS is_replicated
+  , 0 AS is_non_sql_subscribed
+  , 0 AS is_merge_published
+  , 0 AS is_dts_replicated
+  , 0 AS is_xml_document
+  , 0 AS xml_collection_id
+  , 0 AS default_object_id
+  , 0 AS rule_object_id
+  , pg_get_expr(d.adbin, d.adrelid) AS definition
+  , 1 AS uses_database_collation
+  , 0 AS is_persisted
+  , 1 AS is_computed
+  , 0 AS is_sparse
+  , 0 AS is_column_set
+  , 0 AS generated_always_type
+  , 'NOT_APPLICABLE'::varchar(60) as generated_always_type_desc
+  , null::integer AS encryption_type
+  , null::varchar AS encryption_type_desc
+  , null::varchar AS encryption_algorithm_name
+  , null::integer AS column_encryption_key_id
+  , null::varchar AS column_encryption_key_database_name
+  , 0 AS is_hidden
+  , 0 AS is_masked
+  , null::integer AS graph_type
+  , null::varchar AS graph_type_desc
+FROM pg_attrdef d
+JOIN pg_attribute a ON d.adrelid = a.attrelid AND d.adnum = a.attnum
+WHERE a.attgenerated = 's';
+GRANT SELECT ON sys.computed_columns TO PUBLIC;
   
 DROP VIEW IF EXISTS sys.index_columns;
 CREATE OR REPLACE VIEW sys.index_columns
@@ -876,31 +890,19 @@ CREATE OR REPLACE VIEW sys.index_columns
  GRANT SELECT ON sys.index_columns TO PUBLIC;
   
  DROP VIEW IF EXISTS sys.configurations;
- CREATE OR REPLACE VIEW sys.configurations
- AS 
- SELECT row_number() OVER (ORDER BY s.category, s.name) AS configuration_id
-   , s.name
-   , s.setting::sys.sql_variant AS value
-   , s.min_val::sys.sql_variant AS minimum
-   , s.max_val::sys.sql_variant AS maximum
-   , s.setting::sys.sql_variant AS value_in_use
-   , s.short_desc AS description
-   , CASE WHEN s.context in ('user', 'superuser', 'backend', 'superuser-backend', 'sighup') THEN 1 ELSE 0 END AS is_dynamic
-   , 0 AS is_advanced
-   , s.category
-   , s.extra_desc
-   , s.context
-   , s.unit
-   , s.vartype
-   , s.source
-   , s.enumvals
-   , s.boot_val
-   , s.reset_val
-   , s.sourcefile
-   , s.sourceline
-   , s.pending_restart
- FROM pg_settings s;
- GRANT SELECT ON sys.configurations TO PUBLIC;
+CREATE OR REPLACE VIEW sys.configurations
+AS 
+SELECT row_number() OVER (ORDER BY s.category, s.name) AS configuration_id
+  , s.name
+  , s.setting::sys.sql_variant AS value
+  , s.min_val::sys.sql_variant AS minimum
+  , s.max_val::sys.sql_variant AS maximum
+  , s.setting::sys.sql_variant AS value_in_use
+  , s.short_desc AS description
+  , CASE WHEN s.context in ('user', 'superuser', 'backend', 'superuser-backend', 'sighup') THEN 1 ELSE 0 END AS is_dynamic
+  , 0 AS is_advanced
+FROM pg_settings s;
+GRANT SELECT ON sys.configurations TO PUBLIC;
   
 DROP VIEW IF EXISTS sys.check_constraints;
 CREATE OR REPLACE VIEW sys.check_constraints AS
