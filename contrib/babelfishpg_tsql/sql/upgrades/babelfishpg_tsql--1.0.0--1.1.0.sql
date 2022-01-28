@@ -611,3 +611,402 @@ SELECT
 $BODY$
 LANGUAGE SQL IMMUTABLE PARALLEL SAFE;
 GRANT EXECUTE ON FUNCTION sys.sign(TEXT) TO PUBLIC;
+CREATE OR REPLACE FUNCTION sys.lock_timeout()
+ RETURNS integer
+ LANGUAGE plpgsql
+ STRICT
+ AS $$
+ declare return_value integer;
+ begin
+     return_value := (select s.setting FROM pg_catalog.pg_settings s where name = 'lock_timeout');
+     RETURN return_value::integer;
+ EXCEPTION
+     WHEN others THEN
+         RETURN NULL;
+ END;
+ $$;
+
+ CREATE OR REPLACE FUNCTION sys.max_connections()
+ RETURNS integer
+ LANGUAGE plpgsql
+ STRICT
+ AS $$
+ declare return_value integer;
+ begin
+     return_value := (select s.setting FROM pg_catalog.pg_settings s where name = 'max_connections');
+     RETURN return_value::integer;
+ EXCEPTION
+     WHEN others THEN
+         RETURN NULL;
+ END;
+ $$;
+
+ CREATE OR REPLACE FUNCTION sys.type_name(type_id oid)
+ RETURNS text
+ LANGUAGE plpgsql
+ STRICT
+ AS $$
+ declare return_value text;
+ begin
+     return_value := (select format_type(type_id, null));
+     RETURN return_value::text;
+ EXCEPTION
+     WHEN others THEN
+         RETURN NULL;
+ END;
+ $$;
+
+ CREATE OR REPLACE FUNCTION sys.trigger_nestlevel()
+ RETURNS integer
+ LANGUAGE plpgsql
+ STRICT
+ AS $$
+ declare return_value integer;
+ begin
+     return_value := (select pg_trigger_depth());
+     RETURN return_value::integer;
+ EXCEPTION
+     WHEN others THEN
+         RETURN NULL;
+ END;
+ $$;
+
+ CREATE OR REPLACE FUNCTION sys.dm_exec_sql_text(
+     IN handle_id integer, 
+     OUT result text
+ )
+ AS $BODY$
+ begin
+     select a.query into result from pg_catalog.pg_stat_activity as a where a.pid = handle_id;
+ END
+ $BODY$ language plpgsql;
+  
+ create or replace function sys.has_perms_by_name(
+     securable text, 
+     securable_class text, 
+     permission text
+ )
+ RETURNS integer
+ LANGUAGE plpgsql
+ CALLED ON NULL INPUT
+ AS $$
+ DECLARE 
+     return_value integer;
+     cur_database text;
+ begin
+     RETURN 1;
+ EXCEPTION
+     WHEN others THEN
+         RETURN 1;
+ END;
+ $$;
+
+ CREATE OR REPLACE FUNCTION sys.schema_name()
+ RETURNS text
+ LANGUAGE plpgsql
+ STRICT
+ AS $function$
+ declare return_value text;
+ begin
+     return_value := (select orig_name from sys.babelfish_namespace_ext ext  
+                     where ext.nspname = (select current_schema()) and  ext.dbid::oid = sys.db_id()::oid);
+  
+     RETURN return_value::text;
+ EXCEPTION 
+     WHEN others THEN
+         RETURN NULL;
+ END;
+ $function$
+ ;
+  
+ CREATE OR REPLACE FUNCTION sys.original_login()
+ RETURNS text
+ LANGUAGE plpgsql
+ STRICT
+ AS $$
+ declare return_value text;
+ begin
+ 	return_value := (select session_user);
+     RETURN return_value::text;
+ EXCEPTION 
+ 	WHEN others THEN
+  		RETURN NULL;
+ END;
+ $$;
+
+ CREATE OR REPLACE FUNCTION sys.columnproperty(object_id oid, property name, property_name text)
+ RETURNS integer
+ LANGUAGE plpgsql
+ STRICT
+ AS $$
+ declare extra_bytes CONSTANT integer := 4;
+ declare return_value integer;
+ begin
+ 	return_value := (
+ 					select 
+ 						case  LOWER(property_name)
+ 							when 'charmaxlen' then 
+ 								(select CASE WHEN a.atttypmod > 0 THEN a.atttypmod - extra_bytes ELSE NULL END  from pg_catalog.pg_attribute a where a.attrelid = object_id and a.attname = property)
+ 							when 'allowsnull' then
+ 								(select CASE WHEN a.attnotnull THEN 0 ELSE 1 END from pg_catalog.pg_attribute a where a.attrelid = object_id and a.attname = property)
+ 							else
+ 								null
+ 						end
+ 					);
+  
+   RETURN return_value::integer;
+ EXCEPTION 
+ 	WHEN others THEN
+  		RETURN NULL;
+ END;
+ $$;
+
+ COMMENT ON FUNCTION sys.columnproperty 
+ IS 'This function returns column or parameter information. Currently only works with "charmaxlen", and "allowsnull" otherwise returns 0.';
+
+CREATE OR REPLACE VIEW sys.default_constraints
+ AS
+ select 'DF_' || o.relname || '_' || d.oid as name
+   , d.oid as object_id
+   , null::int as principal_id
+   , o.relnamespace as schema_id
+   , d.adrelid as parent_object_id
+   , 'D' as type
+   , 'DEFAULT_CONSTRAINT'::sys.nvarchar(60) AS type_desc
+   , null::timestamp as create_date
+   , null::timestamp as modified_date
+   , 0 as is_ms_shipped
+   , 0 as is_published
+   , d.adnum as parent_column_id
+   , pg_get_expr(d.adbin, d.adrelid) as definition
+   , d.adbin
+   , 1 as is_system_named
+ from pg_catalog.pg_attrdef as d
+ inner join pg_catalog.pg_class as o on (d.adrelid = o.oid);
+ GRANT SELECT ON sys.default_constraints TO PUBLIC;
+  
+ CREATE OR REPLACE VIEW sys.computed_columns
+ AS 
+ SELECT d.adrelid AS object_id
+   , a.attname AS name
+   , a.attnum AS column_id
+   , a.atttypid AS system_type_id
+   , a.atttypid AS user_type_id
+   , 0 AS is_persisted
+   , 1 AS is_computed
+   , 1 AS uses_database_collation
+   , pg_get_expr(d.adbin, d.adrelid) AS definition
+ FROM pg_attrdef d
+ JOIN pg_attribute a ON d.adrelid = a.attrelid AND d.adnum = a.attnum
+ WHERE a.attgenerated = 's';
+ GRANT SELECT ON sys.computed_columns TO PUBLIC;
+  
+CREATE OR REPLACE VIEW sys.index_columns
+ as
+ select i.indrelid as object_id
+   , i.indexrelid as index_id
+   , a.attrelid as index_column_id
+   , a.attnum as column_id
+   , a.attnum as key_ordinal
+   , 0 as partition_ordinal
+   , 0 as is_descending_key
+   , 1 as is_included_column
+ from pg_index as i
+ inner join pg_catalog.pg_attribute a on i.indexrelid = a.attrelid;
+ GRANT SELECT ON sys.index_columns TO PUBLIC;
+  
+ CREATE OR REPLACE VIEW sys.configurations
+ AS 
+ SELECT row_number() OVER (ORDER BY s.category, s.name) AS configuration_id
+   , s.name
+   , s.setting::sys.sql_variant AS value
+   , s.min_val::sys.sql_variant AS minimum
+   , s.max_val::sys.sql_variant AS maximum
+   , s.setting::sys.sql_variant AS value_in_use
+   , s.short_desc AS description
+   , CASE WHEN s.context in ('user', 'superuser', 'backend', 'superuser-backend', 'sighup') THEN 1 ELSE 0 END AS is_dynamic
+   , 0 AS is_advanced
+   , s.category
+   , s.extra_desc
+   , s.context
+   , s.unit
+   , s.vartype
+   , s.source
+   , s.enumvals
+   , s.boot_val
+   , s.reset_val
+   , s.sourcefile
+   , s.sourceline
+   , s.pending_restart
+ FROM pg_settings s;
+ GRANT SELECT ON sys.configurations TO PUBLIC;
+  
+CREATE OR REPLACE VIEW sys.check_constraints AS
+ SELECT CAST(c.conname as sys.sysname) as name
+   , oid as object_id
+   , c.connamespace as principal_id 
+   , c.connamespace as schema_id
+   , conrelid as parent_object_id
+   , 'C' as type
+   , 'CHECK_CONSTRAINT'::sys.nvarchar(60) as type_desc
+   , null::sys.datetime as create_date
+   , null::sys.datetime as modify_date
+   , 0 as is_ms_shipped
+   , 0 as is_published
+   , 0 as is_schema_published
+   , 0 as is_disabled
+   , 0 as is_not_for_replication
+   , 0 as is_not_trusted
+   , c.conkey[1] AS parent_column_id
+   , substring(pg_get_constraintdef(c.oid) from 7) AS definition
+   , 1 as uses_database_collation
+   , 0 as is_system_named
+ FROM pg_catalog.pg_constraint as c
+ WHERE c.contype = 'c' and c.conrelid != 0;
+ GRANT SELECT ON sys.check_constraints TO PUBLIC;
+  
+CREATE OR REPLACE VIEW sys.dm_exec_sessions
+ AS
+ select a.pid as session_id
+   , a.backend_start as login_time
+   , a.client_hostname::sys.nvarchar(128) as host_name
+   , a.application_name::sys.nvarchar(128) as program_name
+   , a.pid as host_process_id
+   , 0 as client_version
+   , backend_type::sys.nvarchar(32) as client_interface_name
+   , null::integer as security_id
+   , a.usename::sys.nvarchar(128) as login_name
+   , null::nvarchar(128) as nt_domain
+   , null::nvarchar(128) as nt_user_name
+   , a.state::sys.nvarchar(32) as status
+   , null::nvarchar(128) as context_info
+   , null::integer as cpu_time
+   , null::integer as memory_usage
+   , null::integer as total_scheduled_time
+   , null::integer as total_elapsed_time
+   , a.client_port as endpoint_id
+   , a.query_start as last_request_start_time
+   , a.state_change as last_request_end_time
+   , null::bigint as "reads"
+   , null::bigint as "writes"
+   , null::bigint as logical_reads
+   , case when a.client_port > 0 then 1 else 0 end as is_user_process
+   , (select s.setting FROM pg_catalog.pg_settings s where name = 'babelfish_pg_tsql.text_size') as text_size
+   , (select s.setting FROM pg_catalog.pg_settings s where name = 'babelfish_pg_tsql.language')::sys.nvarchar(128) as language
+   , 'ymd'::sys.nvarchar(3) as date_format-- Bld 173 lacks support for SET DATEFORMAT and always expects ymd
+   , (select s.setting FROM pg_catalog.pg_settings s where name = 'datefirst') as date_first -- Bld 173 lacks support for SET DATEFIRST and always returns 7
+   , null::sys.bit as quoted_identifier
+   , null::sys.bit as arithabort
+   , null::sys.bit as ansi_null_dflt_on
+   , null::sys.bit as ansi_defaults
+   , null::sys.bit as ansi_warnings
+   , null::sys.bit as ansi_padding
+   , null::sys.bit as ansi_nulls
+   , null::sys.bit as concat_null_yields_null
+   , 0 as transaction_isolation_level
+   , (select s.setting FROM pg_catalog.pg_settings s where name = 'lock_timeout') as lock_timeout
+   , 0 as deadlock_priority
+   , a.datid as database_id
+   , 0 as authenticating_database_id
+   , a.wait_event_type
+   , a.wait_event
+   , a.xact_start
+   , a.backend_xid
+   , a.backend_xmin
+   , a.backend_type
+   , a.query
+   , a.client_port
+ from pg_catalog.pg_stat_activity a;
+ GRANT SELECT ON sys.dm_exec_sessions TO PUBLIC;
+  
+ CREATE OR REPLACE VIEW sys.dm_exec_connections
+ as
+ select a.pid as session_id
+   , a.pid as most_recent_session_id
+   , a.backend_start::sys.datetime2 as connect_time
+   , 'TCP' as net_transport
+   , null::sys.nvarchar(40) as protocol_type
+   , a.client_addr as client_net_address
+   , a.client_port as client_tcp_port
+   , a.pid as most_recent_sql_handle
+   , a.pid as connection_id
+ from pg_catalog.pg_stat_activity a;
+ GRANT SELECT ON sys.dm_exec_connections TO PUBLIC;
+
+create or replace view sys.all_columns as
+select c.oid as object_id
+  , a.attname as name
+  , a.attnum as column_id
+  , t.oid as system_type_id
+  , t.oid as user_type_id
+  , a.attlen as max_length
+  , null::integer as precision
+  , null::integer as scale
+  , coll.collname as collation_name
+  , case when a.attnotnull then 0 else 1 end as is_nullable
+  , 0 as is_ansi_padded
+  , 0 as is_rowguidcol
+  , 0 as is_identity
+  , 0 as is_computed
+  , 0 as is_filestream
+  , 0 as is_replicated
+  , 0 as is_non_sql_subscribed
+  , 0 as is_merge_published
+  , 0 as is_dts_replicated
+  , 0 as is_xml_document
+  , 0 as xml_collection_id
+  , coalesce(d.oid, 0) as default_object_id
+  , coalesce((select oid from pg_constraint where conrelid = t.oid and contype = 'c' and a.attnum = any(conkey) limit 1), 0) as rule_object_id
+  , 0 as is_sparse
+  , 0 as is_column_set
+  , 0 as generated_always_type
+  , 'NOT_APPLICABLE'::varchar(60) as generated_always_type_desc
+  , null::integer as encryption_type
+  , null::varchar(64) as encryption_type_desc
+  , null::varchar as encryption_algorithm_name
+  , null::integer as column_encryption_key_id
+  , null::varchar as column_encryption_key_database_name
+  , 0 as is_hidden
+  , 0 as is_masked
+from pg_attribute a
+inner join pg_class c on c.oid = a.attrelid
+inner join pg_type t on t.oid = a.atttypid
+inner join pg_namespace s on s.oid = c.relnamespace
+left join pg_attrdef d on c.oid = d.adrelid and a.attnum = d.adnum
+left join pg_collation coll on coll.oid = t.typcollation
+where not a.attisdropped
+-- r = ordinary table, i = index, S = sequence, t = TOAST table, v = view, m = materialized view, c = composite type, f = foreign table, p = partitioned table
+and c.relkind in ('r', 'v', 'm', 'f', 'p')
+and has_column_privilege(quote_ident(s.nspname) ||'.'||quote_ident(c.relname), a.attname, 'SELECT,INSERT,UPDATE,REFERENCES')
+and has_schema_privilege(s.oid, 'USAGE')
+and a.attnum > 0;
+GRANT SELECT ON sys.all_columns TO PUBLIC;
+
+create or replace view sys.indexes as
+select
+  i.indrelid as object_id
+  , c.relname as name
+  , case when i.indisclustered then 1 else 2 end as type
+  , case when i.indisclustered then 'CLUSTERED'::varchar(60) else 'NONCLUSTERED'::varchar(60) end as type_desc
+  , case when i.indisunique then 1 else 0 end as is_unique
+  , c.reltablespace as data_space_id
+  , 0 as ignore_dup_key
+  , case when i.indisprimary then 1 else 0 end as is_primary_key
+  , case when constr.oid is null then 0 else 1 end as is_unique_constraint
+  , 0 as fill_factor
+  , case when i.indpred is null then 0 else 1 end as is_padded
+  , case when i.indisready then 0 else 1 end is_disabled
+  , 0 as is_hypothetical
+  , 1 as allow_row_locks
+  , 1 as allow_page_locks
+  , 0 as has_filter
+  , null::varchar as filter_definition
+  , 0 as auto_created
+  , c.oid as index_id
+from pg_class c
+inner join pg_namespace s on s.oid = c.relnamespace
+inner join pg_index i on i.indexrelid = c.oid
+left join pg_constraint constr on constr.conindid = c.oid
+where c.relkind = 'i' and i.indislive
+and s.nspname not in ('information_schema', 'pg_catalog');
+GRANT SELECT ON sys.indexes TO PUBLIC;
