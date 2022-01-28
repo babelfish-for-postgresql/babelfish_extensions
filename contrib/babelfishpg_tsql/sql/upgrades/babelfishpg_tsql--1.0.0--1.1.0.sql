@@ -957,3 +957,24 @@ left join pg_constraint constr on constr.conindid = c.oid
 where c.relkind = 'i' and i.indislive
 and s.nspname not in ('information_schema', 'pg_catalog');
 GRANT SELECT ON sys.indexes TO PUBLIC;
+
+-- substring --
+CREATE OR REPLACE FUNCTION sys.substring(string TEXT, i INTEGER, j INTEGER)
+RETURNS sys.VARCHAR
+AS 'babelfishpg_tsql', 'tsql_varchar_substr' LANGUAGE C IMMUTABLE PARALLEL SAFE;
+
+CREATE OR REPLACE FUNCTION sys.substring(string sys.VARCHAR, i INTEGER, j INTEGER)
+RETURNS sys.VARCHAR
+AS 'babelfishpg_tsql', 'tsql_varchar_substr' LANGUAGE C IMMUTABLE PARALLEL SAFE;
+
+CREATE OR REPLACE FUNCTION sys.substring(string sys.VARCHAR, i INTEGER, j INTEGER)
+RETURNS sys.VARCHAR
+AS 'babelfishpg_tsql', 'tsql_varchar_substr' LANGUAGE C IMMUTABLE PARALLEL SAFE;
+
+CREATE OR REPLACE FUNCTION sys.substring(string sys.NVARCHAR, i INTEGER, j INTEGER)
+RETURNS sys.NVARCHAR
+AS 'babelfishpg_tsql', 'tsql_varchar_substr' LANGUAGE C IMMUTABLE PARALLEL SAFE;
+
+CREATE OR REPLACE FUNCTION sys.substring(string sys.NCHAR, i INTEGER, j INTEGER)
+RETURNS sys.NVARCHAR
+AS 'babelfishpg_tsql', 'tsql_varchar_substr' LANGUAGE C IMMUTABLE PARALLEL SAFE;

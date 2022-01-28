@@ -1,0 +1,145 @@
+create table ccol(a varchar(20), b as substring(a,1,3))
+go
+insert into ccol values('hello');
+go
+~~ROW COUNT: 1~~
+
+select * from ccol;
+go
+~~START~~
+varchar#!#varchar
+hello#!#hel
+~~END~~
+
+
+select substring('hello',1,3)
+go
+~~START~~
+varchar
+hel
+~~END~~
+
+select substring(cast('hello' as sys.varchar(5)),1,3)
+go
+~~START~~
+varchar
+hel
+~~END~~
+
+select substring(cast('hello' as sys.char(5)),1,3)
+go
+~~START~~
+varchar
+hel
+~~END~~
+
+select substring(cast('hello' as sys.nvarchar(5)),1,3)
+go
+~~START~~
+nvarchar
+hel
+~~END~~
+
+select substring(cast('hello' as sys.nchar(5)),1,3)
+go
+~~START~~
+nvarchar
+hel
+~~END~~
+
+select substring('hello',0, 3)
+go
+~~START~~
+varchar
+he
+~~END~~
+
+select substring('hello',1, 0)
+go
+~~START~~
+varchar
+
+~~END~~
+
+select substring('hello',100, 3)
+go
+~~START~~
+varchar
+
+~~END~~
+
+select substring('hello',-1, 3)
+go
+~~START~~
+varchar
+h
+~~END~~
+
+select substring('hello',-10, 3)
+go
+~~START~~
+varchar
+
+~~END~~
+
+select substring('hello',-4, 7)
+go
+~~START~~
+varchar
+he
+~~END~~
+
+select substring('hello', 1, 100)
+go
+~~START~~
+varchar
+hello
+~~END~~
+
+select substring('ÀÈǸẀ', 1, 3);
+go
+~~START~~
+varchar
+ÀÈ?
+~~END~~
+
+select substring('Ææ', 1, 4);
+go
+~~START~~
+varchar
+Ææ
+~~END~~
+
+select substring('hello', null, 3)
+go
+~~START~~
+varchar
+<NULL>
+~~END~~
+
+select substring('hello', 2, null)
+go
+~~START~~
+varchar
+<NULL>
+~~END~~
+
+
+-- should error
+select substring('hello',1, -3)
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: negative substring length not allowed)~~
+
+select substring(null, 1, 3)
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Argument data type NULL is invalid for argument 1 of substring function)~~
+
+
+
+-- cleanup
+drop table ccol;
+go

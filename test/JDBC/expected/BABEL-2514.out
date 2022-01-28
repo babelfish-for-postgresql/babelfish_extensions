@@ -173,7 +173,7 @@ go
 select babel_2514_complex_func('abc def', ' ');
 go
 ~~START~~
-text
+nvarchar
 abc
 def
 ~~END~~

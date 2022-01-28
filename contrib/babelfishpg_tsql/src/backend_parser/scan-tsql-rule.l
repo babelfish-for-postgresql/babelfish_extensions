@@ -239,6 +239,7 @@
 							case TSQL_S:
 							case TSQL_SAVE:
 							case TSQL_SS:
+							case TSQL_SUBSTRING:
 							case TSQL_TRAN:
 							case TSQL_TZ:
 							case TSQL_TEXTIMAGE_ON:
