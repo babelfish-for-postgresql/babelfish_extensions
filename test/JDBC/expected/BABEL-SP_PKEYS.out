@@ -1,0 +1,78 @@
+create database db1
+go
+use db1
+go
+create table t1(a int, primary key(a))
+go
+create table t2(a int, b int, c int, primary key(b, c))
+go
+create table t3(a int, b int, c int, primary key(c, b))
+go
+create table t4(a int)
+go
+
+-- syntax error: @table_name is required
+exec sp_pkeys
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: procedure sp_pkeys() does not exist)~~
+
+
+exec sp_pkeys @table_name = 't1'
+go
+~~START~~
+varchar#!#varchar#!#varchar#!#varchar#!#smallint#!#varchar
+db1#!#dbo#!#t1#!#a#!#1#!#t1_pkey
+~~END~~
+
+
+exec sp_pkeys @table_name = 't2', @table_qualifier = 'db1'
+go
+~~START~~
+varchar#!#varchar#!#varchar#!#varchar#!#smallint#!#varchar
+db1#!#dbo#!#t2#!#b#!#1#!#t2_pkey
+db1#!#dbo#!#t2#!#c#!#2#!#t2_pkey
+~~END~~
+
+
+exec sp_pkeys @table_name = 't3', @table_owner = 'dbo'
+go
+~~START~~
+varchar#!#varchar#!#varchar#!#varchar#!#smallint#!#varchar
+db1#!#dbo#!#t3#!#c#!#1#!#t3_pkey
+db1#!#dbo#!#t3#!#b#!#2#!#t3_pkey
+~~END~~
+
+
+-- unnamed invocation
+exec sp_pkeys 't1', 'dbo', 'db1'
+go
+~~START~~
+varchar#!#varchar#!#varchar#!#varchar#!#smallint#!#varchar
+db1#!#dbo#!#t1#!#a#!#1#!#t1_pkey
+~~END~~
+
+
+-- case-insensative invocation
+EXEC SP_PKEYS @TABLE_NAME = 't2', @TABLE_OWNER = 'dbo', @TABLE_QUALIFIER = 'db1'
+GO
+~~START~~
+varchar#!#varchar#!#varchar#!#varchar#!#smallint#!#varchar
+db1#!#dbo#!#t2#!#b#!#1#!#t2_pkey
+db1#!#dbo#!#t2#!#c#!#2#!#t2_pkey
+~~END~~
+
+
+drop table t1
+go
+drop table t2
+go
+drop table t3
+go
+drop table t4
+go
+use master
+go
+drop database db1
+go

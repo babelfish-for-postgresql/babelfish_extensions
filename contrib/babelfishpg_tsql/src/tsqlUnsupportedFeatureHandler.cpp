@@ -1373,7 +1373,6 @@ const char *unsupported_sp_procedures[] = {
 	/* Catalog */
 	"sp_column_privileges",
 	"sp_fkeys",
-	"sp_pkeys",
 	"sp_server_info",
 	"sp_special_columns",
 	"sp_sproc_columns",
