@@ -907,3 +907,68 @@ END;
 $$
 LANGUAGE 'pltsql';
 GRANT EXECUTE on PROCEDURE sys.sp_databases TO PUBLIC;
+
+CREATE VIEW sys.sp_pkeys_view AS
+SELECT
+CAST(t2.dbname AS sys.sysname) AS TABLE_QUALIFIER,
+CAST(t3.rolname AS sys.sysname) AS TABLE_OWNER,
+CAST(t1.relname AS sys.sysname) AS TABLE_NAME,
+CAST(t4.column_name AS sys.sysname) AS COLUMN_NAME,
+CAST(seq AS smallint) AS KEY_SEQ,
+CAST(t5.conname AS sys.sysname) AS PK_NAME
+FROM pg_catalog.pg_class t1 
+	JOIN sys.pg_namespace_ext t2 ON t1.relnamespace = t2.oid
+	JOIN pg_catalog.pg_roles t3 ON t1.relowner = t3.oid
+	JOIN information_schema.columns t4 ON t1.relname = t4.table_name
+	JOIN pg_constraint t5 ON t1.oid = t5.conrelid
+	, generate_series(1,16) seq -- SQL server has max 16 columns per primary key
+WHERE t5.contype = 'p'
+	AND CAST(t4.dtd_identifier AS smallint) = ANY (t5.conkey)
+	AND CAST(t4.dtd_identifier AS smallint) = t5.conkey[seq];
+
+GRANT SELECT on sys.sp_pkeys_view TO PUBLIC;
+
+-- internal function in order to workaround BABEL-1597
+create function sys.sp_pkeys_internal(
+	in_table_name sys.nvarchar(384),
+	in_table_owner sys.nvarchar(384) = '',
+	in_table_qualifier sys.nvarchar(384) = ''
+)
+returns table(
+	out_table_qualifier sys.sysname,
+	out_table_owner sys.sysname,
+	out_table_name sys.sysname,
+	out_column_name sys.sysname,
+	out_key_seq smallint,
+	out_pk_name sys.sysname
+)
+as $$
+begin
+	return query
+	select * from sys.sp_pkeys_view
+	where in_table_name = table_name
+		and ((SELECT coalesce(in_table_owner,'')) = '' or table_owner = in_table_owner)
+		and ((SELECT coalesce(in_table_qualifier,'')) = '' or table_qualifier = in_table_qualifier)
+	order by table_qualifier, table_owner, table_name, key_seq;
+end;
+$$
+LANGUAGE plpgsql;
+
+CREATE OR REPLACE PROCEDURE sys.sp_pkeys(
+	"@table_name" sys.nvarchar(384),
+	"@table_owner" sys.nvarchar(384) = '',
+	"@table_qualifier" sys.nvarchar(384) = ''
+)
+AS $$
+BEGIN
+	select out_table_qualifier as table_qualifier,
+			out_table_owner as table_owner,
+			out_table_name as table_name,
+			out_column_name as column_name,
+			out_key_seq as key_seq,
+			out_pk_name as pk_name
+	from sys.sp_pkeys_internal(@table_name, @table_owner, @table_qualifier);
+END; 
+$$
+LANGUAGE 'pltsql';
+GRANT ALL on PROCEDURE sys.sp_pkeys TO PUBLIC;
