@@ -1,0 +1,29 @@
+USE master
+go
+
+select cast(SERVERPROPERTY('ProductVersion') as varchar) as ProductVersion;
+select cast(SERVERPROPERTY('ProductMajorVersion') as varchar) as ProductMajorVersion;
+-- only print till the server version i.e. first newline character
+select substring(@@version, 1, CHARINDEX(CHAR(10), @@version) - 1);
+select @@microsoftversion;
+go
+~~START~~
+varchar
+12.0.2000.8
+~~END~~
+
+~~START~~
+varchar
+12
+~~END~~
+
+~~START~~
+nvarchar
+Babelfish for PostgreSQL with SQL Server Compatibility - 12.0.2000.8
+~~END~~
+
+~~START~~
+int
+201332885
+~~END~~
+
