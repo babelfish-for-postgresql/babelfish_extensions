@@ -1,0 +1,29 @@
+CREATE TABLE INT_dt(a INT);
+prepst#!#INSERT INTO INT_dt(a) values(@a) #!#INT|-|a|-|0
+prepst#!#exec#!#INT|-|a|-|-10
+prepst#!#exec#!#INT|-|a|-|10
+prepst#!#exec#!#INT|-|a|-|-12234
+prepst#!#exec#!#INT|-|a|-|22.0
+prepst#!#exec#!#INT|-|a|-|003
+prepst#!#exec#!#INT|-|a|-|9864
+prepst#!#exec#!#INT|-|a|-|-01625
+prepst#!#exec#!#INT|-|a|-|-2147483648
+prepst#!#exec#!#INT|-|a|-|2147483647
+prepst#!#exec#!#INT|-|a|-|<NULL>
+ 
+SELECT * FROM INT_dt;
+
+INSERT INTO INT_dt(a) values(0)
+INSERT INTO INT_dt(a) values(-10)
+INSERT INTO INT_dt(a) values(10)
+INSERT INTO INT_dt(a) values(-12345)
+INSERT INTO INT_dt(a) values(22)
+INSERT INTO INT_dt(a) values(004)
+INSERT INTO INT_dt(a) values(-01645)
+INSERT INTO INT_dt(a) values(-2147483648)
+INSERT INTO INT_dt(a) values(2147483647)
+INSERT INTO INT_dt(a) values(NULL)
+
+SELECT * FROM INT_dt;
+
+DROP TABLE INT_dt;

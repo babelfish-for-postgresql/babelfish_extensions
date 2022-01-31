@@ -1,0 +1,36 @@
+CREATE TABLE uniqueidentifier_dt (a uniqueidentifier);
+
+INSERT INTO uniqueidentifier_dt VALUES ('51f178a6-53c7-472c-9be1-1c08942342d7')
+INSERT INTO uniqueidentifier_dt VALUES ('dd8cb046-461d-411e-be40-d219252ce849')
+INSERT INTO uniqueidentifier_dt VALUES ('b84ebcc9-c927-4cfe-b08e-dc7f25b5087c')
+INSERT INTO uniqueidentifier_dt VALUES ('bab96bc8-60b9-40dd-b0de-c90a80f5739e')
+INSERT INTO uniqueidentifier_dt VALUES ('d424fdef-1404-4bac-8289-c725b540f93d')
+INSERT INTO uniqueidentifier_dt VALUES ('60aeaa5c-e272-4b17-bad0-c25710fd7a60')
+INSERT INTO uniqueidentifier_dt VALUES ('253fb146-7e45-45ef-9d92-bbe14a8ad1b2')
+INSERT INTO uniqueidentifier_dt VALUES ('dba2726c-2131-409f-aefa-5c8079571623')
+INSERT INTO uniqueidentifier_dt VALUES ('b3400fa7-3a60-40ec-b40e-fc85a3eb262d')
+INSERT INTO uniqueidentifier_dt VALUES ('851763b5-b068-42ae-88ec-764bfb0e5605')
+INSERT INTO uniqueidentifier_dt VALUES (NULL)
+
+SELECT * FROM uniqueidentifier_dt
+
+prepst#!#INSERT INTO uniqueidentifier_dt VALUES (@a1)#!#uniqueidentifier|-|a1|-|51f178a6-53c7-472c-9be1-1c08942342d7
+prepst#!#exec#!#uniqueidentifier|-|a1|-|767392df-87d0-450d-9b24-85a86c02811d
+prepst#!#exec#!#uniqueidentifier|-|a1|-|9bcb5632-53c3-4695-b617-d9a7055813ce
+prepst#!#exec#!#uniqueidentifier|-|a1|-|ac81a140-f686-4259-9b90-dd46f10b355f
+prepst#!#exec#!#uniqueidentifier|-|a1|-|3d08372d-770c-48b9-9740-a667d036680e
+prepst#!#exec#!#uniqueidentifier|-|a1|-|518d52c7-4d79-4143-ab33-b3765689fdf4
+prepst#!#exec#!#uniqueidentifier|-|a1|-|bc3fa456-7391-4060-b5d8-430048075cf4
+prepst#!#exec#!#uniqueidentifier|-|a1|-|3b75b2dd-01b7-4958-9de7-f92410693547
+prepst#!#exec#!#uniqueidentifier|-|a1|-|ce8af10a-2709-43b0-9e4e-a02753929d17
+prepst#!#exec#!#uniqueidentifier|-|a1|-|5b7c2e8d-6d90-411d-8e19-9a81067e6f6c
+prepst#!#exec#!#uniqueidentifier|-|a1|-|<NULL>
+
+SELECT * FROM uniqueidentifier_dt;
+
+# to demonstrate the truncation of data when the value is too long
+INSERT INTO uniqueidentifier_dt VALUES ('51f178a6-53c7-472c-9be1-1c08942342d7thisIsTooLong')
+prepst#!#INSERT INTO uniqueidentifier_dt VALUES (@a2)#!#uniqueidentifier|-|a2|-|51f178a6-53c7-472c-9be1-1c08942342d7
+#prepst#!#exec#!#uniqueidentifier|-|a2|-|767392df-87d0-450d-9b24-85a86c02811dthisIsTooLong
+SELECT * FROM uniqueidentifier_dt;
+DROP TABLE uniqueidentifier_dt;

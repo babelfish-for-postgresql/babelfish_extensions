@@ -1,0 +1,56 @@
+#Q#CREATE TABLE TINYINT_dt (a TINYINT)
+#Q# INSERT INTO TINYINT_dt(a) values(@a) 
+#Q# INSERT INTO TINYINT_dt(a) values(@a) 
+#Q# INSERT INTO TINYINT_dt(a) values(@a) 
+#Q# INSERT INTO TINYINT_dt(a) values(@a) 
+#Q# INSERT INTO TINYINT_dt(a) values(@a) 
+#Q# INSERT INTO TINYINT_dt(a) values(@a) 
+#Q# INSERT INTO TINYINT_dt(a) values(@a) 
+#Q# INSERT INTO TINYINT_dt(a) values(@a) 
+#Q# INSERT INTO TINYINT_dt(a) values(@a) 
+#Q# INSERT INTO TINYINT_dt(a) values(@a) 
+#Q#SELECT * FROM TINYINT_dt;
+#D#tinyint
+0
+0
+100
+2
+29
+4
+87
+0
+254
+
+#Q#INSERT INTO TINYINT_dt(a) values(0)
+#Q#INSERT INTO TINYINT_dt(a) values(120)
+#Q#INSERT INTO TINYINT_dt(a) values(100)
+#Q#INSERT INTO TINYINT_dt(a) values(004)
+#Q#INSERT INTO TINYINT_dt(a) values(0)
+#Q#INSERT INTO TINYINT_dt(a) values(002)
+#Q#INSERT INTO TINYINT_dt(a) values(86)
+#Q#INSERT INTO TINYINT_dt(a) values(0)
+#Q#INSERT INTO TINYINT_dt(a) values(255)
+#Q#INSERT INTO TINYINT_dt(a) values(NULL)
+#Q#SELECT * FROM TINYINT_dt;
+#D#tinyint
+0
+0
+100
+2
+29
+4
+87
+0
+254
+
+0
+120
+100
+4
+0
+2
+86
+0
+255
+
+#Q#DROP TABLE TINYINT_dt;

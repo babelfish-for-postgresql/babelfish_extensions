@@ -1,0 +1,257 @@
+#Q#CREATE TABLE tmp(a int PRIMARY KEY, b int UNIQUE);
+#E#Nullable UNIQUE constraint is not supported. Please use babelfishpg_tsql.escape_hatch_unique_constraint to ignore or add a NOT NULL constraint
+#Q#INSERT INTO tmp(a,b) values(1,1);
+#E#relation "tmp" does not exist
+#Q#INSERT INTO tmp(a,b) values(2,2);
+#E#relation "tmp" does not exist
+#Q#SELECT * FROM tmp;
+#E#relation "tmp" does not exist
+#Q#DROP TABLE tmp;
+#E#table "tmp" does not exist
+#Q#CREATE TABLE tmp(a int PRIMARY KEY,b int NOT NULL);
+#Q#INSERT INTO tmp(a,b) values(1,1);
+#Q#INSERT INTO tmp(a,b) values(2,1);
+#Q#SELECT * FROM tmp;
+#D#int#!#int
+1#!#1
+2#!#1
+#Q#DROP TABLE tmp;
+#Q#CREATE TABLE tmp(a int PRIMARY KEY);
+#Q#INSERT INTO tmp(a) VALUES(1);
+#Q#INSERT INTO tmp(a) VALUES(2);
+#Q#INSERT INTO tmp(a) VALUES(3);
+#Q#INSERT INTO tmp(a) VALUES(4);
+#Q#INSERT INTO tmp(a) VALUES(5);
+#Q#SELECT * FROM tmp;
+#D#int
+1
+2
+3
+4
+5
+#Q#DELETE FROM tmp WHERE a>2;
+#Q#SELECT * FROM tmp;
+#D#int
+1
+2
+#Q#DROP TABLE tmp;
+#Q#CREATE TABLE tmp(a int PRIMARY KEY,b int);
+#Q#INSERT INTO tmp(a,b) values(1,1);
+#Q#INSERT INTO tmp(a,b) values(2,1);
+#Q#INSERT INTO tmp(a,b) values(3,NULL);
+#Q#INSERT INTO tmp(a,b) values(4,NULL);
+#Q#SELECT * FROM tmp WHERE b IS NOT NULL;
+#D#int#!#int
+1#!#1
+2#!#1
+#Q#DROP TABLE tmp;
+#Q#CREATE TABLE tmp(a int PRIMARY KEY);
+#Q#INSERT INTO tmp(a) VALUES(1);
+#Q#INSERT INTO tmp(a) VALUES(2);
+#Q#SELECT * FROM tmp;
+#D#int
+1
+2
+#Q#SELECT * FROM tmp;
+#D#int
+1
+2
+#Q#SELECT * FROM tmp;
+#D#int
+1
+2
+#Q#DROP TABLE tmp;
+#Q#CREATE TABLE tmp(a int PRIMARY KEY);
+#Q#INSERT INTO tmp(a) VALUES(1);
+#Q#INSERT INTO tmp(a) VALUES(2);
+#Q#SELECT * FROM tmp;
+#D#int
+1
+2
+#Q#SELECT * FROM tmp;
+#D#int
+1
+2
+#Q#SELECT * FROM tmp;
+#D#int
+1
+2
+#Q#DROP TABLE tmp;
+#Q#CREATE TABLE tmp(a int PRIMARY KEY,b int);
+#Q#INSERT INTO tmp(a,b) VALUES(1,1);
+#Q#INSERT INTO tmp(a,b) VALUES(2,2);
+#Q#SELECT * FROM tmp;
+#D#int#!#int
+1#!#1
+2#!#2
+#Q#SELECT * FROM tmp;
+#D#int#!#int
+1#!#1
+2#!#2
+#Q#SELECT * FROM tmp;
+#D#int#!#int
+1#!#1
+2#!#2
+#Q#DROP TABLE tmp;
+#Q#CREATE TABLE tmp(a int PRIMARY KEY,b int);
+#Q#INSERT INTO tmp(a,b) VALUES(1,1);
+#Q#INSERT INTO tmp(a,b) VALUES(2,2);
+#Q#INSERT INTO tmp(a,b) VALUES(3,3);
+#Q#INSERT INTO tmp(a,b) VALUES(4,4);
+#Q#INSERT INTO tmp(a,b) VALUES(5,5);
+#Q#SELECT * FROM tmp;
+#D#int#!#int
+1#!#1
+2#!#2
+3#!#3
+4#!#4
+5#!#5
+#Q#UPDATE tmp SET b=b+1 WHERE b>2;
+#Q#SELECT * FROM tmp;
+#D#int#!#int
+1#!#1
+2#!#2
+3#!#4
+4#!#5
+5#!#6
+#Q#DROP TABLE tmp;
+#Q#CREATE TABLE tmp(a int PRIMARY KEY,b int);
+#Q#INSERT INTO tmp(a,b) VALUES(1,1);
+#Q#INSERT INTO tmp(a,b) VALUES(2,2);
+#Q#INSERT INTO tmp(a,b) VALUES(3,3);
+#Q#INSERT INTO tmp(a,b) VALUES(4,4);
+#Q#INSERT INTO tmp(a,b) VALUES(5,5);
+#Q#SELECT * FROM tmp;
+#D#int#!#int
+1#!#1
+2#!#2
+3#!#3
+4#!#4
+5#!#5
+#Q#INSERT INTO tmp(a) values (6);
+#Q#SELECT * FROM tmp;
+#D#int#!#int
+1#!#1
+2#!#2
+3#!#3
+4#!#4
+5#!#5
+6#!#
+#Q#DROP TABLE tmp;
+#Q#CREATE TABLE tmp(a int PRIMARY KEY CHECK (a>10),b int);
+#Q#INSERT INTO tmp(a,b) VALUES(11,1);
+#Q#INSERT INTO tmp(a,b) VALUES(12,2);
+#Q#INSERT INTO tmp(a,b) VALUES(13,3);
+#Q#INSERT INTO tmp(a,b) VALUES(14,4);
+#Q#INSERT INTO tmp(a,b) VALUES(15,5);
+#Q#SELECT * FROM tmp;
+#D#int#!#int
+11#!#1
+12#!#2
+13#!#3
+14#!#4
+15#!#5
+#Q#DROP TABLE tmp;
+#Q#CREATE PROCEDURE tmp AS BEGIN CREATE TABLE dip(a int PRIMARY KEY CHECK (a>10),b int); INSERT INTO dip(a,b) VALUES(11,1); INSERT INTO dip(a,b) VALUES(12,2); INSERT INTO dip(a,b) VALUES(13,3); INSERT INTO dip(a,b) VALUES(14,4); INSERT INTO dip(a,b) VALUES(15,5); SELECT * FROM dip; DROP TABLE dip; END;
+#Q#DROP PROCEDURE tmp;
+#Q#CREATE TABLE tmp(a int PRIMARY KEY,b int);
+#Q#INSERT INTO tmp(a,b) VALUES(1,1),(2,2),(3,3),(4,4),(5,5);
+#Q#SELECT * FROM tmp;
+#D#int#!#int
+1#!#1
+2#!#2
+3#!#3
+4#!#4
+5#!#5
+#Q#UPDATE tmp SET b=b*2+1 WHERE (a>2);
+#Q#SELECT * FROM tmp;
+#D#int#!#int
+1#!#1
+2#!#2
+3#!#7
+4#!#9
+5#!#11
+#Q#DROP TABLE tmp;
+#Q#CREATE TABLE tmp(a int PRIMARY KEY,b int);
+#Q#INSERT INTO tmp(a,b) VALUES(1,1),(2,2),(3,3),(4,4),(5,5);
+#Q#SELECT * FROM tmp;
+#D#int#!#int
+1#!#1
+2#!#2
+3#!#3
+4#!#4
+5#!#5
+#Q#SELECT * FROM tmp;
+#D#int#!#int
+1#!#1
+2#!#2
+3#!#3
+4#!#4
+5#!#5
+#Q#DROP TABLE tmp;
+#Q#CREATE TABLE temp1 (i INT,j INT,t TEXT);
+#Q#CREATE TABLE temp2 ( i INT,k INT);
+#Q#INSERT INTO temp1 VALUES (1, 4, 'one');
+#Q#INSERT INTO temp1 VALUES (2, 3, 'two');
+#Q#INSERT INTO temp1 VALUES (3, 2, 'three');
+#Q#INSERT INTO temp1 VALUES (4, 1, 'four');
+#Q#INSERT INTO temp1 VALUES (5, 0, 'five');
+#Q#INSERT INTO temp1 VALUES (6, 6, 'six');
+#Q#INSERT INTO temp1 VALUES (7, 7, 'seven');
+#Q#INSERT INTO temp1 VALUES (8, 8, 'eight');
+#Q#INSERT INTO temp1 VALUES (0, NULL, 'zero');
+#Q#INSERT INTO temp1 VALUES (NULL, NULL, NULL);
+#Q#INSERT INTO temp1 VALUES (NULL, 0, 'zero');
+#Q#INSERT INTO temp2 VALUES (1, -1);
+#Q#INSERT INTO temp2 VALUES (2, 2);
+#Q#INSERT INTO temp2 VALUES (3, -3);
+#Q#INSERT INTO temp2 VALUES (2, 4);
+#Q#INSERT INTO temp2 VALUES (5, -5);
+#Q#INSERT INTO temp2 VALUES (5, -5);
+#Q#INSERT INTO temp2 VALUES (0, NULL);
+#Q#INSERT INTO temp2 VALUES (NULL, NULL);
+#Q#INSERT INTO temp2 VALUES (NULL, 0);
+#Q#DROP TABLE temp1;
+#Q#DROP TABLE temp2;
+#Q#CREATE TABLE tmp(a int PRIMARY KEY,b int);
+#Q#INSERT INTO tmp(a,b) VALUES(1,1);
+#Q#INSERT INTO tmp(a,b) VALUES(2,2);
+#Q#INSERT INTO tmp(a,b) VALUES(3,3);
+#Q#INSERT INTO tmp(a,b) VALUES(4,4);
+#Q#INSERT INTO tmp(a,b) VALUES(5,5);
+#Q#SELECT * FROM tmp;
+#D#int#!#int
+1#!#1
+2#!#2
+3#!#3
+4#!#4
+5#!#5
+#Q#SELECT * FROM tmp;
+#D#int#!#int
+1#!#1
+2#!#2
+3#!#3
+4#!#4
+5#!#5
+#Q#DROP TABLE tmp;
+#Q#CREATE TABLE DATE_dt (a DATE);
+#Q#INSERT INTO DATE_dt(a) values('2000-12-13');
+#Q#INSERT INTO DATE_dt(a) values('1900-02-28');
+#Q#INSERT INTO DATE_dt(a) values('0001-01-01');
+#Q#INSERT INTO DATE_dt(a) values('9999-12-31');
+#Q#INSERT INTO DATE_dt(a) values(NULL);
+#Q#SELECT * FROM DATE_dt;
+#D#date
+12/13/2000 00:00:00
+02/28/1900 00:00:00
+01/01/0001 00:00:00
+12/31/9999 00:00:00
+
+#Q#SELECT * FROM DATE_dt;
+#D#date
+12/13/2000 00:00:00
+02/28/1900 00:00:00
+01/01/0001 00:00:00
+12/31/9999 00:00:00
+
+#Q#DROP TABLE DATE_dt;

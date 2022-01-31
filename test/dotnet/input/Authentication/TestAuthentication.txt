@@ -1,0 +1,60 @@
+# THIS IS FOR .NET
+
+dotnet_auth#!#db|-|demo#!#user|-|kushaal
+dotnet_auth#!#db|-|demo
+dotnet_auth#!#db|-| 
+
+dotnet_auth#!#user|-|@
+dotnet_auth#!#user|-| 
+
+dotnet_auth#!#pwd|-|kushaal
+dotnet_auth#!#pwd|-| 
+
+dotnet_auth#!#url|-| 
+
+dotnet_auth#!#db|-|demo#!#user|-|kushaal1
+dotnet_auth#!#db|-|demo#!#pwd|-|hell
+
+dotnet_auth#!#db|-|demo#!#pwd|-|hell#!#others|-|ConnectRetryCount=2
+
+dotnet_auth#!#others|-|Language=English
+dotnet_auth#!#others|-|Language=French
+dotnet_auth#!#others|-|Language= 
+dotnet_auth#!#others|-|Timeout=5
+dotnet_auth#!#others|-|Timeout=0
+dotnet_auth#!#others|-|Encrypt=true
+dotnet_auth#!#others|-|Encrypt=false
+dotnet_auth#!#others|-|Max Pool Size=1
+dotnet_auth#!#others|-|Packet Size=0
+dotnet_auth#!#others|-|Packet Size=512
+dotnet_auth#!#others|-|Packet Size=32768
+dotnet_auth#!#others|-|TrustServerCertificate=true
+dotnet_auth#!#others|-|TrustServerCertificate=false
+
+
+# THIS IS FOR JAVA
+
+java_auth#!#db|-|demo
+java_auth#!#db|-| 
+java_auth#!#user|-|@
+java_auth#!#user|-| 
+java_auth#!#pwd|-|kushaal
+java_auth#!#pwd|-| 
+java_auth#!#url|-| 
+java_auth#!#db|-|demo#!#user|-|kushaal1
+java_auth#!#db|-|demo#!#pwd|-|hell
+java_auth#!#db|-|demo#!#pwd|-|hell#!#others|-|loginTimeout=10
+java_auth#!#others|-|responseBuffering=adaptive
+java_auth#!#others|-|responseBuffering=full 
+java_auth#!#others|-|socketTimeout=5
+java_auth#!#others|-|socketTimeout=1
+java_auth#!#others|-|encrypt=true
+java_auth#!#others|-|encrypt=false
+java_auth#!#others|-|disableStatementPooling=true
+java_auth#!#others|-|disableStatementPooling=false
+java_auth#!#others|-|packetSizee=0
+java_auth#!#others|-|packetSize=-1
+java_auth#!#others|-|packetSize=32767
+java_auth#!#others|-|packetSize=32768
+java_auth#!#others|-|TrustServerCertificate=true
+java_auth#!#others|-|TrustServerCertificate=false

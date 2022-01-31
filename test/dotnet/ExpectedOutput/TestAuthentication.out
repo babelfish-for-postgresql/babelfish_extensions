@@ -1,0 +1,46 @@
+#Q#Data Source = 10.200.222.164; Initial Catalog = demo; User ID = kushaal; Password = hello;Pooling=false;
+#E#database "demo" does not exist
+#Q#Data Source = 10.200.222.164; Initial Catalog = demo; User ID = kushaal; Password = hello;Pooling=false;
+#E#database "demo" does not exist
+#Q#Data Source = 10.200.222.164; Initial Catalog =  ; User ID = kushaal; Password = hello;Pooling=false;
+PASSED
+#Q#Data Source = 10.200.222.164; Initial Catalog = master; User ID = @; Password = hello;Pooling=false;
+#E#password authentication failed for user "@"
+#Q#Data Source = 10.200.222.164; Initial Catalog = master; User ID =  ; Password = hello;Pooling=false;
+#E#no PostgreSQL user name specified in startup packet
+#Q#Data Source = 10.200.222.164; Initial Catalog = master; User ID = kushaal; Password = kushaal;Pooling=false;
+#E#password authentication failed for user "kushaal"
+#Q#Data Source = 10.200.222.164; Initial Catalog = master; User ID = kushaal; Password =  ;Pooling=false;
+#E#invalid TDS authentication request for host "10.94.231.241", user "kushaal", database "master"
+#Q#Data Source = 10.200.222.164; Initial Catalog = master; User ID = kushaal; Password = hello;Pooling=false;
+PASSED
+#Q#Data Source = 10.200.222.164; Initial Catalog = demo; User ID = kushaal1; Password = hello;Pooling=false;
+#E#password authentication failed for user "kushaal1"
+#Q#Data Source = 10.200.222.164; Initial Catalog = demo; User ID = kushaal; Password = hell;Pooling=false;
+#E#password authentication failed for user "kushaal"
+#Q#Data Source = 10.200.222.164; Initial Catalog = demo; User ID = kushaal; Password = hell;Pooling=false;ConnectRetryCount=2
+#E#password authentication failed for user "kushaal"
+#Q#Data Source = 10.200.222.164; Initial Catalog = master; User ID = kushaal; Password = hello;Pooling=false;Language=English
+PASSED
+#Q#Data Source = 10.200.222.164; Initial Catalog = master; User ID = kushaal; Password = hello;Pooling=false;Language=French
+PASSED
+#Q#Data Source = 10.200.222.164; Initial Catalog = master; User ID = kushaal; Password = hello;Pooling=false;Language= 
+PASSED
+#Q#Data Source = 10.200.222.164; Initial Catalog = master; User ID = kushaal; Password = hello;Pooling=false;Timeout=5
+PASSED
+#Q#Data Source = 10.200.222.164; Initial Catalog = master; User ID = kushaal; Password = hello;Pooling=false;Timeout=0
+PASSED
+#Q#Data Source = 10.200.222.164; Initial Catalog = master; User ID = kushaal; Password = hello;Pooling=false;Encrypt=true
+#E#The instance of SQL Server you attempted to connect to does not support encryption.
+#Q#Data Source = 10.200.222.164; Initial Catalog = master; User ID = kushaal; Password = hello;Pooling=false;Encrypt=false
+PASSED
+#Q#Data Source = 10.200.222.164; Initial Catalog = master; User ID = kushaal; Password = hello;Pooling=false;Max Pool Size=1
+PASSED
+#Q#Data Source = 10.200.222.164; Initial Catalog = master; User ID = kushaal; Password = hello;Pooling=false;Packet Size=512
+PASSED
+#Q#Data Source = 10.200.222.164; Initial Catalog = master; User ID = kushaal; Password = hello;Pooling=false;Packet Size=32768
+#E#Invalid packet size: 32768, Packet size has to be zero or a number between 512 and 32767.
+#Q#Data Source = 10.200.222.164; Initial Catalog = master; User ID = kushaal; Password = hello;Pooling=false;TrustServerCertificate=true
+PASSED
+#Q#Data Source = 10.200.222.164; Initial Catalog = master; User ID = kushaal; Password = hello;Pooling=false;TrustServerCertificate=false
+PASSED

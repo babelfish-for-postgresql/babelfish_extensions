@@ -1,0 +1,38 @@
+#Q#CREATE TABLE CHAR_dt (a CHAR(20), b NCHAR(20))
+#Q# INSERT INTO CHAR_dt(a, b) values(@a, @b) 
+#Q# INSERT INTO CHAR_dt(a, b) values(@a, @b) 
+#Q# INSERT INTO CHAR_dt(a, b) values(@a, @b) 
+#Q# INSERT INTO CHAR_dt(a, b) values(@a, @b) 
+#Q# INSERT INTO CHAR_dt(a, b) values(@a, @b) 
+#Q# INSERT INTO CHAR_dt(a, b) values(@a, @b) 
+#Q# INSERT INTO CHAR_dt(a, b) values(@a, @b) 
+#E#value too long for type character(20)
+#Q#SELECT * FROM CHAR_dt;
+#D#char#!#nchar
+Dipesh              #!#Dhameliya           
+Dipesh              #!#Dhameliya           
+D                   #!#🤣😃                
+                    #!#                    
+                    #!#😊😋😎😍😅😆        
+#!#
+#Q#INSERT INTO CHAR_dt(a,b) values('Dipesh','Dhameliya')
+#Q#INSERT INTO CHAR_dt(a,b) values(' Dipesh',' Dhameliya')
+#Q#INSERT INTO CHAR_dt(a,b) values('   D',N'   🤣😃')
+#Q#INSERT INTO CHAR_dt(a,b) values(' ',' ')
+#Q#INSERT INTO CHAR_dt(a,b) values(' ',N'😊😋😎😍😅😆')
+#Q#INSERT INTO CHAR_dt(a,b) values(NULL,NULL)
+#Q#SELECT * FROM CHAR_dt;
+#D#char#!#nchar
+Dipesh              #!#Dhameliya           
+Dipesh              #!#Dhameliya           
+D                   #!#🤣😃                
+                    #!#                    
+                    #!#😊😋😎😍😅😆        
+#!#
+Dipesh              #!#Dhameliya           
+ Dipesh             #!# Dhameliya          
+   D                #!#   🤣😃             
+                    #!#                    
+                    #!#😊😋😎😍😅😆        
+#!#
+#Q#DROP TABLE CHAR_dt;

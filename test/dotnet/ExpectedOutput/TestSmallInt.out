@@ -1,0 +1,56 @@
+#Q#CREATE TABLE SMALLINT_dt (a SMALLINT)
+#Q# INSERT INTO SMALLINT_dt(a) values(@a) 
+#Q# INSERT INTO SMALLINT_dt(a) values(@a) 
+#Q# INSERT INTO SMALLINT_dt(a) values(@a) 
+#Q# INSERT INTO SMALLINT_dt(a) values(@a) 
+#Q# INSERT INTO SMALLINT_dt(a) values(@a) 
+#Q# INSERT INTO SMALLINT_dt(a) values(@a) 
+#Q# INSERT INTO SMALLINT_dt(a) values(@a) 
+#Q# INSERT INTO SMALLINT_dt(a) values(@a) 
+#Q# INSERT INTO SMALLINT_dt(a) values(@a) 
+#Q# INSERT INTO SMALLINT_dt(a) values(@a) 
+#Q#SELECT * FROM SMALLINT_dt;
+#D#smallint
+0
+-10
+100
+2
+-29
+-1234
+876
+-32768
+32767
+
+#Q#INSERT INTO SMALLINT_dt(a) values(0)
+#Q#INSERT INTO SMALLINT_dt(a) values(-10)
+#Q#INSERT INTO SMALLINT_dt(a) values(100)
+#Q#INSERT INTO SMALLINT_dt(a) values(002)
+#Q#INSERT INTO SMALLINT_dt(a) values(-029)
+#Q#INSERT INTO SMALLINT_dt(a) values(-1234)
+#Q#INSERT INTO SMALLINT_dt(a) values(876)
+#Q#INSERT INTO SMALLINT_dt(a) values(-32768)
+#Q#INSERT INTO SMALLINT_dt(a) values(32767)
+#Q#INSERT INTO SMALLINT_dt(a) values(NULL)
+#Q#SELECT * FROM SMALLINT_dt;
+#D#smallint
+0
+-10
+100
+2
+-29
+-1234
+876
+-32768
+32767
+
+0
+-10
+100
+2
+-29
+-1234
+876
+-32768
+32767
+
+#Q#DROP TABLE SMALLINT_dt;
