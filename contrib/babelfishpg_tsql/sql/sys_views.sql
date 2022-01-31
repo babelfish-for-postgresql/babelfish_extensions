@@ -954,20 +954,6 @@ from pg_index as i
 inner join pg_catalog.pg_attribute a on i.indexrelid = a.attrelid;
 GRANT SELECT ON sys.index_columns TO PUBLIC;
 
-CREATE OR REPLACE VIEW sys.configurations
-AS 
-SELECT CAST(row_number() OVER (ORDER BY s.category, s.name) as integer) AS configuration_id
-  , s.name::sys.nvarchar(35)
-  , s.setting::sys.sql_variant AS value
-  , s.min_val::sys.sql_variant AS minimum
-  , s.max_val::sys.sql_variant AS maximum
-  , s.setting::sys.sql_variant AS value_in_use
-  , s.short_desc::sys.nvarchar(255) AS description
-  , CASE WHEN s.context in ('user', 'superuser', 'backend', 'superuser-backend', 'sighup') THEN 1::sys.bit ELSE 0::sys.bit END AS is_dynamic
-  , 0::sys.bit AS is_advanced
-FROM pg_settings s;
-GRANT SELECT ON sys.configurations TO PUBLIC;
-
 CREATE or replace VIEW sys.check_constraints AS
 SELECT CAST(c.conname as sys.sysname) as name
   , oid::integer as object_id
