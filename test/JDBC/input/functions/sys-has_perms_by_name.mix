@@ -8,6 +8,12 @@ GO
 CREATE TABLE t_perms_by_name (c1 INT, c2 VARCHAR(16));
 GO
 
+SELECT * from sys.HAS_PERMS_BY_NAME('master.dbo.t_perms_by_name','OBJECT', 'SELECT');
+GO
+
+SELECT * from sys.HAS_PERMS_BY_NAME('master.dbo.t_perms_by_name','OBJECT', 'UPDATE');
+GO
+
 SELECT * from sys.HAS_PERMS_BY_NAME('dbo.t_perms_by_name','OBJECT', 'SELECT');
 GO
 
@@ -28,12 +34,18 @@ GO
 SELECT * from sys.HAS_PERMS_BY_NAME('t_perms_by_namet2','OBJECT', 'UPDATE');
 GO
 
--- invalid table spec (three part name or more)
-SELECT * from sys.HAS_PERMS_BY_NAME('dbo.t1.t2.abc','OBJECT', 'UPDATE');
+-- invalid table spec (four part name or more)
+SELECT * from sys.HAS_PERMS_BY_NAME('server.master.dbo.t_perms_by_name','OBJECT', 'UPDATE');
 GO
 
 CREATE VIEW v_perms_by_name AS
 	SELECT * from t_perms_by_name;
+GO
+
+SELECT * from sys.HAS_PERMS_BY_NAME('master.dbo.v_perms_by_name','OBJECT', 'SELECT');
+GO
+
+SELECT * from sys.HAS_PERMS_BY_NAME('master.dbo.v_perms_by_name','OBJECT', 'UPDATE');
 GO
 
 SELECT * from sys.HAS_PERMS_BY_NAME('dbo.v_perms_by_name','OBJECT', 'SELECT');
@@ -54,7 +66,13 @@ REVOKE SELECT ON master_dbo.t_perms_by_name FROM master_dbo;
 GO
 
 -- tsql
+SELECT * from sys.HAS_PERMS_BY_NAME('master.dbo.t_perms_by_name','OBJECT', 'SELECT');
+GO
+
 SELECT * from sys.HAS_PERMS_BY_NAME('dbo.t_perms_by_name','OBJECT', 'SELECT');
+GO
+
+SELECT * from sys.HAS_PERMS_BY_NAME('master.dbo.t_perms_by_name','OBJECT', 'UPDATE');
 GO
 
 SELECT * from sys.HAS_PERMS_BY_NAME('dbo.t_perms_by_name','OBJECT', 'UPDATE');
@@ -65,7 +83,13 @@ REVOKE SELECT ON master_dbo.v_perms_by_name FROM master_dbo;
 GO
 
 -- tsql
+SELECT * from sys.HAS_PERMS_BY_NAME('master.dbo.v_perms_by_name','OBJECT', 'SELECT');
+GO
+
 SELECT * from sys.HAS_PERMS_BY_NAME('dbo.v_perms_by_name','OBJECT', 'SELECT');
+GO
+
+SELECT * from sys.HAS_PERMS_BY_NAME('master.dbo.v_perms_by_name','OBJECT', 'UPDATE');
 GO
 
 SELECT * from sys.HAS_PERMS_BY_NAME('dbo.v_perms_by_name','OBJECT', 'UPDATE');
@@ -77,7 +101,13 @@ GRANT SELECT ON master_dbo.v_perms_by_name TO master_dbo;
 GO
 
 -- tsql
+SELECT * from sys.HAS_PERMS_BY_NAME('master.dbo.t_perms_by_name','OBJECT', 'SELECT');
+GO
+
 SELECT * from sys.HAS_PERMS_BY_NAME('dbo.t_perms_by_name','OBJECT', 'SELECT');
+GO
+
+SELECT * from sys.HAS_PERMS_BY_NAME('master.dbo.v_perms_by_name','OBJECT', 'SELECT');
 GO
 
 SELECT * from sys.HAS_PERMS_BY_NAME('dbo.v_perms_by_name','OBJECT', 'SELECT');
