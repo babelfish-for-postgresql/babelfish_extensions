@@ -14,34 +14,36 @@ RETURNS TABLE (
     out_system_type_id int,
     out_user_type_id int,
     out_max_length smallint,
-    out_precision int,
-    out_scale int,
+    out_precision sys.tinyint,
+    out_scale sys.tinyint,
     out_collation_name sys.sysname,
-    out_is_nullable smallint,
-    out_is_ansi_padded smallint,
-    out_is_rowguidcol smallint,
-    out_is_identity smallint,
-    out_is_computed smallint,
-    out_is_filestream smallint,
-    out_is_replicated smallint,
-    out_is_non_sql_subscribed smallint,
-    out_is_merge_published smallint,
-    out_is_dts_replicated smallint,
-    out_is_xml_document smallint,
+    out_is_nullable sys.bit,
+    out_is_ansi_padded sys.bit,
+    out_is_rowguidcol sys.bit,
+    out_is_identity sys.bit,
+    out_is_computed sys.bit,
+    out_is_filestream sys.bit,
+    out_is_replicated sys.bit,
+    out_is_non_sql_subscribed sys.bit,
+    out_is_merge_published sys.bit,
+    out_is_dts_replicated sys.bit,
+    out_is_xml_document sys.bit,
     out_xml_collection_id int,
     out_default_object_id int,
     out_rule_object_id int,
-    out_is_sparse smallint,
-    out_is_column_set smallint,
-    out_generated_always_type smallint,
+    out_is_sparse sys.bit,
+    out_is_column_set sys.bit,
+    out_generated_always_type sys.tinyint,
     out_generated_always_type_desc sys.nvarchar(60),
     out_encryption_type int,
     out_encryption_type_desc sys.nvarchar(64),
     out_encryption_algorithm_name sys.sysname,
     out_column_encryption_key_id int,
     out_column_encryption_key_database_name sys.sysname,
-    out_is_hidden smallint,
-    out_is_masked smallint
+    out_is_hidden sys.bit,
+    out_is_masked sys.bit,
+    out_graph_type int,
+    out_graph_type_desc sys.nvarchar(60)
 )
 AS
 $$
@@ -53,35 +55,37 @@ BEGIN
 			CAST(t.oid AS int),
 			CAST(t.oid AS int),
 			CAST(a.attlen AS smallint),
-			CAST(case when isc.datetime_precision is null then coalesce(isc.numeric_precision, 0) else isc.datetime_precision end AS int),
-			CAST(coalesce(isc.numeric_scale, 0) AS int),
+			CAST(case when isc.datetime_precision is null then coalesce(isc.numeric_precision, 0) else isc.datetime_precision end AS sys.tinyint),
+			CAST(coalesce(isc.numeric_scale, 0) AS sys.tinyint),
 			CAST(coll.collname AS sys.sysname),
-			CAST(case when a.attnotnull then 0 else 1 end AS smallint),
-			CAST(case when t.typname in ('bpchar', 'nchar', 'binary') then 1 else 0 end AS smallint),
-			CAST(0 AS smallint),
-			CAST(case when a.attidentity <> ''::"char" then 1 else 0 end AS smallint),
-			CAST(case when a.attgenerated <> ''::"char" then 1 else 0 end AS smallint),
-			CAST(0 AS smallint),
-			CAST(0 AS smallint),
-			CAST(0 AS smallint),
-			CAST(0 AS smallint),
-			CAST(0 AS smallint),
-			CAST(0 AS smallint),
+			CAST(case when a.attnotnull then 0 else 1 end AS sys.bit),
+			CAST(case when t.typname in ('bpchar', 'nchar', 'binary') then 1 else 0 end AS sys.bit),
+			CAST(0 AS sys.bit),
+			CAST(case when a.attidentity <> ''::"char" then 1 else 0 end AS sys.bit),
+			CAST(case when a.attgenerated <> ''::"char" then 1 else 0 end AS sys.bit),
+			CAST(0 AS sys.bit),
+			CAST(0 AS sys.bit),
+			CAST(0 AS sys.bit),
+			CAST(0 AS sys.bit),
+			CAST(0 AS sys.bit),
+			CAST(0 AS sys.bit),
 			CAST(0 AS int),
 			CAST(coalesce(d.oid, 0) AS int),
 			CAST(coalesce((select oid from pg_constraint where conrelid = t.oid
 						and contype = 'c' and a.attnum = any(conkey) limit 1), 0) AS int),
-			CAST(0 AS smallint),
-			CAST(0 AS smallint),
-			CAST(0 AS smallint),
+			CAST(0 AS sys.bit),
+			CAST(0 AS sys.bit),
+			CAST(0 AS sys.tinyint),
 			CAST('NOT_APPLICABLE' AS sys.nvarchar(60)),
 			CAST(null AS int),
 			CAST(null AS sys.nvarchar(64)),
 			CAST(null AS sys.sysname),
 			CAST(null AS int),
 			CAST(null AS sys.sysname),
-			CAST(0 AS smallint),
-			CAST(0 AS smallint)
+			CAST(0 AS sys.bit),
+			CAST(0 AS sys.bit),
+			CAST(null AS int),
+			CAST(null AS sys.nvarchar(60))
 		FROM pg_attribute a
 		INNER JOIN pg_class c ON c.oid = a.attrelid
 		INNER JOIN pg_type t ON t.oid = a.atttypid
@@ -134,6 +138,8 @@ select out_object_id as object_id
   , out_column_encryption_key_database_name as column_encryption_key_database_name
   , out_is_hidden as is_hidden
   , out_is_masked as is_masked
+  , out_graph_type as graph_type
+  , out_graph_type_desc as graph_type_desc
 from sys.columns_internal();
 GRANT SELECT ON sys.columns TO PUBLIC;
 
@@ -850,54 +856,20 @@ select CAST(('DF_' || o.relname || '_' || d.oid) as sys.sysname) as name
 from pg_catalog.pg_attrdef as d
 inner join pg_catalog.pg_class as o on (d.adrelid = o.oid);
 GRANT SELECT ON sys.default_constraints TO PUBLIC;
-  
+
 DROP VIEW IF EXISTS sys.computed_columns;
 CREATE OR REPLACE VIEW sys.computed_columns
-AS 
-SELECT d.adrelid AS object_id
-  , CAST(a.attname as sys.sysname) AS name
-  , a.attnum::int AS column_id
-  , a.atttypid AS system_type_id
-  , a.atttypid AS user_type_id
-  , 0::smallint AS max_length
-  , null::sys.tinyint AS precision
-  , null::sys.tinyint AS scale
-  , null::sys.sysname AS collation_name
-  , 0::sys.bit AS is_nullable
-  , 0::sys.bit AS is_ansi_padded
-  , 0::sys.bit AS is_rowguidcol
-  , 0::sys.bit AS is_identity
-  , 0::sys.bit AS is_filestream
-  , 0::sys.bit AS is_replicated
-  , 0::sys.bit AS is_non_sql_subscribed
-  , 0::sys.bit AS is_merge_published
-  , 0::sys.bit AS is_dts_replicated
-  , 0::sys.bit AS is_xml_document
-  , 0 AS xml_collection_id
-  , 0 AS default_object_id
-  , 0 AS rule_object_id
+AS
+SELECT sc.*
   , pg_get_expr(d.adbin, d.adrelid) AS definition
   , 1::sys.bit AS uses_database_collation
   , 0::sys.bit AS is_persisted
-  , 1::sys.bit AS is_computed
-  , 0::sys.bit AS is_sparse
-  , 0::sys.bit AS is_column_set
-  , 0::sys.tinyint AS generated_always_type
-  , 'NOT_APPLICABLE'::sys.nvarchar(60) as generated_always_type_desc
-  , null::integer AS encryption_type
-  , null::sys.nvarchar(64) AS encryption_type_desc
-  , null::sys.sysname AS encryption_algorithm_name
-  , null::integer AS column_encryption_key_id
-  , null::sys.sysname AS column_encryption_key_database_name
-  , 0::sys.bit AS is_hidden
-  , 0::sys.bit AS is_masked
-  , null::integer AS graph_type
-  , null::sys.nvarchar(60) AS graph_type_desc
-FROM pg_attrdef d
-JOIN pg_attribute a ON d.adrelid = a.attrelid AND d.adnum = a.attnum
-WHERE a.attgenerated = 's';
+FROM sys.columns sc
+INNER JOIN pg_attribute a ON sc.name = a.attname AND sc.column_id = a.attnum
+INNER JOIN pg_attrdef d ON d.adrelid = a.attrelid AND d.adnum = a.attnum
+WHERE a.attgenerated = 's' AND sc.is_computed::integer = 1;
 GRANT SELECT ON sys.computed_columns TO PUBLIC;
-  
+
 DROP VIEW IF EXISTS sys.index_columns;
 create or replace view sys.index_columns
 as
