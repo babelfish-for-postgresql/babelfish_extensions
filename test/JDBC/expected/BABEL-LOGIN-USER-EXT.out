@@ -220,12 +220,6 @@ GO
 ~~ERROR (Message: only sysadmin role is supported in ALTER SERVER ROLE statement)~~
 
 
-ALTER SERVER ROLE sysadmin ADD MEMBER jdbc_user;
-GO
-
-ALTER SERVER ROLE sysadmin DROP MEMBER jdbc_user;
-GO
-
 -- Test CREATE User
 CREATE USER user1;
 GO
