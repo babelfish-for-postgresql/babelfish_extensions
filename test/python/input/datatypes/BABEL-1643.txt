@@ -1,0 +1,3 @@
+exec sp_datatype_info_100 @data_type = 1;
+
+exec sp_datatype_info @data_type = 2;

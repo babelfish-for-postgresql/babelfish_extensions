@@ -1,0 +1,4 @@
+#database name, username and password should not exceed 128 characters
+#not sure why any password is accepted during authentication through cloud desktop
+#This test should throw error but from cloud desktop a connection is successfully established
+#py_auth#!#password|-|11111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111111

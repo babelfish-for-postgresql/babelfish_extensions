@@ -1,0 +1,106 @@
+CREATE TABLE REAL_dt (a REAL)
+prepst#!# INSERT INTO REAL_dt(a) values(%s) #!#REAL|-|a|-|0
+~~ROW COUNT: 1~~
+
+prepst#!#exec#!#REAL|-|a|-|1.050
+~~ROW COUNT: 1~~
+
+prepst#!#exec#!#REAL|-|a|-|01.05
+~~ROW COUNT: 1~~
+
+prepst#!#exec#!#REAL|-|a|-|0001202
+~~ROW COUNT: 1~~
+
+prepst#!#exec#!#REAL|-|a|-|-024112329
+~~ROW COUNT: 1~~
+
+prepst#!#exec#!#REAL|-|a|-|-02.5
+~~ROW COUNT: 1~~
+
+prepst#!#exec#!#REAL|-|a|-|0000000000000000086
+~~ROW COUNT: 1~~
+
+prepst#!#exec#!#REAL|-|a|-|-3.40E+38
+~~ROW COUNT: 1~~
+
+prepst#!#exec#!#REAL|-|a|-|3.40E+38
+~~ROW COUNT: 1~~
+
+prepst#!#exec#!#REAL|-|a|-|<NULL>
+~~ROW COUNT: 1~~
+
+SELECT * FROM REAL_dt;
+~~START~~
+int
+0.0
+1.0499999523162842
+1.0499999523162842
+1202.0
+-24112328.0
+-2.5
+86.0
+-3.3999999521443642e+38
+3.3999999521443642e+38
+<NULL>
+~~END~~
+
+~~ROW COUNT: 10~~
+
+INSERT INTO REAL_dt(a) values(0)
+~~ROW COUNT: 1~~
+
+INSERT INTO REAL_dt(a) values(1.050)
+~~ROW COUNT: 1~~
+
+INSERT INTO REAL_dt(a) values(01.05)
+~~ROW COUNT: 1~~
+
+INSERT INTO REAL_dt(a) values(-004)
+~~ROW COUNT: 1~~
+
+INSERT INTO REAL_dt(a) values(-0122455324.5)
+~~ROW COUNT: 1~~
+
+INSERT INTO REAL_dt(a) values(-000002)
+~~ROW COUNT: 1~~
+
+INSERT INTO REAL_dt(a) values(0000000000000000086)
+~~ROW COUNT: 1~~
+
+INSERT INTO REAL_dt(a) values(-3.40E+38)
+~~ROW COUNT: 1~~
+
+INSERT INTO REAL_dt(a) values(3.40E+38)
+~~ROW COUNT: 1~~
+
+INSERT INTO REAL_dt(a) values(NULL)
+~~ROW COUNT: 1~~
+
+SELECT * FROM REAL_dt;
+~~START~~
+int
+0.0
+1.0499999523162842
+1.0499999523162842
+1202.0
+-24112328.0
+-2.5
+86.0
+-3.3999999521443642e+38
+3.3999999521443642e+38
+<NULL>
+0.0
+1.0499999523162842
+1.0499999523162842
+-4.0
+-122455328.0
+-2.0
+86.0
+-3.3999999521443642e+38
+3.3999999521443642e+38
+<NULL>
+~~END~~
+
+~~ROW COUNT: 20~~
+
+DROP TABLE REAL_dt;

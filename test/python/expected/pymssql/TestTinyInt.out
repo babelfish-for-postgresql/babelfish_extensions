@@ -1,0 +1,105 @@
+CREATE TABLE TINYINT_dt (a TINYINT)
+prepst#!# INSERT INTO TINYINT_dt(a) values(%s) #!#TINYINT|-|a|-|0
+~~ROW COUNT: 1~~
+
+prepst#!#exec#!#TINYINT|-|a|-|-10
+~~ERROR (Code: 220)~~
+~~ERROR (Message: 'value for domain tinyint violates check constraint "tinyint_check"DB-Lib error message 20018, severity 16:\nGeneral SQL Server error: Check messages from the SQL Server\n')~~
+
+prepst#!#exec#!#TINYINT|-|a|-|100
+~~ROW COUNT: 1~~
+
+prepst#!#exec#!#TINYINT|-|a|-|002
+~~ROW COUNT: 1~~
+
+prepst#!#exec#!#TINYINT|-|a|-|029
+~~ROW COUNT: 1~~
+
+prepst#!#exec#!#TINYINT|-|a|-|004
+~~ROW COUNT: 1~~
+
+prepst#!#exec#!#TINYINT|-|a|-|87
+~~ROW COUNT: 1~~
+
+prepst#!#exec#!#TINYINT|-|a|-|0
+~~ROW COUNT: 1~~
+
+prepst#!#exec#!#TINYINT|-|a|-|255
+~~ROW COUNT: 1~~
+
+prepst#!#exec#!#TINYINT|-|a|-|<NULL>
+~~ROW COUNT: 1~~
+
+SELECT * FROM TINYINT_dt;
+~~START~~
+int
+0
+100
+2
+29
+4
+87
+0
+255
+<NULL>
+~~END~~
+
+~~ROW COUNT: 9~~
+
+INSERT INTO TINYINT_dt(a) values(0)
+~~ROW COUNT: 1~~
+
+INSERT INTO TINYINT_dt(a) values(120)
+~~ROW COUNT: 1~~
+
+INSERT INTO TINYINT_dt(a) values(100)
+~~ROW COUNT: 1~~
+
+INSERT INTO TINYINT_dt(a) values(004)
+~~ROW COUNT: 1~~
+
+INSERT INTO TINYINT_dt(a) values(0)
+~~ROW COUNT: 1~~
+
+INSERT INTO TINYINT_dt(a) values(002)
+~~ROW COUNT: 1~~
+
+INSERT INTO TINYINT_dt(a) values(86)
+~~ROW COUNT: 1~~
+
+INSERT INTO TINYINT_dt(a) values(1000)
+~~ERROR (Code: 220)~~
+~~ERROR (Message: 'value for domain tinyint violates check constraint "tinyint_check"DB-Lib error message 20018, severity 16:\nGeneral SQL Server error: Check messages from the SQL Server\n')~~
+
+INSERT INTO TINYINT_dt(a) values(255)
+~~ROW COUNT: 1~~
+
+INSERT INTO TINYINT_dt(a) values(NULL)
+~~ROW COUNT: 1~~
+
+SELECT * FROM TINYINT_dt;
+~~START~~
+int
+0
+100
+2
+29
+4
+87
+0
+255
+<NULL>
+0
+120
+100
+4
+0
+2
+86
+255
+<NULL>
+~~END~~
+
+~~ROW COUNT: 18~~
+
+DROP TABLE TINYINT_dt;

@@ -1,0 +1,14 @@
+CREATE TABLE test_cursors_fetch_next(a INT, b SMALLINT, c BIGINT, d TINYINT, e BIT);
+INSERT INTO test_cursors_fetch_next values(0, 0, 0, 0, 0)
+~~ROW COUNT: 1~~
+
+INSERT INTO test_cursors_fetch_next values(NULL, NULL, NULL, NULL, NULL)
+~~ROW COUNT: 1~~
+
+INSERT INTO test_cursors_fetch_next values(1, 2, 3, 4, 1)
+~~ROW COUNT: 1~~
+
+INSERT INTO test_cursors_fetch_next values(211234, 9780, 891372401, 56, 1)
+~~ROW COUNT: 1~~
+
+DROP TABLE test_cursors_fetch_next

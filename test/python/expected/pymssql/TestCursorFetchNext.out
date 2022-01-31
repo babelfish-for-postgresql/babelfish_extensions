@@ -1,0 +1,83 @@
+CREATE TABLE test_cursors_fetch_next(a INT, b SMALLINT, c BIGINT, d TINYINT, e BIT);
+INSERT INTO test_cursors_fetch_next values(0, 0, 0, 0, 0)
+~~ROW COUNT: 1~~
+
+INSERT INTO test_cursors_fetch_next values(NULL, NULL, NULL, NULL, NULL)
+~~ROW COUNT: 1~~
+
+INSERT INTO test_cursors_fetch_next values(1, 2, 3, 4, 1)
+~~ROW COUNT: 1~~
+
+INSERT INTO test_cursors_fetch_next values(211234, 9780, 891372401, 56, 1)
+~~ROW COUNT: 1~~
+
+#cursor#!#fetch#!#prev
+#cursor#!#fetch#!#next
+#cursor#!#fetch#!#beforefirst
+#cursor#!#fetch#!#next
+#cursor#!#fetch#!#afterlast
+#cursor#!#fetch#!#next
+DROP TABLE test_cursors_fetch_next
+
+CREATE TABLE test_cursors_fetch_next(a CHAR(30), b VARCHAR(30), c NCHAR(30), d NVARCHAR(30));
+INSERT INTO test_cursors_fetch_next values(' ', ' ', ' ', ' ')
+~~ROW COUNT: 1~~
+
+INSERT INTO test_cursors_fetch_next values(NULL, NULL, NULL, NULL)
+~~ROW COUNT: 1~~
+
+INSERT INTO test_cursors_fetch_next values('hello', 'from the', N'server', N'side 😆')
+~~ROW COUNT: 1~~
+
+INSERT INTO test_cursors_fetch_next values('Its', 'always', N'day', N'1')
+~~ROW COUNT: 1~~
+
+#cursor#!#fetch#!#prev
+#cursor#!#fetch#!#next
+#cursor#!#fetch#!#beforefirst
+#cursor#!#fetch#!#next
+#cursor#!#fetch#!#afterlast
+#cursor#!#fetch#!#next
+DROP TABLE test_cursors_fetch_next
+
+CREATE TABLE test_cursors_fetch_next(a DATE, b DATETIME, c SMALLDATETIME);
+INSERT INTO test_cursors_fetch_next values('2000-12-13', '1900-02-28 23:59:59.989', '2000-12-13 12:58:23')
+~~ROW COUNT: 1~~
+
+INSERT INTO test_cursors_fetch_next values(NULL, NULL, NULL)
+~~ROW COUNT: 1~~
+
+INSERT INTO test_cursors_fetch_next values('1997-05-07', '1900-02-28 11:23:17.895', '2000-12-13 10:23:44')
+~~ROW COUNT: 1~~
+
+INSERT INTO test_cursors_fetch_next values('1876-08-07', '1980-02-05 16:11:45.215', '1987-10-01 07:55:24')
+~~ROW COUNT: 1~~
+
+#cursor#!#fetch#!#prev
+#cursor#!#fetch#!#next
+#cursor#!#fetch#!#beforefirst
+#cursor#!#fetch#!#next
+#cursor#!#fetch#!#afterlast
+#cursor#!#fetch#!#next
+DROP TABLE test_cursors_fetch_next
+
+CREATE TABLE test_cursors_fetch_next(a FLOAT, b REAL, c MONEY, d SMALLMONEY);
+INSERT INTO test_cursors_fetch_next values(0, 0, '$0', '$0')
+~~ROW COUNT: 1~~
+
+INSERT INTO test_cursors_fetch_next values(NULL, NULL, NULL, NULL)
+~~ROW COUNT: 1~~
+
+INSERT INTO test_cursors_fetch_next values(241.7832, 1214.691236, '62,514.00', '690.817')
+~~ROW COUNT: 1~~
+
+INSERT INTO test_cursors_fetch_next values('32546', '980.709', '1,988,232.08', '$86,798')
+~~ROW COUNT: 1~~
+
+#cursor#!#fetch#!#prev
+#cursor#!#fetch#!#next
+#cursor#!#fetch#!#beforefirst
+#cursor#!#fetch#!#next
+#cursor#!#fetch#!#afterlast
+#cursor#!#fetch#!#next
+DROP TABLE test_cursors_fetch_next

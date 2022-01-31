@@ -1,0 +1,601 @@
+--- Simple SP_PREPARE
+DECLARE @handle int;
+EXEC SP_PREPARE @handle, NULL, 'SELECT ''OK'''
+EXEC SP_EXECUTE @handle
+EXEC SP_EXECUTE @handle
+EXEC SP_EXECUTE @handle
+EXEC SP_UNPREPARE @handle
+GO
+~~START~~
+int
+~~END~~
+
+~~ERROR (Code: 33557097)~~
+~~ERROR (Message: 'handle argument of sp_execute is nullDB-Lib error message 20018, severity 16:\nGeneral SQL Server error: Check messages from the SQL Server\n')~~
+
+--- Simple SP_PREPEXEC
+DECLARE @handle int;
+EXEC SP_PREPEXEC @handle OUT, NULL, 'SELECT ''OK'''
+EXEC SP_EXECUTE @handle
+EXEC SP_EXECUTE @handle
+EXEC SP_EXECUTE @handle
+EXEC SP_UNPREPARE @handle
+GO
+~~START~~
+int
+OK
+~~END~~
+
+~~START~~
+int
+OK
+~~END~~
+
+~~START~~
+int
+OK
+~~END~~
+
+~~START~~
+int
+OK
+~~END~~
+
+~~ROW COUNT: 1~~
+
+--- Basic SP_PREPARE with args
+DECLARE @handle int;
+EXEC SP_PREPARE @handle out, N'@a int, @b int', N'select @a, @b', 10;
+EXEC SP_EXECUTE @handle, 1, 2
+EXEC SP_EXECUTE @handle, 1, 2
+EXEC SP_EXECUTE @handle, 1, 2
+EXEC SP_UNPREPARE @handle;
+GO
+~~START~~
+int#!#int
+~~END~~
+
+~~START~~
+int#!#int
+1#!#2
+~~END~~
+
+~~START~~
+int#!#int
+1#!#2
+~~END~~
+
+~~START~~
+int#!#int
+1#!#2
+~~END~~
+
+~~ROW COUNT: 1~~
+
+--- Basic SP_PREPARE with args
+DECLARE @handle int;
+EXEC SP_PREPEXEC @handle out, N'@a int, @b int', N'select @a, @b', 1, 2;
+EXEC SP_EXECUTE @handle, 1, 2
+EXEC SP_EXECUTE @handle, 1, 2
+EXEC SP_EXECUTE @handle, 1, 2
+EXEC SP_UNPREPARE @handle;
+GO
+~~START~~
+int#!#int
+1#!#2
+~~END~~
+
+~~START~~
+int#!#int
+1#!#2
+~~END~~
+
+~~START~~
+int#!#int
+1#!#2
+~~END~~
+
+~~START~~
+int#!#int
+1#!#2
+~~END~~
+
+~~ROW COUNT: 1~~
+
+--- SP_PREPARE Batch Support
+DECLARE @handle int;
+DECLARE @batch nvarchar(500);
+DECLARE @paramdef nvarchar(500);
+DECLARE @var int;
+SET @batch = 'IF (@cond > 0) SELECT @o = @a ELSE SELECT @o = @b'
+SET @paramdef = '@cond int, @a int, @b int, @o int OUTPUT'
+EXEC SP_PREPARE @handle, @paramdef, @batch
+EXEC SP_EXECUTE @handle, -1, 10, 20, @var OUTPUT
+SELECT @var
+EXEC SP_EXECUTE @handle, 1, 10, 20, @var OUTPUT
+SELECT @var
+EXEC SP_UNPREPARE @handle;
+GO
+~~ERROR (Code: 33557097)~~
+~~ERROR (Message: 'handle argument of sp_execute is nullDB-Lib error message 20018, severity 16:\nGeneral SQL Server error: Check messages from the SQL Server\n')~~
+
+--- SP_PREPEXEC Batch Support
+DECLARE @handle int;
+DECLARE @batch nvarchar(500);
+DECLARE @paramdef nvarchar(500);
+DECLARE @var int;
+SET @batch = 'IF (@cond > 0) SELECT @o = @a ELSE SELECT @o = @b'
+SET @paramdef = '@cond int, @a int, @b int, @o int OUTPUT'
+EXEC SP_PREPEXEC @handle out, @paramdef, @batch, 1, 30, 40, @var OUTPUT
+SELECT @var
+EXEC SP_EXECUTE @handle, -1, 10, 20, @var OUTPUT
+SELECT @var
+EXEC SP_EXECUTE @handle, 1, 10, 20, @var OUTPUT
+SELECT @var
+EXEC SP_UNPREPARE @handle;
+GO
+~~START~~
+int
+30
+~~END~~
+
+~~START~~
+int
+20
+~~END~~
+
+~~START~~
+int
+10
+~~END~~
+
+~~ROW COUNT: 1~~
+
+--- Parsing specific 
+DECLARE @handle int;
+EXEC SP_PREPEXEC @handle + 1 OUTPUT, NULL, 'SELECT 1'
+GO
+~~ERROR (Code: 33557097)~~
+~~ERROR (Message: "syntax error near '+' at line 3 and character position 25DB-Lib error message 20018, severity 16:\nGeneral SQL Server error: Check messages from the SQL Server\n")~~
+
+DECLARE @handle VARCHAR(20)
+EXEC SP_PREPEXEC @handle OUTPUT, NULL, 'SELECT 1'
+GO
+~~ERROR (Code: 33557097)~~
+~~ERROR (Message: 'invalid prepared_handle param datatypeDB-Lib error message 20018, severity 16:\nGeneral SQL Server error: Check messages from the SQL Server\n')~~
+
+DECLARE @handle int;
+EXEC SP_PREPEXEC @handle, NULL, 'SELECT 1'
+GO
+~~ERROR (Code: 33557097)~~
+~~ERROR (Message: 'prepared_handle param is not specified as OUTPUTDB-Lib error message 20018, severity 16:\nGeneral SQL Server error: Check messages from the SQL Server\n')~~
+
+--- Corner case 1: empty batch
+DECLARE @handle int;
+EXEC SP_PREPARE @handle out, NULL, NULL
+EXEC SP_EXECUTE @handle
+EXEC SP_UNPREPARE @handle
+GO
+~~ERROR (Code: 33557097)~~
+~~ERROR (Message: 'query argument of sp_prepare is nullDB-Lib error message 20018, severity 16:\nGeneral SQL Server error: Check messages from the SQL Server\n')~~
+
+DECLARE @handle int;
+EXEC SP_PREPEXEC @handle out, NULL, NULL
+EXEC SP_EXECUTE @handle
+EXEC SP_UNPREPARE @handle
+GO
+~~ERROR (Code: 33557097)~~
+~~ERROR (Message: 'batch string argument of sp_prepexec is nullDB-Lib error message 20018, severity 16:\nGeneral SQL Server error: Check messages from the SQL Server\n')~~
+
+--- Corner case 2: nested prepare
+DECLARE @handle int;
+DECLARE @inner_handle int;
+DECLARE @batch VARCHAR(500);
+SET @batch = 'EXEC SP_PREPARE @inner_handle OUT, NULL, ''SELECT 1'' '
+EXEC SP_PREPARE @handle out, '@inner_handle int OUT', @batch
+EXEC SP_EXECUTE @handle, @inner_handle OUT
+EXEC SP_EXECUTE @inner_handle
+EXEC SP_UNPREPARE @inner_handle  -- unprepare inner first
+EXEC SP_UNPREPARE @handle
+GO
+~~START~~
+int
+~~END~~
+
+~~START~~
+int
+1
+~~END~~
+
+~~ROW COUNT: 1~~
+
+DECLARE @handle int;
+DECLARE @inner_handle int;
+DECLARE @batch VARCHAR(500);
+SET @batch = 'EXEC SP_PREPARE @inner_handle OUT, NULL, ''SELECT 1'' '
+EXEC SP_PREPARE @handle out, '@inner_handle int OUT', @batch
+EXEC SP_EXECUTE @handle, @inner_handle OUT
+EXEC SP_EXECUTE @inner_handle
+EXEC SP_UNPREPARE @handle            --unprepare outer first
+EXEC SP_EXECUTE @inner_handle
+EXEC SP_UNPREPARE @inner_handle
+GO
+~~START~~
+int
+~~END~~
+
+~~START~~
+int
+1
+~~END~~
+
+~~START~~
+int
+1
+~~END~~
+
+~~ROW COUNT: 1~~
+
+--- Corner case 3: mismatch paramdef and params
+DECLARE @handle int;
+DECLARE @var int;
+DECLARE @batch VARCHAR(500);
+DECLARE @paramdef VARCHAR(500);
+SET @batch = 'SELECT @a';
+SET @paramdef = '@a int';
+EXEC SP_PREPARE @handle OUT, @paramdef, @batch
+EXEC SP_EXECUTE @handle, 100
+EXEC SP_EXECUTE @handle, @var OUT
+EXEC SP_UNPREPARE @handle
+GO
+~~START~~
+int
+~~END~~
+
+~~START~~
+int
+100
+~~END~~
+
+~~ERROR (Code: 33557097)~~
+~~ERROR (Message: 'param 1 defined as mode i but received mode bDB-Lib error message 20018, severity 16:\nGeneral SQL Server error: Check messages from the SQL Server\n')~~
+
+~~ROW COUNT: 1~~
+
+--- Prepare DML statement
+CREATE TABLE t1 (a int, b int); 
+GO
+DECLARE @handle int;
+DECLARE @batch VARCHAR(500);
+DECLARE @paramdef VARCHAR(500);
+SET @batch = '
+INSERT INTO t1 VALUES (@v1, @v2)
+INSERT INTO t1 VALUES (@v3, @v4)
+'
+SET @paramdef = '@v1 int, @v2 int, @v3 int, @v4 int'
+EXEC SP_PREPARE @handle OUT, @paramdef, @batch
+EXEC SP_EXECUTE @handle, 1, 2, 2, 3
+EXEC SP_EXECUTE @handle, 3, 4, 4, 5
+SELECT * FROM t1 ORDER BY 1, 2;
+GO
+~~START~~
+int#!#int
+1#!#2
+2#!#3
+3#!#4
+4#!#5
+~~END~~
+
+~~ROW COUNT: 4~~
+
+DECLARE @handle int;
+DECLARE @batch VARCHAR(500);
+DECLARE @paramdef VARCHAR(500);
+SET @batch = '
+UPDATE t1 SET a = a * 10, b = b *10 where a = @var1;
+UPDATE t1 SET a = a * 10, b = b *10 where a = @var2;
+'
+SET @paramdef = '@var1 int, @var2 int'
+EXEC SP_PREPARE @handle OUT, @paramdef, @batch
+EXEC SP_EXECUTE @handle, 1, 2
+EXEC SP_EXECUTE @handle, 3, 4
+SELECT * FROM t1 ORDER BY 1, 2;
+EXEC SP_UNPREPARE @handle
+DROP TABLE t1;
+GO
+~~START~~
+int#!#int
+10#!#20
+20#!#30
+30#!#40
+40#!#50
+~~END~~
+
+~~ROW COUNT: 4~~
+
+--- Transaction with SP_EXECUTE
+CREATE TABLE t1 (a int, b int); 
+GO
+DECLARE @handle int;
+DECLARE @batch VARCHAR(500);
+DECLARE @paramdef VARCHAR(500);
+SET @batch = '
+INSERT INTO t1 VALUES (@v1, @v2);
+INSERT INTO t1 VALUES (@v3, @v4);
+'
+SET @paramdef = '@v1 int, @v2 int, @v3 int, @v4 int'
+EXEC SP_PREPARE @handle OUT, @paramdef, @batch
+BEGIN TRANSACTION;
+EXEC SP_EXECUTE @handle, 1, 2, 2, 3
+SELECT * FROM t1 ORDER BY 1, 2;
+COMMIT;
+SELECT * FROM t1 ORDER BY 1, 2;
+BEGIN TRANSACTION;
+EXEC SP_EXECUTE @handle, 3, 4, 4, 5
+SELECT * FROM t1 ORDER BY 1, 2;
+ROLLBACK;
+SELECT * FROM t1 ORDER BY 1, 2;
+EXEC SP_UNPREPARE @handle
+GO
+~~START~~
+int#!#int
+1#!#2
+2#!#3
+~~END~~
+
+~~START~~
+int#!#int
+1#!#2
+2#!#3
+~~END~~
+
+~~START~~
+int#!#int
+1#!#2
+2#!#3
+3#!#4
+4#!#5
+~~END~~
+
+~~START~~
+int#!#int
+1#!#2
+2#!#3
+~~END~~
+
+~~ROW COUNT: 2~~
+
+DROP TABLE t1;
+GO
+--- PREPARE Batch with Transaction 
+CREATE TABLE t1 (a int, b int); 
+GO
+DECLARE @handle int;
+DECLARE @batch VARCHAR(500);
+DECLARE @paramdef VARCHAR(500);
+SET @batch = '
+BEGIN TRANSACTION
+INSERT INTO t1 VALUES (@v1, @v2);
+INSERT INTO t1 VALUES (@v3, @v4);
+SELECT * FROM t1 ORDER BY 1, 2;
+IF (@v1 = 10)
+  	COMMIT;
+ELSE
+	ROLLBACK;
+'
+SET @paramdef = '@v1 int, @v2 int, @v3 int, @v4 int'
+EXEC SP_PREPARE @handle OUT, @paramdef, @batch
+EXEC SP_EXECUTE @handle, 10, 20, 30, 40
+SELECT * FROM t1 ORDER BY 1, 2;
+EXEC SP_EXECUTE @handle, 50, 60, 70, 80
+SELECT * FROM t1 ORDER BY 1, 2;
+EXEC SP_UNPREPARE @handle
+GO
+~~START~~
+int#!#int
+10#!#20
+30#!#40
+~~END~~
+
+~~START~~
+int#!#int
+10#!#20
+30#!#40
+~~END~~
+
+~~START~~
+int#!#int
+10#!#20
+30#!#40
+50#!#60
+70#!#80
+~~END~~
+
+~~START~~
+int#!#int
+10#!#20
+30#!#40
+~~END~~
+
+~~ROW COUNT: 2~~
+
+DROP TABLE t1;
+GO
+-- Test Save Point
+CREATE TABLE t1 ( a int, b int);
+GO
+DECLARE @handle int;
+DECLARE @batch VARCHAR(500);
+SET @batch = '
+DECLARE @handle int;
+BEGIN TRANSACTION;
+INSERT INTO t1 VALUES (1, 2);
+SAVE TRANSACTION my_savept;
+EXEC SP_PREPEXEC @handle OUT, NULL, 
+''INSERT INTO t1 VALUES (3, 4);
+  SELECT * FROM t1 ORDER BY 1, 2;
+  ROLLBACK TRANSACTION my_savept;
+  SELECT * FROM t1 ORDER BY 1, 2;
+'';
+SELECT * FROM t1 ORDER BY 1, 2;
+ROLLBACK;
+SELECT * FROM t1 ORDER BY 1, 2;
+EXEC SP_UNPREPARE @handle;
+'
+EXEC SP_PREPARE @handle OUT, NULL, @batch;
+PRINT @handle
+EXEC SP_EXECUTE @handle;
+EXEC SP_UNPREPARE @handle;
+GO
+~~START~~
+int#!#int
+1#!#2
+3#!#4
+~~END~~
+
+~~START~~
+int#!#int
+1#!#2
+~~END~~
+
+~~START~~
+int#!#int
+1#!#2
+~~END~~
+
+~~START~~
+int#!#int
+~~END~~
+
+DROP TABLE t1;
+GO
+--- Test string type
+CREATE TABLE t1 ( a VARCHAR(10), b VARCHAR(10));
+GO
+DECLARE @handle int;
+EXEC SP_PREPEXEC @handle OUT, '@v1 VARCHAR(10), @v2 VARCHAR(10)', 'INSERT INTO t1 VALUES (@v1,@v2)', 'abc', 'efg'
+EXEC SP_EXECUTE @handle, 'lmn', 'opq'
+EXEC SP_UNPREPARE @handle
+SELECT * FROM t1 ORDER BY 1, 2;
+GO
+~~START~~
+int#!#int
+abc#!#efg
+lmn#!#opq
+~~END~~
+
+~~ROW COUNT: 2~~
+
+DROP TABLE t1;
+GO
+-- Test transaction begins outside the batch and commited/rollbacked inside the batch
+CREATE TABLE t1 (a INT);
+GO
+BEGIN TRAN;
+GO
+DECLARE @handle INT;
+DECLARE @batch VARCHAR(500);
+SET @batch = 'insert into t1 values(1); commit; begin tran;'
+EXEC sp_prepare @handle OUT, NULL, @batch
+EXEC sp_execute @handle
+EXEC sp_execute @handle
+EXEC SP_UNPREPARE @handle;
+COMMIT;
+SELECT COUNT(*) FROM t1;
+GO
+~~START~~
+int
+2
+~~END~~
+
+~~ROW COUNT: 1~~
+
+BEGIN TRAN;
+GO
+DECLARE @handle INT;
+DECLARE @batch VARCHAR(500);
+SET @batch = 'insert into t1 values(1); rollback tran; begin tran;'
+EXEC sp_prepare @handle OUT, NULL, @batch
+EXEC sp_execute @handle
+EXEC sp_execute @handle
+EXEC SP_UNPREPARE @handle;
+COMMIT;
+SELECT COUNT(*) FROM t1;
+GO
+~~START~~
+int
+2
+~~END~~
+
+~~ROW COUNT: 1~~
+
+DROP TABLE t1;
+GO
+-- prepare time error 1
+DECLARE @handle int;
+EXEC SP_PREPARE @handle OUT, NULL, 'SELECT * FROM t1'
+SELECT @handle IS NOT NULL as 'Prepared'
+GO
+~~ERROR (Code: 33557097)~~
+~~ERROR (Message: "syntax error near 'IS' at line 4 and character position 15DB-Lib error message 20018, severity 16:\nGeneral SQL Server error: Check messages from the SQL Server\n")~~
+
+-- prepare time error 1-2
+DECLARE @handle int;
+EXEC SP_PREPARE @handle OUT, NULL, 'DECLARE @var int; SELECT * FROM t1 WHERE c = @var'
+SELECT @handle IS NOT NULL as 'Prepared'
+GO
+~~ERROR (Code: 33557097)~~
+~~ERROR (Message: "syntax error near 'IS' at line 4 and character position 15DB-Lib error message 20018, severity 16:\nGeneral SQL Server error: Check messages from the SQL Server\n")~~
+
+-- prepare time error 2
+DECLARE @handle int;
+EXEC SP_PREPARE @handle OUT, NULL, 'EXEC my_proc'
+SELECT @handle IS NOT NULL as 'Prepared'
+GO
+~~ERROR (Code: 33557097)~~
+~~ERROR (Message: "syntax error near 'IS' at line 4 and character position 15DB-Lib error message 20018, severity 16:\nGeneral SQL Server error: Check messages from the SQL Server\n")~~
+
+-- prepare time error 2-2
+DECLARE @handle int;
+EXEC SP_PREPARE @handle OUT, NULL, 'DECLARE @var int; EXEC my_proc @var'
+SELECT @handle IS NOT NULL as 'Prepared'
+GO
+~~ERROR (Code: 33557097)~~
+~~ERROR (Message: "syntax error near 'IS' at line 4 and character position 15DB-Lib error message 20018, severity 16:\nGeneral SQL Server error: Check messages from the SQL Server\n")~~
+
+-- runtime error 1
+DECLARE @handle int;
+EXEC SP_PREPARE @handle OUT, NULL, 'SELECT * FROM t1; SELECT * FROM t1;'
+SELECT @handle IS NOT NULL as 'Prepared'
+EXEC SP_EXECUTE @handle
+GO
+~~ERROR (Code: 33557097)~~
+~~ERROR (Message: "syntax error near 'IS' at line 4 and character position 15DB-Lib error message 20018, severity 16:\nGeneral SQL Server error: Check messages from the SQL Server\n")~~
+
+-- runtime error 2
+DECLARE @handle int;
+EXEC SP_PREPARE @handle OUT, NULL, 'EXEC my_proc; EXEC my_proc;'
+SELECT @handle IS NOT NULL as 'Prepared'
+EXEC SP_EXECUTE @handle
+GO
+~~ERROR (Code: 33557097)~~
+~~ERROR (Message: "syntax error near 'IS' at line 4 and character position 15DB-Lib error message 20018, severity 16:\nGeneral SQL Server error: Check messages from the SQL Server\n")~~
+
+-- runtime error 3
+DECLARE @handle int;
+EXEC SP_PREPARE @handle OUT, NULL, 'IF (1=1) SELECT * FROM t1;'
+SELECT @handle IS NOT NULL as 'Prepared'
+EXEC SP_EXECUTE @handle
+GO
+~~ERROR (Code: 33557097)~~
+~~ERROR (Message: "syntax error near 'IS' at line 4 and character position 15DB-Lib error message 20018, severity 16:\nGeneral SQL Server error: Check messages from the SQL Server\n")~~
+
+-- runtime error 4
+DECLARE @handle int;
+EXEC SP_PREPARE @handle OUT, NULL, 'DECLARE @var int; SET @var = 1; select * from t1 where c = @var'
+SELECT @handle IS NOT NULL as 'Prepared'
+EXEC SP_EXECUTE @handle
+GO
+~~ERROR (Code: 33557097)~~
+~~ERROR (Message: "syntax error near 'IS' at line 4 and character position 15DB-Lib error message 20018, severity 16:\nGeneral SQL Server error: Check messages from the SQL Server\n")~~
+

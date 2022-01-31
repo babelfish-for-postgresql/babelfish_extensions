@@ -1,0 +1,10 @@
+CREATE TABLE TEXT_dt (a text, b ntext)
+#path to file should be with respect to root of test suite
+prepst#!# INSERT INTO TEXT_dt(a, b) values(@a, @b) #!#TEXT|-|a|-|utils/sample.txt#!#NTEXT|-|b|-|utils/sample.txt
+prepst#!#exec#!#TEXT|-|a|-|utils/blank.txt#!#NTEXT|-|b|-|utils/blank.txt
+prepst#!#exec#!#TEXT|-|a|-|<NULL>#!#NTEXT|-|b|-|<NULL>
+prepst#!#exec#!#TEXT|-|a|-|<NULL>#!#NTEXT|-|b|-|utils/utf16.txt
+prepst#!#exec#!#TEXT|-|a|-|<NULL>#!#NTEXT|-|b|-|utils/emojisText.txt
+prepst#!#exec#!#TEXT|-|a|-|<NULL>#!#NTEXT|-|b|-|utils/devanagari.txt
+SELECT * FROM TEXT_dt;
+DROP TABLE TEXT_dt;

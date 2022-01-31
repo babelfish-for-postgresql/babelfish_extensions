@@ -1,0 +1,30 @@
+CREATE TABLE XML_dt (a XML)
+#prepst#!# INSERT INTO XML_dt values(@a) #!#XML|-|a|-|<NULL>
+#prepst#!# INSERT INTO XML_dt values(@a) #!#XML|-|a|-|<contact><name>Contact Name 2</name><phone>YYY-YYY-YYYY</phone></contact>
+#prepst#!#exec#!#XML|-|a|-|
+SELECT * FROM XML_dt;
+~~START~~
+int
+~~END~~
+
+INSERT INTO XML_dt values('<contact><name>Contact Name 2</name><phone>YYY-YYY-YYYY</phone></contact>')
+~~ROW COUNT: 1~~
+
+INSERT INTO XML_dt values(NULL)
+~~ROW COUNT: 1~~
+
+#INSERT INTO XML_dt values('')
+INSERT INTO XML_dt values(<contact><name>Contact Name 2</name><phone>YYY-YYY-YYYY</phone>)
+~~ERROR (Code: 33557097)~~
+~~ERROR (Message: "syntax error near '<' at line 1 and character position 26DB-Lib error message 20018, severity 16:\nGeneral SQL Server error: Check messages from the SQL Server\n")~~
+
+SELECT * FROM XML_dt;
+~~START~~
+int
+<contact><name>Contact Name 2</name><phone>YYY-YYY-YYYY</phone></contact>
+<NULL>
+~~END~~
+
+~~ROW COUNT: 2~~
+
+DROP TABLE XML_dt;

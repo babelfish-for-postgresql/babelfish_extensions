@@ -1,0 +1,25 @@
+# Setup a table with some data
+CREATE TABLE updatable_cursor_table(a INT, b SMALLINT, c BIGINT, d TINYINT, e BIT);
+INSERT INTO updatable_cursor_table values(0, 0, 0, 0, 0)
+~~ROW COUNT: 1~~
+
+INSERT INTO updatable_cursor_table values(NULL, NULL, NULL, NULL, NULL)
+~~ROW COUNT: 1~~
+
+INSERT INTO updatable_cursor_table values(1, 2, 3, 4, 1)
+~~ROW COUNT: 1~~
+
+INSERT INTO updatable_cursor_table values(211234, 9780, 891372401, 56, 1)
+~~ROW COUNT: 1~~
+
+
+# Try opening an updatable cursor using JDBC API
+
+# Try opening an updatable (i.e. dynamic) cursor using SQL Batch
+DECLARE updatable_cursor CURSOR DYNAMIC FOR SELECT a FROM updatable_cursor_table; OPEN updatable_cursor; CLOSE updatable_cursor; DEALLOCATE updatable_cursor;
+~~ERROR (Code: 33557097)~~
+~~ERROR (Message: [42000] [Microsoft][ODBC Driver 17 for SQL Server][SQL Server]'DYNAMIC CURSOR' is not currently supported in Babelfish (33557097) (SQLExecDirectW))~~
+
+
+# Drop table
+DROP TABLE updatable_cursor_table

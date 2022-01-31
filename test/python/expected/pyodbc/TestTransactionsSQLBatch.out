@@ -1,0 +1,492 @@
+create table TxnTable(c1 int);
+
+# Begin transaction -> commit transaction
+begin transaction;
+select @@trancount;
+~~START~~
+int
+1
+~~END~~
+
+begin transaction;
+select @@trancount;
+~~START~~
+int
+2
+~~END~~
+
+set transaction isolation level read committed;
+#show transaction_isolation;
+#show default_transaction_isolation;
+insert into TxnTable values(1);
+~~ROW COUNT: 1~~
+
+commit transaction;
+select @@trancount;
+~~START~~
+int
+1
+~~END~~
+
+commit transaction;
+select @@trancount;
+~~START~~
+int
+0
+~~END~~
+
+select c1 from TxnTable;
+~~START~~
+int
+1
+~~END~~
+
+
+# Begin transaction -> rollback transaction
+begin transaction;
+insert into TxnTable values(2);
+~~ROW COUNT: 1~~
+
+rollback transaction;
+select c1 from TxnTable;
+~~START~~
+int
+1
+~~END~~
+
+
+#Begin tran -> commit tran
+begin tran;
+insert into TxnTable values(2);
+~~ROW COUNT: 1~~
+
+commit tran;
+select c1 from TxnTable;
+~~START~~
+int
+1
+2
+~~END~~
+
+
+# Begin tran -> rollback tran
+begin tran;
+select @@trancount;
+~~START~~
+int
+1
+~~END~~
+
+begin tran;
+set transaction isolation level read uncommitted;
+#show transaction_isolation;
+#show default_transaction_isolation;
+insert into TxnTable values(3);
+~~ROW COUNT: 1~~
+
+select @@trancount;
+~~START~~
+int
+2
+~~END~~
+
+rollback tran;
+select @@trancount;
+~~START~~
+int
+0
+~~END~~
+
+select c1 from TxnTable;
+~~START~~
+int
+1
+2
+~~END~~
+
+
+set transaction isolation level repeatable read;
+~~ERROR (Code: 33557097)~~
+~~ERROR (Message: [42000] [Microsoft][ODBC Driver 17 for SQL Server][SQL Server]REPEATABLE READ isolation level is not supported (33557097) (SQLExecDirectW))~~
+
+#show transaction_isolation;
+#show default_transaction_isolation;
+
+# Begin transaction -> commit
+begin transaction;
+insert into TxnTable values(4);
+~~ROW COUNT: 1~~
+
+commit;
+select c1 from TxnTable;
+~~START~~
+int
+1
+2
+4
+~~END~~
+
+
+# Begin transaction -> commit work
+begin transaction;
+insert into TxnTable values(5);
+~~ROW COUNT: 1~~
+
+commit work;
+select c1 from TxnTable;
+~~START~~
+int
+1
+2
+4
+5
+~~END~~
+
+
+# Begin transaction -> rollback
+begin transaction;
+insert into TxnTable values(6);
+~~ROW COUNT: 1~~
+
+rollback;
+select c1 from TxnTable;
+~~START~~
+int
+1
+2
+4
+5
+~~END~~
+
+
+# Begin transaction -> rollback work
+begin transaction;
+insert into TxnTable values(7);
+~~ROW COUNT: 1~~
+
+rollback work;
+select c1 from TxnTable;
+~~START~~
+int
+1
+2
+4
+5
+~~END~~
+
+
+# Begin transaction name -> commit transaction name
+begin transaction txn1;
+insert into TxnTable values(8);
+~~ROW COUNT: 1~~
+
+commit transaction txn1;
+select c1 from TxnTable;
+~~START~~
+int
+1
+2
+4
+5
+8
+~~END~~
+
+
+# Begin transaction name -> rollback transaction name
+begin transaction txn1;
+insert into TxnTable values(9);
+~~ROW COUNT: 1~~
+
+rollback transaction txn1;
+select c1 from TxnTable;
+~~START~~
+int
+1
+2
+4
+5
+8
+~~END~~
+
+
+# Begin tran name -> commit tran name
+begin tran txn1;
+insert into TxnTable values(10);
+~~ROW COUNT: 1~~
+
+commit tran txn1;
+select c1 from TxnTable;
+~~START~~
+int
+1
+2
+4
+5
+8
+10
+~~END~~
+
+
+# Begin tran name -> rollback tran name
+begin tran txn1;
+insert into TxnTable values(10);
+~~ROW COUNT: 1~~
+
+rollback tran txn1;
+select c1 from TxnTable;
+~~START~~
+int
+1
+2
+4
+5
+8
+10
+~~END~~
+
+
+truncate table TxnTable;
+
+# save tran name -> rollback tran name
+set transaction isolation level snapshot;
+#show transaction_isolation;
+#show default_transaction_isolation;
+begin transaction txn1;
+insert into TxnTable values(1);
+~~ROW COUNT: 1~~
+
+save transaction sp1;
+select @@trancount;
+~~START~~
+int
+1
+~~END~~
+
+insert into TxnTable values(2);
+~~ROW COUNT: 1~~
+
+save tran sp2;
+insert into TxnTable values(3);
+~~ROW COUNT: 1~~
+
+save tran sp2;
+select @@trancount;
+~~START~~
+int
+1
+~~END~~
+
+insert into TxnTable values(4);
+~~ROW COUNT: 1~~
+
+select c1 from TxnTable;
+~~START~~
+int
+1
+2
+3
+4
+~~END~~
+
+rollback tran sp2;
+select @@trancount;
+~~START~~
+int
+1
+~~END~~
+
+select c1 from TxnTable;
+~~START~~
+int
+1
+2
+3
+~~END~~
+
+rollback tran sp2;
+select @@trancount;
+~~START~~
+int
+1
+~~END~~
+
+select c1 from TxnTable;
+~~START~~
+int
+1
+2
+~~END~~
+
+rollback tran sp1;
+select @@trancount;
+~~START~~
+int
+1
+~~END~~
+
+select c1 from TxnTable;
+~~START~~
+int
+1
+~~END~~
+
+rollback tran txn1;
+select @@trancount;
+~~START~~
+int
+0
+~~END~~
+
+select c1 from TxnTable;
+~~START~~
+int
+~~END~~
+
+
+# begin transaction name -> save transaction name -> rollback to first savepoint
+begin transaction txn1;
+insert into TxnTable values(1);
+~~ROW COUNT: 1~~
+
+save transaction sp1;
+insert into TxnTable values(2);
+~~ROW COUNT: 1~~
+
+save transaction sp2;
+insert into TxnTable values(3);
+~~ROW COUNT: 1~~
+
+save transaction sp3;
+insert into TxnTable values(4);
+~~ROW COUNT: 1~~
+
+rollback tran sp1;
+#rollback tran sp1; -- this will give an error
+rollback tran;
+select c1 from TxnTable;
+~~START~~
+int
+~~END~~
+
+
+# begin transaction name -> save transaction name -> rollback tran name, Rollback whole transaction
+set transaction isolation level serializable;
+~~ERROR (Code: 33557097)~~
+~~ERROR (Message: [42000] [Microsoft][ODBC Driver 17 for SQL Server][SQL Server]SERIALIZABLE isolation level is not supported (33557097) (SQLExecDirectW))~~
+
+#show transaction_isolation;
+#show default_transaction_isolation;
+begin transaction txn1;
+insert into TxnTable values(1);
+~~ROW COUNT: 1~~
+
+save transaction sp1;
+begin transaction txn1;
+insert into TxnTable values(2);
+~~ROW COUNT: 1~~
+
+save transaction sp1;
+insert into TxnTable values(3);
+~~ROW COUNT: 1~~
+
+select @@trancount;
+~~START~~
+int
+2
+~~END~~
+
+rollback tran txn1;
+select @@trancount;
+~~START~~
+int
+0
+~~END~~
+
+select c1 from TxnTable;
+~~START~~
+int
+~~END~~
+
+
+# begin transaction -> save transaction name -> rollback to savepoint, commit transaction
+begin transaction txn1;
+insert into TxnTable values(1);
+~~ROW COUNT: 1~~
+
+save transaction sp1;
+insert into TxnTable values(2);
+~~ROW COUNT: 1~~
+
+select c1 from TxnTable;
+~~START~~
+int
+1
+2
+~~END~~
+
+rollback tran sp1;
+commit transaction;
+select c1 from TxnTable;
+~~START~~
+int
+1
+~~END~~
+
+
+# begin transaction -> save transaction name -> rollback to savepoint
+# save transaction name -> commit transaction
+begin transaction txn1;
+insert into TxnTable values(3);
+~~ROW COUNT: 1~~
+
+save transaction sp1;
+insert into TxnTable values(4);
+~~ROW COUNT: 1~~
+
+select c1 from TxnTable;
+~~START~~
+int
+1
+3
+4
+~~END~~
+
+rollback tran sp1;
+save transaction sp2;
+insert into TxnTable values(5);
+~~ROW COUNT: 1~~
+
+commit transaction;
+select c1 from TxnTable;
+~~START~~
+int
+1
+3
+5
+~~END~~
+
+
+# begin transaction -> save transaction name -> error -> rollback to savepoint
+# commit transaction
+begin transaction txn1;
+insert into TxnTable values(6);
+~~ROW COUNT: 1~~
+
+save transaction sp1;
+insert into TxnTable values(7);
+~~ROW COUNT: 1~~
+
+#select c1 frm TxnTable; -- error
+rollback tran sp1;
+commit transaction;
+select c1 from TxnTable;
+~~START~~
+int
+1
+3
+5
+6
+~~END~~
+
+
+Drop table TxnTable;

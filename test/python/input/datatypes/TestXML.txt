@@ -1,0 +1,11 @@
+CREATE TABLE XML_dt (a XML)
+#prepst#!# INSERT INTO XML_dt values(@a) #!#XML|-|a|-|<NULL>
+#prepst#!# INSERT INTO XML_dt values(@a) #!#XML|-|a|-|<contact><name>Contact Name 2</name><phone>YYY-YYY-YYYY</phone></contact>
+#prepst#!#exec#!#XML|-|a|-|
+SELECT * FROM XML_dt;
+INSERT INTO XML_dt values('<contact><name>Contact Name 2</name><phone>YYY-YYY-YYYY</phone></contact>')
+INSERT INTO XML_dt values(NULL)
+#INSERT INTO XML_dt values('')
+INSERT INTO XML_dt values(<contact><name>Contact Name 2</name><phone>YYY-YYY-YYYY</phone>)
+SELECT * FROM XML_dt;
+DROP TABLE XML_dt;

@@ -1,0 +1,11 @@
+#Setup
+CREATE TABLE simpleErrorTable (a varchar(15) UNIQUE, b nvarchar(25), c int PRIMARY KEY, d char(15) DEFAULT 'Whoops!', e nchar(25), f datetime, g numeric(4,1) CHECK (g >= 103.5))
+SET IMPLICIT_TRANSACTIONS ON
+
+#Run error handling tests
+include#!#input/errorHandling/TestSimpleErrors.sql
+
+#Cleanup
+IF @@trancount > 0 ROLLBACK
+SET IMPLICIT_TRANSACTIONS OFF
+DROP TABLE simpleerrortable
