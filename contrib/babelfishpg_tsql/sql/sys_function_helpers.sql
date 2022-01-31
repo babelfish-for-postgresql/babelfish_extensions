@@ -10061,21 +10061,35 @@ $BODY$
 $BODY$
 LANGUAGE SQL;
 
-CREATE OR REPLACE FUNCTION sys.babelfish_split_schema_object_name(delimited_name TEXT, out schema_name TEXT, out object_name TEXT)
+-- valid names are
+-- db_name.schema_name.object_name or schema_name.object_name or object_name
+CREATE OR REPLACE FUNCTION sys.babelfish_split_schema_object_name(
+    delimited_name TEXT, 
+    out database_name TEXT, 
+    out schema_name TEXT, 
+    out object_name TEXT)
 as
 $$
 SELECT 
+    CASE
+        WHEN a[4] is not null then null  -- invalid name
+        WHEN a[3] is null then null     -- no db name given  
+        ELSE a[1]
+    END as database_name,
+    
     CASE 
-        WHEN a[3] is not null then null -- currently only support up to two part names
-	    WHEN a[2] is null then null     -- no schema name given, only the object name
+        WHEN a[4] is not null then null  -- invalid name
+        WHEN a[3] is not null then a[2] 
+        WHEN a[2] is null then null     -- no schema name given, only the object name
         ELSE a[1]
     END as schema_name,
        
     CASE
-	    WHEN a[3] is not null then null -- currently only support up to two part names
-	    WHEN a[2] is null then a[1]
-        ELSE a[2]
-   END as object_name
+        WHEN a[4] is not null then null  -- invalid name
+        WHEN a[3] is not null then a[3] 
+        WHEN a[2] is not null then a[2]
+        ELSE a[1]
+    END as object_name
 FROM (
 	SELECT string_to_array(delimited_name, '.') as a
 ) t
