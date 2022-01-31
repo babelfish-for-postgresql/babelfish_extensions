@@ -1,0 +1,12 @@
+CREATE TABLE TEXT_dt (b ntext)
+prepst#!# INSERT INTO TEXT_dt( b) values( @b) #!#NTEXT|-|b|-|/Users/kushaal/Downloads/sample.txt
+#prepst#!#exec#!#TEXT|-|b|-|utils/blank.txt#!#NTEXT|-|b|-|/Users/kushaal/Downloads/blank.txt
+#prepst#!#exec#!#TEXT|-|b|-|<NULL>#!#NTEXT|-|b|-|<NULL>
+#prepst#!#exec#!#TEXT|-|b|-|<NULL>#!#NTEXT|-|b|-|/Users/kushaal/Downloads/utf16.txt
+
+prepst#!#exec#!#NTEXT|-|b|-|/Users/kushaal/Downloads/emojisText.txt
+prepst#!#exec#!#NTEXT|-|b|-|/Users/kushaal/Downloads/sample.txt
+
+prepst#!#INSERT INTO TEXT_dt(b) values(@b1) #!#ntext|-|b1|-|/Users/kushaal/Downloads/devanagari.txt
+SELECT * FROM TEXT_dt;
+DROP TABLE TEXT_dt;

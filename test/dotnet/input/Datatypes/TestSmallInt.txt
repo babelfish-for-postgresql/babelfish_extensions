@@ -1,0 +1,24 @@
+CREATE TABLE SMALLINT_dt (a SMALLINT)
+prepst#!# INSERT INTO SMALLINT_dt(a) values(@a) #!#SMALLINT|-|a|-|0
+prepst#!#exec#!#SMALLINT|-|a|-|-10
+prepst#!#exec#!#SMALLINT|-|a|-|100
+prepst#!#exec#!#SMALLINT|-|a|-|002
+prepst#!#exec#!#SMALLINT|-|a|-|-029
+prepst#!#exec#!#SMALLINT|-|a|-|-1234
+prepst#!#exec#!#SMALLINT|-|a|-|876
+prepst#!#exec#!#SMALLINT|-|a|-|-32768
+prepst#!#exec#!#SMALLINT|-|a|-|32767
+prepst#!#exec#!#SMALLINT|-|a|-|<NULL>
+SELECT * FROM SMALLINT_dt;
+INSERT INTO SMALLINT_dt(a) values(0)
+INSERT INTO SMALLINT_dt(a) values(-10)
+INSERT INTO SMALLINT_dt(a) values(100)
+INSERT INTO SMALLINT_dt(a) values(002)
+INSERT INTO SMALLINT_dt(a) values(-029)
+INSERT INTO SMALLINT_dt(a) values(-1234)
+INSERT INTO SMALLINT_dt(a) values(876)
+INSERT INTO SMALLINT_dt(a) values(-32768)
+INSERT INTO SMALLINT_dt(a) values(32767)
+INSERT INTO SMALLINT_dt(a) values(NULL)
+SELECT * FROM SMALLINT_dt;
+DROP TABLE SMALLINT_dt;

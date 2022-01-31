@@ -1,0 +1,22 @@
+#Q#Create table TestDatetime2(a Datetime2(6)) 
+#Q# Insert into TestDatetime2 Values(@a) 
+#Q# Insert into TestDatetime2 Values(@a) 
+#Q# Insert into TestDatetime2 Values(@a) 
+#Q# Insert into TestDatetime2 Values(@a) 
+#Q# Insert into TestDatetime2 Values(@a) 
+#Q# Insert into TestDatetime2 Values(@a) 
+#Q# Insert into TestDatetime2 Values(@a) 
+#Q# Insert into TestDatetime2 Values(@a) 
+#Q# Insert into TestDatetime2 Values(@a) 
+#Q#select * from TestDatetime2
+#D#datetime2
+10/23/2016 12:45:37
+10/23/2016 12:45:37
+10/23/2016 12:45:37
+10/23/2016 12:45:37
+10/23/2016 12:45:37
+10/23/2016 12:45:37
+10/23/2016 12:45:37
+10/23/2016 12:45:37
+
+#Q#Drop table TestDatetime2

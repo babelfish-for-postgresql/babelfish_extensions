@@ -1,0 +1,77 @@
+#Q#CREATE TABLE SQL_VARIANT_dt (a sql_variant)
+#Q# INSERT INTO SQL_VARIANT_dt(a) values(@a) 
+#Q# INSERT INTO SQL_VARIANT_dt(a) values(@a) 
+#Q# INSERT INTO SQL_VARIANT_dt(a) values(@a) 
+#Q# INSERT INTO SQL_VARIANT_dt(a) values(@a) 
+#Q# INSERT INTO SQL_VARIANT_dt(a) values(@a) 
+#Q# INSERT INTO SQL_VARIANT_dt(a) values(@a) 
+#Q# INSERT INTO SQL_VARIANT_dt(a) values(@a) 
+#Q# INSERT INTO SQL_VARIANT_dt(a) values(@a) 
+#Q# INSERT INTO SQL_VARIANT_dt(a) values(@a) 
+#Q# INSERT INTO SQL_VARIANT_dt(a) values(@a) 
+#Q# INSERT INTO SQL_VARIANT_dt(a) values(@a) 
+#Q#SELECT * FROM SQL_VARIANT_dt;
+#D#sql_variant
+0
+-100
+122.1000
+123.45
+60
+60
+System.Byte[]
+1234.56
+78.5600
+0
+
+#Q#drop table SQL_VARIANT_dt;
+#Q#CREATE TABLE SQL_VARIANT_dt (a sql_variant)
+#Q#INSERT INTO SQL_VARIANT_dt(a) values(cast (1 as bit))
+#Q#INSERT INTO SQL_VARIANT_dt(a) values(cast (6 as tinyint))
+#Q#INSERT INTO SQL_VARIANT_dt(a) values(cast (60 as smallint))
+#Q#INSERT INTO SQL_VARIANT_dt(a) values(cast (600 as int))
+#Q#INSERT INTO SQL_VARIANT_dt(a) values(cast (60000 as bigint))
+#Q#INSERT INTO SQL_VARIANT_dt(a) values(cast (600.00 as real))
+#Q#INSERT INTO SQL_VARIANT_dt(a) values(cast (60000.00 as float))
+#Q#INSERT INTO SQL_VARIANT_dt(a) values(cast (700.00 as smallmoney))
+#Q#INSERT INTO SQL_VARIANT_dt(a) values(cast (70000.00 as money))
+#Q#INSERT INTO SQL_VARIANT_dt(a) values(cast (123.45 as numeric(5, 2)))
+#Q#INSERT INTO SQL_VARIANT_dt(a) values(cast ('abc' as char(10)))
+#Q#INSERT INTO SQL_VARIANT_dt(a) values(cast ('abc' as nchar(10)))
+#Q#INSERT INTO SQL_VARIANT_dt(a) values(cast ('abc' as varchar(10)))
+#Q#INSERT INTO SQL_VARIANT_dt(a) values(cast ('abc' as nvarchar(10)))
+#Q#INSERT INTO SQL_VARIANT_dt(a) values(cast (123 as binary(10)))
+#Q#INSERT INTO SQL_VARIANT_dt(a) values(cast (123 as varbinary(10)))
+#Q#INSERT INTO SQL_VARIANT_dt(a) values(cast ('1968-12-13' as date))
+#Q#INSERT INTO SQL_VARIANT_dt(a) values(cast ('1968-12-13 14:37:45.123' as smalldatetime))
+#Q#INSERT INTO SQL_VARIANT_dt(a) values(cast ('1968-12-13 14:37:45.123' as datetime))
+#Q#INSERT INTO SQL_VARIANT_dt(a) values(cast ('1968-12-13 14:37:45.123456' as datetime2(4)))
+#Q#INSERT INTO SQL_VARIANT_dt(a) values(cast ('14:37:45.123456' as time(5)))
+#Q#SELECT * FROM SQL_VARIANT_dt;
+#D#sql_variant
+True
+6
+60
+600
+60000
+600
+60000
+700.0000
+70000.0000
+123.45
+abc       
+abc       
+abc
+abc
+System.Byte[]
+System.Byte[]
+12/13/1968 00:00:00
+12/13/1968 14:38:00
+12/13/1968 14:37:45
+12/13/1968 14:37:45
+14:37:45.1234600
+#Q#Drop table SQL_VARIANT_dt;
+#Q# select @a 
+#D#sql_variant
+
+#Q#CREATE PROCEDURE temp_sql_variant @a sql_variant OUTPUT AS SELECT @a; END;
+#E#syntax error near ';' at line 1 and character position 73

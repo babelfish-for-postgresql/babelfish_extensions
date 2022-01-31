@@ -1,0 +1,24 @@
+CREATE TABLE TINYINT_dt (a TINYINT)
+prepst#!# INSERT INTO TINYINT_dt(a) values(@a) #!#TINYINT|-|a|-|0
+prepst#!#exec#!#TINYINT|-|a|-|-10
+prepst#!#exec#!#TINYINT|-|a|-|100
+prepst#!#exec#!#TINYINT|-|a|-|002
+prepst#!#exec#!#TINYINT|-|a|-|029
+prepst#!#exec#!#TINYINT|-|a|-|004
+prepst#!#exec#!#TINYINT|-|a|-|87
+prepst#!#exec#!#TINYINT|-|a|-|0
+prepst#!#exec#!#TINYINT|-|a|-|254
+prepst#!#exec#!#TINYINT|-|a|-|<NULL>
+SELECT * FROM TINYINT_dt;
+INSERT INTO TINYINT_dt(a) values(0)
+INSERT INTO TINYINT_dt(a) values(120)
+INSERT INTO TINYINT_dt(a) values(100)
+INSERT INTO TINYINT_dt(a) values(004)
+INSERT INTO TINYINT_dt(a) values(0)
+INSERT INTO TINYINT_dt(a) values(002)
+INSERT INTO TINYINT_dt(a) values(86)
+INSERT INTO TINYINT_dt(a) values(0)
+INSERT INTO TINYINT_dt(a) values(255)
+INSERT INTO TINYINT_dt(a) values(NULL)
+SELECT * FROM TINYINT_dt;
+DROP TABLE TINYINT_dt;

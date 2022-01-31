@@ -1,0 +1,59 @@
+#Q#CREATE TABLE INT_dt(a INT);
+#Q#INSERT INTO INT_dt(a) values(@a) 
+#Q#INSERT INTO INT_dt(a) values(@a) 
+#Q#INSERT INTO INT_dt(a) values(@a) 
+#Q#INSERT INTO INT_dt(a) values(@a) 
+#Q#INSERT INTO INT_dt(a) values(@a) 
+#Q#INSERT INTO INT_dt(a) values(@a) 
+#Q#INSERT INTO INT_dt(a) values(@a) 
+#Q#INSERT INTO INT_dt(a) values(@a) 
+#Q#INSERT INTO INT_dt(a) values(@a) 
+#Q#INSERT INTO INT_dt(a) values(@a) 
+#Q#INSERT INTO INT_dt(a) values(@a) 
+#Q#SELECT * FROM INT_dt;
+#D#int
+0
+-10
+10
+-12234
+-12234
+3
+9864
+-1625
+-2147483648
+2147483647
+
+#Q#INSERT INTO INT_dt(a) values(0)
+#Q#INSERT INTO INT_dt(a) values(-10)
+#Q#INSERT INTO INT_dt(a) values(10)
+#Q#INSERT INTO INT_dt(a) values(-12345)
+#Q#INSERT INTO INT_dt(a) values(22)
+#Q#INSERT INTO INT_dt(a) values(004)
+#Q#INSERT INTO INT_dt(a) values(-01645)
+#Q#INSERT INTO INT_dt(a) values(-2147483648)
+#Q#INSERT INTO INT_dt(a) values(2147483647)
+#Q#INSERT INTO INT_dt(a) values(NULL)
+#Q#SELECT * FROM INT_dt;
+#D#int
+0
+-10
+10
+-12234
+-12234
+3
+9864
+-1625
+-2147483648
+2147483647
+
+0
+-10
+10
+-12345
+22
+4
+-1645
+-2147483648
+2147483647
+
+#Q#DROP TABLE INT_dt;

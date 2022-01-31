@@ -1,0 +1,32 @@
+#Q#CREATE TABLE prep_exec_t1(a int, b float, c smallint, d real, e int);
+#Q#INSERT INTO prep_exec_t1 VALUES(@a, @b, @c, @d, @e)
+#Q#INSERT INTO prep_exec_t1 VALUES(@a, @b, @c, @d, @e)
+#Q#INSERT INTO prep_exec_t1 VALUES(@a, @b, @c, @d, @e)
+#Q#INSERT INTO prep_exec_t1 VALUES(@a, @b, @c, @d, @e)
+#Q#INSERT INTO prep_exec_t1 VALUES(@a, @b, @c, @d, @e)
+#Q#Select * from prep_exec_t1;
+#D#int#!#float#!#smallint#!#real#!#int
+100#!#10.1#!#10#!#10.1#!#
+200#!#20.2#!#20#!#20.2#!#
+200#!#20.2#!#20#!#20.2#!#
+300#!#30.3#!#30#!#30.3#!#
+400#!#40.3#!#40#!#40.4#!#
+#Q#Select * from prep_exec_t1 WHERE a = 100;
+#D#int#!#float#!#smallint#!#real#!#int
+100#!#10.1#!#10#!#10.1#!#
+#Q#INSERT INTO prep_exec_t1 VALUES(@q, @z, @p, @o, @i);
+#Q#INSERT INTO prep_exec_t1 VALUES(@q, @z, @p, @o, @i);
+#Q#INSERT INTO prep_exec_t1 VALUES(@q, @z, @p, @o, @i);
+#Q#INSERT INTO prep_exec_t1 VALUES(@q, @z, @p, @o, @i);
+#Q#Select * from prep_exec_t1;
+#D#int#!#float#!#smallint#!#real#!#int
+100#!#10.1#!#10#!#10.1#!#
+200#!#20.2#!#20#!#20.2#!#
+200#!#20.2#!#20#!#20.2#!#
+300#!#30.3#!#30#!#30.3#!#
+400#!#40.3#!#40#!#40.4#!#
+100#!##!##!##!#
+200#!##!##!##!#
+300#!##!##!##!#
+400#!##!##!##!#
+#Q#DROP TABLE prep_exec_t1;

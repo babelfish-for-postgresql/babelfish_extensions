@@ -1,0 +1,61 @@
+#DROP TABLE prep_exec_t1;
+
+CREATE TABLE prep_exec_t1(a int, b float, c smallint, d real, e int);
+
+
+# TEST SINGLE PREP/EXEC WITH MULTI EXECUTION
+
+prepst#!#INSERT INTO prep_exec_t1 VALUES(@a, @b, @c, @d, @e)#!#int|-|a|-|100 #!#float|-|b|-|10.1 #!#smallint|-|c|-|10 #!#real|-|d|-|10.1 #!#int|-|e|-|<NULL>
+prepst#!#exec#!#int|-|a|-|200 #!#float|-|b|-|20.2 #!#smallint|-|c|-|20 #!#real|-|d|-|20.2 #!#int|-|e|-|<NULL>
+prepst#!#exec#!#int|-|a|-|200 #!#float|-|b|-|20.2 #!#smallint|-|c|-|20 #!#real|-|d|-|20.2 #!#int|-|e|-|<NULL>
+prepst#!#exec#!#float|-|a|-|300.1 #!#float|-|b|-|30.3 #!#smallint|-|c|-|30 #!#real|-|d|-|30.3 #!#int|-|e|-|<NULL>
+prepst#!#exec#!#int|-|a|-|400 #!#float|-|b|-|40.3 #!#smallint|-|c|-|40 #!#real|-|d|-|40.4 #!#smallint|-|e|-|<NULL>
+
+Select * from prep_exec_t1;
+
+Select * from prep_exec_t1 WHERE a = 100;
+
+# Not working for babel raised bug relatede to no metadata=true
+#prepst#!#SELECT * FROM prep_exec_t1 WHERE a=@x#!#int|-|x|-|100
+#prepst#!#exec#!#int|-|x|-|200
+#prepst#!#exec#!#int|-|x|-|300
+#prepst#!#exec#!#int|-|x|-|400
+
+
+# TEST <NULL> SINGLE PREP/EXEC WITH MULTI EXECUTION
+
+prepst#!#INSERT INTO prep_exec_t1 VALUES(@q, @z, @p, @o, @i);#!#int|-|q|-|100 #!#float|-|z|-|<NULL> #!#smallint|-|p|-|<NULL> #!#real|-|o|-|<NULL> #!#int|-|i|-|<NULL>
+prepst#!#exec#!#int|-|q|-|200 #!#float|-|z|-|<NULL> #!#smallint|-|p|-|<NULL> #!#real|-|o|-|<NULL> #!#int|-|i|-|<NULL>
+prepst#!#exec#!#int|-|q|-|300 #!#float|-|z|-|<NULL> #!#smallint|-|p|-|<NULL> #!#real|-|o|-|<NULL> #!#int|-|i|-|<NULL>
+prepst#!#exec#!#int|-|q|-|400 #!#float|-|z|-|<NULL> #!#smallint|-|p|-|<NULL> #!#real|-|o|-|<NULL> #!#int|-|i|-|<NULL>
+
+Select * from prep_exec_t1;
+
+
+# Not working for babel raised bug relatede to no metadata=true
+
+#prepst#!#SELECT * FROM prep_exec_t1 WHERE a=@y#!#int|-|y|-|100
+#repst#!#exec#!#int|-|y|-|100
+#prepst#!#exec#!#int|-|y|-|200
+#prepst#!#exec#!#int|-|y|-|300
+#repst#!#exec#!#int|-|y|-|400
+
+
+# TEST ERROR(COMMENTED SINCE IT IS EXPECTED TO FAIL)
+
+#prepst#!#INSERT1 INTO prep_exec_t1 VALUES(@a1, @b1, @c1, @d1, @e1)#!#int|-|a1|-|100 #!#float|-|b1|-|10.1 #!#smallint|-|c1|-|10 #!#real|-|d1|-|10.1 #!#int|-|e1|-|<NULL>
+#prepst#!#exec#!#int|-|a1|-|200 #!#float|-|b1|-|20.2 #!#smallint|-|c1|-|20 #!#real|-|d1|-|20.2 #!#int|-|e1|-|<NULL>
+#prepst#!#exec#!#int|-|a1|-|300 #!#float|-|b1|-|30.3 #!#smallint|-|c1|-|30 #!#real|-|d1|-|30.3 #!#int|-|e1|-|<NULL>
+#prepst#!#exec#!#int|-|a1|-|400 #!#float|-|b1|-|40.3 #!#smallint|-|c1|-|40 #!#real|-|d1|-|40.4 #!#int|-|e1|-|<NULL>
+
+DROP TABLE prep_exec_t1;
+
+# Random checsks (NOT WORKING ADDED A COMMENT TO A JIRA RELATED TO GRAMMAR)
+#prepst#!#select @p as p#!#int|-|p|-|1
+#prepst#!#exec#!#varchar|-|p|-|hello
+#repst#!#exec#!#bit|-|p|-|1
+#prepst#!#exec#!#tinyint|-|p|-|2
+#prepst#!#exec#!#int|-|p|-|0
+#prepst#!#exec#!#varchar|-|p|-|0
+#prepst#!#exec#!#varchar|-|p|-|<NULL>
+#prepst#!#exec#!#int|-|p|-|<NULL>

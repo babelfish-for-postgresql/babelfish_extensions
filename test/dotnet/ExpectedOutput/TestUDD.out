@@ -1,0 +1,51 @@
+#Q#EXEC sp_babelfish_configure 'babelfishpg_tsql.escape_hatch_unique_constraint', 'ignore';
+#Q#CREATE TYPE udd_varchar from varchar(15);
+#Q#CREATE TYPE udd_nvarchar from nvarchar(15);
+#Q#CREATE TYPE udd_int from int;
+#Q#CREATE TYPE udd_char from char(25);
+#Q#CREATE TYPE udd_nchar from nchar(20) NOT NULL;
+#Q#CREATE TYPE udd_datetime from datetime;
+#Q#CREATE TYPE udd_numeric from numeric(4,1);
+#Q#CREATE TABLE udd_dt (a udd_varchar UNIQUE, b udd_nvarchar, c udd_int PRIMARY KEY, d udd_char DEFAULT 'Whoops!', e udd_nchar, f udd_datetime, g udd_numeric CHECK (g >= 103.5))
+#Q#INSERT INTO udd_dt VALUES ('Apple', N'red', 1, 'Delhi', N'Sad😞',  '2000-12-13 12:58:23.123', 123.1);
+#Q#INSERT INTO udd_dt VALUES ('Apple', N'blue', 2, 'Chennai', N'Neutral😐',  '2006-11-11 22:47:23.128', 512.4);
+#E#duplicate key value violates unique constraint "udd_dt_a_key"
+#Q#INSERT INTO udd_dt VALUES ('Banana', N'green', 1, 'Bangalore', N'Crying😭',  '2007-01-14 23:34:23.749', 908.7);
+#E#duplicate key value violates unique constraint "udd_dt_pkey"
+#Q#INSERT INTO udd_dt VALUES ('Guava', N'yellow', NULL, 'Mumbai', N'Smirk😏',  '1907-05-09 11:14:13.749', 245.6);
+#E#null value in column "c" of relation "udd_dt" violates not-null constraint
+#Q#INSERT INTO udd_dt(a, b, c, e, f, g) VALUES ('Orange', NULL, 3, N'Happy😀',  '1900-02-28 23:59:59.989', 342.5);
+#Q#INSERT INTO udd_dt VALUES ('Kiwi', N'purple', 4, 'Kolkata', NULL,  '1907-05-09 11:14:13.749', 874.0);
+#E#domain udd_nchar does not allow null values
+#Q#INSERT INTO udd_dt VALUES ('Grape', N'white', 5, 'Pune', N'Angry😠',  '2000-02-28 23:59:59.989', 100.1);
+#E#new row for relation "udd_dt" violates check constraint "udd_dt_g_check"
+#Q#SELECT * FROM udd_dt;
+#D#varchar#!#nvarchar#!#int#!#char#!#nchar#!#datetime#!#decimal
+Apple#!#red#!#1#!#Delhi                    #!#Sad😞               #!#12/13/2000 12:58:23#!#123.1
+Orange#!##!#3#!#Whoops!                  #!#Happy😀             #!#02/28/1900 23:59:59#!#342.5
+#Q#DROP TABLE udd_dt;
+#Q#CREATE TABLE udd_dt (a udd_varchar UNIQUE, b udd_nvarchar, c udd_int PRIMARY KEY, d udd_char DEFAULT 'Whoops!', e udd_nchar, f udd_datetime, g udd_numeric CHECK (g >= 103.5))
+#Q#INSERT INTO udd_dt VALUES (@a, @b, @c, @d, @e, @f, @g)
+#Q#INSERT INTO udd_dt VALUES (@a, @b, @c, @d, @e, @f, @g)
+#E#duplicate key value violates unique constraint "udd_dt_a_key"
+#Q#INSERT INTO udd_dt VALUES (@a, @b, @c, @d, @e, @f, @g)
+#E#duplicate key value violates unique constraint "udd_dt_pkey"
+#Q#INSERT INTO udd_dt VALUES (@a, @b, @c, @d, @e, @f, @g)
+#E#null value in column "c" of relation "udd_dt" violates not-null constraint
+#Q#INSERT INTO udd_dt VALUES (@a, @b, @c, @d, @e, @f, @g)
+#E#domain udd_nchar does not allow null values
+#Q#INSERT INTO udd_dt VALUES (@a, @b, @c, @d, @e, @f, @g)
+#E#new row for relation "udd_dt" violates check constraint "udd_dt_g_check"
+#Q#INSERT INTO udd_dt(a, b, c, e, f, g) VALUES (@a1, @b1, @c1, @e1, @f1, @g1)
+#Q#SELECT * FROM udd_dt;
+#D#varchar#!#nvarchar#!#int#!#char#!#nchar#!#datetime#!#decimal
+Apple#!#red#!#1#!#Delhi                    #!#Sad😞               #!#12/13/2000 12:58:23#!#123.1
+Orange#!##!#5#!#Whoops!                  #!#Happy😀             #!#02/28/1900 23:59:59#!#342.5
+#Q#DROP TABLE udd_dt;
+#Q#DROP TYPE udd_varchar
+#Q#DROP TYPE udd_nvarchar
+#Q#DROP TYPE udd_int
+#Q#DROP TYPE udd_char
+#Q#DROP TYPE udd_nchar
+#Q#DROP TYPE udd_datetime
+#Q#DROP TYPE udd_numeric

@@ -1,0 +1,55 @@
+#Q#CREATE TABLE money_dt(a smallmoney, b money);
+#Q#INSERT INTO money_dt(a, b) VALUES (@a, @b) 
+#Q#INSERT INTO money_dt(a, b) VALUES (@a, @b) 
+#Q#INSERT INTO money_dt(a, b) VALUES (@a, @b) 
+#E#value for domain smallmoney violates check constraint "smallmoney_check"
+#Q#INSERT INTO money_dt(a, b) VALUES (@a, @b) 
+#E#value for domain smallmoney violates check constraint "smallmoney_check"
+#Q#INSERT INTO money_dt(a, b) VALUES (@a, @b) 
+#Q#INSERT INTO money_dt(a, b) VALUES (@a, @b) 
+#Q#INSERT INTO money_dt(a, b) VALUES (@a, @b) 
+#E#value for domain smallmoney violates check constraint "smallmoney_check"
+#Q#INSERT INTO money_dt(a, b) VALUES (@a, @b) 
+#Q#INSERT INTO money_dt(a, b) VALUES (@a, @b) 
+#Q#INSERT INTO money_dt(a, b) VALUES (@a, @b) 
+#Q#SELECT * FROM money_dt;
+#D#smallmoney#!#money
+100.5000#!#10.0500
+100.5000#!#10.0500
+214748.3647#!#22337203685477.5807
+214748.3647#!#22337203685477.5807
+214748.3647#!#922337203685477.5807
+214748.3647#!#922337203685477.5807
+#!#
+#Q#INSERT INTO money_dt(a,b) values(100.5,10.05);
+#Q#INSERT INTO money_dt(a,b) values('$10','$10');
+#Q#INSERT INTO money_dt(a,b) values('-10.05','-10.0');
+#Q#INSERT INTO money_dt(a,b) values('10.05','10.0');
+#Q#INSERT INTO money_dt(a,b) values(-214748.3648,'-10.0');
+#Q#INSERT INTO money_dt(a,b) values(14748.3647,-922337203685477.5808);
+#Q#INSERT INTO money_dt(a,b) values('$214748.3647','$22337203685477.5807');
+#Q#INSERT INTO money_dt(a,b) values('-214,748.3648','-922,337,203,685,477.5808');
+#Q#INSERT INTO money_dt(a,b) values('214,748.3647','922,337,203,685,477.5807');
+#Q#INSERT INTO money_dt(a,b) values('$214,748.3647','$922,337,203,685,477.5807');
+#Q#INSERT INTO money_dt(a,b) values(NULL,NULL);
+#Q#SELECT * FROM money_dt;
+#D#smallmoney#!#money
+100.5000#!#10.0500
+100.5000#!#10.0500
+214748.3647#!#22337203685477.5807
+214748.3647#!#22337203685477.5807
+214748.3647#!#922337203685477.5807
+214748.3647#!#922337203685477.5807
+#!#
+100.5000#!#10.0500
+10.0000#!#10.0000
+-10.0500#!#-10.0000
+10.0500#!#10.0000
+-214748.3648#!#-10.0000
+14748.3647#!#-922337203685477.5808
+214748.3647#!#22337203685477.5807
+-214748.3648#!#-922337203685477.5808
+214748.3647#!#922337203685477.5807
+214748.3647#!#922337203685477.5807
+#!#
+#Q#DROP TABLE money_dt;

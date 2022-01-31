@@ -1,0 +1,25 @@
+#Babel connection string attributes
+babel_URL = <endpoint>
+babel_port = <Babel port>
+babel_databaseName = <database name>
+babel_user = <username>
+babel_password = <password>
+
+# GIVE PATH TO YOUR QUERY FOLDER
+queryFolder=./../../../input/
+
+
+runInParallel = false
+printToConsole = true
+
+driver = sql
+provider = SQL NATIVE CLIENT
+
+################################### WHICH TEST TO RUN ###################################
+
+# SET AS "all" TO RUN ALL THE TESTS FOR THE QUEIRY FILES IN "queryFolder"
+# OR SET AS THE NAME OF THE QUERY FILE YOU WANT TO TEST/CREATE EXPECTED OUTCOME FOR
+# MULTIPPLE QUERY FILE NAMES WITH EXTENSION CAN BE GIVEN SEPARATED WITH A SEMICOLON AND NO SPACES
+
+
+testName=all

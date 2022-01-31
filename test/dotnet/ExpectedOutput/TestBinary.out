@@ -1,0 +1,9 @@
+#Q#CREATE TABLE BINARY_dt(a BINARY(8), b VARBINARY(10));
+#Q#INSERT INTO BINARY_dt(a, b) values (1234, 12345);
+#Q#INSERT INTO BINARY_dt(a, b) values (NULL, NULL);
+#Q#SELECT * FROM BINARY_dt
+#D#binary#!#varbinary
+0000004210#!#004857
+
+
+#Q#DROP TABLE BINARY_dt

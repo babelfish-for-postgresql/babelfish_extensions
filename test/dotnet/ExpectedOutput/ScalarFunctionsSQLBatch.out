@@ -1,0 +1,79 @@
+#Q#create schema tests
+#Q#CREATE FUNCTION tests.multiply (@a int, @b int) RETURNS int AS BEGIN RETURN @a * @b; END;
+#Q#Select tests.multiply(1, 1)
+#D#int
+1
+#Q#Select tests.multiply(1, 0)
+#D#int
+0
+#Q#Select tests.multiply(1, -1)
+#D#int
+-1
+#Q#Select tests.multiply(1.1, -1.1)
+#D#int
+-1
+#Q#Select tests.multiply(1, -1.00000001)
+#D#int
+-1
+#Q#Select tests.multiply(1000000000, 1000000000)
+#Q#select tests.multiply(-1, tests.multiply(-10,20))
+#D#int
+200
+#Q#select tests.multiply(0xe, 0xe)
+#D#int
+196
+#Q#select tests.multiply('100', '100')
+#D#int
+10000
+#Q#CREATE FUNCTION tests.multiply1() RETURNS int AS BEGIN RETURN 100 * 1; END;
+#Q#select tests.multiply1()
+#D#int
+100
+#Q#select tests.multiply(1, tests.multiply1());
+#D#int
+100
+#Q#select tests.multiply(tests.multiply(-1,1), tests.multiply1())
+#D#int
+-100
+#Q#CREATE FUNCTION tests.func3() Returns int AS BEGIN RETURN tests.multiply(1,tests.multiply1()); END;
+#Q#select tests.func3()
+#D#int
+100
+#Q#CREATE FUNCTION tests.func4() Returns int AS BEGIN return 1.1 END;
+#Q#Select tests.func4()
+#D#int
+1
+#Q#CREATE FUNCTION tests.func5() Returns varchar As begin RETURN('abc''abc'); END;
+#Q#select tests.func5()
+#D#varchar
+a
+#Q#CREATE FUNCTION tests.func7(@a int) Returns varchar(100) As begin SET @a = 100 RETURN(@a); END;
+#Q#select tests.func7(1)
+#D#varchar
+100
+#Q#select tests.multiply(@a,@b)
+#D#int
+-200
+#Q#select tests.multiply1()
+#D#int
+100
+#Q#select tests.func3()
+#D#int
+100
+#Q#select tests.func4()
+#D#int
+1
+#Q#select tests.func5()
+#D#varchar
+a
+#Q#select tests.func7()
+#E#function master_tests.func7() does not exist
+#Q#DROP FUNCTION tests.mutliply
+#E#could not find a function named "master_tests.mutliply"
+#Q#DROP FUNCTION tests.multiply1
+#Q#DROP FUNCTION tests.func3
+#Q#DROP FUNCTION tests.func4
+#Q#DROP FUNCTION tests.func5
+#Q#DROP FUNCTION tests.func7
+#Q#drop schema tests
+#E#cannot drop schema master_tests because other objects depend on it

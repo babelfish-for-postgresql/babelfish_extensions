@@ -1,0 +1,30 @@
+CREATE TABLE money_dt(a smallmoney, b money);
+
+prepst#!#INSERT INTO money_dt(a, b) VALUES (@a, @b) #!#smallmoney|-|a|-|100.5 #!#money|-|b|-|10.05
+prepst#!#exec#!#smallmoney|-|a|-|$10#!#money|-|b|-|$10
+prepst#!#exec#!#smallmoney|-|a|-|-10.05 #!#money|-|b|-|-10.0
+prepst#!#exec#!#smallmoney|-|a|-|-214748.3648 #!#money|-|b|-|-922337203685477.5808
+prepst#!#exec#!#smallmoney|-|a|-|214748.3647 #!#money|-|b|-|22337203685477.5807
+prepst#!#exec#!#smallmoney|-|a|-|$214748.3647 #!#money|-|b|-|$22337203685477.5807
+prepst#!#exec#!#smallmoney|-|a|-|-214,748.3648 #!#money|-|b|-|-922,337,203,685,477.5808
+prepst#!#exec#!#smallmoney|-|a|-|214,748.3647 #!#money|-|b|-|922,337,203,685,477.5807
+prepst#!#exec#!#smallmoney|-|a|-|$214,748.3647 #!#money|-|b|-|$922,337,203,685,477.5807
+prepst#!#exec#!#smallmoney|-|a|-|<NULL>#!#money|-|b|-|<NULL>
+
+SELECT * FROM money_dt;
+
+INSERT INTO money_dt(a,b) values(100.5,10.05);
+INSERT INTO money_dt(a,b) values('$10','$10');
+INSERT INTO money_dt(a,b) values('-10.05','-10.0');
+INSERT INTO money_dt(a,b) values('10.05','10.0');
+INSERT INTO money_dt(a,b) values(-214748.3648,'-10.0');
+INSERT INTO money_dt(a,b) values(14748.3647,-922337203685477.5808);
+INSERT INTO money_dt(a,b) values('$214748.3647','$22337203685477.5807');
+INSERT INTO money_dt(a,b) values('-214,748.3648','-922,337,203,685,477.5808');
+INSERT INTO money_dt(a,b) values('214,748.3647','922,337,203,685,477.5807');
+INSERT INTO money_dt(a,b) values('$214,748.3647','$922,337,203,685,477.5807');
+INSERT INTO money_dt(a,b) values(NULL,NULL);
+
+
+SELECT * FROM money_dt;
+DROP TABLE money_dt;

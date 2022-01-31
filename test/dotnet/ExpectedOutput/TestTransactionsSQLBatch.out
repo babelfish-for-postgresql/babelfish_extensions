@@ -1,0 +1,322 @@
+#Q#create table TxnTable(c1 int);
+#Q#begin transaction;
+#Q#select @@trancount;
+#D#int
+1
+#Q#begin transaction;
+#Q#select @@trancount;
+#D#int
+2
+#Q#insert into TxnTable values(1);
+#Q#commit transaction;
+#Q#select @@trancount;
+#D#int
+1
+#Q#commit transaction;
+#Q#select @@trancount;
+#D#int
+0
+#Q#select c1 from TxnTable;
+#D#int
+1
+#Q#begin transaction;
+#Q#insert into TxnTable values(2);
+#Q#rollback transaction;
+#Q#select c1 from TxnTable;
+#D#int
+1
+#Q#begin tran;
+#Q#insert into TxnTable values(2);
+#Q#commit tran;
+#Q#select c1 from TxnTable;
+#D#int
+1
+2
+#Q#begin tran;
+#Q#select @@trancount;
+#D#int
+1
+#Q#begin tran;
+#Q#insert into TxnTable values(3);
+#Q#select @@trancount;
+#D#int
+2
+#Q#rollback tran;
+#Q#select @@trancount;
+#D#int
+0
+#Q#select c1 from TxnTable;
+#D#int
+1
+2
+#Q#begin transaction;
+#Q#insert into TxnTable values(4);
+#Q#commit;
+#Q#select c1 from TxnTable;
+#D#int
+1
+2
+4
+#Q#begin transaction;
+#Q#insert into TxnTable values(5);
+#Q#commit work;
+#Q#select c1 from TxnTable;
+#D#int
+1
+2
+4
+5
+#Q#begin transaction;
+#Q#insert into TxnTable values(6);
+#Q#rollback;
+#Q#select c1 from TxnTable;
+#D#int
+1
+2
+4
+5
+#Q#begin transaction;
+#Q#insert into TxnTable values(7);
+#Q#rollback work;
+#Q#select c1 from TxnTable;
+#D#int
+1
+2
+4
+5
+#Q#begin transaction txn1;
+#Q#insert into TxnTable values(8);
+#Q#commit transaction txn1;
+#Q#select c1 from TxnTable;
+#D#int
+1
+2
+4
+5
+8
+#Q#begin transaction txn1;
+#Q#insert into TxnTable values(9);
+#Q#rollback transaction txn1;
+#Q#select c1 from TxnTable;
+#D#int
+1
+2
+4
+5
+8
+#Q#begin tran txn1;
+#Q#insert into TxnTable values(10);
+#Q#commit tran txn1;
+#Q#select c1 from TxnTable;
+#D#int
+1
+2
+4
+5
+8
+10
+#Q#begin tran txn1;
+#Q#insert into TxnTable values(10);
+#Q#rollback tran txn1;
+#Q#select c1 from TxnTable;
+#D#int
+1
+2
+4
+5
+8
+10
+#Q#begin transaction txn1;
+#Q#insert into TxnTable values(1);
+#Q#save transaction sp1;
+#Q#select @@trancount;
+#D#int
+1
+#Q#insert into TxnTable values(2);
+#Q#save tran sp2;
+#Q#insert into TxnTable values(3);
+#Q#save tran sp2;
+#Q#select @@trancount;
+#D#int
+1
+#Q#insert into TxnTable values(4);
+#Q#select c1 from TxnTable;
+#D#int
+1
+2
+4
+5
+8
+10
+1
+2
+3
+4
+#Q#rollback tran sp2;
+#Q#select @@trancount;
+#D#int
+1
+#Q#select c1 from TxnTable;
+#D#int
+1
+2
+4
+5
+8
+10
+1
+2
+3
+#Q#rollback tran sp2;
+#Q#select @@trancount;
+#D#int
+1
+#Q#select c1 from TxnTable;
+#D#int
+1
+2
+4
+5
+8
+10
+1
+2
+#Q#rollback tran sp1;
+#Q#select @@trancount;
+#D#int
+1
+#Q#select c1 from TxnTable;
+#D#int
+1
+2
+4
+5
+8
+10
+1
+#Q#rollback tran txn1;
+#Q#select @@trancount;
+#D#int
+0
+#Q#select c1 from TxnTable;
+#D#int
+1
+2
+4
+5
+8
+10
+#Q#begin transaction txn1;
+#Q#insert into TxnTable values(1);
+#Q#save transaction sp1;
+#Q#insert into TxnTable values(2);
+#Q#save transaction sp2;
+#Q#insert into TxnTable values(3);
+#Q#save transaction sp3;
+#Q#insert into TxnTable values(4);
+#Q#rollback tran sp1;
+#Q#rollback tran;
+#Q#select c1 from TxnTable;
+#D#int
+1
+2
+4
+5
+8
+10
+#Q#begin transaction txn1;
+#Q#insert into TxnTable values(1);
+#Q#save transaction sp1;
+#Q#begin transaction txn1;
+#Q#insert into TxnTable values(2);
+#Q#save transaction sp1;
+#Q#insert into TxnTable values(3);
+#Q#select @@trancount;
+#D#int
+2
+#Q#rollback tran txn1;
+#Q#select @@trancount;
+#D#int
+0
+#Q#select c1 from TxnTable;
+#D#int
+1
+2
+4
+5
+8
+10
+#Q#begin transaction txn1;
+#Q#insert into TxnTable values(1);
+#Q#save transaction sp1;
+#Q#insert into TxnTable values(2);
+#Q#select c1 from TxnTable;
+#D#int
+1
+2
+4
+5
+8
+10
+1
+2
+#Q#rollback tran sp1;
+#Q#commit transaction;
+#Q#select c1 from TxnTable;
+#D#int
+1
+2
+4
+5
+8
+10
+1
+#Q#begin transaction txn1;
+#Q#insert into TxnTable values(3);
+#Q#save transaction sp1;
+#Q#insert into TxnTable values(4);
+#Q#select c1 from TxnTable;
+#D#int
+1
+2
+4
+5
+8
+10
+1
+3
+4
+#Q#rollback tran sp1;
+#Q#save transaction sp2;
+#Q#insert into TxnTable values(5);
+#Q#commit transaction;
+#Q#select c1 from TxnTable;
+#D#int
+1
+2
+4
+5
+8
+10
+1
+3
+5
+#Q#begin transaction txn1;
+#Q#insert into TxnTable values(6);
+#Q#save transaction sp1;
+#Q#insert into TxnTable values(7);
+#Q#rollback tran sp1;
+#Q#commit transaction;
+#Q#select c1 from TxnTable;
+#D#int
+1
+2
+4
+5
+8
+10
+1
+3
+5
+6
+#Q#Drop table TxnTable;

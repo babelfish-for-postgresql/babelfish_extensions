@@ -1,0 +1,59 @@
+create schema tests
+
+CREATE FUNCTION tests.multiply (@a int, @b int) RETURNS int AS BEGIN RETURN @a * @b; END;
+Select tests.multiply(1, 1)
+Select tests.multiply(1, 0)
+Select tests.multiply(1, -1)
+
+# Testing If it excepts float as args
+# BABEL637
+Select tests.multiply(1.1, -1.1)
+Select tests.multiply(1, -1.00000001)
+
+# Testing overflow case
+Select tests.multiply(1000000000, 1000000000)
+
+# nested call
+select tests.multiply(-1, tests.multiply(-10,20))
+#passing different types 
+select tests.multiply(0xe, 0xe)
+select tests.multiply('100', '100')
+
+# testing without params
+CREATE FUNCTION tests.multiply1() RETURNS int AS BEGIN RETURN 100 * 1; END;
+select tests.multiply1()
+select tests.multiply(1, tests.multiply1());
+select tests.multiply(tests.multiply(-1,1), tests.multiply1())
+
+# Nesting of functions
+CREATE FUNCTION tests.func3() Returns int AS BEGIN RETURN tests.multiply(1,tests.multiply1()); END;
+select tests.func3()
+
+# datatype diff in return
+CREATE FUNCTION tests.func4() Returns int AS BEGIN return 1.1 END;
+Select tests.func4()
+
+# some random tests
+CREATE FUNCTION tests.func5() Returns varchar As begin RETURN('abc''abc'); END;
+select tests.func5()
+
+CREATE FUNCTION tests.func7(@a int) Returns varchar(100) As begin SET @a = 100 RETURN(@a); END;
+select tests.func7(1)
+
+
+# Calls from prepare statements 
+prepst#!#select tests.multiply(@a,@b)#!#int|-|a|-|10#!#int|-|b|-|-20
+prepst#!#select tests.multiply1()#!#
+prepst#!#select tests.func3()#!#
+prepst#!#select tests.func4()#!#
+prepst#!#select tests.func5()#!#
+prepst#!#select tests.func7()#!#int|-|a|-|10
+
+DROP FUNCTION tests.mutliply
+DROP FUNCTION tests.multiply1
+DROP FUNCTION tests.func3
+DROP FUNCTION tests.func4
+DROP FUNCTION tests.func5
+DROP FUNCTION tests.func7
+
+drop schema tests

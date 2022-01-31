@@ -1,0 +1,17 @@
+CREATE TABLE CHAR_dt (a CHAR(20), b NCHAR(20))
+prepst#!# INSERT INTO CHAR_dt(a, b) values(@a, @b) #!#CHAR|-|a|-|Dipesh#!#NCHAR|-|b|-|Dhameliya
+prepst#!#exec#!#CHAR|-|a|-| Dipesh #!#NCHAR|-|b|-| Dhameliya
+prepst#!#exec#!#CHAR|-|a|-|   D#!#NCHAR|-|b|-|   🤣😃
+prepst#!#exec#!#CHAR|-|a|-| #!#NCHAR|-|b|-| 
+prepst#!#exec#!#CHAR|-|a|-| #!#NCHAR|-|b|-|😊😋😎😍😅😆
+prepst#!#exec#!#CHAR|-|a|-|<NULL>#!#NCHAR|-|b|-|<NULL>
+prepst#!#exec#!#CHAR|-|a|-| Dipesh #!#NCHAR|-|b|-| Dham7898767895867576eliya
+SELECT * FROM CHAR_dt;
+INSERT INTO CHAR_dt(a,b) values('Dipesh','Dhameliya')
+INSERT INTO CHAR_dt(a,b) values(' Dipesh',' Dhameliya')
+INSERT INTO CHAR_dt(a,b) values('   D',N'   🤣😃')
+INSERT INTO CHAR_dt(a,b) values(' ',' ')
+INSERT INTO CHAR_dt(a,b) values(' ',N'😊😋😎😍😅😆')
+INSERT INTO CHAR_dt(a,b) values(NULL,NULL)
+SELECT * FROM CHAR_dt;
+DROP TABLE CHAR_dt;

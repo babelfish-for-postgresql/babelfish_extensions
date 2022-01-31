@@ -1,0 +1,196 @@
+#Q#CREATE TABLE numeric_table(num numeric(5, 2));
+#Q#INSERT INTO numeric_table(num) VALUES(@a) 
+#Q#INSERT INTO numeric_table(num) VALUES(@a) 
+#Q#INSERT INTO numeric_table(num) VALUES(@a) 
+#Q#INSERT INTO numeric_table(num) VALUES(@a) 
+#Q#INSERT INTO numeric_table(num) VALUES(@a) 
+#Q#INSERT INTO numeric_table(num) VALUES(@a) 
+#Q#INSERT INTO numeric_table(num) VALUES(@a) 
+#Q#INSERT INTO numeric_table(num) VALUES(@a) 
+#Q#INSERT INTO numeric_table(num) VALUES(@a) 
+#Q#INSERT INTO numeric_table(num) VALUES(@a) 
+#Q#INSERT INTO numeric_table(num) VALUES(@a) 
+#Q#SELECT * FROM numeric_table;
+#D#decimal
+3.00
+123.45
+123.40
+123.00
+123.45
+
+-123.45
+-123.40
+-123.00
+-1.00
+-123.00
+#Q#DROP TABLE numeric_table;
+#Q#CREATE TABLE numeric_table(num numeric(5, 0));
+#Q#SELECT * FROM numeric_table;
+#Q#DROP TABLE numeric_table;
+#Q#CREATE TABLE numeric_table(num numeric(38, 3));
+#Q#INSERT INTO numeric_table(num) VALUES(@a1) 
+#Q#INSERT INTO numeric_table(num) VALUES(@a1) 
+#Q#INSERT INTO numeric_table(num) VALUES(@a1) 
+#Q#INSERT INTO numeric_table(num) VALUES(@a1) 
+#Q#INSERT INTO numeric_table(num) VALUES(@a1) 
+#Q#INSERT INTO numeric_table(num) VALUES(@a1) 
+#Q#INSERT INTO numeric_table(num) VALUES(@a1) 
+#Q#INSERT INTO numeric_table(num) VALUES(@a1) 
+#Q#INSERT INTO numeric_table(num) VALUES(@a1) 
+#Q#INSERT INTO numeric_table(num) VALUES(@a1) 
+#Q#SELECT * FROM numeric_table;
+#D#decimal
+3.000
+123.400
+123.000
+123.450
+
+-123.450
+-123.400
+-123.000
+-1.000
+-123.000
+#Q#DROP TABLE numeric_table;
+#Q#CREATE TABLE numeric_table(num numeric(38, 20));
+#Q#INSERT INTO numeric_table(num) VALUES(@a2) 
+#Q#INSERT INTO numeric_table(num) VALUES(@a2) 
+#Q#INSERT INTO numeric_table(num) VALUES(@a2) 
+#Q#INSERT INTO numeric_table(num) VALUES(@a2) 
+#Q#INSERT INTO numeric_table(num) VALUES(@a2) 
+#Q#INSERT INTO numeric_table(num) VALUES(@a2) 
+#Q#INSERT INTO numeric_table(num) VALUES(@a2) 
+#Q#INSERT INTO numeric_table(num) VALUES(@a2) 
+#Q#INSERT INTO numeric_table(num) VALUES(@a2) 
+#Q#INSERT INTO numeric_table(num) VALUES(@a2) 
+#Q#INSERT INTO numeric_table(num) VALUES(@a2) 
+#Q#SELECT * FROM numeric_table;
+#D#decimal
+3.00000000000000000000
+123.45000000000000000000
+123.40000000000000000000
+123.00000000000000000000
+123.45000000000000000000
+
+-123.45000000000000000000
+-123.40000000000000000000
+-123.00000000000000000000
+-1.00000000000000000000
+-123.00000000000000000000
+#Q#DROP TABLE numeric_table;
+#Q#CREATE TABLE numeric_table(num numeric(38, 20));
+#Q#INSERT INTO numeric_table(num) VALUES(@a3) 
+#Q#INSERT INTO numeric_table(num) VALUES(@a3) 
+#Q#INSERT INTO numeric_table(num) VALUES(@a3) 
+#Q#INSERT INTO numeric_table(num) VALUES(@a3) 
+#Q#INSERT INTO numeric_table(num) VALUES(@a3) 
+#Q#INSERT INTO numeric_table(num) VALUES(@a3) 
+#Q#INSERT INTO numeric_table(num) VALUES(@a3) 
+#Q#INSERT INTO numeric_table(num) VALUES(@a3) 
+#Q#INSERT INTO numeric_table(num) VALUES(@a3) 
+#Q#INSERT INTO numeric_table(num) VALUES(@a3) 
+#Q#INSERT INTO numeric_table(num) VALUES(@a3) 
+#Q#SELECT * FROM numeric_table;
+#D#decimal
+3.00000000000000000000
+123.45000000000000000000
+123.40000000000000000000
+123.00000000000000000000
+123.45000000000000000000
+
+-123.45000000000000000000
+-123.40000000000000000000
+-123.00000000000000000000
+-1.00000000000000000000
+-123.00000000000000000000
+#Q#DROP TABLE numeric_table;
+#Q#CREATE TABLE numeric_table(num numeric(38, 21));
+#Q#INSERT INTO numeric_table(num) VALUES(@a4) 
+#Q#INSERT INTO numeric_table(num) VALUES(@a4) 
+#Q#INSERT INTO numeric_table(num) VALUES(@a4) 
+#Q#INSERT INTO numeric_table(num) VALUES(@a4) 
+#Q#INSERT INTO numeric_table(num) VALUES(@a4) 
+#Q#INSERT INTO numeric_table(num) VALUES(@a4) 
+#Q#INSERT INTO numeric_table(num) VALUES(@a4) 
+#Q#INSERT INTO numeric_table(num) VALUES(@a4) 
+#Q#INSERT INTO numeric_table(num) VALUES(@a4) 
+#Q#INSERT INTO numeric_table(num) VALUES(@a4) 
+#Q#INSERT INTO numeric_table(num) VALUES(@a4) 
+#Q#SELECT * FROM numeric_table;
+#D#decimal
+3.000000000000000000000
+123.450000000000000000000
+123.400000000000000000000
+123.000000000000000000000
+123.450000000000000000000
+
+-123.450000000000000000000
+-123.400000000000000000000
+-123.000000000000000000000
+-1.000000000000000000000
+-123.000000000000000000000
+#Q#DROP TABLE numeric_table;
+#Q#CREATE TABLE numeric_table(num numeric(38, 22));
+#Q#INSERT INTO numeric_table(num) VALUES(@a5) 
+#Q#INSERT INTO numeric_table(num) VALUES(@a5) 
+#Q#INSERT INTO numeric_table(num) VALUES(@a5) 
+#Q#INSERT INTO numeric_table(num) VALUES(@a5) 
+#Q#INSERT INTO numeric_table(num) VALUES(@a5) 
+#Q#INSERT INTO numeric_table(num) VALUES(@a5) 
+#Q#INSERT INTO numeric_table(num) VALUES(@a5) 
+#Q#INSERT INTO numeric_table(num) VALUES(@a5) 
+#Q#INSERT INTO numeric_table(num) VALUES(@a5) 
+#Q#INSERT INTO numeric_table(num) VALUES(@a5) 
+#Q#INSERT INTO numeric_table(num) VALUES(@a5) 
+#Q#SELECT * FROM numeric_table;
+#D#decimal
+3.0000000000000000000000
+123.4500000000000000000000
+123.4000000000000000000000
+123.0000000000000000000000
+123.4500000000000000000000
+
+-123.4500000000000000000000
+-123.4000000000000000000000
+-123.0000000000000000000000
+-1.0000000000000000000000
+-123.0000000000000000000000
+#Q#DROP TABLE numeric_table;
+#Q#CREATE TABLE numeric_table(num numeric(38, 23));
+#Q#INSERT INTO numeric_table(num) VALUES(@a6) 
+#Q#INSERT INTO numeric_table(num) VALUES(@a6) 
+#Q#INSERT INTO numeric_table(num) VALUES(@a6) 
+#Q#INSERT INTO numeric_table(num) VALUES(@a6) 
+#Q#INSERT INTO numeric_table(num) VALUES(@a6) 
+#Q#INSERT INTO numeric_table(num) VALUES(@a6) 
+#Q#INSERT INTO numeric_table(num) VALUES(@a6) 
+#Q#INSERT INTO numeric_table(num) VALUES(@a6) 
+#Q#INSERT INTO numeric_table(num) VALUES(@a6) 
+#Q#INSERT INTO numeric_table(num) VALUES(@a6) 
+#Q#INSERT INTO numeric_table(num) VALUES(@a6) 
+#Q#SELECT * FROM numeric_table;
+#D#decimal
+3.00000000000000000000000
+123.45000000000000000000000
+123.40000000000000000000000
+123.00000000000000000000000
+123.45000000000000000000000
+
+-123.45000000000000000000000
+-123.40000000000000000000000
+-123.00000000000000000000000
+-1.00000000000000000000000
+-123.00000000000000000000000
+#Q#DROP TABLE numeric_table;
+#Q#CREATE TABLE numeric_table(num numeric(38, 25));
+#Q#INSERT INTO numeric_table(num) VALUES(@a7) 
+#Q#INSERT INTO numeric_table(num) VALUES(@a7) 
+#Q#INSERT INTO numeric_table(num) VALUES(@a7) 
+#Q#INSERT INTO numeric_table(num) VALUES(@a7) 
+#Q#INSERT INTO numeric_table(num) VALUES(@a7) 
+#Q#INSERT INTO numeric_table(num) VALUES(@a7) 
+#Q#INSERT INTO numeric_table(num) VALUES(@a7) 
+#Q#INSERT INTO numeric_table(num) VALUES(@a7) 
+#Q#INSERT INTO numeric_table(num) VALUES(@a7) 
+#Q#INSERT INTO numeric_table(num) VALUES(@a7) 
+#Q#INSERT INTO numeric_table(num) VALUES(@a7) 
+#Q#DROP TABLE numeric_table;
