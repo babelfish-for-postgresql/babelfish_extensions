@@ -832,7 +832,7 @@ GRANT EXECUTE ON FUNCTION sys.original_login() TO PUBLIC;
 DROP VIEW IF EXISTS sys.default_constraints;
 create or replace view sys.default_constraints
 AS
-select 'DF_' || o.relname || '_' || d.oid as name
+select CAST(('DF_' || o.relname || '_' || d.oid) as sys.sysname) as name
   , d.oid as object_id
   , null::int as principal_id
   , o.relnamespace as schema_id
