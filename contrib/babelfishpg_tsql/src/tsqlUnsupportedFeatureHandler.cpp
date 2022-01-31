@@ -1376,7 +1376,6 @@ const char *unsupported_sp_procedures[] = {
 	"sp_server_info",
 	"sp_special_columns",
 	"sp_sproc_columns",
-	"sp_statistics",
 	"sp_stored_procedures",
 	"sp_table_privileges",
 
