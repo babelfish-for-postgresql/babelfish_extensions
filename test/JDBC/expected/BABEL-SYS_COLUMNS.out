@@ -5,7 +5,7 @@ go
 select name, column_id, precision, scale from sys.columns where object_id=OBJECT_ID('t1') order by name;
 go
 ~~START~~
-varchar#!#int#!#int#!#int
+varchar#!#int#!#tinyint#!#tinyint
 a#!#1#!#32#!#0
 b#!#2#!#53#!#0
 c#!#3#!#64#!#0
@@ -24,7 +24,7 @@ go
 select name, column_id, is_identity, is_computed from sys.columns where object_id=OBJECT_ID('t2') order by name;
 go
 ~~START~~
-varchar#!#int#!#smallint#!#smallint
+varchar#!#int#!#bit#!#bit
 a#!#1#!#0#!#0
 b#!#2#!#1#!#0
 c#!#3#!#0#!#1
@@ -37,7 +37,7 @@ go
 select name, column_id, is_ansi_padded from sys.columns where object_id=OBJECT_ID('t3') order by name;
 go
 ~~START~~
-varchar#!#int#!#smallint
+varchar#!#int#!#bit
 a#!#1#!#1
 b#!#2#!#1
 c#!#3#!#1
