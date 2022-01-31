@@ -1,0 +1,28 @@
+CREATE TABLE XML_dt (a XML)
+#prepst#!# INSERT INTO XML_dt values(@a) #!#XML|-|a|-|<NULL>
+#prepst#!# INSERT INTO XML_dt values(@a) #!#XML|-|a|-|<contact><name>Contact Name 2</name><phone>YYY-YYY-YYYY</phone></contact>
+#prepst#!#exec#!#XML|-|a|-|
+SELECT * FROM XML_dt;
+~~START~~
+str
+~~END~~
+
+INSERT INTO XML_dt values('<contact><name>Contact Name 2</name><phone>YYY-YYY-YYYY</phone></contact>')
+~~ROW COUNT: 1~~
+
+INSERT INTO XML_dt values(NULL)
+~~ROW COUNT: 1~~
+
+#INSERT INTO XML_dt values('')
+INSERT INTO XML_dt values(<contact><name>Contact Name 2</name><phone>YYY-YYY-YYYY</phone>)
+~~ERROR (Code: 33557097)~~
+~~ERROR (Message: [42000] [Microsoft][ODBC Driver 17 for SQL Server][SQL Server]syntax error near '<' at line 1 and character position 26 (33557097) (SQLExecDirectW))~~
+
+SELECT * FROM XML_dt;
+~~START~~
+str
+<contact><name>Contact Name 2</name><phone>YYY-YYY-YYYY</phone></contact>
+<NULL>
+~~END~~
+
+DROP TABLE XML_dt;

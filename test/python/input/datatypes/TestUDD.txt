@@ -1,0 +1,78 @@
+CREATE TYPE udd_varchar from varchar(15);
+CREATE TYPE udd_nvarchar from nvarchar(15);
+CREATE TYPE udd_int from int;
+CREATE TYPE udd_char from char(25);
+CREATE TYPE udd_nchar from nchar(20) NOT NULL;
+CREATE TYPE udd_datetime from datetime;
+CREATE TYPE udd_numeric from numeric(4,1);
+
+EXEC sp_babelfish_configure 'babelfishpg_tsql.escape_hatch_unique_constraint', 'ignore';
+CREATE TABLE udd_dt (a udd_varchar UNIQUE, b udd_nvarchar, c udd_int PRIMARY KEY, d udd_char DEFAULT 'Whoops!', e udd_nchar, f udd_datetime, g udd_numeric CHECK (g >= 103.5))
+
+INSERT INTO udd_dt VALUES ('Apple', N'red', 1, 'Delhi', N'Sad😞',  '2000-12-13 12:58:23.123', 123.1);
+
+#passing a non unique value in column  a
+#throws error: duplicate key value violates unique constraint 
+INSERT INTO udd_dt VALUES ('Apple', N'blue', 2, 'Chennai', N'Neutral😐',  '2006-11-11 22:47:23.128', 512.4);
+
+#passing a non unique value in column c
+#throws error: duplicate key value violates unique constraint
+INSERT INTO udd_dt VALUES ('Banana', N'green', 1, 'Bangalore', N'Crying😭',  '2007-01-14 23:34:23.749', 908.7);
+
+#passing a NULL value in column c
+#throws error: null value in column "c" violates not-null constraint
+INSERT INTO udd_dt VALUES ('Guava', N'yellow', NULL, 'Mumbai', N'Smirk😏',  '1907-05-09 11:14:13.749', 245.6);
+
+#passing no value for column d
+INSERT INTO udd_dt(a, b, c, e, f, g) VALUES ('Orange', NULL, 3, N'Happy😀',  '1900-02-28 23:59:59.989', 342.5);
+
+#passing a NULL value in column e
+#throws error: domain udd_nchar does not allow null values
+INSERT INTO udd_dt VALUES ('Kiwi', N'purple', 4, 'Kolkata', NULL,  '1907-05-09 11:14:13.749', 874.0);
+
+#passing a value less than 103.5 in column g
+#throws error: new row for relation "udd_dt" violates check constraint "udd_dt_g_check"
+INSERT INTO udd_dt VALUES ('Grape', N'white', 5, 'Pune', N'Angry😠',  '2000-02-28 23:59:59.989', 100.1);
+
+SELECT * FROM udd_dt;
+
+DROP TABLE udd_dt;
+
+CREATE TABLE udd_dt (a udd_varchar UNIQUE, b udd_nvarchar, c udd_int PRIMARY KEY, d udd_char DEFAULT 'Whoops!', e udd_nchar, f udd_datetime, g udd_numeric CHECK (g >= 103.5))
+
+prepst#!#INSERT INTO udd_dt VALUES (@a, @b, @c, @d, @e, @f, @g)#!#varchar|-|a|-|Apple#!#nvarchar|-|b|-|red#!#int|-|c|-|1#!#char|-|d|-|Delhi#!#nchar|-|e|-|Sad😞#!#datetime|-|f|-|2000-12-13 12:58:23.123#!#numeric|-|g|-|123.1|-|4|-|1
+
+#passing a non unique value in column  a
+#throws error: duplicate key value violates unique constraint 
+prepst#!#exec#!#varchar|-|a|-|Apple#!#nvarchar|-|b|-|blue#!#int|-|c|-|2#!#char|-|d|-|Chennai#!#nchar|-|e|-|Neutral😐#!#datetime|-|f|-|2006-11-11 22:47:23.128#!#numeric|-|g|-|512.4|-|4|-|1
+
+#passing a non unique value in column c
+#throws error: duplicate key value violates unique constraint
+prepst#!#exec#!#varchar|-|a|-|Banana#!#nvarchar|-|b|-|green#!#int|-|c|-|1#!#char|-|d|-|Bangalore#!#nchar|-|e|-|Crying😭#!#datetime|-|f|-|2007-01-14 23:34:23.749#!#numeric|-|g|-|908.7|-|4|-|1
+
+#passing a NULL value in column c
+#throws error: null value in column "c" violates not-null constraint
+prepst#!#exec#!#varchar|-|a|-|Guava#!#nvarchar|-|b|-|yellow#!#int|-|c|-|<NULL>#!#char|-|d|-|Mumbai#!#nchar|-|e|-|Smirk😏'#!#datetime|-|f|-|1907-05-09 11:14:13.749#!#numeric|-|g|-|245.6|-|4|-|1
+
+#passing a NULL value in column e
+#throws error: domain udd_nchar does not allow null values
+prepst#!#exec#!#varchar|-|a|-|Kiwi#!#nvarchar|-|b|-|purple#!#int|-|c|-|4#!#char|-|d|-|Kolkata#!#nchar|-|e|-|<NULL>#!#datetime|-|f|-|1907-05-09 11:14:13.749#!#numeric|-|g|-|874.0|-|4|-|1
+
+#passing a value less than 103.5 in column g
+#throws error: new row for relation "udd_dt" violates check constraint "udd_dt_g_check"
+prepst#!#exec#!#varchar|-|a|-|Grape#!#nvarchar|-|b|-|white#!#int|-|c|-|5#!#char|-|d|-|Pune#!#nchar|-|e|-|Angry😠#!#datetime|-|f|-|2000-02-28 23:59:59.989#!#numeric|-|g|-|100.1|-|4|-|1
+
+#passing no value for column d
+prepst#!#INSERT INTO udd_dt(a, b, c, e, f, g) VALUES (@a1, @b1, @c1, @e1, @f1, @g1)#!#varchar|-|a1|-|Orange#!#nvarchar|-|b1|-|<NULL>#!#int|-|c1|-|5#!#nchar|-|e1|-|Happy😀#!#datetime|-|f1|-|1900-02-28 23:59:59.989#!#numeric|-|g1|-|342.5|-|4|-|1
+
+SELECT * FROM udd_dt;
+
+DROP TABLE udd_dt;
+
+DROP TYPE udd_varchar
+DROP TYPE udd_nvarchar
+DROP TYPE udd_int
+DROP TYPE udd_char
+DROP TYPE udd_nchar
+DROP TYPE udd_datetime
+DROP TYPE udd_numeric

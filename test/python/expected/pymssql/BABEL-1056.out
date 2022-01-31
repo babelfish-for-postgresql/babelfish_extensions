@@ -1,0 +1,23 @@
+CREATE SCHEMA [Babelfish_1056];
+
+CREATE TABLE [Babelfish_1056].[employees] (person_id int IDENTITY PRIMARY KEY, firstname nvarchar(20), lastname nvarchar(30), salary money)
+CREATE PROCEDURE p_employee_insert @fname nvarchar(20), @lname nvarchar(30), @sal money AS BEGIN DECLARE @next_pers_id INT; SELECT @next_pers_id = MAX(person_id) FROM [Babelfish_1056].[employees]; IF (@next_pers_id IS NULL) SET @next_pers_id = 0 INSERT INTO [Babelfish_1056].[employees] (person_id, firstname, lastname, salary) VALUES (@next_pers_id+1, @fname, @lname, @sal); END
+
+SET IDENTITY_INSERT [Babelfish_1056].[employees] ON EXEC p_employee_insert @fname='First', @lname='Employee', @sal=123.1231; SET IDENTITY_INSERT [Babelfish_1056].[employees] OFF
+SET IDENTITY_INSERT [Babelfish_1056].[employees] ON EXEC p_employee_insert @fname='Second', @lname='Employee', @sal=123.1232; SET IDENTITY_INSERT [Babelfish_1056].[employees] OFF
+SET IDENTITY_INSERT [Babelfish_1056].[employees] ON EXEC p_employee_insert @fname='Third', @lname='Employee', @sal=123.1233; SET IDENTITY_INSERT [Babelfish_1056].[employees] OFF
+
+SELECT * FROM [Babelfish_1056].[employees]
+~~START~~
+int#!#int#!#int#!#int
+1#!#First#!#Employee#!#123.1231
+2#!#Second#!#Employee#!#123.1232
+3#!#Third#!#Employee#!#123.1233
+~~END~~
+
+~~ROW COUNT: 3~~
+
+
+DROP PROCEDURE p_employee_insert
+DROP TABLE [Babelfish_1056].[employees]
+DROP SCHEMA [Babelfish_1056];

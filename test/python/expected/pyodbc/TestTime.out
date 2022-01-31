@@ -1,0 +1,300 @@
+Create table TestTime(a time(6)) 
+
+prepst#!# Insert into TestTime Values(?) #!#Time|-|a|-|12:45:37.123|-|0
+~~ROW COUNT: 1~~
+
+prepst#!#exec#!#Time|-|a|-|12:45:37.123|-|3
+~~ROW COUNT: 1~~
+
+prepst#!#exec#!#Time|-|a|-|12:45:37.12|-|2
+~~ROW COUNT: 1~~
+
+prepst#!#exec#!#Time|-|a|-|12:45:37.1|-|1
+~~ROW COUNT: 1~~
+
+prepst#!#exec#!#Time|-|a|-|12:45:37.1234|-|4
+~~ROW COUNT: 1~~
+
+prepst#!#exec#!#Time|-|a|-|12:45:37.123456|-|6
+~~ROW COUNT: 1~~
+
+prepst#!#exec#!#Time|-|a|-|12:45:37.123456|-|5
+~~ROW COUNT: 1~~
+
+prepst#!#exec#!#Time|-|a|-|<NULL>
+~~ERROR (Code: 33557097)~~
+~~ERROR (Message: [42000] [Microsoft][ODBC Driver 17 for SQL Server][SQL Server]column "a" is of type time without time zone but expression is of type "varchar" (33557097) (SQLExecDirectW))~~
+
+
+select * from TestTime
+~~START~~
+time
+12:45:37
+12:45:37
+12:45:37
+12:45:37
+12:45:37
+12:45:37
+12:45:37
+~~END~~
+
+
+Drop table TestTime
+
+Create table TestTime(a time(5)) 
+
+prepst#!# Insert into TestTime Values(?) #!#Time|-|a|-|12:45:37.123|-|0
+~~ROW COUNT: 1~~
+
+prepst#!#exec#!#Time|-|a|-|12:45:37.123|-|3
+~~ROW COUNT: 1~~
+
+prepst#!#exec#!#Time|-|a|-|12:45:37.12|-|2
+~~ROW COUNT: 1~~
+
+prepst#!#exec#!#Time|-|a|-|12:45:37.1|-|1
+~~ROW COUNT: 1~~
+
+prepst#!#exec#!#Time|-|a|-|12:45:37.1234|-|4
+~~ROW COUNT: 1~~
+
+prepst#!#exec#!#Time|-|a|-|12:45:37.123456|-|6
+~~ROW COUNT: 1~~
+
+prepst#!#exec#!#Time|-|a|-|12:45:37.123456|-|5
+~~ROW COUNT: 1~~
+
+prepst#!#exec#!#Time|-|a|-|<NULL>
+~~ERROR (Code: 33557097)~~
+~~ERROR (Message: [42000] [Microsoft][ODBC Driver 17 for SQL Server][SQL Server]column "a" is of type time without time zone but expression is of type "varchar" (33557097) (SQLExecDirectW))~~
+
+
+select * from TestTime
+~~START~~
+time
+12:45:37
+12:45:37
+12:45:37
+12:45:37
+12:45:37
+12:45:37
+12:45:37
+~~END~~
+
+
+Drop table TestTime
+
+Create table TestTime(a time(4)) 
+
+prepst#!# Insert into TestTime Values(?) #!#Time|-|a|-|12:45:37.123|-|0
+~~ROW COUNT: 1~~
+
+prepst#!#exec#!#Time|-|a|-|12:45:37.123|-|3
+~~ROW COUNT: 1~~
+
+prepst#!#exec#!#Time|-|a|-|12:45:37.12|-|2
+~~ROW COUNT: 1~~
+
+prepst#!#exec#!#Time|-|a|-|12:45:37.1|-|1
+~~ROW COUNT: 1~~
+
+prepst#!#exec#!#Time|-|a|-|12:45:37.1234|-|4
+~~ROW COUNT: 1~~
+
+prepst#!#exec#!#Time|-|a|-|12:45:37.123456|-|6
+~~ROW COUNT: 1~~
+
+prepst#!#exec#!#Time|-|a|-|12:45:37.123456|-|5
+~~ROW COUNT: 1~~
+
+prepst#!#exec#!#Time|-|a|-|<NULL>
+~~ERROR (Code: 33557097)~~
+~~ERROR (Message: [42000] [Microsoft][ODBC Driver 17 for SQL Server][SQL Server]column "a" is of type time without time zone but expression is of type "varchar" (33557097) (SQLExecDirectW))~~
+
+
+select * from TestTime
+~~START~~
+time
+12:45:37
+12:45:37
+12:45:37
+12:45:37
+12:45:37
+12:45:37
+12:45:37
+~~END~~
+
+
+Drop table TestTime
+
+Create table TestTime(a time(3)) 
+
+prepst#!# Insert into TestTime Values(?) #!#Time|-|a|-|12:45:37.123|-|0
+~~ROW COUNT: 1~~
+
+prepst#!#exec#!#Time|-|a|-|12:45:37.123|-|3
+~~ROW COUNT: 1~~
+
+prepst#!#exec#!#Time|-|a|-|12:45:37.12|-|2
+~~ROW COUNT: 1~~
+
+prepst#!#exec#!#Time|-|a|-|12:45:37.1|-|1
+~~ROW COUNT: 1~~
+
+prepst#!#exec#!#Time|-|a|-|12:45:37.1234|-|4
+~~ROW COUNT: 1~~
+
+prepst#!#exec#!#Time|-|a|-|12:45:37.123456|-|6
+~~ROW COUNT: 1~~
+
+prepst#!#exec#!#Time|-|a|-|12:45:37.123456|-|5
+~~ROW COUNT: 1~~
+
+prepst#!#exec#!#Time|-|a|-|<NULL>
+~~ERROR (Code: 33557097)~~
+~~ERROR (Message: [42000] [Microsoft][ODBC Driver 17 for SQL Server][SQL Server]column "a" is of type time without time zone but expression is of type "varchar" (33557097) (SQLExecDirectW))~~
+
+
+select * from TestTime
+~~START~~
+time
+12:45:37
+12:45:37
+12:45:37
+12:45:37
+12:45:37
+12:45:37
+12:45:37
+~~END~~
+
+
+Drop table TestTime
+
+Create table TestTime(a time(2)) 
+
+prepst#!# Insert into TestTime Values(?) #!#Time|-|a|-|12:45:37.123|-|0
+~~ROW COUNT: 1~~
+
+prepst#!#exec#!#Time|-|a|-|12:45:37.123|-|3
+~~ROW COUNT: 1~~
+
+prepst#!#exec#!#Time|-|a|-|12:45:37.12|-|2
+~~ROW COUNT: 1~~
+
+prepst#!#exec#!#Time|-|a|-|12:45:37.1|-|1
+~~ROW COUNT: 1~~
+
+prepst#!#exec#!#Time|-|a|-|12:45:37.1234|-|4
+~~ROW COUNT: 1~~
+
+prepst#!#exec#!#Time|-|a|-|12:45:37.123456|-|6
+~~ROW COUNT: 1~~
+
+prepst#!#exec#!#Time|-|a|-|12:45:37.123456|-|5
+~~ROW COUNT: 1~~
+
+prepst#!#exec#!#Time|-|a|-|<NULL>
+~~ERROR (Code: 33557097)~~
+~~ERROR (Message: [42000] [Microsoft][ODBC Driver 17 for SQL Server][SQL Server]column "a" is of type time without time zone but expression is of type "varchar" (33557097) (SQLExecDirectW))~~
+
+
+select * from TestTime
+~~START~~
+time
+12:45:37
+12:45:37
+12:45:37
+12:45:37
+12:45:37
+12:45:37
+12:45:37
+~~END~~
+
+
+Drop table TestTime
+
+Create table TestTime(a time(1)) 
+
+prepst#!# Insert into TestTime Values(?) #!#Time|-|a|-|12:45:37.123|-|0
+~~ROW COUNT: 1~~
+
+prepst#!#exec#!#Time|-|a|-|12:45:37.123|-|3
+~~ROW COUNT: 1~~
+
+prepst#!#exec#!#Time|-|a|-|12:45:37.12|-|2
+~~ROW COUNT: 1~~
+
+prepst#!#exec#!#Time|-|a|-|12:45:37.1|-|1
+~~ROW COUNT: 1~~
+
+prepst#!#exec#!#Time|-|a|-|12:45:37.1234|-|4
+~~ROW COUNT: 1~~
+
+prepst#!#exec#!#Time|-|a|-|12:45:37.123456|-|6
+~~ROW COUNT: 1~~
+
+prepst#!#exec#!#Time|-|a|-|12:45:37.123456|-|5
+~~ROW COUNT: 1~~
+
+prepst#!#exec#!#Time|-|a|-|<NULL>
+~~ERROR (Code: 33557097)~~
+~~ERROR (Message: [42000] [Microsoft][ODBC Driver 17 for SQL Server][SQL Server]column "a" is of type time without time zone but expression is of type "varchar" (33557097) (SQLExecDirectW))~~
+
+
+select * from TestTime
+~~START~~
+time
+12:45:37
+12:45:37
+12:45:37
+12:45:37
+12:45:37
+12:45:37
+12:45:37
+~~END~~
+
+
+Drop table TestTime
+
+Create table TestTime(a time(0)) 
+
+prepst#!# Insert into TestTime Values(?) #!#Time|-|a|-|12:45:37.123|-|0
+~~ROW COUNT: 1~~
+
+prepst#!#exec#!#Time|-|a|-|12:45:37.123|-|3
+~~ROW COUNT: 1~~
+
+prepst#!#exec#!#Time|-|a|-|12:45:37.12|-|2
+~~ROW COUNT: 1~~
+
+prepst#!#exec#!#Time|-|a|-|12:45:37.1|-|1
+~~ROW COUNT: 1~~
+
+prepst#!#exec#!#Time|-|a|-|12:45:37.1234|-|4
+~~ROW COUNT: 1~~
+
+prepst#!#exec#!#Time|-|a|-|12:45:37.123456|-|6
+~~ROW COUNT: 1~~
+
+prepst#!#exec#!#Time|-|a|-|12:45:37.123456|-|5
+~~ROW COUNT: 1~~
+
+prepst#!#exec#!#Time|-|a|-|<NULL>
+~~ERROR (Code: 33557097)~~
+~~ERROR (Message: [42000] [Microsoft][ODBC Driver 17 for SQL Server][SQL Server]column "a" is of type time without time zone but expression is of type "varchar" (33557097) (SQLExecDirectW))~~
+
+
+select * from TestTime
+~~START~~
+time
+12:45:37
+12:45:37
+12:45:37
+12:45:37
+12:45:37
+12:45:37
+12:45:37
+~~END~~
+
+
+Drop table TestTime
