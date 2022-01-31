@@ -1,4 +1,4 @@
-name: Babelfish Smoke Tests
+name: .NET Tests
 on: [push, pull_request]
 
 jobs:
