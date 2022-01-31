@@ -1,4 +1,4 @@
-name: CI
+name: JDBC Unit Tests
 on:
   push:
     branches:
