@@ -875,7 +875,7 @@ GRANT SELECT ON sys.syscharsets TO PUBLIC;
 
 create or replace view sys.default_constraints
 AS
-select 'DF_' || o.relname || '_' || d.oid as name
+select CAST(('DF_' || o.relname || '_' || d.oid) as sys.sysname) as name
   , d.oid as object_id
   , null::int as principal_id
   , o.relnamespace as schema_id
