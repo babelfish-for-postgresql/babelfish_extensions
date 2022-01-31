@@ -180,6 +180,7 @@ typedef struct TdsColumnMetaData
 										   an expression column */
 	AttrNumber				attrNum;	/* attribute number in the relation */
 	TdsRelationMetaDataInfo	relinfo;
+	bool 					attNotNull; 	/* true if the column has not null constraint */
 } TdsColumnMetaData;
 
 /* Partial Length Prefixed-bytes */
@@ -245,6 +246,8 @@ typedef struct BulkLoadColMetaData
 
 	uint32_t 	colNameLen;
 	char 		*colName;
+
+	bool 		variantType;
 } BulkLoadColMetaData;
 
 typedef struct BulkLoadRowData
