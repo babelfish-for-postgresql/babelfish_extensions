@@ -176,6 +176,88 @@ GetBulkLoadRequest(StringInfo message)
 				memcpy(&colmetadata[currentColumn].maxLen, &message->data[offset], sizeof(uint32_t));
 				offset += sizeof(uint32_t);
 			break;
+			/*
+			 * Below cases are for variant types; in case of fixed length datatype columns, with
+			 * a Not NUll constraint, makes use of this type as an optimisation for not receiving
+			 * the the lengths for the column metadata and row data.
+			 */
+			case VARIANT_TYPE_INT:
+			{
+				colmetadata[currentColumn].columnTdsType = TDS_TYPE_INTEGER;
+				colmetadata[currentColumn].variantType = true;
+				colmetadata[currentColumn].maxLen = TDS_MAXLEN_INT;
+			}
+			break;
+			case VARIANT_TYPE_BIT:
+			{
+				colmetadata[currentColumn].columnTdsType = TDS_TYPE_BIT;
+				colmetadata[currentColumn].variantType = true;
+				colmetadata[currentColumn].maxLen = TDS_MAXLEN_BIT;
+			}
+			break;
+			case VARIANT_TYPE_BIGINT:
+			{
+				colmetadata[currentColumn].columnTdsType = TDS_TYPE_INTEGER;
+				colmetadata[currentColumn].variantType = true;
+				colmetadata[currentColumn].maxLen = TDS_MAXLEN_BIGINT;
+			}
+			break;
+			case VARIANT_TYPE_SMALLINT:
+			{
+				colmetadata[currentColumn].columnTdsType = TDS_TYPE_INTEGER;
+				colmetadata[currentColumn].variantType = true;
+				colmetadata[currentColumn].maxLen = TDS_MAXLEN_SMALLINT;
+			}
+			break;
+			case VARIANT_TYPE_TINYINT:
+			{
+				colmetadata[currentColumn].columnTdsType = TDS_TYPE_INTEGER;
+				colmetadata[currentColumn].variantType = true;
+				colmetadata[currentColumn].maxLen = TDS_MAXLEN_TINYINT;
+			}
+			break;
+			case VARIANT_TYPE_REAL:
+			{
+				colmetadata[currentColumn].columnTdsType = TDS_TYPE_FLOAT;
+				colmetadata[currentColumn].variantType = true;
+				colmetadata[currentColumn].maxLen = TDS_MAXLEN_FLOAT4;
+			}
+			break;
+			case VARIANT_TYPE_FLOAT:
+			{
+				colmetadata[currentColumn].columnTdsType = TDS_TYPE_FLOAT;
+				colmetadata[currentColumn].variantType = true;
+				colmetadata[currentColumn].maxLen = TDS_MAXLEN_FLOAT8;
+			}
+			break;
+			case VARIANT_TYPE_DATETIME:
+			{
+				colmetadata[currentColumn].columnTdsType = TDS_TYPE_DATETIMEN;
+				colmetadata[currentColumn].variantType = true;
+				colmetadata[currentColumn].maxLen = TDS_MAXLEN_DATETIME;
+			}
+			break;
+			case VARIANT_TYPE_SMALLDATETIME:
+			{
+				colmetadata[currentColumn].columnTdsType = TDS_TYPE_DATETIMEN;
+				colmetadata[currentColumn].variantType = true;
+				colmetadata[currentColumn].maxLen = TDS_MAXLEN_SMALLDATETIME;
+			}
+			break;
+			case VARIANT_TYPE_MONEY:
+			{
+				colmetadata[currentColumn].columnTdsType = TDS_TYPE_MONEYN;
+				colmetadata[currentColumn].variantType = true;
+				colmetadata[currentColumn].maxLen = TDS_MAXLEN_MONEY;
+			}
+			break;
+			case VARIANT_TYPE_SMALLMONEY:
+			{
+				colmetadata[currentColumn].columnTdsType = TDS_TYPE_MONEYN;
+				colmetadata[currentColumn].variantType = true;
+				colmetadata[currentColumn].maxLen = TDS_MAXLEN_SMALLMONEY;
+			}
+			break;
 			default:
 			    ereport(ERROR,
 						(errcode(ERRCODE_PROTOCOL_VIOLATION),
@@ -236,14 +318,20 @@ SetBulkLoadRowData(TDSRequestBulkLoad request, const StringInfo message, uint64_
 				case TDS_TYPE_MONEYN:
 				case TDS_TYPE_UNIQUEIDENTIFIER:
 				{
-					rowData->columnValues[i].len = messageData[offset++];
-					if (rowData->columnValues[i].len == 0) /* null */
+					if (colmetadata[i].variantType)
 					{
-						rowData->isNull[i] = 'n';
-						i++;
-						continue;
+						rowData->columnValues[i].len = colmetadata[i].maxLen;
 					}
-
+					else
+					{
+						rowData->columnValues[i].len = messageData[offset++];
+						if (rowData->columnValues[i].len == 0) /* null */
+						{
+							rowData->isNull[i] = 'n';
+							i++;
+							continue;
+						}
+					}
 					CheckForInvalidLength(rowData, request, i);
 
 					if (rowData->columnValues[i].len > rowData->columnValues[i].maxlen)

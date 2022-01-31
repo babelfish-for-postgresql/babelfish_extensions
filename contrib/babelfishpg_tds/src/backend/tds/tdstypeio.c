@@ -2034,10 +2034,14 @@ TdsRecvTypeSqlvariant(const char *message, const ParameterToken token)
 int
 TdsSendTypeBit(FmgrInfo *finfo, Datum value, void *vMetaData)
 {
-	int			rc;
+	int			rc = 0;
 	int8_t		out = DatumGetBool(value);
 
-	if ((rc = TdsPutInt8(sizeof(out))) == 0)
+	/* Don't send the length if the column type is not null. */
+	if (!((TdsColumnMetaData *)vMetaData)->attNotNull)
+		rc = TdsPutInt8(sizeof(out));
+
+	if (rc == 0)
 		rc = TdsPutInt8(out);
 	return rc;
 }
@@ -2045,20 +2049,28 @@ TdsSendTypeBit(FmgrInfo *finfo, Datum value, void *vMetaData)
 int
 TdsSendTypeTinyint(FmgrInfo *finfo, Datum value, void *vMetaData)
 {
-	int			rc;
+	int			rc = 0;
 	int8_t		out = DatumGetUInt8(value);
 
-	if ((rc = TdsPutInt8(sizeof(out))) == 0)
+	/* Don't send the length if the column type is not null. */
+	if (!((TdsColumnMetaData *)vMetaData)->attNotNull)
+		rc = TdsPutInt8(sizeof(out));
+
+	if (rc == 0)
 		rc = TdsPutInt8(out);
 	return rc;
 }
 int
 TdsSendTypeSmallint(FmgrInfo *finfo, Datum value, void *vMetaData)
 {
-	int			rc;
+	int			rc = 0;
 	int16_t		out = DatumGetInt16(value);
 
-	if ((rc = TdsPutInt8(sizeof(out))) == 0)
+	/* Don't send the length if the column type is not null. */
+	if (!((TdsColumnMetaData *)vMetaData)->attNotNull)
+		rc = TdsPutInt8(sizeof(out));
+
+	if (rc == 0)
 		rc = TdsPutInt16LE(out);
 	return rc;
 }
@@ -2066,10 +2078,14 @@ TdsSendTypeSmallint(FmgrInfo *finfo, Datum value, void *vMetaData)
 int
 TdsSendTypeInteger(FmgrInfo *finfo, Datum value, void *vMetaData)
 {
-	int			rc;
+	int			rc = 0;
 	int32_t		out = DatumGetInt32(value);
 
-	if ((rc = TdsPutInt8(sizeof(out))) == 0)
+	/* Don't send the length if the column type is not null. */
+	if (!((TdsColumnMetaData *)vMetaData)->attNotNull)
+		rc = TdsPutInt8(sizeof(out));
+
+	if (rc == 0)
 		rc = TdsPutInt32LE(out);
 	return rc;
 }
@@ -2077,10 +2093,14 @@ TdsSendTypeInteger(FmgrInfo *finfo, Datum value, void *vMetaData)
 int
 TdsSendTypeBigint(FmgrInfo *finfo, Datum value, void *vMetaData)
 {
-	int			rc;
+	int			rc = 0;
 	int64_t		out = DatumGetInt64(value);
 
-	if ((rc = TdsPutInt8(sizeof(out))) == 0)
+	/* Don't send the length if the column type is not null. */
+	if (!((TdsColumnMetaData *)vMetaData)->attNotNull)
+		rc = TdsPutInt8(sizeof(out));
+
+	if (rc == 0)
 		rc = TdsPutInt64LE(out);
 	return rc;
 }
@@ -2088,10 +2108,14 @@ TdsSendTypeBigint(FmgrInfo *finfo, Datum value, void *vMetaData)
 int
 TdsSendTypeFloat4(FmgrInfo *finfo, Datum value, void *vMetaData)
 {
-	int			rc;
+	int			rc = 0;
 	float4		out = DatumGetFloat4(value);
 
-	if ((rc = TdsPutInt8(sizeof(out))) == 0)
+	/* Don't send the length if the column type is not null. */
+	if (!((TdsColumnMetaData *)vMetaData)->attNotNull)
+		rc = TdsPutInt8(sizeof(out));
+
+	if (rc == 0)
 		rc = TdsPutFloat4LE(out);
 	return rc;
 }
@@ -2099,10 +2123,14 @@ TdsSendTypeFloat4(FmgrInfo *finfo, Datum value, void *vMetaData)
 int
 TdsSendTypeFloat8(FmgrInfo *finfo, Datum value, void *vMetaData)
 {
-	int			rc;
+	int			rc = 0;
 	float8		out = DatumGetFloat8(value);
 
-	if ((rc = TdsPutInt8(sizeof(out))) == 0)
+	/* Don't send the length if the column type is not null. */
+	if (!((TdsColumnMetaData *)vMetaData)->attNotNull)
+		rc = TdsPutInt8(sizeof(out));
+
+	if (rc == 0)
 		rc = TdsPutFloat8LE(out);
 	return rc;
 }
@@ -2478,7 +2506,11 @@ TdsSendTypeMoney(FmgrInfo *finfo, Datum value, void *vMetaData)
 	low = out & 0xffffffff;
 	high = (out >> 32) & 0xffffffff;
 
-	if ((rc = TdsPutInt8(length)) == 0)
+	/* Don't send the length if the column type is not null. */
+	if (!((TdsColumnMetaData *)vMetaData)->attNotNull)
+		rc = TdsPutInt8(length);
+
+	if (rc == 0)
 	{
 		rc = TdsPutUInt32LE(high);
 		rc |= TdsPutUInt32LE(low);
@@ -2504,7 +2536,11 @@ TdsSendTypeSmallmoney(FmgrInfo *finfo, Datum value, void *vMetaData)
 		return EOF;
 	}
 
-	if ((rc = TdsPutInt8(length)) == 0)
+	/* Don't send the length if the column type is not null. */
+	if (!((TdsColumnMetaData *)vMetaData)->attNotNull)
+		rc = TdsPutInt8(length);
+
+	if (rc == 0)
 		rc = TdsPutUInt32LE(low);
 	return rc;
 }
@@ -2512,12 +2548,16 @@ TdsSendTypeSmallmoney(FmgrInfo *finfo, Datum value, void *vMetaData)
 int
 TdsSendTypeSmalldatetime(FmgrInfo *finfo, Datum value, void *vMetaData)
 {
-	int rc = EOF, length = 4;
+	int rc = 0, length = 4;
 	uint16 numDays = 0, numMins = 0;
 
 	TdsTimeDifferenceSmalldatetime(value, &numDays, &numMins);
 
-	if ((rc = TdsPutInt8(length)) == 0)
+	/* Don't send the length if the column type is not null. */
+	if (!((TdsColumnMetaData *)vMetaData)->attNotNull)
+		rc = TdsPutInt8(length);
+
+	if (rc == 0)
 	{
 		rc = TdsPutUInt16LE(numDays);
 		rc |= TdsPutUInt16LE(numMins);
@@ -2553,7 +2593,11 @@ TdsSendTypeDatetime(FmgrInfo *finfo, Datum value, void *vMetaData)
 
 	TdsTimeDifferenceDatetime(value, &numDays, &numTicks);
 
-	if ((rc = TdsPutInt8(length)) == 0)
+	/* Don't send the length if the column type is not null. */
+	if (!((TdsColumnMetaData *)vMetaData)->attNotNull)
+		rc = TdsPutInt8(length);
+
+	if (rc == 0)
 	{
 		rc = TdsPutUInt32LE(numDays);
 		rc |= TdsPutUInt32LE(numTicks);
