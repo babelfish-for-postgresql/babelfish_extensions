@@ -1585,6 +1585,13 @@ typedef enum
 	IDENTIFIER_LOOKUP_EXPR		/* In SQL expression --- special case */
 } IdentifierLookup;
 
+typedef struct 
+{
+	AttrNumber    x_attnum;
+	int trigger_depth;
+	int total_columns;
+} UpdatedColumn;
+
 extern IdentifierLookup pltsql_IdentifierLookup;
 
 typedef struct tsql_identity_insert_fields
@@ -1639,6 +1646,8 @@ extern PLtsql_protocol_plugin **pltsql_protocol_plugin_ptr;
 
 extern Oid procid_var;
 extern uint64 rowcount_var;
+extern List* columns_updated_list;
+extern int pltsql_trigger_depth;
 extern int latest_error_code;
 extern int latest_pg_error_code;
 extern bool last_error_mapping_failed;
