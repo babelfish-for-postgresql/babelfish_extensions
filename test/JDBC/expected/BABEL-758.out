@@ -1,0 +1,182 @@
+CREATE PROCEDURE babel_758_set_stmt
+@how_many INT OUT
+AS
+BEGIN
+  SET @how_many = POWER(2, 23) - POWER(2, 3);
+END
+GO
+
+-- original issue: bigint
+DECLARE @ret bigint;
+EXECUTE babel_758_set_stmt @ret OUTPUT;
+SELECT @ret;
+GO
+~~START~~
+bigint
+8388600
+~~END~~
+
+
+-- double precision
+DECLARE @ret double precision;
+EXECUTE babel_758_set_stmt @ret OUTPUT;
+SELECT @ret;
+GO
+~~START~~
+float
+8388600.0
+~~END~~
+
+
+-- real
+DECLARE @ret real;
+EXECUTE babel_758_set_stmt @ret OUTPUT;
+SELECT @ret;
+GO
+~~START~~
+real
+8388600.0
+~~END~~
+
+
+-- decimal
+DECLARE @ret decimal;
+EXECUTE babel_758_set_stmt @ret OUTPUT;
+SELECT @ret;
+GO
+~~START~~
+numeric
+8388600
+~~END~~
+
+
+-- smallint
+DECLARE @ret smallint;
+EXECUTE babel_758_set_stmt @ret OUTPUT;
+SELECT @ret;
+GO
+~~ERROR (Code: 220)~~
+
+~~ERROR (Message: smallint out of range)~~
+
+~~START~~
+smallint
+<NULL>
+~~END~~
+
+
+-- tinyint
+DECLARE @ret tinyint;
+EXECUTE babel_758_set_stmt @ret OUTPUT;
+SELECT @ret;
+GO
+~~ERROR (Code: 220)~~
+
+~~ERROR (Message: smallint out of range)~~
+
+~~START~~
+tinyint
+<NULL>
+~~END~~
+
+
+
+CREATE TABLE [babel_758_employees] (a int);
+INSERT INTO [babel_758_employees] values (1), (2), (3), (4), (5), (6), (7), (8), (9);
+INSERT INTO [babel_758_employees] SELECT * FROM [babel_758_employees];
+INSERT INTO [babel_758_employees] SELECT * FROM [babel_758_employees];
+INSERT INTO [babel_758_employees] SELECT * FROM [babel_758_employees];
+INSERT INTO [babel_758_employees] SELECT * FROM [babel_758_employees];
+INSERT INTO [babel_758_employees] SELECT * FROM [babel_758_employees];
+GO
+~~ROW COUNT: 9~~
+
+~~ROW COUNT: 9~~
+
+~~ROW COUNT: 18~~
+
+~~ROW COUNT: 36~~
+
+~~ROW COUNT: 72~~
+
+~~ROW COUNT: 144~~
+
+
+CREATE PROCEDURE babel_758_p_employee_count
+@how_many INT OUT
+AS
+BEGIN
+  SELECT @how_many = COUNT(*) from [babel_758_employees];
+END
+GO
+
+-- original issue: bigint
+DECLARE @ret bigint;
+EXECUTE babel_758_p_employee_count @ret OUTPUT;
+SELECT @ret;
+GO
+~~START~~
+bigint
+288
+~~END~~
+
+
+-- double precision
+DECLARE @ret double precision;
+EXECUTE babel_758_p_employee_count @ret OUTPUT;
+SELECT @ret;
+GO
+~~START~~
+float
+288.0
+~~END~~
+
+
+-- real
+DECLARE @ret real;
+EXECUTE babel_758_p_employee_count @ret OUTPUT;
+SELECT @ret;
+GO
+~~START~~
+real
+288.0
+~~END~~
+
+
+-- decimal
+DECLARE @ret decimal;
+EXECUTE babel_758_p_employee_count @ret OUTPUT;
+SELECT @ret;
+GO
+~~START~~
+numeric
+288
+~~END~~
+
+
+-- smallint
+DECLARE @ret smallint;
+EXECUTE babel_758_p_employee_count @ret OUTPUT;
+SELECT @ret;
+GO
+~~START~~
+smallint
+288
+~~END~~
+
+
+-- tinyint
+DECLARE @ret tinyint;
+EXECUTE babel_758_p_employee_count @ret OUTPUT;
+SELECT @ret;
+GO
+~~ERROR (Code: 220)~~
+
+~~ERROR (Message: value for domain tinyint violates check constraint "tinyint_check")~~
+
+~~START~~
+tinyint
+<NULL>
+~~END~~
+
+
