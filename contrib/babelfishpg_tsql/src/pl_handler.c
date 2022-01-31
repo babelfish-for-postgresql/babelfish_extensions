@@ -169,6 +169,7 @@ int			pltsql_extra_errors;
 bool		pltsql_debug_parser = false;
 char       *identity_insert_string;
 bool		output_update_transformation = false;
+int			pltsql_trigger_depth = 0;
 
 PLExecStateCallStack	*exec_state_call_stack = NULL;
 int 					text_size;
@@ -2667,8 +2668,10 @@ pltsql_call_handler(PG_FUNCTION_ARGS)
 			&& is_recursive_trigger(save_cur_estate)){
 				retval = (Datum) 0;
 			}else{
+				pltsql_trigger_depth++;
 				retval = PointerGetDatum(pltsql_exec_trigger(func,
 														  (TriggerData *) fcinfo->context));
+				pltsql_trigger_depth--;
 			}
 		}
 		else if (CALLED_AS_EVENT_TRIGGER(fcinfo))
