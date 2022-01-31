@@ -2565,6 +2565,13 @@ StatementEnd_Internal(PLtsql_execstate *estate, PLtsql_stmt *stmt, bool error)
 	 */
 	tds_estate->error_stack_offset = 0;
 
+	/*
+	 * Return if we are inside a function. Continue if it's a trigger.
+	 */
+	if (estate && estate->func && estate->func->fn_oid != InvalidOid &&
+		estate->func->fn_prokind == PROKIND_FUNCTION && estate->func->fn_is_trigger == PLTSQL_NOT_TRIGGER)
+		return;
+
 	if (stmt == NULL)
 		return;
 
