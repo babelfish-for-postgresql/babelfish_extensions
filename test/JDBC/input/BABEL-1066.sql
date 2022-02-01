@@ -9,3 +9,9 @@ go
 
 select dateadd(yy, 1, null);
 go
+
+select datepart(weekday, cast( '2021-12-31' as date));
+go
+
+select datepart(dw, null);
+go
