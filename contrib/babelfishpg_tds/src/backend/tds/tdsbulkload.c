@@ -488,9 +488,9 @@ ProcessBCPRequest(TDSRequest request)
 	BulkLoadColMetaData *colMetaData = req->colMetaData;
 
 	int nargs = req->colCount * req->rowCount;
-	Datum *values = palloc(nargs * sizeof(Datum));
-	char *nulls = palloc(nargs * sizeof(char));
-	Oid *argtypes= palloc(nargs * sizeof(Datum));
+	Datum *values = palloc0(nargs * sizeof(Datum));
+	char *nulls = palloc0(nargs * sizeof(char));
+	Oid *argtypes= palloc0(nargs * sizeof(Datum));
 
 	int count = 0;
 	ListCell 	*lc;
@@ -538,7 +538,7 @@ ProcessBCPRequest(TDSRequest request)
 						values[count] = TdsTypeVarbinaryToDatum(temp);
 						argtypes[count] = tempFuncInfo->ttmtypeid;
 					break;
-					case TDS_RECV_DATE:
+					case TDS_TYPE_DATE:
 						values[count] = TdsTypeDateToDatum(temp);
 					break;
 					case TDS_TYPE_TIME:
