@@ -82,6 +82,7 @@ Datum TdsTypeNumericToDatum(StringInfo buf, int scale);
 Datum TdsTypeVarbinaryToDatum(StringInfo buf);
 Datum TdsTypeDatetime2ToDatum(StringInfo buf, int scale, int len);
 Datum TdsTypeDatetimeToDatum(StringInfo buf);
+Datum TdsTypeSmallDatetimeToDatum(StringInfo buf);
 Datum TdsTypeDateToDatum(StringInfo buf);
 Datum TdsTypeTimeToDatum(StringInfo buf, int scale, int len);
 Datum TdsTypeDatetimeoffsetToDatum(StringInfo buf, int scale, int len);
@@ -893,6 +894,24 @@ TdsTypeNumericToDatum(StringInfo buf, int scale)
 	len = strlen(decString);
 	temp1 = '.';
 
+	/*
+	 * If scale is more than length then we need to append zeros at the start;
+	 * Since there is a '-' at the start of decString, we should ignore it before
+	 * appending and then add it later.
+	 */
+	if (scale > len)
+	{
+		int diff = scale - len + 1;
+		char *zeros = palloc0(sizeof(char) * diff + 1);
+		char *tempString = decString;
+		while(diff)
+		{
+			zeros[--diff] = '0';
+		}
+		decString = psprintf("-%s%s", zeros, tempString + 1);
+		len = strlen(decString);
+		pfree(tempString);
+	}
 	if (num != 0)
 	{
 		while (scale)
@@ -971,6 +990,23 @@ TdsTypeDatetimeToDatum(StringInfo buf)
 	numDays = val & 0x00000000ffffffff;
 
 	TdsTimeGetDatumFromDatetime(numDays, numTicks, &timestamp);
+
+	PG_RETURN_TIMESTAMP((uint64)timestamp);
+}
+
+/* Helper Function to convert Small Datetime value into Datum. */
+Datum
+TdsTypeSmallDatetimeToDatum(StringInfo buf)
+{
+	uint16	numDays, numMins;
+	uint32	val;
+	Timestamp	timestamp;
+
+	val = (uint32)GetMsgInt(buf, 4);
+	numMins = val >> 16;
+	numDays = val & 0x0000ffff;
+
+	TdsTimeGetDatumFromSmalldatetime(numDays, numMins, &timestamp);
 
 	PG_RETURN_TIMESTAMP((uint64)timestamp);
 }
@@ -1623,20 +1659,13 @@ TdsRecvTypeSmallmoney(const char *message, const ParameterToken token)
 Datum
 TdsRecvTypeSmalldatetime(const char *message, const ParameterToken token)
 {
-	uint16	numDays, numMins;
-	uint32	val;
-	Timestamp	timestamp;
-
+	Datum result;
 	StringInfo	buf = TdsGetStringInfoBufferFromToken(message, token);
 
-	val = (uint32)GetMsgInt(buf, 4);
-	numMins = val >> 16;
-	numDays = val & 0x0000ffff;
-
-	TdsTimeGetDatumFromSmalldatetime(numDays, numMins, &timestamp);
+	result = TdsTypeSmallDatetimeToDatum(buf);
 
 	pfree(buf);
-	PG_RETURN_TIMESTAMP((uint64)timestamp);
+	return result;
 }
 
 /* -------------------------------
@@ -1773,6 +1802,24 @@ TdsRecvTypeNumeric(const char *message, const ParameterToken token)
 	len = strlen(decString);
 	temp1 = '.';
 
+	/*
+	 * If scale is more than length then we need to append zeros at the start;
+	 * Since there is a '-' at the start of decString, we should ignore it before
+	 * appending and then add it later.
+	 */
+	if (scale > len)
+	{
+		int diff = scale - len + 1;
+		char *zeros = palloc0(sizeof(char) * diff + 1);
+		char *tempString = decString;
+		while(diff)
+		{
+			zeros[--diff] = '0';
+		}
+		decString = psprintf("-%s%s", zeros, tempString + 1);
+		len = strlen(decString);
+		pfree(tempString);
+	}
 	if (num != 0)
 	{
 		while (scale)
