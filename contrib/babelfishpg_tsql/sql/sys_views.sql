@@ -526,32 +526,32 @@ GRANT SELECT ON sys.sysforeignkeys TO PUBLIC;
 
 create or replace view  sys.sysindexes as
 select
-  i.object_id as id
+  i.object_id::integer as id
   , null::integer as status
-  , null::oid as first
-  , i.type as indid
-  , null::oid as root
-  , 0 as minlen
-  , 1 as keycnt
-  , null::integer as groupid
+  , null::binary(6) as first
+  , i.type::smallint as indid
+  , null::binary(6) as root
+  , 0::smallint as minlen
+  , 1::smallint as keycnt
+  , null::smallint as groupid
   , 0 as dpages
   , 0 as reserved
   , 0 as used
-  , 0 as rowcnt
+  , 0::bigint as rowcnt
   , 0 as rowmodctr
   , 0 as reserved3
   , 0 as reserved4
-  , 0 as xmaxlen
-  , null::integer as maxirow
-  , 90 as OrigFillFactor
-  , 0 as StatVersion
+  , 0::smallint as xmaxlen
+  , null::smallint as maxirow
+  , 90::sys.tinyint as OrigFillFactor
+  , 0::sys.tinyint as StatVersion
   , 0 as reserved2
-  , null::integer as FirstIAM
-  , 0 as impid
-  , 0 as lockflags
+  , null::binary(6) as FirstIAM
+  , 0::smallint as impid
+  , 0::smallint as lockflags
   , 0 as pgmodctr
   , null::sys.varbinary(816) as keys
-  , i.name as name
+  , i.name::sys.sysname as name
   , null::sys.image as statblob
   , 0 as maxlen
   , 0 as rows
