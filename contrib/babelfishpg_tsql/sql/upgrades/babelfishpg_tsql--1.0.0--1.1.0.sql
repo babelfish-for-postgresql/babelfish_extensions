@@ -1178,3 +1178,44 @@ BEGIN
 END;
 $body$
 LANGUAGE plpgsql IMMUTABLE;
+
+CREATE OR REPLACE VIEW sys.spt_tablecollations_view AS
+    SELECT
+        o.object_id         AS object_id,
+        o.schema_id         AS schema_id,
+        c.column_id         AS colid,
+        CASE WHEN p.attoptions[1] LIKE 'bbf_original_name=%' THEN split_part(p.attoptions[1], '=', 2)
+            ELSE c.name END AS name,
+        CAST(CollationProperty(c.collation_name,'tdscollation') AS binary(5)) AS tds_collation_28,
+        CAST(CollationProperty(c.collation_name,'tdscollation') AS binary(5)) AS tds_collation_90,
+        CAST(CollationProperty(c.collation_name,'tdscollation') AS binary(5)) AS tds_collation_100,
+        CAST(c.collation_name AS nvarchar(128)) AS collation_28,
+        CAST(c.collation_name AS nvarchar(128)) AS collation_90,
+        CAST(c.collation_name AS nvarchar(128)) AS collation_100
+    FROM
+        sys.all_columns c INNER JOIN
+        sys.all_objects o ON (c.object_id = o.object_id) JOIN
+        pg_attribute p ON (c.name = p.attname)
+    WHERE
+        c.is_sparse = 0 AND p.attnum >= 0;
+GRANT SELECT ON sys.spt_tablecollations_view TO PUBLIC;
+
+CREATE OR REPLACE PROCEDURE sys.sp_tablecollations_100
+(
+    IN "@object" nvarchar(4000)
+)
+AS $$
+BEGIN
+    select
+        s_tcv.colid         AS colid,
+        s_tcv.name          AS name,
+        s_tcv.tds_collation_100 AS tds_collation,
+        s_tcv.collation_100 AS collation
+    from
+        sys.spt_tablecollations_view s_tcv
+    where
+        s_tcv.object_id = sys.object_id(@object)
+    order by colid;
+END;
+$$
+LANGUAGE 'pltsql';

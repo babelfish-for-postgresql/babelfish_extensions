@@ -114,6 +114,7 @@ static void add_dummy_return(PLtsql_function *function);
 static void add_decl_table(PLtsql_function *function, int tbl_dno, char *tbl_typ);
 static Node *pltsql_pre_column_ref(ParseState *pstate, ColumnRef *cref);
 static Node *pltsql_post_column_ref(ParseState *pstate, ColumnRef *cref, Node *var);
+static void pltsql_post_expand_star(ParseState *pstate, ColumnRef *cref, List *l);
 static Node *pltsql_param_ref(ParseState *pstate, ParamRef *pref);
 static Node *resolve_column_ref(ParseState *pstate, PLtsql_expr *expr,
 				   ColumnRef *cref, bool error_if_no_field);
@@ -1478,6 +1479,7 @@ pltsql_parser_setup(struct ParseState *pstate, PLtsql_expr *expr)
 {
 	pstate->p_pre_columnref_hook = pltsql_pre_column_ref;
 	pstate->p_post_columnref_hook = pltsql_post_column_ref;
+	pstate->p_post_expand_star_hook = pltsql_post_expand_star;
 	pstate->p_paramref_hook = pltsql_param_ref;
 	/* no need to use p_coerce_param_hook */
 	pstate->p_ref_hook_state = (void *) expr;
@@ -1539,6 +1541,78 @@ pltsql_post_column_ref(ParseState *pstate, ColumnRef *cref, Node *var)
 	}
 
 	return myvar;
+}
+
+
+/*
+ * Call this hook only when expanding a SELECT * to its individual column names
+ * We can rewrite the column names to their Babelfish (ie original case) names
+ * if we find them in pg_attribute.
+ */
+static void
+pltsql_post_expand_star(ParseState *pstate, ColumnRef *cref, List *l)
+{
+	ListCell *li;
+	Datum attopts;
+	ArrayType *arr;
+	Datum *optiondatums;
+	int noptions, i;
+	char *optstr, *bbf_original_name;
+
+	foreach(li, l)
+	{
+		/*
+		 * Each item in the List here should be a TargetEntry (see ExpandAllTables/expandNSItemAttrs)
+		 */
+		TargetEntry *te = (TargetEntry *) lfirst(li);
+		ParseNamespaceItem *nsitem = (ParseNamespaceItem *) linitial(pstate->p_namespace);
+		Oid relid = nsitem->p_rte->relid;
+		int16 attnum = te->resno;
+
+		if (relid == InvalidOid)
+		{
+			return;
+		}
+		/*
+		 * Get the list of names in pg_attribute. get_attoptions returns a Datum of
+		 * the text[] field pgattribute.attoptions. We don't want to throw a full
+		 * error if cache lookup fails to preserve functionality, so just log it. 
+		 */
+		PG_TRY();
+		{
+			attopts = get_attoptions(relid, attnum);
+		}
+		PG_CATCH();
+		{
+			elog(LOG, "Cache lookup failed in pltsql_post_expand_star for attribute %d of relation %u",
+						attnum, relid);
+			attopts = (Datum) 0;
+		}
+		PG_END_TRY();
+		if (!attopts)
+		{
+			return;
+		}
+
+		arr = DatumGetArrayTypeP(attopts);
+		deconstruct_array(arr, TEXTOID, -1, false, TYPALIGN_INT,
+					  &optiondatums, NULL, &noptions);
+
+		for (i = 0; i < noptions; i++)
+		{
+			optstr = VARDATA(optiondatums[i]);
+			if (strncmp(optstr, "bbf_original_name=", 18) == 0)
+			{
+				/*
+				 * We found the original name; rewrite it as bbf_original_name
+				 */
+				bbf_original_name = &optstr[18];
+				bbf_original_name[strlen(te->resname)] = '\0';
+				te->resname = pstrdup(bbf_original_name);
+				break;
+			}
+		}
+	}
 }
 
 /*
