@@ -1,9 +1,15 @@
 -- complain if script is sourced in psql, rather than via ALTER EXTENSION
 \echo Use "ALTER EXTENSION ""babelfishpg_tsql"" UPDATE TO '1.1.0'" to load this file. \quit
 
-DROP VIEW IF EXISTS sys.columns CASCADE;
--- Drop cascades to sys.spt_columns_view_managed
+SELECT set_config('search_path', 'sys, '||current_setting('search_path'), false);
 
+/* Caution: Be careful while dropping an object in a minor version upgrade
+ *          script as the object might be getting used in some user defined
+ *          objects and dropping it here might result in upgrade failure or
+ *          even user defined objects getting dropped.
+ * The following sys.sysindexes view was not working previously, so dropping
+ * it here is ok.
+ */
 DROP VIEW IF EXISTS sys.sysindexes;
 
 CREATE FUNCTION sys.columns_internal()
@@ -104,87 +110,44 @@ $$
 language plpgsql;
 
 create or replace view sys.columns AS
-select out_object_id as object_id
-  , out_name as name
-  , out_column_id as column_id
-  , out_system_type_id as system_type_id
-  , out_user_type_id as user_type_id
-  , out_max_length as max_length
-  , out_precision as precision
-  , out_scale as scale
-  , out_collation_name as collation_name
-  , out_is_nullable as is_nullable
-  , out_is_ansi_padded as is_ansi_padded
-  , out_is_rowguidcol as is_rowguidcol
-  , out_is_identity as is_identity
-  , out_is_computed as is_computed
-  , out_is_filestream as is_filestream
-  , out_is_replicated as is_replicated
-  , out_is_non_sql_subscribed as is_non_sql_subscribed
-  , out_is_merge_published as is_merge_published
-  , out_is_dts_replicated as is_dts_replicated
-  , out_is_xml_document as is_xml_document
-  , out_xml_collection_id as xml_collection_id
-  , out_default_object_id as default_object_id
-  , out_rule_object_id as rule_object_id
-  , out_is_sparse as is_sparse
-  , out_is_column_set as is_column_set
-  , out_generated_always_type as generated_always_type
-  , out_generated_always_type_desc as generated_always_type_desc
-  , out_encryption_type as encryption_type
-  , out_encryption_type_desc as encryption_type_desc
-  , out_encryption_algorithm_name as encryption_algorithm_name
-  , out_column_encryption_key_id as column_encryption_key_id
-  , out_column_encryption_key_database_name as column_encryption_key_database_name
-  , out_is_hidden as is_hidden
-  , out_is_masked as is_masked
+select out_object_id::oid as object_id
+  , out_name::name as name
+  , out_column_id::smallint as column_id
+  , out_system_type_id::oid as system_type_id
+  , out_user_type_id::oid as user_type_id
+  , out_max_length::smallint as max_length
+  , out_precision::integer as precision
+  , out_scale::integer as scale
+  , out_collation_name::name as collation_name
+  , out_is_nullable::integer as is_nullable
+  , out_is_ansi_padded::integer as is_ansi_padded
+  , out_is_rowguidcol::integer as is_rowguidcol
+  , out_is_identity::integer as is_identity
+  , out_is_computed::integer as is_computed
+  , out_is_filestream::integer as is_filestream
+  , out_is_replicated::integer as is_replicated
+  , out_is_non_sql_subscribed::integer as is_non_sql_subscribed
+  , out_is_merge_published::integer as is_merge_published
+  , out_is_dts_replicated::integer as is_dts_replicated
+  , out_is_xml_document::integer as is_xml_document
+  , out_xml_collection_id::integer as xml_collection_id
+  , out_default_object_id::oid as default_object_id
+  , out_rule_object_id::oid as rule_object_id
+  , out_is_sparse::integer as is_sparse
+  , out_is_column_set::integer as is_column_set
+  , out_generated_always_type::integer as generated_always_type
+  , out_generated_always_type_desc::varchar(60) as generated_always_type_desc
+  , out_encryption_type::integer as encryption_type
+  , out_encryption_type_desc::varchar(64) as encryption_type_desc
+  , out_encryption_algorithm_name::varchar as encryption_algorithm_name
+  , out_column_encryption_key_id::integer as column_encryption_key_id
+  , out_column_encryption_key_database_name::varchar as column_encryption_key_database_name
+  , out_is_hidden::integer as is_hidden
+  , out_is_masked::integer as is_masked
   , out_graph_type as graph_type
   , out_graph_type_desc as graph_type_desc
 from sys.columns_internal();
 GRANT SELECT ON sys.columns TO PUBLIC;
-
-CREATE VIEW sys.spt_columns_view_managed AS
-SELECT
-    o.object_id                     AS OBJECT_ID,
-    isc.table_catalog               AS TABLE_CATALOG,
-    isc.table_schema                AS TABLE_SCHEMA,
-    o.name                          AS TABLE_NAME,
-    c.name                          AS COLUMN_NAME,
-    isc.ordinal_position            AS ORDINAL_POSITION,
-    isc.column_default              AS COLUMN_DEFAULT,
-    isc.is_nullable                 AS IS_NULLABLE,
-    isc.data_type                   AS DATA_TYPE,
-    isc.character_maximum_length    AS CHARACTER_MAXIMUM_LENGTH,
-    isc.character_octet_length      AS CHARACTER_OCTET_LENGTH,
-    isc.numeric_precision           AS NUMERIC_PRECISION,
-    isc.numeric_precision_radix     AS NUMERIC_PRECISION_RADIX,
-    isc.numeric_scale               AS NUMERIC_SCALE,
-    isc.datetime_precision          AS DATETIME_PRECISION,
-    isc.character_set_catalog       AS CHARACTER_SET_CATALOG,
-    isc.character_set_schema        AS CHARACTER_SET_SCHEMA,
-    isc.character_set_name          AS CHARACTER_SET_NAME,
-    isc.collation_catalog           AS COLLATION_CATALOG,
-    isc.collation_schema            AS COLLATION_SCHEMA,
-    c.collation_name                AS COLLATION_NAME,
-    isc.domain_catalog              AS DOMAIN_CATALOG,
-    isc.domain_schema               AS DOMAIN_SCHEMA,
-    isc.domain_name                 AS DOMAIN_NAME,
-    c.is_sparse                     AS IS_SPARSE,
-    c.is_column_set                 AS IS_COLUMN_SET,
-    c.is_filestream                 AS IS_FILESTREAM
-FROM
-    sys.objects o JOIN sys.columns c ON
-        (
-            c.object_id = o.object_id and
-            o.type in ('U', 'V')  -- limit columns to tables and views
-        )
-    LEFT JOIN information_schema.columns isc ON
-        (
-            sys.schema_name(o.schema_id) = isc.table_schema and
-            o.name = isc.table_name and
-            c.name = isc.column_name
-        )
-    WHERE CAST(column_name AS sys.nvarchar(128)) NOT IN ('cmin', 'cmax', 'xmin', 'xmax', 'ctid', 'tableoid');
 
 create or replace view sys.views as 
 select 
@@ -510,7 +473,6 @@ GRANT EXECUTE ON FUNCTION sys.exp(NUMERIC) TO PUBLIC;
 -- BABEL-2259: Support sp_databases System Stored Procedure
 -- Lists databases that either reside in an instance of the SQL Server or
 -- are accessible through a database gateway
--- DROP VIEW IF EXISTS sys.sp_databases_view CASCADE;
 
 CREATE OR REPLACE VIEW sys.sp_databases_view AS
 	SELECT CAST(database_name AS sys.SYSNAME),
@@ -835,7 +797,6 @@ GRANT EXECUTE ON FUNCTION sys.original_login() TO PUBLIC;
  COMMENT ON FUNCTION sys.columnproperty 
  IS 'This function returns column or parameter information. Currently only works with "charmaxlen", and "allowsnull" otherwise returns 0.';
 
--- DROP VIEW IF EXISTS sys.default_constraints;
 create or replace view sys.default_constraints
 AS
 select CAST(('DF_' || o.relname || '_' || d.oid) as sys.sysname) as name
@@ -857,20 +818,53 @@ from pg_catalog.pg_attrdef as d
 inner join pg_catalog.pg_class as o on (d.adrelid = o.oid);
 GRANT SELECT ON sys.default_constraints TO PUBLIC;
 
--- DROP VIEW IF EXISTS sys.computed_columns;
 CREATE OR REPLACE VIEW sys.computed_columns
 AS
-SELECT sc.*
-  , pg_get_expr(d.adbin, d.adrelid) AS definition
+SELECT out_object_id as object_id
+  , out_name as name
+  , out_column_id as column_id
+  , out_system_type_id as system_type_id
+  , out_user_type_id as user_type_id
+  , out_max_length as max_length
+  , out_precision as precision
+  , out_scale as scale
+  , out_collation_name as collation_name
+  , out_is_nullable as is_nullable
+  , out_is_ansi_padded as is_ansi_padded
+  , out_is_rowguidcol as is_rowguidcol
+  , out_is_identity as is_identity
+  , out_is_computed as is_computed
+  , out_is_filestream as is_filestream
+  , out_is_replicated as is_replicated
+  , out_is_non_sql_subscribed as is_non_sql_subscribed
+  , out_is_merge_published as is_merge_published
+  , out_is_dts_replicated as is_dts_replicated
+  , out_is_xml_document as is_xml_document
+  , out_xml_collection_id as xml_collection_id
+  , out_default_object_id as default_object_id
+  , out_rule_object_id as rule_object_id
+  , out_is_sparse as is_sparse
+  , out_is_column_set as is_column_set
+  , out_generated_always_type as generated_always_type
+  , out_generated_always_type_desc as generated_always_type_desc
+  , out_encryption_type as encryption_type
+  , out_encryption_type_desc as encryption_type_desc
+  , out_encryption_algorithm_name as encryption_algorithm_name
+  , out_column_encryption_key_id as column_encryption_key_id
+  , out_column_encryption_key_database_name as column_encryption_key_database_name
+  , out_is_hidden as is_hidden
+  , out_is_masked as is_masked
+  , out_graph_type as graph_type
+  , out_graph_type_desc as graph_type_desc
+  , substring(pg_get_expr(d.adbin, d.adrelid), 1, 4000)::sys.nvarchar(4000) AS definition
   , 1::sys.bit AS uses_database_collation
   , 0::sys.bit AS is_persisted
-FROM sys.columns sc
-INNER JOIN pg_attribute a ON sc.name = a.attname AND sc.column_id = a.attnum
+FROM sys.columns_internal() sc
+INNER JOIN pg_attribute a ON sc.out_name = a.attname AND sc.out_column_id = a.attnum
 INNER JOIN pg_attrdef d ON d.adrelid = a.attrelid AND d.adnum = a.attnum
-WHERE a.attgenerated = 's' AND sc.is_computed::integer = 1;
+WHERE a.attgenerated = 's' AND sc.out_is_computed::integer = 1;
 GRANT SELECT ON sys.computed_columns TO PUBLIC;
 
--- DROP VIEW IF EXISTS sys.index_columns;
 create or replace view sys.index_columns
 as
 select i.indrelid::integer as object_id
@@ -885,7 +879,6 @@ from pg_index as i
 inner join pg_catalog.pg_attribute a on i.indexrelid = a.attrelid;
 GRANT SELECT ON sys.index_columns TO PUBLIC;
  
-DROP VIEW IF EXISTS sys.check_constraints;
 CREATE or replace VIEW sys.check_constraints AS
 SELECT CAST(c.conname as sys.sysname) as name
   , oid::integer as object_id
