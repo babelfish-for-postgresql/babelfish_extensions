@@ -461,6 +461,7 @@ extern Datum TdsTypeNumericToDatum(StringInfo buf, int scale);
 extern Datum TdsTypeVarbinaryToDatum(StringInfo buf);
 extern Datum TdsTypeDatetime2ToDatum(StringInfo buf, int scale, int len);
 extern Datum TdsTypeDatetimeToDatum(StringInfo buf);
+extern Datum TdsTypeSmallDatetimeToDatum(StringInfo buf);
 extern Datum TdsTypeDateToDatum(StringInfo buf);
 extern Datum TdsTypeTimeToDatum(StringInfo buf, int scale, int len);
 extern Datum TdsTypeDatetimeoffsetToDatum(StringInfo buf, int scale, int len);

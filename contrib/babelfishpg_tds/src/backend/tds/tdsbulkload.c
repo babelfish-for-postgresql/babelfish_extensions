@@ -548,7 +548,10 @@ ProcessBCPRequest(TDSRequest request)
 						values[count] = TdsTypeDatetime2ToDatum(temp, colMetaData[currentColumn].scale, temp->len);
 					break;
 					case TDS_TYPE_DATETIMEN:
-						values[count] = TdsTypeDatetimeToDatum(temp);
+						if (colMetaData[currentColumn].maxLen == TDS_MAXLEN_SMALLDATETIME)
+							values[count] = TdsTypeSmallDatetimeToDatum(temp);
+						else
+							values[count] = TdsTypeDatetimeToDatum(temp);
 					break;
 					case TDS_TYPE_DATETIMEOFFSET:
 						values[count] = TdsTypeDatetimeoffsetToDatum(temp, colMetaData[currentColumn].scale, temp->len);

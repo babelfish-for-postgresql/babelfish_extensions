@@ -166,6 +166,7 @@ TdsIoFunctionRawData TdsIoFunctionRawData_data[] =
     {"pg_catalog", "date", TDS_TYPE_DATE, 3, 1, TDS_SEND_DATE, TDS_RECV_DATE},
     {"sys", "datetime", TDS_TYPE_DATETIMEN, 8, 1, TDS_SEND_DATETIME, TDS_RECV_DATETIME},
     {"pg_catalog", "numeric", TDS_TYPE_NUMERICN, 17, 1, TDS_SEND_NUMERIC, TDS_RECV_NUMERIC},
+    {"sys", "decimal", TDS_TYPE_DECIMALN, 17, 1, TDS_SEND_NUMERIC, TDS_RECV_NUMERIC},
     {"sys", "smalldatetime", TDS_TYPE_DATETIMEN, 4, 1, TDS_SEND_SMALLDATETIME, TDS_RECV_SMALLDATETIME},
     {"sys", "binary", TDS_TYPE_BINARY, -1, 2, TDS_SEND_BINARY, TDS_RECV_BINARY},
     {"sys", "varbinary", TDS_TYPE_VARBINARY, -1, 2, TDS_SEND_VARBINARY, TDS_RECV_VARBINARY},
