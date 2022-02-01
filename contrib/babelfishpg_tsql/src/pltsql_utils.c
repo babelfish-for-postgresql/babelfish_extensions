@@ -19,7 +19,7 @@ bool suppress_string_truncation_error = false;
 bool pltsql_suppress_string_truncation_error(void);
 
 bool is_tsql_any_char_datatype(Oid oid); /* sys.char / sys.nchar / sys.varchar / sys.nvarchar */
-bool is_tsql_invalid_datatype_for_declarestmt(Oid oid);
+bool is_tsql_text_ntext_or_image_datatype(Oid oid);
 
 /* 
  * Following the rule for locktag fields of advisory locks:
@@ -689,7 +689,7 @@ bool is_tsql_any_char_datatype(Oid oid)
 		is_tsql_nvarchar_datatype(oid);
 }
 
-bool is_tsql_invalid_datatype_for_declarestmt(Oid oid)
+bool is_tsql_text_ntext_or_image_datatype(Oid oid)
 {
 	return is_tsql_text_datatype(oid) ||
 		is_tsql_ntext_datatype(oid) ||

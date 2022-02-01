@@ -41,7 +41,7 @@ extern "C"
 
 	extern PLtsql_type *parse_datatype(const char *string, int location);
 	extern bool is_tsql_any_char_datatype(Oid oid);
-	extern bool is_tsql_invalid_datatype_for_declarestmt(Oid oid);
+	extern bool is_tsql_text_ntext_or_image_datatype(Oid oid);
 
 	extern int CurrentLineNumber;
 
@@ -3343,7 +3343,7 @@ makeDeclareStmt(TSqlParser::Declare_statementContext *ctx)
 					std::string newTypeStr = typeStr + "(1)"; /* in T-SQL, length-less (N)(VAR)CHAR's length is treated as 1 */
 					type = parse_datatype(newTypeStr.c_str(), 0);
 				}
-				else if (is_tsql_invalid_datatype_for_declarestmt(type->typoid))
+				else if (is_tsql_text_ntext_or_image_datatype(type->typoid))
 				{
 					throw PGErrorWrapperException(ERROR, ERRCODE_DATATYPE_MISMATCH, "The text, ntext, and image data types are invalid for local variables.", getLineAndPos(local->data_type()));
 				}
@@ -3925,8 +3925,15 @@ makeFetchCurosrStatement(TSqlParser::Fetch_cursorContext *ctx)
 		{
 			if (nse->itemtype == PLTSQL_NSTYPE_REC ||
 			    nse->itemtype == PLTSQL_NSTYPE_TBL)
+			{
 				throw PGErrorWrapperException(ERROR, ERRCODE_FEATURE_NOT_SUPPORTED, "FETCH into non-scalar type is not supported yet", getLineAndPos(localIDs[i]));
-
+			}
+			else if (nse->itemtype == PLTSQL_NSTYPE_VAR)
+			{
+				PLtsql_var *var = (PLtsql_var *) pltsql_Datums[nse->itemno];
+				if (is_tsql_text_ntext_or_image_datatype(var->datatype->typoid))
+					throw PGErrorWrapperException(ERROR, ERRCODE_DATATYPE_MISMATCH, "Cannot fetch into text, ntext, and image variables.", getLineAndPos(localIDs[i]));
+			}
 			/* please refer to read_into_scalar_list */
 			row->fieldnames[i] = pstrdup(targetText.c_str());
 			row->varnos[i] = nse->itemno;
