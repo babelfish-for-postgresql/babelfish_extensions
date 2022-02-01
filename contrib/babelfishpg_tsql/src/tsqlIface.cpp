@@ -117,7 +117,8 @@ static bool is_compiling_create_function();
 static void process_query_specification(TSqlParser::Query_specificationContext *qctx, PLtsql_expr_query_mutator *mutator);
 static void process_select_statement(TSqlParser::Select_statementContext *selectCtx, PLtsql_expr_query_mutator *mutator);
 static void process_select_statement_standalone(TSqlParser::Select_statement_standaloneContext *standaloneCtx, PLtsql_expr_query_mutator *mutator, tsqlBuilder &builder);
-template <class T> static std::string rewrite_omitted_db_and_schema_name(T ctx, GetCtxFunc<T> getDatabase, GetCtxFunc<T> getSchema);
+template <class T> static std::string rewrite_object_name_with_omitted_db_and_schema_name(T ctx, GetCtxFunc<T> getDatabase, GetCtxFunc<T> getSchema);
+template <class T> static std::string rewrite_column_name_with_omitted_schema_name(T ctx, GetCtxFunc<T> getSchema, GetCtxFunc<T> getTableName);
 static bool does_object_name_need_delimiter(TSqlParser::IdContext *id);
 static std::string delimit_identifier(TSqlParser::IdContext *id);
 
@@ -1152,6 +1153,12 @@ public:
 
 	void exitInsert_column_id(TSqlParser::Insert_column_idContext *ctx) override
 	{
+		// qualifier and DOT is totally ignored
+		for (auto dot : ctx->DOT())
+			rewritten_query_fragment.emplace(std::make_pair(dot->getSymbol()->getStartIndex(), std::make_pair(::getFullText(dot), ""))); // remove dot
+		for (auto ign : ctx->ignore)
+			rewritten_query_fragment.emplace(std::make_pair(ign->start->getStartIndex(), std::make_pair(::getFullText(ign), ""))); // remove ignore
+
 		// qualified identifier doesn't need delimiter
 		if (ctx->DOT().empty() && does_object_name_need_delimiter(ctx->id().back()))
 			rewritten_query_fragment.emplace(std::make_pair(ctx->id().back()->start->getStartIndex(), std::make_pair(::getFullText(ctx->id().back()), delimit_identifier(ctx->id().back()))));
@@ -1159,6 +1166,12 @@ public:
 
 	void exitFull_column_name(TSqlParser::Full_column_nameContext *ctx) override
 	{
+		GetCtxFunc<TSqlParser::Full_column_nameContext *> getSchema = [](TSqlParser::Full_column_nameContext *o) { return o->schema; };
+		GetCtxFunc<TSqlParser::Full_column_nameContext *> getTablename = [](TSqlParser::Full_column_nameContext *o) { return o->tablename; };
+		std::string rewritten_name = rewrite_column_name_with_omitted_schema_name(ctx, getSchema, getTablename);
+		if (!rewritten_name.empty())
+			rewritten_query_fragment.emplace(std::make_pair(ctx->start->getStartIndex(), std::make_pair(::getFullText(ctx), rewritten_name)));
+
 		// qualified identifier doesn't need delimiter
 		if (ctx->DOT().empty() && does_object_name_need_delimiter(ctx->column_name))
 			rewritten_query_fragment.emplace(std::make_pair(ctx->column_name->start->getStartIndex(), std::make_pair(::getFullText(ctx->column_name), delimit_identifier(ctx->column_name))));
@@ -1171,7 +1184,7 @@ public:
 	{
 		GetCtxFunc<TSqlParser::Full_object_nameContext *> getDatabase = [](TSqlParser::Full_object_nameContext *o) { return o->database; };
 		GetCtxFunc<TSqlParser::Full_object_nameContext *> getSchema = [](TSqlParser::Full_object_nameContext *o) { return o->schema; };
-		std::string rewritten_name = rewrite_omitted_db_and_schema_name(ctx, getDatabase, getSchema);
+		std::string rewritten_name = rewrite_object_name_with_omitted_db_and_schema_name(ctx, getDatabase, getSchema);
 		if (!rewritten_name.empty())
 			rewritten_query_fragment.emplace(std::make_pair(ctx->start->getStartIndex(), std::make_pair(::getFullText(ctx), rewritten_name)));
 
@@ -1184,7 +1197,7 @@ public:
 	{
 		GetCtxFunc<TSqlParser::Table_nameContext *> getDatabase = [](TSqlParser::Table_nameContext *o) { return o->database; };
 		GetCtxFunc<TSqlParser::Table_nameContext *> getSchema = [](TSqlParser::Table_nameContext *o) { return o->schema; };
-		std::string rewritten_name = rewrite_omitted_db_and_schema_name(ctx, getDatabase, getSchema);
+		std::string rewritten_name = rewrite_object_name_with_omitted_db_and_schema_name(ctx, getDatabase, getSchema);
 		if (!rewritten_name.empty())
 			rewritten_query_fragment.emplace(std::make_pair(ctx->start->getStartIndex(), std::make_pair(::getFullText(ctx), rewritten_name)));
 
@@ -1197,7 +1210,7 @@ public:
 	{
 		GetCtxFunc<TSqlParser::Simple_nameContext *> getDatabase = [](TSqlParser::Simple_nameContext *o) { return nullptr; }; // can't exist
 		GetCtxFunc<TSqlParser::Simple_nameContext *> getSchema = [](TSqlParser::Simple_nameContext *o) { return o->schema; };
-		std::string rewritten_name = rewrite_omitted_db_and_schema_name(ctx, getDatabase, getSchema);
+		std::string rewritten_name = rewrite_object_name_with_omitted_db_and_schema_name(ctx, getDatabase, getSchema);
 		if (!rewritten_name.empty())
 			rewritten_query_fragment.emplace(std::make_pair(ctx->start->getStartIndex(), std::make_pair(::getFullText(ctx), rewritten_name)));
 
@@ -1210,7 +1223,7 @@ public:
 	{
 		GetCtxFunc<TSqlParser::Func_proc_name_schemaContext *> getDatabase = [](TSqlParser::Func_proc_name_schemaContext *o) { return nullptr; }; // can't exist
 		GetCtxFunc<TSqlParser::Func_proc_name_schemaContext *> getSchema = [](TSqlParser::Func_proc_name_schemaContext *o) { return o->schema; };
-		std::string rewritten_name = rewrite_omitted_db_and_schema_name(ctx, getDatabase, getSchema);
+		std::string rewritten_name = rewrite_object_name_with_omitted_db_and_schema_name(ctx, getDatabase, getSchema);
 		if (!rewritten_name.empty())
 			rewritten_query_fragment.emplace(std::make_pair(ctx->start->getStartIndex(), std::make_pair(::getFullText(ctx), rewritten_name)));
 
@@ -1221,7 +1234,7 @@ public:
 	{
 		GetCtxFunc<TSqlParser::Func_proc_name_database_schemaContext *> getDatabase = [](TSqlParser::Func_proc_name_database_schemaContext *o) { return o->database; };
 		GetCtxFunc<TSqlParser::Func_proc_name_database_schemaContext *> getSchema = [](TSqlParser::Func_proc_name_database_schemaContext *o) { return o->schema; };
-		std::string rewritten_name = rewrite_omitted_db_and_schema_name(ctx, getDatabase, getSchema);
+		std::string rewritten_name = rewrite_object_name_with_omitted_db_and_schema_name(ctx, getDatabase, getSchema);
 		if (!rewritten_name.empty())
 			rewritten_query_fragment.emplace(std::make_pair(ctx->start->getStartIndex(), std::make_pair(::getFullText(ctx), rewritten_name)));
 
@@ -1232,7 +1245,7 @@ public:
 	{
 		GetCtxFunc<TSqlParser::Func_proc_name_server_database_schemaContext *> getDatabase = [](TSqlParser::Func_proc_name_server_database_schemaContext *o) { return o->database; };
 		GetCtxFunc<TSqlParser::Func_proc_name_server_database_schemaContext *> getSchema = [](TSqlParser::Func_proc_name_server_database_schemaContext *o) { return o->schema; };
-		std::string rewritten_name = rewrite_omitted_db_and_schema_name(ctx, getDatabase, getSchema);
+		std::string rewritten_name = rewrite_object_name_with_omitted_db_and_schema_name(ctx, getDatabase, getSchema);
 		if (!rewritten_name.empty())
 			rewritten_query_fragment.emplace(std::make_pair(ctx->start->getStartIndex(), std::make_pair(::getFullText(ctx), rewritten_name)));
 
@@ -2177,7 +2190,7 @@ rewriteBatchLevelStatement(
 		if (ctx->create_or_alter_trigger()->create_or_alter_dml_trigger()->for_replication())
 			removeCtxStringFromQuery(expr, ctx->create_or_alter_trigger()->create_or_alter_dml_trigger()->for_replication(), ctx);
 
-	// handle ommited database/schema name
+	// handle omitted database/schema name
 	{
 		ParserRuleContext *nctx = nullptr;
 		std::string rewritten_name = "";
@@ -2190,13 +2203,13 @@ rewriteBatchLevelStatement(
 			if (ctx->create_or_alter_function())
 			{
 				nctx = ctx->create_or_alter_function()->func_proc_name_schema();
-				rewritten_name = rewrite_omitted_db_and_schema_name((TSqlParser::Func_proc_name_schemaContext *) nctx, getDatabase, getSchema);
+				rewritten_name = rewrite_object_name_with_omitted_db_and_schema_name((TSqlParser::Func_proc_name_schemaContext *) nctx, getDatabase, getSchema);
 				// delimit_identifier() doens't need to be called for func-name
 			}
 			else if (ctx->create_or_alter_procedure())
 			{
 				nctx = ctx->create_or_alter_procedure()->func_proc_name_schema();
-				rewritten_name = rewrite_omitted_db_and_schema_name((TSqlParser::Func_proc_name_schemaContext *) nctx, getDatabase, getSchema);
+				rewritten_name = rewrite_object_name_with_omitted_db_and_schema_name((TSqlParser::Func_proc_name_schemaContext *) nctx, getDatabase, getSchema);
 				// delimit_identifier() doens't need to be called for proc-name
 			}
 		}
@@ -2209,7 +2222,7 @@ rewriteBatchLevelStatement(
 			{
 				auto simple_name = ctx->create_or_alter_trigger()->create_or_alter_dml_trigger()->simple_name();
 				nctx = simple_name;
-				rewritten_name = rewrite_omitted_db_and_schema_name(simple_name, getDatabase, getSchema);
+				rewritten_name = rewrite_object_name_with_omitted_db_and_schema_name(simple_name, getDatabase, getSchema);
 				// if rewritten_name already exists, it should contain DOT. don't need to call does_object_name_need_delimiter
 				if (rewritten_name.empty() && does_object_name_need_delimiter(simple_name->name))
 					rewritten_name = delimit_identifier(simple_name->name);
@@ -2218,7 +2231,7 @@ rewriteBatchLevelStatement(
 			{
 				auto simple_name = ctx->create_or_alter_trigger()->create_or_alter_ddl_trigger()->simple_name();
 				nctx = simple_name;
-				rewritten_name = rewrite_omitted_db_and_schema_name(simple_name, getDatabase, getSchema);
+				rewritten_name = rewrite_object_name_with_omitted_db_and_schema_name(simple_name, getDatabase, getSchema);
 				// if rewritten_name already exists, it should contain DOT. don't need to call does_object_name_need_delimiter
 				if (rewritten_name.empty() && does_object_name_need_delimiter(simple_name->name))
 					rewritten_name = delimit_identifier(simple_name->name);
@@ -2227,7 +2240,7 @@ rewriteBatchLevelStatement(
 			{
 				auto simple_name = ctx->create_or_alter_view()->simple_name();
 				nctx = simple_name;
-				rewritten_name = rewrite_omitted_db_and_schema_name(simple_name, getDatabase, getSchema);
+				rewritten_name = rewrite_object_name_with_omitted_db_and_schema_name(simple_name, getDatabase, getSchema);
 				// if rewritten_name already exists, it should contain DOT. don't need to call does_object_name_need_delimiter
 				if (rewritten_name.empty() && does_object_name_need_delimiter(simple_name->name))
 					rewritten_name = delimit_identifier(simple_name->name);
@@ -3744,7 +3757,7 @@ makeExecuteStatement(TSqlParser::Execute_statementContext *ctx)
 			// rewrite func/proc name if database/schema is omitted (i.e. EXEC ..proc1)
 			GetCtxFunc<TSqlParser::Func_proc_name_server_database_schemaContext *> getDatabase = [](TSqlParser::Func_proc_name_server_database_schemaContext *o) { return o->database; };
 			GetCtxFunc<TSqlParser::Func_proc_name_server_database_schemaContext *> getSchema = [](TSqlParser::Func_proc_name_server_database_schemaContext *o) { return o->schema; };
-			rewritten_name = rewrite_omitted_db_and_schema_name((TSqlParser::Func_proc_name_server_database_schemaContext *) func_proc_name, getDatabase, getSchema);
+			rewritten_name = rewrite_object_name_with_omitted_db_and_schema_name((TSqlParser::Func_proc_name_server_database_schemaContext *) func_proc_name, getDatabase, getSchema);
 		}
 
 		std::stringstream ss;
@@ -5211,7 +5224,7 @@ is_compiling_create_function()
 /* if no rewriting necessary, return empty string */
 template<class T>
 std::string
-rewrite_omitted_db_and_schema_name(T ctx, GetCtxFunc<T> getDatabase, GetCtxFunc<T> getSchema)
+rewrite_object_name_with_omitted_db_and_schema_name(T ctx, GetCtxFunc<T> getDatabase, GetCtxFunc<T> getSchema)
 {
 	if (ctx->DOT().size() == 1)
 	{
@@ -5255,6 +5268,37 @@ rewrite_omitted_db_and_schema_name(T ctx, GetCtxFunc<T> getDatabase, GetCtxFunc<
 	}
 	return "";
 }
+
+/* if no rewriting necessary, return empty string */
+template<class T>
+std::string
+rewrite_column_name_with_omitted_schema_name(T ctx, GetCtxFunc<T> getSchema, GetCtxFunc<T> getTableName)
+{
+	// Other than object name, the following cases are not valid.
+	// 1) .column
+	// 1) ..column
+	// 2) schema..column
+	// Let them as it is so that backend parser will throw a syntax error
+
+	if (ctx->DOT().size() >= 2)
+	{
+		std::string name = ::getFullText(ctx);
+		if (ctx->DOT().size() == 3)
+		{
+			// we can assume servername is null because unsupported-feature error should be thrown
+			// so we can remove the first leading dot. the remaining name should be handled with the same with two dots case
+			name = name.substr(1);
+		}
+
+		auto schema = getSchema(ctx);
+		auto tablename = getTableName(ctx);
+
+		if (!schema && tablename)
+			return name.substr(1);
+	}
+	return "";
+}
+
 
 /*
  * PG keyword define as TYPE_FUNC_NAME_KEYWORD but treated as normal unreserved keyword (or not a keyword) in T-SQL.
