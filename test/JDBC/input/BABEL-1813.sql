@@ -38,58 +38,95 @@ go
 drop table t1813;
 go
 
+-- several types of object
+create table collation(a int);
+go
+insert into collation values (1), (2);
+update collation set a=3 where a=2;
+delete from collation where a=1;
+select * from collation;
+go
+
+drop table collation;
+go
+
+create type collation as table (a int);
+go
+drop type collation;
+go
+
+create table t1813(a int);
+go
+create view collation as select * from t1813;
+go
+drop view collation;
+go
+
+create trigger collation on t1813 after insert as begin print 'trigger invoked' end
+go
+
+drop table t1813;
+go
+
+create function collation(@a int) returns int as begin return @a+1; end
+go
+select collation(1);
+go
+drop function collation
+go
+
 -- test all keywords
-create table t1813_binary(binary int);
+create table binary(binary int);
 go
-drop table t1813_binary;
-go
-
-create table t1813_collation(collation int);
-go
-drop table t1813_collation;
+drop table binary;
 go
 
-create table t1813_concurrently(concurrently int);
+create table collation(collation int);
 go
-drop table t1813_concurrently;
-go
-
-create table t1813_current_schema(current_schema int);
-go
-drop table t1813_current_schema;
+drop table collation;
 go
 
-create table t1813_freeze(freeze int);
+create table concurrently(concurrently int);
 go
-drop table t1813_freeze;
-go
-
-create table t1813_ilike(ilike int);
-go
-drop table t1813_ilike;
+drop table concurrently;
 go
 
-create table t1813_isnull(isnull int);
+create table current_schema(current_schema int);
 go
-drop table t1813_isnull;
-go
-
-create table t1813_natural(natural int);
-go
-drop table t1813_natural;
+drop table current_schema;
 go
 
-create table t1813_notnull(notnull int);
+create table freeze(freeze int);
 go
-drop table t1813_notnull;
-go
-
-create table t1813_overlaps(overlaps int);
-go
-drop table t1813_overlaps;
+drop table freeze;
 go
 
-create table t1813_similar(similar int);
+create table ilike(ilike int);
 go
-drop table t1813_similar;
+drop table ilike;
+go
+
+create table isnull(isnull int);
+go
+drop table isnull;
+go
+
+create table natural(natural int);
+go
+drop table natural;
+go
+
+create table notnull(notnull int);
+go
+drop table notnull;
+go
+
+create table overlaps(overlaps int);
+go
+drop table overlaps;
+go
+
+create table similar(similar int);
+go
+drop table similar;
 go
