@@ -239,40 +239,40 @@ $$
 language plpgsql;
 
 create or replace view sys.columns AS
-select out_object_id as object_id
-  , out_name as name
-  , out_column_id as column_id
-  , out_system_type_id as system_type_id
-  , out_user_type_id as user_type_id
-  , out_max_length as max_length
-  , out_precision as precision
-  , out_scale as scale
-  , out_collation_name as collation_name
-  , out_is_nullable as is_nullable
-  , out_is_ansi_padded as is_ansi_padded
-  , out_is_rowguidcol as is_rowguidcol
-  , out_is_identity as is_identity
-  , out_is_computed as is_computed
-  , out_is_filestream as is_filestream
-  , out_is_replicated as is_replicated
-  , out_is_non_sql_subscribed as is_non_sql_subscribed
-  , out_is_merge_published as is_merge_published
-  , out_is_dts_replicated as is_dts_replicated
-  , out_is_xml_document as is_xml_document
-  , out_xml_collection_id as xml_collection_id
-  , out_default_object_id as default_object_id
-  , out_rule_object_id as rule_object_id
-  , out_is_sparse as is_sparse
-  , out_is_column_set as is_column_set
-  , out_generated_always_type as generated_always_type
-  , out_generated_always_type_desc as generated_always_type_desc
-  , out_encryption_type as encryption_type
-  , out_encryption_type_desc as encryption_type_desc
-  , out_encryption_algorithm_name as encryption_algorithm_name
-  , out_column_encryption_key_id as column_encryption_key_id
-  , out_column_encryption_key_database_name as column_encryption_key_database_name
-  , out_is_hidden as is_hidden
-  , out_is_masked as is_masked
+select out_object_id::oid as object_id
+  , out_name::name as name
+  , out_column_id::smallint as column_id
+  , out_system_type_id::oid as system_type_id
+  , out_user_type_id::oid as user_type_id
+  , out_max_length::smallint as max_length
+  , out_precision::integer as precision
+  , out_scale::integer as scale
+  , out_collation_name::name as collation_name
+  , out_is_nullable::integer as is_nullable
+  , out_is_ansi_padded::integer as is_ansi_padded
+  , out_is_rowguidcol::integer as is_rowguidcol
+  , out_is_identity::integer as is_identity
+  , out_is_computed::integer as is_computed
+  , out_is_filestream::integer as is_filestream
+  , out_is_replicated::integer as is_replicated
+  , out_is_non_sql_subscribed::integer as is_non_sql_subscribed
+  , out_is_merge_published::integer as is_merge_published
+  , out_is_dts_replicated::integer as is_dts_replicated
+  , out_is_xml_document::integer as is_xml_document
+  , out_xml_collection_id::integer as xml_collection_id
+  , out_default_object_id::oid as default_object_id
+  , out_rule_object_id::oid as rule_object_id
+  , out_is_sparse::integer as is_sparse
+  , out_is_column_set::integer as is_column_set
+  , out_generated_always_type::integer as generated_always_type
+  , out_generated_always_type_desc::varchar(60) as generated_always_type_desc
+  , out_encryption_type::integer as encryption_type
+  , out_encryption_type_desc::varchar(64) as encryption_type_desc
+  , out_encryption_algorithm_name::varchar as encryption_algorithm_name
+  , out_column_encryption_key_id::integer as column_encryption_key_id
+  , out_column_encryption_key_database_name::varchar as column_encryption_key_database_name
+  , out_is_hidden::integer as is_hidden
+  , out_is_masked::integer as is_masked
   , out_graph_type as graph_type
   , out_graph_type_desc as graph_type_desc
 from sys.columns_internal();
@@ -902,14 +902,49 @@ GRANT SELECT ON sys.default_constraints TO PUBLIC;
 
 CREATE OR REPLACE VIEW sys.computed_columns
 AS
-SELECT sc.*
-  , pg_get_expr(d.adbin, d.adrelid) AS definition
+SELECT out_object_id as object_id
+  , out_name as name
+  , out_column_id as column_id
+  , out_system_type_id as system_type_id
+  , out_user_type_id as user_type_id
+  , out_max_length as max_length
+  , out_precision as precision
+  , out_scale as scale
+  , out_collation_name as collation_name
+  , out_is_nullable as is_nullable
+  , out_is_ansi_padded as is_ansi_padded
+  , out_is_rowguidcol as is_rowguidcol
+  , out_is_identity as is_identity
+  , out_is_computed as is_computed
+  , out_is_filestream as is_filestream
+  , out_is_replicated as is_replicated
+  , out_is_non_sql_subscribed as is_non_sql_subscribed
+  , out_is_merge_published as is_merge_published
+  , out_is_dts_replicated as is_dts_replicated
+  , out_is_xml_document as is_xml_document
+  , out_xml_collection_id as xml_collection_id
+  , out_default_object_id as default_object_id
+  , out_rule_object_id as rule_object_id
+  , out_is_sparse as is_sparse
+  , out_is_column_set as is_column_set
+  , out_generated_always_type as generated_always_type
+  , out_generated_always_type_desc as generated_always_type_desc
+  , out_encryption_type as encryption_type
+  , out_encryption_type_desc as encryption_type_desc
+  , out_encryption_algorithm_name as encryption_algorithm_name
+  , out_column_encryption_key_id as column_encryption_key_id
+  , out_column_encryption_key_database_name as column_encryption_key_database_name
+  , out_is_hidden as is_hidden
+  , out_is_masked as is_masked
+  , out_graph_type as graph_type
+  , out_graph_type_desc as graph_type_desc
+  , substring(pg_get_expr(d.adbin, d.adrelid), 1, 4000)::sys.nvarchar(4000) AS definition
   , 1::sys.bit AS uses_database_collation
   , 0::sys.bit AS is_persisted
-FROM sys.columns sc
-INNER JOIN pg_attribute a ON sc.name = a.attname AND sc.column_id = a.attnum
+FROM sys.columns_internal() sc
+INNER JOIN pg_attribute a ON sc.out_name = a.attname AND sc.out_column_id = a.attnum
 INNER JOIN pg_attrdef d ON d.adrelid = a.attrelid AND d.adnum = a.attnum
-WHERE a.attgenerated = 's' AND sc.is_computed::integer = 1;
+WHERE a.attgenerated = 's' AND sc.out_is_computed::integer = 1;
 GRANT SELECT ON sys.computed_columns TO PUBLIC;
 
 create or replace view sys.index_columns
