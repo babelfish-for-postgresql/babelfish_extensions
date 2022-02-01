@@ -880,6 +880,21 @@ END;
 $body$
 LANGUAGE plpgsql IMMUTABLE;
 
+-- Duplicate function with arg TEXT since ANYELEMENT cannot handle type unknown.
+CREATE OR REPLACE FUNCTION sys.datepart(IN datepart PG_CATALOG.TEXT, IN arg TEXT) RETURNS INTEGER
+AS
+$body$
+BEGIN
+    IF pg_typeof(arg) = 'sys.DATETIMEOFFSET'::regtype THEN
+        return sys.datepart_internal(datepart, arg::timestamp,
+                     sys.babelfish_get_datetimeoffset_tzoffset(arg)::integer);
+    ELSE
+        return sys.datepart_internal(datepart, arg);
+    END IF;
+END;
+$body$
+LANGUAGE plpgsql IMMUTABLE;
+
 CREATE OR REPLACE FUNCTION sys.datediff(IN datepart PG_CATALOG.TEXT, IN startdate PG_CATALOG.date, IN enddate PG_CATALOG.date) RETURNS INTEGER
 AS
 $body$

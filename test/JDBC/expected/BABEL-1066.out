@@ -29,3 +29,19 @@ datetime
 <NULL>
 ~~END~~
 
+
+select datepart(weekday, cast( '2021-12-31' as date));
+go
+~~START~~
+int
+6
+~~END~~
+
+
+select datepart(dw, null);
+go
+~~START~~
+int
+<NULL>
+~~END~~
+
