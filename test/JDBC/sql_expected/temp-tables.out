@@ -52,6 +52,27 @@ int
 DROP SCHEMA temp_tables_test;
 GO
 
+-- various catalog/schema cases
+CREATE TABLE non_exist_db..#tt(a int)
+GO
+DROP TABLE #tt
+GO
+
+CREATE TABLE non_exist_schema.#tt(a int)
+GO
+DROP TABLE #tt
+GO
+
+CREATE TABLE .#tt(a int)
+GO
+DROP TABLE #tt
+GO
+
+CREATE TABLE ..#tt(a int)
+GO
+DROP TABLE #tt
+GO
+
 
 -- Implicitly creating temp tables
 CREATE TABLE tt_test_t1 (col int);
