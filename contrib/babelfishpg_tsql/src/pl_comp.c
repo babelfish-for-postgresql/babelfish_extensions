@@ -112,7 +112,6 @@ static void pltsql_compile_error_callback(void *arg);
 static void add_parameter_name(PLtsql_nsitem_type itemtype, int itemno, const char *name);
 static void add_dummy_return(PLtsql_function *function);
 static void add_decl_table(PLtsql_function *function, int tbl_dno, char *tbl_typ);
-static void add_return_table(PLtsql_function *function);
 static Node *pltsql_pre_column_ref(ParseState *pstate, ColumnRef *cref);
 static Node *pltsql_post_column_ref(ParseState *pstate, ColumnRef *cref, Node *var);
 static Node *pltsql_param_ref(ParseState *pstate, ParamRef *pref);
@@ -311,7 +310,6 @@ do_compile(FunctionCallInfo fcinfo,
 	PLtsql_variable **out_arg_variables;
 	MemoryContext func_cxt;
 	/* Special handling is needed for Multi-Statement Table-Valued Functions. */
-	bool 		is_mstvf = false;
 	int 		tbl_dno = -1; /* dno of the output table variable */
 	char 	   *tbl_typ = NULL; /* Name of the output table variable's type */
 	int			*typmods = NULL; /* typmod of each argument if available */
@@ -458,12 +456,12 @@ do_compile(FunctionCallInfo fcinfo,
 					get_typtype(procStruct->prorettype) == TYPTYPE_COMPOSITE)
 				{
 					/* Mstvf should only have one table arg */
-					if (is_mstvf)
+					if (function->is_mstvf)
 						ereport(ERROR,
 								(errcode(ERRCODE_INVALID_FUNCTION_DEFINITION),
 								 errmsg("multi-statement table-valued functions can only have one table arg")));
 
-					is_mstvf = true;
+					function->is_mstvf = true;
 				}
 
 				/* Create datatype info */
@@ -491,7 +489,7 @@ do_compile(FunctionCallInfo fcinfo,
 													 0, argdtype, false);
 
 				/* Multi-Statement Table-Valued Function - save dno and typname */
-				if (is_mstvf)
+				if (function->is_mstvf)
 				{
 					tbl_dno = argvariable->dno;
 					tbl_typ = psprintf("%s.%s",
@@ -541,7 +539,7 @@ do_compile(FunctionCallInfo fcinfo,
 				 * references.
 				 */
 				if (argnames && argnames[i][0] != '\0' &&
-					(argmode != PROARGMODE_TABLE || is_mstvf))
+					(argmode != PROARGMODE_TABLE || function->is_mstvf))
 					add_parameter_name(argitemtype, argvariable->dno,
 									   argnames[i]);
 			}
@@ -908,7 +906,7 @@ do_compile(FunctionCallInfo fcinfo,
 	 * 1) Add a declare table statement to the beginning
 	 * 2) Add a return table statement to the end
 	 */
-	if (is_mstvf)
+	if (function->is_mstvf)
 	{
 		/* 
 		 * ANTLR parser would return a stmt list like INIT->BLOCK,
@@ -921,7 +919,6 @@ do_compile(FunctionCallInfo fcinfo,
 			function->action = (PLtsql_stmt_block *) lsecond(pltsql_parse_result->body);
 		}
 		add_decl_table(function, tbl_dno, tbl_typ);
-		add_return_table(function);
 	}
 
 	/*
@@ -1467,55 +1464,6 @@ add_decl_table(PLtsql_function *function, int tbl_dno, char *tbl_typ)
 	/* Add the stmt to the beginning */
 	function->action->body = lcons(new, function->action->body);
 }
-
-/*
- * Add a RETURN TABLE statement to the given function's body
- */
-static void
-add_return_table(PLtsql_function *function)
-{
-	/*
-	 * Use the RETURN QUERY statement -
-	 * its query will be filled in during execution.
-	 */
-	PLtsql_stmt_return_query *new;
-
-	new = palloc0(sizeof(PLtsql_stmt_return_query));
-	new->cmd_type = PLTSQL_STMT_RETURN_TABLE;
-	new->query = NULL;
-	new->dynquery = NULL;
-	new->params = NIL;
-
-	/*
-	 * If the outer block has an EXCEPTION clause, we need to make a new outer
-	 * block, since the added RETURN shouldn't act like it is inside the
-	 * EXCEPTION clause.
-	 */
-	if (function->action->exceptions != NULL)
-	{
-		PLtsql_stmt_block *new;
-
-		new = palloc0(sizeof(PLtsql_stmt_block));
-		new->cmd_type = PLTSQL_STMT_BLOCK;
-		new->body = list_make1(function->action);
-
-		function->action = new;
-	}
-	if (function->action->body != NIL &&
-		((PLtsql_stmt *) llast(function->action->body))->cmd_type == PLTSQL_STMT_RETURN)
-	{
-		/*
-		 * There is already a RETURN statement at the end:
-		 * delete it here, it will be added back in add_dummy_return()
-		 */
-		function->action->body = list_truncate(function->action->body,
-											   list_length(function->action->body) - 1);
-	}
-
-	/* Add the stmt to the end */
-	function->action->body = lappend(function->action->body, new);
-}
-
 
 /*
  * pltsql_parser_setup		set up parser hooks for dynamic parameters

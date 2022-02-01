@@ -1131,6 +1131,7 @@ typedef struct PLtsql_function
 	List	   *table_varnos;
 
 	bool 		is_itvf;
+	bool 		is_mstvf;
 
 	PLtsql_resolve_option resolve_option;
 
