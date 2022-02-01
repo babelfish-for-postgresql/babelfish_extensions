@@ -599,20 +599,6 @@ END;
 $$;
 GRANT EXECUTE ON FUNCTION sys.max_connections() TO PUBLIC;
 
- CREATE OR REPLACE FUNCTION sys.type_name(type_id oid)
-RETURNS sys.sysname
-LANGUAGE plpgsql
-STRICT
-AS $$
-begin
-    RETURN (select format_type(type_id, null))::sys.sysname;
-EXCEPTION
-    WHEN others THEN
-        RETURN NULL;
-END;
-$$;
-GRANT EXECUTE ON FUNCTION sys.type_name(type_id oid) TO PUBLIC;
-
  CREATE OR REPLACE FUNCTION sys.trigger_nestlevel()
  RETURNS integer
  LANGUAGE plpgsql
