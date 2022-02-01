@@ -108,7 +108,7 @@ inner join pg_class c on c.oid = a.attrelid
 inner join pg_type t on t.oid = a.atttypid
 inner join pg_namespace s on s.oid = c.relnamespace
 left join pg_attrdef d on c.oid = d.adrelid and a.attnum = d.adnum
-left join pg_collation coll on coll.oid = t.typcollation
+left join pg_collation coll on coll.oid = a.attcollation
 where not a.attisdropped
 -- r = ordinary table, i = index, S = sequence, t = TOAST table, v = view, m = materialized view, c = composite type, f = foreign table, p = partitioned table
 and c.relkind in ('r', 'v', 'm', 'f', 'p')
