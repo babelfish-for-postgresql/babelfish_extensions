@@ -2071,11 +2071,15 @@ TdsRecvTypeTable(const char *message, const ParameterToken token)
 Datum
 TdsRecvTypeSqlvariant(const char *message, const ParameterToken token)
 {
+	Datum result;
 	StringInfo      buf = TdsGetStringInfoBufferFromToken(message, token);
 
 	TDSInstrumentation(INSTR_TDS_DATATYPE_SQLVARIANT);
 
-	return TdsTypeSqlVariantToDatum(buf);
+	result = TdsTypeSqlVariantToDatum(buf);
+
+	pfree(buf);
+	return result;
 }
 
 int
@@ -3122,7 +3126,6 @@ TdsTypeSqlVariantToDatum(StringInfo buf)
 					pgBaseType, scale, precision, maxLen);
 
 	buf->cursor += tempLen;
-	pfree(buf);
 	PG_RETURN_BYTEA_P(result);
 }
 
