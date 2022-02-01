@@ -9,6 +9,12 @@ abcd#!#{bbf_original_name=AbCd}
 efgh#!#{bbf_original_name=EfGh}
 ~~END~~
 
+select * from t_2371
+go
+~~START~~
+int#!#varchar
+~~END~~
+
 
 -- alter table add column
 alter table t_2371 add IjKl int;
@@ -21,8 +27,20 @@ efgh#!#{bbf_original_name=EfGh}
 ijkl#!#{bbf_original_name=IjKl}
 ~~END~~
 
+select * from t_2371
+go
+~~START~~
+int#!#varchar#!#int
+~~END~~
+
 alter table t_2371 drop column EfGh;
 GO
+select * from t_2371
+go
+~~START~~
+int#!#int
+~~END~~
+
 select attname, attoptions from pg_class C, pg_attribute A where C.oid = A.attrelid and C.relname like 't_2371' and A.attnum > 0 and attisdropped = 'f' order by attname;
 GO
 ~~START~~
@@ -44,6 +62,12 @@ varchar#!#varchar
 a123456789b123456789c123456789db4c4af0f272f75e4933ebecb4b853d11#!#{bbf_original_name=A123456789B123456789C123456789D123456789E123456789F123456789G123456789H123456789I123456789J123456789K123456789}
 ~~END~~
 
+select * from t_2371_2
+go
+~~START~~
+int
+~~END~~
+
 drop table t_2371_2
 GO
 
@@ -55,6 +79,12 @@ GO
 ~~START~~
 varchar#!#varchar
 level#!#{bbf_original_name=LeVeL}
+~~END~~
+
+select * from t_2371_3
+go
+~~START~~
+int
 ~~END~~
 
 drop table t_2371_3
@@ -75,6 +105,12 @@ efgh#!#{bbf_original_name=Efgh}
 ijhl#!#{bbf_original_name=Ijhl}
 k)@m($[^&#!#{bbf_original_name=K)@m($[^&}
 x'abc"e#!#{"bbf_original_name=x'AbC\"e"}
+~~END~~
+
+select * from t_2371_4
+go
+~~START~~
+int#!#int#!#int#!#int#!#int#!#int
 ~~END~~
 
 drop table t_2371_4
