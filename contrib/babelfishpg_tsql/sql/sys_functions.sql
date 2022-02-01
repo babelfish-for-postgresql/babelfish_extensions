@@ -1793,66 +1793,6 @@ END;
 $$;
 GRANT EXECUTE ON FUNCTION sys.trigger_nestlevel() TO PUBLIC;
 
-CREATE OR REPLACE FUNCTION sys.has_perms_by_name(
-    securable sys.SYSNAME, 
-    securable_class sys.nvarchar(60), 
-    permission sys.SYSNAME
-)
-RETURNS integer
-LANGUAGE plpgsql
-CALLED ON NULL INPUT
-AS $$
-DECLARE 
-    return_value integer;
-    database_n text;
-    schema_n text;
-    object_n text;
-    database_id smallint;
-BEGIN
-    return_value := NULL;
-    SELECT s.database_name, s.schema_name, s.object_name into database_n,schema_n, object_n 
-    FROM sys.babelfish_split_schema_object_name(securable) s;
-	
-	database_id := (
-        select 
-			case when database_n is null then (sys.db_id())
-			else 
-	    		(sys.db_id(database_n))
-			end as dbid);
-
-    -- translate schema name from bbf to postgres, e.g. dbo -> master_dbo
-	schema_n := (
-        select 
-			case when schema_n is null then (current_schema())
-			else 
-	    		(select nspname from sys.babelfish_namespace_ext ext where ext.orig_name = schema_n and  ext.dbid::oid = database_id::oid)
-			end as scheman);
-	
-	return_value := (
-        select
-		  -- check if object_n is a 'table-like' object.
-            case (select count(relname) from pg_catalog.pg_class  where relname = object_n and
-                           relnamespace = (select oid from pg_catalog.pg_namespace where nspname = schema_n))
-		        when 1 then
-		            has_table_privilege(concat(schema_n,'.',object_n), permission)::integer
-		  -- check other cases here  
-          -- TODO implement functionality for other object types.
-		  end
-	);
-	
-	RETURN return_value;
-	EXCEPTION 
-	WHEN others THEN
- 		RETURN NULL;
-END;
-$$;
-
-GRANT EXECUTE ON FUNCTION sys.has_perms_by_name(securable sys.SYSNAME, securable_class sys.nvarchar(60), permission sys.SYSNAME) TO PUBLIC;
-
-COMMENT ON FUNCTION sys.has_perms_by_name
-IS 'This function returns permission information. Currently only works with "table-like" objects, otherwise returns NULL.';
-
-
 CREATE OR REPLACE FUNCTION sys.schema_name()
 RETURNS sys.sysname
 LANGUAGE plpgsql
