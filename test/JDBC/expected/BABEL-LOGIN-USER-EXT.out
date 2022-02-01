@@ -13,7 +13,7 @@ t
 -- tsql      user=foo      password=abc
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: "foo" is not a babelfish user )~~
+~~ERROR (Message: "foo" is not a Babelfish user )~~
 
 -- Login with non babelfish user should fail
 go

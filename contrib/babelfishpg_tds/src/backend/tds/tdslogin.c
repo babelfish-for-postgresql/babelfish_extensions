@@ -2022,7 +2022,7 @@ TdsSendLoginAck(Port *port)
 			if(!login_exist && !superuser_arg(roleid))
 				ereport(ERROR,
 						(errcode(ERRCODE_UNDEFINED_OBJECT),
-						 errmsg("\"%s\" is not a babelfish user", port->user_name)));
+						 errmsg("\"%s\" is not a Babelfish user", port->user_name)));
 		}
 
 		if (tds_enable_db_session_property)
