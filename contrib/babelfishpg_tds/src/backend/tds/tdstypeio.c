@@ -2826,7 +2826,7 @@ TdsTypeSqlVariantToDatum(StringInfo buf)
 	int		pgBaseType = 0;
 	int             dataLen = 0, i = 0, len = 0;
 	int		tempScale = 0, tempLen = 0;
-	int		variantHeaderLen = 0, maxLen = 0;
+	int		variantHeaderLen = 0, maxLen = 0, resLen = 0;
 	uint8_t		scale = 0, precision = 0, sign = 1, temp = 0;		  
 	DateADT		date = 0;
 	uint64		numMicro = 0, dateval = 0;
@@ -2854,34 +2854,48 @@ TdsTypeSqlVariantToDatum(StringInfo buf)
 		TdsUTF16toUTF8StringInfo(&strbuf, &buf->data[9], tempLen - 9);
 	}
 
-	if (dataLen + VARHDRSZ_SHORT <= VARATT_SHORT_MAX)
+	resLen = dataLen + variantHeaderLen;
+	/* We need an extra varlena header for varlena datatypes */
+	if (variantBaseType == VARIANT_TYPE_CHAR || variantBaseType == VARIANT_TYPE_NCHAR ||
+		variantBaseType == VARIANT_TYPE_VARCHAR || variantBaseType == VARIANT_TYPE_NVARCHAR ||
+		variantBaseType == VARIANT_TYPE_BINARY || variantBaseType == VARIANT_TYPE_VARBINARY ||
+		variantBaseType == VARIANT_TYPE_NUMERIC)
 	{
-		result = (bytea *) palloc0(VARHDRSZ_SHORT + variantHeaderLen + dataLen);
-		SET_VARSIZE_SHORT(result, VARHDRSZ_SHORT + variantHeaderLen + dataLen);
+		resLen += VARHDRSZ;
+	}
+
+	if (resLen + VARHDRSZ_SHORT <= VARATT_SHORT_MAX)
+	{
+		resLen += VARHDRSZ_SHORT;
+		result = (bytea *) palloc0(resLen);
+		SET_VARSIZE_SHORT(result, resLen);
 	}
 	else
 	{
-		result = (bytea *) palloc0(VARHDRSZ + variantHeaderLen + dataLen);
-		SET_VARSIZE(result, VARHDRSZ + variantHeaderLen + dataLen);
+		resLen += VARHDRSZ;
+		result = (bytea *) palloc0(resLen);
+		SET_VARSIZE(result, resLen);
 	}
 
 	if (variantBaseType == VARIANT_TYPE_CHAR || variantBaseType == VARIANT_TYPE_NCHAR ||
 	    variantBaseType == VARIANT_TYPE_VARCHAR || variantBaseType == VARIANT_TYPE_NVARCHAR)
 	{
+		SET_VARSIZE(READ_DATA(result, variantHeaderLen), VARHDRSZ + dataLen);
 		memcpy(&maxLen, &buf->data[7], 2);
 		if (variantBaseType == VARIANT_TYPE_NCHAR || variantBaseType == VARIANT_TYPE_NVARCHAR)
 		{
-			memcpy(READ_DATA(result, variantHeaderLen + 4), strbuf.data, dataLen);
+			memcpy(VARDATA(READ_DATA(result, variantHeaderLen)), strbuf.data, dataLen);
 		}
 		else
 		{
-			memcpy(READ_DATA(result, variantHeaderLen + 4), &buf->data[9], dataLen);
+			memcpy(VARDATA(READ_DATA(result, variantHeaderLen)), &buf->data[9], dataLen);
 		}
 	}
 	else if (variantBaseType == VARIANT_TYPE_BINARY || variantBaseType == VARIANT_TYPE_VARBINARY)
 	{
+		SET_VARSIZE(READ_DATA(result, variantHeaderLen), VARHDRSZ + dataLen);
 		memcpy(&maxLen, &buf->data[2], 2);
-		memcpy(READ_DATA(result, variantHeaderLen), &buf->data[0], dataLen);
+		memcpy(VARDATA(READ_DATA(result, variantHeaderLen)), &buf->data[0], dataLen);
 	}
 	else if (variantBaseType == VARIANT_TYPE_DATE)
 	{
@@ -2988,6 +3002,7 @@ TdsTypeSqlVariantToDatum(StringInfo buf)
 	}
         else if (variantBaseType == VARIANT_TYPE_NUMERIC)
 	{
+		SET_VARSIZE(READ_DATA(result, variantHeaderLen), VARHDRSZ + dataLen);
 		precision = buf->data[2];
 		scale = buf->data[3];
 		sign = buf->data[4];
@@ -3027,7 +3042,7 @@ TdsTypeSqlVariantToDatum(StringInfo buf)
 		if (sign == 1 && num != 0)
 			decString++;
 		res = TdsSetVarFromStrWrapper(decString);
-		memcpy(READ_DATA(result, variantHeaderLen), &res, sizeof(Numeric));
+		memcpy(VARDATA(READ_DATA(result, variantHeaderLen)), &res, sizeof(Numeric));
 	}
         else
 	{
