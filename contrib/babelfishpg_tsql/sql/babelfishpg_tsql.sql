@@ -898,13 +898,16 @@ CREATE OR REPLACE VIEW sys.sp_databases_view AS
 		JOIN pg_catalog.pg_namespace ON pg_catalog.pg_namespace.nspname = EXT.nspname
 		LEFT JOIN pg_catalog.pg_class ON relnamespace = pg_catalog.pg_namespace.oid
 	) t
-	GROUP BY database_name;
+	GROUP BY database_name
+	ORDER BY database_name;
 GRANT SELECT on sys.sp_databases_view TO PUBLIC;
 
 CREATE OR REPLACE PROCEDURE sys.sp_databases ()
 AS $$
 BEGIN
-	SELECT * from sys.sp_databases_view;
+	SELECT database_name as "DATABASE_NAME",
+		database_size as "DATABASE_SIZE", 
+		remarks as "REMARKS" from sys.sp_databases_view;
 END;
 $$
 LANGUAGE 'pltsql';
