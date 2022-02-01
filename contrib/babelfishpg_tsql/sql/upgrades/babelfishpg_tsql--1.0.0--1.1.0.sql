@@ -250,7 +250,7 @@ inner join pg_class c on c.oid = a.attrelid
 inner join pg_type t on t.oid = a.atttypid
 inner join pg_namespace s on s.oid = c.relnamespace
 left join pg_attrdef d on c.oid = d.adrelid and a.attnum = d.adnum
-left join pg_collation coll on coll.oid = t.typcollation
+left join pg_collation coll on coll.oid = a.attcollation
 where not a.attisdropped
 -- r = ordinary table, i = index, S = sequence, t = TOAST table, v = view, m = materialized view, c = composite type, f = foreign table, p = partitioned table
 and c.relkind in ('r', 'v', 'm', 'f', 'p')
@@ -510,7 +510,7 @@ GRANT EXECUTE ON FUNCTION sys.exp(NUMERIC) TO PUBLIC;
 -- BABEL-2259: Support sp_databases System Stored Procedure
 -- Lists databases that either reside in an instance of the SQL Server or
 -- are accessible through a database gateway
-DROP VIEW IF EXISTS sys.sp_databases_view CASCADE;
+-- DROP VIEW IF EXISTS sys.sp_databases_view CASCADE;
 
 CREATE OR REPLACE VIEW sys.sp_databases_view AS
 	SELECT CAST(database_name AS sys.SYSNAME),
@@ -835,7 +835,7 @@ GRANT EXECUTE ON FUNCTION sys.original_login() TO PUBLIC;
  COMMENT ON FUNCTION sys.columnproperty 
  IS 'This function returns column or parameter information. Currently only works with "charmaxlen", and "allowsnull" otherwise returns 0.';
 
-DROP VIEW IF EXISTS sys.default_constraints;
+-- DROP VIEW IF EXISTS sys.default_constraints;
 create or replace view sys.default_constraints
 AS
 select CAST(('DF_' || o.relname || '_' || d.oid) as sys.sysname) as name
@@ -857,7 +857,7 @@ from pg_catalog.pg_attrdef as d
 inner join pg_catalog.pg_class as o on (d.adrelid = o.oid);
 GRANT SELECT ON sys.default_constraints TO PUBLIC;
 
-DROP VIEW IF EXISTS sys.computed_columns;
+-- DROP VIEW IF EXISTS sys.computed_columns;
 CREATE OR REPLACE VIEW sys.computed_columns
 AS
 SELECT sc.*
@@ -870,7 +870,7 @@ INNER JOIN pg_attrdef d ON d.adrelid = a.attrelid AND d.adnum = a.attnum
 WHERE a.attgenerated = 's' AND sc.is_computed::integer = 1;
 GRANT SELECT ON sys.computed_columns TO PUBLIC;
 
-DROP VIEW IF EXISTS sys.index_columns;
+-- DROP VIEW IF EXISTS sys.index_columns;
 create or replace view sys.index_columns
 as
 select i.indrelid::integer as object_id
