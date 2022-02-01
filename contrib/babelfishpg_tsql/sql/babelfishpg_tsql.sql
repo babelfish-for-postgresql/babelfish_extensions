@@ -1107,3 +1107,31 @@ END;
 $$
 LANGUAGE 'pltsql';
 GRANT ALL on PROCEDURE sys.sp_statistics_100 TO PUBLIC;
+
+CREATE OR REPLACE PROCEDURE sys.printarg(IN "@message" TEXT)
+AS $$
+BEGIN
+  PRINT @message;
+END;
+$$ LANGUAGE pltsql;
+GRANT EXECUTE ON PROCEDURE sys.printarg(IN "@message" TEXT) TO PUBLIC;
+
+CREATE OR REPLACE PROCEDURE sys.sp_updatestats(IN "@resample" VARCHAR(8) DEFAULT 'NO')
+AS $$
+BEGIN
+  IF sys.user_name() != 'dbo' THEN
+    RAISE EXCEPTION 'user does not have permission';
+  END IF;
+
+  IF lower("@resample") = 'resample' THEN
+    RAISE NOTICE 'ignoring resample option';
+  ELSIF lower("@resample") != 'no' THEN
+    RAISE EXCEPTION 'Invalid option name %', "@resample";
+  END IF;
+
+  ANALYZE VERBOSE;
+
+  CALL printarg('Statistics for all tables have been updated. Refer logs for details.');
+END;
+$$ LANGUAGE plpgsql;
+GRANT EXECUTE on PROCEDURE sys.sp_updatestats(IN "@resample" VARCHAR(8)) TO PUBLIC;

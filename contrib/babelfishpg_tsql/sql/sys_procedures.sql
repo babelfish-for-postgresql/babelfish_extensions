@@ -151,16 +151,3 @@ $$ LANGUAGE plpgsql;
 GRANT EXECUTE ON PROCEDURE sys.sp_babelfish_configure(
 	IN varchar(128), IN varchar(128), IN varchar(128)
 ) TO PUBLIC;
-
-CREATE OR REPLACE PROCEDURE sys.sp_updatestats(IN "@resample" VARCHAR(8) DEFAULT 'NO')
-AS $$
-BEGIN
-  IF lower("@resample") = 'resample' THEN
-    RAISE NOTICE 'ignoring resample option';
-  ELSIF lower("@resample") != 'no' THEN
-    RAISE EXCEPTION 'Invalid option name %', "@resample";
-  END IF;
-  ANALYZE VERBOSE;
-END;
-$$ LANGUAGE plpgsql;
-GRANT EXECUTE ON PROCEDURE sys.sp_updatestats(IN VARCHAR(8)) TO PUBLIC;
