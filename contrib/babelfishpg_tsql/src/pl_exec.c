@@ -3383,6 +3383,25 @@ static int
 exec_stmt_return(PLtsql_execstate *estate, PLtsql_stmt_return *stmt)
 {
 	/*
+	 * If processing a multi-statement table-valued function, any RETURN stmt
+	 * should be treated as a RETURN_TABLE stmt which returns all rows in the
+	 * resulting table variable, followed by a normal RETURN stmt for
+	 * control-of-flow.
+	 */
+	if (estate->func->is_mstvf)
+	{
+		PLtsql_stmt_return_query *return_table;
+		return_table = (PLtsql_stmt_return_query *) palloc0(sizeof(PLtsql_stmt_return_query));
+		return_table->cmd_type = PLTSQL_STMT_RETURN_TABLE;
+		return_table->query = NULL;
+		return_table->dynquery = NULL;
+		return_table->params = NIL;
+
+		exec_stmt_return_table(estate, return_table);
+		return PLTSQL_RC_RETURN;
+	}
+
+	/*
 	 * If processing a set-returning PL/tsql function, the final RETURN
 	 * indicates that the function is finished producing tuples.  The rest of
 	 * the work will be done at the top level.
