@@ -548,10 +548,10 @@ select
   , 0 as reserved4
   , 0::smallint as xmaxlen
   , null::smallint as maxirow
-  , 90::sys.tinyint as OrigFillFactor
-  , 0::sys.tinyint as StatVersion
+  , 90::sys.tinyint as "OrigFillFactor"
+  , 0::sys.tinyint as "StatVersion"
   , 0 as reserved2
-  , null::binary(6) as FirstIAM
+  , null::binary(6) as "FirstIAM"
   , 0::smallint as impid
   , 0::smallint as lockflags
   , 0 as pgmodctr
