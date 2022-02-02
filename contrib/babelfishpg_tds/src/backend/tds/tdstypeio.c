@@ -900,7 +900,7 @@ TdsTypeNumericToDatum(StringInfo buf, int scale)
 	 * Since there is a '-' at the start of decString, we should ignore it before
 	 * appending and then add it later.
 	 */
-	if (scale > len)
+	if (num != 0 && scale >= len)
 	{
 		int diff = scale - len + 1;
 		char *zeros = palloc0(sizeof(char) * diff + 1);
@@ -909,8 +909,12 @@ TdsTypeNumericToDatum(StringInfo buf, int scale)
 		{
 			zeros[--diff] = '0';
 		}
-		decString = psprintf("-%s%s", zeros, tempString + 1);
-		len = strlen(decString);
+		/*
+		 * Add extra '.' character in psprintf; Later we make use of
+		 * this index during shifting the scale part of the string.
+		 */
+		decString = psprintf("-%s%s.", zeros, tempString + 1);
+		len = strlen(decString) - 1;
 		pfree(tempString);
 	}
 	if (num != 0)
@@ -1819,7 +1823,7 @@ TdsRecvTypeNumeric(const char *message, const ParameterToken token)
 	 * Since there is a '-' at the start of decString, we should ignore it before
 	 * appending and then add it later.
 	 */
-	if (num != 0 && scale > len)
+	if (num != 0 && scale >= len)
 	{
 		int diff = scale - len + 1;
 		char *zeros = palloc0(sizeof(char) * diff + 1);
@@ -1828,8 +1832,12 @@ TdsRecvTypeNumeric(const char *message, const ParameterToken token)
 		{
 			zeros[--diff] = '0';
 		}
-		decString = psprintf("-%s%s", zeros, tempString + 1);
-		len = strlen(decString);
+		/*
+		 * Add extra '.' character in psprintf; Later we make use of
+		 * this index during shifting the scale part of the string.
+		 */
+		decString = psprintf("-%s%s.", zeros, tempString + 1);
+		len = strlen(decString) - 1;
 		pfree(tempString);
 	}
 	if (num != 0)
