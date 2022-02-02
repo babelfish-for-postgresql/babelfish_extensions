@@ -2484,7 +2484,7 @@ int exec_stmt_insert_bulk(PLtsql_execstate *estate, PLtsql_stmt_insert_bulk *stm
 	if (bulk_load_schema_name)
 	{
 		rel_oid = get_relname_relid(stmt->table_name, schema_oid);
-		bulk_load_table_name = psprintf("%s.%s", bulk_load_schema_name, stmt->table_name);
+		bulk_load_table_name = psprintf("\"%s\".\"%s\"", bulk_load_schema_name, stmt->table_name);
 		pfree(bulk_load_schema_name);
 	}
 	else
