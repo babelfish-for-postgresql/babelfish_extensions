@@ -1,0 +1,103 @@
+use master;
+go
+
+-- basic operations
+create table t2725 (a int, b int, offset int not null);
+go
+insert into t2725 (a, offset) values (1, 2);
+go
+~~ROW COUNT: 1~~
+
+select a, b, offset from t2725;
+go
+~~START~~
+int#!#int#!#int
+1#!#<NULL>#!#2
+~~END~~
+
+select a, b, t2725.offset from t2725;
+go
+~~START~~
+int#!#int#!#int
+1#!#<NULL>#!#2
+~~END~~
+
+alter table t2725 add binary binary; -- column "binary" whose type is binary
+go
+insert into t2725(offset,binary) values (3, 0x04);
+go
+~~ROW COUNT: 1~~
+
+create unique index i1813 on t2725(offset);
+go
+insert into t2725(offset,binary) values (4, 0x05);
+insert into t2725(offset,binary) values (4, 0x05);
+go
+~~ROW COUNT: 1~~
+
+~~ERROR (Code: 2627)~~
+
+~~ERROR (Message: duplicate key value violates unique constraint "i1813t27252835522bc8db62c2e7873fbd5c7ec927")~~
+
+select abs(-offset)*2 c, binary from t2725;
+go
+~~START~~
+int#!#binary
+4#!#<NULL>
+6#!#04
+8#!#05
+~~END~~
+
+update t2725 set offset = 5 output deleted.offset where offset = 2;
+go
+~~START~~
+int
+2
+~~END~~
+
+delete from t2725 output offset where offset = 4;
+go
+~~START~~
+int
+4
+~~END~~
+
+select offset from t2725 order by offset;
+go
+~~START~~
+int
+3
+5
+~~END~~
+
+select [offset] from t2725 order by offset;
+go
+~~START~~
+int
+3
+5
+~~END~~
+
+select t2725.[offset] from t2725 order by offset;
+go
+~~START~~
+int
+3
+5
+~~END~~
+
+select oFfSet from t2725 order by ofFSET;
+go
+~~START~~
+int
+3
+5
+~~END~~
+
+drop table t2725;
+go
+
+create table offset(offset int);
+go
+drop table offset;
+go
