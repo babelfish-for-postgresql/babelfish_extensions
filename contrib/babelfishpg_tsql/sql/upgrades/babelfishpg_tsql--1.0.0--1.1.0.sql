@@ -922,7 +922,12 @@ WHEN t5.indisunique = 't' THEN CAST(0 AS smallint)
 ELSE CAST(1 AS smallint)
 END AS NON_UNIQUE,
 CAST(t1.relname AS sys.sysname) AS INDEX_QUALIFIER,
-CAST(SUBSTRING(t6.indexname,1,LENGTH(t6.indexname)-32-LENGTH(t1.relname)) AS sys.sysname) AS INDEX_NAME,
+-- the index name created by CREATE INDEX is re-mapped, find it (by checking
+-- the ones not in pg_constraint) and restoring it back before display
+CASE
+WHEN t8.oid > 0 THEN CAST(t6.relname AS sys.sysname)
+ELSE CAST(SUBSTRING(t6.relname,1,LENGTH(t6.relname)-32-LENGTH(t1.relname)) AS sys.sysname)
+END AS INDEX_NAME,
 CASE
 WHEN t7.starelid > 0 THEN CAST(0 AS smallint)
 ELSE
@@ -941,9 +946,10 @@ FROM pg_catalog.pg_class t1
     JOIN sys.pg_namespace_ext t2 ON t1.relnamespace = t2.oid
     JOIN pg_catalog.pg_roles t3 ON t1.relowner = t3.oid
     JOIN information_schema.columns t4 ON t1.relname = t4.table_name
-	JOIN pg_catalog.pg_index t5 ON t1.oid = t5.indrelid
-	JOIN pg_catalog.pg_indexes t6 ON t1.relname = t6.tablename
+	JOIN (pg_catalog.pg_index t5 JOIN
+		pg_catalog.pg_class t6 ON t5.indexrelid = t6.oid) ON t1.oid = t5.indrelid
 	LEFT JOIN pg_catalog.pg_statistic t7 ON t1.oid = t7.starelid
+	LEFT JOIN pg_catalog.pg_constraint t8 ON t5.indexrelid = t8.conindid
     , generate_series(0,31) seq -- SQL server has max 32 columns per index
 WHERE CAST(t4.dtd_identifier AS smallint) = ANY (t5.indkey)
     AND CAST(t4.dtd_identifier AS smallint) = t5.indkey[seq];
@@ -980,7 +986,7 @@ begin
         and ((SELECT coalesce(in_table_owner,'')) = '' or table_owner = in_table_owner)
         and ((SELECT coalesce(in_table_qualifier,'')) = '' or table_qualifier = in_table_qualifier)
         and ((SELECT coalesce(in_index_name,'')) = '' or index_name like in_index_name)
-        and ((in_is_unique = 'N' and non_unique = 1) or (in_is_unique = 'Y' and non_unique = 0))
+		and ((in_is_unique = 'N') or (in_is_unique = 'Y' and non_unique = 0))
     order by non_unique, type, index_name, seq_in_index;
 end;
 $$
