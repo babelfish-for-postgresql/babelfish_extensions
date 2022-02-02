@@ -3233,7 +3233,7 @@ column_constraint
     :(CONSTRAINT constraint=id)?
       ((PRIMARY KEY | UNIQUE) clustered? with_index_options?
       | CHECK for_replication? LR_BRACKET search_condition RR_BRACKET
-      | (FOREIGN KEY)? REFERENCES table_name LR_BRACKET pk = column_name_list RR_BRACKET (on_update | on_delete)*
+      | (FOREIGN KEY)? REFERENCES table_name (LR_BRACKET pk = column_name_list RR_BRACKET)? (on_update | on_delete)*
       | DEFAULT expression
       | null_notnull
       | WITH VALUES 
