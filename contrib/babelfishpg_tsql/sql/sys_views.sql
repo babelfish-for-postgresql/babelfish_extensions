@@ -1041,7 +1041,7 @@ SELECT out_name as name
   , out_max_length as length
   , 0::sys.tinyint as xprec
   , 0::sys.tinyint as xscale
-  , out_column_id as colid
+  , out_column_id::smallint as colid
   , 0::smallint as xoffset
   , 0::sys.tinyint as bitpos
   , 0::sys.tinyint as reserved

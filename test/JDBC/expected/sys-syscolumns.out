@@ -48,59 +48,59 @@ GO
 create table syscolumns_demo_table (col_a int, col_b bigint, col_c char(10), col_d numeric(5,4))
 GO
 
-select name, OidToObject(id), OidToDataType(xtype), typestat, length from sys.syscolumns where name = '@firstparam' or name = '@secondparam' or name = 'col_a' or name = 'col_b' or name = 'col_c' or name = 'col_d'
+select name, OidToObject(id), OidToDataType(xtype), typestat, length from sys.syscolumns where name = '@firstparam' or name = '@secondparam' or name = 'col_a' or name = 'col_b' or name = 'col_c' or name = 'col_d' order by OidToObject(id) asc, name
 GO
 ~~START~~
 varchar#!#varchar#!#varchar#!#tinyint#!#smallint
+@firstparam#!#syscolumns_demo_proc1#!#nvarchar#!#0#!#<NULL>
+@firstparam#!#syscolumns_demo_proc2#!#nvarchar#!#0#!#<NULL>
+@secondparam#!#syscolumns_demo_proc2#!#varchar#!#0#!#<NULL>
 col_a#!#syscolumns_demo_table#!#int4#!#0#!#4
 col_b#!#syscolumns_demo_table#!#int8#!#0#!#8
 col_c#!#syscolumns_demo_table#!#bpchar#!#0#!#-1
 col_d#!#syscolumns_demo_table#!#numeric#!#0#!#-1
-@firstparam#!#syscolumns_demo_proc1#!#nvarchar#!#0#!#<NULL>
-@firstparam#!#syscolumns_demo_proc2#!#nvarchar#!#0#!#<NULL>
-@secondparam#!#syscolumns_demo_proc2#!#varchar#!#0#!#<NULL>
 ~~END~~
 
 
-select colid, cdefault, domain, number from sys.syscolumns where name = '@firstparam' or name = '@secondparam' or name = 'col_a' or name = 'col_b' or name = 'col_c' or name = 'col_d'
+select colid, cdefault, domain, number from sys.syscolumns where name = '@firstparam' or name = '@secondparam' or name = 'col_a' or name = 'col_b' or name = 'col_c' or name = 'col_d' order by OidToObject(id) asc, name
 GO
 ~~START~~
-int#!#int#!#int#!#smallint
+smallint#!#int#!#int#!#smallint
+1#!#<NULL>#!#<NULL>#!#0
+1#!#<NULL>#!#<NULL>#!#0
+2#!#<NULL>#!#<NULL>#!#0
 1#!#0#!#0#!#0
 2#!#0#!#0#!#0
 3#!#0#!#0#!#0
 4#!#0#!#0#!#0
-1#!#<NULL>#!#<NULL>#!#0
-1#!#<NULL>#!#<NULL>#!#0
-2#!#<NULL>#!#<NULL>#!#0
 ~~END~~
 
 
-select OidToCollation(collationid), status, OidToDataType(type), prec, scale from sys.syscolumns where name = '@firstparam' or name = '@secondparam' or name = 'col_a' or name = 'col_b' or name = 'col_c' or name = 'col_d'
+select OidToCollation(collationid), status, OidToDataType(type), prec, scale from sys.syscolumns where name = '@firstparam' or name = '@secondparam' or name = 'col_a' or name = 'col_b' or name = 'col_c' or name = 'col_d' order by OidToObject(id) asc, name
 GO
 ~~START~~
 varchar#!#tinyint#!#varchar#!#smallint#!#int
+<NULL>#!#0#!#nvarchar#!#<NULL>#!#<NULL>
+<NULL>#!#0#!#nvarchar#!#<NULL>#!#<NULL>
+<NULL>#!#64#!#varchar#!#<NULL>#!#<NULL>
 <NULL>#!#8#!#int4#!#32#!#0
 <NULL>#!#8#!#int8#!#64#!#0
 bbf_unicode_cp1_ci_as#!#8#!#bpchar#!#0#!#0
 <NULL>#!#8#!#numeric#!#5#!#4
-<NULL>#!#0#!#nvarchar#!#<NULL>#!#<NULL>
-<NULL>#!#0#!#nvarchar#!#<NULL>#!#<NULL>
-<NULL>#!#64#!#varchar#!#<NULL>#!#<NULL>
 ~~END~~
 
 
-select iscomputed, isoutparam, isnullable, collation from sys.syscolumns where name = '@firstparam' or name = '@secondparam' or name = 'col_a' or name = 'col_b' or name = 'col_c' or name = 'col_d'
+select iscomputed, isoutparam, isnullable, collation from sys.syscolumns where name = '@firstparam' or name = '@secondparam' or name = 'col_a' or name = 'col_b' or name = 'col_c' or name = 'col_d' order by OidToObject(id) asc, name
 GO
 ~~START~~
 int#!#int#!#int#!#varchar
 0#!#0#!#1#!#<NULL>
 0#!#0#!#1#!#<NULL>
+0#!#1#!#1#!#<NULL>
+0#!#0#!#1#!#<NULL>
+0#!#0#!#1#!#<NULL>
 0#!#0#!#1#!#bbf_unicode_cp1_ci_as
 0#!#0#!#1#!#<NULL>
-0#!#0#!#1#!#<NULL>
-0#!#0#!#1#!#<NULL>
-0#!#1#!#1#!#<NULL>
 ~~END~~
 
 
