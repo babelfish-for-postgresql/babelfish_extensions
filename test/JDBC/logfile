@@ -1,0 +1,551 @@
+2022-02-02 04:29:33.449 UTC [8903] LOG:  starting PostgreSQL 13.5 on x86_64-pc-linux-gnu, compiled by gcc (GCC) 7.3.1 20180712 (Red Hat 7.3.1-13), 64-bit
+2022-02-02 04:29:33.449 UTC [8903] LOG:  listening on IPv4 address "0.0.0.0", port 5432
+2022-02-02 04:29:33.449 UTC [8903] LOG:  listening on IPv6 address "::", port 5432
+2022-02-02 04:29:33.453 UTC [8903] LOG:  listening on Unix socket "/tmp/.s.PGSQL.5432"
+2022-02-02 04:29:33.455 UTC [8903] LOG:  listening on IPv4 address "0.0.0.0", port 1433
+2022-02-02 04:29:33.455 UTC [8903] LOG:  listening on IPv6 address "::", port 1433
+2022-02-02 04:29:33.459 UTC [8904] LOG:  database system was shut down at 2022-02-02 04:29:33 UTC
+2022-02-02 04:29:33.462 UTC [8903] LOG:  database system is ready to accept connections
+2022-02-02 04:30:06.182 UTC [9376] WARNING:  cast will be ignored because the source data type is a domain
+2022-02-02 04:30:06.191 UTC [9376] WARNING:  cast will be ignored because the source data type is a domain
+2022-02-02 04:30:06.216 UTC [9376] WARNING:  cast will be ignored because the source data type is a domain
+2022-02-02 04:30:06.226 UTC [9376] WARNING:  cast will be ignored because the source data type is a domain
+2022-02-02 04:30:06.780 UTC [8903] LOG:  received SIGHUP, reloading configuration files
+2022-02-02 04:30:06.781 UTC [8903] LOG:  parameter "babelfishpg_tsql.database_name" changed to "jdbc_testdb"
+2022-02-02 04:30:12.707 UTC [9621] LOG:  message_type: TDS7 Prelogin Message
+2022-02-02 04:30:12.707 UTC [9621] CONTEXT:  TDS Protocol: Message Type: TDS Pre-Login, Phase: Login. 
+2022-02-02 04:30:12.711 UTC [9621] LOG:  message_type: TDS7 Login
+2022-02-02 04:30:12.711 UTC [9621] CONTEXT:  TDS Protocol: Message Type: TDS Login7, Phase: Login. 
+2022-02-02 04:30:15.094 UTC [9621] ERROR:  The incoming tabular data stream (TDS) Bulk Load Request (BulkLoadBCP) protocol stream is incorrect. Row 1, column 2, unexpected token encountered processing the request.
+2022-02-02 04:30:15.094 UTC [9621] CONTEXT:  TDS Protocol: Fetching Bulk Load Request
+2022-02-02 04:30:15.094 UTC [9621] LOG:  Unmapped error found. Code: 16908800, Message: The incoming tabular data stream (TDS) Bulk Load Request (BulkLoadBCP) protocol stream is incorrect. Row 1, column 2, unexpected token encountered processing the request., File: tdsbulkload.c, Line: 473, Context: TDS
+2022-02-02 04:30:17.001 UTC [9621] ERROR:  The incoming tabular data stream (TDS) Bulk Load Request (BulkLoadBCP) protocol stream is incorrect. Row 1, column 2, unexpected token encountered processing the request.
+2022-02-02 04:30:17.001 UTC [9621] CONTEXT:  TDS Protocol: Fetching Bulk Load Request
+2022-02-02 04:30:17.001 UTC [9621] LOG:  Unmapped error found. Code: 16908800, Message: The incoming tabular data stream (TDS) Bulk Load Request (BulkLoadBCP) protocol stream is incorrect. Row 1, column 2, unexpected token encountered processing the request., File: tdsbulkload.c, Line: 473, Context: TDS
+2022-02-02 04:30:18.894 UTC [9621] ERROR:  The incoming tabular data stream (TDS) Bulk Load Request (BulkLoadBCP) protocol stream is incorrect. Row 1, column 2, unexpected token encountered processing the request.
+2022-02-02 04:30:18.894 UTC [9621] CONTEXT:  TDS Protocol: Fetching Bulk Load Request
+2022-02-02 04:30:18.894 UTC [9621] LOG:  Unmapped error found. Code: 16908800, Message: The incoming tabular data stream (TDS) Bulk Load Request (BulkLoadBCP) protocol stream is incorrect. Row 1, column 2, unexpected token encountered processing the request., File: tdsbulkload.c, Line: 473, Context: TDS
+2022-02-02 04:30:20.802 UTC [9621] ERROR:  The incoming tabular data stream (TDS) Bulk Load Request (BulkLoadBCP) protocol stream is incorrect. Row 1, column 2, unexpected token encountered processing the request.
+2022-02-02 04:30:20.802 UTC [9621] CONTEXT:  TDS Protocol: Fetching Bulk Load Request
+2022-02-02 04:30:20.802 UTC [9621] LOG:  Unmapped error found. Code: 16908800, Message: The incoming tabular data stream (TDS) Bulk Load Request (BulkLoadBCP) protocol stream is incorrect. Row 1, column 2, unexpected token encountered processing the request., File: tdsbulkload.c, Line: 473, Context: TDS
+2022-02-02 04:30:22.708 UTC [9621] ERROR:  The incoming tabular data stream (TDS) Bulk Load Request (BulkLoadBCP) protocol stream is incorrect. Row 1, column 2, unexpected token encountered processing the request.
+2022-02-02 04:30:22.708 UTC [9621] CONTEXT:  TDS Protocol: Fetching Bulk Load Request
+2022-02-02 04:30:22.708 UTC [9621] LOG:  Unmapped error found. Code: 16908800, Message: The incoming tabular data stream (TDS) Bulk Load Request (BulkLoadBCP) protocol stream is incorrect. Row 1, column 2, unexpected token encountered processing the request., File: tdsbulkload.c, Line: 473, Context: TDS
+2022-02-02 04:30:24.604 UTC [9621] ERROR:  The incoming tabular data stream (TDS) Bulk Load Request (BulkLoadBCP) protocol stream is incorrect. Row 1, column 2, unexpected token encountered processing the request.
+2022-02-02 04:30:24.604 UTC [9621] CONTEXT:  TDS Protocol: Fetching Bulk Load Request
+2022-02-02 04:30:24.604 UTC [9621] LOG:  Unmapped error found. Code: 16908800, Message: The incoming tabular data stream (TDS) Bulk Load Request (BulkLoadBCP) protocol stream is incorrect. Row 1, column 2, unexpected token encountered processing the request., File: tdsbulkload.c, Line: 473, Context: TDS
+2022-02-02 04:30:26.527 UTC [9621] ERROR:  The incoming tabular data stream (TDS) Bulk Load Request (BulkLoadBCP) protocol stream is incorrect. Row 1, column 2, unexpected token encountered processing the request.
+2022-02-02 04:30:26.527 UTC [9621] CONTEXT:  TDS Protocol: Fetching Bulk Load Request
+2022-02-02 04:30:26.527 UTC [9621] LOG:  Unmapped error found. Code: 16908800, Message: The incoming tabular data stream (TDS) Bulk Load Request (BulkLoadBCP) protocol stream is incorrect. Row 1, column 2, unexpected token encountered processing the request., File: tdsbulkload.c, Line: 473, Context: TDS
+2022-02-02 04:30:28.434 UTC [9621] ERROR:  The incoming tabular data stream (TDS) Bulk Load Request (BulkLoadBCP) protocol stream is incorrect. Row 1, column 2, unexpected token encountered processing the request.
+2022-02-02 04:30:28.434 UTC [9621] CONTEXT:  TDS Protocol: Fetching Bulk Load Request
+2022-02-02 04:30:28.434 UTC [9621] LOG:  Unmapped error found. Code: 16908800, Message: The incoming tabular data stream (TDS) Bulk Load Request (BulkLoadBCP) protocol stream is incorrect. Row 1, column 2, unexpected token encountered processing the request., File: tdsbulkload.c, Line: 473, Context: TDS
+2022-02-02 04:30:30.344 UTC [9621] ERROR:  The incoming tabular data stream (TDS) Bulk Load Request (BulkLoadBCP) protocol stream is incorrect. Row 1, column 2, unexpected token encountered processing the request.
+2022-02-02 04:30:30.344 UTC [9621] CONTEXT:  TDS Protocol: Fetching Bulk Load Request
+2022-02-02 04:30:30.344 UTC [9621] LOG:  Unmapped error found. Code: 16908800, Message: The incoming tabular data stream (TDS) Bulk Load Request (BulkLoadBCP) protocol stream is incorrect. Row 1, column 2, unexpected token encountered processing the request., File: tdsbulkload.c, Line: 473, Context: TDS
+2022-02-02 04:30:32.297 UTC [9621] ERROR:  The incoming tabular data stream (TDS) Bulk Load Request (BulkLoadBCP) protocol stream is incorrect. Row 1, column 2, unexpected token encountered processing the request.
+2022-02-02 04:30:32.297 UTC [9621] CONTEXT:  TDS Protocol: Fetching Bulk Load Request
+2022-02-02 04:30:32.297 UTC [9621] LOG:  Unmapped error found. Code: 16908800, Message: The incoming tabular data stream (TDS) Bulk Load Request (BulkLoadBCP) protocol stream is incorrect. Row 1, column 2, unexpected token encountered processing the request., File: tdsbulkload.c, Line: 473, Context: TDS
+2022-02-02 04:30:34.216 UTC [9621] ERROR:  The incoming tabular data stream (TDS) Bulk Load Request (BulkLoadBCP) protocol stream is incorrect. Row 1, column 2, unexpected token encountered processing the request.
+2022-02-02 04:30:34.216 UTC [9621] CONTEXT:  TDS Protocol: Fetching Bulk Load Request
+2022-02-02 04:30:34.216 UTC [9621] LOG:  Unmapped error found. Code: 16908800, Message: The incoming tabular data stream (TDS) Bulk Load Request (BulkLoadBCP) protocol stream is incorrect. Row 1, column 2, unexpected token encountered processing the request., File: tdsbulkload.c, Line: 473, Context: TDS
+2022-02-02 04:30:36.134 UTC [9621] ERROR:  The incoming tabular data stream (TDS) Bulk Load Request (BulkLoadBCP) protocol stream is incorrect. Row 1, column 2, unexpected token encountered processing the request.
+2022-02-02 04:30:36.134 UTC [9621] CONTEXT:  TDS Protocol: Fetching Bulk Load Request
+2022-02-02 04:30:36.134 UTC [9621] LOG:  Unmapped error found. Code: 16908800, Message: The incoming tabular data stream (TDS) Bulk Load Request (BulkLoadBCP) protocol stream is incorrect. Row 1, column 2, unexpected token encountered processing the request., File: tdsbulkload.c, Line: 473, Context: TDS
+2022-02-02 04:30:38.060 UTC [9621] ERROR:  The incoming tabular data stream (TDS) Bulk Load Request (BulkLoadBCP) protocol stream is incorrect. Row 1, column 2, unexpected token encountered processing the request.
+2022-02-02 04:30:38.060 UTC [9621] CONTEXT:  TDS Protocol: Fetching Bulk Load Request
+2022-02-02 04:30:38.060 UTC [9621] LOG:  Unmapped error found. Code: 16908800, Message: The incoming tabular data stream (TDS) Bulk Load Request (BulkLoadBCP) protocol stream is incorrect. Row 1, column 2, unexpected token encountered processing the request., File: tdsbulkload.c, Line: 473, Context: TDS
+2022-02-02 04:30:39.975 UTC [9621] ERROR:  The incoming tabular data stream (TDS) Bulk Load Request (BulkLoadBCP) protocol stream is incorrect. Row 1, column 2, unexpected token encountered processing the request.
+2022-02-02 04:30:39.975 UTC [9621] CONTEXT:  TDS Protocol: Fetching Bulk Load Request
+2022-02-02 04:30:39.975 UTC [9621] LOG:  Unmapped error found. Code: 16908800, Message: The incoming tabular data stream (TDS) Bulk Load Request (BulkLoadBCP) protocol stream is incorrect. Row 1, column 2, unexpected token encountered processing the request., File: tdsbulkload.c, Line: 473, Context: TDS
+2022-02-02 04:30:41.883 UTC [9621] ERROR:  The incoming tabular data stream (TDS) Bulk Load Request (BulkLoadBCP) protocol stream is incorrect. Row 1, column 2, unexpected token encountered processing the request.
+2022-02-02 04:30:41.883 UTC [9621] CONTEXT:  TDS Protocol: Fetching Bulk Load Request
+2022-02-02 04:30:41.883 UTC [9621] LOG:  Unmapped error found. Code: 16908800, Message: The incoming tabular data stream (TDS) Bulk Load Request (BulkLoadBCP) protocol stream is incorrect. Row 1, column 2, unexpected token encountered processing the request., File: tdsbulkload.c, Line: 473, Context: TDS
+2022-02-02 04:30:43.793 UTC [9621] ERROR:  The incoming tabular data stream (TDS) Bulk Load Request (BulkLoadBCP) protocol stream is incorrect. Row 1, column 2, unexpected token encountered processing the request.
+2022-02-02 04:30:43.793 UTC [9621] CONTEXT:  TDS Protocol: Fetching Bulk Load Request
+2022-02-02 04:30:43.793 UTC [9621] LOG:  Unmapped error found. Code: 16908800, Message: The incoming tabular data stream (TDS) Bulk Load Request (BulkLoadBCP) protocol stream is incorrect. Row 1, column 2, unexpected token encountered processing the request., File: tdsbulkload.c, Line: 473, Context: TDS
+2022-02-02 04:30:45.694 UTC [9621] ERROR:  The incoming tabular data stream (TDS) Bulk Load Request (BulkLoadBCP) protocol stream is incorrect. Row 1, column 2, unexpected token encountered processing the request.
+2022-02-02 04:30:45.694 UTC [9621] CONTEXT:  TDS Protocol: Fetching Bulk Load Request
+2022-02-02 04:30:45.694 UTC [9621] LOG:  Unmapped error found. Code: 16908800, Message: The incoming tabular data stream (TDS) Bulk Load Request (BulkLoadBCP) protocol stream is incorrect. Row 1, column 2, unexpected token encountered processing the request., File: tdsbulkload.c, Line: 473, Context: TDS
+2022-02-02 04:30:47.590 UTC [9621] ERROR:  The incoming tabular data stream (TDS) Bulk Load Request (BulkLoadBCP) protocol stream is incorrect. Row 1, column 2, unexpected token encountered processing the request.
+2022-02-02 04:30:47.590 UTC [9621] CONTEXT:  TDS Protocol: Fetching Bulk Load Request
+2022-02-02 04:30:47.590 UTC [9621] LOG:  Unmapped error found. Code: 16908800, Message: The incoming tabular data stream (TDS) Bulk Load Request (BulkLoadBCP) protocol stream is incorrect. Row 1, column 2, unexpected token encountered processing the request., File: tdsbulkload.c, Line: 473, Context: TDS
+2022-02-02 04:30:49.488 UTC [9621] ERROR:  The incoming tabular data stream (TDS) Bulk Load Request (BulkLoadBCP) protocol stream is incorrect. Row 1, column 2, unexpected token encountered processing the request.
+2022-02-02 04:30:49.488 UTC [9621] CONTEXT:  TDS Protocol: Fetching Bulk Load Request
+2022-02-02 04:30:49.488 UTC [9621] LOG:  Unmapped error found. Code: 16908800, Message: The incoming tabular data stream (TDS) Bulk Load Request (BulkLoadBCP) protocol stream is incorrect. Row 1, column 2, unexpected token encountered processing the request., File: tdsbulkload.c, Line: 473, Context: TDS
+2022-02-02 04:30:51.391 UTC [9621] ERROR:  The incoming tabular data stream (TDS) Bulk Load Request (BulkLoadBCP) protocol stream is incorrect. Row 1, column 2, unexpected token encountered processing the request.
+2022-02-02 04:30:51.391 UTC [9621] CONTEXT:  TDS Protocol: Fetching Bulk Load Request
+2022-02-02 04:30:51.391 UTC [9621] LOG:  Unmapped error found. Code: 16908800, Message: The incoming tabular data stream (TDS) Bulk Load Request (BulkLoadBCP) protocol stream is incorrect. Row 1, column 2, unexpected token encountered processing the request., File: tdsbulkload.c, Line: 473, Context: TDS
+2022-02-02 04:30:53.303 UTC [9621] ERROR:  The incoming tabular data stream (TDS) Bulk Load Request (BulkLoadBCP) protocol stream is incorrect. Row 1, column 2, unexpected token encountered processing the request.
+2022-02-02 04:30:53.303 UTC [9621] CONTEXT:  TDS Protocol: Fetching Bulk Load Request
+2022-02-02 04:30:53.304 UTC [9621] LOG:  Unmapped error found. Code: 16908800, Message: The incoming tabular data stream (TDS) Bulk Load Request (BulkLoadBCP) protocol stream is incorrect. Row 1, column 2, unexpected token encountered processing the request., File: tdsbulkload.c, Line: 473, Context: TDS
+2022-02-02 04:30:55.214 UTC [9621] ERROR:  The incoming tabular data stream (TDS) Bulk Load Request (BulkLoadBCP) protocol stream is incorrect. Row 1, column 2, unexpected token encountered processing the request.
+2022-02-02 04:30:55.214 UTC [9621] CONTEXT:  TDS Protocol: Fetching Bulk Load Request
+2022-02-02 04:30:55.214 UTC [9621] LOG:  Unmapped error found. Code: 16908800, Message: The incoming tabular data stream (TDS) Bulk Load Request (BulkLoadBCP) protocol stream is incorrect. Row 1, column 2, unexpected token encountered processing the request., File: tdsbulkload.c, Line: 473, Context: TDS
+2022-02-02 04:30:57.105 UTC [9621] ERROR:  The incoming tabular data stream (TDS) Bulk Load Request (BulkLoadBCP) protocol stream is incorrect. Row 1, column 2, unexpected token encountered processing the request.
+2022-02-02 04:30:57.105 UTC [9621] CONTEXT:  TDS Protocol: Fetching Bulk Load Request
+2022-02-02 04:30:57.105 UTC [9621] LOG:  Unmapped error found. Code: 16908800, Message: The incoming tabular data stream (TDS) Bulk Load Request (BulkLoadBCP) protocol stream is incorrect. Row 1, column 2, unexpected token encountered processing the request., File: tdsbulkload.c, Line: 473, Context: TDS
+2022-02-02 04:30:59.009 UTC [9621] ERROR:  The incoming tabular data stream (TDS) Bulk Load Request (BulkLoadBCP) protocol stream is incorrect. Row 1, column 2, unexpected token encountered processing the request.
+2022-02-02 04:30:59.009 UTC [9621] CONTEXT:  TDS Protocol: Fetching Bulk Load Request
+2022-02-02 04:30:59.009 UTC [9621] LOG:  Unmapped error found. Code: 16908800, Message: The incoming tabular data stream (TDS) Bulk Load Request (BulkLoadBCP) protocol stream is incorrect. Row 1, column 2, unexpected token encountered processing the request., File: tdsbulkload.c, Line: 473, Context: TDS
+2022-02-02 04:31:00.929 UTC [9621] ERROR:  The incoming tabular data stream (TDS) Bulk Load Request (BulkLoadBCP) protocol stream is incorrect. Row 1, column 2, unexpected token encountered processing the request.
+2022-02-02 04:31:00.929 UTC [9621] CONTEXT:  TDS Protocol: Fetching Bulk Load Request
+2022-02-02 04:31:00.930 UTC [9621] LOG:  Unmapped error found. Code: 16908800, Message: The incoming tabular data stream (TDS) Bulk Load Request (BulkLoadBCP) protocol stream is incorrect. Row 1, column 2, unexpected token encountered processing the request., File: tdsbulkload.c, Line: 473, Context: TDS
+2022-02-02 04:31:00.958 UTC [9621] LOG:  EOF on TDS socket
+2022-02-02 04:31:00.958 UTC [9621] CONTEXT:  TDS Protocol: Message Type: SQL BATCH, Phase: TDS_REQUEST_PHASE_FETCH. Fetching TDS Request
+2022-02-02 04:33:14.527 UTC [8903] LOG:  received SIGHUP, reloading configuration files
+2022-02-02 04:33:14.527 UTC [8903] LOG:  parameter "babelfishpg_tds.set_db_session_property" removed from configuration file, reset to default
+2022-02-02 04:33:14.527 UTC [8903] LOG:  parameter "babelfishpg_tsql.database_name" removed from configuration file, reset to default
+2022-02-02 04:33:19.608 UTC [11968] WARNING:  cast will be ignored because the source data type is a domain
+2022-02-02 04:33:19.617 UTC [11968] WARNING:  cast will be ignored because the source data type is a domain
+2022-02-02 04:33:19.641 UTC [11968] WARNING:  cast will be ignored because the source data type is a domain
+2022-02-02 04:33:19.652 UTC [11968] WARNING:  cast will be ignored because the source data type is a domain
+2022-02-02 04:33:20.207 UTC [8903] LOG:  received SIGHUP, reloading configuration files
+2022-02-02 04:33:20.207 UTC [8903] LOG:  parameter "babelfishpg_tsql.database_name" changed to "jdbc_testdb"
+2022-02-02 04:33:25.743 UTC [12205] LOG:  message_type: TDS7 Prelogin Message
+2022-02-02 04:33:25.743 UTC [12205] CONTEXT:  TDS Protocol: Message Type: TDS Pre-Login, Phase: Login. 
+2022-02-02 04:33:25.746 UTC [12205] LOG:  message_type: TDS7 Login
+2022-02-02 04:33:25.746 UTC [12205] CONTEXT:  TDS Protocol: Message Type: TDS Login7, Phase: Login. 
+2022-02-02 04:33:28.135 UTC [12205] ERROR:  The incoming tabular data stream (TDS) Bulk Load Request (BulkLoadBCP) protocol stream is incorrect. Row 1, column 2, unexpected token encountered processing the request.
+2022-02-02 04:33:28.135 UTC [12205] CONTEXT:  TDS Protocol: Fetching Bulk Load Request
+2022-02-02 04:33:28.135 UTC [12205] LOG:  Unmapped error found. Code: 16908800, Message: The incoming tabular data stream (TDS) Bulk Load Request (BulkLoadBCP) protocol stream is incorrect. Row 1, column 2, unexpected token encountered processing the request., File: tdsbulkload.c, Line: 473, Context: TDS
+2022-02-02 04:33:30.040 UTC [12205] ERROR:  The incoming tabular data stream (TDS) Bulk Load Request (BulkLoadBCP) protocol stream is incorrect. Row 1, column 2, unexpected token encountered processing the request.
+2022-02-02 04:33:30.040 UTC [12205] CONTEXT:  TDS Protocol: Fetching Bulk Load Request
+2022-02-02 04:33:30.040 UTC [12205] LOG:  Unmapped error found. Code: 16908800, Message: The incoming tabular data stream (TDS) Bulk Load Request (BulkLoadBCP) protocol stream is incorrect. Row 1, column 2, unexpected token encountered processing the request., File: tdsbulkload.c, Line: 473, Context: TDS
+2022-02-02 04:33:31.947 UTC [12205] ERROR:  The incoming tabular data stream (TDS) Bulk Load Request (BulkLoadBCP) protocol stream is incorrect. Row 1, column 2, unexpected token encountered processing the request.
+2022-02-02 04:33:31.947 UTC [12205] CONTEXT:  TDS Protocol: Fetching Bulk Load Request
+2022-02-02 04:33:31.947 UTC [12205] LOG:  Unmapped error found. Code: 16908800, Message: The incoming tabular data stream (TDS) Bulk Load Request (BulkLoadBCP) protocol stream is incorrect. Row 1, column 2, unexpected token encountered processing the request., File: tdsbulkload.c, Line: 473, Context: TDS
+2022-02-02 04:33:33.848 UTC [12205] ERROR:  The incoming tabular data stream (TDS) Bulk Load Request (BulkLoadBCP) protocol stream is incorrect. Row 1, column 2, unexpected token encountered processing the request.
+2022-02-02 04:33:33.848 UTC [12205] CONTEXT:  TDS Protocol: Fetching Bulk Load Request
+2022-02-02 04:33:33.848 UTC [12205] LOG:  Unmapped error found. Code: 16908800, Message: The incoming tabular data stream (TDS) Bulk Load Request (BulkLoadBCP) protocol stream is incorrect. Row 1, column 2, unexpected token encountered processing the request., File: tdsbulkload.c, Line: 473, Context: TDS
+2022-02-02 04:33:35.740 UTC [12205] ERROR:  The incoming tabular data stream (TDS) Bulk Load Request (BulkLoadBCP) protocol stream is incorrect. Row 1, column 2, unexpected token encountered processing the request.
+2022-02-02 04:33:35.740 UTC [12205] CONTEXT:  TDS Protocol: Fetching Bulk Load Request
+2022-02-02 04:33:35.740 UTC [12205] LOG:  Unmapped error found. Code: 16908800, Message: The incoming tabular data stream (TDS) Bulk Load Request (BulkLoadBCP) protocol stream is incorrect. Row 1, column 2, unexpected token encountered processing the request., File: tdsbulkload.c, Line: 473, Context: TDS
+2022-02-02 04:33:37.635 UTC [12205] ERROR:  The incoming tabular data stream (TDS) Bulk Load Request (BulkLoadBCP) protocol stream is incorrect. Row 1, column 2, unexpected token encountered processing the request.
+2022-02-02 04:33:37.635 UTC [12205] CONTEXT:  TDS Protocol: Fetching Bulk Load Request
+2022-02-02 04:33:37.635 UTC [12205] LOG:  Unmapped error found. Code: 16908800, Message: The incoming tabular data stream (TDS) Bulk Load Request (BulkLoadBCP) protocol stream is incorrect. Row 1, column 2, unexpected token encountered processing the request., File: tdsbulkload.c, Line: 473, Context: TDS
+2022-02-02 04:33:39.567 UTC [12205] ERROR:  The incoming tabular data stream (TDS) Bulk Load Request (BulkLoadBCP) protocol stream is incorrect. Row 1, column 2, unexpected token encountered processing the request.
+2022-02-02 04:33:39.567 UTC [12205] CONTEXT:  TDS Protocol: Fetching Bulk Load Request
+2022-02-02 04:33:39.567 UTC [12205] LOG:  Unmapped error found. Code: 16908800, Message: The incoming tabular data stream (TDS) Bulk Load Request (BulkLoadBCP) protocol stream is incorrect. Row 1, column 2, unexpected token encountered processing the request., File: tdsbulkload.c, Line: 473, Context: TDS
+2022-02-02 04:33:41.470 UTC [12205] ERROR:  The incoming tabular data stream (TDS) Bulk Load Request (BulkLoadBCP) protocol stream is incorrect. Row 1, column 2, unexpected token encountered processing the request.
+2022-02-02 04:33:41.470 UTC [12205] CONTEXT:  TDS Protocol: Fetching Bulk Load Request
+2022-02-02 04:33:41.470 UTC [12205] LOG:  Unmapped error found. Code: 16908800, Message: The incoming tabular data stream (TDS) Bulk Load Request (BulkLoadBCP) protocol stream is incorrect. Row 1, column 2, unexpected token encountered processing the request., File: tdsbulkload.c, Line: 473, Context: TDS
+2022-02-02 04:33:43.384 UTC [12205] ERROR:  The incoming tabular data stream (TDS) Bulk Load Request (BulkLoadBCP) protocol stream is incorrect. Row 1, column 2, unexpected token encountered processing the request.
+2022-02-02 04:33:43.384 UTC [12205] CONTEXT:  TDS Protocol: Fetching Bulk Load Request
+2022-02-02 04:33:43.384 UTC [12205] LOG:  Unmapped error found. Code: 16908800, Message: The incoming tabular data stream (TDS) Bulk Load Request (BulkLoadBCP) protocol stream is incorrect. Row 1, column 2, unexpected token encountered processing the request., File: tdsbulkload.c, Line: 473, Context: TDS
+2022-02-02 04:33:45.325 UTC [12205] ERROR:  The incoming tabular data stream (TDS) Bulk Load Request (BulkLoadBCP) protocol stream is incorrect. Row 1, column 2, unexpected token encountered processing the request.
+2022-02-02 04:33:45.325 UTC [12205] CONTEXT:  TDS Protocol: Fetching Bulk Load Request
+2022-02-02 04:33:45.325 UTC [12205] LOG:  Unmapped error found. Code: 16908800, Message: The incoming tabular data stream (TDS) Bulk Load Request (BulkLoadBCP) protocol stream is incorrect. Row 1, column 2, unexpected token encountered processing the request., File: tdsbulkload.c, Line: 473, Context: TDS
+2022-02-02 04:33:47.239 UTC [12205] ERROR:  The incoming tabular data stream (TDS) Bulk Load Request (BulkLoadBCP) protocol stream is incorrect. Row 1, column 2, unexpected token encountered processing the request.
+2022-02-02 04:33:47.239 UTC [12205] CONTEXT:  TDS Protocol: Fetching Bulk Load Request
+2022-02-02 04:33:47.239 UTC [12205] LOG:  Unmapped error found. Code: 16908800, Message: The incoming tabular data stream (TDS) Bulk Load Request (BulkLoadBCP) protocol stream is incorrect. Row 1, column 2, unexpected token encountered processing the request., File: tdsbulkload.c, Line: 473, Context: TDS
+2022-02-02 04:33:49.164 UTC [12205] ERROR:  The incoming tabular data stream (TDS) Bulk Load Request (BulkLoadBCP) protocol stream is incorrect. Row 1, column 2, unexpected token encountered processing the request.
+2022-02-02 04:33:49.164 UTC [12205] CONTEXT:  TDS Protocol: Fetching Bulk Load Request
+2022-02-02 04:33:49.164 UTC [12205] LOG:  Unmapped error found. Code: 16908800, Message: The incoming tabular data stream (TDS) Bulk Load Request (BulkLoadBCP) protocol stream is incorrect. Row 1, column 2, unexpected token encountered processing the request., File: tdsbulkload.c, Line: 473, Context: TDS
+2022-02-02 04:33:51.084 UTC [12205] ERROR:  The incoming tabular data stream (TDS) Bulk Load Request (BulkLoadBCP) protocol stream is incorrect. Row 1, column 2, unexpected token encountered processing the request.
+2022-02-02 04:33:51.084 UTC [12205] CONTEXT:  TDS Protocol: Fetching Bulk Load Request
+2022-02-02 04:33:51.084 UTC [12205] LOG:  Unmapped error found. Code: 16908800, Message: The incoming tabular data stream (TDS) Bulk Load Request (BulkLoadBCP) protocol stream is incorrect. Row 1, column 2, unexpected token encountered processing the request., File: tdsbulkload.c, Line: 473, Context: TDS
+2022-02-02 04:33:53.010 UTC [12205] ERROR:  The incoming tabular data stream (TDS) Bulk Load Request (BulkLoadBCP) protocol stream is incorrect. Row 1, column 2, unexpected token encountered processing the request.
+2022-02-02 04:33:53.010 UTC [12205] CONTEXT:  TDS Protocol: Fetching Bulk Load Request
+2022-02-02 04:33:53.010 UTC [12205] LOG:  Unmapped error found. Code: 16908800, Message: The incoming tabular data stream (TDS) Bulk Load Request (BulkLoadBCP) protocol stream is incorrect. Row 1, column 2, unexpected token encountered processing the request., File: tdsbulkload.c, Line: 473, Context: TDS
+2022-02-02 04:33:54.914 UTC [12205] ERROR:  The incoming tabular data stream (TDS) Bulk Load Request (BulkLoadBCP) protocol stream is incorrect. Row 1, column 2, unexpected token encountered processing the request.
+2022-02-02 04:33:54.914 UTC [12205] CONTEXT:  TDS Protocol: Fetching Bulk Load Request
+2022-02-02 04:33:54.914 UTC [12205] LOG:  Unmapped error found. Code: 16908800, Message: The incoming tabular data stream (TDS) Bulk Load Request (BulkLoadBCP) protocol stream is incorrect. Row 1, column 2, unexpected token encountered processing the request., File: tdsbulkload.c, Line: 473, Context: TDS
+2022-02-02 04:33:56.820 UTC [12205] ERROR:  The incoming tabular data stream (TDS) Bulk Load Request (BulkLoadBCP) protocol stream is incorrect. Row 1, column 2, unexpected token encountered processing the request.
+2022-02-02 04:33:56.820 UTC [12205] CONTEXT:  TDS Protocol: Fetching Bulk Load Request
+2022-02-02 04:33:56.820 UTC [12205] LOG:  Unmapped error found. Code: 16908800, Message: The incoming tabular data stream (TDS) Bulk Load Request (BulkLoadBCP) protocol stream is incorrect. Row 1, column 2, unexpected token encountered processing the request., File: tdsbulkload.c, Line: 473, Context: TDS
+2022-02-02 04:33:58.709 UTC [12205] ERROR:  The incoming tabular data stream (TDS) Bulk Load Request (BulkLoadBCP) protocol stream is incorrect. Row 1, column 2, unexpected token encountered processing the request.
+2022-02-02 04:33:58.709 UTC [12205] CONTEXT:  TDS Protocol: Fetching Bulk Load Request
+2022-02-02 04:33:58.709 UTC [12205] LOG:  Unmapped error found. Code: 16908800, Message: The incoming tabular data stream (TDS) Bulk Load Request (BulkLoadBCP) protocol stream is incorrect. Row 1, column 2, unexpected token encountered processing the request., File: tdsbulkload.c, Line: 473, Context: TDS
+2022-02-02 04:34:00.596 UTC [12205] ERROR:  The incoming tabular data stream (TDS) Bulk Load Request (BulkLoadBCP) protocol stream is incorrect. Row 1, column 2, unexpected token encountered processing the request.
+2022-02-02 04:34:00.596 UTC [12205] CONTEXT:  TDS Protocol: Fetching Bulk Load Request
+2022-02-02 04:34:00.596 UTC [12205] LOG:  Unmapped error found. Code: 16908800, Message: The incoming tabular data stream (TDS) Bulk Load Request (BulkLoadBCP) protocol stream is incorrect. Row 1, column 2, unexpected token encountered processing the request., File: tdsbulkload.c, Line: 473, Context: TDS
+2022-02-02 04:34:02.491 UTC [12205] ERROR:  The incoming tabular data stream (TDS) Bulk Load Request (BulkLoadBCP) protocol stream is incorrect. Row 1, column 2, unexpected token encountered processing the request.
+2022-02-02 04:34:02.491 UTC [12205] CONTEXT:  TDS Protocol: Fetching Bulk Load Request
+2022-02-02 04:34:02.491 UTC [12205] LOG:  Unmapped error found. Code: 16908800, Message: The incoming tabular data stream (TDS) Bulk Load Request (BulkLoadBCP) protocol stream is incorrect. Row 1, column 2, unexpected token encountered processing the request., File: tdsbulkload.c, Line: 473, Context: TDS
+2022-02-02 04:34:04.393 UTC [12205] ERROR:  The incoming tabular data stream (TDS) Bulk Load Request (BulkLoadBCP) protocol stream is incorrect. Row 1, column 2, unexpected token encountered processing the request.
+2022-02-02 04:34:04.393 UTC [12205] CONTEXT:  TDS Protocol: Fetching Bulk Load Request
+2022-02-02 04:34:04.393 UTC [12205] LOG:  Unmapped error found. Code: 16908800, Message: The incoming tabular data stream (TDS) Bulk Load Request (BulkLoadBCP) protocol stream is incorrect. Row 1, column 2, unexpected token encountered processing the request., File: tdsbulkload.c, Line: 473, Context: TDS
+2022-02-02 04:34:06.300 UTC [12205] ERROR:  The incoming tabular data stream (TDS) Bulk Load Request (BulkLoadBCP) protocol stream is incorrect. Row 1, column 2, unexpected token encountered processing the request.
+2022-02-02 04:34:06.300 UTC [12205] CONTEXT:  TDS Protocol: Fetching Bulk Load Request
+2022-02-02 04:34:06.300 UTC [12205] LOG:  Unmapped error found. Code: 16908800, Message: The incoming tabular data stream (TDS) Bulk Load Request (BulkLoadBCP) protocol stream is incorrect. Row 1, column 2, unexpected token encountered processing the request., File: tdsbulkload.c, Line: 473, Context: TDS
+2022-02-02 04:34:08.195 UTC [12205] ERROR:  The incoming tabular data stream (TDS) Bulk Load Request (BulkLoadBCP) protocol stream is incorrect. Row 1, column 2, unexpected token encountered processing the request.
+2022-02-02 04:34:08.195 UTC [12205] CONTEXT:  TDS Protocol: Fetching Bulk Load Request
+2022-02-02 04:34:08.195 UTC [12205] LOG:  Unmapped error found. Code: 16908800, Message: The incoming tabular data stream (TDS) Bulk Load Request (BulkLoadBCP) protocol stream is incorrect. Row 1, column 2, unexpected token encountered processing the request., File: tdsbulkload.c, Line: 473, Context: TDS
+2022-02-02 04:34:10.103 UTC [12205] ERROR:  The incoming tabular data stream (TDS) Bulk Load Request (BulkLoadBCP) protocol stream is incorrect. Row 1, column 2, unexpected token encountered processing the request.
+2022-02-02 04:34:10.103 UTC [12205] CONTEXT:  TDS Protocol: Fetching Bulk Load Request
+2022-02-02 04:34:10.103 UTC [12205] LOG:  Unmapped error found. Code: 16908800, Message: The incoming tabular data stream (TDS) Bulk Load Request (BulkLoadBCP) protocol stream is incorrect. Row 1, column 2, unexpected token encountered processing the request., File: tdsbulkload.c, Line: 473, Context: TDS
+2022-02-02 04:34:11.998 UTC [12205] ERROR:  The incoming tabular data stream (TDS) Bulk Load Request (BulkLoadBCP) protocol stream is incorrect. Row 1, column 2, unexpected token encountered processing the request.
+2022-02-02 04:34:11.998 UTC [12205] CONTEXT:  TDS Protocol: Fetching Bulk Load Request
+2022-02-02 04:34:11.998 UTC [12205] LOG:  Unmapped error found. Code: 16908800, Message: The incoming tabular data stream (TDS) Bulk Load Request (BulkLoadBCP) protocol stream is incorrect. Row 1, column 2, unexpected token encountered processing the request., File: tdsbulkload.c, Line: 473, Context: TDS
+2022-02-02 04:34:13.917 UTC [12205] ERROR:  The incoming tabular data stream (TDS) Bulk Load Request (BulkLoadBCP) protocol stream is incorrect. Row 1, column 2, unexpected token encountered processing the request.
+2022-02-02 04:34:13.917 UTC [12205] CONTEXT:  TDS Protocol: Fetching Bulk Load Request
+2022-02-02 04:34:13.917 UTC [12205] LOG:  Unmapped error found. Code: 16908800, Message: The incoming tabular data stream (TDS) Bulk Load Request (BulkLoadBCP) protocol stream is incorrect. Row 1, column 2, unexpected token encountered processing the request., File: tdsbulkload.c, Line: 473, Context: TDS
+2022-02-02 04:34:13.943 UTC [12205] LOG:  EOF on TDS socket
+2022-02-02 04:34:13.943 UTC [12205] CONTEXT:  TDS Protocol: Message Type: SQL BATCH, Phase: TDS_REQUEST_PHASE_FETCH. Fetching TDS Request
+2022-02-02 04:35:27.042 UTC [8903] LOG:  received SIGHUP, reloading configuration files
+2022-02-02 04:35:27.043 UTC [8903] LOG:  parameter "babelfishpg_tds.set_db_session_property" removed from configuration file, reset to default
+2022-02-02 04:35:27.043 UTC [8903] LOG:  parameter "babelfishpg_tsql.database_name" removed from configuration file, reset to default
+2022-02-02 04:35:32.430 UTC [13729] WARNING:  cast will be ignored because the source data type is a domain
+2022-02-02 04:35:32.439 UTC [13729] WARNING:  cast will be ignored because the source data type is a domain
+2022-02-02 04:35:32.464 UTC [13729] WARNING:  cast will be ignored because the source data type is a domain
+2022-02-02 04:35:32.474 UTC [13729] WARNING:  cast will be ignored because the source data type is a domain
+2022-02-02 04:35:33.047 UTC [8903] LOG:  received SIGHUP, reloading configuration files
+2022-02-02 04:35:33.048 UTC [8903] LOG:  parameter "babelfishpg_tsql.database_name" changed to "jdbc_testdb"
+2022-02-02 04:37:55.008 UTC [15168] LOG:  message_type: TDS7 Prelogin Message
+2022-02-02 04:37:55.008 UTC [15168] CONTEXT:  TDS Protocol: Message Type: TDS Pre-Login, Phase: Login. 
+2022-02-02 04:37:55.011 UTC [15168] LOG:  message_type: TDS7 Login
+2022-02-02 04:37:55.011 UTC [15168] CONTEXT:  TDS Protocol: Message Type: TDS Login7, Phase: Login. 
+2022-02-02 04:37:57.401 UTC [15168] ERROR:  The incoming tabular data stream (TDS) Bulk Load Request (BulkLoadBCP) protocol stream is incorrect. Row 1, column 2, unexpected token encountered processing the request.
+2022-02-02 04:37:57.401 UTC [15168] CONTEXT:  TDS Protocol: Fetching Bulk Load Request
+2022-02-02 04:37:57.401 UTC [15168] LOG:  Unmapped error found. Code: 16908800, Message: The incoming tabular data stream (TDS) Bulk Load Request (BulkLoadBCP) protocol stream is incorrect. Row 1, column 2, unexpected token encountered processing the request., File: tdsbulkload.c, Line: 473, Context: TDS
+2022-02-02 04:37:59.298 UTC [15168] ERROR:  The incoming tabular data stream (TDS) Bulk Load Request (BulkLoadBCP) protocol stream is incorrect. Row 1, column 2, unexpected token encountered processing the request.
+2022-02-02 04:37:59.298 UTC [15168] CONTEXT:  TDS Protocol: Fetching Bulk Load Request
+2022-02-02 04:37:59.298 UTC [15168] LOG:  Unmapped error found. Code: 16908800, Message: The incoming tabular data stream (TDS) Bulk Load Request (BulkLoadBCP) protocol stream is incorrect. Row 1, column 2, unexpected token encountered processing the request., File: tdsbulkload.c, Line: 473, Context: TDS
+2022-02-02 04:38:01.188 UTC [15168] ERROR:  The incoming tabular data stream (TDS) Bulk Load Request (BulkLoadBCP) protocol stream is incorrect. Row 1, column 2, unexpected token encountered processing the request.
+2022-02-02 04:38:01.188 UTC [15168] CONTEXT:  TDS Protocol: Fetching Bulk Load Request
+2022-02-02 04:38:01.188 UTC [15168] LOG:  Unmapped error found. Code: 16908800, Message: The incoming tabular data stream (TDS) Bulk Load Request (BulkLoadBCP) protocol stream is incorrect. Row 1, column 2, unexpected token encountered processing the request., File: tdsbulkload.c, Line: 473, Context: TDS
+2022-02-02 04:38:03.085 UTC [15168] ERROR:  The incoming tabular data stream (TDS) Bulk Load Request (BulkLoadBCP) protocol stream is incorrect. Row 1, column 2, unexpected token encountered processing the request.
+2022-02-02 04:38:03.085 UTC [15168] CONTEXT:  TDS Protocol: Fetching Bulk Load Request
+2022-02-02 04:38:03.086 UTC [15168] LOG:  Unmapped error found. Code: 16908800, Message: The incoming tabular data stream (TDS) Bulk Load Request (BulkLoadBCP) protocol stream is incorrect. Row 1, column 2, unexpected token encountered processing the request., File: tdsbulkload.c, Line: 473, Context: TDS
+2022-02-02 04:38:04.978 UTC [15168] ERROR:  The incoming tabular data stream (TDS) Bulk Load Request (BulkLoadBCP) protocol stream is incorrect. Row 1, column 2, unexpected token encountered processing the request.
+2022-02-02 04:38:04.978 UTC [15168] CONTEXT:  TDS Protocol: Fetching Bulk Load Request
+2022-02-02 04:38:04.978 UTC [15168] LOG:  Unmapped error found. Code: 16908800, Message: The incoming tabular data stream (TDS) Bulk Load Request (BulkLoadBCP) protocol stream is incorrect. Row 1, column 2, unexpected token encountered processing the request., File: tdsbulkload.c, Line: 473, Context: TDS
+2022-02-02 04:38:06.880 UTC [15168] ERROR:  The incoming tabular data stream (TDS) Bulk Load Request (BulkLoadBCP) protocol stream is incorrect. Row 1, column 2, unexpected token encountered processing the request.
+2022-02-02 04:38:06.880 UTC [15168] CONTEXT:  TDS Protocol: Fetching Bulk Load Request
+2022-02-02 04:38:06.880 UTC [15168] LOG:  Unmapped error found. Code: 16908800, Message: The incoming tabular data stream (TDS) Bulk Load Request (BulkLoadBCP) protocol stream is incorrect. Row 1, column 2, unexpected token encountered processing the request., File: tdsbulkload.c, Line: 473, Context: TDS
+2022-02-02 04:38:08.786 UTC [15168] ERROR:  The incoming tabular data stream (TDS) Bulk Load Request (BulkLoadBCP) protocol stream is incorrect. Row 1, column 2, unexpected token encountered processing the request.
+2022-02-02 04:38:08.786 UTC [15168] CONTEXT:  TDS Protocol: Fetching Bulk Load Request
+2022-02-02 04:38:08.786 UTC [15168] LOG:  Unmapped error found. Code: 16908800, Message: The incoming tabular data stream (TDS) Bulk Load Request (BulkLoadBCP) protocol stream is incorrect. Row 1, column 2, unexpected token encountered processing the request., File: tdsbulkload.c, Line: 473, Context: TDS
+2022-02-02 04:38:10.678 UTC [15168] ERROR:  The incoming tabular data stream (TDS) Bulk Load Request (BulkLoadBCP) protocol stream is incorrect. Row 1, column 2, unexpected token encountered processing the request.
+2022-02-02 04:38:10.678 UTC [15168] CONTEXT:  TDS Protocol: Fetching Bulk Load Request
+2022-02-02 04:38:10.678 UTC [15168] LOG:  Unmapped error found. Code: 16908800, Message: The incoming tabular data stream (TDS) Bulk Load Request (BulkLoadBCP) protocol stream is incorrect. Row 1, column 2, unexpected token encountered processing the request., File: tdsbulkload.c, Line: 473, Context: TDS
+2022-02-02 04:38:12.579 UTC [15168] ERROR:  The incoming tabular data stream (TDS) Bulk Load Request (BulkLoadBCP) protocol stream is incorrect. Row 1, column 2, unexpected token encountered processing the request.
+2022-02-02 04:38:12.579 UTC [15168] CONTEXT:  TDS Protocol: Fetching Bulk Load Request
+2022-02-02 04:38:12.579 UTC [15168] LOG:  Unmapped error found. Code: 16908800, Message: The incoming tabular data stream (TDS) Bulk Load Request (BulkLoadBCP) protocol stream is incorrect. Row 1, column 2, unexpected token encountered processing the request., File: tdsbulkload.c, Line: 473, Context: TDS
+2022-02-02 04:38:14.520 UTC [15168] ERROR:  The incoming tabular data stream (TDS) Bulk Load Request (BulkLoadBCP) protocol stream is incorrect. Row 1, column 2, unexpected token encountered processing the request.
+2022-02-02 04:38:14.520 UTC [15168] CONTEXT:  TDS Protocol: Fetching Bulk Load Request
+2022-02-02 04:38:14.520 UTC [15168] LOG:  Unmapped error found. Code: 16908800, Message: The incoming tabular data stream (TDS) Bulk Load Request (BulkLoadBCP) protocol stream is incorrect. Row 1, column 2, unexpected token encountered processing the request., File: tdsbulkload.c, Line: 473, Context: TDS
+2022-02-02 04:38:16.424 UTC [15168] ERROR:  The incoming tabular data stream (TDS) Bulk Load Request (BulkLoadBCP) protocol stream is incorrect. Row 1, column 2, unexpected token encountered processing the request.
+2022-02-02 04:38:16.424 UTC [15168] CONTEXT:  TDS Protocol: Fetching Bulk Load Request
+2022-02-02 04:38:16.424 UTC [15168] LOG:  Unmapped error found. Code: 16908800, Message: The incoming tabular data stream (TDS) Bulk Load Request (BulkLoadBCP) protocol stream is incorrect. Row 1, column 2, unexpected token encountered processing the request., File: tdsbulkload.c, Line: 473, Context: TDS
+2022-02-02 04:38:18.345 UTC [15168] ERROR:  The incoming tabular data stream (TDS) Bulk Load Request (BulkLoadBCP) protocol stream is incorrect. Row 1, column 2, unexpected token encountered processing the request.
+2022-02-02 04:38:18.345 UTC [15168] CONTEXT:  TDS Protocol: Fetching Bulk Load Request
+2022-02-02 04:38:18.345 UTC [15168] LOG:  Unmapped error found. Code: 16908800, Message: The incoming tabular data stream (TDS) Bulk Load Request (BulkLoadBCP) protocol stream is incorrect. Row 1, column 2, unexpected token encountered processing the request., File: tdsbulkload.c, Line: 473, Context: TDS
+2022-02-02 04:38:20.251 UTC [15168] ERROR:  The incoming tabular data stream (TDS) Bulk Load Request (BulkLoadBCP) protocol stream is incorrect. Row 1, column 2, unexpected token encountered processing the request.
+2022-02-02 04:38:20.251 UTC [15168] CONTEXT:  TDS Protocol: Fetching Bulk Load Request
+2022-02-02 04:38:20.251 UTC [15168] LOG:  Unmapped error found. Code: 16908800, Message: The incoming tabular data stream (TDS) Bulk Load Request (BulkLoadBCP) protocol stream is incorrect. Row 1, column 2, unexpected token encountered processing the request., File: tdsbulkload.c, Line: 473, Context: TDS
+2022-02-02 04:38:22.171 UTC [15168] ERROR:  The incoming tabular data stream (TDS) Bulk Load Request (BulkLoadBCP) protocol stream is incorrect. Row 1, column 2, unexpected token encountered processing the request.
+2022-02-02 04:38:22.171 UTC [15168] CONTEXT:  TDS Protocol: Fetching Bulk Load Request
+2022-02-02 04:38:22.171 UTC [15168] LOG:  Unmapped error found. Code: 16908800, Message: The incoming tabular data stream (TDS) Bulk Load Request (BulkLoadBCP) protocol stream is incorrect. Row 1, column 2, unexpected token encountered processing the request., File: tdsbulkload.c, Line: 473, Context: TDS
+2022-02-02 04:38:24.070 UTC [15168] ERROR:  The incoming tabular data stream (TDS) Bulk Load Request (BulkLoadBCP) protocol stream is incorrect. Row 1, column 2, unexpected token encountered processing the request.
+2022-02-02 04:38:24.070 UTC [15168] CONTEXT:  TDS Protocol: Fetching Bulk Load Request
+2022-02-02 04:38:24.070 UTC [15168] LOG:  Unmapped error found. Code: 16908800, Message: The incoming tabular data stream (TDS) Bulk Load Request (BulkLoadBCP) protocol stream is incorrect. Row 1, column 2, unexpected token encountered processing the request., File: tdsbulkload.c, Line: 473, Context: TDS
+2022-02-02 04:38:25.969 UTC [15168] ERROR:  The incoming tabular data stream (TDS) Bulk Load Request (BulkLoadBCP) protocol stream is incorrect. Row 1, column 2, unexpected token encountered processing the request.
+2022-02-02 04:38:25.969 UTC [15168] CONTEXT:  TDS Protocol: Fetching Bulk Load Request
+2022-02-02 04:38:25.969 UTC [15168] LOG:  Unmapped error found. Code: 16908800, Message: The incoming tabular data stream (TDS) Bulk Load Request (BulkLoadBCP) protocol stream is incorrect. Row 1, column 2, unexpected token encountered processing the request., File: tdsbulkload.c, Line: 473, Context: TDS
+2022-02-02 04:38:27.862 UTC [15168] ERROR:  The incoming tabular data stream (TDS) Bulk Load Request (BulkLoadBCP) protocol stream is incorrect. Row 1, column 2, unexpected token encountered processing the request.
+2022-02-02 04:38:27.862 UTC [15168] CONTEXT:  TDS Protocol: Fetching Bulk Load Request
+2022-02-02 04:38:27.862 UTC [15168] LOG:  Unmapped error found. Code: 16908800, Message: The incoming tabular data stream (TDS) Bulk Load Request (BulkLoadBCP) protocol stream is incorrect. Row 1, column 2, unexpected token encountered processing the request., File: tdsbulkload.c, Line: 473, Context: TDS
+2022-02-02 04:38:29.758 UTC [15168] ERROR:  The incoming tabular data stream (TDS) Bulk Load Request (BulkLoadBCP) protocol stream is incorrect. Row 1, column 2, unexpected token encountered processing the request.
+2022-02-02 04:38:29.758 UTC [15168] CONTEXT:  TDS Protocol: Fetching Bulk Load Request
+2022-02-02 04:38:29.758 UTC [15168] LOG:  Unmapped error found. Code: 16908800, Message: The incoming tabular data stream (TDS) Bulk Load Request (BulkLoadBCP) protocol stream is incorrect. Row 1, column 2, unexpected token encountered processing the request., File: tdsbulkload.c, Line: 473, Context: TDS
+2022-02-02 04:38:31.659 UTC [15168] ERROR:  The incoming tabular data stream (TDS) Bulk Load Request (BulkLoadBCP) protocol stream is incorrect. Row 1, column 2, unexpected token encountered processing the request.
+2022-02-02 04:38:31.659 UTC [15168] CONTEXT:  TDS Protocol: Fetching Bulk Load Request
+2022-02-02 04:38:31.659 UTC [15168] LOG:  Unmapped error found. Code: 16908800, Message: The incoming tabular data stream (TDS) Bulk Load Request (BulkLoadBCP) protocol stream is incorrect. Row 1, column 2, unexpected token encountered processing the request., File: tdsbulkload.c, Line: 473, Context: TDS
+2022-02-02 04:38:33.576 UTC [15168] ERROR:  The incoming tabular data stream (TDS) Bulk Load Request (BulkLoadBCP) protocol stream is incorrect. Row 1, column 2, unexpected token encountered processing the request.
+2022-02-02 04:38:33.576 UTC [15168] CONTEXT:  TDS Protocol: Fetching Bulk Load Request
+2022-02-02 04:38:33.576 UTC [15168] LOG:  Unmapped error found. Code: 16908800, Message: The incoming tabular data stream (TDS) Bulk Load Request (BulkLoadBCP) protocol stream is incorrect. Row 1, column 2, unexpected token encountered processing the request., File: tdsbulkload.c, Line: 473, Context: TDS
+2022-02-02 04:38:35.499 UTC [15168] ERROR:  The incoming tabular data stream (TDS) Bulk Load Request (BulkLoadBCP) protocol stream is incorrect. Row 1, column 2, unexpected token encountered processing the request.
+2022-02-02 04:38:35.499 UTC [15168] CONTEXT:  TDS Protocol: Fetching Bulk Load Request
+2022-02-02 04:38:35.499 UTC [15168] LOG:  Unmapped error found. Code: 16908800, Message: The incoming tabular data stream (TDS) Bulk Load Request (BulkLoadBCP) protocol stream is incorrect. Row 1, column 2, unexpected token encountered processing the request., File: tdsbulkload.c, Line: 473, Context: TDS
+2022-02-02 04:38:37.403 UTC [15168] ERROR:  The incoming tabular data stream (TDS) Bulk Load Request (BulkLoadBCP) protocol stream is incorrect. Row 1, column 2, unexpected token encountered processing the request.
+2022-02-02 04:38:37.403 UTC [15168] CONTEXT:  TDS Protocol: Fetching Bulk Load Request
+2022-02-02 04:38:37.403 UTC [15168] LOG:  Unmapped error found. Code: 16908800, Message: The incoming tabular data stream (TDS) Bulk Load Request (BulkLoadBCP) protocol stream is incorrect. Row 1, column 2, unexpected token encountered processing the request., File: tdsbulkload.c, Line: 473, Context: TDS
+2022-02-02 04:38:39.291 UTC [15168] ERROR:  The incoming tabular data stream (TDS) Bulk Load Request (BulkLoadBCP) protocol stream is incorrect. Row 1, column 2, unexpected token encountered processing the request.
+2022-02-02 04:38:39.291 UTC [15168] CONTEXT:  TDS Protocol: Fetching Bulk Load Request
+2022-02-02 04:38:39.291 UTC [15168] LOG:  Unmapped error found. Code: 16908800, Message: The incoming tabular data stream (TDS) Bulk Load Request (BulkLoadBCP) protocol stream is incorrect. Row 1, column 2, unexpected token encountered processing the request., File: tdsbulkload.c, Line: 473, Context: TDS
+2022-02-02 04:38:41.178 UTC [15168] ERROR:  The incoming tabular data stream (TDS) Bulk Load Request (BulkLoadBCP) protocol stream is incorrect. Row 1, column 2, unexpected token encountered processing the request.
+2022-02-02 04:38:41.178 UTC [15168] CONTEXT:  TDS Protocol: Fetching Bulk Load Request
+2022-02-02 04:38:41.178 UTC [15168] LOG:  Unmapped error found. Code: 16908800, Message: The incoming tabular data stream (TDS) Bulk Load Request (BulkLoadBCP) protocol stream is incorrect. Row 1, column 2, unexpected token encountered processing the request., File: tdsbulkload.c, Line: 473, Context: TDS
+2022-02-02 04:38:43.109 UTC [15168] ERROR:  The incoming tabular data stream (TDS) Bulk Load Request (BulkLoadBCP) protocol stream is incorrect. Row 1, column 2, unexpected token encountered processing the request.
+2022-02-02 04:38:43.109 UTC [15168] CONTEXT:  TDS Protocol: Fetching Bulk Load Request
+2022-02-02 04:38:43.109 UTC [15168] LOG:  Unmapped error found. Code: 16908800, Message: The incoming tabular data stream (TDS) Bulk Load Request (BulkLoadBCP) protocol stream is incorrect. Row 1, column 2, unexpected token encountered processing the request., File: tdsbulkload.c, Line: 473, Context: TDS
+2022-02-02 04:38:43.138 UTC [15168] LOG:  EOF on TDS socket
+2022-02-02 04:38:43.138 UTC [15168] CONTEXT:  TDS Protocol: Message Type: SQL BATCH, Phase: TDS_REQUEST_PHASE_FETCH. Fetching TDS Request
+2022-02-02 04:39:20.672 UTC [8903] LOG:  received SIGHUP, reloading configuration files
+2022-02-02 04:39:20.672 UTC [8903] LOG:  parameter "babelfishpg_tds.set_db_session_property" removed from configuration file, reset to default
+2022-02-02 04:39:20.672 UTC [8903] LOG:  parameter "babelfishpg_tsql.database_name" removed from configuration file, reset to default
+2022-02-02 04:40:15.680 UTC [16880] WARNING:  cast will be ignored because the source data type is a domain
+2022-02-02 04:40:15.689 UTC [16880] WARNING:  cast will be ignored because the source data type is a domain
+2022-02-02 04:40:15.714 UTC [16880] WARNING:  cast will be ignored because the source data type is a domain
+2022-02-02 04:40:15.724 UTC [16880] WARNING:  cast will be ignored because the source data type is a domain
+2022-02-02 04:40:16.275 UTC [8903] LOG:  received SIGHUP, reloading configuration files
+2022-02-02 04:40:16.275 UTC [8903] LOG:  parameter "babelfishpg_tsql.database_name" changed to "jdbc_testdb"
+2022-02-02 04:40:29.899 UTC [17192] LOG:  message_type: TDS7 Prelogin Message
+2022-02-02 04:40:29.899 UTC [17192] CONTEXT:  TDS Protocol: Message Type: TDS Pre-Login, Phase: Login. 
+2022-02-02 04:40:29.902 UTC [17192] LOG:  message_type: TDS7 Login
+2022-02-02 04:40:29.902 UTC [17192] CONTEXT:  TDS Protocol: Message Type: TDS Login7, Phase: Login. 
+2022-02-02 04:40:30.702 UTC [17192] LOG:  EOF on TDS socket
+2022-02-02 04:40:30.702 UTC [17192] CONTEXT:  TDS Protocol: Message Type: SQL BATCH, Phase: TDS_REQUEST_PHASE_FETCH. Fetching TDS Request
+2022-02-02 04:40:30.749 UTC [17209] LOG:  message_type: TDS7 Prelogin Message
+2022-02-02 04:40:30.749 UTC [17209] CONTEXT:  TDS Protocol: Message Type: TDS Pre-Login, Phase: Login. 
+2022-02-02 04:40:30.749 UTC [17209] LOG:  message_type: TDS7 Login
+2022-02-02 04:40:30.749 UTC [17209] CONTEXT:  TDS Protocol: Message Type: TDS Login7, Phase: Login. 
+2022-02-02 04:40:30.884 UTC [17209] WARNING:  cache reference leak: cache pg_proc (43), tuple 125/15 has count 1
+2022-02-02 04:40:30.884 UTC [17209] CONTEXT:  TDS Protocol: Message Type: SQL BATCH, Phase: TDS_REQUEST_PHASE_PROCESS. Writing Done Token
+2022-02-02 04:40:30.896 UTC [17209] LOG:  EOF on TDS socket
+2022-02-02 04:40:30.896 UTC [17209] CONTEXT:  TDS Protocol: Message Type: SQL BATCH, Phase: TDS_REQUEST_PHASE_FETCH. Fetching TDS Request
+2022-02-02 04:40:30.899 UTC [17217] LOG:  message_type: TDS7 Prelogin Message
+2022-02-02 04:40:30.899 UTC [17217] CONTEXT:  TDS Protocol: Message Type: TDS Pre-Login, Phase: Login. 
+2022-02-02 04:40:30.899 UTC [17217] LOG:  message_type: TDS7 Login
+2022-02-02 04:40:30.899 UTC [17217] CONTEXT:  TDS Protocol: Message Type: TDS Login7, Phase: Login. 
+2022-02-02 04:40:31.004 UTC [17217] WARNING:  cache reference leak: cache pg_proc (43), tuple 125/16 has count 1
+2022-02-02 04:40:31.004 UTC [17217] CONTEXT:  TDS Protocol: Message Type: SQL BATCH, Phase: TDS_REQUEST_PHASE_PROCESS. Writing Done Token
+2022-02-02 04:40:31.017 UTC [17217] LOG:  EOF on TDS socket
+2022-02-02 04:40:31.017 UTC [17217] CONTEXT:  TDS Protocol: Message Type: SQL BATCH, Phase: TDS_REQUEST_PHASE_FETCH. Fetching TDS Request
+2022-02-02 04:40:31.020 UTC [17233] LOG:  message_type: TDS7 Prelogin Message
+2022-02-02 04:40:31.020 UTC [17233] CONTEXT:  TDS Protocol: Message Type: TDS Pre-Login, Phase: Login. 
+2022-02-02 04:40:31.021 UTC [17233] LOG:  message_type: TDS7 Login
+2022-02-02 04:40:31.021 UTC [17233] CONTEXT:  TDS Protocol: Message Type: TDS Login7, Phase: Login. 
+2022-02-02 04:40:31.451 UTC [17233] LOG:  EOF on TDS socket
+2022-02-02 04:40:31.451 UTC [17233] CONTEXT:  TDS Protocol: Message Type: SQL BATCH, Phase: TDS_REQUEST_PHASE_FETCH. Fetching TDS Request
+2022-02-02 04:40:31.454 UTC [17235] LOG:  message_type: TDS7 Prelogin Message
+2022-02-02 04:40:31.454 UTC [17235] CONTEXT:  TDS Protocol: Message Type: TDS Pre-Login, Phase: Login. 
+2022-02-02 04:40:31.454 UTC [17235] LOG:  message_type: TDS7 Login
+2022-02-02 04:40:31.454 UTC [17235] CONTEXT:  TDS Protocol: Message Type: TDS Login7, Phase: Login. 
+2022-02-02 04:40:32.113 UTC [8903] LOG:  server process (PID 17235) was terminated by signal 11: Segmentation fault
+2022-02-02 04:40:32.113 UTC [8903] DETAIL:  Failed process was running: INSERT INTO products(
+		product_id,
+	    product_name, 
+	    brand_id, 
+	    category_id, 
+	    model_year, 
+	    list_price
+	)
+	VALUES (
+		1,
+	    'Test product',
+	    1,
+	    1,
+	    2018,
+	    599
+	)
+	
+2022-02-02 04:40:32.113 UTC [8903] LOG:  terminating any other active server processes
+2022-02-02 04:40:32.113 UTC [8908] WARNING:  terminating connection because of crash of another server process
+2022-02-02 04:40:32.113 UTC [8908] DETAIL:  The postmaster has commanded this server process to roll back the current transaction and exit, because another server process exited abnormally and possibly corrupted shared memory.
+2022-02-02 04:40:32.113 UTC [8908] HINT:  In a moment you should be able to reconnect to the database and repeat your command.
+2022-02-02 04:40:32.115 UTC [8903] LOG:  all server processes terminated; reinitializing
+2022-02-02 04:40:32.131 UTC [17241] LOG:  database system was interrupted; last known up at 2022-02-02 04:40:15 UTC
+2022-02-02 04:40:32.241 UTC [17241] LOG:  database system was not properly shut down; automatic recovery in progress
+2022-02-02 04:40:32.243 UTC [17241] LOG:  redo starts at 0/25B3368
+2022-02-02 04:40:32.300 UTC [17241] LOG:  invalid record length at 0/2A1F130: wanted 24, got 0
+2022-02-02 04:40:32.300 UTC [17241] LOG:  redo done at 0/2A1F078
+2022-02-02 04:40:32.373 UTC [8903] LOG:  database system is ready to accept connections
+2022-02-02 04:41:30.088 UTC [8903] LOG:  received SIGHUP, reloading configuration files
+2022-02-02 04:41:30.089 UTC [8903] LOG:  parameter "babelfishpg_tds.set_db_session_property" removed from configuration file, reset to default
+2022-02-02 04:41:30.089 UTC [8903] LOG:  parameter "babelfishpg_tsql.database_name" removed from configuration file, reset to default
+2022-02-02 04:41:35.759 UTC [18118] WARNING:  cast will be ignored because the source data type is a domain
+2022-02-02 04:41:35.767 UTC [18118] WARNING:  cast will be ignored because the source data type is a domain
+2022-02-02 04:41:35.792 UTC [18118] WARNING:  cast will be ignored because the source data type is a domain
+2022-02-02 04:41:35.803 UTC [18118] WARNING:  cast will be ignored because the source data type is a domain
+2022-02-02 04:41:36.359 UTC [8903] LOG:  received SIGHUP, reloading configuration files
+2022-02-02 04:41:36.359 UTC [8903] LOG:  parameter "babelfishpg_tsql.database_name" changed to "jdbc_testdb"
+2022-02-02 04:41:53.183 UTC [18483] LOG:  message_type: TDS7 Prelogin Message
+2022-02-02 04:41:53.183 UTC [18483] CONTEXT:  TDS Protocol: Message Type: TDS Pre-Login, Phase: Login. 
+2022-02-02 04:41:53.186 UTC [18483] LOG:  message_type: TDS7 Login
+2022-02-02 04:41:53.186 UTC [18483] CONTEXT:  TDS Protocol: Message Type: TDS Login7, Phase: Login. 
+2022-02-02 04:41:53.984 UTC [18483] LOG:  EOF on TDS socket
+2022-02-02 04:41:53.984 UTC [18483] CONTEXT:  TDS Protocol: Message Type: SQL BATCH, Phase: TDS_REQUEST_PHASE_FETCH. Fetching TDS Request
+2022-02-02 04:41:54.031 UTC [18492] LOG:  message_type: TDS7 Prelogin Message
+2022-02-02 04:41:54.031 UTC [18492] CONTEXT:  TDS Protocol: Message Type: TDS Pre-Login, Phase: Login. 
+2022-02-02 04:41:54.031 UTC [18492] LOG:  message_type: TDS7 Login
+2022-02-02 04:41:54.031 UTC [18492] CONTEXT:  TDS Protocol: Message Type: TDS Login7, Phase: Login. 
+2022-02-02 04:41:54.166 UTC [18492] WARNING:  cache reference leak: cache pg_proc (43), tuple 125/15 has count 1
+2022-02-02 04:41:54.166 UTC [18492] CONTEXT:  TDS Protocol: Message Type: SQL BATCH, Phase: TDS_REQUEST_PHASE_PROCESS. Writing Done Token
+2022-02-02 04:41:54.178 UTC [18492] LOG:  EOF on TDS socket
+2022-02-02 04:41:54.178 UTC [18492] CONTEXT:  TDS Protocol: Message Type: SQL BATCH, Phase: TDS_REQUEST_PHASE_FETCH. Fetching TDS Request
+2022-02-02 04:41:54.182 UTC [18495] LOG:  message_type: TDS7 Prelogin Message
+2022-02-02 04:41:54.182 UTC [18495] CONTEXT:  TDS Protocol: Message Type: TDS Pre-Login, Phase: Login. 
+2022-02-02 04:41:54.182 UTC [18495] LOG:  message_type: TDS7 Login
+2022-02-02 04:41:54.182 UTC [18495] CONTEXT:  TDS Protocol: Message Type: TDS Login7, Phase: Login. 
+2022-02-02 04:41:54.287 UTC [18495] WARNING:  cache reference leak: cache pg_proc (43), tuple 125/16 has count 1
+2022-02-02 04:41:54.287 UTC [18495] CONTEXT:  TDS Protocol: Message Type: SQL BATCH, Phase: TDS_REQUEST_PHASE_PROCESS. Writing Done Token
+2022-02-02 04:41:54.297 UTC [18495] LOG:  EOF on TDS socket
+2022-02-02 04:41:54.297 UTC [18495] CONTEXT:  TDS Protocol: Message Type: SQL BATCH, Phase: TDS_REQUEST_PHASE_FETCH. Fetching TDS Request
+2022-02-02 04:41:54.303 UTC [18500] LOG:  message_type: TDS7 Prelogin Message
+2022-02-02 04:41:54.303 UTC [18500] CONTEXT:  TDS Protocol: Message Type: TDS Pre-Login, Phase: Login. 
+2022-02-02 04:41:54.303 UTC [18500] LOG:  message_type: TDS7 Login
+2022-02-02 04:41:54.303 UTC [18500] CONTEXT:  TDS Protocol: Message Type: TDS Login7, Phase: Login. 
+2022-02-02 04:41:54.728 UTC [18500] LOG:  EOF on TDS socket
+2022-02-02 04:41:54.728 UTC [18500] CONTEXT:  TDS Protocol: Message Type: SQL BATCH, Phase: TDS_REQUEST_PHASE_FETCH. Fetching TDS Request
+2022-02-02 04:41:54.731 UTC [18514] LOG:  message_type: TDS7 Prelogin Message
+2022-02-02 04:41:54.731 UTC [18514] CONTEXT:  TDS Protocol: Message Type: TDS Pre-Login, Phase: Login. 
+2022-02-02 04:41:54.731 UTC [18514] LOG:  message_type: TDS7 Login
+2022-02-02 04:41:54.731 UTC [18514] CONTEXT:  TDS Protocol: Message Type: TDS Login7, Phase: Login. 
+2022-02-02 04:41:55.406 UTC [8903] LOG:  server process (PID 18514) was terminated by signal 11: Segmentation fault
+2022-02-02 04:41:55.406 UTC [8903] DETAIL:  Failed process was running: INSERT INTO products(
+		product_id,
+	    product_name, 
+	    brand_id, 
+	    category_id, 
+	    model_year, 
+	    list_price
+	)
+	VALUES (
+		1,
+	    'Test product',
+	    1,
+	    1,
+	    2018,
+	    599
+	)
+	
+2022-02-02 04:41:55.406 UTC [8903] LOG:  terminating any other active server processes
+2022-02-02 04:41:55.406 UTC [17245] WARNING:  terminating connection because of crash of another server process
+2022-02-02 04:41:55.406 UTC [17245] DETAIL:  The postmaster has commanded this server process to roll back the current transaction and exit, because another server process exited abnormally and possibly corrupted shared memory.
+2022-02-02 04:41:55.406 UTC [17245] HINT:  In a moment you should be able to reconnect to the database and repeat your command.
+2022-02-02 04:41:55.407 UTC [8903] LOG:  all server processes terminated; reinitializing
+2022-02-02 04:41:55.421 UTC [18519] LOG:  database system was interrupted; last known up at 2022-02-02 04:41:35 UTC
+2022-02-02 04:41:55.516 UTC [18519] LOG:  database system was not properly shut down; automatic recovery in progress
+2022-02-02 04:41:55.519 UTC [18519] LOG:  redo starts at 0/2A40638
+2022-02-02 04:41:55.577 UTC [18519] LOG:  invalid record length at 0/2EAD880: wanted 24, got 0
+2022-02-02 04:41:55.577 UTC [18519] LOG:  redo done at 0/2EAD7C8
+2022-02-02 04:41:55.631 UTC [8903] LOG:  database system is ready to accept connections
+2022-02-02 04:43:29.387 UTC [8903] LOG:  received SIGHUP, reloading configuration files
+2022-02-02 04:43:29.388 UTC [8903] LOG:  parameter "babelfishpg_tds.set_db_session_property" removed from configuration file, reset to default
+2022-02-02 04:43:29.388 UTC [8903] LOG:  parameter "babelfishpg_tsql.database_name" removed from configuration file, reset to default
+2022-02-02 04:43:43.362 UTC [20056] WARNING:  cast will be ignored because the source data type is a domain
+2022-02-02 04:43:43.371 UTC [20056] WARNING:  cast will be ignored because the source data type is a domain
+2022-02-02 04:43:43.396 UTC [20056] WARNING:  cast will be ignored because the source data type is a domain
+2022-02-02 04:43:43.406 UTC [20056] WARNING:  cast will be ignored because the source data type is a domain
+2022-02-02 04:43:43.959 UTC [8903] LOG:  received SIGHUP, reloading configuration files
+2022-02-02 04:43:43.959 UTC [8903] LOG:  parameter "babelfishpg_tsql.database_name" changed to "jdbc_testdb"
+2022-02-02 04:43:50.328 UTC [20299] LOG:  message_type: TDS7 Prelogin Message
+2022-02-02 04:43:50.328 UTC [20299] CONTEXT:  TDS Protocol: Message Type: TDS Pre-Login, Phase: Login. 
+2022-02-02 04:43:50.331 UTC [20299] LOG:  message_type: TDS7 Login
+2022-02-02 04:43:50.331 UTC [20299] CONTEXT:  TDS Protocol: Message Type: TDS Login7, Phase: Login. 
+2022-02-02 04:43:50.832 UTC [20299] LOG:  EOF on TDS socket
+2022-02-02 04:43:50.832 UTC [20299] CONTEXT:  TDS Protocol: Message Type: SQL BATCH, Phase: TDS_REQUEST_PHASE_FETCH. Fetching TDS Request
+2022-02-02 04:43:56.385 UTC [8903] LOG:  received SIGHUP, reloading configuration files
+2022-02-02 04:43:56.385 UTC [8903] LOG:  parameter "babelfishpg_tds.set_db_session_property" removed from configuration file, reset to default
+2022-02-02 04:43:56.385 UTC [8903] LOG:  parameter "babelfishpg_tsql.database_name" removed from configuration file, reset to default
+2022-02-02 04:44:25.318 UTC [20628] WARNING:  cast will be ignored because the source data type is a domain
+2022-02-02 04:44:25.327 UTC [20628] WARNING:  cast will be ignored because the source data type is a domain
+2022-02-02 04:44:25.351 UTC [20628] WARNING:  cast will be ignored because the source data type is a domain
+2022-02-02 04:44:25.362 UTC [20628] WARNING:  cast will be ignored because the source data type is a domain
+2022-02-02 04:44:25.913 UTC [8903] LOG:  received SIGHUP, reloading configuration files
+2022-02-02 04:44:25.913 UTC [8903] LOG:  parameter "babelfishpg_tsql.database_name" changed to "jdbc_testdb"
+2022-02-02 04:44:31.586 UTC [20897] LOG:  message_type: TDS7 Prelogin Message
+2022-02-02 04:44:31.586 UTC [20897] CONTEXT:  TDS Protocol: Message Type: TDS Pre-Login, Phase: Login. 
+2022-02-02 04:44:31.588 UTC [20897] LOG:  message_type: TDS7 Login
+2022-02-02 04:44:31.588 UTC [20897] CONTEXT:  TDS Protocol: Message Type: TDS Login7, Phase: Login. 
+2022-02-02 04:44:32.082 UTC [20897] LOG:  EOF on TDS socket
+2022-02-02 04:44:32.082 UTC [20897] CONTEXT:  TDS Protocol: Message Type: SQL BATCH, Phase: TDS_REQUEST_PHASE_FETCH. Fetching TDS Request
+2022-02-02 04:44:42.380 UTC [8903] LOG:  received SIGHUP, reloading configuration files
+2022-02-02 04:44:42.380 UTC [8903] LOG:  parameter "babelfishpg_tds.set_db_session_property" removed from configuration file, reset to default
+2022-02-02 04:44:42.380 UTC [8903] LOG:  parameter "babelfishpg_tsql.database_name" removed from configuration file, reset to default
+2022-02-02 04:44:46.070 UTC [20999] WARNING:  cast will be ignored because the source data type is a domain
+2022-02-02 04:44:46.079 UTC [20999] WARNING:  cast will be ignored because the source data type is a domain
+2022-02-02 04:44:46.104 UTC [20999] WARNING:  cast will be ignored because the source data type is a domain
+2022-02-02 04:44:46.114 UTC [20999] WARNING:  cast will be ignored because the source data type is a domain
+2022-02-02 04:44:46.663 UTC [8903] LOG:  received SIGHUP, reloading configuration files
+2022-02-02 04:44:46.663 UTC [8903] LOG:  parameter "babelfishpg_tsql.database_name" changed to "jdbc_testdb"
+2022-02-02 04:44:55.501 UTC [21262] LOG:  message_type: TDS7 Prelogin Message
+2022-02-02 04:44:55.501 UTC [21262] CONTEXT:  TDS Protocol: Message Type: TDS Pre-Login, Phase: Login. 
+2022-02-02 04:44:55.504 UTC [21262] LOG:  message_type: TDS7 Login
+2022-02-02 04:44:55.504 UTC [21262] CONTEXT:  TDS Protocol: Message Type: TDS Login7, Phase: Login. 
+2022-02-02 04:44:56.298 UTC [21262] LOG:  EOF on TDS socket
+2022-02-02 04:44:56.298 UTC [21262] CONTEXT:  TDS Protocol: Message Type: SQL BATCH, Phase: TDS_REQUEST_PHASE_FETCH. Fetching TDS Request
+2022-02-02 04:44:56.344 UTC [21267] LOG:  message_type: TDS7 Prelogin Message
+2022-02-02 04:44:56.344 UTC [21267] CONTEXT:  TDS Protocol: Message Type: TDS Pre-Login, Phase: Login. 
+2022-02-02 04:44:56.344 UTC [21267] LOG:  message_type: TDS7 Login
+2022-02-02 04:44:56.344 UTC [21267] CONTEXT:  TDS Protocol: Message Type: TDS Login7, Phase: Login. 
+2022-02-02 04:44:56.479 UTC [21267] WARNING:  cache reference leak: cache pg_proc (43), tuple 125/15 has count 1
+2022-02-02 04:44:56.479 UTC [21267] CONTEXT:  TDS Protocol: Message Type: SQL BATCH, Phase: TDS_REQUEST_PHASE_PROCESS. Writing Done Token
+2022-02-02 04:44:56.491 UTC [21267] LOG:  EOF on TDS socket
+2022-02-02 04:44:56.491 UTC [21267] CONTEXT:  TDS Protocol: Message Type: SQL BATCH, Phase: TDS_REQUEST_PHASE_FETCH. Fetching TDS Request
+2022-02-02 04:44:56.496 UTC [21275] LOG:  message_type: TDS7 Prelogin Message
+2022-02-02 04:44:56.496 UTC [21275] CONTEXT:  TDS Protocol: Message Type: TDS Pre-Login, Phase: Login. 
+2022-02-02 04:44:56.496 UTC [21275] LOG:  message_type: TDS7 Login
+2022-02-02 04:44:56.496 UTC [21275] CONTEXT:  TDS Protocol: Message Type: TDS Login7, Phase: Login. 
+2022-02-02 04:44:56.600 UTC [21275] WARNING:  cache reference leak: cache pg_proc (43), tuple 125/16 has count 1
+2022-02-02 04:44:56.600 UTC [21275] CONTEXT:  TDS Protocol: Message Type: SQL BATCH, Phase: TDS_REQUEST_PHASE_PROCESS. Writing Done Token
+2022-02-02 04:44:56.611 UTC [21275] LOG:  EOF on TDS socket
+2022-02-02 04:44:56.611 UTC [21275] CONTEXT:  TDS Protocol: Message Type: SQL BATCH, Phase: TDS_REQUEST_PHASE_FETCH. Fetching TDS Request
+2022-02-02 04:44:56.615 UTC [21277] LOG:  message_type: TDS7 Prelogin Message
+2022-02-02 04:44:56.615 UTC [21277] CONTEXT:  TDS Protocol: Message Type: TDS Pre-Login, Phase: Login. 
+2022-02-02 04:44:56.615 UTC [21277] LOG:  message_type: TDS7 Login
+2022-02-02 04:44:56.615 UTC [21277] CONTEXT:  TDS Protocol: Message Type: TDS Login7, Phase: Login. 
+2022-02-02 04:44:57.033 UTC [21277] LOG:  EOF on TDS socket
+2022-02-02 04:44:57.033 UTC [21277] CONTEXT:  TDS Protocol: Message Type: SQL BATCH, Phase: TDS_REQUEST_PHASE_FETCH. Fetching TDS Request
+2022-02-02 04:44:57.036 UTC [21279] LOG:  message_type: TDS7 Prelogin Message
+2022-02-02 04:44:57.036 UTC [21279] CONTEXT:  TDS Protocol: Message Type: TDS Pre-Login, Phase: Login. 
+2022-02-02 04:44:57.037 UTC [21279] LOG:  message_type: TDS7 Login
+2022-02-02 04:44:57.037 UTC [21279] CONTEXT:  TDS Protocol: Message Type: TDS Login7, Phase: Login. 
+2022-02-02 04:44:57.727 UTC [8903] LOG:  server process (PID 21279) was terminated by signal 11: Segmentation fault
+2022-02-02 04:44:57.727 UTC [8903] DETAIL:  Failed process was running: INSERT INTO products(
+		product_id,
+	    product_name, 
+	    brand_id, 
+	    category_id, 
+	    model_year, 
+	    list_price
+	)
+	VALUES (
+		1,
+	    'Test product',
+	    1,
+	    1,
+	    2018,
+	    599
+	)
+	
+2022-02-02 04:44:57.727 UTC [8903] LOG:  terminating any other active server processes
+2022-02-02 04:44:57.727 UTC [18523] WARNING:  terminating connection because of crash of another server process
+2022-02-02 04:44:57.727 UTC [18523] DETAIL:  The postmaster has commanded this server process to roll back the current transaction and exit, because another server process exited abnormally and possibly corrupted shared memory.
+2022-02-02 04:44:57.727 UTC [18523] HINT:  In a moment you should be able to reconnect to the database and repeat your command.
+2022-02-02 04:44:57.729 UTC [8903] LOG:  all server processes terminated; reinitializing
+2022-02-02 04:44:57.742 UTC [21284] LOG:  database system was interrupted; last known up at 2022-02-02 04:44:45 UTC
+2022-02-02 04:44:57.778 UTC [21284] LOG:  database system was not properly shut down; automatic recovery in progress
+2022-02-02 04:44:57.781 UTC [21284] LOG:  redo starts at 0/375D640
+2022-02-02 04:44:57.837 UTC [21284] LOG:  invalid record length at 0/3BCCF80: wanted 24, got 0
+2022-02-02 04:44:57.837 UTC [21284] LOG:  redo done at 0/3BCCEC8
+2022-02-02 04:44:57.881 UTC [8903] LOG:  database system is ready to accept connections
+2022-02-02 04:47:57.992 UTC [8903] LOG:  could not open file "postmaster.pid": No such file or directory
+2022-02-02 04:47:57.992 UTC [8903] LOG:  performing immediate shutdown because data directory lock file is invalid
+2022-02-02 04:47:57.992 UTC [8903] LOG:  received immediate shutdown request
+2022-02-02 04:47:57.992 UTC [8903] LOG:  could not open file "postmaster.pid": No such file or directory
+2022-02-02 04:47:57.992 UTC [21289] LOG:  could not open temporary statistics file "pg_stat_tmp/global.tmp": No such file or directory
+2022-02-02 04:47:57.992 UTC [21288] WARNING:  terminating connection because of crash of another server process
+2022-02-02 04:47:57.992 UTC [21288] DETAIL:  The postmaster has commanded this server process to roll back the current transaction and exit, because another server process exited abnormally and possibly corrupted shared memory.
+2022-02-02 04:47:57.992 UTC [21288] HINT:  In a moment you should be able to reconnect to the database and repeat your command.
+2022-02-02 04:47:57.992 UTC [21289] LOG:  could not open temporary statistics file "pg_stat/global.tmp": No such file or directory
+2022-02-02 04:47:57.996 UTC [8903] LOG:  database system is shut down
+2022-02-02 05:24:03.123 UTC [704] LOG:  starting PostgreSQL 13.5 on x86_64-pc-linux-gnu, compiled by gcc (GCC) 7.3.1 20180712 (Red Hat 7.3.1-13), 64-bit
+2022-02-02 05:24:03.123 UTC [704] LOG:  listening on IPv4 address "0.0.0.0", port 5432
+2022-02-02 05:24:03.123 UTC [704] LOG:  listening on IPv6 address "::", port 5432
+2022-02-02 05:24:03.127 UTC [704] LOG:  listening on Unix socket "/tmp/.s.PGSQL.5432"
+2022-02-02 05:24:03.130 UTC [704] LOG:  listening on IPv4 address "0.0.0.0", port 1433
+2022-02-02 05:24:03.130 UTC [704] LOG:  listening on IPv6 address "::", port 1433
+2022-02-02 05:24:03.135 UTC [705] LOG:  database system was shut down at 2022-02-02 05:24:03 UTC
+2022-02-02 05:24:03.139 UTC [704] LOG:  database system is ready to accept connections
+2022-02-02 05:24:07.213 UTC [762] WARNING:  cast will be ignored because the source data type is a domain
+2022-02-02 05:24:07.221 UTC [762] WARNING:  cast will be ignored because the source data type is a domain
+2022-02-02 05:24:07.246 UTC [762] WARNING:  cast will be ignored because the source data type is a domain
+2022-02-02 05:24:07.257 UTC [762] WARNING:  cast will be ignored because the source data type is a domain
+2022-02-02 05:24:07.811 UTC [704] LOG:  received SIGHUP, reloading configuration files
+2022-02-02 05:24:07.811 UTC [704] LOG:  parameter "babelfishpg_tsql.database_name" changed to "jdbc_testdb"
+2022-02-02 05:31:23.383 UTC [5353] LOG:  message_type: TDS7 Prelogin Message
+2022-02-02 05:31:23.383 UTC [5353] CONTEXT:  TDS Protocol: Message Type: TDS Pre-Login, Phase: Login. 
+2022-02-02 05:31:23.637 UTC [5353] LOG:  message_type: TDS7 Login
+2022-02-02 05:31:23.637 UTC [5353] CONTEXT:  TDS Protocol: Message Type: TDS Login7, Phase: Login. 
+2022-02-02 05:31:23.639 UTC [5353] FATAL:  no pg_hba.conf entry for host "10.95.37.134", user "jdbc_user", database "jdbc_testdb"
+2022-02-02 05:31:23.639 UTC [5353] LOG:  Unmapped error found. Code: 514, Message: no pg_hba.conf entry for host "10.95.37.134", user "jdbc_user", database "jdbc_testdb", File: tdslogin.c, Line: 1697, Context: TDS
+2022-02-02 05:37:56.350 UTC [9041] LOG:  message_type: TDS7 Prelogin Message
+2022-02-02 05:37:56.350 UTC [9041] CONTEXT:  TDS Protocol: Message Type: TDS Pre-Login, Phase: Login. 
+2022-02-02 05:37:56.484 UTC [9046] LOG:  message_type: TDS7 Prelogin Message
+2022-02-02 05:37:56.484 UTC [9046] CONTEXT:  TDS Protocol: Message Type: TDS Pre-Login, Phase: Login. 
+2022-02-02 05:37:56.661 UTC [9047] LOG:  message_type: TDS7 Prelogin Message
+2022-02-02 05:37:56.661 UTC [9047] CONTEXT:  TDS Protocol: Message Type: TDS Pre-Login, Phase: Login. 
