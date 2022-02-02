@@ -76,7 +76,7 @@ GetBulkLoadRequest(StringInfo message)
 
 	TDSInstrumentation(INSTR_TDS_BULK_LOAD_REQUEST);
 
-	request = palloc0(sizeof(TDSRequestBulkLoad));
+	request = palloc0(sizeof(TDSRequestBulkLoadData));
 	request->rowData 		= NIL;
 	request->reqType 		= TDS_REQUEST_BULK_LOAD;
 
@@ -256,6 +256,15 @@ GetBulkLoadRequest(StringInfo message)
 				colmetadata[currentColumn].columnTdsType = TDS_TYPE_MONEYN;
 				colmetadata[currentColumn].variantType = true;
 				colmetadata[currentColumn].maxLen = TDS_MAXLEN_SMALLMONEY;
+			}
+			break;
+			case TDS_TYPE_TEXT:
+			case TDS_TYPE_NTEXT:
+			case TDS_TYPE_IMAGE:
+			{
+				ereport(ERROR,
+						(errcode(ERRCODE_PROTOCOL_VIOLATION),
+						errmsg("Unsupported Data type 0x%02X for Bulk Load Request.", colmetadata[currentColumn].columnTdsType)));
 			}
 			break;
 			default:
@@ -469,8 +478,8 @@ SetBulkLoadRowData(TDSRequestBulkLoad request, const StringInfo message, uint64_
 		ereport(ERROR,
 				(errcode(ERRCODE_PROTOCOL_VIOLATION),
 					errmsg("The incoming tabular data stream (TDS) Bulk Load Request (BulkLoadBCP) protocol stream is incorrect. "
-						"Row %d, column %d, unexpected token encountered processing the request.",
-						request->rowCount, request->colCount)));
+						"Row %d, column %d, unexpected token encountered processing the request. %d",
+						request->rowCount, request->colCount, (uint8_t)messageData[offset])));
 	offset++;
 }
 
@@ -490,7 +499,7 @@ ProcessBCPRequest(TDSRequest request)
 	int nargs = req->colCount * req->rowCount;
 	Datum *values = palloc0(nargs * sizeof(Datum));
 	char *nulls = palloc0(nargs * sizeof(char));
-	Oid *argtypes= palloc0(nargs * sizeof(Datum));
+	Oid *argtypes= palloc0(nargs * sizeof(Oid));
 
 	int count = 0;
 	ListCell 	*lc;
