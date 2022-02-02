@@ -466,6 +466,7 @@ extern Datum TdsTypeDateToDatum(StringInfo buf);
 extern Datum TdsTypeTimeToDatum(StringInfo buf, int scale, int len);
 extern Datum TdsTypeDatetimeoffsetToDatum(StringInfo buf, int scale, int len);
 extern Datum TdsTypeMoneyToDatum(StringInfo buf);
+extern Datum TdsTypeSmallMoneyToDatum(StringInfo buf);
 extern Datum TdsTypeXMLToDatum(StringInfo buf);
 extern Datum TdsTypeUIDToDatum(StringInfo buf);
 extern Datum TdsTypeSqlVariantToDatum(StringInfo buf);
