@@ -14,6 +14,13 @@ create table t3(a int, b int, c int)
 go
 create index i3 on t3(c,a)
 go
+CREATE TABLE t4(
+        c1 INT PRIMARY KEY
+        , c2 CHAR(10) NOT NULL UNIQUE
+        , c3 VARCHAR(20) NULL
+)
+create index i4 on t4(c2)
+go
 
 -- syntax error: @table_name is required
 exec sp_statistics
@@ -26,6 +33,12 @@ exec sp_statistics @table_name = 't2', @table_qualifier = 'db1'
 go
 
 exec sp_statistics @table_name = 't3', @table_owner = 'dbo'
+go
+
+exec sp_statistics @table_name = 't4'
+go
+
+exec sp_statistics @table_name = 't4', @is_unique = 'Y'
 go
 
 -- unnamed invocation
