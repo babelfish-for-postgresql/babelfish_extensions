@@ -51,7 +51,7 @@ do \
 #define CheckForInvalidLength(rowData, temp, colNum) \
 do \
 { \
-	if (rowData->columnValues[i].len > temp->colMetaData[i].maxLen) \
+	if ((uint32_t)rowData->columnValues[i].len > (uint32_t)temp->colMetaData[i].maxLen) \
 		ereport(ERROR, \
 				(errcode(ERRCODE_PROTOCOL_VIOLATION), \
 				errmsg("The incoming tabular data stream (TDS) Bulk Load Request (BulkLoadBCP) protocol stream is incorrect. " \
@@ -137,7 +137,31 @@ GetBulkLoadRequest(StringInfo message)
 				colmetadata[currentColumn].sortId = message->data[offset++];
 			}
 			break;
-			case TDS_TYPE_XML: /* XMLTYPE is only a valid LONGLEN_TYPE for BulkLoadBCP. */
+			case TDS_TYPE_TEXT:
+			case TDS_TYPE_NTEXT:
+			case TDS_TYPE_IMAGE:
+			{
+				uint16_t tableLen = 0;
+				memcpy(&colmetadata[currentColumn].maxLen, &message->data[offset], sizeof(uint32_t));
+				offset += sizeof(uint32_t);
+
+				/* Read collation(LICD) and sort-id for TEXT and NTEXT. */
+				if (colmetadata[currentColumn].columnTdsType == TDS_TYPE_TEXT ||
+					colmetadata[currentColumn].columnTdsType == TDS_TYPE_NTEXT)
+				{
+					memcpy(&colmetadata[currentColumn].collation, &message->data[offset], sizeof(uint32_t));
+					offset += sizeof(uint32_t);
+					colmetadata[currentColumn].sortId = message->data[offset++];
+				}
+
+				memcpy(&tableLen, &message->data[offset], sizeof(uint16_t));
+				offset += sizeof(uint16_t);
+
+				/* Skip table name for now. */
+				offset += tableLen * 2;
+			}
+			break;
+			case TDS_TYPE_XML:
 			{
 				colmetadata[currentColumn].maxLen = message->data[offset++];
 			}
@@ -256,15 +280,6 @@ GetBulkLoadRequest(StringInfo message)
 				colmetadata[currentColumn].columnTdsType = TDS_TYPE_MONEYN;
 				colmetadata[currentColumn].variantType = true;
 				colmetadata[currentColumn].maxLen = TDS_MAXLEN_SMALLMONEY;
-			}
-			break;
-			case TDS_TYPE_TEXT:
-			case TDS_TYPE_NTEXT:
-			case TDS_TYPE_IMAGE:
-			{
-				ereport(ERROR,
-						(errcode(ERRCODE_PROTOCOL_VIOLATION),
-						errmsg("Unsupported Data type 0x%02X for Bulk Load Request.", colmetadata[currentColumn].columnTdsType)));
 			}
 			break;
 			default:
@@ -389,7 +404,6 @@ SetBulkLoadRowData(TDSRequestBulkLoad request, const StringInfo message, uint64_
 					{
 						memcpy(&rowData->columnValues[i].len, &messageData[offset], sizeof(short));
 						offset +=  sizeof(short);
-						rowData->columnValues[i].maxlen = colmetadata[i].maxLen;
 						if (rowData->columnValues[i].len != 0xffff)
 						{
 							CheckForInvalidLength(rowData, request, i);
@@ -426,6 +440,39 @@ SetBulkLoadRowData(TDSRequestBulkLoad request, const StringInfo message, uint64_
 						pfree(plpStr);
 						pfree(temp);
 					}
+				}
+				break;
+				case TDS_TYPE_TEXT:
+				case TDS_TYPE_NTEXT:
+				case TDS_TYPE_IMAGE:
+				{
+					/* Ignore the Data Text Ptr since its currently of no use. */
+					uint8 dataTextPtrLen = messageData[offset++];
+					if (dataTextPtrLen == 0) /* null */
+					{
+						rowData->isNull[i] = 'n';
+						i++;
+						continue;
+					}
+					offset += dataTextPtrLen;
+					offset += 8; /* TODO: Ignored the Data Text TimeStamp for now. */
+
+					memcpy(&rowData->columnValues[i].len, &messageData[offset], sizeof(uint32_t));
+					offset +=  sizeof(uint32_t);
+					if (rowData->columnValues[i].len == 0) /* null */
+					{
+						rowData->isNull[i] = 'n';
+						i++;
+						continue;
+					}
+
+					CheckForInvalidLength(rowData, request, i);
+
+					if (rowData->columnValues[i].len > rowData->columnValues[i].maxlen)
+						enlargeStringInfo(&rowData->columnValues[i], rowData->columnValues[i].len);
+
+					memcpy(rowData->columnValues[i].data, &messageData[offset], rowData->columnValues[i].len);
+					offset += rowData->columnValues[i].len;
 				}
 				break;
 				case TDS_TYPE_XML:
@@ -525,10 +572,12 @@ ProcessBCPRequest(TDSRequest request)
 				{
 					case TDS_TYPE_CHAR:
 					case TDS_TYPE_VARCHAR:
+					case TDS_TYPE_TEXT:
 						values[count] = TdsTypeVarcharToDatum(temp, argtypes[count], colMetaData[currentColumn].collation);
 					break;
 					case TDS_TYPE_NCHAR:
 					case TDS_TYPE_NVARCHAR:
+					case TDS_TYPE_NTEXT:
 						values[count] = TdsTypeNCharToDatum(temp);
 					break;
 					case TDS_TYPE_INTEGER:
@@ -544,6 +593,7 @@ ProcessBCPRequest(TDSRequest request)
 					break;
 					case TDS_TYPE_VARBINARY:
 					case TDS_TYPE_BINARY:
+					case TDS_TYPE_IMAGE:
 						values[count] = TdsTypeVarbinaryToDatum(temp);
 						argtypes[count] = tempFuncInfo->ttmtypeid;
 					break;
