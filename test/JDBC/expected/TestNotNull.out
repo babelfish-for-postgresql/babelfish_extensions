@@ -1,0 +1,832 @@
+# int
+Create table sourceTable(a int, b int not null)
+prepst#!# INSERT INTO sourceTable(a, b) values(?, ?) #!#int|-|a|-|2#!#int|-|b|-|2
+~~ROW COUNT: 1~~
+
+prepst#!#exec#!#int|-|a|-|<NULL>#!#int|-|b|-|3
+~~ROW COUNT: 1~~
+
+Select * from sourceTable
+~~START~~
+int#!#int
+2#!#2
+<NULL>#!#3
+~~END~~
+
+Insert into sourceTable values (1, 1);
+~~ROW COUNT: 1~~
+
+Insert into sourceTable values (NULL, 1);
+~~ROW COUNT: 1~~
+
+Select * from sourceTable
+~~START~~
+int#!#int
+2#!#2
+<NULL>#!#3
+1#!#1
+<NULL>#!#1
+~~END~~
+
+drop table sourceTable
+
+# smallint
+Create table sourceTable(a smallint, b smallint not null)
+prepst#!# INSERT INTO sourceTable(a, b) values(?, ?) #!#smallint|-|a|-|2#!#smallint|-|b|-|2
+~~ROW COUNT: 1~~
+
+prepst#!#exec#!#smallint|-|a|-|<NULL>#!#smallint|-|b|-|3
+~~ROW COUNT: 1~~
+
+Select * from sourceTable
+~~START~~
+smallint#!#smallint
+2#!#2
+<NULL>#!#3
+~~END~~
+
+Insert into sourceTable values (1, 1);
+~~ROW COUNT: 1~~
+
+Insert into sourceTable values (NULL, 1);
+~~ROW COUNT: 1~~
+
+Select * from sourceTable
+~~START~~
+smallint#!#smallint
+2#!#2
+<NULL>#!#3
+1#!#1
+<NULL>#!#1
+~~END~~
+
+drop table sourceTable
+
+# bigint
+Create table sourceTable(a bigint, b bigint not null)
+prepst#!# INSERT INTO sourceTable(a, b) values(?, ?) #!#bigint|-|a|-|2#!#bigint|-|b|-|2
+~~ROW COUNT: 1~~
+
+prepst#!#exec#!#bigint|-|a|-|<NULL>#!#bigint|-|b|-|3
+~~ROW COUNT: 1~~
+
+Select * from sourceTable
+~~START~~
+bigint#!#bigint
+2#!#2
+<NULL>#!#3
+~~END~~
+
+Insert into sourceTable values (1, 1);
+~~ROW COUNT: 1~~
+
+Insert into sourceTable values (NULL, 1);
+~~ROW COUNT: 1~~
+
+Select * from sourceTable
+~~START~~
+bigint#!#bigint
+2#!#2
+<NULL>#!#3
+1#!#1
+<NULL>#!#1
+~~END~~
+
+drop table sourceTable
+
+# bit
+Create table sourceTable(a bit, b bit not null)
+prepst#!# INSERT INTO sourceTable(a, b) values(?, ?) #!#bit|-|a|-|true#!#bit|-|b|-|false
+~~ROW COUNT: 1~~
+
+prepst#!#exec#!#bit|-|a|-|<NULL>#!#bit|-|b|-|true
+~~ROW COUNT: 1~~
+
+Select * from sourceTable
+~~START~~
+bit#!#bit
+1#!#0
+<NULL>#!#1
+~~END~~
+
+Insert into sourceTable values (1, 1);
+~~ROW COUNT: 1~~
+
+Insert into sourceTable values (NULL, 1);
+~~ROW COUNT: 1~~
+
+Select * from sourceTable
+~~START~~
+bit#!#bit
+1#!#0
+<NULL>#!#1
+1#!#1
+<NULL>#!#1
+~~END~~
+
+drop table sourceTable
+
+# float
+Create table sourceTable(a float, b float not null)
+prepst#!# INSERT INTO sourceTable(a, b) values(?, ?) #!#float|-|a|-|2.00#!#float|-|b|-|2.01
+~~ROW COUNT: 1~~
+
+prepst#!#exec#!#float|-|a|-|<NULL>#!#float|-|b|-|2.20
+~~ROW COUNT: 1~~
+
+Select * from sourceTable
+~~START~~
+float#!#float
+2.0#!#2.01
+<NULL>#!#2.2
+~~END~~
+
+Insert into sourceTable values (1.1101, 0.00010);
+~~ROW COUNT: 1~~
+
+Insert into sourceTable values (NULL, 1);
+~~ROW COUNT: 1~~
+
+Select * from sourceTable
+~~START~~
+float#!#float
+2.0#!#2.01
+<NULL>#!#2.2
+1.1101#!#1.0E-4
+<NULL>#!#1.0
+~~END~~
+
+drop table sourceTable
+
+# real
+Create table sourceTable(a real, b real not null)
+prepst#!# INSERT INTO sourceTable(a, b) values(?, ?) #!#real|-|a|-|2.00#!#real|-|b|-|2.01
+~~ROW COUNT: 1~~
+
+prepst#!#exec#!#real|-|a|-|<NULL>#!#real|-|b|-|2.20
+~~ROW COUNT: 1~~
+
+Select * from sourceTable
+~~START~~
+real#!#real
+2.0#!#2.01
+<NULL>#!#2.2
+~~END~~
+
+Insert into sourceTable values (1.1101, 0.00010);
+~~ROW COUNT: 1~~
+
+Insert into sourceTable values (NULL, 1);
+~~ROW COUNT: 1~~
+
+Select * from sourceTable
+~~START~~
+real#!#real
+2.0#!#2.01
+<NULL>#!#2.2
+1.1101#!#1.0E-4
+<NULL>#!#1.0
+~~END~~
+
+drop table sourceTable
+
+# char
+Create table sourceTable(a char(10), b char(10) not null)
+prepst#!# INSERT INTO sourceTable(a, b) values(?, ?) #!#char|-|a|-|hello#!#char|-|b|-|jello
+~~ROW COUNT: 1~~
+
+prepst#!#exec#!#char|-|a|-|<NULL>#!#char|-|b|-|mellow
+~~ROW COUNT: 1~~
+
+Select * from sourceTable
+~~START~~
+char#!#char
+hello     #!#jello     
+<NULL>#!#mellow    
+~~END~~
+
+Insert into sourceTable values ('hello', 'jello');
+~~ROW COUNT: 1~~
+
+Insert into sourceTable values (NULL, 'jello');
+~~ROW COUNT: 1~~
+
+Select * from sourceTable
+~~START~~
+char#!#char
+hello     #!#jello     
+<NULL>#!#mellow    
+hello     #!#jello     
+<NULL>#!#jello     
+~~END~~
+
+drop table sourceTable
+
+# nchar
+Create table sourceTable(a nchar(10), b nchar(10) not null)
+prepst#!# INSERT INTO sourceTable(a, b) values(?, ?) #!#nchar|-|a|-|hello#!#nchar|-|b|-|jello
+~~ROW COUNT: 1~~
+
+prepst#!#exec#!#nchar|-|a|-|<NULL>#!#nchar|-|b|-|mellow
+~~ROW COUNT: 1~~
+
+Select * from sourceTable
+~~START~~
+nchar#!#nchar
+hello     #!#jello     
+<NULL>#!#mellow    
+~~END~~
+
+Insert into sourceTable values ('hello', 'jello');
+~~ROW COUNT: 1~~
+
+Insert into sourceTable values (NULL, 'jello');
+~~ROW COUNT: 1~~
+
+Select * from sourceTable
+~~START~~
+nchar#!#nchar
+hello     #!#jello     
+<NULL>#!#mellow    
+hello     #!#jello     
+<NULL>#!#jello     
+~~END~~
+
+drop table sourceTable
+
+# varchar
+Create table sourceTable(a varchar(10), b varchar(10) not null)
+prepst#!# INSERT INTO sourceTable(a, b) values(?, ?) #!#varchar|-|a|-|hello#!#varchar|-|b|-|jello
+~~ROW COUNT: 1~~
+
+prepst#!#exec#!#varchar|-|a|-|<NULL>#!#varchar|-|b|-|mellow
+~~ROW COUNT: 1~~
+
+Select * from sourceTable
+~~START~~
+varchar#!#varchar
+hello#!#jello
+<NULL>#!#mellow
+~~END~~
+
+Insert into sourceTable values ('hello', 'jello');
+~~ROW COUNT: 1~~
+
+Insert into sourceTable values (NULL, 'jello');
+~~ROW COUNT: 1~~
+
+Select * from sourceTable
+~~START~~
+varchar#!#varchar
+hello#!#jello
+<NULL>#!#mellow
+hello#!#jello
+<NULL>#!#jello
+~~END~~
+
+drop table sourceTable
+
+# nvarchar
+Create table sourceTable(a nvarchar(10), b nvarchar(10) not null)
+prepst#!# INSERT INTO sourceTable(a, b) values(?, ?) #!#nvarchar|-|a|-|hello#!#nvarchar|-|b|-|jello
+~~ROW COUNT: 1~~
+
+prepst#!#exec#!#nvarchar|-|a|-|<NULL>#!#nvarchar|-|b|-|mellow
+~~ROW COUNT: 1~~
+
+Select * from sourceTable
+~~START~~
+nvarchar#!#nvarchar
+hello#!#jello
+<NULL>#!#mellow
+~~END~~
+
+Insert into sourceTable values ('hello', 'jello');
+~~ROW COUNT: 1~~
+
+Insert into sourceTable values (NULL, 'jello');
+~~ROW COUNT: 1~~
+
+Select * from sourceTable
+~~START~~
+nvarchar#!#nvarchar
+hello#!#jello
+<NULL>#!#mellow
+hello#!#jello
+<NULL>#!#jello
+~~END~~
+
+drop table sourceTable
+
+# text
+Create table sourceTable(a text, b text not null)
+prepst#!# INSERT INTO sourceTable(a, b) values(?, ?) #!#text|-|a|-|utils/sample.txt#!#text|-|b|-|utils/sample.txt
+~~ROW COUNT: 1~~
+
+prepst#!#exec#!#text|-|a|-|<NULL>#!#text|-|b|-|utils/sample.txt
+~~ROW COUNT: 1~~
+
+Select * from sourceTable
+~~START~~
+text#!#text
+AAAAAAAAAAAAAAAAAAAA<newline>BBBBBBBBBB<newline>CCCCC<newline>badksjvbajsdcbvjads<newline>sejvhsdbfjhcgvasdhgcvsj<newline>21639812365091264#!#AAAAAAAAAAAAAAAAAAAA<newline>BBBBBBBBBB<newline>CCCCC<newline>badksjvbajsdcbvjads<newline>sejvhsdbfjhcgvasdhgcvsj<newline>21639812365091264
+<NULL>#!#AAAAAAAAAAAAAAAAAAAA<newline>BBBBBBBBBB<newline>CCCCC<newline>badksjvbajsdcbvjads<newline>sejvhsdbfjhcgvasdhgcvsj<newline>21639812365091264
+~~END~~
+
+Insert into sourceTable values ('hello', 'jello');
+~~ROW COUNT: 1~~
+
+Insert into sourceTable values (NULL, 'jello');
+~~ROW COUNT: 1~~
+
+Select * from sourceTable
+~~START~~
+text#!#text
+AAAAAAAAAAAAAAAAAAAA<newline>BBBBBBBBBB<newline>CCCCC<newline>badksjvbajsdcbvjads<newline>sejvhsdbfjhcgvasdhgcvsj<newline>21639812365091264#!#AAAAAAAAAAAAAAAAAAAA<newline>BBBBBBBBBB<newline>CCCCC<newline>badksjvbajsdcbvjads<newline>sejvhsdbfjhcgvasdhgcvsj<newline>21639812365091264
+<NULL>#!#AAAAAAAAAAAAAAAAAAAA<newline>BBBBBBBBBB<newline>CCCCC<newline>badksjvbajsdcbvjads<newline>sejvhsdbfjhcgvasdhgcvsj<newline>21639812365091264
+hello#!#jello
+<NULL>#!#jello
+~~END~~
+
+drop table sourceTable
+
+# ntext
+Create table sourceTable(a ntext, b ntext not null)
+prepst#!# INSERT INTO sourceTable(a, b) values(?, ?) #!#ntext|-|a|-|utils/sample.txt#!#ntext|-|b|-|utils/sample.txt
+~~ROW COUNT: 1~~
+
+prepst#!#exec#!#ntext|-|a|-|<NULL>#!#ntext|-|b|-|utils/sample.txt
+~~ROW COUNT: 1~~
+
+Select * from sourceTable
+~~START~~
+ntext#!#ntext
+AAAAAAAAAAAAAAAAAAAA<newline>BBBBBBBBBB<newline>CCCCC<newline>badksjvbajsdcbvjads<newline>sejvhsdbfjhcgvasdhgcvsj<newline>21639812365091264#!#AAAAAAAAAAAAAAAAAAAA<newline>BBBBBBBBBB<newline>CCCCC<newline>badksjvbajsdcbvjads<newline>sejvhsdbfjhcgvasdhgcvsj<newline>21639812365091264
+<NULL>#!#AAAAAAAAAAAAAAAAAAAA<newline>BBBBBBBBBB<newline>CCCCC<newline>badksjvbajsdcbvjads<newline>sejvhsdbfjhcgvasdhgcvsj<newline>21639812365091264
+~~END~~
+
+Insert into sourceTable values ('hello', 'jello');
+~~ROW COUNT: 1~~
+
+Insert into sourceTable values (NULL, 'jello');
+~~ROW COUNT: 1~~
+
+Select * from sourceTable
+~~START~~
+ntext#!#ntext
+AAAAAAAAAAAAAAAAAAAA<newline>BBBBBBBBBB<newline>CCCCC<newline>badksjvbajsdcbvjads<newline>sejvhsdbfjhcgvasdhgcvsj<newline>21639812365091264#!#AAAAAAAAAAAAAAAAAAAA<newline>BBBBBBBBBB<newline>CCCCC<newline>badksjvbajsdcbvjads<newline>sejvhsdbfjhcgvasdhgcvsj<newline>21639812365091264
+<NULL>#!#AAAAAAAAAAAAAAAAAAAA<newline>BBBBBBBBBB<newline>CCCCC<newline>badksjvbajsdcbvjads<newline>sejvhsdbfjhcgvasdhgcvsj<newline>21639812365091264
+hello#!#jello
+<NULL>#!#jello
+~~END~~
+
+drop table sourceTable
+
+# binary
+Create table sourceTable(a binary(10), b binary(10) not null)
+prepst#!# INSERT INTO sourceTable(a, b) values(?, ?) #!#binary|-|a|-|0x31323334#!#binary|-|b|-|0x9241
+~~ROW COUNT: 1~~
+
+prepst#!#exec#!#binary|-|a|-|<NULL>#!#binary|-|b|-|0x9241
+~~ROW COUNT: 1~~
+
+Select * from sourceTable
+~~START~~
+binary#!#binary
+30783331333233333334#!#30783932343100000000
+<NULL>#!#30783932343100000000
+~~END~~
+
+Insert into sourceTable values (0x31323334, 0x9241);
+~~ROW COUNT: 1~~
+
+Insert into sourceTable values (NULL, 0x9241);
+~~ROW COUNT: 1~~
+
+Select * from sourceTable
+~~START~~
+binary#!#binary
+30783331333233333334#!#30783932343100000000
+<NULL>#!#30783932343100000000
+31323334000000000000#!#92410000000000000000
+<NULL>#!#92410000000000000000
+~~END~~
+
+drop table sourceTable
+
+# varbinary
+Create table sourceTable(a varbinary(10), b varbinary(10) not null)
+prepst#!# INSERT INTO sourceTable(a, b) values(?, ?) #!#varbinary|-|a|-|0x31323334#!#varbinary|-|b|-|0x9241
+~~ROW COUNT: 1~~
+
+prepst#!#exec#!#varbinary|-|a|-|<NULL>#!#varbinary|-|b|-|0x9241
+~~ROW COUNT: 1~~
+
+Select * from sourceTable
+~~START~~
+varbinary#!#varbinary
+30783331333233333334#!#307839323431
+<NULL>#!#307839323431
+~~END~~
+
+Insert into sourceTable values (0x31323334, 0x9241);
+~~ROW COUNT: 1~~
+
+Insert into sourceTable values (NULL, 0x9241);
+~~ROW COUNT: 1~~
+
+Select * from sourceTable
+~~START~~
+varbinary#!#varbinary
+30783331333233333334#!#307839323431
+<NULL>#!#307839323431
+31323334#!#9241
+<NULL>#!#9241
+~~END~~
+
+drop table sourceTable
+
+# numeric
+Create table sourceTable(a numeric(38, 22), b numeric(38, 22) not null)
+prepst#!# INSERT INTO sourceTable(a, b) values(?, ?) #!#numeric|-|a|-|1.1101#!#numeric|-|b|-|1.1101
+~~ROW COUNT: 1~~
+
+prepst#!#exec#!#numeric|-|a|-|<NULL>#!#numeric|-|b|-|0.00
+~~ROW COUNT: 1~~
+
+Select * from sourceTable
+~~START~~
+numeric#!#numeric
+1.1101000000000000000000#!#1.1101000000000000000000
+<NULL>#!#0E-22
+~~END~~
+
+Insert into sourceTable values (1.1101, 0.00010);
+~~ROW COUNT: 1~~
+
+Insert into sourceTable values (NULL, 0.00010);
+~~ROW COUNT: 1~~
+
+Select * from sourceTable
+~~START~~
+numeric#!#numeric
+1.1101000000000000000000#!#1.1101000000000000000000
+<NULL>#!#0E-22
+1.1101000000000000000000#!#0.0001000000000000000000
+<NULL>#!#0.0001000000000000000000
+~~END~~
+
+drop table sourceTable
+
+# decimal
+Create table sourceTable(a decimal(38, 22), b decimal(38, 22) not null)
+prepst#!# INSERT INTO sourceTable(a, b) values(?, ?) #!#decimal|-|a|-|1.1101#!#decimal|-|b|-|1.1101
+~~ROW COUNT: 1~~
+
+prepst#!#exec#!#decimal|-|a|-|<NULL>#!#decimal|-|b|-|1.1101
+~~ROW COUNT: 1~~
+
+Select * from sourceTable
+~~START~~
+numeric#!#numeric
+1.1101000000000000000000#!#1.1101000000000000000000
+<NULL>#!#1.1101000000000000000000
+~~END~~
+
+Insert into sourceTable values (1.1101, 0.00010);
+~~ROW COUNT: 1~~
+
+Insert into sourceTable values (NULL, 0.00010);
+~~ROW COUNT: 1~~
+
+Select * from sourceTable
+~~START~~
+numeric#!#numeric
+1.1101000000000000000000#!#1.1101000000000000000000
+<NULL>#!#1.1101000000000000000000
+1.1101000000000000000000#!#0.0001000000000000000000
+<NULL>#!#0.0001000000000000000000
+~~END~~
+
+drop table sourceTable
+
+# money
+Create table sourceTable(a money, b money not null)
+prepst#!# INSERT INTO sourceTable(a, b) values(?, ?) #!#money|-|a|-|100.11#!#money|-|b|-|100.11
+~~ROW COUNT: 1~~
+
+prepst#!#exec#!#money|-|a|-|<NULL>#!#money|-|b|-|100.11
+~~ROW COUNT: 1~~
+
+Select * from sourceTable
+~~START~~
+money#!#money
+100.1100#!#100.1100
+<NULL>#!#100.1100
+~~END~~
+
+Insert into sourceTable values (100.11, 0.10);
+~~ROW COUNT: 1~~
+
+Insert into sourceTable values (NULL, 0.10);
+~~ROW COUNT: 1~~
+
+Select * from sourceTable
+~~START~~
+money#!#money
+100.1100#!#100.1100
+<NULL>#!#100.1100
+100.1100#!#0.1000
+<NULL>#!#0.1000
+~~END~~
+
+drop table sourceTable
+
+# smallmoney
+Create table sourceTable(a smallmoney, b smallmoney not null)
+prepst#!# INSERT INTO sourceTable(a, b) values(?, ?) #!#smallmoney|-|a|-|0.10#!#smallmoney|-|b|-|0.10
+~~ROW COUNT: 1~~
+
+prepst#!#exec#!#smallmoney|-|a|-|<NULL>#!#smallmoney|-|b|-|0.10
+~~ROW COUNT: 1~~
+
+Select * from sourceTable
+~~START~~
+smallmoney#!#smallmoney
+0.1000#!#0.1000
+<NULL>#!#0.1000
+~~END~~
+
+Insert into sourceTable values (100.11, 0.10);
+~~ROW COUNT: 1~~
+
+Insert into sourceTable values (NULL, 0.10);
+~~ROW COUNT: 1~~
+
+Select * from sourceTable
+~~START~~
+smallmoney#!#smallmoney
+0.1000#!#0.1000
+<NULL>#!#0.1000
+100.1100#!#0.1000
+<NULL>#!#0.1000
+~~END~~
+
+drop table sourceTable
+
+# uniqueidentifier
+Create table sourceTable(a uniqueidentifier, b uniqueidentifier not null)
+prepst#!# INSERT INTO sourceTable(a, b) values(?, ?) #!#uniqueidentifier|-|a|-|51f178a6-53c7-472c-9be1-1c08942342d7#!#uniqueidentifier|-|b|-|51f178a6-53c7-472c-9be1-1c08942342d7
+~~ROW COUNT: 1~~
+
+prepst#!#exec#!#uniqueidentifier|-|a|-|<NULL>#!#uniqueidentifier|-|b|-|51f178a6-53c7-472c-9be1-1c08942342d7
+~~ROW COUNT: 1~~
+
+Select * from sourceTable
+~~START~~
+uniqueidentifier#!#uniqueidentifier
+51F178A6-53C7-472C-9BE1-1C08942342D7#!#51F178A6-53C7-472C-9BE1-1C08942342D7
+<NULL>#!#51F178A6-53C7-472C-9BE1-1C08942342D7
+~~END~~
+
+Insert into sourceTable values ('51f178a6-53c7-472c-9be1-1c08942342d7', 'dd8cb046-461d-411e-be40-d219252ce849');
+~~ROW COUNT: 1~~
+
+Insert into sourceTable values (NULL, 'dd8cb046-461d-411e-be40-d219252ce849');
+~~ROW COUNT: 1~~
+
+Select * from sourceTable
+~~START~~
+uniqueidentifier#!#uniqueidentifier
+51F178A6-53C7-472C-9BE1-1C08942342D7#!#51F178A6-53C7-472C-9BE1-1C08942342D7
+<NULL>#!#51F178A6-53C7-472C-9BE1-1C08942342D7
+51F178A6-53C7-472C-9BE1-1C08942342D7#!#DD8CB046-461D-411E-BE40-D219252CE849
+<NULL>#!#DD8CB046-461D-411E-BE40-D219252CE849
+~~END~~
+
+drop table sourceTable
+
+# date
+Create table sourceTable(a date, b date not null)
+prepst#!# INSERT INTO sourceTable(a, b) values(?, ?) #!#date|-|a|-|2000-02-28#!#date|-|b|-|2000-02-28
+~~ROW COUNT: 1~~
+
+prepst#!#exec#!#date|-|a|-|<NULL>#!#date|-|b|-|2000-02-28
+~~ROW COUNT: 1~~
+
+Select * from sourceTable
+~~START~~
+date#!#date
+2000-02-28#!#2000-02-28
+<NULL>#!#2000-02-28
+~~END~~
+
+Insert into sourceTable values ('2000-02-28', '0001-01-01');
+~~ROW COUNT: 1~~
+
+Insert into sourceTable values (NULL, '0001-01-01');
+~~ROW COUNT: 1~~
+
+Select * from sourceTable
+~~START~~
+date#!#date
+2000-02-28#!#2000-02-28
+<NULL>#!#2000-02-28
+2000-02-28#!#0001-01-01
+<NULL>#!#0001-01-01
+~~END~~
+
+drop table sourceTable
+
+# time
+Create table sourceTable(a time(6), b time(6) not null)
+prepst#!# INSERT INTO sourceTable(a, b) values(?, ?) #!#time|-|a|-|12:45:37.123#!#time|-|b|-|12:45:37.123
+~~ROW COUNT: 1~~
+
+prepst#!#exec#!#time|-|a|-|<NULL>#!#time|-|b|-|12:45:37.123
+~~ROW COUNT: 1~~
+
+Select * from sourceTable
+~~START~~
+time#!#time
+12:45:37.000000#!#12:45:37.000000
+<NULL>#!#12:45:37.000000
+~~END~~
+
+Insert into sourceTable values ('12:45:37.123', '12:45:37.12');
+~~ROW COUNT: 1~~
+
+Insert into sourceTable values (NULL, '12:45:37.12');
+~~ROW COUNT: 1~~
+
+Select * from sourceTable
+~~START~~
+time#!#time
+12:45:37.000000#!#12:45:37.000000
+<NULL>#!#12:45:37.000000
+12:45:37.123000#!#12:45:37.120000
+<NULL>#!#12:45:37.120000
+~~END~~
+
+drop table sourceTable
+
+# datetime
+Create table sourceTable(a datetime, b datetime not null)
+prepst#!# INSERT INTO sourceTable(a, b) values(?, ?) #!#datetime|-|a|-|2000-12-13 12:58:23.123#!#datetime|-|b|-|2000-12-13 12:58:23.123
+~~ROW COUNT: 1~~
+
+prepst#!#exec#!#datetime|-|a|-|<NULL>#!#datetime|-|b|-|2000-12-13 12:58:23.123
+~~ROW COUNT: 1~~
+
+Select * from sourceTable
+~~START~~
+datetime#!#datetime
+2000-12-13 12:58:23.123#!#2000-12-13 12:58:23.123
+<NULL>#!#2000-12-13 12:58:23.123
+~~END~~
+
+Insert into sourceTable values ('2000-12-13 12:58:23.123', '1900-02-28 23:59:59.989');
+~~ROW COUNT: 1~~
+
+Insert into sourceTable values (NULL, '1900-02-28 23:59:59.989');
+~~ROW COUNT: 1~~
+
+Select * from sourceTable
+~~START~~
+datetime#!#datetime
+2000-12-13 12:58:23.123#!#2000-12-13 12:58:23.123
+<NULL>#!#2000-12-13 12:58:23.123
+2000-12-13 12:58:23.123#!#1900-02-28 23:59:59.99
+<NULL>#!#1900-02-28 23:59:59.99
+~~END~~
+
+drop table sourceTable
+
+# smalldatetime
+Create table sourceTable(a smalldatetime, b smalldatetime not null)
+prepst#!# INSERT INTO sourceTable(a, b) values(?, ?) #!#smalldatetime|-|a|-|2007-05-08 12:35:29#!#smalldatetime|-|b|-|2007-05-08 12:35:29
+~~ROW COUNT: 1~~
+
+prepst#!#exec#!#smalldatetime|-|a|-|<NULL>#!#smalldatetime|-|b|-|2007-05-08 12:35:29
+~~ROW COUNT: 1~~
+
+Select * from sourceTable
+~~START~~
+smalldatetime#!#smalldatetime
+2007-05-08 12:35:00.0#!#2007-05-08 12:35:00.0
+<NULL>#!#2007-05-08 12:35:00.0
+~~END~~
+
+Insert into sourceTable values ('2007-05-08 12:35:29', '2000-12-13 12:58:23');
+~~ROW COUNT: 1~~
+
+Insert into sourceTable values (NULL, '2000-12-13 12:58:23');
+~~ROW COUNT: 1~~
+
+Select * from sourceTable
+~~START~~
+smalldatetime#!#smalldatetime
+2007-05-08 12:35:00.0#!#2007-05-08 12:35:00.0
+<NULL>#!#2007-05-08 12:35:00.0
+2007-05-08 12:35:00.0#!#2000-12-13 12:58:00.0
+<NULL>#!#2000-12-13 12:58:00.0
+~~END~~
+
+drop table sourceTable
+
+# datetime2
+Create table sourceTable(a Datetime2(6), b Datetime2(6) not null)
+prepst#!# INSERT INTO sourceTable(a, b) values(?, ?) #!#Datetime2|-|a|-|2016-10-23 12:45:37.123|-|6#!#Datetime2|-|b|-|2016-10-23 12:45:37.123|-|6
+~~ROW COUNT: 1~~
+
+prepst#!#exec#!#Datetime2|-|a|-|<NULL>#!#Datetime2|-|b|-|2016-10-23 12:45:37.123|-|6
+~~ROW COUNT: 1~~
+
+Select * from sourceTable
+~~START~~
+datetime2#!#datetime2
+2016-10-23 12:45:37.123000#!#2016-10-23 12:45:37.123000
+<NULL>#!#2016-10-23 12:45:37.123000
+~~END~~
+
+Insert into sourceTable values ('2016-10-23 12:45:37.123', '2016-10-23 12:45:37.123');
+~~ROW COUNT: 1~~
+
+Insert into sourceTable values (NULL, '2016-10-23 12:45:37.123');
+~~ROW COUNT: 1~~
+
+Select * from sourceTable
+~~START~~
+datetime2#!#datetime2
+2016-10-23 12:45:37.123000#!#2016-10-23 12:45:37.123000
+<NULL>#!#2016-10-23 12:45:37.123000
+2016-10-23 12:45:37.123000#!#2016-10-23 12:45:37.123000
+<NULL>#!#2016-10-23 12:45:37.123000
+~~END~~
+
+drop table sourceTable
+
+# datetimeoffset
+Create table sourceTable(a datetimeoffset(6), b datetimeoffset(6) not null)
+prepst#!# INSERT INTO sourceTable(a, b) values(?, ?) #!#datetimeoffset|-|a|-|2016-10-23 12:24:32|-|6#!#datetimeoffset|-|b|-|2016-10-23 12:24:32|-|6
+~~ROW COUNT: 1~~
+
+prepst#!#exec#!#datetimeoffset|-|a|-|<NULL>#!#datetimeoffset|-|b|-|2016-10-23 12:24:32|-|6
+~~ROW COUNT: 1~~
+
+Select * from sourceTable
+~~START~~
+datetimeoffset#!#datetimeoffset
+2016-10-23 12:24:32.000000 +00:00#!#2016-10-23 12:24:32.000000 +00:00
+<NULL>#!#2016-10-23 12:24:32.000000 +00:00
+~~END~~
+
+Insert into sourceTable values ('2016-10-23 12:24:32 +10:0', '2016-10-23 12:24:32 +10:0');
+~~ROW COUNT: 1~~
+
+Insert into sourceTable values (NULL, '2016-10-23 12:24:32 +10:0');
+~~ROW COUNT: 1~~
+
+Select * from sourceTable
+~~START~~
+datetimeoffset#!#datetimeoffset
+2016-10-23 12:24:32.000000 +00:00#!#2016-10-23 12:24:32.000000 +00:00
+<NULL>#!#2016-10-23 12:24:32.000000 +00:00
+2016-10-23 12:24:32.000000 +10:00#!#2016-10-23 12:24:32.000000 +10:00
+<NULL>#!#2016-10-23 12:24:32.000000 +10:00
+~~END~~
+
+drop table sourceTable
+
+# sql_variant
+Create table sourceTable(a sql_variant, b sql_variant not null)
+prepst#!# INSERT INTO sourceTable(a, b) values(?, ?) #!#bit|-|a|-|<NULL>#!#int|-|b|-|2
+~~ROW COUNT: 1~~
+
+prepst#!#exec#!#bit|-|a|-|0#!#bit|-|b|-|1
+~~ROW COUNT: 1~~
+
+Select * from sourceTable
+~~START~~
+sql_variant#!#sql_variant
+<NULL>#!#2
+false#!#false
+~~END~~
+
+Insert into sourceTable values (cast (1 as int), cast ('abc' as varchar(10)));
+~~ROW COUNT: 1~~
+
+Insert into sourceTable values (NULL, cast ('abc' as varchar(10)));
+~~ROW COUNT: 1~~
+
+Select * from sourceTable
+~~START~~
+sql_variant#!#sql_variant
+<NULL>#!#2
+false#!#false
+1#!#abc
+<NULL>#!#abc
+~~END~~
+
+drop table sourceTable
+
