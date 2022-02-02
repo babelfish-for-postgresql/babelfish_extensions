@@ -87,6 +87,7 @@ Datum TdsTypeDateToDatum(StringInfo buf);
 Datum TdsTypeTimeToDatum(StringInfo buf, int scale, int len);
 Datum TdsTypeDatetimeoffsetToDatum(StringInfo buf, int scale, int len);
 Datum TdsTypeMoneyToDatum(StringInfo buf);
+Datum TdsTypeSmallMoneyToDatum(StringInfo buf);
 Datum TdsTypeXMLToDatum(StringInfo buf);
 Datum TdsTypeUIDToDatum(StringInfo buf);
 Datum TdsTypeSqlVariantToDatum(StringInfo buf);
@@ -1107,6 +1108,18 @@ TdsTypeMoneyToDatum(StringInfo buf)
 	low = val & 0x00000000ffffffff;
 	val = high >> 32 | low << 32;
 
+
+	PG_RETURN_CASH((Cash)val);
+}
+
+/* Helper Function to convert Small Money value into Datum. */
+Datum
+TdsTypeSmallMoneyToDatum(StringInfo buf)
+{
+	uint64		val = 0;
+	uint32		low = GetMsgInt(buf, 4);
+
+	val = (uint64)low;
 
 	PG_RETURN_CASH((Cash)val);
 }

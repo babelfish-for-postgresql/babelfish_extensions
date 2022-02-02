@@ -616,7 +616,10 @@ ProcessBCPRequest(TDSRequest request)
 						values[count] = TdsTypeDatetimeoffsetToDatum(temp, colMetaData[currentColumn].scale, temp->len);
 					break;
 					case TDS_TYPE_MONEYN:
-						values[count] = TdsTypeMoneyToDatum(temp);
+						if (colMetaData[currentColumn].maxLen == TDS_MAXLEN_SMALLMONEY)
+							values[count] = TdsTypeSmallMoneyToDatum(temp);
+						else
+							values[count] = TdsTypeMoneyToDatum(temp);
 					break;
 					case TDS_TYPE_XML:
 						values[count] = TdsTypeXMLToDatum(temp);
