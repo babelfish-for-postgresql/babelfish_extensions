@@ -1797,7 +1797,6 @@ TdsRecvTypeNumeric(const char *message, const ParameterToken token)
 	else
 		decString[0] = '0';
 
-	wholeString = decString;
 
 	len = strlen(decString);
 	temp1 = '.';
@@ -1807,7 +1806,7 @@ TdsRecvTypeNumeric(const char *message, const ParameterToken token)
 	 * Since there is a '-' at the start of decString, we should ignore it before
 	 * appending and then add it later.
 	 */
-	if (scale > len)
+	if (num != 0 && scale > len)
 	{
 		int diff = scale - len + 1;
 		char *zeros = palloc0(sizeof(char) * diff + 1);
@@ -1840,13 +1839,21 @@ TdsRecvTypeNumeric(const char *message, const ParameterToken token)
 			scale--;
 		}
 	}
+	/*
+	 * We use wholeString just to free the address at decString later,
+	 * since it gets updated later.
+	 */
+	wholeString = decString;
 
 	if (sign == 1 && num != 0)
 		decString++;
 
 	res = TdsSetVarFromStrWrapper(decString);
-	pfree(wholeString);
-	pfree(buf);
+
+	if (wholeString)
+		pfree(wholeString);
+	if (buf)
+		pfree(buf);
 	PG_RETURN_NUMERIC(res);
 }
 
