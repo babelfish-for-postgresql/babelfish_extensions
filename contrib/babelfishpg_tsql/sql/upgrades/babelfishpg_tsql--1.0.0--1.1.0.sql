@@ -452,6 +452,7 @@ CREATE OR REPLACE FUNCTION sys.exp(IN arg DOUBLE PRECISION)
 RETURNS DOUBLE PRECISION
 AS 'babelfishpg_tsql', 'tsql_exp'
 LANGUAGE C IMMUTABLE STRICT PARALLEL SAFE;
+GRANT EXECUTE ON FUNCTION sys.exp(DOUBLE PRECISION) TO PUBLIC;
 
 CREATE OR REPLACE FUNCTION sys.exp(IN arg NUMERIC)
 RETURNS DOUBLE PRECISION
@@ -1066,6 +1067,39 @@ END;
 $body$
 LANGUAGE plpgsql IMMUTABLE;
 
+ -- Duplicate functions with arg TEXT since ANYELEMENT cannot handle type unknown.
+CREATE OR REPLACE FUNCTION sys.dateadd(IN datepart PG_CATALOG.TEXT, IN num INTEGER, IN startdate TEXT) RETURNS DATETIME
+AS
+$body$
+BEGIN
+    IF pg_typeof(startdate) = 'sys.DATETIMEOFFSET'::regtype THEN
+        return sys.dateadd_internal_df(datepart, num,
+                     startdate);
+    ELSE
+        return sys.dateadd_internal(datepart, num,
+                     startdate);
+    END IF;
+END;
+$body$
+LANGUAGE plpgsql IMMUTABLE;
+
+-- Duplicate functions with arg TEXT since ANYELEMENT cannot handle type unknown.
+CREATE OR REPLACE FUNCTION sys.datename(IN dp PG_CATALOG.TEXT, IN arg TEXT) RETURNS TEXT AS
+$BODY$
+SELECT
+    CASE
+    WHEN dp = 'month'::text THEN
+        to_char(arg::date, 'TMMonth')
+    -- '1969-12-28' is a Sunday
+    WHEN dp = 'dow'::text THEN
+        to_char(arg::date, 'TMDay')
+    ELSE
+        sys.datepart(dp, arg)::TEXT
+    END
+$BODY$
+STRICT
+LANGUAGE sql IMMUTABLE;
+
 CREATE OR REPLACE VIEW sys.spt_tablecollations_view AS
     SELECT
         o.object_id         AS object_id,
@@ -1243,3 +1277,6 @@ SELECT p.name
   , p.collation
 FROM sys.proc_param_helper() as p;
 GRANT SELECT ON sys.syscolumns TO PUBLIC;
+
+-- Reset search_path to not affect any subsequent scripts
+SELECT set_config('search_path', trim(leading 'sys, ' from current_setting('search_path')), false);
