@@ -1487,7 +1487,9 @@ PrepareRowDescription(TupleDesc typeinfo, List *targetlist, int16 *formats,
 				sendTableName |= col->sendTableName;
 				break;
 			case TDS_SEND_BINARY:
-				SetColMetadataForBinaryType(col, TDS_TYPE_BINARY, atttypmod - 4);
+				/* The default binary data length is 1 when maxLen isn't specified */
+				SetColMetadataForBinaryType(col, TDS_TYPE_BINARY, (atttypmod == -1) ?
+											1 : atttypmod - VARHDRSZ);
 				break;
 			case TDS_SEND_VARBINARY:
 				/* Generate the typmod from hex const input because typmod won't be specified */
