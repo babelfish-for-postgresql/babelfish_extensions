@@ -233,9 +233,10 @@ BEGIN
 		LEFT JOIN pg_attrdef d ON c.oid = d.adrelid AND a.attnum = d.adnum
 		LEFT JOIN pg_collation coll ON coll.oid = a.attcollation
 		WHERE NOT a.attisdropped
+		AND a.attnum > 0
 		-- r = ordinary table, i = index, S = sequence, t = TOAST table, v = view, m = materialized view, c = composite type, f = foreign table, p = partitioned table
 		AND c.relkind IN ('r', 'v', 'm', 'f', 'p')
-		AND s.nspname NOT IN ('information_schema', 'pg_catalog')
+		AND s.nspname NOT IN ('information_schema', 'pg_catalog', 'sys')
 		AND has_schema_privilege(s.oid, 'USAGE')
 		AND has_column_privilege(quote_ident(s.nspname) ||'.'||quote_ident(c.relname), a.attname, 'SELECT,INSERT,UPDATE,REFERENCES');
 END;
