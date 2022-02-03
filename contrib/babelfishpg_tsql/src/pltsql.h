@@ -1691,6 +1691,7 @@ extern bool pltsql_disable_txn_in_triggers;
 
 extern int text_size;
 extern int pltsql_rowcount;
+extern int pltsql_lock_timeout;
 extern Portal pltsql_snapshot_portal;
 extern int pltsql_non_tsql_proc_entry_count;
 extern int pltsql_sys_func_entry_count;

@@ -36,6 +36,7 @@ char* pltsql_version = NULL;
 int   pltsql_datefirst = 7;
 int   pltsql_rowcount = 0;
 char* pltsql_language = NULL;
+int pltsql_lock_timeout = -1;
 
 
 bool	pltsql_xact_abort = false;
@@ -72,6 +73,7 @@ static bool check_showplan_xml (bool *newval, void **extra, GucSource source);
 static void assign_transform_null_equals (bool newval, void *extra);
 static void assign_ansi_defaults (bool newval, void *extra);
 static void assign_language (const char *newval, void *extra);
+static void assign_lock_timeout (int newval, void *extra);
 int escape_hatch_session_settings; /* forward declaration */
 
 static const struct config_enum_entry migration_mode_options[] = {
@@ -393,6 +395,29 @@ static void assign_language (const char *newval, void *extra)
 	}
 }
 
+static void
+assign_lock_timeout(int newval, void *extra)
+{
+	char timeout_str[16];
+	/* PG's lock_timeout guc will take different values depending upon newval:
+	 * newval = INT_MIN to -1: no time-out period (wait forever, PG's lock_timeout = 0)
+	 * newval = 0            : not wait at all and return a message as soon as a lock is
+	 *                         encountered. (no matching setting in PG, so we will set
+	 *                         lock_timeout to smallest possible value = 1ms)
+	 * newval = 1 to INT_MAX : number of milliseconds that will pass before returns a
+	 *                         locking error. (PG's lock_timeout = newval)
+	 */
+
+	if (newval > 0)
+		snprintf(timeout_str, sizeof(timeout_str), "%d", newval);
+	else if (newval == 0)
+		snprintf(timeout_str, sizeof(timeout_str), "%d", 1);
+	else
+		snprintf(timeout_str, sizeof(timeout_str), "%d", 0);
+	SetConfigOption("lock_timeout", timeout_str,
+			                PGC_USERSET, PGC_S_OVERRIDE);
+}
+
 void
 define_escape_hatch_variables(void);
 
@@ -624,6 +649,15 @@ define_custom_variables(void)
 				 PGC_USERSET,
 				 GUC_NOT_IN_SAMPLE | GUC_DISALLOW_IN_FILE | GUC_DISALLOW_IN_AUTO_FILE,
 				 check_rowcount, NULL, NULL);
+
+	DefineCustomIntVariable("babelfishpg_tsql.lock_timeout",
+				 gettext_noop("Specifies the number of milliseconds a statement waits for a lock to be released."),
+				 NULL,
+				 &pltsql_lock_timeout,
+				 -1, INT_MIN, INT_MAX,
+				 PGC_USERSET,
+				 GUC_NOT_IN_SAMPLE | GUC_DISALLOW_IN_FILE | GUC_DISALLOW_IN_AUTO_FILE,
+				 NULL, assign_lock_timeout, NULL);
 
 	DefineCustomStringVariable("babelfishpg_tsql.version",
 				 gettext_noop("Sets the output of @@VERSION variable"),

@@ -492,6 +492,7 @@ LOCAL_SERVICE_NAME:                              L O C A L  UNDERLINE  S E R V I
 LOCATION:                                        L O C A T I O N;
 LOCK:                                            L O C K;
 LOCK_ESCALATION:                                 L O C K  UNDERLINE  E S C A L A T I O N;
+LOCK_TIMEOUT:                                    L O C K  UNDERLINE  T I M E O U T;
 LOG:                                             L O G;
 LOGIN:                                           L O G I N;
 LOOP:                                            L O O P;
