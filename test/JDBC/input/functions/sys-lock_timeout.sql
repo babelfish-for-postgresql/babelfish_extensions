@@ -1,13 +1,42 @@
-SELECT * FROM sys.lock_timeout()
+
+-- Check default value for lock_timeout guc
+SELECT @@lock_timeout;
 GO
 
--- Setting of SET LOCK_TIMEOUT is set at execute or run time and not at parse time
--- Means will continue to display default value of 0 at next transaction
-SET LOCK_TIMEOUT 100 
+-- SET lock_timeout to 2 seconds (2000 ms)
+SET lock_timeout 2000;
+GO
+SELECT @@lock_timeout;
 GO
 
-SELECT @@LOCK_TIMEOUT
+-- SET guc to max value (INT_MAX)
+SET lock_timeout 2147483647;
+GO
+SELECT @@lock_timeout;
 GO
 
-SELECT sys.lock_timeout() 
+-- SET guc to value greater than INT_MAX
+SET lock_timeout 2147483648; -- Shoud throw error
+GO
+
+-- SET guc to min value (INT_MIN)
+SET lock_timeout -2147483648;
+GO
+SELECT @@lock_timeout;
+GO
+
+-- SET guc to value less than INT_MIN
+SET lock_timeout -2147483649; -- Shoud throw error
+GO
+
+-- SET guc to 0
+SET lock_timeout 0;
+GO
+SELECT @@lock_timeout;
+GO
+
+-- RESET guc to -1
+SET lock_timeout -1;
+GO
+SELECT @@lock_timeout;
 GO

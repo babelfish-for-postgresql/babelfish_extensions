@@ -1753,7 +1753,7 @@ STRICT
 AS $$
 declare return_value integer;
 begin
-    return_value := (select s.setting FROM pg_catalog.pg_settings s where name = 'lock_timeout');
+    return_value := (select s.setting FROM pg_catalog.pg_settings s where name = 'babelfishpg_tsql.lock_timeout');
     RETURN return_value;
 EXCEPTION
     WHEN others THEN

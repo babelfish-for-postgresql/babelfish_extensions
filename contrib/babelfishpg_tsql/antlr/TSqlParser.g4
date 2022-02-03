@@ -4492,6 +4492,7 @@ keyword
     | LOCATION
     | LOCK
     | LOCK_ESCALATION
+    | LOCK_TIMEOUT
     | LOG
     | LOGIN
     | LOOP
