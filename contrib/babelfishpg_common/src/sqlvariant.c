@@ -72,6 +72,21 @@
 #define VARIANT_TYPE_DATETIME2      42
 #define VARIANT_TYPE_DATETIMEOFFSET 43
 
+/*
+ * macros to store length of metadata (including metadata for base type) for sqlvariant datatypes.
+ */
+#define VARIANT_TYPE_METALEN_FOR_NUM_DATATYPES 	2	/* for BIT, TINYINT, SMALLINT, INT, BIGINT, REAL, FLOAT, [SMALL]MONEY and UID */
+#define VARIANT_TYPE_METALEN_FOR_CHAR_DATATYPES	9	/* for [N][VAR]CHAR */
+#define VARIANT_TYPE_METALEN_FOR_BIN_DATATYPES 	4	/* for [VAR]BINARY */
+#define VARIANT_TYPE_METALEN_FOR_NUMERIC_DATATYPES	5	/* for NUMERIC */
+#define VARIANT_TYPE_METALEN_FOR_DATE 			2	/* for DATE */
+#define VARIANT_TYPE_METALEN_FOR_SMALLDATETIME 	2	/* for SMALLDATETIME */
+#define VARIANT_TYPE_METALEN_FOR_DATETIME 		2	/* for DATETIME */
+#define VARIANT_TYPE_METALEN_FOR_TIME 			3	/* for TIME */
+#define VARIANT_TYPE_METALEN_FOR_DATETIME2 		3	/* for DATETIME2 */
+#define VARIANT_TYPE_METALEN_FOR_DATETIMEOFFSET	3	/* for DATETIMEOFFSET */
+
+
 /*  Function Registeration  */
 PG_FUNCTION_INFO_V1(sqlvariantin);
 PG_FUNCTION_INFO_V1(sqlvariantout);
@@ -1884,106 +1899,200 @@ extern void
 TdsGetPGbaseType(uint8 variantBaseType, int *pgBaseType, int tempLen,
 					int *dataLen, int *variantHeaderLen)
 {
-    switch (variantBaseType)
-    {
-        case VARIANT_TYPE_BIT:
-            *pgBaseType = BIT_T;
-            *dataLen = tempLen - 2;
-	    break;
-	case VARIANT_TYPE_TINYINT:
-	    *pgBaseType = TINYINT_T;
-	    *dataLen = tempLen - 2;
-	    break;
-        case VARIANT_TYPE_SMALLINT:
-	    *pgBaseType = SMALLINT_T;
-	    *dataLen = tempLen - 2;
-	    break;
-	case VARIANT_TYPE_INT:
-	    *pgBaseType = INT_T;
-	    *dataLen = tempLen - 2;
-	    break;
-	case VARIANT_TYPE_BIGINT:
-	    *pgBaseType = BIGINT_T;
-	    *dataLen = tempLen - 2;
-	    break;
-	case VARIANT_TYPE_REAL:
-	    *pgBaseType = REAL_T;
-	    *dataLen = tempLen - 2;
-	    break;
-	case VARIANT_TYPE_FLOAT:
-            *pgBaseType = FLOAT_T;
-	    *dataLen = tempLen - 2;
-	    break;
-        case VARIANT_TYPE_CHAR:
-	    *pgBaseType = CHAR_T;
-	    *dataLen = tempLen - 5;
-	    break;
-	case VARIANT_TYPE_NCHAR:
-	    *pgBaseType = NCHAR_T;
-	    *dataLen = (tempLen - 9) / 2 + 4;
-	    break;
-	case VARIANT_TYPE_VARCHAR:
-	    *pgBaseType = VARCHAR_T;
-	    *dataLen = tempLen - 5;
-	    break;
-        case VARIANT_TYPE_NVARCHAR:
-            *pgBaseType = NVARCHAR_T;
-            *dataLen = (tempLen - 9) / 2 + 4;
-            break;
-        case VARIANT_TYPE_BINARY:
-            *pgBaseType = BINARY_T;
-            *dataLen = tempLen;
-            break;
-        case VARIANT_TYPE_VARBINARY:
-            *pgBaseType = VARBINARY_T;
-            *dataLen = tempLen;
-            break;
-        case VARIANT_TYPE_DATE:
-            *pgBaseType = DATE_T;
-            *dataLen = tempLen - 2;
-            break;
-        case VARIANT_TYPE_TIME:
-            *pgBaseType = TIME_T;
-            *dataLen = tempLen - 3;
-            break;
-        case VARIANT_TYPE_SMALLDATETIME:
-            *pgBaseType = SMALLDATETIME_T;
-            *dataLen = tempLen - 2;
-            break;
-        case VARIANT_TYPE_DATETIME:
-            *pgBaseType = DATETIME_T;
-            *dataLen = tempLen - 2;
-	    break;
-        case VARIANT_TYPE_DATETIME2:
-            *pgBaseType = DATETIME2_T;
-            *dataLen = tempLen - 3;
-	    break;
-        case VARIANT_TYPE_UNIQUEIDENTIFIER:
-	    *pgBaseType = UNIQUEIDENTIFIER_T;
-	    *dataLen = tempLen - 2;
-	    break;
-	case VARIANT_TYPE_NUMERIC:
-	    *pgBaseType = NUMERIC_T;
-	    *dataLen = tempLen - 5;
-	    break;
-	case VARIANT_TYPE_MONEY:
-	    *pgBaseType = MONEY_T;
-	    *dataLen = tempLen - 2;
-	    break;
-	case VARIANT_TYPE_SMALLMONEY:
-	    *pgBaseType = SMALLMONEY_T;
-	    *dataLen = tempLen - 2;
-	    break;
-        case VARIANT_TYPE_DATETIMEOFFSET:
-	    *pgBaseType = DATETIMEOFFSET_T;
-	    *dataLen = tempLen - 3;
-	    break;
-	default:
-	    elog(ERROR, "%d: datatype not supported in TDS receiver", variantBaseType);
-	    break;
-    }
+	switch (variantBaseType)
+	{
+		case VARIANT_TYPE_BIT:
+			/*
+			 * dataformat: totalLen(4B) + metadata(2B)( baseType(1B) + metadatalen(1B) ) +
+			 * 		data(dataLen)
+			 */
+			*pgBaseType = BIT_T;
+			*dataLen = tempLen - VARIANT_TYPE_METALEN_FOR_NUM_DATATYPES;
+			break;
+		case VARIANT_TYPE_TINYINT:
+			/*
+			 * dataformat: totalLen(4B) + metadata(2B)( baseType(1B) + metadatalen(1B) ) +
+			 * 		data(dataLen)
+			 */
+			*pgBaseType = TINYINT_T;
+			*dataLen = tempLen - VARIANT_TYPE_METALEN_FOR_NUM_DATATYPES;
+			break;
+		case VARIANT_TYPE_SMALLINT:
+			/*
+			 * dataformat: totalLen(4B) + metadata(2B)( baseType(1B) + metadatalen(1B) ) +
+			 * 		data(dataLen)
+			 */
+			*pgBaseType = SMALLINT_T;
+			*dataLen = tempLen - VARIANT_TYPE_METALEN_FOR_NUM_DATATYPES;
+			break;
+		case VARIANT_TYPE_INT:
+			/*
+			 * dataformat: totalLen(4B) + metadata(2B)( baseType(1B) + metadatalen(1B) ) +
+			 * 		data(dataLen)
+			 */
+			*pgBaseType = INT_T;
+			*dataLen = tempLen - VARIANT_TYPE_METALEN_FOR_NUM_DATATYPES;
+			break;
+		case VARIANT_TYPE_BIGINT:
+			/*
+			 * dataformat: totalLen(4B) + metadata(2B)( baseType(1B) + metadatalen(1B) ) +
+			 * 		data(dataLen)
+			 */
+			*pgBaseType = BIGINT_T;
+			*dataLen = tempLen - VARIANT_TYPE_METALEN_FOR_NUM_DATATYPES;
+			break;
+		case VARIANT_TYPE_REAL:
+			/*
+			 * dataformat: totalLen(4B) + metadata(2B)( baseType(1B) + metadatalen(1B) ) +
+			 * 		data(dataLen)
+			 */
+			*pgBaseType = REAL_T;
+			*dataLen = tempLen - VARIANT_TYPE_METALEN_FOR_NUM_DATATYPES;
+			break;
+		case VARIANT_TYPE_FLOAT:
+			/*
+			 * dataformat: totalLen(4B) + metadata(2B)( baseType(1B) + metadatalen(1B) ) +
+			 * 		data(dataLen)
+			 */
+			*pgBaseType = FLOAT_T;
+			*dataLen = tempLen - VARIANT_TYPE_METALEN_FOR_NUM_DATATYPES;
+			break;
+		case VARIANT_TYPE_CHAR:
+			/*
+			 * dataformat: totalLen(4B) + metadata(9B)( baseType(1B) + metadatalen(1B) +
+			 *	encodingLen(5B) + dataLen(2B) ) + data(dataLen)
+			 */
+			*pgBaseType = CHAR_T;
+			*dataLen = tempLen - VARIANT_TYPE_METALEN_FOR_CHAR_DATATYPES;
+			break;
+		case VARIANT_TYPE_NCHAR:
+			*pgBaseType = NCHAR_T;
+			/*
+			 * dataformat: totalLen(4B) + metadata(9B)( baseType(1B) + metadatalen(1B) +
+			 *	encodingLen(5B) + dataLen(2B) ) + data(dataLen)
+			 * Data is in UTF16 format.
+			 */
+			*dataLen = (tempLen - VARIANT_TYPE_METALEN_FOR_CHAR_DATATYPES) / 2;
+			break;
+		case VARIANT_TYPE_VARCHAR:
+			/*
+			 * dataformat: totalLen(4B) + metadata(9B)( baseType(1B) + metadatalen(1B) +
+			 *	encodingLen(5B) + dataLen(2B) ) + data(dataLen)
+			 */
+			*pgBaseType = VARCHAR_T;
+			*dataLen = tempLen - VARIANT_TYPE_METALEN_FOR_CHAR_DATATYPES;
+			break;
+		case VARIANT_TYPE_NVARCHAR:
+			*pgBaseType = NVARCHAR_T;
+			/*
+			 * dataformat: totalLen(4B) + metadata(9B)( baseType(1B) + metadatalen(1B) +
+			 *		encodingLen(5B) + dataLen(2B) ) + data(dataLen)
+			 * Data is in UTF16 format.
+			 */
+			*dataLen = (tempLen - VARIANT_TYPE_METALEN_FOR_CHAR_DATATYPES) / 2;
+			break;
+		case VARIANT_TYPE_BINARY:
+			/*
+			 * dataformat : totalLen(4B) + metadata(4B)( baseType(1B) + metadatalen(1B) +
+			 *      dataLen(2B) ) + data(dataLen)
+			 */
+			*pgBaseType = BINARY_T;
+			*dataLen = tempLen - VARIANT_TYPE_METALEN_FOR_BIN_DATATYPES;
+			break;
+		case VARIANT_TYPE_VARBINARY:
+			/*
+			 * dataformat : totalLen(4B) + metadata(4B)( baseType(1B) + metadatalen(1B) +
+			 *      dataLen(2B) ) + data(dataLen)
+			 */
+			*pgBaseType = VARBINARY_T;
+			*dataLen = tempLen - VARIANT_TYPE_METALEN_FOR_BIN_DATATYPES;
+			break;
+		case VARIANT_TYPE_DATE:
+			/*
+			 * dataformat : totalLen(4B) + metadata(2B)( baseType(1B) + metadatalen(1B) ) +
+			 *              data(3B)
+			 */
+			*pgBaseType = DATE_T;
+			*dataLen = tempLen - VARIANT_TYPE_METALEN_FOR_DATE;
+			break;
+		case VARIANT_TYPE_TIME:
+			/*
+			 * dataformat : totalLen(4B) + metadata(3B)( baseType(1B) + metadatalen(1B) +
+			 *              scale(1B) ) + data(3B-5B)
+			 */
+			*pgBaseType = TIME_T;
+			*dataLen = tempLen - VARIANT_TYPE_METALEN_FOR_TIME;
+			break;
+		case VARIANT_TYPE_SMALLDATETIME:
+			/*
+			 * dataformat : totalLen(4B) + metadata(2B)( baseType(1B) + metadatalen(1B) ) +
+			 *              data(4B)
+			 */
+			*pgBaseType = SMALLDATETIME_T;
+			*dataLen = tempLen - VARIANT_TYPE_METALEN_FOR_SMALLDATETIME;
+			break;
+		case VARIANT_TYPE_DATETIME:
+			/*
+			 * dataformat : totalLen(4B) + metadata(2B)( baseType(1B) + metadatalen(1B) ) +
+			 *              data(8B)
+			 */
+			*pgBaseType = DATETIME_T;
+			*dataLen = tempLen - VARIANT_TYPE_METALEN_FOR_DATETIME;
+			break;
+		case VARIANT_TYPE_DATETIME2:
+			/*
+			 * dataformat : totalLen(4B) + metadata(3B)( baseType(1B) + metadatalen(1B) +
+			 *              scale(1B) ) + data(6B-8B)
+			 */
+			*pgBaseType = DATETIME2_T;
+			*dataLen = tempLen - VARIANT_TYPE_METALEN_FOR_DATETIME2;
+			break;
+		case VARIANT_TYPE_UNIQUEIDENTIFIER:
+			/*
+			 * dataformat: totalLen(4B) + metadata(2B)( baseType(1B) + metadatalen(1B) ) +
+			 * 		data(dataLen)
+			 */
+			*pgBaseType = UNIQUEIDENTIFIER_T;
+			*dataLen = tempLen - VARIANT_TYPE_METALEN_FOR_NUM_DATATYPES;
+			break;
+		case VARIANT_TYPE_NUMERIC:
+			/*
+			 * dataformat : totalLen(4B) + metdata(5B)( baseType(1B) + metadatalen(1B) +
+			 * 		precision(1B) + scale(1B) + sign(1B) ) + data(dataLen)
+			 */
+			*pgBaseType = NUMERIC_T;
+			*dataLen = tempLen - VARIANT_TYPE_METALEN_FOR_NUMERIC_DATATYPES;
+			break;
+		case VARIANT_TYPE_MONEY:
+			/*
+			 * dataformat: totalLen(4B) + metadata(2B)( baseType(1B) + metadatalen(1B) ) +
+			 * 		data(dataLen)
+			 */
+			*pgBaseType = MONEY_T;
+			*dataLen = tempLen - VARIANT_TYPE_METALEN_FOR_NUM_DATATYPES;
+			break;
+		case VARIANT_TYPE_SMALLMONEY:
+			/*
+			 * dataformat: totalLen(4B) + metadata(2B)( baseType(1B) + metadatalen(1B) ) +
+			 * 		data(dataLen)
+			 */
+			*pgBaseType = SMALLMONEY_T;
+			*dataLen = tempLen - VARIANT_TYPE_METALEN_FOR_NUM_DATATYPES;
+			break;
+		case VARIANT_TYPE_DATETIMEOFFSET:
+			/*
+			 * dataformat : totalLen(4B) + metadata(3B)(baseType(1B) + metadatalen(1B) +
+			 *              scale(1B)) + data(8B-10B)
+			 */
+			*pgBaseType = DATETIMEOFFSET_T;
+			*dataLen = tempLen - VARIANT_TYPE_METALEN_FOR_DATETIMEOFFSET;
+			break;
+		default:
+			elog(ERROR, "0x%02X : datatype as basetype for SQL_VARIANT is not supported", variantBaseType);
+			break;
+	}
 
-    *variantHeaderLen = type_infos[*pgBaseType].svhdr_size;
+	*variantHeaderLen = type_infos[*pgBaseType].svhdr_size;
 }
 
 

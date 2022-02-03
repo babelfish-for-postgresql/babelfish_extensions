@@ -56,6 +56,34 @@ do { \
 				finfo->ttmbasetypeid : finfo->ttmtypeid; \
 } while(0);
 
+/*
+ * macros to store length of metadata (including metadata for base type) for sqlvariant datatypes.
+ */
+#define VARIANT_TYPE_METALEN_FOR_NUM_DATATYPES 	2	/* for BIT, TINYINT, SMALLINT, INT, BIGINT, REAL, FLOAT, [SMALL]MONEY and UID */
+#define VARIANT_TYPE_METALEN_FOR_CHAR_DATATYPES	9	/* for [N][VAR]CHAR */
+#define VARIANT_TYPE_METALEN_FOR_BIN_DATATYPES 	4	/* for [VAR]BINARY */
+#define VARIANT_TYPE_METALEN_FOR_NUMERIC_DATATYPES	5	/* for NUMERIC */
+#define VARIANT_TYPE_METALEN_FOR_DATE 			2	/* for DATE */
+#define VARIANT_TYPE_METALEN_FOR_SMALLDATETIME 	2	/* for SMALLDATETIME */
+#define VARIANT_TYPE_METALEN_FOR_DATETIME 		2	/* for DATETIME */
+#define VARIANT_TYPE_METALEN_FOR_TIME 			3	/* for TIME */
+#define VARIANT_TYPE_METALEN_FOR_DATETIME2 		3	/* for DATETIME2 */
+#define VARIANT_TYPE_METALEN_FOR_DATETIMEOFFSET	3	/* for DATETIMEOFFSET */
+
+/*
+ * macros to store length of metadata for base type of sqlvariant datatype.
+ */
+#define VARIANT_TYPE_BASE_METALEN_FOR_NUM_DATATYPES	0	/* for BIT, TINYINT, SMALLINT, INT, BIGINT, REAL, FLOAT, [SMALL]MONEY and UID */
+#define VARIANT_TYPE_BASE_METALEN_FOR_CHAR_DATATYPES	7	/* for [N][VAR]CHAR */
+#define VARIANT_TYPE_BASE_METALEN_FOR_BIN_DATATYPES	2	/* for [VAR]BINARY */
+#define VARIANT_TYPE_BASE_METALEN_FOR_NUMERIC_DATATYPES	2	/* for NUMERIC */
+#define VARIANT_TYPE_BASE_METALEN_FOR_DATE	0	/* for DATE */
+#define VARIANT_TYPE_BASE_METALEN_FOR_SMALLDATETIME	0	/* for SMALLDATETIME */
+#define VARIANT_TYPE_BASE_METALEN_FOR_DATETIME	0	/* for DATETIME */
+#define VARIANT_TYPE_BASE_METALEN_FOR_TIME	1	/* for TIME */
+#define VARIANT_TYPE_BASE_METALEN_FOR_DATETIME2	1	/* for DATETIME2 */
+#define VARIANT_TYPE_BASE_METALEN_FOR_DATETIMEOFFSET	1	/* for DATETIMEOFFSET */
+
 static HTAB	   *functionInfoCacheByOid = NULL;
 static HTAB	   *functionInfoCacheByTdsId = NULL;
 
@@ -2926,23 +2954,50 @@ TdsTypeSqlVariantToDatum(StringInfo buf)
 	pltsql_plugin_handler_ptr->sqlvariant_get_pg_base_type(variantBaseType, &pgBaseType,
 							tempLen, &dataLen, &variantHeaderLen);
 
-	if (variantBaseType == VARIANT_TYPE_NCHAR ||
-	    variantBaseType == VARIANT_TYPE_NVARCHAR)
-	{
-		initStringInfo(&strbuf);
-		TdsUTF16toUTF8StringInfo(&strbuf, &buf->data[9], tempLen - 9);
-	}
+	/*
+	 * Header formats:
+	 *
+	 *	3-byte Header (for datetime series types with typmod):
+	 *		1. One byte varlena Header
+	 *		2. One byte type code (5bit) + MD ver (3bit)
+	 *		3. One byte scale
+	 *
+	 *	2-byte Header (for fixed length types without typmod):
+	 *		1. One byte varlena Header
+	 * 		2. One byte type code (5bit) + MD ver (3bit)
+	 *
+	 *	4-byte Header (for decimal type):
+	 *		1. One byte varlena Header
+	 *		2. One byte type code (5bit) + MD ver (3bit)
+	 *		3. Two bytes typmod (encoded precision and scale)
+	 *
+	 *	Header for binary types:
+	 *		1. 1 or 4 bytes varlena header
+	 *		2. One byte type code ( 5bit ) + MD ver (3bit)
+	 *		3. 2 Bytes max length
+	 *
+	 *	Header for string types:
+	 *		1. 1 or 4 bytes varlena Header
+	 *		2. One byte type code (5bit) + MD ver (3bit)
+	 *		3. Two bytes for max length
+	 * 		4. Two bytes for collation code
+	 */
 
 	resLen = dataLen + variantHeaderLen;
+
 	/* We need an extra varlena header for varlena datatypes */
-	if (variantBaseType == VARIANT_TYPE_CHAR || variantBaseType == VARIANT_TYPE_NCHAR ||
-		variantBaseType == VARIANT_TYPE_VARCHAR || variantBaseType == VARIANT_TYPE_NVARCHAR ||
-		variantBaseType == VARIANT_TYPE_BINARY || variantBaseType == VARIANT_TYPE_VARBINARY ||
+	if (variantBaseType == VARIANT_TYPE_CHAR || 
+		variantBaseType == VARIANT_TYPE_NCHAR ||
+		variantBaseType == VARIANT_TYPE_VARCHAR || 
+		variantBaseType == VARIANT_TYPE_NVARCHAR ||
+		variantBaseType == VARIANT_TYPE_BINARY || 
+		variantBaseType == VARIANT_TYPE_VARBINARY ||
 		variantBaseType == VARIANT_TYPE_NUMERIC)
 	{
 		resLen += VARHDRSZ;
 	}
 
+	/* common varlena header for SQL_VARIANT datatype */
 	if (resLen + VARHDRSZ_SHORT <= VARATT_SHORT_MAX)
 	{
 		resLen += VARHDRSZ_SHORT;
@@ -2956,50 +3011,89 @@ TdsTypeSqlVariantToDatum(StringInfo buf)
 		SET_VARSIZE(result, resLen);
 	}
 
-	if (variantBaseType == VARIANT_TYPE_CHAR || variantBaseType == VARIANT_TYPE_NCHAR ||
-	    variantBaseType == VARIANT_TYPE_VARCHAR || variantBaseType == VARIANT_TYPE_NVARCHAR)
+	if (variantBaseType == VARIANT_TYPE_CHAR || 
+		variantBaseType == VARIANT_TYPE_NCHAR ||
+	    variantBaseType == VARIANT_TYPE_VARCHAR || 
+	    variantBaseType == VARIANT_TYPE_NVARCHAR)
 	{
 		SET_VARSIZE(READ_DATA(result, variantHeaderLen), VARHDRSZ + dataLen);
 		memcpy(&maxLen, &buf->data[7], 2);
 		if (variantBaseType == VARIANT_TYPE_NCHAR || variantBaseType == VARIANT_TYPE_NVARCHAR)
 		{
+			/*
+			 * dataformat: totalLen(4B) + metadata(9B)( baseType(1B) + metadatalen(1B) +
+			 *	encodingLen(5B) + dataLen(2B) ) + data(dataLen)
+			 * Data is in UTF16 format.
+			 */
+			if (variantBaseType == VARIANT_TYPE_NCHAR ||
+				variantBaseType == VARIANT_TYPE_NVARCHAR)
+			{
+				initStringInfo(&strbuf);
+				TdsUTF16toUTF8StringInfo(&strbuf, &buf->data[VARIANT_TYPE_METALEN_FOR_CHAR_DATATYPES], tempLen - VARIANT_TYPE_METALEN_FOR_CHAR_DATATYPES);
+			}
+
 			memcpy(VARDATA(READ_DATA(result, variantHeaderLen)), strbuf.data, dataLen);
 		}
 		else
 		{
-			memcpy(VARDATA(READ_DATA(result, variantHeaderLen)), &buf->data[9], dataLen);
+			/*
+			 * dataformat: totalLen(4B) + metadata(9B)( baseType(1B) + metadatalen(1B) +
+			 *	encodingLen(5B) + dataLen(2B) ) + data(dataLen)
+			 */
+			memcpy(VARDATA(READ_DATA(result, variantHeaderLen)), &buf->data[VARIANT_TYPE_METALEN_FOR_CHAR_DATATYPES], dataLen);
 		}
 	}
-	else if (variantBaseType == VARIANT_TYPE_BINARY || variantBaseType == VARIANT_TYPE_VARBINARY)
+	else if (variantBaseType == VARIANT_TYPE_BINARY || 
+			variantBaseType == VARIANT_TYPE_VARBINARY)
 	{
+		/*
+		 * dataformat : totalLen(4B) + metadata(4B)( baseType(1B) + metadatalen(1B) +
+		 *      dataLen(2B) ) + data(dataLen)
+		 */
 		SET_VARSIZE(READ_DATA(result, variantHeaderLen), VARHDRSZ + dataLen);
 		memcpy(&maxLen, &buf->data[2], 2);
-		memcpy(VARDATA(READ_DATA(result, variantHeaderLen)), &buf->data[0], dataLen);
+		memcpy(VARDATA(READ_DATA(result, variantHeaderLen)), &buf->data[VARIANT_TYPE_METALEN_FOR_BIN_DATATYPES], dataLen);
 	}
 	else if (variantBaseType == VARIANT_TYPE_DATE)
 	{
+		/*
+		 * dataformat : totalLen(4B) + metadata(2B)( baseType(1B) + metadatalen(1B) ) +
+		 *              data(3B)
+		 */
 		memset(&date, 0, sizeof(date));
-		memcpy(&date, &buf->data[2], 3);
+		memcpy(&date, &buf->data[VARIANT_TYPE_METALEN_FOR_DATE], 3);
 		TdsCheckDateValidity(date);
 		TdsTimeGetDatumFromDays(date, &dateval);
 		memcpy(READ_DATA(result, variantHeaderLen), &dateval, sizeof(date));
 	}
 	else if (variantBaseType == VARIANT_TYPE_SMALLDATETIME)
 	{
-		memcpy(&numDays, &buf->data[2], 2);
+		/*
+		 * dataformat : totalLen(4B) + metadata(2B)( baseType(1B) + metadatalen(1B) ) +
+		 *              data(4B)
+		 */
+		memcpy(&numDays, &buf->data[VARIANT_TYPE_METALEN_FOR_SMALLDATETIME], 2);
 		memcpy(&numMins, &buf->data[4], 2);
 		TdsTimeGetDatumFromSmalldatetime(numDays, numMins, &timestamp);
 		memcpy(READ_DATA(result, variantHeaderLen), &timestamp, sizeof(timestamp));
 	}
 	else if (variantBaseType == VARIANT_TYPE_DATETIME)
 	{
-		memcpy(&numDays32, &buf->data[2], 4);
+		/*
+		 * dataformat : totalLen(4B) + metadata(2B)( baseType(1B) + metadatalen(1B) ) +
+		 *              data(8B)
+		 */
+		memcpy(&numDays32, &buf->data[VARIANT_TYPE_METALEN_FOR_DATETIME], 4);
 		memcpy(&numTicks, &buf->data[6], 4);
 		TdsTimeGetDatumFromDatetime(numDays32, numTicks, &timestamp);
 		memcpy(READ_DATA(result, variantHeaderLen), &timestamp, sizeof(timestamp));
 	}
 	else if (variantBaseType == VARIANT_TYPE_TIME)
 	{
+		/*
+		 * dataformat : totalLen(4B) + metadata(3B)( baseType(1B) + metadatalen(1B) +
+		 *              scale(1B) ) + data(3B-5B)
+		 */
 		scale = buf->data[2];
 		temp = scale;	
 		/* postgres limitation */
@@ -3014,7 +3108,7 @@ TdsTypeSqlVariantToDatum(StringInfo buf)
 			dataLen = 5;
 
 		memset(&numMicro, 0, sizeof(numMicro));
-		memcpy(&numMicro, &buf->data[3], dataLen);
+		memcpy(&numMicro, &buf->data[VARIANT_TYPE_METALEN_FOR_TIME], dataLen);
 
 		if (temp == 7 || temp == 0xff)
 			numMicro /= 10;
@@ -3029,6 +3123,10 @@ TdsTypeSqlVariantToDatum(StringInfo buf)
 	}
 	else if (variantBaseType == VARIANT_TYPE_DATETIME2)
 	{
+		/*
+		 * dataformat : totalLen(4B) + metadata(3B)( baseType(1B) + metadatalen(1B) +
+		 *              scale(1B) ) + data(6B-8B)
+		 */
 		scale = buf->data[2];
 	
 		/* postgres limitation */
@@ -3044,13 +3142,17 @@ TdsTypeSqlVariantToDatum(StringInfo buf)
 		
 		memset(&numDays32, 0, sizeof(numDays32));
 		memset(&numMicro, 0, sizeof(numMicro));
-		memcpy(&numDays32, &buf->data[3], 3);
+		memcpy(&numDays32, &buf->data[VARIANT_TYPE_METALEN_FOR_DATETIME2], 3);
 		memcpy(&numMicro, &buf->data[6], dataLen - 3);
 		TdsGetTimestampFromDayTime(numDays32, numMicro, 0, &timestamp, scale);
 		memcpy(READ_DATA(result, variantHeaderLen), &timestamp, sizeof(timestamp));
 	}
 	else if (variantBaseType == VARIANT_TYPE_DATETIMEOFFSET)
 	{
+		/*
+		 * dataformat : totalLen(4B) + metadata(3B)(baseType(1B) + metadatalen(1B) +
+		 *              scale(1B)) + data(8B-10B)
+		 */
 		scale = buf->data[2];
 	
 		/* postgres limitation */
@@ -3079,8 +3181,12 @@ TdsTypeSqlVariantToDatum(StringInfo buf)
 		tdt->tsql_tz = timezone;
 		memcpy(READ_DATA(result, variantHeaderLen), tdt, DATETIMEOFFSET_LEN);
 	}
-        else if (variantBaseType == VARIANT_TYPE_NUMERIC)
+	else if (variantBaseType == VARIANT_TYPE_NUMERIC)
 	{
+		/*
+		 * dataformat : totalLen(4B) + metdata(5B)( baseType(1B) + metadatalen(1B) +
+		 * 		precision(1B) + scale(1B) + sign(1B) ) + data(dataLen)
+		 */
 		SET_VARSIZE(READ_DATA(result, variantHeaderLen), VARHDRSZ + dataLen);
 		precision = buf->data[2];
 		scale = buf->data[3];
@@ -3088,7 +3194,7 @@ TdsTypeSqlVariantToDatum(StringInfo buf)
 		tempScale = scale;
 
 		dataLen = 16;
-		memcpy(&n128, &buf->data[5], dataLen);
+		memcpy(&n128, &buf->data[VARIANT_TYPE_METALEN_FOR_NUMERIC_DATATYPES], dataLen);
 		num = LEtoh128(n128);
 		decString = (char *)palloc0(sizeof(char) * 40);
 		if (num != 0)
@@ -3123,37 +3229,38 @@ TdsTypeSqlVariantToDatum(StringInfo buf)
 		res = TdsSetVarFromStrWrapper(decString);
 		memcpy(VARDATA(READ_DATA(result, variantHeaderLen)), &res, sizeof(Numeric));
 	}
-        else
+	else
 	{
 		/*
 		 * For all other fixed length datatypes
 		 */
-		memcpy(READ_DATA(result, variantHeaderLen), &buf->data[2], dataLen);
-	}
+		memcpy(READ_DATA(result, variantHeaderLen), &buf->data[VARIANT_TYPE_METALEN_FOR_NUM_DATATYPES], dataLen);
 
-	if (variantBaseType == VARIANT_TYPE_MONEY)
-	{
-		/*
-		 * swap positions of 2 nibbles for money type
-		 * to match SQL behaviour
-		 */
-		for (i = 0; i < 4; i++)
-			SwapByte(READ_DATA(result, variantHeaderLen), i, i + 4);
-	}
-
-	if (variantBaseType == VARIANT_TYPE_UNIQUEIDENTIFIER)
-	{
-		/* SWAP to match TSQL behaviour */
-		SwapByte(READ_DATA(result, variantHeaderLen), 0, 3);
-		SwapByte(READ_DATA(result, variantHeaderLen), 1, 2);
-		SwapByte(READ_DATA(result, variantHeaderLen), 4, 5);
-		SwapByte(READ_DATA(result, variantHeaderLen), 6, 7);
+		if (variantBaseType == VARIANT_TYPE_MONEY)
+		{
+			/*
+			 * swap positions of 2 nibbles for money type
+			 * to match SQL behaviour
+			 */
+			for (i = 0; i < 4; i++)
+				SwapByte(READ_DATA(result, variantHeaderLen), i, i + 4);
+		}
+		else if (variantBaseType == VARIANT_TYPE_UNIQUEIDENTIFIER)
+		{
+			/* SWAP to match TSQL behaviour */
+			SwapByte(READ_DATA(result, variantHeaderLen), 0, 3);
+			SwapByte(READ_DATA(result, variantHeaderLen), 1, 2);
+			SwapByte(READ_DATA(result, variantHeaderLen), 4, 5);
+			SwapByte(READ_DATA(result, variantHeaderLen), 6, 7);
+		}
 	}
 
 	pltsql_plugin_handler_ptr->sqlvariant_set_metadata(result,
 					pgBaseType, scale, precision, maxLen);
 
 	buf->cursor += tempLen;
+
+	pfree(tdt);
 	PG_RETURN_BYTEA_P(result);
 }
 
@@ -3162,8 +3269,7 @@ TdsSendTypeSqlvariant(FmgrInfo *finfo, Datum value, void *vMetaData)
 {
 	int		rc = EOF, variantBaseType = 0;
 	uint8_t		pgBaseType = 0;
-	int		dataLen = 0, totalLen = 0, maxLen = 0;
-	int		metadataLen = 0, variantHeaderLen = 0;
+	int		dataLen = 0, totalLen = 0, maxLen = 0, variantHeaderLen = 0;
 	bytea		*vlena = DatumGetByteaPCopy(value);
 	char		*buf = VARDATA(vlena), *decString = NULL, *out = NULL;
 	bool		isBaseNum = false, isBaseChar = false;
@@ -3192,40 +3298,6 @@ TdsSendTypeSqlvariant(FmgrInfo *finfo, Datum value, void *vMetaData)
 	pltsql_plugin_handler_ptr->sqlvariant_get_variant_base_type(pgBaseType,
 				 &variantBaseType, &isBaseNum, &isBaseChar,
 				 &isBaseDec, &isBaseBin, &isBaseDate, &variantHeaderLen);
-
-	if (variantBaseType == VARIANT_TYPE_NUMERIC)
-	{
-		dataLen = VARSIZE_ANY_EXHDR(vlena) - variantHeaderLen;
-		buf += variantHeaderLen;
-		dataLen = 16;
-
-		out = OutputFunctionCall(finfo, value);
-	
-		if (out && out[0] == '-')
-		{
-			sign = 0;
-			out++;
-		}
-		decString = (char *)palloc(sizeof(char) * (strlen(out) + 1));
-		precision = 0, scale = -1;
-		while (out && *out)
-		{
-			if (*out == '.')
-			{
-				out++;
-				scale = 0;
-				continue;
-			}
-			decString[precision++] = *out;
-			out++;
-			if (scale >= 0)
-				scale++;
-		}
-		if (scale == -1)
-			scale = 0;
-		decString[precision] = '\0';
-		num = StringToInteger(decString);
-	}
 
 	dataLen = VARSIZE_ANY_EXHDR(vlena) - variantHeaderLen;
 	buf += variantHeaderLen;
@@ -3261,10 +3333,10 @@ TdsSendTypeSqlvariant(FmgrInfo *finfo, Datum value, void *vMetaData)
 			SwapByte(buf, 6, 7);
 		}
 
-		totalLen = dataLen + 2;
+		totalLen = dataLen + VARIANT_TYPE_METALEN_FOR_NUM_DATATYPES;
 		rc = TdsPutUInt32LE(totalLen);
 		rc |= TdsPutInt8(variantBaseType);
-		rc |= TdsPutInt8(metadataLen);
+		rc |= TdsPutInt8(VARIANT_TYPE_BASE_METALEN_FOR_NUM_DATATYPES);
 		rc |= TdsPutbytes(buf, dataLen);
 	}
 	else if (isBaseChar)
@@ -3273,20 +3345,31 @@ TdsSendTypeSqlvariant(FmgrInfo *finfo, Datum value, void *vMetaData)
 		 * dataformat: totalLen(4B) + baseType(1B) + metadatalen(1B) +
 		 *		encodingLen(5B) + dataLen(2B) + data(dataLen)
 		 */
-		dataLen -= 4;
+		int actualDataLen = 0;	 /* Number of bytes that would be needed to store given string in given encoding. */
+		char *destBuf = NULL;
+		dataLen -= VARHDRSZ;
 		if (variantBaseType == VARIANT_TYPE_NCHAR ||
 		    variantBaseType == VARIANT_TYPE_NVARCHAR)
 		{
 			initStringInfo(&strbuf);
-        		TdsUTF8toUTF16StringInfo(&strbuf, buf + 4, dataLen);
-			dataLen *= 2;
+			TdsUTF8toUTF16StringInfo(&strbuf, buf + VARHDRSZ, dataLen);
+			actualDataLen = dataLen * 2;
+		}
+		else
+		{
+			/* 
+			 * TODO: [BABEL-1069] Remove collation related hardcoding 
+			 * from sql_variant sender for char class basetypes
+			 */
+			destBuf = server_to_any(buf + VARHDRSZ, dataLen, PG_WIN1252);
+			actualDataLen = strlen(destBuf);
 		}
 
-		totalLen = dataLen + 9;
-		metadataLen = 7;
+		totalLen = actualDataLen + VARIANT_TYPE_METALEN_FOR_CHAR_DATATYPES;
+
 		rc = TdsPutUInt32LE(totalLen);
 		rc |= TdsPutInt8(variantBaseType);
-		rc |= TdsPutInt8(metadataLen);
+		rc |= TdsPutInt8(VARIANT_TYPE_BASE_METALEN_FOR_CHAR_DATATYPES);
 		/*
 		 * 5B of fixed collation
 		 * TODO: [BABEL-1069] Remove collation related hardcoding 
@@ -3298,13 +3381,16 @@ TdsSendTypeSqlvariant(FmgrInfo *finfo, Datum value, void *vMetaData)
 		rc |= TdsPutInt8(0);
 		rc |= TdsPutInt8(52);
 
-		rc |= TdsPutUInt16LE(dataLen);
+		rc |= TdsPutUInt16LE(actualDataLen);
 
 		if (variantBaseType == VARIANT_TYPE_NCHAR ||
 		    variantBaseType == VARIANT_TYPE_NVARCHAR)
-			rc |= TdsPutbytes(strbuf.data, dataLen);
+			rc |= TdsPutbytes(strbuf.data, actualDataLen);
 		else	
-			rc |= TdsPutbytes(buf + 4, dataLen);
+			rc |= TdsPutbytes(destBuf, actualDataLen);
+
+		if (destBuf)
+			pfree(destBuf);
 	}
 	else if (isBaseBin)
 	{
@@ -3312,14 +3398,14 @@ TdsSendTypeSqlvariant(FmgrInfo *finfo, Datum value, void *vMetaData)
 		 * dataformat : totalLen(4B) + baseType(1B) + metadatalen(1B) +
 		 * 		dataLen(2B) + data(dataLen)
 		 */
-		totalLen = dataLen;
-		metadataLen = 2;
+		dataLen = dataLen - VARHDRSZ;
+		totalLen = dataLen + VARIANT_TYPE_METALEN_FOR_BIN_DATATYPES;
 
 		rc = TdsPutUInt32LE(totalLen);
 		rc |= TdsPutInt8(variantBaseType);
-		rc |= TdsPutInt8(metadataLen);
+		rc |= TdsPutInt8(VARIANT_TYPE_BASE_METALEN_FOR_BIN_DATATYPES);
 		rc |= TdsPutUInt16LE(maxLen);
-		rc |= TdsPutbytes(buf + 4, maxLen);
+		rc |= TdsPutbytes(buf + VARHDRSZ, dataLen);
 	}
 	else if (isBaseDec)
 	{
@@ -3328,11 +3414,37 @@ TdsSendTypeSqlvariant(FmgrInfo *finfo, Datum value, void *vMetaData)
 		 * 		precision(1B) + scale(1B) + sign(1B) + data(dataLen)
 		 */
 		dataLen = 16;
-		totalLen = dataLen + 5;
-		metadataLen = 2;
+		totalLen = dataLen + VARIANT_TYPE_METALEN_FOR_NUMERIC_DATATYPES;
+
+		out = OutputFunctionCall(finfo, value);
+		if (out && out[0] == '-')
+		{
+			sign = 0;
+			out++;
+		}
+		decString = (char *)palloc(sizeof(char) * (strlen(out) + 1));
+		precision = 0, scale = -1;
+		while (out && *out)
+		{
+			if (*out == '.')
+			{
+				out++;
+				scale = 0;
+				continue;
+			}
+			decString[precision++] = *out;
+			out++;
+			if (scale >= 0)
+				scale++;
+		}
+		if (scale == -1)
+			scale = 0;
+		decString[precision] = '\0';
+		num = StringToInteger(decString);
+
 		rc = TdsPutUInt32LE(totalLen);
 		rc |= TdsPutInt8(variantBaseType);
-		rc |= TdsPutInt8(metadataLen);
+		rc |= TdsPutInt8(VARIANT_TYPE_BASE_METALEN_FOR_NUMERIC_DATATYPES);
 		rc |= TdsPutInt8(precision);
 		rc |= TdsPutInt8(scale);
 		rc |= TdsPutInt8(sign);
@@ -3351,10 +3463,10 @@ TdsSendTypeSqlvariant(FmgrInfo *finfo, Datum value, void *vMetaData)
 			memcpy(&dateval, buf, sizeof(dateval));
 			numDays = TdsDayDifference(dateval);
 			dataLen = 3;
-			totalLen = dataLen + 2;
+			totalLen = dataLen + VARIANT_TYPE_METALEN_FOR_DATE;
 			rc = TdsPutUInt32LE(totalLen);
 			rc |= TdsPutInt8(variantBaseType);
-			rc |= TdsPutInt8(metadataLen);
+			rc |= TdsPutInt8(VARIANT_TYPE_BASE_METALEN_FOR_DATE);
 			rc |= TdsPutDate(numDays);
 		}
 		/*
@@ -3365,11 +3477,11 @@ TdsSendTypeSqlvariant(FmgrInfo *finfo, Datum value, void *vMetaData)
 		{
 			memcpy(&timestamp, buf, sizeof(timestamp));
 			dataLen = 4;
-			totalLen = dataLen + 2;		
+			totalLen = dataLen + VARIANT_TYPE_METALEN_FOR_SMALLDATETIME;		
 			TdsTimeDifferenceSmalldatetime(timestamp, &numDays16, &numMins);
 			rc = TdsPutUInt32LE(totalLen);
 			rc |= TdsPutInt8(variantBaseType);
-			rc |= TdsPutInt8(metadataLen);
+			rc |= TdsPutInt8(VARIANT_TYPE_BASE_METALEN_FOR_SMALLDATETIME);
 			rc |= TdsPutUInt16LE(numDays16);
 			rc |= TdsPutUInt16LE(numMins);
 		}
@@ -3382,10 +3494,10 @@ TdsSendTypeSqlvariant(FmgrInfo *finfo, Datum value, void *vMetaData)
 			memcpy(&timestamp, buf, dataLen);
 			TdsTimeDifferenceDatetime(timestamp, &numDays, &numTicks);
 			dataLen = 8;
-			totalLen = dataLen + 2;
+			totalLen = dataLen + VARIANT_TYPE_METALEN_FOR_DATETIME;
 			rc = TdsPutUInt32LE(totalLen);
 			rc |= TdsPutInt8(variantBaseType);
-			rc |= TdsPutInt8(metadataLen);
+			rc |= TdsPutInt8(VARIANT_TYPE_BASE_METALEN_FOR_DATETIME);
 			rc |= TdsPutUInt32LE(numDays);
 			rc |= TdsPutUInt32LE(numTicks);
 		}
@@ -3404,8 +3516,7 @@ TdsSendTypeSqlvariant(FmgrInfo *finfo, Datum value, void *vMetaData)
 				dataLen = 4;
 			else if (scale >= 5 && scale <= 7)
 				dataLen = 5;
-			
-			metadataLen = 1;
+
 			memcpy(&numMicro, buf, sizeof(numMicro));
 			temp = scale;
 			if (scale == 7 || scale == 0xff)
@@ -3416,10 +3527,10 @@ TdsSendTypeSqlvariant(FmgrInfo *finfo, Datum value, void *vMetaData)
 				numMicro /= 10;
 				temp++;
 			}
-			totalLen = dataLen + metadataLen + 2;
+			totalLen = dataLen + VARIANT_TYPE_METALEN_FOR_TIME;
 			rc = TdsPutUInt32LE(totalLen);
 			rc |= TdsPutInt8(variantBaseType);
-			rc |= TdsPutInt8(metadataLen);
+			rc |= TdsPutInt8(VARIANT_TYPE_BASE_METALEN_FOR_TIME);
 			rc |= TdsPutInt8(scale);
 			rc = TdsPutbytes(&numMicro, dataLen);
 		}
@@ -3443,11 +3554,10 @@ TdsSendTypeSqlvariant(FmgrInfo *finfo, Datum value, void *vMetaData)
 			TdsGetDayTimeFromTimestamp((Timestamp)timestamp, &numDays,
 							&numMicro, scale);
 
-			metadataLen = 1;
-			totalLen = dataLen + metadataLen + 2;
+			totalLen = dataLen + VARIANT_TYPE_METALEN_FOR_DATETIME2;
 			rc = TdsPutUInt32LE(totalLen);
 			rc |= TdsPutInt8(variantBaseType);
-			rc |= TdsPutInt8(metadataLen);
+			rc |= TdsPutInt8(VARIANT_TYPE_BASE_METALEN_FOR_DATETIME2);
 			rc |= TdsPutInt8(scale);
 			rc |= TdsPutbytes(&numMicro, dataLen - 3);
 			rc |= TdsPutDate(numDays);
@@ -3477,17 +3587,19 @@ TdsSendTypeSqlvariant(FmgrInfo *finfo, Datum value, void *vMetaData)
 							&numMicro, scale);
 			timezone *= -1;
 
-			metadataLen = 1;
-			totalLen = dataLen + metadataLen + 2;
+			totalLen = dataLen + VARIANT_TYPE_METALEN_FOR_DATETIMEOFFSET;
 			rc = TdsPutUInt32LE(totalLen);
 			rc |= TdsPutInt8(variantBaseType);
-			rc |= TdsPutInt8(metadataLen);
+			rc |= TdsPutInt8(VARIANT_TYPE_BASE_METALEN_FOR_DATETIMEOFFSET);
 			rc |= TdsPutInt8(scale);
 			rc |= TdsPutbytes(&numMicro, dataLen - 5);
 			rc |= TdsPutDate(numDays);
 			rc |= TdsPutInt16LE(timezone);
 		}
 	}
+
+	if (vlena)
+		pfree(vlena);
 	return rc;
 }
 
