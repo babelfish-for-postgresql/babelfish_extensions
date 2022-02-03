@@ -697,8 +697,9 @@ drop table destinationTable
 # sql_variant
 Create table sourceTable(a sql_variant, b sql_variant not null)
 Create table destinationTable(a sql_variant, b sql_variant not null)
-# Bug BABEL-2728
-#Insert into sourceTable values (cast (1 as int),cast ('abc' as varchar(10)));
+Insert into sourceTable values (cast (1 as int),cast ('abc' as varchar(10)));
+~~ROW COUNT: 1~~
+
 Insert into sourceTable values (NULL, cast ('14:37:45.123456' as time(5)));
 ~~ROW COUNT: 1~~
 
@@ -708,12 +709,14 @@ insertbulk#!#sourceTable#!#destinationTable
 Select * from sourceTable
 ~~START~~
 sql_variant#!#sql_variant
+1#!#abc
 <NULL>#!#14:37:45.123460
 ~~END~~
 
 Select * from destinationTable
 ~~START~~
 sql_variant#!#sql_variant
+1#!#abc
 <NULL>#!#14:37:45.123328
 ~~END~~
 
