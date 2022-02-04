@@ -31,6 +31,9 @@ CREATE FUNCTION collationproperty (TEXT, TEXT)
 CREATE FUNCTION sessionproperty (TEXT)
 	   RETURNS  sys.SQL_VARIANT AS 'babelfishpg_tsql', 'sessionproperty' LANGUAGE C IMMUTABLE STRICT PARALLEL SAFE;
 
+CREATE OR REPLACE FUNCTION COLUMNS_UPDATED ()
+	   RETURNS sys.VARBINARY AS 'babelfishpg_tsql', 'columnsupdated' LANGUAGE C;
+
 -- The procedures below requires return code as a RETURN statement which is
 -- only possible in pltsql. Therefore, we create them here and call into the
 -- corresponding internal functions.

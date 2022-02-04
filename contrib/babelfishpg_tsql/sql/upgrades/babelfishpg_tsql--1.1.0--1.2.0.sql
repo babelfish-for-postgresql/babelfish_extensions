@@ -21,3 +21,6 @@ GRANT EXECUTE ON FUNCTION sys.lock_timeout() TO PUBLIC;
 
 -- Reset search_path to not affect any subsequent scripts
 SELECT set_config('search_path', trim(leading 'sys, ' from current_setting('search_path')), false);
+
+CREATE OR REPLACE FUNCTION COLUMNS_UPDATED ()
+	 	   RETURNS sys.VARBINARY AS 'babelfishpg_tsql', 'columnsupdated' LANGUAGE C;

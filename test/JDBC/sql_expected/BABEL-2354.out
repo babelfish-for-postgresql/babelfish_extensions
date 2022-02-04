@@ -7,17 +7,9 @@ CREATE TRIGGER updEmployeeData  ON employeeData  AFTER UPDATE AS
      PRINT 'Columns 3, 5 and 9 updated';     
    END;  
 GO
-~~ERROR (Code: 1088)~~
-
-~~ERROR (Message: 'COLUMNS_UPDATED FUNC IN TRIGGER' is not currently supported in Babelfish)~~
-
 
 drop trigger updEmployeeData
 GO
-~~ERROR (Code: 3701)~~
-
-~~ERROR (Message: trigger "updemployeedata" does not exist)~~
-
 
 drop table employeeData
 GO

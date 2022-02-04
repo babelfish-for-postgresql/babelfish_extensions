@@ -1289,9 +1289,6 @@ antlrcpp::Any TsqlUnsupportedFeatureHandlerImpl::visitFunc_proc_name_server_data
 	{
 		// check some built-in functions/procedures
 		checkUnsupportedSystemProcedure(ctx->procedure);
-
-		if (pg_strcasecmp("COLUMNS_UPDATED", getFullText(ctx->procedure).c_str()) == 0)
-	 		handle(INSTR_UNSUPPORTED_TSQL_COLUMNS_UPDATED_FUNC, "COLUMNS_UPDATED FUNC IN TRIGGER", getLineAndPos(ctx));
 	}
 
 	return visitChildren(ctx);
