@@ -1208,3 +1208,14 @@ varbinary_cmp (PG_FUNCTION_ARGS)
 	bytea *source2 = PG_GETARG_BYTEA_PP(1);
 	PG_RETURN_INT32(varbinarycompare(source1, source2));
 }
+
+
+PG_FUNCTION_INFO_V1(varbinary_length);
+
+Datum
+varbinary_length (PG_FUNCTION_ARGS)
+{
+	bytea 	*source = PG_GETARG_BYTEA_PP(0);
+	int32 	limit = VARSIZE_ANY_EXHDR(source);	
+	PG_RETURN_INT32(limit);
+}
