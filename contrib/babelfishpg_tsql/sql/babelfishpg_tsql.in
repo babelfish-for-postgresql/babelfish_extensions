@@ -12,10 +12,10 @@ SELECT set_config('search_path', 'sys, '||current_setting('search_path'), false)
 #include "sys_functions.sql"
 #include "sys_cast.sql"
 #include "coerce.sql"
+#include "ownership.sql"
 #include "sys_views.sql"
 #include "collation.sql"
 #include "sys_procedures.sql"
-#include "ownership.sql"
 #include "import_export_compatibility.sql"
 #include "babelfishpg_tsql.sql"
 
