@@ -125,22 +125,22 @@ RangeVar *
 pltsqlMakeRangeVarFromName(const char *ident)
 {
 	const char *str = "SELECT * FROM ";
-	char *query;
+	StringInfoData query;
 	List *parsetree;
 	SelectStmt *sel_stmt;
 	Node *n;
 
 	/* Create a fake SELECT statement to get the identifier names */
-	query = palloc(strlen(str) + strlen(ident) + 1);
-	strcpy(query, str);
-	strcat(query, ident);
+	initStringInfo(&query);
+	appendStringInfoString(&query, str);
+	appendStringInfoString(&query, ident);
 
 	/*
 	 * Check the dialect is in tsql mode. This should be a given but need to
 	 * confirm since it affects the parser.
 	 */
 	Assert(sql_dialect == SQL_DIALECT_TSQL);
-	parsetree = raw_parser(query);
+	parsetree = raw_parser(query.data);
 
 	sel_stmt = (SelectStmt *) (((RawStmt *) linitial(parsetree))->stmt);
 	n = linitial(sel_stmt->fromClause);
@@ -275,7 +275,8 @@ static char
 	int	i, n = strlen(s);
 	char	*s_copy = palloc(n + 1);
 
-	strcpy(s_copy, s);
+	s_copy[0] = '\0';
+	strncat(s_copy, s, n);
 
 	for (i = 0; i < n; i++)
 	{
@@ -291,24 +292,25 @@ pre_function_call_hook_impl(const char *funcName)
 {
 	char	*prefix = "instr_tsql_";
 	char	*funcname_edited = replace_with_underscore(funcName);
-	char	*metricName = palloc(strlen(prefix) + strlen(funcname_edited) + 1);
+	StringInfoData metricName;
+	initStringInfo(&metricName);
 
-	strcpy(metricName, prefix);
-	strcat(metricName, funcname_edited);
+	appendStringInfoString(&metricName, prefix);
+	appendStringInfoString(&metricName, funcname_edited);
 
 	if ((pltsql_instr_plugin_ptr &&
 				(*pltsql_instr_plugin_ptr) &&
 				(*pltsql_instr_plugin_ptr)->pltsql_instr_increment_func_metric))
 	{
-		if (!(*pltsql_instr_plugin_ptr)->pltsql_instr_increment_func_metric(metricName))
+		if (!(*pltsql_instr_plugin_ptr)->pltsql_instr_increment_func_metric(metricName.data))
 		{
 			/* check with "unsupported" in prefix */
 			prefix = "instr_unsupported_tsql_";
-			metricName = palloc(strlen(prefix) + strlen(funcname_edited) + 1);
 
-			strcpy(metricName, prefix);
-			strcat(metricName, funcname_edited);
-			(*pltsql_instr_plugin_ptr)->pltsql_instr_increment_func_metric(metricName);
+			resetStringInfo(&metricName);
+			appendStringInfoString(&metricName, prefix);
+			appendStringInfoString(&metricName, funcname_edited);
+			(*pltsql_instr_plugin_ptr)->pltsql_instr_increment_func_metric(metricName.data);
 		}
 	}
 }

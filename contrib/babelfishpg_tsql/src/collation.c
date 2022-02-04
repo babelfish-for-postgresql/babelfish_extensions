@@ -1446,7 +1446,7 @@ void BabelfishPreCreateCollation_hook(
 					   strlen(collcollate) + 1);
 			
 	    memcpy(catcollcollate, pltsql_default_locale, strlen(pltsql_default_locale));
-	    strcat(catcollcollate, collcollate);
+	    strncat(catcollcollate, collcollate, strlen(collcollate));
 	    *pCollcollate = catcollcollate;
 	}
 
@@ -1456,7 +1456,7 @@ void BabelfishPreCreateCollation_hook(
 					 strlen(collctype) + 1);
 			
 	    memcpy(catcollctype, pltsql_default_locale, strlen(pltsql_default_locale));
-	    strcat(catcollctype, collcollate);
+	    strncat(catcollctype, collcollate, strlen(collcollate));
 	    *pCollctype = catcollctype;
 	}
     }

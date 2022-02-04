@@ -1027,7 +1027,7 @@ decl_statement	: decl_varname opt_as decl_const decl_datatype decl_collate decl_
 #if 0
 						curname_def->dtype = PLTSQL_DTYPE_EXPR;
 #endif
-						strcpy(buf, "SELECT ");
+						strncpy(buf, "SELECT ", 7);
 						cp1 = new->refname;
 						cp2 = buf + strlen(buf);
 						/*
@@ -1043,7 +1043,7 @@ decl_statement	: decl_varname opt_as decl_const decl_datatype decl_collate decl_
 								*cp2++ = *cp1;
 							*cp2++ = *cp1++;
 						}
-						strcpy(cp2, "'::pg_catalog.refcursor");
+						strncpy(cp2, "'::pg_catalog.refcursor", 23);
 						curname_def->query = pstrdup(buf);
 						new->default_val = curname_def;
 
@@ -1626,7 +1626,7 @@ stmt_assign		: K_SET assign_var '='
 							/* Generate cursor name based on pointer of PLtsql_stmt_assign since it is unique until procedure is dropped */
 							new = palloc0(sizeof(PLtsql_stmt_assign));
 
-							sprintf(varname, "%s##sys_gen##%p", ((PLtsql_var *) $2)->refname, (void *) new);
+							snprintf(varname, NAMEDATALEN, "%s##sys_gen##%p", ((PLtsql_var *) $2)->refname, (void *) new);
 							new_curvar = (PLtsql_var *)
 								pltsql_build_variable(pstrdup(varname), tokloc,
 								                      pltsql_build_datatype(REFCURSOROID, -1, InvalidOid, NULL),
@@ -1636,7 +1636,7 @@ stmt_assign		: K_SET assign_var '='
 #if 0
 							curname_def->dtype = PLTSQL_DTYPE_EXPR;
 #endif
-							strcpy(buf, "SELECT ");
+							strncpy(buf, "SELECT ", 7);
 							cp1 = new_curvar->refname;
 							cp2 = buf + strlen(buf);
 							/*
@@ -1652,7 +1652,7 @@ stmt_assign		: K_SET assign_var '='
 									*cp2++ = *cp1;
 								*cp2++ = *cp1++;
 							}
-							strcpy(cp2, "'::pg_catalog.refcursor");
+							strncpy(cp2, "'::pg_catalog.refcursor", 23);
 							curname_def->query = pstrdup(buf);
 							new_curvar->default_val = curname_def;
 
@@ -1664,7 +1664,7 @@ stmt_assign		: K_SET assign_var '='
 							/* Start of assignment part */
 
 							new_curvar_expr = palloc0(sizeof(PLtsql_expr));
-							sprintf(buf, "SELECT \"%s\"", varname);
+							snprintf(buf, 1024, "SELECT \"%s\"", varname);
 							new_curvar_expr->query = pstrdup(buf);
 							new_curvar_expr->ns = pltsql_ns_top();
 

@@ -2116,7 +2116,7 @@ GetPortalFromCursorHandle(const int portalHandle, bool missingOk)
 	Portal		portal;
 	char		cursorHandle[INT32_STRLEN];
 
-	sprintf(cursorHandle, "%d", portalHandle);
+	snprintf(cursorHandle, INT32_STRLEN, "%d", portalHandle);
 
 	portal = GetPortalByName(cursorHandle);
 

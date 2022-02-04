@@ -270,15 +270,15 @@ void pltsql_read_procedure_info(StringInfo inout_str,
 	FuncCall *funccall;
 	FuncCandidateList clist;
 	const char  *str1 = "EXECUTE ";
-	char	    *proc_stmt;
+	StringInfoData	    proc_stmt;
 
 	/*
 	 * Create a fake EXECUTE statement to get the function name
 	 */
-	proc_stmt = palloc(strlen(inout_str->data) + strlen(str1) + 1);
-	strcpy(proc_stmt, str1);
-	strcat(proc_stmt, inout_str->data);
-	parsetree = raw_parser(proc_stmt);
+	initStringInfo(&proc_stmt);
+	appendStringInfoString(&proc_stmt, str1);
+	appendStringInfoString(&proc_stmt, inout_str->data);
+	parsetree = raw_parser(proc_stmt.data);
 	cstmt  = (CallStmt *) ((RawStmt *) linitial(parsetree))->stmt;
 
 	funccall = cstmt->funccall;
@@ -438,7 +438,7 @@ PLTsqlRollbackTransaction(char *txnName, QueryCompletion *qc, bool chain)
 		RollbackToSavepoint(txnName);
 		RollbackAndReleaseSavepoint(txnName);
 		if (qc)
-			//			strcpy(completionTag, "ROLLBACK TO SAVEPOINT");
+			//			strncpy(completionTag, "ROLLBACK TO SAVEPOINT");
 			/* PG 13 merge: double check this line */
 			qc->commandTag = CMDTAG_SAVEPOINT;
 	}
