@@ -118,5 +118,50 @@ SELECT
     as "os_language_version";
 GRANT SELECT ON sys.dm_os_host_info TO PUBLIC;
 
+create or replace view sys.tables as
+select
+  t.relname as name
+  , t.oid as object_id
+  , null::integer as principal_id
+  , sch.schema_id as schema_id
+  , 0 as parent_object_id
+  , 'U'::varchar(2) as type
+  , 'USER_TABLE'::varchar(60) as type_desc
+  , null::timestamp as create_date
+  , null::timestamp as modify_date
+  , 0 as is_ms_shipped
+  , 0 as is_published
+  , 0 as is_schema_published
+  , case reltoastrelid when 0 then 0 else 1 end as lob_data_space_id
+  , null::integer as filestream_data_space_id
+  , relnatts as max_column_id_used
+  , 0 as lock_on_bulk_load
+  , 1 as uses_ansi_nulls
+  , 0 as is_replicated
+  , 0 as has_replication_filter
+  , 0 as is_merge_published
+  , 0 as is_sync_tran_subscribed
+  , 0 as has_unchecked_assembly_data
+  , 0 as text_in_row_limit
+  , 0 as large_value_types_out_of_row
+  , 0 as is_tracked_by_cdc
+  , 0 as lock_escalation
+  , 'TABLE'::varchar(60) as lock_escalation_desc
+  , 0 as is_filetable
+  , 0 as durability
+  , 'SCHEMA_AND_DATA'::varchar(60) as durability_desc
+  , 0 as is_memory_optimized
+  , case relpersistence when 't' then 2 else 0 end as temporal_type
+  , case relpersistence when 't' then 'SYSTEM_VERSIONED_TEMPORAL_TABLE' else 'NON_TEMPORAL_TABLE' end as temporal_type_desc
+  , null::integer as history_table_id
+  , 0 as is_remote_data_archive_enabled
+  , 0 as is_external
+from pg_class t inner join sys.schemas sch on t.relnamespace = sch.schema_id
+where t.relpersistence in ('p', 'u', 't')
+and t.relkind = 'r'
+and has_schema_privilege(sch.schema_id, 'USAGE')
+and has_table_privilege(t.oid, 'SELECT,INSERT,UPDATE,DELETE,TRUNCATE,TRIGGER');
+GRANT SELECT ON sys.tables TO PUBLIC;
+
 -- Reset search_path to not affect any subsequent scripts
 SELECT set_config('search_path', trim(leading 'sys, ' from current_setting('search_path')), false);

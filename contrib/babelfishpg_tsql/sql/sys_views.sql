@@ -4,7 +4,7 @@ select
   t.relname as name
   , t.oid as object_id
   , null::integer as principal_id
-  , s.oid as schema_id
+  , sch.schema_id as schema_id
   , 0 as parent_object_id
   , 'U'::varchar(2) as type
   , 'USER_TABLE'::varchar(60) as type_desc
@@ -37,11 +37,11 @@ select
   , null::integer as history_table_id
   , 0 as is_remote_data_archive_enabled
   , 0 as is_external
-from pg_class t inner join pg_namespace s on s.oid = t.relnamespace
+from pg_class t inner join sys.schemas sch on t.relnamespace = sch.schema_id
 where t.relpersistence in ('p', 'u', 't')
 and t.relkind = 'r'
-and has_table_privilege(quote_ident(s.nspname) ||'.'||quote_ident(t.relname), 'SELECT,INSERT,UPDATE,DELETE,TRUNCATE,TRIGGER')
-and s.nspname not in ('information_schema', 'pg_catalog');
+and has_schema_privilege(sch.schema_id, 'USAGE')
+and has_table_privilege(t.oid, 'SELECT,INSERT,UPDATE,DELETE,TRUNCATE,TRIGGER');
 GRANT SELECT ON sys.tables TO PUBLIC;
 
 create or replace view sys.views as 
