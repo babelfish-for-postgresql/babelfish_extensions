@@ -24,3 +24,6 @@ SELECT set_config('search_path', trim(leading 'sys, ' from current_setting('sear
 
 CREATE OR REPLACE FUNCTION COLUMNS_UPDATED ()
 	 	   RETURNS sys.VARBINARY AS 'babelfishpg_tsql', 'columnsupdated' LANGUAGE C;
+
+CREATE OR REPLACE FUNCTION UPDATE (TEXT)
+	 	   RETURNS BOOLEAN AS 'babelfishpg_tsql', 'updated' LANGUAGE C;

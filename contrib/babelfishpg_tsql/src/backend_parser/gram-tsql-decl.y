@@ -107,4 +107,4 @@
  * otherwise the parser cannot tell between 'WITH' and 'WITH (' and thus
  * lead to a shift/reduce conflict.
  */
-%token	WITH_paren TSQL_HINT_START_BRACKET
+%token	WITH_paren TSQL_HINT_START_BRACKET UPDATE_paren
