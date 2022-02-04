@@ -1313,31 +1313,28 @@ GO
 
 CREATE TABLE t_unsupported_so6(a int, primary key(a) with DROP_EXISTING=on);
 GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: 'DROP_EXISTING' is not currently supported in Babelfish)~~
-
+DROP TABLE t_unsupported_so6
+GO
 
 CREATE TABLE t_unsupported_so7(a int, primary key(a) with ONLINE=on);
 GO
-~~ERROR (Code: 33557097)~~
+DROP TABLE t_unsupported_so7
+GO
 
-~~ERROR (Message: 'ONLINE' is not currently supported in Babelfish)~~
-
+CREATE TABLE t_unsupported_so7(a int, primary key(a) with SORT_IN_TEMPDB=on);
+GO
+DROP TABLE t_unsupported_so7
+GO
 
 CREATE TABLE t_unsupported_so8(a int, primary key(a) with RESUMABLE=on, ONLINE=on);
 GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: 'RESUMABLE' is not currently supported in Babelfish)~~
-
+DROP TABLE t_unsupported_so8
+GO
 
 CREATE TABLE t_unsupported_so9(a int, primary key(a) with (MAX_DURATION=60, ONLINE=on));
 GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: 'MAX_DURATION' is not currently supported in Babelfish)~~
-
+DROP TABLE t_unsupported_so9
+GO
 
 CREATE TABLE t_unsupported_so10(a int, primary key(a) with (ALLOW_ROW_LOCKS=on));
 GO
@@ -1426,28 +1423,35 @@ CREATE TABLE t_unsupported_so6(a int, primary key(a) with DROP_EXISTING=on);
 GO
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: 'DROP_EXISTING' is not currently supported in Babelfish)~~
+~~ERROR (Message: 'DROP_EXISTING' is not currently supported in Babelfish. please use babelfishpg_tsql.escape_hatch_storage_options to ignore)~~
 
 
 CREATE TABLE t_unsupported_so7(a int, primary key(a) with ONLINE=on);
 GO
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: 'ONLINE' is not currently supported in Babelfish)~~
+~~ERROR (Message: 'ONLINE' is not currently supported in Babelfish. please use babelfishpg_tsql.escape_hatch_storage_options to ignore)~~
+
+
+CREATE TABLE t_unsupported_so7(a int, primary key(a) with SORT_IN_TEMPDB=on);
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: 'SORT_IN_TEMPDB' is not currently supported in Babelfish. please use babelfishpg_tsql.escape_hatch_storage_options to ignore)~~
 
 
 CREATE TABLE t_unsupported_so8(a int, primary key(a) with RESUMABLE=on, ONLINE=on);
 GO
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: 'RESUMABLE' is not currently supported in Babelfish)~~
+~~ERROR (Message: 'RESUMABLE' is not currently supported in Babelfish. please use babelfishpg_tsql.escape_hatch_storage_options to ignore)~~
 
 
 CREATE TABLE t_unsupported_so9(a int, primary key(a) with (MAX_DURATION=60, ONLINE=on));
 GO
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: 'MAX_DURATION' is not currently supported in Babelfish)~~
+~~ERROR (Message: 'MAX_DURATION' is not currently supported in Babelfish. please use babelfishpg_tsql.escape_hatch_storage_options to ignore)~~
 
 
 CREATE TABLE t_unsupported_so10(a int, primary key(a) with (ALLOW_ROW_LOCKS=on));

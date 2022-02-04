@@ -566,7 +566,7 @@ antlrcpp::Any TsqlUnsupportedFeatureHandlerImpl::visitIndex_option(TSqlParser::I
 		else if (pg_strcasecmp(id_str.c_str(), "fillfactor") == 0)
 			handle(INSTR_UNSUPPORTED_TSQL_INDEX_OPTION_FILLFACTOR, "FILLFACTOR", &st_escape_hatch_storage_options, getLineAndPos(ctx->id()[0]));
 		else if (pg_strcasecmp(id_str.c_str(), "sort_in_tempdb") == 0)
-			handle(INSTR_UNSUPPORTED_TSQL_INDEX_OPTION_MISC, "SORT_IN_TEMPDB", getLineAndPos(ctx->id()[0])); /* seems like it will affect functionality. do not use escape hatch */
+			handle(INSTR_UNSUPPORTED_TSQL_INDEX_OPTION_MISC, "SORT_IN_TEMPDB", &st_escape_hatch_storage_options, getLineAndPos(ctx->id()[0]));
 		else if (pg_strcasecmp(id_str.c_str(), "ignore_dup_key") == 0)
 			handle(INSTR_UNSUPPORTED_TSQL_INDEX_OPTION_MISC, "IGNORE_DUP_KEY", &st_escape_hatch_storage_options, getLineAndPos(ctx->id()[0]));
 		else if (pg_strcasecmp(id_str.c_str(), "statistics_norecompute") == 0)
@@ -574,13 +574,13 @@ antlrcpp::Any TsqlUnsupportedFeatureHandlerImpl::visitIndex_option(TSqlParser::I
 		else if (pg_strcasecmp(id_str.c_str(), "statistics_incremental") == 0)
 			handle(INSTR_UNSUPPORTED_TSQL_INDEX_OPTION_MISC, "STATISTICS_INCREMENTAL", &st_escape_hatch_storage_options, getLineAndPos(ctx->id()[0]));
 		else if (pg_strcasecmp(id_str.c_str(), "drop_existing") == 0)
-			handle(INSTR_UNSUPPORTED_TSQL_INDEX_OPTION_MISC, "DROP_EXISTING", getLineAndPos(ctx->id()[0])); /* seems like it will affect functionality. do not use escape hatch */
+			handle(INSTR_UNSUPPORTED_TSQL_INDEX_OPTION_MISC, "DROP_EXISTING", &st_escape_hatch_storage_options, getLineAndPos(ctx->id()[0]));
 		else if (pg_strcasecmp(id_str.c_str(), "online") == 0)
-			handle(INSTR_UNSUPPORTED_TSQL_INDEX_OPTION_MISC, "ONLINE", getLineAndPos(ctx->id()[0])); /* seems like it will affect functionality. do not use escape hatch */
+			handle(INSTR_UNSUPPORTED_TSQL_INDEX_OPTION_MISC, "ONLINE", &st_escape_hatch_storage_options, getLineAndPos(ctx->id()[0]));
 		else if (pg_strcasecmp(id_str.c_str(), "resumable") == 0)
-			handle(INSTR_UNSUPPORTED_TSQL_INDEX_OPTION_MISC, "RESUMABLE", getLineAndPos(ctx->id()[0])); /* online index option */
+			handle(INSTR_UNSUPPORTED_TSQL_INDEX_OPTION_MISC, "RESUMABLE", &st_escape_hatch_storage_options, getLineAndPos(ctx->id()[0])); /* online index option */
 		else if (pg_strcasecmp(id_str.c_str(), "max_duration") == 0)
-			handle(INSTR_UNSUPPORTED_TSQL_INDEX_OPTION_MISC, "MAX_DURATION", getLineAndPos(ctx->id()[0])); /* online index option */
+			handle(INSTR_UNSUPPORTED_TSQL_INDEX_OPTION_MISC, "MAX_DURATION",&st_escape_hatch_storage_options,  getLineAndPos(ctx->id()[0])); /* online index option */
 		else if (pg_strcasecmp(id_str.c_str(), "allow_row_locks") == 0)
 			handle(INSTR_UNSUPPORTED_TSQL_INDEX_OPTION_MISC, "ALLOW_ROW_LOCKS", &st_escape_hatch_storage_options, getLineAndPos(ctx->id()[0]));
 		else if (pg_strcasecmp(id_str.c_str(), "allow_page_locks") == 0)
