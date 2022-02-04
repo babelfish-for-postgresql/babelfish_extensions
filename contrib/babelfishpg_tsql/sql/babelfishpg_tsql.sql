@@ -1150,3 +1150,21 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql;
 GRANT EXECUTE on PROCEDURE sys.sp_updatestats(IN "@resample" VARCHAR(8)) TO PUBLIC;
+
+CREATE OR REPLACE VIEW sys.dm_os_host_info AS
+SELECT
+  -- get_host_os() depends on a Postgres function created separately.
+  cast( sys.get_host_os() as sys.nvarchar(256) ) as host_platform
+  -- Hardcoded at the moment. Should likely be GUC with default '' (empty string).
+  , cast( (select setting FROM pg_settings WHERE name = 'babelfishpg_tsql.host_distribution') as sys.nvarchar(256) ) as host_distribution
+  -- documentation on one hand states this is empty string on linux, but otoh shows an example with "ubuntu 16.04"
+  , cast( (select setting FROM pg_settings WHERE name = 'babelfishpg_tsql.host_release') as sys.nvarchar(256) ) as host_release
+  -- empty string on linux.
+  , cast( (select setting FROM pg_settings WHERE name = 'babelfishpg_tsql.host_service_pack_level') as sys.nvarchar(256) )
+    as host_service_pack_level
+  -- windows stock keeping unit. null on linux.
+  , cast( null as int ) as host_sku
+  -- lcid
+  , cast( sys.collationproperty( (select setting FROM pg_settings WHERE name = 'babelfishpg_tsql.server_collation_name') , 'lcid') as int )
+    as "os_language_version";
+GRANT SELECT ON sys.dm_os_host_info TO PUBLIC;
