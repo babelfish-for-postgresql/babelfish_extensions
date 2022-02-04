@@ -2,7 +2,7 @@ select sign()
 go
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: function sign() does not exist)~~
+~~ERROR (Message: The sign function requires 1 argument)~~
 
 
 select sign(NULL)

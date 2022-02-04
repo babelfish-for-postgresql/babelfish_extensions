@@ -24,6 +24,8 @@ bool is_xact_abort_txn_compilation_error(int sql_error_code);
 #define SQL_ERROR_142 142
 #define SQL_ERROR_153 153
 #define SQL_ERROR_180 180
+#define SQL_ERROR_201 201
+#define SQL_ERROR_206 206
 #define SQL_ERROR_217 217
 #define SQL_ERROR_219 219
 #define SQL_ERROR_220 220
@@ -106,6 +108,9 @@ bool is_xact_abort_txn_compilation_error(int sql_error_code);
 #define SQL_ERROR_8115 8115
 #define SQL_ERROR_8134 8134
 #define SQL_ERROR_8143 8143
+#define SQL_ERROR_8144 8144
+#define SQL_ERROR_8145 8145
+#define SQL_ERROR_8146 8146
 #define SQL_ERROR_8152 8152
 #define SQL_ERROR_8159 8159
 #define SQL_ERROR_8179 8179

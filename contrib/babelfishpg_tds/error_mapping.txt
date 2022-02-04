@@ -78,6 +78,11 @@ XX000 ERRCODE_INTERNAL_ERROR	"CREATE FUNCTION failed because a column name is no
 42883 ERRCODE_UNDEFINED_FUNCTION	"could not find a procedure named \"%s\""	SQL_ERROR_3701	11
 42883 ERRCODE_UNDEFINED_FUNCTION	"could not identify an equality operator for type %s"	SQL_ERROR_306	16
 42883 ERRCODE_UNDEFINED_FUNCTION	"could not identify an ordering operator for type %s"	SQL_ERROR_306	16
+42883 ERRCODE_UNDEFINED_FUNCTION	"%s %s expects parameter \"%s\", which was not supplied."	SQL_ERROR_201	16
+42883 ERRCODE_UNDEFINED_FUNCTION	"%s %s has no parameters and arguments were supplied."	SQL_ERROR_8146	16
+42883 ERRCODE_UNDEFINED_FUNCTION	"%s %s has too many arguments specified."	SQL_ERROR_8144	16
+42883 ERRCODE_UNDEFINED_FUNCTION	"\"%s\" is not an parameter for %s %s."	SQL_ERROR_8145	16
+42883 ERRCODE_UNDEFINED_FUNCTION	"The %s %s is found but cannot be used. Possibly due to datatype mismatch and implicit casting is not allowed."	SQL_ERROR_206	16
 42P03 ERRCODE_DUPLICATE_CURSOR		"cursor \"%s\" already exists" SQL_ERROR_16915	16
 42704 ERRCODE_UNDEFINED_OBJECT          "cursor %d doesn't exist"       SQL_ERROR_16916 16
 22004 ERRCODE_NULL_VALUE_NOT_ALLOWED	"cursor variable \"%s\" is null"	SQL_ERROR_16950	16

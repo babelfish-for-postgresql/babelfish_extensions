@@ -2,7 +2,7 @@ select exp()
 go
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: function exp() does not exist)~~
+~~ERROR (Message: The exp function requires 1 argument)~~
 
 
 select exp(null)
@@ -354,37 +354,37 @@ float
 
 select exp(cast(12 as binary))
 go
-~~ERROR (Code: 33557097)~~
+~~ERROR (Code: 206)~~
 
-~~ERROR (Message: function exp("binary") does not exist)~~
+~~ERROR (Message: The function exp is found but cannot be used. Possibly due to datatype mismatch and implicit casting is not allowed.)~~
 
 
 select exp(cast(-1234 as binary))
 go
-~~ERROR (Code: 33557097)~~
+~~ERROR (Code: 206)~~
 
-~~ERROR (Message: function exp("binary") does not exist)~~
+~~ERROR (Message: The function exp is found but cannot be used. Possibly due to datatype mismatch and implicit casting is not allowed.)~~
 
 
 select exp(cast(-12 as binary))
 go
-~~ERROR (Code: 33557097)~~
+~~ERROR (Code: 206)~~
 
-~~ERROR (Message: function exp("binary") does not exist)~~
+~~ERROR (Message: The function exp is found but cannot be used. Possibly due to datatype mismatch and implicit casting is not allowed.)~~
 
 
 select exp(cast(12 as varbinary))
 go
-~~ERROR (Code: 33557097)~~
+~~ERROR (Code: 206)~~
 
-~~ERROR (Message: function exp(varbinary) does not exist)~~
+~~ERROR (Message: The function exp is found but cannot be used. Possibly due to datatype mismatch and implicit casting is not allowed.)~~
 
 
 select exp(cast(-12 as varbinary))
 go
-~~ERROR (Code: 33557097)~~
+~~ERROR (Code: 206)~~
 
-~~ERROR (Message: function exp(varbinary) does not exist)~~
+~~ERROR (Message: The function exp is found but cannot be used. Possibly due to datatype mismatch and implicit casting is not allowed.)~~
 
 
 select exp(cast('-12.12' as varchar))

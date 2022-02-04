@@ -67,7 +67,7 @@ a
 #D#varchar
 a
 #Q#select tests.func7()
-#E#function master_tests.func7() does not exist
+#E#function master_tests.func7 expects parameter "@a", which was not supplied.
 #Q#DROP FUNCTION tests.mutliply
 #E#could not find a function named "master_tests.mutliply"
 #Q#DROP FUNCTION tests.multiply1
