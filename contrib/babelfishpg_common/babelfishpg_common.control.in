@@ -1,7 +1,7 @@
 # TSQL Datatype extension
 comment = 'Transact SQL Datatype Support'
-default_version = '1.1.0'
-module_pathname = '$libdir/babelfishpg_common'
+default_version = '@EXTVERSION@'
+module_pathname = '@MODULEPATH@'
 relocatable = true
 superuser = true
 requires = ''

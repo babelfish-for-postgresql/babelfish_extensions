@@ -42,6 +42,8 @@ PG_FUNCTION_INFO_V1(varbinary);
 PG_FUNCTION_INFO_V1(binary);
 PG_FUNCTION_INFO_V1(varbinarytypmodin);
 PG_FUNCTION_INFO_V1(varbinarytypmodout);
+PG_FUNCTION_INFO_V1(byteavarbinary);
+PG_FUNCTION_INFO_V1(varbinarybytea);
 PG_FUNCTION_INFO_V1(varcharvarbinary);
 PG_FUNCTION_INFO_V1(bpcharvarbinary);
 PG_FUNCTION_INFO_V1(varbinaryvarchar);
@@ -439,6 +441,22 @@ reverse_memcpy(char* dst, char* src, size_t n)
 /*
  *   Cast functions
  */
+Datum
+byteavarbinary(PG_FUNCTION_ARGS)
+{
+	bytea *source = PG_GETARG_BYTEA_PP(0);
+
+	PG_RETURN_BYTEA_P(source);
+}
+
+Datum
+varbinarybytea(PG_FUNCTION_ARGS)
+{
+	bytea *source = PG_GETARG_BYTEA_PP(0);
+
+	PG_RETURN_BYTEA_P(source);
+}
+
 Datum
 varcharvarbinary(PG_FUNCTION_ARGS)
 {
