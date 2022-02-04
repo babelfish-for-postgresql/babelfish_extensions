@@ -105,6 +105,7 @@ CREATE OR REPLACE PROCEDURE sys.sp_babelfish_configure(IN "@option_name" varchar
 AS $$
 DECLARE
   normalized_name varchar(256);
+  default_value text;
   cnt int;
   cur refcursor;
   eh_name varchar(256);
@@ -134,12 +135,24 @@ BEGIN
     FETCH NEXT FROM cur into eh_name;
     exit when not found;
 
-    PERFORM pg_catalog.set_config(eh_name, "@option_value", 'false');
+    -- Each setting has a boot_val which is the wired-in default value
+    -- Assuming that escape hatches cannot be modified using ALTER SYTEM/config file
+    -- we are setting the boot_val as the default value for the escape hatches
+    SELECT boot_val INTO default_value FROM pg_catalog.pg_settings WHERE name = eh_name;
+    IF lower("@option_value") = 'default' THEN
+        PERFORM pg_catalog.set_config(eh_name, default_value, 'false');
+    ELSE
+        PERFORM pg_catalog.set_config(eh_name, "@option_value", 'false');
+    END IF;
     IF server THEN
       SELECT current_user INTO prev_user;
       PERFORM sys.babelfish_set_role(session_user);
-      -- store the setting in PG master database so that it can be applied to all bbf databases
-      EXECUTE format('ALTER DATABASE %s SET %s = %s', CURRENT_DATABASE(), eh_name, "@option_value");
+      IF lower("@option_value") = 'default' THEN
+        EXECUTE format('ALTER DATABASE %s SET %s = %s', CURRENT_DATABASE(), eh_name, default_value);
+      ELSE
+        -- store the setting in PG master database so that it can be applied to all bbf databases
+        EXECUTE format('ALTER DATABASE %s SET %s = %s', CURRENT_DATABASE(), eh_name, "@option_value");
+      END IF;
       PERFORM sys.babelfish_set_role(prev_user);
     END IF;
   END LOOP;

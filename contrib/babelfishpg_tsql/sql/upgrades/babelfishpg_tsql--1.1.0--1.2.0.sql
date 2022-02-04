@@ -32,4 +32,68 @@ CREATE OR REPLACE FUNCTION UPDATE (TEXT)
 CREATE OR REPLACE FUNCTION sys.len(expr sys.BBF_VARBINARY) RETURNS INTEGER AS
 'babelfishpg_common', 'varbinary_length'
 STRICT
-LANGUAGE c IMMUTABLE PARALLEL SAFE;
+LANGUAGE C IMMUTABLE PARALLEL SAFE;
+
+CREATE OR REPLACE PROCEDURE sys.sp_babelfish_configure(IN "@option_name" varchar(128),  IN "@option_value" varchar(128), IN "@option_scope" varchar(128))
+AS $$
+DECLARE
+  normalized_name varchar(256);
+  default_value text;
+  cnt int;
+  cur refcursor;
+  eh_name varchar(256);
+  server boolean := false;
+  prev_user text;
+BEGIN
+  IF lower("@option_name") like 'babelfishpg_tsql.%' THEN
+    SELECT "@option_name" INTO normalized_name;
+  ELSE
+    SELECT concat('babelfishpg_tsql.',"@option_name") INTO normalized_name;
+  END IF;
+
+  IF lower("@option_scope") = 'server' THEN
+    server := true;
+  ELSIF btrim("@option_scope") != '' THEN
+    RAISE EXCEPTION 'invalid option: %', "@option_scope";
+  END IF;
+
+  SELECT COUNT(*) INTO cnt FROM pg_catalog.pg_settings WHERE name like normalized_name and name like '%escape_hatch%';
+  IF cnt = 0 THEN
+    RAISE EXCEPTION 'unknown configuration: %', normalized_name;
+  END IF;
+
+  OPEN cur FOR SELECT name FROM pg_catalog.pg_settings WHERE name like normalized_name and name like '%escape_hatch%';
+
+  LOOP
+    FETCH NEXT FROM cur into eh_name;
+    exit when not found;
+
+    -- Each setting has a boot_val which is the wired-in default value
+    -- Assuming that escape hatches cannot be modified using ALTER SYTEM/config file
+    -- we are setting the boot_val as the default value for the escape hatches
+    SELECT boot_val INTO default_value FROM pg_catalog.pg_settings WHERE name = eh_name;
+    IF lower("@option_value") = 'default' THEN
+        PERFORM pg_catalog.set_config(eh_name, default_value, 'false');
+    ELSE
+        PERFORM pg_catalog.set_config(eh_name, "@option_value", 'false');
+    END IF;
+    IF server THEN
+      SELECT current_user INTO prev_user;
+      PERFORM sys.babelfish_set_role(session_user);
+      IF lower("@option_value") = 'default' THEN
+        EXECUTE format('ALTER DATABASE %s SET %s = %s', CURRENT_DATABASE(), eh_name, default_value);
+      ELSE
+        -- store the setting in PG master database so that it can be applied to all bbf databases
+        EXECUTE format('ALTER DATABASE %s SET %s = %s', CURRENT_DATABASE(), eh_name, "@option_value");
+      END IF;
+      PERFORM sys.babelfish_set_role(prev_user);
+    END IF;
+  END LOOP;
+
+  CLOSE cur;
+
+END;
+$$ LANGUAGE plpgsql;
+GRANT EXECUTE ON PROCEDURE sys.sp_babelfish_configure(
+	IN varchar(128), IN varchar(128), IN varchar(128)
+) TO PUBLIC;
