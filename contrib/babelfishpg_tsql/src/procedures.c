@@ -280,6 +280,7 @@ sp_describe_undeclared_parameters_internal(PG_FUNCTION_ARGS)
 		Relation r;
 		List *target_attnums = NIL;
 		ParseState *pstate;
+		int relname_len;
 
 		funcctx = SRF_FIRSTCALL_INIT();
 		oldcontext = MemoryContextSwitchTo(funcctx->multi_call_memory_ctx);
@@ -351,7 +352,9 @@ sp_describe_undeclared_parameters_internal(PG_FUNCTION_ARGS)
 		checkInsertTargets(pstate, insert_stmt->cols, &target_attnums);
 
 		undeclaredparams->tablename = (char *) palloc(sizeof(char) * 64);
-		strncpy(undeclaredparams->tablename, relation->relname, strlen(relation->relname));
+		relname_len = strlen(relation->relname);
+		strncpy(undeclaredparams->tablename, relation->relname, relname_len);
+		undeclaredparams->tablename[relname_len] = '\0';
 		undeclaredparams->targetattnums = (int *) palloc(sizeof(int) * list_length(target_attnums));
 		foreach(lc_attnum, target_attnums)
 		{
@@ -402,8 +405,10 @@ sp_describe_undeclared_parameters_internal(PG_FUNCTION_ARGS)
 						}
 						if (undeclared)
 						{
+							int paramname_len = strlen(field->val.str);
 							undeclaredparams->paramnames[numresults] = (char *) palloc(64 * sizeof(char));
-							strncpy(undeclaredparams->paramnames[numresults], field->val.str, strlen(field->val.str));
+							strncpy(undeclaredparams->paramnames[numresults], field->val.str, paramname_len);
+							undeclaredparams->paramnames[numresults][paramname_len] = '\0';
 							undeclaredparams->paramindexes[numresults] = numvalues;
 							numresults += 1;
 						}
@@ -447,9 +452,15 @@ sp_describe_undeclared_parameters_internal(PG_FUNCTION_ARGS)
 							" OR (t1.domain_schema = \'sys\' AND t2.type_name = t1.domain_name))";
 		char *query = psprintf(tempq, undeclaredparams->tablename,
 				undeclaredparams->targetattnums[undeclaredparams->paramindexes[call_cntr]]);
-		SPI_execute(query, true, 1);
+		int rc = SPI_execute(query, true, 1);
+		if (rc != SPI_OK_SELECT)
+			ereport(ERROR,
+					(errcode(ERRCODE_INTERNAL_ERROR),
+					 errmsg("SPI_execute failed: %s", SPI_result_code_string(rc))));
 		if (SPI_processed == 0)
-			SRF_RETURN_DONE(funcctx);
+			ereport(ERROR,
+					(errcode(ERRCODE_INTERNAL_ERROR),
+					 errmsg("SPI_execute returned no rows: %s", query)));
 
 		values = (char **) palloc(numresultcols * sizeof(char *));
 
