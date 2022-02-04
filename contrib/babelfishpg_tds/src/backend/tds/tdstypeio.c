@@ -2982,6 +2982,22 @@ TdsTypeSqlVariantToDatum(StringInfo buf)
 	 *		3. Two bytes for max length
 	 * 		4. Two bytes for collation code
 	 */
+  
+	/*
+	 * If base type is N[VAR]CHAR then we have to use length of data in UTF8 format as datalen.
+	 */
+	if (variantBaseType == VARIANT_TYPE_NCHAR ||
+		variantBaseType == VARIANT_TYPE_NVARCHAR)
+	{
+		/*
+		 * dataformat: totalLen(4B) + metadata(9B)( baseType(1B) + metadatalen(1B) +
+		 *	encodingLen(5B) + dataLen(2B) ) + data(dataLen)
+		 * Data is in UTF16 format.
+		 */
+		initStringInfo(&strbuf);
+		TdsUTF16toUTF8StringInfo(&strbuf, &buf->data[VARIANT_TYPE_METALEN_FOR_CHAR_DATATYPES], tempLen - VARIANT_TYPE_METALEN_FOR_CHAR_DATATYPES);
+		dataLen = strbuf.len;
+	}
 
 	resLen = dataLen + variantHeaderLen;
 
@@ -3025,14 +3041,8 @@ TdsTypeSqlVariantToDatum(StringInfo buf)
 			 *	encodingLen(5B) + dataLen(2B) ) + data(dataLen)
 			 * Data is in UTF16 format.
 			 */
-			if (variantBaseType == VARIANT_TYPE_NCHAR ||
-				variantBaseType == VARIANT_TYPE_NVARCHAR)
-			{
-				initStringInfo(&strbuf);
-				TdsUTF16toUTF8StringInfo(&strbuf, &buf->data[VARIANT_TYPE_METALEN_FOR_CHAR_DATATYPES], tempLen - VARIANT_TYPE_METALEN_FOR_CHAR_DATATYPES);
-			}
-
 			memcpy(VARDATA(READ_DATA(result, variantHeaderLen)), strbuf.data, dataLen);
+			pfree(strbuf.data);
 		}
 		else
 		{
@@ -3278,7 +3288,6 @@ TdsSendTypeSqlvariant(FmgrInfo *finfo, Datum value, void *vMetaData)
 	uint16		numMins = 0, numDays16 = 0;
 	uint64		numMicro = 0;
 	int16		timezone = 0;
-	StringInfoData	strbuf;
 	int		precision = 0, scale = -1, sign = 1, i = 0, temp = 0;
 	uint128		num = 0;
 	Timestamp	timestamp = 0;
@@ -3345,6 +3354,7 @@ TdsSendTypeSqlvariant(FmgrInfo *finfo, Datum value, void *vMetaData)
 		 * dataformat: totalLen(4B) + baseType(1B) + metadatalen(1B) +
 		 *		encodingLen(5B) + dataLen(2B) + data(dataLen)
 		 */
+		StringInfoData	strbuf;
 		int actualDataLen = 0;	 /* Number of bytes that would be needed to store given string in given encoding. */
 		char *destBuf = NULL;
 		dataLen -= VARHDRSZ;
@@ -3353,7 +3363,7 @@ TdsSendTypeSqlvariant(FmgrInfo *finfo, Datum value, void *vMetaData)
 		{
 			initStringInfo(&strbuf);
 			TdsUTF8toUTF16StringInfo(&strbuf, buf + VARHDRSZ, dataLen);
-			actualDataLen = dataLen * 2;
+			actualDataLen = strbuf.len;
 		}
 		else
 		{
@@ -3385,7 +3395,10 @@ TdsSendTypeSqlvariant(FmgrInfo *finfo, Datum value, void *vMetaData)
 
 		if (variantBaseType == VARIANT_TYPE_NCHAR ||
 		    variantBaseType == VARIANT_TYPE_NVARCHAR)
+		{
 			rc |= TdsPutbytes(strbuf.data, actualDataLen);
+			pfree(strbuf.data);
+		}
 		else	
 			rc |= TdsPutbytes(destBuf, actualDataLen);
 
