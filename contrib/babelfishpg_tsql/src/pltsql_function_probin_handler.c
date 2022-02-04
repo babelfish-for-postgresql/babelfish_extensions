@@ -78,9 +78,9 @@ void pltsql_function_probin_writer(CreateFunctionStmt *stmt, Oid languageOid, ch
 	probin_len = strlen(JsonbToCString(NULL, &jb->root, VARSIZE(jb)));
 	/* extra padding space to prevent chunk overwrite */
 	*probin_str_p = palloc(probin_len+2);
-
-	strcpy(*probin_str_p,
-			JsonbToCString(NULL, &jb->root, probin_len));
+	*probin_str_p[0] = '\0';
+	strncat(*probin_str_p,
+			JsonbToCString(NULL, &jb->root, probin_len), probin_len+2);
 }
 
 void
@@ -301,7 +301,7 @@ pushJsonbPairIntAsText(JsonbParseState **jpstate, JsonbValue **result, const cha
 	v.val.string.val = (char*)key;
 	*result = pushJsonbValue(jpstate, WJB_KEY, &v);
 
-	sprintf(buf, "%lld", val);
+	snprintf(buf, 22, "%lld", val);
 	v.val.string.len = strlen(buf);
 	v.val.string.val = pstrdup(buf);
 	*result = pushJsonbValue(jpstate, WJB_VALUE, &v);
@@ -318,7 +318,8 @@ pushJsonbPairText(JsonbParseState **jpstate, JsonbValue **result, const char* ke
 	if (val && *val && strlen(*val) != 0) 
 	{
 		v.val.string.len = strlen(*val);
-		strcpy(v.val.string.val,(char*)(*val));
+		v.val.string.val[0] = '\0';
+		strncat(v.val.string.val, (char*)(*val), v.val.string.len);
 		free(*val);
 	}
 	else
@@ -346,7 +347,7 @@ pushJsonbArray(JsonbParseState **jpstate, JsonbValue **result, int *items, int a
 	{
 		for(int i = 0; i< array_len; i++)
 		{
-			sprintf(buf, "%d", items[i]);
+			snprintf(buf, 22, "%d", items[i]);
 			v.type = jbvString;
 			v.val.string.len = strlen(buf);
 			v.val.string.val = pstrdup(buf);

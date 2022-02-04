@@ -161,7 +161,7 @@ static void ApplockPrintMessage(const char *fmt, ...) {
                                                     HASH_ENTER, &found); \
 	if (!found) {  \
 		(ENTRY)->refcount = 0;  \
-		strcpy((ENTRY)->resource, "");  \
+		(ENTRY)->resource[0] = '\0';  \
 		slist_init(&(ENTRY)->mode_head);  \
 	}  \
 } while(0) 
@@ -187,7 +187,7 @@ static void ApplockPrintMessage(const char *fmt, ...) {
 	do {  \
 		if (timeout != -99) {  \
 			char timeout_str[16];  \
-			sprintf(timeout_str, "%d", val);  \
+			snprintf(timeout_str, 16, "%d", val);  \
 			SetConfigOption("lock_timeout", timeout_str,  \
 							PGC_USERSET, PGC_S_OVERRIDE);  \
 		}  \
@@ -388,7 +388,7 @@ static void ApplockUnrefGlobalCache(int64 key)
 		hash_search(appLockCacheGlobal,
 											(void *) &key,
 											HASH_REMOVE, NULL);
-		strcpy(entry->resource, "");
+		entry->resource[0] = '\0';
 	}
 	LWLockRelease(TsqlApplockSyncLock);
 }
@@ -466,7 +466,8 @@ static int64 ApplockGetUsableKey(char *resource)
 
 		entry->key = usable_key;
 		entry->refcount = 1;
-		strcpy(entry->resource, resource);
+		entry->resource[0] = '\0';
+		strncat(entry->resource, resource, strlen(resource));
 	}
 
 	LWLockRelease(TsqlApplockSyncLock);
@@ -610,7 +611,8 @@ static int _sp_getapplock_internal (char *resource, char *lockmode,
 	
 	/* lock aquired, we can insert or update the local cache entry now. */
 	AppLockCacheInsert(key, entry);
-	strcpy(entry->resource, resource);
+	entry->resource[0] = '\0';
+	strncat(entry->resource, resource, strlen(resource));
 	entry->refcount++;
 	node = malloc(sizeof(AppLockModeNode));
 	node->mode = mode;

@@ -132,7 +132,7 @@ uint32 get_next_cursor_handle()
 			++current_cursor_handle;
 		if (unlikely(current_cursor_handle == old_handle))
 			elog(ERROR, "out of sp cursor handles");
-		sprintf(curname, "%u", current_cursor_handle);
+		snprintf(curname, NAMEDATALEN, "%u", current_cursor_handle);
 		if (hash_search(CursorHashTable, curname, HASH_FIND, NULL) == NULL)
 			break; /* found */
 	}
@@ -222,7 +222,7 @@ bool pltsql_declare_cursor(PLtsql_execstate *estate, PLtsql_var *var, PLtsql_exp
 			(errcode(ERRCODE_INTERNAL_ERROR),
 			 errmsg("internal cursor name is too long: %s", var->refname)));
 
-	sprintf(mangled_name, "%s%s%p", var->refname, LOCAL_CURSOR_INFIX, var);
+	snprintf(mangled_name, NAMEDATALEN, "%s%s%p", var->refname, LOCAL_CURSOR_INFIX, var);
 
 	assign_text_var(estate, var, mangled_name);
 	var->cursor_explicit_expr = explicit_expr;
@@ -457,7 +457,8 @@ CursorHashEnt *pltsql_insert_cursor_entry(char *curname, PLtsql_expr *explicit_e
 	if (found)
 		elog(ERROR, "duplicate cursor name");
 
-	strcpy(hentry->curname, curname);
+	curname[0] = '\0';
+	strncat(hentry->curname, curname, strlen(curname));
 	hentry->explicit_expr = explicit_expr;
 	hentry->cursor_options = cursor_options;
 	hentry->fetch_status = -9;
@@ -548,7 +549,10 @@ void pltsql_update_cursor_last_operation(char *curname, int last_operation)
 
 	/* keep the last opened cursor for @@cursor_rows */
 	if (last_operation == 1) /* open */
-		strcpy(last_opened_cursor, curname);
+	{
+		last_opened_cursor[0] = '\0';
+		strncat(last_opened_cursor, curname, strlen(curname));
+	}
 }
 
 /* @@cursor_rows returns cursor_rows of 'last opened' cursor. */
@@ -973,7 +977,7 @@ int execute_sp_cursor(int cursor_handle, int opttype, int rownum, const char *ta
 
 	validate_sp_cursor_params(opttype, rownum, tablename, values);
 
-	sprintf(curname, "%u", cursor_handle);
+	snprintf(curname, NAMEDATALEN, "%u", cursor_handle);
 	hentry = (CursorHashEnt *) hash_search(CursorHashTable, curname, HASH_FIND, NULL);
 	if (hentry == NULL)
 		elog(ERROR, "cursor \"%s\" does not exist", curname);
@@ -1087,7 +1091,7 @@ int execute_sp_cursorfetch(int cursor_handle, int *pfetchtype, int *prownum, int
 	PortalContext = savedPortalCxt;
 
 	/* find cursor entry, validate input options and open portal */
-	sprintf(curname, "%u", cursor_handle);
+	snprintf(curname, NAMEDATALEN, "%u", cursor_handle);
 	hentry = (CursorHashEnt *) hash_search(CursorHashTable, curname, HASH_FIND, NULL);
 	if (hentry == NULL)
 		elog(ERROR, "cursor \"%s\" does not exist", curname);
@@ -1215,7 +1219,7 @@ int execute_sp_cursoroption(int cursor_handle, int code, int value)
 
 	validate_sp_cursoroption_params(code, value);
 
-	sprintf(curname, "%u", cursor_handle);
+	snprintf(curname, NAMEDATALEN, "%u", cursor_handle);
 	hentry = (CursorHashEnt *) hash_search(CursorHashTable, curname, HASH_FIND, NULL);
 	if (hentry == NULL)
 		elog(ERROR, "cursor \"%s\" does not exist", curname);
@@ -1304,7 +1308,7 @@ int execute_sp_cursorclose(int cursor_handle)
 		elog(ERROR, "SPI_connect failed: %s", SPI_result_code_string(rc));
 	PortalContext = savedPortalCxt;
 
-	sprintf(curname, "%u", cursor_handle);
+	snprintf(curname, NAMEDATALEN, "%u", cursor_handle);
 	hentry = (CursorHashEnt *) hash_search(CursorHashTable, curname, HASH_FIND, NULL);
 	if (hentry == NULL)
 		elog(ERROR, "cursor \"%s\" does not exist", curname);
@@ -1412,7 +1416,7 @@ execute_sp_cursoropen_common(int* stmt_handle, int *cursor_handle, const char *s
 
 		*cursor_handle = get_next_cursor_handle();
 
-		sprintf(curname, "%u", *cursor_handle);
+		snprintf(curname, NAMEDATALEN, "%u", *cursor_handle);
 
 		/* add new cursor entry */
 		hentry = pltsql_insert_cursor_entry(curname, NULL, cursor_options, cursor_handle);
@@ -1662,7 +1666,7 @@ pltsql_cursor_show_textptr_only_column_indexes(PG_FUNCTION_ARGS)
 	int i, j, k;
 
 	cursor_handle = PG_GETARG_INT32(0);
-	sprintf(curname, "%u", cursor_handle);
+	snprintf(curname, NAMEDATALEN, "%u", cursor_handle);
 
 	hentry = (CursorHashEnt *) hash_search(CursorHashTable, curname, HASH_FIND, NULL);
 	if (hentry == NULL) {

@@ -2037,7 +2037,7 @@ read_param_def(InlineCodeBlockArgs *args, const char *paramdefstr)
 	int	    i = 0;
 	const char  *str1 = "CREATE PROC p_tmp_spexecutesql (";
 	const char  *str2 = ") AS BEGIN END; DROP PROC p_tmp_spexecutesql;";
-	char	    *proc_stmt;
+	StringInfoData proc_stmt;
 
 	Assert(args);
 
@@ -2051,12 +2051,12 @@ read_param_def(InlineCodeBlockArgs *args, const char *paramdefstr)
 	 * Create a fake CREATE PROCEDURE statement to get the param
 	 * definition parse tree.
 	 */
-	proc_stmt = palloc(strlen(paramdefstr) + strlen(str1) + strlen(str2) + 1);
-	strcpy(proc_stmt, str1);
-	strcat(proc_stmt, paramdefstr);
-	strcat(proc_stmt, str2);
+	initStringInfo(&proc_stmt);
+	appendStringInfoString(&proc_stmt, str1);
+	appendStringInfoString(&proc_stmt, paramdefstr);
+	appendStringInfoString(&proc_stmt, str2);
 
-	parsetree = raw_parser(proc_stmt);
+	parsetree = raw_parser(proc_stmt.data);
 	
 	/* 
 	 * Seperate each param definition, and calculate the total number of

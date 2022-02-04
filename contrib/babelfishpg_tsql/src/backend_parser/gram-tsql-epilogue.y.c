@@ -754,7 +754,7 @@ tsql_insert_output_into_cte_transformation(WithClause *opt_with_clause, RangeVar
 	Node	   		*field1;
 	char	   		*qualifier = NULL;
 	
-	sprintf(ctename, "internal_output_cte##sys_gen##%p", (void*) i);
+	snprintf(ctename, NAMEDATALEN, "internal_output_cte##sys_gen##%p", (void*) i);
 	internal_ctename = pstrdup(ctename);
 	
 	// PreparableStmt inside CTE
@@ -880,7 +880,7 @@ tsql_delete_output_into_cte_transformation(WithClause *opt_with_clause, Node *op
 	char 			col_alias_arr[NAMEDATALEN];
 	char 			*col_alias = NULL;
  
-	sprintf(ctename, "internal_output_cte##sys_gen##%p", (void*) i);
+	snprintf(ctename, NAMEDATALEN, "internal_output_cte##sys_gen##%p", (void*) i);
 	internal_ctename = pstrdup(ctename);
 		
 	// PreparableStmt inside CTE
@@ -1041,7 +1041,7 @@ tsql_update_output_into_cte_transformation(WithClause *opt_with_clause, Node *op
 	char 			col_alias_arr[NAMEDATALEN];
 	char 			*col_alias = NULL;
 	
-	sprintf(ctename, "internal_output_cte##sys_gen##%p", (void*) i);
+	snprintf(ctename, NAMEDATALEN, "internal_output_cte##sys_gen##%p", (void*) i);
 	internal_ctename = pstrdup(ctename);
 		
 	// PreparableStmt inside CTE
