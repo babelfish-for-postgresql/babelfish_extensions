@@ -52,6 +52,10 @@ bool  pltsql_showplan_text = false;
 bool  pltsql_showplan_xml = false;
 bool    pltsql_fmtonly = false;
 
+char*	pltsql_host_destribution = NULL;
+char*	pltsql_host_release = NULL;
+char*	pltsql_host_service_pack_level = NULL;
+
 extern bool Transform_null_equals;
 
 static bool check_server_collation_name(char **newval, void **extra, GucSource source);
@@ -784,6 +788,34 @@ define_custom_variables(void)
 				 PGC_USERSET,
 				 GUC_NOT_IN_SAMPLE | GUC_DISALLOW_IN_FILE | GUC_DISALLOW_IN_AUTO_FILE,
 				 check_showplan_xml, NULL, NULL);
+
+	/* Host info related GUCs*/
+	DefineCustomStringVariable("babelfishpg_tsql.host_distribution",
+				 gettext_noop("Sets host distribution"),
+				 NULL,
+				 &pltsql_host_destribution,
+				 "",
+				 PGC_SIGHUP,
+				 GUC_NOT_IN_SAMPLE,
+				 NULL, NULL, NULL);
+
+	DefineCustomStringVariable("babelfishpg_tsql.host_release",
+				 gettext_noop("Sets host release"),
+				 NULL,
+				 &pltsql_host_release,
+				 "",
+				 PGC_SIGHUP,
+				 GUC_NOT_IN_SAMPLE,
+				 NULL, NULL, NULL);
+
+	DefineCustomStringVariable("babelfishpg_tsql.host_service_pack_level",
+				 gettext_noop("Sets host service pack level"),
+				 NULL,
+				 &pltsql_host_service_pack_level,
+				 "",
+				 PGC_SIGHUP,
+				 GUC_NOT_IN_SAMPLE,
+				 NULL, NULL, NULL);
 }
 
 int escape_hatch_storage_options = EH_IGNORE;

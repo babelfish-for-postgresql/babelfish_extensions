@@ -52,6 +52,7 @@ PG_FUNCTION_INFO_V1(datefirst);
 PG_FUNCTION_INFO_V1(options);
 PG_FUNCTION_INFO_V1(default_domain);
 PG_FUNCTION_INFO_V1(tsql_exp);
+PG_FUNCTION_INFO_V1(host_os);
 
 /* Not supported -- only syntax support */
 PG_FUNCTION_INFO_V1(procid);
@@ -539,4 +540,37 @@ tsql_exp(PG_FUNCTION_ARGS)
 	if (unlikely(isinf(result)) && !isinf(arg1))
 		float_overflow_error();
 	PG_RETURN_FLOAT8(result);
+}
+
+Datum
+host_os(PG_FUNCTION_ARGS)
+{
+	char *host_os_res, *pg_version, host_str[256];
+	void *info;
+
+	/* filter out host info */
+	pg_version = pstrdup(PG_VERSION_STR);
+	sscanf(pg_version, "PostgreSQL %*s on %s, compiled by %*s", host_str);
+
+	if (strstr(host_str, "w64") || strstr(host_str, "w32") || strstr(host_str, "mingw") || strstr(host_str, "visual studio"))
+	{
+		host_os_res = pstrdup("Windows");
+	}
+	else if (strstr(host_str, "linux"))
+	{
+		host_os_res = pstrdup("Linux");
+	}
+	else if (strstr(host_str, "mac"))
+	{
+		host_os_res = pstrdup("Mac");
+	}
+	else
+		host_os_res = pstrdup("UNKNOWN");
+
+	info = tsql_varchar_input(host_os_res, strlen(host_os_res), -1);
+	if (pg_version)
+		pfree(pg_version);
+	if (host_os_res)
+		pfree(host_os_res);
+	PG_RETURN_VARCHAR_P(info);
 }

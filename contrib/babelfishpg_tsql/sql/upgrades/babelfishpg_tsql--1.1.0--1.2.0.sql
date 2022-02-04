@@ -19,9 +19,6 @@ END;
 $$;
 GRANT EXECUTE ON FUNCTION sys.lock_timeout() TO PUBLIC;
 
--- Reset search_path to not affect any subsequent scripts
-SELECT set_config('search_path', trim(leading 'sys, ' from current_setting('search_path')), false);
-
 CREATE OR REPLACE FUNCTION COLUMNS_UPDATED ()
 	 	   RETURNS sys.VARBINARY AS 'babelfishpg_tsql', 'columnsupdated' LANGUAGE C;
 
@@ -97,3 +94,29 @@ $$ LANGUAGE plpgsql;
 GRANT EXECUTE ON PROCEDURE sys.sp_babelfish_configure(
 	IN varchar(128), IN varchar(128), IN varchar(128)
 ) TO PUBLIC;
+
+-- For getting host os from PG_VERSION_STR
+CREATE OR REPLACE FUNCTION sys.get_host_os()
+RETURNS sys.NVARCHAR
+AS 'babelfishpg_tsql', 'host_os' LANGUAGE C IMMUTABLE PARALLEL SAFE;
+
+CREATE OR REPLACE VIEW sys.dm_os_host_info AS
+SELECT
+  -- get_host_os() depends on a Postgres function created separately.
+  cast( sys.get_host_os() as sys.nvarchar(256) ) as host_platform
+  -- Hardcoded at the moment. Should likely be GUC with default '' (empty string).
+  , cast( (select setting FROM pg_settings WHERE name = 'babelfishpg_tsql.host_distribution') as sys.nvarchar(256) ) as host_distribution
+  -- documentation on one hand states this is empty string on linux, but otoh shows an example with "ubuntu 16.04"
+  , cast( (select setting FROM pg_settings WHERE name = 'babelfishpg_tsql.host_release') as sys.nvarchar(256) ) as host_release
+  -- empty string on linux.
+  , cast( (select setting FROM pg_settings WHERE name = 'babelfishpg_tsql.host_service_pack_level') as sys.nvarchar(256) )
+    as host_service_pack_level
+  -- windows stock keeping unit. null on linux.
+  , cast( null as int ) as host_sku
+  -- lcid
+  , cast( sys.collationproperty( (select setting FROM pg_settings WHERE name = 'babelfishpg_tsql.server_collation_name') , 'lcid') as int )
+    as "os_language_version";
+GRANT SELECT ON sys.dm_os_host_info TO PUBLIC;
+
+-- Reset search_path to not affect any subsequent scripts
+SELECT set_config('search_path', trim(leading 'sys, ' from current_setting('search_path')), false);

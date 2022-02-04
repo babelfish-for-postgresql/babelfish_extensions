@@ -1883,3 +1883,8 @@ AS 'babelfishpg_tsql', 'tsql_varchar_substr' LANGUAGE C IMMUTABLE PARALLEL SAFE;
 CREATE OR REPLACE FUNCTION sys.substring(string sys.NCHAR, i INTEGER, j INTEGER)
 RETURNS sys.NVARCHAR
 AS 'babelfishpg_tsql', 'tsql_varchar_substr' LANGUAGE C IMMUTABLE PARALLEL SAFE;
+
+-- For getting host os from PG_VERSION_STR
+CREATE OR REPLACE FUNCTION sys.get_host_os()
+RETURNS sys.NVARCHAR
+AS 'babelfishpg_tsql', 'host_os' LANGUAGE C IMMUTABLE PARALLEL SAFE;
