@@ -3371,8 +3371,14 @@ TdsSendTypeSqlvariant(FmgrInfo *finfo, Datum value, void *vMetaData)
 			 * TODO: [BABEL-1069] Remove collation related hardcoding 
 			 * from sql_variant sender for char class basetypes
 			 */
-			destBuf = server_to_any(buf + VARHDRSZ, dataLen, PG_WIN1252);
-			actualDataLen = strlen(destBuf);
+			if (dataLen > 0)
+			{
+				destBuf = server_to_any(buf + VARHDRSZ, dataLen, PG_WIN1252);
+				actualDataLen = strlen(destBuf);
+			}
+			else
+				/* We can not assume that buf would be NULL terminated. */
+				actualDataLen = 0;
 		}
 
 		totalLen = actualDataLen + VARIANT_TYPE_METALEN_FOR_CHAR_DATATYPES;

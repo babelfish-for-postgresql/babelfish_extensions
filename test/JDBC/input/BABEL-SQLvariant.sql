@@ -421,3 +421,44 @@ go
 drop table destinationTable;
 go
 
+Create table sourceTable(a sql_variant, b sql_variant not null);
+go
+Create table destinationTable(a sql_variant, b sql_variant not null);
+go
+Insert into sourceTable values (cast ('Delhi' as VARCHAR(24)),cast ('    Surat' as VARCHAR(24)));
+go
+Insert into sourceTable values (cast ('' as VARCHAR(24)),cast ('   S,B' as VARCHAR(24)));
+go
+Insert into sourceTable values (cast (NULL as VARCHAR(24)), cast ('  ' as VARCHAR(24)));
+go
+insertbulk#!#sourceTable#!#destinationTable
+go
+Select * from sourceTable;
+go
+Select * from destinationTable;
+go
+drop table sourceTable;
+go
+drop table destinationTable;
+go
+
+Create table sourceTable(a sql_variant, b sql_variant not null);
+go
+Create table destinationTable(a sql_variant, b sql_variant not null);
+go
+Insert into sourceTable values (cast ('Delhi' as char(24)),cast ('    Surat' as char(24)));
+go
+Insert into sourceTable values (cast ('' as char(24)),cast ('   S,B' as char(24)));
+go
+Insert into sourceTable values (cast (NULL as char(24)), cast ('  ' as char(24)));
+go
+insertbulk#!#sourceTable#!#destinationTable
+go
+Select * from sourceTable;
+go
+Select * from destinationTable;
+go
+drop table sourceTable;
+go
+drop table destinationTable;
+go
