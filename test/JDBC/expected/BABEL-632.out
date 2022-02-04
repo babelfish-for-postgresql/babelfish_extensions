@@ -1,0 +1,50 @@
+SELECT CAST('\x31' AS bytea);
+GO
+~~START~~
+varbinary
+31
+~~END~~
+
+
+SELECT CAST('0x31' AS bytea);
+GO
+~~START~~
+varbinary
+30783331
+~~END~~
+
+
+-- Test bytea column in a table
+CREATE TABLE t_bytea(c1 int, c2 bytea);
+GO
+
+INSERT INTO t_bytea (c1, c2) VALUES (1, '\x31');
+INSERT INTO t_bytea (c1, c2) VALUES (2, '0x31');
+GO
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+
+-- Test cast bytea to varbinary
+SELECT c1, CAST(c2 AS varbinary(10)) FROM t_bytea;
+GO
+~~START~~
+int#!#varbinary
+1#!#31
+2#!#30783331
+~~END~~
+
+
+--Test cast bytea to varchar
+SELECT c1, CAST(c2 AS varchar(10)) FROM t_bytea;
+GO
+~~START~~
+int#!#varchar
+1#!#\x31
+2#!#\x30783331
+~~END~~
+
+
+DROP TABLE t_bytea;
+GO

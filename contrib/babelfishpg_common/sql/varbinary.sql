@@ -46,6 +46,22 @@ CREATE TYPE sys.BBF_VARBINARY (
     COLLATABLE     = false
 );
 
+CREATE OR REPLACE FUNCTION sys.byteavarbinary(pg_catalog.BYTEA, integer, boolean)
+RETURNS sys.BBF_VARBINARY
+AS 'babelfishpg_common', 'byteavarbinary'
+LANGUAGE C IMMUTABLE STRICT PARALLEL SAFE;
+
+CREATE CAST (pg_catalog.BYTEA AS sys.BBF_VARBINARY)
+WITH FUNCTION sys.byteavarbinary(pg_catalog.BYTEA, integer, boolean) AS ASSIGNMENT;
+
+CREATE OR REPLACE FUNCTION sys.varbinarybytea(sys.BBF_VARBINARY, integer, boolean)
+RETURNS pg_catalog.BYTEA
+AS 'babelfishpg_common', 'byteavarbinary'
+LANGUAGE C IMMUTABLE STRICT PARALLEL SAFE;
+
+CREATE CAST (sys.BBF_VARBINARY AS pg_catalog.BYTEA)
+WITH FUNCTION sys.varbinarybytea(sys.BBF_VARBINARY, integer, boolean) AS ASSIGNMENT;
+
 CREATE OR REPLACE FUNCTION sys.varcharvarbinary(sys.VARCHAR, integer, boolean)
 RETURNS sys.BBF_VARBINARY
 AS 'babelfishpg_common', 'varcharvarbinary'
