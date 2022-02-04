@@ -44,6 +44,11 @@ bool is_ignorable_error(int pg_error_code)
 		case SQL_ERROR_2732:
 		case SQL_ERROR_8179:
 		case SQL_ERROR_9809:
+		case SQL_ERROR_201:
+		case SQL_ERROR_206:
+		case SQL_ERROR_8144:
+		case SQL_ERROR_8145:
+		case SQL_ERROR_8146:
 		{
 			elog(DEBUG1, "TSQL TXN is_ignorable_error %d", latest_error_code);
 			return true;

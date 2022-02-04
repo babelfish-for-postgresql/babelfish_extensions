@@ -2,12 +2,15 @@
 
 #include "catalog/heap.h"
 #include "catalog/namespace.h"
+#include "catalog/pg_proc.h"
 #include "commands/tablecmds.h"
+#include "funcapi.h"
 #include "nodes/makefuncs.h"
 #include "nodes/nodeFuncs.h"
 #include "parser/parse_clause.h"
 #include "parser/parse_coerce.h"
 #include "parser/parse_expr.h"
+#include "parser/parse_func.h"
 #include "parser/parse_relation.h"
 #include "parser/parse_utilcmd.h"
 #include "parser/parse_target.h"
@@ -49,6 +52,11 @@ static int find_attr_by_name_from_relation(Relation rd, const char *attname, boo
  *****************************************/
 static int find_attr_by_name_from_column_def_list(const char *attributeName, List *schema);
 
+/*****************************************
+ * 			Utility Hooks
+ *****************************************/
+static void pltsql_report_proc_not_found_error(List *names, List *argnames, int nargs, ParseState *pstate, int location, bool proc_call);
+
 /* Save hook values in case of unload */
 static core_yylex_hook_type prev_core_yylex_hook = NULL;
 static pre_transform_returning_hook_type prev_pre_transform_returning_hook = NULL;
@@ -58,6 +66,7 @@ static tle_name_comparison_hook_type prev_tle_name_comparison_hook = NULL;
 static resolve_target_list_unknowns_hook_type prev_resolve_target_list_unknowns_hook = NULL;
 static find_attr_by_name_from_column_def_list_hook_type prev_find_attr_by_name_from_column_def_list_hook = NULL;
 static find_attr_by_name_from_relation_hook_type prev_find_attr_by_name_from_relation_hook = NULL;
+static report_proc_not_found_error_hook_type prev_report_proc_not_found_error_hook = NULL;
 
 /*****************************************
  * 			Install / Uninstall
@@ -99,6 +108,9 @@ InstallExtendedHooks(void)
 
 	prev_find_attr_by_name_from_relation_hook = find_attr_by_name_from_relation_hook;
 	find_attr_by_name_from_relation_hook = find_attr_by_name_from_relation;
+
+	prev_report_proc_not_found_error_hook = report_proc_not_found_error_hook;
+	report_proc_not_found_error_hook = pltsql_report_proc_not_found_error;
 }
 
 void
@@ -119,6 +131,7 @@ UninstallExtendedHooks(void)
 	resolve_target_list_unknowns_hook = prev_resolve_target_list_unknowns_hook;
 	find_attr_by_name_from_column_def_list_hook = prev_find_attr_by_name_from_column_def_list_hook;
 	find_attr_by_name_from_relation_hook = prev_find_attr_by_name_from_relation_hook;
+	report_proc_not_found_error_hook = prev_report_proc_not_found_error_hook;
 }
 
 /*****************************************
@@ -802,4 +815,185 @@ tle_name_comparison(const char *tlename, const char *identifier)
 		return (*prev_tle_name_comparison_hook) (tlename, identifier);
 	else
 		return (0 == strcmp(tlename, identifier));
+}
+
+/* Generate similar error message with SQL Server when function/procedure is not found if possible. */
+void
+pltsql_report_proc_not_found_error(List *names, List *given_argnames, int nargs, ParseState *pstate, int location, bool proc_call)
+{
+	FuncCandidateList candidates = NULL, current_candidate = NULL;
+	int max_nargs = -1;
+	int min_nargs = INT_MAX;
+	int ncandidates = 0;
+	bool found = false;
+	const char *obj_type = proc_call ? "procedure" : "function";
+
+	candidates = FuncnameGetCandidates(names, -1, NIL, false, false, true); /* search all possible candidate regardless of the # of arguments */
+	if (candidates == NULL)
+		return; /* no candidates at all. let backend handle the proc-not-found error */
+
+	for (current_candidate = candidates; current_candidate != NULL; current_candidate = current_candidate->next)
+	{
+		if (current_candidate->nargs == nargs) /* Found the proc/func having the same number of arguments. */
+			found = true;
+		
+		ncandidates++;
+		min_nargs = (current_candidate->nargs < min_nargs) ? current_candidate->nargs : min_nargs;
+		max_nargs = (current_candidate->nargs > max_nargs) ? current_candidate->nargs : max_nargs;
+	}
+
+	if (max_nargs == -1 || min_nargs == INT_MAX) /* Unexpected number of arguments, let PG backend handle the error message */
+		return;
+
+	if (ncandidates > 1) /* More than one candidates exist, throwing an error message with possible number of arguments */
+	{
+		const char *arg_str = (max_nargs < 2) ? "argument" : "arguments";
+
+		/* Found the proc/func having the same number of arguments. possibly data-type mistmatch. */
+		if (found)
+		{
+			ereport(ERROR,
+					(errcode(ERRCODE_UNDEFINED_FUNCTION),
+					 errmsg("The %s %s is found but cannot be used. Possibly due to datatype mismatch and implicit casting is not allowed.", obj_type, NameListToString(names))),
+					 parser_errposition(pstate, location));
+		}
+
+		if (max_nargs == min_nargs)
+		{
+			if (max_nargs == 0)
+			{
+				ereport(ERROR,
+						(errcode(ERRCODE_UNDEFINED_FUNCTION),
+						 errmsg("%s %s has too many arguments specified.", obj_type, NameListToString(names))),
+						 parser_errposition(pstate, location));
+			}
+			else
+			{
+				ereport(ERROR,
+						(errcode(ERRCODE_UNDEFINED_FUNCTION),
+						 errmsg("The %s %s requires %d %s", NameListToString(names), obj_type, max_nargs, arg_str)),
+						 parser_errposition(pstate, location));
+			}
+		}
+		else
+		{
+			ereport(ERROR,
+					(errcode(ERRCODE_UNDEFINED_FUNCTION),
+					 errmsg("The %s %s requires %d to %d %s", NameListToString(names), obj_type, min_nargs, max_nargs, arg_str)),
+					 parser_errposition(pstate, location));
+		}
+	}
+	else /* Only one candidate exists, */
+	{
+		HeapTuple tup;
+		bool isnull;
+
+		tup = SearchSysCache1(PROCOID, ObjectIdGetDatum(candidates->oid));
+		if (HeapTupleIsValid(tup))
+		{
+			(void) SysCacheGetAttr(PROCOID, tup,
+									Anum_pg_proc_proargnames,
+									&isnull);
+			
+			if(!isnull)
+			{
+				Form_pg_proc procform = (Form_pg_proc) GETSTRUCT(tup);
+				int pronargs = procform->pronargs;
+				int first_arg_with_default = pronargs - procform->pronargdefaults;
+				int pronallargs;
+				int ap;
+				int pp;
+				int numposargs = nargs - list_length(given_argnames);
+				Oid *p_argtypes;
+				char **p_argnames;
+				char *p_argmodes;
+				char *first_unknown_argname = NULL;
+				bool arggiven[FUNC_MAX_ARGS];
+				ListCell *lc;
+
+				if (nargs > pronargs) /* Too many parameters provided. */
+				{
+					ereport(ERROR,
+							(errcode(ERRCODE_UNDEFINED_FUNCTION),
+							 errmsg("%s %s has too many arguments specified.",obj_type, NameListToString(names))),
+							 parser_errposition(pstate, location));
+				}
+				
+				pronallargs = get_func_arg_info(tup,
+												&p_argtypes,
+												&p_argnames,
+												&p_argmodes);
+				memset(arggiven, false, pronargs * sizeof(bool));
+
+				/* there are numposargs positional args before the named args */
+				for (ap = 0; ap < numposargs; ap++)
+					arggiven[ap] = true;
+
+				foreach(lc, given_argnames)
+				{
+					char *argname = (char *) lfirst(lc);
+					bool match_found;
+					int i;
+
+					pp = 0;
+					match_found = false;
+					for (i = 0; i < pronallargs; i++)
+					{
+						/* consider only input parameters */
+						if (p_argmodes &&
+						    (p_argmodes[i] != FUNC_PARAM_IN &&
+							 p_argmodes[i] != FUNC_PARAM_INOUT &&
+							 p_argmodes[i] != FUNC_PARAM_VARIADIC))
+							continue;
+						if (p_argnames[i] && strcmp(p_argnames[i], argname) == 0)
+						{
+							arggiven[pp] = true;
+							match_found = true;
+							break;
+						}
+						/* increase pp only for input parameters */
+						pp++;
+					}
+					/* Store first unknown parameter name. */
+					if (!match_found && first_unknown_argname == NULL)
+						first_unknown_argname = argname;
+				}
+
+				/* Traverse arggiven list to check if a non-default parameter is not supplied. */
+				for (pp = numposargs; pp < first_arg_with_default; pp++)
+				{
+					if (arggiven[pp])
+						continue;
+					else
+					{
+						ereport(ERROR,
+								(errcode(ERRCODE_UNDEFINED_FUNCTION),
+								 errmsg("%s %s expects parameter \"%s\", which was not supplied.", obj_type, NameListToString(names), p_argnames[pp])),
+								 parser_errposition(pstate, location));
+					}
+				}
+				/* Default arguments are also supplied but parameter name is unknown. */
+				if((nargs > first_arg_with_default) && first_unknown_argname)
+				{
+					ereport(ERROR,
+							(errcode(ERRCODE_UNDEFINED_FUNCTION),
+							 errmsg("\"%s\" is not an parameter for %s %s.", first_unknown_argname, obj_type, NameListToString(names))),
+							 parser_errposition(pstate, location));
+				}
+				/* Still no issue with the arguments provided, possibly data-type mistmatch. */
+				ereport(ERROR,
+						(errcode(ERRCODE_UNDEFINED_FUNCTION),
+						 errmsg("The %s %s is found but cannot be used. Possibly due to datatype mismatch and implicit casting is not allowed.", obj_type, NameListToString(names))),
+						 parser_errposition(pstate, location));
+			}
+			else if(nargs > 0) /* proargnames is NULL. Procedure/function has no parameters but arguments are specified. */
+			{
+				ereport(ERROR,
+						(errcode(ERRCODE_UNDEFINED_FUNCTION),
+						 errmsg("%s %s has no parameters and arguments were supplied.", obj_type, NameListToString(names))),
+						 parser_errposition(pstate, location));
+			}	
+		}
+		ReleaseSysCache(tup);
+	}
 }

@@ -8,9 +8,9 @@ GO
 -- Error: have to provide table name
 EXEC sp_columns
 GO
-~~ERROR (Code: 33557097)~~
+~~ERROR (Code: 201)~~
 
-~~ERROR (Message: procedure sp_columns() does not exist)~~
+~~ERROR (Message: procedure sp_columns expects parameter "@table_name", which was not supplied.)~~
 
 
 -- Testing a few different types

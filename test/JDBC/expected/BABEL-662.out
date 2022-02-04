@@ -83,9 +83,9 @@ go
 
 babel_662_proc_2
 go
-~~ERROR (Code: 33557097)~~
+~~ERROR (Code: 201)~~
 
-~~ERROR (Message: procedure babel_662_proc_2() does not exist)~~
+~~ERROR (Message: procedure babel_662_proc_2 expects parameter "@p", which was not supplied.)~~
 
 
 -- BABEL-1995
