@@ -2061,14 +2061,13 @@ TdsSendLoginAck(Port *port)
 				char	*temp = NULL;
 
 				StartTransactionCommand();
-				temp = pltsql_plugin_handler_ptr->pltsql_get_login_default_db(request->username ?
-																			  request->username : port->user_name);
+				temp = pltsql_plugin_handler_ptr->pltsql_get_login_default_db(port->user_name);
 				MemoryContextSwitchTo(oldContext);
 
 				if (temp == NULL)
 					ereport(ERROR,
 							(errcode(ERRCODE_UNDEFINED_DATABASE),
-							 errmsg("could not find default database for user \"%s\"", request->username)));
+							 errmsg("could not find default database for user \"%s\"", port->user_name)));
 
 				defaultDb = pstrdup(temp);
 				CommitTransactionCommand();
