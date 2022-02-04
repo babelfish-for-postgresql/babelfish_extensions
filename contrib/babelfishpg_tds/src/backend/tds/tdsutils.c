@@ -529,6 +529,13 @@ TdsErrorContextCallback(void *arg)
 					tdsErrorContext->err_text);
 			}
 			break;
+		case TDS_BULK_LOAD: 	/* Bulk Load request */
+			{
+				errcontext("TDS Protocol: Message Type: Bulk Load, Phase: %s. %s",
+					tdsErrorContext->phase,
+					tdsErrorContext->err_text);
+			}
+			break;
 		default:
 			errcontext("TDS Protocol: %s",
 					tdsErrorContext->err_text);
