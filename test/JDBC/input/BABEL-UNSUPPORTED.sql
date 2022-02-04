@@ -814,14 +814,27 @@ GO
 
 CREATE TABLE t_unsupported_so6(a int, primary key(a) with DROP_EXISTING=on);
 GO
+DROP TABLE t_unsupported_so6
+GO
 
 CREATE TABLE t_unsupported_so7(a int, primary key(a) with ONLINE=on);
+GO
+DROP TABLE t_unsupported_so7
+GO
+
+CREATE TABLE t_unsupported_so7(a int, primary key(a) with SORT_IN_TEMPDB=on);
+GO
+DROP TABLE t_unsupported_so7
 GO
 
 CREATE TABLE t_unsupported_so8(a int, primary key(a) with RESUMABLE=on, ONLINE=on);
 GO
+DROP TABLE t_unsupported_so8
+GO
 
 CREATE TABLE t_unsupported_so9(a int, primary key(a) with (MAX_DURATION=60, ONLINE=on));
+GO
+DROP TABLE t_unsupported_so9
 GO
 
 CREATE TABLE t_unsupported_so10(a int, primary key(a) with (ALLOW_ROW_LOCKS=on));
@@ -886,6 +899,9 @@ CREATE TABLE t_unsupported_so6(a int, primary key(a) with DROP_EXISTING=on);
 GO
 
 CREATE TABLE t_unsupported_so7(a int, primary key(a) with ONLINE=on);
+GO
+
+CREATE TABLE t_unsupported_so7(a int, primary key(a) with SORT_IN_TEMPDB=on);
 GO
 
 CREATE TABLE t_unsupported_so8(a int, primary key(a) with RESUMABLE=on, ONLINE=on);
