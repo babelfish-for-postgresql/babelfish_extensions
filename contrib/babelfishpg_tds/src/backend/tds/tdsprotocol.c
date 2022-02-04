@@ -218,14 +218,16 @@ GetTDSRequest(bool *resetProtocol)
 				HOLD_CANCEL_INTERRUPTS();
 				ret = TdsReadNextRequest(&message, &status, &messageType);
 				RESUME_CANCEL_INTERRUPTS();
-                              TdsErrorContext->err_text = "Fetching TDS Request";
 
 				if (ret != 0)
 				{
+					TdsErrorContext->reqType = 0;
+					TdsErrorContext->err_text = "EOF reached on TDS socket";
 					TDS_DEBUG(TDS_DEBUG1, "EOF on TDS socket");
 					pfree(message.data);
 					return NULL;
 				}
+				TdsErrorContext->err_text = "Fetching TDS Request";
 				TdsRequestCtrl->status = status;
 			}
 			else
