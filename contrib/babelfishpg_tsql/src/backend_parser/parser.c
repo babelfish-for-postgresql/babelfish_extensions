@@ -135,6 +135,9 @@ pgtsql_base_yylex(YYSTYPE *lvalp, YYLTYPE *llocp, core_yyscan_t yyscanner)
 		case WITH:
 			cur_token_length = 4;
 			break;
+		case UPDATE:
+			cur_token_length = 6;
+			break;
 		case FOR:
 			cur_token_length = 3;
 			break;
@@ -206,7 +209,14 @@ pgtsql_base_yylex(YYSTYPE *lvalp, YYLTYPE *llocp, core_yyscan_t yyscanner)
 					break;
 			}
 			break;
-
+		case UPDATE:
+			switch (next_token)
+			{
+				case '(':
+					cur_token = UPDATE_paren;
+				break;
+			}
+			break;
 		case WITH:
 			/*
 			 * Replace WITH by WITH_LA if it's followed by TIME or ORDINALITY

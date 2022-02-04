@@ -34,6 +34,9 @@ CREATE FUNCTION sessionproperty (TEXT)
 CREATE OR REPLACE FUNCTION COLUMNS_UPDATED ()
 	   RETURNS sys.VARBINARY AS 'babelfishpg_tsql', 'columnsupdated' LANGUAGE C;
 
+CREATE OR REPLACE FUNCTION UPDATE (TEXT)
+	   RETURNS BOOLEAN AS 'babelfishpg_tsql', 'updated' LANGUAGE C;
+
 -- The procedures below requires return code as a RETURN statement which is
 -- only possible in pltsql. Therefore, we create them here and call into the
 -- corresponding internal functions.

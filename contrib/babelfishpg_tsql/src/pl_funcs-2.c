@@ -9,10 +9,31 @@
 #include "pltsql.h"
 #include "pltsql-2.h"
 #include "pltsql_instr.h"
+#include "utils/builtins.h"
 
 static int cmpfunc(const void *a, const void *b)
 {
   return ( *(int*)a - *(int*)b );
+}
+
+PG_FUNCTION_INFO_V1(updated);
+Datum
+updated(PG_FUNCTION_ARGS){
+	char	   *column = text_to_cstring(PG_GETARG_TEXT_PP(0));
+	char       *real_column;
+	List       *curr_columns_list;
+	ListCell   *l;
+
+	if (pltsql_trigger_depth-1<list_length(columns_updated_list))
+		curr_columns_list = (List *)list_nth(columns_updated_list, pltsql_trigger_depth - 1);
+	else curr_columns_list = NIL;
+	foreach(l, curr_columns_list){
+			real_column = ((UpdatedColumn *)lfirst(l))->column_name;
+			if (pg_strcasecmp(real_column, column) == 0){
+				PG_RETURN_BOOL(true);
+			}
+		}
+	PG_RETURN_BOOL(false);
 }
 
 PG_FUNCTION_INFO_V1(columnsupdated);

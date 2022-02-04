@@ -6,17 +6,9 @@ BEGIN
 	IF NOT update(a)  BEGIN RETURN END
 END
 go
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: 'UPDATE() function in  trigger' is not currently supported in Babelfish)~~
-
 
 DROP TRIGGER tr_1185;
 go
-~~ERROR (Code: 3701)~~
-
-~~ERROR (Message: trigger "tr_1185" does not exist)~~
-
 
 DROP TABLE t_1185;
 go

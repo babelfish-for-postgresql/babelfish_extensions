@@ -1591,6 +1591,7 @@ typedef struct
 	AttrNumber    x_attnum;
 	int trigger_depth;
 	int total_columns;
+	char        *column_name;
 } UpdatedColumn;
 
 extern IdentifierLookup pltsql_IdentifierLookup;

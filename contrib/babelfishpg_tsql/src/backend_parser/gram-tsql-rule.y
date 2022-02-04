@@ -1270,7 +1270,13 @@ table_ref:	relation_expr tsql_table_hint_expr
 		;
 
 func_expr_common_subexpr:
-			TSQL_TRY_CAST '(' a_expr AS Typename ')'
+			UPDATE_paren '(' NonReservedWord_or_Sconst ')'
+				{
+					$$ = (Node *) makeFuncCall(TsqlSystemFuncName2("update"),
+											   list_make1(makeStringConst($3,@3)),
+											   @1);
+				}
+			| TSQL_TRY_CAST '(' a_expr AS Typename ')'
 				{
 					$$ = TsqlFunctionTryCast($3, $5, @1);
 				}

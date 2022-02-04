@@ -4978,7 +4978,8 @@ static void updateColumnUpdatedList(PLtsql_expr* expr, int i){
 		updateColumn = (UpdatedColumn *)palloc(sizeof(UpdatedColumn));
 		updateColumn->x_attnum = target_entry->resno;
 		updateColumn->trigger_depth = pltsql_trigger_depth;
-			updateColumn->total_columns = tupdesc->natts;
+		updateColumn->total_columns = tupdesc->natts;
+		updateColumn->column_name = target_entry->resname;
 		if (length < pltsql_trigger_depth + 1){
 			curr_columns_list = NIL;
 			while (length < pltsql_trigger_depth){
