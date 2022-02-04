@@ -859,3 +859,88 @@ go
 drop table destinationTable;
 go
 
+Create table sourceTable(a sql_variant, b sql_variant not null);
+go
+Create table destinationTable(a sql_variant, b sql_variant not null);
+go
+Insert into sourceTable values (cast ('Delhi' as VARCHAR(24)),cast ('    Surat' as VARCHAR(24)));
+go
+~~ROW COUNT: 1~~
+
+Insert into sourceTable values (cast ('' as VARCHAR(24)),cast ('   S,B' as VARCHAR(24)));
+go
+~~ROW COUNT: 1~~
+
+Insert into sourceTable values (cast (NULL as VARCHAR(24)), cast ('  ' as VARCHAR(24)));
+go
+~~ROW COUNT: 1~~
+
+insertbulk#!#sourceTable#!#destinationTable
+~~ROW COUNT: 2~~
+
+go
+Select * from sourceTable;
+go
+~~START~~
+sql_variant#!#sql_variant
+Delhi#!#    Surat
+#!#   S,B
+<NULL>#!#  
+~~END~~
+
+Select * from destinationTable;
+go
+~~START~~
+sql_variant#!#sql_variant
+Delhi#!#    Surat
+#!#   S,B
+<NULL>#!#  
+~~END~~
+
+drop table sourceTable;
+go
+drop table destinationTable;
+go
+
+Create table sourceTable(a sql_variant, b sql_variant not null);
+go
+Create table destinationTable(a sql_variant, b sql_variant not null);
+go
+Insert into sourceTable values (cast ('Delhi' as char(24)),cast ('    Surat' as char(24)));
+go
+~~ROW COUNT: 1~~
+
+Insert into sourceTable values (cast ('' as char(24)),cast ('   S,B' as char(24)));
+go
+~~ROW COUNT: 1~~
+
+Insert into sourceTable values (cast (NULL as char(24)), cast ('  ' as char(24)));
+go
+~~ROW COUNT: 1~~
+
+insertbulk#!#sourceTable#!#destinationTable
+~~ROW COUNT: 2~~
+
+go
+Select * from sourceTable;
+go
+~~START~~
+sql_variant#!#sql_variant
+Delhi                   #!#    Surat               
+                        #!#   S,B                  
+<NULL>#!#                        
+~~END~~
+
+Select * from destinationTable;
+go
+~~START~~
+sql_variant#!#sql_variant
+Delhi                   #!#    Surat               
+                        #!#   S,B                  
+<NULL>#!#                        
+~~END~~
+
+drop table sourceTable;
+go
+drop table destinationTable;
+go
