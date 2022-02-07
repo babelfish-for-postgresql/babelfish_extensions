@@ -12,9 +12,38 @@ smallint#!#varchar
 ~~END~~
 
 
+select count(*) from sys.sysindexes where id=OBJECT_ID('t1');
+go
+~~START~~
+int
+1
+~~END~~
+
+
+create database db1;
+go
+
+use db1;
+go
+
+-- should not be visible here
+select count(*) from sys.sysindexes where id=OBJECT_ID('t1');
+go
+~~START~~
+int
+0
+~~END~~
+
+
+use master;
+go
+
 -- clean up
 drop index i1_t1 on t1
 go
 
 drop table t1
+go
+
+drop database db1;
 go

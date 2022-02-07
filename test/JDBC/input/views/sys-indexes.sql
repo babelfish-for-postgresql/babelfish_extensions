@@ -30,6 +30,22 @@ GO
 SELECT type, type_desc  FROM sys.indexes WHERE name LIKE 'i_sys_index_test1%';
 GO
 
+CREATE DATABASE db1
+GO
+
+USE db1
+GO
+
+-- index "t_sys_index_test1" should not be visible here
+SELECT COUNT(*) FROM sys.indexes WHERE object_id = OBJECT_ID('t_sys_index_test1')
+GO
+
+SELECT COUNT(*) FROM sys.indexes WHERE name LIKE 'i_sys_index_test1%';
+GO
+
+USE master
+GO
+
 DROP INDEX i_sys_index_test1 ON t_sys_index_test1;
 DROP INDEX i_sys_index_test1a ON t_sys_index_test1;
 GO
@@ -38,4 +54,7 @@ SELECT COUNT(*) FROM sys.indexes WHERE name LIKE 'i_sys_index_test%';
 GO
 
 DROP TABLE IF EXISTS t_sys_index_test1
+GO
+
+DROP DATABASE db1
 GO
