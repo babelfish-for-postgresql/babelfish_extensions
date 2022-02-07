@@ -4,10 +4,13 @@ GO
 USE db1
 GO
 
-CREATE TABLE rand_name1(a int);
+CREATE TABLE rand_name1(rand_col1 int);
 GO
 
 SELECT COUNT(*) FROM sys.tables WHERE name = 'rand_name1';
+GO
+
+SELECT COUNT(*) FROM sys.columns WHERE name = 'rand_col1';
 GO
 
 USE master;
@@ -17,10 +20,17 @@ GO
 SELECT COUNT(*) FROM sys.tables WHERE name = 'rand_name1';
 GO
 
-CREATE TABLE rand_name2(a int);
+#column rand_col1 should not be visible here
+SELECT COUNT(*) FROM sys.columns WHERE name = 'rand_col1';
+GO
+
+CREATE TABLE rand_name2(rand_col2 int);
 GO
 
 SELECT COUNT(*) FROM sys.tables WHERE name = 'rand_name2';
+GO
+
+SELECT COUNT(*) FROM sys.columns WHERE name = 'rand_col2';
 GO
 
 USE db1
@@ -28,6 +38,10 @@ GO
 
 #table rand_name2 should not be visible in db1 database.
 SELECT COUNT(*) FROM sys.tables WHERE name = 'rand_name2';
+GO
+
+#column rand_col2 should not be visible here
+SELECT COUNT(*) FROM sys.columns WHERE name = 'rand_col2';
 GO
 
 DROP TABLE rand_name1;
