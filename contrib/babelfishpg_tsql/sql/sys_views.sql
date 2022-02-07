@@ -505,10 +505,10 @@ select
   , null::integer as execute_as_principal_id
   , 0 as uses_native_compilation
 from pg_proc p
-inner join pg_namespace s on s.oid = p.pronamespace
+inner join sys.schemas s on s.schema_id = p.pronamespace
 inner join pg_type t on t.oid = p.prorettype
 left join pg_collation c on c.oid = t.typcollation
-where s.nspname not in ('information_schema', 'pg_catalog')
+where has_schema_privilege(s.schema_id, 'USAGE')
 and has_function_privilege(p.oid, 'EXECUTE');
 GRANT SELECT ON sys.sql_modules TO PUBLIC;
 
@@ -694,6 +694,32 @@ AND has_schema_privilege(tab.schema_id, 'USAGE')
 AND has_column_privilege(a.attrelid, a.attname, 'SELECT,INSERT,UPDATE,REFERENCES');
 GRANT SELECT ON sys.default_constraints TO PUBLIC;
 
+CREATE or replace VIEW sys.check_constraints AS
+SELECT CAST(c.conname as sys.sysname) as name
+  , oid::integer as object_id
+  , NULL::integer as principal_id 
+  , c.connamespace::integer as schema_id
+  , conrelid::integer as parent_object_id
+  , 'C'::char(2) as type
+  , 'CHECK_CONSTRAINT'::sys.nvarchar(60) as type_desc
+  , null::sys.datetime as create_date
+  , null::sys.datetime as modify_date
+  , 0::sys.bit as is_ms_shipped
+  , 0::sys.bit as is_published
+  , 0::sys.bit as is_schema_published
+  , 0::sys.bit as is_disabled
+  , 0::sys.bit as is_not_for_replication
+  , 0::sys.bit as is_not_trusted
+  , c.conkey[1]::integer AS parent_column_id
+  , substring(pg_get_constraintdef(c.oid) from 7) AS definition
+  , 1::sys.bit as uses_database_collation
+  , 0::sys.bit as is_system_named
+FROM pg_catalog.pg_constraint as c
+INNER JOIN sys.schemas s on c.connamespace = s.schema_id
+WHERE has_schema_privilege(s.schema_id, 'USAGE')
+AND c.contype = 'c' and c.conrelid != 0;
+GRANT SELECT ON sys.check_constraints TO PUBLIC;
+
 create or replace view sys.objects as
 select
       t.name
@@ -785,6 +811,21 @@ select
   , def.is_published::int
   , def.is_schema_published::int
   from sys.default_constraints def
+union all
+select
+    chk.name::name
+  , chk.object_id
+  , chk.principal_id
+  , chk.schema_id
+  , chk.parent_object_id
+  , chk.type
+  , chk.type_desc
+  , chk.create_date
+  , chk.modify_date
+  , chk.is_ms_shipped::int
+  , chk.is_published::int
+  , chk.is_schema_published::int
+  from sys.check_constraints chk
 union all
 select
    p.relname as name
@@ -1042,30 +1083,6 @@ inner join sys.schemas sch on sch.schema_id = c.relnamespace
 where has_schema_privilege(sch.schema_id, 'USAGE')
 and has_table_privilege(c.oid, 'SELECT,INSERT,UPDATE,DELETE,TRUNCATE,TRIGGER');
 GRANT SELECT ON sys.index_columns TO PUBLIC;
-
-CREATE or replace VIEW sys.check_constraints AS
-SELECT CAST(c.conname as sys.sysname) as name
-  , oid::integer as object_id
-  , c.connamespace::integer as principal_id 
-  , c.connamespace::integer as schema_id
-  , conrelid::integer as parent_object_id
-  , 'C'::char(2) as type
-  , 'CHECK_CONSTRAINT'::sys.nvarchar(60) as type_desc
-  , null::sys.datetime as create_date
-  , null::sys.datetime as modify_date
-  , 0::sys.bit as is_ms_shipped
-  , 0::sys.bit as is_published
-  , 0::sys.bit as is_schema_published
-  , 0::sys.bit as is_disabled
-  , 0::sys.bit as is_not_for_replication
-  , 0::sys.bit as is_not_trusted
-  , c.conkey[1]::integer AS parent_column_id
-  , substring(pg_get_constraintdef(c.oid) from 7) AS definition
-  , 1::sys.bit as uses_database_collation
-  , 0::sys.bit as is_system_named
-FROM pg_catalog.pg_constraint as c
-WHERE c.contype = 'c' and c.conrelid != 0;
-GRANT SELECT ON sys.check_constraints TO PUBLIC;
 
 -- internal function that returns relevant info needed
 -- by sys.syscolumns view for all procedure parameters.

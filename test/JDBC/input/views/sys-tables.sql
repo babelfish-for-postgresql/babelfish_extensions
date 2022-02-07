@@ -4,7 +4,7 @@ GO
 USE db1
 GO
 
-CREATE TABLE rand_name1(rand_col1 int DEFAULT 1);
+CREATE TABLE rand_name1(rand_col1 int DEFAULT 1, CHECK (rand_col1 > 0));
 GO
 
 SELECT COUNT(*) FROM sys.tables WHERE name = 'rand_name1';
@@ -17,6 +17,12 @@ SELECT COUNT(*) FROM sys.default_constraints WHERE name like '%rand_name1%';
 GO
 
 SELECT COUNT(*) FROM sys.objects WHERE type='U' and name = 'rand_name1';
+GO
+
+select count(*) from sys.check_constraints where parent_object_id = object_id('rand_name1');
+GO
+
+select count(*) from sys.objects where parent_object_id = object_id('rand_name1') and type = 'C';
 GO
 
 USE master;
@@ -37,7 +43,13 @@ GO
 SELECT COUNT(*) FROM sys.objects WHERE type='U' and name = 'rand_name1';
 GO
 
-CREATE TABLE rand_name2(rand_col2 int DEFAULT 2);
+select count(*) from sys.check_constraints where parent_object_id = object_id('rand_name1');
+GO
+
+select count(*) from sys.objects where parent_object_id = object_id('rand_name1') and type = 'C';
+GO
+
+CREATE TABLE rand_name2(rand_col2 int DEFAULT 2, CHECK (rand_col2 > 0));
 GO
 
 SELECT COUNT(*) FROM sys.tables WHERE name = 'rand_name2';
@@ -50,6 +62,12 @@ SELECT COUNT(*) FROM sys.default_constraints WHERE name like '%rand_name2%';
 GO
 
 SELECT COUNT(*) FROM sys.objects WHERE type='U' and name = 'rand_name2';
+GO
+
+select count(*) from sys.check_constraints where parent_object_id = object_id('rand_name2');
+GO
+
+select count(*) from sys.objects where parent_object_id = object_id('rand_name2') and type = 'C';
 GO
 
 USE db1
@@ -68,6 +86,12 @@ SELECT COUNT(*) FROM sys.default_constraints WHERE name like '%rand_name2%';
 GO
 
 SELECT COUNT(*) FROM sys.objects WHERE type='U' and name = 'rand_name2';
+GO
+
+select count(*) from sys.check_constraints where parent_object_id = object_id('rand_name2');
+GO
+
+select count(*) from sys.objects where parent_object_id = object_id('rand_name2') and type = 'C';
 GO
 
 DROP TABLE rand_name1;
