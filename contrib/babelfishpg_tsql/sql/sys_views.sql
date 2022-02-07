@@ -109,10 +109,11 @@ inner join pg_namespace s on s.oid = c.relnamespace
 left join pg_attrdef d on c.oid = d.adrelid and a.attnum = d.adnum
 left join pg_collation coll on coll.oid = a.attcollation
 where not a.attisdropped
+and (s.oid in (select schema_id from sys.schemas) or s.nspname = 'sys')
 -- r = ordinary table, i = index, S = sequence, t = TOAST table, v = view, m = materialized view, c = composite type, f = foreign table, p = partitioned table
 and c.relkind in ('r', 'v', 'm', 'f', 'p')
-and has_column_privilege(quote_ident(s.nspname) ||'.'||quote_ident(c.relname), a.attname, 'SELECT,INSERT,UPDATE,REFERENCES')
 and has_schema_privilege(s.oid, 'USAGE')
+and has_column_privilege(quote_ident(s.nspname) ||'.'||quote_ident(c.relname), a.attname, 'SELECT,INSERT,UPDATE,REFERENCES')
 and a.attnum > 0;
 GRANT SELECT ON sys.all_columns TO PUBLIC;
 

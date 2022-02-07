@@ -28,6 +28,9 @@ GO
 select count(*) from sys.all_objects where parent_object_id = object_id('rand_name1') and type = 'C';
 GO
 
+SELECT COUNT(*) FROM sys.all_columns WHERE name = 'rand_col1';
+GO
+
 USE master;
 GO
 
@@ -55,6 +58,9 @@ GO
 select count(*) from sys.all_objects where parent_object_id = object_id('rand_name1') and type = 'C';
 GO
 
+SELECT COUNT(*) FROM sys.all_columns WHERE name = 'rand_col1';
+GO
+
 CREATE TABLE rand_name2(rand_col2 int DEFAULT 2, CHECK (rand_col2 > 0));
 GO
 
@@ -77,6 +83,9 @@ select count(*) from sys.objects where parent_object_id = object_id('rand_name2'
 GO
 
 select count(*) from sys.all_objects where parent_object_id = object_id('rand_name2') and type = 'C';
+GO
+
+SELECT COUNT(*) FROM sys.all_columns WHERE name = 'rand_col2';
 GO
 
 USE db1
@@ -104,6 +113,9 @@ select count(*) from sys.objects where parent_object_id = object_id('rand_name2'
 GO
 
 select count(*) from sys.all_objects where parent_object_id = object_id('rand_name2') and type = 'C';
+GO
+
+SELECT COUNT(*) FROM sys.all_columns WHERE name = 'rand_col2';
 GO
 
 DROP TABLE rand_name1;
