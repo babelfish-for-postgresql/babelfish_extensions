@@ -387,6 +387,232 @@ where has_schema_privilege(sch.schema_id, 'USAGE')
 and has_table_privilege(c.oid, 'SELECT,INSERT,UPDATE,DELETE,TRUNCATE,TRIGGER');
 GRANT SELECT ON sys.index_columns TO PUBLIC;
 
+create or replace view sys.foreign_keys as
+select
+  c.conname as name
+  , c.oid as object_id
+  , null::integer as principal_id
+  , sch.schema_id as schema_id
+  , c.conrelid as parent_object_id
+  , 'F'::varchar(2) as type
+  , 'FOREIGN_KEY_CONSTRAINT'::varchar(60) as type_desc
+  , null::timestamp as create_date
+  , null::timestamp as modify_date
+  , 0 as is_ms_shipped
+  , 0 as is_published
+  , 0 as is_schema_published
+  , c.confrelid as referenced_object_id
+  , c.confkey as key_index_id
+  , 0 as is_disabled
+  , 0 as is_not_for_replication
+  , 0 as is_not_trusted
+  , case c.confdeltype
+      when 'a' then 0
+      when 'r' then 0
+      when 'c' then 1
+      when 'n' then 2
+      when 'd' then 3
+    end as delete_referential_action
+  , case c.confdeltype
+      when 'a' then 'NO_ACTION'
+      when 'r' then 'NO_ACTION'
+      when 'c' then 'CASCADE'
+      when 'n' then 'SET_NULL'
+      when 'd' then 'SET_DEFAULT'
+    end as delete_referential_action_desc
+  , case c.confupdtype
+      when 'a' then 0
+      when 'r' then 0
+      when 'c' then 1
+      when 'n' then 2
+      when 'd' then 3
+    end as update_referential_action
+  , case c.confupdtype
+      when 'a' then 'NO_ACTION'
+      when 'r' then 'NO_ACTION'
+      when 'c' then 'CASCADE'
+      when 'n' then 'SET_NULL'
+      when 'd' then 'SET_DEFAULT'
+    end as update_referential_action_desc
+  , 1 as is_system_named
+from pg_constraint c
+inner join sys.schemas sch on sch.schema_id = c.connamespace
+where has_schema_privilege(sch.schema_id, 'USAGE')
+and c.contype = 'f';
+GRANT SELECT ON sys.foreign_keys TO PUBLIC;
+
+create or replace view sys.key_constraints as
+select
+  c.conname as name
+  , c.oid as object_id
+  , null::integer as principal_id
+  , sch.schema_id as schema_id
+  , c.conrelid as parent_object_id
+  , case contype
+      when 'p' then 'PK'::varchar(2)
+      when 'u' then 'UQ'::varchar(2)
+    end as type
+  , case contype
+      when 'p' then 'PRIMARY_KEY_CONSTRAINT'::varchar(60)
+      when 'u' then 'UNIQUE_CONSTRAINT'::varchar(60)
+    end  as type_desc
+  , null::timestamp as create_date
+  , null::timestamp as modify_date
+  , c.conindid as unique_index_id
+  , 0 as is_ms_shipped
+  , 0 as is_published
+  , 0 as is_schema_published
+from pg_constraint c
+inner join sys.schemas sch on sch.schema_id = c.connamespace
+where has_schema_privilege(sch.schema_id, 'USAGE')
+and c.contype in ('p', 'u');
+GRANT SELECT ON sys.key_constraints TO PUBLIC;
+
+create or replace view sys.procedures as
+select
+  p.proname as name
+  , p.oid as object_id
+  , null::integer as principal_id
+  , sch.schema_id as schema_id
+  , 0 as parent_object_id
+  , case format_type(p.prorettype, null)
+      when 'void' then 'P'::varchar(2)
+      else
+        case format_type(p.prorettype, null) when 'trigger'
+          then 'TR'::varchar(2)
+          else 'FN'::varchar(2)
+        end
+    end as type
+  , case format_type(p.prorettype, null)
+      when 'void' then 'SQL_STORED_PROCEDURE'::varchar(60)
+      else
+        case format_type(p.prorettype, null) when 'trigger'
+          then 'SQL_TRIGGER'::varchar(60)
+          else 'SQL_SCALAR_FUNCTION'::varchar(60)
+        end
+    end as type_desc
+  , null::timestamp as create_date
+  , null::timestamp as modify_date
+  , 0 as is_ms_shipped
+  , 0 as is_published
+  , 0 as is_schema_published
+from pg_proc p
+inner join sys.schemas sch on sch.schema_id = p.pronamespace
+and has_schema_privilege(sch.schema_id, 'USAGE')
+and has_function_privilege(p.oid, 'EXECUTE');
+GRANT SELECT ON sys.procedures TO PUBLIC;
+
+create or replace view sys.objects as
+select
+      t.name
+    , t.object_id
+    , t.principal_id
+    , t.schema_id
+    , t.parent_object_id
+    , 'U' as type
+    , 'USER_TABLE' as type_desc
+    , t.create_date
+    , t.modify_date
+    , t.is_ms_shipped
+    , t.is_published
+    , t.is_schema_published
+from  sys.tables t
+union all
+select
+      v.name
+    , v.object_id
+    , v.principal_id
+    , v.schema_id
+    , v.parent_object_id
+    , 'V' as type
+    , 'VIEW' as type_desc
+    , v.create_date
+    , v.modify_date
+    , v.is_ms_shipped
+    , v.is_published
+    , v.is_schema_published
+from  sys.views v
+union all
+select
+      f.name
+    , f.object_id
+    , f.principal_id
+    , f.schema_id
+    , f.parent_object_id
+    , 'F' as type
+    , 'FOREIGN_KEY_CONSTRAINT'
+    , f.create_date
+    , f.modify_date
+    , f.is_ms_shipped
+    , f.is_published
+    , f.is_schema_published
+ from sys.foreign_keys f
+union all
+select
+      p.name
+    , p.object_id
+    , p.principal_id
+    , p.schema_id
+    , p.parent_object_id
+    , 'PK' as type
+    , 'PRIMARY_KEY_CONSTRAINT' as type_desc
+    , p.create_date
+    , p.modify_date
+    , p.is_ms_shipped
+    , p.is_published
+    , p.is_schema_published
+from sys.key_constraints p
+where p.type = 'PK'
+union all
+select
+      pr.name
+    , pr.object_id
+    , pr.principal_id
+    , pr.schema_id
+    , pr.parent_object_id
+    , pr.type
+    , pr.type_desc
+    , pr.create_date
+    , pr.modify_date
+    , pr.is_ms_shipped
+    , pr.is_published
+    , pr.is_schema_published
+ from sys.procedures pr
+union all
+select
+    def.name::name
+  , def.object_id
+  , def.principal_id
+  , def.schema_id
+  , def.parent_object_id
+  , def.type
+  , def.type_desc
+  , def.create_date
+  , def.modified_date as modify_date
+  , def.is_ms_shipped::int
+  , def.is_published::int
+  , def.is_schema_published::int
+  from sys.default_constraints def
+union all
+select
+   p.relname as name
+  ,p.oid as object_id
+  , null::integer as principal_id
+  , s.schema_id as schema_id
+  , 0 as parent_object_id
+  , 'SO'::varchar(2) as type
+  , 'SEQUENCE_OBJECT'::varchar(60) as type_desc
+  , null::timestamp as create_date
+  , null::timestamp as modify_date
+  , 0 as is_ms_shipped
+  , 0 as is_published
+  , 0 as is_schema_published
+from pg_class p
+inner join sys.schemas s on s.schema_id = p.relnamespace
+and p.relkind = 'S'
+and has_schema_privilege(s.schema_id, 'USAGE');
+GRANT SELECT ON sys.objects TO PUBLIC;
+
 -- Reset search_path to not affect any subsequent scripts
 SELECT set_config('search_path', trim(leading 'sys, ' from current_setting('search_path')), false);
 

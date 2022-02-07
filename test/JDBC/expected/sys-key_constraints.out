@@ -1,0 +1,61 @@
+CREATE DATABASE db1;
+GO
+
+USE db1
+GO
+
+create table uq_1 (a int not null unique)
+GO
+
+select count(*) from sys.key_constraints where parent_object_id = object_id('uq_1');
+GO
+~~START~~
+int
+1
+~~END~~
+
+
+USE master
+GO
+
+select count(*) from sys.key_constraints where parent_object_id = object_id('uq_1');
+GO
+~~START~~
+int
+0
+~~END~~
+
+
+create table uq_2 (a int not null unique)
+GO
+
+select count(*) from sys.key_constraints where parent_object_id = object_id('uq_2');
+GO
+~~START~~
+int
+1
+~~END~~
+
+
+USE db1
+GO
+
+select count(*) from sys.key_constraints where parent_object_id = object_id('uq_2');
+GO
+~~START~~
+int
+0
+~~END~~
+
+
+drop table uq_1;
+GO
+
+USE master
+GO
+
+drop table uq_2;
+GO
+
+DROP DATABASE db1
+GO
