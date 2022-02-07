@@ -289,5 +289,61 @@ END;
 $$
 language plpgsql;
 
+create or replace view sys.types As
+--smallint is not created as domain/type in Babel
+select cast(case when t.typname = 'int2' then 'smallint' else t.typname end as text) as name
+  , t.oid as system_type_id
+  , t.oid as user_type_id
+  , s.oid as schema_id
+  , null::integer as principal_id
+  , t.typlen as max_length
+  , 0 as precision
+  , 0 as scale
+  , c.collname as collation_name
+  , case when typnotnull then 0 else 1 end as is_nullable
+  , 0 as is_user_defined
+  , 0 as is_assembly_type
+  , 0 as default_object_id
+  , 0 as rule_object_id
+  , 0 as is_table_type
+from pg_type t
+inner join pg_namespace s on s.oid = t.typnamespace
+left join pg_collation c on c.oid = t.typcollation
+-- list of types available to tsql, int2 is there since smallint is not created as domain/type in Babel
+where t.typname in ('image', 'text', 'date', 'time', 'datetime2', 'datetimeoffset',
+  'tinyint', 'smallint', 'int', 'smalldatetime', 'real', 'money', 'datetime', 'float', 'sql_variant',
+  'ntext', 'bit', 'decimal', 'numeric', 'smallmoney', 'bigint', 'hierarchyid', 'geometry', 'geography',
+  'varbinary', 'varchar', 'char', 'binary','nvarchar', 'nchar',  'sysname', 'xml', 'uniqueidentifier', 'int2')
+and pg_type_is_visible(t.oid)
+union all 
+select cast(t.typname as text) as name
+  , t.oid as system_type_id
+  , t.oid as user_type_id
+  , s.oid as schema_id
+  , null::integer as principal_id
+  , t.typlen as max_length
+  , 0 as precision
+  , 0 as scale
+  , c.collname as collation_name
+  , case when typnotnull then 0 else 1 end as is_nullable
+  -- CREATE TYPE ... FROM is implemented as CREATE DOMAIN in babel
+  , 1 as is_user_defined
+  , 0 as is_assembly_type
+  , 0 as default_object_id
+  , 0 as rule_object_id
+  , 0 as is_table_type
+from pg_type t
+inner join pg_namespace s on s.oid = t.typnamespace
+inner join sys.schemas sch on sch.schema_id = s.oid 
+left join pg_collation c on c.oid = t.typcollation
+-- we want to show details of user defined datatypes created under babelfish database
+where t.typtype = 'd' and t.typname not in ('image', 'text', 'date', 'time', 'datetime2', 'datetimeoffset',
+  'tinyint', 'smallint', 'int', 'smalldatetime', 'real', 'money', 'datetime', 'float', 'sql_variant',
+  'ntext', 'bit', 'decimal', 'numeric', 'smallmoney', 'bigint', 'hierarchyid', 'geometry', 'geography',
+  'varbinary', 'varchar', 'char', 'binary','nvarchar', 'nchar',  'sysname', 'xml', 'uniqueidentifier', 'int2')
+and pg_type_is_visible(t.oid);
+GRANT SELECT ON sys.types TO PUBLIC;
+
 -- Reset search_path to not affect any subsequent scripts
 SELECT set_config('search_path', trim(leading 'sys, ' from current_setting('search_path')), false);
+
