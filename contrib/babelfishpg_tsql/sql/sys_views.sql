@@ -919,10 +919,10 @@ GRANT SELECT ON sys.syscharsets TO PUBLIC;
 
 create or replace view sys.default_constraints
 AS
-select CAST(('DF_' || o.relname || '_' || d.oid) as sys.sysname) as name
+select CAST(('DF_' || tab.name || '_' || d.oid) as sys.sysname) as name
   , d.oid as object_id
   , null::int as principal_id
-  , o.relnamespace as schema_id
+  , tab.schema_id as schema_id
   , d.adrelid as parent_object_id
   , 'D'::char(2) as type
   , 'DEFAULT_CONSTRAINT'::sys.nvarchar(60) AS type_desc
@@ -935,7 +935,11 @@ select CAST(('DF_' || o.relname || '_' || d.oid) as sys.sysname) as name
   , pg_get_expr(d.adbin, d.adrelid) as definition
   , 1::sys.bit as is_system_named
 from pg_catalog.pg_attrdef as d
-inner join pg_catalog.pg_class as o on (d.adrelid = o.oid);
+inner join pg_attribute a on a.attrelid = d.adrelid and d.adnum = a.attnum
+inner join sys.tables tab on d.adrelid = tab.object_id
+WHERE a.atthasdef = 't' and a.attgenerated = ''
+AND has_schema_privilege(tab.schema_id, 'USAGE')
+AND has_column_privilege(a.attrelid, a.attname, 'SELECT,INSERT,UPDATE,REFERENCES');
 GRANT SELECT ON sys.default_constraints TO PUBLIC;
 
 CREATE OR REPLACE VIEW sys.computed_columns
@@ -996,7 +1000,11 @@ select i.indrelid::integer as object_id
   , 0::sys.bit as is_descending_key
   , 1::sys.bit as is_included_column
 from pg_index as i
-inner join pg_catalog.pg_attribute a on i.indexrelid = a.attrelid;
+inner join pg_catalog.pg_attribute a on i.indexrelid = a.attrelid
+inner join pg_class c on i.indrelid = c.oid
+inner join sys.schemas sch on sch.schema_id = c.relnamespace
+where has_schema_privilege(sch.schema_id, 'USAGE')
+and has_table_privilege(c.oid, 'SELECT,INSERT,UPDATE,DELETE,TRUNCATE,TRIGGER');
 GRANT SELECT ON sys.index_columns TO PUBLIC;
 
 CREATE or replace VIEW sys.check_constraints AS
