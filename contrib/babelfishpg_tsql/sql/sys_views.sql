@@ -49,7 +49,7 @@ select
   t.relname as name
   , t.oid as object_id
   , null::integer as principal_id
-  , s.oid as schema_id
+  , sch.schema_id as schema_id
   , 0 as parent_object_id
   , 'V'::varchar(2) as type 
   , 'VIEW'::varchar(60) as type_desc
@@ -61,11 +61,10 @@ select
   , 0 as with_check_option 
   , 0 as is_date_correlation_view 
   , 0 as is_tracked_by_cdc 
-from pg_class t inner join pg_namespace s on s.oid = t.relnamespace 
+from pg_class t inner join sys.schemas sch on t.relnamespace = sch.schema_id 
 where t.relkind = 'v'
-and has_schema_privilege(s.oid, 'USAGE')
-and has_table_privilege(quote_ident(s.nspname) ||'.'||quote_ident(t.relname), 'SELECT,INSERT,UPDATE,DELETE,TRUNCATE,TRIGGER')
-and s.nspname not in ('information_schema', 'pg_catalog');
+and has_schema_privilege(sch.schema_id, 'USAGE')
+and has_table_privilege(t.oid, 'SELECT,INSERT,UPDATE,DELETE,TRUNCATE,TRIGGER');
 GRANT SELECT ON sys.views TO PUBLIC;
 
 create or replace view sys.all_columns as
@@ -141,7 +140,7 @@ and has_table_privilege(quote_ident(s.nspname) ||'.'||quote_ident(t.relname), 'S
 GRANT SELECT ON sys.all_views TO PUBLIC;
 
 -- internal function in order to workaround BABEL-1597
-CREATE FUNCTION sys.columns_internal()
+CREATE OR REPLACE FUNCTION sys.columns_internal()
 RETURNS TABLE (
     out_object_id int,
     out_name sys.sysname,
@@ -228,17 +227,17 @@ BEGIN
 		FROM pg_attribute a
 		INNER JOIN pg_class c ON c.oid = a.attrelid
 		INNER JOIN pg_type t ON t.oid = a.atttypid
-		INNER JOIN pg_namespace s ON s.oid = c.relnamespace
-		INNER JOIN information_schema.columns isc ON c.relname = isc.table_name AND s.nspname = isc.table_schema AND a.attname = isc.column_name
+		INNER JOIN sys.schemas sch on c.relnamespace = sch.schema_id 
+             INNER JOIN sys.pg_namespace_ext ext on sch.schema_id = ext.oid 
+		INNER JOIN information_schema.columns isc ON c.relname = isc.table_name AND ext.nspname = isc.table_schema AND a.attname = isc.column_name
 		LEFT JOIN pg_attrdef d ON c.oid = d.adrelid AND a.attnum = d.adnum
 		LEFT JOIN pg_collation coll ON coll.oid = a.attcollation
 		WHERE NOT a.attisdropped
 		AND a.attnum > 0
 		-- r = ordinary table, i = index, S = sequence, t = TOAST table, v = view, m = materialized view, c = composite type, f = foreign table, p = partitioned table
 		AND c.relkind IN ('r', 'v', 'm', 'f', 'p')
-		AND s.nspname NOT IN ('information_schema', 'pg_catalog', 'sys')
-		AND has_schema_privilege(s.oid, 'USAGE')
-		AND has_column_privilege(quote_ident(s.nspname) ||'.'||quote_ident(c.relname), a.attname, 'SELECT,INSERT,UPDATE,REFERENCES');
+		AND has_schema_privilege(sch.schema_id, 'USAGE')
+		AND has_column_privilege(a.attrelid, a.attname, 'SELECT,INSERT,UPDATE,REFERENCES');
 END;
 $$
 language plpgsql;

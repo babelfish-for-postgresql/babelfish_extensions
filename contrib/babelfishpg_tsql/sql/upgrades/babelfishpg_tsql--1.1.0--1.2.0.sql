@@ -163,5 +163,131 @@ and has_schema_privilege(sch.schema_id, 'USAGE')
 and has_table_privilege(t.oid, 'SELECT,INSERT,UPDATE,DELETE,TRUNCATE,TRIGGER');
 GRANT SELECT ON sys.tables TO PUBLIC;
 
+create or replace view sys.views as 
+select 
+  t.relname as name
+  , t.oid as object_id
+  , null::integer as principal_id
+  , sch.schema_id as schema_id
+  , 0 as parent_object_id
+  , 'V'::varchar(2) as type 
+  , 'VIEW'::varchar(60) as type_desc
+  , null::timestamp as create_date
+  , null::timestamp as modify_date
+  , 0 as is_ms_shipped 
+  , 0 as is_published 
+  , 0 as is_schema_published 
+  , 0 as with_check_option 
+  , 0 as is_date_correlation_view 
+  , 0 as is_tracked_by_cdc 
+from pg_class t inner join sys.schemas sch on t.relnamespace = sch.schema_id 
+where t.relkind = 'v'
+and has_schema_privilege(sch.schema_id, 'USAGE')
+and has_table_privilege(t.oid, 'SELECT,INSERT,UPDATE,DELETE,TRUNCATE,TRIGGER');
+GRANT SELECT ON sys.views TO PUBLIC;
+
+CREATE OR REPLACE FUNCTION sys.columns_internal()
+RETURNS TABLE (
+    out_object_id int,
+    out_name sys.sysname,
+    out_column_id int,
+    out_system_type_id int,
+    out_user_type_id int,
+    out_max_length smallint,
+    out_precision sys.tinyint,
+    out_scale sys.tinyint,
+    out_collation_name sys.sysname,
+    out_collation_id int,
+    out_offset smallint,
+    out_is_nullable sys.bit,
+    out_is_ansi_padded sys.bit,
+    out_is_rowguidcol sys.bit,
+    out_is_identity sys.bit,
+    out_is_computed sys.bit,
+    out_is_filestream sys.bit,
+    out_is_replicated sys.bit,
+    out_is_non_sql_subscribed sys.bit,
+    out_is_merge_published sys.bit,
+    out_is_dts_replicated sys.bit,
+    out_is_xml_document sys.bit,
+    out_xml_collection_id int,
+    out_default_object_id int,
+    out_rule_object_id int,
+    out_is_sparse sys.bit,
+    out_is_column_set sys.bit,
+    out_generated_always_type sys.tinyint,
+    out_generated_always_type_desc sys.nvarchar(60),
+    out_encryption_type int,
+    out_encryption_type_desc sys.nvarchar(64),
+    out_encryption_algorithm_name sys.sysname,
+    out_column_encryption_key_id int,
+    out_column_encryption_key_database_name sys.sysname,
+    out_is_hidden sys.bit,
+    out_is_masked sys.bit,
+    out_graph_type int,
+    out_graph_type_desc sys.nvarchar(60)
+)
+AS
+$$
+BEGIN
+    RETURN QUERY
+      SELECT 
+        CAST(c.oid AS int),
+        CAST(a.attname AS sys.sysname),
+        CAST(a.attnum AS int),
+        CAST(t.oid AS int),
+        CAST(t.oid AS int),
+        CAST(a.attlen AS smallint),
+        CAST(case when isc.datetime_precision is null then coalesce(isc.numeric_precision, 0) else isc.datetime_precision end AS sys.tinyint),
+        CAST(coalesce(isc.numeric_scale, 0) AS sys.tinyint),
+        CAST(coll.collname AS sys.sysname),
+        CAST(a.attcollation AS int),
+        CAST(a.attnum AS smallint),
+        CAST(case when a.attnotnull then 0 else 1 end AS sys.bit),
+        CAST(case when t.typname in ('bpchar', 'nchar', 'binary') then 1 else 0 end AS sys.bit),
+        CAST(0 AS sys.bit),
+        CAST(case when a.attidentity <> ''::"char" then 1 else 0 end AS sys.bit),
+        CAST(case when a.attgenerated <> ''::"char" then 1 else 0 end AS sys.bit),
+        CAST(0 AS sys.bit),
+        CAST(0 AS sys.bit),
+        CAST(0 AS sys.bit),
+        CAST(0 AS sys.bit),
+        CAST(0 AS sys.bit),
+        CAST(0 AS sys.bit),
+        CAST(0 AS int),
+        CAST(coalesce(d.oid, 0) AS int),
+        CAST(coalesce((select oid from pg_constraint where conrelid = t.oid
+        and contype = 'c' and a.attnum = any(conkey) limit 1), 0) AS int),
+        CAST(0 AS sys.bit),
+        CAST(0 AS sys.bit),
+        CAST(0 AS sys.tinyint),
+        CAST('NOT_APPLICABLE' AS sys.nvarchar(60)),
+        CAST(null AS int),
+        CAST(null AS sys.nvarchar(64)),
+        CAST(null AS sys.sysname),
+        CAST(null AS int),
+        CAST(null AS sys.sysname),
+        CAST(0 AS sys.bit),
+        CAST(0 AS sys.bit),
+        CAST(null AS int),
+        CAST(null AS sys.nvarchar(60))
+      FROM pg_attribute a
+      INNER JOIN pg_class c ON c.oid = a.attrelid
+      INNER JOIN pg_type t ON t.oid = a.atttypid
+      INNER JOIN sys.schemas sch on c.relnamespace = sch.schema_id 
+      INNER JOIN sys.pg_namespace_ext ext on sch.schema_id = ext.oid 
+      INNER JOIN information_schema.columns isc ON c.relname = isc.table_name AND ext.nspname = isc.table_schema AND a.attname = isc.column_name
+      LEFT JOIN pg_attrdef d ON c.oid = d.adrelid AND a.attnum = d.adnum
+      LEFT JOIN pg_collation coll ON coll.oid = a.attcollation
+      WHERE NOT a.attisdropped
+      AND a.attnum > 0
+      -- r = ordinary table, i = index, S = sequence, t = TOAST table, v = view, m = materialized view, c = composite type, f = foreign table, p = partitioned table
+      AND c.relkind IN ('r', 'v', 'm', 'f', 'p')
+      AND has_schema_privilege(sch.schema_id, 'USAGE')
+      AND has_column_privilege(a.attrelid, a.attname, 'SELECT,INSERT,UPDATE,REFERENCES');
+END;
+$$
+language plpgsql;
+
 -- Reset search_path to not affect any subsequent scripts
 SELECT set_config('search_path', trim(leading 'sys, ' from current_setting('search_path')), false);
