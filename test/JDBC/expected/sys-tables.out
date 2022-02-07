@@ -31,6 +31,14 @@ int
 ~~END~~
 
 
+SELECT COUNT(*) FROM sys.objects WHERE type='U' and name = 'rand_name1';
+GO
+~~START~~
+int
+1
+~~END~~
+
+
 USE master;
 GO
 
@@ -54,6 +62,14 @@ int
 
 #default constrain on rand_name1 should not be visible here
 SELECT COUNT(*) FROM sys.default_constraints WHERE name like '%rand_name1%';
+GO
+~~START~~
+int
+0
+~~END~~
+
+
+SELECT COUNT(*) FROM sys.objects WHERE type='U' and name = 'rand_name1';
 GO
 ~~START~~
 int
@@ -88,6 +104,14 @@ int
 ~~END~~
 
 
+SELECT COUNT(*) FROM sys.objects WHERE type='U' and name = 'rand_name2';
+GO
+~~START~~
+int
+1
+~~END~~
+
+
 USE db1
 GO
 
@@ -111,6 +135,14 @@ int
 
 #default constrain on rand_name2 should not be visible here
 SELECT COUNT(*) FROM sys.default_constraints WHERE name like '%rand_name2%';
+GO
+~~START~~
+int
+0
+~~END~~
+
+
+SELECT COUNT(*) FROM sys.objects WHERE type='U' and name = 'rand_name2';
 GO
 ~~START~~
 int

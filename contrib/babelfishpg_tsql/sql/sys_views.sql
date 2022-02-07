@@ -301,7 +301,7 @@ select
   c.conname as name
   , c.oid as object_id
   , null::integer as principal_id
-  , s.oid as schema_id
+  , sch.schema_id as schema_id
   , c.conrelid as parent_object_id
   , 'F'::varchar(2) as type
   , 'FOREIGN_KEY_CONSTRAINT'::varchar(60) as type_desc
@@ -345,9 +345,9 @@ select
     end as update_referential_action_desc
   , 1 as is_system_named
 from pg_constraint c
-inner join pg_namespace s on s.oid = c.connamespace
-where c.contype = 'f'
-and s.nspname not in ('information_schema', 'pg_catalog');
+inner join sys.schemas sch on sch.schema_id = c.connamespace
+where has_schema_privilege(sch.schema_id, 'USAGE')
+and c.contype = 'f';
 GRANT SELECT ON sys.foreign_keys TO PUBLIC;
 
 create or replace view sys.identity_columns as
@@ -436,7 +436,7 @@ select
   c.conname as name
   , c.oid as object_id
   , null::integer as principal_id
-  , s.oid as schema_id
+  , sch.schema_id as schema_id
   , c.conrelid as parent_object_id
   , case contype
       when 'p' then 'PK'::varchar(2)
@@ -453,8 +453,9 @@ select
   , 0 as is_published
   , 0 as is_schema_published
 from pg_constraint c
-inner join pg_namespace s on s.oid = c.connamespace
-where c.contype = 'p';
+inner join sys.schemas sch on sch.schema_id = c.connamespace
+where has_schema_privilege(sch.schema_id, 'USAGE')
+and c.contype in ('p', 'u');
 GRANT SELECT ON sys.key_constraints TO PUBLIC;
 
 create or replace view sys.procedures as
@@ -462,7 +463,7 @@ select
   p.proname as name
   , p.oid as object_id
   , null::integer as principal_id
-  , s.oid as schema_id
+  , sch.schema_id as schema_id
   , 0 as parent_object_id
   , case format_type(p.prorettype, null)
       when 'void' then 'P'::varchar(2)
@@ -486,8 +487,8 @@ select
   , 0 as is_published
   , 0 as is_schema_published
 from pg_proc p
-inner join pg_namespace s on s.oid = p.pronamespace
-where s.nspname not in ('information_schema', 'pg_catalog')
+inner join sys.schemas sch on sch.schema_id = p.pronamespace
+and has_schema_privilege(sch.schema_id, 'USAGE')
 and has_function_privilege(p.oid, 'EXECUTE');
 GRANT SELECT ON sys.procedures TO PUBLIC;
 
@@ -668,9 +669,34 @@ where t.typtype = 'd' and t.typname not in ('image', 'text', 'date', 'time', 'da
 and pg_type_is_visible(t.oid);
 GRANT SELECT ON sys.types TO PUBLIC;
 
-create view sys.objects as
+create or replace view sys.default_constraints
+AS
+select CAST(('DF_' || tab.name || '_' || d.oid) as sys.sysname) as name
+  , d.oid as object_id
+  , null::int as principal_id
+  , tab.schema_id as schema_id
+  , d.adrelid as parent_object_id
+  , 'D'::char(2) as type
+  , 'DEFAULT_CONSTRAINT'::sys.nvarchar(60) AS type_desc
+  , null::timestamp as create_date
+  , null::timestamp as modified_date
+  , 0::sys.bit as is_ms_shipped
+  , 0::sys.bit as is_published
+  , 0::sys.bit as is_schema_published
+  , d.adnum::int as parent_column_id
+  , pg_get_expr(d.adbin, d.adrelid) as definition
+  , 1::sys.bit as is_system_named
+from pg_catalog.pg_attrdef as d
+inner join pg_attribute a on a.attrelid = d.adrelid and d.adnum = a.attnum
+inner join sys.tables tab on d.adrelid = tab.object_id
+WHERE a.atthasdef = 't' and a.attgenerated = ''
+AND has_schema_privilege(tab.schema_id, 'USAGE')
+AND has_column_privilege(a.attrelid, a.attname, 'SELECT,INSERT,UPDATE,REFERENCES');
+GRANT SELECT ON sys.default_constraints TO PUBLIC;
+
+create or replace view sys.objects as
 select
-	t.name
+      t.name
     , t.object_id
     , t.principal_id
     , t.schema_id
@@ -683,10 +709,9 @@ select
     , t.is_published
     , t.is_schema_published
 from  sys.tables t
-where has_schema_privilege(t.schema_id, 'USAGE')
 union all
 select
-	v.name
+      v.name
     , v.object_id
     , v.principal_id
     , v.schema_id
@@ -699,10 +724,9 @@ select
     , v.is_published
     , v.is_schema_published
 from  sys.views v
-where has_schema_privilege(v.schema_id, 'USAGE')
 union all
 select
-	f.name
+      f.name
     , f.object_id
     , f.principal_id
     , f.schema_id
@@ -715,10 +739,9 @@ select
     , f.is_published
     , f.is_schema_published
  from sys.foreign_keys f
-where has_schema_privilege(f.schema_id, 'USAGE')
- union all
+union all
 select
-	p.name
+      p.name
     , p.object_id
     , p.principal_id
     , p.schema_id
@@ -730,11 +753,11 @@ select
     , p.is_ms_shipped
     , p.is_published
     , p.is_schema_published
- from sys.key_constraints p
-where has_schema_privilege(p.schema_id, 'USAGE')
+from sys.key_constraints p
+where p.type = 'PK'
 union all
 select
-    pr.name
+      pr.name
     , pr.object_id
     , pr.principal_id
     , pr.schema_id
@@ -747,13 +770,27 @@ select
     , pr.is_published
     , pr.is_schema_published
  from sys.procedures pr
-where has_schema_privilege(pr.schema_id, 'USAGE')
 union all
 select
-  p.relname as name
+    def.name::name
+  , def.object_id
+  , def.principal_id
+  , def.schema_id
+  , def.parent_object_id
+  , def.type
+  , def.type_desc
+  , def.create_date
+  , def.modified_date as modify_date
+  , def.is_ms_shipped::int
+  , def.is_published::int
+  , def.is_schema_published::int
+  from sys.default_constraints def
+union all
+select
+   p.relname as name
   ,p.oid as object_id
   , null::integer as principal_id
-  , s.oid as schema_id
+  , s.schema_id as schema_id
   , 0 as parent_object_id
   , 'SO'::varchar(2) as type
   , 'SEQUENCE_OBJECT'::varchar(60) as type_desc
@@ -763,10 +800,9 @@ select
   , 0 as is_published
   , 0 as is_schema_published
 from pg_class p
-inner join pg_namespace s on s.oid = p.relnamespace
-where s.nspname not in ('information_schema', 'pg_catalog')
+inner join sys.schemas s on s.schema_id = p.relnamespace
 and p.relkind = 'S'
-and has_schema_privilege(s.oid, 'USAGE');
+and has_schema_privilege(s.schema_id, 'USAGE');
 GRANT SELECT ON sys.objects TO PUBLIC;
 
 create or replace view sys.sysobjects as
