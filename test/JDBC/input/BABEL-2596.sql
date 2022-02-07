@@ -24,7 +24,6 @@ SELECT @a = COUNT(*) FROM sys.columns
 SELECT (CASE WHEN @a > 1 THEN 'true' ELSE 'false' END) AS result
 go
 
--- TODO: BABEL-2624 Add support for sys.identity_columns
 DECLARE @a INT
 SELECT @a = COUNT(*) FROM sys.identity_columns
 SELECT (CASE WHEN @a > 1 THEN 'true' ELSE 'false' END) AS result

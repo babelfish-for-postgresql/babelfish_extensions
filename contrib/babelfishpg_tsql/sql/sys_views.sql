@@ -350,56 +350,52 @@ where has_schema_privilege(sch.schema_id, 'USAGE')
 and c.contype = 'f';
 GRANT SELECT ON sys.foreign_keys TO PUBLIC;
 
-create or replace view sys.identity_columns as
-select
-  sys.babelfish_get_id_by_name(c.oid::text||a.attname) as object_id
-  , a.attname as name
-  , a.attnum as column_id
-  , t.oid as system_type_id
-  , t.oid as user_type_id
-  , a.attlen as max_length
-  , null::integer as precision
-  , null::integer as scale
-  , coll.collname as collation_name
-  , case when a.attnotnull then 0 else 1 end as is_nullable
-  , 0 as is_ansi_padded
-  , 0 as is_rowguidcol
-  , 1 as is_identity
-  , 0 as is_computed
-  , 0 as is_filestream
-  , 0 as is_replicated
-  , 0 as is_non_sql_subscribed
-  , 0 as is_merge_published
-  , 0 as is_dts_replicated
-  , 0 as is_xml_document
-  , 0 as xml_collection_id
-  , coalesce(d.oid, 0) as default_object_id
-  , coalesce((select oid from pg_constraint where conrelid = t.oid and contype = 'c' and a.attnum = any(conkey) limit 1), 0) as rule_object_id
-  , 0 as is_sparse
-  , 0 as is_column_set
-  , 0 as generated_always_type
-  , 'NOT_APPLICABLE'::varchar(60) as generated_always_type_desc
-  , null::integer as encryption_type
-  , null::varchar(64) as encryption_type_desc
-  , null::varchar as encryption_algorithm_name
-  , null::integer as column_encryption_key_id
-  , null::varchar as column_encryption_key_database_name
-  , 0 as is_hidden
-  , 0 as is_masked
-  , null::bigint as seed_value
-  , null::bigint as increment_value
-  , sys.babelfish_get_sequence_value(pg_get_serial_sequence(quote_ident(s.nspname)||'.'||quote_ident(c.relname), a.attname)) as last_value
-from pg_attribute  a
-left join pg_attrdef d on a.attrelid = d.adrelid and a.attnum = d.adnum
+create or replace view sys.identity_columns AS
+select out_object_id::bigint as object_id
+  , out_name::name as name
+  , out_column_id::smallint as column_id
+  , out_system_type_id::oid as system_type_id
+  , out_user_type_id::oid as user_type_id
+  , out_max_length as max_length
+  , out_precision::integer as precision
+  , out_scale::integer as scale
+  , out_collation_name::name as collation_name
+  , out_is_nullable::integer as is_nullable
+  , out_is_ansi_padded::integer as is_ansi_padded
+  , out_is_rowguidcol::integer as is_rowguidcol
+  , out_is_identity::integer as is_identity
+  , out_is_computed::integer as is_computed
+  , out_is_filestream::integer as is_filestream
+  , out_is_replicated::integer as is_replicated
+  , out_is_non_sql_subscribed::integer as is_non_sql_subscribed
+  , out_is_merge_published::integer as is_merge_published
+  , out_is_dts_replicated::integer as is_dts_replicated
+  , out_is_xml_document::integer as is_xml_document
+  , out_xml_collection_id::integer as xml_collection_id
+  , out_default_object_id::oid as default_object_id
+  , out_rule_object_id::oid as rule_object_id
+  , out_is_sparse::integer as is_sparse
+  , out_is_column_set::integer as is_column_set
+  , out_generated_always_type::integer as generated_always_type
+  , out_generated_always_type_desc::character varying(60) as generated_always_type_desc
+  , out_encryption_type::integer as encryption_type
+  , out_encryption_type_desc::character varying(64)  as encryption_type_desc
+  , out_encryption_algorithm_name::character varying as encryption_algorithm_name
+  , out_column_encryption_key_id::integer as column_encryption_key_id
+  , out_column_encryption_key_database_name::character varying as column_encryption_key_database_name
+  , out_is_hidden::integer as is_hidden
+  , out_is_masked::integer as is_masked
+  , sys.ident_seed(OBJECT_NAME(sc.out_object_id))::bigint as seed_value
+  , sys.ident_incr(OBJECT_NAME(sc.out_object_id))::bigint as increment_value
+  , sys.babelfish_get_sequence_value(pg_get_serial_sequence(quote_ident(ext.nspname)||'.'||quote_ident(c.relname), a.attname)) as last_value
+from sys.columns_internal() sc
+INNER JOIN pg_attribute a ON sc.out_name = a.attname AND sc.out_column_id = a.attnum
 inner join pg_class c on c.oid = a.attrelid
-inner join pg_namespace s on s.oid = c.relnamespace
-left join pg_type t on t.oid = a.atttypid
-left join pg_collation coll on coll.oid = t.typcollation
+inner join sys.pg_namespace_ext ext on ext.oid = c.relnamespace
 where not a.attisdropped
-and pg_get_serial_sequence(quote_ident(s.nspname)||'.'||quote_ident(c.relname), a.attname)  is not null
-and s.nspname not in ('information_schema', 'pg_catalog')
-and has_schema_privilege(s.oid, 'USAGE')
-and has_sequence_privilege(pg_get_serial_sequence(quote_ident(s.nspname)||'.'||quote_ident(c.relname), a.attname), 'USAGE,SELECT,UPDATE');
+and sc.out_is_identity::integer = 1
+and pg_get_serial_sequence(quote_ident(ext.nspname)||'.'||quote_ident(c.relname), a.attname)  is not null
+and has_sequence_privilege(pg_get_serial_sequence(quote_ident(ext.nspname)||'.'||quote_ident(c.relname), a.attname), 'USAGE,SELECT,UPDATE');
 GRANT SELECT ON sys.identity_columns TO PUBLIC;
 
 create or replace view sys.indexes as
