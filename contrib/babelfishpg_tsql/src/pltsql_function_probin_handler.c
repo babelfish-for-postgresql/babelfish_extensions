@@ -117,6 +117,7 @@ pltsql_function_probin_reader(ParseState *pstate,
 		procTup = SearchSysCache1(PROCOID, ObjectIdGetDatum(funcid));
 		if (!HeapTupleIsValid(procTup))
 			elog(ERROR, "cache lookup failed for function %u", funcid);
+		
 		numargs = get_func_arg_info(procTup, &argtypes, &argnames, &argmodes);
 
 		if (argmodes)
@@ -207,6 +208,7 @@ pltsql_function_probin_reader(ParseState *pstate,
 			}
 			i++;
 		}
+		ReleaseSysCache(procTup);
 	}
 }
 
