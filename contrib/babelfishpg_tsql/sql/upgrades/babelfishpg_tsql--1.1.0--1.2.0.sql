@@ -502,6 +502,32 @@ and has_schema_privilege(sch.schema_id, 'USAGE')
 and has_function_privilege(p.oid, 'EXECUTE');
 GRANT SELECT ON sys.procedures TO PUBLIC;
 
+CREATE or replace VIEW sys.check_constraints AS
+SELECT CAST(c.conname as sys.sysname) as name
+  , oid::integer as object_id
+  , NULL::integer as principal_id 
+  , c.connamespace::integer as schema_id
+  , conrelid::integer as parent_object_id
+  , 'C'::char(2) as type
+  , 'CHECK_CONSTRAINT'::sys.nvarchar(60) as type_desc
+  , null::sys.datetime as create_date
+  , null::sys.datetime as modify_date
+  , 0::sys.bit as is_ms_shipped
+  , 0::sys.bit as is_published
+  , 0::sys.bit as is_schema_published
+  , 0::sys.bit as is_disabled
+  , 0::sys.bit as is_not_for_replication
+  , 0::sys.bit as is_not_trusted
+  , c.conkey[1]::integer AS parent_column_id
+  , substring(pg_get_constraintdef(c.oid) from 7) AS definition
+  , 1::sys.bit as uses_database_collation
+  , 0::sys.bit as is_system_named
+FROM pg_catalog.pg_constraint as c
+INNER JOIN sys.schemas s on c.connamespace = s.schema_id
+WHERE has_schema_privilege(s.schema_id, 'USAGE')
+AND c.contype = 'c' and c.conrelid != 0;
+GRANT SELECT ON sys.check_constraints TO PUBLIC;
+
 create or replace view sys.objects as
 select
       t.name
@@ -595,6 +621,21 @@ select
   from sys.default_constraints def
 union all
 select
+    chk.name::name
+  , chk.object_id
+  , chk.principal_id
+  , chk.schema_id
+  , chk.parent_object_id
+  , chk.type
+  , chk.type_desc
+  , chk.create_date
+  , chk.modify_date
+  , chk.is_ms_shipped::int
+  , chk.is_published::int
+  , chk.is_schema_published::int
+  from sys.check_constraints chk
+union all
+select
    p.relname as name
   ,p.oid as object_id
   , null::integer as principal_id
@@ -641,6 +682,26 @@ left join pg_constraint constr on constr.conindid = c.oid
 where c.relkind = 'i' and i.indislive
 and has_schema_privilege(sch.schema_id, 'USAGE');
 GRANT SELECT ON sys.indexes TO PUBLIC;
+
+create or replace view sys.sql_modules as
+select
+  p.oid as object_id
+  , pg_get_functiondef(p.oid) as definition
+  , 1 as uses_ansi_nulls
+  , 1 as uses_quoted_identifier
+  , 0 as is_schema_bound
+  , 0 as uses_database_collation
+  , 0 as is_recompiled
+  , case when p.proisstrict then 1 else 0 end as null_on_null_input
+  , null::integer as execute_as_principal_id
+  , 0 as uses_native_compilation
+from pg_proc p
+inner join sys.schemas s on s.schema_id = p.pronamespace
+inner join pg_type t on t.oid = p.prorettype
+left join pg_collation c on c.oid = t.typcollation
+where has_schema_privilege(s.schema_id, 'USAGE')
+and has_function_privilege(p.oid, 'EXECUTE');
+GRANT SELECT ON sys.sql_modules TO PUBLIC;
 
 -- Reset search_path to not affect any subsequent scripts
 SELECT set_config('search_path', trim(leading 'sys, ' from current_setting('search_path')), false);
