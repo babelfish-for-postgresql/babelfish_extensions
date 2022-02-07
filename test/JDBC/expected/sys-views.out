@@ -23,6 +23,14 @@ int
 ~~END~~
 
 
+SELECT COUNT(*) FROM sys.all_objects WHERE type='V' and name = 'rand_name1';
+GO
+~~START~~
+int
+1
+~~END~~
+
+
 USE master;
 GO
 
@@ -36,6 +44,14 @@ int
 
 
 SELECT COUNT(*) FROM sys.objects WHERE type='V' and name = 'rand_name1';
+GO
+~~START~~
+int
+0
+~~END~~
+
+
+SELECT COUNT(*) FROM sys.all_objects WHERE type='V' and name = 'rand_name1';
 GO
 ~~START~~
 int
@@ -62,6 +78,14 @@ int
 ~~END~~
 
 
+SELECT COUNT(*) FROM sys.all_objects WHERE type='V' and name = 'rand_name2';
+GO
+~~START~~
+int
+1
+~~END~~
+
+
 USE db1
 GO
 
@@ -75,6 +99,14 @@ int
 
 
 SELECT COUNT(*) FROM sys.objects WHERE type='V' and name = 'rand_name2';
+GO
+~~START~~
+int
+0
+~~END~~
+
+
+SELECT COUNT(*) FROM sys.all_objects WHERE type='V' and name = 'rand_name2';
 GO
 ~~START~~
 int

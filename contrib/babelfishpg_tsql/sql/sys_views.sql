@@ -135,6 +135,7 @@ select
   , 0 as is_tracked_by_cdc
 from pg_class t inner join pg_namespace s on s.oid = t.relnamespace
 where t.relkind = 'v'
+and (s.oid in (select schema_id from sys.schemas) or s.nspname = 'sys')
 and has_schema_privilege(s.oid, 'USAGE')
 and has_table_privilege(quote_ident(s.nspname) ||'.'||quote_ident(t.relname), 'SELECT,INSERT,UPDATE,DELETE,TRUNCATE,TRIGGER');
 GRANT SELECT ON sys.all_views TO PUBLIC;
@@ -872,90 +873,165 @@ select
 from sys.objects s;
 GRANT SELECT ON sys.sysobjects TO PUBLIC;
 
-create view sys.all_objects as
+create or replace view sys.all_objects as
+-- details of user defined and system tables
 select
-	t.name
-    , t.object_id
-    , t.principal_id
-    , t.schema_id
-    , t.parent_object_id
-    , 'U' as type
-    , 'USER_TABLE' as type_desc
-    , t.create_date
-    , t.modify_date
-    , t.is_ms_shipped
-    , t.is_published
-    , t.is_schema_published
-from  sys.tables t
-where has_schema_privilege(t.schema_id, 'USAGE')
+    t.relname as name
+  , t.oid as object_id
+  , null::integer as principal_id
+  , s.oid as schema_id
+  , 0 as parent_object_id
+  , 'U' as type
+  , 'USER_TABLE' as type_desc
+  , null::timestamp as create_date
+  , null::timestamp as modify_date
+  , 0 as is_ms_shipped
+  , 0 as is_published
+  , 0 as is_schema_published
+from pg_class t inner join pg_namespace s on s.oid = t.relnamespace
+where t.relpersistence in ('p', 'u', 't')
+and t.relkind = 'r'
+and (s.oid in (select schema_id from sys.schemas) or s.nspname = 'sys')
+and has_schema_privilege(s.oid, 'USAGE')
+and has_table_privilege(t.oid, 'SELECT,INSERT,UPDATE,DELETE,TRUNCATE,TRIGGER')
 union all
+-- details of user defined and system views
 select
-	v.name
-    , v.object_id
-    , v.principal_id
-    , v.schema_id
-    , v.parent_object_id
-    , 'V' as type
-    , 'VIEW' as type_desc
-    , v.create_date
-    , v.modify_date
-    , v.is_ms_shipped
-    , v.is_published
-    , v.is_schema_published
+    v.name
+  , v.object_id
+  , v.principal_id
+  , v.schema_id
+  , v.parent_object_id
+  , 'V' as type
+  , 'VIEW' as type_desc
+  , v.create_date
+  , v.modify_date
+  , v.is_ms_shipped
+  , v.is_published
+  , v.is_schema_published
 from  sys.all_views v
-where has_schema_privilege(v.schema_id, 'USAGE')
 union all
+-- details of user defined and system foreign key constraints
 select
-	f.name
-    , f.object_id
-    , f.principal_id
-    , f.schema_id
-    , f.parent_object_id
-    , 'F' as type
-    , 'FOREIGN_KEY_CONSTRAINT'
-    , f.create_date
-    , f.modify_date
-    , f.is_ms_shipped
-    , f.is_published
-    , f.is_schema_published
- from sys.foreign_keys f
- where has_schema_privilege(f.schema_id, 'USAGE')
- union all
-select
-	p.name
-    , p.object_id
-    , p.principal_id
-    , p.schema_id
-    , p.parent_object_id
-    , 'PK' as type
-    , 'PRIMARY_KEY_CONSTRAINT' as type_desc
-    , p.create_date
-    , p.modify_date
-    , p.is_ms_shipped
-    , p.is_published
-    , p.is_schema_published
- from sys.key_constraints p
- where has_schema_privilege(p.schema_id, 'USAGE')
+    c.conname as name
+  , c.oid as object_id
+  , null::integer as principal_id
+  , s.oid as schema_id
+  , c.conrelid as parent_object_id
+  , 'F' as type
+  , 'FOREIGN_KEY_CONSTRAINT'
+  , null::timestamp as create_date
+  , null::timestamp as modify_date
+  , 0 as is_ms_shipped
+  , 0 as is_published
+  , 0 as is_schema_published
+from pg_constraint c
+inner join pg_namespace s on s.oid = c.connamespace
+where (s.oid in (select schema_id from sys.schemas) or s.nspname = 'sys')
+and has_schema_privilege(s.oid, 'USAGE')
+and c.contype = 'f'
 union all
+-- details of user defined and system primary key constraints
 select
-	pr.name
-    , pr.object_id
-    , pr.principal_id
-    , pr.schema_id
-    , pr.parent_object_id
-    , pr.type
-    , pr.type_desc
-    , pr.create_date
-    , pr.modify_date
-    , pr.is_ms_shipped
-    , pr.is_published
-    , pr.is_schema_published
- from sys.procedures pr
- where has_schema_privilege(pr.schema_id, 'USAGE')
+    c.conname as name
+  , c.oid as object_id
+  , null::integer as principal_id
+  , s.oid as schema_id
+  , c.conrelid as parent_object_id
+  , 'PK' as type
+  , 'PRIMARY_KEY_CONSTRAINT' as type_desc
+  , null::timestamp as create_date
+  , null::timestamp as modify_date
+  , 0 as is_ms_shipped
+  , 0 as is_published
+  , 0 as is_schema_published
+from pg_constraint c
+inner join pg_namespace s on s.oid = c.connamespace
+where (s.oid in (select schema_id from sys.schemas) or s.nspname = 'sys')
+and has_schema_privilege(s.oid, 'USAGE')
+and c.contype = 'p'
 union all
+-- details of user defined and system defined procedures
+select
+    p.proname as name
+  , p.oid as object_id
+  , null::integer as principal_id
+  , s.oid as schema_id
+  , 0 as parent_object_id
+  , case format_type(p.prorettype, null)
+      when 'void' then 'P'::varchar(2)
+      else
+        case format_type(p.prorettype, null) when 'trigger'
+          then 'TR'::varchar(2)
+          else 'FN'::varchar(2)
+        end
+    end as type
+  , case format_type(p.prorettype, null)
+      when 'void' then 'SQL_STORED_PROCEDURE'::varchar(60)
+      else
+        case format_type(p.prorettype, null) when 'trigger'
+          then 'SQL_TRIGGER'::varchar(60)
+          else 'SQL_SCALAR_FUNCTION'::varchar(60)
+        end
+    end as type_desc
+  , null::timestamp as create_date
+  , null::timestamp as modify_date
+  , 0 as is_ms_shipped
+  , 0 as is_published
+  , 0 as is_schema_published
+from pg_proc p
+inner join pg_namespace s on s.oid = p.pronamespace
+where (s.oid in (select schema_id from sys.schemas) or s.nspname = 'sys')
+and has_schema_privilege(s.oid, 'USAGE')
+and has_function_privilege(p.oid, 'EXECUTE')
+union all
+-- details of all default constraints
+select
+    ('DF_' || o.relname || '_' || d.oid)::name as name
+  , d.oid as object_id
+  , null::int as principal_id
+  , o.relnamespace as schema_id
+  , d.adrelid as parent_object_id
+  , 'D'::char(2) as type
+  , 'DEFAULT_CONSTRAINT'::sys.nvarchar(60) AS type_desc
+  , null::timestamp as create_date
+  , null::timestamp as modify_date
+  , 0 as is_ms_shipped
+  , 0 as is_published
+  , 0 as is_schema_published
+from pg_catalog.pg_attrdef d
+inner join pg_attribute a on a.attrelid = d.adrelid and d.adnum = a.attnum
+inner join pg_class o on d.adrelid = o.oid
+inner join pg_namespace s on s.oid = o.relnamespace
+where a.atthasdef = 't' and a.attgenerated = ''
+and (s.oid in (select schema_id from sys.schemas) or s.nspname = 'sys')
+and has_schema_privilege(s.oid, 'USAGE')
+and has_column_privilege(a.attrelid, a.attname, 'SELECT,INSERT,UPDATE,REFERENCES')
+union all
+-- details of all check constraints
+select
+    c.conname::name
+  , c.oid::integer as object_id
+  , NULL::integer as principal_id 
+  , c.connamespace::integer as schema_id
+  , c.conrelid::integer as parent_object_id
+  , 'C'::char(2) as type
+  , 'CHECK_CONSTRAINT'::sys.nvarchar(60) as type_desc
+  , null::sys.datetime as create_date
+  , null::sys.datetime as modify_date
+  , 0 as is_ms_shipped
+  , 0 as is_published
+  , 0 as is_schema_published
+from pg_catalog.pg_constraint as c
+inner join pg_namespace s on s.oid = c.connamespace
+where (s.oid in (select schema_id from sys.schemas) or s.nspname = 'sys')
+and has_schema_privilege(s.oid, 'USAGE')
+and c.contype = 'c' and c.conrelid != 0
+union all
+-- details of user defined and system defined sequence objects
 select
   p.relname as name
-  ,p.oid as object_id
+  , p.oid as object_id
   , null::integer as principal_id
   , s.oid as schema_id
   , 0 as parent_object_id
@@ -969,13 +1045,14 @@ select
 from pg_class p
 inner join pg_namespace s on s.oid = p.relnamespace
 where p.relkind = 'S'
+and (s.oid in (select schema_id from sys.schemas) or s.nspname = 'sys')
 and has_schema_privilege(s.oid, 'USAGE');
 GRANT SELECT ON sys.all_objects TO PUBLIC;
 
 create or replace view sys.system_objects as
 select * from sys.all_objects o
 inner join pg_namespace s on s.oid = o.schema_id
-where s.nspname in ('information_schema', 'pg_catalog');
+where s.nspname = 'sys';
 GRANT SELECT ON sys.system_objects TO PUBLIC;
 
 CREATE VIEW sys.syscharsets

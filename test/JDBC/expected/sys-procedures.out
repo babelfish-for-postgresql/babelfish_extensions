@@ -23,6 +23,14 @@ int
 ~~END~~
 
 
+select count(*) from sys.all_objects where type = 'P' and name = 'proc_test_1';
+GO
+~~START~~
+int
+1
+~~END~~
+
+
 select count(*) from sys.sql_modules where object_id = object_id('proc_test_1');
 GO
 ~~START~~
@@ -43,6 +51,14 @@ int
 
 
 select count(*) from sys.objects where type = 'P' and name = 'proc_test_1';
+GO
+~~START~~
+int
+0
+~~END~~
+
+
+select count(*) from sys.all_objects where type = 'P' and name = 'proc_test_1';
 GO
 ~~START~~
 int
@@ -77,6 +93,14 @@ int
 ~~END~~
 
 
+select count(*) from sys.all_objects where type = 'P' and name = 'proc_test_2';
+GO
+~~START~~
+int
+1
+~~END~~
+
+
 select count(*) from sys.sql_modules where object_id = object_id('proc_test_2');
 GO
 ~~START~~
@@ -97,6 +121,14 @@ int
 
 
 select count(*) from sys.objects where type = 'P' and name = 'proc_test_2';
+GO
+~~START~~
+int
+0
+~~END~~
+
+
+select count(*) from sys.all_objects where type = 'P' and name = 'proc_test_2';
 GO
 ~~START~~
 int

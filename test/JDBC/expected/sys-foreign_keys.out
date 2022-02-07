@@ -34,6 +34,14 @@ int
 ~~END~~
 
 
+select count(*) from sys.all_objects where type='F' and parent_object_id = object_id('fk_2');
+GO
+~~START~~
+int
+1
+~~END~~
+
+
 USE master
 GO
 
@@ -54,6 +62,14 @@ int
 
 
 select count(*) from sys.objects where type='F' and parent_object_id = object_id('fk_2');
+GO
+~~START~~
+int
+0
+~~END~~
+
+
+select count(*) from sys.all_objects where type='F' and parent_object_id = object_id('fk_2');
 GO
 ~~START~~
 int
@@ -91,6 +107,14 @@ int
 ~~END~~
 
 
+select count(*) from sys.all_objects where type='F' and parent_object_id = object_id('fk_4');
+GO
+~~START~~
+int
+1
+~~END~~
+
+
 USE db1
 GO
 
@@ -111,6 +135,14 @@ int
 
 
 select count(*) from sys.objects where type='F' and parent_object_id = object_id('fk_4');
+GO
+~~START~~
+int
+0
+~~END~~
+
+
+select count(*) from sys.all_objects where type='F' and parent_object_id = object_id('fk_4');
 GO
 ~~START~~
 int
