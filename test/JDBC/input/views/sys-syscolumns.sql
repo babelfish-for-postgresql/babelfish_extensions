@@ -1,3 +1,9 @@
+create database db1;
+go
+
+use db1;
+go
+
 -- create helper function to get datatype name given oid
 CREATE FUNCTION OidToDataType(@Oid integer)
 RETURNS VARCHAR(50)
@@ -60,6 +66,32 @@ GO
 select iscomputed, isoutparam, isnullable, collation from sys.syscolumns where name = '@firstparam' or name = '@secondparam' or name = 'col_a' or name = 'col_b' or name = 'col_c' or name = 'col_d' order by OidToObject(id) asc, name
 GO
 
+SELECT COUNT(*) FROM sys.syscolumns where name = '@firstparam' or name = '@secondparam' or name = 'col_a' or name = 'col_b' or name = 'col_c'
+go
+
+use master;
+go
+
+create procedure syscolumns_demo_proc3 @thirdparam NVARCHAR(50) as select 3;
+go
+
+SELECT COUNT(*) FROM sys.syscolumns where name = '@thirdparam'
+go
+
+-- should not be visible here
+SELECT COUNT(*) FROM sys.syscolumns where name = '@firstparam' or name = '@secondparam' or name = 'col_a' or name = 'col_b' or name = 'col_c'
+go
+
+use db1;
+go
+
+SELECT COUNT(*) FROM sys.syscolumns where name = '@firstparam' or name = '@secondparam' or name = 'col_a' or name = 'col_b' or name = 'col_c'
+go
+
+-- should not be visible here
+SELECT COUNT(*) FROM sys.syscolumns where name = '@thirdparam'
+go
+
 -- Cleanup
 DROP FUNCTION OidToDataType
 DROP FUNCTION OidToObject
@@ -68,3 +100,13 @@ DROP PROCEDURE syscolumns_demo_proc1
 DROP PROCEDURE syscolumns_demo_proc2
 DROP TABLE syscolumns_demo_table
 GO
+
+use master;
+go
+
+drop database db1;
+go
+
+DROP PROCEDURE syscolumns_demo_proc3
+go
+

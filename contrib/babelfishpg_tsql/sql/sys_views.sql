@@ -1083,7 +1083,7 @@ GRANT SELECT ON sys.index_columns TO PUBLIC;
 -- internal function that returns relevant info needed
 -- by sys.syscolumns view for all procedure parameters.
 -- This separate function was needed to workaround BABEL-1597
-CREATE FUNCTION sys.proc_param_helper()
+CREATE OR REPLACE FUNCTION sys.proc_param_helper()
 RETURNS TABLE (
     name sys.sysname,
     id int,
@@ -1116,8 +1116,8 @@ left join information_schema.parameters params
 left join pg_collation coll on coll.collname = params.collation_name
 /* assuming routine.specific_name is constructed by concatenating procedure name and oid */
 left join pg_proc pgproc on routine.specific_name = nameconcatoid(pgproc.proname, pgproc.oid)
-where routine.routine_schema not in ('pg_catalog', 'information_schema')
-  and routine.routine_type = 'PROCEDURE';
+left join sys.schemas sch on sch.schema_id = pgproc.pronamespace
+where has_schema_privilege(sch.schema_id, 'USAGE');
 END;
 $$
 LANGUAGE plpgsql;

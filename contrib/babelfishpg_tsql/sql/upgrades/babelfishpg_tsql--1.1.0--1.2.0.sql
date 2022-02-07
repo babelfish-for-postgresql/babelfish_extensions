@@ -751,6 +751,112 @@ and pg_get_serial_sequence(quote_ident(ext.nspname)||'.'||quote_ident(c.relname)
 and has_sequence_privilege(pg_get_serial_sequence(quote_ident(ext.nspname)||'.'||quote_ident(c.relname), a.attname), 'USAGE,SELECT,UPDATE');
 GRANT SELECT ON sys.identity_columns TO PUBLIC;
 
+CREATE OR REPLACE FUNCTION sys.proc_param_helper()
+RETURNS TABLE (
+    name sys.sysname,
+    id int,
+    xtype int,
+    colid smallint,
+    collationid int,
+    prec smallint,
+    scale int,
+    isoutparam int,
+    collation sys.sysname
+)
+AS
+$$
+BEGIN
+RETURN QUERY
+select params.parameter_name::sys.sysname
+  , pgproc.oid::int
+  , CAST(case when pgproc.proallargtypes is null then split_part(pgproc.proargtypes::varchar, ' ', params.ordinal_position)
+    else split_part(btrim(pgproc.proallargtypes::text,'{}'), ',', params.ordinal_position) end AS int)
+  , params.ordinal_position::smallint
+  , coll.oid::int
+  , params.numeric_precision::smallint
+  , params.numeric_scale::int
+  , case params.parameter_mode when 'OUT' then 1 when 'INOUT' then 1 else 0 end
+  , params.collation_name::sys.sysname
+from information_schema.routines routine
+left join information_schema.parameters params
+  on routine.specific_schema = params.specific_schema
+  and routine.specific_name = params.specific_name
+left join pg_collation coll on coll.collname = params.collation_name
+/* assuming routine.specific_name is constructed by concatenating procedure name and oid */
+left join pg_proc pgproc on routine.specific_name = nameconcatoid(pgproc.proname, pgproc.oid)
+left join sys.schemas sch on sch.schema_id = pgproc.pronamespace
+where has_schema_privilege(sch.schema_id, 'USAGE');
+END;
+$$
+LANGUAGE plpgsql;
+
+CREATE OR REPLACE VIEW sys.syscolumns AS
+SELECT out_name as name
+  , out_object_id as id
+  , out_system_type_id as xtype
+  , 0::sys.tinyint as typestat
+  , (case when out_user_type_id < 32767 then out_user_type_id else null end)::smallint as xusertype
+  , out_max_length as length
+  , 0::sys.tinyint as xprec
+  , 0::sys.tinyint as xscale
+  , out_column_id::smallint as colid
+  , 0::smallint as xoffset
+  , 0::sys.tinyint as bitpos
+  , 0::sys.tinyint as reserved
+  , 0::smallint as colstat
+  , out_default_object_id::int as cdefault
+  , out_rule_object_id::int as domain
+  , 0::smallint as number
+  , 0::smallint as colorder
+  , null::sys.varbinary(8000) as autoval
+  , out_offset as offset
+  , out_collation_id as collationid
+  , (case out_is_nullable::int when 1 then 8    else 0 end +
+     case out_is_identity::int when 1 then 128  else 0 end)::sys.tinyint as status
+  , out_system_type_id as type
+  , (case when out_user_type_id < 32767 then out_user_type_id else null end)::smallint as usertype
+  , null::varchar(255) as printfmt
+  , out_precision::smallint as prec
+  , out_scale::int as scale
+  , out_is_computed::int as iscomputed
+  , 0::int as isoutparam
+  , out_is_nullable::int as isnullable
+  , out_collation_name::sys.sysname as collation
+FROM sys.columns_internal()
+union all
+SELECT p.name
+  , p.id
+  , p.xtype
+  , 0::sys.tinyint as typestat
+  , (case when p.xtype < 32767 then p.xtype else null end)::smallint as xusertype
+  , null as length
+  , 0::sys.tinyint as xprec
+  , 0::sys.tinyint as xscale
+  , p.colid
+  , 0::smallint as xoffset
+  , 0::sys.tinyint as bitpos
+  , 0::sys.tinyint as reserved
+  , 0::smallint as colstat
+  , null::int as cdefault
+  , null::int as domain
+  , 0::smallint as number
+  , 0::smallint as colorder
+  , null::sys.varbinary(8000) as autoval
+  , 0::smallint as offset
+  , collationid
+  , (case p.isoutparam when 1 then 64 else 0 end)::sys.tinyint as status
+  , p.xtype as type
+  , (case when p.xtype < 32767 then p.xtype else null end)::smallint as usertype
+  , null::varchar(255) as printfmt
+  , p.prec
+  , p.scale
+  , 0::int as iscomputed
+  , p.isoutparam
+  , 1::int as isnullable
+  , p.collation
+FROM sys.proc_param_helper() as p;
+GRANT SELECT ON sys.syscolumns TO PUBLIC;
+
 -- Reset search_path to not affect any subsequent scripts
 SELECT set_config('search_path', trim(leading 'sys, ' from current_setting('search_path')), false);
 
