@@ -613,6 +613,35 @@ and p.relkind = 'S'
 and has_schema_privilege(s.schema_id, 'USAGE');
 GRANT SELECT ON sys.objects TO PUBLIC;
 
+create or replace view sys.indexes as
+select
+  i.indrelid as object_id
+  , c.relname as name
+  , case when i.indisclustered then 1 else 2 end as type
+  , case when i.indisclustered then 'CLUSTERED'::varchar(60) else 'NONCLUSTERED'::varchar(60) end as type_desc
+  , case when i.indisunique then 1 else 0 end as is_unique
+  , c.reltablespace as data_space_id
+  , 0 as ignore_dup_key
+  , case when i.indisprimary then 1 else 0 end as is_primary_key
+  , case when constr.oid is null then 0 else 1 end as is_unique_constraint
+  , 0 as fill_factor
+  , case when i.indpred is null then 0 else 1 end as is_padded
+  , case when i.indisready then 0 else 1 end is_disabled
+  , 0 as is_hypothetical
+  , 1 as allow_row_locks
+  , 1 as allow_page_locks
+  , 0 as has_filter
+  , null::varchar as filter_definition
+  , 0 as auto_created
+  , c.oid as index_id
+from pg_class c
+inner join sys.schemas sch on c.relnamespace = sch.schema_id
+inner join pg_index i on i.indexrelid = c.oid
+left join pg_constraint constr on constr.conindid = c.oid
+where c.relkind = 'i' and i.indislive
+and has_schema_privilege(sch.schema_id, 'USAGE');
+GRANT SELECT ON sys.indexes TO PUBLIC;
+
 -- Reset search_path to not affect any subsequent scripts
 SELECT set_config('search_path', trim(leading 'sys, ' from current_setting('search_path')), false);
 

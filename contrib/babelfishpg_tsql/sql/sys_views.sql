@@ -424,11 +424,11 @@ select
   , 0 as auto_created
   , c.oid as index_id
 from pg_class c
-inner join pg_namespace s on s.oid = c.relnamespace
+inner join sys.schemas sch on c.relnamespace = sch.schema_id
 inner join pg_index i on i.indexrelid = c.oid
 left join pg_constraint constr on constr.conindid = c.oid
 where c.relkind = 'i' and i.indislive
-and s.nspname not in ('information_schema', 'pg_catalog');
+and has_schema_privilege(sch.schema_id, 'USAGE');
 GRANT SELECT ON sys.indexes TO PUBLIC;
 
 create or replace view sys.key_constraints as
