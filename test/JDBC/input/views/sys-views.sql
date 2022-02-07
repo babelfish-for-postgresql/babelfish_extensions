@@ -13,6 +13,9 @@ GO
 SELECT COUNT(*) FROM sys.objects WHERE type='V' and name = 'rand_name1';
 GO
 
+SELECT COUNT(*) FROM sys.all_objects WHERE type='V' and name = 'rand_name1';
+GO
+
 USE master;
 GO
 
@@ -21,6 +24,9 @@ SELECT COUNT(*) FROM sys.views WHERE name = 'rand_name1';
 GO
 
 SELECT COUNT(*) FROM sys.objects WHERE type='V' and name = 'rand_name1';
+GO
+
+SELECT COUNT(*) FROM sys.all_objects WHERE type='V' and name = 'rand_name1';
 GO
 
 CREATE VIEW rand_name2 AS select 1;
@@ -32,6 +38,9 @@ GO
 SELECT COUNT(*) FROM sys.objects WHERE type='V' and name = 'rand_name2';
 GO
 
+SELECT COUNT(*) FROM sys.all_objects WHERE type='V' and name = 'rand_name2';
+GO
+
 USE db1
 GO
 
@@ -40,6 +49,9 @@ SELECT COUNT(*) FROM sys.views WHERE name = 'rand_name2';
 GO
 
 SELECT COUNT(*) FROM sys.objects WHERE type='V' and name = 'rand_name2';
+GO
+
+SELECT COUNT(*) FROM sys.all_objects WHERE type='V' and name = 'rand_name2';
 GO
 
 DROP VIEW rand_name1;

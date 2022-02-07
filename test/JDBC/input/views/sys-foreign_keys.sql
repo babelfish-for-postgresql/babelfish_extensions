@@ -19,6 +19,9 @@ GO
 select count(*) from sys.objects where type='F' and parent_object_id = object_id('fk_2');
 GO
 
+select count(*) from sys.all_objects where type='F' and parent_object_id = object_id('fk_2');
+GO
+
 USE master
 GO
 
@@ -29,6 +32,9 @@ select count(*) from sys.foreign_keys where parent_object_id = object_id('fk_2')
 GO
 
 select count(*) from sys.objects where type='F' and parent_object_id = object_id('fk_2');
+GO
+
+select count(*) from sys.all_objects where type='F' and parent_object_id = object_id('fk_2');
 GO
 
 create table fk_3 (a int, primary key (a))
@@ -46,6 +52,9 @@ GO
 select count(*) from sys.objects where type='F' and parent_object_id = object_id('fk_4');
 GO
 
+select count(*) from sys.all_objects where type='F' and parent_object_id = object_id('fk_4');
+GO
+
 USE db1
 GO
 
@@ -56,6 +65,9 @@ select count(*) from sys.foreign_keys where parent_object_id = object_id('fk_4')
 GO
 
 select count(*) from sys.objects where type='F' and parent_object_id = object_id('fk_4');
+GO
+
+select count(*) from sys.all_objects where type='F' and parent_object_id = object_id('fk_4');
 GO
 
 drop table fk_2;
