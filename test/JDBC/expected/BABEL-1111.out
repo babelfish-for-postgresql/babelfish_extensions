@@ -1,0 +1,34 @@
+-- test connectionproperty() function
+-- invalid property name, should return NULL
+select connectionproperty('invalid property');
+GO
+~~START~~
+sql_variant
+<NULL>
+~~END~~
+
+
+select connectionproperty(NULL);
+GO
+~~START~~
+sql_variant
+<NULL>
+~~END~~
+
+
+-- valid supported properties
+select connectionproperty('net_transport'),connectionproperty('protocol_type'), connectionproperty('auth_scheme'), connectionproperty('local_tcp_port');
+GO
+~~START~~
+sql_variant#!#sql_variant#!#sql_variant#!#sql_variant
+TCP#!#TSQL#!#SQL#!#1433
+~~END~~
+
+
+select @@MICROSOFTVERSION;
+GO
+~~START~~
+int
+201332885
+~~END~~
+

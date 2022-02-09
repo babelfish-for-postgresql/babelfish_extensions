@@ -66,37 +66,37 @@ static void* get_servername_helper(void);
 
 Datum connectionproperty(PG_FUNCTION_ARGS) {
 	const char *property = text_to_cstring(PG_GETARG_TEXT_P(0));
-    VarChar *vch;
+	VarChar *vch;
 
 	if (strcasecmp(property, "net_transport") == 0)
-    {
+	{
 		const char *ret = "TCP";
 		vch = tsql_varchar_input(ret, strlen(ret), -1);
-    }
-    else if (strcasecmp(property, "protocol_type") == 0)
-    {
-		const char *ret = "TSQL";
-        vch = tsql_varchar_input(ret, strlen(ret), -1);
-    }
-    else if (strcasecmp(property, "auth_scheme") == 0)
-    {
-        const char *ret = "SQL";
-        vch = tsql_varchar_input(ret, strlen(ret), -1);
-    }
-    else if (strcasecmp(property, "local_net_address") == 0)
-    {
-        const char *ret = "";
-        vch = tsql_varchar_input(ret, strlen(ret), -1);
-    }
-    else if (strcasecmp(property, "local_tcp_port") == 0)
+	}
+	else if (strcasecmp(property, "protocol_type") == 0)
 	{
-      PG_RETURN_BYTEA_P(convertIntToSQLVariantByteA(1433));
-    }
-    else
-    {
+		const char *ret = "TSQL";
+		vch = tsql_varchar_input(ret, strlen(ret), -1);
+	}
+	else if (strcasecmp(property, "auth_scheme") == 0)
+	{
+		const char *ret = "SQL";
+		vch = tsql_varchar_input(ret, strlen(ret), -1);
+	}
+	else if (strcasecmp(property, "local_net_address") == 0)
+	{
 		const char *ret = "";
-        vch = tsql_varchar_input(ret, strlen(ret), -1);
-    }
+		vch = tsql_varchar_input(ret, strlen(ret), -1);
+	}
+	else if (strcasecmp(property, "local_tcp_port") == 0)
+	{
+		PG_RETURN_BYTEA_P(convertIntToSQLVariantByteA(1433));
+	}
+	else
+	{
+		/* for invalid input, return NULL */
+		PG_RETURN_NULL();
+	}
 	PG_RETURN_BYTEA_P(convertVarcharToSQLVariantByteA(vch, PG_GET_COLLATION()));
 }
 
