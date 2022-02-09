@@ -4795,9 +4795,11 @@ static PLtsql_stmt *
 makeSpStatement(ParserRuleContext *sp_name, TSqlParser::Execute_statement_argContext *sp_args, int lineno, int return_code_dno)
 {
 	Assert(sp_name);
-	Assert(sp_args);
 
 	std::string name_str = ::getFullText(sp_name);
+	if (!sp_args)
+		throw PGErrorWrapperException(ERROR, ERRCODE_INVALID_PARAMETER_VALUE, format_errmsg("%s procedure was called with an incorrect number of parameters", name_str.c_str()), getLineAndPos(sp_name));
+
 	std::vector<tsql_exec_param *> params;
 
 	PLtsql_stmt_exec_sp *result = (PLtsql_stmt_exec_sp *) palloc0(sizeof(*result));
@@ -4813,7 +4815,8 @@ makeSpStatement(ParserRuleContext *sp_name, TSqlParser::Execute_statement_argCon
 	if (string_matches(name_str.c_str(), "sp_cursor"))
 	{
 		result->sp_type_code = PLTSQL_EXEC_SP_CURSOR;
-		Assert(paramno >= 4);
+		if (paramno < 4)
+			throw PGErrorWrapperException(ERROR, ERRCODE_INVALID_PARAMETER_VALUE, format_errmsg("%s procedure was called with an incorrect number of parameters", name_str.c_str()), getLineAndPos(sp_name));
 
 		result->handle = getNthParamExpr(params, 1);
 		result->opt1 = getNthParamExpr(params, 2);
@@ -4829,14 +4832,16 @@ makeSpStatement(ParserRuleContext *sp_name, TSqlParser::Execute_statement_argCon
 	else if (string_matches(name_str.c_str(), "sp_cursorclose"))
 	{
 		result->sp_type_code = PLTSQL_EXEC_SP_CURSORCLOSE;
-		Assert(paramno == 1);
+		if (paramno != 1)
+			throw PGErrorWrapperException(ERROR, ERRCODE_INVALID_PARAMETER_VALUE, format_errmsg("%s procedure was called with an incorrect number of parameters", name_str.c_str()), getLineAndPos(sp_name));
 
 		result->handle = getNthParamExpr(params, 1);
 	}
 	else if (string_matches(name_str.c_str(), "sp_cursorexecute"))
 	{
 		result->sp_type_code = PLTSQL_EXEC_SP_CURSOREXECUTE;
-		Assert(paramno >= 2);
+		if (paramno < 2)
+			throw PGErrorWrapperException(ERROR, ERRCODE_INVALID_PARAMETER_VALUE, format_errmsg("%s procedure was called with an incorrect number of parameters", name_str.c_str()), getLineAndPos(sp_name));
 
 		result->handle = getNthParamExpr(params, 1);
 		check_param_type(params[1], true, INT4OID, "cursor");
@@ -4853,7 +4858,8 @@ makeSpStatement(ParserRuleContext *sp_name, TSqlParser::Execute_statement_argCon
 	else if (string_matches(name_str.c_str(), "sp_cursorfetch"))
 	{
 		result->sp_type_code = PLTSQL_EXEC_SP_CURSORFETCH;
-		Assert(paramno >= 1 && paramno <= 4);
+		if (paramno < 1 || paramno > 4)
+			throw PGErrorWrapperException(ERROR, ERRCODE_INVALID_PARAMETER_VALUE, format_errmsg("%s procedure was called with an incorrect number of parameters", name_str.c_str()), getLineAndPos(sp_name));
 
 		result->handle = getNthParamExpr(params, 1);
 		result->opt1 = getNthParamExpr(params, 2);
@@ -4863,7 +4869,8 @@ makeSpStatement(ParserRuleContext *sp_name, TSqlParser::Execute_statement_argCon
 	else if (string_matches(name_str.c_str(), "sp_cursoropen"))
 	{
 		result->sp_type_code = PLTSQL_EXEC_SP_CURSOROPEN;
-		Assert(paramno >= 2);
+		if (paramno < 2)
+			throw PGErrorWrapperException(ERROR, ERRCODE_INVALID_PARAMETER_VALUE, format_errmsg("%s procedure was called with an incorrect number of parameters", name_str.c_str()), getLineAndPos(sp_name));
 
 		check_param_type(params[0], true, INT4OID, "cursor");
 		result->cursor_handleno = params[0]->varno;
@@ -4881,7 +4888,8 @@ makeSpStatement(ParserRuleContext *sp_name, TSqlParser::Execute_statement_argCon
 	else if (string_matches(name_str.c_str(), "sp_cursoroption"))
 	{
 		result->sp_type_code = PLTSQL_EXEC_SP_CURSOROPTION;
-		Assert(paramno == 3);
+		if (paramno != 3)
+			throw PGErrorWrapperException(ERROR, ERRCODE_INVALID_PARAMETER_VALUE, format_errmsg("%s procedure was called with an incorrect number of parameters", name_str.c_str()), getLineAndPos(sp_name));
 
 		result->handle = getNthParamExpr(params, 1);
 		result->opt1 = getNthParamExpr(params, 2);
@@ -4890,7 +4898,8 @@ makeSpStatement(ParserRuleContext *sp_name, TSqlParser::Execute_statement_argCon
 	else if (string_matches(name_str.c_str(), "sp_cursorprepare"))
 	{
 		result->sp_type_code = PLTSQL_EXEC_SP_CURSORPREPARE;
-		Assert(paramno >= 4 && paramno <= 6);
+		if (paramno < 4 || paramno > 6)
+			throw PGErrorWrapperException(ERROR, ERRCODE_INVALID_PARAMETER_VALUE, format_errmsg("%s procedure was called with an incorrect number of parameters", name_str.c_str()), getLineAndPos(sp_name));
 
 		check_param_type(params[0], true, INT4OID, "prepared_handle");
 		result->prepared_handleno = params[0]->varno;
@@ -4903,7 +4912,8 @@ makeSpStatement(ParserRuleContext *sp_name, TSqlParser::Execute_statement_argCon
 	else if (string_matches(name_str.c_str(), "sp_cursorprepexec"))
 	{
 		result->sp_type_code = PLTSQL_EXEC_SP_CURSORPREPEXEC;
-		Assert(paramno >= 5);
+		if (paramno < 5)
+			throw PGErrorWrapperException(ERROR, ERRCODE_INVALID_PARAMETER_VALUE, format_errmsg("%s procedure was called with an incorrect number of parameters", name_str.c_str()), getLineAndPos(sp_name));
 
 		check_param_type(params[0], true, INT4OID, "prepared_handle");
 		result->prepared_handleno = params[0]->varno;
@@ -4923,14 +4933,16 @@ makeSpStatement(ParserRuleContext *sp_name, TSqlParser::Execute_statement_argCon
 	else if (string_matches(name_str.c_str(), "sp_cursorunprepare"))
 	{
 		result->sp_type_code = PLTSQL_EXEC_SP_CURSORUNPREPARE;
-		Assert(paramno == 1);
+		if (paramno != 1)
+			throw PGErrorWrapperException(ERROR, ERRCODE_INVALID_PARAMETER_VALUE, format_errmsg("%s procedure was called with an incorrect number of parameters", name_str.c_str()), getLineAndPos(sp_name));
 
 		result->handle = getNthParamExpr(params, 1);
 	}
 	else if (string_matches(name_str.c_str(), "sp_execute"))
 	{
 		result->sp_type_code = PLTSQL_EXEC_SP_EXECUTE;
-		Assert(paramno >= 1);
+		if (paramno < 1)
+			throw PGErrorWrapperException(ERROR, ERRCODE_INVALID_PARAMETER_VALUE, format_errmsg("%s procedure was called with an incorrect number of parameters", name_str.c_str()), getLineAndPos(sp_name));
 
 		result->handle = getNthParamExpr(params, 1);
 
@@ -4943,7 +4955,8 @@ makeSpStatement(ParserRuleContext *sp_name, TSqlParser::Execute_statement_argCon
 	else if (string_matches(name_str.c_str(), "sp_executesql"))
 	{
 		result->sp_type_code = PLTSQL_EXEC_SP_EXECUTESQL;
-		Assert(paramno == 1 || paramno >= 3);
+		if (paramno == 0 || paramno == 2)
+			throw PGErrorWrapperException(ERROR, ERRCODE_INVALID_PARAMETER_VALUE, format_errmsg("%s procedure was called with an incorrect number of parameters", name_str.c_str()), getLineAndPos(sp_name));
 
 		result->query = getNthParamExpr(params, 1);
 		result->param_def = getNthParamExpr(params, 2);
@@ -4957,7 +4970,8 @@ makeSpStatement(ParserRuleContext *sp_name, TSqlParser::Execute_statement_argCon
 	else if (string_matches(name_str.c_str(), "sp_prepexec"))
 	{
 		result->sp_type_code = PLTSQL_EXEC_SP_PREPEXEC;
-		Assert(paramno >= 3);
+		if (paramno < 3)
+			throw PGErrorWrapperException(ERROR, ERRCODE_INVALID_PARAMETER_VALUE, format_errmsg("%s procedure was called with an incorrect number of parameters", name_str.c_str()), getLineAndPos(sp_name));
 
 		check_param_type(params[0], true, INT4OID, "prepared_handle");
 		result->prepared_handleno = params[0]->varno;
