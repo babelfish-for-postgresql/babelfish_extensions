@@ -28,24 +28,24 @@ BEGIN
 END;
 GO
 
-SELECT type, type_desc from sys.procedures  where name like 'babel_2747%'
+SELECT type, type_desc from sys.procedures  where name like 'babel_2747%' order by type;
 GO
 ~~START~~
 varchar#!#varchar
-P#!#SQL_STORED_PROCEDURE
-P#!#SQL_STORED_PROCEDURE
 FN#!#SQL_SCALAR_FUNCTION
+P#!#SQL_STORED_PROCEDURE
+P#!#SQL_STORED_PROCEDURE
 TR#!#SQL_TRIGGER
 ~~END~~
 
 
-SELECT type, type_desc from sys.all_objects  where name like 'babel_2747%'
+SELECT type, type_desc from sys.all_objects  where name like 'babel_2747%' order by type;
 GO
 ~~START~~
 text#!#text
-P#!#SQL_STORED_PROCEDURE
-P#!#SQL_STORED_PROCEDURE
 FN#!#SQL_SCALAR_FUNCTION
+P#!#SQL_STORED_PROCEDURE
+P#!#SQL_STORED_PROCEDURE
 TR#!#SQL_TRIGGER
 ~~END~~
 

@@ -28,10 +28,10 @@ BEGIN
 END;
 GO
 
-SELECT type, type_desc from sys.procedures  where name like 'babel_2747%'
+SELECT type, type_desc from sys.procedures  where name like 'babel_2747%' order by type;
 GO
 
-SELECT type, type_desc from sys.all_objects  where name like 'babel_2747%'
+SELECT type, type_desc from sys.all_objects  where name like 'babel_2747%' order by type;
 GO
 
 DROP PROCEDURE babel_2747
