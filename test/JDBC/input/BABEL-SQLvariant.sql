@@ -210,7 +210,8 @@ prepst#!#exec#!#smallmoney|-|a|-|<NULL>#!#money|-|b|-|<NULL>
 go
 SELECT * FROM money_dt;
 go
-
+DROP TABLE money_dt;
+go
 
 Create table sourceTable(a sql_variant, b sql_variant not null);
 go

@@ -442,7 +442,8 @@ sql_variant#!#sql_variant
 <NULL>#!#<NULL>
 ~~END~~
 
-
+DROP TABLE money_dt;
+go
 
 Create table sourceTable(a sql_variant, b sql_variant not null);
 go
