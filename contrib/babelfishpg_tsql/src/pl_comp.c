@@ -25,6 +25,7 @@
 #include "catalog/pg_type.h"
 #include "funcapi.h"
 #include "nodes/makefuncs.h"
+#include "parser/parse_relation.h"
 #include "parser/parse_type.h"
 #include "utils/builtins.h"
 #include "utils/guc.h"
@@ -1545,7 +1546,7 @@ pltsql_post_column_ref(ParseState *pstate, ColumnRef *cref, Node *var)
 
 
 /*
- * Call this hook only when expanding a SELECT * to its individual column names
+ * Call this hook only when expanding a SELECT * or relation.* to its individual column names
  * We can rewrite the column names to their Babelfish (ie original case) names
  * if we find them in pg_attribute.
  */
@@ -1565,11 +1566,12 @@ pltsql_post_expand_star(ParseState *pstate, ColumnRef *cref, List *l)
 		 * Each item in the List here should be a TargetEntry (see ExpandAllTables/expandNSItemAttrs)
 		 */
 		TargetEntry *te = (TargetEntry *) lfirst(li);
-		ParseNamespaceItem *nsitem = (ParseNamespaceItem *) linitial(pstate->p_namespace);
-		Oid relid = nsitem->p_rte->relid;
-		int16 attnum = te->resno;
+		Var *varnode = (Var *) te->expr;
+		RangeTblEntry *rte = GetRTEByRangeTablePosn(pstate, varnode->varno, varnode->varlevelsup);
+		Oid relid = rte->relid;
+		int16 attnum = varnode->varattno;
 
-		if (relid == InvalidOid)
+		if (rte->rtekind != RTE_RELATION || relid == InvalidOid)
 		{
 			return;
 		}
