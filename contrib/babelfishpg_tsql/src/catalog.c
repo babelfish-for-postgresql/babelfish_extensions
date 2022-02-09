@@ -140,33 +140,15 @@ int16 get_db_id(const char *dbname)
 	int16				db_id = 0;
 	HeapTuple 			tuple;
 	Form_sysdatabases 	sysdb;
-	Relation			rel;
-	ScanKeyData			scanKey;
-	SysScanDesc			scan;
 
-	/* 
-	 * TODO: BABEL-2578: invalidate non-pg_catalog tuples properly in syscache
-	 * so we can use syscache here.
-	 */
-	rel = table_open(sysdatabases_oid, AccessShareLock);
+      tuple = SearchSysCache1(SYSDATABASENAME, CStringGetTextDatum(dbname));
 
-	ScanKeyInit(&scanKey,
-				Anum_sysdatabaese_name,
-				BTEqualStrategyNumber, F_TEXTEQ,
-				CStringGetTextDatum(dbname));
+      if (!HeapTupleIsValid(tuple))
+              return InvalidDbid;
 
-	scan = systable_beginscan(rel, sysdatabaese_idx_name_oid, true,
-				NULL, 1, &scanKey);
-	tuple = systable_getnext(scan);
-
-	if (HeapTupleIsValid(tuple))
-	{
-		sysdb = ((Form_sysdatabases) GETSTRUCT(tuple));
-		db_id = sysdb->dbid;
-	}
-
-	systable_endscan(scan);
-	table_close(rel, NoLock);
+      sysdb = ((Form_sysdatabases) GETSTRUCT(tuple));
+      db_id = sysdb->dbid;
+      ReleaseSysCache(tuple);
 
 	return db_id;
 }
@@ -178,34 +160,14 @@ char *get_db_name(int16 dbid)
 	char				*name = NULL;
 	bool 				isNull;
 
-	/* 
-	 * TODO: BABEL-2578: invalidate non-pg_catalog tuples properly in syscache
-	 * so we can use syscache here.
-	 */
-	Relation            rel;
-	ScanKeyData			scanKey;
-	SysScanDesc         scan;
+      tuple  = SearchSysCache1(SYSDATABASEOID, Int16GetDatum(dbid));
 
-	rel = table_open(sysdatabases_oid, AccessShareLock);
+      if (!HeapTupleIsValid(tuple))
+              return NULL;
 
-	ScanKeyInit(&scanKey,
-				Anum_sysdatabaese_oid,
-				BTEqualStrategyNumber, F_INT2EQ,
-				Int16GetDatum(dbid));
-
-	scan = systable_beginscan(rel, sysdatabaese_idx_oid_oid, true,
-				NULL, 1, &scanKey);
-
-	tuple = systable_getnext(scan);
-
-	if (HeapTupleIsValid(tuple))
-	{
-		name_datum = heap_getattr(tuple, Anum_sysdatabaese_name, rel->rd_att, &isNull);
-		name = TextDatumGetCString(name_datum);
-	}
-
-	systable_endscan(scan);
-	table_close(rel, NoLock);
+      name_datum = SysCacheGetAttr(SYSDATABASEOID, tuple, Anum_sysdatabaese_name, &isNull);
+      name = TextDatumGetCString(name_datum);
+      ReleaseSysCache(tuple);
 
 	return name;
 }
@@ -498,7 +460,6 @@ char *
 get_login_default_db(char *login_name)
 {
 	Relation				bbf_authid_login_ext_rel;
-	Relation				sysdatabase_rel;
 	TupleDesc				dsc;
 	HeapTuple				tuple;
 	ScanKeyData				scanKey;
@@ -535,23 +496,11 @@ get_login_default_db(char *login_name)
 	systable_endscan(scan);
 	table_close(bbf_authid_login_ext_rel, AccessShareLock);
 
-	sysdatabase_rel = table_open(sysdatabases_oid, AccessShareLock);
-
-	ScanKeyInit(&scanKey,
-				Anum_sysdatabaese_name,
-				BTEqualStrategyNumber, F_TEXTEQ,
-				CStringGetTextDatum(default_db_name));
-
-	scan = systable_beginscan(sysdatabase_rel, sysdatabaese_idx_name_oid, true,
-			NULL, 1, &scanKey);
-
-	tuple = systable_getnext(scan);
-
-	systable_endscan(scan);
-	table_close(sysdatabase_rel, AccessShareLock);
+      tuple = SearchSysCache1(SYSDATABASENAME, CStringGetTextDatum(default_db_name));
 
 	if (!HeapTupleIsValid(tuple))
 		return NULL;
+      ReleaseSysCache(tuple);
 
 	return default_db_name;
 }

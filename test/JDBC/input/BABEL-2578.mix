@@ -1,0 +1,29 @@
+-- psql
+CREATE USER su_user WITH SUPERUSER CREATEDB LOGIN PASSWORD 'abc';
+GO
+
+-- tsql      user=jdbc_user      password=12345678
+create database db1
+go
+
+-- starting a new session 
+-- tsql      user=su_user      password=abc
+-- load the syscache entry for sysdatabase for db1
+use db1
+go
+-- drop and re-create db1 should succeed
+use master
+go
+drop database db1
+go
+create database db1
+go
+
+-- tsql      user=jdbc_user      password=12345678
+-- cleanup
+drop database db1
+go
+
+-- psql
+DROP USER IF EXISTS su_user;
+go
