@@ -474,17 +474,22 @@ select
   , p.oid as object_id
   , null::integer as principal_id
   , sch.schema_id as schema_id
-  , 0 as parent_object_id
-  , case format_type(p.prorettype, null)
-      when 'void' then 'P'::varchar(2)
+  , cast (case when tr.tgrelid is not null 
+      then tr.tgrelid 
+      else 0 end as int) 
+    as parent_object_id
+  , case p.prokind
+      when 'p' then 'P'::varchar(2)
+      when 'a' then 'AF'::varchar(2)
       else
         case format_type(p.prorettype, null) when 'trigger'
           then 'TR'::varchar(2)
           else 'FN'::varchar(2)
         end
     end as type
-  , case format_type(p.prorettype, null)
-      when 'void' then 'SQL_STORED_PROCEDURE'::varchar(60)
+  , case p.prokind
+      when 'p' then 'SQL_STORED_PROCEDURE'::varchar(60)
+      when 'a' then 'AGGREGATE_FUNCTION'::varchar(60)
       else
         case format_type(p.prorettype, null) when 'trigger'
           then 'SQL_TRIGGER'::varchar(60)
@@ -498,7 +503,8 @@ select
   , 0 as is_schema_published
 from pg_proc p
 inner join sys.schemas sch on sch.schema_id = p.pronamespace
-and has_schema_privilege(sch.schema_id, 'USAGE')
+left join pg_trigger tr on tr.tgfoid = p.oid
+where has_schema_privilege(sch.schema_id, 'USAGE')
 and has_function_privilege(p.oid, 'EXECUTE');
 GRANT SELECT ON sys.procedures TO PUBLIC;
 
@@ -1164,42 +1170,6 @@ where c.contype = 'f'
 and (c.connamespace in (select schema_id from sys.schemas))
 and has_schema_privilege(c.connamespace, 'USAGE');
 GRANT SELECT ON sys.sysforeignkeys TO PUBLIC;
-
-create or replace view sys.procedures as
-select
-  p.proname as name
-  , p.oid as object_id
-  , null::integer as principal_id
-  , sch.schema_id as schema_id
-  , 0 as parent_object_id
-  , case p.prokind
-      when 'p' then 'P'::varchar(2)
-      when 'a' then 'AF'::varchar(2)
-      else
-        case format_type(p.prorettype, null) when 'trigger'
-          then 'TR'::varchar(2)
-          else 'FN'::varchar(2)
-        end
-    end as type
-  , case p.prokind
-      when 'p' then 'SQL_STORED_PROCEDURE'::varchar(60)
-      when 'a' then 'AGGREGATE_FUNCTION'::varchar(60)
-      else
-        case format_type(p.prorettype, null) when 'trigger'
-          then 'SQL_TRIGGER'::varchar(60)
-          else 'SQL_SCALAR_FUNCTION'::varchar(60)
-        end
-    end as type_desc
-  , null::timestamp as create_date
-  , null::timestamp as modify_date
-  , 0 as is_ms_shipped
-  , 0 as is_published
-  , 0 as is_schema_published
-from pg_proc p
-inner join sys.schemas sch on sch.schema_id = p.pronamespace
-and has_schema_privilege(sch.schema_id, 'USAGE')
-and has_function_privilege(p.oid, 'EXECUTE');
-GRANT SELECT ON sys.procedures TO PUBLIC;
 
 -- Reset search_path to not affect any subsequent scripts
 SELECT set_config('search_path', trim(leading 'sys, ' from current_setting('search_path')), false);

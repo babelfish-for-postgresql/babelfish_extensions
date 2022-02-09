@@ -464,7 +464,10 @@ select
   , p.oid as object_id
   , null::integer as principal_id
   , sch.schema_id as schema_id
-  , 0 as parent_object_id
+  , cast (case when tr.tgrelid is not null 
+      then tr.tgrelid 
+      else 0 end as int) 
+    as parent_object_id
   , case p.prokind
       when 'p' then 'P'::varchar(2)
       when 'a' then 'AF'::varchar(2)
@@ -490,7 +493,8 @@ select
   , 0 as is_schema_published
 from pg_proc p
 inner join sys.schemas sch on sch.schema_id = p.pronamespace
-and has_schema_privilege(sch.schema_id, 'USAGE')
+left join pg_trigger tr on tr.tgfoid = p.oid
+where has_schema_privilege(sch.schema_id, 'USAGE')
 and has_function_privilege(p.oid, 'EXECUTE');
 GRANT SELECT ON sys.procedures TO PUBLIC;
 
