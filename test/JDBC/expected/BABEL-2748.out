@@ -1,0 +1,258 @@
+use master;
+go
+
+exec sp_cursor
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: sp_cursor procedure was called with an incorrect number of parameters)~~
+
+
+declare @cursor_handle int;
+exec sp_cursor @cursor_handle;
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: sp_cursor procedure was called with an incorrect number of parameters)~~
+
+
+declare @cursor_handle int;
+exec sp_cursor @cursor_handle, 40
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: sp_cursor procedure was called with an incorrect number of parameters)~~
+
+
+declare @cursor_handle int;
+exec sp_cursor @cursor_handle, 40, 1
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: sp_cursor procedure was called with an incorrect number of parameters)~~
+
+
+exec sp_cursorclose;
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: sp_cursorclose procedure was called with an incorrect number of parameters)~~
+
+
+exec sp_cursorexecute;
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: sp_cursorexecute procedure was called with an incorrect number of parameters)~~
+
+
+declare @stmt_handle int;
+exec sp_cursorexecute @stmt_handle;
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: sp_cursorexecute procedure was called with an incorrect number of parameters)~~
+
+
+exec sp_cursorfetch;
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: sp_cursorfetch procedure was called with an incorrect number of parameters)~~
+
+
+declare @cursor_handle int;
+exec sp_cursorfetch @cursor_handle, 2, 0, 1, 'dummy';
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: sp_cursorfetch procedure was called with an incorrect number of parameters)~~
+
+
+exec sp_cursoropen;
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: sp_cursoropen procedure was called with an incorrect number of parameters)~~
+
+
+declare @cursor_handle int;
+exec sp_cursoropen @cursor_handle OUTPUT;
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: sp_cursoropen procedure was called with an incorrect number of parameters)~~
+
+
+exec sp_cursoroption;
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: sp_cursoroption procedure was called with an incorrect number of parameters)~~
+
+
+declare @cursor_handle int;
+exec sp_cursoroption @cursor_handle;
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: sp_cursoroption procedure was called with an incorrect number of parameters)~~
+
+
+declare @cursor_handle int;
+exec sp_cursoroption @cursor_handle, 1;
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: sp_cursoroption procedure was called with an incorrect number of parameters)~~
+
+
+declare @cursor_handle int;
+exec sp_cursoroption @cursor_handle, 1, 2, 'dummy';
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: sp_cursoroption procedure was called with an incorrect number of parameters)~~
+
+
+exec sp_cursorprepare;
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: sp_cursorprepare procedure was called with an incorrect number of parameters)~~
+
+
+declare @stmt_handle int;
+exec sp_cursorprepare @stmt_handle OUTPUT;
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: sp_cursorprepare procedure was called with an incorrect number of parameters)~~
+
+
+declare @stmt_handle int;
+exec sp_cursorprepare @stmt_handle OUTPUT, N'';
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: sp_cursorprepare procedure was called with an incorrect number of parameters)~~
+
+
+declare @stmt_handle int;
+exec sp_cursorprepare @stmt_handle OUTPUT, N'', 'select i, d, c, u from babel_cursor_t1';
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: sp_cursorprepare procedure was called with an incorrect number of parameters)~~
+
+
+declare @stmt_handle int;
+exec sp_cursorprepare @stmt_handle OUTPUT, N'', 'select i, d, c, u from babel_cursor_t1', 0, 2, 1, 'dummy';
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: sp_cursorprepare procedure was called with an incorrect number of parameters)~~
+
+
+exec sp_cursorprepexec;
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: sp_cursorprepexec procedure was called with an incorrect number of parameters)~~
+
+
+declare @stmt_handle int;
+exec sp_cursorprepexec @stmt_handle OUTPUT;
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: sp_cursorprepexec procedure was called with an incorrect number of parameters)~~
+
+
+declare @stmt_handle int;
+declare @cursor_handle int;
+exec sp_cursorprepexec @stmt_handle OUTPUT, @cursor_handle OUTPUT;
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: sp_cursorprepexec procedure was called with an incorrect number of parameters)~~
+
+
+declare @stmt_handle int;
+declare @cursor_handle int;
+exec sp_cursorprepexec @stmt_handle OUTPUT, @cursor_handle OUTPUT, N'';
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: sp_cursorprepexec procedure was called with an incorrect number of parameters)~~
+
+
+declare @stmt_handle int;
+declare @cursor_handle int;
+exec sp_cursorprepexec @stmt_handle OUTPUT, @cursor_handle OUTPUT, N'', 'select i+100 from babel_cursor_t1';
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: sp_cursorprepexec procedure was called with an incorrect number of parameters)~~
+
+
+exec sp_cursorunprepare;
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: sp_cursorunprepare procedure was called with an incorrect number of parameters)~~
+
+
+declare @stmt_handle int;
+exec sp_cursorunprepare @stmt_handle, 'dummy';
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: sp_cursorunprepare procedure was called with an incorrect number of parameters)~~
+
+
+exec sp_execute;
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: sp_execute procedure was called with an incorrect number of parameters)~~
+
+
+exec sp_executesql;
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: sp_executesql procedure was called with an incorrect number of parameters)~~
+
+
+declare @query_str varchar(100);
+declare @param_def varchar(100);
+exec sp_executesql @query_str, @param_def;
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: sp_executesql procedure was called with an incorrect number of parameters)~~
+
+
+exec sp_prepexec;
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: sp_prepexec procedure was called with an incorrect number of parameters)~~
+
+
+declare @handle int;
+exec sp_prepexec @handle output;
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: sp_prepexec procedure was called with an incorrect number of parameters)~~
+
+
+declare @handle int;
+exec sp_prepexec @handle output, N'@a int';
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: sp_prepexec procedure was called with an incorrect number of parameters)~~
+
