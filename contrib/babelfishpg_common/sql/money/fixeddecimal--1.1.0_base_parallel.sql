@@ -462,6 +462,10 @@ ALTER OPERATOR FAMILY fixeddecimal_ops USING btree ADD
 ALTER OPERATOR FAMILY fixeddecimal_ops USING hash ADD
     OPERATOR    1   =  (NUMERIC, FIXEDDECIMAL);
 
+
+CREATE DOMAIN sys.MONEY as sys.FIXEDDECIMAL CHECK (VALUE >= -922337203685477.5808 AND VALUE <= 922337203685477.5807);
+CREATE DOMAIN sys.SMALLMONEY as sys.FIXEDDECIMAL CHECK (VALUE >= -214748.3648 AND VALUE <= 214748.3647);
+
 --
 -- Cross type operators with int8
 --
@@ -676,6 +680,12 @@ RETURNS DOUBLE PRECISION
 AS 'babelfishpg_money', 'int8fixeddecimaldiv'
 LANGUAGE C IMMUTABLE STRICT PARALLEL SAFE;
 
+CREATE FUNCTION sys.int8fixeddecimaldiv_money(INT8, FIXEDDECIMAL)
+RETURNS sys.MONEY
+AS $$
+  SELECT sys.int8fixeddecimaldiv($1, $2)::sys.MONEY;
+$$ LANGUAGE SQL IMMUTABLE STRICT PARALLEL SAFE;
+
 CREATE OPERATOR sys.= (
     LEFTARG    = INT8,
     RIGHTARG   = FIXEDDECIMAL,
@@ -760,7 +770,7 @@ CREATE OPERATOR sys.* (
 CREATE OPERATOR sys./ (
     LEFTARG    = INT8,
     RIGHTARG   = FIXEDDECIMAL,
-    PROCEDURE  = int8fixeddecimaldiv
+    PROCEDURE  = int8fixeddecimaldiv_money
 );
 
 ALTER OPERATOR FAMILY fixeddecimal_ops USING btree ADD
@@ -988,6 +998,12 @@ RETURNS DOUBLE PRECISION
 AS 'babelfishpg_money', 'int4fixeddecimaldiv'
 LANGUAGE C IMMUTABLE STRICT PARALLEL SAFE;
 
+CREATE FUNCTION sys.int4fixeddecimaldiv_money(INT4, FIXEDDECIMAL)
+RETURNS sys.MONEY
+AS $$
+  SELECT sys.int4fixeddecimaldiv($1, $2)::sys.MONEY;
+$$ LANGUAGE SQL IMMUTABLE STRICT PARALLEL SAFE;
+
 CREATE OPERATOR sys.= (
     LEFTARG    = INT4,
     RIGHTARG   = FIXEDDECIMAL,
@@ -1072,7 +1088,7 @@ CREATE OPERATOR sys.* (
 CREATE OPERATOR sys./ (
     LEFTARG    = INT4,
     RIGHTARG   = FIXEDDECIMAL,
-    PROCEDURE  = int4fixeddecimaldiv
+    PROCEDURE  = int4fixeddecimaldiv_money
 );
 
 ALTER OPERATOR FAMILY fixeddecimal_ops USING btree ADD
@@ -1299,6 +1315,12 @@ RETURNS DOUBLE PRECISION
 AS 'babelfishpg_money', 'int2fixeddecimaldiv'
 LANGUAGE C IMMUTABLE STRICT PARALLEL SAFE;
 
+CREATE FUNCTION sys.int2fixeddecimaldiv_money(INT2, FIXEDDECIMAL)
+RETURNS sys.MONEY
+AS $$
+  SELECT sys.int2fixeddecimaldiv($1, $2)::sys.MONEY;
+$$ LANGUAGE SQL IMMUTABLE STRICT PARALLEL SAFE;
+
 CREATE OPERATOR sys.= (
     LEFTARG    = INT2,
     RIGHTARG   = FIXEDDECIMAL,
@@ -1383,7 +1405,7 @@ CREATE OPERATOR sys.* (
 CREATE OPERATOR sys./ (
     LEFTARG    = INT2,
     RIGHTARG   = FIXEDDECIMAL,
-    PROCEDURE  = int2fixeddecimaldiv
+    PROCEDURE  = int2fixeddecimaldiv_money
 );
 
 ALTER OPERATOR FAMILY fixeddecimal_ops USING btree ADD
@@ -1598,5 +1620,354 @@ CREATE CAST (FIXEDDECIMAL AS NUMERIC)
 CREATE CAST (NUMERIC AS FIXEDDECIMAL)
 	WITH FUNCTION numeric_fixeddecimal (NUMERIC) AS IMPLICIT;
 
-CREATE DOMAIN sys.MONEY as sys.FIXEDDECIMAL CHECK (VALUE >= -922337203685477.5808 AND VALUE <= 922337203685477.5807);
-CREATE DOMAIN sys.SMALLMONEY as sys.FIXEDDECIMAL CHECK (VALUE >= -214748.3648 AND VALUE <= 214748.3647);
+CREATE FUNCTION sys.fixeddecimalum(sys.SMALLMONEY)
+RETURNS sys.SMALLMONEY
+AS 'babelfishpg_money', 'fixeddecimalum'
+LANGUAGE C IMMUTABLE STRICT PARALLEL SAFE;
+
+CREATE FUNCTION sys.fixeddecimalpl(sys.SMALLMONEY, sys.SMALLMONEY)
+RETURNS sys.SMALLMONEY
+AS 'babelfishpg_money', 'fixeddecimalpl'
+LANGUAGE C IMMUTABLE STRICT PARALLEL SAFE;
+
+CREATE FUNCTION sys.fixeddecimalmi(sys.SMALLMONEY, sys.SMALLMONEY)
+RETURNS sys.SMALLMONEY
+AS 'babelfishpg_money', 'fixeddecimalmi'
+LANGUAGE C IMMUTABLE STRICT PARALLEL SAFE;
+
+CREATE FUNCTION sys.fixeddecimalmul(sys.SMALLMONEY, sys.SMALLMONEY)
+RETURNS sys.SMALLMONEY
+AS 'babelfishpg_money', 'fixeddecimalmul'
+LANGUAGE C IMMUTABLE STRICT PARALLEL SAFE;
+
+CREATE FUNCTION sys.fixeddecimaldiv(sys.SMALLMONEY, sys.SMALLMONEY)
+RETURNS sys.SMALLMONEY
+AS 'babelfishpg_money', 'fixeddecimaldiv'
+LANGUAGE C IMMUTABLE STRICT PARALLEL SAFE;
+
+CREATE OPERATOR sys.+ (
+    LEFTARG    = sys.SMALLMONEY,
+    RIGHTARG   = sys.SMALLMONEY,
+    COMMUTATOR = +,
+    PROCEDURE  = fixeddecimalpl
+);
+
+CREATE OPERATOR sys.- (
+    LEFTARG    = sys.SMALLMONEY,
+    RIGHTARG   = sys.SMALLMONEY,
+    PROCEDURE  = fixeddecimalmi
+);
+
+CREATE OPERATOR sys.- (
+    RIGHTARG   = sys.SMALLMONEY,
+    PROCEDURE  = fixeddecimalum
+);
+
+CREATE OPERATOR sys.* (
+    LEFTARG    = sys.SMALLMONEY,
+    RIGHTARG   = sys.SMALLMONEY,
+    COMMUTATOR = *,
+    PROCEDURE  = fixeddecimalmul
+);
+
+CREATE OPERATOR sys./ (
+    LEFTARG    = sys.SMALLMONEY,
+    RIGHTARG   = sys.SMALLMONEY,
+    PROCEDURE  = fixeddecimaldiv
+);
+
+CREATE FUNCTION sys.fixeddecimalint8pl(sys.SMALLMONEY, INT8)
+RETURNS sys.SMALLMONEY
+AS 'babelfishpg_money', 'fixeddecimalint8pl'
+LANGUAGE C IMMUTABLE STRICT PARALLEL SAFE;
+
+CREATE FUNCTION sys.fixeddecimalint8mi(sys.SMALLMONEY, INT8)
+RETURNS sys.SMALLMONEY
+AS 'babelfishpg_money', 'fixeddecimalint8mi'
+LANGUAGE C IMMUTABLE STRICT PARALLEL SAFE;
+
+CREATE FUNCTION sys.fixeddecimalint8mul(sys.SMALLMONEY, INT8)
+RETURNS sys.SMALLMONEY
+AS 'babelfishpg_money', 'fixeddecimalint8mul'
+LANGUAGE C IMMUTABLE STRICT PARALLEL SAFE;
+
+CREATE FUNCTION sys.fixeddecimalint8div(sys.SMALLMONEY, INT8)
+RETURNS sys.SMALLMONEY
+AS 'babelfishpg_money', 'fixeddecimalint8div'
+LANGUAGE C IMMUTABLE STRICT PARALLEL SAFE;
+
+CREATE OPERATOR sys.+ (
+    LEFTARG    = sys.SMALLMONEY,
+    RIGHTARG   = INT8,
+    COMMUTATOR = +,
+    PROCEDURE  = fixeddecimalint8pl
+);
+
+CREATE OPERATOR sys.- (
+    LEFTARG    = sys.SMALLMONEY,
+    RIGHTARG   = INT8,
+    PROCEDURE  = fixeddecimalint8mi
+);
+
+CREATE OPERATOR sys.* (
+    LEFTARG    = sys.SMALLMONEY,
+    RIGHTARG   = INT8,
+    COMMUTATOR = *,
+    PROCEDURE  = fixeddecimalint8mul
+);
+
+CREATE OPERATOR sys./ (
+    LEFTARG    = sys.SMALLMONEY,
+    RIGHTARG   = INT8,
+    PROCEDURE  = fixeddecimalint8div
+);
+
+CREATE FUNCTION sys.fixeddecimalint4pl(sys.SMALLMONEY, INT4)
+RETURNS sys.SMALLMONEY
+AS 'babelfishpg_money', 'fixeddecimalint4pl'
+LANGUAGE C IMMUTABLE STRICT PARALLEL SAFE;
+
+CREATE FUNCTION sys.fixeddecimalint4mi(sys.SMALLMONEY, INT4)
+RETURNS sys.SMALLMONEY
+AS 'babelfishpg_money', 'fixeddecimalint4mi'
+LANGUAGE C IMMUTABLE STRICT PARALLEL SAFE;
+
+CREATE FUNCTION sys.fixeddecimalint4mul(sys.SMALLMONEY, INT4)
+RETURNS sys.SMALLMONEY
+AS 'babelfishpg_money', 'fixeddecimalint4mul'
+LANGUAGE C IMMUTABLE STRICT PARALLEL SAFE;
+
+CREATE FUNCTION sys.fixeddecimalint4div(sys.SMALLMONEY, INT4)
+RETURNS sys.SMALLMONEY
+AS 'babelfishpg_money', 'fixeddecimalint4div'
+LANGUAGE C IMMUTABLE STRICT PARALLEL SAFE;
+
+CREATE OPERATOR sys.+ (
+    LEFTARG    = sys.SMALLMONEY,
+    RIGHTARG   = INT4,
+    COMMUTATOR = +,
+    PROCEDURE  = fixeddecimalint4pl
+);
+
+CREATE OPERATOR sys.- (
+    LEFTARG    = sys.SMALLMONEY,
+    RIGHTARG   = INT4,
+    PROCEDURE  = fixeddecimalint4mi
+);
+
+CREATE OPERATOR sys.* (
+    LEFTARG    = sys.SMALLMONEY,
+    RIGHTARG   = INT4,
+    COMMUTATOR = *,
+    PROCEDURE  = fixeddecimalint4mul
+);
+
+CREATE OPERATOR sys./ (
+    LEFTARG    = sys.SMALLMONEY,
+    RIGHTARG   = INT4,
+    PROCEDURE  = fixeddecimalint4div
+);
+
+CREATE FUNCTION sys.fixeddecimalint2pl(sys.SMALLMONEY, INT2)
+RETURNS sys.SMALLMONEY
+AS 'babelfishpg_money', 'fixeddecimalint2pl'
+LANGUAGE C IMMUTABLE STRICT PARALLEL SAFE;
+
+CREATE FUNCTION sys.fixeddecimalint2mi(sys.SMALLMONEY, INT2)
+RETURNS sys.SMALLMONEY
+AS 'babelfishpg_money', 'fixeddecimalint2mi'
+LANGUAGE C IMMUTABLE STRICT PARALLEL SAFE;
+
+CREATE FUNCTION sys.fixeddecimalint2mul(sys.SMALLMONEY, INT2)
+RETURNS sys.SMALLMONEY
+AS 'babelfishpg_money', 'fixeddecimalint2mul'
+LANGUAGE C IMMUTABLE STRICT PARALLEL SAFE;
+
+CREATE FUNCTION sys.fixeddecimalint2div(sys.SMALLMONEY, INT2)
+RETURNS sys.SMALLMONEY
+AS 'babelfishpg_money', 'fixeddecimalint2div'
+LANGUAGE C IMMUTABLE STRICT PARALLEL SAFE;
+
+CREATE OPERATOR sys.+ (
+    LEFTARG    = sys.SMALLMONEY,
+    RIGHTARG   = INT2,
+    COMMUTATOR = +,
+    PROCEDURE  = fixeddecimalint2pl
+);
+
+CREATE OPERATOR sys.- (
+    LEFTARG    = sys.SMALLMONEY,
+    RIGHTARG   = INT2,
+    PROCEDURE  = fixeddecimalint2mi
+);
+
+CREATE OPERATOR sys.* (
+    LEFTARG    = sys.SMALLMONEY,
+    RIGHTARG   = INT2,
+    COMMUTATOR = *,
+    PROCEDURE  = fixeddecimalint2mul
+);
+
+CREATE OPERATOR sys./ (
+    LEFTARG    = sys.SMALLMONEY,
+    RIGHTARG   = INT2,
+    PROCEDURE  = fixeddecimalint2div
+);
+
+
+CREATE FUNCTION sys.int8fixeddecimalpl(INT8, sys.SMALLMONEY)
+RETURNS sys.SMALLMONEY
+AS 'babelfishpg_money', 'int8fixeddecimalpl'
+LANGUAGE C IMMUTABLE STRICT PARALLEL SAFE;
+
+CREATE FUNCTION sys.int8fixeddecimalmi(INT8, sys.SMALLMONEY)
+RETURNS sys.SMALLMONEY
+AS 'babelfishpg_money', 'int8fixeddecimalmi'
+LANGUAGE C IMMUTABLE STRICT PARALLEL SAFE;
+
+CREATE FUNCTION sys.int8fixeddecimalmul(INT8, sys.SMALLMONEY)
+RETURNS sys.SMALLMONEY
+AS 'babelfishpg_money', 'int8fixeddecimalmul'
+LANGUAGE C IMMUTABLE STRICT PARALLEL SAFE;
+
+CREATE FUNCTION sys.int8fixeddecimaldiv(INT8, sys.SMALLMONEY)
+RETURNS DOUBLE PRECISION
+AS 'babelfishpg_money', 'int8fixeddecimaldiv'
+LANGUAGE C IMMUTABLE STRICT PARALLEL SAFE;
+
+CREATE FUNCTION sys.int8fixeddecimaldiv_smallmoney(INT8, sys.SMALLMONEY)
+RETURNS sys.SMALLMONEY
+AS $$
+  SELECT sys.int8fixeddecimaldiv($1, $2)::sys.SMALLMONEY;
+$$ LANGUAGE SQL IMMUTABLE STRICT PARALLEL SAFE;
+
+CREATE OPERATOR sys.+ (
+    LEFTARG    = INT8,
+    RIGHTARG   = sys.SMALLMONEY,
+    COMMUTATOR = +,
+    PROCEDURE  = int8fixeddecimalpl
+);
+
+CREATE OPERATOR sys.- (
+    LEFTARG    = INT8,
+    RIGHTARG   = sys.SMALLMONEY,
+    PROCEDURE  = int8fixeddecimalmi
+);
+
+CREATE OPERATOR sys.* (
+    LEFTARG    = INT8,
+    RIGHTARG   = sys.SMALLMONEY,
+    COMMUTATOR = *,
+    PROCEDURE  = int8fixeddecimalmul
+);
+
+CREATE OPERATOR sys./ (
+    LEFTARG    = INT8,
+    RIGHTARG   = sys.SMALLMONEY,
+    PROCEDURE  = int8fixeddecimaldiv_smallmoney
+);
+
+CREATE FUNCTION sys.int4fixeddecimalpl(INT4, sys.SMALLMONEY)
+RETURNS sys.SMALLMONEY
+AS 'babelfishpg_money', 'int4fixeddecimalpl'
+LANGUAGE C IMMUTABLE STRICT PARALLEL SAFE;
+
+CREATE FUNCTION sys.int4fixeddecimalmi(INT4, sys.SMALLMONEY)
+RETURNS sys.SMALLMONEY
+AS 'babelfishpg_money', 'int4fixeddecimalmi'
+LANGUAGE C IMMUTABLE STRICT PARALLEL SAFE;
+
+CREATE FUNCTION sys.int4fixeddecimalmul(INT4, sys.SMALLMONEY)
+RETURNS sys.SMALLMONEY
+AS 'babelfishpg_money', 'int4fixeddecimalmul'
+LANGUAGE C IMMUTABLE STRICT PARALLEL SAFE;
+
+CREATE FUNCTION sys.int4fixeddecimaldiv(INT4, sys.SMALLMONEY)
+RETURNS DOUBLE PRECISION
+AS 'babelfishpg_money', 'int4fixeddecimaldiv'
+LANGUAGE C IMMUTABLE STRICT PARALLEL SAFE;
+
+CREATE FUNCTION sys.int4fixeddecimaldiv_smallmoney(INT4, sys.SMALLMONEY)
+RETURNS sys.SMALLMONEY
+AS $$
+  SELECT sys.int4fixeddecimaldiv($1, $2)::sys.SMALLMONEY;
+$$ LANGUAGE SQL IMMUTABLE STRICT PARALLEL SAFE;
+
+CREATE OPERATOR sys.+ (
+    LEFTARG    = INT4,
+    RIGHTARG   = sys.SMALLMONEY,
+    COMMUTATOR = +,
+    PROCEDURE  = int4fixeddecimalpl
+);
+
+CREATE OPERATOR sys.- (
+    LEFTARG    = INT4,
+    RIGHTARG   = sys.SMALLMONEY,
+    PROCEDURE  = int4fixeddecimalmi
+);
+
+CREATE OPERATOR sys.* (
+    LEFTARG    = INT4,
+    RIGHTARG   = sys.SMALLMONEY,
+    COMMUTATOR = *,
+    PROCEDURE  = int4fixeddecimalmul
+);
+
+CREATE OPERATOR sys./ (
+    LEFTARG    = INT4,
+    RIGHTARG   = sys.SMALLMONEY,
+    PROCEDURE  = int4fixeddecimaldiv_smallmoney
+);
+
+CREATE FUNCTION sys.int2fixeddecimalpl(INT2, sys.SMALLMONEY)
+RETURNS sys.SMALLMONEY
+AS 'babelfishpg_money', 'int2fixeddecimalpl'
+LANGUAGE C IMMUTABLE STRICT PARALLEL SAFE;
+
+CREATE FUNCTION sys.int2fixeddecimalmi(INT2, sys.SMALLMONEY)
+RETURNS sys.SMALLMONEY
+AS 'babelfishpg_money', 'int2fixeddecimalmi'
+LANGUAGE C IMMUTABLE STRICT PARALLEL SAFE;
+
+CREATE FUNCTION sys.int2fixeddecimalmul(INT2, sys.SMALLMONEY)
+RETURNS sys.SMALLMONEY
+AS 'babelfishpg_money', 'int2fixeddecimalmul'
+LANGUAGE C IMMUTABLE STRICT PARALLEL SAFE;
+
+CREATE FUNCTION sys.int2fixeddecimaldiv(INT2, sys.SMALLMONEY)
+RETURNS DOUBLE PRECISION
+AS 'babelfishpg_money', 'int2fixeddecimaldiv'
+LANGUAGE C IMMUTABLE STRICT PARALLEL SAFE;
+
+CREATE FUNCTION sys.int2fixeddecimaldiv_smallmoney(INT2, sys.SMALLMONEY)
+RETURNS sys.SMALLMONEY
+AS $$
+  SELECT sys.int2fixeddecimaldiv($1, $2)::sys.SMALLMONEY;
+$$ LANGUAGE SQL IMMUTABLE STRICT PARALLEL SAFE;
+
+CREATE OPERATOR sys.+ (
+    LEFTARG    = INT2,
+    RIGHTARG   = sys.SMALLMONEY,
+    COMMUTATOR = +,
+    PROCEDURE  = int2fixeddecimalpl
+);
+
+CREATE OPERATOR sys.- (
+    LEFTARG    = INT2,
+    RIGHTARG   = sys.SMALLMONEY,
+    PROCEDURE  = int2fixeddecimalmi
+);
+
+CREATE OPERATOR sys.* (
+    LEFTARG    = INT2,
+    RIGHTARG   = sys.SMALLMONEY,
+    COMMUTATOR = *,
+    PROCEDURE  = int2fixeddecimalmul
+);
+
+CREATE OPERATOR sys./ (
+    LEFTARG    = INT2,
+    RIGHTARG   = sys.SMALLMONEY,
+    PROCEDURE  = int2fixeddecimaldiv_smallmoney
+);
+

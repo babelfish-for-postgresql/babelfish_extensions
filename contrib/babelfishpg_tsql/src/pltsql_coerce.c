@@ -302,10 +302,12 @@ tsql_precedence_info_t tsql_precedence_infos[] =
     {27,"pg_catalog","char"},
     {28,"sys","bpchar"},
     {29,"pg_catalog","bpchar"},
-    {30,"sys","bbf_varbinary"},
-    {31,"sys","varbinary"},
-    {32,"sys","bbf_binary"},
-    {33,"sys","binary"}
+    {30,"pg_catalog","name"}, /* pg_catalog.name is depriotized than any other string datatype not to be looked up unless requested explicitly */
+    {31,"sys","bbf_varbinary"},
+    {32,"sys","varbinary"},
+    {33,"sys","bbf_binary"},
+    {34,"sys","binary"},
+    {35,"pg_catalog","bytea"} /* pg_catalog.bytea is depriotized than any other binary datatype not to be looked up unless requested explicitly */
 };
 
 #define TOTAL_TSQL_PRECEDENCE_COUNT (sizeof(tsql_precedence_infos)/sizeof(tsql_precedence_infos[0]))
@@ -578,20 +580,51 @@ static bool tsql_has_higher_precedence(Oid typeId1, Oid typeId2)
 	return type1_precedence < type2_precedence;
 }
 
-static bool tsql_has_func_args_higher_precedence(int n, Oid* inputtypes, Oid* argtypes1, Oid* argtypes2)
+static bool is_vectorized_binary_operator(FuncCandidateList candidate)
+{
+	Oid argoid = InvalidOid;
+	HeapTuple tup = NULL;
+
+	Assert(candidate);
+
+	if (candidate->nargs != 2)
+		return false;
+	if (candidate->nvargs > 0)
+		return false;
+
+	argoid = candidate->args[0];
+	for (int i=1; i<candidate->nargs; ++i)
+		if (argoid != candidate->args[i])
+			return false;
+
+	/* look-up syscache to check candidate is a valid operator */
+	tup = SearchSysCache1(OPEROID, ObjectIdGetDatum(candidate->oid));
+	if (!HeapTupleIsValid(tup))
+		return false;
+
+	ReleaseSysCache(tup);
+	return true;
+}
+
+static bool tsql_has_func_args_higher_precedence(int n, Oid *inputtypes, FuncCandidateList candidate1, FuncCandidateList candidate2)
 {
 	int i;
+	Oid *argtypes1 = candidate1->args;
+	Oid *argtypes2 = candidate2->args;
 
 	/*
-	 * There is no public  documentatioan how T-SQL chooses the best candidate.
+	 * There is no public documentation how T-SQL chooses the best candidate.
 	 * Let's use a simple heuristic based on type precedence to resolve ambiguity.
 	 *
-	 * Please note that other more imporantant criteria such as (# of exact matching types) should be already
+	 * Please note that other more important criteria such as (# of exact matching types) should be already
 	 * handled by PG backend. So we don't need to consider it here.
 	 *
-	 * Please note that there still can be an ambigous case.
+	 * Please note that there still can be an ambiguous case.
 	 * i.e. input is (int,int) but candidate 1 is (int,bigint) and candidate 2 is (bigint,int)
 	 */
+
+	if (is_vectorized_binary_operator(candidate1) && !is_vectorized_binary_operator(candidate2))
+		return true;
 
 	for (i = 0; i < n; ++i)
 	{
@@ -607,11 +640,85 @@ static bool tsql_has_func_args_higher_precedence(int n, Oid* inputtypes, Oid* ar
 }
 
 static FuncCandidateList
+deep_copy_func_candidate(FuncCandidateList in)
+{
+	/* deep copy single func-candidate except pointer to a next func-candidate */
+	FuncCandidateList out;
+	out = (FuncCandidateList) palloc(sizeof(struct _FuncCandidateList) + in->nargs * sizeof(Oid));
+	memcpy(out, in, sizeof(struct _FuncCandidateList) + in->nargs * sizeof(Oid));
+	out->next = NULL;
+	return out;
+}
+
+static FuncCandidateList
+run_tsql_best_match_heuristics(int nargs, Oid *input_typeids, FuncCandidateList candidates)
+{
+	FuncCandidateList new_candidates = NULL;
+	Oid input_base_typeids[FUNC_MAX_ARGS];
+	int i;
+	int nmatch;
+	int nbestMatch;
+	FuncCandidateList current_candidate;
+	FuncCandidateList last_candidate;
+	Oid *current_typeids;
+
+	for (i = 0; i < nargs; i++)
+	{
+		if (input_typeids[i] != UNKNOWNOID)
+			input_base_typeids[i] = getBaseType(input_typeids[i]);
+		else
+		{
+			/* no need to call getBaseType on UNKNOWNOID */
+			input_base_typeids[i] = UNKNOWNOID;
+		}
+	}
+
+	/*
+	 * Run through all candidates and keep those with the most matches on
+	 * exact types. Keep all candidates if none match.
+	 */
+	nbestMatch = 0;
+	last_candidate = NULL;
+	for (current_candidate = candidates;
+		 current_candidate != NULL;
+		 current_candidate = current_candidate->next)
+	{
+		current_typeids = current_candidate->args;
+		nmatch = 0;
+		for (i = 0; i < nargs; i++)
+		{
+			if (input_base_typeids[i] != UNKNOWNOID &&
+				(current_typeids[i] == input_base_typeids[i] ||
+				 current_typeids[i] == input_typeids[i])) /* this is the difference from PG */
+				nmatch++;
+		}
+
+		/* take this one as the best choice so far? */
+		if ((nmatch > nbestMatch) || (last_candidate == NULL))
+		{
+			nbestMatch = nmatch;
+			new_candidates = deep_copy_func_candidate(current_candidate);
+			last_candidate = new_candidates;
+		}
+		/* no worse than the last choice, so keep this one too? */
+		else if (nmatch == nbestMatch)
+		{
+			last_candidate->next = deep_copy_func_candidate(current_candidate);
+			last_candidate = last_candidate->next;
+		}
+		/* otherwise, don't bother keeping this one... */
+	}
+
+	return new_candidates;
+}
+
+static FuncCandidateList
 tsql_func_select_candidate(int nargs,
 					  Oid *input_typeids,
 					  FuncCandidateList candidates,
 					  bool unknowns_resolved)
 {
+	FuncCandidateList new_candidates;
 	FuncCandidateList current_candidate;
 	FuncCandidateList another_candidate;
 	int i;
@@ -629,7 +736,15 @@ tsql_func_select_candidate(int nargs,
 		}
 		current_candidate = func_select_candidate(nargs, new_input_typeids, candidates);
 		if (current_candidate)
-			return current_candidate;
+		{
+			int n_poly_args = 0;
+			for (i = 0; i< nargs; i++)
+				if (input_typeids[i] == UNKNOWNOID && IsPolymorphicType(current_candidate->args[i]))
+					++n_poly_args;
+
+			if (n_poly_args == 0)
+				return current_candidate;
+		}
 
 		/*
 		* TODO: PG doens't blindly use TEXT datatype for UNKNOWNOID. It is based on its category and preffered datatype.
@@ -644,17 +759,19 @@ tsql_func_select_candidate(int nargs,
 		return func_select_candidate(nargs, new_input_typeids, candidates);
 	}
 
-	for (current_candidate = candidates;
+	new_candidates = run_tsql_best_match_heuristics(nargs, input_typeids, candidates);
+
+	for (current_candidate = new_candidates;
 		 current_candidate != NULL;
 		 current_candidate = current_candidate->next)
 	{
 		bool has_highest_precedence = true;
 
-		for (another_candidate = candidates;
+		for (another_candidate = new_candidates;
 			 another_candidate != NULL;
 			 another_candidate = another_candidate->next)
 		{
-			if (!tsql_has_func_args_higher_precedence(nargs, input_typeids, current_candidate->args, another_candidate->args))
+			if (!tsql_has_func_args_higher_precedence(nargs, input_typeids, current_candidate, another_candidate))
 			{
 				has_highest_precedence = false;
 				break;

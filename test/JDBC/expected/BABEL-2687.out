@@ -1,0 +1,867 @@
+use master;
+GO
+
+-- real+bigint -> real
+select cast(pg_typeof(CAST(324.463 AS real) + CAST(5000 AS bigint)) as varchar(100)) rettype;
+GO
+~~START~~
+varchar
+real
+~~END~~
+
+-- real*bigint -> real
+select cast(pg_typeof(CAST(324.463 AS real) * CAST(5000 AS bigint)) as varchar(100)) rettype;
+GO
+~~START~~
+varchar
+real
+~~END~~
+
+-- smallmoney+bigint -> smallmoney
+select cast(pg_typeof(CAST(42.1256 AS smallmoney) + CAST(5000 AS bigint)) as varchar(100)) rettype;
+GO
+~~START~~
+varchar
+smallmoney
+~~END~~
+
+-- smallmoney/bigint -> smallmoney
+select cast(pg_typeof(CAST(42.1256 AS smallmoney) / CAST(5000 AS bigint)) as varchar(100)) rettype;
+GO
+~~START~~
+varchar
+smallmoney
+~~END~~
+
+-- real*decimal(12,4) -> real
+select cast(pg_typeof(CAST(324.463 AS real) * CAST(54535.5656 AS decimal(12,4))) as varchar(100)) rettype;
+GO
+~~START~~
+varchar
+real
+~~END~~
+
+-- smallmoney-int -> smallmoney
+select cast(pg_typeof(CAST(42.1256 AS smallmoney) - CAST(1000 AS int)) as varchar(100)) rettype;
+GO
+~~START~~
+varchar
+smallmoney
+~~END~~
+
+-- real/decimal(12,4) -> real
+select cast(pg_typeof(CAST(324.463 AS real) / CAST(54535.5656 AS decimal(12,4))) as varchar(100)) rettype;
+GO
+~~START~~
+varchar
+real
+~~END~~
+
+-- real-decimal(12,4) -> real
+select cast(pg_typeof(CAST(324.463 AS real) - CAST(54535.5656 AS decimal(12,4))) as varchar(100)) rettype;
+GO
+~~START~~
+varchar
+real
+~~END~~
+
+-- real/int -> real
+select cast(pg_typeof(CAST(324.463 AS real) / CAST(1000 AS int)) as varchar(100)) rettype;
+GO
+~~START~~
+varchar
+real
+~~END~~
+
+-- real*int -> real
+select cast(pg_typeof(CAST(324.463 AS real) * CAST(1000 AS int)) as varchar(100)) rettype;
+GO
+~~START~~
+varchar
+real
+~~END~~
+
+-- real+int -> real
+select cast(pg_typeof(CAST(324.463 AS real) + CAST(1000 AS int)) as varchar(100)) rettype;
+GO
+~~START~~
+varchar
+real
+~~END~~
+
+-- smallmoney*int -> smallmoney
+select cast(pg_typeof(CAST(42.1256 AS smallmoney) * CAST(1000 AS int)) as varchar(100)) rettype;
+GO
+~~START~~
+varchar
+smallmoney
+~~END~~
+
+-- smallmoney+int -> smallmoney
+select cast(pg_typeof(CAST(42.1256 AS smallmoney) + CAST(1000 AS int)) as varchar(100)) rettype;
+GO
+~~START~~
+varchar
+smallmoney
+~~END~~
+
+-- smallmoney+int -> smallmoney
+select cast(pg_typeof(CAST(42.1256 AS smallmoney) / CAST(1000 AS int)) as varchar(100)) rettype;
+GO
+~~START~~
+varchar
+smallmoney
+~~END~~
+
+-- smallint/money -> money
+select cast(pg_typeof(CAST(100 AS smallint) / CAST(420.2313 AS money)) as varchar(100)) rettype;
+GO
+~~START~~
+varchar
+money
+~~END~~
+
+-- int/money -> money
+select cast(pg_typeof(CAST(1000 AS int) / CAST(420.2313 AS money)) as varchar(100)) rettype;
+GO
+~~START~~
+varchar
+money
+~~END~~
+
+-- real+money -> real
+select cast(pg_typeof(CAST(324.463 AS real) + CAST(420.2313 AS money)) as varchar(100)) rettype;
+GO
+~~START~~
+varchar
+real
+~~END~~
+
+-- real-money -> real
+select cast(pg_typeof(CAST(324.463 AS real) - CAST(420.2313 AS money)) as varchar(100)) rettype;
+GO
+~~START~~
+varchar
+real
+~~END~~
+
+-- real/money -> real
+select cast(pg_typeof(CAST(324.463 AS real) / CAST(420.2313 AS money)) as varchar(100)) rettype;
+GO
+~~START~~
+varchar
+real
+~~END~~
+
+-- real/numeric(12,4) -> real
+select cast(pg_typeof(CAST(324.463 AS real) / CAST(54535.5656 AS numeric(12,4))) as varchar(100)) rettype;
+GO
+~~START~~
+varchar
+real
+~~END~~
+
+-- real-numeric(12,4) -> real
+select cast(pg_typeof(CAST(324.463 AS real) - CAST(54535.5656 AS numeric(12,4))) as varchar(100)) rettype;
+GO
+~~START~~
+varchar
+real
+~~END~~
+
+-- real*numeric(12,4) --> real
+select cast(pg_typeof(CAST(324.463 AS real) * CAST(54535.5656 AS numeric(12,4))) as varchar(100)) rettype;
+GO
+~~START~~
+varchar
+real
+~~END~~
+
+-- smallint+real -> real
+select cast(pg_typeof(CAST(100 AS smallint) + CAST(324.463 AS real)) as varchar(100)) rettype;
+GO
+~~START~~
+varchar
+real
+~~END~~
+
+-- decimal(12,4)-real -> real
+select cast(pg_typeof(CAST(54535.5656 AS decimal(12,4)) - CAST(324.463 AS real)) as varchar(100)) rettype;
+GO
+~~START~~
+varchar
+real
+~~END~~
+
+-- smallmoney-real -> real
+select cast(pg_typeof(CAST(42.1256 AS smallmoney) - CAST(324.463 AS real)) as varchar(100)) rettype;
+GO
+~~START~~
+varchar
+real
+~~END~~
+
+-- numeric(12,4)-real -> real
+select cast(pg_typeof(CAST(54535.5656 AS numeric(12,4)) - CAST(324.463 AS real)) as varchar(100)) rettype;
+GO
+~~START~~
+varchar
+real
+~~END~~
+
+-- int+real -> real
+select cast(pg_typeof(CAST(1000 AS int) + CAST(324.463 AS real)) as varchar(100)) rettype;
+GO
+~~START~~
+varchar
+real
+~~END~~
+
+-- bigint-real -> real
+select cast(pg_typeof(CAST(5000 AS bigint) - CAST(324.463 AS real)) as varchar(100)) rettype;
+GO
+~~START~~
+varchar
+real
+~~END~~
+
+-- tinyint+real -> real
+select cast(pg_typeof(CAST(10 AS tinyint) + CAST(324.463 AS real)) as varchar(100)) rettype;
+GO
+~~START~~
+varchar
+real
+~~END~~
+
+-- tinyint-real -> real
+select cast(pg_typeof(CAST(10 AS tinyint) - CAST(324.463 AS real)) as varchar(100)) rettype;
+GO
+~~START~~
+varchar
+real
+~~END~~
+
+-- money+real -> real
+select cast(pg_typeof(CAST(420.2313 AS money) + CAST(324.463 AS real)) as varchar(100)) rettype;
+GO
+~~START~~
+varchar
+real
+~~END~~
+
+-- money*real -> real
+select cast(pg_typeof(CAST(420.2313 AS money) * CAST(324.463 AS real)) as varchar(100)) rettype;
+GO
+~~START~~
+varchar
+real
+~~END~~
+
+-- decimal(12,4)+real -> real
+select cast(pg_typeof(CAST(54535.5656 AS decimal(12,4)) + CAST(324.463 AS real)) as varchar(100)) rettype;
+GO
+~~START~~
+varchar
+real
+~~END~~
+
+-- decimal(12,4)*real -> real
+select cast(pg_typeof(CAST(54535.5656 AS decimal(12,4)) * CAST(324.463 AS real)) as varchar(100)) rettype;
+GO
+~~START~~
+varchar
+real
+~~END~~
+
+-- smallmoney/real -> real
+select cast(pg_typeof(CAST(42.1256 AS smallmoney) / CAST(324.463 AS real)) as varchar(100)) rettype;
+GO
+~~START~~
+varchar
+real
+~~END~~
+
+-- smallmoney*real -> real
+select cast(pg_typeof(CAST(42.1256 AS smallmoney) * CAST(324.463 AS real)) as varchar(100)) rettype;
+GO
+~~START~~
+varchar
+real
+~~END~~
+
+-- bigint/real -> real
+select cast(pg_typeof(CAST(5000 AS bigint) / CAST(324.463 AS real)) as varchar(100)) rettype;
+GO
+~~START~~
+varchar
+real
+~~END~~
+
+-- numeric(12,4)*real -> real
+select cast(pg_typeof(CAST(54535.5656 AS numeric(12,4)) * CAST(324.463 AS real)) as varchar(100)) rettype;
+GO
+~~START~~
+varchar
+real
+~~END~~
+
+-- numeric(12,4)/real -> real
+select cast(pg_typeof(CAST(54535.5656 AS numeric(12,4)) / CAST(324.463 AS real)) as varchar(100)) rettype;
+GO
+~~START~~
+varchar
+real
+~~END~~
+
+-- int/real -> real
+select cast(pg_typeof(CAST(1000 AS int) / CAST(324.463 AS real)) as varchar(100)) rettype;
+GO
+~~START~~
+varchar
+real
+~~END~~
+
+-- smallmoney+real -> real
+select cast(pg_typeof(CAST(42.1256 AS smallmoney) + CAST(324.463 AS real)) as varchar(100)) rettype;
+GO
+~~START~~
+varchar
+real
+~~END~~
+
+-- bigint*real -> real
+select cast(pg_typeof(CAST(5000 AS bigint) * CAST(324.463 AS real)) as varchar(100)) rettype;
+GO
+~~START~~
+varchar
+real
+~~END~~
+
+-- tinyint/real -> real
+select cast(pg_typeof(CAST(10 AS tinyint) / CAST(324.463 AS real)) as varchar(100)) rettype;
+GO
+~~START~~
+varchar
+real
+~~END~~
+
+-- smallint*real -> real
+select cast(pg_typeof(CAST(100 AS smallint) * CAST(324.463 AS real)) as varchar(100)) rettype;
+GO
+~~START~~
+varchar
+real
+~~END~~
+
+-- real/smallint -> real
+select cast(pg_typeof(CAST(324.463 AS real) / CAST(100 AS smallint)) as varchar(100)) rettype;
+GO
+~~START~~
+varchar
+real
+~~END~~
+
+-- real*smallint -> real
+select cast(pg_typeof(CAST(324.463 AS real) * CAST(100 AS smallint)) as varchar(100)) rettype;
+GO
+~~START~~
+varchar
+real
+~~END~~
+
+-- real+smallint -> real
+select cast(pg_typeof(CAST(324.463 AS real) + CAST(100 AS smallint)) as varchar(100)) rettype;
+GO
+~~START~~
+varchar
+real
+~~END~~
+
+-- smallmoney+smallint -> smallmoney
+select cast(pg_typeof(CAST(42.1256 AS smallmoney) + CAST(100 AS smallint)) as varchar(100)) rettype;
+GO
+~~START~~
+varchar
+smallmoney
+~~END~~
+
+-- real-smallint -> real
+select cast(pg_typeof(CAST(324.463 AS real) - CAST(100 AS smallint)) as varchar(100)) rettype;
+GO
+~~START~~
+varchar
+real
+~~END~~
+
+-- smallmoney-smallint -> smallmoney
+select cast(pg_typeof(CAST(42.1256 AS smallmoney) - CAST(100 AS smallint)) as varchar(100)) rettype;
+GO
+~~START~~
+varchar
+smallmoney
+~~END~~
+
+-- tinyint*smallmoney -> smallmoney
+select cast(pg_typeof(CAST(10 AS tinyint) * CAST(42.1256 AS smallmoney)) as varchar(100)) rettype;
+GO
+~~START~~
+varchar
+smallmoney
+~~END~~
+
+-- bigint*smallmoney -> smallmoney
+select cast(pg_typeof(CAST(5000 AS bigint) * CAST(42.1256 AS smallmoney)) as varchar(100)) rettype;
+GO
+~~START~~
+varchar
+smallmoney
+~~END~~
+
+-- bigint-smallmoney -> smallmoney
+select cast(pg_typeof(CAST(5000 AS bigint) - CAST(42.1256 AS smallmoney)) as varchar(100)) rettype;
+GO
+~~START~~
+varchar
+smallmoney
+~~END~~
+
+-- bigint+smallmoney -> smallmoney
+select cast(pg_typeof(CAST(5000 AS bigint) + CAST(42.1256 AS smallmoney)) as varchar(100)) rettype;
+GO
+~~START~~
+varchar
+smallmoney
+~~END~~
+
+-- real+smallmoney -> real
+select cast(pg_typeof(CAST(324.463 AS real) + CAST(42.1256 AS smallmoney)) as varchar(100)) rettype;
+GO
+~~START~~
+varchar
+real
+~~END~~
+
+-- real*smallmoney -> real
+select cast(pg_typeof(CAST(324.463 AS real) * CAST(42.1256 AS smallmoney)) as varchar(100)) rettype;
+GO
+~~START~~
+varchar
+real
+~~END~~
+
+-- real/smallmoney -> real
+select cast(pg_typeof(CAST(324.463 AS real) / CAST(42.1256 AS smallmoney)) as varchar(100)) rettype;
+GO
+~~START~~
+varchar
+real
+~~END~~
+
+-- int/smallmoney -> smallmoney
+select cast(pg_typeof(CAST(1000 AS int) / CAST(42.1256 AS smallmoney)) as varchar(100)) rettype;
+GO
+~~START~~
+varchar
+smallmoney
+~~END~~
+
+-- int-smallmoney -> smallmoney
+select cast(pg_typeof(CAST(1000 AS int) - CAST(42.1256 AS smallmoney)) as varchar(100)) rettype;
+GO
+~~START~~
+varchar
+smallmoney
+~~END~~
+
+-- int+smallmoney -> smallmoney
+select cast(pg_typeof(CAST(1000 AS int) + CAST(42.1256 AS smallmoney)) as varchar(100)) rettype;
+GO
+~~START~~
+varchar
+smallmoney
+~~END~~
+
+-- tinyint+smallmoney -> smallmoney
+select cast(pg_typeof(CAST(10 AS tinyint) + CAST(42.1256 AS smallmoney)) as varchar(100)) rettype;
+GO
+~~START~~
+varchar
+smallmoney
+~~END~~
+
+-- smallint/smallmoney -> smallmoney
+select cast(pg_typeof(CAST(100 AS smallint) / CAST(42.1256 AS smallmoney)) as varchar(100)) rettype;
+GO
+~~START~~
+varchar
+smallmoney
+~~END~~
+
+-- smallint*smallmoney -> smallmoney
+select cast(pg_typeof(CAST(100 AS smallint) * CAST(42.1256 AS smallmoney)) as varchar(100)) rettype;
+GO
+~~START~~
+varchar
+smallmoney
+~~END~~
+
+-- smallint-smallmoney -> smallmoney
+select cast(pg_typeof(CAST(100 AS smallint) - CAST(42.1256 AS smallmoney)) as varchar(100)) rettype;
+GO
+~~START~~
+varchar
+smallmoney
+~~END~~
+
+-- tinyint/smallmoney -> smallmoney
+select cast(pg_typeof(CAST(10 AS tinyint) / CAST(42.1256 AS smallmoney)) as varchar(100)) rettype;
+GO
+~~START~~
+varchar
+smallmoney
+~~END~~
+
+-- smallmoney+smallmoney -> smallmoney
+select cast(pg_typeof(CAST(42.1256 AS smallmoney) + CAST(42.1256 AS smallmoney)) as varchar(100)) rettype;
+GO
+~~START~~
+varchar
+smallmoney
+~~END~~
+
+-- smallmoney-smallmoney -> smallmoney
+select cast(pg_typeof(CAST(42.1256 AS smallmoney) - CAST(42.1256 AS smallmoney)) as varchar(100)) rettype;
+GO
+~~START~~
+varchar
+smallmoney
+~~END~~
+
+-- smallmoney*smallmoney -> smallmoney
+select cast(pg_typeof(CAST(42.1256 AS smallmoney) * CAST(42.1256 AS smallmoney)) as varchar(100)) rettype;
+GO
+~~START~~
+varchar
+smallmoney
+~~END~~
+
+-- smallmoney/smallmoney -> smallmoney
+select cast(pg_typeof(CAST(42.1256 AS smallmoney) / CAST(42.1256 AS smallmoney)) as varchar(100)) rettype;
+GO
+~~START~~
+varchar
+smallmoney
+~~END~~
+
+-- real-bigint -> real
+select cast(pg_typeof(CAST(324.463 AS real) - CAST(5000 AS bigint)) as varchar(100)) rettype;
+GO
+~~START~~
+varchar
+real
+~~END~~
+
+-- real/bigint -> real
+select cast(pg_typeof(CAST(324.463 AS real) / CAST(5000 AS bigint)) as varchar(100)) rettype;
+GO
+~~START~~
+varchar
+real
+~~END~~
+
+-- smallmoney-bigint -> smallmoney
+select cast(pg_typeof(CAST(42.1256 AS smallmoney) - CAST(5000 AS bigint)) as varchar(100)) rettype;
+GO
+~~START~~
+varchar
+smallmoney
+~~END~~
+
+-- smallmoney*bigint -> smallmoney
+select cast(pg_typeof(CAST(42.1256 AS smallmoney) * CAST(5000 AS bigint)) as varchar(100)) rettype;
+GO
+~~START~~
+varchar
+smallmoney
+~~END~~
+
+-- real*tinyint -> real
+select cast(pg_typeof(CAST(324.463 AS real) * CAST(10 AS tinyint)) as varchar(100)) rettype;
+GO
+~~START~~
+varchar
+real
+~~END~~
+
+-- real-tinyint -> real
+select cast(pg_typeof(CAST(324.463 AS real) - CAST(10 AS tinyint)) as varchar(100)) rettype;
+GO
+~~START~~
+varchar
+real
+~~END~~
+
+-- smallmoney*tinyint -> smallmoney
+select cast(pg_typeof(CAST(42.1256 AS smallmoney) * CAST(10 AS tinyint)) as varchar(100)) rettype;
+GO
+~~START~~
+varchar
+smallmoney
+~~END~~
+
+-- smallmoney-tinyint -> smallmoney
+select cast(pg_typeof(CAST(42.1256 AS smallmoney) - CAST(10 AS tinyint)) as varchar(100)) rettype;
+GO
+~~START~~
+varchar
+smallmoney
+~~END~~
+
+-- smallmoney+tinyint -> smallmoney
+select cast(pg_typeof(CAST(42.1256 AS smallmoney) + CAST(10 AS tinyint)) as varchar(100)) rettype;
+GO
+~~START~~
+varchar
+smallmoney
+~~END~~
+
+-- real+tinyint -> real
+select cast(pg_typeof(CAST(324.463 AS real) + CAST(10 AS tinyint)) as varchar(100)) rettype;
+GO
+~~START~~
+varchar
+real
+~~END~~
+
+-- tinyint+tinyint -> tinyint
+select cast(pg_typeof(CAST(10 AS tinyint) + CAST(10 AS tinyint)) as varchar(100)) rettype;
+GO
+~~START~~
+varchar
+tinyint
+~~END~~
+
+-- tinyint-tinyint -> tinyint
+select cast(pg_typeof(CAST(10 AS tinyint) - CAST(10 AS tinyint)) as varchar(100)) rettype;
+GO
+~~START~~
+varchar
+tinyint
+~~END~~
+
+-- tinyint*tinyint -> tinyint
+select cast(pg_typeof(CAST(10 AS tinyint) * CAST(10 AS tinyint)) as varchar(100)) rettype;
+GO
+~~START~~
+varchar
+tinyint
+~~END~~
+
+-- tinyint/tinyint -> tinyint
+select cast(pg_typeof(CAST(10 AS tinyint) / CAST(10 AS tinyint)) as varchar(100)) rettype;
+GO
+~~START~~
+varchar
+tinyint
+~~END~~
+
+-- real+decimal(12,4) -> real
+select cast(pg_typeof(CAST(324.463 AS real) + CAST(54535.5656 AS decimal(12,4))) as varchar(100)) rettype;
+GO
+~~START~~
+varchar
+real
+~~END~~
+
+-- real-int -> real
+select cast(pg_typeof(CAST(324.463 AS real) - CAST(1000 AS int)) as varchar(100)) rettype;
+GO
+~~START~~
+varchar
+real
+~~END~~
+
+-- tinyint/money -> money
+select cast(pg_typeof(CAST(10 AS tinyint) / CAST(420.2313 AS money)) as varchar(100)) rettype;
+GO
+~~START~~
+varchar
+money
+~~END~~
+
+-- bigint/money -> money
+select cast(pg_typeof(CAST(5000 AS bigint) / CAST(420.2313 AS money)) as varchar(100)) rettype;
+GO
+~~START~~
+varchar
+money
+~~END~~
+
+-- real*money -> real
+select cast(pg_typeof(CAST(324.463 AS real) * CAST(420.2313 AS money)) as varchar(100)) rettype;
+GO
+~~START~~
+varchar
+real
+~~END~~
+
+-- real+numeric(12,4) -> real
+select cast(pg_typeof(CAST(324.463 AS real) + CAST(54535.5656 AS numeric(12,4))) as varchar(100)) rettype;
+GO
+~~START~~
+varchar
+real
+~~END~~
+
+-- money-real -> real
+select cast(pg_typeof(CAST(420.2313 AS money) - CAST(324.463 AS real)) as varchar(100)) rettype;
+GO
+~~START~~
+varchar
+real
+~~END~~
+
+-- money/real -> real
+select cast(pg_typeof(CAST(420.2313 AS money) / CAST(324.463 AS real)) as varchar(100)) rettype;
+GO
+~~START~~
+varchar
+real
+~~END~~
+
+-- decimal(12,4)/real -> real
+select cast(pg_typeof(CAST(54535.5656 AS decimal(12,4)) / CAST(324.463 AS real)) as varchar(100)) rettype;
+GO
+~~START~~
+varchar
+real
+~~END~~
+
+-- numeric(12,4)+real -> real
+select cast(pg_typeof(CAST(54535.5656 AS numeric(12,4)) + CAST(324.463 AS real)) as varchar(100)) rettype;
+GO
+~~START~~
+varchar
+real
+~~END~~
+
+-- int*real -> real
+select cast(pg_typeof(CAST(1000 AS int) * CAST(324.463 AS real)) as varchar(100)) rettype;
+GO
+~~START~~
+varchar
+real
+~~END~~
+
+-- int-real -> real
+select cast(pg_typeof(CAST(1000 AS int) - CAST(324.463 AS real)) as varchar(100)) rettype;
+GO
+~~START~~
+varchar
+real
+~~END~~
+
+-- bigint+real -> real
+select cast(pg_typeof(CAST(5000 AS bigint) + CAST(324.463 AS real)) as varchar(100)) rettype;
+GO
+~~START~~
+varchar
+real
+~~END~~
+
+-- tinyint*real -> real
+select cast(pg_typeof(CAST(10 AS tinyint) * CAST(324.463 AS real)) as varchar(100)) rettype;
+GO
+~~START~~
+varchar
+real
+~~END~~
+
+-- smallint/real -> real
+select cast(pg_typeof(CAST(100 AS smallint) / CAST(324.463 AS real)) as varchar(100)) rettype;
+GO
+~~START~~
+varchar
+real
+~~END~~
+
+-- smallint-real -> real
+select cast(pg_typeof(CAST(100 AS smallint) - CAST(324.463 AS real)) as varchar(100)) rettype;
+GO
+~~START~~
+varchar
+real
+~~END~~
+
+-- smallmoney/smallint -> smallmoney
+select cast(pg_typeof(CAST(42.1256 AS smallmoney) / CAST(100 AS smallint)) as varchar(100)) rettype;
+GO
+~~START~~
+varchar
+smallmoney
+~~END~~
+
+-- smallmoney*smallint -> smallmoney
+select cast(pg_typeof(CAST(42.1256 AS smallmoney) * CAST(100 AS smallint)) as varchar(100)) rettype;
+GO
+~~START~~
+varchar
+smallmoney
+~~END~~
+
+-- bigint/smallmoney -> smallmoney
+select cast(pg_typeof(CAST(5000 AS bigint) / CAST(42.1256 AS smallmoney)) as varchar(100)) rettype;
+GO
+~~START~~
+varchar
+smallmoney
+~~END~~
+
+-- real-smallmoney -> real
+select cast(pg_typeof(CAST(324.463 AS real) - CAST(42.1256 AS smallmoney)) as varchar(100)) rettype;
+GO
+~~START~~
+varchar
+real
+~~END~~
+
+-- int*smallmoney -> smallmoney
+select cast(pg_typeof(CAST(1000 AS int) * CAST(42.1256 AS smallmoney)) as varchar(100)) rettype;
+GO
+~~START~~
+varchar
+smallmoney
+~~END~~
+
+-- smallint+smallmoney -> smallmoney
+select cast(pg_typeof(CAST(100 AS smallint) + CAST(42.1256 AS smallmoney)) as varchar(100)) rettype;
+GO
+~~START~~
+varchar
+smallmoney
+~~END~~
+
+-- tinyint-smallmoney -> smallmoney
+select cast(pg_typeof(CAST(10 AS tinyint) - CAST(42.1256 AS smallmoney)) as varchar(100)) rettype;
+GO
+~~START~~
+varchar
+smallmoney
+~~END~~
+
+-- smallmoney/tinyint -> smallmoney
+select cast(pg_typeof(CAST(42.1256 AS smallmoney) / CAST(10 AS tinyint)) as varchar(100)) rettype;
+GO
+~~START~~
+varchar
+smallmoney
+~~END~~
+
+-- real/tinyint -> real
+select cast(pg_typeof(CAST(324.463 AS real) / CAST(10 AS tinyint)) as varchar(100)) rettype;
+GO
+~~START~~
+varchar
+real
+~~END~~
+

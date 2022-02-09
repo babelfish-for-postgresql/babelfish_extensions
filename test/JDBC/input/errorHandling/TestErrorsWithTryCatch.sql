@@ -163,7 +163,7 @@ GO
 BEGIN TRY
     SELECT xact_state();
     INSERT INTO ErrorWithTryCatchTable VALUES ('Apple', N'red', 1, 'Delhi', N'Sad😞',  '2000-12-13 12:58:23.123', 123.1);
-    UPDATE ErrorWithTryCatchTable SET g = 101.4 WHERE a = 1;
+    UPDATE ErrorWithTryCatchTable SET g = 101.4 WHERE c = 1;
 END TRY
 BEGIN CATCH
     SELECT xact_state();
@@ -180,7 +180,7 @@ BEGIN TRY
     BEGIN TRAN
         SELECT xact_state();
         INSERT INTO ErrorWithTryCatchTable VALUES ('Apple', N'red', 1, 'Delhi', N'Sad😞',  '2000-12-13 12:58:23.123', 123.1);
-        UPDATE ErrorWithTryCatchTable SET g = 101.4 WHERE a = 1;
+        UPDATE ErrorWithTryCatchTable SET g = 101.4 WHERE c = 1;
 END TRY
 BEGIN CATCH
     SELECT xact_state();
@@ -198,7 +198,7 @@ GO
 CREATE PROCEDURE errorWithTryCatchProc1
 AS
 INSERT INTO ErrorWithTryCatchTable VALUES ('Apple', N'red', 1, 'Delhi', N'Sad😞',  '2000-12-13 12:58:23.123', 123.1);
-UPDATE ErrorWithTryCatchTable SET g = 101.4 WHERE a = 1;
+UPDATE ErrorWithTryCatchTable SET g = 101.4 WHERE c = 1;
 GO
 BEGIN TRY
     SELECT xact_state();
@@ -220,7 +220,7 @@ GO
 CREATE PROCEDURE errorWithTryCatchProc1
 AS
 INSERT INTO ErrorWithTryCatchTable VALUES ('Apple', N'red', 1, 'Delhi', N'Sad😞',  '2000-12-13 12:58:23.123', 123.1);
-UPDATE ErrorWithTryCatchTable SET g = 101.4 WHERE a = 1;
+UPDATE ErrorWithTryCatchTable SET g = 101.4 WHERE c = 1;
 GO
 BEGIN TRY
     BEGIN TRAN
@@ -247,7 +247,7 @@ AS
 BEGIN
     BEGIN TRAN
         INSERT INTO ErrorWithTryCatchTable VALUES ('Apple', N'red', 1, 'Delhi', N'Sad😞',  '2000-12-13 12:58:23.123', 123.1);
-        UPDATE ErrorWithTryCatchTable SET g = 101.4 WHERE a = 1;
+        UPDATE ErrorWithTryCatchTable SET g = 101.4 WHERE c = 1;
     COMMIT TRAN
 END
 GO
@@ -275,7 +275,7 @@ AS
 BEGIN
     BEGIN TRAN
         INSERT INTO ErrorWithTryCatchTable VALUES ('Apple', N'red', 1, 'Delhi', N'Sad😞',  '2000-12-13 12:58:23.123', 123.1);
-        UPDATE ErrorWithTryCatchTable SET g = 101.4 WHERE a = 1;
+        UPDATE ErrorWithTryCatchTable SET g = 101.4 WHERE c = 1;
     COMMIT TRAN
 END
 GO
@@ -308,7 +308,7 @@ GO
 BEGIN TRY
     SELECT xact_state();
     INSERT INTO ErrorWithTryCatchTable VALUES ('Apple', N'red', 1, 'Delhi', N'Sad😞',  '2000-12-13 12:58:23.123', 123.1);
-    UPDATE ErrorWithTryCatchTable SET c = NULL WHERE a = 1;
+    UPDATE ErrorWithTryCatchTable SET c = NULL WHERE c = 1;
 END TRY
 BEGIN CATCH
     SELECT xact_state();
@@ -325,7 +325,7 @@ BEGIN TRY
     BEGIN TRAN
         SELECT xact_state();
         INSERT INTO ErrorWithTryCatchTable VALUES ('Apple', N'red', 1, 'Delhi', N'Sad😞',  '2000-12-13 12:58:23.123', 123.1);
-        UPDATE ErrorWithTryCatchTable SET c = NULL WHERE a = 1;
+        UPDATE ErrorWithTryCatchTable SET c = NULL WHERE c = 1;
 END TRY
 BEGIN CATCH
     SELECT xact_state();
@@ -343,7 +343,7 @@ GO
 CREATE PROCEDURE errorWithTryCatchProc1
 AS
 INSERT INTO ErrorWithTryCatchTable VALUES ('Apple', N'red', 1, 'Delhi', N'Sad😞',  '2000-12-13 12:58:23.123', 123.1);
-UPDATE ErrorWithTryCatchTable SET c = NULL WHERE a = 1;
+UPDATE ErrorWithTryCatchTable SET c = NULL WHERE c = 1;
 GO
 BEGIN TRY
     SELECT xact_state();
@@ -365,7 +365,7 @@ GO
 CREATE PROCEDURE errorWithTryCatchProc1
 AS
 INSERT INTO ErrorWithTryCatchTable VALUES ('Apple', N'red', 1, 'Delhi', N'Sad😞',  '2000-12-13 12:58:23.123', 123.1);
-UPDATE ErrorWithTryCatchTable SET c = NULL WHERE a = 1;
+UPDATE ErrorWithTryCatchTable SET c = NULL WHERE c = 1;
 GO
 BEGIN TRY
     BEGIN TRAN
@@ -392,7 +392,7 @@ AS
 BEGIN
     BEGIN TRAN
         INSERT INTO ErrorWithTryCatchTable VALUES ('Apple', N'red', 1, 'Delhi', N'Sad😞',  '2000-12-13 12:58:23.123', 123.1);
-        UPDATE ErrorWithTryCatchTable SET c = NULL WHERE a = 1;
+        UPDATE ErrorWithTryCatchTable SET c = NULL WHERE c = 1;
     COMMIT TRAN
 END
 GO
@@ -420,7 +420,7 @@ AS
 BEGIN
     BEGIN TRAN
         INSERT INTO ErrorWithTryCatchTable VALUES ('Apple', N'red', 1, 'Delhi', N'Sad😞',  '2000-12-13 12:58:23.123', 123.1);
-        UPDATE ErrorWithTryCatchTable SET c = NULL WHERE a = 1;
+        UPDATE ErrorWithTryCatchTable SET c = NULL WHERE c = 1;
     COMMIT TRAN
 END
 GO

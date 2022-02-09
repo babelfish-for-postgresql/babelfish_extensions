@@ -19,7 +19,7 @@ SELECT
 ,@money * @int AS should_be_10
 GO
 ~~START~~
-money#!#money#!#money#!#money#!#money#!#money#!#money#!#money#!#money#!#money#!#money#!#money
+smallmoney#!#money#!#smallmoney#!#money#!#smallmoney#!#money#!#smallmoney#!#money#!#smallmoney#!#money#!#smallmoney#!#money
 10.0000#!#10.0000#!#10.0000#!#10.0000#!#10.0000#!#10.0000#!#10.0000#!#10.0000#!#10.0000#!#10.0000#!#10.0000#!#10.0000
 ~~END~~
 
@@ -48,7 +48,7 @@ GO
 SELECT c_tinyint_m_smallmoney, c_tinyint_m_money, c_smallint_m_smallmoney, c_smallint_m_money, c_smallmoney_m_tinyint, c_money_m_tinyint, c_smallmoney_m_smallint, c_money_m_smallint FROM t1
 GO
 ~~START~~
-money#!#money#!#money#!#money#!#money#!#money#!#money#!#money
+smallmoney#!#money#!#smallmoney#!#money#!#smallmoney#!#money#!#smallmoney#!#money
 10.0000#!#10.0000#!#10.0000#!#10.0000#!#10.0000#!#10.0000#!#10.0000#!#10.0000
 ~~END~~
 
@@ -74,8 +74,8 @@ SELECT
 ,@money / @int AS mi
 GO
 ~~START~~
-float#!#float#!#float#!#float#!#float#!#float#!#money#!#money#!#money#!#money#!#money#!#money
-2.5#!#2.5#!#2.5#!#2.5#!#2.5#!#2.5#!#0.4000#!#0.4000#!#0.4000#!#0.4000#!#0.4000#!#0.4000
+smallmoney#!#money#!#smallmoney#!#money#!#smallmoney#!#money#!#smallmoney#!#money#!#smallmoney#!#money#!#smallmoney#!#money
+2.5000#!#2.5000#!#2.5000#!#2.5000#!#2.5000#!#2.5000#!#0.4000#!#0.4000#!#0.4000#!#0.4000#!#0.4000#!#0.4000
 ~~END~~
 
 

@@ -75,3 +75,180 @@ CREATE OPERATOR sys.^ (
     FUNCTION = sys.int8xor,
     COMMUTATOR = ^
 );
+
+-- tinyint operator definitions to force return type to tinyyint
+
+CREATE FUNCTION sys.tinyintum(sys.TINYINT)
+RETURNS sys.TINYINT
+AS $$
+  SELECT int2um($1)::sys.TINYINT;
+$$
+LANGUAGE SQL IMMUTABLE STRICT PARALLEL SAFE;
+
+CREATE FUNCTION sys.tinyintpl(sys.TINYINT, sys.TINYINT)
+RETURNS sys.TINYINT
+AS $$
+  SELECT int2pl($1,$2)::sys.TINYINT;
+$$
+LANGUAGE SQL IMMUTABLE STRICT PARALLEL SAFE;
+
+CREATE FUNCTION sys.tinyintmi(sys.TINYINT, sys.TINYINT)
+RETURNS sys.TINYINT
+AS $$
+  SELECT int2mi($1,$2)::sys.TINYINT;
+$$
+LANGUAGE SQL IMMUTABLE STRICT PARALLEL SAFE;
+
+CREATE FUNCTION sys.tinyintmul(sys.TINYINT, sys.TINYINT)
+RETURNS sys.TINYINT
+AS $$
+  SELECT int2mul($1,$2)::sys.TINYINT;
+$$
+LANGUAGE SQL IMMUTABLE STRICT PARALLEL SAFE;
+
+CREATE FUNCTION sys.tinyintdiv(sys.TINYINT, sys.TINYINT)
+RETURNS sys.TINYINT
+AS $$
+  SELECT int2div($1,$2)::sys.TINYINT;
+$$
+LANGUAGE SQL IMMUTABLE STRICT PARALLEL SAFE;
+
+CREATE OPERATOR sys.+ (
+    LEFTARG    = sys.TINYINT,
+    RIGHTARG   = sys.TINYINT,
+    COMMUTATOR = +,
+    PROCEDURE  = sys.tinyintpl
+);
+
+CREATE OPERATOR sys.- (
+    LEFTARG    = sys.TINYINT,
+    RIGHTARG   = sys.TINYINT,
+    PROCEDURE  = sys.tinyintmi
+);
+
+CREATE OPERATOR sys.- (
+    RIGHTARG   = sys.TINYINT,
+    PROCEDURE  = sys.tinyintum
+);
+
+CREATE OPERATOR sys.* (
+    LEFTARG    = sys.TINYINT,
+    RIGHTARG   = sys.TINYINT,
+    COMMUTATOR = *,
+    PROCEDURE  = sys.tinyintmul
+);
+
+CREATE OPERATOR sys./ (
+    LEFTARG    = sys.TINYINT,
+    RIGHTARG   = sys.TINYINT,
+    PROCEDURE  = sys.tinyintdiv
+);
+
+
+CREATE FUNCTION sys.smallmoneytinyintpl(sys.SMALLMONEY, sys.TINYINT)
+RETURNS sys.SMALLMONEY
+AS $$
+  SELECT sys.fixeddecimalint2pl($1,$2)::sys.SMALLMONEY;
+$$
+LANGUAGE SQL IMMUTABLE STRICT PARALLEL SAFE;
+
+CREATE FUNCTION sys.smallmoneytinyintmi(sys.SMALLMONEY, sys.TINYINT)
+RETURNS sys.SMALLMONEY
+AS $$
+  SELECT sys.fixeddecimalint2mi($1,$2)::sys.SMALLMONEY;
+$$
+LANGUAGE SQL IMMUTABLE STRICT PARALLEL SAFE;
+
+CREATE FUNCTION sys.smallmoneytinyintmul(sys.SMALLMONEY, sys.TINYINT)
+RETURNS sys.SMALLMONEY
+AS $$
+  SELECT sys.fixeddecimalint2mul($1,$2)::sys.SMALLMONEY;
+$$
+LANGUAGE SQL IMMUTABLE STRICT PARALLEL SAFE;
+
+CREATE FUNCTION sys.smallmoneytinyintdiv(sys.SMALLMONEY, sys.TINYINT)
+RETURNS sys.SMALLMONEY
+AS $$
+  SELECT sys.fixeddecimalint2div($1,$2)::sys.SMALLMONEY;
+$$
+LANGUAGE SQL IMMUTABLE STRICT PARALLEL SAFE;
+
+CREATE OPERATOR sys.+ (
+    LEFTARG    = sys.SMALLMONEY,
+    RIGHTARG   = sys.TINYINT,
+    COMMUTATOR = +,
+    PROCEDURE  = sys.smallmoneytinyintpl
+);
+
+CREATE OPERATOR sys.- (
+    LEFTARG    = sys.SMALLMONEY,
+    RIGHTARG   = sys.TINYINT,
+    PROCEDURE  = sys.smallmoneytinyintmi
+);
+
+CREATE OPERATOR sys.* (
+    LEFTARG    = sys.SMALLMONEY,
+    RIGHTARG   = sys.TINYINT,
+    COMMUTATOR = *,
+    PROCEDURE  = sys.smallmoneytinyintmul
+);
+
+CREATE OPERATOR sys./ (
+    LEFTARG    = sys.SMALLMONEY,
+    RIGHTARG   = sys.TINYINT,
+    PROCEDURE  = sys.smallmoneytinyintdiv
+);
+
+CREATE FUNCTION sys.tinyintsmallmoneypl(sys.TINYINT, sys.SMALLMONEY)
+RETURNS sys.SMALLMONEY
+AS $$
+  SELECT sys.int2fixeddecimalpl($1,$2)::sys.SMALLMONEY;
+$$
+LANGUAGE SQL IMMUTABLE STRICT PARALLEL SAFE;
+
+CREATE FUNCTION sys.tinyintsmallmoneymi(sys.TINYINT, sys.SMALLMONEY)
+RETURNS sys.SMALLMONEY
+AS $$
+  SELECT sys.int2fixeddecimalmi($1,$2)::sys.SMALLMONEY;
+$$
+LANGUAGE SQL IMMUTABLE STRICT PARALLEL SAFE;
+
+CREATE FUNCTION sys.tinyintsmallmoneymul(sys.TINYINT, sys.SMALLMONEY)
+RETURNS sys.SMALLMONEY
+AS $$
+  SELECT sys.int2fixeddecimalmul($1,$2)::sys.SMALLMONEY;
+$$
+LANGUAGE SQL IMMUTABLE STRICT PARALLEL SAFE;
+
+CREATE FUNCTION sys.tinyintsmallmoneydiv(sys.TINYINT, sys.SMALLMONEY)
+RETURNS sys.SMALLMONEY
+AS $$
+  SELECT sys.int2fixeddecimaldiv($1,$2)::sys.SMALLMONEY;
+$$
+LANGUAGE SQL IMMUTABLE STRICT PARALLEL SAFE;
+
+CREATE OPERATOR sys.+ (
+    LEFTARG    = sys.TINYINT,
+    RIGHTARG   = sys.SMALLMONEY,
+    COMMUTATOR = +,
+    PROCEDURE  = sys.tinyintsmallmoneypl
+);
+
+CREATE OPERATOR sys.- (
+    LEFTARG    = sys.TINYINT,
+    RIGHTARG   = sys.SMALLMONEY,
+    PROCEDURE  = sys.tinyintsmallmoneymi
+);
+
+CREATE OPERATOR sys.* (
+    LEFTARG    = sys.TINYINT,
+    RIGHTARG   = sys.SMALLMONEY,
+    COMMUTATOR = *,
+    PROCEDURE  = sys.tinyintsmallmoneymul
+);
+
+CREATE OPERATOR sys./ (
+    LEFTARG    = sys.TINYINT,
+    RIGHTARG   = sys.SMALLMONEY,
+    PROCEDURE  = sys.tinyintsmallmoneydiv
+);
