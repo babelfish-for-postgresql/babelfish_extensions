@@ -32,6 +32,7 @@ typedef struct TSQL_ForClause
 } TSQL_ForClause;
 
 extern bool output_update_transformation;
+extern char *update_delete_target_alias;
 extern PLtsql_execstate *get_current_tsql_estate(void);
 
 static Node *makeTSQLHexStringConst(char *str, int location);
@@ -54,6 +55,7 @@ static Node *tsql_update_delete_stmt_with_join(Node *n, List* from_clause, Node*
 				core_yyscan_t yyscanner);
 static Node *tsql_update_delete_stmt_with_top(Node *top_clause, RangeVar
 				*relation, Node *where_clause, core_yyscan_t yyscanner);
+static void tsql_update_delete_stmt_from_clause_alias(RangeVar *relation, List *from_clause);
 static Node *tsql_insert_output_into_cte_transformation(WithClause *opt_with_clause, RangeVar *insert_target, 
 				List *insert_column_list, List *tsql_output_clause, RangeVar *output_target, List *tsql_output_into_target_columns, 
 				InsertStmt *tsql_output_insert_rest, int select_location);

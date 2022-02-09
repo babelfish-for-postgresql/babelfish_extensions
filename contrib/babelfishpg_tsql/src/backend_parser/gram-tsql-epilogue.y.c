@@ -734,6 +734,59 @@ tsql_update_delete_stmt_with_top(Node *top_clause, RangeVar *relation, Node
 	return (Node *)link;
 }
 
+static void
+tsql_update_delete_stmt_from_clause_alias(RangeVar *relation, List *from_clause)
+{
+	ListCell *lc;
+	foreach(lc, from_clause)
+	{
+		Node *n = lfirst(lc);
+		if (IsA(n, RangeVar))
+		{
+			RangeVar *rv = (RangeVar *) n;
+			if (rv->alias && rv->alias->aliasname &&
+				strcmp(rv->alias->aliasname, relation->relname) == 0)
+			{
+				if (relation->schemaname)
+				{
+					ereport(ERROR,
+							(errcode(ERRCODE_SYNTAX_ERROR),
+							 errmsg("The correlation name \'%s\' has the same exposed name as table \'%s.%s\'.",
+								 	rv->alias->aliasname, relation->schemaname,
+									relation->relname)));
+				}
+				else
+				{
+					/*
+					 * Save the original alias name so that "inserted" and
+					 * "deleted" tables in OUTPUT clause can be linked to it
+					 */
+					update_delete_target_alias = relation->relname;
+
+					/*
+					 * Update the relation to have the real table name as
+					 * relname, and the original alias name as an alias
+					 */
+					relation->catalogname = rv->catalogname;
+					relation->schemaname = rv->schemaname;
+					relation->relname = rv->relname;
+					relation->inh = rv->inh;
+					relation->relpersistence = rv->relpersistence;
+					relation->alias = rv->alias;
+
+					/*
+					 * To avoid alias collision, remove the alias of the table
+					 * in the FROM clause, because it will already be an alias
+					 * of the target relation
+					 */
+					rv->alias = NULL;
+					return;
+				}
+			}
+		}
+	}
+}
+
 static Node * 
 tsql_insert_output_into_cte_transformation(WithClause *opt_with_clause, RangeVar *insert_target, 
 	List *insert_column_list, List *tsql_output_clause, RangeVar *output_target, List *tsql_output_into_target_columns,
@@ -885,6 +938,7 @@ tsql_delete_output_into_cte_transformation(WithClause *opt_with_clause, Node *op
 		
 	// PreparableStmt inside CTE
 	d->relation = relation_expr_opt_alias;
+	tsql_update_delete_stmt_from_clause_alias(d->relation, from_clause);
 	if (from_clause != NULL && IsA(linitial(from_clause), JoinExpr))
 	{
 		d = (DeleteStmt*)tsql_update_delete_stmt_with_join(
@@ -1046,6 +1100,7 @@ tsql_update_output_into_cte_transformation(WithClause *opt_with_clause, Node *op
 		
 	// PreparableStmt inside CTE
 	u->relation = relation_expr_opt_alias;
+	tsql_update_delete_stmt_from_clause_alias(u->relation, from_clause);
 	u->targetList = set_clause_list;
 	if (from_clause != NULL && IsA(linitial(from_clause), JoinExpr))
 	{

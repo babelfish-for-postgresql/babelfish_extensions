@@ -370,7 +370,19 @@ handle_returning_qualifiers(CmdType command, List *returningList, ParseState *ps
 						qualifier = strVal(field1);
 
 						if ((!inserted && !strcmp(qualifier, "inserted")) || (!deleted && !strcmp(qualifier, "deleted")))
-							linitial(cref->fields) = makeString(RelationGetRelationName(pstate->p_target_relation));
+						{
+							if (update_delete_target_alias)
+								/*
+								 * If target relation is specified by an alias
+								 * in FROM clause, we should use the alias
+								 * instead of the relation name, because
+								 * otherwise "inserted" will still show the
+								 * previous value.
+								 */
+								linitial(cref->fields) = makeString(update_delete_target_alias);
+							else
+								linitial(cref->fields) = makeString(RelationGetRelationName(pstate->p_target_relation));
+						}
 					}
 				}
 				else if(IsA(node, A_Expr))
