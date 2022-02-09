@@ -44,17 +44,25 @@ PG_FUNCTION_INFO_V1(varbinarytypmodin);
 PG_FUNCTION_INFO_V1(varbinarytypmodout);
 PG_FUNCTION_INFO_V1(byteavarbinary);
 PG_FUNCTION_INFO_V1(varbinarybytea);
+PG_FUNCTION_INFO_V1(varbinaryrowversion);
+PG_FUNCTION_INFO_V1(rowversionbinary);
+PG_FUNCTION_INFO_V1(rowversionvarbinary);
 PG_FUNCTION_INFO_V1(varcharvarbinary);
 PG_FUNCTION_INFO_V1(bpcharvarbinary);
 PG_FUNCTION_INFO_V1(varbinaryvarchar);
 PG_FUNCTION_INFO_V1(varcharbinary);
 PG_FUNCTION_INFO_V1(bpcharbinary);
+PG_FUNCTION_INFO_V1(varcharrowversion);
+PG_FUNCTION_INFO_V1(bpcharrowversion);
 PG_FUNCTION_INFO_V1(int2varbinary);
 PG_FUNCTION_INFO_V1(int4varbinary);
 PG_FUNCTION_INFO_V1(int8varbinary);
 PG_FUNCTION_INFO_V1(int2binary);
 PG_FUNCTION_INFO_V1(int4binary);
 PG_FUNCTION_INFO_V1(int8binary);
+PG_FUNCTION_INFO_V1(int2rowversion);
+PG_FUNCTION_INFO_V1(int4rowversion);
+PG_FUNCTION_INFO_V1(int8rowversion);
 PG_FUNCTION_INFO_V1(varbinaryint2);
 PG_FUNCTION_INFO_V1(varbinaryint4);
 PG_FUNCTION_INFO_V1(varbinaryint8);
@@ -78,6 +86,7 @@ PG_FUNCTION_INFO_V1(binaryfloat8);
 #define DIG(VAL)		((VAL) + '0')
 
 #define MAX_BINARY_SIZE 8000
+#define ROWVERSION_SIZE 8
 
 /*
  *		varbinaryin	- input function of varbinary
@@ -458,6 +467,85 @@ varbinarybytea(PG_FUNCTION_ARGS)
 }
 
 Datum
+varbinaryrowversion(PG_FUNCTION_ARGS)
+{
+	bytea *source = PG_GETARG_BYTEA_PP(0);
+	bytea *result;
+	char *data = VARDATA_ANY(source);
+	size_t len = VARSIZE_ANY_EXHDR(source);
+	char *rp;
+
+	if (len > ROWVERSION_SIZE)
+		len = ROWVERSION_SIZE;
+	
+	result = (bytea *) palloc0(ROWVERSION_SIZE + VARHDRSZ);
+	SET_VARSIZE(result, ROWVERSION_SIZE + VARHDRSZ);
+	
+	rp = VARDATA(result);
+	memcpy(rp, data, len);
+
+	PG_RETURN_BYTEA_P(result);
+}
+
+Datum
+rowversionbinary(PG_FUNCTION_ARGS)
+{
+	bytea *source = PG_GETARG_BYTEA_PP(0);
+	int32 typmod = PG_GETARG_INT32(1);
+	char *data = VARDATA_ANY(source);
+	char *rp;
+	size_t len = VARSIZE_ANY_EXHDR(source);
+	int32 maxlen;
+	bytea *result;
+
+	/* If typmod is -1 (or invalid), use the actual length */
+	if (typmod < (int32) VARHDRSZ)
+		maxlen = len;
+	else
+		maxlen = typmod - VARHDRSZ;
+
+	if (len > maxlen)
+		len = maxlen;
+
+	result = (bytea *) palloc0(maxlen + VARHDRSZ);
+	SET_VARSIZE(result, maxlen + VARHDRSZ);
+
+	rp = VARDATA(result);
+	memcpy(rp, data, len);
+
+	PG_RETURN_BYTEA_P(source);
+}
+
+Datum
+rowversionvarbinary(PG_FUNCTION_ARGS)
+{
+	bytea *source = PG_GETARG_BYTEA_PP(0);
+	int32 typmod = PG_GETARG_INT32(1);
+	char *data = VARDATA_ANY(source);
+	char *rp;
+	size_t len = VARSIZE_ANY_EXHDR(source);
+	int32 maxlen;
+	bytea *result;
+
+	/* If typmod is -1 (or invalid), use the actual length */
+	if (typmod < (int32) VARHDRSZ)
+		maxlen = len;
+	else
+		maxlen = typmod - VARHDRSZ;
+
+	if (len > maxlen)
+		len = maxlen;
+
+	result = (bytea *) palloc(len + VARHDRSZ);
+	SET_VARSIZE(result, len + VARHDRSZ);
+
+	rp = VARDATA(result);
+	memcpy(rp, data, len);
+
+	PG_RETURN_BYTEA_P(source);
+}
+
+Datum
 varcharvarbinary(PG_FUNCTION_ARGS)
 {
 	VarChar *source = PG_GETARG_VARCHAR_PP(0);
@@ -627,6 +715,64 @@ bpcharbinary(PG_FUNCTION_ARGS)
 
 	/* NULL pad the rest of the space */
 	memset(rp + len, '\0', maxlen - len);
+	PG_RETURN_BYTEA_P(result);
+}
+
+Datum
+varcharrowversion(PG_FUNCTION_ARGS)
+{
+	VarChar *source = PG_GETARG_VARCHAR_PP(0);
+	char *data = VARDATA_ANY(source);
+	char *rp;
+	size_t len = VARSIZE_ANY_EXHDR(source);
+	bool  isExplicit = PG_GETARG_BOOL(2);
+	bytea *result;
+
+	if (!isExplicit)
+		ereport(ERROR,
+				(errcode(ERRCODE_DATATYPE_MISMATCH),
+				 errmsg("Implicit conversion from data type varchar to "
+						 "rowversion is not allowed. Use the CONVERT function "
+						 "to run this query.")));
+
+	if (len > ROWVERSION_SIZE)
+		len = ROWVERSION_SIZE;
+
+	result = (bytea *) palloc0(ROWVERSION_SIZE + VARHDRSZ);
+	SET_VARSIZE(result, ROWVERSION_SIZE + VARHDRSZ);
+
+	rp = VARDATA(result);
+	memcpy(rp, data, len);
+
+	PG_RETURN_BYTEA_P(result);
+}
+
+Datum
+bpcharrowversion(PG_FUNCTION_ARGS)
+{
+	BpChar *source = PG_GETARG_BPCHAR_PP(0);
+	char *data = VARDATA_ANY(source);
+	char *rp;
+	size_t len = VARSIZE_ANY_EXHDR(source);
+	bool  isExplicit = PG_GETARG_BOOL(2);
+	bytea *result;
+
+	if (!isExplicit)
+		ereport(ERROR,
+				(errcode(ERRCODE_DATATYPE_MISMATCH),
+				 errmsg("Implicit conversion from data type bpchar to "
+						 "rowversion is not allowed. Use the CONVERT function "
+						 "to run this query.")));
+
+	if (len > ROWVERSION_SIZE)
+		len = ROWVERSION_SIZE;
+
+	result = (bytea *) palloc0(ROWVERSION_SIZE + VARHDRSZ);
+	SET_VARSIZE(result, ROWVERSION_SIZE + VARHDRSZ);
+
+	rp = VARDATA(result);
+	memcpy(rp, data, len);
+
 	PG_RETURN_BYTEA_P(result);
 }
 
@@ -943,6 +1089,60 @@ int8binary(PG_FUNCTION_ARGS)
 	else
 		/* Pad 0 to the left if maxlen is longer than input length */
 		reverse_memcpy(rp+maxlen-len, (char *) &input , len);
+
+	PG_RETURN_BYTEA_P(result);
+}
+
+Datum
+int2rowversion(PG_FUNCTION_ARGS)
+{
+	int16 input = PG_GETARG_INT16(0);
+	int len = sizeof(int16);
+	bytea *result;
+	char *rp;
+
+	result = (bytea *) palloc0(ROWVERSION_SIZE + VARHDRSZ);
+	SET_VARSIZE(result, ROWVERSION_SIZE + VARHDRSZ);
+
+	rp = VARDATA(result);
+	/* Need reverse copy because endianness is different in T-SQL */
+	reverse_memcpy(rp+ROWVERSION_SIZE-len, (char *) &input , len);
+
+	PG_RETURN_BYTEA_P(result);
+}
+
+Datum
+int4rowversion(PG_FUNCTION_ARGS)
+{
+	int32 input = PG_GETARG_INT32(0);
+	int len = sizeof(int32);
+	bytea *result;
+	char *rp;
+
+	result = (bytea *) palloc0(ROWVERSION_SIZE + VARHDRSZ);
+	SET_VARSIZE(result, ROWVERSION_SIZE + VARHDRSZ);
+
+	rp = VARDATA(result);
+	/* Need reverse copy because endianness is different in T-SQL */
+	reverse_memcpy(rp+ROWVERSION_SIZE-len, (char *) &input , len);
+
+	PG_RETURN_BYTEA_P(result);
+}
+
+Datum
+int8rowversion(PG_FUNCTION_ARGS)
+{
+	int64 input = PG_GETARG_INT64(0);
+	int len = sizeof(int64);
+	bytea *result;
+	char *rp;
+
+	result = (bytea *) palloc0(ROWVERSION_SIZE + VARHDRSZ);
+	SET_VARSIZE(result, ROWVERSION_SIZE + VARHDRSZ);
+
+	rp = VARDATA(result);
+	/* Need reverse copy because endianness is different in T-SQL */
+	reverse_memcpy(rp, (char *) &input , len);
 
 	PG_RETURN_BYTEA_P(result);
 }
