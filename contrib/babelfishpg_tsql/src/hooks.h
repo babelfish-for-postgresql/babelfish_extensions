@@ -11,4 +11,6 @@ extern void UninstallExtendedHooks(void);
 
 extern bool output_update_transformation;
 extern char* extract_identifier(const char *start);
+
+extern char *update_delete_target_alias;
 #endif

@@ -169,6 +169,7 @@ int			pltsql_extra_errors;
 bool		pltsql_debug_parser = false;
 char       *identity_insert_string;
 bool		output_update_transformation = false;
+char       *update_delete_target_alias = NULL;
 int			pltsql_trigger_depth = 0;
 
 PLExecStateCallStack	*exec_state_call_stack = NULL;
@@ -588,8 +589,8 @@ pltsql_add_ctid_self_join_cond_between_target_and_from_clause(Query *query)
 		if (query->returningList)
 		{
 			/* Exclude tables having alias "inserted" or "deleted" if OUTPUT-clause exists */
-			if (strcmp(rte->alias->aliasname, "inserted") == 0
-				|| strcmp(rte->alias->aliasname, "deleted") == 0)
+			if (rte->alias && (strcmp(rte->alias->aliasname, "inserted") == 0
+				|| strcmp(rte->alias->aliasname, "deleted") == 0))
 				continue;
 		}
 

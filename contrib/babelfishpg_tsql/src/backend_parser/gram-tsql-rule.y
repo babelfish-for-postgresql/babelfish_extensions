@@ -928,6 +928,7 @@ tsql_UpdateStmt: opt_with_clause UPDATE relation_expr_opt_alias
 				{
 					UpdateStmt *n = makeNode(UpdateStmt);
 					n->relation = $3;
+					tsql_update_delete_stmt_from_clause_alias(n->relation, $6);
 					n->targetList = $5;
 					if ($6 != NULL && IsA(linitial($6), JoinExpr))
 					{
@@ -953,6 +954,7 @@ tsql_UpdateStmt: opt_with_clause UPDATE relation_expr_opt_alias
 				{
 					UpdateStmt *n = makeNode(UpdateStmt);
 					n->relation = $3;
+					tsql_update_delete_stmt_from_clause_alias(n->relation, $7);
 					n->targetList = $6;
 					n->fromClause = $7;
 					n->whereClause = $8;
@@ -969,6 +971,7 @@ tsql_UpdateStmt: opt_with_clause UPDATE relation_expr_opt_alias
 				{
 					UpdateStmt *n = makeNode(UpdateStmt);
 					n->relation = $4;
+					tsql_update_delete_stmt_from_clause_alias(n->relation, $8);
 					n->targetList = $7;
 					if ($8 != NULL && IsA(linitial($8), JoinExpr))
 					{
@@ -995,6 +998,7 @@ tsql_UpdateStmt: opt_with_clause UPDATE relation_expr_opt_alias
 				{
 					UpdateStmt *n = makeNode(UpdateStmt);
 					n->relation = $3;
+					tsql_update_delete_stmt_from_clause_alias(n->relation, $7);
 					n->targetList = $5;
 					if ($7 != NULL && IsA(linitial($7), JoinExpr))
 					{
@@ -1022,6 +1026,8 @@ tsql_UpdateStmt: opt_with_clause UPDATE relation_expr_opt_alias
 					{
 						UpdateStmt *n = makeNode(UpdateStmt);
 						n->relation = $3;
+						tsql_update_delete_stmt_from_clause_alias(n->relation,
+						$8);
 						n->targetList = $6;
 						n->fromClause = $8;
 						n->whereClause = $9;
@@ -1039,6 +1045,8 @@ tsql_UpdateStmt: opt_with_clause UPDATE relation_expr_opt_alias
 					{
 						UpdateStmt *n = makeNode(UpdateStmt);
 						n->relation = $4;
+						tsql_update_delete_stmt_from_clause_alias(n->relation,
+						$8);
 						n->targetList = $7;
 						if ($8 != NULL && IsA(linitial($8), JoinExpr))
 						{
@@ -2547,6 +2555,7 @@ tsql_DeleteStmt: opt_with_clause DELETE_P opt_top_clause opt_from relation_expr_
 				{
 					DeleteStmt *n = makeNode(DeleteStmt);
 					n->relation = $5;
+					tsql_update_delete_stmt_from_clause_alias(n->relation, $7);
 					if ($7 != NULL && IsA(linitial($7), JoinExpr))
 					{
 						n = (DeleteStmt*)tsql_update_delete_stmt_with_join(
@@ -2569,6 +2578,7 @@ tsql_DeleteStmt: opt_with_clause DELETE_P opt_top_clause opt_from relation_expr_
 				{
 					DeleteStmt *n = makeNode(DeleteStmt);
 					n->relation = $5;
+					tsql_update_delete_stmt_from_clause_alias(n->relation, $8);
 					if ($8 != NULL && IsA(linitial($8), JoinExpr))
 					{
 						n = (DeleteStmt*)tsql_update_delete_stmt_with_join(
