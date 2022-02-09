@@ -465,16 +465,18 @@ select
   , null::integer as principal_id
   , sch.schema_id as schema_id
   , 0 as parent_object_id
-  , case format_type(p.prorettype, null)
-      when 'void' then 'P'::varchar(2)
+  , case p.prokind
+      when 'p' then 'P'::varchar(2)
+      when 'a' then 'AF'::varchar(2)
       else
         case format_type(p.prorettype, null) when 'trigger'
           then 'TR'::varchar(2)
           else 'FN'::varchar(2)
         end
     end as type
-  , case format_type(p.prorettype, null)
-      when 'void' then 'SQL_STORED_PROCEDURE'::varchar(60)
+  , case p.prokind
+      when 'p' then 'SQL_STORED_PROCEDURE'::varchar(60)
+      when 'a' then 'AGGREGATE_FUNCTION'::varchar(60)
       else
         case format_type(p.prorettype, null) when 'trigger'
           then 'SQL_TRIGGER'::varchar(60)
@@ -961,16 +963,18 @@ select
   , null::integer as principal_id
   , s.oid as schema_id
   , 0 as parent_object_id
-  , case format_type(p.prorettype, null)
-      when 'void' then 'P'::varchar(2)
+  , case p.prokind
+      when 'p' then 'P'::varchar(2)
+      when 'a' then 'AF'::varchar(2)
       else
         case format_type(p.prorettype, null) when 'trigger'
           then 'TR'::varchar(2)
           else 'FN'::varchar(2)
         end
     end as type
-  , case format_type(p.prorettype, null)
-      when 'void' then 'SQL_STORED_PROCEDURE'::varchar(60)
+  , case p.prokind
+      when 'p' then 'SQL_STORED_PROCEDURE'::varchar(60)
+      when 'a' then 'AGGREGATE_FUNCTION'::varchar(60)
       else
         case format_type(p.prorettype, null) when 'trigger'
           then 'SQL_TRIGGER'::varchar(60)
