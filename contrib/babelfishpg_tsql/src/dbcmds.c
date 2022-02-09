@@ -462,8 +462,6 @@ drop_bbf_db(const char *dbname, bool missing_ok, bool force_drop)
 	List	   			*parsetree_list;
 	ListCell   			*parsetree_item;
 	const char			*prev_current_user;
-	ScanKeyData			scanKey;
-	volatile SysScanDesc scan;
 
 	if ((strcmp(dbname, "master") == 0) || (strcmp(dbname, "tempdb") == 0))
 		if (!force_drop)
@@ -474,18 +472,11 @@ drop_bbf_db(const char *dbname, bool missing_ok, bool force_drop)
 	/* Check if the DB exist */
 	sysdatabase_rel = table_open(sysdatabases_oid, RowExclusiveLock);
 
-	ScanKeyInit(&scanKey,
-				Anum_sysdatabaese_name,
-				BTEqualStrategyNumber, F_TEXTEQ,
-				CStringGetTextDatum(dbname));
-	scan = systable_beginscan(sysdatabase_rel, sysdatabaese_idx_name_oid, true,
-				NULL, 1, &scanKey);
-	tuple = systable_getnext(scan);
+      tuple = SearchSysCache1(SYSDATABASENAME, CStringGetTextDatum(dbname));
 
 	if (!HeapTupleIsValid(tuple))
 	{
 		/* Close pg_database, release the lock, since we changed nothing */
-		systable_endscan(scan);
 		table_close(sysdatabase_rel, RowExclusiveLock);
 		if (!missing_ok)
 		{
@@ -532,11 +523,9 @@ drop_bbf_db(const char *dbname, bool missing_ok, bool force_drop)
 							" in another session", dbname)));
 
 		CatalogTupleDelete(sysdatabase_rel, &tuple->t_self);
+              ReleaseSysCache(tuple);
 
-		systable_endscan(scan);
-		scan = NULL;
 		table_close(sysdatabase_rel, RowExclusiveLock);
-		sysdatabase_rel = NULL;
 
 		/* Advance cmd counter to make the delete visible */
 		CommandCounterIncrement();
@@ -588,12 +577,6 @@ drop_bbf_db(const char *dbname, bool missing_ok, bool force_drop)
 						PGC_S_DATABASE_USER);
 
 		UnlockLogicalDatabaseForSession(dbid, ExclusiveLock, false);
-
-		if (scan)
-			systable_endscan(scan);
-
-		if (sysdatabase_rel)
-			table_close(sysdatabase_rel, RowExclusiveLock);
 
 		PG_RE_THROW();
 	}
