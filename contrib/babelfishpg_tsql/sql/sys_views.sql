@@ -295,7 +295,9 @@ select distinct
 from pg_constraint c
 inner join pg_attribute a_con on a_con.attrelid = c.conrelid and a_con.attnum = any(c.conkey)
 inner join pg_attribute a_conf on a_conf.attrelid = c.confrelid and a_conf.attnum = any(c.confkey)
-where c.contype = 'f';
+where c.contype = 'f'
+and (c.connamespace in (select schema_id from sys.schemas))
+and has_schema_privilege(c.connamespace, 'USAGE');
 GRANT SELECT ON sys.foreign_key_columns TO PUBLIC;
 
 create or replace view sys.foreign_keys as
@@ -520,11 +522,11 @@ select
   , a_conf.attnum as rkey
   , a_conf.attnum as keyno
 from pg_constraint c
-inner join pg_namespace s on s.oid = c.connamespace
 inner join pg_attribute a_con on a_con.attrelid = c.conrelid and a_con.attnum = any(c.conkey)
 inner join pg_attribute a_conf on a_conf.attrelid = c.confrelid and a_conf.attnum = any(c.confkey)
 where c.contype = 'f'
-and s.nspname not in ('information_schema', 'pg_catalog');
+and (c.connamespace in (select schema_id from sys.schemas))
+and has_schema_privilege(c.connamespace, 'USAGE');
 GRANT SELECT ON sys.sysforeignkeys TO PUBLIC;
 
 create or replace view  sys.sysindexes as
