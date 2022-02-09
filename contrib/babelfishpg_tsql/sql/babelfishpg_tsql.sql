@@ -823,8 +823,8 @@ LANGUAGE 'pltsql';
 GRANT ALL on PROCEDURE sys.sp_describe_undeclared_parameters TO PUBLIC;
 
 -- BABEL-1782
-CREATE VIEW sys.sp_tables_view AS
-SELECT 
+CREATE OR REPLACE VIEW sys.sp_tables_view AS
+SELECT
 t2.dbname AS TABLE_QUALIFIER,
 t3.rolname AS TABLE_OWNER,
 t1.relname AS TABLE_NAME,
@@ -833,8 +833,11 @@ case
   else 'TABLE'
 end AS TABLE_TYPE,
 CAST(NULL AS varchar(254)) AS remarks
-FROM pg_catalog.pg_class AS t1, sys.pg_namespace_ext AS t2, pg_catalog.pg_roles AS t3 
-WHERE t1.relowner = t3.oid AND t1.relnamespace = t2.oid;
+FROM pg_catalog.pg_class AS t1, sys.pg_namespace_ext AS t2, pg_catalog.pg_roles AS t3
+WHERE t1.relowner = t3.oid AND t1.relnamespace = t2.oid
+AND (t1.relnamespace IN (SELECT schema_id FROM sys.schemas))
+AND has_schema_privilege(t1.relnamespace, 'USAGE')
+AND has_table_privilege(t1.oid, 'SELECT,INSERT,UPDATE,DELETE,TRUNCATE,TRIGGER');
 GRANT SELECT on sys.sp_tables_view TO PUBLIC;
 
 CREATE OR REPLACE PROCEDURE sys.sp_tables (

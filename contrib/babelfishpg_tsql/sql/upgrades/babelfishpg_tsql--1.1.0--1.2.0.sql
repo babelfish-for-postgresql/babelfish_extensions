@@ -1113,6 +1113,56 @@ and has_column_privilege(quote_ident(s.nspname) ||'.'||quote_ident(c.relname), a
 and a.attnum > 0;
 GRANT SELECT ON sys.all_columns TO PUBLIC;
 
+CREATE OR REPLACE VIEW sys.sp_tables_view AS
+SELECT
+t2.dbname AS TABLE_QUALIFIER,
+t3.rolname AS TABLE_OWNER,
+t1.relname AS TABLE_NAME,
+case
+  when t1.relkind = 'v' then 'VIEW'
+  else 'TABLE'
+end AS TABLE_TYPE,
+CAST(NULL AS varchar(254)) AS remarks
+FROM pg_catalog.pg_class AS t1, sys.pg_namespace_ext AS t2, pg_catalog.pg_roles AS t3
+WHERE t1.relowner = t3.oid AND t1.relnamespace = t2.oid
+AND (t1.relnamespace IN (SELECT schema_id FROM sys.schemas))
+AND has_schema_privilege(t1.relnamespace, 'USAGE')
+AND has_table_privilege(t1.oid, 'SELECT,INSERT,UPDATE,DELETE,TRUNCATE,TRIGGER');
+GRANT SELECT on sys.sp_tables_view TO PUBLIC;
+
+create or replace view sys.foreign_key_columns as
+select distinct
+  c.oid as constraint_object_id
+  , c.confkey as constraint_column_id
+  , c.conrelid as parent_object_id
+  , a_con.attnum as parent_column_id
+  , c.confrelid as referenced_object_id
+  , a_conf.attnum as referenced_column_id
+from pg_constraint c
+inner join pg_attribute a_con on a_con.attrelid = c.conrelid and a_con.attnum = any(c.conkey)
+inner join pg_attribute a_conf on a_conf.attrelid = c.confrelid and a_conf.attnum = any(c.confkey)
+where c.contype = 'f'
+and (c.connamespace in (select schema_id from sys.schemas))
+and has_schema_privilege(c.connamespace, 'USAGE');
+GRANT SELECT ON sys.foreign_key_columns TO PUBLIC;
+
+create or replace view sys.sysforeignkeys as
+select
+  c.conname as name
+  , c.oid as object_id
+  , c.conrelid as fkeyid
+  , c.confrelid as rkeyid
+  , a_con.attnum as fkey
+  , a_conf.attnum as rkey
+  , a_conf.attnum as keyno
+from pg_constraint c
+inner join pg_attribute a_con on a_con.attrelid = c.conrelid and a_con.attnum = any(c.conkey)
+inner join pg_attribute a_conf on a_conf.attrelid = c.confrelid and a_conf.attnum = any(c.confkey)
+where c.contype = 'f'
+and (c.connamespace in (select schema_id from sys.schemas))
+and has_schema_privilege(c.connamespace, 'USAGE');
+GRANT SELECT ON sys.sysforeignkeys TO PUBLIC;
+
 -- Reset search_path to not affect any subsequent scripts
 SELECT set_config('search_path', trim(leading 'sys, ' from current_setting('search_path')), false);
 
