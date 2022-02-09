@@ -66,6 +66,7 @@
 
 #define Max(x, y)				((x) > (y) ? (x) : (y))
 #define Min(x, y)				((x) < (y) ? (x) : (y))
+#define ROWVERSION_SIZE 8
 
 /*
  * Local structures and functions copied from printtup.c
@@ -1487,6 +1488,9 @@ PrepareRowDescription(TupleDesc typeinfo, List *targetlist, int16 *formats,
 				sendTableName |= col->sendTableName;
 				break;
 			case TDS_SEND_BINARY:
+				/* Explicitly set typemod for rowversion because typmod won't be specified */
+				if (finfo->ttmtdstypelen == ROWVERSION_SIZE)
+					atttypmod = ROWVERSION_SIZE + VARHDRSZ;
 				/* The default binary data length is 1 when maxLen isn't specified */
 				SetColMetadataForBinaryType(col, TDS_TYPE_BINARY, (atttypmod == -1) ?
 											1 : atttypmod - VARHDRSZ);

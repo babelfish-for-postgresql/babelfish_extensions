@@ -1322,8 +1322,6 @@ antlrcpp::Any TsqlUnsupportedFeatureHandlerImpl::visitData_type(TSqlParser::Data
 		std::string val = stripQuoteFromId(ctx->simple_name()->id().back());
 		if (pg_strcasecmp("timestamp", val.c_str()) == 0)
 			handle(INSTR_TSQL_TIMESTAMP_DATATYPE, "TIMESTAMP datatype", getLineAndPos(ctx));
-		else if (pg_strcasecmp("rowversion", val.c_str()) == 0)
-			handle(INSTR_TSQL_ROWVERSION_DATATYPE, "ROWVERSION datatype", getLineAndPos(ctx));
 	}
 
 	if (ctx->NATIONAL())
