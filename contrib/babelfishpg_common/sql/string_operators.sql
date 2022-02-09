@@ -22,6 +22,59 @@ CREATE OPERATOR sys.+ (
     FUNCTION = sys.babelfish_concat_wrapper
 );
 
+CREATE OR REPLACE FUNCTION sys.babelfish_concat_wrapper(leftarg sys.varchar, rightarg sys.varchar) RETURNS text AS
+$$
+  SELECT sys.babelfish_concat_wrapper(leftarg::text, rightarg::text)
+$$
+LANGUAGE SQL VOLATILE;
+
+-- Support strings for + operator.
+CREATE OPERATOR sys.+ (
+    LEFTARG = sys.varchar,
+    RIGHTARG = sys.varchar,
+    FUNCTION = sys.babelfish_concat_wrapper
+);
+
+CREATE OR REPLACE FUNCTION sys.babelfish_concat_wrapper(leftarg sys.nvarchar, rightarg sys.nvarchar) RETURNS text AS
+$$
+  SELECT sys.babelfish_concat_wrapper(leftarg::text, rightarg::text)
+$$
+LANGUAGE SQL VOLATILE;
+
+-- Support strings for + operator.
+CREATE OPERATOR sys.+ (
+    LEFTARG = sys.nvarchar,
+    RIGHTARG = sys.nvarchar,
+    FUNCTION = sys.babelfish_concat_wrapper
+);
+
+CREATE OR REPLACE FUNCTION sys.babelfish_concat_wrapper(leftarg sys.bpchar, rightarg sys.bpchar) RETURNS text AS
+$$
+  SELECT sys.babelfish_concat_wrapper(leftarg::text, rightarg::text)
+$$
+LANGUAGE SQL VOLATILE;
+
+-- Support strings for + operator.
+CREATE OPERATOR sys.+ (
+    LEFTARG = sys.bpchar,
+    RIGHTARG = sys.bpchar,
+    FUNCTION = sys.babelfish_concat_wrapper
+);
+
+CREATE OR REPLACE FUNCTION sys.babelfish_concat_wrapper(leftarg sys.nchar, rightarg sys.nchar) RETURNS text AS
+$$
+  SELECT sys.babelfish_concat_wrapper(leftarg::text, rightarg::text)
+$$
+LANGUAGE SQL VOLATILE;
+
+-- Support strings for + operator.
+CREATE OPERATOR sys.+ (
+    LEFTARG = sys.nchar,
+    RIGHTARG = sys.nchar,
+    FUNCTION = sys.babelfish_concat_wrapper
+);
+
+
 create or replace function sys.CHAR(x in int)returns char
 AS
 $body$

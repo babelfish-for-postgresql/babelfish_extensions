@@ -263,7 +263,7 @@ GO
 BEGIN TRY
     SELECT xact_state();
     INSERT INTO ErrorWithTryCatchTable VALUES ('Apple', N'red', 1, 'Delhi', N'Sad😞',  '2000-12-13 12:58:23.123', 123.1);
-    UPDATE ErrorWithTryCatchTable SET g = 101.4 WHERE a = 1;
+    UPDATE ErrorWithTryCatchTable SET g = 101.4 WHERE c = 1;
 END TRY
 BEGIN CATCH
     SELECT xact_state();
@@ -297,7 +297,7 @@ BEGIN TRY
     BEGIN TRAN
         SELECT xact_state();
         INSERT INTO ErrorWithTryCatchTable VALUES ('Apple', N'red', 1, 'Delhi', N'Sad😞',  '2000-12-13 12:58:23.123', 123.1);
-        UPDATE ErrorWithTryCatchTable SET g = 101.4 WHERE a = 1;
+        UPDATE ErrorWithTryCatchTable SET g = 101.4 WHERE c = 1;
 END TRY
 BEGIN CATCH
     SELECT xact_state();
@@ -315,7 +315,7 @@ smallint
 -1
 ~~END~~
 
-~~ERROR (Code: 4)~~
+~~ERROR (Code: 33557097)~~
 
 ~~ERROR (Message: Uncommittable transaction is detected at the end of the batch. The transaction is rolled back.)~~
 
@@ -335,7 +335,7 @@ GO
 CREATE PROCEDURE errorWithTryCatchProc1
 AS
 INSERT INTO ErrorWithTryCatchTable VALUES ('Apple', N'red', 1, 'Delhi', N'Sad😞',  '2000-12-13 12:58:23.123', 123.1);
-UPDATE ErrorWithTryCatchTable SET g = 101.4 WHERE a = 1;
+UPDATE ErrorWithTryCatchTable SET g = 101.4 WHERE c = 1;
 GO
 BEGIN TRY
     SELECT xact_state();
@@ -374,7 +374,7 @@ GO
 CREATE PROCEDURE errorWithTryCatchProc1
 AS
 INSERT INTO ErrorWithTryCatchTable VALUES ('Apple', N'red', 1, 'Delhi', N'Sad😞',  '2000-12-13 12:58:23.123', 123.1);
-UPDATE ErrorWithTryCatchTable SET g = 101.4 WHERE a = 1;
+UPDATE ErrorWithTryCatchTable SET g = 101.4 WHERE c = 1;
 GO
 BEGIN TRY
     BEGIN TRAN
@@ -397,7 +397,7 @@ smallint
 -1
 ~~END~~
 
-~~ERROR (Code: 4)~~
+~~ERROR (Code: 33557097)~~
 
 ~~ERROR (Message: Uncommittable transaction is detected at the end of the batch. The transaction is rolled back.)~~
 
@@ -421,7 +421,7 @@ AS
 BEGIN
     BEGIN TRAN
         INSERT INTO ErrorWithTryCatchTable VALUES ('Apple', N'red', 1, 'Delhi', N'Sad😞',  '2000-12-13 12:58:23.123', 123.1);
-        UPDATE ErrorWithTryCatchTable SET g = 101.4 WHERE a = 1;
+        UPDATE ErrorWithTryCatchTable SET g = 101.4 WHERE c = 1;
     COMMIT TRAN
 END
 GO
@@ -445,7 +445,7 @@ smallint
 -1
 ~~END~~
 
-~~ERROR (Code: 4)~~
+~~ERROR (Code: 33557097)~~
 
 ~~ERROR (Message: Uncommittable transaction is detected at the end of the batch. The transaction is rolled back.)~~
 
@@ -469,7 +469,7 @@ AS
 BEGIN
     BEGIN TRAN
         INSERT INTO ErrorWithTryCatchTable VALUES ('Apple', N'red', 1, 'Delhi', N'Sad😞',  '2000-12-13 12:58:23.123', 123.1);
-        UPDATE ErrorWithTryCatchTable SET g = 101.4 WHERE a = 1;
+        UPDATE ErrorWithTryCatchTable SET g = 101.4 WHERE c = 1;
     COMMIT TRAN
 END
 GO
@@ -494,7 +494,7 @@ smallint
 -1
 ~~END~~
 
-~~ERROR (Code: 4)~~
+~~ERROR (Code: 33557097)~~
 
 ~~ERROR (Message: Uncommittable transaction is detected at the end of the batch. The transaction is rolled back.)~~
 
@@ -522,7 +522,7 @@ GO
 BEGIN TRY
     SELECT xact_state();
     INSERT INTO ErrorWithTryCatchTable VALUES ('Apple', N'red', 1, 'Delhi', N'Sad😞',  '2000-12-13 12:58:23.123', 123.1);
-    UPDATE ErrorWithTryCatchTable SET c = NULL WHERE a = 1;
+    UPDATE ErrorWithTryCatchTable SET c = NULL WHERE c = 1;
 END TRY
 BEGIN CATCH
     SELECT xact_state();
@@ -556,7 +556,7 @@ BEGIN TRY
     BEGIN TRAN
         SELECT xact_state();
         INSERT INTO ErrorWithTryCatchTable VALUES ('Apple', N'red', 1, 'Delhi', N'Sad😞',  '2000-12-13 12:58:23.123', 123.1);
-        UPDATE ErrorWithTryCatchTable SET c = NULL WHERE a = 1;
+        UPDATE ErrorWithTryCatchTable SET c = NULL WHERE c = 1;
 END TRY
 BEGIN CATCH
     SELECT xact_state();
@@ -571,12 +571,8 @@ smallint
 
 ~~START~~
 smallint
--1
+1
 ~~END~~
-
-~~ERROR (Code: 4)~~
-
-~~ERROR (Message: Uncommittable transaction is detected at the end of the batch. The transaction is rolled back.)~~
 
 IF @@trancount > 0 ROLLBACK TRAN;
 GO
@@ -594,7 +590,7 @@ GO
 CREATE PROCEDURE errorWithTryCatchProc1
 AS
 INSERT INTO ErrorWithTryCatchTable VALUES ('Apple', N'red', 1, 'Delhi', N'Sad😞',  '2000-12-13 12:58:23.123', 123.1);
-UPDATE ErrorWithTryCatchTable SET c = NULL WHERE a = 1;
+UPDATE ErrorWithTryCatchTable SET c = NULL WHERE c = 1;
 GO
 BEGIN TRY
     SELECT xact_state();
@@ -633,7 +629,7 @@ GO
 CREATE PROCEDURE errorWithTryCatchProc1
 AS
 INSERT INTO ErrorWithTryCatchTable VALUES ('Apple', N'red', 1, 'Delhi', N'Sad😞',  '2000-12-13 12:58:23.123', 123.1);
-UPDATE ErrorWithTryCatchTable SET c = NULL WHERE a = 1;
+UPDATE ErrorWithTryCatchTable SET c = NULL WHERE c = 1;
 GO
 BEGIN TRY
     BEGIN TRAN
@@ -653,12 +649,8 @@ smallint
 
 ~~START~~
 smallint
--1
+1
 ~~END~~
-
-~~ERROR (Code: 4)~~
-
-~~ERROR (Message: Uncommittable transaction is detected at the end of the batch. The transaction is rolled back.)~~
 
 IF @@trancount > 0 ROLLBACK TRAN;
 GO
@@ -680,7 +672,7 @@ AS
 BEGIN
     BEGIN TRAN
         INSERT INTO ErrorWithTryCatchTable VALUES ('Apple', N'red', 1, 'Delhi', N'Sad😞',  '2000-12-13 12:58:23.123', 123.1);
-        UPDATE ErrorWithTryCatchTable SET c = NULL WHERE a = 1;
+        UPDATE ErrorWithTryCatchTable SET c = NULL WHERE c = 1;
     COMMIT TRAN
 END
 GO
@@ -701,12 +693,8 @@ smallint
 
 ~~START~~
 smallint
--1
+1
 ~~END~~
-
-~~ERROR (Code: 4)~~
-
-~~ERROR (Message: Uncommittable transaction is detected at the end of the batch. The transaction is rolled back.)~~
 
 IF @@trancount > 0 ROLLBACK TRAN;
 GO
@@ -728,7 +716,7 @@ AS
 BEGIN
     BEGIN TRAN
         INSERT INTO ErrorWithTryCatchTable VALUES ('Apple', N'red', 1, 'Delhi', N'Sad😞',  '2000-12-13 12:58:23.123', 123.1);
-        UPDATE ErrorWithTryCatchTable SET c = NULL WHERE a = 1;
+        UPDATE ErrorWithTryCatchTable SET c = NULL WHERE c = 1;
     COMMIT TRAN
 END
 GO
@@ -750,12 +738,8 @@ smallint
 
 ~~START~~
 smallint
--1
+1
 ~~END~~
-
-~~ERROR (Code: 4)~~
-
-~~ERROR (Message: Uncommittable transaction is detected at the end of the batch. The transaction is rolled back.)~~
 
 IF @@trancount > 0 ROLLBACK TRAN;
 GO
@@ -833,7 +817,7 @@ smallint
 -1
 ~~END~~
 
-~~ERROR (Code: 4)~~
+~~ERROR (Code: 33557097)~~
 
 ~~ERROR (Message: Uncommittable transaction is detected at the end of the batch. The transaction is rolled back.)~~
 
@@ -915,7 +899,7 @@ smallint
 -1
 ~~END~~
 
-~~ERROR (Code: 4)~~
+~~ERROR (Code: 33557097)~~
 
 ~~ERROR (Message: Uncommittable transaction is detected at the end of the batch. The transaction is rolled back.)~~
 
@@ -963,7 +947,7 @@ smallint
 -1
 ~~END~~
 
-~~ERROR (Code: 4)~~
+~~ERROR (Code: 33557097)~~
 
 ~~ERROR (Message: Uncommittable transaction is detected at the end of the batch. The transaction is rolled back.)~~
 
@@ -1012,7 +996,7 @@ smallint
 -1
 ~~END~~
 
-~~ERROR (Code: 4)~~
+~~ERROR (Code: 33557097)~~
 
 ~~ERROR (Message: Uncommittable transaction is detected at the end of the batch. The transaction is rolled back.)~~
 
@@ -1408,7 +1392,7 @@ smallint
 -1
 ~~END~~
 
-~~ERROR (Code: 4)~~
+~~ERROR (Code: 33557097)~~
 
 ~~ERROR (Message: Uncommittable transaction is detected at the end of the batch. The transaction is rolled back.)~~
 
@@ -1490,7 +1474,7 @@ smallint
 -1
 ~~END~~
 
-~~ERROR (Code: 4)~~
+~~ERROR (Code: 33557097)~~
 
 ~~ERROR (Message: Uncommittable transaction is detected at the end of the batch. The transaction is rolled back.)~~
 
@@ -1538,7 +1522,7 @@ smallint
 -1
 ~~END~~
 
-~~ERROR (Code: 4)~~
+~~ERROR (Code: 33557097)~~
 
 ~~ERROR (Message: Uncommittable transaction is detected at the end of the batch. The transaction is rolled back.)~~
 
@@ -1587,7 +1571,7 @@ smallint
 -1
 ~~END~~
 
-~~ERROR (Code: 4)~~
+~~ERROR (Code: 33557097)~~
 
 ~~ERROR (Message: Uncommittable transaction is detected at the end of the batch. The transaction is rolled back.)~~
 
