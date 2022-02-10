@@ -1224,6 +1224,14 @@ and (c.connamespace in (select schema_id from sys.schemas))
 and has_schema_privilege(c.connamespace, 'USAGE');
 GRANT SELECT ON sys.sysforeignkeys TO PUBLIC;
 
+CREATE OR REPLACE FUNCTION sys.DBTS()
+RETURNS sys.ROWVERSION AS
+$BODY$
+SELECT txid_snapshot_xmin(txid_current_snapshot())::sys.ROWVERSION as dbts;
+$BODY$
+STRICT
+LANGUAGE SQL;
+
 -- Reset search_path to not affect any subsequent scripts
 SELECT set_config('search_path', trim(leading 'sys, ' from current_setting('search_path')), false);
 

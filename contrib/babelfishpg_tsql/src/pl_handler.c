@@ -133,6 +133,10 @@ static non_tsql_proc_entry_hook_type prev_non_tsql_proc_entry_hook = NULL;
 static void pltsql_non_tsql_proc_entry(int proc_count, int sys_func_count);
 static bool get_attnotnull(Oid relid, AttrNumber attnum);
 static void set_procid(Oid oid);
+static bool is_rowversion_column(ParseState *pstate, ColumnDef *column);
+static void validate_rowversion_column_constraints(ColumnDef *column);
+static void validate_rowversion_table_constraint(Constraint *c, char *rowversion_column_name);
+extern bool is_tsql_rowversion_datatype(Oid oid);
 
 PG_FUNCTION_INFO_V1(pltsql_inline_handler);
 
@@ -531,6 +535,18 @@ pltsql_pre_parse_analyze(ParseState *pstate, RawStmt *parseTree)
 			}
 			break;
 		}
+		case T_SelectStmt:
+		{
+			/* 
+			 * Set columnref overwrite hook in pstate if not already done.
+			 * This is needed when we are parsing a subquery of a create
+			 * view statement, this hook will check for rowversion column
+			 * reference and change the reference if needed.
+			 */
+			if (pstate->p_column_ref_overwrite_hook == NULL)
+				setup_column_ref_overwrite_hook(pstate);
+			break;
+		}
 		default:
 			break;
 	}
@@ -683,6 +699,34 @@ pltsql_post_parse_analyze(ParseState *pstate, Query *query)
 		return;
 	if (query->commandType == CMD_INSERT)
 	{
+		ListCell *lc;
+		bool has_ident = false;
+
+		/* Loop through column attribute list */
+		foreach (lc, query->targetList)
+		{
+			TargetEntry *tle = (TargetEntry *) lfirst(lc);
+			TupleDesc tupdesc = RelationGetDescr(pstate->p_target_relation);
+			int attr_num = tle->resno - 1;
+			Form_pg_attribute attr;
+
+			attr = TupleDescAttr(tupdesc, attr_num);
+
+			/* Check if explicitly inserting into identity column. */
+			if (attr->attidentity)
+			{
+				has_ident = true;
+			}
+
+			/*Disallow insert into a ROWVERSION column */
+			if(is_tsql_rowversion_datatype(attr->atttypid))
+			{
+				ereport(ERROR,
+						(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+						 errmsg("Cannot insert an explicit value into a rowversion column.")));
+			}
+		}
+
 		/* Set to override value if IDENTITY_INSERT */
 		if (tsql_identity_insert.valid)
 		{
@@ -692,31 +736,9 @@ pltsql_post_parse_analyze(ParseState *pstate, Query *query)
 
 			if (rel_oid == tsql_identity_insert.rel_oid)
 			{
-				/*
-				 * Check if explicitly inserting into identity column.
-				 * Just loop through column attribute list since it is already validated
-				 */
-				bool has_ident = false;
-				ListCell *tmp_lc;
 				ColumnRef *n;
 				ResTarget *rt;
 				List *returningList;
-
-				foreach (tmp_lc, query->targetList)
-				{
-					TargetEntry *tle = (TargetEntry *) lfirst(tmp_lc);
-					TupleDesc tupdesc = RelationGetDescr(pstate->p_target_relation);
-					int attr_num = tle->resno - 1;
-					Form_pg_attribute attr;
-
-					attr = TupleDescAttr(tupdesc, attr_num);
-
-					if (attr->attidentity)
-					{
-						has_ident = true;
-						break;
-					}
-				}
 
 				if (!has_ident)
 					ereport(ERROR,
@@ -761,6 +783,8 @@ pltsql_post_parse_analyze(ParseState *pstate, Query *query)
 					CreateStmt *stmt = (CreateStmt *) parsetree;
 					ListCell   *elements;
 					bool		seen_identity = false;
+					bool		seen_rowversion = false;
+					char		*rowversion_column_name = NULL;
 
 					foreach(elements, stmt->tableElts)
 					{
@@ -787,11 +811,24 @@ pltsql_post_parse_analyze(ParseState *pstate, Query *query)
 											errmsg("Nullable UNIQUE constraint is not supported. Please use babelfishpg_tsql.escape_hatch_unique_constraint to ignore "
 												"or add a NOT NULL constraint")));
 								}
+								if (is_rowversion_column(pstate, (ColumnDef *) element))
+								{
+									if (seen_rowversion)
+										ereport(ERROR,
+												(errcode(ERRCODE_INVALID_TABLE_DEFINITION),
+												 errmsg("Only one rowversion column is allowed in a table.")));
+									seen_rowversion = true;
+									rowversion_column_name = castNode(ColumnDef, element)->colname;
+									validate_rowversion_column_constraints((ColumnDef *) element);
+								}
 								break;
 							case T_Constraint: 
 							{
 								Constraint *c = (Constraint *) element;
 								c->conname = construct_unique_index_name(c->conname, stmt->relation->relname);
+
+								if (rowversion_column_name)
+									validate_rowversion_table_constraint(c, rowversion_column_name);
 							}
 								break;
 							default:
@@ -806,10 +843,12 @@ pltsql_post_parse_analyze(ParseState *pstate, Query *query)
 					AlterTableStmt	*atstmt = (AlterTableStmt *) parsetree;
 					ListCell		*lcmd;
 					bool			seen_identity = false;
+					bool			seen_rowversion = false;
 					Oid				relid;
 					Relation		rel;
 					TupleDesc		tupdesc;
 					AttrNumber		attr_num;
+					char			*rowversion_column_name = NULL;
 
 					/* Search through existing relation attributes */
 					relid = RangeVarGetRelid(atstmt->relation, NoLock, false);
@@ -829,6 +868,13 @@ pltsql_post_parse_analyze(ParseState *pstate, Query *query)
 						/* Check for identity attribute */
 						if (attr->attidentity)
 							seen_identity = true;
+						
+						/* Check for rowversion attribute */
+						if (is_tsql_rowversion_datatype(attr->atttypid))
+						{
+							seen_rowversion = true;
+							rowversion_column_name = NameStr(attr->attname);
+						}
 					}
 
 					RelationClose(rel);
@@ -850,6 +896,16 @@ pltsql_post_parse_analyze(ParseState *pstate, Query *query)
 												 errmsg("Only one identity column is allowed in a table")));
 									seen_identity = true;
 								}
+								if (is_rowversion_column(pstate, castNode(ColumnDef, cmd->def)))
+								{
+									if (seen_rowversion)
+										ereport(ERROR,
+												(errcode(ERRCODE_INVALID_TABLE_DEFINITION),
+												 errmsg("Only one rowversion column is allowed in a table.")));
+									seen_rowversion = true;
+									rowversion_column_name = castNode(ColumnDef, cmd->def)->colname;
+									validate_rowversion_column_constraints(castNode(ColumnDef, cmd->def));
+								}
 								break;
 							case AT_AddConstraint: 
 							{
@@ -866,6 +922,43 @@ pltsql_post_parse_analyze(ParseState *pstate, Query *query)
 												"or add a NOT NULL constraint")));
 								}
 
+								if (rowversion_column_name)
+									validate_rowversion_table_constraint(c, rowversion_column_name);
+							}
+								break;
+							case AT_AlterColumnType:
+							{
+								int colnamelen = strlen(cmd->name);
+
+								/* Check if rowversion column type is being changed. */
+								if (rowversion_column_name != NULL &&
+									strlen(rowversion_column_name) == colnamelen)
+								{
+									bool found = false;
+									if (pltsql_case_insensitive_identifiers)
+									{
+										char *colname = downcase_identifier(cmd->name, colnamelen, false, false);
+										char *dc_rv_name = downcase_identifier(rowversion_column_name, colnamelen, false, false);
+
+										if (strncmp(dc_rv_name, colname, colnamelen) == 0)
+											found = true;
+									}
+									else if (strncmp(rowversion_column_name, cmd->name, colnamelen) == 0)
+									{
+											found = true;
+									}
+
+									if (found)
+										ereport(ERROR,
+												(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+												 errmsg("Cannot alter column \"%s\" because it is rowversion.", cmd->name)));
+								}
+
+								/* Check if a column type is being changed to rowversion. */
+								if (is_rowversion_column(pstate, castNode(ColumnDef, cmd->def)))
+									ereport(ERROR,
+											(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+											 errmsg("Cannot alter column \"%s\" to be data type rowversion.", cmd->name)));
 							}
 								break;
 							case AT_DropConstraint:
@@ -902,7 +995,31 @@ pltsql_post_parse_analyze(ParseState *pstate, Query *query)
 				{
 					Query *q = (Query *) n;
 					if (q->commandType == CMD_SELECT)
+					{
+						ListCell *t;
+						bool seen_rowversion = false;
+
+						/* Varify if SELECT INTO ... statement not inserting multiple rowversion columns. */
+						foreach(t, q->targetList)
+						{
+							TargetEntry *tle = (TargetEntry *) lfirst(t);
+							Oid typeid = InvalidOid;
+
+							if (!tle->resjunk)
+								typeid = exprType((Node *) tle->expr);
+
+							if (OidIsValid(typeid) && is_tsql_rowversion_datatype(typeid))
+							{
+								if (seen_rowversion)
+									ereport(ERROR,
+											(errcode(ERRCODE_INVALID_TABLE_DEFINITION),
+											 errmsg("Only one rowversion column is allowed in a table.")));
+								seen_rowversion = true;
+							}
+						}
+
 						pltsql_set_nulls_first(q);
+					}
 				}
 			}
 				break;
@@ -912,6 +1029,25 @@ pltsql_post_parse_analyze(ParseState *pstate, Query *query)
 	}
 	else if (query->commandType == CMD_UPDATE)
 	{
+		ListCell *lc;
+
+		/* Disallow updating a ROWVERSION column */
+		foreach (lc, query->targetList)
+		{
+			TargetEntry *tle = (TargetEntry *) lfirst(lc);
+			TupleDesc tupdesc = RelationGetDescr(pstate->p_target_relation);
+			int attr_num = tle->resno - 1;
+			Form_pg_attribute attr;
+
+			attr = TupleDescAttr(tupdesc, attr_num);
+
+			if(is_tsql_rowversion_datatype(attr->atttypid))
+			{
+				ereport(ERROR,
+						(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+						 errmsg("Cannot update a rowversion column.")));
+			}
+		}
 		pltsql_add_ctid_self_join_cond_between_target_and_from_clause(query);
 	}
 	else if (query->commandType == CMD_DELETE)
@@ -998,6 +1134,144 @@ is_identity_constraint(ColumnDef *column)
 	}
 
 	return is_identity;
+}
+
+static bool
+is_rowversion_column(ParseState *pstate, ColumnDef *column)
+{
+	Type ctype;
+	Oid typeOid;
+
+	ctype = LookupTypeName(pstate, column->typeName, NULL, true);
+
+	if (!ctype)
+		return false;
+
+	typeOid = ((Form_pg_type) GETSTRUCT(ctype))->oid;
+	ReleaseSysCache(ctype);
+
+	if (is_tsql_rowversion_datatype(typeOid))
+		return true;
+
+	return false;
+}
+
+/*
+* 1. We will only allow NULL constraint on a rowversion column.
+* 2. If we encounter a NOT-NULL constaint, we will change it
+*    to NULL constraint as we will always be showing xmin value
+*    (which is always going to be NOT-NULL) for this column but
+*    internally this column may contain NULL values.
+* 3. Check constraint will not work on a rowversion column as
+*    we are always changing the reference of this column.
+* 4. Unique/Primary/Foreign constraints are not allowed as multiple
+*    rows can have same xmin value in a single transaction.
+*    Moreover sql server documentation also states rowversion
+*    column a poor candidate for keys.
+*/
+static void
+validate_rowversion_column_constraints(ColumnDef *column)
+{
+	ListCell *lc;
+
+	foreach(lc, column->constraints)
+	{
+		Constraint *c = lfirst_node(Constraint, lc);
+		switch (c->contype)
+		{
+			case CONSTR_NOTNULL:
+ 			{
+ 				c->contype = CONSTR_NULL;
+ 				break;
+ 			}
+ 			case CONSTR_UNIQUE:
+ 			{
+ 				ereport(ERROR,
+ 						(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+ 						 errmsg("Unique constraint is not supported on a rowversion column.")));
+ 				break;
+ 			}
+ 			case CONSTR_PRIMARY:
+ 			{
+ 				ereport(ERROR,
+ 						(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+ 						 errmsg("Primary key constraint is not supported on a rowversion column.")));
+ 				break;
+ 			}
+ 			case CONSTR_FOREIGN:
+ 			{
+ 				ereport(ERROR,
+ 						(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+ 						 errmsg("Foreign key constraint is not supported on a rowversion column.")));
+ 				break;
+ 			}
+ 			default:
+ 				break;
+		}
+	}
+}
+
+static void
+validate_rowversion_table_constraint(Constraint *c, char *rowversion_column_name)
+{
+	List *colnames = NIL;
+	ListCell *lc;
+	char *conname = NULL;
+	int rv_colname_len = strlen(rowversion_column_name);
+	char *dc_rv_name = downcase_identifier(rowversion_column_name, rv_colname_len, false, false);
+
+	switch(c->contype)
+	{
+		case CONSTR_UNIQUE:
+		{
+			conname = "Unique";
+			colnames = c->keys;
+			break;
+		}
+		case CONSTR_PRIMARY:
+		{
+			conname = "Primary key";
+			colnames = c->keys;
+			break;
+		}
+		case CONSTR_FOREIGN:
+		{
+			conname = "Foreign key";
+			colnames = c->fk_attrs;
+			break;
+		}
+		default:
+			break;
+	}
+
+	if (colnames == NIL)
+		return;
+	
+	foreach(lc, colnames)
+	{
+		char *colname = strVal(lfirst(lc));
+		bool found = false;
+
+		if (strlen(colname) == rv_colname_len)
+		{
+			if (pltsql_case_insensitive_identifiers)
+			{
+				char *dc_colname = downcase_identifier(colname, strlen(colname), false, false);
+
+				if (strncmp(dc_rv_name, dc_colname, rv_colname_len) == 0)
+					found = true;
+			}
+			else if (strncmp(rowversion_column_name, colname, rv_colname_len) == 0)
+			{
+				found = true;
+			}
+
+			if (found)
+				ereport(ERROR,
+						(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+						 errmsg("%s constraint is not supported on a rowversion column.", conname)));
+		}
+	}
 }
 
 static void

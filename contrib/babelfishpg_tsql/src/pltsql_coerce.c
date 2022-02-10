@@ -99,6 +99,8 @@ tsql_cast_raw_info_t tsql_cast_raw_infos[] =
     {PG_CAST_ENTRY, "sys", "varbinary", "pg_catalog", "int8", NULL, 'i', 'f'},
     {PG_CAST_ENTRY, "sys", "varbinary", "pg_catalog", "int4", NULL, 'i', 'f'},
     {PG_CAST_ENTRY, "sys", "varbinary", "pg_catalog", "int2", NULL, 'i', 'f'},
+    {TSQL_CAST_ENTRY, "sys", "bbf_varbinary", "sys", "rowversion", "varbinaryrowversion", 'i', 'f'},
+    {TSQL_CAST_ENTRY, "sys", "varbinary", "sys", "rowversion", "varbinaryrowversion", 'i', 'f'},
     {TSQL_CAST_WITHOUT_FUNC_ENTRY, "sys", "bbf_varbinary", "sys", "bbf_binary", NULL, 'i', 'b'},
 // binary     {only allow to cast to integral data type)
     {PG_CAST_ENTRY, "sys", "bbf_binary", "pg_catalog", "int8", NULL, 'i', 'f'},
@@ -107,7 +109,16 @@ tsql_cast_raw_info_t tsql_cast_raw_infos[] =
     {PG_CAST_ENTRY, "sys", "binary", "pg_catalog", "int8", NULL, 'i', 'f'},
     {PG_CAST_ENTRY, "sys", "binary", "pg_catalog", "int4", NULL, 'i', 'f'},
     {PG_CAST_ENTRY, "sys", "binary", "pg_catalog", "int2", NULL, 'i', 'f'},
+    {TSQL_CAST_ENTRY, "sys", "bbf_binary", "sys", "rowversion", "varbinaryrowversion", 'i', 'f'},
+    {TSQL_CAST_ENTRY, "sys", "binary", "sys", "rowversion", "varbinaryrowversion", 'i', 'f'},
     {TSQL_CAST_WITHOUT_FUNC_ENTRY, "sys", "bbf_binary", "sys", "bbf_varbinary", NULL, 'i', 'b'},
+// rowversion
+    {PG_CAST_ENTRY, "sys", "rowversion", "pg_catalog", "int8", NULL, 'i', 'f'},
+    {PG_CAST_ENTRY, "sys", "rowversion", "pg_catalog", "int4", NULL, 'i', 'f'},
+    {PG_CAST_ENTRY, "sys", "rowversion", "pg_catalog", "int2", NULL, 'i', 'f'},
+    {TSQL_CAST_ENTRY, "pg_catalog", "xid", "sys", "rowversion", "xidrowversion", 'i', 'f'},
+    {TSQL_CAST_WITHOUT_FUNC_ENTRY, "sys", "rowversion", "sys", "bbf_varbinary", NULL, 'i', 'b'},
+    {TSQL_CAST_WITHOUT_FUNC_ENTRY, "sys", "rowversion", "sys", "bbf_binary", NULL, 'i', 'b'},
 // characters
     {TSQL_CAST_ENTRY, "pg_catalog", "text", "sys", "fixeddecimal", "char_to_fixeddecimal", 'i', 'f'},
     {TSQL_CAST_ENTRY, "pg_catalog", "bpchar", "sys", "fixeddecimal", "char_to_fixeddecimal", 'i', 'f'},
@@ -179,6 +190,10 @@ tsql_cast_raw_info_t tsql_cast_raw_infos[] =
 	{TSQL_CAST_ENTRY, "sys", "bpchar", "pg_catalog", "name", "bpchar_to_name", 'i', 'f'},
     {TSQL_CAST_ENTRY, "pg_catalog", "varchar", "pg_catalog", "name", "varchar_to_name", 'i', 'f'},
 	{TSQL_CAST_ENTRY, "sys", "varchar", "pg_catalog", "name", "varchar_to_name", 'i', 'f'},
+// xid -> integer
+	{TSQL_CAST_WITHOUT_FUNC_ENTRY, "pg_catalog", "xid", "pg_catalog", "int2", NULL, 'i', 'i'},
+	{TSQL_CAST_WITHOUT_FUNC_ENTRY, "pg_catalog", "xid", "pg_catalog", "int4", NULL, 'i', 'i'},
+	{TSQL_CAST_WITHOUT_FUNC_ENTRY, "pg_catalog", "xid", "pg_catalog", "int8", NULL, 'i', 'i'},
 // string -> float8 via I/O
     {TSQL_CAST_WITHOUT_FUNC_ENTRY, "pg_catalog", "text", "pg_catalog", "float8", NULL, 'i', 'i'},
     {TSQL_CAST_WITHOUT_FUNC_ENTRY, "pg_catalog", "bpchar", "pg_catalog", "float8", NULL, 'i', 'i'},

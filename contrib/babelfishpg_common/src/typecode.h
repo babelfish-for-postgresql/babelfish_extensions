@@ -69,6 +69,7 @@ extern Oid tsql_ntext_oid;
 extern Oid tsql_image_oid;
 extern Oid tsql_binary_oid;
 extern Oid tsql_varbinary_oid;
+extern Oid tsql_rowversion_oid;
 
 extern Oid lookup_tsql_datatype_oid(const char *typename);
 extern bool is_tsql_bpchar_datatype(Oid oid);
@@ -80,5 +81,6 @@ extern bool is_tsql_ntext_datatype(Oid oid);
 extern bool is_tsql_image_datatype(Oid oid);
 extern bool is_tsql_binary_datatype(Oid oid);
 extern bool is_tsql_varbinary_datatype(Oid oid);
+extern bool is_tsql_rowversion_datatype(Oid oid);
 
 #endif
