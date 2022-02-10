@@ -20,7 +20,9 @@
 #include "catalog/pg_type.h"
 #include "catalog/pg_operator.h"
 #include "commands/dbcommands.h"
+#include "common/ip.h"
 #include "lib/stringinfo.h"
+#include "libpq/libpq-be.h"
 #include "libpq/pqformat.h"
 #include "port.h"
 #include "utils/array.h"
@@ -91,6 +93,46 @@ Datum connectionproperty(PG_FUNCTION_ARGS) {
 	else if (strcasecmp(property, "local_tcp_port") == 0)
 	{
 		PG_RETURN_BYTEA_P(convertIntToSQLVariantByteA(1433));
+	}
+	else if (strcasecmp(property, "client_net_address") == 0)
+	{
+		Port		*port = MyProcPort;
+		char		remote_host[NI_MAXHOST];
+		const char	*ret;
+		int		rc;
+
+		if (port == NULL)
+			PG_RETURN_NULL();
+
+		switch (port->raddr.addr.ss_family)
+		{
+			case AF_INET:
+#ifdef HAVE_IPV6
+			case AF_INET6:
+#endif
+				break;
+			default:
+				PG_RETURN_NULL();
+		}
+
+		remote_host[0] = '\0';
+
+		rc = pg_getnameinfo_all(&port->raddr.addr, port->raddr.salen,
+								remote_host, sizeof(remote_host),
+								NULL, 0,
+								NI_NUMERICHOST | NI_NUMERICSERV);
+		if (rc != 0)
+			PG_RETURN_NULL();
+
+		clean_ipv6_addr(port->raddr.addr.ss_family, remote_host);
+
+		ret = remote_host;
+		vch = tsql_varchar_input(ret, strlen(ret), -1);
+	}
+	else if (strcasecmp(property, "physical_net_transport") == 0)
+	{
+		const char *ret = "TCP";
+		vch = tsql_varchar_input(ret, strlen(ret), -1);
 	}
 	else
 	{
