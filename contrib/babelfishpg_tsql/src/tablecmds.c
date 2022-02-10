@@ -28,6 +28,7 @@
 #include "parser/parser.h"
 #include "parser/parse_expr.h"
 #include "parser/parse_type.h"
+#include "parser/parse_collate.h"
 #include "utils/fmgroids.h"
 #include "utils/syscache.h"
 #include "utils/lsyscache.h"
@@ -417,7 +418,6 @@ pltsql_PreAddConstraintsHook(Relation rel, ParseState *pstate, List *newColDefau
 		Node	   			*expr;
 		Oid					targettype;
 		int32				targettypmod;
-		Oid					targetcollid;
 		HeapTuple			heapTup;
 		Type				targetType;
 		Form_pg_attribute	attTup;
@@ -449,7 +449,6 @@ pltsql_PreAddConstraintsHook(Relation rel, ParseState *pstate, List *newColDefau
 		/* extract the type and other relevant information */
 		targettype = exprType(expr);
 		targettypmod = exprTypmod(expr);
-		targetcollid = exprCollation(expr);
 
 		/* now update the attribute catalog entry with the correct type */
 		if (!RelationIsValid(attrelation))
@@ -470,11 +469,28 @@ pltsql_PreAddConstraintsHook(Relation rel, ParseState *pstate, List *newColDefau
 
 		attTup->atttypid = targettype;
 		attTup->atttypmod = targettypmod;
-		attTup->attcollation = targetcollid;
-		if (OidIsValid(targetcollid))
-			attTup->attcollation = targetcollid;
-		else
-			attTup->attcollation = tform->typcollation;
+
+		/*
+		 * The target column should already be having a collation
+		 * associated with it due to explicit COLLATE clause
+		 * If suppose collation is not valid or there is no explicit
+		 * COLLATE clause, we try to find column collation from
+		 * finished expession.
+		 */
+		if (!OidIsValid(attTup->attcollation) || !colDef->hasCollClause)
+		{
+			Oid	targetcollid;
+
+			/* take care of collations in the finished expression */
+			assign_expr_collations(pstate, expr);
+			targetcollid = exprCollation(expr);
+
+			if (OidIsValid(targetcollid))
+				attTup->attcollation = targetcollid;
+			else
+				attTup->attcollation = tform->typcollation;
+		}
+
 		attTup->attndims = tform->typndims;
 		attTup->attlen = tform->typlen;
 		attTup->attbyval = tform->typbyval;
