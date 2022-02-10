@@ -37,3 +37,237 @@ binary#!#binary#!#binary#!#binary#!#tinyint#!#smallint#!#int#!#bigint
 ~~END~~
 
 
+-- Create table with rowversion column
+create table t1(id int, rv rowversion);
+go
+
+-- A table can only have one rowversion column
+create table t2(id int, rv1 rowversion, rv2 rowversion);
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Only one rowversion column is allowed in a table.)~~
+
+
+-- Insert into a rowversion column is not allowed
+insert into t1(id, rv) values(1,2);
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Cannot insert an explicit value into a rowversion column.)~~
+
+
+-- Valid insert
+insert into t1(id) values(1);
+insert into t1(id) values(2);
+go
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+
+-- Varify that rowversion column value equals xmin
+select case when rv = xmin then 'equal' else 'not-equal' end from t1;
+go
+~~START~~
+text
+equal
+equal
+~~END~~
+
+
+-- Test with CTE
+with mycte (a, b)
+as (select t1.* from t1)
+select case when x.b = y.rv then 'equal' else 'not-equal' end
+				from mycte x inner join t1 y on x.a = y.id;
+go
+~~START~~
+text
+equal
+equal
+~~END~~
+
+
+-- Test view
+create view v1 as select id, rv from t1;
+go
+select case when x.rv = y.rv then 'equal' else 'not-equal' end
+				from v1 x inner join t1 y on x.id = y.id;
+go
+~~START~~
+text
+equal
+equal
+~~END~~
+
+
+drop view v1;
+go
+
+-- Test with tvf
+create function tvf(@x int) returns table as return select id, rv from t1;
+go
+
+select case when f.rv = t.rv then 'equal' else 'not-equal' end
+                from tvf(1) f inner join t1 t on f.id = t.id;
+go
+~~START~~
+text
+equal
+equal
+~~END~~
+
+
+drop function tvf;
+go
+
+-- function return type can not be rowversion
+create function tvf(@x int) returns rowversion as begin return cast(@x as rowversion) end;
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: The rowversion data type is invalid for return values.)~~
+
+
+-- function parameter types can not be rowversion
+create function tvf(@x int, @y rowversion) returns int as begin return @x end;
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Parameter or variable "@y" has an invalid data type.)~~
+
+
+-- Updating a rowversion column is not allowed
+update t1 set rv = 2 where id = 1;
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Cannot update a rowversion column.)~~
+
+
+-- Test SELECT INTO
+select * into t2 from t1;
+go
+select case when rv = xmin then 'equal' else 'not-equal' end from t2;
+go
+~~START~~
+text
+equal
+equal
+~~END~~
+
+
+-- SELECT INTO should not result in multiple rowversion columns in new table
+select * into t3 from t1, t2;
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Only one rowversion column is allowed in a table.)~~
+
+
+-- Cleanup
+drop table t1;
+drop table t2;
+go
+
+-- NULL, NOT-NULL and DEFAULT constraints are allowed on rowversion column
+create table t1(id int, rv rowversion null);
+go
+drop table t1;
+go
+
+create table t1(id int, rv rowversion not null);
+go
+drop table t1;
+go
+
+create table t1(id int, rv rowversion default 50);
+go
+drop table t1;
+go
+
+-- All other constraints should not be allowed
+create table t1(id int, rv rowversion primary key);
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Primary key constraint is not supported on a rowversion column.)~~
+
+
+create table t1(a int primary key);
+go
+
+create table t2(id int, [RV] rowversion, foreign key(rv) references t1(a));
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Foreign key constraint is not supported on a rowversion column.)~~
+
+
+create table t2(id int, rv rowversion not null unique);
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Unique constraint is not supported on a rowversion column.)~~
+
+
+create table t2(id int, rv rowversion check(rv > 50));
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Cannot use rowversion column in check constraint expression.)~~
+
+
+drop table t1;
+go
+
+-- creating computed column from rowversion column should not be allowed
+create table t1(id int, rv rowversion, rv2 as (rv+2));
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Cannot use rowversion column in computed column expression.)~~
+
+
+create table t1([ID] int, [RV] rowversion);
+go
+
+-- Changing type of a column to rowversion should not be allowed
+alter table t1 alter column id rowversion;
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Cannot alter column "id" to be data type rowversion.)~~
+
+
+-- Changing type of a rowversion column is not allowed
+alter table t1 alter column rv int;
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Cannot alter column "rv" because it is rowversion.)~~
+
+
+drop table t1;
+go
+
+-- Test @@DBTS
+create table t1(id int, rv rowversion);
+go
+
+insert into t1(id) values(1);
+go
+~~ROW COUNT: 1~~
+
+
+select case when @@dbts = rv + 1 then 'ok' else 'not ok' end from t1;
+go
+~~START~~
+text
+ok
+~~END~~
+
+
+drop table t1;
+go

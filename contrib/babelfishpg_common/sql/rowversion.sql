@@ -132,6 +132,14 @@ LANGUAGE C IMMUTABLE STRICT PARALLEL SAFE;
 CREATE CAST (INT4 AS sys.ROWVERSION)
 WITH FUNCTION sys.int4rowversion (INT4, integer, boolean) AS ASSIGNMENT;
 
+CREATE OR REPLACE FUNCTION sys.xidrowversion(XID, integer, boolean)
+RETURNS sys.ROWVERSION
+AS 'babelfishpg_common', 'int4rowversion'
+LANGUAGE C IMMUTABLE STRICT PARALLEL SAFE;
+
+CREATE CAST (XID AS sys.ROWVERSION)
+WITH FUNCTION sys.xidrowversion (XID, integer, boolean) AS IMPLICIT;
+
 CREATE OR REPLACE FUNCTION sys.int8rowversion(INT8, integer, boolean)
 RETURNS sys.ROWVERSION
 AS 'babelfishpg_common', 'int8rowversion'
