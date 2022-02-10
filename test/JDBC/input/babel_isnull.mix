@@ -120,5 +120,9 @@ GO
 SELECT ISNULL(null, CAST(0xfe AS VARBINARY))
 GO
 
+-- Test case for varbinary
+SELECT ISNULL(null, CAST(0xfe AS BINARY(10)))
+GO
+
 DROP TABLE test_args
 GO

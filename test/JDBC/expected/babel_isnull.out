@@ -211,5 +211,14 @@ FE
 ~~END~~
 
 
+-- Test case for varbinary
+SELECT ISNULL(null, CAST(0xfe AS BINARY(10)))
+GO
+~~START~~
+binary
+FE000000000000000000
+~~END~~
+
+
 DROP TABLE test_args
 GO
