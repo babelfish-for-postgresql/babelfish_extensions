@@ -22,6 +22,10 @@ LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 */
+/*
+Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
+SPDX-License-Identifier: Apache-2.0
+*/
 
 lexer grammar TSqlLexer;
 
@@ -35,6 +39,7 @@ ABORT:                                           A B O R T;
 ABORT_AFTER_WAIT:                                A B O R T  UNDERLINE  A F T E R  UNDERLINE  W A I T;
 ABSENT:                                          A B S E N T;
 ABSOLUTE:                                        A B S O L U T E;
+ACCELERATED_DATABASE_RECOVERY:                   A C C E L E R A T E D  UNDERLINE  D A T A B A S E  UNDERLINE  R E C O V E R Y;
 ACCENT_SENSITIVITY:                              A C C E N T  UNDERLINE  S E N S I T I V I T Y;
 ACCESS:                                          A C C E S S;
 ACTION:                                          A C T I O N;
@@ -52,6 +57,7 @@ AFTER:                                           A F T E R;
 AGGREGATE:                                       A G G R E G A T E;
 ALGORITHM:                                       A L G O R I T H M;
 ALL:                                             A L L;
+ALL_SPARSE_COLUMNS:                              A L L  UNDERLINE  S P A R S E  UNDERLINE  C O L U M N S;
 ALLOWED:                                         A L L O W E D;
 ALLOW_CONNECTIONS:                               A L L O W  UNDERLINE  C O N N E C T I O N S;
 ALLOW_ENCRYPTED_VALUE_MODIFICATIONS:             A L L O W  UNDERLINE  E N C R Y P T E D  UNDERLINE  V A L U E  UNDERLINE  M O D I F I C A T I O N S;
@@ -152,6 +158,7 @@ CHECKSUM:                                        C H E C K S U M;
 CHECKSUM_AGG:                                    C H E C K S U M  UNDERLINE  A G G;
 CHECK_EXPIRATION:                                C H E C K  UNDERLINE  E X P I R A T I O N;
 CHECK_POLICY:                                    C H E C K  UNDERLINE  P O L I C Y;
+CLASSIFIER:                                      C L A S S I F I E R;
 CLASSIFIER_FUNCTION:                             C L A S S I F I E R  UNDERLINE  F U N C T I O N;
 CLEANUP:                                         C L E A N U P;
 CLEANUP_POLICY:                                  C L E A N U P  UNDERLINE  P O L I C Y;
@@ -163,9 +170,11 @@ COALESCE:                                        C O A L E S C E;
 COLLATE:                                         C O L L A T E;
 COLLECTION:                                      C O L L E C T I O N;
 COLUMN:                                          C O L U M N;
+COLUMN_SET:                                      C O L U M N  UNDERLINE  S E T;
 COLUMNS:                                         C O L U M N S;
 COLUMNSTORE:                                     C O L U M N S T O R E;
 COLUMN_MASTER_KEY:                               C O L U M N  UNDERLINE  M A S T E R  UNDERLINE  K E Y;
+COLUMN_ENCRYPTION_KEY:                           C O L U M N  UNDERLINE  E N C R Y P T I O N  UNDERLINE  K E Y;
 COMMIT:                                          C O M M I T;
 COMMITTED:                                       C O M M I T T E D;
 COMPATIBILITY_LEVEL:                             C O M P A T I B I L I T Y  UNDERLINE  L E V E L;
@@ -258,6 +267,7 @@ DES:                                             D E S;
 DESC:                                            D E S C;
 DESCRIPTION:                                     D E S C R I P T I O N;
 DESX:                                            D E S X;
+DETERMINISTIC:                                   D E T E R M I N I S T I C;
 DHCP:                                            D H C P;
 DIAGNOSTICS:                                     D I A G N O S T I C S;
 DIALOG:                                          D I A L O G;
@@ -271,6 +281,7 @@ DISK_DRIVE:                                      [A-Z][:];
 DISTINCT:                                        D I S T I N C T;
 DISTRIBUTED:                                     D I S T R I B U T E D;
 DISTRIBUTED_AGG:                                 D I S T R I B U T E D  UNDERLINE  A G G;
+DISTRIBUTION:                                    D I S T R I B U T I O N;
 DOCUMENT:                                        D O C U M E N T;
 DOLLAR_ACTION:                                   DOLLAR A C T I O N;
 DOLLAR_EDGE_ID:                                  DOLLAR E D G E  UNDERLINE  I D;    // graph
@@ -293,8 +304,10 @@ EMPTY:                                           E M P T Y;
 ENABLE:                                          E N A B L E;
 ENABLED:                                         E N A B L E D;
 ENABLE_BROKER:                                   E N A B L E  UNDERLINE  B R O K E R;
+ENCRYPTED:                                       E N C R Y P T E D;
 ENCRYPTED_VALUE:                                 E N C R Y P T E D  UNDERLINE  V A L U E;
 ENCRYPTION:                                      E N C R Y P T I O N;
+ENCRYPTION_TYPE:                                 E N C R Y P T I O N UNDERLINE T Y P E;
 ENCODING:                                        E N C O D I N G;
 END:                                             E N D;
 ENDPOINT:                                        E N D P O I N T;
@@ -356,6 +369,7 @@ FMTONLY:                                         F M T O N L Y;
 FN:                                              F N;
 FOLLOWING:                                       F O L L O W I N G;
 FOR:                                             F O R;
+FOR_APPEND:                                      F O R UNDERLINE A P P E N D;
 FORCE:                                           F O R C E;
 FORCED:                                          F O R C E D;
 FORCEPLAN:                                       F O R C E P L A N;
@@ -492,7 +506,6 @@ LOCAL_SERVICE_NAME:                              L O C A L  UNDERLINE  S E R V I
 LOCATION:                                        L O C A T I O N;
 LOCK:                                            L O C K;
 LOCK_ESCALATION:                                 L O C K  UNDERLINE  E S C A L A T I O N;
-LOCK_TIMEOUT:                                    L O C K  UNDERLINE  T I M E O U T;
 LOG:                                             L O G;
 LOGIN:                                           L O G I N;
 LOOP:                                            L O O P;
@@ -593,6 +606,7 @@ NOWAIT:                                          N O W A I T;
 NO_CHECKSUM:                                     N O  UNDERLINE  C H E C K S U M;
 NO_COMPRESSION:                                  N O  UNDERLINE  C O M P R E S S I O N;
 NO_EVENT_LOSS:                                   N O  UNDERLINE  E V E N T  UNDERLINE  L O S S;
+NO_LOG:                                          N O  UNDERLINE  L O G;
 NO_PERFORMANCE_SPOOL:                            N O  UNDERLINE  P E R F O R M A N C E  UNDERLINE  S P O O L;
 NO_TRUNCATE:                                     N O  UNDERLINE  T R U N C A T E;
 NO_WAIT:                                         N O  UNDERLINE  W A I T;
@@ -659,7 +673,8 @@ PERIOD:                                          P E R I O D;
 PERMISSION_SET:                                  P E R M I S S I O N  UNDERLINE  S E T;
 PERSISTED:                                       P E R S I S T E D;
 PERSIST_SAMPLE_PERCENT:                          P E R S I S T  UNDERLINE  S A M P L E  UNDERLINE  P E R C E N T;
-PERSISTENT_LOG_BUFFER:                           P E R S I S T E N T UNDERLINE L O G UNDERLINE B U F F E R;
+PERSISTENT_LOG_BUFFER:                           P E R S I S T E N T  UNDERLINE  L O G  UNDERLINE  B U F F E R;
+PERSISTENT_VERSION_STORE_FILEGROUP:              P E R S I S T E N T  UNDERLINE  V E R S I O N  UNDERLINE  S T O R E  UNDERLINE  F I L E G R O U P;
 PER_CPU:                                         P E R  UNDERLINE  C P U;
 PER_DB:                                          P E R  UNDERLINE  D B;
 PER_NODE:                                        P E R  UNDERLINE  N O D E;
@@ -706,6 +721,7 @@ QUEUE_DELAY:                                     Q U E U E  UNDERLINE  D E L A Y
 QUOTED_IDENTIFIER:                               Q U O T E D  UNDERLINE  I D E N T I F I E R;
 R:                                               [Rr];
 RAISERROR:                                       R A I S E R R O R;
+RANDOMIZED:                                      R A N D O M I Z E D;
 RANGE:                                           R A N G E;
 RANK:                                            R A N K;
 RAW:                                             R A W;
@@ -774,6 +790,7 @@ ROLE:                                            R O L E;
 ROLLBACK:                                        R O L L B A C K;
 ROLLUP:                                          R O L L U P;
 ROOT:                                            R O O T;
+ROUND_ROBIN:                                     R O U N D UNDERLINE R O B I N;
 ROUTE:                                           R O U T E;
 ROW:                                             R O W;
 ROWCOUNT:                                        R O W C O U N T;
@@ -925,6 +942,7 @@ TIES:                                            T I E S;
 TIME:                                            T I M E;
 TIMEOUT:                                         T I M E O U T;
 TIMER:                                           T I M E R;
+TIMESTAMP:                                       T I M E S T A M P;
 TINYINT:                                         T I N Y I N T;
 TO:                                              T O;
 TOP:                                             T O P;
@@ -1033,14 +1051,16 @@ VARCHAR:                                         V A R C H A R;
 NVARCHAR:                                        N V A R C H A R;
 
 
-SPACE:              [ \t\r\n]+    -> skip;
+SPACE:              [ \t\r\n]+    -> channel(HIDDEN); // Thus error messages have spaces
 
-// the following are ignored by Tsql
+// the following are ignored by SQL Server
 CHAR_XA0_NBSP:      '\u00a0'      -> skip;   // non-breaking space
 CHAR_X08_BS:        '\u0008'      -> skip;   // backspace
 CHAR_X0B_VT:        '\u000b'      -> skip;   // vertical tab
 CHAR_X0C_FF:        '\u000c'      -> skip;   // form feed
 
+// https://en.wikipedia.org/wiki/Whitespace_character
+CHAR_ZWSP:          '\u200b'      -> skip;   // zero width space
 
 // https://docs.microsoft.com/en-us/sql/t-sql/language-elements/slash-star-comment-transact-sql
 COMMENT:            '/*' (COMMENT | .)*? '*/' -> skip;
@@ -1178,7 +1198,7 @@ fragment CURRENCY_SYMBOL
     | '\uffe6'  // Fullwidth Won
     ;
 
-// use standard alphabet + extended Latin only; add more later if desired.
+// use standard alphabet + extended Latin + Greek only; add more later if desired.
 fragment LETTER
     : '\u0041'..'\u005a'  // A-Z
     | '\u0061'..'\u007a'  // a-z
@@ -1187,14 +1207,14 @@ fragment LETTER
     | '\u00f8'..'\u00ff'
     | '\u0100'..'\u017f'  // Latin Extended-A
     | '\u0180'..'\u024f'  // Latin Extended-B
-//    | '\u0250'..'\u02ad'  // IPA extensions
-//    | '\u0386'            // Greek
-//    | '\u0388'..'\u038a'
-//    | '\u038c'
-//    | '\u038e'..'\u03a1'
-//    | '\u03a3'..'\u03ce'
-//    | '\u03d0'..'\u03d7'
-//    | '\u03da'..'\u03f3'
+    | '\u0250'..'\u02ad'  // IPA extensions
+    | '\u0386'            // Greek
+    | '\u0388'..'\u038a'
+    | '\u038c'
+    | '\u038e'..'\u03a1'
+    | '\u03a3'..'\u03ce'
+    | '\u03d0'..'\u03d7'
+    | '\u03da'..'\u03f3'
 //    | '\u0400'..'\u0481'  // Cyrillic
 //    | '\u048c'..'\u04c4'
 //    | '\u04c7'..'\u04c8'
@@ -1283,6 +1303,8 @@ fragment LETTER
 //    | '\uffda'..'\uffdc'
 //    | '\u10000'..'\u1F9FF'  //not supporting 4-byte chars
 //    | '\u20000'..'\u2FA1F'
-      ;
+    ;
 
-UNMATCHED_CHARACTER:  . ;
+
+UNMATCHED_CHARACTER: .+?
+    ;

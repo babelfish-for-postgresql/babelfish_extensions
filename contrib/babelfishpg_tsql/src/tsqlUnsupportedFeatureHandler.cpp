@@ -136,7 +136,7 @@ protected:
 		antlrcpp::Any visitCreate_queue(TSqlParser::Create_queueContext *ctx) override { handle(INSTR_UNSUPPORTED_TSQL_CREATE_QUEUE, "CREATE QUEUE", getLineAndPos(ctx)); return visitChildren(ctx); }
 		antlrcpp::Any visitAlter_queue(TSqlParser::Alter_queueContext *ctx) override { handle(INSTR_UNSUPPORTED_TSQL_ALTER_QUEUE, "ALTER QUEUE", getLineAndPos(ctx)); return visitChildren(ctx); }
 		antlrcpp::Any visitKill_statement(TSqlParser::Kill_statementContext *ctx) override { handle(INSTR_UNSUPPORTED_TSQL_KILL, "KILL", getLineAndPos(ctx)); return visitChildren(ctx); }
-		antlrcpp::Any visitMessage_statement(TSqlParser::Message_statementContext *ctx) override { handle(INSTR_UNSUPPORTED_TSQL_CREATE_MESSAGE, "CREATE MESSAGE", getLineAndPos(ctx)); return visitChildren(ctx); }
+		antlrcpp::Any visitCreate_message_type(TSqlParser::Create_message_typeContext *ctx) override { handle(INSTR_UNSUPPORTED_TSQL_CREATE_MESSAGE, "CREATE MESSAGE", getLineAndPos(ctx)); return visitChildren(ctx); }
 		antlrcpp::Any visitSecurity_statement(TSqlParser::Security_statementContext *ctx) override;
 		antlrcpp::Any visitSetuser_statement(TSqlParser::Setuser_statementContext *ctx) override { handle(INSTR_UNSUPPORTED_TSQL_SET_USER, "SET USER", getLineAndPos(ctx)); return visitChildren(ctx); }
 		antlrcpp::Any visitReconfigure_statement(TSqlParser::Reconfigure_statementContext *ctx) override { handle(INSTR_UNSUPPORTED_TSQL_RECONFIGURE, "RECONFIGURE", getLineAndPos(ctx)); return visitChildren(ctx); }
@@ -167,22 +167,29 @@ protected:
 		antlrcpp::Any visitOption_clause(TSqlParser::Option_clauseContext *ctx) override; // query hints
 		antlrcpp::Any visitJoin_hint(TSqlParser::Join_hintContext *ctx) override;
 		antlrcpp::Any visitGroup_by_item(TSqlParser::Group_by_itemContext *ctx) override;
+		antlrcpp::Any visitWith_expression(TSqlParser::With_expressionContext *ctx) override;
 
 		// functions and expression
+		antlrcpp::Any visitFunction_call(TSqlParser::Function_callContext *ctx) override;
 		antlrcpp::Any visitAggregate_windowed_function(TSqlParser::Aggregate_windowed_functionContext *ctx) override;
 		antlrcpp::Any visitRowset_function(TSqlParser::Rowset_functionContext *ctx) override { handle(INSTR_UNSUPPORTED_TSQL_ROWSET_FUNCTION, "rowset function", getLineAndPos(ctx)); return visitChildren(ctx); }
 		antlrcpp::Any visitTrigger_column_updated(TSqlParser::Trigger_column_updatedContext *ctx) override; // UPDATE() in trigger
-		antlrcpp::Any visitFREE_TEXT(TSqlParser::FREE_TEXTContext *ctx) override { handle(INSTR_UNSUPPORTED_TSQL_FREETEXT, "FREETEXT", getLineAndPos(ctx)); return visitChildren(ctx); }
-		antlrcpp::Any visitNextvaluefor(TSqlParser::NextvalueforContext *ctx) override { handle(INSTR_UNSUPPORTED_TSQL_NEXT_VALUE_FOR, "NEXT VALUE FOR", getLineAndPos(ctx)); return visitChildren(ctx); }
-		antlrcpp::Any visitOdbcscalar(TSqlParser::OdbcscalarContext *ctx) override { handle(INSTR_UNSUPPORTED_TSQL_ODBC_SCALAR_FUNCTION, "ODBC scalar functions", getLineAndPos(ctx)); return visitChildren(ctx); }
+		antlrcpp::Any visitFreetext_function(TSqlParser::Freetext_functionContext *ctx) override { handle(INSTR_UNSUPPORTED_TSQL_FREETEXT, "FREETEXT", getLineAndPos(ctx)); return visitChildren(ctx); }
+		antlrcpp::Any visitOdbc_scalar_function(TSqlParser::Odbc_scalar_functionContext *ctx) override { handle(INSTR_UNSUPPORTED_TSQL_ODBC_SCALAR_FUNCTION, "ODBC scalar functions", getLineAndPos(ctx)); return visitChildren(ctx); }
 		antlrcpp::Any visitPartition_function_call(TSqlParser::Partition_function_callContext *ctx) override { handle(INSTR_UNSUPPORTED_TSQL_PARTITION_FUNCTION, "partition function", getLineAndPos(ctx)); return visitChildren(ctx); }
-		antlrcpp::Any visitExpression(TSqlParser::ExpressionContext *ctx) override;
+
+		antlrcpp::Any visitDefault_expr(TSqlParser::Default_exprContext *ctx) override;
+		antlrcpp::Any visitHierarchyid_coloncolon(TSqlParser::Hierarchyid_coloncolonContext *ctx) override { handle(INSTR_UNSUPPORTED_TSQL_EXPRESSION_HIERARCHID, "hierarchid", getLineAndPos(ctx)); return visitChildren(ctx); }
+		antlrcpp::Any visitOdbc_literal_expr(TSqlParser::Odbc_literal_exprContext *ctx) override { handle(INSTR_UNSUPPORTED_TSQL_EXPRESSION_ODBC_LITERAL, "odbc literal", getLineAndPos(ctx)); return visitChildren(ctx); }
+		antlrcpp::Any visitDollar_action_expr(TSqlParser::Dollar_action_exprContext *ctx) override { handle(INSTR_UNSUPPORTED_TSQL_EXPRESSION_DOLLAR_ACTION, "$ACTION", getLineAndPos(ctx)); return visitChildren(ctx); }
 		antlrcpp::Any visitExecute_parameter(TSqlParser::Execute_parameterContext *ctx) override;
 
 		antlrcpp::Any visitFunc_proc_name_schema(TSqlParser::Func_proc_name_schemaContext *ctx) override;
 		antlrcpp::Any visitFunc_proc_name_database_schema(TSqlParser::Func_proc_name_database_schemaContext *ctx) override;
 		antlrcpp::Any visitFunc_proc_name_server_database_schema(TSqlParser::Func_proc_name_server_database_schemaContext *ctx) override;
 		antlrcpp::Any visitFull_object_name(TSqlParser::Full_object_nameContext *ctx) override;
+
+		antlrcpp::Any visitId(TSqlParser::IdContext *ctx) override;
 
 		// methods call (XML, hierachy, spatial)
 		antlrcpp::Any visitXml_nodes_method(TSqlParser::Xml_nodes_methodContext *ctx) override { handle(INSTR_UNSUPPORTED_TSQL_XML_NODES, "XML NODES", getLineAndPos(ctx)); return visitChildren(ctx); }
@@ -509,8 +516,8 @@ antlrcpp::Any TsqlUnsupportedFeatureHandlerImpl::visitColumn_inline_index(TSqlPa
 		handle_storage_partition(ctx->storage_partition_clause()[idx]);
 	}
 
-	if (ctx->CLUSTERED())
-		handle(INSTR_UNSUPPORTED_TSQL_COLUMN_OPTION_CLUSTERED, ctx->CLUSTERED(), &st_escape_hatch_index_clustering);
+	if (ctx->clustered() && ctx->clustered()->CLUSTERED())
+		handle(INSTR_UNSUPPORTED_TSQL_COLUMN_OPTION_CLUSTERED, ctx->clustered()->CLUSTERED(), &st_escape_hatch_index_clustering);
 
 	return visitChildren(ctx);
 }
@@ -657,8 +664,8 @@ antlrcpp::Any TsqlUnsupportedFeatureHandlerImpl::visitCreate_table(TSqlParser::C
 		if (ictx->ON())
 			handle_storage_partition(ictx->storage_partition_clause());
 
-		if (ictx->CLUSTERED())
-			handle(INSTR_UNSUPPORTED_TSQL_COLUMN_OPTION_CLUSTERED, ictx->CLUSTERED(), &st_escape_hatch_index_clustering);
+		if (ictx->clustered() && ictx->clustered()->CLUSTERED())
+			handle(INSTR_UNSUPPORTED_TSQL_COLUMN_OPTION_CLUSTERED, ictx->clustered()->CLUSTERED(), &st_escape_hatch_index_clustering);
 	}
 
 	return visitChildren(ctx);
@@ -679,7 +686,7 @@ antlrcpp::Any TsqlUnsupportedFeatureHandlerImpl::visitAlter_table(TSqlParser::Al
 	{
 		Assert(ctx->column_definition());
 		auto cdctx = ctx->column_definition();
-		if (!cdctx->COLLATE().empty())
+		if (!cdctx->collation().empty())
 			handle(INSTR_UNSUPPORTED_TSQL_ALTER_TABLE_ALTER_COLUMN_COLLATE, "COLLATE in ALTER TABLE ALTER COLUMN", getLineAndPos(cdctx));
 		if (!cdctx->null_notnull().empty())
 		{
@@ -750,8 +757,8 @@ antlrcpp::Any TsqlUnsupportedFeatureHandlerImpl::visitCreate_database(TSqlParser
 	if (!ctx->ON().empty())
 		handle(INSTR_UNSUPPORTED_TSQL_CREATE_DATABASE_ON, "CREATE DATABASE ON <database-file-spec>", getLineAndPos(ctx->ON()[0]));
 
-	if (ctx->COLLATE())
-		handle(INSTR_UNSUPPORTED_TSQL_CREATE_DATABASE_COLLATE, ctx->COLLATE());
+	if (ctx->collation())
+		handle(INSTR_UNSUPPORTED_TSQL_CREATE_DATABASE_COLLATE, "COLLATE", getLineAndPos(ctx->collation()));
 
 	if (ctx->WITH())
 	{
@@ -992,18 +999,6 @@ antlrcpp::Any TsqlUnsupportedFeatureHandlerImpl::visitDdl_statement(TSqlParser::
 
 antlrcpp::Any TsqlUnsupportedFeatureHandlerImpl::visitSelect_statement(TSqlParser::Select_statementContext *ctx)
 {
-	auto qctx = get_query_specification(ctx);
-	if (qctx && qctx->select_list())
-	{
-		for (auto elem : qctx->select_list()->select_list_elem())
-		{
-			if (elem->column_elem() && elem->column_elem()->DOLLAR_IDENTITY())
-				handle(INSTR_UNSUPPORTED_TSQL_SELECT_DOLLAR_IDENTITY, "$IDENTITY", getLineAndPos(elem));
-			if (elem->column_elem() && elem->column_elem()->DOLLAR_ROWGUID())
-				handle(INSTR_UNSUPPORTED_TSQL_SELECT_DOLLAR_ROWGUID, "$ROWGUID", getLineAndPos(elem));
-		}
-	}
-
 	return visitChildren(ctx);
 }
 
@@ -1053,8 +1048,6 @@ antlrcpp::Any TsqlUnsupportedFeatureHandlerImpl::visitSet_statement(TSqlParser::
 				handle(INSTR_UNSUPPORTED_TSQL_OPTION_FIPS_FLAGGER, option->FIPS_FLAGGER(), &st_escape_hatch_session_settings);
 			if (option->FORCEPLAN())
 				handle(INSTR_UNSUPPORTED_TSQL_OPTION_FORCEPLAN, option->FORCEPLAN(), &st_escape_hatch_session_settings);
-			if (option->OFFSETS())
-				handle(INSTR_UNSUPPORTED_TSQL_OPTION_OFFSETS, option->OFFSETS(), &st_escape_hatch_session_settings);
 			if (option->PARSEONLY())
 				handle(INSTR_UNSUPPORTED_TSQL_OPTION_PARSEONLY, option->PARSEONLY(), &st_escape_hatch_session_settings);
 			if (option->REMOTE_PROC_TRANSACTIONS())
@@ -1065,8 +1058,6 @@ antlrcpp::Any TsqlUnsupportedFeatureHandlerImpl::visitSet_statement(TSqlParser::
 				handle(INSTR_UNSUPPORTED_TSQL_OPTION_SHOWPLAN_TEXT, option->SHOWPLAN_TEXT(), &st_escape_hatch_session_settings);
 			if (option->SHOWPLAN_XML())
 				handle(INSTR_UNSUPPORTED_TSQL_OPTION_SHOWPLAN_XML, option->SHOWPLAN_XML(), &st_escape_hatch_session_settings);
-			if (option->STATISTICS())
-				handle(INSTR_UNSUPPORTED_TSQL_OPTION_STATISTICS, option->STATISTICS(), &st_escape_hatch_session_settings);
 		}
 
 		if (!sctx->id().empty())
@@ -1084,6 +1075,9 @@ antlrcpp::Any TsqlUnsupportedFeatureHandlerImpl::visitSet_statement(TSqlParser::
 
 			/* let invalid SET-option be handled by tsqlIface */
 		}
+
+		if (sctx->OFFSETS())
+			handle(INSTR_UNSUPPORTED_TSQL_OPTION_OFFSETS, sctx->OFFSETS(), &st_escape_hatch_session_settings);
 
 		if (sctx->STATISTICS())
 			handle(INSTR_UNSUPPORTED_TSQL_OPTION_STATISTICS, sctx->STATISTICS(), &st_escape_hatch_session_settings);
@@ -1146,8 +1140,6 @@ antlrcpp::Any TsqlUnsupportedFeatureHandlerImpl::visitSecurity_statement(TSqlPar
 		handle(INSTR_UNSUPPORTED_TSQL_OPEN_KEY, "OPEN KEY", getLineAndPos(ctx));
 	else if (ctx->close_key())
 		handle(INSTR_UNSUPPORTED_TSQL_CLOSE_KEY, "CLOSE KEY", getLineAndPos(ctx));
-	else if (ctx->create_key())
-		handle(INSTR_UNSUPPORTED_TSQL_CREATE_KEY, "CREATE KEY", getLineAndPos(ctx));
 	else if (ctx->create_certificate())
 		handle(INSTR_UNSUPPORTED_TSQL_CREATE_CERTIFICATE, "CREATE CERTIFICATE", getLineAndPos(ctx));
 
@@ -1210,6 +1202,20 @@ antlrcpp::Any TsqlUnsupportedFeatureHandlerImpl::visitGroup_by_item(TSqlParser::
 	return visitChildren(ctx);
 }
 
+antlrcpp::Any TsqlUnsupportedFeatureHandlerImpl::visitWith_expression(TSqlParser::With_expressionContext *ctx)
+{
+	if (ctx->XMLNAMESPACES())
+		handle(INSTR_UNSUPPORTED_TSQL_WITH_XMLNAMESPACES, "WITH XMLNAMESPACES", getLineAndPos(ctx));
+	return visitChildren(ctx);
+}
+
+antlrcpp::Any TsqlUnsupportedFeatureHandlerImpl::visitFunction_call(TSqlParser::Function_callContext *ctx)
+{
+	if (ctx->NEXT())
+		handle(INSTR_UNSUPPORTED_TSQL_NEXT_VALUE_FOR, "NEXT VALUE FOR", getLineAndPos(ctx));
+	return visitChildren(ctx);
+}
+
 antlrcpp::Any TsqlUnsupportedFeatureHandlerImpl::visitAggregate_windowed_function(TSqlParser::Aggregate_windowed_functionContext *ctx)
 {
 	if (ctx->STDEV())
@@ -1228,20 +1234,11 @@ antlrcpp::Any TsqlUnsupportedFeatureHandlerImpl::visitAggregate_windowed_functio
 	return visitChildren(ctx);
 }
 
-antlrcpp::Any TsqlUnsupportedFeatureHandlerImpl::visitExpression(TSqlParser::ExpressionContext *ctx)
+antlrcpp::Any TsqlUnsupportedFeatureHandlerImpl::visitDefault_expr(TSqlParser::Default_exprContext *ctx)
 {
-	if (ctx->DEFAULT())
-	{
-		TSqlParser::Expression_listContext *pctx = dynamic_cast<TSqlParser::Expression_listContext *>(ctx->parent);
-		if (!pctx || dynamic_cast<TSqlParser::Table_value_constructorContext *>(pctx->parent) == nullptr) /* if DEFAULT expression is used for VALUES ..., accept it */
-			handle(INSTR_UNSUPPORTED_TSQL_EXPRESSION_DEFAULT, ctx->DEFAULT());
-	}
-	if (ctx->hierarchyid_coloncolon_methods())
-		handle(INSTR_UNSUPPORTED_TSQL_EXPRESSION_HIERARCHID, "hierarchid", getLineAndPos(ctx->hierarchyid_coloncolon_methods()));
-	if (ctx->odbc_literal())
-		handle(INSTR_UNSUPPORTED_TSQL_EXPRESSION_ODBC_LITERAL, "odbc literal", getLineAndPos(ctx->odbc_literal()));
-	if (ctx->DOLLAR_ACTION())
-		handle(INSTR_UNSUPPORTED_TSQL_EXPRESSION_DOLLAR_ACTION, "$ACTION", getLineAndPos(ctx->DOLLAR_ACTION()));
+	TSqlParser::Expression_listContext *pctx = dynamic_cast<TSqlParser::Expression_listContext *>(ctx->parent);
+	if (!pctx || dynamic_cast<TSqlParser::Table_value_constructorContext *>(pctx->parent) == nullptr) /* if DEFAULT expression is used for VALUES ..., accept it */
+		handle(INSTR_UNSUPPORTED_TSQL_EXPRESSION_DEFAULT, ctx->DEFAULT());
 	return visitChildren(ctx);
 }
 
@@ -1298,6 +1295,15 @@ antlrcpp::Any TsqlUnsupportedFeatureHandlerImpl::visitFull_object_name(TSqlParse
 	if (ctx->DOT().size() >= 3 && ctx->server) /* server.db.schema.funcname */
 		handle(INSTR_UNSUPPORTED_TSQL_SERVERNAME_IN_NAME, "servername", getLineAndPos(ctx));
 
+	return visitChildren(ctx);
+}
+
+antlrcpp::Any TsqlUnsupportedFeatureHandlerImpl::visitId(TSqlParser::IdContext *ctx)
+{
+	if (ctx->DOLLAR_IDENTITY())
+		handle(INSTR_UNSUPPORTED_TSQL_SELECT_DOLLAR_IDENTITY, "$IDENTITY", getLineAndPos(ctx));
+	if (ctx->DOLLAR_ROWGUID())
+		handle(INSTR_UNSUPPORTED_TSQL_SELECT_DOLLAR_ROWGUID, "$ROWGUID", getLineAndPos(ctx));
 	return visitChildren(ctx);
 }
 
