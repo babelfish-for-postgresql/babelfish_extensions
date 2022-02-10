@@ -1,10 +1,10 @@
-create table triggerTab1(c1 int, c2 varchar(30))
+create table triggerTab1(c1 int, c2 varchar(30), check (c1 < 5))
 go
 
-create table triggerTab2(c1 int)
+create table triggerTab2(c1 int, check (c1 < 5))
 go
 
-create table triggerTab3(c1 int)
+create table triggerTab3(c1 int, check (c1 < 5))
 go
 
 insert into triggerTab1 values(1, 'first')
@@ -106,6 +106,121 @@ int#!#varchar
 ~~ROW COUNT: 1~~
 
 commit;
+go
+
+update triggerTab2 set c1 = 6;
+GO
+~~ERROR (Code: 547)~~
+
+~~ERROR (Message: The UPDATE statement conflicted with the CHECK constraint "CK__triggerTab2__c1__062DE679". The conflict occurred in database "test_1", table "dbo.triggerTab2", column 'c1'.)~~
+
+
+begin tran
+go
+update triggerTab2 set c1 = 6;
+go
+~~ERROR (Code: 547)~~
+
+~~ERROR (Message: The UPDATE statement conflicted with the CHECK constraint "CK__triggerTab2__c1__062DE679". The conflict occurred in database "test_1", table "dbo.triggerTab2", column 'c1'.)~~
+
+if (@@trancount > 0) rollback;
+go
+
+begin tran
+go
+insert into triggerTab1 values(6, 'six');
+go
+~~ERROR (Code: 547)~~
+
+~~ERROR (Message: The INSERT statement conflicted with the CHECK constraint "CK__triggerTab1__c1__04459E07". The conflict occurred in database "test_1", table "dbo.triggerTab1", column 'c1'.)~~
+
+if (@@trancount > 0) rollback;
+go
+
+drop trigger txnTrig1;
+go
+
+create trigger txnTrig1 on triggerTab1 for insert as
+begin tran;
+update triggerTab2 set c1 = 6;
+commit;
+select * from triggerTab2 order by c1;
+select * from inserted;
+go
+
+insert into triggerTab1 values(2, 'second');
+go
+~~ERROR (Code: 547)~~
+
+~~ERROR (Message: The UPDATE statement conflicted with the CHECK constraint "CK__triggerTab2__c1__062DE679". The conflict occurred in database "test_1", table "dbo.triggerTab2", column 'c1'.)~~
+
+
+begin tran;
+go
+insert into triggerTab1 values(3, 'third');
+go
+~~ERROR (Code: 547)~~
+
+~~ERROR (Message: The UPDATE statement conflicted with the CHECK constraint "CK__triggerTab2__c1__062DE679". The conflict occurred in database "test_1", table "dbo.triggerTab2", column 'c1'.)~~
+
+if (@@trancount > 0) rollback;
+go
+
+drop trigger txnTrig1;
+go
+
+drop trigger txnTrig3;
+go
+
+create trigger txnTrig1 on triggerTab1 for insert as
+begin tran;
+update triggerTab2 set c1 = 2;
+commit;
+select * from triggerTab2 order by c1;
+select * from inserted;
+go
+
+create trigger txnTrig3 on triggerTab3 for delete as
+select * from triggerTab3 order by c1;
+insert into triggerTab3 values(6);
+select * from deleted;
+rollback tran sp2;
+go
+
+insert into triggerTab1 values(2, 'second');
+go
+~~START~~
+int
+~~END~~
+
+~~ERROR (Code: 547)~~
+
+~~ERROR (Message: The INSERT statement conflicted with the CHECK constraint "CK__triggerTab3__c1__08162EEB". The conflict occurred in database "test_1", table "dbo.triggerTab3", column 'c1'.)~~
+
+
+begin tran;
+go
+insert into triggerTab1 values(3, 'third');
+go
+~~START~~
+int
+~~END~~
+
+~~ERROR (Code: 547)~~
+
+~~ERROR (Message: The INSERT statement conflicted with the CHECK constraint "CK__triggerTab3__c1__08162EEB". The conflict occurred in database "test_1", table "dbo.triggerTab3", column 'c1'.)~~
+
+if (@@trancount > 0) rollback;
+go
+
+drop trigger txnTrig3;
+go
+
+create trigger txnTrig3 on triggerTab3 for delete as
+select * from triggerTab3 order by c1;
+insert into triggerTab3 values(1);
+select * from deleted;
+rollback tran sp2;
 go
 
 drop trigger txnTrig1;
@@ -280,6 +395,109 @@ int
 ~~ERROR (Message: The transaction ended in the trigger. The batch has been aborted.)~~
 
 
+drop procedure triggerProc2;
+go
+
+drop trigger txnTrig1
+go
+
+create trigger txnTrig1 on triggerTab1 for insert as
+commit;
+update triggerTab2 set c1 = 6;
+select * from triggerTab2 order by c1;
+go
+
+create procedure triggerProc2 as
+begin tran;
+exec triggerProc1;
+insert into triggerTab1 values(6, 'six');
+commit;
+go
+
+exec triggerProc2;
+go
+~~ERROR (Code: 547)~~
+
+~~ERROR (Message: The UPDATE statement conflicted with the CHECK constraint "CK__triggerTab2__c1__062DE679". The conflict occurred in database "test_1", table "dbo.triggerTab2", column 'c1'.)~~
+
+
+if (@@trancount>0) commit;
+go
+
+drop trigger txnTrig1;
+go
+
+create trigger txnTrig1 on triggerTab1 for insert as
+begin tran;
+update triggerTab2 set c1 = 2;
+commit;
+select * from triggerTab2 order by c1;
+select * from inserted;
+go
+
+drop procedure triggerProc1;
+go
+drop procedure triggerProc2;
+go
+
+create table tmp__1 (a int not null);
+go
+
+insert into tmp__1 values (1)
+go
+~~ROW COUNT: 1~~
+
+
+create procedure triggerProc1 as
+save tran sp1;
+insert into tmp__1 values (null);
+rollback tran sp1;
+go
+
+create procedure triggerProc2 as
+begin tran;
+exec triggerProc1;
+insert into triggerTab1 values(3, 'third');
+commit;
+go
+
+exec triggerProc2;
+go
+~~ERROR (Code: 515)~~
+
+~~ERROR (Message: Cannot insert the value NULL into column 'a', table 'test_1.dbo.tmp__1'; column does not allow nulls. INSERT fails.)~~
+
+~~START~~
+int
+~~END~~
+
+~~ROW COUNT: 1~~
+
+~~START~~
+int
+1
+~~END~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~START~~
+int
+2
+~~END~~
+
+~~START~~
+int#!#varchar
+3#!#third
+~~END~~
+
+~~ROW COUNT: 1~~
+
+
+drop table tmp__1 
+go
+
 create table triggerErrorTab(c1 int not null);
 go
 
@@ -292,7 +510,7 @@ insert into triggerErrorTab values(1);
 go
 ~~ERROR (Code: 515)~~
 
-~~ERROR (Message: null value in column "c1" of relation "triggererrortab" violates not-null constraint)~~
+~~ERROR (Message: Cannot insert the value NULL into column 'c1', table 'test_1.dbo.triggerErrorTab'; column does not allow nulls. INSERT fails.)~~
 
 
 
@@ -388,4 +606,395 @@ go
 drop table triggerTab3;
 go
 drop table triggerErrorTab
+go
+
+create table triggerTab1(c1 int, c2 varchar(30), check (c1 < 5))
+go
+
+create table triggerTab2(c1 int, check (c1 < 5))
+go
+
+create table triggerTab3(c1 int, check (c1 < 5))
+go
+
+insert into triggerTab1 values(1, 'first')
+go
+~~ROW COUNT: 1~~
+
+
+insert into triggerTab2 values(1)
+go
+~~ROW COUNT: 1~~
+
+
+insert into triggerTab3 values(1)
+go
+~~ROW COUNT: 1~~
+
+
+create trigger txnTrig1 on triggerTab1 for insert as
+insert into triggerTab2 values (2);
+go
+
+create trigger txnTrig2 on triggerTab2 for insert as
+insert into triggerTab3 values (2);
+go
+
+create trigger txnTrig3 on triggerTab3 for insert as
+select 'nest level 3'
+go
+
+insert into triggerTab1 values(2, 'two')
+go
+~~START~~
+varchar
+nest level 3
+~~END~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+
+begin tran
+go
+insert into triggerTab1 values(6, 'six')
+go
+~~ERROR (Code: 547)~~
+
+~~ERROR (Message: The INSERT statement conflicted with the CHECK constraint "CK__triggerTab1__c1__24B26D99". The conflict occurred in database "test_1", table "dbo.triggerTab1", column 'c1'.)~~
+
+if (@@trancount > 0) rollback tran;
+go
+
+select * from triggerTab1;
+GO
+~~START~~
+int#!#varchar
+1#!#first
+2#!#two
+~~END~~
+
+
+select * from triggerTab2;
+GO
+~~START~~
+int
+1
+2
+~~END~~
+
+
+select * from triggerTab3;
+GO
+~~START~~
+int
+1
+2
+~~END~~
+
+
+drop trigger txnTrig1;
+go
+
+create trigger txnTrig1 on triggerTab1 for insert as
+insert into triggerTab2 values (6);
+go
+
+insert into triggerTab2 values(2)
+go
+~~START~~
+varchar
+nest level 3
+~~END~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+
+begin tran
+go
+insert into triggerTab2 values(6)
+go
+~~ERROR (Code: 547)~~
+
+~~ERROR (Message: The INSERT statement conflicted with the CHECK constraint "CK__triggerTab2__c1__269AB60B". The conflict occurred in database "test_1", table "dbo.triggerTab2", column 'c1'.)~~
+
+if (@@trancount > 0) rollback tran;
+go
+
+begin tran
+go
+insert into triggerTab1 values(3, 'three')
+go
+~~ERROR (Code: 547)~~
+
+~~ERROR (Message: The INSERT statement conflicted with the CHECK constraint "CK__triggerTab2__c1__269AB60B". The conflict occurred in database "test_1", table "dbo.triggerTab2", column 'c1'.)~~
+
+if (@@trancount > 0) rollback tran;
+go
+
+select * from triggerTab1;
+GO
+~~START~~
+int#!#varchar
+1#!#first
+2#!#two
+~~END~~
+
+
+select * from triggerTab2;
+GO
+~~START~~
+int
+1
+2
+2
+~~END~~
+
+
+select * from triggerTab3;
+GO
+~~START~~
+int
+1
+2
+2
+~~END~~
+
+
+drop trigger txnTrig1;
+go
+drop trigger txnTrig2;
+go
+
+create trigger txnTrig1 on triggerTab1 for insert as
+insert into triggerTab2 values (2);
+go
+
+create trigger txnTrig2 on triggerTab2 for insert as
+insert into triggerTab3 values (6);
+go
+
+insert into triggerTab3 values(2)
+go
+~~START~~
+varchar
+nest level 3
+~~END~~
+
+~~ROW COUNT: 1~~
+
+
+begin tran
+go
+insert into triggerTab3 values(6)
+go
+~~ERROR (Code: 547)~~
+
+~~ERROR (Message: The INSERT statement conflicted with the CHECK constraint "CK__triggerTab3__c1__2882FE7D". The conflict occurred in database "test_1", table "dbo.triggerTab3", column 'c1'.)~~
+
+if (@@trancount > 0) rollback tran;
+go
+
+begin tran
+go
+insert into triggerTab1 values(3, 'three')
+go
+~~ERROR (Code: 547)~~
+
+~~ERROR (Message: The INSERT statement conflicted with the CHECK constraint "CK__triggerTab3__c1__2882FE7D". The conflict occurred in database "test_1", table "dbo.triggerTab3", column 'c1'.)~~
+
+if (@@trancount > 0) rollback tran;
+go
+
+select * from triggerTab1;
+GO
+~~START~~
+int#!#varchar
+1#!#first
+2#!#two
+~~END~~
+
+select * from triggerTab2;
+GO
+~~START~~
+int
+1
+2
+2
+~~END~~
+
+select * from triggerTab3;
+GO
+~~START~~
+int
+1
+2
+2
+2
+~~END~~
+
+
+drop table triggerTab1;
+go
+drop table triggerTab2;
+go
+drop table triggerTab3;
+go
+
+create table triggerTab1(c1 int not null)
+go
+
+create table triggerTab2(c1 int not null)
+go
+
+create table triggerTab3(c1 int not null)
+go
+
+insert into triggerTab1 values(1)
+go
+~~ROW COUNT: 1~~
+
+
+insert into triggerTab2 values(1)
+go
+~~ROW COUNT: 1~~
+
+
+insert into triggerTab3 values(1)
+go
+~~ROW COUNT: 1~~
+
+
+create trigger txnTrig1 on triggerTab1 for insert as
+select 'nest level 1'
+insert into triggerTab2 values (2);
+go
+
+create trigger txnTrig2 on triggerTab2 for insert as
+select 'nest level 2'
+insert into triggerTab3 values (null);
+go
+
+create trigger txnTrig3 on triggerTab3 for insert as
+select 'nest level 3'
+go
+
+begin tran
+go
+insert into triggerTab1 values(2)
+go
+~~START~~
+varchar
+nest level 1
+~~END~~
+
+~~START~~
+varchar
+nest level 2
+~~END~~
+
+~~ERROR (Code: 515)~~
+
+~~ERROR (Message: Cannot insert the value NULL into column 'c1', table 'test_1.dbo.triggerTab3'; column does not allow nulls. INSERT fails.)~~
+
+if (@@trancount > 0) rollback tran;
+go
+
+begin tran
+go
+insert into triggerTab1 values(NULL)
+go
+~~ERROR (Code: 515)~~
+
+~~ERROR (Message: Cannot insert the value NULL into column 'c1', table 'test_1.dbo.triggerTab1'; column does not allow nulls. INSERT fails.)~~
+
+if (@@trancount > 0) rollback tran;
+go
+
+select * from triggerTab1;
+go
+~~START~~
+int
+1
+~~END~~
+
+select * from triggerTab2;
+go
+~~START~~
+int
+1
+~~END~~
+
+select * from triggerTab3;
+go
+~~START~~
+int
+1
+~~END~~
+
+
+drop trigger txnTrig1;
+go
+
+drop trigger txnTrig2;
+go
+
+create trigger txnTrig1 on triggerTab1 for insert as
+select 'nest level 1'
+insert into triggerTab2 values (NULL);
+go
+
+create trigger txnTrig2 on triggerTab2 for insert as
+select 'nest level 2'
+insert into triggerTab3 values (3);
+go
+
+begin tran
+go
+insert into triggerTab1 values(3)
+go
+~~START~~
+varchar
+nest level 1
+~~END~~
+
+~~ERROR (Code: 515)~~
+
+~~ERROR (Message: Cannot insert the value NULL into column 'c1', table 'test_1.dbo.triggerTab2'; column does not allow nulls. INSERT fails.)~~
+
+if (@@trancount > 0) rollback tran;
+go
+
+select * from triggerTab1;
+go
+~~START~~
+int
+1
+~~END~~
+
+select * from triggerTab2;
+go
+~~START~~
+int
+1
+~~END~~
+
+select * from triggerTab3;
+go
+~~START~~
+int
+1
+~~END~~
+
+
+drop table triggerTab1;
+go
+drop table triggerTab2;
+go
+drop table triggerTab3;
 go
