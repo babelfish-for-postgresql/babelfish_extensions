@@ -98,14 +98,14 @@ static PLtsql_var *build_cursor_variable(const char *curname, int lineno);
 static int read_extended_cursor_option(TSqlParser::Declare_cursor_optionsContext *ctx, int current_cursor_option);
 static PLtsql_stmt *makeDeclTableStmt(PLtsql_variable *var, PLtsql_type *type, int lineno);
 static void *makeReturnQueryStmt(TSqlParser::Select_statement_standaloneContext *ctx, bool itvf);
-static PLtsql_stmt *makeSpStatement(ParserRuleContext *sp_name, TSqlParser::Execute_statement_argContext *sp_args, int lineno, int return_code_dno);
+static PLtsql_stmt *makeSpStatement(const std::string& sp_name, TSqlParser::Execute_statement_argContext *sp_args, int lineno, int return_code_dno);
 static void makeSpParams(TSqlParser::Execute_statement_argContext *ctx, std::vector<tsql_exec_param *> &params);
 static tsql_exec_param *makeSpParam(TSqlParser::Execute_statement_arg_namedContext *ctx);
 static tsql_exec_param *makeSpParam(TSqlParser::Execute_statement_arg_unnamedContext *ctx);
 static int getVarno(tree::TerminalNode *localID);
 static int check_assignable(tree::TerminalNode *localID);
 static void check_dup_declare(const char *name);
-static bool is_sp_proc(ParserRuleContext *func_proc_name);
+static bool is_sp_proc(const std::string& func_proc_name);
 static bool string_matches(const char *str, const char *pattern);
 static void check_param_type(tsql_exec_param *param, bool is_output, Oid typoid, const char *param_str);
 static PLtsql_expr *getNthParamExpr(std::vector<tsql_exec_param *> &params, size_t n);
@@ -1256,40 +1256,45 @@ public:
 	// function/procedure call analysis
 	//////////////////////////////////////////////////////////////////////////////
 
-	void exitSCALAR_FUNCTION(TSqlParser::SCALAR_FUNCTIONContext *ctx) override
+	void exitFunction_call(TSqlParser::Function_callContext *ctx) override
 	{
-		/* analyze scalar function call */
-		if (ctx->func_proc_name_server_database_schema()->DOT().empty() && ctx->func_proc_name_server_database_schema()->id().back()->keyword()) /* built-in functions */
+		if (ctx->analytic_windowed_function())
 		{
-			auto id = ctx->func_proc_name_server_database_schema()->id().back();
+			auto actx = ctx->analytic_windowed_function();
+			Assert(actx);
 
-			if (id->keyword()->NULLIF()) /* NULLIF */
+			if (actx->PERCENTILE_CONT() || actx->PERCENTILE_DISC())
 			{
-				if (ctx->function_arg_list() && !ctx->function_arg_list()->expression().empty())
+				if (actx->over_clause())
 				{
-					auto first_arg = ctx->function_arg_list()->expression().front();
-					if (first_arg->constant() && first_arg->constant()->NULL_P())
-						throw PGErrorWrapperException(ERROR, ERRCODE_INVALID_PARAMETER_VALUE, "The first argument to NULLIF cannot be a constant NULL.", getLineAndPos(first_arg));
+					std::string funcName = actx->PERCENTILE_CONT() ? ::getFullText(actx->PERCENTILE_CONT()) : ::getFullText(actx->PERCENTILE_DISC());
+
+					if (actx->over_clause()->row_or_range_clause())
+						throw PGErrorWrapperException(ERROR, ERRCODE_INVALID_PARAMETER_VALUE, format_errmsg("%s cannot have a window frame", funcName.c_str()), getLineAndPos(actx->over_clause()->row_or_range_clause()));
+					else if (actx->over_clause()->order_by_clause())
+						throw PGErrorWrapperException(ERROR, ERRCODE_INVALID_PARAMETER_VALUE, format_errmsg("%s cannot have ORDER BY in OVER clause", funcName.c_str()), getLineAndPos(actx->over_clause()->order_by_clause()));
 				}
 			}
 		}
-	}
 
-	void exitANALYTIC_WINDOWED_FUNC(TSqlParser::ANALYTIC_WINDOWED_FUNCContext *ctx) override
-	{
-		auto actx = ctx->analytic_windowed_function();
-		Assert(actx);
-
-		if (actx->PERCENTILE_CONT() || actx->PERCENTILE_DISC())
+		/* analyze scalar function call */
+		if (ctx->func_proc_name_server_database_schema())
 		{
-			if (actx->over_clause())
-			{
-				std::string funcName = actx->PERCENTILE_CONT() ? ::getFullText(actx->PERCENTILE_CONT()) : ::getFullText(actx->PERCENTILE_DISC());
+			auto fpnsds = ctx->func_proc_name_server_database_schema();
 
-				if (actx->over_clause()->row_or_range_clause())
-					throw PGErrorWrapperException(ERROR, ERRCODE_INVALID_PARAMETER_VALUE, format_errmsg("%s cannot have a window frame", funcName.c_str()), getLineAndPos(actx->over_clause()->row_or_range_clause()));
-				else if (actx->over_clause()->order_by_clause())
-					throw PGErrorWrapperException(ERROR, ERRCODE_INVALID_PARAMETER_VALUE, format_errmsg("%s cannot have ORDER BY in OVER clause", funcName.c_str()), getLineAndPos(actx->over_clause()->order_by_clause()));
+			if (fpnsds->DOT().empty() && fpnsds->id().back()->keyword()) /* built-in functions */
+			{
+				auto id = fpnsds->id().back();
+
+				if (id->keyword()->NULLIF()) /* NULLIF */
+				{
+					if (ctx->function_arg_list() && !ctx->function_arg_list()->expression().empty())
+					{
+						auto first_arg = ctx->function_arg_list()->expression().front();
+						if (dynamic_cast<TSqlParser::Constant_exprContext*>(first_arg) && static_cast<TSqlParser::Constant_exprContext*>(first_arg)->constant()->NULL_P())
+							throw PGErrorWrapperException(ERROR, ERRCODE_INVALID_PARAMETER_VALUE, "The first argument to NULLIF cannot be a constant NULL.", getLineAndPos(first_arg));
+					}
+				}
 			}
 		}
 	}
@@ -1322,7 +1327,7 @@ public:
 			if (cdtctx && cdtctx->table_constraint())
 			{
 				TSqlParser::Column_def_table_constraintContext* prev_cdtctx = (prev_child ? dynamic_cast<TSqlParser::Column_def_table_constraintContext*>(prev_child) : nullptr);
-				if (prev_cdtctx && (prev_cdtctx->column_definition() || prev_cdtctx->materialized_column_definition()))
+				if (prev_cdtctx && prev_cdtctx->column_definition())
 					rewritten_query_fragment.emplace(std::make_pair(cdtctx->start->getStartIndex(), std::make_pair("", ","))); // add comma
 			}
 			prev_child = child;
@@ -1455,9 +1460,9 @@ private:
 public:
     void enterConstant(TSqlParser::ConstantContext *ctx) override
     {
-	if (ctx->STRING())
+	if (ctx->char_string() && ctx->char_string()->STRING())
 	{
-	    std::string str = ctx->STRING()->getSymbol()->getText();
+	    std::string str = ctx->char_string()->STRING()->getSymbol()->getText();
 
 	    if (str.front() == 'N')
 		str.erase(0, 1);
@@ -1770,11 +1775,10 @@ static void process_query_specification(
 				repl_text += ::getFullText(expr_elem->column_alias());
 			mutator->add(expr_elem->expression()->stop->getStopIndex()+1, "", repl_text);
 		}
-		else if ((elem->column_elem() && elem->column_elem()->as_column_alias()) ||
-			(elem->expression_elem() && elem->expression_elem()->as_column_alias()))
+		else if (elem->expression_elem() && elem->expression_elem()->as_column_alias())
 		{
 			/* if AS is missing, add it. */
-			auto column_alias_as = ((elem->column_elem() && elem->column_elem()->as_column_alias()) ? elem->column_elem()->as_column_alias() : elem->expression_elem()->as_column_alias());
+			auto column_alias_as = elem->expression_elem()->as_column_alias();
 			if (!column_alias_as->AS())
 			{
 				std::string orig_text = ::getFullText(column_alias_as->column_alias());
@@ -3576,8 +3580,6 @@ makeSetStatement(TSqlParser::Set_statementContext *ctx, tsqlBuilder &builder)
 			std::string query;
 			for (auto option : set_special_ctx->set_on_off_option())
 			{
-				if (option->OFFSETS() || option->STATISTICS())
-					continue; // OFFSETS and STATISTICS has a special syntax so backend parser can't consume it. do not relay the query to backend parser
 				query += "SET ";
 				query += getFullText(option);
 				query += " ";
@@ -3603,9 +3605,6 @@ makeSetStatement(TSqlParser::Set_statementContext *ctx, tsqlBuilder &builder)
 		}
 		else if (set_special_ctx->set_on_off_option().size() == 1)
 		{
-			auto option = set_special_ctx->set_on_off_option().front();
-			if (option->OFFSETS() || option->STATISTICS())
-				return nullptr; // OFFSETS and STATISTICS has a special syntax so backend parser can't consume it. do not relay the query to backend parser
 			return makeSQL(ctx);
 		}
 		else if (!set_special_ctx->id().empty())
@@ -3619,6 +3618,8 @@ makeSetStatement(TSqlParser::Set_statementContext *ctx, tsqlBuilder &builder)
 			}
 			return makeSQL(ctx);
 		}
+		else if (set_special_ctx->OFFSETS())
+			return nullptr;
 		else if (set_special_ctx->STATISTICS())
 			return nullptr;
 		else
@@ -3706,25 +3707,25 @@ makeExecuteStatement(TSqlParser::Execute_statementContext *ctx)
 	}
 	else /* execute a stored procedure or function */
 	{
-		ParserRuleContext *func_proc_name = NULL;
+		std::string func_proc_name;
 		TSqlParser::Execute_statement_argContext *func_proc_args = body->execute_statement_arg();
 
 		if (body->func_proc_name_server_database_schema())
 		{
-			func_proc_name = body->func_proc_name_server_database_schema();
+			func_proc_name = ::getFullText(body->func_proc_name_server_database_schema());
 		}
 		else 
 		{
-			std::vector<TSqlParser::Execute_var_stringContext *> exec_strings = body->execute_var_string();
-			Assert(!exec_strings.empty());
-			func_proc_name = exec_strings[0];
+			/* LOCAL_ID can be placed on return_status and/or proc_var. choose the corresponding index, depending on whether return_status if exists or not. */
+			Assert(body->proc_var);
+			func_proc_name = ::getFullText(body->return_status ? body->LOCAL_ID()[1] : body->LOCAL_ID()[0]);
 		}
-		Assert(func_proc_name);
+		Assert(!func_proc_name.empty());
 	
 		int lineno = getLineNo(ctx);
 		int return_code_dno = -1;
 
-		auto *localID = body->LOCAL_ID();
+		auto *localID = body->return_status ? body->LOCAL_ID()[0] : nullptr;
 		if (localID)
 			return_code_dno = getVarno(localID);
 
@@ -3757,11 +3758,11 @@ makeExecuteStatement(TSqlParser::Execute_statementContext *ctx)
 			// rewrite func/proc name if database/schema is omitted (i.e. EXEC ..proc1)
 			GetCtxFunc<TSqlParser::Func_proc_name_server_database_schemaContext *> getDatabase = [](TSqlParser::Func_proc_name_server_database_schemaContext *o) { return o->database; };
 			GetCtxFunc<TSqlParser::Func_proc_name_server_database_schemaContext *> getSchema = [](TSqlParser::Func_proc_name_server_database_schemaContext *o) { return o->schema; };
-			rewritten_name = rewrite_object_name_with_omitted_db_and_schema_name((TSqlParser::Func_proc_name_server_database_schemaContext *) func_proc_name, getDatabase, getSchema);
+			rewritten_name = rewrite_object_name_with_omitted_db_and_schema_name(body->func_proc_name_server_database_schema(), getDatabase, getSchema);
 		}
 
 		std::stringstream ss;
-		ss << "EXEC " << (!rewritten_name.empty() ? rewritten_name : ::getFullText(func_proc_name));
+		ss << "EXEC " << (!rewritten_name.empty() ? rewritten_name : func_proc_name);
 		if (func_proc_args)
 			ss << " " << ::getFullText(func_proc_args);
 		std::string expr_query = ss.str();
@@ -4080,8 +4081,8 @@ makeAnother(TSqlParser::Another_statementContext *ctx, tsqlBuilder &builder)
 PLtsql_stmt *
 makeExecBodyBatch(TSqlParser::Execute_body_batchContext *ctx)
 {
-	TSqlParser::Func_proc_name_server_database_schemaContext *func_proc_name = ctx->func_proc_name_server_database_schema();
-	Assert(func_proc_name);
+	std::string func_proc_name = ::getFullText(ctx->func_proc_name_server_database_schema());
+	Assert(!func_proc_name.empty());
 	TSqlParser::Execute_statement_argContext *func_proc_args = ctx->execute_statement_arg();
 
 	int lineno = getLineNo(ctx);
@@ -4111,7 +4112,7 @@ makeExecBodyBatch(TSqlParser::Execute_body_batchContext *ctx)
 	}
 
 	std::stringstream ss;
-	ss << "EXEC " << ::getFullText(func_proc_name);
+	ss << "EXEC " << func_proc_name;
 	if (func_proc_args)
 		ss << " " << ::getFullText(func_proc_args);
 	std::string expr_query = ss.str();
@@ -4425,10 +4426,10 @@ post_process_column_inline_index(TSqlParser::Column_inline_indexContext *ctx, PL
 		removeCtxStringFromQuery(stmt->sqlstmt, ctx->storage_partition_clause()[idx], baseCtx);
 	}
 
-	if (ctx->CLUSTERED())
-		removeTokenStringFromQuery(stmt->sqlstmt, ctx->CLUSTERED(), baseCtx);
-	if (ctx->NONCLUSTERED())
-		removeTokenStringFromQuery(stmt->sqlstmt, ctx->NONCLUSTERED(), baseCtx);
+	if (ctx->clustered() && ctx->clustered()->CLUSTERED())
+		removeTokenStringFromQuery(stmt->sqlstmt, ctx->clustered()->CLUSTERED(), baseCtx);
+	if (ctx->clustered() && ctx->clustered()->NONCLUSTERED())
+		removeTokenStringFromQuery(stmt->sqlstmt, ctx->clustered()->NONCLUSTERED(), baseCtx);
 	if (ctx->with_index_options())
 		removeCtxStringFromQuery(stmt->sqlstmt, ctx->with_index_options(), baseCtx);
 }
@@ -4545,10 +4546,10 @@ post_process_create_table(TSqlParser::Create_tableContext *ctx, PLtsql_stmt_exec
 			removeCtxStringFromQuery(stmt->sqlstmt, ictx->storage_partition_clause(), baseCtx);
 		}
 
-		if (ictx->CLUSTERED())
-			removeTokenStringFromQuery(stmt->sqlstmt, ictx->CLUSTERED(), baseCtx);
-		if (ictx->NONCLUSTERED())
-			removeTokenStringFromQuery(stmt->sqlstmt, ictx->NONCLUSTERED(), baseCtx);
+		if (ictx->clustered() && ictx->clustered()->CLUSTERED())
+			removeTokenStringFromQuery(stmt->sqlstmt, ictx->clustered()->CLUSTERED(), baseCtx);
+		if (ictx->clustered() && ictx->clustered()->NONCLUSTERED())
+			removeTokenStringFromQuery(stmt->sqlstmt, ictx->clustered()->NONCLUSTERED(), baseCtx);
 	}
 	return false;
 }
@@ -4792,13 +4793,12 @@ read_extended_cursor_option(TSqlParser::Declare_cursor_optionsContext *ctx, int 
 }
 
 static PLtsql_stmt *
-makeSpStatement(ParserRuleContext *sp_name, TSqlParser::Execute_statement_argContext *sp_args, int lineno, int return_code_dno)
+makeSpStatement(const std::string& name_str, TSqlParser::Execute_statement_argContext *sp_args, int lineno, int return_code_dno)
 {
-	Assert(sp_name);
+	Assert(!name_str.empty());
 
-	std::string name_str = ::getFullText(sp_name);
 	if (!sp_args)
-		throw PGErrorWrapperException(ERROR, ERRCODE_INVALID_PARAMETER_VALUE, format_errmsg("%s procedure was called with an incorrect number of parameters", name_str.c_str()), getLineAndPos(sp_name));
+		throw PGErrorWrapperException(ERROR, ERRCODE_INVALID_PARAMETER_VALUE, format_errmsg("%s procedure was called with an incorrect number of parameters", name_str.c_str()), getLineAndPos(sp_args));
 
 	std::vector<tsql_exec_param *> params;
 
@@ -4816,7 +4816,7 @@ makeSpStatement(ParserRuleContext *sp_name, TSqlParser::Execute_statement_argCon
 	{
 		result->sp_type_code = PLTSQL_EXEC_SP_CURSOR;
 		if (paramno < 4)
-			throw PGErrorWrapperException(ERROR, ERRCODE_INVALID_PARAMETER_VALUE, format_errmsg("%s procedure was called with an incorrect number of parameters", name_str.c_str()), getLineAndPos(sp_name));
+			throw PGErrorWrapperException(ERROR, ERRCODE_INVALID_PARAMETER_VALUE, format_errmsg("%s procedure was called with an incorrect number of parameters", name_str.c_str()), getLineAndPos(sp_args));
 
 		result->handle = getNthParamExpr(params, 1);
 		result->opt1 = getNthParamExpr(params, 2);
@@ -4833,7 +4833,7 @@ makeSpStatement(ParserRuleContext *sp_name, TSqlParser::Execute_statement_argCon
 	{
 		result->sp_type_code = PLTSQL_EXEC_SP_CURSORCLOSE;
 		if (paramno != 1)
-			throw PGErrorWrapperException(ERROR, ERRCODE_INVALID_PARAMETER_VALUE, format_errmsg("%s procedure was called with an incorrect number of parameters", name_str.c_str()), getLineAndPos(sp_name));
+			throw PGErrorWrapperException(ERROR, ERRCODE_INVALID_PARAMETER_VALUE, format_errmsg("%s procedure was called with an incorrect number of parameters", name_str.c_str()), getLineAndPos(sp_args));
 
 		result->handle = getNthParamExpr(params, 1);
 	}
@@ -4841,7 +4841,7 @@ makeSpStatement(ParserRuleContext *sp_name, TSqlParser::Execute_statement_argCon
 	{
 		result->sp_type_code = PLTSQL_EXEC_SP_CURSOREXECUTE;
 		if (paramno < 2)
-			throw PGErrorWrapperException(ERROR, ERRCODE_INVALID_PARAMETER_VALUE, format_errmsg("%s procedure was called with an incorrect number of parameters", name_str.c_str()), getLineAndPos(sp_name));
+			throw PGErrorWrapperException(ERROR, ERRCODE_INVALID_PARAMETER_VALUE, format_errmsg("%s procedure was called with an incorrect number of parameters", name_str.c_str()), getLineAndPos(sp_args));
 
 		result->handle = getNthParamExpr(params, 1);
 		check_param_type(params[1], true, INT4OID, "cursor");
@@ -4859,7 +4859,7 @@ makeSpStatement(ParserRuleContext *sp_name, TSqlParser::Execute_statement_argCon
 	{
 		result->sp_type_code = PLTSQL_EXEC_SP_CURSORFETCH;
 		if (paramno < 1 || paramno > 4)
-			throw PGErrorWrapperException(ERROR, ERRCODE_INVALID_PARAMETER_VALUE, format_errmsg("%s procedure was called with an incorrect number of parameters", name_str.c_str()), getLineAndPos(sp_name));
+			throw PGErrorWrapperException(ERROR, ERRCODE_INVALID_PARAMETER_VALUE, format_errmsg("%s procedure was called with an incorrect number of parameters", name_str.c_str()), getLineAndPos(sp_args));
 
 		result->handle = getNthParamExpr(params, 1);
 		result->opt1 = getNthParamExpr(params, 2);
@@ -4870,7 +4870,7 @@ makeSpStatement(ParserRuleContext *sp_name, TSqlParser::Execute_statement_argCon
 	{
 		result->sp_type_code = PLTSQL_EXEC_SP_CURSOROPEN;
 		if (paramno < 2)
-			throw PGErrorWrapperException(ERROR, ERRCODE_INVALID_PARAMETER_VALUE, format_errmsg("%s procedure was called with an incorrect number of parameters", name_str.c_str()), getLineAndPos(sp_name));
+			throw PGErrorWrapperException(ERROR, ERRCODE_INVALID_PARAMETER_VALUE, format_errmsg("%s procedure was called with an incorrect number of parameters", name_str.c_str()), getLineAndPos(sp_args));
 
 		check_param_type(params[0], true, INT4OID, "cursor");
 		result->cursor_handleno = params[0]->varno;
@@ -4889,7 +4889,7 @@ makeSpStatement(ParserRuleContext *sp_name, TSqlParser::Execute_statement_argCon
 	{
 		result->sp_type_code = PLTSQL_EXEC_SP_CURSOROPTION;
 		if (paramno != 3)
-			throw PGErrorWrapperException(ERROR, ERRCODE_INVALID_PARAMETER_VALUE, format_errmsg("%s procedure was called with an incorrect number of parameters", name_str.c_str()), getLineAndPos(sp_name));
+			throw PGErrorWrapperException(ERROR, ERRCODE_INVALID_PARAMETER_VALUE, format_errmsg("%s procedure was called with an incorrect number of parameters", name_str.c_str()), getLineAndPos(sp_args));
 
 		result->handle = getNthParamExpr(params, 1);
 		result->opt1 = getNthParamExpr(params, 2);
@@ -4899,7 +4899,7 @@ makeSpStatement(ParserRuleContext *sp_name, TSqlParser::Execute_statement_argCon
 	{
 		result->sp_type_code = PLTSQL_EXEC_SP_CURSORPREPARE;
 		if (paramno < 4 || paramno > 6)
-			throw PGErrorWrapperException(ERROR, ERRCODE_INVALID_PARAMETER_VALUE, format_errmsg("%s procedure was called with an incorrect number of parameters", name_str.c_str()), getLineAndPos(sp_name));
+			throw PGErrorWrapperException(ERROR, ERRCODE_INVALID_PARAMETER_VALUE, format_errmsg("%s procedure was called with an incorrect number of parameters", name_str.c_str()), getLineAndPos(sp_args));
 
 		check_param_type(params[0], true, INT4OID, "prepared_handle");
 		result->prepared_handleno = params[0]->varno;
@@ -4913,7 +4913,7 @@ makeSpStatement(ParserRuleContext *sp_name, TSqlParser::Execute_statement_argCon
 	{
 		result->sp_type_code = PLTSQL_EXEC_SP_CURSORPREPEXEC;
 		if (paramno < 5)
-			throw PGErrorWrapperException(ERROR, ERRCODE_INVALID_PARAMETER_VALUE, format_errmsg("%s procedure was called with an incorrect number of parameters", name_str.c_str()), getLineAndPos(sp_name));
+			throw PGErrorWrapperException(ERROR, ERRCODE_INVALID_PARAMETER_VALUE, format_errmsg("%s procedure was called with an incorrect number of parameters", name_str.c_str()), getLineAndPos(sp_args));
 
 		check_param_type(params[0], true, INT4OID, "prepared_handle");
 		result->prepared_handleno = params[0]->varno;
@@ -4934,7 +4934,7 @@ makeSpStatement(ParserRuleContext *sp_name, TSqlParser::Execute_statement_argCon
 	{
 		result->sp_type_code = PLTSQL_EXEC_SP_CURSORUNPREPARE;
 		if (paramno != 1)
-			throw PGErrorWrapperException(ERROR, ERRCODE_INVALID_PARAMETER_VALUE, format_errmsg("%s procedure was called with an incorrect number of parameters", name_str.c_str()), getLineAndPos(sp_name));
+			throw PGErrorWrapperException(ERROR, ERRCODE_INVALID_PARAMETER_VALUE, format_errmsg("%s procedure was called with an incorrect number of parameters", name_str.c_str()), getLineAndPos(sp_args));
 
 		result->handle = getNthParamExpr(params, 1);
 	}
@@ -4942,7 +4942,7 @@ makeSpStatement(ParserRuleContext *sp_name, TSqlParser::Execute_statement_argCon
 	{
 		result->sp_type_code = PLTSQL_EXEC_SP_EXECUTE;
 		if (paramno < 1)
-			throw PGErrorWrapperException(ERROR, ERRCODE_INVALID_PARAMETER_VALUE, format_errmsg("%s procedure was called with an incorrect number of parameters", name_str.c_str()), getLineAndPos(sp_name));
+			throw PGErrorWrapperException(ERROR, ERRCODE_INVALID_PARAMETER_VALUE, format_errmsg("%s procedure was called with an incorrect number of parameters", name_str.c_str()), getLineAndPos(sp_args));
 
 		result->handle = getNthParamExpr(params, 1);
 
@@ -4956,7 +4956,7 @@ makeSpStatement(ParserRuleContext *sp_name, TSqlParser::Execute_statement_argCon
 	{
 		result->sp_type_code = PLTSQL_EXEC_SP_EXECUTESQL;
 		if (paramno == 0 || paramno == 2)
-			throw PGErrorWrapperException(ERROR, ERRCODE_INVALID_PARAMETER_VALUE, format_errmsg("%s procedure was called with an incorrect number of parameters", name_str.c_str()), getLineAndPos(sp_name));
+			throw PGErrorWrapperException(ERROR, ERRCODE_INVALID_PARAMETER_VALUE, format_errmsg("%s procedure was called with an incorrect number of parameters", name_str.c_str()), getLineAndPos(sp_args));
 
 		result->query = getNthParamExpr(params, 1);
 		result->param_def = getNthParamExpr(params, 2);
@@ -4971,7 +4971,7 @@ makeSpStatement(ParserRuleContext *sp_name, TSqlParser::Execute_statement_argCon
 	{
 		result->sp_type_code = PLTSQL_EXEC_SP_PREPEXEC;
 		if (paramno < 3)
-			throw PGErrorWrapperException(ERROR, ERRCODE_INVALID_PARAMETER_VALUE, format_errmsg("%s procedure was called with an incorrect number of parameters", name_str.c_str()), getLineAndPos(sp_name));
+			throw PGErrorWrapperException(ERROR, ERRCODE_INVALID_PARAMETER_VALUE, format_errmsg("%s procedure was called with an incorrect number of parameters", name_str.c_str()), getLineAndPos(sp_args));
 
 		check_param_type(params[0], true, INT4OID, "prepared_handle");
 		result->prepared_handleno = params[0]->varno;
@@ -5096,21 +5096,21 @@ check_dup_declare(const char *name)
 }
 
 static bool
-is_sp_proc(ParserRuleContext *func_proc_name)
+is_sp_proc(const std::string& func_proc_name)
 {
-	std::string name_str = ::getFullText(func_proc_name);
-	return string_matches(name_str.c_str(), "sp_cursor") ||
-		string_matches(name_str.c_str(), "sp_cursoropen") ||
-		string_matches(name_str.c_str(), "sp_cursorprepare") ||
-		string_matches(name_str.c_str(), "sp_cursorexecute") ||
-		string_matches(name_str.c_str(), "sp_cursorprepexec") ||
-		string_matches(name_str.c_str(), "sp_cursorunprepare") ||
-		string_matches(name_str.c_str(), "sp_cursorfetch") ||
-		string_matches(name_str.c_str(), "sp_cursoroption") ||
-		string_matches(name_str.c_str(), "sp_cursorclose") ||
-		string_matches(name_str.c_str(), "sp_executesql") ||
-		string_matches(name_str.c_str(), "sp_execute") ||
-		string_matches(name_str.c_str(), "sp_prepexec");
+	const char *name_str = func_proc_name.c_str();
+	return string_matches(name_str, "sp_cursor") ||
+		string_matches(name_str, "sp_cursoropen") ||
+		string_matches(name_str, "sp_cursorprepare") ||
+		string_matches(name_str, "sp_cursorexecute") ||
+		string_matches(name_str, "sp_cursorprepexec") ||
+		string_matches(name_str, "sp_cursorunprepare") ||
+		string_matches(name_str, "sp_cursorfetch") ||
+		string_matches(name_str, "sp_cursoroption") ||
+		string_matches(name_str, "sp_cursorclose") ||
+		string_matches(name_str, "sp_executesql") ||
+		string_matches(name_str, "sp_execute") ||
+		string_matches(name_str, "sp_prepexec");
 }
 
 static bool

@@ -57,16 +57,11 @@ GO
 SET ANSI_NULLS ON;
 GO
 
-SET ANSI_NULLS, STATISTICS IO OFF;
-GO
 select current_setting('babelfishpg_tsql.ansi_nulls'); -- should not be chagned
 GO
 
 -- two unsupported
 SET ANSI_PADDING, FORCEPLAN ON;
-GO
-
-SET STATISTICS IO, OFFSETS SELECT ON;
 GO
 
 -- escape_hatch_session_settings
@@ -140,20 +135,9 @@ GO
 SET ANSI_NULLS ON;
 GO
 
-SET ANSI_NULLS, STATISTICS IO OFF;
-GO
-select current_setting('babelfishpg_tsql.ansi_nulls'); -- should not be chagned
-GO
-SET ANSI_NULLS ON;
-GO
-
 -- two unsupported
 SET ANSI_PADDING, FORCEPLAN ON;
 GO
-
-SET STATISTICS IO, OFFSETS SELECT ON;
-GO
-
 
 EXEC sp_babelfish_configure 'babelfishpg_tsql.escape_hatch_session_settings', 'strict';
 GO
