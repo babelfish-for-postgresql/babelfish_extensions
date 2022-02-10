@@ -50,6 +50,12 @@ extern "C"
 
 	extern bool pltsql_dump_antlr_query_graph;
 	extern bool pltsql_enable_antlr_detailed_log;
+
+	extern char *column_names_to_be_delimited[];
+	extern char *pg_reserved_keywords_to_be_delimited[];
+
+	extern size_t get_num_column_names_to_be_delimited();
+	extern size_t get_num_pg_reserved_keywords_to_be_delimited();
 }
 
 static void toDotRecursive(ParseTree *t, const std::vector<std::string> &ruleNames, const std::string &sourceText);
@@ -5320,34 +5326,6 @@ rewrite_column_name_with_omitted_schema_name(T ctx, GetCtxFunc<T> getSchema, Get
 	return "";
 }
 
-
-/*
- * PG keywords defined as TYPE_FUNC_NAME_KEYWORD but treated as a normal unreserved keyword (or not a keyword) in T-SQL.
- * TODO: we may generate this list automatically by using kwlist.h and antlr grammar.
- */
-static const char *column_names_to_be_delimited[] = {
-  "binary",
-  "collation",
-  "concurrently",
-  "current_schema",
-  "freeze",
-  "ilike",
-  "isnull",
-  "natural",
-  "notnull",
-  "overlaps",
-  "similar"
-};
-
-/*
- * PG keywords defined as reserved but treated as a normal unreserved (or not a keyword) in T-SQL.
- * TODO: fill with the full list.
- * TODO: we may generate this list automatically by using kwlist.h and antlr grammar.
- */
-static const char *pg_reserved_keywords_to_be_delimited[] = {
-  "offset"
-};
-
 static bool
 does_object_name_need_delimiter(TSqlParser::IdContext *id)
 {
@@ -5355,12 +5333,18 @@ does_object_name_need_delimiter(TSqlParser::IdContext *id)
 		return false; // already delimited
 
 	std::string id_str = ::getFullText(id);
-	for (const char *keyword : column_names_to_be_delimited)
+	for (size_t i=0; i<get_num_column_names_to_be_delimited(); ++i)
+	{
+		const char *keyword = column_names_to_be_delimited[i];
 		if (pg_strcasecmp(keyword, id_str.c_str()) == 0)
 			return true;
-	for (const char *keyword : pg_reserved_keywords_to_be_delimited)
+	}
+	for (size_t i=0; i<get_num_pg_reserved_keywords_to_be_delimited(); ++i)
+	{
+		const char *keyword = pg_reserved_keywords_to_be_delimited[i];
 		if (pg_strcasecmp(keyword, id_str.c_str()) == 0)
 			return true;
+	}
 	return false;
 }
 

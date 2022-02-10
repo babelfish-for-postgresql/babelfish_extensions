@@ -60,6 +60,7 @@ OBJS += src/tsqlNodes.o
 OBJS += src/tsqlHandler.o
 OBJS += src/tsqlUnsupportedFeatureHandler.o
 OBJS += src/tsqlIface.o
+OBJS += src/special_keywords.o
 OBJS += antlr/libantlr_tsql.a
 OBJS += src/multidb.o
 
