@@ -169,6 +169,7 @@ TdsIoFunctionRawData TdsIoFunctionRawData_data[] =
     {"sys", "decimal", TDS_TYPE_DECIMALN, 17, 1, TDS_SEND_NUMERIC, TDS_RECV_NUMERIC},
     {"sys", "smalldatetime", TDS_TYPE_DATETIMEN, 4, 1, TDS_SEND_SMALLDATETIME, TDS_RECV_SMALLDATETIME},
     {"sys", "binary", TDS_TYPE_BINARY, -1, 2, TDS_SEND_BINARY, TDS_RECV_BINARY},
+    {"sys", "bbf_binary", TDS_TYPE_BINARY, -1, 2, TDS_SEND_BINARY, TDS_RECV_BINARY},
     {"sys", "varbinary", TDS_TYPE_VARBINARY, -1, 2, TDS_SEND_VARBINARY, TDS_RECV_VARBINARY},
     {"sys", "bbf_varbinary", TDS_TYPE_VARBINARY, -1, 2, TDS_SEND_VARBINARY, TDS_RECV_VARBINARY},
     {"sys", "image", TDS_TYPE_IMAGE, -1, 2, TDS_SEND_IMAGE, TDS_RECV_IMAGE},
