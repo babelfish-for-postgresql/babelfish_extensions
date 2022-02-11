@@ -3706,6 +3706,7 @@ unreserved_keyword:
 			| TSQL_LOGIN
 			| TSQL_M
 			| TSQL_MCS
+			| TSQL_MEMBER
 			| TSQL_MICROSECOND
 			| TSQL_MILLISECOND
 			| TSQL_MM
@@ -3738,6 +3739,7 @@ unreserved_keyword:
 			| TSQL_S
 			| TSQL_SAVE
 			| TSQL_SCHEMABINDING
+			| TSQL_SERVER
 			| TSQL_SID
 			| TSQL_SS
 			| TSQL_SUBSTRING
@@ -3767,6 +3769,7 @@ reserved_keyword:
 			| TSQL_DATENAME
 			| TSQL_DATEPART
 			| TSQL_IIF
+			| TSQL_OUT
 			| TSQL_OUTPUT
 			| TSQL_PARSE
 			| TSQL_PERCENT
