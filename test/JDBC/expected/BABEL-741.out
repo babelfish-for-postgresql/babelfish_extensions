@@ -38,6 +38,14 @@ int
 ~~END~~
 
 
+SELECT schema_name(schema_id())
+GO
+~~START~~
+varchar
+dbo
+~~END~~
+
+
 SELECT schema_name(99)
 GO
 ~~START~~
@@ -98,5 +106,13 @@ GO
 ~~ERROR (Code: 33557097)~~
 
 ~~ERROR (Message: invalid input syntax for type oid: "asdf")~~
+
+
+SELECT schema_name()
+GO
+~~START~~
+varchar
+dbo
+~~END~~
 
 

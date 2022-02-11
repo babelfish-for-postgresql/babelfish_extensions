@@ -13,6 +13,9 @@ GO
 SELECT schema_id('fake_schemaname')
 GO
 
+SELECT schema_name(schema_id())
+GO
+
 SELECT schema_name(99)
 GO
 
@@ -35,5 +38,8 @@ SELECT schema_name(NULL)
 GO
 
 SELECT schema_name('asdf')
+GO
+
+SELECT schema_name()
 GO
 
