@@ -429,6 +429,7 @@ TdsProtocolInit(void)
 	MemoryContext	oldContext;
 
 	SetConfigOption("babelfishpg_tsql.sql_dialect", "tsql", PGC_SU_BACKEND, PGC_S_OVERRIDE);
+	SetConfigOption("babelfishpg_tsql.enable_tsql_information_schema", "true", PGC_USERSET, PGC_S_SESSION);
 	SetConfigOption("lock_timeout", "0", PGC_SU_BACKEND, PGC_S_OVERRIDE);
 	oldContext = MemoryContextSwitchTo(TdsMemoryContext);
 	TdsRequestCtrl = palloc(sizeof(TdsRequestCtrlData));
@@ -447,6 +448,7 @@ void
 TdsProtocolFinish(void)
 {
 	SetConfigOption("babelfishpg_tsql.sql_dialect", "postgres", PGC_SU_BACKEND, PGC_S_OVERRIDE);
+	SetConfigOption("babelfishpg_tsql.enable_tsql_information_schema", "false", PGC_USERSET, PGC_S_SESSION);
 	SetConfigOption("lock_timeout", NULL, PGC_SU_BACKEND, PGC_S_OVERRIDE);
 
 	if (TdsRequestCtrl->requestContext)
