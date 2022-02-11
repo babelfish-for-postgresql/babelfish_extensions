@@ -674,8 +674,8 @@ left join pg_catalog.pg_locks         blocking_locks
 GRANT SELECT ON sys.sysprocesses TO PUBLIC;
 
 create or replace view sys.types As
---smallint is not created as domain/type in Babel
-select cast(case when t.typname = 'int2' then 'smallint' else t.typname end as text) as name
+-- For System types
+select sys.translate_pg_type_to_tsql(t.oid) as name
   , t.oid as system_type_id
   , t.oid as user_type_id
   , s.oid as schema_id
@@ -693,15 +693,13 @@ select cast(case when t.typname = 'int2' then 'smallint' else t.typname end as t
 from pg_type t
 inner join pg_namespace s on s.oid = t.typnamespace
 left join pg_collation c on c.oid = t.typcollation
--- list of types available to tsql, int2 is there since smallint is not created as domain/type in Babel
-where t.typname in ('image', 'text', 'date', 'time', 'datetime2', 'datetimeoffset',
-  'tinyint', 'smallint', 'int', 'smalldatetime', 'real', 'money', 'datetime', 'float', 'sql_variant',
-  'ntext', 'bit', 'decimal', 'numeric', 'smallmoney', 'bigint', 'hierarchyid', 'geometry', 'geography',
-  'varbinary', 'varchar', 'char', 'binary','nvarchar', 'nchar',  'sysname', 'xml', 'uniqueidentifier', 'int2')
+where sys.translate_pg_type_to_tsql(t.oid) IS NOT NULL
 and pg_type_is_visible(t.oid)
+and (s.nspname = 'pg_catalog' OR s.nspname = 'sys')
 union all 
+-- For User Defined Types
 select cast(t.typname as text) as name
-  , t.oid as system_type_id
+  , t.typbasetype as system_type_id
   , t.oid as user_type_id
   , s.oid as schema_id
   , null::integer as principal_id
@@ -718,14 +716,12 @@ select cast(t.typname as text) as name
   , 0 as is_table_type
 from pg_type t
 inner join pg_namespace s on s.oid = t.typnamespace
-inner join sys.schemas sch on sch.schema_id = s.oid 
 left join pg_collation c on c.oid = t.typcollation
 -- we want to show details of user defined datatypes created under babelfish database
-where t.typtype = 'd' and t.typname not in ('image', 'text', 'date', 'time', 'datetime2', 'datetimeoffset',
-  'tinyint', 'smallint', 'int', 'smalldatetime', 'real', 'money', 'datetime', 'float', 'sql_variant',
-  'ntext', 'bit', 'decimal', 'numeric', 'smallmoney', 'bigint', 'hierarchyid', 'geometry', 'geography',
-  'varbinary', 'varchar', 'char', 'binary','nvarchar', 'nchar',  'sysname', 'xml', 'uniqueidentifier', 'int2')
-and pg_type_is_visible(t.oid);
+where sys.translate_pg_type_to_tsql(t.oid) IS NULL
+and pg_type_is_visible(t.oid)
+and s.nspname <> 'pg_catalog' AND s.nspname <> 'sys'
+and t.typtype = 'd' ;
 GRANT SELECT ON sys.types TO PUBLIC;
 
 create or replace view sys.default_constraints
