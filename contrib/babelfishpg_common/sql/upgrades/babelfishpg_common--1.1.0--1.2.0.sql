@@ -292,7 +292,6 @@ DEFAULT FOR TYPE sys.rowversion USING btree AS
     FUNCTION    1   sys.rowversion_cmp(sys.rowversion, sys.rowversion);
 
 
-
 CREATE OR REPLACE FUNCTION sys.int8fixeddecimaldiv_money(INT8, FIXEDDECIMAL)
 RETURNS sys.MONEY
 AS $$
@@ -917,6 +916,10 @@ CREATE OPERATOR sys.+ (
     RIGHTARG = sys.nchar,
     FUNCTION = sys.babelfish_concat_wrapper
 );
+
+CREATE OR REPLACE FUNCTION sys.translate_pg_type_to_tsql(pgoid oid) RETURNS TEXT
+AS 'babelfishpg_common', 'translate_pg_type_to_tsql'
+LANGUAGE C PARALLEL SAFE IMMUTABLE;
 
 
 -- Reset search_path to not affect any subsequent scripts

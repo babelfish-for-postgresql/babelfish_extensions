@@ -38,10 +38,16 @@ type_info_t type_infos[TOTAL_TYPECODE_COUNT] =
     {0, 1, "nvarchar"        , "nvarchar"        , 5, 18, 5},
     {0, 1, "nchar"           , "nchar"           , 5, 19, 5},
     {0, 1, "varchar"         , "varchar"         , 5, 20, 5},
-    {0, 0, "bpchar"          , "char"            , 5, 21, 5},
+    {0, 1, "bpchar"          , "char"            , 5, 21, 5},
     {0, 1, "varbinary"       , "varbinary"       , 6, 22, 3},
     {0, 1, "binary"          , "binary"          , 6, 23, 3},
-    {0, 1, "uniqueidentifier", "uniqueidentifier", 7, 24, 1}
+    {0, 1, "uniqueidentifier", "uniqueidentifier", 7, 24, 1},
+    {0, 0, "text"            , "text"            , 5, 25, 5},
+    {0, 1, "ntext"           , "ntext"           , 5, 26, 5},
+    {0, 1, "image"           , "image"           , 5, 27, 5},
+    {0, 0, "xml"             , "xml"             , 5, 28, 5},
+    {0, 0, "bpchar"          , "char"            , 5, 29, 5},
+    {0, 1, "decimal"         , "decimal"         , 5, 30, 5}
 };
 
 /* Hash tables to help backward searching (from OID to Persist ID) */
@@ -184,6 +190,24 @@ typecode_list(PG_FUNCTION_ARGS)
     rsinfo->setDesc = tupdesc;
 
     PG_RETURN_NULL();
+}
+
+PG_FUNCTION_INFO_V1(translate_pg_type_to_tsql);
+
+Datum
+translate_pg_type_to_tsql(PG_FUNCTION_ARGS)
+{
+	Oid pg_type = PG_GETARG_OID(0);
+	ht_oid2typecode_entry_t *entry;
+
+	if (OidIsValid(pg_type))
+	{
+		entry = hash_search(ht_oid2typecode, &pg_type, HASH_FIND, NULL);
+
+		if (entry && entry->persist_id < TOTAL_TYPECODE_COUNT)
+			PG_RETURN_TEXT_P(CStringGetTextDatum(type_infos[entry->persist_id].tsql_typname));
+	}
+	PG_RETURN_NULL();
 }
 
 Oid get_type_oid(int type_code)

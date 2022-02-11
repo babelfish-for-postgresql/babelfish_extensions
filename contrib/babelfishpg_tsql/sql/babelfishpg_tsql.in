@@ -13,6 +13,7 @@ SELECT set_config('search_path', 'sys, '||current_setting('search_path'), false)
 #include "sys_cast.sql"
 #include "coerce.sql"
 #include "ownership.sql"
+#include "information_schema_tsql.sql"
 #include "sys_views.sql"
 #include "collation.sql"
 #include "sys_procedures.sql"

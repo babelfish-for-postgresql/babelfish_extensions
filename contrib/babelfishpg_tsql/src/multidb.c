@@ -659,7 +659,8 @@ rewrite_schema_name(Value *schema)
 static bool
 is_shared_schema(const char *name)
 {
-	if (strcmp("sys", name ) == 0)
+	if ((strcmp("sys", name ) == 0)
+			|| (strcmp("information_schema_tsql", name) == 0))
 		return true;  /* babelfish shared schema */
 	else if ((strcmp("public", name) == 0)
 			|| (strcmp("pg_catalog", name) == 0)
