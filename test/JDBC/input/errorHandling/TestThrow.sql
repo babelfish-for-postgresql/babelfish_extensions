@@ -17,6 +17,28 @@ BEGIN
 END
 go
 
+CREATE PROC reThrowProc1 AS
+BEGIN
+	BEGIN TRY
+		INSERT INTO throwTable VALUES (1);
+		THROW 51000, 'Throw error', 1;
+		INSERT INTO throwTable VALUES (2);
+	END TRY
+	BEGIN CATCH
+		THROW;
+		SELECT 'THROW SHOULD NOT CONTINUE'
+	END CATCH
+END
+go
+
+CREATE PROC reThrowProc2 AS
+BEGIN
+	INSERT INTO throwTable VALUES (111);
+	EXEC reThrowProc1;
+	INSERT INTO throwTable VALUES (222);
+END
+go
+
 /* Error -- THORW; can only be called in CATCH block */
 THROW;
 go
@@ -36,6 +58,7 @@ BEGIN TRY
 END TRY
 BEGIN CATCH
 	THROW;
+	SELECT 'THROW SHOULD NOT CONTINUE'
 END CATCH
 go
 
@@ -50,6 +73,7 @@ BEGIN TRY
 END TRY
 BEGIN CATCH
 	THROW;
+	SELECT 'THROW SHOULD NOT CONTINUE'
 END CATCH
 go
 
@@ -63,6 +87,7 @@ BEGIN CATCH
 	END TRY
 	BEGIN CATCH
 		THROW;
+		SELECT 'THROW SHOULD NOT CONTINUE'
 	END CATCH
 END CATCH
 go
@@ -97,6 +122,17 @@ go
 /* Nested procedure call */
 BEGIN TRAN
 	EXEC throwProc2;
+go
+SELECT xact_state();
+SELECT @@trancount;
+SELECT * FROM throwTable;
+IF @@trancount > 0 ROLLBACK TRANSACTION;
+go
+TRUNCATE TABLE throwTable
+go
+
+BEGIN TRAN
+	EXEC reThrowProc2;
 go
 SELECT xact_state();
 SELECT @@trancount;
@@ -337,6 +373,10 @@ go
 DROP PROC throwProc1;
 go
 DROP PROC throwProc2;
+go
+DROP PROC reThrowProc1;
+go
+DROP PROC reThrowProc2;
 go
 DROP TABLE throwTable;
 go

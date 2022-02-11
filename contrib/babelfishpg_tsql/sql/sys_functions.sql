@@ -854,7 +854,34 @@ create or replace function sys.RAND(x in int)returns double precision
 AS 'babelfishpg_tsql', 'tsql_random'
 LANGUAGE C IMMUTABLE STRICT COST 1 PARALLEL RESTRICTED;
 
+create or replace function sys.square(in x double precision) returns double precision
+AS
+$BODY$
+DECLARE
+	res double precision;
+BEGIN
+	res = pow(x, 2::float);
+	return res;
+END;
+$BODY$
+LANGUAGE plpgsql PARALLEL SAFE IMMUTABLE RETURNS NULL ON NULL INPUT;
+
 CREATE OR REPLACE FUNCTION sys.datepart(IN datepart PG_CATALOG.TEXT, IN arg anyelement) RETURNS INTEGER
+AS
+$body$
+BEGIN
+    IF pg_typeof(arg) = 'sys.DATETIMEOFFSET'::regtype THEN
+        return sys.datepart_internal(datepart, arg::timestamp,
+                     sys.babelfish_get_datetimeoffset_tzoffset(arg)::integer);
+    ELSE
+        return sys.datepart_internal(datepart, arg);
+    END IF;
+END;
+$body$
+LANGUAGE plpgsql IMMUTABLE;
+
+-- Duplicate function with arg TEXT since ANYELEMENT cannot handle type unknown.
+CREATE OR REPLACE FUNCTION sys.datepart(IN datepart PG_CATALOG.TEXT, IN arg TEXT) RETURNS INTEGER
 AS
 $body$
 BEGIN
@@ -919,6 +946,22 @@ $body$
 BEGIN
     return sys.datediff_internal(datepart, startdate, enddate);
 END
+$body$
+LANGUAGE plpgsql IMMUTABLE;
+
+ -- Duplicate functions with arg TEXT since ANYELEMENT cannot handle type unknown.
+CREATE OR REPLACE FUNCTION sys.dateadd(IN datepart PG_CATALOG.TEXT, IN num INTEGER, IN startdate TEXT) RETURNS DATETIME
+AS
+$body$
+BEGIN
+    IF pg_typeof(startdate) = 'sys.DATETIMEOFFSET'::regtype THEN
+        return sys.dateadd_internal_df(datepart, num,
+                     startdate);
+    ELSE
+        return sys.dateadd_internal(datepart, num,
+                     startdate);
+    END IF;
+END;
 $body$
 LANGUAGE plpgsql IMMUTABLE;
 
@@ -1283,6 +1326,23 @@ $BODY$
 STRICT
 LANGUAGE sql IMMUTABLE;
 
+-- Duplicate functions with arg TEXT since ANYELEMENT cannot handle type unknown.
+CREATE OR REPLACE FUNCTION sys.datename(IN dp PG_CATALOG.TEXT, IN arg TEXT) RETURNS TEXT AS
+$BODY$
+SELECT
+    CASE
+    WHEN dp = 'month'::text THEN
+        to_char(arg::date, 'TMMonth')
+    -- '1969-12-28' is a Sunday
+    WHEN dp = 'dow'::text THEN
+        to_char(arg::date, 'TMDay')
+    ELSE
+        sys.datepart(dp, arg)::TEXT
+    END
+$BODY$
+STRICT
+LANGUAGE sql IMMUTABLE;
+
 CREATE OR REPLACE FUNCTION sys.GETUTCDATE() RETURNS sys.DATETIME AS
 $BODY$
 SELECT CAST(CURRENT_TIMESTAMP AT TIME ZONE 'UTC' AS sys.DATETIME);
@@ -1468,7 +1528,7 @@ AS 'babelfishpg_tsql', 'int_ceiling' LANGUAGE C IMMUTABLE STRICT PARALLEL SAFE;
 CREATE OR REPLACE FUNCTION sys.microsoftversion()
 RETURNS INTEGER AS
 $BODY$
-	SELECT NULL::INTEGER;
+	SELECT 201332885::INTEGER;
 $BODY$
 LANGUAGE SQL IMMUTABLE STRICT PARALLEL SAFE;
 CREATE OR REPLACE FUNCTION sys.APPLOCK_MODE(IN "@dbprincipal" varchar(32),
@@ -1592,3 +1652,228 @@ LANGUAGE plpgsql;
 GRANT EXECUTE ON FUNCTION sys.fn_listextendedproperty(
 	varchar(128), varchar(128), varchar(128), varchar(128), varchar(128), varchar(128), varchar(128)
 ) TO PUBLIC;
+
+CREATE OR REPLACE FUNCTION sys.exp(IN arg DOUBLE PRECISION)
+RETURNS DOUBLE PRECISION
+AS 'babelfishpg_tsql', 'tsql_exp'
+LANGUAGE C IMMUTABLE STRICT PARALLEL SAFE;
+GRANT EXECUTE ON FUNCTION sys.exp(DOUBLE PRECISION) TO PUBLIC;
+
+CREATE OR REPLACE FUNCTION sys.exp(IN arg NUMERIC)
+RETURNS DOUBLE PRECISION
+AS
+$BODY$
+SELECT sys.exp(arg::DOUBLE PRECISION);
+$BODY$
+LANGUAGE SQL IMMUTABLE PARALLEL SAFE;
+GRANT EXECUTE ON FUNCTION sys.exp(NUMERIC) TO PUBLIC;
+
+-- For numeric/decimal and float/double precision there is already inbuilt functions,
+-- Following sign functions are for remaining datatypes
+CREATE OR REPLACE FUNCTION sys.sign(IN arg INT) RETURNS INT AS
+$BODY$
+SELECT
+	CASE
+		WHEN arg > 0 THEN 1::INT
+		WHEN arg < 0 THEN -1::INT
+		ELSE 0::INT
+	END;
+$BODY$
+STRICT
+LANGUAGE SQL IMMUTABLE PARALLEL SAFE;
+GRANT EXECUTE ON FUNCTION sys.sign(INT) TO PUBLIC;
+
+CREATE OR REPLACE FUNCTION sys.sign(IN arg SMALLINT) RETURNS INT AS
+$BODY$
+SELECT sys.sign(arg::INT);
+$BODY$
+LANGUAGE SQL IMMUTABLE PARALLEL SAFE;
+GRANT EXECUTE ON FUNCTION sys.sign(SMALLINT) TO PUBLIC;
+
+CREATE OR REPLACE FUNCTION sys.sign(IN arg SYS.TINYINT) RETURNS INT AS
+$BODY$
+SELECT sys.sign(arg::INT);
+$BODY$
+LANGUAGE SQL IMMUTABLE PARALLEL SAFE;
+GRANT EXECUTE ON FUNCTION sys.sign(SYS.TINYINT) TO PUBLIC;
+
+CREATE OR REPLACE FUNCTION sys.sign(IN arg BIGINT) RETURNS BIGINT AS
+$BODY$
+SELECT
+	CASE
+		WHEN arg > 0::BIGINT THEN 1::BIGINT
+		WHEN arg < 0::BIGINT THEN -1::BIGINT
+		ELSE 0::BIGINT
+	END;
+$BODY$
+LANGUAGE SQL IMMUTABLE PARALLEL SAFE;
+GRANT EXECUTE ON FUNCTION sys.sign(BIGINT) TO PUBLIC;
+
+CREATE OR REPLACE FUNCTION sys.sign(IN arg SYS.MONEY) RETURNS SYS.MONEY AS
+$BODY$
+SELECT
+	CASE
+		WHEN arg > 0::SYS.MONEY THEN 1::SYS.MONEY
+		WHEN arg < 0::SYS.MONEY THEN -1::SYS.MONEY
+		ELSE 0::SYS.MONEY
+	END;
+$BODY$
+LANGUAGE SQL IMMUTABLE PARALLEL SAFE;
+GRANT EXECUTE ON FUNCTION sys.sign(SYS.MONEY) TO PUBLIC;
+
+CREATE OR REPLACE FUNCTION sys.sign(IN arg SYS.SMALLMONEY) RETURNS SYS.MONEY AS
+$BODY$
+SELECT sys.sign(arg::SYS.MONEY);
+$BODY$
+LANGUAGE SQL IMMUTABLE PARALLEL SAFE;
+GRANT EXECUTE ON FUNCTION sys.sign(SYS.SMALLMONEY) TO PUBLIC;
+
+-- To handle remaining input datatypes
+CREATE OR REPLACE FUNCTION sys.sign(IN arg ANYELEMENT) RETURNS SYS.FLOAT AS
+$BODY$
+SELECT
+	sign(arg::SYS.FLOAT);
+$BODY$
+LANGUAGE SQL IMMUTABLE PARALLEL SAFE;
+GRANT EXECUTE ON FUNCTION sys.sign(ANYELEMENT) TO PUBLIC;
+
+-- Duplicate functions with arg TEXT since ANYELEMNT cannot handle type unknown.
+CREATE OR REPLACE FUNCTION sys.sign(IN arg TEXT) RETURNS SYS.FLOAT AS
+$BODY$
+SELECT
+	sign(arg::SYS.FLOAT);
+$BODY$
+LANGUAGE SQL IMMUTABLE PARALLEL SAFE;
+GRANT EXECUTE ON FUNCTION sys.sign(TEXT) TO PUBLIC;
+
+CREATE OR REPLACE FUNCTION sys.lock_timeout()
+RETURNS integer
+LANGUAGE plpgsql
+STRICT
+AS $$
+declare return_value integer;
+begin
+    return_value := (select s.setting FROM pg_catalog.pg_settings s where name = 'lock_timeout');
+    RETURN return_value;
+EXCEPTION
+    WHEN others THEN
+        RETURN NULL;
+END;
+$$;
+GRANT EXECUTE ON FUNCTION sys.lock_timeout() TO PUBLIC;
+
+CREATE OR REPLACE FUNCTION sys.max_connections()
+RETURNS integer
+LANGUAGE plpgsql
+STRICT
+AS $$
+declare return_value integer;
+begin
+    return_value := (select s.setting FROM pg_catalog.pg_settings s where name = 'max_connections');
+    RETURN return_value;
+EXCEPTION
+    WHEN others THEN
+        RETURN NULL;
+END;
+$$;
+GRANT EXECUTE ON FUNCTION sys.max_connections() TO PUBLIC;
+
+CREATE OR REPLACE FUNCTION sys.trigger_nestlevel()
+RETURNS integer
+LANGUAGE plpgsql
+STRICT
+AS $$
+declare return_value integer;
+begin
+    return_value := (select pg_trigger_depth());
+    RETURN return_value;
+EXCEPTION
+    WHEN others THEN
+        RETURN NULL;
+END;
+$$;
+GRANT EXECUTE ON FUNCTION sys.trigger_nestlevel() TO PUBLIC;
+
+CREATE OR REPLACE FUNCTION sys.schema_name()
+RETURNS sys.sysname
+LANGUAGE plpgsql
+STRICT
+AS $function$
+begin
+    RETURN (select orig_name from sys.babelfish_namespace_ext ext  
+                    where ext.nspname = (select current_schema()) and  ext.dbid::oid = sys.db_id()::oid)::sys.sysname;
+EXCEPTION 
+    WHEN others THEN
+        RETURN NULL;
+END;
+$function$
+;
+GRANT EXECUTE ON FUNCTION sys.schema_name() TO PUBLIC;
+
+CREATE OR REPLACE FUNCTION sys.original_login()
+RETURNS sys.sysname
+LANGUAGE plpgsql
+STRICT
+AS $$
+declare return_value text;
+begin
+	RETURN (select session_user)::sys.sysname;
+EXCEPTION 
+	WHEN others THEN
+ 		RETURN NULL;
+END;
+$$;
+GRANT EXECUTE ON FUNCTION sys.original_login() TO PUBLIC;
+
+CREATE OR REPLACE FUNCTION sys.columnproperty(object_id oid, property name, property_name text)
+RETURNS integer
+LANGUAGE plpgsql
+STRICT
+AS $$
+
+declare extra_bytes CONSTANT integer := 4;
+declare return_value integer;
+begin
+	return_value := (
+					select 
+						case  LOWER(property_name)
+							when 'charmaxlen' then 
+								(select CASE WHEN a.atttypmod > 0 THEN a.atttypmod - extra_bytes ELSE NULL END  from pg_catalog.pg_attribute a where a.attrelid = object_id and a.attname = property)
+							when 'allowsnull' then
+								(select CASE WHEN a.attnotnull THEN 0 ELSE 1 END from pg_catalog.pg_attribute a where a.attrelid = object_id and a.attname = property)
+							else
+								null
+						end
+					);
+	
+  RETURN return_value::integer;
+EXCEPTION 
+	WHEN others THEN
+ 		RETURN NULL;
+END;
+$$;
+GRANT EXECUTE ON FUNCTION sys.columnproperty(object_id oid, property name, property_name text) TO PUBLIC;
+
+COMMENT ON FUNCTION sys.columnproperty 
+IS 'This function returns column or parameter information. Currently only works with "charmaxlen", and "allowsnull" otherwise returns 0.';
+
+-- substring --
+CREATE OR REPLACE FUNCTION sys.substring(string TEXT, i INTEGER, j INTEGER)
+RETURNS sys.VARCHAR
+AS 'babelfishpg_tsql', 'tsql_varchar_substr' LANGUAGE C IMMUTABLE PARALLEL SAFE;
+
+CREATE OR REPLACE FUNCTION sys.substring(string sys.VARCHAR, i INTEGER, j INTEGER)
+RETURNS sys.VARCHAR
+AS 'babelfishpg_tsql', 'tsql_varchar_substr' LANGUAGE C IMMUTABLE PARALLEL SAFE;
+
+CREATE OR REPLACE FUNCTION sys.substring(string sys.VARCHAR, i INTEGER, j INTEGER)
+RETURNS sys.VARCHAR
+AS 'babelfishpg_tsql', 'tsql_varchar_substr' LANGUAGE C IMMUTABLE PARALLEL SAFE;
+
+CREATE OR REPLACE FUNCTION sys.substring(string sys.NVARCHAR, i INTEGER, j INTEGER)
+RETURNS sys.NVARCHAR
+AS 'babelfishpg_tsql', 'tsql_varchar_substr' LANGUAGE C IMMUTABLE PARALLEL SAFE;
+
+CREATE OR REPLACE FUNCTION sys.substring(string sys.NCHAR, i INTEGER, j INTEGER)
+RETURNS sys.NVARCHAR
+AS 'babelfishpg_tsql', 'tsql_varchar_substr' LANGUAGE C IMMUTABLE PARALLEL SAFE;

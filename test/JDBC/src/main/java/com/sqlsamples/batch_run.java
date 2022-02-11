@@ -34,6 +34,7 @@ public class batch_run {
         JDBCStatement jdbcStatement = new JDBCStatement();
         JDBCTransaction jdbcTransaction = new JDBCTransaction();
         JDBCCrossDialect jdbcCrossDialect = null;
+        JDBCBulkCopy jdbcBulkCopy = new JDBCBulkCopy();
 
         if (isCrossDialectFile)
             jdbcCrossDialect = new JDBCCrossDialect(con_bbl);
@@ -219,9 +220,20 @@ public class batch_run {
                     // Run the iterative parse and compare loop for test file
                     batch_run_sql(con_bbl, bw, filePath, logger);
 
+                } else if (strLine.startsWith("insertbulk")) {
+                    bw.write(strLine);
+                    bw.newLine();
+
+                    String[] result = strLine.split("#!#");
+                    String sourceTable = result[1];
+                    String destinationTable = result[2];
+                    jdbcBulkCopy.executeInsertBulk(con_bbl, destinationTable, sourceTable, logger, bw);
+
                 } else if (isCrossDialectFile && (  (tsqlDialect = strLine.toLowerCase().startsWith("-- tsql")) ||
                                                     (psqlDialect = strLine.toLowerCase().startsWith("-- psql")))) {
                     // Cross dialect testing
+
+                    Connection connection = null;
 
                     bw.write(strLine);
                     bw.newLine();
@@ -232,13 +244,13 @@ public class batch_run {
                      * assign it to existing connection object.
                      */
                     if (tsqlDialect) {
-                        con_bbl = jdbcCrossDialect.getTsqlConnection(strLine, bw, logger);
+                        connection = jdbcCrossDialect.getTsqlConnection(strLine, bw, logger);
                     } else if (psqlDialect) {
-                        con_bbl = jdbcCrossDialect.getPsqlConnection(strLine, bw, logger);
+                        connection = jdbcCrossDialect.getPsqlConnection(strLine, bw, logger);
                     }
 
-                    // Ensure connection object is not null
-                    assert(con_bbl != null);
+                    // Ensure con_bbl is never null
+                    if (connection != null) con_bbl = connection;
 
                 } else {
                     // execute statement as a normal SQL statement

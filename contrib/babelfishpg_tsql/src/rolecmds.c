@@ -37,6 +37,7 @@
 #include "storage/lmgr.h"
 #include "tcop/utility.h"
 #include "utils/acl.h"
+#include "utils/catcache.h"
 #include "utils/builtins.h"
 #include "utils/fmgroids.h"
 #include "utils/lsyscache.h"
@@ -690,34 +691,60 @@ is_alter_server_stmt(GrantRoleStmt *stmt)
 	if (list_length(stmt->granted_roles) == 1)
 	{
 		RoleSpec *spec = (RoleSpec *) linitial(stmt->granted_roles);		
-		if (strcmp(spec->rolename, "sysadmin") == 0) /* only supported server role */
-			return true;
+		if (strcmp(spec->rolename, "sysadmin") != 0) /* only supported server role */
+			return false;
 	}
 	/* has one and only one grantee  */
-	if (list_length(stmt->grantee_roles) == 1)
-		return true;
+	if (list_length(stmt->grantee_roles) != 1)
+		return false;
 
-	return false;
+	return true;
 }
 
 void
 check_alter_server_stmt(GrantRoleStmt *stmt)
 {
-	Oid role;
-	const char *grantee_name;
-	/* grantee MUST be a login */
-	
-	grantee_name = ((RoleSpec *) linitial(stmt->grantee_roles))->rolename;
-	role = get_role_oid(grantee_name, false);
+	Oid grantee;
+	const char 	*grantee_name;
+	RoleSpec 	*spec;
+	CatCList   	*memlist;
+	Oid         sysadmin;
 
-	if(!is_login(role))
+	spec = (RoleSpec *) linitial(stmt->grantee_roles);		
+	sysadmin = get_role_oid("sysadmin", false);
+
+	/* grantee MUST be a login */
+	grantee_name = spec->rolename;
+	grantee = get_role_oid(grantee_name, false);  /* missing not OK */
+
+	if(!is_login(grantee))
 		ereport(ERROR,
 				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
 				 errmsg("%s is not a login", grantee_name)));
 
-	if (!has_privs_of_role(GetSessionUserId(), get_role_oid("sysadmin", false)))
+	/* only sysadmin role is assumed below */
+	if (!has_privs_of_role(GetSessionUserId(), sysadmin))
 		ereport(ERROR,
 				(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
 				 errmsg("Current login %s do not have permission to alter server role",
 					 GetUserNameFromId(GetSessionUserId(), true))));
+
+	/* could not drop the last member of sysadmin */
+	memlist = SearchSysCacheList1(AUTHMEMROLEMEM,
+									ObjectIdGetDatum(sysadmin));
+
+	if (memlist->n_members == 1)
+	{
+		HeapTuple   tup = &memlist->members[0]->tuple;
+		Oid         member = ((Form_pg_auth_members) GETSTRUCT(tup))->member;
+
+		if (member == grantee)
+		{
+			ReleaseSysCacheList(memlist);
+			ereport(ERROR,
+					(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+					 errmsg("Could not drop last member of sysadmin")));
+		}
+	}
+	ReleaseSysCacheList(memlist);
 }

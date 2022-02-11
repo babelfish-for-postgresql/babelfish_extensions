@@ -1,0 +1,7 @@
+SELECT ORIGINAL_LOGIN()
+GO
+~~START~~
+varchar
+jdbc_user
+~~END~~
+

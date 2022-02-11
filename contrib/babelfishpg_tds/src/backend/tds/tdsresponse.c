@@ -32,6 +32,7 @@
 #include "utils/numeric.h"
 #include "utils/portal.h"
 #include "utils/rel.h"
+#include "utils/syscache.h"
 
 #include "src/include/tds_instr.h"
 #include "src/include/tds_int.h"
@@ -123,6 +124,7 @@ static void FillTabNameWithNumParts(StringInfo buf, uint8 numParts, TdsRelationM
 static void FillTabNameWithoutNumParts(StringInfo buf, uint8 numParts, TdsRelationMetaDataInfo relMetaDataInfo);
 static void SetTdsEstateErrorData(void);
 static void ResetTdsEstateErrorData(void);
+static bool get_attnotnull(Oid relid, AttrNumber attnum);
 
 static inline void
 SendPendingDone(bool more)
@@ -394,7 +396,7 @@ PrintTupPrepareInfo(DR_printtup *myState, TupleDesc typeinfo, int numAttrs)
 	}
 }
 
-/* look for a typmod to return during a numeric expression */
+/* look for a typmod to return from a numeric expression */
 static int32
 resolve_numeric_typmod_from_exp(Node *expr)
 {
@@ -524,13 +526,19 @@ resolve_numeric_typmod_from_exp(Node *expr)
 					return -1;
 			}
 
-			/* handle precision overflow, use max allowed precision:38 */
-			if (precision > TDS_MAX_NUM_PRECISION)
+			/*
+			 * Mitigate precision overflow if integral precision <= 38
+			 * Otherwise it simply won't fit in 38 precision and let an
+			 * overflow error be thrown in PrepareRowDescription.
+			 */
+			if (precision > TDS_MAX_NUM_PRECISION &&
+			    precision - scale <= TDS_MAX_NUM_PRECISION)
 			{
-				int delta = precision - TDS_MAX_NUM_PRECISION;
-				precision = TDS_MAX_NUM_PRECISION;
-				scale = Max(scale - delta, 0);
+			    int delta = precision - TDS_MAX_NUM_PRECISION;
+			    precision = TDS_MAX_NUM_PRECISION;
+			    scale = Max(scale - delta, 0);
 			}
+
 			return ((precision << 16) | scale) + VARHDRSZ;
 		}
 		case T_FuncExpr:
@@ -539,9 +547,9 @@ resolve_numeric_typmod_from_exp(Node *expr)
 			Oid     func_oid = InvalidOid;
 			int rettypmod = -1;
 
-			/* Function argument list can be empty */
-			if (func->args == NIL)
-				return -1;
+			/* Be smart about length-coercion functions... */
+			if (exprIsLengthCoercion(expr, &rettypmod))
+			        return rettypmod;
 
 			/*
 			 * Look up the return type typmod from a persistent
@@ -552,7 +560,8 @@ resolve_numeric_typmod_from_exp(Node *expr)
 
 			if(func->funcresulttype != VOIDOID)
 				rettypmod = pltsql_plugin_handler_ptr->pltsql_read_numeric_typmod(func_oid,
-								func->args->length, func->funcresulttype);
+								func->args == NIL ? 0 : func->args->length,
+								func->funcresulttype);
 			return rettypmod;
 		}
 		case T_NullIfExpr:
@@ -571,12 +580,12 @@ resolve_numeric_typmod_from_exp(Node *expr)
 		}
 		case T_CoalesceExpr:
 		{
-			/* Find max possible precision and scale in a CoalesceExpr */
+			/* Find max possible integral_precision and scale (fractional precision) in a CoalesceExpr */
 			CoalesceExpr *coale = (CoalesceExpr *) expr;
 			ListCell *lc;
 			Node *arg;
 			int32 arg_typmod;
-			uint8_t precision, max_precision = 0, scale, max_scale = 0;
+			uint8_t precision, max_integral_precision = 0, scale, max_scale = 0;
 
 			Assert(coale->args != NIL);
 
@@ -594,19 +603,19 @@ resolve_numeric_typmod_from_exp(Node *expr)
 				scale = (arg_typmod - VARHDRSZ) & 0xffff;
 				precision = ((arg_typmod - VARHDRSZ) >> 16) & 0xffff;
 				max_scale = Max(scale, max_scale);
-				max_precision = Max(precision, max_precision);
+				max_integral_precision = Max(precision - scale, max_integral_precision);
 			}
-			return ((max_precision << 16) | max_scale) + VARHDRSZ;
+			return (((max_integral_precision + max_scale) << 16) | max_scale) + VARHDRSZ;
 		}
 		case T_CaseExpr:
 		{
-			/* Find max possible precision and scale in a CaseExpr */
+			/* Find max possible integral_precision and scale (fractional precision) in a CoalesceExpr */
 			CaseExpr *case_expr = (CaseExpr *) expr;
 			ListCell *lc;
 			CaseWhen *casewhen;
 			Node *casewhen_result;
 			int32 typmod;
-			uint8_t precision, max_precision = 0, scale, max_scale = 0;
+			uint8_t precision, max_integral_precision = 0, scale, max_scale = 0;
 
 			Assert(case_expr->args != NIL);
 
@@ -625,9 +634,9 @@ resolve_numeric_typmod_from_exp(Node *expr)
 				scale = (typmod - VARHDRSZ) & 0xffff;
 				precision = ((typmod - VARHDRSZ) >> 16) & 0xffff;
 				max_scale = Max(scale, max_scale);
-				max_precision = Max(precision, max_precision);
+				max_integral_precision = Max(precision - scale, max_integral_precision);
 			}
-			return ((max_precision << 16) | max_scale) + VARHDRSZ;
+			return (((max_integral_precision + max_scale) << 16) | max_scale) + VARHDRSZ;
 		}
 		case T_Aggref:
 		{
@@ -645,6 +654,15 @@ resolve_numeric_typmod_from_exp(Node *expr)
 			PlaceHolderVar *phv = (PlaceHolderVar *) expr;
 
 			return resolve_numeric_typmod_from_exp((Node *) phv->phexpr);
+		}
+		case T_RelabelType:
+		{
+			 RelabelType *rlt = (RelabelType *) expr;
+
+			 if (rlt->resulttypmod != -1)
+			   return rlt->resulttypmod;
+			 else
+			   return resolve_numeric_typmod_from_exp((Node *) rlt->arg);
 		}
 		/* TODO handle more Expr types if needed */
 		default:
@@ -706,31 +724,31 @@ MakeEmptyParameterToken(char *name, int atttypid, int32 atttypmod, int attcollat
 	{
 		/* TODO  boolean is equivalent to TSQL BIT type */
 		case TDS_SEND_BIT:
-			SetColMetadataForFixedType(col, TDS_TYPE_BIT, 1);
+			SetColMetadataForFixedType(col, TDS_TYPE_BIT, TDS_MAXLEN_BIT);
 			temp->maxLen = 1;
 			break;
 		case TDS_SEND_TINYINT:
-			SetColMetadataForFixedType(col, TDS_TYPE_INTEGER, 1);
+			SetColMetadataForFixedType(col, TDS_TYPE_INTEGER, TDS_MAXLEN_TINYINT);
 			temp->maxLen = 1;
 			break;
 		case TDS_SEND_SMALLINT:
-			SetColMetadataForFixedType(col, TDS_TYPE_INTEGER, 2);
+			SetColMetadataForFixedType(col, TDS_TYPE_INTEGER, TDS_MAXLEN_SMALLINT);
 			temp->maxLen = 2;
 			break;
 		case TDS_SEND_INTEGER:
-			SetColMetadataForFixedType(col, TDS_TYPE_INTEGER, 4);
+			SetColMetadataForFixedType(col, TDS_TYPE_INTEGER, TDS_MAXLEN_INT);
 			temp->maxLen = 4;
 			break;
 		case TDS_SEND_BIGINT:
-			SetColMetadataForFixedType(col, TDS_TYPE_INTEGER, 8);
+			SetColMetadataForFixedType(col, TDS_TYPE_INTEGER, TDS_MAXLEN_BIGINT);
 			temp->maxLen = 8;
 			break;
 		case TDS_SEND_FLOAT4:
-			SetColMetadataForFixedType(col, TDS_TYPE_FLOAT, 4);
+			SetColMetadataForFixedType(col, TDS_TYPE_FLOAT, TDS_MAXLEN_FLOAT4);
 			temp->maxLen = 4;
 			break;
 		case TDS_SEND_FLOAT8:
-			SetColMetadataForFixedType(col, TDS_TYPE_FLOAT, 8);
+			SetColMetadataForFixedType(col, TDS_TYPE_FLOAT, TDS_MAXLEN_FLOAT8);
 			temp->maxLen = 8;
 			break;
 		case TDS_SEND_CHAR:
@@ -764,11 +782,11 @@ MakeEmptyParameterToken(char *name, int atttypid, int32 atttypmod, int attcollat
 				temp->maxLen = 0xFFFF;
 			break;
 		case TDS_SEND_MONEY:
-			SetColMetadataForFixedType(col, TDS_TYPE_MONEYN, 8);
+			SetColMetadataForFixedType(col, TDS_TYPE_MONEYN, TDS_MAXLEN_MONEY);
 			temp->maxLen = 8;
 			break;
 		case TDS_SEND_SMALLMONEY:
-			SetColMetadataForFixedType(col, TDS_TYPE_MONEYN, 4);
+			SetColMetadataForFixedType(col, TDS_TYPE_MONEYN, TDS_MAXLEN_SMALLMONEY);
 			temp->maxLen = 4;
 			break;
 		case TDS_SEND_TEXT:
@@ -795,7 +813,7 @@ MakeEmptyParameterToken(char *name, int atttypid, int32 atttypmod, int attcollat
 			}
 			break;
 		case TDS_SEND_DATETIME:
-			SetColMetadataForFixedType(col, TDS_TYPE_DATETIMEN, 8);
+			SetColMetadataForFixedType(col, TDS_TYPE_DATETIMEN, TDS_MAXLEN_DATETIME);
 			temp->maxLen = 8;
 			break;
 		case TDS_SEND_NUMERIC:
@@ -821,7 +839,7 @@ MakeEmptyParameterToken(char *name, int atttypid, int32 atttypmod, int attcollat
 			}
 			break;
 		case TDS_SEND_SMALLDATETIME:
-			SetColMetadataForFixedType(col, TDS_TYPE_DATETIMEN, 4);
+			SetColMetadataForFixedType(col, TDS_TYPE_DATETIMEN, TDS_MAXLEN_SMALLDATETIME);
 			temp->maxLen = 4;
 			break;
 		case TDS_SEND_IMAGE:
@@ -842,7 +860,7 @@ MakeEmptyParameterToken(char *name, int atttypid, int32 atttypmod, int attcollat
 				temp->maxLen = 0xFFFF;
 			break;
 		case TDS_SEND_UNIQUEIDENTIFIER:
-			SetColMetadataForFixedType(col, TDS_TYPE_UNIQUEIDENTIFIER, 16);
+			SetColMetadataForFixedType(col, TDS_TYPE_UNIQUEIDENTIFIER, TDS_MAXLEN_UNIQUEIDENTIFIER);
 			temp->maxLen = 16;
 			break;
 		case TDS_SEND_TIME:
@@ -1319,29 +1337,56 @@ PrepareRowDescription(TupleDesc typeinfo, List *targetlist, int16 *formats,
 			col->attrNum = 0;
 		}
 
+		col->attNotNull = get_attnotnull(col->relOid, col->attrNum);
 		switch (finfo->sendFuncId)
 		{
-			/* TODO PG boolean is equivalent to TSQL BIT type */
+			/*
+			 * In case of Not NULL constraint on the column, send the variant type.
+			 * This is only done for the Fixed length datat types except uniqueidentifier.
+			 *
+			 * TODO PG boolean is equivalent to TSQL BIT type
+			 */
 			case TDS_SEND_BIT:
-				SetColMetadataForFixedType(col, TDS_TYPE_BIT, 1);
+				if (col->attNotNull)
+					SetColMetadataForFixedType(col, VARIANT_TYPE_BIT, TDS_MAXLEN_BIT);
+				else
+					SetColMetadataForFixedType(col, TDS_TYPE_BIT, TDS_MAXLEN_BIT);
 				break;
 			case TDS_SEND_TINYINT:
-				SetColMetadataForFixedType(col, TDS_TYPE_INTEGER, 1);
+				if (col->attNotNull)
+					SetColMetadataForFixedType(col, VARIANT_TYPE_TINYINT, TDS_MAXLEN_TINYINT);
+				else
+					SetColMetadataForFixedType(col, TDS_TYPE_INTEGER, TDS_MAXLEN_TINYINT);
 				break;
 			case TDS_SEND_SMALLINT:
-				SetColMetadataForFixedType(col, TDS_TYPE_INTEGER, 2);
+				if (col->attNotNull)
+					SetColMetadataForFixedType(col, VARIANT_TYPE_SMALLINT, TDS_MAXLEN_SMALLINT);
+				else
+					SetColMetadataForFixedType(col, TDS_TYPE_INTEGER, TDS_MAXLEN_SMALLINT);
 				break;
 			case TDS_SEND_INTEGER:
-				SetColMetadataForFixedType(col, TDS_TYPE_INTEGER, 4);
+				if (col->attNotNull)
+					SetColMetadataForFixedType(col, VARIANT_TYPE_INT, TDS_MAXLEN_INT);
+				else
+					SetColMetadataForFixedType(col, TDS_TYPE_INTEGER, TDS_MAXLEN_INT);
 				break;
 			case TDS_SEND_BIGINT:
-				SetColMetadataForFixedType(col, TDS_TYPE_INTEGER, 8);
+				if (col->attNotNull)
+					SetColMetadataForFixedType(col, VARIANT_TYPE_BIGINT, TDS_MAXLEN_BIGINT);
+				else
+					SetColMetadataForFixedType(col, TDS_TYPE_INTEGER, TDS_MAXLEN_BIGINT);
 				break;
 			case TDS_SEND_FLOAT4:
-				SetColMetadataForFixedType(col, TDS_TYPE_FLOAT, 4);
+				if (col->attNotNull)
+					SetColMetadataForFixedType(col, VARIANT_TYPE_REAL, TDS_MAXLEN_FLOAT4);
+				else
+					SetColMetadataForFixedType(col, TDS_TYPE_FLOAT, TDS_MAXLEN_FLOAT4);
 				break;
 			case TDS_SEND_FLOAT8:
-				SetColMetadataForFixedType(col, TDS_TYPE_FLOAT, 8);
+				if (col->attNotNull)
+					SetColMetadataForFixedType(col, VARIANT_TYPE_FLOAT, TDS_MAXLEN_FLOAT8);
+				else
+					SetColMetadataForFixedType(col, TDS_TYPE_FLOAT, TDS_MAXLEN_FLOAT8);
 				break;
 			case TDS_SEND_CHAR:
 				SetColMetadataForCharTypeHelper(col, TDS_TYPE_CHAR,
@@ -1362,10 +1407,16 @@ PrepareRowDescription(TupleDesc typeinfo, List *targetlist, int16 *formats,
 														    atttypmod : (atttypmod - 4) * 2);
 				break;
 			case TDS_SEND_MONEY:
-				SetColMetadataForFixedType(col, TDS_TYPE_MONEYN, 8);
+				if (col->attNotNull)
+					SetColMetadataForFixedType(col, VARIANT_TYPE_MONEY, TDS_MAXLEN_MONEY);
+				else
+					SetColMetadataForFixedType(col, TDS_TYPE_MONEYN, TDS_MAXLEN_MONEY);
 				break;
 			case TDS_SEND_SMALLMONEY:
-				SetColMetadataForFixedType(col, TDS_TYPE_MONEYN, 4);
+				if (col->attNotNull)
+					SetColMetadataForFixedType(col, VARIANT_TYPE_SMALLMONEY, TDS_MAXLEN_SMALLMONEY);
+				else
+					SetColMetadataForFixedType(col, TDS_TYPE_MONEYN, TDS_MAXLEN_SMALLMONEY);
 				break;
 			case TDS_SEND_TEXT:
 				SetColMetadataForTextTypeHelper(col, TDS_TYPE_TEXT,
@@ -1389,7 +1440,10 @@ PrepareRowDescription(TupleDesc typeinfo, List *targetlist, int16 *formats,
 					SetColMetadataForDateType(col, TDS_TYPE_DATE);
 				break;
 			case TDS_SEND_DATETIME:
-				SetColMetadataForFixedType(col, TDS_TYPE_DATETIMEN, 8);
+				if (col->attNotNull)
+					SetColMetadataForFixedType(col, VARIANT_TYPE_DATETIME, TDS_MAXLEN_DATETIME);
+				else
+					SetColMetadataForFixedType(col, TDS_TYPE_DATETIMEN, TDS_MAXLEN_DATETIME);
 				break;
 			case TDS_SEND_NUMERIC:
 				{
@@ -1408,6 +1462,11 @@ PrepareRowDescription(TupleDesc typeinfo, List *targetlist, int16 *formats,
 					{
 						scale = (atttypmod - VARHDRSZ) & 0xffff;
 						precision = ((atttypmod - VARHDRSZ) >> 16) & 0xffff;
+						if (precision > TDS_MAX_NUM_PRECISION)
+						{
+						    ereport(ERROR, (errcode(ERRCODE_NUMERIC_VALUE_OUT_OF_RANGE),
+								    errmsg("Arithmetic overflow error for data type numeric.")));
+						}
 					}
 					else
 					{
@@ -1418,14 +1477,19 @@ PrepareRowDescription(TupleDesc typeinfo, List *targetlist, int16 *formats,
 				}
 				break;
 			case TDS_SEND_SMALLDATETIME:
-				SetColMetadataForFixedType(col, TDS_TYPE_DATETIMEN, 4);
+				if (col->attNotNull)
+					SetColMetadataForFixedType(col, VARIANT_TYPE_SMALLDATETIME, TDS_MAXLEN_SMALLDATETIME);
+				else
+					SetColMetadataForFixedType(col, TDS_TYPE_DATETIMEN, TDS_MAXLEN_SMALLDATETIME);
 				break;
 			case TDS_SEND_IMAGE:
 				SetColMetadataForImageType(col, TDS_TYPE_IMAGE);
 				sendTableName |= col->sendTableName;
 				break;
 			case TDS_SEND_BINARY:
-				SetColMetadataForBinaryType(col, TDS_TYPE_BINARY, atttypmod - 4);
+				/* The default binary data length is 1 when maxLen isn't specified */
+				SetColMetadataForBinaryType(col, TDS_TYPE_BINARY, (atttypmod == -1) ?
+											1 : atttypmod - VARHDRSZ);
 				break;
 			case TDS_SEND_VARBINARY:
 				/* Generate the typmod from hex const input because typmod won't be specified */
@@ -1442,7 +1506,7 @@ PrepareRowDescription(TupleDesc typeinfo, List *targetlist, int16 *formats,
 											atttypmod : atttypmod - VARHDRSZ);
 				break;
 			case TDS_SEND_UNIQUEIDENTIFIER:
-				SetColMetadataForFixedType(col, TDS_TYPE_UNIQUEIDENTIFIER, 16);
+				SetColMetadataForFixedType(col, TDS_TYPE_UNIQUEIDENTIFIER, TDS_MAXLEN_UNIQUEIDENTIFIER);
 				break;
 			case TDS_SEND_TIME:
 				if (tdsVersion < TDS_VERSION_7_3_A)
@@ -2503,6 +2567,13 @@ StatementEnd_Internal(PLtsql_execstate *estate, PLtsql_stmt *stmt, bool error)
 	 */
 	tds_estate->error_stack_offset = 0;
 
+	/*
+	 * Return if we are inside a function. Continue if it's a trigger.
+	 */
+	if (estate && estate->func && estate->func->fn_oid != InvalidOid &&
+		estate->func->fn_prokind == PROKIND_FUNCTION && estate->func->fn_is_trigger == PLTSQL_NOT_TRIGGER)
+		return;
+
 	if (stmt == NULL)
 		return;
 
@@ -2802,4 +2873,33 @@ GetTdsEstateErrorData(int *number, int *severity, int *state)
 	 */
 	else
 		return pltsql_plugin_handler_ptr->pltsql_get_errdata(number, severity, state);
+}
+
+/*
+ * get_attnotnull
+ *		Given the relation id and the attribute number,
+ *		return the "attnotnull" field from the attribute relation.
+ */
+static bool
+get_attnotnull(Oid relid, AttrNumber attnum)
+{
+	HeapTuple	  tp;
+	Form_pg_attribute att_tup;
+
+	tp = SearchSysCache2(ATTNUM,
+			ObjectIdGetDatum(relid),
+			Int16GetDatum(attnum));
+
+	if (HeapTupleIsValid(tp))
+	{
+		bool result;
+
+		att_tup = (Form_pg_attribute) GETSTRUCT(tp);
+		result = att_tup->attnotnull;
+		ReleaseSysCache(tp);
+
+		return result;
+	}
+	/* Assume att is nullable if no valid heap tuple is found */
+	return false;
 }

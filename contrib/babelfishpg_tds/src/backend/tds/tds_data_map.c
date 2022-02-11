@@ -166,6 +166,7 @@ TdsIoFunctionRawData TdsIoFunctionRawData_data[] =
     {"pg_catalog", "date", TDS_TYPE_DATE, 3, 1, TDS_SEND_DATE, TDS_RECV_DATE},
     {"sys", "datetime", TDS_TYPE_DATETIMEN, 8, 1, TDS_SEND_DATETIME, TDS_RECV_DATETIME},
     {"pg_catalog", "numeric", TDS_TYPE_NUMERICN, 17, 1, TDS_SEND_NUMERIC, TDS_RECV_NUMERIC},
+    {"sys", "decimal", TDS_TYPE_DECIMALN, 17, 1, TDS_SEND_NUMERIC, TDS_RECV_NUMERIC},
     {"sys", "smalldatetime", TDS_TYPE_DATETIMEN, 4, 1, TDS_SEND_SMALLDATETIME, TDS_RECV_SMALLDATETIME},
     {"sys", "binary", TDS_TYPE_BINARY, -1, 2, TDS_SEND_BINARY, TDS_RECV_BINARY},
     {"sys", "varbinary", TDS_TYPE_VARBINARY, -1, 2, TDS_SEND_VARBINARY, TDS_RECV_VARBINARY},
@@ -177,6 +178,7 @@ TdsIoFunctionRawData TdsIoFunctionRawData_data[] =
     {"pg_catalog", "xml", TDS_TYPE_XML, -1, 1, TDS_SEND_XML, TDS_RECV_XML},
     {"sys", "sql_variant", TDS_TYPE_SQLVARIANT, -1, 4, TDS_SEND_SQLVARIANT, TDS_RECV_SQLVARIANT},
     {"sys", "datetimeoffset", TDS_TYPE_DATETIMEOFFSET, 10, 1, TDS_SEND_DATETIMEOFFSET, TDS_RECV_DATETIMEOFFSET},
+    {"sys", "fixeddecimal", TDS_TYPE_MONEYN, 8, 1, TDS_SEND_MONEY, TDS_RECV_INVALID},
 
     /* Mapping TDS listener sender to basic Postgres datatypes. */
     {"pg_catalog", "oid", TDS_TYPE_INTEGER, 4, 1, TDS_SEND_INTEGER, TDS_RECV_INVALID},

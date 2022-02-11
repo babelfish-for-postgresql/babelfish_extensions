@@ -6,3 +6,13 @@ extern int32_t tsql_numeric_get_typmod(Numeric num);
 
 /* Functions in datatypes/varchar.c */
 extern void *tsql_varchar_input(const char *s, size_t len, int32 atttypmod);
+
+/* Defined in typecode.c */
+extern Oid lookup_tsql_datatype_oid(const char *typename);
+extern bool is_tsql_bpchar_datatype(Oid oid);
+extern bool is_tsql_nchar_datatype(Oid oid);
+extern bool is_tsql_varchar_datatype(Oid oid);
+extern bool is_tsql_nvarchar_datatype(Oid oid);
+extern bool is_tsql_text_datatype(Oid oid);
+extern bool is_tsql_ntext_datatype(Oid oid);
+extern bool is_tsql_image_datatype(Oid oid);

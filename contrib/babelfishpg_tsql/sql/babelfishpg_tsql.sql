@@ -30,6 +30,7 @@ CREATE FUNCTION collationproperty (TEXT, TEXT)
 
 CREATE FUNCTION sessionproperty (TEXT)
 	   RETURNS  sys.SQL_VARIANT AS 'babelfishpg_tsql', 'sessionproperty' LANGUAGE C IMMUTABLE STRICT PARALLEL SAFE;
+
 -- The procedures below requires return code as a RETURN statement which is
 -- only possible in pltsql. Therefore, we create them here and call into the
 -- corresponding internal functions.
@@ -580,7 +581,8 @@ CREATE OR REPLACE VIEW sys.spt_tablecollations_view AS
         o.object_id         AS object_id,
         o.schema_id         AS schema_id,
         c.column_id         AS colid,
-        c.name              AS name,
+        CASE WHEN p.attoptions[1] LIKE 'bbf_original_name=%' THEN split_part(p.attoptions[1], '=', 2)
+            ELSE c.name END AS name,
         CAST(CollationProperty(c.collation_name,'tdscollation') AS binary(5)) AS tds_collation_28,
         CAST(CollationProperty(c.collation_name,'tdscollation') AS binary(5)) AS tds_collation_90,
         CAST(CollationProperty(c.collation_name,'tdscollation') AS binary(5)) AS tds_collation_100,
@@ -589,9 +591,10 @@ CREATE OR REPLACE VIEW sys.spt_tablecollations_view AS
         CAST(c.collation_name AS nvarchar(128)) AS collation_100
     FROM
         sys.all_columns c INNER JOIN
-        sys.all_objects o ON (c.object_id = o.object_id)
+        sys.all_objects o ON (c.object_id = o.object_id) JOIN
+        pg_attribute p ON (c.name = p.attname)
     WHERE
-        c.is_sparse = 0;
+        c.is_sparse = 0 AND p.attnum >= 0;
 GRANT SELECT ON sys.spt_tablecollations_view TO PUBLIC;
 
 -- We are limited by what postgres procedures can return here, but IEW may not
@@ -605,13 +608,12 @@ BEGIN
     select
         s_tcv.colid         AS colid,
         s_tcv.name          AS name,
-        s_tcv.tds_collation_100 AS tds_collation_100,
+        s_tcv.tds_collation_100 AS tds_collation,
         s_tcv.collation_100 AS collation
     from
         sys.spt_tablecollations_view s_tcv
     where
-        s_tcv.object_id = sys.object_id("@object") AND
-        s_tcv.name NOT IN ('cmin', 'cmax', 'xmin', 'xmax', 'ctid', 'tableoid')
+        s_tcv.object_id = sys.object_id(@object)
     order by colid;
 END;
 $$
@@ -873,3 +875,272 @@ returns table (sql_error_code int)
 AS 'babelfishpg_tsql', 'babel_list_mapped_error'
 LANGUAGE C IMMUTABLE STRICT;
 GRANT ALL on FUNCTION sys.fn_mapped_system_error_list TO PUBLIC;
+
+-- BABEL-2259: Support sp_databases System Stored Procedure
+-- Lists databases that either reside in an instance of the SQL Server or
+-- are accessible through a database gateway
+DROP VIEW IF EXISTS sys.sp_databases_view CASCADE;
+
+CREATE OR REPLACE VIEW sys.sp_databases_view AS
+	SELECT CAST(database_name AS sys.SYSNAME),
+	-- DATABASE_SIZE returns a NULL value for databases larger than 2.15 TB
+	CASE WHEN (sum(table_size)/1024.0) > 2.15 * 1024.0 * 1024.0 * 1024.0 THEN NULL
+		ELSE CAST((sum(table_size)/1024.0) AS int) END as database_size,
+	CAST(NULL AS sys.VARCHAR(254)) as remarks
+	FROM (
+		SELECT pg_catalog.pg_namespace.oid as schema_oid,
+		pg_catalog.pg_namespace.nspname as schema_name,
+		INT.name AS database_name,
+		coalesce(pg_relation_size(pg_catalog.pg_class.oid), 0) as table_size
+		FROM
+		sys.babelfish_namespace_ext EXT
+		JOIN sys.babelfish_sysdatabases INT ON EXT.dbid = INT.dbid
+		JOIN pg_catalog.pg_namespace ON pg_catalog.pg_namespace.nspname = EXT.nspname
+		LEFT JOIN pg_catalog.pg_class ON relnamespace = pg_catalog.pg_namespace.oid
+	) t
+	GROUP BY database_name
+	ORDER BY database_name;
+GRANT SELECT on sys.sp_databases_view TO PUBLIC;
+
+CREATE OR REPLACE PROCEDURE sys.sp_databases ()
+AS $$
+BEGIN
+	SELECT database_name as "DATABASE_NAME",
+		database_size as "DATABASE_SIZE", 
+		remarks as "REMARKS" from sys.sp_databases_view;
+END;
+$$
+LANGUAGE 'pltsql';
+GRANT EXECUTE on PROCEDURE sys.sp_databases TO PUBLIC;
+
+CREATE VIEW sys.sp_pkeys_view AS
+SELECT
+CAST(t2.dbname AS sys.sysname) AS TABLE_QUALIFIER,
+CAST(t3.rolname AS sys.sysname) AS TABLE_OWNER,
+CAST(t1.relname AS sys.sysname) AS TABLE_NAME,
+CAST(t4.column_name AS sys.sysname) AS COLUMN_NAME,
+CAST(seq AS smallint) AS KEY_SEQ,
+CAST(t5.conname AS sys.sysname) AS PK_NAME
+FROM pg_catalog.pg_class t1 
+	JOIN sys.pg_namespace_ext t2 ON t1.relnamespace = t2.oid
+	JOIN pg_catalog.pg_roles t3 ON t1.relowner = t3.oid
+	JOIN information_schema.columns t4 ON t1.relname = t4.table_name
+	JOIN pg_constraint t5 ON t1.oid = t5.conrelid
+	, generate_series(1,16) seq -- SQL server has max 16 columns per primary key
+WHERE t5.contype = 'p'
+	AND CAST(t4.dtd_identifier AS smallint) = ANY (t5.conkey)
+	AND CAST(t4.dtd_identifier AS smallint) = t5.conkey[seq];
+
+GRANT SELECT on sys.sp_pkeys_view TO PUBLIC;
+
+-- internal function in order to workaround BABEL-1597
+create function sys.sp_pkeys_internal(
+	in_table_name sys.nvarchar(384),
+	in_table_owner sys.nvarchar(384) = '',
+	in_table_qualifier sys.nvarchar(384) = ''
+)
+returns table(
+	out_table_qualifier sys.sysname,
+	out_table_owner sys.sysname,
+	out_table_name sys.sysname,
+	out_column_name sys.sysname,
+	out_key_seq smallint,
+	out_pk_name sys.sysname
+)
+as $$
+begin
+	return query
+	select * from sys.sp_pkeys_view
+	where in_table_name = table_name
+		and ((SELECT coalesce(in_table_owner,'')) = '' or table_owner = in_table_owner)
+		and ((SELECT coalesce(in_table_qualifier,'')) = '' or table_qualifier = in_table_qualifier)
+	order by table_qualifier, table_owner, table_name, key_seq;
+end;
+$$
+LANGUAGE plpgsql;
+
+CREATE OR REPLACE PROCEDURE sys.sp_pkeys(
+	"@table_name" sys.nvarchar(384),
+	"@table_owner" sys.nvarchar(384) = '',
+	"@table_qualifier" sys.nvarchar(384) = ''
+)
+AS $$
+BEGIN
+	select out_table_qualifier as table_qualifier,
+			out_table_owner as table_owner,
+			out_table_name as table_name,
+			out_column_name as column_name,
+			out_key_seq as key_seq,
+			out_pk_name as pk_name
+	from sys.sp_pkeys_internal(@table_name, @table_owner, @table_qualifier);
+END; 
+$$
+LANGUAGE 'pltsql';
+GRANT ALL on PROCEDURE sys.sp_pkeys TO PUBLIC;
+
+CREATE VIEW sys.sp_statistics_view AS
+SELECT
+CAST(t2.dbname AS sys.sysname) AS TABLE_QUALIFIER,
+CAST(t3.rolname AS sys.sysname) AS TABLE_OWNER,
+CAST(t1.relname AS sys.sysname) AS TABLE_NAME,
+CASE
+WHEN t5.indisunique = 't' THEN CAST(0 AS smallint)
+ELSE CAST(1 AS smallint)
+END AS NON_UNIQUE,
+CAST(t1.relname AS sys.sysname) AS INDEX_QUALIFIER,
+-- the index name created by CREATE INDEX is re-mapped, find it (by checking
+-- the ones not in pg_constraint) and restoring it back before display
+CASE 
+WHEN t8.oid > 0 THEN CAST(t6.relname AS sys.sysname)
+ELSE CAST(SUBSTRING(t6.relname,1,LENGTH(t6.relname)-32-LENGTH(t1.relname)) AS sys.sysname) 
+END AS INDEX_NAME,
+CASE
+WHEN t7.starelid > 0 THEN CAST(0 AS smallint)
+ELSE
+	CASE
+	WHEN t5.indisclustered = 't' THEN CAST(1 AS smallint)
+	ELSE CAST(3 AS smallint)
+	END
+END AS TYPE,
+CAST(seq + 1 AS smallint) AS SEQ_IN_INDEX,
+CAST(t4.column_name AS sys.sysname) AS COLUMN_NAME,
+CAST('A' AS sys.varchar(1)) AS COLLATION,
+CAST(t7.stadistinct AS int) AS CARDINALITY,
+CAST(0 AS int) AS PAGES, --not supported
+CAST(NULL AS sys.varchar(128)) AS FILTER_CONDITION
+FROM pg_catalog.pg_class t1
+    JOIN sys.pg_namespace_ext t2 ON t1.relnamespace = t2.oid
+    JOIN pg_catalog.pg_roles t3 ON t1.relowner = t3.oid
+    JOIN information_schema.columns t4 ON t1.relname = t4.table_name
+	JOIN (pg_catalog.pg_index t5 JOIN
+		pg_catalog.pg_class t6 ON t5.indexrelid = t6.oid) ON t1.oid = t5.indrelid
+	LEFT JOIN pg_catalog.pg_statistic t7 ON t1.oid = t7.starelid
+	LEFT JOIN pg_catalog.pg_constraint t8 ON t5.indexrelid = t8.conindid
+    , generate_series(0,31) seq -- SQL server has max 32 columns per index
+WHERE CAST(t4.dtd_identifier AS smallint) = ANY (t5.indkey)
+    AND CAST(t4.dtd_identifier AS smallint) = t5.indkey[seq];
+GRANT SELECT on sys.sp_statistics_view TO PUBLIC;
+
+create function sys.sp_statistics_internal(
+    in_table_name sys.sysname,
+    in_table_owner sys.sysname = '',
+    in_table_qualifier sys.sysname = '',
+    in_index_name sys.sysname = '',
+	in_is_unique char = 'N',
+	in_accuracy char = 'Q'
+)
+returns table(
+    out_table_qualifier sys.sysname,
+    out_table_owner sys.sysname,
+    out_table_name sys.sysname,
+	out_non_unique smallint,
+	out_index_qualifier sys.sysname,
+	out_index_name sys.sysname,
+	out_type smallint,
+	out_seq_in_index smallint,
+	out_column_name sys.sysname,
+	out_collation sys.varchar(1),
+	out_cardinality int,
+	out_pages int,
+	out_filter_condition sys.varchar(128)
+)
+as $$
+begin
+    return query
+    select * from sys.sp_statistics_view
+    where in_table_name = table_name
+        and ((SELECT coalesce(in_table_owner,'')) = '' or table_owner = in_table_owner)
+        and ((SELECT coalesce(in_table_qualifier,'')) = '' or table_qualifier = in_table_qualifier)
+        and ((SELECT coalesce(in_index_name,'')) = '' or index_name like in_index_name)
+        and ((in_is_unique = 'N') or (in_is_unique = 'Y' and non_unique = 0))
+    order by non_unique, type, index_name, seq_in_index;
+end;
+$$
+LANGUAGE plpgsql;
+
+CREATE OR REPLACE PROCEDURE sys.sp_statistics(
+    "@table_name" sys.sysname,
+    "@table_owner" sys.sysname = '',
+    "@table_qualifier" sys.sysname = '',
+	"@index_name" sys.sysname = '',
+	"@is_unique" char = 'N',
+	"@accuracy" char = 'Q'
+)
+AS $$
+BEGIN
+    select out_table_qualifier as table_qualifier,
+            out_table_owner as table_owner,
+            out_table_name as table_name,
+			out_non_unique as non_unique,
+			out_index_qualifier as index_qualifier,
+			out_index_name as index_name,
+			out_type as type,
+			out_seq_in_index as seq_in_index,
+			out_column_name as column_name,
+			out_collation as collation,
+			out_cardinality as cardinality,
+			out_pages as pages,
+			out_filter_condition as filter_condition
+    from sys.sp_statistics_internal(@table_name, @table_owner, @table_qualifier, @index_name, @is_unique, @accuracy);
+END;
+$$
+LANGUAGE 'pltsql';
+GRANT ALL on PROCEDURE sys.sp_statistics TO PUBLIC;
+
+-- same as sp_statistics
+CREATE OR REPLACE PROCEDURE sys.sp_statistics_100(
+    "@table_name" sys.sysname,
+    "@table_owner" sys.sysname = '',
+    "@table_qualifier" sys.sysname = '',
+	"@index_name" sys.sysname = '',
+	"@is_unique" char = 'N',
+	"@accuracy" char = 'Q'
+)
+AS $$
+BEGIN
+    select out_table_qualifier as table_qualifier,
+            out_table_owner as table_owner,
+            out_table_name as table_name,
+			out_non_unique as non_unique,
+			out_index_qualifier as index_qualifier,
+			out_index_name as index_name,
+			out_type as type,
+			out_seq_in_index as seq_in_index,
+			out_column_name as column_name,
+			out_collation as collation,
+			out_cardinality as cardinality,
+			out_pages as pages,
+			out_filter_condition as filter_condition
+    from sys.sp_statistics_internal(@table_name, @table_owner, @table_qualifier, @index_name, @is_unique, @accuracy);
+END;
+$$
+LANGUAGE 'pltsql';
+GRANT ALL on PROCEDURE sys.sp_statistics_100 TO PUBLIC;
+
+CREATE OR REPLACE PROCEDURE sys.printarg(IN "@message" TEXT)
+AS $$
+BEGIN
+  PRINT @message;
+END;
+$$ LANGUAGE pltsql;
+GRANT EXECUTE ON PROCEDURE sys.printarg(IN "@message" TEXT) TO PUBLIC;
+
+CREATE OR REPLACE PROCEDURE sys.sp_updatestats(IN "@resample" VARCHAR(8) DEFAULT 'NO')
+AS $$
+BEGIN
+  IF sys.user_name() != 'dbo' THEN
+    RAISE EXCEPTION 'user does not have permission';
+  END IF;
+
+  IF lower("@resample") = 'resample' THEN
+    RAISE NOTICE 'ignoring resample option';
+  ELSIF lower("@resample") != 'no' THEN
+    RAISE EXCEPTION 'Invalid option name %', "@resample";
+  END IF;
+
+  ANALYZE VERBOSE;
+
+  CALL printarg('Statistics for all tables have been updated. Refer logs for details.');
+END;
+$$ LANGUAGE plpgsql;
+GRANT EXECUTE on PROCEDURE sys.sp_updatestats(IN "@resample" VARCHAR(8)) TO PUBLIC;

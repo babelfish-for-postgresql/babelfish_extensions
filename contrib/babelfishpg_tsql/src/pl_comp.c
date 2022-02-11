@@ -58,6 +58,7 @@ bool		pltsql_DumpExecTree = false;
 bool		pltsql_check_syntax = false;
 
 PLtsql_function *pltsql_curr_compile;
+int pltsql_curr_compile_body_lineno; /* lineno of function/procedure body in CREATE */
 
 /* A context appropriate for short-term allocs during compilation */
 MemoryContext pltsql_compile_tmp_cxt;
@@ -111,9 +112,9 @@ static void pltsql_compile_error_callback(void *arg);
 static void add_parameter_name(PLtsql_nsitem_type itemtype, int itemno, const char *name);
 static void add_dummy_return(PLtsql_function *function);
 static void add_decl_table(PLtsql_function *function, int tbl_dno, char *tbl_typ);
-static void add_return_table(PLtsql_function *function);
 static Node *pltsql_pre_column_ref(ParseState *pstate, ColumnRef *cref);
 static Node *pltsql_post_column_ref(ParseState *pstate, ColumnRef *cref, Node *var);
+static void pltsql_post_expand_star(ParseState *pstate, ColumnRef *cref, List *l);
 static Node *pltsql_param_ref(ParseState *pstate, ParamRef *pref);
 static Node *resolve_column_ref(ParseState *pstate, PLtsql_expr *expr,
 				   ColumnRef *cref, bool error_if_no_field);
@@ -310,7 +311,6 @@ do_compile(FunctionCallInfo fcinfo,
 	PLtsql_variable **out_arg_variables;
 	MemoryContext func_cxt;
 	/* Special handling is needed for Multi-Statement Table-Valued Functions. */
-	bool 		is_mstvf = false;
 	int 		tbl_dno = -1; /* dno of the output table variable */
 	char 	   *tbl_typ = NULL; /* Name of the output table variable's type */
 	int			*typmods = NULL; /* typmod of each argument if available */
@@ -457,12 +457,12 @@ do_compile(FunctionCallInfo fcinfo,
 					get_typtype(procStruct->prorettype) == TYPTYPE_COMPOSITE)
 				{
 					/* Mstvf should only have one table arg */
-					if (is_mstvf)
+					if (function->is_mstvf)
 						ereport(ERROR,
 								(errcode(ERRCODE_INVALID_FUNCTION_DEFINITION),
 								 errmsg("multi-statement table-valued functions can only have one table arg")));
 
-					is_mstvf = true;
+					function->is_mstvf = true;
 				}
 
 				/* Create datatype info */
@@ -490,7 +490,7 @@ do_compile(FunctionCallInfo fcinfo,
 													 0, argdtype, false);
 
 				/* Multi-Statement Table-Valued Function - save dno and typname */
-				if (is_mstvf)
+				if (function->is_mstvf)
 				{
 					tbl_dno = argvariable->dno;
 					tbl_typ = psprintf("%s.%s",
@@ -540,7 +540,7 @@ do_compile(FunctionCallInfo fcinfo,
 				 * references.
 				 */
 				if (argnames && argnames[i][0] != '\0' &&
-					(argmode != PROARGMODE_TABLE || is_mstvf))
+					(argmode != PROARGMODE_TABLE || function->is_mstvf))
 					add_parameter_name(argitemtype, argvariable->dno,
 									   argnames[i]);
 			}
@@ -907,7 +907,7 @@ do_compile(FunctionCallInfo fcinfo,
 	 * 1) Add a declare table statement to the beginning
 	 * 2) Add a return table statement to the end
 	 */
-	if (is_mstvf)
+	if (function->is_mstvf)
 	{
 		/* 
 		 * ANTLR parser would return a stmt list like INIT->BLOCK,
@@ -920,7 +920,6 @@ do_compile(FunctionCallInfo fcinfo,
 			function->action = (PLtsql_stmt_block *) lsecond(pltsql_parse_result->body);
 		}
 		add_decl_table(function, tbl_dno, tbl_typ);
-		add_return_table(function);
 	}
 
 	/*
@@ -1468,55 +1467,6 @@ add_decl_table(PLtsql_function *function, int tbl_dno, char *tbl_typ)
 }
 
 /*
- * Add a RETURN TABLE statement to the given function's body
- */
-static void
-add_return_table(PLtsql_function *function)
-{
-	/*
-	 * Use the RETURN QUERY statement -
-	 * its query will be filled in during execution.
-	 */
-	PLtsql_stmt_return_query *new;
-
-	new = palloc0(sizeof(PLtsql_stmt_return_query));
-	new->cmd_type = PLTSQL_STMT_RETURN_TABLE;
-	new->query = NULL;
-	new->dynquery = NULL;
-	new->params = NIL;
-
-	/*
-	 * If the outer block has an EXCEPTION clause, we need to make a new outer
-	 * block, since the added RETURN shouldn't act like it is inside the
-	 * EXCEPTION clause.
-	 */
-	if (function->action->exceptions != NULL)
-	{
-		PLtsql_stmt_block *new;
-
-		new = palloc0(sizeof(PLtsql_stmt_block));
-		new->cmd_type = PLTSQL_STMT_BLOCK;
-		new->body = list_make1(function->action);
-
-		function->action = new;
-	}
-	if (function->action->body != NIL &&
-		((PLtsql_stmt *) llast(function->action->body))->cmd_type == PLTSQL_STMT_RETURN)
-	{
-		/*
-		 * There is already a RETURN statement at the end:
-		 * delete it here, it will be added back in add_dummy_return()
-		 */
-		function->action->body = list_truncate(function->action->body,
-											   list_length(function->action->body) - 1);
-	}
-
-	/* Add the stmt to the end */
-	function->action->body = lappend(function->action->body, new);
-}
-
-
-/*
  * pltsql_parser_setup		set up parser hooks for dynamic parameters
  *
  * Note: this routine, and the hook functions it prepares for, are logically
@@ -1529,6 +1479,7 @@ pltsql_parser_setup(struct ParseState *pstate, PLtsql_expr *expr)
 {
 	pstate->p_pre_columnref_hook = pltsql_pre_column_ref;
 	pstate->p_post_columnref_hook = pltsql_post_column_ref;
+	pstate->p_post_expand_star_hook = pltsql_post_expand_star;
 	pstate->p_paramref_hook = pltsql_param_ref;
 	/* no need to use p_coerce_param_hook */
 	pstate->p_ref_hook_state = (void *) expr;
@@ -1590,6 +1541,78 @@ pltsql_post_column_ref(ParseState *pstate, ColumnRef *cref, Node *var)
 	}
 
 	return myvar;
+}
+
+
+/*
+ * Call this hook only when expanding a SELECT * to its individual column names
+ * We can rewrite the column names to their Babelfish (ie original case) names
+ * if we find them in pg_attribute.
+ */
+static void
+pltsql_post_expand_star(ParseState *pstate, ColumnRef *cref, List *l)
+{
+	ListCell *li;
+	Datum attopts;
+	ArrayType *arr;
+	Datum *optiondatums;
+	int noptions, i;
+	char *optstr, *bbf_original_name;
+
+	foreach(li, l)
+	{
+		/*
+		 * Each item in the List here should be a TargetEntry (see ExpandAllTables/expandNSItemAttrs)
+		 */
+		TargetEntry *te = (TargetEntry *) lfirst(li);
+		ParseNamespaceItem *nsitem = (ParseNamespaceItem *) linitial(pstate->p_namespace);
+		Oid relid = nsitem->p_rte->relid;
+		int16 attnum = te->resno;
+
+		if (relid == InvalidOid)
+		{
+			return;
+		}
+		/*
+		 * Get the list of names in pg_attribute. get_attoptions returns a Datum of
+		 * the text[] field pgattribute.attoptions. We don't want to throw a full
+		 * error if cache lookup fails to preserve functionality, so just log it. 
+		 */
+		PG_TRY();
+		{
+			attopts = get_attoptions(relid, attnum);
+		}
+		PG_CATCH();
+		{
+			elog(LOG, "Cache lookup failed in pltsql_post_expand_star for attribute %d of relation %u",
+						attnum, relid);
+			attopts = (Datum) 0;
+		}
+		PG_END_TRY();
+		if (!attopts)
+		{
+			return;
+		}
+
+		arr = DatumGetArrayTypeP(attopts);
+		deconstruct_array(arr, TEXTOID, -1, false, TYPALIGN_INT,
+					  &optiondatums, NULL, &noptions);
+
+		for (i = 0; i < noptions; i++)
+		{
+			optstr = VARDATA(optiondatums[i]);
+			if (strncmp(optstr, "bbf_original_name=", 18) == 0)
+			{
+				/*
+				 * We found the original name; rewrite it as bbf_original_name
+				 */
+				bbf_original_name = &optstr[18];
+				bbf_original_name[strlen(te->resname)] = '\0';
+				te->resname = pstrdup(bbf_original_name);
+				break;
+			}
+		}
+	}
 }
 
 /*

@@ -1,0 +1,387 @@
+#Q#create table temp_sp2(a int);
+#Q#CREATE PROCEDURE sp_test AS BEGIN insert into temp_sp2 values(1); END;
+#Q#sp_test
+#Q#SELECT * FROM temp_sp2;
+#D#int
+1
+#Q#drop table temp_sp2;
+#Q#drop Procedure sp_test;
+#Q#create table temp_sp(a int);
+#Q#Create Procedure stored_proc1 (@a int) As Begin insert into temp_sp values(@a) End;
+#Q#stored_proc1
+#Q#exec stored_proc1 -200
+#Q#exec stored_proc1 0
+#Q#exec stored_proc1 -1
+#Q#exec stored_proc1 2
+#Q#SELECT * FROM temp_sp;
+#D#int
+-100
+-200
+0
+-1
+2
+#Q#DROP table temp_sp;
+#Q#DROP Procedure stored_proc1
+#Q#CREATE PROCEDURE sp_test1 (@a  INT) AS BEGIN SET @a=100; Select @a as a; END;
+#Q#exec sp_test1 2
+#D#int
+100
+#Q#Declare @a int;Set @a=1; exec sp_test1 @a;select @a as a;
+#D#int
+100
+1
+#Q#sp_test1
+#D#int
+100
+#Q#sp_test1
+#D#int
+100
+#Q#DROP PROCEDURE sp_test1
+#Q#CREATE PROCEDURE sp_test1 (@a  INT OUTPUT) AS BEGIN SET @a=100; Select @a as a; END;
+#Q#exec sp_test1 2
+#D#int
+100
+#Q#Declare @a int;Set @a=1; exec sp_test1 @a;select @a as a;
+#D#int
+100
+1
+#Q#sp_test1
+#D#int
+100
+--OUT PARAMETERS--
+a
+Int32
+100
+
+#Q#sp_test1
+#D#int
+100
+--OUT PARAMETERS--
+a
+Int32
+100
+
+#Q#DROP PROCEDURE sp_test1
+#Q#CREATE PROCEDURE sp_test2 (@a SMALLINT OUTPUT) AS BEGIN SET @a=100; Select @a as a; END;
+#Q#exec sp_test2 2
+#D#smallint
+100
+#Q#Declare @a smallint;Set @a=1; exec sp_test2 @a;select @a as a;
+#D#smallint
+100
+1
+#Q#sp_test2
+#D#smallint
+100
+--OUT PARAMETERS--
+a
+Int16
+100
+
+#Q#sp_test2
+#D#smallint
+100
+--OUT PARAMETERS--
+a
+Int16
+100
+
+#Q#DROP PROCEDURE sp_test2
+#Q#CREATE PROCEDURE sp_test3 (@a BIGINT OUTPUT) AS BEGIN SET @a=100; Select @a as a; END;
+#Q#exec sp_test3 2
+#D#bigint
+100
+#Q#Declare @a bigint;Set @a=1; exec sp_test3 @a;select @a as a;
+#D#bigint
+100
+1
+#Q#sp_test3
+#D#bigint
+100
+--OUT PARAMETERS--
+a
+Int64
+100
+
+#Q#sp_test3
+#D#bigint
+100
+--OUT PARAMETERS--
+a
+Int64
+100
+
+#Q#DROP PROCEDURE sp_test3
+#Q#CREATE PROCEDURE sp_test4 (@a tinyint OUTPUT) AS BEGIN SET @a=100; Select @a as a; END;
+#Q#exec sp_test4 4
+#D#tinyint
+100
+#Q#Declare @a bigint;Set @a=1; exec sp_test4 @a;select @a as a;
+#D#tinyint
+100
+1
+#Q#sp_test4
+#D#tinyint
+100
+--OUT PARAMETERS--
+a
+Byte
+100
+
+#Q#sp_test4
+#D#tinyint
+100
+--OUT PARAMETERS--
+a
+Byte
+100
+
+#Q#DROP PROCEDURE sp_test4
+#Q#CREATE PROCEDURE sp_test5 (@a float OUTPUT) AS BEGIN SET @a=100.12; Select @a as a; END;
+#Q#exec sp_test5 2.1
+#D#float
+100.12
+#Q#Declare @a float;Set @a=1.1; exec sp_test5 @a;select @a as a;
+#D#float
+100.12
+1.1
+#Q#sp_test5
+#D#float
+100.12
+--OUT PARAMETERS--
+a
+Double
+100.12
+
+#Q#sp_test5
+#D#float
+100.12
+--OUT PARAMETERS--
+a
+Double
+100.12
+
+#Q#DROP PROCEDURE sp_test5
+#Q#CREATE PROCEDURE sp_test6 (@a varchar OUTPUT) AS BEGIN SET @a='helloworld'; Select @a as a; END;
+#Q#exec sp_test6 'hello'
+#D#varchar
+h
+#Q#Declare @a varchar;Set @a='hello'; exec sp_test6 @a;select @a as a;
+#D#varchar
+h
+h
+#Q#sp_test6
+#D#varchar
+h
+--OUT PARAMETERS--
+a
+AnsiString
+h
+
+#Q#sp_test6
+#D#varchar
+h
+--OUT PARAMETERS--
+a
+AnsiString
+h
+
+#Q#DROP PROCEDURE sp_test6
+#Q#CREATE PROCEDURE sp_test9 (@a nvarchar OUTPUT) AS BEGIN SET @a='helloworld'; Select @a as a; END;
+#Q#exec sp_test9 'hello'
+#D#nvarchar
+h
+#Q#Declare @a nvarchar;Set @a='hello'; exec sp_test9 @a;select @a as a;
+#D#nvarchar
+h
+h
+#Q#sp_test9
+#D#nvarchar
+h
+--OUT PARAMETERS--
+a
+AnsiString
+h
+
+#Q#sp_test9
+#D#nvarchar
+h
+--OUT PARAMETERS--
+a
+AnsiString
+h
+
+#Q#DROP PROCEDURE sp_test9
+#Q#CREATE PROCEDURE sp_test11 (@a decimal(10,4) OUTPUT) AS BEGIN SET @a=100.41; Select @a as a; END;
+#Q#exec sp_test11 2.00
+#D#decimal
+100.4100
+#Q#Declare @a decimal(10,4);Set @a=10.04; exec sp_test11 @a;select @a as a;
+#D#decimal
+100.4100
+10.0400
+#Q#sp_test11
+#D#decimal
+100.4100
+--OUT PARAMETERS--
+a
+Decimal
+100.410
+
+#Q#sp_test11
+#D#decimal
+100.4100
+--OUT PARAMETERS--
+a
+Decimal
+100.41
+
+#Q#DROP PROCEDURE sp_test11
+#Q#CREATE PROCEDURE sp_test14 (@a date output) AS BEGIN SET @a='1999-1-3'; Select @a as a; END;
+#Q#exec sp_test14 '9999-12-31'
+#D#date
+01/03/1999 00:00:00
+#Q#Declare @a DATE;Set @a='9999-12-31'; exec sp_test14 @a;select @a as a;
+#D#date
+01/03/1999 00:00:00
+12/31/9999 00:00:00
+#Q#sp_test14
+#D#date
+01/03/1999 00:00:00
+--OUT PARAMETERS--
+a
+Date
+01/03/1999 00:00:00
+
+#Q#sp_test14
+#D#date
+01/03/1999 00:00:00
+--OUT PARAMETERS--
+a
+Date
+01/03/1999 00:00:00
+
+#Q#DROP PROCEDURE sp_test14
+#Q#CREATE PROCEDURE sp_test15 (@a time(4) OUTPUT) AS BEGIN SET @a='11:25:07.123'; Select @a as a; END;
+#Q#exec sp_test15 '12:45:37.123'
+#D#time
+11:25:07.1230000
+#Q#Declare @a Time;Set @a='12:45:37.123'; exec sp_test15 @a;select @a as a;
+#D#time
+11:25:07.1230000
+12:45:37.1230000
+#Q#sp_test15
+#D#time
+11:25:07.1230000
+--OUT PARAMETERS--
+a
+Time
+11:25:07.1230000
+
+#Q#sp_test15
+#D#time
+11:25:07.1230000
+--OUT PARAMETERS--
+a
+Time
+11:25:07.1230000
+
+#Q#DROP PROCEDURE sp_test15
+#Q#CREATE PROCEDURE sp_test16 (@a datetime output) AS BEGIN SET @a='2004-05-18 13:59:59.995'; Select @a as a; END;
+#Q#exec sp_test16 '2000-02-28 23:59:59.995'
+#D#datetime
+05/18/2004 13:59:59
+#Q#Declare @a DATETIME;Set @a='2000-02-28 23:59:59.995'; exec sp_test16 @a;select @a as a;
+#D#datetime
+05/18/2004 13:59:59
+02/28/2000 23:59:59
+#Q#sp_test16
+#D#datetime
+05/18/2004 13:59:59
+--OUT PARAMETERS--
+a
+DateTime
+05/18/2004 13:59:59
+
+#Q#sp_test16
+#D#datetime
+05/18/2004 13:59:59
+--OUT PARAMETERS--
+a
+DateTime
+05/18/2004 13:59:59
+
+#Q#DROP PROCEDURE sp_test16
+#Q#CREATE PROCEDURE sp_test17 (@a datetime2(5) OUTPUT) AS BEGIN SET @a='2014-10-2 1:45:37.123456'; Select @a as a; END;
+#Q#exec sp_test17 '2016-10-23 12:45:37.123456'
+#D#datetime2
+10/02/2014 01:45:37
+#Q#Declare @a Datetime2;Set @a='2016-10-23 12:45:37.123456'; exec sp_test17 @a;select @a as a;
+#D#datetime2
+10/02/2014 01:45:37
+10/23/2016 12:45:37
+#Q#sp_test17
+#D#datetime2
+10/02/2014 01:45:37
+--OUT PARAMETERS--
+a
+DateTime2
+10/02/2014 01:45:37
+
+#Q#sp_test17
+#D#datetime2
+10/02/2014 01:45:37
+--OUT PARAMETERS--
+a
+DateTime2
+10/02/2014 01:45:37
+
+#Q#DROP PROCEDURE sp_test17
+#Q#CREATE PROCEDURE sp_test18 (@a smalldatetime output) AS BEGIN SET @a='2010-02-03 12:58:23'; Select @a as a; END;
+#Q#exec sp_test18 '2005-02-19 02:58:23'
+#D#smalldatetime
+02/03/2010 12:58:00
+#Q#Declare @a SMALLDATETIME;Set @a='2000-12-13 12:58:23'; exec sp_test18 @a;select @a as a;
+#D#smalldatetime
+02/03/2010 12:58:00
+12/13/2000 12:58:00
+#Q#sp_test18
+#D#smalldatetime
+02/03/2010 12:58:00
+--OUT PARAMETERS--
+a
+DateTime
+02/03/2010 12:58:00
+
+#Q#sp_test18
+#D#smalldatetime
+02/03/2010 12:58:00
+--OUT PARAMETERS--
+a
+DateTime
+02/03/2010 12:58:00
+
+#Q#DROP PROCEDURE sp_test18
+#Q#DROP PROCEDURE sp_test20
+#E#could not find a procedure named "sp_test20"
+#Q#CREATE PROCEDURE sp_test20 ( @one int, @two int ) AS BEGIN SELECT @one, @two; END;
+#Q#DECLARE @one int = 100; DECLARE @two int = 200; EXECUTE sp_test20 @one = @one, @two = @two;
+#D#int#!#int
+100#!#200
+#Q#DECLARE @one int = 100; DECLARE @two int = 200; EXECUTE sp_test20 @one = @two, @two = @one;
+#D#int#!#int
+200#!#100
+#Q#sp_test20
+#D#int#!#int
+100#!#200
+#Q#DROP PROCEDURE sp_test20
+#Q#DROP PROCEDURE sp_test21
+#E#could not find a procedure named "sp_test21"
+#Q#CREATE PROCEDURE sp_test21 ( @one varchar(30), @two int ) AS BEGIN SELECT @one, @two; END;
+#Q#EXECUTE sp_test21 @one = "hello", @two = 1;
+#D#varchar#!#int
+hello#!#1
+#Q#sp_test21
+#D#varchar#!#int
+hello#!#200
+#Q#DROP PROCEDURE sp_test21

@@ -1,0 +1,31 @@
+USE master;
+go
+
+select N'long text more than 30 characters';
+go
+~~START~~
+nvarchar
+long text more than 30 characters
+~~END~~
+
+select 'foo' where N'bar ' = 'bar';
+go
+~~START~~
+varchar
+foo
+~~END~~
+
+select 'foo' where N'bar ' = N'bar';
+go
+~~START~~
+varchar
+foo
+~~END~~
+
+select 'foo' as N'@var';
+go
+~~START~~
+varchar
+foo
+~~END~~
+

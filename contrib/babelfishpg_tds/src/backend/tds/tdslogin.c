@@ -47,7 +47,9 @@
 #include "libpq/libpq.h"
 #include "libpq/pqformat.h"
 #include "tcop/pquery.h"
+#include "parser/scansup.h"
 #include "utils/guc.h"
+#include "utils/acl.h"
 #include "utils/lsyscache.h"
 #include "utils/memdebug.h"
 #include "utils/memutils.h"
@@ -1097,13 +1099,25 @@ ProcessLoginInternal(Port *port)
 	ValidateLoginRequest(request);
 
 	/*
-	 * Copy the username and database name in port structure so that no one
+	 * Downcase and copy the username and database name in port structure so that no one
 	 * messes up with the local copy.
 	 */
 	if (request->username != NULL)
+	{
+		request->username = downcase_identifier(request->username,
+												strlen(request->username),
+												false,
+												false);
 		port->user_name = pstrdup(request->username);
+	}
 	if (request->database != NULL)
+	{
+		request->database = downcase_identifier(request->database, 
+												strlen(request->database),
+												false,
+												false);
 		port->database_name = pstrdup(request->database);
+	}
 
 	/*
 	 * We set application name in port structure in case we want to log
@@ -1987,6 +2001,28 @@ TdsSendLoginAck(Port *port)
 			snprintf(old, sizeof(old), "%u", tds_default_packet_size);
 			snprintf(new, sizeof(new), "%u", request->packetSize);
 			TdsSendEnvChange(TDS_ENVID_BLOCKSIZE, new, old);
+		}
+
+		/* Check if the user is a valid babelfish login.
+		 * We will only allow following users to login:
+		 * 1. An existing PG user that we have initialised with sys.babelfish_initialize()
+		 * 2. A Postgres SUPERUSER. 
+		 * 3. New users created using CREATE LOGIN command through TDS endpoint. */
+		if (port->user_name != NULL && port->user_name[0] != '\0')
+		{
+			bool login_exist;
+			Oid roleid;
+
+			StartTransactionCommand();
+			roleid = get_role_oid(port->user_name, false);
+			login_exist = pltsql_plugin_handler_ptr->pltsql_is_login(roleid);
+			CommitTransactionCommand();
+
+			/* Throw error if this user is not one of the type mentioned above */
+			if(!login_exist && !superuser_arg(roleid))
+				ereport(ERROR,
+						(errcode(ERRCODE_UNDEFINED_OBJECT),
+						 errmsg("\"%s\" is not a Babelfish user", port->user_name)));
 		}
 
 		if (tds_enable_db_session_property)

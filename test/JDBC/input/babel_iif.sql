@@ -6,9 +6,13 @@ select iif (2 > 1, cast(3.14 as float), cast(31.4 as numeric(3, 1)));
 go
 select iif (2 > 1, cast(3.14 as float), cast(1 as int));
 go
+select iif (2 > 1, cast('$123.123' as money), cast(1 as int));
+go
 select iif (2 > 1, cast('$123.123' as money), cast(3.14 as float));
 go
 select iif (2 > 1, cast('2020-10-20 09:00:00' as datetime), cast('09:00:00' as time));
+go
+select iif (2 > 1, cast('$123.123' as money), cast(321 as bigint));
 go
 select iif (2 > 1, cast(3.14 as float), cast('$123.123' as money));
 go

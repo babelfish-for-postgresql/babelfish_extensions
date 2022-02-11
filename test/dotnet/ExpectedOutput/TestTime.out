@@ -1,0 +1,140 @@
+#Q#Create table TestTime(a time(6)) 
+#Q# Insert into TestTime Values(@a) 
+#Q# Insert into TestTime Values(@a) 
+#Q# Insert into TestTime Values(@a) 
+#Q# Insert into TestTime Values(@a) 
+#Q# Insert into TestTime Values(@a) 
+#Q# Insert into TestTime Values(@a) 
+#Q# Insert into TestTime Values(@a) 
+#Q# Insert into TestTime Values(@a) 
+#Q#select * from TestTime
+#D#time
+12:45:37.1230000
+12:45:37.1230000
+12:45:37.1200000
+12:45:37.1000000
+12:45:37.1234000
+12:45:37.1234560
+12:45:37.1234500
+
+#Q#Drop table TestTime
+#Q#Create table TestTime(a time(5)) 
+#Q# Insert into TestTime Values(@a) 
+#Q# Insert into TestTime Values(@a) 
+#Q# Insert into TestTime Values(@a) 
+#Q# Insert into TestTime Values(@a) 
+#Q# Insert into TestTime Values(@a) 
+#Q# Insert into TestTime Values(@a) 
+#Q# Insert into TestTime Values(@a) 
+#Q# Insert into TestTime Values(@a) 
+#Q#select * from TestTime
+#D#time
+12:45:37.1230000
+12:45:37.1230000
+12:45:37.1200000
+12:45:37.1000000
+12:45:37.1234000
+12:45:37.1234600
+12:45:37.1234500
+
+#Q#Drop table TestTime
+#Q#Create table TestTime(a time(4)) 
+#Q# Insert into TestTime Values(@a) 
+#Q# Insert into TestTime Values(@a) 
+#Q# Insert into TestTime Values(@a) 
+#Q# Insert into TestTime Values(@a) 
+#Q# Insert into TestTime Values(@a) 
+#Q# Insert into TestTime Values(@a) 
+#Q# Insert into TestTime Values(@a) 
+#Q# Insert into TestTime Values(@a) 
+#Q#select * from TestTime
+#D#time
+12:45:37.1230000
+12:45:37.1230000
+12:45:37.1200000
+12:45:37.1000000
+12:45:37.1234000
+12:45:37.1235000
+12:45:37.1235000
+
+#Q#Drop table TestTime
+#Q#Create table TestTime(a time(3)) 
+#Q# Insert into TestTime Values(@a) 
+#Q# Insert into TestTime Values(@a) 
+#Q# Insert into TestTime Values(@a) 
+#Q# Insert into TestTime Values(@a) 
+#Q# Insert into TestTime Values(@a) 
+#Q# Insert into TestTime Values(@a) 
+#Q# Insert into TestTime Values(@a) 
+#Q# Insert into TestTime Values(@a) 
+#Q#select * from TestTime
+#D#time
+12:45:37.1230000
+12:45:37.1230000
+12:45:37.1200000
+12:45:37.1000000
+12:45:37.1230000
+12:45:37.1230000
+12:45:37.1230000
+
+#Q#Drop table TestTime
+#Q#Create table TestTime(a time(2)) 
+#Q# Insert into TestTime Values(@a) 
+#Q# Insert into TestTime Values(@a) 
+#Q# Insert into TestTime Values(@a) 
+#Q# Insert into TestTime Values(@a) 
+#Q# Insert into TestTime Values(@a) 
+#Q# Insert into TestTime Values(@a) 
+#Q# Insert into TestTime Values(@a) 
+#Q# Insert into TestTime Values(@a) 
+#Q#select * from TestTime
+#D#time
+12:45:37.1200000
+12:45:37.1200000
+12:45:37.1200000
+12:45:37.1000000
+12:45:37.1200000
+12:45:37.1200000
+12:45:37.1200000
+
+#Q#Drop table TestTime
+#Q#Create table TestTime(a time(1)) 
+#Q# Insert into TestTime Values(@a) 
+#Q# Insert into TestTime Values(@a) 
+#Q# Insert into TestTime Values(@a) 
+#Q# Insert into TestTime Values(@a) 
+#Q# Insert into TestTime Values(@a) 
+#Q# Insert into TestTime Values(@a) 
+#Q# Insert into TestTime Values(@a) 
+#Q# Insert into TestTime Values(@a) 
+#Q#select * from TestTime
+#D#time
+12:45:37.1000000
+12:45:37.1000000
+12:45:37.1000000
+12:45:37.1000000
+12:45:37.1000000
+12:45:37.1000000
+12:45:37.1000000
+
+#Q#Drop table TestTime
+#Q#Create table TestTime(a time(0)) 
+#Q# Insert into TestTime Values(@a) 
+#Q# Insert into TestTime Values(@a) 
+#Q# Insert into TestTime Values(@a) 
+#Q# Insert into TestTime Values(@a) 
+#Q# Insert into TestTime Values(@a) 
+#Q# Insert into TestTime Values(@a) 
+#Q# Insert into TestTime Values(@a) 
+#Q# Insert into TestTime Values(@a) 
+#Q#select * from TestTime
+#D#time
+12:45:37
+12:45:37
+12:45:37
+12:45:37
+12:45:37
+12:45:37
+12:45:37
+
+#Q#Drop table TestTime

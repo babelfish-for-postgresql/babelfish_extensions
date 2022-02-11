@@ -1,0 +1,47 @@
+-- psql
+DROP DATABASE babel_2622;
+GO
+~~ERROR (Code: 0)~~
+
+~~ERROR (Message: ERROR: database "babel_2622" does not exist
+    Server SQLState: 3D000)~~
+
+
+DROP DATABASE IF EXISTS babel_2622;
+GO
+
+CREATE DATABASE babel_2622;
+GO
+
+ALTER DATABASE babel_2622 RENAME to babel2622;
+GO
+
+ALTER DATABASE babel_2622 RENAME to babel2622;
+GO
+~~ERROR (Code: 0)~~
+
+~~ERROR (Message: ERROR: database "babel_2622" does not exist
+    Server SQLState: 3D000)~~
+
+
+DROP DATABASE IF EXISTS babel2622;
+GO
+
+DROP DATABASE IF EXISTS babel2622;
+GO
+
+DROP DATABASE babel2622;
+GO
+~~ERROR (Code: 0)~~
+
+~~ERROR (Message: ERROR: database "babel2622" does not exist
+    Server SQLState: 3D000)~~
+
+
+ALTER DATABASE babel2622 RENAME to babel_2622;
+GO
+~~ERROR (Code: 0)~~
+
+~~ERROR (Message: ERROR: database "babel2622" does not exist
+    Server SQLState: 3D000)~~
+

@@ -1,0 +1,20 @@
+create table t1(a int, b float, c bigint, d numeric);
+go
+
+create index i1_t1 on t1 (a, b);
+go
+
+select indid, name from sys.sysindexes where id=OBJECT_ID('t1');
+go
+~~START~~
+smallint#!#varchar
+2#!#i1_t1t1f8997b05ff6c7614042919b25a8cc2e0
+~~END~~
+
+
+-- clean up
+drop index i1_t1 on t1
+go
+
+drop table t1
+go

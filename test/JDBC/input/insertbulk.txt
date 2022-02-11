@@ -1,0 +1,275 @@
+# int
+Create table sourceTable(a int, b int not null)
+Create table destinationTable(a int, b int not null)
+Insert into sourceTable values (1, 1);
+Insert into sourceTable values (NULL, 2);
+insertbulk#!#sourceTable#!#destinationTable
+Select * from sourceTable
+Select * from destinationTable
+drop table sourceTable
+drop table destinationTable
+
+# smallint
+Create table sourceTable(a smallint, b smallint not null)
+Create table destinationTable(a smallint, b smallint not null)
+Insert into sourceTable values (1, 1);
+Insert into sourceTable values (NULL, 2);
+insertbulk#!#sourceTable#!#destinationTable
+Select * from sourceTable
+Select * from destinationTable
+drop table sourceTable
+drop table destinationTable
+
+# bigint
+Create table sourceTable(a bigint, b bigint not null)
+Create table destinationTable(a bigint, b bigint not null)
+Insert into sourceTable values (1, 1);
+Insert into sourceTable values (NULL, 2);
+insertbulk#!#sourceTable#!#destinationTable
+Select * from sourceTable
+Select * from destinationTable
+drop table sourceTable
+drop table destinationTable
+
+# bit
+Create table sourceTable(a bit, b bit not null)
+Create table destinationTable(a bit, b bit not null)
+Insert into sourceTable values (1, 1);
+Insert into sourceTable values (NULL, 0);
+insertbulk#!#sourceTable#!#destinationTable
+Select * from sourceTable
+Select * from destinationTable
+drop table sourceTable
+drop table destinationTable
+
+# float
+Create table sourceTable(a float, b float not null)
+Create table destinationTable(a float, b float not null)
+Insert into sourceTable values (1.1101, 0.00010);
+Insert into sourceTable values (NULL, 0.101010);
+insertbulk#!#sourceTable#!#destinationTable
+Select * from sourceTable
+Select * from destinationTable
+drop table sourceTable
+drop table destinationTable
+
+# real
+Create table sourceTable(a real, b real not null)
+Create table destinationTable(a real, b real not null)
+Insert into sourceTable values (1.1101, 0.00010);
+Insert into sourceTable values (NULL, 0.101010);
+insertbulk#!#sourceTable#!#destinationTable
+Select * from sourceTable
+Select * from destinationTable
+drop table sourceTable
+drop table destinationTable
+
+# char
+Create table sourceTable(a char(10), b char(10) not null)
+Create table destinationTable(a char(10), b char(10) not null)
+Insert into sourceTable values ('hello', 'jello');
+Insert into sourceTable values (NULL, 'mellow');
+insertbulk#!#sourceTable#!#destinationTable
+Select * from sourceTable
+Select * from destinationTable
+drop table sourceTable
+drop table destinationTable
+
+# nchar
+Create table sourceTable(a nchar(10), b nchar(10) not null)
+Create table destinationTable(a nchar(10), b nchar(10) not null)
+Insert into sourceTable values ('hello', 'jello');
+Insert into sourceTable values (NULL, 'mellow');
+insertbulk#!#sourceTable#!#destinationTable
+Select * from sourceTable
+Select * from destinationTable
+drop table sourceTable
+drop table destinationTable
+
+# varchar
+Create table sourceTable(a varchar(10), b varchar(10) not null)
+Create table destinationTable(a varchar(10), b varchar(10) not null)
+Insert into sourceTable values ('hello', 'jello');
+Insert into sourceTable values (NULL, 'mellow');
+insertbulk#!#sourceTable#!#destinationTable
+Select * from sourceTable
+Select * from destinationTable
+drop table sourceTable
+drop table destinationTable
+
+# nvarchar
+Create table sourceTable(a nvarchar(10), b nvarchar(10) not null)
+Create table destinationTable(a nvarchar(10), b nvarchar(10) not null)
+Insert into sourceTable values ('hello', 'jello');
+Insert into sourceTable values (NULL, 'mellow');
+insertbulk#!#sourceTable#!#destinationTable
+Select * from sourceTable
+Select * from destinationTable
+drop table sourceTable
+drop table destinationTable
+
+# text
+Create table sourceTable(a text, b text not null)
+Create table destinationTable(a text, b text not null)
+Insert into sourceTable values ('hello', 'jello');
+Insert into sourceTable values (NULL, 'mellow');
+insertbulk#!#sourceTable#!#destinationTable
+Select * from sourceTable
+Select * from destinationTable
+drop table sourceTable
+drop table destinationTable
+
+# ntext
+Create table sourceTable(a ntext, b ntext not null)
+Create table destinationTable(a ntext, b ntext not null)
+Insert into sourceTable values ('hello', 'jello');
+Insert into sourceTable values (NULL, 'mellow');
+insertbulk#!#sourceTable#!#destinationTable
+Select * from sourceTable
+Select * from destinationTable
+drop table sourceTable
+drop table destinationTable
+
+# binary
+Create table sourceTable(a binary(10), b binary(10) not null)
+Create table destinationTable(a binary(10), b binary(10) not null)
+Insert into sourceTable values (0x31323334, 0x9241);
+Insert into sourceTable values (NULL, 0x4202);
+insertbulk#!#sourceTable#!#destinationTable
+Select * from sourceTable
+Select * from destinationTable
+drop table sourceTable
+drop table destinationTable
+
+# varbinary
+Create table sourceTable(a varbinary(10), b varbinary(10) not null)
+Create table destinationTable(a varbinary(10), b varbinary(10) not null)
+Insert into sourceTable values (0x31323334, 0x9241);
+Insert into sourceTable values (NULL, 0x4202);
+insertbulk#!#sourceTable#!#destinationTable
+Select * from sourceTable
+Select * from destinationTable
+drop table sourceTable
+drop table destinationTable
+
+# numeric
+Create table sourceTable(a numeric(38, 22), b numeric(38, 22) not null)
+Create table destinationTable(a numeric(38, 22), b numeric(38, 22) not null)
+Insert into sourceTable values (1.1101, 0.00010);
+Insert into sourceTable values (NULL, 0.101010);
+insertbulk#!#sourceTable#!#destinationTable
+Select * from sourceTable
+Select * from destinationTable
+drop table sourceTable
+drop table destinationTable
+
+# decimal
+Create table sourceTable(a decimal(38, 22), b decimal(38, 22) not null)
+Create table destinationTable(a decimal(38, 22), b decimal(38, 22) not null)
+Insert into sourceTable values (1.1101, 0.00010);
+Insert into sourceTable values (NULL, 0.101010);
+insertbulk#!#sourceTable#!#destinationTable
+Select * from sourceTable
+Select * from destinationTable
+drop table sourceTable
+drop table destinationTable
+
+# money
+Create table sourceTable(a money, b money not null)
+Create table destinationTable(a money, b money not null)
+Insert into sourceTable values (100.11, 0.10);
+Insert into sourceTable values (NULL, 91.12);
+insertbulk#!#sourceTable#!#destinationTable
+Select * from sourceTable
+Select * from destinationTable
+drop table sourceTable
+drop table destinationTable
+
+# smallmoney
+Create table sourceTable(a smallmoney, b smallmoney not null)
+Create table destinationTable(a smallmoney, b smallmoney not null)
+Insert into sourceTable values (100.11, 0.10);
+Insert into sourceTable values (NULL, 91.12);
+insertbulk#!#sourceTable#!#destinationTable
+Select * from sourceTable
+Select * from destinationTable
+drop table sourceTable
+drop table destinationTable
+
+# uniqueidentifier
+Create table sourceTable(a uniqueidentifier, b uniqueidentifier not null)
+Create table destinationTable(a uniqueidentifier, b uniqueidentifier not null)
+Insert into sourceTable values ('51f178a6-53c7-472c-9be1-1c08942342d7', 'dd8cb046-461d-411e-be40-d219252ce849');
+Insert into sourceTable values (NULL, 'b84ebcc9-c927-4cfe-b08e-dc7f25b5087c');
+insertbulk#!#sourceTable#!#destinationTable
+Select * from sourceTable
+Select * from destinationTable
+drop table sourceTable
+drop table destinationTable
+
+# date
+Create table sourceTable(a date, b date not null)
+Create table destinationTable(a date, b date not null)
+Insert into sourceTable values ('2000-02-28', '0001-01-01');
+Insert into sourceTable values (NULL, '1001-11-11');
+insertbulk#!#sourceTable#!#destinationTable
+Select * from sourceTable
+Select * from destinationTable
+drop table sourceTable
+drop table destinationTable
+
+# time
+Create table sourceTable(a time(6), b time(6) not null)
+Create table destinationTable(a time(6), b time(6) not null)
+Insert into sourceTable values ('12:45:37.123', '12:45:37.12');
+Insert into sourceTable values (NULL, '12:45:37.123456');
+insertbulk#!#sourceTable#!#destinationTable
+Select * from sourceTable
+Select * from destinationTable
+drop table sourceTable
+drop table destinationTable
+
+# datetime
+Create table sourceTable(a datetime, b datetime not null)
+Create table destinationTable(a datetime, b datetime not null)
+Insert into sourceTable values ('2000-12-13 12:58:23.123', '1900-02-28 23:59:59.989');
+Insert into sourceTable values (NULL, '9999-12-31 23:59:59.997');
+insertbulk#!#sourceTable#!#destinationTable
+Select * from sourceTable
+Select * from destinationTable
+drop table sourceTable
+drop table destinationTable
+
+# smalldatetime
+Create table sourceTable(a smalldatetime, b smalldatetime not null)
+Create table destinationTable(a smalldatetime, b smalldatetime not null)
+Insert into sourceTable values ('2007-05-08 12:35:29', '2000-12-13 12:58:23');
+Insert into sourceTable values (NULL, '2000-02-28 23:45:30');
+insertbulk#!#sourceTable#!#destinationTable
+Select * from sourceTable
+Select * from destinationTable
+drop table sourceTable
+drop table destinationTable
+
+# datetime2
+Create table sourceTable(a Datetime2(6), b Datetime2(6) not null)
+Create table destinationTable(a Datetime2(6), b Datetime2(6) not null)
+Insert into sourceTable values ('2016-10-23 12:45:37.123', '2016-10-23 12:45:37.123');
+Insert into sourceTable values (NULL, '2016-10-23 12:45:37.123456');
+insertbulk#!#sourceTable#!#destinationTable
+Select * from sourceTable
+Select * from destinationTable
+drop table sourceTable
+drop table destinationTable
+
+# sql_variant
+Create table sourceTable(a sql_variant, b sql_variant not null)
+Create table destinationTable(a sql_variant, b sql_variant not null)
+# Bug BABEL-2728
+#Insert into sourceTable values (cast (1 as int),cast ('abc' as varchar(10)));
+Insert into sourceTable values (NULL, cast ('14:37:45.123456' as time(5)));
+insertbulk#!#sourceTable#!#destinationTable
+Select * from sourceTable
+Select * from destinationTable
+drop table sourceTable
+drop table destinationTable

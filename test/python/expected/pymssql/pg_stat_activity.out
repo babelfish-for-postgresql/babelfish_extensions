@@ -1,0 +1,79 @@
+SELECT sys.babelfish_set_role(session_user);
+~~START~~
+int
+1
+~~END~~
+
+~~ROW COUNT: 1~~
+
+
+# Babel-1294 Support application_name in pg_stat_activity
+select count(*) from pg_stat_activity where pid = pg_backend_pid() and lower(application_name) like 'python%';
+~~START~~
+int
+0
+~~END~~
+
+~~ROW COUNT: 1~~
+
+
+# BABEL-1326: Support query in pg_stat_activity
+select query from pg_stat_activity where pid = pg_backend_pid();
+~~START~~
+int
+select query from pg_stat_activity where pid = pg_backend_pid();
+~~END~~
+
+~~ROW COUNT: 1~~
+
+
+# BABEL-1326: Checking if the right query is returned for Prepexec with batch too
+prepst#!#select query from pg_stat_activity where pid = pg_backend_pid();select %s as a#!#int|-|a|-|1
+~~START~~
+int
+select query from pg_stat_activity where pid = pg_backend_pid();select 1 as a
+~~END~~
+
+~~START~~
+int
+1
+~~END~~
+
+~~ROW COUNT: 1~~
+
+prepst#!#exec#!#int|-|a|-|1
+~~START~~
+int
+select query from pg_stat_activity where pid = pg_backend_pid();select 1 as a
+~~END~~
+
+~~START~~
+int
+1
+~~END~~
+
+~~ROW COUNT: 1~~
+
+
+# BABEL-1326: Checking if the right query is returned from a procedure and a nested procedure as well
+Create procedure proc_pg_stat_activity as begin select query from pg_stat_activity where pid = pg_backend_pid(); end;
+exec proc_pg_stat_activity;
+~~START~~
+int
+exec proc_pg_stat_activity;
+~~END~~
+
+~~ROW COUNT: 1~~
+
+Create procedure proc1_pg_stat_activity as begin exec proc_pg_stat_activity end;
+exec proc1_pg_stat_activity;
+~~START~~
+int
+exec proc1_pg_stat_activity;
+~~END~~
+
+~~ROW COUNT: 1~~
+
+
+drop procedure proc_pg_stat_activity;
+drop procedure proc1_pg_stat_activity;

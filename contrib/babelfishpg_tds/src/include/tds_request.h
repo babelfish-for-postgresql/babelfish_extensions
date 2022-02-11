@@ -30,6 +30,7 @@ typedef enum TDSRequestType
 	TDS_REQUEST_SQL_BATCH = 1,	/* a simple SQL batch */
 	TDS_REQUEST_SP_NUMBER = 2,	/* numbered SP like sp_execute */
 	TDS_REQUEST_TXN_MGMT  = 3,		/* transaction management request */
+	TDS_REQUEST_BULK_LOAD = 4,  /* bulk load request */
 	TDS_REQUEST_ATTN			/* attention request */
 } TDSRequestType;
 
@@ -171,6 +172,17 @@ typedef struct TDSRequestSPData
 } TDSRequestSPData;
 typedef TDSRequestSPData *TDSRequestSP;
 
+typedef struct TDSRequestBulkLoadData
+{
+	TDSRequestType			reqType;
+	int 					colCount;
+	int 					rowCount;
+
+	BulkLoadColMetaData 	*colMetaData; /* Array of each column's metadata. */
+	List 					*rowData;     /* List holding each row. */
+} TDSRequestBulkLoadData;
+typedef TDSRequestBulkLoadData *TDSRequestBulkLoad;
+
 /* Default handle value for a RPC request which doesn't use any handle */
 /*
  * TODO: Check and correct the values for SP_HANDLE_INVALID
@@ -233,6 +245,7 @@ typedef TDSRequestData *TDSRequest;
 
 #define TDS_COL_METADATA_DEFAULT_FLAGS  TDS_COLMETA_NULLABLE | \
 					TDS_COLMETA_UPD_UNKNOWN
+#define TDS_COL_METADATA_NOT_NULL_FLAGS TDS_COLMETA_UPD_UNKNOWN
 
 /* Macro for TVP tokens. */
 #define TVP_ROW_TOKEN				0x01
@@ -543,7 +556,6 @@ SetColMetadataForTvp(ParameterToken temp,const StringInfo message, uint64_t *off
 					colmetadata[i].precision = messageData[(*offset)++];
 					colmetadata[i].scale 	 = messageData[(*offset)++];
 				break;
-				// case DATETIMEOFFSET: 	/* TODO, not implemented yet */
 				case TDS_TYPE_CHAR:
 				case TDS_TYPE_VARCHAR:
 				case TDS_TYPE_NCHAR:
@@ -659,8 +671,23 @@ static inline void
 SetColMetadataForFixedType(TdsColumnMetaData *col, uint8_t tdsType, uint8_t maxSize)
 {
 	col->sizeLen = 1;
-	col->metaLen = sizeof(col->metaEntry.type1);
-	col->metaEntry.type1.flags = TDS_COL_METADATA_DEFAULT_FLAGS;
+
+	/*
+	 * If column is Not NULL constrained then we don't want to send
+	 * maxSize except for uniqueidentifier and xml.
+       * TODO: We should send TDS_COL_METADATA_NOT_NULL_FLAGS
+       * This needs to be done for identity contraints
+	 */
+	if (col->attNotNull && tdsType != TDS_TYPE_UNIQUEIDENTIFIER && tdsType != TDS_TYPE_XML)
+      {
+		col->metaLen = sizeof(col->metaEntry.type1) - 1;
+	        col->metaEntry.type1.flags = TDS_COL_METADATA_NOT_NULL_FLAGS;
+      }
+      else
+      {
+		col->metaLen = sizeof(col->metaEntry.type1);
+              col->metaEntry.type1.flags = TDS_COL_METADATA_DEFAULT_FLAGS;
+      }
 	col->metaEntry.type1.tdsTypeId = tdsType;
 	col->metaEntry.type1.maxSize = maxSize;
 }
@@ -861,5 +888,9 @@ extern void ProcessRPCRequest(TDSRequest request);
 extern TDSRequest GetTxnMgmtRequest(const StringInfo message);
 extern void ProcessTxnMgmtRequest(TDSRequest request);
 extern int TestTxnMgmtRequest(TDSRequest request, const char *expectedStr);
+
+/* Functions in tdsbulkload.c */
+extern TDSRequest GetBulkLoadRequest(StringInfo message);
+extern void ProcessBCPRequest(TDSRequest request);
 
 #endif	/* TDS_REQUEST_H */

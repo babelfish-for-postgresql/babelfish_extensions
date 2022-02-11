@@ -63,6 +63,8 @@
 #include "guc.h"
 
 uint64 rowcount_var = 0;
+List *columns_updated_list = NIL;
+
 int fetch_status_var = 0;
 
 typedef struct
@@ -314,6 +316,7 @@ static int exec_stmt_assert(PLtsql_execstate *estate,
 				 PLtsql_stmt_assert *stmt);
 static int exec_stmt_execsql(PLtsql_execstate *estate,
 				  PLtsql_stmt_execsql *stmt);
+static void updateColumnUpdatedList(PLtsql_expr* expr, int i);
 static int exec_stmt_dynexecute(PLtsql_execstate *estate,
 					 PLtsql_stmt_dynexecute *stmt);
 static int exec_stmt_dynfors(PLtsql_execstate *estate,
@@ -2226,6 +2229,10 @@ exec_stmt(PLtsql_execstate *estate, PLtsql_stmt *stmt)
 			rc = exec_stmt_exit(estate, (PLtsql_stmt_exit *) stmt);
 			break;
 
+        case PLTSQL_STMT_INSERT_BULK:
+            rc = exec_stmt_insert_bulk(estate, (PLtsql_stmt_insert_bulk *) stmt);
+            break;
+
 		case PLTSQL_STMT_RETURN:
 			rc = exec_stmt_return(estate, (PLtsql_stmt_return *) stmt);
 			break;
@@ -2309,7 +2316,7 @@ exec_stmt_assign(PLtsql_execstate *estate, PLtsql_stmt_assign *stmt)
 
 	exec_assign_expr(estate, estate->datums[stmt->varno], stmt->expr);
 
-        exec_set_rowcount(1);
+	exec_set_rowcount(1);
 
 	return PLTSQL_RC_OK;
 }
@@ -3375,6 +3382,25 @@ exec_stmt_exit(PLtsql_execstate *estate, PLtsql_stmt_exit *stmt)
 static int
 exec_stmt_return(PLtsql_execstate *estate, PLtsql_stmt_return *stmt)
 {
+	/*
+	 * If processing a multi-statement table-valued function, any RETURN stmt
+	 * should be treated as a RETURN_TABLE stmt which returns all rows in the
+	 * resulting table variable, followed by a normal RETURN stmt for
+	 * control-of-flow.
+	 */
+	if (estate->func->is_mstvf)
+	{
+		PLtsql_stmt_return_query *return_table;
+		return_table = (PLtsql_stmt_return_query *) palloc0(sizeof(PLtsql_stmt_return_query));
+		return_table->cmd_type = PLTSQL_STMT_RETURN_TABLE;
+		return_table->query = NULL;
+		return_table->dynquery = NULL;
+		return_table->params = NIL;
+
+		exec_stmt_return_table(estate, return_table);
+		return PLTSQL_RC_RETURN;
+	}
+
 	/*
 	 * If processing a set-returning PL/tsql function, the final RETURN
 	 * indicates that the function is finished producing tuples.  The rest of
@@ -4589,12 +4615,15 @@ exec_stmt_execsql(PLtsql_execstate *estate,
 	 */
 	paramLI = setup_param_list(estate, expr);
 
+
 	/*
 	 * Check whether the statement is an INSERT/DELETE with RETURNING
 	 */
 	cp = SPI_plan_get_cached_plan(expr->plan);
 	if (cp)
 	{
+		int i;
+		i = 0;
 		foreach(lc, cp->stmt_list)
 		{
 			PlannedStmt *ps = (PlannedStmt*) lfirst(lc);
@@ -4613,6 +4642,10 @@ exec_stmt_execsql(PLtsql_execstate *estate,
             {
                 is_select = false;
             }
+			if (ps->commandType == CMD_UPDATE || ps->commandType == CMD_INSERT){
+				updateColumnUpdatedList(expr, i);
+			}
+			++i;
 		}
 		ReleaseCachedPlan(cp, true);
 	}
@@ -4765,11 +4798,21 @@ exec_stmt_execsql(PLtsql_execstate *estate,
 				 expr->query, SPI_result_code_string(rc));
 			break;
 	}
+
 	if (enable_txn_in_triggers)
 	{
+		if (!stmt->need_to_push_result) // before trigger execution , set the rowcount
+		{
+			exec_set_rowcount(SPI_processed);
+		}
 		/* Close nesting level on engine side */
 		EndCompositeTriggers(false);
 		estate->tsql_trigger_flags &= ~TSQL_TRIGGER_STARTED;
+	}
+
+	if (columns_updated_list != NIL && pltsql_trigger_depth == 0){
+		pfree(columns_updated_list);
+		columns_updated_list = NIL;
 	}
 
 	if (!stmt->need_to_push_result) // already set in execute_plan_and_push_result
@@ -4902,6 +4945,55 @@ exec_stmt_execsql(PLtsql_execstate *estate,
 	}
 
 	return PLTSQL_RC_OK;
+}
+
+static void updateColumnUpdatedList(PLtsql_expr* expr, int i){
+	ListCell* lcj;
+	List* curr_columns_list;
+	TargetEntry *target_entry;
+	Relation rel;
+	TupleDesc tupdesc;
+	MemoryContext oldContext;
+	UpdatedColumn *updateColumn;
+	int length;
+	Query *query;
+	List* targetList;
+	query = (Query *)list_nth(
+		((CachedPlanSource *)list_nth(expr->plan->plancache_list, 0))->query_list
+		,i);
+	targetList = 
+		query->targetList;
+	if (query->rtable == NULL || targetList == NULL)
+		return;
+	rel = RelationIdGetRelation(((RangeTblEntry *)list_nth(query->rtable,0))->relid);
+	if (rel->rd_islocaltemp || !rel->rd_isvalid){
+		RelationClose(rel);
+		return;
+	}
+	foreach(lcj, targetList){
+		target_entry = (TargetEntry*)lfirst(lcj);
+		tupdesc = RelationGetDescr(rel);
+		oldContext = MemoryContextSwitchTo(TopMemoryContext);
+		length = list_length(columns_updated_list);
+		updateColumn = (UpdatedColumn *)palloc(sizeof(UpdatedColumn));
+		updateColumn->x_attnum = target_entry->resno;
+		updateColumn->trigger_depth = pltsql_trigger_depth;
+			updateColumn->total_columns = tupdesc->natts;
+		if (length < pltsql_trigger_depth + 1){
+			curr_columns_list = NIL;
+			while (length < pltsql_trigger_depth){
+				columns_updated_list = lappend(columns_updated_list, NIL);
+				length++;
+			}
+			curr_columns_list = list_make1(updateColumn);
+			columns_updated_list = lappend(columns_updated_list, curr_columns_list);
+		}else{
+			curr_columns_list = (List *)list_nth(columns_updated_list, pltsql_trigger_depth);
+			curr_columns_list = lappend(curr_columns_list, updateColumn);
+		}
+		MemoryContextSwitchTo(oldContext);
+	}
+	RelationClose(rel);
 }
 
 /*
@@ -9736,6 +9828,7 @@ static void
 pltsql_init_exec_error_data(PLtsqlErrorData *error_data)
 {
 	error_data->xact_abort_on = false;
+	error_data->rethrow_error = false;
 	error_data->trigger_error = false;
 	error_data->error_estate = NULL;
 	error_data->error_procedure = NULL;
@@ -9748,6 +9841,7 @@ static void
 pltsql_copy_exec_error_data(PLtsqlErrorData *src, PLtsqlErrorData *dst)
 {
 	dst->xact_abort_on = src->xact_abort_on;
+	dst->rethrow_error = src->rethrow_error;
 	dst->trigger_error = src->trigger_error;
 	dst->error_procedure = src->error_procedure;
 	dst->error_estate = src->error_estate;

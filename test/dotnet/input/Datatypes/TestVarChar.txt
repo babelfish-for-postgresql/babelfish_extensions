@@ -1,0 +1,6 @@
+CREATE TABLE VARCHAR_dt (a VARCHAR(20), b NVARCHAR(24))
+prepst#!# INSERT INTO VARCHAR_dt(a, b) values(@a, @b) #!#VARCHAR|-|a|-|Dipesh123#!#NVARCHAR|-|b|-|Dhameliya123
+prepst#!#exec#!#VARCHAR|-|a|-|abcdefghijklmnopqrst#!#NVARCHAR|-|b|-|abcdefghijklmnopqrstuvwx
+prepst#!#exec#!#VARCHAR|-|a|-|abcdefghijklmnopqrstu#!#NVARCHAR|-|b|-|abcdefghijklmnopqrstuvwxy
+select * from VARCHAR_dt
+drop table VARCHAR_dt;

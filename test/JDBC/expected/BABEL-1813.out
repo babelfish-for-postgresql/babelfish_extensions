@@ -1,0 +1,215 @@
+use master;
+go
+
+-- basic operations
+create table t1813 (a int, b int, collation int not null);
+go
+insert into t1813 (a, collation) values (1, 2);
+go
+~~ROW COUNT: 1~~
+
+select a, b, collation from t1813;
+go
+~~START~~
+int#!#int#!#int
+1#!#<NULL>#!#2
+~~END~~
+
+select a, b, t1813.collation from t1813;
+go
+~~START~~
+int#!#int#!#int
+1#!#<NULL>#!#2
+~~END~~
+
+alter table t1813 add binary binary; -- column "binary" whose type is binary
+go
+insert into t1813(collation,binary) values (3, 0x04);
+go
+~~ROW COUNT: 1~~
+
+create unique index i1813 on t1813(collation);
+go
+insert into t1813(collation,binary) values (4, 0x05);
+insert into t1813(collation,binary) values (4, 0x05);
+go
+~~ROW COUNT: 1~~
+
+~~ERROR (Code: 2627)~~
+
+~~ERROR (Message: duplicate key value violates unique constraint "i1813t18132835522bc8db62c2e7873fbd5c7ec927")~~
+
+select abs(-collation)*2 c, binary from t1813;
+go
+~~START~~
+int#!#binary
+4#!#<NULL>
+6#!#04
+8#!#05
+~~END~~
+
+update t1813 set collation = 5 output deleted.collation where collation = 2;
+go
+~~START~~
+int
+2
+~~END~~
+
+delete from t1813 output collation where collation = 4;
+go
+~~START~~
+int
+4
+~~END~~
+
+select collation from t1813 order by collation;
+go
+~~START~~
+int
+3
+5
+~~END~~
+
+select [collation] from t1813 order by collation;
+go
+~~START~~
+int
+3
+5
+~~END~~
+
+select t1813.[collation] from t1813 order by collation;
+go
+~~START~~
+int
+3
+5
+~~END~~
+
+select COLLATION from t1813 order by COLLATION;
+go
+~~START~~
+int
+3
+5
+~~END~~
+
+select CoLlAtIoN from t1813 order by CoLlAtIoN;
+go
+~~START~~
+int
+3
+5
+~~END~~
+
+drop table t1813;
+go
+
+-- several types of object
+create table collation(a int);
+go
+insert into collation values (1), (2);
+update collation set a=3 where a=2;
+delete from collation where a=1;
+select * from collation;
+go
+~~ROW COUNT: 2~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~START~~
+int
+3
+~~END~~
+
+
+drop table collation;
+go
+
+create type collation as table (a int);
+go
+drop type collation;
+go
+
+create table t1813(a int);
+go
+create view collation as select * from t1813;
+go
+drop view collation;
+go
+
+create trigger collation on t1813 after insert as begin print 'trigger invoked' end
+go
+
+drop table t1813;
+go
+
+create function collation(@a int) returns int as begin return @a+1; end
+go
+select collation(1);
+go
+~~START~~
+int
+2
+~~END~~
+
+drop function collation
+go
+
+-- test all keywords
+create table binary(binary int);
+go
+drop table binary;
+go
+
+create table collation(collation int);
+go
+drop table collation;
+go
+
+create table concurrently(concurrently int);
+go
+drop table concurrently;
+go
+
+create table current_schema(current_schema int);
+go
+drop table current_schema;
+go
+
+create table freeze(freeze int);
+go
+drop table freeze;
+go
+
+create table ilike(ilike int);
+go
+drop table ilike;
+go
+
+create table isnull(isnull int);
+go
+drop table isnull;
+go
+
+create table natural(natural int);
+go
+drop table natural;
+go
+
+create table notnull(notnull int);
+go
+drop table notnull;
+go
+
+create table overlaps(overlaps int);
+go
+drop table overlaps;
+go
+
+create table similar(similar int);
+go
+drop table similar;
+go

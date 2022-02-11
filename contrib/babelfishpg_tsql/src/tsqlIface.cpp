@@ -41,8 +41,12 @@ extern "C"
 
 	extern PLtsql_type *parse_datatype(const char *string, int location);
 	extern bool is_tsql_any_char_datatype(Oid oid);
+	extern bool is_tsql_text_ntext_or_image_datatype(Oid oid);
 
 	extern int CurrentLineNumber;
+
+	extern int pltsql_curr_compile_body_position;
+	extern int pltsql_curr_compile_body_lineno;
 
 	extern bool pltsql_dump_antlr_query_graph;
 	extern bool pltsql_enable_antlr_detailed_log;
@@ -50,17 +54,26 @@ extern "C"
 
 static void toDotRecursive(ParseTree *t, const std::vector<std::string> &ruleNames, const std::string &sourceText);
 class tsqlBuilder;
+class PLtsql_expr_query_mutator;
+class tsqlSelectStatementMutator;
 
-bool handleBatchLevelStatment(tree::ParseTree *tree);
+// helper template function to get certain token from given context.
+// use template here because there is no mid-level base class for similar contexts.
+template <class T>
+using GetTokenFunc = std::function <antlr4::tree::TerminalNode * (T)>;
+template <class T>
+using GetCtxFunc = std::function <ParserRuleContext * (T)>;
+
+void handleBatchLevelStatement(TSqlParser::Batch_level_statementContext *ctx, tsqlSelectStatementMutator *ssm);
 bool handleITVFBody(TSqlParser::Func_body_return_select_bodyContext *body);
 
 PLtsql_stmt_block *makeEmptyBlockStmt(int lineno);
 
 PLtsql_stmt *makeCfl(TSqlParser::Cfl_statementContext *ctx, tsqlBuilder &builder);
 PLtsql_stmt *makeSQL(ParserRuleContext *ctx);
-std::vector<PLtsql_stmt *> makeAnother(TSqlParser::Another_statementContext *ctx);
+std::vector<PLtsql_stmt *> makeAnother(TSqlParser::Another_statementContext *ctx, tsqlBuilder &builder);
 PLtsql_stmt *makeExecBodyBatch(TSqlParser::Execute_body_batchContext *ctx);
-
+PLtsql_stmt *makeInsertBulkStatement(TSqlParser::Dml_statementContext *ctx);
 PLtsql_expr *makeTsqlExpr(const std::string &fragment, bool addSelect);
 PLtsql_expr *makeTsqlExpr(ParserRuleContext *ctx, bool addSelect);
 void * makeBlockStmt(ParserRuleContext *ctx, tsqlBuilder &builder);
@@ -74,12 +87,12 @@ static void *makeBatch(TSqlParser::Tsql_fileContext *ctx, tsqlBuilder &builder);
 
 static void process_execsql_destination(TSqlParser::Dml_statementContext *ctx, PLtsql_stmt_execsql *stmt);
 static void process_execsql_remove_unsupported_tokens(TSqlParser::Dml_statementContext *ctx, PLtsql_stmt_execsql *stmt);
-static void remove_unsupported_tokens_from_select(TSqlParser::Select_statement_standaloneContext *ctx, PLtsql_expr *expr, ParserRuleContext *baseCtx);
 static bool post_process_create_table(TSqlParser::Create_tableContext *ctx, PLtsql_stmt_execsql *stmt, TSqlParser::Ddl_statementContext *baseCtx);
 static bool post_process_alter_table(TSqlParser::Alter_tableContext *ctx, PLtsql_stmt_execsql *stmt, TSqlParser::Ddl_statementContext *baseCtx);
 static bool post_process_create_index(TSqlParser::Create_indexContext *ctx, PLtsql_stmt_execsql *stmt, TSqlParser::Ddl_statementContext *baseCtx);
 static bool post_process_create_database(TSqlParser::Create_databaseContext *ctx, PLtsql_stmt_execsql *stmt, TSqlParser::Ddl_statementContext *baseCtx);
-static char *generate_itvf_query(char *query, ParserRuleContext *baseCtx);
+static void post_process_table_source(TSqlParser::Table_source_itemContext *ctx, PLtsql_expr *expr, ParserRuleContext *baseCtx);
+static void post_process_declare_cursor_statement(PLtsql_stmt_decl_cursor *stmt, TSqlParser::Declare_cursorContext *ctx, tsqlBuilder &builder);
 static PLtsql_var *lookup_cursor_variable(const char *varname);
 static PLtsql_var *build_cursor_variable(const char *curname, int lineno);
 static int read_extended_cursor_option(TSqlParser::Declare_cursor_optionsContext *ctx, int current_cursor_option);
@@ -97,9 +110,72 @@ static bool string_matches(const char *str, const char *pattern);
 static void check_param_type(tsql_exec_param *param, bool is_output, Oid typoid, const char *param_str);
 static PLtsql_expr *getNthParamExpr(std::vector<tsql_exec_param *> &params, size_t n);
 static const char* rewrite_assign_operator(tree::TerminalNode *aop);
-TSqlParser::Query_specificationContext *get_query_specification(TSqlParser::Select_statement_standaloneContext *ctx);
+TSqlParser::Query_specificationContext *get_query_specification(TSqlParser::Select_statementContext *sctx);
+static bool is_top_level_query_specification(TSqlParser::Query_specificationContext *ctx);
 static bool is_quotation_needed_for_column_alias(TSqlParser::Column_aliasContext *ctx);
 static bool is_compiling_create_function();
+static void process_query_specification(TSqlParser::Query_specificationContext *qctx, PLtsql_expr_query_mutator *mutator);
+static void process_select_statement(TSqlParser::Select_statementContext *selectCtx, PLtsql_expr_query_mutator *mutator);
+static void process_select_statement_standalone(TSqlParser::Select_statement_standaloneContext *standaloneCtx, PLtsql_expr_query_mutator *mutator, tsqlBuilder &builder);
+template <class T> static std::string rewrite_object_name_with_omitted_db_and_schema_name(T ctx, GetCtxFunc<T> getDatabase, GetCtxFunc<T> getSchema);
+template <class T> static std::string rewrite_column_name_with_omitted_schema_name(T ctx, GetCtxFunc<T> getSchema, GetCtxFunc<T> getTableName);
+static bool does_object_name_need_delimiter(TSqlParser::IdContext *id);
+static std::string delimit_identifier(TSqlParser::IdContext *id);
+
+/*
+ * Structure / Utility function for general purpose of query string modification
+ *
+ * The difficulty of query string modification is that, upper-level general grammar (i.e. dml_clause, ddl_clause, ...)
+ * actaully creates PLtsql_stmt but logic of query modification is available in low-level fine-grained grammar (i.e. full_object_name, select_list, ...)
+ * We can't modify the query string in enter/exit function of low-evel grammar because it may append query string in middle of query
+ * so it may lead to inconsistency between query string and token index information obtained from ANTLR parser.
+ * (i.e. if we rewrite "SELECT 'a'=1 from T" to "SELECT 1 as 'a' FROM T", T appears poisition 22 after rewriting but ANTLR token still keeps position 19)
+ *
+ * To resolve this issue, each low-level grammar just register rewritten-query-fragement to a map (rewritten_query_fragment)
+ * and all the rewriting will be done by upper-level grammar rule at once by using PLtsql_expr_query_mutator
+ *
+ * Here is general code snippet (but different patterns in specific query statement like itvf, batch-level statement)
+ *
+ * void enterUpperLevelGrammar() { // DML, DDL, ...
+ *   ...
+ *   clear_rewritten_query_fragment(); // clean-up before collecting rewriting information
+ * }
+ *
+ * void exitLowLevelGrammar() { // fine-grained grammar needs actual rewirting
+ *   ...
+ *   // register rewritten query
+ *   rewritten_query_fragment.emplace(std::make_pair(original_string_position, std::make_pair(original_string, rewritten_string));
+ * }
+ *
+ * void exitUpperLevelGrammar() {
+ *   ...
+ *   PLtsql_expr* expr = ...; acutal payload query string for PLtsql_stmt;
+ *   PLtsql_expr_query_mutator mutator(expr, ctx);
+ *
+ *   add_rewritten_query_fragment_to_mutator(&mutator); // move information of rewritten_query_fragment to mutator.
+ *
+ *   mutator.run(); // expr->query will be rewitten here
+ *   clear_rewritten_query_fragment();
+ * }
+ */
+
+// general-purpose map to store query fragement which needs to be rewritten
+// intentionally use std::map to access positions by sorted order.
+// global object is enough because no nesting is expected.
+static std::map<size_t, pair<std::string, std::string>> rewritten_query_fragment;
+
+// Keeping poisitions of local_ids to quote them.
+// local_id can be rewritten in differeny way in some cases (itvf), don't use rewritten_query_fragment.
+// TODO: incorporate local_id_positions with rewritten_query_fragment
+static std::map<size_t, std::string> local_id_positions;
+
+// should be called before visiting subclause to make PLtsql_stmt.
+static void clear_rewritten_query_fragment();
+
+// add information of rewritten_query_fragment information to mutator
+static void add_rewritten_query_fragment_to_mutator(PLtsql_expr_query_mutator *mutator);
+
+
 
 static void
 breakHere()
@@ -164,20 +240,92 @@ stripQuoteFromId(TSqlParser::IdContext *ctx)
 	return getFullText(ctx);
 }
 
-size_t getLineOfStartToken(ParserRuleContext *ctx)
+static int
+get_curr_compile_body_lineno_adjustment()
 {
+	if (!pltsql_curr_compile || pltsql_curr_compile->fn_oid == InvalidOid) /* not in a func/proc body */
+		return 0;
+	if (pltsql_curr_compile_body_lineno == 0) /* not set */
+		return 0;
+	return pltsql_curr_compile_body_lineno - 1; /* minus 1 for correct adjustment */
+}
+
+int getLineNo(ParserRuleContext *ctx)
+{
+	if (!ctx)
+		return 0;
+
+	/*
+	 * in T-SQL, line number is relative to batch start of CREATE FUNCTION/PROCEDURE/...
+	 * if we're running in CREATE FUNCTION/PROCEDURE/..., add a offset lineno.
+	 */
+	int lineno_offset = get_curr_compile_body_lineno_adjustment();
 	Token *startToken = ctx->getStart();
 	if (!startToken)
 		return 0;
-	return startToken->getLine();
+	return startToken->getLine() + lineno_offset;
 }
 
-size_t getLineFromTerminalNode(TerminalNode* node)
+int getLineNo(TerminalNode* node)
 {
+	if (!node)
+		return 0;
+
+	/*
+	 * in T-SQL, line number is relative to batch start of CREATE FUNCTION/PROCEDURE/...
+	 * if we're running in CREATE FUNCTION/PROCEDURE/..., add a offset lineno.
+	 */
+	int lineno_offset = get_curr_compile_body_lineno_adjustment();
 	Token *symbol = node->getSymbol();
 	if (!symbol)
 		return 0;
-	return symbol->getLine();
+	return symbol->getLine() + lineno_offset;
+}
+
+static int
+get_curr_compile_body_position_adjustment()
+{
+	if (!pltsql_curr_compile || pltsql_curr_compile->fn_oid == InvalidOid) /* not in a func/proc body */
+		return 0;
+	if (pltsql_curr_compile_body_position == 0) /* not set */
+		return 0;
+	return pltsql_curr_compile_body_position - 1; /* minus 1 for correct adjustment */
+}
+
+int getPosition(ParserRuleContext *ctx)
+{
+	if (!ctx)
+		return 0;
+
+	/* if we're running in CREATE FUNCTION/PROCEDURE/..., add a offset position. */
+	int position_offset = get_curr_compile_body_position_adjustment();
+	Token *startToken = ctx->getStart();
+	if (!startToken)
+		return 0;
+	return startToken->getStartIndex() + position_offset;
+}
+
+int getPosition(TerminalNode* node)
+{
+	if (!node)
+		return 0;
+
+	/* if we're running in CREATE FUNCTION/PROCEDURE/..., add a offset position. */
+	int position_offset = get_curr_compile_body_position_adjustment();
+	Token *symbol = node->getSymbol();
+	if (!symbol)
+		return 0;
+	return symbol->getStartIndex() + position_offset;
+}
+
+std::pair<int,int> getLineAndPos(ParserRuleContext *ctx)
+{
+	return std::make_pair(getLineNo(ctx), getPosition(ctx));
+}
+
+std::pair<int,int> getLineAndPos(TerminalNode *node)
+{
+	return std::make_pair(getLineNo(node), getPosition(node));
 }
 
 static ParseTreeProperty<PLtsql_stmt *> fragments;
@@ -209,14 +357,6 @@ getPLtsql_fragment(ParseTree *node)
 }
 
 static List *rootInitializers = NIL;
-
-// Keeping poisitions of local_ids to quote them.
-// intentionally use std::map to access positions by sorted order.
-// global object is enough because no nesting is expected.
-static std::map<size_t, std::string> local_id_positions;
-
-// Note locations that have qualified names that need to be replaced
-static std::map<size_t, pair<std::string, std::string>> full_object_name_positions;
 
 FormattedMessage
 format_errmsg(const char *fmt, const char *arg0)
@@ -290,24 +430,27 @@ public:
 
 	void run();
 
+	PLtsql_expr *expr;
+	ParserRuleContext* ctx;
+
 protected:
 	// intentionally use std::map to iterate it via sorted order.
 	std::map<int, std::pair<std::string, std::string>> m; // pos -> (orig_text, repl_text)
 
-	PLtsql_expr *expr;
 	int base_idx;
 };
 
 PLtsql_expr_query_mutator::PLtsql_expr_query_mutator(PLtsql_expr *e, ParserRuleContext* baseCtx)
 	: expr(e)
+	, ctx(baseCtx)
 	, base_idx(-1)
 {
 	if (!e)
-		throw PGErrorWrapperException(ERROR, ERRCODE_INTERNAL_ERROR, "can't mutate an internal query. NULL expression", 0);
+		throw PGErrorWrapperException(ERROR, ERRCODE_INTERNAL_ERROR, "can't mutate an internal query. NULL expression", getLineAndPos(baseCtx));
 
 	size_t base_index = baseCtx->getStart()->getStartIndex();
 	if (base_index == INVALID_INDEX)
-		throw PGErrorWrapperException(ERROR, ERRCODE_INTERNAL_ERROR, "can't mutate an internal query. base index is invalid", 0);
+		throw PGErrorWrapperException(ERROR, ERRCODE_INTERNAL_ERROR, "can't mutate an internal query. base index is invalid", getLineAndPos(baseCtx));
 	base_idx = base_index;
 }
 
@@ -317,11 +460,11 @@ void PLtsql_expr_query_mutator::add(int antlr_pos, std::string orig_text, std::s
 
 	/* validation check */
 	if (offset < 0)
-		throw PGErrorWrapperException(ERROR, ERRCODE_INTERNAL_ERROR, "can't mutate an internal query. offset value is negative", 0);
+		throw PGErrorWrapperException(ERROR, ERRCODE_INTERNAL_ERROR, "can't mutate an internal query. offset value is negative", 0, 0);
 	if (offset > (int)strlen(expr->query))
-		throw PGErrorWrapperException(ERROR, ERRCODE_INTERNAL_ERROR, "can't mutate an internal query. offset value is too large", 0);
+		throw PGErrorWrapperException(ERROR, ERRCODE_INTERNAL_ERROR, "can't mutate an internal query. offset value is too large", 0, 0);
 	if (m.find(offset) != m.end())
-		throw PGErrorWrapperException(ERROR, ERRCODE_INTERNAL_ERROR, "can't mutate an internal query. mulitiple mutation on the same position", 0);
+		throw PGErrorWrapperException(ERROR, ERRCODE_INTERNAL_ERROR, "can't mutate an internal query. mulitiple mutation on the same position", 0, 0);
 
 	m.emplace(std::make_pair(offset, std::make_pair(orig_text, repl_text)));
 }
@@ -340,7 +483,7 @@ void PLtsql_expr_query_mutator::run()
 		if (orig_text.length() == 0 || strncmp(orig_text.c_str(), expr->query+offset, orig_text.length()) == 0) // local_id maybe already deleted in some cases such as select-assignment. check here if it still exists)
 		{
 			if (offset - cursor < 0)
-				throw PGErrorWrapperException(ERROR, ERRCODE_INTERNAL_ERROR, "can't mutate an internal query. might be due to mulitiple mutation on the same position", 0);
+				throw PGErrorWrapperException(ERROR, ERRCODE_INTERNAL_ERROR, "can't mutate an internal query. might be due to mulitiple mutation on the same position", 0, 0);
 			if (offset - cursor > 0) // if offset==cursor, no need to copy
 				appendBinaryStringInfo(&ds, expr->query+cursor, offset - cursor); // copy substring of expr->query. ranged [cursor, offset)
 			appendStringInfo(&ds, "%s", repl_text.c_str());
@@ -353,6 +496,65 @@ void PLtsql_expr_query_mutator::run()
 	// update query string with quoted one
 	expr->query = pstrdup(ds.data);
 }
+
+static void
+clear_rewritten_query_fragment()
+{
+	rewritten_query_fragment.clear();
+	local_id_positions.clear();
+}
+
+static void
+add_rewritten_query_fragment_to_mutator(PLtsql_expr_query_mutator *mutator)
+{
+	Assert(mutator);
+	for (auto &entry : rewritten_query_fragment)
+		mutator->add(entry.first, entry.second.first, entry.second.second);
+}
+
+////////////////////////////////////////////////////////////////////////////////
+// tsql Select Statement Mutator
+////////////////////////////////////////////////////////////////////////////////
+class tsqlSelectStatementMutator : public TSqlParserBaseListener
+{
+	/*
+	 * For some cases, e.g., batch level statement, declare statement, etc, we cannot rely only on tsqlBuilder.
+	 * However, we need to mutate select statements regardless of having tsqlBuilder.
+	 * This mutator should be used for the case where tsqlBuilder::exitSelect_statement() cannot be called.
+	 */
+public:
+    tree::ParseTreeProperty<void *> *code;
+    const std::vector<std::string> &ruleNames;
+    TSqlParser::Tsql_fileContext *root;
+
+    int nodeID = 0;
+    tree::ParseTree *parser;
+    MyInputStream &stream;
+
+	PLtsql_expr_query_mutator *mutator;
+
+public:
+    tsqlSelectStatementMutator(tree::ParseTree *p, const std::vector<std::string> &rules, MyInputStream &s)
+		: code(new tree::ParseTreeProperty<void *>()),
+		  ruleNames(rules),
+		  root(nullptr),
+		  parser(p),
+		  stream(s)
+    {
+    }
+
+	void exitSelect_statement(TSqlParser::Select_statementContext *ctx) override
+	{
+		if (mutator)
+			process_select_statement(ctx, mutator);
+	}
+
+	void exitQuery_specification(TSqlParser::Query_specificationContext *ctx) override
+	{
+		if (mutator)
+			process_query_specification(ctx, mutator);
+	}
+};
 
 ////////////////////////////////////////////////////////////////////////////////
 // tsqlBuilder
@@ -389,6 +591,7 @@ public:
 
 	std::vector<ParserRuleContext *> containers;
 	std::unordered_map<ParserRuleContext  *, List *> bodies;
+	std::unique_ptr<PLtsql_expr_query_mutator> statementMutator;
 	
     tsqlBuilder(tree::ParseTree *p, const std::vector<std::string> &rules, MyInputStream &s)
 		: code(new tree::ParseTreeProperty<void *>()),
@@ -398,6 +601,7 @@ public:
 		  stream(s)
     {
 		rootInitializers = NIL;
+		statementMutator = nullptr;
     }
 
 	~tsqlBuilder()
@@ -619,7 +823,7 @@ public:
 		List *code = getCode(ctx);
 
 		if (!code) // defensive code
-			throw PGErrorWrapperException(ERROR, ERRCODE_INTERNAL_ERROR, "IF-block is empty. It might be an internal bug due to unsupported statements.", 0);
+			throw PGErrorWrapperException(ERROR, ERRCODE_INTERNAL_ERROR, "IF-block is empty. It might be an internal bug due to unsupported statements.", getLineAndPos(ctx));
 
 		fragment->then_body = (PLtsql_stmt *) linitial(code);
 
@@ -640,14 +844,14 @@ public:
 		List *code = getCode(ctx);
 
 		if (!code) // defensive code
-			throw PGErrorWrapperException(ERROR, ERRCODE_INTERNAL_ERROR, "TRY-block is empty. It might be an internal bug due to unsupported statements.", 0);
+			throw PGErrorWrapperException(ERROR, ERRCODE_INTERNAL_ERROR, "TRY-block is empty. It might be an internal bug due to unsupported statements.", getLineAndPos(ctx));
 
 		fragment->body = (PLtsql_stmt *) linitial(code);
 
 		if (list_length(code) > 1)
 			fragment->handler = (PLtsql_stmt *) lsecond(code);
 		else
-			fragment->handler = (PLtsql_stmt *) makeEmptyBlockStmt(getLineOfStartToken(ctx->catch_block()));
+			fragment->handler = (PLtsql_stmt *) makeEmptyBlockStmt(getLineNo(ctx->catch_block()));
 
 		popContainer(ctx);
 
@@ -719,7 +923,7 @@ public:
 	//////////////////////////////////////////////////////////////////////////////
 	// Non-container statement management
 	//////////////////////////////////////////////////////////////////////////////
-	
+
    	void enterDml_statement(TSqlParser::Dml_statementContext *ctx) override
 	{
 		// We ran into a DML clause while walking down the ANTLR parse
@@ -732,20 +936,33 @@ public:
 		// the string that makes up the statement, store that string
 		// inside of the PLtsql_stmt_execsql, and send that string
 		// to the main SQL parser when we execute the statement.
-		
-		graft(makeSQL(ctx), peekContainer());
 
-		// clean up local_id positions maps before entering
-		local_id_positions.clear();
+        if (ctx->bulk_insert_statement())
+        {
+            graft(makeInsertBulkStatement(ctx), peekContainer());
+        }
+        else
+        {
+            graft(makeSQL(ctx), peekContainer());
+        }
 
-        // clean up full_object_name positions maps before entering
-        full_object_name_positions.clear();
+		// prepare rewriting
+		clear_rewritten_query_fragment();
+		PLtsql_stmt_execsql *stmt = (PLtsql_stmt_execsql *) getPLtsql_fragment(ctx);
+		Assert(stmt);
+		statementMutator = std::make_unique<PLtsql_expr_query_mutator>(stmt->sqlstmt, ctx);
 	}
 
 	void exitDml_statement(TSqlParser::Dml_statementContext *ctx) override
 	{
+        if (ctx->bulk_insert_statement())
+        {
+            clear_rewritten_query_fragment();
+            return;
+        }
 		PLtsql_stmt_execsql *stmt = (PLtsql_stmt_execsql *) getPLtsql_fragment(ctx);
 		Assert(stmt);
+		Assert(stmt->sqlstmt = statementMutator->expr);
 
 		process_execsql_destination(ctx, stmt);
 
@@ -759,88 +976,45 @@ public:
 
 		if (is_compiling_create_function())
 		{
+			/* select without destination should be blocked. We can use already information about desitnation, which is already processed. */
+			if (ctx->select_statement_standalone() && stmt->need_to_push_result)
+				throw PGErrorWrapperException(ERROR, ERRCODE_INVALID_FUNCTION_DEFINITION, "select statement returing result to a client cannot be used in a function", getLineAndPos(ctx->select_statement_standalone()));
+
 			/* T-SQL doens't allow side-effecting operations in CREATE FUNCTION */
-			if (ctx->insert_statement() && stmt->insert_exec && ctx->insert_statement()->ddl_object() && !ctx->insert_statement()->ddl_object()->local_id()) /* insert into non-local object */
-				throw PGErrorWrapperException(ERROR, ERRCODE_INVALID_FUNCTION_DEFINITION, "'INSERT EXEC' cannot be used within a function", 0);
-			else if (ctx->insert_statement() && ctx->insert_statement()->ddl_object() && !ctx->insert_statement()->ddl_object()->local_id()) /* insert into non-local object */
-				throw PGErrorWrapperException(ERROR, ERRCODE_INVALID_FUNCTION_DEFINITION, "'INSERT' cannot be used within a function", 0);
+			if (ctx->insert_statement())
+			{
+				auto ddl_object = ctx->insert_statement()->ddl_object();
+				if (stmt->insert_exec && ddl_object && !ddl_object->local_id()) /* insert into non-local object */
+					throw PGErrorWrapperException(ERROR, ERRCODE_INVALID_FUNCTION_DEFINITION, "'INSERT EXEC' cannot be used within a function", getLineAndPos(ddl_object));
+				else if (ddl_object && !ddl_object->local_id()) /* insert into non-local object */
+					throw PGErrorWrapperException(ERROR, ERRCODE_INVALID_FUNCTION_DEFINITION, "'INSERT' cannot be used within a function", getLineAndPos(ddl_object));
+			}
 			else if (ctx->update_statement() && ctx->update_statement()->ddl_object() && !ctx->update_statement()->ddl_object()->local_id()) /* update non-local object */
-				throw PGErrorWrapperException(ERROR, ERRCODE_INVALID_FUNCTION_DEFINITION, "'UPDATE' cannot be used within a function", 0);
+				throw PGErrorWrapperException(ERROR, ERRCODE_INVALID_FUNCTION_DEFINITION, "'UPDATE' cannot be used within a function", getLineAndPos(ctx->update_statement()->ddl_object()));
 			else if (ctx->delete_statement() && ctx->delete_statement()->delete_statement_from()->ddl_object() && !ctx->delete_statement()->delete_statement_from()->ddl_object()->local_id()) /* delete from non-local object */
-				throw PGErrorWrapperException(ERROR, ERRCODE_INVALID_FUNCTION_DEFINITION, "'DELETE' cannot be used within a function", 0);
+				throw PGErrorWrapperException(ERROR, ERRCODE_INVALID_FUNCTION_DEFINITION, "'DELETE' cannot be used within a function", getLineAndPos(ctx->delete_statement()->delete_statement_from()->ddl_object()));
 		}
 
 		// post-processing of execsql stmt query
-		PLtsql_expr_query_mutator mutator(stmt->sqlstmt, ctx);
-
-		// update stmt->sqlstmt with adding quote to tsql local_id (starting with '@') because backend parser is expecting that.
 		for (auto &entry : local_id_positions)
 		{
+			// Adding quote to tsql local_id (starting with '@') because backend parser is expecting that.
 			std::string quoted_local_id = std::string("\"") + entry.second + "\"";
-			mutator.add(entry.first, entry.second, quoted_local_id);
-		}
-		local_id_positions.clear();
-
-        // process qualified names with ..
-        for (auto &entry : full_object_name_positions)
-        {
-            mutator.add(entry.first, entry.second.first, entry.second.second);
-        }
-        full_object_name_positions.clear();
-
-		// handle special alias syntax and quote alias
-		if (ctx->select_statement_standalone())
-		{
-			TSqlParser::Query_specificationContext *qctx = get_query_specification(ctx->select_statement_standalone());
-			Assert(qctx);
-			Assert(qctx->select_list());
-			std::vector<TSqlParser::Select_list_elemContext *> select_elems = qctx->select_list()->select_list_elem();
-
-			for (size_t i=0; i<select_elems.size(); ++i)
-			{
-				TSqlParser::Select_list_elemContext *elem = select_elems[i];
-				if (elem->expression_elem() && elem->expression_elem()->EQUAL())
-				{
-					/* rewrite "SELECT COL=expr" to "SELECT expr as "COL"" */
-					auto expr_elem = elem->expression_elem();
-
-					/* 1. remove "COL=" */
-					std::string orig_text = ::getFullText(expr_elem->column_alias());
-					mutator.add(expr_elem->column_alias()->start->getStartIndex(), orig_text, "");
-
-					orig_text = ::getFullText(elem->expression_elem()->EQUAL());
-					mutator.add(elem->expression_elem()->EQUAL()->getSymbol()->getStartIndex(), orig_text, "");
-
-					/* 2. append "AS COL" to the end of expr */
-					std::string repl_text(" AS ");
-					if (is_quotation_needed_for_column_alias(expr_elem->column_alias()))
-						repl_text += "\"" + ::getFullText(expr_elem->column_alias()) + "\"";
-					else
-						repl_text += ::getFullText(expr_elem->column_alias());
-					mutator.add(expr_elem->expression()->stop->getStopIndex()+1, "", repl_text);
-				}
-				else if ((elem->column_elem() && elem->column_elem()->as_column_alias()) ||
-				  (elem->expression_elem() && elem->expression_elem()->as_column_alias()))
-				{
-					/* if AS is missing, add it. */
-					auto column_alias_as = ((elem->column_elem() && elem->column_elem()->as_column_alias()) ? elem->column_elem()->as_column_alias() : elem->expression_elem()->as_column_alias());
-					if (!column_alias_as->AS())
-					{
-						std::string orig_text = ::getFullText(column_alias_as->column_alias());
-						std::string repl_text = std::string("AS ");
-
-						if (is_quotation_needed_for_column_alias(column_alias_as->column_alias()))
-							repl_text += std::string("\"") + orig_text + "\"";
-						else
-							repl_text += orig_text;
-
-						mutator.add(column_alias_as->start->getStartIndex(), "", "AS ");
-					}
-				}
-			}
+			statementMutator->add(entry.first, entry.second, quoted_local_id);
 		}
 
-		mutator.run();
+		/* common routine for select and non-select */
+		add_rewritten_query_fragment_to_mutator(statementMutator.get());
+
+		statementMutator->run();
+		statementMutator = nullptr;
+		clear_rewritten_query_fragment();
+	}
+
+	void exitSelect_statement(TSqlParser::Select_statementContext *selectCtx) override
+	{
+		if (statementMutator)
+			process_select_statement(selectCtx, statementMutator.get());
 	}
 
 	void enterBatch_level_statement(TSqlParser::Batch_level_statementContext *ctx) override
@@ -853,6 +1027,9 @@ public:
 	{
 		// See the comments in enterDml_statement() for an explanation of this code
 		graft(makeSQL(ctx), peekContainer());
+
+		// clean up object_name positions maps before entering
+		rewritten_query_fragment.clear();
 	}
 
 	void exitDdl_statement(TSqlParser::Ddl_statementContext *ctx) override
@@ -863,7 +1040,7 @@ public:
 		if (is_compiling_create_function())
 		{
 			/* T-SQL doens't allow side-effecting operations in CREATE FUNCTION */
-			throw PGErrorWrapperException(ERROR, ERRCODE_INVALID_FUNCTION_DEFINITION, "DDL cannot be used within a function", 0);
+			throw PGErrorWrapperException(ERROR, ERRCODE_INVALID_FUNCTION_DEFINITION, "DDL cannot be used within a function", getLineAndPos(ctx));
 		}
 
 
@@ -887,7 +1064,18 @@ public:
 		}
 
 		if (nop)
+		{
 			make_nop((PLtsql_stmt *) stmt, peekContainer());
+			return;
+		}
+		else
+		{
+			// post-processing of execsql stmt query
+			PLtsql_expr_query_mutator mutator(stmt->sqlstmt, ctx);
+			add_rewritten_query_fragment_to_mutator(&mutator);
+			mutator.run();
+		}
+		clear_rewritten_query_fragment();
 	}
 
 	void enterAnother_statement(TSqlParser::Another_statementContext *ctx) override
@@ -902,9 +1090,23 @@ public:
 		//
 		// Please note that one "another_statement" may return a list of PLtsql_stmt
 		// in case of DECLARE multiple variable with initializers at a time.
-		std::vector<PLtsql_stmt *> result = makeAnother(ctx);
+		std::vector<PLtsql_stmt *> result = makeAnother(ctx, *this);
 		for (PLtsql_stmt *stmt : result)
 			graft(stmt, peekContainer());
+
+		clear_rewritten_query_fragment();
+	}
+
+	void exitAnother_statement(TSqlParser::Another_statementContext *ctx) override
+	{
+		// currently, declare_cursor only need rewriting because it contains select statement
+		if (ctx->cursor_statement() && ctx->cursor_statement()->declare_cursor())
+		{
+			PLtsql_stmt_decl_cursor *decl_cursor_stmt = (PLtsql_stmt_decl_cursor *) getPLtsql_fragment(ctx);
+			post_process_declare_cursor_statement(decl_cursor_stmt, ctx->cursor_statement()->declare_cursor(), *this);
+		}
+
+		clear_rewritten_query_fragment();
 	}
 
     void enterCfl_statement(TSqlParser::Cfl_statementContext *ctx) override
@@ -917,7 +1119,9 @@ public:
 		// makeCfl() to create the appropriate PLtsql_stmt and then graft that
 		// into the topmost container.
 		graft(makeCfl(ctx, *this), peekContainer());
-    }
+
+		clear_rewritten_query_fragment();
+	}
 
 	//////////////////////////////////////////////////////////////////////////////
 	// Special handling of non-statement context
@@ -938,30 +1142,115 @@ public:
 		}
 	}
 
-    void enterFull_object_name(TSqlParser::Full_object_nameContext *ctx) override
-    {
-        if (ctx->children.size() == 3)
-        {
-            // Match ..bar
-            if (ctx->DOT().size() == 2 && !ctx->database && !ctx->schema)
-            {
-                full_object_name_positions.emplace(std::make_pair(ctx->start->getStartIndex(), std::make_pair(::getFullText(ctx->DOT()[0]), "master.dbo")));
-            }
-        }
-        else if (ctx->children.size() == 4)
-        {
-            // Match foo..bar
-            if (ctx->DOT().size() == 2 && ctx->database && !ctx->schema)
-            {
-                full_object_name_positions.emplace(std::make_pair(ctx->DOT()[0]->getSymbol()->getStartIndex(), std::make_pair(::getFullText(ctx->DOT()[0]), ".dbo")));
-            }
-            // Match .foo.bar
-            else if (ctx->DOT().size() == 2 && !ctx->database && ctx->schema)
-            {
-                full_object_name_positions.emplace(std::make_pair(ctx->start->getStartIndex(), std::make_pair(::getFullText(ctx->DOT()[0]), "master.")));
-            }
-        }
-    }
+
+	/* Column Name */
+
+	void exitSimple_column_name(TSqlParser::Simple_column_nameContext *ctx) override
+	{
+		if (does_object_name_need_delimiter(ctx->id()))
+			rewritten_query_fragment.emplace(std::make_pair(ctx->id()->start->getStartIndex(), std::make_pair(::getFullText(ctx->id()), delimit_identifier(ctx->id()))));
+	}
+
+	void exitInsert_column_id(TSqlParser::Insert_column_idContext *ctx) override
+	{
+		// qualifier and DOT is totally ignored
+		for (auto dot : ctx->DOT())
+			rewritten_query_fragment.emplace(std::make_pair(dot->getSymbol()->getStartIndex(), std::make_pair(::getFullText(dot), ""))); // remove dot
+		for (auto ign : ctx->ignore)
+			rewritten_query_fragment.emplace(std::make_pair(ign->start->getStartIndex(), std::make_pair(::getFullText(ign), ""))); // remove ignore
+
+		// qualified identifier doesn't need delimiter
+		if (ctx->DOT().empty() && does_object_name_need_delimiter(ctx->id().back()))
+			rewritten_query_fragment.emplace(std::make_pair(ctx->id().back()->start->getStartIndex(), std::make_pair(::getFullText(ctx->id().back()), delimit_identifier(ctx->id().back()))));
+	}
+
+	void exitFull_column_name(TSqlParser::Full_column_nameContext *ctx) override
+	{
+		GetCtxFunc<TSqlParser::Full_column_nameContext *> getSchema = [](TSqlParser::Full_column_nameContext *o) { return o->schema; };
+		GetCtxFunc<TSqlParser::Full_column_nameContext *> getTablename = [](TSqlParser::Full_column_nameContext *o) { return o->tablename; };
+		std::string rewritten_name = rewrite_column_name_with_omitted_schema_name(ctx, getSchema, getTablename);
+		if (!rewritten_name.empty())
+			rewritten_query_fragment.emplace(std::make_pair(ctx->start->getStartIndex(), std::make_pair(::getFullText(ctx), rewritten_name)));
+
+		// qualified identifier doesn't need delimiter
+		if (ctx->DOT().empty() && does_object_name_need_delimiter(ctx->column_name))
+			rewritten_query_fragment.emplace(std::make_pair(ctx->column_name->start->getStartIndex(), std::make_pair(::getFullText(ctx->column_name), delimit_identifier(ctx->column_name))));
+	}
+
+
+	/* Object Name */
+
+	void exitFull_object_name(TSqlParser::Full_object_nameContext *ctx) override
+	{
+		GetCtxFunc<TSqlParser::Full_object_nameContext *> getDatabase = [](TSqlParser::Full_object_nameContext *o) { return o->database; };
+		GetCtxFunc<TSqlParser::Full_object_nameContext *> getSchema = [](TSqlParser::Full_object_nameContext *o) { return o->schema; };
+		std::string rewritten_name = rewrite_object_name_with_omitted_db_and_schema_name(ctx, getDatabase, getSchema);
+		if (!rewritten_name.empty())
+			rewritten_query_fragment.emplace(std::make_pair(ctx->start->getStartIndex(), std::make_pair(::getFullText(ctx), rewritten_name)));
+
+		// qualified identifier doesn't need delimiter
+		if (ctx->DOT().empty() && does_object_name_need_delimiter(ctx->object_name))
+			rewritten_query_fragment.emplace(std::make_pair(ctx->object_name->start->getStartIndex(), std::make_pair(::getFullText(ctx->object_name), delimit_identifier(ctx->object_name))));
+	}
+
+	void exitTable_name(TSqlParser::Table_nameContext *ctx) override
+	{
+		GetCtxFunc<TSqlParser::Table_nameContext *> getDatabase = [](TSqlParser::Table_nameContext *o) { return o->database; };
+		GetCtxFunc<TSqlParser::Table_nameContext *> getSchema = [](TSqlParser::Table_nameContext *o) { return o->schema; };
+		std::string rewritten_name = rewrite_object_name_with_omitted_db_and_schema_name(ctx, getDatabase, getSchema);
+		if (!rewritten_name.empty())
+			rewritten_query_fragment.emplace(std::make_pair(ctx->start->getStartIndex(), std::make_pair(::getFullText(ctx), rewritten_name)));
+
+		// qualified identifier doesn't need delimiter
+		if (ctx->DOT().empty() && does_object_name_need_delimiter(ctx->table))
+			rewritten_query_fragment.emplace(std::make_pair(ctx->table->start->getStartIndex(), std::make_pair(::getFullText(ctx->table), delimit_identifier(ctx->table))));
+	}
+
+	void exitSimple_name(TSqlParser::Simple_nameContext *ctx) override
+	{
+		GetCtxFunc<TSqlParser::Simple_nameContext *> getDatabase = [](TSqlParser::Simple_nameContext *o) { return nullptr; }; // can't exist
+		GetCtxFunc<TSqlParser::Simple_nameContext *> getSchema = [](TSqlParser::Simple_nameContext *o) { return o->schema; };
+		std::string rewritten_name = rewrite_object_name_with_omitted_db_and_schema_name(ctx, getDatabase, getSchema);
+		if (!rewritten_name.empty())
+			rewritten_query_fragment.emplace(std::make_pair(ctx->start->getStartIndex(), std::make_pair(::getFullText(ctx), rewritten_name)));
+
+		// qualified identifier doesn't need delimiter
+		if (ctx->DOT().empty() && does_object_name_need_delimiter(ctx->name))
+			rewritten_query_fragment.emplace(std::make_pair(ctx->name->start->getStartIndex(), std::make_pair(::getFullText(ctx->name), delimit_identifier(ctx->name))));
+	}
+
+	void exitFunc_proc_name_schema(TSqlParser::Func_proc_name_schemaContext *ctx) override
+	{
+		GetCtxFunc<TSqlParser::Func_proc_name_schemaContext *> getDatabase = [](TSqlParser::Func_proc_name_schemaContext *o) { return nullptr; }; // can't exist
+		GetCtxFunc<TSqlParser::Func_proc_name_schemaContext *> getSchema = [](TSqlParser::Func_proc_name_schemaContext *o) { return o->schema; };
+		std::string rewritten_name = rewrite_object_name_with_omitted_db_and_schema_name(ctx, getDatabase, getSchema);
+		if (!rewritten_name.empty())
+			rewritten_query_fragment.emplace(std::make_pair(ctx->start->getStartIndex(), std::make_pair(::getFullText(ctx), rewritten_name)));
+
+		// don't need to call does_object_name_need_delimiter() because problematic keywords are already allowed as function name
+	}
+
+	void exitFunc_proc_name_database_schema(TSqlParser::Func_proc_name_database_schemaContext *ctx) override
+	{
+		GetCtxFunc<TSqlParser::Func_proc_name_database_schemaContext *> getDatabase = [](TSqlParser::Func_proc_name_database_schemaContext *o) { return o->database; };
+		GetCtxFunc<TSqlParser::Func_proc_name_database_schemaContext *> getSchema = [](TSqlParser::Func_proc_name_database_schemaContext *o) { return o->schema; };
+		std::string rewritten_name = rewrite_object_name_with_omitted_db_and_schema_name(ctx, getDatabase, getSchema);
+		if (!rewritten_name.empty())
+			rewritten_query_fragment.emplace(std::make_pair(ctx->start->getStartIndex(), std::make_pair(::getFullText(ctx), rewritten_name)));
+
+		// don't need to call does_object_name_need_delimiter() because problematic keywords are already allowed as function name
+	}
+
+	void exitFunc_proc_name_server_database_schema(TSqlParser::Func_proc_name_server_database_schemaContext *ctx) override
+	{
+		GetCtxFunc<TSqlParser::Func_proc_name_server_database_schemaContext *> getDatabase = [](TSqlParser::Func_proc_name_server_database_schemaContext *o) { return o->database; };
+		GetCtxFunc<TSqlParser::Func_proc_name_server_database_schemaContext *> getSchema = [](TSqlParser::Func_proc_name_server_database_schemaContext *o) { return o->schema; };
+		std::string rewritten_name = rewrite_object_name_with_omitted_db_and_schema_name(ctx, getDatabase, getSchema);
+		if (!rewritten_name.empty())
+			rewritten_query_fragment.emplace(std::make_pair(ctx->start->getStartIndex(), std::make_pair(::getFullText(ctx), rewritten_name)));
+
+		// don't need to call does_object_name_need_delimiter() because problematic keywords are already allowed as function name
+	}
 
 	//////////////////////////////////////////////////////////////////////////////
 	// function/procedure call analysis
@@ -980,9 +1269,63 @@ public:
 				{
 					auto first_arg = ctx->function_arg_list()->expression().front();
 					if (first_arg->constant() && first_arg->constant()->NULL_P())
-						throw PGErrorWrapperException(ERROR, ERRCODE_INVALID_PARAMETER_VALUE, "The first argument to NULLIF cannot be a constant NULL.", 0);
+						throw PGErrorWrapperException(ERROR, ERRCODE_INVALID_PARAMETER_VALUE, "The first argument to NULLIF cannot be a constant NULL.", getLineAndPos(first_arg));
 				}
 			}
+		}
+	}
+
+	void exitANALYTIC_WINDOWED_FUNC(TSqlParser::ANALYTIC_WINDOWED_FUNCContext *ctx) override
+	{
+		auto actx = ctx->analytic_windowed_function();
+		Assert(actx);
+
+		if (actx->PERCENTILE_CONT() || actx->PERCENTILE_DISC())
+		{
+			if (actx->over_clause())
+			{
+				std::string funcName = actx->PERCENTILE_CONT() ? ::getFullText(actx->PERCENTILE_CONT()) : ::getFullText(actx->PERCENTILE_DISC());
+
+				if (actx->over_clause()->row_or_range_clause())
+					throw PGErrorWrapperException(ERROR, ERRCODE_INVALID_PARAMETER_VALUE, format_errmsg("%s cannot have a window frame", funcName.c_str()), getLineAndPos(actx->over_clause()->row_or_range_clause()));
+				else if (actx->over_clause()->order_by_clause())
+					throw PGErrorWrapperException(ERROR, ERRCODE_INVALID_PARAMETER_VALUE, format_errmsg("%s cannot have ORDER BY in OVER clause", funcName.c_str()), getLineAndPos(actx->over_clause()->order_by_clause()));
+			}
+		}
+	}
+
+	//////////////////////////////////////////////////////////////////////////////
+	// statement analysis
+	//////////////////////////////////////////////////////////////////////////////
+
+	void exitQuery_specification(TSqlParser::Query_specificationContext *ctx) override
+	{
+		if (statementMutator)
+			process_query_specification(ctx, statementMutator.get());
+	}
+
+	void exitColumn_def_table_constraints(TSqlParser::Column_def_table_constraintsContext *ctx)
+	{
+		/*
+		 * It is not documented but it seems T-SQL allows that column-definition is followed by table-constraint without COMMA.
+		 * PG backend parser will throw a syntax error when this kind of query is inputted.
+		 * It is not easy to add a rule accepting this syntax to backend parser because of many shift/reduce conflicts.
+		 * To handle this case, add a compensation COMMA between column-definition and table-constraint here.
+		 *
+		 * This handling should be only applied to table-constraint following column-definition. Other cases (such as two column definitions without comma) should still throw a syntax error.
+		 */
+
+		ParseTree* prev_child = nullptr;
+		for (ParseTree* child : ctx->children)
+		{
+			TSqlParser::Column_def_table_constraintContext* cdtctx = dynamic_cast<TSqlParser::Column_def_table_constraintContext*>(child);
+			if (cdtctx && cdtctx->table_constraint())
+			{
+				TSqlParser::Column_def_table_constraintContext* prev_cdtctx = (prev_child ? dynamic_cast<TSqlParser::Column_def_table_constraintContext*>(prev_child) : nullptr);
+				if (prev_cdtctx && (prev_cdtctx->column_definition() || prev_cdtctx->materialized_column_definition()))
+					rewritten_query_fragment.emplace(std::make_pair(cdtctx->start->getStartIndex(), std::make_pair("", ","))); // add comma
+			}
+			prev_child = child;
 		}
 	}
 
@@ -991,14 +1334,14 @@ public:
 	//////////////////////////////////////////////////////////////////////////////
 	void enterFunc_body_return_select_body(TSqlParser::Func_body_return_select_bodyContext *ctx) override
 	{
-		// local_ids information will be collected.
-		local_id_positions.clear();
+		// prepare rewriting
+		clear_rewritten_query_fragment();
 	}
 
 	void exitFunc_body_return_select_body(TSqlParser::Func_body_return_select_bodyContext *ctx) override
 	{
 		handleITVFBody(ctx);
-		local_id_positions.clear();
+		clear_rewritten_query_fragment();
 	}
 
 	void enterExecute_body_batch(TSqlParser::Execute_body_batchContext *ctx) override
@@ -1136,7 +1479,7 @@ public:
 		{
 		    throw PGErrorWrapperException(ERROR,
 						  ERRCODE_INTERNAL_ERROR,
-						  "double-quoted string literals cannot contain single-quotes while QUOTED_IDENTIFIER=OFF", 0);
+						  "double-quoted string literals cannot contain single-quotes while QUOTED_IDENTIFIER=OFF", 0, 0);
 		}
 	    }
 	    else
@@ -1347,16 +1690,142 @@ class MyParserErrorListener: public antlr4::BaseErrorListener
 		 */
 		int errorpos = offendingSymbol->getStartIndex() + line - 1;
 
-		/*
-		 * TDS protocol requires sending an error line# from the server.
-		 * babelfishpg_tds extension can access ErrorData but it doens't include the exact line number. Only cursorpos (=character postition) is available.
-		 * To provide babelfishpg_tds extension with exact line number, store line number to a global variable. babelfishpg_tds can read it via pltsql_plugin_handler.
-		 */
-		CurrentLineNumber = line;
-
-		throw PGErrorWrapperException(ERROR, ERRCODE_SYNTAX_ERROR, format_errmsg("syntax error near %s at line %lu and character position %lu", recognizer->getTokenErrorDisplay(offendingSymbol).c_str(), line, charPositionInLine), errorpos);
+		throw PGErrorWrapperException(ERROR, ERRCODE_SYNTAX_ERROR, format_errmsg("syntax error near %s at line %lu and character position %lu", recognizer->getTokenErrorDisplay(offendingSymbol).c_str(), line, charPositionInLine), line, errorpos);
 	}
 };
+
+/*
+ * Necessary checks and mutations for query_specification
+ */
+static void process_query_specification(
+	TSqlParser::Query_specificationContext *qctx,
+	PLtsql_expr_query_mutator *mutator)
+{
+	Assert(qctx->select_list());
+	std::vector<TSqlParser::Select_list_elemContext *> select_elems = qctx->select_list()->select_list_elem();
+	for (size_t i=0; i<select_elems.size(); ++i)
+	{
+		TSqlParser::Select_list_elemContext *elem = select_elems[i];
+
+		if (elem->EQUAL() || elem->assignment_operator())
+		{
+			/* check if assignment is used in top-level select */
+			if (!is_top_level_query_specification(qctx))
+				throw PGErrorWrapperException(ERROR, ERRCODE_SYNTAX_ERROR, "variable assignment can be used only in top-level SELECT", getLineAndPos(elem));
+
+			/* check if assignment is involved with sql_union */
+			auto pctx = qctx->parent;
+			while (pctx)
+			{
+				if (dynamic_cast<TSqlParser::Query_expressionContext *>(pctx))
+				{
+					TSqlParser::Query_expressionContext *qectx = static_cast<TSqlParser::Query_expressionContext *>(pctx);
+					if (!qectx->sql_union().empty())
+						throw PGErrorWrapperException(ERROR, ERRCODE_SYNTAX_ERROR, "variable assignment cannot be used with UNION, EXCEPT or INTERSECT", getLineAndPos(elem));
+				}
+				else if (dynamic_cast<TSqlParser::Sql_unionContext *>(pctx))
+				{
+					throw PGErrorWrapperException(ERROR, ERRCODE_SYNTAX_ERROR, "variable assignment cannot be used in UNION, EXCEPT or INTERSECT", getLineAndPos(elem));
+				}
+
+				else
+					break; /* no interest */
+
+				pctx = pctx->parent;
+			}
+		}
+	}
+
+	PLtsql_expr *expr = mutator->expr;
+	ParserRuleContext* baseCtx = mutator->ctx;
+
+	/* remove unsupported_tokens */
+	if (qctx->table_sources())
+	{
+		for (auto tctx : qctx->table_sources()->table_source_item()) // from-clause (to remove hints)
+			post_process_table_source(tctx, expr, baseCtx);
+	}
+
+	/* handle special alias syntax and quote alias */
+	for (size_t i=0; i<select_elems.size(); ++i)
+	{
+		TSqlParser::Select_list_elemContext *elem = select_elems[i];
+		if (elem->expression_elem() && elem->expression_elem()->EQUAL())
+		{
+			/* rewrite "SELECT COL=expr" to "SELECT expr as "COL"" */
+			auto expr_elem = elem->expression_elem();
+
+			/* 1. remove "COL=" */
+			std::string orig_text = ::getFullText(expr_elem->column_alias());
+			mutator->add(expr_elem->column_alias()->start->getStartIndex(), orig_text, "");
+
+			orig_text = ::getFullText(elem->expression_elem()->EQUAL());
+			mutator->add(elem->expression_elem()->EQUAL()->getSymbol()->getStartIndex(), orig_text, "");
+
+			/* 2. append "AS COL" to the end of expr */
+			std::string repl_text(" AS ");
+			if (is_quotation_needed_for_column_alias(expr_elem->column_alias()))
+				repl_text += "\"" + ::getFullText(expr_elem->column_alias()) + "\"";
+			else
+				repl_text += ::getFullText(expr_elem->column_alias());
+			mutator->add(expr_elem->expression()->stop->getStopIndex()+1, "", repl_text);
+		}
+		else if ((elem->column_elem() && elem->column_elem()->as_column_alias()) ||
+			(elem->expression_elem() && elem->expression_elem()->as_column_alias()))
+		{
+			/* if AS is missing, add it. */
+			auto column_alias_as = ((elem->column_elem() && elem->column_elem()->as_column_alias()) ? elem->column_elem()->as_column_alias() : elem->expression_elem()->as_column_alias());
+			if (!column_alias_as->AS())
+			{
+				std::string orig_text = ::getFullText(column_alias_as->column_alias());
+				std::string repl_text = std::string("AS ");
+
+				if (is_quotation_needed_for_column_alias(column_alias_as->column_alias()))
+					repl_text += std::string("\"") + orig_text + "\"";
+				else
+					repl_text += orig_text;
+
+				mutator->add(column_alias_as->start->getStartIndex(), "", "AS ");
+			}
+		}
+	}
+}
+
+/*
+ * Necessary mutations for select_statement_standalone which cannot be covered by tsqlBuilder
+ */
+static void process_select_statement_standalone(
+	TSqlParser::Select_statement_standaloneContext *standaloneCtx,
+	PLtsql_expr_query_mutator *mutator, tsqlBuilder &builder)
+{
+	Assert(mutator);
+	auto ssm = std::make_unique<tsqlSelectStatementMutator>(
+		builder.parser, builder.ruleNames, builder.stream);
+	ssm->mutator = mutator;
+	antlr4::tree::ParseTreeWalker walker;
+	walker.walk(ssm.get(), standaloneCtx);
+}
+
+/*
+ * Necessary mutations for select_statement
+ */
+static void process_select_statement(
+	TSqlParser::Select_statementContext *selectCtx,
+	PLtsql_expr_query_mutator *mutator)
+{
+	/* remove unsupported_tokens */
+	if (selectCtx->for_clause()) // for xml
+	{
+		Assert(selectCtx->for_clause()->XML()); // we only support FOR XML
+		Assert(selectCtx->for_clause()->RAW() || selectCtx->for_clause()->PATH());
+	}
+
+	Assert(mutator);
+	PLtsql_expr *expr = mutator->expr;
+	ParserRuleContext* baseCtx = mutator->ctx;
+	for (auto octx : selectCtx->option_clause()) // query hint
+		removeCtxStringFromQuery(expr, octx, baseCtx);
+}
 
 ////////////////////////////////////////////////////////////////////////////////
 // Entry point for ANTLR parser
@@ -1438,10 +1907,24 @@ antlr_parser_cpp(const char *sourceText)
 
 		// for batch-level statement (i.e. create procedure), we don't need to create actual PLtsql_stmt* by tsqlBuilder.
 		// We can just relay the query string to backend parser via one PLtsql_stmt_execsql.
-		if (handleBatchLevelStatment(tree))
+		TSqlParser::Tsql_fileContext *tsql_file = dynamic_cast<TSqlParser::Tsql_fileContext *>(tree);
+		if (tsql_file && tsql_file->batch_level_statement())
 		{
+			/* By tsql grammar, batch-level statement can exist in tsql_file only
+			 * and there should be exactly one batch_level_statement there
+			 */
+			auto ssm = std::make_unique<tsqlSelectStatementMutator>(tree, parser.getRuleNames(), sourceStream);
+			handleBatchLevelStatement(tsql_file->batch_level_statement(), ssm.get());
 			result.success = true;
 			return result;
+		}
+		else
+		{
+			if (pltsql_curr_compile && pltsql_curr_compile->fn_oid == InvalidOid) /* new batch */
+			{
+				pltsql_curr_compile_body_position = 0;
+				pltsql_curr_compile_body_lineno = 0;
+			}
 		}
 
 		std::unique_ptr<tsqlBuilder> builder = std::make_unique<tsqlBuilder>(tree, parser.getRuleNames(), sourceStream);
@@ -1463,6 +1946,8 @@ antlr_parser_cpp(const char *sourceText)
 		result.n_errargs = (e.get_errargs().size() < 5) ? e.get_errargs().size() : 5;
 		for (size_t i=0; i<e.get_errargs().size(); ++i)
 			result.errargs[i] = e.get_errargs()[i];
+
+		CurrentLineNumber = e.get_errorline();
 
 		return result; /* to avoid compiler warning. should not reach */
 	}
@@ -1524,11 +2009,6 @@ void report_antlr_error(ANTLR_result r)
 #pragma GCC diagnostic pop
 } // extern "C"
 
-// helper template function to remove certain token from comma-separated list. (designed to be used for a clause such as "WITH <opt1>, <opt2>, <opt3>".
-// use template here because there is no base class for T. F is function pointer (or lambda) to return interesting token which wants to be removed.
-template <class T>
-using GetTokenFunc = std::function <antlr4::tree::TerminalNode * (T)>;
-
 template <class T>
 bool
 removeTokenFromOptionList(PLtsql_expr *expr, std::vector<T>& options, std::vector<antlr4::tree::TerminalNode *>& commas, antlr4::ParserRuleContext *ctx, GetTokenFunc<T> getTokenFunc)
@@ -1569,8 +2049,13 @@ removeTokenFromOptionList(PLtsql_expr *expr, std::vector<T>& options, std::vecto
 }
 
 void
-rewriteBatchLevelStatement(PLtsql_expr *expr, TSqlParser::Batch_level_statementContext *ctx)
+rewriteBatchLevelStatement(
+	TSqlParser::Batch_level_statementContext *ctx, tsqlSelectStatementMutator *ssm, PLtsql_expr *expr)
 {
+	// rewrite batch-level stmt query
+	PLtsql_expr_query_mutator mutator(expr, ctx);
+	ssm->mutator = &mutator;
+
 	/*
 	 * remove unnecessary create-options such as SCHEMABINDING.
 	 * basically, we check SCHEMABINDING is specified of each kind of statement
@@ -1636,7 +2121,7 @@ rewriteBatchLevelStatement(PLtsql_expr *expr, TSqlParser::Batch_level_statementC
 
 		for (auto param : ctx->create_or_alter_function()->procedure_param())
 			if (param->VARYING())
-				throw PGErrorWrapperException(ERROR, ERRCODE_SYNTAX_ERROR, "Cannot use the VARYING option in a CREATE FUNCTION statement.", 0);
+				throw PGErrorWrapperException(ERROR, ERRCODE_SYNTAX_ERROR, "Cannot use the VARYING option in a CREATE FUNCTION statement.", getLineAndPos(param->VARYING()));
 	}
 	else if (ctx->create_or_alter_procedure())
 	{
@@ -1704,22 +2189,130 @@ rewriteBatchLevelStatement(PLtsql_expr *expr, TSqlParser::Batch_level_statementC
 	if (ctx->create_or_alter_trigger() && ctx->create_or_alter_trigger()->create_or_alter_dml_trigger())
 		if (ctx->create_or_alter_trigger()->create_or_alter_dml_trigger()->for_replication())
 			removeCtxStringFromQuery(expr, ctx->create_or_alter_trigger()->create_or_alter_dml_trigger()->for_replication(), ctx);
+
+	// handle omitted database/schema name
+	{
+		ParserRuleContext *nctx = nullptr;
+		std::string rewritten_name = "";
+
+		if (ctx->create_or_alter_function() || ctx->create_or_alter_procedure())
+		{
+			GetCtxFunc<TSqlParser::Func_proc_name_schemaContext *> getDatabase = [](TSqlParser::Func_proc_name_schemaContext *o) { return nullptr; }; // can't exist
+			GetCtxFunc<TSqlParser::Func_proc_name_schemaContext *> getSchema = [](TSqlParser::Func_proc_name_schemaContext *o) { return o->schema; };
+
+			if (ctx->create_or_alter_function())
+			{
+				nctx = ctx->create_or_alter_function()->func_proc_name_schema();
+				rewritten_name = rewrite_object_name_with_omitted_db_and_schema_name((TSqlParser::Func_proc_name_schemaContext *) nctx, getDatabase, getSchema);
+				// delimit_identifier() doens't need to be called for func-name
+			}
+			else if (ctx->create_or_alter_procedure())
+			{
+				nctx = ctx->create_or_alter_procedure()->func_proc_name_schema();
+				rewritten_name = rewrite_object_name_with_omitted_db_and_schema_name((TSqlParser::Func_proc_name_schemaContext *) nctx, getDatabase, getSchema);
+				// delimit_identifier() doens't need to be called for proc-name
+			}
+		}
+		else if (ctx->create_or_alter_trigger() || ctx->create_or_alter_view())
+		{
+			GetCtxFunc<TSqlParser::Simple_nameContext *> getDatabase = [](TSqlParser::Simple_nameContext *o) { return nullptr; }; // can't exist
+			GetCtxFunc<TSqlParser::Simple_nameContext *> getSchema = [](TSqlParser::Simple_nameContext *o) { return o->schema; };
+
+			if (ctx->create_or_alter_trigger() && ctx->create_or_alter_trigger()->create_or_alter_dml_trigger())
+			{
+				auto simple_name = ctx->create_or_alter_trigger()->create_or_alter_dml_trigger()->simple_name();
+				nctx = simple_name;
+				rewritten_name = rewrite_object_name_with_omitted_db_and_schema_name(simple_name, getDatabase, getSchema);
+				// if rewritten_name already exists, it should contain DOT. don't need to call does_object_name_need_delimiter
+				if (rewritten_name.empty() && does_object_name_need_delimiter(simple_name->name))
+					rewritten_name = delimit_identifier(simple_name->name);
+			}
+			else if (ctx->create_or_alter_trigger() && ctx->create_or_alter_trigger()->create_or_alter_ddl_trigger())
+			{
+				auto simple_name = ctx->create_or_alter_trigger()->create_or_alter_ddl_trigger()->simple_name();
+				nctx = simple_name;
+				rewritten_name = rewrite_object_name_with_omitted_db_and_schema_name(simple_name, getDatabase, getSchema);
+				// if rewritten_name already exists, it should contain DOT. don't need to call does_object_name_need_delimiter
+				if (rewritten_name.empty() && does_object_name_need_delimiter(simple_name->name))
+					rewritten_name = delimit_identifier(simple_name->name);
+			}
+			else if (ctx->create_or_alter_view())
+			{
+				auto simple_name = ctx->create_or_alter_view()->simple_name();
+				nctx = simple_name;
+				rewritten_name = rewrite_object_name_with_omitted_db_and_schema_name(simple_name, getDatabase, getSchema);
+				// if rewritten_name already exists, it should contain DOT. don't need to call does_object_name_need_delimiter
+				if (rewritten_name.empty() && does_object_name_need_delimiter(simple_name->name))
+					rewritten_name = delimit_identifier(simple_name->name);
+			}
+		}
+
+		// object name should be rewritten
+		if (!rewritten_name.empty())
+		{
+			Assert(nctx != nullptr);
+			mutator.add(nctx->start->getStartIndex(), ::getFullText(nctx), rewritten_name);
+		}
+	}
+
+	// Run select statement mutator
+	antlr4::tree::ParseTreeWalker walker;
+	walker.walk(ssm, ctx);
+
+	mutator.run();
+	ssm->mutator = nullptr;
+	clear_rewritten_query_fragment();
 }
 
-bool
-handleBatchLevelStatment(tree::ParseTree *tree)
+static Token *
+get_start_token_of_batch_level_stmt_body(TSqlParser::Batch_level_statementContext *ctx)
 {
-	TSqlParser::Tsql_fileContext *tsql_file = dynamic_cast<TSqlParser::Tsql_fileContext *>(tree);
-	if (!tsql_file)
-		return false;
+	if (ctx->create_or_alter_function())
+	{
+		auto fctx = ctx->create_or_alter_function();
+		if (fctx->func_body_returns_select())
+			return fctx->func_body_returns_select()->func_body_return_select_body()->getStart();
+		else if (fctx->func_body_returns_table() && !fctx->func_body_returns_table()->sql_clauses().empty())
+			return fctx->func_body_returns_table()->sql_clauses()[0]->getStart();
+		else if (fctx->func_body_returns_scalar() && !fctx->func_body_returns_scalar()->sql_clauses().empty())
+			return fctx->func_body_returns_scalar()->sql_clauses()[0]->getStart();
+	}
+	else if (ctx->create_or_alter_procedure())
+	{
+		auto pctx = ctx->create_or_alter_procedure();
+		if (!pctx->sql_clauses().empty())
+			return pctx->sql_clauses()[0]->getStart();
+	}
+	else if (ctx->create_or_alter_trigger() && ctx->create_or_alter_trigger()->create_or_alter_dml_trigger())
+	{
+		auto tctx = ctx->create_or_alter_trigger()->create_or_alter_dml_trigger();
+		if (!tctx->sql_clauses().empty())
+			return tctx->sql_clauses()[0]->getStart();
+	}
+	else if (ctx->create_or_alter_trigger() && ctx->create_or_alter_trigger()->create_or_alter_ddl_trigger())
+	{
+		auto tctx = ctx->create_or_alter_trigger()->create_or_alter_ddl_trigger();
+		if (!tctx->sql_clauses().empty())
+			return tctx->sql_clauses()[0]->getStart();
+	}
+	else if (ctx->create_or_alter_view())
+	{
+		auto vctx = ctx->create_or_alter_view();
+		return vctx->select_statement_standalone()->getStart();
+	}
 
-		// by tsql grammar, batch-level statement can exist in tsql_file only and there should be exactly one batch_level_statement there
-	if (!tsql_file->batch_level_statement())
-		return false;
+	return nullptr;
+}
+
+void
+handleBatchLevelStatement(TSqlParser::Batch_level_statementContext *ctx, tsqlSelectStatementMutator *ssm)
+{
+	// batch-level statment can be inputted in SQL batch only (by inline_handler) or has empty body. getLineNo() will not be affected by uninitialized pltsql_curr_compile_body_lineno.
+	Assert(pltsql_curr_compile->fn_oid == InvalidOid || ctx->SEMI());
 
 	PLtsql_stmt_block *result = (PLtsql_stmt_block *) palloc0(sizeof(*result));
 	result->cmd_type = PLTSQL_STMT_BLOCK;
-	result->lineno = getLineOfStartToken(tsql_file->batch_level_statement());
+	result->lineno = getLineNo(ctx);
 	result->label = NULL;
 	result->body = NIL;
 	result->n_initvars = 0;
@@ -1728,19 +2321,22 @@ handleBatchLevelStatment(tree::ParseTree *tree)
 
 	PLtsql_stmt_init *init = (PLtsql_stmt_init *) palloc0(sizeof(*init));
 	init->cmd_type = PLTSQL_STMT_INIT;
-	init->lineno = getLineOfStartToken(tsql_file->batch_level_statement());
+	init->lineno = getLineNo(ctx);
 	init->label = NULL;
 	init->inits = rootInitializers;
 
 	result->body = list_make1(init);
 	// create PLtsql_stmt_execsql to wrap all query string
-	PLtsql_stmt_execsql *execsql = (PLtsql_stmt_execsql *) makeSQL(tsql_file->batch_level_statement());
-	rewriteBatchLevelStatement(execsql->sqlstmt, tsql_file->batch_level_statement());
+	PLtsql_stmt_execsql *execsql = (PLtsql_stmt_execsql *) makeSQL(ctx);
+
+	rewriteBatchLevelStatement(ctx, ssm, execsql->sqlstmt);
 	lappend(result->body, execsql);
 
-	pltsql_parse_result = result;
+	Token* start_body_token = get_start_token_of_batch_level_stmt_body(ctx);
 
-	return true;
+	pltsql_curr_compile_body_position = (start_body_token ? start_body_token->getStartIndex() : 0);
+	pltsql_curr_compile_body_lineno = (start_body_token ? start_body_token->getLine() : 0);
+	pltsql_parse_result = result;
 }
 
 bool
@@ -1748,7 +2344,7 @@ handleITVFBody(TSqlParser::Func_body_return_select_bodyContext *ctx)
 {
 	PLtsql_stmt_block *result = (PLtsql_stmt_block *) palloc0(sizeof(*result));
 	result->cmd_type = PLTSQL_STMT_BLOCK;
-	result->lineno = getLineOfStartToken(ctx);
+	result->lineno = getLineNo(ctx);
 	result->label = NULL;
 	result->body = NIL;
 	result->n_initvars = 0;
@@ -2165,7 +2761,7 @@ makeExecSql(ParserRuleContext *ctx)
 	PLtsql_stmt_execsql *stmt = (PLtsql_stmt_execsql *) palloc0(sizeof(*stmt));
 
 	stmt->cmd_type = PLTSQL_STMT_EXECSQL;
-	stmt->lineno = getLineOfStartToken(ctx);
+	stmt->lineno = getLineNo(ctx);
 	stmt->sqlstmt = makeTsqlExpr(ctx, false);
 	stmt->into = false;
 	stmt->strict = false;
@@ -2209,19 +2805,19 @@ void replaceTokenStringFromQuery(PLtsql_expr* expr, Token* startToken, Token* en
 {
 	size_t startIdx = startToken->getStartIndex();
 	if (startIdx == INVALID_INDEX)
-		throw PGErrorWrapperException(ERROR, ERRCODE_SYNTAX_ERROR, "can't generate an internal query", 0);
+		throw PGErrorWrapperException(ERROR, ERRCODE_SYNTAX_ERROR, "can't generate an internal query", getLineAndPos(baseCtx));
 
 	size_t endIdx = endToken->getStopIndex();
 	if (endIdx == INVALID_INDEX)
-		throw PGErrorWrapperException(ERROR, ERRCODE_SYNTAX_ERROR, "can't generate an internal query", 0);
+		throw PGErrorWrapperException(ERROR, ERRCODE_SYNTAX_ERROR, "can't generate an internal query", getLineAndPos(baseCtx));
 
 	size_t baseIdx = baseCtx->getStart()->getStartIndex();
 	if (endIdx == INVALID_INDEX)
-		throw PGErrorWrapperException(ERROR, ERRCODE_SYNTAX_ERROR, "can't generate an internal query", 0);
+		throw PGErrorWrapperException(ERROR, ERRCODE_SYNTAX_ERROR, "can't generate an internal query", getLineAndPos(baseCtx));
 
 	// repl string is too long. we cannot replace with it in place.
 	if (repl && strlen(repl) > endIdx - startIdx + 1)
-		throw PGErrorWrapperException(ERROR, ERRCODE_SYNTAX_ERROR, "can't generate an internal query", 0);
+		throw PGErrorWrapperException(ERROR, ERRCODE_SYNTAX_ERROR, "can't generate an internal query", getLineAndPos(baseCtx));
 
 	Assert(expr->query);
 	memset(expr->query + startIdx - baseIdx, ' ', endIdx - startIdx + 1);
@@ -2259,14 +2855,14 @@ makeBatch(TSqlParser::Block_statementContext *ctx, tsqlBuilder &tsql)
 	PLtsql_stmt_block *result = (PLtsql_stmt_block *) palloc0(sizeof(*result));
 
 	result->cmd_type = PLTSQL_STMT_BLOCK;
-	result->lineno = getLineOfStartToken(ctx);
+	result->lineno = getLineNo(ctx);
 	result->label = NULL;
 	result->body = NIL;
 
 	PLtsql_stmt_init *init = (PLtsql_stmt_init *) palloc0(sizeof(*init));
 
 	init->cmd_type = PLTSQL_STMT_INIT;
-	init->lineno = getLineOfStartToken(ctx);
+	init->lineno = getLineNo(ctx);
 	init->label = NULL;
 	init->inits = rootInitializers;
 
@@ -2297,14 +2893,14 @@ makeBatch(TSqlParser::Tsql_fileContext *ctx, tsqlBuilder &builder)
 	PLtsql_stmt_block *result = (PLtsql_stmt_block *) palloc0(sizeof(*result));
 
 	result->cmd_type = PLTSQL_STMT_BLOCK;
-	result->lineno = getLineOfStartToken(ctx);
+	result->lineno = getLineNo(ctx);
 	result->label = NULL;
 	result->body = NIL;
 
     PLtsql_stmt_init *init = (PLtsql_stmt_init *) palloc0(sizeof(*init));
 
 	init->cmd_type = PLTSQL_STMT_INIT;
-	init->lineno = getLineOfStartToken(ctx);
+	init->lineno = getLineNo(ctx);
 	init->label = NULL;
 	init->inits = rootInitializers;
 
@@ -2350,7 +2946,7 @@ makeBlockStmt(ParserRuleContext *ctx, tsqlBuilder &builder)
 	PLtsql_stmt_block *result = (PLtsql_stmt_block *) palloc0(sizeof(*result));
 
 	result->cmd_type = PLTSQL_STMT_BLOCK;
-	result->lineno = getLineOfStartToken(ctx);
+	result->lineno = getLineNo(ctx);
 	result->label = NULL;
 	result->body = NIL;
 	result->n_initvars = 0;
@@ -2385,7 +2981,7 @@ makeBreakStmt(TSqlParser::Break_statementContext *ctx)
 	
 	result->cmd_type = PLTSQL_STMT_EXIT;
 	result->is_exit  = true;
-	result->lineno = getLineOfStartToken(ctx);
+	result->lineno = getLineNo(ctx);
 	result->label	 = NULL;
 	result->cond	 = NULL;
 
@@ -2401,7 +2997,7 @@ makeContinueStmt(TSqlParser::Continue_statementContext *ctx)
 	
 	result->cmd_type = PLTSQL_STMT_EXIT;
 	result->is_exit  = false;
-	result->lineno = getLineOfStartToken(ctx);
+	result->lineno = getLineNo(ctx);
 	result->label	 = NULL;
 	result->cond	 = NULL;
 
@@ -2426,7 +3022,7 @@ makeGotoStmt(TSqlParser::Goto_statementContext *ctx)
 		PLtsql_stmt_label *result = (PLtsql_stmt_label *) palloc0(sizeof(*result));
 
 		result->cmd_type = PLTSQL_STMT_LABEL;
-		result->lineno = getLineOfStartToken(ctx);
+		result->lineno = getLineNo(ctx);
 		std::string label_str = ::getFullText(ctx->id());
 		result->label = pstrdup(downcase_truncate_identifier(label_str.c_str(), label_str.length(), true));
 
@@ -2438,7 +3034,7 @@ makeGotoStmt(TSqlParser::Goto_statementContext *ctx)
 		PLtsql_stmt_goto *result = (PLtsql_stmt_goto *) palloc0(sizeof(*result));
 	
 		result->cmd_type = PLTSQL_STMT_GOTO;
-		result->lineno = getLineOfStartToken(ctx);
+		result->lineno = getLineNo(ctx);
 		result->cond = NULL;
 		result->target_pc = -1;
 		std::string label_str = ::getFullText(ctx->id());
@@ -2456,7 +3052,7 @@ makeIfStmt(TSqlParser::If_statementContext *ctx)
 	PLtsql_stmt_if	*result = (PLtsql_stmt_if *) palloc0(sizeof(*result));
 
 	result->cmd_type = PLTSQL_STMT_IF;
-	result->lineno = getLineOfStartToken(ctx);
+	result->lineno = getLineNo(ctx);
 	result->cond = makeTsqlExpr(ctx->search_condition(), true);
 
 	// Note that we record the then_body and the else_body
@@ -2471,7 +3067,7 @@ makeReturnStmt(TSqlParser::Return_statementContext *ctx)
 	PLtsql_stmt_return *result = (PLtsql_stmt_return *) palloc0(sizeof(*result));
 
 	result->cmd_type = PLTSQL_STMT_RETURN;
-	result->lineno = getLineOfStartToken(ctx);
+	result->lineno = getLineNo(ctx);
 	result->retvarno = -1;
 	if (ctx->expression())
 	{
@@ -2506,22 +3102,49 @@ makeReturnQueryStmt(TSqlParser::Select_statement_standaloneContext *ctx, bool it
 	PLtsql_stmt_return_query *result = (PLtsql_stmt_return_query *) palloc0(sizeof(*result));
 
 	result->cmd_type = PLTSQL_STMT_RETURN_QUERY;
-	result->lineno =getLineOfStartToken(ctx);
-	result->query = makeTsqlExpr(ctx, false);
+	result->lineno =getLineNo(ctx);
+
+	auto *expr = makeTsqlExpr(ctx, false);
+	result->query = expr;
 	if (itvf)
-		result->query->itvf_query = generate_itvf_query(result->query->query, ctx);
-
-	// post-processing of execsql stmt query
-	PLtsql_expr_query_mutator mutator(result->query, ctx);
-
-	// update stmt->sqlstmt with adding quote to tsql local_id (starting with '@') because backend parser is expecting that.
-	for (auto &entry : local_id_positions)
 	{
-		std::string quoted_local_id = std::string("\"") + entry.second + "\"";
-		mutator.add(entry.first, entry.second, quoted_local_id);
-	}
-	local_id_positions.clear();
+		auto *itvf_expr = makeTsqlExpr(ctx, false);
+		PLtsql_expr_query_mutator itvf_mutator(itvf_expr, ctx);
 
+		/*
+		 * For inline table-valued function, we need to save another version of the query
+		 * statement that we can call SPI_prepare to generate a plan, in order to figure
+		 * out the column definition list. So, we replace all variable references by
+		 * "CAST(NULL AS <type>)" in order to get the correct columnn list from
+		 * planning.
+		 */
+		size_t base_index = ctx->getStart()->getStartIndex();
+		if (base_index == INVALID_INDEX)
+			throw PGErrorWrapperException(ERROR, ERRCODE_SYNTAX_ERROR, "can't generate an internal query", getLineAndPos(ctx));
+
+		auto *query = itvf_expr->query;
+		for (const auto &entry : local_id_positions)
+		{
+			const std::string& local_id = entry.second;
+			size_t offset = entry.first - base_index;
+			if (strncmp(local_id.c_str(), query+offset, local_id.length()) == 0) // local_id maybe already deleted in some cases such as select-assignment. check here if it still exists)
+			{
+				int dno;
+				PLtsql_nsitem *nse = pltsql_ns_lookup(pltsql_ns_top(), false, local_id.c_str(), nullptr, nullptr, nullptr);
+				if (nse)
+					dno = nse->itemno;
+				else
+					throw PGErrorWrapperException(ERROR, ERRCODE_SYNTAX_ERROR, format_errmsg("\"%s\" is not a known variable", local_id.c_str()), getLineAndPos(ctx));
+
+				PLtsql_var *var = (PLtsql_var *) pltsql_Datums[dno];
+				std::string repl_text = std::string("CAST(NULL AS ") + std::string(var->datatype->typname) + std::string(")");
+				itvf_mutator.add(entry.first, entry.second, repl_text);
+			}
+		}
+		add_rewritten_query_fragment_to_mutator(&itvf_mutator);
+		itvf_mutator.run();
+		result->query->itvf_query = itvf_expr->query;
+	}
 	return result;
 }
 
@@ -2531,7 +3154,7 @@ makeThrowStmt(TSqlParser::Throw_statementContext *ctx)
 	PLtsql_stmt_throw *result = (PLtsql_stmt_throw *) palloc0(sizeof(*result));
 
 	result->cmd_type = PLTSQL_STMT_THROW;
-	result->lineno = getLineOfStartToken(ctx);
+	result->lineno = getLineNo(ctx);
 	result->params = NIL;
 
 	if (ctx->throw_error_number())
@@ -2550,7 +3173,7 @@ makeTryCatchStmt(TSqlParser::Try_catch_statementContext *ctx)
 	PLtsql_stmt_try_catch *result = (PLtsql_stmt_try_catch *) palloc0(sizeof(*result));
 
 	result->cmd_type = PLTSQL_STMT_TRY_CATCH;
-	result->lineno = getLineOfStartToken(ctx);
+	result->lineno = getLineNo(ctx);
 
 	// Note that we record the then_body and the else_body
 	// in exitIf_statement()
@@ -2592,7 +3215,7 @@ makeRaiseErrorStmt(TSqlParser::Raiseerror_statementContext *ctx)
 	PLtsql_stmt_raiserror *result = (PLtsql_stmt_raiserror *) palloc0(sizeof(*result));
 
 	result->cmd_type = PLTSQL_STMT_RAISERROR;
-	result->lineno   = getLineOfStartToken(ctx);
+	result->lineno   = getLineNo(ctx);
 	result->params   = NIL;
 	result->paramno  = 3;
 	result->log      = false;
@@ -2606,7 +3229,7 @@ makeRaiseErrorStmt(TSqlParser::Raiseerror_statementContext *ctx)
 
 	// additional arguments
 	if (ctx->argument.size() > 20)
-		throw PGErrorWrapperException(ERROR, ERRCODE_SYNTAX_ERROR, "Too many substitution parameters for RAISERROR. Cannot exceed 20 substitution parameters.", 0);
+		throw PGErrorWrapperException(ERROR, ERRCODE_SYNTAX_ERROR, "Too many substitution parameters for RAISERROR. Cannot exceed 20 substitution parameters.", getLineAndPos(ctx));
 
 	for (auto arg : ctx->argument)
 	{
@@ -2692,7 +3315,7 @@ makeDeclareStmt(TSqlParser::Declare_statementContext *ctx)
 
 		PLtsql_variable *var = pltsql_build_variable(name, 0, type, true);
 
-		result.push_back(makeDeclTableStmt(var, type, getLineOfStartToken(ctx)));
+		result.push_back(makeDeclTableStmt(var, type, getLineNo(ctx)));
 	}
 	else
 	{
@@ -2709,7 +3332,7 @@ makeDeclareStmt(TSqlParser::Declare_statementContext *ctx)
 			if (local->data_type()->CURSOR())
 			{
 				// cursor datatype needs a special build process
-				var = (PLtsql_variable *) build_cursor_variable(name, getLineOfStartToken(local));
+				var = (PLtsql_variable *) build_cursor_variable(name, getLineNo(local));
 			}
 			else
 			{
@@ -2720,11 +3343,15 @@ makeDeclareStmt(TSqlParser::Declare_statementContext *ctx)
 					std::string newTypeStr = typeStr + "(1)"; /* in T-SQL, length-less (N)(VAR)CHAR's length is treated as 1 */
 					type = parse_datatype(newTypeStr.c_str(), 0);
 				}
+				else if (is_tsql_text_ntext_or_image_datatype(type->typoid))
+				{
+					throw PGErrorWrapperException(ERROR, ERRCODE_DATATYPE_MISMATCH, "The text, ntext, and image data types are invalid for local variables.", getLineAndPos(local->data_type()));
+				}
 
 				var = pltsql_build_variable(name, 0, type, true);
 
 				if (var->dtype == PLTSQL_DTYPE_TBL)
-					result.push_back(makeDeclTableStmt(var, type, getLineOfStartToken(ctx)));
+					result.push_back(makeDeclTableStmt(var, type, getLineNo(ctx)));
 				else if (local->expression())
 					result.push_back(makeInitializer(var, local->expression()));
 			}
@@ -2829,7 +3456,7 @@ static bool is_valid_set_option(std::string val)
 }
 
 PLtsql_stmt *
-makeSetStatement(TSqlParser::Set_statementContext *ctx)
+makeSetStatement(TSqlParser::Set_statementContext *ctx, tsqlBuilder &builder)
 {
 
 	auto *expr = ctx->expression();
@@ -2849,7 +3476,7 @@ makeSetStatement(TSqlParser::Set_statementContext *ctx)
 		pltsql_parse_word(target, target, &wdatum, &word);
 		
 		result->cmd_type = PLTSQL_STMT_ASSIGN;
-		result->lineno   = getLineOfStartToken(ctx);
+		result->lineno   = getLineNo(ctx);
 		result->varno    = dno;
 		result->expr     = makeTsqlExpr(expr, true);
 
@@ -2896,7 +3523,7 @@ makeSetStatement(TSqlParser::Set_statementContext *ctx)
 	{
 		PLtsql_stmt_assign *result = (PLtsql_stmt_assign *) palloc0(sizeof(*result));
 		result->cmd_type = PLTSQL_STMT_ASSIGN;
-		result->lineno = getLineOfStartToken(ctx);
+		result->lineno = getLineNo(ctx);
 
 		auto targetText = ::getFullText(localID);
 		result->varno = lookup_cursor_variable(targetText.c_str())->dno;
@@ -2905,7 +3532,7 @@ makeSetStatement(TSqlParser::Set_statementContext *ctx)
 		StringInfoData ds;
 		initStringInfo(&ds);
 		appendStringInfo(&ds, "%s##sys_gen##%p", targetText.c_str(), (void *) result);
-		PLtsql_var *curvar = build_cursor_variable(ds.data, getLineOfStartToken(ctx));
+		PLtsql_var *curvar = build_cursor_variable(ds.data, getLineNo(ctx));
 
 		int cursor_option = 0;
 		for (auto pctx : ctx->declare_cursor_options())
@@ -2914,7 +3541,14 @@ makeSetStatement(TSqlParser::Set_statementContext *ctx)
 		TSqlParser::Select_statement_standaloneContext *sctx = ctx->select_statement_standalone();
 		Assert(sctx);
 
-		curvar->cursor_explicit_expr = makeTsqlExpr(sctx, false);
+		auto expr = makeTsqlExpr(sctx, false);
+
+		PLtsql_expr_query_mutator mutator(expr, sctx);
+		process_select_statement_standalone(sctx, &mutator, builder);
+		add_rewritten_query_fragment_to_mutator(&mutator);
+		mutator.run();
+
+		curvar->cursor_explicit_expr = expr;
 		curvar->cursor_explicit_argrow = -1;
 		curvar->cursor_options = CURSOR_OPT_FAST_PLAN | cursor_option | PGTSQL_CURSOR_ANONYMOUS;
 		curvar->isconst = true;
@@ -2955,7 +3589,7 @@ makeSetStatement(TSqlParser::Set_statementContext *ctx)
 				return nullptr;
 
 			stmt->cmd_type = PLTSQL_STMT_EXECSQL;
-			stmt->lineno = getLineOfStartToken(ctx);
+			stmt->lineno = getLineNo(ctx);
 			stmt->sqlstmt = makeTsqlExpr(query, false);
 			stmt->into = false;
 			stmt->strict = false;
@@ -2981,7 +3615,7 @@ makeSetStatement(TSqlParser::Set_statementContext *ctx)
 			std::string val = getFullText(set_special_ctx->id().front());
 			if (!is_valid_set_option(val))
 			{
-				throw PGErrorWrapperException(ERROR, ERRCODE_SYNTAX_ERROR, format_errmsg("unrecognized configuration parameter: %s", val.c_str()), 0);
+				throw PGErrorWrapperException(ERROR, ERRCODE_SYNTAX_ERROR, format_errmsg("unrecognized configuration parameter: %s", val.c_str()), getLineAndPos(set_special_ctx->id().front()));
 			}
 			return makeSQL(ctx);
 		}
@@ -2995,6 +3629,55 @@ makeSetStatement(TSqlParser::Set_statementContext *ctx)
 }
 
 PLtsql_stmt *
+makeInsertBulkStatement(TSqlParser::Dml_statementContext *ctx)
+{
+	PLtsql_stmt_insert_bulk *stmt = (PLtsql_stmt_insert_bulk *) palloc0(sizeof(*stmt));
+	TSqlParser::Bulk_insert_statementContext *bulk_ctx = ctx->bulk_insert_statement();
+
+	std::string table_name;
+	std::string schema_name;
+	std::string db_name;
+
+	if (!bulk_ctx)
+	{
+		return nullptr;
+	}
+
+	stmt->cmd_type = PLTSQL_STMT_INSERT_BULK;
+	if (bulk_ctx->ddl_object())
+	{
+		if (bulk_ctx->ddl_object()->local_id())
+		{
+			table_name = ::getFullText(bulk_ctx->ddl_object()->local_id()).c_str();
+		}
+		else if (bulk_ctx->ddl_object()->full_object_name())
+		{
+			if (bulk_ctx->ddl_object()->full_object_name()->object_name)
+				table_name = stripQuoteFromId(bulk_ctx->ddl_object()->full_object_name()->object_name);
+			if (bulk_ctx->ddl_object()->full_object_name()->schema)
+				schema_name = stripQuoteFromId(bulk_ctx->ddl_object()->full_object_name()->schema);
+			if (bulk_ctx->ddl_object()->full_object_name()->database)
+				db_name = stripQuoteFromId(bulk_ctx->ddl_object()->full_object_name()->database);
+		}
+		if (!table_name.empty())
+		{
+			stmt->table_name = pstrdup(downcase_truncate_identifier(table_name.c_str(), table_name.length(), true));
+		}
+		if (!schema_name.empty())
+		{
+			stmt->schema_name = pstrdup(downcase_truncate_identifier(schema_name.c_str(), schema_name.length(), true));
+		}
+		if (!db_name.empty())
+		{
+			stmt->db_name = pstrdup(downcase_truncate_identifier(db_name.c_str(), db_name.length(), true));
+		}
+	}
+
+	attachPLtsql_fragment(ctx, (PLtsql_stmt *) stmt);
+	return (PLtsql_stmt *) stmt;
+}
+
+PLtsql_stmt *
 makeExecuteStatement(TSqlParser::Execute_statementContext *ctx)
 {
 	TSqlParser::Execute_bodyContext *body = ctx->execute_body();
@@ -3004,7 +3687,7 @@ makeExecuteStatement(TSqlParser::Execute_statementContext *ctx)
 	{
 		PLtsql_stmt_exec_batch *result = (PLtsql_stmt_exec_batch *) palloc0(sizeof(*result));
 		result->cmd_type = PLTSQL_STMT_EXEC_BATCH;
-		result->lineno = getLineOfStartToken(ctx);
+		result->lineno = getLineNo(ctx);
 
 		std::vector<TSqlParser::Execute_var_stringContext *> exec_strings = body->execute_var_string();
 		std::stringstream ss;
@@ -3038,7 +3721,7 @@ makeExecuteStatement(TSqlParser::Execute_statementContext *ctx)
 		}
 		Assert(func_proc_name);
 	
-		int lineno = getLineOfStartToken(ctx);
+		int lineno = getLineNo(ctx);
 		int return_code_dno = -1;
 
 		auto *localID = body->LOCAL_ID();
@@ -3068,8 +3751,17 @@ makeExecuteStatement(TSqlParser::Execute_statementContext *ctx)
 			}
 		}
 
+		std::string rewritten_name = "";
+		if (body->func_proc_name_server_database_schema())
+		{
+			// rewrite func/proc name if database/schema is omitted (i.e. EXEC ..proc1)
+			GetCtxFunc<TSqlParser::Func_proc_name_server_database_schemaContext *> getDatabase = [](TSqlParser::Func_proc_name_server_database_schemaContext *o) { return o->database; };
+			GetCtxFunc<TSqlParser::Func_proc_name_server_database_schemaContext *> getSchema = [](TSqlParser::Func_proc_name_server_database_schemaContext *o) { return o->schema; };
+			rewritten_name = rewrite_object_name_with_omitted_db_and_schema_name((TSqlParser::Func_proc_name_server_database_schemaContext *) func_proc_name, getDatabase, getSchema);
+		}
+
 		std::stringstream ss;
-		ss << "EXEC " << ::getFullText(func_proc_name);
+		ss << "EXEC " << (!rewritten_name.empty() ? rewritten_name : ::getFullText(func_proc_name));
 		if (func_proc_args)
 			ss << " " << ::getFullText(func_proc_args);
 		std::string expr_query = ss.str();
@@ -3095,7 +3787,7 @@ makeDeclareCursorStatement(TSqlParser::Declare_cursorContext *ctx)
 	}
 	else
 	{
-		curvar = build_cursor_variable(cursor_name.c_str(), getLineOfStartToken(ctx));
+		curvar = build_cursor_variable(cursor_name.c_str(), getLineNo(ctx));
 	}
 
 	int cursor_option = 0;
@@ -3106,9 +3798,21 @@ makeDeclareCursorStatement(TSqlParser::Declare_cursorContext *ctx)
 	if (ctx->SCROLL())
 	{
 		if (cursor_option != 0)
-			throw PGErrorWrapperException(ERROR, ERRCODE_FEATURE_NOT_SUPPORTED, "mixture of ISO syntax and T-SQL extended syntax", 0);
+			throw PGErrorWrapperException(ERROR, ERRCODE_FEATURE_NOT_SUPPORTED, "mixture of ISO syntax and T-SQL extended syntax", getLineAndPos(ctx->SCROLL()));
 		else
 			cursor_option |= CURSOR_OPT_SCROLL;
+	}
+
+	if (ctx->READ() && ctx->ONLY())
+	{
+		if (cursor_option & TSQL_CURSOR_OPT_READ_ONLY)
+			throw PGErrorWrapperException(ERROR, ERRCODE_FEATURE_NOT_SUPPORTED, "both READ_ONLY and FOR READ ONLY cannot be specified on a cursor declaration", getLineAndPos(ctx->READ()));
+
+		// note: SCROLL_LOCKS and OPTIMISTIC is not supported. so unsupported-feature error should be thrown already.
+		if (cursor_option & TSQL_CURSOR_OPT_SCROLL_LOCKS)
+			throw PGErrorWrapperException(ERROR, ERRCODE_FEATURE_NOT_SUPPORTED, "both SCROLL_LOCKS and FOR READ ONLY cannot be specified on a cursor declaration", getLineAndPos(ctx->READ()));
+		if (cursor_option & TSQL_CURSOR_OPT_OPTIMISTIC)
+			throw PGErrorWrapperException(ERROR, ERRCODE_FEATURE_NOT_SUPPORTED, "both OPTIMISTIC and FOR READ ONLY cannot be specified on a cursor declaration", getLineAndPos(ctx->READ()));
 	}
 
 	/*
@@ -3121,7 +3825,6 @@ makeDeclareCursorStatement(TSqlParser::Declare_cursorContext *ctx)
 	if (sctx)
 	{
 		auto expr = makeTsqlExpr(sctx, false);
-		remove_unsupported_tokens_from_select(sctx, expr, sctx);
 		curvar->cursor_explicit_expr = expr;
 		curvar->cursor_explicit_argrow = -1;
 		curvar->isconst = true;
@@ -3129,7 +3832,7 @@ makeDeclareCursorStatement(TSqlParser::Declare_cursorContext *ctx)
 
 	PLtsql_stmt_decl_cursor *result = (PLtsql_stmt_decl_cursor *) palloc0(sizeof(PLtsql_stmt_decl_cursor));
 	result->cmd_type = PLTSQL_STMT_DECL_CURSOR;
-	result->lineno = getLineOfStartToken(ctx);
+	result->lineno = getLineNo(ctx);
 	result->curvar = curvar->dno;
 	result->cursor_explicit_expr = curvar->cursor_explicit_expr;
 	result->cursor_options = CURSOR_OPT_FAST_PLAN | cursor_option;
@@ -3143,11 +3846,11 @@ makeOpenCursorStatement(TSqlParser::Cursor_statementContext *ctx)
 	Assert(ctx->OPEN());
 
 	if (ctx->GLOBAL())
-		throw PGErrorWrapperException(ERROR, ERRCODE_FEATURE_NOT_SUPPORTED, "GLOBAL CURSOR is not supported yet", 0);
+		throw PGErrorWrapperException(ERROR, ERRCODE_FEATURE_NOT_SUPPORTED, "GLOBAL CURSOR is not supported yet", getLineAndPos(ctx->GLOBAL()));
 
 	PLtsql_stmt_open *result = (PLtsql_stmt_open *) palloc0(sizeof(PLtsql_stmt_open));
 	result->cmd_type = PLTSQL_STMT_OPEN;
-	result->lineno = getLineOfStartToken(ctx);
+	result->lineno = getLineNo(ctx);
 	result->curvar = -1;
 	result->cursor_options = CURSOR_OPT_FAST_PLAN;
 
@@ -3162,7 +3865,7 @@ makeFetchCurosrStatement(TSqlParser::Fetch_cursorContext *ctx)
 {
 	PLtsql_stmt_fetch *result = (PLtsql_stmt_fetch *) palloc(sizeof(PLtsql_stmt_fetch));
 	result->cmd_type = PLTSQL_STMT_FETCH;
-	result->lineno = getLineOfStartToken(ctx);
+	result->lineno = getLineNo(ctx);
 	result->target = NULL;
 	result->is_move = false;
 	/* set direction defaults: */
@@ -3203,12 +3906,12 @@ makeFetchCurosrStatement(TSqlParser::Fetch_cursorContext *ctx)
 		return (PLtsql_stmt *) result;
 
 	if (localIDs.size() > 1024)
-		throw PGErrorWrapperException(ERROR, ERRCODE_PROGRAM_LIMIT_EXCEEDED, "too many INTO variables specified", 0);
+		throw PGErrorWrapperException(ERROR, ERRCODE_PROGRAM_LIMIT_EXCEEDED, "too many INTO variables specified", getLineAndPos(ctx->LOCAL_ID()[0]));
 
 	PLtsql_row *row = (PLtsql_row *) palloc(sizeof(PLtsql_row));
 	row->dtype = PLTSQL_DTYPE_ROW;
 	row->refname = pstrdup("*internal*");
-	row->lineno = getLineOfStartToken(ctx);
+	row->lineno = getLineNo(ctx);
 	row->rowtupdesc = NULL;
 	row->nfields = localIDs.size();
 	row->fieldnames = (char **) palloc(sizeof(char *) * row->nfields);
@@ -3222,14 +3925,21 @@ makeFetchCurosrStatement(TSqlParser::Fetch_cursorContext *ctx)
 		{
 			if (nse->itemtype == PLTSQL_NSTYPE_REC ||
 			    nse->itemtype == PLTSQL_NSTYPE_TBL)
-				throw PGErrorWrapperException(ERROR, ERRCODE_FEATURE_NOT_SUPPORTED, "FETCH into non-scalar type is not supported yet", 0);
-
+			{
+				throw PGErrorWrapperException(ERROR, ERRCODE_FEATURE_NOT_SUPPORTED, "FETCH into non-scalar type is not supported yet", getLineAndPos(localIDs[i]));
+			}
+			else if (nse->itemtype == PLTSQL_NSTYPE_VAR)
+			{
+				PLtsql_var *var = (PLtsql_var *) pltsql_Datums[nse->itemno];
+				if (is_tsql_text_ntext_or_image_datatype(var->datatype->typoid))
+					throw PGErrorWrapperException(ERROR, ERRCODE_DATATYPE_MISMATCH, "Cannot fetch into text, ntext, and image variables.", getLineAndPos(localIDs[i]));
+			}
 			/* please refer to read_into_scalar_list */
 			row->fieldnames[i] = pstrdup(targetText.c_str());
 			row->varnos[i] = nse->itemno;
 		}
 		else
-			throw PGErrorWrapperException(ERROR, ERRCODE_SYNTAX_ERROR, format_errmsg("\"%s\" is not a known variable", targetText.c_str()), 0);
+			throw PGErrorWrapperException(ERROR, ERRCODE_SYNTAX_ERROR, format_errmsg("\"%s\" is not a known variable", targetText.c_str()), getLineAndPos(localIDs[i]));
 	}
 
 	pltsql_adddatum((PLtsql_datum *)row);
@@ -3244,11 +3954,11 @@ makeCloseCursorStatement(TSqlParser::Cursor_statementContext *ctx)
 	Assert(ctx->CLOSE());
 
 	if (ctx->GLOBAL())
-		throw PGErrorWrapperException(ERROR, ERRCODE_FEATURE_NOT_SUPPORTED, "GLOBAL CURSOR is not supported yet", 0);
+		throw PGErrorWrapperException(ERROR, ERRCODE_FEATURE_NOT_SUPPORTED, "GLOBAL CURSOR is not supported yet", getLineAndPos(ctx->GLOBAL()));
 
 	PLtsql_stmt_close *result = (PLtsql_stmt_close *) palloc0(sizeof(PLtsql_stmt_close));
 	result->cmd_type = PLTSQL_STMT_CLOSE;
-	result->lineno = getLineOfStartToken(ctx);
+	result->lineno = getLineNo(ctx);
 	result->curvar = -1;
 
 	auto targetText = ::getFullText(ctx->cursor_name());
@@ -3261,11 +3971,11 @@ PLtsql_stmt *
 makeDeallocateCursorStatement(TSqlParser::Cursor_statementContext *ctx)
 {
 	if (ctx->GLOBAL())
-		throw PGErrorWrapperException(ERROR, ERRCODE_FEATURE_NOT_SUPPORTED, "GLOBAL CURSOR is not supported yet", 0);
+		throw PGErrorWrapperException(ERROR, ERRCODE_FEATURE_NOT_SUPPORTED, "GLOBAL CURSOR is not supported yet", getLineAndPos(ctx->GLOBAL()));
 
 	PLtsql_stmt_deallocate *result = (PLtsql_stmt_deallocate *) palloc0(sizeof(PLtsql_stmt_deallocate));
 	result->cmd_type = PLTSQL_STMT_DEALLOCATE;
-	result->lineno = getLineOfStartToken(ctx);;
+	result->lineno = getLineNo(ctx);;
 	result->curvar = -1;
 
 	auto targetText = ::getFullText(ctx->cursor_name());
@@ -3297,7 +4007,7 @@ makeUseStatement(TSqlParser::Use_statementContext *ctx)
 {
 	PLtsql_stmt_usedb *result = (PLtsql_stmt_usedb *) palloc0(sizeof(PLtsql_stmt_usedb));
 	result->cmd_type = PLTSQL_STMT_USEDB;
-	result->lineno = getLineOfStartToken(ctx);
+	result->lineno = getLineNo(ctx);
 
 	Assert(ctx->id());
 	std::string id_str = ::getFullText(ctx->id());
@@ -3337,7 +4047,7 @@ makeTransactionStatement(TSqlParser::Transaction_statementContext *ctx)
 }
 
 std::vector<PLtsql_stmt *>
-makeAnother(TSqlParser::Another_statementContext *ctx)
+makeAnother(TSqlParser::Another_statementContext *ctx, tsqlBuilder &builder)
 {
 	std::vector<PLtsql_stmt *> result;
 
@@ -3347,7 +4057,7 @@ makeAnother(TSqlParser::Another_statementContext *ctx)
 		result.insert(result.end(), decl_result.begin(), decl_result.end());
 	}
 	else if (ctx->set_statement())
-		result.push_back(makeSetStatement(ctx->set_statement()));
+		result.push_back(makeSetStatement(ctx->set_statement(), builder));
 	else if (ctx->execute_statement())
 		result.push_back(makeExecuteStatement(ctx->execute_statement()));
 	else if (ctx->cursor_statement())
@@ -3374,7 +4084,7 @@ makeExecBodyBatch(TSqlParser::Execute_body_batchContext *ctx)
 	Assert(func_proc_name);
 	TSqlParser::Execute_statement_argContext *func_proc_args = ctx->execute_statement_arg();
 
-	int lineno = getLineOfStartToken(ctx);
+	int lineno = getLineNo(ctx);
 	int return_code_dno = -1;
 
 	if (is_sp_proc(func_proc_name))
@@ -3432,7 +4142,7 @@ void add_assignment_target_field(PLtsql_row *target, antlr4::tree::TerminalNode 
 	auto targetText = ::getFullText(localId);
 	PLtsql_nsitem *nse = pltsql_ns_lookup(pltsql_ns_top(), false, targetText.c_str(), nullptr, nullptr, nullptr);
 	if (!nse)
-		throw PGErrorWrapperException(ERROR, ERRCODE_SYNTAX_ERROR, format_errmsg("\"%s\" is not a known variable", targetText.c_str()), 0);
+		throw PGErrorWrapperException(ERROR, ERRCODE_SYNTAX_ERROR, format_errmsg("\"%s\" is not a known variable", targetText.c_str()), getLineAndPos(localId));
 
 	target->varnos[idx] = nse->itemno;
 	if (nse->itemno >= 0 && nse->itemno < pltsql_nDatums)
@@ -3447,12 +4157,12 @@ void add_assignment_target_field(PLtsql_row *target, antlr4::tree::TerminalNode 
 	// In tsql, @v will have 3 because @v+=1 and @v+=2 is executed sequentially. We cannot support this case.
 	for (size_t i=0; i<idx; ++i)
 		if (target->varnos[i] == nse->itemno)
-			throw PGErrorWrapperException(ERROR, ERRCODE_SYNTAX_ERROR, format_errmsg("Babelfish does not support assignment to the same variable in SELECT. variable name: \"%s\"", targetText.c_str()), 0);
+			throw PGErrorWrapperException(ERROR, ERRCODE_SYNTAX_ERROR, format_errmsg("Babelfish does not support assignment to the same variable in SELECT. variable name: \"%s\"", targetText.c_str()), getLineAndPos(localId));
 }
 
 void process_execsql_destination_select(TSqlParser::Select_statement_standaloneContext* ctx, PLtsql_stmt_execsql *stmt)
 {
-	TSqlParser::Query_specificationContext *qctx = get_query_specification(ctx);
+	TSqlParser::Query_specificationContext *qctx = get_query_specification(ctx->select_statement());
 	Assert(qctx);
 
 	/* check select stmt has INTO-clause */
@@ -3473,10 +4183,10 @@ void process_execsql_destination_select(TSqlParser::Select_statement_standaloneC
 		if (elem->EQUAL() || elem->assignment_operator())
 		{
 			if (i>0 && !target) /* one of preceeding elems doesn't have destination */
-				throw PGErrorWrapperException(ERROR, ERRCODE_SYNTAX_ERROR, "A SELECT statement that assigns a value to a variable must not be combined with data-retrieval operations", 0);
+				throw PGErrorWrapperException(ERROR, ERRCODE_SYNTAX_ERROR, "A SELECT statement that assigns a value to a variable must not be combined with data-retrieval operations", getLineAndPos(elem));
 
 			if (!target)
-				target = create_select_target_row("(select target)", select_elems.size(), getLineOfStartToken(elem));
+				target = create_select_target_row("(select target)", select_elems.size(), getLineNo(elem));
 
 			add_assignment_target_field(target, elem->LOCAL_ID(), i);
 
@@ -3518,7 +4228,7 @@ void process_execsql_destination_select(TSqlParser::Select_statement_standaloneC
 		else
 		{
 			if (target) /* one of preceeding elems has a destination */
-				throw PGErrorWrapperException(ERROR, ERRCODE_SYNTAX_ERROR, "A SELECT statement that assigns a value to a variable must not be combined with data-retrieval operations", 0);
+				throw PGErrorWrapperException(ERROR, ERRCODE_SYNTAX_ERROR, "A SELECT statement that assigns a value to a variable must not be combined with data-retrieval operations", getLineAndPos(elem));
 		}
 	}
 
@@ -3553,12 +4263,12 @@ void process_execsql_destination_update(TSqlParser::Update_statementContext *uct
 
 	if (target_row_size == uctx->update_elem().size() && !has_combined_variable_and_column_update)
 	{
-		throw PGErrorWrapperException(ERROR, ERRCODE_SYNTAX_ERROR, "UPDATE statement with variables without table update is not yet supported", 0);
+		throw PGErrorWrapperException(ERROR, ERRCODE_SYNTAX_ERROR, "UPDATE statement with variables without table update is not yet supported", getLineAndPos(uctx));
 	}
 
 	if (target_row_size > 0)
 	{
-		PLtsql_row *target = create_select_target_row("(select target)", target_row_size, getLineFromTerminalNode(uctx->SET()));
+		PLtsql_row *target = create_select_target_row("(select target)", target_row_size, getLineNo(uctx->SET()));
 		StringInfoData ds;
 		initStringInfo(&ds);
 		appendStringInfo(&ds, "RETURNING ");
@@ -3652,32 +4362,9 @@ static void post_process_table_source(TSqlParser::Table_source_itemContext *ctx,
 		removeCtxStringFromQuery(expr, ctx->join_hint(), baseCtx);
 }
 
-static void remove_unsupported_tokens_from_select(TSqlParser::Select_statement_standaloneContext *ctx, PLtsql_expr *expr, ParserRuleContext *baseCtx)
-{
-	TSqlParser::Query_specificationContext *qctx = get_query_specification(ctx);
-
-	if (qctx->table_sources())
-		for (auto tctx : qctx->table_sources()->table_source_item()) // from-clause (to remove hints)
-			post_process_table_source(tctx, expr, baseCtx);
-
-	auto sctx = ctx->select_statement();
-	if (sctx->for_clause()) // for xml
-	{
-		Assert(sctx->for_clause()->XML()); // we only support FOR XML
-		Assert(sctx->for_clause()->RAW() || sctx->for_clause()->PATH());
-	}
-
-	for (auto octx : sctx->option_clause()) // query hint
-		removeCtxStringFromQuery(expr, octx, baseCtx);
-}
-
 void process_execsql_remove_unsupported_tokens(TSqlParser::Dml_statementContext *ctx, PLtsql_stmt_execsql *stmt)
 {
-	if (ctx->select_statement_standalone())
-	{
-		remove_unsupported_tokens_from_select(ctx->select_statement_standalone(), stmt->sqlstmt, ctx);
-	}
-	else if (ctx->insert_statement())
+	if (ctx->insert_statement())
 	{
 		auto ictx = ctx->insert_statement();
 		if (ictx->with_table_hints() && ictx->with_table_hints()->WITH()) // table hints
@@ -3982,20 +4669,37 @@ post_process_create_database(TSqlParser::Create_databaseContext *ctx, PLtsql_stm
 	return false;
 }
 
+static void
+post_process_declare_cursor_statement(PLtsql_stmt_decl_cursor *stmt, TSqlParser::Declare_cursorContext *ctx, tsqlBuilder &builder)
+{
+	if (stmt->cursor_explicit_expr)
+	{
+		PLtsql_expr *expr = stmt->cursor_explicit_expr;
+
+		auto sctx = ctx->select_statement_standalone();
+		Assert(sctx);
+
+		PLtsql_expr_query_mutator mutator(expr, sctx);
+		process_select_statement_standalone(sctx, &mutator, builder);
+		add_rewritten_query_fragment_to_mutator(&mutator);
+		mutator.run();
+	}
+}
+
 static PLtsql_var *
 lookup_cursor_variable(const char *varname)
 {
 	PLtsql_nsitem *nse = pltsql_ns_lookup(pltsql_ns_top(), false, varname, nullptr, nullptr, nullptr);
 	if (!nse)
-		throw PGErrorWrapperException(ERROR, ERRCODE_SYNTAX_ERROR, format_errmsg("\"%s\" is not a known variable", varname), 0);
+		throw PGErrorWrapperException(ERROR, ERRCODE_SYNTAX_ERROR, format_errmsg("\"%s\" is not a known variable", varname), 0, 0);
 
 	PLtsql_datum* datum = pltsql_Datums[nse->itemno];
 	if (datum->dtype != PLTSQL_DTYPE_VAR)
-		throw PGErrorWrapperException(ERROR, ERRCODE_DATATYPE_MISMATCH, "cursor variable must be a simple variable", 0);
+		throw PGErrorWrapperException(ERROR, ERRCODE_DATATYPE_MISMATCH, "cursor variable must be a simple variable", 0, 0);
 
 	PLtsql_var *var = (PLtsql_var *) datum;
 	if (!is_cursor_datatype(var->datatype->typoid))
-		throw PGErrorWrapperException(ERROR, ERRCODE_DATATYPE_MISMATCH, format_errmsg("variable \"%s\" must be of type cursor or refcursor", var->refname), 0);
+		throw PGErrorWrapperException(ERROR, ERRCODE_DATATYPE_MISMATCH, format_errmsg("variable \"%s\" must be of type cursor or refcursor", var->refname), 0, 0);
 
 	return var;
 }
@@ -4037,33 +4741,33 @@ static int
 read_extended_cursor_option(TSqlParser::Declare_cursor_optionsContext *ctx, int option)
 {
 	if (ctx->GLOBAL())
-		throw PGErrorWrapperException(ERROR, ERRCODE_FEATURE_NOT_SUPPORTED, "GLOBAL CURSOR is not supported yet", 0);
+		throw PGErrorWrapperException(ERROR, ERRCODE_FEATURE_NOT_SUPPORTED, "GLOBAL CURSOR is not supported yet", getLineAndPos(ctx->GLOBAL()));
 	if (ctx->LOCAL())
 		option |= TSQL_CURSOR_OPT_LOCAL;
 
 	if (ctx->FORWARD_ONLY())
 	{
 		if ((option & TSQL_CURSOR_OPT_SCROLL) != 0)
-			throw PGErrorWrapperException(ERROR, ERRCODE_SYNTAX_ERROR, "cannot specify both FORWARD_ONLY and SCROLL", 0);
+			throw PGErrorWrapperException(ERROR, ERRCODE_SYNTAX_ERROR, "cannot specify both FORWARD_ONLY and SCROLL", getLineAndPos(ctx->FORWARD_ONLY()));
 		option |= (CURSOR_OPT_NO_SCROLL | TSQL_CURSOR_OPT_FORWARD_ONLY);
 	}
 	if (ctx->SCROLL())
 	{
 		if ((option & TSQL_CURSOR_OPT_FORWARD_ONLY) != 0)
-			throw PGErrorWrapperException(ERROR, ERRCODE_SYNTAX_ERROR, "cannot specify both FORWARD_ONLY and SCROLL", 0);
+			throw PGErrorWrapperException(ERROR, ERRCODE_SYNTAX_ERROR, "cannot specify both FORWARD_ONLY and SCROLL", getLineAndPos(ctx->SCROLL()));
 		option |= (CURSOR_OPT_SCROLL | TSQL_CURSOR_OPT_SCROLL);
 	}
 
 	if (ctx->STATIC())
 		option |= TSQL_CURSOR_OPT_STATIC;
 	if (ctx->KEYSET())
-		throw PGErrorWrapperException(ERROR, ERRCODE_FEATURE_NOT_SUPPORTED, "KEYSET CURSOR is not supported", 0);
+		throw PGErrorWrapperException(ERROR, ERRCODE_FEATURE_NOT_SUPPORTED, "KEYSET CURSOR is not supported", getLineAndPos(ctx->KEYSET()));
 	if (ctx->DYNAMIC())
-		throw PGErrorWrapperException(ERROR, ERRCODE_FEATURE_NOT_SUPPORTED, "DYNAMIC CURSOR is not supported", 0);
+		throw PGErrorWrapperException(ERROR, ERRCODE_FEATURE_NOT_SUPPORTED, "DYNAMIC CURSOR is not supported", getLineAndPos(ctx->DYNAMIC()));
 	if (ctx->FAST_FORWARD())
 	{
 		if ((option & TSQL_CURSOR_OPT_SCROLL) != 0)
-			throw PGErrorWrapperException(ERROR, ERRCODE_SYNTAX_ERROR, "cannot specify both FAST_FORWARD and SCROLL", 0);
+			throw PGErrorWrapperException(ERROR, ERRCODE_SYNTAX_ERROR, "cannot specify both FAST_FORWARD and SCROLL", getLineAndPos(ctx->FAST_FORWARD()));
 
 		/* FAST_FORWARD specifies FORWARD_ONLY and READ_ONLY) */
 		option |= (CURSOR_OPT_NO_SCROLL | TSQL_CURSOR_OPT_FORWARD_ONLY | TSQL_CURSOR_OPT_READ_ONLY);
@@ -4080,9 +4784,9 @@ read_extended_cursor_option(TSqlParser::Declare_cursor_optionsContext *ctx, int 
 		option |= TSQL_CURSOR_OPT_READ_ONLY;
 	}
 	if (ctx->SCROLL_LOCKS())
-		throw PGErrorWrapperException(ERROR, ERRCODE_FEATURE_NOT_SUPPORTED, "SCROLL LOCKS is not supported", 0);
+		throw PGErrorWrapperException(ERROR, ERRCODE_FEATURE_NOT_SUPPORTED, "SCROLL LOCKS is not supported", getLineAndPos(ctx->SCROLL_LOCKS()));
 	if (ctx->OPTIMISTIC())
-		throw PGErrorWrapperException(ERROR, ERRCODE_FEATURE_NOT_SUPPORTED, "OPTIMISTIC is not supported", 0);
+		throw PGErrorWrapperException(ERROR, ERRCODE_FEATURE_NOT_SUPPORTED, "OPTIMISTIC is not supported", getLineAndPos(ctx->OPTIMISTIC()));
 
 	return option;
 }
@@ -4139,9 +4843,12 @@ makeSpStatement(ParserRuleContext *sp_name, TSqlParser::Execute_statement_argCon
 		result->cursor_handleno = params[1]->varno;
 		result->opt1 = getNthParamExpr(params, 3);
 		result->opt2 = getNthParamExpr(params, 4);
-
-		/* TODO: rowcount handling */
-		/* TODO: parameter handling */
+		result->opt3 = getNthParamExpr(params, 5);
+		for (size_t i = 5; i < paramno; i++)
+		{
+			result->params = lappend(result->params, params[i]);
+			result->paramno++;
+		}
 	}
 	else if (string_matches(name_str.c_str(), "sp_cursorfetch"))
 	{
@@ -4163,9 +4870,13 @@ makeSpStatement(ParserRuleContext *sp_name, TSqlParser::Execute_statement_argCon
 		result->query = getNthParamExpr(params, 2);
 		result->opt1 = getNthParamExpr(params, 3);
 		result->opt2 = getNthParamExpr(params, 4);
-		
-		/* TODO: rowcount handling */
-		/* TODO: parameter handling */
+		result->opt3 = getNthParamExpr(params, 5);
+		result->param_def = getNthParamExpr(params, 6);
+		for (size_t i = 6; i < paramno; i++)
+		{
+			result->params = lappend(result->params, params[i]);
+			result->paramno++;
+		}
 	}
 	else if (string_matches(name_str.c_str(), "sp_cursoroption"))
 	{
@@ -4183,7 +4894,7 @@ makeSpStatement(ParserRuleContext *sp_name, TSqlParser::Execute_statement_argCon
 
 		check_param_type(params[0], true, INT4OID, "prepared_handle");
 		result->prepared_handleno = params[0]->varno;
-		/* TODO: param handling */
+		result->param_def = getNthParamExpr(params, 2);
 		result->query = getNthParamExpr(params, 3);
 		result->opt3 = getNthParamExpr(params, 4);
 		result->opt1 = getNthParamExpr(params, 5);
@@ -4198,13 +4909,16 @@ makeSpStatement(ParserRuleContext *sp_name, TSqlParser::Execute_statement_argCon
 		result->prepared_handleno = params[0]->varno;
 		check_param_type(params[1], true, INT4OID, "cursor");
 		result->cursor_handleno = params[1]->varno;
-		/* TODO: param handling */
+		result->param_def = getNthParamExpr(params, 3);
 		result->query = getNthParamExpr(params, 4);
-		result->opt3 = getNthParamExpr(params, 5);
-		result->opt1 = getNthParamExpr(params, 6);
-		result->opt2 = getNthParamExpr(params, 7);
-		/* TODO: rowcount handling */
-		/* TODO: parameter handling */
+		result->opt1 = getNthParamExpr(params, 5);
+		result->opt2 = getNthParamExpr(params, 6);
+		result->opt3 = getNthParamExpr(params, 7);
+		for (size_t i = 7; i < paramno; i++)
+		{
+			result->params = lappend(result->params, params[i]);
+			result->paramno++;
+		}
 	}
 	else if (string_matches(name_str.c_str(), "sp_cursorunprepare"))
 	{
@@ -4343,7 +5057,7 @@ getVarno(tree::TerminalNode *localID)
 	if (nse)
 		dno = nse->itemno;
 	else
-		throw PGErrorWrapperException(ERROR, ERRCODE_SYNTAX_ERROR, format_errmsg("\"%s\" is not a known variable", targetText.c_str()), 0);
+		throw PGErrorWrapperException(ERROR, ERRCODE_SYNTAX_ERROR, format_errmsg("\"%s\" is not a known variable", targetText.c_str()), getLineAndPos(localID));
 
 	return dno;
 }
@@ -4356,7 +5070,7 @@ check_assignable(tree::TerminalNode *localID)
 	PLtsql_datum *datum = pltsql_Datums[dno];
 	// FIXME: may need to check other datum types
 	if (datum->dtype == PLTSQL_DTYPE_TBL)
-		throw PGErrorWrapperException(ERROR, ERRCODE_SYNTAX_ERROR, format_errmsg("unrecognized dtype: %d", datum->dtype), 0);
+		throw PGErrorWrapperException(ERROR, ERRCODE_SYNTAX_ERROR, format_errmsg("unrecognized dtype: %d", datum->dtype), getLineAndPos(localID));
 	return dno;
 }
 
@@ -4364,25 +5078,25 @@ static void
 check_dup_declare(const char *name)
 {
 	if (pltsql_ns_lookup(pltsql_ns_top(), true, name, NULL, NULL, NULL) != NULL) 
-		throw PGErrorWrapperException(ERROR, ERRCODE_SYNTAX_ERROR, "duplicate declaration", 0);
+		throw PGErrorWrapperException(ERROR, ERRCODE_SYNTAX_ERROR, "duplicate declaration", 0, 0);
 }
 
 static bool
 is_sp_proc(ParserRuleContext *func_proc_name)
 {
-	const std::string name_str = ::getFullText(func_proc_name).c_str();
+	std::string name_str = ::getFullText(func_proc_name);
 	return string_matches(name_str.c_str(), "sp_cursor") ||
-	       string_matches(name_str.c_str(), "sp_cursoropen") ||
-	       string_matches(name_str.c_str(), "sp_cursorprepare") ||
-	       string_matches(name_str.c_str(), "sp_cursorexecute") ||
-	       string_matches(name_str.c_str(), "sp_cursorprepexec") ||
-	       string_matches(name_str.c_str(), "sp_cursorunprepare") ||
-	       string_matches(name_str.c_str(), "sp_cursorfetch") ||
-	       string_matches(name_str.c_str(), "sp_cursoroption") ||
-	       string_matches(name_str.c_str(), "sp_cursorclose") ||
-	       string_matches(name_str.c_str(), "sp_executesql") ||
-	       string_matches(name_str.c_str(), "sp_execute") ||
-	       string_matches(name_str.c_str(), "sp_prepexec");
+		string_matches(name_str.c_str(), "sp_cursoropen") ||
+		string_matches(name_str.c_str(), "sp_cursorprepare") ||
+		string_matches(name_str.c_str(), "sp_cursorexecute") ||
+		string_matches(name_str.c_str(), "sp_cursorprepexec") ||
+		string_matches(name_str.c_str(), "sp_cursorunprepare") ||
+		string_matches(name_str.c_str(), "sp_cursorfetch") ||
+		string_matches(name_str.c_str(), "sp_cursoroption") ||
+		string_matches(name_str.c_str(), "sp_cursorclose") ||
+		string_matches(name_str.c_str(), "sp_executesql") ||
+		string_matches(name_str.c_str(), "sp_execute") ||
+		string_matches(name_str.c_str(), "sp_prepexec");
 }
 
 static bool
@@ -4398,13 +5112,13 @@ static void
 check_param_type(tsql_exec_param *param, bool is_output, Oid typoid, const char *param_str)
 {
 	if (is_output && param->mode != FUNC_PARAM_INOUT)
-		throw PGErrorWrapperException(ERROR, ERRCODE_SYNTAX_ERROR, format_errmsg("%s param is not specified as OUTPUT", param_str), 0); 
+		throw PGErrorWrapperException(ERROR, ERRCODE_SYNTAX_ERROR, format_errmsg("%s param is not specified as OUTPUT", param_str), 0, 0);
 	PLtsql_datum *datum = pltsql_Datums[param->varno];
 	if (typoid != InvalidOid && datum->dtype != PLTSQL_DTYPE_VAR)
-		throw PGErrorWrapperException(ERROR, ERRCODE_SYNTAX_ERROR, format_errmsg("invalid %s param", param_str), 0);
+		throw PGErrorWrapperException(ERROR, ERRCODE_SYNTAX_ERROR, format_errmsg("invalid %s param", param_str), 0, 0);
 	PLtsql_var *var = (PLtsql_var *) datum;
 	if (typoid != InvalidOid && var->datatype->typoid != typoid)
-		throw PGErrorWrapperException(ERROR, ERRCODE_SYNTAX_ERROR, format_errmsg("invalid %s param datatype", param_str), 0);
+		throw PGErrorWrapperException(ERROR, ERRCODE_SYNTAX_ERROR, format_errmsg("invalid %s param datatype", param_str), 0, 0);
 }
 
 static PLtsql_expr*
@@ -4414,52 +5128,6 @@ getNthParamExpr(std::vector<tsql_exec_param *> &params, size_t n)
 		return params[n - 1]->expr;
 	else
 		return NULL;
-}
-
-/*
- * For inline table-valued function, we need to save an version of the query
- * statement that we can call SPI_prepare to generate a plan, in order to figure
- * out the column definition list. So, we replace all variable references by
- * "CAST(NULL AS <type>)" in order to get the correct columnn list from
- * planning.
- */
-char *
-generate_itvf_query(char *query, ParserRuleContext *baseCtx)
-{
-	StringInfoData ds;
-	initStringInfo(&ds);
-
-	// base index where the current stmt starts from whole input stream.
-	size_t base_index = baseCtx->getStart()->getStartIndex();
-	if (base_index == INVALID_INDEX)
-		throw PGErrorWrapperException(ERROR, ERRCODE_SYNTAX_ERROR, "can't generate an internal query", 0);
-
-	size_t cursor = 0; // cursor to query where next copy should starts
-	for (const auto &entry : local_id_positions)
-	{
-		const std::string& local_id = entry.second;
-		size_t offset = entry.first - base_index;
-		if (strncmp(local_id.c_str(), query+offset, local_id.length()) == 0) // local_id maybe already deleted in some cases such as select-assignment. check here if it still exists)
-		{
-			int dno;
-			PLtsql_nsitem *nse = pltsql_ns_lookup(pltsql_ns_top(), false, local_id.c_str(), nullptr, nullptr, nullptr);
-			if (nse)
-				dno = nse->itemno;
-			else
-				throw PGErrorWrapperException(ERROR, ERRCODE_SYNTAX_ERROR, format_errmsg("\"%s\" is not a known variable", local_id.c_str()), 0);
-
-			PLtsql_var *var = (PLtsql_var *) pltsql_Datums[dno];
-
-			appendBinaryStringInfo(&ds, query+cursor, offset - cursor); // copy substring of expr->query. ranged [cursor, offset)
-			appendStringInfo(&ds, "CAST(NULL AS %s)", var->datatype->typname);
-			cursor = offset + local_id.length();
-		}
-	}
-	if (cursor < strlen(query))
-		appendStringInfoString(&ds, query + cursor); // copy remaining expr->query
-
-	// update query string with quoted one
-	return pstrdup(ds.data);
 }
 
 static const char*
@@ -4486,10 +5154,9 @@ rewrite_assign_operator(tree::TerminalNode *aop)
 }
 
 TSqlParser::Query_specificationContext *
-get_query_specification(TSqlParser::Select_statement_standaloneContext* ctx)
+get_query_specification(TSqlParser::Select_statementContext* sctx)
 {
-	Assert(ctx->select_statement());
-	TSqlParser::Select_statementContext *sctx = ctx->select_statement();
+	Assert(sctx);
 	Assert(sctx->query_expression());
 	TSqlParser::Query_expressionContext *qectx = sctx->query_expression();
 	TSqlParser::Query_specificationContext *qctx = qectx->query_specification();
@@ -4504,6 +5171,32 @@ get_query_specification(TSqlParser::Select_statement_standaloneContext* ctx)
 			qctx = qectx->query_specification();
 	}
 	return qctx;
+}
+
+bool
+is_top_level_query_specification(TSqlParser::Query_specificationContext *ctx)
+{
+	/*
+	 * in ANTLR t-sql grammar, top-level select statement is represented as select_statement_standalone.
+	 * subquery, derived table, cte can contain query specification via select statement but it is just a select_statement not via select_statement_standalone.
+	 * To figure out the query-specification is corresponding to top-level select statement,
+	 * iterate its ancestors and check if encoutering subquery, derived_table or common_table_expression.
+	 * if it is query specification in top-level statement, it will never meet those grammar element.
+	 */
+	Assert(ctx);
+
+	auto pctx = ctx->parent;
+	while (pctx)
+	{
+		if (dynamic_cast<TSqlParser::Derived_tableContext *>(pctx) ||
+		    dynamic_cast<TSqlParser::SubqueryContext *>(pctx) ||
+		    dynamic_cast<TSqlParser::Common_table_expressionContext *>(pctx) ||
+		    dynamic_cast<TSqlParser::Declare_xmlnamespaces_statementContext *>(pctx)) // not supported in BBF. excluding it from top-level select statement just in case.
+			return false;
+
+		pctx = pctx->parent;
+	}
+	return true;
 }
 
 static bool
@@ -4533,4 +5226,132 @@ is_compiling_create_function()
 	if (pltsql_curr_compile->fn_is_trigger != PLTSQL_NOT_TRIGGER) /* except trigger */
 		return false;
 	return true;
+}
+
+/* if no rewriting necessary, return empty string */
+template<class T>
+std::string
+rewrite_object_name_with_omitted_db_and_schema_name(T ctx, GetCtxFunc<T> getDatabase, GetCtxFunc<T> getSchema)
+{
+	if (ctx->DOT().size() == 1)
+	{
+		auto schema = getSchema(ctx);
+
+		// .object -> dbo.object
+		if (!schema)
+			return "dbo" + ::getFullText(ctx);
+		else
+			return "";
+	}
+	if (ctx->DOT().size() >= 2)
+	{
+		std::string name = ::getFullText(ctx);
+		if (ctx->DOT().size() == 3)
+		{
+			// we can assume servername is null because unsupported-feature error should be thrown
+			// so we can remove the first leading dot. the remaining name should be handled with the same with two dots case
+			name = name.substr(1);
+		}
+
+		auto database = getDatabase(ctx);
+		auto schema = getSchema(ctx);
+
+		// ..object -> object
+		if (!database && !schema)
+			return name.substr(2);
+		// db..object -> db.dbo.object
+		else if (database && !schema)
+		{
+			size_t first_dot_index = name.find('.');
+			Assert(first_dot_index != std::string::npos);
+			Assert(name[first_dot_index+1] == '.'); /* next character should be also '.' */
+			return name.substr(0,first_dot_index + 1) + "dbo" + name.substr(first_dot_index + 1);
+		}
+		// .schema.object -> schema.object
+		else if (!database && schema)
+			return name.substr(1);
+		else
+			return "";
+	}
+	return "";
+}
+
+/* if no rewriting necessary, return empty string */
+template<class T>
+std::string
+rewrite_column_name_with_omitted_schema_name(T ctx, GetCtxFunc<T> getSchema, GetCtxFunc<T> getTableName)
+{
+	// Other than object name, the following cases are not valid.
+	// 1) .column
+	// 1) ..column
+	// 2) schema..column
+	// Let them as it is so that backend parser will throw a syntax error
+
+	if (ctx->DOT().size() >= 2)
+	{
+		std::string name = ::getFullText(ctx);
+		if (ctx->DOT().size() == 3)
+		{
+			// we can assume servername is null because unsupported-feature error should be thrown
+			// so we can remove the first leading dot. the remaining name should be handled with the same with two dots case
+			name = name.substr(1);
+		}
+
+		auto schema = getSchema(ctx);
+		auto tablename = getTableName(ctx);
+
+		if (!schema && tablename)
+			return name.substr(1);
+	}
+	return "";
+}
+
+
+/*
+ * PG keywords defined as TYPE_FUNC_NAME_KEYWORD but treated as a normal unreserved keyword (or not a keyword) in T-SQL.
+ * TODO: we may generate this list automatically by using kwlist.h and antlr grammar.
+ */
+static const char *column_names_to_be_delimited[] = {
+  "binary",
+  "collation",
+  "concurrently",
+  "current_schema",
+  "freeze",
+  "ilike",
+  "isnull",
+  "natural",
+  "notnull",
+  "overlaps",
+  "similar"
+};
+
+/*
+ * PG keywords defined as reserved but treated as a normal unreserved (or not a keyword) in T-SQL.
+ * TODO: fill with the full list.
+ * TODO: we may generate this list automatically by using kwlist.h and antlr grammar.
+ */
+static const char *pg_reserved_keywords_to_be_delimited[] = {
+  "offset"
+};
+
+static bool
+does_object_name_need_delimiter(TSqlParser::IdContext *id)
+{
+	if (!id->ID() && !id->keyword())
+		return false; // already delimited
+
+	std::string id_str = ::getFullText(id);
+	for (const char *keyword : column_names_to_be_delimited)
+		if (pg_strcasecmp(keyword, id_str.c_str()) == 0)
+			return true;
+	for (const char *keyword : pg_reserved_keywords_to_be_delimited)
+		if (pg_strcasecmp(keyword, id_str.c_str()) == 0)
+			return true;
+	return false;
+}
+
+static std::string
+delimit_identifier(TSqlParser::IdContext *id)
+{
+	return std::string("[") + ::getFullText(id) + "]";
 }

@@ -136,6 +136,9 @@ LANGUAGE C IMMUTABLE STRICT PARALLEL SAFE;
 -- Operators.
 --
 
+CREATE OPERATOR FAMILY fixeddecimal_ops USING btree;
+CREATE OPERATOR FAMILY fixeddecimal_ops USING hash;
+
 -- FIXEDDECIMAL op FIXEDDECIMAL
 CREATE OPERATOR sys.= (
     LEFTARG    = FIXEDDECIMAL,
@@ -230,7 +233,7 @@ CREATE OPERATOR sys./ (
 );
 
 CREATE OPERATOR CLASS sys.fixeddecimal_ops
-DEFAULT FOR TYPE FIXEDDECIMAL USING btree AS
+DEFAULT FOR TYPE FIXEDDECIMAL USING btree FAMILY fixeddecimal_ops AS
     OPERATOR    1   <  (FIXEDDECIMAL, FIXEDDECIMAL),
     OPERATOR    2   <= (FIXEDDECIMAL, FIXEDDECIMAL),
     OPERATOR    3   =  (FIXEDDECIMAL, FIXEDDECIMAL),
@@ -239,7 +242,7 @@ DEFAULT FOR TYPE FIXEDDECIMAL USING btree AS
     FUNCTION    1   fixeddecimal_cmp(FIXEDDECIMAL, FIXEDDECIMAL);
 
 CREATE OPERATOR CLASS sys.fixeddecimal_ops
-DEFAULT FOR TYPE FIXEDDECIMAL USING hash AS
+DEFAULT FOR TYPE FIXEDDECIMAL USING hash FAMILY fixeddecimal_ops AS
     OPERATOR    1   =  (FIXEDDECIMAL, FIXEDDECIMAL),
     FUNCTION    1   fixeddecimal_hash(FIXEDDECIMAL);
 
@@ -345,8 +348,7 @@ CREATE OPERATOR sys.> (
     JOIN       = scalargtjoinsel
 );
 
-CREATE OPERATOR CLASS sys.fixeddecimal_numeric_ops
-FOR TYPE FIXEDDECIMAL USING btree AS
+ALTER OPERATOR FAMILY fixeddecimal_ops USING btree ADD
     OPERATOR    1   <  (FIXEDDECIMAL, NUMERIC),
     OPERATOR    2   <= (FIXEDDECIMAL, NUMERIC),
     OPERATOR    3   =  (FIXEDDECIMAL, NUMERIC),
@@ -354,10 +356,8 @@ FOR TYPE FIXEDDECIMAL USING btree AS
     OPERATOR    5   >  (FIXEDDECIMAL, NUMERIC),
     FUNCTION    1   fixeddecimal_numeric_cmp(FIXEDDECIMAL, NUMERIC);
 
-CREATE OPERATOR CLASS sys.fixeddecimal_numeric_ops
-FOR TYPE FIXEDDECIMAL USING hash AS
-    OPERATOR    1   =  (FIXEDDECIMAL, NUMERIC),
-    FUNCTION    1   fixeddecimal_hash(FIXEDDECIMAL);
+ALTER OPERATOR FAMILY fixeddecimal_ops USING hash ADD
+    OPERATOR    1   =  (FIXEDDECIMAL, NUMERIC);
 
 -- NUMERIC, FIXEDDECIMAL
 CREATE FUNCTION sys.numeric_fixeddecimal_eq(NUMERIC, FIXEDDECIMAL)
@@ -451,8 +451,7 @@ CREATE OPERATOR sys.> (
     JOIN       = scalargtjoinsel
 );
 
-CREATE OPERATOR CLASS sys.numeric_fixeddecimal_ops
-FOR TYPE FIXEDDECIMAL USING btree AS
+ALTER OPERATOR FAMILY fixeddecimal_ops USING btree ADD
     OPERATOR    1   <  (NUMERIC, FIXEDDECIMAL) FOR SEARCH,
     OPERATOR    2   <= (NUMERIC, FIXEDDECIMAL) FOR SEARCH,
     OPERATOR    3   =  (NUMERIC, FIXEDDECIMAL) FOR SEARCH,
@@ -460,10 +459,8 @@ FOR TYPE FIXEDDECIMAL USING btree AS
     OPERATOR    5   >  (NUMERIC, FIXEDDECIMAL) FOR SEARCH,
     FUNCTION    1   numeric_fixeddecimal_cmp(NUMERIC, FIXEDDECIMAL);
 
-CREATE OPERATOR CLASS sys.numeric_fixeddecimal_ops
-FOR TYPE FIXEDDECIMAL USING hash AS
-    OPERATOR    1   =  (NUMERIC, FIXEDDECIMAL),
-    FUNCTION    1   fixeddecimal_hash(FIXEDDECIMAL);
+ALTER OPERATOR FAMILY fixeddecimal_ops USING hash ADD
+    OPERATOR    1   =  (NUMERIC, FIXEDDECIMAL);
 
 --
 -- Cross type operators with int8
@@ -612,8 +609,7 @@ CREATE OPERATOR sys./ (
     PROCEDURE  = fixeddecimalint8div
 );
 
-CREATE OPERATOR CLASS sys.fixeddecimal_int8_ops
-FOR TYPE FIXEDDECIMAL USING btree AS
+ALTER OPERATOR FAMILY fixeddecimal_ops USING btree ADD
     OPERATOR    1   <  (FIXEDDECIMAL, INT8),
     OPERATOR    2   <= (FIXEDDECIMAL, INT8),
     OPERATOR    3   =  (FIXEDDECIMAL, INT8),
@@ -621,10 +617,8 @@ FOR TYPE FIXEDDECIMAL USING btree AS
     OPERATOR    5   >  (FIXEDDECIMAL, INT8),
     FUNCTION    1   fixeddecimal_int8_cmp(FIXEDDECIMAL, INT8);
 
-CREATE OPERATOR CLASS sys.fixeddecimal_int8_ops
-FOR TYPE FIXEDDECIMAL USING hash AS
-    OPERATOR    1   =  (FIXEDDECIMAL, INT8),
-    FUNCTION    1   fixeddecimal_hash(FIXEDDECIMAL);
+ALTER OPERATOR FAMILY fixeddecimal_ops USING hash ADD
+   OPERATOR    1   =  (FIXEDDECIMAL, INT8);
 
 -- INT8, FIXEDDECIMAL
 CREATE FUNCTION sys.int8_fixeddecimal_cmp(INT8, FIXEDDECIMAL)
@@ -769,8 +763,7 @@ CREATE OPERATOR sys./ (
     PROCEDURE  = int8fixeddecimaldiv
 );
 
-CREATE OPERATOR CLASS sys.int8_fixeddecimal_ops
-FOR TYPE FIXEDDECIMAL USING btree AS
+ALTER OPERATOR FAMILY fixeddecimal_ops USING btree ADD
     OPERATOR    1   <  (INT8, FIXEDDECIMAL),
     OPERATOR    2   <= (INT8, FIXEDDECIMAL),
     OPERATOR    3   =  (INT8, FIXEDDECIMAL),
@@ -778,10 +771,8 @@ FOR TYPE FIXEDDECIMAL USING btree AS
     OPERATOR    5   >  (INT8, FIXEDDECIMAL),
     FUNCTION    1   int8_fixeddecimal_cmp(INT8, FIXEDDECIMAL);
 
-CREATE OPERATOR CLASS sys.int8_fixeddecimal_ops
-FOR TYPE FIXEDDECIMAL USING hash AS
-    OPERATOR    1   =  (INT8, FIXEDDECIMAL),
-    FUNCTION    1   fixeddecimal_hash(FIXEDDECIMAL);
+ALTER OPERATOR FAMILY fixeddecimal_ops USING hash ADD
+   OPERATOR    1   =  (INT8, FIXEDDECIMAL);
 
 --
 -- Cross type operators with int4
@@ -930,8 +921,7 @@ CREATE OPERATOR sys./ (
     PROCEDURE  = fixeddecimalint4div
 );
 
-CREATE OPERATOR CLASS sys.fixeddecimal_int4_ops
-FOR TYPE FIXEDDECIMAL USING btree AS
+ALTER OPERATOR FAMILY fixeddecimal_ops USING btree ADD
     OPERATOR    1   <  (FIXEDDECIMAL, INT4),
     OPERATOR    2   <= (FIXEDDECIMAL, INT4),
     OPERATOR    3   =  (FIXEDDECIMAL, INT4),
@@ -939,10 +929,8 @@ FOR TYPE FIXEDDECIMAL USING btree AS
     OPERATOR    5   >  (FIXEDDECIMAL, INT4),
     FUNCTION    1   fixeddecimal_int4_cmp(FIXEDDECIMAL, INT4);
 
-CREATE OPERATOR CLASS sys.fixeddecimal_int4_ops
-FOR TYPE FIXEDDECIMAL USING hash AS
-    OPERATOR    1   =  (FIXEDDECIMAL, INT4),
-    FUNCTION    1   fixeddecimal_hash(FIXEDDECIMAL);
+ALTER OPERATOR FAMILY fixeddecimal_ops USING hash ADD
+    OPERATOR    1   =  (FIXEDDECIMAL, INT4);
 
 -- INT4, FIXEDDECIMAL
 CREATE FUNCTION sys.int4_fixeddecimal_cmp(INT4, FIXEDDECIMAL)
@@ -1087,8 +1075,7 @@ CREATE OPERATOR sys./ (
     PROCEDURE  = int4fixeddecimaldiv
 );
 
-CREATE OPERATOR CLASS sys.int4_fixeddecimal_ops
-FOR TYPE FIXEDDECIMAL USING btree AS
+ALTER OPERATOR FAMILY fixeddecimal_ops USING btree ADD
     OPERATOR    1   <  (INT4, FIXEDDECIMAL),
     OPERATOR    2   <= (INT4, FIXEDDECIMAL),
     OPERATOR    3   =  (INT4, FIXEDDECIMAL),
@@ -1096,10 +1083,8 @@ FOR TYPE FIXEDDECIMAL USING btree AS
     OPERATOR    5   >  (INT4, FIXEDDECIMAL),
     FUNCTION    1   int4_fixeddecimal_cmp(INT4, FIXEDDECIMAL);
 
-CREATE OPERATOR CLASS sys.int4_fixeddecimal_ops
-FOR TYPE FIXEDDECIMAL USING hash AS
-    OPERATOR    1   =  (INT4, FIXEDDECIMAL),
-    FUNCTION    1   fixeddecimal_hash(FIXEDDECIMAL);
+ALTER OPERATOR FAMILY fixeddecimal_ops USING hash ADD
+    OPERATOR    1   =  (INT4, FIXEDDECIMAL);
 
 --
 -- Cross type operators with int2
@@ -1247,8 +1232,7 @@ CREATE OPERATOR sys./ (
     PROCEDURE  = fixeddecimalint2div
 );
 
-CREATE OPERATOR CLASS sys.fixeddecimal_int2_ops
-FOR TYPE FIXEDDECIMAL USING btree AS
+ALTER OPERATOR FAMILY fixeddecimal_ops USING btree ADD
     OPERATOR    1   <  (FIXEDDECIMAL, INT2),
     OPERATOR    2   <= (FIXEDDECIMAL, INT2),
     OPERATOR    3   =  (FIXEDDECIMAL, INT2),
@@ -1256,10 +1240,8 @@ FOR TYPE FIXEDDECIMAL USING btree AS
     OPERATOR    5   >  (FIXEDDECIMAL, INT2),
     FUNCTION    1   fixeddecimal_int2_cmp(FIXEDDECIMAL, INT2);
 
-CREATE OPERATOR CLASS sys.fixeddecimal_int2_ops
-FOR TYPE FIXEDDECIMAL USING hash AS
-    OPERATOR    1   =  (FIXEDDECIMAL, INT2),
-    FUNCTION    1   fixeddecimal_hash(FIXEDDECIMAL);
+ALTER OPERATOR FAMILY fixeddecimal_ops USING hash ADD
+    OPERATOR    1   =  (FIXEDDECIMAL, INT2);
 
 -- INT2, FIXEDDECIMAL
 CREATE FUNCTION sys.int2_fixeddecimal_cmp(INT2, FIXEDDECIMAL)
@@ -1404,8 +1386,7 @@ CREATE OPERATOR sys./ (
     PROCEDURE  = int2fixeddecimaldiv
 );
 
-CREATE OPERATOR CLASS sys.int2_fixeddecimal_ops
-FOR TYPE FIXEDDECIMAL USING btree AS
+ALTER OPERATOR FAMILY fixeddecimal_ops USING btree ADD
     OPERATOR    1   <  (INT2, FIXEDDECIMAL),
     OPERATOR    2   <= (INT2, FIXEDDECIMAL),
     OPERATOR    3   =  (INT2, FIXEDDECIMAL),
@@ -1413,10 +1394,101 @@ FOR TYPE FIXEDDECIMAL USING btree AS
     OPERATOR    5   >  (INT2, FIXEDDECIMAL),
     FUNCTION    1   int2_fixeddecimal_cmp(INT2, FIXEDDECIMAL);
 
-CREATE OPERATOR CLASS sys.int2_fixeddecimal_ops
-FOR TYPE FIXEDDECIMAL USING hash AS
-    OPERATOR    1   =  (INT2, FIXEDDECIMAL),
-    FUNCTION    1   fixeddecimal_hash(FIXEDDECIMAL);
+ALTER OPERATOR FAMILY fixeddecimal_ops USING hash ADD
+    OPERATOR    1   =  (INT2, FIXEDDECIMAL);
+
+-- add combination of (int8/int4/int2) to fixeddecimal_ops to make it complete
+ALTER OPERATOR FAMILY fixeddecimal_ops USING btree ADD
+    -- INT8
+    OPERATOR    1   <  (INT8, INT8),
+    OPERATOR    2   <= (INT8, INT8),
+    OPERATOR    3   =  (INT8, INT8),
+    OPERATOR    4   >= (INT8, INT8),
+    OPERATOR    5   >  (INT8, INT8),
+    FUNCTION    1   btint8cmp(INT8, INT8),
+
+    OPERATOR    1   <  (INT8, INT4),
+    OPERATOR    2   <= (INT8, INT4),
+    OPERATOR    3   =  (INT8, INT4),
+    OPERATOR    4   >= (INT8, INT4),
+    OPERATOR    5   >  (INT8, INT4),
+    FUNCTION    1   btint84cmp(INT8, INT4),
+
+    OPERATOR    1   <  (INT8, INT2),
+    OPERATOR    2   <= (INT8, INT2),
+    OPERATOR    3   =  (INT8, INT2),
+    OPERATOR    4   >= (INT8, INT2),
+    OPERATOR    5   >  (INT8, INT2),
+    FUNCTION    1   btint82cmp(INT8, INT2),
+
+    -- INT4
+    OPERATOR    1   <  (INT4, INT8),
+    OPERATOR    2   <= (INT4, INT8),
+    OPERATOR    3   =  (INT4, INT8),
+    OPERATOR    4   >= (INT4, INT8),
+    OPERATOR    5   >  (INT4, INT8),
+    FUNCTION    1   btint48cmp(INT4, INT8),
+
+    OPERATOR    1   <  (INT4, INT4),
+    OPERATOR    2   <= (INT4, INT4),
+    OPERATOR    3   =  (INT4, INT4),
+    OPERATOR    4   >= (INT4, INT4),
+    OPERATOR    5   >  (INT4, INT4),
+    FUNCTION    1   btint4cmp(INT4, INT4),
+
+    OPERATOR    1   <  (INT4, INT2),
+    OPERATOR    2   <= (INT4, INT2),
+    OPERATOR    3   =  (INT4, INT2),
+    OPERATOR    4   >= (INT4, INT2),
+    OPERATOR    5   >  (INT4, INT2),
+    FUNCTION    1   btint42cmp(INT4, INT2),
+
+    -- INT2
+    OPERATOR    1   <  (INT2, INT8),
+    OPERATOR    2   <= (INT2, INT8),
+    OPERATOR    3   =  (INT2, INT8),
+    OPERATOR    4   >= (INT2, INT8),
+    OPERATOR    5   >  (INT2, INT8),
+    FUNCTION    1   btint28cmp(INT2, INT8),
+
+    OPERATOR    1   <  (INT2, INT4),
+    OPERATOR    2   <= (INT2, INT4),
+    OPERATOR    3   =  (INT2, INT4),
+    OPERATOR    4   >= (INT2, INT4),
+    OPERATOR    5   >  (INT2, INT4),
+    FUNCTION    1   btint24cmp(INT2, INT4),
+
+    OPERATOR    1   <  (INT2, INT2),
+    OPERATOR    2   <= (INT2, INT2),
+    OPERATOR    3   =  (INT2, INT2),
+    OPERATOR    4   >= (INT2, INT2),
+    OPERATOR    5   >  (INT2, INT2),
+    FUNCTION    1   btint2cmp(INT2, INT2),
+
+    -- numeric
+    OPERATOR    1   <  (NUMERIC, NUMERIC),
+    OPERATOR    2   <= (NUMERIC, NUMERIC),
+    OPERATOR    3   =  (NUMERIC, NUMERIC),
+    OPERATOR    4   >= (NUMERIC, NUMERIC),
+    OPERATOR    5   >  (NUMERIC, NUMERIC),
+    FUNCTION    1   numeric_cmp(NUMERIC, NUMERIC);
+
+
+ALTER OPERATOR FAMILY fixeddecimal_ops USING hash ADD
+    OPERATOR    1   =  (INT8, INT8),
+    OPERATOR    1   =  (INT8, INT4),
+    OPERATOR    1   =  (INT8, INT2),
+    OPERATOR    1   =  (INT4, INT8),
+    OPERATOR    1   =  (INT4, INT4),
+    OPERATOR    1   =  (INT4, INT2),
+    OPERATOR    1   =  (INT2, INT8),
+    OPERATOR    1   =  (INT2, INT4),
+    OPERATOR    1   =  (INT2, INT2),
+    OPERATOR    1   =  (NUMERIC, NUMERIC),
+    FUNCTION    1   hashint8(INT8),
+    FUNCTION    1   hashint4(INT4),
+    FUNCTION    1   hashint2(INT2),
+    FUNCTION    1   hash_numeric(NUMERIC);
 
 --
 -- Casts

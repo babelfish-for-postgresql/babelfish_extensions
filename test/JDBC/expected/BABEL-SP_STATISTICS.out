@@ -1,0 +1,122 @@
+create database db1
+go
+use db1
+go
+create table t1(a int)
+go
+create index i1 on t1(a)
+go
+create table t2(a int, b int)
+go
+create index i2 on t2(a,b)
+go
+create table t3(a int, b int, c int)
+go
+create index i3 on t3(c,a)
+go
+CREATE TABLE t4(
+        c1 INT PRIMARY KEY
+        , c2 CHAR(10) NOT NULL UNIQUE
+        , c3 VARCHAR(20) NULL
+)
+create index i4 on t4(c2)
+go
+
+-- syntax error: @table_name is required
+exec sp_statistics
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: procedure sp_statistics() does not exist)~~
+
+
+exec sp_statistics @table_name = 't1'
+go
+~~START~~
+varchar#!#varchar#!#varchar#!#smallint#!#varchar#!#varchar#!#smallint#!#smallint#!#varchar#!#varchar#!#int#!#int#!#varchar
+db1#!#dbo#!#t1#!#1#!#t1#!#i1#!#3#!#1#!#a#!#A#!#<NULL>#!#0#!#<NULL>
+~~END~~
+
+
+exec sp_statistics @table_name = 't2', @table_qualifier = 'db1'
+go
+~~START~~
+varchar#!#varchar#!#varchar#!#smallint#!#varchar#!#varchar#!#smallint#!#smallint#!#varchar#!#varchar#!#int#!#int#!#varchar
+db1#!#dbo#!#t2#!#1#!#t2#!#i2#!#3#!#1#!#a#!#A#!#<NULL>#!#0#!#<NULL>
+db1#!#dbo#!#t2#!#1#!#t2#!#i2#!#3#!#2#!#b#!#A#!#<NULL>#!#0#!#<NULL>
+~~END~~
+
+
+exec sp_statistics @table_name = 't3', @table_owner = 'dbo'
+go
+~~START~~
+varchar#!#varchar#!#varchar#!#smallint#!#varchar#!#varchar#!#smallint#!#smallint#!#varchar#!#varchar#!#int#!#int#!#varchar
+db1#!#dbo#!#t3#!#1#!#t3#!#i3#!#3#!#1#!#c#!#A#!#<NULL>#!#0#!#<NULL>
+db1#!#dbo#!#t3#!#1#!#t3#!#i3#!#3#!#2#!#a#!#A#!#<NULL>#!#0#!#<NULL>
+~~END~~
+
+
+exec sp_statistics @table_name = 't4'
+go
+~~START~~
+varchar#!#varchar#!#varchar#!#smallint#!#varchar#!#varchar#!#smallint#!#smallint#!#varchar#!#varchar#!#int#!#int#!#varchar
+db1#!#dbo#!#t4#!#0#!#t4#!#t4_c2_key#!#3#!#1#!#c2#!#A#!#<NULL>#!#0#!#<NULL>
+db1#!#dbo#!#t4#!#0#!#t4#!#t4_pkey#!#3#!#1#!#c1#!#A#!#<NULL>#!#0#!#<NULL>
+db1#!#dbo#!#t4#!#1#!#t4#!#i4#!#3#!#1#!#c2#!#A#!#<NULL>#!#0#!#<NULL>
+~~END~~
+
+
+exec sp_statistics @table_name = 't4', @is_unique = 'Y'
+go
+~~START~~
+varchar#!#varchar#!#varchar#!#smallint#!#varchar#!#varchar#!#smallint#!#smallint#!#varchar#!#varchar#!#int#!#int#!#varchar
+db1#!#dbo#!#t4#!#0#!#t4#!#t4_c2_key#!#3#!#1#!#c2#!#A#!#<NULL>#!#0#!#<NULL>
+db1#!#dbo#!#t4#!#0#!#t4#!#t4_pkey#!#3#!#1#!#c1#!#A#!#<NULL>#!#0#!#<NULL>
+~~END~~
+
+
+-- unnamed invocation
+exec sp_statistics 't1', 'dbo', 'db1'
+go
+~~START~~
+varchar#!#varchar#!#varchar#!#smallint#!#varchar#!#varchar#!#smallint#!#smallint#!#varchar#!#varchar#!#int#!#int#!#varchar
+db1#!#dbo#!#t1#!#1#!#t1#!#i1#!#3#!#1#!#a#!#A#!#<NULL>#!#0#!#<NULL>
+~~END~~
+
+
+-- case-insensative invocation
+EXEC sp_statistics @TABLE_NAME = 't2', @TABLE_OWNER = 'dbo', @TABLE_QUALIFIER = 'db1'
+GO
+~~START~~
+varchar#!#varchar#!#varchar#!#smallint#!#varchar#!#varchar#!#smallint#!#smallint#!#varchar#!#varchar#!#int#!#int#!#varchar
+db1#!#dbo#!#t2#!#1#!#t2#!#i2#!#3#!#1#!#a#!#A#!#<NULL>#!#0#!#<NULL>
+db1#!#dbo#!#t2#!#1#!#t2#!#i2#!#3#!#2#!#b#!#A#!#<NULL>#!#0#!#<NULL>
+~~END~~
+
+
+-- sp_statistics_100 is implemented as same as sp_statistics
+exec sp_statistics_100 @table_name = 't3' 
+go
+~~START~~
+varchar#!#varchar#!#varchar#!#smallint#!#varchar#!#varchar#!#smallint#!#smallint#!#varchar#!#varchar#!#int#!#int#!#varchar
+db1#!#dbo#!#t3#!#1#!#t3#!#i3#!#3#!#1#!#c#!#A#!#<NULL>#!#0#!#<NULL>
+db1#!#dbo#!#t3#!#1#!#t3#!#i3#!#3#!#2#!#a#!#A#!#<NULL>#!#0#!#<NULL>
+~~END~~
+
+
+drop index i1 on t1
+go
+drop index i2 on t2
+go
+drop index i3 on t3
+go
+drop table t1
+go
+drop table t2
+go
+drop table t3
+go
+use master
+go
+drop database db1
+go

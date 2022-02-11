@@ -1,0 +1,56 @@
+#Q#CREATE TABLE FLOAT_dt (a FLOAT)
+#Q# INSERT INTO FLOAT_dt(a) values(@a) 
+#Q# INSERT INTO FLOAT_dt(a) values(@a) 
+#Q# INSERT INTO FLOAT_dt(a) values(@a) 
+#Q# INSERT INTO FLOAT_dt(a) values(@a) 
+#Q# INSERT INTO FLOAT_dt(a) values(@a) 
+#Q# INSERT INTO FLOAT_dt(a) values(@a) 
+#Q# INSERT INTO FLOAT_dt(a) values(@a) 
+#Q# INSERT INTO FLOAT_dt(a) values(@a) 
+#Q# INSERT INTO FLOAT_dt(a) values(@a) 
+#Q# INSERT INTO FLOAT_dt(a) values(@a) 
+#Q#SELECT * FROM FLOAT_dt;
+#D#float
+0
+1.05
+1.05
+1202
+-24112329
+-2.5
+86
+-1.79E+308
+1.79E+308
+
+#Q#INSERT INTO FLOAT_dt(a) values(0)
+#Q#INSERT INTO FLOAT_dt(a) values(1.050)
+#Q#INSERT INTO FLOAT_dt(a) values(01.05)
+#Q#INSERT INTO FLOAT_dt(a) values(-004)
+#Q#INSERT INTO FLOAT_dt(a) values(-0122455324.5)
+#Q#INSERT INTO FLOAT_dt(a) values(-000002)
+#Q#INSERT INTO FLOAT_dt(a) values(0000000000000000086)
+#Q#INSERT INTO FLOAT_dt(a) values(-1.79E+308)
+#Q#INSERT INTO FLOAT_dt(a) values(1.79E+308)
+#Q#INSERT INTO FLOAT_dt(a) values(NULL)
+#Q#SELECT * FROM FLOAT_dt;
+#D#float
+0
+1.05
+1.05
+1202
+-24112329
+-2.5
+86
+-1.79E+308
+1.79E+308
+
+0
+1.05
+1.05
+-4
+-122455324.5
+-2
+86
+-1.79E+308
+1.79E+308
+
+#Q#DROP TABLE FLOAT_dt;

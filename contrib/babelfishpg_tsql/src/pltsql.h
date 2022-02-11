@@ -178,7 +178,8 @@ typedef enum PLtsql_stmt_type
     PLTSQL_STMT_INIT_VARS,
     PLTSQL_STMT_SAVE_CTX,
     PLTSQL_STMT_RESTORE_CTX_FULL,
-    PLTSQL_STMT_RESTORE_CTX_PARTIAL
+    PLTSQL_STMT_RESTORE_CTX_PARTIAL,
+    PLTSQL_STMT_INSERT_BULK
 } PLtsql_stmt_type;
 
 /*
@@ -904,6 +905,18 @@ typedef struct PLtsql_stmt_exit
 } PLtsql_stmt_exit;
 
 /*
+ * INSERT BULK statement
+ */
+typedef struct PLtsql_stmt_insert_bulk
+{
+    PLtsql_stmt_type cmd_type;
+    int         lineno;
+    char  *table_name;
+    char  *schema_name;
+    char  *db_name;
+} PLtsql_stmt_insert_bulk;
+
+/*
  * RETURN statement
  */
 typedef struct PLtsql_stmt_return
@@ -1118,6 +1131,7 @@ typedef struct PLtsql_function
 	List	   *table_varnos;
 
 	bool 		is_itvf;
+	bool 		is_mstvf;
 
 	PLtsql_resolve_option resolve_option;
 
@@ -1527,9 +1541,14 @@ typedef struct PLtsql_protocol_plugin
 
 	int16 (*pltsql_get_database_oid) (const char *dbname);
 
+	bool (*pltsql_is_login) (Oid role_oid);
+
 	char* (*pltsql_get_login_default_db) (char *login_name);
 
 	int* (*get_mapped_error_list) (void);
+
+	int (*bulk_load_callback) (int ncol, int nrow, Oid *argtypes,
+									Datum *Values, const char *Nulls);
 
 } PLtsql_protocol_plugin;
 
@@ -1566,6 +1585,13 @@ typedef enum
 	IDENTIFIER_LOOKUP_DECLARE,	/* In DECLARE --- don't look up names */
 	IDENTIFIER_LOOKUP_EXPR		/* In SQL expression --- special case */
 } IdentifierLookup;
+
+typedef struct 
+{
+	AttrNumber    x_attnum;
+	int trigger_depth;
+	int total_columns;
+} UpdatedColumn;
 
 extern IdentifierLookup pltsql_IdentifierLookup;
 
@@ -1619,7 +1645,10 @@ extern PLtsql_protocol_plugin **pltsql_protocol_plugin_ptr;
 #define IS_TDS_CLIENT() (*pltsql_protocol_plugin_ptr && \
 						 (*pltsql_protocol_plugin_ptr)->is_tds_client)
 
+extern Oid procid_var;
 extern uint64 rowcount_var;
+extern List* columns_updated_list;
+extern int pltsql_trigger_depth;
 extern int latest_error_code;
 extern int latest_pg_error_code;
 extern bool last_error_mapping_failed;
@@ -1635,6 +1664,7 @@ extern char* pltsql_version;
 typedef struct PLtsqlErrorData
 {
 	bool				xact_abort_on;
+	bool				rethrow_error;
 	bool				trigger_error;
 	PLtsql_execstate	*error_estate;
 	char				*error_procedure;
@@ -1664,6 +1694,8 @@ extern int pltsql_rowcount;
 extern Portal pltsql_snapshot_portal;
 extern int pltsql_non_tsql_proc_entry_count;
 extern int pltsql_sys_func_entry_count;
+
+extern char *bulk_load_table_name;
 
 /**********************************************************************
  * Function declarations
@@ -1736,6 +1768,8 @@ extern Datum sp_prepare(PG_FUNCTION_ARGS);
 extern Datum sp_unprepare(PG_FUNCTION_ARGS);
 extern bool pltsql_support_tsql_transactions(void);
 extern bool pltsql_sys_function_pop(void);
+extern int execute_bulk_load_insert(int ncol, int nrow, Oid *argtypes,
+									Datum *Values, const char *Nulls);
 /*
  * Functions in pl_exec.c
  */
@@ -1891,7 +1925,8 @@ TdsGetMetaData(bytea *result, int pgBaseType, int *scale, int *precision, int *m
  * Functions in cursor.c
  */
 int execute_sp_cursor(int cursor_handle, int opttype, int rownum, const char *tablename, List* values);
-int execute_sp_cursoropen(int *cursor_handle, const char *stmt, int *scrollopt, int *ccopt, int *row_count, int nparams, Datum *values, const char *nulls);
+int execute_sp_cursoropen_old(int *cursor_handle, const char *stmt, int *scrollopt, int *ccopt, int *row_count, int nparams, Datum *values, const char *nulls); /* old interface to be compatabile with TDS */
+int execute_sp_cursoropen(int *cursor_handle, const char *stmt, int *scrollopt, int *ccopt, int *row_count, int nparams, int nBindParams, Oid *boundParamsOidList, Datum *values, const char *nulls);
 int execute_sp_cursorprepare(int *stmt_handle, const char *stmt, int options, int *scrollopt, int *ccopt, int nBindParams, Oid *boundParamsOidList);
 int execute_sp_cursorexecute(int stmt_handle, int *cursor_handle, int *scrollopt, int *ccopt, int *rowcount, int nparams, Datum *values, const char *nulls);
 int execute_sp_cursorprepexec(int *stmt_handle, int *cursor_handle, const char *stmt, int options, int *scrollopt, int *ccopt, int *row_count, int nparams, int nBindParams, Oid *boundParamsOidList, Datum *values, const char *nulls);

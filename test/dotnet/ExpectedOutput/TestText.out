@@ -1,0 +1,25 @@
+#Q#CREATE TABLE TEXT_dt (b ntext)
+#Q# INSERT INTO TEXT_dt( b) values( @b) 
+#Q# INSERT INTO TEXT_dt( b) values( @b) 
+#Q# INSERT INTO TEXT_dt( b) values( @b) 
+#Q#INSERT INTO TEXT_dt(b) values(@b1) 
+#Q#SELECT * FROM TEXT_dt;
+#D#ntext
+AAAAAAAAAAAAAAAAAAAA
+BBBBBBBBBB
+CCCCC
+badksjvbajsdcbvjads
+sejvhsdbfjhcgvasdhgcvsj
+21639812365091264
+
+😀😃😁😎😒😞😍🙂😆😊😉
+
+AAAAAAAAAAAAAAAAAAAA
+BBBBBBBBBB
+CCCCC
+badksjvbajsdcbvjads
+sejvhsdbfjhcgvasdhgcvsj
+21639812365091264
+
+ऀँंःऄअआइईउऊऋऌऍऎएऐऑऒओऔकखगघङचछजझञटठडढणतथदधनऩपफबभमयरऱलळऴवशषसहऺऻ़ऽािीुूृॄॅॆेैॉॊोौ्ॎॏॐ॒॑॓॔ॕॖॗक़ख़ग़ज़ड़ढ़फ़य़ॠॡॢॣ
+#Q#DROP TABLE TEXT_dt;

@@ -1,0 +1,28 @@
+CREATE TABLE BINARY_dt(a BINARY(8), b VARBINARY(10));
+#inserting random values
+INSERT INTO BINARY_dt(a, b) values (1234, 12345);
+INSERT INTO BINARY_dt(a, b) values (NULL, NULL);
+SELECT * FROM BINARY_dt
+#prepst#!# INSERT INTO BINARY_dt(a, b) values(@a, @b) #!#binary|-|a|-|1234#!#varbinary|-|b|-|12345
+#prepst#!#exec#!#binary|-|a|-|<NULL>#!#varbinary|-|b|-|<NULL>
+
+#inserting out of bound values, all will throw error
+#prepst#!#exec#!#binary|-|a|-|123456789#!#varbinary|-|b|-|12345
+#prepst#!#exec#!#binary|-|a|-|1234#!#varbinary|-|b|-|123456789:;
+#INSERT INTO BINARY_dt(a, b) values (0x313233343536373839, 0x3132333435);
+#INSERT INTO BINARY_dt(a, b) values (0x31323334, 0x3132333435363738393A3B);
+#SELECT * FROM BINARY_dt
+DROP TABLE BINARY_dt
+
+
+#CREATE TABLE BINARY_dt(a BINARY(100), b VARBINARY(100));
+#prepst#!# INSERT INTO BINARY_dt(a, b) values(@a1, @b1) #!#binary|-|a1|-|!"#$%&'()*+,-./0123456789:;<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ[\]^_`abcdefghijklmnopqrstuvwxyz{|}~#!#varbinary|-|b1|-|!"#$%&'()*+,-./0123456789:;<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ[\]^_`abcdefghijklmnopqrstuvwxyz{|}~
+#SELECT * FROM BINARY_dt
+#DROP TABLE BINARY_dt
+#CREATE TABLE IMAGE_dt(img IMAGE);
+#prepst#!#insert into IMAGE_dt values (@img)#!#image|-|img|-|utils/flower.jpg
+#prepst#!#exec#!#image|-|img|-|utils/Blank.jpeg
+#prepst#!#exec#!#image|-|img|-|<NULL>
+#insert into IMAGE_dt VALUES (NULL);
+#SELECT * FROM IMAGE_dt
+#DROP TABLE IMAGE_dt

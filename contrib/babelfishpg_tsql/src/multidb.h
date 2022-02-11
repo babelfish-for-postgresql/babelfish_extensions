@@ -5,6 +5,8 @@
 
 #include "nodes/parsenodes.h"
 
+#define MAX_BBF_NAMEDATALEND (2*NAMEDATALEN + 2)  /* two identifiers + 1 '_' + 1 terminator */
+
 /* condition for schema remapping */
 extern bool enable_schema_mapping(void);
 

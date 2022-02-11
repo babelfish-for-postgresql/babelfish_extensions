@@ -1740,6 +1740,7 @@ insert_statement_value
 
 bulk_insert_statement
     : BULK INSERT ddl_object FROM STRING ( WITH LR_BRACKET bulk_insert_option (COMMA? bulk_insert_option)* RR_BRACKET )? SEMI?
+    | INSERT BULK ddl_object (LR_BRACKET (insert_bulk_column_definition (COMMA insert_bulk_column_definition)*)? column_constraint* COMMA? RR_BRACKET)
     ;
 
 bulk_insert_option
@@ -3153,11 +3154,18 @@ column_def_table_constraint
 // https://msdn.microsoft.com/en-us/library/ms187742.aspx
 // emprically found: ROWGUIDCOL can be in various locations
 column_definition
-    : id (data_type system_versioning_column? | AS expression PERSISTED? ) ( special_column_option | (COLLATE id) | null_notnull )*
+    : simple_column_name (data_type system_versioning_column? | AS expression PERSISTED? ) ( special_column_option | (COLLATE id) | null_notnull )*
       ( column_constraint? IDENTITY (LR_BRACKET sign? seed=DECIMAL COMMA sign? increment=DECIMAL RR_BRACKET)? )? for_replication? ROWGUIDCOL?
       column_constraint* column_inline_index?
     ;
-	    
+
+// Temporary workaround for COLLATE default in INSERT BULK
+insert_bulk_column_definition
+    : simple_column_name (data_type system_versioning_column? | AS expression PERSISTED? ) ( special_column_option | (COLLATE (id | DEFAULT)) | null_notnull )*
+      ( column_constraint? IDENTITY (LR_BRACKET sign? seed=DECIMAL COMMA sign? increment=DECIMAL RR_BRACKET)? )? for_replication? ROWGUIDCOL?
+      column_constraint* column_inline_index?
+    ;
+
 column_inline_index
     : INDEX id (CLUSTERED | NONCLUSTERED)?
       (WHERE where=search_condition)?
@@ -3225,7 +3233,7 @@ column_constraint
     :(CONSTRAINT constraint=id)?
       ((PRIMARY KEY | UNIQUE) clustered? with_index_options?
       | CHECK for_replication? LR_BRACKET search_condition RR_BRACKET
-      | (FOREIGN KEY)? REFERENCES table_name LR_BRACKET pk = column_name_list RR_BRACKET (on_update | on_delete)*
+      | (FOREIGN KEY)? REFERENCES table_name (LR_BRACKET pk = column_name_list RR_BRACKET)? (on_update | on_delete)*
       | DEFAULT expression
       | null_notnull
       | WITH VALUES 
@@ -3944,7 +3952,7 @@ analytic_windowed_function
     : first_last=(FIRST_VALUE | LAST_VALUE) LR_BRACKET expression RR_BRACKET over_clause
     | lag_lead=(LAG | LEAD) LR_BRACKET expression  (COMMA expression (COMMA expression)? )? RR_BRACKET over_clause
     | rank=(CUME_DIST | PERCENT_RANK) LR_BRACKET RR_BRACKET OVER LR_BRACKET (PARTITION BY expression_list)? order_by_clause RR_BRACKET
-    | pct=(PERCENTILE_CONT | PERCENTILE_DISC) LR_BRACKET expression RR_BRACKET WITHIN GROUP LR_BRACKET ORDER BY expression (ASC | DESC)? RR_BRACKET OVER LR_BRACKET (PARTITION BY expression_list)? RR_BRACKET
+    | pct=(PERCENTILE_CONT | PERCENTILE_DISC) LR_BRACKET expression RR_BRACKET WITHIN GROUP LR_BRACKET ORDER BY expression (ASC | DESC)? RR_BRACKET over_clause
     ;
     
 all_distinct_expression
@@ -4158,8 +4166,11 @@ keyword
     | ALLOW_SNAPSHOT_ISOLATION
     | ALWAYS
     | ANONYMOUS
+    | ANSI_DEFAULTS
     | ANSI_NULLS
     | ANSI_NULL_DEFAULT
+    | ANSI_NULL_DFLT_OFF
+    | ANSI_NULL_DFLT_ON
     | ANSI_PADDING
     | ANSI_WARNINGS
     | APPEND
@@ -4185,6 +4196,7 @@ keyword
     | AUTO_SHRINK
     | AUTO_UPDATE_STATISTICS
     | AUTO_UPDATE_STATISTICS_ASYNC
+    | AUTOCOMMIT
     | AVAILABILITY
     | AVAILABILITY_MODE
     | AVG
@@ -4364,9 +4376,11 @@ keyword
     | FILETABLE
     | FILE_SNAPSHOT
     | FILTER
+    | FIPS_FLAGGER
     | FIRST
     | FIRST_ROW
     | FIRST_VALUE
+    | FMTONLY
     | FN
     | FOLLOWING
     | FORCE
@@ -4555,6 +4569,7 @@ keyword
     | NOCOUNT
     | NODE
     | NODES
+    | NOEXEC
     | NOEXPAND
     | NOFORMAT
     | NOINIT
@@ -4604,6 +4619,7 @@ keyword
     | PARAM
     | PARAMETERIZATION
     | PARAM_NODE
+    | PARSEONLY
     | PARTIAL
     | PARTITION
     | PARTITIONS
@@ -4675,6 +4691,7 @@ keyword
     | RELATED_CONVERSATION_GROUP
     | RELATIVE
     | REMOTE
+    | REMOTE_PROC_TRANSACTIONS
     | REMOTE_SERVICE_NAME
     | REMOVE
     | REORGANIZE
@@ -4757,6 +4774,9 @@ keyword
     | SETTINGS
     | SHARE
     | SHOWPLAN
+    | SHOWPLAN_ALL
+    | SHOWPLAN_TEXT
+    | SHOWPLAN_XML
     | SID
     | SIGNATURE
     | SIMPLE
@@ -4876,6 +4896,7 @@ keyword
     | VIEWS
     | VIEW_METADATA
     | VISIBILITY
+    | XACT_ABORT
     | WAIT
     | WAIT_AT_LOW_PRIORITY
     | WAIT_STATS_CAPTURE_MODE
@@ -4953,7 +4974,7 @@ full_column_name
     ;
 
 column_name_list_with_order
-    : id (ASC | DESC)? (COMMA id (ASC | DESC)?)*
+    : simple_column_name (ASC | DESC)? (COMMA simple_column_name (ASC | DESC)?)*
     ;
 
 //For some reason, tsql allows any number of prefixes:  Here, h is the column: a.b.c.d.e.f.g.h
@@ -4966,12 +4987,16 @@ insert_column_id
     ;
 
 column_name_list
-    : col+=id (COMMA col+=id)*
+    : col+=simple_column_name (COMMA col+=simple_column_name)*
     ;
 
 cursor_name
     : id
     | LOCAL_ID
+    ;
+
+simple_column_name
+    : id
     ;
 
 // https://msdn.microsoft.com/en-us/library/ms175874.aspx

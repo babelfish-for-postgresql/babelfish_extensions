@@ -1,0 +1,199 @@
+use master
+go
+
+create table t1 (a numeric(6,4), b numeric(6,3));
+insert into t1 values (4, 16);
+insert into t1 values (10.1234, 10.123);
+insert into t1 values (1.2, 6);
+insert into t1 values (NULL, 101.123);
+go
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+
+-- test selection of numeric Var
+select * from t1;
+go
+~~START~~
+numeric#!#numeric
+4.0000#!#16.000
+10.1234#!#10.123
+1.2000#!#6.000
+<NULL>#!#101.123
+~~END~~
+
+
+-- test operations on numeric var
+select a+b, a-b, a*b, a/b, +a, -a from t1;
+go
+~~START~~
+numeric#!#numeric#!#numeric#!#numeric#!#numeric#!#numeric
+20.0000#!#-12.0000#!#64.0000000#!#0.25000000000#!#4.0000#!#-4.0000
+20.2464#!#0.0004#!#102.4791782#!#1.00003951397#!#10.1234#!#-10.1234
+7.2000#!#-4.8000#!#7.2000000#!#0.20000000000#!#1.2000#!#-1.2000
+<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>
+~~END~~
+
+
+-- test functions that returns numeric value
+select round(a, 2) from t1;
+go
+~~START~~
+numeric
+4.00000000
+10.12000000
+1.20000000
+<NULL>
+~~END~~
+
+
+select power(a, b) from t1;
+go
+~~START~~
+numeric
+4294967296.00000000
+15028620538.57697600
+2.98598400
+<NULL>
+~~END~~
+
+
+select sqrt(a) from t1;
+go
+~~START~~
+numeric
+2.00000000
+3.18172908
+1.09544511
+<NULL>
+~~END~~
+
+
+select abs(a) from t1;
+go
+~~START~~
+numeric
+4.00000000
+10.12340000
+1.20000000
+<NULL>
+~~END~~
+
+
+-- test overflow error, max precision is 38 for TSQL client.
+-- BABEL-2656
+select power(10.0, 100);
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Arithmetic overflow error for data type numeric.)~~
+
+
+-- test Nullif expression
+select nullif(a, b) from t1;
+go
+~~START~~
+numeric
+4.0000
+10.1234
+1.2000
+<NULL>
+~~END~~
+
+
+-- test Param expr
+select (select 1.234);
+go
+~~START~~
+numeric
+1.23400000
+~~END~~
+
+
+-- test case expr
+select a, b,
+case when a>5 then a
+	 when a<=5 then b
+end
+	 from t1;
+go
+~~START~~
+numeric#!#numeric#!#numeric
+4.0000#!#16.000#!#16.0000
+10.1234#!#10.123#!#10.1234
+1.2000#!#6.000#!#6.0000
+<NULL>#!#101.123#!#<NULL>
+~~END~~
+
+
+-- test Aggref expr
+select min(a), max(a), min(b), max(b) from t1;
+go
+~~START~~
+numeric#!#numeric#!#numeric#!#numeric
+1.2000#!#10.1234#!#6.000#!#101.123
+~~END~~
+
+
+-- test Coalesece expr
+-- BABEL-2656
+select coalesce(a, b) from t1;
+go
+~~START~~
+numeric
+4.0000
+10.1234
+1.2000
+101.1230
+~~END~~
+
+
+-- test Union All
+select a from t1 Union All
+select b from t1;
+go
+~~START~~
+numeric
+4.00000000
+10.12340000
+1.20000000
+<NULL>
+16.00000000
+10.12300000
+6.00000000
+101.12300000
+~~END~~
+
+
+-- test overflow from multiplication of columns
+create table t2 (a numeric(38, 1), b numeric(38, 1))
+insert into t1 values (1234567890123456789012345678901234567.1), (1234567890123456789012345678901234567.2)
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Number of given values does not match target table definition)~~
+
+
+select * from t2
+go
+~~START~~
+numeric#!#numeric
+~~END~~
+
+
+select a * b from t2;
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Arithmetic overflow error for data type numeric.)~~
+
+
+-- clean up
+drop table t1;
+drop table t2;
+go

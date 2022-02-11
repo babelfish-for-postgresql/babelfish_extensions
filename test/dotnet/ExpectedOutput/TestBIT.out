@@ -1,0 +1,21 @@
+#Q#CREATE TABLE BIT_dt (a BIT)
+#Q# INSERT INTO BIT_dt(a) values(@a) 
+#Q# INSERT INTO BIT_dt(a) values(@a) 
+#Q# INSERT INTO BIT_dt(a) values(@a) 
+#Q#SELECT * FROM BIT_dt;
+#D#bit
+False
+True
+
+#Q#INSERT INTO BIT_dt(a) values(1)
+#Q#INSERT INTO BIT_dt(a) values(0)
+#Q#INSERT INTO BIT_dt(a) values(NULL)
+#Q#SELECT * FROM BIT_dt;
+#D#bit
+False
+True
+
+True
+False
+
+#Q#DROP TABLE BIT_dt;

@@ -1,0 +1,263 @@
+#Q#create table txntable1(c1 int);
+#Q#select @@trancount;
+#D#int
+1
+#Q#insert into txntable1 values(1);
+#Q#select @@trancount;
+#D#int
+0
+#Q#select c1 from txntable1;
+#D#int
+1
+#Q#insert into txntable1 values(2);
+#Q#select c1 from txntable1;
+#D#int
+1
+#Q#insert into txntable1 values(2);
+#Q#select c1 from txntable1;
+#D#int
+1
+2
+#Q#select @@trancount;
+#D#int
+1
+#Q#insert into txntable1 values(3);
+#Q#select @@trancount;
+#D#int
+1
+#Q#select @@trancount;
+#D#int
+0
+#Q#select c1 from txntable1;
+#D#int
+1
+2
+#Q#insert into txntable1 values(4);
+#Q#select c1 from txntable1;
+#D#int
+1
+2
+4
+#Q#insert into txntable1 values(5);
+#Q#select c1 from txntable1;
+#D#int
+1
+2
+4
+5
+#Q#insert into txntable1 values(6);
+#Q#select c1 from txntable1;
+#D#int
+1
+2
+4
+5
+#Q#insert into txntable1 values(7);
+#Q#select c1 from txntable1;
+#D#int
+1
+2
+4
+5
+#Q#insert into txntable1 values(8);
+#Q#select c1 from txntable1;
+#D#int
+1
+2
+4
+5
+8
+#Q#insert into txntable1 values(9);
+#Q#select c1 from txntable1;
+#D#int
+1
+2
+4
+5
+8
+#Q#insert into txntable1 values(10);
+#Q#select c1 from txntable1;
+#D#int
+1
+2
+4
+5
+8
+10
+#Q#insert into txntable1 values(10);
+#Q#select c1 from txntable1;
+#D#int
+1
+2
+4
+5
+8
+10
+#Q#insert into txntable1 values(1);
+#Q#select @@trancount;
+#D#int
+1
+#Q#insert into txntable1 values(2);
+#Q#insert into txntable1 values(3);
+#Q#select @@trancount;
+#D#int
+1
+#Q#insert into txntable1 values(4);
+#Q#select c1 from txntable1;
+#D#int
+1
+2
+4
+5
+8
+10
+1
+2
+3
+4
+#Q#select @@trancount;
+#D#int
+1
+#Q#select c1 from txntable1;
+#D#int
+1
+2
+4
+5
+8
+10
+1
+2
+3
+#Q#select @@trancount;
+#D#int
+1
+#Q#select c1 from txntable1;
+#D#int
+1
+2
+4
+5
+8
+10
+1
+2
+#Q#select @@trancount;
+#D#int
+1
+#Q#select c1 from txntable1;
+#D#int
+1
+2
+4
+5
+8
+10
+1
+#Q#select @@trancount;
+#D#int
+0
+#Q#select c1 from txntable1;
+#D#int
+1
+2
+4
+5
+8
+10
+#Q#insert into txntable1 values(1);
+#Q#insert into txntable1 values(2);
+#Q#insert into txntable1 values(3);
+#Q#insert into txntable1 values(4);
+#Q#select c1 from txntable1;
+#D#int
+1
+2
+4
+5
+8
+10
+#Q#insert into txntable1 values(1);
+#Q#insert into txntable1 values(2);
+#Q#insert into txntable1 values(3);
+#Q#select @@trancount;
+#D#int
+1
+#Q#select @@trancount;
+#D#int
+0
+#Q#select c1 from txntable1;
+#D#int
+1
+2
+4
+5
+8
+10
+#Q#insert into txntable1 values(1);
+#Q#insert into txntable1 values(2);
+#Q#select c1 from txntable1;
+#D#int
+1
+2
+4
+5
+8
+10
+1
+2
+#Q#select c1 from txntable1;
+#D#int
+1
+2
+4
+5
+8
+10
+#Q#insert into txntable1 values(3);
+#Q#insert into txntable1 values(4);
+#Q#select c1 from txntable1;
+#D#int
+1
+2
+4
+5
+8
+10
+3
+4
+#Q#insert into txntable1 values(5);
+#Q#select c1 from txntable1;
+#D#int
+1
+2
+4
+5
+8
+10
+3
+5
+#Q#insert into txntable1 values(6);
+#Q#insert into txntable1 values(7);
+#Q#select c1 frm txntable1;
+#E#syntax error near ';' at line 1 and character position 23
+#Q#select c1 from txntable1;
+#D#int
+1
+2
+4
+5
+8
+10
+3
+5
+#Q#select @@trancount;
+#D#int
+0
+#Q#select @@trancount;
+#D#int
+0
+#Q#select @@trancount;
+#D#int
+0
+#Q#DROP TABLE txntable1;

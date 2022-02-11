@@ -30,15 +30,13 @@ GO
 
 exec error_mapping.ErrorHandling1;
 GO
-~~ERROR (Code: 3616)~~
-
-~~ERROR (Message: An error was raised during trigger execution. The batch has been aborted and the user transaction, if any, has been rolled back.)~~
-
 
 select * from t3616;
 GO
 ~~START~~
 int
+1
+2
 ~~END~~
 
 

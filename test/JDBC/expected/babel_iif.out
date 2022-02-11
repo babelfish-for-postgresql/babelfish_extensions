@@ -26,6 +26,13 @@ float
 3.14
 ~~END~~
 
+select iif (2 > 1, cast('$123.123' as money), cast(1 as int));
+go
+~~START~~
+money
+123.1230
+~~END~~
+
 select iif (2 > 1, cast('$123.123' as money), cast(3.14 as float));
 go
 ~~START~~
@@ -38,6 +45,13 @@ go
 ~~START~~
 datetime
 2020-10-20 09:00:00.0
+~~END~~
+
+select iif (2 > 1, cast('$123.123' as money), cast(321 as bigint));
+go
+~~START~~
+money
+123.1230
 ~~END~~
 
 select iif (2 > 1, cast(3.14 as float), cast('$123.123' as money));

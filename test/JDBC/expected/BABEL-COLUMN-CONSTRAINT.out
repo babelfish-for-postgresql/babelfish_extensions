@@ -1,0 +1,86 @@
+CREATE SCHEMA [Babelfish_COLCONST];
+GO
+
+
+create table [Babelfish_COLCONST].[a] (
+  id int identity primary key,
+  texto varchar(50) NOT NULL
+);
+create table [Babelfish_COLCONST].[b] (
+  id int identity primary key,
+  foreign_id int not null references [Babelfish_COLCONST].[a],
+  texto varchar(50) NOT NULL
+);
+GO
+
+create table [Babelfish_COLCONST].[c] (
+    id int identity primary key,
+    foreign_id int not null,
+    foreign key(foreign_id) references [Babelfish_COLCONST].[a](id),
+    texto varchar(50) NOT NULL
+);
+GO
+
+SET IDENTITY_INSERT [Babelfish_COLCONST].[a] ON;
+GO
+
+insert into [Babelfish_COLCONST].[a](id,texto) values(1, 'some text');
+GO
+~~ROW COUNT: 1~~
+
+
+insert into [Babelfish_COLCONST].[b](foreign_id, texto) values(1,'insert text');
+GO
+~~ROW COUNT: 1~~
+
+
+insert into [Babelfish_COLCONST].[c](foreign_id, texto) values(1,'insert text');
+GO
+~~ROW COUNT: 1~~
+
+
+select * from [Babelfish_COLCONST].[a];
+GO
+~~START~~
+int#!#varchar
+1#!#some text
+~~END~~
+
+
+select * from [Babelfish_COLCONST].[b];
+GO
+~~START~~
+int#!#int#!#varchar
+1#!#1#!#insert text
+~~END~~
+
+
+select * from [Babelfish_COLCONST].[c];
+GO
+~~START~~
+int#!#int#!#varchar
+1#!#1#!#insert text
+~~END~~
+
+
+-- test invalid data insert
+insert into [Babelfish_COLCONST].[b](foreign_id, texto) values(2,'insert text');
+GO
+~~ERROR (Code: 547)~~
+
+~~ERROR (Message: insert or update on table "b" violates foreign key constraint "b_foreign_id_fkey")~~
+
+
+-- test invalid data insert
+insert into [Babelfish_COLCONST].[c](foreign_id, texto) values(2,'insert text');
+GO
+~~ERROR (Code: 547)~~
+
+~~ERROR (Message: insert or update on table "c" violates foreign key constraint "c_foreign_id_fkey")~~
+
+
+DROP TABLE [Babelfish_COLCONST].[c];
+DROP TABLE [Babelfish_COLCONST].[b];
+DROP TABLE [Babelfish_COLCONST].[a];
+DROP SCHEMA [Babelfish_COLCONST];
+GO

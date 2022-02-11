@@ -1,0 +1,92 @@
+create schema error_mapping;
+GO
+
+CREATE TABLE t3616(id int);
+GO
+
+CREATE TABLE t3617(id int);
+GO
+
+CREATE TRIGGER t3616Trigger
+ON              t3616
+AFTER           INSERT  
+AS
+BEGIN
+    BEGIN TRY
+        BEGIN TRAN
+        INSERT INTO t3616 VALUES (2)
+        COMMIT TRAN
+    END TRY
+    BEGIN CATCH
+        SELECT ERROR_MESSAGE();
+    END CATCH
+END
+GO
+
+
+CREATE TRIGGER t3617Trigger
+ON              t3617
+AFTER           INSERT  
+AS
+BEGIN
+    BEGIN TRY
+        BEGIN TRAN
+        INSERT INTO t3616 VALUES (1)
+        COMMIT TRAN
+    END TRY
+    BEGIN CATCH
+        SELECT ERROR_MESSAGE();
+    END CATCH
+END
+GO
+
+create procedure error_mapping.ErrorHandling1 as
+begin
+INSERT INTO t3617 values (1)
+if @@error > 0 select cast('STATEMENT TERMINATING ERROR' as text);
+end
+GO
+
+exec error_mapping.ErrorHandling1;
+GO
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+
+select * from t3616
+GO
+~~START~~
+int
+1
+2
+~~END~~
+
+
+select * from t3617
+GO
+~~START~~
+int
+1
+~~END~~
+
+
+drop trigger t3617Trigger;
+GO
+
+drop trigger t3616Trigger;
+GO
+
+drop table t3616;
+GO
+
+drop table t3617;
+GO
+
+drop procedure error_mapping.ErrorHandling1;
+GO
+
+drop schema error_mapping;
+GO

@@ -1,0 +1,260 @@
+# int
+Create table sourceTable(a int, b int not null)
+prepst#!# INSERT INTO sourceTable(a, b) values(@a, @b) #!#int|-|a|-|2#!#int|-|b|-|2
+prepst#!#exec#!#int|-|a|-|<NULL>#!#int|-|b|-|3
+Select * from sourceTable
+Insert into sourceTable values (1, 1);
+Insert into sourceTable values (NULL, 1);
+Select * from sourceTable
+drop table sourceTable
+
+# smallint
+Create table sourceTable(a smallint, b smallint not null)
+prepst#!# INSERT INTO sourceTable(a, b) values(@a, @b) #!#smallint|-|a|-|2#!#smallint|-|b|-|2
+prepst#!#exec#!#smallint|-|a|-|<NULL>#!#smallint|-|b|-|3
+Select * from sourceTable
+Insert into sourceTable values (1, 1);
+Insert into sourceTable values (NULL, 1);
+Select * from sourceTable
+drop table sourceTable
+
+# bigint
+Create table sourceTable(a bigint, b bigint not null)
+prepst#!# INSERT INTO sourceTable(a, b) values(@a, @b) #!#bigint|-|a|-|2#!#bigint|-|b|-|2
+prepst#!#exec#!#bigint|-|a|-|<NULL>#!#bigint|-|b|-|3
+Select * from sourceTable
+Insert into sourceTable values (1, 1);
+Insert into sourceTable values (NULL, 1);
+Select * from sourceTable
+drop table sourceTable
+
+# bit
+Create table sourceTable(a bit, b bit not null)
+prepst#!# INSERT INTO sourceTable(a, b) values(@a, @b) #!#bit|-|a|-|true#!#bit|-|b|-|false
+prepst#!#exec#!#bit|-|a|-|<NULL>#!#bit|-|b|-|true
+Select * from sourceTable
+Insert into sourceTable values (1, 1);
+Insert into sourceTable values (NULL, 1);
+Select * from sourceTable
+drop table sourceTable
+
+# float
+Create table sourceTable(a float, b float not null)
+prepst#!# INSERT INTO sourceTable(a, b) values(@a, @b) #!#float|-|a|-|2.00#!#float|-|b|-|2.01
+prepst#!#exec#!#float|-|a|-|<NULL>#!#float|-|b|-|2.20
+Select * from sourceTable
+Insert into sourceTable values (1.1101, 0.00010);
+Insert into sourceTable values (NULL, 1);
+Select * from sourceTable
+drop table sourceTable
+
+# real
+Create table sourceTable(a real, b real not null)
+prepst#!# INSERT INTO sourceTable(a, b) values(@a, @b) #!#real|-|a|-|2.00#!#real|-|b|-|2.01
+prepst#!#exec#!#real|-|a|-|<NULL>#!#real|-|b|-|2.20
+Select * from sourceTable
+Insert into sourceTable values (1.1101, 0.00010);
+Insert into sourceTable values (NULL, 1);
+Select * from sourceTable
+drop table sourceTable
+
+# char
+Create table sourceTable(a char(10), b char(10) not null)
+prepst#!# INSERT INTO sourceTable(a, b) values(@a, @b) #!#char|-|a|-|hello#!#char|-|b|-|jello
+prepst#!#exec#!#char|-|a|-|<NULL>#!#char|-|b|-|mellow
+Select * from sourceTable
+Insert into sourceTable values ('hello', 'jello');
+Insert into sourceTable values (NULL, 'jello');
+Select * from sourceTable
+drop table sourceTable
+
+# nchar
+Create table sourceTable(a nchar(10), b nchar(10) not null)
+prepst#!# INSERT INTO sourceTable(a, b) values(@a, @b) #!#nchar|-|a|-|hello#!#nchar|-|b|-|jello
+prepst#!#exec#!#nchar|-|a|-|<NULL>#!#nchar|-|b|-|mellow
+Select * from sourceTable
+Insert into sourceTable values ('hello', 'jello');
+Insert into sourceTable values (NULL, 'jello');
+Select * from sourceTable
+drop table sourceTable
+
+# varchar
+Create table sourceTable(a varchar(10), b varchar(10) not null)
+prepst#!# INSERT INTO sourceTable(a, b) values(@a, @b) #!#varchar|-|a|-|hello#!#varchar|-|b|-|jello
+prepst#!#exec#!#varchar|-|a|-|<NULL>#!#varchar|-|b|-|mellow
+Select * from sourceTable
+Insert into sourceTable values ('hello', 'jello');
+Insert into sourceTable values (NULL, 'jello');
+Select * from sourceTable
+drop table sourceTable
+
+# nvarchar
+Create table sourceTable(a nvarchar(10), b nvarchar(10) not null)
+prepst#!# INSERT INTO sourceTable(a, b) values(@a, @b) #!#nvarchar|-|a|-|hello#!#nvarchar|-|b|-|jello
+prepst#!#exec#!#nvarchar|-|a|-|<NULL>#!#nvarchar|-|b|-|mellow
+Select * from sourceTable
+Insert into sourceTable values ('hello', 'jello');
+Insert into sourceTable values (NULL, 'jello');
+Select * from sourceTable
+drop table sourceTable
+
+# text
+Create table sourceTable(a text, b text not null)
+prepst#!# INSERT INTO sourceTable(a, b) values(@a, @b) #!#text|-|a|-|utils/sample.txt#!#text|-|b|-|utils/sample.txt
+prepst#!#exec#!#text|-|a|-|<NULL>#!#text|-|b|-|utils/sample.txt
+Select * from sourceTable
+Insert into sourceTable values ('hello', 'jello');
+Insert into sourceTable values (NULL, 'jello');
+Select * from sourceTable
+drop table sourceTable
+
+# ntext
+Create table sourceTable(a ntext, b ntext not null)
+prepst#!# INSERT INTO sourceTable(a, b) values(@a, @b) #!#ntext|-|a|-|utils/sample.txt#!#ntext|-|b|-|utils/sample.txt
+prepst#!#exec#!#ntext|-|a|-|<NULL>#!#ntext|-|b|-|utils/sample.txt
+Select * from sourceTable
+Insert into sourceTable values ('hello', 'jello');
+Insert into sourceTable values (NULL, 'jello');
+Select * from sourceTable
+drop table sourceTable
+
+# binary
+Create table sourceTable(a binary(10), b binary(10) not null)
+prepst#!# INSERT INTO sourceTable(a, b) values(@a, @b) #!#binary|-|a|-|0x31323334#!#binary|-|b|-|0x9241
+prepst#!#exec#!#binary|-|a|-|<NULL>#!#binary|-|b|-|0x9241
+Select * from sourceTable
+Insert into sourceTable values (0x31323334, 0x9241);
+Insert into sourceTable values (NULL, 0x9241);
+Select * from sourceTable
+drop table sourceTable
+
+# varbinary
+Create table sourceTable(a varbinary(10), b varbinary(10) not null)
+prepst#!# INSERT INTO sourceTable(a, b) values(@a, @b) #!#varbinary|-|a|-|0x31323334#!#varbinary|-|b|-|0x9241
+prepst#!#exec#!#varbinary|-|a|-|<NULL>#!#varbinary|-|b|-|0x9241
+Select * from sourceTable
+Insert into sourceTable values (0x31323334, 0x9241);
+Insert into sourceTable values (NULL, 0x9241);
+Select * from sourceTable
+drop table sourceTable
+
+# numeric
+Create table sourceTable(a numeric(38, 22), b numeric(38, 22) not null)
+prepst#!# INSERT INTO sourceTable(a, b) values(@a, @b) #!#numeric|-|a|-|1.1101#!#numeric|-|b|-|1.1101
+prepst#!#exec#!#numeric|-|a|-|<NULL>#!#numeric|-|b|-|0.00
+Select * from sourceTable
+Insert into sourceTable values (1.1101, 0.00010);
+Insert into sourceTable values (NULL, 0.00010);
+Select * from sourceTable
+drop table sourceTable
+
+# decimal
+Create table sourceTable(a decimal(38, 22), b decimal(38, 22) not null)
+prepst#!# INSERT INTO sourceTable(a, b) values(@a, @b) #!#decimal|-|a|-|1.1101#!#decimal|-|b|-|1.1101
+prepst#!#exec#!#decimal|-|a|-|<NULL>#!#decimal|-|b|-|1.1101
+Select * from sourceTable
+Insert into sourceTable values (1.1101, 0.00010);
+Insert into sourceTable values (NULL, 0.00010);
+Select * from sourceTable
+drop table sourceTable
+
+# money
+Create table sourceTable(a money, b money not null)
+prepst#!# INSERT INTO sourceTable(a, b) values(@a, @b) #!#money|-|a|-|100.11#!#money|-|b|-|100.11
+prepst#!#exec#!#money|-|a|-|<NULL>#!#money|-|b|-|100.11
+Select * from sourceTable
+Insert into sourceTable values (100.11, 0.10);
+Insert into sourceTable values (NULL, 0.10);
+Select * from sourceTable
+drop table sourceTable
+
+# smallmoney
+Create table sourceTable(a smallmoney, b smallmoney not null)
+prepst#!# INSERT INTO sourceTable(a, b) values(@a, @b) #!#smallmoney|-|a|-|0.10#!#smallmoney|-|b|-|0.10
+prepst#!#exec#!#smallmoney|-|a|-|<NULL>#!#smallmoney|-|b|-|0.10
+Select * from sourceTable
+Insert into sourceTable values (100.11, 0.10);
+Insert into sourceTable values (NULL, 0.10);
+Select * from sourceTable
+drop table sourceTable
+
+# uniqueidentifier
+Create table sourceTable(a uniqueidentifier, b uniqueidentifier not null)
+prepst#!# INSERT INTO sourceTable(a, b) values(@a, @b) #!#uniqueidentifier|-|a|-|51f178a6-53c7-472c-9be1-1c08942342d7#!#uniqueidentifier|-|b|-|51f178a6-53c7-472c-9be1-1c08942342d7
+prepst#!#exec#!#uniqueidentifier|-|a|-|<NULL>#!#uniqueidentifier|-|b|-|51f178a6-53c7-472c-9be1-1c08942342d7
+Select * from sourceTable
+Insert into sourceTable values ('51f178a6-53c7-472c-9be1-1c08942342d7', 'dd8cb046-461d-411e-be40-d219252ce849');
+Insert into sourceTable values (NULL, 'dd8cb046-461d-411e-be40-d219252ce849');
+Select * from sourceTable
+drop table sourceTable
+
+# date
+Create table sourceTable(a date, b date not null)
+prepst#!# INSERT INTO sourceTable(a, b) values(@a, @b) #!#date|-|a|-|2000-02-28#!#date|-|b|-|2000-02-28
+prepst#!#exec#!#date|-|a|-|<NULL>#!#date|-|b|-|2000-02-28
+Select * from sourceTable
+Insert into sourceTable values ('2000-02-28', '0001-01-01');
+Insert into sourceTable values (NULL, '0001-01-01');
+Select * from sourceTable
+drop table sourceTable
+
+# time
+Create table sourceTable(a time(6), b time(6) not null)
+prepst#!# INSERT INTO sourceTable(a, b) values(@a, @b) #!#time|-|a|-|12:45:37.123#!#time|-|b|-|12:45:37.123
+prepst#!#exec#!#time|-|a|-|<NULL>#!#time|-|b|-|12:45:37.123
+Select * from sourceTable
+Insert into sourceTable values ('12:45:37.123', '12:45:37.12');
+Insert into sourceTable values (NULL, '12:45:37.12');
+Select * from sourceTable
+drop table sourceTable
+
+# datetime
+Create table sourceTable(a datetime, b datetime not null)
+prepst#!# INSERT INTO sourceTable(a, b) values(@a, @b) #!#datetime|-|a|-|2000-12-13 12:58:23.123#!#datetime|-|b|-|2000-12-13 12:58:23.123
+prepst#!#exec#!#datetime|-|a|-|<NULL>#!#datetime|-|b|-|2000-12-13 12:58:23.123
+Select * from sourceTable
+Insert into sourceTable values ('2000-12-13 12:58:23.123', '1900-02-28 23:59:59.989');
+Insert into sourceTable values (NULL, '1900-02-28 23:59:59.989');
+Select * from sourceTable
+drop table sourceTable
+
+# smalldatetime
+Create table sourceTable(a smalldatetime, b smalldatetime not null)
+prepst#!# INSERT INTO sourceTable(a, b) values(@a, @b) #!#smalldatetime|-|a|-|2007-05-08 12:35:29#!#smalldatetime|-|b|-|2007-05-08 12:35:29
+prepst#!#exec#!#smalldatetime|-|a|-|<NULL>#!#smalldatetime|-|b|-|2007-05-08 12:35:29
+Select * from sourceTable
+Insert into sourceTable values ('2007-05-08 12:35:29', '2000-12-13 12:58:23');
+Insert into sourceTable values (NULL, '2000-12-13 12:58:23');
+Select * from sourceTable
+drop table sourceTable
+
+# datetime2
+Create table sourceTable(a Datetime2(6), b Datetime2(6) not null)
+prepst#!# INSERT INTO sourceTable(a, b) values(@a, @b) #!#Datetime2|-|a|-|2016-10-23 12:45:37.123|-|6#!#Datetime2|-|b|-|2016-10-23 12:45:37.123|-|6
+prepst#!#exec#!#Datetime2|-|a|-|<NULL>#!#Datetime2|-|b|-|2016-10-23 12:45:37.123|-|6
+Select * from sourceTable
+Insert into sourceTable values ('2016-10-23 12:45:37.123', '2016-10-23 12:45:37.123');
+Insert into sourceTable values (NULL, '2016-10-23 12:45:37.123');
+Select * from sourceTable
+drop table sourceTable
+
+# datetimeoffset
+Create table sourceTable(a datetimeoffset(6), b datetimeoffset(6) not null)
+prepst#!# INSERT INTO sourceTable(a, b) values(@a, @b) #!#datetimeoffset|-|a|-|2016-10-23 12:24:32|-|6#!#datetimeoffset|-|b|-|2016-10-23 12:24:32|-|6
+prepst#!#exec#!#datetimeoffset|-|a|-|<NULL>#!#datetimeoffset|-|b|-|2016-10-23 12:24:32|-|6
+Select * from sourceTable
+Insert into sourceTable values ('2016-10-23 12:24:32 +10:0', '2016-10-23 12:24:32 +10:0');
+Insert into sourceTable values (NULL, '2016-10-23 12:24:32 +10:0');
+Select * from sourceTable
+drop table sourceTable
+
+# sql_variant
+Create table sourceTable(a sql_variant, b sql_variant not null)
+prepst#!# INSERT INTO sourceTable(a, b) values(@a, @b) #!#bit|-|a|-|<NULL>#!#int|-|b|-|2
+prepst#!#exec#!#bit|-|a|-|0#!#bit|-|b|-|1
+Select * from sourceTable
+Insert into sourceTable values (cast (1 as int), cast ('abc' as varchar(10)));
+Insert into sourceTable values (NULL, cast ('abc' as varchar(10)));
+Select * from sourceTable
+drop table sourceTable
+

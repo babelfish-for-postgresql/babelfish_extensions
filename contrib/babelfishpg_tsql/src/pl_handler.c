@@ -81,6 +81,7 @@
 #include "access/xact.h"
 
 extern bool escape_hatch_unique_constraint;
+extern bool pltsql_recursive_triggers;
 
 extern List *babelfishpg_tsql_raw_parser(const char *str);
 extern bool install_backend_gram_hooks();
@@ -92,6 +93,7 @@ extern Datum init_tsql_coerce_hash_tab(PG_FUNCTION_ARGS);
 extern Datum init_tsql_datatype_precedence_hash_tab(PG_FUNCTION_ARGS);
 extern Datum init_tsql_cursor_hash_tab(PG_FUNCTION_ARGS);
 extern PLtsql_execstate *get_current_tsql_estate(void);
+extern void pre_check_trigger_schema(List *object, bool missing_ok);
 static void  get_language_procs(const char *langname, Oid *compiler, Oid *validator);
 extern bool pltsql_suppress_string_truncation_error();
 static Oid bbf_table_var_lookup(const char *relname, Oid relnamespace);
@@ -130,6 +132,7 @@ extern int CurrentLineNumber;
 static non_tsql_proc_entry_hook_type prev_non_tsql_proc_entry_hook = NULL;
 static void pltsql_non_tsql_proc_entry(int proc_count, int sys_func_count);
 static bool get_attnotnull(Oid relid, AttrNumber attnum);
+static void set_procid(Oid oid);
 
 PG_FUNCTION_INFO_V1(pltsql_inline_handler);
 
@@ -156,6 +159,8 @@ static const struct config_enum_entry schema_mapping_options[] = {
 	{NULL, 0, false}
 };
 
+Oid procid_var = InvalidOid;
+
 int			pltsql_variable_conflict = PLTSQL_RESOLVE_ERROR;
 
 int 		pltsql_schema_mapping;
@@ -164,6 +169,7 @@ int			pltsql_extra_errors;
 bool		pltsql_debug_parser = false;
 char       *identity_insert_string;
 bool		output_update_transformation = false;
+int			pltsql_trigger_depth = 0;
 
 PLExecStateCallStack	*exec_state_call_stack = NULL;
 int 					text_size;
@@ -211,6 +217,12 @@ pltsql_resetcache_hook_type prev_pltsql_resetcache_hook = NULL;
 CLUSTER_COLLATION_OID_hook_type prev_CLUSTER_COLLATION_OID_hook = NULL;
 PreCreateCollation_hook_type prev_PreCreateCollation_hook = NULL;
 TranslateCollation_hook_type prev_TranslateCollation_hook = NULL;
+
+static void
+set_procid(Oid oid)
+{
+	procid_var = oid;
+}
 
 static void
 assign_identity_insert(const char *newval, void *extra)
@@ -385,6 +397,44 @@ pltsql_pre_parse_analyze(ParseState *pstate, RawStmt *parseTree)
 
 	if (sql_dialect != SQL_DIALECT_TSQL)
 		return;
+
+	if (parseTree->stmt->type == T_CreateFunctionStmt ){
+		ListCell 		*option;
+		CreateTrigStmt *trigStmt;
+		char* trig_schema;
+		foreach (option, ((CreateFunctionStmt *) parseTree->stmt)->options){
+			DefElem *defel = (DefElem *) lfirst(option);
+			if (strcmp(defel->defname, "trigStmt") == 0)
+			{
+				trigStmt = (CreateTrigStmt *) defel->arg;
+				if (trigStmt->args != NIL){
+					trig_schema = ((Value*)list_nth(((CreateTrigStmt *) trigStmt)->args,0))->val.str;
+					if ((trigStmt->relation->schemaname != NULL && strcasecmp(trig_schema, trigStmt->relation->schemaname)!=0)
+					|| trigStmt->relation->schemaname == NULL){
+					ereport(ERROR,
+						(errcode(ERRCODE_INTERNAL_ERROR),
+						 errmsg("Cannot create trigger '%s.%s' because its schema is different from the schema of the target table or view.",
+						   trig_schema , trigStmt->trigname)));
+					}
+					trigStmt->args = NIL;
+				}
+			}
+		}
+	}
+
+	if(parseTree->stmt->type == T_DropStmt){
+		DropStmt *dropStmt;
+		dropStmt = (DropStmt *) parseTree->stmt;
+		if (dropStmt->removeType == OBJECT_TRIGGER){
+			ListCell   *cell1;
+			// in case we have multi triggers in one stmt
+			foreach(cell1, dropStmt->objects)
+			{
+				Node *object = lfirst(cell1);
+				pre_check_trigger_schema(castNode(List, object), dropStmt->missing_ok);
+			}
+		}
+	}
 
 	if (enable_schema_mapping())
 		rewrite_object_refs(parseTree->stmt);
@@ -2284,6 +2334,7 @@ _PG_init(void)
         (*pltsql_protocol_plugin_ptr)->sp_prepexec_callback = &pltsql_inline_handler;
         (*pltsql_protocol_plugin_ptr)->sp_unprepare_callback = &sp_unprepare;
         (*pltsql_protocol_plugin_ptr)->reset_session_properties = &reset_session_properties;
+        (*pltsql_protocol_plugin_ptr)->bulk_load_callback = &execute_bulk_load_insert;
 		(*pltsql_protocol_plugin_ptr)->pltsql_declare_var_callback = &pltsql_declare_variable;
 		(*pltsql_protocol_plugin_ptr)->pltsql_read_out_param_callback = &pltsql_read_composite_out_param;
 		(*pltsql_protocol_plugin_ptr)->lookup_collation_table_callback = &lookup_collation_table;
@@ -2293,7 +2344,7 @@ _PG_init(void)
 		(*pltsql_protocol_plugin_ptr)->sqlvariant_get_pg_base_type = &TdsGetPGbaseType;
 		(*pltsql_protocol_plugin_ptr)->sqlvariant_get_variant_base_type = &TdsGetVariantBaseType;
 		(*pltsql_protocol_plugin_ptr)->pltsql_read_proc_return_status = &pltsql_proc_return_code;
-		(*pltsql_protocol_plugin_ptr)->sp_cursoropen_callback = &execute_sp_cursoropen;
+		(*pltsql_protocol_plugin_ptr)->sp_cursoropen_callback = &execute_sp_cursoropen_old;
 		(*pltsql_protocol_plugin_ptr)->sp_cursorclose_callback = &execute_sp_cursorclose;
 		(*pltsql_protocol_plugin_ptr)->sp_cursorfetch_callback = &execute_sp_cursorfetch;
 		(*pltsql_protocol_plugin_ptr)->sp_cursorexecute_callback = &execute_sp_cursorexecute;
@@ -2308,6 +2359,7 @@ _PG_init(void)
 		(*pltsql_protocol_plugin_ptr)->pltsql_get_errdata = &pltsql_get_errdata;
 		(*pltsql_protocol_plugin_ptr)->pltsql_get_database_oid = &get_db_id;
 		(*pltsql_protocol_plugin_ptr)->pltsql_get_login_default_db = &get_login_default_db;
+		(*pltsql_protocol_plugin_ptr)->pltsql_is_login = &is_login;
 	}
 
 	*pltsql_config_ptr = &myConfig;
@@ -2562,6 +2614,7 @@ pltsql_call_handler(PG_FUNCTION_ARGS)
 	int                     save_nestlevel;
 	MemoryContext	savedPortalCxt;
 	bool support_tsql_trans = pltsql_support_tsql_transactions();
+	Oid prev_procid = InvalidOid;
 
 	create_queryEnv2(CacheMemoryContext, false);
 
@@ -2601,15 +2654,26 @@ pltsql_call_handler(PG_FUNCTION_ARGS)
 	func->use_count++;
 
 	save_nestlevel = pltsql_new_guc_nest_level();
+
+	prev_procid = procid_var;
 	PG_TRY();
 	{
+		set_procid(func->fn_oid);
 		/*
 		 * Determine if called as function or trigger and call appropriate
 		 * subhandler
 		 */
-		if (CALLED_AS_TRIGGER(fcinfo))
-			retval = PointerGetDatum(pltsql_exec_trigger(func,
+		if (CALLED_AS_TRIGGER(fcinfo)){
+			if (!pltsql_recursive_triggers && save_cur_estate!=NULL 
+			&& is_recursive_trigger(save_cur_estate)){
+				retval = (Datum) 0;
+			}else{
+				pltsql_trigger_depth++;
+				retval = PointerGetDatum(pltsql_exec_trigger(func,
 														  (TriggerData *) fcinfo->context));
+				pltsql_trigger_depth--;
+			}
+		}
 		else if (CALLED_AS_EVENT_TRIGGER(fcinfo))
 		{
 			pltsql_exec_event_trigger(func,
@@ -2618,9 +2682,12 @@ pltsql_call_handler(PG_FUNCTION_ARGS)
 		}
 		else
 			retval = pltsql_exec_function(func, fcinfo, NULL, false);
+
+		set_procid(prev_procid);
 	}
 	PG_CATCH();
 	{
+		set_procid(prev_procid);
 		/* Decrement use-count, restore cur_estate, and propagate error */
 		func->use_count--;
 		func->cur_estate = save_cur_estate;

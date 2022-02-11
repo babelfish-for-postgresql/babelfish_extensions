@@ -157,7 +157,7 @@ get_tsql_error_details(ErrorData *edata,
 		MemoryContextSwitchTo(oldContext);
 	}
 
-	key_info.message_hash = (uint32) hash_any((unsigned char *)edata->message_id, strlen(edata->message_id));
+	key_info.message_hash = (uint32) hash_any((unsigned char *)edata->message_id, (edata->message_id != NULL) ? strlen(edata->message_id) : 0);
 	key_info.sqlerrcode = edata->sqlerrcode;
 
 	map_info = (error_map_info) hash_search(error_map_hash,
@@ -237,7 +237,12 @@ get_tsql_error_details(ErrorData *edata,
 		 */
 		if (!flag)
 		{
-			*tsql_error_code	= ERRCODE_PLTSQL_ERROR_NOT_MAPPED;
+			TDSInstrumentation(INSTR_TDS_UNMAPPED_ERROR);
+
+			elog(LOG, "Unmapped error found. Code: %d, Message: %s, File: %s, Line: %d, Context: %s",
+				edata->sqlerrcode, edata->message, edata->filename, edata->lineno, error_context);
+
+			*tsql_error_code = ERRCODE_PLTSQL_ERROR_NOT_MAPPED;
 			*tsql_error_severity = 16;
 			return false;
 		}

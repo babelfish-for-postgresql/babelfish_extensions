@@ -83,11 +83,11 @@ tsql_login_option_list1:
 				{
 					$$ = lcons(makeDefElem("password", $4, @1), $6);
 				}
-			| WITH PASSWORD '=' TSQL_XCONST HASHED opt_must_change
+			| WITH PASSWORD '=' TSQL_XCONST TSQL_HASHED opt_must_change
 				{
 					$$ = list_make1(makeDefElem("password", NULL, @1));
 				}
-			| WITH PASSWORD '=' TSQL_XCONST HASHED opt_must_change tsql_login_option_list2
+			| WITH PASSWORD '=' TSQL_XCONST TSQL_HASHED opt_must_change tsql_login_option_list2
 				{
 					$$ = lcons(makeDefElem("password", NULL, @1), $7);
 				}
@@ -109,43 +109,43 @@ tsql_login_option_list2:
 		;
 
 tsql_login_option_elem:
-			SID '=' TSQL_XCONST
+			TSQL_SID '=' TSQL_XCONST
 				{
 					$$ = NULL;
 				}
-			| DEFAULT_DATABASE '=' NonReservedWord
+			| TSQL_DEFAULT_DATABASE '=' NonReservedWord
 				{
 					$$ = makeDefElem("default_database",
 									 (Node *)makeString($3),
 									 @1);
 				}
-			| DEFAULT_LANGUAGE '=' NonReservedWord
+			| TSQL_DEFAULT_LANGUAGE '=' NonReservedWord
 				{
 					$$ = NULL;
 				}
-			| CHECK_EXPIRATION '=' opt_boolean_or_string
+			| TSQL_CHECK_EXPIRATION '=' opt_boolean_or_string
 				{
 					$$ = NULL;
 				}
-			| CHECK_POLICY '=' opt_boolean_or_string
+			| TSQL_CHECK_POLICY '=' opt_boolean_or_string
 				{
 					$$ = NULL;
 				}
-			| CREDENTIAL '=' NonReservedWord
+			| TSQL_CREDENTIAL '=' NonReservedWord
 				{
 					$$ = NULL;
 				}
 		;
 
 opt_must_change:
-			MUST_CHANGE
+			TSQL_MUST_CHANGE
 			| /*EMPTY*/
 		;
 
 tsql_login_sources:
 			TSQL_WINDOWS
 			| TSQL_WINDOWS WITH tsql_windows_options_list
-			| CERTIFICATE NonReservedWord
+			| TSQL_CERTIFICATE NonReservedWord
 			| ASYMMETRIC KEY NonReservedWord
 		;
 
@@ -155,8 +155,8 @@ tsql_windows_options_list:
 		;
 
 tsql_windows_options:
-			DEFAULT_DATABASE '=' NonReservedWord
-			| DEFAULT_LANGUAGE '=' NonReservedWord
+			TSQL_DEFAULT_DATABASE '=' NonReservedWord
+			| TSQL_DEFAULT_LANGUAGE '=' NonReservedWord
 		;
 
 CreateUserStmt:
@@ -215,7 +215,7 @@ tsql_AlterLoginStmt:
 						n->options = list_concat(n->options, $5);
 					$$ = (Node *)n;
 				}
-			| ALTER TSQL_LOGIN RoleSpec add_drop CREDENTIAL NonReservedWord
+			| ALTER TSQL_LOGIN RoleSpec add_drop TSQL_CREDENTIAL NonReservedWord
 				{
 					AlterRoleStmt *n = makeNode(AlterRoleStmt);
 					n->role = $3;
@@ -258,17 +258,17 @@ tsql_alter_login_option_elem:
 				{
 					$$ = makeDefElem("password", $3, @1);
 				}
-			| PASSWORD '=' TSQL_XCONST HASHED tsql_alter_login_password_option1
+			| PASSWORD '=' TSQL_XCONST TSQL_HASHED tsql_alter_login_password_option1
 				{
 					$$ = makeDefElem("password", NULL, @1);
 				}
-			| DEFAULT_DATABASE '=' NonReservedWord
+			| TSQL_DEFAULT_DATABASE '=' NonReservedWord
 				{
 					$$ = makeDefElem("default_database",
 									 (Node *)makeString($3),
 									 @1);;
 				}
-			| DEFAULT_LANGUAGE '=' NonReservedWord
+			| TSQL_DEFAULT_LANGUAGE '=' NonReservedWord
 				{
 					$$ = NULL;
 				}
@@ -276,26 +276,26 @@ tsql_alter_login_option_elem:
 				{
 					$$ = NULL;
 				}
-			| CHECK_EXPIRATION '=' opt_boolean_or_string
+			| TSQL_CHECK_EXPIRATION '=' opt_boolean_or_string
 				{
 					$$ = NULL;
 				}
-			| CHECK_POLICY '=' opt_boolean_or_string
+			| TSQL_CHECK_POLICY '=' opt_boolean_or_string
 				{
 					$$ = NULL;
 				}
-			| CREDENTIAL '=' NonReservedWord
+			| TSQL_CREDENTIAL '=' NonReservedWord
 				{
 					$$ = NULL;
 				}
-			| NO CREDENTIAL
+			| NO TSQL_CREDENTIAL
 				{
 					$$ = NULL;
 				}
 		;
 
 tsql_alter_login_password_option1:
-			OLD_PASSWORD '=' tsql_nchar
+			TSQL_OLD_PASSWORD '=' tsql_nchar
 			| tsql_alter_login_password_option2_list
 			| /*EMPTY*/
 		;
@@ -306,8 +306,8 @@ tsql_alter_login_password_option2_list:
 		;
 
 tsql_alter_login_password_option2:
-			MUST_CHANGE
-			| UNLOCK
+			TSQL_MUST_CHANGE
+			| TSQL_UNLOCK
 		;
 
 tsql_DropLoginStmt:
@@ -321,7 +321,7 @@ tsql_DropLoginStmt:
 		;
 
 tsql_nchar:
-			VARCHAR Sconst { $$ = (Node *)makeString($2); }
+			TSQL_NVARCHAR Sconst { $$ = (Node *)makeString($2); }
 			| Sconst { $$ = (Node *)makeString($1); }
 		;
 
@@ -781,7 +781,7 @@ def_arg:	func_type tsql_on_ident_partitions_list			{ $$ = (Node *)$1; }
 		;
 
 DropStmt:
-			DROP drop_type_name_on_any_name name
+			DROP drop_type_name_on_any_name tsql_triggername
 				{
 					DropStmt *n = makeNode(DropStmt);
 
@@ -793,13 +793,13 @@ DropStmt:
 								 parser_errposition(@1)));
 					}
 					n->removeType = OBJECT_TRIGGER;
-					n->objects = list_make1(list_make1(makeString($3)));
+					n->objects = list_make1($3);
 					n->behavior = DROP_CASCADE;
 					n->missing_ok = false;
 					n->concurrent = false;
 					$$ = (Node *) n;
 				}
-			| DROP drop_type_name_on_any_name IF_P EXISTS name
+			| DROP drop_type_name_on_any_name IF_P EXISTS tsql_triggername
 				{
 					DropStmt *n = makeNode(DropStmt);
 
@@ -811,7 +811,7 @@ DropStmt:
 								 parser_errposition(@1)));
 					}
 					n->removeType = OBJECT_TRIGGER;
-					n->objects = list_make1(list_make1(makeString($5)));
+					n->objects = list_make1($5);
 					n->behavior = DROP_CASCADE;
 					n->missing_ok = true;
 					n->concurrent = false;
@@ -1380,7 +1380,7 @@ target_el:
 					$$->val = (Node *)$1;
 					$$->location = @1;
 				}
-			| 	a_expr AS VARCHAR Sconst
+			| 	a_expr AS TSQL_NVARCHAR Sconst
 				/*
 				 * This rule is to support SELECT 1 AS N'col' query in Babelfish.
 				 * For vanilla PG, the syntax is valid as well
@@ -1406,6 +1406,14 @@ AexprConst:
 			TSQL_XCONST
 				{
 					$$ = makeTSQLHexStringConst($1, @1);
+				}
+			| TSQL_NVARCHAR Sconst
+				{
+					/* This is to support N'str' in various locations */
+					TypeName *t = makeTypeNameFromNameList(list_make2(makeString("sys"), makeString("nvarchar")));
+					t->location = @1;
+					t->typmods = list_make1(makeIntConst(TSQLMaxTypmod, -1));
+					$$ = makeStringConstCast($2, @2, t);
 				}
 		;
 
@@ -2242,9 +2250,10 @@ tsql_xml_common_directive:
 			| TSQL_ROOT '(' Sconst ')'					{ $$ = makeStringConst($3, -1); }
 		;
 
+
 /* Create Function and Create Trigger in one statement */
 tsql_CreateTrigStmt:
-			CREATE TRIGGER name ON qualified_name
+			CREATE TRIGGER tsql_triggername ON qualified_name
 			tsql_TriggerActionTime tsql_TriggerEvents tsql_opt_not_for_replication
 			AS tokens_remaining
 				{
@@ -2256,7 +2265,7 @@ tsql_CreateTrigStmt:
 					DefElem *body = makeDefElem("as", (Node *) list_make1(makeString($10)), @10);
 					DefElem *trigStmt = makeDefElem("trigStmt", (Node *) n1, @1);
 
-					n1->trigname = $3;
+ 					n1->trigname = ((Value *)list_nth($3,0))->val.str;
 					n1->relation = $5;
 					/*
 					 * Function with the same name as the
@@ -2264,7 +2273,17 @@ tsql_CreateTrigStmt:
 					 * this create trigger command.
 					 */
 					n1->funcname = list_make1(makeString(n1->trigname));
-					n1->args = NIL;
+ 					if (list_length($3) > 1){
+	 					n1->trigname = ((Value *)list_nth($3,1))->val.str;
+						/*
+						* Used a hack way to pass the schema name from args, in CR-58614287
+						* Args will be set back to NIL in pl_handler pltsql_pre_parse_analyze()
+						* before calling backend functios
+						*/
+	 					n1->args = list_make1(makeString(((Value *)list_nth($3,0))->val.str));
+	 				}else{
+						n1->args = NIL;
+					}
 					/* TSQL only support statement level triggers as part of the
 					 * syntax, n1->row is false for AFTER, BEFORE and INSTEAD OF
 					 * triggers.
@@ -2280,48 +2299,23 @@ tsql_CreateTrigStmt:
 					n1->constrrel = NULL;
 					n1->transitionRels = NIL;
 
-					/* TODO: Postgres doesn't allow multi-event triggers
-					 * ("INSERT OR UPDATE") with transition tables atm: Triggers.c:497
-					 * We'll need to create both "inserted" and "deleted" transition
-					 * table if that feature is added in the future.
-					 *
-					 * For now, Create transition table "inserted" or "deleted" for TSQL
-					 */
-					if(((n1->events & TRIGGER_TYPE_INSERT) == TRIGGER_TYPE_INSERT &&
-						(n1->events & TRIGGER_TYPE_DELETE) == TRIGGER_TYPE_DELETE)
-						||
-					   ((n1->events & TRIGGER_TYPE_INSERT) == TRIGGER_TYPE_INSERT &&
-						(n1->events & TRIGGER_TYPE_UPDATE) == TRIGGER_TYPE_UPDATE)
-						||
-					   ((n1->events & TRIGGER_TYPE_DELETE) == TRIGGER_TYPE_DELETE &&
-						(n1->events & TRIGGER_TYPE_UPDATE) == TRIGGER_TYPE_UPDATE))
+					if((n1->events & TRIGGER_TYPE_INSERT) == TRIGGER_TYPE_INSERT ||
+					   (n1->events & TRIGGER_TYPE_UPDATE) == TRIGGER_TYPE_UPDATE)
 					{
-						ereport(NOTICE,
-								(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-								 errmsg("Multi-event trigger with transition tables not supported"),
-								 errhint("Use single event trigger with transition table"),
-								 parser_errposition(@1)));
+						nt_inserted = makeNode(TriggerTransition);
+						nt_inserted->name = "inserted";
+						nt_inserted->isNew = true;
+						nt_inserted->isTable = true;
+						n1->transitionRels = lappend(n1->transitionRels, nt_inserted);
 					}
-					else
+					if((n1->events & TRIGGER_TYPE_DELETE) == TRIGGER_TYPE_DELETE ||
+					   (n1->events & TRIGGER_TYPE_UPDATE) == TRIGGER_TYPE_UPDATE)
 					{
-						if((n1->events & TRIGGER_TYPE_INSERT) == TRIGGER_TYPE_INSERT ||
-						   (n1->events & TRIGGER_TYPE_UPDATE) == TRIGGER_TYPE_UPDATE)
-						{
-							nt_inserted = makeNode(TriggerTransition);
-							nt_inserted->name = "inserted";
-							nt_inserted->isNew = true;
-							nt_inserted->isTable = true;
-							n1->transitionRels = lappend(n1->transitionRels, nt_inserted);
-						}
-						if((n1->events & TRIGGER_TYPE_DELETE) == TRIGGER_TYPE_DELETE ||
-						   (n1->events & TRIGGER_TYPE_UPDATE) == TRIGGER_TYPE_UPDATE)
-						{
-							nt_deleted = makeNode(TriggerTransition);
-							nt_deleted->name = "deleted";
-							nt_deleted->isNew = false;
-							nt_deleted->isTable = true;
-							n1->transitionRels = lappend(n1->transitionRels, nt_deleted);
-						}
+						nt_deleted = makeNode(TriggerTransition);
+						nt_deleted->name = "deleted";
+						nt_deleted->isNew = false;
+						nt_deleted->isTable = true;
+						n1->transitionRels = lappend(n1->transitionRels, nt_deleted);
 					}
 
 					n2->is_procedure = false;
@@ -2334,6 +2328,10 @@ tsql_CreateTrigStmt:
 					$$ = (Node *) n2;
 				}
 	   ;
+
+ tsql_triggername: 
+	 		ColId									{ $$ = list_make1(makeString($1)); };
+	 		| ColId '.' ColId						{ $$ = list_make2(makeString($1),makeString($3)); };					
 
 tsql_TriggerActionTime:
 			TriggerActionTime
@@ -3660,20 +3658,30 @@ createdb_opt_item:
 				$$ = makeDefElem("collate", (Node *) makeString($2), @1);
 			}
 			;
+col_name_keyword:
+			  TSQL_NVARCHAR
+			;
 
 unreserved_keyword:
 			  TSQL_ALLOW_SNAPSHOT_ISOLATION
 			| TSQL_AUTO
 			| TSQL_BASE64
 			| TSQL_CALLER
+			| TSQL_CERTIFICATE
+			| TSQL_CHECK_EXPIRATION
+			| TSQL_CHECK_POLICY
+			| TSQL_CREDENTIAL
 			| TSQL_CLUSTERED
 			| TSQL_COLUMNSTORE
 			| TSQL_D
 			| TSQL_DAYOFYEAR
 			| TSQL_DD
+			| TSQL_DEFAULT_DATABASE
+			| TSQL_DEFAULT_LANGUAGE
 			| TSQL_DW
 			| TSQL_DY
 			| TSQL_EXPLICIT
+			| TSQL_HASHED
 			| TSQL_HH
 			| TSQL_IDENTITY_INSERT
 			| TSQL_ISOWK
@@ -3686,6 +3694,7 @@ unreserved_keyword:
 			| TSQL_MILLISECOND
 			| TSQL_MM
 			| TSQL_MS
+			| TSQL_MUST_CHANGE
 			| TSQL_N
 			| TSQL_NANOSECOND
 			| TSQL_NOCHECK
@@ -3693,6 +3702,7 @@ unreserved_keyword:
 			| TSQL_NOLOCK
 			| TSQL_NONCLUSTERED
 			| TSQL_NS
+			| TSQL_OLD_PASSWORD
 			| TSQL_PAGLOCK
 			| TSQL_PATH
 			| TSQL_PERSISTED
@@ -3712,16 +3722,20 @@ unreserved_keyword:
 			| TSQL_S
 			| TSQL_SAVE
 			| TSQL_SCHEMABINDING
+			| TSQL_SID
 			| TSQL_SS
+			| TSQL_SUBSTRING
 			| TSQL_TABLOCK
 			| TSQL_TABLOCKX
 			| TSQL_TEXTIMAGE_ON
 			| TSQL_TRAN
 			| TSQL_TZ
 			| TSQL_TZOFFSET
+			| TSQL_UNLOCK
 			| TSQL_UPDLOCK
 			| TSQL_WEEK
 			| TSQL_WEEKDAY
+			| TSQL_WINDOWS
 			| TSQL_WK
 			| TSQL_WW
 			| TSQL_XLOCK

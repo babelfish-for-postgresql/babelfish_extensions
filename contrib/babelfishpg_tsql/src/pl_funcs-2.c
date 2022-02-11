@@ -1,12 +1,68 @@
 #include "postgres.h"
+#include <stdlib.h>
 
 #include "nodes/parsenodes.h"
 #include "parser/parser.h"
 #include "parser/scansup.h"
+#include "libpq/pqformat.h"
 #include "utils/memutils.h"
 #include "pltsql.h"
 #include "pltsql-2.h"
 #include "pltsql_instr.h"
+
+static int cmpfunc(const void *a, const void *b)
+{
+  return ( *(int*)a - *(int*)b );
+}
+
+PG_FUNCTION_INFO_V1(columnsupdated);
+Datum
+columnsupdated(PG_FUNCTION_ARGS)
+{
+	StringInfoData buf;
+	ListCell *l;
+	UpdatedColumn *column;
+	List* curr_columns_list;
+	int *columnIndex;
+	int i;
+	int length, bufSize, curByteIndex, total_columns = 0;
+	int8 curBuf;
+	int j;
+	if (pltsql_trigger_depth-1<list_length(columns_updated_list))
+		curr_columns_list = (List *)list_nth(columns_updated_list, pltsql_trigger_depth - 1);
+	else curr_columns_list = NIL;
+	length = list_length(curr_columns_list);
+	curBuf = 0;
+	pq_begintypsend(&buf);
+	if (length > 0){
+		columnIndex =  (int *) palloc(sizeof(int) * length);
+		i = 0;
+		foreach(l, curr_columns_list){
+			column = (UpdatedColumn *)lfirst(l);
+			columnIndex[i] = column->x_attnum;
+			total_columns = column->total_columns;
+			++i;
+		}
+		qsort(columnIndex, length, sizeof(int), cmpfunc);
+		bufSize = total_columns/8 + 1;
+		curByteIndex = 0;
+		for (i = 0; i < length; ++i){
+			if ( columnIndex[i]/8 > curByteIndex){
+				for(j = curByteIndex; j<columnIndex[i]/8; ++j){
+					pq_writeint8(&buf, curBuf);
+					curBuf = 0;
+				}
+				curByteIndex = columnIndex[i]/8;
+			}
+			curBuf = curBuf | (1<<(columnIndex[i]%8-1));
+		}
+		while(curByteIndex++<bufSize){
+			pq_writeint8(&buf, curBuf);//the last one
+			curBuf = 0;
+		}
+	}
+	PG_RETURN_BYTEA_P(pq_endtypsend(&buf));
+}
 
 PG_FUNCTION_INFO_V1(rowcount);
 
@@ -356,6 +412,7 @@ free_stmt2(PLtsql_stmt *stmt)
 		}
 	    case PLTSQL_STMT_LABEL:
 		case PLTSQL_STMT_USEDB:
+        case PLTSQL_STMT_INSERT_BULK:
 		{
 			/* Nothing to free */
 			break;
@@ -406,6 +463,7 @@ void dump_stmt_label(PLtsql_stmt_label *stmt_label);
 void dump_stmt_raiserror(PLtsql_stmt_raiserror *stmt_raiserror);
 void dump_stmt_throw(PLtsql_stmt_throw *stmt_throw);
 void dump_stmt_usedb(PLtsql_stmt_usedb *stmt_usedb);
+void dump_stmt_insert_bulk(PLtsql_stmt_insert_bulk *stmt_insert_bulk);
 void dump_stmt_try_catch(PLtsql_stmt_try_catch *stmt_try_catch);
 void dump_stmt_query_set(PLtsql_stmt_query_set *query_set);
 void dump_stmt_exec_batch(PLtsql_stmt_exec_batch *exec_batch);
@@ -504,6 +562,12 @@ void
 dump_stmt_usedb(PLtsql_stmt_usedb *stmt_usedb)
 {
 	printf("USE %s\n", stmt_usedb->db_name);
+}
+
+void
+dump_stmt_insert_bulk(PLtsql_stmt_insert_bulk *stmt_insert_bulk)
+{
+    printf("INSERT BULK %s\n", stmt_insert_bulk->table_name);
 }
 
 void
@@ -623,6 +687,11 @@ dump_stmt2(PLtsql_stmt *stmt)
 			dump_stmt_usedb((PLtsql_stmt_usedb *) stmt);
 			break;
 		}
+        case PLTSQL_STMT_INSERT_BULK:
+        {
+            dump_stmt_insert_bulk((PLtsql_stmt_insert_bulk *) stmt);
+            break;
+        }
         default:
             elog(ERROR, "unrecognized cmd_type: %d", stmt->cmd_type);
             break;

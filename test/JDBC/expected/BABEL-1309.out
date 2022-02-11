@@ -1,0 +1,58 @@
+-- tsql
+exec sp_updatestats;
+go
+
+exec sp_updatestats 'no';
+go
+
+exec sp_updatestats 'resample';
+go
+
+exec sp_updatestats @resample='resample';
+go
+
+exec sp_updatestats resample;
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: column "resample" does not exist)~~
+
+
+exec sp_updatestats @resample;
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: column "@resample" does not exist)~~
+
+
+exec sp_updatestats @resample='sdlfkjsdf';
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Invalid option name sdlfkjsdf)~~
+
+
+exec sp_updatestats 'resdflskjf';
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Invalid option name resdflskjf)~~
+
+
+exec sp_updatestats @random_option='resample';
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: procedure sp_updatestats(@random_option => unknown) does not exist)~~
+
+
+-- psql
+-- Case when user other than database owner executes, it should throw error
+call sys.sp_updatestats();
+go
+~~ERROR (Code: 0)~~
+
+~~ERROR (Message: ERROR: user does not have permission
+  Where: PL/pgSQL function sys.sp_updatestats(character varying) line 4 at RAISE
+    Server SQLState: P0001)~~
+

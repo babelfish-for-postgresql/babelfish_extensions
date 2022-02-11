@@ -1,0 +1,115 @@
+CREATE TABLE INT_dt(a INT);
+prepst#!#INSERT INTO INT_dt(a) values(%s) #!#INT|-|a|-|0
+~~ROW COUNT: 1~~
+
+prepst#!#exec#!#INT|-|a|-|-10
+~~ROW COUNT: 1~~
+
+prepst#!#exec#!#INT|-|a|-|10
+~~ROW COUNT: 1~~
+
+prepst#!#exec#!#INT|-|a|-|-12234
+~~ROW COUNT: 1~~
+
+prepst#!#exec#!#INT|-|a|-|22
+~~ROW COUNT: 1~~
+
+prepst#!#exec#!#INT|-|a|-|003
+~~ROW COUNT: 1~~
+
+prepst#!#exec#!#INT|-|a|-|9864
+~~ROW COUNT: 1~~
+
+prepst#!#exec#!#INT|-|a|-|-01625
+~~ROW COUNT: 1~~
+
+prepst#!#exec#!#INT|-|a|-|-2147483648
+~~ROW COUNT: 1~~
+
+prepst#!#exec#!#INT|-|a|-|2147483647
+~~ROW COUNT: 1~~
+
+prepst#!#exec#!#INT|-|a|-|<NULL>
+~~ROW COUNT: 1~~
+
+
+SELECT * FROM INT_dt;
+~~START~~
+int
+0
+-10
+10
+-12234
+22
+3
+9864
+-1625
+-2147483648
+2147483647
+<NULL>
+~~END~~
+
+~~ROW COUNT: 11~~
+
+
+INSERT INTO INT_dt(a) values(0)
+~~ROW COUNT: 1~~
+
+INSERT INTO INT_dt(a) values(-10)
+~~ROW COUNT: 1~~
+
+INSERT INTO INT_dt(a) values(10)
+~~ROW COUNT: 1~~
+
+INSERT INTO INT_dt(a) values(-12345)
+~~ROW COUNT: 1~~
+
+INSERT INTO INT_dt(a) values(22)
+~~ROW COUNT: 1~~
+
+INSERT INTO INT_dt(a) values(004)
+~~ROW COUNT: 1~~
+
+INSERT INTO INT_dt(a) values(-01645)
+~~ROW COUNT: 1~~
+
+INSERT INTO INT_dt(a) values(-2147483648)
+~~ROW COUNT: 1~~
+
+INSERT INTO INT_dt(a) values(2147483647)
+~~ROW COUNT: 1~~
+
+INSERT INTO INT_dt(a) values(NULL)
+~~ROW COUNT: 1~~
+
+
+SELECT * FROM INT_dt;
+~~START~~
+int
+0
+-10
+10
+-12234
+22
+3
+9864
+-1625
+-2147483648
+2147483647
+<NULL>
+0
+-10
+10
+-12345
+22
+4
+-1645
+-2147483648
+2147483647
+<NULL>
+~~END~~
+
+~~ROW COUNT: 21~~
+
+
+DROP TABLE INT_dt;

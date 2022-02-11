@@ -1,0 +1,47 @@
+select datename(month, cast('2002-05-23 23:41:29.998' as smalldatetime));
+go
+~~START~~
+text
+May
+~~END~~
+
+
+select datename(dw, null);
+go
+~~START~~
+text
+<NULL>
+~~END~~
+
+
+select dateadd(year, 2, cast('20060830' AS datetime));
+go
+~~START~~
+datetime
+2008-08-30 00:00:00.0
+~~END~~
+
+
+select dateadd(yy, 1, null);
+go
+~~START~~
+datetime
+<NULL>
+~~END~~
+
+
+select datepart(weekday, cast( '2021-12-31' as date));
+go
+~~START~~
+int
+6
+~~END~~
+
+
+select datepart(dw, null);
+go
+~~START~~
+int
+<NULL>
+~~END~~
+

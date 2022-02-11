@@ -1,0 +1,17 @@
+#Q#CREATE TABLE XML_dt (a XML)
+#Q# INSERT INTO XML_dt values(@a) 
+#Q# INSERT INTO XML_dt values(@a) 
+#Q# INSERT INTO XML_dt values(@a) 
+#Q#SELECT * FROM XML_dt;
+#D#xml
+﻿<contact><name>Contact Name 2</name><phone>YYY-YYY-YYYY</phone></contact>
+
+
+#Q#INSERT INTO XML_dt values('<contact><name>Contact Name 2</name><phone>YYY-YYY-YYYY</phone></contact>')
+#Q#SELECT * FROM XML_dt;
+#D#xml
+﻿<contact><name>Contact Name 2</name><phone>YYY-YYY-YYYY</phone></contact>
+
+
+<contact><name>Contact Name 2</name><phone>YYY-YYY-YYYY</phone></contact>
+#Q#DROP TABLE XML_dt;

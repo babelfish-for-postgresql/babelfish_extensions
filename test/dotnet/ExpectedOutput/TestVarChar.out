@@ -1,0 +1,10 @@
+#Q#CREATE TABLE VARCHAR_dt (a VARCHAR(20), b NVARCHAR(24))
+#Q# INSERT INTO VARCHAR_dt(a, b) values(@a, @b) 
+#Q# INSERT INTO VARCHAR_dt(a, b) values(@a, @b) 
+#Q# INSERT INTO VARCHAR_dt(a, b) values(@a, @b) 
+#E#value too long for type character varying(20)
+#Q#select * from VARCHAR_dt
+#D#varchar#!#nvarchar
+Dipesh123#!#Dhameliya123
+abcdefghijklmnopqrst#!#abcdefghijklmnopqrstuvwx
+#Q#drop table VARCHAR_dt;

@@ -21,6 +21,7 @@
 #include "mb/pg_wchar.h"
 #include "miscadmin.h"
 #include "nodes/parsenodes.h"
+#include "pgstat.h"
 #include "tcop/tcopprot.h"
 
 #include "src/include/tds_int.h"
@@ -68,8 +69,11 @@ ExecuteSQLBatch(char *query)
 {
 	LOCAL_FCINFO(fcinfo,1);
 	InlineCodeBlock *codeblock = makeNode(InlineCodeBlock);
+	char *activity =  psprintf("SQL_BATCH: %s", query);
 
 	TdsErrorContext->err_text = "Processing SQL Batch Request";
+	pgstat_report_activity(STATE_RUNNING, activity);
+	pfree(activity);
 
 	/* Only source text matters to handler */
 	codeblock->source_text = query;
