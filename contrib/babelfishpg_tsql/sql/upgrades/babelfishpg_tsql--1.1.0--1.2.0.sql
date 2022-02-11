@@ -1246,6 +1246,11 @@ END;
 $$;
 GRANT EXECUTE ON FUNCTION sys.schema_id() TO PUBLIC;
 
+CREATE OR REPLACE FUNCTION sys.getdate() RETURNS sys.datetime
+    AS $$select date_trunc('millisecond', clock_timestamp()::pg_catalog.timestamp)::sys.datetime;$$
+    LANGUAGE SQL;
+GRANT EXECUTE ON FUNCTION sys.getdate() TO PUBLIC; 
+
 -- Reset search_path to not affect any subsequent scripts
 SELECT set_config('search_path', trim(leading 'sys, ' from current_setting('search_path')), false);
 

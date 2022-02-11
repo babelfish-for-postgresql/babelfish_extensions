@@ -171,7 +171,7 @@ drop table t1;
 drop table t2;
 go
 
--- NULL, NOT-NULL and DEFAULT constraints are allowed on rowversion column
+-- NULL and NOT-NULL constraints are allowed on rowversion column
 create table t1(id int, rv rowversion null);
 go
 drop table t1;
@@ -182,12 +182,14 @@ go
 drop table t1;
 go
 
+-- All other constraints should not be allowed
 create table t1(id int, rv rowversion default 50);
 go
-drop table t1;
-go
+~~ERROR (Code: 33557097)~~
 
--- All other constraints should not be allowed
+~~ERROR (Message: Defaults cannot be created on columns of data type rowversion.)~~
+
+
 create table t1(id int, rv rowversion primary key);
 go
 ~~ERROR (Code: 33557097)~~

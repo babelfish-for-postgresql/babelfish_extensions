@@ -97,8 +97,10 @@ static bool post_process_create_table(TSqlParser::Create_tableContext *ctx, PLts
 static bool post_process_alter_table(TSqlParser::Alter_tableContext *ctx, PLtsql_stmt_execsql *stmt, TSqlParser::Ddl_statementContext *baseCtx);
 static bool post_process_create_index(TSqlParser::Create_indexContext *ctx, PLtsql_stmt_execsql *stmt, TSqlParser::Ddl_statementContext *baseCtx);
 static bool post_process_create_database(TSqlParser::Create_databaseContext *ctx, PLtsql_stmt_execsql *stmt, TSqlParser::Ddl_statementContext *baseCtx);
+static bool post_process_create_type(TSqlParser::Create_typeContext *ctx, PLtsql_stmt_execsql *stmt, TSqlParser::Ddl_statementContext *baseCtx);
 static void post_process_table_source(TSqlParser::Table_source_itemContext *ctx, PLtsql_expr *expr, ParserRuleContext *baseCtx);
 static void post_process_declare_cursor_statement(PLtsql_stmt_decl_cursor *stmt, TSqlParser::Declare_cursorContext *ctx, tsqlBuilder &builder);
+static void post_process_declare_table_statement(PLtsql_stmt_decl_table *stmt, TSqlParser::Table_type_definitionContext *ctx);
 static PLtsql_var *lookup_cursor_variable(const char *varname);
 static PLtsql_var *build_cursor_variable(const char *curname, int lineno);
 static int read_extended_cursor_option(TSqlParser::Declare_cursor_optionsContext *ctx, int current_cursor_option);
@@ -1059,6 +1061,8 @@ public:
 			nop = post_process_create_index(ctx->create_index(), stmt, ctx);
 		else if (ctx->create_database())
 			nop = post_process_create_database(ctx->create_database(), stmt, ctx);
+		else if (ctx->create_type())
+			nop = post_process_create_type(ctx->create_type(), stmt, ctx);
 		else if (ctx->create_fulltext_index() ||
 		         ctx->alter_fulltext_index() ||
 		         ctx->drop_fulltext_index())
@@ -1110,6 +1114,13 @@ public:
 		{
 			PLtsql_stmt_decl_cursor *decl_cursor_stmt = (PLtsql_stmt_decl_cursor *) getPLtsql_fragment(ctx);
 			post_process_declare_cursor_statement(decl_cursor_stmt, ctx->cursor_statement()->declare_cursor(), *this);
+		}
+
+		// Declare table type statement might need rewriting in column definition list.
+		if (ctx->declare_statement() && ctx->declare_statement()->table_type_definition())
+		{
+			PLtsql_stmt_decl_table *decl_table_stmt = (PLtsql_stmt_decl_table *) getPLtsql_fragment(ctx);
+			post_process_declare_table_statement(decl_table_stmt, ctx->declare_statement()->table_type_definition());
 		}
 
 		clear_rewritten_query_fragment();
@@ -4456,6 +4467,15 @@ post_process_special_column_option(TSqlParser::Special_column_optionContext *ctx
 static void
 post_process_column_definition(TSqlParser::Column_definitionContext *ctx, PLtsql_stmt_execsql *stmt, TSqlParser::Ddl_statementContext *baseCtx)
 {
+	/*
+	 * TSQL allows timestamp datatype without column name in create/alter table/type
+	 * statement and internally assumes "timestamp" as column name. So here if
+	 * we find TIMESTAMP token then we will prepend "timestamp" as a column name
+	 * in the column definition.
+	 */
+	if (ctx->TIMESTAMP())
+		rewritten_query_fragment.emplace(std::make_pair(ctx->TIMESTAMP()->getSymbol()->getStartIndex(), std::make_pair(::getFullText(ctx->TIMESTAMP()), "timestamp " + ::getFullText(ctx->TIMESTAMP()))));
+
 	if (ctx->column_inline_index())
 		post_process_column_inline_index(ctx->column_inline_index(), stmt, baseCtx);
 
@@ -4674,6 +4694,61 @@ post_process_create_database(TSqlParser::Create_databaseContext *ctx, PLtsql_stm
 	}
 
 	return false;
+}
+
+static bool
+post_process_create_type(TSqlParser::Create_typeContext *ctx, PLtsql_stmt_execsql *stmt, TSqlParser::Ddl_statementContext *baseCtx)
+{
+	if (ctx->column_def_table_constraints())
+	{
+		for (auto cdtctx : ctx->column_def_table_constraints()->column_def_table_constraint())
+		{
+			if (cdtctx->column_definition())
+				post_process_column_definition(cdtctx->column_definition(), stmt, baseCtx);
+
+			if (cdtctx->table_constraint())
+				post_process_table_constraint(cdtctx->table_constraint(), stmt, baseCtx);
+		}
+	}
+
+	return false;
+}
+
+static void
+post_process_declare_table_statement(PLtsql_stmt_decl_table *stmt, TSqlParser::Table_type_definitionContext *ctx)
+{
+	if (ctx->column_def_table_constraints())
+	{
+		bool rewrite = false;
+
+		for (auto cdtctx : ctx->column_def_table_constraints()->column_def_table_constraint())
+		{
+			/*
+			 * TSQL allows timestamp datatype without column name in declare table type
+			 * statement and internally assumes "timestamp" as column name. So here if
+			 * we find TIMESTAMP token then we will prepend "timestamp" as a column name
+			 * in the column definition.
+			 */
+			if (cdtctx->column_definition() && cdtctx->column_definition()->TIMESTAMP())
+			{
+				auto tctx = cdtctx->column_definition()->TIMESTAMP();
+				std::string rewritten_text = "timestamp " + ::getFullText(tctx);
+				rewritten_query_fragment.emplace(std::make_pair(tctx->getSymbol()->getStartIndex(), std::make_pair(::getFullText(tctx), rewritten_text)));
+				rewrite = true;
+			}
+		}
+
+		if (rewrite)
+		{
+			PLtsql_expr *expr = makeTsqlExpr(ctx, false);
+			PLtsql_expr_query_mutator mutator(expr, ctx);
+			add_rewritten_query_fragment_to_mutator(&mutator);
+			mutator.run();
+			char *rewritten_query = expr->query;
+			// Save the rewritten column definition list
+			stmt->coldef = pstrdup(&rewritten_query[5]);
+		}
+	}
 }
 
 static void

@@ -137,7 +137,7 @@ static void set_procid(Oid oid);
 static bool is_rowversion_column(ParseState *pstate, ColumnDef *column);
 static void validate_rowversion_column_constraints(ColumnDef *column);
 static void validate_rowversion_table_constraint(Constraint *c, char *rowversion_column_name);
-extern bool is_tsql_rowversion_datatype(Oid oid);
+extern bool is_tsql_rowversion_or_timestamp_datatype(Oid oid);
 
 PG_FUNCTION_INFO_V1(pltsql_inline_handler);
 
@@ -727,7 +727,7 @@ pltsql_post_parse_analyze(ParseState *pstate, Query *query)
 			}
 
 			/*Disallow insert into a ROWVERSION column */
-			if(is_tsql_rowversion_datatype(attr->atttypid))
+			if(is_tsql_rowversion_or_timestamp_datatype(attr->atttypid))
 			{
 				ereport(ERROR,
 						(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
@@ -878,7 +878,7 @@ pltsql_post_parse_analyze(ParseState *pstate, Query *query)
 							seen_identity = true;
 						
 						/* Check for rowversion attribute */
-						if (is_tsql_rowversion_datatype(attr->atttypid))
+						if (is_tsql_rowversion_or_timestamp_datatype(attr->atttypid))
 						{
 							seen_rowversion = true;
 							rowversion_column_name = NameStr(attr->attname);
@@ -1016,7 +1016,7 @@ pltsql_post_parse_analyze(ParseState *pstate, Query *query)
 							if (!tle->resjunk)
 								typeid = exprType((Node *) tle->expr);
 
-							if (OidIsValid(typeid) && is_tsql_rowversion_datatype(typeid))
+							if (OidIsValid(typeid) && is_tsql_rowversion_or_timestamp_datatype(typeid))
 							{
 								if (seen_rowversion)
 									ereport(ERROR,
@@ -1049,7 +1049,7 @@ pltsql_post_parse_analyze(ParseState *pstate, Query *query)
 
 			attr = TupleDescAttr(tupdesc, attr_num);
 
-			if(is_tsql_rowversion_datatype(attr->atttypid))
+			if(is_tsql_rowversion_or_timestamp_datatype(attr->atttypid))
 			{
 				ereport(ERROR,
 						(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
@@ -1158,7 +1158,7 @@ is_rowversion_column(ParseState *pstate, ColumnDef *column)
 	typeOid = ((Form_pg_type) GETSTRUCT(ctype))->oid;
 	ReleaseSysCache(ctype);
 
-	if (is_tsql_rowversion_datatype(typeOid))
+	if (is_tsql_rowversion_or_timestamp_datatype(typeOid))
 		return true;
 
 	return false;
@@ -1176,6 +1176,7 @@ is_rowversion_column(ParseState *pstate, ColumnDef *column)
 *    rows can have same xmin value in a single transaction.
 *    Moreover sql server documentation also states rowversion
 *    column a poor candidate for keys.
+* 5. Default constraint is not allowed on a rowversion column.
 */
 static void
 validate_rowversion_column_constraints(ColumnDef *column)
@@ -1211,6 +1212,13 @@ validate_rowversion_column_constraints(ColumnDef *column)
  				ereport(ERROR,
  						(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
  						 errmsg("Foreign key constraint is not supported on a rowversion column.")));
+ 				break;
+ 			}
+			case CONSTR_DEFAULT:
+ 			{
+ 				ereport(ERROR,
+ 						(errcode(ERRCODE_INVALID_COLUMN_DEFINITION),
+ 						 errmsg("Defaults cannot be created on columns of data type rowversion.")));
  				break;
  			}
  			default:

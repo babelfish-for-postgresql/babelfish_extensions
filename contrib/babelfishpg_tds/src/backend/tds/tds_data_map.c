@@ -181,6 +181,7 @@ TdsIoFunctionRawData TdsIoFunctionRawData_data[] =
     {"sys", "datetimeoffset", TDS_TYPE_DATETIMEOFFSET, 10, 1, TDS_SEND_DATETIMEOFFSET, TDS_RECV_DATETIMEOFFSET},
     {"sys", "fixeddecimal", TDS_TYPE_MONEYN, 8, 1, TDS_SEND_MONEY, TDS_RECV_INVALID},
     {"sys", "rowversion", TDS_TYPE_BINARY, 8, 2, TDS_SEND_BINARY, TDS_RECV_BINARY},
+    {"sys", "timestamp", TDS_TYPE_BINARY, 8, 2, TDS_SEND_BINARY, TDS_RECV_BINARY},
 
     /* Mapping TDS listener sender to basic Postgres datatypes. */
     {"pg_catalog", "oid", TDS_TYPE_INTEGER, 4, 1, TDS_SEND_INTEGER, TDS_RECV_INVALID},

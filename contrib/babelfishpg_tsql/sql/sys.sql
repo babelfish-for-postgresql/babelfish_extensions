@@ -18,7 +18,7 @@ GRANT EXECUTE ON FUNCTION sys.sysutcdatetime() TO PUBLIC;
 
 
 CREATE FUNCTION sys.getdate() RETURNS sys.datetime
-    AS $$select date_trunc('millisecond', clock_timestamp()::timestamp)::sys.datetime;$$
+    AS $$select date_trunc('millisecond', clock_timestamp()::pg_catalog.timestamp)::sys.datetime;$$
     LANGUAGE SQL;
 GRANT EXECUTE ON FUNCTION sys.getdate() TO PUBLIC; 
 
