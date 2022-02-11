@@ -334,6 +334,17 @@
 									return IDENT;
 								}
 								break;
+							case TIMESTAMP:
+								if (sql_dialect == SQL_DIALECT_TSQL)
+								{
+									/*
+									 * Without this, gram.y puts 'pg_catalog.timestamp' explicitly,
+									 * so there will be no chance to lookup the search path
+									 */
+									yylval->str = pstrdup("timestamp");
+									return IDENT;
+								}
+								break;
 							default:
 								return yyextra->keyword_tokens[kwnum];
 						}

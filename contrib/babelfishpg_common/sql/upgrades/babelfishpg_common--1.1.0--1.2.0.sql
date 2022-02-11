@@ -202,6 +202,8 @@ LANGUAGE C IMMUTABLE STRICT PARALLEL SAFE;
 CREATE CAST (sys.ROWVERSION as INT8)
 WITH FUNCTION sys.rowversionint8 (sys.ROWVERSION) AS ASSIGNMENT;
 
+CREATE DOMAIN sys.TIMESTAMP AS sys.ROWVERSION;
+
 CREATE FUNCTION sys.rowversion_eq(leftarg sys.rowversion, rightarg sys.rowversion)
 RETURNS boolean
 AS 'babelfishpg_common', 'varbinary_eq'

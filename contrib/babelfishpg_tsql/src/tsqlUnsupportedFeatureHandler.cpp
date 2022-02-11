@@ -1323,13 +1323,6 @@ antlrcpp::Any TsqlUnsupportedFeatureHandlerImpl::visitBif_convert(TSqlParser::Bi
 
 antlrcpp::Any TsqlUnsupportedFeatureHandlerImpl::visitData_type(TSqlParser::Data_typeContext *ctx)
 {
-	if (ctx->simple_name() && ctx->simple_name()->DOT().empty()) /* datatype with no schema */
-	{
-		std::string val = stripQuoteFromId(ctx->simple_name()->id().back());
-		if (pg_strcasecmp("timestamp", val.c_str()) == 0)
-			handle(INSTR_TSQL_TIMESTAMP_DATATYPE, "TIMESTAMP datatype", getLineAndPos(ctx));
-	}
-
 	if (ctx->NATIONAL())
 		handle(INSTR_UNSUPPORTED_TSQL_NATIONAL, ctx->NATIONAL());
 	if (ctx->VARYING())

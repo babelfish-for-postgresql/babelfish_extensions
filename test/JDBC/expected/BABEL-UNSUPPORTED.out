@@ -2501,10 +2501,6 @@ GO
 -- TIMESTAMP and ROWVERSION
 CREATE TABLE t_ts(a timestamp);
 GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: 'TIMESTAMP datatype' is not currently supported in Babelfish)~~
-
 CREATE TABLE t_ts2(a pg_catalog.timestamp); -- it's fine
 GO
 DROP TABLE t_ts2;
@@ -2513,10 +2509,6 @@ CREATE TABLE t_rv(a ROWVERSION);
 GO
 CREATE PROCEDURE p_t2 (@v timestamp) AS BEGIN PRINT CAST(@v AS VARCHAR(10)) END;
 GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: 'TIMESTAMP datatype' is not currently supported in Babelfish)~~
-
 
 -- CREATE TYPE WITH (10788)
 CREATE TYPE type10788 AS TABLE (c1 INT) WITH (DATA_COMPRESSION = NONE)

@@ -200,6 +200,7 @@ Oid tsql_image_oid = InvalidOid;
 Oid tsql_binary_oid = InvalidOid;
 Oid tsql_varbinary_oid = InvalidOid;
 Oid tsql_rowversion_oid = InvalidOid;
+Oid tsql_timestamp_oid = InvalidOid;
 
 Oid
 lookup_tsql_datatype_oid(const char *typename)
@@ -291,5 +292,19 @@ is_tsql_rowversion_datatype(Oid oid)
 	if (tsql_rowversion_oid == InvalidOid)
 		tsql_rowversion_oid = lookup_tsql_datatype_oid("rowversion");
 	return tsql_rowversion_oid == oid;
+}
+
+bool
+is_tsql_timestamp_datatype(Oid oid)
+{
+	if (tsql_timestamp_oid == InvalidOid)
+		tsql_timestamp_oid = lookup_tsql_datatype_oid("timestamp");
+	return tsql_timestamp_oid == oid;
+}
+
+bool
+is_tsql_rowversion_or_timestamp_datatype(Oid oid)
+{
+    return (is_tsql_rowversion_datatype(oid) || is_tsql_timestamp_datatype(oid));
 }
 

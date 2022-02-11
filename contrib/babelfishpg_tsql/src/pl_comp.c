@@ -144,7 +144,7 @@ static void delete_function(PLtsql_function *func);
 
 extern Portal ActivePortal;
 extern bool pltsql_function_parse_error_transpose(const char* prosrc);
-extern bool is_tsql_rowversion_datatype(Oid oid);
+extern bool is_tsql_rowversion_or_timestamp_datatype(Oid oid);
 
 /* ----------
  * pltsql_compile		Make an execution tree for a PL/tsql function.
@@ -437,7 +437,8 @@ do_compile(FunctionCallInfo fcinfo,
 			probin_read_args_typmods(procTup, procStruct->pronargs, procStruct->proargtypes.values, &typmods);
 
 			/* Function return type should not be rowversion. */
-			if (procStruct->prokind == PROKIND_FUNCTION && is_tsql_rowversion_datatype(procStruct->prorettype))
+			if (procStruct->prokind == PROKIND_FUNCTION &&
+				is_tsql_rowversion_or_timestamp_datatype(procStruct->prorettype))
 				ereport(ERROR,
 						(errcode(ERRCODE_INVALID_FUNCTION_DEFINITION),
 						 errmsg("The rowversion data type is invalid for return values.")));
@@ -459,7 +460,7 @@ do_compile(FunctionCallInfo fcinfo,
 
 				/* rowversion is not a valid type for function parameter. */
 				if (procStruct->prokind == PROKIND_FUNCTION &&
-					is_tsql_rowversion_datatype(argtypeid) &&
+					is_tsql_rowversion_or_timestamp_datatype(argtypeid) &&
 					argmode != PROARGMODE_TABLE)
 					ereport(ERROR,
 						(errcode(ERRCODE_INVALID_FUNCTION_DEFINITION),
@@ -1616,7 +1617,7 @@ pltsql_post_expand_star(ParseState *pstate, ColumnRef *cref, List *l)
 		}
 
 		/* Check if it is a rowversion column reference. */
-		if (is_tsql_rowversion_datatype(varnode->vartype))
+		if (is_tsql_rowversion_or_timestamp_datatype(varnode->vartype))
 		{
 			Node *res = pltsql_column_ref_overwrite(pstate, cref, (Node *) varnode);
 
@@ -1676,7 +1677,7 @@ pltsql_column_ref_overwrite(ParseState *pstate, ColumnRef *cref, Node *var)
 {
 	/* Check if it is a rowversion column reference. */
 	if (var && IsA(var, Var) &&
-		is_tsql_rowversion_datatype(castNode(Var, var)->vartype))
+		is_tsql_rowversion_or_timestamp_datatype(castNode(Var, var)->vartype))
 	{
 		Var *varnode = (Var *) var;
 		RangeTblEntry *rte;

@@ -310,7 +310,7 @@ tsql_precedence_info_t tsql_precedence_infos[] =
     {18,"sys","ntext"},
     {19,"pg_catalog","text"},
     {20,"sys","image"},
-    //{21,"sys","timestamp"}, /* we don't support timestamp/rowversion */
+    {21,"sys","timestamp"},
     {22,"sys","uniqueidentifier"},
     {23,"sys","nvarchar"},
     {24,"sys","nchar"},
