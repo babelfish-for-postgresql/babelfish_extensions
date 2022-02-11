@@ -87,6 +87,7 @@ extern List *babelfishpg_tsql_raw_parser(const char *str);
 extern bool install_backend_gram_hooks();
 
 static void assign_identity_insert(const char *newval, void *extra);
+static void assign_textsize(int newval, void *extra);
 extern Datum init_collid_trans_tab(PG_FUNCTION_ARGS);
 extern Datum init_like_ilike_table(PG_FUNCTION_ARGS);
 extern Datum init_tsql_coerce_hash_tab(PG_FUNCTION_ARGS);
@@ -392,6 +393,13 @@ assign_identity_insert(const char *newval, void *extra)
                 pfree(input_string);
                 list_free(elemlist);
         }
+}
+
+static void
+assign_textsize(int newval, void *extra)
+{
+	if (pltsql_protocol_plugin_ptr && *pltsql_protocol_plugin_ptr && (*pltsql_protocol_plugin_ptr)->set_guc_stat_var)
+			(*pltsql_protocol_plugin_ptr)->set_guc_stat_var("babelfishpg_tsql.textsize", false, NULL, newval);
 }
 
 static void
@@ -2567,7 +2575,7 @@ _PG_init(void)
 							 0, -1, INT_MAX,
 							 PGC_USERSET, 
 				 			 GUC_NO_SHOW_ALL | GUC_NOT_IN_SAMPLE | GUC_DISALLOW_IN_FILE | GUC_DISALLOW_IN_AUTO_FILE,
-				 			 NULL, NULL, NULL);
+							 NULL, assign_textsize, NULL);
 	
 	define_custom_variables();
 
@@ -2697,6 +2705,7 @@ _PG_init(void)
 	make_fn_arguments_from_stored_proc_probin_hook = pltsql_function_probin_reader;
 	truncate_identifier_hook = pltsql_truncate_identifier;
 	cstr_to_name_hook = pltsql_cstr_to_name;
+	tsql_has_pgstat_permissions_hook = tsql_has_pgstat_permissions;
 
 	InstallExtendedHooks();
 

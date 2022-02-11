@@ -20,6 +20,7 @@ extern void assign_object_access_hook_drop_role(void);
 extern void uninstall_object_access_hook_drop_role(void);
 
 extern bool role_is_sa(Oid roleid);
+extern bool tsql_has_pgstat_permissions(Oid roleid);
 extern bool is_alter_server_stmt(GrantRoleStmt *stmt);
 extern void check_alter_server_stmt(GrantRoleStmt *stmt);
 extern void create_bbf_authid_login_ext(CreateRoleStmt *stmt);

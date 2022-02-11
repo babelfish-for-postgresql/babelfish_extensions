@@ -188,6 +188,14 @@ pe_tds_init(void)
 	pltsql_plugin_handler_ptr->get_mapped_error_list = &get_mapped_error_code_list;
 
 	pltsql_plugin_handler_ptr->get_login_domainname = &get_tds_login_domainname;
+	pltsql_plugin_handler_ptr->set_guc_stat_var = &TdsSetGucStatVariable;
+	pltsql_plugin_handler_ptr->set_at_at_stat_var = &TdsSetAtAtStatVariable;
+	pltsql_plugin_handler_ptr->set_db_stat_var = &TdsSetDatabaseStatVariable;
+	pltsql_plugin_handler_ptr->get_stat_values = &tds_stat_get_activity;
+	pltsql_plugin_handler_ptr->invalidate_stat_view = &invalidate_stat_table;
+
+	invalidate_stat_table_hook = invalidate_stat_table;
+	guc_newval_hook = TdsSetGucStatVariable;
 
 	/* set up process-exit hook to close the socket */
 	on_proc_exit(socket_close, 0);
@@ -240,6 +248,10 @@ pe_start(Port *port)
 static void
 pe_authenticate(Port *port, const char **username)
 {
+
+	/* Initialize the TDS backend status array in shmem */
+	tdsstat_initialize();
+
 	/* This should be set already, but let's make sure */
 	ClientAuthInProgress = true;	/* limit visibility of log messages */
 
@@ -358,6 +370,9 @@ pe_send_ready_for_query(CommandDest dest)
 	 */
 	if (TdsRequestCtrl)
 		return;
+
+	/* Initialize the TDS backend information */
+	tdsstat_bestart();
 
 	/* Push the error context */
 	tdserrcontext.callback = TdsErrorContextCallback;

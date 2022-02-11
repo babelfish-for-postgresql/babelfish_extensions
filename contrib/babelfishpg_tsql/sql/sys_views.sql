@@ -1329,3 +1329,87 @@ SELECT p.name
   , p.collation
 FROM sys.proc_param_helper() as p;
 GRANT SELECT ON sys.syscolumns TO PUBLIC;
+
+create or replace view sys.dm_exec_sessions
+  as
+  select a.pid as session_id
+    , a.backend_start::sys.datetime as login_time
+    , a.client_hostname::sys.nvarchar(128) as host_name
+    , a.application_name::sys.nvarchar(128) as program_name
+    , d.client_pid as host_process_id
+    , d.client_version as client_version
+    , d.library_name::sys.nvarchar(32) as client_interface_name
+    , null::sys.varbinary(85) as security_id
+    , a.usename::sys.nvarchar(128) as login_name
+    , (select sys.default_domain())::sys.nvarchar(128) as nt_domain
+    , null::sys.nvarchar(128) as nt_user_name
+    , a.state::sys.nvarchar(30) as status
+    , null::sys.nvarchar(128) as context_info
+    , null::integer as cpu_time
+    , null::integer as memory_usage
+    , null::integer as total_scheduled_time
+    , null::integer as total_elapsed_time
+    , a.client_port as endpoint_id
+    , a.query_start::sys.datetime as last_request_start_time
+    , a.state_change::sys.datetime as last_request_end_time
+    , null::bigint as "reads"
+    , null::bigint as "writes"
+    , null::bigint as logical_reads
+    , case when a.client_port > 0 then 1::sys.bit else 0::sys.bit end as is_user_process
+    , d.textsize as text_size
+    , d.language::sys.nvarchar(128) as language
+    , 'ymd'::sys.nvarchar(3) as date_format-- Bld 173 lacks support for SET DATEFORMAT and always expects ymd
+    , d.datefirst::smallint as date_first -- Bld 173 lacks support for SET DATEFIRST and always returns 7
+    , d.quoted_identifier as quoted_identifier
+    , d.arithabort as arithabort
+    , d.ansi_null_dflt_on as ansi_null_dflt_on
+    , d.ansi_defaults as ansi_defaults
+    , d.ansi_warnings as ansi_warnings
+    , d.ansi_padding as ansi_padding
+    , d.ansi_nulls as ansi_nulls
+    , d.concat_null_yields_null as concat_null_yields_null
+    , d.transaction_isolation::smallint as transaction_isolation_level
+    , d.lock_timeout as lock_timeout
+    , 0 as deadlock_priority
+    , d.row_count as row_count
+    , d.error as prev_error
+    , null::sys.varbinary(85) as original_security_id
+    , a.usename::sys.nvarchar(128) as original_login_name
+    , null::sys.datetime as last_successful_logon
+    , null::sys.datetime as last_unsuccessful_logon
+    , null::bigint as unsuccessful_logons
+    , null::int as group_id
+    , d.database_id::smallint as database_id
+    , 0 as authenticating_database_id
+    , d.trancount as open_transaction_count
+  from pg_catalog.pg_stat_activity AS a
+  RIGHT JOIN sys.tsql_stat_get_activity('sessions') AS d ON (a.pid = d.procid);
+  GRANT SELECT ON sys.dm_exec_sessions TO PUBLIC;
+
+create or replace view sys.dm_exec_connections
+ as
+ select a.pid as session_id
+   , a.pid as most_recent_session_id
+   , a.backend_start::sys.datetime as connect_time
+   , 'TCP'::sys.nvarchar(40) as net_transport
+   , 'TSQL'::sys.nvarchar(40) as protocol_type
+   , d.protocol_version as protocol_version
+   , a.client_port as endpoint_id
+   , d.encrypyt_option::sys.nvarchar(40) as encrypt_option
+   , null::sys.nvarchar(40) as auth_scheme
+   , null::smallint as node_affinity
+   , null::int as num_reads
+   , null::int as num_writes
+   , null::sys.datetime as last_read
+   , null::sys.datetime as last_write
+   , d.packet_size as net_packet_size
+   , a.client_addr::varchar(48) as client_net_address
+   , a.client_port as client_tcp_port
+   , null::varchar(48) as local_net_address
+   , null::int as local_tcp_port
+   , null::sys.uniqueidentifier as connection_id
+   , null::sys.uniqueidentifier as parent_connection_id
+   , a.pid::sys.varbinary(64) as most_recent_sql_handle
+ from pg_catalog.pg_stat_activity AS a
+ RIGHT JOIN sys.tsql_stat_get_activity('connections') AS d ON (a.pid = d.procid);
+ GRANT SELECT ON sys.dm_exec_connections TO PUBLIC;

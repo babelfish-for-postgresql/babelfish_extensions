@@ -10,6 +10,7 @@
 #include "dbcmds.h"
 #include "multidb.h"
 #include "session.h"
+#include "pltsql.h"
 
 /* Core Session Properties */
 
@@ -40,6 +41,9 @@ set_cur_db(int16 id, const char *name)
 	current_db_id = id;
 	strncpy(current_db_name, name, len);
 	current_db_name[len] = '\0';
+
+	if (*pltsql_protocol_plugin_ptr && (*pltsql_protocol_plugin_ptr)->set_db_stat_var)
+			(*pltsql_protocol_plugin_ptr)->set_db_stat_var(id);
 }
 
 void

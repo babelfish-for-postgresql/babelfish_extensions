@@ -194,6 +194,13 @@ typedef struct TdsParamNameData
 
 typedef TdsParamNameData *TdsParamName;
 
+extern PGDLLIMPORT uint32_t MyTdsClientVersion;
+extern PGDLLIMPORT char* MyTdsLibraryName;
+extern PGDLLIMPORT uint32_t MyTdsClientPid;
+extern PGDLLIMPORT uint32_t MyTdsProtocolVersion;
+extern PGDLLIMPORT uint32_t MyTdsPacketSize;
+extern PGDLLIMPORT int MyTdsEncryptOption;
+
 /* XXX: Should be removed */
 /* Stores mapping between TVP and underlying table */
 extern List *tvp_lookup_list;
@@ -293,6 +300,14 @@ extern void TdsErrorContextCallback(void *arg);
 
 /* Functions in backend/tds/guc.c */
 extern void TdsDefineGucs(void);
+
+extern void tdsstat_initialize(void);
+extern void tdsstat_bestart(void);
+extern void TdsSetGucStatVariable(const char *guc, bool boolVal, const char *strVal, int intVal);
+extern void TdsSetAtAtStatVariable(const char *at_at_var, int intVal, uint64 bigintVal);
+extern void TdsSetDatabaseStatVariable(int16 db_id);
+extern bool tds_stat_get_activity(Datum *values, bool *nulls, int len, int pid, int curr_backend);
+extern void invalidate_stat_table(void);
 
 /* Functions in backend/tds/tdspostgres.c */
 extern void TDSPostgresMain(int argc, char *argv[],

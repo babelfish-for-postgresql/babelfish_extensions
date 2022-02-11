@@ -457,6 +457,8 @@ SetPreLoginResponseVal(Port *port, uint8_t token, StringInfo val,
 				appendStringInfoChar(val, TDS_ENCRYPT_NOT_SUP);
 				*loadEncryption = TDS_ENCRYPT_NOT_SUP;
 			}
+
+			MyTdsEncryptOption = *loadEncryption;
 			break;
 		case TDS_PRELOGIN_INSTOPT:
 			/*
@@ -829,6 +831,7 @@ FetchLoginRequest(LoginRequest request)
 					break;
 				case TDS_LOGIN_ATTR_LIBRARY:
 					request->library = pstrdup(temp_utf8.data);
+					MyTdsLibraryName = request->library;
 					break;
 				case TDS_LOGIN_ATTR_LANGUAGE:
 					request->language = pstrdup(temp_utf8.data);
@@ -1215,6 +1218,12 @@ ProcessLoginInternal(Port *port)
 
 	TdsErrorContext->err_text = "Process Login Flags";
 	ProcessLoginFlags(loginInfo);
+
+	MyTdsClientVersion = loginInfo->clientProVersion;
+	MyTdsClientPid = loginInfo->clientPid;
+	MyTdsProtocolVersion = loginInfo->tdsVersion;
+	MyTdsPacketSize = loginInfo->packetSize;
+
 	return STATUS_OK;
 }
 
