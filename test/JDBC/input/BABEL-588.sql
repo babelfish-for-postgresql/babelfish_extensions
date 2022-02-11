@@ -1070,3 +1070,57 @@ go
 
 DROP TABLE output_FLOAT
 go
+
+-- Test OUTPUT with table variables --
+create table test_tbl(fname varchar(10), lname varchar(10), age integer, score decimal);
+declare @tbl_var table(fname varchar(10), lname varchar(10), age integer, score decimal);
+
+insert into test_tbl
+output inserted.* into @tbl_var
+values ('kelly', 'slater', 40, 100), ('john', 'cena', 50, 78);
+
+update @tbl_var set score=0
+output inserted.* into test_tbl
+where age=40;
+
+select * from @tbl_var;
+go
+
+select * from test_tbl;
+go
+
+-- Cleanup
+DROP TABLE test_tbl;
+
+-- Test OUTPUT with default column --
+CREATE TABLE #testdef
+(
+        c2 uniqueidentifier
+        ,c4 varchar(10) DEFAULT 'Hello')
+
+DECLARE @uq table(uq uniqueidentifier)
+
+INSERT #testdef(c2)
+OUTPUT inserted.c2 INTO @uq
+VALUES('0A0EA68C-864E-45B7-9ABE-DFFA2D8EFCC5')
+
+SELECT uq FROM @uq
+go
+
+CREATE TABLE t1(
+    a int, 
+    b int default 1, 
+    c int default 2 )
+
+INSERT INTO t1(a,b) VALUES (1, 2)
+go
+
+SELECT * FROM t1
+go
+
+-- Cleanup
+drop table #testdef;
+go
+drop table t1;
+go
+
