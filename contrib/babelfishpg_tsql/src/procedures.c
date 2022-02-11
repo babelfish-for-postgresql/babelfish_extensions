@@ -20,6 +20,7 @@
 #include "miscadmin.h"
 #include "utils/builtins.h"
 #include "utils/guc.h"
+#include "utils/rel.h"
 #include "pltsql_instr.h"
 #include "parser/parser.h"
 #include "parser/parse_target.h"
@@ -230,8 +231,14 @@ typedef struct UndeclaredParams
 	 */
 	int 			*targetattnums;
 
+	/* The relevant colume names in the target table. */
+	char			**targetcolnames;
+
 	/* Name of the target table */
 	char 			*tablename;
+
+	/* The Oid of the table's schema */
+	Oid 			schemaoid;
 } UndeclaredParams;
 
 /*
@@ -271,7 +278,6 @@ sp_describe_undeclared_parameters_internal(PG_FUNCTION_ARGS)
 		List *values_list;
 		ListCell *lc;
 		int numresults = 0;
-		ListCell *lc_attnum;
 		int num_target_attnums = 0;
 		RawStmt    *parsetree;
 		InsertStmt *insert_stmt;
@@ -281,6 +287,9 @@ sp_describe_undeclared_parameters_internal(PG_FUNCTION_ARGS)
 		List *target_attnums = NIL;
 		ParseState *pstate;
 		int relname_len;
+		List *cols;
+		int target_attnum_i;
+		int target_attnums_len;
 
 		funcctx = SRF_FIRSTCALL_INIT();
 		oldcontext = MemoryContextSwitchTo(funcctx->multi_call_memory_ctx);
@@ -349,16 +358,35 @@ sp_describe_undeclared_parameters_internal(PG_FUNCTION_ARGS)
 		r = relation_open(relid, AccessShareLock);
 		pstate = (ParseState *) palloc(sizeof(ParseState));
 		pstate->p_target_relation = r;
-		checkInsertTargets(pstate, insert_stmt->cols, &target_attnums);
+		cols = checkInsertTargets(pstate, insert_stmt->cols, &target_attnums);
 
 		undeclaredparams->tablename = (char *) palloc(sizeof(char) * 64);
 		relname_len = strlen(relation->relname);
 		strncpy(undeclaredparams->tablename, relation->relname, relname_len);
 		undeclaredparams->tablename[relname_len] = '\0';
+		undeclaredparams->schemaoid = RelationGetNamespace(r);
 		undeclaredparams->targetattnums = (int *) palloc(sizeof(int) * list_length(target_attnums));
-		foreach(lc_attnum, target_attnums)
+		undeclaredparams->targetcolnames = (char **) palloc(sizeof(char *) * list_length(target_attnums));
+
+		/* Record attnums and column names of the target table */
+		target_attnum_i = 0;
+		target_attnums_len = list_length(target_attnums);
+		while (target_attnum_i < target_attnums_len)
 		{
-			undeclaredparams->targetattnums[num_target_attnums] = lfirst_int(lc_attnum);
+			ListCell *lc;
+			ResTarget *col;
+			int colname_len;
+
+			lc = list_nth_cell(target_attnums, target_attnum_i);
+			undeclaredparams->targetattnums[num_target_attnums] = lfirst_int(lc);
+
+			col = (ResTarget *)list_nth(cols, target_attnum_i);
+			colname_len = strlen(col->name);
+			undeclaredparams->targetcolnames[num_target_attnums] = (char *) palloc(sizeof(char) * 64);
+			strncpy(undeclaredparams->targetcolnames[num_target_attnums], col->name, colname_len);
+			undeclaredparams->targetcolnames[num_target_attnums][colname_len] = '\0';
+
+			target_attnum_i += 1;
 			num_target_attnums += 1;
 		}
 
@@ -433,25 +461,134 @@ sp_describe_undeclared_parameters_internal(PG_FUNCTION_ARGS)
 		char **values;
 		HeapTuple tuple;
 		Datum result;
+		int col;
 		int numresultcols = 24;
-		bool isnull;
-		char *data_type;
-		char *udt_name;
-		/*
-		 * Use the same query as sp_describe_first_result_set_internal to get
-		 * the relevant column information
-		 */
-		char *tempq = "select t2.length, t1.numeric_precision, t1.numeric_scale, t1.data_type, t1.udt_name "
-					  " FROM information_schema.columns t1, sys.spt_datatype_info_table t2 "
-					  " WHERE table_name = \'%s\' "
-					  	" AND t1.ordinal_position = %d "
- 						" AND (t1.data_type = t2.pg_type_name "
-							" OR ((SELECT coalesce(t1.domain_name, \'\') != \'tinyint\') "
-								" AND (SELECT coalesce(t1.domain_name, \'\') != \'nchar\') "
-								" AND t2.pg_type_name = t1.udt_name) "
-							" OR (t1.domain_schema = \'sys\' AND t2.type_name = t1.domain_name))";
-		char *query = psprintf(tempq, undeclaredparams->tablename,
-				undeclaredparams->targetattnums[undeclaredparams->paramindexes[call_cntr]]);
+		char *tempq = 
+" SELECT "
+	"CAST( 0 AS INT ) " /* AS "parameter_ordinal"  -- Need to get correct ordinal number in code. */
+	", CAST( NULL AS sysname ) " /* AS "name"  -- Need to get correct parameter name in code. */
+	", CASE "
+		"WHEN T2.name = \'bigint\' THEN 127 "
+		"WHEN T2.name = \'binary\' THEN 173 "
+		"WHEN T2.name = \'bit\' THEN 104 "
+		"WHEN T2.name = \'char\' THEN 175 "
+		"WHEN T2.name = \'date\' THEN 40 "
+		"WHEN T2.name = \'datetime\' THEN 61 "
+		"WHEN T2.name = \'datetime2\' THEN 42 "
+		"WHEN T2.name = \'datetimeoffset\' THEN 43 "
+		"WHEN T2.name = \'decimal\' THEN 106 "
+		"WHEN T2.name = \'float\' THEN 62 "
+		"WHEN T2.name = \'image\' THEN 34 "
+		"WHEN T2.name = \'int\' THEN 56 "
+		"WHEN T2.name = \'money\' THEN 60 "
+		"WHEN T2.name = \'nchar\' THEN 239 "
+		"WHEN T2.name = \'ntext\' THEN 99 "
+		"WHEN T2.name = \'numeric\' THEN 108 "
+		"WHEN T2.name = \'nvarchar\' THEN 231 "
+		"WHEN T2.name = \'real\' THEN 59 "
+		"WHEN T2.name = \'smalldatetime\' THEN 58 "
+		"WHEN T2.name = \'smallint\' THEN 52 "
+		"WHEN T2.name = \'smallmoney\' THEN 122 "
+		"WHEN T2.name = \'text\' THEN 35 "
+		"WHEN T2.name = \'time\' THEN 41 "
+		"WHEN T2.name = \'tinyint\' THEN 48 "
+		"WHEN T2.name = \'uniqueidentifier\' THEN 36 "
+		"WHEN T2.name = \'varbinary\' THEN 165 "
+		"WHEN T2.name = \'varchar\' THEN 167 "
+		"ELSE C.system_type_id "
+	"END " /* AS "suggested_system_type_id" */
+	", CASE "
+		"WHEN T2.name = \'decimal\' THEN \'decimal(\' + CAST( C.precision AS VARCHAR(10) ) + \',\' + CAST( C.scale AS VARCHAR(10) ) + \')\' "
+		"WHEN T2.name = \'numeric\' THEN \'numeric(\' + CAST( C.precision AS VARCHAR(10) ) + \',\' + CAST( C.scale AS VARCHAR(10) ) + \')\' "
+		"WHEN T2.name = \'char\' THEN \'char(\' + CAST( C.max_length AS VARCHAR(10) ) + \')\' "
+		"WHEN T2.name = \'nchar\' THEN \'nchar(\' + CAST( C.max_length/2 AS VARCHAR(10) ) + \')\' "
+		"WHEN T2.name = \'binary\' THEN \'binary(\' + CAST( C.max_length AS VARCHAR(10) ) + \')\' "
+		"WHEN T2.name = \'datetime2\' THEN \'datetime2(\' + CAST( C.scale AS VARCHAR(10) ) + \')\' "
+		"WHEN T2.name = \'datetimeoffset\' THEN \'datetimeoffset(\' + CAST( C.scale AS VARCHAR(10) ) + \')\' "
+		"WHEN T2.name = \'time\' THEN \'time(\' + CAST( C.scale AS VARCHAR(10) ) + \')\' "
+		"WHEN T2.name = \'varchar\' THEN "
+			"CASE WHEN C.max_length = -1 THEN \'varchar(max)\' "
+				"ELSE \'varchar(\' + CAST( C.max_length AS VARCHAR(10) ) + \')\' "
+			"END "
+		"WHEN T2.name = \'nvarchar\' THEN "
+			"CASE WHEN C.max_length = -1 THEN \'nvarchar(max)\' "
+			"ELSE \'nvarchar(\' + CAST( C.max_length/2 AS VARCHAR(10) ) + \')\' "
+			"END "
+		"WHEN T2.name = \'varbinary\' THEN "
+		"CASE WHEN C.max_length = -1 THEN \'varbinary(max)\' "
+			"ELSE \'varbinary(\' + CAST( C.max_length AS VARCHAR(10) ) + \')\' "
+			"END "
+		"ELSE T2.name "
+	"END " /* AS "suggested_system_type_name" */
+	", CASE "
+		"WHEN T2.name IN (\'image\', \'ntext\',\'text\') THEN -1 "
+		"ELSE C.max_length "
+	"END  " /* AS "suggested_max_length" */
+	", C.precision " /* AS "suggested_precision" */
+	", C.scale " /* AS "suggested_scale" */
+	", CASE WHEN T.user_type_id = T.system_type_id THEN CAST( NULL AS INT ) ELSE T.user_type_id END " /* AS "suggested_user_type_id" */
+	", CASE WHEN T.user_type_id = T.system_type_id THEN CAST( NULL AS sysname) ELSE DB_NAME() END " /* AS "suggested_user_type_database" */
+	", CASE WHEN T.user_type_id = T.system_type_id THEN CAST( NULL AS sysname) ELSE SCHEMA_NAME( T.schema_id ) END " /* AS "suggested_user_type_schema" */
+	", CASE WHEN T.user_type_id = T.system_type_id THEN CAST( NULL AS sysname) ELSE T.name END " /* AS "suggested_user_type_name" */
+	", CAST( NULL AS NVARCHAR(4000) ) " /* AS "suggested_assembly_qualified_type_name" */
+	", CASE "
+		"WHEN C.xml_collection_id = 0 THEN CAST( NULL AS INT ) "
+		"ELSE C.xml_collection_id "
+	"END " /* AS "suggested_xml_collection_id" */
+	", CAST( NULL AS sysname ) " /* AS "suggested_xml_collection_database" */
+	", CAST( NULL AS sysname ) " /* AS "suggested_xml_collection_schema" */
+	", CAST( NULL AS sysname ) " /* AS "suggested_xml_collection_name" */
+	", C.is_xml_document " /* AS "suggested_is_xml_document" */
+	", CAST( 0 AS BIT ) " /* AS "suggested_is_case_sensitive" */
+	", CAST( 0 AS BIT ) " /* AS "suggested_is_fixed_length_clr_type" */
+	", CAST( 1 AS BIT ) " /* AS "suggested_is_input" */
+	", CAST( 0 AS BIT ) " /* AS "suggested_is_output" */
+	", CAST( NULL AS sysname ) " /* AS "formal_parameter_name" */
+	", CASE "
+		"WHEN T2.name IN (\'tinyint\', \'smallint\', \'int\', \'bigint\') THEN 38 "
+		"WHEN T2.name IN (\'float\', \'real\') THEN 109 "
+		"WHEN T2.name IN (\'smallmoney\', \'money\') THEN 110 "
+		"WHEN T2.name IN (\'smalldatetime\', \'datetime\') THEN 111 "
+		"WHEN T2.name = \'binary\' THEN 173 "
+		"WHEN T2.name = \'bit\' THEN 104 "
+		"WHEN T2.name = \'char\' THEN 175 "
+		"WHEN T2.name = \'date\' THEN 40 "
+		"WHEN T2.name = \'datetime2\' THEN 42 "
+		"WHEN T2.name = \'datetimeoffset\' THEN 43 "
+		"WHEN T2.name = \'decimal\' THEN 106 "
+		"WHEN T2.name = \'image\' THEN 34 "
+		"WHEN T2.name = \'nchar\' THEN 239 "
+		"WHEN T2.name = \'ntext\' THEN 99 "
+		"WHEN T2.name = \'numeric\' THEN 108 "
+		"WHEN T2.name = \'nvarchar\' THEN 231 "
+		"WHEN T2.name = \'text\' THEN 35 "
+		"WHEN T2.name = \'time\' THEN 41 "
+		"WHEN T2.name = \'uniqueidentifier\' THEN 36 "
+		"WHEN T2.name = \'varbinary\' THEN 165 "
+		"ELSE C.system_type_id "
+	"END " /* AS "suggested_tds_type_id" */
+	", CASE "
+		"WHEN T2.name IN (\'image\', \'ntext\', \'text\') THEN 4096 "
+		"WHEN T2.name = \'nvarchar\' AND C.max_length = -1 THEN 65535 "
+		"WHEN T2.name = \'varbinary\' AND C.max_length = -1 THEN 65535 "
+		"WHEN T2.name = \'varchar\' AND C.max_length = -1 THEN 65535 "
+		"WHEN T2.name IN (\'decimal\', \'numeric\') THEN 17 "
+		"WHEN T2.name = \'xml\' THEN 8100 "
+		"ELSE CAST( C.max_length AS INT ) "
+	"END " /* AS "suggested_tds_length" */
+"FROM sys.objects O, sys.columns C, sys.types T, sys.types T2 "
+"WHERE O.object_id = C.object_id "
+"AND C.user_type_id = T.user_type_id "
+"AND C.name = \'%s\' " /* -- INPUT column name */
+"AND T.system_type_id = T2.user_type_id " /*  -- To get system dt name. */
+"AND O.name = \'%s\'  " /*  -- INPUT table name */
+"AND O.schema_id = %d " /*  -- INPUT schema Oid */
+"AND O.type = \'U\'"; /* -- User tables only for the time being */
+		char *query = psprintf(tempq,
+				undeclaredparams->targetcolnames[undeclaredparams->paramindexes[call_cntr]],
+				undeclaredparams->tablename,
+				undeclaredparams->schemaoid);
+
 		int rc = SPI_execute(query, true, 1);
 		if (rc != SPI_OK_SELECT)
 			ereport(ERROR,
@@ -466,48 +603,11 @@ sp_describe_undeclared_parameters_internal(PG_FUNCTION_ARGS)
 
 		values[0] = psprintf("%d", call_cntr + 1);
 		values[1] = undeclaredparams->paramnames[call_cntr];
-		values[2] = "0";
-		values[3] = "";
-		values[4] = psprintf("%d",
-				 DatumGetInt32(SPI_getbinval(SPI_tuptable->vals[0],
-											SPI_tuptable->tupdesc,
-											1, &isnull)));
-		values[5] = psprintf("%d",
-				 DatumGetInt32(SPI_getbinval(SPI_tuptable->vals[0],
-											SPI_tuptable->tupdesc,
-											2, &isnull)));
-		values[6] = psprintf("%d",
-				 DatumGetInt32(SPI_getbinval(SPI_tuptable->vals[0],
-											SPI_tuptable->tupdesc,
-											3, &isnull)));
-		values[7] = NULL;
-		values[8] = "";
-		values[9] = "";
-		values[10] = "";
-		values[11] = "";
-		values[12] = NULL;
-		values[13] = "";
-		values[14] = "";
-		values[15] = "";
-		data_type = SPI_getvalue(SPI_tuptable->vals[0],
-								 SPI_tuptable->tupdesc, 4);
-		if (strcmp(data_type, "xml") == 0)
-			values[16] = "1";
-		else
-			values[16] = "0";
-		udt_name = DatumGetCString(SPI_getbinval(SPI_tuptable->vals[0],
-												 SPI_tuptable->tupdesc,
-												 5, &isnull));
-		if (strcmp(udt_name, "citext") == 0)
-			values[17] = "1";
-		else
-			values[17] = "0";
-		values[18] = "0";
-		values[19] = "0";
-		values[20] = "0";
-		values[21] = "";
-		values[22] = "0";
-		values[23] = "0";
+		for (col = 2; col < numresultcols; col++)
+		{
+			values[col] = SPI_getvalue(SPI_tuptable->vals[0],
+									   SPI_tuptable->tupdesc, col+1);
+		}
 
 		tuple = BuildTupleFromCStrings(attinmeta, values);
 		result = HeapTupleGetDatum(tuple);

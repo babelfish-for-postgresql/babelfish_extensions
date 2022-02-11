@@ -1,0 +1,32 @@
+USE master
+GO
+
+CREATE TABLE [dbo].[smtableint](
+    [c_id] [int] NOT NULL,
+    [c_d_id] [tinyint] NOT NULL,
+    [c_w_id] [int] NOT NULL,
+	[name1] [nvarchar(20)],
+	[name2] [nvarchar(25)]
+) ON [PRIMARY]
+GO
+
+INSERT INTO [dbo].[smtableint] VALUES (1, 2, 3, 'a1', 'a2'), (4, 5, 6, 'a11', 'a22'), (7, 8, 9, 'a111', 'a222')
+GO
+~~ROW COUNT: 3~~
+
+
+EXEC sp_describe_undeclared_parameters N'INSERT INTO [dbo].[smtableint]([c_id],[c_d_id],[c_w_id],[name1],[name2]) values (@PaRaM1,@PaRaM2,@PaRaM3,@PaRaM4,@PaRaM5)'
+GO
+~~START~~
+int#!#varchar#!#int#!#nvarchar#!#smallint#!#tinyint#!#tinyint#!#int#!#varchar#!#varchar#!#varchar#!#nvarchar#!#int#!#varchar#!#varchar#!#varchar#!#bit#!#bit#!#bit#!#bit#!#bit#!#varchar#!#int#!#int
+1#!#@param1#!#56#!#int#!#4#!#10#!#0#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#0#!#0#!#0#!#1#!#0#!#<NULL>#!#38#!#4
+2#!#@param2#!#48#!#tinyint#!#1#!#3#!#0#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#0#!#0#!#0#!#1#!#0#!#<NULL>#!#38#!#1
+3#!#@param3#!#56#!#int#!#4#!#10#!#0#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#0#!#0#!#0#!#1#!#0#!#<NULL>#!#38#!#4
+4#!#@param4#!#231#!#nvarchar(20)#!#40#!#0#!#0#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#0#!#0#!#0#!#1#!#0#!#<NULL>#!#231#!#40
+5#!#@param5#!#231#!#nvarchar(25)#!#50#!#0#!#0#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#0#!#0#!#0#!#1#!#0#!#<NULL>#!#231#!#50
+~~END~~
+
+
+-- cleanup
+DROP TABLE [dbo].[smtableint]
+GO
