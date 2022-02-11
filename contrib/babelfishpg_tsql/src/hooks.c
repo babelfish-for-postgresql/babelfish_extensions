@@ -1,7 +1,11 @@
 #include "postgres.h"
 
+#include "access/genam.h"
+#include "access/htup.h"
+#include "access/table.h"
 #include "catalog/heap.h"
 #include "catalog/namespace.h"
+#include "catalog/pg_attrdef_d.h"
 #include "catalog/pg_proc.h"
 #include "commands/tablecmds.h"
 #include "funcapi.h"
@@ -18,6 +22,7 @@
 #include "parser/scanner.h"
 #include "parser/scansup.h"
 #include "utils/builtins.h"
+#include "utils/fmgroids.h"
 #include "utils/rel.h"
 #include "utils/relcache.h"
 #include "utils/syscache.h"
@@ -39,7 +44,7 @@ static void set_output_clause_transformation_info(bool enabled);
 static bool get_output_clause_transformation_info(void);
 static Node *output_update_self_join_transformation(ParseState *pstate, UpdateStmt *stmt, CmdType command);
 static void handle_returning_qualifiers(CmdType command, List *returningList, ParseState *pstate);
-static void check_insert_row(List *icolumns, List *exprList);
+static void check_insert_row(List *icolumns, List *exprList, Oid relid);
 static void pltsql_post_transform_column_definition(ParseState *pstate, RangeVar* relation, ColumnDef *column, List **alist);
 static void pre_transform_target_entry(ResTarget *res, ParseState *pstate, ParseExprKind exprKind);
 static bool tle_name_comparison(const char *tlename, const char *identifier);
@@ -406,16 +411,43 @@ handle_returning_qualifiers(CmdType command, List *returningList, ParseState *ps
 }
 
 static void
-check_insert_row(List *icolumns, List *exprList)
+check_insert_row(List *icolumns, List *exprList, Oid relid)
 {
+	Relation	pg_attribute;
+	ScanKeyData scankey;
+	SysScanDesc scan;
+	HeapTuple	tuple;
+	int 		defaultCols = 0;
+	
 	if (prev_post_transform_insert_row_hook)
-		prev_post_transform_insert_row_hook(icolumns, exprList);
+		prev_post_transform_insert_row_hook(icolumns, exprList, relid);
 
 	if (sql_dialect != SQL_DIALECT_TSQL)
 		return;
 
+	/* Check for number of default columns in the relation */
+	ScanKeyInit(&scankey,
+				Anum_pg_attribute_attrelid,
+				BTEqualStrategyNumber, F_OIDEQ,
+				ObjectIdGetDatum(relid));
+
+	pg_attribute = table_open(AttributeRelationId, AccessShareLock);
+	
+	scan = systable_beginscan(pg_attribute, AttributeRelidNumIndexId, true,
+							  NULL, 1, &scankey);
+
+	while (HeapTupleIsValid(tuple = systable_getnext(scan)))
+	{
+		Form_pg_attribute att = (Form_pg_attribute) GETSTRUCT(tuple);
+		if (att->atthasdef && att->attgenerated == '\0')
+			defaultCols += 1;
+	}
+
+	systable_endscan(scan);
+	table_close(pg_attribute, AccessShareLock);
+
 	/* Do not allow more target columns than expressions */
-	if (exprList != NIL && list_length(exprList) < list_length(icolumns))
+	if (exprList != NIL && list_length(exprList) < list_length(icolumns) - defaultCols)
 		ereport(ERROR,
 				(errcode(ERRCODE_SYNTAX_ERROR),
 				 errmsg("Number of given values does not match target table definition")));

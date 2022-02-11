@@ -886,7 +886,7 @@ tsql_insert_output_into_cte_transformation(WithClause *opt_with_clause, RangeVar
 	tsql_output_insert_rest->onConflictClause = NULL;
 	tsql_output_insert_rest->returningList = NULL;
 	if (tsql_output_into_target_columns == NIL)
-		tsql_output_insert_rest->cols = insert_column_list;
+		tsql_output_insert_rest->cols = NIL;
 	else
 		tsql_output_insert_rest->cols = tsql_output_into_target_columns;
 
