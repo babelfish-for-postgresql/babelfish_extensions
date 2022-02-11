@@ -38,6 +38,15 @@ int
 ~~END~~
 
 
+-- empty schema name should return NULL
+SELECT schema_id('')
+GO
+~~START~~
+int
+<NULL>
+~~END~~
+
+
 SELECT schema_name(schema_id())
 GO
 ~~START~~
