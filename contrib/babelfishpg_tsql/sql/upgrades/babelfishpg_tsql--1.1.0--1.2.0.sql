@@ -1232,6 +1232,20 @@ $BODY$
 STRICT
 LANGUAGE SQL;
 
+CREATE OR REPLACE FUNCTION sys.schema_id()
+RETURNS INT
+LANGUAGE plpgsql
+STRICT
+AS $$
+BEGIN
+  RETURN (select oid from sys.pg_namespace_ext where nspname = (select current_schema()))::INT;
+EXCEPTION
+    WHEN others THEN
+        RETURN NULL;
+END;
+$$;
+GRANT EXECUTE ON FUNCTION sys.schema_id() TO PUBLIC;
+
 -- Reset search_path to not affect any subsequent scripts
 SELECT set_config('search_path', trim(leading 'sys, ' from current_setting('search_path')), false);
 
