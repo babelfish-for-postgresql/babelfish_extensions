@@ -9,14 +9,14 @@ prepst#!#exec#!#BIT|-|a|-|true
 #prepst#!#exec#!#BIT|-|a|-|0
 #prepst#!#exec#!#BIT|-|a|-|1
 prepst#!#exec#!#BIT|-|a|-|<NULL>
-~~ERROR (Code: 33557097)~~
-~~ERROR (Message: [42000] [Microsoft][ODBC Driver 17 for SQL Server][SQL Server]column "a" is of type "bit" but expression is of type "varchar" (33557097) (SQLExecDirectW))~~
+~~ROW COUNT: 1~~
 
 SELECT * FROM BIT_dt;
 ~~START~~
 bool
 False
 True
+<NULL>
 ~~END~~
 
 INSERT INTO BIT_dt(a) values(1)
@@ -36,6 +36,7 @@ SELECT * FROM BIT_dt;
 bool
 False
 True
+<NULL>
 True
 False
 <NULL>

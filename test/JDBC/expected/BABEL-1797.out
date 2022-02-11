@@ -9,9 +9,9 @@ N'INSERT INTO [dbo].[t23]([id],[a],[b]) values (@P1,@P2,@P3)'
 go
 ~~START~~
 int#!#varchar#!#int#!#nvarchar#!#smallint#!#tinyint#!#tinyint#!#int#!#varchar#!#varchar#!#varchar#!#nvarchar#!#int#!#varchar#!#varchar#!#varchar#!#bit#!#bit#!#bit#!#bit#!#bit#!#varchar#!#int#!#int
-1#!#@p1#!#0#!##!#4#!#32#!#0#!#<NULL>#!##!##!##!##!#<NULL>#!##!##!##!#0#!#0#!#0#!#0#!#0#!##!#0#!#0
-2#!#@p2#!#0#!##!#21#!#0#!#0#!#<NULL>#!##!##!##!##!#<NULL>#!##!##!##!#0#!#0#!#0#!#0#!#0#!##!#0#!#0
-3#!#@p3#!#0#!##!#16#!#0#!#0#!#<NULL>#!##!##!##!##!#<NULL>#!##!##!##!#0#!#0#!#0#!#0#!#0#!##!#0#!#0
+1#!#@p1#!#56#!#int#!#4#!#10#!#0#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#0#!#0#!#0#!#1#!#0#!#<NULL>#!#38#!#4
+2#!#@p2#!#60#!#money#!#8#!#19#!#4#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#0#!#0#!#0#!#1#!#0#!#<NULL>#!#110#!#8
+3#!#@p3#!#61#!#datetime#!#8#!#23#!#3#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#0#!#0#!#0#!#1#!#0#!#<NULL>#!#111#!#8
 ~~END~~
 
 

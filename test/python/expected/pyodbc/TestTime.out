@@ -22,8 +22,7 @@ prepst#!#exec#!#Time|-|a|-|12:45:37.123456|-|5
 ~~ROW COUNT: 1~~
 
 prepst#!#exec#!#Time|-|a|-|<NULL>
-~~ERROR (Code: 33557097)~~
-~~ERROR (Message: [42000] [Microsoft][ODBC Driver 17 for SQL Server][SQL Server]column "a" is of type time without time zone but expression is of type "varchar" (33557097) (SQLExecDirectW))~~
+~~ROW COUNT: 1~~
 
 
 select * from TestTime
@@ -36,6 +35,7 @@ time
 12:45:37
 12:45:37
 12:45:37
+<NULL>
 ~~END~~
 
 
@@ -65,8 +65,7 @@ prepst#!#exec#!#Time|-|a|-|12:45:37.123456|-|5
 ~~ROW COUNT: 1~~
 
 prepst#!#exec#!#Time|-|a|-|<NULL>
-~~ERROR (Code: 33557097)~~
-~~ERROR (Message: [42000] [Microsoft][ODBC Driver 17 for SQL Server][SQL Server]column "a" is of type time without time zone but expression is of type "varchar" (33557097) (SQLExecDirectW))~~
+~~ROW COUNT: 1~~
 
 
 select * from TestTime
@@ -79,6 +78,7 @@ time
 12:45:37
 12:45:37
 12:45:37
+<NULL>
 ~~END~~
 
 
@@ -108,8 +108,7 @@ prepst#!#exec#!#Time|-|a|-|12:45:37.123456|-|5
 ~~ROW COUNT: 1~~
 
 prepst#!#exec#!#Time|-|a|-|<NULL>
-~~ERROR (Code: 33557097)~~
-~~ERROR (Message: [42000] [Microsoft][ODBC Driver 17 for SQL Server][SQL Server]column "a" is of type time without time zone but expression is of type "varchar" (33557097) (SQLExecDirectW))~~
+~~ROW COUNT: 1~~
 
 
 select * from TestTime
@@ -122,6 +121,7 @@ time
 12:45:37
 12:45:37
 12:45:37
+<NULL>
 ~~END~~
 
 
@@ -151,8 +151,7 @@ prepst#!#exec#!#Time|-|a|-|12:45:37.123456|-|5
 ~~ROW COUNT: 1~~
 
 prepst#!#exec#!#Time|-|a|-|<NULL>
-~~ERROR (Code: 33557097)~~
-~~ERROR (Message: [42000] [Microsoft][ODBC Driver 17 for SQL Server][SQL Server]column "a" is of type time without time zone but expression is of type "varchar" (33557097) (SQLExecDirectW))~~
+~~ROW COUNT: 1~~
 
 
 select * from TestTime
@@ -165,6 +164,7 @@ time
 12:45:37
 12:45:37
 12:45:37
+<NULL>
 ~~END~~
 
 
@@ -194,8 +194,7 @@ prepst#!#exec#!#Time|-|a|-|12:45:37.123456|-|5
 ~~ROW COUNT: 1~~
 
 prepst#!#exec#!#Time|-|a|-|<NULL>
-~~ERROR (Code: 33557097)~~
-~~ERROR (Message: [42000] [Microsoft][ODBC Driver 17 for SQL Server][SQL Server]column "a" is of type time without time zone but expression is of type "varchar" (33557097) (SQLExecDirectW))~~
+~~ROW COUNT: 1~~
 
 
 select * from TestTime
@@ -208,6 +207,7 @@ time
 12:45:37
 12:45:37
 12:45:37
+<NULL>
 ~~END~~
 
 
@@ -237,8 +237,7 @@ prepst#!#exec#!#Time|-|a|-|12:45:37.123456|-|5
 ~~ROW COUNT: 1~~
 
 prepst#!#exec#!#Time|-|a|-|<NULL>
-~~ERROR (Code: 33557097)~~
-~~ERROR (Message: [42000] [Microsoft][ODBC Driver 17 for SQL Server][SQL Server]column "a" is of type time without time zone but expression is of type "varchar" (33557097) (SQLExecDirectW))~~
+~~ROW COUNT: 1~~
 
 
 select * from TestTime
@@ -251,6 +250,7 @@ time
 12:45:37
 12:45:37
 12:45:37
+<NULL>
 ~~END~~
 
 
@@ -280,8 +280,7 @@ prepst#!#exec#!#Time|-|a|-|12:45:37.123456|-|5
 ~~ROW COUNT: 1~~
 
 prepst#!#exec#!#Time|-|a|-|<NULL>
-~~ERROR (Code: 33557097)~~
-~~ERROR (Message: [42000] [Microsoft][ODBC Driver 17 for SQL Server][SQL Server]column "a" is of type time without time zone but expression is of type "varchar" (33557097) (SQLExecDirectW))~~
+~~ROW COUNT: 1~~
 
 
 select * from TestTime
@@ -294,6 +293,7 @@ time
 12:45:37
 12:45:37
 12:45:37
+<NULL>
 ~~END~~
 
 
