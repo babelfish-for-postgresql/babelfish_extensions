@@ -10,11 +10,11 @@
 size_t get_num_column_names_to_be_delimited(void);
 size_t get_num_pg_reserved_keywords_to_be_delimited(void);
 
-/*
- * PG keywords defined as TYPE_FUNC_NAME_KEYWORD
- * but treated as a normal unreserved keyword (or not a keyword) in T-SQL.
- */
 const char *column_names_to_be_delimited[] = {
+  /*
+   * PG keywords defined as TYPE_FUNC_NAME_KEYWORD
+   * but treated as a normal unreserved keyword (or not a keyword) in T-SQL.
+   */
   "binary",
   "collation",
   "concurrently",
@@ -25,7 +25,15 @@ const char *column_names_to_be_delimited[] = {
   "natural",
   "notnull",
   "overlaps",
-  "similar"
+  "similar",
+
+  /*
+   * PG unreserved keyword which can be used in table hint.
+   * this cause an issue in a query such as "create table t(nowait int)"
+   */
+  "noexpand",
+  "nowait",
+  "snapshot"
 };
 
 size_t get_num_column_names_to_be_delimited()
@@ -69,7 +77,21 @@ const char *pg_reserved_keywords_to_be_delimited[] = {
   //"true",
   "using",
   "variadic",
-  "window"
+  "window",
+
+  /* reserved keywords listed in Babelfish backend parser extension */
+  "choose",
+  "dateadd",
+  "datediff",
+  "datename",
+  "datepart",
+  "iif",
+  "out",
+  "output",
+  "parse",
+  "readonly",
+  "try_cast",
+  "try_parse"
 };
 
 size_t get_num_pg_reserved_keywords_to_be_delimited()

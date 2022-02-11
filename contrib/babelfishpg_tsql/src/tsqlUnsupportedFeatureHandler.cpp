@@ -213,7 +213,6 @@ protected:
 		antlrcpp::Any visitData_type(TSqlParser::Data_typeContext *ctx) override;
 
 		antlrcpp::Any visitSnapshot_option(TSqlParser::Snapshot_optionContext *ctx) override;
-		antlrcpp::Any visitKeyword(TSqlParser::KeywordContext *ctx) override;
 
 	/* helpers */
 	void handle_storage_partition(TSqlParser::Storage_partition_clauseContext *ctx);
@@ -1340,15 +1339,6 @@ antlrcpp::Any TsqlUnsupportedFeatureHandlerImpl::visitSnapshot_option(TSqlParser
 {
 	if (ctx->ALLOW_SNAPSHOT_ISOLATION())
 		handle(INSTR_UNSUPPORTED_TSQL_OPTION_ALLOW_SNAPSHOT_ISOLATION, ctx->ALLOW_SNAPSHOT_ISOLATION());
-	return visitChildren(ctx);
-}
-
-antlrcpp::Any TsqlUnsupportedFeatureHandlerImpl::visitKeyword(TSqlParser::KeywordContext *ctx)
-{
-	if (ctx->ALLOW_SNAPSHOT_ISOLATION())
-	{
-		handle(INSTR_UNSUPPORTED_TSQL_OPTION_ALLOW_SNAPSHOT_ISOLATION, ctx->ALLOW_SNAPSHOT_ISOLATION());
-	}
 	return visitChildren(ctx);
 }
 

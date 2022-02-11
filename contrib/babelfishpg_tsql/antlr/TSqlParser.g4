@@ -4153,7 +4153,8 @@ sign
     ;
 
 keyword
-    : ABORT_AFTER_WAIT
+    : ABORT
+    | ABORT_AFTER_WAIT
     | ABSENT
     | ABSOLUTE
     | ACCELERATED_DATABASE_RECOVERY
@@ -4193,6 +4194,7 @@ keyword
     | APPLICATION_LOG
     | APPLY
     | ARITHABORT
+    | ARITHIGNORE
     | ASSEMBLY
     | ASYMMETRIC
     | ASYNCHRONOUS_COMMIT
@@ -4203,6 +4205,8 @@ keyword
     | AUTHENTICATE
     | AUTHENTICATION
     | AUTO
+    | AUTOGROW_ALL_FILES
+    | AUTOGROW_SINGLE_FILE
     | AUTOMATED_BACKUP_PREFERENCE
     | AUTOMATIC
     | AUTO_CLEANUP
@@ -4221,6 +4225,7 @@ keyword
     | BIGINT
     | BASE64
     | BINARY_CHECKSUM
+    | BINARY_KEYWORD
     | BINDING
     | BLOB_STORAGE
     | BLOCK
@@ -4271,6 +4276,7 @@ keyword
     | CONCAT
     | CONCAT_NULL_YIELDS_NULL
     | CONFIGURATION
+    | CONNECT
     | CONNECTION
     | CONTAINED
     | CONTAINMENT
@@ -4309,6 +4315,7 @@ keyword
     | DATEDIFF
     | DATEFIRST
     | DATEFORMAT
+    | DATE_FORMAT
     | DATENAME
     | DATEPART
     | DATE_CORRELATION_OPTIMIZATION
@@ -4346,9 +4353,11 @@ keyword
     | DISK
     | DISK_DRIVE
     | DISTRIBUTED_AGG
+    | DISTRIBUTION
     | DOCUMENT
     | DTC_SUPPORT
     | DYNAMIC
+    | EDGE
     | ELEMENTS
     | EMERGENCY
     | EMPTY
@@ -4377,6 +4386,7 @@ keyword
     | EXPIRY_DATE
     | EXPLICIT
     | EXTENSION
+    | EXTERNALPUSHDOWN
     | EXTERNAL_ACCESS
     | EXTRACT
     | FAILOVER
@@ -4385,6 +4395,7 @@ keyword
     | FAILURECONDITIONLEVEL
     | FAILURE_CONDITION_LEVEL
     | FAIL_OPERATION
+    | FAIL_UNSUPPORTED
     | FALSE
     | FAN_IN
     | FAST
@@ -4395,6 +4406,7 @@ keyword
     | FILENAME
     | FILEPATH
     | FILESTREAM
+    | FILESTREAM_ON
     | FILETABLE
     | FILE_SNAPSHOT
     | FILTER
@@ -4408,6 +4420,7 @@ keyword
     | FOR_APPEND   
     | FORCE
     | FORCED
+    | FORCEPLAN
     | FORCESEEK
     | FORCE_FAILOVER_ALLOW_DATA_LOSS
     | FORCE_SERVICE_ALLOW_DATA_LOSS
@@ -4459,6 +4472,7 @@ keyword
     | IIF
     | IMMEDIATE
     | IMPERSONATE
+    | IMPLICIT_TRANSACTIONS
     | IMPORTANCE
     | INCLUDE
     | INCLUDE_NULL_VALUES
@@ -4582,12 +4596,14 @@ keyword
     | MUST_CHANGE
     | NAME
     | NATIVE_COMPILATION
+    | NEGOTIATE
     | NESTED_TRIGGERS
     | NEW_ACCOUNT
     | NEW_BROKER
     | NEW_PASSWORD
     | NEXT
     | NO
+    | NO_PERFORMANCE_SPOOL
     | NOCOMPUTE
     | NOCOUNT
     | NODE
@@ -4609,6 +4625,8 @@ keyword
     | NO_CHECKSUM
     | NO_COMPRESSION
     | NO_EVENT_LOSS
+    | NO_LOG
+    | NO_PERFORMANCE_SPOOL
     | NO_TRUNCATE
     | NO_WAIT
     | NTILE
@@ -4642,6 +4660,7 @@ keyword
     | PARAM
     | PARAMETERIZATION
     | PARAM_NODE
+    | PARSE
     | PARSEONLY
     | PARTIAL
     | PARTITION
@@ -4649,6 +4668,7 @@ keyword
     | PARTNER
     | PASSWORD
     | PATH
+    | PAUSE
     | PERCENTILE_CONT
     | PERCENTILE_DISC
     | PERCENT_RANK
@@ -4665,6 +4685,7 @@ keyword
     | POISON_MESSAGE_HANDLING
     | POLICY
     | POOL
+    | POPULATION
     | PORT
     | POSITION
     | PRECEDING
@@ -4677,6 +4698,7 @@ keyword
     | PRIVATE
     | PRIVATE_KEY
     | PRIVILEGES
+    | PROCEDURE_CACHE
     | PROCEDURE_NAME
     | PROCESS
     | PROFILE
@@ -4688,6 +4710,7 @@ keyword
     | QUERY_CAPTURE_MODE
     | QUERY_CAPTURE_POLICY
     | QUERY_STORE
+    | QUERYTRACEON
     | QUEUE
     | QUEUE_DELAY
     | QUOTED_IDENTIFIER
@@ -4695,10 +4718,12 @@ keyword
     | RANDOMIZED  
     | RANGE
     | RANK
+    | RAW
     | RC2
     | RC4
     | RC4_128
     | READONLY
+    | READWRITE
     | READ_COMMITTED_SNAPSHOT
     | READ_ONLY
     | READ_ONLY_ROUTING_LIST
@@ -4763,6 +4788,7 @@ keyword
     | SAFE
     | SAFETY
     | SAMPLE
+    | SCALEOUTEXECUTION
     | SCHEDULER
     | SCHEMABINDING
     | SCHEME
@@ -4781,6 +4807,7 @@ keyword
     | SECURITY
     | SECURITY_LOG
     | SEEDING_MODE
+    | SELECTIVE
     | SELF
     | SELECTIVE
     | SEMI_SENSITIVE
@@ -4803,6 +4830,7 @@ keyword
     | SHOWPLAN_ALL
     | SHOWPLAN_TEXT
     | SHOWPLAN_XML
+    | SHRINKLOG
     | SID
     | SIGNATURE
     | SIMPLE
@@ -4825,6 +4853,7 @@ keyword
     | SQLDUMPERPATH
     | SQLDUMPERTIMEOUT
     | STALE_CAPTURE_POLICY_THRESHOLD
+    | STALE_QUERY_THRESHOLD_DAYS
     | STANDBY
     | START
     | STARTED
@@ -4833,6 +4862,7 @@ keyword
     | STATE
     | STATEMENT
     | STATIC
+    | STATISTICAL_SEMANTICS
     | STATS
     | STATS_STREAM
     | STATUS
@@ -4895,6 +4925,7 @@ keyword
     | TRUSTWORTHY
     | TRY
     | TRY_CAST
+    | TRY_PARSE
     | TS
     | TSQL
     | TWO_DIGIT_YEAR_CUTOFF
@@ -4903,6 +4934,7 @@ keyword
     | UNBOUNDED
     | UNCHECKED
     | UNCOMMITTED
+    | UNDEFINED
     | UNKNOWN
     | UNLIMITED
     | UNLOCK
@@ -4930,12 +4962,14 @@ keyword
     | WEEK
     | WEEKS
     | WELL_FORMED_XML
+    | WHEN_SUPPORTED
     | WINDOWS
     | WITHOUT
     | WITHOUT_ARRAY_WRAPPER
     | WITNESS
     | WORK
     | WORKLOAD
+    | XACT_ABORT
     | XMAX
     | XMIN
     | XML
