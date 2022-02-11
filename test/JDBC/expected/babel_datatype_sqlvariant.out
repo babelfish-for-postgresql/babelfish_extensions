@@ -1,0 +1,1443 @@
+drop table if exists t1;
+go
+
+-- Test CAST to SQL_VARIANT
+create sequence t1_sec start with 1;
+go
+create table t1 (id int default nextval('t1_sec'), a sql_variant);
+go
+
+-- datetime2
+insert into t1 (a) values ( cast('2020-10-05 09:00:00' as datetime2) );
+go
+~~ROW COUNT: 1~~
+
+-- datetime
+insert into t1 (a) values ( cast('2020-10-05 09:00:00' as datetime) );
+go
+~~ROW COUNT: 1~~
+
+-- datetimeoffset
+insert into t1 (a) values ( cast('2020-10-05 09:00:00.123456-9:00' as datetimeoffset) );
+go
+~~ROW COUNT: 1~~
+
+insert into t1 (a) values ( cast('2020-10-05 09:00:00.123456-9:00' as datetimeoffset(3)) );
+go
+~~ROW COUNT: 1~~
+
+-- exceeding range error
+insert into t1 (a) values ( cast('10000-10-05 09:00:00.123456-9:00' as datetimeoffset(3)) );
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: data out of range for datetimeoffset)~~
+
+-- smalldatetime
+-- exceeding range error
+insert into t1 (a) values ( cast('2079-10-05 09:00:00' as smalldatetime) );
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: data out of range for smalldatetime)~~
+
+insert into t1 (a) values ( cast('2020-10-05 09:00:00' as smalldatetime) );
+go
+~~ROW COUNT: 1~~
+
+-- date
+insert into t1 (a) values ( cast('0001-01-01' as date) );
+go
+~~ROW COUNT: 1~~
+
+insert into t1 (a) values ( cast('9999-12-31' as date) );
+go
+~~ROW COUNT: 1~~
+
+-- time
+insert into t1 (a) values ( cast('00:00:00' as time) );
+go
+~~ROW COUNT: 1~~
+
+insert into t1 (a) values ( cast('23:59:59' as time) );
+go
+~~ROW COUNT: 1~~
+
+-- float
+-- float4
+insert into t1 (a) values ( cast(3.1415926 as float(24)) );
+go
+~~ROW COUNT: 1~~
+
+-- float8
+insert into t1 (a) values ( cast(3.1415926 as float(53)) );
+go
+~~ROW COUNT: 1~~
+
+-- real
+insert into t1 (a) values ( cast(3.1415926 as real) );
+go
+~~ROW COUNT: 1~~
+
+-- numeric
+insert into t1 (a) values ( cast(3.1415926 as numeric(4,3)) );
+go
+~~ROW COUNT: 1~~
+
+insert into t1 (a) values ( cast(3.1415926 as numeric(4,2)) );
+go
+~~ROW COUNT: 1~~
+
+-- money
+insert into t1 (a) values ( cast($100.123 as money) );
+go
+~~ROW COUNT: 1~~
+
+insert into t1 (a) values ( cast('100.123' as money) );
+go
+~~ROW COUNT: 1~~
+
+-- smallmoney
+insert into t1 (a) values ( cast($100.123 as smallmoney) );
+go
+~~ROW COUNT: 1~~
+
+insert into t1 (a) values ( cast('100.123' as smallmoney) );
+go
+~~ROW COUNT: 1~~
+
+-- bigint
+insert into t1 (a) values ( cast(2147483648 as bigint) );
+go
+~~ROW COUNT: 1~~
+
+-- int
+-- exceeding range error
+insert into t1 (a) values ( cast(2147483648 as int) );
+go
+~~ERROR (Code: 8115)~~
+
+~~ERROR (Message: integer out of range)~~
+
+insert into t1 (a) values ( cast(2147483647 as int) );
+go
+~~ROW COUNT: 1~~
+
+-- smallint
+-- exceeding range error
+insert into t1 (a) values ( cast(32768 as smallint) );
+go
+~~ERROR (Code: 220)~~
+
+~~ERROR (Message: smallint out of range)~~
+
+insert into t1 (a) values ( cast(32767 as smallint) );
+go
+~~ROW COUNT: 1~~
+
+-- tinyint
+-- exceeding range error
+insert into t1 (a) values ( cast(256 as tinyint) );
+go
+~~ERROR (Code: 220)~~
+
+~~ERROR (Message: value for domain tinyint violates check constraint "tinyint_check")~~
+
+insert into t1 (a) values ( cast(255 as tinyint) );
+go
+~~ROW COUNT: 1~~
+
+-- bit
+insert into t1 (a) values ( cast(1.5 as bit) );
+go
+~~ROW COUNT: 1~~
+
+insert into t1 (a) values ( cast(0 as bit) );
+go
+~~ROW COUNT: 1~~
+
+insert into t1 (a) values ( cast(NULL as bit) );
+go
+~~ROW COUNT: 1~~
+
+-- nvarchar
+insert into t1 (a) values ( cast('£' as nvarchar(1)) );
+go
+~~ROW COUNT: 1~~
+
+-- varchar
+insert into t1 (a) values ( cast('£' as varchar(1)) );
+go
+~~ROW COUNT: 1~~
+
+-- nchar
+insert into t1 (a) values ( cast('£' as nchar(1)) );
+go
+~~ROW COUNT: 1~~
+
+-- char
+insert into t1 (a) values ( cast('£' as char(1)) );
+go
+~~ROW COUNT: 1~~
+
+-- varbinary
+insert into t1 (a) values ( cast('abc' as varbinary(3)) );
+go
+~~ROW COUNT: 1~~
+
+-- binary
+insert into t1 (a) values ( cast('abc' as binary(3)) );
+go
+~~ROW COUNT: 1~~
+
+-- uniqueidentifier
+insert into t1 (a) values ( cast('0E984725-C51C-4BF4-9960-E1C80E27ABA0' as uniqueidentifier) );
+go
+~~ROW COUNT: 1~~
+
+insert into t1 (a) values ( cast('0e984725-c51c-4bf4-9960-e1c80e27aba0' as uniqueidentifier) );
+go
+~~ROW COUNT: 1~~
+
+-- truncation succeed
+insert into t1 (a) values ( cast('0E984725-C51C-4BF4-9960-E1C80E27ABA0wrong' as uniqueidentifier) );
+go
+~~ROW COUNT: 1~~
+
+
+-- DATETIMEOFFSETN error expected using JDBC - see https://github.com/microsoft/mssql-jdbc/issues/1670
+select a from t1 order by id;
+go
+~~START~~
+sql_variant
+2020-10-05 09:00:00.0
+2020-10-05 09:00:00.0
+~~ERROR (Code: 0)~~
+
+~~ERROR (Message: Unexpected TDS type  DATETIMEOFFSETN  in SQL_VARIANT.)~~
+
+
+-- Test CAST from SQL_VARIANT
+-- datetime2
+select cast(cast(cast('2020-10-20 09:00:00' as datetime2) as sql_variant) as datetime2);
+go
+~~START~~
+datetime2
+2020-10-20 09:00:00.000000
+~~END~~
+
+-- datetimeoffset
+select cast(cast(cast('2020-10-05 09:00:00-9:00' as datetimeoffset) as sql_variant) as datetimeoffset);
+go
+~~START~~
+datetimeoffset
+2020-10-05 09:00:00.000000 -09:00
+~~END~~
+
+-- datetime
+select cast(cast(cast('2020-10-20 09:00:00' as datetime) as sql_variant) as datetime);
+go
+~~START~~
+datetime
+2020-10-20 09:00:00.0
+~~END~~
+
+-- smalldatetime
+select cast(cast(cast('2020-10-20 09:00:00' as smalldatetime) as sql_variant) as smalldatetime);
+go
+~~START~~
+smalldatetime
+2020-10-20 09:00:00.0
+~~END~~
+
+-- date
+select cast(cast(cast('2020-10-20' as date) as sql_variant) as date);
+go
+~~START~~
+date
+2020-10-20
+~~END~~
+
+-- time
+select cast(cast(cast('09:00:00' as time) as sql_variant) as time);
+go
+~~START~~
+time
+09:00:00.000000
+~~END~~
+
+-- float
+select cast(cast(cast(3.1415926 as float) as sql_variant) as float);
+go
+~~START~~
+float
+3.1415926
+~~END~~
+
+-- real
+select cast(cast(cast(3.1415926 as real) as sql_variant) as real);
+go
+~~START~~
+real
+3.1415925
+~~END~~
+
+-- numeric
+select cast(cast(cast(3.1415926 as numeric(4, 3)) as sql_variant) as numeric(4, 3));
+go
+~~START~~
+numeric
+3.142
+~~END~~
+
+select cast(cast(cast(3.1415926 as numeric(4, 3)) as sql_variant) as numeric(4, 2));
+go
+~~START~~
+numeric
+3.14
+~~END~~
+
+-- money
+select cast(cast(cast('$123.123' as money) as sql_variant) as money);
+go
+~~START~~
+money
+123.1230
+~~END~~
+
+-- smallmoney
+select cast(cast(cast('$123.123' as smallmoney) as sql_variant) as smallmoney);
+go
+~~START~~
+smallmoney
+123.1230
+~~END~~
+
+-- bigint
+select cast(cast(cast(2147483648 as bigint) as sql_variant) as bigint);
+go
+~~START~~
+bigint
+2147483648
+~~END~~
+
+-- int
+select cast(cast(cast(32768 as int) as sql_variant) as int);
+go
+~~START~~
+int
+32768
+~~END~~
+
+-- smallint
+select cast(cast(cast(256 as smallint) as sql_variant) as smallint);
+go
+~~START~~
+smallint
+256
+~~END~~
+
+-- tinyint
+select cast(cast(cast(255 as tinyint) as sql_variant) as tinyint);
+go
+~~START~~
+tinyint
+255
+~~END~~
+
+-- bit
+select cast(cast(cast(1.5 as bit) as sql_variant) as bit);
+go
+~~START~~
+bit
+1
+~~END~~
+
+select cast(cast(cast(0 as bit) as sql_variant) as bit);
+go
+~~START~~
+bit
+0
+~~END~~
+
+select cast(cast(cast(NULL as bit) as sql_variant) as bit);
+go
+~~START~~
+bit
+<NULL>
+~~END~~
+
+-- nvarchar
+select cast(cast(cast('£' as nvarchar(1)) as sql_variant) as nvarchar(1));
+go
+~~START~~
+nvarchar
+£
+~~END~~
+
+-- varchar
+select cast(cast(cast('£' as varchar(1)) as sql_variant) as varchar(1));
+go
+~~START~~
+varchar
+£
+~~END~~
+
+-- nchar
+select cast(cast(cast('£' as nchar(1)) as sql_variant) as nchar(1));
+go
+~~START~~
+nchar
+£
+~~END~~
+
+-- char
+select cast(cast(cast('£' as char(1)) as sql_variant) as char(1));
+go
+~~START~~
+char
+£
+~~END~~
+
+-- varbinary
+select cast(cast(cast('abc' as varbinary(3)) as sql_variant) as varbinary(3));
+go
+~~START~~
+varbinary
+616263
+~~END~~
+
+-- binary
+select cast(cast(cast('abc' as binary(3)) as sql_variant) as binary(3));
+go
+~~START~~
+binary
+616263
+~~END~~
+
+-- uniqueidentifier
+select cast(cast(cast('0E984725-C51C-4BF4-9960-E1C80E27ABA0' as uniqueidentifier) 
+                 as sql_variant) as uniqueidentifier);
+go
+~~START~~
+uniqueidentifier
+0E984725-C51C-4BF4-9960-E1C80E27ABA0
+~~END~~
+
+
+select cast(cast(cast('0E984725-C51C-4BF4-9960-E1C80E27ABA0wrong' as uniqueidentifier) 
+                 as sql_variant) as uniqueidentifier);
+go
+~~START~~
+uniqueidentifier
+0E984725-C51C-4BF4-9960-E1C80E27ABA0
+~~END~~
+
+
+-- CAST examples already supported
+-- datetime to date
+select cast(cast(cast('2020-10-20 09:00:00' as datetime) as sql_variant) as date);
+go
+~~START~~
+date
+2020-10-20
+~~END~~
+
+-- date to datetime2
+select cast(cast(cast('2020-10-20' as date) as sql_variant) as datetime2);
+go
+~~START~~
+datetime2
+2020-10-20 00:00:00.000000
+~~END~~
+
+-- datetimeoffset 2 datetime2
+select cast(cast(cast('2020-10-05 09:00:00-9:00' as datetimeoffset) as sql_variant) as datetime2);
+go
+~~START~~
+datetime2
+2020-10-05 18:00:00.000000
+~~END~~
+
+-- datetime2 2 datetimeoffset
+select cast(cast(cast('2020-10-20 09:00:00' as datetime2) as sql_variant) as datetimeoffset);
+go
+~~START~~
+datetimeoffset
+2020-10-20 09:00:00.000000 +00:00
+~~END~~
+
+-- float to numeric
+select cast(cast(cast(3.1415926 as float) as sql_variant) as numeric(4, 3));
+go
+~~START~~
+numeric
+3.142
+~~END~~
+
+-- float to money
+select cast(cast(cast(3.1415926 as float) as sql_variant) as money);
+go
+~~START~~
+money
+3.1416
+~~END~~
+
+-- float to int
+select cast(cast(cast(3.1415926 as float) as sql_variant) as int);
+go
+~~START~~
+int
+3
+~~END~~
+
+-- money to int
+select cast(cast(cast('$123.123' as money) as sql_variant) as int);
+go
+~~START~~
+int
+123
+~~END~~
+
+-- int to varbinary
+select cast(cast(cast(123 as int) as sql_variant) as varbinary(4));
+go
+~~START~~
+varbinary
+0000007B
+~~END~~
+
+-- varchar to varbinary
+select cast(cast(cast('abc' as varchar(3)) as sql_variant) as varbinary(3));
+go
+~~START~~
+varbinary
+616263
+~~END~~
+
+-- varbinary to int
+select cast(cast(cast('abc' as varbinary(3)) as sql_variant) as int);
+go
+~~START~~
+int
+6382179
+~~END~~
+
+-- varbinary to varchar
+select cast(cast(cast('abc' as varbinary(3)) as sql_variant) as varchar(3));
+go
+~~START~~
+varchar
+abc
+~~END~~
+
+
+-- CAST examples not supported yet
+-- datetime to float
+select cast(cast(cast('2020-10-20 09:00:00' as datetime) as sql_variant) as float);
+go
+~~START~~
+float
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: unable to cast from internal type datetime to double precision)~~
+
+-- time to datetime
+select cast(cast(cast('09:00:00' as time) as sql_variant) as datetime);
+go
+~~START~~
+datetime
+1900-01-01 09:00:00.0
+~~END~~
+
+-- float to datetime
+select cast(cast(cast(3.1415926 as float) as sql_variant) as datetime);
+go
+~~START~~
+datetime
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: unable to cast from internal type double precision to datetime2)~~
+
+-- numeric to varbinary
+select cast(cast(cast(3.1415926 as numeric(4, 3)) as sql_variant) as varbinary(6));
+go
+~~START~~
+varbinary
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: unable to cast from internal type numeric to varbinary)~~
+
+-- money to bigint
+select cast(cast(cast('$123.123' as money) as sql_variant) as bigint);
+go
+~~START~~
+bigint
+123
+~~END~~
+
+-- money to bit
+select cast(cast(cast('$123.123' as money) as sql_variant) as bit);
+go
+~~START~~
+bit
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: unable to cast from internal type money to "bit")~~
+
+-- bigint to money
+select cast(cast(cast(12345 as bigint) as sql_variant) as money);
+go
+~~START~~
+money
+12345.0000
+~~END~~
+
+-- bit to float
+select cast(cast(cast(1.5 as bit) as sql_variant) as float);
+go
+~~START~~
+float
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: unable to cast from internal type "bit" to double precision)~~
+
+-- varbinary to money
+select cast(cast(cast('abc' as varbinary(3)) as sql_variant) as money);
+go
+~~START~~
+money
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: unable to cast from internal type varbinary to money)~~
+
+-- uniqueidentifier to varbinary
+select cast(cast(cast('0E984725-C51C-4BF4-9960-E1C80E27ABA0' as uniqueidentifier)
+                 as sql_variant) as varbinary(36));
+go
+~~START~~
+varbinary
+2547980E1CC5F44B9960E1C80E27ABA0
+~~END~~
+
+
+-- Test DATALENGTH for SQL_VARIANT TODO: DATETIMEOFFSETN error expected using JDBC - see https://github.com/microsoft/mssql-jdbc/issues/1670
+select datalength(a), a from t1;
+go
+~~START~~
+int#!#sql_variant
+8#!#2020-10-05 09:00:00.0
+8#!#2020-10-05 09:00:00.0
+10#!#~~ERROR (Code: 0)~~
+
+~~ERROR (Message: Unexpected TDS type  DATETIMEOFFSETN  in SQL_VARIANT.)~~
+
+
+-- SQL_VARAINT_PROPERTY function
+CREATE SEQUENCE t2_sec start with 1 increment by 1;
+go
+create table t2 (id int default nextval('t2_sec'), testcase varchar(50), v sql_variant);
+go
+insert into t2 (testcase, v) values ('datetime2 basic', cast('2020-10-05 09:00:00' as datetime2));
+go
+~~ROW COUNT: 1~~
+
+-- no such property
+select sql_variant_property(v, 'nothing') from t2;
+go
+~~START~~
+sql_variant
+<NULL>
+~~END~~
+
+
+-- type-wise property check
+insert into t2 (testcase, v) values ('datetime2 w/ typmode', cast('2020-10-05 09:00:00' as datetime2(3)));
+go
+~~ROW COUNT: 1~~
+
+insert into t2 (testcase, v) values ('datetime basic', cast('2020-10-05 09:00:00' as datetime));
+go
+~~ROW COUNT: 1~~
+
+insert into t2 (testcase, v) values ('datetimeoffset', cast('2020-10-05 09:00:00.123456+8:00' as datetimeoffset));
+go
+~~ROW COUNT: 1~~
+
+insert into t2 (testcase, v) values ('datetimeoffset w/ typmod', cast('2020-10-05 09:00:00.123456+8:00' as datetimeoffset(3)));
+go
+~~ROW COUNT: 1~~
+
+insert into t2 (testcase, v) values ('smalldatetime basic', cast('2020-10-05 09:00:00' as smalldatetime));
+go
+~~ROW COUNT: 1~~
+
+insert into t2 (testcase, v) values ('date basic', cast('0001-01-01' as date));
+go
+~~ROW COUNT: 1~~
+
+insert into t2 (testcase, v) values ('time basic', cast('00:00:00' as time));
+go
+~~ROW COUNT: 1~~
+
+insert into t2 (testcase, v) values ('time basic w/ typmod', cast('00:00:00' as time(3)));
+go
+~~ROW COUNT: 1~~
+
+-- float8
+insert into t2 (testcase, v) values ('float basic', cast(3.1415926 as float(53)));
+go
+~~ROW COUNT: 1~~
+
+insert into t2 (testcase, v) values ('real basic', cast(3.1415926 as real));
+go
+~~ROW COUNT: 1~~
+
+insert into t2 (testcase, v) values ('numeric basic', cast(93.1415926 as numeric(4,2)));
+go
+~~ROW COUNT: 1~~
+
+insert into t2 (testcase, v) values ('numeric basic2', cast(93.1415926 as numeric(5,1)));
+go
+~~ROW COUNT: 1~~
+
+insert into t2 (testcase, v) values ('money basic', cast('100.123' as money));
+go
+~~ROW COUNT: 1~~
+
+insert into t2 (testcase, v) values ('smallmoney basic', cast('100.123' as smallmoney));
+go
+~~ROW COUNT: 1~~
+
+insert into t2 (testcase, v) values ('bigint basic', cast(2147483648 as bigint));
+go
+~~ROW COUNT: 1~~
+
+insert into t2 (testcase, v) values ('int basic', cast(2147483647 as int));
+go
+~~ROW COUNT: 1~~
+
+insert into t2 (testcase, v) values ('smallint basic', cast(32767 as smallint));
+go
+~~ROW COUNT: 1~~
+
+insert into t2 (testcase, v) values ('tinyint basic', cast(255 as tinyint));
+go
+~~ROW COUNT: 1~~
+
+insert into t2 (testcase, v) values ('bit basic', cast(0 as bit));
+go
+~~ROW COUNT: 1~~
+
+insert into t2 (testcase, v) values ('nvarchar basic', cast('£' as nvarchar(1)));
+go
+~~ROW COUNT: 1~~
+
+insert into t2 (testcase, v) values ('varchar basic', cast('£' as varchar(1)));
+go
+~~ROW COUNT: 1~~
+
+insert into t2 (testcase, v) values ('nchar basic', cast('£' as nchar(1)));
+go
+~~ROW COUNT: 1~~
+
+insert into t2 (testcase, v) values ('char basic', cast('£' as char(1)));
+go
+~~ROW COUNT: 1~~
+
+insert into t2 (testcase, v) values ('varbinary basic', cast('abc' as varbinary(3)));
+go
+~~ROW COUNT: 1~~
+
+insert into t2 (testcase, v) values ('binary basic', cast('abc' as binary(3)));
+go
+~~ROW COUNT: 1~~
+
+insert into t2 (testcase, v) values ('uniqueidentifier basic', cast('0e984725-c51c-4bf4-9960-e1c80e27aba0' as uniqueidentifier));
+go
+~~ROW COUNT: 1~~
+
+
+
+-- TODO fix crash
+-- select id, testcase, 
+--        sql_variant_property(v, 'basetype') as 'basetype',
+--        sql_variant_property(v, 'precision') as 'precision',
+--        sql_variant_property(v, 'scale') as 'scale',
+--        sql_variant_property(v, 'collation') as 'collation',
+--        sql_variant_property(v, 'totalbytes') as 'totalbytes',
+--        sql_variant_property(v, 'maxlength') as 'maxlength' from t2 order by id;
+-- go
+-- test null value
+CREATE table t3 ( a sql_variant);
+go
+insert into t3 values (null);
+go
+~~ROW COUNT: 1~~
+
+
+select sql_variant_property(a, 'basetype') as 'basetype',
+       sql_variant_property(a, 'precision') as 'precision',
+       sql_variant_property(a, 'scale') as 'scale',
+       sql_variant_property(a, 'collation') as 'collation',
+       sql_variant_property(a, 'totalbytes') as 'totalbytes',
+       sql_variant_property(a, 'maxlength') as 'maxlength' from t3;
+go
+~~START~~
+sql_variant#!#sql_variant#!#sql_variant#!#sql_variant#!#sql_variant#!#sql_variant
+<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>
+~~END~~
+
+
+-- Comparision functions
+CREATE SEQUENCE t4_sec START WITH 1;
+go
+create table t4 (id int default nextval('t4_sec'), a sql_variant, b sql_variant);
+go
+
+-- datetime2
+insert into t4 (a , b) values (cast('2020-10-05 09:00:00' as datetime2), cast('2020-10-05 09:00:00' as datetime2));
+go
+~~ROW COUNT: 1~~
+
+insert into t4 (a , b) values (cast('2020-10-05 09:00:00' as datetime2), cast('2020-10-05 06:00:00' as datetime2));
+go
+~~ROW COUNT: 1~~
+
+insert into t4 (a , b) values (cast('2020-10-05 06:00:00' as datetime2), cast('2020-10-05 09:00:00' as datetime2));
+go
+~~ROW COUNT: 1~~
+
+-- datetime
+insert into t4 (a , b) values (cast('2020-10-05 09:00:00' as datetime), cast('2020-10-05 09:00:00' as datetime));
+go
+~~ROW COUNT: 1~~
+
+insert into t4 (a , b) values (cast('2020-10-05 09:00:00' as datetime), cast('2020-10-05 01:00:00' as datetime));
+go
+~~ROW COUNT: 1~~
+
+insert into t4 (a , b) values (cast('2020-10-05 01:00:00' as datetime), cast('2020-10-05 09:00:00' as datetime));
+go
+~~ROW COUNT: 1~~
+
+-- datetimeoffset
+insert into t4 (a , b) values (cast('2020-10-05 09:00:00-8:00' as datetimeoffset), cast('2020-10-05 09:00:00-8:00' as datetimeoffset));
+go
+~~ROW COUNT: 1~~
+
+insert into t4 (a , b) values (cast('2020-10-05 09:00:00-8:00' as datetimeoffset), cast('2020-10-05 06:00:00-8:00' as datetimeoffset));
+go
+~~ROW COUNT: 1~~
+
+insert into t4 (a , b) values (cast('2020-10-05 06:00:00-8:00' as datetimeoffset), cast('2020-10-05 09:00:00-8:00' as datetimeoffset));
+go
+~~ROW COUNT: 1~~
+
+-- smalldatetime
+insert into t4 (a , b) values (cast('2020-10-05 09:00:00' as smalldatetime), cast('2020-10-05 09:00:00' as smalldatetime));
+go
+~~ROW COUNT: 1~~
+
+insert into t4 (a , b) values (cast('2020-10-05 09:00:00' as smalldatetime), cast('2020-10-05 03:00:00' as smalldatetime));
+go
+~~ROW COUNT: 1~~
+
+insert into t4 (a , b) values (cast('2020-10-05 03:00:00' as smalldatetime), cast('2020-10-05 09:00:00' as smalldatetime));
+go
+~~ROW COUNT: 1~~
+
+-- date
+insert into t4 (a , b) values (cast('0001-01-01' as date), cast('0001-01-01' as date));
+go
+~~ROW COUNT: 1~~
+
+insert into t4 (a , b) values (cast('9999-12-31' as date), cast('0001-01-01' as date));
+go
+~~ROW COUNT: 1~~
+
+insert into t4 (a , b) values (cast('0001-01-01' as date), cast('9999-12-31' as date));
+go
+~~ROW COUNT: 1~~
+
+-- time
+insert into t4 (a , b) values (cast('00:00:00' as time), cast('00:00:00' as time));
+go
+~~ROW COUNT: 1~~
+
+insert into t4 (a , b) values (cast('23:59:59' as time), cast('00:00:00' as time));
+go
+~~ROW COUNT: 1~~
+
+insert into t4 (a , b) values (cast('00:00:00' as time), cast('23:59:59' as time));
+go
+~~ROW COUNT: 1~~
+
+-- float
+insert into t4 (a , b) values (cast(3.1415926 as float(53)), cast(3.1415926 as float(53)));
+go
+~~ROW COUNT: 1~~
+
+insert into t4 (a , b) values (cast(3.1415926 as float(53)), cast(3.1415921 as float(53)));
+go
+~~ROW COUNT: 1~~
+
+insert into t4 (a , b) values (cast(3.1415921 as float(53)), cast(3.1415926 as float(53)));
+go
+~~ROW COUNT: 1~~
+
+-- real
+insert into t4 (a , b) values (cast(3.141 as real), cast(3.141 as real));
+go
+~~ROW COUNT: 1~~
+
+insert into t4 (a , b) values (cast(3.141 as real), cast(2.141 as real));
+go
+~~ROW COUNT: 1~~
+
+insert into t4 (a , b) values (cast(2.141 as real), cast(3.141 as real));
+go
+~~ROW COUNT: 1~~
+
+-- numeric
+insert into t4 (a , b) values (cast(3.141 as numeric(4,3)), cast(3.141 as numeric(4,3)));
+go
+~~ROW COUNT: 1~~
+
+insert into t4 (a , b) values (cast(3.141 as numeric(4,3)), cast(3.142 as numeric(4,3)));
+go
+~~ROW COUNT: 1~~
+
+insert into t4 (a , b) values (cast(3.142 as numeric(4,3)), cast(3.141 as numeric(4,3)));
+go
+~~ROW COUNT: 1~~
+
+-- money
+insert into t4 (a , b) values (cast('$100.123' as money), cast('$100.123' as money));
+go
+~~ROW COUNT: 1~~
+
+insert into t4 (a , b) values (cast('$100.123' as money), cast('$100.121' as money));
+go
+~~ROW COUNT: 1~~
+
+insert into t4 (a , b) values (cast('$100.121' as money), cast('$100.123' as money));
+go
+~~ROW COUNT: 1~~
+
+-- smallmoney
+insert into t4 (a , b) values (cast('$100.123' as smallmoney), cast('$100.123' as smallmoney));
+go
+~~ROW COUNT: 1~~
+
+insert into t4 (a , b) values (cast('$100.123' as smallmoney), cast('$100.121' as smallmoney));
+go
+~~ROW COUNT: 1~~
+
+insert into t4 (a , b) values (cast('$100.121' as smallmoney), cast('$100.123' as smallmoney));
+go
+~~ROW COUNT: 1~~
+
+-- bigint
+insert into t4 (a , b) values (cast(2147483648 as bigint), cast(2147483648 as bigint));
+go
+~~ROW COUNT: 1~~
+
+insert into t4 (a , b) values (cast(2147483648 as bigint), cast(2147483641 as bigint));
+go
+~~ROW COUNT: 1~~
+
+insert into t4 (a , b) values (cast(2147483641 as bigint), cast(2147483648 as bigint));
+go
+~~ROW COUNT: 1~~
+
+-- int
+insert into t4 (a , b) values (cast(2147483647 as int), cast(2147483647 as int));
+go
+~~ROW COUNT: 1~~
+
+insert into t4 (a , b) values (cast(2147483647 as int), cast(2147483641 as int));
+go
+~~ROW COUNT: 1~~
+
+insert into t4 (a , b) values (cast(2147483641 as int), cast(2147483647 as int));
+go
+~~ROW COUNT: 1~~
+
+-- smallint
+insert into t4 (a , b) values (cast(32767 as smallint), cast(32767 as smallint));
+go
+~~ROW COUNT: 1~~
+
+insert into t4 (a , b) values (cast(32767 as smallint), cast(32761 as smallint));
+go
+~~ROW COUNT: 1~~
+
+insert into t4 (a , b) values (cast(32761 as smallint), cast(32767 as smallint));
+go
+~~ROW COUNT: 1~~
+
+-- tinyint
+insert into t4 (a , b) values (cast(255 as tinyint), cast(255 as tinyint));
+go
+~~ROW COUNT: 1~~
+
+insert into t4 (a , b) values (cast(255 as tinyint), cast(251 as tinyint));
+go
+~~ROW COUNT: 1~~
+
+insert into t4 (a , b) values (cast(251 as tinyint), cast(255 as tinyint));
+go
+~~ROW COUNT: 1~~
+
+-- bit
+--insert into t4 (a , b) values (0::bit, 0::bit);
+go
+--insert into t4 (a , b) values (1::bit, 0::bit);
+go
+--insert into t4 (a , b) values (1::bit, 1::bit);
+go
+-- nvarchar 
+insert into t4 (a , b) values (cast('nvarchar' as nvarchar(10)), cast('nvarchar' as nvarchar(10)));
+go
+~~ROW COUNT: 1~~
+
+insert into t4 (a , b) values (cast('nvarchar' as nvarchar(10)), cast('nvarchar1' as nvarchar(10)));
+go
+~~ROW COUNT: 1~~
+
+insert into t4 (a , b) values (cast('nvarchar1' as nvarchar(10)), cast('nvarchar' as nvarchar(10)));
+go
+~~ROW COUNT: 1~~
+
+-- varchar 
+insert into t4 (a , b) values (cast('varchar' as varchar(10)), cast('varchar' as varchar(10)));
+go
+~~ROW COUNT: 1~~
+
+insert into t4 (a , b) values (cast('varchar' as varchar(10)), cast('varchar1' as varchar(10)));
+go
+~~ROW COUNT: 1~~
+
+insert into t4 (a , b) values (cast('varchar1' as varchar(10)), cast('varchar' as varchar(10)));
+go
+~~ROW COUNT: 1~~
+
+-- varbinary 
+--insert into t4 (a , b) values ('varbinary'::varbinary(10), 'varbinary'::varbinary(10));
+go
+--insert into t4 (a , b) values ('varbinary'::varbinary(10), 'varbinary1'::varbinary(10));
+go
+--insert into t4 (a , b) values ('varbinary1'::varbinary(10), 'varbinary'::varbinary(10));
+go
+-- binary 
+--insert into t4 (a , b) values ('binary'::binary(10), 'binary'::binary(10));
+go
+--insert into t4 (a , b) values ('binary'::binary(10), 'binary1'::binary(10));
+go
+--insert into t4 (a , b) values ('binary1'::binary(10), 'binary'::binary(10));
+go
+
+-- TODO: DATETIMEOFFSETN error expected using JDBC - see https://github.com/microsoft/mssql-jdbc/issues/1670
+select * from t4 where a = b order by id;
+go
+~~START~~
+int#!#sql_variant#!#sql_variant
+1#!#2020-10-05 09:00:00.0#!#2020-10-05 09:00:00.0
+4#!#2020-10-05 09:00:00.0#!#2020-10-05 09:00:00.0
+7#!#~~ERROR (Code: 0)~~
+
+~~ERROR (Message: Unexpected TDS type  DATETIMEOFFSETN  in SQL_VARIANT.)~~
+
+-- TODO: DATETIMEOFFSETN error expected using JDBC - see https://github.com/microsoft/mssql-jdbc/issues/1670
+select * from t4 where a <> b order by id;
+go
+~~START~~
+int#!#sql_variant#!#sql_variant
+2#!#2020-10-05 09:00:00.0#!#2020-10-05 06:00:00.0
+3#!#2020-10-05 06:00:00.0#!#2020-10-05 09:00:00.0
+5#!#2020-10-05 09:00:00.0#!#2020-10-05 01:00:00.0
+6#!#2020-10-05 01:00:00.0#!#2020-10-05 09:00:00.0
+8#!#~~ERROR (Code: 0)~~
+
+~~ERROR (Message: Unexpected TDS type  DATETIMEOFFSETN  in SQL_VARIANT.)~~
+
+-- TODO: DATETIMEOFFSETN error expected using JDBC - see https://github.com/microsoft/mssql-jdbc/issues/1670
+select * from t4 where a > b order by id;
+go
+~~START~~
+int#!#sql_variant#!#sql_variant
+2#!#2020-10-05 09:00:00.0#!#2020-10-05 06:00:00.0
+5#!#2020-10-05 09:00:00.0#!#2020-10-05 01:00:00.0
+8#!#~~ERROR (Code: 0)~~
+
+~~ERROR (Message: Unexpected TDS type  DATETIMEOFFSETN  in SQL_VARIANT.)~~
+
+-- TODO: DATETIMEOFFSETN error expected using JDBC - see https://github.com/microsoft/mssql-jdbc/issues/1670
+select * from t4 where a < b order by id;
+go
+~~START~~
+int#!#sql_variant#!#sql_variant
+3#!#2020-10-05 06:00:00.0#!#2020-10-05 09:00:00.0
+6#!#2020-10-05 01:00:00.0#!#2020-10-05 09:00:00.0
+9#!#~~ERROR (Code: 0)~~
+
+~~ERROR (Message: Unexpected TDS type  DATETIMEOFFSETN  in SQL_VARIANT.)~~
+
+-- TODO: DATETIMEOFFSETN error expected using JDBC - see https://github.com/microsoft/mssql-jdbc/issues/1670
+select * from t4 where a >= b order by id;
+go
+~~START~~
+int#!#sql_variant#!#sql_variant
+1#!#2020-10-05 09:00:00.0#!#2020-10-05 09:00:00.0
+2#!#2020-10-05 09:00:00.0#!#2020-10-05 06:00:00.0
+4#!#2020-10-05 09:00:00.0#!#2020-10-05 09:00:00.0
+5#!#2020-10-05 09:00:00.0#!#2020-10-05 01:00:00.0
+7#!#~~ERROR (Code: 0)~~
+
+~~ERROR (Message: Unexpected TDS type  DATETIMEOFFSETN  in SQL_VARIANT.)~~
+
+-- TODO: DATETIMEOFFSETN error expected using JDBC - see https://github.com/microsoft/mssql-jdbc/issues/1670
+select * from t4 where a <= b order by id;
+go
+~~START~~
+int#!#sql_variant#!#sql_variant
+1#!#2020-10-05 09:00:00.0#!#2020-10-05 09:00:00.0
+3#!#2020-10-05 06:00:00.0#!#2020-10-05 09:00:00.0
+4#!#2020-10-05 09:00:00.0#!#2020-10-05 09:00:00.0
+6#!#2020-10-05 01:00:00.0#!#2020-10-05 09:00:00.0
+7#!#~~ERROR (Code: 0)~~
+
+~~ERROR (Message: Unexpected TDS type  DATETIMEOFFSETN  in SQL_VARIANT.)~~
+
+
+-- comparison between different types
+truncate table t4;
+go
+insert into t4 ( a, b) values (cast(1234 as int), cast('5678' as varchar(10)));
+go
+~~ROW COUNT: 1~~
+
+insert into t4 ( a, b) values (cast(1234 as int), cast('2020-10-05 09:00:00' as datetime2));
+go
+~~ROW COUNT: 1~~
+
+select * from t4 where a = b order by id;
+go
+~~START~~
+int#!#sql_variant#!#sql_variant
+~~END~~
+
+select * from t4 where a <> b order by id;
+go
+~~START~~
+int#!#sql_variant#!#sql_variant
+52#!#1234#!#5678
+53#!#1234#!#2020-10-05 09:00:00.0
+~~END~~
+
+select * from t4 where a > b order by id;
+go
+~~START~~
+int#!#sql_variant#!#sql_variant
+52#!#1234#!#5678
+~~END~~
+
+select * from t4 where a < b order by id;
+go
+~~START~~
+int#!#sql_variant#!#sql_variant
+53#!#1234#!#2020-10-05 09:00:00.0
+~~END~~
+
+select * from t4 where a >= b order by id;
+go
+~~START~~
+int#!#sql_variant#!#sql_variant
+52#!#1234#!#5678
+~~END~~
+
+select * from t4 where a <= b order by id;
+go
+~~START~~
+int#!#sql_variant#!#sql_variant
+53#!#1234#!#2020-10-05 09:00:00.0
+~~END~~
+
+
+-- Index 
+create table t5 (a sql_variant, b sql_variant);
+go
+create index t5_idx1 on t5 (a);
+go
+create index t5_idx2 on t5 (b);
+go
+-- datetime2
+insert into t5 (a , b) values (cast('2020-10-05 09:00:00' as datetime2), cast('2020-10-05 09:00:00' as datetime2));
+go
+~~ROW COUNT: 1~~
+
+-- datetime
+insert into t5 (a , b) values (cast('2021-10-05 09:00:00' as datetime), cast('2021-10-05 09:00:00' as datetime));
+go
+~~ROW COUNT: 1~~
+
+-- datetimeoffset
+insert into t5 (a , b) values (cast('2020-10-05 09:00:00-8:00' as datetimeoffset), cast('2020-10-05 09:00:00-8:00' as datetimeoffset));
+go
+~~ROW COUNT: 1~~
+
+-- smalldatetime
+insert into t5 (a , b) values (cast('2022-10-05 09:00:00' as smalldatetime), cast('2022-10-05 09:00:00' as smalldatetime));
+go
+~~ROW COUNT: 1~~
+
+-- date
+insert into t5 (a , b) values (cast('1991-01-01' as date), cast('1991-01-01' as date));
+go
+~~ROW COUNT: 1~~
+
+-- time
+insert into t5 (a , b) values (cast('23:59:59' as time), cast('23:59:59' as time));
+go
+~~ROW COUNT: 1~~
+
+-- float
+insert into t5 (a , b) values (cast(3.1415926 as float(53)), cast(3.1415926 as float(53)));
+go
+~~ROW COUNT: 1~~
+
+-- real
+insert into t5 (a , b) values (cast(3.141 as real), cast(3.141 as real));
+go
+~~ROW COUNT: 1~~
+
+-- numeric
+insert into t5 (a , b) values (cast(3.142 as numeric(4,3)), cast(3.142 as numeric(4,3)));
+go
+~~ROW COUNT: 1~~
+
+-- money
+insert into t5 (a , b) values (cast('$100.123' as money), cast('$100.123' as money));
+go
+~~ROW COUNT: 1~~
+
+-- smallmoney
+insert into t5 (a , b) values (cast('$99.121' as smallmoney), cast('$99.121' as smallmoney));
+go
+~~ROW COUNT: 1~~
+
+-- bigint
+insert into t5 (a , b) values (cast(2147483648 as bigint), cast(2147483648 as bigint));
+go
+~~ROW COUNT: 1~~
+
+-- int
+insert into t5 (a , b) values (cast(2147483647 as int), cast(2147483647 as int));
+go
+~~ROW COUNT: 1~~
+
+-- smallint
+insert into t5 (a , b) values (cast(32767 as smallint), cast(32767 as smallint));
+go
+~~ROW COUNT: 1~~
+
+-- tinyint
+insert into t5 (a , b) values (cast(255 as tinyint), cast(255 as tinyint));
+go
+~~ROW COUNT: 1~~
+
+-- bit
+insert into t5 (a , b) values (cast(1 as bit), cast(1 as bit));
+go
+~~ROW COUNT: 1~~
+
+-- nvarchar 
+insert into t5 (a , b) values (cast('nvarchar' as nvarchar(10)), cast('nvarchar' as nvarchar(10)));
+go
+~~ROW COUNT: 1~~
+
+-- varchar 
+insert into t5 (a , b) values (cast('varchar' as varchar(10)), cast('varchar' as varchar(10)));
+go
+~~ROW COUNT: 1~~
+
+-- uniqueidentifier
+insert into t5 (a , b) values (cast('123e4567-e89b-12d3-a456-426614174000' as uniqueidentifier), cast('123e4567-e89b-12d3-a456-426614174000' as uniqueidentifier));
+go
+~~ROW COUNT: 1~~
+
+
+-- test sql_variant specific comparison rules
+create table t7 (a sql_variant, b sql_variant);
+go
+insert into t7 values(cast('01-01-01 00:00:00' as datetime2), cast('23:59:59' as time));
+go
+~~ROW COUNT: 1~~
+
+insert into t7 values(cast('01-01-01 00:00:00' as datetime), cast('23:59:59' as time));
+go
+~~ROW COUNT: 1~~
+
+insert into t7 values(cast('01-01-01 00:00:00' as smalldatetime), cast('23:59:59' as time));
+go
+~~ROW COUNT: 1~~
+
+insert into t7 values(cast('01-01-01' as date), cast('23:59:59' as time));
+go
+~~ROW COUNT: 1~~
+
+select count(*) from t7 where a > b;
+go
+~~START~~
+int
+4
+~~END~~
+
+
+truncate table t7;
+go
+insert into t7 values (cast('$922337203685477.5807' as money), cast(922337203685478 as bigint));
+go
+~~ROW COUNT: 1~~
+
+insert into t7 values (cast(922337203685478 as bigint), cast('$922337203685477.5807' as money));
+go
+~~ROW COUNT: 1~~
+
+insert into t7 values (cast('-922337203685477.5807' as money), cast(-922337203685478 as bigint));
+go
+~~ROW COUNT: 1~~
+
+insert into t7 values (cast(-922337203685478 as bigint), cast('-922337203685477.5807' as money));
+go
+~~ROW COUNT: 1~~
+
+select * from t7 where a = b order by 1,2;
+go
+~~START~~
+sql_variant#!#sql_variant
+~~END~~
+
+select * from t7 where a > b order by 1,2;
+go
+~~START~~
+sql_variant#!#sql_variant
+-922337203685477.5807#!#-922337203685478
+922337203685478#!#922337203685477.5807
+~~END~~
+
+select * from t7 where a < b order by 1,2;
+go
+~~START~~
+sql_variant#!#sql_variant
+-922337203685478#!#-922337203685477.5807
+922337203685477.5807#!#922337203685478
+~~END~~
+
+select * from t7 where a <> b order by 1,2;
+go
+~~START~~
+sql_variant#!#sql_variant
+-922337203685478#!#-922337203685477.5807
+-922337203685477.5807#!#-922337203685478
+922337203685477.5807#!#922337203685478
+922337203685478#!#922337203685477.5807
+~~END~~
+
+select * from t7 where a >= b order by 1,2;
+go
+~~START~~
+sql_variant#!#sql_variant
+-922337203685477.5807#!#-922337203685478
+922337203685478#!#922337203685477.5807
+~~END~~
+
+select * from t7 where a <= b order by 1,2;
+go
+~~START~~
+sql_variant#!#sql_variant
+-922337203685478#!#-922337203685477.5807
+922337203685477.5807#!#922337203685478
+~~END~~
+
+
+truncate table t7;
+go
+insert into t7 values (cast('$200' as money), cast(200 as bigint));
+go
+~~ROW COUNT: 1~~
+
+insert into t7 values (cast('$200' as money), cast(100 as bigint));
+go
+~~ROW COUNT: 1~~
+
+insert into t7 values (cast('$200' as money), cast(300 as bigint));
+go
+~~ROW COUNT: 1~~
+
+select * from t7 where a = b order by 1,2;
+go
+~~START~~
+sql_variant#!#sql_variant
+200.0000#!#200
+~~END~~
+
+select * from t7 where a > b order by 1,2;
+go
+~~START~~
+sql_variant#!#sql_variant
+200.0000#!#100
+~~END~~
+
+select * from t7 where a < b order by 1,2;
+go
+~~START~~
+sql_variant#!#sql_variant
+200.0000#!#300
+~~END~~
+
+select * from t7 where a <> b order by 1,2;
+go
+~~START~~
+sql_variant#!#sql_variant
+200.0000#!#100
+200.0000#!#300
+~~END~~
+
+select * from t7 where a >= b order by 1,2;
+go
+~~START~~
+sql_variant#!#sql_variant
+200.0000#!#100
+200.0000#!#200
+~~END~~
+
+select * from t7 where a <= b order by 1,2;
+go
+~~START~~
+sql_variant#!#sql_variant
+200.0000#!#200
+200.0000#!#300
+~~END~~
+
+
+-- Clean up
+drop table t1;
+go
+drop table t2;
+go
+drop table t3;
+go
+drop table t4;
+go
+drop table t5;
+go
+drop table t7;
+go
+drop sequence t1_sec;
+go
+drop sequence t2_sec;
+go
+drop sequence t4_sec;
+go

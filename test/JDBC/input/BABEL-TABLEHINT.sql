@@ -82,3 +82,5 @@ go
 -- Clean up
 drop table t1;
 go
+drop sequence t1_sec;
+go

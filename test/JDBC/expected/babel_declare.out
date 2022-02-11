@@ -1,0 +1,49 @@
+CREATE PROCEDURE test_proc1 AS
+BEGIN
+    DECLARE @v1 INT;
+    DECLARE @v2 AS INT;
+    SET @v1 = 1;
+    SET @v2 = 2;
+    PRINT @v1;
+    PRINT @v2;
+END
+GO
+
+EXEC test_proc1
+GO
+
+-- Test single declare stmt ending with datatype and followed by K_END
+CREATE PROCEDURE test_proc2 AS
+BEGIN
+    DECLARE @a INT
+END
+GO
+
+EXEC test_proc2
+GO
+
+-- Test single declare stmt ending with datatype not wrapped in BEGIN...END
+CREATE PROCEDURE test_proc3 AS
+    DECLARE @a INT
+GO
+
+EXEC test_proc3
+GO
+
+SELECT proname, prosrc FROM pg_proc WHERE proname LIKE 'test_proc%'
+GO
+~~START~~
+varchar#!#text
+test_proc1#!#BEGIN<newline>    DECLARE @v1 INT;<newline>    DECLARE @v2 AS INT;<newline>    SET @v1 = 1;<newline>    SET @v2 = 2;<newline>    PRINT @v1;<newline>    PRINT @v2;<newline>END
+test_proc2#!#BEGIN<newline>    DECLARE @a INT<newline>END
+test_proc3#!#DECLARE @a INT
+~~END~~
+
+
+-- CLEAN UP
+DROP PROCEDURE test_proc1;
+GO
+DROP PROCEDURE test_proc2;
+GO
+DROP PROCEDURE test_proc3;
+GO

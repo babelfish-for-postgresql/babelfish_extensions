@@ -1,0 +1,128 @@
+create procedure babel_462_proc @a varchar(20) as
+begin
+exec('create table ' + @a + '(b int) insert into ' + @a + ' values (111)')
+end
+go
+
+exec babel_462_proc 'babel_462_table'
+go
+~~ROW COUNT: 1~~
+
+
+
+select * from babel_462_table
+go
+~~START~~
+int
+111
+~~END~~
+
+
+drop table babel_462_table
+go
+
+SET apg_tsql_batches ON
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: unrecognized configuration parameter: apg_tsql_batches)~~
+
+
+exec babel_462_proc 'babel_462_table2';
+select * from babel_462_table2;
+go
+~~ROW COUNT: 1~~
+
+~~START~~
+int
+111
+~~END~~
+
+
+create procedure babel_462_proc_int @b int as
+begin
+declare @c varchar(max);
+set @c = cast(@b as varchar(max));
+exec('create table babel_462_int (b int) insert into babel_462_int values ('+ @c +')')
+end
+go
+
+exec babel_462_proc_int  2
+go
+~~ROW COUNT: 1~~
+
+
+exec babel_462_proc_int 'unexpected'
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: invalid input syntax for type integer: "unexpected")~~
+
+
+create procedure babel_462_proc_null as
+begin
+declare @v varchar(10)
+exec(@v)
+end
+go
+
+create procedure babel_462_semicolon as
+begin
+exec('select * from babel_462_table2');
+end
+go
+
+create procedure babel_462_exec_ddl as
+begin
+exec('create table babel_462_exec_ddl_table(a int)')
+end
+go
+
+exec babel_462_proc_null
+go
+
+exec babel_462_semicolon
+go
+~~START~~
+int
+111
+~~END~~
+
+
+exec babel_462_exec_ddl
+go
+
+select * from babel_462_int
+go
+~~START~~
+int
+2
+~~END~~
+
+
+select * from babel_462_exec_ddl_table
+go
+~~START~~
+int
+~~END~~
+
+
+drop table babel_462_table2
+go
+
+drop table babel_462_int
+go
+
+drop table babel_462_exec_ddl_table
+go
+
+drop procedure babel_462_proc
+go
+drop procedure babel_462_proc_int
+go
+drop procedure babel_462_proc_null
+go
+drop procedure babel_462_semicolon
+go
+drop procedure babel_462_exec_ddl
+go
