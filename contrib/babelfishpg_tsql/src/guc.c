@@ -51,6 +51,7 @@ bool  pltsql_showplan_all = false;
 bool  pltsql_showplan_text = false;
 bool  pltsql_showplan_xml = false;
 bool    pltsql_fmtonly = false;
+bool 	pltsql_enable_tsql_information_schema = true;
 
 char*	pltsql_host_destribution = NULL;
 char*	pltsql_host_release = NULL;
@@ -858,6 +859,14 @@ define_custom_variables(void)
 				 PGC_USERSET,
 				 GUC_NOT_IN_SAMPLE | GUC_DISALLOW_IN_FILE | GUC_DISALLOW_IN_AUTO_FILE,
 				 check_showplan_xml, NULL, NULL);
+	DefineCustomBoolVariable("babelfishpg_tsql.enable_tsql_information_schema",
+				 gettext_noop("toggles between the information_schema for postgres and tsql"),
+				 NULL,
+				 &pltsql_enable_tsql_information_schema,
+				 false,
+				 PGC_USERSET,
+				 GUC_NOT_IN_SAMPLE | GUC_DISALLOW_IN_FILE | GUC_DISALLOW_IN_AUTO_FILE,
+				 NULL, NULL, NULL);
 
 	/* Host info related GUCs*/
 	DefineCustomStringVariable("babelfishpg_tsql.host_distribution",
