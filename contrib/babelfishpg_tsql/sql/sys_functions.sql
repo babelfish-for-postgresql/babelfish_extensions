@@ -1896,3 +1896,32 @@ AS 'babelfishpg_tsql', 'tsql_varchar_substr' LANGUAGE C IMMUTABLE PARALLEL SAFE;
 CREATE OR REPLACE FUNCTION sys.get_host_os()
 RETURNS sys.NVARCHAR
 AS 'babelfishpg_tsql', 'host_os' LANGUAGE C IMMUTABLE PARALLEL SAFE;
+
+CREATE OR REPLACE FUNCTION sys.tsql_stat_get_activity(
+  IN view_name text,
+  OUT procid int,
+  OUT client_version int,
+  OUT library_name VARCHAR(32),
+  OUT language VARCHAR(128),
+  OUT quoted_identifier bool,
+  OUT arithabort bool,
+  OUT ansi_null_dflt_on bool,
+  OUT ansi_defaults bool,
+  OUT ansi_warnings bool,
+  OUT ansi_padding bool,
+  OUT ansi_nulls bool,
+  OUT concat_null_yields_null bool,
+  OUT textsize int,
+  OUT datefirst int,
+  OUT lock_timeout int,
+  OUT transaction_isolation int2,
+  OUT client_pid int,
+  OUT row_count bigint,
+  OUT error int,
+  OUT trancount int,
+  OUT protocol_version int,
+  OUT packet_size int,
+  OUT encrypyt_option VARCHAR(40),
+  OUT database_id int2)
+AS 'babelfishpg_tsql', 'tsql_stat_get_activity'
+LANGUAGE C VOLATILE STRICT;

@@ -1,0 +1,32 @@
+
+-- Some columns have not been queried from the view because either they are not implemented
+-- yet as part of the sys.dm_exec_connections view (adding tests for them here is a TODO)
+-- or their value changes backend to backend
+-- Creating a simple login which has lesser privilege than sysadmin role
+create login login_2296 with password = 'password_2296'
+GO
+
+-- tsql user=login_2296 password=password_2296
+-- if we query the view not as sysadmin, then we will get an error
+select * from sys.dm_exec_connections
+GO
+~~START~~
+int#!#int#!#datetime#!#nvarchar#!#nvarchar#!#int#!#int#!#nvarchar#!#nvarchar#!#smallint#!#int#!#int#!#datetime#!#datetime#!#int#!#varchar#!#int#!#varchar#!#int#!#uniqueidentifier#!#uniqueidentifier#!#varbinary
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: The user does not have permission to perform this action)~~
+
+
+-- tsql
+-- if we query the view as sysadmin, we can get info for all the connection to server
+select net_transport, protocol_type, protocol_version, encrypt_option from sys.dm_exec_connections where session_id = @@SPID
+GO
+~~START~~
+nvarchar#!#nvarchar#!#int#!#nvarchar
+TCP#!#TSQL#!#1946157060#!#FALSE
+~~END~~
+
+
+-- Cleanup
+drop login login_2296
+GO

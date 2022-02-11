@@ -76,8 +76,15 @@ static bool check_showplan_text (bool *newval, void **extra, GucSource source);
 static bool check_showplan_xml (bool *newval, void **extra, GucSource source);
 static void assign_transform_null_equals (bool newval, void *extra);
 static void assign_ansi_defaults (bool newval, void *extra);
+static void assign_quoted_identifier (bool newval, void *extra);
+static void assign_arithabort (bool newval, void *extra);
+static void assign_ansi_null_dflt_on (bool newval, void *extra);
+static void assign_ansi_warnings (bool newval, void *extra);
+static void assign_ansi_padding (bool newval, void *extra);
+static void assign_concat_null_yields_null (bool newval, void *extra);
 static void assign_language (const char *newval, void *extra);
 static void assign_lock_timeout (int newval, void *extra);
+static void assign_datefirst (int newval, void *extra);
 int escape_hatch_session_settings; /* forward declaration */
 
 static const struct config_enum_entry migration_mode_options[] = {
@@ -331,6 +338,9 @@ static bool check_showplan_xml (bool *newval, void **extra, GucSource source)
 static void assign_transform_null_equals (bool newval, void *extra)
 {
 	Transform_null_equals = !newval;
+
+	if (pltsql_protocol_plugin_ptr && *pltsql_protocol_plugin_ptr && (*pltsql_protocol_plugin_ptr)->set_guc_stat_var)
+			(*pltsql_protocol_plugin_ptr)->set_guc_stat_var("babelfishpg_tsql.ansi_nulls", newval, NULL, 0);
 }
 
 /*
@@ -364,6 +374,15 @@ static void assign_ansi_defaults (bool newval, void *extra)
 	pltsql_ansi_padding = true;
 	pltsql_implicit_transactions = true;
 	pltsql_quoted_identifier = true;
+
+	if (pltsql_protocol_plugin_ptr && *pltsql_protocol_plugin_ptr && (*pltsql_protocol_plugin_ptr)->set_guc_stat_var)
+	{
+			(*pltsql_protocol_plugin_ptr)->set_guc_stat_var("babelfishpg_tsql.ansi_defaults", newval, NULL, 0);
+			(*pltsql_protocol_plugin_ptr)->set_guc_stat_var("babelfishpg_tsql.ansi_warnings", true, NULL, 0);
+			(*pltsql_protocol_plugin_ptr)->set_guc_stat_var("babelfishpg_tsql.ansi_null_dflt_on", true, NULL, 0);
+			(*pltsql_protocol_plugin_ptr)->set_guc_stat_var("babelfishpg_tsql.ansi_padding", true, NULL, 0);
+			(*pltsql_protocol_plugin_ptr)->set_guc_stat_var("babelfishpg_tsql.quoted_identifier", true, NULL, 0);
+	}
     }
     /* newval == false && escape_hatch_session_settings == EH_IGNORE, skip unsupported settings */
     else
@@ -375,8 +394,50 @@ static void assign_ansi_defaults (bool newval, void *extra)
 	pltsql_implicit_transactions = false;
 	pltsql_quoted_identifier = false;
 
+	if (pltsql_protocol_plugin_ptr && *pltsql_protocol_plugin_ptr && (*pltsql_protocol_plugin_ptr)->set_guc_stat_var)
+	{
+			(*pltsql_protocol_plugin_ptr)->set_guc_stat_var("babelfishpg_tsql.ansi_defaults", newval, NULL, 0);
+			(*pltsql_protocol_plugin_ptr)->set_guc_stat_var("babelfishpg_tsql.quoted_identifier", false, NULL, 0);
+	}
+
 	/* Skip ANSI_WARNINGS, ANSI_PADDING and ANSI_NULL_DFLT_ON */
     }
+}
+
+static void assign_quoted_identifier (bool newval, void *extra)
+{
+	if (pltsql_protocol_plugin_ptr && *pltsql_protocol_plugin_ptr && (*pltsql_protocol_plugin_ptr)->set_guc_stat_var)
+			(*pltsql_protocol_plugin_ptr)->set_guc_stat_var("babelfishpg_tsql.quoted_identifier", newval, NULL, 0);
+}
+
+static void assign_arithabort (bool newval, void *extra)
+{
+	if (pltsql_protocol_plugin_ptr && *pltsql_protocol_plugin_ptr && (*pltsql_protocol_plugin_ptr)->set_guc_stat_var)
+			(*pltsql_protocol_plugin_ptr)->set_guc_stat_var("babelfishpg_tsql.arithabort", newval, NULL, 0);
+}
+
+static void assign_ansi_null_dflt_on (bool newval, void *extra)
+{
+	if (pltsql_protocol_plugin_ptr && *pltsql_protocol_plugin_ptr && (*pltsql_protocol_plugin_ptr)->set_guc_stat_var)
+			(*pltsql_protocol_plugin_ptr)->set_guc_stat_var("babelfishpg_tsql.ansi_null_dflt_on", newval, NULL, 0);
+}
+
+static void assign_ansi_warnings (bool newval, void *extra)
+{
+	if (pltsql_protocol_plugin_ptr && *pltsql_protocol_plugin_ptr && (*pltsql_protocol_plugin_ptr)->set_guc_stat_var)
+			(*pltsql_protocol_plugin_ptr)->set_guc_stat_var("babelfishpg_tsql.ansi_warnings", newval, NULL, 0);
+}
+
+static void assign_ansi_padding (bool newval, void *extra)
+{
+	if (pltsql_protocol_plugin_ptr && *pltsql_protocol_plugin_ptr && (*pltsql_protocol_plugin_ptr)->set_guc_stat_var)
+			(*pltsql_protocol_plugin_ptr)->set_guc_stat_var("babelfishpg_tsql.ansi_padding", newval, NULL, 0);
+}
+
+static void assign_concat_null_yields_null (bool newval, void *extra)
+{
+	if (pltsql_protocol_plugin_ptr && *pltsql_protocol_plugin_ptr && (*pltsql_protocol_plugin_ptr)->set_guc_stat_var)
+			(*pltsql_protocol_plugin_ptr)->set_guc_stat_var("babelfishpg_tsql.concat_null_yields_null", newval, NULL, 0);
 }
 
 static void assign_language (const char *newval, void *extra)
@@ -396,6 +457,9 @@ static void assign_language (const char *newval, void *extra)
 									mbuf /* message */,
 									1 /* line number */);
 		}
+
+		if (pltsql_protocol_plugin_ptr && *pltsql_protocol_plugin_ptr && (*pltsql_protocol_plugin_ptr)->set_guc_stat_var)
+			(*pltsql_protocol_plugin_ptr)->set_guc_stat_var("babelfishpg_tsql.language", false, newval, 0);
 	}
 }
 
@@ -420,6 +484,12 @@ assign_lock_timeout(int newval, void *extra)
 		snprintf(timeout_str, sizeof(timeout_str), "%d", 0);
 	SetConfigOption("lock_timeout", timeout_str,
 			                PGC_USERSET, PGC_S_OVERRIDE);
+}
+
+static void assign_datefirst (int newval, void *extra)
+{
+	if (pltsql_protocol_plugin_ptr && *pltsql_protocol_plugin_ptr && (*pltsql_protocol_plugin_ptr)->set_guc_stat_var)
+			(*pltsql_protocol_plugin_ptr)->set_guc_stat_var("babelfishpg_tsql.datefirst", false, NULL, newval);
 }
 
 void
@@ -524,7 +594,7 @@ define_custom_variables(void)
 				 true,
 				 PGC_USERSET, 
 				 GUC_NO_SHOW_ALL | GUC_NOT_IN_SAMPLE | GUC_DISALLOW_IN_FILE | GUC_DISALLOW_IN_AUTO_FILE,
-				 NULL, NULL, NULL);
+				 NULL, assign_quoted_identifier, NULL);
 	
 	DefineCustomBoolVariable("babelfishpg_tsql.concat_null_yields_null",
 				 gettext_noop("If enabled, concatenating a NULL value produces a NULL result"),
@@ -532,7 +602,7 @@ define_custom_variables(void)
 				 &pltsql_concat_null_yields_null,
 				 true,
 				 PGC_USERSET, 0,
-				 NULL, NULL, NULL);
+				 NULL, assign_concat_null_yields_null, NULL);
 
 	DefineCustomBoolVariable("babelfishpg_tsql.ansi_nulls",
 				 gettext_noop("Specifies ISO compliant behavior of the Equals (=) "
@@ -554,7 +624,7 @@ define_custom_variables(void)
 				 true,
 				 PGC_USERSET,
 				 GUC_NOT_IN_SAMPLE | GUC_DISALLOW_IN_FILE | GUC_DISALLOW_IN_AUTO_FILE,
-				 check_ansi_null_dflt_on, NULL, NULL);
+				 check_ansi_null_dflt_on, assign_ansi_null_dflt_on, NULL);
 
 	DefineCustomBoolVariable("babelfishpg_tsql.ansi_null_dflt_off",
 				 gettext_noop("Modifies the behavior of the session to override default nullability "
@@ -576,7 +646,7 @@ define_custom_variables(void)
 				 true,
 				 PGC_USERSET,
 				 GUC_NOT_IN_SAMPLE | GUC_DISALLOW_IN_FILE | GUC_DISALLOW_IN_AUTO_FILE,
-				 check_ansi_padding, NULL, NULL);
+				 check_ansi_padding, assign_ansi_padding, NULL);
 
 	DefineCustomBoolVariable("babelfishpg_tsql.ansi_warnings",
 				 gettext_noop("Specifies ISO standard behavior for several error conditions"),
@@ -585,7 +655,7 @@ define_custom_variables(void)
 				 true,
 				 PGC_USERSET,
 				 GUC_NOT_IN_SAMPLE | GUC_DISALLOW_IN_FILE | GUC_DISALLOW_IN_AUTO_FILE,
-				 check_ansi_warnings, NULL, NULL);
+				 check_ansi_warnings, assign_ansi_warnings, NULL);
 
 	DefineCustomBoolVariable("babelfishpg_tsql.arithignore",
 				 gettext_noop("Controls whether error messages are returned from overflow or "
@@ -605,7 +675,7 @@ define_custom_variables(void)
 				 true,
 				 PGC_USERSET,
 				 GUC_NOT_IN_SAMPLE | GUC_DISALLOW_IN_FILE | GUC_DISALLOW_IN_AUTO_FILE,
-				 check_arithabort, NULL, NULL);
+				 check_arithabort, assign_arithabort, NULL);
 
 	DefineCustomBoolVariable("babelfishpg_tsql.numeric_roundabort",
 				 gettext_noop("Ends a query when an overflow or divide-by-zero error occurs "
@@ -642,7 +712,7 @@ define_custom_variables(void)
 				 7, 1, 7,
 				 PGC_USERSET,
 				 GUC_NOT_IN_SAMPLE | GUC_DISALLOW_IN_FILE | GUC_DISALLOW_IN_AUTO_FILE,
-				 NULL, NULL, NULL);
+				 NULL, assign_datefirst, NULL);
 
 	DefineCustomIntVariable("babelfishpg_tsql.rowcount",
 				 gettext_noop("Causes the DB engine to stop processing the query after the "

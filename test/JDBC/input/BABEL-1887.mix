@@ -1,0 +1,40 @@
+-- Some columns have not been queried from the view because either they are not implemented
+-- yet as part of the sys.dm_exec_sessions view (adding tests for them here is a TODO)
+-- or their value changes backend to backend
+
+-- Creating a simple login which has lesser privilege than sysadmin role
+create login login_1887 with password = 'password_1887'
+GO
+
+-- tsql user=login_1887 password=password_1887
+-- if we query the view not as sysadmin, we will only see info of this session only 
+select language, client_version, client_interface_name, program_name, date_format, date_first from sys.dm_exec_sessions order by login_name
+GO
+
+select login_name, text_size, quoted_identifier, arithabort from sys.dm_exec_sessions order by login_name
+GO
+
+select ansi_warnings, ansi_padding, ansi_nulls, concat_null_yields_null, transaction_isolation_level from sys.dm_exec_sessions order by login_name
+GO
+
+select original_login_name, row_count, prev_error from sys.dm_exec_sessions where session_id = @@SPID order by login_name
+GO
+
+-- tsql
+-- if we query the view as sysadmin, we will see info of all sessions
+-- here we will show this by querying info for sessions whose session_pid is @@SPID or login name is login_1887
+select language, client_version, client_interface_name, program_name, date_format, date_first from sys.dm_exec_sessions where session_id = @@SPID or login_name = 'login_1887' order by login_name
+GO
+
+select login_name, text_size, quoted_identifier, arithabort from sys.dm_exec_sessions where session_id = @@SPID or login_name = 'login_1887' order by login_name
+GO
+
+select ansi_warnings, ansi_padding, ansi_nulls, concat_null_yields_null, transaction_isolation_level from sys.dm_exec_sessions where session_id = @@SPID or login_name = 'login_1887' order by login_name
+GO
+
+select original_login_name, row_count, prev_error, db_name(database_id), open_transaction_count from sys.dm_exec_sessions where session_id = @@SPID or login_name = 'login_1887' order by login_name
+GO
+
+-- Cleanup
+drop login login_1887
+GO
