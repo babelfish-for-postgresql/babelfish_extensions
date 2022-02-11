@@ -141,6 +141,190 @@ and has_schema_privilege(s.oid, 'USAGE')
 and has_table_privilege(quote_ident(s.nspname) ||'.'||quote_ident(t.relname), 'SELECT,INSERT,UPDATE,DELETE,TRUNCATE,TRIGGER');
 GRANT SELECT ON sys.all_views TO PUBLIC;
 
+CREATE OR REPLACE FUNCTION sys.tsql_type_scale_helper(IN type TEXT, IN typemod INT) RETURNS sys.TINYINT
+AS $$
+DECLARE
+	scale INT;
+BEGIN
+	IF type IS NULL THEN 
+		RETURN -1;
+	END IF;
+
+	CASE type
+	WHEN 'decimal' THEN scale = (typemod - 4) & 65535;
+	WHEN 'numeric' THEN scale = (typemod - 4) & 65535;
+	WHEN 'money' THEN scale = 4;
+	WHEN 'smallmoney' THEN scale = 4;
+	WHEN 'datetime' THEN scale = 3;
+	WHEN 'datetime2' THEN
+		CASE typemod 
+		WHEN 1 THEN scale = 1;
+		WHEN 2 THEN scale = 2;
+		WHEN 3 THEN scale = 3;
+		WHEN 4 THEN scale = 4;
+		WHEN 5 THEN scale = 5;
+		WHEN 6 THEN scale = 6;
+		-- typemod = 7 is not possible for Babelfish
+		END CASE;
+	WHEN 'datetimeoffset' THEN
+		CASE typemod
+		WHEN -1 THEN scale = 7;
+		WHEN 1 THEN scale = 1;
+		WHEN 2 THEN scale = 2;
+		WHEN 3 THEN scale = 3;
+		WHEN 4 THEN scale = 4;
+		WHEN 5 THEN scale = 5;
+		WHEN 6 THEN scale = 6;
+		-- typemod = 7 is not possible for datetimeoffset
+		END CASE;
+	WHEN 'time' THEN
+		IF typemod = -1 THEN scale = 7;
+		ELSIF typemod = 1 THEN scale = 1;
+		ELSIF typemod = 2 THEN scale = 2;
+		ELSIF typemod = 3 THEN scale = 3;
+		ELSIF typemod = 4 THEN scale = 4;
+		ELSIF typemod = 5 THEN scale = 5;
+		ELSIF typemod = 6 THEN scale = 6;
+		-- typemod = 7 is not possible for time
+		END IF;
+	ELSE scale = 0;
+	END CASE;
+	RETURN scale;
+END;
+$$ LANGUAGE plpgsql IMMUTABLE STRICT;
+
+CREATE OR REPLACE FUNCTION sys.tsql_type_precision_helper(IN type TEXT, IN typemod INT) RETURNS sys.TINYINT
+AS $$
+DECLARE
+	precision INT;
+BEGIN
+	IF type IS NULL THEN 
+		RETURN -1;
+	END IF;
+
+	CASE type
+	WHEN 'bigint' THEN precision = 19;
+	WHEN 'int' THEN precision = 10;
+	WHEN 'smallint' THEN precision = 5;
+	WHEN 'tinyint' THEN precision = 3;
+	WHEN 'bit' THEN precision = 1;
+	WHEN 'numeric' THEN precision = ((typemod - 4) >> 16) & 65535;
+	WHEN 'decimal' THEN precision = ((typemod - 4) >> 16) & 65535;
+	WHEN 'float' THEN precision = 53;
+	WHEN 'real' THEN precision = 24;
+	WHEN 'money' THEN precision = 19;
+	WHEN 'smallmoney' THEN precision = 10;
+	WHEN 'date' THEN precision = 10;
+	WHEN 'datetime' THEN precision = 23;
+	WHEN 'datetime2' THEN 
+		CASE typemod 
+		WHEN 1 THEN precision = 21;
+		WHEN 2 THEN precision = 22;
+		WHEN 3 THEN precision = 23;
+		WHEN 4 THEN precision = 24;
+		WHEN 5 THEN precision = 25;
+		WHEN 6 THEN precision = 26;
+		-- typemod = 7 is not possible for datetime2
+		END CASE;
+	WHEN 'datetimeoffset' THEN
+		CASE typemod
+		WHEN -1 THEN precision = 34;
+		WHEN 1 THEN precision = 28;
+		WHEN 2 THEN precision = 29;
+		WHEN 3 THEN precision = 30;
+		WHEN 4 THEN precision = 31;
+		WHEN 5 THEN precision = 32;
+		WHEN 6 THEN precision = 33;
+		-- typemod = 7 is not possible for datetimeoffset
+		END CASE;
+	WHEN 'smalldatetime' THEN precision = 16;
+	WHEN 'time' THEN
+		IF typemod = -1 THEN precision = 16;
+		ELSIF typemod = 1 THEN precision = 10;
+		ELSIF typemod = 2 THEN precision = 11;
+		ELSIF typemod = 3 THEN precision = 12;
+		ELSIF typemod = 4 THEN precision = 13;
+		ELSIF typemod = 5 THEN precision = 14;
+		ELSIF typemod = 6 THEN precision = 15;
+		-- typemod = 7 is not possible for time
+		END IF;
+	ELSE precision = 0;
+	END CASE;
+	RETURN precision;
+END;
+$$ LANGUAGE plpgsql IMMUTABLE STRICT;
+
+
+CREATE OR REPLACE FUNCTION sys.tsql_type_max_length_helper(IN type TEXT, IN typelen INT, IN typemod INT)
+RETURNS SMALLINT
+AS $$
+DECLARE
+	max_length SMALLINT;
+	precision INT;
+BEGIN
+	-- unknown tsql type
+	IF type IS NULL THEN
+		RETURN typelen::SMALLINT;
+	END IF;
+
+	IF typelen != -1 THEN
+		CASE type
+		WHEN 'tinyint' THEN max_length = 1;
+		WHEN 'date' THEN max_length = 3;
+		WHEN 'smalldatetime' THEN max_length = 4;
+		WHEN 'smallmoney' THEN max_length = 4;
+		WHEN 'datetime2' THEN
+			IF typemod <= 2 THEN max_length = 6;
+			ELSIF typemod <= 4 THEN max_length = 7;
+			ELSEIF typemod <= 7 THEN max_length = 8;
+			-- typemod = 7 is not possible for datetime2 in Babel
+			END IF;
+		WHEN 'datetimeoffset' THEN
+			IF typemod = -1 THEN max_length = 10;
+			ELSIF typemod <= 2 THEN max_length = 8;
+			ELSIF typemod <= 4 THEN max_length = 9;
+			ELSIF typemod <= 7 THEN max_length = 10;
+			-- typemod = 7 is not possible for datetimeoffset in Babel
+			END IF;
+		WHEN 'time' THEN
+			IF typemod = -1 THEN max_length = 5;
+			ELSIF typemod <= 2 THEN max_length = 3;
+			ELSIF typemod <= 4 THEN max_length = 4;
+			ELSIF typemod <= 7 THEN max_length = 5;
+			END IF;
+		ELSE max_length = typelen;
+		END CASE;
+		RETURN max_length;
+	END IF;
+
+	IF typemod = -1 THEN
+		CASE 
+		WHEN type in ('image', 'text', 'ntext') THEN max_length = 16;
+		WHEN type = 'sql_variant' THEN max_length = 8016;
+		ELSE max_length = typemod;
+		END CASE;
+		RETURN max_length;
+	END IF;
+
+	CASE
+	WHEN type in ('char', 'bpchar', 'varchar', 'binary', 'varbinary') THEN max_length = typemod - 4;
+	WHEN type in ('nchar', 'nvarchar') THEN max_length = (typemod - 4) * 2;
+	WHEN type = 'sysname' THEN max_length = (typemod - 4) * 2;
+	WHEN type in ('numeric', 'decimal') THEN
+		precision = ((typemod - 4) >> 16) & 65535;
+		IF precision >= 1 and precision <= 9 THEN max_length = 5;
+		ELSIF precision <= 19 THEN max_length = 9;
+		ELSIF precision <= 28 THEN max_length = 13;
+		ELSIF precision <= 38 THEN max_length = 17;
+	ELSE max_length = typelen;
+	END IF;
+	ELSE
+		max_length = typemod;
+	END CASE;
+	RETURN max_length;
+END;
+$$ LANGUAGE plpgsql IMMUTABLE STRICT;
+
 -- internal function in order to workaround BABEL-1597
 CREATE OR REPLACE FUNCTION sys.columns_internal()
 RETURNS TABLE (
@@ -192,9 +376,30 @@ BEGIN
 			CAST(a.attnum AS int),
 			CAST(t.oid AS int),
 			CAST(t.oid AS int),
-			CAST(a.attlen AS smallint),
-			CAST(case when isc.datetime_precision is null then coalesce(isc.numeric_precision, 0) else isc.datetime_precision end AS sys.tinyint),
-			CAST(coalesce(isc.numeric_scale, 0) AS sys.tinyint),
+			CASE
+			WHEN a.atttypmod != -1 THEN 
+				sys.tsql_type_max_length_helper(coalesce(sys.translate_pg_type_to_tsql(a.atttypid),sys.translate_pg_type_to_tsql(t.typbasetype)), 
+														a.attlen, a.atttypmod)
+			ELSE 
+				sys.tsql_type_max_length_helper(coalesce(sys.translate_pg_type_to_tsql(a.atttypid),sys.translate_pg_type_to_tsql(t.typbasetype)), 
+														a.attlen, t.typtypmod)
+			END,
+			CASE
+			WHEN a.atttypmod != -1 THEN 
+				sys.tsql_type_precision_helper(coalesce(sys.translate_pg_type_to_tsql(a.atttypid),sys.translate_pg_type_to_tsql(t.typbasetype)), 
+														a.atttypmod)
+			ELSE 
+				sys.tsql_type_precision_helper(coalesce(sys.translate_pg_type_to_tsql(a.atttypid),sys.translate_pg_type_to_tsql(t.typbasetype)), 
+														t.typtypmod)
+			END,
+			CASE
+			WHEN a.atttypmod != -1 THEN 
+				sys.tsql_type_scale_helper(coalesce(sys.translate_pg_type_to_tsql(a.atttypid),sys.translate_pg_type_to_tsql(t.typbasetype)), 
+														a.atttypmod)
+			ELSE 
+				sys.tsql_type_scale_helper(coalesce(sys.translate_pg_type_to_tsql(a.atttypid),sys.translate_pg_type_to_tsql(t.typbasetype)), 
+														t.typtypmod)
+			END,
 			CAST(coll.collname AS sys.sysname),
 			CAST(a.attcollation AS int),
 			CAST(a.attnum AS smallint),
@@ -247,9 +452,30 @@ BEGIN
 			CAST(a.attnum AS int),
 			CAST(t.oid AS int),
 			CAST(t.oid AS int),
-			CAST(a.attlen AS smallint),
-			CAST(case when isc.datetime_precision is null then coalesce(isc.numeric_precision, 0) else isc.datetime_precision end AS sys.tinyint),
-			CAST(coalesce(isc.numeric_scale, 0) AS sys.tinyint),
+			CASE
+			WHEN a.atttypmod != -1 THEN 
+				sys.tsql_type_max_length_helper(coalesce(sys.translate_pg_type_to_tsql(a.atttypid),sys.translate_pg_type_to_tsql(t.typbasetype)), 
+														a.attlen, a.atttypmod)
+			ELSE 
+				sys.tsql_type_max_length_helper(coalesce(sys.translate_pg_type_to_tsql(a.atttypid),sys.translate_pg_type_to_tsql(t.typbasetype)), 
+														a.attlen, t.typtypmod)
+			END,
+			CASE
+			WHEN a.atttypmod != -1 THEN 
+				sys.tsql_type_precision_helper(coalesce(sys.translate_pg_type_to_tsql(a.atttypid),sys.translate_pg_type_to_tsql(t.typbasetype)), 
+														a.atttypmod)
+			ELSE 
+				sys.tsql_type_precision_helper(coalesce(sys.translate_pg_type_to_tsql(a.atttypid),sys.translate_pg_type_to_tsql(t.typbasetype)), 
+														t.typtypmod)
+			END,
+			CASE
+			WHEN a.atttypmod != -1 THEN 
+				sys.tsql_type_scale_helper(coalesce(sys.translate_pg_type_to_tsql(a.atttypid),sys.translate_pg_type_to_tsql(t.typbasetype)), 
+														a.atttypmod)
+			ELSE 
+				sys.tsql_type_scale_helper(coalesce(sys.translate_pg_type_to_tsql(a.atttypid),sys.translate_pg_type_to_tsql(t.typbasetype)), 
+														t.typtypmod)
+			END,
 			CAST(coll.collname AS sys.sysname),
 			CAST(a.attcollation AS int),
 			CAST(a.attnum AS smallint),

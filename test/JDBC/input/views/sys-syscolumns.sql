@@ -110,3 +110,80 @@ go
 DROP PROCEDURE syscolumns_demo_proc3
 go
 
+-- Tests for sys.columns catalog view
+-- Test precision and scale for all numeric datatypes
+create table t1(a int, b float, c bigint, d numeric, e smallint, f tinyint, g decimal, h money, i smallmoney);
+go
+select name, column_id, precision, scale from sys.columns where object_id=OBJECT_ID('t1') order by name;
+go
+
+-- Test identity and computed columns
+create table t2(a int, b int IDENTITY(1,1), c as a * b);
+go
+select name, column_id, is_identity, is_computed from sys.columns where object_id=OBJECT_ID('t2') order by name;
+go
+
+-- Test ansi padded columns
+create table t3(a char(10), b nchar(10), c binary(10));
+go
+select name, column_id, is_ansi_padded from sys.columns where object_id=OBJECT_ID('t3') order by name;
+go
+
+-- Test collation name
+create table t4(
+        c1 char(10) COLLATE SQL_LATIN1_GENERAL_CP1_CI_AI,
+        c2 char(10) COLLATE SQL_LATIN1_GENERAL_CP1_CI_AS,
+        c3 char(10) COLLATE SQL_LATIN1_GENERAL_CP1_CS_AI,
+        c4 char(10) COLLATE SQL_LATIN1_GENERAL_CP1_CS_AS,
+        c5 char(10) COLLATE SQL_LATIN1_GENERAL_CP1250_CI_AS
+);
+go
+select name, column_id, collation_name from sys.columns where object_id=OBJECT_ID('t4') order by name;
+go
+
+-- Cleanup
+drop table t1;
+drop table t2;
+drop table t3;
+drop table t4;
+go
+
+CREATE TABLE test_columns (
+    c1  bigint  NOT NULL
+    , c2    binary(123) NOT NULL
+    , c3    bit NOT NULL
+    , c4    char(123)   NOT NULL
+    , c5    date    NOT NULL
+    , c6    datetime    NOT NULL
+    , c7    datetime2   NOT NULL
+    , c8    datetimeoffset  NOT NULL
+    , c9    decimal(8,4)    NOT NULL
+    , c10   float   NOT NULL
+    , c11   image   NOT NULL
+    , c12   int NOT NULL
+    , c13   money   NOT NULL
+    , c14   nchar(123)  NOT NULL
+    , c15   ntext   NOT NULL
+    , c16   numeric(8,4)    NOT NULL
+    , c17   nvarchar(123)   NOT NULL
+    , c18   real    NOT NULL
+    , c19   smalldatetime   NOT NULL
+    , c20   smallint    NOT NULL
+    , c21   smallmoney  NOT NULL
+    , c22   sql_variant NOT NULL
+    , c23   sysname NOT NULL
+    , c24   text    NOT NULL
+    , c25   time    NOT NULL
+    , c27   tinyint NOT NULL
+    , c28   uniqueidentifier    NOT NULL
+    , c29   varbinary(123)  NOT NULL
+    , c30   varchar(123)    NOT NULL
+    , c31   xml NOT NULL)
+GO
+
+select name,max_length,precision,scale from sys.columns where object_id = OBJECT_ID('test_columns') order by name;
+GO
+
+drop table test_columns;
+GO
+
