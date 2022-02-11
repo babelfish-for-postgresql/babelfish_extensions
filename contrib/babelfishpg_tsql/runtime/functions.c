@@ -426,6 +426,12 @@ schema_id(PG_FUNCTION_ARGS)
 	Form_pg_namespace nspform;
 	const char *physical_name = get_physical_schema_name(get_cur_db_name(), name);
 
+	/*
+	 * If physical schema name is empty or NULL for any reason then return NULL.
+	 */
+	if (physical_name == NULL || strlen(physical_name) == 0)
+		PG_RETURN_NULL();
+
 	tup = SearchSysCache1(NAMESPACENAME, CStringGetDatum(physical_name));
 
 	if (!HeapTupleIsValid(tup))

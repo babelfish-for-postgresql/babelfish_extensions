@@ -13,6 +13,10 @@ GO
 SELECT schema_id('fake_schemaname')
 GO
 
+-- empty schema name should return NULL
+SELECT schema_id('')
+GO
+
 SELECT schema_name(schema_id())
 GO
 
