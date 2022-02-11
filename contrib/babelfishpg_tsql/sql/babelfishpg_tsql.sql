@@ -625,32 +625,46 @@ END;
 $$
 LANGUAGE 'pltsql';
 
-CREATE VIEW sys.spt_columns_view_managed AS
+-- TODO: Remove information_schema references
+CREATE OR REPLACE VIEW sys.spt_columns_view_managed AS
 SELECT
     o.object_id                     AS OBJECT_ID,
-    isc.table_catalog               AS TABLE_CATALOG,
-    isc.table_schema                AS TABLE_SCHEMA,
+    isc."TABLE_CATALOG"::information_schema.sql_identifier               AS TABLE_CATALOG,
+    isc."TABLE_SCHEMA"::information_schema.sql_identifier                AS TABLE_SCHEMA,
     o.name                          AS TABLE_NAME,
     c.name                          AS COLUMN_NAME,
-    isc.ordinal_position            AS ORDINAL_POSITION,
-    isc.column_default              AS COLUMN_DEFAULT,
-    isc.is_nullable                 AS IS_NULLABLE,
-    isc.data_type                   AS DATA_TYPE,
-    isc.character_maximum_length    AS CHARACTER_MAXIMUM_LENGTH,
-    isc.character_octet_length      AS CHARACTER_OCTET_LENGTH,
-    isc.numeric_precision           AS NUMERIC_PRECISION,
-    isc.numeric_precision_radix     AS NUMERIC_PRECISION_RADIX,
-    isc.numeric_scale               AS NUMERIC_SCALE,
-    isc.datetime_precision          AS DATETIME_PRECISION,
-    isc.character_set_catalog       AS CHARACTER_SET_CATALOG,
-    isc.character_set_schema        AS CHARACTER_SET_SCHEMA,
-    isc.character_set_name          AS CHARACTER_SET_NAME,
-    isc.collation_catalog           AS COLLATION_CATALOG,
-    isc.collation_schema            AS COLLATION_SCHEMA,
-    c.collation_name                AS COLLATION_NAME,
-    isc.domain_catalog              AS DOMAIN_CATALOG,
-    isc.domain_schema               AS DOMAIN_SCHEMA,
-    isc.domain_name                 AS DOMAIN_NAME,
+    isc."ORDINAL_POSITION"::information_schema.cardinal_number           AS ORDINAL_POSITION,
+    isc."COLUMN_DEFAULT"::information_schema.character_data              AS COLUMN_DEFAULT,
+    isc."IS_NULLABLE"::information_schema.yes_or_no                      AS IS_NULLABLE,
+    isc."DATA_TYPE"::information_schema.character_data                   AS DATA_TYPE,
+
+    CAST (CASE WHEN isc."CHARACTER_MAXIMUM_LENGTH" < 0 THEN 0 ELSE isc."CHARACTER_MAXIMUM_LENGTH" END
+		AS information_schema.cardinal_number) AS CHARACTER_MAXIMUM_LENGTH,
+
+    CAST (CASE WHEN isc."CHARACTER_OCTET_LENGTH" < 0 THEN 0 ELSE isc."CHARACTER_OCTET_LENGTH" END
+		AS information_schema.cardinal_number)      AS CHARACTER_OCTET_LENGTH,
+
+    CAST (CASE WHEN isc."NUMERIC_PRECISION" < 0 THEN 0 ELSE isc."NUMERIC_PRECISION" END
+		AS information_schema.cardinal_number)      AS NUMERIC_PRECISION,
+
+    CAST (CASE WHEN isc."NUMERIC_PRECISION_RADIX" < 0 THEN 0 ELSE isc."NUMERIC_PRECISION_RADIX" END
+		AS information_schema.cardinal_number)      AS NUMERIC_PRECISION_RADIX,
+
+    CAST (CASE WHEN isc."NUMERIC_SCALE" < 0 THEN 0 ELSE isc."NUMERIC_SCALE" END
+		AS information_schema.cardinal_number)      AS NUMERIC_SCALE,
+
+    CAST (CASE WHEN isc."DATETIME_PRECISION" < 0 THEN 0 ELSE isc."DATETIME_PRECISION" END
+		AS information_schema.cardinal_number)      AS DATETIME_PRECISION,
+
+    isc."CHARACTER_SET_CATALOG"::information_schema.sql_identifier       AS CHARACTER_SET_CATALOG,
+    isc."CHARACTER_SET_SCHEMA"::information_schema.sql_identifier        AS CHARACTER_SET_SCHEMA,
+    isc."CHARACTER_SET_NAME"::information_schema.sql_identifier          AS CHARACTER_SET_NAME,
+    isc."COLLATION_CATALOG"::information_schema.sql_identifier           AS COLLATION_CATALOG,
+    isc."COLLATION_SCHEMA"::information_schema.sql_identifier            AS COLLATION_SCHEMA,
+    c.collation_name                                                     AS COLLATION_NAME,
+    isc."DOMAIN_CATALOG"::information_schema.sql_identifier              AS DOMAIN_CATALOG,
+    isc."DOMAIN_SCHEMA"::information_schema.sql_identifier               AS DOMAIN_SCHEMA,
+    isc."DOMAIN_NAME"::information_schema.sql_identifier                 AS DOMAIN_NAME,
     c.is_sparse                     AS IS_SPARSE,
     c.is_column_set                 AS IS_COLUMN_SET,
     c.is_filestream                 AS IS_FILESTREAM
@@ -660,13 +674,14 @@ FROM
             c.object_id = o.object_id and
             o.type in ('U', 'V')  -- limit columns to tables and views
         )
-    LEFT JOIN information_schema.columns isc ON
+    LEFT JOIN information_schema_tsql.columns isc ON
         (
-            sys.schema_name(o.schema_id) = isc.table_schema and
-            o.name = isc.table_name and
-            c.name = isc.column_name
+            sys.schema_name(o.schema_id) = isc."TABLE_SCHEMA" and
+            o.name = isc."TABLE_NAME" and
+            c.name = isc."COLUMN_NAME"
         )
-    WHERE CAST(column_name AS sys.nvarchar(128)) NOT IN ('cmin', 'cmax', 'xmin', 'xmax', 'ctid', 'tableoid');
+    WHERE CAST("COLUMN_NAME" AS sys.nvarchar(128)) NOT IN ('cmin', 'cmax', 'xmin', 'xmax', 'ctid', 'tableoid');
+GRANT SELECT ON sys.spt_columns_view_managed TO PUBLIC;
 
 CREATE FUNCTION sys.sp_columns_managed_internal(
     in_catalog sys.nvarchar(128), 
@@ -724,10 +739,10 @@ BEGIN
             CAST(is_filestream AS int)
         FROM sys.spt_columns_view_managed s_cv
         WHERE
-        (in_catalog IS NULL OR s_cv.TABLE_CATALOG LIKE in_catalog) AND
-        (in_owner IS NULL OR s_cv.TABLE_SCHEMA LIKE in_owner) AND
-        (in_table IS NULL OR s_cv.TABLE_NAME LIKE in_table) AND
-        (in_column IS NULL OR s_cv.COLUMN_NAME LIKE in_column) AND
+        (in_catalog IS NULL OR s_cv.TABLE_CATALOG LIKE LOWER(in_catalog)) AND
+        (in_owner IS NULL OR s_cv.TABLE_SCHEMA LIKE LOWER(in_owner)) AND
+        (in_table IS NULL OR s_cv.TABLE_NAME LIKE LOWER(in_table)) AND
+        (in_column IS NULL OR s_cv.COLUMN_NAME LIKE LOWER(in_column)) AND
         (in_schematype = 0 AND (s_cv.IS_SPARSE = 0) OR in_schematype = 1 OR in_schematype = 2 AND (s_cv.IS_SPARSE = 1));
 END;
 $$
@@ -766,7 +781,7 @@ BEGIN
         out_IS_COLUMN_SET AS IS_COLUMN_SET,
         out_IS_FILESTREAM AS IS_FILESTREAM
     FROM
-        sys.sp_columns_managed_internal(@Catalog, @Owner, "@Table", "@Column", @SchemaType) s_cv
+        sys.sp_columns_managed_internal(@Catalog, @Owner, @Table, @Column, @SchemaType) s_cv
     ORDER BY TABLE_CATALOG, TABLE_SCHEMA, TABLE_NAME, IS_NULLABLE;
 END;
 $$
