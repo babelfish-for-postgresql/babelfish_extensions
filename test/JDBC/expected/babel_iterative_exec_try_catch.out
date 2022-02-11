@@ -1,0 +1,69 @@
+BEGIN TRY
+	SELECT 100/0
+	SELECT 'no error';
+END TRY
+BEGIN CATCH
+	SELECT 'has erro';
+END CATCH
+GO
+~~START~~
+varchar
+has erro
+~~END~~
+
+
+BEGIN TRY
+	SELECT 100/0
+	SELECT 'no error';
+END TRY
+BEGIN CATCH
+END CATCH
+GO
+
+BEGIN TRY
+	SELECT 100;
+	SELECT 'no error';
+END TRY
+BEGIN CATCH
+END CATCH
+GO
+~~START~~
+int
+100
+~~END~~
+
+~~START~~
+varchar
+no error
+~~END~~
+
+
+BEGIN TRY
+	BEGIN TRY
+		SELECT 'generate error'
+		SELECT 100/0
+	END TRY
+	BEGIN CATCH
+		SELECT 'generate error in catch' 
+		SELECT 99/0
+	END CATCH
+END TRY
+BEGIN CATCH
+	SELECT 'handle error'
+END CATCH
+GO
+~~START~~
+varchar
+generate error
+~~END~~
+
+~~START~~
+varchar
+generate error in catch
+~~END~~
+
+~~START~~
+varchar
+handle error
+~~END~~
+
