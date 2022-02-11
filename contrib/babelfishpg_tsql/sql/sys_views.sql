@@ -158,35 +158,45 @@ BEGIN
 	WHEN 'datetime' THEN scale = 3;
 	WHEN 'datetime2' THEN
 		CASE typemod 
+		WHEN 0 THEN scale = 0;
 		WHEN 1 THEN scale = 1;
 		WHEN 2 THEN scale = 2;
 		WHEN 3 THEN scale = 3;
 		WHEN 4 THEN scale = 4;
 		WHEN 5 THEN scale = 5;
 		WHEN 6 THEN scale = 6;
-		-- typemod = 7 is not possible for Babelfish
+		-- typemod = 7 is not possible for datetime2 in Babelfish but
+		-- adding the case just in case we support it in future
+		WHEN 7 THEN scale = 7;
 		END CASE;
 	WHEN 'datetimeoffset' THEN
 		CASE typemod
 		WHEN -1 THEN scale = 7;
+		WHEN 0 THEN scale = 0;
 		WHEN 1 THEN scale = 1;
 		WHEN 2 THEN scale = 2;
 		WHEN 3 THEN scale = 3;
 		WHEN 4 THEN scale = 4;
 		WHEN 5 THEN scale = 5;
 		WHEN 6 THEN scale = 6;
-		-- typemod = 7 is not possible for datetimeoffset
+		-- typemod = 7 is not possible for datetimeoffset in Babelfish
+		-- but adding the case just in case we support it in future
+		WHEN 7 THEN scale = 7;
 		END CASE;
 	WHEN 'time' THEN
-		IF typemod = -1 THEN scale = 7;
-		ELSIF typemod = 1 THEN scale = 1;
-		ELSIF typemod = 2 THEN scale = 2;
-		ELSIF typemod = 3 THEN scale = 3;
-		ELSIF typemod = 4 THEN scale = 4;
-		ELSIF typemod = 5 THEN scale = 5;
-		ELSIF typemod = 6 THEN scale = 6;
-		-- typemod = 7 is not possible for time
-		END IF;
+		CASE typemod
+		WHEN -1 THEN scale = 7;
+		WHEN 0 THEN scale = 0;
+		WHEN 1 THEN scale = 1;
+		WHEN 2 THEN scale = 2;
+		WHEN 3 THEN scale = 3;
+		WHEN 4 THEN scale = 4;
+		WHEN 5 THEN scale = 5;
+		WHEN 6 THEN scale = 6;
+		-- typemod = 7 is not possible for time in Babelfish but
+		-- adding the case just in case we support it in future
+		WHEN 7 THEN scale = 7;
+		END CASE;
 	ELSE scale = 0;
 	END CASE;
 	RETURN scale;
@@ -218,36 +228,46 @@ BEGIN
 	WHEN 'datetime' THEN precision = 23;
 	WHEN 'datetime2' THEN 
 		CASE typemod 
+		WHEN 0 THEN precision = 19;
 		WHEN 1 THEN precision = 21;
 		WHEN 2 THEN precision = 22;
 		WHEN 3 THEN precision = 23;
 		WHEN 4 THEN precision = 24;
 		WHEN 5 THEN precision = 25;
 		WHEN 6 THEN precision = 26;
-		-- typemod = 7 is not possible for datetime2
+		-- typemod = 7 is not possible for datetime2 in Babelfish but
+		-- adding the case just in case we support it in future
+		WHEN 7 THEN precision = 27;
 		END CASE;
 	WHEN 'datetimeoffset' THEN
 		CASE typemod
 		WHEN -1 THEN precision = 34;
+		WHEN 0 THEN precision = 26;
 		WHEN 1 THEN precision = 28;
 		WHEN 2 THEN precision = 29;
 		WHEN 3 THEN precision = 30;
 		WHEN 4 THEN precision = 31;
 		WHEN 5 THEN precision = 32;
 		WHEN 6 THEN precision = 33;
-		-- typemod = 7 is not possible for datetimeoffset
+		-- typemod = 7 is not possible for datetimeoffset in Babelfish
+		-- but adding the case just in case we support it in future
+		WHEN 7 THEN precision = 34;
 		END CASE;
 	WHEN 'smalldatetime' THEN precision = 16;
 	WHEN 'time' THEN
-		IF typemod = -1 THEN precision = 16;
-		ELSIF typemod = 1 THEN precision = 10;
-		ELSIF typemod = 2 THEN precision = 11;
-		ELSIF typemod = 3 THEN precision = 12;
-		ELSIF typemod = 4 THEN precision = 13;
-		ELSIF typemod = 5 THEN precision = 14;
-		ELSIF typemod = 6 THEN precision = 15;
-		-- typemod = 7 is not possible for time
-		END IF;
+		CASE typemod
+		WHEN -1 THEN precision = 16;
+		WHEN 0 THEN precision = 8;
+		WHEN 1 THEN precision = 10;
+		WHEN 2 THEN precision = 11;
+		WHEN 3 THEN precision = 12;
+		WHEN 4 THEN precision = 13;
+		WHEN 5 THEN precision = 14;
+		WHEN 6 THEN precision = 15;
+		-- typemod = 7 is not possible for time in Babelfish but
+		-- adding the case just in case we support it in future
+		WHEN 7 THEN precision = 16;
+		END CASE;
 	ELSE precision = 0;
 	END CASE;
 	RETURN precision;
