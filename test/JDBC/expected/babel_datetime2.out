@@ -1,0 +1,702 @@
+-- Testing inserting into the table
+create table datetime2_testing ( dt DATETIME2 );
+INSERT INTO datetime2_testing VALUES('1753-1-1 00:00:00.000');
+INSERT INTO datetime2_testing VALUES('9999-12-31 23:59:59.998');
+INSERT INTO datetime2_testing VALUES('1992-05-23 23:40:29.999');
+INSERT INTO datetime2_testing VALUES('1992-05-23 23:40:30.000');
+INSERT INTO datetime2_testing VALUES('1999-12-31 23:59:59.998');
+INSERT INTO datetime2_testing VALUES('1999-12-31 23:59:59.999');
+INSERT INTO datetime2_testing VALUES('23:40:29.999');
+INSERT INTO datetime2_testing VALUES('23:40:30.000');
+INSERT INTO datetime2_testing VALUES('2020-03-14');
+select * from datetime2_testing;
+go
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~START~~
+datetime2
+1753-01-01 00:00:00.000000
+9999-12-31 23:59:59.998000
+1992-05-23 23:40:29.999000
+1992-05-23 23:40:30.000000
+1999-12-31 23:59:59.998000
+1999-12-31 23:59:59.999000
+1900-01-01 23:40:29.999000
+1900-01-01 23:40:30.000000
+2020-03-14 00:00:00.000000
+~~END~~
+
+
+-- Test comparision with datetimeoffset/datetime/smalldatetime/date/time
+select * from datetime2_testing where dt > cast('2079-06-06 23:59:12.345678 -9:30' as datetimeoffset);
+go
+~~START~~
+datetime2
+9999-12-31 23:59:59.998000
+~~END~~
+
+select * from datetime2_testing where dt >= cast('2000-01-01 00:00:59' as smalldatetime);
+go
+~~START~~
+datetime2
+9999-12-31 23:59:59.998000
+2020-03-14 00:00:00.000000
+~~END~~
+
+select * from datetime2_testing where dt >= cast('1992-05-23 23:40:00' as datetime) 
+                    and dt < cast('1992-05-23 23:41:00' as datetime);
+go
+~~START~~
+datetime2
+1992-05-23 23:40:29.999000
+1992-05-23 23:40:30.000000
+~~END~~
+
+select * from datetime2_testing where dt < cast('1992-05-24' as date);
+go
+~~START~~
+datetime2
+1753-01-01 00:00:00.000000
+1992-05-23 23:40:29.999000
+1992-05-23 23:40:30.000000
+1900-01-01 23:40:29.999000
+1900-01-01 23:40:30.000000
+~~END~~
+
+select * from datetime2_testing where dt < cast('12:34:56.789' as time);
+go
+~~START~~
+datetime2
+1753-01-01 00:00:00.000000
+~~END~~
+
+
+-- Testing rounding for different typmod
+select CAST('2079-06-06 23:59:29.123456' AS datetime2);
+go
+~~START~~
+datetime2
+2079-06-06 23:59:29.123455
+~~END~~
+
+select CAST('2079-06-06 23:59:29.123456' AS datetime2(0));
+go
+~~START~~
+datetime2
+2079-06-06 23:59:29
+~~END~~
+
+select CAST('2079-06-06 23:59:29.123456' AS datetime2(1));
+go
+~~START~~
+datetime2
+2079-06-06 23:59:29.1
+~~END~~
+
+select CAST('2079-06-06 23:59:29.123456' AS datetime2(2));
+go
+~~START~~
+datetime2
+2079-06-06 23:59:29.12
+~~END~~
+
+select CAST('2079-06-06 23:59:29.123456' AS datetime2(3));
+go
+~~START~~
+datetime2
+2079-06-06 23:59:29.123
+~~END~~
+
+select CAST('2079-06-06 23:59:29.123456' AS datetime2(4));
+go
+~~START~~
+datetime2
+2079-06-06 23:59:29.1235
+~~END~~
+
+select CAST('2079-06-06 23:59:29.123456' AS datetime2(5));
+go
+~~START~~
+datetime2
+2079-06-06 23:59:29.12346
+~~END~~
+
+select CAST('2079-06-06 23:59:29.123456' AS datetime2(6));
+go
+~~START~~
+datetime2
+2079-06-06 23:59:29.123455
+~~END~~
+
+
+-- Testing rounding for different typmod edge cases
+select CAST('2000-12-31 23:59:29.99' AS datetime2(5));
+go
+~~START~~
+datetime2
+2000-12-31 23:59:29.99000
+~~END~~
+
+select CAST('1500-12-31 23:59:29.99' AS datetime2(1));
+go
+~~START~~
+datetime2
+1500-12-31 23:59:30.0
+~~END~~
+
+select CAST('2020-12-31 23:59:29.99' AS datetime2(5));
+go
+~~START~~
+datetime2
+2020-12-31 23:59:29.99000
+~~END~~
+
+select CAST('2020-12-31 23:59:29.99' AS datetime2(1));
+go
+~~START~~
+datetime2
+2020-12-31 23:59:30.0
+~~END~~
+
+select CAST('9999-12-31 23:59:59.999999' AS datetime2(4));
+go
+~~START~~
+datetime2
+9999-12-31 23:59:59.9999
+~~END~~
+
+select CAST('9999-12-31 23:59:59.99999' AS datetime2(6));
+go
+~~START~~
+datetime2
+9999-12-31 23:59:59.999990
+~~END~~
+
+select CAST('1500-12-31 23:59:30.0001' AS datetime2(5));
+go
+~~START~~
+datetime2
+1500-12-31 23:59:30.00010
+~~END~~
+
+select CAST('1500-12-31 23:59:30.0001' AS datetime2(3));
+go
+~~START~~
+datetime2
+1500-12-31 23:59:30.000
+~~END~~
+
+select CAST('0001-01-01 00:00:00.000000' AS datetime2(5));
+go
+~~START~~
+datetime2
+0001-01-01 00:00:00.00000
+~~END~~
+
+-- out of range
+select CAST('10000-01-01 00:00:00.000000' AS datetime2(5));
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: data out of range for datetime2)~~
+
+-- out of range
+select CAST('0000-12-31 23:59:59.9999' AS datetime2(1));
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: date/time field value out of range: "0000-12-31 23:59:59.9999")~~
+
+select cast('9999-12-31 23:59:59.9999999' as datetime2(7));
+go
+~~START~~
+datetime2
+9999-12-31 23:59:59.999999
+~~END~~
+
+select cast('9999-12-31 23:59:59.9999999' as datetime2(5));
+go
+~~START~~
+datetime2
+9999-12-31 23:59:59.99999
+~~END~~
+
+select cast('8888-12-31 23:59:59.9999999' as datetime2(4));
+go
+~~START~~
+datetime2
+8889-01-01 00:00:00.0000
+~~END~~
+
+select cast('9999-12-31 23:59:59.999' as datetime2(5));
+go
+~~START~~
+datetime2
+9999-12-31 23:59:59.99900
+~~END~~
+
+select cast('9999-12-31 23:59:59.999999999' as datetime2(3));
+go
+~~START~~
+datetime2
+9999-12-31 23:59:59.999
+~~END~~
+
+
+
+-- Test type cast to/from other time formats
+-- Test date
+select CAST(CAST('1999-12-31' AS date) AS datetime2);
+go
+~~START~~
+datetime2
+1999-12-31 00:00:00.000000
+~~END~~
+
+select CAST(CAST('2000-01-01 23:59:59.99932' AS datetime2) AS date);
+go
+~~START~~
+date
+2000-01-01
+~~END~~
+
+select CAST(CAST('0001-12-31' AS date) AS datetime2);
+go
+~~START~~
+datetime2
+0001-12-31 00:00:00.000000
+~~END~~
+
+select CAST(CAST('2000-12-31' AS date) AS datetime2(2));
+go
+~~START~~
+datetime2
+2000-12-31 00:00:00.00
+~~END~~
+
+
+-- Test time
+select CAST(CAST('00:00:00.000' AS time) AS datetime2);
+go
+~~START~~
+datetime2
+1900-01-01 00:00:00.000000
+~~END~~
+
+select CAST(CAST('23:59:59.999' AS time) AS datetime2);
+go
+~~START~~
+datetime2
+1900-01-01 23:59:59.999000
+~~END~~
+
+select CAST(CAST('23:59:59.123456' AS time) AS datetime2);
+go
+~~START~~
+datetime2
+1900-01-01 23:59:59.123455
+~~END~~
+
+select CAST(CAST('23:59:59.123456' AS time) AS datetime2(1));
+go
+~~START~~
+datetime2
+1900-01-01 23:59:59.1
+~~END~~
+
+select CAST(CAST('1900-05-06 23:59:29.998123' AS datetime2) AS time);
+go
+~~START~~
+time
+23:59:29.998123
+~~END~~
+
+select CAST(CAST('2050-05-06 00:00:00' AS datetime2) AS time);
+go
+~~START~~
+time
+00:00:00.000000
+~~END~~
+
+select CAST(CAST('2050-05-06 23:59:29.998' AS datetime2) AS time);
+go
+~~START~~
+time
+23:59:29.998000
+~~END~~
+
+
+-- Test smalldatetime
+select CAST(CAST('2000-06-06 23:59:29.998123' AS datetime2) AS smalldatetime);
+go
+~~START~~
+smalldatetime
+2000-06-06 23:59:00.0
+~~END~~
+
+select CAST(CAST('2020-03-15 23:59:29.99722' AS smalldatetime) AS datetime2);
+go
+~~START~~
+datetime2
+2020-03-15 23:59:00.000000
+~~END~~
+
+select CAST(CAST('2020-03-15 23:59:12.99722' AS smalldatetime) AS datetime2(4));
+go
+~~START~~
+datetime2
+2020-03-15 23:59:00.0000
+~~END~~
+
+select CAST(CAST('2020-03-15 23:59:29.999' AS smalldatetime) AS datetime2);
+go
+~~START~~
+datetime2
+2020-03-16 00:00:00.000000
+~~END~~
+
+-- out of range
+select CAST(CAST('3000-06-06 23:59:29.998' AS datetime2) AS smalldatetime);
+go
+~~START~~
+smalldatetime
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: data out of range for smalldatetime)~~
+
+
+-- Test datetime
+select CAST(CAST('2020-03-15 23:59:29.99' AS datetime) AS datetime2);
+go
+~~START~~
+datetime2
+2020-03-15 23:59:29.990000
+~~END~~
+
+select CAST(CAST('2020-03-15 23:59:29.45' AS datetime) AS datetime2(1));
+go
+~~START~~
+datetime2
+2020-03-15 23:59:29.5
+~~END~~
+
+select CAST(CAST('2079-06-06 23:59:29.99' AS datetime2) AS datetime);
+go
+~~START~~
+datetime
+2079-06-06 23:59:29.99
+~~END~~
+
+select CAST(CAST('2079-06-06 23:59:29.992343' AS datetime2) AS datetime);
+go
+~~START~~
+datetime
+2079-06-06 23:59:29.993
+~~END~~
+
+
+-- Test datetimeoffset
+select CAST(CAST('2020-03-15 23:59:29.99' AS datetime2) AS datetimeoffset);
+go
+~~START~~
+datetimeoffset
+2020-03-15 23:59:29.990000 +00:00
+~~END~~
+
+select CAST(CAST('2079-06-06 23:59:29.998 +8:00' AS datetimeoffset) AS datetime2);
+go
+~~START~~
+datetime2
+2079-06-06 15:59:29.998000
+~~END~~
+
+select CAST(CAST('2079-06-06 23:59:29.998 -9:30' AS datetimeoffset) AS datetime2);
+go
+~~START~~
+datetime2
+2079-06-07 09:29:29.998000
+~~END~~
+
+select CAST(CAST('2079-06-06 23:59:12.345678 -9:30' AS datetimeoffset) AS datetime2);
+go
+~~START~~
+datetime2
+2079-06-07 09:29:12.345678
+~~END~~
+
+select CAST(CAST('0001-06-06 23:59:12.345678 -9:30' AS datetimeoffset) AS datetime2);
+go
+~~START~~
+datetime2
+0001-06-07 09:29:12.345678
+~~END~~
+
+select CAST(CAST('0001-06-06 23:59:12.345678 -9:30' AS datetimeoffset) AS datetime2(5));
+go
+~~START~~
+datetime2
+0001-06-07 09:29:12.34568
+~~END~~
+
+
+-- Test datetime value ranges
+select cast('9999-12-31' as datetime2);
+go
+~~START~~
+datetime2
+9999-12-31 00:00:00.000000
+~~END~~
+
+select cast('9999-12-31 23:59:59.998' as datetime2);
+go
+~~START~~
+datetime2
+9999-12-31 23:59:59.998000
+~~END~~
+
+-- out of range
+select cast('10000-00-00' as datetime2);
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: date/time field value out of range: "10000-00-00")~~
+
+-- out of range
+select cast('0000-12-31 23:59:59.999999' as datetime2);
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: date/time field value out of range: "0000-12-31 23:59:59.999999")~~
+
+select cast('0001-01-01 00:00:00.000000' as datetime2);
+go
+~~START~~
+datetime2
+0001-01-01 00:00:00.000000
+~~END~~
+
+select cast('9999-12-31 23:59:59.999999' as datetime2);
+go
+~~START~~
+datetime2
+9999-12-31 23:59:59.999999
+~~END~~
+
+select cast('2021-12-31 23:59:29.1234567' as datetime2);
+go
+~~START~~
+datetime2
+2021-12-31 23:59:29.123456
+~~END~~
+
+select cast('9999-12-31 23:59:59.9999999' as datetime2);
+go
+~~START~~
+datetime2
+9999-12-31 23:59:59.999999
+~~END~~
+
+select cast('8888-12-31 23:59:59.9999999' as datetime2);
+go
+~~START~~
+datetime2
+8889-01-01 00:00:00.000000
+~~END~~
+
+select cast('9999-12-31 23:59:59.99999999' as datetime2);
+go
+~~START~~
+datetime2
+9999-12-31 23:59:59.999999
+~~END~~
+
+select cast('8888-12-31 23:59:59.99999999' as datetime2);
+go
+~~START~~
+datetime2
+8889-01-01 00:00:00.000000
+~~END~~
+
+select cast('9999-12-31 23:59:59.999999' as datetime2);
+go
+~~START~~
+datetime2
+9999-12-31 23:59:59.999999
+~~END~~
+
+select cast('8888-12-31 23:59:59.999999' as datetime2);
+go
+~~START~~
+datetime2
+8888-12-31 23:59:59.999999
+~~END~~
+
+
+-- Test datetime2 default value
+create table t1 (a datetime2, b int);
+go
+insert into t1 (b) values (1);
+go
+~~ROW COUNT: 1~~
+
+select a from t1 where b = 1;
+go
+~~START~~
+datetime2
+1900-01-01 00:00:00.000000
+~~END~~
+
+
+-- Test datetime2 as parameter for time related functions
+select day(cast('2002-05-23 23:41:29.998' as datetime2));
+go
+~~START~~
+int
+23
+~~END~~
+
+select month(cast('2002-05-23 23:41:29.998' as datetime2));
+go
+~~START~~
+int
+5
+~~END~~
+
+select year(cast('2002-05-23 23:41:29.998' as datetime2));
+go
+~~START~~
+int
+2002
+~~END~~
+
+select datepart(quarter, cast('2002-05-23 23:41:29.998' as datetime2));
+go
+~~START~~
+int
+2
+~~END~~
+
+select datepart(hour, cast('2002-05-23 23:41:29.998' as datetime2));
+go
+~~START~~
+int
+23
+~~END~~
+
+select datepart(dayofyear, cast('2002-05-23 23:41:29.998' as datetime2));
+go
+~~START~~
+int
+143
+~~END~~
+
+select datepart(second, cast('2002-05-23 23:41:29.998' as datetime2));
+go
+~~START~~
+int
+29
+~~END~~
+
+select datename(year, cast('2002-05-23 23:41:29.998' as datetime2));
+go
+~~START~~
+text
+2002
+~~END~~
+
+select datename(dw, cast('2002-05-23 23:41:29.998' as datetime2));
+go
+~~START~~
+text
+Thursday
+~~END~~
+
+select datename(month, cast('2002-05-23 23:41:29.998' as datetime2));
+go
+~~START~~
+text
+May
+~~END~~
+
+select dateadd(second, 56, cast('2016-12-26 23:29:29' as datetime2));
+go
+~~START~~
+datetime2
+2016-12-26 23:30:25.000000
+~~END~~
+
+-- TODO Fix BABEL-2822
+select dateadd(millisecond, 56, cast('2016-12-26 23:29:29' as datetime2));
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: operator is not unique: integer * numeric)~~
+
+select dateadd(minute, 56, cast('2016-12-26 23:29:29' as datetime2));
+go
+~~START~~
+datetime2
+2016-12-27 00:25:29.000000
+~~END~~
+
+-- out of range
+select dateadd(year, 150, cast('9900-12-26 23:29:29' as datetime2));
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: data out of range for datetime2)~~
+
+
+-- Test data type precedence TODO Fix [BABEL-883] missing TDS support for type regtype (was pg_typeof produces error in sqlcmd)
+select pg_typeof(c1) FROM (SELECT cast('2016-12-26 23:30:05' as datetime2) as C1 UNION SELECT cast('2016-12-26 23:30:05' as smalldatetime) as C1) T;
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: data type regtype is not supported yet)~~
+
+select pg_typeof(c1) FROM (SELECT cast('2016-12-26 23:30:05' as datetime2) as C1 UNION SELECT cast('2016-12-26 23:30:05' as datetime) as C1) T;
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: data type regtype is not supported yet)~~
+
+select pg_typeof(c1) FROM (SELECT cast('2016-12-26 23:30:05' as datetime2) as C1 UNION SELECT cast('2016-12-26 23:30:05 +08:00:00' as datetimeoffset) as C1) T;
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: data type regtype is not supported yet)~~
+
+select pg_typeof(c1) FROM (SELECT cast('2016-12-26 23:30:05' as datetime2) as C1 UNION SELECT cast('23:30:05' as time) as C1) T;
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: data type regtype is not supported yet)~~
+
+select pg_typeof(c1) FROM (SELECT cast('2016-12-26 23:30:05' as datetime2) as C1 UNION SELECT cast('2016-12-26' as date) as C1) T;
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: data type regtype is not supported yet)~~
+
+
+-- Clean up
+drop table datetime2_testing;
+go
+drop table t1;
+go
