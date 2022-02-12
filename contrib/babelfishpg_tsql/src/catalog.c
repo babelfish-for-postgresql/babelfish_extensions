@@ -6,9 +6,11 @@
 #include "access/stratnum.h"
 #include "access/table.h"
 #include "catalog/catalog.h"
+#include "catalog/indexing.h"
 #include "catalog/pg_namespace.h"
 #include "catalog/pg_authid.h"
 #include "catalog/namespace.h"
+#include "parser/scansup.h"
 #include "utils/builtins.h"
 #include "utils/fmgroids.h"
 #include "utils/lsyscache.h"
@@ -18,7 +20,9 @@
 #include "utils/timestamp.h"
 #include "nodes/execnodes.h"
 #include "catalog.h"
+#include "guc.h"
 #include "hooks.h"
+#include "multidb.h"
 #include "rolecmds.h"
 
 /*****************************************
@@ -525,6 +529,60 @@ get_authid_login_ext_idx_oid(void)
 	return bbf_authid_login_ext_idx_oid;
 }
 
+
+/*****************************************
+ * 			Metadata Check
+ *****************************************/
+
+#define STOP_AT_FIRST_ERROR true
+
+static void metadata_inconsistency_check(Tuplestorestate *res_tupstore, TupleDesc res_tupdesc);
+static Datum get_master(HeapTuple tuple, TupleDesc dsc);
+static Datum get_owner(HeapTuple tuple, TupleDesc dsc);
+static Datum get_name_db_owner(HeapTuple tuple, TupleDesc dsc);
+static bool is_multidb(void);
+static bool check_exist(void *arg, HeapTuple tuple);
+static void update_report(Rule *rule, Tuplestorestate *res_tupstore, TupleDesc res_tupdesc);
+static void init_catalog_data(void);
+static void get_catalog_info(Rule *rule);
+
+/*****************************************
+ * 			Catalog Extra Info
+ *****************************************/
+RelData catalog_data[] = 
+{
+	{"babelfish_sysdatabases", InvalidOid, InvalidOid, InvalidOid, Anum_sysdatabaese_name, F_TEXTEQ},
+	{"babelfish_namespace_ext", InvalidOid, InvalidOid, InvalidOid, Anum_namespace_ext_namespace, F_NAMEEQ},
+	{"babelfish_authid_login_ext", InvalidOid, InvalidOid, InvalidOid, Anum_bbf_authid_login_ext_rolname, F_NAMEEQ},
+	{"pg_namespace", InvalidOid, InvalidOid, InvalidOid, Anum_pg_namespace_nspname, F_NAMEEQ},
+	{"pg_authid", InvalidOid, InvalidOid, InvalidOid, Anum_pg_authid_rolname, F_NAMEEQ}
+};
+	
+/*****************************************
+ * 			Rule Definitions
+ *****************************************/
+
+/* Category 1 rules */
+Rule must_have_rules[] =
+{
+	{"\"master\" must exist in babelfish_sysdatabases",
+	 "babelfish_sysdatabases", "name", NULL, get_master, NULL, check_exist, NULL}
+};
+
+/* Category 2 rules */
+/* babelfish_sysdatabases */
+Rule must_match_rules_sysdb[] =
+{
+	{"<owner> in babelfish_sysdatabases must also exist in babelfish_authid_login_ext", 
+	 "babelfish_authid_login_ext", "rolname", NULL, get_owner, NULL, check_exist, NULL},
+	{"In multi-db mode, for each <name> in babelfish_sysdatabases, <name>_db_owner must also exist in pg_authid",
+	 "pg_authid", "rolname", NULL, get_name_db_owner, is_multidb, check_exist, NULL}
+};
+	 
+/*****************************************
+ * 			Core function
+ *****************************************/
+
 PG_FUNCTION_INFO_V1(babelfish_inconsistent_metadata);
 
 Datum
@@ -570,12 +628,313 @@ babelfish_inconsistent_metadata(PG_FUNCTION_ARGS)
     /* generate junk in short-term context */
     MemoryContextSwitchTo(oldcontext);
 
-    /* clean up and return the tuplestore */
-    tuplestore_donestoring(tupstore);
+	PG_TRY();
+	{
+		/* Check metadata inconsistency */
+		metadata_inconsistency_check(tupstore, tupdesc);
 
-    rsinfo->returnMode = SFRM_Materialize;
-    rsinfo->setResult = tupstore;
-    rsinfo->setDesc = tupdesc;
+		/* clean up and return the tuplestore */
+		tuplestore_donestoring(tupstore);
 
-    PG_RETURN_NULL();
+		rsinfo->returnMode = SFRM_Materialize;
+		rsinfo->setResult = tupstore;
+		rsinfo->setDesc = tupdesc;
+
+		PG_RETURN_NULL();
+	}
+	PG_CATCH();
+	{
+		tuplestore_donestoring(tupstore);
+		PG_RE_THROW();
+	}
+	PG_END_TRY();
+}
+
+static void
+metadata_inconsistency_check(Tuplestorestate *res_tupstore, TupleDesc res_tupdesc)
+{
+	HeapTuple		tuple;
+	TupleDesc		dsc;
+	SysScanDesc 	scan;
+	Relation		rel;
+
+	size_t num_must_have_rules = sizeof(must_have_rules) / sizeof(must_have_rules[0]);
+	size_t num_sysdb_rules = sizeof(must_match_rules_sysdb) / sizeof(must_match_rules_sysdb[0]);
+
+	/* Initialize the catalog_data array to fetch catalog info */
+	init_catalog_data();
+
+	/* Category 1 rules */
+	for (size_t i = 0; i < num_must_have_rules; i++)
+	{
+		Rule *rule = &(must_have_rules[i]);
+
+		/* Check the rule's required condition */
+		if (rule->func_cond && !(rule->func_cond) ())
+			continue;
+
+		/* Read catalog info and store in rule->tbldata */
+		get_catalog_info(rule);
+
+		if (!rule->func_check)
+			ereport(ERROR,
+					(errcode(ERRCODE_NULL_VALUE_NOT_ALLOWED),
+					 errmsg("Null check function for rule: \n%s",
+							rule->desc)));
+
+		/* 
+		 * When encountering rule violation, add the inconsistency info
+		 * to the final report
+		 */
+		if (!(rule->func_check) (rule, NULL))
+		{
+			update_report(rule, res_tupstore, res_tupdesc);
+			/* Stop checking if we want to stop at the first error */
+			if (STOP_AT_FIRST_ERROR) 
+				return;
+		}
+	}
+
+	/* Category 2 rules */
+	PG_TRY();
+	{
+		/* Rules depending on babelfish_sysdatabases */
+		rel = table_open(sysdatabases_oid, AccessShareLock);
+		dsc = RelationGetDescr(rel);
+		scan = systable_beginscan(rel, 0, false, NULL, 0, NULL);
+		
+		while (HeapTupleIsValid(tuple = systable_getnext(scan)))
+		{
+			/* Loop through all rules that depend on babelfish_sysdatabases */
+			for (size_t i = 0; i < num_sysdb_rules; i++)
+			{
+				Rule *rule = &(must_match_rules_sysdb[i]);
+
+				/* Check the rule's required condition */
+				if (rule->func_cond && !(rule->func_cond) ())
+					continue;
+
+				/* Read catalog info and store in rule->tbldata */
+				get_catalog_info(rule);
+				rule->tupdesc = dsc;
+
+				if (!rule->func_check)
+					ereport(ERROR,
+							(errcode(ERRCODE_NULL_VALUE_NOT_ALLOWED),
+							 errmsg("Null check function for rule: \n%s",
+									rule->desc)));
+
+				/* 
+				 * When encountering rule violation, add the inconsistency info
+				 * to the final report
+				 */
+				if (!(rule->func_check) (rule, tuple))
+				{
+					update_report(rule, res_tupstore, res_tupdesc);
+					/* Stop checking if we want to stop at the first error */
+					if (STOP_AT_FIRST_ERROR)
+						return;
+				}
+			}
+		}
+
+		systable_endscan(scan);
+		table_close(rel, AccessShareLock);
+	}
+	PG_CATCH();
+	{
+		if (scan)
+			  systable_endscan(scan);
+		if (rel)
+			  table_close(rel, AccessShareLock);
+		PG_RE_THROW();
+	}
+	PG_END_TRY();
+}
+
+/*****************************************
+ * 			Value functions
+ *****************************************/
+
+static Datum
+get_master(HeapTuple tuple, TupleDesc dsc)
+{
+	return CStringGetTextDatum("master");
+}
+
+static Datum
+get_owner(HeapTuple tuple, TupleDesc dsc)
+{
+	Form_sysdatabases sysdb = ((Form_sysdatabases) GETSTRUCT(tuple));
+	return NameGetDatum(&(sysdb->owner));
+}
+
+static Datum
+get_name_db_owner(HeapTuple tuple, TupleDesc dsc)
+{
+	bool isNull;
+	Datum name = heap_getattr(tuple, 
+							  Anum_sysdatabaese_name,
+							  dsc,
+							  &isNull);
+	char *name_str = TextDatumGetCString(name);
+	char *name_db_owner = palloc0(MAX_BBF_NAMEDATALEND);
+
+	truncate_identifier(name_str, strlen(name_str), false);
+	snprintf(name_db_owner, MAX_BBF_NAMEDATALEND, "%s_db_owner", name_str);
+	truncate_identifier(name_db_owner, strlen(name_db_owner), false);
+	return CStringGetDatum(name_db_owner);
+}
+
+/*****************************************
+ * 			Condition check funcs
+ *****************************************/
+static bool
+is_multidb(void)
+{
+	return (MULTI_DB == get_migration_mode());
+}
+
+/*****************************************
+ * 			Rule validation funcs
+ *****************************************/
+
+static bool
+check_exist(void *arg, HeapTuple tuple)
+{
+	bool			found;
+	Relation		rel;
+	SysScanDesc		scan;
+	ScanKeyData		scanKey;
+	Rule			*rule;
+	Datum			datum;
+
+	rule = (Rule *) arg;
+
+	if (!rule->func_val)
+		ereport(ERROR,
+				(errcode(ERRCODE_NULL_VALUE_NOT_ALLOWED),
+				 errmsg("Null value function for rule: \n%s",
+						rule->desc)));
+
+	rel = table_open(rule->tbldata->tbl_oid, AccessShareLock);
+
+	/* Get the wanted datum through value function */
+	datum = (rule->func_val) (tuple, rule->tupdesc);
+
+	ScanKeyInit(&scanKey, 
+				rule->tbldata->attnum, 
+				BTEqualStrategyNumber, 
+				rule->tbldata->regproc, 
+				datum);
+
+	scan = systable_beginscan(rel, rule->tbldata->idx_oid, true, NULL, 1, &scanKey);
+
+	/* The rule passes if we found the wanted datum in the catalog */
+	found = (HeapTupleIsValid(systable_getnext(scan)));
+
+	systable_endscan(scan);
+	table_close(rel, AccessShareLock);
+
+	return found;
+}
+
+/*****************************************
+ * 			Helper functions
+ *****************************************/
+
+static void 
+update_report(Rule *rule, Tuplestorestate *res_tupstore, TupleDesc res_tupdesc)
+{
+	Datum		values[4];
+	bool		nulls[4];
+	const char	*object_type;
+	const char	*schema_name;
+	const char	*object_name = rule->colname;
+	const char	*detail = rule->desc;
+
+	MemSet(nulls, 0, sizeof(nulls));
+
+	if (!rule->tbldata)
+		ereport(ERROR,
+				(errcode(ERRCODE_INTERNAL_ERROR),
+				 errmsg("Failed to find catalog info for rule: \n%s",
+						rule->desc)));
+
+	object_type = format_type_be(rule->tbldata->atttype);
+	schema_name = get_namespace_name(get_rel_namespace(rule->tbldata->tbl_oid));
+
+	/* Build tuple values for the report */
+	values[0] = CStringGetTextDatum(object_type);
+	values[1] = CStringGetTextDatum(schema_name);
+	values[2] = CStringGetTextDatum(object_name);
+	values[3] = CStringGetTextDatum(detail);
+
+	tuplestore_putvalues(res_tupstore, res_tupdesc, values, nulls);
+}
+
+/*
+ * Initialize the inconstant members of the RelData array catalog_data[]
+ */
+static void
+init_catalog_data(void)
+{
+	for (size_t i = 0; i < sizeof(catalog_data) / sizeof(catalog_data[0]); i++)
+	{
+		if (strcmp(catalog_data[i].tblname, "babelfish_sysdatabases") == 0)
+		{
+			catalog_data[i].tbl_oid = sysdatabases_oid;
+			catalog_data[i].idx_oid = sysdatabaese_idx_name_oid;
+			catalog_data[i].atttype = get_atttype(sysdatabases_oid, Anum_sysdatabaese_name);
+		}
+		else if (strcmp(catalog_data[i].tblname, "babelfish_namespace_ext") == 0)
+		{
+			catalog_data[i].tbl_oid = namespace_ext_oid;
+			catalog_data[i].idx_oid = namespace_ext_idx_oid_oid;
+			catalog_data[i].atttype = get_atttype(namespace_ext_oid, Anum_namespace_ext_namespace);
+		}
+		else if (strcmp(catalog_data[i].tblname, "babelfish_authid_login_ext") == 0)
+		{
+			catalog_data[i].tbl_oid = bbf_authid_login_ext_oid;
+			catalog_data[i].idx_oid = bbf_authid_login_ext_idx_oid;
+			catalog_data[i].atttype = get_atttype(bbf_authid_login_ext_oid, Anum_bbf_authid_login_ext_rolname);
+		}
+		else if (strcmp(catalog_data[i].tblname, "pg_namespace") == 0)
+		{
+			catalog_data[i].tbl_oid = NamespaceRelationId;
+			catalog_data[i].idx_oid = NamespaceNameIndexId;
+			catalog_data[i].atttype = get_atttype(NamespaceRelationId, Anum_pg_namespace_nspname);
+		}
+		else if (strcmp(catalog_data[i].tblname, "pg_authid") == 0)
+		{
+			catalog_data[i].tbl_oid = AuthIdRelationId;
+			catalog_data[i].idx_oid = AuthIdRolnameIndexId;
+			catalog_data[i].atttype = get_atttype(AuthIdRelationId, Anum_pg_authid_rolname);
+		}
+		else
+			ereport(ERROR,
+					(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+					 errmsg("\"%s\" is not a supported catalog", catalog_data[i].tblname)));
+	}
+}
+
+static void
+get_catalog_info(Rule *rule)
+{
+	size_t num_catalog = sizeof(catalog_data) / sizeof(catalog_data[0]);
+	size_t i = 0;
+
+	for (; i < num_catalog; i++)
+	{
+		if (strcmp(rule->tblname, catalog_data[i].tblname) == 0)
+		{
+			rule->tbldata = &catalog_data[i];
+			break;
+		}
+	}
+	if (i == num_catalog)
+		ereport(ERROR,
+				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+				 errmsg("Failed to find \"%s\" in the pre-defined catalog data array", 
+						rule->tblname)));
 }
