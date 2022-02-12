@@ -390,6 +390,7 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql IMMUTABLE STRICT;
 
+-- internal function in order to workaround BABEL-1597
 CREATE OR REPLACE FUNCTION sys.columns_internal()
 RETURNS TABLE (
     out_object_id int,
@@ -438,31 +439,31 @@ BEGIN
     SELECT CAST(c.oid AS int),
       CAST(a.attname AS sys.sysname),
       CAST(a.attnum AS int),
-      CAST(t.oid AS int),
-      CAST(t.oid AS int),
+      CASE 
+      WHEN tsql_type_name IS NOT NULL OR t.typbasetype = 0 THEN
+        -- either tsql or PG base type 
+        CAST(a.atttypid AS int)
+      ELSE 
+        CAST(t.typbasetype AS int)
+      END,
+      CAST(a.atttypid AS int),
       CASE
       WHEN a.atttypmod != -1 THEN 
-        sys.tsql_type_max_length_helper(coalesce(sys.translate_pg_type_to_tsql(a.atttypid),sys.translate_pg_type_to_tsql(t.typbasetype)), 
-                            a.attlen, a.atttypmod)
+        sys.tsql_type_max_length_helper(coalesce(tsql_type_name, tsql_base_type_name), a.attlen, a.atttypmod)
       ELSE 
-        sys.tsql_type_max_length_helper(coalesce(sys.translate_pg_type_to_tsql(a.atttypid),sys.translate_pg_type_to_tsql(t.typbasetype)), 
-                            a.attlen, t.typtypmod)
+        sys.tsql_type_max_length_helper(coalesce(tsql_type_name, tsql_base_type_name), a.attlen, t.typtypmod)
       END,
       CASE
       WHEN a.atttypmod != -1 THEN 
-        sys.tsql_type_precision_helper(coalesce(sys.translate_pg_type_to_tsql(a.atttypid),sys.translate_pg_type_to_tsql(t.typbasetype)), 
-                            a.atttypmod)
+        sys.tsql_type_precision_helper(coalesce(tsql_type_name, tsql_base_type_name), a.atttypmod)
       ELSE 
-        sys.tsql_type_precision_helper(coalesce(sys.translate_pg_type_to_tsql(a.atttypid),sys.translate_pg_type_to_tsql(t.typbasetype)), 
-                            t.typtypmod)
+        sys.tsql_type_precision_helper(coalesce(tsql_type_name, tsql_base_type_name), t.typtypmod)
       END,
       CASE
       WHEN a.atttypmod != -1 THEN 
-        sys.tsql_type_scale_helper(coalesce(sys.translate_pg_type_to_tsql(a.atttypid),sys.translate_pg_type_to_tsql(t.typbasetype)), 
-                            a.atttypmod)
+        sys.tsql_type_scale_helper(coalesce(tsql_type_name, tsql_base_type_name), a.atttypmod)
       ELSE 
-        sys.tsql_type_scale_helper(coalesce(sys.translate_pg_type_to_tsql(a.atttypid),sys.translate_pg_type_to_tsql(t.typbasetype)), 
-                            t.typtypmod)
+        sys.tsql_type_scale_helper(coalesce(tsql_type_name, tsql_base_type_name), t.typtypmod)
       END,
       CAST(coll.collname AS sys.sysname),
       CAST(a.attcollation AS int),
@@ -503,6 +504,8 @@ BEGIN
     INNER JOIN information_schema.columns isc ON c.relname = isc.table_name AND ext.nspname = isc.table_schema AND a.attname = isc.column_name
     LEFT JOIN pg_attrdef d ON c.oid = d.adrelid AND a.attnum = d.adnum
     LEFT JOIN pg_collation coll ON coll.oid = a.attcollation
+    , sys.translate_pg_type_to_tsql(a.atttypid) AS tsql_type_name
+    , sys.translate_pg_type_to_tsql(t.typbasetype) AS tsql_base_type_name
     WHERE NOT a.attisdropped
     AND a.attnum > 0
     -- r = ordinary table, i = index, S = sequence, t = TOAST table, v = view, m = materialized view, c = composite type, f = foreign table, p = partitioned table
@@ -514,31 +517,31 @@ BEGIN
     SELECT CAST(c.oid AS int),
       CAST(a.attname AS sys.sysname),
       CAST(a.attnum AS int),
-      CAST(t.oid AS int),
-      CAST(t.oid AS int),
+      CASE 
+      WHEN tsql_type_name IS NOT NULL OR t.typbasetype = 0 THEN
+        -- either tsql or PG base type 
+        CAST(a.atttypid AS int)
+      ELSE 
+        CAST(t.typbasetype AS int)
+      END,
+      CAST(a.atttypid AS int),
       CASE
       WHEN a.atttypmod != -1 THEN 
-        sys.tsql_type_max_length_helper(coalesce(sys.translate_pg_type_to_tsql(a.atttypid),sys.translate_pg_type_to_tsql(t.typbasetype)), 
-                            a.attlen, a.atttypmod)
+        sys.tsql_type_max_length_helper(coalesce(tsql_type_name, tsql_base_type_name), a.attlen, a.atttypmod)
       ELSE 
-        sys.tsql_type_max_length_helper(coalesce(sys.translate_pg_type_to_tsql(a.atttypid),sys.translate_pg_type_to_tsql(t.typbasetype)), 
-                            a.attlen, t.typtypmod)
+        sys.tsql_type_max_length_helper(coalesce(tsql_type_name, tsql_base_type_name), a.attlen, t.typtypmod)
       END,
       CASE
       WHEN a.atttypmod != -1 THEN 
-        sys.tsql_type_precision_helper(coalesce(sys.translate_pg_type_to_tsql(a.atttypid),sys.translate_pg_type_to_tsql(t.typbasetype)), 
-                            a.atttypmod)
+        sys.tsql_type_precision_helper(coalesce(tsql_type_name, tsql_base_type_name), a.atttypmod)
       ELSE 
-        sys.tsql_type_precision_helper(coalesce(sys.translate_pg_type_to_tsql(a.atttypid),sys.translate_pg_type_to_tsql(t.typbasetype)), 
-                            t.typtypmod)
+        sys.tsql_type_precision_helper(coalesce(tsql_type_name, tsql_base_type_name), t.typtypmod)
       END,
       CASE
       WHEN a.atttypmod != -1 THEN 
-        sys.tsql_type_scale_helper(coalesce(sys.translate_pg_type_to_tsql(a.atttypid),sys.translate_pg_type_to_tsql(t.typbasetype)), 
-                            a.atttypmod)
+        sys.tsql_type_scale_helper(coalesce(tsql_type_name, tsql_base_type_name), a.atttypmod)
       ELSE 
-        sys.tsql_type_scale_helper(coalesce(sys.translate_pg_type_to_tsql(a.atttypid),sys.translate_pg_type_to_tsql(t.typbasetype)), 
-                            t.typtypmod)
+        sys.tsql_type_scale_helper(coalesce(tsql_type_name, tsql_base_type_name), t.typtypmod)
       END,
       CAST(coll.collname AS sys.sysname),
       CAST(a.attcollation AS int),
@@ -578,6 +581,8 @@ BEGIN
     INNER JOIN information_schema.columns isc ON c.relname = isc.table_name AND nsp.nspname = isc.table_schema AND a.attname = isc.column_name
     LEFT JOIN pg_attrdef d ON c.oid = d.adrelid AND a.attnum = d.adnum
     LEFT JOIN pg_collation coll ON coll.oid = a.attcollation
+    , sys.translate_pg_type_to_tsql(a.atttypid) AS tsql_type_name
+    , sys.translate_pg_type_to_tsql(t.typbasetype) AS tsql_base_type_name
     WHERE NOT a.attisdropped
     AND a.attnum > 0
     AND c.relkind = 'r'

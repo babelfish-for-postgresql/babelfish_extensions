@@ -349,3 +349,30 @@ c6#!#5#!#15#!#6
 drop table t1;
 GO
 
+CREATE TYPE type1 FROM INT NOT NULL
+GO
+CREATE TABLE t1( c1 type1, c2 int)
+GO
+
+select count(*) from sys.columns where object_id = OBJECT_ID('t1') and system_type_id <> user_type_id
+GO
+~~START~~
+int
+1
+~~END~~
+
+
+select object_name(system_type_id), object_name(user_type_id) from sys.columns where object_id = OBJECT_ID('t1');
+GO
+~~START~~
+varchar#!#varchar
+int4#!#type1
+int4#!#int4
+~~END~~
+
+
+drop table t1;
+GO
+
+drop type type1
+GO
