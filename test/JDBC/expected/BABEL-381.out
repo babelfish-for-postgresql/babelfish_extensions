@@ -1,0 +1,25 @@
+-- BABEL-381 Test numeric constant can be correctly processed through
+-- TDS protocol.
+select 2.0;
+go
+~~START~~
+numeric
+2.0
+~~END~~
+
+
+select 2.0/1.5;
+go
+~~START~~
+numeric
+1.3333333333333333
+~~END~~
+
+
+select 2.0, 2.0/1.5, 1.0/1.5;
+go
+~~START~~
+numeric#!#numeric#!#numeric
+2.0#!#1.3333333333333333#!#0.66666666666666666667
+~~END~~
+
