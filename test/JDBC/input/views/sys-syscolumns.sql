@@ -200,3 +200,19 @@ GO
 drop table t1;
 GO
 
+CREATE TYPE type1 FROM INT NOT NULL
+GO
+CREATE TABLE t1( c1 type1, c2 int)
+GO
+
+select count(*) from sys.columns where object_id = OBJECT_ID('t1') and system_type_id <> user_type_id
+GO
+
+select object_name(system_type_id), object_name(user_type_id) from sys.columns where object_id = OBJECT_ID('t1');
+GO
+
+drop table t1;
+GO
+
+drop type type1
+GO
