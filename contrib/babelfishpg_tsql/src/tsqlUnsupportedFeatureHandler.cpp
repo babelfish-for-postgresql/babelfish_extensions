@@ -82,6 +82,7 @@ protected:
 		bool publish_instr = false;
 		bool throw_error = false;
 		int count = 0; /* record count to skip unnecessary visiting */
+		bool is_inside_trigger = false;
 
 		/* handler */
 		void handle(PgTsqlInstrMetricType tm_type, antlr4::tree::TerminalNode *node, escape_hatch_t* eh);
@@ -423,7 +424,10 @@ antlrcpp::Any TsqlUnsupportedFeatureHandlerImpl::visitCreate_or_alter_trigger(TS
 			handle(INSTR_UNSUPPORTED_TSQL_DDL_TRIGGER_EXTERNAL_NAME_OPTION, "EXERNAL NAME", getLineAndPos(dctx->external_name()));
 	}
 
-	return visitChildren(ctx);
+	is_inside_trigger = true;
+	auto ret = visitChildren(ctx);
+	is_inside_trigger = false;
+	return ret;
 }
 
 antlrcpp::Any TsqlUnsupportedFeatureHandlerImpl::visitCreate_or_alter_view(TSqlParser::Create_or_alter_viewContext *ctx)
@@ -1250,6 +1254,10 @@ antlrcpp::Any TsqlUnsupportedFeatureHandlerImpl::visitExecute_parameter(TSqlPars
 
 antlrcpp::Any TsqlUnsupportedFeatureHandlerImpl::visitTrigger_column_updated(TSqlParser::Trigger_column_updatedContext *ctx)
 {
+	if (!is_inside_trigger && pltsql_curr_compile->fn_is_trigger == PLTSQL_NOT_TRIGGER){
+		/* trigger column updated is different from other case because it should throw an error when it is OUTSIDE of trigger. handle an error manually */
+ 		throw PGErrorWrapperException(ERROR, ERRCODE_SYNTAX_ERROR, "Can only use IF UPDATE within a CREATE TRIGGER statement", getLineAndPos(ctx));
+	}
 	return visitChildren(ctx);
 }
 

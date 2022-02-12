@@ -49,6 +49,10 @@ columnsupdated(PG_FUNCTION_ARGS)
 	int length, bufSize, curByteIndex, total_columns = 0;
 	int8 curBuf;
 	int j;
+	if (columns_updated_list == NULL)
+	{
+		PG_RETURN_NULL();
+	}
 	if (pltsql_trigger_depth-1<list_length(columns_updated_list))
 		curr_columns_list = (List *)list_nth(columns_updated_list, pltsql_trigger_depth - 1);
 	else curr_columns_list = NIL;
