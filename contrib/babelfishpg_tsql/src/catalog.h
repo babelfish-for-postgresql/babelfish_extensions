@@ -112,4 +112,43 @@ extern char *get_login_default_db(char *login_name);
 extern Oid get_authid_login_ext_oid(void);
 extern Oid get_authid_login_ext_idx_oid(void);
 
+/*****************************************
+ *			Metadata Check Rule
+ *****************************************/
+typedef struct RelData
+{
+	const char		*tblname;	/* table name */
+	Oid				tbl_oid;	/* table oid */
+	Oid				idx_oid;	/* index oid */
+	Oid				atttype;	/* index column's type oid */
+	AttrNumber		attnum;		/* index column's attribute num */
+	RegProcedure	regproc;	/* regproc used to scan through the index */
+} RelData;
+
+typedef struct Rule
+{
+	const char	*desc;		/* rule description */
+	const char	*tblname;	/* catalog name */
+	const char	*colname;	/* column name */
+
+	/* 
+	 * The expected value can either be a Datum or the result of a value
+	 * function.
+	 * A value function reads a tuple and output a Datum. 
+	 * Category 1 rules: Input tuple is NULL.
+	 * Category 2 rules: Input tuple is provided by a catalog (often different
+	 *					 from tblname.
+	 * tupdesc is the description for the input tuple.
+	 */
+	TupleDesc	tupdesc;
+	Datum		(*func_val) (HeapTuple tuple, TupleDesc dsc);
+
+	/* function to check whether certain condition is satisfied */
+	bool		(*func_cond) (void);
+	/* function to validate the rule */
+	bool		(*func_check) (void *rule_arg, HeapTuple tuple);
+
+	RelData		*tbldata;	/* extra catalog info */
+} Rule;
+
 #endif

@@ -5,3 +5,31 @@ GO
 varchar#!#varchar#!#varchar#!#text
 ~~END~~
 
+
+-- psql
+ALTER SYSTEM SET babelfishpg_tsql.migration_mode = 'multi-db';
+SELECT pg_reload_conf();
+GO
+~~START~~
+bool
+t
+~~END~~
+
+
+-- psql
+SELECT * FROM sys.babelfish_inconsistent_metadata();
+GO
+~~START~~
+varchar#!#varchar#!#varchar#!#text
+~~END~~
+
+
+-- psql
+ALTER SYSTEM SET babelfishpg_tsql.migration_mode = 'single-db';
+SELECT pg_reload_conf();
+GO
+~~START~~
+bool
+t
+~~END~~
+
