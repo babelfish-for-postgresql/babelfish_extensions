@@ -1451,6 +1451,20 @@ INNER JOIN pg_attrdef d ON d.adrelid = a.attrelid AND d.adnum = a.attnum
 WHERE a.attgenerated = 's' AND sc.out_is_computed::integer = 1;
 GRANT SELECT ON sys.computed_columns TO PUBLIC;
 
+CREATE OR REPLACE VIEW sys.endpoints 
+AS
+SELECT CAST('TSQL Default TCP' AS sys.sysname) AS name
+	, CAST(4 AS int) AS endpoint_id
+	, CAST(1 AS int) AS principal_id
+	, CAST(2 AS sys.tinyint) AS protocol
+	, CAST('TCP' AS sys.nvarchar(60)) AS protocol_desc
+	, CAST(2 AS sys.tinyint) AS type
+  , CAST('TSQL' AS sys.nvarchar(60)) AS type_desc
+  , CAST(0 AS tinyint) AS state
+  , CAST('STARTED' AS sys.nvarchar(60)) AS state_desc
+  , CAST(0 AS sys.bit) AS is_admin_endpoint;
+GRANT SELECT ON sys.endpoints TO PUBLIC;
+
 create or replace view sys.index_columns
 as
 select i.indrelid::integer as object_id
