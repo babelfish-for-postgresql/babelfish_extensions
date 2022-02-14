@@ -209,12 +209,24 @@ BEGIN
     RETURN -1;
   END IF;
 
+  IF typemod = -1 THEN
+    CASE type
+    WHEN 'datetime' THEN scale = 3;
+    WHEN 'datetime2' THEN scale = 6;
+    WHEN 'datetimeoffset' THEN scale = 6;
+    WHEN 'decimal' THEN scale = 38;
+    WHEN 'numeric' THEN scale = 38;
+    WHEN 'money' THEN scale = 4;
+    WHEN 'smallmoney' THEN scale = 4;
+    WHEN 'time' THEN scale = 6;
+    ELSE scale = 0;
+    END CASE;
+    RETURN scale;
+  END IF;
+
   CASE type
   WHEN 'decimal' THEN scale = (typemod - 4) & 65535;
   WHEN 'numeric' THEN scale = (typemod - 4) & 65535;
-  WHEN 'money' THEN scale = 4;
-  WHEN 'smallmoney' THEN scale = 4;
-  WHEN 'datetime' THEN scale = 3;
   WHEN 'datetime2' THEN
     CASE typemod 
     WHEN 0 THEN scale = 0;
@@ -230,7 +242,6 @@ BEGIN
     END CASE;
   WHEN 'datetimeoffset' THEN
     CASE typemod
-    WHEN -1 THEN scale = 7;
     WHEN 0 THEN scale = 0;
     WHEN 1 THEN scale = 1;
     WHEN 2 THEN scale = 2;
@@ -244,7 +255,6 @@ BEGIN
     END CASE;
   WHEN 'time' THEN
     CASE typemod
-    WHEN -1 THEN scale = 7;
     WHEN 0 THEN scale = 0;
     WHEN 1 THEN scale = 1;
     WHEN 2 THEN scale = 2;
@@ -271,20 +281,34 @@ BEGIN
     RETURN -1;
   END IF;
 
+  IF typemod = -1 THEN
+    CASE type
+    WHEN 'bigint' THEN precision = 19;
+    WHEN 'bit' THEN precision = 1;
+    WHEN 'date' THEN precision = 10;
+    WHEN 'datetime' THEN precision = 23;
+    WHEN 'datetime2' THEN precision = 26;
+    WHEN 'datetimeoffset' THEN precision = 33;
+    WHEN 'decimal' THEN precision = 38;
+    WHEN 'numeric' THEN precision = 38;
+    WHEN 'float' THEN precision = 53;
+    WHEN 'int' THEN precision = 10;
+    WHEN 'money' THEN precision = 19;
+    WHEN 'real' THEN precision = 24;
+    WHEN 'smalldatetime' THEN precision = 16;
+    WHEN 'smallint' THEN precision = 5;
+    WHEN 'smallmoney' THEN precision = 10;
+    WHEN 'time' THEN precision = 15;
+    WHEN 'tinyint' THEN precision = 3;
+    ELSE precision = 0;
+    END CASE;
+    RETURN precision;
+  END IF;
+
   CASE type
-  WHEN 'bigint' THEN precision = 19;
-  WHEN 'int' THEN precision = 10;
-  WHEN 'smallint' THEN precision = 5;
-  WHEN 'tinyint' THEN precision = 3;
-  WHEN 'bit' THEN precision = 1;
   WHEN 'numeric' THEN precision = ((typemod - 4) >> 16) & 65535;
   WHEN 'decimal' THEN precision = ((typemod - 4) >> 16) & 65535;
-  WHEN 'float' THEN precision = 53;
-  WHEN 'real' THEN precision = 24;
-  WHEN 'money' THEN precision = 19;
-  WHEN 'smallmoney' THEN precision = 10;
-  WHEN 'date' THEN precision = 10;
-  WHEN 'datetime' THEN precision = 23;
+  WHEN 'smalldatetime' THEN precision = 16;
   WHEN 'datetime2' THEN 
     CASE typemod 
     WHEN 0 THEN precision = 19;
@@ -300,7 +324,6 @@ BEGIN
     END CASE;
   WHEN 'datetimeoffset' THEN
     CASE typemod
-    WHEN -1 THEN precision = 34;
     WHEN 0 THEN precision = 26;
     WHEN 1 THEN precision = 28;
     WHEN 2 THEN precision = 29;
@@ -312,10 +335,8 @@ BEGIN
     -- but adding the case just in case we support it in future
     WHEN 7 THEN precision = 34;
     END CASE;
-  WHEN 'smalldatetime' THEN precision = 16;
   WHEN 'time' THEN
     CASE typemod
-    WHEN -1 THEN precision = 16;
     WHEN 0 THEN precision = 8;
     WHEN 1 THEN precision = 10;
     WHEN 2 THEN precision = 11;
@@ -343,17 +364,18 @@ DECLARE
 BEGIN
   -- unknown tsql type
   IF type IS NULL THEN
-    RETURN typelen::SMALLINT;
+    RETURN CAST(typelen as SMALLINT);
   END IF;
 
   IF typelen != -1 THEN
-    CASE type
+    CASE type 
     WHEN 'tinyint' THEN max_length = 1;
     WHEN 'date' THEN max_length = 3;
     WHEN 'smalldatetime' THEN max_length = 4;
     WHEN 'smallmoney' THEN max_length = 4;
     WHEN 'datetime2' THEN
-      IF typemod <= 2 THEN max_length = 6;
+      IF typemod = -1 THEN max_length = 8;
+      ELSIF typemod <= 2 THEN max_length = 6;
       ELSIF typemod <= 4 THEN max_length = 7;
       ELSEIF typemod <= 7 THEN max_length = 8;
       -- typemod = 7 is not possible for datetime2 in Babel
@@ -380,6 +402,8 @@ BEGIN
     CASE 
     WHEN type in ('image', 'text', 'ntext') THEN max_length = 16;
     WHEN type = 'sql_variant' THEN max_length = 8016;
+    WHEN type in ('binary', 'varbinary', 'char', 'varchar', 'bpchar', 'nchar', 'nvarchar') THEN max_length = 8000;
+    WHEN type in ('decimal', 'numeric') THEN max_length = 17;
     ELSE max_length = typemod;
     END CASE;
     RETURN max_length;
@@ -608,15 +632,18 @@ language plpgsql;
 
 create or replace view sys.types As
 -- For System types
-select sys.translate_pg_type_to_tsql(t.oid) as name
+select tsql_type_name as name
   , t.oid as system_type_id
   , t.oid as user_type_id
   , s.oid as schema_id
-  , null::integer as principal_id
-  , t.typlen as max_length
-  , 0 as precision
-  , 0 as scale
-  , c.collname as collation_name
+  , cast(NULL as INT) as principal_id
+  , sys.tsql_type_max_length_helper(tsql_type_name, t.typlen, t.typtypmod) as max_length
+  , cast(sys.tsql_type_precision_helper(tsql_type_name, t.typtypmod) as int) as precision
+  , cast(sys.tsql_type_scale_helper(tsql_type_name, t.typtypmod) as int) as scale
+  , CASE c.collname
+    WHEN 'default' THEN cast(current_setting('babelfishpg_tsql.server_collation_name') as name)
+    ELSE  c.collname
+    END as collation_name
   , case when typnotnull then 0 else 1 end as is_nullable
   , 0 as is_user_defined
   , 0 as is_assembly_type
@@ -626,7 +653,8 @@ select sys.translate_pg_type_to_tsql(t.oid) as name
 from pg_type t
 inner join pg_namespace s on s.oid = t.typnamespace
 left join pg_collation c on c.oid = t.typcollation
-where sys.translate_pg_type_to_tsql(t.oid) IS NOT NULL
+, sys.translate_pg_type_to_tsql(t.oid) AS tsql_type_name
+where tsql_type_name IS NOT NULL
 and pg_type_is_visible(t.oid)
 and (s.nspname = 'pg_catalog' OR s.nspname = 'sys')
 union all 
@@ -636,10 +664,13 @@ select cast(t.typname as text) as name
   , t.oid as user_type_id
   , s.oid as schema_id
   , null::integer as principal_id
-  , t.typlen as max_length
-  , 0 as precision
-  , 0 as scale
-  , c.collname as collation_name
+  , sys.tsql_type_max_length_helper(tsql_base_type_name, t.typlen, t.typtypmod) as max_length
+  , cast(sys.tsql_type_precision_helper(tsql_base_type_name, t.typtypmod) as int) as precision
+  , cast(sys.tsql_type_scale_helper(tsql_base_type_name, t.typtypmod) as int) as scale
+  , CASE c.collname
+    WHEN 'default' THEN cast(current_setting('babelfishpg_tsql.server_collation_name') as name)
+    ELSE  c.collname 
+    END as collation_name
   , case when typnotnull then 0 else 1 end as is_nullable
   -- CREATE TYPE ... FROM is implemented as CREATE DOMAIN in babel
   , 1 as is_user_defined
@@ -650,8 +681,10 @@ select cast(t.typname as text) as name
 from pg_type t
 inner join pg_namespace s on s.oid = t.typnamespace
 left join pg_collation c on c.oid = t.typcollation
+, sys.translate_pg_type_to_tsql(t.oid) AS tsql_type_name
+, sys.translate_pg_type_to_tsql(t.typbasetype) AS tsql_base_type_name
 -- we want to show details of user defined datatypes created under babelfish database
-where sys.translate_pg_type_to_tsql(t.oid) IS NULL
+where tsql_type_name IS NULL
 and pg_type_is_visible(t.oid)
 and s.nspname <> 'pg_catalog' AND s.nspname <> 'sys'
 and t.typtype = 'd' ;
