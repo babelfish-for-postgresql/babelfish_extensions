@@ -2,13 +2,81 @@
 
 #include "err_handler.h"
 #include "funcapi.h"
-#include "pltsql.h"
 
 PG_FUNCTION_INFO_V1(babel_list_mapped_error);
 
-/* error could be ignored within exec_stmt_execsql */
-bool is_ignorable_error(int pg_error_code)
+/*
+ * Certain tsql error code can behave differently depending on when it is
+ * raised or what operations were being executed. 
+ * For example, tsql error code 547 can behave in 2 different ways:
+ * 1. Error code 547 will behave as if it is statement terminating error if
+ *    It is raised when DML was being executed.
+ * 2. Same error code will behave as transaction aborting error for any other cases.
+ * 
+ * Scenario described in point no. 1 is happening probably because another tsql error 
+ * token (i.e. 3621) also being raised after original token. But Babelfish does not  
+ * have support to raise multiple token.
+ *
+ * So, This function override_txn_behaviour could be used to override behaviour of
+ * any error code for different situation.
+ *
+ * This will return int flag with required information encoded.
+ * flag & IGNORABLE_ERROR (0x01) --> statement terminating
+ * flag & CUR_BATCH_ABORTING_ERROR (0x02) --> current batch terminating
+ * flag & TXN_ABORTING_ERROR (0x04) --> transaction aborting
+ * flag & IGNORE_XACT_ERROR (0x08) --> ignore xact_abort
+ */ 
+uint8_t 
+override_txn_behaviour(PLtsql_stmt *stmt)
 {
+	uint8_t override_flag = 0;
+
+	if (!stmt)
+		return 0;
+	/*
+	 * If tsql error code 547 is raised while executing DML statement
+	 * then error code should behave as if it is statement terminating
+	 * error.
+	 */
+	if (latest_error_code == SQL_ERROR_547 && stmt->cmd_type == PLTSQL_STMT_EXECSQL)
+	{
+		PLtsql_expr *expr = ((PLtsql_stmt_execsql *) stmt)->sqlstmt;
+		if (expr && expr->plan)
+		{
+			ListCell *lc;
+			/* Below loop will iterate one time only for every statement in the batch. */
+			foreach(lc, SPI_plan_get_plan_sources(expr->plan))
+			{
+				CachedPlanSource *plansource = (CachedPlanSource *) lfirst(lc);
+				if (plansource &&
+					plansource->commandTag &&
+					(plansource->commandTag == CMDTAG_INSERT ||
+						plansource->commandTag == CMDTAG_UPDATE ||
+						plansource->commandTag == CMDTAG_DELETE))
+					{
+						override_flag |= IGNORABLE_ERROR;
+					}
+			}
+		}
+	}
+	return override_flag;
+}
+
+/* error could be ignored within exec_stmt_execsql */
+bool is_ignorable_error(int pg_error_code, uint8_t override_flag)
+{
+	/*
+	 * Check if override transactional behaviour flag is set,
+	 * And use the same to determine the transactional behaviour.
+	 */
+	if (override_flag)
+	{
+		if (override_flag & IGNORABLE_ERROR)
+			return true;
+		else
+			return false;
+	}
+
 	/* 
 	 * As of now, Trying do classification based on SQL error code.
 	 * If it does not work then doing classification based on pg_error_code.
@@ -69,8 +137,20 @@ bool is_ignorable_error(int pg_error_code)
 }
 
 /* Tsql errors which terminate only the batch where error was raised  */
-bool is_current_batch_aborting_error(int pg_error_code)
+bool is_current_batch_aborting_error(int pg_error_code, uint8_t override_flag)
 {
+	/*
+	 * Check if override transactional behaviour flag is set,
+	 * And use the same to determine the transactional behaviour.
+	 */
+	if (override_flag)
+	{
+		if (override_flag & CUR_BATCH_ABORTING_ERROR)
+			return true;
+		else
+			return false;
+	}
+
 	/* 
 	 * As of now, Trying do classification based on SQL error code.
 	 * If it does not work then doing classification based on pg_error_code.
@@ -91,8 +171,20 @@ bool is_current_batch_aborting_error(int pg_error_code)
 }
 
 /* Tsql errors which lead to batch abort and transaction rollback */
-bool is_batch_txn_aborting_error(int pg_error_code)
+bool is_batch_txn_aborting_error(int pg_error_code, uint8_t override_flag)
 {
+	/*
+	 * Check if override transactional behaviour flag is set,
+	 * And use the same to determine the transactional behaviour.
+	 */
+	if (override_flag)
+	{
+		if (override_flag & TXN_ABORTING_ERROR)
+			return true;
+		else
+			return false;
+	}
+
 	/* 
 	 * As of now, Trying do classification based on SQL error code.
 	 * If it does not work then doing classification based on pg_error_code.
@@ -148,8 +240,20 @@ bool is_batch_txn_aborting_error(int pg_error_code)
 	}
 }
 
-bool ignore_xact_abort_error(int pg_error_code)
+bool ignore_xact_abort_error(int pg_error_code, uint8_t override_flag)
 {
+	/*
+	 * Check if override transactional behaviour flag is set,
+	 * And use the same to determine the transactional behaviour.
+	 */
+	if (override_flag)
+	{
+		if (override_flag & IGNORE_XACT_ERROR)
+			return true;
+		else
+			return false;
+	}
+
 	/* 
 	 * As of now, Trying do classification based on SQL error code.
 	 * If it does not work then doing classification based on pg_error_code.

@@ -1,0 +1,225 @@
+CREATE TABLE t547_2(c1 int CHECK  (c1 < 10));
+INSERT INTO t547_2 VALUES(5)
+GO
+~~ROW COUNT: 1~~
+
+
+INSERT INTO t547_2 VALUES(50);
+GO
+~~ERROR (Code: 547)~~
+
+~~ERROR (Message: The INSERT statement conflicted with the CHECK constraint "CK__t547_2__c1__7FEAFD3E". The conflict occurred in database "babel_2880", table "dbo.t547_2", column 'c1'.)~~
+
+
+begin transaction
+GO
+
+INSERT INTO t547_2 VALUES(50);
+GO
+~~ERROR (Code: 547)~~
+
+~~ERROR (Message: The INSERT statement conflicted with the CHECK constraint "CK__t547_2__c1__7FEAFD3E". The conflict occurred in database "babel_2880", table "dbo.t547_2", column 'c1'.)~~
+
+
+if (@@trancount > 0) select cast('transaction did not rolledback' as text) else select cast('transaction rollback' as text)
+GO
+~~START~~
+text
+transaction did not rolledback
+~~END~~
+
+
+if (@@trancount > 0) rollback tran
+GO
+
+create schema error_mapping;
+GO
+
+create table error_mapping.temp1 (a int)
+GO
+
+create procedure error_mapping.ErrorHandling1 as
+begin
+insert into error_mapping.temp1 values(1)
+INSERT INTO t547_2 VALUES(50);
+end
+GO
+
+
+create table error_mapping.temp2 (a int)
+GO
+
+insert into error_mapping.temp2 values(1)
+INSERT INTO t547_2 VALUES(50);
+GO
+~~ROW COUNT: 1~~
+
+~~ERROR (Code: 547)~~
+
+~~ERROR (Message: The INSERT statement conflicted with the CHECK constraint "CK__t547_2__c1__7FEAFD3E". The conflict occurred in database "babel_2880", table "dbo.t547_2", column 'c1'.)~~
+
+
+create table error_mapping.temp3 (a int)
+GO
+
+insert into error_mapping.temp3 values(1)
+exec error_mapping.ErrorHandling1;
+GO
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ERROR (Code: 547)~~
+
+~~ERROR (Message: The INSERT statement conflicted with the CHECK constraint "CK__t547_2__c1__7FEAFD3E". The conflict occurred in database "babel_2880", table "dbo.t547_2", column 'c1'.)~~
+
+
+if ((select count(*) from error_mapping.temp1) = 0 and (select count(*) from error_mapping.temp2) = 0 and (select count(*) from error_mapping.temp3) > 0) select cast('parse analysis phase error' as text)
+GO
+
+drop procedure error_mapping.ErrorHandling1;
+GO
+drop table error_mapping.temp1;
+drop table error_mapping.temp2;
+drop table error_mapping.temp3;
+GO
+
+
+create procedure error_mapping.ErrorHandling1 as
+begin
+INSERT INTO t547_2 VALUES(50);
+if @@error > 0 select cast('STATEMENT TERMINATING ERROR' as text);
+select @@trancount;
+end
+GO
+
+create procedure error_mapping.ErrorHandling2 as
+begin
+exec error_mapping.ErrorHandling1;
+if @@error > 0 select cast('CURRENT BATCH TERMINATING ERROR' as text);
+end
+GO
+
+begin transaction;
+GO
+exec error_mapping.ErrorHandling2;
+GO
+~~ERROR (Code: 547)~~
+
+~~ERROR (Message: The INSERT statement conflicted with the CHECK constraint "CK__t547_2__c1__7FEAFD3E". The conflict occurred in database "babel_2880", table "dbo.t547_2", column 'c1'.)~~
+
+~~START~~
+text
+STATEMENT TERMINATING ERROR
+~~END~~
+
+~~START~~
+int
+1
+~~END~~
+
+
+declare @err int = @@error; if (@err > 0 and @@trancount > 0) select cast('BATCH ONLY TERMINATING' as text) else if @err > 0 select cast('BATCH TERMINATING\ txn rolledback' as text);
+if @@trancount > 0 rollback transaction;
+GO
+
+drop procedure error_mapping.ErrorHandling1;
+drop procedure error_mapping.ErrorHandling2;
+set xact_abort OFF;
+set implicit_transactions OFF;
+GO
+
+
+set xact_abort ON;
+GO
+
+create procedure error_mapping.ErrorHandling1 as
+begin
+INSERT INTO t547_2 VALUES(50);
+if @@error > 0 select cast('STATEMENT TERMINATING ERROR' as text);
+select @@trancount;
+end
+GO
+
+create procedure error_mapping.ErrorHandling2 as
+begin
+exec error_mapping.ErrorHandling1;
+if @@error > 0 select cast('CURRENT BATCH TERMINATING ERROR' as text);
+end
+GO
+
+begin transaction;
+GO
+exec error_mapping.ErrorHandling2;
+GO
+~~ERROR (Code: 547)~~
+
+~~ERROR (Message: The INSERT statement conflicted with the CHECK constraint "CK__t547_2__c1__7FEAFD3E". The conflict occurred in database "babel_2880", table "dbo.t547_2", column 'c1'.)~~
+
+declare @err int = @@error; if (@err > 0 and @@trancount > 0) select cast('BATCH ONLY TERMINATING' as text) else if @err > 0 select cast('BATCH TERMINATING\ txn rolledback' as text);
+if @@trancount > 0 rollback transaction;
+GO
+~~START~~
+text
+BATCH TERMINATING\ txn rolledback
+~~END~~
+
+
+drop procedure error_mapping.ErrorHandling1;
+drop procedure error_mapping.ErrorHandling2;
+set xact_abort OFF;
+set implicit_transactions OFF;
+GO
+
+set xact_abort OFF;
+GO
+
+create table babel_2880(a int)
+GO
+
+begin try
+insert into babel_2880 values(1);
+INSERT INTO t547_2 VALUES(50);
+end try
+begin catch
+	select * from babel_2880;
+	select xact_state();
+end catch
+GO
+~~ROW COUNT: 1~~
+
+~~START~~
+int
+1
+~~END~~
+
+~~START~~
+smallint
+0
+~~END~~
+
+
+select * from babel_2880;
+GO
+~~START~~
+int
+1
+~~END~~
+
+
+if @@trancount > 0 rollback transaction;
+GO
+
+set xact_abort OFF;
+set implicit_transactions OFF;
+GO
+
+
+DROP TABLE t547_2
+GO
+
+drop table babel_2880
+GO
+
+drop schema error_mapping;
+GO
