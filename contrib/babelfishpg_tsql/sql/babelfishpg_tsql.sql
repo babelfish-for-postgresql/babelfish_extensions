@@ -792,8 +792,8 @@ GRANT ALL on PROCEDURE sys.sp_columns_managed TO PUBLIC;
 -- sys.sp_describe_undeclared_parameters_internal: internal function
 -- For the result rows, can we create a template table for it?
 create function sys.sp_describe_undeclared_parameters_internal(
-	tsqlquery varchar(384),
-    params varchar(384) = NULL
+	tsqlquery sys.nvarchar(4000),
+    params sys.nvarchar(4000) = NULL
 )
 returns table (
 	parameter_ordinal 							int, -- NOT NULL
@@ -826,8 +826,8 @@ LANGUAGE C;
 GRANT ALL on FUNCTION sys.sp_describe_undeclared_parameters_internal TO PUBLIC;
 
 CREATE PROCEDURE sys.sp_describe_undeclared_parameters (
-	"@tsql" varchar(384),
-    "@params" varchar(384) = NULL)
+	"@tsql" sys.nvarchar(4000),
+    "@params" sys.nvarchar(4000) = NULL)
 AS $$
 BEGIN
 	select * from sys.sp_describe_undeclared_parameters_internal(@tsql, @params);

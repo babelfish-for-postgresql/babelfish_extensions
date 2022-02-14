@@ -27,6 +27,59 @@ int#!#varchar#!#int#!#nvarchar#!#smallint#!#tinyint#!#tinyint#!#int#!#varchar#!#
 ~~END~~
 
 
+-- Test long input string
+CREATE TABLE t_numerics_dt(
+    c_bigintXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX  BIGINT  NOT NULL
+    , c_decimal_1_0 DECIMAL(1,0)    NOT NULL
+    , c_decimal_1_1 DECIMAL(1,1)    NOT NULL
+    , c_decimal_12_3    DECIMAL(12,3)   NOT NULL
+    , c_decimal_38_0    DECIMAL(38,0)   NOT NULL
+    , c_decimal_38_5    DECIMAL(38,5)   NOT NULL
+    , c_float   FLOAT   NOT NULL
+    , c_float_8 FLOAT(8)    NOT NULL
+    , c_float_24    FLOAT(24)   NOT NULL
+    , c_float_25    FLOAT(25)   NOT NULL
+    , c_float_48    FLOAT(48)   NOT NULL
+    , c_int INT NOT NULL
+    , c_money   MONEY   NOT NULL
+    , c_numeric_1_0 NUMERIC(1,0)    NOT NULL
+    , c_numeric_1_1 NUMERIC(1,1)    NOT NULL
+    , c_numeric_12_3    NUMERIC(12,3)   NOT NULL
+    , c_numeric_38_0    NUMERIC(38,0)   NOT NULL
+    , c_numeric_38_5    NUMERIC(38,5)   NOT NULL
+    , c_real    INT NOT NULL
+)
+go
+
+EXEC sp_describe_undeclared_parameters N'INSERT INTO t_numerics_dt(
+    c_bigintXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX ,c_decimal_1_0 ,c_decimal_1_1 ,c_decimal_12_3 ,c_decimal_38_0 ,c_decimal_38_5 ,c_float ,c_float_8 ,c_float_24 ,c_float_25 ,c_float_48 ,c_int ,c_money ,c_numeric_1_0 ,c_numeric_1_1 ,c_numeric_12_3 ,c_numeric_38_0 ,c_numeric_38_5 ,c_real ) VALUES ( @p1 ,@p2 ,@p3 ,@p4 ,@p5 ,@p6 ,@p7 ,@p8 ,@p9 ,@p10 ,@p11 ,@p12 ,@p13 ,@p14 ,@p15 ,@p16 ,@p17 ,@p18 ,@p19 )'
+go
+~~START~~
+int#!#varchar#!#int#!#nvarchar#!#smallint#!#tinyint#!#tinyint#!#int#!#varchar#!#varchar#!#varchar#!#nvarchar#!#int#!#varchar#!#varchar#!#varchar#!#bit#!#bit#!#bit#!#bit#!#bit#!#varchar#!#int#!#int
+1#!#@p1#!#127#!#bigint#!#8#!#19#!#0#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#0#!#0#!#0#!#1#!#0#!#<NULL>#!#38#!#8
+2#!#@p2#!#106#!#decimal(1,0)#!#5#!#1#!#0#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#0#!#0#!#0#!#1#!#0#!#<NULL>#!#106#!#17
+3#!#@p3#!#106#!#decimal(1,1)#!#5#!#1#!#1#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#0#!#0#!#0#!#1#!#0#!#<NULL>#!#106#!#17
+4#!#@p4#!#106#!#decimal(12,3)#!#9#!#12#!#3#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#0#!#0#!#0#!#1#!#0#!#<NULL>#!#106#!#17
+5#!#@p5#!#106#!#decimal(38,0)#!#17#!#38#!#0#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#0#!#0#!#0#!#1#!#0#!#<NULL>#!#106#!#17
+6#!#@p6#!#106#!#decimal(38,5)#!#17#!#38#!#5#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#0#!#0#!#0#!#1#!#0#!#<NULL>#!#106#!#17
+7#!#@p7#!#62#!#float#!#8#!#53#!#0#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#0#!#0#!#0#!#1#!#0#!#<NULL>#!#109#!#8
+8#!#@p8#!#59#!#real#!#4#!#24#!#0#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#0#!#0#!#0#!#1#!#0#!#<NULL>#!#109#!#4
+9#!#@p9#!#59#!#real#!#4#!#24#!#0#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#0#!#0#!#0#!#1#!#0#!#<NULL>#!#109#!#4
+10#!#@p10#!#62#!#float#!#8#!#53#!#0#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#0#!#0#!#0#!#1#!#0#!#<NULL>#!#109#!#8
+11#!#@p11#!#62#!#float#!#8#!#53#!#0#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#0#!#0#!#0#!#1#!#0#!#<NULL>#!#109#!#8
+12#!#@p12#!#56#!#int#!#4#!#10#!#0#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#0#!#0#!#0#!#1#!#0#!#<NULL>#!#38#!#4
+13#!#@p13#!#60#!#money#!#8#!#19#!#4#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#0#!#0#!#0#!#1#!#0#!#<NULL>#!#110#!#8
+14#!#@p14#!#108#!#numeric(1,0)#!#5#!#1#!#0#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#0#!#0#!#0#!#1#!#0#!#<NULL>#!#108#!#17
+15#!#@p15#!#108#!#numeric(1,1)#!#5#!#1#!#1#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#0#!#0#!#0#!#1#!#0#!#<NULL>#!#108#!#17
+16#!#@p16#!#108#!#numeric(12,3)#!#9#!#12#!#3#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#0#!#0#!#0#!#1#!#0#!#<NULL>#!#108#!#17
+17#!#@p17#!#108#!#numeric(38,0)#!#17#!#38#!#0#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#0#!#0#!#0#!#1#!#0#!#<NULL>#!#108#!#17
+18#!#@p18#!#108#!#numeric(38,5)#!#17#!#38#!#5#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#0#!#0#!#0#!#1#!#0#!#<NULL>#!#108#!#17
+19#!#@p19#!#56#!#int#!#4#!#10#!#0#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#0#!#0#!#0#!#1#!#0#!#<NULL>#!#38#!#4
+~~END~~
+
+
 -- cleanup
 DROP TABLE [dbo].[smtableint]
+GO
+DROP TABLE t_numerics_dt
 GO
