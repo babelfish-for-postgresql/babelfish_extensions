@@ -908,10 +908,10 @@ bool is_xact_abort_on_error(PLtsql_execstate *estate)
 
 /* Cases where transaction is no longer committable */
 static
-bool abort_transaction(PLtsql_execstate *estate, ErrorData *edata)
+bool abort_transaction(PLtsql_execstate *estate, ErrorData *edata, uint8_t override_flag)
 {
 	/* Batch aborting errors which also terminate the transaction */
-	if (is_batch_txn_aborting_error(edata->sqlerrcode))
+	if (is_batch_txn_aborting_error(edata->sqlerrcode, override_flag))
 		return true;
 
 	/*
@@ -930,7 +930,7 @@ bool abort_transaction(PLtsql_execstate *estate, ErrorData *edata)
 	{
 		if (is_part_of_pltsql_trycatch_block(estate))
 			return true;
-		if (!ignore_xact_abort_error(edata->sqlerrcode))
+		if (!ignore_xact_abort_error(edata->sqlerrcode, override_flag))
 			return true;
 	}
 
@@ -939,9 +939,9 @@ bool abort_transaction(PLtsql_execstate *estate, ErrorData *edata)
 
 /* If error only terminates current batch */
 static
-bool abort_only_current_batch(PLtsql_execstate *estate, ErrorData *edata)
+bool abort_only_current_batch(PLtsql_execstate *estate, ErrorData *edata, uint8_t override_flag)
 {
-	if (is_current_batch_aborting_error(edata->sqlerrcode) &&
+	if (is_current_batch_aborting_error(edata->sqlerrcode, override_flag) &&
 		is_error_raising_batch(estate))
 		return true;
 	return false;
@@ -949,14 +949,14 @@ bool abort_only_current_batch(PLtsql_execstate *estate, ErrorData *edata)
 
 /* Cases where execution needs to terminate */
 static
-bool abort_execution(PLtsql_execstate *estate, ErrorData *edata, bool *terminate_batch)
+bool abort_execution(PLtsql_execstate *estate, ErrorData *edata, bool *terminate_batch, uint8_t override_flag)
 {
 	/* Exclude ignorable errors */
-	if (!is_ignorable_error(edata->sqlerrcode))
+	if (!is_ignorable_error(edata->sqlerrcode, override_flag))
 		return true;
 
 	/* Current batch aborting errors */
-	if (abort_only_current_batch(estate, edata))
+	if (abort_only_current_batch(estate, edata, override_flag))
 	{
 		*terminate_batch = true;
 		return true;
@@ -974,7 +974,7 @@ bool abort_execution(PLtsql_execstate *estate, ErrorData *edata, bool *terminate
 		return true;
 
 	if (is_xact_abort_on_error(estate) &&
-		!ignore_xact_abort_error(edata->sqlerrcode))
+		!ignore_xact_abort_error(edata->sqlerrcode, override_flag))
 		return true;
 
 	return false;
@@ -985,11 +985,18 @@ bool abort_execution(PLtsql_execstate *estate, ErrorData *edata, bool *terminate
  * like transactions, try/catch, xact_abort
  */
 static
-void handle_error(PLtsql_execstate *estate, ErrorData *edata, SimpleEcontextStackEntry *volatile topEntry, bool *terminate_batch)
+void handle_error(PLtsql_execstate *estate, 
+					PLtsql_stmt *stmt,
+					ErrorData *edata, 
+					SimpleEcontextStackEntry *volatile topEntry, 
+					bool *terminate_batch)
 {
+	/* Determine if we want to override the transactional behaviour. */
+	uint8_t override_flag = override_txn_behaviour(stmt);
+
 	record_error_state(estate);
 	/* Mark transaction for termination */
-	if (IsTransactionBlockActive() && (last_error_mapping_failed || abort_transaction(estate, edata)))
+	if (IsTransactionBlockActive() && (last_error_mapping_failed || abort_transaction(estate, edata, override_flag)))
 	{
 		elog(DEBUG1, "TSQL TXN Mark transaction for rollback error mapping failed : %d", last_error_mapping_failed);
 		AbortCurTransaction = true;
@@ -1002,7 +1009,7 @@ void handle_error(PLtsql_execstate *estate, ErrorData *edata, SimpleEcontextStac
 		pltsql_create_econtext(estate);
 
 	/* In case of errors which terminate execution, let outer layer handle it */
-	if (last_error_mapping_failed || abort_execution(estate, edata, terminate_batch))
+	if (last_error_mapping_failed || abort_execution(estate, edata, terminate_batch, override_flag))
 	{
 		elog(DEBUG1, "TSQL TXN Stop execution error mapping failed : %d current batch status %d", last_error_mapping_failed, *terminate_batch);
 		FreeErrorData(edata);
@@ -1225,7 +1232,7 @@ int dispatch_stmt_handle_error(PLtsql_execstate *estate,
 		if (pltsql_snapshot_portal != NULL)
 			pltsql_snapshot_portal->portalSnapshot = NULL;
 
-		handle_error(estate, edata, topEntry, terminate_batch);
+		handle_error(estate, stmt, edata, topEntry, terminate_batch);
 
 		rc = PLTSQL_RC_OK;
 	}

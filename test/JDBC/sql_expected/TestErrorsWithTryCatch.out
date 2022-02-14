@@ -312,12 +312,8 @@ smallint
 
 ~~START~~
 smallint
--1
+1
 ~~END~~
-
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: Uncommittable transaction is detected at the end of the batch. The transaction is rolled back.)~~
 
 IF @@trancount > 0 ROLLBACK TRAN;
 GO
