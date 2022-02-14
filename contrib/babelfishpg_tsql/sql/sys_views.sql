@@ -881,7 +881,7 @@ select
   , 0 as waittime
   , a.wait_event_type as lastwaittype
   , null::text as waitresource
-  , coalesce(t.database_id, a.datid) as dbid
+  , coalesce(t.database_id, 0)::oid as dbid
   , a.usesysid as uid
   , 0 as cpu
   , 0 as physical_io
@@ -921,7 +921,8 @@ left join pg_catalog.pg_locks         blocking_locks
         AND blocking_locks.objid IS NOT DISTINCT FROM blocked_locks.objid
         AND blocking_locks.objsubid IS NOT DISTINCT FROM blocked_locks.objsubid
         AND blocking_locks.pid != blocked_locks.pid
- left join pg_catalog.pg_stat_activity blocking_activity ON blocking_activity.pid = blocking_locks.pid;
+ left join pg_catalog.pg_stat_activity blocking_activity ON blocking_activity.pid = blocking_locks.pid
+ where a.datname = current_database(); /* current physical database will always be babelfish database */
 GRANT SELECT ON sys.sysprocesses TO PUBLIC;
 
 create or replace view sys.types As
