@@ -1,0 +1,349 @@
+-- tsql
+CREATE DATABASE db1
+GO
+
+USE db1
+GO
+
+CREATE TABLE t1(a int, primary key(a))
+GO
+
+CREATE TABLE t2(a int, b int, c int)
+GO
+
+CREATE TABLE t3(a int, b int, c int)
+GO
+
+CREATE TABLE t4(testcolumn int, tastcolumn int, testcolumn2 int)
+GO
+
+CREATE TABLE MyTable4(MyColumn_a int, MyColumn_b int)
+GO
+
+CREATE TABLE [MyTable5] ([MyColumn_a] int, [MyColumn_b] int)
+GO
+
+
+-- TODO: Create a test case where we create the same table name in another schema and assert that this table is not visible
+-- to the dbo user (cannot do this since table creation in another schema is unsupported)
+-- syntax error: @table_name is required
+EXEC sp_column_privileges
+GO
+~~ERROR (Code: 201)~~
+
+~~ERROR (Message: procedure sp_column_privileges expects parameter "@table_name", which was not supplied.)~~
+
+
+-- psql
+REVOKE SELECT ON dbo.t2 FROM dbo;
+GO
+
+REVOKE UPDATE ON dbo.t2 FROM dbo;
+GO
+
+REVOKE INSERT ON dbo.t3 FROM dbo;
+GO
+
+-- tsql
+EXEC sp_column_privileges @table_name = 't1'
+GO
+~~START~~
+varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar
+db1#!#dbo#!#t1#!#a#!#dbo#!#dbo#!#INSERT#!#YES
+db1#!#dbo#!#t1#!#a#!#dbo#!#dbo#!#REFERENCES#!#YES
+db1#!#dbo#!#t1#!#a#!#dbo#!#dbo#!#SELECT#!#YES
+db1#!#dbo#!#t1#!#a#!#dbo#!#dbo#!#UPDATE#!#YES
+~~END~~
+
+
+EXEC sp_column_privileges @table_name = 't2', @table_qualifier = 'db1', @COLUMN_NAME='c'
+GO
+~~START~~
+varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar
+db1#!#dbo#!#t2#!#c#!#dbo#!#dbo#!#INSERT#!#YES
+db1#!#dbo#!#t2#!#c#!#dbo#!#dbo#!#REFERENCES#!#YES
+~~END~~
+
+
+EXEC sp_column_privileges @table_name = 't3', @table_owner = 'dbo'
+GO
+~~START~~
+varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar
+db1#!#dbo#!#t3#!#a#!#dbo#!#dbo#!#REFERENCES#!#YES
+db1#!#dbo#!#t3#!#a#!#dbo#!#dbo#!#SELECT#!#YES
+db1#!#dbo#!#t3#!#a#!#dbo#!#dbo#!#UPDATE#!#YES
+db1#!#dbo#!#t3#!#b#!#dbo#!#dbo#!#REFERENCES#!#YES
+db1#!#dbo#!#t3#!#b#!#dbo#!#dbo#!#SELECT#!#YES
+db1#!#dbo#!#t3#!#b#!#dbo#!#dbo#!#UPDATE#!#YES
+db1#!#dbo#!#t3#!#c#!#dbo#!#dbo#!#REFERENCES#!#YES
+db1#!#dbo#!#t3#!#c#!#dbo#!#dbo#!#SELECT#!#YES
+db1#!#dbo#!#t3#!#c#!#dbo#!#dbo#!#UPDATE#!#YES
+~~END~~
+
+
+-- unnamed invocation
+EXEC sp_column_privileges 't1', 'dbo', 'db1', 'a'
+GO
+~~START~~
+varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar
+db1#!#dbo#!#t1#!#a#!#dbo#!#dbo#!#INSERT#!#YES
+db1#!#dbo#!#t1#!#a#!#dbo#!#dbo#!#REFERENCES#!#YES
+db1#!#dbo#!#t1#!#a#!#dbo#!#dbo#!#SELECT#!#YES
+db1#!#dbo#!#t1#!#a#!#dbo#!#dbo#!#UPDATE#!#YES
+~~END~~
+
+
+-- psql
+GRANT SELECT (c) ON dbo.t2 TO dbo;
+GO
+
+-- tsql
+-- case-insensitive invocation
+EXEC SP_COLUMN_PRIVILEGES @TABLE_NAME = 't2', @TABLE_OWNER = 'dbo', @TABLE_QUALIFIER = 'db1'
+GO
+~~START~~
+varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar
+db1#!#dbo#!#t2#!#a#!#dbo#!#dbo#!#INSERT#!#YES
+db1#!#dbo#!#t2#!#a#!#dbo#!#dbo#!#REFERENCES#!#YES
+db1#!#dbo#!#t2#!#b#!#dbo#!#dbo#!#INSERT#!#YES
+db1#!#dbo#!#t2#!#b#!#dbo#!#dbo#!#REFERENCES#!#YES
+db1#!#dbo#!#t2#!#c#!#dbo#!#dbo#!#INSERT#!#YES
+db1#!#dbo#!#t2#!#c#!#dbo#!#dbo#!#REFERENCES#!#YES
+db1#!#dbo#!#t2#!#c#!#dbo#!#dbo#!#SELECT#!#YES
+~~END~~
+
+
+-- case-insensitive parameters
+EXEC SP_COLUMN_PRIVILEGES 'T2', 'DBO', 'DB1', 'A'
+GO
+~~START~~
+varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar
+db1#!#dbo#!#t2#!#a#!#dbo#!#dbo#!#INSERT#!#YES
+db1#!#dbo#!#t2#!#a#!#dbo#!#dbo#!#REFERENCES#!#YES
+~~END~~
+
+
+-- [] delimiter invocation test
+EXEC [sp_column_privileges] 't2', 'dbo', 'db1', 'a'
+GO
+~~START~~
+varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar
+db1#!#dbo#!#t2#!#a#!#dbo#!#dbo#!#INSERT#!#YES
+db1#!#dbo#!#t2#!#a#!#dbo#!#dbo#!#REFERENCES#!#YES
+~~END~~
+
+
+EXEC [sys].[sp_column_privileges] 't2', 'dbo', 'db1', 'a'
+GO
+~~START~~
+varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar
+db1#!#dbo#!#t2#!#a#!#dbo#!#dbo#!#INSERT#!#YES
+db1#!#dbo#!#t2#!#a#!#dbo#!#dbo#!#REFERENCES#!#YES
+~~END~~
+
+
+-- mix-cased table tests
+exec sp_column_privileges @table_name = 'mytable4'
+GO
+~~START~~
+varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar
+db1#!#dbo#!#mytable4#!#MyColumn_a#!#dbo#!#dbo#!#INSERT#!#YES
+db1#!#dbo#!#mytable4#!#MyColumn_a#!#dbo#!#dbo#!#REFERENCES#!#YES
+db1#!#dbo#!#mytable4#!#MyColumn_a#!#dbo#!#dbo#!#SELECT#!#YES
+db1#!#dbo#!#mytable4#!#MyColumn_a#!#dbo#!#dbo#!#UPDATE#!#YES
+db1#!#dbo#!#mytable4#!#MyColumn_b#!#dbo#!#dbo#!#INSERT#!#YES
+db1#!#dbo#!#mytable4#!#MyColumn_b#!#dbo#!#dbo#!#REFERENCES#!#YES
+db1#!#dbo#!#mytable4#!#MyColumn_b#!#dbo#!#dbo#!#SELECT#!#YES
+db1#!#dbo#!#mytable4#!#MyColumn_b#!#dbo#!#dbo#!#UPDATE#!#YES
+~~END~~
+
+
+exec sp_column_privileges @table_name = 'MYTABLE4'
+GO
+~~START~~
+varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar
+db1#!#dbo#!#mytable4#!#MyColumn_a#!#dbo#!#dbo#!#INSERT#!#YES
+db1#!#dbo#!#mytable4#!#MyColumn_a#!#dbo#!#dbo#!#REFERENCES#!#YES
+db1#!#dbo#!#mytable4#!#MyColumn_a#!#dbo#!#dbo#!#SELECT#!#YES
+db1#!#dbo#!#mytable4#!#MyColumn_a#!#dbo#!#dbo#!#UPDATE#!#YES
+db1#!#dbo#!#mytable4#!#MyColumn_b#!#dbo#!#dbo#!#INSERT#!#YES
+db1#!#dbo#!#mytable4#!#MyColumn_b#!#dbo#!#dbo#!#REFERENCES#!#YES
+db1#!#dbo#!#mytable4#!#MyColumn_b#!#dbo#!#dbo#!#SELECT#!#YES
+db1#!#dbo#!#mytable4#!#MyColumn_b#!#dbo#!#dbo#!#UPDATE#!#YES
+~~END~~
+
+
+exec sp_column_privileges @table_name = 'mytable5'
+GO
+~~START~~
+varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar
+db1#!#dbo#!#mytable5#!#MyColumn_a#!#dbo#!#dbo#!#INSERT#!#YES
+db1#!#dbo#!#mytable5#!#MyColumn_a#!#dbo#!#dbo#!#REFERENCES#!#YES
+db1#!#dbo#!#mytable5#!#MyColumn_a#!#dbo#!#dbo#!#SELECT#!#YES
+db1#!#dbo#!#mytable5#!#MyColumn_a#!#dbo#!#dbo#!#UPDATE#!#YES
+db1#!#dbo#!#mytable5#!#MyColumn_b#!#dbo#!#dbo#!#INSERT#!#YES
+db1#!#dbo#!#mytable5#!#MyColumn_b#!#dbo#!#dbo#!#REFERENCES#!#YES
+db1#!#dbo#!#mytable5#!#MyColumn_b#!#dbo#!#dbo#!#SELECT#!#YES
+db1#!#dbo#!#mytable5#!#MyColumn_b#!#dbo#!#dbo#!#UPDATE#!#YES
+~~END~~
+
+
+exec sp_column_privileges @table_name = 'MYTABLE5'
+GO
+~~START~~
+varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar
+db1#!#dbo#!#mytable5#!#MyColumn_a#!#dbo#!#dbo#!#INSERT#!#YES
+db1#!#dbo#!#mytable5#!#MyColumn_a#!#dbo#!#dbo#!#REFERENCES#!#YES
+db1#!#dbo#!#mytable5#!#MyColumn_a#!#dbo#!#dbo#!#SELECT#!#YES
+db1#!#dbo#!#mytable5#!#MyColumn_a#!#dbo#!#dbo#!#UPDATE#!#YES
+db1#!#dbo#!#mytable5#!#MyColumn_b#!#dbo#!#dbo#!#INSERT#!#YES
+db1#!#dbo#!#mytable5#!#MyColumn_b#!#dbo#!#dbo#!#REFERENCES#!#YES
+db1#!#dbo#!#mytable5#!#MyColumn_b#!#dbo#!#dbo#!#SELECT#!#YES
+db1#!#dbo#!#mytable5#!#MyColumn_b#!#dbo#!#dbo#!#UPDATE#!#YES
+~~END~~
+
+
+-- Delimiter table tests: NOTE: These produces errors due to BABEL-2883
+exec sp_column_privileges @table_name = [mytable4]
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: column "mytable4" does not exist)~~
+
+
+exec sp_column_privileges @table_name = [MYTABLE4]
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: column "mytable4" does not exist)~~
+
+
+exec sp_column_privileges @table_name = [mytable5]
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: column "mytable5" does not exist)~~
+
+
+exec sp_column_privileges @table_name = [MYTABLE5]
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: column "mytable5" does not exist)~~
+
+
+-- tests wildcard patterns
+EXEC sp_column_privileges @table_name = 't4', @table_owner = 'dbo', @COLUMN_NAME='testcol%'
+GO
+~~START~~
+varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar
+db1#!#dbo#!#t4#!#testcolumn#!#dbo#!#dbo#!#INSERT#!#YES
+db1#!#dbo#!#t4#!#testcolumn#!#dbo#!#dbo#!#REFERENCES#!#YES
+db1#!#dbo#!#t4#!#testcolumn#!#dbo#!#dbo#!#SELECT#!#YES
+db1#!#dbo#!#t4#!#testcolumn#!#dbo#!#dbo#!#UPDATE#!#YES
+db1#!#dbo#!#t4#!#testcolumn2#!#dbo#!#dbo#!#INSERT#!#YES
+db1#!#dbo#!#t4#!#testcolumn2#!#dbo#!#dbo#!#REFERENCES#!#YES
+db1#!#dbo#!#t4#!#testcolumn2#!#dbo#!#dbo#!#SELECT#!#YES
+db1#!#dbo#!#t4#!#testcolumn2#!#dbo#!#dbo#!#UPDATE#!#YES
+~~END~~
+
+
+EXEC sp_column_privileges @table_name = 't4', @table_owner = 'dbo', @COLUMN_NAME='t_stcolumn'
+GO
+~~START~~
+varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar
+db1#!#dbo#!#t4#!#tastcolumn#!#dbo#!#dbo#!#INSERT#!#YES
+db1#!#dbo#!#t4#!#tastcolumn#!#dbo#!#dbo#!#REFERENCES#!#YES
+db1#!#dbo#!#t4#!#tastcolumn#!#dbo#!#dbo#!#SELECT#!#YES
+db1#!#dbo#!#t4#!#tastcolumn#!#dbo#!#dbo#!#UPDATE#!#YES
+db1#!#dbo#!#t4#!#testcolumn#!#dbo#!#dbo#!#INSERT#!#YES
+db1#!#dbo#!#t4#!#testcolumn#!#dbo#!#dbo#!#REFERENCES#!#YES
+db1#!#dbo#!#t4#!#testcolumn#!#dbo#!#dbo#!#SELECT#!#YES
+db1#!#dbo#!#t4#!#testcolumn#!#dbo#!#dbo#!#UPDATE#!#YES
+~~END~~
+
+
+-- NOTE: Incorrect output with [] wildcards, see BABEL-2452
+EXEC sp_column_privileges @table_name = 't4', @table_owner = 'dbo', @COLUMN_NAME='t[ea]stcolumn'
+GO
+~~START~~
+varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar
+~~END~~
+
+
+EXEC sp_column_privileges @table_name = 't4', @table_owner = 'dbo', @COLUMN_NAME='t[^e]stcolumn'
+GO
+~~START~~
+varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar
+~~END~~
+
+
+EXEC sp_column_privileges @table_name = 't4', @table_owner = 'dbo', @COLUMN_NAME='t[a-e]stcolumn'
+GO
+~~START~~
+varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar
+~~END~~
+
+
+-- provided name of database we are not currently in, should return error
+EXEC sp_column_privileges @table_name = 't2', @table_qualifier = 'master', @COLUMN_NAME='c'
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: The database name component of the object qualifier must be the name of the current database.)~~
+
+
+-- only get tables existing within current database context
+USE master
+GO
+
+CREATE TABLE t1(z int)
+GO
+
+USE db1
+GO
+
+EXEC sp_column_privileges 't1', 'dbo', 'db1', 'a'
+GO
+~~START~~
+varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar
+db1#!#dbo#!#t1#!#a#!#dbo#!#dbo#!#INSERT#!#YES
+db1#!#dbo#!#t1#!#a#!#dbo#!#dbo#!#REFERENCES#!#YES
+db1#!#dbo#!#t1#!#a#!#dbo#!#dbo#!#SELECT#!#YES
+db1#!#dbo#!#t1#!#a#!#dbo#!#dbo#!#UPDATE#!#YES
+~~END~~
+
+
+USE master
+GO
+
+DROP TABLE t1
+GO
+
+
+
+USE db1
+-- cleanup
+DROP TABLE t1
+GO
+
+DROP TABLE t2
+GO
+
+DROP TABLE t3
+GO
+
+DROP TABLE t4
+GO
+
+DROP TABLE MyTable4
+GO
+
+DROP TABLE [MyTable5]
+GO
+
+USE master
+GO
+
+DROP DATABASE db1
+GO

@@ -1,0 +1,169 @@
+-- tsql
+CREATE DATABASE db1
+GO
+
+USE db1
+GO
+
+CREATE TABLE t1(a int, primary key(a))
+GO
+
+CREATE TABLE t2(a int, b int, c int)
+GO
+
+CREATE TABLE t3(a int, b int, c int)
+GO
+
+CREATE TABLE t4(testcolumn int, tastcolumn int, testcolumn2 int)
+GO
+
+CREATE TABLE MyTable4(MyColumn_a int, MyColumn_b int)
+GO
+
+CREATE TABLE [MyTable5] ([MyColumn_a] int, [MyColumn_b] int)
+GO
+
+-- TODO: Create a test case where we create the same table name in another schema and assert that this table is not visible
+-- to the dbo user (cannot do this since table creation in another schema is unsupported)
+
+-- syntax error: @table_name is required
+EXEC sp_column_privileges
+GO
+
+-- psql
+REVOKE SELECT ON dbo.t2 FROM dbo;
+GO
+
+REVOKE UPDATE ON dbo.t2 FROM dbo;
+GO
+
+REVOKE INSERT ON dbo.t3 FROM dbo;
+GO
+
+-- tsql
+EXEC sp_column_privileges @table_name = 't1'
+GO
+
+EXEC sp_column_privileges @table_name = 't2', @table_qualifier = 'db1', @COLUMN_NAME='c'
+GO
+
+EXEC sp_column_privileges @table_name = 't3', @table_owner = 'dbo'
+GO
+
+-- unnamed invocation
+EXEC sp_column_privileges 't1', 'dbo', 'db1', 'a'
+GO
+
+-- psql
+GRANT SELECT (c) ON dbo.t2 TO dbo;
+GO
+
+-- tsql
+-- case-insensitive invocation
+EXEC SP_COLUMN_PRIVILEGES @TABLE_NAME = 't2', @TABLE_OWNER = 'dbo', @TABLE_QUALIFIER = 'db1'
+GO
+
+-- case-insensitive parameters
+EXEC SP_COLUMN_PRIVILEGES 'T2', 'DBO', 'DB1', 'A'
+GO
+
+-- [] delimiter invocation test
+EXEC [sp_column_privileges] 't2', 'dbo', 'db1', 'a'
+GO
+
+EXEC [sys].[sp_column_privileges] 't2', 'dbo', 'db1', 'a'
+GO
+
+-- mix-cased table tests
+exec sp_column_privileges @table_name = 'mytable4'
+GO
+
+exec sp_column_privileges @table_name = 'MYTABLE4'
+GO
+
+exec sp_column_privileges @table_name = 'mytable5'
+GO
+
+exec sp_column_privileges @table_name = 'MYTABLE5'
+GO
+
+-- Delimiter table tests: NOTE: These produces errors due to BABEL-2883
+exec sp_column_privileges @table_name = [mytable4]
+GO
+
+exec sp_column_privileges @table_name = [MYTABLE4]
+GO
+
+exec sp_column_privileges @table_name = [mytable5]
+GO
+
+exec sp_column_privileges @table_name = [MYTABLE5]
+GO
+
+-- tests wildcard patterns
+EXEC sp_column_privileges @table_name = 't4', @table_owner = 'dbo', @COLUMN_NAME='testcol%'
+GO
+
+EXEC sp_column_privileges @table_name = 't4', @table_owner = 'dbo', @COLUMN_NAME='t_stcolumn'
+GO
+
+-- NOTE: Incorrect output with [] wildcards, see BABEL-2452
+EXEC sp_column_privileges @table_name = 't4', @table_owner = 'dbo', @COLUMN_NAME='t[ea]stcolumn'
+GO
+
+EXEC sp_column_privileges @table_name = 't4', @table_owner = 'dbo', @COLUMN_NAME='t[^e]stcolumn'
+GO
+
+EXEC sp_column_privileges @table_name = 't4', @table_owner = 'dbo', @COLUMN_NAME='t[a-e]stcolumn'
+GO
+
+-- provided name of database we are not currently in, should return error
+EXEC sp_column_privileges @table_name = 't2', @table_qualifier = 'master', @COLUMN_NAME='c'
+GO
+
+-- only get tables existing within current database context
+USE master
+GO
+
+CREATE TABLE t1(z int)
+GO
+
+USE db1
+GO
+
+EXEC sp_column_privileges 't1', 'dbo', 'db1', 'a'
+GO
+
+USE master
+GO
+
+DROP TABLE t1
+GO
+
+USE db1
+
+-- cleanup
+
+DROP TABLE t1
+GO
+
+DROP TABLE t2
+GO
+
+DROP TABLE t3
+GO
+
+DROP TABLE t4
+GO
+
+DROP TABLE MyTable4
+GO
+
+DROP TABLE [MyTable5]
+GO
+
+USE master
+GO
+
+DROP DATABASE db1
+GO
