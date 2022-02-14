@@ -767,6 +767,8 @@ GO
 SELECT set_config('babelfishpg_tsql.escape_hatch_storage_options', 'ignore', 'false')
 GO
 
+EXEC sp_babelfish_configure 'babelfishpg_tsql.escape_hatch_ignore_dup_key', 'ignore';
+GO
 
 -- escape hatch: escape_hatch_storage_options (especially index option).
 -- 'ignore' is default
@@ -864,6 +866,9 @@ GO
 SELECT set_config('babelfishpg_tsql.escape_hatch_storage_options', 'strict', 'false')
 GO
 
+EXEC sp_babelfish_configure 'babelfishpg_tsql.escape_hatch_ignore_dup_key', 'strict';
+GO
+
 CREATE TABLE t_unsupported_so1(a int, primary key(a) with data_compression=none);
 GO
 
@@ -871,6 +876,9 @@ CREATE TABLE t_unsupported_so2(a int, primary key(a) with pad_index=on);
 GO
 
 CREATE TABLE t_unsupported_so3(a int, primary key(a) with ignore_dup_key=on);
+GO
+
+CREATE TABLE t_unsupported_so3(a int, primary key(a) with ignore_dup_key=off);
 GO
 
 CREATE TABLE t_unsupported_so4(a int, primary key(a) with STATISTICS_NORECOMPUTE=on);
@@ -904,6 +912,9 @@ CREATE TABLE t_unsupported_so12(a int, primary key(a) with (OPTIMIZE_FOR_SEQUENT
 GO
 
 CREATE TABLE t_unsupported_so13(a int, primary key(a) with (MAXDOP=40));
+GO
+
+DROP TABLE t_unsupported_so3
 GO
 
 -- multiple options
