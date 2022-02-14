@@ -1274,6 +1274,11 @@ GO
 DROP TABLE t_unsupported_so3
 GO
 
+CREATE TABLE t_unsupported_so3(a int, primary key(a) with ignore_dup_key);
+GO
+DROP TABLE t_unsupported_so3
+GO
+
 CREATE TABLE t_unsupported_so4(a int, primary key(a) with STATISTICS_NORECOMPUTE=on);
 GO
 DROP TABLE t_unsupported_so4
@@ -1375,6 +1380,13 @@ GO
 
 
 CREATE TABLE t_unsupported_so3(a int, primary key(a) with ignore_dup_key=on);
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: 'IGNORE_DUP_KEY' is not currently supported in Babelfish. please use babelfishpg_tsql.escape_hatch_ignore_dup_key to ignore)~~
+
+
+CREATE TABLE t_unsupported_so3(a int, primary key(a) with ignore_dup_key);
 GO
 ~~ERROR (Code: 33557097)~~
 

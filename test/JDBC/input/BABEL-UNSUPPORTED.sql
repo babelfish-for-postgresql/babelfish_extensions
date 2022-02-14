@@ -788,6 +788,11 @@ GO
 DROP TABLE t_unsupported_so3
 GO
 
+CREATE TABLE t_unsupported_so3(a int, primary key(a) with ignore_dup_key);
+GO
+DROP TABLE t_unsupported_so3
+GO
+
 CREATE TABLE t_unsupported_so4(a int, primary key(a) with STATISTICS_NORECOMPUTE=on);
 GO
 DROP TABLE t_unsupported_so4
@@ -876,6 +881,9 @@ CREATE TABLE t_unsupported_so2(a int, primary key(a) with pad_index=on);
 GO
 
 CREATE TABLE t_unsupported_so3(a int, primary key(a) with ignore_dup_key=on);
+GO
+
+CREATE TABLE t_unsupported_so3(a int, primary key(a) with ignore_dup_key);
 GO
 
 CREATE TABLE t_unsupported_so3(a int, primary key(a) with ignore_dup_key=off);
