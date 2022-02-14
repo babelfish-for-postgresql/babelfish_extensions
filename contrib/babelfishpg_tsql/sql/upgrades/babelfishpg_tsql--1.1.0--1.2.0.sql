@@ -2006,7 +2006,7 @@ create or replace view sys.dm_exec_connections
    , 'TCP'::sys.nvarchar(40) as net_transport
    , 'TSQL'::sys.nvarchar(40) as protocol_type
    , d.protocol_version as protocol_version
-   , a.client_port as endpoint_id
+   , 4 as endpoint_id
    , d.encrypyt_option::sys.nvarchar(40) as encrypt_option
    , null::sys.nvarchar(40) as auth_scheme
    , null::smallint as node_affinity
