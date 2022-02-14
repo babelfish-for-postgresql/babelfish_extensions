@@ -565,6 +565,7 @@ sp_describe_undeclared_parameters_internal(PG_FUNCTION_ARGS)
 		"WHEN T2.name = \'time\' THEN 41 "
 		"WHEN T2.name = \'uniqueidentifier\' THEN 36 "
 		"WHEN T2.name = \'varbinary\' THEN 165 "
+		"WHEN T2.name = \'varchar\' THEN 167 "
 		"ELSE C.system_type_id "
 	"END " /* AS "suggested_tds_type_id" */
 	", CASE "
