@@ -56,6 +56,7 @@ declare_escape_hatch(escape_hatch_table_hints);
 declare_escape_hatch(escape_hatch_query_hints);
 declare_escape_hatch(escape_hatch_join_hints);
 declare_escape_hatch(escape_hatch_session_settings);
+declare_escape_hatch(escape_hatch_ignore_dup_key);
 
 extern std::string getFullText(antlr4::ParserRuleContext *context);
 extern std::string stripQuoteFromId(TSqlParser::IdContext *context);
@@ -578,7 +579,13 @@ antlrcpp::Any TsqlUnsupportedFeatureHandlerImpl::visitIndex_option(TSqlParser::I
 		else if (pg_strcasecmp(id_str.c_str(), "sort_in_tempdb") == 0)
 			handle(INSTR_UNSUPPORTED_TSQL_INDEX_OPTION_MISC, "SORT_IN_TEMPDB", &st_escape_hatch_storage_options, getLineAndPos(ctx->id()[0]));
 		else if (pg_strcasecmp(id_str.c_str(), "ignore_dup_key") == 0)
-			handle(INSTR_UNSUPPORTED_TSQL_INDEX_OPTION_MISC, "IGNORE_DUP_KEY", &st_escape_hatch_storage_options, getLineAndPos(ctx->id()[0]));
+              {
+                      if (pg_strcasecmp(getFullText(ctx->on_off()).c_str(), "on") == 0)
+			        handle(INSTR_UNSUPPORTED_TSQL_INDEX_OPTION_MISC, "IGNORE_DUP_KEY", &st_escape_hatch_ignore_dup_key, getLineAndPos(ctx->id()[0]));
+                      /* IGNORE_DUP_KEY=OFF needs to be silently ignored so we directly return; otherwise an unknown index option error will be thrown. */
+                      else if (pg_strcasecmp(getFullText(ctx->on_off()).c_str(), "off") == 0)
+                              return visitChildren(ctx);
+              }
 		else if (pg_strcasecmp(id_str.c_str(), "statistics_norecompute") == 0)
 			handle(INSTR_UNSUPPORTED_TSQL_INDEX_OPTION_MISC, "STATISTICS_NORECOMPUTE", &st_escape_hatch_storage_options, getLineAndPos(ctx->id()[0]));
 		else if (pg_strcasecmp(id_str.c_str(), "statistics_incremental") == 0)

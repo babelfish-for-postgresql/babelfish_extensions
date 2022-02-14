@@ -1253,6 +1253,8 @@ ignore
 ~~END~~
 
 
+EXEC sp_babelfish_configure 'babelfishpg_tsql.escape_hatch_ignore_dup_key', 'ignore';
+GO
 
 
 -- escape hatch: escape_hatch_storage_options (especially index option).
@@ -1355,6 +1357,9 @@ strict
 ~~END~~
 
 
+EXEC sp_babelfish_configure 'babelfishpg_tsql.escape_hatch_ignore_dup_key', 'strict';
+GO
+
 CREATE TABLE t_unsupported_so1(a int, primary key(a) with data_compression=none);
 GO
 ~~ERROR (Code: 33557097)~~
@@ -1373,8 +1378,11 @@ CREATE TABLE t_unsupported_so3(a int, primary key(a) with ignore_dup_key=on);
 GO
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: 'IGNORE_DUP_KEY' is not currently supported in Babelfish. please use babelfishpg_tsql.escape_hatch_storage_options to ignore)~~
+~~ERROR (Message: 'IGNORE_DUP_KEY' is not currently supported in Babelfish. please use babelfishpg_tsql.escape_hatch_ignore_dup_key to ignore)~~
 
+
+CREATE TABLE t_unsupported_so3(a int, primary key(a) with ignore_dup_key=off);
+GO
 
 CREATE TABLE t_unsupported_so4(a int, primary key(a) with STATISTICS_NORECOMPUTE=on);
 GO
@@ -1452,6 +1460,9 @@ GO
 
 ~~ERROR (Message: 'MAXDOP' is not currently supported in Babelfish. please use babelfishpg_tsql.escape_hatch_storage_options to ignore)~~
 
+
+DROP TABLE t_unsupported_so3
+GO
 
 -- multiple options
 CREATE TABLE t_unsupported_so14(a int, primary key(a) with data_compression=none, fillfactor=50);
@@ -1930,6 +1941,7 @@ babelfishpg_tsql.escape_hatch_constraint_name_for_default#!#ignore#!#escape hatc
 babelfishpg_tsql.escape_hatch_database_misc_options#!#ignore#!#escape hatch for misc options in CREATE/ALTER DATABASE
 babelfishpg_tsql.escape_hatch_for_replication#!#strict#!#escape hatch for (NOT) FOR REPLICATION option
 babelfishpg_tsql.escape_hatch_fulltext#!#strict#!#escape hatch for fulltext
+babelfishpg_tsql.escape_hatch_ignore_dup_key#!#strict#!#escape hatch for ignore_dup_key=on option in CREATE/ALTER TABLE/INDEX
 babelfishpg_tsql.escape_hatch_index_clustering#!#ignore#!#escape hatch for CLUSTERED option in CREATE INDEX
 babelfishpg_tsql.escape_hatch_index_columnstore#!#strict#!#escape hatch for COLUMNSTORE option in CREATE INDEX
 babelfishpg_tsql.escape_hatch_join_hints#!#ignore#!#escape hatch for join hints
@@ -1982,6 +1994,7 @@ babelfishpg_tsql.escape_hatch_constraint_name_for_default#!#ignore#!#escape hatc
 babelfishpg_tsql.escape_hatch_database_misc_options#!#ignore#!#escape hatch for misc options in CREATE/ALTER DATABASE
 babelfishpg_tsql.escape_hatch_for_replication#!#strict#!#escape hatch for (NOT) FOR REPLICATION option
 babelfishpg_tsql.escape_hatch_fulltext#!#strict#!#escape hatch for fulltext
+babelfishpg_tsql.escape_hatch_ignore_dup_key#!#strict#!#escape hatch for ignore_dup_key=on option in CREATE/ALTER TABLE/INDEX
 babelfishpg_tsql.escape_hatch_index_clustering#!#ignore#!#escape hatch for CLUSTERED option in CREATE INDEX
 babelfishpg_tsql.escape_hatch_index_columnstore#!#strict#!#escape hatch for COLUMNSTORE option in CREATE INDEX
 babelfishpg_tsql.escape_hatch_join_hints#!#ignore#!#escape hatch for join hints
@@ -2015,6 +2028,7 @@ babelfishpg_tsql.escape_hatch_constraint_name_for_default#!#ignore#!#escape hatc
 babelfishpg_tsql.escape_hatch_database_misc_options#!#ignore#!#escape hatch for misc options in CREATE/ALTER DATABASE
 babelfishpg_tsql.escape_hatch_for_replication#!#strict#!#escape hatch for (NOT) FOR REPLICATION option
 babelfishpg_tsql.escape_hatch_fulltext#!#strict#!#escape hatch for fulltext
+babelfishpg_tsql.escape_hatch_ignore_dup_key#!#strict#!#escape hatch for ignore_dup_key=on option in CREATE/ALTER TABLE/INDEX
 babelfishpg_tsql.escape_hatch_index_clustering#!#ignore#!#escape hatch for CLUSTERED option in CREATE INDEX
 babelfishpg_tsql.escape_hatch_index_columnstore#!#strict#!#escape hatch for COLUMNSTORE option in CREATE INDEX
 babelfishpg_tsql.escape_hatch_join_hints#!#ignore#!#escape hatch for join hints
