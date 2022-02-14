@@ -610,6 +610,9 @@ pltsql_add_ctid_self_join_cond_between_target_and_from_clause(Query *query)
 		if (rte->relid != tt->relid)
 			continue;
 
+		if (rte->enrname && (strcmp(rte->enrname, "inserted") == 0 || strcmp(rte->enrname, "deleted") == 0))
+			continue;
+
 		if (query->returningList)
 		{
 			/* Exclude tables having alias "inserted" or "deleted" if OUTPUT-clause exists */
