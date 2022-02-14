@@ -2026,5 +2026,57 @@ create or replace view sys.dm_exec_connections
  RIGHT JOIN sys.tsql_stat_get_activity('connections') AS d ON (a.pid = d.procid);
  GRANT SELECT ON sys.dm_exec_connections TO PUBLIC;
 
+create or replace view sys.sysprocesses as
+select
+  a.pid as spid
+  , null::integer as kpid
+  , coalesce(blocking_activity.pid, 0) as blocked
+  , null::bytea as waittype
+  , 0 as waittime
+  , a.wait_event_type as lastwaittype
+  , null::text as waitresource
+  , coalesce(t.database_id, a.datid) as dbid
+  , a.usesysid as uid
+  , 0 as cpu
+  , 0 as physical_io
+  , 0 as memusage
+  , a.backend_start as login_time
+  , a.query_start as last_batch
+  , 0 as ecid
+  , 0 as open_tran
+  , a.state as status
+  , null::bytea as sid
+  , a.client_hostname as hostname
+  , a.application_name as program_name
+  , null::varchar(10) as hostprocess
+  , a.query as cmd
+  , null::varchar(128) as nt_domain
+  , null::varchar(128) as nt_username
+  , null::varchar(12) as net_address
+  , null::varchar(12) as net_library
+  , a.usename as loginname
+  , null::bytea as context_info
+  , null::bytea as sql_handle
+  , 0 as stmt_start
+  , 0 as stmt_end
+  , 0 as request_id
+from pg_stat_activity a
+left join sys.tsql_stat_get_activity('sessions') as t on a.pid = t.procid
+left join pg_catalog.pg_locks as blocked_locks on a.pid = blocked_locks.pid
+left join pg_catalog.pg_locks         blocking_locks
+        ON blocking_locks.locktype = blocked_locks.locktype
+        AND blocking_locks.DATABASE IS NOT DISTINCT FROM blocked_locks.DATABASE
+        AND blocking_locks.relation IS NOT DISTINCT FROM blocked_locks.relation
+        AND blocking_locks.page IS NOT DISTINCT FROM blocked_locks.page
+        AND blocking_locks.tuple IS NOT DISTINCT FROM blocked_locks.tuple
+        AND blocking_locks.virtualxid IS NOT DISTINCT FROM blocked_locks.virtualxid
+        AND blocking_locks.transactionid IS NOT DISTINCT FROM blocked_locks.transactionid
+        AND blocking_locks.classid IS NOT DISTINCT FROM blocked_locks.classid
+        AND blocking_locks.objid IS NOT DISTINCT FROM blocked_locks.objid
+        AND blocking_locks.objsubid IS NOT DISTINCT FROM blocked_locks.objsubid
+        AND blocking_locks.pid != blocked_locks.pid
+ left join pg_catalog.pg_stat_activity blocking_activity ON blocking_activity.pid = blocking_locks.pid;
+GRANT SELECT ON sys.sysprocesses TO PUBLIC;
+
 -- Reset search_path to not affect any subsequent scripts
 SELECT set_config('search_path', trim(leading 'sys, ' from current_setting('search_path')), false);

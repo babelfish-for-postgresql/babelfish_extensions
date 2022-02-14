@@ -881,7 +881,7 @@ select
   , 0 as waittime
   , a.wait_event_type as lastwaittype
   , null::text as waitresource
-  , a.datid as dbid
+  , coalesce(t.database_id, a.datid) as dbid
   , a.usesysid as uid
   , 0 as cpu
   , 0 as physical_io
@@ -907,6 +907,7 @@ select
   , 0 as stmt_end
   , 0 as request_id
 from pg_stat_activity a
+left join sys.tsql_stat_get_activity('sessions') as t on a.pid = t.procid
 left join pg_catalog.pg_locks as blocked_locks on a.pid = blocked_locks.pid
 left join pg_catalog.pg_locks         blocking_locks
         ON blocking_locks.locktype = blocked_locks.locktype
