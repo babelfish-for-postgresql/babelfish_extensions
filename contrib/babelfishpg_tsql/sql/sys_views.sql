@@ -40,6 +40,7 @@ select
 from pg_class t inner join sys.schemas sch on t.relnamespace = sch.schema_id
 where t.relpersistence in ('p', 'u', 't')
 and t.relkind = 'r'
+and not sys.is_table_type(t.oid)
 and has_schema_privilege(sch.schema_id, 'USAGE')
 and has_table_privilege(t.oid, 'SELECT,INSERT,UPDATE,DELETE,TRUNCATE,TRIGGER');
 GRANT SELECT ON sys.tables TO PUBLIC;
@@ -995,31 +996,51 @@ select cast(t.typname as text) as name
   , t.oid as user_type_id
   , s.oid as schema_id
   , null::integer as principal_id
-  , sys.tsql_type_max_length_helper(tsql_base_type_name, t.typlen, t.typtypmod) as max_length
-  , cast(sys.tsql_type_precision_helper(tsql_base_type_name, t.typtypmod) as int) as precision
-  , cast(sys.tsql_type_scale_helper(tsql_base_type_name, t.typtypmod, false) as int) as scale
+  , case when is_tbl_type then -1::smallint else sys.tsql_type_max_length_helper(tsql_base_type_name, t.typlen, t.typtypmod) end as max_length
+  , case when is_tbl_type then 0::smallint else cast(sys.tsql_type_precision_helper(tsql_base_type_name, t.typtypmod) as int) end as precision
+  , case when is_tbl_type then 0::smallint else cast(sys.tsql_type_scale_helper(tsql_base_type_name, t.typtypmod, false) as int) end as scale
   , CASE c.collname
     WHEN 'default' THEN cast(current_setting('babelfishpg_tsql.server_collation_name') as name)
     ELSE  c.collname 
     END as collation_name
-  , case when typnotnull then 0 else 1 end as is_nullable
+  , case when is_tbl_type then 0
+         else case when typnotnull then 0 else 1 end
+    end
+    as is_nullable
   -- CREATE TYPE ... FROM is implemented as CREATE DOMAIN in babel
   , 1 as is_user_defined
   , 0 as is_assembly_type
   , 0 as default_object_id
   , 0 as rule_object_id
-  , 0 as is_table_type
+  , case when is_tbl_type then 1 else 0 end as is_table_type
 from pg_type t
 inner join pg_namespace s on s.oid = t.typnamespace
 left join pg_collation c on c.oid = t.typcollation
 , sys.translate_pg_type_to_tsql(t.oid) AS tsql_type_name
 , sys.translate_pg_type_to_tsql(t.typbasetype) AS tsql_base_type_name
+, sys.is_table_type(t.typrelid) as is_tbl_type
 -- we want to show details of user defined datatypes created under babelfish database
 where tsql_type_name IS NULL
 and pg_type_is_visible(t.oid)
 and s.nspname <> 'pg_catalog' AND s.nspname <> 'sys'
-and t.typtype = 'd' ;
+and
+  (
+    -- show all user defined datatypes created under babelfish database except table types
+    t.typtype = 'd'
+    or
+    -- only for table types
+    sys.is_table_type(t.typrelid)
+  );
 GRANT SELECT ON sys.types TO PUBLIC;
+
+create or replace view sys.table_types as
+select st.*
+  , pt.typrelid::int as type_table_object_id
+  , 0::sys.bit as is_memory_optimized -- return 0 until we support in-memory tables
+from sys.types st
+inner join pg_catalog.pg_type pt on st.user_type_id = pt.oid
+where is_table_type = 1;
+GRANT SELECT ON sys.table_types TO PUBLIC;
 
 create or replace view sys.default_constraints
 AS
@@ -1195,7 +1216,22 @@ select
 from pg_class p
 inner join sys.schemas s on s.schema_id = p.relnamespace
 and p.relkind = 'S'
-and has_schema_privilege(s.schema_id, 'USAGE');
+and has_schema_privilege(s.schema_id, 'USAGE')
+union all
+select
+    ('TT_' || tt.name || '_' || tt.type_table_object_id)::name as name
+  , tt.type_table_object_id as object_id
+  , tt.principal_id as principal_id
+  , tt.schema_id as schema_id
+  , 0 as parent_object_id
+  , 'TT'::varchar(2) as type
+  , 'TABLE_TYPE'::varchar(60) as type_desc
+  , null::timestamp as create_date
+  , null::timestamp as modify_date
+  , 1 as is_ms_shipped
+  , 0 as is_published
+  , 0 as is_schema_published
+from sys.table_types tt;
 GRANT SELECT ON sys.objects TO PUBLIC;
 
 create or replace view sys.sysobjects as
@@ -1403,7 +1439,23 @@ from pg_class p
 inner join pg_namespace s on s.oid = p.relnamespace
 where p.relkind = 'S'
 and (s.oid in (select schema_id from sys.schemas) or s.nspname = 'sys')
-and has_schema_privilege(s.oid, 'USAGE');
+and has_schema_privilege(s.oid, 'USAGE')
+union all
+-- details of user defined table types
+select
+    ('TT_' || tt.name || '_' || tt.type_table_object_id)::name as name
+  , tt.type_table_object_id as object_id
+  , tt.principal_id as principal_id
+  , tt.schema_id as schema_id
+  , 0 as parent_object_id
+  , 'TT'::varchar(2) as type
+  , 'TABLE_TYPE'::varchar(60) as type_desc
+  , null::timestamp as create_date
+  , null::timestamp as modify_date
+  , 1 as is_ms_shipped
+  , 0 as is_published
+  , 0 as is_schema_published
+from sys.table_types tt;
 GRANT SELECT ON sys.all_objects TO PUBLIC;
 
 create or replace view sys.system_objects as
