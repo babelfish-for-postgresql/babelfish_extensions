@@ -742,11 +742,23 @@ antlrcpp::Any TsqlUnsupportedFeatureHandlerImpl::visitCreate_index(TSqlParser::C
 	{
 		for (auto option : ctx->with_index_options()->index_option_list()->index_option())
 		{
-			if (!option->EQUAL()) // backend only supports index option formed like <storage_parameter>=<value>
-			{
-				std::string option_name = (!option->id().empty() ? getFullText(option->id()[0]) : std::string("unknown index option"));
+                        std::string option_name = (!option->id().empty() ? getFullText(option->id()[0]) : std::string("unknown index option"));
+
+                        /* backend only supports index option formed like <storage_parameter>=<value>
+                         * in case of IGNORE_DUP_KEY, we also need to support index
+                         * option like <storage_parameter>. <value> is optional.
+                         */
+                        if (pg_strcasecmp(option_name.c_str(), "ignore_dup_key") == 0)
+                        {
+                            // IGNORE_DUP_KEY=OFF needs to be silently ignored so we directly return; otherwise an unknown index option error will be thrown.
+                            if (pg_strcasecmp(getFullText(option->on_off()).c_str(), "off") == 0)
+                                break;
+                            else
+                                handle(INSTR_UNSUPPORTED_TSQL_INDEX_OPTION_MISC, "IGNORE_DUP_KEY", &st_escape_hatch_ignore_dup_key, getLineAndPos(option));
+                        }
+
+                        else if (!option->EQUAL()) // index option formed like <storage_parameter>=<value>
 				handle(INSTR_UNSUPPORTED_TSQL_INDEX_OPTION_UNKNOWN, option_name.c_str(), getLineAndPos(option));
-			}
 		}
 	}
 
