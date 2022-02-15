@@ -1234,6 +1234,31 @@ SendColInfoToken(int natts, bool sendRowStat)
 	pfree(buf.data);
 }
 
+static
+int TdsGetGenericTypmod(Node *expr)
+{
+	FuncExpr *func;
+	Oid     func_oid = InvalidOid;
+	int rettypmod = -1;
+
+	if (!expr)
+		return rettypmod;
+	func = (FuncExpr *) expr;
+
+	/*
+	 * Look up the return type typmod from a persistent
+	 * store using function oid.
+	 */
+	func_oid = func->funcid;
+	Assert(func_oid != InvalidOid);
+
+	if (func->funcresulttype != VOIDOID)
+		rettypmod = pltsql_plugin_handler_ptr->pltsql_get_generic_typmod(func_oid,
+				func->args == NIL ? 0 : func->args->length, func->funcresulttype);
+
+	return rettypmod;
+}
+
 /*
  * PrepareRowDescription - prepare the information needed to construct COLMETADATA
  * token, TABNAME token and COLINFO token.
@@ -1390,12 +1415,18 @@ PrepareRowDescription(TupleDesc typeinfo, List *targetlist, int16 *formats,
 					SetColMetadataForFixedType(col, TDS_TYPE_FLOAT, TDS_MAXLEN_FLOAT8);
 				break;
 			case TDS_SEND_CHAR:
+				if (atttypmod == -1 && tle != NULL)
+					atttypmod = TdsGetGenericTypmod((Node *)tle->expr);
+				
 				SetColMetadataForCharTypeHelper(col, TDS_TYPE_CHAR,
 												att->attcollation, (atttypmod - 4));
 				break;
 			case TDS_SEND_NCHAR:
+				if (atttypmod == -1 && tle != NULL)
+					atttypmod = TdsGetGenericTypmod((Node *)tle->expr);
+
 				SetColMetadataForCharTypeHelper(col, TDS_TYPE_NCHAR,
-												att->attcollation, (atttypmod-4) * 2);
+												att->attcollation, (atttypmod - 4) * 2);
 				break;
 			case TDS_SEND_VARCHAR:
 				SetColMetadataForCharTypeHelper(col, TDS_TYPE_VARCHAR,
