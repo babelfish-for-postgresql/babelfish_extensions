@@ -1284,3 +1284,53 @@ END;
 $$
 LANGUAGE 'pltsql';
 GRANT EXECUTE ON PROCEDURE sys.sp_column_privileges TO PUBLIC;
+
+CREATE OR REPLACE VIEW sys.sp_table_privileges_view AS
+SELECT DISTINCT
+CAST(t2.dbname AS sys.sysname) AS TABLE_QUALIFIER,
+CAST(s1.name AS sys.sysname) AS TABLE_OWNER,
+CAST(t1.relname AS sys.sysname) AS TABLE_NAME,
+CAST((select orig_name from sys.babelfish_namespace_ext where dbid = sys.db_id() and nspname = t4.grantor) AS sys.sysname) AS GRANTOR,
+CAST((select orig_name from sys.babelfish_namespace_ext where dbid = sys.db_id() and nspname = t4.grantee) AS sys.sysname) AS GRANTEE,
+CAST(t4.privilege_type AS sys.sysname) AS PRIVILEGE,
+CAST(t4.is_grantable AS sys.sysname) AS IS_GRANTABLE
+FROM pg_catalog.pg_class t1 
+	JOIN sys.pg_namespace_ext t2 ON t1.relnamespace = t2.oid
+	JOIN sys.schemas s1 ON s1.schema_id = t1.relnamespace
+	JOIN information_schema.table_privileges t4 ON t1.relname = t4.table_name
+WHERE t4.privilege_type NOT IN ('TRIGGER', 'TRUNCATE');
+GRANT SELECT on sys.sp_table_privileges_view TO PUBLIC;
+
+CREATE OR REPLACE PROCEDURE sys.sp_table_privileges(
+	"@table_name" sys.nvarchar(384),
+	"@table_owner" sys.nvarchar(384) = '',
+	"@table_qualifier" sys.sysname = '',
+	"@fusepattern" sys.bit = 1
+)
+AS $$
+BEGIN
+	
+	IF (@table_qualifier != '') AND (LOWER(@table_qualifier) != LOWER(sys.db_name()))
+	BEGIN
+		THROW 33557097, N'The database name component of the object qualifier must be the name of the current database.', 1;
+	END
+	
+	IF @fusepattern = 1
+	BEGIN
+		SELECT * FROM sys.sp_table_privileges_view
+		WHERE LOWER(TABLE_NAME) LIKE LOWER(@table_name)
+			AND ((SELECT COALESCE(@table_owner,'')) = '' OR LOWER(TABLE_OWNER) LIKE LOWER(@table_owner))
+		ORDER BY table_qualifier, table_owner, table_name, privilege;
+	END
+	ELSE 
+	BEGIN
+		SELECT * FROM sys.sp_table_privileges_view
+		WHERE LOWER(TABLE_NAME) = LOWER(@table_name)
+			AND ((SELECT COALESCE(@table_owner,'')) = '' OR LOWER(TABLE_OWNER) = LOWER(@table_owner))
+		ORDER BY table_qualifier, table_owner, table_name, privilege;
+	END
+	
+END; 
+$$
+LANGUAGE 'pltsql';
+GRANT EXECUTE ON PROCEDURE sys.sp_table_privileges TO PUBLIC;

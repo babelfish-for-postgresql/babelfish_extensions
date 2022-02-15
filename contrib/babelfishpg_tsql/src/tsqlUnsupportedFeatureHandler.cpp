@@ -1384,7 +1384,6 @@ const char *unsupported_sp_procedures[] = {
 	"sp_special_columns",
 	"sp_sproc_columns",
 	"sp_stored_procedures",
-	"sp_table_privileges",
 
 	/* Cursor */
 	"sp_describe_cursor_columns",
