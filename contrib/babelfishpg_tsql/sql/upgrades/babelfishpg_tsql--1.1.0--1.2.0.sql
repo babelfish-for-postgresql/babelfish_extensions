@@ -2772,7 +2772,7 @@ CREATE OR REPLACE VIEW sys.sp_columns_100_view AS
   CAST(t5.data_type AS smallint) AS DATA_TYPE,
   CAST(coalesce(tsql_type_name, t.typname) AS sys.sysname) AS TYPE_NAME,
 
-  CASE WHEN t4."DATA_TYPE" = 'xml' THEN 0::INT
+  CASE WHEN t4."CHARACTER_MAXIMUM_LENGTH" = -1 THEN 0::INT
     WHEN a.atttypmod != -1
     THEN
     CAST(coalesce(t4."NUMERIC_PRECISION", t4."CHARACTER_MAXIMUM_LENGTH", sys.tsql_type_precision_helper(t4."DATA_TYPE", a.atttypmod)) AS INT)
@@ -2830,12 +2830,12 @@ CREATE OR REPLACE VIEW sys.sp_columns_100_view AS
      JOIN sys.pg_namespace_ext t2 ON t1.relnamespace = t2.oid
      JOIN pg_catalog.pg_roles t3 ON t1.relowner = t3.oid
      LEFT OUTER JOIN sys.babelfish_namespace_ext ext on t2.nspname = ext.nspname
-     JOIN information_schema_tsql.columns t4 ON t1.relname = t4."TABLE_NAME"
+     JOIN information_schema_tsql.columns t4 ON (t1.relname = t4."TABLE_NAME" AND ext.orig_name = t4."TABLE_SCHEMA")
      LEFT JOIN pg_attribute a on a.attrelid = t1.oid AND a.attname = t4."COLUMN_NAME"
      LEFT JOIN pg_type t ON t.oid = a.atttypid
      LEFT JOIN sys.columns t6 ON
      (
-      t4."TABLE_NAME" = sys.OBJECT_NAME(t6.object_id::int) AND
+      t1.oid = t6.object_id AND
       t4."ORDINAL_POSITION" = t6.column_id
      )
      , sys.translate_pg_type_to_tsql(a.atttypid) AS tsql_type_name
