@@ -72,12 +72,12 @@ CREATE OR REPLACE FUNCTION information_schema_tsql._pgtsql_char_octet_length(typ
 $$SELECT
 	CASE WHEN type IN ('char', 'varchar', 'binary', 'varbinary')
 		THEN CASE WHEN typmod = -1 /* default typmod */
-			THEN CAST(2147483646 AS integer) /* 2^30 */
+			THEN -1
 			ELSE typmod - 4
 			END
 		WHEN type IN ('nchar', 'nvarchar')
 		THEN CASE WHEN typmod = -1 /* default typmod */
-			THEN CAST(2147483646 AS integer) /* 2^30 */
+			THEN -1
 			ELSE (typmod - 4) * 2
 			END
 		WHEN type IN ('text', 'image')
