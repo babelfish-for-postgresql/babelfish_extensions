@@ -1,3 +1,4 @@
+-- tsql
 create type tt_type as table(tt_type_a int, tt_type_b char);
 GO
 
@@ -63,4 +64,30 @@ int#!#int#!#text#!#text#!#datetime#!#datetime#!#int#!#int#!#int
 
 
 drop type tt_type;
+GO
+
+-- psql
+CREATE TYPE master_dbo.comp_type AS (name text,sid integer);
+GO
+
+-- tsql
+-- above composite type should not be visible in sys.table_types and it should return is_table_type(oid) as false
+select count(*) from sys.table_types where name='comp_type';
+GO
+~~START~~
+int
+0
+~~END~~
+
+
+select sys.is_table_type(typrelid) from pg_type where typname='comp_type';
+GO
+~~START~~
+bit
+0
+~~END~~
+
+
+-- psql
+DROP TYPE master_dbo.comp_type
 GO

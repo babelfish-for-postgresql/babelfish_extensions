@@ -1961,6 +1961,7 @@ SELECT
     INNER JOIN pg_catalog.pg_depend dep
     ON pt.typrelid = dep.objid
     join sys.schemas sch on pt.typnamespace = sch.schema_id
-    WHERE pt.typtype = 'c' AND dep.deptype = 'i' AND pt.typrelid = object_id);
+    JOIN pg_catalog.pg_class pc ON pc.oid = dep.objid
+    WHERE pt.typtype = 'c' AND dep.deptype = 'i' AND pt.typrelid = object_id AND pc.relkind = 'r');
 $BODY$
 LANGUAGE SQL VOLATILE STRICT;
