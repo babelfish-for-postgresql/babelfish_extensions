@@ -17,10 +17,6 @@ begin
 select * from t_405_insert1;
 end
 go
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: 'Instead of Trigger' is not currently supported in Babelfish)~~
-
 
 create trigger tr2 on t_405_insert2 instead of insert
 as
@@ -30,57 +26,46 @@ end
 go
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: 'Instead of Trigger' is not currently supported in Babelfish)~~
+~~ERROR (Message: cannot create trigger "tr2" for relation "t_405_insert2" because an INSTEAD OF INSERT trigger already exists on this object.)~~
 
 
 insert into t_405_insert2 values(2);
 go
-~~ROW COUNT: 1~~
+~~START~~
+int
+1
+1
+1
+1
+~~END~~
 
 
 select * from t_405_insert2;
 go
 ~~START~~
 int
-2
 ~~END~~
 
 
 drop trigger tr1;
 go
-~~ERROR (Code: 3701)~~
-
-~~ERROR (Message: trigger "tr1" does not exist)~~
-
 
 create trigger tr1 on t_405_insert2 instead of insert
 as
 begin
 end
 go
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: 'Instead of Trigger' is not currently supported in Babelfish)~~
-
 
 insert into t_405_insert2 values(2);
 select * from t_405_insert2;
 go
-~~ROW COUNT: 1~~
-
 ~~START~~
 int
-2
-2
 ~~END~~
 
 
 drop trigger tr1;
 go
-~~ERROR (Code: 3701)~~
-
-~~ERROR (Message: trigger "tr1" does not exist)~~
-
 
 insert into t_405_insert2 values(2);
 select * from t_405_insert2;
@@ -89,8 +74,6 @@ go
 
 ~~START~~
 int
-2
-2
 2
 ~~END~~
 
@@ -132,10 +115,6 @@ begin
 select '1';
 end
 go
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: 'Instead of Trigger' is not currently supported in Babelfish)~~
-
 
 delete from t_405_delete2 where 1=1;
 go
@@ -184,11 +163,13 @@ go
 insert into t_405_delete2 values(2);
 select * from t_405_delete2;
 go
-~~ROW COUNT: 1~~
+~~START~~
+varchar
+1
+~~END~~
 
 ~~START~~
 int
-2
 ~~END~~
 
 
@@ -314,10 +295,6 @@ begin
 select * from t_405_insert1
 end;
 go
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: 'Instead of Trigger' is not currently supported in Babelfish)~~
-
 
 create trigger after_trig on t_405_insert2 after insert
 as
@@ -329,19 +306,16 @@ go
 insert into t_405_insert2 values(3);
 go
 ~~START~~
-varchar
-hello
+int
+1
+1
+1
+1
 ~~END~~
-
-~~ROW COUNT: 1~~
 
 
 drop trigger tr1;
 go
-~~ERROR (Code: 3701)~~
-
-~~ERROR (Message: trigger "tr1" does not exist)~~
-
 
 insert into t_405_insert2 values(3);
 go
@@ -357,7 +331,6 @@ select * from t_405_insert2;
 go
 ~~START~~
 int
-3
 3
 ~~END~~
 
@@ -373,7 +346,6 @@ select * from t_405_insert2;
 go
 ~~START~~
 int
-3
 3
 3
 ~~END~~
