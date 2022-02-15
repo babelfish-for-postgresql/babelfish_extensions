@@ -35,7 +35,6 @@
 #include "utils/builtins.h"
 
 #include "../src/multidb.h"
-#include "../src/pltsql.h"
 #include "../src/session.h"
 
 const char* ATTOPTION_BBF_ORIGINAL_NAME = "bbf_original_name";
@@ -378,14 +377,6 @@ pltsql_PreAddConstraintsHook(Relation rel, ParseState *pstate, List *newColDefau
 
 	if (sql_dialect != SQL_DIALECT_TSQL)
 		return;
-
-	/* 
-	 * Setup columnref orverwrite hook in pstate if not already done.
-	 * This is needed to check if a rowversion column is referenced in
-	 * a generated column or check constraint.
-	 */
-	if (pstate->p_column_ref_overwrite_hook == NULL)
-		setup_column_ref_overwrite_hook(pstate);
 
 	/*
 	 * TSQL: Support for computed columns

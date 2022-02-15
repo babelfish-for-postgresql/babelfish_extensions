@@ -1967,6 +1967,7 @@ babelfishpg_tsql.escape_hatch_nocheck_add_constraint#!#strict#!#escape hatch for
 babelfishpg_tsql.escape_hatch_nocheck_existing_constraint#!#strict#!#escape hatch for WITH [NO]CHECK option in alter table on exsiting constraint
 babelfishpg_tsql.escape_hatch_query_hints#!#ignore#!#escape hatch for query hints
 babelfishpg_tsql.escape_hatch_rowguidcol_column#!#ignore#!#escape hatch for ROWGUIDCOL option
+babelfishpg_tsql.escape_hatch_rowversion#!#strict#!#escape hatch for TIMESTAMP/ROWVERSION columns
 babelfishpg_tsql.escape_hatch_schemabinding_function#!#ignore#!#escape hatch for SCHEMABINDING option in CREATE FUNCTION
 babelfishpg_tsql.escape_hatch_schemabinding_procedure#!#ignore#!#escape hatch for SCHEMABINDING option in CREATE PROCEDURE
 babelfishpg_tsql.escape_hatch_schemabinding_trigger#!#ignore#!#escape hatch for SCHEMABINDING option in CREATE TRIGGER
@@ -2020,6 +2021,7 @@ babelfishpg_tsql.escape_hatch_nocheck_add_constraint#!#strict#!#escape hatch for
 babelfishpg_tsql.escape_hatch_nocheck_existing_constraint#!#strict#!#escape hatch for WITH [NO]CHECK option in alter table on exsiting constraint
 babelfishpg_tsql.escape_hatch_query_hints#!#ignore#!#escape hatch for query hints
 babelfishpg_tsql.escape_hatch_rowguidcol_column#!#ignore#!#escape hatch for ROWGUIDCOL option
+babelfishpg_tsql.escape_hatch_rowversion#!#strict#!#escape hatch for TIMESTAMP/ROWVERSION columns
 babelfishpg_tsql.escape_hatch_schemabinding_function#!#ignore#!#escape hatch for SCHEMABINDING option in CREATE FUNCTION
 babelfishpg_tsql.escape_hatch_schemabinding_procedure#!#ignore#!#escape hatch for SCHEMABINDING option in CREATE PROCEDURE
 babelfishpg_tsql.escape_hatch_schemabinding_trigger#!#ignore#!#escape hatch for SCHEMABINDING option in CREATE TRIGGER
@@ -2054,6 +2056,7 @@ babelfishpg_tsql.escape_hatch_nocheck_add_constraint#!#strict#!#escape hatch for
 babelfishpg_tsql.escape_hatch_nocheck_existing_constraint#!#strict#!#escape hatch for WITH [NO]CHECK option in alter table on exsiting constraint
 babelfishpg_tsql.escape_hatch_query_hints#!#ignore#!#escape hatch for query hints
 babelfishpg_tsql.escape_hatch_rowguidcol_column#!#ignore#!#escape hatch for ROWGUIDCOL option
+babelfishpg_tsql.escape_hatch_rowversion#!#strict#!#escape hatch for TIMESTAMP/ROWVERSION columns
 babelfishpg_tsql.escape_hatch_schemabinding_function#!#ignore#!#escape hatch for SCHEMABINDING option in CREATE FUNCTION
 babelfishpg_tsql.escape_hatch_schemabinding_procedure#!#ignore#!#escape hatch for SCHEMABINDING option in CREATE PROCEDURE
 babelfishpg_tsql.escape_hatch_schemabinding_trigger#!#ignore#!#escape hatch for SCHEMABINDING option in CREATE TRIGGER
@@ -2525,7 +2528,13 @@ GO
 
 
 -- TIMESTAMP and ROWVERSION
+-- With escape hatch to ignore
+EXEC sp_babelfish_configure 'babelfishpg_tsql.escape_hatch_rowversion', 'ignore';
+GO
+
 CREATE TABLE t_ts(a timestamp);
+GO
+DROP TABLE t_ts;
 GO
 CREATE TABLE t_ts2(a pg_catalog.timestamp); -- it's fine
 GO
@@ -2533,8 +2542,47 @@ DROP TABLE t_ts2;
 GO
 CREATE TABLE t_rv(a ROWVERSION);
 GO
+DROP TABLE t_rv;
+GO
 CREATE PROCEDURE p_t2 (@v timestamp) AS BEGIN PRINT CAST(@v AS VARCHAR(10)) END;
 GO
+DROP PROCEDURE p_t2;
+GO
+
+-- With escape hatch to strict
+EXEC sp_babelfish_configure 'babelfishpg_tsql.escape_hatch_rowversion', 'strict';
+GO
+
+CREATE TABLE t_ts(a timestamp);
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: 'TIMESTAMP datatype' is not currently supported in Babelfish. please use babelfishpg_tsql.escape_hatch_rowversion to ignore)~~
+
+CREATE TABLE t_ts2(a pg_catalog.timestamp); -- it's fine
+GO
+DROP TABLE t_ts2;
+GO
+CREATE TABLE t_rv(a ROWVERSION);
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: 'ROWVERSION datatype' is not currently supported in Babelfish. please use babelfishpg_tsql.escape_hatch_rowversion to ignore)~~
+
+CREATE PROCEDURE p_t2 (@v timestamp) AS BEGIN PRINT CAST(@v AS VARCHAR(10)) END;
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: 'TIMESTAMP datatype' is not currently supported in Babelfish. please use babelfishpg_tsql.escape_hatch_rowversion to ignore)~~
+
+SELECT @@DBTS;
+GO
+~~START~~
+binary
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: DBTS is not currently supported in Babelfish. please use babelfishpg_tsql.escape_hatch_rowversion to ignore)~~
+
 
 -- CREATE TYPE WITH (10788)
 CREATE TYPE type10788 AS TABLE (c1 INT) WITH (DATA_COMPRESSION = NONE)

@@ -1719,7 +1719,6 @@ extern PLtsql_function *pltsql_compile_inline(char *proc_source,
 					      InlineCodeBlockArgs *args);
 extern void pltsql_parser_setup(struct ParseState *pstate,
 					 PLtsql_expr *expr);
-extern void setup_column_ref_overwrite_hook(struct ParseState *pstate);
 extern bool pltsql_parse_word(char *word1, const char *yytxt,
 				   PLwdatum *wdatum, PLword *word);
 extern bool pltsql_parse_dblword(char *word1, char *word2,

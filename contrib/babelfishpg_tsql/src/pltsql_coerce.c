@@ -116,7 +116,7 @@ tsql_cast_raw_info_t tsql_cast_raw_infos[] =
     {PG_CAST_ENTRY, "sys", "rowversion", "pg_catalog", "int8", NULL, 'i', 'f'},
     {PG_CAST_ENTRY, "sys", "rowversion", "pg_catalog", "int4", NULL, 'i', 'f'},
     {PG_CAST_ENTRY, "sys", "rowversion", "pg_catalog", "int2", NULL, 'i', 'f'},
-    {TSQL_CAST_ENTRY, "pg_catalog", "xid", "sys", "rowversion", "xidrowversion", 'i', 'f'},
+    {TSQL_CAST_ENTRY, "pg_catalog", "xid8", "sys", "rowversion", "xid8rowversion", 'i', 'f'},
     {TSQL_CAST_WITHOUT_FUNC_ENTRY, "sys", "rowversion", "sys", "bbf_varbinary", NULL, 'i', 'b'},
     {TSQL_CAST_WITHOUT_FUNC_ENTRY, "sys", "rowversion", "sys", "bbf_binary", NULL, 'i', 'b'},
 // characters
@@ -190,10 +190,6 @@ tsql_cast_raw_info_t tsql_cast_raw_infos[] =
 	{TSQL_CAST_ENTRY, "sys", "bpchar", "pg_catalog", "name", "bpchar_to_name", 'i', 'f'},
     {TSQL_CAST_ENTRY, "pg_catalog", "varchar", "pg_catalog", "name", "varchar_to_name", 'i', 'f'},
 	{TSQL_CAST_ENTRY, "sys", "varchar", "pg_catalog", "name", "varchar_to_name", 'i', 'f'},
-// xid -> integer
-	{TSQL_CAST_WITHOUT_FUNC_ENTRY, "pg_catalog", "xid", "pg_catalog", "int2", NULL, 'i', 'i'},
-	{TSQL_CAST_WITHOUT_FUNC_ENTRY, "pg_catalog", "xid", "pg_catalog", "int4", NULL, 'i', 'i'},
-	{TSQL_CAST_WITHOUT_FUNC_ENTRY, "pg_catalog", "xid", "pg_catalog", "int8", NULL, 'i', 'i'},
 // string -> float8 via I/O
     {TSQL_CAST_WITHOUT_FUNC_ENTRY, "pg_catalog", "text", "pg_catalog", "float8", NULL, 'i', 'i'},
     {TSQL_CAST_WITHOUT_FUNC_ENTRY, "pg_catalog", "bpchar", "pg_catalog", "float8", NULL, 'i', 'i'},

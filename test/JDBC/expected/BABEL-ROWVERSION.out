@@ -1,3 +1,6 @@
+EXEC sp_babelfish_configure 'babelfishpg_tsql.escape_hatch_rowversion', 'ignore';
+go
+
 -- Test casting functions
 -- (var)binary <-> rowversion
 SELECT CAST(CAST(0xfe AS binary(8)) AS rowversion),
@@ -46,7 +49,7 @@ create table t2(id int, rv1 rowversion, rv2 rowversion);
 go
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: Only one rowversion column is allowed in a table.)~~
+~~ERROR (Message: Only one timestamp column is allowed in a table.)~~
 
 
 -- Insert into a rowversion column is not allowed
@@ -54,7 +57,7 @@ insert into t1(id, rv) values(1,2);
 go
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: Cannot insert an explicit value into a rowversion column.)~~
+~~ERROR (Message: Cannot insert an explicit value into a timestamp column.)~~
 
 
 -- Valid insert
@@ -66,13 +69,13 @@ go
 ~~ROW COUNT: 1~~
 
 
--- Varify that rowversion column value equals xmin
-select case when rv = xmin then 'equal' else 'not-equal' end from t1;
+-- Varify that rowversion column value is not null
+select IIF(rv = NULL, 'null', 'not-null') from t1;
 go
 ~~START~~
 text
-equal
-equal
+not-null
+not-null
 ~~END~~
 
 
@@ -127,7 +130,7 @@ create function tvf(@x int) returns rowversion as begin return cast(@x as rowver
 go
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: The rowversion data type is invalid for return values.)~~
+~~ERROR (Message: The timestamp data type is invalid for return values.)~~
 
 
 -- function parameter types can not be rowversion
@@ -143,13 +146,28 @@ update t1 set rv = 2 where id = 1;
 go
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: Cannot update a rowversion column.)~~
+~~ERROR (Message: Cannot update a timestamp column.)~~
 
 
--- Test SELECT INTO
+-- Updating a row should result in a new value for the rowversion column
+declare @prev_rv rowversion;
+select @prev_rv = rv from t1 where id = 2;
+update t1 set id = 3 where id = 2;
+select case when rv > @prev_rv then 'ok' else 'not-ok' end from t1 where id = 3;
+go
+~~ROW COUNT: 1~~
+
+~~START~~
+text
+ok
+~~END~~
+
+
+-- Test SELECT-INTO
 select * into t2 from t1;
 go
-select case when rv = xmin then 'equal' else 'not-equal' end from t2;
+select case when x.rv = y.rv then 'equal' else 'not-equal' end
+                from t1 x inner join t2 y on x.id = y.id;
 go
 ~~START~~
 text
@@ -163,7 +181,7 @@ select * into t3 from t1, t2;
 go
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: Only one rowversion column is allowed in a table.)~~
+~~ERROR (Message: Only one timestamp column is allowed in a table.)~~
 
 
 -- Cleanup
@@ -171,7 +189,7 @@ drop table t1;
 drop table t2;
 go
 
--- NULL and NOT-NULL constraints are allowed on rowversion column
+-- NULL, NOT-NULL, check constraints are allowed on rowversion column
 create table t1(id int, rv rowversion null);
 go
 drop table t1;
@@ -182,19 +200,24 @@ go
 drop table t1;
 go
 
+create table t1(id int, rv rowversion check(rv > 50));
+go
+drop table t1;
+go
+
 -- All other constraints should not be allowed
 create table t1(id int, rv rowversion default 50);
 go
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: Defaults cannot be created on columns of data type rowversion.)~~
+~~ERROR (Message: Defaults cannot be created on columns of data type timestamp.)~~
 
 
 create table t1(id int, rv rowversion primary key);
 go
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: Primary key constraint is not supported on a rowversion column.)~~
+~~ERROR (Message: Primary key constraint is not supported on a timestamp column.)~~
 
 
 create table t1(a int primary key);
@@ -204,33 +227,38 @@ create table t2(id int, [RV] rowversion, foreign key(rv) references t1(a));
 go
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: Foreign key constraint is not supported on a rowversion column.)~~
-
-
-create table t2(id int, rv rowversion not null unique);
-go
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: Unique constraint is not supported on a rowversion column.)~~
-
-
-create table t2(id int, rv rowversion check(rv > 50));
-go
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: Cannot use rowversion column in check constraint expression.)~~
+~~ERROR (Message: Foreign key constraint is not supported on a timestamp column.)~~
 
 
 drop table t1;
 go
 
--- creating computed column from rowversion column should not be allowed
-create table t1(id int, rv rowversion, rv2 as (rv+2));
+create table t1(id int, rv rowversion not null unique);
 go
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: Cannot use rowversion column in computed column expression.)~~
+~~ERROR (Message: Unique constraint is not supported on a timestamp column.)~~
 
+
+create table t1(id int, rv rowversion);
+go
+
+-- Can't add default constraint on rowversion column.
+alter table t1 add constraint df DEFAULT 2 for rv;
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Defaults cannot be created on columns of data type timestamp.)~~
+
+
+drop table t1;
+go
+
+-- creating computed column from rowversion column is allowed
+create table t1(id int, rv rowversion, rv2 as (rv+2));
+go
+drop table t1;
+go
 
 create table t1([ID] int, [RV] rowversion);
 go
@@ -240,7 +268,7 @@ alter table t1 alter column id rowversion;
 go
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: Cannot alter column "id" to be data type rowversion.)~~
+~~ERROR (Message: Cannot alter column "id" to be data type timestamp.)~~
 
 
 -- Changing type of a rowversion column is not allowed
@@ -248,23 +276,24 @@ alter table t1 alter column rv int;
 go
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: Cannot alter column "rv" because it is rowversion.)~~
+~~ERROR (Message: Cannot alter column "rv" because it is timestamp.)~~
 
 
 drop table t1;
 go
 
--- Test @@DBTS
+-- Test dbts
 create table t1(id int, rv rowversion);
 go
-
+declare @last_dbts rowversion, @cur_dbts rowversion;
+set @last_dbts = @@dbts;
 insert into t1(id) values(1);
+set @cur_dbts = @@dbts;
+select case when (rv >= @last_dbts) and (@cur_dbts > rv) then 'ok'
+                else 'not-ok' end from t1 where id = 1;
 go
 ~~ROW COUNT: 1~~
 
-
-select case when @@dbts = rv + 1 then 'ok' else 'not ok' end from t1;
-go
 ~~START~~
 text
 ok
@@ -272,4 +301,7 @@ ok
 
 
 drop table t1;
+go
+
+EXEC sp_babelfish_configure 'babelfishpg_tsql.escape_hatch_rowversion', 'strict';
 go

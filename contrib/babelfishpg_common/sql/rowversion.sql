@@ -132,13 +132,13 @@ LANGUAGE C IMMUTABLE STRICT PARALLEL SAFE;
 CREATE CAST (INT4 AS sys.ROWVERSION)
 WITH FUNCTION sys.int4rowversion (INT4, integer, boolean) AS ASSIGNMENT;
 
-CREATE OR REPLACE FUNCTION sys.xidrowversion(XID, integer, boolean)
+CREATE OR REPLACE FUNCTION sys.xid8rowversion(XID8, integer, boolean)
 RETURNS sys.ROWVERSION
-AS 'babelfishpg_common', 'int4rowversion'
+AS 'babelfishpg_common', 'int8rowversion'
 LANGUAGE C IMMUTABLE STRICT PARALLEL SAFE;
 
-CREATE CAST (XID AS sys.ROWVERSION)
-WITH FUNCTION sys.xidrowversion (XID, integer, boolean) AS IMPLICIT;
+CREATE CAST (XID8 AS sys.ROWVERSION)
+WITH FUNCTION sys.xid8rowversion (XID8, integer, boolean) AS IMPLICIT;
 
 CREATE OR REPLACE FUNCTION sys.int8rowversion(INT8, integer, boolean)
 RETURNS sys.ROWVERSION
@@ -225,7 +225,7 @@ CREATE OPERATOR sys.>= (
 
 CREATE FUNCTION sys.rowversion_lt(leftarg sys.rowversion, rightarg sys.rowversion)
 RETURNS boolean
-AS 'babelfishpg_common', 'varbinary_eq'
+AS 'babelfishpg_common', 'varbinary_lt'
 LANGUAGE C IMMUTABLE STRICT PARALLEL SAFE;
 
 CREATE OPERATOR sys.< (

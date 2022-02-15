@@ -82,6 +82,7 @@
 
 extern bool escape_hatch_unique_constraint;
 extern bool pltsql_recursive_triggers;
+extern bool escape_hatch_rowversion;
 
 extern List *babelfishpg_tsql_raw_parser(const char *str);
 extern bool install_backend_gram_hooks();
@@ -137,6 +138,7 @@ static void set_procid(Oid oid);
 static bool is_rowversion_column(ParseState *pstate, ColumnDef *column);
 static void validate_rowversion_column_constraints(ColumnDef *column);
 static void validate_rowversion_table_constraint(Constraint *c, char *rowversion_column_name);
+static Constraint *get_rowversion_default_constraint(TypeName *typname);
 extern bool is_tsql_rowversion_or_timestamp_datatype(Oid oid);
 
 PG_FUNCTION_INFO_V1(pltsql_inline_handler);
@@ -543,16 +545,56 @@ pltsql_pre_parse_analyze(ParseState *pstate, RawStmt *parseTree)
 			}
 			break;
 		}
-		case T_SelectStmt:
+		case T_UpdateStmt:
 		{
-			/* 
-			 * Set columnref overwrite hook in pstate if not already done.
-			 * This is needed when we are parsing a subquery of a create
-			 * view statement, this hook will check for rowversion column
-			 * reference and change the reference if needed.
-			 */
-			if (pstate->p_column_ref_overwrite_hook == NULL)
-				setup_column_ref_overwrite_hook(pstate);
+			if (escape_hatch_rowversion == EH_IGNORE)
+			{
+				UpdateStmt *updstmt = (UpdateStmt *) parseTree->stmt;
+				Oid relid;
+				Relation rel;
+				TupleDesc tupdesc;
+				AttrNumber attr_num;
+
+				relid = RangeVarGetRelid(updstmt->relation, NoLock, false);
+				rel = RelationIdGetRelation(relid);
+				tupdesc = RelationGetDescr(rel);
+
+				/*
+				* If target table contains a rowversion column, add a new ResTarget node
+				* with a SetToDefault expression into statement's targetList. This will
+				* ensure that the rows which are going to be updated will have new rowversion
+				* value.
+				*/
+				for (attr_num = 0; attr_num < tupdesc->natts; attr_num++)
+				{
+					Form_pg_attribute attr;
+
+					attr = TupleDescAttr(tupdesc, attr_num);
+
+					if (attr->attisdropped)
+						continue;
+
+					if (is_tsql_rowversion_or_timestamp_datatype(attr->atttypid))
+					{
+						SetToDefault *def = makeNode(SetToDefault);
+						ResTarget *res;
+
+						def->typeId = attr->atttypid;
+						def->typeMod = attr->atttypmod;
+						def->collation = attr->attcollation;
+						res = makeNode(ResTarget);
+						res->name = pstrdup(NameStr(attr->attname));
+						res->name_location = -1;
+						res->indirection = NIL;
+						res->val = (Node *)def;
+						res->location = -1;
+						updstmt->targetList = lappend(updstmt->targetList, res);
+						break;
+					}
+				}
+
+				RelationClose(rel);
+			}
 			break;
 		}
 		default:
@@ -730,11 +772,12 @@ pltsql_post_parse_analyze(ParseState *pstate, Query *query)
 			}
 
 			/*Disallow insert into a ROWVERSION column */
-			if(is_tsql_rowversion_or_timestamp_datatype(attr->atttypid))
+			if (escape_hatch_rowversion == EH_IGNORE &&
+				is_tsql_rowversion_or_timestamp_datatype(attr->atttypid))
 			{
 				ereport(ERROR,
 						(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-						 errmsg("Cannot insert an explicit value into a rowversion column.")));
+						 errmsg("Cannot insert an explicit value into a timestamp column.")));
 			}
 		}
 
@@ -822,15 +865,19 @@ pltsql_post_parse_analyze(ParseState *pstate, Query *query)
 											errmsg("Nullable UNIQUE constraint is not supported. Please use babelfishpg_tsql.escape_hatch_unique_constraint to ignore "
 												"or add a NOT NULL constraint")));
 								}
-								if (is_rowversion_column(pstate, (ColumnDef *) element))
+								if (escape_hatch_rowversion == EH_IGNORE &&
+									is_rowversion_column(pstate, (ColumnDef *) element))
 								{
+									ColumnDef *def = (ColumnDef *) element;
+
 									if (seen_rowversion)
 										ereport(ERROR,
 												(errcode(ERRCODE_INVALID_TABLE_DEFINITION),
-												 errmsg("Only one rowversion column is allowed in a table.")));
+												 errmsg("Only one timestamp column is allowed in a table.")));
 									seen_rowversion = true;
-									rowversion_column_name = castNode(ColumnDef, element)->colname;
-									validate_rowversion_column_constraints((ColumnDef *) element);
+									rowversion_column_name = def->colname;
+									validate_rowversion_column_constraints(def);
+									def->constraints = lappend(def->constraints, get_rowversion_default_constraint(def->typeName));
 								}
 								break;
 							case T_Constraint: 
@@ -838,7 +885,7 @@ pltsql_post_parse_analyze(ParseState *pstate, Query *query)
 								Constraint *c = (Constraint *) element;
 								c->conname = construct_unique_index_name(c->conname, stmt->relation->relname);
 
-								if (rowversion_column_name)
+								if (escape_hatch_rowversion == EH_IGNORE && rowversion_column_name)
 									validate_rowversion_table_constraint(c, rowversion_column_name);
 							}
 								break;
@@ -881,7 +928,8 @@ pltsql_post_parse_analyze(ParseState *pstate, Query *query)
 							seen_identity = true;
 						
 						/* Check for rowversion attribute */
-						if (is_tsql_rowversion_or_timestamp_datatype(attr->atttypid))
+						if (escape_hatch_rowversion == EH_IGNORE &&
+							is_tsql_rowversion_or_timestamp_datatype(attr->atttypid))
 						{
 							seen_rowversion = true;
 							rowversion_column_name = NameStr(attr->attname);
@@ -907,15 +955,18 @@ pltsql_post_parse_analyze(ParseState *pstate, Query *query)
 												 errmsg("Only one identity column is allowed in a table")));
 									seen_identity = true;
 								}
-								if (is_rowversion_column(pstate, castNode(ColumnDef, cmd->def)))
+								if (escape_hatch_rowversion == EH_IGNORE &&
+									is_rowversion_column(pstate, castNode(ColumnDef, cmd->def)))
 								{
+									ColumnDef *def = castNode(ColumnDef, cmd->def);
 									if (seen_rowversion)
 										ereport(ERROR,
 												(errcode(ERRCODE_INVALID_TABLE_DEFINITION),
-												 errmsg("Only one rowversion column is allowed in a table.")));
+												 errmsg("Only one timestamp column is allowed in a table.")));
 									seen_rowversion = true;
-									rowversion_column_name = castNode(ColumnDef, cmd->def)->colname;
-									validate_rowversion_column_constraints(castNode(ColumnDef, cmd->def));
+									rowversion_column_name = def->colname;
+									validate_rowversion_column_constraints(def);
+									def->constraints = lappend(def->constraints, get_rowversion_default_constraint(def->typeName));
 								}
 								break;
 							case AT_AddConstraint: 
@@ -933,7 +984,7 @@ pltsql_post_parse_analyze(ParseState *pstate, Query *query)
 												"or add a NOT NULL constraint")));
 								}
 
-								if (rowversion_column_name)
+								if (escape_hatch_rowversion == EH_IGNORE && rowversion_column_name)
 									validate_rowversion_table_constraint(c, rowversion_column_name);
 							}
 								break;
@@ -942,7 +993,8 @@ pltsql_post_parse_analyze(ParseState *pstate, Query *query)
 								int colnamelen = strlen(cmd->name);
 
 								/* Check if rowversion column type is being changed. */
-								if (rowversion_column_name != NULL &&
+								if (escape_hatch_rowversion == EH_IGNORE &&
+									rowversion_column_name != NULL &&
 									strlen(rowversion_column_name) == colnamelen)
 								{
 									bool found = false;
@@ -962,14 +1014,45 @@ pltsql_post_parse_analyze(ParseState *pstate, Query *query)
 									if (found)
 										ereport(ERROR,
 												(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-												 errmsg("Cannot alter column \"%s\" because it is rowversion.", cmd->name)));
+												 errmsg("Cannot alter column \"%s\" because it is timestamp.", cmd->name)));
 								}
 
 								/* Check if a column type is being changed to rowversion. */
-								if (is_rowversion_column(pstate, castNode(ColumnDef, cmd->def)))
+								if (escape_hatch_rowversion == EH_IGNORE &&
+									is_rowversion_column(pstate, castNode(ColumnDef, cmd->def)))
 									ereport(ERROR,
 											(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-											 errmsg("Cannot alter column \"%s\" to be data type rowversion.", cmd->name)));
+											 errmsg("Cannot alter column \"%s\" to be data type timestamp.", cmd->name)));
+							}
+								break;
+							case AT_ColumnDefault:
+							{
+								int colnamelen = strlen(cmd->name);
+
+								/* Disallow defaults on a rowversion column. */
+								if (escape_hatch_rowversion == EH_IGNORE &&
+									rowversion_column_name != NULL &&
+									strlen(rowversion_column_name) == colnamelen)
+								{
+									bool found = false;
+									if (pltsql_case_insensitive_identifiers)
+									{
+										char *colname = downcase_identifier(cmd->name, colnamelen, false, false);
+										char *dc_rv_name = downcase_identifier(rowversion_column_name, colnamelen, false, false);
+
+										if (strncmp(dc_rv_name, colname, colnamelen) == 0)
+											found = true;
+									}
+									else if (strncmp(rowversion_column_name, cmd->name, colnamelen) == 0)
+									{
+											found = true;
+									}
+
+									if (found)
+										ereport(ERROR,
+												(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+												 errmsg("Defaults cannot be created on columns of data type timestamp.")));
+								}
 							}
 								break;
 							case AT_DropConstraint:
@@ -1007,25 +1090,28 @@ pltsql_post_parse_analyze(ParseState *pstate, Query *query)
 					Query *q = (Query *) n;
 					if (q->commandType == CMD_SELECT)
 					{
-						ListCell *t;
-						bool seen_rowversion = false;
-
-						/* Varify if SELECT INTO ... statement not inserting multiple rowversion columns. */
-						foreach(t, q->targetList)
+						if (escape_hatch_rowversion == EH_IGNORE)
 						{
-							TargetEntry *tle = (TargetEntry *) lfirst(t);
-							Oid typeid = InvalidOid;
+							ListCell *t;
+							bool seen_rowversion = false;
 
-							if (!tle->resjunk)
-								typeid = exprType((Node *) tle->expr);
-
-							if (OidIsValid(typeid) && is_tsql_rowversion_or_timestamp_datatype(typeid))
+							/* Varify if SELECT INTO ... statement not inserting multiple rowversion columns. */
+							foreach(t, q->targetList)
 							{
-								if (seen_rowversion)
-									ereport(ERROR,
-											(errcode(ERRCODE_INVALID_TABLE_DEFINITION),
-											 errmsg("Only one rowversion column is allowed in a table.")));
-								seen_rowversion = true;
+								TargetEntry *tle = (TargetEntry *) lfirst(t);
+								Oid typeid = InvalidOid;
+
+								if (!tle->resjunk)
+									typeid = exprType((Node *) tle->expr);
+
+								if (OidIsValid(typeid) && is_tsql_rowversion_or_timestamp_datatype(typeid))
+								{
+									if (seen_rowversion)
+										ereport(ERROR,
+												(errcode(ERRCODE_INVALID_TABLE_DEFINITION),
+												errmsg("Only one timestamp column is allowed in a table.")));
+									seen_rowversion = true;
+								}
 							}
 						}
 
@@ -1040,23 +1126,26 @@ pltsql_post_parse_analyze(ParseState *pstate, Query *query)
 	}
 	else if (query->commandType == CMD_UPDATE)
 	{
-		ListCell *lc;
-
-		/* Disallow updating a ROWVERSION column */
-		foreach (lc, query->targetList)
+		if (escape_hatch_rowversion == EH_IGNORE)
 		{
-			TargetEntry *tle = (TargetEntry *) lfirst(lc);
-			TupleDesc tupdesc = RelationGetDescr(pstate->p_target_relation);
-			int attr_num = tle->resno - 1;
-			Form_pg_attribute attr;
+			ListCell *lc;
 
-			attr = TupleDescAttr(tupdesc, attr_num);
-
-			if(is_tsql_rowversion_or_timestamp_datatype(attr->atttypid))
+			/* Disallow updating a ROWVERSION column */
+			foreach (lc, query->targetList)
 			{
-				ereport(ERROR,
-						(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-						 errmsg("Cannot update a rowversion column.")));
+				TargetEntry *tle = (TargetEntry *) lfirst(lc);
+				TupleDesc tupdesc = RelationGetDescr(pstate->p_target_relation);
+				int attr_num = tle->resno - 1;
+				Form_pg_attribute attr;
+
+				attr = TupleDescAttr(tupdesc, attr_num);
+
+				if(is_tsql_rowversion_or_timestamp_datatype(attr->atttypid) && !IsA(tle->expr, SetToDefault))
+				{
+					ereport(ERROR,
+							(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+							errmsg("Cannot update a timestamp column.")));
+				}
 			}
 		}
 		pltsql_add_ctid_self_join_cond_between_target_and_from_clause(query);
@@ -1168,18 +1257,12 @@ is_rowversion_column(ParseState *pstate, ColumnDef *column)
 }
 
 /*
-* 1. We will only allow NULL constraint on a rowversion column.
-* 2. If we encounter a NOT-NULL constaint, we will change it
-*    to NULL constraint as we will always be showing xmin value
-*    (which is always going to be NOT-NULL) for this column but
-*    internally this column may contain NULL values.
-* 3. Check constraint will not work on a rowversion column as
-*    we are always changing the reference of this column.
-* 4. Unique/Primary/Foreign constraints are not allowed as multiple
-*    rows can have same xmin value in a single transaction.
+* 1. We will only allow NULL/NOT-NULL constraint on a rowversion column.
+* 2. Unique/Primary/Foreign constraints are not allowed as multiple
+*    rows can have same rowversion value in a single transaction.
 *    Moreover sql server documentation also states rowversion
 *    column a poor candidate for keys.
-* 5. Default constraint is not allowed on a rowversion column.
+* 3. Default constraint is not allowed on a rowversion column.
 */
 static void
 validate_rowversion_column_constraints(ColumnDef *column)
@@ -1191,37 +1274,32 @@ validate_rowversion_column_constraints(ColumnDef *column)
 		Constraint *c = lfirst_node(Constraint, lc);
 		switch (c->contype)
 		{
-			case CONSTR_NOTNULL:
- 			{
- 				c->contype = CONSTR_NULL;
- 				break;
- 			}
  			case CONSTR_UNIQUE:
  			{
  				ereport(ERROR,
  						(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
- 						 errmsg("Unique constraint is not supported on a rowversion column.")));
+						 errmsg("Unique constraint is not supported on a timestamp column.")));
  				break;
  			}
  			case CONSTR_PRIMARY:
  			{
  				ereport(ERROR,
  						(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
- 						 errmsg("Primary key constraint is not supported on a rowversion column.")));
+						 errmsg("Primary key constraint is not supported on a timestamp column.")));
  				break;
  			}
  			case CONSTR_FOREIGN:
  			{
  				ereport(ERROR,
  						(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
- 						 errmsg("Foreign key constraint is not supported on a rowversion column.")));
+						 errmsg("Foreign key constraint is not supported on a timestamp column.")));
  				break;
  			}
 			case CONSTR_DEFAULT:
  			{
  				ereport(ERROR,
  						(errcode(ERRCODE_INVALID_COLUMN_DEFINITION),
- 						 errmsg("Defaults cannot be created on columns of data type rowversion.")));
+						 errmsg("Defaults cannot be created on columns of data type timestamp.")));
  				break;
  			}
  			default:
@@ -1288,9 +1366,35 @@ validate_rowversion_table_constraint(Constraint *c, char *rowversion_column_name
 			if (found)
 				ereport(ERROR,
 						(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-						 errmsg("%s constraint is not supported on a rowversion column.", conname)));
+						 errmsg("%s constraint is not supported on a timestamp column.", conname)));
 		}
 	}
+}
+
+/*
+ * Helper function to create a default constraint node for rowversion
+ * column with FuncCall to sys.get_current_full_xact_id(), which outputs
+ * current full transaction ID.
+ */
+static Constraint *
+get_rowversion_default_constraint(TypeName *typname)
+{
+	TypeCast *castnode;
+	FuncCall *funccallnode;
+	Constraint *constraint;
+
+	funccallnode = makeFuncCall(list_make2(makeString("sys"), makeString("get_current_full_xact_id")), NIL, -1);
+	castnode = makeNode(TypeCast);
+	castnode->typeName = typname;
+	castnode->arg = (Node *) funccallnode;
+	castnode->location = -1;
+	constraint = makeNode(Constraint);
+	constraint->contype = CONSTR_DEFAULT;
+	constraint->location = -1;
+	constraint->raw_expr = (Node *) castnode;
+	constraint->cooked_expr = NULL;
+
+	return constraint;
 }
 
 static void
@@ -2342,6 +2446,62 @@ static void bbf_ProcessUtility(PlannedStmt *pstmt,
 
 				return;
 			}
+		case T_CreateTableAsStmt:
+		{
+			if (sql_dialect == SQL_DIALECT_TSQL && escape_hatch_rowversion == EH_IGNORE)
+			{
+				CreateTableAsStmt *stmt = (CreateTableAsStmt *) parsetree;
+				Oid relid;
+				Relation rel;
+				TupleDesc tupdesc;
+				AttrNumber attr_num;
+
+				if (prev_ProcessUtility)
+					prev_ProcessUtility(pstmt, queryString, context, params,
+							queryEnv, dest, qc);
+				else
+					standard_ProcessUtility(pstmt, queryString, context, params,
+							queryEnv, dest, qc);
+
+				relid = RangeVarGetRelid(stmt->into->rel, NoLock, false);
+				rel = RelationIdGetRelation(relid);
+				tupdesc = RelationGetDescr(rel);
+
+				/*
+				 * If table contains a rowversion column add a default node to that
+				 * column. It is needed as table created with SELECT-INTO will not
+				 * get the column defaults from parent table.
+				 */
+				for (attr_num = 0; attr_num < tupdesc->natts; attr_num++)
+				{
+					Form_pg_attribute attr;
+
+					attr = TupleDescAttr(tupdesc, attr_num);
+
+					/* Skip dropped columns */
+					if (attr->attisdropped)
+						continue;
+
+					if (is_tsql_rowversion_or_timestamp_datatype(attr->atttypid))
+					{
+						RawColumnDefault *rawEnt;
+						Constraint *con;
+
+						con = get_rowversion_default_constraint(makeTypeNameFromOid(attr->atttypid, attr->atttypmod));
+						rawEnt = (RawColumnDefault *) palloc(sizeof(RawColumnDefault));
+						rawEnt->attnum = attr_num + 1;
+						rawEnt->raw_default = (Node *) con->raw_expr;
+						AddRelationNewConstraints(rel, list_make1(rawEnt), NIL,
+										false, true, true, NULL);
+						break;
+					}
+				}
+
+				RelationClose(rel);
+				return;
+			}
+			break;
+		}
 		default:
 			break;
 	}
