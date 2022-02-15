@@ -2699,5 +2699,58 @@ CREATE OR REPLACE VIEW sys.sp_columns_100_view AS
 
 GRANT SELECT on sys.sp_columns_100_view TO PUBLIC;
 
+-- Need to DROP first because input types are changed during upgrade
+DROP FUNCTION sys.sp_describe_undeclared_parameters_internal;
+-- BABEL-1797: initial support of sp_describe_undeclared_parameters
+-- sys.sp_describe_undeclared_parameters_internal: internal function
+-- For the result rows, can we create a template table for it?
+CREATE OR REPLACE FUNCTION sys.sp_describe_undeclared_parameters_internal(
+ tsqlquery sys.nvarchar(4000),
+    params sys.nvarchar(4000) = NULL
+)
+returns table (
+ parameter_ordinal int, -- NOT NULL
+ name sys.sysname, -- NOT NULL
+ suggested_system_type_id int, -- NOT NULL
+ suggested_system_type_name sys.nvarchar(256),
+ suggested_max_length smallint, -- NOT NULL
+ suggested_precision sys.tinyint, -- NOT NULL
+ suggested_scale sys.tinyint, -- NOT NULL
+ suggested_user_type_id int, -- NOT NULL
+ suggested_user_type_database sys.sysname,
+ suggested_user_type_schema sys.sysname,
+ suggested_user_type_name sys.sysname,
+ suggested_assembly_qualified_type_name sys.nvarchar(4000),
+ suggested_xml_collection_id int,
+ suggested_xml_collection_database sys.sysname,
+ suggested_xml_collection_schema sys.sysname,
+ suggested_xml_collection_name sys.sysname,
+ suggested_is_xml_document sys.bit, -- NOT NULL
+ suggested_is_case_sensitive sys.bit, -- NOT NULL
+ suggested_is_fixed_length_clr_type sys.bit, -- NOT NULL
+ suggested_is_input sys.bit, -- NOT NULL
+ suggested_is_output sys.bit, -- NOT NULL
+ formal_parameter_name sys.sysname,
+ suggested_tds_type_id int, -- NOT NULL
+ suggested_tds_length int -- NOT NULL
+)
+AS 'babelfishpg_tsql', 'sp_describe_undeclared_parameters_internal'
+LANGUAGE C;
+GRANT ALL on FUNCTION sys.sp_describe_undeclared_parameters_internal TO PUBLIC;
+
+-- Need to DROP first because input types are changed during upgrade
+DROP PROCEDURE sys.sp_describe_undeclared_parameters;
+CREATE OR REPLACE PROCEDURE sys.sp_describe_undeclared_parameters (
+ "@tsql" sys.nvarchar(4000),
+    "@params" sys.nvarchar(4000) = NULL)
+AS $$
+BEGIN
+ select * from sys.sp_describe_undeclared_parameters_internal(@tsql, @params);
+ return 1;
+END;
+$$
+LANGUAGE 'pltsql';
+GRANT ALL on PROCEDURE sys.sp_describe_undeclared_parameters TO PUBLIC;
+
 -- Reset search_path to not affect any subsequent scripts
 SELECT set_config('search_path', trim(leading 'sys, ' from current_setting('search_path')), false);
