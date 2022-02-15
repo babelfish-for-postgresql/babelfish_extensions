@@ -1555,6 +1555,8 @@ typedef struct PLtsql_protocol_plugin
 	int (*bulk_load_callback) (int ncol, int nrow, Oid *argtypes,
 									Datum *Values, const char *Nulls);
 
+	int (*pltsql_get_generic_typmod) (Oid funcid, int nargs, Oid declared_oid);
+
 } PLtsql_protocol_plugin;
 
 /*
