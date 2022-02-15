@@ -1,0 +1,31 @@
+use master;
+go
+
+
+-- simple repro
+create table t2117(a int);
+create table t2117_2(b int);
+go
+create view v2117 as select * from t2117 inner join t2117_2 do on t2117.a = do.b;
+go
+select * from v2117;
+go
+~~START~~
+int#!#int
+~~END~~
+
+drop view v2117;
+go
+
+create view v2117 as select do.a offset from t2117 do where do.a = 1 order by offset;
+go
+drop view v2117
+go
+
+create table do(offset int);
+go
+
+create view v2117 as select do.offset from do where offset = 1;
+go
+drop view v2117;
+go
