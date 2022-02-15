@@ -29,6 +29,7 @@ smalldatetime#!#4#!#16#!#0#!#<NULL>
 smallint#!#2#!#5#!#0#!#<NULL>
 smallmoney#!#4#!#10#!#4#!#<NULL>
 sql_variant#!#8016#!#0#!#0#!#sql_latin1_general_cp1_ci_as
+sysname#!#256#!#0#!#0#!#sql_latin1_general_cp1_ci_as
 text#!#16#!#0#!#0#!#sql_latin1_general_cp1_ci_as
 time#!#5#!#15#!#6#!#<NULL>
 tinyint#!#1#!#3#!#0#!#<NULL>

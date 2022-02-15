@@ -1669,6 +1669,8 @@ $$SELECT
     THEN 2147483647
     WHEN type = 'ntext'
     THEN 1073741823
+    WHEN type = 'sysname'
+    THEN 128
     WHEN type = 'xml'
     THEN -1
     WHEN type = 'sql_variant'
@@ -1685,18 +1687,20 @@ CREATE OR REPLACE FUNCTION information_schema_tsql._pgtsql_char_octet_length(typ
 $$SELECT
   CASE WHEN type IN ('char', 'varchar', 'binary', 'varbinary')
     THEN CASE WHEN typmod = -1 /* default typmod */
-      THEN CAST(2147483646 AS integer) /* 2^30 */
+      THEN -1
       ELSE typmod - 4
       END
     WHEN type IN ('nchar', 'nvarchar')
     THEN CASE WHEN typmod = -1 /* default typmod */
-      THEN CAST(2147483646 AS integer) /* 2^30 */
+      THEN -1
       ELSE (typmod - 4) * 2
       END
     WHEN type IN ('text', 'image')
     THEN 2147483647 /* 2^30 + 1 */
     WHEN type = 'ntext'
     THEN 2147483646 /* 2^30 */
+    WHEN type = 'sysname'
+    THEN 256
     WHEN type = 'sql_variant'
     THEN 0
     WHEN type = 'xml'
@@ -1789,7 +1793,9 @@ CREATE OR REPLACE VIEW information_schema_tsql.columns AS
         AS "IS_NULLABLE",
 
       CAST(
-        tsql_type_name AS sys.nvarchar(128))
+        CASE WHEN tsql_type_name = 'sysname' THEN sys.translate_pg_type_to_tsql(t.typbasetype)
+        ELSE tsql_type_name END
+        AS sys.nvarchar(128))
         AS "DATA_TYPE",
 
       CAST(
