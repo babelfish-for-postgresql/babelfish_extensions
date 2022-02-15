@@ -27,6 +27,10 @@ extern "C" {
 #include "parser/scansup.h"
 
 #endif
+
+#ifdef LOG // maybe already defined in elog.h, which is conflicted with grammar token LOG
+#undef LOG
+#endif
 }
 
 using namespace std;
@@ -4689,16 +4693,40 @@ post_process_create_database(TSqlParser::Create_databaseContext *ctx, PLtsql_stm
 			removeTokenStringFromQuery(stmt->sqlstmt, ctx->PARTIAL(), baseCtx);
 	}
 
-	Assert(ctx->ON().empty()); // should be blocked already.
+	size_t num_commas_in_on_clause = ctx->COMMA().size();
 
 	if (ctx->WITH())
 	{
+		/* COMMA is shared between ON-clause and WITH-clause. calculate the number of COMMA so that it can be removed properly */
+		num_commas_in_on_clause -= (ctx->create_database_option().size() - 1);
+
 		auto options = ctx->create_database_option();
 		auto commas = ctx->COMMA();
+		std::vector<antlr4::tree::TerminalNode *> commas_in_with_clause;
+		commas_in_with_clause.insert(commas_in_with_clause.begin(), commas.begin() + num_commas_in_on_clause, commas.end());
+
 		GetTokenFunc<TSqlParser::Create_database_optionContext*> getToken = getCreateDatabaseOptionTobeRemoved;
-		bool all_removed = removeTokenFromOptionList(stmt->sqlstmt, options, commas, ctx, getToken);
+		bool all_removed = removeTokenFromOptionList(stmt->sqlstmt, options, commas_in_with_clause, ctx, getToken);
 		if (all_removed)
 			removeTokenStringFromQuery(stmt->sqlstmt, ctx->WITH(), ctx);
+	}
+
+	if (!ctx->ON().empty())
+	{
+		auto specs = ctx->database_file_spec();
+		for (auto sctx : specs)
+			removeCtxStringFromQuery(stmt->sqlstmt, sctx, ctx);
+
+		for (size_t i=0; i<num_commas_in_on_clause; ++i)
+			removeTokenStringFromQuery(stmt->sqlstmt, ctx->COMMA()[i], ctx);
+
+		for (size_t i=0; i<ctx->ON().size(); ++i)
+			removeTokenStringFromQuery(stmt->sqlstmt, ctx->ON()[i], ctx);
+
+		if (ctx->PRIMARY())
+			removeTokenStringFromQuery(stmt->sqlstmt, ctx->PRIMARY(), ctx);
+		if (ctx->LOG())
+			removeTokenStringFromQuery(stmt->sqlstmt, ctx->LOG(), ctx);
 	}
 
 	return false;
