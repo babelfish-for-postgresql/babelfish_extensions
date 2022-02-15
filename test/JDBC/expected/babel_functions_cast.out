@@ -1,0 +1,974 @@
+-- test CAST function
+-- Casting with date/time types
+select CAST('08/25/2017' AS date);
+GO
+~~START~~
+date
+2017-08-25
+~~END~~
+
+select CAST('12:01:59' AS time);
+GO
+~~START~~
+time
+12:01:59.000000
+~~END~~
+
+select CAST('2017-08-25 01:01:59PM' AS datetime);
+GO
+~~START~~
+datetime
+2017-08-25 13:01:59.0
+~~END~~
+
+select CAST('2017-08-25 01:01:59PM' AS datetime2);
+GO
+~~START~~
+datetime2
+2017-08-25 13:01:59.000000
+~~END~~
+
+select CAST(CAST('2017-08-25' AS date) AS varchar(30));
+GO
+~~START~~
+varchar
+2017-08-25
+~~END~~
+
+select CAST(CAST('13:01:59' AS time) AS varchar(30));
+GO
+~~START~~
+varchar
+13:01:59
+~~END~~
+
+select CAST(CAST('2017-08-25 13:01:59' AS datetime) AS varchar(30));
+GO
+~~START~~
+varchar
+2017-08-25 13:01:59
+~~END~~
+
+
+-- Casting with numerics
+select CAST(123 AS float);
+GO
+~~START~~
+float
+123.0
+~~END~~
+
+select CAST(CAST(11234561231231.234 AS float) AS varchar(30));
+GO
+~~START~~
+varchar
+11234561231231.234
+~~END~~
+
+select CAST('123' AS int);
+GO
+~~START~~
+int
+123
+~~END~~
+
+select CAST('123' AS text);
+GO
+~~START~~
+text
+123
+~~END~~
+
+select CAST('123.456' AS numeric(6,3));
+GO
+~~START~~
+numeric
+123.456
+~~END~~
+
+select CAST(123.456 AS numeric(6,3));
+GO
+~~START~~
+numeric
+123.456
+~~END~~
+
+select CAST('123' As smallint);
+GO
+~~START~~
+smallint
+123
+~~END~~
+
+select CAST('1234567890' AS bigint);
+GO
+~~START~~
+bigint
+1234567890
+~~END~~
+
+
+-- Casting with money
+select CAST(4936.56 AS MONEY);
+GO
+~~START~~
+money
+4936.5600
+~~END~~
+
+select CAST(-4936.56 AS MONEY);
+GO
+~~START~~
+money
+-4936.5600
+~~END~~
+
+select CAST(CAST(4936.56 AS MONEY) AS varchar(10));
+GO
+~~START~~
+varchar
+4936.5600
+~~END~~
+
+select CAST(CAST(-4936.56 AS MONEY) AS varchar(10));
+GO
+~~START~~
+varchar
+-4936.5600
+~~END~~
+
+select CAST(4936.56 AS smallmoney);
+GO
+~~START~~
+smallmoney
+4936.5600
+~~END~~
+
+
+-- Casting from money/smallmoney to smallint
+select CAST(CAST(1.56 as smallmoney) AS smallint);
+GO
+~~START~~
+smallint
+2
+~~END~~
+
+select CAST(CAST(-1.56 as smallmoney) AS smallint);
+GO
+~~START~~
+smallint
+-2
+~~END~~
+
+-- out of range
+select CAST(CAST(-214748.3648 as smallmoney) As smallint);
+GO
+~~START~~
+smallint
+~~ERROR (Code: 220)~~
+
+~~ERROR (Message: smallint out of range)~~
+
+-- out of range
+select CAST(CAST(214748.3647 as smallmoney) As smallint);
+GO
+~~START~~
+smallint
+~~ERROR (Code: 220)~~
+
+~~ERROR (Message: smallint out of range)~~
+
+select CAST(CAST(1.56 as MONEY) AS smallint);
+GO
+~~START~~
+smallint
+2
+~~END~~
+
+select CAST(CAST(-1.56 as MONEY) AS smallint);
+GO
+~~START~~
+smallint
+-2
+~~END~~
+
+-- out of range
+select CAST(CAST(922337203685477.5807 as MONEY) AS smallint);
+GO
+~~START~~
+smallint
+~~ERROR (Code: 220)~~
+
+~~ERROR (Message: smallint out of range)~~
+
+-- out of range
+select CAST(CAST(-922337203685477.5808 as MONEY) AS smallint);
+GO
+~~START~~
+smallint
+~~ERROR (Code: 220)~~
+
+~~ERROR (Message: smallint out of range)~~
+
+
+-- Casting from money/smallmoney to int
+select CAST(CAST(1.56 as smallmoney) AS int);
+GO
+~~START~~
+int
+2
+~~END~~
+
+select CAST(CAST(-1.56 as smallmoney) AS int);
+GO
+~~START~~
+int
+-2
+~~END~~
+
+select CAST(CAST(-214748.3648 as smallmoney) As int);
+GO
+~~START~~
+int
+-214748
+~~END~~
+
+select CAST(CAST(214748.3647 as smallmoney) As int);
+GO
+~~START~~
+int
+214748
+~~END~~
+
+select CAST(CAST(1.56 as MONEY) AS int);
+GO
+~~START~~
+int
+2
+~~END~~
+
+select CAST(CAST(-1.56 as MONEY) AS int);
+GO
+~~START~~
+int
+-2
+~~END~~
+
+-- out of range
+select CAST(CAST(922337203685477.5807 as MONEY) AS int);
+GO
+~~START~~
+int
+~~ERROR (Code: 8115)~~
+
+~~ERROR (Message: integer out of range)~~
+
+-- out of range
+select CAST(CAST(-922337203685477.5808 as MONEY) AS int);
+GO
+~~START~~
+int
+~~ERROR (Code: 8115)~~
+
+~~ERROR (Message: integer out of range)~~
+
+
+-- Casting from money/smallmoney to bigint
+select CAST(CAST(1.56 as smallmoney) AS bigint);
+GO
+~~START~~
+bigint
+2
+~~END~~
+
+select CAST(CAST(-1.56 as smallmoney) AS bigint);
+GO
+~~START~~
+bigint
+-2
+~~END~~
+
+select CAST(CAST(-214748.3648 as smallmoney) As bigint);
+GO
+~~START~~
+bigint
+-214748
+~~END~~
+
+select CAST(CAST(214748.3647 as smallmoney) As bigint);
+GO
+~~START~~
+bigint
+214748
+~~END~~
+
+select CAST(CAST(1.56 as MONEY) AS bigint);
+GO
+~~START~~
+bigint
+2
+~~END~~
+
+select CAST(CAST(-1.56 as MONEY) AS bigint);
+GO
+~~START~~
+bigint
+-2
+~~END~~
+
+select CAST(CAST(922337203685477.5807 as MONEY) AS bigint);
+GO
+~~START~~
+bigint
+922337203685478
+~~END~~
+
+select CAST(CAST(-922337203685477.5808 as MONEY) AS bigint);
+GO
+~~START~~
+bigint
+-922337203685478
+~~END~~
+
+
+-- test TRY_CAST function
+-- Casting with date/time types
+select TRY_CAST('08/25/2017' AS date);
+GO
+~~START~~
+date
+2017-08-25
+~~END~~
+
+select TRY_CAST('12:01:59' AS time);
+GO
+~~START~~
+time
+12:01:59.000000
+~~END~~
+
+select TRY_CAST('2017-08-25 01:01:59PM' AS datetime);
+GO
+~~START~~
+datetime
+2017-08-25 13:01:59.0
+~~END~~
+
+select TRY_CAST('2017-08-25 01:01:59PM' AS datetime2);
+GO
+~~START~~
+datetime2
+2017-08-25 13:01:59.000000
+~~END~~
+
+select TRY_CAST(TRY_CAST('2017-08-25' AS date) AS varchar(30));
+GO
+~~START~~
+varchar
+2017-08-25
+~~END~~
+
+select TRY_CAST(TRY_CAST('13:01:59' AS time) AS varchar(30));
+GO
+~~START~~
+varchar
+13:01:59
+~~END~~
+
+select TRY_CAST(TRY_CAST('2017-08-25 13:01:59' AS datetime) AS varchar(30));
+GO
+~~START~~
+varchar
+2017-08-25 13:01:59
+~~END~~
+
+
+-- Casting with numerics
+select TRY_CAST(123 AS float);
+GO
+~~START~~
+float
+123.0
+~~END~~
+
+select TRY_CAST(CAST(11234561231231.234 AS float) AS varchar(30));
+GO
+~~START~~
+varchar
+11234561231231.234
+~~END~~
+
+select TRY_CAST('123' AS int);
+GO
+~~START~~
+int
+123
+~~END~~
+
+select TRY_CAST('123' AS text);
+GO
+~~START~~
+text
+123
+~~END~~
+
+select TRY_CAST('123.456' AS numeric(6,3));
+GO
+~~START~~
+numeric
+123.45600000
+~~END~~
+
+select TRY_CAST(123.456 AS numeric(6,3));
+GO
+~~START~~
+numeric
+123.45600000
+~~END~~
+
+select TRY_CAST('123' As smallint);
+GO
+~~START~~
+smallint
+123
+~~END~~
+
+select TRY_CAST('1234567890' AS bigint);
+GO
+~~START~~
+bigint
+1234567890
+~~END~~
+
+select TRY_CAST(99.9 As int);
+GO
+~~START~~
+int
+99
+~~END~~
+
+select TRY_CAST(-99.9 As int);
+GO
+~~START~~
+int
+-99
+~~END~~
+
+
+-- Casting from numeric to int types
+-- Currently an issue with TRY_CASTing to tinyint(see: JIRA BABEL-926)
+select TRY_CAST(CAST(12.56 as numeric(4,2)) As smallint);
+GO
+~~START~~
+smallint
+12
+~~END~~
+
+select TRY_CAST(CAST(-12.56 as numeric(4,2)) As smallint);
+GO
+~~START~~
+smallint
+-12
+~~END~~
+
+select TRY_CAST(CAST(12.56 as numeric(4,2)) As int);
+GO
+~~START~~
+int
+12
+~~END~~
+
+select TRY_CAST(CAST(-12.56 as numeric(4,2)) As int);
+GO
+~~START~~
+int
+-12
+~~END~~
+
+select TRY_CAST(CAST(12.56 as numeric(4,2)) As bigint);
+GO
+~~START~~
+bigint
+12
+~~END~~
+
+select TRY_CAST(CAST(-12.56 as numeric(4,2)) As bigint);
+GO
+~~START~~
+bigint
+-12
+~~END~~
+
+
+-- Casting from double precision to int types
+-- edge cases: -1.79e308, -2.23e-308, 0, 2.23e-308, 1.79e308
+-- Currently an issue with TRY_CASTing to tinyint(see: JIRA BABEL-926)
+select TRY_CAST(CAST(1.56 as float(53)) As smallint);
+GO
+~~START~~
+smallint
+1
+~~END~~
+
+select TRY_CAST(CAST(-1.56 as float(53)) As smallint);
+GO
+~~START~~
+smallint
+-1
+~~END~~
+
+select TRY_CAST(CAST(-1.79e308 as float(53)) As smallint);
+GO
+~~START~~
+smallint
+<NULL>
+~~END~~
+
+select TRY_CAST(CAST(1.79e308 as float(53)) As smallint);
+GO
+~~START~~
+smallint
+<NULL>
+~~END~~
+
+select TRY_CAST(CAST(2.23e-308 as float(53)) As smallint);
+GO
+~~START~~
+smallint
+0
+~~END~~
+
+select TRY_CAST(CAST(-2.23e-308 as float(53)) As smallint);
+GO
+~~START~~
+smallint
+0
+~~END~~
+
+select TRY_CAST(CAST(1.56 as float(53)) As int);
+GO
+~~START~~
+int
+1
+~~END~~
+
+select TRY_CAST(CAST(-1.56 as float(53)) As int);
+GO
+~~START~~
+int
+-1
+~~END~~
+
+select TRY_CAST(CAST(-1.79e308 as float(53)) As int);
+GO
+~~START~~
+int
+<NULL>
+~~END~~
+
+select TRY_CAST(CAST(1.79e308 as float(53)) As int);
+GO
+~~START~~
+int
+<NULL>
+~~END~~
+
+select TRY_CAST(CAST(2.23e-308 as float(53)) As int);
+GO
+~~START~~
+int
+0
+~~END~~
+
+select TRY_CAST(CAST(-2.23e-308 as float(53)) As int);
+GO
+~~START~~
+int
+0
+~~END~~
+
+select TRY_CAST(CAST(1.56 as float(53)) As bigint);
+GO
+~~START~~
+bigint
+1
+~~END~~
+
+select TRY_CAST(CAST(-1.56 as float(53)) As bigint);
+GO
+~~START~~
+bigint
+-1
+~~END~~
+
+select TRY_CAST(CAST(-1.79e308 as float(53)) As bigint);
+GO
+~~START~~
+bigint
+<NULL>
+~~END~~
+
+select TRY_CAST(CAST(1.79e308 as float(53)) As bigint);
+GO
+~~START~~
+bigint
+<NULL>
+~~END~~
+
+select TRY_CAST(CAST(2.23e-308 as float(53)) As bigint);
+GO
+~~START~~
+bigint
+0
+~~END~~
+
+select TRY_CAST(CAST(-2.23e-308 as float(53)) As bigint);
+GO
+~~START~~
+bigint
+0
+~~END~~
+
+
+-- Casting fromreal to int types
+-- edge cases: -3.40e38, -1.18e-38, 0, 1.18e-38, 3.40e38
+-- Currently an issue with TRY_CASTing to tinyint(see: JIRA BABEL-926)
+select TRY_CAST(CAST(1.56 as real) As smallint);
+GO
+~~START~~
+smallint
+1
+~~END~~
+
+select TRY_CAST(CAST(-1.56 as real) As smallint);
+GO
+~~START~~
+smallint
+-1
+~~END~~
+
+select TRY_CAST(CAST(-3.40e38 as real) As smallint);
+GO
+~~START~~
+smallint
+<NULL>
+~~END~~
+
+select TRY_CAST(CAST(-1.18e-38 as real) As smallint);
+GO
+~~START~~
+smallint
+0
+~~END~~
+
+select TRY_CAST(CAST(1.18e-38 as real) As smallint);
+GO
+~~START~~
+smallint
+0
+~~END~~
+
+select TRY_CAST(CAST(3.40e38 as real) As smallint);
+GO
+~~START~~
+smallint
+<NULL>
+~~END~~
+
+select TRY_CAST(CAST(1.56 as real) As int);
+GO
+~~START~~
+int
+1
+~~END~~
+
+select TRY_CAST(CAST(-1.56 as real) As int);
+GO
+~~START~~
+int
+-1
+~~END~~
+
+select TRY_CAST(CAST(-3.40e38 as real) As int);
+GO
+~~START~~
+int
+<NULL>
+~~END~~
+
+select TRY_CAST(CAST(-1.18e-38 as real) As int);
+GO
+~~START~~
+int
+0
+~~END~~
+
+select TRY_CAST(CAST(1.18e-38 as real) As int);
+GO
+~~START~~
+int
+0
+~~END~~
+
+select TRY_CAST(CAST(3.40e38 as real) As int);
+GO
+~~START~~
+int
+<NULL>
+~~END~~
+
+select TRY_CAST(CAST(1.56 as real) As bigint);
+GO
+~~START~~
+bigint
+1
+~~END~~
+
+select TRY_CAST(CAST(-1.56 as real) As bigint);
+GO
+~~START~~
+bigint
+-1
+~~END~~
+
+select TRY_CAST(CAST(-3.40e38 as real) As bigint);
+GO
+~~START~~
+bigint
+<NULL>
+~~END~~
+
+select TRY_CAST(CAST(-1.18e-38 as real) As bigint);
+GO
+~~START~~
+bigint
+0
+~~END~~
+
+select TRY_CAST(CAST(1.18e-38 as real) As bigint);
+GO
+~~START~~
+bigint
+0
+~~END~~
+
+select TRY_CAST(CAST(3.40e38 as real) As bigint);
+GO
+~~START~~
+bigint
+<NULL>
+~~END~~
+
+
+-- Casting from money to int types
+-- edge cases: -922337203685477.5808, 922337203685477.5807
+-- Currently an issue with TRY_CASTing to tinyint(see: JIRA BABEL-926)
+select TRY_CAST(CAST(1.56 as money) As smallint);
+GO
+~~START~~
+smallint
+2
+~~END~~
+
+select TRY_CAST(CAST(-1.56 as money) As smallint);
+GO
+~~START~~
+smallint
+-2
+~~END~~
+
+select (TRY_CAST(CAST(-922337203685477.5808 as money) As smallint));
+GO
+~~START~~
+smallint
+<NULL>
+~~END~~
+
+select (TRY_CAST(CAST(922337203685477.5807 as money) As smallint));
+GO
+~~START~~
+smallint
+<NULL>
+~~END~~
+
+select TRY_CAST(CAST(1.56 as money) As int);
+GO
+~~START~~
+int
+2
+~~END~~
+
+select TRY_CAST(CAST(-1.56 as money) As int);
+GO
+~~START~~
+int
+-2
+~~END~~
+
+select (TRY_CAST(CAST(-922337203685477.5808 as money) As int));
+GO
+~~START~~
+int
+<NULL>
+~~END~~
+
+select (TRY_CAST(CAST(922337203685477.5807 as money) As int));
+GO
+~~START~~
+int
+<NULL>
+~~END~~
+
+select TRY_CAST(CAST(1.56 as money) As bigint);
+GO
+~~START~~
+bigint
+2
+~~END~~
+
+select TRY_CAST(CAST(-1.56 as money) As bigint);
+GO
+~~START~~
+bigint
+-2
+~~END~~
+
+select (TRY_CAST(CAST(-922337203685477.5808 as money) As bigint));
+GO
+~~START~~
+bigint
+-922337203685478
+~~END~~
+
+select (TRY_CAST(CAST(922337203685477.5807 as money) As bigint));
+GO
+~~START~~
+bigint
+922337203685478
+~~END~~
+
+
+-- Casting from smallmoney to int types
+-- edge cases: -214748.3648, 214748.3647
+-- Currently an issue with TRY_CASTing to tinyint(see: JIRA BABEL-926)
+select TRY_CAST(CAST(1.56 as smallmoney) As smallint);
+GO
+~~START~~
+smallint
+2
+~~END~~
+
+select TRY_CAST(CAST(-1.56 as smallmoney) As smallint);
+GO
+~~START~~
+smallint
+-2
+~~END~~
+
+select (TRY_CAST(CAST(-214748.3648 as smallmoney) As smallint));
+GO
+~~START~~
+smallint
+<NULL>
+~~END~~
+
+select (TRY_CAST(CAST(214748.3647 as smallmoney) As smallint));
+GO
+~~START~~
+smallint
+<NULL>
+~~END~~
+
+select TRY_CAST(CAST(1.56 as smallmoney) As int);
+GO
+~~START~~
+int
+2
+~~END~~
+
+select TRY_CAST(CAST(-1.56 as smallmoney) As int);
+GO
+~~START~~
+int
+-2
+~~END~~
+
+select TRY_CAST(CAST(-214748.3648 as smallmoney) As int);
+GO
+~~START~~
+int
+-214748
+~~END~~
+
+select TRY_CAST(CAST(214748.3647 as smallmoney) As int);
+GO
+~~START~~
+int
+214748
+~~END~~
+
+select TRY_CAST(CAST(1.56 as smallmoney) As bigint);
+GO
+~~START~~
+bigint
+2
+~~END~~
+
+select TRY_CAST(CAST(-1.56 as smallmoney) As bigint);
+GO
+~~START~~
+bigint
+-2
+~~END~~
+
+select TRY_CAST(CAST(-214748.3648 as smallmoney) As bigint);
+GO
+~~START~~
+bigint
+-214748
+~~END~~
+
+select TRY_CAST(CAST(214748.3647 as smallmoney) As bigint);
+GO
+~~START~~
+bigint
+214748
+~~END~~
+
+
+-- Casting with money
+select TRY_CAST(4936.56 AS MONEY);
+GO
+~~START~~
+money
+4936.5600
+~~END~~
+
+select TRY_CAST(-4936.56 AS MONEY);
+GO
+~~START~~
+money
+-4936.5600
+~~END~~
+
+select TRY_CAST(TRY_CAST(4936.56 AS MONEY) AS varchar(10));
+GO
+~~START~~
+varchar
+4936.5600
+~~END~~
+
+select TRY_CAST(TRY_CAST(-4936.56 AS MONEY) AS varchar(10));
+GO
+~~START~~
+varchar
+-4936.5600
+~~END~~
+
+select TRY_CAST(4936.56 AS smallmoney);
+GO
+~~START~~
+smallmoney
+4936.5600
+~~END~~
+

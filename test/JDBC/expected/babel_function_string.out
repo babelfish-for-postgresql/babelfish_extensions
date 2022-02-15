@@ -1,0 +1,836 @@
+-- test REPLICATE function
+SELECT REPLICATE(' abc ', 3)
+GO
+~~START~~
+varchar
+ abc  abc  abc 
+~~END~~
+
+
+SELECT REPLICATE(N'abc', 3)
+GO
+~~START~~
+varchar
+abcabcabc
+~~END~~
+
+
+SELECT REPLICATE(' abc ', 0)
+GO
+~~START~~
+varchar
+
+~~END~~
+
+
+-- test null condition
+SELECT REPLICATE('abc', -3)
+GO
+~~START~~
+varchar
+<NULL>
+~~END~~
+
+
+SELECT REPLICATE(null, 1)
+GO
+~~START~~
+varchar
+<NULL>
+~~END~~
+
+
+-- test LEN and DATALENGTH functions
+SELECT LEN(N'123')
+GO
+~~START~~
+int
+3
+~~END~~
+
+
+SELECT LEN(N'123   ')
+GO
+~~START~~
+int
+3
+~~END~~
+
+
+SELECT LEN(N'   123   ')
+GO
+~~START~~
+int
+6
+~~END~~
+
+
+SELECT LEN(CAST('123' as char(25)))
+GO
+~~START~~
+int
+3
+~~END~~
+
+
+SELECT LEN('abc')
+GO
+~~START~~
+int
+3
+~~END~~
+
+
+SELECT LEN('abc' + 'def')
+GO
+~~START~~
+int
+6
+~~END~~
+
+
+SELECT LEN('tamaño')
+GO
+~~START~~
+int
+6
+~~END~~
+
+
+SELECT DATALENGTH(N'123')
+GO
+~~START~~
+int
+3
+~~END~~
+
+
+SELECT DATALENGTH(N'123   ')
+GO
+~~START~~
+int
+6
+~~END~~
+
+
+SELECT DATALENGTH(N'   123   ')
+GO
+~~START~~
+int
+9
+~~END~~
+
+
+SELECT DATALENGTH(CAST('123' as char(25)))
+GO
+~~START~~
+int
+25
+~~END~~
+
+
+SELECT DATALENGTH('ab' + 'def')
+GO
+~~START~~
+int
+5
+~~END~~
+
+
+SELECT DATALENGTH('哈哈12345')
+GO
+~~START~~
+int
+11
+~~END~~
+
+
+-- additional tests for DATALENGTH (more types, nullvalues)
+CREATE table t1 (a binary(10), b image, c varbinary(10), d char(10),
+			     e varchar(10), f text, g nchar(10), h nvarchar(10), i ntext)
+GO
+
+INSERT into t1 values (cast('abc' as binary(10)), cast('abc' as image), cast('abc' as varbinary(10)),'abc','abc','abc','abc','abc','abc')
+GO
+~~ROW COUNT: 1~~
+
+
+INSERT into t1 values (null, null, null, null, null, null,null, null, null)
+GO
+~~ROW COUNT: 1~~
+
+
+SELECT datalength(a), datalength(b),datalength(c),datalength(d),datalength(e),
+       datalength(f),datalength(g),datalength(h),datalength(i) FROM t1
+GO
+~~START~~
+int#!#int#!#int#!#int#!#int#!#int#!#int#!#int#!#int
+3#!#3#!#3#!#10#!#3#!#3#!#10#!#3#!#3
+<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>
+~~END~~
+
+
+CREATE table t2 (a integer, b bigint, c bit, d smallint, e tinyint, f decimal, g numeric, h float, i real)
+GO
+
+INSERT into t2 values (1, 1, 1, 1, 1, 1, 1, 1, 1)
+GO
+~~ROW COUNT: 1~~
+
+
+INSERT into t2 values (null, null, null, null, null, null,null, null, null)
+GO
+~~ROW COUNT: 1~~
+
+
+SELECT datalength(a), datalength(b),datalength(c),datalength(d),datalength(e), datalength(f),datalength(g),datalength(h),datalength(i) FROM t2
+GO
+~~START~~
+int#!#int#!#int#!#int#!#int#!#int#!#int#!#int#!#int
+4#!#8#!#1#!#2#!#2#!#4#!#4#!#8#!#4
+<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>
+~~END~~
+
+
+CREATE table t3 (a smallmoney, b money, c date, d datetime, e datetime2, f smalldatetime, g time, h uniqueidentifier)
+GO
+
+INSERT into t3 values (cast(1 as smallmoney), cast(1 as money), cast('2020-02-20' as date), cast('2020-02-20 20:20:20.888' as datetime), 
+                        cast('2020-02-20 20:20:20.88888' as datetime2), cast('2020-02-20 20:20:20' as smalldatetime), cast('20:20:20.888' as time), 
+                        cast('6F9619FF-8B86-D011-B42D-00C04FC964FF' as uniqueidentifier))
+GO
+~~ROW COUNT: 1~~
+
+
+INSERT into t3 values (null, null, null, null, null, null,null, null)
+GO
+~~ROW COUNT: 1~~
+
+
+SELECT datalength(a), datalength(b),datalength(c),datalength(d),datalength(e), datalength(f),datalength(g),datalength(h) FROM t3
+GO
+~~START~~
+int#!#int#!#int#!#int#!#int#!#int#!#int#!#int
+8#!#8#!#4#!#8#!#8#!#8#!#8#!#16
+<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>
+~~END~~
+
+
+-- test quotename function
+SELECT quotename('hardrada', ']')
+GO
+~~START~~
+nvarchar
+[hardrada]
+~~END~~
+
+
+SELECT quotename('gershwin', '<')
+GO
+~~START~~
+nvarchar
+>gershwin<
+~~END~~
+
+
+SELECT quotename('faulkner', '>')
+GO
+~~START~~
+nvarchar
+>faulkner<
+~~END~~
+
+
+SELECT quotename('edgerton', '(')
+GO
+~~START~~
+nvarchar
+(edgerton)
+~~END~~
+
+
+SELECT quotename('denali', ')')
+GO
+~~START~~
+nvarchar
+(denali)
+~~END~~
+
+
+SELECT quotename('charisma', '{')
+GO
+~~START~~
+nvarchar
+{charisma}
+~~END~~
+
+
+SELECT quotename('banana', '}')
+GO
+~~START~~
+nvarchar
+{banana}
+~~END~~
+
+
+SELECT quotename('aardvark', '`')
+GO
+~~START~~
+nvarchar
+`aardvark`
+~~END~~
+
+
+SELECT quotename('128 characters exactly----------------------------------------------------------------------------------------------------------')
+GO
+~~START~~
+nvarchar
+[128 characters exactly----------------------------------------------------------------------------------------------------------]
+~~END~~
+
+
+SELECT
+quotename(']]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]')
+GO
+~~START~~
+nvarchar
+[]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]
+~~END~~
+
+
+SELECT
+quotename('""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""')
+GO
+~~START~~
+nvarchar
+[""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""]
+~~END~~
+
+
+SELECT quotename('''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''')
+GO
+~~START~~
+nvarchar
+['''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''']
+~~END~~
+
+
+SELECT quotename('')
+GO
+~~START~~
+nvarchar
+[]
+~~END~~
+
+
+-- regtype error expected pending BABEL-883
+SELECT pg_typeof(quotename('a'))
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: data type regtype is not supported yet)~~
+
+
+SELECT quotename(CAST('abc' as varchar))
+GO
+~~START~~
+nvarchar
+[abc]
+~~END~~
+
+
+SELECT quotename(CAST('abc' as sys.nvarchar))
+GO
+~~START~~
+nvarchar
+[abc]
+~~END~~
+
+
+SELECT quotename(CAST('abc' as text))
+GO
+~~START~~
+nvarchar
+[abc]
+~~END~~
+
+
+SELECT quotename('invalid char', 'F')
+GO
+~~START~~
+nvarchar
+<NULL>
+~~END~~
+
+
+SELECT quotename('too long char', 'aa')
+GO
+~~START~~
+nvarchar
+<NULL>
+~~END~~
+
+
+SELECT quotename('129 characters exactly-----------------------------------------------------------------------------------------------------------')
+GO
+~~START~~
+nvarchar
+<NULL>
+~~END~~
+
+
+SELECT quotename('default should be bracket')
+GO
+~~START~~
+nvarchar
+[default should be bracket]
+~~END~~
+
+
+SELECT quotename('abc [] def')
+GO
+~~START~~
+nvarchar
+[abc []] def]
+~~END~~
+
+
+SELECT quotename(NULL)
+GO
+~~START~~
+nvarchar
+<NULL>
+~~END~~
+
+
+SELECT quotename(NULL, NULL)
+GO
+~~START~~
+nvarchar
+<NULL>
+~~END~~
+
+
+SELECT quotename('hey', NULL)
+GO
+~~START~~
+nvarchar
+<NULL>
+~~END~~
+
+
+SELECT quotename(NULL, '[')
+GO
+~~START~~
+nvarchar
+<NULL>
+~~END~~
+
+
+
+-- test unicode function
+SELECT unicode(null)
+GO
+~~START~~
+int
+<NULL>
+~~END~~
+
+
+SELECT unicode('Åkergatan 24')
+GO
+~~START~~
+int
+197
+~~END~~
+
+
+SELECT nchar(unicode('Åkergatan 24'))
+GO
+~~START~~
+nvarchar
+Å
+~~END~~
+
+
+SELECT unicode(cast('Āmazon' AS nvarchar))
+GO
+~~START~~
+int
+256
+~~END~~
+
+
+SELECT unicode(CAST('Āmazon' as nvarchar))
+GO
+~~START~~
+int
+256
+~~END~~
+
+
+SELECT unicode(cast('Ƃ' as nchar))
+GO
+~~START~~
+int
+386
+~~END~~
+
+
+SELECT unicode(CAST('Ƃ' as nchar))
+GO
+~~START~~
+int
+386
+~~END~~
+
+
+SELECT STRING_SPLIT('Lorem ipsum dolor sit amet.', ' ')
+GO
+~~START~~
+varchar
+Lorem
+ipsum
+dolor
+sit
+amet.
+~~END~~
+
+
+SELECT STRING_SPLIT('clothing,road,,touring,bike', ',')
+GO
+~~START~~
+varchar
+clothing
+road
+
+touring
+bike
+~~END~~
+
+
+SELECT STRING_SPLIT('||||||||', '|')
+GO
+~~START~~
+varchar
+
+
+
+
+
+
+
+
+
+~~END~~
+
+
+SELECT STRING_SPLIT(NULL, ' ')
+GO
+~~START~~
+varchar
+~~END~~
+
+
+-- test invalid separator
+SELECT STRING_SPLIT('asdf', '')
+GO
+~~START~~
+varchar
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Invalid separator: )~~
+
+
+SELECT STRING_SPLIT('asdf', NULL)
+GO
+~~START~~
+varchar
+~~END~~
+
+
+SELECT STRING_SPLIT(NULL, NULL)
+GO
+~~START~~
+varchar
+~~END~~
+
+
+SELECT STRING_SPLIT(CAST('nvarchar nvarchar nvarchar' as nvarchar), CAST(' ' as nvarchar))
+GO
+~~START~~
+varchar
+nvarchar
+nvarchar
+nvarchar
+~~END~~
+
+
+SELECT STRING_SPLIT(CAST('varchar varchar varchar' as varchar), CAST(' ' as varchar))
+GO
+~~START~~
+varchar
+varchar
+varchar
+varchar
+~~END~~
+
+
+SELECT STRING_SPLIT('char char char', ' ')
+GO
+~~START~~
+varchar
+char
+char
+char
+~~END~~
+
+
+SELECT STRING_SPLIT('a,b,c,d', ',')
+GO
+~~START~~
+varchar
+a
+b
+c
+d
+~~END~~
+
+
+SELECT STRING_SPLIT('mississippi island lives in igloo', 'i')
+GO
+~~START~~
+varchar
+m
+ss
+ss
+pp
+ 
+sland l
+ves 
+n 
+gloo
+~~END~~
+
+
+SELECT STRING_SPLIT(CAST('asdf' as nchar(4)), ' ')
+GO
+~~START~~
+varchar
+asdf
+~~END~~
+
+
+SELECT STRING_SPLIT(CAST('asdf' as char(4)), ' ')
+GO
+~~START~~
+varchar
+asdf
+~~END~~
+
+
+-- test invalid separator
+SELECT STRING_SPLIT('Lorem ipsum', 'too many chars')
+GO
+~~START~~
+varchar
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Invalid separator: too many chars)~~
+
+
+SELECT value FROM STRING_SPLIT('Lorem ipsum dolor sit amet.', ' ')
+GO
+~~START~~
+varchar
+Lorem
+ipsum
+dolor
+sit
+amet.
+~~END~~
+
+
+SELECT mycol FROM STRING_SPLIT('Lorem ipsum dolor sit amet.', ' ')
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: column "mycol" does not exist)~~
+
+
+
+-- STRING_ESCAPE tests
+SELECT STRING_ESCAPE('foo', 'notjson')
+GO
+~~START~~
+nvarchar
+<NULL>
+~~END~~
+
+
+SELECT STRING_ESCAPE('foo', '')
+GO
+~~START~~
+nvarchar
+<NULL>
+~~END~~
+
+
+SELECT STRING_ESCAPE('foo', NULL)
+GO
+~~START~~
+nvarchar
+<NULL>
+~~END~~
+
+
+SELECT STRING_ESCAPE(NULL, '')
+GO
+~~START~~
+nvarchar
+<NULL>
+~~END~~
+
+
+SELECT STRING_ESCAPE(NULL, NULL)
+GO
+~~START~~
+nvarchar
+<NULL>
+~~END~~
+
+
+SELECT STRING_ESCAPE(NULL, 'json')
+GO
+~~START~~
+nvarchar
+<NULL>
+~~END~~
+
+
+SELECT STRING_ESCAPE('	', 'json')
+GO
+~~START~~
+nvarchar
+\t
+~~END~~
+
+
+SELECT STRING_ESCAPE('"', 'json')
+GO
+~~START~~
+nvarchar
+\"
+~~END~~
+
+
+SELECT STRING_ESCAPE('\', 'json')
+GO
+~~START~~
+nvarchar
+\\
+~~END~~
+
+
+SELECT STRING_ESCAPE('/', 'json')
+GO
+~~START~~
+nvarchar
+\/
+~~END~~
+
+
+SELECT STRING_ESCAPE(chr(1), 'json')
+GO
+~~START~~
+nvarchar
+\u0001
+~~END~~
+
+
+SELECT STRING_ESCAPE(chr(2), 'json')
+GO
+~~START~~
+nvarchar
+\u0002
+~~END~~
+
+
+SELECT STRING_ESCAPE(chr(8), 'json')
+GO
+~~START~~
+nvarchar
+\b
+~~END~~
+
+
+SELECT STRING_ESCAPE(chr(9), 'json')
+GO
+~~START~~
+nvarchar
+\t
+~~END~~
+
+
+SELECT STRING_ESCAPE('
+', 'json')
+GO
+~~START~~
+nvarchar
+\n
+~~END~~
+
+
+SELECT STRING_ESCAPE(chr(10), 'json')
+GO
+~~START~~
+nvarchar
+\n
+~~END~~
+
+
+SELECT STRING_ESCAPE(chr(11), 'json')
+GO
+~~START~~
+nvarchar
+\u000b
+~~END~~
+
+
+SELECT STRING_ESCAPE(chr(12), 'json')
+GO
+~~START~~
+nvarchar
+\f
+~~END~~
+
+
+SELECT STRING_ESCAPE(chr(13), 'json')
+GO
+~~START~~
+nvarchar
+\r
+~~END~~
+
+
+SELECT STRING_ESCAPE(chr(31), 'json')
+GO
+~~START~~
+nvarchar
+\u001f
+~~END~~
+
+
+SELECT STRING_ESCAPE('lorem ipsum dolor amet	
+consectetur adipiscing elit', 'json')
+GO
+~~START~~
+nvarchar
+lorem ipsum dolor amet\t\nconsectetur adipiscing elit
+~~END~~
+
+
+-- clean up
+DROP table t1, t2, t3
+GO
+
