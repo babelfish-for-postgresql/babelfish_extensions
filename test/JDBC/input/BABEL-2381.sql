@@ -304,3 +304,28 @@ select cast(cast (' 123.1 ' as char) as numeric);
 go
 select cast(cast (null as char) as numeric);
 go
+
+drop table if exists babel_2381_t1;
+go
+create table babel_2381_t1 (a1 decimal DEFAULT '', b1 int);
+go
+insert into babel_2381_t1 values ('1', 1);
+go
+insert into babel_2381_t1 values ('', 1);
+go
+insert into babel_2381_t1 (b1) values (1);
+go
+
+drop table if exists babel_2381_t1;
+go
+create table babel_2381_t1 (a1 numeric DEFAULT ' ', b1 int);
+go
+insert into babel_2381_t1 values ('1', 1);
+go
+insert into babel_2381_t1 values ('', 1);
+go
+insert into babel_2381_t1 (b1) values (1);
+go
+
+drop table if exists babel_2381_t1;
+go

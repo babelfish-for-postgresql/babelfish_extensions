@@ -18,9 +18,11 @@
 #include "catalog/pg_namespace.h"
 #include "executor/spi.h"
 #include "mb/pg_wchar.h"
+#include "nodes/makefuncs.h"
 #include "parser/parse_coerce.h"
 #include "parser/parse_func.h"
 #include "parser/parse_type.h"
+#include "src/collation.h"
 #include "utils/builtins.h"
 #include "utils/float.h"
 #include "utils/guc.h"
@@ -802,14 +804,20 @@ tsql_func_select_candidate(int nargs,
 	return NULL;
 }
 
-static void
-tsql_coerce_string_literal_hook(Const *newcon, char *value, CoercionContext ccontext)
+static Node *
+tsql_coerce_string_literal_hook(ParseCallbackState *pcbstate, Oid targetTypeId,
+								int32 targetTypeMod, int32 baseTypeMod,
+								Const *newcon, char *value,
+								CoercionContext ccontext, CoercionForm cformat,
+								int location)
 {
-	Type baseType = typeidType(newcon->consttype);
+	Oid baseTypeId = newcon->consttype;
+	Type baseType = typeidType(baseTypeId);
+	int32 inputTypeMod = newcon->consttypmod;
 
 	if (newcon->constisnull)
 	{
-		newcon->constvalue = stringTypeDatum(baseType, NULL, newcon->consttypmod);
+		newcon->constvalue = stringTypeDatum(baseType, NULL, inputTypeMod);
 	}
 	else
 	{
@@ -818,11 +826,11 @@ tsql_coerce_string_literal_hook(Const *newcon, char *value, CoercionContext ccon
 		if (ccontext != COERCION_EXPLICIT)
 		{
 			/* T-SQL may forbid casting from string literal to certain datatypes (i.e. binary, varbinary) */
-			if (is_tsql_binary_datatype(newcon->consttype))
+			if (is_tsql_binary_datatype(baseTypeId))
 				ereport(ERROR,
 					(errcode(ERRCODE_CANNOT_COERCE),
 						errmsg("cannot coerce string literal to binary datatype")));
-			if (is_tsql_varbinary_datatype(newcon->consttype))
+			if (is_tsql_varbinary_datatype(baseTypeId))
 				ereport(ERROR,
 					(errcode(ERRCODE_CANNOT_COERCE),
 						errmsg("cannot coerce string literal to varbinary datatype")));
@@ -838,7 +846,7 @@ tsql_coerce_string_literal_hook(Const *newcon, char *value, CoercionContext ccon
 		if (i == -1)
 		{
 			/* i == 1 means the value does not contain any characters but spaces */
-			switch (newcon->consttype)
+			switch (baseTypeId)
 			{
 				case INT2OID:
 					newcon->constvalue = Int16GetDatum(0);
@@ -855,16 +863,87 @@ tsql_coerce_string_literal_hook(Const *newcon, char *value, CoercionContext ccon
 				case FLOAT8OID:
 					newcon->constvalue = Float8GetDatum(0);
 					break;
+				case NUMERICOID:
+				{
+					/*
+					 * T-SQL allows an empty/space-only string as a default constraint of
+					 * NUMERIC column in CREATE TABLE statement. However, it will eventually
+					 * throw an error when actual INSERT happens for the default value.
+					 *
+					 * For example, "CREATE TABLE t1 (c1 INT, c2 NUMERIC DEFAULT '')" can
+					 * be executed without an error, but "INSERT INTO t1 (c1) VALUES (1)" will
+					 * throw an error because an empty string to NUMERIC conversion is disallowed.
+					 *
+					 * To support this behavior without impacting general DML performance,
+					 * we replace the wrong default value with the built-in function,
+					 * sys.babelfish_runtime_error(), which raises an error in execution time.
+					 */
+
+					Oid argTypes[1];
+					List *funcname;
+					Oid errFuncOid;
+					Node *result;
+
+					argTypes[0] = ANYCOMPATIBLEOID;
+					funcname = list_make1(makeString(pstrdup("babelfish_runtime_error")));
+					errFuncOid = LookupFuncName(funcname, 1, argTypes, true);
+
+					if (OidIsValid(errFuncOid))
+					{
+						char *msg;
+						List *args;
+						FuncExpr *errFunc;
+
+						msg = pstrdup("An empty or space-only string cannot be converted into numeric/decimal data type");
+						args = list_make1(makeConst(TEXTOID,
+													-1,
+													get_server_collation_oid_internal(),
+													-1,
+													PointerGetDatum(cstring_to_text(msg)),
+													false,
+													false));
+						errFunc = makeFuncExpr(errFuncOid, targetTypeId, args, 0, 0, cformat);
+
+						cancel_parser_errposition_callback(pcbstate);
+
+						result = (Node *) errFunc;
+
+						/* If target is a domain, apply constraints. */
+						if (baseTypeId != targetTypeId)
+							result = coerce_to_domain(result,
+													  baseTypeId, baseTypeMod,
+													  targetTypeId,
+													  ccontext, cformat, location,
+													  false);
+
+						ReleaseSysCache(baseType);
+
+						return result;
+					}
+
+					/*
+					 * If we cannot find errFunc, let normal exception happens inside stringTypeDatum().
+					 */
+					newcon->constvalue = stringTypeDatum(baseType, value, inputTypeMod);
+					break;
+				}
 				default:
-					newcon->constvalue = stringTypeDatum(baseType, value, newcon->consttypmod);
+					newcon->constvalue = stringTypeDatum(baseType, value, inputTypeMod);
 			}
 		}
 		else
 		{
-			newcon->constvalue = stringTypeDatum(baseType, value, newcon->consttypmod);
+			newcon->constvalue = stringTypeDatum(baseType, value, inputTypeMod);
 		}
 	}
+
 	ReleaseSysCache(baseType);
+
+	/*
+	 * NULL means the newcon is updated properly so that
+	 * we can proceed the rest of coerce_type() function.
+	 */
+	return NULL;
 }
 
 PG_FUNCTION_INFO_V1(init_tsql_datatype_precedence_hash_tab);
