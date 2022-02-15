@@ -1444,6 +1444,31 @@ SELECT $ROWGUID;
 GO
 
 -- TIMESTAMP and ROWVERSION
+-- With escape hatch to ignore
+EXEC sp_babelfish_configure 'babelfishpg_tsql.escape_hatch_rowversion', 'ignore';
+GO
+
+CREATE TABLE t_ts(a timestamp);
+GO
+DROP TABLE t_ts;
+GO
+CREATE TABLE t_ts2(a pg_catalog.timestamp); -- it's fine
+GO
+DROP TABLE t_ts2;
+GO
+CREATE TABLE t_rv(a ROWVERSION);
+GO
+DROP TABLE t_rv;
+GO
+CREATE PROCEDURE p_t2 (@v timestamp) AS BEGIN PRINT CAST(@v AS VARCHAR(10)) END;
+GO
+DROP PROCEDURE p_t2;
+GO
+
+-- With escape hatch to strict
+EXEC sp_babelfish_configure 'babelfishpg_tsql.escape_hatch_rowversion', 'strict';
+GO
+
 CREATE TABLE t_ts(a timestamp);
 GO
 CREATE TABLE t_ts2(a pg_catalog.timestamp); -- it's fine
@@ -1453,6 +1478,8 @@ GO
 CREATE TABLE t_rv(a ROWVERSION);
 GO
 CREATE PROCEDURE p_t2 (@v timestamp) AS BEGIN PRINT CAST(@v AS VARCHAR(10)) END;
+GO
+SELECT @@DBTS;
 GO
 
 -- CREATE TYPE WITH (10788)

@@ -24,6 +24,7 @@
 #include "utils/varlena.h"
 #include "utils/queryenvironment.h"
 #include "utils/float.h"
+#include "utils/xid8.h"
 #include <math.h>
 
 #include "../src/babelfish_version.h"
@@ -59,6 +60,7 @@ PG_FUNCTION_INFO_V1(default_domain);
 PG_FUNCTION_INFO_V1(tsql_exp);
 PG_FUNCTION_INFO_V1(host_os);
 PG_FUNCTION_INFO_V1(tsql_stat_get_activity);
+PG_FUNCTION_INFO_V1(get_current_full_xact_id);
 
 /* Not supported -- only syntax support */
 PG_FUNCTION_INFO_V1(procid);
@@ -701,4 +703,12 @@ tsql_stat_get_activity(PG_FUNCTION_ARGS)
 				(*pltsql_protocol_plugin_ptr)->invalidate_stat_view();
 
 	return (Datum) 0;
+}
+
+Datum
+get_current_full_xact_id(PG_FUNCTION_ARGS)
+{
+	PreventCommandDuringRecovery("get_current_full_xact_id()");
+
+	PG_RETURN_FULLTRANSACTIONID(GetCurrentFullTransactionId());
 }

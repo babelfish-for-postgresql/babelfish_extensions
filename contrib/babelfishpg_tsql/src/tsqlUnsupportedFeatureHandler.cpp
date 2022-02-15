@@ -57,6 +57,7 @@ declare_escape_hatch(escape_hatch_query_hints);
 declare_escape_hatch(escape_hatch_join_hints);
 declare_escape_hatch(escape_hatch_session_settings);
 declare_escape_hatch(escape_hatch_ignore_dup_key);
+declare_escape_hatch(escape_hatch_rowversion);
 
 extern std::string getFullText(antlr4::ParserRuleContext *context);
 extern std::string stripQuoteFromId(TSqlParser::IdContext *context);
@@ -556,6 +557,9 @@ antlrcpp::Any TsqlUnsupportedFeatureHandlerImpl::visitColumn_definition(TSqlPars
 	// ctx->column_constraint() will be handled by visitColumn_constraint(). do nothing here.
 
 	// ctx->special_column_option() will be handled by visitSpecial_column_option(). do nothing here.
+
+	if (ctx->TIMESTAMP())
+		handle(INSTR_TSQL_TIMESTAMP_DATATYPE, "TIMESTAMP datatype", &st_escape_hatch_rowversion, getLineAndPos(ctx->TIMESTAMP()));
 
 	if (ctx->for_replication())
 		handle_for_replication(ctx->for_replication());
@@ -1349,6 +1353,22 @@ antlrcpp::Any TsqlUnsupportedFeatureHandlerImpl::visitBif_convert(TSqlParser::Bi
 
 antlrcpp::Any TsqlUnsupportedFeatureHandlerImpl::visitData_type(TSqlParser::Data_typeContext *ctx)
 {
+	if (ctx->simple_name())
+	{
+		TSqlParser::IdContext *schema = nullptr;
+
+		if (ctx->simple_name()->DOT().size() >= 1)
+			schema = ctx->simple_name()->schema;
+
+		if (schema == nullptr || pg_strcasecmp(getFullText(schema).c_str(), "sys") == 0)
+		{
+			std::string name = stripQuoteFromId(ctx->simple_name()->id().back());
+			if (pg_strcasecmp("timestamp", name.c_str()) == 0)
+				handle(INSTR_TSQL_TIMESTAMP_DATATYPE, "TIMESTAMP datatype", &st_escape_hatch_rowversion, getLineAndPos(ctx));
+			else if (pg_strcasecmp("rowversion", name.c_str()) == 0)
+				handle(INSTR_TSQL_ROWVERSION_DATATYPE, "ROWVERSION datatype", &st_escape_hatch_rowversion, getLineAndPos(ctx));
+		}
+	}
 	if (ctx->NATIONAL())
 		handle(INSTR_UNSUPPORTED_TSQL_NATIONAL, ctx->NATIONAL());
 	if (ctx->VARYING())

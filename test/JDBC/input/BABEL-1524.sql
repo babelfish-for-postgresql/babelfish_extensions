@@ -1,3 +1,6 @@
+EXEC sp_babelfish_configure 'babelfishpg_tsql.escape_hatch_rowversion', 'ignore';
+go
+
 -- Test casting functions
 -- (var)binary <-> timestamp
 SELECT CAST(CAST(0xfe AS binary(8)) AS timestamp),
@@ -46,8 +49,8 @@ insert into t1(id) values(1);
 insert into t1(id) values(2);
 go
 
--- Varify that timestamp column value equals xmin
-select case when timestamp = xmin then 'equal' else 'not-equal' end from t1;
+-- Varify that rowversion column value is not null
+select IIF(timestamp = NULL, 'null', 'not null') from t1;
 go
 
 -- Test with CTE
@@ -90,10 +93,18 @@ go
 update t1 set timestamp = 2 where id = 1;
 go
 
+-- Updating a row should result in a new value for the timestamp column
+declare @prev_timestamp timestamp;
+select @prev_timestamp = timestamp from t1 where id = 2;
+update t1 set id = 3 where id = 2;
+select case when timestamp > @prev_timestamp then 'ok' else 'not ok' end from t1 where id = 3;
+go
+
 -- Test SELECT INTO
 select * into t2 from t1;
 go
-select case when timestamp = xmin then 'equal' else 'not-equal' end from t2;
+select case when x.timestamp = y.timestamp then 'equal' else 'not-equal' end
+                from t1 x inner join t2 y on x.id = y.id;
 go
 
 -- SELECT INTO should not result in multiple timestamp columns in new table
@@ -105,13 +116,18 @@ drop table t1;
 drop table t2;
 go
 
--- NULL and NOT-NULL constraints are allowed on timestamp column
+-- NULL, NOT-NULL, check constraints are allowed on rowversion column
 create table t1(id int, timestamp null);
 go
 drop table t1;
 go
 
 create table t1(id int, timestamp not null);
+go
+drop table t1;
+go
+
+create table t1(id int, timestamp check(timestamp > 50));
 go
 drop table t1;
 go
@@ -129,17 +145,27 @@ go
 create table t2(id int, timestamp, foreign key(timestamp) references t1(a));
 go
 
-create table t2(id int, timestamp not null unique);
+drop table t1;
 go
 
-create table t2(id int, timestamp check(timestamp > 50));
+create table t1(id int, timestamp not null unique);
+go
+
+create table t1(id int, timestamp);
+go
+
+-- Can't add default constraint on timestamp column.
+alter table t1 add constraint df DEFAULT 2 for timestamp;
 go
 
 drop table t1;
 go
 
--- creating computed column from timestamp column should not be allowed
+-- creating computed column from rowversion column is allowed
 create table t1(id int, timestamp, timestamp2 as (timestamp+2));
+go
+
+drop table t1;
 go
 
 create table t1(id int, timestamp);
@@ -151,19 +177,6 @@ go
 
 -- Changing type of a timestamp column is not allowed
 alter table t1 alter column timestamp int;
-go
-
-drop table t1;
-go
-
--- Test @@DBTS
-create table t1(id int, timestamp);
-go
-
-insert into t1(id) values(1);
-go
-
-select case when @@dbts = timestamp + 1 then 'ok' else 'not ok' end from t1;
 go
 
 drop table t1;
@@ -189,4 +202,21 @@ go
 
 -- without column name
 declare @tbl table (a int, timestamp);
+go
+
+-- Test dbts
+create table t1(id int, timestamp);
+go
+declare @last_dbts timestamp, @cur_dbts timestamp;
+set @last_dbts = @@dbts;
+insert into t1(id) values(1);
+set @cur_dbts = @@dbts;
+select case when (timestamp >= @last_dbts) and (@cur_dbts > timestamp) then 'ok'
+                else 'not-ok' end from t1 where id = 1;
+go
+
+drop table t1;
+go
+
+EXEC sp_babelfish_configure 'babelfishpg_tsql.escape_hatch_rowversion', 'strict';
 go

@@ -925,6 +925,7 @@ int escape_hatch_join_hints = EH_IGNORE;
 int escape_hatch_session_settings = EH_IGNORE;
 int escape_hatch_unique_constraint = EH_STRICT;
 int escape_hatch_ignore_dup_key = EH_STRICT;
+int escape_hatch_rowversion = EH_STRICT;
 
 void
 define_escape_hatch_variables(void)
@@ -1226,6 +1227,16 @@ define_escape_hatch_variables(void)
 							  gettext_noop("escape hatch for ignore_dup_key=on option in CREATE/ALTER TABLE/INDEX"),
 							  NULL,
 							  &escape_hatch_ignore_dup_key,
+							  EH_STRICT,
+							  escape_hatch_options,
+							  PGC_USERSET,
+							  GUC_NOT_IN_SAMPLE | GUC_DISALLOW_IN_FILE | GUC_DISALLOW_IN_AUTO_FILE,
+							  NULL, NULL, NULL);
+
+	DefineCustomEnumVariable("babelfishpg_tsql.escape_hatch_rowversion",
+							  gettext_noop("escape hatch for TIMESTAMP/ROWVERSION columns"),
+							  NULL,
+							  &escape_hatch_rowversion,
 							  EH_STRICT,
 							  escape_hatch_options,
 							  PGC_USERSET,

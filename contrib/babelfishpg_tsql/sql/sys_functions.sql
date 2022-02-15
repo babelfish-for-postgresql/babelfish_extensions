@@ -1471,13 +1471,25 @@ $BODY$
 STRICT
 LANGUAGE SQL;
 
+CREATE OR REPLACE FUNCTION sys.get_current_full_xact_id()
+    RETURNS XID8 AS 'babelfishpg_tsql' LANGUAGE C STABLE;
+
 CREATE OR REPLACE FUNCTION sys.DBTS()
 RETURNS sys.ROWVERSION AS
-$BODY$
-SELECT txid_snapshot_xmin(txid_current_snapshot())::sys.ROWVERSION as dbts;
-$BODY$
+$$
+DECLARE
+    eh_setting text;
+BEGIN
+    eh_setting = (select s.setting FROM pg_catalog.pg_settings s where name = 'babelfishpg_tsql.escape_hatch_rowversion');
+    IF eh_setting = 'strict' THEN
+        RAISE EXCEPTION 'DBTS is not currently supported in Babelfish. please use babelfishpg_tsql.escape_hatch_rowversion to ignore';
+    ELSE
+        RETURN pg_snapshot_xmin(pg_current_snapshot())::sys.ROWVERSION;
+    END IF;
+END;
+$$
 STRICT
-LANGUAGE SQL;
+LANGUAGE plpgsql;
 
 CREATE OR REPLACE FUNCTION sys.nestlevel() RETURNS INTEGER AS
 $$

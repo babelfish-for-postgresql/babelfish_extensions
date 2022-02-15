@@ -25,8 +25,6 @@
 #include "catalog/pg_type.h"
 #include "funcapi.h"
 #include "nodes/makefuncs.h"
-#include "parser/parser.h"
-#include "parser/parse_coerce.h"
 #include "parser/parse_relation.h"
 #include "parser/parse_type.h"
 #include "utils/builtins.h"
@@ -118,7 +116,6 @@ static void add_decl_table(PLtsql_function *function, int tbl_dno, char *tbl_typ
 static Node *pltsql_pre_column_ref(ParseState *pstate, ColumnRef *cref);
 static Node *pltsql_post_column_ref(ParseState *pstate, ColumnRef *cref, Node *var);
 static void pltsql_post_expand_star(ParseState *pstate, ColumnRef *cref, List *l);
-static Node *pltsql_column_ref_overwrite(ParseState *pstate, ColumnRef *cref, Node *var);
 static Node *pltsql_param_ref(ParseState *pstate, ParamRef *pref);
 static Node *resolve_column_ref(ParseState *pstate, PLtsql_expr *expr,
 				   ColumnRef *cref, bool error_if_no_field);
@@ -441,7 +438,7 @@ do_compile(FunctionCallInfo fcinfo,
 				is_tsql_rowversion_or_timestamp_datatype(procStruct->prorettype))
 				ereport(ERROR,
 						(errcode(ERRCODE_INVALID_FUNCTION_DEFINITION),
-						 errmsg("The rowversion data type is invalid for return values.")));
+						 errmsg("The timestamp data type is invalid for return values.")));
 
 			/*
 			 * Create the variables for the procedure's parameters.
@@ -1500,23 +1497,9 @@ pltsql_parser_setup(struct ParseState *pstate, PLtsql_expr *expr)
 	pstate->p_pre_columnref_hook = pltsql_pre_column_ref;
 	pstate->p_post_columnref_hook = pltsql_post_column_ref;
 	pstate->p_post_expand_star_hook = pltsql_post_expand_star;
-	pstate->p_column_ref_overwrite_hook = pltsql_column_ref_overwrite;
 	pstate->p_paramref_hook = pltsql_param_ref;
 	/* no need to use p_coerce_param_hook */
 	pstate->p_ref_hook_state = (void *) expr;
-}
-
-/*
- * Set up columnref overwrite hook.
- * This is needed when we are parsing a subquery of check constraint,
- * generated expression or a CREATE VIEW statement. The hook might
- * not be initialized in the subquery. In this case the hook will only
- * be used to change rowversion column reference if any.
- */
-void
-setup_column_ref_overwrite_hook(struct ParseState *pstate)
-{
-	pstate->p_column_ref_overwrite_hook = pltsql_column_ref_overwrite;
 }
 
 /*
@@ -1600,31 +1583,14 @@ pltsql_post_expand_star(ParseState *pstate, ColumnRef *cref, List *l)
 		 */
 		TargetEntry *te = (TargetEntry *) lfirst(li);
 		Var *varnode = (Var *) te->expr;
-		RangeTblEntry *rte;
-		Oid relid;
-		int16 attnum;
-
-		if (!IsA(te->expr, Var))
-			continue;
-
-		rte = GetRTEByRangeTablePosn(pstate, varnode->varno, varnode->varlevelsup);
-		relid = rte->relid;
-		attnum = varnode->varattno;
+		RangeTblEntry *rte = GetRTEByRangeTablePosn(pstate, varnode->varno, varnode->varlevelsup);
+		Oid relid = rte->relid;
+		int16 attnum = varnode->varattno;
 
 		if (rte->rtekind != RTE_RELATION || relid == InvalidOid)
 		{
-			continue;
+			return;
 		}
-
-		/* Check if it is a rowversion column reference. */
-		if (is_tsql_rowversion_or_timestamp_datatype(varnode->vartype))
-		{
-			Node *res = pltsql_column_ref_overwrite(pstate, cref, (Node *) varnode);
-
-			if (res)
-				te->expr = (Expr *) res;
-		}
-
 		/*
 		 * Get the list of names in pg_attribute. get_attoptions returns a Datum of
 		 * the text[] field pgattribute.attoptions. We don't want to throw a full
@@ -1643,7 +1609,7 @@ pltsql_post_expand_star(ParseState *pstate, ColumnRef *cref, List *l)
 		PG_END_TRY();
 		if (!attopts)
 		{
-			continue;
+			return;
 		}
 
 		arr = DatumGetArrayTypeP(attopts);
@@ -1665,85 +1631,6 @@ pltsql_post_expand_star(ParseState *pstate, ColumnRef *cref, List *l)
 			}
 		}
 	}
-}
-
-/* 
- * Overwrite a column reference node if needed.
- * The hook will be called just after we are done parsing a column
- * reference node.
- */
-static Node *
-pltsql_column_ref_overwrite(ParseState *pstate, ColumnRef *cref, Node *var)
-{
-	/* Check if it is a rowversion column reference. */
-	if (var && IsA(var, Var) &&
-		is_tsql_rowversion_or_timestamp_datatype(castNode(Var, var)->vartype))
-	{
-		Var *varnode = (Var *) var;
-		RangeTblEntry *rte;
-
-		/*
-		* Disallow rowversion column in a generated expression or inside
-		* check constraint.
-		* Check constraint will not work on a rowversion column as
-		* internally a dummy value is stored in this column and this
-		* dummy value will be compared in the check constraint, which
-		* is not correct.
-		* Similary rowversion column also can't be used in a computed/
-		* generated column due to same reason as mentioned above.
-		*/
-		switch(pstate->p_expr_kind)
-		{
-			case EXPR_KIND_GENERATED_COLUMN:
-			{
-				ereport(ERROR,
-						(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-						 errmsg("Cannot use rowversion column in computed column expression.")));
-				break;
-			}
-			case EXPR_KIND_CHECK_CONSTRAINT:
-			{
-				ereport(ERROR,
-						(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-						 errmsg("Cannot use rowversion column in check constraint expression.")));
-				break;
-			}
-			default:
-				break;
-		}
-
-		rte = GetRTEByRangeTablePosn(pstate, varnode->varno, varnode->varlevelsup);
-
-		/*
-		 * If it's a reference to an actual table column then change the reference
-		 * from rowversion to system column (xmin). We will add an additional typecast
-		 * to modified column from xid to rowversion (to make sure returned value is
-		 * of type rowversion and not xid) and return that node.
-		 */
-		if (rte->rtekind == RTE_RELATION && rte->relkind == RELKIND_RELATION)
-		{
-			Node *tc = NULL;
-			Oid rowversion_oid = varnode->vartype;
-			int location = varnode->location;
-			
-			varnode->varattno = MinTransactionIdAttributeNumber;
-			varnode->vartype = XIDOID;
-
-			tc = coerce_to_target_type(pstate, var, XIDOID,
-								rowversion_oid, -1, COERCION_IMPLICIT,
-								COERCE_IMPLICIT_CAST, location);
-			
-			if (tc == NULL)
-				ereport(ERROR,
-						(errcode(ERRCODE_CANNOT_COERCE),
-						 errmsg("cannot cast type %s to %s",
-							format_type_be(XIDOID),
-							format_type_be(rowversion_oid)),
-						 parser_coercion_errposition(pstate, location, var)));
-			return tc;
-		}
-	}
-	return NULL;
 }
 
 /*
