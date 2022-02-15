@@ -1,0 +1,192 @@
+create database db1
+go
+use db1
+go
+CREATE TYPE eyedees FROM int not NULL
+go
+CREATE TYPE Phone_Num FROM varchar(11) NOT NULL 
+go
+create table t1(a int, primary key(a))
+go
+create table t2(a int, b int, c int, primary key(b, c))
+go
+create table t3(a int not null unique, b int, c int, primary key(c, b))
+go
+create table t4(a int not null unique)
+go
+create table t5(Id eyedees, Cellphone phone_num, primary key(Id, Cellphone));
+go
+create table MyTable1(ColA eyedees, ColB phone_num, primary key(ColA, ColB))
+go
+create table [MyTable2]([ColA] phone_num, [ColB] eyedees, primary key([ColA], [ColB]))
+go
+
+-- syntax error: @table_name is required
+exec sp_special_columns
+go
+~~ERROR (Code: 201)~~
+
+~~ERROR (Message: procedure sp_special_columns expects parameter "@table_name", which was not supplied.)~~
+
+
+exec sp_special_columns @table_name = 't1'
+go
+~~START~~
+smallint#!#varchar#!#smallint#!#varchar#!#int#!#int#!#smallint#!#smallint
+1#!#a#!#4#!#int#!#10#!#4#!#0#!#1
+~~END~~
+
+
+exec sp_special_columns @table_name = 't2', @qualifier = 'db1', @scope = 'C'
+go
+~~START~~
+smallint#!#varchar#!#smallint#!#varchar#!#int#!#int#!#smallint#!#smallint
+0#!#b#!#4#!#int#!#10#!#4#!#0#!#1
+0#!#c#!#4#!#int#!#10#!#4#!#0#!#1
+~~END~~
+
+
+exec sp_special_columns @table_name = 't3', @table_owner = 'dbo', @col_type = 'R'
+go
+~~START~~
+smallint#!#varchar#!#smallint#!#varchar#!#int#!#int#!#smallint#!#smallint
+1#!#b#!#4#!#int#!#10#!#4#!#0#!#1
+1#!#c#!#4#!#int#!#10#!#4#!#0#!#1
+~~END~~
+
+
+exec sp_special_columns @table_name = 't4', @nullable = 'O'
+go
+~~START~~
+smallint#!#varchar#!#smallint#!#varchar#!#int#!#int#!#smallint#!#smallint
+1#!#a#!#4#!#int#!#10#!#4#!#0#!#1
+~~END~~
+
+
+-- Test table with user-defined type
+exec sp_special_columns @table_name = 't5'
+go
+~~START~~
+smallint#!#varchar#!#smallint#!#varchar#!#int#!#int#!#smallint#!#smallint
+1#!#Cellphone#!#12#!#phone_num#!#0#!#11#!#0#!#1
+1#!#Id#!#4#!#eyedees#!#10#!#4#!#0#!#1
+~~END~~
+
+
+-- Mix-cased table tests
+exec sp_special_columns @table_name = 'mytable1'
+go
+~~START~~
+smallint#!#varchar#!#smallint#!#varchar#!#int#!#int#!#smallint#!#smallint
+1#!#ColA#!#4#!#eyedees#!#10#!#4#!#0#!#1
+1#!#ColB#!#12#!#phone_num#!#0#!#11#!#0#!#1
+~~END~~
+
+
+exec sp_special_columns @table_name = 'MYTABLE1'
+go
+~~START~~
+smallint#!#varchar#!#smallint#!#varchar#!#int#!#int#!#smallint#!#smallint
+1#!#ColA#!#4#!#eyedees#!#10#!#4#!#0#!#1
+1#!#ColB#!#12#!#phone_num#!#0#!#11#!#0#!#1
+~~END~~
+
+
+exec sp_special_columns @table_name = 'mytable2'
+go
+~~START~~
+smallint#!#varchar#!#smallint#!#varchar#!#int#!#int#!#smallint#!#smallint
+1#!#ColA#!#12#!#phone_num#!#0#!#11#!#0#!#1
+1#!#ColB#!#4#!#eyedees#!#10#!#4#!#0#!#1
+~~END~~
+
+
+exec sp_special_columns @table_name = 'MYTABLE2'
+go
+~~START~~
+smallint#!#varchar#!#smallint#!#varchar#!#int#!#int#!#smallint#!#smallint
+1#!#ColA#!#12#!#phone_num#!#0#!#11#!#0#!#1
+1#!#ColB#!#4#!#eyedees#!#10#!#4#!#0#!#1
+~~END~~
+
+
+-- Delimiter table tests NOTE: These to do not produce correct output due to BABEL-2883
+exec sp_special_columns @table_name = [mytable1]
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: column "mytable1" does not exist)~~
+
+
+exec sp_special_columns @table_name = [MYTABLE1]
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: column "mytable1" does not exist)~~
+
+
+exec sp_special_columns @table_name = [mytable2]
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: column "mytable2" does not exist)~~
+
+
+exec sp_special_columns @table_name = [MYTABLE2]
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: column "mytable2" does not exist)~~
+
+
+-- unnamed invocation
+exec sp_special_columns 't1', 'dbo', 'db1'
+go
+~~START~~
+smallint#!#varchar#!#smallint#!#varchar#!#int#!#int#!#smallint#!#smallint
+1#!#a#!#4#!#int#!#10#!#4#!#0#!#1
+~~END~~
+
+
+-- case-insensitive invocation
+EXEC SP_SPECIAL_COLUMNS @TABLE_NAME = 't2', @TABLE_OWNER = 'dbo', @QUALIFIER = 'db1'
+GO
+~~START~~
+smallint#!#varchar#!#smallint#!#varchar#!#int#!#int#!#smallint#!#smallint
+1#!#b#!#4#!#int#!#10#!#4#!#0#!#1
+1#!#c#!#4#!#int#!#10#!#4#!#0#!#1
+~~END~~
+
+
+-- square-delimiter invocation
+EXEC [sys].[sp_special_columns] @table_name = 't2', @table_owner = 'dbo', @qualifier = 'db1'
+GO
+~~START~~
+smallint#!#varchar#!#smallint#!#varchar#!#int#!#int#!#smallint#!#smallint
+1#!#b#!#4#!#int#!#10#!#4#!#0#!#1
+1#!#c#!#4#!#int#!#10#!#4#!#0#!#1
+~~END~~
+
+
+drop table t1
+go
+drop table t2
+go
+drop table t3
+go
+drop table t4
+go
+drop table t5
+go
+drop table MyTable1
+go
+drop table [MyTable2]
+go
+drop type eyedees
+go
+drop type phone_num
+go
+use master
+go
+drop database db1
+go

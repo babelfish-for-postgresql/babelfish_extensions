@@ -2248,6 +2248,248 @@ $$
 LANGUAGE 'pltsql';
 GRANT EXECUTE ON PROCEDURE sys.sp_column_privileges TO PUBLIC;
 
+-- TODO: BABEL-2838
+CREATE OR REPLACE VIEW sys.sp_special_columns_view AS
+SELECT DISTINCT 
+CAST(1 as smallint) AS SCOPE,
+CAST(coalesce (split_part(pa.attoptions[1], '=', 2) ,c1.name) AS sys.sysname) AS COLUMN_NAME, -- get original column name if exists
+CAST(t6.data_type AS smallint) AS DATA_TYPE,
+CAST(t8.name AS sys.sysname) AS TYPE_NAME,
+CAST(c1.precision AS int) AS PRECISION,
+CAST(c1.max_length AS int) AS LENGTH,
+CAST(c1.scale AS smallint) AS SCALE,
+CAST(1 AS smallint) AS PSEUDO_COLUMN,
+CAST(c1.is_nullable AS int) AS IS_NULLABLE,
+CAST(t2.dbname AS sys.sysname) AS TABLE_QUALIFIER,
+CAST(s1.name AS sys.sysname) AS TABLE_OWNER,
+CAST(t1.relname AS sys.sysname) AS TABLE_NAME,
+CAST (t5.contype AS sys.sysname) AS CONSTRAINT_TYPE
+        
+FROM pg_catalog.pg_class t1 
+	JOIN sys.pg_namespace_ext t2 ON t1.relnamespace = t2.oid
+	JOIN sys.schemas s1 ON s1.schema_id = t1.relnamespace
+	JOIN pg_constraint t5 ON t1.oid = t5.conrelid
+	JOIN sys.columns c1 ON t1.oid = c1.object_id
+
+	JOIN pg_catalog.pg_type AS t7 ON t7.oid = c1.system_type_id
+	JOIN sys.types as t8 ON c1.user_type_id = t8.user_type_id 
+	LEFT JOIN sys.spt_datatype_info_table AS t6 ON t7.typname = t6.pg_type_name OR t7.typname = t6.type_name --need in order to get accurate DATA_TYPE value
+	LEFT JOIN pg_catalog.pg_attribute AS pa ON t1.oid = pa.attrelid AND c1.name = pa.attname
+WHERE (t5.contype = 'p' OR t5.contype = 'u')
+	AND CAST(c1.column_id AS smallint) = ANY (t5.conkey)
+	AND has_schema_privilege(s1.schema_id, 'USAGE');
+  
+GRANT SELECT ON sys.sp_special_columns_view TO PUBLIC;
+
+
+CREATE OR REPLACE PROCEDURE sys.sp_special_columns(
+	"@table_name" sys.sysname,
+	"@table_owner" sys.sysname = '',
+	"@qualifier" sys.sysname = '',
+	"@col_type" char(1) = 'R',
+	"@scope" char(1) = 'T',
+	"@nullable" char(1) = 'U',
+	"@odbcver" int = 2
+)
+AS $$
+DECLARE @special_col_type sys.sysname;
+BEGIN
+	IF (@qualifier != '') AND (LOWER(@qualifier) != LOWER(sys.db_name()))
+ 	BEGIN
+ 		THROW 33557097, N'The database name component of the object qualifier must be the name of the current database.', 1;
+	 	
+	END
+	
+	IF (LOWER(@col_type) = LOWER('V'))
+	BEGIN
+		THROW 33557097, N'TIMESTAMP datatype is not currently supported in Babelfish', 1;
+	END
+	
+	IF (LOWER(@nullable) = LOWER('O'))
+	BEGIN
+		SELECT TOP 1 @special_col_type=constraint_type FROM sys.sp_special_columns_view
+		WHERE LOWER(@table_name) = LOWER(table_name)
+			AND ((SELECT coalesce(@table_owner,'')) = '' OR LOWER(table_owner) = LOWER(@table_owner))
+			AND ((SELECT coalesce(@qualifier,'')) = '' OR LOWER(table_qualifier) = LOWER(@qualifier)) AND (is_nullable = 0)
+		ORDER BY constraint_type, column_name;
+	
+		IF @special_col_type='u'
+		BEGIN
+			IF @scope='C'
+			BEGIN
+				SELECT TOP 1 
+				CAST(0 AS smallint) AS SCOPE,
+				COLUMN_NAME,
+				DATA_TYPE,
+				TYPE_NAME,
+				PRECISION,
+				LENGTH,
+				SCALE,
+				PSEUDO_COLUMN FROM sys.sp_special_columns_view
+				WHERE LOWER(@table_name) = LOWER(table_name)
+				AND ((SELECT coalesce(@table_owner,'')) = '' OR LOWER(table_owner) = LOWER(@table_owner))
+				AND ((SELECT coalesce(@qualifier,'')) = '' OR LOWER(table_qualifier) = LOWER(@qualifier)) AND (is_nullable = 0) AND LOWER(constraint_type) = LOWER(@special_col_type)
+				ORDER BY scope, column_name;
+				
+			END
+			ELSE
+			BEGIN
+				SELECT TOP 1 
+				SCOPE,
+				COLUMN_NAME,
+				DATA_TYPE,
+				TYPE_NAME,
+				PRECISION,
+				LENGTH,
+				SCALE,
+				PSEUDO_COLUMN FROM sys.sp_special_columns_view
+				WHERE LOWER(@table_name) = LOWER(table_name)
+				AND ((SELECT coalesce(@table_owner,'')) = '' OR LOWER(table_owner) = LOWER(@table_owner))
+				AND ((SELECT coalesce(@qualifier,'')) = '' OR LOWER(table_qualifier) = LOWER(@qualifier)) AND (is_nullable = 0) AND LOWER(constraint_type) = LOWER(@special_col_type)
+			END
+			
+		END
+		
+		ELSE 
+		BEGIN
+			IF @scope='C'
+			BEGIN
+				SELECT 
+				CAST(0 AS smallint) AS SCOPE,
+				COLUMN_NAME,
+				DATA_TYPE,
+				TYPE_NAME,
+				PRECISION,
+				LENGTH,
+				SCALE,
+				PSEUDO_COLUMN FROM sys.sp_special_columns_view
+				WHERE LOWER(@table_name) = LOWER(table_name)
+				AND ((SELECT coalesce(@table_owner,'')) = '' OR LOWER(table_owner) = LOWER(@table_owner))
+				AND ((SELECT coalesce(@qualifier,'')) = '' OR LOWER(table_qualifier) = LOWER(@qualifier)) AND (is_nullable = 0) AND LOWER(constraint_type) = LOWER(@special_col_type)
+				ORDER BY scope, column_name;
+			END
+			ELSE
+			BEGIN
+				SELECT SCOPE,
+				COLUMN_NAME,
+				DATA_TYPE,
+				TYPE_NAME,
+				PRECISION,
+				LENGTH,
+				SCALE,
+				PSEUDO_COLUMN  FROM sys.sp_special_columns_view
+				WHERE LOWER(@table_name) = LOWER(table_name)
+				AND ((SELECT coalesce(@table_owner,'')) = '' OR LOWER(table_owner) = LOWER(@table_owner))
+				AND ((SELECT coalesce(@qualifier,'')) = '' OR LOWER(table_qualifier) = LOWER(@qualifier)) AND (is_nullable = 0) AND LOWER(constraint_type) = LOWER(@special_col_type)
+				ORDER BY scope, column_name;
+			END
+		END
+	END
+	
+	ELSE 
+	BEGIN
+		SELECT TOP 1 @special_col_type=constraint_type FROM sys.sp_special_columns_view
+		WHERE LOWER(@table_name) = LOWER(table_name)
+			AND ((SELECT coalesce(@table_owner,'')) = '' OR LOWER(table_owner) = LOWER(@table_owner))
+			AND ((SELECT coalesce(@qualifier,'')) = '' OR LOWER(table_qualifier) = LOWER(@qualifier))
+		ORDER BY constraint_type, column_name;
+
+		IF @special_col_type='u'
+		BEGIN
+			IF @scope='C'
+			BEGIN
+				SELECT TOP 1
+				CAST(0 AS smallint) AS SCOPE,
+				COLUMN_NAME,
+				DATA_TYPE,
+				TYPE_NAME,
+				PRECISION,
+				LENGTH,
+				SCALE,
+				PSEUDO_COLUMN FROM sys.sp_special_columns_view
+				WHERE LOWER(@table_name) = LOWER(table_name)
+				AND ((SELECT coalesce(@table_owner,'')) = '' OR LOWER(table_owner) = LOWER(@table_owner))
+				AND ((SELECT coalesce(@qualifier,'')) = '' OR LOWER(table_qualifier) = LOWER(@qualifier)) AND LOWER(constraint_type) = LOWER(@special_col_type)
+				ORDER BY scope, column_name;
+			END
+			
+			ELSE
+			BEGIN
+				SELECT TOP 1 SCOPE,
+				COLUMN_NAME,
+				DATA_TYPE,
+				TYPE_NAME,
+				PRECISION,
+				LENGTH,
+				SCALE,
+				PSEUDO_COLUMN FROM sys.sp_special_columns_view
+				WHERE LOWER(@table_name) = LOWER(table_name)
+				AND ((SELECT coalesce(@table_owner,'')) = '' OR LOWER(table_owner) = LOWER(@table_owner))
+				AND ((SELECT coalesce(@qualifier,'')) = '' OR LOWER(table_qualifier) = LOWER(@qualifier)) AND LOWER(constraint_type) = LOWER(@special_col_type)
+				ORDER BY scope, column_name;
+			END
+			
+		END
+		ELSE
+		BEGIN
+			IF @scope='C'
+			BEGIN
+				SELECT 
+				CAST(0 AS smallint) AS SCOPE,
+				COLUMN_NAME,
+				DATA_TYPE,
+				TYPE_NAME,
+				PRECISION,
+				LENGTH,
+				SCALE,
+				PSEUDO_COLUMN FROM sys.sp_special_columns_view
+				WHERE LOWER(@table_name) = LOWER(table_name)
+				AND ((SELECT coalesce(@table_owner,'')) = '' OR LOWER(table_owner) = LOWER(@table_owner))
+				AND ((SELECT coalesce(@qualifier,'')) = '' OR LOWER(table_qualifier) = LOWER(@qualifier)) AND LOWER(constraint_type) = LOWER(@special_col_type)
+			ORDER BY scope, column_name;	
+			END
+			
+			ELSE
+			BEGIN
+				SELECT SCOPE,
+				COLUMN_NAME,
+				DATA_TYPE,
+				TYPE_NAME,
+				PRECISION,
+				LENGTH,
+				SCALE,
+				PSEUDO_COLUMN FROM sys.sp_special_columns_view
+				WHERE LOWER(@table_name) = LOWER(table_name)
+				AND ((SELECT coalesce(@table_owner,'')) = '' OR LOWER(table_owner) = LOWER(@table_owner))
+				AND ((SELECT coalesce(@qualifier,'')) = '' OR LOWER(table_qualifier) = LOWER(@qualifier)) AND LOWER(constraint_type) = LOWER(@special_col_type)
+				ORDER BY scope, column_name;
+			END
+				
+		END
+	END
+
+END; 
+$$
+LANGUAGE 'pltsql';
+GRANT EXECUTE on PROCEDURE sys.sp_special_columns TO PUBLIC;
+
+CREATE OR REPLACE PROCEDURE sys.sp_special_columns_100(
+	"@table_name" sys.sysname,
+	"@table_owner" sys.sysname = '',
+	"@qualifier" sys.sysname = '',
+	"@col_type" char(1) = 'R',
+	"@scope" char(1) = 'T',
+	"@nullable" char(1) = 'U',
+	"@odbcver" int = 2
+)
+AS $$
+BEGIN
+	EXEC sp_special_columns @table_name, @table_owner, @qualifier, @col_type, @scope, @nullable, @odbcver
+END; 
+$$
+LANGUAGE 'pltsql';
+GRANT EXECUTE on PROCEDURE sys.sp_special_columns_100 TO PUBLIC;
+
 CREATE OR REPLACE VIEW sys.sp_table_privileges_view AS
 SELECT DISTINCT
 CAST(t2.dbname AS sys.sysname) AS TABLE_QUALIFIER,
