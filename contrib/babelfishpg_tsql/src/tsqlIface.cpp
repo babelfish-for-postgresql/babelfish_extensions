@@ -1383,6 +1383,19 @@ public:
 							throw PGErrorWrapperException(ERROR, ERRCODE_INVALID_PARAMETER_VALUE, "The first argument to NULLIF cannot be a constant NULL.", getLineAndPos(first_arg));
 					}
 				}
+
+                              if (id->keyword()->CHECKSUM())
+                              {
+                                      if (ctx->function_arg_list() && !ctx->function_arg_list()->expression().empty())
+                                      {
+                                              for (auto arg: ctx->function_arg_list()->expression())
+                                              {
+                                                      if (dynamic_cast<TSqlParser::Constant_exprContext*>(arg) && static_cast<TSqlParser:: Constant_exprContext*>(arg)->constant()->NULL_P())
+                                                              throw PGErrorWrapperException(ERROR, ERRCODE_INVALID_PARAMETER_VALUE, "Argument NULL is invalid for CHECKSUM().", getLineAndPos(arg));
+                                              }
+                                      }
+                              }
+
 			}
 		}
 	}
