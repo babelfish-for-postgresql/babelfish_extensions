@@ -1951,3 +1951,16 @@ CREATE OR REPLACE FUNCTION sys.tsql_stat_get_activity(
   OUT database_id int2)
 AS 'babelfishpg_tsql', 'tsql_stat_get_activity'
 LANGUAGE C VOLATILE STRICT;
+
+CREATE OR REPLACE FUNCTION sys.is_table_type(object_id oid) RETURNS bool AS
+$BODY$
+SELECT
+  EXISTS(
+    SELECT 1
+    FROM pg_catalog.pg_type pt
+    INNER JOIN pg_catalog.pg_depend dep
+    ON pt.typrelid = dep.objid
+    WHERE pt.typtype = 'c' AND dep.deptype = 'i' AND pt.typrelid = object_id
+    AND pg_catalog.pg_table_is_visible(object_id));
+$BODY$
+LANGUAGE SQL VOLATILE STRICT;

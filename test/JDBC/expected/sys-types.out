@@ -73,6 +73,17 @@ int
 ~~END~~
 
 
+CREATE TYPE tbl_type_sys_types AS TABLE(a INT);
+GO
+
+SELECT count(*) FROM sys.types WHERE name = 'tbl_type_sys_types';
+GO
+~~START~~
+int
+1
+~~END~~
+
+
 USE master;
 GO
 
@@ -96,10 +107,37 @@ int
 ~~END~~
 
 
+SELECT count(*) FROM sys.types WHERE name = 'tbl_type_sys_types';
+GO
+~~START~~
+int
+0
+~~END~~
+
+
+CREATE TYPE tbl_type_sys_types1 AS TABLE(a INT);
+GO
+
+SELECT count(*) FROM sys.types WHERE name = 'tbl_type_sys_types1';
+GO
+~~START~~
+int
+1
+~~END~~
+
+
 USE db1
 GO
 
 SELECT count(*) FROM sys.types WHERE name = 'my_type1';
+GO
+~~START~~
+int
+0
+~~END~~
+
+
+SELECT count(*) FROM sys.types WHERE name = 'tbl_type_sys_types1';
 GO
 ~~START~~
 int
@@ -113,6 +151,9 @@ GO
 DROP TYPE my_type2
 GO
 
+DROP TYPE tbl_type_sys_types;
+GO
+
 USE master;
 GO
 
@@ -120,4 +161,7 @@ DROP DATABASE db1;
 GO
 
 DROP TYPE my_type1;
+GO
+
+DROP TYPE tbl_type_sys_types1;
 GO
