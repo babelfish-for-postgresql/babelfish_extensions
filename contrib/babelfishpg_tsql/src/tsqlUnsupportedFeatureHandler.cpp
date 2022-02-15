@@ -781,7 +781,7 @@ antlrcpp::Any TsqlUnsupportedFeatureHandlerImpl::visitCreate_database(TSqlParser
 		handle(INSTR_UNSUPPORTED_TSQL_CREATE_DATABASE_CONTAINMENT, ctx->CONTAINMENT(), &st_escape_hatch_database_misc_options);
 
 	if (!ctx->ON().empty())
-		handle(INSTR_UNSUPPORTED_TSQL_CREATE_DATABASE_ON, "CREATE DATABASE ON <database-file-spec>", getLineAndPos(ctx->ON()[0]));
+		handle(INSTR_UNSUPPORTED_TSQL_CREATE_DATABASE_ON, "CREATE DATABASE ON <database-file-spec>", &st_escape_hatch_storage_options, getLineAndPos(ctx->ON()[0]));
 
 	if (ctx->collation())
 		handle(INSTR_UNSUPPORTED_TSQL_CREATE_DATABASE_COLLATE, "COLLATE", getLineAndPos(ctx->collation()));
