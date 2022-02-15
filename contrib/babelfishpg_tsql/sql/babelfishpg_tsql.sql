@@ -1288,6 +1288,18 @@ SELECT
     as "os_language_version";
 GRANT SELECT ON sys.dm_os_host_info TO PUBLIC;
 
+-- For some cases, T-SQL throws an error in DML-time even though it can be detected in DDL-time.
+-- This function can be used in DDL-time to postpone errors without impacting general DML performance.
+CREATE OR REPLACE FUNCTION sys.babelfish_runtime_error(msg ANYCOMPATIBLE)
+RETURNS ANYCOMPATIBLE AS
+$$
+BEGIN
+	RAISE EXCEPTION '%', msg;
+END;
+$$
+LANGUAGE PLPGSQL;
+GRANT ALL on FUNCTION sys.babelfish_runtime_error TO PUBLIC;
+
 CREATE OR REPLACE VIEW sys.sp_column_privileges_view AS
 SELECT
 CAST(t2.dbname AS sys.sysname) AS TABLE_QUALIFIER,

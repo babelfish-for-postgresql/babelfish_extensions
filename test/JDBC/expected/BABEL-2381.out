@@ -152,15 +152,19 @@ bigint
 
 select cast('' as decimal);
 go
+~~START~~
+numeric
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: invalid input syntax for type numeric: "")~~
+~~ERROR (Message: An empty or space-only string cannot be converted into numeric/decimal data type)~~
 
 select cast(' ' as decimal);
 go
+~~START~~
+numeric
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: invalid input syntax for type numeric: " ")~~
+~~ERROR (Message: An empty or space-only string cannot be converted into numeric/decimal data type)~~
 
 select cast('1' as decimal);
 go
@@ -294,15 +298,19 @@ real
 
 select cast('' as numeric);
 go
+~~START~~
+numeric
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: invalid input syntax for type numeric: "")~~
+~~ERROR (Message: An empty or space-only string cannot be converted into numeric/decimal data type)~~
 
 select cast(' ' as numeric);
 go
+~~START~~
+numeric
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: invalid input syntax for type numeric: " ")~~
+~~ERROR (Message: An empty or space-only string cannot be converted into numeric/decimal data type)~~
 
 select cast('1' as numeric);
 go
@@ -967,3 +975,48 @@ numeric
 <NULL>
 ~~END~~
 
+
+drop table if exists babel_2381_t1;
+go
+create table babel_2381_t1 (a1 decimal DEFAULT '', b1 int);
+go
+insert into babel_2381_t1 values ('1', 1);
+go
+~~ROW COUNT: 1~~
+
+insert into babel_2381_t1 values ('', 1);
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: An empty or space-only string cannot be converted into numeric/decimal data type)~~
+
+insert into babel_2381_t1 (b1) values (1);
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: An empty or space-only string cannot be converted into numeric/decimal data type)~~
+
+
+drop table if exists babel_2381_t1;
+go
+create table babel_2381_t1 (a1 numeric DEFAULT ' ', b1 int);
+go
+insert into babel_2381_t1 values ('1', 1);
+go
+~~ROW COUNT: 1~~
+
+insert into babel_2381_t1 values ('', 1);
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: An empty or space-only string cannot be converted into numeric/decimal data type)~~
+
+insert into babel_2381_t1 (b1) values (1);
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: An empty or space-only string cannot be converted into numeric/decimal data type)~~
+
+
+drop table if exists babel_2381_t1;
+go
