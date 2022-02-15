@@ -41,7 +41,7 @@
 #define FIXEDDECIMAL_MULTIPLIER 10000LL
 #endif
 
-#define TOTAL_TYPECODE_COUNT 30
+#define TOTAL_TYPECODE_COUNT 31
 
 typedef struct type_info
 {

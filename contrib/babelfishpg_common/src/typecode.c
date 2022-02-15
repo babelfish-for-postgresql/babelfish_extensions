@@ -47,7 +47,8 @@ type_info_t type_infos[TOTAL_TYPECODE_COUNT] =
     {0, 1, "image"           , "image"           , 5, 27, 5},
     {0, 0, "xml"             , "xml"             , 5, 28, 5},
     {0, 0, "bpchar"          , "char"            , 5, 29, 5},
-    {0, 1, "decimal"         , "decimal"         , 5, 30, 5}
+    {0, 1, "decimal"         , "decimal"         , 5, 30, 5},
+    {0, 1, "sysname"         , "sysname"         , 5, 30, 5}
 };
 
 /* Hash tables to help backward searching (from OID to Persist ID) */
