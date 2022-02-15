@@ -200,7 +200,7 @@ and has_schema_privilege(sch.schema_id, 'USAGE')
 and has_table_privilege(t.oid, 'SELECT,INSERT,UPDATE,DELETE,TRUNCATE,TRIGGER');
 GRANT SELECT ON sys.views TO PUBLIC;
 
-CREATE OR REPLACE FUNCTION sys.tsql_type_scale_helper(IN type TEXT, IN typemod INT) RETURNS sys.TINYINT
+CREATE OR REPLACE FUNCTION sys.tsql_type_scale_helper(IN type TEXT, IN typemod INT, IN return_null_for_rest bool) RETURNS sys.TINYINT
 AS $$
 DECLARE
   scale INT;
@@ -211,7 +211,9 @@ BEGIN
 
   IF typemod = -1 THEN
     CASE type
+    WHEN 'date' THEN scale = 0;
     WHEN 'datetime' THEN scale = 3;
+    WHEN 'smalldatetime' THEN scale = 0;
     WHEN 'datetime2' THEN scale = 6;
     WHEN 'datetimeoffset' THEN scale = 6;
     WHEN 'decimal' THEN scale = 38;
@@ -219,7 +221,12 @@ BEGIN
     WHEN 'money' THEN scale = 4;
     WHEN 'smallmoney' THEN scale = 4;
     WHEN 'time' THEN scale = 6;
-    ELSE scale = 0;
+    WHEN 'tinyint' THEN scale = 0;
+    ELSE
+      IF return_null_for_rest
+        THEN scale = NULL;
+      ELSE scale = 0;
+      END IF;
     END CASE;
     RETURN scale;
   END IF;
@@ -227,6 +234,7 @@ BEGIN
   CASE type
   WHEN 'decimal' THEN scale = (typemod - 4) & 65535;
   WHEN 'numeric' THEN scale = (typemod - 4) & 65535;
+  WHEN 'smalldatetime' THEN scale = 0;
   WHEN 'datetime2' THEN
     CASE typemod 
     WHEN 0 THEN scale = 0;
@@ -266,7 +274,11 @@ BEGIN
     -- adding the case just in case we support it in future
     WHEN 7 THEN scale = 7;
     END CASE;
-  ELSE scale = 0;
+  ELSE
+    IF return_null_for_rest
+      THEN scale = NULL;
+    ELSE scale = 0;
+    END IF;
   END CASE;
   RETURN scale;
 END;
@@ -499,9 +511,9 @@ BEGIN
       END,
       CASE
       WHEN a.atttypmod != -1 THEN 
-        sys.tsql_type_scale_helper(coalesce(tsql_type_name, tsql_base_type_name), a.atttypmod)
+        sys.tsql_type_scale_helper(coalesce(tsql_type_name, tsql_base_type_name), a.atttypmod, false)
       ELSE 
-        sys.tsql_type_scale_helper(coalesce(tsql_type_name, tsql_base_type_name), t.typtypmod)
+        sys.tsql_type_scale_helper(coalesce(tsql_type_name, tsql_base_type_name), t.typtypmod, false)
       END,
       CAST(coll.collname AS sys.sysname),
       CAST(a.attcollation AS int),
@@ -577,9 +589,9 @@ BEGIN
       END,
       CASE
       WHEN a.atttypmod != -1 THEN 
-        sys.tsql_type_scale_helper(coalesce(tsql_type_name, tsql_base_type_name), a.atttypmod)
+        sys.tsql_type_scale_helper(coalesce(tsql_type_name, tsql_base_type_name), a.atttypmod, false)
       ELSE 
-        sys.tsql_type_scale_helper(coalesce(tsql_type_name, tsql_base_type_name), t.typtypmod)
+        sys.tsql_type_scale_helper(coalesce(tsql_type_name, tsql_base_type_name), t.typtypmod, false)
       END,
       CAST(coll.collname AS sys.sysname),
       CAST(a.attcollation AS int),
@@ -639,7 +651,7 @@ select tsql_type_name as name
   , cast(NULL as INT) as principal_id
   , sys.tsql_type_max_length_helper(tsql_type_name, t.typlen, t.typtypmod) as max_length
   , cast(sys.tsql_type_precision_helper(tsql_type_name, t.typtypmod) as int) as precision
-  , cast(sys.tsql_type_scale_helper(tsql_type_name, t.typtypmod) as int) as scale
+  , cast(sys.tsql_type_scale_helper(tsql_type_name, t.typtypmod, false) as int) as scale
   , CASE c.collname
     WHEN 'default' THEN cast(current_setting('babelfishpg_tsql.server_collation_name') as name)
     ELSE  c.collname
@@ -666,7 +678,7 @@ select cast(t.typname as text) as name
   , null::integer as principal_id
   , sys.tsql_type_max_length_helper(tsql_base_type_name, t.typlen, t.typtypmod) as max_length
   , cast(sys.tsql_type_precision_helper(tsql_base_type_name, t.typtypmod) as int) as precision
-  , cast(sys.tsql_type_scale_helper(tsql_base_type_name, t.typtypmod) as int) as scale
+  , cast(sys.tsql_type_scale_helper(tsql_base_type_name, t.typtypmod, false) as int) as scale
   , CASE c.collname
     WHEN 'default' THEN cast(current_setting('babelfishpg_tsql.server_collation_name') as name)
     ELSE  c.collname 
@@ -2273,6 +2285,153 @@ END;
 $$
 LANGUAGE 'pltsql';
 GRANT EXECUTE ON PROCEDURE sys.sp_table_privileges TO PUBLIC;
+
+CREATE OR REPLACE FUNCTION sys.tsql_type_radix_for_sp_columns_helper(IN type TEXT)
+RETURNS SMALLINT
+AS $$
+DECLARE
+  radix SMALLINT;
+BEGIN
+  CASE type
+    WHEN 'tinyint' THEN radix = 10;
+    WHEN 'money' THEN radix = 10;
+    WHEN 'smallmoney' THEN radix = 10;
+    WHEN 'sql_variant' THEN radix = 10;
+  ELSE
+    radix = NULL;
+  END CASE;
+  RETURN radix;
+END;
+$$ LANGUAGE plpgsql IMMUTABLE STRICT;
+
+CREATE OR REPLACE FUNCTION sys.tsql_type_length_for_sp_columns_helper(IN type TEXT, IN typelen INT, IN typemod INT)
+RETURNS INT
+AS $$
+DECLARE
+  length INT;
+  precision INT;
+BEGIN
+  -- unknown tsql type
+  IF type IS NULL THEN
+    RETURN typelen::INT;
+  END IF;
+
+  IF typelen != -1 THEN
+    CASE type
+    WHEN 'tinyint' THEN length = 1;
+    WHEN 'date' THEN length = 6;
+    WHEN 'smalldatetime' THEN length = 16;
+    WHEN 'smallmoney' THEN length = 12;
+    WHEN 'money' THEN length = 21;
+    WHEN 'datetime' THEN length = 16;
+    WHEN 'datetime2' THEN length = 16;
+    WHEN 'datetimeoffset' THEN length = 20;
+    WHEN 'time' THEN length = 12;
+    ELSE length = typelen;
+    END CASE;
+    RETURN length;
+  END IF;
+
+  CASE
+  WHEN type in ('char', 'bpchar', 'varchar', 'binary', 'varbinary') THEN length = typemod - 4;
+  WHEN type in ('nchar', 'nvarchar') THEN length = (typemod - 4) * 2;
+  WHEN type in ('text', 'image') THEN length = 2147483647;
+  WHEN type = 'ntext' THEN length = 2147483646;
+  WHEN type = 'xml' THEN length = 0;
+  WHEN type = 'sql_variant' THEN length = 8000;
+  WHEN type = 'money' THEN length = 21;
+  WHEN type = 'sysname' THEN length = (typemod - 4) * 2;
+  WHEN type in ('numeric', 'decimal') THEN
+    precision = ((typemod - 4) >> 16) & 65535;
+    length = precision + 2;
+  ELSE
+    length = typemod;
+  END CASE;
+  RETURN length;
+END;
+$$ LANGUAGE plpgsql IMMUTABLE STRICT;
+
+CREATE OR REPLACE VIEW sys.sp_columns_100_view AS
+  SELECT 
+  CAST(t4."TABLE_CATALOG" AS sys.sysname) AS TABLE_QUALIFIER,
+  CAST(t4."TABLE_SCHEMA" AS sys.sysname) AS TABLE_OWNER,
+  CAST(t4."TABLE_NAME" AS sys.sysname) AS TABLE_NAME,
+  CAST(t4."COLUMN_NAME" AS sys.sysname) AS COLUMN_NAME,
+  CAST(t5.data_type AS smallint) AS DATA_TYPE,
+  CAST(coalesce(tsql_type_name, t.typname) AS sys.sysname) AS TYPE_NAME,
+
+  CASE WHEN t4."DATA_TYPE" = 'xml' THEN 0::INT
+    WHEN a.atttypmod != -1
+    THEN
+    CAST(coalesce(t4."NUMERIC_PRECISION", t4."CHARACTER_MAXIMUM_LENGTH", sys.tsql_type_precision_helper(t4."DATA_TYPE", a.atttypmod)) AS INT)
+    ELSE
+    CAST(coalesce(t4."NUMERIC_PRECISION", t4."CHARACTER_MAXIMUM_LENGTH", sys.tsql_type_precision_helper(t4."DATA_TYPE", t.typtypmod)) AS INT)
+  END AS PRECISION,
+
+  CASE WHEN a.atttypmod != -1
+    THEN
+    CAST(sys.tsql_type_length_for_sp_columns_helper(t4."DATA_TYPE", a.attlen, a.atttypmod) AS int)
+    ELSE
+    CAST(sys.tsql_type_length_for_sp_columns_helper(t4."DATA_TYPE", a.attlen, t.typtypmod) AS int)
+  END AS LENGTH,
+
+
+  CASE WHEN a.atttypmod != -1
+    THEN
+    CAST(coalesce(t4."NUMERIC_SCALE", sys.tsql_type_scale_helper(t4."DATA_TYPE", a.atttypmod, true)) AS smallint)
+    ELSE
+    CAST(coalesce(t4."NUMERIC_SCALE", sys.tsql_type_scale_helper(t4."DATA_TYPE", t.typtypmod, true)) AS smallint)
+  END AS SCALE,
+
+
+  CAST(coalesce(t4."NUMERIC_PRECISION_RADIX", sys.tsql_type_radix_for_sp_columns_helper(t4."DATA_TYPE")) AS smallint) AS RADIX,
+  case
+    when t4."IS_NULLABLE" = 'YES' then CAST(1 AS smallint)
+    else CAST(0 AS smallint)
+  end AS NULLABLE,
+
+  CAST(NULL AS varchar(254)) AS remarks,
+  CAST(t4."COLUMN_DEFAULT" AS sys.nvarchar(4000)) AS COLUMN_DEF,
+  CAST(t5.sql_data_type AS smallint) AS SQL_DATA_TYPE,
+  CAST(t5.SQL_DATETIME_SUB AS smallint) AS SQL_DATETIME_SUB,
+
+  CASE WHEN t4."DATA_TYPE" = 'xml' THEN 0::INT
+    WHEN t4."DATA_TYPE" = 'sql_variant' THEN 8000::INT
+    ELSE CAST(t4."CHARACTER_OCTET_LENGTH" AS int)
+  END AS CHAR_OCTET_LENGTH,
+
+  CAST(t4."ORDINAL_POSITION" AS int) AS ORDINAL_POSITION,
+  CAST(t4."IS_NULLABLE" AS varchar(254)) AS IS_NULLABLE,
+  CAST(t5.ss_data_type AS sys.tinyint) AS SS_DATA_TYPE,
+  CAST(0 AS smallint) AS SS_IS_SPARSE,
+  CAST(0 AS smallint) AS SS_IS_COLUMN_SET,
+  CAST(t6.is_computed as smallint) AS SS_IS_COMPUTED,
+  CAST(t6.is_identity as smallint) AS SS_IS_IDENTITY,
+  CAST(NULL AS varchar(254)) SS_UDT_CATALOG_NAME,
+  CAST(NULL AS varchar(254)) SS_UDT_SCHEMA_NAME,
+  CAST(NULL AS varchar(254)) SS_UDT_ASSEMBLY_TYPE_NAME,
+  CAST(NULL AS varchar(254)) SS_XML_SCHEMACOLLECTION_CATALOG_NAME,
+  CAST(NULL AS varchar(254)) SS_XML_SCHEMACOLLECTION_SCHEMA_NAME,
+  CAST(NULL AS varchar(254)) SS_XML_SCHEMACOLLECTION_NAME
+
+  FROM pg_catalog.pg_class t1
+     JOIN sys.pg_namespace_ext t2 ON t1.relnamespace = t2.oid
+     JOIN pg_catalog.pg_roles t3 ON t1.relowner = t3.oid
+     LEFT OUTER JOIN sys.babelfish_namespace_ext ext on t2.nspname = ext.nspname
+     JOIN information_schema_tsql.columns t4 ON t1.relname = t4."TABLE_NAME"
+     LEFT JOIN pg_attribute a on a.attrelid = t1.oid AND a.attname = t4."COLUMN_NAME"
+     LEFT JOIN pg_type t ON t.oid = a.atttypid
+     LEFT JOIN sys.columns t6 ON
+     (
+      t4."TABLE_NAME" = sys.OBJECT_NAME(t6.object_id::int) AND
+      t4."ORDINAL_POSITION" = t6.column_id
+     )
+     , sys.translate_pg_type_to_tsql(a.atttypid) AS tsql_type_name
+     , sys.spt_datatype_info_table AS t5
+  WHERE (t4."DATA_TYPE" = t5.TYPE_NAME)
+    AND ext.dbid = cast(sys.db_id() as oid);
+
+GRANT SELECT on sys.sp_columns_100_view TO PUBLIC;
 
 -- Reset search_path to not affect any subsequent scripts
 SELECT set_config('search_path', trim(leading 'sys, ' from current_setting('search_path')), false);

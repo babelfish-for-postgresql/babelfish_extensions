@@ -141,7 +141,7 @@ and has_schema_privilege(s.oid, 'USAGE')
 and has_table_privilege(quote_ident(s.nspname) ||'.'||quote_ident(t.relname), 'SELECT,INSERT,UPDATE,DELETE,TRUNCATE,TRIGGER');
 GRANT SELECT ON sys.all_views TO PUBLIC;
 
-CREATE OR REPLACE FUNCTION sys.tsql_type_scale_helper(IN type TEXT, IN typemod INT) RETURNS sys.TINYINT
+CREATE OR REPLACE FUNCTION sys.tsql_type_scale_helper(IN type TEXT, IN typemod INT, IN return_null_for_rest bool) RETURNS sys.TINYINT
 AS $$
 DECLARE
 	scale INT;
@@ -152,7 +152,9 @@ BEGIN
 
 	IF typemod = -1 THEN
 		CASE type
+		WHEN 'date' THEN scale = 0;
 		WHEN 'datetime' THEN scale = 3;
+		WHEN 'smalldatetime' THEN scale = 0;
 		WHEN 'datetime2' THEN scale = 6;
 		WHEN 'datetimeoffset' THEN scale = 6;
 		WHEN 'decimal' THEN scale = 38;
@@ -160,14 +162,20 @@ BEGIN
 		WHEN 'money' THEN scale = 4;
 		WHEN 'smallmoney' THEN scale = 4;
 		WHEN 'time' THEN scale = 6;
-		ELSE scale = 0;
+		WHEN 'tinyint' THEN scale = 0;
+		ELSE
+			IF return_null_for_rest
+				THEN scale = NULL;
+			ELSE scale = 0;
+			END IF;
 		END CASE;
 		RETURN scale;
 	END IF;
 
-	CASE type
+	CASE type 
 	WHEN 'decimal' THEN scale = (typemod - 4) & 65535;
 	WHEN 'numeric' THEN scale = (typemod - 4) & 65535;
+	WHEN 'smalldatetime' THEN scale = 0;
 	WHEN 'datetime2' THEN
 		CASE typemod 
 		WHEN 0 THEN scale = 0;
@@ -207,7 +215,11 @@ BEGIN
 		-- adding the case just in case we support it in future
 		WHEN 7 THEN scale = 7;
 		END CASE;
-	ELSE scale = 0;
+	ELSE
+		IF return_null_for_rest
+			THEN scale = NULL;
+		ELSE scale = 0;
+		END IF;
 	END CASE;
 	RETURN scale;
 END;
@@ -440,9 +452,9 @@ BEGIN
 			END,
 			CASE
 			WHEN a.atttypmod != -1 THEN 
-				sys.tsql_type_scale_helper(coalesce(tsql_type_name, tsql_base_type_name), a.atttypmod)
+				sys.tsql_type_scale_helper(coalesce(tsql_type_name, tsql_base_type_name), a.atttypmod, false)
 			ELSE 
-				sys.tsql_type_scale_helper(coalesce(tsql_type_name, tsql_base_type_name), t.typtypmod)
+				sys.tsql_type_scale_helper(coalesce(tsql_type_name, tsql_base_type_name), t.typtypmod, false)
 			END,
 			CAST(coll.collname AS sys.sysname),
 			CAST(a.attcollation AS int),
@@ -518,9 +530,9 @@ BEGIN
 			END,
 			CASE
 			WHEN a.atttypmod != -1 THEN 
-				sys.tsql_type_scale_helper(coalesce(tsql_type_name, tsql_base_type_name), a.atttypmod)
+				sys.tsql_type_scale_helper(coalesce(tsql_type_name, tsql_base_type_name), a.atttypmod, false)
 			ELSE 
-				sys.tsql_type_scale_helper(coalesce(tsql_type_name, tsql_base_type_name), t.typtypmod)
+				sys.tsql_type_scale_helper(coalesce(tsql_type_name, tsql_base_type_name), t.typtypmod, false)
 			END,
 			CAST(coll.collname AS sys.sysname),
 			CAST(a.attcollation AS int),
@@ -958,7 +970,7 @@ select tsql_type_name as name
   , cast(NULL as INT) as principal_id
   , sys.tsql_type_max_length_helper(tsql_type_name, t.typlen, t.typtypmod) as max_length
   , cast(sys.tsql_type_precision_helper(tsql_type_name, t.typtypmod) as int) as precision
-  , cast(sys.tsql_type_scale_helper(tsql_type_name, t.typtypmod) as int) as scale
+  , cast(sys.tsql_type_scale_helper(tsql_type_name, t.typtypmod, false) as int) as scale
   , CASE c.collname
     WHEN 'default' THEN cast(current_setting('babelfishpg_tsql.server_collation_name') as name)
     ELSE  c.collname
@@ -985,7 +997,7 @@ select cast(t.typname as text) as name
   , null::integer as principal_id
   , sys.tsql_type_max_length_helper(tsql_base_type_name, t.typlen, t.typtypmod) as max_length
   , cast(sys.tsql_type_precision_helper(tsql_base_type_name, t.typtypmod) as int) as precision
-  , cast(sys.tsql_type_scale_helper(tsql_base_type_name, t.typtypmod) as int) as scale
+  , cast(sys.tsql_type_scale_helper(tsql_base_type_name, t.typtypmod, false) as int) as scale
   , CASE c.collname
     WHEN 'default' THEN cast(current_setting('babelfishpg_tsql.server_collation_name') as name)
     ELSE  c.collname 
