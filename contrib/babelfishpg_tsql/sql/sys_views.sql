@@ -1015,14 +1015,13 @@ select cast(t.typname as text) as name
   , case when is_tbl_type then 1 else 0 end as is_table_type
 from pg_type t
 inner join pg_namespace s on s.oid = t.typnamespace
+join sys.schemas sch on t.typnamespace = sch.schema_id
 left join pg_collation c on c.oid = t.typcollation
 , sys.translate_pg_type_to_tsql(t.oid) AS tsql_type_name
 , sys.translate_pg_type_to_tsql(t.typbasetype) AS tsql_base_type_name
 , sys.is_table_type(t.typrelid) as is_tbl_type
 -- we want to show details of user defined datatypes created under babelfish database
 where tsql_type_name IS NULL
-and pg_type_is_visible(t.oid)
-and s.nspname <> 'pg_catalog' AND s.nspname <> 'sys'
 and
   (
     -- show all user defined datatypes created under babelfish database except table types

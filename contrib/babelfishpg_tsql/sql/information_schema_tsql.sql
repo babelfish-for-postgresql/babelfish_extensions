@@ -91,7 +91,7 @@ $$SELECT
 	   ELSE null
   END$$;
 
-CREATE OR REPLACE FUNCTION information_schema_tsql._pgtsql_numeric_precision(typid oid, typmod int4) RETURNS integer
+CREATE OR REPLACE FUNCTION information_schema_tsql._pgtsql_numeric_precision(type text, typid oid, typmod int4) RETURNS integer
 	LANGUAGE sql
 	IMMUTABLE
 	PARALLEL SAFE
@@ -109,10 +109,15 @@ $$SELECT
 				   END
 		 WHEN 700 /*float4*/ THEN 24
 		 WHEN 701 /*float8*/ THEN 53
-		 ELSE null
+		 ELSE
+			CASE WHEN type = 'tinyint' THEN 3
+				WHEN type = 'money' THEN 19
+				WHEN type = 'smallmoney' THEN 10
+				ELSE null
+			END
   END$$;
 
-CREATE OR REPLACE FUNCTION information_schema_tsql._pgtsql_numeric_precision_radix(typid oid, typmod int4) RETURNS integer
+CREATE OR REPLACE FUNCTION information_schema_tsql._pgtsql_numeric_precision_radix(type text, typid oid, typmod int4) RETURNS integer
 	LANGUAGE sql
 	IMMUTABLE
 	PARALLEL SAFE
@@ -121,10 +126,11 @@ CREATE OR REPLACE FUNCTION information_schema_tsql._pgtsql_numeric_precision_rad
 $$SELECT
 	CASE WHEN typid IN (700, 701) THEN 2
 		WHEN typid IN (20, 21, 23, 1700) THEN 10
+		WHEN type IN ('tinyint', 'money', 'smallmoney') THEN 10
 		ELSE null
 	END$$;
 
-CREATE OR REPLACE FUNCTION information_schema_tsql._pgtsql_numeric_scale(typid oid, typmod int4) RETURNS integer
+CREATE OR REPLACE FUNCTION information_schema_tsql._pgtsql_numeric_scale(type text, typid oid, typmod int4) RETURNS integer
 	LANGUAGE sql
 	IMMUTABLE
 	PARALLEL SAFE
@@ -137,6 +143,8 @@ $$SELECT
 				 THEN null
 				 ELSE (typmod - 4) & 65535
 				 END
+		WHEN type = 'tinyint' THEN 0
+			WHEN type IN ('money', 'smallmoney') THEN 4
 		ELSE null
 	END$$;
 
@@ -151,9 +159,9 @@ $$SELECT
 		   THEN 0
 		WHEN type = 'datetime'
 		THEN 3
-	   WHEN type IN ('time', 'datetime2', 'smalldatetime')
-		   THEN CASE WHEN typmod < 0 THEN 6 ELSE typmod END
-	   ELSE null
+	  WHEN type IN ('time', 'datetime2', 'smalldatetime', 'datetimeoffset')
+			THEN CASE WHEN typmod < 0 THEN 6 ELSE typmod END
+	  ELSE null
   END$$;
 
 
@@ -173,46 +181,37 @@ CREATE OR REPLACE VIEW information_schema_tsql.columns AS
 				AS "IS_NULLABLE",
 
 			CAST(
-				sys.translate_pg_type_to_tsql(information_schema_tsql._pgtsql_truetypid(nt, a, t)) AS sys.nvarchar(128))
+				tsql_type_name AS sys.nvarchar(128))
 				AS "DATA_TYPE",
 
 			CAST(
-				information_schema_tsql._pgtsql_char_max_length(sys.translate_pg_type_to_tsql(information_schema_tsql._pgtsql_truetypid(nt, a, t)),
-					information_schema_tsql._pgtsql_truetypmod(nt, a, t))
+				information_schema_tsql._pgtsql_char_max_length(tsql_type_name, true_typmod)
 				AS int)
 				AS "CHARACTER_MAXIMUM_LENGTH",
 
 			CAST(
-				information_schema_tsql._pgtsql_char_octet_length(sys.translate_pg_type_to_tsql(information_schema_tsql._pgtsql_truetypid(nt, a, t)),
-					information_schema_tsql._pgtsql_truetypmod(nt, a, t))
+				information_schema_tsql._pgtsql_char_octet_length(tsql_type_name, true_typmod)
 				AS int)
 				AS "CHARACTER_OCTET_LENGTH",
 
 			CAST(
 				/* Handle Tinyint separately */
-				CASE WHEN sys.translate_pg_type_to_tsql(information_schema_tsql._pgtsql_truetypid(nt, a, t)) = 'tinyint'
-					THEN 3
-					ELSE information_schema_tsql._pgtsql_numeric_precision(information_schema_tsql._pgtsql_truetypid(nt, a, t),
-						information_schema_tsql._pgtsql_truetypmod(nt, a, t))
-					END
+				information_schema_tsql._pgtsql_numeric_precision(tsql_type_name, true_typid, true_typmod)
 				AS sys.tinyint)
 				AS "NUMERIC_PRECISION",
 
 			CAST(
-				information_schema_tsql._pgtsql_numeric_precision_radix(information_schema_tsql._pgtsql_truetypid(nt, a, t),
-					information_schema_tsql._pgtsql_truetypmod(nt, a, t))
+				information_schema_tsql._pgtsql_numeric_precision_radix(tsql_type_name, true_typid, true_typmod)
 				AS smallint)
 				AS "NUMERIC_PRECISION_RADIX",
 
 			CAST(
-				information_schema_tsql._pgtsql_numeric_scale(information_schema_tsql._pgtsql_truetypid(nt, a, t),
-					information_schema_tsql._pgtsql_truetypmod(nt, a, t))
+				information_schema_tsql._pgtsql_numeric_scale(tsql_type_name, true_typid, true_typmod)
 				AS int)
 				AS "NUMERIC_SCALE",
 
 			CAST(
-				information_schema_tsql._pgtsql_datetime_precision(sys.translate_pg_type_to_tsql(information_schema_tsql._pgtsql_truetypid(nt, a, t)),
-					information_schema_tsql._pgtsql_truetypmod(nt, a, t))
+				information_schema_tsql._pgtsql_datetime_precision(tsql_type_name, true_typmod)
 				AS smallint)
 				AS "DATETIME_PRECISION",
 
@@ -246,7 +245,10 @@ CREATE OR REPLACE VIEW information_schema_tsql.columns AS
 		LEFT JOIN (pg_type bt JOIN pg_namespace nbt ON (bt.typnamespace = nbt.oid))
 			ON (t.typtype = 'd' AND t.typbasetype = bt.oid)
 		LEFT JOIN pg_collation co on co.oid = a.attcollation
-		LEFT OUTER JOIN sys.babelfish_namespace_ext ext on nc.nspname = ext.nspname
+		LEFT OUTER JOIN sys.babelfish_namespace_ext ext on nc.nspname = ext.nspname,
+		information_schema_tsql._pgtsql_truetypid(nt, a, t) AS true_typid,
+		information_schema_tsql._pgtsql_truetypmod(nt, a, t) AS true_typmod,
+		sys.translate_pg_type_to_tsql(true_typid) AS tsql_type_name
 
 	WHERE (NOT pg_is_other_temp_schema(nc.oid))
 		AND a.attnum > 0 AND NOT a.attisdropped
@@ -258,6 +260,74 @@ CREATE OR REPLACE VIEW information_schema_tsql.columns AS
 
 GRANT SELECT ON information_schema_tsql.columns TO PUBLIC;
 
+
+/*
+ * DOMAINS view
+ */
+
+CREATE OR REPLACE VIEW information_schema_tsql.domains AS
+	SELECT CAST(nc.dbname AS sys.nvarchar(128)) AS "DOMAIN_CATALOG",
+		CAST(ext.orig_name AS sys.nvarchar(128)) AS "DOMAIN_SCHEMA",
+		CAST(t.typname AS sys.sysname) AS "DOMAIN_NAME",
+		CAST(case when is_tbl_type THEN 'table type' ELSE tsql_type_name END AS sys.sysname) AS "DATA_TYPE",
+
+		CAST(information_schema_tsql._pgtsql_char_max_length(tsql_type_name, t.typtypmod)
+			AS int)
+		AS "CHARACTER_MAXIMUM_LENGTH",
+
+		CAST(information_schema_tsql._pgtsql_char_octet_length(tsql_type_name, t.typtypmod)
+			AS int)
+		AS "CHARACTER_OCTET_LENGTH",
+
+		CAST(NULL as sys.nvarchar(128)) AS "COLLATION_CATALOG",
+		CAST(NULL as sys.nvarchar(128)) AS "COLLATION_SCHEMA",
+
+		/* Returns Babelfish specific collation name. */
+		CAST(
+			CASE co.collname
+				WHEN 'default' THEN current_setting('babelfishpg_tsql.server_collation_name')
+				ELSE co.collname
+			END
+		AS sys.nvarchar(128)) AS "COLLATION_NAME",
+
+		CAST(null AS sys.varchar(6)) AS "CHARACTER_SET_CATALOG",
+		CAST(null AS sys.varchar(3)) AS "CHARACTER_SET_SCHEMA",
+		/*
+		 * TODO: We need to first create mapping of collation name to char-set name;
+		 * Until then return null.
+		 */
+		CAST(null AS sys.nvarchar(128)) AS "CHARACTER_SET_NAME",
+
+		CAST(information_schema_tsql._pgtsql_numeric_precision(tsql_type_name, t.typbasetype, t.typtypmod)
+			AS sys.tinyint)
+		AS "NUMERIC_PRECISION",
+
+		CAST(information_schema_tsql._pgtsql_numeric_precision_radix(tsql_type_name, t.typbasetype, t.typtypmod)
+			AS smallint)
+		AS "NUMERIC_PRECISION_RADIX",
+
+		CAST(information_schema_tsql._pgtsql_numeric_scale(tsql_type_name, t.typbasetype, t.typtypmod)
+			AS int)
+		AS "NUMERIC_SCALE",
+
+		CAST(information_schema_tsql._pgtsql_datetime_precision(tsql_type_name, t.typtypmod)
+			AS smallint)
+		AS "DATETIME_PRECISION",
+
+		CAST(case when is_tbl_type THEN NULL ELSE t.typdefault END AS sys.nvarchar(4000)) AS "DOMAIN_DEFAULT"
+
+		FROM (pg_type t JOIN sys.pg_namespace_ext nc ON t.typnamespace = nc.oid)
+		LEFT JOIN pg_collation co ON t.typcollation = co.oid
+		LEFT JOIN sys.babelfish_namespace_ext ext on nc.nspname = ext.nspname,
+		sys.translate_pg_type_to_tsql(t.typbasetype) AS tsql_type_name,
+		sys.is_table_type(t.typrelid) as is_tbl_type
+
+		WHERE (pg_has_role(t.typowner, 'USAGE')
+			OR has_type_privilege(t.oid, 'USAGE'))
+		AND (t.typtype = 'd' OR is_tbl_type)
+		AND ext.dbid = cast(sys.db_id() as oid);
+
+GRANT SELECT ON information_schema_tsql.domains TO PUBLIC;
 
 /*
  * TABLES view
