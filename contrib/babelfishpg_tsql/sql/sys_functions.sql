@@ -109,12 +109,10 @@ $BODY$
 $BODY$
 LANGUAGE SQL;
 
-CREATE OR REPLACE FUNCTION sys.checksum(IN _input TEXT) RETURNS INTEGER
-AS
-$BODY$
-  SELECT ('x'||SUBSTR(MD5(_input),1,8))::pg_catalog.BIT(32)::INTEGER;
-$BODY$
-LANGUAGE SQL IMMUTABLE;
+CREATE OR REPLACE FUNCTION sys.checksum(VARIADIC arr TEXT[])
+RETURNS INTEGER
+AS 'babelfishpg_tsql', 'checksum'
+LANGUAGE C IMMUTABLE PARALLEL SAFE;
 
 CREATE OR REPLACE FUNCTION sys.datetime2fromparts(IN p_year NUMERIC,
                                                                 IN p_month NUMERIC,

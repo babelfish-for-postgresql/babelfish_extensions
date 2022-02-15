@@ -12,6 +12,7 @@
 #include "catalog/pg_namespace.h"
 #include "catalog/pg_type.h"
 #include "commands/dbcommands.h"
+#include "common/md5.h"
 #include "miscadmin.h"
 #include "utils/acl.h"
 #include "utils/builtins.h"
@@ -61,6 +62,7 @@ PG_FUNCTION_INFO_V1(tsql_exp);
 PG_FUNCTION_INFO_V1(host_os);
 PG_FUNCTION_INFO_V1(tsql_stat_get_activity);
 PG_FUNCTION_INFO_V1(get_current_full_xact_id);
+PG_FUNCTION_INFO_V1(checksum);
 
 /* Not supported -- only syntax support */
 PG_FUNCTION_INFO_V1(procid);
@@ -85,6 +87,7 @@ extern bool pltsql_numeric_roundabort;
 extern bool pltsql_xact_abort;
 
 char *bbf_servername = "BABELFISH";
+#define MD5_HASH_LEN 32
 
 Datum
 trancount(PG_FUNCTION_ARGS)
@@ -711,4 +714,48 @@ get_current_full_xact_id(PG_FUNCTION_ARGS)
 	PreventCommandDuringRecovery("get_current_full_xact_id()");
 
 	PG_RETURN_FULLTRANSACTIONID(GetCurrentFullTransactionId());
+}
+
+Datum
+checksum(PG_FUNCTION_ARGS)
+{
+       int32 result = 0;
+       int nargs = PG_NARGS();
+       StringInfoData buf;
+       char md5[MD5_HASH_LEN + 1];
+       char *name;
+
+       initStringInfo(&buf);
+       if (nargs > 0)
+       {
+                ArrayType *arr;
+                Datum *values;
+                bool *nulls;
+                int nelems;
+                int i;
+                arr = PG_GETARG_ARRAYTYPE_P(0);
+                deconstruct_array(arr, TEXTOID, -1, false, TYPALIGN_INT, &values, &nulls, &nelems);
+                for (i=0; i<nelems; i++)
+                {
+                        name = nulls[i] ? "": TextDatumGetCString(values[i]);
+                        if (strlen(name) == 0 && nelems == 1)
+                                PG_RETURN_INT32(0);
+                        else
+                                appendStringInfoString(&buf, name);
+                }
+        }
+
+        /* We get hash value for md5 which is in hexadecimal.
+         * We are taking the first 8 characters of the md5 hash
+         * and converting it to int32.
+         */
+        bool success = pg_md5_hash(buf.data, buf.len, md5);
+        if (success)
+        {
+                md5[8] = '\0';
+                result = (int)strtol(md5, NULL, 16);
+        }
+        pfree(buf.data);
+
+        PG_RETURN_INT32(result);
 }

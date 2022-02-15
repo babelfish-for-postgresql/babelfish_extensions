@@ -3021,5 +3021,12 @@ $$
 LANGUAGE 'pltsql';
 GRANT EXECUTE ON PROCEDURE sys.sp_fkeys TO PUBLIC;
 
+-- Need to drop previous incorrect definition.
+DROP FUNCTION sys.checksum;
+CREATE OR REPLACE FUNCTION sys.checksum(VARIADIC arr TEXT[])
+RETURNS INTEGER
+AS 'babelfishpg_tsql', 'checksum'
+LANGUAGE C IMMUTABLE PARALLEL SAFE;
+
 -- Reset search_path to not affect any subsequent scripts
 SELECT set_config('search_path', trim(leading 'sys, ' from current_setting('search_path')), false);
