@@ -1,0 +1,239 @@
+create database db1
+go
+use db1
+go
+create table t1(a int, primary key(a))
+go
+create table t2(a int, b int, c int, foreign key(b) references t1(a))
+go
+create table t3(a int, b int, c int, primary key(c, b))
+go
+create table t4(d int, e int, foreign key(d, e) references t3(c, b))
+go
+create table MyTable5(cOlUmN_a int, CoLuMn_b int, primary key(cOlUmN_a , CoLuMn_b))
+go
+create table MyTable6(cOlUmN_c int, CoLuMn_d int, foreign key(cOlUmN_c, CoLuMn_d) references MyTable5(cOlUmN_a, CoLuMn_b))
+go
+create table [MyTable7] ([MyColumn_a] int, [MyColumn_b] int, foreign key([MyColumn_a], [MyColumn_b]) references MyTable5(cOlUmN_a, CoLuMn_b))
+go
+
+-- error: @pktable_name and/or @fktable_name must be provided
+exec sp_fkeys
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Primary or foreign key table name must be given.)~~
+
+
+-- error: provided name of database we are not currently in
+exec sp_fkeys @fktable_name = 't2', @pktable_qualifier = 'master'
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: The database name component of the object qualifier must be the name of the current database.)~~
+
+
+exec sp_fkeys @pktable_name = 't1'
+go
+~~START~~
+varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#smallint#!#smallint#!#smallint#!#varchar#!#varchar
+db1#!#dbo#!#t1#!#a#!#db1#!#dbo#!#t2#!#b#!#1#!#1#!#1#!#t2_b_fkey#!#t1_pkey
+~~END~~
+
+
+exec sys.sp_fkeys @pktable_name = 't1'
+go
+~~START~~
+varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#smallint#!#smallint#!#smallint#!#varchar#!#varchar
+db1#!#dbo#!#t1#!#a#!#db1#!#dbo#!#t2#!#b#!#1#!#1#!#1#!#t2_b_fkey#!#t1_pkey
+~~END~~
+
+
+exec sp_fkeys @fktable_name = 't2', @pktable_qualifier = 'db1'
+go
+~~START~~
+varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#smallint#!#smallint#!#smallint#!#varchar#!#varchar
+db1#!#dbo#!#t1#!#a#!#db1#!#dbo#!#t2#!#b#!#1#!#1#!#1#!#t2_b_fkey#!#t1_pkey
+~~END~~
+
+
+exec sp_fkeys @pktable_name = 't3', @pktable_owner = 'dbo'
+go
+~~START~~
+varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#smallint#!#smallint#!#smallint#!#varchar#!#varchar
+db1#!#dbo#!#t3#!#c#!#db1#!#dbo#!#t4#!#d#!#1#!#1#!#1#!#t4_d_e_fkey#!#t3_pkey
+db1#!#dbo#!#t3#!#b#!#db1#!#dbo#!#t4#!#e#!#2#!#1#!#1#!#t4_d_e_fkey#!#t3_pkey
+~~END~~
+
+
+-- case-insensitive invocation
+EXEC SP_FKEYS @FKTABLE_NAME = 't4', @PKTABLE_NAME = 't3', @PKTABLE_OWNER = 'dbo', @FKTABLE_QUALIFIER = 'db1'
+GO
+~~START~~
+varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#smallint#!#smallint#!#smallint#!#varchar#!#varchar
+db1#!#dbo#!#t3#!#c#!#db1#!#dbo#!#t4#!#d#!#1#!#1#!#1#!#t4_d_e_fkey#!#t3_pkey
+db1#!#dbo#!#t3#!#b#!#db1#!#dbo#!#t4#!#e#!#2#!#1#!#1#!#t4_d_e_fkey#!#t3_pkey
+~~END~~
+
+
+-- case-insensitive parameter calls
+exec sp_fkeys @fktable_name = 'T4', @pktable_name = 'T3', @pktable_owner = 'dbo', @fktable_qualifier = 'db1'
+go
+~~START~~
+varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#smallint#!#smallint#!#smallint#!#varchar#!#varchar
+db1#!#dbo#!#t3#!#c#!#db1#!#dbo#!#t4#!#d#!#1#!#1#!#1#!#t4_d_e_fkey#!#t3_pkey
+db1#!#dbo#!#t3#!#b#!#db1#!#dbo#!#t4#!#e#!#2#!#1#!#1#!#t4_d_e_fkey#!#t3_pkey
+~~END~~
+
+
+-- [] delimiter invocation
+EXEC [sys].[sp_fkeys] @FKTABLE_NAME = 't4', @PKTABLE_NAME = 't3', @PKTABLE_OWNER = 'dbo', @FKTABLE_QUALIFIER = 'db1'
+GO
+~~START~~
+varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#smallint#!#smallint#!#smallint#!#varchar#!#varchar
+db1#!#dbo#!#t3#!#c#!#db1#!#dbo#!#t4#!#d#!#1#!#1#!#1#!#t4_d_e_fkey#!#t3_pkey
+db1#!#dbo#!#t3#!#b#!#db1#!#dbo#!#t4#!#e#!#2#!#1#!#1#!#t4_d_e_fkey#!#t3_pkey
+~~END~~
+
+
+-- Mix-cased table tests
+exec sp_fkeys @pktable_name = 'mytable5'
+go
+~~START~~
+varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#smallint#!#smallint#!#smallint#!#varchar#!#varchar
+db1#!#dbo#!#mytable5#!#cOlUmN_a#!#db1#!#dbo#!#mytable6#!#cOlUmN_c#!#1#!#1#!#1#!#mytable6_column_c_column_d_fkey#!#mytable5_pkey
+db1#!#dbo#!#mytable5#!#CoLuMn_b#!#db1#!#dbo#!#mytable6#!#CoLuMn_d#!#2#!#1#!#1#!#mytable6_column_c_column_d_fkey#!#mytable5_pkey
+db1#!#dbo#!#mytable5#!#cOlUmN_a#!#db1#!#dbo#!#mytable7#!#MyColumn_a#!#1#!#1#!#1#!#mytable7_mycolumn_a_mycolumn_b_fkey#!#mytable5_pkey
+db1#!#dbo#!#mytable5#!#CoLuMn_b#!#db1#!#dbo#!#mytable7#!#MyColumn_b#!#2#!#1#!#1#!#mytable7_mycolumn_a_mycolumn_b_fkey#!#mytable5_pkey
+~~END~~
+
+
+exec sp_fkeys @pktable_name = 'MYTABLE5'
+go
+~~START~~
+varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#smallint#!#smallint#!#smallint#!#varchar#!#varchar
+db1#!#dbo#!#mytable5#!#cOlUmN_a#!#db1#!#dbo#!#mytable6#!#cOlUmN_c#!#1#!#1#!#1#!#mytable6_column_c_column_d_fkey#!#mytable5_pkey
+db1#!#dbo#!#mytable5#!#CoLuMn_b#!#db1#!#dbo#!#mytable6#!#CoLuMn_d#!#2#!#1#!#1#!#mytable6_column_c_column_d_fkey#!#mytable5_pkey
+db1#!#dbo#!#mytable5#!#cOlUmN_a#!#db1#!#dbo#!#mytable7#!#MyColumn_a#!#1#!#1#!#1#!#mytable7_mycolumn_a_mycolumn_b_fkey#!#mytable5_pkey
+db1#!#dbo#!#mytable5#!#CoLuMn_b#!#db1#!#dbo#!#mytable7#!#MyColumn_b#!#2#!#1#!#1#!#mytable7_mycolumn_a_mycolumn_b_fkey#!#mytable5_pkey
+~~END~~
+
+
+exec sp_fkeys @fktable_name = 'mytable6'
+go
+~~START~~
+varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#smallint#!#smallint#!#smallint#!#varchar#!#varchar
+db1#!#dbo#!#mytable5#!#cOlUmN_a#!#db1#!#dbo#!#mytable6#!#cOlUmN_c#!#1#!#1#!#1#!#mytable6_column_c_column_d_fkey#!#mytable5_pkey
+db1#!#dbo#!#mytable5#!#CoLuMn_b#!#db1#!#dbo#!#mytable6#!#CoLuMn_d#!#2#!#1#!#1#!#mytable6_column_c_column_d_fkey#!#mytable5_pkey
+~~END~~
+
+
+exec sp_fkeys @fktable_name = 'MYTABLE6'
+go
+~~START~~
+varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#smallint#!#smallint#!#smallint#!#varchar#!#varchar
+db1#!#dbo#!#mytable5#!#cOlUmN_a#!#db1#!#dbo#!#mytable6#!#cOlUmN_c#!#1#!#1#!#1#!#mytable6_column_c_column_d_fkey#!#mytable5_pkey
+db1#!#dbo#!#mytable5#!#CoLuMn_b#!#db1#!#dbo#!#mytable6#!#CoLuMn_d#!#2#!#1#!#1#!#mytable6_column_c_column_d_fkey#!#mytable5_pkey
+~~END~~
+
+
+exec sp_fkeys @fktable_name = 'mytable7'
+go
+~~START~~
+varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#smallint#!#smallint#!#smallint#!#varchar#!#varchar
+db1#!#dbo#!#mytable5#!#cOlUmN_a#!#db1#!#dbo#!#mytable7#!#MyColumn_a#!#1#!#1#!#1#!#mytable7_mycolumn_a_mycolumn_b_fkey#!#mytable5_pkey
+db1#!#dbo#!#mytable5#!#CoLuMn_b#!#db1#!#dbo#!#mytable7#!#MyColumn_b#!#2#!#1#!#1#!#mytable7_mycolumn_a_mycolumn_b_fkey#!#mytable5_pkey
+~~END~~
+
+
+exec sp_fkeys @fktable_name = 'MYTABLE7'
+go
+~~START~~
+varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#smallint#!#smallint#!#smallint#!#varchar#!#varchar
+db1#!#dbo#!#mytable5#!#cOlUmN_a#!#db1#!#dbo#!#mytable7#!#MyColumn_a#!#1#!#1#!#1#!#mytable7_mycolumn_a_mycolumn_b_fkey#!#mytable5_pkey
+db1#!#dbo#!#mytable5#!#CoLuMn_b#!#db1#!#dbo#!#mytable7#!#MyColumn_b#!#2#!#1#!#1#!#mytable7_mycolumn_a_mycolumn_b_fkey#!#mytable5_pkey
+~~END~~
+
+-- Delimiter table tests NOTE: THese do not procude correct output due to BABEL-2883
+exec sp_fkeys @pktable_name = [mytable5]
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: column "mytable5" does not exist)~~
+
+
+exec sp_fkeys @pktable_name = [MYTABLE5]
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: column "mytable5" does not exist)~~
+
+
+exec sp_fkeys @fktable_name = [mytable6]
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: column "mytable6" does not exist)~~
+
+
+exec sp_fkeys @fktable_name = [MYTABLE6]
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: column "mytable6" does not exist)~~
+
+
+exec sp_fkeys @fktable_name = [mytable7]
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: column "mytable7" does not exist)~~
+
+
+exec sp_fkeys @fktable_name = [MYTABLE7]
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: column "mytable7" does not exist)~~
+
+
+-- ensure that only tables from the same database are retrieved
+use master
+go
+create table t3(a int, b int, c int, primary key(c, b))
+go
+create table t4(d int, e int, foreign key(d, e) references t3(c, b))
+go
+EXEC SP_FKEYS @FKTABLE_NAME = 't4'
+go
+~~START~~
+varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#smallint#!#smallint#!#smallint#!#varchar#!#varchar
+master#!#dbo#!#t3#!#c#!#master#!#dbo#!#t4#!#d#!#1#!#1#!#1#!#t4_d_e_fkey#!#t3_pkey
+master#!#dbo#!#t3#!#b#!#master#!#dbo#!#t4#!#e#!#2#!#1#!#1#!#t4_d_e_fkey#!#t3_pkey
+~~END~~
+
+
+use db1
+go
+drop table t2
+go
+drop table t1
+go
+drop table t4
+go
+drop table [MyTable7]
+go
+drop table MyTable6
+go
+drop table MyTable5
+go
+drop table t3
+go
+use master
+go
+drop table t4
+go
+drop table t3
+go
+drop database db1
+go

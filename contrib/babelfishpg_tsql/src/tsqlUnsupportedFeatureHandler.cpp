@@ -1399,7 +1399,6 @@ bool TsqlUnsupportedFeatureHandlerImpl::isDefaultLanguage(TSqlParser::IdContext 
 // If unsupported feature is missing here, it will not cause a critical problem because it will just throw an error "procedure does not exist" in backend parser.
 const char *unsupported_sp_procedures[] = {
 	/* Catalog */
-	"sp_fkeys",
 	"sp_server_info",
 	"sp_sproc_columns",
 	"sp_stored_procedures",

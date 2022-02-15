@@ -2898,5 +2898,128 @@ $$
 LANGUAGE 'pltsql';
 GRANT ALL on PROCEDURE sys.sp_describe_undeclared_parameters TO PUBLIC;
 
+CREATE OR REPLACE VIEW sys.sp_fkeys_view AS
+SELECT
+-- primary key info
+CAST(t2.dbname AS sys.sysname) AS PKTABLE_QUALIFIER,
+CAST((select orig_name from sys.babelfish_namespace_ext where dbid = sys.db_id() and nspname = ref.table_schema) AS sys.sysname) AS PKTABLE_OWNER,
+CAST(ref.table_name AS sys.sysname) AS PKTABLE_NAME,
+CAST(coalesce(split_part(pkname_table.attoptions[1], '=', 2), ref.column_name) AS sys.sysname) AS PKCOLUMN_NAME,
+
+-- foreign key info
+CAST(t2.dbname AS sys.sysname) AS FKTABLE_QUALIFIER,
+CAST((select orig_name from sys.babelfish_namespace_ext where dbid = sys.db_id() and nspname = fk.table_schema) AS sys.sysname) AS FKTABLE_OWNER,
+CAST(fk.table_name AS sys.sysname) AS FKTABLE_NAME,
+CAST(coalesce(split_part(fkname_table.attoptions[1], '=', 2), fk.column_name) AS sys.sysname) AS FKCOLUMN_NAME,
+
+CAST(seq AS smallint) AS KEY_SEQ,
+CASE
+    WHEN map.update_rule = 'NO ACTION' THEN CAST(1 AS smallint)
+    WHEN map.update_rule = 'SET NULL' THEN CAST(2 AS smallint)
+    WHEN map.update_rule = 'SET DEFAULT' THEN CAST(3 AS smallint)
+    ELSE CAST(0 AS smallint)
+END AS UPDATE_RULE,
+
+CASE
+    WHEN map.delete_rule = 'NO ACTION' THEN CAST(1 AS smallint)
+    WHEN map.delete_rule = 'SET NULL' THEN CAST(2 AS smallint)
+    WHEN map.delete_rule = 'SET DEFAULT' THEN CAST(3 AS smallint)
+    ELSE CAST(0 AS smallint)
+END AS DELETE_RULE,
+CAST(fk.constraint_name AS sys.sysname) AS FK_NAME,
+CAST(ref.constraint_name AS sys.sysname) AS PK_NAME
+        
+FROM information_schema.referential_constraints AS map
+
+-- join unique constraints (e.g. PKs constraints) to ref columns info
+INNER JOIN information_schema.key_column_usage AS ref
+    JOIN pg_catalog.pg_class p1 -- Need to join this in order to get oid for pkey's original bbf name
+    JOIN sys.pg_namespace_ext p2 ON p1.relnamespace = p2.oid
+    JOIN information_schema.columns p4 ON p1.relname = p4.table_name AND p1.relnamespace::regnamespace::text = p4.table_schema
+    JOIN pg_constraint p5 ON p1.oid = p5.conrelid
+    ON (p1.relname=ref.table_name AND p4.column_name=ref.column_name AND ref.table_schema = p2.nspname AND ref.table_schema = p4.table_schema)
+    
+    ON ref.constraint_catalog = map.unique_constraint_catalog
+    AND ref.constraint_schema = map.unique_constraint_schema
+    AND ref.constraint_name = map.unique_constraint_name
+
+-- join fk columns to the correct ref columns using ordinal positions
+INNER JOIN information_schema.key_column_usage AS fk
+    ON  fk.constraint_catalog = map.constraint_catalog
+    AND fk.constraint_schema = map.constraint_schema
+    AND fk.constraint_name = map.constraint_name
+    AND fk.position_in_unique_constraint = ref.ordinal_position
+
+INNER JOIN pg_catalog.pg_class t1 
+    JOIN sys.pg_namespace_ext t2 ON t1.relnamespace = t2.oid
+    JOIN information_schema.columns t4 ON t1.relname = t4.table_name AND t1.relnamespace::regnamespace::text = t4.table_schema
+    JOIN pg_constraint t5 ON t1.oid = t5.conrelid
+    ON (t1.relname=fk.table_name AND t4.column_name=fk.column_name AND fk.table_schema = t2.nspname AND fk.table_schema = t4.table_schema)
+    
+-- get foreign key's original bbf name
+JOIN pg_catalog.pg_attribute fkname_table
+	ON (t1.oid = fkname_table.attrelid) AND (fk.column_name = fkname_table.attname)
+
+-- get primary key's original bbf name
+JOIN pg_catalog.pg_attribute pkname_table
+	ON (p1.oid = pkname_table.attrelid) AND (ref.column_name = pkname_table.attname)
+	
+	, generate_series(1,16) seq -- BBF has max 16 columns per primary key
+WHERE t5.contype = 'f'
+AND CAST(t4.dtd_identifier AS smallint) = ANY (t5.conkey)
+AND CAST(t4.dtd_identifier AS smallint) = t5.conkey[seq];
+
+GRANT SELECT ON sys.sp_fkeys_view TO PUBLIC;
+
+CREATE OR REPLACE PROCEDURE sys.sp_fkeys(
+	"@pktable_name" sys.sysname = '',
+	"@pktable_owner" sys.sysname = '',
+	"@pktable_qualifier" sys.sysname = '',
+	"@fktable_name" sys.sysname = '',
+	"@fktable_owner" sys.sysname = '',
+	"@fktable_qualifier" sys.sysname = ''
+)
+AS $$
+BEGIN
+
+	IF coalesce(@pktable_name,'') = '' AND coalesce(@fktable_name,'') = ''
+	BEGIN
+		THROW 33557097, N'Primary or foreign key table name must be given.', 1;
+	END
+
+	IF (@pktable_qualifier != '' AND (SELECT sys.db_name()) != @pktable_qualifier) OR 
+		(@fktable_qualifier != '' AND (SELECT sys.db_name()) != @fktable_qualifier)	
+	BEGIN
+		THROW 33557097, N'The database name component of the object qualifier must be the name of the current database.', 1;
+	END
+
+	SELECT 
+	PKTABLE_QUALIFIER,
+	PKTABLE_OWNER,
+	PKTABLE_NAME,
+	PKCOLUMN_NAME,
+	FKTABLE_QUALIFIER,
+	FKTABLE_OWNER,
+	FKTABLE_NAME,
+	FKCOLUMN_NAME,
+	KEY_SEQ,
+	UPDATE_RULE,
+	DELETE_RULE,
+	FK_NAME,
+	PK_NAME
+	FROM sys.sp_fkeys_view
+	WHERE ((SELECT coalesce(@pktable_name,'')) = '' OR LOWER(pktable_name) = LOWER(@pktable_name))
+		AND ((SELECT coalesce(@fktable_name,'')) = '' OR LOWER(fktable_name) = LOWER(@fktable_name))
+		AND ((SELECT coalesce(@pktable_owner,'')) = '' OR LOWER(pktable_owner) = LOWER(@pktable_owner))
+		AND ((SELECT coalesce(@pktable_qualifier,'')) = '' OR LOWER(pktable_qualifier) = LOWER(@pktable_qualifier))
+		AND ((SELECT coalesce(@fktable_owner,'')) = '' OR LOWER(fktable_owner) = LOWER(@fktable_owner))
+		AND ((SELECT coalesce(@fktable_qualifier,'')) = '' OR LOWER(fktable_qualifier) = LOWER(@fktable_qualifier))
+		ORDER BY fktable_qualifier, fktable_owner, fktable_name, key_seq;
+
+END; 
+$$
+LANGUAGE 'pltsql';
+GRANT EXECUTE ON PROCEDURE sys.sp_fkeys TO PUBLIC;
+
 -- Reset search_path to not affect any subsequent scripts
 SELECT set_config('search_path', trim(leading 'sys, ' from current_setting('search_path')), false);
