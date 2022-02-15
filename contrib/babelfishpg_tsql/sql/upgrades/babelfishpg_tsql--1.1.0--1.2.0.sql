@@ -2664,15 +2664,29 @@ BEGIN
 	END
 	
 	IF @fusepattern = 1
-	BEGIN
-		SELECT * FROM sys.sp_table_privileges_view
+  	BEGIN
+		SELECT
+		TABLE_QUALIFIER,
+		TABLE_OWNER,
+		TABLE_NAME,
+		GRANTOR,
+		GRANTEE,
+		PRIVILEGE,
+		IS_GRANTABLE FROM sys.sp_table_privileges_view
 		WHERE LOWER(TABLE_NAME) LIKE LOWER(@table_name)
 			AND ((SELECT COALESCE(@table_owner,'')) = '' OR LOWER(TABLE_OWNER) LIKE LOWER(@table_owner))
 		ORDER BY table_qualifier, table_owner, table_name, privilege;
 	END
 	ELSE 
-	BEGIN
-		SELECT * FROM sys.sp_table_privileges_view
+  	BEGIN
+		SELECT
+		TABLE_QUALIFIER,
+		TABLE_OWNER,
+		TABLE_NAME,
+		GRANTOR,
+		GRANTEE,
+		PRIVILEGE,
+		IS_GRANTABLE FROM sys.sp_table_privileges_view
 		WHERE LOWER(TABLE_NAME) = LOWER(@table_name)
 			AND ((SELECT COALESCE(@table_owner,'')) = '' OR LOWER(TABLE_OWNER) = LOWER(@table_owner))
 		ORDER BY table_qualifier, table_owner, table_name, privilege;
