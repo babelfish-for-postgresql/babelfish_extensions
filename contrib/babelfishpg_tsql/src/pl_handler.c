@@ -2054,6 +2054,7 @@ static void bbf_ProcessUtility(PlannedStmt *pstmt,
 				const char      *prev_current_user;
 				CreateRoleStmt	*stmt = (CreateRoleStmt *) parsetree;
 				List			*login_options = NIL;
+				List			*user_options = NIL;
 				ListCell		*option;
 				bool			islogin = false;
 				bool			isuser = false;
@@ -2090,7 +2091,45 @@ static void bbf_ProcessUtility(PlannedStmt *pstmt,
 						}
 					}
 					else if (strcmp(headel->defname, "isuser") == 0)
+					{
+						int location = -1;
+
 						isuser = true;
+						stmt->options = list_delete_cell(stmt->options,
+														 list_head(stmt->options));
+						pfree(headel);
+
+						/* Filter user options from default role options */
+						foreach(option, stmt->options)
+						{
+							DefElem *defel = (DefElem *) lfirst(option);
+
+							if (strcmp(defel->defname, "default_schema") == 0)
+								user_options = lappend(user_options, defel);
+							else if (strcmp(defel->defname, "name_location") == 0)
+							{
+								location = defel->location;
+								user_options = lappend(user_options, defel);
+							}
+						}
+
+						foreach(option, user_options)
+						{
+							stmt->options = list_delete_ptr(stmt->options,
+															lfirst(option));
+						}
+
+						if (location >= 0)
+						{
+							char		*orig_user_name;
+
+							orig_user_name = extract_identifier(queryString + location);
+							user_options = lappend(user_options,
+												   makeDefElem("original_user_name",
+															   (Node *) makeString(orig_user_name),
+															   -1));
+						}
+					}
 				}
 
 				if (islogin)
@@ -2135,10 +2174,42 @@ static void bbf_ProcessUtility(PlannedStmt *pstmt,
 
 					return;
 				}
-				else if (!isuser && stmt->stmt_type == ROLESTMT_USER)
-					ereport(ERROR,
-							(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-							 errmsg("CREATE USER not supported")));
+				else if (isuser)
+				{
+					/* Set current user to dbo user for create permissions */
+					prev_current_user = GetUserNameFromId(GetUserId(), false);
+
+					SetConfigOption("role", get_dbo_role_name(get_cur_db_name()),
+									PGC_SUSET, PGC_S_DATABASE_USER);
+
+					PG_TRY();
+					{
+						if (prev_ProcessUtility)
+							prev_ProcessUtility(pstmt, queryString, context,
+												params, queryEnv, dest,
+												qc);
+						else
+							standard_ProcessUtility(pstmt, queryString, context,
+													params, queryEnv, dest,
+													qc);
+
+						stmt->options = list_concat(stmt->options,
+													user_options);
+						create_bbf_authid_user_ext(stmt, true, true);
+					}
+					PG_CATCH();
+					{
+						SetConfigOption("role", prev_current_user,
+										PGC_SUSET, PGC_S_DATABASE_USER);
+						PG_RE_THROW();
+					}
+					PG_END_TRY();
+
+					SetConfigOption("role", prev_current_user,
+									PGC_SUSET, PGC_S_DATABASE_USER);
+
+					return;
+				}
 			}
 			break;
 		}
@@ -2251,10 +2322,40 @@ static void bbf_ProcessUtility(PlannedStmt *pstmt,
 				const char      *prev_current_user;
 				DropRoleStmt	*stmt = (DropRoleStmt *) parsetree;
 				bool			all_logins = false;
-				bool			no_logins = false;
+				bool			all_users = false;
+				bool			other = false;
 				ListCell		*item;
 
-				/* Must either be all logins or no logins. Cannot mix. */
+				/* Check if roles are users that need role name mapping */
+				if (stmt->roles != NIL)
+				{
+					RoleSpec		*headrol = linitial(stmt->roles);
+
+					if (strcmp(headrol->rolename, "is_user") == 0)
+					{
+						char *db_name;
+						stmt->roles = list_delete_cell(stmt->roles,
+													   list_head(stmt->roles));
+						pfree(headrol);
+						headrol = NULL;
+						db_name = get_cur_db_name();
+
+						if (strcmp(db_name, "") != 0)
+						{
+							foreach (item, stmt->roles)
+							{
+								RoleSpec	*rolspec = lfirst(item);
+								char		*user_name;
+
+								user_name = get_physical_user_name(db_name, rolspec->rolename);
+								pfree(rolspec->rolename);
+								rolspec->rolename = user_name;
+							}
+						}
+					}
+				}
+
+				/* List must be all one type of babelfish role. Cannot mix. */
 				foreach (item, stmt->roles)
 				{
 					RoleSpec		*rolspec = lfirst(item);
@@ -2271,24 +2372,30 @@ static void bbf_ProcessUtility(PlannedStmt *pstmt,
 
 					if (is_login(roleform->oid))
 						all_logins = true;
+					else if (is_user(roleform->oid))
+						all_users = true;
 					else
-						no_logins = true;
+						other = true;
 
 					ReleaseSysCache(tuple);
 
-					if (all_logins && no_logins)
+					if ((all_logins && (all_users || other)) || (all_users && other))
 						ereport(ERROR,
 								(errcode(ERRCODE_INTERNAL_ERROR),
-								 errmsg("cannot mix logins and non-login roles")));
+								 errmsg("cannot mix dropping babelfish role types")));
 				}
 
-				if (all_logins)
+				if (all_logins || all_users)
 				{
-					/* Set current user to sysadmin for drop permissions */
+					/* Set current user as appropriate for drop permissions */
 					prev_current_user = GetUserNameFromId(GetUserId(), false);
 
-					SetConfigOption("role", "sysadmin",
-									PGC_SUSET, PGC_S_DATABASE_USER);
+					if (all_logins)
+						SetConfigOption("role", "sysadmin",
+										PGC_SUSET, PGC_S_DATABASE_USER);
+					else if (all_users)
+						SetConfigOption("role", get_dbo_role_name(get_cur_db_name()),
+										PGC_SUSET, PGC_S_DATABASE_USER);
 
 					PG_TRY();
 					{

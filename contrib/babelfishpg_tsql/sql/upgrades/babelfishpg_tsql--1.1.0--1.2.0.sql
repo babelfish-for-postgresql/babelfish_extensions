@@ -1116,6 +1116,52 @@ where has_schema_privilege(s.schema_id, 'USAGE')
 and has_function_privilege(p.oid, 'EXECUTE');
 GRANT SELECT ON sys.sql_modules TO PUBLIC;
 
+-- USER extension
+CREATE TABLE sys.babelfish_authid_user_ext (
+rolname NAME NOT NULL,
+login_name NAME NOT NULL,
+type CHAR(1) NOT NULL DEFAULT 'S',
+owning_principal_id INT,
+is_fixed_role INT NOT NULL DEFAULT 0,
+authentication_type INT,
+default_language_lcid INT,
+allow_encrypted_value_modifications INT NOT NULL DEFAULT 0,
+create_date timestamptz NOT NULL,
+modify_date timestamptz NOT NULL,
+orig_username SYS.NVARCHAR(128) NOT NULL,
+database_name SYS.NVARCHAR(128) NOT NULL,
+default_schema_name SYS.NVARCHAR(128) NOT NULL,
+default_language_name SYS.NVARCHAR(128),
+authentication_type_desc SYS.NVARCHAR(60),
+PRIMARY KEY (rolname));
+
+CREATE INDEX babelfish_authid_user_ext_login_db_idx ON sys.babelfish_authid_user_ext (login_name, database_name);
+
+GRANT SELECT ON sys.babelfish_authid_user_ext TO PUBLIC;
+
+-- DATABASE_PRINCIPALS
+CREATE VIEW sys.database_principals AS SELECT
+Ext.orig_username AS name,
+CAST(Base.OID AS INT) AS principal_id,
+Ext.type,
+CAST(CASE WHEN Ext.type = 'S' THEN 'SQL_USER' ELSE NULL END AS SYS.NVARCHAR(60)) AS type_desc,
+Ext.default_schema_name,
+Ext.create_date,
+Ext.modify_date,
+Ext.owning_principal_id,
+CAST(CAST(Base.oid AS INT) AS SYS.VARBINARY(85)) AS SID,
+CAST(Ext.is_fixed_role AS SYS.BIT) AS is_fixed_role,
+Ext.authentication_type,
+Ext.authentication_type_desc,
+Ext.default_language_name,
+Ext.default_language_lcid,
+CAST(Ext.allow_encrypted_value_modifications AS SYS.BIT) AS allow_encrypted_value_modifications
+FROM pg_catalog.pg_authid AS Base INNER JOIN sys.babelfish_authid_user_ext AS Ext
+ON Base.rolname = Ext.rolname
+WHERE Ext.database_name = DB_NAME();
+
+GRANT SELECT ON sys.database_principals TO PUBLIC;
+
 create or replace view sys.identity_columns AS
 select out_object_id::bigint as object_id
   , out_name::name as name

@@ -123,10 +123,6 @@ GO
 ALTER SERVER ROLE db_owner DROP MEMBER dummy;
 GO
 
--- Test CREATE User
-CREATE USER user1;
-GO
-
 -- Test User functions
 USE MASTER;
 GO

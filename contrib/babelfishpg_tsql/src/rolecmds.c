@@ -52,7 +52,17 @@
 
 static object_access_hook_type prev_object_access_hook_drop_role = NULL;
 
+static void drop_bbf_roles(ObjectAccessType access,
+										Oid classId,
+										Oid roleid,
+										int subId,
+										void *arg);
 static void drop_bbf_authid_login_ext(ObjectAccessType access,
+										Oid classId,
+										Oid roleid,
+										int subId,
+										void *arg);
+static void drop_bbf_authid_user_ext(ObjectAccessType access,
 										Oid classId,
 										Oid roleid,
 										int subId,
@@ -65,7 +75,7 @@ assign_object_access_hook_drop_role()
 	if (object_access_hook)
 		prev_object_access_hook_drop_role = object_access_hook;
 
-	object_access_hook = drop_bbf_authid_login_ext;
+	object_access_hook = drop_bbf_roles;
 }
 
 void
@@ -251,6 +261,30 @@ alter_bbf_authid_login_ext(AlterRoleStmt *stmt)
 }
 
 static void
+drop_bbf_roles(ObjectAccessType access,
+							Oid classId,
+							Oid roleid,
+							int subId,
+							void *arg)
+{
+	/* Call previous hook if exists */
+	if (prev_object_access_hook_drop_role)
+		(*prev_object_access_hook_drop_role) (access, classId, roleid, subId, arg);
+
+	if (sql_dialect != SQL_DIALECT_TSQL)
+		return;
+
+	/* Check this was invoked by drop Role */
+	if (access != OAT_DROP || classId != AuthIdRelationId)
+		return;
+
+	if (is_login(roleid))
+		drop_bbf_authid_login_ext(access, classId, roleid, subId, arg);
+	else if (is_user(roleid))
+		drop_bbf_authid_user_ext(access, classId, roleid, subId, arg);
+}
+
+static void
 drop_bbf_authid_login_ext(ObjectAccessType access,
 							Oid classId,
 							Oid roleid,
@@ -263,23 +297,12 @@ drop_bbf_authid_login_ext(ObjectAccessType access,
 	ScanKeyData	scanKey;
 	SysScanDesc	scan;
 	NameData	rolname;
-	
-	/* Call previous hook if exists */
-	if (prev_object_access_hook_drop_role)
-		(*prev_object_access_hook_drop_role) (access, classId, roleid, subId, arg);
-
-	if (sql_dialect != SQL_DIALECT_TSQL)
-		return;
-
-	/* Check this was invoked by drop Role */
-	if (access != OAT_DROP || classId != AuthIdRelationId)
-		return;
 
 	authtuple = SearchSysCache1(AUTHOID, ObjectIdGetDatum(roleid));
-    if (!HeapTupleIsValid(authtuple))
-          ereport(ERROR,
-                  (errcode(ERRCODE_UNDEFINED_OBJECT),
-                   errmsg("role with OID %u does not exist", roleid)));
+	if (!HeapTupleIsValid(authtuple))
+		ereport(ERROR,
+				(errcode(ERRCODE_UNDEFINED_OBJECT),
+				 errmsg("role with OID %u does not exist", roleid)));
 	rolname = ((Form_pg_authid) GETSTRUCT(authtuple))->rolname;
 	
 	/* Fetch the relation */
@@ -304,6 +327,52 @@ drop_bbf_authid_login_ext(ObjectAccessType access,
 
 	systable_endscan(scan);
 	table_close(bbf_authid_login_ext_rel, RowExclusiveLock);
+	ReleaseSysCache(authtuple);
+}
+
+static void
+drop_bbf_authid_user_ext(ObjectAccessType access,
+							Oid classId,
+							Oid roleid,
+							int subId,
+							void *arg)
+{
+	Relation	bbf_authid_user_ext_rel;
+	HeapTuple	tuple;
+	HeapTuple	authtuple;
+	ScanKeyData	scanKey;
+	SysScanDesc	scan;
+	NameData	rolname;
+
+	authtuple = SearchSysCache1(AUTHOID, ObjectIdGetDatum(roleid));
+	if (!HeapTupleIsValid(authtuple))
+		ereport(ERROR,
+				(errcode(ERRCODE_UNDEFINED_OBJECT),
+				 errmsg("role with OID %u does not exist", roleid)));
+	rolname = ((Form_pg_authid) GETSTRUCT(authtuple))->rolname;
+
+	/* Fetch the relation */
+	bbf_authid_user_ext_rel = table_open(get_authid_user_ext_oid(),
+										 RowExclusiveLock);
+
+	/* Search and drop on the role */
+	ScanKeyInit(&scanKey,
+				Anum_bbf_authid_user_ext_rolname,
+				BTEqualStrategyNumber, F_NAMEEQ,
+				NameGetDatum(&rolname));
+
+	scan = systable_beginscan(bbf_authid_user_ext_rel,
+							  get_authid_user_ext_idx_oid(),
+							  true, NULL, 1, &scanKey);
+
+	tuple = systable_getnext(scan);
+
+	if (HeapTupleIsValid(tuple))
+		CatalogTupleDelete(bbf_authid_user_ext_rel,
+						   &tuple->t_self);
+
+	systable_endscan(scan);
+	table_close(bbf_authid_user_ext_rel, RowExclusiveLock);
 	ReleaseSysCache(authtuple);
 }
 
@@ -670,6 +739,285 @@ Datum drop_all_logins(PG_FUNCTION_ARGS)
 		}
 		PG_END_TRY();
 	}
+	/* Set current user back to previous user */
+	SetConfigOption("role", prev_current_user, PGC_SUSET, PGC_S_DATABASE_USER);
+	sql_dialect = saved_dialect;
+	PG_RETURN_INT32(0);
+}
+
+void
+add_to_bbf_authid_user_ext(const char *user_name,
+						   const char *orig_user_name,
+						   const char *db_name,
+						   const char *schema_name,
+						   const char *login_name)
+{
+	Relation		bbf_authid_user_ext_rel;
+	TupleDesc		bbf_authid_user_ext_dsc;
+	HeapTuple		tuple_user_ext;
+	Datum			new_record_user_ext[BBF_AUTHID_USER_EXT_NUM_COLS];
+	bool			new_record_nulls_user_ext[BBF_AUTHID_USER_EXT_NUM_COLS];
+
+	if (!user_name || !orig_user_name)
+		ereport(ERROR,
+				(errcode(ERRCODE_UNDEFINED_OBJECT),
+				 errmsg("User catalog requires user names.")));
+
+	/* Fetch the relation */
+	bbf_authid_user_ext_rel = table_open(get_authid_user_ext_oid(),
+										 RowExclusiveLock);
+	bbf_authid_user_ext_dsc = RelationGetDescr(bbf_authid_user_ext_rel);
+
+	/* Build a tuple to insert */
+	MemSet(new_record_user_ext, 0, sizeof(new_record_user_ext));
+	MemSet(new_record_nulls_user_ext, false, sizeof(new_record_nulls_user_ext));
+
+	new_record_user_ext[USER_EXT_ROLNAME] = CStringGetDatum(pstrdup(user_name));
+	if (login_name)
+		new_record_user_ext[USER_EXT_LOGIN_NAME] = CStringGetDatum(pstrdup(login_name));
+	else
+		new_record_user_ext[USER_EXT_LOGIN_NAME] = CStringGetDatum("");
+	new_record_user_ext[USER_EXT_TYPE] = CStringGetTextDatum("S"); /* placeholder */
+	new_record_user_ext[USER_EXT_OWNING_PRINCIPAL_ID] = Int32GetDatum(-1); /* placeholder */
+	new_record_user_ext[USER_EXT_IS_FIXED_ROLE] = Int32GetDatum(-1); /* placeholder */
+	new_record_user_ext[USER_EXT_AUTHENTICATION_TYPE] = Int32GetDatum(-1); /* placeholder */
+	new_record_user_ext[USER_EXT_DEFAULT_LANGUAGE_LCID] = Int32GetDatum(-1); /* placeholder */
+	new_record_user_ext[USER_EXT_ALLOW_ENCRYPTED_VALUE_MODIFICATIONS] = Int32GetDatum(-1); /* placeholder */
+	new_record_user_ext[USER_EXT_CREATE_DATE] = TimestampTzGetDatum(GetSQLCurrentTimestamp(-1));
+	new_record_user_ext[USER_EXT_MODIFY_DATE] = TimestampTzGetDatum(GetSQLCurrentTimestamp(-1));
+	new_record_user_ext[USER_EXT_ORIG_USERNAME] = CStringGetTextDatum(pstrdup(orig_user_name));
+	if (db_name)
+		new_record_user_ext[USER_EXT_DATABASE_NAME] = CStringGetTextDatum(pstrdup(db_name));
+	else
+		new_record_user_ext[USER_EXT_DATABASE_NAME] = CStringGetTextDatum(get_cur_db_name());
+	if (schema_name)
+		new_record_user_ext[USER_EXT_DEFAULT_SCHEMA_NAME] = CStringGetTextDatum(pstrdup(schema_name));
+	else
+		new_record_user_ext[USER_EXT_DEFAULT_SCHEMA_NAME] = CStringGetTextDatum("");
+	new_record_user_ext[USER_EXT_DEFAULT_LANGUAGE_NAME] = CStringGetTextDatum("English");
+	new_record_user_ext[USER_EXT_AUTHENTICATION_TYPE_DESC] = CStringGetTextDatum(""); /* placeholder */
+
+	tuple_user_ext = heap_form_tuple(bbf_authid_user_ext_dsc,
+									 new_record_user_ext,
+									 new_record_nulls_user_ext);
+
+	/* Insert new record in the bbf_authid_user_ext table */
+	CatalogTupleInsert(bbf_authid_user_ext_rel, tuple_user_ext);
+
+	/* Close bbf_authid_user_ext, but keep lock till commit */
+	table_close(bbf_authid_user_ext_rel, RowExclusiveLock);
+
+	/* Advance cmd counter to make the insert visible */
+	CommandCounterIncrement();
+}
+
+void
+create_bbf_authid_user_ext(CreateRoleStmt *stmt, bool has_schema, bool has_login)
+{
+	ListCell		*option;
+	char			*default_schema = NULL;
+	char			*original_user_name = NULL;
+	RoleSpec		*login = NULL;
+	NameData		*login_name;
+
+	/* Extract options from the statement node tree */
+	foreach(option, stmt->options)
+	{
+		DefElem    *defel = (DefElem *) lfirst(option);
+
+		if (strcmp(defel->defname, "default_schema") == 0)
+		{
+			if (defel->arg)
+				default_schema = strVal(defel->arg);
+		}
+		else if (strcmp(defel->defname, "original_user_name") == 0)
+		{
+			if (defel->arg)
+				original_user_name = strVal(defel->arg);
+		}
+		else if (strcmp(defel->defname, "rolemembers") == 0)
+		{
+			List		*rolemembers = NIL;
+
+			rolemembers = (List *) defel->arg;
+			login = (RoleSpec *) linitial(rolemembers);
+		}
+	}
+
+	if (has_schema)
+	{
+		char			*physical_schema;
+
+		if (!default_schema)
+			default_schema = "dbo";
+
+		physical_schema = get_physical_schema_name(get_cur_db_name(), default_schema);
+		if (!OidIsValid(get_namespace_oid(physical_schema, true)))
+			ereport(ERROR,
+					(errcode(ERRCODE_UNDEFINED_OBJECT),
+					 errmsg("The schema '%s' does not exist.", default_schema)));
+	}
+
+	if (has_login)
+	{
+		Relation		bbf_authid_user_ext_rel;
+		HeapTuple		tuple_user_ext;
+		ScanKeyData		key[2];
+		TableScanDesc	scan;
+
+		if (login == NULL || !is_login_name(login->rolename))
+			ereport(ERROR,
+					(errcode(ERRCODE_UNDEFINED_OBJECT),
+					 errmsg("The login '%s' does not exist.", login->rolename)));
+
+		/* Fetch the relation */
+		bbf_authid_user_ext_rel = table_open(get_authid_user_ext_oid(),
+											 RowExclusiveLock);
+
+		/* Check for login to user uniqueness in the database */
+		login_name = (NameData *) palloc0(NAMEDATALEN);
+		snprintf(login_name->data, NAMEDATALEN, "%s", login->rolename);
+		ScanKeyInit(&key[0],
+					Anum_bbf_authid_user_ext_login_name,
+					BTEqualStrategyNumber, F_NAMEEQ,
+					NameGetDatum(login_name));
+		ScanKeyInit(&key[1],
+					Anum_bbf_authid_user_ext_database_name,
+					BTEqualStrategyNumber, F_TEXTEQ,
+					CStringGetTextDatum(get_cur_db_name()));
+
+		scan = table_beginscan_catalog(bbf_authid_user_ext_rel, 2, key);
+
+		tuple_user_ext = heap_getnext(scan, ForwardScanDirection);
+		if (tuple_user_ext != NULL)
+			ereport(ERROR,
+					(errcode(ERRCODE_INVALID_ROLE_SPECIFICATION),
+					 errmsg("Existing user already maps to login '%s' in current database.", login->rolename)));
+
+		table_endscan(scan);
+		table_close(bbf_authid_user_ext_rel, RowExclusiveLock);
+	}
+
+	/* Add to the catalog table. Adds current database name by default */
+	add_to_bbf_authid_user_ext(stmt->role, original_user_name, NULL, default_schema, login->rolename);
+}
+
+static List *
+gen_dropuser_subcmds(const char *user)
+{
+	StringInfoData query;
+	List *res;
+	Node *stmt;
+
+	initStringInfo(&query);
+
+	appendStringInfo(&query, "DROP USER dummy; ");
+	res = raw_parser(query.data);
+
+	if (list_length(res) != 1)
+		ereport(ERROR,
+				(errcode(ERRCODE_SYNTAX_ERROR),
+				 errmsg("Expected 1 statement but get %d statements after parsing",
+						list_length(res))));
+
+	stmt = parsetree_nth_stmt(res, 0);
+	update_DropRoleStmt(stmt, user);
+
+	return res;
+}
+
+PG_FUNCTION_INFO_V1(drop_all_users);
+Datum drop_all_users(PG_FUNCTION_ARGS)
+{
+	Relation	bbf_authid_user_ext_rel;
+	HeapTuple	tuple;
+	SysScanDesc	scan;
+	char*		rolname;
+	List		*rolname_list = NIL;
+	const char  *prev_current_user;
+	List        *parsetree_list;
+	ListCell    *parsetree_item;
+	int         saved_dialect = sql_dialect;
+
+	/* Only allow superuser or SA to drop all users. */
+	if (!superuser() && !role_is_sa(GetUserId()))
+          ereport(ERROR,
+                  (errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
+                   errmsg("user %s not allowed to drop all users in babelfish database %s",
+					   GetUserNameFromId(GetUserId(), true), get_database_name(MyDatabaseId))));
+
+	/* Fetch the relation */
+	bbf_authid_user_ext_rel = table_open(get_authid_user_ext_oid(),
+										  RowExclusiveLock);
+	scan = systable_beginscan(bbf_authid_user_ext_rel, 0, false, NULL, 0, NULL);
+
+	/* Get all the user names beforehand. */
+	while (HeapTupleIsValid(tuple = systable_getnext(scan))) {
+		Form_authid_user_ext  userform = (Form_authid_user_ext) GETSTRUCT(tuple);
+		rolname = NameStr(userform->rolname);
+		rolname_list = lcons(rolname, rolname_list);
+	}
+
+	systable_endscan(scan);
+	table_close(bbf_authid_user_ext_rel, RowExclusiveLock);
+
+	/* Set current user to session user for dropping permissions */
+	prev_current_user = GetUserNameFromId(GetUserId(), false);
+	SetConfigOption("role", "sysadmin", PGC_SUSET, PGC_S_DATABASE_USER);
+
+	sql_dialect = SQL_DIALECT_TSQL;
+
+	while (rolname_list != NIL) {
+		char *rolname = linitial(rolname_list);
+		rolname_list = list_delete_first(rolname_list);
+
+		PG_TRY();
+		{
+			/* Advance cmd counter to make the delete visible */
+			CommandCounterIncrement();
+
+			parsetree_list = gen_dropuser_subcmds(rolname);
+
+			/* Run all subcommands */
+			foreach(parsetree_item, parsetree_list)
+			{
+				Node	   *stmt = ((RawStmt *) lfirst(parsetree_item))->stmt;
+				PlannedStmt *wrapper;
+
+				/* need to make a wrapper PlannedStmt */
+				wrapper = makeNode(PlannedStmt);
+				wrapper->commandType = CMD_UTILITY;
+				wrapper->canSetTag = false;
+				wrapper->utilityStmt = stmt;
+				wrapper->stmt_location = 0;
+				wrapper->stmt_len = 16;
+
+				/* do this step */
+				ProcessUtility(wrapper,
+							   "(DROP USER )",
+							   PROCESS_UTILITY_SUBCOMMAND,
+							   NULL,
+							   NULL,
+							   None_Receiver,
+							   NULL);
+
+				/* make sure later steps can see the object created here */
+				CommandCounterIncrement();
+			}
+		}
+		PG_CATCH();
+		{
+			/* Clean up. Restore previous state. */
+			SetConfigOption("role",
+							prev_current_user,
+							PGC_SUSET,
+							PGC_S_DATABASE_USER);
+			sql_dialect = saved_dialect;
+			PG_RE_THROW();
+		}
+		PG_END_TRY();
+	}
+
 	/* Set current user back to previous user */
 	SetConfigOption("role", prev_current_user, PGC_SUSET, PGC_S_DATABASE_USER);
 	sql_dialect = saved_dialect;

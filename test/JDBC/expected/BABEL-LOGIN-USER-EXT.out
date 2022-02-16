@@ -220,14 +220,6 @@ GO
 ~~ERROR (Message: only sysadmin role is supported in ALTER SERVER ROLE statement)~~
 
 
--- Test CREATE User
-CREATE USER user1;
-GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: CREATE USER not supported)~~
-
-
 -- Test User functions
 USE MASTER;
 GO

@@ -17,11 +17,14 @@
 %type <node> tsql_CreateFunctionStmt tsql_VariableSetStmt tsql_CreateTrigStmt tsql_TransactionStmt tsql_UpdateStmt tsql_DeleteStmt tsql_IndexStmt
 %type <node> tsql_DropIndexStmt tsql_InsertStmt
 %type <node> tsql_CreateLoginStmt tsql_AlterLoginStmt tsql_DropLoginStmt
+%type <node> tsql_CreateUserStmt tsql_DropRoleStmt
 %type <node> tsql_nchar
 %type <list> tsql_login_option_list1 tsql_login_option_list2
 %type <list> tsql_alter_login_option_list
 %type <defelt> tsql_login_option_elem tsql_alter_login_option_elem
 %type <boolean> tsql_enable_disable
+%type <defelt> tsql_create_user_options
+%type <str> tsql_create_user_login
 %type <list> tsql_createfunc_options tsql_createfunc_opt_list tsql_IsolationLevel
 %type <list> tsql_func_name
 %type <defelt> tsql_func_opt_item
@@ -39,8 +42,6 @@
 %type <boolean> tsql_opt_output tsql_opt_readonly
 
 %type <str> tsql_OptTranName tsql_IsolationLevelStr
-
-%type <boolean> tsql_without_login
 
 %type <node> tsql_alter_table_cmd
 
@@ -83,7 +84,7 @@
 
 %token <keyword> TSQL_ATAT TSQL_ALLOW_SNAPSHOT_ISOLATION
 	TSQL_CALLER TSQL_CHOOSE TSQL_CLUSTERED TSQL_COLUMNSTORE TSQL_CONVERT
-	TSQL_DATENAME TSQL_DATEPART TSQL_DATEDIFF TSQL_DATEADD TSQL_ISNULL
+	TSQL_DATENAME TSQL_DATEPART TSQL_DATEDIFF TSQL_DATEADD TSQL_DEFAULT_SCHEMA TSQL_ISNULL
 	TSQL_D TSQL_DAYOFYEAR TSQL_DD TSQL_DW TSQL_DY TSQL_HH TSQL_ISO_WEEK TSQL_ISOWK
 	TSQL_ISOWW TSQL_LOGIN TSQL_M TSQL_MCS TSQL_MICROSECOND TSQL_MILLISECOND TSQL_MM TSQL_MS
 	TSQL_N TSQL_NANOSECOND TSQL_NONCLUSTERED TSQL_NS TSQL_OUTPUT TSQL_OUT TSQL_PARSE TSQL_Q

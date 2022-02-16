@@ -228,6 +228,46 @@ rewrite_object_refs(Node *stmt)
 			}
 			break;
 		}
+		case T_CreateRoleStmt:
+		{
+			CreateRoleStmt *create_role = (CreateRoleStmt *) stmt;
+
+			if (create_role->options != NIL)
+			{
+				DefElem *headel = (DefElem *) linitial(create_role->options);
+
+				if (strcmp(headel->defname, "isuser") == 0)
+				{
+					ListCell	*option;
+					char		*user_name;
+					char		*db_name = get_cur_db_name();
+
+					user_name = get_physical_user_name(db_name, create_role->role);
+					pfree(create_role->role);
+					create_role->role = user_name;
+
+					foreach (option, create_role->options)
+					{
+						DefElem    *defel = (DefElem *) lfirst(option);
+
+						if (strcmp(defel->defname, "rolemembers") == 0)
+						{
+							List		*rolemembers = NIL;
+							RoleSpec	*spec;
+
+							spec = makeNode(RoleSpec);
+							spec->roletype = ROLESPEC_CSTRING;
+							spec->location = -1;
+							spec->rolename = pstrdup(get_db_owner_name(db_name));
+
+							rolemembers = (List *) defel->arg;
+							rolemembers = lappend(rolemembers, spec);
+						}
+					}
+				}
+			}
+			break;
+		}
 		case T_DropStmt:
 		{
 			DropStmt *drop = (DropStmt *) stmt;
@@ -821,6 +861,37 @@ get_physical_schema_name(char *db_name, const char *schema)
 		snprintf(result, (MAX_BBF_NAMEDATALEND), "%s_%s", db_name, name);
 	}
 
+	truncate_tsql_identifier(result);
+
+	return result;
+}
+
+char *
+get_physical_user_name(char *db_name, char *user_name)
+{
+	char	*new_user_name;
+	char	*result;
+	int		len = strlen(user_name);
+
+	if (!user_name || len == 0)
+		return NULL;
+
+	if (!DbidIsValid(get_db_id(db_name)))
+		ereport(ERROR,
+				(errcode(ERRCODE_UNDEFINED_DATABASE),
+				 errmsg("database \"%s\" does not exist.", db_name)));
+
+	/* Get a new copy */
+	new_user_name = palloc0(len > MAX_BBF_NAMEDATALEND ? len : MAX_BBF_NAMEDATALEND);
+	strncpy(new_user_name, user_name, len);
+
+	/* Truncate to 64 bytes */
+	truncate_tsql_identifier(new_user_name);
+
+	result = palloc0(MAX_BBF_NAMEDATALEND);
+	snprintf(result, (MAX_BBF_NAMEDATALEND), "%s_%s", db_name, user_name);
+
+	/* Truncate final result to 64 bytes */
 	truncate_tsql_identifier(result);
 
 	return result;

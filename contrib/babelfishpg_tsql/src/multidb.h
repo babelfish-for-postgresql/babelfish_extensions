@@ -16,6 +16,7 @@ extern void rewrite_object_refs(Node *stmt);
 extern void rewrite_plain_name(List *name);  /* Value Strings */
 
 /* helper functions */
+extern char *get_physical_user_name(char *db_name, char *user_name);
 extern char *get_physical_schema_name(char *db_name, const char *schema);
 extern const char *get_dbo_schema_name(const char *dbname);
 extern const char *get_dbo_role_name(const char *dbname);

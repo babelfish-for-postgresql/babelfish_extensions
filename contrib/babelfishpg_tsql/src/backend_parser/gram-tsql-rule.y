@@ -159,27 +159,60 @@ tsql_windows_options:
 			| TSQL_DEFAULT_LANGUAGE '=' NonReservedWord
 		;
 
-CreateUserStmt:
-			CREATE USER RoleId tsql_without_login opt_with OptRoleList
+tsql_CreateUserStmt:
+			CREATE USER RoleId tsql_create_user_login tsql_create_user_options
 				{
-					CreateRoleStmt *n = makeNode(CreateRoleStmt);
+					CreateRoleStmt	*n = makeNode(CreateRoleStmt);
+					RoleSpec		*login;
+					List			*rolelist;
+
 					n->stmt_type = ROLESTMT_USER;
 					n->role = $3;
-					n->options = $6;
-					if ($4)
-					{
-						if ($6)
-						{
-							n->options = lappend(n->options,
-								list_make1(makeDefElem("canlogin", (Node *)makeInteger(false), @1)));
-						}
-						else
-						{
-							n->options = list_make1(makeDefElem("canlogin", (Node *)makeInteger(false), @1));
-						}
-					}
-					$$ = (Node *)n;
+					n->options = list_make1(makeDefElem("isuser",
+											(Node *)makeInteger(true),
+											@1)); /* Must be first */
+					n->options = lappend(n->options,
+										 makeDefElem("inherit",
+													 (Node *)makeInteger(true),
+													 @1));
+					n->options = lappend(n->options,
+										 makeDefElem("canlogin",
+													 (Node *)makeInteger(false),
+													 @1));
+					login = makeRoleSpec(ROLESPEC_CSTRING, @1);
+					if ($4 != NULL)
+						login->rolename = $4;
+					else
+						login->rolename = pstrdup($3);
+					rolelist = list_make1(login); /* Login must be first */
+					n->options = lappend(n->options,
+										 makeDefElem("rolemembers",
+													 (Node *)rolelist,
+													 @1));
+					if ($5 != NULL)
+						n->options = lappend(n->options, $5);
+					n->options = lappend(n->options,
+										 makeDefElem("name_location",
+													 (Node *)makeInteger(@3),
+													 @3));
+					$$ = (Node *) n;
 				}
+		;
+
+tsql_create_user_login:
+			FOR TSQL_LOGIN RoleId		{ $$ = $3; }
+			| FROM TSQL_LOGIN RoleId	{ $$ = $3; }
+			| /* EMPTY */				{ $$ = NULL; }
+		;
+
+tsql_create_user_options:
+			WITH TSQL_DEFAULT_SCHEMA '=' ColId
+				{
+					$$ = makeDefElem("default_schema",
+									 (Node *)makeString($4),
+									 @1);
+				}
+			| /* EMPTY */	{ $$ = NULL; }
 		;
 
 tsql_AlterLoginStmt:
@@ -319,6 +352,44 @@ tsql_DropLoginStmt:
 					$$ = (Node *)n;
 				}
 		;
+
+tsql_DropRoleStmt:
+			DROP ROLE role_list
+				{
+					DropRoleStmt *n = makeNode(DropRoleStmt);
+					n->missing_ok = false;
+					n->roles = $3;
+					$$ = (Node *)n;
+				}
+			| DROP ROLE IF_P EXISTS role_list
+				{
+					DropRoleStmt *n = makeNode(DropRoleStmt);
+					n->missing_ok = true;
+					n->roles = $5;
+					$$ = (Node *)n;
+				}
+			| DROP USER role_list
+				{
+					DropRoleStmt	*n = makeNode(DropRoleStmt);
+					RoleSpec		*is_user;
+
+					is_user = makeRoleSpec(ROLESPEC_CSTRING, @1);
+					is_user->rolename = "is_user";
+					n->missing_ok = false;
+					n->roles = lcons(is_user, $3);
+					$$ = (Node *)n;
+				}
+			| DROP USER IF_P EXISTS role_list
+				{
+					DropRoleStmt *n = makeNode(DropRoleStmt);
+					RoleSpec		*is_user;
+
+					is_user = makeRoleSpec(ROLESPEC_CSTRING, @1);
+					is_user->rolename = "is_user";
+					n->missing_ok = true;
+					n->roles = lcons(is_user, $5);
+					$$ = (Node *)n;
+				}
 
 tsql_nchar:
 			TSQL_NVARCHAR Sconst { $$ = (Node *)makeString($2); }
@@ -1670,8 +1741,7 @@ tsql_stmt :
 			| tsql_CreateTrigStmt
 			| CreateEventTrigStmt
 			| CreateRoleStmt
-			| CreateUserStmt
-			| CreateUserMappingStmt
+			| tsql_CreateUserStmt
 			| CreatedbStmt
 			| DeallocateStmt
 			| DeclareCursorStmt
@@ -1690,8 +1760,8 @@ tsql_stmt :
 			| DropSubscriptionStmt
 			| DropTableSpaceStmt
 			| DropTransformStmt
-			| DropRoleStmt
 			| DropUserMappingStmt
+			| tsql_DropRoleStmt
 			| DropdbStmt
 			| tsql_ExecStmt
 			| ExplainStmt
@@ -1997,9 +2067,6 @@ tsql_actual_arg: ColId '=' a_expr tsql_opt_output
 					{
 						$$ = $1; /* FIXME: record $2 somewhere - probably need a new Node type */
 					}
-		;
-
-tsql_without_login: WITHOUT TSQL_LOGIN					{ $$ = true; }
 		;
 
 tsql_constraint_check:
@@ -3694,6 +3761,7 @@ unreserved_keyword:
 			| TSQL_DD
 			| TSQL_DEFAULT_DATABASE
 			| TSQL_DEFAULT_LANGUAGE
+			| TSQL_DEFAULT_SCHEMA
 			| TSQL_DW
 			| TSQL_DY
 			| TSQL_EXPLICIT
