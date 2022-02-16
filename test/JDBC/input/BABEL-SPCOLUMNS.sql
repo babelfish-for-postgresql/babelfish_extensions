@@ -44,6 +44,25 @@ GO
 EXEC sp_columns_100 '%_money', 'dbo', NULL, NULL, 0, 2, 0
 GO
 
+-- sp_columns_100, wild card matching enabled
+EXEC sp_columns_100 '%[_]money', 'dbo', NULL, NULL, 0, 2, 1
+GO
+
+EXEC sp_columns_100 '%[_]MONEY', 'dbo', NULL, NULL, 0, 2, 1
+GO
+
+EXEC sp_columns_100 't_[a-z][a-z][a-z][a-z][a-z]', 'dbo', NULL, NULL, 0, 2, 1
+GO
+
+EXEC sp_columns_100 't_[a-z][a-z][a-z][a-z][a-z]', 'dbo', NULL, NULL, 0, 2, 1
+GO
+
+EXEC sp_columns_100 'T_[A-Z][A-Z][A-Z][A-Z][A-Z]', 'dbo', NULL, NULL, 0, 2, 1
+GO
+
+EXEC sp_columns_100 't_[a-z][a-z][a-z][a-z][^a-z]', 'dbo', NULL, NULL, 0, 2, 1
+GO
+
 drop table t_int
 drop table t_text
 drop table t_time

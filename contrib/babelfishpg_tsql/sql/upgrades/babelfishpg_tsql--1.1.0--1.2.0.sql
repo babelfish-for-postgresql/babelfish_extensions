@@ -2897,6 +2897,97 @@ CREATE OR REPLACE VIEW sys.sp_columns_100_view AS
 
 GRANT SELECT on sys.sp_columns_100_view TO PUBLIC;
 
+create or replace function sys.sp_columns_100_internal(
+	in_table_name sys.nvarchar(384),
+    in_table_owner sys.nvarchar(384) = '', 
+    in_table_qualifier sys.nvarchar(384) = '',
+    in_column_name sys.nvarchar(384) = '',
+	in_NameScope int = 0,
+    in_ODBCVer int = 2,
+    in_fusepattern smallint = 1)
+returns table (
+	out_table_qualifier sys.sysname,
+	out_table_owner sys.sysname,
+	out_table_name sys.sysname,
+	out_column_name sys.sysname,
+	out_data_type smallint,
+	out_type_name sys.sysname,
+	out_precision int,
+	out_length int,
+	out_scale smallint,
+	out_radix smallint,
+	out_nullable smallint,
+	out_remarks varchar(254),
+	out_column_def sys.nvarchar(4000),
+	out_sql_data_type smallint,
+	out_sql_datetime_sub smallint,
+	out_char_octet_length int,
+	out_ordinal_position int,
+	out_is_nullable varchar(254),
+	out_ss_is_sparse smallint,
+	out_ss_is_column_set smallint,
+	out_ss_is_computed smallint,
+	out_ss_is_identity smallint,
+	out_ss_udt_catalog_name varchar(254),
+	out_ss_udt_schema_name varchar(254),
+	out_ss_udt_assembly_type_name varchar(254),
+	out_ss_xml_schemacollection_catalog_name varchar(254),
+	out_ss_xml_schemacollection_schema_name varchar(254),
+	out_ss_xml_schemacollection_name varchar(254),
+	out_ss_data_type sys.tinyint
+)
+as $$
+begin
+	IF in_fusepattern = 1 THEN
+		return query
+	    select table_qualifier, 
+				table_owner,
+				table_name,
+				column_name,
+				data_type,
+				type_name,
+				precision,
+				length,
+				scale,
+				radix,
+				nullable,
+				remarks,
+				column_def,
+				sql_data_type,
+				sql_datetime_sub,
+				char_octet_length,
+				ordinal_position,
+				is_nullable,
+				ss_is_sparse,
+				ss_is_column_set,
+				ss_is_computed,
+				ss_is_identity,
+				ss_udt_catalog_name,
+				ss_udt_schema_name,
+				ss_udt_assembly_type_name,
+				ss_xml_schemacollection_catalog_name,
+				ss_xml_schemacollection_schema_name,
+				ss_xml_schemacollection_name,
+				ss_data_type
+		from sys.sp_columns_100_view
+	    where lower(table_name) similar to lower(in_table_name)
+	      and ((SELECT coalesce(in_table_owner,'')) = '' or table_owner like in_table_owner)
+	      and ((SELECT coalesce(in_table_qualifier,'')) = '' or table_qualifier like in_table_qualifier)
+	      and ((SELECT coalesce(in_column_name,'')) = '' or column_name like in_column_name)
+		order by table_qualifier, table_owner, table_name;
+	ELSE 
+		return query
+	    select table_qualifier, precision from sys.sp_columns_100_view
+	      where in_table_name = table_name
+	      and ((SELECT coalesce(in_table_owner,'')) = '' or table_owner = in_table_owner)
+	      and ((SELECT coalesce(in_table_qualifier,'')) = '' or table_qualifier = in_table_qualifier)
+	      and ((SELECT coalesce(in_column_name,'')) = '' or column_name = in_column_name)
+		order by table_qualifier, table_owner, table_name;
+	END IF;
+end;
+$$
+LANGUAGE plpgsql;
+
 -- Need to DROP first because input types are changed during upgrade
 DROP FUNCTION sys.sp_describe_undeclared_parameters_internal;
 -- BABEL-1797: initial support of sp_describe_undeclared_parameters
