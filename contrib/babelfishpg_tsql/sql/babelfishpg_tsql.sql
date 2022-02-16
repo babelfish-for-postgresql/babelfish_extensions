@@ -444,7 +444,7 @@ begin
 				ss_xml_schemacollection_name,
 				ss_data_type
 		from sys.sp_columns_100_view
-	    where table_name like in_table_name
+	    where lower(table_name) similar to lower(in_table_name)
 	      and ((SELECT coalesce(in_table_owner,'')) = '' or table_owner like in_table_owner)
 	      and ((SELECT coalesce(in_table_qualifier,'')) = '' or table_qualifier like in_table_qualifier)
 	      and ((SELECT coalesce(in_column_name,'')) = '' or column_name like in_column_name)
