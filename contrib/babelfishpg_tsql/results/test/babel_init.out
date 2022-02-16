@@ -1,0 +1,14 @@
+SET client_min_messages TO WARNING;
+CREATE EXTENSION "babelfishpg_tsql" cascade;
+RESET client_min_messages;
+SET babelfishpg_tsql.sql_dialect = 'tsql';
+reset babelfishpg_tsql.sql_dialect;
+--BABEL-978: make sure error stack is not exceeded in/after extension creation.
+CREATE PROCEDURE myproc() LANGUAGE plpgsql AS $$
+BEGIN
+CREATE invalid_syntax;
+END;
+$$;
+ERROR:  syntax error at or near "invalid_syntax"
+LINE 3: CREATE invalid_syntax;
+               ^
