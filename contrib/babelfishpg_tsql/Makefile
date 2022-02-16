@@ -84,6 +84,10 @@ UPGRADES = $(patsubst sql/upgrades/%.sql,sql/%.sql,$(wildcard sql/upgrades/*.sql
 REGRESS = test/babel_like
 REGRESS += test/babel_219
 REGRESS += test/babel_init
+REGRESS += test/babel_select_distinct_top
+REGRESS += test/babel_transaction
+REGRESS += test/babel_typecode
+REGRESS += test/babel_uniqueidentifier
 
 # We need the previous version to test extension upgrade scripts
 ifdef PREV_EXTVERSION
