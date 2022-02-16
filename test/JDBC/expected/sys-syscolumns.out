@@ -362,12 +362,12 @@ int
 ~~END~~
 
 
-select object_name(system_type_id), object_name(user_type_id) from sys.columns where object_id = OBJECT_ID('t1');
+select object_name(system_type_id), object_name(user_type_id) from sys.columns where object_id = OBJECT_ID('t1') order by object_name(user_type_id);
 GO
 ~~START~~
 varchar#!#varchar
-int4#!#type1
 int4#!#int4
+int4#!#type1
 ~~END~~
 
 
