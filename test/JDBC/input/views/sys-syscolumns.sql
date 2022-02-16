@@ -208,7 +208,7 @@ GO
 select count(*) from sys.columns where object_id = OBJECT_ID('t1') and system_type_id <> user_type_id
 GO
 
-select object_name(system_type_id), object_name(user_type_id) from sys.columns where object_id = OBJECT_ID('t1');
+select object_name(system_type_id), object_name(user_type_id) from sys.columns where object_id = OBJECT_ID('t1') order by object_name(user_type_id);
 GO
 
 drop table t1;
