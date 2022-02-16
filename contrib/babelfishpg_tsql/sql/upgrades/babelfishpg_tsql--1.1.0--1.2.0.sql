@@ -3181,6 +3181,58 @@ RETURNS table (
 	detail jsonb
 ) AS 'babelfishpg_tsql', 'babelfish_inconsistent_metadata' LANGUAGE C;
 
+CREATE OR REPLACE FUNCTION is_srvrolemember(role PG_CATALOG.TEXT, login PG_CATALOG.TEXT DEFAULT CURRENT_USER)
+RETURNS INTEGER AS
+$$
+DECLARE has_role BOOLEAN;
+DECLARE login_valid BOOLEAN;
+begin
+	role := LOWER(role);
+	login := LOWER(login);
+	
+	login_valid = (login = CURRENT_USER) OR 
+		(EXISTS (SELECT name
+	 			FROM sys.server_principals
+		 	 	WHERE 
+				LOWER(name) = login 
+				AND type = 'S'));
+ 	
+ 	IF NOT login_valid THEN
+ 		RETURN NULL;
+    
+    ELSIF role = 'public' THEN
+    	RETURN 1;
+	
+ 	ELSIF role = 'sysadmin' THEN
+	  	has_role = pg_has_role(login, role, 'MEMBER');
+	    IF has_role THEN
+			RETURN 1;
+		ELSE
+			RETURN 0;
+		END IF;
+	
+    ELSIF role IN (
+            'serveradmin',
+            'securityadmin',
+            'setupadmin',
+            'securityadmin',
+            'processadmin',
+            'dbcreator',
+            'diskadmin',
+            'bulkadmin') THEN 
+    	RETURN 0;
+ 	
+    ELSE
+ 		  RETURN NULL;
+ 	END IF;
+	
+ 	EXCEPTION WHEN OTHERS THEN
+	 	  RETURN NULL;
+END;
+$$
+STRICT
+LANGUAGE plpgsql;
+
 CREATE OR REPLACE VIEW sys.sp_stored_procedures_view AS
 SELECT 
 CAST(d.name AS sys.sysname) AS PROCEDURE_QUALIFIER,

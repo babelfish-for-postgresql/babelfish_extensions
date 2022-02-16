@@ -669,22 +669,6 @@ $$
 STRICT
 LANGUAGE plpgsql;
 
-CREATE OR REPLACE FUNCTION sys.is_srvrolemember(role PG_CATALOG.TEXT, login PG_CATALOG.TEXT DEFAULT CURRENT_USER) RETURNS INTEGER AS $$
-DECLARE has_role BOOLEAN;
-BEGIN
-	has_role = pg_has_role(login, role, 'MEMBER');
-	IF has_role THEN
-		return 1;
-	ELSE
-		RETURN 0;
-	END IF;
-EXCEPTION WHEN others THEN
-	RETURN NULL;
-END;
-$$
-STRICT
-LANGUAGE plpgsql;
-
 CREATE OR REPLACE FUNCTION sys.datefromparts(IN year INT, IN month INT, IN day INT)
 RETURNS DATE AS
 $BODY$
