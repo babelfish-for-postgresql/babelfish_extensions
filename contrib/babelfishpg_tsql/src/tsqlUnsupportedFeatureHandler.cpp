@@ -1406,7 +1406,6 @@ const char *unsupported_sp_procedures[] = {
 	/* Catalog */
 	"sp_server_info",
 	"sp_sproc_columns",
-	"sp_stored_procedures",
 
 	/* Cursor */
 	"sp_describe_cursor_columns",

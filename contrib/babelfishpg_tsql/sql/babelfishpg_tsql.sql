@@ -1826,3 +1826,206 @@ END;
 $$
 LANGUAGE 'pltsql';
 GRANT EXECUTE ON PROCEDURE sys.sp_fkeys TO PUBLIC;
+
+CREATE OR REPLACE VIEW sys.sp_stored_procedures_view AS
+SELECT 
+CAST(d.name AS sys.sysname) AS PROCEDURE_QUALIFIER,
+CAST(s1.name AS sys.sysname) AS PROCEDURE_OWNER, 
+
+CASE 
+	WHEN p.prokind = 'p' THEN CAST(concat(p.proname, ';1') AS sys.nvarchar(134))
+	ELSE CAST(concat(p.proname, ';0') AS sys.nvarchar(134))
+END AS PROCEDURE_NAME,
+
+-1 AS NUM_INPUT_PARAMS,
+-1 AS NUM_OUTPUT_PARAMS,
+-1 AS NUM_RESULT_SETS,
+CAST(NULL AS varchar(254)) AS REMARKS,
+cast(2 AS smallint) AS PROCEDURE_TYPE
+
+FROM pg_catalog.pg_proc p 
+
+INNER JOIN sys.schemas s1 ON p.pronamespace = s1.schema_id 
+INNER JOIN sys.databases d ON d.database_id = sys.db_id()
+WHERE has_schema_privilege(s1.schema_id, 'USAGE')
+
+UNION 
+
+SELECT CAST((SELECT sys.db_name()) AS sys.sysname) AS PROCEDURE_QUALIFIER,
+CAST(nspname AS sys.sysname) AS PROCEDURE_OWNER,
+
+CASE 
+	WHEN prokind = 'p' THEN cast(concat(proname, ';1') AS sys.nvarchar(134))
+	ELSE cast(concat(proname, ';0') AS sys.nvarchar(134))
+END AS PROCEDURE_NAME,
+
+-1 AS NUM_INPUT_PARAMS,
+-1 AS NUM_OUTPUT_PARAMS,
+-1 AS NUM_RESULT_SETS,
+CAST(NULL AS varchar(254)) AS REMARKS,
+cast(2 AS smallint) AS PROCEDURE_TYPE
+
+FROM    pg_catalog.pg_namespace n 
+JOIN    pg_catalog.pg_proc p 
+ON      pronamespace = n.oid   
+WHERE nspname = 'sys';
+
+GRANT SELECT ON sys.sp_stored_procedures_view TO PUBLIC;
+
+CREATE OR REPLACE PROCEDURE sys.sp_stored_procedures(
+    "@sp_name" sys.nvarchar(390) = '',
+    "@sp_owner" sys.nvarchar(384) = '',
+    "@sp_qualifier" sys.sysname = '',
+    "@fusepattern" sys.bit = '1'
+)
+AS $$
+BEGIN
+	IF (@sp_qualifier != '') AND LOWER(sys.db_name()) != LOWER(@sp_qualifier)
+	BEGIN
+		THROW 33557097, N'The database name component of the object qualifier must be the name of the current database.', 1;
+	END
+	
+	-- If @sp_name or @sp_owner = '%', it gets converted to NULL or '' regardless of @fusepattern 
+	IF @sp_name = '%'
+	BEGIN
+		SELECT @sp_name = ''
+	END
+	
+	IF @sp_owner = '%'
+	BEGIN
+		SELECT @sp_owner = ''
+	END
+	
+	-- Changes fusepattern to 0 if no wildcards are used. NOTE: Need to add [] wildcard pattern when it is implemented. Wait for BABEL-2452
+	IF @fusepattern = 1
+	BEGIN
+		IF (CHARINDEX('%', @sp_name) != 0 AND CHARINDEX('_', @sp_name) != 0 AND CHARINDEX('%', @sp_owner) != 0 AND CHARINDEX('_', @sp_owner) != 0 )
+		BEGIN
+			SELECT @fusepattern = 0;
+		END
+	END
+	
+	-- Condition for when sp_name argument is not given or is null, or is just a wildcard (same order)
+	IF COALESCE(@sp_name, '') = ''
+	BEGIN
+		IF @fusepattern=1 
+		BEGIN
+			SELECT 
+			PROCEDURE_QUALIFIER,
+			PROCEDURE_OWNER,
+			PROCEDURE_NAME,
+			NUM_INPUT_PARAMS,
+			NUM_OUTPUT_PARAMS,
+			NUM_RESULT_SETS,
+			REMARKS,
+			PROCEDURE_TYPE FROM sys.sp_stored_procedures_view
+			WHERE ((SELECT COALESCE(@sp_owner,'')) = '' OR LOWER(procedure_owner) LIKE LOWER(@sp_owner))
+			ORDER BY procedure_qualifier, procedure_owner, procedure_name;
+		END
+		ELSE
+		BEGIN
+			SELECT 
+			PROCEDURE_QUALIFIER,
+			PROCEDURE_OWNER,
+			PROCEDURE_NAME,
+			NUM_INPUT_PARAMS,
+			NUM_OUTPUT_PARAMS,
+			NUM_RESULT_SETS,
+			REMARKS,
+			PROCEDURE_TYPE FROM sys.sp_stored_procedures_view
+			WHERE ((SELECT COALESCE(@sp_owner,'')) = '' OR LOWER(procedure_owner) LIKE LOWER(@sp_owner))
+			ORDER BY procedure_qualifier, procedure_owner, procedure_name;
+		END
+	END
+	-- When @sp_name is not null
+	ELSE
+	BEGIN
+		-- When sp_owner is null and fusepattern = 0
+		IF (@fusepattern = 0 AND  COALESCE(@sp_owner,'') = '') 
+		BEGIN
+			IF EXISTS ( -- Search in the sys schema 
+					SELECT * FROM sys.sp_stored_procedures_view
+					WHERE (LOWER(LEFT(procedure_name, -2)) = LOWER(@sp_name))
+						AND (LOWER(procedure_owner) = 'sys'))
+			BEGIN
+				SELECT PROCEDURE_QUALIFIER,
+				PROCEDURE_OWNER,
+				PROCEDURE_NAME,
+				NUM_INPUT_PARAMS,
+				NUM_OUTPUT_PARAMS,
+				NUM_RESULT_SETS,
+				REMARKS,
+				PROCEDURE_TYPE FROM sys.sp_stored_procedures_view
+				WHERE (LOWER(LEFT(procedure_name, -2)) = LOWER(@sp_name))
+					AND (LOWER(procedure_owner) = 'sys')
+				ORDER BY procedure_qualifier, procedure_owner, procedure_name;
+			END
+			ELSE IF EXISTS ( 
+				SELECT * FROM sys.sp_stored_procedures_view
+				WHERE (LOWER(LEFT(procedure_name, -2)) = LOWER(@sp_name))
+					AND (LOWER(procedure_owner) = LOWER(SCHEMA_NAME()))
+					)
+			BEGIN
+				SELECT PROCEDURE_QUALIFIER,
+				PROCEDURE_OWNER,
+				PROCEDURE_NAME,
+				NUM_INPUT_PARAMS,
+				NUM_OUTPUT_PARAMS,
+				NUM_RESULT_SETS,
+				REMARKS,
+				PROCEDURE_TYPE FROM sys.sp_stored_procedures_view
+				WHERE (LOWER(LEFT(procedure_name, -2)) = LOWER(@sp_name))
+					AND (LOWER(procedure_owner) = LOWER(SCHEMA_NAME()))
+				ORDER BY procedure_qualifier, procedure_owner, procedure_name;
+			END
+			ELSE -- Search in the dbo schema (if nothing exists it should just return nothing). 
+			BEGIN
+				SELECT PROCEDURE_QUALIFIER,
+				PROCEDURE_OWNER,
+				PROCEDURE_NAME,
+				NUM_INPUT_PARAMS,
+				NUM_OUTPUT_PARAMS,
+				NUM_RESULT_SETS,
+				REMARKS,
+				PROCEDURE_TYPE FROM sys.sp_stored_procedures_view
+				WHERE (LOWER(LEFT(procedure_name, -2)) = LOWER(@sp_name))
+					AND (LOWER(procedure_owner) = 'dbo')
+				ORDER BY procedure_qualifier, procedure_owner, procedure_name;
+			END
+			
+		END
+		ELSE IF (@fusepattern = 0 AND  COALESCE(@sp_owner,'') != '')
+		BEGIN
+			SELECT 
+			PROCEDURE_QUALIFIER,
+			PROCEDURE_OWNER,
+			PROCEDURE_NAME,
+			NUM_INPUT_PARAMS,
+			NUM_OUTPUT_PARAMS,
+			NUM_RESULT_SETS,
+			REMARKS,
+			PROCEDURE_TYPE FROM sys.sp_stored_procedures_view
+			WHERE (LOWER(LEFT(procedure_name, -2)) = LOWER(@sp_name))
+				AND (LOWER(procedure_owner) = LOWER(@sp_owner))
+			ORDER BY procedure_qualifier, procedure_owner, procedure_name;
+		END
+		ELSE -- fusepattern = 1
+		BEGIN
+			SELECT 
+			PROCEDURE_QUALIFIER,
+			PROCEDURE_OWNER,
+			PROCEDURE_NAME,
+			NUM_INPUT_PARAMS,
+			NUM_OUTPUT_PARAMS,
+			NUM_RESULT_SETS,
+			REMARKS,
+			PROCEDURE_TYPE FROM sys.sp_stored_procedures_view
+			WHERE ((SELECT COALESCE(@sp_name,'')) = '' OR LOWER(LEFT(procedure_name, -2)) LIKE LOWER(@sp_name))
+				AND ((SELECT COALESCE(@sp_owner,'')) = '' OR LOWER(procedure_owner) LIKE LOWER(@sp_owner))
+			ORDER BY procedure_qualifier, procedure_owner, procedure_name;
+		END
+	END	
+END; 
+$$
+LANGUAGE 'pltsql';
+GRANT EXECUTE on PROCEDURE sys.sp_stored_procedures TO PUBLIC;
