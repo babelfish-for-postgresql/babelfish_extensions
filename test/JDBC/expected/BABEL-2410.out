@@ -2,14 +2,6 @@ USE master
 go
 
 -- Should be blocked
-CREATE USER babel_2410_user
-go
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: 'CREATE USER' is not currently supported in Babelfish)~~
-
-
--- Should be blocked
 CREATE ROLE babel_2410_role
 go
 ~~ERROR (Code: 33557097)~~
@@ -31,13 +23,6 @@ go
 
 DROP PROC babel_2410_proc
 go
-
-DROP USER babel_2410_user
-go
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: 'DROP USER' is not currently supported in Babelfish)~~
-
 
 DROP ROLE babel_2410_role
 go

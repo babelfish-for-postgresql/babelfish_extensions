@@ -108,9 +108,47 @@ extern Oid			bbf_authid_login_ext_oid;
 extern Oid			bbf_authid_login_ext_idx_oid;
 
 extern bool is_login(Oid role_oid);
+extern bool is_login_name(char *rolname);
 extern char *get_login_default_db(char *login_name);
 extern Oid get_authid_login_ext_oid(void);
 extern Oid get_authid_login_ext_idx_oid(void);
+
+/*****************************************
+ *			USER EXT
+ *****************************************/
+#define BBF_AUTHID_USER_EXT_TABLE_NAME "babelfish_authid_user_ext"
+#define BBF_AUTHID_USER_EXT_IDX_NAME "babelfish_authid_user_ext_pkey"
+#define Anum_bbf_authid_user_ext_rolname		1
+#define Anum_bbf_authid_user_ext_login_name		2
+#define Anum_bbf_authid_user_ext_database_name	12
+extern Oid			bbf_authid_user_ext_oid;
+extern Oid			bbf_authid_user_ext_idx_oid;
+
+extern bool is_user(Oid role_oid);
+extern Oid get_authid_user_ext_oid(void);
+extern Oid get_authid_user_ext_idx_oid(void);
+
+/* MUST comply with babelfish_authid_user_ext table */
+typedef struct FormData_authid_user_ext
+{
+	NameData  	rolname;
+	NameData	login_name;
+	char		type;
+	int32		owning_principal_id;
+	int32		is_fixed_role;
+	int32		authentication_type;
+	int32		default_language_lcid;
+	int32		allow_encrypted_value_modifications;
+	TimestampTz	create_date;
+	TimestampTz	modify_date;
+	VarChar		orig_username;
+	VarChar		database_name;
+	VarChar		default_schema_name;
+	VarChar		default_language_name;
+	VarChar		authentication_type_desc;
+} FormData_authid_user_ext;
+
+typedef FormData_authid_user_ext *Form_authid_user_ext;
 
 /*****************************************
  *			Metadata Check Rule

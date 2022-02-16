@@ -209,6 +209,7 @@
 							case TSQL_DD:
 							case TSQL_DEFAULT_DATABASE:
 							case TSQL_DEFAULT_LANGUAGE:
+							case TSQL_DEFAULT_SCHEMA:
 							case TSQL_DW:
 							case TSQL_DY:
 							case TSQL_HASHED:
