@@ -3171,6 +3171,8 @@ RETURNS INTEGER
 AS 'babelfishpg_tsql', 'checksum'
 LANGUAGE C IMMUTABLE PARALLEL SAFE;
 
+-- Need to drop previous incorrect definition.
+DROP FUNCTION sys.babelfish_inconsistent_metadata;
 CREATE OR REPLACE FUNCTION sys.babelfish_inconsistent_metadata(return_consistency boolean default false)
 RETURNS table (
 	object_type varchar(32),
