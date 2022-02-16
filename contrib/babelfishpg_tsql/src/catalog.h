@@ -153,6 +153,19 @@ typedef FormData_authid_user_ext *Form_authid_user_ext;
 /*****************************************
  *			Metadata Check Rule
  *****************************************/
+
+/*
+ * RelData stores catalog info that is used in metadata check.
+ *
+ * When initializing a RelData in catalog.c, the expected status of the fields
+ * are
+ *		tblname - mandatory
+ *		tbl_oid - InvalidOid
+ *		idx_oid - InvalidOid
+ *		atttype - InvalidOid
+ *		attnum - mandatory
+ *		regproc - mandatory
+ */
 typedef struct RelData
 {
 	const char		*tblname;	/* table name */
@@ -163,18 +176,30 @@ typedef struct RelData
 	RegProcedure	regproc;	/* regproc used to scan through the index */
 } RelData;
 
+/*
+ * Rule defines a rule for metadata inconsistency check.
+ *
+ * When defining a Rule in catalog.c, the expected status of the fields are
+ *		desc - mandatory
+ *		tblname - mandatory
+ *		colname - mandatory
+ *		tupdesc - NULL
+ *		func_val - mandatory
+ *		func_cond - optional, can be NULL
+ *		func_check - mandatory
+ *		tbldata - NULL
+ */
 typedef struct Rule
 {
-	const char	*desc;		/* rule description */
-	const char	*tblname;	/* catalog name */
-	const char	*colname;	/* column name */
+	const char	*desc;		/* rule description, mandatory field */
+	const char	*tblname;	/* catalog name, mandatory field */
+	const char	*colname;	/* column name, mandatory field */
 
 	/* 
-	 * The expected value can either be a Datum or the result of a value
-	 * function.
+	 * The expected value should be the result of a value function.
 	 * A value function reads a tuple and output a Datum. 
-	 * Category 1 rules: Input tuple is NULL.
-	 * Category 2 rules: Input tuple is provided by a catalog (often different
+	 * Must have rules: Input tuple is NULL.
+	 * Must match rules: Input tuple is provided by a catalog (often different
 	 *					 from tblname.
 	 * tupdesc is the description for the input tuple.
 	 */
