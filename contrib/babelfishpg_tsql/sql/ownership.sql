@@ -355,11 +355,10 @@ select
 
 GRANT SELECT ON sys.databases TO PUBLIC;
 
-CREATE OR REPLACE FUNCTION sys.babelfish_inconsistent_metadata()
+CREATE OR REPLACE FUNCTION sys.babelfish_inconsistent_metadata(return_consistency boolean default false)
 RETURNS table (
   object_type varchar(32),
   schema_name varchar(128),
   object_name varchar(128),
-  detail text
+  detail jsonb
 ) AS 'babelfishpg_tsql', 'babelfish_inconsistent_metadata' LANGUAGE C;
-

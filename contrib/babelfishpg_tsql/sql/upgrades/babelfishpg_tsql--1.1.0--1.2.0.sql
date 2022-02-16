@@ -3080,5 +3080,13 @@ RETURNS INTEGER
 AS 'babelfishpg_tsql', 'checksum'
 LANGUAGE C IMMUTABLE PARALLEL SAFE;
 
+CREATE OR REPLACE FUNCTION sys.babelfish_inconsistent_metadata(return_consistency boolean default false)
+RETURNS table (
+	object_type varchar(32),
+	schema_name varchar(128),
+	object_name varchar(128),
+	detail jsonb
+) AS 'babelfishpg_tsql', 'babelfish_inconsistent_metadata' LANGUAGE C;
+
 -- Reset search_path to not affect any subsequent scripts
 SELECT set_config('search_path', trim(leading 'sys, ' from current_setting('search_path')), false);

@@ -1,4 +1,5 @@
 #include "postgres.h"
+#include "miscadmin.h"
 #include "access/htup_details.h"
 #include "access/heapam.h"
 #include "access/genam.h"
@@ -643,22 +644,62 @@ get_authid_user_ext_idx_oid(void)
 
 /*****************************************
  * 			Metadata Check
+ * ---------------------------------------
+ * Babelfish catalogs should comply with
+ * PG catalogs. We defined some metadata
+ * rules to check the metadata integrity.
  *****************************************/
 
-#define STOP_AT_FIRST_ERROR true
+/* 
+ * This parameter controls whether the metadata check would stop at the first
+ * detected error. 
+ */
+bool stop_at_first_error = true;
+/*
+ * This parameter controls whether the function will return consistent rule list
+ * or detected inconsistency.
+ */
+bool return_consistency = false;
 
+/* Core function declaration */
 static void metadata_inconsistency_check(Tuplestorestate *res_tupstore, TupleDesc res_tupdesc);
+/* Value function declaration */
 static Datum get_master(HeapTuple tuple, TupleDesc dsc);
+static Datum get_tempdb(HeapTuple tuple, TupleDesc dsc);
+static Datum get_cur_rolname(HeapTuple tuple, TupleDesc dsc);
+static Datum get_master_dbo(HeapTuple tuple, TupleDesc dsc);
+static Datum get_tempdb_dbo(HeapTuple tuple, TupleDesc dsc);
+static Datum get_dbo(HeapTuple tuple, TupleDesc dsc);
+static Datum get_db_owner(HeapTuple tuple, TupleDesc dsc);
+static Datum get_master_db_owner(HeapTuple tuple, TupleDesc dsc);
+static Datum get_master_guest(HeapTuple tuple, TupleDesc dsc);
+static Datum get_tempdb_db_owner(HeapTuple tuple, TupleDesc dsc);
+static Datum get_tempdb_guest(HeapTuple tuple, TupleDesc dsc);
 static Datum get_owner(HeapTuple tuple, TupleDesc dsc);
 static Datum get_name_db_owner(HeapTuple tuple, TupleDesc dsc);
+static Datum get_name_dbo(HeapTuple tuple, TupleDesc dsc);
+static Datum get_nspname(HeapTuple tuple, TupleDesc dsc);
+static Datum get_rolname(HeapTuple tuple, TupleDesc dsc);
+static Datum get_default_database_name(HeapTuple tuple, TupleDesc dsc);
+/* Condition function declaration */
 static bool is_multidb(void);
+static bool is_singledb_exists_userdb(void);
+/* Rule validation function declaration */
 static bool check_exist(void *arg, HeapTuple tuple);
+static bool check_rules(Rule rules[], size_t num_rules, HeapTuple tuple, TupleDesc dsc,
+						Tuplestorestate *res_tupstore, TupleDesc res_tupdesc);
+static bool check_must_match_rules(Rule rules[], size_t num_rules, Oid catalog_oid, 
+								   Tuplestorestate *res_tupstore, TupleDesc res_tupdesc);
+/* Helper function declaration */
 static void update_report(Rule *rule, Tuplestorestate *res_tupstore, TupleDesc res_tupdesc);
 static void init_catalog_data(void);
 static void get_catalog_info(Rule *rule);
 
 /*****************************************
  * 			Catalog Extra Info
+ * ---------------------------------------
+ * MUST also edit init_catalog_data() when 
+ * editing the listed catalogs here.
  *****************************************/
 RelData catalog_data[] = 
 {
@@ -671,31 +712,88 @@ RelData catalog_data[] =
 	
 /*****************************************
  * 			Rule Definitions
+ * ---------------------------------------
+ * 1. Must have rule
+ *		A.a must have some value V
+ * 2. Must match rule
+ *		B->A, if we have a value V2 in B.b, 
+ *		then A.a should have value V1
  *****************************************/
 
-/* Category 1 rules */
+/* Must have rules */
 Rule must_have_rules[] =
 {
-	{"\"master\" must exist in babelfish_sysdatabases",
-	 "babelfish_sysdatabases", "name", NULL, get_master, NULL, check_exist, NULL}
+	{"master must exist in babelfish_sysdatabases",
+	 "babelfish_sysdatabases", "name", NULL, get_master, NULL, check_exist, NULL},
+	{"tempdb must exist in babelfish_sysdatabases",
+	 "babelfish_sysdatabases", "name", NULL, get_tempdb, NULL, check_exist, NULL},
+	{"Current role name must exist in babelfish_authid_login_ext",
+	 "babelfish_authid_login_ext", "rolname", NULL, get_cur_rolname, NULL, check_exist, NULL},
+	{"master_dbo must exist in babelfish_namespace_ext",
+	 "babelfish_namespace_ext", "nspname", NULL, get_master_dbo, NULL, check_exist, NULL},
+	{"tempdb_dbo must exist in babelfish_namespace_ext",
+	 "babelfish_namespace_ext", "nspname", NULL, get_tempdb_dbo, NULL, check_exist, NULL},
+	{"In single-db mode, if user db exists, dbo must exist in babelfish_namespace_ext",
+	 "babelfish_namespace_ext", "nspname", NULL, get_dbo, is_singledb_exists_userdb, check_exist, NULL},
+	{"In single-db mode, if user db exists, db_owner must exist in pg_authid",
+	 "pg_authid", "rolname", NULL, get_db_owner, is_singledb_exists_userdb, check_exist, NULL},
+	{"In single-db mode, if user db exists, dbo must exist in pg_authid",
+	 "pg_authid", "rolname", NULL, get_dbo, is_singledb_exists_userdb, check_exist, NULL},
+	{"master_db_owner must exist in pg_authid", 
+	 "pg_authid", "rolname", NULL, get_master_db_owner, NULL, check_exist, NULL},
+	{"master_dbo must exist in pg_authid",
+	 "pg_authid", "rolname", NULL, get_master_dbo, NULL, check_exist, NULL},
+	{"master_guest must exist in pg_authid",
+	 "pg_authid", "rolname", NULL, get_master_guest, NULL, check_exist, NULL},
+	{"tempdb_db_owner must exist in pg_authid",
+	 "pg_authid", "rolname", NULL, get_tempdb_db_owner, NULL, check_exist, NULL},
+	{"tempdb_dbo must exist in pg_authid",
+	 "pg_authid", "rolname", NULL, get_tempdb_dbo, NULL, check_exist, NULL},
+	{"tempdb_guest must exist in pg_authid",
+	 "pg_authid", "rolname", NULL, get_tempdb_guest, NULL, check_exist, NULL}
 };
 
-/* Category 2 rules */
+/* Must match rules, MUST comply with metadata_inconsistency_check() */
 /* babelfish_sysdatabases */
 Rule must_match_rules_sysdb[] =
 {
 	{"<owner> in babelfish_sysdatabases must also exist in babelfish_authid_login_ext", 
 	 "babelfish_authid_login_ext", "rolname", NULL, get_owner, NULL, check_exist, NULL},
 	{"In multi-db mode, for each <name> in babelfish_sysdatabases, <name>_db_owner must also exist in pg_authid",
-	 "pg_authid", "rolname", NULL, get_name_db_owner, is_multidb, check_exist, NULL}
+	 "pg_authid", "rolname", NULL, get_name_db_owner, is_multidb, check_exist, NULL},
+	{"In multi-db mode, for each <name> in babelfish_sysdatabases, <name>_dbo must also exist in pg_authid",
+	 "pg_authid", "rolname", NULL, get_name_dbo, is_multidb, check_exist, NULL},
+	{"In multi-db mode, for each <name> in babelfish_sysdatabases, <name>_dbo must also exist in babelfish_namespace_ext",
+	 "babelfish_namespace_ext", "nspname", NULL, get_name_dbo, is_multidb, check_exist, NULL}
 };
-	 
+
+/* babelfish_namespace_ext */
+Rule must_match_rules_nsp[] = 
+{
+	{"<nspname> in babelfish_namespace_ext must also exist in pg_namespace",
+	 "pg_namespace", "nspname", NULL, get_nspname, NULL, check_exist, NULL}
+};
+
+/* babelfish_authid_login_ext */
+Rule must_match_rules_authid[] = 
+{
+	{"<rolname> in babelfish_authid_login_ext must also exist in pg_authid",
+	 "pg_authid", "rolname", NULL, get_rolname, NULL, check_exist, NULL},
+	{"<default_database_name> in babelfish_authid_login_ext must also exist in babelfish_sysdatabases",
+	 "babelfish_sysdatabases", "name", NULL, get_default_database_name, NULL, check_exist, NULL}
+};
+	
 /*****************************************
  * 			Core function
  *****************************************/
 
 PG_FUNCTION_INFO_V1(babelfish_inconsistent_metadata);
 
+/*
+ * Execute the metadata inconsistency check.
+ * Detected metadata inconsistency will be returned as the output of the
+ * procedure sys.babelfish_inconsistent_metadata().
+ */
 Datum
 babelfish_inconsistent_metadata(PG_FUNCTION_ARGS)
 {
@@ -704,6 +802,8 @@ babelfish_inconsistent_metadata(PG_FUNCTION_ARGS)
 	MemoryContext 		oldcontext;
     TupleDesc 			tupdesc;
     Tuplestorestate 	*tupstore;
+
+	return_consistency = PG_GETARG_BOOL(0);
 
     /* check to see if caller supports us returning a tuplestore */
     if (rsinfo == NULL || !IsA(rsinfo, ReturnSetInfo))
@@ -731,7 +831,7 @@ babelfish_inconsistent_metadata(PG_FUNCTION_ARGS)
     TupleDescInitEntry(tupdesc, (AttrNumber) 3, "object_name",
                        VARCHAROID, 128, 0);
     TupleDescInitEntry(tupdesc, (AttrNumber) 4, "detail",
-                       TEXTOID, -1, 0);
+                       JSONBOID, -1, 0);
     tupstore =
         tuplestore_begin_heap(rsinfo->allowedModes & SFRM_Materialize_Random,
                               false, 1024);
@@ -764,21 +864,49 @@ babelfish_inconsistent_metadata(PG_FUNCTION_ARGS)
 static void
 metadata_inconsistency_check(Tuplestorestate *res_tupstore, TupleDesc res_tupdesc)
 {
-	HeapTuple		tuple;
-	TupleDesc		dsc;
-	SysScanDesc 	scan;
-	Relation		rel;
-
 	size_t num_must_have_rules = sizeof(must_have_rules) / sizeof(must_have_rules[0]);
-	size_t num_sysdb_rules = sizeof(must_match_rules_sysdb) / sizeof(must_match_rules_sysdb[0]);
+	size_t num_must_match_rules_sysdb =  sizeof(must_match_rules_sysdb) / sizeof(must_match_rules_sysdb[0]);
+	size_t num_must_match_rules_nsp = sizeof(must_match_rules_nsp) / sizeof(must_match_rules_nsp[0]);
+	size_t num_must_match_rules_authid = sizeof(must_match_rules_authid) / sizeof(must_match_rules_authid[0]);
 
 	/* Initialize the catalog_data array to fetch catalog info */
 	init_catalog_data();
 
-	/* Category 1 rules */
-	for (size_t i = 0; i < num_must_have_rules; i++)
+	/* 
+	 * If any of the following function call returns false, that means an
+	 * inconsistency is detected AND stop_at_first_error is set to true, thus
+	 * we should immediately stop checking and output the result
+	 */
+	if (
+		/* Must have rules */
+		!(check_rules(must_have_rules, num_must_have_rules, NULL, NULL, res_tupstore, res_tupdesc))
+		/* Must match rules, MUST comply with the defined must match rules */
+		||
+		!(check_must_match_rules(must_match_rules_sysdb, num_must_match_rules_sysdb, 
+								 sysdatabases_oid, res_tupstore, res_tupdesc))
+		||
+		!(check_must_match_rules(must_match_rules_nsp, num_must_match_rules_nsp, 
+								 namespace_ext_oid, res_tupstore, res_tupdesc)) 
+		||
+		!(check_must_match_rules(must_match_rules_authid, num_must_match_rules_authid,
+								 bbf_authid_login_ext_oid, res_tupstore, res_tupdesc))
+	)
+		return;
+}
+
+/* 
+ * Check all rules in a rule array.
+ * It only returns false when an inconsistency is detected AND
+ * stop_at_first_error is set to true.
+ * For must have rules, tuple and dsc should be NULL.
+ */
+static bool
+check_rules(Rule rules[], size_t num_rules, HeapTuple tuple, TupleDesc dsc,
+			Tuplestorestate *res_tupstore, TupleDesc res_tupdesc)
+{
+	for (size_t i = 0; i < num_rules; i++)
 	{
-		Rule *rule = &(must_have_rules[i]);
+		Rule *rule = &(rules[i]);
 
 		/* Check the rule's required condition */
 		if (rule->func_cond && !(rule->func_cond) ())
@@ -787,80 +915,77 @@ metadata_inconsistency_check(Tuplestorestate *res_tupstore, TupleDesc res_tupdes
 		/* Read catalog info and store in rule->tbldata */
 		get_catalog_info(rule);
 
+		/* Get the tuple description for current catalog */
+		if (dsc)
+			rule->tupdesc = dsc;
+
 		if (!rule->func_check)
 			ereport(ERROR,
 					(errcode(ERRCODE_NULL_VALUE_NOT_ALLOWED),
 					 errmsg("Null check function for rule: \n%s",
 							rule->desc)));
 
-		/* 
-		 * When encountering rule violation, add the inconsistency info
-		 * to the final report
-		 */
-		if (!(rule->func_check) (rule, NULL))
+		/* When return_consistency=true, update report with passed rules */
+		if ((rule->func_check) (rule, tuple))
+		{
+			if (return_consistency)
+				update_report(rule, res_tupstore, res_tupdesc);
+		}
+		/* When return_consistency=false, update report with inconsistency */
+		else if (!return_consistency)
 		{
 			update_report(rule, res_tupstore, res_tupdesc);
 			/* Stop checking if we want to stop at the first error */
-			if (STOP_AT_FIRST_ERROR) 
-				return;
+			if (stop_at_first_error)
+				return false;
 		}
 	}
 
-	/* Category 2 rules */
+	return true;
+}
+
+/* 
+ * Check a set of must match rules that depend on a certain catalog.
+ * It only returns false when an inconsistency is detected AND
+ * stop_at_first_error is set to true.
+ */
+static bool
+check_must_match_rules(Rule rules[], size_t num_rules, Oid catalog_oid, 
+					   Tuplestorestate *res_tupstore, TupleDesc res_tupdesc)
+{
+	HeapTuple		tuple;
+	TupleDesc		dsc;
+	SysScanDesc 	scan;
+	Relation		rel;
+
+	/* Rules depending on the catalog */
+	rel = table_open(catalog_oid, AccessShareLock);
+	dsc = RelationGetDescr(rel);
+	scan = systable_beginscan(rel, 0, false, NULL, 0, NULL);
+		
 	PG_TRY();
 	{
-		/* Rules depending on babelfish_sysdatabases */
-		rel = table_open(sysdatabases_oid, AccessShareLock);
-		dsc = RelationGetDescr(rel);
-		scan = systable_beginscan(rel, 0, false, NULL, 0, NULL);
-		
 		while (HeapTupleIsValid(tuple = systable_getnext(scan)))
 		{
-			/* Loop through all rules that depend on babelfish_sysdatabases */
-			for (size_t i = 0; i < num_sysdb_rules; i++)
+			/* Loop through all rules that depend on the catalog */
+			if (!check_rules(rules, num_rules, tuple, dsc, res_tupstore, res_tupdesc))
 			{
-				Rule *rule = &(must_match_rules_sysdb[i]);
-
-				/* Check the rule's required condition */
-				if (rule->func_cond && !(rule->func_cond) ())
-					continue;
-
-				/* Read catalog info and store in rule->tbldata */
-				get_catalog_info(rule);
-				rule->tupdesc = dsc;
-
-				if (!rule->func_check)
-					ereport(ERROR,
-							(errcode(ERRCODE_NULL_VALUE_NOT_ALLOWED),
-							 errmsg("Null check function for rule: \n%s",
-									rule->desc)));
-
-				/* 
-				 * When encountering rule violation, add the inconsistency info
-				 * to the final report
-				 */
-				if (!(rule->func_check) (rule, tuple))
-				{
-					update_report(rule, res_tupstore, res_tupdesc);
-					/* Stop checking if we want to stop at the first error */
-					if (STOP_AT_FIRST_ERROR)
-						return;
-				}
+				systable_endscan(scan);
+				table_close(rel, AccessShareLock);
+				return false;
 			}
 		}
-
-		systable_endscan(scan);
-		table_close(rel, AccessShareLock);
 	}
-	PG_CATCH();
+	PG_FINALLY();
 	{
 		if (scan)
 			  systable_endscan(scan);
 		if (rel)
 			  table_close(rel, AccessShareLock);
-		PG_RE_THROW();
 	}
 	PG_END_TRY();
+
+	return true;
 }
 
 /*****************************************
@@ -874,6 +999,68 @@ get_master(HeapTuple tuple, TupleDesc dsc)
 }
 
 static Datum
+get_tempdb(HeapTuple tuple, TupleDesc dsc)
+{
+	return CStringGetTextDatum("tempdb");
+}
+
+static Datum
+get_cur_rolname(HeapTuple tuple, TupleDesc dsc)
+{
+	char *rolname = GetUserNameFromId(GetSessionUserId(), false);
+	truncate_identifier(rolname, strlen(rolname), false);
+	return CStringGetDatum(rolname);
+}
+
+static Datum
+get_master_dbo(HeapTuple tuple, TupleDesc dsc)
+{
+	return CStringGetDatum("master_dbo");
+}
+
+static Datum
+get_tempdb_dbo(HeapTuple tuple, TupleDesc dsc)
+{
+	return CStringGetDatum("tempdb_dbo");
+}
+
+static Datum
+get_dbo(HeapTuple tuple, TupleDesc dsc)
+{
+	return CStringGetDatum("dbo");
+}
+
+static Datum
+get_db_owner(HeapTuple tuple, TupleDesc dsc)
+{
+	return CStringGetDatum("db_owner");
+}
+
+static Datum
+get_master_db_owner(HeapTuple tuple, TupleDesc dsc)
+{
+	return CStringGetDatum("master_db_owner");
+}
+
+static Datum
+get_master_guest(HeapTuple tuple, TupleDesc dsc)
+{
+	return CStringGetDatum("master_guest");
+}
+
+static Datum
+get_tempdb_db_owner(HeapTuple tuple, TupleDesc dsc)
+{
+	return CStringGetDatum("tempdb_db_owner");
+}
+
+static Datum
+get_tempdb_guest(HeapTuple tuple, TupleDesc dsc)
+{
+	return CStringGetDatum("tempdb_guest");
+}
+
+static Datum
 get_owner(HeapTuple tuple, TupleDesc dsc)
 {
 	Form_sysdatabases sysdb = ((Form_sysdatabases) GETSTRUCT(tuple));
@@ -883,12 +1070,9 @@ get_owner(HeapTuple tuple, TupleDesc dsc)
 static Datum
 get_name_db_owner(HeapTuple tuple, TupleDesc dsc)
 {
-	bool isNull;
-	Datum name = heap_getattr(tuple, 
-							  Anum_sysdatabaese_name,
-							  dsc,
-							  &isNull);
-	char *name_str = TextDatumGetCString(name);
+	Form_sysdatabases sysdb = ((Form_sysdatabases) GETSTRUCT(tuple));
+	const text *name = &(sysdb->name);
+	char *name_str = text_to_cstring(name);
 	char *name_db_owner = palloc0(MAX_BBF_NAMEDATALEND);
 
 	truncate_identifier(name_str, strlen(name_str), false);
@@ -897,9 +1081,51 @@ get_name_db_owner(HeapTuple tuple, TupleDesc dsc)
 	return CStringGetDatum(name_db_owner);
 }
 
+static Datum
+get_name_dbo(HeapTuple tuple, TupleDesc dsc)
+{
+	Form_sysdatabases sysdb = ((Form_sysdatabases) GETSTRUCT(tuple));
+	const text *name = &(sysdb->name);
+	char *name_str = text_to_cstring(name);
+	char *name_dbo = palloc0(MAX_BBF_NAMEDATALEND);
+
+	truncate_identifier(name_str, strlen(name_str), false);
+	snprintf(name_dbo, MAX_BBF_NAMEDATALEND, "%s_dbo", name_str);
+	truncate_identifier(name_dbo, strlen(name_dbo), false);
+	return CStringGetDatum(name_dbo);
+}
+
+static Datum
+get_nspname(HeapTuple tuple, TupleDesc dsc)
+{
+	bool isNull;
+	Datum nspname = heap_getattr(tuple, Anum_namespace_ext_namespace, dsc, &isNull);
+	return nspname;
+}
+
+static Datum
+get_rolname(HeapTuple tuple, TupleDesc dsc)
+{
+	Form_authid_login_ext authid = ((Form_authid_login_ext) GETSTRUCT(tuple));
+	return NameGetDatum(&(authid->rolname));
+}
+
+static Datum
+get_default_database_name(HeapTuple tuple, TupleDesc dsc)
+{
+	Form_authid_login_ext authid = ((Form_authid_login_ext) GETSTRUCT(tuple));
+	return PointerGetDatum(&(authid->default_database_name));
+}
+
 /*****************************************
  * 			Condition check funcs
  *****************************************/
+static bool
+is_singledb_exists_userdb(void)
+{
+	return (SINGLE_DB == get_migration_mode() && get_one_user_db_name());
+}
+
 static bool
 is_multidb(void)
 {
@@ -962,7 +1188,12 @@ update_report(Rule *rule, Tuplestorestate *res_tupstore, TupleDesc res_tupdesc)
 	const char	*object_type;
 	const char	*schema_name;
 	const char	*object_name = rule->colname;
-	const char	*detail = rule->desc;
+	int			str_len = strlen(rule->desc) + strlen("{\"Rule\":\"\"}") + 1;
+	char		*detail = palloc0(str_len);
+	Jsonb		*detail_jsonb;
+
+	snprintf(detail, str_len, "{\"Rule\":\"%s\"}", rule->desc);
+	detail_jsonb = DatumGetJsonbP(DirectFunctionCall1(jsonb_in, CStringGetDatum(detail)));
 
 	MemSet(nulls, 0, sizeof(nulls));
 
@@ -979,13 +1210,14 @@ update_report(Rule *rule, Tuplestorestate *res_tupstore, TupleDesc res_tupdesc)
 	values[0] = CStringGetTextDatum(object_type);
 	values[1] = CStringGetTextDatum(schema_name);
 	values[2] = CStringGetTextDatum(object_name);
-	values[3] = CStringGetTextDatum(detail);
+	values[3] = JsonbPGetDatum(detail_jsonb);
 
 	tuplestore_putvalues(res_tupstore, res_tupdesc, values, nulls);
 }
 
 /*
  * Initialize the inconstant members of the RelData array catalog_data[]
+ * MUST comply with catalog_data[].
  */
 static void
 init_catalog_data(void)
