@@ -746,7 +746,7 @@ get_authid_user_ext_schema_name(const char *db_name, const char *user)
  * This parameter controls whether the metadata check would stop at the first
  * detected error. 
  */
-bool stop_at_first_error = true;
+bool stop_at_first_error = false;
 /*
  * This parameter controls whether the function will return consistent rule list
  * or detected inconsistency.
