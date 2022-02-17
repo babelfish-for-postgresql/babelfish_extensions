@@ -103,8 +103,51 @@ FROM sys.database_principals
 WHERE name = 'AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA';
 GO
 
+-- Test alter user schema
+ALTER USER test1 WITH DEFAULT_SCHEMA = sch3;
+GO
+
+SELECT rolname, login_name, orig_username, database_name, default_schema_name
+FROM sys.babelfish_authid_user_ext
+WHERE orig_username = 'test1';
+GO
+
+SELECT name, default_schema_name
+FROM sys.database_principals
+WHERE name = 'test1';
+GO
+
+ALTER USER test1 WITH DEFAULT_SCHEMA = NULL;
+GO
+
+SELECT rolname, login_name, orig_username, database_name, default_schema_name
+FROM sys.babelfish_authid_user_ext
+WHERE orig_username = 'test1';
+GO
+
+SELECT name, default_schema_name
+FROM sys.database_principals
+WHERE name = 'test1';
+GO
+
+ALTER USER test1 WITH NAME = new_test1;
+GO
+
+SELECT rolname, login_name, orig_username, database_name, default_schema_name
+FROM sys.babelfish_authid_user_ext
+WHERE orig_username = 'new_test1';
+GO
+
+SELECT name, default_schema_name
+FROM sys.database_principals
+WHERE name = 'new_test1';
+GO
+
+SELECT rolname FROM pg_roles WHERE rolname = 'master_new_test1';
+GO
+
 -- Clean up
-DROP USER test1;
+DROP USER new_test1;
 GO
 
 SELECT name, default_schema_name

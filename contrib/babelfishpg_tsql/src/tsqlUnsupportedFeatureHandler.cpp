@@ -970,7 +970,7 @@ antlrcpp::Any TsqlUnsupportedFeatureHandlerImpl::visitDdl_statement(TSqlParser::
 	 || ctx->alter_sequence()
 	 || (ctx->alter_server_role())
 	 || ctx->alter_table()
-	 || (ctx->alter_user() && pltsql_allow_antlr_to_unsupported_grammar_for_testing)
+	 || ctx->alter_user()
 	 || ctx->create_aggregate()
 	 || ctx->create_database()
 	 || ctx->create_fulltext_index()

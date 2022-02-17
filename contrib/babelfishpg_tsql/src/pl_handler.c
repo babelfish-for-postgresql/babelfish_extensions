@@ -2283,8 +2283,10 @@ static void bbf_ProcessUtility(PlannedStmt *pstmt,
 				Oid				prev_current_user;
 				AlterRoleStmt	*stmt = (AlterRoleStmt *) parsetree;
 				List			*login_options = NIL;
+				List			*user_options = NIL;
 				ListCell		*option;
 				bool			islogin = false;
+				bool			isuser = false;
 
 				/* Check if creating login or role. Expect islogin first */
 				if (stmt->options != NIL)
@@ -2292,8 +2294,8 @@ static void bbf_ProcessUtility(PlannedStmt *pstmt,
 					DefElem *headel = (DefElem *) linitial(stmt->options);
 
 					/*
-					 * If islogin set the options list to after the head.
-					 * Save the list of login specific options.
+					 * Set the options list to after the head.
+					 * Save the list of babelfish specific options.
 					 */
 					if (strcmp(headel->defname, "islogin") == 0)
 					{
@@ -2312,6 +2314,30 @@ static void bbf_ProcessUtility(PlannedStmt *pstmt,
 						}
 
 						foreach(option, login_options)
+						{
+							stmt->options = list_delete_ptr(stmt->options,
+															lfirst(option));
+						}
+					}
+					else if (strcmp(headel->defname, "isuser") == 0)
+					{
+						isuser = true;
+						stmt->options = list_delete_cell(stmt->options,
+														 list_head(stmt->options));
+						pfree(headel);
+
+						/* Filter user options from default role options */
+						foreach(option, stmt->options)
+						{
+							DefElem *defel = (DefElem *) lfirst(option);
+
+							if (strcmp(defel->defname, "default_schema") == 0)
+								user_options = lappend(user_options, defel);
+							if (strcmp(defel->defname, "rename") == 0)
+								user_options = lappend(user_options, defel);
+						}
+
+						foreach(option, user_options)
 						{
 							stmt->options = list_delete_ptr(stmt->options,
 															lfirst(option));
@@ -2371,6 +2397,73 @@ static void bbf_ProcessUtility(PlannedStmt *pstmt,
 
 					SetCurrentRoleId(prev_current_user, false);
 
+					return;
+				}
+				else if (isuser)
+				{
+					Oid		datdba;
+
+					datdba = get_role_oid("sysadmin", false);
+
+					/*
+					 * Check if the current user has privileges.
+					 */
+					foreach(option, user_options)
+					{
+						DefElem		*defel = (DefElem *) lfirst(option);
+						const char	*dbo_name;
+						char		*user_name;
+						char		*cur_user;
+
+						dbo_name = get_dbo_role_name(get_cur_db_name());
+						user_name = stmt->role->rolename;
+						cur_user = GetUserNameFromId(GetUserId(), false);
+						if (strcmp(defel->defname, "default_schema") == 0)
+						{
+							if (strcmp(cur_user, dbo_name) != 0 &&
+								strcmp(cur_user, user_name) != 0)
+								ereport(ERROR,
+										(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
+										 errmsg("Current user does not have privileges to change schema")));
+						}
+						if (strcmp(defel->defname, "rename") == 0)
+						{
+							if (strcmp(cur_user, dbo_name) != 0 &&
+								strcmp(cur_user, user_name) != 0)
+								ereport(ERROR,
+										(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
+										 errmsg("Current user does not have privileges to change user name")));
+						}
+					}
+
+					/* Set current user to sysadmin for alter permissions */
+					prev_current_user = GetUserId();
+
+					SetCurrentRoleId(datdba, false);
+
+					PG_TRY();
+					{
+						if (prev_ProcessUtility)
+							prev_ProcessUtility(pstmt, queryString, context,
+												params, queryEnv, dest,
+												qc);
+						else
+							standard_ProcessUtility(pstmt, queryString, context,
+													params, queryEnv, dest,
+													qc);
+
+						stmt->options = list_concat(stmt->options,
+													user_options);
+						alter_bbf_authid_user_ext(stmt);
+					}
+					PG_CATCH();
+					{
+						SetCurrentRoleId(prev_current_user, false);
+						PG_RE_THROW();
+					}
+					PG_END_TRY();
+
+					SetCurrentRoleId(prev_current_user, false);
 					return;
 				}
 			}

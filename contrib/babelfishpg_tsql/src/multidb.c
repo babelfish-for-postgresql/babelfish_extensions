@@ -272,6 +272,26 @@ rewrite_object_refs(Node *stmt)
 			}
 			break;
 		}
+		case T_AlterRoleStmt:
+		{
+			AlterRoleStmt *alter_role = (AlterRoleStmt *) stmt;
+
+			if (alter_role->options != NIL)
+			{
+				DefElem *headel = (DefElem *) linitial(alter_role->options);
+
+				if (strcmp(headel->defname, "isuser") == 0)
+				{
+					char		*user_name;
+					char		*db_name = get_cur_db_name();
+
+					user_name = get_physical_user_name(db_name, alter_role->role->rolename);
+					pfree(alter_role->role->rolename);
+					alter_role->role->rolename = user_name;
+				}
+			}
+			break;
+		}
 		case T_DropStmt:
 		{
 			DropStmt *drop = (DropStmt *) stmt;
