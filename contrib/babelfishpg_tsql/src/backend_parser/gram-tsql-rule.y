@@ -215,6 +215,40 @@ tsql_create_user_options:
 			| /* EMPTY */	{ $$ = NULL; }
 		;
 
+tsql_AlterUserStmt:
+			ALTER USER RoleSpec WITH tsql_alter_user_options
+				{
+					AlterRoleStmt *n = makeNode(AlterRoleStmt);
+					n->role = $3;
+					n->action = +1;	/* add, if there are members */
+					n->options = list_make1(makeDefElem("isuser",
+											(Node *)makeInteger(true),
+											@1)); /* Must be first */
+					n->options = lappend(n->options, $5);
+					$$ = (Node *) n;
+				}
+
+tsql_alter_user_options:
+			TSQL_DEFAULT_SCHEMA '=' ColId
+				{
+					$$ = makeDefElem("default_schema",
+									 (Node *)makeString($3),
+									 @1);
+				}
+			| TSQL_DEFAULT_SCHEMA '=' NULL_P
+				{
+					$$ = makeDefElem("default_schema",
+									 (Node *)makeString(""),
+									 @1);
+				}
+			| NAME_P '=' ColId
+				{
+					$$ = makeDefElem("rename",
+									 (Node *)makeString($3),
+									 @1);
+				}
+		;
+
 tsql_AlterLoginStmt:
 			ALTER TSQL_LOGIN RoleSpec tsql_enable_disable
 				{
@@ -1704,6 +1738,7 @@ tsql_stmt :
 			| AlterTSConfigurationStmt
 			| AlterTSDictionaryStmt
 			| AlterUserMappingStmt
+			| tsql_AlterUserStmt
 			| AnalyzeStmt
 			| CallStmt
 			| CheckPointStmt

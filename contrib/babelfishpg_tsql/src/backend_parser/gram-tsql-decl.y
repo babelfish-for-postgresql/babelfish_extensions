@@ -17,13 +17,13 @@
 %type <node> tsql_CreateFunctionStmt tsql_VariableSetStmt tsql_CreateTrigStmt tsql_TransactionStmt tsql_UpdateStmt tsql_DeleteStmt tsql_IndexStmt
 %type <node> tsql_DropIndexStmt tsql_InsertStmt
 %type <node> tsql_CreateLoginStmt tsql_AlterLoginStmt tsql_DropLoginStmt
-%type <node> tsql_CreateUserStmt tsql_DropRoleStmt
+%type <node> tsql_CreateUserStmt tsql_DropRoleStmt tsql_AlterUserStmt
 %type <node> tsql_nchar
 %type <list> tsql_login_option_list1 tsql_login_option_list2
 %type <list> tsql_alter_login_option_list
 %type <defelt> tsql_login_option_elem tsql_alter_login_option_elem
 %type <boolean> tsql_enable_disable
-%type <defelt> tsql_create_user_options
+%type <defelt> tsql_create_user_options tsql_alter_user_options
 %type <str> tsql_create_user_login
 %type <list> tsql_createfunc_options tsql_createfunc_opt_list tsql_IsolationLevel
 %type <list> tsql_func_name

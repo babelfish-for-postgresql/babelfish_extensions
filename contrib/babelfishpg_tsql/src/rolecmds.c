@@ -1084,6 +1084,161 @@ add_existing_users_to_catalog(PG_FUNCTION_ARGS)
 	PG_RETURN_INT32(0);
 }
 
+void
+alter_bbf_authid_user_ext(AlterRoleStmt *stmt)
+{
+	Relation		bbf_authid_user_ext_rel;
+	TupleDesc		bbf_authid_user_ext_dsc;
+	HeapTuple		new_tuple;
+	HeapTuple		tuple;
+	Datum			new_record_user_ext[BBF_AUTHID_USER_EXT_NUM_COLS];
+	bool			new_record_nulls_user_ext[BBF_AUTHID_USER_EXT_NUM_COLS];
+	bool			new_record_repl_user_ext[BBF_AUTHID_USER_EXT_NUM_COLS];
+	ScanKeyData		scanKey;
+	SysScanDesc		scan;
+	ListCell		*option;
+	NameData		*user_name;
+	char			*default_schema = NULL;
+	char			*new_user_name = NULL;
+	char			*physical_name = NULL;
+
+	if (sql_dialect != SQL_DIALECT_TSQL)
+		return;
+
+	/* Extract options from the statement node tree */
+	foreach(option, stmt->options)
+	{
+		DefElem    *defel = (DefElem *) lfirst(option);
+
+		if (strcmp(defel->defname, "default_schema") == 0)
+		{
+			if (defel->arg)
+				default_schema = strVal(defel->arg);
+		}
+		if (strcmp(defel->defname, "rename") == 0)
+		{
+			if (defel->arg)
+				new_user_name = strVal(defel->arg);
+		}
+	}
+
+	/* Fetch the relation */
+	bbf_authid_user_ext_rel = table_open(get_authid_user_ext_oid(),
+										 RowExclusiveLock);
+	bbf_authid_user_ext_dsc = RelationGetDescr(bbf_authid_user_ext_rel);
+
+	/* Search and obtain the tuple on the role name*/
+	user_name = (NameData *) palloc0(NAMEDATALEN);
+	snprintf(user_name->data, NAMEDATALEN, "%s", stmt->role->rolename);
+	ScanKeyInit(&scanKey,
+				Anum_bbf_authid_user_ext_rolname,
+				BTEqualStrategyNumber, F_NAMEEQ,
+				NameGetDatum(user_name));
+
+	scan = systable_beginscan(bbf_authid_user_ext_rel,
+							  get_authid_user_ext_idx_oid(),
+							  true, NULL, 1, &scanKey);
+
+	tuple = systable_getnext(scan);
+
+	if (!HeapTupleIsValid(tuple))
+		ereport(ERROR,
+				(errcode(ERRCODE_UNDEFINED_OBJECT),
+				 errmsg("tuple does not exist")));
+
+	/* Build a tuple to insert */
+	MemSet(new_record_user_ext, 0, sizeof(new_record_user_ext));
+	MemSet(new_record_nulls_user_ext, false, sizeof(new_record_nulls_user_ext));
+	MemSet(new_record_repl_user_ext, false, sizeof(new_record_repl_user_ext));
+
+	/* update user name */
+	if (new_user_name)
+	{
+		physical_name = get_physical_user_name(get_cur_db_name(), new_user_name);
+		new_record_user_ext[USER_EXT_ROLNAME] = CStringGetDatum(physical_name);
+		new_record_repl_user_ext[USER_EXT_ROLNAME] = true;
+		new_record_user_ext[USER_EXT_ORIG_USERNAME] = CStringGetTextDatum(new_user_name);
+		new_record_repl_user_ext[USER_EXT_ORIG_USERNAME] = true;
+
+	}
+
+	/* update modify_date */
+	new_record_user_ext[USER_EXT_MODIFY_DATE] = TimestampTzGetDatum(GetSQLCurrentTimestamp(-1));
+	new_record_repl_user_ext[USER_EXT_MODIFY_DATE] = true;
+
+	/* update default_schema */
+	if (default_schema)
+	{
+		if (strcmp(default_schema, "") == 0)
+		{
+			pfree(default_schema);
+			default_schema = "dbo";
+		}
+		new_record_user_ext[USER_EXT_DEFAULT_SCHEMA_NAME] = CStringGetTextDatum(pstrdup(default_schema));
+		new_record_repl_user_ext[USER_EXT_DEFAULT_SCHEMA_NAME] = true;
+	}
+
+	new_tuple = heap_modify_tuple(tuple,
+								  bbf_authid_user_ext_dsc,
+								  new_record_user_ext,
+								  new_record_nulls_user_ext,
+								  new_record_repl_user_ext);
+
+	CatalogTupleUpdate(bbf_authid_user_ext_rel, &tuple->t_self, new_tuple);
+
+	/* Advance the command counter to see the new record */
+	CommandCounterIncrement();
+
+	systable_endscan(scan);
+	heap_freetuple(new_tuple);
+
+	table_close(bbf_authid_user_ext_rel, RowExclusiveLock);
+
+	if (new_user_name)
+	{
+		StringInfoData	query;
+		List			*parsetree_list;
+		Node			*n;
+		PlannedStmt		*wrapper;
+
+		initStringInfo(&query);
+		appendStringInfo(&query, "ALTER ROLE dummy RENAME TO dummy; ");
+
+		parsetree_list = raw_parser(query.data);
+
+		if (list_length(parsetree_list) != 1)
+			ereport(ERROR,
+					(errcode(ERRCODE_SYNTAX_ERROR),
+					 errmsg("Expected 1 statement but get %d statements after parsing",
+							list_length(parsetree_list))));
+
+		/* Update the dummy statement with real values */
+		n = parsetree_nth_stmt(parsetree_list, 0);
+
+		update_RenameStmt(n, stmt->role->rolename, physical_name);
+
+		/* Run the built query */
+		/* need to make a wrapper PlannedStmt */
+		wrapper = makeNode(PlannedStmt);
+		wrapper->commandType = CMD_UTILITY;
+		wrapper->canSetTag = false;
+		wrapper->utilityStmt = n;
+		wrapper->stmt_location = -1;
+		wrapper->stmt_len = -1;
+
+		/* do this step */
+		ProcessUtility(wrapper,
+					   "(ALTER ROLE )",
+					   PROCESS_UTILITY_SUBCOMMAND,
+					   NULL,
+					   NULL,
+					   None_Receiver,
+					   NULL);
+
+		pfree(query.data);
+	}
+}
+
 static List *
 gen_droprole_subcmds(const char *user)
 {

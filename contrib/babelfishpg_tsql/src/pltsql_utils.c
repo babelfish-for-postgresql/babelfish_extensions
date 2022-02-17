@@ -692,6 +692,17 @@ update_GrantStmt(Node *n, const char *object, const char *obj_schema, const char
 }
 
 void
+update_RenameStmt(Node *n, const char *old_name, const char *new_name)
+{
+	RenameStmt *stmt = (RenameStmt *) n;
+	if (!IsA(stmt, RenameStmt))
+		ereport(ERROR, (errcode(ERRCODE_SYNTAX_ERROR), errmsg("query is not a RenameStmt")));
+
+	stmt->subname = pstrdup(old_name);
+	stmt->newname = pstrdup(new_name);
+}
+
+void
 update_ViewStmt(Node *n, const char *view_schema)
 {
 	ViewStmt *stmt = (ViewStmt *) n;

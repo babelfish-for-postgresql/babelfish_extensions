@@ -94,6 +94,56 @@ r1
 ~~END~~
 
 
+ALTER USER r1 WITH DEFAULT_SCHEMA = sch2;
+go
+
+SELECT rolname, orig_username, login_name, database_name, default_schema_name
+FROM sys.babelfish_authid_user_ext
+WHERE orig_username = 'r1';
+go
+~~START~~
+varchar#!#nvarchar#!#varchar#!#nvarchar#!#nvarchar
+master_r1#!#r1#!#r1#!#master#!#sch2
+~~END~~
+
+
+ALTER USER r1 WITH NAME = new_r1;
+go
+
+SELECT rolname, orig_username, login_name, database_name, default_schema_name
+FROM sys.babelfish_authid_user_ext
+WHERE orig_username = 'new_r1';
+go
+~~START~~
+varchar#!#nvarchar#!#varchar#!#nvarchar#!#nvarchar
+master_new_r1#!#new_r1#!#r1#!#master#!#sch2
+~~END~~
+
+
+ALTER USER r2 WITH DEFAULT_SCHEMA = NULL;
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Current user does not have privileges to change schema)~~
+
+
+ALTER USER r2 WITH NAME = new_r2;
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Current user does not have privileges to change user name)~~
+
+
+SELECT rolname, orig_username, login_name, database_name, default_schema_name
+FROM sys.babelfish_authid_user_ext
+WHERE orig_username = 'r2';
+go
+~~START~~
+varchar#!#nvarchar#!#varchar#!#nvarchar#!#nvarchar
+master_r2#!#r2#!#r2#!#master#!#sch2
+~~END~~
+
+
 -- tsql      user=r2      password=abc
 SELECT db_name();
 go
@@ -138,7 +188,7 @@ r2
 
 
 -- tsql
-DROP USER r1;
+DROP USER new_r1;
 go
 
 DROP LOGIN r1;

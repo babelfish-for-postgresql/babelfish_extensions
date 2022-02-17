@@ -55,6 +55,33 @@ go
 SELECT current_user;
 go
 
+ALTER USER r1 WITH DEFAULT_SCHEMA = sch2;
+go
+
+SELECT rolname, orig_username, login_name, database_name, default_schema_name
+FROM sys.babelfish_authid_user_ext
+WHERE orig_username = 'r1';
+go
+
+ALTER USER r1 WITH NAME = new_r1;
+go
+
+SELECT rolname, orig_username, login_name, database_name, default_schema_name
+FROM sys.babelfish_authid_user_ext
+WHERE orig_username = 'new_r1';
+go
+
+ALTER USER r2 WITH DEFAULT_SCHEMA = NULL;
+go
+
+ALTER USER r2 WITH NAME = new_r2;
+go
+
+SELECT rolname, orig_username, login_name, database_name, default_schema_name
+FROM sys.babelfish_authid_user_ext
+WHERE orig_username = 'r2';
+go
+
 -- tsql      user=r2      password=abc
 SELECT db_name();
 go
@@ -74,7 +101,7 @@ SELECT current_user;
 go
 
 -- tsql
-DROP USER r1;
+DROP USER new_r1;
 go
 
 DROP LOGIN r1;

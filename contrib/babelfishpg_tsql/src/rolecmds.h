@@ -49,5 +49,6 @@ extern void add_to_bbf_authid_user_ext(const char *user_name,
 									   const char *schema_name,
 									   const char *login_name);
 extern void drop_related_bbf_users(const char *dbo_role, const char *db_owner_role, const char *guest);
+extern void alter_bbf_authid_user_ext(AlterRoleStmt *stmt);
 
 #endif
