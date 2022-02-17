@@ -1,11 +1,6 @@
 name: JDBC Unit Tests
 on:
-  push:
-    branches:
-      - BABEL_1_X_DEV
-  pull_request:
-    branches:
-      - BABEL_1_X_DEV
+  push
 
 jobs:
   extension-tests:

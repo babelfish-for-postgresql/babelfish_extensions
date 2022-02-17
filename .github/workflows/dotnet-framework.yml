@@ -1,5 +1,5 @@
 name: .NET Tests
-on: [push, pull_request]
+on: push
 
 jobs:
   dotnet:
