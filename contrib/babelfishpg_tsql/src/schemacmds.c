@@ -63,14 +63,14 @@ add_ns_ext_info(CreateSchemaStmt *stmt, const char *queryString, const char *ori
 }
 
 void 
-del_ns_ext_info(const char *schemaname)
+del_ns_ext_info(const char *schemaname, bool missing_ok)
 {
 	Relation 	rel;
 	HeapTuple	tuple;
 	ScanKeyData scanKey;
 	SysScanDesc scan;
 
-	if (get_namespace_oid(schemaname, false) == InvalidOid)
+	if (get_namespace_oid(schemaname, missing_ok) == InvalidOid)
 		return;
 
 	rel = table_open(namespace_ext_oid, RowExclusiveLock);

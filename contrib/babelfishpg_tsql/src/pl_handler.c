@@ -2528,7 +2528,7 @@ static void bbf_ProcessUtility(PlannedStmt *pstmt,
             if (sql_dialect == SQL_DIALECT_TSQL
 				&& ownership_structure_enabled())
 			{
-				del_ns_ext_info(strVal(lfirst(list_head(drop_stmt->objects))));
+				del_ns_ext_info(strVal(lfirst(list_head(drop_stmt->objects))), drop_stmt->missing_ok);
 
 				if (prev_ProcessUtility)
 					prev_ProcessUtility(pstmt, queryString, context, params,
