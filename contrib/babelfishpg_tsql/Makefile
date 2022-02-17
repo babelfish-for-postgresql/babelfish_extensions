@@ -88,6 +88,7 @@ REGRESS += test/babel_select_distinct_top
 REGRESS += test/babel_transaction
 REGRESS += test/babel_typecode
 REGRESS += test/babel_uniqueidentifier
+REGRESS += test/babel_collation
 
 # We need the previous version to test extension upgrade scripts
 ifdef PREV_EXTVERSION
