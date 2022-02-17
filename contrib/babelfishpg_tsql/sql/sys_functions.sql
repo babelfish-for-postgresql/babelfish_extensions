@@ -1430,6 +1430,9 @@ CREATE OR REPLACE FUNCTION sys.version()
 CREATE OR REPLACE FUNCTION sys.servername()
         RETURNS sys.NVARCHAR(128)  AS 'babelfishpg_tsql' LANGUAGE C;
 
+CREATE OR REPLACE FUNCTION sys.servicename()
+        RETURNS sys.NVARCHAR(128)  AS 'babelfishpg_tsql' LANGUAGE C;
+
 -- In tsql @@max_precision represents max precision that server supports
 -- As of now, we do not support change in max_precision. So, returning default value
 CREATE OR REPLACE FUNCTION sys.max_precision()

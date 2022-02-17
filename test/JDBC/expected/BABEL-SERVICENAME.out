@@ -1,0 +1,7 @@
+SELECT @@SERVICENAME;
+go
+~~START~~
+nvarchar
+MSSQLSERVER
+~~END~~
+
