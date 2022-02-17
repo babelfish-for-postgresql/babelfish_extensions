@@ -56,6 +56,41 @@ master#!#dbo#!#nums#!#j#!#3#!#smallmoney#!#10#!#12#!#4#!#10#!#1#!#<NULL>#!#<NULL
 ~~END~~
 
 
+-- Testing with rowversion/timestamp column
+EXEC sp_babelfish_configure 'babelfishpg_tsql.escape_hatch_rowversion', 'ignore';
+go
+
+create table tbl_rv(id int, rv rowversion);
+go
+
+create table tbl_tm(id int, tm timestamp);
+go
+
+EXEC [sys].sp_columns_100 'tbl_rv', 'dbo', NULL, NULL, @ODBCVer = 3, @fUsePattern = 1
+go
+~~START~~
+varchar#!#varchar#!#varchar#!#varchar#!#smallint#!#varchar#!#int#!#int#!#smallint#!#smallint#!#smallint#!#varchar#!#nvarchar#!#smallint#!#smallint#!#int#!#int#!#varchar#!#smallint#!#smallint#!#smallint#!#smallint#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#tinyint
+master#!#dbo#!#tbl_rv#!#id#!#4#!#int#!#10#!#4#!#0#!#10#!#1#!#<NULL>#!#<NULL>#!#4#!#<NULL>#!#<NULL>#!#1#!#YES#!#0#!#0#!#0#!#0#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#38
+master#!#dbo#!#tbl_rv#!#rv#!#-2#!#timestamp#!#8#!#8#!#<NULL>#!#<NULL>#!#1#!#<NULL>#!#(get_current_full_xact_id())::rowversion#!#-2#!#<NULL>#!#<NULL>#!#2#!#YES#!#0#!#0#!#0#!#0#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#45
+~~END~~
+
+
+EXEC [sys].sp_columns_100 'tbl_tm', 'dbo', NULL, NULL, @ODBCVer = 3, @fUsePattern = 1
+go
+~~START~~
+varchar#!#varchar#!#varchar#!#varchar#!#smallint#!#varchar#!#int#!#int#!#smallint#!#smallint#!#smallint#!#varchar#!#nvarchar#!#smallint#!#smallint#!#int#!#int#!#varchar#!#smallint#!#smallint#!#smallint#!#smallint#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#tinyint
+master#!#dbo#!#tbl_tm#!#id#!#4#!#int#!#10#!#4#!#0#!#10#!#1#!#<NULL>#!#<NULL>#!#4#!#<NULL>#!#<NULL>#!#1#!#YES#!#0#!#0#!#0#!#0#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#38
+master#!#dbo#!#tbl_tm#!#tm#!#-2#!#timestamp#!#8#!#8#!#<NULL>#!#<NULL>#!#1#!#<NULL>#!#(get_current_full_xact_id())::"timestamp"#!#-2#!#<NULL>#!#<NULL>#!#2#!#YES#!#0#!#0#!#0#!#0#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#45
+~~END~~
+
+
+drop table tbl_rv;
+drop table tbl_tm;
+go
+
+EXEC sp_babelfish_configure 'babelfishpg_tsql.escape_hatch_rowversion', 'strict';
+go
+
 -- Testing with UDTS
 create type char_t from char(10)
 go

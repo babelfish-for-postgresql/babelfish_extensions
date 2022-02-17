@@ -25,7 +25,7 @@ CREATE TYPE sys.ROWVERSION (
     OUTPUT         = sys.rowversionout,
     RECEIVE        = sys.rowversionrecv,
     SEND           = sys.rowversionsend,
-    INTERNALLENGTH = 16,
+    INTERNALLENGTH = 12,
     ALIGNMENT      = 'int4',
     STORAGE        = 'plain',
     CATEGORY       = 'U',

@@ -347,6 +347,7 @@ BEGIN
 			ELSIF typemod <= 4 THEN max_length = 4;
 			ELSIF typemod <= 7 THEN max_length = 5;
 			END IF;
+		WHEN 'timestamp' THEN max_length = 8;
 		ELSE max_length = typelen;
 		END CASE;
 		RETURN max_length;
