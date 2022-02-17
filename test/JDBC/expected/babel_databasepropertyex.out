@@ -8,7 +8,7 @@ sql_variant
 ~~END~~
 
 -- invalid property name, should return NULL
-select databasepropertyex(N'template1',N'invalid_property');
+select databasepropertyex(N'master',N'invalid_property');
 GO
 ~~START~~
 sql_variant
@@ -16,63 +16,63 @@ sql_variant
 ~~END~~
 
 -- test return type
-select pg_typeof(databasepropertyex(N'template1',N'invalid_property'));
+select pg_typeof(databasepropertyex(N'master',N'invalid_property'));
 GO
 ~~ERROR (Code: 33557097)~~
 
 ~~ERROR (Message: data type regtype is not supported yet)~~
 
 -- test supported properties
-select databasepropertyex(N'template1',N'Collation');
+select databasepropertyex(N'master',N'Collation');
 GO
 ~~START~~
 sql_variant
 sql_latin1_general_cp1_ci_as
 ~~END~~
 
-select databasepropertyex(N'template1',N'IsInStandBy');
+select databasepropertyex(N'master',N'IsInStandBy');
 GO
 ~~START~~
 sql_variant
 0
 ~~END~~
 
-select databasepropertyex(N'template1',N'IsAutoClose');
+select databasepropertyex(N'master',N'IsAutoClose');
 GO
 ~~START~~
 sql_variant
 0
 ~~END~~
 
-select databasepropertyex(N'template1',N'IsAutoCreateStatistics');
+select databasepropertyex(N'master',N'IsAutoCreateStatistics');
 GO
 ~~START~~
 sql_variant
 1
 ~~END~~
 
-select 'true' where databasepropertyex(N'template1',N'IsTornPageDetectionEnabled') >= 0
+select 'true' where databasepropertyex(N'master',N'IsTornPageDetectionEnabled') >= 0
 GO
 ~~START~~
 varchar
 true
 ~~END~~
 
-select databasepropertyex(N'template1',N'Updateability');
+select databasepropertyex(N'master',N'Updateability');
 GO
 ~~START~~
 sql_variant
 READ_WRITE
 ~~END~~
 
-select databasepropertyex(N'template1',N'Status');
+select databasepropertyex(N'master',N'Status');
 GO
 ~~START~~
 sql_variant
 ONLINE
 ~~END~~
 
-SELECT (case when charindex(cast(databasepropertyex(N'template1',N'Version') as nvarchar), version()) > 0 then 'true' else 'false' end) result
+SELECT (case when charindex(cast(databasepropertyex(N'master',N'Version') as nvarchar), version()) > 0 then 'true' else 'false' end) result
 GO
 ~~START~~
 text
@@ -80,21 +80,21 @@ true
 ~~END~~
 
 -- test unsupported properties(expect return NULL or 0)
-select databasepropertyex(N'template1',N'IsArithmeticAbortEnabled');
+select databasepropertyex(N'master',N'IsArithmeticAbortEnabled');
 GO
 ~~START~~
 sql_variant
 0
 ~~END~~
 
-select databasepropertyex(N'template1',N'IsAutoShrink');
+select databasepropertyex(N'master',N'IsAutoShrink');
 GO
 ~~START~~
 sql_variant
 0
 ~~END~~
 
-select databasepropertyex(N'template1',N'MaxSizeInBytes');
+select databasepropertyex(N'master',N'MaxSizeInBytes');
 GO
 ~~START~~
 sql_variant

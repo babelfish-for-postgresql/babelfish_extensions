@@ -20,10 +20,10 @@ SELECT * from fn_helpcollations();
 go
 
 -- BABEL-1697 Collation and Codepage information for DMS
-SELECT CAST( COLLATIONPROPERTY(Name, 'CodePage') AS INT) FROM fn_helpcollations() where Name = DATABASEPROPERTYEX('template1', 'Collation');
+SELECT CAST( COLLATIONPROPERTY(Name, 'CodePage') AS INT) FROM fn_helpcollations() where Name = DATABASEPROPERTYEX('master', 'Collation');
 go
 
-SELECT CAST( COLLATIONPROPERTY(Name, 'lcid') AS INT) FROM fn_helpcollations() where Name = DATABASEPROPERTYEX('template1', 'Collation');
+SELECT CAST( COLLATIONPROPERTY(Name, 'lcid') AS INT) FROM fn_helpcollations() where Name = DATABASEPROPERTYEX('master', 'Collation');
 go
 
 -- clean up
