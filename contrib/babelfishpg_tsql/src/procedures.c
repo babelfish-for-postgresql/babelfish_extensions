@@ -33,6 +33,7 @@ PG_FUNCTION_INFO_V1(sp_unprepare);
 PG_FUNCTION_INFO_V1(sp_prepare);
 PG_FUNCTION_INFO_V1(sp_babelfish_configure);
 PG_FUNCTION_INFO_V1(sp_describe_undeclared_parameters_internal);
+PG_FUNCTION_INFO_V1(xp_qv_internal);
 
 extern void delete_cached_batch(int handle);
 extern InlineCodeBlockArgs *create_args(int numargs);
@@ -619,4 +620,14 @@ sp_describe_undeclared_parameters_internal(PG_FUNCTION_ARGS)
 	{
 		SRF_RETURN_DONE(funcctx);
 	}
+}
+
+/*
+ * Internal function used by procedure xp_qv.
+ * The xp_qv procedure is called by SSMS. Only the minimum implementation is required.
+ */
+Datum 
+xp_qv_internal(PG_FUNCTION_ARGS)
+{	
+	PG_RETURN_INT32(0);
 }

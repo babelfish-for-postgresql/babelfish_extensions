@@ -37,6 +37,10 @@ CREATE OR REPLACE FUNCTION COLUMNS_UPDATED ()
 CREATE OR REPLACE FUNCTION UPDATE (TEXT)
 	   RETURNS BOOLEAN AS 'babelfishpg_tsql', 'updated' LANGUAGE C;
 
+CREATE OR REPLACE PROCEDURE xp_qv(IN nvarchar(256), IN nvarchar(256))
+	   AS 'babelfishpg_tsql', 'xp_qv_internal' LANGUAGE C;
+
+--
 -- The procedures below requires return code as a RETURN statement which is
 -- only possible in pltsql. Therefore, we create them here and call into the
 -- corresponding internal functions.
