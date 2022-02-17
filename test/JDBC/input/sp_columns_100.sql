@@ -18,6 +18,29 @@ go
 EXEC [sys].sp_columns_100 'nums', 'dbo', NULL, NULL, @ODBCVer = 3, @fUsePattern = 1
 go
 
+-- Testing with rowversion/timestamp column
+EXEC sp_babelfish_configure 'babelfishpg_tsql.escape_hatch_rowversion', 'ignore';
+go
+
+create table tbl_rv(id int, rv rowversion);
+go
+
+create table tbl_tm(id int, tm timestamp);
+go
+
+EXEC [sys].sp_columns_100 'tbl_rv', 'dbo', NULL, NULL, @ODBCVer = 3, @fUsePattern = 1
+go
+
+EXEC [sys].sp_columns_100 'tbl_tm', 'dbo', NULL, NULL, @ODBCVer = 3, @fUsePattern = 1
+go
+
+drop table tbl_rv;
+drop table tbl_tm;
+go
+
+EXEC sp_babelfish_configure 'babelfishpg_tsql.escape_hatch_rowversion', 'strict';
+go
+
 -- Testing with UDTS
 create type char_t from char(10)
 go

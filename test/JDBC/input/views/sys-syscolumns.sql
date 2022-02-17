@@ -148,6 +148,9 @@ drop table t3;
 drop table t4;
 go
 
+EXEC sp_babelfish_configure 'babelfishpg_tsql.escape_hatch_rowversion', 'ignore';
+go
+
 CREATE TABLE test_columns (
     c1  bigint  NOT NULL
     , c2    binary(123) NOT NULL
@@ -178,7 +181,8 @@ CREATE TABLE test_columns (
     , c28   uniqueidentifier    NOT NULL
     , c29   varbinary(123)  NOT NULL
     , c30   varchar(123)    NOT NULL
-    , c31   xml NOT NULL)
+    , c31   xml NOT NULL
+    , c32   rowversion)
 GO
 
 select name,max_length,precision,scale from sys.columns where object_id = OBJECT_ID('test_columns') order by name;
@@ -186,6 +190,9 @@ GO
 
 drop table test_columns;
 GO
+
+EXEC sp_babelfish_configure 'babelfishpg_tsql.escape_hatch_rowversion', 'strict';
+go
 
 CREATE TABLE t1(c1 datetime2(0)
                 , c2 datetime2(7)

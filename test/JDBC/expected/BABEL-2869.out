@@ -63,6 +63,8 @@ sql_variant
 sysname
 text
 time
+timestamp
+timestamp
 tinyint
 uniqueidentifier
 varbinary

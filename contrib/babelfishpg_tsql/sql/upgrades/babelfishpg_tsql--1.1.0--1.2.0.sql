@@ -420,6 +420,7 @@ BEGIN
       ELSIF typemod <= 4 THEN max_length = 4;
       ELSIF typemod <= 7 THEN max_length = 5;
       END IF;
+    WHEN 'timestamp' THEN max_length = 8;
     ELSE max_length = typelen;
     END CASE;
     RETURN max_length;
@@ -2791,6 +2792,7 @@ BEGIN
     WHEN 'datetime2' THEN length = 16;
     WHEN 'datetimeoffset' THEN length = 20;
     WHEN 'time' THEN length = 12;
+    WHEN 'timestamp' THEN length = 8;
     ELSE length = typelen;
     END CASE;
     RETURN length;
@@ -2828,6 +2830,8 @@ CREATE OR REPLACE VIEW sys.sp_columns_100_view AS
     WHEN a.atttypmod != -1
     THEN
     CAST(coalesce(t4."NUMERIC_PRECISION", t4."CHARACTER_MAXIMUM_LENGTH", sys.tsql_type_precision_helper(t4."DATA_TYPE", a.atttypmod)) AS INT)
+    WHEN tsql_type_name = 'timestamp'
+    THEN 8
     ELSE
     CAST(coalesce(t4."NUMERIC_PRECISION", t4."CHARACTER_MAXIMUM_LENGTH", sys.tsql_type_precision_helper(t4."DATA_TYPE", t.typtypmod)) AS INT)
   END AS PRECISION,
