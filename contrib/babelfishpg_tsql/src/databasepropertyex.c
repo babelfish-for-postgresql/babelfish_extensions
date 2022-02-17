@@ -38,7 +38,6 @@ Datum databasepropertyex(PG_FUNCTION_ARGS) {
 	/* if db doesn't exist, return null for all queries */
 	if (!HeapTupleIsValid(tuple))
 	{
-		ReleaseSysCache(tuple);
 		PG_RETURN_NULL();
 	}
 	ReleaseSysCache(tuple);
