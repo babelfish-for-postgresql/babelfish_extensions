@@ -223,6 +223,9 @@ protected:
 
 	bool isDefaultLanguage(TSqlParser::IdContext *ctx);
 	void checkUnsupportedSystemProcedure(TSqlParser::IdContext *ctx);
+
+	void checkSupportedGrantStmt(TSqlParser::Grant_statementContext *grant);
+	void checkSupportedRevokeStmt(TSqlParser::Revoke_statementContext *revoke);
 };
 
 std::unique_ptr<TsqlUnsupportedFeatureHandler> TsqlUnsupportedFeatureHandler::create()
@@ -1159,12 +1162,9 @@ antlrcpp::Any TsqlUnsupportedFeatureHandlerImpl::visitSecurity_statement(TSqlPar
 	else if (ctx->revert_statement())
 		handle(INSTR_UNSUPPORTED_TSQL_REVERT_STMT, "REVERT", getLineAndPos(ctx));
 	else if (ctx->grant_statement())
-	{
-		if (!pltsql_allow_antlr_to_unsupported_grammar_for_testing)
-			handle(INSTR_UNSUPPORTED_TSQL_GRANT_STMT, "GRANT", getLineAndPos(ctx));
-	}
+		checkSupportedGrantStmt(ctx->grant_statement());
 	else if (ctx->revoke_statement())
-		handle(INSTR_UNSUPPORTED_TSQL_REVOKE_STMT, "REVOKE", getLineAndPos(ctx));
+		checkSupportedRevokeStmt(ctx->revoke_statement());
 	else if (ctx->deny_statement())
 		handle(INSTR_UNSUPPORTED_TSQL_DENY_STMT, "DENY", getLineAndPos(ctx));
 	else if (ctx->open_key())
@@ -1565,4 +1565,90 @@ void TsqlUnsupportedFeatureHandlerImpl::checkUnsupportedSystemProcedure(TSqlPars
 	for (size_t i=0; i<NUM_UNSUPPORTED_PROCEDURES; ++i)
 		if (pg_strcasecmp(unsupported_sp_procedures[i], val.c_str()) == 0)
 			handle(INSTR_UNSUPPORTED_TSQL_NOT_IMPLEMENTED_SYSTEM_PROCEDURE, val.c_str(), getLineAndPos(ctx));
+}
+
+void TsqlUnsupportedFeatureHandlerImpl::checkSupportedGrantStmt(TSqlParser::Grant_statementContext *grant)
+{
+	std::string unsupported_feature;
+
+	if (!grant->permission_object()) 
+		handle(INSTR_UNSUPPORTED_TSQL_REVOKE_STMT, "GRANT Database", getLineAndPos(grant));
+
+	if (grant->permissions())
+	{
+		for (auto perm : grant->permissions()->permission())
+		{
+			auto single_perm = perm->single_permission();
+			if (single_perm->EXECUTE()
+					|| single_perm->SELECT() 
+					|| single_perm->INSERT()
+					|| single_perm->UPDATE()
+					|| single_perm->DELETE()
+					|| single_perm->REFERENCES())
+				continue;
+			else
+			{
+				unsupported_feature = "GRANT PERMISSION " + perm->getText();
+				handle(INSTR_UNSUPPORTED_TSQL_REVOKE_STMT, unsupported_feature.c_str(), getLineAndPos(perm));
+			}
+
+		}
+	}
+
+	if (grant->permission_object())
+	{
+		auto perm_obj = grant->permission_object();
+		auto obj_type = perm_obj->object_type();
+		if (obj_type && !obj_type->OBJECT())
+		{
+			unsupported_feature = "GRANT ON " + obj_type->getText();
+			handle(INSTR_UNSUPPORTED_TSQL_REVOKE_STMT, unsupported_feature.c_str(), getLineAndPos(obj_type));
+		}
+	}
+
+	if (grant->AS())
+		handle(INSTR_UNSUPPORTED_TSQL_REVOKE_STMT, "GRANT AS", getLineAndPos(grant->AS()));
+}
+
+void TsqlUnsupportedFeatureHandlerImpl::checkSupportedRevokeStmt(TSqlParser::Revoke_statementContext *revoke)
+{
+	std::string unsupported_feature;
+
+	if (!revoke->permission_object()) 
+		handle(INSTR_UNSUPPORTED_TSQL_REVOKE_STMT, "REVOKE Database", getLineAndPos(revoke));
+
+	if (revoke->permissions())
+	{
+		for (auto perm : revoke->permissions()->permission())
+		{
+			auto single_perm = perm->single_permission();
+			if (single_perm->EXECUTE()
+					|| single_perm->SELECT() 
+					|| single_perm->INSERT()
+					|| single_perm->UPDATE()
+					|| single_perm->DELETE()
+					|| single_perm->REFERENCES())
+				continue;
+			else
+			{
+				unsupported_feature = "REVOKE PERMISSION " + perm->getText();
+				handle(INSTR_UNSUPPORTED_TSQL_REVOKE_STMT, unsupported_feature.c_str(), getLineAndPos(perm));
+			}
+
+		}
+	}
+
+	if (revoke->permission_object())
+	{
+		auto perm_obj = revoke->permission_object();
+		auto obj_type = perm_obj->object_type();
+		if (obj_type && !obj_type->OBJECT())
+		{
+			unsupported_feature = "REVOKE ON " + obj_type->getText();
+			handle(INSTR_UNSUPPORTED_TSQL_REVOKE_STMT, unsupported_feature.c_str(), getLineAndPos(obj_type));
+		}
+	}
+
+	if (revoke->AS())
+		handle(INSTR_UNSUPPORTED_TSQL_REVOKE_STMT, "REVOKE AS", getLineAndPos(revoke->AS()));
 }

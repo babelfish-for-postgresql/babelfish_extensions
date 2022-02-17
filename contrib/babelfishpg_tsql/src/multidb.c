@@ -20,6 +20,7 @@ static void rewrite_rangevar(RangeVar *rv);
 static void rewrite_objectwithargs(ObjectWithArgs *obj);
 void rewrite_plain_name(List *name);  /* Value Strings */
 static void rewrite_schema_name(Value *schema);
+static void rewrite_role_name(RoleSpec *role);
 static bool is_shared_schema(const char *name);
 
 static void rewrite_rangevar_list(List *rvs);  /* list of RangeVars */
@@ -27,6 +28,7 @@ static void rewrite_objectwithargs_list(List *objs);  /* list of ObjectWithArgs 
 static void rewrite_plain_name_list(List *names); /* list of plan names */
 static void rewrite_schema_name_list(List *schemas); /* list of schema names */
 static void rewrite_type_name_list(List *typenames); /* list of type names */
+static void rewrite_role_list(List *rolespecs); /* list of RoleSpecs */
 
 static bool rewrite_relation_walker(Node *node, void *context);
 
@@ -137,6 +139,7 @@ rewrite_object_refs(Node *stmt)
 		}
 		case T_GrantStmt:
 		{
+			/* Grant / Revoke stmt share same structure */
 			GrantStmt 	*grant = (GrantStmt *) stmt;
 			switch (grant->targtype)
 			{
@@ -169,6 +172,7 @@ rewrite_object_refs(Node *stmt)
 						default:
 							break;
 					}
+					rewrite_role_list(grant->grantees);
 					break;
 				}
 				case ACL_TARGET_ALL_IN_SCHEMA:
@@ -376,8 +380,8 @@ rewrite_object_refs(Node *stmt)
 				case OBJECT_SCHEMA:
 				{
 					char *cur_db = get_cur_db_name();
-					rename->subname = get_physical_schema_name(cur_db, rename->subname);
-					rename->newname = get_physical_schema_name(cur_db, rename->newname);
+					rename->subname = get_physical_name(cur_db, rename->subname);
+					rename->newname = get_physical_name(cur_db, rename->newname);
 					break;
 				}
 				case OBJECT_TABLE:
@@ -430,7 +434,7 @@ rewrite_object_refs(Node *stmt)
 		{
 			CreateSchemaStmt *create_schema = (CreateSchemaStmt *) stmt;
 			char *cur_db = get_cur_db_name();
-			create_schema->schemaname = get_physical_schema_name(cur_db, create_schema->schemaname);
+			create_schema->schemaname = get_physical_name(cur_db, create_schema->schemaname);
 			break;
 		}
 		case T_AlterOwnerStmt:
@@ -581,7 +585,7 @@ rewrite_column_refs(ColumnRef *cref)
 				break;  /* do not thing for shared schemas */
 			else
 			{
-				new_schema = makeString(get_physical_schema_name(cur_db, strVal(schema)));
+				new_schema = makeString(get_physical_name(cur_db, strVal(schema)));
 				list_delete_first(cref->fields);
 				lcons(new_schema, cref->fields);
 			}
@@ -597,7 +601,7 @@ rewrite_column_refs(ColumnRef *cref)
 				list_delete_first(cref->fields);  /* redirect to shared schema */
 			else
 			{
-				new_schema = makeString(get_physical_schema_name(strVal(db), strVal(schema)));
+				new_schema = makeString(get_physical_name(strVal(db), strVal(schema)));
 				list_delete_first(cref->fields);
 				list_delete_first(cref->fields);
 				lcons(new_schema, cref->fields);
@@ -618,7 +622,7 @@ rewrite_rangevar(RangeVar *rv)
 			rv->catalogname = NULL;  /* redirect to shared schema */
 		else
 		{
-			rv->schemaname = get_physical_schema_name(rv->catalogname, rv->schemaname);
+			rv->schemaname = get_physical_name(rv->catalogname, rv->schemaname);
 			rv->catalogname = NULL;
 		}
 	}
@@ -629,7 +633,7 @@ rewrite_rangevar(RangeVar *rv)
 		else
 		{
 			char *cur_db = get_cur_db_name();
-			rv->schemaname = get_physical_schema_name(cur_db, rv->schemaname);
+			rv->schemaname = get_physical_name(cur_db, rv->schemaname);
 		}
 	}
 }
@@ -654,7 +658,7 @@ rewrite_plain_name(List *name)
 			if (is_shared_schema(strVal(schema)))
 				break;  /* do not thing for shared schemas */
 
-			new_schema = makeString(get_physical_schema_name(cur_db, strVal(schema)));
+			new_schema = makeString(get_physical_name(cur_db, strVal(schema)));
 			/* ignoring the return value sinece list is valid and cannot be empty */
 			list_delete_first(name);
 			lcons(new_schema, name);
@@ -672,7 +676,7 @@ rewrite_plain_name(List *name)
 				list_delete_first(name);  /* redirect to shared SYS schema */
 			else
 			{
-				new_schema = makeString(get_physical_schema_name(strVal(db), strVal(schema)));
+				new_schema = makeString(get_physical_name(strVal(db), strVal(schema)));
 				/* ignoring the return value sinece list is valid and cannot be empty */
 				list_delete_first(name);
 				list_delete_first(name);
@@ -693,7 +697,14 @@ rewrite_schema_name(Value *schema)
 	/* do nothing for shared schemas */
 	if (is_shared_schema(strVal(schema)))
 		return;
-	schema->val.str = get_physical_schema_name(cur_db, strVal(schema));
+	schema->val.str = get_physical_name(cur_db, strVal(schema));
+}
+
+static void
+rewrite_role_name(RoleSpec *role)
+{
+	char       *cur_db = get_cur_db_name();
+	role->rolename = get_physical_name(cur_db, role->rolename);
 }
 
 static bool
@@ -775,6 +786,20 @@ rewrite_type_name_list(List *typenames)
 	}
 }
 
+static void 
+rewrite_role_list(List *rolespecs)
+{
+	ListCell   	*cell;
+
+	foreach(cell, rolespecs)
+	{
+		RoleSpec *role = (RoleSpec *) lfirst(cell);
+		/* skip current user, session user, public */
+		if (role->roletype == ROLESPEC_CSTRING)
+			rewrite_role_name(role);
+	}
+}
+
 /*************************************************************
  * 						Helper Functions
  *************************************************************/
@@ -794,7 +819,7 @@ get_current_physical_schema_name(PG_FUNCTION_ARGS)
 		PG_RETURN_NULL();
 
 	if (cur_db_name)
-		ret = get_physical_schema_name(cur_db_name, schema_name);
+		ret = get_physical_name(cur_db_name, schema_name);
 	else
 		PG_RETURN_TEXT_P(CStringGetTextDatum(schema_name));
 
@@ -805,18 +830,18 @@ get_current_physical_schema_name(PG_FUNCTION_ARGS)
  * retrieve the physical mapped schema for the query
  */
 char *
-get_physical_schema_name(char *db_name, const char *schema)
+get_physical_name(char *db_name, const char *object_name)
 {
 	char *name;
 	char *result;
-	int  len = strlen(schema);
+	int  len = strlen(object_name);
 
-	if (!schema || len == 0)
+	if (!object_name || len == 0)
 		return NULL;
 
 	/* always return a new copy */
 	name = palloc0(len > MAX_BBF_NAMEDATALEND ? len : MAX_BBF_NAMEDATALEND);
-	strncpy(name, schema, strlen(schema));
+	strncpy(name, object_name, strlen(object_name));
 
 	if (is_shared_schema(name))
 		return name;
@@ -851,7 +876,7 @@ get_physical_schema_name(char *db_name, const char *schema)
 			/* db_name is valid. 
 			 * under SINGLE_DB this is only possible 
 			 * when target db is the customer db.
-			 * in such case we only return the schema name */
+			 * in such case we only return the object_name name */
 			return name;
 		}
 	}
