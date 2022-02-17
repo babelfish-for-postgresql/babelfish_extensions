@@ -2038,7 +2038,7 @@ $$
 LANGUAGE 'pltsql';
 GRANT EXECUTE on PROCEDURE sys.sp_stored_procedures TO PUBLIC;
 
-CREATE OR REPLACE FUNCTION is_srvrolemember(role PG_CATALOG.TEXT, login PG_CATALOG.TEXT DEFAULT CURRENT_USER)
+CREATE OR REPLACE FUNCTION is_srvrolemember(role sys.SYSNAME, login sys.SYSNAME DEFAULT CURRENT_USER)
 RETURNS INTEGER AS
 $$
 DECLARE has_role BOOLEAN;
@@ -2061,7 +2061,7 @@ begin
     	RETURN 1;
 	
  	ELSIF role = 'sysadmin' THEN
-	  	has_role = pg_has_role(login, role, 'MEMBER');
+	  	has_role = pg_has_role(login::TEXT, role::TEXT, 'MEMBER');
 	    IF has_role THEN
 			RETURN 1;
 		ELSE
@@ -2086,6 +2086,4 @@ begin
  	EXCEPTION WHEN OTHERS THEN
 	 	  RETURN NULL;
 END;
-$$
-STRICT
-LANGUAGE plpgsql;
+$$ LANGUAGE plpgsql;
