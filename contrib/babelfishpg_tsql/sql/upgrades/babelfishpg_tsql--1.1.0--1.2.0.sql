@@ -1163,6 +1163,12 @@ WHERE Ext.database_name = DB_NAME();
 
 GRANT SELECT ON sys.database_principals TO PUBLIC;
 
+CREATE OR REPLACE PROCEDURE sys.babel_add_existing_users_to_catalog()
+LANGUAGE C
+AS 'babelfishpg_tsql', 'add_existing_users_to_catalog';
+
+CALL sys.babel_add_existing_users_to_catalog();
+
 create or replace view sys.identity_columns AS
 select out_object_id::bigint as object_id
   , out_name::name as name

@@ -67,6 +67,7 @@ static void drop_bbf_authid_user_ext(ObjectAccessType access,
 										Oid roleid,
 										int subId,
 										void *arg);
+static void drop_bbf_authid_user_ext_by_rolname(const char *rolname);
 static void grant_guests_to_login(const char *login);
 
 void
@@ -374,6 +375,52 @@ drop_bbf_authid_user_ext(ObjectAccessType access,
 	systable_endscan(scan);
 	table_close(bbf_authid_user_ext_rel, RowExclusiveLock);
 	ReleaseSysCache(authtuple);
+}
+
+static void
+drop_bbf_authid_user_ext_by_rolname(const char *rolname)
+{
+	Relation	bbf_authid_user_ext_rel;
+	HeapTuple	tuple;
+	HeapTuple	authtuple;
+	ScanKeyData	scanKey;
+	SysScanDesc	scan;
+
+	/* Fetch the relation */
+	bbf_authid_user_ext_rel = table_open(get_authid_user_ext_oid(),
+										 RowExclusiveLock);
+
+	/* Search and drop on the role */
+	ScanKeyInit(&scanKey,
+				Anum_bbf_authid_user_ext_rolname,
+				BTEqualStrategyNumber, F_NAMEEQ,
+				CStringGetDatum(rolname));
+
+	scan = systable_beginscan(bbf_authid_user_ext_rel,
+							  get_authid_user_ext_idx_oid(),
+							  true, NULL, 1, &scanKey);
+
+	tuple = systable_getnext(scan);
+
+	if (HeapTupleIsValid(tuple))
+		CatalogTupleDelete(bbf_authid_user_ext_rel,
+						   &tuple->t_self);
+
+	systable_endscan(scan);
+	table_close(bbf_authid_user_ext_rel, RowExclusiveLock);
+}
+
+void
+drop_related_bbf_users(const char *dbo_role,
+					   const char *db_owner_role,
+					   const char *guest)
+{
+	if (dbo_role)
+		drop_bbf_authid_user_ext_by_rolname(dbo_role);
+	if (db_owner_role)
+		drop_bbf_authid_user_ext_by_rolname(db_owner_role);
+	if (guest)
+		drop_bbf_authid_user_ext_by_rolname(guest);
 }
 
 static void
@@ -902,8 +949,143 @@ create_bbf_authid_user_ext(CreateRoleStmt *stmt, bool has_schema, bool has_login
 	add_to_bbf_authid_user_ext(stmt->role, original_user_name, NULL, default_schema, login->rolename);
 }
 
+PG_FUNCTION_INFO_V1(add_existing_users_to_catalog);
+Datum
+add_existing_users_to_catalog(PG_FUNCTION_ARGS)
+{
+	Relation        db_rel;
+	TableScanDesc   scan;
+	HeapTuple       tuple;
+	bool            is_null;
+	List            *dbo_list = NIL;
+	StringInfoData  query;
+	List            *parsetree_list;
+	Node            *stmt;
+	RoleSpec        *tmp;
+	PlannedStmt     *wrapper;
+	const char      *prev_current_user;
+	int             saved_dialect = sql_dialect;
+
+	db_rel = table_open(sysdatabases_oid, AccessShareLock);
+	scan = table_beginscan_catalog(db_rel, 0, NULL);
+	tuple = heap_getnext(scan, ForwardScanDirection);
+
+	while (HeapTupleIsValid(tuple))
+	{
+		Datum           db_name_datum;
+		const char      *db_name;
+		const char      *dbo_role;
+		const char      *dbo_scm;
+		const char      *db_owner_role;
+		const char      *guest;
+		RoleSpec        *rolspec;
+
+		db_name_datum = heap_getattr(tuple,
+		Anum_sysdatabaese_name,
+		db_rel->rd_att,
+		&is_null);
+
+		db_name = TextDatumGetCString(db_name_datum);
+		dbo_role = get_dbo_role_name(db_name);
+		dbo_scm = get_dbo_schema_name(db_name);
+		db_owner_role = get_db_owner_name(db_name);
+		guest = get_guest_role_name(db_name);
+
+		/* Add users to catalog ext */
+		if (dbo_role)
+		{
+			rolspec = makeNode(RoleSpec);
+			rolspec->type = ROLESPEC_CSTRING;
+			rolspec->location = -1;
+			rolspec->rolename = pstrdup(dbo_role);
+			dbo_list = lappend(dbo_list, rolspec);
+			add_to_bbf_authid_user_ext(dbo_role, "dbo", db_name, dbo_scm, NULL);
+		}
+		if (db_owner_role)
+			add_to_bbf_authid_user_ext(db_owner_role, "db_owner", db_name, NULL, NULL);
+		if (guest)
+			add_to_bbf_authid_user_ext(guest, "guest", db_name, NULL, NULL);
+
+		tuple = heap_getnext(scan, ForwardScanDirection);
+	}
+	table_endscan(scan);
+	table_close(db_rel, AccessShareLock);
+
+	if (list_length(dbo_list) <= 0)
+		PG_RETURN_INT32(0);
+
+	/* Alter role to enable createrole to all dbo users */
+	/* Set current user to sysadmin for alter permissions */
+	prev_current_user = GetUserNameFromId(GetUserId(), false);
+	SetConfigOption("role", "sysadmin", PGC_SUSET, PGC_S_DATABASE_USER);
+
+	sql_dialect = SQL_DIALECT_TSQL;
+
+	while (dbo_list != NIL)
+	{
+		RoleSpec *rolspec = (RoleSpec *) linitial(dbo_list);
+		dbo_list = list_delete_first(dbo_list);
+
+		PG_TRY();
+		{
+			initStringInfo(&query);
+			appendStringInfo(&query, "ALTER ROLE dummy WITH createrole; ");
+
+			parsetree_list = raw_parser(query.data);
+
+			if (list_length(parsetree_list) != 1)
+				ereport(ERROR,
+						(errcode(ERRCODE_SYNTAX_ERROR),
+						 errmsg("Expected 1 statement after parsing, but got %d statements",
+						 list_length(parsetree_list))));
+
+			stmt = parsetree_nth_stmt(parsetree_list, 0);
+
+			/* Update dummy statement with real values */
+			update_AlterRoleStmt(stmt, rolspec);
+
+			/* Make a wrapper PlannedStmt */
+			wrapper = makeNode(PlannedStmt);
+			wrapper->commandType = CMD_UTILITY;
+			wrapper->canSetTag = false;
+			wrapper->utilityStmt = stmt;
+			wrapper->stmt_location = 0;
+			wrapper->stmt_len = 34;
+
+			/* Run the built query */
+			ProcessUtility(wrapper,
+						   "(CREATE DATABASE )",
+						   PROCESS_UTILITY_SUBCOMMAND,
+						   NULL,
+						   NULL,
+						   None_Receiver,
+						   NULL);
+
+			/* Make sure later steps can see the object created here */
+			CommandCounterIncrement();
+
+			pfree(query.data);
+		}
+		PG_CATCH();
+		{
+			/* Clean up. Restore previous state. */
+			SetConfigOption("role",
+							prev_current_user,
+							PGC_SUSET,
+							PGC_S_DATABASE_USER);
+			sql_dialect = saved_dialect;
+			PG_RE_THROW();
+		}
+		PG_END_TRY();
+	}
+
+	SetConfigOption("role", prev_current_user, PGC_SUSET, PGC_S_DATABASE_USER);
+	sql_dialect = saved_dialect;
+	PG_RETURN_INT32(0);
+}
+
 static List *
-gen_dropuser_subcmds(const char *user)
+gen_droprole_subcmds(const char *user)
 {
 	StringInfoData query;
 	List *res;
@@ -911,7 +1093,7 @@ gen_dropuser_subcmds(const char *user)
 
 	initStringInfo(&query);
 
-	appendStringInfo(&query, "DROP USER dummy; ");
+	appendStringInfo(&query, "DROP ROLE dummy; ");
 	res = raw_parser(query.data);
 
 	if (list_length(res) != 1)
@@ -976,7 +1158,7 @@ Datum drop_all_users(PG_FUNCTION_ARGS)
 			/* Advance cmd counter to make the delete visible */
 			CommandCounterIncrement();
 
-			parsetree_list = gen_dropuser_subcmds(rolname);
+			parsetree_list = gen_droprole_subcmds(rolname);
 
 			/* Run all subcommands */
 			foreach(parsetree_item, parsetree_list)
@@ -994,7 +1176,7 @@ Datum drop_all_users(PG_FUNCTION_ARGS)
 
 				/* do this step */
 				ProcessUtility(wrapper,
-							   "(DROP USER )",
+							   "(DROP ROLE )",
 							   PROCESS_UTILITY_SUBCOMMAND,
 							   NULL,
 							   NULL,
@@ -1004,6 +1186,9 @@ Datum drop_all_users(PG_FUNCTION_ARGS)
 				/* make sure later steps can see the object created here */
 				CommandCounterIncrement();
 			}
+
+			/* Clean up role from user catalog */
+			drop_bbf_authid_user_ext_by_rolname(rolname);
 		}
 		PG_CATCH();
 		{

@@ -429,6 +429,12 @@ do_create_bbf_db(const char *dbname, List *options, const char *owner)
 			CommandCounterIncrement();
 		}
 		set_cur_db(old_dbid, old_dbname);
+		if (dbo_role)
+			add_to_bbf_authid_user_ext(dbo_role, "dbo", dbname, dbo_scm, NULL);
+		if (db_owner_role)
+			add_to_bbf_authid_user_ext(db_owner_role, "db_owner", dbname, NULL, NULL);
+		if (guest)
+			add_to_bbf_authid_user_ext(guest, "guest", dbname, NULL, NULL);
 	}
 	PG_CATCH();
 	{
@@ -564,6 +570,8 @@ drop_bbf_db(const char *dbname, bool missing_ok, bool force_drop)
 		}
 		/* clean up bbf namespace catalog accordingly */
 		drop_related_bbf_namespace_entries(dbid);
+		/* clean up corresponding db users */
+		drop_related_bbf_users(dbo_role, db_owner_role, guest);
 
 		/* Release the session-level exclusive lock */
 		UnlockLogicalDatabaseForSession(dbid, ExclusiveLock, true);

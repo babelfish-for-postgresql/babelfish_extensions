@@ -13,6 +13,25 @@ GO
 SELECT DB_NAME();
 GO
 
+-- Check for default users
+CREATE DATABASE db1;
+GO
+
+SELECT rolname, login_name, orig_username, database_name, default_schema_name
+FROM sys.babelfish_authid_user_ext
+ORDER BY rolname;
+GO
+
+SELECT name, default_schema_name
+FROM sys.database_principals
+ORDER BY default_schema_name DESC, name;
+GO
+
+SELECT rolname, rolcreaterole FROM pg_roles
+WHERE rolname LIKE '%dbo'
+ORDER BY rolname;
+GO
+
 -- Test default create user
 CREATE USER test1;
 GO
@@ -130,4 +149,7 @@ DROP LOGIN test3;
 GO
 
 DROP LOGIN test4;
+GO
+
+DROP DATABASE db1;
 GO
