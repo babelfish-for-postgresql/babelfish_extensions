@@ -14,6 +14,7 @@
 #include "commands/dbcommands.h"
 #include "common/md5.h"
 #include "miscadmin.h"
+#include "parser/scansup.h"
 #include "utils/acl.h"
 #include "utils/builtins.h"
 #include "utils/elog.h"
@@ -85,6 +86,7 @@ extern bool pltsql_ansi_null_dflt_off;
 extern bool pltsql_concat_null_yields_null;
 extern bool pltsql_numeric_roundabort;
 extern bool pltsql_xact_abort;
+extern bool pltsql_case_insensitive_identifiers;
 
 char *bbf_servername = "BABELFISH";
 #define MD5_HASH_LEN 32
@@ -429,7 +431,11 @@ schema_id(PG_FUNCTION_ARGS)
 	HeapTuple   tup;
 	Oid         nspOid;
 	Form_pg_namespace nspform;
-	const char *physical_name = get_physical_name(get_cur_db_name(), name);
+	const char *physical_name;
+
+	if (pltsql_case_insensitive_identifiers)
+		name = downcase_identifier(name, strlen(name), false, false); /* no truncation here. truncation will be handled inside get_physical_name() */
+	physical_name = get_physical_name(get_cur_db_name(), name);
 
 	/*
 	 * If physical schema name is empty or NULL for any reason then return NULL.
