@@ -49,10 +49,11 @@ set_cur_db(int16 id, const char *name)
 void
 set_session_properties(const char *db_name)
 {
-	Oid				datdba;
 	const char		*buffer = "%s, \"$user\", sys, pg_catalog";
 	const char		*path;
-	const char		*role;
+	const char		*user = NULL;
+	const char		*login;
+	const char		*physical_schema;
 	int16			db_id = get_db_id(db_name);
 
 	if (!DbidIsValid(db_id))
@@ -60,30 +61,45 @@ set_session_properties(const char *db_name)
 					(errcode(ERRCODE_UNDEFINED_DATABASE),
 					 errmsg("database \"%s\" does not exist", db_name)));
 
-	/* set current user */
-	datdba = get_role_oid("sysadmin", false);
-
-	if (is_member_of_role(GetSessionUserId(), datdba))
-		role = get_dbo_role_name(db_name);
-	else
-		role = get_guest_role_name(db_name);
-
-	if (!role)
-			ereport(ERROR,
-					(errcode(ERRCODE_UNDEFINED_DATABASE),
-					 errmsg("The server principal \"%s\" is not able to access "
-							"the database \"%s\" under the current security context", 
-							GetUserNameFromId(GetSessionUserId(), false),
-							db_name)));
-
-	SetConfigOption("role", role, PGC_SUSET, PGC_S_DATABASE_USER);
-	current_user_id = get_role_oid(role, false);
+	login = GetUserNameFromId(GetSessionUserId(), false);
+	user = get_authid_user_ext_physical_name(db_name, login);
 
 	/* set current DB */
 	set_cur_db(db_id, db_name);
 
+	if (!user)
+	{
+		Oid				datdba;
+
+		datdba = get_role_oid("sysadmin", false);
+		if (is_member_of_role(GetSessionUserId(), datdba))
+			user = get_dbo_role_name(db_name);
+		else
+			user = get_guest_role_name(db_name);
+
+		if (!user)
+			ereport(ERROR,
+					(errcode(ERRCODE_UNDEFINED_DATABASE),
+					 errmsg("The server principal \"%s\" is not able to access "
+							"the database \"%s\" under the current security context",
+							login, db_name)));
+
+		physical_schema = get_dbo_schema_name(db_name);
+	}
+	else
+	{
+		const char		*schema;
+
+		schema = get_authid_user_ext_schema_name(db_name, user);
+		physical_schema = get_physical_name(pstrdup(db_name), schema);
+	}
+
+	/* set current user */
+	current_user_id = get_role_oid(user, false);
+	SetConfigOption("role", user, PGC_SUSET, PGC_S_DATABASE_USER);
+
 	/* set search path */
-	path = psprintf(buffer, get_dbo_schema_name(db_name));
+	path = psprintf(buffer, physical_schema);
 	SetConfigOption("search_path",
 					path,
 					PGC_SUSET,
