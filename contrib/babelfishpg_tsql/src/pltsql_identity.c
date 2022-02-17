@@ -73,7 +73,7 @@ get_identity_param(PG_FUNCTION_ARGS)
 		cur_db_name = get_cur_db_name();
 
 		if (tablerv->schemaname && cur_db_name)
-			tablerv->schemaname = get_physical_schema_name(cur_db_name,
+			tablerv->schemaname = get_physical_name(cur_db_name,
 														   tablerv->schemaname);
 
 		/* Look up table name. Can't lock it - we might not have privileges. */
@@ -139,7 +139,7 @@ get_identity_current(PG_FUNCTION_ARGS)
 		cur_db_name = get_cur_db_name();
 
 		if (tablerv->schemaname && cur_db_name)
-			tablerv->schemaname = get_physical_schema_name(cur_db_name,
+			tablerv->schemaname = get_physical_name(cur_db_name,
 														   tablerv->schemaname);
 
 		/* Look up table name. Can't lock it - we might not have privileges. */

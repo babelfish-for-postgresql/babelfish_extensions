@@ -17,7 +17,9 @@ extern void rewrite_plain_name(List *name);  /* Value Strings */
 
 /* helper functions */
 extern char *get_physical_user_name(char *db_name, char *user_name);
-extern char *get_physical_schema_name(char *db_name, const char *schema);
+
+/*handles name mapping for schema / user / role */
+extern char *get_physical_name(char *db_name, const char *object_name);
 extern const char *get_dbo_schema_name(const char *dbname);
 extern const char *get_dbo_role_name(const char *dbname);
 extern const char *get_db_owner_name(const char *dbname);

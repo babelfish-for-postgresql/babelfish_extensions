@@ -429,7 +429,7 @@ schema_id(PG_FUNCTION_ARGS)
 	HeapTuple   tup;
 	Oid         nspOid;
 	Form_pg_namespace nspform;
-	const char *physical_name = get_physical_schema_name(get_cur_db_name(), name);
+	const char *physical_name = get_physical_name(get_cur_db_name(), name);
 
 	/*
 	 * If physical schema name is empty or NULL for any reason then return NULL.

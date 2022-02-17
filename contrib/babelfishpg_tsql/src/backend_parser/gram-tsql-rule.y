@@ -3848,3 +3848,45 @@ reserved_keyword:
 			| TSQL_TRY_PARSE
 			| TSQL_EXEC
 		;
+
+privilege_target:
+			OBJECT_P TYPECAST qualified_name_list
+			{
+				PrivTarget *n = (PrivTarget *) palloc(sizeof(PrivTarget));
+				n->targtype = ACL_TARGET_OBJECT;
+				n->objtype = OBJECT_TABLE;
+				n->objs = $3;
+				$$ = n;
+			}
+		;
+
+RevokeStmt:
+            REVOKE privileges ON privilege_target
+            TO grantee_list opt_drop_behavior
+                {
+                    GrantStmt *n = makeNode(GrantStmt);
+                    n->is_grant = false;
+                    n->grant_option = false;
+                    n->privileges = $2;
+                    n->targtype = ($4)->targtype;
+                    n->objtype = ($4)->objtype;
+                    n->objects = ($4)->objs;
+                    n->grantees = $6;
+                    n->behavior = $7;
+                    $$ = (Node *)n;
+                }
+            | REVOKE GRANT OPTION FOR privileges ON privilege_target
+            TO grantee_list opt_drop_behavior
+                {
+                    GrantStmt *n = makeNode(GrantStmt);
+                    n->is_grant = false;
+                    n->grant_option = true;
+                    n->privileges = $5;
+                    n->targtype = ($7)->targtype;
+                    n->objtype = ($7)->objtype;
+                    n->objects = ($7)->objs;
+                    n->grantees = $9;
+                    n->behavior = $10;
+                    $$ = (Node *)n;
+                }
+        ;
