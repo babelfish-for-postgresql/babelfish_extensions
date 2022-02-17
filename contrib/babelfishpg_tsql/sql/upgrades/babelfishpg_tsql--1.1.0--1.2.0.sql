@@ -3455,5 +3455,18 @@ CREATE OR REPLACE PROCEDURE xp_qv(IN nvarchar(256), IN nvarchar(256))
 CREATE OR REPLACE FUNCTION sys.servicename()
         RETURNS sys.NVARCHAR(128)  AS 'babelfishpg_tsql' LANGUAGE C;
 
+-- JSON Functions
+CREATE OR REPLACE FUNCTION sys.isjson(json_string text)
+RETURNS INTEGER
+AS 'babelfishpg_tsql', 'tsql_isjson' LANGUAGE C STRICT IMMUTABLE PARALLEL SAFE;
+
+CREATE OR REPLACE FUNCTION sys.json_value(json_string text, path text)
+RETURNS sys.NVARCHAR(4000)
+AS 'babelfishpg_tsql', 'tsql_json_value' LANGUAGE C IMMUTABLE PARALLEL SAFE;
+
+CREATE OR REPLACE FUNCTION sys.json_query(json_string text, path text default '$')
+RETURNS sys.NVARCHAR
+AS 'babelfishpg_tsql', 'tsql_json_query' LANGUAGE C IMMUTABLE PARALLEL SAFE;
+
 -- Reset search_path to not affect any subsequent scripts
 SELECT set_config('search_path', trim(leading 'sys, ' from current_setting('search_path')), false);
