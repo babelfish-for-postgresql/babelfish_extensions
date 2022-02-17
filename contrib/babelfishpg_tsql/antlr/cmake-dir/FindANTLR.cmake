@@ -2,7 +2,7 @@
 
 if(NOT ANTLR_EXECUTABLE)
   find_program(ANTLR_EXECUTABLE
-               NAMES antlr.jar antlr4.jar antlr-4.jar antlr-4.9.2-complete.jar)
+               NAMES antlr.jar antlr4.jar antlr-4.jar antlr-4.9.3-complete.jar)
 endif()
 
 set(Java_JAVA_EXECUTABLE $ENV{ANTLR4_JAVA_BIN})

@@ -21,18 +21,18 @@ jobs:
       - name: Copy ANTLR jar file
         run: |
           cd contrib/babelfishpg_tsql/antlr/thirdparty/antlr/
-          sudo cp antlr-4.9.2-complete.jar /usr/local/lib
+          sudo cp antlr-4.9.3-complete.jar /usr/local/lib
       - name: Compile ANTLR
         run: |
           cd ..
-          wget http://www.antlr.org/download/antlr4-cpp-runtime-4.9.2-source.zip
-          unzip -d antlr4 antlr4-cpp-runtime-4.9.2-source.zip 
+          wget http://www.antlr.org/download/antlr4-cpp-runtime-4.9.3-source.zip
+          unzip -d antlr4 antlr4-cpp-runtime-4.9.3-source.zip 
           cd antlr4
           mkdir build && cd build 
-          cmake .. -D ANTLR_JAR_LOCATION=/usr/local/lib/antlr-4.9.2-complete.jar -DCMAKE_INSTALL_PREFIX=/usr/local -DWITH_DEMO=True
+          cmake .. -D ANTLR_JAR_LOCATION=/usr/local/lib/antlr-4.9.3-complete.jar -DCMAKE_INSTALL_PREFIX=/usr/local -DWITH_DEMO=True
           make
           sudo make install
-          cp /usr/local/lib/libantlr4-runtime.so.4.9.2 ~/postgres/lib/
+          cp /usr/local/lib/libantlr4-runtime.so.4.9.3 ~/postgres/lib/
       - name: Set env variables and build extensions
         run: |
           export PG_CONFIG=~/postgres/bin/pg_config
