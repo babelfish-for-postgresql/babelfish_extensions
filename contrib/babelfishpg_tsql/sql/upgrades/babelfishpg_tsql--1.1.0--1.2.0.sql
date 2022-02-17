@@ -3221,7 +3221,7 @@ begin
 	
  	ELSIF role = 'sysadmin' THEN
 	  	has_role = pg_has_role(login::TEXT, role::TEXT, 'MEMBER');
-	    IF has_role THEN
+    IF has_role THEN
 			RETURN 1;
 		ELSE
 			RETURN 0;
@@ -3454,6 +3454,9 @@ CREATE OR REPLACE PROCEDURE xp_qv(IN nvarchar(256), IN nvarchar(256))
 
 CREATE OR REPLACE FUNCTION sys.servicename()
         RETURNS sys.NVARCHAR(128)  AS 'babelfishpg_tsql' LANGUAGE C;
+
+CREATE FUNCTION fulltextserviceproperty (TEXT)
+  RETURNS sys.int AS 'babelfishpg_tsql', 'fulltextserviceproperty' LANGUAGE C IMMUTABLE STRICT PARALLEL SAFE;
 
 -- JSON Functions
 CREATE OR REPLACE FUNCTION sys.isjson(json_string text)

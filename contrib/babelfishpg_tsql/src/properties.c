@@ -49,6 +49,7 @@
 PG_FUNCTION_INFO_V1(connectionproperty);
 PG_FUNCTION_INFO_V1(serverproperty);
 PG_FUNCTION_INFO_V1(sessionproperty);
+PG_FUNCTION_INFO_V1(fulltextserviceproperty);
 
 extern bool pltsql_ansi_nulls;
 extern bool pltsql_ansi_padding;
@@ -496,4 +497,8 @@ Datum sessionproperty(PG_FUNCTION_ARGS) {
         PG_RETURN_NULL(); 
     
     PG_RETURN_BYTEA_P(convertIntToSQLVariantByteA(intVal));
+}
+
+Datum fulltextserviceproperty(PG_FUNCTION_ARGS) {
+	PG_RETURN_INT32(0);
 }
