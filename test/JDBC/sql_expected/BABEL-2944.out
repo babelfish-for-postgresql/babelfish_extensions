@@ -1,0 +1,59 @@
+CREATE TABLE employeeData( ID INT IDENTITY (1,1) PRIMARY KEY,Emp_First_name VARCHAR (50))
+GO
+
+CREATE TRIGGER updEmployeeData  ON employeeData  AFTER INSERT AS    
+   select count(*) from deleted;
+GO
+
+insert into employeeData values ('a'),('b'),('c'),('d');
+GO
+~~START~~
+int
+0
+~~END~~
+
+~~ROW COUNT: 4~~
+
+
+drop trigger updEmployeeData;
+GO
+
+insert into employeeData values ('a'),('b'),('c'),('d');
+GO
+~~ROW COUNT: 4~~
+
+
+CREATE TRIGGER updEmployeeData  ON employeeData  AFTER DELETE AS    
+   select count(*) from inserted;
+GO
+
+delete from employeeData where Emp_First_name = 'a';
+GO
+~~START~~
+int
+0
+~~END~~
+
+~~ROW COUNT: 2~~
+
+
+drop trigger updEmployeeData;
+GO
+
+CREATE TRIGGER updEmployeeData  ON employeeData  INSTEAD OF INSERT AS    
+   select count(*) from deleted;
+GO
+
+insert into employeeData values ('bbb');
+GO
+~~START~~
+int
+0
+~~END~~
+
+
+drop trigger updEmployeeData;
+GO
+
+drop table employeeData
+GO
