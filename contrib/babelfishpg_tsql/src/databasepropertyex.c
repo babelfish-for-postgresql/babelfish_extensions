@@ -26,7 +26,6 @@ extern bytea *convertIntToSQLVariantByteA(int ret);
 Datum databasepropertyex(PG_FUNCTION_ARGS) {
 	VarChar *vch = NULL;
 	int64_t intVal = 0;
-	HeapTuple	tuple;
 	const char *dbname = text_to_cstring(PG_GETARG_TEXT_P(0));
 	const char *property = text_to_cstring(PG_GETARG_TEXT_P(1));
 	Oid		dboid = get_db_id(dbname, true);
@@ -34,13 +33,6 @@ Datum databasepropertyex(PG_FUNCTION_ARGS) {
 	{
 		PG_RETURN_NULL();
 	}
-	tuple = SearchSysCache1(DATABASEOID, ObjectIdGetDatum(dboid));
-	/* if db doesn't exist, return null for all queries */
-	if (!HeapTupleIsValid(tuple))
-	{
-		PG_RETURN_NULL();
-	}
-	ReleaseSysCache(tuple);
 
 	if (strcasecmp(property, "Collation") == 0)
 	{

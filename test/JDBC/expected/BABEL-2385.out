@@ -1,7 +1,0 @@
-select cast(databasepropertyex('master','collation') as varchar(50))
-go
-~~START~~
-varchar
-sql_latin1_general_cp1_ci_as
-~~END~~
-
