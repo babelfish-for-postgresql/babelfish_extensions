@@ -118,15 +118,18 @@ extern Oid get_authid_login_ext_idx_oid(void);
  *****************************************/
 #define BBF_AUTHID_USER_EXT_TABLE_NAME "babelfish_authid_user_ext"
 #define BBF_AUTHID_USER_EXT_IDX_NAME "babelfish_authid_user_ext_pkey"
-#define Anum_bbf_authid_user_ext_rolname		1
-#define Anum_bbf_authid_user_ext_login_name		2
-#define Anum_bbf_authid_user_ext_database_name	12
+#define Anum_bbf_authid_user_ext_rolname				1
+#define Anum_bbf_authid_user_ext_login_name				2
+#define Anum_bbf_authid_user_ext_database_name			12
+#define Anum_bbf_authid_user_ext_default_schema_name	13
 extern Oid			bbf_authid_user_ext_oid;
 extern Oid			bbf_authid_user_ext_idx_oid;
 
 extern bool is_user(Oid role_oid);
 extern Oid get_authid_user_ext_oid(void);
 extern Oid get_authid_user_ext_idx_oid(void);
+extern char *get_authid_user_ext_physical_name(const char *db_name, const char *login_name);
+extern char *get_authid_user_ext_schema_name(const char *db_name, const char *user_name);
 
 /* MUST comply with babelfish_authid_user_ext table */
 typedef struct FormData_authid_user_ext

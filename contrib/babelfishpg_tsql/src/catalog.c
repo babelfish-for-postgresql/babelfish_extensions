@@ -642,6 +642,98 @@ get_authid_user_ext_idx_oid(void)
 	return bbf_authid_user_ext_idx_oid;
 }
 
+char *
+get_authid_user_ext_physical_name(const char *db_name, const char *login)
+{
+	Relation		bbf_authid_user_ext_rel;
+	HeapTuple		tuple_user_ext;
+	ScanKeyData		key[2];
+	TableScanDesc	scan;
+	char			*user_name = NULL;
+	NameData		*login_name;
+
+	if (!db_name || !login)
+		return NULL;
+
+	bbf_authid_user_ext_rel = table_open(get_authid_user_ext_oid(),
+										 RowExclusiveLock);
+
+	login_name = (NameData *) palloc0(NAMEDATALEN);
+	snprintf(login_name->data, NAMEDATALEN, "%s", login);
+	ScanKeyInit(&key[0],
+				Anum_bbf_authid_user_ext_login_name,
+				BTEqualStrategyNumber, F_NAMEEQ,
+				NameGetDatum(login_name));
+	ScanKeyInit(&key[1],
+				Anum_bbf_authid_user_ext_database_name,
+				BTEqualStrategyNumber, F_TEXTEQ,
+				CStringGetTextDatum(db_name));
+
+	scan = table_beginscan_catalog(bbf_authid_user_ext_rel, 2, key);
+
+	tuple_user_ext = heap_getnext(scan, ForwardScanDirection);
+	if (HeapTupleIsValid(tuple_user_ext))
+	{
+		Form_authid_user_ext userform;
+
+		userform = (Form_authid_user_ext) GETSTRUCT(tuple_user_ext);
+		user_name = pstrdup(NameStr(userform->rolname));
+	}
+
+	table_endscan(scan);
+	table_close(bbf_authid_user_ext_rel, RowExclusiveLock);
+
+	return user_name;
+}
+
+char *
+get_authid_user_ext_schema_name(const char *db_name, const char *user)
+{
+	Relation		bbf_authid_user_ext_rel;
+	HeapTuple		tuple_user_ext;
+	ScanKeyData		key[2];
+	TableScanDesc	scan;
+	char			*schema_name = NULL;
+	NameData		*user_name;
+
+	if (!db_name || !user)
+		return NULL;
+
+	bbf_authid_user_ext_rel = table_open(get_authid_user_ext_oid(),
+										 RowExclusiveLock);
+
+	user_name = (NameData *) palloc0(NAMEDATALEN);
+	snprintf(user_name->data, NAMEDATALEN, "%s", user);
+	ScanKeyInit(&key[0],
+				Anum_bbf_authid_user_ext_rolname,
+				BTEqualStrategyNumber, F_NAMEEQ,
+				NameGetDatum(user_name));
+	ScanKeyInit(&key[1],
+				Anum_bbf_authid_user_ext_database_name,
+				BTEqualStrategyNumber, F_TEXTEQ,
+				CStringGetTextDatum(db_name));
+
+	scan = table_beginscan_catalog(bbf_authid_user_ext_rel, 2, key);
+
+	tuple_user_ext = heap_getnext(scan, ForwardScanDirection);
+	if (HeapTupleIsValid(tuple_user_ext))
+	{
+		Datum	datum;
+		bool	is_null;
+
+		datum = heap_getattr(tuple_user_ext,
+							 Anum_bbf_authid_user_ext_default_schema_name,
+							 bbf_authid_user_ext_rel->rd_att,
+							 &is_null);
+		schema_name = pstrdup(TextDatumGetCString(datum));
+	}
+
+	table_endscan(scan);
+	table_close(bbf_authid_user_ext_rel, RowExclusiveLock);
+
+	return schema_name;
+}
+
 /*****************************************
  * 			Metadata Check
  * ---------------------------------------

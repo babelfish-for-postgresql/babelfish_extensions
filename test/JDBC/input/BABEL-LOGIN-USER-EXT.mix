@@ -24,14 +24,71 @@ go
 CREATE LOGIN r1 WITH PASSWORD = 'abc';
 go
 
+CREATE USER r1;
+go
+
+CREATE LOGIN r2 WITH password = 'abc';
+go
+
+CREATE SCHEMA sch2;
+go
+
+CREATE USER r2 WITH DEFAULT_SCHEMA = sch2;
+go
+
 -- Login with a Babelfish user should succeed
 -- tsql      user=r1      password=abc
-SELECT 1;
+SELECT db_name();
+go
+
+SELECT current_setting('search_path');
+go
+
+SELECT rolname, orig_username, login_name, database_name, default_schema_name
+FROM sys.babelfish_authid_user_ext
+WHERE orig_username = 'r1';
+go
+
+SELECT session_user;
+go
+
+SELECT current_user;
+go
+
+-- tsql      user=r2      password=abc
+SELECT db_name();
+go
+
+SELECT current_setting('search_path');
+go
+
+SELECT rolname, orig_username, login_name, database_name, default_schema_name
+FROM sys.babelfish_authid_user_ext
+WHERE orig_username = 'r2';
+go
+
+SELECT session_user;
+go
+
+SELECT current_user;
 go
 
 -- tsql
+DROP USER r1;
+go
+
 DROP LOGIN r1;
 go
+
+DROP USER r2;
+go
+
+DROP SCHEMA sch2;
+go
+
+DROP LOGIN r2;
+go
+
 -- Test initialization
 SELECT COUNT(*) FROM sys.babelfish_authid_login_ext;
 go
