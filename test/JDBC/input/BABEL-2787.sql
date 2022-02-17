@@ -7,12 +7,6 @@ BEGIN
 END
 GO
 
-CREATE TRIGGER updEmployeeData  ON employeeData  INSTEAD OF DELETE AS    
-BEGIN
-   select count(*) from inserted;
-END
-GO
-
 CREATE TRIGGER updEmployeeData  ON employeeData  INSTEAD OF INSERT AS  
 BEGIN  
    select count(*) from inserted;
@@ -25,20 +19,30 @@ GO
 select count(*) from employeeData;
 GO
 
-CREATE TRIGGER updEmployeeData2  ON employeeData  AFTER INSERT AS  
-BEGIN  
-   select "after insert";
+drop trigger updEmployeeData;
+GO
+
+insert into employeeData values ('a'),('b'),('c'),('d');
+GO
+
+CREATE TRIGGER updEmployeeData  ON employeeData  INSTEAD OF DELETE AS    
+BEGIN
+   select count(*) from deleted;
 END
 GO
 
-insert into employeeData values ('bb'),('cc');
+delete from employeeData where id = 1;
+GO
+
+delete from employeeData;
+GO
+
+select * from employeeData;
 GO
 
 drop trigger updEmployeeData
 GO
 
-drop trigger updEmployeeData2
-GO
 
 drop table employeeData
 GO
