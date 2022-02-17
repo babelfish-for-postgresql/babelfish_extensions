@@ -1950,3 +1950,16 @@ SELECT
     WHERE pt.typtype = 'c' AND dep.deptype = 'i' AND pt.typrelid = object_id AND pc.relkind = 'r');
 $BODY$
 LANGUAGE SQL VOLATILE STRICT;
+
+-- JSON Functions
+CREATE OR REPLACE FUNCTION sys.isjson(json_string text)
+RETURNS INTEGER
+AS 'babelfishpg_tsql', 'tsql_isjson' LANGUAGE C STRICT IMMUTABLE PARALLEL SAFE;
+
+CREATE OR REPLACE FUNCTION sys.json_value(json_string text, path text)
+RETURNS sys.NVARCHAR(4000)
+AS 'babelfishpg_tsql', 'tsql_json_value' LANGUAGE C IMMUTABLE PARALLEL SAFE;
+
+CREATE OR REPLACE FUNCTION sys.json_query(json_string text, path text default '$')
+RETURNS sys.NVARCHAR
+AS 'babelfishpg_tsql', 'tsql_json_query' LANGUAGE C IMMUTABLE PARALLEL SAFE;
