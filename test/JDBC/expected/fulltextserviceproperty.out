@@ -1,0 +1,55 @@
+SELECT fulltextserviceproperty('ResourceUsage')
+GO
+~~START~~
+int
+0
+~~END~~
+
+
+SELECT fulltextserviceproperty('ConnectTimeout')
+GO
+~~START~~
+int
+0
+~~END~~
+
+
+SELECT fulltextserviceproperty('IsFulltextInstalled')
+GO
+~~START~~
+int
+0
+~~END~~
+
+
+SELECT fulltextserviceproperty('DataTimeout')
+GO
+~~START~~
+int
+0
+~~END~~
+
+
+SELECT fulltextserviceproperty('LoadOSResources')
+GO
+~~START~~
+int
+0
+~~END~~
+
+
+SELECT fulltextserviceproperty('VerifySignature')
+GO
+~~START~~
+int
+0
+~~END~~
+
+
+SELECT fulltextserviceproperty('Non_Existent')
+GO
+~~START~~
+int
+0
+~~END~~
+
