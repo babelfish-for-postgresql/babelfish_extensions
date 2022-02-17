@@ -11,16 +11,6 @@ GO
 ~~ERROR (Message: 'Instead of Trigger' is not currently supported in Babelfish)~~
 
 
-CREATE TRIGGER updEmployeeData  ON employeeData  INSTEAD OF DELETE AS    
-BEGIN
-   select count(*) from inserted;
-END
-GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: 'Instead of Trigger' is not currently supported in Babelfish)~~
-
-
 CREATE TRIGGER updEmployeeData  ON employeeData  INSTEAD OF INSERT AS  
 BEGIN  
    select count(*) from inserted;
@@ -43,25 +33,50 @@ int
 ~~END~~
 
 
-CREATE TRIGGER updEmployeeData2  ON employeeData  AFTER INSERT AS  
-BEGIN  
-   select "after insert";
+drop trigger updEmployeeData;
+GO
+
+insert into employeeData values ('a'),('b'),('c'),('d');
+GO
+~~ROW COUNT: 4~~
+
+
+CREATE TRIGGER updEmployeeData  ON employeeData  INSTEAD OF DELETE AS    
+BEGIN
+   select count(*) from deleted;
 END
 GO
 
-insert into employeeData values ('bb'),('cc');
+delete from employeeData where id = 1;
 GO
 ~~START~~
 int
-2
+0
+~~END~~
+
+
+delete from employeeData;
+GO
+~~START~~
+int
+4
+~~END~~
+
+
+select * from employeeData;
+GO
+~~START~~
+int#!#varchar
+4#!#a
+5#!#b
+6#!#c
+7#!#d
 ~~END~~
 
 
 drop trigger updEmployeeData
 GO
 
-drop trigger updEmployeeData2
-GO
 
 drop table employeeData
 GO

@@ -395,7 +395,7 @@ antlrcpp::Any TsqlUnsupportedFeatureHandlerImpl::visitCreate_or_alter_trigger(TS
 
 		if (dctx->INSTEAD()){
 			for (auto ops : dctx->dml_trigger_operation()){
-				if (ops->UPDATE() || ops->DELETE()){
+				if (ops->UPDATE()){
 					handle(INSTR_UNSUPPORTED_TSQL_DML_INSTEAD_OF_TRIGGER, "Instead of Trigger", getLineAndPos(dctx->INSTEAD()));
 				}
 			}
