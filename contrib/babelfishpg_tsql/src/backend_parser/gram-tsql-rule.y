@@ -2380,24 +2380,17 @@ tsql_CreateTrigStmt:
 					n1->constrrel = NULL;
 					n1->transitionRels = NIL;
 
-					if((n1->events & TRIGGER_TYPE_INSERT) == TRIGGER_TYPE_INSERT ||
-					   (n1->events & TRIGGER_TYPE_UPDATE) == TRIGGER_TYPE_UPDATE)
-					{
-						nt_inserted = makeNode(TriggerTransition);
-						nt_inserted->name = "inserted";
-						nt_inserted->isNew = true;
-						nt_inserted->isTable = true;
-						n1->transitionRels = lappend(n1->transitionRels, nt_inserted);
-					}
-					if((n1->events & TRIGGER_TYPE_DELETE) == TRIGGER_TYPE_DELETE ||
-					   (n1->events & TRIGGER_TYPE_UPDATE) == TRIGGER_TYPE_UPDATE)
-					{
-						nt_deleted = makeNode(TriggerTransition);
-						nt_deleted->name = "deleted";
-						nt_deleted->isNew = false;
-						nt_deleted->isTable = true;
-						n1->transitionRels = lappend(n1->transitionRels, nt_deleted);
-					}
+					nt_inserted = makeNode(TriggerTransition);
+					nt_inserted->name = "inserted";
+					nt_inserted->isNew = true;
+					nt_inserted->isTable = true;
+					n1->transitionRels = lappend(n1->transitionRels, nt_inserted);
+
+					nt_deleted = makeNode(TriggerTransition);
+					nt_deleted->name = "deleted";
+					nt_deleted->isNew = false;
+					nt_deleted->isTable = true;
+					n1->transitionRels = lappend(n1->transitionRels, nt_deleted);
 
 					n2->is_procedure = false;
 					n2->replace = true;
