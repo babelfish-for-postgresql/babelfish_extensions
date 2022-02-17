@@ -587,6 +587,18 @@ update_CreateRoleStmt(Node *n, const char *role, const char *member, const char 
 }
 
 void
+update_AlterRoleStmt(Node *n, RoleSpec *role)
+{
+	AlterRoleStmt *stmt = (AlterRoleStmt *) n;
+	if (!IsA(stmt, AlterRoleStmt))
+		ereport(ERROR,
+				(errcode(ERRCODE_SYNTAX_ERROR),
+				 errmsg("query is not an AlterRoleStmt")));
+
+	stmt->role = role;
+}
+
+void
 update_CreateSchemaStmt(Node *n, const char *schemaname, const char *authrole)
 {
 	CreateSchemaStmt *stmt = (CreateSchemaStmt *) n;

@@ -2395,14 +2395,14 @@ static void bbf_ProcessUtility(PlannedStmt *pstmt,
 
 					if (strcmp(headrol->rolename, "is_user") == 0)
 					{
-						char *db_name;
+						char *db_name = NULL;
 						stmt->roles = list_delete_cell(stmt->roles,
 													   list_head(stmt->roles));
 						pfree(headrol);
 						headrol = NULL;
 						db_name = get_cur_db_name();
 
-						if (strcmp(db_name, "") != 0)
+						if (db_name != NULL && strcmp(db_name, "") != 0)
 						{
 							foreach (item, stmt->roles)
 							{
@@ -2414,6 +2414,11 @@ static void bbf_ProcessUtility(PlannedStmt *pstmt,
 								rolspec->rolename = user_name;
 							}
 						}
+						else
+							ereport(ERROR,
+									(errcode(ERRCODE_UNDEFINED_DATABASE),
+									 errmsg("Current database missing. "
+										    "Can only drop users in current database. ")));
 					}
 				}
 
