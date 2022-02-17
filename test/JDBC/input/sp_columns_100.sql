@@ -8,6 +8,9 @@ go
 create table nums(a int, b smallint, c tinyint, d bigint, e bit, f float, g real, h numeric(5,3), i money, j smallmoney)
 go
 
+create table maxx(a varchar(max), b nvarchar(max), c varbinary(max))
+go
+
 -- testing sp_columns_100
 EXEC [sys].sp_columns_100 'var', 'dbo', NULL, NULL, @ODBCVer = 3, @fUsePattern = 1
 go
@@ -39,6 +42,9 @@ drop table tbl_tm;
 go
 
 EXEC sp_babelfish_configure 'babelfishpg_tsql.escape_hatch_rowversion', 'strict';
+go
+
+EXEC [sys].sp_columns_100 'maxx', 'dbo', NULL, NULL, @ODBCVer = 3, @fUsePattern = 1
 go
 
 -- Testing with UDTS
@@ -102,6 +108,7 @@ drop table var;
 drop table dates;
 drop table nums;
 drop table vart;
+drop table maxx;
 drop type char_t;
 drop type nchar_t;
 drop type varchar_t;

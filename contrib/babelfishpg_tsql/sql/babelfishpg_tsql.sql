@@ -243,7 +243,7 @@ BEGIN
     RETURN typelen::INT;
   END IF;
 
-  IF typemod = -1 AND (type = 'varchar' OR type = 'nvarchar') THEN
+  IF typemod = -1 AND (type = 'varchar' OR type = 'nvarchar' OR type = 'varbinary') THEN
     length = 0;
     RETURN length;
   END IF;
@@ -333,6 +333,7 @@ CREATE OR REPLACE VIEW sys.sp_columns_100_view AS
 
   CASE WHEN t4."DATA_TYPE" = 'xml' THEN 0::INT
     WHEN t4."DATA_TYPE" = 'sql_variant' THEN 8000::INT
+    WHEN t4."CHARACTER_MAXIMUM_LENGTH" = -1 THEN 0::INT
     ELSE CAST(t4."CHARACTER_OCTET_LENGTH" AS int)
   END AS CHAR_OCTET_LENGTH,
 
