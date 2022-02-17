@@ -3452,5 +3452,8 @@ GRANT EXECUTE on PROCEDURE sys.sp_stored_procedures TO PUBLIC;
 CREATE OR REPLACE PROCEDURE xp_qv(IN nvarchar(256), IN nvarchar(256))
 	   AS 'babelfishpg_tsql', 'xp_qv_internal' LANGUAGE C;
 
+CREATE OR REPLACE FUNCTION sys.servicename()
+        RETURNS sys.NVARCHAR(128)  AS 'babelfishpg_tsql' LANGUAGE C;
+
 -- Reset search_path to not affect any subsequent scripts
 SELECT set_config('search_path', trim(leading 'sys, ' from current_setting('search_path')), false);

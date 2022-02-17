@@ -50,6 +50,7 @@ PG_FUNCTION_INFO_V1(int_ceiling);
 PG_FUNCTION_INFO_V1(bit_floor);
 PG_FUNCTION_INFO_V1(bit_ceiling);
 PG_FUNCTION_INFO_V1(servername);
+PG_FUNCTION_INFO_V1(servicename);
 PG_FUNCTION_INFO_V1(xact_state);
 PG_FUNCTION_INFO_V1(get_enr_list);
 PG_FUNCTION_INFO_V1(tsql_random);
@@ -69,6 +70,7 @@ PG_FUNCTION_INFO_V1(checksum);
 PG_FUNCTION_INFO_V1(procid);
 
 void* get_servername_internal(void);
+void* get_servicename_internal(void);
 extern bool canCommitTransaction(void);
 
 extern int pltsql_datefirst;
@@ -89,6 +91,7 @@ extern bool pltsql_xact_abort;
 extern bool pltsql_case_insensitive_identifiers;
 
 char *bbf_servername = "BABELFISH";
+const char *bbf_servicename = "MSSQLSERVER";
 #define MD5_HASH_LEN 32
 
 Datum
@@ -144,17 +147,27 @@ version(PG_FUNCTION_ARGS)
 	PG_RETURN_VARCHAR_P(info);
 }
 
-void* get_servername_internal()
+void* string_to_tsql_varchar(const char *input_str)
 {
 	StringInfoData temp;
 	void* info;
 
 	initStringInfo(&temp);
-	appendStringInfoString(&temp, bbf_servername);
+	appendStringInfoString(&temp, input_str);
 
 	info = tsql_varchar_input(temp.data, temp.len, -1);
 	pfree(temp.data);
 	return info;
+}
+
+void* get_servername_internal()
+{
+	return string_to_tsql_varchar(bbf_servername);
+}
+
+void* get_servicename_internal()
+{
+	return string_to_tsql_varchar(bbf_servicename);
 }
 
 /*
@@ -164,6 +177,15 @@ Datum
 servername(PG_FUNCTION_ARGS)
 {
 	PG_RETURN_VARCHAR_P(get_servername_internal());
+}
+
+/*
+ * This function will return the servicename.
+ */
+Datum
+servicename(PG_FUNCTION_ARGS)
+{
+	PG_RETURN_VARCHAR_P(get_servicename_internal());
 }
 
 Datum
