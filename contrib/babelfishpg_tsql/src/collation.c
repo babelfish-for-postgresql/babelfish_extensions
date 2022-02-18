@@ -618,101 +618,82 @@ find_locale(const char *given_locale)
 Datum
 init_collid_trans_tab(PG_FUNCTION_ARGS)
 {
-    HASHCTL hashCtl;
-    Oid nspoid;
-    ht_oid2collid_entry_t *entry;
-    int locale_pos = -1;
-    HeapTuple tp;
-    char *atsign;
-    char *locale;
+	HASHCTL hashCtl;
+	Oid nspoid;
+	ht_oid2collid_entry_t *entry;
+	int locale_pos = -1;
+	HeapTuple tp;
+	char *atsign;
+	char *locale;
 
-    if (TransMemoryContext == NULL)  /* initialize memory context */
-    {
-        TransMemoryContext =
-            AllocSetContextCreateInternal(NULL,
-                                          "SQL Variant Memory Context",
-                                          ALLOCSET_DEFAULT_SIZES);
-    }
-
-    if (ht_oid2collid == NULL)  /* create hash table */
-    {
-        MemSet(&hashCtl, 0, sizeof(hashCtl));
-        hashCtl.keysize = sizeof(Oid);
-        hashCtl.entrysize = sizeof(ht_oid2collid_entry_t);
-        hashCtl.hcxt = TransMemoryContext;
-        ht_oid2collid = hash_create("OID to Persist Collation ID Mapping",
-                                    TOTAL_COLL_COUNT,
-                                    &hashCtl,
-                                   HASH_ELEM | HASH_CONTEXT | HASH_BLOBS);
-    }
-
-    // locale_pos = find_locale(pltsql_default_locale);
-    
-    nspoid = get_namespace_oid("sys", false);
-    
-    /* retrieve oid and setup hashtable */
-    for (int i=0; i<TOTAL_COLL_COUNT; i++)
-    {
-        /*
-         * Encoding can be either COLL_DEFAULT_ENCODING - in case of libc based collations
-         * or it can be -1 in case of icu based collations.
-         */
-        coll_infos[i].oid = GetSysCacheOid3(COLLNAMEENCNSP, Anum_pg_collation_oid,
-					    PointerGetDatum(coll_infos[i].collname),
-					    Int32GetDatum(-1),
-					    ObjectIdGetDatum(nspoid));
-
-        if (!OidIsValid(coll_infos[i].oid))
-        {
-	    coll_infos[i].oid = GetSysCacheOid3(COLLNAMEENCNSP, Anum_pg_collation_oid,
-                                            PointerGetDatum(coll_infos[i].collname),
-                                            Int32GetDatum(COLL_DEFAULT_ENCODING),
-                                            ObjectIdGetDatum(nspoid));
-	}
-
-	/* For the bbf collations, fill in the lcid and/or the code_page from the locale
-	 * that was used to create the collation, which was the pltsql_default_locale at that time.
-	 */
-      	if ((0 == coll_infos[i].lcid || 0 == coll_infos[i].code_page) &&
-	    NULL != strstr(coll_infos[i].collname, "bin2"))
+	if (TransMemoryContext == NULL)  /* initialize memory context */
 	{
-	    tp = SearchSysCache1(COLLOID, ObjectIdGetDatum(coll_infos[i].oid));
-	    if (!HeapTupleIsValid(tp))
-	    {
-	        locale_pos = NOT_FOUND;  // could be due to an earlier upgrade script
-		// elog(WARNING, "cache lookup failed for collation %u, \"%s\"", coll_infos[i].oid, coll_infos[i].collname);
-	    }
-	    else
-	    {
-	        locale = pstrdup(NameStr(((Form_pg_collation) GETSTRUCT(tp))->collcollate));
-		ReleaseSysCache(tp);
-		atsign = strstr(locale, "@");
-		if (NULL != atsign)
-		    *atsign = '\0';
-
-		locale_pos = find_locale(locale);
-	    }
-	
-	    /* Fill in the lcid and the code_page of the bbf_unicode_general* collations 
-	     * from the locales array. These collations use the default code page of the
-	     * specified pltsql_default_locale.
-	     */
-	    if (locale_pos >= 0 && 0 == strncmp(coll_infos[i].collname, "bbf_", sizeof("bbf_")))
-	    {
-	        coll_infos[i].lcid = locales[locale_pos].lcid;
-
-		if (locale_pos >= 0 && 0 == strncmp(coll_infos[i].collname, "bbf_unicode_general", sizeof("bbf_unicode_general")))
-		  coll_infos[i].code_page = locales[locale_pos].code_page;
-	    }
+		TransMemoryContext = AllocSetContextCreateInternal(NULL,
+									"SQL Variant Memory Context",
+									ALLOCSET_DEFAULT_SIZES);
 	}
-	
-	if (OidIsValid(coll_infos[i].oid))
+
+	if (ht_oid2collid == NULL)  /* create hash table */
 	{
-	    entry = hash_search(ht_oid2collid, &coll_infos[i].oid, HASH_ENTER, NULL);
-	    entry->persist_id = i;
+		MemSet(&hashCtl, 0, sizeof(hashCtl));
+		hashCtl.keysize = sizeof(Oid);
+		hashCtl.entrysize = sizeof(ht_oid2collid_entry_t);
+		hashCtl.hcxt = TransMemoryContext;
+		ht_oid2collid = hash_create("OID to Persist Collation ID Mapping",
+						TOTAL_COLL_COUNT,
+						&hashCtl,
+						HASH_ELEM | HASH_CONTEXT | HASH_BLOBS);
 	}
-    }
 
+	// locale_pos = find_locale(pltsql_default_locale);
+
+	nspoid = get_namespace_oid("sys", false);
+
+	/* retrieve oid and setup hashtable */
+	for (int i=0; i<TOTAL_COLL_COUNT; i++)
+	{
+		/*
+		 * Encoding can be either COLL_DEFAULT_ENCODING - in case of libc based collations
+		 * or it can be -1 in case of icu based collations.
+		 */
+		coll_infos[i].oid = GetSysCacheOid3(COLLNAMEENCNSP,
+							Anum_pg_collation_oid,
+							PointerGetDatum(coll_infos[i].collname),
+							Int32GetDatum(-1),
+							ObjectIdGetDatum(nspoid));
+
+		if (!OidIsValid(coll_infos[i].oid))
+			coll_infos[i].oid = GetSysCacheOid3(COLLNAMEENCNSP,
+								Anum_pg_collation_oid,
+								PointerGetDatum(coll_infos[i].collname),
+								Int32GetDatum(COLL_DEFAULT_ENCODING),
+								ObjectIdGetDatum(nspoid));
+
+		/* For the bbf_unicode_general_* collations, fill in the lcid and/or the code_page from the default_locale GUC */
+		if (0 == strncmp(coll_infos[i].collname, "bbf_unicode_general", strlen("bbf_unicode_general")))
+		{
+			locale = pstrdup(pltsql_default_locale);
+			atsign = strstr(locale, "@");
+			if (atsign != NULL)
+				*atsign = '\0';
+			locale_pos = find_locale(locale);
+
+			if (locale_pos < 0)
+				ereport(ERROR,
+					(errcode(ERRCODE_INTERNAL_ERROR),
+						errmsg("invalid setting detected for babelfishpg_tsql.default_locale setting")));
+			coll_infos[i].lcid = locales[locale_pos].lcid;
+			coll_infos[i].code_page = locales[locale_pos].code_page;
+			if (locale)
+				pfree(locale);
+		}
+		
+		if (OidIsValid(coll_infos[i].oid))
+		{
+			entry = hash_search(ht_oid2collid, &coll_infos[i].oid, HASH_ENTER, NULL);
+			entry->persist_id = i;
+		}
+	}
     PG_RETURN_INT32(0);
 }
 
