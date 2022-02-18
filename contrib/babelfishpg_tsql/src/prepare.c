@@ -5,6 +5,7 @@
 #include "executor/spi_priv.h"
 #include "funcapi.h"
 #include "nodes/nodeFuncs.h"
+#include "optimizer/optimizer.h"
 #include "parser/parse_func.h"
 #include "parser/parser.h"
 
@@ -576,6 +577,8 @@ exec_save_simple_expr(PLtsql_expr *expr, CachedPlan *cplan)
 	/* Also stash away the expression result type */
 	expr->expr_simple_type = exprType((Node *) tle_expr);
 	expr->expr_simple_typmod = exprTypmod((Node *) tle_expr);
+      /* We also want to remember if it is immutable or not */
+      expr->expr_simple_mutable = contain_mutable_functions((Node *) tle_expr);
 }
 
 SPIPlanPtr prepare_exec_codes(PLtsql_function *func, ExecCodes *exec_codes)
