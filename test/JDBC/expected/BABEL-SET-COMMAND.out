@@ -95,3 +95,6 @@ text#!#text
 babelfishpg_tsql.xact_abort#!#off
 ~~END~~
 
+
+DROP PROCEDURE xact_proc
+go

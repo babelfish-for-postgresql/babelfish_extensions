@@ -2994,7 +2994,7 @@ begin
 	      and ((SELECT coalesce(in_table_owner,'')) = '' or table_owner like in_table_owner)
 	      and ((SELECT coalesce(in_table_qualifier,'')) = '' or table_qualifier like in_table_qualifier)
 	      and ((SELECT coalesce(in_column_name,'')) = '' or column_name like in_column_name)
-		order by table_qualifier, table_owner, table_name;
+		order by table_qualifier, table_owner, table_name, ordinal_position;
 	ELSE 
 		return query
 	    select table_qualifier, precision from sys.sp_columns_100_view
@@ -3002,7 +3002,7 @@ begin
 	      and ((SELECT coalesce(in_table_owner,'')) = '' or table_owner = in_table_owner)
 	      and ((SELECT coalesce(in_table_qualifier,'')) = '' or table_qualifier = in_table_qualifier)
 	      and ((SELECT coalesce(in_column_name,'')) = '' or column_name = in_column_name)
-		order by table_qualifier, table_owner, table_name;
+		order by table_qualifier, table_owner, table_name, ordinal_position;
 	END IF;
 end;
 $$

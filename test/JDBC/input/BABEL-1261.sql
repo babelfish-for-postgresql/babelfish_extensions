@@ -71,3 +71,9 @@ DECLARE @b INT;
 EXEC sp_babel_1307_2 @a OUT, @b OUT;
 SELECT @a+@b;
 GO
+
+DROP PROCEDURE sp_babel_1261_1
+DROP PROCEDURE sp_babel_1261_2
+DROP PROCEDURE sp_babel_1307_1
+DROP PROCEDURE sp_babel_1307_2
+go

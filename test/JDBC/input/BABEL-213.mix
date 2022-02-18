@@ -349,4 +349,5 @@ DROP SCHEMA babel_213_schema;
 DROP FUNCTION [babel_213_schema with space].[babel_213_int_func with space];
 DROP SCHEMA [babel_213_schema with space];
 DROP TABLE babel_647_employees;
+DROP FUNCTION babel_213_int_plpgsql_func
 GO

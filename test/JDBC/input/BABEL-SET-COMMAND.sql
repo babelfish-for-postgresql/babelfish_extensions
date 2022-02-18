@@ -50,3 +50,6 @@ EXEC xact_proc;
 SELECT name, setting FROM pg_settings WHERE name = 'babelfishpg_tsql.xact_abort';
 SET XACT_ABORT OFF;
 GO
+
+DROP PROCEDURE xact_proc
+go

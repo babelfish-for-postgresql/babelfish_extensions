@@ -467,3 +467,8 @@ int#!#int#!#int#!#int#!#int
 1073741831#!#180150017#!#16388#!#8193#!#0
 ~~END~~
 
+
+DROP TABLE babel_cursor_t1
+DROP TABLE t1812
+GO
+

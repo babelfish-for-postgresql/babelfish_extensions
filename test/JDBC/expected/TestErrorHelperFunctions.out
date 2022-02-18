@@ -171,3 +171,6 @@ int
 18456
 ~~END~~
 
+
+Drop table testerrorhf
+GO

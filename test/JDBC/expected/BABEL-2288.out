@@ -39,3 +39,6 @@ int
 6
 ~~END~~
 
+
+DROP PROCEDURE sp_2288
+GO

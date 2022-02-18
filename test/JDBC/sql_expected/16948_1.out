@@ -597,5 +597,7 @@ GO
 
 ~~ERROR (Message: The variable '@notCursor' is not a cursor variable, but it is used in a place where a cursor variable is expected.)~~
 
+DROP TABLE t16948
+GO
 drop schema error_mapping;
 GO

@@ -177,8 +177,7 @@ go
 select JSON_QUERY(vc, 'strict $.info.none'), JSON_QUERY(nvc, 'strict $.info.none'), JSON_QUERY(t, 'strict $.info.none') from json_value_query_table
 go
 
-
--- cleanup
-drop table valid_json_strings;
-drop table invalid_json_strings;
-drop table json_value_query_table;
+DROP TABLE valid_json_strings
+DROP TABLE invalid_json_strings
+DROP TABLE json_value_query_table
+go

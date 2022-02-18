@@ -361,5 +361,7 @@ GO
 
 ~~ERROR (Message: Incorrect syntax for definition of the 'TABLE' constraint.)~~
 
+drop table sometable
+go
 drop schema error_mapping;
 GO

@@ -224,3 +224,6 @@ int
 44318
 ~~END~~
 
+
+DROP TABLE babel_1510_t
+go

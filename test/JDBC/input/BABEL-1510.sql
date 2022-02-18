@@ -72,3 +72,6 @@ select datediff(dd, t, sdt) from babel_1510_t;
 go
 select datediff(dd, t, d) from babel_1510_t;
 go
+
+DROP TABLE babel_1510_t
+go

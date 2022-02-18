@@ -224,3 +224,8 @@ select @p1, @p2, @p5, @p6, @p7;
 exec sp_cursorclose @p2;
 exec sp_cursorunprepare @p1;
 go
+
+DROP TABLE babel_cursor_t1
+DROP TABLE t1812
+GO
+

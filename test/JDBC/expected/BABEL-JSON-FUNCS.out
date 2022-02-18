@@ -458,4 +458,7 @@ nvarchar#!#nvarchar#!#nvarchar
 ~~ERROR (Message: JSON object does not contain key "none")~~
 
 
-
+DROP TABLE valid_json_strings
+DROP TABLE invalid_json_strings
+DROP TABLE json_value_query_table
+go

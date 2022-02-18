@@ -35,4 +35,6 @@ GO
 
 
 DROP TABLE newid_volatile
+DROP TABLE newid_volatile_proc
+DROP PROCEDURE p_newid
 GO

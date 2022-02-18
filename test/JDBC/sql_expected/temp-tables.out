@@ -427,5 +427,7 @@ DROP PROCEDURE temp_table_sp_alter;
 GO
 DROP PROCEDURE temp_table_sp_constraint;
 GO
+DROP PROCEDURE sp_babel1637
+GO
 DROP TABLE tt_test_t1;
 GO

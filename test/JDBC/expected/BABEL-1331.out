@@ -51,3 +51,6 @@ int#!#int
 4#!#4
 ~~END~~
 
+
+DROP TABLE t_babel_1331
+GO

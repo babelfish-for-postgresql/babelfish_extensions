@@ -151,3 +151,9 @@ int
 300
 ~~END~~
 
+
+DROP PROCEDURE sp_babel_1261_1
+DROP PROCEDURE sp_babel_1261_2
+DROP PROCEDURE sp_babel_1307_1
+DROP PROCEDURE sp_babel_1307_2
+go

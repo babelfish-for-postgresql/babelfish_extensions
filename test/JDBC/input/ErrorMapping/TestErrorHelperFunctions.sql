@@ -21,3 +21,6 @@ GO
 
 select * from fn_mapped_system_error_list();
 GO
+
+Drop table testerrorhf
+GO

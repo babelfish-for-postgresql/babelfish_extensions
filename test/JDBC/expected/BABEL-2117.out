@@ -29,3 +29,8 @@ create view v2117 as select do.offset from do where offset = 1;
 go
 drop view v2117;
 go
+
+drop table t2117
+drop table t2117_2
+drop table do
+go

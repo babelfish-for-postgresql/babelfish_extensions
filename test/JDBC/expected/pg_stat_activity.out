@@ -60,3 +60,6 @@ text
 exec proc1_pg_stat_activity;
 ~~END~~
 
+
+drop procedure proc_pg_stat_activity;
+drop procedure proc1_pg_stat_activity;

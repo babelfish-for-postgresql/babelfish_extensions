@@ -24,3 +24,6 @@ go
 
 ~~ERROR (Message: 'OPTIMISTIC' is not currently supported in Babelfish)~~
 
+
+DROP TABLE t2267
+go

@@ -30,3 +30,6 @@ SELECT 'reset force_parallel_mode' FROM (SELECT
 		set_config('force_parallel_mode', @orig_force_parallel_mode, false)) sq;
 GO
 
+-- tsql
+DROP TABLE babel_1363_t1
+GO
