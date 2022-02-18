@@ -419,6 +419,11 @@ template
 FormattedMessage
 format_errmsg(const char *fmt, const char *arg1, const char *arg2);
 
+inline std::u32string utf8_to_utf32(const char* s)
+{
+	return antlrcpp::utf8_to_utf32(s, s + strlen(s));
+}
+
 class MyInputStream : public ANTLRInputStream
 {
 public:
@@ -428,12 +433,12 @@ public:
 
     }
     
-    void setText(size_t pos, const char *newText)
-    {
-	UTF32String	newText32 = antlrcpp::utf8_to_utf32(newText, newText + strlen(newText));
-	
-	_data.replace(pos, newText32.size(), newText32);
-    }
+		void setText(size_t pos, const char *newText)
+		{
+			UTF32String	newText32 = utf8_to_utf32(newText);
+
+			_data.replace(pos, newText32.size(), newText32);
+		}
 };
 
 class PLtsql_expr_query_mutator
@@ -486,30 +491,37 @@ void PLtsql_expr_query_mutator::add(int antlr_pos, std::string orig_text, std::s
 
 void PLtsql_expr_query_mutator::run()
 {
-	StringInfoData ds;
-	initStringInfo(&ds);
+	/*
+	 * ANTLR parser converts all input to std::u32string (utf-32 string) internally and runs the lexer/parser on that.
+	 * This indicates that Token position is based on character position not a byte offset.
+	 * To rewrite query based on token position, we have to convert a query string to std::u32string first
+	 * so that offset should indicate a correct position to be replaced.
+	 */
+	std::u32string query = utf8_to_utf32(expr->query);
+	std::u32string rewritten_query;
 
 	size_t cursor = 0; // cursor to expr->query where next copy should start
 	for (const auto &entry : m)
 	{
 		size_t offset = entry.first;
-		const std::string& orig_text = entry.second.first;
-		const std::string& repl_text = entry.second.second;
-		if (orig_text.length() == 0 || strncmp(orig_text.c_str(), expr->query+offset, orig_text.length()) == 0) // local_id maybe already deleted in some cases such as select-assignment. check here if it still exists)
+		const std::u32string& orig_text = utf8_to_utf32(entry.second.first.c_str());
+		const std::u32string& repl_text = utf8_to_utf32(entry.second.second.c_str());
+		if (orig_text.length() == 0 || orig_text.c_str(), query.substr(offset, orig_text.length()) == orig_text) // local_id maybe already deleted in some cases such as select-assignment. check here if it still exists)
 		{
 			if (offset - cursor < 0)
 				throw PGErrorWrapperException(ERROR, ERRCODE_INTERNAL_ERROR, "can't mutate an internal query. might be due to mulitiple mutation on the same position", 0, 0);
 			if (offset - cursor > 0) // if offset==cursor, no need to copy
-				appendBinaryStringInfo(&ds, expr->query+cursor, offset - cursor); // copy substring of expr->query. ranged [cursor, offset)
-			appendStringInfo(&ds, "%s", repl_text.c_str());
+				rewritten_query += query.substr(cursor, offset - cursor); // copy substring of expr->query. ranged [cursor, offset)
+			rewritten_query += repl_text;
 			cursor = offset + orig_text.length();
 		}
 	}
 	if (cursor < strlen(expr->query))
-		appendStringInfoString(&ds, expr->query + cursor); // copy remaining expr->query
+		rewritten_query += query.substr(cursor); // copy remaining expr->query
 
 	// update query string with quoted one
-	expr->query = pstrdup(ds.data);
+	std::string new_query = antlrcpp::utf32_to_utf8(rewritten_query);
+	expr->query = pstrdup(new_query.c_str());
 }
 
 static void
