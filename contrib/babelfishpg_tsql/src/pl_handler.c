@@ -82,7 +82,6 @@
 
 extern bool escape_hatch_unique_constraint;
 extern bool pltsql_recursive_triggers;
-extern bool escape_hatch_rowversion;
 
 extern List *babelfishpg_tsql_raw_parser(const char *str);
 extern bool install_backend_gram_hooks();
@@ -547,54 +546,51 @@ pltsql_pre_parse_analyze(ParseState *pstate, RawStmt *parseTree)
 		}
 		case T_UpdateStmt:
 		{
-			if (escape_hatch_rowversion == EH_IGNORE)
+			UpdateStmt *updstmt = (UpdateStmt *) parseTree->stmt;
+			Oid relid;
+			Relation rel;
+			TupleDesc tupdesc;
+			AttrNumber attr_num;
+
+			relid = RangeVarGetRelid(updstmt->relation, NoLock, false);
+			rel = RelationIdGetRelation(relid);
+			tupdesc = RelationGetDescr(rel);
+
+			/*
+			* If target table contains a rowversion column, add a new ResTarget node
+			* with a SetToDefault expression into statement's targetList. This will
+			* ensure that the rows which are going to be updated will have new rowversion
+			* value.
+			*/
+			for (attr_num = 0; attr_num < tupdesc->natts; attr_num++)
 			{
-				UpdateStmt *updstmt = (UpdateStmt *) parseTree->stmt;
-				Oid relid;
-				Relation rel;
-				TupleDesc tupdesc;
-				AttrNumber attr_num;
+				Form_pg_attribute attr;
 
-				relid = RangeVarGetRelid(updstmt->relation, NoLock, false);
-				rel = RelationIdGetRelation(relid);
-				tupdesc = RelationGetDescr(rel);
+				attr = TupleDescAttr(tupdesc, attr_num);
 
-				/*
-				* If target table contains a rowversion column, add a new ResTarget node
-				* with a SetToDefault expression into statement's targetList. This will
-				* ensure that the rows which are going to be updated will have new rowversion
-				* value.
-				*/
-				for (attr_num = 0; attr_num < tupdesc->natts; attr_num++)
+				if (attr->attisdropped)
+					continue;
+
+				if (is_tsql_rowversion_or_timestamp_datatype(attr->atttypid))
 				{
-					Form_pg_attribute attr;
+					SetToDefault *def = makeNode(SetToDefault);
+					ResTarget *res;
 
-					attr = TupleDescAttr(tupdesc, attr_num);
-
-					if (attr->attisdropped)
-						continue;
-
-					if (is_tsql_rowversion_or_timestamp_datatype(attr->atttypid))
-					{
-						SetToDefault *def = makeNode(SetToDefault);
-						ResTarget *res;
-
-						def->typeId = attr->atttypid;
-						def->typeMod = attr->atttypmod;
-						def->collation = attr->attcollation;
-						res = makeNode(ResTarget);
-						res->name = pstrdup(NameStr(attr->attname));
-						res->name_location = -1;
-						res->indirection = NIL;
-						res->val = (Node *)def;
-						res->location = -1;
-						updstmt->targetList = lappend(updstmt->targetList, res);
-						break;
-					}
+					def->typeId = attr->atttypid;
+					def->typeMod = attr->atttypmod;
+					def->collation = attr->attcollation;
+					res = makeNode(ResTarget);
+					res->name = pstrdup(NameStr(attr->attname));
+					res->name_location = -1;
+					res->indirection = NIL;
+					res->val = (Node *)def;
+					res->location = -1;
+					updstmt->targetList = lappend(updstmt->targetList, res);
+					break;
 				}
-
-				RelationClose(rel);
 			}
+
+			RelationClose(rel);
 			break;
 		}
 		case T_GrantStmt:
@@ -834,8 +830,7 @@ pltsql_post_parse_analyze(ParseState *pstate, Query *query)
 			}
 
 			/*Disallow insert into a ROWVERSION column */
-			if (escape_hatch_rowversion == EH_IGNORE &&
-				is_tsql_rowversion_or_timestamp_datatype(attr->atttypid))
+			if (is_tsql_rowversion_or_timestamp_datatype(attr->atttypid))
 			{
 				ereport(ERROR,
 						(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
@@ -927,8 +922,7 @@ pltsql_post_parse_analyze(ParseState *pstate, Query *query)
 											errmsg("Nullable UNIQUE constraint is not supported. Please use babelfishpg_tsql.escape_hatch_unique_constraint to ignore "
 												"or add a NOT NULL constraint")));
 								}
-								if (escape_hatch_rowversion == EH_IGNORE &&
-									is_rowversion_column(pstate, (ColumnDef *) element))
+								if (is_rowversion_column(pstate, (ColumnDef *) element))
 								{
 									ColumnDef *def = (ColumnDef *) element;
 
@@ -947,7 +941,7 @@ pltsql_post_parse_analyze(ParseState *pstate, Query *query)
 								Constraint *c = (Constraint *) element;
 								c->conname = construct_unique_index_name(c->conname, stmt->relation->relname);
 
-								if (escape_hatch_rowversion == EH_IGNORE && rowversion_column_name)
+								if (rowversion_column_name)
 									validate_rowversion_table_constraint(c, rowversion_column_name);
 							}
 								break;
@@ -990,8 +984,7 @@ pltsql_post_parse_analyze(ParseState *pstate, Query *query)
 							seen_identity = true;
 						
 						/* Check for rowversion attribute */
-						if (escape_hatch_rowversion == EH_IGNORE &&
-							is_tsql_rowversion_or_timestamp_datatype(attr->atttypid))
+						if (is_tsql_rowversion_or_timestamp_datatype(attr->atttypid))
 						{
 							seen_rowversion = true;
 							rowversion_column_name = NameStr(attr->attname);
@@ -1017,8 +1010,7 @@ pltsql_post_parse_analyze(ParseState *pstate, Query *query)
 												 errmsg("Only one identity column is allowed in a table")));
 									seen_identity = true;
 								}
-								if (escape_hatch_rowversion == EH_IGNORE &&
-									is_rowversion_column(pstate, castNode(ColumnDef, cmd->def)))
+								if (is_rowversion_column(pstate, castNode(ColumnDef, cmd->def)))
 								{
 									ColumnDef *def = castNode(ColumnDef, cmd->def);
 									if (seen_rowversion)
@@ -1046,7 +1038,7 @@ pltsql_post_parse_analyze(ParseState *pstate, Query *query)
 												"or add a NOT NULL constraint")));
 								}
 
-								if (escape_hatch_rowversion == EH_IGNORE && rowversion_column_name)
+								if (rowversion_column_name)
 									validate_rowversion_table_constraint(c, rowversion_column_name);
 							}
 								break;
@@ -1055,8 +1047,7 @@ pltsql_post_parse_analyze(ParseState *pstate, Query *query)
 								int colnamelen = strlen(cmd->name);
 
 								/* Check if rowversion column type is being changed. */
-								if (escape_hatch_rowversion == EH_IGNORE &&
-									rowversion_column_name != NULL &&
+								if (rowversion_column_name != NULL &&
 									strlen(rowversion_column_name) == colnamelen)
 								{
 									bool found = false;
@@ -1080,8 +1071,7 @@ pltsql_post_parse_analyze(ParseState *pstate, Query *query)
 								}
 
 								/* Check if a column type is being changed to rowversion. */
-								if (escape_hatch_rowversion == EH_IGNORE &&
-									is_rowversion_column(pstate, castNode(ColumnDef, cmd->def)))
+								if (is_rowversion_column(pstate, castNode(ColumnDef, cmd->def)))
 									ereport(ERROR,
 											(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
 											 errmsg("Cannot alter column \"%s\" to be data type timestamp.", cmd->name)));
@@ -1092,8 +1082,7 @@ pltsql_post_parse_analyze(ParseState *pstate, Query *query)
 								int colnamelen = strlen(cmd->name);
 
 								/* Disallow defaults on a rowversion column. */
-								if (escape_hatch_rowversion == EH_IGNORE &&
-									rowversion_column_name != NULL &&
+								if (rowversion_column_name != NULL &&
 									strlen(rowversion_column_name) == colnamelen)
 								{
 									bool found = false;
@@ -1152,28 +1141,25 @@ pltsql_post_parse_analyze(ParseState *pstate, Query *query)
 					Query *q = (Query *) n;
 					if (q->commandType == CMD_SELECT)
 					{
-						if (escape_hatch_rowversion == EH_IGNORE)
+						ListCell *t;
+						bool seen_rowversion = false;
+
+						/* Varify if SELECT INTO ... statement not inserting multiple rowversion columns. */
+						foreach(t, q->targetList)
 						{
-							ListCell *t;
-							bool seen_rowversion = false;
+							TargetEntry *tle = (TargetEntry *) lfirst(t);
+							Oid typeid = InvalidOid;
 
-							/* Varify if SELECT INTO ... statement not inserting multiple rowversion columns. */
-							foreach(t, q->targetList)
+							if (!tle->resjunk)
+								typeid = exprType((Node *) tle->expr);
+
+							if (OidIsValid(typeid) && is_tsql_rowversion_or_timestamp_datatype(typeid))
 							{
-								TargetEntry *tle = (TargetEntry *) lfirst(t);
-								Oid typeid = InvalidOid;
-
-								if (!tle->resjunk)
-									typeid = exprType((Node *) tle->expr);
-
-								if (OidIsValid(typeid) && is_tsql_rowversion_or_timestamp_datatype(typeid))
-								{
-									if (seen_rowversion)
-										ereport(ERROR,
-												(errcode(ERRCODE_INVALID_TABLE_DEFINITION),
-												errmsg("Only one timestamp column is allowed in a table.")));
-									seen_rowversion = true;
-								}
+								if (seen_rowversion)
+									ereport(ERROR,
+											(errcode(ERRCODE_INVALID_TABLE_DEFINITION),
+											errmsg("Only one timestamp column is allowed in a table.")));
+								seen_rowversion = true;
 							}
 						}
 
@@ -1188,26 +1174,23 @@ pltsql_post_parse_analyze(ParseState *pstate, Query *query)
 	}
 	else if (query->commandType == CMD_UPDATE)
 	{
-		if (escape_hatch_rowversion == EH_IGNORE)
+		ListCell *lc;
+
+		/* Disallow updating a ROWVERSION column */
+		foreach (lc, query->targetList)
 		{
-			ListCell *lc;
+			TargetEntry *tle = (TargetEntry *) lfirst(lc);
+			TupleDesc tupdesc = RelationGetDescr(pstate->p_target_relation);
+			int attr_num = tle->resno - 1;
+			Form_pg_attribute attr;
 
-			/* Disallow updating a ROWVERSION column */
-			foreach (lc, query->targetList)
+			attr = TupleDescAttr(tupdesc, attr_num);
+
+			if(is_tsql_rowversion_or_timestamp_datatype(attr->atttypid) && !IsA(tle->expr, SetToDefault))
 			{
-				TargetEntry *tle = (TargetEntry *) lfirst(lc);
-				TupleDesc tupdesc = RelationGetDescr(pstate->p_target_relation);
-				int attr_num = tle->resno - 1;
-				Form_pg_attribute attr;
-
-				attr = TupleDescAttr(tupdesc, attr_num);
-
-				if(is_tsql_rowversion_or_timestamp_datatype(attr->atttypid) && !IsA(tle->expr, SetToDefault))
-				{
-					ereport(ERROR,
-							(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-							errmsg("Cannot update a timestamp column.")));
-				}
+				ereport(ERROR,
+						(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+						errmsg("Cannot update a timestamp column.")));
 			}
 		}
 		pltsql_add_ctid_self_join_cond_between_target_and_from_clause(query);
@@ -2713,7 +2696,7 @@ static void bbf_ProcessUtility(PlannedStmt *pstmt,
 			}
 		case T_CreateTableAsStmt:
 		{
-			if (sql_dialect == SQL_DIALECT_TSQL && escape_hatch_rowversion == EH_IGNORE)
+			if (sql_dialect == SQL_DIALECT_TSQL)
 			{
 				CreateTableAsStmt *stmt = (CreateTableAsStmt *) parsetree;
 				Oid relid;
