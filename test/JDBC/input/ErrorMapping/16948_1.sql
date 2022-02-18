@@ -496,5 +496,7 @@ if @@trancount > 0 rollback transaction;
 --
 --
 GO
+DROP TABLE t16948
+GO
 drop schema error_mapping;
 GO

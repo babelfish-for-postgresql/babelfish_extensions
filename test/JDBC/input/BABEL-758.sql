@@ -99,3 +99,4 @@ GO
 DROP PROCEDURE babel_758_set_stmt;
 DROP PROCEDURE babel_758_p_employee_count;
 DROP TABLE babel_758_employees;
+GO

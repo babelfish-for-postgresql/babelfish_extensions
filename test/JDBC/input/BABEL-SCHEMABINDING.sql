@@ -61,4 +61,5 @@ DROP PROCEDURE p_babel_1201;
 DROP VIEW v_babel_1201;
 DROP TRIGGER tr_babel_1201;
 DROP TABLE t_babel_1201;
+DROP TABLE t_babel_1201_2;
 GO

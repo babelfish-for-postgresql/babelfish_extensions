@@ -195,5 +195,6 @@ drop type text_t;
 drop type ntext_t;
 drop type varbinary_t;
 drop type binary_t;
+drop type image_t;
 drop database sp_cols;
 go

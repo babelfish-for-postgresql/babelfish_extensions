@@ -14,3 +14,6 @@ fetch relative 2 from cur
 close cur
 deallocate cur
 go
+
+DROP TABLE t_babel_1331
+GO

@@ -28,3 +28,9 @@ CREATE FUNCTION custom_f6(@one CHAR(10)) RETURNS CHAR AS BEGIN RETURN @one; END;
 go
 SELECT custom_f6('abcdef');
 go
+
+DROP FUNCTION custom_f3
+DROP FUNCTION custom_f4
+DROP FUNCTION custom_f5
+DROP FUNCTION custom_f6
+GO

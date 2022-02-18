@@ -97,3 +97,15 @@ GO
 
 EXEC p_babel_1381_varbinary_10 0x1;
 GO
+
+DROP PROCEDURE p_babel_1381_tinyint
+DROP PROCEDURE p_babel_1381_nchar
+DROP PROCEDURE p_babel_1381_nchar_10
+DROP PROCEDURE p_babel_1381_varchar
+DROP PROCEDURE p_babel_1381_varchar_10
+DROP PROCEDURE p_babel_1381_nvarchar
+DROP PROCEDURE p_babel_1381_nvarchar_10
+DROP PROCEDURE p_babel_1381_binary
+DROP PROCEDURE p_babel_1381_varbinary
+DROP PROCEDURE p_babel_1381_varbinary_10
+GO

@@ -33,3 +33,11 @@ go
 
 EXEC sp_babelfish_configure 'babelfishpg_tsql.escape_hatch_unique_constraint', 'strict';
 go
+
+DROP TABLE babel_559_t1
+DROP TABLE babel_559_t2
+DROP TABLE babel_559_t3
+DROP TABLE babel_559_t4
+DROP TABLE babel_559_t5
+DROP TABLE babel_559_t6
+go

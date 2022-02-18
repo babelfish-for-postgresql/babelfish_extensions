@@ -57,3 +57,6 @@ reset force_parallel_mode
 ~~END~~
 
 
+-- tsql
+DROP TABLE babel_1363_t1
+GO

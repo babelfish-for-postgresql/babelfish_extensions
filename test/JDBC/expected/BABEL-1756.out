@@ -25,3 +25,5 @@ smallint#!#varchar#!#binary#!#nvarchar
 ~~END~~
 
 
+DROP TABLE foo;
+GO

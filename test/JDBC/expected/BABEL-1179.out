@@ -119,3 +119,9 @@ bigint
 1
 ~~END~~
 
+
+DROP FUNCTION implicit_2int2
+DROP FUNCTION implicit_2int4
+DROP FUNCTION implicit_2int8
+DROP FUNCTION implicit_2bit
+go

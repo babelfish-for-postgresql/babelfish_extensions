@@ -339,5 +339,7 @@ if @@trancount > 0 rollback transaction;
 DROP TABLE t141;
 GO
 
+DROP TABLE t141;
+GO
 drop schema error_mapping;
 GO

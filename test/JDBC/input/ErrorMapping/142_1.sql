@@ -278,5 +278,7 @@ if @@trancount > 0 rollback transaction;
 --
 --
 GO
+drop table sometable
+go
 drop schema error_mapping;
 GO

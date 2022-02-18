@@ -422,5 +422,7 @@ GO
 ~~ERROR (Message: A SELECT statement that assigns a value to a variable must not be combined with data-retrieval operations.)~~
 
 
+DROP TABLE t141;
+GO
 drop schema error_mapping;
 GO
