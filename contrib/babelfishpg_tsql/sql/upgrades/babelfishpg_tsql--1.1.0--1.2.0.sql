@@ -3471,5 +3471,77 @@ CREATE OR REPLACE FUNCTION sys.json_query(json_string text, path text default '$
 RETURNS sys.NVARCHAR
 AS 'babelfishpg_tsql', 'tsql_json_query' LANGUAGE C IMMUTABLE PARALLEL SAFE;
 
+CREATE OR REPLACE VIEW sys.sp_statistics_view AS
+SELECT
+CAST(t4."TABLE_CATALOG" AS sys.sysname) AS TABLE_QUALIFIER,
+CAST(t4."TABLE_SCHEMA" AS sys.sysname) AS TABLE_OWNER,
+CAST(t4."TABLE_NAME" AS sys.sysname) AS TABLE_NAME,
+CASE
+WHEN t5.indisunique = 't' THEN CAST(0 AS smallint)
+ELSE CAST(1 AS smallint)
+END AS NON_UNIQUE,
+CAST(t1.relname AS sys.sysname) AS INDEX_QUALIFIER,
+-- the index name created by CREATE INDEX is re-mapped, find it (by checking
+-- the ones not in pg_constraint) and restoring it back before display
+CASE 
+WHEN t8.oid > 0 THEN CAST(t6.relname AS sys.sysname)
+ELSE CAST(SUBSTRING(t6.relname,1,LENGTH(t6.relname)-32-LENGTH(t1.relname)) AS sys.sysname) 
+END AS INDEX_NAME,
+CASE
+WHEN t7.starelid > 0 THEN CAST(0 AS smallint)
+ELSE
+	CASE
+	WHEN t5.indisclustered = 't' THEN CAST(1 AS smallint)
+	ELSE CAST(3 AS smallint)
+	END
+END AS TYPE,
+CAST(seq + 1 AS smallint) AS SEQ_IN_INDEX,
+CAST(t4."COLUMN_NAME" AS sys.sysname) AS COLUMN_NAME,
+CAST('A' AS sys.varchar(1)) AS COLLATION,
+CAST(t7.stadistinct AS int) AS CARDINALITY,
+CAST(0 AS int) AS PAGES, --not supported
+CAST(NULL AS sys.varchar(128)) AS FILTER_CONDITION
+FROM pg_catalog.pg_class t1
+    JOIN sys.schemas s1 ON s1.schema_id = t1.relnamespace
+    JOIN pg_catalog.pg_roles t3 ON t1.relowner = t3.oid
+    JOIN information_schema.columns t4 ON (t1.relname = t4."TABLE_NAME" AND s1.name = t4."TABLE_SCHEMA")
+	JOIN (pg_catalog.pg_index t5 JOIN
+		pg_catalog.pg_class t6 ON t5.indexrelid = t6.oid) ON t1.oid = t5.indrelid
+	LEFT JOIN pg_catalog.pg_statistic t7 ON t1.oid = t7.starelid
+	LEFT JOIN pg_catalog.pg_constraint t8 ON t5.indexrelid = t8.conindid
+    , generate_series(0,31) seq -- SQL server has max 32 columns per index
+WHERE CAST(t4."ORDINAL_POSITION" AS smallint) = ANY (t5.indkey)
+    AND CAST(t4."ORDINAL_POSITION" AS smallint) = t5.indkey[seq];
+GRANT SELECT on sys.sp_statistics_view TO PUBLIC;
+
+CREATE OR REPLACE PROCEDURE sys.sp_statistics_100(
+    "@table_name" sys.sysname,
+    "@table_owner" sys.sysname = '',
+    "@table_qualifier" sys.sysname = '',
+	"@index_name" sys.sysname = '',
+	"@is_unique" char = 'N',
+	"@accuracy" char = 'Q'
+)
+AS $$
+BEGIN
+    select out_table_qualifier as TABLE_QUALIFIER,
+            out_table_owner as TABLE_OWNER,
+            out_table_name as TABLE_NAME,
+			out_non_unique as NON_UNIQUE,
+			out_index_qualifier as INDEX_QUALIFIER,
+			out_index_name as INDEX_NAME,
+			out_type as TYPE,
+			out_seq_in_index as SEQ_IN_INDEX,
+			out_column_name as COLUMN_NAME,
+			out_collation as COLLATION,
+			out_cardinality as CARDINALITY,
+			out_pages as PAGES,
+			out_filter_condition as FILTER_CONDITION
+    from sys.sp_statistics_internal(@table_name, @table_owner, @table_qualifier, @index_name, @is_unique, @accuracy);
+END;
+$$
+LANGUAGE 'pltsql';
+GRANT ALL on PROCEDURE sys.sp_statistics_100 TO PUBLIC;
+
 -- Reset search_path to not affect any subsequent scripts
 SELECT set_config('search_path', trim(leading 'sys, ' from current_setting('search_path')), false);
