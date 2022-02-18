@@ -223,3 +223,45 @@ GO
 
 drop type type1
 GO
+
+create type varchar_max from varchar(max)
+create type nvarchar_max from nvarchar(max)
+create type varbinary_max from varbinary(max)
+GO
+
+create table babel_2947 (a varchar_max
+                        , b varchar(max)
+                        , c varchar(10)
+                        , d nvarchar_max
+                        , e nvarchar(max)
+                        , f nvarchar(10)
+                        , g varbinary_max
+                        , h varbinary(max)
+                        , i varbinary(10))
+GO
+
+select name, max_length from sys.columns where object_id = OBJECT_ID('babel_2947') order by name;
+GO
+
+drop table babel_2947
+GO
+
+drop type varchar_max 
+drop type nvarchar_max 
+drop type varbinary_max 
+GO
+
+create table babel_2947 (a varchar(max)
+                        , b varchar(10)
+                        , c nvarchar(max)
+                        , d nvarchar(10)
+                        , e varbinary(max)
+                        , f varbinary(10))
+GO
+
+exec sys.sp_describe_undeclared_parameters N'insert into babel_2947 (a,b,c,d,e,f) values (@a,@b,@c,@d,@e,@f)'
+GO
+
+drop table babel_2947
+GO
+
