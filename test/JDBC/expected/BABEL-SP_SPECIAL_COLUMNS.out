@@ -14,11 +14,84 @@ create table t3(a int not null unique, b int, c int, primary key(c, b))
 go
 create table t4(a int not null unique)
 go
-create table t5(Id eyedees, Cellphone phone_num, primary key(Id, Cellphone));
+create table t5(Id eyedees, Cellphone phone_num, primary key(Id, Cellphone))
 go
 create table MyTable1(ColA eyedees, ColB phone_num, primary key(ColA, ColB))
 go
 create table [MyTable2]([ColA] phone_num, [ColB] eyedees, primary key([ColA], [ColB]))
+go
+create table unique_idx_table1(a int NOT NULL)
+go
+create unique index my_index1 ON unique_idx_table1(a)
+go
+create table unique_idx_table2(a int NOT NULL, b int primary key)
+go
+create unique index my_index2 ON unique_idx_table2(a)
+go
+-- Tables for all data types
+CREATE TABLE type_bigint (a_bigint bigint primary key)
+go
+CREATE TABLE type_binary (a_binary binary primary key)
+go
+CREATE TABLE type_bit (a_bit bit primary key)
+go
+CREATE TABLE type_char (a_char char primary key)
+go
+CREATE TABLE type_date (a_date date primary key)
+go
+CREATE TABLE type_datetime (a_datetime datetime primary key)
+go
+CREATE TABLE type_datetime2 (a_datetime2 datetime2 primary key)
+go
+CREATE TABLE type_datetimeoffset (a_datetimeoffset datetimeoffset primary key)
+go
+CREATE TABLE type_decimal (a_decimal decimal primary key)
+go
+CREATE TABLE type_float (a_float float primary key)
+go
+CREATE TABLE type_int (a_int int primary key)
+go
+CREATE TABLE type_money (a_money money primary key)
+go
+CREATE TABLE type_nchar (a_nchar nchar primary key)
+go
+CREATE TABLE type_numeric(a_numeric numeric primary key)
+go
+CREATE TABLE type_nvarchar(a_nvarchar nvarchar primary key)
+go
+CREATE TABLE type_real(a_real real primary key)
+go
+CREATE TABLE type_smalldatetime(a_smalldatetime smalldatetime primary key)
+go
+CREATE TABLE type_smallint (a_smallint smallint primary key)
+go
+CREATE TABLE type_smallmoney (a_smallmoney smallmoney primary key)
+go
+CREATE TABLE type_sql_variant (a_sql_variant sql_variant primary key)
+go
+CREATE TABLE type_sysname (a_sysname sysname primary key)
+go
+CREATE TABLE type_time (a_time time primary key)
+go
+CREATE TABLE type_tinyint (a_tinyint tinyint primary key)
+go
+CREATE TABLE type_uniqueidentifier (a_uniqueidentifier uniqueidentifier primary key)
+go
+CREATE TABLE type_varbinary (a_varbinary varbinary primary key)
+go
+CREATE TABLE type_varchar (a_varchar varchar primary key)
+go
+CREATE TABLE type_int_identity (a_int_identity int identity primary key)
+go
+CREATE TABLE type_bigint_identity (a_bigint_identity bigint identity primary key)
+go
+CREATE TABLE type_smallint_identity (a_smallint_identity smallint identity primary key)
+go
+CREATE TABLE type_tinyint_identity (a_tinyint_identity tinyint identity primary key)
+go
+CREATE TABLE type_decimal_identity (a_decimal_identity decimal identity primary key)
+go
+CREATE TABLE type_numeric_identity (a_numeric_identity numeric identity primary key)
 go
 
 -- syntax error: @table_name is required
@@ -168,6 +241,244 @@ smallint#!#varchar#!#smallint#!#varchar#!#int#!#int#!#smallint#!#smallint
 ~~END~~
 
 
+
+-- Testing datatypes
+-- NOTE: Currently, these values do not produce accurate results for some values such as binary, uniqueidentifier and others
+EXEC sp_special_columns 'type_bigint'
+go
+~~START~~
+smallint#!#varchar#!#smallint#!#varchar#!#int#!#int#!#smallint#!#smallint
+1#!#a_bigint#!#-5#!#bigint#!#19#!#8#!#0#!#1
+~~END~~
+
+EXEC sp_special_columns 'type_bit'
+go
+~~START~~
+smallint#!#varchar#!#smallint#!#varchar#!#int#!#int#!#smallint#!#smallint
+1#!#a_bit#!#-7#!#bit#!#1#!#1#!#0#!#1
+~~END~~
+
+EXEC sp_special_columns 'type_char'
+go
+~~START~~
+smallint#!#varchar#!#smallint#!#varchar#!#int#!#int#!#smallint#!#smallint
+1#!#a_char#!#1#!#char#!#0#!#1#!#0#!#1
+~~END~~
+
+EXEC sp_special_columns 'type_date'
+go
+~~START~~
+smallint#!#varchar#!#smallint#!#varchar#!#int#!#int#!#smallint#!#smallint
+1#!#a_date#!#91#!#date#!#10#!#3#!#0#!#1
+~~END~~
+
+EXEC sp_special_columns 'type_datetime'
+go
+~~START~~
+smallint#!#varchar#!#smallint#!#varchar#!#int#!#int#!#smallint#!#smallint
+1#!#a_datetime#!#93#!#datetime#!#23#!#8#!#3#!#1
+~~END~~
+
+EXEC sp_special_columns 'type_datetime2'
+go
+~~START~~
+smallint#!#varchar#!#smallint#!#varchar#!#int#!#int#!#smallint#!#smallint
+1#!#a_datetime2#!#93#!#datetime2#!#26#!#8#!#6#!#1
+~~END~~
+
+EXEC sp_special_columns 'type_datetimeoffset'
+go
+~~START~~
+smallint#!#varchar#!#smallint#!#varchar#!#int#!#int#!#smallint#!#smallint
+1#!#a_datetimeoffset#!#-155#!#datetimeoffset#!#33#!#10#!#6#!#1
+~~END~~
+
+EXEC sp_special_columns 'type_decimal'
+go
+~~START~~
+smallint#!#varchar#!#smallint#!#varchar#!#int#!#int#!#smallint#!#smallint
+1#!#a_decimal#!#3#!#decimal#!#18#!#9#!#0#!#1
+~~END~~
+
+EXEC sp_special_columns 'type_float'
+go
+~~START~~
+smallint#!#varchar#!#smallint#!#varchar#!#int#!#int#!#smallint#!#smallint
+1#!#a_float#!#6#!#float#!#53#!#8#!#0#!#1
+~~END~~
+
+EXEC sp_special_columns 'type_int'
+go
+~~START~~
+smallint#!#varchar#!#smallint#!#varchar#!#int#!#int#!#smallint#!#smallint
+1#!#a_int#!#4#!#int#!#10#!#4#!#0#!#1
+~~END~~
+
+EXEC sp_special_columns 'type_money'
+go
+~~START~~
+smallint#!#varchar#!#smallint#!#varchar#!#int#!#int#!#smallint#!#smallint
+1#!#a_money#!#3#!#money#!#19#!#8#!#4#!#1
+~~END~~
+
+EXEC sp_special_columns 'type_nchar'
+go
+~~START~~
+smallint#!#varchar#!#smallint#!#varchar#!#int#!#int#!#smallint#!#smallint
+1#!#a_nchar#!#-8#!#nchar#!#0#!#2#!#0#!#1
+~~END~~
+
+EXEC sp_special_columns 'type_numeric'
+go
+~~START~~
+smallint#!#varchar#!#smallint#!#varchar#!#int#!#int#!#smallint#!#smallint
+1#!#a_numeric#!#2#!#numeric#!#18#!#9#!#0#!#1
+~~END~~
+
+EXEC sp_special_columns 'type_nvarchar'
+go
+~~START~~
+smallint#!#varchar#!#smallint#!#varchar#!#int#!#int#!#smallint#!#smallint
+1#!#a_nvarchar#!#-9#!#nvarchar#!#0#!#2#!#0#!#1
+~~END~~
+
+EXEC sp_special_columns 'type_real'
+go
+~~START~~
+smallint#!#varchar#!#smallint#!#varchar#!#int#!#int#!#smallint#!#smallint
+1#!#a_real#!#7#!#real#!#24#!#4#!#0#!#1
+~~END~~
+
+EXEC sp_special_columns 'type_smalldatetime'
+go
+~~START~~
+smallint#!#varchar#!#smallint#!#varchar#!#int#!#int#!#smallint#!#smallint
+1#!#a_smalldatetime#!#93#!#smalldatetime#!#16#!#4#!#0#!#1
+~~END~~
+
+EXEC sp_special_columns 'type_smallint'
+go
+~~START~~
+smallint#!#varchar#!#smallint#!#varchar#!#int#!#int#!#smallint#!#smallint
+1#!#a_smallint#!#5#!#smallint#!#5#!#2#!#0#!#1
+~~END~~
+
+EXEC sp_special_columns 'type_smallmoney'
+go
+~~START~~
+smallint#!#varchar#!#smallint#!#varchar#!#int#!#int#!#smallint#!#smallint
+1#!#a_smallmoney#!#3#!#smallmoney#!#10#!#4#!#4#!#1
+~~END~~
+
+EXEC sp_special_columns 'type_sql_variant'
+go
+~~START~~
+smallint#!#varchar#!#smallint#!#varchar#!#int#!#int#!#smallint#!#smallint
+1#!#a_sql_variant#!#-150#!#sql_variant#!#0#!#8016#!#0#!#1
+~~END~~
+
+EXEC sp_special_columns 'type_sysname'
+go
+~~START~~
+smallint#!#varchar#!#smallint#!#varchar#!#int#!#int#!#smallint#!#smallint
+1#!#a_sysname#!#-9#!#sysname#!#0#!#256#!#0#!#1
+~~END~~
+
+EXEC sp_special_columns 'type_time'
+go
+~~START~~
+smallint#!#varchar#!#smallint#!#varchar#!#int#!#int#!#smallint#!#smallint
+1#!#a_time#!#-154#!#time#!#15#!#5#!#6#!#1
+~~END~~
+
+EXEC sp_special_columns 'type_tinyint'
+go
+~~START~~
+smallint#!#varchar#!#smallint#!#varchar#!#int#!#int#!#smallint#!#smallint
+1#!#a_tinyint#!#-6#!#tinyint#!#3#!#1#!#0#!#1
+~~END~~
+
+EXEC sp_special_columns 'type_uniqueidentifier'
+go
+~~START~~
+smallint#!#varchar#!#smallint#!#varchar#!#int#!#int#!#smallint#!#smallint
+1#!#a_uniqueidentifier#!#-11#!#uniqueidentifier#!#0#!#16#!#0#!#1
+~~END~~
+
+EXEC sp_special_columns 'type_varbinary'
+go
+~~START~~
+smallint#!#varchar#!#smallint#!#varchar#!#int#!#int#!#smallint#!#smallint
+1#!#a_varbinary#!#-3#!#varbinary#!#0#!#1#!#0#!#1
+~~END~~
+
+EXEC sp_special_columns 'type_varchar'
+go
+~~START~~
+smallint#!#varchar#!#smallint#!#varchar#!#int#!#int#!#smallint#!#smallint
+1#!#a_varchar#!#12#!#varchar#!#0#!#1#!#0#!#1
+~~END~~
+
+EXEC sp_special_columns 'type_int_identity'
+go
+~~START~~
+smallint#!#varchar#!#smallint#!#varchar#!#int#!#int#!#smallint#!#smallint
+1#!#a_int_identity#!#4#!#int identity#!#10#!#4#!#0#!#1
+~~END~~
+
+EXEC sp_special_columns 'type_bigint_identity'
+go
+~~START~~
+smallint#!#varchar#!#smallint#!#varchar#!#int#!#int#!#smallint#!#smallint
+1#!#a_bigint_identity#!#-5#!#bigint identity#!#19#!#8#!#0#!#1
+~~END~~
+
+EXEC sp_special_columns 'type_smallint_identity'
+go
+~~START~~
+smallint#!#varchar#!#smallint#!#varchar#!#int#!#int#!#smallint#!#smallint
+1#!#a_smallint_identity#!#5#!#smallint identity#!#5#!#2#!#0#!#1
+~~END~~
+
+EXEC sp_special_columns 'type_tinyint_identity'
+go
+~~START~~
+smallint#!#varchar#!#smallint#!#varchar#!#int#!#int#!#smallint#!#smallint
+1#!#a_tinyint_identity#!#5#!#smallint identity#!#5#!#2#!#0#!#1
+~~END~~
+
+EXEC sp_special_columns 'type_decimal_identity'
+go
+~~START~~
+smallint#!#varchar#!#smallint#!#varchar#!#int#!#int#!#smallint#!#smallint
+1#!#a_decimal_identity#!#-5#!#bigint identity#!#19#!#8#!#0#!#1
+~~END~~
+
+EXEC sp_special_columns 'type_numeric_identity'
+go
+~~START~~
+smallint#!#varchar#!#smallint#!#varchar#!#int#!#int#!#smallint#!#smallint
+1#!#a_numeric_identity#!#-5#!#bigint identity#!#19#!#8#!#0#!#1
+~~END~~
+
+
+-- Test unique indexes created after table creation
+exec sp_special_columns 'unique_idx_table1'
+go
+~~START~~
+smallint#!#varchar#!#smallint#!#varchar#!#int#!#int#!#smallint#!#smallint
+1#!#a#!#4#!#int#!#10#!#4#!#0#!#1
+~~END~~
+
+exec sp_special_columns 'unique_idx_table2' -- only primary key should be shown
+go
+~~START~~
+smallint#!#varchar#!#smallint#!#varchar#!#int#!#int#!#smallint#!#smallint
+1#!#b#!#4#!#int#!#10#!#4#!#0#!#1
+~~END~~
+
+
+-- cleanup
 drop table t1
 go
 drop table t2
@@ -185,6 +496,72 @@ go
 drop type eyedees
 go
 drop type phone_num
+go
+DROP TABLE type_bigint
+go
+DROP TABLE type_bit
+go
+DROP TABLE type_char
+go
+DROP TABLE type_date
+go
+DROP TABLE type_datetime
+go
+DROP TABLE type_datetime2
+go
+DROP TABLE type_datetimeoffset
+go
+DROP TABLE type_decimal
+go
+DROP TABLE type_float
+go
+DROP TABLE type_int
+go
+DROP TABLE type_money
+go
+DROP TABLE type_nchar
+go
+DROP TABLE type_numeric
+go
+DROP TABLE type_nvarchar
+go
+DROP TABLE type_real
+go
+DROP TABLE type_smalldatetime
+go
+DROP TABLE type_smallint
+go
+DROP TABLE type_smallmoney
+go
+DROP TABLE type_sql_variant 
+go
+DROP TABLE type_sysname
+go
+DROP TABLE type_time 
+go
+DROP TABLE type_tinyint
+go
+DROP TABLE type_uniqueidentifier
+go
+DROP TABLE type_varbinary
+go
+DROP TABLE type_varchar
+go
+DROP TABLE type_int_identity
+go
+DROP TABLE type_bigint_identity
+go
+DROP TABLE type_smallint_identity
+go
+DROP TABLE type_tinyint_identity
+go
+DROP TABLE type_decimal_identity
+go
+DROP TABLE type_numeric_identity
+go
+DROP TABLE unique_idx_table1
+go
+DROP TABLE unique_idx_table2
 go
 use master
 go
