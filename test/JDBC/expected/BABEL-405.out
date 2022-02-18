@@ -192,10 +192,6 @@ begin
 select * from t_405_update1;
 end
 go
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: 'Instead of Trigger' is not currently supported in Babelfish)~~
-
 
 create trigger tr2 on t_405_update2 instead of update
 as
@@ -205,63 +201,57 @@ end
 go
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: 'Instead of Trigger' is not currently supported in Babelfish)~~
+~~ERROR (Message: cannot create trigger "tr2" for relation "t_405_update2" because an INSTEAD OF UPDATE trigger already exists on this object.)~~
 
 
 update t_405_update2 set x = 2 where x=1;
 go
-~~ROW COUNT: 1~~
+~~START~~
+int
+1
+1
+1
+1
+~~END~~
 
   
 select * from t_405_update2;
 go
 ~~START~~
 int
-2
+1
 ~~END~~
 
   
 drop trigger tr1;
 go
-~~ERROR (Code: 3701)~~
-
-~~ERROR (Message: trigger "tr1" does not exist)~~
-
   
 create trigger tr1 on t_405_update2 instead of update
 as
 begin
 end
 go
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: 'Instead of Trigger' is not currently supported in Babelfish)~~
-
   
 update t_405_update2 set x = 3 where 1 = 1;
+select * from t_405_update2;
+go
+~~START~~
+int
+1
+~~END~~
+
+  
+drop trigger tr1;
+go
+
+update t_405_update2 set x=2 where x=1;
 select * from t_405_update2;
 go
 ~~ROW COUNT: 1~~
 
 ~~START~~
 int
-3
-~~END~~
-
-  
-drop trigger tr1;
-go
-~~ERROR (Code: 3701)~~
-
-~~ERROR (Message: trigger "tr1" does not exist)~~
-
-
-update t_405_update2 set x=2 where x=1;
-select * from t_405_update2;
-go
-~~START~~
-int
-3
+2
 ~~END~~
 
 

@@ -393,14 +393,6 @@ antlrcpp::Any TsqlUnsupportedFeatureHandlerImpl::visitCreate_or_alter_trigger(TS
 		if (dctx->ALTER())
 			handle(INSTR_UNSUPPORTED_TSQL_DML_ALTER_TRIGGER, "ALTER TRIGGER", getLineAndPos(dctx->ALTER()));
 
-		if (dctx->INSTEAD()){
-			for (auto ops : dctx->dml_trigger_operation()){
-				if (ops->UPDATE()){
-					handle(INSTR_UNSUPPORTED_TSQL_DML_INSTEAD_OF_TRIGGER, "Instead of Trigger", getLineAndPos(dctx->INSTEAD()));
-				}
-			}
-		}
-
 		if (dctx->APPEND()) // WITH APPEND
 			handle(INSTR_UNSUPPORTED_TSQL_DML_WITH_APPEND_TRIGGER, "WITH APPEND", getLineAndPos(dctx->APPEND()));
 
