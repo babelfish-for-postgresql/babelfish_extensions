@@ -899,10 +899,6 @@ create_bbf_authid_user_ext(CreateRoleStmt *stmt, bool has_schema, bool has_login
 			default_schema = "dbo";
 
 		physical_schema = get_physical_name(get_cur_db_name(), default_schema);
-		if (!OidIsValid(get_namespace_oid(physical_schema, true)))
-			ereport(ERROR,
-					(errcode(ERRCODE_UNDEFINED_OBJECT),
-					 errmsg("The schema '%s' does not exist.", default_schema)));
 	}
 
 	if (has_login)
