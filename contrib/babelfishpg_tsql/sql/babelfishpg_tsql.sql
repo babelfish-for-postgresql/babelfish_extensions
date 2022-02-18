@@ -1049,28 +1049,30 @@ $$
 LANGUAGE 'pltsql';
 GRANT EXECUTE on PROCEDURE sys.sp_databases TO PUBLIC;
 
-CREATE VIEW sys.sp_pkeys_view AS
+CREATE OR REPLACE VIEW sys.sp_pkeys_view AS
 SELECT
-CAST(t2.dbname AS sys.sysname) AS TABLE_QUALIFIER,
-CAST(t3.rolname AS sys.sysname) AS TABLE_OWNER,
+CAST(t4."TABLE_CATALOG" AS sys.sysname) AS TABLE_QUALIFIER,
+CAST(t4."TABLE_SCHEMA" AS sys.sysname) AS TABLE_OWNER,
 CAST(t1.relname AS sys.sysname) AS TABLE_NAME,
-CAST(t4.column_name AS sys.sysname) AS COLUMN_NAME,
+CAST(t4."COLUMN_NAME" AS sys.sysname) AS COLUMN_NAME,
 CAST(seq AS smallint) AS KEY_SEQ,
 CAST(t5.conname AS sys.sysname) AS PK_NAME
 FROM pg_catalog.pg_class t1 
 	JOIN sys.pg_namespace_ext t2 ON t1.relnamespace = t2.oid
 	JOIN pg_catalog.pg_roles t3 ON t1.relowner = t3.oid
-	JOIN information_schema.columns t4 ON t1.relname = t4.table_name
+  LEFT OUTER JOIN sys.babelfish_namespace_ext ext on t2.nspname = ext.nspname
+	JOIN information_schema_tsql.columns t4 ON (t1.relname = t4."TABLE_NAME" AND ext.orig_name = t4."TABLE_SCHEMA")
 	JOIN pg_constraint t5 ON t1.oid = t5.conrelid
 	, generate_series(1,16) seq -- SQL server has max 16 columns per primary key
 WHERE t5.contype = 'p'
-	AND CAST(t4.dtd_identifier AS smallint) = ANY (t5.conkey)
-	AND CAST(t4.dtd_identifier AS smallint) = t5.conkey[seq];
+	AND CAST(t4."ORDINAL_POSITION" AS smallint) = ANY (t5.conkey)
+	AND CAST(t4."ORDINAL_POSITION" AS smallint) = t5.conkey[seq]
+  AND ext.dbid = cast(sys.db_id() as oid);
 
 GRANT SELECT on sys.sp_pkeys_view TO PUBLIC;
 
 -- internal function in order to workaround BABEL-1597
-create function sys.sp_pkeys_internal(
+create or replace function sys.sp_pkeys_internal(
 	in_table_name sys.nvarchar(384),
 	in_table_owner sys.nvarchar(384) = '',
 	in_table_qualifier sys.nvarchar(384) = ''
@@ -1088,7 +1090,7 @@ begin
 	return query
 	select * from sys.sp_pkeys_view
 	where in_table_name = table_name
-		and ((SELECT coalesce(in_table_owner,'')) = '' or table_owner = in_table_owner)
+		and table_owner = coalesce(in_table_owner,'dbo')
 		and ((SELECT coalesce(in_table_qualifier,'')) = '' or table_qualifier = in_table_qualifier)
 	order by table_qualifier, table_owner, table_name, key_seq;
 end;
@@ -1097,17 +1099,17 @@ LANGUAGE plpgsql;
 
 CREATE OR REPLACE PROCEDURE sys.sp_pkeys(
 	"@table_name" sys.nvarchar(384),
-	"@table_owner" sys.nvarchar(384) = '',
+	"@table_owner" sys.nvarchar(384) = 'dbo',
 	"@table_qualifier" sys.nvarchar(384) = ''
 )
 AS $$
 BEGIN
-	select out_table_qualifier as table_qualifier,
-			out_table_owner as table_owner,
-			out_table_name as table_name,
-			out_column_name as column_name,
-			out_key_seq as key_seq,
-			out_pk_name as pk_name
+	select out_table_qualifier as TABLE_QUALIFIER,
+			out_table_owner as TABLE_OWNER,
+			out_table_name as TABLE_NAME,
+			out_column_name as COLUMN_NAME,
+			out_key_seq as KEY_SEQ,
+			out_pk_name as PK_NAME
 	from sys.sp_pkeys_internal(@table_name, @table_owner, @table_qualifier);
 END; 
 $$
