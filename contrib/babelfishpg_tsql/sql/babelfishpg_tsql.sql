@@ -1116,9 +1116,9 @@ GRANT ALL on PROCEDURE sys.sp_pkeys TO PUBLIC;
 
 CREATE VIEW sys.sp_statistics_view AS
 SELECT
-CAST(t2.dbname AS sys.sysname) AS TABLE_QUALIFIER,
-CAST(t3.rolname AS sys.sysname) AS TABLE_OWNER,
-CAST(t1.relname AS sys.sysname) AS TABLE_NAME,
+CAST(t4."TABLE_CATALOG" AS sys.sysname) AS TABLE_QUALIFIER,
+CAST(t4."TABLE_SCHEMA" AS sys.sysname) AS TABLE_OWNER,
+CAST(t4."TABLE_NAME" AS sys.sysname) AS TABLE_NAME,
 CASE
 WHEN t5.indisunique = 't' THEN CAST(0 AS smallint)
 ELSE CAST(1 AS smallint)
@@ -1139,22 +1139,22 @@ ELSE
 	END
 END AS TYPE,
 CAST(seq + 1 AS smallint) AS SEQ_IN_INDEX,
-CAST(t4.column_name AS sys.sysname) AS COLUMN_NAME,
+CAST(t4."COLUMN_NAME" AS sys.sysname) AS COLUMN_NAME,
 CAST('A' AS sys.varchar(1)) AS COLLATION,
 CAST(t7.stadistinct AS int) AS CARDINALITY,
 CAST(0 AS int) AS PAGES, --not supported
 CAST(NULL AS sys.varchar(128)) AS FILTER_CONDITION
 FROM pg_catalog.pg_class t1
-    JOIN sys.pg_namespace_ext t2 ON t1.relnamespace = t2.oid
+    JOIN sys.schemas s1 ON s1.schema_id = t1.relnamespace
     JOIN pg_catalog.pg_roles t3 ON t1.relowner = t3.oid
-    JOIN information_schema.columns t4 ON t1.relname = t4.table_name
+    JOIN information_schema_tsql.columns t4 ON (t1.relname = t4."TABLE_NAME" AND s1.name = t4."TABLE_SCHEMA")
 	JOIN (pg_catalog.pg_index t5 JOIN
 		pg_catalog.pg_class t6 ON t5.indexrelid = t6.oid) ON t1.oid = t5.indrelid
 	LEFT JOIN pg_catalog.pg_statistic t7 ON t1.oid = t7.starelid
 	LEFT JOIN pg_catalog.pg_constraint t8 ON t5.indexrelid = t8.conindid
     , generate_series(0,31) seq -- SQL server has max 32 columns per index
-WHERE CAST(t4.dtd_identifier AS smallint) = ANY (t5.indkey)
-    AND CAST(t4.dtd_identifier AS smallint) = t5.indkey[seq];
+WHERE CAST(t4."ORDINAL_POSITION" AS smallint) = ANY (t5.indkey)
+    AND CAST(t4."ORDINAL_POSITION" AS smallint) = t5.indkey[seq];
 GRANT SELECT on sys.sp_statistics_view TO PUBLIC;
 
 create function sys.sp_statistics_internal(
@@ -1234,19 +1234,19 @@ CREATE OR REPLACE PROCEDURE sys.sp_statistics_100(
 )
 AS $$
 BEGIN
-    select out_table_qualifier as table_qualifier,
-            out_table_owner as table_owner,
-            out_table_name as table_name,
-			out_non_unique as non_unique,
-			out_index_qualifier as index_qualifier,
-			out_index_name as index_name,
-			out_type as type,
-			out_seq_in_index as seq_in_index,
-			out_column_name as column_name,
-			out_collation as collation,
-			out_cardinality as cardinality,
-			out_pages as pages,
-			out_filter_condition as filter_condition
+    select out_table_qualifier as TABLE_QUALIFIER,
+            out_table_owner as TABLE_OWNER,
+            out_table_name as TABLE_NAME,
+			out_non_unique as NON_UNIQUE,
+			out_index_qualifier as INDEX_QUALIFIER,
+			out_index_name as INDEX_NAME,
+			out_type as TYPE,
+			out_seq_in_index as SEQ_IN_INDEX,
+			out_column_name as COLUMN_NAME,
+			out_collation as COLLATION,
+			out_cardinality as CARDINALITY,
+			out_pages as PAGES,
+			out_filter_condition as FILTER_CONDITION
     from sys.sp_statistics_internal(@table_name, @table_owner, @table_qualifier, @index_name, @is_unique, @accuracy);
 END;
 $$
