@@ -309,7 +309,7 @@ END;
 $$ LANGUAGE plpgsql IMMUTABLE STRICT;
 
 
-CREATE OR REPLACE FUNCTION sys.tsql_type_max_length_helper(IN type TEXT, IN typelen INT, IN typemod INT)
+CREATE OR REPLACE FUNCTION sys.tsql_type_max_length_helper(IN type TEXT, IN typelen INT, IN typemod INT, IN for_sys_types boolean DEFAULT false)
 RETURNS SMALLINT
 AS $$
 DECLARE
@@ -357,7 +357,11 @@ BEGIN
 		CASE 
 		WHEN type in ('image', 'text', 'ntext') THEN max_length = 16;
 		WHEN type = 'sql_variant' THEN max_length = 8016;
-		WHEN type in ('binary', 'varbinary', 'char', 'varchar', 'bpchar', 'nchar', 'nvarchar') THEN max_length = 8000;
+		WHEN type in ('varbinary', 'varchar', 'nvarchar') THEN 
+			IF for_sys_types THEN max_length = 8000;
+			ELSE max_length = -1;
+			END IF;
+		WHEN type in ('binary', 'char', 'bpchar', 'nchar') THEN max_length = 8000;
 		WHEN type in ('decimal', 'numeric') THEN max_length = 17;
 		ELSE max_length = typemod;
 		END CASE;
@@ -970,7 +974,7 @@ select tsql_type_name as name
   , t.oid as user_type_id
   , s.oid as schema_id
   , cast(NULL as INT) as principal_id
-  , sys.tsql_type_max_length_helper(tsql_type_name, t.typlen, t.typtypmod) as max_length
+  , sys.tsql_type_max_length_helper(tsql_type_name, t.typlen, t.typtypmod, true) as max_length
   , cast(sys.tsql_type_precision_helper(tsql_type_name, t.typtypmod) as int) as precision
   , cast(sys.tsql_type_scale_helper(tsql_type_name, t.typtypmod, false) as int) as scale
   , CASE c.collname
