@@ -3508,7 +3508,7 @@ CAST(NULL AS sys.varchar(128)) AS FILTER_CONDITION
 FROM pg_catalog.pg_class t1
     JOIN sys.schemas s1 ON s1.schema_id = t1.relnamespace
     JOIN pg_catalog.pg_roles t3 ON t1.relowner = t3.oid
-    JOIN information_schema.columns t4 ON (t1.relname = t4."TABLE_NAME" AND s1.name = t4."TABLE_SCHEMA")
+    JOIN information_schema_tsql.columns t4 ON (t1.relname = t4."TABLE_NAME" AND s1.name = t4."TABLE_SCHEMA")
 	JOIN (pg_catalog.pg_index t5 JOIN
 		pg_catalog.pg_class t6 ON t5.indexrelid = t6.oid) ON t1.oid = t5.indrelid
 	LEFT JOIN pg_catalog.pg_statistic t7 ON t1.oid = t7.starelid
