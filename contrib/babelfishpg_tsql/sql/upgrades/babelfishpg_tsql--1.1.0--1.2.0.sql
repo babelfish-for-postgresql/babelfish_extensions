@@ -2461,7 +2461,15 @@ SELECT DISTINCT
 CAST(1 as smallint) AS SCOPE,
 CAST(coalesce (split_part(pa.attoptions[1], '=', 2) ,c1.name) AS sys.sysname) AS COLUMN_NAME, -- get original column name if exists
 CAST(t6.data_type AS smallint) AS DATA_TYPE,
-CAST(t8.name AS sys.sysname) AS TYPE_NAME,
+
+CASE -- cases for when they are of type identity. 
+	WHEN c1.is_identity = 1 AND (t8.name = 'decimal' or t8.name = 'numeric') 
+	THEN CAST(CONCAT(t8.name, '() identity') AS sys.sysname)
+	WHEN c1.is_identity = 1 AND (t8.name != 'decimal' AND t8.name != 'numeric')
+	THEN CAST(CONCAT(t8.name, ' identity') AS sys.sysname)
+	ELSE CAST(t8.name AS sys.sysname)
+END AS TYPE_NAME,
+
 CAST(c1.precision AS int) AS PRECISION,
 CAST(c1.max_length AS int) AS LENGTH,
 CAST(c1.scale AS smallint) AS SCALE,
@@ -2470,20 +2478,27 @@ CAST(c1.is_nullable AS int) AS IS_NULLABLE,
 CAST(t2.dbname AS sys.sysname) AS TABLE_QUALIFIER,
 CAST(s1.name AS sys.sysname) AS TABLE_OWNER,
 CAST(t1.relname AS sys.sysname) AS TABLE_NAME,
-CAST (t5.contype AS sys.sysname) AS CONSTRAINT_TYPE
+
+CASE 
+	WHEN idx.is_unique = 1 AND (idx.is_unique_constraint !=1 AND idx.is_primary_key != 1)
+	THEN CAST('u' AS sys.sysname) -- if it is a unique index, then we should cast it as 'u' for filtering purposes
+	ELSE CAST(t5.contype AS sys.sysname)
+END AS CONSTRAINT_TYPE
         
 FROM pg_catalog.pg_class t1 
 	JOIN sys.pg_namespace_ext t2 ON t1.relnamespace = t2.oid
 	JOIN sys.schemas s1 ON s1.schema_id = t1.relnamespace
-	JOIN pg_constraint t5 ON t1.oid = t5.conrelid
+	LEFT JOIN pg_constraint t5 ON t1.oid = t5.conrelid
+	LEFT JOIN sys.indexes idx ON idx.object_id = t1.oid
 	JOIN sys.columns c1 ON t1.oid = c1.object_id
 
 	JOIN pg_catalog.pg_type AS t7 ON t7.oid = c1.system_type_id
 	JOIN sys.types as t8 ON c1.user_type_id = t8.user_type_id 
 	LEFT JOIN sys.spt_datatype_info_table AS t6 ON t7.typname = t6.pg_type_name OR t7.typname = t6.type_name --need in order to get accurate DATA_TYPE value
 	LEFT JOIN pg_catalog.pg_attribute AS pa ON t1.oid = pa.attrelid AND c1.name = pa.attname
-WHERE (t5.contype = 'p' OR t5.contype = 'u')
-	AND CAST(c1.column_id AS smallint) = ANY (t5.conkey)
+	WHERE (t5.contype = 'p' OR t5.contype = 'u' 
+	OR ((idx.is_unique = 1) AND (idx.is_primary_key !=1 AND idx.is_unique_constraint !=1))) -- Only looking for unique indexes
+	AND (CAST(c1.column_id AS smallint) = ANY (t5.conkey) OR ((idx.is_unique = 1) AND (idx.is_primary_key !=1 AND idx.is_unique_constraint !=1)))
 	AND has_schema_privilege(s1.schema_id, 'USAGE');
   
 GRANT SELECT ON sys.sp_special_columns_view TO PUBLIC;
@@ -2573,6 +2588,7 @@ BEGIN
 				WHERE LOWER(@table_name) = LOWER(table_name)
 				AND ((SELECT coalesce(@table_owner,'')) = '' OR LOWER(table_owner) = LOWER(@table_owner))
 				AND ((SELECT coalesce(@qualifier,'')) = '' OR LOWER(table_qualifier) = LOWER(@qualifier)) AND (is_nullable = 0) AND LOWER(constraint_type) = LOWER(@special_col_type)
+				AND CONSTRAINT_TYPE = 'p'
 				ORDER BY scope, column_name;
 			END
 			ELSE
@@ -2588,6 +2604,7 @@ BEGIN
 				WHERE LOWER(@table_name) = LOWER(table_name)
 				AND ((SELECT coalesce(@table_owner,'')) = '' OR LOWER(table_owner) = LOWER(@table_owner))
 				AND ((SELECT coalesce(@qualifier,'')) = '' OR LOWER(table_qualifier) = LOWER(@qualifier)) AND (is_nullable = 0) AND LOWER(constraint_type) = LOWER(@special_col_type)
+				AND CONSTRAINT_TYPE = 'p'
 				ORDER BY scope, column_name;
 			END
 		END
@@ -2653,7 +2670,8 @@ BEGIN
 				WHERE LOWER(@table_name) = LOWER(table_name)
 				AND ((SELECT coalesce(@table_owner,'')) = '' OR LOWER(table_owner) = LOWER(@table_owner))
 				AND ((SELECT coalesce(@qualifier,'')) = '' OR LOWER(table_qualifier) = LOWER(@qualifier)) AND LOWER(constraint_type) = LOWER(@special_col_type)
-			ORDER BY scope, column_name;	
+				AND CONSTRAINT_TYPE = 'p'
+				ORDER BY scope, column_name;	
 			END
 			
 			ELSE
@@ -2669,6 +2687,7 @@ BEGIN
 				WHERE LOWER(@table_name) = LOWER(table_name)
 				AND ((SELECT coalesce(@table_owner,'')) = '' OR LOWER(table_owner) = LOWER(@table_owner))
 				AND ((SELECT coalesce(@qualifier,'')) = '' OR LOWER(table_qualifier) = LOWER(@qualifier)) AND LOWER(constraint_type) = LOWER(@special_col_type)
+				AND CONSTRAINT_TYPE = 'p'
 				ORDER BY scope, column_name;
 			END
 				
