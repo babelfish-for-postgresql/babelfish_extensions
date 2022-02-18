@@ -7309,6 +7309,7 @@ exec_eval_simple_expr(PLtsql_execstate *estate,
 	LocalTransactionId curlxid = MyProc->lxid;
 	CachedPlan *cplan;
 	void	   *save_setup_arg;
+      bool        need_snapshot;
 	MemoryContext oldcontext;
 
 	/*
@@ -7380,12 +7381,19 @@ exec_eval_simple_expr(PLtsql_execstate *estate,
 
 	/*
 	 * We have to do some of the things SPI_execute_plan would do, in
-	 * particular advance the snapshot if we are in a non-read-only function.
-	 * Without this, stable functions within the expression would fail to see
-	 * updates made so far by our own function.
+	 * particular push a new snapshot so that stable functions within the
+	 * expression can see updates made so far by our own function.  However,
+	 * we can skip doing that (and just invoke the expression with the same
+       * snapshot passed to our function) in some cases, which is useful because
+       * it's quite expensive relative to the cost of a simple expression.  We
+       * can skip it if the expression contains no stable or volatile functions;
+       * immutable functions shouldn't need to see our updates.  Also, if this
+       * is a read-only function, we haven't made any updates so again it's okay
+       * to skip.
 	 */
 	oldcontext = MemoryContextSwitchTo(get_eval_mcontext(estate));
-	if (!estate->readonly_func)
+      need_snapshot = (expr->expr_simple_mutable && !estate->readonly_func);
+	if (need_snapshot)
 	{
 		CommandCounterIncrement();
 		PushActiveSnapshot(GetTransactionSnapshot());
@@ -7410,7 +7418,7 @@ exec_eval_simple_expr(PLtsql_execstate *estate,
 
 	estate->paramLI->parserSetupArg = save_setup_arg;
 
-	if (!estate->readonly_func)
+	if (need_snapshot)
 		PopActiveSnapshot();
 
 	MemoryContextSwitchTo(oldcontext);
