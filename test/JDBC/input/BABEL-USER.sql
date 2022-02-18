@@ -64,13 +64,10 @@ WHERE name = 'test2';
 GO
 
 -- Test create user with schema option
-CREATE SCHEMA sch3;
-GO
-
-CREATE USER test3 WITH DEFAULT_SCHEMA = fake_schema;
-GO
-
 CREATE USER test3 WITH DEFAULT_SCHEMA = sch3;
+GO
+
+CREATE SCHEMA sch3;
 GO
 
 SELECT rolname, login_name, orig_username, database_name, default_schema_name
