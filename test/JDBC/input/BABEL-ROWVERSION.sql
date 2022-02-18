@@ -33,6 +33,9 @@ go
 create table t2(id int, rv1 rowversion, rv2 rowversion);
 go
 
+EXEC sp_babelfish_configure 'babelfishpg_tsql.escape_hatch_rowversion', 'strict';
+go
+
 -- Insert into a rowversion column is not allowed
 insert into t1(id, rv) values(1,2);
 go
@@ -61,6 +64,9 @@ select case when x.rv = y.rv then 'equal' else 'not-equal' end
 go
 
 drop view v1;
+go
+
+EXEC sp_babelfish_configure 'babelfishpg_tsql.escape_hatch_rowversion', 'ignore';
 go
 
 -- Test with tvf
