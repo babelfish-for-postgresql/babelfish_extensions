@@ -228,6 +228,28 @@ LANGUAGE C IMMUTABLE STRICT PARALLEL SAFE;
 CREATE CAST (sys.VARCHAR AS FLOAT8)
 WITH FUNCTION sys.varchar2float8(sys.VARCHAR) AS IMPLICIT;
 
+CREATE OR REPLACE FUNCTION sys.varchar_larger(sys.VARCHAR, sys.VARCHAR)
+RETURNS sys.VARCHAR
+AS 'text_larger'
+LANGUAGE INTERNAL IMMUTABLE STRICT PARALLEL SAFE;
+
+CREATE OR REPLACE FUNCTION sys.varchar_smaller(sys.VARCHAR, sys.VARCHAR)
+RETURNS sys.VARCHAR
+AS 'text_smaller'
+LANGUAGE INTERNAL IMMUTABLE STRICT PARALLEL SAFE;
+
+CREATE OR REPLACE AGGREGATE sys.max(sys.VARCHAR)
+(
+  sfunc = sys.varchar_larger,
+  stype = sys.varchar
+);
+
+CREATE OR REPLACE AGGREGATE sys.min(sys.VARCHAR)
+(
+  sfunc = sys.varchar_smaller,
+  stype = sys.varchar
+);
+
 SET enable_domain_typmod = TRUE;
 CREATE DOMAIN sys.NVARCHAR AS sys.VARCHAR;
 RESET enable_domain_typmod;
@@ -241,3 +263,25 @@ SET client_min_messages = 'ERROR';
 CREATE CAST (sys.nvarchar AS sys.nvarchar)
 WITH FUNCTION sys.nvarchar (sys.nvarchar, integer, BOOLEAN) AS ASSIGNMENT;
 SET client_min_messages = 'WARNING';
+
+CREATE OR REPLACE FUNCTION sys.nvarchar_larger(sys.NVARCHAR, sys.NVARCHAR)
+RETURNS sys.NVARCHAR
+AS 'text_larger'
+LANGUAGE INTERNAL IMMUTABLE STRICT PARALLEL SAFE;
+
+CREATE OR REPLACE FUNCTION sys.nvarchar_smaller(sys.NVARCHAR, sys.NVARCHAR)
+RETURNS sys.NVARCHAR
+AS 'text_smaller'
+LANGUAGE INTERNAL IMMUTABLE STRICT PARALLEL SAFE;
+
+CREATE OR REPLACE AGGREGATE sys.max(sys.NVARCHAR)
+(
+  sfunc = sys.nvarchar_larger,
+  stype = sys.nvarchar
+);
+
+CREATE OR REPLACE AGGREGATE sys.min(sys.NVARCHAR)
+(
+  sfunc = sys.nvarchar_smaller,
+  stype = sys.nvarchar
+);

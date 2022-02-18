@@ -917,10 +917,97 @@ CREATE OPERATOR sys.+ (
     FUNCTION = sys.babelfish_concat_wrapper
 );
 
+CREATE OR REPLACE FUNCTION sys.varchar_larger(sys.VARCHAR, sys.VARCHAR)
+RETURNS sys.VARCHAR
+AS 'text_larger'
+LANGUAGE INTERNAL IMMUTABLE STRICT PARALLEL SAFE;
+
+CREATE OR REPLACE FUNCTION sys.varchar_smaller(sys.VARCHAR, sys.VARCHAR)
+RETURNS sys.VARCHAR
+AS 'text_smaller'
+LANGUAGE INTERNAL IMMUTABLE STRICT PARALLEL SAFE;
+
+CREATE OR REPLACE AGGREGATE sys.max(sys.VARCHAR)
+(
+  sfunc = sys.varchar_larger,
+  stype = sys.varchar
+);
+
+CREATE OR REPLACE AGGREGATE sys.min(sys.VARCHAR)
+(
+  sfunc = sys.varchar_smaller,
+  stype = sys.varchar
+);
+
+CREATE OR REPLACE FUNCTION sys.nvarchar_larger(sys.NVARCHAR, sys.NVARCHAR)
+RETURNS sys.NVARCHAR
+AS 'text_larger'
+LANGUAGE INTERNAL IMMUTABLE STRICT PARALLEL SAFE;
+
+CREATE OR REPLACE FUNCTION sys.nvarchar_smaller(sys.NVARCHAR, sys.NVARCHAR)
+RETURNS sys.NVARCHAR
+AS 'text_smaller'
+LANGUAGE INTERNAL IMMUTABLE STRICT PARALLEL SAFE;
+
+CREATE OR REPLACE AGGREGATE sys.max(sys.NVARCHAR)
+(
+  sfunc = sys.nvarchar_larger,
+  stype = sys.nvarchar
+);
+
+CREATE OR REPLACE AGGREGATE sys.min(sys.NVARCHAR)
+(
+  sfunc = sys.nvarchar_smaller,
+  stype = sys.nvarchar
+);
+
+CREATE OR REPLACE FUNCTION sys.bpchar_larger(sys.BPCHAR, sys.BPCHAR)
+RETURNS sys.BPCHAR
+AS 'bpchar_larger'
+LANGUAGE INTERNAL IMMUTABLE STRICT PARALLEL SAFE;
+
+CREATE OR REPLACE FUNCTION sys.bpchar_smaller(sys.BPCHAR, sys.BPCHAR)
+RETURNS sys.BPCHAR
+AS 'bpchar_smaller'
+LANGUAGE INTERNAL IMMUTABLE STRICT PARALLEL SAFE;
+
+CREATE OR REPLACE AGGREGATE sys.max(sys.BPCHAR)
+(
+  sfunc = sys.bpchar_larger,
+  stype = sys.bpchar
+);
+
+CREATE OR REPLACE AGGREGATE sys.min(sys.BPCHAR)
+(
+  sfunc = sys.bpchar_smaller,
+  stype = sys.bpchar
+);
+
+CREATE OR REPLACE FUNCTION sys.nchar_larger(sys.NCHAR, sys.NCHAR)
+RETURNS sys.NCHAR
+AS 'bpchar_larger'
+LANGUAGE INTERNAL IMMUTABLE STRICT PARALLEL SAFE;
+
+CREATE OR REPLACE FUNCTION sys.nchar_smaller(sys.NCHAR, sys.NCHAR)
+RETURNS sys.NCHAR
+AS 'bpchar_smaller'
+LANGUAGE INTERNAL IMMUTABLE STRICT PARALLEL SAFE;
+
+CREATE OR REPLACE AGGREGATE sys.max(sys.NCHAR)
+(
+  sfunc = sys.nchar_larger,
+  stype = sys.nchar
+);
+
+CREATE OR REPLACE AGGREGATE sys.min(sys.NCHAR)
+(
+  sfunc = sys.nchar_smaller,
+  stype = sys.nchar
+);
+
 CREATE OR REPLACE FUNCTION sys.translate_pg_type_to_tsql(pgoid oid) RETURNS TEXT
 AS 'babelfishpg_common', 'translate_pg_type_to_tsql'
 LANGUAGE C PARALLEL SAFE IMMUTABLE;
-
 
 -- Reset search_path to not affect any subsequent scripts
 SELECT set_config('search_path', trim(leading 'sys, ' from current_setting('search_path')), false);

@@ -282,6 +282,28 @@ CREATE OPERATOR pg_catalog.<> (
     JOIN       = neqjoinsel
 );
 
+CREATE OR REPLACE FUNCTION sys.bpchar_larger(sys.BPCHAR, sys.BPCHAR)
+RETURNS sys.BPCHAR
+AS 'bpchar_larger'
+LANGUAGE INTERNAL IMMUTABLE STRICT PARALLEL SAFE;
+
+CREATE OR REPLACE FUNCTION sys.bpchar_smaller(sys.BPCHAR, sys.BPCHAR)
+RETURNS sys.BPCHAR
+AS 'bpchar_smaller'
+LANGUAGE INTERNAL IMMUTABLE STRICT PARALLEL SAFE;
+
+CREATE OR REPLACE AGGREGATE sys.max(sys.BPCHAR)
+(
+  sfunc = sys.bpchar_larger,
+  stype = sys.bpchar
+);
+
+CREATE OR REPLACE AGGREGATE sys.min(sys.BPCHAR)
+(
+  sfunc = sys.bpchar_smaller,
+  stype = sys.bpchar
+);
+
 SET enable_domain_typmod = TRUE;
 CREATE DOMAIN sys.NCHAR AS sys.BPCHAR;
 RESET enable_domain_typmod;
@@ -296,3 +318,25 @@ SET client_min_messages = 'ERROR';
 CREATE CAST (sys.nchar AS sys.nchar)
 WITH FUNCTION sys.nchar (sys.nchar, integer, BOOLEAN) AS ASSIGNMENT;
 SET client_min_messages = 'WARNING';
+
+CREATE OR REPLACE FUNCTION sys.nchar_larger(sys.NCHAR, sys.NCHAR)
+RETURNS sys.NCHAR
+AS 'bpchar_larger'
+LANGUAGE INTERNAL IMMUTABLE STRICT PARALLEL SAFE;
+
+CREATE OR REPLACE FUNCTION sys.nchar_smaller(sys.NCHAR, sys.NCHAR)
+RETURNS sys.NCHAR
+AS 'bpchar_smaller'
+LANGUAGE INTERNAL IMMUTABLE STRICT PARALLEL SAFE;
+
+CREATE OR REPLACE AGGREGATE sys.max(sys.NCHAR)
+(
+  sfunc = sys.nchar_larger,
+  stype = sys.nchar
+);
+
+CREATE OR REPLACE AGGREGATE sys.min(sys.NCHAR)
+(
+  sfunc = sys.nchar_smaller,
+  stype = sys.nchar
+);
