@@ -653,21 +653,9 @@ LANGUAGE plpgsql
 VOLATILE
 RETURNS NULL ON NULL INPUT;
 
-CREATE OR REPLACE FUNCTION sys.has_dbaccess(database_name PG_CATALOG.TEXT) RETURNS INTEGER AS $$
-DECLARE has_access BOOLEAN;
-BEGIN
-	has_access = has_database_privilege(database_name, 'CONNECT');
-	IF has_access THEN
-		RETURN 1;
-	ELSE
-		RETURN 0;
-	END IF;
-EXCEPTION WHEN others THEN
-	RETURN NULL;
-END;
-$$
-STRICT
-LANGUAGE plpgsql;
+CREATE OR REPLACE FUNCTION sys.has_dbaccess(database_name SYSNAME) RETURNS INTEGER AS 
+'babelfishpg_tsql', 'has_dbaccess'
+LANGUAGE C STRICT;
 
 CREATE OR REPLACE FUNCTION sys.datefromparts(IN year INT, IN month INT, IN day INT)
 RETURNS DATE AS

@@ -3652,5 +3652,9 @@ $$
 LANGUAGE 'pltsql';
 GRANT ALL on PROCEDURE sys.sp_pkeys TO PUBLIC;
 
+CREATE OR REPLACE FUNCTION sys.has_dbaccess(database_name SYSNAME) RETURNS INTEGER AS 
+'babelfishpg_tsql', 'has_dbaccess'
+LANGUAGE C IMMUTABLE STRICT;
+
 -- Reset search_path to not affect any subsequent scripts
 SELECT set_config('search_path', trim(leading 'sys, ' from current_setting('search_path')), false);
