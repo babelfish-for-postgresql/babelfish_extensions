@@ -15,6 +15,7 @@
 #include "common/md5.h"
 #include "miscadmin.h"
 #include "parser/scansup.h"
+#include "tsearch/ts_locale.h"
 #include "utils/acl.h"
 #include "utils/builtins.h"
 #include "utils/elog.h"
@@ -65,6 +66,7 @@ PG_FUNCTION_INFO_V1(host_os);
 PG_FUNCTION_INFO_V1(tsql_stat_get_activity);
 PG_FUNCTION_INFO_V1(get_current_full_xact_id);
 PG_FUNCTION_INFO_V1(checksum);
+PG_FUNCTION_INFO_V1(has_dbaccess);
 
 /* Not supported -- only syntax support */
 PG_FUNCTION_INFO_V1(procid);
@@ -786,4 +788,42 @@ checksum(PG_FUNCTION_ARGS)
         pfree(buf.data);
 
         PG_RETURN_INT32(result);
+}
+
+Datum
+has_dbaccess(PG_FUNCTION_ARGS)
+{
+	char *db_name = text_to_cstring(PG_GETARG_TEXT_P(0));
+	/* Ensure the database name input argument is lower-case, as all Babel table names are lower-case */
+	char *lowercase_db_name = lowerstr(db_name);
+	const char *user = NULL;
+	const char *login;
+
+	int16		db_id = get_db_id(lowercase_db_name);
+
+	if (!DbidIsValid(db_id))
+		PG_RETURN_NULL();
+
+	login = GetUserNameFromId(GetSessionUserId(), false);
+	user = get_authid_user_ext_physical_name(lowercase_db_name, login);
+
+	/* Special cases:
+		Database Owner should always have access
+		If this DB has guest roles, the guests should always have access
+	*/
+	if (!user)
+	{
+		Oid				datdba;
+
+		datdba = get_role_oid("sysadmin", false);
+		if (is_member_of_role(GetSessionUserId(), datdba))
+			user = get_dbo_role_name(lowercase_db_name);
+		else
+			user = get_guest_role_name(lowercase_db_name);
+	}
+
+	if (!user)
+		PG_RETURN_INT32(0);
+	else
+		PG_RETURN_INT32(1);
 }
