@@ -21,9 +21,15 @@ REGRESS = $(shell echo aggregate cast comparison overflow $(REGRESS_BRIN) $(REGR
 
 REGRESS_OPTS = --inputdir=test --outputdir=test --load-extension=babelfishpg_money
 
-#PG_CONFIG = pg_config
+ifdef USE_PGXS
 PGXS := $(shell $(PG_CONFIG) --pgxs)
 include $(PGXS)
+else
+subdir = contrib/babelfishpg_money
+top_builddir = ../..
+include $(top_builddir)/src/Makefile.global
+include $(top_srcdir)/contrib/contrib-global.mk
+endif
 
 AGGSTATESQL := $(shell LD_LIBRARY_PATH=$(LD_LIBRARY_PATH) $(PG_CONFIG) --version | grep -qE "XL" && echo fixeddecimalaggstate.sql)
 AGGFUNCSSQL := $(shell LD_LIBRARY_PATH=$(LD_LIBRARY_PATH) $(PG_CONFIG) --version | grep -qE "XL" && echo fixeddecimal--xlaggs.sql)

@@ -35,6 +35,7 @@ jobs:
           cp /usr/local/lib/libantlr4-runtime.so.4.9.3 ~/postgres/lib/
       - name: Set env variables and build extensions
         run: |
+          export USE_PGXS=1
           export PG_CONFIG=~/postgres/bin/pg_config
           export PG_SRC=~/work/babelfish_extensions/postgresql_modified_for_babelfish
           export cmake=$(which cmake)

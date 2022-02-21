@@ -28,11 +28,15 @@ $(tds_include)/error_mapping.h: error_mapping.txt generate_error_mapping.pl
 	$(PERL) generate_error_mapping.pl $< > $@
 $(tds_backend)/tds/err_handler.o: $(tds_include)/error_mapping.h
 
-# Disable for now
-#NO_PGXS = 1
-
+ifdef USE_PGXS
 PGXS := $(shell $(PG_CONFIG) --pgxs)
 include $(PGXS)
+else
+subdir = contrib/babelfishpg_tds
+top_builddir = ../..
+include $(top_builddir)/src/Makefile.global
+include $(top_srcdir)/contrib/contrib-global.mk
+endif
 
 #include ../Makefile.common
 

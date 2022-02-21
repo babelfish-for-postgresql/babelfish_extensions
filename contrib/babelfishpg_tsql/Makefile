@@ -100,8 +100,15 @@ test		 = $(shell test $(1) $(2) $(3) && echo yes || echo no)
 
 GE91		 = $(call test, $(MAJORVER), -ge, 91)
 
+ifdef USE_PGXS
 PGXS := $(shell $(PG_CONFIG) --pgxs)
 include $(PGXS)
+else
+subdir = contrib/babelfishpg_tsql
+top_builddir = ../..
+include $(top_builddir)/src/Makefile.global
+include $(top_srcdir)/contrib/contrib-global.mk
+endif
 
 ifeq ($(GE91),yes)
 all: sql/$(EXTENSION)--$(EXTVERSION).sql $(UPGRADES)
