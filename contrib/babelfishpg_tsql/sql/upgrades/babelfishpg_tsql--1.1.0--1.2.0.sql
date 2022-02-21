@@ -2292,6 +2292,111 @@ create or replace view sys.dm_exec_connections
  RIGHT JOIN sys.tsql_stat_get_activity('connections') AS d ON (a.pid = d.procid);
  GRANT SELECT ON sys.dm_exec_connections TO PUBLIC;
 
+-- BABEL-1782
+CREATE OR REPLACE VIEW sys.sp_tables_view AS
+SELECT
+t2.dbname AS TABLE_QUALIFIER,
+CAST(t3.name AS name) AS TABLE_OWNER,
+t1.relname AS TABLE_NAME,
+
+CASE 
+WHEN t1.relkind = 'v' 
+	THEN 'VIEW'
+ELSE 'TABLE'
+END AS TABLE_TYPE,
+
+CAST(NULL AS varchar(254)) AS remarks
+FROM pg_catalog.pg_class AS t1, sys.pg_namespace_ext AS t2, sys.schemas AS t3
+WHERE t1.relnamespace = t3.schema_id AND t1.relnamespace = t2.oid AND t1.relkind IN ('r','v','m') 
+AND has_schema_privilege(t1.relnamespace, 'USAGE')
+AND has_table_privilege(t1.oid, 'SELECT,INSERT,UPDATE,DELETE,TRUNCATE,TRIGGER');
+GRANT SELECT ON sys.sp_tables_view TO PUBLIC;
+
+CREATE OR REPLACE FUNCTION sys.sp_tables_internal(
+	in_table_name sys.nvarchar(384) = '',
+	in_table_owner sys.nvarchar(384) = '', 
+	in_table_qualifier sys.sysname = '',
+	in_table_type sys.varchar(100) = '',
+	in_fusepattern sys.bit = '1')
+	RETURNS TABLE (
+		out_table_qualifier sys.sysname,
+		out_table_owner sys.sysname,
+		out_table_name sys.sysname,
+		out_table_type sys.varchar(32),
+		out_remarks sys.varchar(254)
+	)
+	AS $$
+		DECLARE opt_table sys.varchar(16) = '';
+		DECLARE opt_view sys.varchar(16) = '';
+	BEGIN
+	   
+		IF (SELECT count(*) FROM unnest(string_to_array(in_table_type, ',')) WHERE upper(trim(unnest)) = 'TABLE' OR upper(trim(unnest)) = '''TABLE''') >= 1 THEN
+			opt_table = 'TABLE';
+		END IF;
+		IF (SELECT count(*) from unnest(string_to_array(in_table_type, ',')) WHERE upper(trim(unnest)) = 'VIEW' OR upper(trim(unnest)) = '''VIEW''') >= 1 THEN
+			opt_view = 'VIEW';
+		END IF;
+		IF in_fusepattern = 1 THEN
+			RETURN query
+			SELECT 
+			CAST(table_qualifier AS sys.sysname) AS TABLE_QUALIFIER,
+			CAST(table_owner AS sys.sysname) AS TABLE_OWNER,
+			CAST(table_name AS sys.sysname) AS TABLE_NAME,
+			CAST(table_type AS sys.varchar(32)) AS TABLE_TYPE,
+			CAST(remarks AS sys.varchar(254)) AS REMARKS
+			FROM sys.sp_tables_view
+			WHERE ((SELECT coalesce(in_table_name,'')) = '' OR lower(table_name) LIKE lower(in_table_name))
+			AND ((SELECT coalesce(in_table_owner,'')) = '' OR lower(table_owner) LIKE lower(in_table_owner))
+			AND ((SELECT coalesce(in_table_qualifier,'')) = '' OR lower(table_qualifier) LIKE lower(in_table_qualifier))
+			AND ((SELECT coalesce(in_table_type,'')) = '' OR table_type = opt_table OR table_type = opt_view)
+			ORDER BY table_qualifier, table_owner, table_name;
+		ELSE 
+			RETURN query
+			SELECT 
+			CAST(table_qualifier AS sys.sysname) AS TABLE_QUALIFIER,
+			CAST(table_owner AS sys.sysname) AS TABLE_OWNER,
+			CAST(table_name AS sys.sysname) AS TABLE_NAME,
+			CAST(table_type AS sys.varchar(32)) AS TABLE_TYPE,
+			CAST(remarks AS sys.varchar(254)) AS REMARKS
+			FROM sys.sp_tables_view
+			WHERE ((SELECT coalesce(in_table_name,'')) = '' OR lower(table_name) = lower(in_table_name))
+			AND ((SELECT coalesce(in_table_owner,'')) = '' OR lower(table_owner) = lower(in_table_owner))
+			AND ((SELECT coalesce(in_table_qualifier,'')) = '' OR lower(table_qualifier) = lower(in_table_qualifier))
+			AND ((SELECT coalesce(in_table_type,'')) = '' OR table_type = opt_table OR table_type = opt_view)
+			ORDER BY table_qualifier, table_owner, table_name;
+		END IF;
+	END;
+$$
+LANGUAGE plpgsql;
+	 
+
+CREATE OR REPLACE PROCEDURE sys.sp_tables (
+    "@table_name" sys.nvarchar(384) = '',
+    "@table_owner" sys.nvarchar(384) = '', 
+    "@table_qualifier" sys.sysname = '',
+    "@table_type" sys.nvarchar(100) = '',
+    "@fusepattern" sys.bit = '1')
+AS $$
+	DECLARE @opt_table sys.varchar(16) = '';
+	DECLARE @opt_view sys.varchar(16) = ''; 
+BEGIN
+	IF (@table_qualifier != '') AND (LOWER(@table_qualifier) != LOWER(sys.db_name()))
+	BEGIN
+		THROW 33557097, N'The database name component of the object qualifier must be the name of the current database.', 1;
+	END
+	
+	SELECT
+	CAST(out_table_qualifier AS sys.sysname) AS TABLE_QUALIFIER,
+	CAST(out_table_owner AS sys.sysname) AS TABLE_OWNER,
+	CAST(out_table_name AS sys.sysname) AS TABLE_NAME,
+	CAST(out_table_type AS sys.varchar(32)) AS TABLE_TYPE,
+	CAST(out_remarks AS sys.varchar(254)) AS REMARKS
+	FROM sys.sp_tables_internal(@table_name, @table_owner, @table_qualifier, CAST(@table_type AS varchar(100)), @fusepattern);
+END;
+$$
+LANGUAGE 'pltsql';
+GRANT EXECUTE ON PROCEDURE sys.sp_tables TO PUBLIC;
+
 create or replace view sys.sysprocesses as
 select
   a.pid as spid

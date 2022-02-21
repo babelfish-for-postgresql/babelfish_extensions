@@ -18,7 +18,7 @@ int
 exec sys.sp_tables @table_name = 'tbl_1';
 GO
 ~~START~~
-text#!#varchar#!#varchar#!#text#!#varchar
+varchar#!#varchar#!#varchar#!#varchar#!#varchar
 db1#!#dbo#!#tbl_1#!#TABLE#!#<NULL>
 ~~END~~
 
@@ -37,7 +37,7 @@ int
 exec sys.sp_tables @table_name = 'tbl_1';
 GO
 ~~START~~
-text#!#varchar#!#varchar#!#text#!#varchar
+varchar#!#varchar#!#varchar#!#varchar#!#varchar
 ~~END~~
 
 
@@ -55,8 +55,8 @@ int
 exec sys.sp_tables @table_name = 'tbl_2';
 GO
 ~~START~~
-text#!#varchar#!#varchar#!#text#!#varchar
-master#!#master_dbo#!#tbl_2#!#TABLE#!#<NULL>
+varchar#!#varchar#!#varchar#!#varchar#!#varchar
+master#!#dbo#!#tbl_2#!#TABLE#!#<NULL>
 ~~END~~
 
 
@@ -74,7 +74,7 @@ int
 exec sys.sp_tables @table_name = 'tbl_2';
 GO
 ~~START~~
-text#!#varchar#!#varchar#!#text#!#varchar
+varchar#!#varchar#!#varchar#!#varchar#!#varchar
 ~~END~~
 
 
