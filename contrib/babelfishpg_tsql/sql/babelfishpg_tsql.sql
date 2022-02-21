@@ -185,33 +185,34 @@ INSERT INTO sys.spt_datatype_info_table VALUES (N'datetime2', 93, 27, N'''', N''
 INSERT INTO sys.spt_datatype_info_table VALUES (N'datetime', 93, 23, N'''', N'''', NULL, 1, 0, 3, NULL, 0, NULL, N'datetime', 3, 3, 9, 3, NULL, NULL, 12, 16, 111, 'datetime');
 INSERT INTO sys.spt_datatype_info_table VALUES (N'smalldatetime', 93, 16, N'''', N'''', NULL, 1, 0, 3, NULL, 0, NULL, N'smalldatetime', 0, 0, 9, 3, NULL, NULL, 22, 16, 111, 'smalldatetime');
 
--- ODBCVer ignored for now
 CREATE OR REPLACE PROCEDURE sys.sp_datatype_info (
 	"@data_type" int = 0,
 	"@odbcver" smallint = 2)
 AS $$
 BEGIN
         select TYPE_NAME, DATA_TYPE, PRECISION, LITERAL_PREFIX, LITERAL_SUFFIX,
-               CREATE_PARAMS, NULLABLE, CASE_SENSITIVE, SEARCHABLE,
+               CREATE_PARAMS::CHAR(20), NULLABLE, CASE_SENSITIVE, SEARCHABLE,
               UNSIGNED_ATTRIBUTE, MONEY, AUTO_INCREMENT, LOCAL_TYPE_NAME,
               MINIMUM_SCALE, MAXIMUM_SCALE, SQL_DATA_TYPE, SQL_DATETIME_SUB,
               NUM_PREC_RADIX, INTERVAL_PRECISION, USERTYPE
-       from sys.spt_datatype_info_table where @data_type = 0 or data_type = @data_type;		
+        from sys.sp_datatype_info_helper(@odbcver, false) where @data_type = 0 or data_type = @data_type
+        order by DATA_TYPE, AUTO_INCREMENT, MONEY, USERTYPE;
 END;
 $$
 LANGUAGE 'pltsql';
--- same as sp_datatype_info
+
 CREATE OR REPLACE PROCEDURE sys.sp_datatype_info_100 (
 	"@data_type" int = 0,
 	"@odbcver" smallint = 2)
 AS $$
 BEGIN
         select TYPE_NAME, DATA_TYPE, PRECISION, LITERAL_PREFIX, LITERAL_SUFFIX,
-               CREATE_PARAMS, NULLABLE, CASE_SENSITIVE, SEARCHABLE,
+               CREATE_PARAMS::CHAR(20), NULLABLE, CASE_SENSITIVE, SEARCHABLE,
               UNSIGNED_ATTRIBUTE, MONEY, AUTO_INCREMENT, LOCAL_TYPE_NAME,
               MINIMUM_SCALE, MAXIMUM_SCALE, SQL_DATA_TYPE, SQL_DATETIME_SUB,
               NUM_PREC_RADIX, INTERVAL_PRECISION, USERTYPE
-        from sys.spt_datatype_info_table where @data_type = 0 or data_type = @data_type;
+        from sys.sp_datatype_info_helper(@odbcver, true) where @data_type = 0 or data_type = @data_type
+        order by DATA_TYPE, AUTO_INCREMENT, MONEY, USERTYPE;
 END;
 $$
 LANGUAGE 'pltsql';
