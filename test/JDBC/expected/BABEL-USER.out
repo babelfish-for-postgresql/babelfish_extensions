@@ -31,10 +31,10 @@ varchar#!#varchar#!#nvarchar#!#nvarchar#!#nvarchar
 db_owner#!##!#db_owner#!#db1#!#
 dbo#!##!#dbo#!#db1#!#dbo
 master_db_owner#!##!#db_owner#!#master#!#
-master_dbo#!##!#dbo#!#master#!#master_dbo
+master_dbo#!##!#dbo#!#master#!#dbo
 master_guest#!##!#guest#!#master#!#
 tempdb_db_owner#!##!#db_owner#!#tempdb#!#
-tempdb_dbo#!##!#dbo#!#tempdb#!#tempdb_dbo
+tempdb_dbo#!##!#dbo#!#tempdb#!#dbo
 tempdb_guest#!##!#guest#!#tempdb#!#
 ~~END~~
 
@@ -45,7 +45,7 @@ ORDER BY default_schema_name DESC, name;
 GO
 ~~START~~
 nvarchar#!#nvarchar
-dbo#!#master_dbo
+dbo#!#dbo
 db_owner#!#
 guest#!#
 ~~END~~

@@ -971,7 +971,6 @@ add_existing_users_to_catalog(PG_FUNCTION_ARGS)
 		Datum           db_name_datum;
 		const char      *db_name;
 		const char      *dbo_role;
-		const char      *dbo_scm;
 		const char      *db_owner_role;
 		const char      *guest;
 		RoleSpec        *rolspec;
@@ -983,7 +982,6 @@ add_existing_users_to_catalog(PG_FUNCTION_ARGS)
 
 		db_name = TextDatumGetCString(db_name_datum);
 		dbo_role = get_dbo_role_name(db_name);
-		dbo_scm = get_dbo_schema_name(db_name);
 		db_owner_role = get_db_owner_name(db_name);
 		guest = get_guest_role_name(db_name);
 
@@ -995,7 +993,7 @@ add_existing_users_to_catalog(PG_FUNCTION_ARGS)
 			rolspec->location = -1;
 			rolspec->rolename = pstrdup(dbo_role);
 			dbo_list = lappend(dbo_list, rolspec);
-			add_to_bbf_authid_user_ext(dbo_role, "dbo", db_name, dbo_scm, NULL);
+			add_to_bbf_authid_user_ext(dbo_role, "dbo", db_name, "dbo", NULL);
 		}
 		if (db_owner_role)
 			add_to_bbf_authid_user_ext(db_owner_role, "db_owner", db_name, NULL, NULL);

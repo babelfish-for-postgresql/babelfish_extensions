@@ -430,7 +430,7 @@ do_create_bbf_db(const char *dbname, List *options, const char *owner)
 		}
 		set_cur_db(old_dbid, old_dbname);
 		if (dbo_role)
-			add_to_bbf_authid_user_ext(dbo_role, "dbo", dbname, dbo_scm, NULL);
+			add_to_bbf_authid_user_ext(dbo_role, "dbo", dbname, "dbo", NULL);
 		if (db_owner_role)
 			add_to_bbf_authid_user_ext(db_owner_role, "db_owner", dbname, NULL, NULL);
 		if (guest)
