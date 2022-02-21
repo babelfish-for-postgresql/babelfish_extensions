@@ -3719,5 +3719,85 @@ END;
 $$
 LANGUAGE 'pltsql';
 
+CREATE OR REPLACE PROCEDURE sys.sp_columns (
+  "@table_name" sys.nvarchar(384),
+    "@table_owner" sys.nvarchar(384) = '', 
+    "@table_qualifier" sys.nvarchar(384) = '',
+    "@column_name" sys.nvarchar(384) = '',
+  "@namescope" int = 0,
+    "@odbcver" int = 2,
+    "@fusepattern" smallint = 1)
+AS $$
+BEGIN
+  select out_table_qualifier as TABLE_QUALIFIER, 
+      out_table_owner as TABLE_OWNER,
+      out_table_name as TABLE_NAME,
+      out_column_name as COLUMN_NAME,
+      out_data_type as DATA_TYPE,
+      out_type_name as TYPE_NAME,
+      out_precision as PRECISION,
+      out_length as LENGTH,
+      out_scale as SCALE,
+      out_radix as RADIX,
+      out_nullable as NULLABLE,
+      out_remarks as REMARKS,
+      out_column_def as COLUMN_DEF,
+      out_sql_data_type as SQL_DATA_TYPE,
+      out_sql_datetime_sub as SQL_DATETIME_SUB,
+      out_char_octet_length as CHAR_OCTET_LENGTH,
+      out_ordinal_position as ORDINAL_POSITION,
+      out_is_nullable as IS_NULLABLE,
+      out_ss_data_type as SS_DATA_TYPE
+  from sys.sp_columns_100_internal(@table_name, @table_owner,@table_qualifier, @column_name, @NameScope,@ODBCVer, @fusepattern);
+END;
+$$
+LANGUAGE 'pltsql';
+GRANT ALL on PROCEDURE sys.sp_columns TO PUBLIC;
+
+CREATE OR REPLACE PROCEDURE sys.sp_columns_100 (
+  "@table_name" sys.nvarchar(384),
+    "@table_owner" sys.nvarchar(384) = '', 
+    "@table_qualifier" sys.nvarchar(384) = '',
+    "@column_name" sys.nvarchar(384) = '',
+  "@namescope" int = 0,
+    "@odbcver" int = 2,
+    "@fusepattern" smallint = 1)
+AS $$
+BEGIN
+  select out_table_qualifier as TABLE_QUALIFIER, 
+      out_table_owner as TABLE_OWNER,
+      out_table_name as TABLE_NAME,
+      out_column_name as COLUMN_NAME,
+      out_data_type as DATA_TYPE,
+      out_type_name as TYPE_NAME,
+      out_precision as PRECISION,
+      out_length as LENGTH,
+      out_scale as SCALE,
+      out_radix as RADIX,
+      out_nullable as NULLABLE,
+      out_remarks as REMARKS,
+      out_column_def as COLUMN_DEF,
+      out_sql_data_type as SQL_DATA_TYPE,
+      out_sql_datetime_sub as SQL_DATETIME_SUB,
+      out_char_octet_length as CHAR_OCTET_LENGTH,
+      out_ordinal_position as ORDINAL_POSITION,
+      out_is_nullable as IS_NULLABLE,
+      out_ss_is_sparse as SS_IS_SPARSE,
+      out_ss_is_column_set as SS_IS_COLUMN_SET,
+      out_ss_is_computed as SS_IS_COMPUTED,
+      out_ss_is_identity as SS_IS_IDENTITY,
+      out_ss_udt_catalog_name as SS_UDT_CATALOG_NAME,
+      out_ss_udt_schema_name as SS_UDT_SCHEMA_NAME,
+      out_ss_udt_assembly_type_name as SS_UDT_ASSEMBLY_TYPE_NAME,
+      out_ss_xml_schemacollection_catalog_name as SS_XML_SCHEMACOLLECTION_CATALOG_NAME,
+      out_ss_xml_schemacollection_schema_name as SS_XML_SCHEMACOLLECTION_SCHEMA_NAME,
+      out_ss_xml_schemacollection_name as SS_XML_SCHEMACOLLECTION_NAME,
+      out_ss_data_type as SS_DATA_TYPE
+  from sys.sp_columns_100_internal(@table_name, @table_owner,@table_qualifier, @column_name, @NameScope,@ODBCVer, @fusepattern);
+END;
+$$
+LANGUAGE 'pltsql';
+GRANT ALL on PROCEDURE sys.sp_columns_100 TO PUBLIC;
+
 -- Reset search_path to not affect any subsequent scripts
 SELECT set_config('search_path', trim(leading 'sys, ' from current_setting('search_path')), false);
