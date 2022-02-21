@@ -1,0 +1,66 @@
+create table t1 (a int not null)
+go
+
+create unique index ix1 on t1(a) with pad_index
+go
+
+create unique index ix2 on t1(a) with pad_index=on
+go
+
+create unique index ix3 on t1(a) with pad_index=off
+go
+
+drop index ix1 on t1
+go
+
+drop index ix2 on t1
+go
+
+drop index ix3 on t1
+go
+
+drop table t1
+go
+
+SELECT set_config('babelfishpg_tsql.escape_hatch_storage_options', 'strict', 'false')
+go
+~~START~~
+text
+strict
+~~END~~
+
+
+create table t1 (a int not null)
+go
+
+create unique index ix1 on t1(a) with pad_index
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: 'PAD_INDEX' is not currently supported in Babelfish. please use babelfishpg_tsql.escape_hatch_storage_options to ignore)~~
+
+
+create unique index ix2 on t1(a) with pad_index=on
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: 'PAD_INDEX' is not currently supported in Babelfish. please use babelfishpg_tsql.escape_hatch_storage_options to ignore)~~
+
+
+create unique index ix3 on t1(a) with pad_index=off
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: 'PAD_INDEX' is not currently supported in Babelfish. please use babelfishpg_tsql.escape_hatch_storage_options to ignore)~~
+
+
+drop table t1
+go
+
+SELECT set_config('babelfishpg_tsql.escape_hatch_storage_options', 'ignore', 'false')
+go
+~~START~~
+text
+ignore
+~~END~~
+
