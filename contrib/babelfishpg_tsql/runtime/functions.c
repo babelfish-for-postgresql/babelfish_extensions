@@ -31,6 +31,7 @@
 #include <math.h>
 
 #include "../src/babelfish_version.h"
+#include "../src/datatype_info.h"
 #include "../src/datatypes.h"
 #include "../src/pltsql.h"
 #include "../src/pltsql_instr.h"
@@ -40,6 +41,7 @@
 #include "../src/rolecmds.h"
 
 #define TSQL_STAT_GET_ACTIVITY_COLS 24
+#define SP_DATATYPE_INFO_HELPER_COLS 23
 
 PG_FUNCTION_INFO_V1(trancount);
 PG_FUNCTION_INFO_V1(version);
@@ -67,6 +69,7 @@ PG_FUNCTION_INFO_V1(tsql_stat_get_activity);
 PG_FUNCTION_INFO_V1(get_current_full_xact_id);
 PG_FUNCTION_INFO_V1(checksum);
 PG_FUNCTION_INFO_V1(has_dbaccess);
+PG_FUNCTION_INFO_V1(sp_datatype_info_helper);
 
 /* Not supported -- only syntax support */
 PG_FUNCTION_INFO_V1(procid);
@@ -826,4 +829,174 @@ has_dbaccess(PG_FUNCTION_ARGS)
 		PG_RETURN_INT32(0);
 	else
 		PG_RETURN_INT32(1);
+}
+
+Datum
+sp_datatype_info_helper(PG_FUNCTION_ARGS)
+{
+
+	int16		odbcVer = PG_GETARG_INT16(0);
+	bool		is_100 = PG_GETARG_BOOL(1);
+
+	ReturnSetInfo *rsinfo = (ReturnSetInfo *) fcinfo->resultinfo;
+	TupleDesc	tupdesc;
+	Tuplestorestate *tupstore;
+	MemoryContext per_query_ctx;
+	MemoryContext oldcontext;
+
+	int i;
+
+	/* check to see if caller supports us returning a tuplestore */
+	if (rsinfo == NULL || !IsA(rsinfo, ReturnSetInfo))
+		ereport(ERROR,
+				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+				 errmsg("set-valued function called in context that cannot accept a set")));
+
+	if (!(rsinfo->allowedModes & SFRM_Materialize))
+		ereport(ERROR,
+				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+				 errmsg("materialize mode required, but it is not allowed in this context")));
+
+	/* Build tupdesc for result tuples. */
+	tupdesc = CreateTemplateTupleDesc(SP_DATATYPE_INFO_HELPER_COLS);
+	TupleDescInitEntry(tupdesc, (AttrNumber) 1, "TYPE_NAME", VARCHAROID, 20, 0);
+	TupleDescInitEntry(tupdesc, (AttrNumber) 2, "DATA_TYPE", INT4OID, -1, 0);
+	TupleDescInitEntry(tupdesc, (AttrNumber) 3, "PRECISION", INT8OID, -1, 0);
+	TupleDescInitEntry(tupdesc, (AttrNumber) 4, "LITERAL_PREFIX", VARCHAROID, 20, 0);
+	TupleDescInitEntry(tupdesc, (AttrNumber) 5, "LITERAL_SUFFIX", VARCHAROID, 20, 0);
+	TupleDescInitEntry(tupdesc, (AttrNumber) 6, "CREATE_PARAMS", VARCHAROID, 20, 0);
+	TupleDescInitEntry(tupdesc, (AttrNumber) 7, "NULLABLE", INT4OID, -1, 0);
+	TupleDescInitEntry(tupdesc, (AttrNumber) 8, "CASE_SENSITIVE", INT4OID, -1, 0);
+	TupleDescInitEntry(tupdesc, (AttrNumber) 9, "SEARCHABLE", INT4OID, -1, 0);
+	TupleDescInitEntry(tupdesc, (AttrNumber) 10, "UNSIGNED_ATTRIBUTE", INT4OID, -1, 0);
+	TupleDescInitEntry(tupdesc, (AttrNumber) 11, "MONEY", INT4OID, -1, 0);
+	TupleDescInitEntry(tupdesc, (AttrNumber) 12, "AUTO_INCREMENT", INT4OID, -1, 0);
+	TupleDescInitEntry(tupdesc, (AttrNumber) 13, "LOCAL_TYPE_NAME", VARCHAROID, 20, 0);
+	TupleDescInitEntry(tupdesc, (AttrNumber) 14, "MINIMUM_SCALE", INT4OID, -1, 0);
+	TupleDescInitEntry(tupdesc, (AttrNumber) 15, "MAXIMUM_SCALE", INT4OID, -1, 0);
+	TupleDescInitEntry(tupdesc, (AttrNumber) 16, "SQL_DATA_TYPE", INT4OID, -1, 0);
+	TupleDescInitEntry(tupdesc, (AttrNumber) 17, "SQL_DATETIME_SUB", INT4OID, -1, 0);
+	TupleDescInitEntry(tupdesc, (AttrNumber) 18, "NUM_PREC_RADIX", INT4OID, -1, 0);
+	TupleDescInitEntry(tupdesc, (AttrNumber) 19, "INTERVAL_PRECISION", INT4OID, -1, 0);
+	TupleDescInitEntry(tupdesc, (AttrNumber) 20, "USERTYPE", INT4OID, -1, 0);
+	TupleDescInitEntry(tupdesc, (AttrNumber) 21, "LENGTH", INT4OID, -1, 0);
+	TupleDescInitEntry(tupdesc, (AttrNumber) 22, "SS_DATA_TYPE", INT2OID, -1, 0);
+	TupleDescInitEntry(tupdesc, (AttrNumber) 23, "PG_TYPE_NAME", VARCHAROID, 20, 0);
+	tupdesc = BlessTupleDesc(tupdesc);
+
+	per_query_ctx = rsinfo->econtext->ecxt_per_query_memory;
+	oldcontext = MemoryContextSwitchTo(per_query_ctx);
+
+	tupstore = tuplestore_begin_heap(true, false, work_mem);
+	rsinfo->returnMode = SFRM_Materialize;
+	rsinfo->setResult = tupstore;
+	rsinfo->setDesc = tupdesc;
+
+	MemoryContextSwitchTo(oldcontext);
+
+	for (i = 0; i < DATATYPE_INFO_TABLE_ROWS; i++)
+	{
+		/* for each row */
+		Datum		values[SP_DATATYPE_INFO_HELPER_COLS];
+		bool		nulls[SP_DATATYPE_INFO_HELPER_COLS];
+
+		DatatypeInfo datatype_info_element = datatype_info_table[i];
+
+		MemSet(nulls, false, SP_DATATYPE_INFO_HELPER_COLS);
+
+		values[0] = CStringGetTextDatum(datatype_info_element.type_name);
+
+		if (odbcVer == 3)
+		{
+			if (is_100)
+				values[1] = Int32GetDatum(datatype_info_element.data_type_3_100);
+			else
+				values[1] = Int32GetDatum(datatype_info_element.data_type_3);
+		}
+		else
+		{
+			if (is_100)
+				values[1] = Int32GetDatum(datatype_info_element.data_type_2_100);
+			else
+				values[1] = Int32GetDatum(datatype_info_element.data_type_2);
+		}
+
+		values[2] = Int64GetDatum(datatype_info_element.precision);
+
+		if (strcmp(datatype_info_element.literal_prefix, NULLVAL_STR) == 0)
+			nulls[3] = true;
+		else
+			values[3] = CStringGetTextDatum(datatype_info_element.literal_prefix);
+
+		if (strcmp(datatype_info_element.literal_suffix, NULLVAL_STR) == 0)
+			nulls[4] = true;
+		else
+			values[4] = CStringGetTextDatum(datatype_info_element.literal_suffix);
+
+		if (strcmp(datatype_info_element.create_params, NULLVAL_STR) == 0)
+			nulls[5] = true;
+		else
+			values[5] = CStringGetTextDatum(datatype_info_element.create_params);
+
+		values[6] = Int32GetDatum(datatype_info_element.nullable);
+		values[7] = Int32GetDatum(datatype_info_element.case_sensitive);
+		values[8] = Int32GetDatum(datatype_info_element.searchable);
+
+		if (datatype_info_element.unsigned_attribute == NULLVAL)
+			nulls[9] = true;
+		else
+			values[9] = Int32GetDatum(datatype_info_element.unsigned_attribute);
+
+		values[10] = Int32GetDatum(datatype_info_element.money);
+
+		if (datatype_info_element.auto_increment == NULLVAL)
+			nulls[11] = true;
+		else
+			values[11] = Int32GetDatum(datatype_info_element.auto_increment);
+
+		values[12] = CStringGetTextDatum(datatype_info_element.local_type_name);
+
+		if (datatype_info_element.minimum_scale == NULLVAL)
+			nulls[13] = true;
+		else
+			values[13] = Int32GetDatum(datatype_info_element.minimum_scale);
+
+		if (datatype_info_element.maximum_scale == NULLVAL)
+			nulls[14] = true;
+		else
+			values[14] = Int32GetDatum(datatype_info_element.maximum_scale);
+
+		values[15] = Int32GetDatum(datatype_info_element.sql_data_type);
+
+		if (datatype_info_element.sql_datetime_sub == NULLVAL)
+			nulls[16] = true;
+		else
+			values[16] = Int32GetDatum(datatype_info_element.sql_datetime_sub);
+
+		if (datatype_info_element.num_prec_radix == NULLVAL)
+			nulls[17] = true;
+		else
+			values[17] = Int32GetDatum(datatype_info_element.num_prec_radix);
+
+		if (datatype_info_element.interval_precision == NULLVAL)
+			nulls[18] = true;
+		else
+			values[18] = Int32GetDatum(datatype_info_element.interval_precision);
+
+		values[19] = Int32GetDatum(datatype_info_element.usertype);
+		values[20] = Int32GetDatum(datatype_info_element.length);
+		values[21] = UInt8GetDatum(datatype_info_element.ss_data_type);
+
+		if (strcmp(datatype_info_element.pg_type_name, NULLVAL_STR) == 0)
+			nulls[22] = true;
+		else
+			values[22] = CStringGetTextDatum(datatype_info_element.pg_type_name);
+
+		tuplestore_putvalues(tupstore, tupdesc, values, nulls);
+	}
+
+	/* clean up and return the tuplestore */
+	tuplestore_donestoring(tupstore);
+
+	return (Datum) 0;
 }

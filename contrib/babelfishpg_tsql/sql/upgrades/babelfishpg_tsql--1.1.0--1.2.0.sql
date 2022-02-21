@@ -3656,5 +3656,68 @@ CREATE OR REPLACE FUNCTION sys.has_dbaccess(database_name SYSNAME) RETURNS INTEG
 'babelfishpg_tsql', 'has_dbaccess'
 LANGUAGE C IMMUTABLE STRICT;
 
+CREATE OR REPLACE FUNCTION sys.sp_datatype_info_helper(
+    IN odbcVer smallint,
+    IN is_100 bool,
+    OUT TYPE_NAME VARCHAR(20),
+    OUT DATA_TYPE INT,
+    OUT "PRECISION" BIGINT,
+    OUT LITERAL_PREFIX VARCHAR(20),
+    OUT LITERAL_SUFFIX VARCHAR(20),
+    OUT CREATE_PARAMS VARCHAR(20),
+    OUT NULLABLE INT,
+    OUT CASE_SENSITIVE INT,
+    OUT SEARCHABLE INT,
+    OUT UNSIGNED_ATTRIBUTE INT,
+    OUT MONEY INT,
+    OUT AUTO_INCREMENT INT,
+    OUT LOCAL_TYPE_NAME VARCHAR(20),
+    OUT MINIMUM_SCALE INT,
+    OUT MAXIMUM_SCALE INT,
+    OUT SQL_DATA_TYPE INT,
+    OUT SQL_DATETIME_SUB INT,
+    OUT NUM_PREC_RADIX INT,
+    OUT INTERVAL_PRECISION INT,
+    OUT USERTYPE INT,
+    OUT LENGTH INT,
+    OUT SS_DATA_TYPE smallint,
+-- below column is added in order to join PG's information_schema.columns for sys.sp_columns_100_view
+    OUT PG_TYPE_NAME VARCHAR(20)
+)
+AS 'babelfishpg_tsql', 'sp_datatype_info_helper'
+LANGUAGE C IMMUTABLE STRICT;
+
+CREATE OR REPLACE PROCEDURE sys.sp_datatype_info (
+	"@data_type" int = 0,
+	"@odbcver" smallint = 2)
+AS $$
+BEGIN
+        select TYPE_NAME, DATA_TYPE, PRECISION, LITERAL_PREFIX, LITERAL_SUFFIX,
+               CREATE_PARAMS::CHAR(20), NULLABLE, CASE_SENSITIVE, SEARCHABLE,
+              UNSIGNED_ATTRIBUTE, MONEY, AUTO_INCREMENT, LOCAL_TYPE_NAME,
+              MINIMUM_SCALE, MAXIMUM_SCALE, SQL_DATA_TYPE, SQL_DATETIME_SUB,
+              NUM_PREC_RADIX, INTERVAL_PRECISION, USERTYPE
+        from sys.sp_datatype_info_helper(@odbcver, false) where @data_type = 0 or data_type = @data_type
+        order by DATA_TYPE, AUTO_INCREMENT, MONEY, USERTYPE;
+END;
+$$
+LANGUAGE 'pltsql';
+
+CREATE OR REPLACE PROCEDURE sys.sp_datatype_info_100 (
+	"@data_type" int = 0,
+	"@odbcver" smallint = 2)
+AS $$
+BEGIN
+        select TYPE_NAME, DATA_TYPE, PRECISION, LITERAL_PREFIX, LITERAL_SUFFIX,
+               CREATE_PARAMS::CHAR(20), NULLABLE, CASE_SENSITIVE, SEARCHABLE,
+              UNSIGNED_ATTRIBUTE, MONEY, AUTO_INCREMENT, LOCAL_TYPE_NAME,
+              MINIMUM_SCALE, MAXIMUM_SCALE, SQL_DATA_TYPE, SQL_DATETIME_SUB,
+              NUM_PREC_RADIX, INTERVAL_PRECISION, USERTYPE
+        from sys.sp_datatype_info_helper(@odbcver, true) where @data_type = 0 or data_type = @data_type
+        order by DATA_TYPE, AUTO_INCREMENT, MONEY, USERTYPE;
+END;
+$$
+LANGUAGE 'pltsql';
+
 -- Reset search_path to not affect any subsequent scripts
 SELECT set_config('search_path', trim(leading 'sys, ' from current_setting('search_path')), false);

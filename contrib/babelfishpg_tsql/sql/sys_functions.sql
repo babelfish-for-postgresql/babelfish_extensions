@@ -1951,3 +1951,34 @@ AS 'babelfishpg_tsql', 'tsql_json_value' LANGUAGE C IMMUTABLE PARALLEL SAFE;
 CREATE OR REPLACE FUNCTION sys.json_query(json_string text, path text default '$')
 RETURNS sys.NVARCHAR
 AS 'babelfishpg_tsql', 'tsql_json_query' LANGUAGE C IMMUTABLE PARALLEL SAFE;
+
+CREATE OR REPLACE FUNCTION sys.sp_datatype_info_helper(
+    IN odbcVer smallint,
+    IN is_100 bool,
+    OUT TYPE_NAME VARCHAR(20),
+    OUT DATA_TYPE INT,
+    OUT "PRECISION" BIGINT,
+    OUT LITERAL_PREFIX VARCHAR(20),
+    OUT LITERAL_SUFFIX VARCHAR(20),
+    OUT CREATE_PARAMS VARCHAR(20),
+    OUT NULLABLE INT,
+    OUT CASE_SENSITIVE INT,
+    OUT SEARCHABLE INT,
+    OUT UNSIGNED_ATTRIBUTE INT,
+    OUT MONEY INT,
+    OUT AUTO_INCREMENT INT,
+    OUT LOCAL_TYPE_NAME VARCHAR(20),
+    OUT MINIMUM_SCALE INT,
+    OUT MAXIMUM_SCALE INT,
+    OUT SQL_DATA_TYPE INT,
+    OUT SQL_DATETIME_SUB INT,
+    OUT NUM_PREC_RADIX INT,
+    OUT INTERVAL_PRECISION INT,
+    OUT USERTYPE INT,
+    OUT LENGTH INT,
+    OUT SS_DATA_TYPE smallint,
+-- below column is added in order to join PG's information_schema.columns for sys.sp_columns_100_view
+    OUT PG_TYPE_NAME VARCHAR(20)
+)
+AS 'babelfishpg_tsql', 'sp_datatype_info_helper'
+LANGUAGE C IMMUTABLE STRICT;
