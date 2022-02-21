@@ -587,14 +587,14 @@ GO
 ~~START~~
 varchar#!#varchar#!#nvarchar#!#nvarchar#!#nvarchar
 db1_db_owner#!##!#db_owner#!#db1#!#
-db1_dbo#!##!#dbo#!#db1#!#db1_dbo
+db1_dbo#!##!#dbo#!#db1#!#dbo
 db2_db_owner#!##!#db_owner#!#db2#!#
-db2_dbo#!##!#dbo#!#db2#!#db2_dbo
+db2_dbo#!##!#dbo#!#db2#!#dbo
 master_db_owner#!##!#db_owner#!#master#!#
-master_dbo#!##!#dbo#!#master#!#master_dbo
+master_dbo#!##!#dbo#!#master#!#dbo
 master_guest#!##!#guest#!#master#!#
 tempdb_db_owner#!##!#db_owner#!#tempdb#!#
-tempdb_dbo#!##!#dbo#!#tempdb#!#tempdb_dbo
+tempdb_dbo#!##!#dbo#!#tempdb#!#dbo
 tempdb_guest#!##!#guest#!#tempdb#!#
 ~~END~~
 
@@ -605,7 +605,7 @@ ORDER BY default_schema_name DESC, name;
 GO
 ~~START~~
 nvarchar#!#nvarchar
-dbo#!#master_dbo
+dbo#!#dbo
 db_owner#!#
 guest#!#
 ~~END~~
@@ -633,7 +633,7 @@ ORDER BY default_schema_name DESC, name;
 GO
 ~~START~~
 nvarchar#!#nvarchar
-dbo#!#db1_dbo
+dbo#!#dbo
 db_owner#!#
 ~~END~~
 
