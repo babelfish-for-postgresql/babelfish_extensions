@@ -93,6 +93,31 @@ CREATE TABLE type_decimal_identity (a_decimal_identity decimal identity primary 
 go
 CREATE TABLE type_numeric_identity (a_numeric_identity numeric identity primary key)
 go
+CREATE TABLE type_decimal_5_2 (a_decimal_5_2 decimal(5,2) primary key)
+go
+CREATE TABLE type_decimal_5_3 (a_decimal_5_2 decimal(5,3) primary key)
+go
+CREATE TABLE type_float_7 (a_float_7 float(7) primary key)
+go
+CREATE TABLE type_char_7 (a_char_7 char(7) primary key)
+go
+CREATE TABLE type_varchar_7 (a_varchar_7 varchar(7) primary key)
+go
+CREATE TABLE type_nchar_7 (a_nchar_7 nchar(7) primary key)
+go
+CREATE TABLE type_nvarchar_7 (a_nvarchar_7 nvarchar(7) primary key)
+go
+CREATE TABLE type_time_6 (a_time_6 time(6) primary key)
+go
+CREATE TABLE type_datetime2_6 (a_datetime2_6 datetime2(6) primary key)
+go
+CREATE TABLE type_datetimeoffset_6 (a_datetimeoffset_6 datetimeoffset(6) primary key)
+go
+CREATE TABLE type_binary_7 (a_binary_7 binary(7) primary key)
+go
+CREATE TABLE type_varbinary_7 (a_varbinary_7 varbinary(7) primary key)
+go
+
 
 -- syntax error: @table_name is required
 exec sp_special_columns
@@ -141,7 +166,7 @@ exec sp_special_columns @table_name = 't5'
 go
 ~~START~~
 smallint#!#varchar#!#smallint#!#varchar#!#int#!#int#!#smallint#!#smallint
-1#!#Cellphone#!#12#!#phone_num#!#0#!#11#!#0#!#1
+1#!#Cellphone#!#12#!#phone_num#!#11#!#11#!#<NULL>#!#1
 1#!#Id#!#4#!#eyedees#!#10#!#4#!#0#!#1
 ~~END~~
 
@@ -152,7 +177,7 @@ go
 ~~START~~
 smallint#!#varchar#!#smallint#!#varchar#!#int#!#int#!#smallint#!#smallint
 1#!#ColA#!#4#!#eyedees#!#10#!#4#!#0#!#1
-1#!#ColB#!#12#!#phone_num#!#0#!#11#!#0#!#1
+1#!#ColB#!#12#!#phone_num#!#11#!#11#!#<NULL>#!#1
 ~~END~~
 
 
@@ -161,7 +186,7 @@ go
 ~~START~~
 smallint#!#varchar#!#smallint#!#varchar#!#int#!#int#!#smallint#!#smallint
 1#!#ColA#!#4#!#eyedees#!#10#!#4#!#0#!#1
-1#!#ColB#!#12#!#phone_num#!#0#!#11#!#0#!#1
+1#!#ColB#!#12#!#phone_num#!#11#!#11#!#<NULL>#!#1
 ~~END~~
 
 
@@ -169,7 +194,7 @@ exec sp_special_columns @table_name = 'mytable2'
 go
 ~~START~~
 smallint#!#varchar#!#smallint#!#varchar#!#int#!#int#!#smallint#!#smallint
-1#!#ColA#!#12#!#phone_num#!#0#!#11#!#0#!#1
+1#!#ColA#!#12#!#phone_num#!#11#!#11#!#<NULL>#!#1
 1#!#ColB#!#4#!#eyedees#!#10#!#4#!#0#!#1
 ~~END~~
 
@@ -178,7 +203,7 @@ exec sp_special_columns @table_name = 'MYTABLE2'
 go
 ~~START~~
 smallint#!#varchar#!#smallint#!#varchar#!#int#!#int#!#smallint#!#smallint
-1#!#ColA#!#12#!#phone_num#!#0#!#11#!#0#!#1
+1#!#ColA#!#12#!#phone_num#!#11#!#11#!#<NULL>#!#1
 1#!#ColB#!#4#!#eyedees#!#10#!#4#!#0#!#1
 ~~END~~
 
@@ -243,7 +268,7 @@ smallint#!#varchar#!#smallint#!#varchar#!#int#!#int#!#smallint#!#smallint
 
 
 -- Testing datatypes
--- NOTE: Currently, these values do not produce accurate results for some values such as binary, uniqueidentifier and others
+-- NOTE: Currently, these values do not produce accurate results for some datatypes such as tinyint/decimal/numeric identity, time/datetime2/datetimeoffset with default typemode 7.
 EXEC sp_special_columns 'type_bigint'
 go
 ~~START~~
@@ -251,60 +276,67 @@ smallint#!#varchar#!#smallint#!#varchar#!#int#!#int#!#smallint#!#smallint
 1#!#a_bigint#!#-5#!#bigint#!#19#!#8#!#0#!#1
 ~~END~~
 
+EXEC sp_special_columns 'type_binary'
+go
+~~START~~
+smallint#!#varchar#!#smallint#!#varchar#!#int#!#int#!#smallint#!#smallint
+1#!#a_binary#!#-2#!#binary#!#1#!#1#!#<NULL>#!#1
+~~END~~
+
 EXEC sp_special_columns 'type_bit'
 go
 ~~START~~
 smallint#!#varchar#!#smallint#!#varchar#!#int#!#int#!#smallint#!#smallint
-1#!#a_bit#!#-7#!#bit#!#1#!#1#!#0#!#1
+1#!#a_bit#!#-7#!#bit#!#1#!#1#!#<NULL>#!#1
 ~~END~~
 
 EXEC sp_special_columns 'type_char'
 go
 ~~START~~
 smallint#!#varchar#!#smallint#!#varchar#!#int#!#int#!#smallint#!#smallint
-1#!#a_char#!#1#!#char#!#0#!#1#!#0#!#1
+1#!#a_char#!#1#!#char#!#1#!#1#!#<NULL>#!#1
 ~~END~~
 
 EXEC sp_special_columns 'type_date'
 go
 ~~START~~
 smallint#!#varchar#!#smallint#!#varchar#!#int#!#int#!#smallint#!#smallint
-1#!#a_date#!#91#!#date#!#10#!#3#!#0#!#1
+1#!#a_date#!#-9#!#date#!#10#!#20#!#<NULL>#!#1
 ~~END~~
 
 EXEC sp_special_columns 'type_datetime'
 go
 ~~START~~
 smallint#!#varchar#!#smallint#!#varchar#!#int#!#int#!#smallint#!#smallint
-1#!#a_datetime#!#93#!#datetime#!#23#!#8#!#3#!#1
+1#!#a_datetime#!#11#!#datetime#!#23#!#16#!#3#!#1
 ~~END~~
 
 EXEC sp_special_columns 'type_datetime2'
 go
 ~~START~~
 smallint#!#varchar#!#smallint#!#varchar#!#int#!#int#!#smallint#!#smallint
-1#!#a_datetime2#!#93#!#datetime2#!#26#!#8#!#6#!#1
+1#!#a_datetime2#!#-9#!#datetime2#!#26#!#52#!#<NULL>#!#1
 ~~END~~
 
 EXEC sp_special_columns 'type_datetimeoffset'
 go
 ~~START~~
 smallint#!#varchar#!#smallint#!#varchar#!#int#!#int#!#smallint#!#smallint
-1#!#a_datetimeoffset#!#-155#!#datetimeoffset#!#33#!#10#!#6#!#1
+1#!#a_datetimeoffset#!#-9#!#datetimeoffset#!#33#!#66#!#<NULL>#!#1
 ~~END~~
 
 EXEC sp_special_columns 'type_decimal'
 go
 ~~START~~
 smallint#!#varchar#!#smallint#!#varchar#!#int#!#int#!#smallint#!#smallint
-1#!#a_decimal#!#3#!#decimal#!#18#!#9#!#0#!#1
+1#!#a_decimal#!#3#!#decimal#!#18#!#20#!#0#!#1
 ~~END~~
 
 EXEC sp_special_columns 'type_float'
 go
 ~~START~~
 smallint#!#varchar#!#smallint#!#varchar#!#int#!#int#!#smallint#!#smallint
-1#!#a_float#!#6#!#float#!#53#!#8#!#0#!#1
+1#!#a_float#!#6#!#float#!#15#!#8#!#<NULL>#!#1
 ~~END~~
 
 EXEC sp_special_columns 'type_int'
@@ -318,42 +350,42 @@ EXEC sp_special_columns 'type_money'
 go
 ~~START~~
 smallint#!#varchar#!#smallint#!#varchar#!#int#!#int#!#smallint#!#smallint
-1#!#a_money#!#3#!#money#!#19#!#8#!#4#!#1
+1#!#a_money#!#3#!#money#!#19#!#21#!#4#!#1
 ~~END~~
 
 EXEC sp_special_columns 'type_nchar'
 go
 ~~START~~
 smallint#!#varchar#!#smallint#!#varchar#!#int#!#int#!#smallint#!#smallint
-1#!#a_nchar#!#-8#!#nchar#!#0#!#2#!#0#!#1
+1#!#a_nchar#!#-8#!#nchar#!#1#!#2#!#<NULL>#!#1
 ~~END~~
 
 EXEC sp_special_columns 'type_numeric'
 go
 ~~START~~
 smallint#!#varchar#!#smallint#!#varchar#!#int#!#int#!#smallint#!#smallint
-1#!#a_numeric#!#2#!#numeric#!#18#!#9#!#0#!#1
+1#!#a_numeric#!#2#!#numeric#!#18#!#20#!#0#!#1
 ~~END~~
 
 EXEC sp_special_columns 'type_nvarchar'
 go
 ~~START~~
 smallint#!#varchar#!#smallint#!#varchar#!#int#!#int#!#smallint#!#smallint
-1#!#a_nvarchar#!#-9#!#nvarchar#!#0#!#2#!#0#!#1
+1#!#a_nvarchar#!#-9#!#nvarchar#!#1#!#2#!#<NULL>#!#1
 ~~END~~
 
 EXEC sp_special_columns 'type_real'
 go
 ~~START~~
 smallint#!#varchar#!#smallint#!#varchar#!#int#!#int#!#smallint#!#smallint
-1#!#a_real#!#7#!#real#!#24#!#4#!#0#!#1
+1#!#a_real#!#7#!#real#!#7#!#4#!#<NULL>#!#1
 ~~END~~
 
 EXEC sp_special_columns 'type_smalldatetime'
 go
 ~~START~~
 smallint#!#varchar#!#smallint#!#varchar#!#int#!#int#!#smallint#!#smallint
-1#!#a_smalldatetime#!#93#!#smalldatetime#!#16#!#4#!#0#!#1
+1#!#a_smalldatetime#!#11#!#smalldatetime#!#16#!#16#!#0#!#1
 ~~END~~
 
 EXEC sp_special_columns 'type_smallint'
@@ -367,28 +399,28 @@ EXEC sp_special_columns 'type_smallmoney'
 go
 ~~START~~
 smallint#!#varchar#!#smallint#!#varchar#!#int#!#int#!#smallint#!#smallint
-1#!#a_smallmoney#!#3#!#smallmoney#!#10#!#4#!#4#!#1
+1#!#a_smallmoney#!#3#!#smallmoney#!#10#!#12#!#4#!#1
 ~~END~~
 
 EXEC sp_special_columns 'type_sql_variant'
 go
 ~~START~~
 smallint#!#varchar#!#smallint#!#varchar#!#int#!#int#!#smallint#!#smallint
-1#!#a_sql_variant#!#-150#!#sql_variant#!#0#!#8016#!#0#!#1
+1#!#a_sql_variant#!#-150#!#sql_variant#!#0#!#8000#!#<NULL>#!#1
 ~~END~~
 
 EXEC sp_special_columns 'type_sysname'
 go
 ~~START~~
 smallint#!#varchar#!#smallint#!#varchar#!#int#!#int#!#smallint#!#smallint
-1#!#a_sysname#!#-9#!#sysname#!#0#!#256#!#0#!#1
+1#!#a_sysname#!#-9#!#sysname#!#128#!#256#!#<NULL>#!#1
 ~~END~~
 
 EXEC sp_special_columns 'type_time'
 go
 ~~START~~
 smallint#!#varchar#!#smallint#!#varchar#!#int#!#int#!#smallint#!#smallint
-1#!#a_time#!#-154#!#time#!#15#!#5#!#6#!#1
+1#!#a_time#!#-9#!#time#!#15#!#30#!#<NULL>#!#1
 ~~END~~
 
 EXEC sp_special_columns 'type_tinyint'
@@ -402,21 +434,21 @@ EXEC sp_special_columns 'type_uniqueidentifier'
 go
 ~~START~~
 smallint#!#varchar#!#smallint#!#varchar#!#int#!#int#!#smallint#!#smallint
-1#!#a_uniqueidentifier#!#-11#!#uniqueidentifier#!#0#!#16#!#0#!#1
+1#!#a_uniqueidentifier#!#-11#!#uniqueidentifier#!#36#!#16#!#<NULL>#!#1
 ~~END~~
 
 EXEC sp_special_columns 'type_varbinary'
 go
 ~~START~~
 smallint#!#varchar#!#smallint#!#varchar#!#int#!#int#!#smallint#!#smallint
-1#!#a_varbinary#!#-3#!#varbinary#!#0#!#1#!#0#!#1
+1#!#a_varbinary#!#-3#!#varbinary#!#1#!#1#!#<NULL>#!#1
 ~~END~~
 
 EXEC sp_special_columns 'type_varchar'
 go
 ~~START~~
 smallint#!#varchar#!#smallint#!#varchar#!#int#!#int#!#smallint#!#smallint
-1#!#a_varchar#!#12#!#varchar#!#0#!#1#!#0#!#1
+1#!#a_varchar#!#12#!#varchar#!#1#!#1#!#<NULL>#!#1
 ~~END~~
 
 EXEC sp_special_columns 'type_int_identity'
@@ -461,6 +493,90 @@ smallint#!#varchar#!#smallint#!#varchar#!#int#!#int#!#smallint#!#smallint
 1#!#a_numeric_identity#!#-5#!#bigint identity#!#19#!#8#!#0#!#1
 ~~END~~
 
+EXEC sp_special_columns 'type_decimal_5_2'
+go
+~~START~~
+smallint#!#varchar#!#smallint#!#varchar#!#int#!#int#!#smallint#!#smallint
+1#!#a_decimal_5_2#!#3#!#decimal#!#5#!#7#!#2#!#1
+~~END~~
+
+EXEC sp_special_columns 'type_decimal_5_3'
+go
+~~START~~
+smallint#!#varchar#!#smallint#!#varchar#!#int#!#int#!#smallint#!#smallint
+1#!#a_decimal_5_2#!#3#!#decimal#!#5#!#7#!#3#!#1
+~~END~~
+
+EXEC sp_special_columns 'type_float_7'
+go
+~~START~~
+smallint#!#varchar#!#smallint#!#varchar#!#int#!#int#!#smallint#!#smallint
+1#!#a_float_7#!#7#!#real#!#7#!#4#!#<NULL>#!#1
+~~END~~
+
+EXEC sp_special_columns 'type_char_7'
+go
+~~START~~
+smallint#!#varchar#!#smallint#!#varchar#!#int#!#int#!#smallint#!#smallint
+1#!#a_char_7#!#1#!#char#!#7#!#7#!#<NULL>#!#1
+~~END~~
+
+EXEC sp_special_columns 'type_varchar_7'
+go
+~~START~~
+smallint#!#varchar#!#smallint#!#varchar#!#int#!#int#!#smallint#!#smallint
+1#!#a_varchar_7#!#12#!#varchar#!#7#!#7#!#<NULL>#!#1
+~~END~~
+
+EXEC sp_special_columns 'type_nchar_7'
+go
+~~START~~
+smallint#!#varchar#!#smallint#!#varchar#!#int#!#int#!#smallint#!#smallint
+1#!#a_nchar_7#!#-8#!#nchar#!#7#!#14#!#<NULL>#!#1
+~~END~~
+
+EXEC sp_special_columns 'type_nvarchar_7'
+go
+~~START~~
+smallint#!#varchar#!#smallint#!#varchar#!#int#!#int#!#smallint#!#smallint
+1#!#a_nvarchar_7#!#-9#!#nvarchar#!#7#!#14#!#<NULL>#!#1
+~~END~~
+
+EXEC sp_special_columns 'type_time_6'
+go
+~~START~~
+smallint#!#varchar#!#smallint#!#varchar#!#int#!#int#!#smallint#!#smallint
+1#!#a_time_6#!#-9#!#time#!#15#!#30#!#<NULL>#!#1
+~~END~~
+
+EXEC sp_special_columns 'type_datetime2_6'
+go
+~~START~~
+smallint#!#varchar#!#smallint#!#varchar#!#int#!#int#!#smallint#!#smallint
+1#!#a_datetime2_6#!#-9#!#datetime2#!#26#!#52#!#<NULL>#!#1
+~~END~~
+
+EXEC sp_special_columns 'type_datetimeoffset_6'
+go
+~~START~~
+smallint#!#varchar#!#smallint#!#varchar#!#int#!#int#!#smallint#!#smallint
+1#!#a_datetimeoffset_6#!#-9#!#datetimeoffset#!#33#!#66#!#<NULL>#!#1
+~~END~~
+
+EXEC sp_special_columns 'type_binary_7'
+go
+~~START~~
+smallint#!#varchar#!#smallint#!#varchar#!#int#!#int#!#smallint#!#smallint
+1#!#a_binary_7#!#-2#!#binary#!#7#!#7#!#<NULL>#!#1
+~~END~~
+
+EXEC sp_special_columns 'type_varbinary_7'
+go
+~~START~~
+smallint#!#varchar#!#smallint#!#varchar#!#int#!#int#!#smallint#!#smallint
+1#!#a_varbinary_7#!#-3#!#varbinary#!#7#!#7#!#<NULL>#!#1
+~~END~~
+
 
 -- Test unique indexes created after table creation
 exec sp_special_columns 'unique_idx_table1'
@@ -498,6 +614,8 @@ go
 drop type phone_num
 go
 DROP TABLE type_bigint
+go
+DROP TABLE type_binary
 go
 DROP TABLE type_bit
 go
@@ -562,6 +680,30 @@ go
 DROP TABLE unique_idx_table1
 go
 DROP TABLE unique_idx_table2
+go
+DROP TABLE type_decimal_5_2
+go
+DROP TABLE type_decimal_5_3
+go
+DROP TABLE type_float_7
+go
+DROP TABLE type_char_7
+go
+DROP TABLE type_varchar_7
+go
+DROP TABLE type_nchar_7
+go
+DROP TABLE type_nvarchar_7
+go
+DROP TABLE type_time_6
+go
+DROP TABLE type_datetime2_6
+go
+DROP TABLE type_datetimeoffset_6
+go
+DROP TABLE type_binary_7
+go
+DROP TABLE type_varbinary_7
 go
 use master
 go

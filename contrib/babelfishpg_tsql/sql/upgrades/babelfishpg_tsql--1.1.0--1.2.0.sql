@@ -2560,6 +2560,71 @@ $$
 LANGUAGE 'pltsql';
 GRANT EXECUTE ON PROCEDURE sys.sp_column_privileges TO PUBLIC;
 
+CREATE OR REPLACE FUNCTION sys.sp_datatype_info_helper(
+    IN odbcVer smallint,
+    IN is_100 bool,
+    OUT TYPE_NAME VARCHAR(20),
+    OUT DATA_TYPE INT,
+    OUT "PRECISION" BIGINT,
+    OUT LITERAL_PREFIX VARCHAR(20),
+    OUT LITERAL_SUFFIX VARCHAR(20),
+    OUT CREATE_PARAMS VARCHAR(20),
+    OUT NULLABLE INT,
+    OUT CASE_SENSITIVE INT,
+    OUT SEARCHABLE INT,
+    OUT UNSIGNED_ATTRIBUTE INT,
+    OUT MONEY INT,
+    OUT AUTO_INCREMENT INT,
+    OUT LOCAL_TYPE_NAME VARCHAR(20),
+    OUT MINIMUM_SCALE INT,
+    OUT MAXIMUM_SCALE INT,
+    OUT SQL_DATA_TYPE INT,
+    OUT SQL_DATETIME_SUB INT,
+    OUT NUM_PREC_RADIX INT,
+    OUT INTERVAL_PRECISION INT,
+    OUT USERTYPE INT,
+    OUT LENGTH INT,
+    OUT SS_DATA_TYPE smallint,
+-- below column is added in order to join PG's information_schema.columns for sys.sp_columns_100_view
+    OUT PG_TYPE_NAME VARCHAR(20)
+)
+AS 'babelfishpg_tsql', 'sp_datatype_info_helper'
+LANGUAGE C IMMUTABLE STRICT;
+
+CREATE OR REPLACE FUNCTION sys.sp_special_columns_precision_helper(IN type TEXT, IN sp_columns_precision INT, IN sp_columns_max_length SMALLINT, IN sp_datatype_info_precision BIGINT) RETURNS INT
+AS $$
+SELECT
+	CASE
+		WHEN type in ('real','float') THEN sp_columns_max_length * 2 - 1
+		WHEN type in ('char','varchar','binary','varbinary') THEN sp_columns_max_length
+		WHEN type in ('nchar','nvarchar') THEN sp_columns_max_length / 2
+		WHEN type in ('sysname','uniqueidentifier') THEN sp_datatype_info_precision
+		ELSE sp_columns_precision
+	END;
+$$ LANGUAGE SQL IMMUTABLE;
+
+CREATE OR REPLACE FUNCTION sys.sp_special_columns_length_helper(IN type TEXT, IN sp_columns_precision INT, IN sp_columns_max_length SMALLINT, IN sp_datatype_info_precision BIGINT) RETURNS INT
+AS $$
+SELECT
+	CASE
+		WHEN type in ('decimal','numeric','money','smallmoney') THEN sp_columns_precision + 2
+		WHEN type in ('time','date','datetime2','datetimeoffset') THEN sp_columns_precision * 2
+		WHEN type in ('smalldatetime') THEN sp_columns_precision
+		WHEN type in ('datetime') THEN sp_columns_max_length * 2
+		WHEN type in ('sql_variant') THEN sp_datatype_info_precision
+		ELSE sp_columns_max_length
+	END;
+$$ LANGUAGE SQL IMMUTABLE;
+
+CREATE OR REPLACE FUNCTION sys.sp_special_columns_scale_helper(IN type TEXT, IN sp_columns_scale INT) RETURNS INT
+AS $$
+SELECT
+	CASE
+		WHEN type in ('bit','real','float','char','varchar','nchar','nvarchar','time','date','datetime2','datetimeoffset','varbinary','binary','sql_variant','sysname','uniqueidentifier') THEN NULL
+		ELSE sp_columns_scale
+	END;
+$$ LANGUAGE SQL IMMUTABLE;
+
 -- TODO: BABEL-2838
 CREATE OR REPLACE VIEW sys.sp_special_columns_view AS
 SELECT DISTINCT 
@@ -2575,9 +2640,9 @@ CASE -- cases for when they are of type identity.
 	ELSE CAST(t8.name AS sys.sysname)
 END AS TYPE_NAME,
 
-CAST(c1.precision AS int) AS PRECISION,
-CAST(c1.max_length AS int) AS LENGTH,
-CAST(c1.scale AS smallint) AS SCALE,
+CAST(sys.sp_special_columns_precision_helper(coalesce(tsql_type_name, tsql_base_type_name), c1.precision, c1.max_length, t6."PRECISION") AS int) AS PRECISION,
+CAST(sys.sp_special_columns_length_helper(coalesce(tsql_type_name, tsql_base_type_name), c1.precision, c1.max_length, t6."PRECISION") AS int) AS LENGTH,
+CAST(sys.sp_special_columns_scale_helper(coalesce(tsql_type_name, tsql_base_type_name), c1.scale) AS smallint) AS SCALE,
 CAST(1 AS smallint) AS PSEUDO_COLUMN,
 CAST(c1.is_nullable AS int) AS IS_NULLABLE,
 CAST(t2.dbname AS sys.sysname) AS TABLE_QUALIFIER,
@@ -2599,8 +2664,10 @@ FROM pg_catalog.pg_class t1
 
 	JOIN pg_catalog.pg_type AS t7 ON t7.oid = c1.system_type_id
 	JOIN sys.types as t8 ON c1.user_type_id = t8.user_type_id 
-	LEFT JOIN sys.spt_datatype_info_table AS t6 ON t7.typname = t6.pg_type_name OR t7.typname = t6.type_name --need in order to get accurate DATA_TYPE value
+	LEFT JOIN sys.sp_datatype_info_helper(2::smallint, false) AS t6 ON t7.typname = t6.pg_type_name OR t7.typname = t6.type_name --need in order to get accurate DATA_TYPE value
 	LEFT JOIN pg_catalog.pg_attribute AS pa ON t1.oid = pa.attrelid AND c1.name = pa.attname
+	, sys.translate_pg_type_to_tsql(t8.user_type_id) AS tsql_type_name
+	, sys.translate_pg_type_to_tsql(t8.system_type_id) AS tsql_base_type_name
 	WHERE (t5.contype = 'p' OR t5.contype = 'u' 
 	OR ((idx.is_unique = 1) AND (idx.is_primary_key !=1 AND idx.is_unique_constraint !=1))) -- Only looking for unique indexes
 	AND (CAST(c1.column_id AS smallint) = ANY (t5.conkey) OR ((idx.is_unique = 1) AND (idx.is_primary_key !=1 AND idx.is_unique_constraint !=1)))
@@ -3759,37 +3826,6 @@ GRANT ALL on PROCEDURE sys.sp_pkeys TO PUBLIC;
 
 CREATE OR REPLACE FUNCTION sys.has_dbaccess(database_name SYSNAME) RETURNS INTEGER AS 
 'babelfishpg_tsql', 'has_dbaccess'
-LANGUAGE C IMMUTABLE STRICT;
-
-CREATE OR REPLACE FUNCTION sys.sp_datatype_info_helper(
-    IN odbcVer smallint,
-    IN is_100 bool,
-    OUT TYPE_NAME VARCHAR(20),
-    OUT DATA_TYPE INT,
-    OUT "PRECISION" BIGINT,
-    OUT LITERAL_PREFIX VARCHAR(20),
-    OUT LITERAL_SUFFIX VARCHAR(20),
-    OUT CREATE_PARAMS VARCHAR(20),
-    OUT NULLABLE INT,
-    OUT CASE_SENSITIVE INT,
-    OUT SEARCHABLE INT,
-    OUT UNSIGNED_ATTRIBUTE INT,
-    OUT MONEY INT,
-    OUT AUTO_INCREMENT INT,
-    OUT LOCAL_TYPE_NAME VARCHAR(20),
-    OUT MINIMUM_SCALE INT,
-    OUT MAXIMUM_SCALE INT,
-    OUT SQL_DATA_TYPE INT,
-    OUT SQL_DATETIME_SUB INT,
-    OUT NUM_PREC_RADIX INT,
-    OUT INTERVAL_PRECISION INT,
-    OUT USERTYPE INT,
-    OUT LENGTH INT,
-    OUT SS_DATA_TYPE smallint,
--- below column is added in order to join PG's information_schema.columns for sys.sp_columns_100_view
-    OUT PG_TYPE_NAME VARCHAR(20)
-)
-AS 'babelfishpg_tsql', 'sp_datatype_info_helper'
 LANGUAGE C IMMUTABLE STRICT;
 
 CREATE OR REPLACE PROCEDURE sys.sp_datatype_info (

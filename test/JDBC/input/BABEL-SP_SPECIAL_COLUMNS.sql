@@ -93,6 +93,31 @@ CREATE TABLE type_decimal_identity (a_decimal_identity decimal identity primary 
 go
 CREATE TABLE type_numeric_identity (a_numeric_identity numeric identity primary key)
 go
+CREATE TABLE type_decimal_5_2 (a_decimal_5_2 decimal(5,2) primary key)
+go
+CREATE TABLE type_decimal_5_3 (a_decimal_5_2 decimal(5,3) primary key)
+go
+CREATE TABLE type_float_7 (a_float_7 float(7) primary key)
+go
+CREATE TABLE type_char_7 (a_char_7 char(7) primary key)
+go
+CREATE TABLE type_varchar_7 (a_varchar_7 varchar(7) primary key)
+go
+CREATE TABLE type_nchar_7 (a_nchar_7 nchar(7) primary key)
+go
+CREATE TABLE type_nvarchar_7 (a_nvarchar_7 nvarchar(7) primary key)
+go
+CREATE TABLE type_time_6 (a_time_6 time(6) primary key)
+go
+CREATE TABLE type_datetime2_6 (a_datetime2_6 datetime2(6) primary key)
+go
+CREATE TABLE type_datetimeoffset_6 (a_datetimeoffset_6 datetimeoffset(6) primary key)
+go
+CREATE TABLE type_binary_7 (a_binary_7 binary(7) primary key)
+go
+CREATE TABLE type_varbinary_7 (a_varbinary_7 varbinary(7) primary key)
+go
+
 
 -- syntax error: @table_name is required
 exec sp_special_columns
@@ -153,9 +178,11 @@ EXEC [sys].[sp_special_columns] @table_name = 't2', @table_owner = 'dbo', @quali
 GO
 
 -- Testing datatypes
--- NOTE: Currently, these values do not produce accurate results for some values such as binary, uniqueidentifier and others
+-- NOTE: Currently, these values do not produce accurate results for some datatypes such as tinyint/decimal/numeric identity, time/datetime2/datetimeoffset with default typemode 7.
 
 EXEC sp_special_columns 'type_bigint'
+go
+EXEC sp_special_columns 'type_binary'
 go
 EXEC sp_special_columns 'type_bit'
 go
@@ -217,6 +244,30 @@ EXEC sp_special_columns 'type_decimal_identity'
 go
 EXEC sp_special_columns 'type_numeric_identity'
 go
+EXEC sp_special_columns 'type_decimal_5_2'
+go
+EXEC sp_special_columns 'type_decimal_5_3'
+go
+EXEC sp_special_columns 'type_float_7'
+go
+EXEC sp_special_columns 'type_char_7'
+go
+EXEC sp_special_columns 'type_varchar_7'
+go
+EXEC sp_special_columns 'type_nchar_7'
+go
+EXEC sp_special_columns 'type_nvarchar_7'
+go
+EXEC sp_special_columns 'type_time_6'
+go
+EXEC sp_special_columns 'type_datetime2_6'
+go
+EXEC sp_special_columns 'type_datetimeoffset_6'
+go
+EXEC sp_special_columns 'type_binary_7'
+go
+EXEC sp_special_columns 'type_varbinary_7'
+go
 
 -- Test unique indexes created after table creation
 exec sp_special_columns 'unique_idx_table1'
@@ -244,6 +295,8 @@ go
 drop type phone_num
 go
 DROP TABLE type_bigint
+go
+DROP TABLE type_binary
 go
 DROP TABLE type_bit
 go
@@ -308,6 +361,30 @@ go
 DROP TABLE unique_idx_table1
 go
 DROP TABLE unique_idx_table2
+go
+DROP TABLE type_decimal_5_2
+go
+DROP TABLE type_decimal_5_3
+go
+DROP TABLE type_float_7
+go
+DROP TABLE type_char_7
+go
+DROP TABLE type_varchar_7
+go
+DROP TABLE type_nchar_7
+go
+DROP TABLE type_nvarchar_7
+go
+DROP TABLE type_time_6
+go
+DROP TABLE type_datetime2_6
+go
+DROP TABLE type_datetimeoffset_6
+go
+DROP TABLE type_binary_7
+go
+DROP TABLE type_varbinary_7
 go
 use master
 go
