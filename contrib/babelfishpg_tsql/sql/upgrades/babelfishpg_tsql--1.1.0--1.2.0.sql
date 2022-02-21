@@ -3416,7 +3416,7 @@ cast(2 AS smallint) AS PROCEDURE_TYPE
 FROM    pg_catalog.pg_namespace n 
 JOIN    pg_catalog.pg_proc p 
 ON      pronamespace = n.oid   
-WHERE nspname = 'sys';
+WHERE nspname = 'sys' AND (proname LIKE 'sp\_%' OR proname LIKE 'xp\_%' OR proname LIKE 'dm\_%' OR proname LIKE 'fn\_%');
 
 GRANT SELECT ON sys.sp_stored_procedures_view TO PUBLIC;
 
