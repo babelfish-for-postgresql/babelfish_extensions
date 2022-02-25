@@ -154,6 +154,7 @@ FaultInjectionEnableTest(FaultInjectorEntry_s *entry)
 static inline void
 FaultInjectionDisableTest(FaultInjectorEntry_s *entry)
 {
+	ListCell *lc;
 	List *list = FaultInjectionTypes[entry->type].injected_entries;
 
 	if (list_length(list) == 1)
@@ -162,7 +163,13 @@ FaultInjectionDisableTest(FaultInjectorEntry_s *entry)
 		list = NIL;
 	}
 	else
-		list = list_delete(list, entry);
+	{
+		foreach(lc, list)
+		{
+			if (entry == (FaultInjectorEntry_s *) lfirst(lc))
+				list_delete_cell(list, lc);
+		}
+	}
 
 	tamperByte = INVALID_TAMPER_BYTE;
 	FaultInjectionTypes[entry->type].injected_entries = list;
@@ -237,12 +244,10 @@ TriggerFault(FaultInjectorType_e type, void *arg)
 		/* otherwise it should have been removed */
 		Assert(entry->num_occurrences > 0);
 
-		entry->num_occurrences--;
-
 		PG_TRY();
 		{
 			TDS_DEBUG(TDS_DEBUG2, "Triggering fault: %s", entry->faultName);
-			(*(entry->fault_callback)) (arg);
+			(*(entry->fault_callback)) (arg, &(entry->num_occurrences));
 		}
 		PG_CATCH();
 		{
@@ -270,12 +275,10 @@ TriggerFault(FaultInjectorType_e type, void *arg)
 		/* otherwise it should have been removed */
 		Assert(entry->num_occurrences > 0);
 
-		entry->num_occurrences--;
-
 		PG_TRY();
 		{
 			TDS_DEBUG(TDS_DEBUG2, "Triggering fault: %s", entry->faultName);
-			(*(entry->fault_callback)) (arg);
+			(*(entry->fault_callback)) (arg, &(entry->num_occurrences));
 		}
 		PG_CATCH();
 		{
