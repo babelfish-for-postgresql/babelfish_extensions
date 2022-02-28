@@ -283,11 +283,20 @@ rewrite_object_refs(Node *stmt)
 				if (strcmp(headel->defname, "isuser") == 0)
 				{
 					char		*user_name;
+					char		*physical_user_name;
 					char		*db_name = get_cur_db_name();
 
-					user_name = get_physical_user_name(db_name, alter_role->role->rolename);
+					user_name = alter_role->role->rolename;
+					if (strcmp(user_name, "dbo") == 0 ||
+						strcmp(user_name, "db_owner") == 0 ||
+						strcmp(user_name, "guest") == 0)
+						ereport(ERROR,
+								(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+								 errmsg("Cannot alter the user %s", user_name)));
+
+					physical_user_name = get_physical_user_name(db_name, user_name);
 					pfree(alter_role->role->rolename);
-					alter_role->role->rolename = user_name;
+					alter_role->role->rolename = physical_user_name;
 				}
 			}
 			break;

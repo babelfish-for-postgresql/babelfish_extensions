@@ -179,7 +179,7 @@ AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA#!#dbo
 ~~END~~
 
 
--- Test alter user schema
+-- Test alter user
 ALTER USER test1 WITH DEFAULT_SCHEMA = sch3;
 GO
 
@@ -255,6 +255,28 @@ GO
 varchar
 master_new_test1
 ~~END~~
+
+
+-- Test alter user on predefined database users
+ALTER USER dbo WITH DEFAULT_SCHEMA = sch3;
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Cannot alter the user dbo)~~
+
+
+ALTER USER db_owner WITH NAME = new_db_owner;
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Cannot alter the user db_owner)~~
+
+
+ALTER USER guest WITH NAME = new_guest;
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Cannot alter the user guest)~~
 
 
 -- Clean up

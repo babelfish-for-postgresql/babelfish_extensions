@@ -100,7 +100,7 @@ FROM sys.database_principals
 WHERE name = 'AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA';
 GO
 
--- Test alter user schema
+-- Test alter user
 ALTER USER test1 WITH DEFAULT_SCHEMA = sch3;
 GO
 
@@ -141,6 +141,16 @@ WHERE name = 'new_test1';
 GO
 
 SELECT rolname FROM pg_roles WHERE rolname = 'master_new_test1';
+GO
+
+-- Test alter user on predefined database users
+ALTER USER dbo WITH DEFAULT_SCHEMA = sch3;
+GO
+
+ALTER USER db_owner WITH NAME = new_db_owner;
+GO
+
+ALTER USER guest WITH NAME = new_guest;
 GO
 
 -- Clean up
