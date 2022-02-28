@@ -100,6 +100,17 @@ GO
 REVOKE ALL ON OBJECT::type_int FROM PUBLIC;
 GO
 
+GRANT SELECT ON t1 (a) TO guest;
+GO
+
+REVOKE SELECT ON t1 (a) TO guest;
+GO
+
+GRANT SELECT (a) ON t1 TO guest WITH GRANT OPTION;
+GO
+
+REVOKE GRANT OPTION FOR SELECT (a) ON t1 FROM guest;
+GO
 --- 
 ---  Unsupported cases
 ---
