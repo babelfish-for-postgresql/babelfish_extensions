@@ -78,6 +78,32 @@ CREATE OPERATOR sys.^ (
 
 -- tinyint operator definitions to force return type to tinyyint
 
+CREATE OR REPLACE FUNCTION sys.tinyint_larger(sys.TINYINT, sys.TINYINT)
+RETURNS sys.TINYINT
+AS 'int2larger'
+LANGUAGE INTERNAL IMMUTABLE STRICT PARALLEL SAFE;
+
+CREATE OR REPLACE FUNCTION sys.tinyint_smaller(sys.TINYINT, sys.TINYINT)
+RETURNS sys.TINYINT
+AS 'int2smaller'
+LANGUAGE INTERNAL IMMUTABLE STRICT PARALLEL SAFE;
+
+CREATE OR REPLACE AGGREGATE sys.max(sys.TINYINT)
+(
+    sfunc = sys.tinyint_larger,
+    stype = sys.tinyint,
+    combinefunc = sys.tinyint_larger,
+    parallel = safe
+);
+
+CREATE OR REPLACE AGGREGATE sys.min(sys.TINYINT)
+(
+    sfunc = sys.tinyint_smaller,
+    stype = sys.tinyint,
+    combinefunc = sys.tinyint_smaller,
+    parallel = safe
+);
+
 CREATE FUNCTION sys.tinyintum(sys.TINYINT)
 RETURNS sys.TINYINT
 AS $$
@@ -251,4 +277,33 @@ CREATE OPERATOR sys./ (
     LEFTARG    = sys.TINYINT,
     RIGHTARG   = sys.SMALLMONEY,
     PROCEDURE  = sys.tinyintsmallmoneydiv
+);
+
+
+-- function definition on REAL datatype to force return type to REAL
+
+CREATE OR REPLACE FUNCTION sys.real_larger(sys.REAL, sys.REAL)
+RETURNS sys.REAL
+AS 'float4larger'
+LANGUAGE INTERNAL IMMUTABLE STRICT PARALLEL SAFE;
+
+CREATE OR REPLACE FUNCTION sys.real_smaller(sys.REAL, sys.REAL)
+RETURNS sys.REAL
+AS 'float4smaller'
+LANGUAGE INTERNAL IMMUTABLE STRICT PARALLEL SAFE;
+
+CREATE OR REPLACE AGGREGATE sys.max(sys.REAL)
+(
+    sfunc = sys.real_larger,
+    stype = sys.real,
+    combinefunc = sys.real_larger,
+    parallel = safe
+);
+
+CREATE OR REPLACE AGGREGATE sys.min(sys.REAL)
+(
+    sfunc = sys.real_smaller,
+    stype = sys.real,
+    combinefunc = sys.real_smaller,
+    parallel = safe
 );

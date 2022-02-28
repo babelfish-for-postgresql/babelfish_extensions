@@ -930,13 +930,17 @@ LANGUAGE INTERNAL IMMUTABLE STRICT PARALLEL SAFE;
 CREATE OR REPLACE AGGREGATE sys.max(sys.VARCHAR)
 (
   sfunc = sys.varchar_larger,
-  stype = sys.varchar
+  stype = sys.varchar,
+  combinefunc = sys.varchar_larger,
+  parallel = safe
 );
 
 CREATE OR REPLACE AGGREGATE sys.min(sys.VARCHAR)
 (
   sfunc = sys.varchar_smaller,
-  stype = sys.varchar
+  stype = sys.varchar,
+  combinefunc = sys.varchar_smaller,
+  parallel = safe
 );
 
 CREATE OR REPLACE FUNCTION sys.nvarchar_larger(sys.NVARCHAR, sys.NVARCHAR)
@@ -952,13 +956,17 @@ LANGUAGE INTERNAL IMMUTABLE STRICT PARALLEL SAFE;
 CREATE OR REPLACE AGGREGATE sys.max(sys.NVARCHAR)
 (
   sfunc = sys.nvarchar_larger,
-  stype = sys.nvarchar
+  stype = sys.nvarchar,
+  combinefunc = sys.nvarchar_larger,
+  parallel = safe
 );
 
 CREATE OR REPLACE AGGREGATE sys.min(sys.NVARCHAR)
 (
   sfunc = sys.nvarchar_smaller,
-  stype = sys.nvarchar
+  stype = sys.nvarchar,
+  combinefunc = sys.nvarchar_smaller,
+  parallel = safe
 );
 
 CREATE OR REPLACE FUNCTION sys.bpchar_larger(sys.BPCHAR, sys.BPCHAR)
@@ -974,13 +982,17 @@ LANGUAGE INTERNAL IMMUTABLE STRICT PARALLEL SAFE;
 CREATE OR REPLACE AGGREGATE sys.max(sys.BPCHAR)
 (
   sfunc = sys.bpchar_larger,
-  stype = sys.bpchar
+  stype = sys.bpchar,
+  combinefunc = sys.bpchar_larger,
+  parallel = safe
 );
 
 CREATE OR REPLACE AGGREGATE sys.min(sys.BPCHAR)
 (
   sfunc = sys.bpchar_smaller,
-  stype = sys.bpchar
+  stype = sys.bpchar,
+  combinefunc = sys.bpchar_smaller,
+  parallel = safe
 );
 
 CREATE OR REPLACE FUNCTION sys.nchar_larger(sys.NCHAR, sys.NCHAR)
@@ -996,14 +1008,260 @@ LANGUAGE INTERNAL IMMUTABLE STRICT PARALLEL SAFE;
 CREATE OR REPLACE AGGREGATE sys.max(sys.NCHAR)
 (
   sfunc = sys.nchar_larger,
-  stype = sys.nchar
+  stype = sys.nchar,
+  combinefunc = sys.nchar_larger,
+  parallel = safe
 );
 
 CREATE OR REPLACE AGGREGATE sys.min(sys.NCHAR)
 (
   sfunc = sys.nchar_smaller,
-  stype = sys.nchar
+  stype = sys.nchar,
+  combinefunc = sys.nchar_smaller,
+  parallel = safe
 );
+
+CREATE OR REPLACE FUNCTION sys.tinyint_larger(sys.TINYINT, sys.TINYINT)
+RETURNS sys.TINYINT
+AS 'int2larger'
+LANGUAGE INTERNAL IMMUTABLE STRICT PARALLEL SAFE;
+
+CREATE OR REPLACE FUNCTION sys.tinyint_smaller(sys.TINYINT, sys.TINYINT)
+RETURNS sys.TINYINT
+AS 'int2smaller'
+LANGUAGE INTERNAL IMMUTABLE STRICT PARALLEL SAFE;
+
+CREATE OR REPLACE AGGREGATE sys.max(sys.TINYINT)
+(
+    sfunc = sys.tinyint_larger,
+    stype = sys.tinyint,
+    combinefunc = sys.tinyint_larger,
+    parallel = safe
+);
+
+CREATE OR REPLACE AGGREGATE sys.min(sys.TINYINT)
+(
+    sfunc = sys.tinyint_smaller,
+    stype = sys.tinyint,
+    combinefunc = sys.tinyint_smaller,
+    parallel = safe
+);
+
+CREATE OR REPLACE FUNCTION sys.real_larger(sys.REAL, sys.REAL)
+RETURNS sys.REAL
+AS 'float4larger'
+LANGUAGE INTERNAL IMMUTABLE STRICT PARALLEL SAFE;
+
+CREATE OR REPLACE FUNCTION sys.real_smaller(sys.REAL, sys.REAL)
+RETURNS sys.REAL
+AS 'float4smaller'
+LANGUAGE INTERNAL IMMUTABLE STRICT PARALLEL SAFE;
+
+CREATE OR REPLACE AGGREGATE sys.max(sys.REAL)
+(
+    sfunc = sys.real_larger,
+    stype = sys.real,
+    combinefunc = sys.real_larger,
+    parallel = safe
+);
+
+CREATE OR REPLACE AGGREGATE sys.min(sys.REAL)
+(
+    sfunc = sys.real_smaller,
+    stype = sys.real,
+    combinefunc = sys.real_smaller,
+    parallel = safe
+);
+
+CREATE FUNCTION sys.smallmoneylarger(sys.SMALLMONEY, sys.SMALLMONEY)
+RETURNS sys.SMALLMONEY
+AS 'babelfishpg_money', 'fixeddecimallarger'
+LANGUAGE C IMMUTABLE STRICT PARALLEL SAFE;
+
+CREATE FUNCTION sys.smallmoneysmaller(sys.SMALLMONEY, sys.SMALLMONEY)
+RETURNS sys.SMALLMONEY
+AS 'babelfishpg_money', 'fixeddecimalsmaller'
+LANGUAGE C IMMUTABLE STRICT PARALLEL SAFE;
+
+CREATE AGGREGATE sys.min(sys.smallmoney) (
+    SFUNC = sys.smallmoneysmaller,
+    STYPE = sys.smallmoney,
+    COMBINEFUNC = sys.smallmoneysmaller,
+    PARALLEL = SAFE
+);
+
+CREATE AGGREGATE sys.max(sys.smallmoney) (
+    SFUNC = sys.smallmoneylarger,
+    STYPE = sys.smallmoney,
+    COMBINEFUNC = sys.smallmoneylarger,
+    PARALLEL = SAFE
+);
+
+CREATE OR REPLACE FUNCTION sys.datetime_larger(sys.DATETIME, sys.DATETIME)
+RETURNS sys.DATETIME
+AS 'timestamp_larger'
+LANGUAGE INTERNAL IMMUTABLE STRICT PARALLEL SAFE;
+
+CREATE OR REPLACE FUNCTION sys.datetime_smaller(sys.DATETIME, sys.DATETIME)
+RETURNS sys.DATETIME
+AS 'timestamp_smaller'
+LANGUAGE INTERNAL IMMUTABLE STRICT PARALLEL SAFE;
+
+CREATE OR REPLACE AGGREGATE sys.max(sys.DATETIME)
+(
+    sfunc = sys.datetime_larger,
+    stype = sys.datetime,
+    combinefunc = sys.datetime_larger,
+    parallel = safe
+);
+
+CREATE OR REPLACE AGGREGATE sys.min(sys.DATETIME)
+(
+    sfunc = sys.datetime_smaller,
+    stype = sys.datetime,
+    combinefunc = sys.datetime_smaller,
+    parallel = safe
+);
+
+CREATE OR REPLACE FUNCTION sys.datetime2_larger(sys.DATETIME2, sys.DATETIME2)
+RETURNS sys.DATETIME2
+AS 'timestamp_larger'
+LANGUAGE INTERNAL IMMUTABLE STRICT PARALLEL SAFE;
+
+CREATE OR REPLACE FUNCTION sys.datetime2_smaller(sys.DATETIME2, sys.DATETIME2)
+RETURNS sys.DATETIME2
+AS 'timestamp_smaller'
+LANGUAGE INTERNAL IMMUTABLE STRICT PARALLEL SAFE;
+
+CREATE OR REPLACE AGGREGATE sys.max(sys.DATETIME2)
+(
+    sfunc = sys.datetime2_larger,
+    stype = sys.datetime2,
+    combinefunc = sys.datetime2_larger,
+    parallel = safe
+);
+
+CREATE OR REPLACE AGGREGATE sys.min(sys.DATETIME2)
+(
+    sfunc = sys.datetime2_smaller,
+    stype = sys.datetime2,
+    combinefunc = sys.datetime2_smaller,
+    parallel = safe
+);
+
+CREATE OR REPLACE FUNCTION sys.datetimeoffset_larger(sys.DATETIMEOFFSET, sys.DATETIMEOFFSET)
+RETURNS sys.DATETIMEOFFSET
+AS 'babelfishpg_common', 'datetimeoffset_larger'
+LANGUAGE C IMMUTABLE STRICT PARALLEL SAFE;
+
+CREATE OR REPLACE FUNCTION sys.datetimeoffset_smaller(sys.DATETIMEOFFSET, sys.DATETIMEOFFSET)
+RETURNS sys.DATETIMEOFFSET
+AS 'babelfishpg_common', 'datetimeoffset_smaller'
+LANGUAGE C IMMUTABLE STRICT PARALLEL SAFE;
+
+CREATE OR REPLACE AGGREGATE sys.max(sys.DATETIMEOFFSET)
+(
+    sfunc = sys.datetimeoffset_larger,
+    stype = sys.datetimeoffset,
+    combinefunc = sys.datetimeoffset_larger,
+    parallel = safe
+);
+
+CREATE OR REPLACE AGGREGATE sys.min(sys.DATETIMEOFFSET)
+(
+    sfunc = sys.datetimeoffset_smaller,
+    stype = sys.datetimeoffset,
+    combinefunc = sys.datetimeoffset_smaller,
+    parallel = safe
+);
+
+CREATE OR REPLACE FUNCTION sys.smalldatetime_larger(sys.SMALLDATETIME, sys.SMALLDATETIME)
+RETURNS sys.SMALLDATETIME
+AS 'timestamp_larger'
+LANGUAGE INTERNAL IMMUTABLE STRICT PARALLEL SAFE;
+
+CREATE OR REPLACE FUNCTION sys.smalldatetime_smaller(sys.SMALLDATETIME, sys.SMALLDATETIME)
+RETURNS sys.SMALLDATETIME
+AS 'timestamp_smaller'
+LANGUAGE INTERNAL IMMUTABLE STRICT PARALLEL SAFE;
+
+CREATE OR REPLACE AGGREGATE sys.max(sys.SMALLDATETIME)
+(
+    sfunc = sys.smalldatetime_larger,
+    stype = sys.smalldatetime,
+    combinefunc = sys.smalldatetime_larger,
+    parallel = safe
+);
+
+CREATE OR REPLACE AGGREGATE sys.min(sys.SMALLDATETIME)
+(
+    sfunc = sys.smalldatetime_smaller,
+    stype = sys.smalldatetime,
+    combinefunc = sys.smalldatetime_smaller,
+    parallel = safe
+);
+
+CREATE OR REPLACE FUNCTION sys.bit_unsupported_max(IN b1 sys.BIT, IN b2 sys.BIT)
+RETURNS sys.BIT
+AS $$
+BEGIN
+   RAISE EXCEPTION 'Operand data type bit is invalid for max operator.';
+END;
+$$ LANGUAGE plpgsql IMMUTABLE;
+
+CREATE OR REPLACE FUNCTION sys.bit_unsupported_min(IN b1 sys.BIT, IN b2 sys.BIT)
+RETURNS sys.BIT
+AS $$
+BEGIN
+   RAISE EXCEPTION 'Operand data type bit is invalid for min operator.';
+END;
+$$ LANGUAGE plpgsql IMMUTABLE;
+
+CREATE OR REPLACE FUNCTION sys.bit_unsupported_sum(IN b1 sys.BIT, IN b2 sys.BIT)
+RETURNS sys.BIT
+AS $$
+BEGIN
+   RAISE EXCEPTION 'Operand data type bit is invalid for sum operator.';
+END;
+$$ LANGUAGE plpgsql IMMUTABLE;
+
+CREATE OR REPLACE FUNCTION sys.bit_unsupported_avg(IN b1 sys.BIT, IN b2 sys.BIT)
+RETURNS sys.BIT
+AS $$
+BEGIN
+   RAISE EXCEPTION 'Operand data type bit is invalid for avg operator.';
+END;
+$$ LANGUAGE plpgsql IMMUTABLE;
+
+CREATE OR REPLACE AGGREGATE sys.max(sys.BIT)
+(
+    sfunc = sys.bit_unsupported_max,
+    stype = sys.bit,
+    parallel = safe
+);
+
+CREATE OR REPLACE AGGREGATE sys.min(sys.BIT)
+(
+    sfunc = sys.bit_unsupported_min,
+    stype = sys.bit,
+    parallel = safe
+);
+
+CREATE OR REPLACE AGGREGATE sys.sum(sys.BIT)
+(
+    sfunc = sys.bit_unsupported_sum,
+    stype = sys.bit,
+    parallel = safe
+);
+
+CREATE OR REPLACE AGGREGATE sys.avg(sys.BIT)
+(
+    sfunc = sys.bit_unsupported_avg,
+    stype = sys.bit,
+    parallel = safe
+);
+
+
 
 CREATE OR REPLACE FUNCTION sys.translate_pg_type_to_tsql(pgoid oid) RETURNS TEXT
 AS 'babelfishpg_common', 'translate_pg_type_to_tsql'

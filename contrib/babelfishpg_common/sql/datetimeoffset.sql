@@ -204,6 +204,32 @@ DEFAULT FOR TYPE sys.DATETIMEOFFSET USING hash AS
     OPERATOR    1   =  (sys.DATETIMEOFFSET, sys.DATETIMEOFFSET),
     FUNCTION    1   datetimeoffset_hash(sys.DATETIMEOFFSET);
 
+CREATE OR REPLACE FUNCTION sys.datetimeoffset_larger(sys.DATETIMEOFFSET, sys.DATETIMEOFFSET)
+RETURNS sys.DATETIMEOFFSET
+AS 'babelfishpg_common', 'datetimeoffset_larger'
+LANGUAGE C IMMUTABLE STRICT PARALLEL SAFE;
+
+CREATE OR REPLACE FUNCTION sys.datetimeoffset_smaller(sys.DATETIMEOFFSET, sys.DATETIMEOFFSET)
+RETURNS sys.DATETIMEOFFSET
+AS 'babelfishpg_common', 'datetimeoffset_smaller'
+LANGUAGE C IMMUTABLE STRICT PARALLEL SAFE;
+
+CREATE OR REPLACE AGGREGATE sys.max(sys.DATETIMEOFFSET)
+(
+    sfunc = sys.datetimeoffset_larger,
+    stype = sys.datetimeoffset,
+    combinefunc = sys.datetimeoffset_larger,
+    parallel = safe
+);
+
+CREATE OR REPLACE AGGREGATE sys.min(sys.DATETIMEOFFSET)
+(
+    sfunc = sys.datetimeoffset_smaller,
+    stype = sys.datetimeoffset,
+    combinefunc = sys.datetimeoffset_smaller,
+    parallel = safe
+);
+
 -- Casts
 CREATE FUNCTION sys.datetimeoffsetscale(sys.DATETIMEOFFSET, INT4)
 RETURNS sys.DATETIMEOFFSET

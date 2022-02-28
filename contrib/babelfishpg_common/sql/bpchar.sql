@@ -295,13 +295,17 @@ LANGUAGE INTERNAL IMMUTABLE STRICT PARALLEL SAFE;
 CREATE OR REPLACE AGGREGATE sys.max(sys.BPCHAR)
 (
   sfunc = sys.bpchar_larger,
-  stype = sys.bpchar
+  stype = sys.bpchar,
+  combinefunc = sys.bpchar_larger,
+  parallel = safe
 );
 
 CREATE OR REPLACE AGGREGATE sys.min(sys.BPCHAR)
 (
   sfunc = sys.bpchar_smaller,
-  stype = sys.bpchar
+  stype = sys.bpchar,
+  combinefunc = sys.bpchar_smaller,
+  parallel = safe
 );
 
 SET enable_domain_typmod = TRUE;
@@ -332,11 +336,15 @@ LANGUAGE INTERNAL IMMUTABLE STRICT PARALLEL SAFE;
 CREATE OR REPLACE AGGREGATE sys.max(sys.NCHAR)
 (
   sfunc = sys.nchar_larger,
-  stype = sys.nchar
+  stype = sys.nchar,
+  combinefunc = sys.nchar_larger,
+  parallel = safe
 );
 
 CREATE OR REPLACE AGGREGATE sys.min(sys.NCHAR)
 (
   sfunc = sys.nchar_smaller,
-  stype = sys.nchar
+  stype = sys.nchar,
+  combinefunc = sys.nchar_smaller,
+  parallel = safe
 );

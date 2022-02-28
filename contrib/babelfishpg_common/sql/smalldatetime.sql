@@ -138,6 +138,32 @@ CREATE OPERATOR sys.>= (
     JOIN       = scalargejoinsel
 );
 
+CREATE OR REPLACE FUNCTION sys.smalldatetime_larger(sys.SMALLDATETIME, sys.SMALLDATETIME)
+RETURNS sys.SMALLDATETIME
+AS 'timestamp_larger'
+LANGUAGE INTERNAL IMMUTABLE STRICT PARALLEL SAFE;
+
+CREATE OR REPLACE FUNCTION sys.smalldatetime_smaller(sys.SMALLDATETIME, sys.SMALLDATETIME)
+RETURNS sys.SMALLDATETIME
+AS 'timestamp_smaller'
+LANGUAGE INTERNAL IMMUTABLE STRICT PARALLEL SAFE;
+
+CREATE OR REPLACE AGGREGATE sys.max(sys.SMALLDATETIME)
+(
+    sfunc = sys.smalldatetime_larger,
+    stype = sys.smalldatetime,
+    combinefunc = sys.smalldatetime_larger,
+    parallel = safe
+);
+
+CREATE OR REPLACE AGGREGATE sys.min(sys.SMALLDATETIME)
+(
+    sfunc = sys.smalldatetime_smaller,
+    stype = sys.smalldatetime,
+    combinefunc = sys.smalldatetime_smaller,
+    parallel = safe
+);
+
 -- smalldate vs pg_catalog.date
 CREATE FUNCTION sys.smalldatetime_eq_date(sys.SMALLDATETIME, pg_catalog.date)
 RETURNS bool
