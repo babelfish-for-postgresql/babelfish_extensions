@@ -113,6 +113,19 @@ GO
 
 REVOKE GRANT OPTION FOR SELECT (a) ON t1 FROM guest;
 GO
+
+GRANT UPDATE ON t1 (a) TO guest;
+GO
+
+REVOKE UPDATE ON t1 (a) TO guest;
+GO
+
+GRANT UPDATE (a) ON t1 TO guest WITH GRANT OPTION;
+GO
+
+REVOKE GRANT OPTION FOR UPDATE (a) ON t1 FROM guest;
+GO
+
 --- 
 ---  Unsupported cases
 ---

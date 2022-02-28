@@ -3877,6 +3877,16 @@ reserved_keyword:
 			| TSQL_EXEC
 		;
 
+privilege:
+			UPDATE_paren '(' columnList ')'
+			{
+				AccessPriv *n = makeNode(AccessPriv);
+				n->priv_name = "update";
+				n->cols = $3;
+				$$ = n;
+			}
+		;
+
 privilege_target:
 			OBJECT_P TYPECAST qualified_name_list
 			{
