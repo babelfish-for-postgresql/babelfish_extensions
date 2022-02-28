@@ -94,3 +94,15 @@ go
 
 set quoted_identifier off;
 go
+
+create table t1(a int)
+go
+
+insert into t1 values(1)
+go
+
+select checksum(user_type_id) from sys.columns where object_id=OBJECT_ID('t1')
+go
+
+drop table t1;
+go

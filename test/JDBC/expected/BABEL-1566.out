@@ -211,3 +211,22 @@ go
 
 set quoted_identifier off;
 go
+
+create table t1(a int)
+go
+
+insert into t1 values(1)
+go
+~~ROW COUNT: 1~~
+
+
+select checksum(user_type_id) from sys.columns where object_id=OBJECT_ID('t1')
+go
+~~START~~
+int
+929643772
+~~END~~
+
+
+drop table t1;
+go
