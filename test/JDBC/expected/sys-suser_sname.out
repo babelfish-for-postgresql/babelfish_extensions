@@ -1,0 +1,32 @@
+SELECT SYS.SUSER_SNAME()
+GO
+~~START~~
+nvarchar
+jdbc_user
+~~END~~
+
+
+SELECT SYS.SUSER_SNAME(0x01)
+GO
+~~START~~
+nvarchar
+<NULL>
+~~END~~
+
+
+SELECT SYS.SUSER_SNAME(0x0P)
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: syntax error near '0x0' at line 1 and character position 23)~~
+
+
+DECLARE @id SYS.VARBINARY(85)
+SET @id = CAST(CAST((SELECT oid FROM pg_catalog.pg_roles WHERE rolname = 'jdbc_user') AS INT) AS SYS.VARBINARY(85))
+SELECT SYS.SUSER_SNAME(@id)
+GO
+~~START~~
+nvarchar
+jdbc_user
+~~END~~
+

@@ -27,10 +27,28 @@ RETURNS sys.NVARCHAR(128)
 AS 'babelfishpg_tsql', 'suser_name'
 LANGUAGE C IMMUTABLE PARALLEL RESTRICTED;
 
+-- Since SIDs are currently not supported in Babelfish, this essentially behaves the same as suser_name but 
+-- with a different input data type
+CREATE OR REPLACE FUNCTION sys.suser_sname(IN server_user_sid SYS.VARBINARY(85) DEFAULT NULL)
+RETURNS SYS.NVARCHAR(128)
+AS $$
+    SELECT sys.suser_name(CAST(server_user_sid AS INT)); 
+$$
+LANGUAGE SQL IMMUTABLE PARALLEL RESTRICTED;
+
 CREATE OR REPLACE FUNCTION sys.suser_id(IN login TEXT DEFAULT NULL)
 RETURNS OID
 AS 'babelfishpg_tsql', 'suser_id'
 LANGUAGE C IMMUTABLE PARALLEL RESTRICTED;
+
+-- Since SIDs are currently not supported in Babelfish, this essentially behaves the same as suser_id but 
+-- with different input/output data types. The second argument will be ignored as its functionality is not supported
+CREATE OR REPLACE FUNCTION sys.suser_sid(IN login SYS.SYSNAME DEFAULT NULL, IN Param2 INT DEFAULT NULL)
+RETURNS SYS.VARBINARY(85) 
+AS $$
+    SELECT CAST(CAST(sys.suser_id(login) AS INT) AS SYS.VARBINARY(85)); 
+$$
+LANGUAGE SQL IMMUTABLE PARALLEL RESTRICTED;
 
 -- Matches and returns object name to Oid
 CREATE OR REPLACE FUNCTION sys.OBJECT_NAME(IN object_id INT, IN database_id INT DEFAULT NULL)
