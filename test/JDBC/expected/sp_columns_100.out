@@ -181,12 +181,34 @@ go
 Use master
 go
 
+CREATE TABLE dbo.tidentityintbigwithareallylongtablenamewhickcausesbabelfishtoaddahashcodetothenamebecauseofdefault63 (
+	data_type_test CHAR(50) NULL
+	, test_scenario CHAR(60) NULL
+	, value_test BIGINT IDENTITY (202202081842, 100 ) NOT NULL
+	, inserted_dt DATETIME DEFAULT GETDATE()
+	, user_login CHAR(255) DEFAULT CURRENT_USER
+)
+GO
+
+EXEC [sys].sp_columns_100 'tidentityintbigwithareallylongtablenamewhickcausesbabelfishtoaddahashcodetothenamebecauseofdefault63', 'dbo', NULL, NULL, @ODBCVer = 3, @fUsePattern = 1
+GO
+~~START~~
+varchar#!#varchar#!#varchar#!#varchar#!#smallint#!#varchar#!#int#!#int#!#smallint#!#smallint#!#smallint#!#varchar#!#nvarchar#!#smallint#!#smallint#!#int#!#int#!#varchar#!#smallint#!#smallint#!#smallint#!#smallint#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#tinyint
+master#!#dbo#!#tidentityintbigwithareallylongteba669a8099c8b172adc8a937e6cf71d#!#data_type_test#!#1#!#char#!#50#!#50#!#<NULL>#!#<NULL>#!#1#!#<NULL>#!#<NULL>#!#1#!#<NULL>#!#50#!#1#!#YES#!#0#!#0#!#0#!#0#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#39
+master#!#dbo#!#tidentityintbigwithareallylongteba669a8099c8b172adc8a937e6cf71d#!#test_scenario#!#1#!#char#!#60#!#60#!#<NULL>#!#<NULL>#!#1#!#<NULL>#!#<NULL>#!#1#!#<NULL>#!#60#!#2#!#YES#!#0#!#0#!#0#!#0#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#39
+master#!#dbo#!#tidentityintbigwithareallylongteba669a8099c8b172adc8a937e6cf71d#!#value_test#!#-5#!#bigint#!#19#!#8#!#0#!#10#!#0#!#<NULL>#!#<NULL>#!#-5#!#<NULL>#!#<NULL>#!#3#!#NO#!#0#!#0#!#0#!#1#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#108
+master#!#dbo#!#tidentityintbigwithareallylongteba669a8099c8b172adc8a937e6cf71d#!#inserted_dt#!#93#!#datetime#!#23#!#16#!#3#!#<NULL>#!#1#!#<NULL>#!#getdate()#!#9#!#3#!#<NULL>#!#4#!#YES#!#0#!#0#!#0#!#0#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#111
+master#!#dbo#!#tidentityintbigwithareallylongteba669a8099c8b172adc8a937e6cf71d#!#user_login#!#1#!#char#!#255#!#255#!#<NULL>#!#<NULL>#!#1#!#<NULL>#!#user_name_sysname()#!#1#!#<NULL>#!#255#!#5#!#YES#!#0#!#0#!#0#!#0#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#39
+~~END~~
+
+
 -- Cleanup
 drop table var;
 drop table dates;
 drop table nums;
 drop table vart;
 drop table maxx;
+drop table tidentityintbigwithareallylongtablenamewhickcausesbabelfishtoaddahashcodetothenamebecauseofdefault63;
 drop type char_t;
 drop type nchar_t;
 drop type varchar_t;
