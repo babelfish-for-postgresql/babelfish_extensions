@@ -2384,9 +2384,13 @@ static void bbf_ProcessUtility(PlannedStmt *pstmt,
 				}
 				else if (isuser)
 				{
-					Oid		datdba;
+					const char	*db_name;
+					const char	*dbo_name;
+					Oid			dbo_id;
 
-					datdba = get_role_oid("sysadmin", false);
+					db_name = get_cur_db_name();
+					dbo_name = get_dbo_role_name(db_name);
+					dbo_id = get_role_oid(dbo_name, false);
 
 					/*
 					 * Check if the current user has privileges.
@@ -2394,11 +2398,9 @@ static void bbf_ProcessUtility(PlannedStmt *pstmt,
 					foreach(option, user_options)
 					{
 						DefElem		*defel = (DefElem *) lfirst(option);
-						const char	*dbo_name;
 						char		*user_name;
 						char		*cur_user;
 
-						dbo_name = get_dbo_role_name(get_cur_db_name());
 						user_name = stmt->role->rolename;
 						cur_user = GetUserNameFromId(GetUserId(), false);
 						if (strcmp(defel->defname, "default_schema") == 0)
@@ -2419,10 +2421,10 @@ static void bbf_ProcessUtility(PlannedStmt *pstmt,
 						}
 					}
 
-					/* Set current user to sysadmin for alter permissions */
+					/* Set current user to dbo for alter permissions */
 					prev_current_user = GetUserId();
 
-					SetCurrentRoleId(datdba, false);
+					SetCurrentRoleId(dbo_id, false);
 
 					PG_TRY();
 					{

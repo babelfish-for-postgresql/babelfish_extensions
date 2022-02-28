@@ -382,7 +382,6 @@ drop_bbf_authid_user_ext_by_rolname(const char *rolname)
 {
 	Relation	bbf_authid_user_ext_rel;
 	HeapTuple	tuple;
-	HeapTuple	authtuple;
 	ScanKeyData	scanKey;
 	SysScanDesc	scan;
 
@@ -891,15 +890,8 @@ create_bbf_authid_user_ext(CreateRoleStmt *stmt, bool has_schema, bool has_login
 		}
 	}
 
-	if (has_schema)
-	{
-		char			*physical_schema;
-
-		if (!default_schema)
-			default_schema = "dbo";
-
-		physical_schema = get_physical_name(get_cur_db_name(), default_schema);
-	}
+	if (has_schema && !default_schema)
+		default_schema = "dbo";
 
 	if (has_login)
 	{
@@ -957,7 +949,6 @@ add_existing_users_to_catalog(PG_FUNCTION_ARGS)
 	StringInfoData  query;
 	List            *parsetree_list;
 	Node            *stmt;
-	RoleSpec        *tmp;
 	PlannedStmt     *wrapper;
 	const char      *prev_current_user;
 	int             saved_dialect = sql_dialect;
