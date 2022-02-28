@@ -503,7 +503,10 @@ BEGIN
 			out_ordinal_position as ORDINAL_POSITION,
 			out_is_nullable as IS_NULLABLE,
 			out_ss_data_type as SS_DATA_TYPE
-	from sys.sp_columns_100_internal(@table_name, @table_owner,@table_qualifier, @column_name, @NameScope,@ODBCVer, @fusepattern);
+	from sys.sp_columns_100_internal(sys.babelfish_truncate_identifier(@table_name),
+		sys.babelfish_truncate_identifier(@table_owner),
+		sys.babelfish_truncate_identifier(@table_qualifier),
+		sys.babelfish_truncate_identifier(@column_name), @NameScope, @ODBCVer, @fusepattern);
 END;
 $$
 LANGUAGE 'pltsql';
@@ -548,7 +551,10 @@ BEGIN
 			out_ss_xml_schemacollection_schema_name as SS_XML_SCHEMACOLLECTION_SCHEMA_NAME,
 			out_ss_xml_schemacollection_name as SS_XML_SCHEMACOLLECTION_NAME,
 			out_ss_data_type as SS_DATA_TYPE
-	from sys.sp_columns_100_internal(@table_name, @table_owner,@table_qualifier, @column_name, @NameScope,@ODBCVer, @fusepattern);
+	from sys.sp_columns_100_internal(sys.babelfish_truncate_identifier(@table_name),
+		sys.babelfish_truncate_identifier(@table_owner),
+		sys.babelfish_truncate_identifier(@table_qualifier),
+		sys.babelfish_truncate_identifier(@column_name), @NameScope, @ODBCVer, @fusepattern);
 END;
 $$
 LANGUAGE 'pltsql';

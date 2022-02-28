@@ -103,12 +103,25 @@ go
 Use master
 go
 
+CREATE TABLE dbo.tidentityintbigwithareallylongtablenamewhickcausesbabelfishtoaddahashcodetothenamebecauseofdefault63 (
+	data_type_test CHAR(50) NULL
+	, test_scenario CHAR(60) NULL
+	, value_test BIGINT IDENTITY (202202081842, 100 ) NOT NULL
+	, inserted_dt DATETIME DEFAULT GETDATE()
+	, user_login CHAR(255) DEFAULT CURRENT_USER
+)
+GO
+
+EXEC [sys].sp_columns_100 'tidentityintbigwithareallylongtablenamewhickcausesbabelfishtoaddahashcodetothenamebecauseofdefault63', 'dbo', NULL, NULL, @ODBCVer = 3, @fUsePattern = 1
+GO
+
 -- Cleanup
 drop table var;
 drop table dates;
 drop table nums;
 drop table vart;
 drop table maxx;
+drop table tidentityintbigwithareallylongtablenamewhickcausesbabelfishtoaddahashcodetothenamebecauseofdefault63;
 drop type char_t;
 drop type nchar_t;
 drop type varchar_t;
