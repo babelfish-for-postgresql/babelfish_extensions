@@ -3888,6 +3888,30 @@ privilege_target:
 			}
 		;
 
+GrantStmt:
+			GRANT privileges ON qualified_name_list '(' columnList ')' 
+			TO grantee_list opt_grant_grant_option
+				{
+					GrantStmt *n = makeNode(GrantStmt);
+					ListCell *lc;
+
+					foreach(lc, $2)
+					{
+						AccessPriv *ap = (AccessPriv *) lfirst(lc);
+						ap->cols = $6;
+					}
+
+					n->is_grant = true;
+					n->privileges = $2;
+					n->targtype = ACL_TARGET_OBJECT;
+					n->objtype = OBJECT_TABLE;
+					n->objects = $4;
+					n->grantees = $9;
+					n->grant_option = $10;
+					$$ = (Node*)n;
+				}
+		;
+	
 RevokeStmt:
             REVOKE privileges ON privilege_target
             TO grantee_list opt_drop_behavior
@@ -3917,4 +3941,92 @@ RevokeStmt:
                     n->behavior = $10;
                     $$ = (Node *)n;
                 }
+			| REVOKE privileges ON qualified_name_list '(' columnList ')'
+			FROM grantee_list opt_drop_behavior
+				{
+					GrantStmt *n = makeNode(GrantStmt);
+					ListCell *lc;
+
+					foreach(lc, $2)
+					{
+						AccessPriv *ap = (AccessPriv *) lfirst(lc);
+						ap->cols = $6;
+					}
+
+					n->is_grant = false;
+					n->grant_option = false;
+					n->privileges = $2;
+					n->targtype = ACL_TARGET_OBJECT;
+					n->objtype = OBJECT_TABLE;
+					n->objects = $4;
+					n->grantees = $9;
+					n->behavior = $10;
+					$$ = (Node *)n;
+				}
+			| REVOKE GRANT OPTION FOR privileges ON qualified_name_list
+			'(' columnList ')' FROM grantee_list opt_drop_behavior
+				{
+					GrantStmt *n = makeNode(GrantStmt);
+					ListCell *lc;
+
+					foreach(lc, $5)
+					{
+						AccessPriv *ap = (AccessPriv *) lfirst(lc);
+						ap->cols = $9;
+					}
+
+					n->is_grant = false;
+					n->grant_option = true;
+					n->privileges = $5;
+					n->targtype = ACL_TARGET_OBJECT;
+					n->objtype = OBJECT_TABLE;
+					n->objects = $7;
+					n->grantees = $12;
+					n->behavior = $13;
+					$$ = (Node *)n;
+				}
+			| REVOKE privileges ON qualified_name_list '(' columnList ')'
+			TO grantee_list opt_drop_behavior
+				{
+                    GrantStmt *n = makeNode(GrantStmt);
+					ListCell *lc;
+
+					foreach(lc, $2)
+					{
+						AccessPriv *ap = (AccessPriv *) lfirst(lc);
+						ap->cols = $6;
+					}
+
+                    n->is_grant = false;
+                    n->grant_option = false;
+                    n->privileges = $2;
+                    n->targtype = ACL_TARGET_OBJECT;
+                    n->objtype = OBJECT_TABLE;
+                    n->objects = $4;
+                    n->grantees = $9;
+                    n->behavior = $10;
+                    $$ = (Node *)n;
+                }
+			| REVOKE GRANT OPTION FOR privileges ON qualified_name_list
+			'(' columnList ')' TO grantee_list opt_drop_behavior
+	            {
+                    GrantStmt *n = makeNode(GrantStmt);
+					ListCell *lc;
+
+					foreach(lc, $5)
+					{
+						AccessPriv *ap = (AccessPriv *) lfirst(lc);
+						ap->cols = $9;
+					}
+
+                    n->is_grant = false;
+                    n->grant_option = true;
+                    n->privileges = $5;
+                    n->targtype = ACL_TARGET_OBJECT;
+                    n->objtype = OBJECT_TABLE;
+                    n->objects = $7;
+                    n->grantees = $12;
+                    n->behavior = $13;
+                    $$ = (Node *)n;
+                }			
         ;
