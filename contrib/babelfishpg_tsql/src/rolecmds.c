@@ -410,16 +410,16 @@ drop_bbf_authid_user_ext_by_rolname(const char *rolname)
 }
 
 void
-drop_related_bbf_users(const char *dbo_role,
-					   const char *db_owner_role,
-					   const char *guest)
+drop_related_bbf_users(List *db_users)
 {
-	if (dbo_role)
-		drop_bbf_authid_user_ext_by_rolname(dbo_role);
-	if (db_owner_role)
-		drop_bbf_authid_user_ext_by_rolname(db_owner_role);
-	if (guest)
-		drop_bbf_authid_user_ext_by_rolname(guest);
+	ListCell *elem;
+
+	foreach (elem, db_users)
+	{
+		char *user_name = (char *) lfirst(elem);
+
+		drop_bbf_authid_user_ext_by_rolname(user_name);
+	}
 }
 
 static void

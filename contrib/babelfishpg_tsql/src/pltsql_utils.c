@@ -613,24 +613,28 @@ update_CreateSchemaStmt(Node *n, const char *schemaname, const char *authrole)
 }
 
 void
-update_DropOwnedStmt(Node *n, const char **roles, int role_num)
+update_DropOwnedStmt(Node *n, List *role_list)
 {
-	DropOwnedStmt *stmt = (DropOwnedStmt *) n;
-	List *role_list = NIL;
-	if (!IsA(stmt, DropOwnedStmt))
-		ereport(ERROR, (errcode(ERRCODE_SYNTAX_ERROR), errmsg("query is not a DropOwnedStmt")));
+	DropOwnedStmt	*stmt = (DropOwnedStmt *) n;
+	List			*rolespec_list = NIL;
+	ListCell		*elem;
 
-	for (int i = 0; i < role_num; i++)
+	if (!IsA(stmt, DropOwnedStmt))
+		ereport(ERROR,
+				(errcode(ERRCODE_SYNTAX_ERROR),
+				 errmsg("query is not a DropOwnedStmt")));
+
+	foreach (elem, role_list)
 	{
+		char *name = (char *) lfirst(elem);
 		RoleSpec *tmp = makeNode(RoleSpec);
-		Assert(roles[i]);
 
 		tmp->roletype = ROLESPEC_CSTRING;
 		tmp->location = -1;
-		tmp->rolename = pstrdup(roles[i]);
-		role_list = lappend(role_list, tmp);
+		tmp->rolename = pstrdup(name);
+		rolespec_list = lappend(rolespec_list, tmp);
 	}
-	stmt->roles = role_list;
+	stmt->roles = rolespec_list;
 }
 
 void

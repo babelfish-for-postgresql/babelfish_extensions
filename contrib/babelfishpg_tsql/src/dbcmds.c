@@ -45,9 +45,9 @@ static List	*gen_createdb_subcmds(const char *schema,
 								  const char *db_owner,
 								  const char *guest);
 static List *gen_dropdb_subcmds(const char *schema,
-								const char *dbo,
 								const char *db_owner,
-								const char *guest);
+								const char *dbo,
+								List *db_users);
 static Oid do_create_bbf_db(const char *dbname, List *options, const char *owner);
 static List *grant_guest_to_logins(StringInfoData *query);
 static void drop_related_bbf_namespace_entries(int16 dbid);
@@ -164,57 +164,70 @@ gen_createdb_subcmds(const char *schema, const char *dbo, const char *db_owner, 
  * Generate subcmds for DROP DATABASE. Note 'guest' can be NULL.
  */
 static List *
-gen_dropdb_subcmds(const char *schema, const char *dbo, const char *db_owner, const char *guest)
+gen_dropdb_subcmds(const char *schema,
+				   const char *db_owner,
+				   const char *dbo,
+				   List *db_users)
 {
-	StringInfoData query;
-	List *res;
-	Node *stmt;
-	int i = 0;
-	int expected_stmt = guest ? 5 : 4;
-
-	const char **roles = (const char **) palloc(sizeof(const char *) * 3);
-	roles[0] = db_owner;
-	roles[1] = dbo;
-	roles[2] = guest;
+	StringInfoData		query;
+	List				*stmt_list;
+	ListCell			*elem;
+	Node				*stmt;
+	int					expected_stmts = 4;
+	int					i = 0;
 
 	initStringInfo(&query);
-
 	appendStringInfo(&query, "DROP SCHEMA dummy CASCADE; ");
-	if (guest)
-		appendStringInfo(&query, "DROP OWNED BY dummy, dummy, dummy CASCADE; ");
-	else
-		appendStringInfo(&query, "DROP OWNED BY dummy, dummy CASCADE; ");
-	appendStringInfo(&query, "DROP ROLE dummy; ");
-	appendStringInfo(&query, "DROP ROLE dummy; ");
-	if (guest)
-		appendStringInfo(&query, "DROP ROLE dummy; ");
-	res = raw_parser(query.data);
+	/* First drop guest user and custom users if they exist */
+	foreach (elem, db_users)
+	{
+		char *user_name = (char *) lfirst(elem);
 
-	if (list_length(res) != expected_stmt)
+		if (strcmp(user_name, db_owner) != 0 && strcmp(user_name, dbo) != 0)
+		{
+			appendStringInfo(&query, "DROP OWNED BY dummy CASCADE; ");
+			appendStringInfo(&query, "DROP ROLE dummy; ");
+			expected_stmts += 2;
+		}
+	}
+	/* Then drop db_owner and dbo in that order */
+	appendStringInfo(&query, "DROP OWNED BY dummy, dummy CASCADE; ");
+	appendStringInfo(&query, "DROP ROLE dummy; ");
+	appendStringInfo(&query, "DROP ROLE dummy; ");
+
+	stmt_list = raw_parser(query.data);
+	if (list_length(stmt_list) != expected_stmts)
 		ereport(ERROR,
 				(errcode(ERRCODE_SYNTAX_ERROR),
-				 errmsg("Expected %d statement but get %d statements after parsing",
-						expected_stmt, list_length(res))));
+				 errmsg("Expected %d statements, but got %d statements after parsing",
+						expected_stmts, list_length(stmt_list))));
 
-	stmt = parsetree_nth_stmt(res, i++);
+	stmt = parsetree_nth_stmt(stmt_list, i++);
 	update_DropStmt(stmt, schema);
 
-	stmt = parsetree_nth_stmt(res, i++);
-	update_DropOwnedStmt(stmt, roles, guest ? 3 : 2);
-
-	stmt = parsetree_nth_stmt(res, i++);
-	update_DropRoleStmt(stmt, db_owner);
-
-	stmt = parsetree_nth_stmt(res, i++);
-	update_DropRoleStmt(stmt, dbo);
-
-	if (guest)
+	foreach (elem, db_users)
 	{
-		stmt = parsetree_nth_stmt(res, i++);
-		update_DropRoleStmt(stmt, guest);
+		char *user_name = (char *) lfirst(elem);
+
+		if (strcmp(user_name, db_owner) != 0 && strcmp(user_name, dbo) != 0)
+		{
+			stmt = parsetree_nth_stmt(stmt_list, i++);
+			update_DropOwnedStmt(stmt, list_make1(user_name));
+
+			stmt = parsetree_nth_stmt(stmt_list, i++);
+			update_DropRoleStmt(stmt, user_name);
+		}
 	}
 
-	return res;
+	stmt = parsetree_nth_stmt(stmt_list, i++);
+	update_DropOwnedStmt(stmt, list_make2(db_owner, dbo));
+
+	stmt = parsetree_nth_stmt(stmt_list, i++);
+	update_DropRoleStmt(stmt, db_owner);
+	stmt = parsetree_nth_stmt(stmt_list, i++);
+	update_DropRoleStmt(stmt, dbo);
+
+	return stmt_list;
 }
 
 Oid
@@ -461,10 +474,10 @@ drop_bbf_db(const char *dbname, bool missing_ok, bool force_drop)
 	HeapTuple 			tuple;
 	Form_sysdatabases 	bbf_db;
 	int16				dbid;
-	const char 			*dbo_role;
-	const char        	*db_owner_role;
-	const char        	*guest;
 	const char        	*schema_name;
+	const char        	*db_owner_role;
+	const char        	*dbo_role;
+	List				*db_users_list;
 	List	   			*parsetree_list;
 	ListCell   			*parsetree_item;
 	const char			*prev_current_user;
@@ -539,8 +552,13 @@ drop_bbf_db(const char *dbname, bool missing_ok, bool force_drop)
 		schema_name = get_dbo_schema_name(dbname);
 		dbo_role = get_dbo_role_name(dbname);
 		db_owner_role = get_db_owner_name(dbname);
-		guest = get_guest_role_name(dbname);
-		parsetree_list = gen_dropdb_subcmds(schema_name, dbo_role, db_owner_role, guest);
+		/* Get a list of all the database's users */
+		db_users_list = get_authid_user_ext_db_users(dbname);
+
+		parsetree_list = gen_dropdb_subcmds(schema_name,
+											db_owner_role,
+											dbo_role,
+											db_users_list);
 
 		/* Run all subcommands */
 		foreach(parsetree_item, parsetree_list)
@@ -571,7 +589,7 @@ drop_bbf_db(const char *dbname, bool missing_ok, bool force_drop)
 		/* clean up bbf namespace catalog accordingly */
 		drop_related_bbf_namespace_entries(dbid);
 		/* clean up corresponding db users */
-		drop_related_bbf_users(dbo_role, db_owner_role, guest);
+		drop_related_bbf_users(db_users_list);
 
 		/* Release the session-level exclusive lock */
 		UnlockLogicalDatabaseForSession(dbid, ExclusiveLock, true);
