@@ -138,6 +138,32 @@ CREATE OPERATOR sys.>= (
     JOIN       = scalargejoinsel
 );
 
+CREATE OR REPLACE FUNCTION sys.datetime_larger(sys.DATETIME, sys.DATETIME)
+RETURNS sys.DATETIME
+AS 'timestamp_larger'
+LANGUAGE INTERNAL IMMUTABLE STRICT PARALLEL SAFE;
+
+CREATE OR REPLACE FUNCTION sys.datetime_smaller(sys.DATETIME, sys.DATETIME)
+RETURNS sys.DATETIME
+AS 'timestamp_smaller'
+LANGUAGE INTERNAL IMMUTABLE STRICT PARALLEL SAFE;
+
+CREATE OR REPLACE AGGREGATE sys.max(sys.DATETIME)
+(
+    sfunc = sys.datetime_larger,
+    stype = sys.datetime,
+    combinefunc = sys.datetime_larger,
+    parallel = safe
+);
+
+CREATE OR REPLACE AGGREGATE sys.min(sys.DATETIME)
+(
+    sfunc = sys.datetime_smaller,
+    stype = sys.datetime,
+    combinefunc = sys.datetime_smaller,
+    parallel = safe
+);
+
 -- datetime <-> int operators for datetime-int +/- arithmetic 
 CREATE FUNCTION sys.datetimeplint4(sys.DATETIME, INT4)
 RETURNS sys.DATETIME

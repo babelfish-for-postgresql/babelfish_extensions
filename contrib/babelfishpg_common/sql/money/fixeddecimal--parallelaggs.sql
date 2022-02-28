@@ -67,4 +67,16 @@ CREATE AGGREGATE sys.avg(FIXEDDECIMAL) (
     PARALLEL = SAFE
 );
 
+CREATE AGGREGATE sys.min(sys.smallmoney) (
+    SFUNC = sys.smallmoneysmaller,
+    STYPE = sys.smallmoney,
+    COMBINEFUNC = sys.smallmoneysmaller,
+    PARALLEL = SAFE
+);
 
+CREATE AGGREGATE sys.max(sys.smallmoney) (
+    SFUNC = sys.smallmoneylarger,
+    STYPE = sys.smallmoney,
+    COMBINEFUNC = sys.smallmoneylarger,
+    PARALLEL = SAFE
+);

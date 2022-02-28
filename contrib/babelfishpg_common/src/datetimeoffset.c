@@ -36,6 +36,8 @@ PG_FUNCTION_INFO_V1(datetimeoffset_le);
 PG_FUNCTION_INFO_V1(datetimeoffset_gt);
 PG_FUNCTION_INFO_V1(datetimeoffset_ge);
 PG_FUNCTION_INFO_V1(datetimeoffset_cmp);
+PG_FUNCTION_INFO_V1(datetimeoffset_larger);
+PG_FUNCTION_INFO_V1(datetimeoffset_smaller);
 
 PG_FUNCTION_INFO_V1(datetimeoffset_pl_interval);
 PG_FUNCTION_INFO_V1(datetimeoffset_mi_interval);
@@ -297,6 +299,34 @@ datetimeoffset_cmp(PG_FUNCTION_ARGS)
 	tsql_datetimeoffset *df1 = PG_GETARG_DATETIMEOFFSET(0);
 	tsql_datetimeoffset *df2 = PG_GETARG_DATETIMEOFFSET(1);
 	PG_RETURN_INT32(datetimeoffset_cmp_internal(df1, df2));
+}
+
+Datum
+datetimeoffset_smaller(PG_FUNCTION_ARGS)
+{
+	tsql_datetimeoffset *df1 = PG_GETARG_DATETIMEOFFSET(0);
+	tsql_datetimeoffset *df2 = PG_GETARG_DATETIMEOFFSET(1);
+	tsql_datetimeoffset *result = (tsql_datetimeoffset *) palloc(DATETIMEOFFSET_LEN);
+
+	if (datetimeoffset_cmp_internal(df1, df2) < 0)
+		*result = *df1;
+	else
+		*result = *df2;
+	PG_RETURN_DATETIMEOFFSET(result);
+}
+
+Datum
+datetimeoffset_larger(PG_FUNCTION_ARGS)
+{
+	tsql_datetimeoffset *df1 = PG_GETARG_DATETIMEOFFSET(0);
+	tsql_datetimeoffset *df2 = PG_GETARG_DATETIMEOFFSET(1);
+	tsql_datetimeoffset *result = (tsql_datetimeoffset *) palloc(DATETIMEOFFSET_LEN);
+
+	if (datetimeoffset_cmp_internal(df1, df2) > 0)
+		*result = *df1;
+	else
+		*result = *df2;
+	PG_RETURN_DATETIMEOFFSET(result);
 }
 
 /* datetimeoffset_pl_interval()

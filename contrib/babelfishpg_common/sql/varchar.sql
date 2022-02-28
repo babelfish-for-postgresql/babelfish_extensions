@@ -241,13 +241,17 @@ LANGUAGE INTERNAL IMMUTABLE STRICT PARALLEL SAFE;
 CREATE OR REPLACE AGGREGATE sys.max(sys.VARCHAR)
 (
   sfunc = sys.varchar_larger,
-  stype = sys.varchar
+  stype = sys.varchar,
+  combinefunc = sys.varchar_larger,
+  parallel = safe
 );
 
 CREATE OR REPLACE AGGREGATE sys.min(sys.VARCHAR)
 (
   sfunc = sys.varchar_smaller,
-  stype = sys.varchar
+  stype = sys.varchar,
+  combinefunc = sys.varchar_smaller,
+  parallel = safe
 );
 
 SET enable_domain_typmod = TRUE;
@@ -277,11 +281,15 @@ LANGUAGE INTERNAL IMMUTABLE STRICT PARALLEL SAFE;
 CREATE OR REPLACE AGGREGATE sys.max(sys.NVARCHAR)
 (
   sfunc = sys.nvarchar_larger,
-  stype = sys.nvarchar
+  stype = sys.nvarchar,
+  combinefunc = sys.nvarchar_larger,
+  parallel = safe
 );
 
 CREATE OR REPLACE AGGREGATE sys.min(sys.NVARCHAR)
 (
   sfunc = sys.nvarchar_smaller,
-  stype = sys.nvarchar
+  stype = sys.nvarchar,
+  combinefunc = sys.nvarchar_smaller,
+  parallel = safe
 );

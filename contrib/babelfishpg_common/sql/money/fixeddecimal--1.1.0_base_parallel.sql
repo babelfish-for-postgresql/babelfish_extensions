@@ -1971,3 +1971,12 @@ CREATE OPERATOR sys./ (
     PROCEDURE  = int2fixeddecimaldiv_smallmoney
 );
 
+CREATE FUNCTION sys.smallmoneylarger(sys.SMALLMONEY, sys.SMALLMONEY)
+RETURNS sys.SMALLMONEY
+AS 'babelfishpg_money', 'fixeddecimallarger'
+LANGUAGE C IMMUTABLE STRICT PARALLEL SAFE;
+
+CREATE FUNCTION sys.smallmoneysmaller(sys.SMALLMONEY, sys.SMALLMONEY)
+RETURNS sys.SMALLMONEY
+AS 'babelfishpg_money', 'fixeddecimalsmaller'
+LANGUAGE C IMMUTABLE STRICT PARALLEL SAFE;

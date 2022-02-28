@@ -429,3 +429,62 @@ SELECT (leftarg & ~rightarg) | (~leftarg & rightarg);
 $$
 LANGUAGE SQL;
 
+CREATE OR REPLACE FUNCTION sys.bit_unsupported_max(IN b1 sys.BIT, IN b2 sys.BIT)
+RETURNS sys.BIT
+AS $$
+BEGIN
+   RAISE EXCEPTION 'Operand data type bit is invalid for max operator.';
+END;
+$$ LANGUAGE plpgsql IMMUTABLE;
+
+CREATE OR REPLACE FUNCTION sys.bit_unsupported_min(IN b1 sys.BIT, IN b2 sys.BIT)
+RETURNS sys.BIT
+AS $$
+BEGIN
+   RAISE EXCEPTION 'Operand data type bit is invalid for min operator.';
+END;
+$$ LANGUAGE plpgsql IMMUTABLE;
+
+CREATE OR REPLACE FUNCTION sys.bit_unsupported_sum(IN b1 sys.BIT, IN b2 sys.BIT)
+RETURNS sys.BIT
+AS $$
+BEGIN
+   RAISE EXCEPTION 'Operand data type bit is invalid for sum operator.';
+END;
+$$ LANGUAGE plpgsql IMMUTABLE;
+
+CREATE OR REPLACE FUNCTION sys.bit_unsupported_avg(IN b1 sys.BIT, IN b2 sys.BIT)
+RETURNS sys.BIT
+AS $$
+BEGIN
+   RAISE EXCEPTION 'Operand data type bit is invalid for avg operator.';
+END;
+$$ LANGUAGE plpgsql IMMUTABLE;
+
+CREATE OR REPLACE AGGREGATE sys.max(sys.BIT)
+(
+    sfunc = sys.bit_unsupported_max,
+    stype = sys.bit,
+    parallel = safe
+);
+
+CREATE OR REPLACE AGGREGATE sys.min(sys.BIT)
+(
+    sfunc = sys.bit_unsupported_min,
+    stype = sys.bit,
+    parallel = safe
+);
+
+CREATE OR REPLACE AGGREGATE sys.sum(sys.BIT)
+(
+    sfunc = sys.bit_unsupported_sum,
+    stype = sys.bit,
+    parallel = safe
+);
+
+CREATE OR REPLACE AGGREGATE sys.avg(sys.BIT)
+(
+    sfunc = sys.bit_unsupported_avg,
+    stype = sys.bit,
+    parallel = safe
+);

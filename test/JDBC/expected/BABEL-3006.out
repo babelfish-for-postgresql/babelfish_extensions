@@ -1,0 +1,233 @@
+use master;
+go
+
+create table t3006_i(i int, bi bigint, si smallint, ti tinyint);
+insert into t3006_i values (1, 1, 1, 1), (2, 2, 2, 2), (3, 3, 3, 3);
+go
+~~ROW COUNT: 3~~
+
+
+select min(i), min(bi), min(si), min(ti) from t3006_i;
+go
+~~START~~
+int#!#bigint#!#smallint#!#tinyint
+1#!#1#!#1#!#1
+~~END~~
+
+
+select max(i), max(bi), max(si), max(ti) from t3006_i;
+go
+~~START~~
+int#!#bigint#!#smallint#!#tinyint
+3#!#3#!#3#!#3
+~~END~~
+
+
+select cast(pg_typeof(m) as varchar(20)) i from (select min(i) as m from t3006_i) tt
+select cast(pg_typeof(m) as varchar(20)) bi from (select min(bi) as m from t3006_i) tt
+select cast(pg_typeof(m) as varchar(20)) si from (select min(si) as m from t3006_i) tt
+select cast(pg_typeof(m) as varchar(20)) ti from (select min(ti) as m from t3006_i) tt
+go
+~~START~~
+varchar
+integer
+~~END~~
+
+~~START~~
+varchar
+bigint
+~~END~~
+
+~~START~~
+varchar
+smallint
+~~END~~
+
+~~START~~
+varchar
+tinyint
+~~END~~
+
+
+select cast(pg_typeof(m) as varchar(20)) i from (select max(i) as m from t3006_i) tt
+select cast(pg_typeof(m) as varchar(20)) bi from (select max(bi) as m from t3006_i) tt
+select cast(pg_typeof(m) as varchar(20)) si from (select max(si) as m from t3006_i) tt
+select cast(pg_typeof(m) as varchar(20)) ti from (select max(ti) as m from t3006_i) tt
+go
+~~START~~
+varchar
+integer
+~~END~~
+
+~~START~~
+varchar
+bigint
+~~END~~
+
+~~START~~
+varchar
+smallint
+~~END~~
+
+~~START~~
+varchar
+tinyint
+~~END~~
+
+
+create table t3006_f(r real, f float);
+insert into t3006_f values (1.1, 1.1), (2.2, 2.2), (3.3, 3.3);
+go
+~~ROW COUNT: 3~~
+
+
+select min(r), min(f) from t3006_f;
+go
+~~START~~
+real#!#float
+1.1#!#1.1
+~~END~~
+
+
+select max(r), max(f) from t3006_f;
+go
+~~START~~
+real#!#float
+3.3#!#3.3
+~~END~~
+
+
+select cast(pg_typeof(m) as varchar(20)) r from (select min(r) as m from t3006_f) tt
+select cast(pg_typeof(m) as varchar(20)) f from (select min(f) as m from t3006_f) tt
+go
+~~START~~
+varchar
+real
+~~END~~
+
+~~START~~
+varchar
+double precision
+~~END~~
+
+
+select cast(pg_typeof(m) as varchar(20)) r from (select max(r) as m from t3006_f) tt
+select cast(pg_typeof(m) as varchar(20)) f from (select max(f) as m from t3006_f) tt
+go
+~~START~~
+varchar
+real
+~~END~~
+
+~~START~~
+varchar
+double precision
+~~END~~
+
+
+create table t3006_m(m money, sm smallmoney, d decimal(10,2));
+insert into t3006_m values (1.1, 1.1, 1.1), (2.2, 2.2, 2.2), (3.3, 3.3, 3.3);
+go
+~~ROW COUNT: 3~~
+
+
+select min(m), min(sm), min(d) from t3006_m;
+go
+~~START~~
+money#!#smallmoney#!#numeric
+1.1000#!#1.1000#!#1.10
+~~END~~
+
+
+select max(m), max(sm), max(d) from t3006_m;
+go
+~~START~~
+money#!#smallmoney#!#numeric
+3.3000#!#3.3000#!#3.30
+~~END~~
+
+
+select cast(pg_typeof(m) as varchar(20)) m from (select min(m) as m from t3006_m) tt
+select cast(pg_typeof(m) as varchar(20)) sm from (select min(sm) as m from t3006_m) tt
+select cast(pg_typeof(m) as varchar(20)) d from (select min(d) as m from t3006_m) tt
+go
+~~START~~
+varchar
+fixeddecimal
+~~END~~
+
+~~START~~
+varchar
+smallmoney
+~~END~~
+
+~~START~~
+varchar
+numeric
+~~END~~
+
+
+select cast(pg_typeof(m) as varchar(20)) m from (select max(m) as m from t3006_m) tt
+select cast(pg_typeof(m) as varchar(20)) sm from (select max(sm) as m from t3006_m) tt
+select cast(pg_typeof(m) as varchar(20)) d from (select max(d) as m from t3006_m) tt
+go
+~~START~~
+varchar
+fixeddecimal
+~~END~~
+
+~~START~~
+varchar
+smallmoney
+~~END~~
+
+~~START~~
+varchar
+numeric
+~~END~~
+
+
+create table t3006_b(b bit);
+insert into t3006_b values (1), (2);
+go
+~~ROW COUNT: 2~~
+
+
+select min(b) from t3006_b;
+go
+~~START~~
+bit
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Operand data type bit is invalid for min operator.)~~
+
+select max(b) from t3006_b;
+go
+~~START~~
+bit
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Operand data type bit is invalid for max operator.)~~
+
+select sum(b) from t3006_b;
+go
+~~START~~
+bit
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Operand data type bit is invalid for sum operator.)~~
+
+select avg(b) from t3006_b;
+go
+~~START~~
+bit
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Operand data type bit is invalid for avg operator.)~~
+
+
+drop table t3006_i;
+drop table t3006_f;
+drop table t3006_m;
+drop table t3006_b;
+go

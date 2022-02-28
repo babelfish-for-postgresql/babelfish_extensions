@@ -162,6 +162,32 @@ DEFAULT FOR TYPE sys.DATETIME2 USING hash AS
     OPERATOR    1   =  (sys.DATETIME2, sys.DATETIME2),
     FUNCTION    1   datetime2_hash(sys.DATETIME2);
 
+CREATE OR REPLACE FUNCTION sys.datetime2_larger(sys.DATETIME2, sys.DATETIME2)
+RETURNS sys.DATETIME2
+AS 'timestamp_larger'
+LANGUAGE INTERNAL IMMUTABLE STRICT PARALLEL SAFE;
+
+CREATE OR REPLACE FUNCTION sys.datetime2_smaller(sys.DATETIME2, sys.DATETIME2)
+RETURNS sys.DATETIME2
+AS 'timestamp_smaller'
+LANGUAGE INTERNAL IMMUTABLE STRICT PARALLEL SAFE;
+
+CREATE OR REPLACE AGGREGATE sys.max(sys.DATETIME2)
+(
+    sfunc = sys.datetime2_larger,
+    stype = sys.datetime2,
+    combinefunc = sys.datetime2_larger,
+    parallel = safe
+);
+
+CREATE OR REPLACE AGGREGATE sys.min(sys.DATETIME2)
+(
+    sfunc = sys.datetime2_smaller,
+    stype = sys.datetime2,
+    combinefunc = sys.datetime2_smaller,
+    parallel = safe
+);
+
 -- cast TO datetime2
 CREATE OR REPLACE FUNCTION sys.timestamp2datetime2(TIMESTAMP)
 RETURNS DATETIME2
