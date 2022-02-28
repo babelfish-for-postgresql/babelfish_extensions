@@ -130,6 +130,7 @@ extern Oid get_authid_user_ext_oid(void);
 extern Oid get_authid_user_ext_idx_oid(void);
 extern char *get_authid_user_ext_physical_name(const char *db_name, const char *login_name);
 extern char *get_authid_user_ext_schema_name(const char *db_name, const char *user_name);
+extern List *get_authid_user_ext_db_users(const char *db_name);
 
 /* MUST comply with babelfish_authid_user_ext table */
 typedef struct FormData_authid_user_ext

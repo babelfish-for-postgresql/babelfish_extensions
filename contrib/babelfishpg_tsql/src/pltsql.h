@@ -1883,7 +1883,7 @@ extern void update_AlterTableStmt(Node *n, const char *tbl_schema, const char *n
 extern void update_CreateRoleStmt(Node *n, const char *role, const char *member, const char *addto);
 extern void update_AlterRoleStmt(Node *n, RoleSpec *role);
 extern void update_CreateSchemaStmt(Node *n, const char *schemaname, const char *authrole);
-extern void update_DropOwnedStmt(Node *n, const char **roles, int role_num);
+extern void update_DropOwnedStmt(Node *n, List *role_list);
 extern void update_DropRoleStmt(Node *n, const char *role);
 extern void update_DropStmt(Node *n, const char *object);
 extern void update_GrantRoleStmt(Node *n, List *privs, List *roles);

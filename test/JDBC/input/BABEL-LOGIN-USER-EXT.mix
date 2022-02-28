@@ -250,6 +250,11 @@ GO
 USE db1;
 GO
 
+SELECT rolname, orig_username, login_name, database_name, default_schema_name
+FROM sys.babelfish_authid_user_ext
+ORDER BY rolname;
+GO
+
 SELECT user_name();
 GO
 
@@ -290,6 +295,11 @@ USE MASTER;
 GO
 
 DROP DATABASE db1;
+GO
+
+SELECT rolname, orig_username, login_name, database_name, default_schema_name
+FROM sys.babelfish_authid_user_ext
+ORDER BY rolname;
 GO
 
 DROP LOGIN login1;
@@ -379,7 +389,17 @@ GO
 DROP DATABASE db1;
 GO
 
+SELECT rolname, orig_username, login_name, database_name, default_schema_name
+FROM sys.babelfish_authid_user_ext
+ORDER BY rolname;
+GO
+
 DROP DATABASE db2;
+GO
+
+SELECT rolname, orig_username, login_name, database_name, default_schema_name
+FROM sys.babelfish_authid_user_ext
+ORDER BY rolname;
 GO
 
 -- psql

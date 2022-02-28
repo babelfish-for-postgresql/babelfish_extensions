@@ -734,6 +734,46 @@ get_authid_user_ext_schema_name(const char *db_name, const char *user)
 	return schema_name;
 }
 
+List *
+get_authid_user_ext_db_users(const char *db_name)
+{
+	Relation		bbf_authid_user_ext_rel;
+	HeapTuple		tuple;
+	ScanKeyData		key;
+	TableScanDesc	scan;
+	List			*db_users_list = NIL;
+
+	if (!db_name)
+		return NULL;
+
+	bbf_authid_user_ext_rel = table_open(get_authid_user_ext_oid(),
+										 RowExclusiveLock);
+
+	ScanKeyInit(&key,
+				Anum_bbf_authid_user_ext_database_name,
+				BTEqualStrategyNumber, F_TEXTEQ,
+				CStringGetTextDatum(db_name));
+
+	scan = table_beginscan_catalog(bbf_authid_user_ext_rel, 1, &key);
+
+	tuple = heap_getnext(scan, ForwardScanDirection);
+	while (HeapTupleIsValid(tuple))
+	{
+		char *user_name;
+		Form_authid_user_ext userform;
+
+		userform = (Form_authid_user_ext) GETSTRUCT(tuple);
+		user_name = pstrdup(NameStr(userform->rolname));
+		db_users_list = lappend(db_users_list, user_name);
+		tuple = heap_getnext(scan, ForwardScanDirection);
+	}
+
+	table_endscan(scan);
+	table_close(bbf_authid_user_ext_rel, RowExclusiveLock);
+
+	return db_users_list;
+}
+
 /*****************************************
  * 			Metadata Check
  * ---------------------------------------
