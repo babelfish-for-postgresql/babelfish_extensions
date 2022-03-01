@@ -39,7 +39,6 @@ bool	tds_ssl_encrypt = false;
 int 	tds_default_protocol_version = 0;
 int32_t tds_default_packet_size = 4096;
 int	tds_debug_log_level = 1;
-bool	tds_enable_db_session_property = true;
 #ifdef FAULT_INJECTOR
 static bool TdsFaultInjectionEnabled = false;
 #endif
@@ -273,16 +272,6 @@ TdsDefineGucs(void)
 		NULL,
 		NULL,
 		NULL);
-
-	DefineCustomBoolVariable(
-		"babelfishpg_tds.set_db_session_property",
-		gettext_noop("Set database session property on TDS connections"),
-		NULL,
-		&tds_enable_db_session_property,
-		true,
-		PGC_SUSET,
-		GUC_NO_SHOW_ALL | GUC_NOT_IN_SAMPLE,
-		NULL, NULL, NULL);	
 
 /* the guc is accessible only if it's compiled with fault injection flag */
 #ifdef FAULT_INJECTOR

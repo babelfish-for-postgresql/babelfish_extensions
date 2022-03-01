@@ -1068,20 +1068,12 @@ ProcessLoginInternal(Port *port)
 {
 	MemoryContext	oldContext;
 	LoginRequest request;
-	const char* gucDatabaseName = NULL;
+	const char* gucDatabaseName = GetConfigOption("babelfishpg_tsql.database_name", true, false);
 
-	/*
-	 * Only use "babelfishpg_tsql.database_name" GUC when we have
-	 * enabled "babelfishpg_tds.set_db_session_property" GUC
-	 */
-	if (tds_enable_db_session_property)
-	{
-		gucDatabaseName = GetConfigOption("babelfishpg_tsql.database_name", true, false);
-		if (gucDatabaseName == NULL)
-			ereport(FATAL, (errcode(ERRCODE_UNDEFINED_OBJECT),
-				errmsg("Configuration parameter \"babelfishpg_tsql.database_name\" is not defined"),
-				errhint("Set GUC value by specifying it in postgresql.conf or by ALTER SYSTEM")));
-	}
+	if (gucDatabaseName == NULL)
+		ereport(FATAL, (errcode(ERRCODE_UNDEFINED_OBJECT),
+			errmsg("Configuration parameter \"babelfishpg_tsql.database_name\" is not defined"),
+			errhint("Set GUC value by specifying it in postgresql.conf or by ALTER SYSTEM")));
 
 	/*
 	 * We want to keep all login related information around even after
@@ -1136,17 +1128,11 @@ ProcessLoginInternal(Port *port)
 	}
 
 	/*
-	 * If GUC "babelfishpg_tsql.database_name" is "none", database
-	 * name is set as whatever is specified in login request. Else,
+	 * If GUC "babelfishpg_tsql.database_name" is not "none" then
 	 * database name specified in login request is overridden by
 	 * "babelfish_pgtsql.database_name"
 	 */
-	if (gucDatabaseName == NULL || strcmp(gucDatabaseName, "none") == 0)
-	{
-		if (request->database != NULL)
-			port->database_name = pstrdup(request->database);
-	}
-	else
+	if (gucDatabaseName != NULL && strcmp(gucDatabaseName, "none") != 0)
 		port->database_name = pstrdup(gucDatabaseName);
 
 	if (request->sspiLen > 0)
@@ -1930,6 +1916,8 @@ TdsSendLoginAck(Port *port)
 	uint8		temp8;
 	uint32_t	collationInfo;
 	char collationBytesNew[5];
+	char *useDbCommand = NULL;
+	MemoryContext  oldContext;
 	uint32_t tdsVersion = pg_hton32(loginInfo->tdsVersion);
 
 	/* TODO: should these version numbers be hardcoded? */
@@ -2034,74 +2022,57 @@ TdsSendLoginAck(Port *port)
 						 errmsg("\"%s\" is not a Babelfish user", port->user_name)));
 		}
 
-		if (tds_enable_db_session_property)
+		oldContext = CurrentMemoryContext;
+
+		if (request->database != NULL && request->database[0] != '\0')
 		{
-			char 			*useCommand = "USE ";
-			StringInfoData	useDbCommand;
-			MemoryContext oldContext = CurrentMemoryContext;
-
-			initStringInfo(&useDbCommand);
-			appendStringInfoString(&useDbCommand, useCommand);
-
-			if (request->database != NULL && request->database[0] != '\0')
-			{
-				Oid db_id;
-
-				/*
-				 * Before preparing the query, first check whether we got a
-				 * valid database name and it exists.  Otherwise, there'll be
-				 * risk of SQL injection.
-				 */
-				StartTransactionCommand();
-				db_id = pltsql_plugin_handler_ptr->pltsql_get_database_oid(request->database);
-				CommitTransactionCommand();
-				MemoryContextSwitchTo(oldContext);
-
-				if (!OidIsValid(db_id))
-						ereport(ERROR,
-								(errcode(ERRCODE_UNDEFINED_DATABASE),
-								 errmsg("database \"%s\" does not exist", request->database)));
-
-				appendStringInfoString(&useDbCommand, request->database);
-			}
-			else
-			{
-				char	*defaultDb = NULL;
-				char	*temp = NULL;
-
-				StartTransactionCommand();
-				temp = pltsql_plugin_handler_ptr->pltsql_get_login_default_db(port->user_name);
-				MemoryContextSwitchTo(oldContext);
-
-				if (temp == NULL)
-					ereport(ERROR,
-							(errcode(ERRCODE_UNDEFINED_DATABASE),
-							 errmsg("could not find default database for user \"%s\"", port->user_name)));
-
-				defaultDb = pstrdup(temp);
-				CommitTransactionCommand();
-				MemoryContextSwitchTo(oldContext);
-
-				appendStringInfoString(&useDbCommand, defaultDb);
-			}
+			Oid db_id;
 
 			/*
-			* Request has a database name provided, so we execute
-			* a "USE <db_name>" through pgtsql inline handler
-			*/
+			 * Before preparing the query, first check whether we got a
+			 * valid database name and it exists.  Otherwise, there'll be
+			 * risk of SQL injection.
+			 */
 			StartTransactionCommand();
-			ExecuteSQLBatch(useDbCommand.data);
+			db_id = pltsql_plugin_handler_ptr->pltsql_get_database_oid(request->database);
 			CommitTransactionCommand();
+			MemoryContextSwitchTo(oldContext);
+
+			if (!OidIsValid(db_id))
+					ereport(ERROR,
+							(errcode(ERRCODE_UNDEFINED_DATABASE),
+							 errmsg("database \"%s\" does not exist", request->database)));
+
+			/* Any delimitated/quoted db name identifier requested in login must be already handled before this point. */
+			useDbCommand = psprintf("USE [%s]", request->database);
 		}
 		else
 		{
-			dbname = port->database_name;
-			snprintf(mbuf, sizeof(mbuf), "Changed database context to '%s'",
-					 dbname);
-			if (strcmp(dbname, TSQL_DEFAULT_DB) != 0)
-				TdsSendEnvChange(TDS_ENVID_DATABASE, dbname, TSQL_DEFAULT_DB);
-			TdsSendInfo(5701, 1, 10, mbuf, 1);
+			char	*temp = NULL;
+
+			StartTransactionCommand();
+			temp = pltsql_plugin_handler_ptr->pltsql_get_login_default_db(port->user_name);
+			MemoryContextSwitchTo(oldContext);
+
+			if (temp == NULL)
+				ereport(ERROR,
+						(errcode(ERRCODE_UNDEFINED_DATABASE),
+						 errmsg("could not find default database for user \"%s\"", port->user_name)));
+
+			useDbCommand = psprintf("USE [%s]", temp);
+			CommitTransactionCommand();
+			MemoryContextSwitchTo(oldContext);
 		}
+
+		/*
+		 * Request has a database name provided, so we execute
+		 * a "USE [<db_name>]" through pgtsql inline handler
+		 */
+		StartTransactionCommand();
+		ExecuteSQLBatch(useDbCommand);
+		CommitTransactionCommand();
+		if (useDbCommand)
+			pfree(useDbCommand);
 
 		/*
 		 * Set the GUC for language, it will take care of

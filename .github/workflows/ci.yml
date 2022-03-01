@@ -77,7 +77,6 @@ jobs:
           sudo ~/postgres/bin/psql -d jdbc_testdb -U runner -c "GRANT ALL ON SCHEMA sys to jdbc_user;"
           sudo ~/postgres/bin/psql -d jdbc_testdb -U runner -c "ALTER USER jdbc_user CREATEDB;"
           sudo ~/postgres/bin/psql -d jdbc_testdb -U runner -c "ALTER SYSTEM SET babelfishpg_tsql.database_name = 'jdbc_testdb';"
-          sudo ~/postgres/bin/psql -d jdbc_testdb -U runner -c "ALTER SYSTEM SET babelfishpg_tds.set_db_session_property = true;"
           sudo ~/postgres/bin/psql -d jdbc_testdb -U runner -c "SELECT pg_reload_conf();"
           sudo ~/postgres/bin/psql -d jdbc_testdb -U runner -c "CALL sys.initialize_babelfish('jdbc_user');"
           sqlcmd -S localhost -U jdbc_user -P 12345678 -Q "SELECT @@version GO"
