@@ -120,6 +120,7 @@ extern Oid get_authid_login_ext_idx_oid(void);
 #define BBF_AUTHID_USER_EXT_IDX_NAME "babelfish_authid_user_ext_pkey"
 #define Anum_bbf_authid_user_ext_rolname				1
 #define Anum_bbf_authid_user_ext_login_name				2
+#define Anum_bbf_authid_user_ext_orig_username			11
 #define Anum_bbf_authid_user_ext_database_name			12
 #define Anum_bbf_authid_user_ext_default_schema_name	13
 extern Oid			bbf_authid_user_ext_oid;

@@ -22,6 +22,5 @@ extern const char *get_dbo_schema_name(const char *dbname);
 extern const char *get_dbo_role_name(const char *dbname);
 extern const char *get_db_owner_name(const char *dbname);
 extern const char *get_guest_role_name(const char *dbname);
-extern const char *user_return_name(const char* user_name);
 
 #endif

@@ -580,19 +580,51 @@ Datum
 user_name(PG_FUNCTION_ARGS)
 {
 	Oid				id;
-	const char		*ret;
+	Relation		bbf_authid_user_ext_rel;
+	HeapTuple		tuple;
+	ScanKeyData		scanKey;
+	SysScanDesc		scan;
+	char			*physical_user;
+	NameData		*physical_user_name;
+	char			*user;
+	Datum			datum;
+	bool			is_null;
 
 	id = PG_ARGISNULL(0) ? InvalidOid : PG_GETARG_OID(0);
 
 	if (id == InvalidOid)
 		id = GetUserId();
 
-	ret = user_return_name(GetUserNameFromId(id, true));
-
-	if (!ret)
+	physical_user = GetUserNameFromId(id, true);
+	if (!physical_user)
 		PG_RETURN_NULL();
 
-	PG_RETURN_TEXT_P(CStringGetTextDatum(ret));
+	bbf_authid_user_ext_rel = table_open(get_authid_user_ext_oid(),
+										 RowExclusiveLock);
+
+	/* Search and obtain the tuple on the role name*/
+	physical_user_name = (NameData *) palloc0(NAMEDATALEN);
+	snprintf(physical_user_name->data, NAMEDATALEN, "%s", physical_user);
+	ScanKeyInit(&scanKey,
+				Anum_bbf_authid_user_ext_rolname,
+				BTEqualStrategyNumber, F_NAMEEQ,
+				NameGetDatum(physical_user_name));
+
+	scan = systable_beginscan(bbf_authid_user_ext_rel,
+							  get_authid_user_ext_idx_oid(),
+							  true, NULL, 1, &scanKey);
+
+	tuple = systable_getnext(scan);
+	if (!HeapTupleIsValid(tuple))
+		PG_RETURN_NULL();
+
+	datum = heap_getattr(tuple,
+						 Anum_bbf_authid_user_ext_orig_username,
+						 bbf_authid_user_ext_rel->rd_att,
+						 &is_null);
+	user = pstrdup(TextDatumGetCString(datum));
+
+	PG_RETURN_TEXT_P(CStringGetTextDatum(user));
 }
 
 PG_FUNCTION_INFO_V1(user_id);
@@ -600,25 +632,22 @@ Datum
 user_id(PG_FUNCTION_ARGS)
 {
 	char			*user_input;
-	const char		*user_name;
+	char			*user_name;
+	char			*db_name;
 	HeapTuple		auth_tuple;
 	Form_pg_authid	authform;
 	Oid				ret;
 
 	user_input = PG_ARGISNULL(0) ? NULL : text_to_cstring(PG_GETARG_TEXT_PP(0));
+	db_name = get_cur_db_name();
 
-	if (!get_cur_db_name())
+	if (!db_name)
 		PG_RETURN_NULL();
 
 	if (!user_input)
 		PG_RETURN_OID(GetUserId());
 
-	if (strcmp(user_input, "dbo") == 0)
-		user_name = get_dbo_role_name(get_cur_db_name());
-	else if (strcmp(user_input, "guest") == 0)
-		user_name = get_guest_role_name(get_cur_db_name());
-	else
-		PG_RETURN_NULL();
+	user_name = get_physical_user_name(db_name, user_input);
 
 	if (!user_name)
 		PG_RETURN_NULL();
