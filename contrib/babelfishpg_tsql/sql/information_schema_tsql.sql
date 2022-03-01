@@ -362,4 +362,41 @@ CREATE VIEW information_schema_tsql.tables AS
 
 GRANT SELECT ON information_schema_tsql.tables TO PUBLIC;
 
+/*
+ * TABLE_CONSTRAINTS view
+ */
+
+CREATE VIEW information_schema_tsql.table_constraints AS
+    SELECT CAST(nc.dbname AS sys.nvarchar(128)) AS "CONSTRAINT_CATALOG",
+           CAST(extc.orig_name AS sys.nvarchar(128)) AS "CONSTRAINT_SCHEMA",
+           CAST(c.conname AS sys.sysname) AS "CONSTRAINT_NAME",
+           CAST(nr.dbname AS sys.nvarchar(128)) AS "TABLE_CATALOG",
+           CAST(extr.orig_name AS sys.nvarchar(128)) AS "TABLE_SCHEMA",
+           CAST(r.relname AS sys.sysname) AS "TABLE_NAME",
+           CAST(
+             CASE c.contype WHEN 'c' THEN 'CHECK'
+                            WHEN 'f' THEN 'FOREIGN KEY'
+                            WHEN 'p' THEN 'PRIMARY KEY'
+                            WHEN 'u' THEN 'UNIQUE' END
+             AS sys.varchar(11)) AS "CONSTRAINT_TYPE",
+           CAST('NO' AS sys.varchar(2)) AS "IS_DEFERRABLE",
+           CAST('NO' AS sys.varchar(2)) AS "INITIALLY_DEFERRED"
+
+    FROM sys.pg_namespace_ext nc LEFT OUTER JOIN sys.babelfish_namespace_ext extc ON nc.nspname = extc.nspname,
+         sys.pg_namespace_ext nr LEFT OUTER JOIN sys.babelfish_namespace_ext extr ON nr.nspname = extr.nspname,
+         pg_constraint c,
+         pg_class r
+
+    WHERE nc.oid = c.connamespace AND nr.oid = r.relnamespace
+          AND c.conrelid = r.oid
+          AND c.contype NOT IN ('t', 'x')
+          AND r.relkind IN ('r', 'p')
+          AND (NOT pg_is_other_temp_schema(nr.oid))
+          AND (pg_has_role(r.relowner, 'USAGE')
+               OR has_table_privilege(r.oid, 'SELECT, INSERT, UPDATE, DELETE, TRUNCATE, REFERENCES, TRIGGER')
+               OR has_any_column_privilege(r.oid, 'SELECT, INSERT, UPDATE, REFERENCES') )
+		  AND  extc.dbid = cast(sys.db_id() as oid);
+
+GRANT SELECT ON information_schema_tsql.table_constraints TO PUBLIC;
+
 SELECT set_config('search_path', 'sys, '||current_setting('search_path'), false);
