@@ -82,7 +82,7 @@ SELECT
 from testTbl;
 go
 ~~START~~
-text#!#text#!#text#!#text
+varchar#!#varchar#!#varchar#!#varchar
 aaa       |#!#aaa       |#!#aaa|#!#aaa|
 aaa       |#!#aaa       |#!#aaa  |#!#aaa  |
 ~~END~~
@@ -141,7 +141,7 @@ sql_variant
 select 'test'+null;
 go
 ~~START~~
-text
+varchar
 <NULL>
 ~~END~~
 

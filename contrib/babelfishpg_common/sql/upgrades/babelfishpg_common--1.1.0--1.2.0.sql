@@ -865,9 +865,23 @@ CREATE OPERATOR sys./ (
     PROCEDURE  = sys.tinyintsmallmoneydiv
 );
 
-CREATE OR REPLACE FUNCTION sys.babelfish_concat_wrapper(leftarg sys.varchar, rightarg sys.varchar) RETURNS text AS
+CREATE OR REPLACE FUNCTION sys.babelfish_concat_wrapper_outer(leftarg text, rightarg text) RETURNS sys.varchar(8000) AS
 $$
-  SELECT sys.babelfish_concat_wrapper(leftarg::text, rightarg::text)
+  SELECT sys.babelfish_concat_wrapper(cast(leftarg as text), cast(rightarg as text))
+$$
+LANGUAGE SQL VOLATILE;
+
+DROP OPERATOR IF EXISTS sys.+(text, text);
+
+CREATE OPERATOR sys.+ (
+    LEFTARG = text,
+    RIGHTARG = text,
+    FUNCTION = sys.babelfish_concat_wrapper_outer
+);
+
+CREATE OR REPLACE FUNCTION sys.babelfish_concat_wrapper(leftarg sys.varchar, rightarg sys.varchar) RETURNS sys.varchar(8000) AS
+$$
+  SELECT sys.babelfish_concat_wrapper(cast(leftarg as text), cast(rightarg as text))
 $$
 LANGUAGE SQL VOLATILE;
 
@@ -878,9 +892,9 @@ CREATE OPERATOR sys.+ (
     FUNCTION = sys.babelfish_concat_wrapper
 );
 
-CREATE OR REPLACE FUNCTION sys.babelfish_concat_wrapper(leftarg sys.nvarchar, rightarg sys.nvarchar) RETURNS text AS
+CREATE OR REPLACE FUNCTION sys.babelfish_concat_wrapper(leftarg sys.nvarchar, rightarg sys.nvarchar) RETURNS sys.nvarchar(8000) AS
 $$
-  SELECT sys.babelfish_concat_wrapper(leftarg::text, rightarg::text)
+  SELECT sys.babelfish_concat_wrapper(cast(leftarg as text), cast(rightarg as text))
 $$
 LANGUAGE SQL VOLATILE;
 
@@ -891,9 +905,9 @@ CREATE OPERATOR sys.+ (
     FUNCTION = sys.babelfish_concat_wrapper
 );
 
-CREATE OR REPLACE FUNCTION sys.babelfish_concat_wrapper(leftarg sys.bpchar, rightarg sys.bpchar) RETURNS text AS
+CREATE OR REPLACE FUNCTION sys.babelfish_concat_wrapper(leftarg sys.bpchar, rightarg sys.bpchar) RETURNS sys.varchar(8000) AS
 $$
-  SELECT sys.babelfish_concat_wrapper(leftarg::text, rightarg::text)
+  SELECT sys.babelfish_concat_wrapper(cast(leftarg as text), cast(rightarg as text))
 $$
 LANGUAGE SQL VOLATILE;
 
@@ -904,9 +918,9 @@ CREATE OPERATOR sys.+ (
     FUNCTION = sys.babelfish_concat_wrapper
 );
 
-CREATE OR REPLACE FUNCTION sys.babelfish_concat_wrapper(leftarg sys.nchar, rightarg sys.nchar) RETURNS text AS
+CREATE OR REPLACE FUNCTION sys.babelfish_concat_wrapper(leftarg sys.nchar, rightarg sys.nchar) RETURNS sys.nvarchar(8000) AS
 $$
-  SELECT sys.babelfish_concat_wrapper(leftarg::text, rightarg::text)
+  SELECT sys.babelfish_concat_wrapper(cast(leftarg as text), cast(rightarg as text))
 $$
 LANGUAGE SQL VOLATILE;
 
@@ -914,6 +928,33 @@ LANGUAGE SQL VOLATILE;
 CREATE OPERATOR sys.+ (
     LEFTARG = sys.nchar,
     RIGHTARG = sys.nchar,
+    FUNCTION = sys.babelfish_concat_wrapper
+);
+
+-- if one of input is nvarchar, resolve it as nvarchar. as varchar is a base type of nvarchar, we need to define this function explictly.
+CREATE OR REPLACE FUNCTION sys.babelfish_concat_wrapper(leftarg sys.varchar, rightarg sys.nvarchar) RETURNS sys.nvarchar(8000) AS
+$$
+  SELECT sys.babelfish_concat_wrapper(cast(leftarg as text), cast(rightarg as text))
+$$
+LANGUAGE SQL VOLATILE;
+
+-- Support strings for + operator.
+CREATE OPERATOR sys.+ (
+    LEFTARG = sys.varchar,
+    RIGHTARG = sys.nvarchar,
+    FUNCTION = sys.babelfish_concat_wrapper
+);
+
+CREATE OR REPLACE FUNCTION sys.babelfish_concat_wrapper(leftarg sys.nvarchar, rightarg sys.varchar) RETURNS sys.nvarchar(8000) AS
+$$
+  SELECT sys.babelfish_concat_wrapper(cast(leftarg as text), cast(rightarg as text))
+$$
+LANGUAGE SQL VOLATILE;
+
+-- Support strings for + operator.
+CREATE OPERATOR sys.+ (
+    LEFTARG = sys.nvarchar,
+    RIGHTARG = sys.varchar,
     FUNCTION = sys.babelfish_concat_wrapper
 );
 

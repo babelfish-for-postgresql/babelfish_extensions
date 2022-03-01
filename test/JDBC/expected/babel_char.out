@@ -15,18 +15,18 @@ nvarchar
 ~~END~~
 
 ~~START~~
-text
+nvarchar
 
 ~~END~~
 
 ~~START~~
-text
+nvarchar
 BC
 ~~END~~
 
 ~~START~~
-text
-U?
+nvarchar
+Uă
 ~~END~~
 
 

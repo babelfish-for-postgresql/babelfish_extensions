@@ -9,7 +9,7 @@ int
 ~~END~~
 
 ~~START~~
-text#!#int
+varchar#!#int
 abc#!#1400
 ~~END~~
 
@@ -18,7 +18,7 @@ SET CONCAT_NULL_YIELDS_NULL ON;
 SELECT 'abc' + NULL AS ResultWhen_ON, @@OPTIONS AS OptionsValueWhen_ON;
 GO
 ~~START~~
-text#!#int
+varchar#!#int
 <NULL>#!#5496
 ~~END~~
 
