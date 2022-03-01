@@ -1,0 +1,103 @@
+CREATE TABLE employeeData( ID INT IDENTITY (1,1) PRIMARY KEY,Emp_First_name VARCHAR (50));
+GO
+
+insert into employeeData values ('a'),('b'),('c'),('d');
+GO
+~~ROW COUNT: 4~~
+
+
+CREATE TRIGGER updEmployeeData  ON employeeData  INSTEAD OF INSERT AS  
+BEGIN  
+   BEGIN TRAN;
+    update employeeData set Emp_First_name = 'dddd';
+   Rollback tran;
+END
+GO
+
+insert into employeeData values ('e')
+GO
+~~ROW COUNT: 4~~
+
+~~ERROR (Code: 3609)~~
+
+~~ERROR (Message: The transaction ended in the trigger. The batch has been aborted.)~~
+
+
+select * from employeeData
+GO
+~~START~~
+int#!#varchar
+1#!#a
+2#!#b
+3#!#c
+4#!#d
+~~END~~
+
+
+drop trigger updEmployeeData;
+GO
+
+CREATE TRIGGER updEmployeeData  ON employeeData  INSTEAD OF UPDATE AS  
+BEGIN  
+   BEGIN TRAN;
+    insert into employeeData values ('e')
+   Rollback tran;
+END
+GO
+
+update employeeData set Emp_First_name = 'dddd';
+GO
+~~ROW COUNT: 1~~
+
+~~ERROR (Code: 3609)~~
+
+~~ERROR (Message: The transaction ended in the trigger. The batch has been aborted.)~~
+
+
+select * from employeeData
+GO
+~~START~~
+int#!#varchar
+1#!#a
+2#!#b
+3#!#c
+4#!#d
+~~END~~
+
+
+drop trigger updEmployeeData;
+GO
+
+CREATE TRIGGER updEmployeeData  ON employeeData  INSTEAD OF DELETE AS  
+BEGIN  
+   BEGIN TRAN;
+    update employeeData set Emp_First_name = 'dddd';
+   Rollback tran;
+END
+GO
+
+delete from employeeData where Emp_First_name = 'a';
+GO
+~~ROW COUNT: 4~~
+
+~~ERROR (Code: 3609)~~
+
+~~ERROR (Message: The transaction ended in the trigger. The batch has been aborted.)~~
+
+
+select * from employeeData
+GO
+~~START~~
+int#!#varchar
+1#!#a
+2#!#b
+3#!#c
+4#!#d
+~~END~~
+
+
+drop trigger updEmployeeData;
+GO
+
+drop table employeeData
+GO
