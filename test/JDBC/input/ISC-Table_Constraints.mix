@@ -1,0 +1,176 @@
+-- psql
+ALTER SYSTEM SET babelfishpg_tsql.migration_mode = 'multi-db';
+SELECT pg_reload_conf();
+GO
+
+-- tsql
+create table tbl_pk(a int primary key, c int not null unique, d int default 1, check(d > 0));
+go
+
+create table tbl_fk(b int primary key, a int, foreign key (a) references tbl_pk(a));
+go
+
+select * from information_schema.table_constraints where table_name in ('tbl_pk','tbl_fk') order by constraint_name, constraint_schema;
+go
+
+-- should return 5
+select count(*) from information_schema.table_constraints;
+go
+
+create database db1;
+go
+
+use db1;
+go
+
+create table db1_tbl_pk(a int primary key, c int not null unique, d int default 1, check(d > 0));
+go
+
+create table db1_tbl_fk(b int primary key, a int, foreign key (a) references db1_tbl_pk(a));
+go
+
+select * from information_schema.table_constraints where table_name in ('tbl_pk','tbl_fk','db1_tbl_pk','db1_tbl_fk') order by constraint_name, constraint_schema;
+go
+
+use master;
+go
+
+select * from information_schema.table_constraints where table_name in ('tbl_pk','tbl_fk','db1_tbl_pk','db1_tbl_fk') order by constraint_name, constraint_schema;
+go
+
+-- Check for constraints created under schema
+create schema sch1;
+go
+
+create table sch1.tbl_pk(a int primary key, c int not null unique, d int default 1, check(d > 0));
+go
+
+create table sch1.tbl_fk(b int primary key, a int, foreign key (a) references sch1.tbl_pk(a));
+go
+
+select * from information_schema.table_constraints where table_name in ('tbl_pk','tbl_fk','sch1_tbl_pk','sch1_tbl_fk') order by constraint_name, constraint_schema;
+go
+
+-- verify from sys.objects
+-- Note: sys.objects not showing unique constraints currently
+select constraint_name, constraint_schema, table_name, constraint_type from information_schema.table_constraints order by constraint_name, constraint_schema;
+
+select name, schema_name(schema_id) as schname, object_name(parent_object_id),type_desc from sys.objects where type in ('C','F','PK','UQ') order by name, schname;
+go
+
+-- Test for adding addtional constraints with different name
+alter table tbl_fk add constraint chk_1234 check(a>0);
+go
+
+select count(*) from information_schema.table_constraints where table_name in ('tbl_fk') and constraint_name like '%chk_1234%';
+go
+
+-- privilege testing
+
+create login user_tbl_const with password='123456789';
+go
+
+use db1;
+go
+
+create user user_tbl_const for login user_tbl_const;
+go
+
+use master;
+go
+
+-- tsql user=user_tbl_const password=123456789
+-- should return 0 since user_tbl_const doesn't have any privileges
+use db1;
+go
+
+select count(*) from information_schema.table_constraints where table_name='db1_tbl_pk';
+go
+
+use master;
+go
+
+-- tsql
+use db1;
+go
+
+grant select on db1_tbl_pk to user_tbl_const;
+go
+
+use master;
+go
+
+-- tsql user=user_tbl_const password=123456789
+-- should return 3 since user_tbl_const has select privilege
+use db1;
+go
+
+select count(*) from information_schema.table_constraints where table_name='db1_tbl_pk';
+go
+
+use master;
+go
+
+-- tsql
+use db1;
+go
+
+revoke select on db1_tbl_pk to user_tbl_const;
+go
+
+grant insert on db1_tbl_pk to user_tbl_const;
+go
+
+use master;
+go
+
+-- tsql user=user_tbl_const password=123456789
+-- should return 3 since user_tbl_const has insert privilege
+use db1;
+go
+
+select count(*) from information_schema.table_constraints where table_name='db1_tbl_pk';
+go
+
+use master;
+go
+
+-- tsql
+-- Cleanup
+use db1;
+go
+
+drop table db1_tbl_fk;
+go
+
+drop table db1_tbl_pk;
+go
+
+use master;
+go
+
+drop database db1;
+go
+
+drop table tbl_fk;
+go
+
+drop table tbl_pk;
+go
+
+drop table sch1.tbl_fk;
+go
+
+drop table sch1.tbl_pk;
+go
+
+drop schema sch1;
+go
+
+drop login user_tbl_const;
+go
+
+-- psql
+ALTER SYSTEM SET babelfishpg_tsql.migration_mode = 'single-db';
+SELECT pg_reload_conf();
+GO
