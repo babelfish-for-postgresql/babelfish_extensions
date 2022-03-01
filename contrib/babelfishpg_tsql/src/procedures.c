@@ -570,12 +570,13 @@ sp_describe_undeclared_parameters_internal(PG_FUNCTION_ARGS)
 		"ELSE C.system_type_id "
 	"END " /* AS "suggested_tds_type_id" */
 	", CASE "
-		"WHEN T2.name IN (\'image\', \'ntext\', \'text\') THEN 4096 "
 		"WHEN T2.name = \'nvarchar\' AND C.max_length = -1 THEN 65535 "
 		"WHEN T2.name = \'varbinary\' AND C.max_length = -1 THEN 65535 "
 		"WHEN T2.name = \'varchar\' AND C.max_length = -1 THEN 65535 "
 		"WHEN T2.name IN (\'decimal\', \'numeric\') THEN 17 "
 		"WHEN T2.name = \'xml\' THEN 8100 "
+		"WHEN T2.name in (\'image\', \'text\') THEN 2147483647"
+		"WHEN T2.name = \'ntext\' THEN 2147483646"
 		"ELSE CAST( C.max_length AS INT ) "
 	"END " /* AS "suggested_tds_length" */
 "FROM sys.objects O, sys.columns C, sys.types T, sys.types T2 "
