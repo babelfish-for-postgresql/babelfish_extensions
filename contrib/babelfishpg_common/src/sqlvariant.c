@@ -56,6 +56,7 @@
 #define VARIANT_TYPE_REAL       59
 #define VARIANT_TYPE_FLOAT      62
 #define VARIANT_TYPE_NUMERIC        108
+#define VARIANT_TYPE_DECIMAL 	106
 #define VARIANT_TYPE_MONEY      60
 #define VARIANT_TYPE_SMALLMONEY     122
 #define VARIANT_TYPE_DATE       40
@@ -2056,6 +2057,7 @@ TdsGetPGbaseType(uint8 variantBaseType, int *pgBaseType, int tempLen,
 			*dataLen = tempLen - VARIANT_TYPE_METALEN_FOR_NUM_DATATYPES;
 			break;
 		case VARIANT_TYPE_NUMERIC:
+		case VARIANT_TYPE_DECIMAL:
 			/*
 			 * dataformat : totalLen(4B) + metdata(5B)( baseType(1B) + metadatalen(1B) +
 			 * 		precision(1B) + scale(1B) + sign(1B) ) + data(dataLen)
@@ -2104,25 +2106,39 @@ void TdsSetMetaData(bytea *result, int pgBaseType, int scale,
 void TdsSetMetaData(bytea *result, int pgBaseType, int scale,
 						int precision, int maxLen)
 {
-	svhdr_5B_t *svhdr;
-	svhdr = SV_HDR_5B(result);
-
-	SV_SET_METADATA(svhdr, pgBaseType, HDR_VER);
-
 	if (pgBaseType == TIME_T || pgBaseType == DATETIME2_T ||
 	    pgBaseType == DATETIMEOFFSET_T)
 	{
-		svhdr->typmod = scale;
+		/* For datatypes having sql_variant specific header of length 2 bytes */
+		svhdr_2B_t *svhdr2;
+		svhdr2 = SV_HDR_2B(result);
+		SV_SET_METADATA(svhdr2, pgBaseType, HDR_VER);
+		svhdr2->typmod = scale;
 	}
 	else if (pgBaseType == NUMERIC_T)
 	{
-		svhdr->typmod = (precision << 8) | scale;
+		/* For datatypes having sql_variant specific header of length 3 bytes */
+		svhdr_3B_t *svhdr3;
+		svhdr3 = SV_HDR_3B(result);
+		SV_SET_METADATA(svhdr3, pgBaseType, HDR_VER);
+		svhdr3->typmod = (precision << 8) | scale;
 	}
 	else if (pgBaseType == BINARY_T || pgBaseType == VARBINARY_T ||
 		 pgBaseType == CHAR_T || pgBaseType == NCHAR_T ||
 		 pgBaseType == VARCHAR_T || pgBaseType == NVARCHAR_T)
 	{
-		svhdr->typmod = (int16)maxLen;
+		/* For datatypes having sql_variant specific header of length 5 bytes */
+		svhdr_5B_t *svhdr5;
+		svhdr5 = SV_HDR_5B(result);
+		SV_SET_METADATA(svhdr5, pgBaseType, HDR_VER);
+		svhdr5->typmod = (int16)maxLen;
+	}
+	else
+	{
+		/* For all other fixed-length datatypes */
+		svhdr_2B_t *svhdr2;
+		svhdr2 = SV_HDR_2B(result);
+		SV_SET_METADATA(svhdr2, pgBaseType, HDR_VER);
 	}
 }
 
@@ -2156,7 +2172,7 @@ TdsGetMetaData(bytea *result, int pgBaseType, int *scale,
     else if (pgBaseType == NUMERIC_T)
     {
         *scale = svhdr->typmod & 0x00ff;
-        *precision = svhdr->typmod & 0xff00;
+    	*precision = (svhdr->typmod & 0xff00) >> 8;
     }
     else if (pgBaseType == BINARY_T || pgBaseType == VARBINARY_T ||
              pgBaseType == CHAR_T || pgBaseType == NCHAR_T ||

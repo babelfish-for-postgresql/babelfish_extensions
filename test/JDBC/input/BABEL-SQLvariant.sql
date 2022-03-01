@@ -463,3 +463,61 @@ drop table sourceTable;
 go
 drop table destinationTable;
 go
+
+Create table sourceTable(a sql_variant, b sql_variant not null);
+go
+Insert into sourceTable values (cast (123.456 as numeric(5,2)), cast (123.4 as numeric(5,2)));
+go
+Insert into sourceTable values (cast (NULL as numeric(5,2)), cast (123 as numeric(5,2)));
+go
+Insert into sourceTable values (cast (-123.456 as numeric(5,2)), cast (-123 as numeric(5,2)));
+go
+Select * from sourceTable;
+go
+drop table sourceTable;
+go
+
+Create table sourceTable(a sql_variant, b sql_variant not null);
+go
+Insert into sourceTable values (cast (123.456 as decimal(5,2)), cast (123.4 as decimal(5,2)));
+go
+Insert into sourceTable values (cast (NULL as decimal(5,2)), cast (123 as decimal(5,2)));
+go
+Insert into sourceTable values (cast (-123.456 as decimal(5,2)), cast (-123 as decimal(5,2)));
+go
+Select * from sourceTable;
+go
+drop table sourceTable;
+go
+
+
+Create table sourceTable(a sql_variant, b sql_variant not null);
+go
+Insert into sourceTable values (cast ('12:45:37.123' as time(0)), cast ('12:45:37.123' as time(1)));
+go
+Insert into sourceTable values (cast (NULL as time(3)), cast ('12:45:37.123' as time(2)));
+go
+Insert into sourceTable values (cast ('12:45:37.123' as time(3)), cast ('12:45:37.1234' as time(4)));
+go
+Insert into sourceTable values (cast ('12:45:37.12345' as time(5)), cast ('12:45:37.123456' as time(6)));
+go
+Select * from sourceTable;
+go
+drop table sourceTable;
+go
+
+
+Create table sourceTable(a sql_variant, b sql_variant not null);
+go
+Insert into sourceTable values (cast ('2016-10-23 12:45:37.123' as datetime2(0)), cast ('2016-10-23 12:45:37.123' as datetime2(1)));
+go
+Insert into sourceTable values (cast (NULL as datetime2(3)), cast ('2016-10-23 12:45:37.123' as datetime2(2)));
+go
+Insert into sourceTable values (cast ('2016-10-23 12:45:37.123' as datetime2(3)), cast ('2016-10-23 12:45:37.1234' as datetime2(4)));
+go
+Insert into sourceTable values (cast ('2016-10-23 12:45:37.12345' as datetime2(5)), cast ('2016-10-23 12:45:37.123456' as datetime2(6)));
+go
+Select * from sourceTable;
+go
+drop table sourceTable;
+go
