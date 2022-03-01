@@ -2256,14 +2256,14 @@ create or replace view sys.dm_exec_sessions
     , d.language::sys.nvarchar(128) as language
     , 'ymd'::sys.nvarchar(3) as date_format-- Bld 173 lacks support for SET DATEFORMAT and always expects ymd
     , d.datefirst::smallint as date_first -- Bld 173 lacks support for SET DATEFIRST and always returns 7
-    , d.quoted_identifier as quoted_identifier
-    , d.arithabort as arithabort
-    , d.ansi_null_dflt_on as ansi_null_dflt_on
-    , d.ansi_defaults as ansi_defaults
-    , d.ansi_warnings as ansi_warnings
-    , d.ansi_padding as ansi_padding
-    , d.ansi_nulls as ansi_nulls
-    , d.concat_null_yields_null as concat_null_yields_null
+    , CAST(CAST(d.quoted_identifier as integer) as sys.bit) as quoted_identifier
+    , CAST(CAST(d.arithabort as integer) as sys.bit) as arithabort
+    , CAST(CAST(d.ansi_null_dflt_on as integer) as sys.bit) as ansi_null_dflt_on
+    , CAST(CAST(d.ansi_defaults as integer) as sys.bit) as ansi_defaults
+    , CAST(CAST(d.ansi_warnings as integer) as sys.bit) as ansi_warnings
+    , CAST(CAST(d.ansi_padding as integer) as sys.bit) as ansi_padding
+    , CAST(CAST(d.ansi_nulls as integer) as sys.bit) as ansi_nulls
+    , CAST(CAST(d.concat_null_yields_null as integer) as sys.bit) as concat_null_yields_null
     , d.transaction_isolation::smallint as transaction_isolation_level
     , d.lock_timeout as lock_timeout
     , 0 as deadlock_priority
