@@ -1,0 +1,308 @@
+use master;
+go
+
+create table t2983(v varchar(10), nv nvarchar(10), c char(10), nc nchar(10), t text, nt ntext);
+go
+insert into t2983 values ('abc', 'def', 'ghi', 'jkl', 'mno', 'pqr');
+go
+~~ROW COUNT: 1~~
+
+
+select v + v from t2983;
+go
+~~START~~
+varchar
+abcabc
+~~END~~
+
+select cast(pg_typeof(v + v) as varchar(20)) from t2983;
+go
+~~START~~
+varchar
+"varchar"
+~~END~~
+
+
+select nv + nv from t2983;
+go
+~~START~~
+nvarchar
+defdef
+~~END~~
+
+select cast(pg_typeof(nv + nv) as varchar(20)) from t2983;
+go
+~~START~~
+varchar
+nvarchar
+~~END~~
+
+
+select c + c from t2983;
+go
+~~START~~
+varchar
+ghi       ghi       
+~~END~~
+
+select cast(pg_typeof(c + c) as varchar(20)) from t2983;
+go
+~~START~~
+varchar
+"varchar"
+~~END~~
+
+
+select nc + nc from t2983;
+go
+~~START~~
+nvarchar
+jkl       jkl       
+~~END~~
+
+select cast(pg_typeof(nc + nc) as varchar(20)) from t2983;
+go
+~~START~~
+varchar
+nvarchar
+~~END~~
+
+
+select t + t from t2983;
+go
+~~START~~
+varchar
+mnomno
+~~END~~
+
+select cast(pg_typeof(t + t) as varchar(20)) from t2983;
+go
+~~START~~
+varchar
+"varchar"
+~~END~~
+
+
+select nt + nt from t2983;
+go
+~~START~~
+varchar
+pqrpqr
+~~END~~
+
+select cast(pg_typeof(nt + nt) as varchar(20)) from t2983;
+go
+~~START~~
+varchar
+"varchar"
+~~END~~
+
+
+-- string literal
+select '123' + '456' from t2983;
+go
+~~START~~
+varchar
+123456
+~~END~~
+
+select cast(pg_typeof('123' + '456') as varchar(20)) from t2983;
+go
+~~START~~
+varchar
+"varchar"
+~~END~~
+
+
+select '123' + v from t2983;
+go
+~~START~~
+varchar
+123abc
+~~END~~
+
+select cast(pg_typeof('123' + v) as varchar(20)) from t2983;
+go
+~~START~~
+varchar
+"varchar"
+~~END~~
+
+
+select v + '123' from t2983;
+go
+~~START~~
+varchar
+abc123
+~~END~~
+
+select cast(pg_typeof(v + '123') as varchar(20)) from t2983;
+go
+~~START~~
+varchar
+"varchar"
+~~END~~
+
+
+select '123' + nv from t2983;
+go
+~~START~~
+nvarchar
+123def
+~~END~~
+
+select cast(pg_typeof('123' + nv) as varchar(20)) from t2983;
+go
+~~START~~
+varchar
+nvarchar
+~~END~~
+
+
+select nv + '123' from t2983;
+go
+~~START~~
+nvarchar
+def123
+~~END~~
+
+select cast(pg_typeof(nv + '123') as varchar(20)) from t2983;
+go
+~~START~~
+varchar
+nvarchar
+~~END~~
+
+
+-- mixup with nvarchar
+select v + nv from t2983;
+go
+~~START~~
+nvarchar
+abcdef
+~~END~~
+
+select cast(pg_typeof(v + nv) as varchar(20)) from t2983;
+go
+~~START~~
+varchar
+nvarchar
+~~END~~
+
+
+select nv + v from t2983;
+go
+~~START~~
+nvarchar
+defabc
+~~END~~
+
+select cast(pg_typeof(nv + v) as varchar(20)) from t2983;
+go
+~~START~~
+varchar
+nvarchar
+~~END~~
+
+
+select c + nv from t2983;
+go
+~~START~~
+nvarchar
+ghi       def
+~~END~~
+
+select cast(pg_typeof(c + nv) as varchar(20)) from t2983;
+go
+~~START~~
+varchar
+nvarchar
+~~END~~
+
+
+select nv + c from t2983;
+go
+~~START~~
+nvarchar
+defghi       
+~~END~~
+
+select cast(pg_typeof(nv + c) as varchar(20)) from t2983;
+go
+~~START~~
+varchar
+nvarchar
+~~END~~
+
+
+select nc + nv from t2983;
+go
+~~START~~
+nvarchar
+jkl       def
+~~END~~
+
+select cast(pg_typeof(nc + nv) as varchar(20)) from t2983;
+go
+~~START~~
+varchar
+nvarchar
+~~END~~
+
+
+select nv + nc from t2983;
+go
+~~START~~
+nvarchar
+defjkl       
+~~END~~
+
+select cast(pg_typeof(nv + nc) as varchar(20)) from t2983;
+go
+~~START~~
+varchar
+nvarchar
+~~END~~
+
+
+select nc + v from t2983;
+go
+~~START~~
+nvarchar
+jkl       abc
+~~END~~
+
+select cast(pg_typeof(nc + v) as varchar(20)) from t2983;
+go
+~~START~~
+varchar
+nvarchar
+~~END~~
+
+
+select v + nc from t2983;
+go
+~~START~~
+nvarchar
+abcjkl       
+~~END~~
+
+select cast(pg_typeof(v + nc) as varchar(20)) from t2983;
+go
+~~START~~
+varchar
+nvarchar
+~~END~~
+
+
+drop table t2983;
+go
+
+declare @v varchar(20) = '01-Aug'
+select datediff(dd, @v + '-2021', '2022-01-01')
+go
+~~START~~
+int
+153
+~~END~~
+

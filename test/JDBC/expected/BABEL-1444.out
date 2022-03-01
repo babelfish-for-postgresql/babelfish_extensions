@@ -9,12 +9,12 @@ SELECT 'user: '+ @usr
 SELECT 'current_user: '+ @cur_usr
 GO
 ~~START~~
-text
+varchar
 user: dbo                           
 ~~END~~
 
 ~~START~~
-text
+varchar
 current_user: dbo                           
 ~~END~~
 

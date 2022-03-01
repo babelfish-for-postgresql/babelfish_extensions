@@ -72,57 +72,57 @@ GO
 EXEC babel_cursor_proc;
 GO
 ~~START~~
-text
+varchar
 @@fetch_status: 0
 ~~END~~
 
 ~~START~~
-text
+varchar
 <NULL>
 ~~END~~
 
 ~~START~~
-text
+varchar
 @var_i is null: true
 ~~END~~
 
 ~~START~~
-text
+varchar
 @@fetch_status: 0
 ~~END~~
 
 ~~START~~
-text
+varchar
 @var_i: 1
 ~~END~~
 
 ~~START~~
-text
+varchar
 @@fetch_status: 0
 ~~END~~
 
 ~~START~~
-text
+varchar
 @var_i: 2
 ~~END~~
 
 ~~START~~
-text
+varchar
 @@fetch_status: 0
 ~~END~~
 
 ~~START~~
-text
+varchar
 @var_i: 3
 ~~END~~
 
 ~~START~~
-text
+varchar
 @@fetch_status: 0
 ~~END~~
 
 ~~START~~
-text
+varchar
 @var_i: 4
 ~~END~~
 
@@ -143,57 +143,57 @@ GO
 EXEC babel_cursor_no_semi_proc;
 GO
 ~~START~~
-text
+varchar
 @@fetch_status: 0
 ~~END~~
 
 ~~START~~
-text
+varchar
 <NULL>
 ~~END~~
 
 ~~START~~
-text
+varchar
 @var_i is null: true
 ~~END~~
 
 ~~START~~
-text
+varchar
 @@fetch_status: 0
 ~~END~~
 
 ~~START~~
-text
+varchar
 @var_i: 1
 ~~END~~
 
 ~~START~~
-text
+varchar
 @@fetch_status: 0
 ~~END~~
 
 ~~START~~
-text
+varchar
 @var_i: 2
 ~~END~~
 
 ~~START~~
-text
+varchar
 @@fetch_status: 0
 ~~END~~
 
 ~~START~~
-text
+varchar
 @var_i: 3
 ~~END~~
 
 ~~START~~
-text
+varchar
 @@fetch_status: 0
 ~~END~~
 
 ~~START~~
-text
+varchar
 @var_i: 4
 ~~END~~
 
@@ -330,52 +330,52 @@ GO
 EXEC babel_cursor_double_precision_proc;
 GO
 ~~START~~
-text
+varchar
 @@fetch_status: 0
 ~~END~~
 
 ~~START~~
-text
+varchar
 @var_a is null: true
 ~~END~~
 
 ~~START~~
-text
+varchar
 @@fetch_status: 0
 ~~END~~
 
 ~~START~~
-text
+varchar
 @var_a: 1.1
 ~~END~~
 
 ~~START~~
-text
+varchar
 @@fetch_status: 0
 ~~END~~
 
 ~~START~~
-text
+varchar
 @var_a: 22.22
 ~~END~~
 
 ~~START~~
-text
+varchar
 @@fetch_status: 0
 ~~END~~
 
 ~~START~~
-text
+varchar
 @var_a: 333.333
 ~~END~~
 
 ~~START~~
-text
+varchar
 @@fetch_status: 0
 ~~END~~
 
 ~~START~~
-text
+varchar
 @var_a: 4444.4444
 ~~END~~
 
@@ -409,52 +409,52 @@ GO
 EXEC babel_cursor_varchar_proc;
 GO
 ~~START~~
-text
+varchar
 @@fetch_status: 0
 ~~END~~
 
 ~~START~~
-text
+varchar
 @var_a is null: true
 ~~END~~
 
 ~~START~~
-text
+varchar
 @@fetch_status: 0
 ~~END~~
 
 ~~START~~
-text
+varchar
 @var_a: a
 ~~END~~
 
 ~~START~~
-text
+varchar
 @@fetch_status: 0
 ~~END~~
 
 ~~START~~
-text
+varchar
 @var_a: bb
 ~~END~~
 
 ~~START~~
-text
+varchar
 @@fetch_status: 0
 ~~END~~
 
 ~~START~~
-text
+varchar
 @var_a: cccc
 ~~END~~
 
 ~~START~~
-text
+varchar
 @@fetch_status: 0
 ~~END~~
 
 ~~START~~
-text
+varchar
 @var_a: dddddd
 ~~END~~
 
@@ -488,52 +488,52 @@ GO
 EXEC babel_cursor_uniqueidentifier_proc;
 GO
 ~~START~~
-text
+varchar
 @@fetch_status: 0
 ~~END~~
 
 ~~START~~
-text
+varchar
 @var_a is null: true
 ~~END~~
 
 ~~START~~
-text
+varchar
 @@fetch_status: 0
 ~~END~~
 
 ~~START~~
-text
+varchar
 @var_a: 1E984725-C51C-4BF4-9960-E1C80E27ABA0
 ~~END~~
 
 ~~START~~
-text
+varchar
 @@fetch_status: 0
 ~~END~~
 
 ~~START~~
-text
+varchar
 @var_a: 2E984725-C51C-4BF4-9960-E1C80E27ABA0
 ~~END~~
 
 ~~START~~
-text
+varchar
 @@fetch_status: 0
 ~~END~~
 
 ~~START~~
-text
+varchar
 @var_a: 3E984725-C51C-4BF4-9960-E1C80E27ABA0
 ~~END~~
 
 ~~START~~
-text
+varchar
 @@fetch_status: 0
 ~~END~~
 
 ~~START~~
-text
+varchar
 @var_a: 4E984725-C51C-4BF4-9960-E1C80E27ABA0
 ~~END~~
 
@@ -567,52 +567,52 @@ GO
 EXEC babel_cursor_sql_variant_proc;
 GO
 ~~START~~
-text
+varchar
 @@fetch_status: 0
 ~~END~~
 
 ~~START~~
-text
+varchar
 <NULL>
 ~~END~~
 
 ~~START~~
-text
+varchar
 @@fetch_status: 0
 ~~END~~
 
 ~~START~~
-text
+varchar
 base type of @var_a: uniqueidentifier
 ~~END~~
 
 ~~START~~
-text
+varchar
 @@fetch_status: 0
 ~~END~~
 
 ~~START~~
-text
+varchar
 base type of @var_a: varchar
 ~~END~~
 
 ~~START~~
-text
+varchar
 @@fetch_status: 0
 ~~END~~
 
 ~~START~~
-text
+varchar
 base type of @var_a: int
 ~~END~~
 
 ~~START~~
-text
+varchar
 @@fetch_status: 0
 ~~END~~
 
 ~~START~~
-text
+varchar
 base type of @var_a: numeric
 ~~END~~
 
@@ -677,152 +677,152 @@ GO
 EXEC babel_cursor_multi_columns_proc;
 GO
 ~~START~~
-text
+varchar
 @@fetch_status: 0
 ~~END~~
 
 ~~START~~
-text
+varchar
 <NULL>
 ~~END~~
 
 ~~START~~
-text
+varchar
 <NULL>
 ~~END~~
 
 ~~START~~
-text
+varchar
 <NULL>
 ~~END~~
 
 ~~START~~
-text
+varchar
 <NULL>
 ~~END~~
 
 ~~START~~
-text
+varchar
 <NULL>
 ~~END~~
 
 ~~START~~
-text
+varchar
 @@fetch_status: 0
 ~~END~~
 
 ~~START~~
-text
+varchar
 @var_i: 101
 ~~END~~
 
 ~~START~~
-text
+varchar
 @var_d: 1.2
 ~~END~~
 
 ~~START~~
-text
+varchar
 @var_c: a_postfix
 ~~END~~
 
 ~~START~~
-text
+varchar
 @var_u: 1E984725-C51C-4BF4-9960-E1C80E27ABA0
 ~~END~~
 
 ~~START~~
-text
+varchar
 base type of @var_v: int
 ~~END~~
 
 ~~START~~
-text
+varchar
 @@fetch_status: 0
 ~~END~~
 
 ~~START~~
-text
+varchar
 @var_i: 102
 ~~END~~
 
 ~~START~~
-text
+varchar
 @var_d: 22.32
 ~~END~~
 
 ~~START~~
-text
+varchar
 @var_c: bb_postfix
 ~~END~~
 
 ~~START~~
-text
+varchar
 @var_u: 2E984725-C51C-4BF4-9960-E1C80E27ABA0
 ~~END~~
 
 ~~START~~
-text
+varchar
 base type of @var_v: numeric
 ~~END~~
 
 ~~START~~
-text
+varchar
 @@fetch_status: 0
 ~~END~~
 
 ~~START~~
-text
+varchar
 @var_i: 103
 ~~END~~
 
 ~~START~~
-text
+varchar
 @var_d: 333.433
 ~~END~~
 
 ~~START~~
-text
+varchar
 @var_c: cccc_postfix
 ~~END~~
 
 ~~START~~
-text
+varchar
 @var_u: 3E984725-C51C-4BF4-9960-E1C80E27ABA0
 ~~END~~
 
 ~~START~~
-text
+varchar
 base type of @var_v: varchar
 ~~END~~
 
 ~~START~~
-text
+varchar
 @@fetch_status: 0
 ~~END~~
 
 ~~START~~
-text
+varchar
 @var_i: 104
 ~~END~~
 
 ~~START~~
-text
+varchar
 @var_d: 4444.5444
 ~~END~~
 
 ~~START~~
-text
+varchar
 @var_c: dddddd_postfix
 ~~END~~
 
 ~~START~~
-text
+varchar
 @var_u: 4E984725-C51C-4BF4-9960-E1C80E27ABA0
 ~~END~~
 
 ~~START~~
-text
+varchar
 base type of @var_v: uniqueidentifier
 ~~END~~
 
@@ -857,57 +857,57 @@ GO
 EXEC babel_local_cursor_proc;
 GO
 ~~START~~
-text
+varchar
 @@fetch_status: 0
 ~~END~~
 
 ~~START~~
-text
+varchar
 <NULL>
 ~~END~~
 
 ~~START~~
-text
+varchar
 @var_i is null: true
 ~~END~~
 
 ~~START~~
-text
+varchar
 @@fetch_status: 0
 ~~END~~
 
 ~~START~~
-text
+varchar
 @var_i: 1
 ~~END~~
 
 ~~START~~
-text
+varchar
 @@fetch_status: 0
 ~~END~~
 
 ~~START~~
-text
+varchar
 @var_i: 2
 ~~END~~
 
 ~~START~~
-text
+varchar
 @@fetch_status: 0
 ~~END~~
 
 ~~START~~
-text
+varchar
 @var_i: 3
 ~~END~~
 
 ~~START~~
-text
+varchar
 @@fetch_status: 0
 ~~END~~
 
 ~~START~~
-text
+varchar
 @var_i: 4
 ~~END~~
 
@@ -932,37 +932,37 @@ GO
 EXEC babel_forward_only_cursor_proc;
 GO
 ~~START~~
-text
+varchar
 @@fetch_status: 0
 ~~END~~
 
 ~~START~~
-text
+varchar
 <NULL>
 ~~END~~
 
 ~~START~~
-text
+varchar
 @var_i is null: true
 ~~END~~
 
 ~~START~~
-text
+varchar
 @@fetch_status: 0
 ~~END~~
 
 ~~START~~
-text
+varchar
 @var_i: 1
 ~~END~~
 
 ~~START~~
-text
+varchar
 @@fetch_status: 0
 ~~END~~
 
 ~~START~~
-text
+varchar
 @var_i: 2
 ~~END~~
 
@@ -990,47 +990,47 @@ GO
 EXEC babel_scroll_cursor_proc;
 GO
 ~~START~~
-text
+varchar
 @@fetch_status: 0
 ~~END~~
 
 ~~START~~
-text
+varchar
 <NULL>
 ~~END~~
 
 ~~START~~
-text
+varchar
 @var_i is null: true
 ~~END~~
 
 ~~START~~
-text
+varchar
 @@fetch_status: 0
 ~~END~~
 
 ~~START~~
-text
+varchar
 @var_i: 1
 ~~END~~
 
 ~~START~~
-text
+varchar
 @@fetch_status: 0
 ~~END~~
 
 ~~START~~
-text
+varchar
 @var_i: 2
 ~~END~~
 
 ~~START~~
-text
+varchar
 @@fetch_status: 0
 ~~END~~
 
 ~~START~~
-text
+varchar
 @var_a: 1
 ~~END~~
 
@@ -1051,57 +1051,57 @@ GO
 EXEC babel_static_cursor_proc;
 GO
 ~~START~~
-text
+varchar
 @@fetch_status: 0
 ~~END~~
 
 ~~START~~
-text
+varchar
 <NULL>
 ~~END~~
 
 ~~START~~
-text
+varchar
 @var_i is null: true
 ~~END~~
 
 ~~START~~
-text
+varchar
 @@fetch_status: 0
 ~~END~~
 
 ~~START~~
-text
+varchar
 @var_i: 1
 ~~END~~
 
 ~~START~~
-text
+varchar
 @@fetch_status: 0
 ~~END~~
 
 ~~START~~
-text
+varchar
 @var_i: 2
 ~~END~~
 
 ~~START~~
-text
+varchar
 @@fetch_status: 0
 ~~END~~
 
 ~~START~~
-text
+varchar
 @var_i: 3
 ~~END~~
 
 ~~START~~
-text
+varchar
 @@fetch_status: 0
 ~~END~~
 
 ~~START~~
-text
+varchar
 @var_i: 4
 ~~END~~
 
@@ -1162,57 +1162,57 @@ GO
 EXEC babel_fast_forward_cursor_proc;
 GO
 ~~START~~
-text
+varchar
 @@fetch_status: 0
 ~~END~~
 
 ~~START~~
-text
+varchar
 <NULL>
 ~~END~~
 
 ~~START~~
-text
+varchar
 @var_i is null: true
 ~~END~~
 
 ~~START~~
-text
+varchar
 @@fetch_status: 0
 ~~END~~
 
 ~~START~~
-text
+varchar
 @var_i: 1
 ~~END~~
 
 ~~START~~
-text
+varchar
 @@fetch_status: 0
 ~~END~~
 
 ~~START~~
-text
+varchar
 @var_i: 2
 ~~END~~
 
 ~~START~~
-text
+varchar
 @@fetch_status: 0
 ~~END~~
 
 ~~START~~
-text
+varchar
 @var_i: 3
 ~~END~~
 
 ~~START~~
-text
+varchar
 @@fetch_status: 0
 ~~END~~
 
 ~~START~~
-text
+varchar
 @var_i: 4
 ~~END~~
 
@@ -1236,47 +1236,47 @@ GO
 EXEC babel_read_only_cursor_proc;
 GO
 ~~START~~
-text
+varchar
 @@fetch_status: 0
 ~~END~~
 
 ~~START~~
-text
+varchar
 @var_i: 1
 ~~END~~
 
 ~~START~~
-text
+varchar
 @@fetch_status: 0
 ~~END~~
 
 ~~START~~
-text
+varchar
 @var_i: 2
 ~~END~~
 
 ~~START~~
-text
+varchar
 @@fetch_status: 0
 ~~END~~
 
 ~~START~~
-text
+varchar
 @var_i: 3
 ~~END~~
 
 ~~START~~
-text
+varchar
 @@fetch_status: 0
 ~~END~~
 
 ~~START~~
-text
+varchar
 @var_i: 4
 ~~END~~
 
 ~~START~~
-text
+varchar
 @@fetch_status: -1
 ~~END~~
 
@@ -1390,122 +1390,122 @@ GO
 EXEC babel_cursor_fetch_options_proc
 GO
 ~~START~~
-text
+varchar
 @@fetch_status: 0
 ~~END~~
 
 ~~START~~
-text
+varchar
 @var_a is null: true
 ~~END~~
 
 ~~START~~
-text
+varchar
 @@fetch_status: 0
 ~~END~~
 
 ~~START~~
-text
+varchar
 @var_a: 1
 ~~END~~
 
 ~~START~~
-text
+varchar
 @@fetch_status: 0
 ~~END~~
 
 ~~START~~
-text
+varchar
 @var_a: 2
 ~~END~~
 
 ~~START~~
-text
+varchar
 @@fetch_status: 0
 ~~END~~
 
 ~~START~~
-text
+varchar
 @var_a: 1
 ~~END~~
 
 ~~START~~
-text
+varchar
 @@fetch_status: 0
 ~~END~~
 
 ~~START~~
-text
+varchar
 @var_a: 4
 ~~END~~
 
 ~~START~~
-text
+varchar
 @@fetch_status: 0
 ~~END~~
 
 ~~START~~
-text
+varchar
 @var_a is null: true
 ~~END~~
 
 ~~START~~
-text
+varchar
 @@fetch_status: 0
 ~~END~~
 
 ~~START~~
-text
+varchar
 @var_a: 2
 ~~END~~
 
 ~~START~~
-text
+varchar
 @@fetch_status: 0
 ~~END~~
 
 ~~START~~
-text
+varchar
 @var_a: 3
 ~~END~~
 
 ~~START~~
-text
+varchar
 @@fetch_status: 0
 ~~END~~
 
 ~~START~~
-text
+varchar
 @var_a is null: true
 ~~END~~
 
 ~~START~~
-text
+varchar
 @@fetch_status: 0
 ~~END~~
 
 ~~START~~
-text
+varchar
 @var_a: 2
 ~~END~~
 
 ~~START~~
-text
+varchar
 @@fetch_status: 0
 ~~END~~
 
 ~~START~~
-text
+varchar
 @var_a: 2
 ~~END~~
 
 ~~START~~
-text
+varchar
 @@fetch_status: 0
 ~~END~~
 
 ~~START~~
-text
+varchar
 @var_a: 1
 ~~END~~
 
@@ -1531,52 +1531,52 @@ GO
 EXEC babel_cursor_fetch_failure_proc;
 GO
 ~~START~~
-text
+varchar
 @@fetch_status: 0
 ~~END~~
 
 ~~START~~
-text
+varchar
 @var_i: 1
 ~~END~~
 
 ~~START~~
-text
+varchar
 @@fetch_status: 0
 ~~END~~
 
 ~~START~~
-text
+varchar
 @var_i: 2
 ~~END~~
 
 ~~START~~
-text
+varchar
 @@fetch_status: 0
 ~~END~~
 
 ~~START~~
-text
+varchar
 @var_i: 3
 ~~END~~
 
 ~~START~~
-text
+varchar
 @@fetch_status: 0
 ~~END~~
 
 ~~START~~
-text
+varchar
 @var_i: 4
 ~~END~~
 
 ~~START~~
-text
+varchar
 @@fetch_status: -1
 ~~END~~
 
 ~~START~~
-text
+varchar
 @@fetch_status: -1
 ~~END~~
 
@@ -1625,112 +1625,112 @@ GO
 EXEC babel_cursor_deallocate_assign_proc
 GO
 ~~START~~
-text
+varchar
 @@fetch_status: 0
 ~~END~~
 
 ~~START~~
-text
+varchar
 <NULL>
 ~~END~~
 
 ~~START~~
-text
+varchar
 @var_i is null: true
 ~~END~~
 
 ~~START~~
-text
+varchar
 @@fetch_status: 0
 ~~END~~
 
 ~~START~~
-text
+varchar
 @var_i: 1
 ~~END~~
 
 ~~START~~
-text
+varchar
 @@fetch_status: 0
 ~~END~~
 
 ~~START~~
-text
+varchar
 @var_i: 2
 ~~END~~
 
 ~~START~~
-text
+varchar
 @@fetch_status: 0
 ~~END~~
 
 ~~START~~
-text
+varchar
 @var_i: 3
 ~~END~~
 
 ~~START~~
-text
+varchar
 @@fetch_status: 0
 ~~END~~
 
 ~~START~~
-text
+varchar
 @var_i: 4
 ~~END~~
 
 ~~START~~
-text
+varchar
 @@fetch_status: 0
 ~~END~~
 
 ~~START~~
-text
+varchar
 <NULL>
 ~~END~~
 
 ~~START~~
-text
+varchar
 @var_c is null: true
 ~~END~~
 
 ~~START~~
-text
+varchar
 @@fetch_status: 0
 ~~END~~
 
 ~~START~~
-text
+varchar
 @var_c: a
 ~~END~~
 
 ~~START~~
-text
+varchar
 @@fetch_status: 0
 ~~END~~
 
 ~~START~~
-text
+varchar
 @var_c: bb
 ~~END~~
 
 ~~START~~
-text
+varchar
 @@fetch_status: 0
 ~~END~~
 
 ~~START~~
-text
+varchar
 @var_c: cccc
 ~~END~~
 
 ~~START~~
-text
+varchar
 @@fetch_status: 0
 ~~END~~
 
 ~~START~~
-text
+varchar
 @var_c: dddddd
 ~~END~~
 
@@ -1762,112 +1762,112 @@ GO
 EXEC babel_cursor_deallocate_assign_change_cursor_type_proc
 GO
 ~~START~~
-text
+varchar
 @@fetch_status: 0
 ~~END~~
 
 ~~START~~
-text
+varchar
 <NULL>
 ~~END~~
 
 ~~START~~
-text
+varchar
 @var_i is null: true
 ~~END~~
 
 ~~START~~
-text
+varchar
 @@fetch_status: 0
 ~~END~~
 
 ~~START~~
-text
+varchar
 @var_i: 1
 ~~END~~
 
 ~~START~~
-text
+varchar
 @@fetch_status: 0
 ~~END~~
 
 ~~START~~
-text
+varchar
 @var_i: 2
 ~~END~~
 
 ~~START~~
-text
+varchar
 @@fetch_status: 0
 ~~END~~
 
 ~~START~~
-text
+varchar
 @var_i: 3
 ~~END~~
 
 ~~START~~
-text
+varchar
 @@fetch_status: 0
 ~~END~~
 
 ~~START~~
-text
+varchar
 @var_i: 4
 ~~END~~
 
 ~~START~~
-text
+varchar
 @@fetch_status: 0
 ~~END~~
 
 ~~START~~
-text
+varchar
 <NULL>
 ~~END~~
 
 ~~START~~
-text
+varchar
 @var_c is null: true
 ~~END~~
 
 ~~START~~
-text
+varchar
 @@fetch_status: 0
 ~~END~~
 
 ~~START~~
-text
+varchar
 @var_c: a
 ~~END~~
 
 ~~START~~
-text
+varchar
 @@fetch_status: 0
 ~~END~~
 
 ~~START~~
-text
+varchar
 @var_c: bb
 ~~END~~
 
 ~~START~~
-text
+varchar
 @@fetch_status: 0
 ~~END~~
 
 ~~START~~
-text
+varchar
 @var_c: cccc
 ~~END~~
 
 ~~START~~
-text
+varchar
 @@fetch_status: 0
 ~~END~~
 
 ~~START~~
-text
+varchar
 @var_c: dddddd
 ~~END~~
 
@@ -1897,32 +1897,32 @@ GO
 EXEC babel_cursor_double_set_proc
 GO
 ~~START~~
-text
+varchar
 @@fetch_status: 0
 ~~END~~
 
 ~~START~~
-text
+varchar
 <NULL>
 ~~END~~
 
 ~~START~~
-text
+varchar
 @var_i is null: true
 ~~END~~
 
 ~~START~~
-text
+varchar
 @@fetch_status: 0
 ~~END~~
 
 ~~START~~
-text
+varchar
 <NULL>
 ~~END~~
 
 ~~START~~
-text
+varchar
 @var_c is null: true
 ~~END~~
 
@@ -1949,12 +1949,12 @@ GO
 EXEC babel_cursor_double_set_without_open_proc
 GO
 ~~START~~
-text
+varchar
 @@fetch_status: 0
 ~~END~~
 
 ~~START~~
-text
+varchar
 @var_c: a
 ~~END~~
 
@@ -1994,12 +1994,12 @@ GO
 EXEC babel_cursor_double_deallocate_proc
 GO
 ~~START~~
-text
+varchar
 @@fetch_status: 0
 ~~END~~
 
 ~~START~~
-text
+varchar
 @var_i: 2
 ~~END~~
 
@@ -2049,22 +2049,22 @@ GO
 EXEC babel_cursor_switch_cursors_proc;
 GO
 ~~START~~
-text
+varchar
 @var_i: 1
 ~~END~~
 
 ~~START~~
-text
+varchar
 @var_c: a
 ~~END~~
 
 ~~START~~
-text
+varchar
 @var_i: 2
 ~~END~~
 
 ~~START~~
-text
+varchar
 @var_c: bb
 ~~END~~
 
@@ -2121,22 +2121,22 @@ GO
 EXEC babel_cursor_switch_cursors_proc_2;
 GO
 ~~START~~
-text
+varchar
 @var_c: 1
 ~~END~~
 
 ~~START~~
-text
+varchar
 @var_c: a
 ~~END~~
 
 ~~START~~
-text
+varchar
 @var_c: 2
 ~~END~~
 
 ~~START~~
-text
+varchar
 @var_c: bb
 ~~END~~
 
@@ -2202,22 +2202,22 @@ GO
 EXEC babel_cursor_switch_cursors_proc_3;
 GO
 ~~START~~
-text
+varchar
 @var_c: a
 ~~END~~
 
 ~~START~~
-text
+varchar
 @var_c: 1
 ~~END~~
 
 ~~START~~
-text
+varchar
 @var_c: bb
 ~~END~~
 
 ~~START~~
-text
+varchar
 @var_c: 2
 ~~END~~
 
@@ -2257,57 +2257,57 @@ GO
 EXEC babel_cursor_status_proc;
 GO
 ~~START~~
-text
+varchar
 cursor_status (after decl): -1
 ~~END~~
 
 ~~START~~
-text
+varchar
 cursor_status (after open): 1
 ~~END~~
 
 ~~START~~
-text
+varchar
 cursor_status (after fetch): 1
 ~~END~~
 
 ~~START~~
-text
+varchar
 <NULL>
 ~~END~~
 
 ~~START~~
-text
+varchar
 @var_a: 1
 ~~END~~
 
 ~~START~~
-text
+varchar
 @var_a: 2
 ~~END~~
 
 ~~START~~
-text
+varchar
 @var_a: 3
 ~~END~~
 
 ~~START~~
-text
+varchar
 @var_a: 4
 ~~END~~
 
 ~~START~~
-text
+varchar
 cursor_status (variable - should not be shown): -3
 ~~END~~
 
 ~~START~~
-text
+varchar
 cursor_status (after close): -1
 ~~END~~
 
 ~~START~~
-text
+varchar
 cursor_status (after deallocate): -3
 ~~END~~
 
@@ -2376,87 +2376,87 @@ GO
 EXEC babel_nested_cursor_status_proc;
 GO
 ~~START~~
-text
+varchar
 cursor_status lv0 (after decl): -1
 ~~END~~
 
 ~~START~~
-text
+varchar
 cursor_status lv1 (after decl): -1
 ~~END~~
 
 ~~START~~
-text
+varchar
 cursor_status lv1 (after open): 1
 ~~END~~
 
 ~~START~~
-text
+varchar
 cursor_status lv2 (after decl): -1
 ~~END~~
 
 ~~START~~
-text
+varchar
 cursor_status lv2 (after open): 1
 ~~END~~
 
 ~~START~~
-text
+varchar
 cursor_status lv2 (after fetch): 1
 ~~END~~
 
 ~~START~~
-text
+varchar
 cursor_status lv2 (after close): -1
 ~~END~~
 
 ~~START~~
-text
+varchar
 cursor_status lv2 (after deallocate): -3
 ~~END~~
 
 ~~START~~
-text
+varchar
 cursor_status lv1 (after exec nested procedure): 1
 ~~END~~
 
 ~~START~~
-text
+varchar
 cursor_status lv1 (after fetch): 1
 ~~END~~
 
 ~~START~~
-text
+varchar
 cursor_status lv1 (after close): -1
 ~~END~~
 
 ~~START~~
-text
+varchar
 cursor_status lv1 (after deallocate): -3
 ~~END~~
 
 ~~START~~
-text
+varchar
 cursor_status lv0 (after exec nested procedure): -1
 ~~END~~
 
 ~~START~~
-text
+varchar
 cursor_status lv0 (after open): 1
 ~~END~~
 
 ~~START~~
-text
+varchar
 cursor_status lv0 (after fetch): 1
 ~~END~~
 
 ~~START~~
-text
+varchar
 cursor_status lv0 (after close): -1
 ~~END~~
 
 ~~START~~
-text
+varchar
 cursor_status lv0 (after deallocate): -3
 ~~END~~
 
@@ -2520,112 +2520,112 @@ GO
 EXEC babel_cursor_var_status_proc;
 GO
 ~~START~~
-text
+varchar
 cursor_status (after decl): -2
 ~~END~~
 
 ~~START~~
-text
+varchar
 cursor_status (after set): -1
 ~~END~~
 
 ~~START~~
-text
+varchar
 cursor_status (after open): 1
 ~~END~~
 
 ~~START~~
-text
+varchar
 cursor_status (after fetch): 1
 ~~END~~
 
 ~~START~~
-text
+varchar
 <NULL>
 ~~END~~
 
 ~~START~~
-text
+varchar
 @var_a: 1
 ~~END~~
 
 ~~START~~
-text
+varchar
 @var_a: 2
 ~~END~~
 
 ~~START~~
-text
+varchar
 @var_a: 3
 ~~END~~
 
 ~~START~~
-text
+varchar
 @var_a: 4
 ~~END~~
 
 ~~START~~
-text
+varchar
 cursor_status (local - should not be shown): -3
 ~~END~~
 
 ~~START~~
-text
+varchar
 cursor_status (after close): -1
 ~~END~~
 
 ~~START~~
-text
+varchar
 cursor_status (after deallocate): -2
 ~~END~~
 
 ~~START~~
-text
+varchar
 cursor_status (after set): -1
 ~~END~~
 
 ~~START~~
-text
+varchar
 cursor_status (after open): 1
 ~~END~~
 
 ~~START~~
-text
+varchar
 cursor_status (after fetch): 1
 ~~END~~
 
 ~~START~~
-text
+varchar
 <NULL>
 ~~END~~
 
 ~~START~~
-text
+varchar
 @var_c: a
 ~~END~~
 
 ~~START~~
-text
+varchar
 @var_c: bb
 ~~END~~
 
 ~~START~~
-text
+varchar
 @var_c: cccc
 ~~END~~
 
 ~~START~~
-text
+varchar
 @var_c: dddddd
 ~~END~~
 
 ~~START~~
-text
+varchar
 cursor_status (after close): -1
 ~~END~~
 
 ~~START~~
-text
+varchar
 cursor_status (after deallocate): -2
 ~~END~~
 
@@ -2650,12 +2650,12 @@ GO
 EXEC babel_cursor_status_non_literal_param_proc;
 GO
 ~~START~~
-text
+varchar
 cursor_status (after open): 1
 ~~END~~
 
 ~~START~~
-text
+varchar
 cursor_status (after close): -1
 ~~END~~
 
@@ -2693,17 +2693,17 @@ GO
 EXEC babel_cursor_auto_close_exec_proc;
 GO
 ~~START~~
-text
+varchar
 @cursor_cnt (before proc execution): 0
 ~~END~~
 
 ~~START~~
-text
+varchar
 @var_a: 1
 ~~END~~
 
 ~~START~~
-text
+varchar
 @cursor_cnt (after proc execution): 0
 ~~END~~
 
@@ -2741,17 +2741,17 @@ GO
 EXEC babel_cursor_var_auto_close_exec_proc;
 GO
 ~~START~~
-text
+varchar
 @cursor_cnt (before proc execution): 0
 ~~END~~
 
 ~~START~~
-text
+varchar
 @var_a: 1
 ~~END~~
 
 ~~START~~
-text
+varchar
 @cursor_cnt (after proc execution): 0
 ~~END~~
 
@@ -2777,112 +2777,112 @@ GO
 EXEC babel_cursor_redecl_proc
 GO
 ~~START~~
-text
+varchar
 @@fetch_status: 0
 ~~END~~
 
 ~~START~~
-text
+varchar
 @var_i: 1
 ~~END~~
 
 ~~START~~
-text
+varchar
 @@fetch_status: 0
 ~~END~~
 
 ~~START~~
-text
+varchar
 @var_i: 2
 ~~END~~
 
 ~~START~~
-text
+varchar
 @@fetch_status: 0
 ~~END~~
 
 ~~START~~
-text
+varchar
 @var_i: 3
 ~~END~~
 
 ~~START~~
-text
+varchar
 @@fetch_status: 0
 ~~END~~
 
 ~~START~~
-text
+varchar
 @var_i: 4
 ~~END~~
 
 ~~START~~
-text
+varchar
 @@fetch_status: 0
 ~~END~~
 
 ~~START~~
-text
+varchar
 <NULL>
 ~~END~~
 
 ~~START~~
-text
+varchar
 @var_i is null: true
 ~~END~~
 
 ~~START~~
-text
+varchar
 @@fetch_status: 0
 ~~END~~
 
 ~~START~~
-text
+varchar
 @var_i: 101
 ~~END~~
 
 ~~START~~
-text
+varchar
 @@fetch_status: 0
 ~~END~~
 
 ~~START~~
-text
+varchar
 @var_i: 102
 ~~END~~
 
 ~~START~~
-text
+varchar
 @@fetch_status: 0
 ~~END~~
 
 ~~START~~
-text
+varchar
 @var_i: 103
 ~~END~~
 
 ~~START~~
-text
+varchar
 @@fetch_status: 0
 ~~END~~
 
 ~~START~~
-text
+varchar
 @var_i: 104
 ~~END~~
 
 ~~START~~
-text
+varchar
 @@fetch_status: 0
 ~~END~~
 
 ~~START~~
-text
+varchar
 <NULL>
 ~~END~~
 
 ~~START~~
-text
+varchar
 @var_i is null: true
 ~~END~~
 
@@ -2907,57 +2907,57 @@ GO
 EXEC babel_cursor_redecl_not_deallocd_proc_1
 GO
 ~~START~~
-text
+varchar
 @@fetch_status: 0
 ~~END~~
 
 ~~START~~
-text
+varchar
 @var_i: 1
 ~~END~~
 
 ~~START~~
-text
+varchar
 @@fetch_status: 0
 ~~END~~
 
 ~~START~~
-text
+varchar
 @var_i: 2
 ~~END~~
 
 ~~START~~
-text
+varchar
 @@fetch_status: 0
 ~~END~~
 
 ~~START~~
-text
+varchar
 @var_i: 3
 ~~END~~
 
 ~~START~~
-text
+varchar
 @@fetch_status: 0
 ~~END~~
 
 ~~START~~
-text
+varchar
 @var_i: 4
 ~~END~~
 
 ~~START~~
-text
+varchar
 @@fetch_status: 0
 ~~END~~
 
 ~~START~~
-text
+varchar
 <NULL>
 ~~END~~
 
 ~~START~~
-text
+varchar
 @var_i is null: true
 ~~END~~
 
@@ -3026,112 +3026,112 @@ GO
 EXEC babel_cursor_redecl_goto_proc
 GO
 ~~START~~
-text
+varchar
 @@fetch_status: 0
 ~~END~~
 
 ~~START~~
-text
+varchar
 @var_i: 1
 ~~END~~
 
 ~~START~~
-text
+varchar
 @@fetch_status: 0
 ~~END~~
 
 ~~START~~
-text
+varchar
 @var_i: 2
 ~~END~~
 
 ~~START~~
-text
+varchar
 @@fetch_status: 0
 ~~END~~
 
 ~~START~~
-text
+varchar
 @var_i: 3
 ~~END~~
 
 ~~START~~
-text
+varchar
 @@fetch_status: 0
 ~~END~~
 
 ~~START~~
-text
+varchar
 @var_i: 4
 ~~END~~
 
 ~~START~~
-text
+varchar
 @@fetch_status: 0
 ~~END~~
 
 ~~START~~
-text
+varchar
 <NULL>
 ~~END~~
 
 ~~START~~
-text
+varchar
 @var_i is null: true
 ~~END~~
 
 ~~START~~
-text
+varchar
 @@fetch_status: 0
 ~~END~~
 
 ~~START~~
-text
+varchar
 @var_i: 101
 ~~END~~
 
 ~~START~~
-text
+varchar
 @@fetch_status: 0
 ~~END~~
 
 ~~START~~
-text
+varchar
 @var_i: 102
 ~~END~~
 
 ~~START~~
-text
+varchar
 @@fetch_status: 0
 ~~END~~
 
 ~~START~~
-text
+varchar
 @var_i: 103
 ~~END~~
 
 ~~START~~
-text
+varchar
 @@fetch_status: 0
 ~~END~~
 
 ~~START~~
-text
+varchar
 @var_i: 104
 ~~END~~
 
 ~~START~~
-text
+varchar
 @@fetch_status: 0
 ~~END~~
 
 ~~START~~
-text
+varchar
 <NULL>
 ~~END~~
 
 ~~START~~
-text
+varchar
 @var_i is null: true
 ~~END~~
 
@@ -3159,57 +3159,57 @@ GO
 EXEC babel_cursor_redecl_goto_proc_2
 GO
 ~~START~~
-text
+varchar
 @@fetch_status: 0
 ~~END~~
 
 ~~START~~
-text
+varchar
 @var_i: 1
 ~~END~~
 
 ~~START~~
-text
+varchar
 @@fetch_status: 0
 ~~END~~
 
 ~~START~~
-text
+varchar
 @var_i: 2
 ~~END~~
 
 ~~START~~
-text
+varchar
 @@fetch_status: 0
 ~~END~~
 
 ~~START~~
-text
+varchar
 @var_i: 3
 ~~END~~
 
 ~~START~~
-text
+varchar
 @@fetch_status: 0
 ~~END~~
 
 ~~START~~
-text
+varchar
 @var_i: 4
 ~~END~~
 
 ~~START~~
-text
+varchar
 @@fetch_status: 0
 ~~END~~
 
 ~~START~~
-text
+varchar
 <NULL>
 ~~END~~
 
 ~~START~~
-text
+varchar
 @var_i is null: true
 ~~END~~
 
@@ -3313,7 +3313,7 @@ varchar
 ~~END~~
 
 ~~START~~
-text
+varchar
 (sp_cursor_list out) @refname: cur_a, @curname: cur_a, @scope: 1, @model: 1, @concurrency: 1, @scrollable: 1, @open_status: 0, @cursor_rows: 0, @fetch_status: -9, @column_count: -1, @row_count: 0, @last_operation 0
 ~~END~~
 
@@ -3369,7 +3369,7 @@ varchar
 ~~END~~
 
 ~~START~~
-text
+varchar
 (sp_cursor_list out) @refname: cur_a, @curname: cur_a, @scope: 1, @model: 1, @concurrency: 1, @scrollable: 1, @open_status: 1, @cursor_rows: -1, @fetch_status: 0, @column_count: 1, @row_count: 1, @last_operation 2
 ~~END~~
 
@@ -3487,7 +3487,7 @@ varchar
 ~~END~~
 
 ~~START~~
-text
+varchar
 (sp_cursor_list out) @refname: cur_a, @curname: cur_a, @scope: 1, @model: 1, @concurrency: 1, @scrollable: 1, @open_status: 0, @cursor_rows: 0, @fetch_status: -9, @column_count: -1, @row_count: 0, @last_operation 0
 ~~END~~
 
@@ -3524,7 +3524,7 @@ GO
 EXEC babel_same_cursor_name_proc 1;
 GO
 ~~START~~
-text
+varchar
 @var_a: 1
 ~~END~~
 
@@ -3532,7 +3532,7 @@ text
 EXEC babel_same_cursor_name_proc 2;
 GO
 ~~START~~
-text
+varchar
 @var_b: a
 ~~END~~
 
@@ -3575,52 +3575,52 @@ GO
 EXEC babel_cursor_rows_proc;
 GO
 ~~START~~
-text
+varchar
 @@cursor_rows (after decl): 0
 ~~END~~
 
 ~~START~~
-text
+varchar
 @@cursor_rows (after open a): -1
 ~~END~~
 
 ~~START~~
-text
+varchar
 @var_a: 1
 ~~END~~
 
 ~~START~~
-text
+varchar
 @@cursor_rows (after fetch 1): -1
 ~~END~~
 
 ~~START~~
-text
+varchar
 @@cursor_rows (after open b): -1
 ~~END~~
 
 ~~START~~
-text
+varchar
 @var_a: 2
 ~~END~~
 
 ~~START~~
-text
+varchar
 @@cursor_rows (after fetch 2): -1
 ~~END~~
 
 ~~START~~
-text
+varchar
 @@cursor_rows (after close a): -1
 ~~END~~
 
 ~~START~~
-text
+varchar
 @@cursor_rows (after close b): 0
 ~~END~~
 
 ~~START~~
-text
+varchar
 @@cursor_rows (after deallocate): 0
 ~~END~~
 
@@ -4121,27 +4121,27 @@ GO
 EXEC babel_311_cusor_fetch_in_while_proc;
 GO
 ~~START~~
-text
+varchar
 <NULL>
 ~~END~~
 
 ~~START~~
-text
+varchar
 @var_a: 1
 ~~END~~
 
 ~~START~~
-text
+varchar
 @var_a: 2
 ~~END~~
 
 ~~START~~
-text
+varchar
 @var_a: 3
 ~~END~~
 
 ~~START~~
-text
+varchar
 @var_a: 4
 ~~END~~
 
@@ -4170,27 +4170,27 @@ GO
 EXEC babel_311_cusor_fetch_in_if_proc;
 GO
 ~~START~~
-text
+varchar
 <NULL>
 ~~END~~
 
 ~~START~~
-text
+varchar
 @var_a: 1
 ~~END~~
 
 ~~START~~
-text
+varchar
 @var_a: 2
 ~~END~~
 
 ~~START~~
-text
+varchar
 @var_a: 3
 ~~END~~
 
 ~~START~~
-text
+varchar
 @var_a: 4
 ~~END~~
 
@@ -4243,27 +4243,27 @@ GO
 ~~ROW COUNT: 1~~
 
 ~~START~~
-text
+varchar
 @@fetch_status before fetch=  0
 ~~END~~
 
 ~~START~~
-text
+varchar
 fetched=1
 ~~END~~
 
 ~~START~~
-text
+varchar
 fetched=2
 ~~END~~
 
 ~~START~~
-text
+varchar
 fetched=3
 ~~END~~
 
 ~~START~~
-text
+varchar
 <NULL>
 ~~END~~
 
