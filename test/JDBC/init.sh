@@ -11,11 +11,9 @@ GRANT ALL ON SCHEMA sys to jdbc_user;
 ALTER USER jdbc_user CREATEDB;
 \c jdbc_testdb
 ALTER SYSTEM SET babelfishpg_tsql.database_name = 'jdbc_testdb';
-ALTER SYSTEM SET babelfishpg_tds.set_db_session_property = true;
 SELECT pg_reload_conf();
 \c jdbc_testdb
 show babelfishpg_tsql.database_name;
-show babelfishpg_tds.set_db_session_property;
 CALL sys.initialize_babelfish('jdbc_user');
 EOF
 echo "============================= BUILDING JDBC TEST FRAMEWORK ============================="

@@ -1,0 +1,10 @@
+create database [babel-2993];
+java_auth#!#database|-|babel-2993
+java_auth#!#database|-|[babel-2993]
+java_auth#!#database|-|"babel-2993"
+java_auth#!#database|-|"[babel-2993]"
+java_auth#!#database|-|'babel-2993'
+
+java_auth#!#database|-|master
+
+drop database [babel-2993];

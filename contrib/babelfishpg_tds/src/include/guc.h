@@ -24,5 +24,4 @@ extern int tds_default_numeric_scale;
 extern int32_t tds_default_protocol_version;
 extern int32_t tds_default_packet_size;
 extern int tds_debug_log_level;
-extern bool tds_enable_db_session_property;
 extern char *default_server_name;

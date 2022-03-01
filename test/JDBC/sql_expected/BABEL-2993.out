@@ -1,0 +1,28 @@
+create database [babel-2993];
+java_auth#!#database|-|babel-2993
+~~SUCCESS~~
+java_auth#!#database|-|[babel-2993]
+~~ERROR (Code: 4060)~~
+
+~~ERROR (Message: Cannot open database "[babel-2993]" requested by the login. The login failed. )~~
+
+java_auth#!#database|-|"babel-2993"
+~~ERROR (Code: 4060)~~
+
+~~ERROR (Message: Cannot open database ""babel-2993"" requested by the login. The login failed. )~~
+
+java_auth#!#database|-|"[babel-2993]"
+~~ERROR (Code: 4060)~~
+
+~~ERROR (Message: Cannot open database ""[babel-2993]"" requested by the login. The login failed. )~~
+
+java_auth#!#database|-|'babel-2993'
+~~ERROR (Code: 4060)~~
+
+~~ERROR (Message: Cannot open database "'babel-2993'" requested by the login. The login failed. )~~
+
+
+java_auth#!#database|-|master
+~~SUCCESS~~
+
+drop database [babel-2993];
