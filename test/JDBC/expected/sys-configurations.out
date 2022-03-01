@@ -1,0 +1,49 @@
+SELECT * FROM sys.configurations;
+GO
+~~START~~
+int#!#nvarchar#!#sql_variant#!#sql_variant#!#sql_variant#!#sql_variant#!#nvarchar#!#bit#!#bit
+16387#!#SMO and DMO XPs#!#1#!#0#!#1#!#1#!#Enable or disable SMO and DMO XPs#!#1#!#1
+~~END~~
+
+
+SELECT * FROM sys.syscurconfigs;
+GO
+~~START~~
+sql_variant#!#int#!#nvarchar#!#smallint
+1#!#16387#!#Enable or disable SMO and DMO XPs#!#3
+~~END~~
+
+
+SELECT * FROM sys.sysconfigures;
+GO
+~~START~~
+sql_variant#!#int#!#nvarchar#!#smallint
+1#!#16387#!#Enable or disable SMO and DMO XPs#!#3
+~~END~~
+
+
+SELECT * FROM sys.babelfish_configurations;
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: permission denied for table babelfish_configurations)~~
+
+
+INSERT INTO sys.babelfish_configurations
+     VALUES (1234,
+             'testing',
+             1,
+             0,
+             0,
+             1,
+             'asdf',
+             sys.bitin('1'),
+             sys.bitin('0'),
+             'testing',
+             'testing'
+             );
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: permission denied for table babelfish_configurations)~~
+

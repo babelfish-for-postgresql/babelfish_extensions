@@ -1776,3 +1776,45 @@ create or replace view sys.dm_exec_connections
  from pg_catalog.pg_stat_activity AS a
  RIGHT JOIN sys.tsql_stat_get_activity('connections') AS d ON (a.pid = d.procid);
  GRANT SELECT ON sys.dm_exec_connections TO PUBLIC;
+
+CREATE OR REPLACE VIEW sys.configurations
+AS
+SELECT  configuration_id, 
+        name, 
+        value, 
+        minimum, 
+        maximum, 
+        value_in_use, 
+        description, 
+        is_dynamic, 
+        is_advanced 
+FROM sys.babelfish_configurations;
+GRANT SELECT ON sys.configurations TO PUBLIC;
+
+CREATE OR REPLACE VIEW sys.syscurconfigs
+AS
+SELECT  value,
+        configuration_id AS config,
+        comment_syscurconfigs AS comment,
+        CASE
+        	WHEN CAST(is_advanced as int) = 0 AND CAST(is_dynamic as int) = 0 THEN CAST(0 as smallint)
+        	WHEN CAST(is_advanced as int) = 0 AND CAST(is_dynamic as int) = 1 THEN CAST(1 as smallint)
+        	WHEN CAST(is_advanced as int) = 1 AND CAST(is_dynamic as int) = 0 THEN CAST(2 as smallint)
+        	WHEN CAST(is_advanced as int) = 1 AND CAST(is_dynamic as int) = 1 THEN CAST(3 as smallint)
+        END AS status
+FROM sys.babelfish_configurations;
+GRANT SELECT ON sys.syscurconfigs TO PUBLIC;
+
+CREATE OR REPLACE VIEW sys.sysconfigures
+AS
+SELECT  value_in_use AS value,
+        configuration_id AS config,
+        comment_sysconfigures AS comment,
+        CASE
+        	WHEN CAST(is_advanced as int) = 0 AND CAST(is_dynamic as int) = 0 THEN CAST(0 as smallint)
+        	WHEN CAST(is_advanced as int) = 0 AND CAST(is_dynamic as int) = 1 THEN CAST(1 as smallint)
+        	WHEN CAST(is_advanced as int) = 1 AND CAST(is_dynamic as int) = 0 THEN CAST(2 as smallint)
+        	WHEN CAST(is_advanced as int) = 1 AND CAST(is_dynamic as int) = 1 THEN CAST(3 as smallint)
+        END AS status
+FROM sys.babelfish_configurations;
+GRANT SELECT ON sys.sysconfigures TO PUBLIC;
