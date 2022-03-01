@@ -94,6 +94,14 @@ r1
 ~~END~~
 
 
+SELECT user_name(user_id());
+go
+~~START~~
+nvarchar
+r1
+~~END~~
+
+
 ALTER USER r1 WITH DEFAULT_SCHEMA = sch2;
 go
 
@@ -183,6 +191,14 @@ SELECT current_user;
 go
 ~~START~~
 varchar
+r2
+~~END~~
+
+
+SELECT user_name(user_id());
+go
+~~START~~
+nvarchar
 r2
 ~~END~~
 
@@ -498,26 +514,11 @@ dbo
 ~~END~~
 
 
-SELECT user_name(user_id('guest'));
-GO
-~~START~~
-nvarchar
-dbo
-~~END~~
-
-
 SELECT rolname FROM pg_roles WHERE oid = user_id('dbo');
 GO
 ~~START~~
 varchar
 dbo
-~~END~~
-
-
-SELECT rolname FROM pg_roles WHERE oid = user_id('guest');
-GO
-~~START~~
-varchar
 ~~END~~
 
 

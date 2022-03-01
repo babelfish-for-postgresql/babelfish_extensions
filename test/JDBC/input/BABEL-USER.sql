@@ -46,6 +46,9 @@ FROM sys.database_principals
 WHERE name = 'test1';
 GO
 
+SELECT user_name(user_id('test1'));
+GO
+
 -- Test create user with login uniqueness in the database
 CREATE USER test2 FOR LOGIN test2;
 GO

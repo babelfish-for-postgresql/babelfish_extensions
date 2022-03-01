@@ -55,6 +55,9 @@ go
 SELECT current_user;
 go
 
+SELECT user_name(user_id());
+go
+
 ALTER USER r1 WITH DEFAULT_SCHEMA = sch2;
 go
 
@@ -98,6 +101,9 @@ SELECT session_user;
 go
 
 SELECT current_user;
+go
+
+SELECT user_name(user_id());
 go
 
 -- tsql
@@ -261,13 +267,7 @@ GO
 SELECT user_name(user_id());
 GO
 
-SELECT user_name(user_id('guest'));
-GO
-
 SELECT rolname FROM pg_roles WHERE oid = user_id('dbo');
-GO
-
-SELECT rolname FROM pg_roles WHERE oid = user_id('guest');
 GO
 
 -- Expect NULL

@@ -926,6 +926,12 @@ get_physical_schema_name(char *db_name, const char *schema_name)
 	return result;
 }
 
+/*
+ * db_name is the logical database name to rewrite to
+ * user_name is the logical user name
+ *
+ * Map the logical user name to its physical name in the database.
+ */
 char *
 get_physical_user_name(char *db_name, char *user_name)
 {
@@ -966,7 +972,7 @@ get_physical_user_name(char *db_name, char *user_name)
 	}
 
 	result = palloc0(MAX_BBF_NAMEDATALEND);
-	snprintf(result, (MAX_BBF_NAMEDATALEND), "%s_%s", db_name, user_name);
+	snprintf(result, (MAX_BBF_NAMEDATALEND), "%s_%s", db_name, new_user_name);
 
 	/* Truncate final result to 64 bytes */
 	truncate_tsql_identifier(result);
@@ -1037,40 +1043,6 @@ const char *get_guest_role_name(const char *dbname)
 	/* BABEL-2430: Disable guest user for DB other than master/tempdb */
 	else
 		return NULL;
-}
-
-const char *
-user_return_name(const char* user_name)
-{
-	size_t	lendb;
-	char	*dbname = palloc0(MAX_BBF_NAMEDATALEND);
-
-	if (!user_name || !get_cur_db_name())
-		return NULL;
-
-	if (SINGLE_DB != get_migration_mode() ||
-		strcmp("master", get_cur_db_name()) == 0 ||
-		strcmp("tempdb", get_cur_db_name()) == 0)
-	{
-		size_t	lenuser;
-		char	*ret;
-
-		snprintf(dbname, MAX_BBF_NAMEDATALEND, "%s_", get_cur_db_name());
-		truncate_identifier(dbname, strlen(dbname), false);
-		lendb = strlen(dbname);
-
-		if (strncmp(dbname, user_name, lendb) != 0)
-			return NULL;
-
-		/* Obtain user name */
-		lenuser = strlen(user_name) - lendb + 1;
-		ret = palloc0(lenuser);
-		snprintf(ret, lenuser, "%s", user_name + lendb);
-
-		return ret;
-	}
-
-	return user_name;
 }
 
 /*************************************************************

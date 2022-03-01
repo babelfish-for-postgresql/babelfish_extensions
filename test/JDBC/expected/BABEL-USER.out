@@ -87,6 +87,14 @@ test1#!#dbo
 ~~END~~
 
 
+SELECT user_name(user_id('test1'));
+GO
+~~START~~
+nvarchar
+test1
+~~END~~
+
+
 -- Test create user with login uniqueness in the database
 CREATE USER test2 FOR LOGIN test2;
 GO
