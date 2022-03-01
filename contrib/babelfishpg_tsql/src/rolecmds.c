@@ -1427,3 +1427,29 @@ check_alter_server_stmt(GrantRoleStmt *stmt)
 	}
 	ReleaseSysCacheList(memlist);
 }
+
+PG_FUNCTION_INFO_V1(role_id);
+Datum
+role_id(PG_FUNCTION_ARGS)
+{
+	char	*user_input;
+	char	*role_name;
+	Oid		result;
+
+	user_input = text_to_cstring(PG_GETARG_TEXT_PP(0));
+
+	if (0 != strncmp(user_input, "db_owner", 8))
+		PG_RETURN_NULL();  /* don't have other roles */
+
+	if (!get_cur_db_name())
+		PG_RETURN_NULL();
+
+	role_name = get_physical_name(get_cur_db_name(), user_input);
+
+	result = get_role_oid(role_name, true);
+
+	if (result == InvalidOid)
+		PG_RETURN_NULL();
+	else
+		PG_RETURN_INT32(result);
+}

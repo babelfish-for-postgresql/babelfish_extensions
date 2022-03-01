@@ -362,3 +362,10 @@ RETURNS table (
   object_name varchar(128),
   detail jsonb
 ) AS 'babelfishpg_tsql', 'babelfish_inconsistent_metadata' LANGUAGE C;
+
+
+CREATE OR REPLACE FUNCTION sys.role_id(role_name SYS.SYSNAME)
+RETURNS INT
+AS 'babelfishpg_tsql', 'role_id'
+LANGUAGE C STRICT IMMUTABLE PARALLEL SAFE;
+GRANT EXECUTE ON FUNCTION sys.role_id TO PUBLIC;
