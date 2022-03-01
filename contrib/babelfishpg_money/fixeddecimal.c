@@ -578,8 +578,15 @@ scanfixeddecimal(const char *str, int *precision, int *scale)
 
 		/*
 		 * Eat into any excess precision digits.
+		 * For first digit, apply "Round half away from zero"
 		 * XXX These are ignored, should we error instead?
 		 */
+		if (isdigit((unsigned char) *ptr) && (unsigned char) *ptr >= '5')
+		{
+			fractionalpart++;
+			ptr++, vscale++;
+		}
+
 		while (isdigit((unsigned char) *ptr))
 			ptr++, vscale++;
 	}
