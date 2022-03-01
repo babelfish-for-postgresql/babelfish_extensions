@@ -4,6 +4,12 @@ GO
 SELECT is_srvrolemember('public')
 GO
 
+SELECT is_srvrolemember('public     ')
+GO
+
+SELECT is_srvrolemember('     public')
+GO
+
 SELECT is_srvrolemember('public', 'non_existent')
 GO
 
@@ -17,6 +23,12 @@ SELECT is_srvrolemember('sysadmin')
 GO
 
 SELECT is_srvrolemember('sysadmin', 'jdbc_user')
+GO
+
+SELECT is_srvrolemember('sysadmin', 'jdbc_user   ')
+GO
+
+SELECT is_srvrolemember('sysadmin', '   jdbc_user')
 GO
 
 SELECT is_srvrolemember('serveradmin')
