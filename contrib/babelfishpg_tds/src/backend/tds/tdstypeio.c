@@ -3008,7 +3008,11 @@ TdsTypeSqlVariantToDatum(StringInfo buf)
 		variantBaseType == VARIANT_TYPE_NVARCHAR ||
 		variantBaseType == VARIANT_TYPE_BINARY || 
 		variantBaseType == VARIANT_TYPE_VARBINARY ||
-		variantBaseType == VARIANT_TYPE_NUMERIC)
+		variantBaseType == VARIANT_TYPE_NUMERIC ||
+		variantBaseType == VARIANT_TYPE_DECIMAL ||
+		variantBaseType == VARIANT_TYPE_TIME ||
+		variantBaseType == VARIANT_TYPE_DATETIME2 ||
+		variantBaseType == VARIANT_TYPE_DATETIMEOFFSET)
 	{
 		resLen += VARHDRSZ;
 	}
@@ -3191,7 +3195,7 @@ TdsTypeSqlVariantToDatum(StringInfo buf)
 		tdt->tsql_tz = timezone;
 		memcpy(READ_DATA(result, variantHeaderLen), tdt, DATETIMEOFFSET_LEN);
 	}
-	else if (variantBaseType == VARIANT_TYPE_NUMERIC)
+	else if (variantBaseType == VARIANT_TYPE_NUMERIC || variantBaseType == VARIANT_TYPE_DECIMAL)
 	{
 		/*
 		 * dataformat : totalLen(4B) + metdata(5B)( baseType(1B) + metadatalen(1B) +
@@ -3237,7 +3241,7 @@ TdsTypeSqlVariantToDatum(StringInfo buf)
 		if (sign == 1 && num != 0)
 			decString++;
 		res = TdsSetVarFromStrWrapper(decString);
-		memcpy(VARDATA(READ_DATA(result, variantHeaderLen)), &res, sizeof(Numeric));
+		memcpy(READ_DATA(result, variantHeaderLen), (bytea *)DatumGetPointer(res), dataLen);
 	}
 	else
 	{

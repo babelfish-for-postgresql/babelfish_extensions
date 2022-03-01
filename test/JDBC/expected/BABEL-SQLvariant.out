@@ -458,9 +458,7 @@ go
 ~~ROW COUNT: 1~~
 
 insertbulk#!#sourceTable#!#destinationTable
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: 0x6A : datatype as basetype for SQL_VARIANT is not supported)~~
+~~ROW COUNT: 2~~
 
 go
 Select * from sourceTable;
@@ -475,6 +473,8 @@ Select * from destinationTable;
 go
 ~~START~~
 sql_variant#!#sql_variant
+0.0000#!#1050.0000
+<NULL>#!#-2.0000
 ~~END~~
 
 drop table sourceTable;
@@ -496,9 +496,7 @@ go
 ~~ROW COUNT: 1~~
 
 insertbulk#!#sourceTable#!#destinationTable
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: 0x6A : datatype as basetype for SQL_VARIANT is not supported)~~
+~~ROW COUNT: 2~~
 
 go
 Select * from sourceTable;
@@ -513,6 +511,8 @@ Select * from destinationTable;
 go
 ~~START~~
 sql_variant#!#sql_variant
+0.0000#!#1050.0000
+<NULL>#!#-2.0000
 ~~END~~
 
 drop table sourceTable;
@@ -944,4 +944,120 @@ Delhi                   #!#    Surat
 drop table sourceTable;
 go
 drop table destinationTable;
+go
+
+Create table sourceTable(a sql_variant, b sql_variant not null);
+go
+Insert into sourceTable values (cast (123.456 as numeric(5,2)), cast (123.4 as numeric(5,2)));
+go
+~~ROW COUNT: 1~~
+
+Insert into sourceTable values (cast (NULL as numeric(5,2)), cast (123 as numeric(5,2)));
+go
+~~ROW COUNT: 1~~
+
+Insert into sourceTable values (cast (-123.456 as numeric(5,2)), cast (-123 as numeric(5,2)));
+go
+~~ROW COUNT: 1~~
+
+Select * from sourceTable;
+go
+~~START~~
+sql_variant#!#sql_variant
+123.46#!#123.40
+<NULL>#!#123.00
+-123.46#!#-123.00
+~~END~~
+
+drop table sourceTable;
+go
+
+Create table sourceTable(a sql_variant, b sql_variant not null);
+go
+Insert into sourceTable values (cast (123.456 as decimal(5,2)), cast (123.4 as decimal(5,2)));
+go
+~~ROW COUNT: 1~~
+
+Insert into sourceTable values (cast (NULL as decimal(5,2)), cast (123 as decimal(5,2)));
+go
+~~ROW COUNT: 1~~
+
+Insert into sourceTable values (cast (-123.456 as decimal(5,2)), cast (-123 as decimal(5,2)));
+go
+~~ROW COUNT: 1~~
+
+Select * from sourceTable;
+go
+~~START~~
+sql_variant#!#sql_variant
+123.46#!#123.40
+<NULL>#!#123.00
+-123.46#!#-123.00
+~~END~~
+
+drop table sourceTable;
+go
+
+
+Create table sourceTable(a sql_variant, b sql_variant not null);
+go
+Insert into sourceTable values (cast ('12:45:37.123' as time(0)), cast ('12:45:37.123' as time(1)));
+go
+~~ROW COUNT: 1~~
+
+Insert into sourceTable values (cast (NULL as time(3)), cast ('12:45:37.123' as time(2)));
+go
+~~ROW COUNT: 1~~
+
+Insert into sourceTable values (cast ('12:45:37.123' as time(3)), cast ('12:45:37.1234' as time(4)));
+go
+~~ROW COUNT: 1~~
+
+Insert into sourceTable values (cast ('12:45:37.12345' as time(5)), cast ('12:45:37.123456' as time(6)));
+go
+~~ROW COUNT: 1~~
+
+Select * from sourceTable;
+go
+~~START~~
+sql_variant#!#sql_variant
+12:45:37.000000#!#12:45:37.100000
+<NULL>#!#12:45:37.120000
+12:45:37.123000#!#12:45:37.123400
+12:45:37.123450#!#12:45:37.123456
+~~END~~
+
+drop table sourceTable;
+go
+
+
+Create table sourceTable(a sql_variant, b sql_variant not null);
+go
+Insert into sourceTable values (cast ('2016-10-23 12:45:37.123' as datetime2(0)), cast ('2016-10-23 12:45:37.123' as datetime2(1)));
+go
+~~ROW COUNT: 1~~
+
+Insert into sourceTable values (cast (NULL as datetime2(3)), cast ('2016-10-23 12:45:37.123' as datetime2(2)));
+go
+~~ROW COUNT: 1~~
+
+Insert into sourceTable values (cast ('2016-10-23 12:45:37.123' as datetime2(3)), cast ('2016-10-23 12:45:37.1234' as datetime2(4)));
+go
+~~ROW COUNT: 1~~
+
+Insert into sourceTable values (cast ('2016-10-23 12:45:37.12345' as datetime2(5)), cast ('2016-10-23 12:45:37.123456' as datetime2(6)));
+go
+~~ROW COUNT: 1~~
+
+Select * from sourceTable;
+go
+~~START~~
+sql_variant#!#sql_variant
+2016-10-23 12:45:37.0#!#2016-10-23 12:45:37.1
+<NULL>#!#2016-10-23 12:45:37.12
+2016-10-23 12:45:37.123#!#2016-10-23 12:45:37.1234
+2016-10-23 12:45:37.12345#!#2016-10-23 12:45:37.123456
+~~END~~
+
+drop table sourceTable;
 go

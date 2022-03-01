@@ -717,7 +717,7 @@ Select * from destinationTable
 ~~START~~
 sql_variant#!#sql_variant
 1#!#abc
-<NULL>#!#14:37:45.123328
+<NULL>#!#14:37:45.123460
 ~~END~~
 
 drop table sourceTable
