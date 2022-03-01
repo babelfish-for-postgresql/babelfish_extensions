@@ -3410,16 +3410,16 @@ RETURNS table (
 	detail jsonb
 ) AS 'babelfishpg_tsql', 'babelfish_inconsistent_metadata' LANGUAGE C;
 
-CREATE OR REPLACE FUNCTION is_srvrolemember(role sys.SYSNAME, login sys.SYSNAME DEFAULT CURRENT_USER)
+CREATE OR REPLACE FUNCTION is_srvrolemember(role sys.SYSNAME, login sys.SYSNAME DEFAULT suser_name())
 RETURNS INTEGER AS
 $$
 DECLARE has_role BOOLEAN;
 DECLARE login_valid BOOLEAN;
-begin
-	role := LOWER(role);
-	login := LOWER(login);
+BEGIN
+	role  := TRIM(trailing from LOWER(role));
+	login := TRIM(trailing from LOWER(login));
 	
-	login_valid = (login = CURRENT_USER) OR 
+	login_valid = (login = suser_name()) OR 
 		(EXISTS (SELECT name
 	 			FROM sys.server_principals
 		 	 	WHERE 

@@ -14,6 +14,22 @@ int
 ~~END~~
 
 
+SELECT is_srvrolemember('public     ')
+GO
+~~START~~
+int
+1
+~~END~~
+
+
+SELECT is_srvrolemember('     public')
+GO
+~~START~~
+int
+<NULL>
+~~END~~
+
+
 SELECT is_srvrolemember('public', 'non_existent')
 GO
 ~~START~~
@@ -34,7 +50,7 @@ SELECT is_srvrolemember('SYSADMIN')
 GO
 ~~START~~
 int
-0
+1
 ~~END~~
 
 
@@ -42,7 +58,7 @@ SELECT is_srvrolemember('sysadmin')
 GO
 ~~START~~
 int
-0
+1
 ~~END~~
 
 
@@ -51,6 +67,22 @@ GO
 ~~START~~
 int
 1
+~~END~~
+
+
+SELECT is_srvrolemember('sysadmin', 'jdbc_user   ')
+GO
+~~START~~
+int
+1
+~~END~~
+
+
+SELECT is_srvrolemember('sysadmin', '   jdbc_user')
+GO
+~~START~~
+int
+<NULL>
 ~~END~~
 
 
