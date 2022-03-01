@@ -409,8 +409,8 @@ rewrite_object_refs(Node *stmt)
 				case OBJECT_SCHEMA:
 				{
 					char *cur_db = get_cur_db_name();
-					rename->subname = get_physical_name(cur_db, rename->subname);
-					rename->newname = get_physical_name(cur_db, rename->newname);
+					rename->subname = get_physical_schema_name(cur_db, rename->subname);
+					rename->newname = get_physical_schema_name(cur_db, rename->newname);
 					break;
 				}
 				case OBJECT_TABLE:
@@ -463,7 +463,9 @@ rewrite_object_refs(Node *stmt)
 		{
 			CreateSchemaStmt *create_schema = (CreateSchemaStmt *) stmt;
 			char *cur_db = get_cur_db_name();
-			create_schema->schemaname = get_physical_name(cur_db, create_schema->schemaname);
+			create_schema->schemaname = get_physical_schema_name(cur_db, create_schema->schemaname);
+			if (create_schema->authrole)
+				rewrite_role_name(create_schema->authrole);
 			break;
 		}
 		case T_AlterOwnerStmt:
@@ -614,7 +616,7 @@ rewrite_column_refs(ColumnRef *cref)
 				break;  /* do not thing for shared schemas */
 			else
 			{
-				new_schema = makeString(get_physical_name(cur_db, strVal(schema)));
+				new_schema = makeString(get_physical_schema_name(cur_db, strVal(schema)));
 				list_delete_first(cref->fields);
 				lcons(new_schema, cref->fields);
 			}
@@ -630,7 +632,7 @@ rewrite_column_refs(ColumnRef *cref)
 				list_delete_first(cref->fields);  /* redirect to shared schema */
 			else
 			{
-				new_schema = makeString(get_physical_name(strVal(db), strVal(schema)));
+				new_schema = makeString(get_physical_schema_name(strVal(db), strVal(schema)));
 				list_delete_first(cref->fields);
 				list_delete_first(cref->fields);
 				lcons(new_schema, cref->fields);
@@ -651,7 +653,7 @@ rewrite_rangevar(RangeVar *rv)
 			rv->catalogname = NULL;  /* redirect to shared schema */
 		else
 		{
-			rv->schemaname = get_physical_name(rv->catalogname, rv->schemaname);
+			rv->schemaname = get_physical_schema_name(rv->catalogname, rv->schemaname);
 			rv->catalogname = NULL;
 		}
 	}
@@ -662,7 +664,7 @@ rewrite_rangevar(RangeVar *rv)
 		else
 		{
 			char *cur_db = get_cur_db_name();
-			rv->schemaname = get_physical_name(cur_db, rv->schemaname);
+			rv->schemaname = get_physical_schema_name(cur_db, rv->schemaname);
 		}
 	}
 }
@@ -687,7 +689,7 @@ rewrite_plain_name(List *name)
 			if (is_shared_schema(strVal(schema)))
 				break;  /* do not thing for shared schemas */
 
-			new_schema = makeString(get_physical_name(cur_db, strVal(schema)));
+			new_schema = makeString(get_physical_schema_name(cur_db, strVal(schema)));
 			/* ignoring the return value sinece list is valid and cannot be empty */
 			list_delete_first(name);
 			lcons(new_schema, name);
@@ -705,7 +707,7 @@ rewrite_plain_name(List *name)
 				list_delete_first(name);  /* redirect to shared SYS schema */
 			else
 			{
-				new_schema = makeString(get_physical_name(strVal(db), strVal(schema)));
+				new_schema = makeString(get_physical_schema_name(strVal(db), strVal(schema)));
 				/* ignoring the return value sinece list is valid and cannot be empty */
 				list_delete_first(name);
 				list_delete_first(name);
@@ -726,14 +728,14 @@ rewrite_schema_name(Value *schema)
 	/* do nothing for shared schemas */
 	if (is_shared_schema(strVal(schema)))
 		return;
-	schema->val.str = get_physical_name(cur_db, strVal(schema));
+	schema->val.str = get_physical_schema_name(cur_db, strVal(schema));
 }
 
 static void
 rewrite_role_name(RoleSpec *role)
 {
 	char       *cur_db = get_cur_db_name();
-	role->rolename = get_physical_name(cur_db, role->rolename);
+	role->rolename = get_physical_user_name(cur_db, role->rolename);
 }
 
 static bool
@@ -848,7 +850,7 @@ get_current_physical_schema_name(PG_FUNCTION_ARGS)
 		PG_RETURN_NULL();
 
 	if (cur_db_name)
-		ret = get_physical_name(cur_db_name, schema_name);
+		ret = get_physical_schema_name(cur_db_name, schema_name);
 	else
 		PG_RETURN_TEXT_P(CStringGetTextDatum(schema_name));
 
@@ -859,18 +861,22 @@ get_current_physical_schema_name(PG_FUNCTION_ARGS)
  * retrieve the physical mapped schema for the query
  */
 char *
-get_physical_name(char *db_name, const char *object_name)
+get_physical_schema_name(char *db_name, const char *schema_name)
 {
 	char *name;
 	char *result;
-	int  len = strlen(object_name);
+	int		len;
 
-	if (!object_name || len == 0)
+	if (!schema_name)
+		return NULL;
+
+	len = strlen(schema_name);
+	if (len == 0)
 		return NULL;
 
 	/* always return a new copy */
 	name = palloc0(len > MAX_BBF_NAMEDATALEND ? len : MAX_BBF_NAMEDATALEND);
-	strncpy(name, object_name, strlen(object_name));
+	strncpy(name, schema_name, strlen(schema_name));
 
 	if (is_shared_schema(name))
 		return name;
@@ -905,7 +911,7 @@ get_physical_name(char *db_name, const char *object_name)
 			/* db_name is valid. 
 			 * under SINGLE_DB this is only possible 
 			 * when target db is the customer db.
-			 * in such case we only return the object_name name */
+			 * in such case we only return the schema_name name */
 			return name;
 		}
 	}
@@ -925,9 +931,13 @@ get_physical_user_name(char *db_name, char *user_name)
 {
 	char	*new_user_name;
 	char	*result;
-	int		len = strlen(user_name);
+	int		len;
 
-	if (!user_name || len == 0)
+	if (!user_name)
+		return NULL;
+
+	len = strlen(user_name);
+	if (len == 0)
 		return NULL;
 
 	if (!DbidIsValid(get_db_id(db_name)))
@@ -941,6 +951,19 @@ get_physical_user_name(char *db_name, char *user_name)
 
 	/* Truncate to 64 bytes */
 	truncate_tsql_identifier(new_user_name);
+
+	/* All the role and user names are prefixed.
+	 * Historically, dbo and db_owner in single-db mode were unprefixed
+	 * These are two exceptions to the naming convention
+	 */
+	if (SINGLE_DB == get_migration_mode())
+	{
+		if ((strcmp(db_name, "master") != 0) && (strcmp(db_name, "tempdb") != 0))
+		{
+			if (strncmp(user_name, "dbo", 3) == 0 || ( strncmp(user_name, "db_owner", 8) == 0))
+				return new_user_name;
+		}
+	}
 
 	result = palloc0(MAX_BBF_NAMEDATALEND);
 	snprintf(result, (MAX_BBF_NAMEDATALEND), "%s_%s", db_name, user_name);

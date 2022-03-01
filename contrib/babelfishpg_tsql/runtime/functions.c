@@ -461,8 +461,8 @@ schema_id(PG_FUNCTION_ARGS)
 	const char *physical_name;
 
 	if (pltsql_case_insensitive_identifiers)
-		name = downcase_identifier(name, strlen(name), false, false); /* no truncation here. truncation will be handled inside get_physical_name() */
-	physical_name = get_physical_name(get_cur_db_name(), name);
+		name = downcase_identifier(name, strlen(name), false, false); /* no truncation here. truncation will be handled inside get_physical_schema_name() */
+	physical_name = get_physical_schema_name(get_cur_db_name(), name);
 
 	/*
 	 * If physical schema name is empty or NULL for any reason then return NULL.

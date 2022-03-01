@@ -1444,7 +1444,7 @@ role_id(PG_FUNCTION_ARGS)
 	if (!get_cur_db_name())
 		PG_RETURN_NULL();
 
-	role_name = get_physical_name(get_cur_db_name(), user_input);
+	role_name = get_physical_user_name(get_cur_db_name(), user_input);
 
 	result = get_role_oid(role_name, true);
 

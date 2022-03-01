@@ -1,0 +1,6 @@
+alter user john with login = smith
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: 'ALTER USER WITH LOGIN' is not currently supported in Babelfish)~~
+

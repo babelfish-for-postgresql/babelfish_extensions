@@ -146,7 +146,7 @@ gen_createdb_subcmds(const char *schema, const char *dbo, const char *db_owner, 
 	}
 
 	stmt = parsetree_nth_stmt(res, i++);
-	update_CreateSchemaStmt(stmt, "dbo", db_owner);
+	update_CreateSchemaStmt(stmt, schema, db_owner);
 
 	stmt = parsetree_nth_stmt(res, i++);
 	update_ViewStmt(stmt, schema);

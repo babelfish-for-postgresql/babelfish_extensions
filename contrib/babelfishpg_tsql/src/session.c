@@ -91,7 +91,7 @@ set_session_properties(const char *db_name)
 		const char		*schema;
 
 		schema = get_authid_user_ext_schema_name(db_name, user);
-		physical_schema = get_physical_name(pstrdup(db_name), schema);
+		physical_schema = get_physical_schema_name(pstrdup(db_name), schema);
 	}
 
 	/* set current user */
