@@ -8,6 +8,7 @@ SELECT set_config('search_path', 'sys, '||current_setting('search_path'), false)
 #include "datatype_string_operators.sql"
 #include "sys.sql"
 #include "sys_languages.sql"
+#include "sys_babelfish_configurations.sql"
 #include "sys_function_helpers.sql"
 #include "sys_functions.sql"
 #include "sys_cast.sql"

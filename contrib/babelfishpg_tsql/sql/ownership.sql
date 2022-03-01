@@ -167,6 +167,7 @@ SELECT pg_catalog.pg_extension_config_dump('sys.babelfish_sysdatabases', '');
 SELECT pg_catalog.pg_extension_config_dump('sys.babelfish_db_seq', '');
 SELECT pg_catalog.pg_extension_config_dump('sys.babelfish_namespace_ext', '');
 SELECT pg_catalog.pg_extension_config_dump('sys.babelfish_authid_login_ext', '');
+SELECT pg_catalog.pg_extension_config_dump('sys.babelfish_configurations', '');
 
 -- SERVER_PRINCIPALS
 CREATE VIEW sys.server_principals

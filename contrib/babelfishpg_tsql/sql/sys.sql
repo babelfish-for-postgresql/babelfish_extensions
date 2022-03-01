@@ -127,3 +127,17 @@ CREATE TABLE sys.syslanguages (
     lang_data_jsonb JSONB
 ) WITH (OIDS = FALSE);
 GRANT SELECT ON sys.syslanguages TO PUBLIC;
+
+CREATE TABLE sys.babelfish_configurations (
+    configuration_id INT,
+    name sys.nvarchar(35),
+    value sys.sql_variant,
+    minimum sys.sql_variant,
+    maximum sys.sql_variant,
+    value_in_use sys.sql_variant,
+    description sys.nvarchar(255),
+    is_dynamic sys.BIT,
+    is_advanced sys.BIT,
+    comment_syscurconfigs sys.nvarchar(255),
+    comment_sysconfigures sys.nvarchar(255)
+) WITH (OIDS = FALSE);

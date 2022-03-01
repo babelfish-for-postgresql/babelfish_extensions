@@ -3877,6 +3877,78 @@ BEGIN
 END;
 $$
 LANGUAGE 'pltsql';
+CREATE TABLE sys.babelfish_configurations (
+    configuration_id INT,
+    name sys.nvarchar(35),
+    value sys.sql_variant,
+    minimum sys.sql_variant,
+    maximum sys.sql_variant,
+    value_in_use sys.sql_variant,
+    description sys.nvarchar(255),
+    is_dynamic sys.BIT,
+    is_advanced sys.BIT,
+    comment_syscurconfigs sys.nvarchar(255),
+    comment_sysconfigures sys.nvarchar(255)
+) WITH (OIDS = FALSE);
+
+SELECT pg_catalog.pg_extension_config_dump('sys.babelfish_configurations', '');
+
+CREATE OR REPLACE VIEW sys.configurations
+AS
+SELECT  configuration_id, 
+        name, 
+        value, 
+        minimum, 
+        maximum, 
+        value_in_use, 
+        description, 
+        is_dynamic, 
+        is_advanced 
+FROM sys.babelfish_configurations;
+GRANT SELECT ON sys.configurations TO PUBLIC;
+
+CREATE OR REPLACE VIEW sys.syscurconfigs
+AS
+SELECT  value,
+        configuration_id AS config,
+        comment_syscurconfigs AS comment,
+        CASE
+        	WHEN CAST(is_advanced as int) = 0 AND CAST(is_dynamic as int) = 0 THEN CAST(0 as smallint)
+        	WHEN CAST(is_advanced as int) = 0 AND CAST(is_dynamic as int) = 1 THEN CAST(1 as smallint)
+        	WHEN CAST(is_advanced as int) = 1 AND CAST(is_dynamic as int) = 0 THEN CAST(2 as smallint)
+        	WHEN CAST(is_advanced as int) = 1 AND CAST(is_dynamic as int) = 1 THEN CAST(3 as smallint)
+        END AS status
+FROM sys.babelfish_configurations;
+GRANT SELECT ON sys.syscurconfigs TO PUBLIC;
+
+CREATE OR REPLACE VIEW sys.sysconfigures
+AS
+SELECT  value_in_use AS value,
+        configuration_id AS config,
+        comment_sysconfigures AS comment,
+        CASE
+        	WHEN CAST(is_advanced as int) = 0 AND CAST(is_dynamic as int) = 0 THEN CAST(0 as smallint)
+        	WHEN CAST(is_advanced as int) = 0 AND CAST(is_dynamic as int) = 1 THEN CAST(1 as smallint)
+        	WHEN CAST(is_advanced as int) = 1 AND CAST(is_dynamic as int) = 0 THEN CAST(2 as smallint)
+        	WHEN CAST(is_advanced as int) = 1 AND CAST(is_dynamic as int) = 1 THEN CAST(3 as smallint)
+        END AS status
+FROM sys.babelfish_configurations;
+GRANT SELECT ON sys.sysconfigures TO PUBLIC;
+
+-- The value and value_in_use is set to 1 because SSMS-Babelfish connectivity requires it.
+INSERT INTO sys.babelfish_configurations
+    VALUES (16387,
+            'SMO and DMO XPs',
+            1,
+            0,
+            1,
+            1,
+            'Enable or disable SMO and DMO XPs',
+            sys.bitin('1'),
+            sys.bitin('1'),
+            'Enable or disable SMO and DMO XPs',
+            'Enable or disable SMO and DMO XPs'
+            );
 
 CREATE OR REPLACE PROCEDURE sys.sp_columns (
   "@table_name" sys.nvarchar(384),
