@@ -2202,3 +2202,56 @@ begin
 	 	  RETURN NULL;
 END;
 $$ LANGUAGE plpgsql;
+
+CREATE PROCEDURE sys.sp_helpuser("@name_in_db" sys.SYSNAME = NULL) AS
+$$
+BEGIN
+	IF @name_in_db IS NULL
+	BEGIN
+		SELECT CAST(Ext.orig_username AS SYS.SYSNAME) AS 'UserName',
+			   CAST(CASE WHEN Ext.orig_username = 'dbo' THEN 'db_owner' ELSE 'PUBLIC' END AS SYS.SYSNAME) AS 'RoleName',
+			   CAST(Ext.login_name AS SYS.SYSNAME) AS 'LoginName',
+			   CAST(LogExt.default_database_name AS SYS.SYSNAME) AS 'DefDBName',
+			   CAST(Ext.default_schema_name AS SYS.SYSNAME) AS 'DefSchemaName',
+			   CAST(Base.oid AS INT) AS 'UserID',
+			   CAST(CAST(Base.oid AS INT) AS SYS.VARBINARY(85))  AS 'SID'
+			FROM pg_catalog.pg_roles AS Base INNER JOIN sys.babelfish_authid_user_ext AS Ext
+			ON Base.rolname = Ext.rolname
+			LEFT OUTER JOIN sys.babelfish_authid_login_ext As LogExt
+			ON LogExt.rolname = Ext.orig_username
+			WHERE Ext.database_name = DB_NAME()
+	END
+    ELSE IF @name_in_db = 'db_owner'
+	BEGIN
+		-- simplification of role case, since no user defined roles exist yet
+		SELECT CAST('db_owner' AS SYS.SYSNAME) AS 'Role_name',
+			   ROLE_ID('db_owner') AS 'Role_id',
+			   CAST('dbo' AS SYS.SYSNAME) AS Users_in_role,
+			   USER_ID('dbo') AS 'Userid';
+	END
+	ELSE IF EXISTS (SELECT 1
+					  FROM sys.babelfish_authid_user_ext
+						WHERE (orig_username = @name_in_db
+						      OR lower(orig_username) = lower(@name_in_db))
+						      AND database_name = DB_NAME())
+	BEGIN
+		SELECT CAST(Ext.orig_username AS SYS.SYSNAME) AS 'UserName',
+			   CAST(CASE WHEN Ext.orig_username = 'dbo' THEN 'db_owner' ELSE 'PUBLIC' END AS SYS.SYSNAME) AS 'RoleName',
+			   CAST(Ext.login_name AS SYS.SYSNAME) AS 'LoginName',
+			   CAST(LogExt.default_database_name AS SYS.SYSNAME) AS 'DefDBName',
+			   CAST(Ext.default_schema_name AS SYS.SYSNAME) AS 'DefSchemaName',
+			   CAST(Base.oid AS INT) AS 'UserID',
+			   CAST(CAST(Base.oid AS INT) AS SYS.VARBINARY(85))  AS 'SID'
+			FROM pg_catalog.pg_roles AS Base INNER JOIN sys.babelfish_authid_user_ext AS Ext
+			ON Base.rolname = Ext.rolname
+			LEFT OUTER JOIN sys.babelfish_authid_login_ext As LogExt
+			ON LogExt.rolname = Ext.orig_username
+			WHERE Ext.database_name = DB_NAME()
+				  AND (orig_username = @name_in_db OR lower(orig_username) = lower(@name_in_db));
+	END
+	ELSE 
+		RAISERROR ( 'The name supplied (%s) is not a user, role, or aliased login.', 16, 1, @name_in_db);
+END;
+$$
+LANGUAGE 'pltsql';
+GRANT EXECUTE on PROCEDURE sys.sp_helpuser TO PUBLIC;
