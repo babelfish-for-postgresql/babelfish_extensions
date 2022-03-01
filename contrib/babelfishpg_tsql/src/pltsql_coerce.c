@@ -275,6 +275,23 @@ tsql_cast_raw_info_t tsql_cast_raw_infos[] =
 // oid -> int4
     {TSQL_CAST_WITHOUT_FUNC_ENTRY, "pg_catalog", "oid", "pg_catalog", "int4", NULL, 'i', 'b'},
     {TSQL_CAST_WITHOUT_FUNC_ENTRY, "pg_catalog", "oid", "pg_catalog", "text", NULL, 'i', 'i'},
+// text
+    {TSQL_CAST_WITHOUT_FUNC_ENTRY, "sys", "rowversion", "pg_catalog", "text", NULL, 'i', 'i'},
+    {TSQL_CAST_WITHOUT_FUNC_ENTRY, "pg_catalog", "timestamp", "pg_catalog", "text", NULL, 'i', 'i'},
+    {TSQL_CAST_WITHOUT_FUNC_ENTRY, "pg_catalog", "timestamptz", "pg_catalog", "text", NULL, 'i', 'i'},
+    {TSQL_CAST_WITHOUT_FUNC_ENTRY, "sys", "varbinary", "pg_catalog", "text", NULL, 'i', 'i'},
+    {TSQL_CAST_WITHOUT_FUNC_ENTRY, "sys", "bbf_varbinary", "pg_catalog", "text", NULL, 'i', 'i'},
+    {TSQL_CAST_WITHOUT_FUNC_ENTRY, "sys", "sql_variant", "pg_catalog", "text", NULL, 'i', 'i'},
+    {TSQL_CAST_WITHOUT_FUNC_ENTRY, "pg_catalog", "date", "pg_catalog", "text", NULL, 'i', 'i'},
+    {TSQL_CAST_WITHOUT_FUNC_ENTRY, "sys", "datetime", "pg_catalog", "text", NULL, 'i', 'i'},
+    {TSQL_CAST_WITHOUT_FUNC_ENTRY, "sys", "datetime2", "pg_catalog", "text", NULL, 'i', 'i'},
+    {TSQL_CAST_WITHOUT_FUNC_ENTRY, "sys", "smalldatetime", "pg_catalog", "text", NULL, 'i', 'i'},
+    {TSQL_CAST_WITHOUT_FUNC_ENTRY, "sys", "bit", "pg_catalog", "text", NULL, 'i', 'i'},
+    {TSQL_CAST_WITHOUT_FUNC_ENTRY, "sys", "binary", "pg_catalog", "text", NULL, 'i', 'i'},
+    {TSQL_CAST_WITHOUT_FUNC_ENTRY, "sys", "bbf_binary", "pg_catalog", "text", NULL, 'i', 'i'},
+    {TSQL_CAST_WITHOUT_FUNC_ENTRY, "pg_catalog", "bytea", "pg_catalog", "text", NULL, 'i', 'i'},
+    {TSQL_CAST_WITHOUT_FUNC_ENTRY, "sys", "datetimeoffset", "pg_catalog", "text", NULL, 'i', 'i'},
+    {TSQL_CAST_WITHOUT_FUNC_ENTRY, "pg_catalog", "time", "pg_catalog", "text", NULL, 'i', 'i'},
 };
 
 #define TOTAL_TSQL_CAST_COUNT (sizeof(tsql_cast_raw_infos)/sizeof(tsql_cast_raw_infos[0]))
