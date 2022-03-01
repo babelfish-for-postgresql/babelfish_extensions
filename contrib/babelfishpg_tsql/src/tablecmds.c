@@ -108,7 +108,7 @@ void pre_check_trigger_schema(List *object, bool missing_ok){
 			schema_oid = get_rel_namespace(reloid);
             schema_name = get_namespace_name(schema_oid);
 			if ((list_length(object) > 1 && 
-			strcasecmp(schema_name , get_physical_name(get_cur_db_name(),trigger_schema)) != 0 && !missing_ok)){
+			strcasecmp(schema_name , get_physical_schema_name(get_cur_db_name(),trigger_schema)) != 0 && !missing_ok)){
 				ereport(ERROR,
 				(errcode(ERRCODE_UNDEFINED_OBJECT),
 				errmsg("trigger \"%s.%s\" does not exist",

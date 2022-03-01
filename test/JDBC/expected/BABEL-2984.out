@@ -1,0 +1,13 @@
+grant execute on dbo.myproc to public
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: relation "master_dbo.myproc" does not exist)~~
+
+
+grant exec on dbo.myproc to public
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: relation "master_dbo.myproc" does not exist)~~
+

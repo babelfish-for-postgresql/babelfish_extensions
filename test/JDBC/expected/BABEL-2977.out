@@ -1,0 +1,26 @@
+create login alreadyexists with password='12345678';
+GO
+
+create login alreadyexists with password='12345678';
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: The Server principal 'alreadyexists' already exists)~~
+
+
+drop login nosuchlogin;
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Cannot drop the login 'nosuchlogin', because it does not exist or you do not have permission.)~~
+
+
+alter login nosuchlogin with default_database=mydb;
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Cannot drop the login 'nosuchlogin', because it does not exist or you do not have permission.)~~
+
+
+DROP login alreadyexists;
+GO

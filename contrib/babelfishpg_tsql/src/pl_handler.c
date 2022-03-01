@@ -279,7 +279,7 @@ assign_identity_insert(const char *newval, void *extra)
                         schema_name = (char *) lthird(elemlist);
 
 						if (ownership_structure_enabled() && cur_db_name)
-							schema_name = get_physical_name(cur_db_name,
+							schema_name = get_physical_schema_name(cur_db_name,
 																   schema_name);
 
                         schema_oid = LookupExplicitNamespace(schema_name, true);
@@ -2185,6 +2185,10 @@ static void bbf_ProcessUtility(PlannedStmt *pstmt,
 								errmsg("Current login %s do not have permission to create new login",
 									GetUserNameFromId(GetSessionUserId(), true))));
 
+					if (get_role_oid(stmt->role, true) != InvalidOid)
+						  ereport(ERROR, (errcode(ERRCODE_DUPLICATE_OBJECT), 
+									  errmsg("The Server principal '%s' already exists", stmt->role)));
+
 					/* Set current user to sysadmin for create permissions */
 					prev_current_user = GetUserNameFromId(GetUserId(), false);
 
@@ -2351,6 +2355,11 @@ static void bbf_ProcessUtility(PlannedStmt *pstmt,
 						}
 					}
 
+					if (get_role_oid(stmt->role->rolename, true) == InvalidOid)
+						  ereport(ERROR, (errcode(ERRCODE_DUPLICATE_OBJECT), 
+									  errmsg("Cannot drop the login '%s', because it does not exist or you do not have permission.", stmt->role->rolename)));
+
+
 					/* Set current user to sysadmin for alter permissions */
 					prev_current_user = GetUserId();
 
@@ -2461,8 +2470,10 @@ static void bbf_ProcessUtility(PlannedStmt *pstmt,
 			{
 				const char      *prev_current_user;
 				DropRoleStmt	*stmt = (DropRoleStmt *) parsetree;
+				bool			drop_user = false;
 				bool			all_logins = false;
 				bool			all_users = false;
+				char 			*role_name = NULL;
 				bool			other = false;
 				ListCell		*item;
 
@@ -2474,6 +2485,8 @@ static void bbf_ProcessUtility(PlannedStmt *pstmt,
 					if (strcmp(headrol->rolename, "is_user") == 0)
 					{
 						char *db_name = NULL;
+
+						drop_user = true;
 						stmt->roles = list_delete_cell(stmt->roles,
 													   list_head(stmt->roles));
 						pfree(headrol);
@@ -2507,8 +2520,9 @@ static void bbf_ProcessUtility(PlannedStmt *pstmt,
 					Form_pg_authid	roleform;
 					HeapTuple		tuple;
 
+					role_name = rolspec->rolename;
 					tuple = SearchSysCache1(AUTHNAME,
-											PointerGetDatum(rolspec->rolename));
+											PointerGetDatum(role_name));
 					/* Let DropRole handle missing roles */
 					if (HeapTupleIsValid(tuple))
 						roleform = (Form_pg_authid) GETSTRUCT(tuple);
@@ -2529,6 +2543,11 @@ static void bbf_ProcessUtility(PlannedStmt *pstmt,
 								(errcode(ERRCODE_INTERNAL_ERROR),
 								 errmsg("cannot mix dropping babelfish role types")));
 				}
+
+				/* until role is supported, if not user, then login */
+				if (!drop_user && get_role_oid(role_name, true) == InvalidOid)
+					  ereport(ERROR, (errcode(ERRCODE_DUPLICATE_OBJECT), 
+								  errmsg("Cannot drop the login '%s', because it does not exist or you do not have permission.", role_name)));
 
 				if (all_logins || all_users)
 				{
@@ -2579,10 +2598,7 @@ static void bbf_ProcessUtility(PlannedStmt *pstmt,
 
 				if (strcmp(queryString, "(CREATE LOGICAL DATABASE )") == 0
 							&& context == PROCESS_UTILITY_SUBCOMMAND )
-				{
-					orig_schema = create_schema->schemaname;
-					rewrite_object_refs(parsetree);
-				}
+					orig_schema = "dbo";
 
 				if (prev_ProcessUtility)
 					prev_ProcessUtility(pstmt, queryString, context, params,

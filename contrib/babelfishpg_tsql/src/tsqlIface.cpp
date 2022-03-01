@@ -704,6 +704,36 @@ public:
 
 		// don't need to call does_object_name_need_delimiter() because problematic keywords are already allowed as function name
 	}
+
+	void exitGrant_statement(TSqlParser::Grant_statementContext* ctx) override
+	{
+		if (ctx->permissions())
+		{
+			const auto &permissions = ctx->permissions()->permission();
+			for (const auto perm : permissions)
+			{
+				const auto exec = perm->single_permission()->EXEC();
+				if (exec)
+					rewritten_query_fragment.emplace(std::make_pair(exec->getSymbol()->getStartIndex(),
+													 std::make_pair(::getFullText(exec), "EXECUTE")));
+			}
+		}
+	}
+
+	void exitRevoke_statement(TSqlParser::Revoke_statementContext* ctx) override
+	{
+		if (ctx->permissions())
+		{
+			const auto &permissions = ctx->permissions()->permission();
+			for (const auto perm : permissions)
+			{
+				const auto exec = perm->single_permission()->EXEC();
+				if (exec)
+					rewritten_query_fragment.emplace(std::make_pair(exec->getSymbol()->getStartIndex(),
+													 std::make_pair(::getFullText(exec), "EXECUTE")));
+			}
+		}
+	}
 };
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -1278,6 +1308,17 @@ public:
 			add_rewritten_query_fragment_to_mutator(&mutator);
 			mutator.run();
 		}
+		clear_rewritten_query_fragment();
+	}
+
+	void exitSecurity_statement(TSqlParser::Security_statementContext *ctx) override
+	{
+		PLtsql_stmt_execsql *stmt = (PLtsql_stmt_execsql *) getPLtsql_fragment(ctx);
+		Assert(stmt);
+
+		PLtsql_expr_query_mutator mutator(stmt->sqlstmt, ctx);
+		add_rewritten_query_fragment_to_mutator(&mutator);
+		mutator.run();
 		clear_rewritten_query_fragment();
 	}
 

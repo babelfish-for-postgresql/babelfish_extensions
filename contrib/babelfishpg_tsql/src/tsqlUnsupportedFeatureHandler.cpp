@@ -953,6 +953,12 @@ antlrcpp::Any TsqlUnsupportedFeatureHandlerImpl::visitAlter_login(TSqlParser::Al
 
 antlrcpp::Any TsqlUnsupportedFeatureHandlerImpl::visitDdl_statement(TSqlParser::Ddl_statementContext *ctx)
 {
+	if (ctx->alter_user())
+	{
+		auto alter_user = ctx->alter_user();
+		if (alter_user->loginame)
+			handle(INSTR_UNSUPPORTED_TSQL_UNKNOWN_DDL, "ALTER USER WITH LOGIN",  getLineAndPos(ctx));
+	}
 	/*
 	 * We have more than 100 DDLs but support a few of them.
 	 * manage the whitelist here.
@@ -962,10 +968,10 @@ antlrcpp::Any TsqlUnsupportedFeatureHandlerImpl::visitDdl_statement(TSqlParser::
 	 || ctx->alter_fulltext_index()
 	 || ctx->alter_index()
 	 || ctx->alter_login()
+	 || ctx->alter_user()
 	 || ctx->alter_sequence()
 	 || (ctx->alter_server_role())
 	 || ctx->alter_table()
-	 || ctx->alter_user()
 	 || ctx->create_aggregate()
 	 || ctx->create_database()
 	 || ctx->create_fulltext_index()
@@ -1574,6 +1580,7 @@ void TsqlUnsupportedFeatureHandlerImpl::checkSupportedGrantStmt(TSqlParser::Gran
 		{
 			auto single_perm = perm->single_permission();
 			if (single_perm->EXECUTE()
+					|| single_perm->EXEC()
 					|| single_perm->SELECT() 
 					|| single_perm->INSERT()
 					|| single_perm->UPDATE()
@@ -1617,6 +1624,7 @@ void TsqlUnsupportedFeatureHandlerImpl::checkSupportedRevokeStmt(TSqlParser::Rev
 		{
 			auto single_perm = perm->single_permission();
 			if (single_perm->EXECUTE()
+					|| single_perm->EXEC()
 					|| single_perm->SELECT() 
 					|| single_perm->INSERT()
 					|| single_perm->UPDATE()

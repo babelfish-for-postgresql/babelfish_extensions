@@ -2467,7 +2467,7 @@ int exec_stmt_insert_bulk(PLtsql_execstate *estate, PLtsql_stmt_insert_bulk *stm
 		stmt->db_name = get_cur_db_name();
 	if (stmt->schema_name && stmt->db_name)
 	{
-		bulk_load_schema_name = get_physical_name(stmt->db_name,
+		bulk_load_schema_name = get_physical_schema_name(stmt->db_name,
 													   stmt->schema_name);
 		schema_oid = LookupExplicitNamespace(bulk_load_schema_name, true);
 		if (!OidIsValid(schema_oid))
