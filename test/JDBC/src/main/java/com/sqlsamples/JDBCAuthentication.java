@@ -5,6 +5,7 @@ import org.apache.logging.log4j.Logger;
 import java.io.BufferedWriter;
 import java.io.IOException;
 import java.sql.DriverManager;
+import java.sql.Connection;
 import java.sql.SQLException;
 import java.util.Properties;
 
@@ -54,10 +55,12 @@ public class JDBCAuthentication {
             bw.newLine();
 
             // establish connection using connection string
-            DriverManager.getConnection(connectionString_babel);
+            Connection connection = DriverManager.getConnection(connectionString_babel);
                 
             bw.write("~~SUCCESS~~");
             bw.newLine();
+
+            connection.close();
                 
         } catch (SQLException e) {
             handleSQLExceptionWithFile(e, bw, logger);
