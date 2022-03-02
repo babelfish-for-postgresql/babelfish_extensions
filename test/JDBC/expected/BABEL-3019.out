@@ -1,0 +1,120 @@
+-- tsql
+
+CREATE TABLE t1 ( a INT, b INT);
+GO
+
+CREATE LOGIN tester WITH PASSWORD='12341234';
+GO
+
+CREATE USER tester FOR LOGIN tester;
+GO
+
+GRANT SELECT ON t1 TO tester;
+GO
+
+-- procedure
+CREATE PROC p1 @a INT, @b FLOAT AS
+SELECT @a, @b;
+GO
+
+-- scalar function
+CREATE FUNCTION f1(@a INT)	
+RETURNS INT AS
+BEGIN
+	RETURN (@a + 1)
+END
+GO
+
+-- table function
+CREATE FUNCTION f2 (@a INT)
+RETURNS TABLE AS
+RETURN (SELECT @a + 1 AS col);
+go
+
+-- domain
+CREATE TYPE ty1 FROM varchar(11) NOT NULL;
+GO
+
+-- table type
+CREATE TYPE ty2 AS TABLE (a int, b int);
+GO
+
+-- psql
+SET ROLE master_tester;
+GO
+
+CALL master_dbo.p1(1,2);
+GO
+~~ERROR (Code: 0)~~
+
+~~ERROR (Message: ERROR: permission denied for procedure p1
+    Server SQLState: 42501)~~
+
+
+SELECT master_dbo.f1(1) ; 
+GO
+~~ERROR (Code: 0)~~
+
+~~ERROR (Message: ERROR: permission denied for function f1
+    Server SQLState: 42501)~~
+
+
+SELECT * from master_dbo.f2(1);
+GO
+~~ERROR (Code: 0)~~
+
+~~ERROR (Message: ERROR: permission denied for function f2
+    Server SQLState: 42501)~~
+
+
+CREATE TABLE public.test ( a master_dbo.ty1);
+GO
+~~ERROR (Code: 0)~~
+
+~~ERROR (Message: ERROR: permission denied for type master_dbo.ty1
+    Server SQLState: 42501)~~
+
+
+CREATE DOMAIN ty3 as master_dbo.ty2;
+GO
+~~ERROR (Code: 0)~~
+
+~~ERROR (Message: ERROR: permission denied for type master_dbo.ty2
+    Server SQLState: 42501)~~
+
+
+RESET ROLE;
+GO
+
+-- workaround for TSQL schema permission
+REVOKE ALL ON SCHEMA master_dbo FROM master_tester;
+GO
+
+-- tsql
+DROP TYPE ty2;
+GO
+
+DROP TYPE ty1;
+GO
+
+DROP FUNCTION f2;
+GO
+
+DROP FUNCTION f1;
+GO
+
+DROP PROCEDURE p1;
+GO
+
+REVOKE ALL ON t1 FROM tester;
+GO
+
+DROP TABLE t1;
+GO
+
+DROP LOGIN tester;
+GO
+
+DROP USER tester;
+GO
+
