@@ -1,5 +1,7 @@
 #include "postgres.h"
 
+#include "common/string.h"
+#include "datatypes.h"
 #include "err_handler.h"
 #include "funcapi.h"
 
@@ -352,6 +354,64 @@ bool get_tsql_error_code(ErrorData *edata, int *last_error)
 	return false;
 }
 
+static int
+get_err_lineno(const char *context)
+{
+	int lineno = -1;
+	const char *pattern1 = "line ";
+	const char *pattern2 = " at";
+	char *start, *end;
+
+	if ((start = strstr(context, pattern1)))
+	{
+		start += strlen(pattern1);
+		if ((end = strstr(start, pattern2)))
+		{
+			lineno = strtoint(start, &end, 10);
+		}
+	}
+	return lineno;
+}
+
+/* 
+ * Do error mapping to get the mapped error info, including error number, error
+ * severity and error state.
+ */
+static void
+do_error_mapping(PLtsql_estate_err *err)
+{
+	if (!(*pltsql_protocol_plugin_ptr) || 
+		!(*pltsql_protocol_plugin_ptr)->get_tsql_error)
+		return;
+
+	err->number = err->error->sqlerrcode;
+	(*pltsql_protocol_plugin_ptr)->get_tsql_error(err->error,
+												  &err->number,
+												  &err->severity,
+												  &err->state,
+												  "babelfishpg_tsql");
+}
+
+/* 
+ * If there is no error in current estate, try to check previous estates one by
+ * one, in case we are inside a previous estate's CATCH block.
+ */
+static PLtsql_execstate *
+find_innermost_catch_block(void)
+{
+	PLExecStateCallStack *stack = exec_state_call_stack;
+	PLtsql_execstate *estate = stack->estate;
+
+	while ((!estate || !estate->cur_error || !estate->cur_error->error) &&
+		   stack->next)
+	{
+		stack = stack->next;
+		estate = stack->estate;
+	}
+
+	return estate;
+}
+
 Datum
 babel_list_mapped_error(PG_FUNCTION_ARGS)
 {
@@ -389,3 +449,151 @@ babel_list_mapped_error(PG_FUNCTION_ARGS)
 		SRF_RETURN_DONE(funcctx);
 }
 
+/* 
+ * ERROR_*() functions 
+ */
+PG_FUNCTION_INFO_V1(pltsql_error_line);
+PG_FUNCTION_INFO_V1(pltsql_error_message);
+PG_FUNCTION_INFO_V1(pltsql_error_number);
+PG_FUNCTION_INFO_V1(pltsql_error_procedure);
+PG_FUNCTION_INFO_V1(pltsql_error_severity);
+PG_FUNCTION_INFO_V1(pltsql_error_state);
+
+Datum
+pltsql_error_line(PG_FUNCTION_ARGS)
+{
+	PLtsql_execstate *estate;
+	int lineno = -1;
+
+	if (exec_state_call_stack == NULL)
+		PG_RETURN_NULL();
+
+	estate = find_innermost_catch_block();
+
+	if (!estate || !estate->cur_error || !estate->cur_error->error ||
+		!estate->cur_error->error->context)
+		PG_RETURN_NULL();
+
+	/*
+	 * TODO: This function is just a temporary workaround for error line number.
+	 * We should cache line number as soon as an error is raised.
+	 */
+	lineno = get_err_lineno(estate->cur_error->error->context);
+
+	if (lineno == -1)
+		PG_RETURN_NULL();
+
+	PG_RETURN_INT32(lineno);
+}
+
+Datum
+pltsql_error_message(PG_FUNCTION_ARGS)
+{
+	PLtsql_execstate *estate;
+	StringInfoData temp;
+	void *message = NULL;
+
+	if (exec_state_call_stack == NULL)
+		PG_RETURN_NULL();
+
+	estate = find_innermost_catch_block();
+
+	if (!estate || !estate->cur_error || !estate->cur_error->error ||
+		!estate->cur_error->error->message)
+		PG_RETURN_NULL();
+
+	initStringInfo(&temp);
+	appendStringInfoString(&temp, estate->cur_error->error->message);
+	message = tsql_varchar_input(temp.data, temp.len, -1);
+
+	pfree(temp.data);
+
+	Assert(message);
+	PG_RETURN_VARCHAR_P(message);
+}
+
+Datum
+pltsql_error_number(PG_FUNCTION_ARGS)
+{
+	PLtsql_execstate *estate;
+
+	if (exec_state_call_stack == NULL)
+		PG_RETURN_NULL();
+
+	estate = find_innermost_catch_block();
+
+	if (!estate || !estate->cur_error || !estate->cur_error->error)
+		PG_RETURN_NULL();
+
+	/* For system generated error, do error mapping */
+	if (estate->cur_error->number == -1)
+		do_error_mapping(estate->cur_error);
+
+	PG_RETURN_INT32(estate->cur_error->number);
+}
+
+Datum
+pltsql_error_procedure(PG_FUNCTION_ARGS)
+{
+	PLtsql_execstate *estate;
+	StringInfoData temp;
+	void *procedure = NULL;
+
+	if (exec_state_call_stack == NULL)
+		PG_RETURN_NULL();
+
+	estate = find_innermost_catch_block();
+
+	if (!estate || !estate->cur_error || !estate->cur_error->error ||
+		!estate->cur_error->procedure)
+		PG_RETURN_NULL();
+
+	initStringInfo(&temp);
+	appendStringInfoString(&temp, estate->cur_error->procedure);
+	procedure = tsql_varchar_input(temp.data, temp.len, -1);
+
+	pfree(temp.data);
+
+	Assert(procedure);
+	PG_RETURN_VARCHAR_P(procedure);
+}
+
+Datum
+pltsql_error_severity(PG_FUNCTION_ARGS)
+{
+	PLtsql_execstate *estate;
+
+	if (exec_state_call_stack == NULL)
+		PG_RETURN_NULL();
+
+	estate = find_innermost_catch_block();
+
+	if (!estate || !estate->cur_error || !estate->cur_error->error)
+		PG_RETURN_NULL();
+
+	/* For system generated error, do error mapping */
+	if (estate->cur_error->number == -1)
+		do_error_mapping(estate->cur_error);
+
+	PG_RETURN_INT32(estate->cur_error->severity);
+}
+
+Datum
+pltsql_error_state(PG_FUNCTION_ARGS)
+{
+	PLtsql_execstate *estate;
+
+	if (exec_state_call_stack == NULL)
+		PG_RETURN_NULL();
+
+	estate = find_innermost_catch_block();
+
+	if (!estate || !estate->cur_error || !estate->cur_error->error)
+		PG_RETURN_NULL();
+
+	/* For system generated error, do error mapping */
+	if (estate->cur_error->number == -1)
+		do_error_mapping(estate->cur_error);
+
+	PG_RETURN_INT32(estate->cur_error->state);
+}

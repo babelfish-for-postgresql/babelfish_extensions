@@ -179,11 +179,108 @@ BEGIN CATCH
 END CATCH
 go
 
+-- Nested procedures (nested estates)
+CREATE PROC errorFuncProcInner AS
+SELECT
+	ERROR_LINE() AS line,
+	ERROR_MESSAGE() AS msg,
+	ERROR_NUMBER() AS num,
+	ERROR_PROCEDURE() AS proc_,
+	ERROR_SEVERITY() AS sev,
+	ERROR_STATE() AS state;
+go
+
+CREATE PROC errorFuncProcOuter1 AS
+BEGIN TRY
+	DECLARE @a INT
+	SET @a = 1/0
+END TRY
+BEGIN CATCH
+	EXEC errorFuncProcInner
+END CATCH
+go
+
+EXEC errorFuncProcOuter1
+go
+
+CREATE PROC errorFuncProcMiddle AS
+BEGIN TRY
+	EXEC errorFuncProcInner
+END TRY
+BEGIN CATCH
+	SELECT 'error'
+END CATCH
+go
+
+CREATE PROC errorFuncProcOuter2 AS
+BEGIN TRY
+	DECLARE @a INT
+	SET @a = 1/0
+END TRY
+BEGIN CATCH
+	EXEC errorFuncProcMiddle
+END CATCH
+go
+
+EXEC errorFuncProcOuter2
+go
+
+-- Multiple-level nested procedures with nested errors
+-- Should report division by zero error in errorFuncProcOuter1
+CREATE PROC errorFuncProcOuter3 AS
+BEGIN TRY
+	THROW 51000, 'throw error', 1;
+END TRY
+BEGIN CATCH
+	EXEC errorFuncProcOuter1
+END CATCH
+go
+
+EXEC errorFuncProcOuter3
+go
+
+-- Should report THROW error in errorFuncProcOuter4
+CREATE PROC errorFuncProcOuter4 AS
+BEGIN TRY
+	DECLARE @a INT
+	SET @a = 1/0
+END TRY
+BEGIN CATCH
+	BEGIN TRY
+		THROW 51000, 'throw error', 1;
+	END TRY
+	BEGIN CATCH
+		EXEC errorFuncProcMiddle
+	END CATCH
+END CATCH
+go
+
+EXEC errorFuncProcOuter4
+go
+
 /* Clean up */
 DROP PROC errorFuncProc1
 go
 
 DROP PROC errorFuncProc2
+go
+
+DROP PROC errorFuncProcOuter1
+go
+
+DROP PROC errorFuncProcOuter2
+go
+
+DROP PROC errorFuncProcOuter3
+go
+
+DROP PROC errorFuncProcOuter4
+go
+
+DROP PROC errorFuncProcMiddle
+go
+
+DROP PROC errorFuncProcInner
 go
 
 DROP TABLE errorFuncTable
