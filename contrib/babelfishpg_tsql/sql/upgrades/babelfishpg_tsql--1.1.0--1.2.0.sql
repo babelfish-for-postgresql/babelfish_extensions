@@ -3662,8 +3662,17 @@ END;
 $$
 LANGUAGE 'pltsql';
 GRANT EXECUTE on PROCEDURE sys.sp_stored_procedures TO PUBLIC;
+
 CREATE OR REPLACE PROCEDURE xp_qv(IN nvarchar(256), IN nvarchar(256))
 	   AS 'babelfishpg_tsql', 'xp_qv_internal' LANGUAGE C;
+
+CREATE OR REPLACE PROCEDURE sys.create_xp_qv_in_master_dbo()
+  LANGUAGE C
+  AS 'babelfishpg_tsql', 'create_xp_qv_in_master_dbo_internal';
+
+CALL sys.create_xp_qv_in_master_dbo();
+ALTER PROCEDURE master_dbo.xp_qv OWNER TO sysadmin;
+DROP PROCEDURE sys.create_xp_qv_in_master_dbo;
 
 CREATE OR REPLACE FUNCTION sys.servicename()
         RETURNS sys.NVARCHAR(128)  AS 'babelfishpg_tsql' LANGUAGE C;

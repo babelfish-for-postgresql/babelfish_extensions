@@ -25,3 +25,27 @@ int
 0
 ~~END~~
 
+
+
+-- Test master.dbo access
+DECLARE @retVal INT
+EXECUTE @retVal = master.dbo.xp_qv N'87651903210', N'SERVICENAME'
+select @retVal;
+go
+~~START~~
+int
+0
+~~END~~
+
+
+
+-- Test dbo access
+DECLARE @retVal INT
+EXECUTE @retVal = dbo.xp_qv N'87651903210', N'SERVICENAME'
+select @retVal;
+go
+~~START~~
+int
+0
+~~END~~
+
