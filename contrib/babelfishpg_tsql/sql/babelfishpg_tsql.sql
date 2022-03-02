@@ -1189,8 +1189,6 @@ CAST(NULL AS sys.varchar(128)) AS FILTER_CONDITION
 FROM pg_catalog.pg_class t1
     JOIN sys.schemas s1 ON s1.schema_id = t1.relnamespace
     JOIN information_schema_tsql.columns t3 ON (t1.relname = t3."TABLE_NAME" AND s1.name = t3."TABLE_SCHEMA")
-	JOIN (pg_catalog.pg_index t5 JOIN
-		pg_catalog.pg_class t6 ON t5.indexrelid = t6.oid) ON t1.oid = t5.indrelid
     , generate_series(0,31) seq -- SQL server has max 32 columns per index
 UNION
 SELECT

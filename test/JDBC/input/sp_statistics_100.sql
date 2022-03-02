@@ -10,6 +10,9 @@ go
 create index i2 on t2(a,b)
 go
 
+create table t3(a int)
+go
+
 -- syntax error: @table_name is required
 exec [sys].sp_statistics_100
 go
@@ -24,6 +27,9 @@ exec [sys].sp_statistics_100 @table_name = 't2', @table_qualifier = 'master'
 go
 
 exec [sys].sp_statistics_100 't1', 'dbo'
+go
+
+exec [sys].sp_statistics_100 @table_name = 't3'
 go
 
 create database db1
@@ -52,6 +58,9 @@ drop table t1
 go
 
 drop table t2
+go
+
+drop table t3
 go
 
 drop database db1
