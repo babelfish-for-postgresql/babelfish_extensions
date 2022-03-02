@@ -1333,7 +1333,7 @@ BEGIN
 
   ANALYZE VERBOSE;
 
-  CALL printarg('Statistics for all tables have been updated. Refer logs for details.');
+  CALL sys.printarg('Statistics for all tables have been updated. Refer logs for details.');
 END;
 $$ LANGUAGE plpgsql;
 GRANT EXECUTE on PROCEDURE sys.sp_updatestats(IN "@resample" VARCHAR(8)) TO PUBLIC;

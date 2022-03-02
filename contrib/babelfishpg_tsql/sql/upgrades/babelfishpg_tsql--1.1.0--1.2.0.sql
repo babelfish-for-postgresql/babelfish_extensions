@@ -4069,9 +4069,6 @@ CREATE VIEW information_schema_tsql.table_constraints AS
 
 GRANT SELECT ON information_schema_tsql.table_constraints TO PUBLIC;
 
--- Reset search_path to not affect any subsequent scripts
-SELECT set_config('search_path', trim(leading 'sys, ' from current_setting('search_path')), false);
-
 CREATE OR REPLACE FUNCTION sys.role_id(role_name SYS.SYSNAME)
 RETURNS INT
 AS 'babelfishpg_tsql', 'role_id'
@@ -4131,4 +4128,25 @@ $$
 LANGUAGE 'pltsql';
 GRANT EXECUTE on PROCEDURE sys.sp_helpuser TO PUBLIC;
 
+CREATE OR REPLACE PROCEDURE sys.sp_updatestats(IN "@resample" VARCHAR(8) DEFAULT 'NO')
+AS $$
+BEGIN
+  IF sys.user_name() != 'dbo' THEN
+    RAISE EXCEPTION 'user does not have permission';
+  END IF;
 
+  IF lower("@resample") = 'resample' THEN
+    RAISE NOTICE 'ignoring resample option';
+  ELSIF lower("@resample") != 'no' THEN
+    RAISE EXCEPTION 'Invalid option name %', "@resample";
+  END IF;
+
+  ANALYZE VERBOSE;
+
+  CALL sys.printarg('Statistics for all tables have been updated. Refer logs for details.');
+END;
+$$ LANGUAGE plpgsql;
+GRANT EXECUTE on PROCEDURE sys.sp_updatestats(IN "@resample" VARCHAR(8)) TO PUBLIC;
+
+-- Reset search_path to not affect any subsequent scripts
+SELECT set_config('search_path', trim(leading 'sys, ' from current_setting('search_path')), false);

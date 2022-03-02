@@ -26,7 +26,44 @@ go
 exec sp_updatestats @random_option='resample';
 go
 
+create login user1 with password = 'abc';
+go
+
+-- check execution from psql
 -- psql
--- Case when user other than database owner executes, it should throw error
 call sys.sp_updatestats();
+go
+
+-- tsql
+create database db1;
+go
+
+use db1;
+go
+
+create user user1 for login user1;
+go
+
+use master;
+go
+
+-- tsql user=user1 password=abc
+-- Case when user other than database owner executes, it should throw error
+use db1;
+go
+
+exec sys.sp_updatestats;
+go
+
+use master;
+go
+
+exec sys.sp_updatestats;
+go
+
+-- tsql
+drop database db1;
+go
+
+drop login user1;
 go
