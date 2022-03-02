@@ -34,6 +34,7 @@ PG_FUNCTION_INFO_V1(sp_prepare);
 PG_FUNCTION_INFO_V1(sp_babelfish_configure);
 PG_FUNCTION_INFO_V1(sp_describe_undeclared_parameters_internal);
 PG_FUNCTION_INFO_V1(xp_qv_internal);
+PG_FUNCTION_INFO_V1(create_xp_qv_in_master_dbo_internal);
 
 extern void delete_cached_batch(int handle);
 extern InlineCodeBlockArgs *create_args(int numargs);
@@ -632,5 +633,45 @@ sp_describe_undeclared_parameters_internal(PG_FUNCTION_ARGS)
 Datum 
 xp_qv_internal(PG_FUNCTION_ARGS)
 {	
+	PG_RETURN_INT32(0);
+}
+
+/*
+ * Internal function to create the xp_qv procedure in master.dbo schema.
+ * Some applications invoke this referencing master.dbo.xp_qv
+ */
+Datum 
+create_xp_qv_in_master_dbo_internal(PG_FUNCTION_ARGS)
+{	
+	char *query = NULL;
+	int rc = -1;
+
+	char *tempq = "CREATE OR REPLACE PROCEDURE %s.xp_qv(IN SYS.NVARCHAR(256), IN SYS.NVARCHAR(256))"
+				  "AS \'babelfishpg_tsql\', \'xp_qv_internal\' LANGUAGE C";
+
+	const char  *dbo_scm = get_dbo_schema_name("master");
+	if (dbo_scm == NULL) 
+		elog(ERROR, "Failed to retrieve dbo schema name");
+
+	query = psprintf(tempq, dbo_scm);
+
+	PG_TRY();
+	{
+		if ((rc = SPI_connect()) != SPI_OK_CONNECT)
+			elog(ERROR, "SPI_connect failed: %s", SPI_result_code_string(rc));
+
+		if ((rc = SPI_execute(query, false, 1)) < 0)
+			elog(ERROR, "SPI_execute failed: %s", SPI_result_code_string(rc));
+
+		if ((rc = SPI_finish()) != SPI_OK_FINISH)
+			elog(ERROR, "SPI_finish failed: %s", SPI_result_code_string(rc));
+	}
+	PG_CATCH();
+	{
+		SPI_finish();
+		PG_RE_THROW();
+	}
+	PG_END_TRY();
+
 	PG_RETURN_INT32(0);
 }

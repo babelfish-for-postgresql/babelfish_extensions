@@ -92,6 +92,22 @@ CREATE OR REPLACE PROCEDURE sys.babel_drop_all_users()
 LANGUAGE C
 AS 'babelfishpg_tsql', 'drop_all_users';
 
+-- The items in initialize_babel_extras procedure need to be initialized or created 
+-- during babelfish initialization. They depend on the core babelfish to be initialized first.
+CREATE OR REPLACE PROCEDURE initialize_babel_extras()
+LANGUAGE plpgsql
+AS $$
+BEGIN
+  CREATE OR REPLACE PROCEDURE sys.create_xp_qv_in_master_dbo()
+  LANGUAGE C
+  AS 'babelfishpg_tsql', 'create_xp_qv_in_master_dbo_internal';
+
+  CALL sys.create_xp_qv_in_master_dbo();
+  ALTER PROCEDURE master_dbo.xp_qv OWNER TO sysadmin;
+  DROP PROCEDURE sys.create_xp_qv_in_master_dbo;
+END
+$$;
+
 CREATE OR REPLACE PROCEDURE initialize_babelfish ( sa_name VARCHAR(128) )
 LANGUAGE plpgsql
 AS $$
@@ -129,6 +145,7 @@ BEGIN
 	EXECUTE 'SET babelfishpg_tsql.enable_ownership_structure = true';
 	CALL sys.babel_initialize_logins(sa_name);
 	CALL sys.babel_create_builtin_dbs(sa_name);
+	CALL sys.initialize_babel_extras();
 END
 $$;
 
