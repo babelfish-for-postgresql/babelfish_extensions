@@ -3706,6 +3706,11 @@ pltsql_inline_handler(PG_FUNCTION_ARGS)
 	/* And run the function */
 	PG_TRY();
 	{
+		/* If the number of arguments supplied are not equal to what is expected then throw error. */
+		if (fake_fcinfo->nargs != func->fn_nargs)
+			ereport(ERROR, (errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+				errmsg("The parameterized query expects %d number of parameters, but %d were supplied", func->fn_nargs, fake_fcinfo->nargs)));
+
 		retval = pltsql_exec_function(func, fake_fcinfo, simple_eval_estate, codeblock->atomic);
 		fcinfo->isnull = false;
 	}

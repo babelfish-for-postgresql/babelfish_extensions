@@ -355,3 +355,24 @@ EXEC SP_PREPARE @handle OUT, NULL, 'DECLARE @var int; SET @var = 1; select * fro
 SELECT (case when @handle IS NOT NULL then 'true' else 'false' end) as 'Prepared'
 EXEC SP_EXECUTE @handle
 GO
+
+-- BABEL-2948: sp_execute is expecting more arguments but we supply only handle.
+CREATE TABLE dbo.tnullvarcharmaxblob (
+ data_type_test CHAR(50) NULL
+, test_scenario CHAR(60) NULL
+, value_test VARCHAR(MAX) NULL
+, inserted_dt DATETIME DEFAULT GETDATE()
+, user_login CHAR(255) DEFAULT CURRENT_USER
+)
+GO
+
+declare @p1 int
+set @p1=1
+exec sp_prepare @p1 output,N'@P1 char(50),@P2 char(60),@P3 varchar(max),@P4 datetime2,@P5 char(255)',N'INSERT INTO [dbo].[tnullvarcharmaxblob]([data_type_test],[test_scenario],[value_test],[inserted_dt],[user_login]) values (@P1,@P2,@P3,@P4,@P5)',1
+select @p1
+exec sp_execute @p1
+exec sp_unprepare @p1
+GO
+
+Drop table dbo.tnullvarcharmaxblob
+GO
