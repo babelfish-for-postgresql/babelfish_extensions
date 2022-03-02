@@ -46,13 +46,52 @@ go
 ~~ERROR (Message: "@random_option" is not an parameter for procedure sp_updatestats.)~~
 
 
+create login user1 with password = 'abc';
+go
+
 -- psql
--- Case when user other than database owner executes, it should throw error
+-- check execution from psql
 call sys.sp_updatestats();
 go
-~~ERROR (Code: 0)~~
 
-~~ERROR (Message: ERROR: user does not have permission
-  Where: PL/pgSQL function sys.sp_updatestats(character varying) line 4 at RAISE
-    Server SQLState: P0001)~~
+-- tsql
+create database db1;
+go
 
+use db1;
+go
+
+create user user1 for login user1;
+go
+
+use master;
+go
+
+-- tsql user=user1 password=abc
+-- Case when user other than database owner executes, it should throw error
+use db1;
+go
+
+exec sys.sp_updatestats;
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: user does not have permission)~~
+
+
+use master;
+go
+
+exec sys.sp_updatestats;
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: user does not have permission)~~
+
+
+-- tsql
+drop database db1;
+go
+
+drop login user1;
+go
