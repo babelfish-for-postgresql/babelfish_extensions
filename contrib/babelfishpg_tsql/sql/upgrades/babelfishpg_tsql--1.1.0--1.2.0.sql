@@ -3686,6 +3686,27 @@ AS 'babelfishpg_tsql', 'tsql_json_query' LANGUAGE C IMMUTABLE PARALLEL SAFE;
 
 CREATE OR REPLACE VIEW sys.sp_statistics_view AS
 SELECT
+CAST(t3."TABLE_CATALOG" AS sys.sysname) AS TABLE_QUALIFIER,
+CAST(t3."TABLE_SCHEMA" AS sys.sysname) AS TABLE_OWNER,
+CAST(t3."TABLE_NAME" AS sys.sysname) AS TABLE_NAME,
+CAST(NULL AS smallint) AS NON_UNIQUE,
+CAST(NULL AS sys.sysname) AS INDEX_QUALIFIER,
+CAST(NULL AS sys.sysname) AS INDEX_NAME,
+CAST(0 AS smallint) AS TYPE,
+CAST(NULL AS smallint) AS SEQ_IN_INDEX,
+CAST(NULL AS sys.sysname) AS COLUMN_NAME,
+CAST(NULL AS sys.varchar(1)) AS COLLATION,
+CAST(t1.reltuples AS int) AS CARDINALITY,
+CAST(t1.relpages AS int) AS PAGES,
+CAST(NULL AS sys.varchar(128)) AS FILTER_CONDITION
+FROM pg_catalog.pg_class t1
+    JOIN sys.schemas s1 ON s1.schema_id = t1.relnamespace
+    JOIN information_schema_tsql.columns t3 ON (t1.relname = t3."TABLE_NAME" AND s1.name = t3."TABLE_SCHEMA")
+	JOIN (pg_catalog.pg_index t5 JOIN
+		pg_catalog.pg_class t6 ON t5.indexrelid = t6.oid) ON t1.oid = t5.indrelid
+    , generate_series(0,31) seq -- SQL server has max 32 columns per index
+UNION
+SELECT
 CAST(t4."TABLE_CATALOG" AS sys.sysname) AS TABLE_QUALIFIER,
 CAST(t4."TABLE_SCHEMA" AS sys.sysname) AS TABLE_OWNER,
 CAST(t4."TABLE_NAME" AS sys.sysname) AS TABLE_NAME,
@@ -3726,6 +3747,43 @@ FROM pg_catalog.pg_class t1
 WHERE CAST(t4."ORDINAL_POSITION" AS smallint) = ANY (t5.indkey)
     AND CAST(t4."ORDINAL_POSITION" AS smallint) = t5.indkey[seq];
 GRANT SELECT on sys.sp_statistics_view TO PUBLIC;
+
+create or replace function sys.sp_statistics_internal(
+    in_table_name sys.sysname,
+    in_table_owner sys.sysname = '',
+    in_table_qualifier sys.sysname = '',
+    in_index_name sys.sysname = '',
+	in_is_unique char = 'N',
+	in_accuracy char = 'Q'
+)
+returns table(
+    out_table_qualifier sys.sysname,
+    out_table_owner sys.sysname,
+    out_table_name sys.sysname,
+	out_non_unique smallint,
+	out_index_qualifier sys.sysname,
+	out_index_name sys.sysname,
+	out_type smallint,
+	out_seq_in_index smallint,
+	out_column_name sys.sysname,
+	out_collation sys.varchar(1),
+	out_cardinality int,
+	out_pages int,
+	out_filter_condition sys.varchar(128)
+)
+as $$
+begin
+    return query
+    select * from sys.sp_statistics_view
+    where in_table_name = table_name
+        and ((SELECT coalesce(in_table_owner,'')) = '' or table_owner = in_table_owner)
+        and ((SELECT coalesce(in_table_qualifier,'')) = '' or table_qualifier = in_table_qualifier)
+        and ((SELECT coalesce(in_index_name,'')) = '' or index_name like in_index_name)
+        and ((in_is_unique = 'Y' and (non_unique IS NULL or non_unique = 0)) or (in_is_unique = 'N'))
+    order by non_unique, type, index_name, seq_in_index;
+end;
+$$
+LANGUAGE plpgsql;
 
 CREATE OR REPLACE PROCEDURE sys.sp_statistics_100(
     "@table_name" sys.sysname,
