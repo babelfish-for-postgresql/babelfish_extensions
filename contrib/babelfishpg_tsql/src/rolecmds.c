@@ -50,13 +50,6 @@
 #include "session.h"
 #include "pltsql.h"
 
-static object_access_hook_type prev_object_access_hook_drop_role = NULL;
-
-static void drop_bbf_roles(ObjectAccessType access,
-										Oid classId,
-										Oid roleid,
-										int subId,
-										void *arg);
 static void drop_bbf_authid_login_ext(ObjectAccessType access,
 										Oid classId,
 										Oid roleid,
@@ -69,22 +62,6 @@ static void drop_bbf_authid_user_ext(ObjectAccessType access,
 										void *arg);
 static void drop_bbf_authid_user_ext_by_rolname(const char *rolname);
 static void grant_guests_to_login(const char *login);
-
-void
-assign_object_access_hook_drop_role()
-{
-	if (object_access_hook)
-		prev_object_access_hook_drop_role = object_access_hook;
-
-	object_access_hook = drop_bbf_roles;
-}
-
-void
-uninstall_object_access_hook_drop_role()
-{
-	if (prev_object_access_hook_drop_role)
-		object_access_hook = prev_object_access_hook_drop_role;
-}
 
 void
 create_bbf_authid_login_ext(CreateRoleStmt *stmt)
@@ -261,24 +238,13 @@ alter_bbf_authid_login_ext(AlterRoleStmt *stmt)
 	table_close(bbf_authid_login_ext_rel, RowExclusiveLock);
 }
 
-static void
+void
 drop_bbf_roles(ObjectAccessType access,
 							Oid classId,
 							Oid roleid,
 							int subId,
 							void *arg)
 {
-	/* Call previous hook if exists */
-	if (prev_object_access_hook_drop_role)
-		(*prev_object_access_hook_drop_role) (access, classId, roleid, subId, arg);
-
-	if (sql_dialect != SQL_DIALECT_TSQL)
-		return;
-
-	/* Check this was invoked by drop Role */
-	if (access != OAT_DROP || classId != AuthIdRelationId)
-		return;
-
 	if (is_login(roleid))
 		drop_bbf_authid_login_ext(access, classId, roleid, subId, arg);
 	else if (is_user(roleid))

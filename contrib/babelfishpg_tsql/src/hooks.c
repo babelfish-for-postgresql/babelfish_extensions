@@ -4,9 +4,13 @@
 #include "access/htup.h"
 #include "access/table.h"
 #include "catalog/heap.h"
+#include "access/xact.h"
 #include "catalog/namespace.h"
+#include "catalog/objectaccess.h"
 #include "catalog/pg_attrdef_d.h"
+#include "catalog/pg_authid.h"
 #include "catalog/pg_proc.h"
+#include "catalog/pg_type.h"
 #include "commands/copy.h"
 #include "commands/tablecmds.h"
 #include "funcapi.h"
@@ -25,12 +29,15 @@
 #include "parser/scansup.h"
 #include "replication/logical.h"
 #include "rewrite/rewriteHandler.h"
+#include "tcop/utility.h"
 #include "utils/builtins.h"
 #include "utils/fmgroids.h"
+#include "utils/lsyscache.h"
 #include "utils/rel.h"
 #include "utils/relcache.h"
 #include "utils/syscache.h"
 
+#include "pltsql.h"
 #include "backend_parser/scanner.h"
 #include "hooks.h"
 #include "catalog.h"
@@ -86,6 +93,15 @@ static report_proc_not_found_error_hook_type prev_report_proc_not_found_error_ho
 static logicalrep_modify_slot_hook_type prev_logicalrep_modify_slot_hook = NULL;
 static is_tsql_rowversion_or_timestamp_datatype_hook_type prev_is_tsql_rowversion_or_timestamp_datatype_hook = NULL;
 
+
+/*****************************************
+ * 			Object Access Hook
+ *****************************************/
+static object_access_hook_type prev_object_access_hook = NULL;
+static void bbf_object_access_hook(ObjectAccessType access, Oid classId, Oid objectId, int subId, void *arg);
+static void revoke_func_permission_from_public(Oid objectId);
+static char *gen_func_arg_list(Oid objectId);
+
 /*****************************************
  * 			Install / Uninstall
  *****************************************/
@@ -96,7 +112,8 @@ InstallExtendedHooks(void)
 		PrevIsExtendedCatalogHook = IsExtendedCatalogHook;
 	IsExtendedCatalogHook = &IsPLtsqlExtendedCatalog;
 
-	assign_object_access_hook_drop_role();
+	prev_object_access_hook = object_access_hook;
+	object_access_hook = bbf_object_access_hook;
 
 	prev_core_yylex_hook = core_yylex_hook;
 	core_yylex_hook = pgtsql_core_yylex;
@@ -142,7 +159,7 @@ UninstallExtendedHooks(void)
 {
 	IsExtendedCatalogHook = PrevIsExtendedCatalogHook;
 
-	uninstall_object_access_hook_drop_role();
+	object_access_hook = prev_object_access_hook;
 
 	core_yylex_hook = prev_core_yylex_hook;
 	get_output_clause_status_hook = NULL;
@@ -1108,4 +1125,116 @@ logicalrep_modify_slot(Relation rel, EState *estate, TupleTableSlot *slot)
 			}
 		}
 	}
+}
+
+static void
+bbf_object_access_hook(ObjectAccessType access, Oid classId, Oid objectId, int subId, void *arg)
+{
+	/* Call previous hook if exists */
+	if (prev_object_access_hook)
+		(*prev_object_access_hook) (access, classId, objectId, subId, arg);
+
+	if (sql_dialect != SQL_DIALECT_TSQL)
+		return;
+
+	if (access == OAT_DROP && classId == AuthIdRelationId)
+		drop_bbf_roles(access, classId, objectId, subId, arg);
+
+	if (access == OAT_POST_CREATE && classId == ProcedureRelationId)
+		revoke_func_permission_from_public(objectId);
+}
+
+static void revoke_func_permission_from_public(Oid objectId)
+{
+	const char 	*query;
+	List		*res;
+	GrantStmt   *revoke;
+	PlannedStmt *wrapper;
+	const char	*obj_name;
+	Oid			phy_sch_oid;
+	const char	*phy_sch_name;
+	const char  *arg_list;
+	char		kind;
+
+	/* TSQL specific behavior */
+	if (sql_dialect != SQL_DIALECT_TSQL)
+		return;
+
+	/* Advance command counter so new tuple can be seen by validator */
+	CommandCounterIncrement();
+
+	/* get properties */
+	obj_name = get_func_name(objectId);
+	phy_sch_oid = get_func_namespace(objectId);
+	phy_sch_name = get_namespace_name(phy_sch_oid);
+	kind = get_func_prokind(objectId);
+	arg_list = gen_func_arg_list(objectId);
+
+	/* prepare subcommand */
+	if (kind == PROKIND_PROCEDURE)
+		query = psprintf("REVOKE ALL ON PROCEDURE [%s].[%s](%s) FROM PUBLIC", phy_sch_name, obj_name, arg_list);
+	else
+		query = psprintf("REVOKE ALL ON FUNCTION [%s].[%s](%s) FROM PUBLIC", phy_sch_name, obj_name, arg_list);
+
+	res = raw_parser(query);
+
+	if (list_length(res) != 1)
+		ereport(ERROR,
+				(errcode(ERRCODE_SYNTAX_ERROR),
+				 errmsg("Expected 1 statement but get %d statements after parsing",
+						list_length(res))));
+
+	revoke = (GrantStmt *) parsetree_nth_stmt(res, 0);
+
+	wrapper = makeNode(PlannedStmt);
+	wrapper->commandType = CMD_UTILITY;
+	wrapper->canSetTag = false;
+	wrapper->utilityStmt = (Node *) revoke;
+	wrapper->stmt_location = 0;
+	wrapper->stmt_len = 0;
+
+	ProcessUtility(wrapper,
+				   query,
+				   PROCESS_UTILITY_SUBCOMMAND,
+				   NULL,
+				   NULL,
+				   None_Receiver,
+				   NULL);
+
+	/* Command Counter will be increased by validator */
+}
+
+static char *gen_func_arg_list(Oid objectId)
+{
+	Oid *argtypes;
+	int nargs = 0;
+	StringInfoData arg_list;
+	initStringInfo(&arg_list);
+
+	get_func_signature(objectId, &argtypes, &nargs);
+
+	for (int i = 0; i < nargs; i++)
+	{
+		Oid typoid = argtypes[i];
+		char *nsp_name;
+		char *type_name;
+		HeapTuple   typeTuple;
+
+		typeTuple = SearchSysCache1(TYPEOID, ObjectIdGetDatum(typoid));
+
+		if (!HeapTupleIsValid(typeTuple))
+			return NULL;
+
+		type_name = pstrdup(NameStr(((Form_pg_type) GETSTRUCT(typeTuple))->typname));
+		nsp_name = get_namespace_name(((Form_pg_type) GETSTRUCT(typeTuple))->typnamespace);
+		ReleaseSysCache(typeTuple);
+
+		appendStringInfoString(&arg_list, nsp_name);
+		appendStringInfoString(&arg_list, ".");
+		appendStringInfoString(&arg_list, type_name);
+		if (i < nargs -1)
+			appendStringInfoString(&arg_list, ", ");
+	}
+
+	return arg_list.data;
 }

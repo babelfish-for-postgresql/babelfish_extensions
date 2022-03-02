@@ -138,6 +138,8 @@ static void validate_rowversion_column_constraints(ColumnDef *column);
 static void validate_rowversion_table_constraint(Constraint *c, char *rowversion_column_name);
 static Constraint *get_rowversion_default_constraint(TypeName *typname);
 extern bool is_tsql_rowversion_or_timestamp_datatype(Oid oid);
+static void revoke_type_permission_from_public(PlannedStmt *pstmt, const char *queryString,
+		ProcessUtilityContext context, ParamListInfo params, QueryEnvironment *queryEnv, DestReceiver *dest, QueryCompletion *qc, List *type_name);
 
 PG_FUNCTION_INFO_V1(pltsql_inline_handler);
 
@@ -1442,6 +1444,54 @@ get_rowversion_default_constraint(TypeName *typname)
 }
 
 static void
+revoke_type_permission_from_public(PlannedStmt *pstmt, const char *queryString,
+		ProcessUtilityContext context, ParamListInfo params, QueryEnvironment *queryEnv, DestReceiver *dest, QueryCompletion *qc, List *type_name)
+{
+	const char 	*template = "REVOKE ALL ON TYPE dummy FROM PUBLIC";
+	List		*res;
+	GrantStmt   *revoke;
+	PlannedStmt *wrapper;
+
+	/* TSQL specific behavior */
+	if (sql_dialect != SQL_DIALECT_TSQL)
+		return;
+
+	/* Need CCI between commands */
+	CommandCounterIncrement();
+
+	/* prepare subcommand */
+	res = raw_parser(template);
+
+	if (list_length(res) != 1)
+		ereport(ERROR,
+				(errcode(ERRCODE_SYNTAX_ERROR),
+				 errmsg("Expected 1 statement but get %d statements after parsing",
+						list_length(res))));
+
+	revoke = (GrantStmt *) parsetree_nth_stmt(res, 0);
+	revoke->objects = list_make1(type_name);
+
+	wrapper = makeNode(PlannedStmt);
+	wrapper->commandType = CMD_UTILITY;
+	wrapper->canSetTag = false;
+	wrapper->utilityStmt = (Node *) revoke;
+	wrapper->stmt_location = pstmt->stmt_location;
+	wrapper->stmt_len = pstmt->stmt_len;
+
+	ProcessUtility(wrapper,
+				   queryString,
+				   PROCESS_UTILITY_SUBCOMMAND,
+				   params,
+				   queryEnv,
+				   None_Receiver,
+				   qc);
+
+	/* Need CCI between commands */
+	CommandCounterIncrement();
+}
+
+
+static void
 check_nullable_identity_constraint(RangeVar *relation, ColumnDef *column)
 {
 	ListCell   *clist;
@@ -2058,6 +2108,7 @@ static void bbf_ProcessUtility(PlannedStmt *pstmt,
 						EventTriggerSQLDrop(parsetree);
 						EventTriggerDDLCommandEnd(parsetree);
 					}
+
 				}
 				PG_CATCH();
 				{
@@ -2868,6 +2919,45 @@ static void bbf_ProcessUtility(PlannedStmt *pstmt,
 				/* Need CCI between commands */
 				CommandCounterIncrement();
 
+				return;
+			}
+		case T_CreateStmt:
+			{
+				CreateStmt *create_stmt = (CreateStmt *) parsetree;
+
+				if (prev_ProcessUtility)
+					prev_ProcessUtility(pstmt, queryString, context, params,
+							queryEnv, dest, qc);
+				else
+					standard_ProcessUtility(pstmt, queryString, context, params,
+							queryEnv, dest, qc);
+
+				if (create_stmt->tsql_tabletype)
+				{
+					RangeVar *rel = create_stmt->relation;
+					List *name;
+					if (rel->schemaname)
+						name = list_make2(makeString(rel->schemaname), makeString(rel->relname));
+					else
+						name = list_make1(makeString(rel->relname));
+
+					revoke_type_permission_from_public(pstmt, queryString, context, params, queryEnv, dest, qc, name);
+				}
+
+				return;
+			}
+		case T_CreateDomainStmt:
+			{
+				CreateDomainStmt *create_domain = (CreateDomainStmt *) parsetree;
+
+				if (prev_ProcessUtility)
+					prev_ProcessUtility(pstmt, queryString, context, params,
+							queryEnv, dest, qc);
+				else
+					standard_ProcessUtility(pstmt, queryString, context, params,
+							queryEnv, dest, qc);
+
+				revoke_type_permission_from_public(pstmt, queryString, context, params, queryEnv, dest, qc, create_domain->domainname);
 				return;
 			}
 		default:
