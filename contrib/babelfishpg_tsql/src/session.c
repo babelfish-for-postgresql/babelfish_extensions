@@ -47,6 +47,16 @@ set_cur_db(int16 id, const char *name)
 }
 
 void
+bbf_set_current_user(const char *user_name)
+{
+	Oid userid;
+
+	userid = get_role_oid(user_name, false);
+	SetConfigOption("role", user_name, PGC_SUSET, PGC_S_DATABASE_USER);
+	SetCurrentRoleId(userid, false);
+}
+
+void
 set_session_properties(const char *db_name)
 {
 	const char		*buffer = "%s, \"$user\", sys, pg_catalog";
@@ -95,8 +105,8 @@ set_session_properties(const char *db_name)
 	}
 
 	/* set current user */
-	current_user_id = get_role_oid(user, false);
-	SetConfigOption("role", user, PGC_SUSET, PGC_S_DATABASE_USER);
+	bbf_set_current_user(user);
+	current_user_id = GetUserId();
 
 	/* set search path */
 	path = psprintf(buffer, physical_schema);
@@ -127,7 +137,7 @@ restore_session_properties()
 		cur_user = GetUserNameFromId(current_user_id, true);
 
 		if (cur_user)
-			SetConfigOption("role", cur_user, PGC_SUSET, PGC_S_DATABASE_USER);
+			bbf_set_current_user(cur_user);
 		else
 			ereport(ERROR,
 					(errcode(ERRCODE_UNDEFINED_OBJECT),
