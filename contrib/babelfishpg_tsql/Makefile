@@ -94,6 +94,8 @@ REGRESS += test/babel_ddl
 REGRESS += test/babel_delete
 REGRESS += test/babel_set_command
 # REGRESS += test/babel_datatype TODO: fix BABEL-2636 "Money datatype doesn't support any currency symbol other than Dollar" before enabling this test
+REGRESS += test/babel_function
+REGRESS += test/babel_table_type
 
 # We need the previous version to test extension upgrade scripts
 ifdef PREV_EXTVERSION
