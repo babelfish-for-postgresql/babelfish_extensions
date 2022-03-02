@@ -92,7 +92,7 @@ tsql_jsonb_in(text *json_text)
 	tok = lex_first_token->token_type;
 	if (result_first_token != JSON_SUCCESS || 
 		(tok != JSON_TOKEN_OBJECT_START && tok != JSON_TOKEN_ARRAY_START))
-		json_ereport_error(JSON_EXPECTED_JSON, lex_first_token);
+		json_ereport_error(result_first_token, lex_first_token);
 	
 	/* convert json expression to jsonb */
 	return DirectFunctionCall1(jsonb_in, CStringGetDatum(text_to_cstring(json_text)));
@@ -126,15 +126,15 @@ tsql_json_value(PG_FUNCTION_ARGS)
 	if (PG_ARGISNULL(1))
 		elog(ERROR, "The JSON_VALUE function requires 2 arguments");
 
-	/* set sql_dialect to tsql, which is needed for jsonb parsing and processing */
-	sql_dialect = SQL_DIALECT_TSQL;
-	prev_sql_dialect = sql_dialect;
-
 	/* read in arguments */
 	json_text = PG_GETARG_TEXT_PP(0);
 	jsonb = tsql_jsonb_in(json_text);
 	jsonpath_text = PG_GETARG_TEXT_PP(1);
 	jsonpath = DirectFunctionCall1(jsonpath_in, CStringGetDatum(text_to_cstring(jsonpath_text)));
+	
+	/* set sql_dialect to tsql, which is needed for jsonb parsing and processing */
+	prev_sql_dialect = sql_dialect;
+	sql_dialect = SQL_DIALECT_TSQL;
 
 	/* jsonb_path_query_first */
 	result = tsql_jsonb_path_query_first(jsonb, jsonpath);
@@ -160,7 +160,11 @@ tsql_json_value(PG_FUNCTION_ARGS)
             else 
                 elog(ERROR, "The JSON_VALUE function requires 2 arguments");
         }
-        result_varchar = (VarChar *) cstring_to_text(result_cstring);
+	/* trim double quotes on json string values which are added by JsonbToCString() */
+	if (strlen(result_cstring) > 1 && result_cstring[0] == '\"')
+	    result_varchar = (VarChar *) cstring_to_text_with_len(result_cstring+1, strlen(result_cstring)-2);
+	else
+	    result_varchar = (VarChar *) cstring_to_text(result_cstring);
         PG_RETURN_VARCHAR_P(result_varchar);
 	} 
 	/* result is not a scalar value */
@@ -195,8 +199,8 @@ tsql_json_query(PG_FUNCTION_ARGS)
 		PG_RETURN_NULL();
 
 	/* set sql_dialect to tsql, which is needed for jsonb parsing and processing */
-	sql_dialect = SQL_DIALECT_TSQL;
 	prev_sql_dialect = sql_dialect;
+	sql_dialect = SQL_DIALECT_TSQL;
 
 	/* read in arguments */
 	json_text = PG_GETARG_TEXT_PP(0);

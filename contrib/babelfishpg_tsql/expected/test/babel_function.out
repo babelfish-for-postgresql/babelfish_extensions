@@ -734,13 +734,6 @@ select has_dbaccess(CAST(current_database() as text));
              
 (1 row)
 
--- test access to rdsadmin, should return 0
-select has_dbaccess(n'rdsadmin');
- has_dbaccess 
---------------
-             
-(1 row)
-
 -- test access to an invalid database, should return NULL
 select has_dbaccess(n'invalid database');
  has_dbaccess 

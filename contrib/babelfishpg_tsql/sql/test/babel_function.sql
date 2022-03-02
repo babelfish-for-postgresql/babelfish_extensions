@@ -230,8 +230,6 @@ show role;
 set babelfishpg_tsql.sql_dialect = 'tsql';
 -- test access to current database, should return 1
 select has_dbaccess(CAST(current_database() as text));
--- test access to rdsadmin, should return 0
-select has_dbaccess(n'rdsadmin');
 -- test access to an invalid database, should return NULL
 select has_dbaccess(n'invalid database');
 reset role;
