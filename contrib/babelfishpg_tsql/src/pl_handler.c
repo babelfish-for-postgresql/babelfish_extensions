@@ -2191,8 +2191,7 @@ static void bbf_ProcessUtility(PlannedStmt *pstmt,
 					/* Set current user to sysadmin for create permissions */
 					prev_current_user = GetUserNameFromId(GetUserId(), false);
 
-					SetConfigOption("role", "sysadmin",
-									PGC_SUSET, PGC_S_DATABASE_USER);
+					bbf_set_current_user("sysadmin");
 
 					PG_TRY();
 					{
@@ -2211,14 +2210,12 @@ static void bbf_ProcessUtility(PlannedStmt *pstmt,
 					}
 					PG_CATCH();
 					{
-						SetConfigOption("role", prev_current_user,
-										PGC_SUSET, PGC_S_DATABASE_USER);
+						bbf_set_current_user(prev_current_user);
 						PG_RE_THROW();
 					}
 					PG_END_TRY();
 
-					SetConfigOption("role", prev_current_user,
-									PGC_SUSET, PGC_S_DATABASE_USER);
+					bbf_set_current_user(prev_current_user);
 
 					return;
 				}
@@ -2227,8 +2224,7 @@ static void bbf_ProcessUtility(PlannedStmt *pstmt,
 					/* Set current user to dbo user for create permissions */
 					prev_current_user = GetUserNameFromId(GetUserId(), false);
 
-					SetConfigOption("role", get_dbo_role_name(get_cur_db_name()),
-									PGC_SUSET, PGC_S_DATABASE_USER);
+					bbf_set_current_user(get_dbo_role_name(get_cur_db_name()));
 
 					PG_TRY();
 					{
@@ -2247,14 +2243,12 @@ static void bbf_ProcessUtility(PlannedStmt *pstmt,
 					}
 					PG_CATCH();
 					{
-						SetConfigOption("role", prev_current_user,
-										PGC_SUSET, PGC_S_DATABASE_USER);
+						bbf_set_current_user(prev_current_user);
 						PG_RE_THROW();
 					}
 					PG_END_TRY();
 
-					SetConfigOption("role", prev_current_user,
-									PGC_SUSET, PGC_S_DATABASE_USER);
+					bbf_set_current_user(prev_current_user);
 
 					return;
 				}
@@ -2266,13 +2260,15 @@ static void bbf_ProcessUtility(PlannedStmt *pstmt,
 			if (sql_dialect == SQL_DIALECT_TSQL
 				&& ownership_structure_enabled())
 			{
-				Oid				prev_current_user;
 				AlterRoleStmt	*stmt = (AlterRoleStmt *) parsetree;
 				List			*login_options = NIL;
 				List			*user_options = NIL;
 				ListCell		*option;
 				bool			islogin = false;
 				bool			isuser = false;
+				Oid				prev_current_user;
+
+				prev_current_user = GetUserId();
 
 				/* Check if creating login or role. Expect islogin first */
 				if (stmt->options != NIL)
@@ -2360,8 +2356,6 @@ static void bbf_ProcessUtility(PlannedStmt *pstmt,
 
 
 					/* Set current user to sysadmin for alter permissions */
-					prev_current_user = GetUserId();
-
 					SetCurrentRoleId(datdba, false);
 
 					PG_TRY();
@@ -2430,8 +2424,6 @@ static void bbf_ProcessUtility(PlannedStmt *pstmt,
 					}
 
 					/* Set current user to dbo for alter permissions */
-					prev_current_user = GetUserId();
-
 					SetCurrentRoleId(dbo_id, false);
 
 					PG_TRY();
@@ -2553,12 +2545,14 @@ static void bbf_ProcessUtility(PlannedStmt *pstmt,
 					/* Set current user as appropriate for drop permissions */
 					prev_current_user = GetUserNameFromId(GetUserId(), false);
 
-					if (all_logins)
-						SetConfigOption("role", "sysadmin",
-										PGC_SUSET, PGC_S_DATABASE_USER);
-					else if (all_users)
-						SetConfigOption("role", get_dbo_role_name(get_cur_db_name()),
-										PGC_SUSET, PGC_S_DATABASE_USER);
+					/*
+					 * Only use dbo if dropping a user in a Babelfish session.
+					 * drop_user enabled guarantees a current Babelfish db.
+					 */
+					if (drop_user)
+						bbf_set_current_user(get_dbo_role_name(get_cur_db_name()));
+					else
+						bbf_set_current_user("sysadmin");
 
 					PG_TRY();
 					{
@@ -2573,14 +2567,12 @@ static void bbf_ProcessUtility(PlannedStmt *pstmt,
 					}
 					PG_CATCH();
 					{
-						SetConfigOption("role", prev_current_user,
-										PGC_SUSET, PGC_S_DATABASE_USER);
+						bbf_set_current_user(prev_current_user);
 						PG_RE_THROW();
 					}
 					PG_END_TRY();
 
-					SetConfigOption("role", prev_current_user,
-									PGC_SUSET, PGC_S_DATABASE_USER);
+					bbf_set_current_user(prev_current_user);
 
 					return;
 				}
@@ -2674,7 +2666,7 @@ static void bbf_ProcessUtility(PlannedStmt *pstmt,
 					prev_current_user = GetUserNameFromId(GetUserId(), false);
 					session_user_name = GetUserNameFromId(GetSessionUserId(), false);
 
-					SetConfigOption("role", session_user_name, PGC_SUSET, PGC_S_DATABASE_USER);
+					bbf_set_current_user(session_user_name);
 					PG_TRY();
 					{
 
@@ -2689,12 +2681,12 @@ static void bbf_ProcessUtility(PlannedStmt *pstmt,
 					PG_CATCH();
 					{
 						/* Clean up. Restore previous state. */
-						SetConfigOption("role", prev_current_user, PGC_SUSET, PGC_S_DATABASE_USER);
+						bbf_set_current_user(prev_current_user);
 						PG_RE_THROW();
 					}
 					PG_END_TRY();
 					/* Clean up. Restore previous state. */
-					SetConfigOption("role", prev_current_user, PGC_SUSET, PGC_S_DATABASE_USER);
+					bbf_set_current_user(prev_current_user);
 					return;
 				}
 			}

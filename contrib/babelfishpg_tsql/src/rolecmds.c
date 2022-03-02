@@ -760,7 +760,7 @@ Datum drop_all_logins(PG_FUNCTION_ARGS)
 
 	/* Set current user to session user for dropping permissions */
 	prev_current_user = GetUserNameFromId(GetUserId(), false);
-	SetConfigOption("role", "sysadmin", PGC_SUSET, PGC_S_DATABASE_USER);
+	bbf_set_current_user("sysadmin");
 
 	sql_dialect = SQL_DIALECT_TSQL;
 
@@ -805,17 +805,14 @@ Datum drop_all_logins(PG_FUNCTION_ARGS)
 		PG_CATCH();
 		{
 			/* Clean up. Restore previous state. */
-			SetConfigOption("role",
-							prev_current_user,
-							PGC_SUSET,
-							PGC_S_DATABASE_USER);
+			bbf_set_current_user(prev_current_user);
 			sql_dialect = saved_dialect;
 			PG_RE_THROW();
 		}
 		PG_END_TRY();
 	}
 	/* Set current user back to previous user */
-	SetConfigOption("role", prev_current_user, PGC_SUSET, PGC_S_DATABASE_USER);
+	bbf_set_current_user(prev_current_user);
 	sql_dialect = saved_dialect;
 	PG_RETURN_INT32(0);
 }
@@ -1031,7 +1028,7 @@ add_existing_users_to_catalog(PG_FUNCTION_ARGS)
 	/* Alter role to enable createrole to all dbo users */
 	/* Set current user to sysadmin for alter permissions */
 	prev_current_user = GetUserNameFromId(GetUserId(), false);
-	SetConfigOption("role", "sysadmin", PGC_SUSET, PGC_S_DATABASE_USER);
+	bbf_set_current_user("sysadmin");
 
 	sql_dialect = SQL_DIALECT_TSQL;
 
@@ -1083,17 +1080,14 @@ add_existing_users_to_catalog(PG_FUNCTION_ARGS)
 		PG_CATCH();
 		{
 			/* Clean up. Restore previous state. */
-			SetConfigOption("role",
-							prev_current_user,
-							PGC_SUSET,
-							PGC_S_DATABASE_USER);
+			bbf_set_current_user(prev_current_user);
 			sql_dialect = saved_dialect;
 			PG_RE_THROW();
 		}
 		PG_END_TRY();
 	}
 
-	SetConfigOption("role", prev_current_user, PGC_SUSET, PGC_S_DATABASE_USER);
+	bbf_set_current_user(prev_current_user);
 	sql_dialect = saved_dialect;
 	PG_RETURN_INT32(0);
 }
@@ -1314,7 +1308,7 @@ Datum drop_all_users(PG_FUNCTION_ARGS)
 
 	/* Set current user to session user for dropping permissions */
 	prev_current_user = GetUserNameFromId(GetUserId(), false);
-	SetConfigOption("role", "sysadmin", PGC_SUSET, PGC_S_DATABASE_USER);
+	bbf_set_current_user("sysadmin");
 
 	sql_dialect = SQL_DIALECT_TSQL;
 
@@ -1362,10 +1356,7 @@ Datum drop_all_users(PG_FUNCTION_ARGS)
 		PG_CATCH();
 		{
 			/* Clean up. Restore previous state. */
-			SetConfigOption("role",
-							prev_current_user,
-							PGC_SUSET,
-							PGC_S_DATABASE_USER);
+			bbf_set_current_user(prev_current_user);
 			sql_dialect = saved_dialect;
 			PG_RE_THROW();
 		}
@@ -1373,7 +1364,7 @@ Datum drop_all_users(PG_FUNCTION_ARGS)
 	}
 
 	/* Set current user back to previous user */
-	SetConfigOption("role", prev_current_user, PGC_SUSET, PGC_S_DATABASE_USER);
+	bbf_set_current_user(prev_current_user);
 	sql_dialect = saved_dialect;
 	PG_RETURN_INT32(0);
 }
@@ -1384,7 +1375,7 @@ babelfish_set_role(PG_FUNCTION_ARGS)
 {
 	char *role = text_to_cstring(PG_GETARG_TEXT_PP(0));
 
-	SetConfigOption("role", role, PGC_SUSET, PGC_S_DATABASE_USER);
+	bbf_set_current_user(role);
 
 	PG_RETURN_INT32(1);
 }

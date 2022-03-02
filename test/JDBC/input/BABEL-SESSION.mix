@@ -1,0 +1,56 @@
+-- tsql
+CREATE LOGIN r1 WITH PASSWORD = 'abc';
+GO
+
+CREATE DATABASE db1;
+GO
+
+USE db1;
+GO
+
+CREATE USER r1;
+GO
+
+CREATE TABLE tb1 (a int);
+GO
+
+INSERT INTO tb1 (a) VALUES (1);
+GO
+
+GRANT SELECT ON tb1 TO r1;
+GO
+
+USE master;
+GO
+
+-- tsql user=r1 password=abc
+USE db1;
+GO
+
+SELECT db_name();
+GO
+
+SELECT user_name();
+GO
+
+SELECT current_schema();
+GO
+
+SELECT * FROM tb1;
+GO
+
+USE master;
+GO
+
+-- tsql
+SELECT db_name();
+GO
+
+SELECT user_name();
+GO
+
+DROP DATABASE db1;
+GO
+
+DROP LOGIN r1;
+GO

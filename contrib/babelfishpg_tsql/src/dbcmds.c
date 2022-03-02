@@ -220,7 +220,7 @@ gen_dropdb_subcmds(const char *schema,
 	}
 
 	stmt = parsetree_nth_stmt(stmt_list, i++);
-	update_DropOwnedStmt(stmt, list_make2(db_owner, dbo));
+	update_DropOwnedStmt(stmt, list_make2(pstrdup(db_owner), pstrdup(dbo)));
 
 	stmt = parsetree_nth_stmt(stmt_list, i++);
 	update_DropRoleStmt(stmt, db_owner);
@@ -371,12 +371,12 @@ do_create_bbf_db(const char *dbname, List *options, const char *owner)
 
 	/* Get new DB ID. Need sysadmin to do that. */
 	prev_current_user = GetUserNameFromId(GetUserId(), false);
-	SetConfigOption("role", "sysadmin", PGC_SUSET, PGC_S_DATABASE_USER);
+	bbf_set_current_user("sysadmin");
 	if ((dbid = getAvailDbid()) == InvalidDbid)
 		ereport(ERROR,
 				(errcode(ERRCODE_INVALID_DATABASE_DEFINITION),
 				 errmsg("cannot find an available ID for database \"%s\"", dbname)));
-	SetConfigOption("role", prev_current_user, PGC_SUSET, PGC_S_DATABASE_USER);
+	bbf_set_current_user(prev_current_user);
 
 	/* Write catalog entry */
 	new_record = palloc0(sizeof(Datum) * SYSDATABASES_NUM_COLS);
@@ -407,7 +407,7 @@ do_create_bbf_db(const char *dbname, List *options, const char *owner)
 	/* Set current user to session user for create permissions */
 	prev_current_user = GetUserNameFromId(GetUserId(), false);
 
-	SetConfigOption("role", "sysadmin", PGC_SUSET, PGC_S_DATABASE_USER);
+	bbf_set_current_user("sysadmin");
 
 	old_dbid = get_cur_db_id();
 	old_dbname = get_cur_db_name();
@@ -452,17 +452,14 @@ do_create_bbf_db(const char *dbname, List *options, const char *owner)
 	PG_CATCH();
 	{
 		/* Clean up. Restore previous state. */
-		SetConfigOption("role",
-						prev_current_user,
-						PGC_SUSET,
-						PGC_S_DATABASE_USER);
+		bbf_set_current_user(prev_current_user);
 		set_cur_db(old_dbid, old_dbname);
 		PG_RE_THROW();
 	}
 	PG_END_TRY();
 
 	/* Set current user back to previous user */
-	SetConfigOption("role", prev_current_user, PGC_SUSET, PGC_S_DATABASE_USER);
+	bbf_set_current_user(prev_current_user);
 
 	return dbid;
 }
@@ -524,7 +521,7 @@ drop_bbf_db(const char *dbname, bool missing_ok, bool force_drop)
 	/* Set current user to session user for dropping permissions */
 	prev_current_user = GetUserNameFromId(GetUserId(), false);
 
-	SetConfigOption("role", "sysadmin", PGC_SUSET, PGC_S_DATABASE_USER);
+	bbf_set_current_user("sysadmin");
 
 	PG_TRY();
 	{
@@ -597,19 +594,14 @@ drop_bbf_db(const char *dbname, bool missing_ok, bool force_drop)
 	PG_CATCH();
 	{
 		/* Clean up. Restore previous state. */
-		SetConfigOption("role",
-						prev_current_user,
-						PGC_SUSET,
-						PGC_S_DATABASE_USER);
-
+		bbf_set_current_user(prev_current_user);
 		UnlockLogicalDatabaseForSession(dbid, ExclusiveLock, false);
-
 		PG_RE_THROW();
 	}
 	PG_END_TRY();
 
 	/* Set current user back to previous user */
-	SetConfigOption("role", prev_current_user, PGC_SUSET, PGC_S_DATABASE_USER);
+	bbf_set_current_user(prev_current_user);
 }
 
 PG_FUNCTION_INFO_V1(create_builtin_dbs);
