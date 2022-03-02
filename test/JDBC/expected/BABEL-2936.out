@@ -1,0 +1,13 @@
+CREATE TABLE dbo.t2936 (c XML NULL);
+go
+
+exec sp_describe_undeclared_parameters N'INSERT INTO [dbo].[t2936]([c]) values (@P1)'
+go
+~~START~~
+int#!#varchar#!#int#!#nvarchar#!#smallint#!#tinyint#!#tinyint#!#int#!#varchar#!#varchar#!#varchar#!#nvarchar#!#int#!#varchar#!#varchar#!#varchar#!#bit#!#bit#!#bit#!#bit#!#bit#!#varchar#!#int#!#int
+1#!#@p1#!#241#!#xml#!#-1#!#0#!#0#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#0#!#0#!#0#!#1#!#0#!#<NULL>#!#241#!#8100
+~~END~~
+
+
+DROP TABLE dbo.t2936;
+go

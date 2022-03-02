@@ -496,6 +496,7 @@ sp_describe_undeclared_parameters_internal(PG_FUNCTION_ARGS)
 		"WHEN T2.name = \'uniqueidentifier\' THEN 36 "
 		"WHEN T2.name = \'varbinary\' THEN 165 "
 		"WHEN T2.name = \'varchar\' THEN 167 "
+		"WHEN T2.name =  \'xml\' THEN 241 "
 		"ELSE C.system_type_id "
 	"END " /* AS "suggested_system_type_id" */
 	", CASE "
@@ -567,6 +568,7 @@ sp_describe_undeclared_parameters_internal(PG_FUNCTION_ARGS)
 		"WHEN T2.name = \'uniqueidentifier\' THEN 36 "
 		"WHEN T2.name = \'varbinary\' THEN 165 "
 		"WHEN T2.name = \'varchar\' THEN 167 "
+		"WHEN T2.name =  \'xml\' THEN 241 "
 		"ELSE C.system_type_id "
 	"END " /* AS "suggested_tds_type_id" */
 	", CASE "
