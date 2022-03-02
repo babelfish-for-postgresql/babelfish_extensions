@@ -318,10 +318,10 @@ bool is_xact_abort_txn_compilation_error(int sql_error_code)
 {
 	switch(sql_error_code)
 	{
-		case SQL_ERROR_16948:
 		case SQL_ERROR_2747:
 		case SQL_ERROR_8159:
 		case SQL_ERROR_11717:
+		case SQL_ERROR_16948:
 		{
 			elog(DEBUG1, "TSQL TXN is_xact_abort_txn_compilation_error %d", latest_error_code);
 			return true;

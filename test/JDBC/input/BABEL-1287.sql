@@ -25,14 +25,7 @@ BEGIN
 END
 GO
 
-CREATE FUNCTION babel_1287_f_text(@v text)
-RETURNS text AS
-BEGIN
-  RETURN @v;
-END
-GO
-
-SELECT babel_1287_f_char(a) char_result, babel_1287_f_varchar(a) varchar_result, babel_1287_f_text(a) text_result FROM babel_1287_t1;
+SELECT babel_1287_f_char(a) char_result, babel_1287_f_varchar(a) varchar_result FROM babel_1287_t1;
 GO
 
 -- implicit casting: string -> uniqueidentifier
@@ -86,7 +79,6 @@ GO
 
 DROP FUNCTION babel_1287_f_char;
 DROP FUNCTION babel_1287_f_varchar;
-DROP FUNCTION babel_1287_f_text;
 DROP FUNCTION babel_1287_f_ui;
 GO
 

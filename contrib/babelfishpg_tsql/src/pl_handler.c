@@ -3829,6 +3829,15 @@ pltsql_validator(PG_FUNCTION_ARGS)
 		elog(ERROR, "cache lookup failed for function %u", funcoid);
 	proc = (Form_pg_proc) GETSTRUCT(tuple);
 
+	/* Disallow text, ntext, and image type result */
+	if (is_tsql_text_datatype(proc->prorettype) || is_tsql_ntext_datatype(proc->prorettype) || is_tsql_image_datatype(proc->prorettype))
+	{
+		ereport(ERROR,
+			(errcode(ERRCODE_INVALID_FUNCTION_DEFINITION),
+				errmsg("PL/tsql functions cannot return type %s",
+					format_type_be(proc->prorettype))));
+	}
+
 	functyptype = get_typtype(proc->prorettype);
 
 	/* Disallow pseudotype result */
