@@ -811,8 +811,10 @@ static Datum get_owner(HeapTuple tuple, TupleDesc dsc);
 static Datum get_name_db_owner(HeapTuple tuple, TupleDesc dsc);
 static Datum get_name_dbo(HeapTuple tuple, TupleDesc dsc);
 static Datum get_nspname(HeapTuple tuple, TupleDesc dsc);
-static Datum get_rolname(HeapTuple tuple, TupleDesc dsc);
+static Datum get_login_rolname(HeapTuple tuple, TupleDesc dsc);
 static Datum get_default_database_name(HeapTuple tuple, TupleDesc dsc);
+static Datum get_user_rolname(HeapTuple tuple, TupleDesc dsc);
+static Datum get_database_name(HeapTuple tuple, TupleDesc dsc);
 /* Condition function declaration */
 static bool is_multidb(void);
 static bool is_singledb_exists_userdb(void);
@@ -838,6 +840,7 @@ RelData catalog_data[] =
 	{"babelfish_sysdatabases", InvalidOid, InvalidOid, InvalidOid, Anum_sysdatabaese_name, F_TEXTEQ},
 	{"babelfish_namespace_ext", InvalidOid, InvalidOid, InvalidOid, Anum_namespace_ext_namespace, F_NAMEEQ},
 	{"babelfish_authid_login_ext", InvalidOid, InvalidOid, InvalidOid, Anum_bbf_authid_login_ext_rolname, F_NAMEEQ},
+	{"babelfish_authid_user_ext", InvalidOid, InvalidOid, InvalidOid, Anum_bbf_authid_user_ext_rolname, F_NAMEEQ},
 	{"pg_namespace", InvalidOid, InvalidOid, InvalidOid, Anum_pg_namespace_nspname, F_NAMEEQ},
 	{"pg_authid", InvalidOid, InvalidOid, InvalidOid, Anum_pg_authid_rolname, F_NAMEEQ}
 };
@@ -867,22 +870,22 @@ Rule must_have_rules[] =
 	 "babelfish_namespace_ext", "nspname", NULL, get_tempdb_dbo, NULL, check_exist, NULL},
 	{"In single-db mode, if user db exists, dbo must exist in babelfish_namespace_ext",
 	 "babelfish_namespace_ext", "nspname", NULL, get_dbo, is_singledb_exists_userdb, check_exist, NULL},
-	{"In single-db mode, if user db exists, db_owner must exist in pg_authid",
-	 "pg_authid", "rolname", NULL, get_db_owner, is_singledb_exists_userdb, check_exist, NULL},
-	{"In single-db mode, if user db exists, dbo must exist in pg_authid",
-	 "pg_authid", "rolname", NULL, get_dbo, is_singledb_exists_userdb, check_exist, NULL},
-	{"master_db_owner must exist in pg_authid", 
-	 "pg_authid", "rolname", NULL, get_master_db_owner, NULL, check_exist, NULL},
-	{"master_dbo must exist in pg_authid",
-	 "pg_authid", "rolname", NULL, get_master_dbo, NULL, check_exist, NULL},
-	{"master_guest must exist in pg_authid",
-	 "pg_authid", "rolname", NULL, get_master_guest, NULL, check_exist, NULL},
-	{"tempdb_db_owner must exist in pg_authid",
-	 "pg_authid", "rolname", NULL, get_tempdb_db_owner, NULL, check_exist, NULL},
-	{"tempdb_dbo must exist in pg_authid",
-	 "pg_authid", "rolname", NULL, get_tempdb_dbo, NULL, check_exist, NULL},
-	{"tempdb_guest must exist in pg_authid",
-	 "pg_authid", "rolname", NULL, get_tempdb_guest, NULL, check_exist, NULL}
+	{"In single-db mode, if user db exists, db_owner must exist in babelfish_authid_user_ext",
+	 "babelfish_authid_user_ext", "rolname", NULL, get_db_owner, is_singledb_exists_userdb, check_exist, NULL},
+	{"In single-db mode, if user db exists, dbo must exist in babelfish_authid_user_ext",
+	 "babelfish_authid_user_ext", "rolname", NULL, get_dbo, is_singledb_exists_userdb, check_exist, NULL},
+	{"master_db_owner must exist in babelfish_authid_user_ext", 
+	 "babelfish_authid_user_ext", "rolname", NULL, get_master_db_owner, NULL, check_exist, NULL},
+	{"master_dbo must exist in babelfish_authid_user_ext",
+	 "babelfish_authid_user_ext", "rolname", NULL, get_master_dbo, NULL, check_exist, NULL},
+	{"master_guest must exist in babelfish_authid_user_ext",
+	 "babelfish_authid_user_ext", "rolname", NULL, get_master_guest, NULL, check_exist, NULL},
+	{"tempdb_db_owner must exist in babelfish_authid_user_ext",
+	 "babelfish_authid_user_ext", "rolname", NULL, get_tempdb_db_owner, NULL, check_exist, NULL},
+	{"tempdb_dbo must exist in babelfish_authid_user_ext",
+	 "babelfish_authid_user_ext", "rolname", NULL, get_tempdb_dbo, NULL, check_exist, NULL},
+	{"tempdb_guest must exist in babelfish_authid_user_ext",
+	 "babelfish_authid_user_ext", "rolname", NULL, get_tempdb_guest, NULL, check_exist, NULL}
 };
 
 /* Must match rules, MUST comply with metadata_inconsistency_check() */
@@ -907,12 +910,21 @@ Rule must_match_rules_nsp[] =
 };
 
 /* babelfish_authid_login_ext */
-Rule must_match_rules_authid[] = 
+Rule must_match_rules_login[] = 
 {
 	{"<rolname> in babelfish_authid_login_ext must also exist in pg_authid",
-	 "pg_authid", "rolname", NULL, get_rolname, NULL, check_exist, NULL},
+	 "pg_authid", "rolname", NULL, get_login_rolname, NULL, check_exist, NULL},
 	{"<default_database_name> in babelfish_authid_login_ext must also exist in babelfish_sysdatabases",
 	 "babelfish_sysdatabases", "name", NULL, get_default_database_name, NULL, check_exist, NULL}
+};
+
+/* babelfish_authid_user_ext */
+Rule must_match_rules_user[] = 
+{
+	{"<rolname> in babelfish_authid_user_ext must also exist in pg_authid",
+	 "pg_authid", "rolname", NULL, get_user_rolname, NULL, check_exist, NULL},
+	{"<database_name> in babelfish_authid_user_ext must also exist in babelfish_sysdatabases",
+	 "babelfish_sysdatabases", "name", NULL, get_database_name, NULL, check_exist, NULL}
 };
 	
 /*****************************************
@@ -999,7 +1011,8 @@ metadata_inconsistency_check(Tuplestorestate *res_tupstore, TupleDesc res_tupdes
 	size_t num_must_have_rules = sizeof(must_have_rules) / sizeof(must_have_rules[0]);
 	size_t num_must_match_rules_sysdb =  sizeof(must_match_rules_sysdb) / sizeof(must_match_rules_sysdb[0]);
 	size_t num_must_match_rules_nsp = sizeof(must_match_rules_nsp) / sizeof(must_match_rules_nsp[0]);
-	size_t num_must_match_rules_authid = sizeof(must_match_rules_authid) / sizeof(must_match_rules_authid[0]);
+	size_t num_must_match_rules_login = sizeof(must_match_rules_login) / sizeof(must_match_rules_login[0]);
+	size_t num_must_match_rules_user = sizeof(must_match_rules_user) / sizeof(must_match_rules_user[0]);
 
 	/* Initialize the catalog_data array to fetch catalog info */
 	init_catalog_data();
@@ -1020,8 +1033,11 @@ metadata_inconsistency_check(Tuplestorestate *res_tupstore, TupleDesc res_tupdes
 		!(check_must_match_rules(must_match_rules_nsp, num_must_match_rules_nsp, 
 								 namespace_ext_oid, res_tupstore, res_tupdesc)) 
 		||
-		!(check_must_match_rules(must_match_rules_authid, num_must_match_rules_authid,
+		!(check_must_match_rules(must_match_rules_login, num_must_match_rules_login,
 								 bbf_authid_login_ext_oid, res_tupstore, res_tupdesc))
+		||
+		!(check_must_match_rules(must_match_rules_user, num_must_match_rules_user,
+								 bbf_authid_user_ext_oid, res_tupstore, res_tupdesc))
 	)
 		return;
 }
@@ -1236,7 +1252,7 @@ get_nspname(HeapTuple tuple, TupleDesc dsc)
 }
 
 static Datum
-get_rolname(HeapTuple tuple, TupleDesc dsc)
+get_login_rolname(HeapTuple tuple, TupleDesc dsc)
 {
 	Form_authid_login_ext authid = ((Form_authid_login_ext) GETSTRUCT(tuple));
 	return NameGetDatum(&(authid->rolname));
@@ -1247,6 +1263,21 @@ get_default_database_name(HeapTuple tuple, TupleDesc dsc)
 {
 	Form_authid_login_ext authid = ((Form_authid_login_ext) GETSTRUCT(tuple));
 	return PointerGetDatum(&(authid->default_database_name));
+}
+
+static Datum
+get_user_rolname(HeapTuple tuple, TupleDesc dsc)
+{
+	Form_authid_user_ext authid = ((Form_authid_user_ext) GETSTRUCT(tuple));
+	return NameGetDatum(&(authid->rolname));
+}
+
+static Datum
+get_database_name(HeapTuple tuple, TupleDesc dsc)
+{
+	bool isNull;
+	Datum dbname = heap_getattr(tuple, Anum_bbf_authid_user_ext_database_name, dsc, &isNull);
+	return dbname;
 }
 
 /*****************************************
@@ -1373,6 +1404,12 @@ init_catalog_data(void)
 			catalog_data[i].tbl_oid = bbf_authid_login_ext_oid;
 			catalog_data[i].idx_oid = bbf_authid_login_ext_idx_oid;
 			catalog_data[i].atttype = get_atttype(bbf_authid_login_ext_oid, Anum_bbf_authid_login_ext_rolname);
+		}
+		else if (strcmp(catalog_data[i].tblname, "babelfish_authid_user_ext") == 0)
+		{
+			catalog_data[i].tbl_oid = bbf_authid_user_ext_oid;
+			catalog_data[i].idx_oid = bbf_authid_user_ext_idx_oid;
+			catalog_data[i].atttype = get_atttype(bbf_authid_user_ext_oid, Anum_bbf_authid_user_ext_rolname);
 		}
 		else if (strcmp(catalog_data[i].tblname, "pg_namespace") == 0)
 		{
