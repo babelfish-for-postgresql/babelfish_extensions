@@ -7,10 +7,12 @@
 #include "catalog/namespace.h"
 #include "catalog/pg_attrdef_d.h"
 #include "catalog/pg_proc.h"
+#include "commands/copy.h"
 #include "commands/tablecmds.h"
 #include "funcapi.h"
 #include "nodes/makefuncs.h"
 #include "nodes/nodeFuncs.h"
+#include "optimizer/optimizer.h"
 #include "parser/parse_clause.h"
 #include "parser/parse_coerce.h"
 #include "parser/parse_expr.h"
@@ -21,6 +23,8 @@
 #include "parser/parser.h"
 #include "parser/scanner.h"
 #include "parser/scansup.h"
+#include "replication/logical.h"
+#include "rewrite/rewriteHandler.h"
 #include "utils/builtins.h"
 #include "utils/fmgroids.h"
 #include "utils/rel.h"
@@ -31,6 +35,8 @@
 #include "hooks.h"
 #include "catalog.h"
 #include "rolecmds.h"
+
+extern bool is_tsql_rowversion_or_timestamp_datatype(Oid oid);
 
 /*****************************************
  * 			Catalog Hooks
@@ -62,6 +68,11 @@ static int find_attr_by_name_from_column_def_list(const char *attributeName, Lis
  *****************************************/
 static void pltsql_report_proc_not_found_error(List *names, List *argnames, int nargs, ParseState *pstate, int location, bool proc_call);
 
+/*****************************************
+ * 			Replication Hooks
+ *****************************************/
+static void logicalrep_modify_slot(Relation rel, EState *estate, TupleTableSlot *slot);
+
 /* Save hook values in case of unload */
 static core_yylex_hook_type prev_core_yylex_hook = NULL;
 static pre_transform_returning_hook_type prev_pre_transform_returning_hook = NULL;
@@ -72,6 +83,8 @@ static resolve_target_list_unknowns_hook_type prev_resolve_target_list_unknowns_
 static find_attr_by_name_from_column_def_list_hook_type prev_find_attr_by_name_from_column_def_list_hook = NULL;
 static find_attr_by_name_from_relation_hook_type prev_find_attr_by_name_from_relation_hook = NULL;
 static report_proc_not_found_error_hook_type prev_report_proc_not_found_error_hook = NULL;
+static logicalrep_modify_slot_hook_type prev_logicalrep_modify_slot_hook = NULL;
+static is_tsql_rowversion_or_timestamp_datatype_hook_type prev_is_tsql_rowversion_or_timestamp_datatype_hook = NULL;
 
 /*****************************************
  * 			Install / Uninstall
@@ -116,6 +129,12 @@ InstallExtendedHooks(void)
 
 	prev_report_proc_not_found_error_hook = report_proc_not_found_error_hook;
 	report_proc_not_found_error_hook = pltsql_report_proc_not_found_error;
+
+	prev_logicalrep_modify_slot_hook = logicalrep_modify_slot_hook;
+	logicalrep_modify_slot_hook = logicalrep_modify_slot;
+
+	prev_is_tsql_rowversion_or_timestamp_datatype_hook = is_tsql_rowversion_or_timestamp_datatype_hook;
+	is_tsql_rowversion_or_timestamp_datatype_hook = is_tsql_rowversion_or_timestamp_datatype;
 }
 
 void
@@ -137,6 +156,8 @@ UninstallExtendedHooks(void)
 	find_attr_by_name_from_column_def_list_hook = prev_find_attr_by_name_from_column_def_list_hook;
 	find_attr_by_name_from_relation_hook = prev_find_attr_by_name_from_relation_hook;
 	report_proc_not_found_error_hook = prev_report_proc_not_found_error_hook;
+	logicalrep_modify_slot_hook = prev_logicalrep_modify_slot_hook;
+	is_tsql_rowversion_or_timestamp_datatype_hook = prev_is_tsql_rowversion_or_timestamp_datatype_hook;
 }
 
 /*****************************************
@@ -1039,5 +1060,52 @@ pltsql_report_proc_not_found_error(List *names, List *given_argnames, int nargs,
 			}	
 		}
 		ReleaseSysCache(tup);
+	}
+}
+
+/*
+ * Perform necessary modification on a slot which is going to be inserted/updated
+ * in the target relation by logical replication worker.
+ */
+static void
+logicalrep_modify_slot(Relation rel, EState *estate, TupleTableSlot *slot)
+{
+	TupleDesc	desc = RelationGetDescr(rel);
+	int			attnum;
+	ExprContext *econtext;
+
+	econtext = GetPerTupleExprContext(estate);
+
+	for (attnum = 0; attnum < desc->natts; attnum++)
+	{
+		Form_pg_attribute attr = TupleDescAttr(desc, attnum);
+
+		if (attr->attisdropped || attr->attgenerated)
+			continue;
+
+		/*
+		 * If it is rowversion/timestamp column, then re-evaluate the column default
+		 * and replace the slot with this new value.
+		 */
+		if (is_tsql_rowversion_or_timestamp_datatype(attr->atttypid))
+		{
+			Expr *defexpr;
+			ExprState *def;
+
+			defexpr = (Expr *) build_column_default(rel, attnum + 1);
+
+			if (defexpr != NULL)
+			{
+				/* Run the expression through planner */
+				defexpr = expression_planner(defexpr);
+				def = ExecInitExpr(defexpr, NULL);
+				slot->tts_values[attnum] = ExecEvalExpr(def, econtext, &slot->tts_isnull[attnum]);
+				/*
+				* No need to check for other columns since we can only
+				* have one rowversion/timestamp column in a table.
+				*/
+				break;
+			}
+		}
 	}
 }
