@@ -198,7 +198,7 @@ select JSON_VALUE(vc, '$.type'), JSON_VALUE(nvc, '$.type'), JSON_VALUE(t, '$.typ
 go
 ~~START~~
 nvarchar#!#nvarchar#!#nvarchar
-"Basic2"#!#"Basic2"#!#"Basic2"
+Basic1#!#Basic1#!#Basic1
 ~~END~~
 
 select JSON_VALUE(vc, '$.nokey'), JSON_VALUE(nvc, '$.nokey'), JSON_VALUE(t, '$.nokey') from json_value_query_table;
@@ -212,14 +212,14 @@ select JSON_VALUE(vc, '$.ext'), JSON_VALUE(nvc, '$.ext'), JSON_VALUE(t, '$.ext')
 go
 ~~START~~
 nvarchar#!#nvarchar#!#nvarchar
-"yes"#!#"yes"#!#"yes"
+yes#!#yes#!#yes
 ~~END~~
 
 select JSON_VALUE(vc, '$.info.address.town'), JSON_VALUE(nvc, '$.info.address.town'), JSON_VALUE(t, '$.info.address.town') from json_value_query_table
 go
 ~~START~~
 nvarchar#!#nvarchar#!#nvarchar
-"Bristol"#!#"Bristol"#!#"Bristol"
+Bristol#!#Bristol#!#Bristol
 ~~END~~
 
 select JSON_VALUE(vc, '$.info."address"'), JSON_VALUE(nvc, '$.info."address"'), JSON_VALUE(t, '$.info."address"') from json_value_query_table
@@ -247,7 +247,7 @@ select JSON_VALUE(vc, 'strict $.info.tags[0]'), JSON_VALUE(nvc, 'strict $.info.t
 go
 ~~START~~
 nvarchar#!#nvarchar#!#nvarchar
-"Sport"#!#"Sport"#!#"Sport"
+Sport#!#Sport#!#Sport
 ~~END~~
 
 select JSON_VALUE(vc, '$.info.none'), JSON_VALUE(nvc, '$.info.none'), JSON_VALUE(t, '$.info.none') from json_value_query_table
@@ -278,7 +278,7 @@ select JSON_VALUE(vc, 'strict $.info.address.town'), JSON_VALUE(nvc, 'strict $.i
 go
 ~~START~~
 nvarchar#!#nvarchar#!#nvarchar
-"Bristol"#!#"Bristol"#!#"Bristol"
+Bristol#!#Bristol#!#Bristol
 ~~END~~
 
 select JSON_VALUE(vc, 'strict $.info."address"'), JSON_VALUE(nvc, 'strict $.info."address"'), JSON_VALUE(t, 'strict $.info."address"') from json_value_query_table
@@ -309,7 +309,7 @@ select JSON_VALUE(vc, 'strict $.info.tags[0]'), JSON_VALUE(nvc, 'strict $.info.t
 go
 ~~START~~
 nvarchar#!#nvarchar#!#nvarchar
-"Sport"#!#"Sport"#!#"Sport"
+Sport#!#Sport#!#Sport
 ~~END~~
 
 select JSON_VALUE(vc, 'strict $.info.none'), JSON_VALUE(nvc, 'strict $.info.none'), JSON_VALUE(t, 'strict $.info.none') from json_value_query_table
