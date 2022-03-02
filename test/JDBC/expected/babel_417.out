@@ -1,0 +1,166 @@
+-- Test cast from SQL_Variant returns correct base type
+-- datetime2
+select SQL_VARIANT_PROPERTY(cast(cast('2020-10-20 09:00:00' as datetime2) as sql_variant), 'BaseType');
+go
+~~START~~
+sql_variant
+datetime2
+~~END~~
+
+select cast(cast(cast('2020-10-20 09:00:00' as datetime2) as sql_variant) as datetime2);
+go
+~~START~~
+datetime2
+2020-10-20 09:00:00.000000
+~~END~~
+
+-- datetime
+select SQL_VARIANT_PROPERTY(cast(cast('2020-10-20 09:00:00' as datetime) as sql_variant), 'BaseType');
+go
+~~START~~
+sql_variant
+datetime
+~~END~~
+
+select cast(cast(cast('2020-10-20 09:00:00' as datetime) as sql_variant) as datetime);
+go
+~~START~~
+datetime
+2020-10-20 09:00:00.0
+~~END~~
+
+-- smalldatetime
+select SQL_VARIANT_PROPERTY(cast(cast('2020-10-20 09:00:00' as smalldatetime) as sql_variant), 'BaseType');
+go
+~~START~~
+sql_variant
+smalldatetime
+~~END~~
+
+select cast(cast(cast('2020-10-20 09:00:00' as smalldatetime) as sql_variant) as smalldatetime);
+go
+~~START~~
+smalldatetime
+2020-10-20 09:00:00.0
+~~END~~
+
+-- money
+select SQL_VARIANT_PROPERTY(cast(cast('$123.123' as money) as sql_variant), 'BaseType');
+go
+~~START~~
+sql_variant
+money
+~~END~~
+
+select cast(cast(cast('$123.123' as money) as sql_variant) as money);
+go
+~~START~~
+money
+123.1230
+~~END~~
+
+-- smallmoney
+select SQL_VARIANT_PROPERTY(cast(cast('$123.123' as smallmoney) as sql_variant), 'BaseType');
+go
+~~START~~
+sql_variant
+smallmoney
+~~END~~
+
+select cast(cast(cast('$123.123' as smallmoney) as sql_variant) as smallmoney);
+go
+~~START~~
+smallmoney
+123.1230
+~~END~~
+
+-- smallint
+select SQL_VARIANT_PROPERTY(cast(cast('256' as smallint) as sql_variant), 'BaseType');
+go
+~~START~~
+sql_variant
+smallint
+~~END~~
+
+select cast(cast(cast('256' as smallint) as sql_variant) as smallint);
+go
+~~START~~
+smallint
+256
+~~END~~
+
+-- tinyint
+select SQL_VARIANT_PROPERTY(cast(cast('255' as tinyint) as sql_variant), 'BaseType');
+go
+~~START~~
+sql_variant
+tinyint
+~~END~~
+
+select cast(cast(cast('255' as tinyint) as sql_variant) as tinyint);
+go
+~~START~~
+tinyint
+255
+~~END~~
+
+-- nvarchar
+select SQL_VARIANT_PROPERTY(cast(cast('£' as nvarchar) as sql_variant), 'BaseType');
+go
+~~START~~
+sql_variant
+nvarchar
+~~END~~
+
+select cast(cast(cast('£' as nvarchar(1)) as sql_variant) as nvarchar(1));
+go
+~~START~~
+nvarchar
+£
+~~END~~
+
+-- varchar
+select SQL_VARIANT_PROPERTY(cast(cast('£' as varchar) as sql_variant), 'BaseType');
+go
+~~START~~
+sql_variant
+varchar
+~~END~~
+
+select cast(cast(cast('£' as varchar(1)) as sql_variant) as varchar(1));
+go
+~~START~~
+varchar
+£
+~~END~~
+
+-- nchar
+select SQL_VARIANT_PROPERTY(cast(cast('£' as nchar(1)) as sql_variant), 'BaseType');
+go
+~~START~~
+sql_variant
+nchar
+~~END~~
+
+select cast(cast(cast('£' as nchar(1)) as sql_variant) as nchar(1));
+go
+~~START~~
+nchar
+£
+~~END~~
+
+-- char
+select SQL_VARIANT_PROPERTY(cast(cast('£' as char(1)) as sql_variant), 'BaseType');
+go
+~~START~~
+sql_variant
+char
+~~END~~
+
+select cast(cast(cast('£' as char(1)) as sql_variant) as char(1));
+go
+~~START~~
+char
+£
+~~END~~
+
