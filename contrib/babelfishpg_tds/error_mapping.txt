@@ -172,3 +172,4 @@ XX000 ERRCODE_INTERNAL_ERROR	"The table-valued parameter \"%s\" must be declared
 23514 ERRCODE_CHECK_VIOLATION	"value for domain %s violates check constraint \"%s\""	SQL_ERROR_220	16
 42P01 ERRCODE_UNDEFINED_TABLE 	"view \"%s\" does not exist"		SQL_ERROR_3701	16
 42P01 ERRCODE_UNDEFINED_TABLE	"table \"%s\" does not exist"		SQL_ERROR_3701	16
+42P13 ERRCODE_INVALID_FUNCTION_DEFINITION   "PL/tsql functions cannot return type %s"   SQL_ERROR_2733 16

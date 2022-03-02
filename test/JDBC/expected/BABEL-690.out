@@ -1,0 +1,68 @@
+CREATE FUNCTION func50() Returns varchar As begin RETURN ('ababababababababababababababaabbababababa'); END
+GO
+SELECT func50()
+GO
+~~START~~
+varchar
+a
+~~END~~
+
+
+CREATE FUNCTION func51() Returns nvarchar As begin RETURN ('ababababababababababababababaabbababababa'); END
+GO
+SELECT func51()
+GO
+~~START~~
+nvarchar
+a
+~~END~~
+
+
+CREATE FUNCTION func52() Returns char As begin RETURN ('ababababababababababababababaabbababababa'); END
+GO
+SELECT func52()
+GO
+~~START~~
+char
+a
+~~END~~
+
+
+-- should return an error stating that 'The text data type is invalid for return values.'
+CREATE FUNCTION func53() Returns text As begin RETURN ('ababababababababababababababaabbababababa'); END
+GO
+~~ERROR (Code: 2733)~~
+
+~~ERROR (Message: PL/tsql functions cannot return type text)~~
+
+
+CREATE FUNCTION func54() Returns nchar As begin RETURN ('ababababababababababababababaabbababababa'); END
+GO
+SELECT func54()
+GO
+~~START~~
+nchar
+a
+~~END~~
+
+
+-- should return an error stating that 'The ntext data type is invalid for return values.'
+CREATE FUNCTION func55() Returns ntext As begin RETURN ('ababababababababababababababaabbababababa'); END
+GO
+~~ERROR (Code: 2733)~~
+
+~~ERROR (Message: PL/tsql functions cannot return type ntext)~~
+
+
+DROP FUNCTION func50
+go
+DROP FUNCTION func51
+go
+DROP FUNCTION func52
+go
+DROP FUNCTION IF EXISTS func53
+go
+DROP FUNCTION func54
+go
+DROP FUNCTION IF EXISTS func55
+go
