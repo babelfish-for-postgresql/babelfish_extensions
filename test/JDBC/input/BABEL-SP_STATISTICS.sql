@@ -22,6 +22,9 @@ CREATE TABLE t4(
 create index i4 on t4(c2)
 go
 
+create table t5(a int)
+go
+
 -- syntax error: @table_name is required
 exec sp_statistics
 go
@@ -39,6 +42,9 @@ exec sp_statistics @table_name = 't4'
 go
 
 exec sp_statistics @table_name = 't4', @is_unique = 'Y'
+go
+
+exec [sys].sp_statistics @table_name = 't5'
 go
 
 -- unnamed invocation
@@ -59,11 +65,17 @@ drop index i2 on t2
 go
 drop index i3 on t3
 go
+drop index i4 on t4
+go
 drop table t1
 go
 drop table t2
 go
 drop table t3
+go
+drop table t4
+go
+drop table t5
 go
 use master
 go

@@ -10,6 +10,9 @@ go
 create index i2 on t2(a,b)
 go
 
+create table t3(a int)
+go
+
 -- syntax error: @table_name is required
 exec [sys].sp_statistics_100
 go
@@ -58,6 +61,14 @@ master#!#dbo#!#t1#!#<NULL>#!#<NULL>#!#<NULL>#!#0#!#<NULL>#!#<NULL>#!#<NULL>#!#0#
 ~~END~~
 
 
+exec [sys].sp_statistics_100 @table_name = 't3'
+go
+~~START~~
+varchar#!#varchar#!#varchar#!#smallint#!#varchar#!#varchar#!#smallint#!#smallint#!#varchar#!#varchar#!#int#!#int#!#varchar
+master#!#dbo#!#t3#!#<NULL>#!#<NULL>#!#<NULL>#!#0#!#<NULL>#!#<NULL>#!#<NULL>#!#0#!#0#!#<NULL>
+~~END~~
+
+
 create database db1
 go
 
@@ -92,6 +103,9 @@ drop table t1
 go
 
 drop table t2
+go
+
+drop table t3
 go
 
 drop database db1
