@@ -2500,6 +2500,8 @@ static void bbf_ProcessUtility(PlannedStmt *pstmt,
 					PG_END_TRY();
 
 					SetCurrentRoleId(prev_current_user, false);
+					set_session_properties(db_name);
+
 					return;
 				}
 			}
@@ -2635,8 +2637,12 @@ static void bbf_ProcessUtility(PlannedStmt *pstmt,
             if (sql_dialect == SQL_DIALECT_TSQL
 				&& ownership_structure_enabled())
             {
-				CreateSchemaStmt *create_schema = (CreateSchemaStmt *) parsetree;
-				const char       *orig_schema = NULL;
+				CreateSchemaStmt	*create_schema = (CreateSchemaStmt *) parsetree;
+				const char			*orig_schema = NULL;
+				const char			*grant_query = "GRANT USAGE ON SCHEMA dummy TO public";
+				List				*res;
+				GrantStmt			*stmt;
+				PlannedStmt			*wrapper;
 
 				if (strcmp(queryString, "(CREATE LOGICAL DATABASE )") == 0
 							&& context == PROCESS_UTILITY_SUBCOMMAND )
@@ -2648,8 +2654,38 @@ static void bbf_ProcessUtility(PlannedStmt *pstmt,
 				else
 					standard_ProcessUtility(pstmt, queryString, context, params,
 							queryEnv, dest, qc);
-				
+
 				add_ns_ext_info(create_schema, queryString, orig_schema);
+
+				res = raw_parser(grant_query);
+
+				if (list_length(res) != 1)
+					ereport(ERROR,
+							(errcode(ERRCODE_SYNTAX_ERROR),
+							 errmsg("Expected 1 statement, but got %d statements after parsing",
+									list_length(res))));
+
+				stmt = (GrantStmt *) parsetree_nth_stmt(res, 0);
+				stmt->objects = list_truncate(stmt->objects, 0);
+				stmt->objects = lappend(stmt->objects, makeString(pstrdup(create_schema->schemaname)));
+
+				wrapper = makeNode(PlannedStmt);
+				wrapper->commandType = CMD_UTILITY;
+				wrapper->canSetTag = false;
+				wrapper->utilityStmt = (Node *) stmt;
+				wrapper->stmt_location = pstmt->stmt_location;
+				wrapper->stmt_len = pstmt->stmt_len;
+
+				ProcessUtility(wrapper,
+							   queryString,
+							   PROCESS_UTILITY_SUBCOMMAND,
+							   params,
+							   NULL,
+							   None_Receiver,
+							   NULL);
+
+				CommandCounterIncrement();
+
 				return;
 			}
 			else
@@ -2810,117 +2846,6 @@ static void bbf_ProcessUtility(PlannedStmt *pstmt,
 			}
 			break;
 		}
-		case T_GrantStmt:
-			{
-				GrantStmt	*grant = (GrantStmt *) parsetree;
-				ListCell   	*cell;
-				const char	*template1 = "GRANT USAGE ON SCHEMA dummy TO dummy2";
-				GrantStmt   *stmt;
-				PlannedStmt *wrapper;
-				List		*res;
-				char		*default_schema;
-
-				if (prev_ProcessUtility)
-					prev_ProcessUtility(pstmt, queryString, context, params,
-							queryEnv, dest, qc);
-				else
-					standard_ProcessUtility(pstmt, queryString, context, params,
-							queryEnv, dest, qc);
-
-				/* GRANT under TSQL implicitly grant schema USAGE permission */
-				if (sql_dialect != SQL_DIALECT_TSQL || !grant->is_grant)
-					return;
-
-				Assert(grant->targtype == ACL_TARGET_OBJECT);
-
-				/* prepare subcommand */
-				res = raw_parser(template1);
-
-				if (list_length(res) != 1)
-					ereport(ERROR,
-							(errcode(ERRCODE_SYNTAX_ERROR),
-							 errmsg("Expected 1 statement but get %d statements after parsing",
-									list_length(res))));
-
-				stmt = (GrantStmt *) parsetree_nth_stmt(res, 0);
-				stmt->objects = list_truncate(stmt->objects, 0);
-				stmt->grantees = grant->grantees;
-				stmt->grant_option = grant->grant_option;
-
-				wrapper = makeNode(PlannedStmt);
-				wrapper->commandType = CMD_UTILITY;
-				wrapper->canSetTag = false;
-				wrapper->utilityStmt = (Node *) stmt;
-				wrapper->stmt_location = pstmt->stmt_location;
-				wrapper->stmt_len = pstmt->stmt_len;
-
-				/* get default schema */
-				default_schema = get_namespace_name(linitial_oid(fetch_search_path(false)));
-
-				/* different objects use different structures */
-				switch(grant->objtype)
-				{
-					case OBJECT_TABLE:
-					case OBJECT_SEQUENCE:
-					{
-						foreach(cell, grant->objects)
-						{
-							RangeVar	*rv = (RangeVar *) lfirst(cell);
-							char	*schema = default_schema;	/* this is physical name */	
-							
-							if (rv->schemaname)
-								schema = rv->schemaname;
-
-							stmt->objects = lappend(stmt->objects, makeString(schema));
-						}
-						break;
-					}
-					case OBJECT_FUNCTION:
-					case OBJECT_PROCEDURE:
-					{
-						foreach(cell, grant->objects)
-						{
-							ObjectWithArgs *obj = (ObjectWithArgs *) lfirst(cell);
-							char	*schema = default_schema;	/* this is physical name */	
-
-							if (list_length(obj->objname) == 2)
-								schema = strVal((Node *)linitial(obj->objname));
-
-							stmt->objects = lappend(stmt->objects, makeString(schema));
-						}
-						break;
-					}
-					case OBJECT_TYPE:
-					{
-						foreach(cell, grant->objects)
-						{
-							List	*obj = (List *) lfirst(cell);
-							char	*schema = default_schema;	/* this is physical name */	
-
-							if (list_length(obj) == 2)
-								schema = strVal((Node *)linitial(obj));
-
-							stmt->objects = lappend(stmt->objects, makeString(schema));
-						}
-						break;
-					}
-					default:
-						return;		/* no need of additional subcommands */
-				}
-
-				ProcessUtility(wrapper,
-							   queryString,
-							   PROCESS_UTILITY_SUBCOMMAND,
-							   params,
-							   NULL,
-							   None_Receiver,
-							   NULL);
-
-				/* Need CCI between commands */
-				CommandCounterIncrement();
-
-				return;
-			}
 		case T_CreateStmt:
 			{
 				CreateStmt *create_stmt = (CreateStmt *) parsetree;

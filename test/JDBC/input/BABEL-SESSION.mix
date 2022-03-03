@@ -2,6 +2,9 @@
 CREATE LOGIN r1 WITH PASSWORD = 'abc';
 GO
 
+CREATE LOGIN johndoe WITH PASSWORD = 'abc';
+GO
+
 CREATE DATABASE db1;
 GO
 
@@ -20,6 +23,21 @@ GO
 GRANT SELECT ON tb1 TO r1;
 GO
 
+CREATE USER janedoe FOR LOGIN johndoe;
+GO
+
+CREATE SCHEMA janedoe_schema;
+GO
+
+CREATE TABLE janedoe_schema.t1 (a int);
+GO
+
+INSERT INTO janedoe_schema.t1 (a) VALUES (10);
+GO
+
+GRANT SELECT ON janedoe_schema.t1 TO janedoe;
+GO
+
 USE master;
 GO
 
@@ -33,7 +51,7 @@ GO
 SELECT user_name();
 GO
 
-SELECT current_schema();
+SELECT schema_name();
 GO
 
 SELECT * FROM tb1;
@@ -42,15 +60,31 @@ GO
 USE master;
 GO
 
+-- tsql user=johndoe password=abc
+USE db1;
+GO
+
+SELECT schema_name();
+GO
+
+ALTER USER janedoe WITH DEFAULT_SCHEMA = janedoe_schema;
+GO
+
+SELECT schema_name();
+GO
+
+SELECT * FROM t1;
+GO
+
+USE master;
+GO
+
 -- tsql
-SELECT db_name();
-GO
-
-SELECT user_name();
-GO
-
 DROP DATABASE db1;
 GO
 
 DROP LOGIN r1;
+GO
+
+DROP LOGIN johndoe;
 GO
