@@ -24,6 +24,22 @@ int
 ~~END~~
 
 
+SELECT HAS_DBACCESS('TestDb   ');
+GO
+~~START~~
+int
+1
+~~END~~
+
+
+SELECT HAS_DBACCESS('   TestDb');
+GO
+~~START~~
+int
+<NULL>
+~~END~~
+
+
 DROP DATABASE TestDb;
 GO
 SELECT HAS_DBACCESS('TestDb');
