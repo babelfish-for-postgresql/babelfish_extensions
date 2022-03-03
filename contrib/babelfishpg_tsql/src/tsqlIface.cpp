@@ -747,25 +747,10 @@ class tsqlSelectStatementMutator : public TSqlParserBaseListener
 	 * This mutator should be used for the case where tsqlBuilder::exitSelect_statement() cannot be called.
 	 */
 public:
-    tree::ParseTreeProperty<void *> *code;
-    const std::vector<std::string> &ruleNames;
-    TSqlParser::Tsql_fileContext *root;
-
-    int nodeID = 0;
-    tree::ParseTree *parser;
-    MyInputStream &stream;
-
 	PLtsql_expr_query_mutator *mutator;
 
 public:
-    tsqlSelectStatementMutator(tree::ParseTree *p, const std::vector<std::string> &rules, MyInputStream &s)
-		: code(new tree::ParseTreeProperty<void *>()),
-		  ruleNames(rules),
-		  root(nullptr),
-		  parser(p),
-		  stream(s)
-    {
-    }
+	tsqlSelectStatementMutator() = default;
 
 	void exitSelect_statement(TSqlParser::Select_statementContext *ctx) override
 	{
@@ -794,7 +779,7 @@ public:
 class tsqlBuilder : public tsqlCommonMutator
 {
 public:
-    tree::ParseTreeProperty<void *> *code;
+	std::unique_ptr<tree::ParseTreeProperty<void *>> code;
 	const std::vector<std::string> &ruleNames;
 	TSqlParser::Tsql_fileContext *root;
 
@@ -825,7 +810,7 @@ public:
 	std::unique_ptr<PLtsql_expr_query_mutator> statementMutator;
 	
     tsqlBuilder(tree::ParseTree *p, const std::vector<std::string> &rules, MyInputStream &s)
-		: code(new tree::ParseTreeProperty<void *>()),
+		: code(std::make_unique<tree::ParseTreeProperty<void *>>()),
 		  ruleNames(rules),
 		  root(nullptr),
 		  parser(p),
@@ -1521,20 +1506,10 @@ public:
 class tsqlMutator : public TSqlParserBaseListener
 {
 public:
-    tree::ParseTreeProperty<void *> *code;
-    const std::vector<std::string> &ruleNames;
-    TSqlParser::Tsql_fileContext *root;
-
-    int nodeID = 0;
-    tree::ParseTree *parser;
     MyInputStream &stream;
 
-    tsqlMutator(tree::ParseTree *p, const std::vector<std::string> &rules, MyInputStream &s)
-		: code(new tree::ParseTreeProperty<void *>()),
-		  ruleNames(rules),
-		  root(nullptr),
-		  parser(p),
-		  stream(s)
+    explicit tsqlMutator(MyInputStream &s)
+        : stream(s)
     {
     }
     
@@ -1957,8 +1932,7 @@ static void process_select_statement_standalone(
 	PLtsql_expr_query_mutator *mutator, tsqlBuilder &builder)
 {
 	Assert(mutator);
-	auto ssm = std::make_unique<tsqlSelectStatementMutator>(
-		builder.parser, builder.ruleNames, builder.stream);
+	auto ssm = std::make_unique<tsqlSelectStatementMutator>();
 	ssm->mutator = mutator;
 	antlr4::tree::ParseTreeWalker walker;
 	walker.walk(ssm.get(), standaloneCtx);
@@ -2059,7 +2033,7 @@ antlr_parser_cpp(const char *sourceText)
 			unsupportedFeatureHandler->visit(tree);
 		}
 
-		std::unique_ptr<tsqlMutator> mutator = std::make_unique<tsqlMutator>(tree, parser.getRuleNames(), sourceStream);
+		std::unique_ptr<tsqlMutator> mutator = std::make_unique<tsqlMutator>(sourceStream);
 		antlr4::tree::ParseTreeWalker firstPass;
 		firstPass.walk(mutator.get(), tree);
 
@@ -2071,7 +2045,7 @@ antlr_parser_cpp(const char *sourceText)
 			/* By tsql grammar, batch-level statement can exist in tsql_file only
 			 * and there should be exactly one batch_level_statement there
 			 */
-			auto ssm = std::make_unique<tsqlSelectStatementMutator>(tree, parser.getRuleNames(), sourceStream);
+			auto ssm = std::make_unique<tsqlSelectStatementMutator>();
 			handleBatchLevelStatement(tsql_file->batch_level_statement(), ssm.get());
 			result.success = true;
 			return result;
