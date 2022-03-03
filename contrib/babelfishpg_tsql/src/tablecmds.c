@@ -38,6 +38,7 @@
 #include "../src/session.h"
 
 const char* ATTOPTION_BBF_ORIGINAL_NAME = "bbf_original_name";
+const char* ATTOPTION_BBF_ORIGINAL_TABLE_NAME = "bbf_original_rel_name";
 
 typedef struct ComputedColumnContextData
 {
@@ -532,6 +533,11 @@ static bool checkAllowedTsqlAttoptions(Node *options)
 	if (strcmp(((DefElem *) linitial(castNode(List, options)))->defname, 
 				ATTOPTION_BBF_ORIGINAL_NAME) == 0)
 		return true;
+
+	if (strcmp(((DefElem *) linitial(castNode(List, options)))->defname,
+				ATTOPTION_BBF_ORIGINAL_TABLE_NAME) == 0)
+		return true;
+
 
 	return false;
 }

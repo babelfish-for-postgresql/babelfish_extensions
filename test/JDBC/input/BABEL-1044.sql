@@ -69,11 +69,11 @@ insert into table_name_t values (
 );
 GO
 -- note: use explicit cast here. since implicit cast is not added. there is the same issue in default PG truncation behavior
-select count(*) from pg_catalog.pg_class where relname in (SELECT cast (c1 as name) from table_name_t);
+select count(*) from pg_catalog.pg_class where relname in (SELECT cast (c1 as pg_catalog.name) from table_name_t);
 GO
-select count(*) from pg_catalog.pg_class where relname in (SELECT cast (c2 as name) from table_name_t);
+select count(*) from pg_catalog.pg_class where relname in (SELECT cast (c2 as pg_catalog.name) from table_name_t);
 GO
-select count(*) from pg_catalog.pg_class where relname in (SELECT cast (c3 as name) from table_name_t);
+select count(*) from pg_catalog.pg_class where relname in (SELECT cast (c3 as pg_catalog.name) from table_name_t);
 GO
 drop table table_name_t;
 GO

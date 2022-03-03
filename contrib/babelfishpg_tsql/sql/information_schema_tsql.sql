@@ -266,7 +266,6 @@ CREATE OR REPLACE VIEW information_schema_tsql.columns AS
 
 GRANT SELECT ON information_schema_tsql.columns TO PUBLIC;
 
-
 /*
  * DOMAINS view
  */
@@ -342,7 +341,10 @@ GRANT SELECT ON information_schema_tsql.domains TO PUBLIC;
 CREATE VIEW information_schema_tsql.tables AS
 	SELECT CAST(nc.dbname AS sys.nvarchar(128)) AS "TABLE_CATALOG",
 		   CAST(ext.orig_name AS sys.nvarchar(128)) AS "TABLE_SCHEMA",
-		   CAST(c.relname AS sys.sysname) AS "TABLE_NAME",
+		   CAST(
+			 CASE WHEN c.reloptions[1] LIKE 'bbf_original_rel_name%' THEN substring(c.reloptions[1], 23)
+                  ELSE c.relname END
+			 AS sys.name) AS "TABLE_NAME",
 
 		   CAST(
 			 CASE WHEN c.relkind IN ('r', 'p') THEN 'BASE TABLE'

@@ -123,5 +123,31 @@ drop index idx on table_10;
 go
 insert into table_10 values(1, 2, 2);
 go
+drop table table_1;
+go
+drop table table_2;
+go
+drop table table_3;
+go
+drop table table_4;
+go
+drop table table_with_long_index_name;
+go
+drop table second_table_with_long_index_name;
+go
+drop table table_with_long_index_name_1234567890_1234567890_1234567890_1234567890_1234567890;
+go
+drop table second_table_with_long_index_name_1234567890_1234567890_1234567890_1234567890_1234567890;
+go
+drop table aa_table_6;
+go
+drop table table_6;
+go
+drop table table_7;
+go
+drop table aa_table_7;
+go
+drop table table_8;
+go
 drop table table_10;
 go
