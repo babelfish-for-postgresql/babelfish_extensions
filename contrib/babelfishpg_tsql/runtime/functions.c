@@ -799,6 +799,11 @@ has_dbaccess(PG_FUNCTION_ARGS)
 	char *db_name = text_to_cstring(PG_GETARG_TEXT_P(0));
 	/* Ensure the database name input argument is lower-case, as all Babel table names are lower-case */
 	char *lowercase_db_name = lowerstr(db_name);
+	/* Also strip trailing whitespace to mimic SQL Server behaviour */
+	int i;
+	i = strlen(lowercase_db_name);
+	while (i > 0 && isspace((unsigned char) lowercase_db_name[i - 1]))
+		lowercase_db_name[--i] = '\0';
 	const char *user = NULL;
 	const char *login;
 
