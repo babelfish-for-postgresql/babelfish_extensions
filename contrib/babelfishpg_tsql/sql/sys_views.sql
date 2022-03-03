@@ -1175,7 +1175,7 @@ select
  from sys.procedures pr
 union all
 select
-    def.name::name
+    def.name::pg_catalog.name
   , def.object_id
   , def.principal_id
   , def.schema_id
@@ -1190,7 +1190,7 @@ select
   from sys.default_constraints def
 union all
 select
-    chk.name::name
+    chk.name::pg_catalog.name
   , chk.object_id
   , chk.principal_id
   , chk.schema_id
@@ -1223,7 +1223,7 @@ and p.relkind = 'S'
 and has_schema_privilege(s.schema_id, 'USAGE')
 union all
 select
-    ('TT_' || tt.name || '_' || tt.type_table_object_id)::name as name
+    ('TT_' || tt.name || '_' || tt.type_table_object_id)::pg_catalog.name as name
   , tt.type_table_object_id as object_id
   , tt.principal_id as principal_id
   , tt.schema_id as schema_id
@@ -1384,7 +1384,7 @@ and has_function_privilege(p.oid, 'EXECUTE')
 union all
 -- details of all default constraints
 select
-    ('DF_' || o.relname || '_' || d.oid)::name as name
+    ('DF_' || o.relname || '_' || d.oid)::pg_catalog.name as name
   , d.oid as object_id
   , null::int as principal_id
   , o.relnamespace as schema_id
@@ -1407,7 +1407,7 @@ and has_column_privilege(a.attrelid, a.attname, 'SELECT,INSERT,UPDATE,REFERENCES
 union all
 -- details of all check constraints
 select
-    c.conname::name
+    c.conname::pg_catalog.name
   , c.oid::integer as object_id
   , NULL::integer as principal_id 
   , c.connamespace::integer as schema_id
@@ -1447,7 +1447,7 @@ and has_schema_privilege(s.oid, 'USAGE')
 union all
 -- details of user defined table types
 select
-    ('TT_' || tt.name || '_' || tt.type_table_object_id)::name as name
+    ('TT_' || tt.name || '_' || tt.type_table_object_id)::pg_catalog.name as name
   , tt.type_table_object_id as object_id
   , tt.principal_id as principal_id
   , tt.schema_id as schema_id
