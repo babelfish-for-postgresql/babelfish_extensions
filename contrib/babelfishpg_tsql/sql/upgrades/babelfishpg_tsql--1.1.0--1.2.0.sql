@@ -1174,7 +1174,7 @@ Ext.default_schema_name,
 Ext.create_date,
 Ext.modify_date,
 Ext.owning_principal_id,
-CAST(CAST(Base.oid AS INT) AS SYS.VARBINARY(85)) AS SID,
+CAST(CAST(Base2.oid AS INT) AS SYS.VARBINARY(85)) AS SID,
 CAST(Ext.is_fixed_role AS SYS.BIT) AS is_fixed_role,
 Ext.authentication_type,
 Ext.authentication_type_desc,
@@ -1183,6 +1183,8 @@ Ext.default_language_lcid,
 CAST(Ext.allow_encrypted_value_modifications AS SYS.BIT) AS allow_encrypted_value_modifications
 FROM pg_catalog.pg_authid AS Base INNER JOIN sys.babelfish_authid_user_ext AS Ext
 ON Base.rolname = Ext.rolname
+LEFT OUTER JOIN pg_catalog.pg_roles Base2
+ON Ext.login_name = Base2.rolname
 WHERE Ext.database_name = DB_NAME();
 
 GRANT SELECT ON sys.database_principals TO PUBLIC;
