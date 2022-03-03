@@ -59,6 +59,7 @@ static Node *output_update_self_join_transformation(ParseState *pstate, UpdateSt
 static void handle_returning_qualifiers(CmdType command, List *returningList, ParseState *pstate);
 static void check_insert_row(List *icolumns, List *exprList, Oid relid);
 static void pltsql_post_transform_column_definition(ParseState *pstate, RangeVar* relation, ColumnDef *column, List **alist);
+static void pltsql_post_transform_table_definition(ParseState *pstate, RangeVar* relation, char *relname, List **alist);
 static void pre_transform_target_entry(ResTarget *res, ParseState *pstate, ParseExprKind exprKind);
 static bool tle_name_comparison(const char *tlename, const char *identifier);
 static void resolve_target_list_unknowns(ParseState *pstate, List *targetlist);
@@ -129,6 +130,8 @@ InstallExtendedHooks(void)
 
 	post_transform_column_definition_hook = pltsql_post_transform_column_definition;
 
+	post_transform_table_definition_hook = pltsql_post_transform_table_definition;
+
 	prev_pre_transform_target_entry_hook = pre_transform_target_entry_hook;
 	pre_transform_target_entry_hook = pre_transform_target_entry;
 
@@ -167,6 +170,7 @@ UninstallExtendedHooks(void)
 	pre_transform_returning_hook = prev_pre_transform_returning_hook;
 	post_transform_insert_row_hook = prev_post_transform_insert_row_hook;
 	post_transform_column_definition_hook = NULL;
+	post_transform_table_definition_hook = NULL;
 	pre_transform_target_entry_hook = prev_pre_transform_target_entry_hook;
 	tle_name_comparison_hook = prev_tle_name_comparison_hook;
 	resolve_target_list_unknowns_hook = prev_resolve_target_list_unknowns_hook;
@@ -613,6 +617,56 @@ pltsql_post_transform_column_definition(ParseState *pstate, RangeVar* relation, 
 	cmd->subtype = AT_SetOptions;
 	cmd->name = column->colname;
 	cmd->def = (Node *) list_make1(makeDefElem(pstrdup(ATTOPTION_BBF_ORIGINAL_NAME), (Node *) makeString(pstrdup(original_name)), column->location));
+	cmd->behavior = DROP_RESTRICT;
+	cmd->missing_ok = false;
+
+	stmt = makeNode(AlterTableStmt);
+	stmt->relation = relation;
+	stmt->cmds = NIL;
+	stmt->relkind = OBJECT_TABLE;
+	stmt->cmds = lappend(stmt->cmds, cmd);
+
+	(*alist) = lappend(*alist, stmt);
+}
+
+extern const char *ATTOPTION_BBF_ORIGINAL_TABLE_NAME;
+
+static void
+pltsql_post_transform_table_definition(ParseState *pstate, RangeVar* relation, char *relname, List **alist)
+{
+	/* add "ALTER TABLE SET (bbf_original_table_name=<original_name>)" to alist so that original_name will be stored in pg_class.reloptions */
+	AlterTableStmt *stmt;
+	AlterTableCmd *cmd;
+
+	/* To get original column name, utilize location of relation and query string. */
+	char *table_name_start, *original_name, *temp;
+
+	table_name_start = pstate->p_sourcetext + relation->location;
+
+	/* Could be the case that the fully qualified name is included, so just find the text after '.' in the identifier. */
+	temp = strpbrk(table_name_start, ". ");
+	while (temp && temp[0] != ' ')
+	{
+		temp += 1;
+		table_name_start = temp;
+		temp = strpbrk(table_name_start, ". ");
+	}
+
+	original_name = extract_identifier(table_name_start);
+	if (original_name == NULL)
+		ereport(ERROR,
+				(errcode(ERRCODE_INTERNAL_ERROR),
+				 errmsg("can't extract original table name")));
+
+	/* Only store if there's a difference, and if the difference is only in capitalization */
+	if (strncmp(relname, original_name, strlen(relname)) == 0 || strncasecmp(relname, original_name, strlen(relname)) != 0)
+	{
+		return;
+	}
+
+	cmd = makeNode(AlterTableCmd);
+	cmd->subtype = AT_SetRelOptions;
+	cmd->def = (Node *) list_make1(makeDefElem(pstrdup(ATTOPTION_BBF_ORIGINAL_TABLE_NAME), (Node *) makeString(pstrdup(original_name)), -1));
 	cmd->behavior = DROP_RESTRICT;
 	cmd->missing_ok = false;
 
