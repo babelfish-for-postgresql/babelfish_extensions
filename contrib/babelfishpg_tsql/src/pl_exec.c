@@ -4810,8 +4810,14 @@ exec_stmt_execsql(PLtsql_execstate *estate,
 		estate->tsql_trigger_flags &= ~TSQL_TRIGGER_STARTED;
 	}
 
-	if (columns_updated_list != NIL && pltsql_trigger_depth == 0){
-		pfree(columns_updated_list);
+	if (columns_updated_list != NIL && 0 == pltsql_trigger_depth){
+		ListCell* lc;
+		foreach(lc, columns_updated_list){
+			List* list = (List*)lfirst(lc);
+			if (list != NIL)
+				list_free_deep(list);
+		}
+		list_free(columns_updated_list);
 		columns_updated_list = NIL;
 	}
 
@@ -4970,29 +4976,32 @@ static void updateColumnUpdatedList(PLtsql_expr* expr, int i){
 		RelationClose(rel);
 		return;
 	}
-	foreach(lcj, targetList){
-		target_entry = (TargetEntry*)lfirst(lcj);
-		tupdesc = RelationGetDescr(rel);
-		oldContext = MemoryContextSwitchTo(TopMemoryContext);
-		length = list_length(columns_updated_list);
-		updateColumn = (UpdatedColumn *)palloc(sizeof(UpdatedColumn));
-		updateColumn->x_attnum = target_entry->resno;
-		updateColumn->trigger_depth = pltsql_trigger_depth;
-		updateColumn->total_columns = tupdesc->natts;
-		updateColumn->column_name = target_entry->resname;
-		if (length < pltsql_trigger_depth + 1){
-			curr_columns_list = NIL;
-			while (length < pltsql_trigger_depth){
-				columns_updated_list = lappend(columns_updated_list, NIL);
-				length++;
+	if (rel->trigdesc && rel->trigdesc->numtriggers > 0){
+		// we only need call this structure inside triggers
+		foreach(lcj, targetList){
+			target_entry = (TargetEntry*)lfirst(lcj);
+			tupdesc = RelationGetDescr(rel);
+			oldContext = MemoryContextSwitchTo(TopMemoryContext);
+			length = list_length(columns_updated_list);
+			updateColumn = (UpdatedColumn *)palloc(sizeof(UpdatedColumn));
+			updateColumn->x_attnum = target_entry->resno;
+			updateColumn->trigger_depth = pltsql_trigger_depth;
+			updateColumn->total_columns = tupdesc->natts;
+			updateColumn->column_name = target_entry->resname;
+			if (length < pltsql_trigger_depth + 1){
+				curr_columns_list = NIL;
+				while (length < pltsql_trigger_depth){
+					columns_updated_list = lappend(columns_updated_list, NIL);
+					length++;
+				}
+				curr_columns_list = list_make1(updateColumn);
+				columns_updated_list = lappend(columns_updated_list, curr_columns_list);
+			}else{
+				curr_columns_list = (List *)list_nth(columns_updated_list, pltsql_trigger_depth);
+				curr_columns_list = lappend(curr_columns_list, updateColumn);
 			}
-			curr_columns_list = list_make1(updateColumn);
-			columns_updated_list = lappend(columns_updated_list, curr_columns_list);
-		}else{
-			curr_columns_list = (List *)list_nth(columns_updated_list, pltsql_trigger_depth);
-			curr_columns_list = lappend(curr_columns_list, updateColumn);
+			MemoryContextSwitchTo(oldContext);
 		}
-		MemoryContextSwitchTo(oldContext);
 	}
 	RelationClose(rel);
 }
