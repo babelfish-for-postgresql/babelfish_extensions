@@ -5,6 +5,8 @@
 #include "common/hashfn.h"
 #include "miscadmin.h"
 #include "nodes/bitmapset.h"
+#include "pgstat.h"
+#include "storage/proc.h"
 #include "utils/elog.h"
 #include "utils/hsearch.h"
 #include "utils/palloc.h"	/* Needed for pstrdup() */
@@ -277,10 +279,21 @@ emit_tds_log(ErrorData *edata)
 		return;
 	}
 
-	get_tsql_error_details(edata, &tsql_error_code, &tsql_error_sev, &tsql_error_state, "TDS");
-	error_lineno = 1;
-	if (pltsql_plugin_handler_ptr && pltsql_plugin_handler_ptr->pltsql_current_lineno && *(pltsql_plugin_handler_ptr->pltsql_current_lineno) > 0)
-		error_lineno = *(pltsql_plugin_handler_ptr->pltsql_current_lineno);
+	if (MyProc != NULL)
+	{
+		error_lineno = 1;
+		get_tsql_error_details(edata, &tsql_error_code, &tsql_error_sev, &tsql_error_state, "TDS");
+		if (pltsql_plugin_handler_ptr && pltsql_plugin_handler_ptr->pltsql_current_lineno && *(pltsql_plugin_handler_ptr->pltsql_current_lineno) > 0)
+			error_lineno = *(pltsql_plugin_handler_ptr->pltsql_current_lineno);
+	}
+	else
+	{
+		/* We are not in position to load the error mapping hash table. */
+		error_lineno = 0;
+		tsql_error_code = ERRCODE_PLTSQL_ERROR_NOT_MAPPED;
+		tsql_error_sev = 16;
+		tsql_error_state = 1;
+	}
 
 	TdsSendError(tsql_error_code, tsql_error_state, tsql_error_sev, 
 					edata->message, error_lineno);
