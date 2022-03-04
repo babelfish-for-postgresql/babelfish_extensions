@@ -3454,6 +3454,7 @@ pltsql_call_handler(PG_FUNCTION_ARGS)
 	MemoryContext	savedPortalCxt;
 	bool support_tsql_trans = pltsql_support_tsql_transactions();
 	Oid prev_procid = InvalidOid;
+	int save_pltsql_trigger_depth = pltsql_trigger_depth;
 
 	create_queryEnv2(CacheMemoryContext, false);
 
@@ -3510,7 +3511,7 @@ pltsql_call_handler(PG_FUNCTION_ARGS)
 				pltsql_trigger_depth++;
 				retval = PointerGetDatum(pltsql_exec_trigger(func,
 														  (TriggerData *) fcinfo->context));
-				pltsql_trigger_depth--;
+				pltsql_trigger_depth = save_pltsql_trigger_depth;
 			}
 		}
 		else if (CALLED_AS_EVENT_TRIGGER(fcinfo))
@@ -3528,6 +3529,7 @@ pltsql_call_handler(PG_FUNCTION_ARGS)
 	{
 		set_procid(prev_procid);
 		/* Decrement use-count, restore cur_estate, and propagate error */
+		pltsql_trigger_depth = save_pltsql_trigger_depth;
 		func->use_count--;
 		func->cur_estate = save_cur_estate;
 		ENRDropTempTables(currentQueryEnv);
