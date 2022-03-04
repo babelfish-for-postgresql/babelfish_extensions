@@ -127,8 +127,15 @@ prepare_stmt_exec(PLtsql_execstate *estate, PLtsql_function *func, PLtsql_stmt_e
 	int first_arg_location;
 	const char *new_params = NULL;
 	PLtsql_expr *expr = stmt->expr;
+	bool is_stmt_scalar_func;
 
-	if (is_exec_stmt_on_scalar_func(expr->query, &first_arg_location, &new_params))
+
+	/* Do the query in local context to free memory at earliest */
+	MemoryContext oldcontext = MemoryContextSwitchTo(estate->eval_econtext->ecxt_per_tuple_memory);
+	is_stmt_scalar_func = is_exec_stmt_on_scalar_func(expr->query, &first_arg_location, &new_params);
+	MemoryContextSwitchTo(oldcontext);
+
+	if (is_stmt_scalar_func)
 	{
 		prepare_select_plan_for_scalar_func(estate, expr, first_arg_location, new_params);
 	}
@@ -355,6 +362,8 @@ prepare_select_plan_for_scalar_func(PLtsql_execstate *estate, PLtsql_expr *expr,
 	exec_prepare_plan(estate, expr, 0, true);
 
 	expr->query = saved_expr_query;
+
+	pfree(new_query.data);
 }
 /* ----------
  * Generate a prepared plan

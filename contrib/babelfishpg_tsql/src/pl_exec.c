@@ -7376,8 +7376,11 @@ exec_eval_simple_expr(PLtsql_execstate *estate,
 	 * Prepare the expression for execution, if it's not been done already in
 	 * the current transaction.  (This will be forced to happen if we called
 	 * exec_save_simple_expr above.)
+	 * We skip preparation for top level batch when it is not replanned. Top
+	 * level batch memory is not reset due to commit/rollback. There is still
+	 * leak when it is Top level batch + replan and needs fix.
 	 */
-	if (expr->expr_simple_lxid != curlxid)
+	if (expr->expr_simple_lxid != curlxid && (expr->expr_simple_state == NULL || estate->use_shared_simple_eval_state))
 	{
 		oldcontext = MemoryContextSwitchTo(estate->simple_eval_estate->es_query_cxt);
 		expr->expr_simple_state =
@@ -9039,9 +9042,11 @@ get_cast_hashentry(PLtsql_execstate *estate,
 	 * given transaction share the same simple_eval_estate.  (Well, regular
 	 * functions do; DO blocks have private simple_eval_estates, and private
 	 * cast hash tables to go with them.)
+	 * We skip it for top level batch to avoid memory leak. There are still
+	 * cases where memory can leak but we are fixing conservatively.
 	 */
 	curlxid = MyProc->lxid;
-	if (cast_entry->cast_lxid != curlxid || cast_entry->cast_in_use)
+	if ((cast_entry->cast_lxid != curlxid && (cast_entry->cast_exprstate == NULL || estate->use_shared_simple_eval_state)) || cast_entry->cast_in_use)
 	{
 		oldcontext = MemoryContextSwitchTo(estate->simple_eval_estate->es_query_cxt);
 		cast_entry->cast_exprstate = ExecInitExpr(cast_entry->cast_expr, NULL);
@@ -9381,6 +9386,30 @@ pltsql_estate_cleanup(void)
 }
 
 /*
+ * Clean Estate and expression context in case of
+ * transaction events like commit or rollback
+ *
+ */
+static void
+txn_clean_estate(bool commit)
+{
+	while (simple_econtext_stack != NULL)
+	{
+		SimpleEcontextStackEntry *next;
+		FreeExprContext(simple_econtext_stack->stack_econtext, commit);
+
+		next = simple_econtext_stack->next;
+		pfree(simple_econtext_stack);
+		simple_econtext_stack = next;
+	}
+
+	if (shared_simple_eval_estate)
+		FreeExecutorState(shared_simple_eval_estate);
+
+	shared_simple_eval_estate = NULL;
+}
+
+/*
  * pltsql_xact_cb --- post-transaction-commit-or-abort cleanup
  *
  * If a simple-expression EState was created in the current transaction,
@@ -9397,11 +9426,7 @@ pltsql_xact_cb(XactEvent event, void *arg)
 	 */
 	if (event == XACT_EVENT_COMMIT || event == XACT_EVENT_PREPARE)
 	{
-		simple_econtext_stack = NULL;
-
-		if (shared_simple_eval_estate)
-			FreeExecutorState(shared_simple_eval_estate);
-		shared_simple_eval_estate = NULL;
+		txn_clean_estate(true);
 	}
 	else if (event == XACT_EVENT_ABORT)
 	{

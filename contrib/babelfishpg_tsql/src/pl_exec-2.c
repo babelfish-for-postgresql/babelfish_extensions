@@ -868,6 +868,21 @@ exec_stmt_exec(PLtsql_execstate *estate, PLtsql_stmt_exec *stmt)
 		rc = SPI_execute_plan_with_paramlist(expr->plan, paramLI,
 											 estate->readonly_func, 0);
 
+		after_lxid = MyProc->lxid;
+
+		if (before_lxid != after_lxid ||
+			simple_econtext_stack == NULL ||
+			topEntry != simple_econtext_stack)
+		{
+			/*
+			 * If we are in a new transaction after the call, we need to build new
+			 * simple-expression infrastructure.
+			 */
+			if (estate->use_shared_simple_eval_state)
+				estate->simple_eval_estate = NULL;
+			pltsql_create_econtext(estate);
+		}
+
 		/*
 		 * Copy the procedure's return code into the specified variable 
 		 *
@@ -932,32 +947,25 @@ exec_stmt_exec(PLtsql_execstate *estate, PLtsql_stmt_exec *stmt)
 		 * could have been unset already, in case of a recursive call.
 		 */
 		if (expr->plan && !expr->plan->saved)
+		{
+			SPIPlanPtr  plan = expr->plan;
 			expr->plan = NULL;
+			SPI_freeplan(plan);
+		}
 		PG_RE_THROW();
 	}
 	PG_END_TRY();
 
 	if (expr->plan && !expr->plan->saved)
+	{
+		SPIPlanPtr  plan = expr->plan;
 		expr->plan = NULL;
+		SPI_freeplan(plan);
+	}
 
 	if (rc < 0)
 		elog(ERROR, "SPI_execute_plan_with_paramlist failed executing query \"%s\": %s",
 			 expr->query, SPI_result_code_string(rc));
-
-	after_lxid = MyProc->lxid;
-
-	if (before_lxid != after_lxid ||
-		simple_econtext_stack == NULL ||
-		topEntry != simple_econtext_stack)
-	{
-		/*
-		 * If we are in a new transaction after the call, we need to build new
-		 * simple-expression infrastructure.
-		 */
-		if (estate->use_shared_simple_eval_state)
-			estate->simple_eval_estate = NULL;
-		pltsql_create_econtext(estate);
-	}
 
 	/*
 	 * Check result rowcount; if there's one row, assign procedure's output
