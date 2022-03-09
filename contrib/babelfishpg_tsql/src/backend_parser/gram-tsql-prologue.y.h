@@ -32,6 +32,7 @@ typedef struct TSQL_ForClause
 } TSQL_ForClause;
 
 extern bool output_update_transformation;
+extern bool output_into_insert_transformation;
 extern char *update_delete_target_alias;
 extern PLtsql_execstate *get_current_tsql_estate(void);
 
