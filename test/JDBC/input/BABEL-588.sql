@@ -1124,3 +1124,82 @@ go
 drop table t1;
 go
 
+-- Test OUTPUT INTO with a table with NULL column --
+
+CREATE TABLE [dbo].[t1]
+(
+    [Id] [int] NOT NULL IDENTITY(1, 1),
+    [Name] [varchar] (100)  NOT NULL,
+    [Desc] [varchar] (32)  NULL,
+) 
+go
+
+DECLARE @t2 TABLE (Id INT, Name VARCHAR(50))
+
+INSERT INTO dbo.t1 (Name)
+OUTPUT Inserted.Id, Inserted.Name INTO @t2
+VALUES ('abc')
+
+SELECT * FROM @t2
+go
+
+SELECT * FROM dbo.t1
+go
+
+-- Cleanup --
+drop table t1
+go
+
+-- Test that a local variable at the beginning of OUTPUT INTO list works properly -- 
+CREATE TABLE t1 (
+      id                 integer       NOT NULL,
+      fname              varchar(128)  NOT NULL,
+      lname              varchar(128)      NULL,
+      age                integer       NOT NULL,
+      preferredname      AS (fname),
+      CONSTRAINT pk_t1 PRIMARY KEY (
+         id,
+         lname
+        )
+);
+
+CREATE TABLE #t2 (
+      operation          varchar(128),
+      gender             varchar(1),
+      id                 integer       NOT NULL,
+      fname              varchar(128)  NOT NULL,
+      lname              varchar(128)      NULL,
+      age                integer       NOT NULL,
+      preferredname      varchar(128)
+);
+
+
+INSERT INTO t1 VALUES (
+    1,
+    'john',
+    'doe',
+    28
+);
+
+DECLARE @str_operation VARCHAR(8);
+SET @str_operation    = 'DELETE';
+
+DECLARE @str_gender VARCHAR(1);
+SET @str_gender  = 'M';
+
+DELETE t1
+OUTPUT @str_operation, @str_gender, deleted.id, deleted.fname, deleted.lname, 
+        deleted.age, deleted.preferredname
+INTO #t2
+WHERE 1=1;
+
+SELECT * FROM t1;
+SELECT * FROM #t2;
+go
+
+-- Cleanup
+DROP TABLE t1;
+go
+
+DROP TABLE #t2;
+go
