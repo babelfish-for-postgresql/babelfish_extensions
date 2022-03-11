@@ -1658,6 +1658,10 @@ ReadParameters(TDSRequestSP request, uint64_t offset, StringInfo message, int *p
 				uint8_t scale = message->data[offset++];
 				temp->len = message->data[offset++];
 
+				/* PostgreSQL's timestamp is limited to scale 6 */
+				if (scale != 255 && scale > 6)
+					scale = 6;
+
 				if (temp->len == 0)
 					temp->isNull = true;
 
