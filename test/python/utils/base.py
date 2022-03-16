@@ -26,7 +26,10 @@ def add_files():
 
         for f in pth.rglob("*.sql"):
             files.append(f)
-        
+
+        for f in pth.rglob("*.spec"):
+            files.append(f)
+
         return files
     #search for testcase name recursively
     else:
@@ -36,6 +39,14 @@ def add_files():
                 lst.append(f)
         
         return lst
+
+def get_ignored_files():
+    cfg = read_config()
+    ignoredTestNames = cfg["ignoredTestName"]
+    if ";" in ignoredTestNames:
+        return ignoredTestNames.split(";")
+    else:
+        return [ignoredTestNames]
 
 #to handle exceptions for babel server execution and return corresponding error code
 def handle_babel_exception(e, logger):
@@ -55,3 +66,5 @@ def handle_babel_exception(e, logger):
     #default
     else:
         logger.warning("Babel Exception: " + str(e))
+
+ignored_files = get_ignored_files()

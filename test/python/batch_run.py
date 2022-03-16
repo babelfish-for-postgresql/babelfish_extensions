@@ -1,5 +1,8 @@
+from utils.config import config_dict as cfg
 from execute_query import  parse_prepared_statement, parse_stored_procedures, process_transaction_statement,process_statement_in_file_mode
 from  python_authentication import py_authentication
+if cfg['runIsolationTests'] == 'true':
+    from isolationtest.isolationTestHandler import isolationTestHandler
 import os
 
 
@@ -85,6 +88,9 @@ def batch_run(bbl_cnxn, file_handler, file, logger):
                 passed += 1
             else:
                 failed += 1
+
+    elif f_type == "spec":
+        flag = isolationTestHandler(file ,file_handler, logger)
 
     return (passed, failed)    
 

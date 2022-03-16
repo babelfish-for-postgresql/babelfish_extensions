@@ -1,0 +1,5 @@
+# Ignore everything in the following directories except .gitkeep
+/output/*/*
+/logs/*
+!/**/.gitkeep
+

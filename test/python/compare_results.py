@@ -93,6 +93,8 @@ def handle_exception_in_file(e, file_writer):
 def process_multiple_resultsets(bbl_rs, file_writer, result_processed, result_set_exist):
     #not possible initial value
     count = -10
+    if(result_set_exist is None):
+        result_set_exist = (bbl_rs.description is not None)
 
     while True:
         
