@@ -1,0 +1,27 @@
+
+starting permutation : { ins com upd }
+step ins: INSERT INTO bar VALUES (42);
+~~ROW COUNT: 1~~
+
+step com: COMMIT;
+step upd: UPDATE foo SET b = 'Hello World';
+~~ROW COUNT: 1~~
+
+
+starting permutation : { ins upd com }
+step ins: INSERT INTO bar VALUES (42);
+~~ROW COUNT: 1~~
+
+step upd: UPDATE foo SET b = 'Hello World';
+~~ROW COUNT: 1~~
+
+step com: COMMIT;
+
+starting permutation : { upd ins com }
+step upd: UPDATE foo SET b = 'Hello World';
+~~ROW COUNT: 1~~
+
+step ins: INSERT INTO bar VALUES (42);
+~~ROW COUNT: 1~~
+
+step com: COMMIT;
