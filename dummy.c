@@ -1,1 +1,1 @@
-/* Dummy change */
+/* Dummy change - fixed syntax */
