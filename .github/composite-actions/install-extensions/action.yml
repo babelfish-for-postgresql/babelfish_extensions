@@ -1,9 +1,4 @@
 name: 'Install Extensions'
-inputs:
-  TEST_USER:
-    required: true
-  TEST_DB:
-    required: true
 
 runs:
   using: "composite"
@@ -21,6 +16,6 @@ runs:
         sudo echo "host    all             all             $ipaddress/32            trust" >> pg_hba.conf
         ~/postgres/bin/pg_ctl -D ~/postgres/data/ -l logfile restart
         cd ~/work/babelfish_extensions/babelfish_extensions/
-        sudo ~/postgres/bin/psql -d postgres -U runner -v user="${{ inputs.TEST_USER }}" -v db="${{inputs.TEST_DB}}" -f .github/scripts/create_extension.sql
+        sudo ~/postgres/bin/psql -d postgres -U runner -v user="jdbc_user" -v db="jdbc_testdb" -f .github/scripts/create_extension.sql
         sqlcmd -S localhost -U ${{inputs.TEST_USER}} -P 12345678 -Q "SELECT @@version GO"
       shell: bash
