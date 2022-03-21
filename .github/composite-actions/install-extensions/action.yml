@@ -17,5 +17,5 @@ runs:
         ~/postgres/bin/pg_ctl -D ~/postgres/data/ -l logfile restart
         cd ~/work/babelfish_extensions/babelfish_extensions/
         sudo ~/postgres/bin/psql -d postgres -U runner -v user="jdbc_user" -v db="jdbc_testdb" -f .github/scripts/create_extension.sql
-        sqlcmd -S localhost -U ${{inputs.TEST_USER}} -P 12345678 -Q "SELECT @@version GO"
+        sqlcmd -S localhost -U "jdbc_user" -P 12345678 -Q "SELECT @@version GO"
       shell: bash
