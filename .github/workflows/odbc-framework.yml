@@ -8,6 +8,8 @@ jobs:
     steps:
       - uses: actions/checkout@v2
       - name: Clone, build, and run tests for Postgres engine
+        id: postgres
+        if: always()
         run: |
           cd ..
           git clone https://github.com/babelfish-for-postgresql/postgresql_modified_for_babelfish.git
@@ -18,21 +20,23 @@ jobs:
           make -j 4 2>error.txt
           make install
           cd contrib && make && sudo make install
-      - name: Copy ANTLR jar file
-        run: |
-          cd contrib/babelfishpg_tsql/antlr/thirdparty/antlr/
-          sudo cp antlr-4.9.3-complete.jar /usr/local/lib
       - name: Compile ANTLR
+        id: compile-antlr
+        if: always() && steps.postgres.outcome == 'success'
         run: |
+          ANTLR_VERSION=4.9.3
+        
+          cd contrib/babelfishpg_tsql/antlr/thirdparty/antlr/
+          sudo cp "antlr-$ANTLR_VERSION-complete.jar" /usr/local/lib
           cd ..
-          wget http://www.antlr.org/download/antlr4-cpp-runtime-4.9.3-source.zip
-          unzip -d antlr4 antlr4-cpp-runtime-4.9.3-source.zip 
+          wget "http://www.antlr.org/download/antlr4-cpp-runtime-$ANTLR_VERSION-source.zip"
+          unzip -d antlr4 "antlr4-cpp-runtime-$ANTLR_VERSION-source.zip"
           cd antlr4
-          mkdir build && cd build 
-          cmake .. -D ANTLR_JAR_LOCATION=/usr/local/lib/antlr-4.9.3-complete.jar -DCMAKE_INSTALL_PREFIX=/usr/local -DWITH_DEMO=True
+          mkdir build && cd build
+          cmake .. -D ANTLR_JAR_LOCATION="/usr/local/lib/antlr-$ANTLR_VERSION-complete.jar" -DCMAKE_INSTALL_PREFIX=/usr/local -DWITH_DEMO=True
           make
           sudo make install
-          cp /usr/local/lib/libantlr4-runtime.so.4.9.3 ~/postgres/lib/
+          cp "/usr/local/lib/libantlr4-runtime.so.$ANTLR_VERSION" ~/postgres/lib/
       - name: Set env variables and build extensions
         run: |
           export PG_CONFIG=~/postgres/bin/pg_config
