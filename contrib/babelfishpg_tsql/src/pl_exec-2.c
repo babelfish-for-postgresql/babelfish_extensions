@@ -2501,6 +2501,13 @@ int exec_stmt_insert_bulk(PLtsql_execstate *estate, PLtsql_stmt_insert_bulk *stm
 		bulk_load_table_name = pstrdup(stmt->table_name);
 	}
 
+	/* if columns to be inserted into are explicitly mentioned then update the table name with them */
+	if (stmt->column_refs)
+	{
+		char *temp = bulk_load_table_name;
+		bulk_load_table_name = psprintf("%s (%s)", temp, stmt->column_refs);
+		pfree(temp);
+	}
 	MemoryContextSwitchTo(oldContext);
 
 	if (!OidIsValid(rel_oid))
