@@ -915,6 +915,7 @@ typedef struct PLtsql_stmt_insert_bulk
     char  *table_name;
     char  *schema_name;
     char  *db_name;
+    char  *column_refs;
 } PLtsql_stmt_insert_bulk;
 
 /*

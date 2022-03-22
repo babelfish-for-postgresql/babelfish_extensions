@@ -678,8 +678,7 @@ SetColMetadataForFixedType(TdsColumnMetaData *col, uint8_t tdsType, uint8_t maxS
 	/*
 	 * If column is Not NULL constrained then we don't want to send
 	 * maxSize except for uniqueidentifier and xml.
-	 * TODO: We should send TDS_COL_METADATA_NOT_NULL_FLAGS
-	 * This needs to be done for identity contraints
+	 * This needs to be done for identity contraints as well.
 	 */
 	if (col->attNotNull && tdsType != TDS_TYPE_UNIQUEIDENTIFIER && tdsType != TDS_TYPE_XML)
 	{
@@ -693,6 +692,7 @@ SetColMetadataForFixedType(TdsColumnMetaData *col, uint8_t tdsType, uint8_t maxS
 	else
 	{
 		col->metaLen = sizeof(col->metaEntry.type1);
+
 		if (col->attgenerated)
 			col->metaEntry.type1.flags = TDS_COL_METADATA_COMPUTED_FLAGS;
 		else
