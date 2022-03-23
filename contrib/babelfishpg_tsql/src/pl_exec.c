@@ -4590,9 +4590,10 @@ exec_stmt_execsql(PLtsql_execstate *estate,
     /* Temporarily disable FMTONLY as it is causing issues with Import-Export.
      * Reenable if a use-case is found.
      */
-    bool        fmtonly_enabled = false;
+    bool        fmtonly_enabled = true;
 	CmdType 	cmd = CMD_UNKNOWN;
 	bool		enable_txn_in_triggers = !pltsql_disable_txn_in_triggers;
+    StringInfoData query;
 
 	/*
 	 * if ANTLR is enabled, PLtsql_stmt_push_result will be replaced with PLtsql_stmt_execsql
@@ -4608,7 +4609,21 @@ exec_stmt_execsql(PLtsql_execstate *estate,
 		return exec_stmt_insert_execute_select(estate, expr);
 
 	if (expr->plan == NULL)
+    {
+        /*
+         * If the set_fmtonly guc is set, we need to rewrite any statements as exec
+         * statements that invoke sp_describe_first_result_set. For now, only
+         * transform SELECT statements.
+         */
+        if (pltsql_fmtonly && is_select && !strcasestr(estate->func->fn_signature, "sp_describe_first_result_set") && fmtonly_enabled && strcasestr(stmt->sqlstmt->query, "SELECT *"))
+        {
+            initStringInfo(&query);
+            appendStringInfo(&query, "SELECT TOP 0");
+            appendStringInfoString(&query, stmt->sqlstmt->query + 6);
+            stmt->sqlstmt->query = pstrdup(query.data);
+        }
 		prepare_stmt_execsql(estate, estate->func, stmt, true);
+    }
 
 	/*
 	 * Set up ParamListInfo to pass to executor
@@ -4650,15 +4665,6 @@ exec_stmt_execsql(PLtsql_execstate *estate,
 		ReleaseCachedPlan(cp, true);
 	}
 
-    /*
-     * If the set_fmtonly guc is set, we need to rewrite any statements as exec
-     * statements that invoke sp_describe_first_result_set. For now, only
-     * transform SELECT statements.
-     */
-    if (pltsql_fmtonly && is_select && !strcasestr(estate->func->fn_signature, "sp_describe_first_result_set") && fmtonly_enabled)
-    {
-        return exec_fmtonly(estate, stmt);
-    }
 
 	/*
 	 * If we have INTO, then we only need one row back ... but if we have INTO
