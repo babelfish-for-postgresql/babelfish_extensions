@@ -3,7 +3,22 @@
 
 SELECT set_config('search_path', 'sys, '||current_setting('search_path'), false);
 
-CREATE DOMAIN sys.name as sys.sysname;
+CREATE DOMAIN sys._ci_sysname as sys.sysname;
+
+CREATE OR REPLACE PROCEDURE sys.sp_babelfish_grant_usage_to_all()
+AS $$
+DECLARE
+	schema_name text;
+BEGIN
+	FOR schema_name IN SELECT nspname FROM sys.babelfish_namespace_ext
+	LOOP
+		EXECUTE format('GRANT USAGE ON SCHEMA %I TO PUBLIC', schema_name);
+	END LOOP;
+END;
+$$ LANGUAGE plpgsql;
+
+CALL sys.sp_babelfish_grant_usage_to_all();
+DROP PROCEDURE sys.sp_babelfish_grant_usage_to_all;
 
 CREATE OR REPLACE PROCEDURE sys.sp_babelfish_grant_usage_to_all()
 AS $$
@@ -708,7 +723,7 @@ select tsql_type_name as name
   , cast(sys.tsql_type_precision_helper(tsql_type_name, t.typtypmod) as int) as precision
   , cast(sys.tsql_type_scale_helper(tsql_type_name, t.typtypmod, false) as int) as scale
   , CASE c.collname
-    WHEN 'default' THEN cast(current_setting('babelfishpg_tsql.server_collation_name') as pg_catalog.name)
+    WHEN 'default' THEN cast(current_setting('babelfishpg_tsql.server_collation_name') as name)
     ELSE  c.collname
     END as collation_name
   , case when typnotnull then 0 else 1 end as is_nullable
@@ -735,7 +750,7 @@ select cast(t.typname as text) as name
   , case when is_tbl_type then 0::smallint else cast(sys.tsql_type_precision_helper(tsql_base_type_name, t.typtypmod) as int) end as precision
   , case when is_tbl_type then 0::smallint else cast(sys.tsql_type_scale_helper(tsql_base_type_name, t.typtypmod, false) as int) end as scale
   , CASE c.collname
-    WHEN 'default' THEN cast(current_setting('babelfishpg_tsql.server_collation_name') as pg_catalog.name)
+    WHEN 'default' THEN cast(current_setting('babelfishpg_tsql.server_collation_name') as name)
     ELSE  c.collname 
     END as collation_name
   , case when is_tbl_type then 0
@@ -1044,7 +1059,7 @@ select
  from sys.procedures pr
 union all
 select
-    def.name::pg_catalog.name
+    def.name::name
   , def.object_id
   , def.principal_id
   , def.schema_id
@@ -1059,7 +1074,7 @@ select
   from sys.default_constraints def
 union all
 select
-    chk.name::pg_catalog.name
+    chk.name::name
   , chk.object_id
   , chk.principal_id
   , chk.schema_id
@@ -1092,7 +1107,7 @@ and p.relkind = 'S'
 and has_schema_privilege(s.schema_id, 'USAGE')
 union all
 select
-    ('TT_' || tt.name || '_' || tt.type_table_object_id)::pg_catalog.name as name
+    ('TT_' || tt.name || '_' || tt.type_table_object_id)::name as name
   , tt.type_table_object_id as object_id
   , tt.principal_id as principal_id
   , tt.schema_id as schema_id
@@ -1158,8 +1173,8 @@ GRANT SELECT ON sys.sql_modules TO PUBLIC;
 
 -- USER extension
 CREATE TABLE sys.babelfish_authid_user_ext (
-rolname pg_catalog.NAME NOT NULL,
-login_name pg_catalog.NAME NOT NULL,
+rolname NAME NOT NULL,
+login_name NAME NOT NULL,
 type CHAR(1) NOT NULL DEFAULT 'S',
 owning_principal_id INT,
 is_fixed_role INT NOT NULL DEFAULT 0,
@@ -1230,14 +1245,14 @@ $$;
 
 create or replace view sys.identity_columns AS
 select out_object_id::bigint as object_id
-  , out_name::pg_catalog.name as name
+  , out_name::name as name
   , out_column_id::smallint as column_id
   , out_system_type_id::oid as system_type_id
   , out_user_type_id::oid as user_type_id
   , out_max_length as max_length
   , out_precision::integer as precision
   , out_scale::integer as scale
-  , out_collation_name::pg_catalog.name as collation_name
+  , out_collation_name::name as collation_name
   , out_is_nullable::integer as is_nullable
   , out_is_ansi_padded::integer as is_ansi_padded
   , out_is_rowguidcol::integer as is_rowguidcol
@@ -1522,7 +1537,7 @@ and has_function_privilege(p.oid, 'EXECUTE')
 union all
 -- details of all default constraints
 select
-    ('DF_' || o.relname || '_' || d.oid)::pg_catalog.name as name
+    ('DF_' || o.relname || '_' || d.oid)::name as name
   , d.oid as object_id
   , null::int as principal_id
   , o.relnamespace as schema_id
@@ -1545,7 +1560,7 @@ and has_column_privilege(a.attrelid, a.attname, 'SELECT,INSERT,UPDATE,REFERENCES
 union all
 -- details of all check constraints
 select
-    c.conname::pg_catalog.name
+    c.conname::name
   , c.oid::integer as object_id
   , NULL::integer as principal_id 
   , c.connamespace::integer as schema_id
@@ -1585,7 +1600,7 @@ and has_schema_privilege(s.oid, 'USAGE')
 union all
 -- details of user defined table types
 select
-    ('TT_' || tt.name || '_' || tt.type_table_object_id)::pg_catalog.name as name
+    ('TT_' || tt.name || '_' || tt.type_table_object_id)::name as name
   , tt.type_table_object_id as object_id
   , tt.principal_id as principal_id
   , tt.schema_id as schema_id
@@ -2056,7 +2071,7 @@ CREATE VIEW information_schema_tsql.tables AS
 	   CAST(
 			CASE WHEN c.reloptions[1] LIKE 'bbf_original_rel_name%' THEN substring(c.reloptions[1], 23)
 			ELSE c.relname END
-            AS sys.name) AS "TABLE_NAME",
+            AS sys._ci_sysname) AS "TABLE_NAME",
 
        CAST(
        CASE WHEN c.relkind IN ('r', 'p') THEN 'BASE TABLE'
@@ -2354,7 +2369,7 @@ create or replace view sys.dm_exec_connections
 CREATE OR REPLACE VIEW sys.sp_tables_view AS
 SELECT
 t2.dbname AS TABLE_QUALIFIER,
-CAST(t3.name AS pg_catalog.name) AS TABLE_OWNER,
+CAST(t3.name AS name) AS TABLE_OWNER,
 t1.relname AS TABLE_NAME,
 
 CASE 
