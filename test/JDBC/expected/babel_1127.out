@@ -1,0 +1,21 @@
+-- expected error due to invalid syntax
+CREATE PROCEDURE p1 AS
+CREATE PROC p2
+AS
+SELECT * FROM t1
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: syntax error near 'PROC' at line 3 and character position 7)~~
+
+
+-- expected error due to invalid syntax
+CREATE PROCEDURE p3 AS
+CREATE PROC p4
+AS
+SELECT 1234
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: syntax error near 'PROC' at line 3 and character position 7)~~
+
