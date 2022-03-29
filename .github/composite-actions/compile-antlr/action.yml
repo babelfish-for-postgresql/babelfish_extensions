@@ -16,7 +16,7 @@ runs:
         cd antlr4
         mkdir build && cd build
         cmake .. -D ANTLR_JAR_LOCATION="/usr/local/lib/antlr-$ANTLR_VERSION-complete.jar" -DCMAKE_INSTALL_PREFIX=/usr/local -DWITH_DEMO=True
-        make
+        make -j 4
         sudo make install
         cp "/usr/local/lib/libantlr4-runtime.so.$ANTLR_VERSION" ~/postgres/lib/
       shell: bash
