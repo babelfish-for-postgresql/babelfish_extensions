@@ -67,7 +67,7 @@ jobs:
             fileGenerator_URL=localhost \
             fileGenerator_port=1433 \
             fileGenerator_databaseName=master \
-            fileGenerator_user=python_user \
+            fileGenerator_user=jdbc_user \
             fileGenerator_password=12345678 \
             inputFilesPath=./input/isolation \
             runIsolationTests=true \
