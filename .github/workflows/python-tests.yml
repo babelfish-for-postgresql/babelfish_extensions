@@ -1,13 +1,8 @@
-name: Babelfish Smoke Tests
-on:
-  push:
-    branches:
-  pull_request:
-    branches:
+name: Python Tests
+on: [push, pull_request]
 
 jobs:
-  isolation-tests:
-    name: Isolation-Tests
+  run-babelfish-python-tests:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
@@ -37,26 +32,26 @@ jobs:
         id: install-extensions
         if: always() && steps.build-extensions.outcome == 'success'
         uses: ./.github/composite-actions/install-extensions
-      
+
       - name: Install Python
+        id: install-python
+        if: always() && steps.install-extensions.outcome == 'success'
         uses: actions/setup-python@v2
         with:
           python-version: 3.7
       
-      - name: Configure Python environment
+      - name: Configure Python Environment
+        id: configure-python-environment
+        if: always() && steps.install-python.outcome == 'success'
         run: |
           cd ~
           curl https://packages.microsoft.com/config/ubuntu/20.04/prod.list | sudo tee /etc/apt/sources.list.d/mssql-release.list
           cd ~/work/babelfish_extensions/babelfish_extensions/test/python
           sudo ACCEPT_EULA=Y apt-get install -y msodbcsql17 python3-dev
-          pip3 install pyodbc pymssql pytest pytest-xdist antlr4-python3-runtime
+          pip3 install pyodbc pymssql pytest pytest-xdist
       
-      - name: Generate .spec file parser
-        run: |
-          cd ~/work/babelfish_extensions/babelfish_extensions/test/python/isolationtest/
-          java -Xmx500M -cp /usr/local/lib/antlr-4.9.3-complete.jar org.antlr.v4.Tool -Dlanguage=Python3 ./parser/*.g4 -visitor -no-listener
-
-      - name: Run Isolation tests
+      - name: Run Python Tests
+        if: always() && steps.configure-python-environment.outcome == 'success'
         run: | 
           cd test/python
           compareWithFile=true \
@@ -69,7 +64,4 @@ jobs:
             fileGenerator_databaseName=master \
             fileGenerator_user=jdbc_user \
             fileGenerator_password=12345678 \
-            inputFilesPath=./input/isolation \
-            runIsolationTests=true \
-            stepTimeLimit=30 \
             pytest -s --tb=long -q .
