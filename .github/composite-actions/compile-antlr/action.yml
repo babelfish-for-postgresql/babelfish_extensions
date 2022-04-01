@@ -1,0 +1,22 @@
+name: 'Compile ANTLR'
+
+runs:
+  using: "composite"
+  steps:  
+
+    - name: Compile ANTLR
+      run: |
+        ANTLR_VERSION=4.9.3
+        
+        cd contrib/babelfishpg_tsql/antlr/thirdparty/antlr/
+        sudo cp "antlr-$ANTLR_VERSION-complete.jar" /usr/local/lib
+        cd ..
+        wget "http://www.antlr.org/download/antlr4-cpp-runtime-$ANTLR_VERSION-source.zip"
+        unzip -d antlr4 "antlr4-cpp-runtime-$ANTLR_VERSION-source.zip"
+        cd antlr4
+        mkdir build && cd build
+        cmake .. -D ANTLR_JAR_LOCATION="/usr/local/lib/antlr-$ANTLR_VERSION-complete.jar" -DCMAKE_INSTALL_PREFIX=/usr/local -DWITH_DEMO=True
+        make -j 4
+        sudo make install
+        cp "/usr/local/lib/libantlr4-runtime.so.$ANTLR_VERSION" ~/postgres/lib/
+      shell: bash

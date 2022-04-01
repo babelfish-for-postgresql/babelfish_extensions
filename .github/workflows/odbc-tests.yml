@@ -1,0 +1,54 @@
+name: ODBC Tests
+on: [push, pull_request]
+
+jobs:
+  run-babelfish-odbc-tests:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+        id: checkout
+
+      - name: Install Dependencies
+        id: install-dependencies
+        if: always()
+        uses: ./.github/composite-actions/install-dependencies
+
+      - name: Build Modified Postgres
+        id: build-modified-postgres
+        if: always() && steps.install-dependencies.outcome == 'success'
+        uses: ./.github/composite-actions/build-modified-postgres
+      
+      - name: Compile ANTLR
+        id: compile-antlr
+        if: always() && steps.build-modified-postgres.outcome == 'success'
+        uses: ./.github/composite-actions/compile-antlr
+      
+      - name: Build Extensions
+        id: build-extensions
+        if: always() && steps.compile-antlr.outcome == 'success'
+        uses: ./.github/composite-actions/build-extensions
+      
+      - name: Install Extensions
+        id: install-extensions
+        if: always() && steps.build-extensions.outcome == 'success'
+        uses: ./.github/composite-actions/install-extensions
+
+      - name: Install ODBC Driver
+        id: install-odbc-driver
+        if: always() && steps.install-extensions.outcome == 'success'
+        run: |
+          cd ~
+          sudo apt-get install msodbcsql17
+      
+      - name: Run ODBC Tests
+        if: always() && steps.install-odbc-driver.outcome == 'success'
+        run: |
+          cd test/odbc
+          cmake -S . -B build
+          cmake --build build
+          BABEL_DB_SERVER=localhost \
+            BABEL_DB_PORT=1433 \
+            BABEL_DB_USER=jdbc_user \
+            BABEL_DB_PASSWORD=12345678 \
+            BABEL_DB_NAME=master \
+            ./build/main
