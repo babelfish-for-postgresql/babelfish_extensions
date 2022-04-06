@@ -26,7 +26,7 @@ go
 ~~START~~
 varchar#!#varchar#!#varchar#!#smallint#!#varchar#!#varchar#!#smallint#!#smallint#!#varchar#!#varchar#!#int#!#int#!#varchar
 master#!#dbo#!#t1#!#1#!#t1#!#i1#!#3#!#1#!#a#!#A#!#<NULL>#!#0#!#<NULL>
-master#!#dbo#!#t1#!#<NULL>#!#<NULL>#!#<NULL>#!#0#!#<NULL>#!#<NULL>#!#<NULL>#!#0#!#0#!#<NULL>
+master#!#dbo#!#t1#!#<NULL>#!#<NULL>#!#<NULL>#!#0#!#<NULL>#!#<NULL>#!#<NULL>#!#-1#!#0#!#<NULL>
 ~~END~~
 
 
@@ -37,7 +37,7 @@ varchar#!#varchar#!#varchar#!#smallint#!#varchar#!#varchar#!#smallint#!#smallint
 master#!#dbo#!#t2#!#0#!#t2#!#t2_pkey#!#3#!#1#!#b#!#A#!#<NULL>#!#0#!#<NULL>
 master#!#dbo#!#t2#!#1#!#t2#!#i2#!#3#!#1#!#a#!#A#!#<NULL>#!#0#!#<NULL>
 master#!#dbo#!#t2#!#1#!#t2#!#i2#!#3#!#2#!#b#!#A#!#<NULL>#!#0#!#<NULL>
-master#!#dbo#!#t2#!#<NULL>#!#<NULL>#!#<NULL>#!#0#!#<NULL>#!#<NULL>#!#<NULL>#!#0#!#0#!#<NULL>
+master#!#dbo#!#t2#!#<NULL>#!#<NULL>#!#<NULL>#!#0#!#<NULL>#!#<NULL>#!#<NULL>#!#-1#!#0#!#<NULL>
 ~~END~~
 
 
@@ -48,7 +48,7 @@ varchar#!#varchar#!#varchar#!#smallint#!#varchar#!#varchar#!#smallint#!#smallint
 master#!#dbo#!#t2#!#0#!#t2#!#t2_pkey#!#3#!#1#!#b#!#A#!#<NULL>#!#0#!#<NULL>
 master#!#dbo#!#t2#!#1#!#t2#!#i2#!#3#!#1#!#a#!#A#!#<NULL>#!#0#!#<NULL>
 master#!#dbo#!#t2#!#1#!#t2#!#i2#!#3#!#2#!#b#!#A#!#<NULL>#!#0#!#<NULL>
-master#!#dbo#!#t2#!#<NULL>#!#<NULL>#!#<NULL>#!#0#!#<NULL>#!#<NULL>#!#<NULL>#!#0#!#0#!#<NULL>
+master#!#dbo#!#t2#!#<NULL>#!#<NULL>#!#<NULL>#!#0#!#<NULL>#!#<NULL>#!#<NULL>#!#-1#!#0#!#<NULL>
 ~~END~~
 
 
@@ -57,7 +57,7 @@ go
 ~~START~~
 varchar#!#varchar#!#varchar#!#smallint#!#varchar#!#varchar#!#smallint#!#smallint#!#varchar#!#varchar#!#int#!#int#!#varchar
 master#!#dbo#!#t1#!#1#!#t1#!#i1#!#3#!#1#!#a#!#A#!#<NULL>#!#0#!#<NULL>
-master#!#dbo#!#t1#!#<NULL>#!#<NULL>#!#<NULL>#!#0#!#<NULL>#!#<NULL>#!#<NULL>#!#0#!#0#!#<NULL>
+master#!#dbo#!#t1#!#<NULL>#!#<NULL>#!#<NULL>#!#0#!#<NULL>#!#<NULL>#!#<NULL>#!#-1#!#0#!#<NULL>
 ~~END~~
 
 
@@ -65,7 +65,7 @@ exec [sys].sp_statistics_100 @table_name = 't3'
 go
 ~~START~~
 varchar#!#varchar#!#varchar#!#smallint#!#varchar#!#varchar#!#smallint#!#smallint#!#varchar#!#varchar#!#int#!#int#!#varchar
-master#!#dbo#!#t3#!#<NULL>#!#<NULL>#!#<NULL>#!#0#!#<NULL>#!#<NULL>#!#<NULL>#!#0#!#0#!#<NULL>
+master#!#dbo#!#t3#!#<NULL>#!#<NULL>#!#<NULL>#!#0#!#<NULL>#!#<NULL>#!#<NULL>#!#-1#!#0#!#<NULL>
 ~~END~~
 
 

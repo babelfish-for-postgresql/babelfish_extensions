@@ -436,7 +436,7 @@ grant_guests_to_login(const char *login)
 
 	appendStringInfo(&query, "GRANT dummy TO dummy; ");
 
-	parsetree_list = raw_parser(query.data);
+	parsetree_list = raw_parser(query.data, RAW_PARSE_DEFAULT);
 
 	if (list_length(parsetree_list) != 1)
 		ereport(ERROR, 
@@ -465,6 +465,7 @@ grant_guests_to_login(const char *login)
 	/* do this step */
 	ProcessUtility(wrapper,
 				   "(CREATE DATABASE )",
+				   false,
 				   PROCESS_UTILITY_SUBCOMMAND,
 				   NULL,
 				   NULL,
@@ -487,7 +488,7 @@ gen_droplogin_subcmds(const char *login)
 	initStringInfo(&query);
 
 	appendStringInfo(&query, "DROP LOGIN dummy; ");
-	res = raw_parser(query.data);
+	res = raw_parser(query.data, RAW_PARSE_DEFAULT);
 
 	if (list_length(res) != 1)
 		ereport(ERROR,
@@ -758,6 +759,7 @@ Datum drop_all_logins(PG_FUNCTION_ARGS)
 				/* do this step */
 				ProcessUtility(wrapper,
 							   "(DROP LOGIN )",
+							   false,
 							   PROCESS_UTILITY_SUBCOMMAND,
 							   NULL,
 							   NULL,
@@ -1008,7 +1010,7 @@ add_existing_users_to_catalog(PG_FUNCTION_ARGS)
 			initStringInfo(&query);
 			appendStringInfo(&query, "ALTER ROLE dummy WITH createrole; ");
 
-			parsetree_list = raw_parser(query.data);
+			parsetree_list = raw_parser(query.data, RAW_PARSE_DEFAULT);
 
 			if (list_length(parsetree_list) != 1)
 				ereport(ERROR,
@@ -1032,6 +1034,7 @@ add_existing_users_to_catalog(PG_FUNCTION_ARGS)
 			/* Run the built query */
 			ProcessUtility(wrapper,
 						   "(CREATE DATABASE )",
+						   false,
 						   PROCESS_UTILITY_SUBCOMMAND,
 						   NULL,
 						   NULL,
@@ -1178,7 +1181,7 @@ alter_bbf_authid_user_ext(AlterRoleStmt *stmt)
 		initStringInfo(&query);
 		appendStringInfo(&query, "ALTER ROLE dummy RENAME TO dummy; ");
 
-		parsetree_list = raw_parser(query.data);
+		parsetree_list = raw_parser(query.data, RAW_PARSE_DEFAULT);
 
 		if (list_length(parsetree_list) != 1)
 			ereport(ERROR,
@@ -1203,6 +1206,7 @@ alter_bbf_authid_user_ext(AlterRoleStmt *stmt)
 		/* do this step */
 		ProcessUtility(wrapper,
 					   "(ALTER ROLE )",
+					   false,
 					   PROCESS_UTILITY_SUBCOMMAND,
 					   NULL,
 					   NULL,
@@ -1223,7 +1227,7 @@ gen_droprole_subcmds(const char *user)
 	initStringInfo(&query);
 
 	appendStringInfo(&query, "DROP ROLE dummy; ");
-	res = raw_parser(query.data);
+	res = raw_parser(query.data, RAW_PARSE_DEFAULT);
 
 	if (list_length(res) != 1)
 		ereport(ERROR,
@@ -1306,6 +1310,7 @@ Datum drop_all_users(PG_FUNCTION_ARGS)
 				/* do this step */
 				ProcessUtility(wrapper,
 							   "(DROP ROLE )",
+							   false,
 							   PROCESS_UTILITY_SUBCOMMAND,
 							   NULL,
 							   NULL,

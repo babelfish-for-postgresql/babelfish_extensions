@@ -24,7 +24,7 @@ CompileContext *create_compile_context(void)
     cmpl_ctx->label_stmt_map = hash_create("Label to stmt mapping",
                                            16,  /* initial hashmap size */
                                            &hashCtl, 
-                                           HASH_ELEM | HASH_CONTEXT ); /* string comp */
+                                           HASH_ELEM | HASH_STRINGS | HASH_CONTEXT ); /* string comp */
     
     return cmpl_ctx;
 }

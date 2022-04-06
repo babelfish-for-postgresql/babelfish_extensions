@@ -1,0 +1,160 @@
+-- tsql
+-- Re-created inner procedures in T-SQL
+drop table if exists t1;
+go
+drop procedure if exists tsql_outer_proc;
+go
+drop procedure if exists tsql_inner_proc;
+go
+
+create table t1 (a1 int);
+go
+create procedure tsql_outer_proc
+as
+    exec tsql_inner_proc;
+go
+
+create procedure tsql_inner_proc
+as
+insert into t1 values (1);
+go
+
+exec tsql_outer_proc;
+go
+select * from t1;
+go
+
+drop procedure tsql_inner_proc;
+go
+
+create procedure tsql_inner_proc
+as
+insert into t1 values (1);
+go
+
+exec tsql_outer_proc;
+go
+select * from t1;
+go
+
+drop table if exists t1;
+go
+drop procedure if exists tsql_outer_proc;
+go
+drop procedure if exists tsql_inner_proc;
+go
+
+-- tsql
+-- Re-created inner procedures in inter operability
+drop procedure if exists tsql_inner_proc;
+go
+drop procedure if exists psql_outer_proc;
+go
+drop table if exists t1;
+go
+
+create table t1 (a1 int);
+go
+
+-- psql     currentSchema=master_dbo,public
+create procedure psql_outer_proc()
+as
+$$
+begin
+    call tsql_inner_proc();
+exception when others then
+    raise 'Calling an inner procedure failed';
+end;
+$$ LANGUAGE PLPGSQL;
+go
+
+-- tsql
+create procedure tsql_inner_proc
+as
+insert into t1 values (1);
+go
+
+exec psql_outer_proc;
+go
+select * from t1;
+go
+
+drop procedure tsql_inner_proc;
+go
+create procedure tsql_inner_proc
+as
+insert into t1 values (1);
+go
+
+-- This has failed since PG14.
+exec psql_outer_proc;
+go
+select * from t1;
+go
+
+drop table if exists t1;
+go
+drop procedure if exists tsql_outer_proc;
+go
+drop procedure if exists tsql_inner_proc;
+go
+
+-- psql     currentSchema=master_dbo,public
+-- Re-created inner procedures in psql
+drop table if exists t1;
+go
+drop procedure if exists psql_outer_proc();
+go
+drop procedure if exists psql_inner_proc();
+go
+
+create table t1 (a1 int);
+go
+create procedure psql_outer_proc()
+as
+$$
+begin
+    call psql_inner_proc();
+exception when others then
+    raise 'Calling an inner procedure failed';
+end;
+$$ LANGUAGE PLPGSQL;
+go
+
+create procedure psql_inner_proc()
+as
+$$
+begin
+    insert into t1 values (1);
+end;
+$$ LANGUAGE PLPGSQL;
+go
+
+call psql_outer_proc();
+go
+select * from t1;
+go
+
+drop procedure psql_inner_proc();
+go
+create procedure psql_inner_proc()
+as
+$$
+begin
+    insert into t1 values (1);
+end;
+$$ LANGUAGE PLPGSQL;
+go
+
+-- This has failed since PG14.
+call psql_outer_proc();
+go
+select * from t1;
+go
+
+drop table if exists t1;
+go
+drop procedure if exists psql_outer_proc();
+go
+drop procedure if exists psql_inner_proc();
+go

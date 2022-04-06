@@ -144,7 +144,7 @@ pltsqlMakeRangeVarFromName(const char *ident)
 	 * confirm since it affects the parser.
 	 */
 	Assert(sql_dialect == SQL_DIALECT_TSQL);
-	parsetree = raw_parser(query.data);
+	parsetree = raw_parser(query.data, RAW_PARSE_DEFAULT);
 
 	sel_stmt = (SelectStmt *) (((RawStmt *) linitial(parsetree))->stmt);
 	n = linitial(sel_stmt->fromClause);

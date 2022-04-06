@@ -2350,6 +2350,7 @@ exec_stmt_call(PLtsql_execstate *estate, PLtsql_stmt_call *stmt)
 	LocalTransactionId after_lxid;
 	volatile bool pushed_active_snap = false;
 	volatile int rc;
+	SPIExecuteOptions options;
 
 	/* PG_TRY to ensure we clear the plan link, if needed, on failure */
 	PG_TRY();
@@ -2369,13 +2370,7 @@ exec_stmt_call(PLtsql_execstate *estate, PLtsql_stmt_call *stmt)
 			 */
 			exec_prepare_plan(estate, expr, 0, estate->atomic);
 
-			/*
-			 * The procedure call could end transactions, which would upset
-			 * the snapshot management in SPI_execute*, so don't let it do it.
-			 * Instead, we set the snapshots ourselves below.
-			 */
 			plan = expr->plan;
-			plan->no_snapshots = true;
 
 			/*
 			 * Force target to be recalculated whenever the plan changes, in
@@ -2424,6 +2419,7 @@ exec_stmt_call(PLtsql_execstate *estate, PLtsql_stmt_call *stmt)
 			 * Extract function arguments, and expand any named-arg notation
 			 */
 			funcargs = expand_function_arguments(funcexpr->args,
+												 false,
 												 funcexpr->funcresulttype,
 												 func_tuple);
 
@@ -2506,8 +2502,12 @@ exec_stmt_call(PLtsql_execstate *estate, PLtsql_stmt_call *stmt)
 			pushed_active_snap = true;
 		}
 
-		rc = SPI_execute_plan_with_paramlist(expr->plan, paramLI,
-											 estate->readonly_func, 0);
+		memset(&options, 0, sizeof(options));
+		options.params = paramLI;
+		options.read_only = estate->readonly_func;
+		options.allow_nonatomic = true;
+
+		rc = SPI_execute_plan_extended(expr->plan, &options);
 	}
 	PG_CATCH();
 	{
@@ -2525,7 +2525,7 @@ exec_stmt_call(PLtsql_execstate *estate, PLtsql_stmt_call *stmt)
 		expr->plan = NULL;
 
 	if (rc < 0)
-		elog(ERROR, "SPI_execute_plan_with_paramlist failed executing query \"%s\": %s",
+		elog(ERROR, "SPI_execute_plan_extended failed executing query \"%s\": %s",
 			 expr->query, SPI_result_code_string(rc));
 
 	after_lxid = MyProc->lxid;
@@ -4491,7 +4491,7 @@ bool is_start_implicit_txn_utility_command(Node* parsetree)
 			/* SELECT ... INTO */
 			case T_CreateTableAsStmt:
 				{
-					if (((CreateTableAsStmt *) parsetree)->relkind == OBJECT_TABLE)
+					if (((CreateTableAsStmt *) parsetree)->objtype == OBJECT_TABLE)
 						return true;
 					else
 						return false;
@@ -4647,7 +4647,7 @@ exec_stmt_execsql(PLtsql_execstate *estate,
 			}
 			++i;
 		}
-		ReleaseCachedPlan(cp, true);
+		ReleaseCachedPlan(cp, CurrentResourceOwner);
 	}
 
     /*
@@ -5035,6 +5035,7 @@ exec_fmtonly(PLtsql_execstate *estate,
 	MemoryContext oldcontext;
 	PLtsql_row *row;
     int rc;
+	SPIExecuteOptions options;
     PLtsql_expr *expr = stmt->sqlstmt;
 	int			nfields;
     int i;
@@ -5085,6 +5086,7 @@ exec_fmtonly(PLtsql_execstate *estate,
 	 * Extract function arguments, and expand any named-arg notation
 	 */
 	funcargs = expand_function_arguments(funcexpr->args,
+											 false,
 											 funcexpr->funcresulttype,
 											 func_tuple);
     /*
@@ -5209,8 +5211,12 @@ exec_fmtonly(PLtsql_execstate *estate,
 			estate->impl_txn_type = PLTSQL_IMPL_TRAN_ON;
 	}
 
-	rc = SPI_execute_plan_with_paramlist(estmt->expr->plan, paramLI,
-										 estate->readonly_func, 0);
+	memset(&options, 0, sizeof(options));
+	options.params = paramLI;
+	options.read_only = estate->readonly_func;
+	options.allow_nonatomic = true;
+
+	rc = SPI_execute_plan_extended(expr->plan, &options);
 
     /*
 	 * Copy the procedure's return code into the specified variable
@@ -6049,19 +6055,21 @@ exec_stmt_rollback(PLtsql_execstate *estate, PLtsql_stmt_rollback *stmt)
 static int
 exec_stmt_set(PLtsql_execstate *estate, PLtsql_stmt_set *stmt)
 {
+	SPIExecuteOptions options;
 	PLtsql_expr *expr = stmt->expr;
 	int			rc;
 
 	if (expr->plan == NULL)
-	{
 		exec_prepare_plan(estate, expr, 0, true);
-		expr->plan->no_snapshots = true;
-	}
 
-	rc = SPI_execute_plan(expr->plan, NULL, NULL, estate->readonly_func, 0);
+	memset(&options, 0, sizeof(options));
+	options.read_only = estate->readonly_func;
+	options.allow_nonatomic = true;
+
+	rc = SPI_execute_plan_extended(expr->plan, &options);
 
 	if (rc != SPI_OK_UTILITY)
-		elog(ERROR, "SPI_execute_plan failed executing query \"%s\": %s",
+		elog(ERROR, "SPI_execute_plan_extended failed executing query \"%s\": %s",
 			 expr->query, SPI_result_code_string(rc));
 
         exec_set_rowcount(0);
@@ -7438,7 +7446,7 @@ exec_eval_simple_expr(PLtsql_execstate *estate,
 	/*
 	 * Now we can release our refcount on the cached plan.
 	 */
-	ReleaseCachedPlan(cplan, true);
+	ReleaseCachedPlan(cplan, CurrentResourceOwner);
 
 	/*
 	 * That's it.

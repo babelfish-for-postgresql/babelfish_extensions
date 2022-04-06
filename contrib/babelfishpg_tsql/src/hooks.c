@@ -623,7 +623,7 @@ pltsql_post_transform_column_definition(ParseState *pstate, RangeVar* relation, 
 	stmt = makeNode(AlterTableStmt);
 	stmt->relation = relation;
 	stmt->cmds = NIL;
-	stmt->relkind = OBJECT_TABLE;
+	stmt->objtype = OBJECT_TABLE;
 	stmt->cmds = lappend(stmt->cmds, cmd);
 
 	(*alist) = lappend(*alist, stmt);
@@ -673,7 +673,7 @@ pltsql_post_transform_table_definition(ParseState *pstate, RangeVar* relation, c
 	stmt = makeNode(AlterTableStmt);
 	stmt->relation = relation;
 	stmt->cmds = NIL;
-	stmt->relkind = OBJECT_TABLE;
+	stmt->objtype = OBJECT_TABLE;
 	stmt->cmds = lappend(stmt->cmds, cmd);
 
 	(*alist) = lappend(*alist, stmt);
@@ -964,7 +964,7 @@ pltsql_report_proc_not_found_error(List *names, List *given_argnames, int nargs,
 	bool found = false;
 	const char *obj_type = proc_call ? "procedure" : "function";
 
-	candidates = FuncnameGetCandidates(names, -1, NIL, false, false, true); /* search all possible candidate regardless of the # of arguments */
+	candidates = FuncnameGetCandidates(names, -1, NIL, false, false, false, true); /* search all possible candidate regardless of the # of arguments */
 	if (candidates == NULL)
 		return; /* no candidates at all. let backend handle the proc-not-found error */
 
@@ -1230,7 +1230,7 @@ static void revoke_func_permission_from_public(Oid objectId)
 	else
 		query = psprintf("REVOKE ALL ON FUNCTION [%s].[%s](%s) FROM PUBLIC", phy_sch_name, obj_name, arg_list);
 
-	res = raw_parser(query);
+	res = raw_parser(query, RAW_PARSE_DEFAULT);
 
 	if (list_length(res) != 1)
 		ereport(ERROR,
@@ -1249,6 +1249,7 @@ static void revoke_func_permission_from_public(Oid objectId)
 
 	ProcessUtility(wrapper,
 				   query,
+				   false,
 				   PROCESS_UTILITY_SUBCOMMAND,
 				   NULL,
 				   NULL,

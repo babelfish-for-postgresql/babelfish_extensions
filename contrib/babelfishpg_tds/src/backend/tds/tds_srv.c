@@ -65,6 +65,7 @@ static void pe_send_ready_for_query(CommandDest dest);
 static int  pe_read_command(StringInfo inBuf);
 static int  pe_process_command(void);
 static void pe_end_command(QueryCompletion *qc, CommandDest dest);
+static void pe_report_param_status(const char *name, char *val);
 static void socket_close(int code, Datum arg);
 
 /* the dest reveiver support is kept in a separate file */
@@ -88,7 +89,8 @@ static ProtocolExtensionConfig pe_config = {
 	TdsPrinttupStartup,
 	TdsShutdown,
 	TdsDestroy,
-	pe_process_command
+	pe_process_command,
+	pe_report_param_status
 };
 
 /*
@@ -431,6 +433,12 @@ pe_process_command()
 
 static void
 pe_end_command(QueryCompletion *qc, CommandDest dest)
+{
+	/* no-op */
+}
+
+static void
+pe_report_param_status(const char *name, char *val)
 {
 	/* no-op */
 }

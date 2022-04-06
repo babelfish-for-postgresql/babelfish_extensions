@@ -2403,7 +2403,7 @@ handleBatchLevelStatement(TSqlParser::Batch_level_statementContext *ctx, tsqlSel
 	PLtsql_stmt_execsql *execsql = (PLtsql_stmt_execsql *) makeSQL(ctx);
 
 	rewriteBatchLevelStatement(ctx, ssm, execsql->sqlstmt);
-	lappend(result->body, execsql);
+	result->body = lappend(result->body, execsql);
 
 	Token* start_body_token = get_start_token_of_batch_level_stmt_body(ctx);
 

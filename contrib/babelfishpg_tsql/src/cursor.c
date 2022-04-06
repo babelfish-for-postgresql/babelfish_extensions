@@ -433,7 +433,7 @@ void pltsql_create_cursor_htab()
 	ctl.entrysize = sizeof(CursorHashEnt);
 	ctl.hcxt = CursorHashtabContext;
 
-	CursorHashTable = hash_create("T-SQL cursor information", 16 /*PORTALS_PER_USER*/, &ctl, HASH_ELEM | HASH_CONTEXT);
+	CursorHashTable = hash_create("T-SQL cursor information", 16 /*PORTALS_PER_USER*/, &ctl, HASH_ELEM | HASH_STRINGS | HASH_CONTEXT);
 
 	current_cursor_handle = CURSOR_HANDLE_INVALID;
 
@@ -443,7 +443,7 @@ void pltsql_create_cursor_htab()
 	ctl.entrysize = sizeof(CurosrPreparedHandleHashEnt);
 	ctl.hcxt = CursorHashtabContext;
 
-	CursorPreparedHandleHashTable = hash_create("T-SQL cursor prepared handle", 16 /*PORTALS_PER_USER*/, &ctl, HASH_ELEM | HASH_CONTEXT);
+	CursorPreparedHandleHashTable = hash_create("T-SQL cursor prepared handle", 16 /*PORTALS_PER_USER*/, &ctl, HASH_ELEM | HASH_BLOBS | HASH_CONTEXT);
 
 	current_cursor_prepared_handle = CURSOR_PREPARED_HANDLE_START;
 }

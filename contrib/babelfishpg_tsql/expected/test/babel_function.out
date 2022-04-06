@@ -130,9 +130,9 @@ show babelfishpg_tsql.sql_dialect;
 
 select test_increment(1);
 ERROR:  column "1" does not exist
-LINE 1: SELECT i + "1"
-                   ^
-QUERY:  SELECT i + "1"
+LINE 1: i + "1"
+            ^
+QUERY:  i + "1"
 CONTEXT:  PL/pgSQL function test_increment(integer) line 3 at RETURN
 show babelfishpg_tsql.sql_dialect;
  babelfishpg_tsql.sql_dialect 
@@ -142,10 +142,10 @@ show babelfishpg_tsql.sql_dialect;
 
 select test_increment1(1);
 ERROR:  operator does not exist: integer + character varying
-LINE 1: SELECT i + CAST(n'1' AS varchar)
-                 ^
+LINE 1: i + CAST(n'1' AS varchar)
+          ^
 HINT:  No operator matches the given name and argument types. You might need to add explicit type casts.
-QUERY:  SELECT i + CAST(n'1' AS varchar)
+QUERY:  i + CAST(n'1' AS varchar)
 CONTEXT:  PL/pgSQL function test_increment1(integer) line 3 at RETURN
 show babelfishpg_tsql.sql_dialect;
  babelfishpg_tsql.sql_dialect 

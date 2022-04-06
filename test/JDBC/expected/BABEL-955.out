@@ -17,7 +17,7 @@ CREATE TRIGGER tr1 ON test1.t1 AFTER DELETE AS
 go
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: trigger "tr1" already exists in the database)~~
+~~ERROR (Message: trigger "tr1" for relation "t1" already exists)~~
 
 
 create schema test2;

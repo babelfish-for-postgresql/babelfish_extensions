@@ -11,10 +11,14 @@
 
 /* Start of exsiting grammar rule in gram.y */
 
-stmtblock:
+parse_toplevel:
 			DIALECT_TSQL tsql_stmtmulti
 				{
 					pg_yyget_extra(yyscanner)->parsetree = $2;
+				}
+			| MODE_TYPE_NAME DIALECT_TSQL Typename
+				{
+					pg_yyget_extra(yyscanner)->parsetree = list_make1($3);
 				}
 		;
 
@@ -886,7 +890,7 @@ def_arg:	func_type tsql_on_ident_partitions_list			{ $$ = (Node *)$1; }
 		;
 
 DropStmt:
-			DROP drop_type_name_on_any_name tsql_triggername
+			DROP object_type_name_on_any_name tsql_triggername
 				{
 					DropStmt *n = makeNode(DropStmt);
 
@@ -904,7 +908,7 @@ DropStmt:
 					n->concurrent = false;
 					$$ = (Node *) n;
 				}
-			| DROP drop_type_name_on_any_name IF_P EXISTS tsql_triggername
+			| DROP object_type_name_on_any_name IF_P EXISTS tsql_triggername
 				{
 					DropStmt *n = makeNode(DropStmt);
 
@@ -925,7 +929,7 @@ DropStmt:
 			;
 
 tsql_DropIndexStmt:
-			DROP drop_type_any_name index_name ON name_list
+			DROP object_type_any_name name ON name_list
 				{
 					DropStmt *n = makeNode(DropStmt);
 					if(sql_dialect != SQL_DIALECT_TSQL)
@@ -949,7 +953,7 @@ tsql_DropIndexStmt:
 					n->concurrent = false;
 					$$ = (Node *)n;
 				}
-			| DROP drop_type_any_name IF_P EXISTS index_name ON name_list
+			| DROP object_type_any_name IF_P EXISTS name ON name_list
 				{
 					DropStmt *n = makeNode(DropStmt);
 					if(sql_dialect != SQL_DIALECT_TSQL)
@@ -1328,7 +1332,8 @@ simple_select:
 					n->intoClause = $5;
 					n->fromClause = $6;
 					n->whereClause = $7;
-					n->groupClause = $8;
+					n->groupClause = ($8)->list;
+					n->groupDistinct = ($8)->distinct;
 					n->havingClause = $9;
 					n->windowClause = $10;
 					$$ = (Node *)n;
@@ -1351,7 +1356,8 @@ simple_select:
 					n->intoClause = $5;
 					n->fromClause = $6;
 					n->whereClause = $7;
-					n->groupClause = $8;
+					n->groupClause = ($8)->list;
+					n->groupDistinct = ($8)->distinct;
 					n->havingClause = $9;
 					n->windowClause = $10;
 					$$ = (Node *)n;
@@ -1387,6 +1393,7 @@ func_expr_common_subexpr:
 				{
 					$$ = (Node *) makeFuncCall(TsqlSystemFuncName2("update"),
 											   list_make1(makeStringConst($3,@3)),
+											   COERCE_EXPLICIT_CALL,
 											   @1);
 				}
 			| TSQL_TRY_CAST '(' a_expr AS Typename ')'
@@ -1419,6 +1426,7 @@ func_expr_common_subexpr:
 					$$ = (Node *) makeFuncCall(TsqlSystemFuncName2("dateadd"),
 											   list_make3(makeStringConst($3, @3),
 														  $5, $7),
+											   COERCE_EXPLICIT_CALL,
 											   @1);
 				}
 			| TSQL_PARSE '(' a_expr AS Typename ')'
@@ -1443,18 +1451,21 @@ func_expr_common_subexpr:
 				{
 					$$ = (Node *) makeFuncCall(TsqlSystemFuncName2("datediff"),
 											   list_make3(makeStringConst($3, @3), $5, $7),
+											   COERCE_EXPLICIT_CALL,
 											   @1);
 				}
 			| TSQL_DATEPART '(' datepart_arg ',' a_expr ')'
 				{
 					$$ = (Node *) makeFuncCall(TsqlSystemFuncName2("datepart"),
 											   list_make2(makeStringConst($3, @3), $5),
+											   COERCE_EXPLICIT_CALL,
 											   @1);
 				}
 			| TSQL_DATENAME '(' datepart_arg ',' a_expr ')'
 				{
 					$$ = (Node *) makeFuncCall(TsqlSystemFuncName2("datename"),
 											   list_make2(makeStringConst($3, @3), $5),
+											   COERCE_EXPLICIT_CALL,
 											   @1);
 				}
 			| TSQL_ISNULL '(' a_expr ',' a_expr ')'
@@ -1470,15 +1481,15 @@ func_expr_common_subexpr:
 				}
 			| TSQL_ATAT IDENT
 				{
-					$$ = (Node *) makeFuncCall(TsqlSystemFuncName2($2), NIL, @1);
+					$$ = (Node *) makeFuncCall(TsqlSystemFuncName2($2), NIL, COERCE_EXPLICIT_CALL, @1);
 				}
 			| TSQL_ATAT VERSION_P
 				{
-					$$ = (Node *) makeFuncCall(TsqlSystemFuncName2("version"),NIL, @1);
+					$$ = (Node *) makeFuncCall(TsqlSystemFuncName2("version"),NIL, COERCE_EXPLICIT_CALL, @1);
 				}
 			| TSQL_ATAT IDENTITY_P
 				{
-					$$ = (Node *) makeFuncCall(TsqlSystemFuncName("babelfish_get_last_identity_numeric"), NIL, @1);
+					$$ = (Node *) makeFuncCall(TsqlSystemFuncName("babelfish_get_last_identity_numeric"), NIL, COERCE_EXPLICIT_CALL, @1);
 				}
 		;
 
@@ -1616,7 +1627,8 @@ tsql_output_simple_select:
 					n->intoClause = $4;
 					n->fromClause = $5;
 					n->whereClause = $6;
-					n->groupClause = $7;
+					n->groupClause = ($7)->list;
+					n->groupDistinct = ($7)->distinct;
 					n->havingClause = $8;
 					n->windowClause = $9;
 					$$ = (Node *)n;
@@ -1631,23 +1643,24 @@ tsql_output_simple_select:
 					n->intoClause = $4;
 					n->fromClause = $5;
 					n->whereClause = $6;
-					n->groupClause = $7;
+					n->groupClause = ($7)->list;
+					n->groupDistinct = ($7)->distinct;
 					n->havingClause = $8;
 					n->windowClause = $9;
 					$$ = (Node *)n;
 				}
 			| tsql_values_clause							{ $$ = $1; }
-			| tsql_output_simple_select UNION all_or_distinct tsql_output_simple_select
+			| tsql_output_simple_select UNION set_quantifier tsql_output_simple_select
 				{
-					$$ = makeSetOp(SETOP_UNION, $3, $1, $4);
+					$$ = makeSetOp(SETOP_UNION, $3 == SET_QUANTIFIER_ALL, $1, $4);
 				}
-			| tsql_output_simple_select INTERSECT all_or_distinct tsql_output_simple_select
+			| tsql_output_simple_select INTERSECT set_quantifier tsql_output_simple_select
 				{
-					$$ = makeSetOp(SETOP_INTERSECT, $3, $1, $4);
+					$$ = makeSetOp(SETOP_INTERSECT, $3 == SET_QUANTIFIER_ALL, $1, $4);
 				}
-			| tsql_output_simple_select EXCEPT all_or_distinct tsql_output_simple_select
+			| tsql_output_simple_select EXCEPT set_quantifier tsql_output_simple_select
 				{
-					$$ = makeSetOp(SETOP_EXCEPT, $3, $1, $4);
+					$$ = makeSetOp(SETOP_EXCEPT, $3 == SET_QUANTIFIER_ALL, $1, $4);
 				}
 			
 		;
@@ -1697,7 +1710,7 @@ tsql_output_ExecStmt:
 					}
 
 					n = makeNode(CallStmt);
-					n->funccall = makeFuncCall(name, args, @1);
+					n->funccall = makeFuncCall(name, args, COERCE_EXPLICIT_CALL, @1);
 
 					$$ = (Node *) n;
 				}
@@ -1717,7 +1730,6 @@ tsql_stmt :
 			| AlterExtensionStmt
 			| AlterExtensionContentsStmt
 			| AlterFdwStmt
-			| AlterForeignTableStmt
 			| AlterFunctionStmt
 			| AlterGroupStmt
 			| tsql_AlterLoginStmt
@@ -1789,7 +1801,6 @@ tsql_stmt :
 			| DropOpClassStmt
 			| DropOpFamilyStmt
 			| DropOwnedStmt
-			| DropPLangStmt
 			| tsql_DropIndexStmt
 			| DropStmt
 			| DropSubscriptionStmt
@@ -2012,7 +2023,7 @@ tsql_ExecStmt:
 					}
 
 					n = makeNode(CallStmt);
-					n->funccall = makeFuncCall(name, args, @1);
+					n->funccall = makeFuncCall(name, args, COERCE_EXPLICIT_CALL, @1);
 
 					$$ = (Node *) n;
 				}
@@ -2037,7 +2048,7 @@ tsql_ExecStmt:
 					}
 
 					n = makeNode(CallStmt);
-					n->funccall = makeFuncCall(name, args, @1);
+					n->funccall = makeFuncCall(name, args, COERCE_EXPLICIT_CALL, @1);
 
 					$$ = (Node *) n;
 				}

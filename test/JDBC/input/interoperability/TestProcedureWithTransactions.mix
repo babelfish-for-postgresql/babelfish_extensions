@@ -208,6 +208,19 @@ END
 $$ LANGUAGE PLPGSQL;
 GO
 
+CREATE OR REPLACE PROCEDURE psql_interop_proc1()
+AS
+$$
+BEGIN
+    CREATE TABLE procTab1(c1 int);
+    ALTER TABLE procTab1 OWNER TO master_dbo;
+    INSERT INTO procTab1 values (5);
+    ALTER TABLE procTab1 ADD c2 char;
+    CALL tsql_interop_proc1();
+END
+$$ LANGUAGE PLPGSQL;
+GO
+
 -- tsql
 EXEC psql_interop_proc1
 GO
@@ -248,6 +261,19 @@ END
 $$ LANGUAGE PLPGSQL;
 GO
 
+CREATE OR REPLACE PROCEDURE psql_interop_proc1()
+AS
+$$
+BEGIN
+    CREATE TABLE procTab1(c1 int);
+    ALTER TABLE procTab1 OWNER TO master_dbo;
+    INSERT INTO procTab1 values (5);
+    ALTER TABLE procTab1 ADD c2 char;
+    CALL tsql_interop_proc1();
+END
+$$ LANGUAGE PLPGSQL;
+GO
+
 -- tsql
 EXEC psql_interop_proc1
 GO
@@ -266,6 +292,19 @@ BEGIN
     UPDATE procTab1 SET c1=c1+2 WHERE c1 BETWEEN 2 AND 10;
     INSERT INTO procTab1(c1,c2) values(13,'w');
     COMMIT;
+END
+$$ LANGUAGE PLPGSQL;
+GO
+
+CREATE OR REPLACE PROCEDURE psql_interop_proc1()
+AS
+$$
+BEGIN
+    CREATE TABLE procTab1(c1 int);
+    ALTER TABLE procTab1 OWNER TO master_dbo;
+    INSERT INTO procTab1 values (5);
+    ALTER TABLE procTab1 ADD c2 char;
+    CALL tsql_interop_proc1();
 END
 $$ LANGUAGE PLPGSQL;
 GO
@@ -359,6 +398,16 @@ ROLLBACK;
 EXEC SP_UNPREPARE @handle;
 GO
 
+-- psql     currentSchema=master_dbo,public
+CREATE OR REPLACE PROCEDURE psql_interop_proc()
+AS
+$$
+BEGIN
+CALL tsql_interop_proc();
+END
+$$ LANGUAGE PLPGSQL;
+GO
+
 -- tsql
 CREATE TABLE t1 (a INT);
 GO
@@ -387,6 +436,16 @@ EXEC SP_UNPREPARE @inner_handle  -- unprepare inner first
 EXEC SP_UNPREPARE @handle
 GO
 
+-- psql     currentSchema=master_dbo,public
+CREATE OR REPLACE PROCEDURE psql_interop_proc()
+AS
+$$
+BEGIN
+CALL tsql_interop_proc();
+END
+$$ LANGUAGE PLPGSQL;
+GO
+
 -- tsql
 EXEC psql_interop_proc;
 GO
@@ -410,6 +469,17 @@ COMMIT;
 EXEC sp_cursorclose @cursor_handle;
 GO
 
+-- psql     currentSchema=master_dbo,public
+CREATE OR REPLACE PROCEDURE psql_interop_proc()
+AS
+$$
+BEGIN
+CALL tsql_interop_proc();
+END
+$$ LANGUAGE PLPGSQL;
+GO
+
+-- tsql
 EXEC psql_interop_proc;
 GO
 DROP PROCEDURE tsql_interop_proc
@@ -437,6 +507,18 @@ GO
 
 EXEC tsql_interop_proc;
 GO
+
+-- psql     currentSchema=master_dbo,public
+CREATE OR REPLACE PROCEDURE psql_interop_proc()
+AS
+$$
+BEGIN
+CALL tsql_interop_proc();
+END
+$$ LANGUAGE PLPGSQL;
+GO
+
+-- tsql
 EXEC psql_interop_proc;
 GO
 DROP PROCEDURE tsql_interop_proc

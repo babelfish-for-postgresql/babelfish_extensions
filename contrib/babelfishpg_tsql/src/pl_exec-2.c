@@ -605,6 +605,7 @@ exec_stmt_exec(PLtsql_execstate *estate, PLtsql_stmt_exec *stmt)
 	LocalTransactionId after_lxid;
 	volatile int rc;
 	SimpleEcontextStackEntry *topEntry;
+	SPIExecuteOptions options;
 
 	/* PG_TRY to ensure we clear the plan link, if needed, on failure */
 	PG_TRY();
@@ -720,6 +721,7 @@ exec_stmt_exec(PLtsql_execstate *estate, PLtsql_stmt_exec *stmt)
 			 * Extract function arguments, and expand any named-arg notation
 			 */
 			funcargs = expand_function_arguments(funcexpr->args,
+												 false,
 												 funcexpr->funcresulttype,
 												 func_tuple);
 
@@ -850,7 +852,7 @@ exec_stmt_exec(PLtsql_execstate *estate, PLtsql_stmt_exec *stmt)
 
 			tss = tuplestore_begin_heap(false, false, work_mem);
 			dest = CreateTuplestoreDestReceiver();
-			SetTuplestoreDestReceiverParams(dest, tss, CurrentMemoryContext, false);
+			SetTuplestoreDestReceiverParams(dest, tss, CurrentMemoryContext, false, NULL, NULL);
 			dest->rStartup(dest, -1, estate->rsi->expectedDesc);
 
 			callstmt = (CallStmt *)node;
@@ -865,8 +867,12 @@ exec_stmt_exec(PLtsql_execstate *estate, PLtsql_stmt_exec *stmt)
 		before_lxid = MyProc->lxid;
 		topEntry = simple_econtext_stack;
 
-		rc = SPI_execute_plan_with_paramlist(expr->plan, paramLI,
-											 estate->readonly_func, 0);
+		memset(&options, 0, sizeof(options));
+		options.params = paramLI;
+		options.read_only = estate->readonly_func;
+		options.allow_nonatomic = true;
+
+		rc = SPI_execute_plan_extended(expr->plan, &options);
 
 		after_lxid = MyProc->lxid;
 
@@ -2064,7 +2070,7 @@ read_param_def(InlineCodeBlockArgs *args, const char *paramdefstr)
 	appendStringInfoString(&proc_stmt, paramdefstr);
 	appendStringInfoString(&proc_stmt, str2);
 
-	parsetree = raw_parser(proc_stmt.data);
+	parsetree = raw_parser(proc_stmt.data, RAW_PARSE_DEFAULT);
 	
 	/* 
 	 * Seperate each param definition, and calculate the total number of

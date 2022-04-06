@@ -97,6 +97,16 @@ GO
 /* SELECT * FROM procTab1; */
 /* GO */
 
+-- psql
+CREATE OR REPLACE PROCEDURE psql_interop_proc()
+AS
+$$
+BEGIN
+    CALL master_dbo.tsql_interop_proc();
+END
+$$ LANGUAGE PLPGSQL;
+GO
+
 -- tsql
 EXEC [public].psql_interop_proc;
 GO
@@ -127,6 +137,18 @@ BEGIN CATCH
 	THROW;
 END CATCH
 GO
+
+-- psql
+CREATE OR REPLACE PROCEDURE psql_interop_proc()
+AS
+$$
+BEGIN
+    CALL master_dbo.tsql_interop_proc();
+END
+$$ LANGUAGE PLPGSQL;
+GO
+
+-- tsql
 EXEC [public].psql_interop_proc;
 GO
 
@@ -173,6 +195,17 @@ BEGIN CATCH
 END CATCH
 GO
 
+-- psql
+CREATE OR REPLACE PROCEDURE psql_interop_proc()
+AS
+$$
+BEGIN
+    CALL master_dbo.tsql_interop_proc();
+END
+$$ LANGUAGE PLPGSQL;
+GO
+
+-- tsql
 EXEC [public].psql_interop_proc;
 GO
 
@@ -195,6 +228,16 @@ AS
 $$
 BEGIN
     SELECT 100/0;
+END
+$$ LANGUAGE PLPGSQL;
+GO
+
+-- psql
+CREATE OR REPLACE PROCEDURE psql_interop_proc()
+AS
+$$
+BEGIN
+    CALL master_dbo.tsql_interop_proc();
 END
 $$ LANGUAGE PLPGSQL;
 GO
@@ -229,6 +272,16 @@ BEGIN CATCH
 END CATCH
 GO
 
+-- psql
+CREATE OR REPLACE PROCEDURE psql_interop_proc()
+AS
+$$
+BEGIN
+    CALL master_dbo.tsql_interop_proc();
+END
+$$ LANGUAGE PLPGSQL;
+GO
+
 -- tsql
 EXEC [public].psql_interop_proc;
 GO
@@ -253,6 +306,16 @@ AS
     RAISERROR('Hello %s', 16, 1, 'World');
     SELECT xact_state();
     SELECT @@trancount;
+GO
+
+-- psql
+CREATE OR REPLACE PROCEDURE psql_interop_proc()
+AS
+$$
+BEGIN
+    CALL master_dbo.tsql_interop_proc();
+END
+$$ LANGUAGE PLPGSQL;
 GO
 
 -- tsql

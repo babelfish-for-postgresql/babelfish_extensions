@@ -31,7 +31,7 @@
 
 int pgtsql_base_yydebug;
 
-List *babelfishpg_tsql_raw_parser(const char *str);
+List *babelfishpg_tsql_raw_parser(const char *str, RawParseMode mode);
 
 /*
  * raw_parser
@@ -41,7 +41,7 @@ List *babelfishpg_tsql_raw_parser(const char *str);
  * of the list are always RawStmt nodes.
  */
 List *
-babelfishpg_tsql_raw_parser(const char *str)
+babelfishpg_tsql_raw_parser(const char *str, RawParseMode mode)
 {
 	core_yyscan_t yyscanner;
 	pgtsql_base_yy_extra_type yyextra;
@@ -55,8 +55,26 @@ babelfishpg_tsql_raw_parser(const char *str)
 	yyscanner = pgtsql_scanner_init(str, &yyextra.core_yy_extra,
 							 &pgtsql_ScanKeywords, pgtsql_ScanKeywordTokens);
 
-	/* base_yylex() only needs this much initialization */
-	yyextra.have_lookahead = false;
+	/* base_yylex() only needs us to initialize the lookahead token, if any */
+	if (mode == RAW_PARSE_DEFAULT)
+		yyextra.have_lookahead = false;
+	else
+	{
+		/* this array is indexed by RawParseMode enum */
+		static const int mode_token[] = {
+			0,					/* RAW_PARSE_DEFAULT */
+			MODE_TYPE_NAME,		/* RAW_PARSE_TYPE_NAME */
+			MODE_PLPGSQL_EXPR,	/* RAW_PARSE_PLPGSQL_EXPR */
+			MODE_PLPGSQL_ASSIGN1,	/* RAW_PARSE_PLPGSQL_ASSIGN1 */
+			MODE_PLPGSQL_ASSIGN2,	/* RAW_PARSE_PLPGSQL_ASSIGN2 */
+			MODE_PLPGSQL_ASSIGN3	/* RAW_PARSE_PLPGSQL_ASSIGN3 */
+		};
+
+		yyextra.have_lookahead = true;
+		yyextra.lookahead_token = mode_token[mode];
+		yyextra.lookahead_yylloc = 0;
+		yyextra.lookahead_end = NULL;
+	}
 
 	/* initialize the bison parser */
 	pgtsql_parser_init(&yyextra);
@@ -112,7 +130,8 @@ pgtsql_base_yylex(YYSTYPE *lvalp, YYLTYPE *llocp, core_yyscan_t yyscanner)
 		cur_token = yyextra->lookahead_token;
 		lvalp->core_yystype = yyextra->lookahead_yylval;
 		*llocp = yyextra->lookahead_yylloc;
-		*(yyextra->lookahead_end) = yyextra->lookahead_hold_char;
+		if (yyextra->lookahead_end)
+			*(yyextra->lookahead_end) = yyextra->lookahead_hold_char;
 		yyextra->have_lookahead = false;
 	}
 	else
