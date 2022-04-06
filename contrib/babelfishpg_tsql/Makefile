@@ -21,6 +21,7 @@ MODULE_big = $(EXTENSION)
 OBJS = src/pl_gram.o src/pl_handler.o src/pl_comp.o src/pl_exec.o
 OBJS += src/pl_funcs.o src/pl_scanner.o $(WIN32RES)
 OBJS += src/pl_comp-2.o
+OBJS += src/pl_explain.o
 OBJS += src/properties.o
 OBJS += src/databasepropertyex.o
 OBJS += src/plan_inval.o

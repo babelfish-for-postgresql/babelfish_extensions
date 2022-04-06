@@ -109,6 +109,8 @@ AUTO_UPDATE_STATISTICS_ASYNC:                    A U T O  UNDERLINE  U P D A T E
 AVAILABILITY:                                    A V A I L A B I L I T Y;
 AVAILABILITY_MODE:                               A V A I L A B I L I T Y  UNDERLINE  M O D E;
 AVG:                                             A V G;
+BABELFISH_SHOWPLAN_ALL:                          B A B E L F I S H  UNDERLINE  S H O W P L A N  UNDERLINE  A L L;
+BABELFISH_STATISTICS:                            B A B E L F I S H  UNDERLINE  S T A T I S T I C S;
 BACKUP:                                          B A C K U P;
 BACKUP_PRIORITY:                                 B A C K U P  UNDERLINE  P R I O R I T Y;
 BEFORE:                                          B E F O R E;

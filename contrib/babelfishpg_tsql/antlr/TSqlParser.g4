@@ -3334,6 +3334,7 @@ set_special
     | SET IDENTITY_INSERT table_name on_off 
     | SET TEXTSIZE DECIMAL     
     | SET xml_modify_method    
+    | SET BABELFISH_STATISTICS PROFILE on_off
     ;    
 
 set_on_off_option
@@ -3361,6 +3362,7 @@ set_on_off_option
     | SHOWPLAN_TEXT
     | SHOWPLAN_XML
     | XACT_ABORT
+    | BABELFISH_SHOWPLAN_ALL
     ;
     
 set_statistics_keyword  
@@ -4989,6 +4991,9 @@ keyword
     | BINARY_KEYWORD
     | VARBINARY_KEYWORD
     | PRECISION //For some reason this is possible to use as ID
+    //Babelfish-specific
+    | BABELFISH_STATISTICS
+    | BABELFISH_SHOWPLAN_ALL
     ;
 
 entity_name

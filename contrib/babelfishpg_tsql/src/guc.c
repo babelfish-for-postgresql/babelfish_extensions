@@ -1,10 +1,12 @@
 #include "postgres.h"
+#include "commands/explain.h"
 #include "utils/guc.h"
 
 #include "guc.h"
 #include "collation.h"
 #include "pltsql_instr.h"
 #include "pltsql.h"
+#include "pl_explain.h"
 
 #define PLTSQL_SESSION_ISOLATION_LEVEL "default_transaction_isolation"
 #define PLTSQL_TRANSACTION_ISOLATION_LEVEL "transaction_isolation"
@@ -56,6 +58,14 @@ bool 	pltsql_enable_tsql_information_schema = true;
 char*	pltsql_host_destribution = NULL;
 char*	pltsql_host_release = NULL;
 char*	pltsql_host_service_pack_level = NULL;
+
+static const struct config_enum_entry explain_format_options[] = {
+	{"text", EXPLAIN_FORMAT_TEXT, false},
+	{"xml", EXPLAIN_FORMAT_XML, false},
+	{"json", EXPLAIN_FORMAT_JSON, false},
+	{"yaml", EXPLAIN_FORMAT_YAML, false},
+	{NULL, 0, false}
+};
 
 extern bool Transform_null_equals;
 
@@ -867,6 +877,80 @@ define_custom_variables(void)
 				 PGC_USERSET,
 				 GUC_NOT_IN_SAMPLE | GUC_DISALLOW_IN_FILE | GUC_DISALLOW_IN_AUTO_FILE,
 				 NULL, NULL, NULL);
+
+	/* EXPLAIN-related GUCs */
+	DefineCustomBoolVariable("babelfishpg_tsql.explain_verbose",
+				 gettext_noop("Display additional information regarding the plan"),
+				 NULL,
+				 &pltsql_explain_verbose,
+				 false,
+				 PGC_USERSET,
+				 GUC_NOT_IN_SAMPLE | GUC_DISALLOW_IN_FILE | GUC_DISALLOW_IN_AUTO_FILE,
+				 NULL, NULL, NULL);
+
+	DefineCustomBoolVariable("babelfishpg_tsql.explain_costs",
+				 gettext_noop("Include information on estimated startup and total cost"),
+				 NULL,
+				 &pltsql_explain_costs,
+				 true,
+				 PGC_USERSET,
+				 GUC_NOT_IN_SAMPLE | GUC_DISALLOW_IN_FILE | GUC_DISALLOW_IN_AUTO_FILE,
+				 NULL, NULL, NULL);
+
+	DefineCustomBoolVariable("babelfishpg_tsql.explain_settings",
+				 gettext_noop("Include information on configuration parameters"),
+				 NULL,
+				 &pltsql_explain_settings,
+				 false,
+				 PGC_USERSET,
+				 GUC_NOT_IN_SAMPLE | GUC_DISALLOW_IN_FILE | GUC_DISALLOW_IN_AUTO_FILE,
+				 NULL, NULL, NULL);
+
+	DefineCustomBoolVariable("babelfishpg_tsql.explain_buffers",
+				 gettext_noop("Include information on buffer usage"),
+				 NULL,
+				 &pltsql_explain_buffers,
+				 false,
+				 PGC_USERSET,
+				 GUC_NOT_IN_SAMPLE | GUC_DISALLOW_IN_FILE | GUC_DISALLOW_IN_AUTO_FILE,
+				 NULL, NULL, NULL);
+
+	DefineCustomBoolVariable("babelfishpg_tsql.explain_wal",
+				 gettext_noop("Include information on WAL record generation"),
+				 NULL,
+				 &pltsql_explain_wal,
+				 false,
+				 PGC_USERSET,
+				 GUC_NOT_IN_SAMPLE | GUC_DISALLOW_IN_FILE | GUC_DISALLOW_IN_AUTO_FILE,
+				 NULL, NULL, NULL);
+
+	DefineCustomBoolVariable("babelfishpg_tsql.explain_timing",
+				 gettext_noop("Include actual startup time and time spent in each node in the output"),
+				 NULL,
+				 &pltsql_explain_timing,
+				 false,
+				 PGC_USERSET,
+				 GUC_NOT_IN_SAMPLE | GUC_DISALLOW_IN_FILE | GUC_DISALLOW_IN_AUTO_FILE,
+				 NULL, NULL, NULL);
+
+	DefineCustomBoolVariable("babelfishpg_tsql.explain_summary",
+				 gettext_noop("Include summary information (e.g., totaled timing information) after the query plan"),
+				 NULL,
+				 &pltsql_explain_summary,
+				 false,
+				 PGC_USERSET,
+				 GUC_NOT_IN_SAMPLE | GUC_DISALLOW_IN_FILE | GUC_DISALLOW_IN_AUTO_FILE,
+				 NULL, NULL, NULL);
+
+	DefineCustomEnumVariable("babelfishpg_tsql.explain_format",
+							 "Specify the output format, which can be TEXT, XML, JSON, or YAML",
+							 NULL,
+							 &pltsql_explain_format,
+							 EXPLAIN_FORMAT_TEXT,
+							 explain_format_options,
+							 PGC_USERSET,
+							 GUC_NOT_IN_SAMPLE | GUC_DISALLOW_IN_FILE | GUC_DISALLOW_IN_AUTO_FILE,
+							 NULL, NULL, NULL);
 
 	/* Host info related GUCs*/
 	DefineCustomStringVariable("babelfishpg_tsql.host_distribution",

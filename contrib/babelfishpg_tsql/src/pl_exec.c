@@ -4316,6 +4316,8 @@ pltsql_estate_setup(PLtsql_execstate *estate,
 						   strcmp(func->fn_signature, "inline_code_block") == 0)
 						  && rsi;
 
+	estate->explain_infos = NIL;
+
 	/*
 	 * Create an EState and ExprContext for evaluation of simple expressions.
 	 */

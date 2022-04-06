@@ -333,6 +333,8 @@ pltsql_stmt_typename(PLtsql_stmt *stmt)
 			return "USE";
         case PLTSQL_STMT_INSERT_BULK:
             return "INSERT BULK";
+		case PLTSQL_STMT_SET_EXPLAIN_MODE:
+			return "SET EXPLAIN MODE";
         /* TSQL-only executable node */
         case PLTSQL_STMT_INIT_VARS:
             return "INIT_VARS";
@@ -890,6 +892,7 @@ static void dump_return_query(PLtsql_stmt_return_query *stmt);
 static void dump_raise(PLtsql_stmt_raise *stmt);
 static void dump_assert(PLtsql_stmt_assert *stmt);
 static void dump_execsql(PLtsql_stmt_execsql *stmt);
+static void dump_set_explain_mode(PLtsql_stmt_set_explain_mode *stmt);
 static void dump_dynexecute(PLtsql_stmt_dynexecute *stmt);
 static void dump_dynfors(PLtsql_stmt_dynfors *stmt);
 static void dump_getdiag(PLtsql_stmt_getdiag *stmt);
@@ -969,6 +972,9 @@ dump_stmt(PLtsql_stmt *stmt)
 			break;
 		case PLTSQL_STMT_EXECSQL:
 			dump_execsql((PLtsql_stmt_execsql *) stmt);
+			break;
+		case PLTSQL_STMT_SET_EXPLAIN_MODE:
+			dump_set_explain_mode((PLtsql_stmt_set_explain_mode *) stmt);
 			break;
 		case PLTSQL_STMT_DYNEXECUTE:
 			dump_dynexecute((PLtsql_stmt_dynexecute *) stmt);
@@ -1589,6 +1595,23 @@ dump_execsql(PLtsql_stmt_execsql *stmt)
 			   stmt->strict ? " STRICT" : "",
 			   stmt->target->dno, stmt->target->refname);
 	}
+	dump_indent -= 2;
+}
+
+static void
+dump_set_explain_mode(PLtsql_stmt_set_explain_mode *stmt)
+{
+	dump_ind();
+	printf("SET EXPLAIN MODE ");
+	printf("\n");
+
+	dump_indent += 2;
+	dump_ind();
+	printf("    IS_EXPLAIN_ONLY = %s\n", stmt->is_explain_only ? "true" : "false");
+	dump_ind();
+	printf("    IS_EXPLAIN_ANALYZE = %s\n", stmt->is_explain_analyze ? "true" : "false");
+	dump_ind();
+	printf("    VALUE = %s\n", stmt->val ? "true" : "false");
 	dump_indent -= 2;
 }
 
