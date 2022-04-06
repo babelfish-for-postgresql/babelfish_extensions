@@ -1940,6 +1940,7 @@ CREATE OR REPLACE FUNCTION sys.tsql_stat_get_activity(
   OUT packet_size int,
   OUT encrypyt_option VARCHAR(40),
   OUT database_id int2)
+RETURNS SETOF RECORD
 AS 'babelfishpg_tsql', 'tsql_stat_get_activity'
 LANGUAGE C VOLATILE STRICT;
 
@@ -1998,5 +1999,6 @@ CREATE OR REPLACE FUNCTION sys.sp_datatype_info_helper(
 -- below column is added in order to join PG's information_schema.columns for sys.sp_columns_100_view
     OUT PG_TYPE_NAME VARCHAR(20)
 )
+RETURNS SETOF RECORD
 AS 'babelfishpg_tsql', 'sp_datatype_info_helper'
 LANGUAGE C IMMUTABLE STRICT;

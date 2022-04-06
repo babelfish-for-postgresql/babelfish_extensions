@@ -88,6 +88,70 @@ PG_FUNCTION_INFO_V1(binaryfloat8);
 #define MAX_BINARY_SIZE 8000
 #define ROWVERSION_SIZE 8
 
+static const int8 hexlookup[128] = {
+	-1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
+	-1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
+	-1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
+	0, 1, 2, 3, 4, 5, 6, 7, 8, 9, -1, -1, -1, -1, -1, -1,
+	-1, 10, 11, 12, 13, 14, 15, -1, -1, -1, -1, -1, -1, -1, -1, -1,
+	-1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
+	-1, 10, 11, 12, 13, 14, 15, -1, -1, -1, -1, -1, -1, -1, -1, -1,
+	-1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
+};
+
+static inline char
+get_hex(char c)
+{
+	int			res = -1;
+
+	if (c > 0 && c < 127)
+		res = hexlookup[(unsigned char) c];
+
+	if (res < 0)
+		ereport(ERROR,
+				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+				 errmsg("invalid hexadecimal digit: \"%c\"", c)));
+
+	return (char) res;
+}
+
+/* A variant of PG's hex_decode function, but allows odd number of hex digits */
+uint64
+babelfish_hex_decode_allow_odd_digits(const char *src, unsigned len, char *dst)
+{
+	const char *s,
+			   *srcend;
+	char		v1,
+				v2,
+			   *p;
+
+	srcend = src + len;
+	s = src;
+	p = dst;
+
+	if (len % 2 == 1)
+	{
+		/* If input has odd number of hex digits, add a 0 to the front to make it even */
+		v1 = '\0';
+		v2 = get_hex(*s++);
+		*p++ = v1 | v2;
+	}
+	/* The rest of the input must have even number of digits*/
+	while (s < srcend)
+	{
+		if (*s == ' ' || *s == '\n' || *s == '\t' || *s == '\r')
+		{
+			s++;
+			continue;
+		}
+		v1 = get_hex(*s++) << 4;
+		v2 = get_hex(*s++);
+		*p++ = v1 | v2;
+	}
+
+	return p - dst;
+}
+
 /*
  *		varbinaryin	- input function of varbinary
  */
@@ -112,7 +176,7 @@ varbinaryin(PG_FUNCTION_ARGS)
 		 */
 		int bc = (len - 1) / 2 + VARHDRSZ;	/* maximum possible length */
 		result = palloc(bc);
-		bc = hex_decode_allow_odd_digits(inputText + 2, len - 2, VARDATA(result));
+		bc = babelfish_hex_decode_allow_odd_digits(inputText + 2, len - 2, VARDATA(result));
 		SET_VARSIZE(result, bc + VARHDRSZ); /* actual length */
 
 		PG_RETURN_BYTEA_P(result);

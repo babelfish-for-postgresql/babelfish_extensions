@@ -152,13 +152,6 @@ prepare_stmt_exec(PLtsql_execstate *estate, PLtsql_function *func, PLtsql_stmt_e
 	}
 
 	/*
-	 * The procedure call could end transactions, which would upset
-	 * the snapshot management in SPI_execute*, so don't let it do it.
-	 * Instead, we set the snapshots ourselves below.
-	 */
-	expr->plan->no_snapshots = true;
-
-	/*
 	 * Force target to be recalculated whenever the plan changes, in
 	 * case the procedure's argument list has changed.
 	 */
@@ -185,7 +178,7 @@ is_exec_stmt_on_scalar_func(const char *stmt, int *first_arg_location, const cha
 	int i;
 
 	/* Stmt should be syntactically vaild since it was verified during compiliation */
-	raw_parsetree_list = raw_parser(stmt);
+	raw_parsetree_list = raw_parser(stmt, RAW_PARSE_DEFAULT);
 	funcname = get_func_info_from_raw_parsetree(raw_parsetree_list, &nargs, &func_variadic, first_arg_location);
 
 	if (!funcname)
@@ -200,7 +193,7 @@ is_exec_stmt_on_scalar_func(const char *stmt, int *first_arg_location, const cha
 	fdresult = func_get_detail(funcname,
 	                           NIL, NIL,
 	                           nargs, arg_types,
-	                           func_variadic, true,
+	                           func_variadic, true, false,
 	                           &funcid, &rettype, &retset,
 	                           &nvargs, &vatype,
 	                           &typeids, NULL);
@@ -507,7 +500,7 @@ exec_simple_check_plan(PLtsql_execstate *estate, PLtsql_expr *expr)
 	exec_save_simple_expr(expr, cplan);
 
 	/* Release our plan refcount */
-	ReleaseCachedPlan(cplan, true);
+	ReleaseCachedPlan(cplan, CurrentResourceOwner);
 }
 
 /*

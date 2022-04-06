@@ -278,7 +278,7 @@ void pltsql_read_procedure_info(StringInfo inout_str,
 	initStringInfo(&proc_stmt);
 	appendStringInfoString(&proc_stmt, str1);
 	appendStringInfoString(&proc_stmt, inout_str->data);
-	parsetree = raw_parser(proc_stmt.data);
+	parsetree = raw_parser(proc_stmt.data, RAW_PARSE_DEFAULT);
 	cstmt  = (CallStmt *) ((RawStmt *) linitial(parsetree))->stmt;
 
 	funccall = cstmt->funccall;
@@ -287,7 +287,7 @@ void pltsql_read_procedure_info(StringInfo inout_str,
 	 * Parse the name into components and see if it matches any
 	 * pg_proc entries in the current search path.
 	 */
-	clist = FuncnameGetCandidates(funccall->funcname, -1, NIL, false, false, false);
+	clist = FuncnameGetCandidates(funccall->funcname, -1, NIL, false, false, false, false);
 
 	if (clist == NULL)
 	{

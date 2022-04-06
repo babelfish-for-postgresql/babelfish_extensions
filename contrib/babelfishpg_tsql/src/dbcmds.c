@@ -106,7 +106,7 @@ gen_createdb_subcmds(const char *schema, const char *dbo, const char *db_owner, 
 	appendStringInfo(&query, "ALTER VIEW dummy.sysdatabases OWNER TO dummy; ");
 	appendStringInfo(&query, "GRANT SELECT ON dummy.sysdatabases TO dummy; ");
 
-	res = raw_parser(query.data);
+	res = raw_parser(query.data, RAW_PARSE_DEFAULT);
 
 	if (guest)
 		expected_stmt_num = list_length(logins) > 0 ? 9 : 8;
@@ -195,7 +195,7 @@ gen_dropdb_subcmds(const char *schema,
 	appendStringInfo(&query, "DROP ROLE dummy; ");
 	appendStringInfo(&query, "DROP ROLE dummy; ");
 
-	stmt_list = raw_parser(query.data);
+	stmt_list = raw_parser(query.data, RAW_PARSE_DEFAULT);
 	if (list_length(stmt_list) != expected_stmts)
 		ereport(ERROR,
 				(errcode(ERRCODE_SYNTAX_ERROR),
@@ -432,6 +432,7 @@ do_create_bbf_db(const char *dbname, List *options, const char *owner)
 			/* do this step */
 			ProcessUtility(wrapper,
 						   "(CREATE LOGICAL DATABASE )",
+						   false,
 						   PROCESS_UTILITY_SUBCOMMAND,
 						   NULL,
 						   NULL,
@@ -574,6 +575,7 @@ drop_bbf_db(const char *dbname, bool missing_ok, bool force_drop)
 			/* do this step */
 			ProcessUtility(wrapper,
 						   "(DROP DATABASE )",
+						   false,
 						   PROCESS_UTILITY_SUBCOMMAND,
 						   NULL,
 						   NULL,

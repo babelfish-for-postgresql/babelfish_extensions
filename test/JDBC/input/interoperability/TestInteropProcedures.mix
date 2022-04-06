@@ -73,6 +73,18 @@ END
 $$ LANGUAGE PLPGSQL;
 GO
 
+CREATE OR REPLACE PROCEDURE psql_interop_proc1()
+AS
+$$
+BEGIN
+    CREATE TABLE procTab1(c1 int);
+    INSERT INTO procTab1 values (5);
+    ALTER TABLE procTab1 ADD c2 char;
+    CALL tsql_interop_proc1();
+END
+$$ LANGUAGE PLPGSQL;
+GO
+
 -- tsql
 EXEC psql_interop_proc1
 GO
@@ -120,6 +132,17 @@ EXEC sp_cursor @cursor_handle, 40, 1, '';
 EXEC sp_cursorclose @cursor_handle;
 GO
 
+-- psql     currentSchema=master_dbo,public
+CREATE OR REPLACE PROCEDURE psql_interop_proc()
+AS
+$$
+BEGIN
+CALL tsql_interop_proc();
+END
+$$ LANGUAGE PLPGSQL;
+GO
+
+-- tsql
 EXEC psql_interop_proc;
 GO
 DROP TABLE cursorTab
@@ -136,6 +159,16 @@ END TRY
 BEGIN CATCH
     SELECT 1;
 END CATCH
+GO
+
+-- psql     currentSchema=master_dbo,public
+CREATE OR REPLACE PROCEDURE psql_interop_proc()
+AS
+$$
+BEGIN
+CALL tsql_interop_proc();
+END
+$$ LANGUAGE PLPGSQL;
 GO
 
 -- tsql

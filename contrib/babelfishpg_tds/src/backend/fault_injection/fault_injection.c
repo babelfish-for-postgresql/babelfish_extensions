@@ -57,7 +57,7 @@ FaultInjectionHashInit()
 	faultInjectorHash = hash_create("Fault Injection Cache",
 							16,
 							&hash_ctl,
-							HASH_ELEM);
+							HASH_ELEM | HASH_STRINGS);
 	MemoryContextSwitchTo(oldContext);
 }
 

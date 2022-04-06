@@ -1,4 +1,4 @@
-%expect 1
+%expect 2
 
 %debug
 %verbose

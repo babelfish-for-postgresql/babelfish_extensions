@@ -5,6 +5,7 @@
 #include "postgres.h"
 
 #include "catalog/pg_type.h"
+#include "common/cryptohash.h"
 #include "common/md5.h"
 #include "common/sha2.h"
 #include "parser/parse_coerce.h"
@@ -85,12 +86,16 @@ hashbytes(PG_FUNCTION_ARGS)
 	}
 	else if (strcasecmp(algorithm, "SHA2_256") == 0)
 	{
-		pg_sha256_ctx ctx;
+		pg_cryptohash_ctx *ctx = pg_cryptohash_create(PG_SHA256);
 		unsigned char buf[PG_SHA256_DIGEST_LENGTH];
 
-		pg_sha256_init(&ctx);
-		pg_sha256_update(&ctx, data, len);
-		pg_sha256_final(&ctx, buf);
+		if (pg_cryptohash_init(ctx) < 0)
+			elog(ERROR, "could not initialize %s context", "SHA256");
+		if (pg_cryptohash_update(ctx, data, len) < 0)
+			elog(ERROR, "could not update %s context", "SHA256");
+		if (pg_cryptohash_final(ctx, buf, PG_SHA256_DIGEST_LENGTH) < 0)
+			elog(ERROR, "could not finalize %s context", "SHA256");
+		pg_cryptohash_free(ctx);
 
 		result = palloc(sizeof(buf) + VARHDRSZ);
 		SET_VARSIZE(result, sizeof(buf) + VARHDRSZ);

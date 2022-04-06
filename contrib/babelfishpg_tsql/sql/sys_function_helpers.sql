@@ -2274,8 +2274,9 @@ BEGIN
 
         IF (v_lang_data_jsonb IS NULL)
         THEN
+            v_lang_spec_culture := upper(regexp_replace(v_lang_spec_culture, '-\s*', '_', 'gi'));
             IF (v_lang_spec_culture IN ('AR', 'FI') OR
-                v_lang_spec_culture ~ '-')
+                v_lang_spec_culture ~ '_')
             THEN
                 SELECT lang_data_jsonb
                   INTO STRICT v_lang_data_jsonb
@@ -2299,7 +2300,7 @@ BEGIN
                                   ELSE substring(v_lang_spec_culture, '(.*)(?:\.)')
                                END;
 
-        v_lang_spec_culture := upper(regexp_replace(v_lang_spec_culture, '_|,\s*', '-', 'gi'));
+        v_lang_spec_culture := upper(regexp_replace(v_lang_spec_culture, ',\s*', '_', 'gi'));
 
         BEGIN
             v_lang_data_jsonb := nullif(current_setting(format('sys.lang_metadata_json.%s',
@@ -2329,7 +2330,7 @@ BEGIN
                 END IF;
             EXCEPTION
                 WHEN OTHERS THEN
-                    v_lang_spec_culture := 'EN-US';
+                    v_lang_spec_culture := 'EN_US';
 
                     SELECT lang_data_jsonb
                       INTO v_lang_data_jsonb

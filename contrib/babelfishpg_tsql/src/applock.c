@@ -315,7 +315,7 @@ static void initApplockCache()
 										/*table size*/ 32,
 										/*max table size*/ 32,
 										&ctl,
-										HASH_ELEM);
+										HASH_ELEM | HASH_BLOBS);
 	LWLockRelease(AddinShmemInitLock);
 
 	/* 

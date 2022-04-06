@@ -77,7 +77,7 @@ static Walker_context *make_codegen_context(CompileContext *cmpl_ctx)
     generator->label_index = hash_create("Label to index mapping",
                                            16,  /* initial label index hashmap size */
                                            &hashCtl, 
-                                           HASH_ELEM | HASH_CONTEXT ); /* string comp */
+                                           HASH_ELEM | HASH_STRINGS | HASH_CONTEXT ); /* string comp */
 
     generator->loop_contexts = create_stack2(sizeof(LoopContext *), 8);
     generator->cmpl_ctx = cmpl_ctx;
