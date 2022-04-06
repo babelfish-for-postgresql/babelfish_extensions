@@ -1,6 +1,8 @@
 #include "access/xact.h"
+#include "commands/explain.h"
 #include "pltsql.h"
 #include "pltsql-2.h"
+#include "pl_explain.h"
 #include "iterative_exec.h"
 #include "dynastack.h"
 
@@ -10,6 +12,7 @@
 
 static int exec_stmt_init_vars(PLtsql_execstate *estate, PLtsql_stmt_init_vars *stmt);
 static int exec_stmt_goto(PLtsql_execstate *estate, PLtsql_stmt_goto *stmt);
+static int exec_stmt_set_explain_mode(PLtsql_execstate *estate, PLtsql_stmt_set_explain_mode *stmt);
 static int exec_stmt_restore_ctx_full(PLtsql_execstate *estate, PLtsql_stmt_restore_ctx_full *stmt);
 static int exec_stmt_restore_ctx_partial(PLtsql_execstate *estate, PLtsql_stmt_restore_ctx_partial *stmt);
 static int exec_stmt_raiserror(PLtsql_execstate *estate, PLtsql_stmt_raiserror *stmt);
@@ -26,6 +29,9 @@ static void read_throw_params(PLtsql_execstate *estate, List *params,
 							  char **msg, int *err_no, int *state);
 static char *get_proc_name(PLtsql_execstate *estate);
 static bool is_seterror_on(PLtsql_stmt *stmt);
+
+static void process_explain(PLtsql_execstate *estate);
+static void process_explain_analyze(PLtsql_execstate *estate);
 
 extern PLtsql_estate_err *pltsql_clone_estate_err(PLtsql_estate_err *err);
 extern void prepare_format_string(StringInfo buf, char *msg_string, int nargs, 
@@ -131,6 +137,13 @@ static int exec_stmt_init_vars(PLtsql_execstate *estate, PLtsql_stmt_init_vars *
 
 static int exec_stmt_goto(PLtsql_execstate *estate, PLtsql_stmt_goto *stmt)
 {
+	if (pltsql_explain_only && stmt->cond)
+	{
+		ereport(ERROR,
+				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+				errmsg("Showing Estimated Execution Plan for CONDITIONAL GOTO statement is not yet supported")));
+	}
+
     if (stmt->cond)
     {
 		/* conditional jump */
@@ -147,6 +160,33 @@ static int exec_stmt_goto(PLtsql_execstate *estate, PLtsql_stmt_goto *stmt)
         estate->pc = (stmt->target_pc - 1);
 
     return PLTSQL_RC_OK;
+}
+
+static int exec_stmt_set_explain_mode(PLtsql_execstate *estate, PLtsql_stmt_set_explain_mode *stmt)
+{
+	if (!stmt->is_explain_only^stmt->is_explain_analyze)
+	{
+		ereport(ERROR,
+				(errcode(ERRCODE_INTERNAL_ERROR),
+				errmsg("Only EXPLAIN ONLY or EXPLAIN ANALYZE must be TRUE")));
+	}
+
+	if (pltsql_explain_only)
+	{
+		if (stmt->is_explain_only && !stmt->val)
+			pltsql_explain_only = false; /* Turn off EXPLAIN ONLY MODE */
+		else
+			append_explain_info(NULL, stmt->query);
+	}
+	else if (stmt->is_explain_only)
+	{
+		pltsql_explain_only = stmt->val;
+	}
+	else if (stmt->is_explain_analyze)
+	{
+		pltsql_explain_analyze = stmt->val;
+	}
+	return PLTSQL_RC_OK;
 }
 
 static int exec_stmt_raiserror(PLtsql_execstate *estate, PLtsql_stmt_raiserror *stmt)
@@ -649,86 +689,227 @@ static inline int dispatch_stmt(PLtsql_execstate *estate, PLtsql_stmt *stmt)
     switch(stmt->cmd_type)
     {
         case PLTSQL_STMT_ASSIGN:
+			if (pltsql_explain_only)
+			{
+				ereport(ERROR,
+						(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+						errmsg("Showing Estimated Execution Plan for ASSIGN statment is not yet supported")));
+			}
             exec_stmt_assign(estate, (PLtsql_stmt_assign *) stmt);
             break;
         case PLTSQL_STMT_RETURN:
             rc = exec_stmt_return(estate, (PLtsql_stmt_return *)stmt);
             break;
         case PLTSQL_STMT_RETURN_QUERY:
+			if (pltsql_explain_only)
+			{
+				ereport(ERROR,
+						(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+						errmsg("Showing Estimated Execution Plan for RETURN QUERY statment is not yet supported")));
+			}
             exec_stmt_return_query(estate, (PLtsql_stmt_return_query *)stmt);
             break;
         case PLTSQL_STMT_EXECSQL:
             exec_stmt_execsql(estate, (PLtsql_stmt_execsql *) stmt);
             break;
 		case PLTSQL_STMT_OPEN:
+			if (pltsql_explain_only)
+			{
+				ereport(ERROR,
+						(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+						errmsg("Showing Estimated Execution Plan for OPEN statment is not yet supported")));
+			}
 			exec_stmt_open(estate, (PLtsql_stmt_open *) stmt);
 			break;
 		case PLTSQL_STMT_FETCH:
+			if (pltsql_explain_only)
+			{
+				ereport(ERROR,
+						(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+						errmsg("Showing Estimated Execution Plan for FETCH statment is not yet supported")));
+			}
 			exec_stmt_fetch(estate, (PLtsql_stmt_fetch *) stmt);
 			break;
 		case PLTSQL_STMT_CLOSE:
+			if (pltsql_explain_only)
+			{
+				ereport(ERROR,
+						(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+						errmsg("Showing Estimated Execution Plan for CLOSE statment is not yet supported")));
+			}
 			exec_stmt_close(estate, (PLtsql_stmt_close *) stmt);
 			break;
 		case PLTSQL_STMT_COMMIT:
+			if (pltsql_explain_only)
+			{
+				ereport(ERROR,
+						(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+						errmsg("Showing Estimated Execution Plan for COMMIT statment is not yet supported")));
+			}
 			exec_stmt_commit(estate, (PLtsql_stmt_commit *) stmt);
 			break;
 		case PLTSQL_STMT_ROLLBACK:
+			if (pltsql_explain_only)
+			{
+				ereport(ERROR,
+						(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+						errmsg("Showing Estimated Execution Plan for ROLLBACK statment is not yet supported")));
+			}
 			exec_stmt_rollback(estate, (PLtsql_stmt_rollback *) stmt);
 			break;
 	    /* TSQL-only statement types follow */
         case PLTSQL_STMT_GOTO:
             exec_stmt_goto(estate, (PLtsql_stmt_goto *) stmt);
             break;
+		case PLTSQL_STMT_SET_EXPLAIN_MODE:
+			exec_stmt_set_explain_mode(estate, (PLtsql_stmt_set_explain_mode *) stmt);
+			break;
         case PLTSQL_STMT_PRINT:
+			if (pltsql_explain_only)
+			{
+				ereport(ERROR,
+						(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+						errmsg("Showing Estimated Execution Plan for PRINT statment is not yet supported")));
+			}
             exec_stmt_print(estate, (PLtsql_stmt_print *)stmt);
             break;
 		case PLTSQL_STMT_QUERY_SET:
+			if (pltsql_explain_only)
+			{
+				ereport(ERROR,
+						(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+						errmsg("Showing Estimated Execution Plan for QUERY SET statment is not yet supported")));
+			}
 			exec_stmt_query_set(estate, (PLtsql_stmt_query_set *) stmt);
 			break;
         case PLTSQL_STMT_PUSH_RESULT:
+			if (pltsql_explain_only)
+			{
+				ereport(ERROR,
+						(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+						errmsg("Showing Estimated Execution Plan for PUSH RESULT statment is not yet supported")));
+			}
             exec_stmt_push_result(estate, (PLtsql_stmt_push_result *) stmt);
             break;
 		case PLTSQL_STMT_EXEC:
 			exec_stmt_exec(estate, (PLtsql_stmt_exec *) stmt);
 			break;
 		case PLTSQL_STMT_EXEC_BATCH:
+			if (pltsql_explain_only)
+			{
+				ereport(ERROR,
+						(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+						errmsg("Showing Estimated Execution Plan for EXEC BATCH statment is not yet supported")));
+			}
 			exec_stmt_exec_batch(estate, (PLtsql_stmt_exec_batch *) stmt);
 			break;
 		case PLTSQL_STMT_EXEC_SP:
+			if (pltsql_explain_only)
+			{
+				ereport(ERROR,
+						(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+						errmsg("Showing Estimated Execution Plan for EXEC SP statment is not yet supported")));
+			}
 			exec_stmt_exec_sp(estate, (PLtsql_stmt_exec_sp *) stmt);
 			break;
 		case PLTSQL_STMT_DECL_TABLE:
+			if (pltsql_explain_only)
+			{
+				ereport(ERROR,
+						(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+						errmsg("Showing Estimated Execution Plan for DECL TABLE statment is not yet supported")));
+			}
 			exec_stmt_decl_table(estate, (PLtsql_stmt_decl_table *) stmt);
 			break;
 		case PLTSQL_STMT_RETURN_TABLE:
+			if (pltsql_explain_only)
+			{
+				ereport(ERROR,
+						(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+						errmsg("Showing Estimated Execution Plan for RETURN TABLE statment is not yet supported")));
+			}
 			exec_stmt_return_table(estate, (PLtsql_stmt_return_query *) stmt);
 			break;
         case PLTSQL_STMT_DEALLOCATE:
+			if (pltsql_explain_only)
+			{
+				ereport(ERROR,
+						(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+						errmsg("Showing Estimated Execution Plan for DEALLOCATE statment is not yet supported")));
+			}
             exec_stmt_deallocate(estate, (PLtsql_stmt_deallocate *) stmt);
             break;
         case PLTSQL_STMT_DECL_CURSOR:
+			if (pltsql_explain_only)
+			{
+				ereport(ERROR,
+						(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+						errmsg("Showing Estimated Execution Plan for DECL CURSOR statment is not yet supported")));
+			}
             exec_stmt_decl_cursor(estate, (PLtsql_stmt_decl_cursor *) stmt);
             break;
 		case PLTSQL_STMT_RAISERROR:
+			if (pltsql_explain_only)
+			{
+				ereport(ERROR,
+						(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+						errmsg("Showing Estimated Execution Plan for RAISE ERROR statment is not yet supported")));
+			}
 			exec_stmt_raiserror(estate, (PLtsql_stmt_raiserror *) stmt);
 			break;
 		case PLTSQL_STMT_THROW:
+			if (pltsql_explain_only)
+			{
+				ereport(ERROR,
+						(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+						errmsg("Showing Estimated Execution Plan for THROW statment is not yet supported")));
+			}
 			exec_stmt_throw(estate, (PLtsql_stmt_throw *) stmt);
 			break;
 		case PLTSQL_STMT_USEDB:
+			if (pltsql_explain_only)
+			{
+				ereport(ERROR,
+						(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+						errmsg("Showing Estimated Execution Plan for USE DB statment is not yet supported")));
+			}
 			exec_stmt_usedb(estate, (PLtsql_stmt_usedb *) stmt);
 			break;
         case PLTSQL_STMT_INSERT_BULK:
+			if (pltsql_explain_only)
+			{
+				ereport(ERROR,
+						(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+						errmsg("Showing Estimated Execution Plan for INSERT BULK statment is not yet supported")));
+			}
             exec_stmt_insert_bulk(estate, (PLtsql_stmt_insert_bulk *) stmt);
             break;
         /* TSQL-only executable node */
         case PLTSQL_STMT_INIT_VARS:
+			if (pltsql_explain_only)
+			{
+				ereport(ERROR,
+						(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+						errmsg("Showing Estimated Execution Plan for INIT VARS statment is not yet supported")));
+			}
             exec_stmt_init_vars(estate, (PLtsql_stmt_init_vars *) stmt);
             break;
         case PLTSQL_STMT_RESTORE_CTX_FULL:
+			if (pltsql_explain_only)
+			{
+				ereport(ERROR,
+						(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+						errmsg("Showing Estimated Execution Plan for RESTORE CTX FULL statment is not yet supported")));
+			}
             exec_stmt_restore_ctx_full(estate, (PLtsql_stmt_restore_ctx_full *) stmt);
             break;
         case PLTSQL_STMT_RESTORE_CTX_PARTIAL:
+			if (pltsql_explain_only)
+			{
+				ereport(ERROR,
+						(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+						errmsg("Showing Estimated Execution Plan for RESTORE CTX PARTIAL statment is not yet supported")));
+			}
             exec_stmt_restore_ctx_partial(estate, (PLtsql_stmt_restore_ctx_partial *) stmt);
             break;
         default:
@@ -1401,7 +1582,10 @@ int exec_stmt_iterative(PLtsql_execstate *estate, ExecCodes *exec_codes, ExecCon
 			/* Let the protocol plugin know that we have finished executing this statement */
 			if (*pltsql_protocol_plugin_ptr && (*pltsql_protocol_plugin_ptr)->stmt_end)
 				((*pltsql_protocol_plugin_ptr)->stmt_end) (estate, stmt);
+
+			process_explain_analyze(estate);
 		}
+		process_explain(estate);
 	}
 	PG_CATCH();
 	{
@@ -1459,6 +1643,136 @@ void free_exec_codes(ExecCodes *exec_codes)
 /***************************************************************************************
  *                         Helper Functions
  **************************************************************************************/
+
+static
+void process_explain(PLtsql_execstate *estate)
+{
+	ExplainInfo *einfo;
+	TupleDesc tupdesc;
+	DestReceiver *receiver;
+	Portal portal;
+	TupOutputState *tstate;
+	ListCell *lc;
+	StringInfoData planstr;
+
+	if (!estate || !estate->explain_infos || estate->explain_infos->length == 0)
+		return;
+	if (!pltsql_explain_only)
+		return;
+
+	/* Let the protocol plugin know that we are about to start execution */
+	if (*pltsql_protocol_plugin_ptr && (*pltsql_protocol_plugin_ptr)->stmt_beg)
+		((*pltsql_protocol_plugin_ptr)->stmt_beg) (estate, NULL);
+
+	/* Concat all explain_infos */
+	initStringInfo(&planstr);
+	foreach(lc, estate->explain_infos)
+	{
+		einfo = (ExplainInfo *) lfirst(lc);
+		appendStringInfoString(&planstr, einfo->data);
+		appendStringInfoString(&planstr, "\n");
+	}
+
+	tupdesc = CreateTemplateTupleDesc(1);
+	TupleDescInitEntry(tupdesc, (AttrNumber) 1, "QUERY PLAN", TEXTOID, -1, 0);
+
+	receiver = CreateDestReceiver(DestRemote);
+	portal = CreateNewPortal();
+	SetRemoteDestReceiverParams(receiver, portal);
+
+	tstate = begin_tup_output_tupdesc(receiver, tupdesc, &TTSOpsVirtual);
+	do_text_output_multiline(tstate, planstr.data);
+	end_tup_output(tstate);
+
+	receiver->rDestroy(receiver);
+	SPI_cursor_close(portal);
+
+	/* Let the protocol plugin know that we have finished execution */
+	if (*pltsql_protocol_plugin_ptr && (*pltsql_protocol_plugin_ptr)->stmt_end)
+		((*pltsql_protocol_plugin_ptr)->stmt_end) (estate, NULL);
+
+	/* We need to manually send DONE token because the current stmt is NULL */
+	if (*pltsql_protocol_plugin_ptr && (*pltsql_protocol_plugin_ptr)->send_done)
+		((*pltsql_protocol_plugin_ptr)->send_done) (
+			0xFD /*TDS_TOKEN_DONE*/,
+			0x00 /*TDS_DONE_FINAL*/,
+			0xF7 /*TDS_CMD_INFO*/,
+			0 /*nprocessed*/
+		);
+}
+
+static
+void process_explain_analyze(PLtsql_execstate *estate)
+{
+	if (!estate || !estate->explain_infos || estate->explain_infos->length == 0)
+		return;
+	if (!is_explain_analyze_mode())
+		return;
+
+	/* Send query plans to a client */
+	PG_TRY();
+	{
+		Oid restype;
+		TupleDesc tupdesc;
+		DestReceiver *receiver;
+		Portal portal;
+		TupOutputState *tstate;
+		ExplainInfo *einfo;
+		ListCell *lc;
+
+		foreach(lc, estate->explain_infos)
+		{
+			/* Let the protocol plugin know that we are about to start execution */
+			if (*pltsql_protocol_plugin_ptr && (*pltsql_protocol_plugin_ptr)->stmt_beg)
+				((*pltsql_protocol_plugin_ptr)->stmt_beg) (estate, NULL);
+
+			if (pltsql_explain_format == EXPLAIN_FORMAT_XML)
+				restype = XMLOID;
+			else
+				restype = TEXTOID;
+
+			tupdesc = CreateTemplateTupleDesc(1);
+			TupleDescInitEntry(tupdesc, (AttrNumber) 1, "QUERY PLAN", restype, -1, 0);
+
+			receiver = CreateDestReceiver(DestRemote);
+			portal = CreateNewPortal();
+			SetRemoteDestReceiverParams(receiver, portal);
+
+			tstate = begin_tup_output_tupdesc(receiver, tupdesc, &TTSOpsVirtual);
+			einfo = (ExplainInfo *) lfirst(lc);
+			if (pltsql_explain_format == EXPLAIN_FORMAT_TEXT)
+				do_text_output_multiline(tstate, einfo->data);
+			else
+				do_text_output_oneline(tstate, einfo->data);
+			end_tup_output(tstate);
+
+			receiver->rDestroy(receiver);
+			SPI_cursor_close(portal);
+
+			/* Let the protocol plugin know that we have finished execution */
+			if (*pltsql_protocol_plugin_ptr && (*pltsql_protocol_plugin_ptr)->stmt_end)
+				((*pltsql_protocol_plugin_ptr)->stmt_end) (estate, NULL);
+
+			/* We need to manually send DONE token because there is no associated stmt */
+			if (*pltsql_protocol_plugin_ptr && (*pltsql_protocol_plugin_ptr)->send_done)
+				((*pltsql_protocol_plugin_ptr)->send_done) (
+					0xFD /*TDS_TOKEN_DONE*/,
+					0x00 /*TDS_DONE_FINAL*/,
+					0xF7 /*TDS_CMD_INFO*/,
+					0 /*nprocessed*/
+				);
+		}
+	}
+	PG_FINALLY();
+	{
+		/* Because this function is called at the end of each top level statement,
+		 * we need to clear it so that the next top level statements
+		 * can use it for their query plans.
+		 */
+		estate->explain_infos = NIL;
+	}
+	PG_END_TRY();
+}
 
 static 
 void set_exec_error_data(char *procedure, int number, int severity, int state, bool rethrow)

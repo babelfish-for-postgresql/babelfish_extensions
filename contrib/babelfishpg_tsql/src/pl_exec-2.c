@@ -10,10 +10,12 @@
 #include "nodes/parsenodes.h"
 
 #include "catalog.h"
+#include "pl_explain.h"
 #include "session.h"
 
 /* helper function to get current T-SQL estate */
 PLtsql_execstate *get_current_tsql_estate(void);
+PLtsql_execstate *get_outermost_tsql_estate(int *nestlevel);
 
 /*
  * NOTE:
@@ -118,6 +120,25 @@ PLtsql_execstate *get_current_tsql_estate()
 
 	/* Couldn't find any T-SQL estate */
 	return NULL;
+}
+
+PLtsql_execstate *get_outermost_tsql_estate(int *nestlevel)
+{
+	PLtsql_execstate *estate = NULL;
+	ErrorContextCallback *plerrcontext = error_context_stack;
+	*nestlevel = 0;
+	while (plerrcontext != NULL)
+	{
+		/* Check plerrcontext was created in T-SQL */
+		if (plerrcontext->callback == pltsql_exec_error_callback)
+		{
+			estate = (PLtsql_execstate *) plerrcontext->arg;
+			(*nestlevel)++;
+		}
+		plerrcontext = plerrcontext->previous;
+	}
+
+	return estate;
 }
 
 static int
@@ -2633,8 +2654,15 @@ execute_plan_and_push_result(PLtsql_execstate *estate, PLtsql_expr *expr, ParamL
 		elog(ERROR, "could not open implicit cursor for query \"%s\": %s",
 				expr->query, SPI_result_code_string(SPI_result));
 
-	receiver = CreateDestReceiver(DestRemote);
-	SetRemoteDestReceiverParams(receiver, portal);
+	if (pltsql_explain_only)
+	{
+		receiver = None_Receiver;
+	}
+	else
+	{
+		receiver = CreateDestReceiver(DestRemote);
+		SetRemoteDestReceiverParams(receiver, portal);
+	}
 
 	success = PortalRun(portal,
 					 FETCH_ALL,

@@ -21,6 +21,7 @@ extern "C" {
 #else
 #include "pltsql.h"
 #include "pltsql-2.h"
+#include "pl_explain.h"
 
 #include "catalog/namespace.h"
 #include "catalog/pg_proc.h"
@@ -86,6 +87,7 @@ PLtsql_stmt *makeSQL(ParserRuleContext *ctx);
 std::vector<PLtsql_stmt *> makeAnother(TSqlParser::Another_statementContext *ctx, tsqlBuilder &builder);
 PLtsql_stmt *makeExecBodyBatch(TSqlParser::Execute_body_batchContext *ctx);
 PLtsql_stmt *makeInsertBulkStatement(TSqlParser::Dml_statementContext *ctx);
+PLtsql_stmt *makeSetExplainModeStatement(TSqlParser::Set_statementContext *ctx, bool is_explain_only);
 PLtsql_expr *makeTsqlExpr(const std::string &fragment, bool addSelect);
 PLtsql_expr *makeTsqlExpr(ParserRuleContext *ctx, bool addSelect);
 void * makeBlockStmt(ParserRuleContext *ctx, tsqlBuilder &builder);
@@ -3674,6 +3676,9 @@ makeSetStatement(TSqlParser::Set_statementContext *ctx, tsqlBuilder &builder)
 		}
 		else if (set_special_ctx->set_on_off_option().size() == 1)
 		{
+			auto option = set_special_ctx->set_on_off_option().front();
+			if (option->BABELFISH_SHOWPLAN_ALL())
+				return makeSetExplainModeStatement(ctx, true);
 			return makeSQL(ctx);
 		}
 		else if (!set_special_ctx->id().empty())
@@ -3691,11 +3696,54 @@ makeSetStatement(TSqlParser::Set_statementContext *ctx, tsqlBuilder &builder)
 			return nullptr;
 		else if (set_special_ctx->STATISTICS())
 			return nullptr;
+		else if (set_special_ctx->BABELFISH_STATISTICS() && set_special_ctx->PROFILE())
+			return makeSetExplainModeStatement(ctx, false);
 		else
 			return makeSQL(ctx);
 	}
 	else
 		return nullptr;
+}
+
+PLtsql_stmt *
+makeSetExplainModeStatement(TSqlParser::Set_statementContext *ctx, bool is_explain_only)
+{
+	TSqlParser::Set_specialContext *set_special_ctx;
+	PLtsql_stmt_set_explain_mode *stmt;
+	std::string on_off;
+	size_t len;
+
+	set_special_ctx = static_cast<TSqlParser::Set_specialContext*> (ctx->set_special());
+	if (!set_special_ctx)
+		return nullptr;
+
+	stmt = (PLtsql_stmt_set_explain_mode *) palloc0(sizeof(PLtsql_stmt_set_explain_mode));
+	on_off = getFullText(set_special_ctx->on_off());
+	len = on_off.length();
+
+	stmt->cmd_type = PLTSQL_STMT_SET_EXPLAIN_MODE;
+	stmt->lineno = getLineNo(ctx);
+	stmt->query = pstrdup(getFullText(ctx).c_str());
+	if (is_explain_only)
+	{
+		stmt->is_explain_only = true;
+		stmt->is_explain_analyze = false;
+	}
+	else
+	{
+		stmt->is_explain_only = false;
+		stmt->is_explain_analyze = true;
+	}
+
+	if (pg_strncasecmp(on_off.c_str(), "on", len) == 0)
+		stmt->val = true;
+	else if (pg_strncasecmp(on_off.c_str(), "off", len) == 0)
+		stmt->val = false;
+	else
+		return nullptr;
+
+	attachPLtsql_fragment(ctx, (PLtsql_stmt *) stmt);
+	return (PLtsql_stmt *) stmt;
 }
 
 PLtsql_stmt *

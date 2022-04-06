@@ -174,6 +174,7 @@ typedef enum PLtsql_stmt_type
 	PLTSQL_STMT_RAISERROR,
 	PLTSQL_STMT_THROW,
 	PLTSQL_STMT_USEDB,
+	PLTSQL_STMT_SET_EXPLAIN_MODE,
     /* TSQL-only executable node */
     PLTSQL_STMT_INIT_VARS,
     PLTSQL_STMT_SAVE_CTX,
@@ -1015,6 +1016,21 @@ typedef struct PLtsql_stmt_execsql
 } PLtsql_stmt_execsql;
 
 /*
+ * SET statement to change EXPLAIN MODE
+ * The main reason for this PLtsql statement is
+ * to turn off EXPLAIN ONLY MODE while it is on.
+ */
+typedef struct PLtsql_stmt_set_explain_mode
+{
+	PLtsql_stmt_type cmd_type;
+	int lineno;
+	char *query;
+	bool is_explain_only;
+	bool is_explain_analyze;
+	bool val;
+} PLtsql_stmt_set_explain_mode;
+
+/*
  * Dynamic SQL string to execute
  */
 typedef struct PLtsql_stmt_dynexecute
@@ -1246,6 +1262,11 @@ typedef struct
     bool                    partial_restored;  /* set true before executing catch block */
 } PLtsql_errctx;
 
+typedef struct ExplainInfo
+{
+    char *data;		/* Estimated (or Actual) Query Execution Plan for a single statement */
+} ExplainInfo;
+
 typedef struct PLtsql_execstate
 {
 	PLtsql_function *func;		/* function being executed */
@@ -1340,6 +1361,8 @@ typedef struct PLtsql_execstate
 	 * EXECUTE, and can behave differently.
 	 */
 	bool 		insert_exec;
+
+	List 		*explain_infos;
 } PLtsql_execstate;
 
 /*

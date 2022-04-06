@@ -76,6 +76,7 @@
 #include "schemacmds.h"
 #include "session.h"
 #include "pltsql.h"
+#include "pl_explain.h"
 #include "datatypes.h"
 
 #include "access/xact.h"
@@ -94,6 +95,7 @@ extern Datum init_tsql_coerce_hash_tab(PG_FUNCTION_ARGS);
 extern Datum init_tsql_datatype_precedence_hash_tab(PG_FUNCTION_ARGS);
 extern Datum init_tsql_cursor_hash_tab(PG_FUNCTION_ARGS);
 extern PLtsql_execstate *get_current_tsql_estate(void);
+extern PLtsql_execstate *get_outermost_tsql_estate(int *nestlevel);
 extern void pre_check_trigger_schema(List *object, bool missing_ok);
 static void  get_language_procs(const char *langname, Oid *compiler, Oid *validator);
 extern bool pltsql_suppress_string_truncation_error();
@@ -1975,6 +1977,52 @@ PLTsqlProcessTransaction(Node *parsetree,
 }
 
 /*
+ * It returns TRUE when we should not execute the utility statement,
+ * e.g., CREATE FUNCTION, in EXPLAIN ONLY MODE.
+ * If it returns FALSE, it means we can execute the utility statement.
+ * For some cases, e.g., EXEC procedure, we need to execute the procedure
+ * even in EXPLAIN ONLY MODE. In that case, EXPLAIN ONLY MODE should be considered
+ * for individual statements inside the procedure.
+ */
+static inline bool process_utility_stmt_explain_only_mode(const char *queryString, Node *parsetree)
+{
+	CallStmt *callstmt;
+	HeapTuple proctuple;
+	Oid procid;
+	Oid langoid;
+	char *langname;
+
+	if (!pltsql_explain_only)
+		return false;
+
+	append_explain_info(NULL, queryString);
+
+	if (nodeTag(parsetree) != T_CallStmt)
+		return true;
+
+	callstmt = (CallStmt *) parsetree;
+	procid = callstmt->funcexpr->funcid;
+	proctuple = SearchSysCache1(PROCOID, ObjectIdGetDatum(procid));
+	if (!HeapTupleIsValid(proctuple))
+		return true;
+
+	langoid = ((Form_pg_proc) GETSTRUCT(proctuple))->prolang;
+	ReleaseSysCache(proctuple);
+
+	langname = get_language_name(langoid, true);
+	if (!langname)
+		return true;
+
+	/* If a procedure language is pltsql, it is safe to execute the procedure.
+	 * EXPLAIN ONLY MODE will be considered for each statements inside the procedure.
+	 */
+	if (pg_strcasecmp("pltsql", langname) == 0)
+		return false;
+
+	return true;
+}
+
+/*
  * Use this hook to handle utility statements that needs special treatment, and
  * use the standard ProcessUtility for other statements.
  * CreateFunctionStmt could have elements in the options list that are specific
@@ -1992,6 +2040,9 @@ static void bbf_ProcessUtility(PlannedStmt *pstmt,
 	Node	   				*parsetree = pstmt->utilityStmt;
 	ParseState 				*pstate = make_parsestate(NULL);
 	pstate->p_sourcetext = 	queryString;
+
+	if (process_utility_stmt_explain_only_mode(queryString, parsetree))
+		return; /* Don't execute anything */
 
 	switch (nodeTag(parsetree))
 	{

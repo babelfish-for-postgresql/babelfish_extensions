@@ -12,6 +12,7 @@
 #include "catalog/pg_proc.h"
 #include "catalog/pg_type.h"
 #include "commands/copy.h"
+#include "commands/explain.h"
 #include "commands/tablecmds.h"
 #include "funcapi.h"
 #include "nodes/makefuncs.h"
@@ -40,6 +41,8 @@
 #include "pltsql.h"
 #include "backend_parser/scanner.h"
 #include "hooks.h"
+#include "pltsql.h"
+#include "pl_explain.h"
 #include "catalog.h"
 #include "rolecmds.h"
 
@@ -75,11 +78,28 @@ static int find_attr_by_name_from_column_def_list(const char *attributeName, Lis
  * 			Utility Hooks
  *****************************************/
 static void pltsql_report_proc_not_found_error(List *names, List *argnames, int nargs, ParseState *pstate, int location, bool proc_call);
+extern PLtsql_execstate *get_outermost_tsql_estate(int *nestlevel);
+
+/*****************************************
+ * 			Executor Hooks
+ *****************************************/
+static void pltsql_ExecutorStart(QueryDesc *queryDesc, int eflags);
+static void pltsql_ExecutorRun(QueryDesc *queryDesc, ScanDirection direction, uint64 count, bool execute_once);
+static void pltsql_ExecutorFinish(QueryDesc *queryDesc);
+static void pltsql_ExecutorEnd(QueryDesc *queryDesc);
 
 /*****************************************
  * 			Replication Hooks
  *****************************************/
 static void logicalrep_modify_slot(Relation rel, EState *estate, TupleTableSlot *slot);
+
+/*****************************************
+ * 			Object Access Hook
+ *****************************************/
+static object_access_hook_type prev_object_access_hook = NULL;
+static void bbf_object_access_hook(ObjectAccessType access, Oid classId, Oid objectId, int subId, void *arg);
+static void revoke_func_permission_from_public(Oid objectId);
+static char *gen_func_arg_list(Oid objectId);
 
 /* Save hook values in case of unload */
 static core_yylex_hook_type prev_core_yylex_hook = NULL;
@@ -93,15 +113,10 @@ static find_attr_by_name_from_relation_hook_type prev_find_attr_by_name_from_rel
 static report_proc_not_found_error_hook_type prev_report_proc_not_found_error_hook = NULL;
 static logicalrep_modify_slot_hook_type prev_logicalrep_modify_slot_hook = NULL;
 static is_tsql_rowversion_or_timestamp_datatype_hook_type prev_is_tsql_rowversion_or_timestamp_datatype_hook = NULL;
-
-
-/*****************************************
- * 			Object Access Hook
- *****************************************/
-static object_access_hook_type prev_object_access_hook = NULL;
-static void bbf_object_access_hook(ObjectAccessType access, Oid classId, Oid objectId, int subId, void *arg);
-static void revoke_func_permission_from_public(Oid objectId);
-static char *gen_func_arg_list(Oid objectId);
+static ExecutorStart_hook_type prev_ExecutorStart = NULL;
+static ExecutorRun_hook_type prev_ExecutorRun = NULL;
+static ExecutorFinish_hook_type prev_ExecutorFinish = NULL;
+static ExecutorEnd_hook_type prev_ExecutorEnd = NULL;
 
 /*****************************************
  * 			Install / Uninstall
@@ -155,6 +170,18 @@ InstallExtendedHooks(void)
 
 	prev_is_tsql_rowversion_or_timestamp_datatype_hook = is_tsql_rowversion_or_timestamp_datatype_hook;
 	is_tsql_rowversion_or_timestamp_datatype_hook = is_tsql_rowversion_or_timestamp_datatype;
+
+	prev_ExecutorStart = ExecutorStart_hook;
+	ExecutorStart_hook = pltsql_ExecutorStart;
+
+	prev_ExecutorRun = ExecutorRun_hook;
+	ExecutorRun_hook = pltsql_ExecutorRun;
+
+	prev_ExecutorFinish = ExecutorFinish_hook;
+	ExecutorFinish_hook = pltsql_ExecutorFinish;
+
+	prev_ExecutorEnd = ExecutorEnd_hook;
+	ExecutorEnd_hook = pltsql_ExecutorEnd;
 }
 
 void
@@ -179,11 +206,86 @@ UninstallExtendedHooks(void)
 	report_proc_not_found_error_hook = prev_report_proc_not_found_error_hook;
 	logicalrep_modify_slot_hook = prev_logicalrep_modify_slot_hook;
 	is_tsql_rowversion_or_timestamp_datatype_hook = prev_is_tsql_rowversion_or_timestamp_datatype_hook;
+	ExecutorStart_hook = prev_ExecutorStart;
+	ExecutorRun_hook = prev_ExecutorRun;
+	ExecutorFinish_hook = prev_ExecutorFinish;
+	ExecutorEnd_hook = prev_ExecutorEnd;
 }
 
 /*****************************************
  * 			Hook Functions
  *****************************************/
+
+static void
+pltsql_ExecutorStart(QueryDesc *queryDesc, int eflags)
+{
+	int ef = pltsql_explain_only ? EXEC_FLAG_EXPLAIN_ONLY : eflags;
+	if (is_explain_analyze_mode())
+	{
+		if (pltsql_explain_timing)
+			queryDesc->instrument_options |= INSTRUMENT_TIMER;
+		else
+			queryDesc->instrument_options |= INSTRUMENT_ROWS;
+		if (pltsql_explain_buffers)
+			queryDesc->instrument_options |= INSTRUMENT_BUFFERS;
+		if (pltsql_explain_wal)
+			queryDesc->instrument_options |= INSTRUMENT_WAL;
+	}
+
+	if (prev_ExecutorStart)
+		prev_ExecutorStart(queryDesc, ef);
+	else
+		standard_ExecutorStart(queryDesc, ef);
+
+	if (is_explain_analyze_mode() && !queryDesc->totaltime)
+	{
+		/*
+		 * Set up to track total elapsed time in ExecutorRun. Make sure the
+		 * space is allocated in the per-query context so it will go away at
+		 * ExecutorEnd.
+		 */
+		MemoryContext oldcxt;
+
+		oldcxt = MemoryContextSwitchTo(queryDesc->estate->es_query_cxt);
+		queryDesc->totaltime = InstrAlloc(1, INSTRUMENT_ALL, false);
+		MemoryContextSwitchTo(oldcxt);
+	}
+}
+
+static void
+pltsql_ExecutorRun(QueryDesc *queryDesc, ScanDirection direction, uint64 count, bool execute_once)
+{
+	if (pltsql_explain_only)
+		return;
+
+	if (prev_ExecutorRun)
+		prev_ExecutorRun(queryDesc, direction, count, execute_once);
+	else
+		standard_ExecutorRun(queryDesc, direction, count, execute_once);
+}
+
+static void
+pltsql_ExecutorFinish(QueryDesc *queryDesc)
+{
+	if (pltsql_explain_only)
+		return;
+
+	if (prev_ExecutorFinish)
+		prev_ExecutorFinish(queryDesc);
+	else
+		standard_ExecutorFinish(queryDesc);
+}
+
+static void
+pltsql_ExecutorEnd(QueryDesc *queryDesc)
+{
+	append_explain_info(queryDesc, NULL);
+
+	if (prev_ExecutorEnd)
+		prev_ExecutorEnd(queryDesc);
+	else
+		standard_ExecutorEnd(queryDesc);
+}
 
 static Node *
 output_update_self_join_transformation(ParseState *pstate, UpdateStmt *stmt, CmdType command)
