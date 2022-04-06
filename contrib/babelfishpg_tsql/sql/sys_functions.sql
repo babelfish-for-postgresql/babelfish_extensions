@@ -1856,7 +1856,7 @@ END;
 $$;
 GRANT EXECUTE ON FUNCTION sys.original_login() TO PUBLIC;
 
-CREATE OR REPLACE FUNCTION sys.columnproperty(object_id oid, property pg_catalog.name, property_name text)
+CREATE OR REPLACE FUNCTION sys.columnproperty(object_id oid, property name, property_name text)
 RETURNS integer
 LANGUAGE plpgsql
 STRICT
@@ -1883,7 +1883,7 @@ EXCEPTION
  		RETURN NULL;
 END;
 $$;
-GRANT EXECUTE ON FUNCTION sys.columnproperty(object_id oid, property pg_catalog.name, property_name text) TO PUBLIC;
+GRANT EXECUTE ON FUNCTION sys.columnproperty(object_id oid, property name, property_name text) TO PUBLIC;
 
 COMMENT ON FUNCTION sys.columnproperty 
 IS 'This function returns column or parameter information. Currently only works with "charmaxlen", and "allowsnull" otherwise returns 0.';
