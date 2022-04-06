@@ -1681,7 +1681,69 @@ tsql_values_clause:
 		;
 
 tsql_output_clause:
-					TSQL_OUTPUT target_list	{ $$ = $2; }
+					TSQL_OUTPUT tsql_output_target_list	{ $$ = $2; }
+		;
+
+tsql_output_target_list:
+			tsql_output_target_el								{ $$ = list_make1($1); }
+			| tsql_output_target_list ',' tsql_output_target_el				{ $$ = lappend($1, $3); }
+		;
+
+
+tsql_output_target_el: /* same as target_el but BareColLabel is not allowed. keep a_expr IDENT instead */
+				a_expr AS AS_ColLabel
+				{
+					$$ = makeNode(ResTarget);
+					$$->name = $3;
+					$$->name_location = @3;
+					$$->indirection = NIL;
+					$$->val = (Node *)$1;
+					$$->location = @1;
+				}
+			/*
+			 * We support omitting AS only for column labels that aren't
+			 * any known keyword.  There is an ambiguity against postfix
+			 * operators: is "a ! b" an infix expression, or a postfix
+			 * expression and a column label?  We prefer to resolve this
+			 * as an infix expression, which we accomplish by assigning
+			 * IDENT a precedence higher than POSTFIXOP.
+			 */
+			| a_expr IDENT
+				{
+					$$ = makeNode(ResTarget);
+
+					/* In TSQL we need to preserve the case of the AS clause in the outermost
+					 * query block, at least.  Target list references must be resolved case-
+					 * insensitively when the database collation is case-insensitive.
+					 */
+					$$->name = $2;
+					$$->name_location = @2;
+					$$->indirection = NIL;
+					$$->val = (Node *)$1;
+					$$->location = @1;
+				}
+			| a_expr
+				{
+					$$ = makeNode(ResTarget);
+					$$->name = NULL;
+					$$->name_location = -1;
+					$$->indirection = NIL;
+					$$->val = (Node *)$1;
+					$$->location = @1;
+				}
+			| '*'
+				{
+					ColumnRef *n = makeNode(ColumnRef);
+					n->fields = list_make1(makeNode(A_Star));
+					n->location = @1;
+
+					$$ = makeNode(ResTarget);
+					$$->name = NULL;
+					$$->name_location = -1;
+					$$->indirection = NIL;
+					$$->val = (Node *)n;
+					$$->location = @1;
+				}
 		;
 
 tsql_output_into_target_columns:

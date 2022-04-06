@@ -1,4 +1,4 @@
-%expect 2
+%expect 1
 
 %debug
 %verbose
@@ -79,7 +79,8 @@
 %type <istmt> tsql_output_insert_rest tsql_output_insert_rest_no_paren
 
 %type <node> tsql_output_simple_select tsql_values_clause
-%type <list> tsql_output_clause tsql_output_into_target_columns
+%type <list> tsql_output_clause tsql_output_target_list tsql_output_into_target_columns
+%type <target> tsql_output_target_el
 %type <node> tsql_alter_server_role
 
 %token <keyword> TSQL_ATAT TSQL_ALLOW_SNAPSHOT_ISOLATION
