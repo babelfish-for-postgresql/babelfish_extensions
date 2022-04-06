@@ -344,7 +344,7 @@ CREATE VIEW information_schema_tsql.tables AS
 		   CAST(
 			 CASE WHEN c.reloptions[1] LIKE 'bbf_original_rel_name%' THEN substring(c.reloptions[1], 23)
                   ELSE c.relname END
-			 AS sys.name) AS "TABLE_NAME",
+			 AS sys._ci_sysname) AS "TABLE_NAME",
 
 		   CAST(
 			 CASE WHEN c.relkind IN ('r', 'p') THEN 'BASE TABLE'

@@ -4,8 +4,8 @@ CREATE TABLE sys.babelfish_sysdatabases (
 	dbid SMALLINT NOT NULL UNIQUE,
 	status INT NOT NULL,
 	status2 INT NOT NULL,
-	owner pg_catalog.NAME NOT NULL,
-	default_collation pg_catalog.NAME NOT NULL,
+	owner NAME NOT NULL,
+	default_collation NAME NOT NULL,
 	name TEXT NOT NULL COLLATE "C",
 	crdate timestamptz NOT NULL,
 	properties TEXT NOT NULL COLLATE "C",
@@ -16,7 +16,7 @@ GRANT SELECT on sys.babelfish_sysdatabases TO PUBLIC;
 
 -- BABELFISH_NAMESPACE_EXT
 CREATE TABLE sys.babelfish_namespace_ext (
-    nspname pg_catalog.NAME NOT NULL,
+    nspname NAME NOT NULL,
     dbid SMALLINT NOT NULL,
     orig_name sys.NVARCHAR(128) NOT NULL,
 	properties TEXT NOT NULL COLLATE "C",
@@ -114,7 +114,7 @@ AS $$
 DECLARE
 	reserved_roles varchar[] := ARRAY['sysadmin', 'master_dbo', 'master_guest', 'master_db_owner', 'tempdb_dbo', 'tempdb_guest', 'tempdb_db_owner'];
 	user_id  oid := -1;
-	db_name  pg_catalog.name := NULL;
+	db_name  name := NULL;
 	role_name varchar;
 	dba_name varchar;
 BEGIN
@@ -166,7 +166,7 @@ $$;
 -- LOGIN EXT
 -- Note: change here requires change in FormData_authid_login_ext too
 CREATE TABLE sys.babelfish_authid_login_ext (
-rolname pg_catalog.NAME NOT NULL, -- pg_authid.rolname
+rolname NAME NOT NULL, -- pg_authid.rolname
 is_disabled INT NOT NULL DEFAULT 0, -- to support enable/disable login
 type CHAR(1) NOT NULL DEFAULT 'S',
 credential_id INT NOT NULL,
@@ -208,8 +208,8 @@ GRANT SELECT ON sys.server_principals TO PUBLIC;
 
 -- USER extension
 CREATE TABLE sys.babelfish_authid_user_ext (
-rolname pg_catalog.NAME NOT NULL,
-login_name pg_catalog.NAME NOT NULL,
+rolname NAME NOT NULL,
+login_name NAME NOT NULL,
 type CHAR(1) NOT NULL DEFAULT 'S',
 owning_principal_id INT,
 is_fixed_role INT NOT NULL DEFAULT 0,
