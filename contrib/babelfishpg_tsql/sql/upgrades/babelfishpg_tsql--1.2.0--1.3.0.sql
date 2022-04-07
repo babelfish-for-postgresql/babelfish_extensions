@@ -271,5 +271,83 @@ $$
 LANGUAGE 'pltsql';
 GRANT EXECUTE on PROCEDURE sys.sp_special_columns_100 TO PUBLIC;
 
+CREATE OR REPLACE FUNCTION sys.suser_name_internal(IN server_user_id OID)
+RETURNS sys.NVARCHAR(128)
+AS 'babelfishpg_tsql', 'suser_name'
+LANGUAGE C IMMUTABLE PARALLEL RESTRICTED;
+
+CREATE OR REPLACE FUNCTION sys.suser_name(IN server_user_id OID)
+RETURNS sys.NVARCHAR(128) AS $$
+    SELECT CASE 
+        WHEN server_user_id IS NULL THEN NULL
+        ELSE sys.suser_name_internal(server_user_id)
+    END;
+$$
+LANGUAGE SQL IMMUTABLE PARALLEL RESTRICTED;
+
+CREATE OR REPLACE FUNCTION sys.suser_name()
+RETURNS sys.NVARCHAR(128)
+AS $$
+    SELECT sys.suser_name_internal(NULL);
+$$
+LANGUAGE SQL IMMUTABLE PARALLEL RESTRICTED;
+
+-- Since SIDs are currently not supported in Babelfish, this essentially behaves the same as suser_name but 
+-- with a different input data type
+CREATE OR REPLACE FUNCTION sys.suser_sname(IN server_user_sid SYS.VARBINARY(85))
+RETURNS SYS.NVARCHAR(128)
+AS $$
+    SELECT sys.suser_name(CAST(server_user_sid AS INT)); 
+$$
+LANGUAGE SQL IMMUTABLE PARALLEL RESTRICTED;
+
+CREATE OR REPLACE FUNCTION sys.suser_sname()
+RETURNS SYS.NVARCHAR(128)
+AS $$
+    SELECT sys.suser_name();
+$$
+LANGUAGE SQL IMMUTABLE PARALLEL RESTRICTED;
+
+CREATE OR REPLACE FUNCTION sys.suser_id_internal(IN login TEXT)
+RETURNS OID
+AS 'babelfishpg_tsql', 'suser_id'
+LANGUAGE C IMMUTABLE PARALLEL RESTRICTED;
+
+CREATE OR REPLACE FUNCTION sys.suser_id(IN login TEXT)
+RETURNS OID AS $$
+    SELECT CASE
+        WHEN login IS NULL THEN NULL
+        ELSE sys.suser_id_internal(login)
+    END;
+$$
+LANGUAGE SQL IMMUTABLE PARALLEL RESTRICTED;
+
+CREATE OR REPLACE FUNCTION sys.suser_id()
+RETURNS OID
+AS $$
+    SELECT sys.suser_id_internal(NULL);
+$$
+LANGUAGE SQL IMMUTABLE PARALLEL RESTRICTED;
+
+-- Since SIDs are currently not supported in Babelfish, this essentially behaves the same as suser_id but 
+-- with different input/output data types. The second argument will be ignored as its functionality is not supported
+CREATE OR REPLACE FUNCTION sys.suser_sid(IN login SYS.SYSNAME, IN Param2 INT DEFAULT NULL)
+RETURNS SYS.VARBINARY(85) AS $$
+    SELECT CASE
+    WHEN login = '' 
+        THEN CAST(CAST(sys.suser_id() AS INT) AS SYS.VARBINARY(85))
+    ELSE 
+        CAST(CAST(sys.suser_id(login) AS INT) AS SYS.VARBINARY(85))
+    END;
+$$
+LANGUAGE SQL IMMUTABLE PARALLEL RESTRICTED;
+
+CREATE OR REPLACE FUNCTION sys.suser_sid()
+RETURNS SYS.VARBINARY(85)
+AS $$
+    SELECT CAST(CAST(sys.suser_id() AS INT) AS SYS.VARBINARY(85));
+$$
+LANGUAGE SQL IMMUTABLE PARALLEL RESTRICTED;
+ 
 -- Reset search_path to not affect any subsequent scripts
 SELECT set_config('search_path', trim(leading 'sys, ' from current_setting('search_path')), false);

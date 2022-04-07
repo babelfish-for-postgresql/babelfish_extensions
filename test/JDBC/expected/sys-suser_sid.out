@@ -18,7 +18,89 @@ jdbc_user
 ~~END~~
 
 
+DECLARE @id SYS.VARBINARY(85)
+SET @id = (SELECT SYS.SUSER_SID('jDbC_uSeR'))
+SELECT SYS.SUSER_SNAME(@id)
+GO
+~~START~~
+nvarchar
+jdbc_user
+~~END~~
+
+
+DECLARE @id SYS.VARBINARY(85)
+SET @id = (SELECT SYS.SUSER_SID('jdbc_user  '))
+SELECT SYS.SUSER_SNAME(@id)
+GO
+~~START~~
+nvarchar
+jdbc_user
+~~END~~
+
+
+SELECT SYS.SUSER_SID(' jdbc_user')
+GO
+~~START~~
+varbinary
+<NULL>
+~~END~~
+
+
+DECLARE @id SYS.VARBINARY(85)
+SET @id = (SELECT SYS.SUSER_SID('jdbc_user', 0))
+SELECT SYS.SUSER_SNAME(@id)
+GO
+~~START~~
+nvarchar
+jdbc_user
+~~END~~
+
+
+DECLARE @id SYS.VARBINARY(85)
+SET @id = (SELECT SYS.SUSER_SID('jdbc_user', NULL))
+SELECT SYS.SUSER_SNAME(@id)
+GO
+~~START~~
+nvarchar
+jdbc_user
+~~END~~
+
+
 SELECT SYS.SUSER_SID('non_existent_user')
+GO
+~~START~~
+varbinary
+<NULL>
+~~END~~
+
+
+DECLARE @id SYS.VARBINARY(85)
+SET @id = (SELECT SYS.SUSER_SID('', NULL))
+SELECT SYS.SUSER_SNAME(@id)
+GO
+~~START~~
+nvarchar
+jdbc_user
+~~END~~
+
+
+SELECT SYS.SUSER_SID(NULL)
+GO
+~~START~~
+varbinary
+<NULL>
+~~END~~
+
+
+SELECT SYS.SUSER_SID(NULL, NULL)
+GO
+~~START~~
+varbinary
+<NULL>
+~~END~~
+
+
+SELECT SYS.SUSER_SID(NULL, 0)
 GO
 ~~START~~
 varbinary
