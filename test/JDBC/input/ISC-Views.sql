@@ -35,6 +35,11 @@ go
 Select DATA_TYPE, CHARACTER_MAXIMUM_LENGTH, CHARACTER_OCTET_LENGTH, NUMERIC_PRECISION, NUMERIC_PRECISION_RADIX, NUMERIC_SCALE, DATETIME_PRECISION, CHARACTER_SET_CATALOG, CHARACTER_SET_NAME, collation_catalog, collation_schema, collation_name from information_schema.columns where table_name in ('isc_udt') ORDER BY DATA_TYPE
 go
 
+-- Testing delimited schema name
+Select DATA_TYPE, CHARACTER_MAXIMUM_LENGTH, CHARACTER_OCTET_LENGTH, NUMERIC_PRECISION, NUMERIC_PRECISION_RADIX, NUMERIC_SCALE, DATETIME_PRECISION, CHARACTER_SET_CATALOG, CHARACTER_SET_NAME, collation_catalog, collation_schema, collation_name from [information_schema].columns where table_name in ('isc_udt') ORDER BY DATA_TYPE
+Select DATA_TYPE, CHARACTER_MAXIMUM_LENGTH, CHARACTER_OCTET_LENGTH, NUMERIC_PRECISION, NUMERIC_PRECISION_RADIX, NUMERIC_SCALE, DATETIME_PRECISION, CHARACTER_SET_CATALOG, CHARACTER_SET_NAME, collation_catalog, collation_schema, collation_name from "information_schema".columns where table_name in ('isc_udt') ORDER BY DATA_TYPE
+go
+
 -- Testing Cross Database refences
 Create database isc_db
 go
