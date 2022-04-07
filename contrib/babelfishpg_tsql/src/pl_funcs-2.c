@@ -294,18 +294,18 @@ static char
 void
 pre_function_call_hook_impl(const char *funcName)
 {
-	char	*prefix = "instr_tsql_";
-	char	*funcname_edited = replace_with_underscore(funcName);
-	StringInfoData metricName;
-	initStringInfo(&metricName);
-
-	appendStringInfoString(&metricName, prefix);
-	appendStringInfoString(&metricName, funcname_edited);
-
 	if ((pltsql_instr_plugin_ptr &&
 				(*pltsql_instr_plugin_ptr) &&
 				(*pltsql_instr_plugin_ptr)->pltsql_instr_increment_func_metric))
 	{
+	        char	*prefix = "instr_tsql_";
+	        char	*funcname_edited = replace_with_underscore(funcName);
+	        StringInfoData metricName;
+	        initStringInfo(&metricName);
+
+	        appendStringInfoString(&metricName, prefix);
+	        appendStringInfoString(&metricName, funcname_edited);
+
 		if (!(*pltsql_instr_plugin_ptr)->pltsql_instr_increment_func_metric(metricName.data))
 		{
 			/* check with "unsupported" in prefix */
@@ -316,6 +316,11 @@ pre_function_call_hook_impl(const char *funcName)
 			appendStringInfoString(&metricName, funcname_edited);
 			(*pltsql_instr_plugin_ptr)->pltsql_instr_increment_func_metric(metricName.data);
 		}
+
+              if(funcname_edited != NULL)
+                      pfree(funcname_edited);
+              if(metricName.data != NULL)
+                      pfree(metricName.data);
 	}
 }
 
