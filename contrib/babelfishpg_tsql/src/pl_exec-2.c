@@ -1033,38 +1033,64 @@ exec_stmt_decl_table(PLtsql_execstate *estate, PLtsql_stmt_decl_table *stmt)
 	int rc;
 	bool isnull;
 	int old_client_min_messages;
+	bool old_pltsql_explain_only = pltsql_explain_only;
 
-	if (estate->nestlevel == -1)
+	pltsql_explain_only = false; /* Create temporary table even in EXPLAIN ONLY mode */
+
+	PG_TRY();
 	{
-		rc = SPI_execute("SELECT @@nestlevel", true, 0);
-		if (rc != SPI_OK_SELECT || SPI_processed != 1)
-			elog(ERROR, "Failed to get @@NESTLEVEL when declaring table variable %s", var->refname);
-		estate->nestlevel = DatumGetInt32(SPI_getbinval(SPI_tuptable->vals[0], SPI_tuptable->tupdesc, 1, &isnull));
+		if (estate->nestlevel == -1)
+		{
+			rc = SPI_execute("SELECT @@nestlevel", true, 0);
+			if (rc != SPI_OK_SELECT || SPI_processed != 1)
+				elog(ERROR, "Failed to get @@NESTLEVEL when declaring table variable %s", var->refname);
+			estate->nestlevel = DatumGetInt32(SPI_getbinval(SPI_tuptable->vals[0], SPI_tuptable->tupdesc, 1, &isnull));
+		}
+
+		tblname = psprintf("%s_%d", var->refname, estate->nestlevel);
+		if (stmt->tbltypname)
+			query = psprintf("CREATE TEMPORARY TABLE IF NOT EXISTS %s (like %s including all)",
+							tblname, stmt->tbltypname);
+		else
+			query = psprintf("CREATE TEMPORARY TABLE IF NOT EXISTS %s%s",
+							tblname, stmt->coldef);
+
+		/*
+		* If a table with the same name already exists, we should just use that
+		* table, and ignore the NOTICE of "relation already exists, skipping".
+		*/
+		old_client_min_messages = client_min_messages;
+		client_min_messages = WARNING;
+		rc = SPI_execute(query, false, 0);
+		client_min_messages = old_client_min_messages;
+		if (rc != SPI_OK_UTILITY)
+			elog(ERROR, "Failed to create the underlying table for table variable %s", var->refname);
+
+		if (old_pltsql_explain_only)
+		{
+			/* Restore EXPLAIN ONLY mode and append explain info */
+			StringInfo strinfo = makeStringInfo();
+			appendStringInfo(strinfo, "DECLARE TABLE %s", var->refname);
+
+			pltsql_explain_only = true;
+
+			append_explain_info(NULL, strinfo->data);
+			increment_explain_indent();
+			append_explain_info(NULL, query);
+			decrement_explain_indent();
+		}
+
+		var->tblname = tblname;
+		if (var->tbltypeid == InvalidOid)
+			var->tbltypeid = TypenameGetTypid(tblname);
+		var->need_drop = true;
 	}
-
-	tblname = psprintf("%s_%d", var->refname, estate->nestlevel);
-	if (stmt->tbltypname)
-		query = psprintf("CREATE TEMPORARY TABLE IF NOT EXISTS %s (like %s including all)",
-						 tblname, stmt->tbltypname);
-	else
-		query = psprintf("CREATE TEMPORARY TABLE IF NOT EXISTS %s%s",
-						 tblname, stmt->coldef);
-
-	/*
-	 * If a table with the same name already exists, we should just use that
-	 * table, and ignore the NOTICE of "relation already exists, skipping".
-	 */
-	old_client_min_messages = client_min_messages;
-	client_min_messages = WARNING;
-	rc = SPI_execute(query, false, 0);
-	client_min_messages = old_client_min_messages;
-	if (rc != SPI_OK_UTILITY)
-		elog(ERROR, "Failed to create the underlying table for table variable %s", var->refname);
-
-	var->tblname = tblname;
-	if (var->tbltypeid == InvalidOid)
-		var->tbltypeid = TypenameGetTypid(tblname);
-	var->need_drop = true;
+	PG_CATCH();
+	{
+		pltsql_explain_only = old_pltsql_explain_only; /* Recover EXPLAIN ONLY mode */
+		PG_RE_THROW();
+	}
+	PG_END_TRY();
 
 	return PLTSQL_RC_OK;
 }

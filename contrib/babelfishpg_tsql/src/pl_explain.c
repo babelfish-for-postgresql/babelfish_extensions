@@ -18,9 +18,40 @@ bool pltsql_explain_timing = true;
 bool pltsql_explain_summary = false;
 int pltsql_explain_format = EXPLAIN_FORMAT_TEXT;
 
+static ExplainInfo *get_last_explain_info();
+
 bool is_explain_analyze_mode()
 {
 	return (pltsql_explain_analyze && !pltsql_explain_only);
+}
+
+static ExplainInfo *get_last_explain_info()
+{
+	PLtsql_execstate *pltsql_estate;
+	int nestlevel;
+
+	if (!pltsql_explain_analyze && !pltsql_explain_only)
+		return NULL;
+
+	pltsql_estate = get_outermost_tsql_estate(&nestlevel);
+	if (!pltsql_estate || !pltsql_estate->explain_infos)
+		return NULL;
+
+	return (ExplainInfo *) llast(pltsql_estate->explain_infos);
+}
+
+void increment_explain_indent()
+{
+	ExplainInfo *einfo = get_last_explain_info();
+	if (einfo)
+		einfo->next_indent++;
+}
+
+void decrement_explain_indent()
+{
+	ExplainInfo *einfo = get_last_explain_info();
+	if (einfo)
+		einfo->next_indent--;
 }
 
 void append_explain_info(QueryDesc *queryDesc, const char *queryString)
@@ -29,6 +60,7 @@ void append_explain_info(QueryDesc *queryDesc, const char *queryString)
 	MemoryContext oldcxt;
 	ExplainState *es;
 	ExplainInfo *einfo;
+	size_t indent;
 	int nestlevel;
 
 	if (!pltsql_explain_analyze && !pltsql_explain_only)
@@ -68,6 +100,16 @@ void append_explain_info(QueryDesc *queryDesc, const char *queryString)
 		InstrEndLoop(queryDesc->totaltime);
 	}
 
+	if (pltsql_estate->explain_infos)
+	{
+		ExplainInfo *last_einfo = (ExplainInfo *) llast(pltsql_estate->explain_infos);
+		indent = last_einfo->next_indent;
+	}
+	else
+	{
+		indent = 0;
+	}
+
 	es = NewExplainState();
 
 	es->analyze = is_explain_analyze_mode();
@@ -85,7 +127,7 @@ void append_explain_info(QueryDesc *queryDesc, const char *queryString)
 	}
 	else
 	{
-		es->indent = (nestlevel > 0) ? (nestlevel - 1) : 0;
+		es->indent = (nestlevel > 0) ? (nestlevel - 1) + indent : indent;
 		es->format = EXPLAIN_FORMAT_TEXT;
 	}
 
@@ -123,6 +165,7 @@ void append_explain_info(QueryDesc *queryDesc, const char *queryString)
 
 	einfo = (ExplainInfo *) palloc0(sizeof(ExplainInfo));
 	einfo->data = pstrdup(es->str->data);
+	einfo->next_indent = indent;
 	pltsql_estate->explain_infos = lappend(pltsql_estate->explain_infos, einfo);
 
 	/* Recover the memory context */
