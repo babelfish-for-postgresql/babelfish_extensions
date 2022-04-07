@@ -179,6 +179,7 @@ int			pltsql_extra_errors;
 bool		pltsql_debug_parser = false;
 char       *identity_insert_string;
 bool		output_update_transformation = false;
+bool		output_into_insert_transformation = false;
 char       *update_delete_target_alias = NULL;
 int			pltsql_trigger_depth = 0;
 
