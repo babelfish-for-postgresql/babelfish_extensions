@@ -336,8 +336,6 @@ pltsql_stmt_typename(PLtsql_stmt *stmt)
 		case PLTSQL_STMT_SET_EXPLAIN_MODE:
 			return "SET EXPLAIN MODE";
         /* TSQL-only executable node */
-        case PLTSQL_STMT_INIT_VARS:
-            return "INIT_VARS";
         case PLTSQL_STMT_SAVE_CTX:
             return "SAVE_CONTEXT";
         case PLTSQL_STMT_RESTORE_CTX_FULL:

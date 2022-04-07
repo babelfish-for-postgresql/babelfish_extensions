@@ -468,7 +468,6 @@ free_stmt2(PLtsql_stmt *stmt)
 				free_expr((PLtsql_expr *) lfirst(l));
 			break;
 		}
-        case PLTSQL_STMT_INIT_VARS:
         case PLTSQL_STMT_SAVE_CTX:
         case PLTSQL_STMT_RESTORE_CTX_FULL:
         case PLTSQL_STMT_RESTORE_CTX_PARTIAL:

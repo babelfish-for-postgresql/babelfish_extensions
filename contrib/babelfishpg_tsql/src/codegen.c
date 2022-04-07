@@ -127,7 +127,6 @@ static PLtsql_stmt_goto                *create_goto(int lineno);
 static PLtsql_stmt_save_ctx            *create_save_ctx(int lineno);
 static PLtsql_stmt_restore_ctx_full    *create_restore_ctx_full(int lineno);
 static PLtsql_stmt_restore_ctx_partial *create_restore_ctx_partial(int lineno);
-static PLtsql_stmt_init_vars           *create_init_vars(int lineno);
 
 /* Label creation */
 static void 
@@ -179,15 +178,6 @@ static PLtsql_stmt_restore_ctx_partial *create_restore_ctx_partial(int lineno)
     restore_ctx->cmd_type = PLTSQL_STMT_RESTORE_CTX_PARTIAL;
     restore_ctx->lineno = lineno;
     return restore_ctx;
-}
-
-static PLtsql_stmt_init_vars *create_init_vars(int lineno)
-{
-    PLtsql_stmt_init_vars *init_vars = palloc(sizeof(PLtsql_stmt_init_vars));
-
-    init_vars->cmd_type = PLTSQL_STMT_INIT_VARS;
-    init_vars->lineno = lineno;
-    return init_vars;
 }
 
 static void 
@@ -299,7 +289,6 @@ static bool stmt_default_act(Walker_context *ctx, PLtsql_stmt *stmt)
         case PLTSQL_STMT_INSERT_BULK:
         case PLTSQL_STMT_SET_EXPLAIN_MODE:
         /* TSQL-only executable node */
-        case PLTSQL_STMT_INIT_VARS:
         case PLTSQL_STMT_SAVE_CTX:
         case PLTSQL_STMT_RESTORE_CTX_FULL:
         case PLTSQL_STMT_RESTORE_CTX_PARTIAL:
@@ -322,15 +311,6 @@ static bool stmt_default_act(Walker_context *ctx, PLtsql_stmt *stmt)
 
 static bool stmt_block_act(Walker_context *ctx, PLtsql_stmt_block *stmt)
 {
-    if (stmt->n_initvars > 0)
-    {
-        CodegenContext *codegen_ctx = (CodegenContext *) ctx->extra_ctx;
-        PLtsql_stmt_init_vars *init_vars = create_init_vars(stmt->lineno);
-        init_vars->n_initvars = stmt->n_initvars;
-        init_vars->initvarnos = stmt->initvarnos;
-
-        add_stmt(codegen_ctx, (PLtsql_stmt *) init_vars);
-    }
     return stmt_walker((PLtsql_stmt *) stmt, general_walker_func, ctx);
 }
 
