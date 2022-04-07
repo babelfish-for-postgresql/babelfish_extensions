@@ -1792,13 +1792,19 @@ exec_stmt_exec_sp(PLtsql_execstate *estate, PLtsql_stmt_exec_sp *stmt)
 
 				paramdefstr = convert_value_to_string(estate, paramdef, restype);
 
-				read_param_def(args, paramdefstr);
+				if (strcmp(paramdefstr, "") != 0) /* check edge cases for sp_executesql */
+				{
+					read_param_def(args, paramdefstr);
 
-				if (args->numargs != stmt->paramno)
-					ereport(ERROR, (errcode(ERRCODE_SYNTAX_ERROR),
-							errmsg("param definition mismatches with inputs")));
+					if (args->numargs != stmt->paramno)
+						ereport(ERROR, (errcode(ERRCODE_SYNTAX_ERROR),
+								errmsg("param definition mismatches with inputs")));
+				}
 			}
-			ret = execute_batch(estate, batchstr, args, stmt->params);
+			if (strcmp(batchstr, "") != 0) /* check edge cases for sp_executesql */
+			{
+				ret = execute_batch(estate, batchstr, args, stmt->params);
+			}
 
 			if (stmt->return_code_dno != -1)
 			{

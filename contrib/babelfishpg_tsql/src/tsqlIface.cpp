@@ -5160,7 +5160,7 @@ makeSpStatement(const std::string& name_str, TSqlParser::Execute_statement_argCo
 	else if (string_matches(name_str.c_str(), "sp_executesql"))
 	{
 		result->sp_type_code = PLTSQL_EXEC_SP_EXECUTESQL;
-		if (paramno == 0 || paramno == 2)
+		if (paramno < 1)
 			throw PGErrorWrapperException(ERROR, ERRCODE_INVALID_PARAMETER_VALUE, format_errmsg("%s procedure was called with an incorrect number of parameters", name_str.c_str()), getLineAndPos(sp_args));
 
 		result->query = getNthParamExpr(params, 1);

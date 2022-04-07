@@ -231,7 +231,7 @@ exec sp_executesql @query_str, @param_def;
 go
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: sp_executesql procedure was called with an incorrect number of parameters)~~
+~~ERROR (Message: batch string argument of sp_executesql is null)~~
 
 
 exec sp_prepexec;
