@@ -594,6 +594,44 @@ smallint#!#varchar#!#smallint#!#varchar#!#int#!#int#!#smallint#!#smallint
 ~~END~~
 
 
+CREATE TABLE dbo.tidentityintbig (
+ data_type_test CHAR(50) NULL
+ , test_scenario CHAR(60) NULL
+ , value_test BIGINT IDENTITY (202202081842, 100 ) NOT NULL  -- Used for unique index
+ , inserted_dt DATETIME DEFAULT GETDATE()
+ , user_login CHAR(255) DEFAULT CURRENT_USER
+)
+GO
+CREATE UNIQUE NONCLUSTERED INDEX dbo_tidentityintbig_value_test ON dbo.tidentityintbig (value_test ASC); -- 3rd column in the table
+GO
+EXEC sp_special_columns @table_name = 'tidentityintbig', @table_owner = 'dbo' , @col_type = 'R', @nullable = 'U', @ODBCVer = 3
+GO
+~~START~~
+smallint#!#varchar#!#smallint#!#varchar#!#int#!#int#!#smallint#!#smallint
+1#!#value_test#!#-5#!#bigint identity#!#19#!#8#!#0#!#1
+~~END~~
+
+
+CREATE TABLE dbo.tidentityintbigmulti (
+    data_type_test CHAR(50) NULL
+    , test_scenario CHAR(60) NULL
+    , value_test BIGINT IDENTITY (202202081842, 100 ) NOT NULL
+    , inserted_dt DATETIME DEFAULT GETDATE()
+    , user_login CHAR(255) DEFAULT CURRENT_USER
+)
+GO
+CREATE UNIQUE NONCLUSTERED INDEX dbo_tidentityintbigmulti_value_test ON dbo.tidentityintbigmulti (user_login ASC, value_test ASC, test_scenario ASC);
+GO
+EXEC sp_special_columns @table_name = 'tidentityintbigmulti', @table_owner = 'dbo' , @col_type = 'R', @nullable = 'U', @ODBCVer = 3
+GO
+~~START~~
+smallint#!#varchar#!#smallint#!#varchar#!#int#!#int#!#smallint#!#smallint
+1#!#test_scenario#!#1#!#char#!#60#!#60#!#<NULL>#!#1
+1#!#user_login#!#1#!#char#!#255#!#255#!#<NULL>#!#1
+1#!#value_test#!#-5#!#bigint identity#!#19#!#8#!#0#!#1
+~~END~~
+
+
 -- cleanup
 drop table t1
 go
@@ -704,6 +742,10 @@ go
 DROP TABLE type_binary_7
 go
 DROP TABLE type_varbinary_7
+go
+DROP TABLE dbo.tidentityintbig
+go
+DROP TABLE dbo.tidentityintbigmulti
 go
 use master
 go

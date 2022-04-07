@@ -1608,28 +1608,27 @@ CAST(s1.name AS sys.sysname) AS TABLE_OWNER,
 CAST(t1.relname AS sys.sysname) AS TABLE_NAME,
 
 CASE 
-	WHEN idx.is_unique = 1 AND (idx.is_unique_constraint !=1 AND idx.is_primary_key != 1)
+	WHEN idx.is_primary_key != 1
 	THEN CAST('u' AS sys.sysname) -- if it is a unique index, then we should cast it as 'u' for filtering purposes
-	ELSE CAST(t5.contype AS sys.sysname)
-END AS CONSTRAINT_TYPE
+	ELSE CAST('p' AS sys.sysname)
+END AS CONSTRAINT_TYPE,
+CAST(idx.name AS sys.sysname) AS CONSTRAINT_NAME,
+CAST(idx.index_id AS int) AS INDEX_ID
         
 FROM pg_catalog.pg_class t1 
 	JOIN sys.pg_namespace_ext t2 ON t1.relnamespace = t2.oid
 	JOIN sys.schemas s1 ON s1.schema_id = t1.relnamespace
-	LEFT JOIN pg_constraint t5 ON t1.oid = t5.conrelid
 	LEFT JOIN sys.indexes idx ON idx.object_id = t1.oid
-	JOIN sys.columns c1 ON t1.oid = c1.object_id
+	INNER JOIN pg_catalog.pg_attribute i2 ON idx.index_id = i2.attrelid
+	INNER JOIN sys.columns c1 ON c1.object_id = idx.object_id AND i2.attname = c1.name
 
 	JOIN pg_catalog.pg_type AS t7 ON t7.oid = c1.system_type_id
-	JOIN sys.types as t8 ON c1.user_type_id = t8.user_type_id 
+	JOIN sys.types AS t8 ON c1.user_type_id = t8.user_type_id 
 	LEFT JOIN sys.sp_datatype_info_helper(2::smallint, false) AS t6 ON t7.typname = t6.pg_type_name OR t7.typname = t6.type_name --need in order to get accurate DATA_TYPE value
 	LEFT JOIN pg_catalog.pg_attribute AS pa ON t1.oid = pa.attrelid AND c1.name = pa.attname
 	, sys.translate_pg_type_to_tsql(t8.user_type_id) AS tsql_type_name
 	, sys.translate_pg_type_to_tsql(t8.system_type_id) AS tsql_base_type_name
-	WHERE (t5.contype = 'p' OR t5.contype = 'u' 
-	OR ((idx.is_unique = 1) AND (idx.is_primary_key !=1 AND idx.is_unique_constraint !=1))) -- Only looking for unique indexes
-	AND (CAST(c1.column_id AS smallint) = ANY (t5.conkey) OR ((idx.is_unique = 1) AND (idx.is_primary_key !=1 AND idx.is_unique_constraint !=1)))
-	AND has_schema_privilege(s1.schema_id, 'USAGE');
+	WHERE has_schema_privilege(s1.schema_id, 'USAGE');
   
 GRANT SELECT ON sys.sp_special_columns_view TO PUBLIC;
 
@@ -1645,11 +1644,12 @@ CREATE OR REPLACE PROCEDURE sys.sp_special_columns(
 )
 AS $$
 DECLARE @special_col_type sys.sysname;
+DECLARE @constraint_name sys.sysname;
 BEGIN
 	IF (@qualifier != '') AND (LOWER(@qualifier) != LOWER(sys.db_name()))
- 	BEGIN
- 		THROW 33557097, N'The database name component of the object qualifier must be the name of the current database.', 1;
-	 	
+	BEGIN
+		THROW 33557097, N'The database name component of the object qualifier must be the name of the current database.', 1;
+		
 	END
 	
 	IF (LOWER(@col_type) = LOWER('V'))
@@ -1659,17 +1659,17 @@ BEGIN
 	
 	IF (LOWER(@nullable) = LOWER('O'))
 	BEGIN
-		SELECT TOP 1 @special_col_type=constraint_type FROM sys.sp_special_columns_view
+		SELECT TOP 1 @special_col_type = constraint_type, @constraint_name = constraint_name FROM sys.sp_special_columns_view
 		WHERE LOWER(@table_name) = LOWER(table_name)
 			AND ((SELECT coalesce(@table_owner,'')) = '' OR LOWER(table_owner) = LOWER(@table_owner))
 			AND ((SELECT coalesce(@qualifier,'')) = '' OR LOWER(table_qualifier) = LOWER(@qualifier)) AND (is_nullable = 0)
-		ORDER BY constraint_type, column_name;
+		ORDER BY constraint_type, index_id;
 	
 		IF @special_col_type='u'
 		BEGIN
 			IF @scope='C'
 			BEGIN
-				SELECT TOP 1 
+				SELECT  
 				CAST(0 AS smallint) AS SCOPE,
 				COLUMN_NAME,
 				DATA_TYPE,
@@ -1681,12 +1681,13 @@ BEGIN
 				WHERE LOWER(@table_name) = LOWER(table_name)
 				AND ((SELECT coalesce(@table_owner,'')) = '' OR LOWER(table_owner) = LOWER(@table_owner))
 				AND ((SELECT coalesce(@qualifier,'')) = '' OR LOWER(table_qualifier) = LOWER(@qualifier)) AND (is_nullable = 0) AND LOWER(constraint_type) = LOWER(@special_col_type)
+				AND @constraint_name = constraint_name
 				ORDER BY scope, column_name;
 				
 			END
 			ELSE
 			BEGIN
-				SELECT TOP 1 
+				SELECT  
 				SCOPE,
 				COLUMN_NAME,
 				DATA_TYPE,
@@ -1698,8 +1699,10 @@ BEGIN
 				WHERE LOWER(@table_name) = LOWER(table_name)
 				AND ((SELECT coalesce(@table_owner,'')) = '' OR LOWER(table_owner) = LOWER(@table_owner))
 				AND ((SELECT coalesce(@qualifier,'')) = '' OR LOWER(table_qualifier) = LOWER(@qualifier)) AND (is_nullable = 0) AND LOWER(constraint_type) = LOWER(@special_col_type)
+				AND @constraint_name = constraint_name
+				ORDER BY scope, column_name;
 			END
-			
+		
 		END
 		
 		ELSE 
@@ -1742,17 +1745,17 @@ BEGIN
 	
 	ELSE 
 	BEGIN
-		SELECT TOP 1 @special_col_type=constraint_type FROM sys.sp_special_columns_view
+		SELECT TOP 1 @special_col_type = constraint_type, @constraint_name = constraint_name FROM sys.sp_special_columns_view
 		WHERE LOWER(@table_name) = LOWER(table_name)
 			AND ((SELECT coalesce(@table_owner,'')) = '' OR LOWER(table_owner) = LOWER(@table_owner))
 			AND ((SELECT coalesce(@qualifier,'')) = '' OR LOWER(table_qualifier) = LOWER(@qualifier))
-		ORDER BY constraint_type, column_name;
+		ORDER BY constraint_type, index_id;
 
 		IF @special_col_type='u'
 		BEGIN
 			IF @scope='C'
 			BEGIN
-				SELECT TOP 1
+				SELECT 
 				CAST(0 AS smallint) AS SCOPE,
 				COLUMN_NAME,
 				DATA_TYPE,
@@ -1764,12 +1767,13 @@ BEGIN
 				WHERE LOWER(@table_name) = LOWER(table_name)
 				AND ((SELECT coalesce(@table_owner,'')) = '' OR LOWER(table_owner) = LOWER(@table_owner))
 				AND ((SELECT coalesce(@qualifier,'')) = '' OR LOWER(table_qualifier) = LOWER(@qualifier)) AND LOWER(constraint_type) = LOWER(@special_col_type)
+				AND @constraint_name = constraint_name
 				ORDER BY scope, column_name;
 			END
 			
 			ELSE
 			BEGIN
-				SELECT TOP 1 SCOPE,
+				SELECT SCOPE,
 				COLUMN_NAME,
 				DATA_TYPE,
 				TYPE_NAME,
@@ -1780,9 +1784,10 @@ BEGIN
 				WHERE LOWER(@table_name) = LOWER(table_name)
 				AND ((SELECT coalesce(@table_owner,'')) = '' OR LOWER(table_owner) = LOWER(@table_owner))
 				AND ((SELECT coalesce(@qualifier,'')) = '' OR LOWER(table_qualifier) = LOWER(@qualifier)) AND LOWER(constraint_type) = LOWER(@special_col_type)
+				AND @constraint_name = constraint_name
 				ORDER BY scope, column_name;
 			END
-			
+		
 		END
 		ELSE
 		BEGIN
@@ -1801,7 +1806,7 @@ BEGIN
 				AND ((SELECT coalesce(@table_owner,'')) = '' OR LOWER(table_owner) = LOWER(@table_owner))
 				AND ((SELECT coalesce(@qualifier,'')) = '' OR LOWER(table_qualifier) = LOWER(@qualifier)) AND LOWER(constraint_type) = LOWER(@special_col_type)
 				AND CONSTRAINT_TYPE = 'p'
-				ORDER BY scope, column_name;	
+				ORDER BY scope, column_name; 
 			END
 			
 			ELSE
@@ -1820,7 +1825,7 @@ BEGIN
 				AND CONSTRAINT_TYPE = 'p'
 				ORDER BY scope, column_name;
 			END
-				
+    
 		END
 	END
 
