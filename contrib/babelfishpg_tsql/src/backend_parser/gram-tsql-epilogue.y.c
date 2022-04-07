@@ -1254,7 +1254,8 @@ get_transformed_output_list(List *tsql_output_clause)
 			{
 				ResTarget *target = makeNode(ResTarget);
 				ColumnRef  *cref = (ColumnRef *) node;
- 
+				local_variable = false;
+				
 				if(!strcmp(strVal(linitial(cref->fields)), "deleted") && list_length(cref->fields) >= 2)
 				{
 					if (IsA((Node*) llast(cref->fields), String))
@@ -1290,7 +1291,6 @@ get_transformed_output_list(List *tsql_output_clause)
 				}
 				else
 				{
-					local_variable = false;
 					if(!strncmp(strVal(linitial(cref->fields)), "@", 1) && estate)
 					{
 						for (i = 0; i < estate->ndatums; i++)
