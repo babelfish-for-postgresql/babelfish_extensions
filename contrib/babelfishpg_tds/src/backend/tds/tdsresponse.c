@@ -126,7 +126,7 @@ static void FillTabNameWithoutNumParts(StringInfo buf, uint8 numParts, TdsRelati
 static void SetTdsEstateErrorData(void);
 static void ResetTdsEstateErrorData(void);
 static bool get_attnotnull(Oid relid, AttrNumber attnum);
-
+static char get_attidentity(Oid relid, AttrNumber attnum);
 static inline void
 SendPendingDone(bool more)
 {
@@ -1364,6 +1364,14 @@ PrepareRowDescription(TupleDesc typeinfo, List *targetlist, int16 *formats,
 		}
 
 		col->attNotNull = get_attnotnull(col->relOid, col->attrNum);
+		{
+			char attidentity = get_attidentity(col->relOid, col->attrNum);
+			if (attidentity != '\0')
+				col->attidentity = true;
+			else
+				col->attidentity = false;
+		}
+
 		switch (finfo->sendFuncId)
 		{
 			/*
@@ -2937,4 +2945,27 @@ get_attnotnull(Oid relid, AttrNumber attnum)
 	}
 	/* Assume att is nullable if no valid heap tuple is found */
 	return false;
+}
+
+char
+get_attidentity(Oid relid, AttrNumber attnum)
+{
+	HeapTuple	  tp;
+	Form_pg_attribute att_tup;
+
+	tp = SearchSysCache2(ATTNUM,
+			ObjectIdGetDatum(relid),
+			Int16GetDatum(attnum));
+
+	if (HeapTupleIsValid(tp))
+	{
+		char result;
+		att_tup = (Form_pg_attribute) GETSTRUCT(tp);
+		result = att_tup->attidentity;
+		ReleaseSysCache(tp);
+
+		return result;
+	}
+	/* return '\0' if no valid heap tuple is found */
+	return '\0';
 }
