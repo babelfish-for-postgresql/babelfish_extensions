@@ -1406,7 +1406,6 @@ bool TsqlUnsupportedFeatureHandlerImpl::isDefaultLanguage(TSqlParser::IdContext 
 const char *unsupported_sp_procedures[] = {
 	/* Catalog */
 	"sp_server_info",
-	"sp_sproc_columns",
 
 	/* Cursor */
 	"sp_describe_cursor_columns",
