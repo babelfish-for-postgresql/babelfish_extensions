@@ -157,8 +157,6 @@ go
 -- Control structure
 set BABELFISH_SHOWPLAN_ALL ON;
 go
-declare @val int = (select a1 from babel_2844_t1 where b1 = 1);
-go
 if (select a1 from babel_2844_t1 where b1 = 1) = 1
     select 1
 else

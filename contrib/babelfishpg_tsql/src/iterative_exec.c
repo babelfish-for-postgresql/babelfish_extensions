@@ -689,12 +689,6 @@ static inline int dispatch_stmt(PLtsql_execstate *estate, PLtsql_stmt *stmt)
     switch(stmt->cmd_type)
     {
         case PLTSQL_STMT_ASSIGN:
-			if (pltsql_explain_only)
-			{
-				ereport(ERROR,
-						(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-						errmsg("Showing Estimated Execution Plan for ASSIGN statment is not yet supported")));
-			}
             exec_stmt_assign(estate, (PLtsql_stmt_assign *) stmt);
             break;
         case PLTSQL_STMT_RETURN:
@@ -813,12 +807,6 @@ static inline int dispatch_stmt(PLtsql_execstate *estate, PLtsql_stmt *stmt)
 			exec_stmt_exec_sp(estate, (PLtsql_stmt_exec_sp *) stmt);
 			break;
 		case PLTSQL_STMT_DECL_TABLE:
-			if (pltsql_explain_only)
-			{
-				ereport(ERROR,
-						(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-						errmsg("Showing Estimated Execution Plan for DECL TABLE statment is not yet supported")));
-			}
 			exec_stmt_decl_table(estate, (PLtsql_stmt_decl_table *) stmt);
 			break;
 		case PLTSQL_STMT_RETURN_TABLE:

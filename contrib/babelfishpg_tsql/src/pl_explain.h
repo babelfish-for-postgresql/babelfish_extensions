@@ -15,6 +15,8 @@ extern bool pltsql_explain_summary;
 extern int pltsql_explain_format;
 
 extern bool is_explain_analyze_mode(void);
+extern void increment_explain_indent(void);
+extern void decrement_explain_indent(void);
 extern void append_explain_info(QueryDesc *queryDesc, const char *queryString);
 
 #endif  /* PL_EXPLAIN_H */

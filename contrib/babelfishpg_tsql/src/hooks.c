@@ -263,7 +263,33 @@ static void
 pltsql_ExecutorRun(QueryDesc *queryDesc, ScanDirection direction, uint64 count, bool execute_once)
 {
 	if (pltsql_explain_only)
+	{
+		EState	   *estate;
+		CmdType		operation;
+		DestReceiver *dest;
+		MemoryContext oldcontext;
+
+		Assert(queryDesc != NULL);
+		estate = queryDesc->estate;
+		Assert(estate != NULL);
+
+		oldcontext = MemoryContextSwitchTo(estate->es_query_cxt);
+		operation = queryDesc->operation;
+		dest = queryDesc->dest;
+
+		/*
+		 * startup tuple receiver, if we will be emitting tuples
+		 */
+		estate->es_processed = 0;
+		if (operation == CMD_SELECT || queryDesc->plannedstmt->hasReturning)
+		{
+			dest->rStartup(dest, operation, queryDesc->tupDesc);
+			dest->rShutdown(dest);
+		}
+
+		MemoryContextSwitchTo(oldcontext);
 		return;
+	}
 
 	if (prev_ExecutorRun)
 		prev_ExecutorRun(queryDesc, direction, count, execute_once);

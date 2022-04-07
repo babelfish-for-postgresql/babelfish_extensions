@@ -1264,7 +1264,11 @@ typedef struct
 
 typedef struct ExplainInfo
 {
-    char *data;		/* Estimated (or Actual) Query Execution Plan for a single statement */
+	/* Estimated (or Actual) Query Execution Plan for a single statement */
+	char *data;
+
+	/* indent for the next ExplainInfo */
+	size_t next_indent;
 } ExplainInfo;
 
 typedef struct PLtsql_execstate

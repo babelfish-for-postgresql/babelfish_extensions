@@ -6111,6 +6111,36 @@ exec_assign_expr(PLtsql_execstate *estate, PLtsql_datum *target,
 			exec_check_rw_parameter(expr, target->dno);
 	}
 
+	if (pltsql_explain_only && expr->ns)
+	{
+		int rc;
+		PLtsql_nsitem *ns = expr->ns;
+		StringInfo strinfo = makeStringInfo();
+
+		while (ns)
+		{
+			if (ns->itemno == target->dno)
+			{
+				appendStringInfo(strinfo, "ASSIGN %s = %s", ns->name, expr->query);
+				break;
+			}
+			ns = ns->prev;
+		}
+		append_explain_info(NULL, strinfo->data);
+
+		increment_explain_indent();
+		rc = exec_run_select(estate, expr, 0, NULL);
+		decrement_explain_indent();
+
+		if (rc != SPI_OK_SELECT)
+			ereport(ERROR,
+					(errcode(ERRCODE_WRONG_OBJECT_TYPE),
+					errmsg("query \"%s\" did not return data", expr->query)));
+
+		exec_eval_cleanup(estate);
+		return;
+	}
+
 	value = exec_eval_expr(estate, expr, &isnull, &valtype, &valtypmod);
 
 	/*
@@ -9870,23 +9900,43 @@ pltsql_clean_table_variables(PLtsql_execstate *estate, PLtsql_function *func)
 	int n;
 	int rc;
 	PLtsql_tbl *tbl;
+	bool old_pltsql_explain_only = pltsql_explain_only;
 	const char *query_fmt = "DROP TABLE %s";
 	const char *query;
 
-	foreach (lc, func->table_varnos)
+	PG_TRY();
 	{
-		n = lfirst_int(lc);
-		if (estate->datums[n]->dtype != PLTSQL_DTYPE_TBL)
-			elog(ERROR, "unrecognized dtype: %d", estate->datums[n]->dtype);
-		tbl = (PLtsql_tbl *) estate->datums[n];
-		if (!tbl->need_drop)
-			continue;
-		query = psprintf(query_fmt, tbl->tblname);
-		rc = SPI_execute(query, false, 0);
-		if (rc != SPI_OK_UTILITY)
-			elog(ERROR, "Failed to drop the underlying table %s of table variable %s",
-				 tbl->tblname, tbl->refname);
+		foreach (lc, func->table_varnos)
+		{
+			n = lfirst_int(lc);
+			if (estate->datums[n]->dtype != PLTSQL_DTYPE_TBL)
+				elog(ERROR, "unrecognized dtype: %d", estate->datums[n]->dtype);
+			tbl = (PLtsql_tbl *) estate->datums[n];
+			if (!tbl->need_drop)
+				continue;
+			query = psprintf(query_fmt, tbl->tblname);
+
+			pltsql_explain_only = false; /* Drop temporary table even in EXPLAIN ONLY mode */
+
+			rc = SPI_execute(query, false, 0);
+			if (rc != SPI_OK_UTILITY)
+				elog(ERROR, "Failed to drop the underlying table %s of table variable %s",
+					tbl->tblname, tbl->refname);
+
+			if (old_pltsql_explain_only)
+			{
+				/* Restore EXPLAIN ONLY mode and append explain info */
+				pltsql_explain_only = true;
+				append_explain_info(NULL, query);
+			}
+		}
 	}
+	PG_CATCH();
+	{
+		pltsql_explain_only = old_pltsql_explain_only; /* Recover EXPLAIN ONLY mode */
+		PG_RE_THROW();
+	}
+	PG_END_TRY();
 }
 
 static void 
