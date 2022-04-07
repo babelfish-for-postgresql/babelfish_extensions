@@ -1124,3 +1124,28 @@ go
 drop table t1;
 go
 
+-- Test OUTPUT INTO with a table with NULL column --
+
+CREATE TABLE [dbo].[t1]
+(
+    [Id] [int] NOT NULL IDENTITY(1, 1),
+    [Name] [varchar] (100)  NOT NULL,
+    [Desc] [varchar] (32)  NULL,
+) 
+go
+
+DECLARE @t2 TABLE (Id INT, Name VARCHAR(50))
+
+INSERT INTO dbo.t1 (Name)
+OUTPUT Inserted.Id, Inserted.Name INTO @t2
+VALUES ('abc')
+
+SELECT * FROM @t2
+go
+
+SELECT * FROM dbo.t1
+go
+
+-- Cleanup --
+drop table t1
+go
