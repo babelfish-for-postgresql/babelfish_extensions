@@ -5471,7 +5471,7 @@ rewrite_information_schema_to_information_schema_tsql(T ctx, GetCtxFunc<T> getSc
 	auto schema = getSchema(ctx);
 	if (!schema)
 		return "";
-	else if (string_matches(getFullText(ctx->schema).c_str(), "information_schema"))
+	else if (string_matches(stripQuoteFromId(ctx->schema).c_str(), "information_schema"))
 		return "information_schema_tsql";
 	else
 		return "";
