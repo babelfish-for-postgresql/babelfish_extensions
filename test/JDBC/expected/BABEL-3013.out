@@ -1,0 +1,54 @@
+CREATE DATABASE db1
+GO
+USE db1
+GO
+CREATE LOGIN johndoe with password='Babel123'
+GO
+CREATE USER johndoe
+GO
+CREATE TABLE t(a int, b int)
+GO
+
+-- Grant select and check table
+GRANT SELECT(a) on t to johndoe
+GO
+
+-- test sp_column_privileges
+EXEC sp_column_privileges 't'
+GO
+~~START~~
+varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar
+db1#!#dbo#!#t#!#a#!#dbo#!#dbo#!#INSERT#!#YES
+db1#!#dbo#!#t#!#a#!#dbo#!#dbo#!#REFERENCES#!#YES
+db1#!#dbo#!#t#!#a#!#dbo#!#dbo#!#SELECT#!#YES
+db1#!#dbo#!#t#!#a#!#dbo#!#johndoe#!#SELECT#!#NO
+db1#!#dbo#!#t#!#a#!#dbo#!#dbo#!#UPDATE#!#YES
+db1#!#dbo#!#t#!#b#!#dbo#!#dbo#!#INSERT#!#YES
+db1#!#dbo#!#t#!#b#!#dbo#!#dbo#!#REFERENCES#!#YES
+db1#!#dbo#!#t#!#b#!#dbo#!#dbo#!#SELECT#!#YES
+db1#!#dbo#!#t#!#b#!#dbo#!#dbo#!#UPDATE#!#YES
+~~END~~
+
+-- test sp_table_privileges
+EXEC sp_table_privileges 't'
+GO
+~~START~~
+varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar
+db1#!#dbo#!#t#!#dbo#!#dbo#!#DELETE#!#YES
+db1#!#dbo#!#t#!#dbo#!#dbo#!#INSERT#!#YES
+db1#!#dbo#!#t#!#dbo#!#dbo#!#REFERENCES#!#YES
+db1#!#dbo#!#t#!#dbo#!#dbo#!#SELECT#!#YES
+db1#!#dbo#!#t#!#dbo#!#johndoe#!#SELECT#!#NO
+db1#!#dbo#!#t#!#dbo#!#dbo#!#UPDATE#!#YES
+~~END~~
+
+
+-- cleanup
+DROP TABLE t
+GO
+USE master
+GO
+DROP DATABASE db1
+GO
+DROP LOGIN johndoe
+GO
