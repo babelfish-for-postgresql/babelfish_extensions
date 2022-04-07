@@ -10,7 +10,6 @@
  *                         Execution Actions
  **************************************************************************************/
 
-static int exec_stmt_init_vars(PLtsql_execstate *estate, PLtsql_stmt_init_vars *stmt);
 static int exec_stmt_goto(PLtsql_execstate *estate, PLtsql_stmt_goto *stmt);
 static int exec_stmt_set_explain_mode(PLtsql_execstate *estate, PLtsql_stmt_set_explain_mode *stmt);
 static int exec_stmt_restore_ctx_full(PLtsql_execstate *estate, PLtsql_stmt_restore_ctx_full *stmt);
@@ -36,104 +35,6 @@ static void process_explain_analyze(PLtsql_execstate *estate);
 extern PLtsql_estate_err *pltsql_clone_estate_err(PLtsql_estate_err *err);
 extern void prepare_format_string(StringInfo buf, char *msg_string, int nargs, 
 								  Datum *args, Oid *argtypes, bool *argisnull);
-
-static int exec_stmt_init_vars(PLtsql_execstate *estate, PLtsql_stmt_init_vars *stmt)
-{
-    int i;
-
-    /*
-     * First initialize all variables declared in this block
-     */
-    estate->err_text = gettext_noop("during statement block local variable initialization");
-
-    for (i = 0; i < stmt->n_initvars; i++)
-    {
-        int n = stmt->initvarnos[i];
-        PLtsql_datum *datum = estate->datums[n];
-
-        /*
-         * The set of dtypes handled here must match pltsql_add_initdatums().
-         *
-         * Note that we currently don't support promise datums within blocks,
-         * only at a function's outermost scope, so we needn't handle those
-         * here.
-         */
-        switch (datum->dtype)
-        {
-            case PLTSQL_DTYPE_VAR:
-                {
-                    PLtsql_var *var = (PLtsql_var *) datum;
-
-                    /*
-                     * Free any old value, in case re-entering block, and
-                     * initialize to NULL
-                     */
-                    assign_simple_var(estate, var, (Datum) 0, true, false);
-
-                    if (var->default_val == NULL)
-                    {
-                        /*
-                         * If needed, give the datatype a chance to reject
-                         * NULLs, by assigning a NULL to the variable.  We
-                         * claim the value is of type UNKNOWN, not the var's
-                         * datatype, else coercion will be skipped.
-                         */
-                        if (var->datatype->typtype == TYPTYPE_DOMAIN)
-                            exec_assign_value(estate,
-                                              (PLtsql_datum *) var,
-                                              (Datum) 0,
-                                              true,
-                                              UNKNOWNOID,
-                                              -1);
-
-                        /* parser should have rejected NOT NULL */
-                        Assert(!var->notnull);
-                    }
-                    else
-                    {
-                        exec_assign_expr(estate, (PLtsql_datum *) var,
-                                         var->default_val);
-                    }
-                }
-                break;
-
-            case PLTSQL_DTYPE_REC:
-                {
-                    PLtsql_rec *rec = (PLtsql_rec *) datum;
-
-                    /*
-                     * Deletion of any existing object will be handled during
-                     * the assignments below, and in some cases it's more
-                     * efficient for us not to get rid of it beforehand.
-                     */
-                    if (rec->default_val == NULL)
-                    {
-                        /*
-                         * If needed, give the datatype a chance to reject
-                         * NULLs, by assigning a NULL to the variable.
-                         */
-                        exec_move_row(estate, (PLtsql_variable *) rec,
-                                      NULL, NULL);
-
-                        /* parser should have rejected NOT NULL */
-                        Assert(!rec->notnull);
-                    }
-                    else
-                    {
-                        exec_assign_expr(estate, (PLtsql_datum *) rec,
-                                         rec->default_val);
-                    }
-                }
-                break;
-
-            default:
-                elog(ERROR, "unrecognized dtype: %d", datum->dtype);
-        }
-    }
-
-    estate->err_text = NULL;
-    return PLTSQL_RC_OK;
-}
 
 static int exec_stmt_goto(PLtsql_execstate *estate, PLtsql_stmt_goto *stmt)
 {
@@ -873,15 +774,6 @@ static inline int dispatch_stmt(PLtsql_execstate *estate, PLtsql_stmt *stmt)
             exec_stmt_insert_bulk(estate, (PLtsql_stmt_insert_bulk *) stmt);
             break;
         /* TSQL-only executable node */
-        case PLTSQL_STMT_INIT_VARS:
-			if (pltsql_explain_only)
-			{
-				ereport(ERROR,
-						(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-						errmsg("Showing Estimated Execution Plan for INIT VARS statment is not yet supported")));
-			}
-            exec_stmt_init_vars(estate, (PLtsql_stmt_init_vars *) stmt);
-            break;
         case PLTSQL_STMT_RESTORE_CTX_FULL:
 			if (pltsql_explain_only)
 			{
