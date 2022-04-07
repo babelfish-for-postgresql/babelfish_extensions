@@ -1210,6 +1210,24 @@ AS 'babelfishpg_tsql', 'add_existing_users_to_catalog';
 
 CALL sys.babel_add_existing_users_to_catalog();
 
+CREATE OR REPLACE PROCEDURE sys.babel_drop_all_users()
+LANGUAGE C
+AS 'babelfishpg_tsql', 'drop_all_users';
+
+CREATE OR REPLACE PROCEDURE remove_babelfish ()
+LANGUAGE plpgsql
+AS $$
+BEGIN
+	CALL sys.babel_drop_all_dbs();
+	CALL sys.babel_drop_all_users();
+	CALL sys.babel_drop_all_logins();
+	EXECUTE format('ALTER DATABASE %s SET babelfishpg_tsql.enable_ownership_structure = false', CURRENT_DATABASE());
+	EXECUTE 'ALTER SEQUENCE sys.babelfish_db_seq RESTART';
+	DROP OWNED BY sysadmin;
+	DROP ROLE sysadmin;
+END
+$$;
+
 create or replace view sys.identity_columns AS
 select out_object_id::bigint as object_id
   , out_name::name as name
