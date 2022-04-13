@@ -4597,15 +4597,6 @@ exec_stmt_execsql(PLtsql_execstate *estate,
 	bool		enable_txn_in_triggers = !pltsql_disable_txn_in_triggers;
     StringInfoData query;
 
-	/*
-	 * if ANTLR is enabled, PLtsql_stmt_push_result will be replaced with PLtsql_stmt_execsql
-	 * with flag need_to_push_result ON. To txn behavior makes consistent regardless of ANTLR,
-	 * adjust enable_txn_in_triggers as same as exec_stmt_push_result.
-	 * same for tsql_select_assign_stmt (select @a=1). with ANTLR=off, it is handled in PLtsql_stmt_query_set.
-	 */
-	if (stmt->need_to_push_result || stmt->is_tsql_select_assign_stmt)
-		enable_txn_in_triggers = false;
-
 	/* Handle naked SELECT stmt differently for INSERT ... EXECUTE */
 	if (stmt->need_to_push_result && estate->insert_exec)
 		return exec_stmt_insert_execute_select(estate, expr);
@@ -4702,6 +4693,15 @@ exec_stmt_execsql(PLtsql_execstate *estate,
 		else
 			estate->impl_txn_type = PLTSQL_IMPL_TRAN_ON;
 	}
+
+	/*
+	 * if ANTLR is enabled, PLtsql_stmt_push_result will be replaced with PLtsql_stmt_execsql
+	 * with flag need_to_push_result ON. To txn behavior makes consistent regardless of ANTLR,
+	 * adjust enable_txn_in_triggers as same as exec_stmt_push_result.
+	 * same for tsql_select_assign_stmt (select @a=1). with ANTLR=off, it is handled in PLtsql_stmt_query_set.
+	 */
+	if (stmt->need_to_push_result || stmt->is_tsql_select_assign_stmt || stmt->mod_stmt_tablevar)
+		enable_txn_in_triggers = false;
 
 	if (enable_txn_in_triggers)
 	{
