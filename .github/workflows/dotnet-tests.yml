@@ -1,5 +1,12 @@
 name: Dotnet Framework Tests
-on: [push, pull_request]
+on:
+  push:
+    branches:
+      - objectdef_main
+  pull_request:
+    branches:
+      - objectdef_lunharsh
+      - objectdef_lshalini
 
 jobs:
   run-babelfish-dotnet-tests:

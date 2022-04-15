@@ -2,8 +2,11 @@ name: Babelfish Smoke Tests
 on:
   push:
     branches:
+      - objectdef_main
   pull_request:
     branches:
+      - objectdef_lunharsh
+      - objectdef_lshalini
 
 jobs:
   isolation-tests:
