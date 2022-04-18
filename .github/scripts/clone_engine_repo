@@ -2,8 +2,6 @@
 
 # Attempt to clone the engine repository based on where the workflow is being run from.
 
-env
-
 # WARNING! Use "GH" instead of "GITHUB" for variable names to avoid possible
 # conflict with github workflow environment variables.
 
@@ -15,8 +13,6 @@ fi
 GH_USER=$1
 BRANCH=$2
 
-https://github.com/nasbyj/postgresql_modified_for_babelfish/tree/BABEL_1_X_DEV__PG_13_5
-https://github.com/nasbyj/postgresql_modified_for_babelfish.git
 # See if user has an engine repository with the same name and branch.
 # See https://unix.stackexchange.com/questions/474805/verify-if-a-url-exists
 BASE_URL=https://github.com/$GH_USER/postgresql_modified_for_babelfish # NO /
@@ -37,4 +33,9 @@ else
 fi
 GIT_URL=${BASE_URL}.git
 
-[ -n "$DRY_RUN" ] || git clone $BRANCH_OPTION "$GIT_URL" || exit $?
+if [ -z "$DRY_RUN" ]; then
+    echo git clone $BRANCH_OPTION "$GIT_URL"
+    exit 1
+else
+    git clone $BRANCH_OPTION "$GIT_URL" || exit $?
+fi
