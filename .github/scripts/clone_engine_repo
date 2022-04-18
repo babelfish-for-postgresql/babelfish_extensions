@@ -25,6 +25,8 @@ BRANCH_OPTION="--branch '$BRANCH'"
 if check_repo "${BASE_URL}/tree/$BRANCH"; then
     echo "Found matching branch $BRANCH at $BASE_URL, using that instead of public repo"
 else
+    # TODO: add support for checking tags in private repo
+
     # Maybe there's a matching branch in the public repo
     BASE_URL=
     BASE_URL=https://github.com/babelfish-for-postgresql/postgresql_modified_for_babelfish # NO /
