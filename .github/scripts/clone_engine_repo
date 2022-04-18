@@ -15,29 +15,33 @@ BRANCH=$2
 
 # See if user has an engine repository with the same name and branch.
 # See https://unix.stackexchange.com/questions/474805/verify-if-a-url-exists
+check_repo () {
+    echo "Checking $1"
+    wget --spider "$1" || return $?
+}
+
 BASE_URL=https://github.com/$GH_USER/postgresql_modified_for_babelfish # NO /
 BRANCH_OPTION="--branch '$BRANCH'"
-if wget --spider "${BASE_URL}/tree/$BRANCH" 2>/dev/null; then
+if check_repo "${BASE_URL}/tree/$BRANCH"; then
     echo "Found matching branch $BRANCH at $BASE_URL, using that instead of public repo"
 else
     # Maybe there's a matching branch in the public repo
     BASE_URL=
     BASE_URL=https://github.com/babelfish-for-postgresql/postgresql_modified_for_babelfish # NO /
 
-    if wget --spider "${BASE_URL}/tree/$BRANCH" 2>/dev/null; then
+    if check_repo "${BASE_URL}/tree/$BRANCH"; then
         echo "Using $BRANCH from project engine repo"
     else
+        # TODO: add support for checking tags
+
         echo "Did not find matching engine branch; using project default"
         BRANCH_OPTION=''
     fi
 fi
 GIT_URL=${BASE_URL}.git
 
-if [ -n "$DRY_RUN" ]; then
-    echo DRY RUN - command that would have run: git clone $BRANCH_OPTION "$GIT_URL"
-    exit 1
-else
-    git clone $BRANCH_OPTION "$GIT_URL" && exit
-    echo "git clone failed with return code $?. Command run:"
-    echo git clone $BRANCH_OPTION "$GIT_URL"
-fi
+echo running git clone "$BRANCH_OPTION" "$GIT_URL"
+git clone $BRANCH_OPTION "$GIT_URL" && exit
+rc=$?
+echo "git clone failed with return code $rc"
+exit $rc
