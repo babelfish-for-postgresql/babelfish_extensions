@@ -1,5 +1,9 @@
 #!/usr/bin/env bash
 
+# Attempt to clone the engine repository based on where the workflow is being run from.
+
+env
+
 # WARNING! Use "GH" instead of "GITHUB" for variable names to avoid possible
 # conflict with github workflow environment variables.
 
