@@ -22,7 +22,7 @@ if wget --spider "${BASE_URL}/tree/$BRANCH" 2>/dev/null; then
 else
     # Maybe there's a matching branch in the public repo
     BASE_URL=
-    BASE_URL=https://github.com/babelfish-for-postgres/postgresql_modified_for_babelfish # NO /
+    BASE_URL=https://github.com/babelfish-for-postgresql/postgresql_modified_for_babelfish # NO /
 
     if wget --spider "${BASE_URL}/tree/$BRANCH" 2>/dev/null; then
         echo "Using $BRANCH from project engine repo"
