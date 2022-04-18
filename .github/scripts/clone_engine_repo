@@ -37,5 +37,7 @@ if [ -n "$DRY_RUN" ]; then
     echo DRY RUN - command that would have run: git clone $BRANCH_OPTION "$GIT_URL"
     exit 1
 else
-    git clone $BRANCH_OPTION "$GIT_URL" || exit $?
+    git clone $BRANCH_OPTION "$GIT_URL" && exit
+    echo "git clone failed with return code $?. Command run:"
+    echo git clone $BRANCH_OPTION "$GIT_URL"
 fi
