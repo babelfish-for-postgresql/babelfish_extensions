@@ -21,7 +21,7 @@ check_repo () {
 }
 
 BASE_URL=https://github.com/$GH_USER/postgresql_modified_for_babelfish # NO /
-BRANCH_OPTION="--branch '$BRANCH'"
+BRANCH_OPTION="--branch $BRANCH"
 if check_repo "${BASE_URL}/tree/$BRANCH"; then
     echo "Found matching branch $BRANCH at $BASE_URL, using that instead of public repo"
 else
