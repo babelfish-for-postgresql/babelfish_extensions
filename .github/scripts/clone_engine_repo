@@ -1,0 +1,36 @@
+#!/usr/bin/env bash
+
+# WARNING! Use "GH" instead of "GITHUB" for variable names to avoid possible
+# conflict with github workflow environment variables.
+
+if [ "$1" == -n ]; then
+    DRY_RUN=1
+    shift
+fi
+
+GH_USER=$1
+BRANCH=$2
+
+https://github.com/nasbyj/postgresql_modified_for_babelfish/tree/BABEL_1_X_DEV__PG_13_5
+https://github.com/nasbyj/postgresql_modified_for_babelfish.git
+# See if user has an engine repository with the same name and branch.
+# See https://unix.stackexchange.com/questions/474805/verify-if-a-url-exists
+BASE_URL=https://github.com/$GH_USER/postgresql_modified_for_babelfish # NO /
+BRANCH_OPTION="--branch '$BRANCH'"
+if wget --spider "${BASE_URL}/tree/$BRANCH" 2>/dev/null; then
+    echo "Found matching branch $BRANCH at $BASE_URL, using that instead of public repo"
+else
+    # Maybe there's a matching branch in the public repo
+    BASE_URL=
+    BASE_URL=https://github.com/babelfish-for-postgres/postgresql_modified_for_babelfish # NO /
+
+    if wget --spider "${BASE_URL}/tree/$BRANCH" 2>/dev/null; then
+        echo "Using $BRANCH from project engine repo"
+    else
+        echo "Did not find matching engine branch; using project default"
+        BRANCH_OPTION=''
+    fi
+fi
+GIT_URL=${BASE_URL}.git
+
+[ -n "$DRY_RUN" ] || git clone $BRANCH_OPTION "$GIT_URL" || exit $?
