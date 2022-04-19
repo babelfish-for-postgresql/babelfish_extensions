@@ -70,6 +70,15 @@ ifeq ($(GE91),yes)
 all: sql/$(EXTENSION)--$(EXTVERSION).sql $(UPGRADES)
 endif
 
+install: install-lib link-lib
+uninstall: uninstall-lib unlink-lib
+
+link-lib:
+	ln -sf $(pkglibdir)/$(EXTENSION).so $(libdir)/$(EXTENSION).so
+
+unlink-lib:
+	rm -f $(libdir)/$(EXTENSION).so
+
 $(EXTENSION).control: $(EXTENSION).control.in
 	cat $< \
 		| sed -e 's|@EXTVERSION@|$(EXTVERSION)|g' \

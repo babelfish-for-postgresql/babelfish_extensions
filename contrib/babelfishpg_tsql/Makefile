@@ -79,7 +79,7 @@ PG_CXXFLAGS += -I$(ANTLR4_RUNTIME_INCLUDE_DIR)
 PG_CFLAGS += -g
 PG_CPPFLAGS += -I$(TSQLSRC) -I$(PG_SRC) -DFAULT_INJECTOR
 
-SHLIB_LINK += -L$(ANTLR4_RUNTIME_LIB_DIR) $(ANTLR4_RUNTIME_LIB) -lcrypto
+SHLIB_LINK += -L$(ANTLR4_RUNTIME_LIB_DIR) $(ANTLR4_RUNTIME_LIB) -lcrypto -L$(pkglibdir) -l:babelfishpg_common.so
 
 UPGRADES = $(patsubst sql/upgrades/%.sql,sql/%.sql,$(wildcard sql/upgrades/*.sql))
 
@@ -112,7 +112,7 @@ DATA_built = \
 # Get Postgres version, as well as major (9.4, etc) version. Remove '.' from MAJORVER.
 VERSION 	 = $(shell $(PG_CONFIG) --version | awk '{print $$2}' | sed -e 's/devel$$//')
 MAJORVER 	 = $(shell echo $(VERSION) | cut -d . -f1,2 | tr -d .)
-
+pkglibdir 	 = $(shell $(PG_CONFIG) --pkglibdir)
 # Function for testing a condition
 test		 = $(shell test $(1) $(2) $(3) && echo yes || echo no)
 
