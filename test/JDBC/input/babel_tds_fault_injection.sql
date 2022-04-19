@@ -64,13 +64,16 @@ go
 select trigger_test_fault();
 go
 
--- enable/disable all the faults
-select inject_fault_all();
-go
+-- enable/disable all the faults except "tds_comm_throw_error" fault
+select inject_fault('test_fault1');
+select inject_fault('test_fault2');
+select inject_fault('pre_parsing_tamper_request');
+select inject_fault('pre_parsing_tamper_rpc_request_sptype');
+select inject_fault('parsing_tamper_rpc_parameter_datatype');
+select inject_fault('pre_parsing_throw_error');
+select inject_fault('post_parsing_throw_error');
+GO
 
--- below will trigger "tds_comm_throw_error"
-select 1
-go
 
 -- below will trigger "pre_parsing_throw_error"
 select 1
