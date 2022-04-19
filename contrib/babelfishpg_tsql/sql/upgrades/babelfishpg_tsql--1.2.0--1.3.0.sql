@@ -913,6 +913,523 @@ AS $$
     SELECT CAST(CAST(sys.suser_id() AS INT) AS SYS.VARBINARY(85));
 $$
 LANGUAGE SQL IMMUTABLE PARALLEL RESTRICTED;
+
+-- Remove single pair of either square brackets or double-quotes from outer ends if present
+-- If name begins with a delimiter but does not end with the matching delimiter return NULL
+-- Otherwise, return the name unchanged
+CREATE OR REPLACE FUNCTION sys.babelfish_remove_delimiter_pair(IN name TEXT)
+RETURNS TEXT AS
+$BODY$
+BEGIN
+    IF name IN('[', ']', '"') THEN
+        RETURN NULL;
+
+    ELSIF length(name) >= 2 AND left(name, 1) = '[' AND right(name, 1) = ']' THEN
+        IF length(name) = 2 THEN
+            RETURN '';
+        ELSE
+            RETURN substring(name from 2 for length(name)-2);
+        END IF;
+    ELSIF length(name) >= 2 AND left(name, 1) = '[' AND right(name, 1) != ']' THEN
+        RETURN NULL;
+    ELSIF length(name) >= 2 AND left(name, 1) != '[' AND right(name, 1) = ']' THEN
+        RETURN NULL;
+
+    ELSIF length(name) >= 2 AND left(name, 1) = '"' AND right(name, 1) = '"' THEN
+        IF length(name) = 2 THEN
+            RETURN '';
+        ELSE
+            RETURN substring(name from 2 for length(name)-2);
+        END IF;
+    ELSIF length(name) >= 2 AND left(name, 1) = '"' AND right(name, 1) != '"' THEN
+        RETURN NULL;
+    ELSIF length(name) >= 2 AND left(name, 1) != '"' AND right(name, 1) = '"' THEN
+        RETURN NULL;
+
+    END IF;
+    RETURN name;
+END;
+$BODY$
+LANGUAGE plpgsql;
+
+CREATE OR REPLACE FUNCTION sys.babelfish_get_name_delimiter_pos(name TEXT)
+RETURNS INTEGER
+AS $$
+DECLARE
+    pos int;
+BEGIN
+    IF (length(name) <= 2 AND (position('"' IN name) != 0 OR position(']' IN name) != 0 OR position('[' IN name) != 0))
+        -- invalid name
+        THEN RETURN 0;
+    ELSIF left(name, 1) = '[' THEN
+        pos = position('].' IN name);
+        IF pos = 0 THEN
+            -- invalid name
+            RETURN 0;
+        ELSE
+            RETURN pos + 1;
+        END IF;
+    ELSIF left(name, 1) = '"' THEN
+        -- search from position 1 in case name starts with ".
+        pos = position('".' IN right(name, length(name) - 1));
+        IF pos = 0 THEN
+            -- invalid name
+            RETURN 0;
+        ELSE
+            RETURN pos + 2;
+        END IF;
+    ELSE
+        RETURN position('.' IN name);
+    END IF;
+END;
+$$
+LANGUAGE plpgsql;
+
+-- valid names are
+-- db_name.schema_name.object_name or schema_name.object_name or object_name
+CREATE OR REPLACE FUNCTION sys.babelfish_split_object_name(
+    name TEXT,
+    OUT db_name TEXT,
+    OUT schema_name TEXT,
+    OUT object_name TEXT)
+AS $$
+DECLARE
+    lower_object_name text;
+    names text[2];
+    counter int;
+    cur_pos int;
+BEGIN
+    lower_object_name = lower(rtrim(name));
+
+    counter = 1;
+    cur_pos = sys.babelfish_get_name_delimiter_pos(lower_object_name);
+
+    -- Parse user input into names split by '.'
+    WHILE cur_pos > 0 LOOP
+        IF counter > 3 THEN
+            -- Too many names provided
+            RETURN;
+        END IF;
+
+        names[counter] = sys.babelfish_remove_delimiter_pair(rtrim(left(lower_object_name, cur_pos - 1)));
+
+        -- invalid name
+        IF names[counter] IS NULL THEN
+            RETURN;
+        END IF;
+
+        lower_object_name = substring(lower_object_name from cur_pos + 1);
+        counter = counter + 1;
+        cur_pos = sys.babelfish_get_name_delimiter_pos(lower_object_name);
+    END LOOP;
+
+    CASE counter
+        WHEN 1 THEN
+            db_name = NULL;
+            schema_name = NULL;
+        WHEN 2 THEN
+            db_name = NULL;
+            schema_name = sys.babelfish_truncate_identifier(names[1]);
+        WHEN 3 THEN
+            db_name = sys.babelfish_truncate_identifier(names[1]);
+            schema_name = sys.babelfish_truncate_identifier(names[2]);
+        ELSE
+            RETURN;
+    END CASE;
+
+    -- Assign each name accordingly
+    object_name = sys.babelfish_truncate_identifier(sys.babelfish_remove_delimiter_pair(rtrim(lower_object_name)));
+END;
+$$
+LANGUAGE plpgsql;
+
+-- Return the object ID given the object name. Can specify optional type.
+CREATE OR REPLACE FUNCTION sys.object_id(IN object_name TEXT, IN object_type char(2) DEFAULT '')
+RETURNS INTEGER AS
+$BODY$
+DECLARE
+        id oid;
+        db_name text;
+        bbf_schema_name text;
+		schema_name text;
+        schema_oid oid;
+        obj_name text;
+        is_temp_object boolean;
+BEGIN
+        id = null;
+        schema_oid = NULL;
+
+        SELECT s.db_name, s.schema_name, s.object_name INTO db_name, bbf_schema_name, obj_name
+        FROM sys.babelfish_split_object_name(object_name) s;
+
+        -- Invalid object_name
+        IF obj_name IS NULL OR obj_name = '' THEN
+            RETURN NULL;
+        END IF;
+
+        IF bbf_schema_name IS NULL OR bbf_schema_name = '' THEN
+            bbf_schema_name := sys.schema_name();
+        END IF;
+
+        schema_name := sys.bbf_get_current_physical_schema_name(bbf_schema_name);
+
+        -- Check if looking for temp object.
+        is_temp_object = left(obj_name, 1) = '#';
+
+        -- Can only search in current database. Allowing tempdb for temp objects.
+        IF db_name IS NOT NULL AND db_name <> db_name() AND db_name <> 'tempdb' THEN
+            RAISE EXCEPTION 'Can only do lookup in current database.';
+        END IF;
+
+        IF schema_name IS NULL OR schema_name = '' THEN
+            RETURN NULL;
+        END IF;
+
+
+        -- Searching within a schema. Get schema oid.
+        schema_oid = (SELECT oid FROM pg_namespace WHERE nspname = schema_name);
+        IF schema_oid IS NULL THEN
+            RETURN NULL;
+        END IF;
+
+        if object_type <> '' then
+            case
+                -- Schema does not apply as much to temp objects.
+                when upper(object_type) in ('S', 'U', 'V', 'IT', 'ET', 'SO') and is_temp_object then
+	            id := (select reloid from sys.babelfish_get_enr_list() where lower(relname) = obj_name limit 1);
+
+                when upper(object_type) in ('S', 'U', 'V', 'IT', 'ET', 'SO') and not is_temp_object then
+	            id := (select oid from pg_class where lower(relname) = obj_name
+                            and relnamespace = schema_oid limit 1);
+
+                when upper(object_type) in ('C', 'D', 'F', 'PK', 'UQ') then
+	            id := (select oid from pg_constraint where lower(conname) = obj_name
+                            and connamespace = schema_oid limit 1);
+
+                when upper(object_type) in ('AF', 'FN', 'FS', 'FT', 'IF', 'P', 'PC', 'TF', 'RF', 'X') then
+	            id := (select oid from pg_proc where lower(proname) = obj_name
+                            and pronamespace = schema_oid limit 1);
+
+                when upper(object_type) in ('TR', 'TA') then
+	            id := (select oid from pg_trigger where lower(tgname) = obj_name limit 1);
+
+                -- Throwing exception as a reminder to add support in the future.
+                when upper(object_type) in ('R', 'EC', 'PG', 'SN', 'SQ', 'TT') then
+                    RAISE EXCEPTION 'Object type currently unsupported.';
+
+                -- unsupported object_type
+                else id := null;
+            end case;
+        else
+            if not is_temp_object then id := (
+                                            select oid from pg_class where lower(relname) = obj_name
+                                                and relnamespace = schema_oid
+				            union
+			                select oid from pg_constraint where lower(conname) = obj_name
+				            and connamespace = schema_oid
+                                                union
+			                select oid from pg_proc where lower(proname) = obj_name
+				            and pronamespace = schema_oid
+                                                union
+			                select oid from pg_trigger where lower(tgname) = obj_name
+			                limit 1);
+            else
+                -- temp object without "object_type" in-argument
+                id := (select reloid from sys.babelfish_get_enr_list() where lower(relname) = obj_name limit 1);
+            end if;
+        end if;
+
+        RETURN id::integer;
+END;
+$BODY$
+LANGUAGE plpgsql STABLE RETURNS NULL ON NULL INPUT;
+
+DROP FUNCTION IF EXISTS sys.babelfish_single_unbracket_name;
+
+CREATE OR REPLACE FUNCTION sys.has_any_privilege(
+    perm_target_type text,
+    schema_name text,
+    object_name text,
+    sub_securable text DEFAULT NULL)
+RETURNS INTEGER
+AS
+$BODY$
+DECLARE
+    relevant_permissions text[];
+    namespace_id oid;
+    function_signature text;
+    qualified_name text;
+    permission text;
+BEGIN
+	IF perm_target_type IS NULL OR perm_target_type NOT IN('table', 'column', 'function', 'procedure')
+        THEN RETURN NULL;
+    ELSIF perm_target_type = 'column' AND sub_securable IS NULL
+        THEN RETURN NULL;
+    END IF;
+
+    relevant_permissions := (
+        SELECT CASE
+            WHEN perm_target_type = 'table'
+                THEN '{"select", "insert", "update", "delete", "references"}'
+            WHEN perm_target_type = 'column'
+                THEN '{"select", "update", "references"}'
+            WHEN perm_target_type IN('function', 'procedure')
+                THEN '{"execute"}'
+        END
+    );
+
+    SELECT oid INTO namespace_id FROM pg_catalog.pg_namespace WHERE nspname = schema_name;
+
+    IF perm_target_type IN('function', 'procedure')
+        THEN SELECT oid::regprocedure
+                INTO function_signature
+                FROM pg_catalog.pg_proc
+                WHERE proname = object_name
+                    AND pronamespace = namespace_id;
+    END IF;
+
+    -- Surround with double-quotes to handle names that contain periods/spaces
+    qualified_name := concat('"', schema_name, '"."', object_name, '"');
+
+    FOREACH permission IN ARRAY relevant_permissions
+    LOOP
+        IF perm_target_type = 'table' AND has_table_privilege(qualified_name, permission)::integer = 1
+            THEN RETURN 1;
+        ELSIF perm_target_type = 'column' AND has_column_privilege(qualified_name, sub_securable, permission)::integer = 1
+            THEN RETURN 1;
+        ELSIF perm_target_type IN('function', 'procedure') AND has_function_privilege(function_signature, permission)::integer = 1
+            THEN RETURN 1;
+        END IF;
+    END LOOP;
+    RETURN 0;
+END
+$BODY$
+LANGUAGE plpgsql;
+
+CREATE OR REPLACE FUNCTION sys.has_perms_by_name(
+    securable SYS.SYSNAME,
+    securable_class SYS.NVARCHAR(60),
+    permission SYS.SYSNAME,
+    sub_securable SYS.SYSNAME DEFAULT NULL,
+    sub_securable_class SYS.NVARCHAR(60) DEFAULT NULL
+)
+RETURNS integer
+LANGUAGE plpgsql
+AS $$
+DECLARE
+    db_name text;
+    bbf_schema_name text;
+    pg_schema text;
+    object_name text;
+    database_id smallint;
+    namespace_id oid;
+    perm_target_type text;
+    function_signature text;
+    qualified_name text;
+    return_value integer;
+BEGIN
+    return_value := NULL;
+
+    -- Lower-case to avoid case issues, remove trailing whitespace to match SQL SERVER behavior
+    -- Objects created in Babelfish are stored in lower-case in pg_class/pg_proc
+    securable = lower(rtrim(securable));
+    securable_class = lower(rtrim(securable_class));
+    permission = lower(rtrim(permission));
+    sub_securable = lower(rtrim(sub_securable));
+    sub_securable_class = lower(rtrim(sub_securable_class));
+
+    -- Validate inputs
+    IF permission IS NULL THEN
+        RETURN NULL;
+
+    -- Assert that securable_class is NULL, object, database, or server
+    ELSIF securable_class IS NOT NULL AND securable_class NOT IN('object', 'database', 'server') THEN
+        RETURN NULL;
+
+    -- Assert that sub_securable and sub_securable_class are either both NULL or both defined
+    ELSIF sub_securable IS NOT NULL AND sub_securable_class IS NULL THEN
+        RETURN NULL;
+    ELSIF sub_securable IS NULL AND sub_securable_class IS NOT NULL THEN
+        RETURN NULL;
+    -- If they are both defined, sub_securable_class must be set to 'column' and securable_class to 'object'
+    ELSIF sub_securable IS NOT NULL
+            AND (sub_securable_class != 'column' OR securable_class IS NULL OR securable_class != 'object') THEN
+        RETURN NULL;
+
+    -- If securable is null, securable_class must be null or server
+    ELSIF securable IS NULL AND securable_class IS NOT NULL AND securable_class != 'server' THEN
+        RETURN NULL;
+    -- If securable_class is null or server, securable must be null
+    ELSIF (securable_class IS NULL OR securable_class = 'server') AND securable IS NOT NULL THEN
+        RETURN NULL;
+
+    -- Assert that permission type is compatible with the securable class
+    ELSIF securable_class = 'object' AND permission NOT IN('select', 'insert', 'update', 'delete', 'references', 'execute', 'any') THEN
+        RETURN NULL;
+    ELSIF securable_class = 'database' AND permission NOT IN('create schema', 'create table') THEN
+        RETURN NULL;
+    ELSIF (securable_class IS NULL OR securable_class = 'server') AND permission != 'view server state' THEN
+        RETURN NULL;
+    END IF;
+
+
+    IF securable_class IS NULL OR securable_class = 'server' THEN
+        IF CURRENT_USER IN('dbo', 'master_dbo', 'tempdb_dbo', 'msdb_dbo') THEN
+            RETURN 1;
+        ELSE
+            RETURN 0;
+        END IF;
+    END IF;
+
+    IF securable_class = 'database' THEN
+        IF CURRENT_USER IN('dbo', 'master_dbo', 'tempdb_dbo', 'msdb_dbo')
+                AND (SELECT count(name) FROM sys.databases WHERE name = securable) = 1
+            THEN RETURN 1;
+        ELSE
+            RETURN 0;
+        END IF;
+    END IF;
+
+    SELECT s.db_name, s.schema_name, s.object_name INTO db_name, bbf_schema_name, object_name
+    FROM sys.babelfish_split_object_name(securable) s;
+
+    -- Invalid securable name
+    IF object_name IS NULL OR object_name = '' THEN
+        RETURN NULL;
+    END IF;
+
+    database_id := (
+        SELECT CASE
+            WHEN db_name IS NULL OR db_name = '' THEN (sys.db_id())
+            ELSE (sys.db_id(db_name))
+        END);
+
+    IF bbf_schema_name IS NULL OR bbf_schema_name = '' THEN
+        bbf_schema_name := sys.schema_name();
+    END IF;
+
+     -- Translate schema name from bbf to postgres, e.g. dbo -> master_dbo
+    pg_schema := (SELECT nspname
+                    FROM sys.babelfish_namespace_ext ext
+                    WHERE ext.orig_name = bbf_schema_name
+                        AND ext.dbid::oid = database_id::oid);
+
+    -- Surround with double-quotes to handle names that contain periods/spaces
+    qualified_name := concat('"', pg_schema, '"."', object_name, '"');
+
+    SELECT oid INTO namespace_id FROM pg_catalog.pg_namespace WHERE nspname = pg_schema;
+
+    IF sub_securable IS NOT NULL THEN
+        sub_securable := sys.babelfish_remove_delimiter_pair(sub_securable);
+        IF sub_securable IS NULL THEN
+            RETURN NULL;
+        END IF;
+    END IF;
+
+    perm_target_type := (
+        SELECT CASE
+            WHEN sub_securable_class = 'column'
+                THEN CASE
+                    WHEN (SELECT count(name)
+                        FROM sys.all_columns
+                        WHERE name = sub_securable
+                            -- Use V as the object type to specify that the securable is table-like.
+                            -- We don't know that the securable is a view, but object_id behaves the
+                            -- same for differint table-like types, so V can be arbitrarily chosen.
+                            AND object_id = sys.object_id(securable, 'V')) = 1
+                                THEN 'column'
+                    ELSE NULL
+                END
+
+            WHEN (SELECT count(relname)
+                    FROM pg_catalog.pg_class
+                    WHERE relname = object_name
+                        AND relnamespace = namespace_id) = 1
+                THEN 'table'
+
+            WHEN (SELECT count(proname)
+                    FROM pg_catalog.pg_proc
+                    WHERE proname = object_name
+                        AND pronamespace = namespace_id
+                        AND prokind = 'f') = 1
+                THEN 'function'
+
+            WHEN (SELECT count(proname)
+                    FROM pg_catalog.pg_proc
+                    WHERE proname = object_name
+                        AND pronamespace = namespace_id
+                        AND prokind = 'p') = 1
+                THEN 'procedure'
+            ELSE NULL
+        END
+    );
+
+    -- Object wasn't found
+    IF perm_target_type IS NULL THEN
+        RETURN 0;
+    END IF;
+
+    -- Get signature for function-like objects
+    IF perm_target_type IN('function', 'procedure') THEN
+        SELECT oid::regprocedure
+            INTO function_signature
+            FROM pg_catalog.pg_proc
+            WHERE proname = object_name
+                AND pronamespace = namespace_id;
+    END IF;
+
+	return_value := (
+        SELECT CASE
+            WHEN permission = 'any' THEN sys.has_any_privilege(perm_target_type, pg_schema, object_name, sub_securable)
+
+            WHEN perm_target_type = 'column'
+                THEN CASE
+                    WHEN permission IN('insert', 'delete', 'execute') THEN NULL
+                    ELSE has_column_privilege(qualified_name, sub_securable, permission)::integer
+                END
+
+            WHEN perm_target_type = 'table'
+                THEN CASE
+                    WHEN permission = 'execute' THEN 0
+                    ELSE has_table_privilege(qualified_name, permission)::integer
+                END
+
+            WHEN perm_target_type = 'function'
+                THEN CASE
+                    WHEN permission IN('select', 'execute')
+                        THEN has_function_privilege(function_signature, 'execute')::integer
+                    WHEN permission IN('update', 'insert', 'delete', 'references')
+                        THEN 0
+                    ELSE NULL
+                END
+
+            WHEN perm_target_type = 'procedure'
+                THEN CASE
+                    WHEN permission = 'execute'
+                        THEN has_function_privilege(function_signature, 'execute')::integer
+                    WHEN permission IN('select', 'update', 'insert', 'delete', 'references')
+                        THEN 0
+                    ELSE NULL
+                END
+
+            ELSE NULL
+		END
+	);
+
+	RETURN return_value;
+	EXCEPTION WHEN OTHERS THEN RETURN NULL;
+END;
+$$;
+
+GRANT EXECUTE ON FUNCTION sys.has_perms_by_name(
+    securable sys.SYSNAME,
+    securable_class sys.nvarchar(60),
+    permission sys.SYSNAME,
+    sub_securable sys.SYSNAME,
+    sub_securable_class sys.nvarchar(60)) TO PUBLIC;
+
+COMMENT ON FUNCTION sys.has_perms_by_name
+IS 'This function returns permission information. Currently only works with tables, views, columns, functions, and procedures. Otherwise returns NULL.';
  
 -- Reset search_path to not affect any subsequent scripts
 SELECT set_config('search_path', trim(leading 'sys, ' from current_setting('search_path')), false);
