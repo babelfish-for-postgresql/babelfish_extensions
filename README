@@ -3,5 +3,5 @@ This github fork intentionally does not include production Babelfish branches.
 To obtain upstream production branches in a clone of this repository, do the
 following:
 
-git remote add upstream https://github.com/babelfish-for-postgresql/postgresql_modified_for_babelfish.git
+git remote add upstream https://github.com/babelfish-for-postgresql/babelfish_extensions.git
 git checkout --track upstream/BABEL_...
