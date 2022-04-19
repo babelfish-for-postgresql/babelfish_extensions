@@ -1,7 +1,8 @@
 import logging
 from file_handler import file_handler
 import pytest
-from utils.base import add_files
+from utils.base import add_files, ignored_files
+from utils.config import config_dict as cfg
 import os
 from datetime import datetime
 from pathlib import Path
@@ -30,6 +31,13 @@ def fx1(request):
 
 #main test fuctions
 def test_main(fx1, my_setup):
+
+    # skip tests specified by config
+    if os.path.splitext(fx1)[1] == '.spec' and cfg['runIsolationTests']=='false':
+        pytest.skip("Isolation Tests are not allowed - runIsolationTests config param is false")
+    if fx1.name in ignored_files:
+        pytest.skip("Ignored test file - Modify ignoredTestName to run this step")
+
     logfname = my_setup
     
     #console logger
