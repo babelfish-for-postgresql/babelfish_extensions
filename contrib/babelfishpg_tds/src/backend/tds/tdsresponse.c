@@ -1725,10 +1725,9 @@ PrepareRowDescription(TupleDesc typeinfo, List *targetlist, int16 *formats,
 				/* logical schema name should be sent as part of response as far as Babelfish is concerned. */
 				if (pltsql_plugin_handler_ptr && 
 					pltsql_plugin_handler_ptr->pltsql_get_logical_schema_name)
-					/* Its very unlikely that logical schema name could not be found for any other cases. */
 					relMetaDataInfo->partName[1] = pltsql_plugin_handler_ptr->pltsql_get_logical_schema_name(physical_schema_name);
 
-				if (physical_schema_name)
+				if (physical_schema_name != relMetaDataInfo->partName[1])
 					pfree(physical_schema_name);
 
 				relation_close(rel, AccessShareLock);
