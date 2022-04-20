@@ -1,7 +1,7 @@
 /* Tsql system catalog views */
 create or replace view sys.tables as
 select
-  t.relname as name
+  t.relname::sys._ci_sysname as name
   , t.oid as object_id
   , null::integer as principal_id
   , sch.schema_id as schema_id
@@ -31,7 +31,7 @@ select
   , 0 as is_filetable
   , 0 as durability
   , 'SCHEMA_AND_DATA'::varchar(60) as durability_desc
-  , 0 as is_memory_optimized
+  , 0::sys.bit as is_memory_optimized
   , case relpersistence when 't' then 2 else 0 end as temporal_type
   , case relpersistence when 't' then 'SYSTEM_VERSIONED_TEMPORAL_TABLE' else 'NON_TEMPORAL_TABLE' end as temporal_type_desc
   , null::integer as history_table_id
@@ -1099,7 +1099,7 @@ GRANT SELECT ON sys.check_constraints TO PUBLIC;
 
 create or replace view sys.objects as
 select
-      t.name
+      t.name::name
     , t.object_id
     , t.principal_id
     , t.schema_id
