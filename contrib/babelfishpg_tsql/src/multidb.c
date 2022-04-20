@@ -896,8 +896,8 @@ get_physical_schema_name(char *db_name, const char *schema_name)
 	else if (SINGLE_DB == get_migration_mode())
 	{
 		if ((strlen(db_name) == 6 && (strncmp(db_name, "master", 6) == 0)) ||
-	(strlen(db_name) == 6 && (strncmp(db_name, "tempdb", 6) == 0)) ||
-	(strlen(db_name) == 4 && (strncmp(db_name, "msdb", 4) == 0)))
+			(strlen(db_name) == 6 && (strncmp(db_name, "tempdb", 6) == 0)) ||
+			(strlen(db_name) == 4 && (strncmp(db_name, "msdb", 4) == 0)))
 		{
 			result = palloc0(MAX_BBF_NAMEDATALEND);
 			snprintf(result, (MAX_BBF_NAMEDATALEND), "%s_%s", db_name, name);
@@ -968,8 +968,8 @@ get_physical_user_name(char *db_name, char *user_name)
 	{
 		// check that db_name is not "master", "tempdb", or "msdb"
 		if ((strlen(db_name) != 6 || (strncmp(db_name, "master", 6) != 0)) &&
-	(strlen(db_name) != 6 || (strncmp(db_name, "tempdb", 6) != 0)) &&
-	(strlen(db_name) != 4 || (strncmp(db_name, "msdb", 4) != 0)))
+			(strlen(db_name) != 6 || (strncmp(db_name, "tempdb", 6) != 0)) &&
+			(strlen(db_name) != 4 || (strncmp(db_name, "msdb", 4) != 0)))
 		{
 			if ((strlen(user_name) == 3 && strncmp(user_name, "dbo", 3) == 0) ||
 				(strlen(user_name) == 8 && strncmp(user_name, "db_owner", 8) == 0))
