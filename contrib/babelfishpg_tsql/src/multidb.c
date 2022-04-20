@@ -895,7 +895,9 @@ get_physical_schema_name(char *db_name, const char *schema_name)
 
 	else if (SINGLE_DB == get_migration_mode())
 	{
-		if ((strcmp(db_name, "master") == 0) || (strcmp(db_name, "tempdb") == 0))
+		if ((strlen(db_name) == 6 && (strncmp(db_name, "master", 6) == 0)) ||
+	(strlen(db_name) == 6 && (strncmp(db_name, "tempdb", 6) == 0)) ||
+	(strlen(db_name) == 4 && (strncmp(db_name, "msdb", 4) == 0)))
 		{
 			result = palloc0(MAX_BBF_NAMEDATALEND);
 			snprintf(result, (MAX_BBF_NAMEDATALEND), "%s_%s", db_name, name);
@@ -964,10 +966,16 @@ get_physical_user_name(char *db_name, char *user_name)
 	 */
 	if (SINGLE_DB == get_migration_mode())
 	{
-		if ((strcmp(db_name, "master") != 0) && (strcmp(db_name, "tempdb") != 0))
+		// check that db_name is not "master", "tempdb", or "msdb"
+		if ((strlen(db_name) != 6 || (strncmp(db_name, "master", 6) != 0)) &&
+	(strlen(db_name) != 6 || (strncmp(db_name, "tempdb", 6) != 0)) &&
+	(strlen(db_name) != 4 || (strncmp(db_name, "msdb", 4) != 0)))
 		{
-			if (strncmp(user_name, "dbo", 3) == 0 || ( strncmp(user_name, "db_owner", 8) == 0))
+			if ((strlen(user_name) == 3 && strncmp(user_name, "dbo", 3) == 0) ||
+				(strlen(user_name) == 8 && strncmp(user_name, "db_owner", 8) == 0))
+			{
 				return new_user_name;
+			}
 		}
 	}
 
@@ -987,6 +995,8 @@ get_dbo_schema_name(const char *dbname)
 		return "master_dbo";
 	if (0 == strcmp(dbname , "tempdb"))
 		return "tempdb_dbo";
+	if (0 == strcmp(dbname , "msdb"))
+		return "msdb_dbo";
 	if (SINGLE_DB == get_migration_mode())
 		return "dbo";
 	else
@@ -1005,6 +1015,8 @@ get_dbo_role_name(const char *dbname)
 		return "master_dbo";
 	if (0 == strcmp(dbname , "tempdb"))
 		return "tempdb_dbo";
+	if (0 == strcmp(dbname , "msdb"))
+		return "msdb_dbo";
 	if (SINGLE_DB == get_migration_mode())
 		return "dbo";
 	else
@@ -1023,6 +1035,8 @@ get_db_owner_name(const char *dbname)
 		return "master_db_owner";
 	if (0 == strcmp(dbname , "tempdb"))
 		return "tempdb_db_owner";
+	if (0 == strcmp(dbname , "msdb"))
+		return "msdb_db_owner";
 	if (SINGLE_DB == get_migration_mode())
 		return "db_owner";
 	else
@@ -1040,7 +1054,9 @@ const char *get_guest_role_name(const char *dbname)
 		return "master_guest";
 	if (0 == strcmp(dbname , "tempdb"))
 		return "tempdb_guest";
-	/* BABEL-2430: Disable guest user for DB other than master/tempdb */
+	if (0 == strcmp(dbname , "msdb"))
+		return "msdb_guest";
+	/* BABEL-2430: Disable guest user for DB other than master/tempdb/msdb */
 	else
 		return NULL;
 }
