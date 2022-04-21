@@ -203,6 +203,10 @@ coll_info_t coll_infos[] =
   {0, "hebrew_ci_as",                 1037, 0, 196608,  0, 0x000d, 1255},
   {0, "hebrew_cs_as",                 1037, 0, 196608,  0, 0x000c, 1255},
 
+  {0, "japanese_ci_ai",                 1041, 0, 196608,  0, 0x000f, 932},
+  {0, "japanese_ci_as",                 1041, 0, 196608,  0, 0x000d, 932},
+  {0, "japanese_cs_as",                 1041, 0, 196608,  0, 0x000c, 932},
+
   {0, "korean_wansung_ci_ai",         1042, 0, 196608,  0, 0x000f, 949},
   {0, "korean_wansung_ci_as",         1042, 0, 196608,  0, 0x000d, 949},
   {0, "korean_wansung_cs_as",         1042, 0, 196608,  0, 0x000c, 949},
