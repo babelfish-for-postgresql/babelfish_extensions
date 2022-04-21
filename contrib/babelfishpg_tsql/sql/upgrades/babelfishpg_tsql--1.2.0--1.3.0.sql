@@ -914,5 +914,16 @@ AS $$
 $$
 LANGUAGE SQL IMMUTABLE PARALLEL RESTRICTED;
  
+CREATE OR REPLACE VIEW sys.data_spaces
+AS
+SELECT 
+  CAST('PRIMARY' as SYSNAME) AS name,
+  CAST(0 as INT) AS data_space_id,
+  CAST('FG' as CHAR(2)) AS type,
+  CAST('ROWS_FILEGROUP' as NVARCHAR(60)) AS type_desc,
+  CAST(1 as sys.BIT) AS is_default,
+  CAST(0 as sys.BIT) AS is_system;
+GRANT SELECT ON sys.data_spaces TO PUBLIC;
+
 -- Reset search_path to not affect any subsequent scripts
 SELECT set_config('search_path', trim(leading 'sys, ' from current_setting('search_path')), false);
