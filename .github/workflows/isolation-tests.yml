@@ -22,6 +22,8 @@ jobs:
         id: build-modified-postgres
         if: always() && steps.install-dependencies.outcome == 'success'
         uses: ./.github/composite-actions/build-modified-postgres
+        with:
+          engine_branch: BABEL_1_X_DEV__PG_13_6
       
       - name: Compile ANTLR
         id: compile-antlr

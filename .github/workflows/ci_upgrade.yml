@@ -19,38 +19,31 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
+
+      - name: Install Dependencies
+        id: install-dependencies
+        if: always()
+        uses: ./.github/composite-actions/install-dependencies
+
       - name: Clone, build, and run tests for Postgres engine using ${{env.ENGINE_VER_FROM}}
-        run: |
-          cd ..
-          git clone --branch $ENGINE_VER_FROM https://github.com/babelfish-for-postgresql/postgresql_modified_for_babelfish.git
-          sudo apt-get update
-          sudo apt-get install uuid-dev openjdk-8-jre libicu-dev libxml2-dev openssl libssl-dev python-dev libossp-uuid-dev libpq-dev cmake pkg-config g++ build-essential bison 
-          cd postgresql_modified_for_babelfish
-          ./configure --prefix=$HOME/postgres/ --with-python PYTHON=/usr/bin/python2.7 --enable-debug CFLAGS="-ggdb" --with-libxml --with-uuid=ossp --with-icu
-          make -j 4 2>error.txt
-          make install
-          make check
-          cd contrib && make && sudo make install
-      - name: Copy ANTLR jar file
-        run: |
-          cd contrib/babelfishpg_tsql/antlr/thirdparty/antlr/
-          sudo cp antlr-4.9.3-complete.jar /usr/local/lib
+        id: build-modified-postgres-older
+        if: always() && steps.install-dependencies.outcome == 'success'
+        uses: ./.github/composite-actions/build-modified-postgres
+        with:
+          engine_branch: ${{env.ENGINE_VER_FROM}}
+
       - name: Compile ANTLR
-        run: |
-          cd ..
-          wget http://www.antlr.org/download/antlr4-cpp-runtime-4.9.3-source.zip
-          unzip -d antlr4 antlr4-cpp-runtime-4.9.3-source.zip 
-          cd antlr4
-          mkdir build && cd build 
-          cmake .. -D ANTLR_JAR_LOCATION=/usr/local/lib/antlr-4.9.3-complete.jar -DCMAKE_INSTALL_PREFIX=/usr/local -DWITH_DEMO=True
-          make
-          sudo make install
-          cp /usr/local/lib/libantlr4-runtime.so.4.9.3 ~/postgres/lib/
+        id: compile-antlr
+        if: always() && steps.build-modified-postgres-older.outcome == 'success'
+        uses: ./.github/composite-actions/compile-antlr
+
       - uses: actions/checkout@v2
         with:
           repository: babelfish-for-postgresql/babelfish_extensions
           ref: ${{env.EXTENSION_VER_FROM}}
+
       - name: Set env variables and build extensions using ${{env.EXTENSION_VER_FROM}}
+        if: always() && steps.compile-antlr.outcome == 'success'
         run: |
           export PG_CONFIG=~/postgres/bin/pg_config
           export PG_SRC=~/work/babelfish_extensions/postgresql_modified_for_babelfish
@@ -64,6 +57,7 @@ jobs:
           echo Now building bbf_tsql
           cd ../babelfishpg_tsql
           make && make install
+
       - name: Install extensions
         run: |
           cd ~
@@ -91,7 +85,8 @@ jobs:
           sudo ~/postgres/bin/psql -d jdbc_testdb -U runner -c "CALL sys.initialize_babelfish('jdbc_user');"
           sudo ~/postgres/bin/psql -d jdbc_testdb -U runner -c "\dx"
           sqlcmd -S localhost -U jdbc_user -P 12345678 -Q "SELECT @@version GO"
-      - name: Clone, build, and run tests for Postgres engine using ${{env.ENGINE_VER_TO}}
+
+      - name: Build and run tests for Postgres engine using ${{env.ENGINE_VER_TO}}
         run: |
           cd ../postgresql_modified_for_babelfish
           git checkout ${{env.ENGINE_VER_TO}}
@@ -101,25 +96,18 @@ jobs:
           make install
           make check
           cd contrib && make && sudo make install
+
       - uses: actions/checkout@v2
         with:
           repository: babelfish-for-postgresql/babelfish_extensions
           ref: ${{env.EXTENSION_VER_TO}}
+
       - name: Set env variables and build extensions using ${{env.EXTENSION_VER_TO}}
-        run: |
-          export PG_CONFIG=~/postgres/bin/pg_config
-          export PG_SRC=~/work/babelfish_extensions/postgresql_modified_for_babelfish
-          export cmake=$(which cmake)
-          cd contrib/babelfishpg_money
-          make clean && make && make install
-          cd ../babelfishpg_common
-          make clean && make && make install
-          cd ../babelfishpg_tds
-          make clean && make && make install
-          echo Now building bbf_tsql
-          cd ../babelfishpg_tsql
-          make clean && make && make install
+        id: build-extensions-newer
+        uses: ./.github/composite-actions/build-extensions
+
       - name: Update extensions
+        if: always() && steps.build-extensions-newer.outcome == 'success'
         run: |
           cd ~
           ~/postgres/bin/pg_ctl -D ~/postgres/data/ -l logfile restart
@@ -127,36 +115,42 @@ jobs:
           sudo ~/postgres/bin/psql -d jdbc_testdb -U runner -c "ALTER EXTENSION "babelfishpg_common" UPDATE; ALTER EXTENSION "babelfishpg_tsql" UPDATE;"
           sudo ~/postgres/bin/psql -d jdbc_testdb -U runner -c "\dx"
           sqlcmd -S localhost -U jdbc_user -P 12345678 -Q "SELECT @@version GO"
-      - name: Run JDBC test framework
+
+      - name: Run JDBC Tests
+        id: jdbc
         timeout-minutes: 15
         run: |
           cd test/JDBC/
           mvn test
-      - name: Upload log
-        if: ${{ failure() }}
+
+      - name: Upload Log
+        if: always() && steps.jdbc.outcome == 'failure'
         uses: actions/upload-artifact@v2
         with:
           name: postgres-log
           path: ~/postgres/data/logfile
+
       # The test summary files contain paths with ':' characters, which is not allowed with the upload-artifact actions
-      - name: Rename test summary files
-        if: ${{ failure() }}
+      - name: Rename Test Summary Files
+        id: test-file-rename
+        if: always() && steps.jdbc.outcome == 'failure'
         run: |
           cd test/JDBC/Info
           timestamp=`ls -Art | tail -n 1`
           cd $timestamp
           mv $timestamp.diff ../output-diff.diff
           mv "$timestamp"_runSummary.log ../run-summary.log
-      - name: Upload run summary 
-        if: ${{ failure() }}
+
+      - name: Upload Run Summary 
+        if: always() && steps.test-file-rename == 'success'
         uses: actions/upload-artifact@v2
         with:
           name: run-summary.log
           path: test/JDBC/Info/run-summary.log
-      - name: Upload output diff
-        if: ${{ failure() }}
+
+      - name: Upload Output Diff
+        if: always() && steps.jdbc.outcome == 'failure'
         uses: actions/upload-artifact@v2
         with:
           name: output-diff.diff
           path: test/JDBC/Info/output-diff.diff
-
