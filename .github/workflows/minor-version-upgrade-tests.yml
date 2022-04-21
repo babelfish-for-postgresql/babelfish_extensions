@@ -1,4 +1,4 @@
-name: JDBC Upgrade Tests
+name: Minor Version Upgrade Tests
 on:
   push:
     branches:
