@@ -1,10 +1,17 @@
 name: 'Build Extensions'
+
+inputs:
+  install_dir:
+    description: 'Engine install directory'
+    required: no
+    default: postgres
+
 runs:
   using: "composite"
   steps:
     - name: Build Extensions
       run: |
-        export PG_CONFIG=~/postgres/bin/pg_config
+        export PG_CONFIG=~/${{inputs.install_dir}}/bin/pg_config
         export PG_SRC=~/work/babelfish_extensions/postgresql_modified_for_babelfish
         export cmake=$(which cmake)
         cd contrib/babelfishpg_money

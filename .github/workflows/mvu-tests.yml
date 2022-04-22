@@ -1,0 +1,109 @@
+name: Major Version Upgrade Tests
+on: [push, pull_request]
+
+jobs:
+  run-babelfish-mvu-tests:
+    env:
+      OLD_INSTALL_DIR: postgres13
+      NEW_INSTALL_DIR: postgres14
+      ENGINE_VER_FROM: BABEL_1_X_DEV__PG_13_6
+      EXTENSION_VER_FROM: BABEL_1_X_DEV
+      ENGINE_VER_TO: BABEL_2_X_DEV__PG_14_2
+      EXTENSION_VER_TO: BABEL_2_X_DEV
+
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+
+      - name: Install Dependencies
+        id: install-dependencies
+        if: always()
+        uses: ./.github/composite-actions/install-dependencies
+
+      - name: Build Modified Postgres using ${{env.ENGINE_VER_FROM}}
+        id: build-modified-postgres-old
+        if: always() && steps.install-dependencies.outcome == 'success'
+        uses: ./.github/composite-actions/build-modified-postgres
+        with:
+          engine_branch: ${{env.ENGINE_VER_FROM}}
+          install_dir: ${{env.OLD_INSTALL_DIR}}
+      
+      - name: Compile ANTLR
+        id: compile-antlr
+        if: always() && steps.build-modified-postgres-old.outcome == 'success'
+        uses: ./.github/composite-actions/compile-antlr
+        with:
+          install_dir: ${{env.OLD_INSTALL_DIR}}
+
+      - uses: actions/checkout@v2
+        with:
+          repository: babelfish-for-postgresql/babelfish_extensions
+          ref: ${{env.EXTENSION_VER_FROM}}
+      
+      - name: Build Extensions using ${{env.EXTENSION_VER_FROM}}
+        id: build-extensions-old
+        if: always() && steps.compile-antlr.outcome == 'success'
+        uses: ./.github/composite-actions/build-extensions
+        with:
+          install_dir: ${{env.OLD_INSTALL_DIR}}
+      
+      - name: Install Extensions using ${{env.EXTENSION_VER_FROM}}
+        id: install-extensions-old
+        if: always() && steps.build-extensions-old.outcome == 'success'
+        uses: ./.github/composite-actions/install-extensions
+        with:
+          install_dir: ${{env.OLD_INSTALL_DIR}}
+          migration_mode: "multi-db"
+
+      - name: Build Modified Postgres using ${{env.ENGINE_VER_TO}}
+        id: build-modified-postgres-new
+        if: always() && steps.install-extensions-old.outcome == 'success'
+        uses: ./.github/composite-actions/build-modified-postgres
+        with:
+          engine_branch: ${{env.ENGINE_VER_TO}}
+          install_dir: ${{env.NEW_INSTALL_DIR}}
+
+      - uses: actions/checkout@v2
+        with:
+          repository: babelfish-for-postgresql/babelfish_extensions
+          ref: ${{env.EXTENSION_VER_TO}}
+
+      - run: cp "/usr/local/lib/libantlr4-runtime.so.4.9.3" ~/${{env.NEW_INSTALL_DIR}}/lib/
+
+      - name: Build Extensions using ${{env.EXTENSION_VER_TO}}
+        id: build-extensions-new
+        if: always() && steps.build-modified-postgres-new.outcome = 'success'
+        uses: ./.github/composite-actions/build-extensions
+        with:
+          install_dir: ${{env.NEW_INSTALL_DIR}}
+
+      - name: Run pg_upgrade
+        id: run-pg_upgrade
+        if: always() && steps.build-extensions-new.outcome = 'success'
+        run: |
+          echo 'Running pre upgrade script!'
+          sudo ~/${{env.OLD_INSTALL_DIR}}/bin/psql -d postgres -U runner -f .github/scripts/pre_upgrade.sql
+          echo 'Starting pg_upgrade'
+          cd ~
+          mkdir upgrade
+          cd upgrade
+          ~/${{env.OLD_INSTALL_DIR}}/bin/pg_ctl -D ~/${{env.OLD_INSTALL_DIR}}/data stop
+          export PATH="$HOME/${{env.NEW_INSTALL_DIR}}/bin:$HOME/${{env.OLD_INSTALL_DIR}}/bin:$PATH"
+          echo $PATH
+          export LD_LIBRARY_PATH="$HOME/${{env.NEW_INSTALL_DIR}}/lib:$HOME/${{env.OLD_INSTALL_DIR}}/lib:$LD_LIBRARY_PATH"
+          echo $LD_LIBRARY_PATH
+          sudo ~/${{env.NEW_INSTALL_DIR}}/bin/pg_upgrade -U runner -b ~/${{env.OLD_INSTALL_DIR}}/bin -B ~/${{env.NEW_INSTALL_DIR}}/bin \
+          -d ~/${{env.OLD_INSTALL_DIR}}/data -D ~/${{env.NEW_INSTALL_DIR}}/data -p 5432 -P 5433 -j 4 --links --verbose
+          echo 'pg_upgrade completed!'
+          cd ~/work/babelfish_extensions/babelfish_extensions/
+          echo 'Running post upgrade script!'
+          ~/${{env.NEW_INSTALL_DIR}}/bin/pg_ctl -D ~/${{env.NEW_INSTALL_DIR}}/data -l ~/${{env.NEW_INSTALL_DIR}}/data/logfile14 start
+          sudo ~/${{env.NEW_INSTALL_DIR}}/bin/psql -d postgres -U runner -f .github/scripts/post_upgrade.sql
+      
+      - name: Upload upgrade Log
+        if: always() && steps.run-pg_upgrade.outcome == 'failure'
+        uses: actions/upload-artifact@v2
+        with:
+          name: upgrade-logs
+          path: ~/upgrade/*.log
+      
