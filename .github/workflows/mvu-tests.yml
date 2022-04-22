@@ -108,7 +108,7 @@ jobs:
         if: always() && steps.build-extensions-new.outcome == 'success'
         run: |
           echo 'Running pre upgrade script!'
-          sudo ~/${{env.OLD_INSTALL_DIR}}/bin/psql -d postgres -U runner -f .github/scripts/pre_upgrade.sql
+          sudo ~/${{env.OLD_INSTALL_DIR}}/bin/psql -d jdbc_testdb -U jdbc_user -f .github/scripts/pre_upgrade.sql
           echo 'Starting pg_upgrade'
           cd ~
           mkdir upgrade
@@ -118,13 +118,13 @@ jobs:
           echo $PATH
           export LD_LIBRARY_PATH="$HOME/${{env.NEW_INSTALL_DIR}}/lib:$HOME/${{env.OLD_INSTALL_DIR}}/lib:$LD_LIBRARY_PATH"
           echo $LD_LIBRARY_PATH
-          sudo ~/${{env.NEW_INSTALL_DIR}}/bin/pg_upgrade -U runner -b ~/${{env.OLD_INSTALL_DIR}}/bin -B ~/${{env.NEW_INSTALL_DIR}}/bin \
+          ~/${{env.NEW_INSTALL_DIR}}/bin/pg_upgrade -U runner -b ~/${{env.OLD_INSTALL_DIR}}/bin -B ~/${{env.NEW_INSTALL_DIR}}/bin \
           -d ~/${{env.OLD_INSTALL_DIR}}/data -D ~/${{env.NEW_INSTALL_DIR}}/data -p 5432 -P 5433 -j 4 --links --verbose
           echo 'pg_upgrade completed!'
           cd ~/work/babelfish_extensions/babelfish_extensions/
           echo 'Running post upgrade script!'
           ~/${{env.NEW_INSTALL_DIR}}/bin/pg_ctl -D ~/${{env.NEW_INSTALL_DIR}}/data -l ~/${{env.NEW_INSTALL_DIR}}/data/logfile14 start
-          sudo ~/${{env.NEW_INSTALL_DIR}}/bin/psql -d postgres -U runner -f .github/scripts/post_upgrade.sql
+          sudo ~/${{env.NEW_INSTALL_DIR}}/bin/psql -d jdbc_testdb -U jdbc_user -f .github/scripts/post_upgrade.sql
           export PATH=/opt/mssql-tools/bin:$PATH
           sqlcmd -S localhost -U jdbc_user -P 12345678 -Q "SELECT @@version GO"
         shell: bash
