@@ -72,14 +72,14 @@ jobs:
 
       - name: Build Extensions using ${{env.EXTENSION_VER_TO}}
         id: build-extensions-new
-        if: always() && steps.build-modified-postgres-new.outcome = 'success'
+        if: always() && steps.build-modified-postgres-new.outcome == 'success'
         uses: ./.github/composite-actions/build-extensions
         with:
           install_dir: ${{env.NEW_INSTALL_DIR}}
 
       - name: Run pg_upgrade
         id: run-pg_upgrade
-        if: always() && steps.build-extensions-new.outcome = 'success'
+        if: always() && steps.build-extensions-new.outcome == 'success'
         run: |
           echo 'Running pre upgrade script!'
           sudo ~/${{env.OLD_INSTALL_DIR}}/bin/psql -d postgres -U runner -f .github/scripts/pre_upgrade.sql
