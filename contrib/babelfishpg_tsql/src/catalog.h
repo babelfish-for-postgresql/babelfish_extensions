@@ -156,6 +156,29 @@ typedef struct FormData_authid_user_ext
 typedef FormData_authid_user_ext *Form_authid_user_ext;
 
 /*****************************************
+ *			OBJECT_DEF
+ *****************************************/
+#define bbf_view_def_TABLE_NAME "babelfish_view_def"
+#define bbf_view_def_IDX_NAME "babelfish_view_def_pkey"
+#define Anum_bbf_view_def_db_name 1
+#define Anum_bbf_view_def_schema_name 2
+#define Anum_bbf_view_def_object_name 3
+#define Anum_bbf_view_def_definition 4
+#define bbf_view_def_NUM_COLS 4
+extern Oid			bbf_view_def_oid;
+extern Oid			bbf_view_def_idx_oid;
+
+typedef struct FormData_bbf_view_def
+{
+	NameData	dbid;
+	NameData	schema;
+	NameData	object_name;
+	text		definition;
+} FormData_bbf_view_def;
+
+typedef FormData_bbf_view_def *Form_bbf_view_def;
+
+/*****************************************
  *			Metadata Check Rule
  *****************************************/
 

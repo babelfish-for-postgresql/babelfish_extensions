@@ -914,5 +914,14 @@ AS $$
 $$
 LANGUAGE SQL IMMUTABLE PARALLEL RESTRICTED;
  
+CREATE TABLE sys.babelfish_view_def (
+	db_name NAME NOT NULL,
+	schema_name NAME NOT NULL,
+	object_name sys.NVARCHAR(128) NOT NULL,
+	definition TEXT NOT NULL COLLATE "C",
+	PRIMARY KEY(db_name, schema_name, object_name)
+);
+GRANT SELECT ON sys.babelfish_view_def TO PUBLIC;
+
 -- Reset search_path to not affect any subsequent scripts
 SELECT set_config('search_path', trim(leading 'sys, ' from current_setting('search_path')), false);

@@ -58,6 +58,12 @@ Oid			bbf_authid_user_ext_oid;
 Oid			bbf_authid_user_ext_idx_oid;
 
 /*****************************************
+ *			OBJECT_DEF
+ *****************************************/
+Oid			bbf_view_def_oid;
+Oid			bbf_view_def_idx_oid;
+
+/*****************************************
  * 			Catalog General
  *****************************************/
 
@@ -119,6 +125,10 @@ Datum init_catalog(PG_FUNCTION_ARGS)
 												sys_schema_oid);
 	bbf_authid_user_ext_idx_oid = get_relname_relid(BBF_AUTHID_USER_EXT_IDX_NAME,
 													sys_schema_oid);
+
+	/* bbf_view_def */
+	bbf_view_def_oid = get_relname_relid(bbf_view_def_TABLE_NAME, sys_schema_oid);
+	bbf_view_def_idx_oid = get_relname_relid(bbf_view_def_IDX_NAME, sys_schema_oid);
 
 	if (sysdatabases_oid != InvalidOid)
 		initTsqlSyscache();

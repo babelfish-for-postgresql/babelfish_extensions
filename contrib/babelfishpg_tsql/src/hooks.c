@@ -5,6 +5,7 @@
 #include "access/table.h"
 #include "catalog/heap.h"
 #include "access/xact.h"
+#include "access/relation.h"
 #include "catalog/namespace.h"
 #include "catalog/objectaccess.h"
 #include "catalog/pg_attrdef_d.h"
@@ -14,6 +15,7 @@
 #include "commands/copy.h"
 #include "commands/explain.h"
 #include "commands/tablecmds.h"
+#include "commands/view.h"
 #include "funcapi.h"
 #include "nodes/makefuncs.h"
 #include "nodes/nodeFuncs.h"
@@ -46,6 +48,7 @@
 #include "pl_explain.h"
 #include "catalog.h"
 #include "rolecmds.h"
+#include "session.h"
 
 extern bool is_tsql_rowversion_or_timestamp_datatype(Oid oid);
 
@@ -81,6 +84,8 @@ static int find_attr_by_name_from_column_def_list(const char *attributeName, Lis
  *****************************************/
 static void pltsql_report_proc_not_found_error(List *names, List *argnames, int nargs, ParseState *pstate, int location, bool proc_call);
 extern PLtsql_execstate *get_outermost_tsql_estate(int *nestlevel);
+static void pltsql_store_view_definition(const char *queryString, ObjectAddress address);
+static void pltsql_drop_view_definition(Oid objectId);
 
 /*****************************************
  * 			Executor Hooks
@@ -114,6 +119,7 @@ static resolve_target_list_unknowns_hook_type prev_resolve_target_list_unknowns_
 static find_attr_by_name_from_column_def_list_hook_type prev_find_attr_by_name_from_column_def_list_hook = NULL;
 static find_attr_by_name_from_relation_hook_type prev_find_attr_by_name_from_relation_hook = NULL;
 static report_proc_not_found_error_hook_type prev_report_proc_not_found_error_hook = NULL;
+static store_view_definition_hook_type prev_store_view_definition_hook = NULL;
 static logicalrep_modify_slot_hook_type prev_logicalrep_modify_slot_hook = NULL;
 static is_tsql_rowversion_or_timestamp_datatype_hook_type prev_is_tsql_rowversion_or_timestamp_datatype_hook = NULL;
 static ExecutorStart_hook_type prev_ExecutorStart = NULL;
@@ -171,6 +177,9 @@ InstallExtendedHooks(void)
 	prev_report_proc_not_found_error_hook = report_proc_not_found_error_hook;
 	report_proc_not_found_error_hook = pltsql_report_proc_not_found_error;
 
+	prev_store_view_definition_hook = store_view_definition_hook;
+	store_view_definition_hook = pltsql_store_view_definition;
+
 	prev_logicalrep_modify_slot_hook = logicalrep_modify_slot_hook;
 	logicalrep_modify_slot_hook = logicalrep_modify_slot;
 
@@ -211,6 +220,7 @@ UninstallExtendedHooks(void)
 	find_attr_by_name_from_column_def_list_hook = prev_find_attr_by_name_from_column_def_list_hook;
 	find_attr_by_name_from_relation_hook = prev_find_attr_by_name_from_relation_hook;
 	report_proc_not_found_error_hook = prev_report_proc_not_found_error_hook;
+	store_view_definition_hook = prev_store_view_definition_hook;
 	logicalrep_modify_slot_hook = prev_logicalrep_modify_slot_hook;
 	is_tsql_rowversion_or_timestamp_datatype_hook = prev_is_tsql_rowversion_or_timestamp_datatype_hook;
 	ExecutorStart_hook = prev_ExecutorStart;
@@ -1290,6 +1300,9 @@ bbf_object_access_hook(ObjectAccessType access, Oid classId, Oid objectId, int s
 	if (prev_object_access_hook)
 		(*prev_object_access_hook) (access, classId, objectId, subId, arg);
 
+	if (access == OAT_DROP && classId == RelationRelationId)
+		pltsql_drop_view_definition(objectId);
+
 	if (sql_dialect != SQL_DIALECT_TSQL)
 		return;
 
@@ -1453,4 +1466,126 @@ modify_insert_stmt(InsertStmt *stmt, Oid relid)
 	systable_endscan(scan);
 	table_close(pg_attribute, AccessShareLock);
 
+}
+
+/*
+ * Stores view object's TSQL definition to bbf_view_def catalog
+ */
+static void
+pltsql_store_view_definition(const char *queryString, ObjectAddress address)
+{
+	/* Store TSQL definition */
+	Relation	bbf_view_def_rel;
+	TupleDesc	bbf_view_def_rel_dsc;
+	Datum		new_record[bbf_view_def_NUM_COLS];
+	bool		new_record_nulls[bbf_view_def_NUM_COLS];
+	HeapTuple	tuple, reltup;
+	Form_pg_class	form_reltup;
+
+	/* Skip if it is for sysdatabases while creating logical database */
+	if(strcmp("(CREATE LOGICAL DATABASE )", queryString) == 0)
+		return;
+
+	/* Fetch the object details from Relation */
+	reltup = SearchSysCache1(RELOID, ObjectIdGetDatum(address.objectId));
+	form_reltup = (Form_pg_class) GETSTRUCT(reltup);
+
+	bbf_view_def_rel = table_open(bbf_view_def_oid, RowExclusiveLock);
+	bbf_view_def_rel_dsc = RelationGetDescr(bbf_view_def_rel);
+
+	MemSet(new_record_nulls, false, sizeof(new_record_nulls));
+
+	new_record[0] = PointerGetDatum(get_cur_db_name());
+	new_record[1] = PointerGetDatum(get_logical_schema_name(get_namespace_name(form_reltup->relnamespace), true));
+	new_record[2] = NameGetDatum(&form_reltup->relname);
+	new_record[3] = CStringGetTextDatum(queryString);
+
+	tuple = heap_form_tuple(bbf_view_def_rel_dsc,
+							new_record, new_record_nulls);
+
+	CatalogTupleInsert(bbf_view_def_rel, tuple);
+
+	ReleaseSysCache(reltup);
+	heap_freetuple(tuple);
+	table_close(bbf_view_def_rel, RowExclusiveLock);
+}
+/*
+ * Drops view object's TSQL definition from bbf_view_def catalog
+ */
+static void
+pltsql_drop_view_definition(Oid objectId)
+{
+	Relation	bbf_view_def_rel;
+	HeapTuple	reltuple, scantup, oldtup = NULL;
+	ScanKeyData	scanKey[3];
+	SysScanDesc	scan;
+	Form_pg_class form;
+	Datum	dbname, schemaname, objectname;
+
+	/* return if it is not a view */
+	reltuple = SearchSysCache1(RELOID, ObjectIdGetDatum(objectId));
+	if (!HeapTupleIsValid(reltuple))
+		return;					/* concurrently dropped */
+	form = (Form_pg_class) GETSTRUCT(reltuple);
+	if (form->relkind != RELKIND_VIEW)
+	{
+		ReleaseSysCache(reltuple);
+		return;
+	}
+
+	dbname = PointerGetDatum(get_cur_db_name());
+	schemaname = PointerGetDatum(get_logical_schema_name(
+								 get_namespace_name(form->relnamespace), true));
+	objectname = NameGetDatum(&form->relname);
+
+	/*
+	 * If any of these entries are NULL then there
+	 * must not be any entry in catalog
+	 */
+	if (dbname == NULL || schemaname == NULL || objectname == NULL)
+	{
+		ReleaseSysCache(reltuple);
+		return;
+	}
+
+	/* Fetch the relation */
+	bbf_view_def_rel = table_open(bbf_view_def_oid, RowExclusiveLock);
+
+	/* Search and drop the definition */
+	ScanKeyInit(&scanKey[0],
+				Anum_bbf_view_def_db_name,
+				BTEqualStrategyNumber, F_NAMEEQ,
+				dbname);
+
+	ScanKeyInit(&scanKey[1],
+				Anum_bbf_view_def_schema_name,
+				BTEqualStrategyNumber, F_NAMEEQ,
+				schemaname);
+
+	ScanKeyInit(&scanKey[2],
+				Anum_bbf_view_def_object_name,
+				BTEqualStrategyNumber, F_NAMEEQ,
+				objectname);
+
+	scan = systable_beginscan(bbf_view_def_rel,
+							  bbf_view_def_idx_oid ,
+							  true, NULL, 3, scanKey);
+
+	while ((scantup = systable_getnext(scan)) != NULL)
+	{
+		/* Raise error if multiple matches */
+		if (oldtup)
+			elog(ERROR,
+				 "multiple babelfish_view_def entries for object %u",
+				 objectId);
+		oldtup = heap_copytuple(scantup);
+	}
+
+	if (HeapTupleIsValid(oldtup))
+		CatalogTupleDelete(bbf_view_def_rel,
+						   &oldtup->t_self);
+
+	systable_endscan(scan);
+	ReleaseSysCache(reltuple);
+	table_close(bbf_view_def_rel, RowExclusiveLock);
 }
