@@ -658,7 +658,10 @@ init_collid_trans_tab(PG_FUNCTION_ARGS)
 
 	// locale_pos = find_locale(pltsql_default_locale);
 
-	nspoid = get_namespace_oid("sys", false);
+	nspoid = get_namespace_oid("sys", true);
+
+	if (!OidIsValid(nspoid))
+		PG_RETURN_INT32(0);
 
 	/* retrieve oid and setup hashtable */
 	for (int i=0; i<TOTAL_COLL_COUNT; i++)
