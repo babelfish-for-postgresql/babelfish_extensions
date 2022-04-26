@@ -1104,6 +1104,9 @@ int dispatch_stmt_handle_error(PLtsql_execstate *estate,
 	SimpleEcontextStackEntry *volatile topEntry = simple_econtext_stack;
 	bool support_tsql_trans = pltsql_support_tsql_transactions();
 	uint32 before_tran_count = NestedTranCount;
+	bool ro_func = (estate->func->fn_prokind == PROKIND_FUNCTION) &&
+		(estate->func->fn_is_trigger == PLTSQL_NOT_TRIGGER) &&
+		(strcmp(estate->func->fn_signature, "inline_code_block") != 0);
 
 	PG_TRY();
 	{
@@ -1132,8 +1135,12 @@ int dispatch_stmt_handle_error(PLtsql_execstate *estate,
 		 * We do not start savepoint for batch commands as
 		 * error handling must be taken care of at statement
 		 * level
+		 * For RO functions start savepoint even when transaction
+		 * is not active to retain top level portals. A transaction
+		 * rollback will cleanup portal data which can lead to
+		 * problems when control returns back to portal level
 		 */
-		if ((!pltsql_disable_internal_savepoint && !is_batch_command(stmt) && IsTransactionBlockActive()))
+		if (!pltsql_disable_internal_savepoint && !is_batch_command(stmt) && (IsTransactionBlockActive() || ro_func))
 		{
 			elog(DEBUG5, "TSQL TXN Start internal savepoint");
 			BeginInternalSubTransaction(NULL);
@@ -1158,8 +1165,7 @@ int dispatch_stmt_handle_error(PLtsql_execstate *estate,
 			elog(DEBUG5, "TSQL TXN Release internal savepoint");
 			ReleaseCurrentSubTransaction();
 			MemoryContextSwitchTo(cur_ctxt);
-			if (!support_tsql_trans)
-				CurrentResourceOwner = oldowner;
+			CurrentResourceOwner = oldowner;
 		}
 
 		estate->impl_txn_type = PLTSQL_IMPL_TRAN_OFF;
@@ -1236,6 +1242,7 @@ int dispatch_stmt_handle_error(PLtsql_execstate *estate,
 			/* Rollback internal savepoint if it is current savepoint */
 			RollbackAndReleaseCurrentSubTransaction();
 			MemoryContextSwitchTo(cur_ctxt);
+			CurrentResourceOwner = oldowner;
 		}
 		else if (!IsTransactionBlockActive())
 		{
@@ -1282,16 +1289,6 @@ int dispatch_stmt_handle_error(PLtsql_execstate *estate,
 		}
 
 		estate->impl_txn_type = PLTSQL_IMPL_TRAN_OFF;
-
-		/*
-		 * In case of error, cleanup all snapshots.
-		 * It is expected that next command will establish
-		 * required new snapshot
-		 */
-		while (ActiveSnapshotSet())
-			PopActiveSnapshot();
-		if (pltsql_snapshot_portal != NULL)
-			pltsql_snapshot_portal->portalSnapshot = NULL;
 
 		handle_error(estate, stmt, edata, topEntry, terminate_batch);
 

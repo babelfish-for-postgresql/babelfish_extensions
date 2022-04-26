@@ -3410,6 +3410,7 @@ static void terminate_batch(bool send_error, bool compile_error)
 				 */
 				while (ActiveSnapshotSet())
 					PopActiveSnapshot();
+				pltsql_snapshot_portal->portalSnapshot = NULL;
 			}
 			MarkPortalDone(pltsql_snapshot_portal);
 			PortalDrop(pltsql_snapshot_portal, false);
