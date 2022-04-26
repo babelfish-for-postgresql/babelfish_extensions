@@ -471,9 +471,15 @@ init_tsql_coerce_hash_tab(PG_FUNCTION_ARGS)
     void                    *value;
     tsql_cast_info_key_t    *key;
     tsql_cast_info_entry_t  *entry;
-    Oid                     sys_nspoid = get_namespace_oid("sys", false);
+    Oid                     sys_nspoid = get_namespace_oid("sys", true);
 
     TSQLInstrumentation(INSTR_TSQL_INIT_TSQL_COERCE_HASH_TAB);
+
+    /* Register Hooks */
+    find_coercion_pathway_hook = tsql_find_coercion_pathway;
+
+    if (!OidIsValid(sys_nspoid))
+	PG_RETURN_INT32(0);
 
 
     if (pltsql_coercion_context == NULL)  /* initialize memory context */
@@ -570,9 +576,6 @@ init_tsql_coerce_hash_tab(PG_FUNCTION_ARGS)
             *(tsql_cast_info_entry_t*)value = *entry;
         }
     }
-
-    /* Register Hooks */
-    find_coercion_pathway_hook = tsql_find_coercion_pathway;
 
     PG_RETURN_INT32(0);
 }
@@ -974,9 +977,17 @@ init_tsql_datatype_precedence_hash_tab(PG_FUNCTION_ARGS)
 	tsql_datatype_precedence_info_entry_t *value;
 	Oid                     typoid;
 	Oid 					nspoid;
-	Oid                     sys_nspoid = get_namespace_oid("sys", false);
+	Oid                     sys_nspoid = get_namespace_oid("sys", true);
 
 	TSQLInstrumentation(INSTR_TSQL_INIT_TSQL_DATATYPE_PRECEDENCE_HASH_TAB);
+
+	/* Register Hooks */
+	determine_datatype_precedence_hook = tsql_has_higher_precedence;
+	func_select_candidate_hook = tsql_func_select_candidate;
+	coerce_string_literal_hook = tsql_coerce_string_literal_hook;
+
+	if (!OidIsValid(sys_nspoid))
+		PG_RETURN_INT32(0);
 
 	if (pltsql_coercion_context == NULL)  /* initialize memory context */
 	{
@@ -1017,11 +1028,6 @@ init_tsql_datatype_precedence_hash_tab(PG_FUNCTION_ARGS)
 			value->precedence = tsql_precedence_infos[i].precedence;
         }
 	}
-
-	/* Register Hooks */
-	determine_datatype_precedence_hook = tsql_has_higher_precedence;
-	func_select_candidate_hook = tsql_func_select_candidate;
-	coerce_string_literal_hook = tsql_coerce_string_literal_hook;
 
 	PG_RETURN_INT32(0);
 }
