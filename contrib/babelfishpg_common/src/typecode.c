@@ -97,7 +97,11 @@ init_tcode_trans_tab(PG_FUNCTION_ARGS)
                                         HASH_ELEM | HASH_CONTEXT | HASH_BLOBS);
     }
 
-    sys_nspoid = get_namespace_oid("sys", false);
+    sys_nspoid = get_namespace_oid("sys", true);
+
+    if (!OidIsValid(sys_nspoid))
+	PG_RETURN_INT32(0);
+
     /* retrieve oid and setup hashtable*/
     for (int i=0; i<TOTAL_TYPECODE_COUNT; i++)
     {
