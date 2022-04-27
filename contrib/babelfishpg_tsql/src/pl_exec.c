@@ -9479,6 +9479,9 @@ pltsql_xact_cb(XactEvent event, void *arg)
 		simple_econtext_stack = NULL;
 		shared_simple_eval_estate = NULL;
 	}
+	/* Reset portal snapshot in case of commit/rollback */
+	if (pltsql_snapshot_portal != NULL)
+		pltsql_snapshot_portal->portalSnapshot = NULL;
 	AbortCurTransaction = false;
 }
 
