@@ -1,5 +1,5 @@
 -- complain if script is sourced in psql, rather than via ALTER EXTENSION
-\echo Use "ALTER EXTENSION ""babelfishpg_tsql"" UPDATE TO '1.3.0'" to load this file. \quit
+\echo Use "ALTER EXTENSION ""babelfishpg_tsql"" UPDATE TO '2.1.0'" to load this file. \quit
  
 SELECT set_config('search_path', 'sys, '||current_setting('search_path'), false);
 
