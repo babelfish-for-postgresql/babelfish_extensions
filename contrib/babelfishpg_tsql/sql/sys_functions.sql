@@ -1982,7 +1982,7 @@ AS
 $BODY$
 SELECT  key,
         CASE json_typeof(value) WHEN 'null'     THEN NULL
-                                ELSE            value
+                                ELSE            TRIM (BOTH '"' FROM value::TEXT)
         END,
         CASE json_typeof(value) WHEN 'null'     THEN 0
                                 WHEN 'string'   THEN 1
@@ -2006,7 +2006,7 @@ AS
 $BODY$
 SELECT  (row_number() over ())-1,
         CASE json_typeof(value) WHEN 'null'     THEN NULL
-                                ELSE            value
+                                ELSE            TRIM (BOTH '"' FROM value::TEXT)
         END,
         CASE json_typeof(value) WHEN 'null'     THEN 0
                                 WHEN 'string'   THEN 1
