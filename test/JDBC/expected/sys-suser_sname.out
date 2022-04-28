@@ -30,11 +30,3 @@ nvarchar
 jdbc_user
 ~~END~~
 
-
-SELECT SYS.SUSER_SNAME(NULL)
-GO
-~~START~~
-nvarchar
-<NULL>
-~~END~~
-
