@@ -98,9 +98,6 @@ jobs:
           cd contrib && make && sudo make install
 
       - uses: actions/checkout@v2
-        with:
-          repository: babelfish-for-postgresql/babelfish_extensions
-          ref: ${{env.EXTENSION_VER_TO}}
 
       - name: Set env variables and build extensions using ${{env.EXTENSION_VER_TO}}
         id: build-extensions-newer
