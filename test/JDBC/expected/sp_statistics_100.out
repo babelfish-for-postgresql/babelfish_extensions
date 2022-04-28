@@ -61,6 +61,23 @@ master#!#dbo#!#t1#!#<NULL>#!#<NULL>#!#<NULL>#!#0#!#<NULL>#!#<NULL>#!#<NULL>#!#-1
 ~~END~~
 
 
+exec sp_statistics_100 N't1',N'dbo',NULL,N'%',N'Y',N'Q'
+go
+~~START~~
+varchar#!#varchar#!#varchar#!#smallint#!#varchar#!#varchar#!#smallint#!#smallint#!#varchar#!#varchar#!#int#!#int#!#varchar
+master#!#dbo#!#t1#!#<NULL>#!#<NULL>#!#<NULL>#!#0#!#<NULL>#!#<NULL>#!#<NULL>#!#-1#!#0#!#<NULL>
+~~END~~
+
+
+exec sp_statistics_100 N't2',N'dbo',NULL,N'%',N'Y',N'Q'
+go
+~~START~~
+varchar#!#varchar#!#varchar#!#smallint#!#varchar#!#varchar#!#smallint#!#smallint#!#varchar#!#varchar#!#int#!#int#!#varchar
+master#!#dbo#!#t2#!#0#!#t2#!#t2_pkey#!#3#!#1#!#b#!#A#!#<NULL>#!#0#!#<NULL>
+master#!#dbo#!#t2#!#<NULL>#!#<NULL>#!#<NULL>#!#0#!#<NULL>#!#<NULL>#!#<NULL>#!#-1#!#0#!#<NULL>
+~~END~~
+
+
 exec [sys].sp_statistics_100 @table_name = 't3'
 go
 ~~START~~
