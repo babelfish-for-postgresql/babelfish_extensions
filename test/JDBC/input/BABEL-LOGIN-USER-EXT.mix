@@ -278,46 +278,17 @@ SELECT user_id('master_dbo');
 GO
 
 -- Test Login functions
-CREATE LOGIN LoGiN1 WITH PASSWORD = '456';
+CREATE LOGIN login1 WITH PASSWORD = '456';
 GO
 
-SELECT name FROM sys.server_principals WHERE principal_id = suser_id('lOgIn1');
-GO
-
-SELECT name FROM sys.server_principals WHERE principal_id = suser_id('login1    ');
-GO
-
--- Expect NULL
-SELECT suser_id(' login1');
-GO
-
-SELECT name FROM sys.server_principals WHERE name = suser_name(suser_id());
-GO
-
--- Expect NULL
-SELECT suser_id('non_existent_user');
-GO
-
--- Expect NULL
-SELECT suser_id('');
-GO
-
--- Expect NULL
-SELECT suser_id(NULL);
+SELECT name FROM sys.server_principals WHERE principal_id = suser_id('login1');
 GO
 
 SELECT name FROM sys.server_principals WHERE name = suser_name(suser_id('login1'));
 GO
 
-SELECT name FROM sys.server_principals WHERE name = suser_name();
-GO
-
 -- Expect NULL
 SELECT suser_name(-1);
-GO
-
--- Expect NULL
-SELECT suser_name(NULL);
 GO
 
 USE MASTER;
