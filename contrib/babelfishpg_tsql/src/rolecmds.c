@@ -791,7 +791,7 @@ add_to_bbf_authid_user_ext(const char *user_name,
 						   const char *db_name,
 						   const char *schema_name,
 						   const char *login_name,
-							bool is_role)
+						   bool is_role)
 {
 	Relation		bbf_authid_user_ext_rel;
 	TupleDesc		bbf_authid_user_ext_dsc;

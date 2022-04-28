@@ -301,7 +301,6 @@ rewrite_object_refs(Node *stmt)
 
 						if (strcmp(defel->defname, "rolemembers") == 0)
 						{
-							List		*rolemembers = NIL;
 							RoleSpec	*spec;
 
 							spec = makeNode(RoleSpec);
