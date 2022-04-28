@@ -11,7 +11,7 @@ jobs:
   extension-tests:
     env:
       ENGINE_VER_FROM: BABEL_2_X_DEV__PG_14_2
-      EXTENSION_VER_FROM: BABEL_2_X_DEV
+      EXTENSION_VER_FROM: BABEL_2_0_0
       ENGINE_VER_TO: BABEL_2_X_DEV__PG_14_2
       EXTENSION_VER_TO: BABEL_2_X_DEV
 
@@ -77,7 +77,7 @@ jobs:
           sudo ~/postgres/bin/psql -d postgres -U runner -c "DROP DATABASE IF EXISTS jdbc_testdb;"
           sudo ~/postgres/bin/psql -d postgres -U runner -c "CREATE DATABASE jdbc_testdb OWNER jdbc_user;"
           sudo ~/postgres/bin/psql -d jdbc_testdb -U runner -c "set allow_system_table_mods = on;"
-          sudo ~/postgres/bin/psql -d jdbc_testdb -U runner -c "CREATE EXTENSION "babelfishpg_common" CASCADE; CREATE EXTENSION "babelfishpg_tsql" WITH VERSION '2.0.0' CASCADE; CREATE EXTENSION "babelfishpg_tds" CASCADE;"
+          sudo ~/postgres/bin/psql -d jdbc_testdb -U runner -c "CREATE EXTENSION "babelfishpg_tds" CASCADE;"
           sudo ~/postgres/bin/psql -d jdbc_testdb -U runner -c "GRANT ALL ON SCHEMA sys to jdbc_user;"
           sudo ~/postgres/bin/psql -d jdbc_testdb -U runner -c "ALTER USER jdbc_user CREATEDB;"
           sudo ~/postgres/bin/psql -d jdbc_testdb -U runner -c "ALTER SYSTEM SET babelfishpg_tsql.database_name = 'jdbc_testdb';"
