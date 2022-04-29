@@ -100,6 +100,10 @@ CREATE COLLATION sys.Hebrew_CS_AS (provider = icu, locale = 'he_IL');
 CREATE COLLATION sys.Hebrew_CI_AI (provider = icu, locale = 'he_IL@colStrength=primary', deterministic = false);
 CREATE COLLATION sys.Hebrew_CI_AS (provider = icu, locale = 'he_IL@colStrength=secondary', deterministic = false);
 
+CREATE COLLATION sys.Japanese_CS_AS (provider = icu, locale = 'ja_JP');
+CREATE COLLATION sys.Japanese_CI_AI (provider = icu, locale = 'ja_JP@colStrength=primary', deterministic = false);
+CREATE COLLATION sys.Japanese_CI_AS (provider = icu, locale = 'ja_JP@colStrength=secondary', deterministic = false);
+
 CREATE COLLATION sys.Korean_Wansung_CS_AS (provider = icu, locale = 'ko_KR');
 CREATE COLLATION sys.Korean_Wansung_CI_AI (provider = icu, locale = 'ko_KR@colStrength=primary', deterministic = false);
 CREATE COLLATION sys.Korean_Wansung_CI_AS (provider = icu, locale = 'ko_KR@colStrength=secondary', deterministic = false);
