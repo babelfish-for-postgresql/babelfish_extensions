@@ -837,7 +837,7 @@ LANGUAGE 'pltsql';
 GRANT ALL ON PROCEDURE sys.sp_sproc_columns_100 TO PUBLIC;
 
 create or replace function sys.get_tds_id(
-	datatype varchar(50)
+	datatype sys.varchar(50)
 )
 returns INT
 AS $$
