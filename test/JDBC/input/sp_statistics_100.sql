@@ -29,6 +29,12 @@ go
 exec [sys].sp_statistics_100 't1', 'dbo'
 go
 
+exec sp_statistics_100 N't1',N'dbo',NULL,N'%',N'Y',N'Q'
+go
+
+exec sp_statistics_100 N't2',N'dbo',NULL,N'%',N'Y',N'Q'
+go
+
 exec [sys].sp_statistics_100 @table_name = 't3'
 go
 

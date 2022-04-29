@@ -1248,6 +1248,10 @@ CREATE OR REPLACE PROCEDURE sys.sp_statistics(
 )
 AS $$
 BEGIN
+    IF @index_name = '%'
+	BEGIN
+	    SELECT @index_name = ''
+	END
     select out_table_qualifier as table_qualifier,
             out_table_owner as table_owner,
             out_table_name as table_name,
@@ -1278,6 +1282,10 @@ CREATE OR REPLACE PROCEDURE sys.sp_statistics_100(
 )
 AS $$
 BEGIN
+    IF @index_name = '%'
+	BEGIN
+	    SELECT @index_name = ''
+	END
     select out_table_qualifier as TABLE_QUALIFIER,
             out_table_owner as TABLE_OWNER,
             out_table_name as TABLE_NAME,
