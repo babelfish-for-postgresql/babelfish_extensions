@@ -376,14 +376,14 @@ sp_describe_first_result_set_internal(PG_FUNCTION_ARGS)
 	
 			/* Switch Dialect so that SPI_execute creates a TSQL View, obeying TSQL Syntax. */
 			set_config_option("babelfishpg_tsql.sql_dialect", "tsql",
-										(superuser() ? PGC_SUSET : (rds_superuser() ? PGC_RDSSUSET : PGC_USERSET)),
+										(superuser() ? PGC_SUSET : PGC_USERSET),
 											PGC_S_SESSION, GUC_ACTION_SAVE, true, 0, false);
 
 			if ((rc = SPI_execute(query, false, 1)) < 0)
 				elog(ERROR, "SPI_execute failed: %s", SPI_result_code_string(rc));
 
 			set_config_option("babelfishpg_tsql.sql_dialect", "postgres",
-										(superuser() ? PGC_SUSET : (rds_superuser() ? PGC_RDSSUSET : PGC_USERSET)),
+										(superuser() ? PGC_SUSET : PGC_USERSET),
 											PGC_S_SESSION, GUC_ACTION_SAVE, true, 0, false);
 			pfree(query);
 
