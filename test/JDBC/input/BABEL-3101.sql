@@ -1,16 +1,3 @@
-CREATE FUNCTION  f_3101()
-RETURNS NVARCHAR(255)
-AS
-begin
-	DECLARE @n NVARCHAR(255)
-	SELECT @n = QUOTENAME(name) FROM sys.tables
-	RETURN @n
-end
-GO
-
-select f_3101()
-GO
-
 CREATE FUNCTION my_splitstring_3101 ( @stringToSplit VARCHAR(MAX) )
 RETURNS
 @returnList TABLE ([Value] [nvarchar] (50))
@@ -89,9 +76,6 @@ END
 GO
 
 select table_3101_0()
-GO
-
-DROP FUNCTION f_3101
 GO
 
 DROP FUNCTION my_splitstring_3101
