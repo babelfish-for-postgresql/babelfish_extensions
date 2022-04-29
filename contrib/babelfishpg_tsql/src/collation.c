@@ -83,7 +83,7 @@ coll_translate_t coll_translations[] =
   
   { "sql_latin1_general_cp874_ci_as", "bbf_unicode_cp874_ci_as", 874 },
   { "sql_latin1_general_cp874_cs_as", "bbf_unicode_cp874_cs_as", 874 },
-  { "sql_latin1_general_pref_cp1_cs_as", "bbf_unicode_cp1_pref_cs_as", 1252 }
+  { "sql_latin1_general_pref_cp1_cs_as", "bbf_unicode_pref_cp1_cs_as", 1252 }
 };
 #define TOTAL_COLL_TRANSLATION_COUNT (sizeof(coll_translations)/sizeof(coll_translations[0]))
 
@@ -203,6 +203,10 @@ coll_info_t coll_infos[] =
   {0, "hebrew_ci_as",                 1037, 0, 196608,  0, 0x000d, 1255},
   {0, "hebrew_cs_as",                 1037, 0, 196608,  0, 0x000c, 1255},
 
+  {0, "japanese_ci_ai",                 1041, 0, 196608,  0, 0x000f, 932},
+  {0, "japanese_ci_as",                 1041, 0, 196608,  0, 0x000d, 932},
+  {0, "japanese_cs_as",                 1041, 0, 196608,  0, 0x000c, 932},
+
   {0, "korean_wansung_ci_ai",         1042, 0, 196608,  0, 0x000f, 949},
   {0, "korean_wansung_ci_as",         1042, 0, 196608,  0, 0x000d, 949},
   {0, "korean_wansung_cs_as",         1042, 0, 196608,  0, 0x000c, 949},
@@ -211,9 +215,9 @@ coll_info_t coll_infos[] =
   {0, "modern_spanish_ci_as",         3082, 0, 196608,  0, 0x000d, 1252},
   {0, "modern_spanish_cs_as",         3082, 0, 196608,  0, 0x000c, 1252},
 
-  {0, "mongolian_ci_ai",              1104, 0, 196608, 0, 0x000f, 1251},
-  {0, "mongolian_ci_as",              1104, 0, 196608, 0, 0x000d, 1251},
-  {0, "mongolian_cs_as",              1104, 0, 196608, 0, 0x000c, 1251},
+  {0, "mongolian_ci_ai",              1104, 0, 196608,  0, 0x000f, 1251},
+  {0, "mongolian_ci_as",              1104, 0, 196608,  0, 0x000d, 1251},
+  {0, "mongolian_cs_as",              1104, 0, 196608,  0, 0x000c, 1251},
 
   {0, "polish_ci_ai",                 1045, 0, 196608,  0, 0x000f, 1250},
   {0, "polish_ci_as",                 1045, 0, 196608,  0, 0x000d, 1250},
