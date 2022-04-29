@@ -19,7 +19,7 @@ teardown
 }
 
 session s1
-setup		{ BEGIN TRAN; SET lock_timeout '100'; }
+setup		{ BEGIN TRAN; SET lock_timeout '500'; }
 step s1i	{ INSERT INTO child VALUES (1, 1); }
 step s1u	{ UPDATE parent SET aux = 'bar'; }
 step s1c	{ COMMIT; }
