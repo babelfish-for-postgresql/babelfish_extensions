@@ -891,6 +891,35 @@ BEGIN
 END
 $$;
 
+-- Returns True if an object is dependant upon by other objects. False otherwise. 
+CREATE OR REPLACE FUNCTION sys.has_dependencies(schema_name varchar, object_name varchar) RETURNS bool AS
+$BODY$
+SELECT
+  EXISTS(
+    SELECT 1
+    FROM pg_depend 
+    JOIN pg_rewrite ON pg_depend.objid = pg_rewrite.oid 
+    JOIN pg_class as dependent_view ON pg_rewrite.ev_class = dependent_view.oid 
+    JOIN pg_class as source_table ON pg_depend.refobjid = source_table.oid 
+    JOIN pg_attribute ON pg_depend.refobjid = pg_attribute.attrelid AND pg_depend.refobjsubid = pg_attribute.attnum 
+    JOIN pg_namespace dependent_ns ON dependent_ns.oid = dependent_view.relnamespace 
+    JOIN pg_namespace source_ns ON source_ns.oid = source_table.relnamespace 
+    WHERE source_ns.nspname = schema_name AND source_table.relname = object_name);
+$BODY$
+LANGUAGE SQL VOLATILE STRICT;
+
+-- If a view is not depended upon by other objects, drop the view. Else, leave it. 
+CREATE OR REPLACE FUNCTION sys.drop_view(schema_name varchar, object_name varchar) RETURNS void AS
+$$
+BEGIN
+IF sys.has_dependencies(schema_name, object_name) = false THEN
+  EXECUTE FORMAT('alter extension babelfishpg_tsql drop view %s.%s;', schema_name, object_name);
+  EXECUTE FORMAT('drop view %s.%s;', schema_name, object_name);
+END IF;
+END;
+$$
+LANGUAGE plpgsql;
+
 ALTER VIEW sys.database_principals RENAME TO database_principals_deprecated;
 -- sys.database_principals don't have any dependent objects
 -- DATABASE_PRINCIPALS
