@@ -1,0 +1,339 @@
+-- check the status of a fault
+select inject_fault_status('test_fault1');
+go
+~~START~~
+text
+disabled, Type: Test
+~~END~~
+
+
+-- inject a fault
+select inject_fault('test_fault1');
+go
+~~START~~
+text
+enabled, pending occurrences: 1
+~~END~~
+
+
+select inject_fault_status('test_fault1');
+go
+~~START~~
+text
+enabled, Type: Test, pending occurrences: 1
+~~END~~
+
+
+-- re-inject a fault for next two requests and check the status
+select inject_fault('test_fault1', 2);
+go
+~~START~~
+text
+enabled, pending occurrences: 2
+~~END~~
+
+
+select inject_fault_status('test_fault1');
+go
+~~START~~
+text
+enabled, Type: Test, pending occurrences: 2
+~~END~~
+
+
+-- trigger the test fault
+select trigger_test_fault();
+go
+~~START~~
+text
+test_fault1
+~~END~~
+
+
+select inject_fault_status('test_fault1');
+go
+~~START~~
+text
+enabled, Type: Test, pending occurrences: 1
+~~END~~
+
+
+select trigger_test_fault();
+go
+~~START~~
+text
+test_fault1
+~~END~~
+
+
+select inject_fault_status('test_fault1');
+go
+~~START~~
+text
+disabled, Type: Test
+~~END~~
+
+
+-- should be empty
+select trigger_test_fault();
+go
+~~START~~
+text
+
+~~END~~
+
+
+-- disable an injected fault
+select inject_fault('test_fault1');
+go
+~~START~~
+text
+enabled, pending occurrences: 1
+~~END~~
+
+
+select inject_fault_status('test_fault1');
+go
+~~START~~
+text
+enabled, Type: Test, pending occurrences: 1
+~~END~~
+
+
+select disable_injected_fault('test_fault1');
+go
+~~START~~
+text
+disabled
+~~END~~
+
+
+select inject_fault_status('test_fault1');
+go
+~~START~~
+text
+disabled, Type: Test
+~~END~~
+
+
+-- try to disable a disabled fault
+select disable_injected_fault('test_fault1');
+go
+~~START~~
+text
+disabled
+~~END~~
+
+
+-- trigger two faults
+select inject_fault('test_fault1');
+go
+~~START~~
+text
+enabled, pending occurrences: 1
+~~END~~
+
+
+select inject_fault('test_fault2');
+go
+~~START~~
+text
+enabled, pending occurrences: 1
+~~END~~
+
+
+select trigger_test_fault();
+go
+~~START~~
+text
+test_fault1, test_fault2
+~~END~~
+
+
+-- should be empty
+select trigger_test_fault();
+go
+~~START~~
+text
+
+~~END~~
+
+
+-- enable/disable all the faults except "tds_comm_throw_error" fault
+select inject_fault('test_fault1');
+select inject_fault('test_fault2');
+select inject_fault('pre_parsing_tamper_request');
+select inject_fault('pre_parsing_tamper_rpc_request_sptype');
+select inject_fault('parsing_tamper_rpc_parameter_datatype');
+select inject_fault('pre_parsing_throw_error');
+select inject_fault('post_parsing_throw_error');
+GO
+~~START~~
+text
+enabled, pending occurrences: 1
+~~END~~
+
+~~START~~
+text
+enabled, pending occurrences: 1
+~~END~~
+
+~~START~~
+text
+enabled, pending occurrences: 1
+~~END~~
+
+~~START~~
+text
+enabled, pending occurrences: 1
+~~END~~
+
+~~START~~
+text
+enabled, pending occurrences: 1
+~~END~~
+
+~~START~~
+text
+enabled, pending occurrences: 1
+~~END~~
+
+~~START~~
+text
+enabled, pending occurrences: 1
+~~END~~
+
+
+
+-- below will trigger "pre_parsing_throw_error"
+select 1
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: error triggered from fault injection)~~
+
+
+-- below will trigger "post_parsing_throw_error"
+select 1
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: error triggered from fault injection)~~
+
+
+-- 'test_fault1' should be enable 
+select inject_fault_status('test_fault1');
+go
+~~START~~
+text
+enabled, Type: Test, pending occurrences: 1
+~~END~~
+
+
+-- 'test_fault2' should be enable
+select inject_fault_status('test_fault2');
+go
+~~START~~
+text
+enabled, Type: Test, pending occurrences: 1
+~~END~~
+
+
+-- 'test_fault1' and 'test_fault2' should be triggered
+select trigger_test_fault();
+go
+~~START~~
+text
+test_fault1, test_fault2
+~~END~~
+
+
+-- disable all fault injections
+select disable_injected_fault_all();
+go
+~~START~~
+text
+success
+~~END~~
+
+
+-- should be disabled
+select inject_fault_status('test_fault1');
+go
+~~START~~
+text
+disabled, Type: Test
+~~END~~
+
+
+-- should be disabled
+select inject_fault_status('test_fault2');
+go
+~~START~~
+text
+disabled, Type: Test
+~~END~~
+
+
+-- should be disabled
+select inject_fault_status('tds_comm_throw_error');
+go
+~~START~~
+text
+disabled, Type: TDS request header
+~~END~~
+
+
+-- should be disabled
+select inject_fault_status('pre_parsing_tamper_request');
+go
+~~START~~
+text
+disabled, Type: TDS pre-parsing
+~~END~~
+
+
+-- should be disabled
+select inject_fault_status('pre_parsing_tamper_request');
+go
+~~START~~
+text
+disabled, Type: TDS pre-parsing
+~~END~~
+
+
+-- should be disabled
+select inject_fault_status('pre_parsing_tamper_rpc_request_sptype');
+go
+~~START~~
+text
+disabled, Type: TDS pre-parsing
+~~END~~
+
+
+-- should be disabled
+select inject_fault_status('parsing_tamper_rpc_parameter_datatype');
+go
+~~START~~
+text
+disabled, Type: TDS post-parsing
+~~END~~
+
+
+-- should be disabled
+select inject_fault_status('pre_parsing_throw_error');
+go
+~~START~~
+text
+disabled, Type: TDS pre-parsing
+~~END~~
+
+
+-- should be disabled
+select inject_fault_status('post_parsing_throw_error');
+go
+~~START~~
+text
+disabled, Type: TDS RPC Parsing
+~~END~~
+

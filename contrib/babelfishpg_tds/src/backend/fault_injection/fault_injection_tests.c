@@ -24,9 +24,11 @@
 
 /* test cases */
 static void
-test_fault1(void *arg)
+test_fault1(void *arg, int *num_occurrences)
 {
 	StringInfo buf = (StringInfo) arg;
+
+	(*num_occurrences) -= 1;
 
 	if (buf->len > 0)
 		appendStringInfo(buf, ", ");
@@ -35,9 +37,11 @@ test_fault1(void *arg)
 }
 
 static void
-test_fault2(void *arg)
+test_fault2(void *arg, int *num_occurrences)
 {
 	StringInfo buf = (StringInfo) arg;
+
+	(*num_occurrences) -= 1;
 
 	if (buf->len > 0)
 		appendStringInfo(buf, ", ");
@@ -53,18 +57,22 @@ test_fault2(void *arg)
 static void
 tamper_request_sequential(void *arg, char tamper_byte)
 {
-	struct TdsMessageWrapper *wrapper = (struct TdsMessageWrapper *) arg;
-	StringInfo	buf = wrapper->message;
-	StringInfo	tmp = makeStringInfo();
+	StringInfo	buf,
+			tmp;
 	MemoryContext	oldcontext;
-	uint64_t 		offset = 0;
-	int			i;
-	uint32_t 			tdsVersion = GetClientTDSVersion();
+	int		i;
+
+	struct TdsMessageWrapper	*wrapper = (struct TdsMessageWrapper *) arg;
+	uint64_t			offset = 0;
+	uint32_t			tdsVersion = GetClientTDSVersion();
 
 	/* Skip if its an Attention Request. */
 	if (wrapper->messageType == TDS_ATTENTION)
 		return;
+
 	oldcontext = MemoryContextSwitchTo(MessageContext);
+	buf = wrapper->message;
+	tmp = makeStringInfo();
 
 	/*
 	 * Skip the offset part, otherwise, we'll throw FATAL error and terminate
@@ -75,7 +83,7 @@ tamper_request_sequential(void *arg, char tamper_byte)
 	 * for TDS versions more than or equal to 7.2, otherwise we do not increment the offset.
 	 */
 	if (tdsVersion > TDS_VERSION_7_1_1)
-		offset = ProcessStreamHeaders(buf);;
+		offset = ProcessStreamHeaders(buf);
 	for (i = offset; i < buf->len; i++)
 	{
 		PG_TRY();
@@ -110,18 +118,19 @@ tamper_request_sequential(void *arg, char tamper_byte)
 		PG_END_TRY();
 
 		resetStringInfo(tmp);
-		MemoryContextReset(MessageContext);
 	}
+	if (tmp->data)
+		pfree(tmp->data);
+	pfree(tmp);
 
 	MemoryContextSwitchTo(oldcontext);
-
-	pfree(tmp->data);
-	pfree(tmp);
 }
 
 static void
-pre_parsing_tamper_request(void *arg)
+pre_parsing_tamper_request(void *arg, int *num_occurrences)
 {
+	(*num_occurrences) -= 1;
+
 	/* tamper byte with all 0s */
 	tamper_request_sequential(arg, 0x00);
 	/* tamper byte with all Fs */
@@ -140,10 +149,10 @@ static void
 tamper_rpc_request(void *arg, uint64_t offset, int tamper_byte)
 {
 	struct TdsMessageWrapper *wrapper = (struct TdsMessageWrapper *) arg;
+	MemoryContext	oldcontext = MemoryContextSwitchTo(MessageContext);
+
 	StringInfo	buf = wrapper->message;
 	StringInfo	tmp = makeStringInfo();
-
-	MemoryContext	oldcontext = MemoryContextSwitchTo(MessageContext);
 
 	PG_TRY();
 	{
@@ -159,22 +168,27 @@ tamper_rpc_request(void *arg, uint64_t offset, int tamper_byte)
 	}
 	PG_END_TRY();
 
-	resetStringInfo(tmp);
-	MemoryContextReset(MessageContext);
+
+	if (tmp->data)
+		pfree(tmp->data);
+	pfree(tmp);
 
 	MemoryContextSwitchTo(oldcontext);
-
-	pfree(tmp->data);
-	pfree(tmp);
 }
 
 static void
-pre_parsing_tamper_rpc_request_sptype(void *arg)
+pre_parsing_tamper_rpc_request_sptype(void *arg, int *num_occurrences)
 {
 	uint64_t 		offset = 0;
+	struct TdsMessageWrapper *wrapper = (struct TdsMessageWrapper *) arg;
+
+	if (wrapper->messageType != TDS_RPC)
+		return;
+
+	(*num_occurrences) -= 1;
 
 	if (GetClientTDSVersion() > TDS_VERSION_7_1_1)
-		offset = ProcessStreamHeaders(((struct TdsMessageWrapper *) arg)->message);
+		offset = ProcessStreamHeaders(wrapper->message);
 
 	offset += 2; 	/* Skip length. */
 
@@ -186,18 +200,33 @@ pre_parsing_tamper_rpc_request_sptype(void *arg)
 }
 
 static void
-parsing_tamper_rpc_parameter_datatype(void *arg)
+parsing_tamper_rpc_parameter_datatype(void *arg, int *num_occurrences)
 {
+	struct TdsMessageWrapper *wrapper = (struct TdsMessageWrapper *) arg;
+
+	if (wrapper->messageType != TDS_RPC)
+		return;
+
+	(*num_occurrences) -= 1;
+
 	if (tamperByte != INVALID_TAMPER_BYTE)
-		tamper_rpc_request(arg, ((struct TdsMessageWrapper *) arg)->offset, tamperByte);
+		tamper_rpc_request(arg, wrapper->offset, tamperByte);
 	else
-		tamper_rpc_request(arg, ((struct TdsMessageWrapper *) arg)->offset, rand() % 0xFF);
+		tamper_rpc_request(arg, wrapper->offset, rand() % 0xFF);
 }
 
 static void
-throw_error(void *arg)
+throw_error(void *arg, int *num_occurrences)
 {
+	(*num_occurrences) -= 1;
 	elog(ERROR, "error triggered from fault injection");
+}
+
+static void
+throw_error_comm(void *arg, int *num_occurrences)
+{
+	(*num_occurrences) -= 1;
+	elog(FATAL, "FATAL error triggered from fault injection");
 }
 
 /*
@@ -229,7 +258,7 @@ TEST_TYPE_LIST = {
 TEST_LIST = {
 	{"test_fault1", TestType, 0, &test_fault1},
 	{"test_fault2", TestType, 0, &test_fault2},
-	{"tds_comm_throw_error", ParseHeaderType, 0, &throw_error},
+	{"tds_comm_throw_error", ParseHeaderType, 0, &throw_error_comm},
 	{"pre_parsing_tamper_request", PreParsingType, 0, &pre_parsing_tamper_request},
 	{"pre_parsing_tamper_rpc_request_sptype", PreParsingType, 0, &pre_parsing_tamper_rpc_request_sptype},
 	{"parsing_tamper_rpc_parameter_datatype", ParseRpcType, 0, &parsing_tamper_rpc_parameter_datatype},
