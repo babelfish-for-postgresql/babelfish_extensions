@@ -560,10 +560,54 @@ $$
 LANGUAGE 'pltsql';
 GRANT ALL on PROCEDURE sys.sp_columns_100 TO PUBLIC;
 
--- BABEL-1785: initial support of sp_describe_first_result_set
--- sys.sp_describe_first_result_set_internal: internal function 
--- used to workaround BABEL-1597 
-create function sys.sp_describe_first_result_set_internal(
+create or replace function sys.get_tds_id(
+	datatype sys.varchar(50)
+)
+returns INT
+AS $$
+DECLARE
+	tds_id INT;
+BEGIN
+	IF datatype IS NULL THEN
+		RETURN 0;
+	END IF;
+	CASE datatype
+		WHEN 'text' THEN tds_id = 35;
+		WHEN 'uniqueidentifier' THEN tds_id = 36;
+		WHEN 'tinyint' THEN tds_id = 38;
+		WHEN 'smallint' THEN tds_id = 38;
+		WHEN 'int' THEN tds_id = 38;
+		WHEN 'bigint' THEN tds_id = 38;
+		WHEN 'ntext' THEN tds_id = 99;
+		WHEN 'bit' THEN tds_id = 104;
+		WHEN 'float' THEN tds_id = 109;
+		WHEN 'real' THEN tds_id = 109;
+		WHEN 'varchar' THEN tds_id = 167;
+		WHEN 'nvarchar' THEN tds_id = 231;
+		WHEN 'nchar' THEN tds_id = 239;
+		WHEN 'money' THEN tds_id = 110;
+		WHEN 'smallmoney' THEN tds_id = 110;
+		WHEN 'char' THEN tds_id = 175;
+		WHEN 'date' THEN tds_id = 40;
+		WHEN 'datetime' THEN tds_id = 111;
+		WHEN 'smalldatetime' THEN tds_id = 111;
+		WHEN 'numeric' THEN tds_id = 108;
+		WHEN 'xml' THEN tds_id = 241;
+		WHEN 'decimal' THEN tds_id = 106;
+		WHEN 'varbinary' THEN tds_id = 165;
+		WHEN 'binary' THEN tds_id = 173;
+		WHEN 'image' THEN tds_id = 34;
+		WHEN 'time' THEN tds_id = 41;
+		WHEN 'datetime2' THEN tds_id = 42;
+		WHEN 'sql_variant' THEN tds_id = 98;
+		WHEN 'datetimeoffset' THEN tds_id = 43;
+		ELSE tds_id = 0;
+	END CASE;
+	RETURN tds_id;
+END;
+$$ LANGUAGE plpgsql IMMUTABLE STRICT;
+
+create or replace function sys.sp_describe_first_result_set_internal(
 	tsqlquery varchar(384),
     params varchar(384) = NULL, 
     browseMode sys.tinyint = 0
@@ -609,87 +653,11 @@ returns table (
 	tds_collation_id int,
 	ss_data_type sys.tinyint
 )
-as $$
-	declare _args text[]; -- placeholder: parse @params and feed the tsqlquery
-begin
-	IF tsqlquery ILIKE 'select %' THEN
-		DROP VIEW IF EXISTS sp_describe_first_result_set_view;
-		EXECUTE 'create temp view sp_describe_first_result_set_view as ' || tsqlquery USING _args;
-		RETURN query
-		SELECT
-			CAST(0 AS sys.bit) AS is_hidden,
-			CAST(t1.dtd_identifier AS int) AS column_ordinal,
-			CAST(t1.column_name AS sys.sysname) AS name,
-			case
-				when t1.is_nullable = 'Y' then CAST(1 AS sys.bit)
-				else CAST(0 AS sys.bit)
-			end as is_nullable,
-			0 as system_type_id, 
-			CAST('' as sys.nvarchar(256)) as system_type_name, 
-			CAST(t2.length AS smallint) AS max_length,
-			CAST(t1.numeric_precision AS sys.tinyint) AS precision,
-			CAST(t1.numeric_scale AS sys.tinyint) AS scale,
-			CAST((SELECT coalesce(t1.collation_name, '')) AS sys.sysname) as collation_name,
-			CAST(NULL as int) as user_type_id, 
-			CAST('' as sys.sysname) as user_type_database, 
-			CAST('' as sys.sysname) as user_type_schema, 
-			CAST('' as sys.sysname) as user_type_name, 
-			CAST('' as sys.nvarchar(4000)) as assembly_qualified_type_name, 
-			CAST(NULL as int) as xml_collection_id,
-			CAST('' as sys.sysname) as xml_collection_database,
-			CAST('' as sys.sysname) as xml_collection_schema,
-			CAST('' as sys.sysname) as xml_collection_name,
-			case 
-				when t1.data_type = 'xml' then CAST(1 AS sys.bit)
-				else CAST(0 AS sys.bit)
-			end as is_xml_document,
-			case
-				when t1.udt_name = 'citext' then CAST(0 AS sys.bit)
-				else CAST(1 AS sys.bit)
-			end as is_case_sensitive,
-			CAST(0 as sys.bit) as is_fixed_length_clr_type,
-			CAST('' as sys.sysname) as source_server, 
-			CAST('' as sys.sysname) as source_database,
-			CAST('' as sys.sysname) as source_schema,
-			CAST('' as sys.sysname) as source_table,
-			CAST('' as sys.sysname) as source_column,
-			case
-				when t1.is_identity = 'YES' then CAST(1 AS sys.bit)
-				else CAST(0 AS sys.bit)
-			end as is_identity_column,
-			CAST(NULL as sys.bit) as is_part_of_unique_key,-- pg_constraint
-			case 
-				when t1.is_updatable = 'YES' then CAST(1 AS sys.bit)
-				else CAST(0 AS sys.bit)
-			end as is_updateable,
-			case
-				when t1.is_generated = 'NEVER' then CAST(0 AS sys.bit)
-				else CAST(1 AS sys.bit)
-			end as is_computed_column,
-			CAST(0 as sys.bit) as is_sparse_column_set,
-			CAST(NULL as smallint) ordinal_in_order_by_list,
-			CAST(NULL as smallint) order_by_list_length,
-			CAST(NULL as smallint) order_by_is_descending,
-			-- below are for internal usage
-			CAST(NULL as int) as tds_type_id,
-			CAST(NULL as int) as tds_length,
-			CAST(NULL as int) as tds_collation_id,
-			CAST(1 AS sys.tinyint) AS tds_collation_sort_id
-		FROM information_schema.columns t1, sys.spt_datatype_info_table t2 
-		WHERE table_name = 'sp_describe_first_result_set_view'
-			AND (t1.data_type = t2.pg_type_name
-				OR ((SELECT coalesce(t1.domain_name, '') != 'tinyint') 
-					AND (SELECT coalesce(t1.domain_name, '') != 'nchar') 
-					AND t2.pg_type_name = t1.udt_name)
-				OR (t1.domain_schema = 'sys' AND t2.type_name = t1.domain_name));
-		DROP VIEW sp_describe_first_result_set_view;
-	END IF;
-end;
-$$
-LANGUAGE plpgsql;
+AS 'babelfishpg_tsql', 'sp_describe_first_result_set_internal'
+LANGUAGE C;
 GRANT ALL on FUNCTION sys.sp_describe_first_result_set_internal TO PUBLIC;
 
-CREATE PROCEDURE sys.sp_describe_first_result_set (
+CREATE OR REPLACE PROCEDURE sys.sp_describe_first_result_set (
 	"@tsql" varchar(384),
     "@params" varchar(384) = NULL, 
     "@browse_information_mode" sys.tinyint = 0)
@@ -717,7 +685,7 @@ CREATE OR REPLACE VIEW sys.spt_tablecollations_view AS
     FROM
         sys.all_columns c INNER JOIN
         sys.all_objects o ON (c.object_id = o.object_id) JOIN
-        pg_attribute p ON (c.name = p.attname)
+        pg_attribute p ON (c.name = p.attname AND c.object_id = p.attrelid)
     WHERE
         c.is_sparse = 0 AND p.attnum >= 0;
 GRANT SELECT ON sys.spt_tablecollations_view TO PUBLIC;
