@@ -182,6 +182,7 @@ typedef struct TdsColumnMetaData
 	TdsRelationMetaDataInfo	relinfo;
 	bool 					attNotNull; 	/* true if the column has not null constraint */
 	bool 					attidentity;	/* true if it is an identity column */
+	bool 					attgenerated;	/* true if it is a computed column */
 } TdsColumnMetaData;
 
 /* Partial Length Prefixed-bytes */
