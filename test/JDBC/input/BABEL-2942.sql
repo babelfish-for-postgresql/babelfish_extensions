@@ -33,7 +33,7 @@ GO
 select t from t_japan_cias where t= 'は' ;
 GO
 
-delete table t_japan_cias;
+drop table t_japan_cias;
 GO
 
 -- japanese_ci_ai collation
@@ -53,4 +53,4 @@ select t from t_japan_ciai where t= 'は' ;
 GO
 
 drop table t_japan_ciai;
-GO
+GO 

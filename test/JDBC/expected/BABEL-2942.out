@@ -66,10 +66,6 @@ GO
 -- japanese_ci_as collation
 CREATE TABLE t_japan_cias(t varchar(20) collate japanese_ci_as);
 GO
-~~ERROR (Code: 2714)~~
-
-~~ERROR (Message: relation "t_japan_cias" already exists)~~
-
 
 INSERT INTO t_japan_cias (t) VALUES 
 ('う'), ('ｳ'), ('C'), ('かさ'), ('ば'), ('ﾊﾟ'), ('３'), ('ﾊﾞ'), ('c'), ('ｲ'), ('がく'), ('Ｃ'), ('ウ'),('ﾊ'),  
@@ -83,178 +79,38 @@ select t from t_japan_cias order by 1 ;
 GO
 ~~START~~
 varchar
-1
-１
 １
 1
-１
-１
-1
-１
-1
-1
-2
-2
-2
-2
 2
 ３
-３
-３
-３
-３
-a
-Ａ
-Ａ
-a
 Ａ
 ａ
-Ａ
-Ａ
-A
-A
-A
 a
-ａ
-ａ
-A
-a
-ａ
-a
-ａ
 A
 AbC
 aBc
-AbC
-aBc
-AbC
-aBc
-AbC
-aBc
-AbC
-aBc
-b
-b
-Ｂ
-B
 B
 Ｂ
 b
-b
-Ｂ
-B
-B
-Ｂ
-Ｂ
-B
-b
-c
-c
 Ｃ
 C
-C
 c
-Ｃ
-c
-C
-Ｃ
-c
-Ｃ
-C
-C
-Ｃ
-ｱ
 ｱ
 ア
-ｱ
-ｱ
-ア
-ｱ
-ア
-ア
-ア
-ｲ
-ｲ
-い
-い
-い
-い
-ｲ
-ｲ
 い
 ｲ
 う
 ｳ
 ウ
-う
-ｳ
-ウ
-う
-ｳ
-ウ
-う
-ｳ
-ウ
-う
-ｳ
-ウ
-か
-か
-か
-か
 か
 がく
-がく
-がく
-がく
-がく
 かさ
-かさ
-かさ
-かさ
-かさ
-ハ
-は
-ﾊ
-ハ
-は
-ﾊ
-ハ
-ﾊ
-ﾊ
-ﾊ
-は
 は
 ハ
-は
-ハ
-バ
-バ
-バ
-ﾊﾞ
-ば
-ば
-ば
-ﾊﾞ
+ﾊ
 ﾊﾞ
 ば
 バ
-バ
-ﾊﾞ
-ﾊﾞ
-ば
-ﾊﾟ
-ぱ
-ﾊﾟ
-ﾊﾟ
-ぱ
-ぱ
-パ
-パ
-パ
-ﾊﾟ
-ぱ
-パ
 パ
 ﾊﾟ
 ぱ
@@ -268,27 +124,11 @@ varchar
 ﾊ
 ハ
 は
-ﾊ
-ハ
-は
-ﾊ
-ハ
-は
-ﾊ
-ハ
-は
-ﾊ
-ハ
-は
 ~~END~~
 
 
-delete table t_japan_cias;
+drop table t_japan_cias;
 GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: syntax error near 'table' at line 1 and character position 7)~~
-
 
 -- japanese_ci_ai collation
 CREATE TABLE t_japan_ciai(t varchar(20) collate japanese_ci_ai);
@@ -360,5 +200,3 @@ varchar
 ~~END~~
 
 
-drop table t_japan_ciai;
-GO
