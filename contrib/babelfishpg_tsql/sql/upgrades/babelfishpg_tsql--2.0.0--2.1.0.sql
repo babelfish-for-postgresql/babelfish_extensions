@@ -1,5 +1,5 @@
 -- complain if script is sourced in psql, rather than via ALTER EXTENSION
-\echo Use "ALTER EXTENSION ""babelfishpg_tsql"" UPDATE TO '1.3.0'" to load this file. \quit
+\echo Use "ALTER EXTENSION ""babelfishpg_tsql"" UPDATE TO '2.1.0'" to load this file. \quit
  
 SELECT set_config('search_path', 'sys, '||current_setting('search_path'), false);
 
@@ -836,90 +836,146 @@ $$
 LANGUAGE 'pltsql';
 GRANT ALL ON PROCEDURE sys.sp_sproc_columns_100 TO PUBLIC;
 
-CREATE OR REPLACE FUNCTION sys.suser_name_internal(IN server_user_id OID)
-RETURNS sys.NVARCHAR(128)
-AS 'babelfishpg_tsql', 'suser_name'
-LANGUAGE C IMMUTABLE PARALLEL RESTRICTED;
-
-CREATE OR REPLACE FUNCTION sys.suser_name(IN server_user_id OID)
-RETURNS sys.NVARCHAR(128) AS $$
-    SELECT CASE 
-        WHEN server_user_id IS NULL THEN NULL
-        ELSE sys.suser_name_internal(server_user_id)
-    END;
-$$
-LANGUAGE SQL IMMUTABLE PARALLEL RESTRICTED;
-
-CREATE OR REPLACE FUNCTION sys.suser_name()
-RETURNS sys.NVARCHAR(128)
+create or replace function sys.get_tds_id(
+	datatype sys.varchar(50)
+)
+returns INT
 AS $$
-    SELECT sys.suser_name_internal(NULL);
-$$
-LANGUAGE SQL IMMUTABLE PARALLEL RESTRICTED;
+DECLARE
+	tds_id INT;
+BEGIN
+	IF datatype IS NULL THEN
+		RETURN 0;
+	END IF;
+	CASE datatype
+		WHEN 'text' THEN tds_id = 35;
+		WHEN 'uniqueidentifier' THEN tds_id = 36;
+		WHEN 'tinyint' THEN tds_id = 38;
+		WHEN 'smallint' THEN tds_id = 38;
+		WHEN 'int' THEN tds_id = 38;
+		WHEN 'bigint' THEN tds_id = 38;
+		WHEN 'ntext' THEN tds_id = 99;
+		WHEN 'bit' THEN tds_id = 104;
+		WHEN 'float' THEN tds_id = 109;
+		WHEN 'real' THEN tds_id = 109;
+		WHEN 'varchar' THEN tds_id = 167;
+		WHEN 'nvarchar' THEN tds_id = 231;
+		WHEN 'nchar' THEN tds_id = 239;
+		WHEN 'money' THEN tds_id = 110;
+		WHEN 'smallmoney' THEN tds_id = 110;
+		WHEN 'char' THEN tds_id = 175;
+		WHEN 'date' THEN tds_id = 40;
+		WHEN 'datetime' THEN tds_id = 111;
+		WHEN 'smalldatetime' THEN tds_id = 111;
+		WHEN 'numeric' THEN tds_id = 108;
+		WHEN 'xml' THEN tds_id = 241;
+		WHEN 'decimal' THEN tds_id = 106;
+		WHEN 'varbinary' THEN tds_id = 165;
+		WHEN 'binary' THEN tds_id = 173;
+		WHEN 'image' THEN tds_id = 34;
+		WHEN 'time' THEN tds_id = 41;
+		WHEN 'datetime2' THEN tds_id = 42;
+		WHEN 'sql_variant' THEN tds_id = 98;
+		WHEN 'datetimeoffset' THEN tds_id = 43;
+		ELSE tds_id = 0;
+	END CASE;
+	RETURN tds_id;
+END;
+$$ LANGUAGE plpgsql IMMUTABLE STRICT;
 
--- Since SIDs are currently not supported in Babelfish, this essentially behaves the same as suser_name but 
--- with a different input data type
-CREATE OR REPLACE FUNCTION sys.suser_sname(IN server_user_sid SYS.VARBINARY(85))
-RETURNS SYS.NVARCHAR(128)
+create or replace function sys.sp_describe_first_result_set_internal(
+	tsqlquery varchar(384),
+    params varchar(384) = NULL,
+    browseMode sys.tinyint = 0
+)
+returns table (
+	is_hidden sys.bit,
+	column_ordinal int,
+	name sys.sysname,
+	is_nullable sys.bit,
+	system_type_id int,
+	system_type_name sys.nvarchar(256),
+	max_length smallint,
+	"precision" sys.tinyint,
+	scale sys.tinyint,
+	collation_name sys.sysname,
+	user_type_id int,
+	user_type_database sys.sysname,
+	user_type_schema sys.sysname,
+	user_type_name sys.sysname,
+	assembly_qualified_type_name sys.nvarchar(4000),
+	xml_collection_id int,
+	xml_collection_database sys.sysname,
+	xml_collection_schema sys.sysname,
+	xml_collection_name sys.sysname,
+	is_xml_document sys.bit,
+	is_case_sensitive sys.bit,
+	is_fixed_length_clr_type sys.bit,
+	source_server sys.sysname,
+	source_database sys.sysname,
+	source_schema sys.sysname,
+	source_table sys.sysname,
+	source_column sys.sysname,
+	is_identity_column sys.bit,
+	is_part_of_unique_key sys.bit,
+	is_updateable sys.bit,
+	is_computed_column sys.bit,
+	is_sparse_column_set sys.bit,
+	ordinal_in_order_by_list smallint,
+	order_by_list_length smallint,
+	order_by_is_descending smallint,
+	tds_type_id int,
+	tds_length int,
+	tds_collation_id int,
+	ss_data_type sys.tinyint
+)
+AS 'babelfishpg_tsql', 'sp_describe_first_result_set_internal'
+LANGUAGE C;
+GRANT ALL on FUNCTION sys.sp_describe_first_result_set_internal TO PUBLIC;
+
+CREATE OR REPLACE PROCEDURE sys.sp_describe_first_result_set (
+	"@tsql" varchar(384),
+    "@params" varchar(384) = NULL,
+    "@browse_information_mode" sys.tinyint = 0)
 AS $$
-    SELECT sys.suser_name(CAST(server_user_sid AS INT)); 
+BEGIN
+    select * from sys.sp_describe_first_result_set_internal(@tsql, @params,  @browse_information_mode);
+END;
 $$
-LANGUAGE SQL IMMUTABLE PARALLEL RESTRICTED;
+LANGUAGE 'pltsql';
+GRANT ALL on PROCEDURE sys.sp_describe_first_result_set TO PUBLIC;
 
-CREATE OR REPLACE FUNCTION sys.suser_sname()
-RETURNS SYS.NVARCHAR(128)
-AS $$
-    SELECT sys.suser_name();
-$$
-LANGUAGE SQL IMMUTABLE PARALLEL RESTRICTED;
+CREATE OR REPLACE VIEW sys.spt_tablecollations_view AS
+    SELECT
+        o.object_id         AS object_id,
+        o.schema_id         AS schema_id,
+        c.column_id         AS colid,
+        CASE WHEN p.attoptions[1] LIKE 'bbf_original_name=%' THEN split_part(p.attoptions[1], '=', 2)
+            ELSE c.name END AS name,
+        CAST(CollationProperty(c.collation_name,'tdscollation') AS binary(5)) AS tds_collation_28,
+        CAST(CollationProperty(c.collation_name,'tdscollation') AS binary(5)) AS tds_collation_90,
+        CAST(CollationProperty(c.collation_name,'tdscollation') AS binary(5)) AS tds_collation_100,
+        CAST(c.collation_name AS nvarchar(128)) AS collation_28,
+        CAST(c.collation_name AS nvarchar(128)) AS collation_90,
+        CAST(c.collation_name AS nvarchar(128)) AS collation_100
+    FROM
+        sys.all_columns c INNER JOIN
+        sys.all_objects o ON (c.object_id = o.object_id) JOIN
+        pg_attribute p ON (c.name = p.attname AND c.object_id = p.attrelid)
+    WHERE
+        c.is_sparse = 0 AND p.attnum >= 0;
+GRANT SELECT ON sys.spt_tablecollations_view TO PUBLIC;
 
-CREATE OR REPLACE FUNCTION sys.suser_id_internal(IN login TEXT)
-RETURNS OID
-AS 'babelfishpg_tsql', 'suser_id'
-LANGUAGE C IMMUTABLE PARALLEL RESTRICTED;
+CREATE COLLATION sys.Japanese_CS_AS (provider = icu, locale = 'ja_JP');
+CREATE COLLATION sys.Japanese_CI_AI (provider = icu, locale = 'ja_JP@colStrength=primary', deterministic = false);
+CREATE COLLATION sys.Japanese_CI_AS (provider = icu, locale = 'ja_JP@colStrength=secondary', deterministic = false);
 
-CREATE OR REPLACE FUNCTION sys.suser_id(IN login TEXT)
-RETURNS OID AS $$
-    SELECT CASE
-        WHEN login IS NULL THEN NULL
-        ELSE sys.suser_id_internal(login)
-    END;
-$$
-LANGUAGE SQL IMMUTABLE PARALLEL RESTRICTED;
-
-CREATE OR REPLACE FUNCTION sys.suser_id()
-RETURNS OID
-AS $$
-    SELECT sys.suser_id_internal(NULL);
-$$
-LANGUAGE SQL IMMUTABLE PARALLEL RESTRICTED;
-
--- Since SIDs are currently not supported in Babelfish, this essentially behaves the same as suser_id but 
--- with different input/output data types. The second argument will be ignored as its functionality is not supported
-CREATE OR REPLACE FUNCTION sys.suser_sid(IN login SYS.SYSNAME, IN Param2 INT DEFAULT NULL)
-RETURNS SYS.VARBINARY(85) AS $$
-    SELECT CASE
-    WHEN login = '' 
-        THEN CAST(CAST(sys.suser_id() AS INT) AS SYS.VARBINARY(85))
-    ELSE 
-        CAST(CAST(sys.suser_id(login) AS INT) AS SYS.VARBINARY(85))
-    END;
-$$
-LANGUAGE SQL IMMUTABLE PARALLEL RESTRICTED;
-
-CREATE OR REPLACE FUNCTION sys.suser_sid()
-RETURNS SYS.VARBINARY(85)
-AS $$
-    SELECT CAST(CAST(sys.suser_id() AS INT) AS SYS.VARBINARY(85));
-$$
-LANGUAGE SQL IMMUTABLE PARALLEL RESTRICTED;
- 
 CREATE TABLE sys.babelfish_view_def (
-	db_name NAME NOT NULL,
+	dbid SMALLINT NOT NULL,
 	schema_name NAME NOT NULL,
-	object_name sys.NVARCHAR(128) NOT NULL,
+	object_name NAME NOT NULL,
 	definition TEXT NOT NULL COLLATE "C",
-	PRIMARY KEY(db_name, schema_name, object_name)
+	PRIMARY KEY(dbid, schema_name, object_name)
 );
 GRANT SELECT ON sys.babelfish_view_def TO PUBLIC;
 
