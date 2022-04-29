@@ -401,4 +401,41 @@ CREATE VIEW information_schema_tsql.table_constraints AS
 
 GRANT SELECT ON information_schema_tsql.table_constraints TO PUBLIC;
 
+/*
+ * VIEWS view
+ */
+
+CREATE OR REPLACE VIEW information_schema_tsql.views AS
+	SELECT CAST(nc.dbname AS sys.nvarchar(128)) AS "TABLE_CATALOG",
+			CAST(ext.orig_name AS sys.nvarchar(128)) AS  "TABLE_SCHEMA",
+			CAST(c.relname AS sys.nvarchar(128)) AS "TABLE_NAME",
+
+			CAST(
+				CASE WHEN LENGTH(vd.definition) <= 4000
+					THEN vd.definition
+					ELSE NULL END
+				AS sys.nvarchar(4000)) AS "VIEW_DEFINITION",
+
+			CAST(
+				CASE WHEN 'check_option=cascaded' = ANY (c.reloptions)
+					THEN 'CASCADE'
+					ELSE 'NONE' END
+				AS sys.varchar(7)) AS "CHECK_OPTION",
+
+			CAST('NO' AS sys.varchar(2)) AS "IS_UPDATABLE"
+
+	FROM sys.pg_namespace_ext nc JOIN pg_class c ON (nc.oid = c.relnamespace)
+		LEFT OUTER JOIN sys.babelfish_namespace_ext ext ON nc.nspname = ext.nspname
+		LEFT OUTER JOIN sys.babelfish_view_def vd
+			ON ext.dbid = vd.dbid AND ext.orig_name = vd.schema_name AND c.relname = vd.object_name
+
+	WHERE c.relkind = 'v'
+		AND (NOT pg_is_other_temp_schema(nc.oid))
+		AND (pg_has_role(c.relowner, 'USAGE')
+			OR has_table_privilege(c.oid, 'SELECT, INSERT, UPDATE, DELETE, TRUNCATE, REFERENCES, TRIGGER')
+			OR has_any_column_privilege(c.oid, 'SELECT, INSERT, UPDATE, REFERENCES') )
+		AND ext.dbid = cast(sys.db_id() as oid);
+
+GRANT SELECT ON information_schema_tsql.views TO PUBLIC;
+
 SELECT set_config('search_path', 'sys, '||current_setting('search_path'), false);
