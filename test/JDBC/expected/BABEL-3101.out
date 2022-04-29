@@ -1,21 +1,3 @@
-CREATE FUNCTION  f_3101()
-RETURNS NVARCHAR(255)
-AS
-begin
-	DECLARE @n NVARCHAR(255)
-	SELECT @n = QUOTENAME(name) FROM sys.tables
-	RETURN @n
-end
-GO
-
-select f_3101()
-GO
-~~START~~
-nvarchar
-<NULL>
-~~END~~
-
-
 
 
 
@@ -114,9 +96,6 @@ int
 
 ~~ERROR (Message: division by zero)~~
 
-
-DROP FUNCTION f_3101
-GO
 
 DROP FUNCTION my_splitstring_3101
 GO
