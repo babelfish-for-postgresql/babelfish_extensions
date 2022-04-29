@@ -191,15 +191,15 @@ AS SELECT
 CAST(Base.rolname AS sys.SYSNAME) AS name,
 CAST(Base.oid As INT) AS principal_id,
 CAST(CAST(Base.oid as INT) as sys.varbinary(85)) AS sid,
-Ext.type,
+CAST(Ext.type AS CHAR(1)) as type,
 CAST(CASE WHEN Ext.type = 'S' THEN 'SQL_LOGIN' ELSE NULL END AS NVARCHAR(60)) AS type_desc,
-Ext.is_disabled,
-Ext.create_date,
-Ext.modify_date,
-Ext.default_database_name,
-Ext.default_language_name,
-Ext.credential_id,
-Ext.owning_principal_id,
+CAST(Ext.is_disabled AS INT) AS is_disabled,
+CAST(Ext.create_date AS SYS.DATETIME) AS create_date,
+CAST(Ext.modify_date AS SYS.DATETIME) AS modify_date,
+CAST(Ext.default_database_name AS SYS.SYSNAME) AS default_database_name,
+CAST(Ext.default_language_name AS SYS.SYSNAME) AS default_language_name,
+CAST(Ext.credential_id AS INT) AS credential_id,
+CAST(Ext.owning_principal_id AS INT) AS owning_principal_id,
 CAST(Ext.is_fixed_role AS sys.BIT) AS is_fixed_role
 FROM pg_catalog.pg_authid AS Base INNER JOIN sys.babelfish_authid_login_ext AS Ext ON Base.rolname = Ext.rolname;
 
@@ -230,22 +230,22 @@ GRANT SELECT ON sys.babelfish_authid_user_ext TO PUBLIC;
 
 -- DATABASE_PRINCIPALS
 CREATE VIEW sys.database_principals AS SELECT
-Ext.orig_username AS name,
+CAST(Ext.orig_username AS SYS.SYSNAME) AS name,
 CAST(Base.OID AS INT) AS principal_id,
-Ext.type,
+CAST(Ext.type AS CHAR(1)) as type,
 CAST(CASE WHEN Ext.type = 'S' THEN 'SQL_USER'
 WHEN Ext.type = 'R' THEN 'DATABASE_ROLE'
 ELSE NULL END AS SYS.NVARCHAR(60)) AS type_desc,
-Ext.default_schema_name,
-Ext.create_date,
-Ext.modify_date,
-Ext.owning_principal_id,
+CAST(Ext.default_schema_name AS SYS.SYSNAME) AS default_schema_name,
+CAST(Ext.create_date AS SYS.DATETIME) AS create_date,
+CAST(Ext.modify_date AS SYS.DATETIME) AS modify_date,
+CAST(Ext.owning_principal_id AS INT) AS owning_principal_id,
 CAST(CAST(Base2.oid AS INT) AS SYS.VARBINARY(85)) AS SID,
 CAST(Ext.is_fixed_role AS SYS.BIT) AS is_fixed_role,
-Ext.authentication_type,
-Ext.authentication_type_desc,
-Ext.default_language_name,
-Ext.default_language_lcid,
+CAST(Ext.authentication_type AS INT) AS authentication_type,
+CAST(Ext.authentication_type_desc AS SYS.NVARCHAR(60)) AS authentication_type_desc,
+CAST(Ext.default_language_name AS SYS.SYSNAME) AS default_language_name,
+CAST(Ext.default_language_lcid AS INT) AS default_language_lcid,
 CAST(Ext.allow_encrypted_value_modifications AS SYS.BIT) AS allow_encrypted_value_modifications
 FROM pg_catalog.pg_authid AS Base INNER JOIN sys.babelfish_authid_user_ext AS Ext
 ON Base.rolname = Ext.rolname
