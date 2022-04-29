@@ -23,4 +23,7 @@ extern const char *get_dbo_role_name(const char *dbname);
 extern const char *get_db_owner_name(const char *dbname);
 extern const char *get_guest_role_name(const char *dbname);
 
+/* helper function for TDS. */
+extern const char *get_logical_schema_name_from_physical_schema_name(const char *physical_schema);
+
 #endif

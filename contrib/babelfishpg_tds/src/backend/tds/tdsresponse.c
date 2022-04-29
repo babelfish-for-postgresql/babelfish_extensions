@@ -1697,8 +1697,9 @@ PrepareRowDescription(TupleDesc typeinfo, List *targetlist, int16 *formats,
 			/* if not found, add one */
 			if (!found)
 			{
-				Relation 				rel;
-				TdsRelationMetaDataInfo relMetaDataInfo;
+				Relation		rel;
+				TdsRelationMetaDataInfo	relMetaDataInfo;
+				const char		*physical_schema_name;
 
 				relMetaDataInfo = (TdsRelationMetaDataInfo) palloc(sizeof(TdsRelationMetaDataInfoData));
 				tableNum++;
@@ -1719,7 +1720,15 @@ PrepareRowDescription(TupleDesc typeinfo, List *targetlist, int16 *formats,
 
 				/* fetch the relation name, schema name */
 				relMetaDataInfo->partName[0] = RelationGetRelationName(rel);
-				relMetaDataInfo->partName[1] = get_namespace_name(RelationGetNamespace(rel));
+				physical_schema_name = get_namespace_name(RelationGetNamespace(rel));
+
+				/* logical schema name should be sent as part of response as far as Babelfish is concerned. */
+				if (pltsql_plugin_handler_ptr && 
+					pltsql_plugin_handler_ptr->pltsql_get_logical_schema_name)
+					relMetaDataInfo->partName[1] = pltsql_plugin_handler_ptr->pltsql_get_logical_schema_name(physical_schema_name);
+
+				if (physical_schema_name != relMetaDataInfo->partName[1])
+					pfree(physical_schema_name);
 
 				relation_close(rel, AccessShareLock);
 
