@@ -58,7 +58,7 @@ Oid			bbf_authid_user_ext_oid;
 Oid			bbf_authid_user_ext_idx_oid;
 
 /*****************************************
- *			OBJECT_DEF
+ *			VIEW_DEF
  *****************************************/
 Oid			bbf_view_def_oid;
 Oid			bbf_view_def_idx_oid;
@@ -378,6 +378,7 @@ babelfish_helpdb(PG_FUNCTION_ARGS)
 /*****************************************
  *			NAMESPACE_EXT
  *****************************************/
+
 const char *
 get_logical_schema_name(const char *physical_schema_name, bool missingOk)
 {
@@ -421,6 +422,51 @@ get_logical_schema_name(const char *physical_schema_name, bool missingOk)
 	systable_endscan(scan);
 	table_close(rel, AccessShareLock);
 	return logical_name;
+}
+
+int16
+get_dbid_from_physical_schema_name(const char *physical_schema_name, bool missingOk)
+{
+	Relation 	rel;
+	HeapTuple	tuple;
+	ScanKeyData	scanKey;
+	SysScanDesc	scan;
+	Datum		datum;
+	int16		dbid;
+	TupleDesc	dsc;
+	bool		isnull;
+
+	if (get_namespace_oid(physical_schema_name, false) == InvalidOid)
+		return NULL;
+
+	rel = table_open(namespace_ext_oid, AccessShareLock);
+	dsc = RelationGetDescr(rel);
+
+	ScanKeyInit(&scanKey,
+				Anum_namespace_ext_namespace,
+				BTEqualStrategyNumber, F_NAMEEQ,
+				CStringGetDatum(physical_schema_name));
+
+	scan = systable_beginscan(rel, namespace_ext_idx_oid_oid, true,
+							  NULL, 1, &scanKey);
+
+	tuple = systable_getnext(scan);
+	if (!HeapTupleIsValid(tuple))
+	{
+		systable_endscan(scan);
+		table_close(rel, AccessShareLock);
+		if (!missingOk)
+			ereport(ERROR,
+				(errcode(ERRCODE_INTERNAL_ERROR),
+				 errmsg("Could not find db id for: \"%s\"", physical_schema_name)));
+		return NULL;
+	}
+	datum = heap_getattr(tuple, Anum_namespace_ext_dbid, dsc, &isnull);
+	dbid = DatumGetInt16(datum);
+
+	systable_endscan(scan);
+	table_close(rel, AccessShareLock);
+	return dbid;
 }
 
 /*****************************************
@@ -782,6 +828,109 @@ get_authid_user_ext_db_users(const char *db_name)
 	table_close(bbf_authid_user_ext_rel, RowExclusiveLock);
 
 	return db_users_list;
+}
+
+/*****************************************
+ *			VIEW_DEF
+ *****************************************/
+bool
+check_is_tsql_view(Oid relid)
+{
+	Oid		schema_oid;
+	Relation	bbf_view_def_rel;
+	ScanKeyData	scanKey[3];
+	SysScanDesc	scan;
+	HeapTuple	scantup, oldtup = NULL;
+	char		*view_name, *schema_name;
+	int16		logical_dbid;
+	const char	*logical_schema_name;
+	bool		is_tsql_view = false;
+
+	view_name = get_rel_name(relid);
+	schema_oid = get_rel_namespace(relid);
+	schema_name = get_namespace_name(schema_oid);
+	if (view_name == NULL || schema_name == NULL)
+	{
+		return false;
+	}
+	logical_schema_name = get_logical_schema_name(schema_name, true);
+	logical_dbid = get_dbid_from_physical_schema_name(schema_name, true);
+	if (logical_schema_name == NULL || logical_dbid == NULL)
+	{
+		return false;
+	}
+	/* Fetch the relation */
+	bbf_view_def_rel = table_open(bbf_view_def_oid, RowExclusiveLock);
+
+	/* Search and drop the definition */
+	ScanKeyInit(&scanKey[0],
+				Anum_bbf_view_def_dbid,
+				BTEqualStrategyNumber, F_INT2EQ,
+				Int16GetDatum(logical_dbid));
+
+	ScanKeyInit(&scanKey[1],
+				Anum_bbf_view_def_schema_name,
+				BTEqualStrategyNumber, F_NAMEEQ,
+				CStringGetDatum(logical_schema_name));
+
+	ScanKeyInit(&scanKey[2],
+				Anum_bbf_view_def_object_name,
+				BTEqualStrategyNumber, F_NAMEEQ,
+				CStringGetDatum(view_name));
+
+	scan = systable_beginscan(bbf_view_def_rel,
+							  bbf_view_def_idx_oid ,
+							  true, NULL, 3, scanKey);
+
+	while ((scantup = systable_getnext(scan)) != NULL)
+	{
+		/* Raise error if multiple matches */
+		if (oldtup)
+			elog(ERROR,
+				 "multiple babelfish_view_def entries for object %u",
+				 relid);
+		oldtup = heap_copytuple(scantup);
+	}
+
+	if (HeapTupleIsValid(oldtup))
+		is_tsql_view = true;
+
+	heap_freetuple(oldtup);
+	systable_endscan(scan);
+	table_close(bbf_view_def_rel, RowExclusiveLock);
+	return is_tsql_view;
+}
+
+void
+clean_up_bbf_view_def(int16 dbid)
+{
+	Relation		bbf_view_def_rel;
+	HeapTuple		scantup;
+	ScanKeyData		scanKey[1];
+	SysScanDesc		scan;
+
+	/* Fetch the relation */
+	bbf_view_def_rel = table_open(bbf_view_def_oid, RowExclusiveLock);
+
+	/* Search and drop the definition */
+	ScanKeyInit(&scanKey[0],
+				Anum_bbf_view_def_dbid,
+				BTEqualStrategyNumber, F_INT2EQ,
+				Int16GetDatum(dbid));
+
+	scan = systable_beginscan(bbf_view_def_rel,
+							  bbf_view_def_idx_oid ,
+							  true, NULL, 1, scanKey);
+
+	while ((scantup = systable_getnext(scan)) != NULL)
+	{
+		if (HeapTupleIsValid(scantup))
+			CatalogTupleDelete(bbf_view_def_rel,
+							&scantup->t_self);
+	}
+
+	systable_endscan(scan);
+	table_close(bbf_view_def_rel, RowExclusiveLock);
 }
 
 /*****************************************

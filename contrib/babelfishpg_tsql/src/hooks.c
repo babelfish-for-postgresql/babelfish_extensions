@@ -1481,6 +1481,10 @@ pltsql_store_view_definition(const char *queryString, ObjectAddress address)
 	bool		new_record_nulls[bbf_view_def_NUM_COLS];
 	HeapTuple	tuple, reltup;
 	Form_pg_class	form_reltup;
+	int		maxlen, len, MAX_BBF_NVARCHAR_LIMIT;
+	char		*physical_schemaname, *truncated_queryString;
+
+	MAX_BBF_NVARCHAR_LIMIT = 8000;
 
 	/* Skip if it is for sysdatabases while creating logical database */
 	if(strcmp("(CREATE LOGICAL DATABASE )", queryString) == 0)
@@ -1495,10 +1499,18 @@ pltsql_store_view_definition(const char *queryString, ObjectAddress address)
 
 	MemSet(new_record_nulls, false, sizeof(new_record_nulls));
 
-	new_record[0] = PointerGetDatum(get_cur_db_name());
-	new_record[1] = PointerGetDatum(get_logical_schema_name(get_namespace_name(form_reltup->relnamespace), true));
+	/* Truncate the query string to NVARCHAR_MAX limit to store in catalog */
+	maxlen = strlen(queryString);
+	len = Min(maxlen, MAX_BBF_NVARCHAR_LIMIT);
+	truncated_queryString = palloc0(len);
+	strncpy(truncated_queryString, queryString, len+1);
+	truncated_queryString[len] = '\0';
+
+	physical_schemaname = get_namespace_name(form_reltup->relnamespace);
+	new_record[0] = Int16GetDatum(get_dbid_from_physical_schema_name(physical_schemaname, true));
+	new_record[1] = PointerGetDatum(get_logical_schema_name(physical_schemaname, true));
 	new_record[2] = NameGetDatum(&form_reltup->relname);
-	new_record[3] = CStringGetTextDatum(queryString);
+	new_record[3] = CStringGetTextDatum(truncated_queryString);
 
 	tuple = heap_form_tuple(bbf_view_def_rel_dsc,
 							new_record, new_record_nulls);
@@ -1509,6 +1521,7 @@ pltsql_store_view_definition(const char *queryString, ObjectAddress address)
 	heap_freetuple(tuple);
 	table_close(bbf_view_def_rel, RowExclusiveLock);
 }
+
 /*
  * Drops view object's TSQL definition from bbf_view_def catalog
  */
@@ -1519,8 +1532,9 @@ pltsql_drop_view_definition(Oid objectId)
 	HeapTuple	reltuple, scantup, oldtup = NULL;
 	ScanKeyData	scanKey[3];
 	SysScanDesc	scan;
-	Form_pg_class form;
-	Datum	dbname, schemaname, objectname;
+	Form_pg_class	form;
+	Datum		dbid, schemaname, objectname;
+	char		*physical_schemaname;
 
 	/* return if it is not a view */
 	reltuple = SearchSysCache1(RELOID, ObjectIdGetDatum(objectId));
@@ -1533,16 +1547,16 @@ pltsql_drop_view_definition(Oid objectId)
 		return;
 	}
 
-	dbname = PointerGetDatum(get_cur_db_name());
-	schemaname = PointerGetDatum(get_logical_schema_name(
-								 get_namespace_name(form->relnamespace), true));
+	physical_schemaname = get_namespace_name(form->relnamespace);
+	dbid = Int16GetDatum(get_dbid_from_physical_schema_name(physical_schemaname, true));
+	schemaname = PointerGetDatum(get_logical_schema_name(physical_schemaname, true));
 	objectname = NameGetDatum(&form->relname);
 
 	/*
 	 * If any of these entries are NULL then there
 	 * must not be any entry in catalog
 	 */
-	if (dbname == NULL || schemaname == NULL || objectname == NULL)
+	if (dbid == NULL || schemaname == NULL || objectname == NULL)
 	{
 		ReleaseSysCache(reltuple);
 		return;
@@ -1553,9 +1567,9 @@ pltsql_drop_view_definition(Oid objectId)
 
 	/* Search and drop the definition */
 	ScanKeyInit(&scanKey[0],
-				Anum_bbf_view_def_db_name,
-				BTEqualStrategyNumber, F_NAMEEQ,
-				dbname);
+				Anum_bbf_view_def_dbid,
+				BTEqualStrategyNumber, F_INT2EQ,
+				dbid);
 
 	ScanKeyInit(&scanKey[1],
 				Anum_bbf_view_def_schema_name,

@@ -89,6 +89,7 @@ extern const char *get_one_user_db_name(void);
 #define NAMESPACE_EXT_TABLE_NAME "babelfish_namespace_ext"
 #define NAMESAPCE_EXT_PK_NAME "babelfish_namespace_ext_pkey"
 #define Anum_namespace_ext_namespace 1
+#define Anum_namespace_ext_dbid 2
 #define Anum_namespace_ext_orig_name 3
 #define NAMESPACE_EXT_NUM_COLS 4
 
@@ -97,6 +98,7 @@ extern Oid namespace_ext_idx_oid_oid;
 extern int namespace_ext_num_cols;
 
 extern const char *get_logical_schema_name(const char *physical_schema_name, bool missingOk);
+extern int16 get_dbid_from_physical_schema_name(const char *physical_schema_name, bool missingOk);
 
 /*****************************************
  *			LOGIN EXT
@@ -156,11 +158,11 @@ typedef struct FormData_authid_user_ext
 typedef FormData_authid_user_ext *Form_authid_user_ext;
 
 /*****************************************
- *			OBJECT_DEF
+ *			VIEW_DEF
  *****************************************/
 #define bbf_view_def_TABLE_NAME "babelfish_view_def"
 #define bbf_view_def_IDX_NAME "babelfish_view_def_pkey"
-#define Anum_bbf_view_def_db_name 1
+#define Anum_bbf_view_def_dbid 1
 #define Anum_bbf_view_def_schema_name 2
 #define Anum_bbf_view_def_object_name 3
 #define Anum_bbf_view_def_definition 4
@@ -168,9 +170,12 @@ typedef FormData_authid_user_ext *Form_authid_user_ext;
 extern Oid			bbf_view_def_oid;
 extern Oid			bbf_view_def_idx_oid;
 
+extern bool check_is_tsql_view(Oid relid);
+extern void clean_up_bbf_view_def(int16 dbid);
+
 typedef struct FormData_bbf_view_def
 {
-	NameData	dbid;
+	int16		dbid;
 	NameData	schema;
 	NameData	object_name;
 	text		definition;

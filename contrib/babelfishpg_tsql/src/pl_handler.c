@@ -414,6 +414,80 @@ pltsql_pre_parse_analyze(ParseState *pstate, RawStmt *parseTree)
 	if (prev_pre_parse_analyze_hook)
 	  prev_pre_parse_analyze_hook(pstate, parseTree);
 
+	/*
+	 * Block ALTER VIEW and CREATE OR REPLACE VIEW statements from PG dialect
+	 * executed on TSQL views which has entries in view_def catalog
+	 */
+	if (sql_dialect == SQL_DIALECT_PG)
+	{
+		switch (parseTree->stmt->type)
+		{
+			case T_ViewStmt:
+			{
+				ViewStmt *vstmt = (ViewStmt *) parseTree->stmt;
+				Oid relid;
+				relid = RangeVarGetRelid(vstmt->view, NoLock, true);
+				if (vstmt->replace && check_is_tsql_view(relid))
+				{
+					ereport(ERROR,
+							(errcode(ERRCODE_INTERNAL_ERROR),
+							errmsg("REPLACE VIEW is not allowed on TSQL views which has entry in babelfish_view_def")));
+				}
+			}
+			case T_AlterTableStmt:
+			{
+				AlterTableStmt	*atstmt = (AlterTableStmt *) parseTree->stmt;
+				if (atstmt->objtype == OBJECT_VIEW)
+				{
+					Oid relid;
+					relid = RangeVarGetRelid(atstmt->relation, NoLock, true);
+
+					if (check_is_tsql_view(relid))
+					{
+						ereport(ERROR,
+								(errcode(ERRCODE_INTERNAL_ERROR),
+								errmsg("ALTER VIEW is not allowed on TSQL views which has entry in babelfish_view_def")));
+					}
+				}
+				break;
+			}
+			case T_RenameStmt:
+			{
+				RenameStmt *rnstmt = (RenameStmt *) parseTree->stmt;
+				if (rnstmt->renameType == OBJECT_VIEW)
+				{
+					Oid relid;
+					relid = RangeVarGetRelid(rnstmt->relation, NoLock, true);
+					if (check_is_tsql_view(relid))
+					{
+						ereport(ERROR,
+								(errcode(ERRCODE_INTERNAL_ERROR),
+								errmsg("REPLACE VIEW is not allowed on TSQL views which has entry in babelfish_view_def")));
+					}
+				}
+				break;
+			}
+			case T_AlterObjectSchemaStmt:
+			{
+				AlterObjectSchemaStmt *altschstmt = (AlterObjectSchemaStmt *) parseTree->stmt;
+				if (altschstmt->objectType == OBJECT_VIEW)
+				{
+					Oid relid;
+					relid = RangeVarGetRelid(altschstmt->relation, NoLock, true);
+					if (check_is_tsql_view(relid))
+					{
+						ereport(ERROR,
+								(errcode(ERRCODE_INTERNAL_ERROR),
+								errmsg("REPLACE VIEW is not allowed on TSQL views which has entry in babelfish_view_def")));
+					}
+				}
+				break;
+			}
+			default:
+				break;
+		}
+	}
+
 	if (sql_dialect != SQL_DIALECT_TSQL)
 		return;
 
