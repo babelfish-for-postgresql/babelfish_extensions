@@ -870,13 +870,13 @@ check_is_tsql_view(Oid relid)
 
 	ScanKeyInit(&scanKey[1],
 				Anum_bbf_view_def_schema_name,
-				BTEqualStrategyNumber, F_NAMEEQ,
-				CStringGetDatum(logical_schema_name));
+				BTEqualStrategyNumber, F_TEXTEQ,
+				CStringGetTextDatum(logical_schema_name));
 
 	ScanKeyInit(&scanKey[2],
 				Anum_bbf_view_def_object_name,
-				BTEqualStrategyNumber, F_NAMEEQ,
-				CStringGetDatum(view_name));
+				BTEqualStrategyNumber, F_TEXTEQ,
+				CStringGetTextDatum(view_name));
 
 	scan = systable_beginscan(bbf_view_def_rel,
 							  bbf_view_def_idx_oid ,
@@ -893,9 +893,11 @@ check_is_tsql_view(Oid relid)
 	}
 
 	if (HeapTupleIsValid(oldtup))
+	{
 		is_tsql_view = true;
+		heap_freetuple(oldtup);
+	}
 
-	heap_freetuple(oldtup);
 	systable_endscan(scan);
 	table_close(bbf_view_def_rel, RowExclusiveLock);
 	return is_tsql_view;

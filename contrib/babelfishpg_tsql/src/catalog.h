@@ -176,9 +176,10 @@ extern void clean_up_bbf_view_def(int16 dbid);
 typedef struct FormData_bbf_view_def
 {
 	int16		dbid;
-	NameData	schema;
-	NameData	object_name;
+	VarChar		schema;
+	VarChar		object_name;
 	text		definition;
+
 } FormData_bbf_view_def;
 
 typedef FormData_bbf_view_def *Form_bbf_view_def;

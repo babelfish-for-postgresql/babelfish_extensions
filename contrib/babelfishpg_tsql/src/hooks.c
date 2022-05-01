@@ -1507,9 +1507,15 @@ pltsql_store_view_definition(const char *queryString, ObjectAddress address)
 	truncated_queryString[len] = '\0';
 
 	physical_schemaname = get_namespace_name(form_reltup->relnamespace);
-	new_record[0] = Int16GetDatum(get_dbid_from_physical_schema_name(physical_schemaname, true));
-	new_record[1] = PointerGetDatum(get_logical_schema_name(physical_schemaname, true));
-	new_record[2] = NameGetDatum(&form_reltup->relname);
+	if (physical_schemaname == NULL)
+	{
+		elog(ERROR,
+				"Could not find physical schemaname for %u",
+				 form_reltup->relnamespace);
+	}
+	new_record[0] = Int16GetDatum(get_dbid_from_physical_schema_name(physical_schemaname, false));
+	new_record[1] = CStringGetTextDatum(get_logical_schema_name(physical_schemaname, false));
+	new_record[2] = CStringGetTextDatum(NameStr(form_reltup->relname));
 	new_record[3] = CStringGetTextDatum(truncated_queryString);
 
 	tuple = heap_form_tuple(bbf_view_def_rel_dsc,
@@ -1533,8 +1539,8 @@ pltsql_drop_view_definition(Oid objectId)
 	ScanKeyData	scanKey[3];
 	SysScanDesc	scan;
 	Form_pg_class	form;
-	Datum		dbid, schemaname, objectname;
-	char		*physical_schemaname;
+	int16		dbid;
+	char		*physical_schemaname, *logical_schemaname, *objectname;
 
 	/* return if it is not a view */
 	reltuple = SearchSysCache1(RELOID, ObjectIdGetDatum(objectId));
@@ -1548,15 +1554,21 @@ pltsql_drop_view_definition(Oid objectId)
 	}
 
 	physical_schemaname = get_namespace_name(form->relnamespace);
-	dbid = Int16GetDatum(get_dbid_from_physical_schema_name(physical_schemaname, true));
-	schemaname = PointerGetDatum(get_logical_schema_name(physical_schemaname, true));
-	objectname = NameGetDatum(&form->relname);
+	if (physical_schemaname == NULL)
+	{
+		elog(ERROR,
+				"Could not find physical schemaname for %u",
+				 form->relnamespace);
+	}
+	dbid = get_dbid_from_physical_schema_name(physical_schemaname, true);
+	logical_schemaname = get_logical_schema_name(physical_schemaname, true);
+	objectname = NameStr(form->relname);
 
 	/*
 	 * If any of these entries are NULL then there
 	 * must not be any entry in catalog
 	 */
-	if (dbid == NULL || schemaname == NULL || objectname == NULL)
+	if (dbid == NULL || logical_schemaname == NULL || objectname == NULL)
 	{
 		ReleaseSysCache(reltuple);
 		return;
@@ -1569,17 +1581,17 @@ pltsql_drop_view_definition(Oid objectId)
 	ScanKeyInit(&scanKey[0],
 				Anum_bbf_view_def_dbid,
 				BTEqualStrategyNumber, F_INT2EQ,
-				dbid);
+				Int16GetDatum(dbid));
 
 	ScanKeyInit(&scanKey[1],
 				Anum_bbf_view_def_schema_name,
-				BTEqualStrategyNumber, F_NAMEEQ,
-				schemaname);
+				BTEqualStrategyNumber, F_TEXTEQ,
+				CStringGetTextDatum(logical_schemaname));
 
 	ScanKeyInit(&scanKey[2],
 				Anum_bbf_view_def_object_name,
-				BTEqualStrategyNumber, F_NAMEEQ,
-				objectname);
+				BTEqualStrategyNumber, F_TEXTEQ,
+				CStringGetTextDatum(objectname));
 
 	scan = systable_beginscan(bbf_view_def_rel,
 							  bbf_view_def_idx_oid ,
