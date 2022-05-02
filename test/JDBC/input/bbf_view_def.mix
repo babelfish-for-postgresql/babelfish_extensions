@@ -1,5 +1,8 @@
 -- tsql
-create view def_v1 as select 1 as a;
+create table vd_t1 (c1 int primary key);
+go
+
+create view def_v1 as select c1 as a from vd_t1;
 go
 
 -- definition should not get trimmed
@@ -53,10 +56,10 @@ go
 alter view master_dbo.def_v1 set schema tempdb_dbo;
 go
 
-alter view master_dbo.def_v1 set check option=local;
+alter view master_dbo.def_v1 set (check_option=local);
 go
 
-alter view master_dbo.def_v1 reset check option;
+alter view master_dbo.def_v1 reset (check_option);
 go
 
 create or replace view master_dbo.def_v1 as select 2;
@@ -106,6 +109,30 @@ go
 select sb.name, vd.schema_name, vd.object_name, vd.definition from babelfish_view_def vd left join sys.sysdatabases sb on vd.dbid=sb.dbid order by vd.dbid, vd.schema_name, vd.object_name, vd.definition;
 go
 
+-- CAST: Check for session properties like ANSI_NULLS and QUOTED_IDENTIFIER
+-- Also check is_schema_bound and uses_database_collation columns
+SET ANSI_NULLS ON;
+go
+
+create view view_ansinullon as select 1;
+go
+
+SET ANSI_NULLS OFF;
+go
+
+create view "view_ansinulloff_qidon" as select 1;
+go
+
+SET QUOTED_IDENTIFIER OFF;
+go
+
+create view view_ansinulloff_qidoff as select 1;
+go
+
+select vd.object_name, vd.definition, vd.is_ansi_nulls_on, vd.uses_quoted_identifier, vd.is_schema_bound, vd.uses_database_collation from babelfish_view_def vd left join sys.sysdatabases sb on vd.dbid=sb.dbid where vd.object_name like ('view_ansi%') order by vd.dbid, vd.schema_name, vd.object_name, vd.definition;
+go
+
+
 -- TODO: Add support when alter view is supported
 alter view def_v1 as select 2;
 go
@@ -116,6 +143,15 @@ go
 
 -- CLEANUP
 use master;
+go
+
+drop view view_ansinullon;
+go
+
+drop view view_ansinulloff_qidon;
+go
+
+drop view view_ansinulloff_qidoff;
 go
 
 select sb.name, vd.schema_name, vd.object_name, vd.definition from babelfish_view_def vd left join sys.sysdatabases sb on vd.dbid=sb.dbid order by vd.dbid, vd.schema_name, vd.object_name, vd.definition;

@@ -50,6 +50,7 @@
 #include "rolecmds.h"
 #include "session.h"
 
+extern bool pltsql_quoted_identifier;
 extern bool is_tsql_rowversion_or_timestamp_datatype(Oid oid);
 
 /*****************************************
@@ -1481,10 +1482,7 @@ pltsql_store_view_definition(const char *queryString, ObjectAddress address)
 	bool		new_record_nulls[bbf_view_def_NUM_COLS];
 	HeapTuple	tuple, reltup;
 	Form_pg_class	form_reltup;
-	int		maxlen, len, MAX_BBF_NVARCHAR_LIMIT;
-	char		*physical_schemaname, *truncated_queryString;
-
-	MAX_BBF_NVARCHAR_LIMIT = 8000;
+	char		*physical_schemaname;
 
 	/* Skip if it is for sysdatabases while creating logical database */
 	if(strcmp("(CREATE LOGICAL DATABASE )", queryString) == 0)
@@ -1499,13 +1497,6 @@ pltsql_store_view_definition(const char *queryString, ObjectAddress address)
 
 	MemSet(new_record_nulls, false, sizeof(new_record_nulls));
 
-	/* Truncate the query string to NVARCHAR_MAX limit to store in catalog */
-	maxlen = strlen(queryString);
-	len = Min(maxlen, MAX_BBF_NVARCHAR_LIMIT);
-	truncated_queryString = palloc0(len);
-	strncpy(truncated_queryString, queryString, len+1);
-	truncated_queryString[len] = '\0';
-
 	physical_schemaname = get_namespace_name(form_reltup->relnamespace);
 	if (physical_schemaname == NULL)
 	{
@@ -1516,7 +1507,19 @@ pltsql_store_view_definition(const char *queryString, ObjectAddress address)
 	new_record[0] = Int16GetDatum(get_dbid_from_physical_schema_name(physical_schemaname, false));
 	new_record[1] = CStringGetTextDatum(get_logical_schema_name(physical_schemaname, false));
 	new_record[2] = CStringGetTextDatum(NameStr(form_reltup->relname));
-	new_record[3] = CStringGetTextDatum(truncated_queryString);
+	new_record[3] = CStringGetTextDatum(queryString);
+	/*
+	 * Used !Transform_null_equals instead of pltsql_ansi_nulls because
+	 * NULL is being inserted in catalog if it is used.
+	 */
+	new_record[4] = BoolGetDatum(!Transform_null_equals);
+	new_record[5] = BoolGetDatum(pltsql_quoted_identifier);
+	/*
+	 * Inserting false/0 as default value for is_schema_bound and
+	 * uses_database_collation until they're supported
+	 */
+	new_record[6] = BoolGetDatum(0);
+	new_record[7] = BoolGetDatum(0);
 
 	tuple = heap_form_tuple(bbf_view_def_rel_dsc,
 							new_record, new_record_nulls);
@@ -1535,7 +1538,7 @@ static void
 pltsql_drop_view_definition(Oid objectId)
 {
 	Relation	bbf_view_def_rel;
-	HeapTuple	reltuple, scantup, oldtup = NULL;
+	HeapTuple	reltuple, scantup;
 	ScanKeyData	scanKey[3];
 	SysScanDesc	scan;
 	Form_pg_class	form;
@@ -1597,19 +1600,11 @@ pltsql_drop_view_definition(Oid objectId)
 							  bbf_view_def_idx_oid ,
 							  true, NULL, 3, scanKey);
 
-	while ((scantup = systable_getnext(scan)) != NULL)
-	{
-		/* Raise error if multiple matches */
-		if (oldtup)
-			elog(ERROR,
-				 "multiple babelfish_view_def entries for object %u",
-				 objectId);
-		oldtup = heap_copytuple(scantup);
-	}
+	scantup = systable_getnext(scan);
 
-	if (HeapTupleIsValid(oldtup))
+	if (HeapTupleIsValid(scantup))
 		CatalogTupleDelete(bbf_view_def_rel,
-						   &oldtup->t_self);
+						   &scantup->t_self);
 
 	systable_endscan(scan);
 	ReleaseSysCache(reltuple);
