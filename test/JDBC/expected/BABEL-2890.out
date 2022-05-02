@@ -1,0 +1,18 @@
+create table #temp_babel_2890 (a text)
+GO
+
+insert into #temp_babel_2890 values ('this is dummy value');
+GO
+~~ROW COUNT: 1~~
+
+
+select * from #temp_babel_2890;
+go
+~~START~~
+text
+this is dummy value
+~~END~~
+
+
+drop table #temp_babel_2890;
+GO
