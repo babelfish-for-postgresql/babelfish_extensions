@@ -2061,7 +2061,7 @@ static void bbf_ProcessUtility(PlannedStmt *pstmt,
 				if (vstmt->replace && check_is_tsql_view(relid))
 				{
 					ereport(ERROR,
-							(errcode(ERRCODE_INTERNAL_ERROR),
+							(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
 							errmsg("REPLACE VIEW is not allowed on TSQL views which has entry in babelfish_view_def")));
 				}
 				break;
@@ -2077,7 +2077,7 @@ static void bbf_ProcessUtility(PlannedStmt *pstmt,
 					if (check_is_tsql_view(relid))
 					{
 						ereport(ERROR,
-								(errcode(ERRCODE_INTERNAL_ERROR),
+								(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
 								errmsg("ALTER VIEW is not allowed on TSQL views which has entry in babelfish_view_def")));
 					}
 				}
@@ -2093,7 +2093,7 @@ static void bbf_ProcessUtility(PlannedStmt *pstmt,
 					if (check_is_tsql_view(relid))
 					{
 						ereport(ERROR,
-								(errcode(ERRCODE_INTERNAL_ERROR),
+								(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
 								errmsg("REPLACE VIEW is not allowed on TSQL views which has entry in babelfish_view_def")));
 					}
 				}
@@ -2109,7 +2109,7 @@ static void bbf_ProcessUtility(PlannedStmt *pstmt,
 					if (check_is_tsql_view(relid))
 					{
 						ereport(ERROR,
-								(errcode(ERRCODE_INTERNAL_ERROR),
+								(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
 								errmsg("REPLACE VIEW is not allowed on TSQL views which has entry in babelfish_view_def")));
 					}
 				}

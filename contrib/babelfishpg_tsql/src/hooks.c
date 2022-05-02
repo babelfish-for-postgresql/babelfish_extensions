@@ -1482,7 +1482,8 @@ pltsql_store_view_definition(const char *queryString, ObjectAddress address)
 	bool		new_record_nulls[bbf_view_def_NUM_COLS];
 	HeapTuple	tuple, reltup;
 	Form_pg_class	form_reltup;
-	char		*physical_schemaname;
+	int16		dbid;
+	char		*physical_schemaname, *logical_schemaname;
 
 	/* Skip if it is for sysdatabases while creating logical database */
 	if(strcmp("(CREATE LOGICAL DATABASE )", queryString) == 0)
@@ -1504,8 +1505,29 @@ pltsql_store_view_definition(const char *queryString, ObjectAddress address)
 				"Could not find physical schemaname for %u",
 				 form_reltup->relnamespace);
 	}
-	new_record[0] = Int16GetDatum(get_dbid_from_physical_schema_name(physical_schemaname, false));
-	new_record[1] = CStringGetTextDatum(get_logical_schema_name(physical_schemaname, false));
+
+	/*
+	 * Do not store definition/data in case of sys and information_schema_tsql
+	 * views
+	 */
+	if (strcmp(physical_schemaname, "sys") == 0 ||
+		strcmp(physical_schemaname, "information_schema_tsql") == 0)
+	{
+		ReleaseSysCache(reltup);
+		return;
+	}
+
+	dbid = get_dbid_from_physical_schema_name(physical_schemaname, true);
+	logical_schemaname = get_logical_schema_name(physical_schemaname, true);
+	if(!DbidIsValid(dbid) || logical_schemaname == NULL)
+	{
+		ereport(ERROR,
+				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+				errmsg("Could not find dbid or logical schema for this physical schema '%s'." \
+				"CREATE VIEW from non-babelfish schema/db is not allowed in TSQL dialect.", physical_schemaname)));
+	}
+	new_record[0] = Int16GetDatum(dbid);
+	new_record[1] = CStringGetTextDatum(logical_schemaname);
 	new_record[2] = CStringGetTextDatum(NameStr(form_reltup->relname));
 	new_record[3] = CStringGetTextDatum(queryString);
 	/*
@@ -1539,8 +1561,6 @@ pltsql_drop_view_definition(Oid objectId)
 {
 	Relation	bbf_view_def_rel;
 	HeapTuple	reltuple, scantup;
-	ScanKeyData	scanKey[3];
-	SysScanDesc	scan;
 	Form_pg_class	form;
 	int16		dbid;
 	char		*physical_schemaname, *logical_schemaname, *objectname;
@@ -1571,7 +1591,7 @@ pltsql_drop_view_definition(Oid objectId)
 	 * If any of these entries are NULL then there
 	 * must not be any entry in catalog
 	 */
-	if (dbid == NULL || logical_schemaname == NULL || objectname == NULL)
+	if (!DbidIsValid(dbid) || logical_schemaname == NULL || objectname == NULL)
 	{
 		ReleaseSysCache(reltuple);
 		return;
@@ -1580,33 +1600,15 @@ pltsql_drop_view_definition(Oid objectId)
 	/* Fetch the relation */
 	bbf_view_def_rel = table_open(bbf_view_def_oid, RowExclusiveLock);
 
-	/* Search and drop the definition */
-	ScanKeyInit(&scanKey[0],
-				Anum_bbf_view_def_dbid,
-				BTEqualStrategyNumber, F_INT2EQ,
-				Int16GetDatum(dbid));
-
-	ScanKeyInit(&scanKey[1],
-				Anum_bbf_view_def_schema_name,
-				BTEqualStrategyNumber, F_TEXTEQ,
-				CStringGetTextDatum(logical_schemaname));
-
-	ScanKeyInit(&scanKey[2],
-				Anum_bbf_view_def_object_name,
-				BTEqualStrategyNumber, F_TEXTEQ,
-				CStringGetTextDatum(objectname));
-
-	scan = systable_beginscan(bbf_view_def_rel,
-							  bbf_view_def_idx_oid ,
-							  true, NULL, 3, scanKey);
-
-	scantup = systable_getnext(scan);
+	scantup = search_bbf_view_def(bbf_view_def_rel, dbid, logical_schemaname, objectname);
 
 	if (HeapTupleIsValid(scantup))
+	{
 		CatalogTupleDelete(bbf_view_def_rel,
 						   &scantup->t_self);
+		heap_freetuple(scantup);
+	}
 
-	systable_endscan(scan);
 	ReleaseSysCache(reltuple);
 	table_close(bbf_view_def_rel, RowExclusiveLock);
 }
