@@ -1585,7 +1585,7 @@ typedef struct PLtsql_protocol_plugin
 
 	int (*pltsql_get_generic_typmod) (Oid funcid, int nargs, Oid declared_oid);
 
-	const char* (*pltsql_get_logical_schema_name) (const char *physical_schema_name);
+	const char* (*pltsql_get_logical_schema_name) (const char *physical_schema_name, bool missingOk);
 
 } PLtsql_protocol_plugin;
 
