@@ -1082,23 +1082,3 @@ truncate_tsql_identifier(char *ident)
 
 }
 
-/*************************************************************
- * 					Helper Functions for TDS
- *************************************************************/
-/*
- * logical_schema_name_from_physical_schema_name - this api would be used by TDS to get logical schema
- * given the physical schema. 
- * This api would first check if given physical schema is shared schema (e.g., "sys", "information_schema", etc)
- * then it would return physical schema itself. Otherwise, it would internally use get_logical_schema_name to get
- * the logical schema and return it.
- */
-const char *
-get_logical_schema_name_from_physical_schema_name(const char *physical_schema)
-{
-	/* If given schema is shared schema e.g., "sys", "information_schema", etc then they do not need to be translated. */
-	if (is_shared_schema(physical_schema))
-		return physical_schema;
-
-	/* Its very unlikely that logical schema name could not be found for any other cases. */
-	return get_logical_schema_name(physical_schema, false);
-}

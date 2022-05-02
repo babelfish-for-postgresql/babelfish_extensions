@@ -835,6 +835,73 @@ END;
 $$
 LANGUAGE 'pltsql';
 GRANT ALL ON PROCEDURE sys.sp_sproc_columns_100 TO PUBLIC;
+ 
+CREATE OR REPLACE PROCEDURE sys.sp_statistics(
+    "@table_name" sys.sysname,
+    "@table_owner" sys.sysname = '',
+    "@table_qualifier" sys.sysname = '',
+	"@index_name" sys.sysname = '',
+	"@is_unique" char = 'N',
+	"@accuracy" char = 'Q'
+)
+AS $$
+BEGIN
+    IF @index_name = '%'
+	BEGIN
+	    SELECT @index_name = ''
+	END
+    select out_table_qualifier as table_qualifier,
+            out_table_owner as table_owner,
+            out_table_name as table_name,
+			out_non_unique as non_unique,
+			out_index_qualifier as index_qualifier,
+			out_index_name as index_name,
+			out_type as type,
+			out_seq_in_index as seq_in_index,
+			out_column_name as column_name,
+			out_collation as collation,
+			out_cardinality as cardinality,
+			out_pages as pages,
+			out_filter_condition as filter_condition
+    from sys.sp_statistics_internal(@table_name, @table_owner, @table_qualifier, @index_name, @is_unique, @accuracy);
+END;
+$$
+LANGUAGE 'pltsql';
+GRANT ALL on PROCEDURE sys.sp_statistics TO PUBLIC;
+
+-- same as sp_statistics
+CREATE OR REPLACE PROCEDURE sys.sp_statistics_100(
+    "@table_name" sys.sysname,
+    "@table_owner" sys.sysname = '',
+    "@table_qualifier" sys.sysname = '',
+	"@index_name" sys.sysname = '',
+	"@is_unique" char = 'N',
+	"@accuracy" char = 'Q'
+)
+AS $$
+BEGIN
+    IF @index_name = '%'
+	BEGIN
+	    SELECT @index_name = ''
+	END
+    select out_table_qualifier as TABLE_QUALIFIER,
+            out_table_owner as TABLE_OWNER,
+            out_table_name as TABLE_NAME,
+			out_non_unique as NON_UNIQUE,
+			out_index_qualifier as INDEX_QUALIFIER,
+			out_index_name as INDEX_NAME,
+			out_type as TYPE,
+			out_seq_in_index as SEQ_IN_INDEX,
+			out_column_name as COLUMN_NAME,
+			out_collation as COLLATION,
+			out_cardinality as CARDINALITY,
+			out_pages as PAGES,
+			out_filter_condition as FILTER_CONDITION
+    from sys.sp_statistics_internal(@table_name, @table_owner, @table_qualifier, @index_name, @is_unique, @accuracy);
+END;
+$$
+LANGUAGE 'pltsql';
+GRANT ALL on PROCEDURE sys.sp_statistics_100 TO PUBLIC;
 
 create or replace function sys.get_tds_id(
 	datatype sys.varchar(50)

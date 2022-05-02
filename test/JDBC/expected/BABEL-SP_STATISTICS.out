@@ -112,6 +112,14 @@ db1#!#dbo#!#t2#!#<NULL>#!#<NULL>#!#<NULL>#!#0#!#<NULL>#!#<NULL>#!#<NULL>#!#-1#!#
 ~~END~~
 
 
+exec sp_statistics N't1',N'dbo',NULL,N'%',N'Y',N'Q'
+go
+~~START~~
+varchar#!#varchar#!#varchar#!#smallint#!#varchar#!#varchar#!#smallint#!#smallint#!#varchar#!#varchar#!#int#!#int#!#varchar
+db1#!#dbo#!#t1#!#<NULL>#!#<NULL>#!#<NULL>#!#0#!#<NULL>#!#<NULL>#!#<NULL>#!#-1#!#0#!#<NULL>
+~~END~~
+
+
 -- sp_statistics_100 is implemented as same as sp_statistics
 exec sp_statistics_100 @table_name = 't3' 
 go
