@@ -129,7 +129,7 @@ select
 go
 ~~START~~
 varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar
-2021-08-15 00:00:00#!#2021-08-15 00:00:00#!#2021-08-15 00:00:00#!#decimal #!#false#!#a
+2021-08-15 00:00:00#!#2021-08-15 00:00:00#!#2021-08-15 00:00:00#!#decimal #!#f#!#a
 ~~END~~
 
 
@@ -161,7 +161,7 @@ select
 go
 ~~START~~
 varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar
-Aug 15 2021 12:00AM#!#2021-08-15 00:00:00#!#2021-08-15 00:00:00#!#decimal #!#false#!#a
+Aug 15 2021 12:00AM#!#2021-08-15 00:00:00#!#2021-08-15 00:00:00#!#decimal #!#f#!#a
 ~~END~~
 
 
