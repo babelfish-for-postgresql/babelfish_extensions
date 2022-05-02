@@ -26,7 +26,7 @@ The JDBC test framework for Babelfish uses the JDBC Driver for SQL Server for da
 Java, Maven
 
 ### Steps to run
-Once you have built the modified Postgres engine and Babelfish extensions from [here](https://github.com/babelfish-for-postgresql/babelfish_extensions/blob/BABEL_1_X_DEV/contrib/README.md), do the following:
+Once you have built the modified Postgres engine and Babelfish extensions from [here](../../contrib/README.md), do the following:
 1. Create a postgres database and initialize babelfish in it (if you already have a database with babelfish initialized you can omit this step or cleanup before you initialize)
     ```bash
     ./init.sh
@@ -42,7 +42,7 @@ Once you have built the modified Postgres engine and Babelfish extensions from [
 
 ## How to run tests against a custom Babelfish endpoint
 By default the tests will run against the server running on localhost. You can specify a custom endpoint, database, user etc. in `test/JDBC/src/main/resources/config.txt`. 
-The [config file](https://github.com/babelfish-for-postgresql/babelfish_extensions/blob/BABEL_1_X_DEV/test/JDBC/src/main/resources/config.txt) has many other options you can change for your test runs. Alternatively, you can also set these option through environment variables as follows:
+The [config file](src/main/resources/config.txt) has many other options you can change for your test runs. Alternatively, you can also set these option through environment variables as follows:
 ```bash
 export databaseName = test_db
 ```
