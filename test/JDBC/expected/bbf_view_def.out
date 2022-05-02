@@ -260,6 +260,9 @@ master#!#def_sch1#!#def_v1#!#create view def_sch1.def_v1 as select 1;
 drop view def_v1, def_v2;
 go
 
+drop table vd_t1;
+go
+
 drop view def_sch1.def_v1;
 go
 
