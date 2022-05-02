@@ -70,7 +70,6 @@ select
     cast(cast('2021-08-15 ' as datetime2) as varchar(20)),
     cast(cast('2021-08-15 ' as smalldatetime) as varchar(20)),
     cast(cast('decimal ' as sql_variant) as varchar(8)),
-    cast(FALSE as varchar(6)),
     cast(cast('a' as char(1)) as varchar(3))
 ;
 go
@@ -92,7 +91,6 @@ select
     convert(varchar(20), cast('2021-08-15 ' as datetime2)),
     convert(varchar(20), cast('2021-08-15 ' as smalldatetime)),
     convert(varchar(8), cast('decimal ' as sql_variant)),
-    convert(varchar(6), FALSE),
     convert(varchar(3), cast('a' as pg_catalog.char(1)))
 ;
 go

@@ -86,7 +86,6 @@ select
     cast(cast('2021-08-15 ' as sys.datetime2) as char(20)),
     cast(cast('2021-08-15 ' as sys.smalldatetime) as char(20)),
     cast(cast('decimal ' as sys.sql_variant) as char(8)),
-    cast(FALSE as char(6)),
     cast(cast('a' as pg_catalog.char(1)) as char(3))
 ;
 go
@@ -108,7 +107,6 @@ select
     convert(char(20), cast('2021-08-15 ' as sys.datetime2)),
     convert(char(20), cast('2021-08-15 ' as sys.smalldatetime)),
     convert(char(8), cast('decimal ' as sys.sql_variant)),
-    convert(char(6), FALSE),
     convert(char(3), cast('a' as pg_catalog.char(1)))
 ;
 go
