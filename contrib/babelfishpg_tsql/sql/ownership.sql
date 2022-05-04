@@ -154,7 +154,6 @@ LANGUAGE plpgsql
 AS $$
 BEGIN
 	CALL sys.babel_drop_all_dbs();
-	CALL sys.babel_drop_all_users();
 	CALL sys.babel_drop_all_logins();
 	EXECUTE format('ALTER DATABASE %s SET babelfishpg_tsql.enable_ownership_structure = false', CURRENT_DATABASE());
 	EXECUTE 'ALTER SEQUENCE sys.babelfish_db_seq RESTART';
@@ -234,7 +233,9 @@ CREATE VIEW sys.database_principals AS SELECT
 Ext.orig_username AS name,
 CAST(Base.OID AS INT) AS principal_id,
 Ext.type,
-CAST(CASE WHEN Ext.type = 'S' THEN 'SQL_USER' ELSE NULL END AS SYS.NVARCHAR(60)) AS type_desc,
+CAST(CASE WHEN Ext.type = 'S' THEN 'SQL_USER'
+WHEN Ext.type = 'R' THEN 'DATABASE_ROLE'
+ELSE NULL END AS SYS.NVARCHAR(60)) AS type_desc,
 Ext.default_schema_name,
 Ext.create_date,
 Ext.modify_date,
@@ -253,6 +254,23 @@ ON Ext.login_name = Base2.rolname
 WHERE Ext.database_name = DB_NAME();
 
 GRANT SELECT ON sys.database_principals TO PUBLIC;
+
+-- DATABASE_ROLE_MEMBERS
+CREATE VIEW sys.database_role_members AS
+SELECT
+CAST(Auth1.oid AS INT) AS role_principal_id,
+CAST(Auth2.oid AS INT) AS member_principal_id
+FROM pg_catalog.pg_auth_members AS Authmbr
+INNER JOIN pg_catalog.pg_authid AS Auth1 ON Auth1.oid = Authmbr.roleid
+INNER JOIN pg_catalog.pg_authid AS Auth2 ON Auth2.oid = Authmbr.member
+INNER JOIN sys.babelfish_authid_user_ext AS Ext1 ON Auth1.rolname = Ext1.rolname
+INNER JOIN sys.babelfish_authid_user_ext AS Ext2 ON Auth2.rolname = Ext2.rolname
+WHERE Ext1.database_name = DB_NAME() 
+AND Ext2.database_name = DB_NAME()
+AND Ext1.type = 'R'
+AND Ext2.orig_username != 'db_owner';
+
+GRANT SELECT ON sys.database_role_members TO PUBLIC;
 
 -- internal table function for sp_helpdb with no arguments
 CREATE OR REPLACE FUNCTION sys.babelfish_helpdb()

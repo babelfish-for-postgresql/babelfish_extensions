@@ -2209,6 +2209,7 @@ static void bbf_ProcessUtility(PlannedStmt *pstmt,
 				ListCell		*option;
 				bool			islogin = false;
 				bool			isuser = false;
+				bool			isrole = false;
 
 				/* Check if creating login or role. Expect islogin first */
 				if (stmt->options != NIL)
@@ -2281,6 +2282,45 @@ static void bbf_ProcessUtility(PlannedStmt *pstmt,
 															   -1));
 						}
 					}
+					else if (strcmp(headel->defname, "isrole") == 0)
+					{
+						int location = -1;
+
+						isrole = true;
+						stmt->options = list_delete_cell(stmt->options,
+														 list_head(stmt->options));
+														 pfree(headel);
+
+						/* Filter TSQL role options from default role options */
+						foreach(option, stmt->options)
+						{
+							DefElem *defel = (DefElem *) lfirst(option);
+
+							if (strcmp(defel->defname, "name_location") == 0)
+							{
+								location = defel->location;
+								user_options = lappend(user_options, defel);
+							}
+						}
+
+						foreach(option, user_options)
+						{
+							stmt->options = list_delete_ptr(stmt->options,
+															lfirst(option));
+						}
+
+						if (location >= 0)
+						{
+							char        *orig_user_name;
+
+							orig_user_name = extract_identifier(queryString + location);
+							user_options = lappend(user_options,
+												   makeDefElem("original_user_name",
+															   (Node *) makeString(orig_user_name),
+															   -1));
+						}
+					}
+
 				}
 
 				if (islogin)
@@ -2326,7 +2366,7 @@ static void bbf_ProcessUtility(PlannedStmt *pstmt,
 
 					return;
 				}
-				else if (isuser)
+				else if (isuser || isrole)
 				{
 					/* Set current user to dbo user for create permissions */
 					prev_current_user = GetUserNameFromId(GetUserId(), false);
@@ -2346,7 +2386,11 @@ static void bbf_ProcessUtility(PlannedStmt *pstmt,
 
 						stmt->options = list_concat(stmt->options,
 													user_options);
-						create_bbf_authid_user_ext(stmt, true, true);
+						/*
+						 * If the stmt is CREATE USER, it must have a
+						 * corresponding login and a schema name
+						 */
+						create_bbf_authid_user_ext(stmt, isuser, isuser);
 					}
 					PG_CATCH();
 					{
@@ -2373,6 +2417,7 @@ static void bbf_ProcessUtility(PlannedStmt *pstmt,
 				ListCell		*option;
 				bool			islogin = false;
 				bool			isuser = false;
+				bool			isrole = false;
 				Oid				prev_current_user;
 
 				prev_current_user = GetUserId();
@@ -2422,6 +2467,28 @@ static void bbf_ProcessUtility(PlannedStmt *pstmt,
 
 							if (strcmp(defel->defname, "default_schema") == 0)
 								user_options = lappend(user_options, defel);
+							if (strcmp(defel->defname, "rename") == 0)
+								user_options = lappend(user_options, defel);
+						}
+
+						foreach(option, user_options)
+						{
+							stmt->options = list_delete_ptr(stmt->options,
+															lfirst(option));
+						}
+					}
+					else if (strcmp(headel->defname, "isrole") == 0)
+					{
+						isrole = true;
+						stmt->options = list_delete_cell(stmt->options,
+														 list_head(stmt->options));
+														 pfree(headel);
+
+						/* Filter user options from default role options */
+						foreach(option, stmt->options)
+						{
+							DefElem *defel = (DefElem *) lfirst(option);
+
 							if (strcmp(defel->defname, "rename") == 0)
 								user_options = lappend(user_options, defel);
 						}
@@ -2491,7 +2558,7 @@ static void bbf_ProcessUtility(PlannedStmt *pstmt,
 
 					return;
 				}
-				else if (isuser)
+				else if (isuser || isrole)
 				{
 					const char	*db_name;
 					const char	*dbo_name;
@@ -2573,6 +2640,7 @@ static void bbf_ProcessUtility(PlannedStmt *pstmt,
 				bool			drop_user = false;
 				bool			all_logins = false;
 				bool			all_users = false;
+				bool			all_roles = false;
 				char 			*role_name = NULL;
 				bool			other = false;
 				ListCell		*item;
@@ -2582,7 +2650,8 @@ static void bbf_ProcessUtility(PlannedStmt *pstmt,
 				{
 					RoleSpec		*headrol = linitial(stmt->roles);
 
-					if (strcmp(headrol->rolename, "is_user") == 0)
+					if (strcmp(headrol->rolename, "is_user") == 0 ||
+						strcmp(headrol->rolename, "is_role") == 0)
 					{
 						char *db_name = NULL;
 
@@ -2633,31 +2702,31 @@ static void bbf_ProcessUtility(PlannedStmt *pstmt,
 						all_logins = true;
 					else if (is_user(roleform->oid))
 						all_users = true;
+					else if (is_role(roleform->oid))
+						all_roles = true;
 					else
 						other = true;
 
 					ReleaseSysCache(tuple);
 
-					if ((all_logins && (all_users || other)) || (all_users && other))
+					/* Only one should be true */
+					if (all_logins + all_users + all_roles + other != 1)
 						ereport(ERROR,
 								(errcode(ERRCODE_INTERNAL_ERROR),
 								 errmsg("cannot mix dropping babelfish role types")));
 				}
 
-				/* until role is supported, if not user, then login */
+				/* If not user or role, then login */
 				if (!drop_user && get_role_oid(role_name, true) == InvalidOid)
 					  ereport(ERROR, (errcode(ERRCODE_DUPLICATE_OBJECT), 
 								  errmsg("Cannot drop the login '%s', because it does not exist or you do not have permission.", role_name)));
 
-				if (all_logins || all_users)
+				if (all_logins || all_users || all_roles)
 				{
 					/* Set current user as appropriate for drop permissions */
 					prev_current_user = GetUserNameFromId(GetUserId(), false);
 
-					/*
-					 * Only use dbo if dropping a user in a Babelfish session.
-					 * drop_user enabled guarantees a current Babelfish db.
-					 */
+					/* Only use dbo if dropping a user/role in a Babelfish session. */
 					if (drop_user)
 						bbf_set_current_user(get_dbo_role_name(get_cur_db_name()));
 					else
@@ -2814,6 +2883,37 @@ static void bbf_ProcessUtility(PlannedStmt *pstmt,
 					PG_TRY();
 					{
 
+						if (prev_ProcessUtility)
+							prev_ProcessUtility(pstmt, queryString, readOnlyTree, context, params,
+									queryEnv, dest, qc);
+						else
+							standard_ProcessUtility(pstmt, queryString, readOnlyTree, context, params,
+									queryEnv, dest, qc);
+
+					}
+					PG_CATCH();
+					{
+						/* Clean up. Restore previous state. */
+						bbf_set_current_user(prev_current_user);
+						PG_RE_THROW();
+					}
+					PG_END_TRY();
+					/* Clean up. Restore previous state. */
+					bbf_set_current_user(prev_current_user);
+					return;
+				}
+				else if (is_alter_role_stmt(grant_role))
+				{
+					const char      *prev_current_user;
+					const char      *session_user_name;
+
+					check_alter_role_stmt(grant_role);
+					prev_current_user = GetUserNameFromId(GetUserId(), false);
+					session_user_name = GetUserNameFromId(GetSessionUserId(), false);
+
+					bbf_set_current_user(session_user_name);
+					PG_TRY();
+					{
 						if (prev_ProcessUtility)
 							prev_ProcessUtility(pstmt, queryString, readOnlyTree, context, params,
 									queryEnv, dest, qc);

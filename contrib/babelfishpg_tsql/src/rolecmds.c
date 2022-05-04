@@ -247,7 +247,7 @@ drop_bbf_roles(ObjectAccessType access,
 {
 	if (is_login(roleid))
 		drop_bbf_authid_login_ext(access, classId, roleid, subId, arg);
-	else if (is_user(roleid))
+	else if (is_user(roleid) || is_role(roleid))
 		drop_bbf_authid_user_ext(access, classId, roleid, subId, arg);
 }
 
@@ -790,7 +790,8 @@ add_to_bbf_authid_user_ext(const char *user_name,
 						   const char *orig_user_name,
 						   const char *db_name,
 						   const char *schema_name,
-						   const char *login_name)
+						   const char *login_name,
+						   bool is_role)
 {
 	Relation		bbf_authid_user_ext_rel;
 	TupleDesc		bbf_authid_user_ext_dsc;
@@ -817,7 +818,10 @@ add_to_bbf_authid_user_ext(const char *user_name,
 		new_record_user_ext[USER_EXT_LOGIN_NAME] = CStringGetDatum(pstrdup(login_name));
 	else
 		new_record_user_ext[USER_EXT_LOGIN_NAME] = CStringGetDatum("");
-	new_record_user_ext[USER_EXT_TYPE] = CStringGetTextDatum("S"); /* placeholder */
+	if (is_role)
+		new_record_user_ext[USER_EXT_TYPE] = CStringGetTextDatum("R"); 
+	else
+		new_record_user_ext[USER_EXT_TYPE] = CStringGetTextDatum("S");
 	new_record_user_ext[USER_EXT_OWNING_PRINCIPAL_ID] = Int32GetDatum(-1); /* placeholder */
 	new_record_user_ext[USER_EXT_IS_FIXED_ROLE] = Int32GetDatum(-1); /* placeholder */
 	new_record_user_ext[USER_EXT_AUTHENTICATION_TYPE] = Int32GetDatum(-1); /* placeholder */
@@ -859,13 +863,14 @@ create_bbf_authid_user_ext(CreateRoleStmt *stmt, bool has_schema, bool has_login
 	char			*original_user_name = NULL;
 	RoleSpec		*login = NULL;
 	NameData		*login_name;
+	char			*login_name_str = NULL;
 
 	/* Extract options from the statement node tree */
 	foreach(option, stmt->options)
 	{
 		DefElem    *defel = (DefElem *) lfirst(option);
 
-		if (strcmp(defel->defname, "default_schema") == 0)
+		if (has_login && strcmp(defel->defname, "default_schema") == 0)
 		{
 			if (defel->arg)
 				default_schema = strVal(defel->arg);
@@ -875,7 +880,8 @@ create_bbf_authid_user_ext(CreateRoleStmt *stmt, bool has_schema, bool has_login
 			if (defel->arg)
 				original_user_name = strVal(defel->arg);
 		}
-		else if (strcmp(defel->defname, "rolemembers") == 0)
+		/* Extract login info if the stmt is CREATE USER */
+		else if (has_login && strcmp(defel->defname, "rolemembers") == 0)
 		{
 			List		*rolemembers = NIL;
 
@@ -925,10 +931,12 @@ create_bbf_authid_user_ext(CreateRoleStmt *stmt, bool has_schema, bool has_login
 
 		table_endscan(scan);
 		table_close(bbf_authid_user_ext_rel, RowExclusiveLock);
+
+		login_name_str = login->rolename;
 	}
 
 	/* Add to the catalog table. Adds current database name by default */
-	add_to_bbf_authid_user_ext(stmt->role, original_user_name, NULL, default_schema, login->rolename);
+	add_to_bbf_authid_user_ext(stmt->role, original_user_name, NULL, default_schema, login_name_str, !has_login);
 }
 
 PG_FUNCTION_INFO_V1(add_existing_users_to_catalog);
@@ -978,12 +986,13 @@ add_existing_users_to_catalog(PG_FUNCTION_ARGS)
 			rolspec->location = -1;
 			rolspec->rolename = pstrdup(dbo_role);
 			dbo_list = lappend(dbo_list, rolspec);
-			add_to_bbf_authid_user_ext(dbo_role, "dbo", db_name, "dbo", NULL);
+			add_to_bbf_authid_user_ext(dbo_role, "dbo", db_name, "dbo", NULL, false);
 		}
+		/* TODO: change it into role */
 		if (db_owner_role)
-			add_to_bbf_authid_user_ext(db_owner_role, "db_owner", db_name, NULL, NULL);
+			add_to_bbf_authid_user_ext(db_owner_role, "db_owner", db_name, NULL, NULL, false);
 		if (guest)
-			add_to_bbf_authid_user_ext(guest, "guest", db_name, NULL, NULL);
+			add_to_bbf_authid_user_ext(guest, "guest", db_name, NULL, NULL, false);
 
 		tuple = heap_getnext(scan, ForwardScanDirection);
 	}
@@ -1417,6 +1426,61 @@ check_alter_server_stmt(GrantRoleStmt *stmt)
 		}
 	}
 	ReleaseSysCacheList(memlist);
+}
+
+bool
+is_alter_role_stmt(GrantRoleStmt *stmt)
+{
+	/*
+	 * The statement is ALTER ROLE if 
+	 * 1. There is only one grantee role
+	 * 2. There is only one granted role and it's an existing babelfish db role
+	 */
+	if (list_length(stmt->granted_roles) != 1 || list_length(stmt->grantee_roles) != 1)
+		return false;
+	else
+	{
+		RoleSpec *spec = (RoleSpec *) linitial(stmt->granted_roles);        
+		Oid granted = get_role_oid(spec->rolename, true);
+		/* Check if the granted role is an existing database role */
+		if (granted == InvalidOid || !is_role(granted))
+			return false;
+	}
+
+	return true;
+}
+
+void
+check_alter_role_stmt(GrantRoleStmt *stmt)
+{
+	Oid         granted;
+	Oid         grantee;
+	const char  *granted_name;
+	const char  *grantee_name;
+	RoleSpec    *granted_spec;
+	RoleSpec    *grantee_spec;
+
+	/* The grantee must be a db user or a user-defined db role */
+	grantee_spec = (RoleSpec *) linitial(stmt->grantee_roles);      
+	grantee_name = grantee_spec->rolename;
+	grantee = get_role_oid(grantee_name, false);
+
+	if (!is_user(grantee) && !is_role(grantee))
+		ereport(ERROR,
+				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+				 errmsg("%s is not a database user or a user-defined database role",
+						grantee_name)));
+
+	/* Need to have permission on the granted role */
+	granted_spec = (RoleSpec *) linitial(stmt->granted_roles);
+	granted_name = granted_spec->rolename;
+	granted = get_role_oid(granted_name, false);
+
+	if (!has_privs_of_role(GetSessionUserId(), granted))
+		ereport(ERROR,
+				(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
+				 errmsg("Current login %s do not have permission to alter role %s", 
+						GetUserNameFromId(GetSessionUserId(), true), granted_name)));
 }
 
 PG_FUNCTION_INFO_V1(role_id);

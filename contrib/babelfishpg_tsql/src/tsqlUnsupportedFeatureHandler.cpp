@@ -965,6 +965,7 @@ antlrcpp::Any TsqlUnsupportedFeatureHandlerImpl::visitDdl_statement(TSqlParser::
 	 * Please keep the order in grammar file.
 	 */
 	if (ctx->alter_database()
+	 || ctx->alter_db_role()
 	 || ctx->alter_fulltext_index()
 	 || ctx->alter_index()
 	 || ctx->alter_login()
@@ -974,6 +975,7 @@ antlrcpp::Any TsqlUnsupportedFeatureHandlerImpl::visitDdl_statement(TSqlParser::
 	 || ctx->alter_table()
 	 || ctx->create_aggregate()
 	 || ctx->create_database()
+	 || ctx->create_db_role()
 	 || ctx->create_fulltext_index()
 	 || ctx->create_index()
 	 || ctx->create_login()
@@ -985,6 +987,7 @@ antlrcpp::Any TsqlUnsupportedFeatureHandlerImpl::visitDdl_statement(TSqlParser::
 	 || ctx->create_user()
 	 || ctx->drop_aggregate()
 	 || ctx->drop_database()
+	 || ctx->drop_db_role()
 	 || ctx->drop_fulltext_index()
 	 || ctx->drop_function()
 	 || ctx->drop_index()

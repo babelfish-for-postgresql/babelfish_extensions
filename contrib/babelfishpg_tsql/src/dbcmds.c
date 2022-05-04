@@ -444,11 +444,12 @@ do_create_bbf_db(const char *dbname, List *options, const char *owner)
 		}
 		set_cur_db(old_dbid, old_dbname);
 		if (dbo_role)
-			add_to_bbf_authid_user_ext(dbo_role, "dbo", dbname, "dbo", NULL);
+			add_to_bbf_authid_user_ext(dbo_role, "dbo", dbname, "dbo", NULL, false);
+		/* TODO: change it into role */
 		if (db_owner_role)
-			add_to_bbf_authid_user_ext(db_owner_role, "db_owner", dbname, NULL, NULL);
+			add_to_bbf_authid_user_ext(db_owner_role, "db_owner", dbname, NULL, NULL, false);
 		if (guest)
-			add_to_bbf_authid_user_ext(guest, "guest", dbname, NULL, NULL);
+			add_to_bbf_authid_user_ext(guest, "guest", dbname, NULL, NULL, false);
 	}
 	PG_CATCH();
 	{
@@ -540,7 +541,7 @@ drop_bbf_db(const char *dbname, bool missing_ok, bool force_drop)
 							" in another session", dbname)));
 
 		CatalogTupleDelete(sysdatabase_rel, &tuple->t_self);
-              ReleaseSysCache(tuple);
+        ReleaseSysCache(tuple);
 
 		table_close(sysdatabase_rel, RowExclusiveLock);
 

@@ -18,6 +18,7 @@
 %type <node> tsql_DropIndexStmt tsql_InsertStmt
 %type <node> tsql_CreateLoginStmt tsql_AlterLoginStmt tsql_DropLoginStmt
 %type <node> tsql_CreateUserStmt tsql_DropRoleStmt tsql_AlterUserStmt
+%type <node> tsql_CreateRoleStmt
 %type <node> tsql_nchar
 %type <list> tsql_login_option_list1 tsql_login_option_list2
 %type <list> tsql_alter_login_option_list
