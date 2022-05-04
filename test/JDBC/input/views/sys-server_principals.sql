@@ -6,6 +6,11 @@ FROM sys.server_principals
 WHERE name =  'jdbc_user';
 GO
 
+SELECT name, type, type_desc, default_database_name, default_language_name
+FROM sys.server_principals
+WHERE name =  'sysadmin';
+GO
+
 CREATE LOGIN serv_principal_test WITH PASSWORD = 'test';
 GO
 
