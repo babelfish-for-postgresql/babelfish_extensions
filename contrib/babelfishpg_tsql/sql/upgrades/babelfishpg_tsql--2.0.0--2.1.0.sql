@@ -952,27 +952,6 @@ GRANT SELECT ON sys.database_principals TO PUBLIC;
 -- Drop the deprecated view if there isn't any dependent object
 SELECT sys.drop_view('sys', 'database_principals_deprecated');
 
-CREATE OR REPLACE VIEW sys.server_principals
-AS SELECT
-CAST(Base.rolname AS sys.SYSNAME) AS name,
-CAST(Base.oid As INT) AS principal_id,
-CAST(CAST(Base.oid as INT) as sys.varbinary(85)) AS sid,
-CAST(Ext.type AS CHAR(1)) as type,
-CAST(CASE WHEN Ext.type = 'S' THEN 'SQL_LOGIN'
-WHEN Ext.type = 'R' THEN 'SERVER_ROLE'
-ELSE NULL END AS NVARCHAR(60)) AS type_desc,
-CAST(Ext.is_disabled AS INT) AS is_disabled,
-CAST(Ext.create_date AS SYS.DATETIME) AS create_date,
-CAST(Ext.modify_date AS SYS.DATETIME) AS modify_date,
-CAST(CASE WHEN Ext.type = 'R' THEN NULL ELSE Ext.default_database_name END AS SYS.SYSNAME) AS default_database_name,
-CAST(Ext.default_language_name AS SYS.SYSNAME) AS default_language_name,
-CAST(Ext.credential_id AS INT) AS credential_id,
-CAST(Ext.owning_principal_id AS INT) AS owning_principal_id,
-CAST(Ext.is_fixed_role AS sys.BIT) AS is_fixed_role
-FROM pg_catalog.pg_authid AS Base INNER JOIN sys.babelfish_authid_login_ext AS Ext ON Base.rolname = Ext.rolname;
-
-GRANT SELECT ON sys.server_principals TO PUBLIC;
-
 ALTER VIEW sys.server_principals RENAME TO server_principals_deprecated;
 -- sys.server_principals is used only in is_srvrolemember() function.
 -- Nothing needs to be done for function as body doesn't get changed dynamically.
