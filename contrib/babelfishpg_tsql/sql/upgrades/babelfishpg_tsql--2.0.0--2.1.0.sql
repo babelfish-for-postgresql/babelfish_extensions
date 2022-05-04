@@ -836,6 +836,153 @@ $$
 LANGUAGE 'pltsql';
 GRANT ALL ON PROCEDURE sys.sp_sproc_columns_100 TO PUBLIC;
  
+-- DATABASE_PRINCIPALS
+CREATE OR REPLACE VIEW sys.database_principals AS SELECT
+Ext.orig_username AS name,
+CAST(Base.OID AS INT) AS principal_id,
+Ext.type,
+CAST(CASE WHEN Ext.type = 'S' THEN 'SQL_USER'
+WHEN Ext.type = 'R' THEN 'DATABASE_ROLE'
+ELSE NULL END AS SYS.NVARCHAR(60)) AS type_desc,
+Ext.default_schema_name,
+Ext.create_date,
+Ext.modify_date,
+Ext.owning_principal_id,
+CAST(CAST(Base2.oid AS INT) AS SYS.VARBINARY(85)) AS SID,
+CAST(Ext.is_fixed_role AS SYS.BIT) AS is_fixed_role,
+Ext.authentication_type,
+Ext.authentication_type_desc,
+Ext.default_language_name,
+Ext.default_language_lcid,
+CAST(Ext.allow_encrypted_value_modifications AS SYS.BIT) AS allow_encrypted_value_modifications
+FROM pg_catalog.pg_authid AS Base INNER JOIN sys.babelfish_authid_user_ext AS Ext
+ON Base.rolname = Ext.rolname
+LEFT OUTER JOIN pg_catalog.pg_roles Base2
+ON Ext.login_name = Base2.rolname
+WHERE Ext.database_name = DB_NAME();
+GRANT SELECT ON sys.database_principals TO PUBLIC;
+
+--DATABASE_ROLE_MEMBERS
+CREATE VIEW sys.database_role_members AS
+SELECT
+CAST(Auth1.oid AS INT) AS role_principal_id,
+CAST(Auth2.oid AS INT) AS member_principal_id
+FROM pg_catalog.pg_auth_members AS Authmbr
+INNER JOIN pg_catalog.pg_authid AS Auth1 ON Auth1.oid = Authmbr.roleid
+INNER JOIN pg_catalog.pg_authid AS Auth2 ON Auth2.oid = Authmbr.member
+INNER JOIN sys.babelfish_authid_user_ext AS Ext1 ON Auth1.rolname = Ext1.rolname
+INNER JOIN sys.babelfish_authid_user_ext AS Ext2 ON Auth2.rolname = Ext2.rolname
+WHERE Ext1.database_name = DB_NAME()
+AND Ext2.database_name = DB_NAME()
+AND Ext1.type = 'R'
+AND Ext2.orig_username != 'db_owner';
+GRANT SELECT ON sys.database_role_members TO PUBLIC;
+
+CREATE OR REPLACE PROCEDURE remove_babelfish ()
+LANGUAGE plpgsql
+AS $$
+BEGIN
+	CALL sys.babel_drop_all_dbs();
+	CALL sys.babel_drop_all_logins();
+	EXECUTE format('ALTER DATABASE %s SET babelfishpg_tsql.enable_ownership_structure = false', CURRENT_DATABASE());
+	EXECUTE 'ALTER SEQUENCE sys.babelfish_db_seq RESTART';
+	DROP OWNED BY sysadmin;
+	DROP ROLE sysadmin;
+END
+$$;
+
+-- Returns True if an object is dependant upon by other objects. False otherwise. 
+CREATE OR REPLACE FUNCTION sys.has_dependencies(schema_name varchar, object_name varchar) RETURNS bool AS
+$BODY$
+SELECT
+  EXISTS(
+    SELECT 1
+    FROM pg_depend 
+    JOIN pg_rewrite ON pg_depend.objid = pg_rewrite.oid 
+    JOIN pg_class as dependent_view ON pg_rewrite.ev_class = dependent_view.oid 
+    JOIN pg_class as source_table ON pg_depend.refobjid = source_table.oid 
+    JOIN pg_attribute ON pg_depend.refobjid = pg_attribute.attrelid AND pg_depend.refobjsubid = pg_attribute.attnum 
+    JOIN pg_namespace dependent_ns ON dependent_ns.oid = dependent_view.relnamespace 
+    JOIN pg_namespace source_ns ON source_ns.oid = source_table.relnamespace 
+    WHERE source_ns.nspname = schema_name AND source_table.relname = object_name);
+$BODY$
+LANGUAGE SQL VOLATILE STRICT;
+
+-- If a view is not depended upon by other objects, drop the view. Else, leave it. 
+CREATE OR REPLACE FUNCTION sys.drop_view(schema_name varchar, object_name varchar) RETURNS void AS
+$$
+BEGIN
+IF sys.has_dependencies(schema_name, object_name) = false THEN
+  EXECUTE FORMAT('alter extension babelfishpg_tsql drop view %s.%s;', schema_name, object_name);
+  EXECUTE FORMAT('drop view %s.%s;', schema_name, object_name);
+END IF;
+END;
+$$
+LANGUAGE plpgsql;
+
+ALTER VIEW sys.database_principals RENAME TO database_principals_deprecated;
+-- sys.database_principals don't have any dependent objects
+-- DATABASE_PRINCIPALS
+CREATE VIEW sys.database_principals AS SELECT
+CAST(Ext.orig_username AS SYS.SYSNAME) AS name,
+CAST(Base.OID AS INT) AS principal_id,
+CAST(Ext.type AS CHAR(1)) as type,
+CAST(CASE WHEN Ext.type = 'S' THEN 'SQL_USER'
+WHEN Ext.type = 'R' THEN 'DATABASE_ROLE'
+ELSE NULL END AS SYS.NVARCHAR(60)) AS type_desc,
+CAST(Ext.default_schema_name AS SYS.SYSNAME) AS default_schema_name,
+CAST(Ext.create_date AS SYS.DATETIME) AS create_date,
+CAST(Ext.modify_date AS SYS.DATETIME) AS modify_date,
+CAST(Ext.owning_principal_id AS INT) AS owning_principal_id,
+CAST(CAST(Base2.oid AS INT) AS SYS.VARBINARY(85)) AS SID,
+CAST(Ext.is_fixed_role AS SYS.BIT) AS is_fixed_role,
+CAST(Ext.authentication_type AS INT) AS authentication_type,
+CAST(Ext.authentication_type_desc AS SYS.NVARCHAR(60)) AS authentication_type_desc,
+CAST(Ext.default_language_name AS SYS.SYSNAME) AS default_language_name,
+CAST(Ext.default_language_lcid AS INT) AS default_language_lcid,
+CAST(Ext.allow_encrypted_value_modifications AS SYS.BIT) AS allow_encrypted_value_modifications
+FROM pg_catalog.pg_authid AS Base INNER JOIN sys.babelfish_authid_user_ext AS Ext
+ON Base.rolname = Ext.rolname
+LEFT OUTER JOIN pg_catalog.pg_roles Base2
+ON Ext.login_name = Base2.rolname
+WHERE Ext.database_name = DB_NAME();
+
+GRANT SELECT ON sys.database_principals TO PUBLIC;
+
+-- Drop the deprecated view if there isn't any dependent object
+SELECT sys.drop_view('sys', 'database_principals_deprecated');
+
+ALTER VIEW sys.server_principals RENAME TO server_principals_deprecated;
+-- sys.server_principals is used only in is_srvrolemember() function.
+-- Nothing needs to be done for function as body doesn't get changed dynamically.
+-- SERVER_PRINCIPALS
+CREATE VIEW sys.server_principals
+AS SELECT
+CAST(Base.rolname AS sys.SYSNAME) AS name,
+CAST(Base.oid As INT) AS principal_id,
+CAST(CAST(Base.oid as INT) as sys.varbinary(85)) AS sid,
+CAST(Ext.type AS CHAR(1)) as type,
+CAST(CASE WHEN Ext.type = 'S' THEN 'SQL_LOGIN'
+WHEN Ext.type = 'R' THEN 'SERVER_ROLE'
+ELSE NULL END AS NVARCHAR(60)) AS type_desc,
+CAST(Ext.is_disabled AS INT) AS is_disabled,
+CAST(Ext.create_date AS SYS.DATETIME) AS create_date,
+CAST(Ext.modify_date AS SYS.DATETIME) AS modify_date,
+CAST(CASE WHEN Ext.type = 'R' THEN NULL ELSE Ext.default_database_name END AS SYS.SYSNAME) AS default_database_name,
+CAST(Ext.default_language_name AS SYS.SYSNAME) AS default_language_name,
+CAST(Ext.credential_id AS INT) AS credential_id,
+CAST(Ext.owning_principal_id AS INT) AS owning_principal_id,
+CAST(Ext.is_fixed_role AS sys.BIT) AS is_fixed_role
+FROM pg_catalog.pg_authid AS Base INNER JOIN sys.babelfish_authid_login_ext AS Ext ON Base.rolname = Ext.rolname;
+
+GRANT SELECT ON sys.server_principals TO PUBLIC;
+
+-- Call initialize_logins for 'sysadmin'. This role is created during bbf initialisation, so old users who are upgrading to new babelfish version should have this role in the server_principles view.
+CALL sys.babel_initialize_logins('sysadmin');
+
+-- Drop the deprecated view if there isn't any dependent object
+SELECT sys.drop_view('sys', 'server_principals_deprecated');
+
 CREATE OR REPLACE PROCEDURE sys.sp_statistics(
     "@table_name" sys.sysname,
     "@table_owner" sys.sysname = '',
@@ -1036,6 +1183,7 @@ GRANT SELECT ON sys.spt_tablecollations_view TO PUBLIC;
 CREATE COLLATION sys.Japanese_CS_AS (provider = icu, locale = 'ja_JP');
 CREATE COLLATION sys.Japanese_CI_AI (provider = icu, locale = 'ja_JP@colStrength=primary', deterministic = false);
 CREATE COLLATION sys.Japanese_CI_AS (provider = icu, locale = 'ja_JP@colStrength=secondary', deterministic = false);
+
 
 -- Reset search_path to not affect any subsequent scripts
 SELECT set_config('search_path', trim(leading 'sys, ' from current_setting('search_path')), false);

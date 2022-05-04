@@ -127,6 +127,7 @@ extern Oid			bbf_authid_user_ext_oid;
 extern Oid			bbf_authid_user_ext_idx_oid;
 
 extern bool is_user(Oid role_oid);
+extern bool is_role(Oid role_oid);
 extern Oid get_authid_user_ext_oid(void);
 extern Oid get_authid_user_ext_idx_oid(void);
 extern char *get_authid_user_ext_physical_name(const char *db_name, const char *login_name);
@@ -138,7 +139,7 @@ typedef struct FormData_authid_user_ext
 {
 	NameData  	rolname;
 	NameData	login_name;
-	char		type;
+	BpChar		type;
 	int32		owning_principal_id;
 	int32		is_fixed_role;
 	int32		authentication_type;

@@ -218,7 +218,7 @@ GO
 SELECT default_database_name FROM sys.server_principals WHERE name = 'r1';
 GO
 ~~START~~
-nvarchar
+varchar
 master
 ~~END~~
 
@@ -253,7 +253,7 @@ GO
 SELECT default_database_name FROM sys.server_principals WHERE name = 'r6';
 GO
 ~~START~~
-nvarchar
+varchar
 master
 ~~END~~
 
@@ -309,7 +309,7 @@ GO
 SELECT default_database_name FROM sys.server_principals WHERE name = 'r1';
 GO
 ~~START~~
-nvarchar
+varchar
 tempdb
 ~~END~~
 

@@ -43,6 +43,8 @@ extern bool role_is_sa(Oid roleid);
 extern bool tsql_has_pgstat_permissions(Oid roleid);
 extern bool is_alter_server_stmt(GrantRoleStmt *stmt);
 extern void check_alter_server_stmt(GrantRoleStmt *stmt);
+extern bool is_alter_role_stmt(GrantRoleStmt *stmt);
+extern void check_alter_role_stmt(GrantRoleStmt *stmt);
 extern void create_bbf_authid_login_ext(CreateRoleStmt *stmt);
 extern void alter_bbf_authid_login_ext(AlterRoleStmt *stmt);
 extern void create_bbf_authid_user_ext(CreateRoleStmt *stmt, bool has_schema, bool has_login);
@@ -50,7 +52,8 @@ extern void add_to_bbf_authid_user_ext(const char *user_name,
 									   const char *orig_user_name,
 									   const char *db_name,
 									   const char *schema_name,
-									   const char *login_name);
+									   const char *login_name,
+									   bool is_role);
 extern void drop_related_bbf_users(List *db_users);
 extern void alter_bbf_authid_user_ext(AlterRoleStmt *stmt);
 

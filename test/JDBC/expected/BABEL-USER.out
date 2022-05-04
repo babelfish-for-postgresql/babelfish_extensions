@@ -44,7 +44,7 @@ FROM sys.database_principals
 ORDER BY default_schema_name DESC, name;
 GO
 ~~START~~
-nvarchar#!#nvarchar
+varchar#!#varchar
 dbo#!#dbo
 db_owner#!#
 guest#!#
@@ -82,7 +82,7 @@ FROM sys.database_principals
 WHERE name = 'test1';
 GO
 ~~START~~
-nvarchar#!#nvarchar
+varchar#!#varchar
 test1#!#dbo
 ~~END~~
 
@@ -121,7 +121,7 @@ FROM sys.database_principals
 WHERE name = 'test2';
 GO
 ~~START~~
-nvarchar#!#nvarchar
+varchar#!#varchar
 test2#!#dbo
 ~~END~~
 
@@ -148,7 +148,7 @@ FROM sys.database_principals
 WHERE name = 'test3';
 GO
 ~~START~~
-nvarchar#!#nvarchar
+varchar#!#varchar
 test3#!#sch3
 ~~END~~
 
@@ -182,7 +182,7 @@ FROM sys.database_principals
 WHERE name = 'AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA';
 GO
 ~~START~~
-nvarchar#!#nvarchar
+varchar#!#varchar
 AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA#!#dbo
 ~~END~~
 
@@ -206,7 +206,7 @@ FROM sys.database_principals
 WHERE name = 'test1';
 GO
 ~~START~~
-nvarchar#!#nvarchar
+varchar#!#varchar
 test1#!#sch3
 ~~END~~
 
@@ -229,7 +229,7 @@ FROM sys.database_principals
 WHERE name = 'test1';
 GO
 ~~START~~
-nvarchar#!#nvarchar
+varchar#!#varchar
 test1#!#dbo
 ~~END~~
 
@@ -252,7 +252,7 @@ FROM sys.database_principals
 WHERE name = 'new_test1';
 GO
 ~~START~~
-nvarchar#!#nvarchar
+varchar#!#varchar
 new_test1#!#dbo
 ~~END~~
 
@@ -296,7 +296,7 @@ FROM sys.database_principals
 WHERE name = 'test1';
 GO
 ~~START~~
-nvarchar#!#nvarchar
+varchar#!#varchar
 ~~END~~
 
 
@@ -308,7 +308,7 @@ FROM sys.database_principals
 WHERE name = 'test2';
 GO
 ~~START~~
-nvarchar#!#nvarchar
+varchar#!#varchar
 ~~END~~
 
 
@@ -320,7 +320,7 @@ FROM sys.database_principals
 WHERE name = 'test3';
 GO
 ~~START~~
-nvarchar#!#nvarchar
+varchar#!#varchar
 ~~END~~
 
 
@@ -332,7 +332,7 @@ FROM sys.database_principals
 WHERE name = 'AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA';
 GO
 ~~START~~
-nvarchar#!#nvarchar
+varchar#!#varchar
 ~~END~~
 
 

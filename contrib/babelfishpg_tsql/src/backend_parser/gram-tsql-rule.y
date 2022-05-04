@@ -163,6 +163,61 @@ tsql_windows_options:
 			| TSQL_DEFAULT_LANGUAGE '=' NonReservedWord
 		;
 
+/*
+ * CREATE ROLE statement needs to satisefy the following two use cases
+ *
+ * 1. TSQL syntax
+ * 	This is the TSQL query that users would call in most cases. For example,
+ * 		CREATE ROLE role_name [ AUTHORIZAION owner_name ]
+ * 	would be mapped into PG syntax
+ * 		CREATE ROLE <cur_db>_role_name INHERIT NOLOGIN ROLE '<cur_db>_db_owner'
+ * 		[ ADMIN <cur_db>_owner_name ]
+ *
+ * 2. PSQL syntax
+ * 	This is for specific role creating process during Babelfish initialization,
+ * 	database creation, etc. For example,
+ * 		CREATE ROLE sysadmin CREATEDB CREATEROLE INHERIT ROLE sa_name
+ */
+tsql_CreateRoleStmt:
+			CREATE ROLE RoleId opt_with OptRoleList
+				{
+					CreateRoleStmt  *n = makeNode(CreateRoleStmt);
+					n->stmt_type = ROLESTMT_ROLE;
+					n->role = $3;
+
+					/* If there are specified options, this is PSQL syntax */
+					if ($5 != NIL)
+						n->options = $5;
+					/* Otherwise, this is TSQL syntax, do query mapping */
+					else
+					{
+						n->options = list_make1(makeDefElem("isrole",
+												(Node *)makeInteger(true),
+												@1)); /* Must be first */
+						n->options = lappend(n->options,
+											 makeDefElem("inherit",
+														 (Node *)makeInteger(true),
+														 @1));
+						n->options = lappend(n->options,
+											 makeDefElem("canlogin",
+														 (Node *)makeInteger(false),
+														 @1));
+						/* 
+						 * Prepare an empty rolemember option for ROLE 
+						 * '<cur_db>_db_owner', we'll fill it in later.
+						 */
+						n->options = lappend(n->options,
+						makeDefElem("rolemembers", NULL, @1));
+
+						n->options = lappend(n->options,
+											 makeDefElem("name_location",
+														 (Node *)makeInteger(@3),
+														 @3));
+					}
+					$$ = (Node *)n;
+				}
+			;
+
 tsql_CreateUserStmt:
 			CREATE USER RoleId tsql_create_user_login tsql_create_user_options
 				{
@@ -218,6 +273,67 @@ tsql_create_user_options:
 				}
 			| /* EMPTY */	{ $$ = NULL; }
 		;
+
+/*
+ * Similar to tsql_CreateRoleStmt, we need to satisefy the following two use
+ * cases
+ *
+ * 1. TSQL syntax
+ * 	This is the TSQL query that users would call in most cases. For example,
+ * 		ALTER ROLE role_name
+ * 		{
+ * 			ADD MEMBER database_principal
+ *			| DROP MEMBER database_principal
+ *			| WITH NAME = new_name
+ *		}
+ *
+ * 2. PSQL syntax
+ *	This is for specific role altering process during Babelfish upgrade
+ *	procedure. For example,
+ *		ALTER ROLE dbo WITH createrole;
+ */ 
+AlterRoleStmt:
+			ALTER ROLE ColId ADD_P TSQL_MEMBER RoleSpec
+				{
+					GrantRoleStmt *n = makeNode(GrantRoleStmt);
+					AccessPriv *ap = makeNode(AccessPriv);
+
+					ap->priv_name = $3;
+					n->is_grant = true;
+					n->granted_roles = list_make1(ap);
+					n->grantee_roles = list_make1($6);
+					n->admin_opt = false;
+					n->grantor = NULL;
+					$$ = (Node *) n;
+				}
+			| ALTER ROLE ColId DROP TSQL_MEMBER RoleSpec
+				{
+					GrantRoleStmt *n = makeNode(GrantRoleStmt);
+					AccessPriv *ap = makeNode(AccessPriv);
+
+					ap->priv_name = $3;
+					n->is_grant = false;
+					n->granted_roles = list_make1(ap);
+					n->grantee_roles = list_make1($6);
+					n->admin_opt = false;
+					n->grantor = NULL;
+					$$ = (Node *) n;
+				}
+			| ALTER ROLE RoleSpec WITH NAME_P '=' ColId
+				{
+					AlterRoleStmt *n = makeNode(AlterRoleStmt);
+					n->role = $3;
+					n->action = +1; /* add, if there are members */
+					n->options = list_make1(makeDefElem("isrole",
+											(Node *)makeInteger(true),
+											@1)); /* Must be first */
+					n->options = lappend(n->options, 
+										 makeDefElem("rename",
+													 (Node *)makeString($7),
+													 @1));
+					$$ = (Node *) n;
+				}
+			;
 
 tsql_AlterUserStmt:
 			ALTER USER RoleSpec WITH tsql_alter_user_options
@@ -394,16 +510,24 @@ tsql_DropLoginStmt:
 tsql_DropRoleStmt:
 			DROP ROLE role_list
 				{
-					DropRoleStmt *n = makeNode(DropRoleStmt);
+					DropRoleStmt	*n = makeNode(DropRoleStmt);
+					RoleSpec		*is_role;
+
+					is_role = makeRoleSpec(ROLESPEC_CSTRING, @1);
+					is_role->rolename = "is_role";
 					n->missing_ok = false;
-					n->roles = $3;
+					n->roles = lcons(is_role, $3);
 					$$ = (Node *)n;
 				}
 			| DROP ROLE IF_P EXISTS role_list
 				{
-					DropRoleStmt *n = makeNode(DropRoleStmt);
+					DropRoleStmt	*n = makeNode(DropRoleStmt);
+					RoleSpec        *is_role;
+
+					is_role = makeRoleSpec(ROLESPEC_CSTRING, @1);
+					is_role->rolename = "is_role";
 					n->missing_ok = true;
-					n->roles = $5;
+					n->roles = lcons(is_role, $5);
 					$$ = (Node *)n;
 				}
 			| DROP USER role_list
@@ -1849,7 +1973,7 @@ tsql_stmt :
 			| CreateTransformStmt
 			| tsql_CreateTrigStmt
 			| CreateEventTrigStmt
-			| CreateRoleStmt
+			| tsql_CreateRoleStmt
 			| tsql_CreateUserStmt
 			| CreatedbStmt
 			| DeallocateStmt

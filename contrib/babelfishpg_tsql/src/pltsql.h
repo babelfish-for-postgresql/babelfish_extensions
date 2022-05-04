@@ -1922,6 +1922,8 @@ extern void update_ViewStmt(Node *n, const char *view_schema);
 extern void pltsql_check_or_set_default_typmod(TypeName * typeName, int32 *typmod, bool is_cast);
 extern bool TryLockLogicalDatabaseForSession(int16 dbid, LOCKMODE lockmode);
 extern void UnlockLogicalDatabaseForSession(int16 dbid, LOCKMODE lockmode, bool force);
+extern char *bpchar_to_cstring(const BpChar *bpchar);
+extern char *varchar_to_cstring(const VarChar *varchar);
 
 typedef struct
 {

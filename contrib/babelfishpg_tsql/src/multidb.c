@@ -185,6 +185,50 @@ rewrite_object_refs(Node *stmt)
 			}
 			break;
 		}
+		case T_GrantRoleStmt:
+		{
+			GrantRoleStmt	*grant_role = (GrantRoleStmt *) stmt;
+			AccessPriv		*granted;
+			RoleSpec		*grantee;
+			char			*role_name;
+			char			*physical_role_name;
+			char			*principal_name;
+			char			*physical_principal_name;
+			char			*db_name = get_cur_db_name();
+
+			/* Check if this is ALTER ROLE statement */
+			if (list_length(grant_role->granted_roles) != 1 || 
+				list_length(grant_role->grantee_roles) != 1)
+				break;
+
+			/* Try to get physical granted role name, see if it's an existing db role */
+			granted = (AccessPriv *) linitial(grant_role->granted_roles);
+			role_name = granted->priv_name;
+			physical_role_name = get_physical_user_name(db_name, role_name);
+			if (get_role_oid(physical_role_name, true) == InvalidOid)
+				break;
+
+			/* This is ALTER ROLE statement */
+			grantee = (RoleSpec *) linitial(grant_role->grantee_roles);
+			principal_name = grantee->rolename;
+
+			/* Forbidden the use of some special principals */
+			if (strcmp(principal_name, "dbo") == 0 ||
+				strcmp(principal_name, "db_owner") == 0)
+				ereport(ERROR,
+						(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+						 errmsg("Cannot use the special principal '%s'", principal_name)));
+
+			/* Rewrite granted and grantee roles */
+			pfree(granted->priv_name);
+			granted->priv_name = physical_role_name;
+
+			physical_principal_name = get_physical_user_name(db_name, principal_name);
+			pfree(grantee->rolename);
+			grantee->rolename = physical_principal_name;
+
+			break;
+		}
 		case T_CreateStmt:
 		{
 			CreateStmt *create = (CreateStmt *) stmt;
@@ -240,7 +284,8 @@ rewrite_object_refs(Node *stmt)
 			{
 				DefElem *headel = (DefElem *) linitial(create_role->options);
 
-				if (strcmp(headel->defname, "isuser") == 0)
+				if (strcmp(headel->defname, "isuser") == 0 ||
+					strcmp(headel->defname, "isrole") == 0)
 				{
 					ListCell	*option;
 					char		*user_name;
@@ -256,7 +301,6 @@ rewrite_object_refs(Node *stmt)
 
 						if (strcmp(defel->defname, "rolemembers") == 0)
 						{
-							List		*rolemembers = NIL;
 							RoleSpec	*spec;
 
 							spec = makeNode(RoleSpec);
@@ -264,8 +308,14 @@ rewrite_object_refs(Node *stmt)
 							spec->location = -1;
 							spec->rolename = pstrdup(get_db_owner_name(db_name));
 
-							rolemembers = (List *) defel->arg;
-							rolemembers = lappend(rolemembers, spec);
+							if (defel->arg == NULL)
+								defel->arg = (Node *) list_make1(spec);
+							else
+							{
+								List *rolemembers = NIL;
+								rolemembers = (List *) defel->arg;
+								rolemembers = lappend(rolemembers, spec);
+							}
 						}
 					}
 				}
@@ -280,13 +330,15 @@ rewrite_object_refs(Node *stmt)
 			{
 				DefElem *headel = (DefElem *) linitial(alter_role->options);
 
-				if (strcmp(headel->defname, "isuser") == 0)
+				if (strcmp(headel->defname, "isuser") == 0 ||
+					strcmp(headel->defname, "isrole") == 0)
 				{
 					char		*user_name;
 					char		*physical_user_name;
 					char		*db_name = get_cur_db_name();
 
 					user_name = alter_role->role->rolename;
+					/* TODO: allow ALTER ROLE db_owner */
 					if (strcmp(user_name, "dbo") == 0 ||
 						strcmp(user_name, "db_owner") == 0 ||
 						strcmp(user_name, "guest") == 0)
