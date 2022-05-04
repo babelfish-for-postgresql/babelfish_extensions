@@ -1,0 +1,11 @@
+-- psql
+show babelfishpg_tsql.restore_mode;
+go
+set babelfishpg_tsql.restore_mode to on;
+go
+show babelfishpg_tsql.restore_mode;
+go
+reset babelfishpg_tsql.restore_mode;
+go
+show babelfishpg_tsql.restore_mode;
+go

@@ -68,6 +68,9 @@ static const struct config_enum_entry explain_format_options[] = {
 
 extern bool Transform_null_equals;
 
+/* Dump and Restore */
+bool babelfish_restore_mode = false;
+
 static bool check_server_collation_name(char **newval, void **extra, GucSource source);
 static bool check_default_locale (char **newval, void **extra, GucSource source);
 static bool check_ansi_null_dflt_on (bool *newval, void **extra, GucSource source);
@@ -968,6 +971,16 @@ define_custom_variables(void)
 				 "",
 				 PGC_SIGHUP,
 				 GUC_NOT_IN_SAMPLE,
+				 NULL, NULL, NULL);
+
+	/* Dump and Restore */
+	DefineCustomBoolVariable("babelfishpg_tsql.restore_mode",
+				 gettext_noop("enable babelfish restore mode"),
+				 NULL,
+				 &babelfish_restore_mode,
+				 false,
+				 PGC_USERSET,
+				 GUC_NOT_IN_SAMPLE | GUC_DISALLOW_IN_FILE | GUC_DISALLOW_IN_AUTO_FILE,
 				 NULL, NULL, NULL);
 }
 
