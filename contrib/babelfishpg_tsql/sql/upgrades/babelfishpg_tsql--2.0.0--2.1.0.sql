@@ -977,47 +977,8 @@ FROM pg_catalog.pg_authid AS Base INNER JOIN sys.babelfish_authid_login_ext AS E
 
 GRANT SELECT ON sys.server_principals TO PUBLIC;
 
-CREATE OR REPLACE PROCEDURE initialize_babelfish ( sa_name VARCHAR(128) )
-LANGUAGE plpgsql
-AS $$
-DECLARE
-	reserved_roles varchar[] := ARRAY['sysadmin', 'master_dbo', 'master_guest', 'master_db_owner', 'tempdb_dbo', 'tempdb_guest', 'tempdb_db_owner'];
-	user_id  oid := -1;
-	db_name  name := NULL;
-	role_name varchar;
-	dba_name varchar;
-BEGIN
-	-- check reserved roles
-	FOREACH role_name IN ARRAY reserved_roles LOOP
-	BEGIN
-		SELECT oid INTO user_id FROM pg_roles WHERE rolname = role_name;
-		IF user_id > 0 THEN
-			SELECT datname INTO db_name FROM pg_shdepend AS s INNER JOIN pg_database AS d ON s.dbid = d.oid WHERE s.refobjid = user_id;
-			IF db_name IS NOT NULL THEN
-				RAISE E'Could not initialize babelfish in current database: Reserved role % used in database %.\nIf babelfish was initialized in %, please remove babelfish and try again.', role_name, db_name, db_name;
-			ELSE
-				RAISE E'Could not initialize babelfish in current database: Reserved role % exists. \nPlease rename or drop existing role and try again ', role_name;
-			END IF;
-		END IF;
-	END;
-	END LOOP;
-
-	SELECT pg_get_userbyid(datdba) INTO dba_name FROM pg_database WHERE datname = CURRENT_DATABASE();
-	IF sa_name <> dba_name THEN
-		RAISE E'Could not initialize babelfish with given role name: % is not the DB owner of current database.', sa_name;
-	END IF;
-
-	EXECUTE format('CREATE ROLE sysadmin CREATEDB CREATEROLE INHERIT ROLE %I', sa_name);
-	EXECUTE format('GRANT USAGE, SELECT ON SEQUENCE sys.babelfish_db_seq TO sysadmin WITH GRANT OPTION');
-	EXECUTE format('GRANT CREATE, CONNECT, TEMPORARY ON DATABASE %s TO sysadmin WITH GRANT OPTION', CURRENT_DATABASE());
-	EXECUTE format('ALTER DATABASE %s SET babelfishpg_tsql.enable_ownership_structure = true', CURRENT_DATABASE());
-	EXECUTE 'SET babelfishpg_tsql.enable_ownership_structure = true';
-	CALL sys.babel_initialize_logins(sa_name);
-	CALL sys.babel_initialize_logins('sysadmin');
-	CALL sys.babel_create_builtin_dbs(sa_name);
-	CALL sys.initialize_babel_extras();
-END
-$$;
+-- Call initialize_logins for 'sysadmin'. This role is created during bbf initialisation, so old users who are upgrading to new babelfish version should have this role in the server_principles view.
+CALL sys.babel_initialize_logins('sysadmin');
 
 -- Drop the deprecated view if there isn't any dependent object
 SELECT sys.drop_view('sys', 'server_principals_deprecated');
