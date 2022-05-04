@@ -55,6 +55,9 @@ go
 EXEC sp_statistics @TABLE_NAME = 't2', @TABLE_OWNER = 'dbo', @TABLE_QUALIFIER = 'db1'
 GO
 
+exec sp_statistics N't1',N'dbo',NULL,N'%',N'Y',N'Q'
+go
+
 -- sp_statistics_100 is implemented as same as sp_statistics
 exec sp_statistics_100 @table_name = 't3' 
 go

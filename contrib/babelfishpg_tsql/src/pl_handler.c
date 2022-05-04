@@ -3355,6 +3355,7 @@ _PG_init(void)
 		(*pltsql_protocol_plugin_ptr)->pltsql_get_login_default_db = &get_login_default_db;
 		(*pltsql_protocol_plugin_ptr)->pltsql_is_login = &is_login;
 		(*pltsql_protocol_plugin_ptr)->pltsql_get_generic_typmod = &probin_read_ret_typmod;
+		(*pltsql_protocol_plugin_ptr)->pltsql_get_logical_schema_name = &get_logical_schema_name;
 	}
 
 	*pltsql_config_ptr = &myConfig;

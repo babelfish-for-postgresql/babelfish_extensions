@@ -38,7 +38,7 @@ typedef struct FaultInjectorEntry_s {
 	char					faultName[FAULT_NAME_MAX_LENGTH];	/* name of the fault */
 	FaultInjectorType_e		type;
 	int						num_occurrences;					/* 0 when diabled */
-	void					(*fault_callback) (void *arg);
+	void					(*fault_callback) (void *arg, int *num_occurrences);
 } FaultInjectorEntry_s;
 
 extern const FaultInjectorEntry_s Faults[];
