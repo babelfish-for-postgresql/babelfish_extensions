@@ -1550,10 +1550,6 @@ is_rolemember(PG_FUNCTION_ARGS)
 	if (role_oid == principal_oid)
 		PG_RETURN_INT32(1);
 
-	/* All valid roles are members of db_owner */
-	if (strcmp(role, "db_owner") == 0 && is_role(principal_oid))
-		PG_RETURN_INT32(1);
-
 	/* 
 	 * Return NULL if given role is not a real role, or if current user doesn't 
 	 * directly/indirectly have privilges over the given role and principal.
