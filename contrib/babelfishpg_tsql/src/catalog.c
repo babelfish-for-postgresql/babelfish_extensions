@@ -25,6 +25,7 @@
 #include "hooks.h"
 #include "multidb.h"
 #include "rolecmds.h"
+#include "pltsql.h"
 
 /*****************************************
  *			SYS schema
@@ -590,6 +591,8 @@ is_user(Oid role_oid)
 	HeapTuple	tuple;
 	HeapTuple	authtuple;
 	NameData	rolname;
+	BpChar		type;
+	char		*type_str = "";
 
 	authtuple = SearchSysCache1(AUTHOID, ObjectIdGetDatum(role_oid));
 	if (!HeapTupleIsValid(authtuple))
@@ -614,12 +617,70 @@ is_user(Oid role_oid)
 	if (!HeapTupleIsValid(tuple))
 		is_user = false;
 
+	type = ((Form_authid_user_ext) GETSTRUCT(tuple))->type;
+	type_str = bpchar_to_cstring(&type);
+
+	if (strcmp(type_str, "S") != 0)
+		is_user = false;
+
 	systable_endscan(scan);
 	table_close(relation, AccessShareLock);
 
 	ReleaseSysCache(authtuple);
 
 	return is_user;
+}
+
+bool
+is_role(Oid role_oid)
+{
+	Relation	relation;
+	bool		is_role = true;
+	ScanKeyData	scanKey;
+	SysScanDesc	scan;
+	HeapTuple	tuple;
+	HeapTuple	authtuple;
+	NameData	rolname;
+	BpChar 		type;
+	char		*type_str = "";
+
+	authtuple = SearchSysCache1(AUTHOID, ObjectIdGetDatum(role_oid));
+	if (!HeapTupleIsValid(authtuple))
+	ereport(ERROR,
+			(errcode(ERRCODE_UNDEFINED_OBJECT),
+			errmsg("role with OID %u does not exist", role_oid)));
+	rolname = ((Form_pg_authid) GETSTRUCT(authtuple))->rolname;
+
+	relation = table_open(get_authid_user_ext_oid(), AccessShareLock);
+
+	ScanKeyInit(&scanKey,
+				Anum_bbf_authid_user_ext_rolname,
+				BTEqualStrategyNumber, F_NAMEEQ,
+				NameGetDatum(&rolname));
+
+	scan = systable_beginscan(relation,
+							  get_authid_user_ext_idx_oid(),
+							  true, NULL, 1, &scanKey);
+
+	tuple = systable_getnext(scan);
+
+	if (!HeapTupleIsValid(tuple))
+		is_role = false;
+	else
+	{
+		type = ((Form_authid_user_ext) GETSTRUCT(tuple))->type;
+		type_str = bpchar_to_cstring(&type);
+
+		if (strcmp(type_str, "R") != 0)
+		is_role = false;
+	}
+
+	systable_endscan(scan);
+	table_close(relation, AccessShareLock);
+
+	ReleaseSysCache(authtuple);
+
+	return is_role;
 }
 
 Oid
