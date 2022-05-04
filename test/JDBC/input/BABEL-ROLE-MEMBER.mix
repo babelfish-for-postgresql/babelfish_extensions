@@ -98,12 +98,10 @@ GO
 SELECT IS_ROLEMEMBER('test_user1', 'test_user1')
 GO
 
--- All valid roles are member of db_owner, should return 1
+-- Should return NULL
+-- TODO: admin user should be able to view members of db_owner
 SELECT IS_ROLEMEMBER('db_owner', 'test_role1')
 GO
-
--- If not explicitly specified, users are not member of db_owner
--- TODO: check explicitly specified case, after support of ALTER ROLE db_owner
 SELECT IS_ROLEMEMBER('db_owner', 'test_user1')
 GO
 
