@@ -1,14 +1,24 @@
 name: 'Build Modified Postgres'
 
+inputs:
+  engine_branch:
+    description: 'Engine Branch'
+    required: no
+    default: $GITHUB_REF_NAME
+  install_dir:
+    description: 'Engine install directory'
+    required: no
+    default: postgres
+
 runs:
   using: "composite"
   steps:
     - name: Checkout, Build, and Install the Modified PostgreSQL Instance and Run Tests
       run: |
         cd ..
-        $GITHUB_WORKSPACE/.github/scripts/clone_engine_repo "$GITHUB_REPOSITORY_OWNER" "$GITHUB_REF_NAME"
+        $GITHUB_WORKSPACE/.github/scripts/clone_engine_repo "$GITHUB_REPOSITORY_OWNER" "${{inputs.engine_branch}}"
         cd postgresql_modified_for_babelfish
-        ./configure --prefix=$HOME/postgres/ --with-python PYTHON=/usr/bin/python2.7 --enable-debug CFLAGS="-ggdb" --with-libxml --with-uuid=ossp --with-icu
+        ./configure --prefix=$HOME/${{inputs.install_dir}}/ --with-python PYTHON=/usr/bin/python2.7 --enable-debug CFLAGS="-ggdb" --with-libxml --with-uuid=ossp --with-icu
         make -j 4 2>error.txt
         make install
         make check
