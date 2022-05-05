@@ -1,23 +1,23 @@
 -- psql
-show babelfishpg_tsql.restore_mode;
+show babelfishpg_tsql.dump_restore;
 go
 ~~START~~
 text
 off
 ~~END~~
 
-set babelfishpg_tsql.restore_mode to on;
+set babelfishpg_tsql.dump_restore to on;
 go
-show babelfishpg_tsql.restore_mode;
+show babelfishpg_tsql.dump_restore;
 go
 ~~START~~
 text
 on
 ~~END~~
 
-reset babelfishpg_tsql.restore_mode;
+reset babelfishpg_tsql.dump_restore;
 go
-show babelfishpg_tsql.restore_mode;
+show babelfishpg_tsql.dump_restore;
 go
 ~~START~~
 text
