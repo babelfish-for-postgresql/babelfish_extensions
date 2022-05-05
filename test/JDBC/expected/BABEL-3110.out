@@ -1,0 +1,17 @@
+CREATE TABLE BABEL_3110_TB(a int)
+GO
+
+select name, is_memory_optimized from sys.tables where name = 'BABEL_3110_TB'
+go
+~~START~~
+varchar#!#bit
+babel_3110_tb#!#0
+~~END~~
+
+ 
+select name, is_memory_optimized from sys.tables where name = 'babel_3110_tb'
+go
+~~START~~
+varchar#!#bit
+babel_3110_tb#!#0
+~~END~~

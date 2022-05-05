@@ -891,6 +891,312 @@ BEGIN
 END
 $$;
 
+-- Fix sys.tables columns
+ALTER VIEW sys.tables RENAME TO sys_tables_200_upg;
+ALTER VIEW sys.objects RENAME TO sys_objects_200_upg;
+
+create or replace view sys.tables as
+select
+  t.relname::sys._ci_sysname as name
+  , t.oid as object_id
+  , null::integer as principal_id
+  , sch.schema_id as schema_id
+  , 0 as parent_object_id
+  , 'U'::varchar(2) as type
+  , 'USER_TABLE'::varchar(60) as type_desc
+  , null::timestamp as create_date
+  , null::timestamp as modify_date
+  , 0 as is_ms_shipped
+  , 0 as is_published
+  , 0 as is_schema_published
+  , case reltoastrelid when 0 then 0 else 1 end as lob_data_space_id
+  , null::integer as filestream_data_space_id
+  , relnatts as max_column_id_used
+  , 0 as lock_on_bulk_load
+  , 1 as uses_ansi_nulls
+  , 0 as is_replicated
+  , 0 as has_replication_filter
+  , 0 as is_merge_published
+  , 0 as is_sync_tran_subscribed
+  , 0 as has_unchecked_assembly_data
+  , 0 as text_in_row_limit
+  , 0 as large_value_types_out_of_row
+  , 0 as is_tracked_by_cdc
+  , 0 as lock_escalation
+  , 'TABLE'::varchar(60) as lock_escalation_desc
+  , 0 as is_filetable
+  , 0 as durability
+  , 'SCHEMA_AND_DATA'::varchar(60) as durability_desc
+  , 0::sys.bit as is_memory_optimized
+  , case relpersistence when 't' then 2 else 0 end as temporal_type
+  , case relpersistence when 't' then 'SYSTEM_VERSIONED_TEMPORAL_TABLE' else 'NON_TEMPORAL_TABLE' end as temporal_type_desc
+  , null::integer as history_table_id
+  , 0 as is_remote_data_archive_enabled
+  , 0 as is_external
+from pg_class t inner join sys.schemas sch on t.relnamespace = sch.schema_id
+where t.relpersistence in ('p', 'u', 't')
+and t.relkind = 'r'
+and not sys.is_table_type(t.oid)
+and has_schema_privilege(sch.schema_id, 'USAGE')
+and has_table_privilege(t.oid, 'SELECT,INSERT,UPDATE,DELETE,TRUNCATE,TRIGGER');
+GRANT SELECT ON sys.tables TO PUBLIC;
+
+create or replace view sys.default_constraints
+AS
+select CAST(('DF_' || tab.name || '_' || d.oid) as sys.sysname) as name
+  , d.oid as object_id
+  , null::int as principal_id
+  , tab.schema_id as schema_id
+  , d.adrelid as parent_object_id
+  , 'D'::char(2) as type
+  , 'DEFAULT_CONSTRAINT'::sys.nvarchar(60) AS type_desc
+  , null::timestamp as create_date
+  , null::timestamp as modified_date
+  , 0::sys.bit as is_ms_shipped
+  , 0::sys.bit as is_published
+  , 0::sys.bit as is_schema_published
+  , d.adnum::int as parent_column_id
+  , pg_get_expr(d.adbin, d.adrelid) as definition
+  , 1::sys.bit as is_system_named
+from pg_catalog.pg_attrdef as d
+inner join pg_attribute a on a.attrelid = d.adrelid and d.adnum = a.attnum
+inner join sys.tables tab on d.adrelid = tab.object_id
+WHERE a.atthasdef = 't' and a.attgenerated = ''
+AND has_schema_privilege(tab.schema_id, 'USAGE')
+AND has_column_privilege(a.attrelid, a.attname, 'SELECT,INSERT,UPDATE,REFERENCES');
+GRANT SELECT ON sys.default_constraints TO PUBLIC;
+
+create or replace view sys.objects as
+select
+      t.name::name
+    , t.object_id
+    , t.principal_id
+    , t.schema_id
+    , t.parent_object_id
+    , 'U' as type
+    , 'USER_TABLE' as type_desc
+    , t.create_date
+    , t.modify_date
+    , t.is_ms_shipped
+    , t.is_published
+    , t.is_schema_published
+from  sys.tables t
+union all
+select
+      v.name
+    , v.object_id
+    , v.principal_id
+    , v.schema_id
+    , v.parent_object_id
+    , 'V' as type
+    , 'VIEW' as type_desc
+    , v.create_date
+    , v.modify_date
+    , v.is_ms_shipped
+    , v.is_published
+    , v.is_schema_published
+from  sys.views v
+union all
+select
+      f.name
+    , f.object_id
+    , f.principal_id
+    , f.schema_id
+    , f.parent_object_id
+    , 'F' as type
+    , 'FOREIGN_KEY_CONSTRAINT'
+    , f.create_date
+    , f.modify_date
+    , f.is_ms_shipped
+    , f.is_published
+    , f.is_schema_published
+ from sys.foreign_keys f
+union all
+select
+      p.name
+    , p.object_id
+    , p.principal_id
+    , p.schema_id
+    , p.parent_object_id
+    , 'PK' as type
+    , 'PRIMARY_KEY_CONSTRAINT' as type_desc
+    , p.create_date
+    , p.modify_date
+    , p.is_ms_shipped
+    , p.is_published
+    , p.is_schema_published
+from sys.key_constraints p
+where p.type = 'PK'
+union all
+select
+      pr.name
+    , pr.object_id
+    , pr.principal_id
+    , pr.schema_id
+    , pr.parent_object_id
+    , pr.type
+    , pr.type_desc
+    , pr.create_date
+    , pr.modify_date
+    , pr.is_ms_shipped
+    , pr.is_published
+    , pr.is_schema_published
+ from sys.procedures pr
+union all
+select
+    def.name::name
+  , def.object_id
+  , def.principal_id
+  , def.schema_id
+  , def.parent_object_id
+  , def.type
+  , def.type_desc
+  , def.create_date
+  , def.modified_date as modify_date
+  , def.is_ms_shipped::int
+  , def.is_published::int
+  , def.is_schema_published::int
+  from sys.default_constraints def
+union all
+select
+    chk.name::name
+  , chk.object_id
+  , chk.principal_id
+  , chk.schema_id
+  , chk.parent_object_id
+  , chk.type
+  , chk.type_desc
+  , chk.create_date
+  , chk.modify_date
+  , chk.is_ms_shipped::int
+  , chk.is_published::int
+  , chk.is_schema_published::int
+  from sys.check_constraints chk
+union all
+select
+   p.relname as name
+  ,p.oid as object_id
+  , null::integer as principal_id
+  , s.schema_id as schema_id
+  , 0 as parent_object_id
+  , 'SO'::varchar(2) as type
+  , 'SEQUENCE_OBJECT'::varchar(60) as type_desc
+  , null::timestamp as create_date
+  , null::timestamp as modify_date
+  , 0 as is_ms_shipped
+  , 0 as is_published
+  , 0 as is_schema_published
+from pg_class p
+inner join sys.schemas s on s.schema_id = p.relnamespace
+and p.relkind = 'S'
+and has_schema_privilege(s.schema_id, 'USAGE')
+union all
+select
+    ('TT_' || tt.name || '_' || tt.type_table_object_id)::name as name
+  , tt.type_table_object_id as object_id
+  , tt.principal_id as principal_id
+  , tt.schema_id as schema_id
+  , 0 as parent_object_id
+  , 'TT'::varchar(2) as type
+  , 'TABLE_TYPE'::varchar(60) as type_desc
+  , null::timestamp as create_date
+  , null::timestamp as modify_date
+  , 1 as is_ms_shipped
+  , 0 as is_published
+  , 0 as is_schema_published
+from sys.table_types tt;
+GRANT SELECT ON sys.objects TO PUBLIC;
+
+create or replace view sys.sysobjects as
+select
+  s.name
+  , s.object_id as id
+  , s.type as xtype
+  , s.schema_id as uid
+  , 0 as info
+  , 0 as status
+  , 0 as base_schema_ver
+  , 0 as replinfo
+  , s.parent_object_id as parent_obj
+  , s.create_date as crdate
+  , 0 as ftcatid
+  , 0 as schema_ver
+  , 0 as stats_schema_ver
+  , s.type
+  , 0 as userstat
+  , 0 as sysstat
+  , 0 as indexdel
+  , s.modify_date as refdate
+  , 0 as version
+  , 0 as deltrig
+  , 0 as instrig
+  , 0 as updtrig
+  , 0 as seltrig
+  , 0 as category
+  , 0 as cache
+from sys.objects s;
+GRANT SELECT ON sys.sysobjects TO PUBLIC;
+
+CREATE OR REPLACE VIEW sys.spt_columns_view_managed AS
+SELECT
+    o.object_id                     AS OBJECT_ID,
+    isc."TABLE_CATALOG"::information_schema.sql_identifier               AS TABLE_CATALOG,
+    isc."TABLE_SCHEMA"::information_schema.sql_identifier                AS TABLE_SCHEMA,
+    o.name                          AS TABLE_NAME,
+    c.name                          AS COLUMN_NAME,
+    isc."ORDINAL_POSITION"::information_schema.cardinal_number           AS ORDINAL_POSITION,
+    isc."COLUMN_DEFAULT"::information_schema.character_data              AS COLUMN_DEFAULT,
+    isc."IS_NULLABLE"::information_schema.yes_or_no                      AS IS_NULLABLE,
+    isc."DATA_TYPE"::information_schema.character_data                   AS DATA_TYPE,
+
+    CAST (CASE WHEN isc."CHARACTER_MAXIMUM_LENGTH" < 0 THEN 0 ELSE isc."CHARACTER_MAXIMUM_LENGTH" END
+		AS information_schema.cardinal_number) AS CHARACTER_MAXIMUM_LENGTH,
+
+    CAST (CASE WHEN isc."CHARACTER_OCTET_LENGTH" < 0 THEN 0 ELSE isc."CHARACTER_OCTET_LENGTH" END
+		AS information_schema.cardinal_number)      AS CHARACTER_OCTET_LENGTH,
+
+    CAST (CASE WHEN isc."NUMERIC_PRECISION" < 0 THEN 0 ELSE isc."NUMERIC_PRECISION" END
+		AS information_schema.cardinal_number)      AS NUMERIC_PRECISION,
+
+    CAST (CASE WHEN isc."NUMERIC_PRECISION_RADIX" < 0 THEN 0 ELSE isc."NUMERIC_PRECISION_RADIX" END
+		AS information_schema.cardinal_number)      AS NUMERIC_PRECISION_RADIX,
+
+    CAST (CASE WHEN isc."NUMERIC_SCALE" < 0 THEN 0 ELSE isc."NUMERIC_SCALE" END
+		AS information_schema.cardinal_number)      AS NUMERIC_SCALE,
+
+    CAST (CASE WHEN isc."DATETIME_PRECISION" < 0 THEN 0 ELSE isc."DATETIME_PRECISION" END
+		AS information_schema.cardinal_number)      AS DATETIME_PRECISION,
+
+    isc."CHARACTER_SET_CATALOG"::information_schema.sql_identifier       AS CHARACTER_SET_CATALOG,
+    isc."CHARACTER_SET_SCHEMA"::information_schema.sql_identifier        AS CHARACTER_SET_SCHEMA,
+    isc."CHARACTER_SET_NAME"::information_schema.sql_identifier          AS CHARACTER_SET_NAME,
+    isc."COLLATION_CATALOG"::information_schema.sql_identifier           AS COLLATION_CATALOG,
+    isc."COLLATION_SCHEMA"::information_schema.sql_identifier            AS COLLATION_SCHEMA,
+    c.collation_name                                                     AS COLLATION_NAME,
+    isc."DOMAIN_CATALOG"::information_schema.sql_identifier              AS DOMAIN_CATALOG,
+    isc."DOMAIN_SCHEMA"::information_schema.sql_identifier               AS DOMAIN_SCHEMA,
+    isc."DOMAIN_NAME"::information_schema.sql_identifier                 AS DOMAIN_NAME,
+    c.is_sparse                     AS IS_SPARSE,
+    c.is_column_set                 AS IS_COLUMN_SET,
+    c.is_filestream                 AS IS_FILESTREAM
+FROM
+    sys.objects o JOIN sys.columns c ON
+        (
+            c.object_id = o.object_id and
+            o.type in ('U', 'V')  -- limit columns to tables and views
+        )
+    LEFT JOIN information_schema_tsql.columns isc ON
+        (
+            sys.schema_name(o.schema_id) = isc."TABLE_SCHEMA" and
+            o.name = isc."TABLE_NAME" and
+            c.name = isc."COLUMN_NAME"
+        )
+    WHERE CAST("COLUMN_NAME" AS sys.nvarchar(128)) NOT IN ('cmin', 'cmax', 'xmin', 'xmax', 'ctid', 'tableoid');
+GRANT SELECT ON sys.spt_columns_view_managed TO PUBLIC;
+
+drop view sys_objects_200_upg;
+drop view sys_tables_200_upg;
+
 CREATE OR REPLACE PROCEDURE sys.sp_statistics(
     "@table_name" sys.sysname,
     "@table_owner" sys.sysname = '',
@@ -1091,6 +1397,8 @@ GRANT SELECT ON sys.spt_tablecollations_view TO PUBLIC;
 CREATE COLLATION sys.Japanese_CS_AS (provider = icu, locale = 'ja_JP');
 CREATE COLLATION sys.Japanese_CI_AI (provider = icu, locale = 'ja_JP@colStrength=primary', deterministic = false);
 CREATE COLLATION sys.Japanese_CI_AS (provider = icu, locale = 'ja_JP@colStrength=secondary', deterministic = false);
+
+
 
 -- Reset search_path to not affect any subsequent scripts
 SELECT set_config('search_path', trim(leading 'sys, ' from current_setting('search_path')), false);
