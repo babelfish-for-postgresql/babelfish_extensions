@@ -893,7 +893,6 @@ do_compile(FunctionCallInfo fcinfo,
 	/*
 	 * Now parse the function's text
 	 */
-	if (pltsql_use_antlr)
 	{
 		ANTLR_result result = antlr_parser_cpp(proc_source);
 
@@ -906,10 +905,6 @@ do_compile(FunctionCallInfo fcinfo,
 			report_antlr_error(result);
 			parse_rc = 1; /* invalid input */
 		}
-	}
-	else
-	{
-		parse_rc = pltsql_yyparse();
 	}
 
 	if (parse_rc != 0)
@@ -931,11 +926,8 @@ do_compile(FunctionCallInfo fcinfo,
 		 * where BLOCK is a wrapper for the statements.
 		 * For MSTVF parsing we don't want the wrapper.
 		 */
-		if (pltsql_use_antlr)
-		{
-			Assert(list_length(pltsql_parse_result->body) >= 2);
-			function->action = (PLtsql_stmt_block *) lsecond(pltsql_parse_result->body);
-		}
+		Assert(list_length(pltsql_parse_result->body) >= 2);
+		function->action = (PLtsql_stmt_block *) lsecond(pltsql_parse_result->body);
 		add_decl_table(function, tbl_dno, tbl_typ);
 	}
 
@@ -1280,7 +1272,6 @@ pltsql_compile_inline(char *proc_source, InlineCodeBlockArgs *args)
 	/*
 	 * Now parse the function's text
 	 */
-	if (pltsql_use_antlr)
 	{
 		ANTLR_result result = antlr_parser_cpp(proc_source);
 
@@ -1293,10 +1284,6 @@ pltsql_compile_inline(char *proc_source, InlineCodeBlockArgs *args)
 			report_antlr_error(result);
 			parse_rc = 1; /* invalid input */
 		}
-	}
-	else
-	{
-		parse_rc = pltsql_yyparse();
 	}
 
 	if (parse_rc != 0)

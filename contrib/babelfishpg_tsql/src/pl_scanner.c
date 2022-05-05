@@ -778,9 +778,7 @@ location_lineno_init(void)
 int
 pltsql_latest_lineno(void)
 {
-	if (pltsql_use_antlr)
-		return CurrentLineNumber;
-	return cur_line_num;
+	return CurrentLineNumber;
 }
 
 
