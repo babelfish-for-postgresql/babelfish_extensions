@@ -204,19 +204,6 @@ select serverproperty(n'collationId');
 select serverproperty(n'IsSingleUser');
 select serverproperty(n'ServerName');
 
--- test has_dbaccess() function
-SELECT set_config('babelfishpg_tsql.sql_dialect', 'postgres', false);
-create role test_role;
-set role 'test_role';
-show role;
-set babelfishpg_tsql.sql_dialect = 'tsql';
--- test access to current database, should return 1
-select has_dbaccess(CAST(current_database() as text));
--- test access to an invalid database, should return NULL
-select has_dbaccess(n'invalid database');
-reset role;
-drop role test_role;
-
 -- test ISDATE function
 -- test valid argument
 SELECT ISDATE('12/26/2016');
