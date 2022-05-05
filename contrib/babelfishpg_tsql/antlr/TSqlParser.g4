@@ -4525,6 +4525,7 @@ keyword
     | LISTENER_IP
     | LISTENER_PORT
     | LISTENER_URL
+    | LOAD // works like a unreserved keyword, differently from the document
     | LOB_COMPACTION
     | LOCAL
     | LOCAL_SERVICE_NAME

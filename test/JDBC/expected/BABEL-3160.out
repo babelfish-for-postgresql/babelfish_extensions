@@ -1,0 +1,18 @@
+use master;
+go
+
+CREATE TABLE load(load int);
+go
+INSERT INTO load values (1);
+go
+~~ROW COUNT: 1~~
+
+SELECT load FROM load;
+go
+~~START~~
+int
+1
+~~END~~
+
+DROP TABLE load;
+go
