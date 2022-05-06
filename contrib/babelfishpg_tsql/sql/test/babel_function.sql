@@ -97,24 +97,6 @@ select OBJECT_NAME('boolin'::regproc::Oid::int);
 select OBJECT_NAME('int4'::regtype::Oid::int);
 select OBJECT_NAME(1);
 
--- test OBJECT_ID function
-select (OBJECT_NAME(OBJECT_ID('sys.columns')) = 'columns');
-select (OBJECT_NAME(OBJECT_ID('[columns]')) = 'columns');
-select (OBJECT_NAME(OBJECT_ID('contrib_regression.sys.columns')) = 'columns');
-select (OBJECT_NAME(OBJECT_ID('[sys].[columns]')) = 'columns');
-select (OBJECT_NAME(OBJECT_ID(N'[contrib_regression].sys.[columns]')) = 'columns');
-select (OBJECT_ID('db.sys.[tb].[col]') IS NULL);
-select (OBJECT_ID('sys.babelfish_sysmail_mailitems') IS NULL);
-select (OBJECT_NAME(OBJECT_ID('sys.columns', 'U')) = 'columns');
-select (OBJECT_NAME(OBJECT_ID('pg_catalog.boolin', 'FN')) = 'boolin');
-select (OBJECT_ID('sysmail_mailitems', 'P') IS NULL);
-select (OBJECT_ID('boolin', 'C') IS NULL);
-create table #tt(a int);
-select (OBJECT_ID('#tt') IS NOT NULL);
-select (OBJECT_ID('tempdb..#tt') IS NOT NULL);
-select (OBJECT_ID('tempdb..#tt2') IS NULL);
-drop table #tt;
-
 -- test SYSDATETIME function
 -- Returns of type datetime2
 select pg_typeof(SYSDATETIME());
