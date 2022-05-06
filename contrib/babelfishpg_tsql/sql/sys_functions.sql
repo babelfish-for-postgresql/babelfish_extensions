@@ -404,156 +404,97 @@ RETURNS INTEGER AS
 $BODY$
 DECLARE
         id oid;
-        lower_object_name text;
-        names text[2];
-        counter int;
-        cur_pos int;
-        db_name text;
-        input_schema_name text;
-		schema_name text;
+        db_name text collate "C";
+        bbf_schema_name text collate "C";
+        schema_name text collate "C";
         schema_oid oid;
-        obj_name text;
+        obj_name text collate "C";
         is_temp_object boolean;
+        obj_type char(2) collate "C";
+        cs_as_object_name text collate "C" := object_name;
 BEGIN
+        obj_type = object_type;
         id = null;
-        lower_object_name = lower(trim(object_name));
-        counter = 1;
-        cur_pos = position('.' in lower_object_name);
         schema_oid = NULL;
 
-        -- Parse user input into names split by '.'
-        WHILE cur_pos > 0 LOOP
-            IF counter > 3 THEN
-                -- Too many names provided
-                RETURN NULL;
-            END IF;
-            names[counter] = sys.babelfish_single_unbracket_name(left(lower_object_name, cur_pos - 1));
-            lower_object_name = substring(lower_object_name from cur_pos + 1);
-            counter = counter + 1;
-            cur_pos = position('.' in lower_object_name);
-        END LOOP;
+        SELECT s.db_name, s.schema_name, s.object_name INTO db_name, bbf_schema_name, obj_name 
+        FROM babelfish_split_object_name(cs_as_object_name) s;
 
-        -- Assign each name accordingly
-        obj_name = sys.babelfish_truncate_identifier(sys.babelfish_single_unbracket_name(lower_object_name));
-        CASE counter
-            WHEN 1 THEN
-                db_name = NULL;
-                schema_name = NULL;
-            WHEN 2 THEN
-                db_name = NULL;
-                input_schema_name = sys.babelfish_truncate_identifier(names[1]);
-				schema_name = sys.bbf_get_current_physical_schema_name(input_schema_name);
-            WHEN 3 THEN
-                db_name = sys.babelfish_truncate_identifier(names[1]);
-                input_schema_name = sys.babelfish_truncate_identifier(names[2]);
-				schema_name = sys.bbf_get_current_physical_schema_name(input_schema_name);
-            ELSE
-                RETURN NULL;
-        END CASE;
+        -- Invalid object_name
+        IF obj_name IS NULL OR obj_name = '' THEN
+            RETURN NULL;
+        END IF;
+
+        IF bbf_schema_name IS NULL OR bbf_schema_name = '' THEN
+            bbf_schema_name := sys.schema_name();
+        END IF;
+
+        schema_name := sys.bbf_get_current_physical_schema_name(bbf_schema_name);
 
         -- Check if looking for temp object.
         is_temp_object = left(obj_name, 1) = '#';
 
         -- Can only search in current database. Allowing tempdb for temp objects.
-        IF db_name IS NOT NULL AND db_name <> current_database() AND db_name <> 'tempdb' THEN
+        IF db_name IS NOT NULL AND db_name <> db_name() AND db_name <> 'tempdb' THEN
             RAISE EXCEPTION 'Can only do lookup in current database.';
         END IF;
 
-        IF schema_name IS NOT NULL AND schema_name <> '' THEN
-            -- Searching within a schema. Get schema oid.
-            schema_oid = (SELECT oid FROM pg_namespace WHERE nspname = schema_name);
-            IF schema_oid IS NULL THEN
-                RETURN NULL;
-            END IF;
-
-            if object_type <> '' then
-                case
-                    -- Schema does not apply as much to temp objects.
-                    when upper(object_type) in ('S', 'U', 'V', 'IT', 'ET', 'SO') and is_temp_object then
-	                id := (select reloid from sys.babelfish_get_enr_list() where lower(relname) = obj_name limit 1);
-
-                    when upper(object_type) in ('S', 'U', 'V', 'IT', 'ET', 'SO') and not is_temp_object then
-	                id := (select oid from pg_class where lower(relname) = obj_name 
-                                and relnamespace = schema_oid limit 1);
-
-                    when upper(object_type) in ('C', 'D', 'F', 'PK', 'UQ') then
-	                id := (select oid from pg_constraint where lower(conname) = obj_name 
-                                and connamespace = schema_oid limit 1);
-
-                    when upper(object_type) in ('AF', 'FN', 'FS', 'FT', 'IF', 'P', 'PC', 'TF', 'RF', 'X') then
-	                id := (select oid from pg_proc where lower(proname) = obj_name 
-                                and pronamespace = schema_oid limit 1);
-
-                    when upper(object_type) in ('TR', 'TA') then
-	                id := (select oid from pg_trigger where lower(tgname) = obj_name limit 1);
-
-                    -- Throwing exception as a reminder to add support in the future.
-                    when upper(object_type) in ('R', 'EC', 'PG', 'SN', 'SQ', 'TT') then
-                        RAISE EXCEPTION 'Object type currently unsupported.';
-
-                    -- unsupported object_type
-                    else id := null;
-                end case;
-            else
-                if not is_temp_object then id := (
-                                                select oid from pg_class where lower(relname) = obj_name
-                                                    and relnamespace = schema_oid
-					            union
-				                select oid from pg_constraint where lower(conname) = obj_name
-					            and connamespace = schema_oid
-                                                    union
-				                select oid from pg_proc where lower(proname) = obj_name
-					            and pronamespace = schema_oid
-                                                    union
-				                select oid from pg_trigger where lower(tgname) = obj_name
-				                limit 1);
-                else
-                    -- temp object without "object_type" in-argument
-                    id := (select reloid from sys.babelfish_get_enr_list() where lower(relname) = obj_name limit 1);
-                end if;
-            end if;
-        ELSE 
-            -- Schema not specified.
-            if object_type <> '' then
-                case
-                    when upper(object_type) in ('S', 'U', 'V', 'IT', 'ET', 'SO') and is_temp_object then
-	                id := (select reloid from sys.babelfish_get_enr_list() where lower(relname) = obj_name limit 1);
-
-                    when upper(object_type) in ('S', 'U', 'V', 'IT', 'ET', 'SO') and not is_temp_object then
-	                id := (select oid from pg_class where lower(relname) = obj_name limit 1);
-
-                    when upper(object_type) in ('C', 'D', 'F', 'PK', 'UQ') then
-	                id := (select oid from pg_constraint where lower(conname) = obj_name limit 1);
-
-                    when upper(object_type) in ('AF', 'FN', 'FS', 'FT', 'IF', 'P', 'PC', 'TF', 'RF', 'X') then
-	                id := (select oid from pg_proc where lower(proname) = obj_name limit 1);
-
-                    when upper(object_type) in ('TR', 'TA') then
-	                id := (select oid from pg_trigger where lower(tgname) = obj_name limit 1);
-
-                    -- Throwing exception as a reminder to add support in the future.
-                    when upper(object_type) in ('R', 'EC', 'PG', 'SN', 'SQ', 'TT') then
-                        RAISE EXCEPTION 'Object type currently unsupported.';
-
-                    -- unsupported object_type
-                    else id := null;
-                end case;
-            else
-                if not is_temp_object then id := (
-                                                select oid from pg_class where lower(relname) = obj_name
-					            union
-				                select oid from pg_constraint where lower(conname) = obj_name
-					            union
-				                select oid from pg_proc where lower(proname) = obj_name
-					            union
-				                select oid from pg_trigger where lower(tgname) = obj_name
-				                limit 1);
-                else
-                    -- temp object without "object_type" in-argument
-                    id := (select reloid from sys.babelfish_get_enr_list() where lower(relname) = obj_name limit 1);
-                end if;
-            end if;
+        IF schema_name IS NULL OR schema_name = '' THEN
+            RETURN NULL;
         END IF;
+
+        -- Searching within a schema. Get schema oid.
+        schema_oid = (SELECT oid FROM pg_namespace WHERE nspname = schema_name);
+        IF schema_oid IS NULL THEN
+            RETURN NULL;
+        END IF;
+
+        if object_type <> '' then
+            case
+                -- Schema does not apply as much to temp objects.
+                when upper(object_type) in ('S', 'U', 'V', 'IT', 'ET', 'SO') and is_temp_object then
+	            id := (select reloid from sys.babelfish_get_enr_list() where lower(relname) = obj_name limit 1);
+
+                when upper(object_type) in ('S', 'U', 'V', 'IT', 'ET', 'SO') and not is_temp_object then
+	            id := (select oid from pg_class where lower(relname) = obj_name 
+                            and relnamespace = schema_oid limit 1);
+
+                when upper(object_type) in ('C', 'D', 'F', 'PK', 'UQ') then
+	            id := (select oid from pg_constraint where lower(conname) = obj_name 
+                            and connamespace = schema_oid limit 1);
+
+                when upper(object_type) in ('AF', 'FN', 'FS', 'FT', 'IF', 'P', 'PC', 'TF', 'RF', 'X') then
+	            id := (select oid from pg_proc where lower(proname) = obj_name 
+                            and pronamespace = schema_oid limit 1);
+
+                when upper(object_type) in ('TR', 'TA') then
+	            id := (select oid from pg_trigger where lower(tgname) = obj_name limit 1);
+
+                -- Throwing exception as a reminder to add support in the future.
+                when upper(object_type) in ('R', 'EC', 'PG', 'SN', 'SQ', 'TT') then
+                    RAISE EXCEPTION 'Object type currently unsupported.';
+
+                -- unsupported object_type
+                else id := null;
+            end case;
+        else
+            if not is_temp_object then id := (
+                                            select oid from pg_class where lower(relname) = obj_name
+                                                and relnamespace = schema_oid
+				            union
+			                select oid from pg_constraint where lower(conname) = obj_name
+				            and connamespace = schema_oid
+                                                union
+			                select oid from pg_proc where lower(proname) = obj_name
+				            and pronamespace = schema_oid
+                                                union
+			                select oid from pg_trigger where lower(tgname) = obj_name
+			                limit 1);
+            else
+                -- temp object without "object_type" in-argument
+                id := (select reloid from sys.babelfish_get_enr_list() where lower(relname) = obj_name limit 1);
+            end if;
+        end if;
 
         RETURN id::integer;
 END;
