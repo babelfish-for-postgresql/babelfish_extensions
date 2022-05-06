@@ -50,6 +50,7 @@ prepare_stmt_execsql(PLtsql_execstate *estate, PLtsql_function *func, PLtsql_stm
 
 	exec_prepare_plan(estate, expr, CURSOR_OPT_PARALLEL_OK, keepplan);
 	stmt->mod_stmt = false;
+	stmt->mod_stmt_tablevar = false;
 	foreach(l, SPI_plan_get_plan_sources(expr->plan))
 	{
 		CachedPlanSource *plansource = (CachedPlanSource *) lfirst(l);
