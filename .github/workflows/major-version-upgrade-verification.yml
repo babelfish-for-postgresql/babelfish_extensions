@@ -1,15 +1,15 @@
-name: Major Version Upgrade Tests
+name: Major Version Upgrade Verification tests
 on: [push, pull_request]
 
 jobs:
-  run-babelfish-mvu-tests:
+  run-babelfish-mvu-verification-tests:
     env:
       OLD_INSTALL_DIR: postgres13
       NEW_INSTALL_DIR: postgres14
       ENGINE_VER_FROM: BABEL_1_X_DEV__PG_13_6
       EXTENSION_VER_FROM: BABEL_1_X_DEV
-      ENGINE_VER_TO: BABEL_2_X_DEV__PG_14_3
-      EXTENSION_VER_TO: BABEL_2_X_DEV
+      ENGINE_VER_TO: mvu-dev
+      EXTENSION_VER_TO: mvu-dev
 
     runs-on: ubuntu-latest
     steps:
@@ -34,7 +34,7 @@ jobs:
           make check
           cd contrib && make && sudo make install
         shell: bash
-      
+
       - name: Compile ANTLR
         id: compile-antlr
         if: always() && steps.build-modified-postgres-old.outcome == 'success'
@@ -46,7 +46,7 @@ jobs:
         with:
           repository: babelfish-for-postgresql/babelfish_extensions
           ref: ${{env.EXTENSION_VER_FROM}}
-      
+
       - name: Build Extensions using ${{env.EXTENSION_VER_FROM}}
         id: build-extensions-old
         if: always() && steps.compile-antlr.outcome == 'success'
@@ -79,14 +79,30 @@ jobs:
           ~/${{env.OLD_INSTALL_DIR}}/bin/pg_ctl -D ~/${{env.OLD_INSTALL_DIR}}/data -l logfile13 restart
           cd ~/work/babelfish_extensions/babelfish_extensions/
           sudo ~/${{env.OLD_INSTALL_DIR}}/bin/psql -d postgres -U runner -v user="jdbc_user" -v db="jdbc_testdb" -f .github/scripts/create_extension.sql
+          sudo ~/${{env.OLD_INSTALL_DIR}}/bin/psql -d jdbc_testdb -U runner -c "ALTER SYSTEM SET babelfishpg_tsql.migration_mode = 'multi-db';"
+          sudo ~/${{env.OLD_INSTALL_DIR}}/bin/psql -d jdbc_testdb -U runner -c "SELECT pg_reload_conf();"
           sqlcmd -S localhost -U jdbc_user -P 12345678 -Q "SELECT @@version GO"
         shell: bash
 
       - uses: actions/checkout@v2
 
+      - name: Run JDBC preparation tests on old server
+        id: run-preparation-test
+        if: always() && steps.install-extensions-old.outcome == 'success'
+        run: |
+          cd test/JDBC/
+          export inputFilesPath=upgrade/preparation
+          mvn test
+          cd Info
+          timestamp=`ls -Art | tail -n 1`
+          cd $timestamp
+          mkdir -p ~/upgrade
+          mv $timestamp.diff ~/upgrade/output-diff-preparation.diff
+          mv "$timestamp"_runSummary.log ~/upgrade/run-summary-preparation.log
+
       - name: Build Modified Postgres using ${{env.ENGINE_VER_TO}}
         id: build-modified-postgres-new
-        if: always() && steps.install-extensions-old.outcome == 'success'
+        if: always() && steps.run-preparation-test.outcome == 'success'
         uses: ./.github/composite-actions/build-modified-postgres
         with:
           engine_branch: ${{env.ENGINE_VER_TO}}
@@ -119,52 +135,28 @@ jobs:
         id: run-pg_upgrade
         if: always() && steps.setup-new-datadir.outcome == 'success'
         uses: ./.github/composite-actions/run-pg-upgrade
+        with:
+          migration_mode: 'multi-db'
 
-      - name: Run JDBC Tests
-        id: jdbc
-        timeout-minutes: 15
+      - name: Run JDBC verification tests on upgraded server
+        id: run-verification-test
         if: always() && steps.run-pg_upgrade.outcome == 'success'
         run: |
           cd test/JDBC/
-          # temporarily ignore test BABEL-2086
-          echo 'ignore#!#BABEL-2086' >> jdbc_schedule
+          export inputFilesPath=upgrade/verification
           mvn test
-     
-      - name: Upload Postgres log
-        if: always() && steps.jdbc.outcome == 'failure'
-        uses: actions/upload-artifact@v2
-        with:
-         name: postgres-log
-         path: ~/${{env.OLD_INSTALL_DIR}}/data/logfile14
+          cd Info
+          timestamp=`ls -Art | tail -n 1`
+          cd $timestamp
+          mv $timestamp.diff ~/upgrade/output-diff-verification.diff
+          mv "$timestamp"_runSummary.log ~/upgrade/run-summary-verification.log
 
-      - name: Upload upgrade Log
-        if: always() && steps.run-pg_upgrade.outcome == 'failure'
+      - name: Upload Logs
+        if: always() && (steps.run-preparation-test.outcome == 'failure' || steps.run-pg_upgrade.outcome == 'failure' || steps.run-verification-test.outcome == 'failure')
         uses: actions/upload-artifact@v2
         with:
           name: upgrade-logs
-          path: ~/upgrade/*.log
-      
-      # The test summary files contain paths with ':' characters, which is not allowed with the upload-artifact actions
-      - name: Rename Test Summary Files
-        id: test-file-rename
-        if: always() && steps.jdbc.outcome == 'failure'
-        run: |
-          cd test/JDBC/Info
-          timestamp=`ls -Art | tail -n 1`
-          cd $timestamp
-          mv $timestamp.diff ../output-diff.diff
-          mv "$timestamp"_runSummary.log ../run-summary.log
-
-      - name: Upload Run Summary
-        if: always() && steps.test-file-rename.outcome == 'success'
-        uses: actions/upload-artifact@v2
-        with:
-          name: run-summary.log
-          path: test/JDBC/Info/run-summary.log
-
-      - name: Upload Output Diff
-        if: always() && steps.test-file-rename.outcome == 'success'
-        uses: actions/upload-artifact@v2
-        with:
-          name: output-diff.diff
-          path: test/JDBC/Info/output-diff.diff
+          path: |
+            ~/upgrade/*.log
+            ~/upgrade/*.diff
+            ~/${{env.OLD_INSTALL_DIR}}/data/logfile14
