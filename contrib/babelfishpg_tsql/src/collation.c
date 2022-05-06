@@ -1508,6 +1508,14 @@ pgtsql_expression_tree_mutator(Node *node, void* context)
 		// collations so that regexp operators can work inside plpgsql functions
 		node = transform_funcexpr(node);
 	}
+	else if (IsA(node, OpExpr))
+	{
+		/* Possibly a singleton LIKE predicate:  SELECT 'abc' LIKE 'ABC'; 
+		 * This is done even in the postgres dialect.
+		 */
+		node = transform_likenode(node);
+	}
+	
 
 	return node;
 }
