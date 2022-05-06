@@ -169,6 +169,11 @@ GO
 
 ~~ERROR (Message: division by zero)~~
 
+~~START~~
+int
+<NULL>
+~~END~~
+
 
 -- assignment to different type
 -- char(200)->int (error should be thrwon)

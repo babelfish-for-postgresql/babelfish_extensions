@@ -1,0 +1,32 @@
+CREATE TABLE t3108(c1 nvarchar(50));
+GO
+
+CREATE FUNCTION f3108_i ( @val nvarchar(50) )
+RETURNS nvarchar(max) AS
+BEGIN
+	DECLARE @tcs nvarchar(max) Declare @TscList AS Table(tc nvarchar(10)) insert into @TscList SELECT Distinct c1 From t3108 with (nolock)
+	select  @tcs = COALESCE(@tcs + ', ', '') + tc from @TscList order by tc
+	RETURN isnull(@tcs,'')
+END
+GO
+
+CREATE FUNCTION f3108_o ( @val nvarchar(50) )
+RETURNS nvarchar(max) AS
+BEGIN
+	DECLARE @tcs nvarchar(max);
+	SELECT @tcs = f3108_i(@val)
+	RETURN Case WHEN @tcs='|' then '' else isnull(@tcs,   '') end
+END
+GO
+
+declare @val nvarchar(50) = ' ' SELECT f3108_o(@val) as tc
+GO
+
+DROP FUNCTION f3108_o
+GO
+
+DROP FUNCTION f3108_i
+GO
+
+DROP TABLE t3108
+GO
