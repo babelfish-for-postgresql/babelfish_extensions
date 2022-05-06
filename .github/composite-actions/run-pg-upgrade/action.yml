@@ -1,0 +1,35 @@
+name: 'Run pg_upgrade'
+
+inputs:
+  migration_mode:
+    description: 'Database migration mode'
+    required: no
+    default: 'single-db'
+
+runs:
+  using: "composite"
+  steps:
+    - name: Run pg_upgrade
+      run: |
+        echo 'Starting pg_upgrade...'
+        cd ~
+        mkdir -p upgrade
+        cd upgrade
+        ~/postgres13/bin/pg_ctl -D ~/${{env.OLD_INSTALL_DIR}}/data stop
+        export PATH="$HOME/postgres14/bin:$HOME/postgres13/bin:$PATH"
+        export LD_LIBRARY_PATH="$HOME/postgres14/lib:$HOME/postgres13/lib:$LD_LIBRARY_PATH"
+        ~/postgres14/bin/pg_upgrade -U runner -b ~/postgres13/bin -B ~/postgres14/bin \
+        -d ~/postgres13/data -D ~/postgres14/data -p 5432 -P 5433 -j 4 --link --verbose
+        echo 'pg_upgrade completed!'
+        echo 'Updating babelfish extensions...'
+        cd ~/work/babelfish_extensions/babelfish_extensions/
+        ~/postgres14/bin/pg_ctl -D ~/postgres14/data -l ~/postgres14/data/logfile14 start
+        sudo ~/postgres14/bin/psql -d jdbc_testdb -U runner -c "ALTER EXTENSION babelfishpg_common UPDATE; ALTER EXTENSION babelfishpg_tsql UPDATE;"
+        sudo ~/postgres14/bin/psql -d jdbc_testdb -U runner -c "\dx"
+        echo 'Reset bbf database settings...'
+        sudo ~/postgres14/bin/psql -d jdbc_testdb -U runner -c "ALTER SYSTEM SET babelfishpg_tsql.database_name = 'jdbc_testdb';"
+        sudo ~/postgres14/bin/psql -d jdbc_testdb -U runner -c "ALTER SYSTEM SET babelfishpg_tsql.migration_mode = '${{inputs.migration_mode}}';"
+        sudo ~/postgres14/bin/psql -d jdbc_testdb -U runner -c "SELECT pg_reload_conf();"
+        export PATH=/opt/mssql-tools/bin:$PATH
+        sqlcmd -S localhost -U jdbc_user -P 12345678 -Q "SELECT @@version GO"
+      shell: bash
