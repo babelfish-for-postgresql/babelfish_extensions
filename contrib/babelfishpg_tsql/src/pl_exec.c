@@ -457,7 +457,7 @@ static void pltsql_update_identity_insert_sequence(PLtsql_expr *expr);
 static void pltsql_clean_table_variables(PLtsql_execstate *estate, PLtsql_function *func);
 
 static void pltsql_init_exec_error_data(PLtsqlErrorData *error_data);
-static void pltsql_copy_exec_error_data(PLtsqlErrorData *src, PLtsqlErrorData *dst);
+static void pltsql_copy_exec_error_data(PLtsqlErrorData *src, PLtsqlErrorData *dst, MemoryContext dstCxt);
 PLtsql_estate_err *pltsql_clone_estate_err(PLtsql_estate_err *err);
 
 extern void pltsql_init_anonymous_cursors(PLtsql_execstate *estate);
@@ -4597,15 +4597,6 @@ exec_stmt_execsql(PLtsql_execstate *estate,
 	bool		enable_txn_in_triggers = !pltsql_disable_txn_in_triggers;
     StringInfoData query;
 
-	/*
-	 * if ANTLR is enabled, PLtsql_stmt_push_result will be replaced with PLtsql_stmt_execsql
-	 * with flag need_to_push_result ON. To txn behavior makes consistent regardless of ANTLR,
-	 * adjust enable_txn_in_triggers as same as exec_stmt_push_result.
-	 * same for tsql_select_assign_stmt (select @a=1). with ANTLR=off, it is handled in PLtsql_stmt_query_set.
-	 */
-	if (stmt->need_to_push_result || stmt->is_tsql_select_assign_stmt)
-		enable_txn_in_triggers = false;
-
 	/* Handle naked SELECT stmt differently for INSERT ... EXECUTE */
 	if (stmt->need_to_push_result && estate->insert_exec)
 		return exec_stmt_insert_execute_select(estate, expr);
@@ -4702,6 +4693,15 @@ exec_stmt_execsql(PLtsql_execstate *estate,
 		else
 			estate->impl_txn_type = PLTSQL_IMPL_TRAN_ON;
 	}
+
+	/*
+	 * if ANTLR is enabled, PLtsql_stmt_push_result will be replaced with PLtsql_stmt_execsql
+	 * with flag need_to_push_result ON. To txn behavior makes consistent regardless of ANTLR,
+	 * adjust enable_txn_in_triggers as same as exec_stmt_push_result.
+	 * same for tsql_select_assign_stmt (select @a=1). with ANTLR=off, it is handled in PLtsql_stmt_query_set.
+	 */
+	if (stmt->need_to_push_result || stmt->is_tsql_select_assign_stmt || stmt->mod_stmt_tablevar)
+		enable_txn_in_triggers = false;
 
 	if (enable_txn_in_triggers)
 	{
@@ -9426,7 +9426,8 @@ pltsql_estate_cleanup(void)
 	top_es_entry = exec_state_call_stack->next;
 	if (top_es_entry != NULL)
 		pltsql_copy_exec_error_data(&(exec_state_call_stack->error_data),
-									&(top_es_entry->error_data));
+									&(top_es_entry->error_data),
+									top_es_entry->estate->stmt_mcontext_parent);
 	pfree(exec_state_call_stack);
 	exec_state_call_stack = top_es_entry;
 }
@@ -9479,6 +9480,9 @@ pltsql_xact_cb(XactEvent event, void *arg)
 		simple_econtext_stack = NULL;
 		shared_simple_eval_estate = NULL;
 	}
+	/* Reset portal snapshot in case of commit/rollback */
+	if (pltsql_snapshot_portal != NULL)
+		pltsql_snapshot_portal->portalSnapshot = NULL;
 	AbortCurTransaction = false;
 }
 
@@ -9953,12 +9957,18 @@ pltsql_init_exec_error_data(PLtsqlErrorData *error_data)
 }
 
 static void
-pltsql_copy_exec_error_data(PLtsqlErrorData *src, PLtsqlErrorData *dst)
+pltsql_copy_exec_error_data(PLtsqlErrorData *src, PLtsqlErrorData *dst, MemoryContext dstCtx)
 {
 	dst->xact_abort_on = src->xact_abort_on;
 	dst->rethrow_error = src->rethrow_error;
 	dst->trigger_error = src->trigger_error;
-	dst->error_procedure = src->error_procedure;
+	dst->error_procedure = NULL;
+	if (src->error_procedure != NULL)
+	{
+		MemoryContext oldContext = MemoryContextSwitchTo(dstCtx);
+		dst->error_procedure = pstrdup(src->error_procedure);
+		MemoryContextSwitchTo(oldContext);
+	}
 	dst->error_estate = src->error_estate;
 	dst->error_number = src->error_number;
 	dst->error_severity = src->error_severity;
