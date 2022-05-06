@@ -457,7 +457,7 @@ static void pltsql_update_identity_insert_sequence(PLtsql_expr *expr);
 static void pltsql_clean_table_variables(PLtsql_execstate *estate, PLtsql_function *func);
 
 static void pltsql_init_exec_error_data(PLtsqlErrorData *error_data);
-static void pltsql_copy_exec_error_data(PLtsqlErrorData *src, PLtsqlErrorData *dst);
+static void pltsql_copy_exec_error_data(PLtsqlErrorData *src, PLtsqlErrorData *dst, MemoryContext dstCxt);
 PLtsql_estate_err *pltsql_clone_estate_err(PLtsql_estate_err *err);
 
 extern void pltsql_init_anonymous_cursors(PLtsql_execstate *estate);
@@ -9426,7 +9426,8 @@ pltsql_estate_cleanup(void)
 	top_es_entry = exec_state_call_stack->next;
 	if (top_es_entry != NULL)
 		pltsql_copy_exec_error_data(&(exec_state_call_stack->error_data),
-									&(top_es_entry->error_data));
+									&(top_es_entry->error_data),
+									top_es_entry->estate->stmt_mcontext_parent);
 	pfree(exec_state_call_stack);
 	exec_state_call_stack = top_es_entry;
 }
@@ -9956,12 +9957,18 @@ pltsql_init_exec_error_data(PLtsqlErrorData *error_data)
 }
 
 static void
-pltsql_copy_exec_error_data(PLtsqlErrorData *src, PLtsqlErrorData *dst)
+pltsql_copy_exec_error_data(PLtsqlErrorData *src, PLtsqlErrorData *dst, MemoryContext dstCtx)
 {
 	dst->xact_abort_on = src->xact_abort_on;
 	dst->rethrow_error = src->rethrow_error;
 	dst->trigger_error = src->trigger_error;
-	dst->error_procedure = src->error_procedure;
+	dst->error_procedure = NULL;
+	if (src->error_procedure != NULL)
+	{
+		MemoryContext oldContext = MemoryContextSwitchTo(dstCtx);
+		dst->error_procedure = pstrdup(src->error_procedure);
+		MemoryContextSwitchTo(oldContext);
+	}
 	dst->error_estate = src->error_estate;
 	dst->error_number = src->error_number;
 	dst->error_severity = src->error_severity;
