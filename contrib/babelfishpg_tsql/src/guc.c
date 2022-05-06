@@ -15,7 +15,6 @@
 static int migration_mode = SINGLE_DB;
 bool   enable_ownership_structure = false;
 
-bool pltsql_use_antlr = true;
 bool pltsql_dump_antlr_query_graph = false;
 bool pltsql_enable_antlr_detailed_log = false;
 bool pltsql_allow_antlr_to_unsupported_grammar_for_testing = false;
@@ -531,15 +530,6 @@ define_custom_variables(void)
 				 NULL, NULL, NULL);
 
 	/* ANTLR parser */
-	DefineCustomBoolVariable("babelfishpg_tsql.use_antlr",
-				 gettext_noop("Selects new ANTLR parser for pl/tsql functions, procedures, trigger, and batches."),
-				 NULL,
-				 &pltsql_use_antlr,
-				 true,
-				 PGC_SUSET,
-				 GUC_NO_SHOW_ALL | GUC_NOT_IN_SAMPLE | GUC_DISALLOW_IN_FILE | GUC_DISALLOW_IN_AUTO_FILE,
-				 NULL, NULL, NULL);
-
 	DefineCustomBoolVariable("babelfishpg_tsql.dump_antlr_query_graph",
 				 gettext_noop("dump query graph parsed by ANTLR parser to local disk"),
 				 NULL,

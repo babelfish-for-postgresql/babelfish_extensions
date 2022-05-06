@@ -1656,8 +1656,6 @@ extern char *pltsql_default_locale;
 
 extern int  pltsql_variable_conflict;
 
-extern bool pltsql_use_antlr;
-
 /* extra compile-time checks */
 #define PLTSQL_XCHECK_NONE			0
 #define PLTSQL_XCHECK_SHADOWVAR	1
