@@ -1,5 +1,5 @@
 -- complain if script is sourced in psql, rather than via ALTER EXTENSION
-\echo Use "ALTER EXTENSION ""babelfishpg_tsql"" UPDATE TO '1.3.0'" to load this file. \quit
+\echo Use "ALTER EXTENSION ""babelfishpg_tsql"" UPDATE TO '2.1.0'" to load this file. \quit
  
 SELECT set_config('search_path', 'sys, '||current_setting('search_path'), false);
 
@@ -835,84 +835,262 @@ END;
 $$
 LANGUAGE 'pltsql';
 GRANT ALL ON PROCEDURE sys.sp_sproc_columns_100 TO PUBLIC;
+ 
+-- DATABASE_PRINCIPALS
+CREATE OR REPLACE VIEW sys.database_principals AS SELECT
+Ext.orig_username AS name,
+CAST(Base.OID AS INT) AS principal_id,
+Ext.type,
+CAST(CASE WHEN Ext.type = 'S' THEN 'SQL_USER'
+WHEN Ext.type = 'R' THEN 'DATABASE_ROLE'
+ELSE NULL END AS SYS.NVARCHAR(60)) AS type_desc,
+Ext.default_schema_name,
+Ext.create_date,
+Ext.modify_date,
+Ext.owning_principal_id,
+CAST(CAST(Base2.oid AS INT) AS SYS.VARBINARY(85)) AS SID,
+CAST(Ext.is_fixed_role AS SYS.BIT) AS is_fixed_role,
+Ext.authentication_type,
+Ext.authentication_type_desc,
+Ext.default_language_name,
+Ext.default_language_lcid,
+CAST(Ext.allow_encrypted_value_modifications AS SYS.BIT) AS allow_encrypted_value_modifications
+FROM pg_catalog.pg_authid AS Base INNER JOIN sys.babelfish_authid_user_ext AS Ext
+ON Base.rolname = Ext.rolname
+LEFT OUTER JOIN pg_catalog.pg_roles Base2
+ON Ext.login_name = Base2.rolname
+WHERE Ext.database_name = DB_NAME();
+GRANT SELECT ON sys.database_principals TO PUBLIC;
 
-CREATE OR REPLACE FUNCTION sys.suser_name_internal(IN server_user_id OID)
-RETURNS sys.NVARCHAR(128)
-AS 'babelfishpg_tsql', 'suser_name'
-LANGUAGE C IMMUTABLE PARALLEL RESTRICTED;
+--DATABASE_ROLE_MEMBERS
+CREATE VIEW sys.database_role_members AS
+SELECT
+CAST(Auth1.oid AS INT) AS role_principal_id,
+CAST(Auth2.oid AS INT) AS member_principal_id
+FROM pg_catalog.pg_auth_members AS Authmbr
+INNER JOIN pg_catalog.pg_authid AS Auth1 ON Auth1.oid = Authmbr.roleid
+INNER JOIN pg_catalog.pg_authid AS Auth2 ON Auth2.oid = Authmbr.member
+INNER JOIN sys.babelfish_authid_user_ext AS Ext1 ON Auth1.rolname = Ext1.rolname
+INNER JOIN sys.babelfish_authid_user_ext AS Ext2 ON Auth2.rolname = Ext2.rolname
+WHERE Ext1.database_name = DB_NAME()
+AND Ext2.database_name = DB_NAME()
+AND Ext1.type = 'R'
+AND Ext2.orig_username != 'db_owner';
+GRANT SELECT ON sys.database_role_members TO PUBLIC;
 
-CREATE OR REPLACE FUNCTION sys.suser_name(IN server_user_id OID)
-RETURNS sys.NVARCHAR(128) AS $$
-    SELECT CASE 
-        WHEN server_user_id IS NULL THEN NULL
-        ELSE sys.suser_name_internal(server_user_id)
-    END;
-$$
-LANGUAGE SQL IMMUTABLE PARALLEL RESTRICTED;
-
-CREATE OR REPLACE FUNCTION sys.suser_name()
-RETURNS sys.NVARCHAR(128)
+CREATE OR REPLACE PROCEDURE remove_babelfish ()
+LANGUAGE plpgsql
 AS $$
-    SELECT sys.suser_name_internal(NULL);
-$$
-LANGUAGE SQL IMMUTABLE PARALLEL RESTRICTED;
+BEGIN
+	CALL sys.babel_drop_all_dbs();
+	CALL sys.babel_drop_all_logins();
+	EXECUTE format('ALTER DATABASE %s SET babelfishpg_tsql.enable_ownership_structure = false', CURRENT_DATABASE());
+	EXECUTE 'ALTER SEQUENCE sys.babelfish_db_seq RESTART';
+	DROP OWNED BY sysadmin;
+	DROP ROLE sysadmin;
+END
+$$;
 
--- Since SIDs are currently not supported in Babelfish, this essentially behaves the same as suser_name but 
--- with a different input data type
-CREATE OR REPLACE FUNCTION sys.suser_sname(IN server_user_sid SYS.VARBINARY(85))
-RETURNS SYS.NVARCHAR(128)
+CREATE OR REPLACE PROCEDURE sys.sp_statistics(
+    "@table_name" sys.sysname,
+    "@table_owner" sys.sysname = '',
+    "@table_qualifier" sys.sysname = '',
+	"@index_name" sys.sysname = '',
+	"@is_unique" char = 'N',
+	"@accuracy" char = 'Q'
+)
 AS $$
-    SELECT sys.suser_name(CAST(server_user_sid AS INT)); 
+BEGIN
+    IF @index_name = '%'
+	BEGIN
+	    SELECT @index_name = ''
+	END
+    select out_table_qualifier as table_qualifier,
+            out_table_owner as table_owner,
+            out_table_name as table_name,
+			out_non_unique as non_unique,
+			out_index_qualifier as index_qualifier,
+			out_index_name as index_name,
+			out_type as type,
+			out_seq_in_index as seq_in_index,
+			out_column_name as column_name,
+			out_collation as collation,
+			out_cardinality as cardinality,
+			out_pages as pages,
+			out_filter_condition as filter_condition
+    from sys.sp_statistics_internal(@table_name, @table_owner, @table_qualifier, @index_name, @is_unique, @accuracy);
+END;
 $$
-LANGUAGE SQL IMMUTABLE PARALLEL RESTRICTED;
+LANGUAGE 'pltsql';
+GRANT ALL on PROCEDURE sys.sp_statistics TO PUBLIC;
 
-CREATE OR REPLACE FUNCTION sys.suser_sname()
-RETURNS SYS.NVARCHAR(128)
+-- same as sp_statistics
+CREATE OR REPLACE PROCEDURE sys.sp_statistics_100(
+    "@table_name" sys.sysname,
+    "@table_owner" sys.sysname = '',
+    "@table_qualifier" sys.sysname = '',
+	"@index_name" sys.sysname = '',
+	"@is_unique" char = 'N',
+	"@accuracy" char = 'Q'
+)
 AS $$
-    SELECT sys.suser_name();
+BEGIN
+    IF @index_name = '%'
+	BEGIN
+	    SELECT @index_name = ''
+	END
+    select out_table_qualifier as TABLE_QUALIFIER,
+            out_table_owner as TABLE_OWNER,
+            out_table_name as TABLE_NAME,
+			out_non_unique as NON_UNIQUE,
+			out_index_qualifier as INDEX_QUALIFIER,
+			out_index_name as INDEX_NAME,
+			out_type as TYPE,
+			out_seq_in_index as SEQ_IN_INDEX,
+			out_column_name as COLUMN_NAME,
+			out_collation as COLLATION,
+			out_cardinality as CARDINALITY,
+			out_pages as PAGES,
+			out_filter_condition as FILTER_CONDITION
+    from sys.sp_statistics_internal(@table_name, @table_owner, @table_qualifier, @index_name, @is_unique, @accuracy);
+END;
 $$
-LANGUAGE SQL IMMUTABLE PARALLEL RESTRICTED;
+LANGUAGE 'pltsql';
+GRANT ALL on PROCEDURE sys.sp_statistics_100 TO PUBLIC;
 
-CREATE OR REPLACE FUNCTION sys.suser_id_internal(IN login TEXT)
-RETURNS OID
-AS 'babelfishpg_tsql', 'suser_id'
-LANGUAGE C IMMUTABLE PARALLEL RESTRICTED;
-
-CREATE OR REPLACE FUNCTION sys.suser_id(IN login TEXT)
-RETURNS OID AS $$
-    SELECT CASE
-        WHEN login IS NULL THEN NULL
-        ELSE sys.suser_id_internal(login)
-    END;
-$$
-LANGUAGE SQL IMMUTABLE PARALLEL RESTRICTED;
-
-CREATE OR REPLACE FUNCTION sys.suser_id()
-RETURNS OID
+create or replace function sys.get_tds_id(
+	datatype sys.varchar(50)
+)
+returns INT
 AS $$
-    SELECT sys.suser_id_internal(NULL);
-$$
-LANGUAGE SQL IMMUTABLE PARALLEL RESTRICTED;
+DECLARE
+	tds_id INT;
+BEGIN
+	IF datatype IS NULL THEN
+		RETURN 0;
+	END IF;
+	CASE datatype
+		WHEN 'text' THEN tds_id = 35;
+		WHEN 'uniqueidentifier' THEN tds_id = 36;
+		WHEN 'tinyint' THEN tds_id = 38;
+		WHEN 'smallint' THEN tds_id = 38;
+		WHEN 'int' THEN tds_id = 38;
+		WHEN 'bigint' THEN tds_id = 38;
+		WHEN 'ntext' THEN tds_id = 99;
+		WHEN 'bit' THEN tds_id = 104;
+		WHEN 'float' THEN tds_id = 109;
+		WHEN 'real' THEN tds_id = 109;
+		WHEN 'varchar' THEN tds_id = 167;
+		WHEN 'nvarchar' THEN tds_id = 231;
+		WHEN 'nchar' THEN tds_id = 239;
+		WHEN 'money' THEN tds_id = 110;
+		WHEN 'smallmoney' THEN tds_id = 110;
+		WHEN 'char' THEN tds_id = 175;
+		WHEN 'date' THEN tds_id = 40;
+		WHEN 'datetime' THEN tds_id = 111;
+		WHEN 'smalldatetime' THEN tds_id = 111;
+		WHEN 'numeric' THEN tds_id = 108;
+		WHEN 'xml' THEN tds_id = 241;
+		WHEN 'decimal' THEN tds_id = 106;
+		WHEN 'varbinary' THEN tds_id = 165;
+		WHEN 'binary' THEN tds_id = 173;
+		WHEN 'image' THEN tds_id = 34;
+		WHEN 'time' THEN tds_id = 41;
+		WHEN 'datetime2' THEN tds_id = 42;
+		WHEN 'sql_variant' THEN tds_id = 98;
+		WHEN 'datetimeoffset' THEN tds_id = 43;
+		ELSE tds_id = 0;
+	END CASE;
+	RETURN tds_id;
+END;
+$$ LANGUAGE plpgsql IMMUTABLE STRICT;
 
--- Since SIDs are currently not supported in Babelfish, this essentially behaves the same as suser_id but 
--- with different input/output data types. The second argument will be ignored as its functionality is not supported
-CREATE OR REPLACE FUNCTION sys.suser_sid(IN login SYS.SYSNAME, IN Param2 INT DEFAULT NULL)
-RETURNS SYS.VARBINARY(85) AS $$
-    SELECT CASE
-    WHEN login = '' 
-        THEN CAST(CAST(sys.suser_id() AS INT) AS SYS.VARBINARY(85))
-    ELSE 
-        CAST(CAST(sys.suser_id(login) AS INT) AS SYS.VARBINARY(85))
-    END;
-$$
-LANGUAGE SQL IMMUTABLE PARALLEL RESTRICTED;
+create or replace function sys.sp_describe_first_result_set_internal(
+	tsqlquery varchar(384),
+    params varchar(384) = NULL,
+    browseMode sys.tinyint = 0
+)
+returns table (
+	is_hidden sys.bit,
+	column_ordinal int,
+	name sys.sysname,
+	is_nullable sys.bit,
+	system_type_id int,
+	system_type_name sys.nvarchar(256),
+	max_length smallint,
+	"precision" sys.tinyint,
+	scale sys.tinyint,
+	collation_name sys.sysname,
+	user_type_id int,
+	user_type_database sys.sysname,
+	user_type_schema sys.sysname,
+	user_type_name sys.sysname,
+	assembly_qualified_type_name sys.nvarchar(4000),
+	xml_collection_id int,
+	xml_collection_database sys.sysname,
+	xml_collection_schema sys.sysname,
+	xml_collection_name sys.sysname,
+	is_xml_document sys.bit,
+	is_case_sensitive sys.bit,
+	is_fixed_length_clr_type sys.bit,
+	source_server sys.sysname,
+	source_database sys.sysname,
+	source_schema sys.sysname,
+	source_table sys.sysname,
+	source_column sys.sysname,
+	is_identity_column sys.bit,
+	is_part_of_unique_key sys.bit,
+	is_updateable sys.bit,
+	is_computed_column sys.bit,
+	is_sparse_column_set sys.bit,
+	ordinal_in_order_by_list smallint,
+	order_by_list_length smallint,
+	order_by_is_descending smallint,
+	tds_type_id int,
+	tds_length int,
+	tds_collation_id int,
+	ss_data_type sys.tinyint
+)
+AS 'babelfishpg_tsql', 'sp_describe_first_result_set_internal'
+LANGUAGE C;
+GRANT ALL on FUNCTION sys.sp_describe_first_result_set_internal TO PUBLIC;
 
-CREATE OR REPLACE FUNCTION sys.suser_sid()
-RETURNS SYS.VARBINARY(85)
+CREATE OR REPLACE PROCEDURE sys.sp_describe_first_result_set (
+	"@tsql" varchar(384),
+    "@params" varchar(384) = NULL,
+    "@browse_information_mode" sys.tinyint = 0)
 AS $$
-    SELECT CAST(CAST(sys.suser_id() AS INT) AS SYS.VARBINARY(85));
+BEGIN
+    select * from sys.sp_describe_first_result_set_internal(@tsql, @params,  @browse_information_mode);
+END;
 $$
-LANGUAGE SQL IMMUTABLE PARALLEL RESTRICTED;
+LANGUAGE 'pltsql';
+GRANT ALL on PROCEDURE sys.sp_describe_first_result_set TO PUBLIC;
+
+CREATE OR REPLACE VIEW sys.spt_tablecollations_view AS
+    SELECT
+        o.object_id         AS object_id,
+        o.schema_id         AS schema_id,
+        c.column_id         AS colid,
+        CASE WHEN p.attoptions[1] LIKE 'bbf_original_name=%' THEN split_part(p.attoptions[1], '=', 2)
+            ELSE c.name END AS name,
+        CAST(CollationProperty(c.collation_name,'tdscollation') AS binary(5)) AS tds_collation_28,
+        CAST(CollationProperty(c.collation_name,'tdscollation') AS binary(5)) AS tds_collation_90,
+        CAST(CollationProperty(c.collation_name,'tdscollation') AS binary(5)) AS tds_collation_100,
+        CAST(c.collation_name AS nvarchar(128)) AS collation_28,
+        CAST(c.collation_name AS nvarchar(128)) AS collation_90,
+        CAST(c.collation_name AS nvarchar(128)) AS collation_100
+    FROM
+        sys.all_columns c INNER JOIN
+        sys.all_objects o ON (c.object_id = o.object_id) JOIN
+        pg_attribute p ON (c.name = p.attname AND c.object_id = p.attrelid)
+    WHERE
+        c.is_sparse = 0 AND p.attnum >= 0;
+GRANT SELECT ON sys.spt_tablecollations_view TO PUBLIC;
+
+CREATE COLLATION sys.Japanese_CS_AS (provider = icu, locale = 'ja_JP');
+CREATE COLLATION sys.Japanese_CI_AI (provider = icu, locale = 'ja_JP@colStrength=primary', deterministic = false);
+CREATE COLLATION sys.Japanese_CI_AS (provider = icu, locale = 'ja_JP@colStrength=secondary', deterministic = false);
 
 CREATE OR REPLACE PROCEDURE BABEL_CREATE_MSDB_IF_NOT_EXISTS_INTERNAL(IN login TEXT)
 AS 'babelfishpg_tsql', 'create_msdb_if_not_exists' LANGUAGE C;
@@ -928,6 +1106,6 @@ END
 $$;
 
 CALL sys.babel_create_msdb_if_not_exists();
- 
+
 -- Reset search_path to not affect any subsequent scripts
 SELECT set_config('search_path', trim(leading 'sys, ' from current_setting('search_path')), false);

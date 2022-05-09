@@ -266,6 +266,8 @@ varchar
 Running trigger trg_err_check
 ~~END~~
 
+~~ROW COUNT: 1~~
+
 
 -- Test insert through a procedure
 CREATE PROCEDURE table_insert
@@ -284,6 +286,8 @@ GO
 varchar
 Running trigger trg_err_check
 ~~END~~
+
+~~ROW COUNT: 1~~
 
 ~~START~~
 varchar
