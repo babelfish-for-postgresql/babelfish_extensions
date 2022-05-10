@@ -4,7 +4,7 @@ GO
 SELECT colid, name, collation_100 FROM sys.spt_tablecollations_view WHERE object_id = sys.object_id('foo') ORDER BY colid
 GO
 ~~START~~
-smallint#!#varchar#!#nvarchar
+int#!#varchar#!#nvarchar
 1#!#test_collation#!#default
 ~~END~~
 
@@ -12,7 +12,7 @@ smallint#!#varchar#!#nvarchar
 exec sp_tablecollations_100 'foo'
 GO
 ~~START~~
-smallint#!#varchar#!#binary#!#nvarchar
+int#!#varchar#!#binary#!#nvarchar
 1#!#test_collation#!#<NULL>#!#default
 ~~END~~
 
@@ -20,7 +20,7 @@ smallint#!#varchar#!#binary#!#nvarchar
 exec ..sp_tablecollations_100 'foo'
 GO
 ~~START~~
-smallint#!#varchar#!#binary#!#nvarchar
+int#!#varchar#!#binary#!#nvarchar
 1#!#test_collation#!#<NULL>#!#default
 ~~END~~
 
