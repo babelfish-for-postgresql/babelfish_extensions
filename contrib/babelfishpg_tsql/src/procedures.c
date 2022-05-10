@@ -292,7 +292,7 @@ static char *sp_describe_first_result_set_query(char *viewName)
 		"end as is_identity_column, "
 		"CAST(NULL as sys.bit) as is_part_of_unique_key, " /* pg_constraint */
 		"case  "
-			"when t1.is_updatable = \'YES\' then CAST(1 AS sys.bit) "
+			"when t1.is_updatable = \'YES\' AND t1.is_generated = \'NEVER\' AND t1.is_identity = \'NO\' then CAST(1 AS sys.bit) "
 			"else CAST(0 AS sys.bit) "
 		"end as is_updateable, "
 		"case "
@@ -346,6 +346,8 @@ sp_describe_first_result_set_internal(PG_FUNCTION_ARGS)
 	int browseMode;
 	char *query;
 	int rc;
+	ANTLR_result result;
+	char *parsedbatch;
 
 	/* stuff done only on the first call of the function */
 	if (SRF_IS_FIRSTCALL())
@@ -363,6 +365,12 @@ sp_describe_first_result_set_internal(PG_FUNCTION_ARGS)
 		attinmeta = TupleDescGetAttInMetadata(tupdesc);
 		funcctx->attinmeta = attinmeta;
 
+		/* First, pass the batch to the ANTLR parser */
+		result = antlr_parser_cpp(batch);
+		if (!result.success)
+			report_antlr_error(result);
+		parsedbatch = ((PLtsql_stmt_execsql *)lsecond(pltsql_parse_result->body))->sqlstmt->query;
+
 		/* If TSQL Query is NULL string then send no rows. */
 		if (batch && batch[0] != '\0')
 		{
@@ -370,15 +378,14 @@ sp_describe_first_result_set_internal(PG_FUNCTION_ARGS)
 			if (strncmp(batch, "select", 6) != 0)
 					ereport(ERROR,
 							 (errcode(ERRCODE_INTERNAL_ERROR),
-							 errmsg("sp_describe_first_result_set supports only select statements %s", query)));
+							 errmsg("sp_describe_first_result_set supports only select statements %s", batch)));
 
-			query = psprintf("CREATE VIEW %s as %s", sp_describe_first_result_set_view_name, batch);
+			query = psprintf("CREATE VIEW %s as %s", sp_describe_first_result_set_view_name, parsedbatch);
 	
 			/* Switch Dialect so that SPI_execute creates a TSQL View, obeying TSQL Syntax. */
 			set_config_option("babelfishpg_tsql.sql_dialect", "tsql",
 										(superuser() ? PGC_SUSET : PGC_USERSET),
 											PGC_S_SESSION, GUC_ACTION_SAVE, true, 0, false);
-
 			if ((rc = SPI_execute(query, false, 1)) < 0)
 				elog(ERROR, "SPI_execute failed: %s", SPI_result_code_string(rc));
 
