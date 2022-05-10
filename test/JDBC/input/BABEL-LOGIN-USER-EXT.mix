@@ -232,6 +232,24 @@ GO
 SELECT rolname FROM pg_roles WHERE oid = user_id('guest');
 GO
 
+USE MSDB;
+GO
+
+SELECT user_name();
+GO
+
+SELECT user_name(user_id());
+GO
+
+SELECT user_name(user_id('guest'));
+GO
+
+SELECT rolname FROM pg_roles WHERE oid = user_id('dbo');
+GO
+
+SELECT rolname FROM pg_roles WHERE oid = user_id('guest');
+GO
+
 USE TEMPDB;
 GO
 

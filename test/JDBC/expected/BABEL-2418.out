@@ -19,6 +19,7 @@ go
 varchar
 master_dbo
 tempdb_dbo
+msdb_dbo
 dbo
 babel_2418_schema1
 babel_2418_schema2
@@ -37,5 +38,6 @@ go
 varchar
 master_dbo
 tempdb_dbo
+msdb_dbo
 ~~END~~
 

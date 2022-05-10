@@ -21,5 +21,16 @@ not null
 ~~END~~
 
 
+USE msdb
+GO
+
+SELECT CASE WHEN schema_id('dbo') IS NULL then 'is null' ELSE 'not null' END;
+GO
+~~START~~
+text
+not null
+~~END~~
+
+
 USE master
 GO

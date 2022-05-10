@@ -20,6 +20,7 @@ text
 correct
 correct
 correct
+correct
 ~~END~~
 
 
@@ -40,6 +41,16 @@ go
 ~~START~~
 varchar#!#int
 tempdb#!#2
+~~END~~
+
+
+SELECT name, dbid
+FROM babelfish_helpdb('msdb')
+WHERE name = 'msdb'
+go
+~~START~~
+varchar#!#int
+msdb#!#4
 ~~END~~
 
 

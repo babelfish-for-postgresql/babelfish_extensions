@@ -11,5 +11,11 @@ GO
 SELECT CASE WHEN schema_id('dbo') IS NULL then 'is null' ELSE 'not null' END;
 GO
 
+USE msdb
+GO
+
+SELECT CASE WHEN schema_id('dbo') IS NULL then 'is null' ELSE 'not null' END;
+GO
+
 USE master
 GO

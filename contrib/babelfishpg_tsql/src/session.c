@@ -180,13 +180,18 @@ Datum babelfish_db_name(PG_FUNCTION_ARGS)
 
 	if (dbid == 1)
 	{
-		dbname = palloc(128 * sizeof(char));
+		dbname = palloc((strlen("master") + 1) * sizeof(char));
 		strncpy(dbname, "master", sizeof("master"));
 	}
 	else if (dbid == 2)
 	{
-		dbname = palloc(128 * sizeof(char));
+		dbname = palloc((strlen("tempdb") + 1) * sizeof(char));
 		strncpy(dbname, "tempdb", sizeof("tempdb"));
+	}
+	else if (dbid == 4)
+	{
+		dbname = palloc((strlen("msdb") + 1) * sizeof(char));
+		strncpy(dbname, "msdb", sizeof("msdb"));
 	}
 	else
 		dbname = get_db_name(dbid);

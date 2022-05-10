@@ -3,7 +3,7 @@ SELECT db_id('hello');
 SELECT db_name(1234);
 GO
 
--- Test master and tempdb
+-- Test master, tempdb, and msdb
 SELECT db_id('master');
 SELECT db_name(1);
 GO
@@ -20,6 +20,16 @@ SELECT db_name(2);
 GO
 
 USE tempdb;
+GO
+SELECT db_id();
+SELECT db_name();
+GO
+
+SELECT db_id('msdb')
+SELECT db_name(4);
+GO
+
+USE msdb;
 GO
 SELECT db_id();
 SELECT db_name();
