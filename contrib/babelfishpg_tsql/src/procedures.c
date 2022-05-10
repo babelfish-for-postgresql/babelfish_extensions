@@ -17,6 +17,7 @@
 #include "executor/spi.h"
 #include "fmgr.h"
 #include "funcapi.h"
+#include "hooks.h"
 #include "miscadmin.h"
 #include "utils/builtins.h"
 #include "utils/guc.h"
@@ -44,6 +45,8 @@ extern int execute_batch(PLtsql_execstate *estate, char *batch, InlineCodeBlockA
 extern PLtsql_execstate *get_current_tsql_estate(void);
 
 char *sp_describe_first_result_set_view_name = NULL;
+
+bool sp_describe_first_result_set_inprogress = false;
 
 Datum
 sp_unprepare(PG_FUNCTION_ARGS)
@@ -380,6 +383,7 @@ sp_describe_first_result_set_internal(PG_FUNCTION_ARGS)
 		/* If TSQL Query is NULL string or a non-select query then send no rows. */
 		if (parsedbatch && strncmp(parsedbatch, "select", 6) == 0)
 		{
+			sp_describe_first_result_set_inprogress = true;
 			query = psprintf("CREATE VIEW %s as %s", sp_describe_first_result_set_view_name, parsedbatch);
 	
 			/* Switch Dialect so that SPI_execute creates a TSQL View, obeying TSQL Syntax. */
@@ -388,6 +392,8 @@ sp_describe_first_result_set_internal(PG_FUNCTION_ARGS)
 											PGC_S_SESSION, GUC_ACTION_SAVE, true, 0, false);
 			if ((rc = SPI_execute(query, false, 1)) < 0)
 				elog(ERROR, "SPI_execute failed: %s", SPI_result_code_string(rc));
+
+			sp_describe_first_result_set_inprogress = false;
 
 			set_config_option("babelfishpg_tsql.sql_dialect", "postgres",
 										(superuser() ? PGC_SUSET : PGC_USERSET),
