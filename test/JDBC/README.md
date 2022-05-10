@@ -1,5 +1,5 @@
 # JDBC Test Framework for Babelfish
-The JDBC test framework for Babelfish uses the JDBC Driver for SQL Server for database connectivity and allows us to do end-to-end testing (i.e. testing of the T-SQL syntax and TDS protocol implementation) of Babelfish without the need to write any application level code.
+The JDBC test framework for Babelfish uses the JDBC Driver for SQL Server for database connectivity and allows you to perform end-to-end testing (i.e. testing of the T-SQL syntax and TDS protocol implementation) of Babelfish without the need to write any application level code.
 
 ## Table of Contents
 - [How to run the test framework](#how-to-run-the-test-framework)
@@ -9,7 +9,7 @@ The JDBC test framework for Babelfish uses the JDBC Driver for SQL Server for da
 - [How to control which tests should run](#how-to-control-which-tests-should-run)
 - [Writing tests](#writing-tests)
   - [Plain SQL Batch](#plain-sql-batch)
-  - [Prepare Exec statements](#prepare-exec-statements)
+  - [Preparing and executing statements](#preparing-and-executing-statements)
   - [Stored Procedures](#stored-procedures)
   - [Transactions](#transactions)
   - [Cursors](#cursors)
@@ -22,37 +22,37 @@ The JDBC test framework for Babelfish uses the JDBC Driver for SQL Server for da
 ## How to run the test framework
 
 ### Build Requirements
-
-Java, Maven
+- Java, version 1.8 or later
+- Maven, version 3.6.3 or later
 
 ### Steps to run
-Once you have built the modified Postgres engine and Babelfish extensions from [here](../../contrib/README.md), do the following:
-1. Create a postgres database and initialize babelfish in it (if you already have a database with babelfish initialized you can omit this step or cleanup before you initialize)
+After building the modified PostgreSQL engine and Babelfish extensions using the [online instructions](../../contrib/README.md), you must:
+1. Create a PostgreSQL database and initialize Babelfish (if you already have a database with Babelfish initialized, you can omit this step or perform the cleanup steps before you initialize):
     ```bash
     ./init.sh
     ```
-2. Run the tests
+2. Run the tests:
     ```bash
     mvn test
     ```
-3. Cleanup all the objects, users, roles and databases created while running the tests
+3. Cleanup all the objects, users, roles and databases created while running the tests:
     ```bash
     ./cleanup.sh
     ```
 
 ## How to run tests against a custom Babelfish endpoint
 By default the tests will run against the server running on localhost. You can specify a custom endpoint, database, user etc. in `test/JDBC/src/main/resources/config.txt`. 
-The [config file](src/main/resources/config.txt) has many other options you can change for your test runs. Alternatively, you can also set these option through environment variables as follows:
+The [config file](src/main/resources/config.txt) has many other options you can change for your test runs. Alternatively, you can also set these options with environment variables as shown below:
 ```bash
 export databaseName = test_db
 ```
 
 ## How to control which tests should run
-By default all the tests will run. You can specify which tests should run in the `test/JDBC/jdbc_schedule` file
+By default all the tests will run. You can run one or more individual tests by specifying test information in the `test/JDBC/jdbc_schedule` file
 
 ## Writing tests
 ### Plain SQL Batch
-Separate SQL Batches with `GO`:
+When adding tests that execute SQL code, separate SQL batches with `GO`:
 ```tsql
 /* SQL Batch 1 */
 GO
@@ -75,13 +75,13 @@ Input file type: `.sql`
 
 ---
 
-### Prepare Exec statements
+### Preparing and executing statements
 To prepare and execute query:
 ```
 prepst#!# <query> #!# <bind variables datatype, name and value groups follow, separated by '#!#' delimiter>
 ```
 
-To execute an already prepare query:
+To execute a prepared query:
 ```
 prepst#!#exec#!# <bind variables datatype, name and value groups follow, separated by '#!#' delimiter>
 ```
@@ -93,19 +93,19 @@ Bind variables should be mentioned in groups:
 
 **Example**
 
-If you wish to prepare the statement: `SELECT [Gender] FROM [HumanResources].[Employee] WHERE [BusinessEntityID] = ?` with the bind variable `1`. Then you will add your query as shown below:
+To prepare the statement: `SELECT [Gender] FROM [HumanResources].[Employee] WHERE [BusinessEntityID] = ?` with the bind variable `1` add your query as shown below:
 ```
 prepst#!#SELECT [Gender] FROM [HumanResources].[Employee] WHERE [BusinessEntityID] = @a#!#int|-|a|-|1
 ```
 
-**NOTE:** To specify NULL values in prepare exec statement, specify them as `<NULL>`
+**NOTE:** To specify NULL values in a prepared or execute statement, specify them as `<NULL>`
 
 Input file type: `.txt`
 
 ---
 
 ### Stored Procedures
-This section covers how to execute stored procedures using JDBC APIs. To execute stored procedures as a SQL batch refer [here](#plain-sql-batch).
+This section covers how to execute stored procedures using JDBC APIs. To execute stored procedures as a SQL batch, refer [to these instructions](#plain-sql-batch).
 
 To prepare and execute a stored procedure:
 ```
@@ -128,14 +128,14 @@ CREATE PROCEDURE sp_test1 (@a  INT) AS BEGIN SET @a=100; Select @a as a; END;
 storedproc#!#prep#!#sp_test1#!#int|-|a|-|1|-|input
 ```
 
-**NOTE:** To specify NULL values in stored procedure params, specify them as `<NULL>`
+**NOTE:** To specify NULL values in stored procedure parameters, specify them as `<NULL>`
 
 Input file type: `.txt`
 
 ---
 
 ### Transactions
-This section covers how to execute transactional statements using JDBC APIs. To execute transactional as a SQL Batch refer [here](#plain-sql-batch).
+This section covers how to execute transactional statements using JDBC APIs. For information about executing transactional statements as a SQL Batch, refer [to these instructions](#plain-sql-batch).
 
 Execute a transactional statement:
 ```
@@ -148,7 +148,7 @@ txn#!#savepoint#!# < name of savepoint >     // to create a new savepoint with n
 txn#!#isolation#!# {ru | rc | rr | se | sn}  // to set transaction isolation level
 ```
 
-Codes for isolation levels are as follows:
+The abbreviations for isolation levels are:
 1. `ru` → READ UNCOMMITTED
 2. `rc` → READ COMMITTED
 3. `rr` → REPEATABLE READ
@@ -167,19 +167,19 @@ select @@TRANCOUNT as txncnt
 txn#!#commit
 ```
 
-**NOTE:** JDBC does not support API like Connection.beginTransaction() so in this case `txn#!#begin`  will simply set auto commit to false so that transactions are committed only when Connection.commit() is called explicitly.
+**NOTE:** JDBC does not support the API Connection.beginTransaction() function, so in this case `txn#!#begin` will simply set auto commit to false so that transactions are committed only when Connection.commit() is called explicitly.
 
 Input file type: `.txt`
 
 ---
 
 ### Cursors
-Open a cursor:
+To open a cursor:
 ```
 cursor#!#open#!# <select statement on which cursor is opened> #!# <cursor options follow, separated by '#!#' delimiter>
 ```
 
-Codes for cursor options are as follows:
+The supported cursor options are:
 - `TYPE_FORWARD_ONLY` → cursor type as forward-only
 - `TYPE_SCROLL_SENSITIVE` → cursor type as scroll sensitive
 - `TYPE_SCROLL_INSENSITIVE`  → cursor type as scroll insensitive
@@ -188,9 +188,12 @@ Codes for cursor options are as follows:
 - `HOLD_CURSORS_OVER_COMMIT` → cursor holdability as hold cursors over commit
 - `CLOSE_CURSORS_AT_COMMIT` → cursor holdability as close cursors after commit
 
-**NOTE:** If one or more of the cursor options are not provided, default values of those option will be applied
+**NOTE:** If one or more of the cursor options are not provided, the cursor options will be:
+- `TYPE_FORWARD_ONLY` → cursor type as forward-only
+- `CONCUR_READ_ONLY` → cursor concurrency as read-only
+- `HOLD_CURSORS_OVER_COMMIT` → cursor holdability as hold cursors over commit
 
-Fetch using a cursor:
+To fetch, use the following cursor options:
 ```
 cursor#!#fetch#!#beforefirst               // move cursor before first row
 cursor#!#fetch#!#afterlast                 // move cursor after last row
@@ -202,7 +205,7 @@ cursor#!#fetch#!#abs#!# <row number>       // fetch from row number specified
 cursor#!#fetch#!#rel#!# <number of rows>   // fetch relatively from current cursor position by number of rows specified
 ```
 
-Close a cursor:
+Use the following command to close a cursor:
 ```
 cursor#!#close
 ```
@@ -219,12 +222,12 @@ Input file type: `.txt`
 ---
 
 ### SQL Authentication
-To check different authentication use cases via JDBC SQL Server Driver:
+Use the following command syntax to verify different authentication use cases with the JDBC SQL Server Driver:
 ```
 java_auth#!# < connection attribute and value pairs follow, separated by '#!#' delimiter>
 ```
 
-The connection attribute and value are to be mentioned as pairs:
+Provide the connection information in an attribute-value pair:
 ```
 <connection attribute> |-| <value>
 ```
@@ -325,7 +328,7 @@ Input file type: `.mix`
 ## Adding tests
 The test framework consumes `.sql`, `.txt` and `.mix` files as input (discussed above) and uses them to generate the output (.out) files.
 
-1. Add the input test file in the `test/JDBC/input` directory. You can also create subdirectories and test files inside those
+1. Add your input file to the `test/JDBC/input` directory. For convenience, you can use subdirectories within the directory to organize test files.
 2. Run the test framework to generate the output file (you may want to edit the schedule file to only the run the tests that you have added instead of running all the tests). The test will fail because it does not have a corresponding expected output file yet.
 3. Check the `test/JDBC/output` directory for the generated output file. The output file (.out) will be of the format:
     ```
@@ -335,10 +338,10 @@ The test framework consumes `.sql`, `.txt` and `.mix` files as input (discussed 
     ```
     mv test/JDBC/output/<your_test_filename>.out test/JDBC/expected
     ```
-5. Re-run the test framework and ensure that the newly added test now passes
+5. Re-run the test framework to ensure that the newly added test generates the expected result set and passes.
 
 ## Reading the console output and diff
-If all the tests PASS, `TESTS FAILED` will be zero and you will be greeted with a `BUILD SUCCESS` message
+If all the tests PASS, `TESTS FAILED` will be zero and you will be greeted with a `BUILD SUCCESS` message:
 ```
 ###########################################################################
 TOTAL TESTS:	575
@@ -352,7 +355,7 @@ TESTS FAILED:	0
 [INFO] ------------------------------------------------------------------------
 ```
 
-If one or more tests FAIL, `TESTS FAILED` will not be zero and you will be greeted with a `BUILD FAILURE` message
+If one or more tests FAIL, `TESTS FAILED` will not be zero and you will be greeted with a `BUILD FAILURE` message:
 ```
 ###########################################################################
 TOTAL TESTS:	574
@@ -367,7 +370,7 @@ Output diff can be found in '/home/runner/work/babelfish_extensions/babelfish_ex
 [INFO] ------------------------------------------------------------------------
 ```
 
-You will also be provided with the location of the `.diff` file which contains the diff between the generated output and expected output. The format of the name of the diff file is `dd-MM-yyyy'T'HH:mm:ss.SSS` where
+You will also be provided with the location of the `.diff` file containing the difference between the generated output and expected output. The diff file name is a date/time stamp, in the form `dd-MM-yyyy'T'HH:mm:ss.SSS` where:
 - `dd`   → date
 - `MM`   → month
 - `yyyy` → year
