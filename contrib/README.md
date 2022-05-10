@@ -217,4 +217,4 @@ The following build instructions comply with Ubuntu 20.04 and Amazon Linux 2 env
       ./init.sh
       mvn test
       ```
-For detailed instructions on how to write, add, and run tests in JDBC test framework, refer [here](../test/JDBC/README.md).
+For detailed instructions on how to write, add, and run tests in JDBC test framework, refer [to the online instructions](../test/JDBC/README.md).
