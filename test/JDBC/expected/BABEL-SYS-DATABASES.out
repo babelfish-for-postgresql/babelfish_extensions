@@ -22,6 +22,7 @@ text#!#tinyint#!#nvarchar
 db1#!#<NULL>#!#bbf_unicode_cp1_ci_as
 db2#!#<NULL>#!#bbf_unicode_cp1_ci_as
 master#!#<NULL>#!#bbf_unicode_cp1_ci_as
+msdb#!#<NULL>#!#bbf_unicode_cp1_ci_as
 tempdb#!#<NULL>#!#bbf_unicode_cp1_ci_as
 ~~END~~
 
@@ -33,6 +34,7 @@ text#!#int#!#nvarchar
 db1#!#1#!#Not Applicable
 db2#!#1#!#Not Applicable
 master#!#1#!#Not Applicable
+msdb#!#1#!#Not Applicable
 tempdb#!#1#!#Not Applicable
 ~~END~~
 

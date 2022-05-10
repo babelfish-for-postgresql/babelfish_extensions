@@ -432,6 +432,49 @@ master_guest
 ~~END~~
 
 
+USE MSDB;
+GO
+
+SELECT user_name();
+GO
+~~START~~
+nvarchar
+dbo
+~~END~~
+
+
+SELECT user_name(user_id());
+GO
+~~START~~
+nvarchar
+dbo
+~~END~~
+
+
+SELECT user_name(user_id('guest'));
+GO
+~~START~~
+nvarchar
+guest
+~~END~~
+
+
+SELECT rolname FROM pg_roles WHERE oid = user_id('dbo');
+GO
+~~START~~
+varchar
+msdb_dbo
+~~END~~
+
+
+SELECT rolname FROM pg_roles WHERE oid = user_id('guest');
+GO
+~~START~~
+varchar
+msdb_guest
+~~END~~
+
+
 USE TEMPDB;
 GO
 
@@ -492,6 +535,9 @@ dbo#!#dbo#!##!#db1#!#dbo
 master_db_owner#!#db_owner#!##!#master#!#
 master_dbo#!#dbo#!##!#master#!#dbo
 master_guest#!#guest#!##!#master#!#
+msdb_db_owner#!#db_owner#!##!#msdb#!#
+msdb_dbo#!#dbo#!##!#msdb#!#dbo
+msdb_guest#!#guest#!##!#msdb#!#
 tempdb_db_owner#!#db_owner#!##!#tempdb#!#
 tempdb_dbo#!#dbo#!##!#tempdb#!#dbo
 tempdb_guest#!#guest#!##!#tempdb#!#
@@ -583,6 +629,9 @@ varchar#!#nvarchar#!#varchar#!#nvarchar#!#nvarchar
 master_db_owner#!#db_owner#!##!#master#!#
 master_dbo#!#dbo#!##!#master#!#dbo
 master_guest#!#guest#!##!#master#!#
+msdb_db_owner#!#db_owner#!##!#msdb#!#
+msdb_dbo#!#dbo#!##!#msdb#!#dbo
+msdb_guest#!#guest#!##!#msdb#!#
 tempdb_db_owner#!#db_owner#!##!#tempdb#!#
 tempdb_dbo#!#dbo#!##!#tempdb#!#dbo
 tempdb_guest#!#guest#!##!#tempdb#!#
@@ -626,6 +675,9 @@ db2_dbo#!##!#dbo#!#db2#!#dbo
 master_db_owner#!##!#db_owner#!#master#!#
 master_dbo#!##!#dbo#!#master#!#dbo
 master_guest#!##!#guest#!#master#!#
+msdb_db_owner#!##!#db_owner#!#msdb#!#
+msdb_dbo#!##!#dbo#!#msdb#!#dbo
+msdb_guest#!##!#guest#!#msdb#!#
 tempdb_db_owner#!##!#db_owner#!#tempdb#!#
 tempdb_dbo#!##!#dbo#!#tempdb#!#dbo
 tempdb_guest#!##!#guest#!#tempdb#!#
@@ -653,6 +705,7 @@ varchar#!#bit
 db1_dbo#!#1
 db2_dbo#!#1
 master_dbo#!#1
+msdb_dbo#!#1
 tempdb_dbo#!#1
 ~~END~~
 
@@ -785,6 +838,9 @@ db2_dbo#!#dbo#!##!#db2#!#dbo
 master_db_owner#!#db_owner#!##!#master#!#
 master_dbo#!#dbo#!##!#master#!#dbo
 master_guest#!#guest#!##!#master#!#
+msdb_db_owner#!#db_owner#!##!#msdb#!#
+msdb_dbo#!#dbo#!##!#msdb#!#dbo
+msdb_guest#!#guest#!##!#msdb#!#
 tempdb_db_owner#!#db_owner#!##!#tempdb#!#
 tempdb_dbo#!#dbo#!##!#tempdb#!#dbo
 tempdb_guest#!#guest#!##!#tempdb#!#
@@ -803,6 +859,9 @@ varchar#!#nvarchar#!#varchar#!#nvarchar#!#nvarchar
 master_db_owner#!#db_owner#!##!#master#!#
 master_dbo#!#dbo#!##!#master#!#dbo
 master_guest#!#guest#!##!#master#!#
+msdb_db_owner#!#db_owner#!##!#msdb#!#
+msdb_dbo#!#dbo#!##!#msdb#!#dbo
+msdb_guest#!#guest#!##!#msdb#!#
 tempdb_db_owner#!#db_owner#!##!#tempdb#!#
 tempdb_dbo#!#dbo#!##!#tempdb#!#dbo
 tempdb_guest#!#guest#!##!#tempdb#!#

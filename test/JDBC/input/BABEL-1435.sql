@@ -15,6 +15,11 @@ SELECT COUNT(*) FROM pg_roles where rolname = 'tempdb_db_owner';
 SELECT COUNT(*) FROM pg_namespace where nspname = 'tempdb_dbo';
 GO
 
+SELECT COUNT(*) FROM pg_roles where rolname = 'msdb_dbo';
+SELECT COUNT(*) FROM pg_roles where rolname = 'msdb_db_owner';
+SELECT COUNT(*) FROM pg_namespace where nspname = 'msdb_dbo';
+GO
+
 -- Test Create User Database
 CREATE DATABASE db1;
 GO

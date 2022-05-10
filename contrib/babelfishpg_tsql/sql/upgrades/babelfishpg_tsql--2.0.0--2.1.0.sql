@@ -1092,5 +1092,20 @@ CREATE COLLATION sys.Japanese_CS_AS (provider = icu, locale = 'ja_JP');
 CREATE COLLATION sys.Japanese_CI_AI (provider = icu, locale = 'ja_JP@colStrength=primary', deterministic = false);
 CREATE COLLATION sys.Japanese_CI_AS (provider = icu, locale = 'ja_JP@colStrength=secondary', deterministic = false);
 
+CREATE OR REPLACE PROCEDURE BABEL_CREATE_MSDB_IF_NOT_EXISTS_INTERNAL(IN login TEXT)
+AS 'babelfishpg_tsql', 'create_msdb_if_not_exists' LANGUAGE C;
+
+CREATE OR REPLACE PROCEDURE BABEL_CREATE_MSDB_IF_NOT_EXISTS()
+LANGUAGE PLPGSQL
+AS $$
+DECLARE
+  sa_name TEXT := (SELECT owner FROM sys.babelfish_sysdatabases WHERE dbid=1);
+BEGIN
+  CALL SYS.BABEL_CREATE_MSDB_IF_NOT_EXISTS_INTERNAL(sa_name);
+END
+$$;
+
+CALL sys.babel_create_msdb_if_not_exists();
+
 -- Reset search_path to not affect any subsequent scripts
 SELECT set_config('search_path', trim(leading 'sys, ' from current_setting('search_path')), false);
