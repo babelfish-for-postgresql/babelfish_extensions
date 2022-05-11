@@ -17,6 +17,11 @@ RETURNS sys.NVARCHAR(128)
 AS 'babelfishpg_tsql', 'user_name'
 LANGUAGE C IMMUTABLE PARALLEL SAFE;
 
+CREATE OR REPLACE FUNCTION sys.tsql_get_constraintdef(IN login OID DEFAULT NULL)
+RETURNS text
+AS 'babelfishpg_tsql', 'tsql_get_constraintdef'
+LANGUAGE C IMMUTABLE PARALLEL SAFE;
+
 CREATE OR REPLACE FUNCTION sys.user_id(IN user_name TEXT DEFAULT NULL)
 RETURNS OID
 AS 'babelfishpg_tsql', 'user_id'
