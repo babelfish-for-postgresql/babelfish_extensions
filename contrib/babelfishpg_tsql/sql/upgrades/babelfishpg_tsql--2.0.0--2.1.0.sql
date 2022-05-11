@@ -2481,5 +2481,31 @@ SELECT CAST(CURRENT_TIMESTAMP AT TIME ZONE 'UTC'::pg_catalog.text AS sys.DATETIM
 $BODY$
 LANGUAGE SQL PARALLEL SAFE;
 
+CREATE OR REPLACE VIEW sys.database_mirroring
+AS
+SELECT database_id,
+	CAST(NULL AS sys.uniqueidentifier) AS mirroring_guid,
+	CAST(NULL AS sys.tinyint) AS mirroring_state,
+	CAST(NULL AS sys.nvarchar(60)) AS mirroring_state_desc,
+	CAST(NULL AS sys.tinyint) AS mirroring_role,
+	CAST(NULL AS sys.nvarchar(60)) AS mirroring_role_desc,
+	CAST(NULL AS int) AS mirroring_role_sequence,
+	CAST(NULL AS sys.tinyint) as mirroring_safety_level,
+	CAST(NULL AS sys.nvarchar(60)) AS mirroring_safety_level_desc,
+	CAST(NULL AS int) as mirroring_safety_sequence,
+	CAST(NULL AS sys.nvarchar(128)) AS mirroring_partner_name,
+	CAST(NULL AS sys.nvarchar(128)) AS mirroring_partner_instance,
+	CAST(NULL AS sys.nvarchar(128)) AS mirroring_witness_name,
+	CAST(NULL AS sys.tinyint) AS mirroring_witness_state,
+	CAST(NULL AS sys.nvarchar(60)) AS mirroring_witness_state_desc,
+	CAST(NULL AS numeric(25,0)) AS mirroring_failover_lsn,
+	CAST(NULL AS int) AS mirroring_connection_timeout,
+	CAST(NULL AS int) AS mirroring_redo_queue,
+	CAST(NULL AS sys.nvarchar(60)) AS mirroring_redo_queue_type,
+	CAST(NULL AS numeric(25,0)) AS mirroring_end_of_log_lsn,
+	CAST(NULL AS numeric(25,0)) AS mirroring_replication_lsn
+FROM sys.databases;
+GRANT SELECT ON sys.database_mirroring TO PUBLIC;
+
 -- Reset search_path to not affect any subsequent scripts
 SELECT set_config('search_path', trim(leading 'sys, ' from current_setting('search_path')), false);
