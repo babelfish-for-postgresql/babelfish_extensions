@@ -347,7 +347,7 @@ sp_describe_first_result_set_internal(PG_FUNCTION_ARGS)
 	char *query;
 	int rc;
 	ANTLR_result result;
-	char *parsedbatch;
+	char *parsedbatch = NULL;
 
 	/* stuff done only on the first call of the function */
 	if (SRF_IS_FIRSTCALL())
@@ -365,21 +365,21 @@ sp_describe_first_result_set_internal(PG_FUNCTION_ARGS)
 		attinmeta = TupleDescGetAttInMetadata(tupdesc);
 		funcctx->attinmeta = attinmeta;
 
-		/* First, pass the batch to the ANTLR parser */
-		result = antlr_parser_cpp(batch);
-		if (!result.success)
-			report_antlr_error(result);
-		parsedbatch = ((PLtsql_stmt_execsql *)lsecond(pltsql_parse_result->body))->sqlstmt->query;
-
-		/* If TSQL Query is NULL string then send no rows. */
-		if (batch && batch[0] != '\0')
+		/* First, pass the batch to the ANTLR parser. */
+		if (batch)
 		{
-			/* TODO call ANTLR to parse the query and return NULL for valid non-select queries. */
-			if (strncmp(batch, "select", 6) != 0)
-					ereport(ERROR,
-							 (errcode(ERRCODE_INTERNAL_ERROR),
-							 errmsg("sp_describe_first_result_set supports only select statements %s", batch)));
+			result = antlr_parser_cpp(batch);
+			if (!result.success)
+				report_antlr_error(result);
 
+			/* Skip if NULL query was passed. */
+			if (pltsql_parse_result->body)
+				parsedbatch = ((PLtsql_stmt_execsql *)lsecond(pltsql_parse_result->body))->sqlstmt->query;
+		}
+
+		/* If TSQL Query is NULL string or a non-select query then send no rows. */
+		if (parsedbatch && strncmp(parsedbatch, "select", 6) == 0)
+		{
 			query = psprintf("CREATE VIEW %s as %s", sp_describe_first_result_set_view_name, parsedbatch);
 	
 			/* Switch Dialect so that SPI_execute creates a TSQL View, obeying TSQL Syntax. */
