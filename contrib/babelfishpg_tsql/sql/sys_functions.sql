@@ -1752,7 +1752,7 @@ END;
 $$;
 GRANT EXECUTE ON FUNCTION sys.trigger_nestlevel() TO PUBLIC;
 
-CREATE OR REPLACE VIEW has_perms_by_name_view
+CREATE OR REPLACE VIEW babelfish_has_perms_by_name_permissions
 AS
 SELECT t.securable_type,t.permission_name,t.implied_dbo_permissions,t.fully_supported FROM
 (
@@ -2033,7 +2033,7 @@ SELECT t.securable_type,t.permission_name,t.implied_dbo_permissions,t.fully_supp
     ('xml schema collection', 'take ownership', 'f', 'f'),
     ('xml schema collection', 'view definition', 'f', 'f')
 ) t(securable_type, permission_name, implied_dbo_permissions, fully_supported);
-GRANT SELECT ON has_perms_by_name_view TO PUBLIC;
+GRANT SELECT ON babelfish_has_perms_by_name_permissions TO PUBLIC;
 
 CREATE OR REPLACE FUNCTION sys.has_perms_by_name(
     securable SYS.SYSNAME, 
@@ -2067,7 +2067,7 @@ BEGIN
     return_value := NULL;
 
     -- Lower-case to avoid case issues, remove trailing whitespace to match SQL SERVER behavior
-    -- Objects created in Babelfish are stored in lower-case in pg_class/pg_proc
+	-- Objects created in Babelfish are stored in lower-case in pg_class/pg_proc
     cs_as_securable = lower(rtrim(cs_as_securable));
     cs_as_securable_class = lower(rtrim(cs_as_securable_class));
     cs_as_permission = lower(rtrim(cs_as_permission));
@@ -2079,9 +2079,10 @@ BEGIN
         RETURN NULL;
     ELSIF cs_as_sub_securable IS NULL AND cs_as_sub_securable_class IS NOT NULL THEN
         RETURN NULL;
-    -- If they are both defined, sub_securable_class must be set to 'column' and securable_class to 'object'
-    -- Additionally, permission cannot be 'any' when checking column privileges
-    ELSIF cs_as_sub_securable IS NOT NULL 
+    -- If they are both defined, user must be evaluating column privileges.
+    -- Check that inputs are valid for column privileges: sub_securable_class must 
+    -- be column, securable_class must be object, and permission cannot be any.
+    ELSIF cs_as_sub_securable_class IS NOT NULL 
             AND (cs_as_sub_securable_class != 'column' 
                     OR cs_as_securable_class IS NULL 
                     OR cs_as_securable_class != 'object' 
@@ -2096,13 +2097,26 @@ BEGIN
         RETURN NULL;
     END IF;
 
-    IF cs_as_securable_class IS NULL THEN
+    IF cs_as_securable_class = 'server' THEN
+        -- SQL Server does not permit a securable_class value of 'server'.
+        -- securable_class should be NULL to evaluate server permissions.
+        RETURN NULL;
+    ELSIF cs_as_securable_class IS NULL THEN
+        -- NULL indicates a server permission. Set this variable so that we can
+        -- search for the matching entry in babelfish_has_perms_by_name_permissions
         cs_as_securable_class = 'server';
+    END IF;
+
+    IF cs_as_sub_securable IS NOT NULL THEN
+        cs_as_sub_securable := babelfish_remove_delimiter_pair(cs_as_sub_securable);
+        IF cs_as_sub_securable IS NULL THEN
+            RETURN NULL;
+        END IF;
     END IF;
 
     SELECT p.implied_dbo_permissions,p.fully_supported 
     INTO implied_dbo_permissions,fully_supported 
-    FROM has_perms_by_name_view p 
+    FROM babelfish_has_perms_by_name_permissions p 
     WHERE p.securable_type = cs_as_securable_class AND p.permission_name = cs_as_permission;
     
     IF implied_dbo_permissions IS NULL OR fully_supported IS NULL THEN
@@ -2123,19 +2137,20 @@ BEGIN
             RETURN NULL;
         ELSIF (SELECT COUNT(nspname) FROM sys.babelfish_namespace_ext ext
                 WHERE ext.orig_name = bbf_schema_name 
-                    AND ext.dbid::oid = sys.db_id()::oid) != 1 THEN
+                    AND CAST(ext.dbid AS oid) = CAST(sys.db_id() AS oid)) != 1 THEN
             RETURN 0;
         END IF;
     END IF;
 
     IF fully_supported = 'f' AND CURRENT_USER IN('dbo', 'master_dbo', 'tempdb_dbo', 'msdb_dbo') THEN
-        RETURN implied_dbo_permissions::integer;
+        RETURN CAST(implied_dbo_permissions AS integer);
     ELSIF fully_supported = 'f' THEN
         RETURN 0;
     END IF;
 
-    -- The only permissions that are fully supported belong to the OBJECT securable
-    -- If we reach this point we know the securable type is OBJECT
+    -- The only permissions that are fully supported belong to the OBJECT securable class.
+    -- The block above has dealt with all permissions that are not fully supported, so 
+    -- if we reach this point we know the securable class is OBJECT.
     SELECT s.db_name, s.schema_name, s.object_name INTO db_name, bbf_schema_name, object_name 
     FROM babelfish_split_object_name(cs_as_securable) s;
 
@@ -2144,6 +2159,7 @@ BEGIN
         RETURN NULL;
     END IF;
 
+    -- If schema was not specified, use the default
     IF bbf_schema_name IS NULL OR bbf_schema_name = '' THEN
         bbf_schema_name := sys.schema_name();
     END IF;
@@ -2158,19 +2174,18 @@ BEGIN
     pg_schema := (SELECT nspname 
                     FROM sys.babelfish_namespace_ext ext 
                     WHERE ext.orig_name = bbf_schema_name 
-                        AND ext.dbid::oid = database_id::oid);
+                        AND CAST(ext.dbid AS oid) = CAST(database_id AS oid));
+
+    IF pg_schema IS NULL THEN
+        -- Shared schemas like sys and pg_catalog do not exist in the table above.
+        -- These schemas do not need to be translated from Babelfish to Postgres
+        pg_schema := bbf_schema_name;
+    END IF;
 
     -- Surround with double-quotes to handle names that contain periods/spaces
     qualified_name := concat('"', pg_schema, '"."', object_name, '"');
 
     SELECT oid INTO namespace_id FROM pg_catalog.pg_namespace WHERE nspname = pg_schema;
-    
-    IF cs_as_sub_securable IS NOT NULL THEN
-        cs_as_sub_securable := babelfish_remove_delimiter_pair(cs_as_sub_securable);
-        IF cs_as_sub_securable IS NULL THEN
-            RETURN NULL;
-        END IF;
-    END IF;
 
     object_type := (
         SELECT CASE
@@ -2217,7 +2232,7 @@ BEGIN
   
     -- Get signature for function-like objects
     IF object_type IN('function', 'procedure') THEN
-        SELECT oid::regprocedure 
+        SELECT CAST(oid AS regprocedure) 
             INTO function_signature 
             FROM pg_catalog.pg_proc 
             WHERE proname = object_name 
@@ -2226,24 +2241,24 @@ BEGIN
 
 	return_value := (
         SELECT CASE            
-            WHEN cs_as_permission = 'any' THEN has_any_privilege(object_type, pg_schema, object_name)
+            WHEN cs_as_permission = 'any' THEN babelfish_has_any_privilege(object_type, pg_schema, object_name)
 
             WHEN object_type = 'column'
                 THEN CASE
                     WHEN cs_as_permission IN('insert', 'delete', 'execute') THEN NULL
-                    ELSE has_column_privilege(qualified_name, cs_as_sub_securable, cs_as_permission)::integer
+                    ELSE CAST(has_column_privilege(qualified_name, cs_as_sub_securable, cs_as_permission) AS integer)
                 END
 
             WHEN object_type = 'table'
                 THEN CASE
                     WHEN cs_as_permission = 'execute' THEN 0
-                    ELSE has_table_privilege(qualified_name, cs_as_permission)::integer
+                    ELSE CAST(has_table_privilege(qualified_name, cs_as_permission) AS integer)
                 END
 
             WHEN object_type = 'function'
                 THEN CASE
                     WHEN cs_as_permission IN('select', 'execute')
-                        THEN has_function_privilege(function_signature, 'execute')::integer
+                        THEN CAST(has_function_privilege(function_signature, 'execute') AS integer)
                     WHEN cs_as_permission IN('update', 'insert', 'delete', 'references')
                         THEN 0
                     ELSE NULL
@@ -2252,7 +2267,7 @@ BEGIN
             WHEN object_type = 'procedure'
                 THEN CASE
                     WHEN cs_as_permission = 'execute'
-                        THEN has_function_privilege(function_signature, 'execute')::integer
+                        THEN CAST(has_function_privilege(function_signature, 'execute') AS integer)
                     WHEN cs_as_permission IN('select', 'update', 'insert', 'delete', 'references')
                         THEN 0
                     ELSE NULL

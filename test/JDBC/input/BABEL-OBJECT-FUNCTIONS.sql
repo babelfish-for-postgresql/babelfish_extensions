@@ -25,6 +25,9 @@ GO
 SELECT (CASE WHEN OBJECT_NAME(OBJECT_ID(N'   "obj_funcs"."t1"  ', N'U')) = 't1' THEN 'true' ELSE 'false' END) result;
 GO
 
+SELECT (CASE WHEN OBJECT_ID(N'non_existent_schema.t1') IS NULL THEN 'true' ELSE 'false' END) result;
+GO
+
 DROP TABLE obj_funcs.t1;
 GO
 DROP SCHEMA obj_funcs;

@@ -299,6 +299,22 @@ int
 ~~END~~
 
 
+SELECT HAS_PERMS_BY_NAME('sys.databases','OBJECT', 'SELECT');
+GO
+~~START~~
+int
+1
+~~END~~
+
+
+SELECT HAS_PERMS_BY_NAME('pg_catalog.pg_class','OBJECT', 'SELECT');
+GO
+~~START~~
+int
+1
+~~END~~
+
+
 
 
 
@@ -1526,6 +1542,15 @@ GO
 
 -- invalid in SQL Server
 SELECT HAS_PERMS_BY_NAME(NULL, 'SERVER', 'VIEW SERVER STATE');
+GO
+~~START~~
+int
+<NULL>
+~~END~~
+
+
+-- invalid in SQL Server
+SELECT HAS_PERMS_BY_NAME('server_name', 'SERVER', 'VIEW SERVER STATE');
 GO
 ~~START~~
 int

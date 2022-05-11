@@ -209,6 +209,12 @@ GO
 SELECT HAS_PERMS_BY_NAME('t_perms_by_name','OBJECT', 'SELECT');
 GO
 
+SELECT HAS_PERMS_BY_NAME('sys.databases','OBJECT', 'SELECT');
+GO
+
+SELECT HAS_PERMS_BY_NAME('pg_catalog.pg_class','OBJECT', 'SELECT');
+GO
+
 
 
 -- =============== Views ===============
@@ -801,6 +807,10 @@ GO
 
 -- invalid in SQL Server
 SELECT HAS_PERMS_BY_NAME(NULL, 'SERVER', 'VIEW SERVER STATE');
+GO
+
+-- invalid in SQL Server
+SELECT HAS_PERMS_BY_NAME('server_name', 'SERVER', 'VIEW SERVER STATE');
 GO
 
 -- securable must be NULL to evaluate SERVER permissions

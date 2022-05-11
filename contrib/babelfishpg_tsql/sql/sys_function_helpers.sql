@@ -10173,7 +10173,7 @@ END;
 $$
 LANGUAGE plpgsql;
 
-CREATE OR REPLACE FUNCTION has_any_privilege(
+CREATE OR REPLACE FUNCTION babelfish_has_any_privilege(
     perm_target_type text,
     schema_name text,
     object_name text)
