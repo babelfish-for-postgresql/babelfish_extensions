@@ -49,6 +49,7 @@ static List *gen_dropdb_subcmds(const char *schema,
 								const char *dbo,
 								List *db_users);
 static Oid do_create_bbf_db(const char *dbname, List *options, const char *owner);
+static void create_bbf_db_internal(const char *dbname, List *options, const char *owner, int16 dbid);
 static List *grant_guest_to_logins(StringInfoData *query);
 static void drop_related_bbf_namespace_entries(int16 dbid);
 
@@ -261,8 +262,8 @@ create_bbf_db(ParseState *pstate, const CreatedbStmt *stmt)
 /* 
  * To guard the rare case that we have used up all the possible sequence values 
  * and it wraps around, check if the next seq value is used by an existing DB.
- * Also, we reserved four IDs 1-4 for native databases, 1-2 are created when
- * initializing babelfishpg_tsql (master and tempdb), 3-4 are just placeholder that 
+ * Also, we reserved four IDs 1-4 for native databases, 1,2 and 4 are created when
+ * initializing babelfishpg_tsql (master, tempdb, and msdb, respectively), 3 is just a placeholder that
  * we currently don't have plan to support. New user database will start from ID=5.
  *
  * If we can't find one after looping the entire range of sequence values
@@ -278,7 +279,7 @@ static int16 getAvailDbid() {
 			start = dbid;
 		else if (start == dbid)
 			return InvalidDbid;
-	} while (dbid == 3 || dbid == 4 || get_db_name(dbid) != NULL);
+	} while (dbid == 3 || get_db_name(dbid) != NULL);
 
 	return dbid;
 }
@@ -287,6 +288,31 @@ static Oid
 do_create_bbf_db(const char *dbname, List *options, const char *owner)
 {
 	int16       dbid;
+	const char	*prev_current_user;
+
+	if (DbidIsValid(get_db_id(dbname)))
+		ereport(ERROR,
+			(errcode(ERRCODE_DUPLICATE_DATABASE),
+			errmsg("Database '%s' already exists. Choose a different database name.",
+					dbname)));
+
+	/* Get new DB ID. Need sysadmin to do that. */
+	prev_current_user = GetUserNameFromId(GetUserId(), false);
+	bbf_set_current_user("sysadmin");
+	if ((dbid = getAvailDbid()) == InvalidDbid)
+		ereport(ERROR,
+				(errcode(ERRCODE_INVALID_DATABASE_DEFINITION),
+				 errmsg("cannot find an available ID for database \"%s\"", dbname)));
+	bbf_set_current_user(prev_current_user);
+
+	create_bbf_db_internal(dbname, options, owner, dbid);
+
+	return dbid;
+}
+
+static void
+create_bbf_db_internal(const char *dbname, List *options, const char *owner, int16 dbid)
+{
 	int16 		old_dbid;
 	char		*old_dbname;
 	Oid         datdba;
@@ -305,12 +331,6 @@ do_create_bbf_db(const char *dbname, List *options, const char *owner)
 
 	/* TODO: Extract options */
 
-	if (DbidIsValid(get_db_id(dbname)))
-		ereport(ERROR,
-			(errcode(ERRCODE_DUPLICATE_DATABASE),
-			errmsg("Database '%s' already exists. Choose a different database name.",
-					dbname)));
-
 	tuple = SearchSysCache1(COLLOID, ObjectIdGetDatum(get_server_collation_oid_internal()));
 	if (!HeapTupleIsValid(tuple))
 		ereport(ERROR,
@@ -319,8 +339,8 @@ do_create_bbf_db(const char *dbname, List *options, const char *owner)
 	default_collation = ((Form_pg_collation) GETSTRUCT(tuple))->collname;
 	ReleaseSysCache(tuple);
 
-	/* single-db mode check */
-	if (SINGLE_DB == get_migration_mode())
+	/* single-db mode check. IDs 1-4 are reserved for native system databases */
+	if (SINGLE_DB == get_migration_mode() && dbid > 4)
 	{
 		const char *user_dbname = get_one_user_db_name();
 		if (user_dbname)
@@ -369,19 +389,9 @@ do_create_bbf_db(const char *dbname, List *options, const char *owner)
 
 	sysdatabase_rel = table_open(sysdatabases_oid, RowExclusiveLock);
 
-	/* Get new DB ID. Need sysadmin to do that. */
-	prev_current_user = GetUserNameFromId(GetUserId(), false);
-	bbf_set_current_user("sysadmin");
-	if ((dbid = getAvailDbid()) == InvalidDbid)
-		ereport(ERROR,
-				(errcode(ERRCODE_INVALID_DATABASE_DEFINITION),
-				 errmsg("cannot find an available ID for database \"%s\"", dbname)));
-	bbf_set_current_user(prev_current_user);
-
 	/* Write catalog entry */
 	new_record = palloc0(sizeof(Datum) * SYSDATABASES_NUM_COLS);
 	new_record_nulls = palloc0(sizeof(bool) * SYSDATABASES_NUM_COLS);
-
 
 	new_record[0] = Int16GetDatum(dbid);
 	new_record[1] = Int32GetDatum(0);
@@ -411,7 +421,7 @@ do_create_bbf_db(const char *dbname, List *options, const char *owner)
 
 	old_dbid = get_cur_db_id();
 	old_dbname = get_cur_db_name();
-	set_cur_db(dbid, dbname);  /* tempororaily set current dbid as the new id */
+	set_cur_db(dbid, dbname);  /* temporarily set current dbid as the new id */
 
 	PG_TRY();
 	{
@@ -462,8 +472,6 @@ do_create_bbf_db(const char *dbname, List *options, const char *owner)
 
 	/* Set current user back to previous user */
 	bbf_set_current_user(prev_current_user);
-
-	return dbid;
 }
 
 void
@@ -481,11 +489,15 @@ drop_bbf_db(const char *dbname, bool missing_ok, bool force_drop)
 	ListCell   			*parsetree_item;
 	const char			*prev_current_user;
 
-	if ((strcmp(dbname, "master") == 0) || (strcmp(dbname, "tempdb") == 0))
+	if ((strlen(dbname) == 6 && (strncmp(dbname, "master", 6) == 0)) ||
+    ((strlen(dbname) == 6 && strncmp(dbname, "tempdb", 6) == 0)) ||
+    (strlen(dbname) == 4 && (strncmp(dbname, "msdb", 4) == 0)))
+	{
 		if (!force_drop)
 			ereport(ERROR,
 					(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
 					 errmsg("Cannot drop database \"%s\", because it is a system database", dbname)));
+	}
 
 	/* Check if the DB exist */
 	sysdatabase_rel = table_open(sysdatabases_oid, RowExclusiveLock);
@@ -623,6 +635,7 @@ Datum create_builtin_dbs(PG_FUNCTION_ARGS)
 				  			PGC_S_SESSION, GUC_ACTION_SAVE, true, 0, false);
 		do_create_bbf_db("master", NULL, sa_name);
 		do_create_bbf_db("tempdb", NULL, sa_name);
+		do_create_bbf_db("msdb", NULL, sa_name);
 		set_config_option("babelfishpg_tsql.sql_dialect", sql_dialect_value_old,
 							(superuser() ? PGC_SUSET : PGC_USERSET),
 				  			PGC_S_SESSION, GUC_ACTION_SAVE, true, 0, false);
@@ -631,6 +644,41 @@ Datum create_builtin_dbs(PG_FUNCTION_ARGS)
 	{
 		set_config_option("babelfishpg_tsql.sql_dialect", sql_dialect_value_old,
 							(superuser() ? PGC_SUSET : PGC_USERSET),
+				  			PGC_S_SESSION, GUC_ACTION_SAVE, true, 0, false);
+
+	}
+	PG_END_TRY();
+	PG_RETURN_INT32(0);
+}
+
+// This function is only being used for the purposes of the upgrade script to add the msdb database
+// It was first added in babelfishpg_tsql--1.2.0--1.3.0.sql
+PG_FUNCTION_INFO_V1(create_msdb_if_not_exists);
+Datum create_msdb_if_not_exists(PG_FUNCTION_ARGS)
+{	
+	const char  *sql_dialect_value_old;
+	const char  *tsql_dialect = "tsql";
+	const char  *sa_name = text_to_cstring(PG_GETARG_TEXT_PP(0));
+
+	if (get_db_name(4) != NULL || DbidIsValid(get_db_id("msdb")))
+		PG_RETURN_INT32(0);
+
+	sql_dialect_value_old = GetConfigOption("babelfishpg_tsql.sql_dialect", true, true);
+
+	PG_TRY();
+	{
+		set_config_option("babelfishpg_tsql.sql_dialect", tsql_dialect,
+				  			(superuser() ? PGC_SUSET : PGC_USERSET),
+				  			PGC_S_SESSION, GUC_ACTION_SAVE, true, 0, false);
+		create_bbf_db_internal("msdb", NULL, sa_name, 4);
+		set_config_option("babelfishpg_tsql.sql_dialect", sql_dialect_value_old,
+				  			(superuser() ? PGC_SUSET : PGC_USERSET),
+				  			PGC_S_SESSION, GUC_ACTION_SAVE, true, 0, false);
+	}
+	PG_CATCH();
+	{
+		set_config_option("babelfishpg_tsql.sql_dialect", sql_dialect_value_old,
+				  			(superuser() ? PGC_SUSET : PGC_USERSET),
 				  			PGC_S_SESSION, GUC_ACTION_SAVE, true, 0, false);
 
 	}
@@ -661,6 +709,7 @@ Datum drop_all_dbs(PG_FUNCTION_ARGS)
 		/* drop built-in DBs */
 		drop_bbf_db("master", false, true);
 		drop_bbf_db("tempdb", false, true);
+		drop_bbf_db("msdb", false, true);
 
 		/* drop user created DBs */
 		while (!all_db_dropped)

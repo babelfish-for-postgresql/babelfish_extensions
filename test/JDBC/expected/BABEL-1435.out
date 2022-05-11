@@ -4,6 +4,7 @@ GO
 ~~START~~
 text
 master
+msdb
 tempdb
 ~~END~~
 
@@ -56,6 +57,26 @@ int
 ~~END~~
 
 
+SELECT COUNT(*) FROM pg_roles where rolname = 'msdb_dbo';
+SELECT COUNT(*) FROM pg_roles where rolname = 'msdb_db_owner';
+SELECT COUNT(*) FROM pg_namespace where nspname = 'msdb_dbo';
+GO
+~~START~~
+int
+1
+~~END~~
+
+~~START~~
+int
+1
+~~END~~
+
+~~START~~
+int
+1
+~~END~~
+
+
 -- Test Create User Database
 CREATE DATABASE db1;
 GO
@@ -66,6 +87,7 @@ GO
 text
 db1
 master
+msdb
 tempdb
 ~~END~~
 
@@ -176,6 +198,7 @@ GO
 ~~START~~
 text
 master
+msdb
 tempdb
 ~~END~~
 
@@ -245,6 +268,7 @@ GO
 ~~START~~
 text
 master
+msdb
 tempdb
 ~~END~~
 
