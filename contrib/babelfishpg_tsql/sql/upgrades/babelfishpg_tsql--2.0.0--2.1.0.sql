@@ -1252,5 +1252,7 @@ END;
 $$
 LANGUAGE plpgsql;
 
+ALTER PROCEDURE sys.babel_drop_all_users() RENAME TO babel_drop_all_users_deprecated_2_1;
+
 -- Reset search_path to not affect any subsequent scripts
 SELECT set_config('search_path', trim(leading 'sys, ' from current_setting('search_path')), false);
