@@ -83,6 +83,7 @@
 
 extern bool escape_hatch_unique_constraint;
 extern bool pltsql_recursive_triggers;
+extern bool restore_tsql_tabletype;
 
 extern List *babelfishpg_tsql_raw_parser(const char *str, RawParseMode mode);
 extern bool install_backend_gram_hooks();
@@ -2124,7 +2125,7 @@ static void bbf_ProcessUtility(PlannedStmt *pstmt,
 
 					address = CreateFunction(pstate, (CreateFunctionStmt *) parsetree);
 
-					if (tbltypStmt)
+					if (tbltypStmt || restore_tsql_tabletype)
 					{
 						/*
 						 * Add internal dependency between the table type and
@@ -3006,6 +3007,9 @@ static void bbf_ProcessUtility(PlannedStmt *pstmt,
 		case T_CreateStmt:
 			{
 				CreateStmt *create_stmt = (CreateStmt *) parsetree;
+
+				if(restore_tsql_tabletype)
+					create_stmt->tsql_tabletype = true;
 
 				if (prev_ProcessUtility)
 					prev_ProcessUtility(pstmt, queryString, readOnlyTree, context, params,
