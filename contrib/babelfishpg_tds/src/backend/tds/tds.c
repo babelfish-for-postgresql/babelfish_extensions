@@ -137,14 +137,6 @@ typedef struct LocalTdsStatus
 	TransactionId backend_xmin;
 } LocalTdsStatus;
 
-static const struct config_enum_entry isolation_level_options[] = {
-	{"serializable", XACT_SERIALIZABLE, false},
-	{"repeatable read", XACT_REPEATABLE_READ, false},
-	{"read committed", XACT_READ_COMMITTED, false},
-	{"read uncommitted", XACT_READ_UNCOMMITTED, false},
-	{NULL, 0}
-};
-
 static TdsStatus *TdsStatusArray = NULL;
 static TdsStatus *MyTdsStatusEntry;
 static LocalTdsStatus *localTdsStatusTable = NULL;
@@ -369,8 +361,6 @@ tdsstat_bestart(void)
 	int len;
 	char *library_name = NULL;
 	const char *language = NULL;
-	const char *isolation_level_str = NULL;
-	const struct config_enum_entry *entry;
 
 	/*
 	 * To minimize the time spent modifying the TdsStatus entry, and
@@ -406,17 +396,7 @@ tdsstat_bestart(void)
 	ltdsentry.textsize = atoi(GetConfigOption("babelfishpg_tsql.textsize", true, true));
 	ltdsentry.datefirst = atoi(GetConfigOption("babelfishpg_tsql.datefirst", true, true));
 	ltdsentry.lock_timeout = atoi(GetConfigOption("lock_timeout", true, true));
-
-	isolation_level_str = GetConfigOption("default_transaction_isolation", true, true);
-
-	for (entry = isolation_level_options; entry && entry->name; entry++)
-	{
-		if (strcmp(entry->name, isolation_level_str) == 0)
-		{
-			ltdsentry.transaction_isolation = entry->val;
-			break;
-		}
-	}
+	ltdsentry.transaction_isolation = DefaultXactIsoLevel;
 
 	language = GetConfigOption("babelfishpg_tsql.language", true, true);
 
