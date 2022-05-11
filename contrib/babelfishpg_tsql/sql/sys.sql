@@ -116,7 +116,7 @@ CREATE TABLE sys.versions
 );
 GRANT SELECT ON sys.versions TO PUBLIC;
 
-CREATE TABLE sys.syslanguages (
+CREATE TABLE sys.babelfish_syslanguages (
     lang_id SMALLINT,
     lang_name_pg VARCHAR(30),
     lang_alias_pg VARCHAR(30),
@@ -126,7 +126,7 @@ CREATE TABLE sys.syslanguages (
     spec_culture VARCHAR(10),
     lang_data_jsonb JSONB
 ) WITH (OIDS = FALSE);
-GRANT SELECT ON sys.syslanguages TO PUBLIC;
+GRANT SELECT ON sys.babelfish_syslanguages TO PUBLIC;
 
 CREATE TABLE sys.babelfish_configurations (
     configuration_id INT,
