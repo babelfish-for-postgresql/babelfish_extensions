@@ -1469,7 +1469,7 @@ preserve_view_constraints_from_base_table(ColumnDef  *col, Oid tableOid, AttrNum
 	 * In TSQL Dialect Preserve the constraints only for the internal view
 	 * created by sp_describe_first_result_set procedure.
 	 */
-	if (sp_describe_first_result_set_inprogress || sql_dialect == SQL_DIALECT_TSQL)
+	if (sp_describe_first_result_set_inprogress && sql_dialect == SQL_DIALECT_TSQL)
 	{
 		HeapTuple	  tp;
 		Form_pg_attribute att_tup;

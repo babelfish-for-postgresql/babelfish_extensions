@@ -395,6 +395,9 @@ sp_describe_first_result_set_internal(PG_FUNCTION_ARGS)
 			if ((rc = SPI_execute(query, false, 1)) < 0)
 			{
 				sp_describe_first_result_set_inprogress = false;
+				set_config_option("babelfishpg_tsql.sql_dialect", "postgres",
+										(superuser() ? PGC_SUSET : PGC_USERSET),
+											PGC_S_SESSION, GUC_ACTION_SAVE, true, 0, false);
 				elog(ERROR, "SPI_execute failed: %s", SPI_result_code_string(rc));
 			}
 

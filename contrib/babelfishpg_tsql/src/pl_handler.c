@@ -3745,6 +3745,13 @@ pltsql_inline_handler(PG_FUNCTION_ARGS)
 	bool support_tsql_trans = pltsql_support_tsql_transactions();
 	ReturnSetInfo rsinfo; /* for INSERT ... EXECUTE */
 
+	/* 
+	 * FIXME: We leak sp_describe_first_result_set_inprogress if CREATE VIEW fails
+	 * internally when executing sp_describe_first_result_set procedure. So we
+	 * reset sp_describe_first_result_set_inprogress here to work around this.
+	 */
+	sp_describe_first_result_set_inprogress = false;
+
 	Assert((nargs > 2 ? nargs - 2 : 0) <= FUNC_MAX_ARGS);
 	Assert(exec_state_call_stack != NULL || !AbortCurTransaction);
 
