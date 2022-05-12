@@ -488,3 +488,11 @@ CREATE OR REPLACE AGGREGATE sys.avg(sys.BIT)
     stype = sys.bit,
     parallel = safe
 );
+
+CREATE OR REPLACE FUNCTION sys.varchar2bit(sys.VARCHAR)
+RETURNS sys.BIT
+AS 'babelfishpg_common', 'varchar2bit'
+LANGUAGE C IMMUTABLE STRICT PARALLEL SAFE;
+
+CREATE CAST (sys.VARCHAR AS sys.BIT)
+WITH FUNCTION sys.varchar2bit(sys.VARCHAR) AS IMPLICIT;

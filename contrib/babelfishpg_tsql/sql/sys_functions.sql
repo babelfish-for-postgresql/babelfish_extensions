@@ -2034,3 +2034,21 @@ $$
 	SELECT sys.is_rolemember_internal(role, database_principal);
 $$
 LANGUAGE SQL STRICT STABLE PARALLEL SAFE;
+
+CREATE OR REPLACE FUNCTION OBJECTPROPERTY(IN object_id INT, IN property sys.varchar)
+RETURNS INT AS
+$$
+BEGIN
+    RETURN NULL;
+END;
+$$
+LANGUAGE plpgsql;
+
+CREATE OR REPLACE FUNCTION OBJECTPROPERTYEX(IN object_id INT, IN property sys.varchar)
+RETURNS SYS.SQL_VARIANT AS
+$$
+BEGIN
+    RETURN NULL;
+END;
+$$
+LANGUAGE plpgsql;
