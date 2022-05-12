@@ -383,22 +383,38 @@ sp_describe_first_result_set_internal(PG_FUNCTION_ARGS)
 		/* If TSQL Query is NULL string or a non-select query then send no rows. */
 		if (parsedbatch && strncmp(parsedbatch, "select", 6) == 0)
 		{
-			sp_describe_first_result_set_inprogress = true;
-			query = psprintf("CREATE VIEW %s as %s", sp_describe_first_result_set_view_name, parsedbatch);
+			/* Create view in trty/catch to reset sp_describe_first_result_set_inprogress. */
+			PG_TRY();
+			{
+				sp_describe_first_result_set_inprogress = true;
+				query = psprintf("CREATE VIEW %s as %s", sp_describe_first_result_set_view_name, parsedbatch);
 	
-			/* Switch Dialect so that SPI_execute creates a TSQL View, obeying TSQL Syntax. */
-			set_config_option("babelfishpg_tsql.sql_dialect", "tsql",
-										(superuser() ? PGC_SUSET : PGC_USERSET),
-											PGC_S_SESSION, GUC_ACTION_SAVE, true, 0, false);
-			if ((rc = SPI_execute(query, false, 1)) < 0)
-				elog(ERROR, "SPI_execute failed: %s", SPI_result_code_string(rc));
+				/* Switch Dialect so that SPI_execute creates a TSQL View, obeying TSQL Syntax. */
+				set_config_option("babelfishpg_tsql.sql_dialect", "tsql",
+											(superuser() ? PGC_SUSET : PGC_USERSET),
+												PGC_S_SESSION, GUC_ACTION_SAVE, true, 0, false);
+				if ((rc = SPI_execute(query, false, 1)) < 0)
+					elog(ERROR, "SPI_execute failed: %s", SPI_result_code_string(rc));
 
-			sp_describe_first_result_set_inprogress = false;
+				sp_describe_first_result_set_inprogress = false;
 
-			set_config_option("babelfishpg_tsql.sql_dialect", "postgres",
-										(superuser() ? PGC_SUSET : PGC_USERSET),
-											PGC_S_SESSION, GUC_ACTION_SAVE, true, 0, false);
-			pfree(query);
+				set_config_option("babelfishpg_tsql.sql_dialect", "postgres",
+											(superuser() ? PGC_SUSET : PGC_USERSET),
+												PGC_S_SESSION, GUC_ACTION_SAVE, true, 0, false);
+				pfree(query);
+			}
+			PG_CATCH();
+			{
+				set_config_option("babelfishpg_tsql.sql_dialect", "postgres",
+							(superuser() ? PGC_SUSET : PGC_USERSET),
+								PGC_S_SESSION, GUC_ACTION_SAVE, true, 0, false);
+				sp_describe_first_result_set_inprogress = false;
+				pfree(query);
+				pfree(sp_describe_first_result_set_view_name);
+				SPI_finish();
+				PG_RE_THROW();
+			}
+			PG_END_TRY();
 
 			/* Execute the Select statement in try/catch so that we drop the view in case of an error. */
 			PG_TRY();
