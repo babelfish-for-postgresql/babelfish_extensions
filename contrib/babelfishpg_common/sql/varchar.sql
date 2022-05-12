@@ -265,6 +265,41 @@ CREATE CAST (sys.nvarchar AS sys.nvarchar)
 WITH FUNCTION sys.nvarchar (sys.nvarchar, integer, BOOLEAN) AS ASSIGNMENT;
 SET client_min_messages = 'WARNING';
 
+CREATE CAST (sys.VARCHAR as pg_catalog.xml)
+WITHOUT FUNCTION AS IMPLICIT;
+ 
+CREATE OR REPLACE FUNCTION sys.varchar2date(sys.VARCHAR)
+RETURNS pg_catalog.DATE
+AS 'babelfishpg_common', 'varchar2date'
+LANGUAGE C IMMUTABLE STRICT PARALLEL SAFE;
+ 
+CREATE CAST (sys.VARCHAR AS pg_catalog.DATE)
+WITH FUNCTION sys.varchar2date(sys.VARCHAR) AS IMPLICIT;
+ 
+CREATE OR REPLACE FUNCTION sys.varchar2time(sys.VARCHAR)
+RETURNS pg_catalog.TIME
+AS 'babelfishpg_common', 'varchar2time'
+LANGUAGE C IMMUTABLE STRICT PARALLEL SAFE;
+ 
+CREATE CAST (sys.VARCHAR AS pg_catalog.TIME)
+WITH FUNCTION sys.varchar2time(sys.VARCHAR) AS IMPLICIT;
+ 
+CREATE OR REPLACE FUNCTION sys.varchar2money(sys.VARCHAR)
+RETURNS sys.FIXEDDECIMAL
+AS 'babelfishpg_common', 'varchar2money'
+LANGUAGE C IMMUTABLE STRICT PARALLEL SAFE;
+ 
+CREATE CAST (sys.VARCHAR AS sys.FIXEDDECIMAL)
+WITH FUNCTION sys.varchar2money(sys.VARCHAR) AS IMPLICIT;
+ 
+CREATE OR REPLACE FUNCTION sys.varchar2numeric(sys.VARCHAR)
+RETURNS pg_catalog.NUMERIC
+AS 'babelfishpg_common', 'varchar2numeric'
+LANGUAGE C IMMUTABLE STRICT PARALLEL SAFE;
+ 
+CREATE CAST (sys.VARCHAR AS pg_catalog.NUMERIC)
+WITH FUNCTION sys.varchar2numeric(sys.VARCHAR) AS IMPLICIT;
+
 CREATE OR REPLACE FUNCTION sys.nvarchar_larger(sys.NVARCHAR, sys.NVARCHAR)
 RETURNS sys.NVARCHAR
 AS 'text_larger'
