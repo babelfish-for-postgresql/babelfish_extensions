@@ -2480,6 +2480,23 @@ $BODY$
 SELECT CAST(CURRENT_TIMESTAMP AT TIME ZONE 'UTC'::pg_catalog.text AS sys.DATETIME);
 $BODY$
 LANGUAGE SQL PARALLEL SAFE;
+ALTER VIEW sys.foreign_key_columns RENAME TO foreign_key_columns_deprecated;
+
+CREATE OR replace view sys.foreign_key_columns as
+SELECT DISTINCT
+  CAST(c.oid AS INT) AS constraint_object_id
+  ,CAST((generate_series(1,ARRAY_LENGTH(c.conkey,1))) AS INT) AS constraint_column_id
+  ,CAST(c.conrelid AS INT) AS parent_object_id
+  ,CAST((UNNEST (c.conkey)) AS INT) AS parent_column_id
+  ,CAST(c.confrelid AS INT) AS referenced_object_id
+  ,CAST((UNNEST(c.confkey)) AS INT) AS referenced_column_id
+FROM pg_constraint c
+WHERE c.contype = 'f'
+AND (c.connamespace IN (SELECT schema_id FROM sys.schemas))
+AND has_schema_privilege(c.connamespace, 'USAGE');
+GRANT SELECT ON sys.foreign_key_columns TO PUBLIC;
+
+SELECT sys.drop_view('sys', 'foreign_key_columns_deprecated');
 
 -- Reset search_path to not affect any subsequent scripts
 SELECT set_config('search_path', trim(leading 'sys, ' from current_setting('search_path')), false);
