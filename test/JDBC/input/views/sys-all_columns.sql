@@ -18,12 +18,12 @@ SELECT COUNT(*) FROM sys.all_columns WHERE object_id = object_id('sys.all_column
 GO
 
 CREATE TABLE columns_scale_precision_length_test (
-	intcol int,
-	char128col varchar(128),
-	bitcol bit,
-	datecol date,
-	moneycol money,
-	datetimecol datetime,
+intcol int,
+char128col varchar(128),
+bitcol bit,
+datecol date,
+moneycol money,
+datetimecol datetime,
 )
 GO
 	
