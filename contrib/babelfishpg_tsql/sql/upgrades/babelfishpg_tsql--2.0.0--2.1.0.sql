@@ -1107,6 +1107,7 @@ $$;
 
 CALL sys.babel_create_msdb_if_not_exists();
 
+<<<<<<< HEAD
 CREATE OR REPLACE FUNCTION OBJECTPROPERTY(IN object_id INT, IN property sys.varchar)
 RETURNS INT AS
 $$
@@ -1125,6 +1126,8 @@ END;
 $$
 LANGUAGE plpgsql;
 
+=======
+>>>>>>> ac6a719961e800f6c00282698fdbdb1aa4763205
 CREATE OR REPLACE VIEW sys.xml_schema_collections
 AS
 SELECT
