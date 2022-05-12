@@ -660,11 +660,22 @@ resolve_numeric_typmod_from_exp(Node *expr)
 
 			/*
 			 * [BABEL-3074] NUMERIC overflow causes TDS error for aggregate
-			 * function sum(); resultant precision should be individual precision + 1
+			 * function sum(); resultant precision should be tds_default_numeric_precision 
 			 */
 			if (aggFuncName && strlen(aggFuncName) == 3 &&
 					(strncmp(aggFuncName, "sum", 3) == 0))
-				precision++;
+				precision = tds_default_numeric_precision;
+
+			/*
+			 * For aggregate function avg(); resultant precision should be
+			 * tds_default_numeric_precision and resultant scale = max(input scale, 6)
+			 */
+			if (aggFuncName && strlen(aggFuncName) == 3 &&
+					(strncmp(aggFuncName, "avg", 3) == 0))
+			{
+				precision = tds_default_numeric_precision;
+				scale = Max(scale, 6);
+			}
 
 			pfree(aggFuncName);
 			return ((precision << 16) | scale) + VARHDRSZ;
