@@ -13,6 +13,7 @@
 #include "libpq/pqformat.h"
 #include "utils/builtins.h"
 #include "utils/numeric.h"
+#include "utils/varbit.h"
 
 #include "instr.h"
 #include "typecode.h"
@@ -42,6 +43,7 @@ PG_FUNCTION_INFO_V1(bit2int4);
 PG_FUNCTION_INFO_V1(bit2int8);
 PG_FUNCTION_INFO_V1(bit2numeric);
 PG_FUNCTION_INFO_V1(bit2fixeddec);
+PG_FUNCTION_INFO_V1(varchar2bit);
 
 /* Comparison between int and bit */
 PG_FUNCTION_INFO_V1(int4biteq);
@@ -545,4 +547,23 @@ bit2fixeddec(PG_FUNCTION_ARGS)
     bool bit = PG_GETARG_BOOL(0);
 
     PG_RETURN_INT64(bit ? 1*FIXEDDECIMAL_MULTIPLIER : 0);
+}
+
+Datum
+varchar2bit(PG_FUNCTION_ARGS)
+{
+	bool result;
+	char	*str;
+
+	VarChar *source = PG_GETARG_VARCHAR_PP(0);
+	const char *s_data = VARDATA_ANY(source);
+	int len = VARSIZE_ANY_EXHDR(source);
+
+	str = (char *) palloc(len + 1);
+	memcpy(str, s_data, len);
+	str[len] = '\0';
+
+	result = DatumGetBool(DirectFunctionCall1(bitin, CStringGetDatum(str)));
+	pfree(str);
+	PG_RETURN_BOOL(result);
 }
