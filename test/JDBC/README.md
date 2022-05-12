@@ -2,30 +2,30 @@
 The JDBC test framework for Babelfish uses the JDBC Driver for SQL Server for database connectivity and allows you to perform end-to-end testing (i.e. testing of the T-SQL syntax and TDS protocol implementation) of Babelfish without the need to write any application level code.
 
 ## Table of Contents
-- [How to run the test framework](#how-to-run-the-test-framework)
+- [Running the test framework](#running-the-test-framework)
   - [Build Requirements](#build-requirements)
-  - [Steps to run](#steps-to-run)
-- [How to run tests against a custom Babelfish endpoint](#how-to-run-tests-against-a-custom-babelfish-endpoint)
-- [How to control which tests should run](#how-to-control-which-tests-should-run)
-- [Writing tests](#writing-tests)
-  - [Plain SQL Batch](#plain-sql-batch)
+  - [Running the test cases](#running-the-test-cases)
+- [Running the test cases against a custom Babelfish endpoint](#running-the-test-cases-against-a-custom-babelfish-endpoint)
+- [Controlling which test cases should run](#controlling-which-test-cases-should-run)
+- [Writing the test cases](#writing-the-test-cases)
+  - [Using a plain SQL Batch](#using-a-plain-sql-batch)
   - [Preparing and executing statements](#preparing-and-executing-statements)
-  - [Stored Procedures](#stored-procedures)
-  - [Transactions](#transactions)
-  - [Cursors](#cursors)
-  - [SQL Authentication](#sql-authentication)
-  - [Cross-dialect](#cross-dialect-intermixing-queries-in-t-sql-and-plpgsql-dialect)
+  - [Using a stored procedure](#using-a-stored-procedure)
+  - [Using a transaction](#using-a-transaction)
+  - [Using a cursor](#using-a-cursor)
+  - [Verifying SQL Authentication test cases](#verifying-sql-authentication-test-cases)
+  - [Intermixing queries in T-SQL and PL/pgSQL dialect](#intermixing-queries-in-t-sql-and-plpgsql-dialect-cross-dialect-test-cases)
   - [IMPORTANT](#important)
-- [Adding tests](#adding-tests)
+- [Adding the test cases](#adding-the-test-cases)
 - [Reading the console output and diff](#reading-the-console-output-and-diff)
 
-## How to run the test framework
+## Running the test framework
 
 ### Build Requirements
 - Java, version 1.8 or later
 - Maven, version 3.6.3 or later
 
-### Steps to run
+### Running the test cases
 After building the modified PostgreSQL engine and Babelfish extensions using the [online instructions](../../contrib/README.md), you must:
 1. Create a PostgreSQL database and initialize Babelfish (if you already have a database with Babelfish initialized, you can omit this step or perform the cleanup steps before you initialize):
     ```bash
@@ -40,18 +40,18 @@ After building the modified PostgreSQL engine and Babelfish extensions using the
     ./cleanup.sh
     ```
 
-## How to run tests against a custom Babelfish endpoint
+## Running the test cases against a custom Babelfish endpoint
 By default the tests will run against the server running on localhost. You can specify a custom endpoint, database, user etc. in `test/JDBC/src/main/resources/config.txt`. 
 The [config file](src/main/resources/config.txt) has many other options you can change for your test runs. Alternatively, you can also set these options with environment variables as shown below:
 ```bash
 export databaseName = test_db
 ```
 
-## How to control which tests should run
+## Controlling which test cases should run
 By default all the tests will run. You can run one or more individual tests by specifying test information in the `test/JDBC/jdbc_schedule` file
 
-## Writing tests
-### Plain SQL Batch
+## Writing the test cases
+### Using a plain SQL Batch
 When adding tests that execute SQL code, separate SQL batches with `GO`:
 ```tsql
 /* SQL Batch 1 */
@@ -104,7 +104,7 @@ Input file type: `.txt`
 
 ---
 
-### Stored Procedures
+### Using a stored procedure
 This section covers how to execute stored procedures using JDBC APIs. To execute stored procedures as a SQL batch, refer [to these instructions](#plain-sql-batch).
 
 To prepare and execute a stored procedure:
@@ -134,7 +134,7 @@ Input file type: `.txt`
 
 ---
 
-### Transactions
+### Using a transaction
 This section covers how to execute transactional statements using JDBC APIs. For information about executing transactional statements as a SQL Batch, refer [to these instructions](#plain-sql-batch).
 
 Execute a transactional statement:
@@ -173,7 +173,7 @@ Input file type: `.txt`
 
 ---
 
-### Cursors
+### Using a cursor
 To open a cursor:
 ```
 cursor#!#open#!# <select statement on which cursor is opened> #!# <cursor options follow, separated by '#!#' delimiter>
@@ -221,7 +221,7 @@ Input file type: `.txt`
 
 ---
 
-### SQL Authentication
+### Verifying SQL Authentication test cases
 Use the following command syntax to verify different authentication use cases with the JDBC SQL Server Driver:
 ```
 java_auth#!# < connection attribute and value pairs follow, separated by '#!#' delimiter>
@@ -244,7 +244,7 @@ Input file type: `.txt`
 
 ---
 
-### Cross Dialect (intermixing queries in T-SQL and PL/pgSQL dialect)
+### Intermixing queries in T-SQL and PL/pgSQL dialect (cross dialect test cases)
 A SQL Batch in T-SQL should be added as:
 ```tsql
 -- tsql <T-SQL connection attribute and value pairs if any, separated by spaces>
@@ -329,7 +329,7 @@ Input file type: `.mix`
 - If you want to execute a SQL Batch in `.txt` input files, you will need to specify the batch in a single line without the `GO` batch separator. This is needed because for `.txt` files, the test framework treates every line as a standalone statement/command that can be executed against the server.
 - You CANNOT group functionalities from a different file type. For example, you cannot execute prep-exec statements (functionality of `.txt` input file) in a `.mix` file. 
 
-## Adding tests
+## Adding the test cases
 The test framework consumes `.sql`, `.txt` and `.mix` files as input (discussed above) and uses them to generate the output (.out) files.
 
 1. Add your input file to the `test/JDBC/input` directory. For convenience, you can use subdirectories within the directory to organize test files.
