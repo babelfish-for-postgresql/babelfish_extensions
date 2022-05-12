@@ -76,7 +76,7 @@ Input file type: `.sql`
 ---
 
 ### Preparing and executing statements
-To prepare and execute query:
+To prepare and execute a query:
 ```
 prepst#!# <query> #!# <bind variables datatype, name and value groups follow, separated by '#!#' delimiter>
 ```
@@ -232,7 +232,7 @@ Provide the connection information in an attribute-value pair:
 <connection attribute> |-| <value>
 ```
 
-List of valid connection property types and values are [here](https://github.com/MicrosoftDocs/sql-docs/blob/live/docs/connect/jdbc/setting-the-connection-properties.md#properties)
+To review a list of valid connection property types and values, [visit this page](https://github.com/MicrosoftDocs/sql-docs/blob/live/docs/connect/jdbc/setting-the-connection-properties.md#properties).
 
 **Example**
 ```
@@ -266,7 +266,11 @@ Connection attributes should be specified in pairs:
 <connection attribute 1>=<value 1>     <connection attribute 2>=<value 2> ...
 ```
 
-Currently the attributes that can specified are `user`, `password`, `database` and `currentSchema` (only for PG connection).
+Currently, the connection accepts the following attributes:
+- `user`
+- `password`
+- `database`
+- `currentSchema` (only for a PG connection)
 
 **Example**
 ```tsql
@@ -323,7 +327,7 @@ Input file type: `.mix`
 
 ### **IMPORTANT**
 - If you want to execute a SQL Batch in `.txt` input files, you will need to specify the batch in a single line without the `GO` batch separator. This is needed because for `.txt` files, the test framework treates every line as a standalone statement/command that can be executed against the server.
-- You CANNOT club functionalities of different file types. For example, you cannot execute prep-exec statements (functionality of `.txt` input file) in a `.mix` file. 
+- You CANNOT group functionalities from a different file type. For example, you cannot execute prep-exec statements (functionality of `.txt` input file) in a `.mix` file. 
 
 ## Adding tests
 The test framework consumes `.sql`, `.txt` and `.mix` files as input (discussed above) and uses them to generate the output (.out) files.
