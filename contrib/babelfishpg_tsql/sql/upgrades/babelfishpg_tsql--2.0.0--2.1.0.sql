@@ -1107,6 +1107,24 @@ $$;
 
 CALL sys.babel_create_msdb_if_not_exists();
 
+CREATE OR REPLACE FUNCTION OBJECTPROPERTY(IN object_id INT, IN property sys.varchar)
+RETURNS INT AS
+$$
+BEGIN
+    RETURN NULL;
+END;
+$$
+LANGUAGE plpgsql;
+
+CREATE OR REPLACE FUNCTION OBJECTPROPERTYEX(IN object_id INT, IN property sys.varchar)
+RETURNS SYS.SQL_VARIANT AS
+$$
+BEGIN
+    RETURN NULL;
+END;
+$$
+LANGUAGE plpgsql;
+
 CREATE OR REPLACE VIEW sys.database_files
 AS
 SELECT
