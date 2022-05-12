@@ -20,10 +20,10 @@ BEGIN
 EXCEPTION
     when object_not_in_prerequisite_state then --if 'alter extension' statement fails
         GET STACKED DIAGNOSTICS error_msg = MESSAGE_TEXT;
-        raise notice '%', error_msg;
+        raise warning '%', error_msg;
     when dependent_objects_still_exist then --if 'drop view' statement fails
         GET STACKED DIAGNOSTICS error_msg = MESSAGE_TEXT;
-        raise notice '%', error_msg;
+        raise warning '%', error_msg;
 end
 $$
 LANGUAGE plpgsql;
