@@ -604,7 +604,7 @@ numeric
 ~~END~~
 
 DROP TABLE #overflow_test;
-
+ 
 CREATE TABLE #overflow_test (amount decimal(5, 2));
 INSERT INTO #overflow_test VALUES(999.12);
 ~~ROW COUNT: 1~~
