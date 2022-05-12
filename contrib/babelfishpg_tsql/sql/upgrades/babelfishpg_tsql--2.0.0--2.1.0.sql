@@ -1107,5 +1107,23 @@ $$;
 
 CALL sys.babel_create_msdb_if_not_exists();
 
+CREATE OR REPLACE FUNCTION OBJECTPROPERTY(IN object_id INT, IN property sys.varchar)
+RETURNS INT AS
+$$
+BEGIN
+    RETURN NULL;
+END;
+$$
+LANGUAGE plpgsql;
+
+CREATE OR REPLACE FUNCTION OBJECTPROPERTYEX(IN object_id INT, IN property sys.varchar)
+RETURNS SYS.SQL_VARIANT AS
+$$
+BEGIN
+    RETURN NULL;
+END;
+$$
+LANGUAGE plpgsql;
+
 -- Reset search_path to not affect any subsequent scripts
 SELECT set_config('search_path', trim(leading 'sys, ' from current_setting('search_path')), false);
