@@ -1,5 +1,5 @@
+
 -- [BABEL-3078] Implicit casting from VARCHAR to all other datatypes
- 
 create procedure p3078 (@a date) as begin select @a; end
 go
 declare @a varchar(10) = '1967-10-23'
