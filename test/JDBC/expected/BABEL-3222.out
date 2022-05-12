@@ -34,7 +34,7 @@ select tsql_get_constraintdef(oid) from pg_constraint where contype='c' and conr
 go
 ~~START~~
 text
-((c_bit <> CAST((1) AS "bit")))
+((c_bit <> CAST((1) AS bit)))
 ((c_int < 10))
 ~~END~~
 
@@ -43,9 +43,9 @@ select tsql_get_constraintdef(oid) from pg_constraint where contype='c' and conr
 go
 ~~START~~
 text
-((c_varchar <> (CAST( AS "varchar"(12)) COLLATE bbf_unicode_cp1_ci_as)))
-((c_char <> (CAST( AS bpchar(7)) COLLATE bbf_unicode_cp1_ci_as)))
-((CAST((CAST((c_nchar) AS "nchar"(7))) AS bpchar) <> (CAST((CAST((CAST('sflkjasdlkfjf' AS bpchar)) AS "nchar"(7))) AS bpchar) COLLATE bbf_unicode_cp1_ci_as)))
+((c_varchar <> (CAST('sflkjasdlkfjf' AS varchar(12)) COLLATE bbf_unicode_cp1_ci_as)))
+((c_char <> (CAST('sflkjasdlkfjf' AS char(7)) COLLATE bbf_unicode_cp1_ci_as)))
+((CAST((c_nchar) AS nchar(7)) <> (CAST((CAST('sflkjasdlkfjf' AS char)) AS nchar(7)) COLLATE bbf_unicode_cp1_ci_as)))
 ~~END~~
 
 
@@ -53,10 +53,10 @@ select tsql_get_constraintdef(oid) from pg_constraint where contype='c' and conr
 go
 ~~START~~
 text
-(((c_float < CAST((133.230182309832423) AS double precision)) AND (c_float < CAST((133.230182309832423) AS real))))
+(((c_float < CAST((133.230182309832423) AS float)) AND (c_float < CAST((133.230182309832423) AS real))))
 ((c_real < CAST((133.230182309832423) AS real)))
-(((CAST((c_decimal) AS numeric) < CAST((CAST((133.230182309832423) AS "decimal"(18,0))) AS numeric)) AND (CAST((c_decimal) AS numeric) < CAST((CAST((133.230182309832423) AS "decimal"(5,3))) AS numeric))))
-(((c_numeric < CAST( AS numeric(18,0))) AND (c_numeric < CAST( AS numeric(5,3)))))
+(((c_decimal < CAST((133.230182309832423) AS decimal(18,0))) AND (c_decimal < CAST((133.230182309832423) AS decimal(5,3)))))
+(((c_numeric < CAST(133.230182309832423 AS numeric(18,0))) AND (c_numeric < CAST(133.230182309832423 AS numeric(5,3)))))
 ~~END~~
 
 

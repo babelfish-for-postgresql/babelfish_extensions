@@ -72,6 +72,7 @@ extern Oid tsql_varbinary_oid;
 extern Oid tsql_rowversion_oid;
 extern Oid tsql_timestamp_oid;
 
+extern Datum translate_pg_type_to_tsql(PG_FUNCTION_ARGS);
 extern Oid lookup_tsql_datatype_oid(const char *typename);
 extern bool is_tsql_bpchar_datatype(Oid oid);
 extern bool is_tsql_nchar_datatype(Oid oid);
