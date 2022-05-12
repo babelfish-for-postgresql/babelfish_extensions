@@ -10187,7 +10187,7 @@ DECLARE
     qualified_name text;
     permission text;
 BEGIN
-	IF perm_target_type IS NULL OR perm_target_type NOT IN('table', 'function', 'procedure')
+    IF perm_target_type IS NULL OR perm_target_type NOT IN('table', 'function', 'procedure')
         THEN RETURN NULL;
     END IF;
 
@@ -10195,8 +10195,6 @@ BEGIN
         SELECT CASE
             WHEN perm_target_type = 'table'
                 THEN '{"select", "insert", "update", "delete", "references"}'
-            WHEN perm_target_type = 'column'
-                THEN '{"select", "update", "references"}'
             WHEN perm_target_type IN('function', 'procedure')
                 THEN '{"execute"}'
         END

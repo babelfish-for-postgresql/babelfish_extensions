@@ -1275,22 +1275,22 @@ BEGIN
             case
                 -- Schema does not apply as much to temp objects.
                 when upper(object_type) in ('S', 'U', 'V', 'IT', 'ET', 'SO') and is_temp_object then
-	            id := (select reloid from sys.babelfish_get_enr_list() where lower(relname) = obj_name limit 1);
+                    id := (select reloid from sys.babelfish_get_enr_list() where lower(relname) = obj_name limit 1);
 
                 when upper(object_type) in ('S', 'U', 'V', 'IT', 'ET', 'SO') and not is_temp_object then
-	            id := (select oid from pg_class where lower(relname) = obj_name 
+                    id := (select oid from pg_class where lower(relname) = obj_name 
                             and relnamespace = schema_oid limit 1);
 
                 when upper(object_type) in ('C', 'D', 'F', 'PK', 'UQ') then
-	            id := (select oid from pg_constraint where lower(conname) = obj_name 
+                    id := (select oid from pg_constraint where lower(conname) = obj_name 
                             and connamespace = schema_oid limit 1);
 
                 when upper(object_type) in ('AF', 'FN', 'FS', 'FT', 'IF', 'P', 'PC', 'TF', 'RF', 'X') then
-	            id := (select oid from pg_proc where lower(proname) = obj_name 
+                    id := (select oid from pg_proc where lower(proname) = obj_name 
                             and pronamespace = schema_oid limit 1);
 
                 when upper(object_type) in ('TR', 'TA') then
-	            id := (select oid from pg_trigger where lower(tgname) = obj_name limit 1);
+                    id := (select oid from pg_trigger where lower(tgname) = obj_name limit 1);
 
                 -- Throwing exception as a reminder to add support in the future.
                 when upper(object_type) in ('R', 'EC', 'PG', 'SN', 'SQ', 'TT') then
@@ -1300,18 +1300,20 @@ BEGIN
                 else id := null;
             end case;
         else
-            if not is_temp_object then id := (
-                                            select oid from pg_class where lower(relname) = obj_name
-                                                and relnamespace = schema_oid
-				            union
-			                select oid from pg_constraint where lower(conname) = obj_name
-				            and connamespace = schema_oid
-                                                union
-			                select oid from pg_proc where lower(proname) = obj_name
-				            and pronamespace = schema_oid
-                                                union
-			                select oid from pg_trigger where lower(tgname) = obj_name
-			                limit 1);
+            if not is_temp_object then 
+                id := (
+                    select oid from pg_class where lower(relname) = obj_name
+                        and relnamespace = schema_oid
+                    union
+                    select oid from pg_constraint where lower(conname) = obj_name
+                        and connamespace = schema_oid
+                    union
+                    select oid from pg_proc where lower(proname) = obj_name
+                        and pronamespace = schema_oid
+                    union
+                    select oid from pg_trigger where lower(tgname) = obj_name
+                    limit 1
+                );
             else
                 -- temp object without "object_type" in-argument
                 id := (select reloid from sys.babelfish_get_enr_list() where lower(relname) = obj_name limit 1);
@@ -1339,7 +1341,7 @@ DECLARE
     qualified_name text;
     permission text;
 BEGIN
-	IF perm_target_type IS NULL OR perm_target_type NOT IN('table', 'function', 'procedure')
+    IF perm_target_type IS NULL OR perm_target_type NOT IN('table', 'function', 'procedure')
         THEN RETURN NULL;
     END IF;
 
@@ -1347,8 +1349,6 @@ BEGIN
         SELECT CASE
             WHEN perm_target_type = 'table'
                 THEN '{"select", "insert", "update", "delete", "references"}'
-            WHEN perm_target_type = 'column'
-                THEN '{"select", "update", "references"}'
             WHEN perm_target_type IN('function', 'procedure')
                 THEN '{"execute"}'
         END
@@ -1686,7 +1686,7 @@ DECLARE
     function_signature text;
     qualified_name text;
     return_value integer;
-   	cs_as_securable text COLLATE "C" := securable;
+    cs_as_securable text COLLATE "C" := securable;
     cs_as_securable_class text COLLATE "C" := securable_class;
     cs_as_permission text COLLATE "C" := permission;
     cs_as_sub_securable text COLLATE "C" := sub_securable;
@@ -1695,7 +1695,7 @@ BEGIN
     return_value := NULL;
 
     -- Lower-case to avoid case issues, remove trailing whitespace to match SQL SERVER behavior
-	-- Objects created in Babelfish are stored in lower-case in pg_class/pg_proc
+    -- Objects created in Babelfish are stored in lower-case in pg_class/pg_proc
     cs_as_securable = lower(rtrim(cs_as_securable));
     cs_as_securable_class = lower(rtrim(cs_as_securable_class));
     cs_as_permission = lower(rtrim(cs_as_permission));
@@ -1867,8 +1867,8 @@ BEGIN
                 AND pronamespace = namespace_id;
     END IF;
 
-	return_value := (
-        SELECT CASE            
+    return_value := (
+        SELECT CASE
             WHEN cs_as_permission = 'any' THEN babelfish_has_any_privilege(object_type, pg_schema, object_name)
 
             WHEN object_type = 'column'
@@ -1902,14 +1902,14 @@ BEGIN
                 END
 
             ELSE NULL
-		END
-	);
- 		  
-	RETURN return_value;
+        END
+    );
+
+    RETURN return_value;
     EXCEPTION WHEN OTHERS THEN RETURN NULL;
 END;
 $$;
- 		  
+
 GRANT EXECUTE ON FUNCTION sys.has_perms_by_name(
     securable sys.SYSNAME, 
     securable_class sys.nvarchar(60), 
