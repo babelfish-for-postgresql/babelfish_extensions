@@ -2002,3 +2002,21 @@ CREATE OR REPLACE FUNCTION sys.sp_datatype_info_helper(
 RETURNS SETOF RECORD
 AS 'babelfishpg_tsql', 'sp_datatype_info_helper'
 LANGUAGE C IMMUTABLE STRICT;
+
+CREATE OR REPLACE FUNCTION OBJECTPROPERTY(IN object_id INT, IN property sys.varchar)
+RETURNS INT AS
+$$
+BEGIN
+    RETURN NULL;
+END;
+$$
+LANGUAGE plpgsql;
+
+CREATE OR REPLACE FUNCTION OBJECTPROPERTYEX(IN object_id INT, IN property sys.varchar)
+RETURNS SYS.SQL_VARIANT AS
+$$
+BEGIN
+    RETURN NULL;
+END;
+$$
+LANGUAGE plpgsql;

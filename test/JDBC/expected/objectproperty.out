@@ -1,0 +1,8 @@
+-- Test OBJECTPROPERTY Stub
+SELECT OBJECTPROPERTY(0, '')
+GO
+~~START~~
+int
+<NULL>
+~~END~~
+

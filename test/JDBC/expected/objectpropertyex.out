@@ -1,0 +1,8 @@
+-- Test OBJECTPROPERTYEX Stub
+SELECT OBJECTPROPERTYEX(0, '')
+GO
+~~START~~
+sql_variant
+<NULL>
+~~END~~
+
