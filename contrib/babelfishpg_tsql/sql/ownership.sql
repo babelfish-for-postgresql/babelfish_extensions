@@ -144,6 +144,7 @@ BEGIN
 	EXECUTE format('ALTER DATABASE %s SET babelfishpg_tsql.enable_ownership_structure = true', CURRENT_DATABASE());
 	EXECUTE 'SET babelfishpg_tsql.enable_ownership_structure = true';
 	CALL sys.babel_initialize_logins(sa_name);
+	CALL sys.babel_initialize_logins('sysadmin');
 	CALL sys.babel_create_builtin_dbs(sa_name);
 	CALL sys.initialize_babel_extras();
 END
@@ -192,14 +193,16 @@ CAST(Base.rolname AS sys.SYSNAME) AS name,
 CAST(Base.oid As INT) AS principal_id,
 CAST(CAST(Base.oid as INT) as sys.varbinary(85)) AS sid,
 CAST(Ext.type AS CHAR(1)) as type,
-CAST(CASE WHEN Ext.type = 'S' THEN 'SQL_LOGIN' ELSE NULL END AS NVARCHAR(60)) AS type_desc,
+CAST(CASE WHEN Ext.type = 'S' THEN 'SQL_LOGIN' 
+WHEN Ext.type = 'R' THEN 'SERVER_ROLE'
+ELSE NULL END AS NVARCHAR(60)) AS type_desc,
 CAST(Ext.is_disabled AS INT) AS is_disabled,
 CAST(Ext.create_date AS SYS.DATETIME) AS create_date,
 CAST(Ext.modify_date AS SYS.DATETIME) AS modify_date,
-CAST(Ext.default_database_name AS SYS.SYSNAME) AS default_database_name,
+CAST(CASE WHEN Ext.type = 'R' THEN NULL ELSE Ext.default_database_name END AS SYS.SYSNAME) AS default_database_name,
 CAST(Ext.default_language_name AS SYS.SYSNAME) AS default_language_name,
-CAST(Ext.credential_id AS INT) AS credential_id,
-CAST(Ext.owning_principal_id AS INT) AS owning_principal_id,
+CAST(CASE WHEN Ext.type = 'R' THEN NULL ELSE Ext.credential_id END AS INT) AS credential_id,
+CAST(CASE WHEN Ext.type = 'R' THEN 1 ELSE Ext.owning_principal_id END AS INT) AS owning_principal_id,
 CAST(Ext.is_fixed_role AS sys.BIT) AS is_fixed_role
 FROM pg_catalog.pg_authid AS Base INNER JOIN sys.babelfish_authid_login_ext AS Ext ON Base.rolname = Ext.rolname;
 
