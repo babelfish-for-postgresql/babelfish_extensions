@@ -1389,5 +1389,79 @@ CALL sys.babelfish_drop_deprecated_view('sys', 'server_principals_deprecated');
 -- Please have this be one of the last statements executed in this upgrade script.
 DROP PROCEDURE sys.babelfish_drop_deprecated_view(varchar, varchar);
 
+-- OPENJSON functions
+CREATE OR REPLACE FUNCTION sys.openjson_object(json_string text)
+RETURNS TABLE 
+(
+    key sys.NVARCHAR(4000),
+    value sys.NVARCHAR,
+    type INTEGER
+)
+AS 
+$BODY$
+SELECT  key, 
+        CASE json_typeof(value) WHEN 'null'     THEN NULL
+                                ELSE            TRIM (BOTH '"' FROM value::TEXT)
+        END,
+        CASE json_typeof(value) WHEN 'null'     THEN 0
+                                WHEN 'string'   THEN 1
+                                WHEN 'number'   THEN 2
+                                WHEN 'boolean'  THEN 3
+                                WHEN 'array'    THEN 4
+                                WHEN 'object'   THEN 5
+        END
+    FROM json_each(json_string::JSON)
+$BODY$
+LANGUAGE SQL;
+
+CREATE OR REPLACE FUNCTION sys.openjson_array(json_string text)
+RETURNS TABLE 
+(
+    key sys.NVARCHAR(4000),
+    value sys.NVARCHAR,
+    type INTEGER
+)
+AS 
+$BODY$
+SELECT  (row_number() over ())-1, 
+        CASE json_typeof(value) WHEN 'null'     THEN NULL
+                                ELSE            TRIM (BOTH '"' FROM value::TEXT)
+        END,
+        CASE json_typeof(value) WHEN 'null'     THEN 0
+                                WHEN 'string'   THEN 1
+                                WHEN 'number'   THEN 2
+                                WHEN 'boolean'  THEN 3
+                                WHEN 'array'    THEN 4
+                                WHEN 'object'   THEN 5
+        END
+    FROM json_array_elements(json_string::JSON) AS value
+$BODY$
+LANGUAGE SQL;
+
+CREATE OR REPLACE FUNCTION sys.openjson_simple(json_string text, path text default '$')
+RETURNS TABLE 
+(
+    key sys.NVARCHAR(4000),
+    value sys.NVARCHAR,
+    type INTEGER
+)
+AS
+$BODY$
+DECLARE
+    sub_json text := sys.json_query(json_string, path);
+BEGIN
+    IF json_typeof(sub_json::JSON) = 'array' THEN
+        RETURN QUERY SELECT * FROM sys.openjson_array(sub_json);
+    ELSE
+        RETURN QUERY SELECT * FROM sys.openjson_object(sub_json);
+    END IF;
+END;
+$BODY$
+LANGUAGE plpgsql;
+
+CREATE OR REPLACE FUNCTION sys.openjson_with(json_string text, path text, VARIADIC column_paths text[])
+RETURNS SETOF RECORD
+AS 'babelfishpg_tsql', 'tsql_openjson_with' LANGUAGE C STRICT IMMUTABLE PARALLEL SAFE;
+ 
 -- Reset search_path to not affect any subsequent scripts
 SELECT set_config('search_path', trim(leading 'sys, ' from current_setting('search_path')), false);

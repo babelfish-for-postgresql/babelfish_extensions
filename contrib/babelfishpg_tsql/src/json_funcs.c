@@ -9,6 +9,7 @@
 
 #include "common/jsonapi.h"
 #include "catalog/pg_type.h"
+#include "funcapi.h"
 #include "utils/builtins.h"
 #include "utils/json.h"
 #include "utils/jsonb.h"
@@ -21,6 +22,7 @@
 Datum tsql_jsonb_in(text *json_text);
 Datum tsql_jsonb_path_query_first(Datum jsonb_datum, Datum jsonpath_datum);
 JsonParseErrorType tsql_parse_json(text *json_text, JsonLexContext *lex, JsonSemAction *sem);
+static Datum tsql_openjson_with_internal(PG_FUNCTION_ARGS);
 
 PG_FUNCTION_INFO_V1(tsql_isjson);
 PG_FUNCTION_INFO_V1(tsql_json_value);
@@ -258,4 +260,136 @@ tsql_jsonb_path_query_first(Datum jsonb_datum, Datum jsonpath_datum)
 	result = (*jsonb_path_query_first) (fcinfo);
 
 	return result;
+}
+
+PG_FUNCTION_INFO_V1(tsql_openjson_with);
+
+Datum
+tsql_openjson_with(PG_FUNCTION_ARGS)
+{
+	return tsql_openjson_with_internal(fcinfo);
+}
+
+/*
+ * tsql_openjson_with
+ *     Executes jsonpath for each column definition passed and returns result as a rowset.
+ */
+static Datum
+tsql_openjson_with_internal(PG_FUNCTION_ARGS)
+{
+    FuncCallContext     *funcctx;
+    int                  call_cntr;
+    int                  max_calls;
+    TupleDesc            tupdesc;
+    AttInMetadata       *attinmeta;
+	/* column_list is a list of lists - each contained list corresponds to a column in the return set */
+	List				*column_list;
+
+	if (SRF_IS_FIRSTCALL())
+	{
+		int				prev_sql_dialect;
+		MemoryContext 	oldcontext;
+
+		funcctx = SRF_FIRSTCALL_INIT();
+		prev_sql_dialect = sql_dialect;
+		PG_TRY();
+		{
+			Jsonb		*sub_jb;
+			ArrayType 	*arr;
+			int				ndim;
+
+			/* set sql_dialect to tsql, which is needed for jsonb parsing and processing */
+			sql_dialect = SQL_DIALECT_TSQL;
+			oldcontext = MemoryContextSwitchTo(funcctx->multi_call_memory_ctx);
+
+			/* Get information about return type. Used to build return message later. */
+			if (get_call_result_type(fcinfo, NULL, &tupdesc) != TYPEFUNC_COMPOSITE)
+				ereport(ERROR,
+						(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+								errmsg("function returning record called in context "
+									"that cannot accept type record")));
+
+			sub_jb = tsql_openjson_with_get_subjsonb(fcinfo);
+
+			/* read in column definitions */
+			arr = PG_GETARG_ARRAYTYPE_P(2);
+
+			/* Deconstruct column info array */
+			ndim = ARR_NDIM(arr);
+			if (ndim > 1)
+				ereport(ERROR,
+						(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+						errmsg("array must be one-dimensional")));
+			else if (array_contains_nulls(arr))
+				ereport(ERROR,
+						(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+						errmsg("array must not contain nulls")));
+			else if (ndim == 1)
+			{
+				/* generate rowsets for each column path */
+				Datum	*datum_opts;
+				int		nelems;
+
+				Assert(ARR_ELEMTYPE(arr) == TEXTOID);
+
+				deconstruct_array(arr, TEXTOID, -1, false, TYPALIGN_INT,
+								&datum_opts, NULL, &nelems);
+
+				max_calls = 0;
+				column_list = NIL;
+
+				for (int i = 0; i < nelems; i++)
+				{
+					char *col_info = TextDatumGetCString(datum_opts[i]);
+					List *list =  tsql_openjson_with_columnize(sub_jb, col_info);
+
+					column_list = lappend(column_list, list);
+
+					if (list && list->length > max_calls)
+						max_calls = list->length;
+				}
+				funcctx->user_fctx = column_list;
+				funcctx->max_calls = max_calls;
+			}
+			attinmeta = TupleDescGetAttInMetadata(tupdesc);
+			funcctx->attinmeta = attinmeta;
+		}
+		PG_FINALLY();
+		{
+			sql_dialect = prev_sql_dialect;
+			MemoryContextSwitchTo(oldcontext);
+		}
+		PG_END_TRY();
+	}
+
+	funcctx = SRF_PERCALL_SETUP();
+	column_list = funcctx->user_fctx;
+	call_cntr = funcctx->call_cntr;
+	max_calls = funcctx->max_calls;
+    attinmeta = funcctx->attinmeta;
+	if (call_cntr < max_calls && column_list != NULL)
+	{
+		char		**values;
+		ListCell	*lc;
+		HeapTuple	tuple;
+		Datum		result;
+
+		values = palloc0(sizeof(char *) * column_list->length);
+		/* go through each column list and add its result to the current tuple to be returned */
+		foreach(lc, column_list)
+		{
+			int i = foreach_current_index(lc);
+			List *column = lfirst(lc);
+			if (column)
+				values[i] = linitial(column);
+			lc->ptr_value = list_delete_first(column); /* update each column to the next result for the next iteration */
+		}
+		tuple = BuildTupleFromCStrings(attinmeta, values);
+		result = HeapTupleGetDatum(tuple);
+		SRF_RETURN_NEXT(funcctx, result);
+	}
+	else
+	{
+		SRF_RETURN_DONE(funcctx);
+	}
 }
