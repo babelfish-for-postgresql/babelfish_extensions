@@ -887,7 +887,7 @@ ON Ext.login_name = Base2.rolname
 WHERE Ext.database_name = DB_NAME();
 GRANT SELECT ON sys.database_principals TO PUBLIC;
 
---DATABASE_ROLE_MEMBERS
+-- DATABASE_ROLE_MEMBERS
 CREATE VIEW sys.database_role_members AS
 SELECT
 CAST(Auth1.oid AS INT) AS role_principal_id,
