@@ -175,7 +175,12 @@ protected:
 		// functions and expression
 		antlrcpp::Any visitFunction_call(TSqlParser::Function_callContext *ctx) override;
 		antlrcpp::Any visitAggregate_windowed_function(TSqlParser::Aggregate_windowed_functionContext *ctx) override;
-		antlrcpp::Any visitRowset_function(TSqlParser::Rowset_functionContext *ctx) override { handle(INSTR_UNSUPPORTED_TSQL_ROWSET_FUNCTION, "rowset function", getLineAndPos(ctx)); return visitChildren(ctx); }
+		antlrcpp::Any visitRowset_function(TSqlParser::Rowset_functionContext *ctx) override {
+			if (!ctx->open_json()) {
+				handle(INSTR_UNSUPPORTED_TSQL_ROWSET_FUNCTION, "rowset function", getLineAndPos(ctx));
+			}
+			return visitChildren(ctx);
+		}
 		antlrcpp::Any visitTrigger_column_updated(TSqlParser::Trigger_column_updatedContext *ctx) override; // UPDATE() in trigger
 		antlrcpp::Any visitFreetext_function(TSqlParser::Freetext_functionContext *ctx) override { handle(INSTR_UNSUPPORTED_TSQL_FREETEXT, "FREETEXT", getLineAndPos(ctx)); return visitChildren(ctx); }
 		antlrcpp::Any visitOdbc_scalar_function(TSqlParser::Odbc_scalar_functionContext *ctx) override { handle(INSTR_UNSUPPORTED_TSQL_ODBC_SCALAR_FUNCTION, "ODBC scalar functions", getLineAndPos(ctx)); return visitChildren(ctx); }
