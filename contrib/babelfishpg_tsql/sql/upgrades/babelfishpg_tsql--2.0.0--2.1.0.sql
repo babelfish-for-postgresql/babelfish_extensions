@@ -1385,10 +1385,6 @@ CALL sys.babel_initialize_logins('sysadmin');
 -- Drop the deprecated view if there isn't any dependent object
 CALL sys.babelfish_drop_deprecated_view('sys', 'server_principals_deprecated');
 
--- Drops the temporary procedure used by the upgrade script.
--- Please have this be one of the last statements executed in this upgrade script.
-DROP PROCEDURE sys.babelfish_drop_deprecated_view(varchar, varchar);
-
 -- OPENJSON functions
 CREATE OR REPLACE FUNCTION sys.openjson_object(json_string text)
 RETURNS TABLE 
@@ -1543,8 +1539,12 @@ CREATE OR REPLACE VIEW sys.spt_tablecollations_view AS
 		c.is_sparse = 0 AND p.attnum >= 0;
 GRANT SELECT ON sys.spt_tablecollations_view TO PUBLIC;
 
-select sys.babelfish_drop_deprecated_view('sys', 'all_columns_deprecated');
-select sys.babelfish_drop_deprecated_view('sys', 'spt_tablecollations_view_deprecated');
+CALL sys.babelfish_drop_deprecated_view('sys', 'all_columns_deprecated');
+CALL sys.babelfish_drop_deprecated_view('sys', 'spt_tablecollations_view_deprecated');
+
+-- Drops the temporary procedure used by the upgrade script.
+-- Please have this be one of the last statements executed in this upgrade script.
+DROP PROCEDURE sys.babelfish_drop_deprecated_view(varchar, varchar);
 
 -- Reset search_path to not affect any subsequent scripts
 SELECT set_config('search_path', trim(leading 'sys, ' from current_setting('search_path')), false);
