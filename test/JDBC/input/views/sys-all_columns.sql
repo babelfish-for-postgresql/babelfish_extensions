@@ -26,7 +26,7 @@ moneycol money,
 datetimecol datetime,
 )
 GO
-	
+
 SELECT name, column_id, max_length, precision, scale, collation_name, is_nullable, is_ansi_padded, is_rowguidcol, is_identity, is_computed, is_filestream, is_replicated, is_non_sql_subscribed, is_merge_published, is_dts_replicated, is_xml_document, xml_collection_id, default_object_id, rule_object_id, is_sparse, is_column_set, generated_always_type, generated_always_type_desc
 FROM sys.all_columns
 WHERE name='intcol' OR name='char128col' OR name='bitcol' OR name='datecol' OR name='moneycol' OR name='datetimecol'
