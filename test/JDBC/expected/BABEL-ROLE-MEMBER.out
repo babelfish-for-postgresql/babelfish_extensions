@@ -70,7 +70,7 @@ GO
 EXEC babel_role_members
 GO
 ~~START~~
-nvarchar#!#char#!#nvarchar#!#char
+varchar#!#char#!#varchar#!#char
 test_role1#!#R#!#test_role2#!#R
 test_role1#!#R#!#test_user1#!#S
 test_role2#!#R#!#test_role3#!#R
