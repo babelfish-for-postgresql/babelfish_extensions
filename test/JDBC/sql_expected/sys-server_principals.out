@@ -6,13 +6,23 @@ int
 ~~END~~
 
 
-SELECT name, type, type_desc, default_database_name, default_language_name
+SELECT name, type, type_desc, default_database_name, default_language_name, credential_id, owning_principal_id
 FROM sys.server_principals 
 WHERE name =  'jdbc_user';
 GO
 ~~START~~
-varchar#!#char#!#nvarchar#!#varchar#!#varchar
-jdbc_user#!#S#!#SQL_LOGIN#!#master#!#English
+varchar#!#char#!#nvarchar#!#varchar#!#varchar#!#int#!#int
+jdbc_user#!#S#!#SQL_LOGIN#!#master#!#English#!#-1#!#-1
+~~END~~
+
+
+SELECT name, type, type_desc, default_database_name, default_language_name, credential_id, owning_principal_id
+FROM sys.server_principals 
+WHERE name =  'sysadmin';
+GO
+~~START~~
+varchar#!#char#!#nvarchar#!#varchar#!#varchar#!#int#!#int
+sysadmin#!#R#!#SERVER_ROLE#!#<NULL>#!#English#!#<NULL>#!#1
 ~~END~~
 
 
@@ -21,7 +31,7 @@ GO
 
 SELECT name, type, type_desc, default_database_name, default_language_name
 FROM sys.server_principals 
-WHERE name in ('jdbc_user', 'serv_principal_test');
+WHERE name in ('jdbc_user', 'serv_principal_test') order by name;
 GO
 ~~START~~
 varchar#!#char#!#nvarchar#!#varchar#!#varchar
