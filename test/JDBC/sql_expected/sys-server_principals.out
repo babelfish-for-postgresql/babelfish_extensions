@@ -11,7 +11,7 @@ FROM sys.server_principals
 WHERE name =  'jdbc_user';
 GO
 ~~START~~
-varchar#!#char#!#nvarchar#!#nvarchar#!#nvarchar
+varchar#!#char#!#nvarchar#!#varchar#!#varchar
 jdbc_user#!#S#!#SQL_LOGIN#!#master#!#English
 ~~END~~
 
@@ -24,7 +24,7 @@ FROM sys.server_principals
 WHERE name in ('jdbc_user', 'serv_principal_test');
 GO
 ~~START~~
-varchar#!#char#!#nvarchar#!#nvarchar#!#nvarchar
+varchar#!#char#!#nvarchar#!#varchar#!#varchar
 jdbc_user#!#S#!#SQL_LOGIN#!#master#!#English
 serv_principal_test#!#S#!#SQL_LOGIN#!#master#!#English
 ~~END~~
@@ -38,7 +38,7 @@ FROM sys.server_principals
 WHERE name in ('jdbc_user', 'serv_principal_test');
 GO
 ~~START~~
-varchar#!#char#!#nvarchar#!#nvarchar#!#nvarchar
+varchar#!#char#!#nvarchar#!#varchar#!#varchar
 jdbc_user#!#S#!#SQL_LOGIN#!#master#!#English
 ~~END~~
 

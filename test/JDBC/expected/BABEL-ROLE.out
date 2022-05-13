@@ -22,7 +22,7 @@ WHERE type = 'R'
 ORDER BY name
 GO
 ~~START~~
-nvarchar#!#nvarchar
+varchar#!#nvarchar
 ~~END~~
 
 
@@ -45,7 +45,7 @@ FROM sys.database_principals
 WHERE name = 'test1'
 GO
 ~~START~~
-nvarchar#!#nvarchar
+varchar#!#nvarchar
 test1#!#DATABASE_ROLE
 ~~END~~
 
@@ -152,7 +152,7 @@ master_test2#!#S#!#test2#!#master
 EXEC babel_db_principal
 GO
 ~~START~~
-nvarchar#!#nvarchar
+varchar#!#nvarchar
 test1#!#DATABASE_ROLE
 test2#!#DATABASE_ROLE
 ~~END~~
@@ -239,7 +239,7 @@ master_test2#!#S#!#test2#!#master
 EXEC babel_db_principal
 GO
 ~~START~~
-nvarchar#!#nvarchar
+varchar#!#nvarchar
 test1#!#DATABASE_ROLE
 test2#!#DATABASE_ROLE
 test3#!#SQL_USER
@@ -250,7 +250,7 @@ test4#!#SQL_USER
 EXEC babel_role_members
 GO
 ~~START~~
-nvarchar#!#char#!#nvarchar#!#char
+varchar#!#char#!#varchar#!#char
 test1#!#R#!#test2#!#R
 test1#!#R#!#test3#!#S
 test2#!#R#!#test4#!#S
@@ -277,7 +277,7 @@ master_test2#!#S#!#test2#!#master
 EXEC babel_db_principal
 GO
 ~~START~~
-nvarchar#!#nvarchar
+varchar#!#nvarchar
 test1_new#!#DATABASE_ROLE
 test2#!#DATABASE_ROLE
 test3#!#SQL_USER
@@ -288,7 +288,7 @@ test4#!#SQL_USER
 EXEC babel_role_members
 GO
 ~~START~~
-nvarchar#!#char#!#nvarchar#!#char
+varchar#!#char#!#varchar#!#char
 test1_new#!#R#!#test2#!#R
 test1_new#!#R#!#test3#!#S
 test2#!#R#!#test4#!#S
@@ -321,7 +321,7 @@ master_test2#!#S#!#test2#!#master
 EXEC babel_db_principal
 GO
 ~~START~~
-nvarchar#!#nvarchar
+varchar#!#nvarchar
 test1_new#!#DATABASE_ROLE
 test2#!#DATABASE_ROLE
 test3#!#SQL_USER
@@ -332,7 +332,7 @@ test4#!#SQL_USER
 EXEC babel_role_members
 GO
 ~~START~~
-nvarchar#!#char#!#nvarchar#!#char
+varchar#!#char#!#varchar#!#char
 test1_new#!#R#!#test2#!#R
 test1_new#!#R#!#test3#!#S
 test2#!#R#!#test4#!#S
