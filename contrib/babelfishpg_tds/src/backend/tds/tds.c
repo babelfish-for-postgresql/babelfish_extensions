@@ -19,6 +19,7 @@
 #include "funcapi.h"
 
 #include "access/printtup.h"
+#include "access/xact.h"
 #include "src/include/tds_int.h"
 #include "src/include/tds_secure.h"
 #include "src/include/tds_instr.h"
@@ -395,7 +396,7 @@ tdsstat_bestart(void)
 	ltdsentry.textsize = atoi(GetConfigOption("babelfishpg_tsql.textsize", true, true));
 	ltdsentry.datefirst = atoi(GetConfigOption("babelfishpg_tsql.datefirst", true, true));
 	ltdsentry.lock_timeout = atoi(GetConfigOption("lock_timeout", true, true));
-	ltdsentry.transaction_isolation = atoi(GetConfigOption("default_transaction_isolation", true, true));
+	ltdsentry.transaction_isolation = DefaultXactIsoLevel;
 
 	language = GetConfigOption("babelfishpg_tsql.language", true, true);
 
