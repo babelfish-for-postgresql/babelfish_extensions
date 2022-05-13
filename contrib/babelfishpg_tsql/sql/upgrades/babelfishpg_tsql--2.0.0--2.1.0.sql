@@ -1350,7 +1350,7 @@ WHERE Ext.database_name = DB_NAME();
 GRANT SELECT ON sys.database_principals TO PUBLIC;
 
 -- Drop the deprecated view if there isn't any dependent object
-SELECT sys.babelfish_drop_deprecated_view('sys', 'database_principals_deprecated');
+CALL sys.babelfish_drop_deprecated_view('sys', 'database_principals_deprecated');
 
 ALTER VIEW sys.server_principals RENAME TO server_principals_deprecated;
 -- sys.server_principals is used only in is_srvrolemember() function.
@@ -1376,7 +1376,7 @@ FROM pg_catalog.pg_authid AS Base INNER JOIN sys.babelfish_authid_login_ext AS E
 GRANT SELECT ON sys.server_principals TO PUBLIC;
 
 -- Drop the deprecated view if there isn't any dependent object
-SELECT sys.babelfish_drop_deprecated_view('sys', 'server_principals_deprecated');
+CALL sys.babelfish_drop_deprecated_view('sys', 'server_principals_deprecated');
 
 -- Drops the temporary procedure used by the upgrade script.
 -- Please have this be one of the last statements executed in this upgrade script.
