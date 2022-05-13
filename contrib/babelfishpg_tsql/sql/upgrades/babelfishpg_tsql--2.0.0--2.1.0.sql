@@ -3,6 +3,31 @@
  
 SELECT set_config('search_path', 'sys, '||current_setting('search_path'), false);
 
+-- Drops a view if it does not have any dependent objects.
+-- Is a temporary procedure for use by the upgrade script. Will be dropped at the end of the upgrade.
+-- Please have this be one of the first statements executed in this upgrade script. 
+CREATE OR REPLACE PROCEDURE babelfish_drop_deprecated_view(schema_name varchar, view_name varchar) AS
+$$
+DECLARE
+    error_msg text;
+    query1 text;
+    query2 text;
+BEGIN
+    query1 := format('alter extension babelfishpg_tsql drop view %s.%s', schema_name, view_name);
+    query2 := format('drop view %s.%s', schema_name, view_name);
+    execute query1;
+    execute query2;
+EXCEPTION
+    when object_not_in_prerequisite_state then --if 'alter extension' statement fails
+        GET STACKED DIAGNOSTICS error_msg = MESSAGE_TEXT;
+        raise warning '%', error_msg;
+    when dependent_objects_still_exist then --if 'drop view' statement fails
+        GET STACKED DIAGNOSTICS error_msg = MESSAGE_TEXT;
+        raise warning '%', error_msg;
+end
+$$
+LANGUAGE plpgsql;
+
 -- TODO: BABEL-2838
 CREATE OR REPLACE VIEW sys.sp_special_columns_view AS
 SELECT DISTINCT 
@@ -1107,6 +1132,176 @@ $$;
 
 CALL sys.babel_create_msdb_if_not_exists();
 
+alter view sys.indexes rename to indexes_deprecated;
+
+create or replace view sys.indexes as
+select 
+  CAST(object_id as int)
+  , CAST(name as sys.sysname)
+  , CAST(type as sys.tinyint)
+  , CAST(type_desc as sys.nvarchar(60))
+  , CAST(is_unique as sys.bit)
+  , CAST(data_space_id as int)
+  , CAST(ignore_dup_key as sys.bit)
+  , CAST(is_primary_key as sys.bit)
+  , CAST(is_unique_constraint as sys.bit)
+  , CAST(fill_factor as sys.tinyint)
+  , CAST(is_padded as sys.bit)
+  , CAST(is_disabled as sys.bit)
+  , CAST(is_hypothetical as sys.bit)
+  , CAST(allow_row_locks as sys.bit)
+  , CAST(allow_page_locks as sys.bit)
+  , CAST(has_filter as sys.bit)
+  , CAST(filter_definition as sys.nvarchar)
+  , CAST(auto_created as sys.bit)
+  , CAST(index_id as int)
+from 
+(
+  -- Get all indexes from all system and user tables
+  select
+    i.indrelid as object_id
+    , c.relname as name
+    , case when i.indisclustered then 1 else 2 end as type
+    , case when i.indisclustered then 'CLUSTERED' else 'NONCLUSTERED' end as type_desc
+    , case when i.indisunique then 1 else 0 end as is_unique
+    , c.reltablespace as data_space_id
+    , 0 as ignore_dup_key
+    , case when i.indisprimary then 1 else 0 end as is_primary_key
+    , case when constr.oid is null then 0 else 1 end as is_unique_constraint
+    , 0 as fill_factor
+    , case when i.indpred is null then 0 else 1 end as is_padded
+    , case when i.indisready then 0 else 1 end as is_disabled
+    , 0 as is_hypothetical
+    , 1 as allow_row_locks
+    , 1 as allow_page_locks
+    , 0 as has_filter
+    , null as filter_definition
+    , 0 as auto_created
+    , case when i.indisclustered then 1 else c.oid end as index_id
+  from pg_class c
+  inner join pg_index i on i.indexrelid = c.oid
+  left join pg_constraint constr on constr.conindid = c.oid
+  where c.relkind = 'i' and i.indislive
+  and (c.relnamespace in (select schema_id from sys.schemas) or c.relnamespace::regnamespace::text = 'sys')
+  and has_schema_privilege(c.relnamespace, 'USAGE')
+
+  union all 
+  
+  -- Create HEAP entries for each system and user table
+  select distinct on (t.oid)
+    t.oid as object_id
+    , null as name
+    , 0 as type
+    , 'HEAP' as type_desc
+    , 0 as is_unique
+    , 1 as data_space_id
+    , 0 as ignore_dup_key
+    , 0 as is_primary_key
+    , 0 as is_unique_constraint
+    , 0 as fill_factor
+    , 0 as is_padded
+    , 0 as is_disabled
+    , 0 as is_hypothetical
+    , 1 as allow_row_locks
+    , 1 as allow_page_locks
+    , 0 as has_filter
+    , null as filter_definition
+    , 0 as auto_created
+    , 0 as index_id
+  from pg_class t 
+  where t.relkind = 'r'
+  and (t.relnamespace in (select schema_id from sys.schemas) or t.relnamespace::regnamespace::text = 'sys')
+  and has_schema_privilege(t.relnamespace, 'USAGE')
+  and has_table_privilege(t.oid, 'SELECT,INSERT,UPDATE,DELETE,TRUNCATE,TRIGGER')
+
+) as indexes_select order by object_id, type_desc;
+GRANT SELECT ON sys.indexes TO PUBLIC;
+
+create or replace view  sys.sysindexes as
+select
+  i.object_id::integer as id
+  , null::integer as status
+  , null::binary(6) as first
+  , i.type::smallint as indid
+  , null::binary(6) as root
+  , 0::smallint as minlen
+  , 1::smallint as keycnt
+  , null::smallint as groupid
+  , 0 as dpages
+  , 0 as reserved
+  , 0 as used
+  , 0::bigint as rowcnt
+  , 0 as rowmodctr
+  , 0 as reserved3
+  , 0 as reserved4
+  , 0::smallint as xmaxlen
+  , null::smallint as maxirow
+  , 90::sys.tinyint as "OrigFillFactor"
+  , 0::sys.tinyint as "StatVersion"
+  , 0 as reserved2
+  , null::binary(6) as "FirstIAM"
+  , 0::smallint as impid
+  , 0::smallint as lockflags
+  , 0 as pgmodctr
+  , null::sys.varbinary(816) as keys
+  , i.name::sys.sysname as name
+  , null::sys.image as statblob
+  , 0 as maxlen
+  , 0 as rows
+from sys.indexes i;
+GRANT SELECT ON sys.sysindexes TO PUBLIC;
+
+-- TODO: BABEL-2838
+CREATE OR REPLACE VIEW sys.sp_special_columns_view AS
+SELECT DISTINCT 
+CAST(1 as smallint) AS SCOPE,
+CAST(coalesce (split_part(pa.attoptions[1], '=', 2) ,c1.name) AS sys.sysname) AS COLUMN_NAME, -- get original column name if exists
+CAST(t6.data_type AS smallint) AS DATA_TYPE,
+
+CASE -- cases for when they are of type identity. 
+	WHEN c1.is_identity = 1 AND (t8.name = 'decimal' or t8.name = 'numeric') 
+	THEN CAST(CONCAT(t8.name, '() identity') AS sys.sysname)
+	WHEN c1.is_identity = 1 AND (t8.name != 'decimal' AND t8.name != 'numeric')
+	THEN CAST(CONCAT(t8.name, ' identity') AS sys.sysname)
+	ELSE CAST(t8.name AS sys.sysname)
+END AS TYPE_NAME,
+
+CAST(sys.sp_special_columns_precision_helper(coalesce(tsql_type_name, tsql_base_type_name), c1.precision, c1.max_length, t6."PRECISION") AS int) AS PRECISION,
+CAST(sys.sp_special_columns_length_helper(coalesce(tsql_type_name, tsql_base_type_name), c1.precision, c1.max_length, t6."PRECISION") AS int) AS LENGTH,
+CAST(sys.sp_special_columns_scale_helper(coalesce(tsql_type_name, tsql_base_type_name), c1.scale) AS smallint) AS SCALE,
+CAST(1 AS smallint) AS PSEUDO_COLUMN,
+CAST(c1.is_nullable AS int) AS IS_NULLABLE,
+CAST(t2.dbname AS sys.sysname) AS TABLE_QUALIFIER,
+CAST(s1.name AS sys.sysname) AS TABLE_OWNER,
+CAST(t1.relname AS sys.sysname) AS TABLE_NAME,
+
+CASE 
+	WHEN idx.is_primary_key != 1
+	THEN CAST('u' AS sys.sysname) -- if it is a unique index, then we should cast it as 'u' for filtering purposes
+	ELSE CAST('p' AS sys.sysname)
+END AS CONSTRAINT_TYPE,
+CAST(idx.name AS sys.sysname) AS CONSTRAINT_NAME,
+CAST(idx.index_id AS int) AS INDEX_ID
+        
+FROM pg_catalog.pg_class t1 
+	JOIN sys.pg_namespace_ext t2 ON t1.relnamespace = t2.oid
+	JOIN sys.schemas s1 ON s1.schema_id = t1.relnamespace
+	LEFT JOIN sys.indexes idx ON idx.object_id = t1.oid
+	INNER JOIN pg_catalog.pg_attribute i2 ON idx.index_id = i2.attrelid
+	INNER JOIN sys.columns c1 ON c1.object_id = idx.object_id AND i2.attname = c1.name
+
+	JOIN pg_catalog.pg_type AS t7 ON t7.oid = c1.system_type_id
+	JOIN sys.types AS t8 ON c1.user_type_id = t8.user_type_id 
+	LEFT JOIN sys.sp_datatype_info_helper(2::smallint, false) AS t6 ON t7.typname = t6.pg_type_name OR t7.typname = t6.type_name --need in order to get accurate DATA_TYPE value
+	LEFT JOIN pg_catalog.pg_attribute AS pa ON t1.oid = pa.attrelid AND c1.name = pa.attname
+	, sys.translate_pg_type_to_tsql(t8.user_type_id) AS tsql_type_name
+	, sys.translate_pg_type_to_tsql(t8.system_type_id) AS tsql_base_type_name
+	WHERE has_schema_privilege(s1.schema_id, 'USAGE');
+  
+GRANT SELECT ON sys.sp_special_columns_view TO PUBLIC;
+
+call sys.babelfish_drop_deprecated_view('sys', 'indexes_deprecated');
+
 CREATE OR REPLACE FUNCTION OBJECTPROPERTY(IN object_id INT, IN property sys.varchar)
 RETURNS INT AS
 $$
@@ -1124,6 +1319,10 @@ BEGIN
 END;
 $$
 LANGUAGE plpgsql;
+
+-- Drops the temporary procedure used by the upgrade script.
+-- Please have this be one of the last statements executed in this upgrade script.
+DROP PROCEDURE sys.babelfish_drop_deprecated_view(varchar, varchar);
 
 -- Reset search_path to not affect any subsequent scripts
 SELECT set_config('search_path', trim(leading 'sys, ' from current_setting('search_path')), false);
