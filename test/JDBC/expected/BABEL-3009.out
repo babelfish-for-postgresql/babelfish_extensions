@@ -1,0 +1,45 @@
+SELECT ac.name,tp.name as type_name FROM sys.all_columns ac
+LEFT JOIN sys.types tp ON tp.system_type_id = ac.system_type_id
+WHERE ac.object_id = object_id('sys.server_principals') ORDER BY ac.name;
+GO
+~~START~~
+varchar#!#text
+create_date#!#datetime
+credential_id#!#int
+default_database_name#!#sysname
+default_language_name#!#sysname
+is_disabled#!#int
+is_fixed_role#!#bit
+modify_date#!#datetime
+name#!#sysname
+owning_principal_id#!#int
+principal_id#!#int
+sid#!#varbinary
+type#!#<NULL>
+type_desc#!#nvarchar
+~~END~~
+
+
+SELECT ac.name,tp.name as type_name FROM sys.all_columns ac
+LEFT JOIN sys.types tp ON tp.system_type_id = ac.system_type_id
+WHERE ac.object_id = object_id('sys.database_principals') ORDER BY ac.name;
+GO
+~~START~~
+varchar#!#text
+allow_encrypted_value_modifications#!#bit
+authentication_type#!#int
+authentication_type_desc#!#nvarchar
+create_date#!#datetime
+default_language_lcid#!#int
+default_language_name#!#sysname
+default_schema_name#!#sysname
+is_fixed_role#!#bit
+modify_date#!#datetime
+name#!#sysname
+owning_principal_id#!#int
+principal_id#!#int
+sid#!#varbinary
+type#!#<NULL>
+type_desc#!#nvarchar
+~~END~~
+

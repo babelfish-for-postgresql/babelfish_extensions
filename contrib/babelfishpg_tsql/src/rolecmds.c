@@ -108,7 +108,10 @@ create_bbf_authid_login_ext(CreateRoleStmt *stmt)
 
 	new_record_login_ext[LOGIN_EXT_ROLNAME] = CStringGetDatum(stmt->role);
 	new_record_login_ext[LOGIN_EXT_IS_DISABLED] = Int32GetDatum(0);
-	new_record_login_ext[LOGIN_EXT_TYPE] = CStringGetTextDatum("S");
+	if (strcmp(stmt->role, "sysadmin") == 0)
+		new_record_login_ext[LOGIN_EXT_TYPE] = CStringGetTextDatum("R");
+	else
+		new_record_login_ext[LOGIN_EXT_TYPE] = CStringGetTextDatum("S");
 	new_record_login_ext[LOGIN_EXT_CREDENTIAL_ID] = Int32GetDatum(-1); /* placeholder */
 	new_record_login_ext[LOGIN_EXT_OWNING_PRINCIPAL_ID] = Int32GetDatum(-1); /* placeholder */
 	new_record_login_ext[LOGIN_EXT_IS_FIXED_ROLE] = Int32GetDatum(0);
