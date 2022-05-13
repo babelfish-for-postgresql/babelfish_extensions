@@ -1,0 +1,53 @@
+USE db_babel_3204;
+go
+
+SELECT babel_3204_complex_func('abc def', ' ');
+go
+~~START~~
+nvarchar
+abc
+def
+~~END~~
+
+
+SELECT babel_3204_text();
+go
+~~START~~
+text
+Hello
+~~END~~
+
+
+SELECT babel_3204_ntext();
+go
+~~START~~
+ntext
+Hello
+~~END~~
+
+
+SELECT babel_3204_image();
+go
+~~START~~
+image
+FE
+~~END~~
+
+
+DROP FUNCTION babel_3204_complex_func;
+go
+
+DROP FUNCTION babel_3204_text;
+go
+
+DROP FUNCTION babel_3204_ntext;
+go
+
+DROP FUNCTION babel_3204_image;
+go
+
+USE master;
+go
+
+DROP DATABASE db_babel_3204;
+go

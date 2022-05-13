@@ -84,6 +84,7 @@
 extern bool escape_hatch_unique_constraint;
 extern bool pltsql_recursive_triggers;
 extern bool restore_tsql_tabletype;
+extern bool babelfish_dump_restore;
 
 extern List *babelfishpg_tsql_raw_parser(const char *str, RawParseMode mode);
 extern bool install_backend_gram_hooks();
@@ -4029,7 +4030,10 @@ pltsql_validator(PG_FUNCTION_ARGS)
 	proc = (Form_pg_proc) GETSTRUCT(tuple);
 
 	/* Disallow text, ntext, and image type result */
-	if (is_tsql_text_datatype(proc->prorettype) || is_tsql_ntext_datatype(proc->prorettype) || is_tsql_image_datatype(proc->prorettype))
+	if (!babelfish_dump_restore &&
+		(is_tsql_text_datatype(proc->prorettype) ||
+		 is_tsql_ntext_datatype(proc->prorettype) ||
+		 is_tsql_image_datatype(proc->prorettype)))
 	{
 		ereport(ERROR,
 			(errcode(ERRCODE_INVALID_FUNCTION_DEFINITION),
@@ -4131,7 +4135,7 @@ pltsql_validator(PG_FUNCTION_ARGS)
 			}
 
 			/* Test-compile the function */
-			if (is_itvf)
+			if (is_itvf && !babelfish_dump_restore)
 			{
 				PLtsql_stmt_return_query *returnQueryStmt;
 				/*
@@ -4166,7 +4170,7 @@ pltsql_validator(PG_FUNCTION_ARGS)
 		 * definition list by planning the query in the function, and modifying the
 		 * pg_proc entry for this function.
 		 */
-		if (is_itvf)
+		if (is_itvf && !babelfish_dump_restore)
 		{
 			SPIPlanPtr spi_plan;
 			int spi_rc;
@@ -4243,6 +4247,7 @@ pltsql_validator(PG_FUNCTION_ARGS)
 				TargetEntry *te = (TargetEntry *) lfirst(lc);
 				int new_i;
 				Oid new_type;
+				ListCell *prev_lc;
 
 				/*
 				 * If resjunk is true then the column is a working column and should
@@ -4264,6 +4269,20 @@ pltsql_validator(PG_FUNCTION_ARGS)
 					elog(ERROR,
 						"CREATE FUNCTION failed because a column name is not specified for column %d",
 						i+1);
+				}
+
+				foreach(prev_lc, query->targetList)
+				{
+					TargetEntry *prev_te = (TargetEntry *) lfirst(prev_lc);
+
+					if (prev_te == te)
+						break;
+
+					if (strcmp(prev_te->resname, te->resname) == 0)
+						ereport(ERROR,
+								(errcode(ERRCODE_INVALID_FUNCTION_DEFINITION),
+								 errmsg("parameter name \"%s\" used more than once",
+								 	te->resname)));
 				}
 
 				new_i = i + numargs;
