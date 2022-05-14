@@ -1,0 +1,18 @@
+use master;
+go
+
+select 'no error' from (select GETUTCDATE()) t;
+go
+~~START~~
+varchar
+no error
+~~END~~
+
+
+select 'no error' from (select SYSUTCDATETIME()) t;
+go
+~~START~~
+varchar
+no error
+~~END~~
+
