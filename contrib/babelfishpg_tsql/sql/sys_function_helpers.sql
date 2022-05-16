@@ -2672,17 +2672,38 @@ end
 $body$
 language 'plpgsql';
 
--- Remove closing square brackets at both ends, otherwise do nothing.
-CREATE OR REPLACE FUNCTION sys.babelfish_single_unbracket_name(IN name TEXT)
+-- Remove single pair of either square brackets or double-quotes from outer ends if present
+-- If name begins with a delimiter but does not end with the matching delimiter return NULL
+-- Otherwise, return the name unchanged
+CREATE OR REPLACE FUNCTION babelfish_remove_delimiter_pair(IN name TEXT)
 RETURNS TEXT AS
 $BODY$
 BEGIN
-    IF length(name) >= 2 AND left(name, 1) = '[' AND right(name, 1) = ']' THEN
+    IF name IN('[', ']', '"') THEN
+        RETURN NULL;
+
+    ELSIF length(name) >= 2 AND left(name, 1) = '[' AND right(name, 1) = ']' THEN
         IF length(name) = 2 THEN
             RETURN '';
         ELSE
             RETURN substring(name from 2 for length(name)-2);
         END IF;
+    ELSIF length(name) >= 2 AND left(name, 1) = '[' AND right(name, 1) != ']' THEN
+        RETURN NULL;
+    ELSIF length(name) >= 2 AND left(name, 1) != '[' AND right(name, 1) = ']' THEN
+        RETURN NULL;
+
+    ELSIF length(name) >= 2 AND left(name, 1) = '"' AND right(name, 1) = '"' THEN
+        IF length(name) = 2 THEN
+            RETURN '';
+        ELSE
+            RETURN substring(name from 2 for length(name)-2);
+        END IF;
+    ELSIF length(name) >= 2 AND left(name, 1) = '"' AND right(name, 1) != '"' THEN
+        RETURN NULL;
+    ELSIF length(name) >= 2 AND left(name, 1) != '"' AND right(name, 1) = '"' THEN
+        RETURN NULL;
+    
     END IF;
     RETURN name;
 END;
@@ -10061,6 +10082,149 @@ $BODY$
                                                       )/1000::numeric);
 $BODY$
 LANGUAGE SQL;
+
+CREATE OR REPLACE FUNCTION babelfish_get_name_delimiter_pos(name TEXT)
+RETURNS INTEGER
+AS $$
+DECLARE
+    pos int;
+BEGIN
+    IF (length(name) <= 2 AND (position('"' IN name) != 0 OR position(']' IN name) != 0 OR position('[' IN name) != 0))
+        -- invalid name
+        THEN RETURN 0;
+    ELSIF left(name, 1) = '[' THEN
+        pos = position('].' IN name);
+        IF pos = 0 THEN 
+            -- invalid name
+            RETURN 0;
+        ELSE
+            RETURN pos + 1;
+        END IF;
+    ELSIF left(name, 1) = '"' THEN
+        -- search from position 1 in case name starts with ".
+        pos = position('".' IN right(name, length(name) - 1));
+        IF pos = 0 THEN
+            -- invalid name
+            RETURN 0;
+        ELSE
+            RETURN pos + 2;
+        END IF;
+    ELSE
+        RETURN position('.' IN name);
+    END IF;
+END;
+$$
+LANGUAGE plpgsql;
+
+-- valid names are db_name.schema_name.object_name or schema_name.object_name or object_name
+CREATE OR REPLACE FUNCTION babelfish_split_object_name(
+    name TEXT, 
+    OUT db_name TEXT, 
+    OUT schema_name TEXT, 
+    OUT object_name TEXT)
+AS $$
+DECLARE
+    lower_object_name text;
+    names text[2];
+    counter int;
+    cur_pos int;
+BEGIN
+    lower_object_name = lower(rtrim(name));
+
+    counter = 1;
+    cur_pos = babelfish_get_name_delimiter_pos(lower_object_name);
+
+    -- Parse user input into names split by '.'
+    WHILE cur_pos > 0 LOOP
+        IF counter > 3 THEN
+            -- Too many names provided
+            RETURN;
+        END IF;
+
+        names[counter] = babelfish_remove_delimiter_pair(rtrim(left(lower_object_name, cur_pos - 1)));
+        
+        -- invalid name
+        IF names[counter] IS NULL THEN
+            RETURN;
+        END IF;
+
+        lower_object_name = substring(lower_object_name from cur_pos + 1);
+        counter = counter + 1;
+        cur_pos = babelfish_get_name_delimiter_pos(lower_object_name);
+    END LOOP;
+
+    CASE counter
+        WHEN 1 THEN
+            db_name = NULL;
+            schema_name = NULL;
+        WHEN 2 THEN
+            db_name = NULL;
+            schema_name = sys.babelfish_truncate_identifier(names[1]);
+        WHEN 3 THEN
+            db_name = sys.babelfish_truncate_identifier(names[1]);
+            schema_name = sys.babelfish_truncate_identifier(names[2]);
+        ELSE
+            RETURN;
+    END CASE;
+
+    -- Assign each name accordingly
+    object_name = sys.babelfish_truncate_identifier(babelfish_remove_delimiter_pair(rtrim(lower_object_name)));
+END;
+$$
+LANGUAGE plpgsql;
+
+CREATE OR REPLACE FUNCTION babelfish_has_any_privilege(
+    perm_target_type text,
+    schema_name text,
+    object_name text)
+RETURNS INTEGER
+AS
+$BODY$
+DECLARE 
+    relevant_permissions text[];
+    namespace_id oid;
+    function_signature text;
+    qualified_name text;
+    permission text;
+BEGIN
+    IF perm_target_type IS NULL OR perm_target_type NOT IN('table', 'function', 'procedure')
+        THEN RETURN NULL;
+    END IF;
+
+    relevant_permissions := (
+        SELECT CASE
+            WHEN perm_target_type = 'table'
+                THEN '{"select", "insert", "update", "delete", "references"}'
+            WHEN perm_target_type IN('function', 'procedure')
+                THEN '{"execute"}'
+        END
+    );
+
+    SELECT oid INTO namespace_id FROM pg_catalog.pg_namespace WHERE nspname = schema_name;
+
+    IF perm_target_type IN('function', 'procedure')
+        THEN SELECT oid::regprocedure 
+                INTO function_signature 
+                FROM pg_catalog.pg_proc 
+                WHERE proname = object_name
+                    AND pronamespace = namespace_id;
+    END IF;
+
+    -- Surround with double-quotes to handle names that contain periods/spaces
+    qualified_name := concat('"', schema_name, '"."', object_name, '"');
+
+    FOREACH permission IN ARRAY relevant_permissions
+    LOOP
+        IF perm_target_type = 'table' AND has_table_privilege(qualified_name, permission)::integer = 1
+            THEN RETURN 1;
+        ELSIF perm_target_type IN('function', 'procedure') AND has_function_privilege(function_signature, permission)::integer = 1
+            THEN RETURN 1;
+        END IF;
+    END LOOP;
+    RETURN 0;
+END
+$BODY$
+LANGUAGE plpgsql;
 
 -- internal table function for sp_cursor_list and sp_decribe_cursor
 CREATE OR REPLACE FUNCTION sys.babelfish_cursor_list(cursor_source integer)

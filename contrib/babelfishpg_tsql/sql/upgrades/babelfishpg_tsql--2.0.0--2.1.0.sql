@@ -1117,6 +1117,831 @@ CREATE COLLATION sys.Japanese_CS_AS (provider = icu, locale = 'ja_JP');
 CREATE COLLATION sys.Japanese_CI_AI (provider = icu, locale = 'ja_JP@colStrength=primary', deterministic = false);
 CREATE COLLATION sys.Japanese_CI_AS (provider = icu, locale = 'ja_JP@colStrength=secondary', deterministic = false);
 
+-- Remove single pair of either square brackets or double-quotes from outer ends if present
+-- If name begins with a delimiter but does not end with the matching delimiter return NULL
+-- Otherwise, return the name unchanged
+CREATE OR REPLACE FUNCTION babelfish_remove_delimiter_pair(IN name TEXT)
+RETURNS TEXT AS
+$BODY$
+BEGIN
+    IF name IN('[', ']', '"') THEN
+        RETURN NULL;
+
+    ELSIF length(name) >= 2 AND left(name, 1) = '[' AND right(name, 1) = ']' THEN
+        IF length(name) = 2 THEN
+            RETURN '';
+        ELSE
+            RETURN substring(name from 2 for length(name)-2);
+        END IF;
+    ELSIF length(name) >= 2 AND left(name, 1) = '[' AND right(name, 1) != ']' THEN
+        RETURN NULL;
+    ELSIF length(name) >= 2 AND left(name, 1) != '[' AND right(name, 1) = ']' THEN
+        RETURN NULL;
+
+    ELSIF length(name) >= 2 AND left(name, 1) = '"' AND right(name, 1) = '"' THEN
+        IF length(name) = 2 THEN
+            RETURN '';
+        ELSE
+            RETURN substring(name from 2 for length(name)-2);
+        END IF;
+    ELSIF length(name) >= 2 AND left(name, 1) = '"' AND right(name, 1) != '"' THEN
+        RETURN NULL;
+    ELSIF length(name) >= 2 AND left(name, 1) != '"' AND right(name, 1) = '"' THEN
+        RETURN NULL;
+    
+    END IF;
+    RETURN name;
+END;
+$BODY$
+LANGUAGE plpgsql;
+
+CREATE OR REPLACE FUNCTION babelfish_get_name_delimiter_pos(name TEXT)
+RETURNS INTEGER
+AS $$
+DECLARE
+    pos int;
+BEGIN
+    IF (length(name) <= 2 AND (position('"' IN name) != 0 OR position(']' IN name) != 0 OR position('[' IN name) != 0))
+        -- invalid name
+        THEN RETURN 0;
+    ELSIF left(name, 1) = '[' THEN
+        pos = position('].' IN name);
+        IF pos = 0 THEN 
+            -- invalid name
+            RETURN 0;
+        ELSE
+            RETURN pos + 1;
+        END IF;
+    ELSIF left(name, 1) = '"' THEN
+        -- search from position 1 in case name starts with ".
+        pos = position('".' IN right(name, length(name) - 1));
+        IF pos = 0 THEN
+            -- invalid name
+            RETURN 0;
+        ELSE
+            RETURN pos + 2;
+        END IF;
+    ELSE
+        RETURN position('.' IN name);
+    END IF;
+END;
+$$
+LANGUAGE plpgsql;
+
+-- valid names are db_name.schema_name.object_name or schema_name.object_name or object_name
+CREATE OR REPLACE FUNCTION babelfish_split_object_name(
+    name TEXT, 
+    OUT db_name TEXT, 
+    OUT schema_name TEXT, 
+    OUT object_name TEXT)
+AS $$
+DECLARE
+    lower_object_name text;
+    names text[2];
+    counter int;
+    cur_pos int;
+BEGIN
+    lower_object_name = lower(rtrim(name));
+
+    counter = 1;
+    cur_pos = babelfish_get_name_delimiter_pos(lower_object_name);
+
+    -- Parse user input into names split by '.'
+    WHILE cur_pos > 0 LOOP
+        IF counter > 3 THEN
+            -- Too many names provided
+            RETURN;
+        END IF;
+
+        names[counter] = babelfish_remove_delimiter_pair(rtrim(left(lower_object_name, cur_pos - 1)));
+        
+        -- invalid name
+        IF names[counter] IS NULL THEN
+            RETURN;
+        END IF;
+
+        lower_object_name = substring(lower_object_name from cur_pos + 1);
+        counter = counter + 1;
+        cur_pos = babelfish_get_name_delimiter_pos(lower_object_name);
+    END LOOP;
+
+    CASE counter
+        WHEN 1 THEN
+            db_name = NULL;
+            schema_name = NULL;
+        WHEN 2 THEN
+            db_name = NULL;
+            schema_name = sys.babelfish_truncate_identifier(names[1]);
+        WHEN 3 THEN
+            db_name = sys.babelfish_truncate_identifier(names[1]);
+            schema_name = sys.babelfish_truncate_identifier(names[2]);
+        ELSE
+            RETURN;
+    END CASE;
+
+    -- Assign each name accordingly
+    object_name = sys.babelfish_truncate_identifier(babelfish_remove_delimiter_pair(rtrim(lower_object_name)));
+END;
+$$
+LANGUAGE plpgsql;
+
+-- Return the object ID given the object name. Can specify optional type.
+CREATE OR REPLACE FUNCTION sys.object_id(IN object_name TEXT, IN object_type char(2) DEFAULT '')
+RETURNS INTEGER AS
+$BODY$
+DECLARE
+        id oid;
+        db_name text collate "C";
+        bbf_schema_name text collate "C";
+        schema_name text collate "C";
+        schema_oid oid;
+        obj_name text collate "C";
+        is_temp_object boolean;
+        obj_type char(2) collate "C";
+        cs_as_object_name text collate "C" := object_name;
+BEGIN
+        obj_type = object_type;
+        id = null;
+        schema_oid = NULL;
+
+        SELECT s.db_name, s.schema_name, s.object_name INTO db_name, bbf_schema_name, obj_name 
+        FROM babelfish_split_object_name(cs_as_object_name) s;
+
+        -- Invalid object_name
+        IF obj_name IS NULL OR obj_name = '' THEN
+            RETURN NULL;
+        END IF;
+
+        IF bbf_schema_name IS NULL OR bbf_schema_name = '' THEN
+            bbf_schema_name := sys.schema_name();
+        END IF;
+
+        schema_name := sys.bbf_get_current_physical_schema_name(bbf_schema_name);
+
+        -- Check if looking for temp object.
+        is_temp_object = left(obj_name, 1) = '#';
+
+        -- Can only search in current database. Allowing tempdb for temp objects.
+        IF db_name IS NOT NULL AND db_name <> db_name() AND db_name <> 'tempdb' THEN
+            RAISE EXCEPTION 'Can only do lookup in current database.';
+        END IF;
+
+        IF schema_name IS NULL OR schema_name = '' THEN
+            RETURN NULL;
+        END IF;
+
+        -- Searching within a schema. Get schema oid.
+        schema_oid = (SELECT oid FROM pg_namespace WHERE nspname = schema_name);
+        IF schema_oid IS NULL THEN
+            RETURN NULL;
+        END IF;
+
+        if object_type <> '' then
+            case
+                -- Schema does not apply as much to temp objects.
+                when upper(object_type) in ('S', 'U', 'V', 'IT', 'ET', 'SO') and is_temp_object then
+                    id := (select reloid from sys.babelfish_get_enr_list() where lower(relname) = obj_name limit 1);
+
+                when upper(object_type) in ('S', 'U', 'V', 'IT', 'ET', 'SO') and not is_temp_object then
+                    id := (select oid from pg_class where lower(relname) = obj_name 
+                            and relnamespace = schema_oid limit 1);
+
+                when upper(object_type) in ('C', 'D', 'F', 'PK', 'UQ') then
+                    id := (select oid from pg_constraint where lower(conname) = obj_name 
+                            and connamespace = schema_oid limit 1);
+
+                when upper(object_type) in ('AF', 'FN', 'FS', 'FT', 'IF', 'P', 'PC', 'TF', 'RF', 'X') then
+                    id := (select oid from pg_proc where lower(proname) = obj_name 
+                            and pronamespace = schema_oid limit 1);
+
+                when upper(object_type) in ('TR', 'TA') then
+                    id := (select oid from pg_trigger where lower(tgname) = obj_name limit 1);
+
+                -- Throwing exception as a reminder to add support in the future.
+                when upper(object_type) in ('R', 'EC', 'PG', 'SN', 'SQ', 'TT') then
+                    RAISE EXCEPTION 'Object type currently unsupported.';
+
+                -- unsupported object_type
+                else id := null;
+            end case;
+        else
+            if not is_temp_object then 
+                id := (
+                    select oid from pg_class where lower(relname) = obj_name
+                        and relnamespace = schema_oid
+                    union
+                    select oid from pg_constraint where lower(conname) = obj_name
+                        and connamespace = schema_oid
+                    union
+                    select oid from pg_proc where lower(proname) = obj_name
+                        and pronamespace = schema_oid
+                    union
+                    select oid from pg_trigger where lower(tgname) = obj_name
+                    limit 1
+                );
+            else
+                -- temp object without "object_type" in-argument
+                id := (select reloid from sys.babelfish_get_enr_list() where lower(relname) = obj_name limit 1);
+            end if;
+        end if;
+
+        RETURN id::integer;
+END;
+$BODY$
+LANGUAGE plpgsql STABLE RETURNS NULL ON NULL INPUT;
+
+DROP FUNCTION IF EXISTS sys.babelfish_single_unbracket_name;
+
+CREATE OR REPLACE FUNCTION babelfish_has_any_privilege(
+    perm_target_type text,
+    schema_name text,
+    object_name text)
+RETURNS INTEGER
+AS
+$BODY$
+DECLARE 
+    relevant_permissions text[];
+    namespace_id oid;
+    function_signature text;
+    qualified_name text;
+    permission text;
+BEGIN
+    IF perm_target_type IS NULL OR perm_target_type NOT IN('table', 'function', 'procedure')
+        THEN RETURN NULL;
+    END IF;
+
+    relevant_permissions := (
+        SELECT CASE
+            WHEN perm_target_type = 'table'
+                THEN '{"select", "insert", "update", "delete", "references"}'
+            WHEN perm_target_type IN('function', 'procedure')
+                THEN '{"execute"}'
+        END
+    );
+
+    SELECT oid INTO namespace_id FROM pg_catalog.pg_namespace WHERE nspname = schema_name;
+
+    IF perm_target_type IN('function', 'procedure')
+        THEN SELECT oid::regprocedure 
+                INTO function_signature 
+                FROM pg_catalog.pg_proc 
+                WHERE proname = object_name
+                    AND pronamespace = namespace_id;
+    END IF;
+
+    -- Surround with double-quotes to handle names that contain periods/spaces
+    qualified_name := concat('"', schema_name, '"."', object_name, '"');
+
+    FOREACH permission IN ARRAY relevant_permissions
+    LOOP
+        IF perm_target_type = 'table' AND has_table_privilege(qualified_name, permission)::integer = 1
+            THEN RETURN 1;
+        ELSIF perm_target_type IN('function', 'procedure') AND has_function_privilege(function_signature, permission)::integer = 1
+            THEN RETURN 1;
+        END IF;
+    END LOOP;
+    RETURN 0;
+END
+$BODY$
+LANGUAGE plpgsql;
+
+CREATE OR REPLACE VIEW babelfish_has_perms_by_name_permissions
+AS
+SELECT t.securable_type,t.permission_name,t.implied_dbo_permissions,t.fully_supported FROM
+(
+  VALUES
+    ('application role', 'alter', 'f', 'f'),
+    ('application role', 'any', 'f', 'f'),
+    ('application role', 'control', 'f', 'f'),
+    ('application role', 'view definition', 'f', 'f'),
+    ('assembly', 'alter', 'f', 'f'),
+    ('assembly', 'any', 'f', 'f'),
+    ('assembly', 'control', 'f', 'f'),
+    ('assembly', 'references', 'f', 'f'),
+    ('assembly', 'take ownership', 'f', 'f'),
+    ('assembly', 'view definition', 'f', 'f'),
+    ('asymmetric key', 'alter', 'f', 'f'),
+    ('asymmetric key', 'any', 'f', 'f'),
+    ('asymmetric key', 'control', 'f', 'f'),
+    ('asymmetric key', 'references', 'f', 'f'),
+    ('asymmetric key', 'take ownership', 'f', 'f'),
+    ('asymmetric key', 'view definition', 'f', 'f'),
+    ('availability group', 'alter', 'f', 'f'),
+    ('availability group', 'any', 'f', 'f'),
+    ('availability group', 'control', 'f', 'f'),
+    ('availability group', 'take ownership', 'f', 'f'),
+    ('availability group', 'view definition', 'f', 'f'),
+    ('certificate', 'alter', 'f', 'f'),
+    ('certificate', 'any', 'f', 'f'),
+    ('certificate', 'control', 'f', 'f'),
+    ('certificate', 'references', 'f', 'f'),
+    ('certificate', 'take ownership', 'f', 'f'),
+    ('certificate', 'view definition', 'f', 'f'),
+    ('contract', 'alter', 'f', 'f'),
+    ('contract', 'any', 'f', 'f'),
+    ('contract', 'control', 'f', 'f'),
+    ('contract', 'references', 'f', 'f'),
+    ('contract', 'take ownership', 'f', 'f'),
+    ('contract', 'view definition', 'f', 'f'),
+    ('database', 'administer database bulk operations', 'f', 'f'),
+    ('database', 'alter', 't', 'f'),
+    ('database', 'alter any application role', 'f', 'f'),
+    ('database', 'alter any assembly', 'f', 'f'),
+    ('database', 'alter any asymmetric key', 'f', 'f'),
+    ('database', 'alter any certificate', 'f', 'f'),
+    ('database', 'alter any column encryption key', 'f', 'f'),
+    ('database', 'alter any column master key', 'f', 'f'),
+    ('database', 'alter any contract', 'f', 'f'),
+    ('database', 'alter any database audit', 'f', 'f'),
+    ('database', 'alter any database ddl trigger', 'f', 'f'),
+    ('database', 'alter any database event notification', 'f', 'f'),
+    ('database', 'alter any database event session', 'f', 'f'),
+    ('database', 'alter any database scoped configuration', 'f', 'f'),
+    ('database', 'alter any dataspace', 'f', 'f'),
+    ('database', 'alter any external data source', 'f', 'f'),
+    ('database', 'alter any external file format', 'f', 'f'),
+    ('database', 'alter any external language', 'f', 'f'),
+    ('database', 'alter any external library', 'f', 'f'),
+    ('database', 'alter any fulltext catalog', 'f', 'f'),
+    ('database', 'alter any mask', 'f', 'f'),
+    ('database', 'alter any message type', 'f', 'f'),
+    ('database', 'alter any remote service binding', 'f', 'f'),
+    ('database', 'alter any role', 'f', 'f'),
+    ('database', 'alter any route', 'f', 'f'),
+    ('database', 'alter any schema', 't', 'f'),
+    ('database', 'alter any security policy', 'f', 'f'),
+    ('database', 'alter any sensitivity classification', 'f', 'f'),
+    ('database', 'alter any service', 'f', 'f'),
+    ('database', 'alter any symmetric key', 'f', 'f'),
+    ('database', 'alter any user', 't', 'f'),
+    ('database', 'any', 't', 'f'),
+    ('database', 'authenticate', 't', 'f'),
+    ('database', 'backup database', 'f', 'f'),
+    ('database', 'backup log', 'f', 'f'),
+    ('database', 'checkpoint', 'f', 'f'),
+    ('database', 'connect', 't', 'f'),
+    ('database', 'connect replication', 'f', 'f'),
+    ('database', 'control', 't', 'f'),
+    ('database', 'create aggregate', 'f', 'f'),
+    ('database', 'create assembly', 'f', 'f'),
+    ('database', 'create asymmetric key', 'f', 'f'),
+    ('database', 'create certificate', 'f', 'f'),
+    ('database', 'create contract', 'f', 'f'),
+    ('database', 'create database', 't', 'f'),
+    ('database', 'create database ddl event notification', 'f', 'f'),
+    ('database', 'create default', 'f', 'f'),
+    ('database', 'create external language', 'f', 'f'),
+    ('database', 'create external library', 'f', 'f'),
+    ('database', 'create fulltext catalog', 'f', 'f'),
+    ('database', 'create function', 't', 'f'),
+    ('database', 'create message type', 'f', 'f'),
+    ('database', 'create procedure', 't', 'f'),
+    ('database', 'create queue', 'f', 'f'),
+    ('database', 'create remote service binding', 'f', 'f'),
+    ('database', 'create role', 'f', 'f'),
+    ('database', 'create route', 'f', 'f'),
+    ('database', 'create rule', 'f', 'f'),
+    ('database', 'create schema', 't', 'f'),
+    ('database', 'create service', 'f', 'f'),
+    ('database', 'create symmetric key', 'f', 'f'),
+    ('database', 'create synonym', 't', 'f'),
+    ('database', 'create table', 't', 'f'),
+    ('database', 'create type', 'f', 'f'),
+    ('database', 'create view', 't', 'f'),
+    ('database', 'create xml schema collection', 'f', 'f'),
+    ('database', 'delete', 't', 'f'),
+    ('database', 'execute', 't', 'f'),
+    ('database', 'execute any external script', 'f', 'f'),
+    ('database', 'insert', 't', 'f'),
+    ('database', 'kill database connection', 'f', 'f'),
+    ('database', 'references', 't', 'f'),
+    ('database', 'select', 't', 'f'),
+    ('database', 'showplan', 'f', 'f'),
+    ('database', 'subscribe query notifications', 'f', 'f'),
+    ('database', 'take ownership', 't', 'f'),
+    ('database', 'unmask', 'f', 'f'),
+    ('database', 'update', 't', 'f'),
+    ('database', 'view any column encryption key definition', 'f', 'f'),
+    ('database', 'view any column master key definition', 'f', 'f'),
+    ('database', 'view any sensitivity classification', 'f', 'f'),
+    ('database', 'view database state', 't', 'f'),
+    ('database', 'view definition', 'f', 'f'),
+    ('database scoped credential', 'alter', 'f', 'f'),
+    ('database scoped credential', 'any', 'f', 'f'),
+    ('database scoped credential', 'control', 'f', 'f'),
+    ('database scoped credential', 'references', 'f', 'f'),
+    ('database scoped credential', 'take ownership', 'f', 'f'),
+    ('database scoped credential', 'view definition', 'f', 'f'),
+    ('endpoint', 'alter', 'f', 'f'),
+    ('endpoint', 'any', 'f', 'f'),
+    ('endpoint', 'connect', 'f', 'f'),
+    ('endpoint', 'control', 'f', 'f'),
+    ('endpoint', 'take ownership', 'f', 'f'),
+    ('endpoint', 'view definition', 'f', 'f'),
+    ('external language', 'alter', 'f', 'f'),
+    ('external language', 'any', 'f', 'f'),
+    ('external language', 'control', 'f', 'f'),
+    ('external language', 'execute external script', 'f', 'f'),
+    ('external language', 'references', 'f', 'f'),
+    ('external language', 'take ownership', 'f', 'f'),
+    ('external language', 'view definition', 'f', 'f'),
+    ('fulltext catalog', 'alter', 'f', 'f'),
+    ('fulltext catalog', 'any', 'f', 'f'),
+    ('fulltext catalog', 'control', 'f', 'f'),
+    ('fulltext catalog', 'references', 'f', 'f'),
+    ('fulltext catalog', 'take ownership', 'f', 'f'),
+    ('fulltext catalog', 'view definition', 'f', 'f'),
+    ('fulltext stoplist', 'alter', 'f', 'f'),
+    ('fulltext stoplist', 'any', 'f', 'f'),
+    ('fulltext stoplist', 'control', 'f', 'f'),
+    ('fulltext stoplist', 'references', 'f', 'f'),
+    ('fulltext stoplist', 'take ownership', 'f', 'f'),
+    ('fulltext stoplist', 'view definition', 'f', 'f'),
+    ('login', 'alter', 'f', 'f'),
+    ('login', 'any', 'f', 'f'),
+    ('login', 'control', 'f', 'f'),
+    ('login', 'impersonate', 'f', 'f'),
+    ('login', 'view definition', 'f', 'f'),
+    ('message type', 'alter', 'f', 'f'),
+    ('message type', 'any', 'f', 'f'),
+    ('message type', 'control', 'f', 'f'),
+    ('message type', 'references', 'f', 'f'),
+    ('message type', 'take ownership', 'f', 'f'),
+    ('message type', 'view definition', 'f', 'f'),
+    ('object', 'alter', 't', 'f'),
+    ('object', 'any', 't', 't'),
+    ('object', 'control', 't', 'f'),
+    ('object', 'delete', 't', 't'),
+    ('object', 'execute', 't', 't'),
+    ('object', 'insert', 't', 't'),
+    ('object', 'receive', 'f', 'f'),
+    ('object', 'references', 't', 't'),
+    ('object', 'select', 't', 't'),
+    ('object', 'take ownership', 'f', 'f'),
+    ('object', 'update', 't', 't'),
+    ('object', 'view change tracking', 'f', 'f'),
+    ('object', 'view definition', 'f', 'f'),
+    ('remote service binding', 'alter', 'f', 'f'),
+    ('remote service binding', 'any', 'f', 'f'),
+    ('remote service binding', 'control', 'f', 'f'),
+    ('remote service binding', 'take ownership', 'f', 'f'),
+    ('remote service binding', 'view definition', 'f', 'f'),
+    ('role', 'alter', 'f', 'f'),
+    ('role', 'any', 'f', 'f'),
+    ('role', 'control', 'f', 'f'),
+    ('role', 'take ownership', 'f', 'f'),
+    ('role', 'view definition', 'f', 'f'),
+    ('route', 'alter', 'f', 'f'),
+    ('route', 'any', 'f', 'f'),
+    ('route', 'control', 'f', 'f'),
+    ('route', 'take ownership', 'f', 'f'),
+    ('route', 'view definition', 'f', 'f'),
+    ('schema', 'alter', 't', 'f'),
+    ('schema', 'any', 't', 'f'),
+    ('schema', 'control', 't', 'f'),
+    ('schema', 'create sequence', 'f', 'f'),
+    ('schema', 'delete', 't', 'f'),
+    ('schema', 'execute', 't', 'f'),
+    ('schema', 'insert', 't', 'f'),
+    ('schema', 'references', 't', 'f'),
+    ('schema', 'select', 't', 'f'),
+    ('schema', 'take ownership', 't', 'f'),
+    ('schema', 'update', 't', 'f'),
+    ('schema', 'view change tracking', 'f', 'f'),
+    ('schema', 'view definition', 'f', 'f'),
+    ('search property list', 'alter', 'f', 'f'),
+    ('search property list', 'any', 'f', 'f'),
+    ('search property list', 'control', 'f', 'f'),
+    ('search property list', 'references', 'f', 'f'),
+    ('search property list', 'take ownership', 'f', 'f'),
+    ('search property list', 'view definition', 'f', 'f'),
+    ('server', 'administer bulk operations', 'f', 'f'),
+    ('server', 'alter any availability group', 'f', 'f'),
+    ('server', 'alter any connection', 'f', 'f'),
+    ('server', 'alter any credential', 'f', 'f'),
+    ('server', 'alter any database', 't', 'f'),
+    ('server', 'alter any endpoint', 'f', 'f'),
+    ('server', 'alter any event notification', 'f', 'f'),
+    ('server', 'alter any event session', 'f', 'f'),
+    ('server', 'alter any linked server', 'f', 'f'),
+    ('server', 'alter any login', 'f', 'f'),
+    ('server', 'alter any server audit', 'f', 'f'),
+    ('server', 'alter any server role', 'f', 'f'),
+    ('server', 'alter resources', 'f', 'f'),
+    ('server', 'alter server state', 'f', 'f'),
+    ('server', 'alter settings', 't', 'f'),
+    ('server', 'alter trace', 'f', 'f'),
+    ('server', 'any', 't', 'f'),
+    ('server', 'authenticate server', 't', 'f'),
+    ('server', 'connect any database', 't', 'f'),
+    ('server', 'connect sql', 't', 'f'),
+    ('server', 'control server', 't', 'f'),
+    ('server', 'create any database', 't', 'f'),
+    ('server', 'create availability group', 'f', 'f'),
+    ('server', 'create ddl event notification', 'f', 'f'),
+    ('server', 'create endpoint', 'f', 'f'),
+    ('server', 'create server role', 'f', 'f'),
+    ('server', 'create trace event notification', 'f', 'f'),
+    ('server', 'external access assembly', 'f', 'f'),
+    ('server', 'impersonate any login', 'f', 'f'),
+    ('server', 'select all user securables', 't', 'f'),
+    ('server', 'shutdown', 'f', 'f'),
+    ('server', 'unsafe assembly', 'f', 'f'),
+    ('server', 'view any database', 't', 'f'),
+    ('server', 'view any definition', 'f', 'f'),
+    ('server', 'view server state', 't', 'f'),
+    ('server role', 'alter', 'f', 'f'),
+    ('server role', 'any', 'f', 'f'),
+    ('server role', 'control', 'f', 'f'),
+    ('server role', 'take ownership', 'f', 'f'),
+    ('server role', 'view definition', 'f', 'f'),
+    ('service', 'alter', 'f', 'f'),
+    ('service', 'any', 'f', 'f'),
+    ('service', 'control', 'f', 'f'),
+    ('service', 'send', 'f', 'f'),
+    ('service', 'take ownership', 'f', 'f'),
+    ('service', 'view definition', 'f', 'f'),
+    ('symmetric key', 'alter', 'f', 'f'),
+    ('symmetric key', 'any', 'f', 'f'),
+    ('symmetric key', 'control', 'f', 'f'),
+    ('symmetric key', 'references', 'f', 'f'),
+    ('symmetric key', 'take ownership', 'f', 'f'),
+    ('symmetric key', 'view definition', 'f', 'f'),
+    ('type', 'any', 'f', 'f'),
+    ('type', 'control', 'f', 'f'),
+    ('type', 'execute', 'f', 'f'),
+    ('type', 'references', 'f', 'f'),
+    ('type', 'take ownership', 'f', 'f'),
+    ('type', 'view definition', 'f', 'f'),
+    ('user', 'alter', 'f', 'f'),
+    ('user', 'any', 'f', 'f'),
+    ('user', 'control', 'f', 'f'),
+    ('user', 'impersonate', 'f', 'f'),
+    ('user', 'view definition', 'f', 'f'),
+    ('xml schema collection', 'alter', 'f', 'f'),
+    ('xml schema collection', 'any', 'f', 'f'),
+    ('xml schema collection', 'control', 'f', 'f'),
+    ('xml schema collection', 'execute', 'f', 'f'),
+    ('xml schema collection', 'references', 'f', 'f'),
+    ('xml schema collection', 'take ownership', 'f', 'f'),
+    ('xml schema collection', 'view definition', 'f', 'f')
+) t(securable_type, permission_name, implied_dbo_permissions, fully_supported);
+GRANT SELECT ON babelfish_has_perms_by_name_permissions TO PUBLIC;
+
+CREATE OR REPLACE FUNCTION sys.has_perms_by_name(
+    securable SYS.SYSNAME, 
+    securable_class SYS.NVARCHAR(60), 
+    permission SYS.SYSNAME,
+    sub_securable SYS.SYSNAME DEFAULT NULL,
+    sub_securable_class SYS.NVARCHAR(60) DEFAULT NULL
+)
+RETURNS integer
+LANGUAGE plpgsql
+AS $$
+DECLARE
+    db_name text COLLATE "C"; 
+    bbf_schema_name text;
+    pg_schema text COLLATE "C";
+    implied_dbo_permissions boolean;
+    fully_supported boolean;
+    object_name text COLLATE "C";
+    database_id smallint;
+    namespace_id oid;
+    object_type text;
+    function_signature text;
+    qualified_name text;
+    return_value integer;
+    cs_as_securable text COLLATE "C" := securable;
+    cs_as_securable_class text COLLATE "C" := securable_class;
+    cs_as_permission text COLLATE "C" := permission;
+    cs_as_sub_securable text COLLATE "C" := sub_securable;
+    cs_as_sub_securable_class text COLLATE "C" := sub_securable_class;
+BEGIN
+    return_value := NULL;
+
+    -- Lower-case to avoid case issues, remove trailing whitespace to match SQL SERVER behavior
+    -- Objects created in Babelfish are stored in lower-case in pg_class/pg_proc
+    cs_as_securable = lower(rtrim(cs_as_securable));
+    cs_as_securable_class = lower(rtrim(cs_as_securable_class));
+    cs_as_permission = lower(rtrim(cs_as_permission));
+    cs_as_sub_securable = lower(rtrim(cs_as_sub_securable));
+    cs_as_sub_securable_class = lower(rtrim(cs_as_sub_securable_class));
+
+    -- Assert that sub_securable and sub_securable_class are either both NULL or both defined
+    IF cs_as_sub_securable IS NOT NULL AND cs_as_sub_securable_class IS NULL THEN
+        RETURN NULL;
+    ELSIF cs_as_sub_securable IS NULL AND cs_as_sub_securable_class IS NOT NULL THEN
+        RETURN NULL;
+    -- If they are both defined, user must be evaluating column privileges.
+    -- Check that inputs are valid for column privileges: sub_securable_class must 
+    -- be column, securable_class must be object, and permission cannot be any.
+    ELSIF cs_as_sub_securable_class IS NOT NULL 
+            AND (cs_as_sub_securable_class != 'column' 
+                    OR cs_as_securable_class IS NULL 
+                    OR cs_as_securable_class != 'object' 
+                    OR cs_as_permission = 'any') THEN
+        RETURN NULL;
+
+    -- If securable is null, securable_class must be null
+    ELSIF cs_as_securable IS NULL AND cs_as_securable_class IS NOT NULL THEN
+        RETURN NULL;
+    -- If securable_class is null, securable must be null
+    ELSIF cs_as_securable IS NOT NULL AND cs_as_securable_class IS NULL THEN
+        RETURN NULL;
+    END IF;
+
+    IF cs_as_securable_class = 'server' THEN
+        -- SQL Server does not permit a securable_class value of 'server'.
+        -- securable_class should be NULL to evaluate server permissions.
+        RETURN NULL;
+    ELSIF cs_as_securable_class IS NULL THEN
+        -- NULL indicates a server permission. Set this variable so that we can
+        -- search for the matching entry in babelfish_has_perms_by_name_permissions
+        cs_as_securable_class = 'server';
+    END IF;
+
+    IF cs_as_sub_securable IS NOT NULL THEN
+        cs_as_sub_securable := babelfish_remove_delimiter_pair(cs_as_sub_securable);
+        IF cs_as_sub_securable IS NULL THEN
+            RETURN NULL;
+        END IF;
+    END IF;
+
+    SELECT p.implied_dbo_permissions,p.fully_supported 
+    INTO implied_dbo_permissions,fully_supported 
+    FROM babelfish_has_perms_by_name_permissions p 
+    WHERE p.securable_type = cs_as_securable_class AND p.permission_name = cs_as_permission;
+    
+    IF implied_dbo_permissions IS NULL OR fully_supported IS NULL THEN
+        -- Securable class or permission is not valid, or permission is not valid for given securable
+        RETURN NULL;
+    END IF;
+
+    IF cs_as_securable_class = 'database' AND cs_as_securable IS NOT NULL THEN
+        db_name = babelfish_remove_delimiter_pair(cs_as_securable);
+        IF db_name IS NULL THEN
+            RETURN NULL;
+        ELSIF (SELECT COUNT(name) FROM sys.databases WHERE name = db_name) != 1 THEN
+            RETURN 0;
+        END IF;
+    ELSIF cs_as_securable_class = 'schema' THEN
+        bbf_schema_name = babelfish_remove_delimiter_pair(cs_as_securable);
+        IF bbf_schema_name IS NULL THEN
+            RETURN NULL;
+        ELSIF (SELECT COUNT(nspname) FROM sys.babelfish_namespace_ext ext
+                WHERE ext.orig_name = bbf_schema_name 
+                    AND CAST(ext.dbid AS oid) = CAST(sys.db_id() AS oid)) != 1 THEN
+            RETURN 0;
+        END IF;
+    END IF;
+
+    IF fully_supported = 'f' AND CURRENT_USER IN('dbo', 'master_dbo', 'tempdb_dbo', 'msdb_dbo') THEN
+        RETURN CAST(implied_dbo_permissions AS integer);
+    ELSIF fully_supported = 'f' THEN
+        RETURN 0;
+    END IF;
+
+    -- The only permissions that are fully supported belong to the OBJECT securable class.
+    -- The block above has dealt with all permissions that are not fully supported, so 
+    -- if we reach this point we know the securable class is OBJECT.
+    SELECT s.db_name, s.schema_name, s.object_name INTO db_name, bbf_schema_name, object_name 
+    FROM babelfish_split_object_name(cs_as_securable) s;
+
+    -- Invalid securable name
+    IF object_name IS NULL OR object_name = '' THEN
+        RETURN NULL;
+    END IF;
+
+    -- If schema was not specified, use the default
+    IF bbf_schema_name IS NULL OR bbf_schema_name = '' THEN
+        bbf_schema_name := sys.schema_name();
+    END IF;
+
+    database_id := (
+        SELECT CASE 
+            WHEN db_name IS NULL OR db_name = '' THEN (sys.db_id())
+            ELSE (sys.db_id(db_name))
+        END);
+  
+    -- Translate schema name from bbf to postgres, e.g. dbo -> master_dbo
+    pg_schema := (SELECT nspname 
+                    FROM sys.babelfish_namespace_ext ext 
+                    WHERE ext.orig_name = bbf_schema_name 
+                        AND CAST(ext.dbid AS oid) = CAST(database_id AS oid));
+
+    IF pg_schema IS NULL THEN
+        -- Shared schemas like sys and pg_catalog do not exist in the table above.
+        -- These schemas do not need to be translated from Babelfish to Postgres
+        pg_schema := bbf_schema_name;
+    END IF;
+
+    -- Surround with double-quotes to handle names that contain periods/spaces
+    qualified_name := concat('"', pg_schema, '"."', object_name, '"');
+
+    SELECT oid INTO namespace_id FROM pg_catalog.pg_namespace WHERE nspname = pg_schema;
+
+    object_type := (
+        SELECT CASE
+            WHEN cs_as_sub_securable_class = 'column'
+                THEN CASE 
+                    WHEN (SELECT count(name) 
+                        FROM sys.all_columns 
+                        WHERE name = cs_as_sub_securable
+                            -- Use V as the object type to specify that the securable is table-like.
+                            -- We don't know that the securable is a view, but object_id behaves the 
+                            -- same for differint table-like types, so V can be arbitrarily chosen.
+                            AND object_id = sys.object_id(cs_as_securable, 'V')) = 1
+                                THEN 'column'
+                    ELSE NULL
+                END
+
+            WHEN (SELECT count(relname) 
+                    FROM pg_catalog.pg_class 
+                    WHERE relname = object_name 
+                        AND relnamespace = namespace_id) = 1
+                THEN 'table'
+
+            WHEN (SELECT count(proname) 
+                    FROM pg_catalog.pg_proc 
+                    WHERE proname = object_name 
+                        AND pronamespace = namespace_id
+                        AND prokind = 'f') = 1
+                THEN 'function'
+                
+            WHEN (SELECT count(proname) 
+                    FROM pg_catalog.pg_proc 
+                    WHERE proname = object_name 
+                        AND pronamespace = namespace_id
+                        AND prokind = 'p') = 1
+                THEN 'procedure'
+            ELSE NULL
+        END
+    );
+    
+    -- Object wasn't found
+    IF object_type IS NULL THEN
+        RETURN 0;
+    END IF;
+  
+    -- Get signature for function-like objects
+    IF object_type IN('function', 'procedure') THEN
+        SELECT CAST(oid AS regprocedure) 
+            INTO function_signature 
+            FROM pg_catalog.pg_proc 
+            WHERE proname = object_name 
+                AND pronamespace = namespace_id;
+    END IF;
+
+    return_value := (
+        SELECT CASE
+            WHEN cs_as_permission = 'any' THEN babelfish_has_any_privilege(object_type, pg_schema, object_name)
+
+            WHEN object_type = 'column'
+                THEN CASE
+                    WHEN cs_as_permission IN('insert', 'delete', 'execute') THEN NULL
+                    ELSE CAST(has_column_privilege(qualified_name, cs_as_sub_securable, cs_as_permission) AS integer)
+                END
+
+            WHEN object_type = 'table'
+                THEN CASE
+                    WHEN cs_as_permission = 'execute' THEN 0
+                    ELSE CAST(has_table_privilege(qualified_name, cs_as_permission) AS integer)
+                END
+
+            WHEN object_type = 'function'
+                THEN CASE
+                    WHEN cs_as_permission IN('select', 'execute')
+                        THEN CAST(has_function_privilege(function_signature, 'execute') AS integer)
+                    WHEN cs_as_permission IN('update', 'insert', 'delete', 'references')
+                        THEN 0
+                    ELSE NULL
+                END
+
+            WHEN object_type = 'procedure'
+                THEN CASE
+                    WHEN cs_as_permission = 'execute'
+                        THEN CAST(has_function_privilege(function_signature, 'execute') AS integer)
+                    WHEN cs_as_permission IN('select', 'update', 'insert', 'delete', 'references')
+                        THEN 0
+                    ELSE NULL
+                END
+
+            ELSE NULL
+        END
+    );
+
+    RETURN return_value;
+    EXCEPTION WHEN OTHERS THEN RETURN NULL;
+END;
+$$;
+
+GRANT EXECUTE ON FUNCTION sys.has_perms_by_name(
+    securable sys.SYSNAME, 
+    securable_class sys.nvarchar(60), 
+    permission sys.SYSNAME, 
+    sub_securable sys.SYSNAME,
+    sub_securable_class sys.nvarchar(60)) TO PUBLIC;
+
 CREATE OR REPLACE PROCEDURE BABEL_CREATE_MSDB_IF_NOT_EXISTS_INTERNAL(IN login TEXT)
 AS 'babelfishpg_tsql', 'create_msdb_if_not_exists' LANGUAGE C;
 
