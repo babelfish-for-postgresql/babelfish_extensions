@@ -1872,3 +1872,57 @@ SELECT  value_in_use AS value,
         END AS status
 FROM sys.babelfish_configurations;
 GRANT SELECT ON sys.sysconfigures TO PUBLIC;
+
+CREATE OR REPLACE VIEW sys.xml_schema_collections
+AS
+SELECT
+  CAST(NULL AS INT) as xml_collection_id,
+  CAST(NULL AS INT) as schema_id,
+  CAST(NULL AS INT) as principal_id,
+  CAST('sys' AS sys.sysname) as name,
+  CAST(NULL as sys.datetime) as create_date,
+  CAST(NULL as sys.datetime) as modify_date
+WHERE FALSE;
+GRANT SELECT ON sys.xml_schema_collections TO PUBLIC;
+
+CREATE OR REPLACE VIEW sys.dm_hadr_database_replica_states
+AS
+SELECT
+   CAST(0 as INT) database_id
+  ,CAST(NULL as sys.UNIQUEIDENTIFIER) as group_id
+  ,CAST(NULL as sys.UNIQUEIDENTIFIER) as replica_id
+  ,CAST(NULL as sys.UNIQUEIDENTIFIER) as group_database_id
+  ,CAST(0 as sys.BIT) as is_local
+  ,CAST(0 as sys.BIT) as is_primary_replica
+  ,CAST(0 as sys.TINYINT) as synchronization_state
+  ,CAST('' as sys.nvarchar(60)) as synchronization_state_desc
+  ,CAST(0 as sys.BIT) as is_commit_participant
+  ,CAST(0 as sys.TINYINT) as synchronization_health
+  ,CAST('' as sys.nvarchar(60)) as synchronization_health_desc
+  ,CAST(0 as sys.TINYINT) as database_state
+  ,CAST('' as sys.nvarchar(60)) as database_state_desc
+  ,CAST(0 as sys.BIT) as is_suspended
+  ,CAST(0 as sys.TINYINT) as suspend_reason
+  ,CAST('' as sys.nvarchar(60)) as suspend_reason_desc
+  ,CAST(0.0 as numeric(25,0)) as truncation_lsn
+  ,CAST(0.0 as numeric(25,0)) as recovery_lsn
+  ,CAST(0.0 as numeric(25,0)) as last_sent_lsn
+  ,CAST(NULL as sys.DATETIME) as last_sent_time
+  ,CAST(0.0 as numeric(25,0)) as last_received_lsn
+  ,CAST(NULL as sys.DATETIME) as last_received_time
+  ,CAST(0.0 as numeric(25,0)) as last_hardened_lsn
+  ,CAST(NULL as sys.DATETIME) as last_hardened_time
+  ,CAST(0.0 as numeric(25,0)) as last_redone_lsn
+  ,CAST(NULL as sys.DATETIME) as last_redone_time
+  ,CAST(0 as sys.BIGINT) as log_send_queue_size
+  ,CAST(0 as sys.BIGINT) as log_send_rate
+  ,CAST(0 as sys.BIGINT) as redo_queue_size
+  ,CAST(0 as sys.BIGINT) as redo_rate
+  ,CAST(0 as sys.BIGINT) as filestream_send_rate
+  ,CAST(0.0 as numeric(25,0)) as end_of_log_lsn
+  ,CAST(0.0 as numeric(25,0)) as last_commit_lsn
+  ,CAST(NULL as sys.DATETIME) as last_commit_time
+  ,CAST(0 as sys.BIGINT) as low_water_mark_for_ghosts
+  ,CAST(0 as sys.BIGINT) as secondary_lag_seconds
+WHERE FALSE;
+GRANT SELECT ON sys.dm_hadr_database_replica_states TO PUBLIC;
