@@ -7,6 +7,7 @@
 #include "nodes/nodeFuncs.h"
 #include "parser/scansup.h"
 #include "parser/parser.h"
+#include "utils/acl.h"
 #include "utils/builtins.h"
 #include "utils/guc.h"
 

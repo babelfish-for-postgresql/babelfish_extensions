@@ -1542,8 +1542,6 @@ const char *unsupported_sp_procedures[] = {
 	"sp_helplogins",
 	"sp_helpntgroup",
 	"sp_helpremotelogin",
-	"sp_helprole",
-	"sp_helprolemember",
 	"sp_helprotect",
 	"sp_helpsrvrole",
 	"sp_helpsrvrolemember",

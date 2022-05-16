@@ -88,10 +88,6 @@ CREATE OR REPLACE PROCEDURE sys.babel_drop_all_logins()
 LANGUAGE C
 AS 'babelfishpg_tsql', 'drop_all_logins';
 
-CREATE OR REPLACE PROCEDURE sys.babel_drop_all_users()
-LANGUAGE C
-AS 'babelfishpg_tsql', 'drop_all_users';
-
 -- The items in initialize_babel_extras procedure need to be initialized or created 
 -- during babelfish initialization. They depend on the core babelfish to be initialized first.
 CREATE OR REPLACE PROCEDURE initialize_babel_extras()
