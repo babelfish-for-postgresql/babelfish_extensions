@@ -2267,6 +2267,101 @@ $$
 LANGUAGE 'pltsql';
 GRANT EXECUTE on PROCEDURE sys.sp_helpuser TO PUBLIC;
 
+CREATE OR REPLACE PROCEDURE sys.sp_helprole("@rolename" sys.SYSNAME = NULL) AS
+$$
+BEGIN
+	-- If role is not specified, return info for all roles in the current db
+	IF @rolename IS NULL
+	BEGIN
+		SELECT CAST(Ext.orig_username AS sys.SYSNAME) AS 'RoleName',
+			   CAST(Base.oid AS INT) AS 'RoleId',
+			   0 AS 'IsAppRole'
+		FROM pg_catalog.pg_roles AS Base 
+		INNER JOIN sys.babelfish_authid_user_ext AS Ext
+		ON Base.rolname = Ext.rolname
+		WHERE Ext.database_name = DB_NAME()
+		AND Ext.type = 'R'
+		ORDER BY RoleName;
+	END
+	-- If a valid role is specified, return its info
+	ELSE IF EXISTS (SELECT 1 
+					FROM sys.babelfish_authid_user_ext
+					WHERE (orig_username = @rolename
+					OR lower(orig_username) = lower(@rolename))
+					AND database_name = DB_NAME()
+					AND type = 'R')
+	BEGIN
+		SELECT CAST(Ext.orig_username AS sys.SYSNAME) AS 'RoleName',
+			   CAST(Base.oid AS INT) AS 'RoleId',
+			   0 AS 'IsAppRole'
+		FROM pg_catalog.pg_roles AS Base 
+		INNER JOIN sys.babelfish_authid_user_ext AS Ext
+		ON Base.rolname = Ext.rolname
+		WHERE Ext.database_name = DB_NAME()
+		AND Ext.type = 'R'
+		AND (Ext.orig_username = @rolename OR lower(Ext.orig_username) = lower(@rolename))
+		ORDER BY RoleName;
+	END
+	-- If the specified role is not valid
+	ELSE
+		RAISERROR('%s is not a role.', 16, 1, @rolename);
+END;
+$$
+LANGUAGE 'pltsql';
+GRANT EXECUTE ON PROCEDURE sys.sp_helprole TO PUBLIC;
+
+CREATE OR REPLACE PROCEDURE sys.sp_helprolemember("@rolename" sys.SYSNAME = NULL) AS
+$$
+BEGIN
+	-- If role is not specified, return info for all roles that have at least
+	-- one member in the current db
+	IF @rolename IS NULL
+	BEGIN
+		SELECT CAST(Ext1.orig_username AS sys.SYSNAME) AS 'RoleName',
+			   CAST(Ext2.orig_username AS sys.SYSNAME) AS 'MemberName',
+			   CAST(CAST(Base2.oid AS INT) AS sys.VARBINARY(85)) AS 'MemberSID'
+		FROM pg_catalog.pg_auth_members AS Authmbr
+		INNER JOIN pg_catalog.pg_roles AS Base1 ON Base1.oid = Authmbr.roleid
+		INNER JOIN pg_catalog.pg_roles AS Base2 ON Base2.oid = Authmbr.member
+		INNER JOIN sys.babelfish_authid_user_ext AS Ext1 ON Base1.rolname = Ext1.rolname
+		INNER JOIN sys.babelfish_authid_user_ext AS Ext2 ON Base2.rolname = Ext2.rolname
+		WHERE Ext1.database_name = DB_NAME()
+		AND Ext2.database_name = DB_NAME()
+		AND Ext1.type = 'R'
+		AND Ext2.orig_username != 'db_owner'
+		ORDER BY RoleName, MemberName;
+	END
+	-- If a valid role is specified, return its member info
+	ELSE IF EXISTS (SELECT 1
+					FROM sys.babelfish_authid_user_ext
+					WHERE (orig_username = @rolename
+					OR lower(orig_username) = lower(@rolename))
+					AND database_name = DB_NAME()
+					AND type = 'R')
+	BEGIN
+		SELECT CAST(Ext1.orig_username AS sys.SYSNAME) AS 'RoleName',
+			   CAST(Ext2.orig_username AS sys.SYSNAME) AS 'MemberName',
+			   CAST(CAST(Base2.oid AS INT) AS sys.VARBINARY(85)) AS 'MemberSID'
+		FROM pg_catalog.pg_auth_members AS Authmbr
+		INNER JOIN pg_catalog.pg_roles AS Base1 ON Base1.oid = Authmbr.roleid
+		INNER JOIN pg_catalog.pg_roles AS Base2 ON Base2.oid = Authmbr.member
+		INNER JOIN sys.babelfish_authid_user_ext AS Ext1 ON Base1.rolname = Ext1.rolname
+		INNER JOIN sys.babelfish_authid_user_ext AS Ext2 ON Base2.rolname = Ext2.rolname
+		WHERE Ext1.database_name = DB_NAME()
+		AND Ext2.database_name = DB_NAME()
+		AND Ext1.type = 'R'
+		AND Ext2.orig_username != 'db_owner'
+		AND (Ext1.orig_username = @rolename OR lower(Ext1.orig_username) = lower(@rolename))
+		ORDER BY RoleName, MemberName;
+	END
+	-- If the specified role is not valid
+	ELSE
+		RAISERROR('%s is not a role.', 16, 1, @rolename);
+END;
+$$
+LANGUAGE 'pltsql';
+GRANT EXECUTE ON PROCEDURE sys.sp_helprolemember TO PUBLIC;
+
 CREATE OR REPLACE VIEW sys.sp_sproc_columns_view AS
 -- Get parameters (if any) for a user-defined stored procedure/function
 (SELECT 
