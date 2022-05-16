@@ -12,7 +12,7 @@ GRANT EXECUTE ON FUNCTION sys.sysdatetimeoffset() TO PUBLIC;
 
 
 CREATE FUNCTION sys.sysutcdatetime() RETURNS sys.datetime2
-    AS $$select (clock_timestamp() AT TIME ZONE 'UTC')::sys.datetime2;$$
+    AS $$select (clock_timestamp() AT TIME ZONE 'UTC'::pg_catalog.text)::sys.datetime2;$$
     LANGUAGE SQL;
 GRANT EXECUTE ON FUNCTION sys.sysutcdatetime() TO PUBLIC; 
 
