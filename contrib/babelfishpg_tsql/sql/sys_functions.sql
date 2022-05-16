@@ -1339,7 +1339,7 @@ LANGUAGE sql IMMUTABLE;
 
 CREATE OR REPLACE FUNCTION sys.GETUTCDATE() RETURNS sys.DATETIME AS
 $BODY$
-SELECT CAST(CURRENT_TIMESTAMP AT TIME ZONE 'UTC' AS sys.DATETIME);
+SELECT CAST(CURRENT_TIMESTAMP AT TIME ZONE 'UTC'::pg_catalog.text AS sys.DATETIME);
 $BODY$
 LANGUAGE SQL PARALLEL SAFE;
 
@@ -2075,6 +2075,38 @@ CREATE OR REPLACE FUNCTION sys.sp_datatype_info_helper(
 RETURNS SETOF RECORD
 AS 'babelfishpg_tsql', 'sp_datatype_info_helper'
 LANGUAGE C IMMUTABLE STRICT;
+
+-- Role member functions
+CREATE OR REPLACE FUNCTION sys.is_rolemember_internal(
+	IN role sys.SYSNAME,
+	IN database_principal sys.SYSNAME
+)
+RETURNS INT AS 'babelfishpg_tsql', 'is_rolemember'
+LANGUAGE C STABLE PARALLEL SAFE;
+
+CREATE OR REPLACE FUNCTION sys.is_member(IN role sys.SYSNAME)
+RETURNS INT AS
+$$
+	SELECT sys.is_rolemember_internal(role, NULL);
+$$
+LANGUAGE SQL STRICT STABLE PARALLEL SAFE;
+
+CREATE OR REPLACE FUNCTION sys.is_rolemember(IN role sys.SYSNAME)
+RETURNS INT AS
+$$
+	SELECT sys.is_rolemember_internal(role, NULL);
+$$
+LANGUAGE SQL STRICT STABLE PARALLEL SAFE;
+
+CREATE OR REPLACE FUNCTION sys.is_rolemember(
+	IN role sys.SYSNAME, 
+	IN database_principal sys.SYSNAME
+)
+RETURNS INT AS
+$$
+	SELECT sys.is_rolemember_internal(role, database_principal);
+$$
+LANGUAGE SQL STRICT STABLE PARALLEL SAFE;
 
 CREATE OR REPLACE FUNCTION OBJECTPROPERTY(IN object_id INT, IN property sys.varchar)
 RETURNS INT AS

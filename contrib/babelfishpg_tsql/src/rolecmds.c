@@ -1253,105 +1253,6 @@ gen_droprole_subcmds(const char *user)
 	return res;
 }
 
-PG_FUNCTION_INFO_V1(drop_all_users);
-Datum drop_all_users(PG_FUNCTION_ARGS)
-{
-	Relation	bbf_authid_user_ext_rel;
-	HeapTuple	tuple;
-	SysScanDesc	scan;
-	char*		rolname;
-	List		*rolname_list = NIL;
-	const char  *prev_current_user;
-	List        *parsetree_list;
-	ListCell    *parsetree_item;
-	int         saved_dialect = sql_dialect;
-
-	/* Only allow superuser or SA to drop all users. */
-	if (!superuser() && !role_is_sa(GetUserId()))
-          ereport(ERROR,
-                  (errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
-                   errmsg("user %s not allowed to drop all users in babelfish database %s",
-					   GetUserNameFromId(GetUserId(), true), get_database_name(MyDatabaseId))));
-
-	/* Fetch the relation */
-	bbf_authid_user_ext_rel = table_open(get_authid_user_ext_oid(),
-										  RowExclusiveLock);
-	scan = systable_beginscan(bbf_authid_user_ext_rel, 0, false, NULL, 0, NULL);
-
-	/* Get all the user names beforehand. */
-	while (HeapTupleIsValid(tuple = systable_getnext(scan))) {
-		Form_authid_user_ext  userform = (Form_authid_user_ext) GETSTRUCT(tuple);
-		rolname = NameStr(userform->rolname);
-		rolname_list = lcons(rolname, rolname_list);
-	}
-
-	systable_endscan(scan);
-	table_close(bbf_authid_user_ext_rel, RowExclusiveLock);
-
-	/* Set current user to session user for dropping permissions */
-	prev_current_user = GetUserNameFromId(GetUserId(), false);
-	bbf_set_current_user("sysadmin");
-
-	sql_dialect = SQL_DIALECT_TSQL;
-
-	while (rolname_list != NIL) {
-		char *rolname = linitial(rolname_list);
-		rolname_list = list_delete_first(rolname_list);
-
-		PG_TRY();
-		{
-			/* Advance cmd counter to make the delete visible */
-			CommandCounterIncrement();
-
-			parsetree_list = gen_droprole_subcmds(rolname);
-
-			/* Run all subcommands */
-			foreach(parsetree_item, parsetree_list)
-			{
-				Node	   *stmt = ((RawStmt *) lfirst(parsetree_item))->stmt;
-				PlannedStmt *wrapper;
-
-				/* need to make a wrapper PlannedStmt */
-				wrapper = makeNode(PlannedStmt);
-				wrapper->commandType = CMD_UTILITY;
-				wrapper->canSetTag = false;
-				wrapper->utilityStmt = stmt;
-				wrapper->stmt_location = 0;
-				wrapper->stmt_len = 16;
-
-				/* do this step */
-				ProcessUtility(wrapper,
-							   "(DROP ROLE )",
-							   false,
-							   PROCESS_UTILITY_SUBCOMMAND,
-							   NULL,
-							   NULL,
-							   None_Receiver,
-							   NULL);
-
-				/* make sure later steps can see the object created here */
-				CommandCounterIncrement();
-			}
-
-			/* Clean up role from user catalog */
-			drop_bbf_authid_user_ext_by_rolname(rolname);
-		}
-		PG_CATCH();
-		{
-			/* Clean up. Restore previous state. */
-			bbf_set_current_user(prev_current_user);
-			sql_dialect = saved_dialect;
-			PG_RE_THROW();
-		}
-		PG_END_TRY();
-	}
-
-	/* Set current user back to previous user */
-	bbf_set_current_user(prev_current_user);
-	sql_dialect = saved_dialect;
-	PG_RETURN_INT32(0);
-}
-
 PG_FUNCTION_INFO_V1(babelfish_set_role);
 Datum
 babelfish_set_role(PG_FUNCTION_ARGS)
@@ -1510,4 +1411,67 @@ role_id(PG_FUNCTION_ARGS)
 		PG_RETURN_NULL();
 	else
 		PG_RETURN_INT32(result);
+}
+
+/*
+ * Internal function for IS_MEMBER and IS_ROLEMEMBER
+ */
+PG_FUNCTION_INFO_V1(is_rolemember);
+Datum
+is_rolemember(PG_FUNCTION_ARGS)
+{
+	Oid		role_oid;
+	Oid		principal_oid;
+	Oid		cur_user_oid = GetUserId();
+	char	*role;
+	char	*physical_role_name;
+	char	*physical_principal_name;
+
+	if (PG_ARGISNULL(0))
+		PG_RETURN_NULL();
+
+	/* Do role name mapping */
+	role = text_to_cstring(PG_GETARG_TEXT_P(0));
+	physical_role_name = get_physical_user_name(get_cur_db_name(), role);
+	role_oid = get_role_oid(physical_role_name, true);
+
+	/* If principal name is NULL, take current user instead */
+	if (PG_ARGISNULL(1))
+		principal_oid = cur_user_oid;
+	else
+	{
+		/* Do principal name mapping */
+		char *principal = text_to_cstring(PG_GETARG_TEXT_P(1));
+		physical_principal_name = get_physical_user_name(get_cur_db_name(), principal);
+		principal_oid = get_role_oid(physical_principal_name, true);
+	}
+
+	/* Return NULL if given role or principal doesn't exist */
+	if (role_oid == InvalidOid || principal_oid == InvalidOid)
+		PG_RETURN_NULL();
+
+	/* Return 1 if given role and principal are the same */
+	if (role_oid == principal_oid)
+		PG_RETURN_INT32(1);
+
+	/* 
+	 * Return NULL if given role is not a real role, or if current user doesn't 
+	 * directly/indirectly have privilges over the given role and principal.
+	 * Note that if given principal is current user, we'll always have
+	 * permissions.
+	 */
+	if (!is_role(role_oid) ||
+		(principal_oid != cur_user_oid &&
+		 (!has_privs_of_role(cur_user_oid, role_oid) ||
+		  !has_privs_of_role(cur_user_oid, principal_oid))))
+		PG_RETURN_NULL();
+
+	/* 
+	 * Recursively check if the given principal is a member of the role, not
+	 * considering superuserness
+	 */
+	if (is_member_of_role_nosuper(principal_oid, role_oid))
+		PG_RETURN_INT32(1);
+	else
+		PG_RETURN_INT32(0);
 }
