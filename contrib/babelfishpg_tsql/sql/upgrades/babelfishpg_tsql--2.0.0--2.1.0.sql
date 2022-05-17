@@ -2496,7 +2496,7 @@ AND (c.connamespace IN (SELECT schema_id FROM sys.schemas))
 AND has_schema_privilege(c.connamespace, 'USAGE');
 GRANT SELECT ON sys.foreign_key_columns TO PUBLIC;
 
-SELECT sys.drop_view('sys', 'foreign_key_columns_deprecated');
+CALL sys.babelfish_drop_deprecated_view('sys', 'foreign_key_columns_deprecated');
 
 -- Reset search_path to not affect any subsequent scripts
 SELECT set_config('search_path', trim(leading 'sys, ' from current_setting('search_path')), false);
