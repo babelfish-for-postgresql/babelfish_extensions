@@ -129,10 +129,55 @@ int
 ~~END~~
 
 
+DROP TABLE IF EXISTS t_pkey_table
+GO
+DROP TABLE IF EXISTS t_fkey_table
+GO
+CREATE TABLE t_pkey_table(c1 int PRIMARY KEY)
+GO
+CREATE TABLE t_fkey_table(c2 int)
+GO
+ALTER TABLE t_fkey_table ADD FOREIGN KEY(c2) REFERENCES t_pkey_table (c1);
+GO
+-- should return two results, one for HEAP and one for NONCLUSTERED
+-- is_unique_constraint should be 0 for both cases
+SELECT type_desc, is_unique_constraint FROM sys.indexes WHERE object_id = OBJECT_ID('t_pkey_table')
+GO
+~~START~~
+nvarchar#!#bit
+HEAP#!#0
+NONCLUSTERED#!#0
+~~END~~
+
+
+DROP TABLE IF EXISTS t_unique_index
+GO
+CREATE TABLE t_unique_index(c1 int UNIQUE NOT NULL)
+GO
+-- should return two results, one for HEAP and one for NONCLUSTERED
+-- is_unique_constraint should be 1 for NONCLUSTERED case
+SELECT type_desc, is_unique_constraint FROM sys.indexes WHERE object_id = OBJECT_ID('t_unique_index')
+GO
+~~START~~
+nvarchar#!#bit
+HEAP#!#0
+NONCLUSTERED#!#1
+~~END~~
+
+
 DROP TABLE IF EXISTS t_sys_index_test1
 GO
 
 DROP TABLE IF EXISTS t_sys_no_index
+GO
+
+DROP TABLE IF EXISTS t_fkey_table
+GO
+
+DROP TABLE IF EXISTS t_pkey_table
+GO
+
+DROP TABLE IF EXISTS t_unique_index
 GO
 
 DROP DATABASE db1
