@@ -58,8 +58,8 @@ from sys.all_objects
 where name like 'TT_tt_type%';
 GO
 ~~START~~
-int#!#int#!#text#!#text#!#datetime#!#datetime#!#int#!#int#!#int
-<NULL>#!#0#!#TT#!#TABLE_TYPE#!#<NULL>#!#<NULL>#!#1#!#0#!#0
+int#!#int#!#char#!#nvarchar#!#datetime#!#datetime#!#bit#!#bit#!#bit
+<NULL>#!#0#!#TT#!#TABLE_TYPE#!#<NULL>#!#<NULL>#!#0#!#0#!#0
 ~~END~~
 
 
