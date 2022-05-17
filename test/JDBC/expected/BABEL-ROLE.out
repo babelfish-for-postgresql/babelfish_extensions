@@ -13,6 +13,9 @@ ORDER BY rolname, orig_username
 GO
 ~~START~~
 varchar#!#char#!#nvarchar#!#nvarchar
+master_db_owner#!#R#!#db_owner#!#master
+msdb_db_owner#!#R#!#db_owner#!#msdb
+tempdb_db_owner#!#R#!#db_owner#!#tempdb
 ~~END~~
 
 
@@ -23,6 +26,7 @@ ORDER BY name
 GO
 ~~START~~
 varchar#!#nvarchar
+db_owner#!#DATABASE_ROLE
 ~~END~~
 
 
@@ -251,6 +255,7 @@ EXEC babel_role_members
 GO
 ~~START~~
 varchar#!#char#!#varchar#!#char
+db_owner#!#R#!#dbo#!#S
 test1#!#R#!#test2#!#R
 test1#!#R#!#test3#!#S
 test2#!#R#!#test4#!#S
@@ -289,6 +294,7 @@ EXEC babel_role_members
 GO
 ~~START~~
 varchar#!#char#!#varchar#!#char
+db_owner#!#R#!#dbo#!#S
 test1_new#!#R#!#test2#!#R
 test1_new#!#R#!#test3#!#S
 test2#!#R#!#test4#!#S
@@ -333,6 +339,7 @@ EXEC babel_role_members
 GO
 ~~START~~
 varchar#!#char#!#varchar#!#char
+db_owner#!#R#!#dbo#!#S
 test1_new#!#R#!#test2#!#R
 test1_new#!#R#!#test3#!#S
 test2#!#R#!#test4#!#S
