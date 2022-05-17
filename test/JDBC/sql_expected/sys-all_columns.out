@@ -56,4 +56,5 @@ moneycol#!#5#!#8#!#19#!#4#!#<NULL>#!#1#!#0#!#0#!#0#!#0#!#0#!#0#!#0#!#0#!#0#!#0#!
 
 
 DROP TABLE IF EXISTS sys_all_columns_table
+DROP TABLE IF EXISTS columns_scale_precision_length_test
 GO
