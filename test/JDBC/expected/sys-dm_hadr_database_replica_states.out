@@ -1,0 +1,7 @@
+-- Test function stub
+SELECT * FROM sys.dm_hadr_database_replica_states;
+GO
+~~START~~
+int#!#uniqueidentifier#!#uniqueidentifier#!#uniqueidentifier#!#bit#!#bit#!#tinyint#!#nvarchar#!#bit#!#tinyint#!#nvarchar#!#tinyint#!#nvarchar#!#bit#!#tinyint#!#nvarchar#!#numeric#!#numeric#!#numeric#!#datetime#!#numeric#!#datetime#!#numeric#!#datetime#!#numeric#!#datetime#!#bigint#!#bigint#!#bigint#!#bigint#!#bigint#!#numeric#!#numeric#!#datetime#!#bigint#!#bigint
+~~END~~
+

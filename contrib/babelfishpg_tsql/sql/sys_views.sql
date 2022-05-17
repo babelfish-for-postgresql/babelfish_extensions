@@ -92,6 +92,56 @@ and has_schema_privilege(s.oid, 'USAGE')
 and has_table_privilege(quote_ident(s.nspname) ||'.'||quote_ident(t.relname), 'SELECT,INSERT,UPDATE,DELETE,TRUNCATE,TRIGGER');
 GRANT SELECT ON sys.all_views TO PUBLIC;
 
+create or replace view sys.all_columns as
+select c.oid as object_id
+  , a.attname as name
+  , a.attnum as column_id
+  , t.oid as system_type_id
+  , t.oid as user_type_id
+  , a.attlen as max_length
+  , null::integer as precision
+  , null::integer as scale
+  , coll.collname as collation_name
+  , case when a.attnotnull then 0 else 1 end as is_nullable
+  , 0 as is_ansi_padded
+  , 0 as is_rowguidcol
+  , 0 as is_identity
+  , 0 as is_computed
+  , 0 as is_filestream
+  , 0 as is_replicated
+  , 0 as is_non_sql_subscribed
+  , 0 as is_merge_published
+  , 0 as is_dts_replicated
+  , 0 as is_xml_document
+  , 0 as xml_collection_id
+  , coalesce(d.oid, 0) as default_object_id
+  , coalesce((select oid from pg_constraint where conrelid = t.oid and contype = 'c' and a.attnum = any(conkey) limit 1), 0) as rule_object_id
+  , 0 as is_sparse
+  , 0 as is_column_set
+  , 0 as generated_always_type
+  , 'NOT_APPLICABLE'::varchar(60) as generated_always_type_desc
+  , null::integer as encryption_type
+  , null::varchar(64) as encryption_type_desc
+  , null::varchar as encryption_algorithm_name
+  , null::integer as column_encryption_key_id
+  , null::varchar as column_encryption_key_database_name
+  , 0 as is_hidden
+  , 0 as is_masked
+from pg_attribute a
+inner join pg_class c on c.oid = a.attrelid
+inner join pg_type t on t.oid = a.atttypid
+inner join pg_namespace s on s.oid = c.relnamespace
+left join pg_attrdef d on c.oid = d.adrelid and a.attnum = d.adnum
+left join pg_collation coll on coll.oid = a.attcollation
+where not a.attisdropped
+and (s.oid in (select schema_id from sys.schemas) or s.nspname = 'sys')
+-- r = ordinary table, i = index, S = sequence, t = TOAST table, v = view, m = materialized view, c = composite type, f = foreign table, p = partitioned table
+and c.relkind in ('r', 'v', 'm', 'f', 'p')
+and has_schema_privilege(s.oid, 'USAGE')
+and has_column_privilege(quote_ident(s.nspname) ||'.'||quote_ident(c.relname), a.attname, 'SELECT,INSERT,UPDATE,REFERENCES')
+and a.attnum > 0;
+GRANT SELECT ON sys.all_columns TO PUBLIC;
+
 CREATE OR REPLACE FUNCTION sys.tsql_type_scale_helper(IN type TEXT, IN typemod INT, IN return_null_for_rest bool) RETURNS sys.TINYINT
 AS $$
 DECLARE
@@ -784,7 +834,7 @@ from
     , c.reltablespace as data_space_id
     , 0 as ignore_dup_key
     , case when i.indisprimary then 1 else 0 end as is_primary_key
-    , case when constr.oid is null then 0 else 1 end as is_unique_constraint
+    , case when (SELECT count(constr.oid) FROM pg_constraint constr WHERE constr.conindid = c.oid and constr.contype = 'u') > 0 then 1 else 0 end as is_unique_constraint
     , 0 as fill_factor
     , case when i.indpred is null then 0 else 1 end as is_padded
     , case when i.indisready then 0 else 1 end as is_disabled
@@ -797,7 +847,6 @@ from
     , case when i.indisclustered then 1 else c.oid end as index_id
   from pg_class c
   inner join pg_index i on i.indexrelid = c.oid
-  left join pg_constraint constr on constr.conindid = c.oid
   where c.relkind = 'i' and i.indislive
   and (c.relnamespace in (select schema_id from sys.schemas) or c.relnamespace::regnamespace::text = 'sys')
   and has_schema_privilege(c.relnamespace, 'USAGE')
@@ -1326,7 +1375,49 @@ select
 from sys.objects s;
 GRANT SELECT ON sys.sysobjects TO PUBLIC;
 
+create or replace view sys.shipped_objects_not_in_sys AS
+-- This portion of view retrieves information on objects that reside in a schema in one specfic database.
+-- For example, 'master_dbo' schema can only exist in the 'master' database.
+-- Internally stored schema name (nspname) must be provided.
+select t.name,t.type, ns.oid as schemaid from
+(
+  values 
+    ('xp_qv','master_dbo','P') 
+) t(name,schema_name, type)
+inner join pg_catalog.pg_namespace ns on t.schema_name = ns.nspname
+
+union all 
+
+-- This portion of view retrieves information on objects that reside in a schema in any number of databases.
+-- For example, 'dbo' schema can exist in the 'master', 'tempdb', 'msdb', and any user created database.
+select t.name,t.type, ns.oid  as schemaid from
+(
+  values 
+    ('sysdatabases','dbo','V')
+) t (name, schema_name, type)
+inner join sys.babelfish_namespace_ext b on t.schema_name=b.orig_name
+inner join pg_catalog.pg_namespace ns on b.nspname = ns.nspname;
+GRANT SELECT ON sys.shipped_objects_not_in_sys TO PUBLIC;
+
 create or replace view sys.all_objects as
+select 
+    cast (name as sys.sysname) 
+  , cast (object_id as integer) 
+  , cast ( principal_id as integer)
+  , cast (schema_id as integer)
+  , cast (parent_object_id as integer)
+  , cast (type as char(2))
+  , cast (type_desc as sys.nvarchar(60))
+  , cast (create_date as sys.datetime)
+  , cast (modify_date as sys.datetime)
+  , cast (case when (schema_id::regnamespace::text = 'sys') then 1
+          when name in (select name from sys.shipped_objects_not_in_sys nis 
+                        where nis.name = name and nis.schemaid = schema_id and nis.type = type) then 1 
+          else 0 end as sys.bit) as is_ms_shipped
+  , cast (is_published as sys.bit)
+  , cast (is_schema_published as sys.bit)
+from
+(
 -- details of user defined and system tables
 select
     t.relname as name
@@ -1350,19 +1441,23 @@ and has_table_privilege(t.oid, 'SELECT,INSERT,UPDATE,DELETE,TRUNCATE,TRIGGER')
 union all
 -- details of user defined and system views
 select
-    v.name
-  , v.object_id
-  , v.principal_id
-  , v.schema_id
-  , v.parent_object_id
-  , 'V' as type
-  , 'VIEW' as type_desc
-  , v.create_date
-  , v.modify_date
-  , v.is_ms_shipped
-  , v.is_published
-  , v.is_schema_published
-from  sys.all_views v
+    t.relname as name
+  , t.oid as object_id
+  , null::integer as principal_id
+  , s.oid as schema_id
+  , 0 as parent_object_id
+  , 'V'::varchar(2) as type
+  , 'VIEW'::varchar(60) as type_desc
+  , null::timestamp as create_date
+  , null::timestamp as modify_date
+  , 0 as is_ms_shipped
+  , 0 as is_published
+  , 0 as is_schema_published
+from pg_class t inner join pg_namespace s on s.oid = t.relnamespace
+where t.relkind = 'v'
+and (s.oid in (select schema_id from sys.schemas) or s.nspname = 'sys')
+and has_schema_privilege(s.oid, 'USAGE')
+and has_table_privilege(quote_ident(s.nspname) ||'.'||quote_ident(t.relname), 'SELECT,INSERT,UPDATE,DELETE,TRUNCATE,TRIGGER')
 union all
 -- details of user defined and system foreign key constraints
 select
@@ -1517,7 +1612,8 @@ select
   , 1 as is_ms_shipped
   , 0 as is_published
   , 0 as is_schema_published
-from sys.table_types tt;
+from sys.table_types tt
+) ot;
 GRANT SELECT ON sys.all_objects TO PUBLIC;
 
 create or replace view sys.system_objects as
@@ -1525,6 +1621,28 @@ select * from sys.all_objects o
 inner join pg_namespace s on s.oid = o.schema_id
 where s.nspname = 'sys';
 GRANT SELECT ON sys.system_objects TO PUBLIC;
+
+create or replace view sys.all_views as
+select
+    t.name
+  , t.object_id
+  , t.principal_id
+  , t.schema_id
+  , t.parent_object_id
+  , t.type
+  , t.type_desc
+  , t.create_date
+  , t.modify_date
+  , t.is_ms_shipped
+  , t.is_published
+  , t.is_schema_published
+  -- check columns, they don't seem to match SQL Server
+  , 0 as with_check_option
+  , 0 as is_date_correlation_view
+  , 0 as is_tracked_by_cdc
+from sys.all_objects t
+where t.type = 'V';
+GRANT SELECT ON sys.all_views TO PUBLIC;
 
 CREATE VIEW sys.syscharsets
 AS
@@ -1876,3 +1994,57 @@ SELECT  value_in_use AS value,
         END AS status
 FROM sys.babelfish_configurations;
 GRANT SELECT ON sys.sysconfigures TO PUBLIC;
+
+CREATE OR REPLACE VIEW sys.xml_schema_collections
+AS
+SELECT
+  CAST(NULL AS INT) as xml_collection_id,
+  CAST(NULL AS INT) as schema_id,
+  CAST(NULL AS INT) as principal_id,
+  CAST('sys' AS sys.sysname) as name,
+  CAST(NULL as sys.datetime) as create_date,
+  CAST(NULL as sys.datetime) as modify_date
+WHERE FALSE;
+GRANT SELECT ON sys.xml_schema_collections TO PUBLIC;
+
+CREATE OR REPLACE VIEW sys.dm_hadr_database_replica_states
+AS
+SELECT
+   CAST(0 as INT) database_id
+  ,CAST(NULL as sys.UNIQUEIDENTIFIER) as group_id
+  ,CAST(NULL as sys.UNIQUEIDENTIFIER) as replica_id
+  ,CAST(NULL as sys.UNIQUEIDENTIFIER) as group_database_id
+  ,CAST(0 as sys.BIT) as is_local
+  ,CAST(0 as sys.BIT) as is_primary_replica
+  ,CAST(0 as sys.TINYINT) as synchronization_state
+  ,CAST('' as sys.nvarchar(60)) as synchronization_state_desc
+  ,CAST(0 as sys.BIT) as is_commit_participant
+  ,CAST(0 as sys.TINYINT) as synchronization_health
+  ,CAST('' as sys.nvarchar(60)) as synchronization_health_desc
+  ,CAST(0 as sys.TINYINT) as database_state
+  ,CAST('' as sys.nvarchar(60)) as database_state_desc
+  ,CAST(0 as sys.BIT) as is_suspended
+  ,CAST(0 as sys.TINYINT) as suspend_reason
+  ,CAST('' as sys.nvarchar(60)) as suspend_reason_desc
+  ,CAST(0.0 as numeric(25,0)) as truncation_lsn
+  ,CAST(0.0 as numeric(25,0)) as recovery_lsn
+  ,CAST(0.0 as numeric(25,0)) as last_sent_lsn
+  ,CAST(NULL as sys.DATETIME) as last_sent_time
+  ,CAST(0.0 as numeric(25,0)) as last_received_lsn
+  ,CAST(NULL as sys.DATETIME) as last_received_time
+  ,CAST(0.0 as numeric(25,0)) as last_hardened_lsn
+  ,CAST(NULL as sys.DATETIME) as last_hardened_time
+  ,CAST(0.0 as numeric(25,0)) as last_redone_lsn
+  ,CAST(NULL as sys.DATETIME) as last_redone_time
+  ,CAST(0 as sys.BIGINT) as log_send_queue_size
+  ,CAST(0 as sys.BIGINT) as log_send_rate
+  ,CAST(0 as sys.BIGINT) as redo_queue_size
+  ,CAST(0 as sys.BIGINT) as redo_rate
+  ,CAST(0 as sys.BIGINT) as filestream_send_rate
+  ,CAST(0.0 as numeric(25,0)) as end_of_log_lsn
+  ,CAST(0.0 as numeric(25,0)) as last_commit_lsn
+  ,CAST(NULL as sys.DATETIME) as last_commit_time
+  ,CAST(0 as sys.BIGINT) as low_water_mark_for_ghosts
+  ,CAST(0 as sys.BIGINT) as secondary_lag_seconds
+WHERE FALSE;
+GRANT SELECT ON sys.dm_hadr_database_replica_states TO PUBLIC;
