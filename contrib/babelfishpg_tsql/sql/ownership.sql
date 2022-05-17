@@ -98,9 +98,18 @@ BEGIN
   LANGUAGE C
   AS 'babelfishpg_tsql', 'create_xp_qv_in_master_dbo_internal';
 
+  CREATE OR REPLACE PROCEDURE sys.create_xp_instance_regread_in_master_dbo()
+  LANGUAGE C
+  AS 'babelfishpg_tsql', 'create_xp_instance_regread_in_master_dbo_internal';
+
   CALL sys.create_xp_qv_in_master_dbo();
   ALTER PROCEDURE master_dbo.xp_qv OWNER TO sysadmin;
   DROP PROCEDURE sys.create_xp_qv_in_master_dbo;
+
+  CALL sys.create_xp_instance_regread_in_master_dbo();
+  ALTER PROCEDURE master_dbo.xp_instance_regread(sys.nvarchar(512), sys.sysname, sys.nvarchar(512), int) OWNER TO sysadmin;
+  ALTER PROCEDURE master_dbo.xp_instance_regread(sys.nvarchar(512), sys.sysname, sys.nvarchar(512), sys.nvarchar(512)) OWNER TO sysadmin;
+  DROP PROCEDURE sys.create_xp_instance_regread_in_master_dbo;
 END
 $$;
 
