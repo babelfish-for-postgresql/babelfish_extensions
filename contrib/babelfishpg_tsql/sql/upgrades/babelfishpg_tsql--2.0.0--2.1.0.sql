@@ -2119,7 +2119,7 @@ from
     , c.reltablespace as data_space_id
     , 0 as ignore_dup_key
     , case when i.indisprimary then 1 else 0 end as is_primary_key
-    , case when constr.oid is null then 0 else 1 end as is_unique_constraint
+    , case when (SELECT count(constr.oid) FROM pg_constraint constr WHERE constr.conindid = c.oid and constr.contype = 'u') > 0 then 1 else 0 end as is_unique_constraint
     , 0 as fill_factor
     , case when i.indpred is null then 0 else 1 end as is_padded
     , case when i.indisready then 0 else 1 end as is_disabled
@@ -2132,7 +2132,6 @@ from
     , case when i.indisclustered then 1 else c.oid end as index_id
   from pg_class c
   inner join pg_index i on i.indexrelid = c.oid
-  left join pg_constraint constr on constr.conindid = c.oid
   where c.relkind = 'i' and i.indislive
   and (c.relnamespace in (select schema_id from sys.schemas) or c.relnamespace::regnamespace::text = 'sys')
   and has_schema_privilege(c.relnamespace, 'USAGE')
