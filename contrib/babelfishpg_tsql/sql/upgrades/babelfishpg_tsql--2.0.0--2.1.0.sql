@@ -2253,6 +2253,306 @@ GRANT SELECT ON sys.sp_special_columns_view TO PUBLIC;
 
 call sys.babelfish_drop_deprecated_view('sys', 'indexes_deprecated');
 
+create or replace view sys.shipped_objects_not_in_sys AS
+-- This portion of view retrieves information on objects that reside in a schema in one specfic database.
+-- For example, 'master_dbo' schema can only exist in the 'master' database.
+-- Internally stored schema name (nspname) must be provided.
+select t.name,t.type, ns.oid as schemaid from
+(
+  values 
+    ('xp_qv','master_dbo','P') 
+) t(name,schema_name, type)
+inner join pg_catalog.pg_namespace ns on t.schema_name = ns.nspname
+
+union all 
+
+-- This portion of view retrieves information on objects that reside in a schema in any number of databases.
+-- For example, 'dbo' schema can exist in the 'master', 'tempdb', 'msdb', and any user created database.
+select t.name,t.type, ns.oid  as schemaid from
+(
+  values 
+    ('sysdatabases','dbo','V')
+) t (name, schema_name, type)
+inner join sys.babelfish_namespace_ext b on t.schema_name=b.orig_name
+inner join pg_catalog.pg_namespace ns on b.nspname = ns.nspname;
+GRANT SELECT ON sys.shipped_objects_not_in_sys TO PUBLIC;
+
+alter view sys.all_objects rename to all_objects_deprecated;
+alter view sys.system_objects rename to system_objects_deprecated;
+alter view sys.all_views rename to all_views_deprecated;
+alter view sys.spt_tablecollations_view rename to spt_tablecollations_view_deprecated;
+
+create or replace view sys.all_objects as
+select 
+    cast (name as sys.sysname) 
+  , cast (object_id as integer) 
+  , cast ( principal_id as integer)
+  , cast (schema_id as integer)
+  , cast (parent_object_id as integer)
+  , cast (type as char(2))
+  , cast (type_desc as sys.nvarchar(60))
+  , cast (create_date as sys.datetime)
+  , cast (modify_date as sys.datetime)
+  , cast (case when (schema_id::regnamespace::text = 'sys') then 1
+          when name in (select name from sys.shipped_objects_not_in_sys nis 
+                        where nis.name = name and nis.schemaid = schema_id and nis.type = type) then 1 
+          else 0 end as sys.bit) as is_ms_shipped
+  , cast (is_published as sys.bit)
+  , cast (is_schema_published as sys.bit)
+from
+(
+-- details of user defined and system tables
+select
+    t.relname as name
+  , t.oid as object_id
+  , null::integer as principal_id
+  , s.oid as schema_id
+  , 0 as parent_object_id
+  , 'U' as type
+  , 'USER_TABLE' as type_desc
+  , null::timestamp as create_date
+  , null::timestamp as modify_date
+  , 0 as is_ms_shipped
+  , 0 as is_published
+  , 0 as is_schema_published
+from pg_class t inner join pg_namespace s on s.oid = t.relnamespace
+where t.relpersistence in ('p', 'u', 't')
+and t.relkind = 'r'
+and (s.oid in (select schema_id from sys.schemas) or s.nspname = 'sys')
+and has_schema_privilege(s.oid, 'USAGE')
+and has_table_privilege(t.oid, 'SELECT,INSERT,UPDATE,DELETE,TRUNCATE,TRIGGER')
+union all
+-- details of user defined and system views
+select
+    t.relname as name
+  , t.oid as object_id
+  , null::integer as principal_id
+  , s.oid as schema_id
+  , 0 as parent_object_id
+  , 'V'::varchar(2) as type
+  , 'VIEW'::varchar(60) as type_desc
+  , null::timestamp as create_date
+  , null::timestamp as modify_date
+  , 0 as is_ms_shipped
+  , 0 as is_published
+  , 0 as is_schema_published
+from pg_class t inner join pg_namespace s on s.oid = t.relnamespace
+where t.relkind = 'v'
+and (s.oid in (select schema_id from sys.schemas) or s.nspname = 'sys')
+and has_schema_privilege(s.oid, 'USAGE')
+and has_table_privilege(quote_ident(s.nspname) ||'.'||quote_ident(t.relname), 'SELECT,INSERT,UPDATE,DELETE,TRUNCATE,TRIGGER')
+union all
+-- details of user defined and system foreign key constraints
+select
+    c.conname as name
+  , c.oid as object_id
+  , null::integer as principal_id
+  , s.oid as schema_id
+  , c.conrelid as parent_object_id
+  , 'F' as type
+  , 'FOREIGN_KEY_CONSTRAINT'
+  , null::timestamp as create_date
+  , null::timestamp as modify_date
+  , 0 as is_ms_shipped
+  , 0 as is_published
+  , 0 as is_schema_published
+from pg_constraint c
+inner join pg_namespace s on s.oid = c.connamespace
+where (s.oid in (select schema_id from sys.schemas) or s.nspname = 'sys')
+and has_schema_privilege(s.oid, 'USAGE')
+and c.contype = 'f'
+union all
+-- details of user defined and system primary key constraints
+select
+    c.conname as name
+  , c.oid as object_id
+  , null::integer as principal_id
+  , s.oid as schema_id
+  , c.conrelid as parent_object_id
+  , 'PK' as type
+  , 'PRIMARY_KEY_CONSTRAINT' as type_desc
+  , null::timestamp as create_date
+  , null::timestamp as modify_date
+  , 0 as is_ms_shipped
+  , 0 as is_published
+  , 0 as is_schema_published
+from pg_constraint c
+inner join pg_namespace s on s.oid = c.connamespace
+where (s.oid in (select schema_id from sys.schemas) or s.nspname = 'sys')
+and has_schema_privilege(s.oid, 'USAGE')
+and c.contype = 'p'
+union all
+-- details of user defined and system defined procedures
+select
+    p.proname as name
+  , p.oid as object_id
+  , null::integer as principal_id
+  , s.oid as schema_id
+  , 0 as parent_object_id
+  , case p.prokind
+      when 'p' then 'P'::varchar(2)
+      when 'a' then 'AF'::varchar(2)
+      else
+        case format_type(p.prorettype, null) when 'trigger'
+          then 'TR'::varchar(2)
+          else 'FN'::varchar(2)
+        end
+    end as type
+  , case p.prokind
+      when 'p' then 'SQL_STORED_PROCEDURE'::varchar(60)
+      when 'a' then 'AGGREGATE_FUNCTION'::varchar(60)
+      else
+        case format_type(p.prorettype, null) when 'trigger'
+          then 'SQL_TRIGGER'::varchar(60)
+          else 'SQL_SCALAR_FUNCTION'::varchar(60)
+        end
+    end as type_desc
+  , null::timestamp as create_date
+  , null::timestamp as modify_date
+  , 0 as is_ms_shipped
+  , 0 as is_published
+  , 0 as is_schema_published
+from pg_proc p
+inner join pg_namespace s on s.oid = p.pronamespace
+where (s.oid in (select schema_id from sys.schemas) or s.nspname = 'sys')
+and has_schema_privilege(s.oid, 'USAGE')
+and has_function_privilege(p.oid, 'EXECUTE')
+union all
+-- details of all default constraints
+select
+    ('DF_' || o.relname || '_' || d.oid)::name as name
+  , d.oid as object_id
+  , null::int as principal_id
+  , o.relnamespace as schema_id
+  , d.adrelid as parent_object_id
+  , 'D'::char(2) as type
+  , 'DEFAULT_CONSTRAINT'::sys.nvarchar(60) AS type_desc
+  , null::timestamp as create_date
+  , null::timestamp as modify_date
+  , 0 as is_ms_shipped
+  , 0 as is_published
+  , 0 as is_schema_published
+from pg_catalog.pg_attrdef d
+inner join pg_attribute a on a.attrelid = d.adrelid and d.adnum = a.attnum
+inner join pg_class o on d.adrelid = o.oid
+inner join pg_namespace s on s.oid = o.relnamespace
+where a.atthasdef = 't' and a.attgenerated = ''
+and (s.oid in (select schema_id from sys.schemas) or s.nspname = 'sys')
+and has_schema_privilege(s.oid, 'USAGE')
+and has_column_privilege(a.attrelid, a.attname, 'SELECT,INSERT,UPDATE,REFERENCES')
+union all
+-- details of all check constraints
+select
+    c.conname::name
+  , c.oid::integer as object_id
+  , NULL::integer as principal_id 
+  , c.connamespace::integer as schema_id
+  , c.conrelid::integer as parent_object_id
+  , 'C'::char(2) as type
+  , 'CHECK_CONSTRAINT'::sys.nvarchar(60) as type_desc
+  , null::sys.datetime as create_date
+  , null::sys.datetime as modify_date
+  , 0 as is_ms_shipped
+  , 0 as is_published
+  , 0 as is_schema_published
+from pg_catalog.pg_constraint as c
+inner join pg_namespace s on s.oid = c.connamespace
+where (s.oid in (select schema_id from sys.schemas) or s.nspname = 'sys')
+and has_schema_privilege(s.oid, 'USAGE')
+and c.contype = 'c' and c.conrelid != 0
+union all
+-- details of user defined and system defined sequence objects
+select
+  p.relname as name
+  , p.oid as object_id
+  , null::integer as principal_id
+  , s.oid as schema_id
+  , 0 as parent_object_id
+  , 'SO'::varchar(2) as type
+  , 'SEQUENCE_OBJECT'::varchar(60) as type_desc
+  , null::timestamp as create_date
+  , null::timestamp as modify_date
+  , 0 as is_ms_shipped
+  , 0 as is_published
+  , 0 as is_schema_published
+from pg_class p
+inner join pg_namespace s on s.oid = p.relnamespace
+where p.relkind = 'S'
+and (s.oid in (select schema_id from sys.schemas) or s.nspname = 'sys')
+and has_schema_privilege(s.oid, 'USAGE')
+union all
+-- details of user defined table types
+select
+    ('TT_' || tt.name || '_' || tt.type_table_object_id)::name as name
+  , tt.type_table_object_id as object_id
+  , tt.principal_id as principal_id
+  , tt.schema_id as schema_id
+  , 0 as parent_object_id
+  , 'TT'::varchar(2) as type
+  , 'TABLE_TYPE'::varchar(60) as type_desc
+  , null::timestamp as create_date
+  , null::timestamp as modify_date
+  , 1 as is_ms_shipped
+  , 0 as is_published
+  , 0 as is_schema_published
+from sys.table_types tt
+) ot;
+GRANT SELECT ON sys.all_objects TO PUBLIC;
+
+create or replace view sys.system_objects as
+select * from sys.all_objects o
+inner join pg_namespace s on s.oid = o.schema_id
+where s.nspname = 'sys';
+GRANT SELECT ON sys.system_objects TO PUBLIC;
+
+create or replace view sys.all_views as
+select
+    t.name
+  , t.object_id
+  , t.principal_id
+  , t.schema_id
+  , t.parent_object_id
+  , t.type
+  , t.type_desc
+  , t.create_date
+  , t.modify_date
+  , t.is_ms_shipped
+  , t.is_published
+  , t.is_schema_published
+  -- check columns, they don't seem to match SQL Server
+  , 0 as with_check_option
+  , 0 as is_date_correlation_view
+  , 0 as is_tracked_by_cdc
+from sys.all_objects t
+where t.type = 'V';
+GRANT SELECT ON sys.all_views TO PUBLIC;
+
+CREATE OR REPLACE VIEW sys.spt_tablecollations_view AS
+  SELECT
+    o.object_id         AS object_id,
+    o.schema_id         AS schema_id,
+    c.column_id         AS colid,
+    CASE WHEN p.attoptions[1] LIKE 'bbf_original_name=%' THEN split_part(p.attoptions[1], '=', 2)
+      ELSE c.name END AS name,
+    CAST(CollationProperty(c.collation_name,'tdscollation') AS binary(5)) AS tds_collation_28,
+    CAST(CollationProperty(c.collation_name,'tdscollation') AS binary(5)) AS tds_collation_90,
+    CAST(CollationProperty(c.collation_name,'tdscollation') AS binary(5)) AS tds_collation_100,
+    CAST(c.collation_name AS nvarchar(128)) AS collation_28,
+    CAST(c.collation_name AS nvarchar(128)) AS collation_90,
+    CAST(c.collation_name AS nvarchar(128)) AS collation_100
+  FROM
+    sys.all_columns c INNER JOIN
+    sys.all_objects o ON (c.object_id = o.object_id) JOIN
+    pg_attribute p ON (c.name = p.attname)
+  WHERE
+    c.is_sparse = 0 AND p.attnum >= 0;
+GRANT SELECT ON sys.spt_tablecollations_view TO PUBLIC;
+
+call sys.babelfish_drop_deprecated_view('sys', 'spt_tablecollations_view_deprecated');
+call sys.babelfish_drop_deprecated_view('sys', 'system_objects_deprecated');
+call sys.babelfish_drop_deprecated_view('sys', 'all_views_deprecated');
+call sys.babelfish_drop_deprecated_view('sys', 'all_objects_deprecated');
+
 CREATE OR REPLACE FUNCTION OBJECTPROPERTY(IN object_id INT, IN property sys.varchar)
 RETURNS INT AS
 $$
@@ -2392,10 +2692,6 @@ CALL sys.babel_initialize_logins('sysadmin');
 -- Drop the deprecated view if there isn't any dependent object
 CALL sys.babelfish_drop_deprecated_view('sys', 'server_principals_deprecated');
 
--- Drops the temporary procedure used by the upgrade script.
--- Please have this be one of the last statements executed in this upgrade script.
-DROP PROCEDURE sys.babelfish_drop_deprecated_view(varchar, varchar);
-
 -- OPENJSON functions
 CREATE OR REPLACE FUNCTION sys.openjson_object(json_string text)
 RETURNS TABLE 
@@ -2479,6 +2775,10 @@ $BODY$
 SELECT CAST(CURRENT_TIMESTAMP AT TIME ZONE 'UTC'::pg_catalog.text AS sys.DATETIME);
 $BODY$
 LANGUAGE SQL PARALLEL SAFE;
+
+-- Drops the temporary procedure used by the upgrade script.
+-- Please have this be one of the last statements executed in this upgrade script.
+DROP PROCEDURE sys.babelfish_drop_deprecated_view(varchar, varchar);
 
 -- Reset search_path to not affect any subsequent scripts
 SELECT set_config('search_path', trim(leading 'sys, ' from current_setting('search_path')), false);
