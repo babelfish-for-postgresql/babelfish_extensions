@@ -2025,6 +2025,17 @@ SELECT
 WHERE FALSE;
 GRANT SELECT ON sys.dm_hadr_database_replica_states TO PUBLIC;
 
+CREATE OR REPLACE VIEW sys.data_spaces
+AS
+SELECT 
+  CAST('PRIMARY' as SYSNAME) AS name,
+  CAST(1 as INT) AS data_space_id,
+  CAST('FG' as CHAR(2)) AS type,
+  CAST('ROWS_FILEGROUP' as NVARCHAR(60)) AS type_desc,
+  CAST(1 as sys.BIT) AS is_default,
+  CAST(0 as sys.BIT) AS is_system;
+GRANT SELECT ON sys.data_spaces TO PUBLIC;
+
 CREATE OR REPLACE VIEW sys.database_mirroring
 AS
 SELECT database_id,
