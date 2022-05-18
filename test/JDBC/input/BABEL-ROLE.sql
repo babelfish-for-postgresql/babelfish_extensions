@@ -1,18 +1,6 @@
 SELECT DB_NAME()
 GO
 
-SELECT rolname, type, orig_username, database_name
-FROM sys.babelfish_authid_user_ext
-WHERE type = 'R'
-ORDER BY rolname, orig_username
-GO
-
-SELECT name, type_desc
-FROM sys.database_principals
-WHERE type = 'R'
-ORDER BY name
-GO
-
 -- Test CREATE ROLE
 CREATE ROLE test1
 GO
