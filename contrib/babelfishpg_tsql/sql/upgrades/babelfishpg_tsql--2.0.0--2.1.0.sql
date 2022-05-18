@@ -3598,6 +3598,17 @@ GRANT SELECT ON sys.spt_tablecollations_view TO PUBLIC;
 CALL sys.babelfish_drop_deprecated_view('sys', 'all_columns_deprecated');
 CALL sys.babelfish_drop_deprecated_view('sys', 'spt_tablecollations_view_deprecated');
 
+CREATE OR REPLACE VIEW sys.data_spaces
+AS
+SELECT 
+  CAST('PRIMARY' as SYSNAME) AS name,
+  CAST(1 as INT) AS data_space_id,
+  CAST('FG' as CHAR(2)) AS type,
+  CAST('ROWS_FILEGROUP' as NVARCHAR(60)) AS type_desc,
+  CAST(1 as sys.BIT) AS is_default,
+  CAST(0 as sys.BIT) AS is_system;
+GRANT SELECT ON sys.data_spaces TO PUBLIC;
+
 CREATE OR REPLACE VIEW sys.database_mirroring
 AS
 SELECT database_id,
