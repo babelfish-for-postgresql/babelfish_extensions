@@ -1,0 +1,9 @@
+-- psql
+CREATE PROCEDURE babel_3220_drop_all_users_deprecated()
+    LANGUAGE "c"
+    AS 'babelfishpg_tsql', 'drop_all_users';
+GO
+CALL babel_3220_drop_all_users_deprecated();
+GO
+DROP PROCEDURE babel_3220_drop_all_users_deprecated;
+GO
