@@ -3581,6 +3581,32 @@ GRANT SELECT ON sys.spt_tablecollations_view TO PUBLIC;
 CALL sys.babelfish_drop_deprecated_view('sys', 'all_columns_deprecated');
 CALL sys.babelfish_drop_deprecated_view('sys', 'spt_tablecollations_view_deprecated');
 
+CREATE OR REPLACE VIEW sys.database_mirroring
+AS
+SELECT database_id,
+	CAST(NULL AS sys.uniqueidentifier) AS mirroring_guid,
+	CAST(NULL AS sys.tinyint) AS mirroring_state,
+	CAST(NULL AS sys.nvarchar(60)) AS mirroring_state_desc,
+	CAST(NULL AS sys.tinyint) AS mirroring_role,
+	CAST(NULL AS sys.nvarchar(60)) AS mirroring_role_desc,
+	CAST(NULL AS int) AS mirroring_role_sequence,
+	CAST(NULL AS sys.tinyint) as mirroring_safety_level,
+	CAST(NULL AS sys.nvarchar(60)) AS mirroring_safety_level_desc,
+	CAST(NULL AS int) as mirroring_safety_sequence,
+	CAST(NULL AS sys.nvarchar(128)) AS mirroring_partner_name,
+	CAST(NULL AS sys.nvarchar(128)) AS mirroring_partner_instance,
+	CAST(NULL AS sys.nvarchar(128)) AS mirroring_witness_name,
+	CAST(NULL AS sys.tinyint) AS mirroring_witness_state,
+	CAST(NULL AS sys.nvarchar(60)) AS mirroring_witness_state_desc,
+	CAST(NULL AS numeric(25,0)) AS mirroring_failover_lsn,
+	CAST(NULL AS int) AS mirroring_connection_timeout,
+	CAST(NULL AS int) AS mirroring_redo_queue,
+	CAST(NULL AS sys.nvarchar(60)) AS mirroring_redo_queue_type,
+	CAST(NULL AS numeric(25,0)) AS mirroring_end_of_log_lsn,
+	CAST(NULL AS numeric(25,0)) AS mirroring_replication_lsn
+FROM sys.databases;
+GRANT SELECT ON sys.database_mirroring TO PUBLIC;
+
 -- Drops the temporary procedure used by the upgrade script.
 -- Please have this be one of the last statements executed in this upgrade script.
 DROP PROCEDURE sys.babelfish_drop_deprecated_view(varchar, varchar);
