@@ -610,20 +610,18 @@ select out_object_id as object_id
 from sys.columns_internal();
 GRANT SELECT ON sys.columns TO PUBLIC;
 
-create or replace view sys.foreign_key_columns as
-select distinct
-  c.oid as constraint_object_id
-  , c.confkey as constraint_column_id
-  , c.conrelid as parent_object_id
-  , a_con.attnum as parent_column_id
-  , c.confrelid as referenced_object_id
-  , a_conf.attnum as referenced_column_id
-from pg_constraint c
-inner join pg_attribute a_con on a_con.attrelid = c.conrelid and a_con.attnum = any(c.conkey)
-inner join pg_attribute a_conf on a_conf.attrelid = c.confrelid and a_conf.attnum = any(c.confkey)
-where c.contype = 'f'
-and (c.connamespace in (select schema_id from sys.schemas))
-and has_schema_privilege(c.connamespace, 'USAGE');
+CREATE OR replace view sys.foreign_key_columns as
+SELECT DISTINCT
+  CAST(c.oid AS INT) AS constraint_object_id
+  ,CAST((generate_series(1,ARRAY_LENGTH(c.conkey,1))) AS INT) AS constraint_column_id
+  ,CAST(c.conrelid AS INT) AS parent_object_id
+  ,CAST((UNNEST (c.conkey)) AS INT) AS parent_column_id
+  ,CAST(c.confrelid AS INT) AS referenced_object_id
+  ,CAST((UNNEST(c.confkey)) AS INT) AS referenced_column_id
+FROM pg_constraint c
+WHERE c.contype = 'f'
+AND (c.connamespace IN (SELECT schema_id FROM sys.schemas))
+AND has_schema_privilege(c.connamespace, 'USAGE');
 GRANT SELECT ON sys.foreign_key_columns TO PUBLIC;
 
 create or replace view sys.foreign_keys as
