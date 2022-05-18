@@ -1957,6 +1957,141 @@ $$;
 
 CALL sys.babel_create_msdb_if_not_exists();
 
+ALTER TABLE sys.syslanguages RENAME TO babelfish_syslanguages;
+
+CREATE OR REPLACE FUNCTION sys.babelfish_get_lang_metadata_json(IN p_lang_spec_culture TEXT)
+RETURNS JSONB
+AS
+$BODY$
+DECLARE
+    v_locale_parts TEXT[] COLLATE "C";
+    v_lang_data_jsonb JSONB;
+    v_lang_spec_culture VARCHAR COLLATE "C";
+    v_is_cached BOOLEAN := FALSE;
+BEGIN
+    v_lang_spec_culture := upper(trim(p_lang_spec_culture));
+
+    IF (char_length(v_lang_spec_culture) > 0)
+    THEN
+        BEGIN
+            v_lang_data_jsonb := nullif(current_setting(format('sys.lang_metadata_json.%s',
+                                                               v_lang_spec_culture)), '')::JSONB;
+        EXCEPTION
+            WHEN undefined_object THEN
+            v_lang_data_jsonb := NULL;
+        END;
+
+        IF (v_lang_data_jsonb IS NULL)
+        THEN
+            v_lang_spec_culture := upper(regexp_replace(v_lang_spec_culture, '-\s*', '_', 'gi'));
+            IF (v_lang_spec_culture IN ('AR', 'FI') OR
+                v_lang_spec_culture ~ '_')
+            THEN
+                SELECT lang_data_jsonb
+                  INTO STRICT v_lang_data_jsonb
+                  FROM sys.babelfish_syslanguages
+                 WHERE spec_culture = v_lang_spec_culture;
+            ELSE
+                SELECT lang_data_jsonb
+                  INTO STRICT v_lang_data_jsonb
+                  FROM sys.babelfish_syslanguages
+                 WHERE lang_name_mssql = v_lang_spec_culture
+                    OR lang_alias_mssql = v_lang_spec_culture;
+            END IF;
+        ELSE
+            v_is_cached := TRUE;
+        END IF;
+    ELSE
+        v_lang_spec_culture := current_setting('LC_TIME');
+
+        v_lang_spec_culture := CASE
+                                  WHEN (v_lang_spec_culture !~ '\.') THEN v_lang_spec_culture
+                                  ELSE substring(v_lang_spec_culture, '(.*)(?:\.)')
+                               END;
+
+        v_lang_spec_culture := upper(regexp_replace(v_lang_spec_culture, ',\s*', '_', 'gi'));
+
+        BEGIN
+            v_lang_data_jsonb := nullif(current_setting(format('sys.lang_metadata_json.%s',
+                                                               v_lang_spec_culture)), '')::JSONB;
+        EXCEPTION
+            WHEN undefined_object THEN
+            v_lang_data_jsonb := NULL;
+        END;
+
+        IF (v_lang_data_jsonb IS NULL)
+        THEN
+            BEGIN
+                IF (char_length(v_lang_spec_culture) = 5)
+                THEN
+                    SELECT lang_data_jsonb
+                      INTO STRICT v_lang_data_jsonb
+                      FROM sys.babelfish_syslanguages
+                     WHERE spec_culture = v_lang_spec_culture;
+                ELSE
+                    v_locale_parts := string_to_array(v_lang_spec_culture, '-');
+
+                    SELECT lang_data_jsonb
+                      INTO STRICT v_lang_data_jsonb
+                      FROM sys.babelfish_syslanguages
+                     WHERE lang_name_pg = v_locale_parts[1]
+                       AND territory = v_locale_parts[2];
+                END IF;
+            EXCEPTION
+                WHEN OTHERS THEN
+                    v_lang_spec_culture := 'EN_US';
+
+                    SELECT lang_data_jsonb
+                      INTO v_lang_data_jsonb
+                      FROM sys.babelfish_syslanguages
+                     WHERE spec_culture = v_lang_spec_culture;
+            END;
+        ELSE
+            v_is_cached := TRUE;
+        END IF;
+    END IF;
+
+    IF (NOT v_is_cached) THEN
+        PERFORM set_config(format('sys.lang_metadata_json.%s',
+                                  v_lang_spec_culture),
+                           v_lang_data_jsonb::TEXT,
+                           FALSE);
+    END IF;
+
+    RETURN v_lang_data_jsonb;
+EXCEPTION
+    WHEN invalid_text_representation THEN
+        RAISE USING MESSAGE := format('The language metadata JSON value extracted from chache is not a valid JSON object.',
+                                      p_lang_spec_culture),
+                    HINT := 'Drop the current session, fix the appropriate record in "sys.babelfish_syslanguages" table, and try again after reconnection.';
+
+    WHEN OTHERS THEN
+        RAISE USING MESSAGE := format('"%s" is not a valid special culture or language name parameter.',
+                                      p_lang_spec_culture),
+                    DETAIL := 'Use of incorrect "lang_spec_culture" parameter value during conversion process.',
+                    HINT := 'Change "lang_spec_culture" parameter to the proper value and try again.';
+END;
+$BODY$
+LANGUAGE plpgsql
+VOLATILE;
+ 
+CREATE OR REPLACE VIEW sys.syslanguages
+AS
+SELECT
+    lang_id AS langid,
+    CAST(lower(lang_data_jsonb ->> 'date_format') AS SYS.NCHAR(3)) AS dateformat,
+    CAST(lang_data_jsonb -> 'date_first' AS SYS.TINYINT) AS datefirst,
+    CAST(NULL AS INT) AS upgrade,
+    CAST(coalesce(lang_name_mssql, lang_name_pg) AS SYS.SYSNAME) AS name,
+    CAST(coalesce(lang_alias_mssql, lang_alias_pg) AS SYS.SYSNAME) AS alias,
+    CAST(array_to_string(ARRAY(SELECT jsonb_array_elements_text(lang_data_jsonb -> 'months_names')), ',') AS SYS.NVARCHAR(372)) AS months,
+    CAST(array_to_string(ARRAY(SELECT jsonb_array_elements_text(lang_data_jsonb -> 'months_shortnames')),',') AS SYS.NVARCHAR(132)) AS shortmonths,
+    CAST(array_to_string(ARRAY(SELECT jsonb_array_elements_text(lang_data_jsonb -> 'days_shortnames')),',') AS SYS.NVARCHAR(217)) AS days,
+    CAST(NULL AS INT) AS lcid,
+    CAST(NULL AS SMALLINT) AS msglangid
+FROM sys.babelfish_syslanguages;
+GRANT SELECT ON sys.syslanguages TO PUBLIC;
+
 -- Role member functions
 CREATE OR REPLACE FUNCTION sys.is_rolemember_internal(
 	IN role sys.SYSNAME,
