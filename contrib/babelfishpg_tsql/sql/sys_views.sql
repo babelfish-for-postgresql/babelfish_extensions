@@ -68,56 +68,6 @@ and has_schema_privilege(sch.schema_id, 'USAGE')
 and has_table_privilege(t.oid, 'SELECT,INSERT,UPDATE,DELETE,TRUNCATE,TRIGGER');
 GRANT SELECT ON sys.views TO PUBLIC;
 
-create or replace view sys.all_columns as
-select c.oid as object_id
-  , a.attname as name
-  , a.attnum as column_id
-  , t.oid as system_type_id
-  , t.oid as user_type_id
-  , a.attlen as max_length
-  , null::integer as precision
-  , null::integer as scale
-  , coll.collname as collation_name
-  , case when a.attnotnull then 0 else 1 end as is_nullable
-  , 0 as is_ansi_padded
-  , 0 as is_rowguidcol
-  , 0 as is_identity
-  , 0 as is_computed
-  , 0 as is_filestream
-  , 0 as is_replicated
-  , 0 as is_non_sql_subscribed
-  , 0 as is_merge_published
-  , 0 as is_dts_replicated
-  , 0 as is_xml_document
-  , 0 as xml_collection_id
-  , coalesce(d.oid, 0) as default_object_id
-  , coalesce((select oid from pg_constraint where conrelid = t.oid and contype = 'c' and a.attnum = any(conkey) limit 1), 0) as rule_object_id
-  , 0 as is_sparse
-  , 0 as is_column_set
-  , 0 as generated_always_type
-  , 'NOT_APPLICABLE'::varchar(60) as generated_always_type_desc
-  , null::integer as encryption_type
-  , null::varchar(64) as encryption_type_desc
-  , null::varchar as encryption_algorithm_name
-  , null::integer as column_encryption_key_id
-  , null::varchar as column_encryption_key_database_name
-  , 0 as is_hidden
-  , 0 as is_masked
-from pg_attribute a
-inner join pg_class c on c.oid = a.attrelid
-inner join pg_type t on t.oid = a.atttypid
-inner join pg_namespace s on s.oid = c.relnamespace
-left join pg_attrdef d on c.oid = d.adrelid and a.attnum = d.adnum
-left join pg_collation coll on coll.oid = a.attcollation
-where not a.attisdropped
-and (s.oid in (select schema_id from sys.schemas) or s.nspname = 'sys')
--- r = ordinary table, i = index, S = sequence, t = TOAST table, v = view, m = materialized view, c = composite type, f = foreign table, p = partitioned table
-and c.relkind in ('r', 'v', 'm', 'f', 'p')
-and has_schema_privilege(s.oid, 'USAGE')
-and has_column_privilege(quote_ident(s.nspname) ||'.'||quote_ident(c.relname), a.attname, 'SELECT,INSERT,UPDATE,REFERENCES')
-and a.attnum > 0;
-GRANT SELECT ON sys.all_columns TO PUBLIC;
-
 CREATE OR REPLACE FUNCTION sys.tsql_type_scale_helper(IN type TEXT, IN typemod INT, IN return_null_for_rest bool) RETURNS sys.TINYINT
 AS $$
 DECLARE
@@ -362,6 +312,61 @@ BEGIN
 	RETURN max_length;
 END;
 $$ LANGUAGE plpgsql IMMUTABLE STRICT;
+
+create or replace view sys.all_columns as
+select CAST(c.oid as int) as object_id
+  , CAST(a.attname as sys.sysname) as name
+  , CAST(a.attnum as int) as column_id
+  , CAST(t.oid as int) as system_type_id
+  , CAST(t.oid as int) as user_type_id
+  , CAST(sys.tsql_type_max_length_helper(coalesce(tsql_type_name, tsql_base_type_name), a.attlen, a.atttypmod) as smallint) as max_length
+  , CAST(case
+      when a.atttypmod != -1 then 
+        sys.tsql_type_precision_helper(coalesce(tsql_type_name, tsql_base_type_name), a.atttypmod)
+      else 
+        sys.tsql_type_precision_helper(coalesce(tsql_type_name, tsql_base_type_name), t.typtypmod)
+    end as sys.tinyint) as precision
+  , CAST(case
+      when a.atttypmod != -1 THEN 
+        sys.tsql_type_scale_helper(coalesce(tsql_type_name, tsql_base_type_name), a.atttypmod, false)
+      else 
+        sys.tsql_type_scale_helper(coalesce(tsql_type_name, tsql_base_type_name), t.typtypmod, false)
+    end as sys.tinyint) as scale
+  , CAST(coll.collname as sys.sysname) as collation_name
+  , case when a.attnotnull then CAST(0 as sys.bit) else CAST(1 as sys.bit) end as is_nullable
+  , CAST(0 as sys.bit) as is_ansi_padded
+  , CAST(0 as sys.bit) as is_rowguidcol
+  , CAST(0 as sys.bit) as is_identity
+  , CAST(0 as sys.bit) as is_computed
+  , CAST(0 as sys.bit) as is_filestream
+  , CAST(0 as sys.bit) as is_replicated
+  , CAST(0 as sys.bit) as is_non_sql_subscribed
+  , CAST(0 as sys.bit) as is_merge_published
+  , CAST(0 as sys.bit) as is_dts_replicated
+  , CAST(0 as sys.bit) as is_xml_document
+  , CAST(0 as int) as xml_collection_id
+  , CAST(coalesce(d.oid, 0) as int) as default_object_id
+  , CAST(coalesce((select oid from pg_constraint where conrelid = t.oid and contype = 'c' and a.attnum = any(conkey) limit 1), 0) as int) as rule_object_id
+  , CAST(0 as sys.bit) as is_sparse
+  , CAST(0 as sys.bit) as is_column_set
+  , CAST(0 as sys.tinyint) as generated_always_type
+  , CAST('NOT_APPLICABLE' as sys.nvarchar(60)) as generated_always_type_desc
+from pg_attribute a
+inner join pg_class c on c.oid = a.attrelid
+inner join pg_type t on t.oid = a.atttypid
+inner join pg_namespace s on s.oid = c.relnamespace
+left join pg_attrdef d on c.oid = d.adrelid and a.attnum = d.adnum
+left join pg_collation coll on coll.oid = a.attcollation
+, sys.translate_pg_type_to_tsql(a.atttypid) AS tsql_type_name
+, sys.translate_pg_type_to_tsql(t.typbasetype) AS tsql_base_type_name
+where not a.attisdropped
+and (s.oid in (select schema_id from sys.schemas) or s.nspname = 'sys')
+-- r = ordinary table, i = index, S = sequence, t = TOAST table, v = view, m = materialized view, c = composite type, f = foreign table, p = partitioned table
+and c.relkind in ('r', 'v', 'm', 'f', 'p')
+and has_schema_privilege(s.oid, 'USAGE')
+and has_column_privilege(quote_ident(s.nspname) ||'.'||quote_ident(c.relname), a.attname, 'SELECT,INSERT,UPDATE,REFERENCES')
+and a.attnum > 0;
+GRANT SELECT ON sys.all_columns TO PUBLIC;
 
 -- internal function in order to workaround BABEL-1597
 CREATE OR REPLACE FUNCTION sys.columns_internal()
