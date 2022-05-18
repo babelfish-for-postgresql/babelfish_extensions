@@ -248,7 +248,6 @@ TEST_F(Metadata, DISABLED_SQLForeignKeys_ReferFromOtherTables) {
 }
 
 // Tests if SQLTablePrivileges works properly
-// DISABLED PLEASE SEE  BABELFISH-123
 TEST_F(Metadata, SQLTablePrivileges) {
 
   const int CHARSIZE = 255;
@@ -309,7 +308,6 @@ TEST_F(Metadata, SQLTablePrivileges) {
 }
 
 // Tests if SQLTableColumnPrivileges works properly
-// DISABLED PLEASE SEE BABELFISH-124
 TEST_F(Metadata, SQLTableColumnPrivileges) {
 
   const int CHARSIZE = 255;
@@ -634,7 +632,6 @@ TEST_F(Metadata, DISABLED_SQLProcedureColumns) {
 }
 
 // Tests SQLProcedureColumns for success with primary keys
-// DISABLED: PLEASE SEE BABELFISH-121
 TEST_F(Metadata, SQLSpecialColumns_PrimaryKeys) {
 
   OdbcHandler odbcHandler;
