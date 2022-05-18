@@ -877,26 +877,6 @@ where has_schema_privilege(sch.schema_id, 'USAGE')
 and has_function_privilege(p.oid, 'EXECUTE');
 GRANT SELECT ON sys.procedures TO PUBLIC;
 
-create or replace view sys.sql_modules as
-select
-  p.oid as object_id
-  , pg_get_functiondef(p.oid) as definition
-  , 1 as uses_ansi_nulls
-  , 1 as uses_quoted_identifier
-  , 0 as is_schema_bound
-  , 0 as uses_database_collation
-  , 0 as is_recompiled
-  , case when p.proisstrict then 1 else 0 end as null_on_null_input
-  , null::integer as execute_as_principal_id
-  , 0 as uses_native_compilation
-from pg_proc p
-inner join sys.schemas s on s.schema_id = p.pronamespace
-inner join pg_type t on t.oid = p.prorettype
-left join pg_collation c on c.oid = t.typcollation
-where has_schema_privilege(s.schema_id, 'USAGE')
-and has_function_privilege(p.oid, 'EXECUTE');
-GRANT SELECT ON sys.sql_modules TO PUBLIC;
-
 create or replace view sys.sysforeignkeys as
 select
   c.conname as name
@@ -1570,6 +1550,85 @@ select
 from sys.all_objects t
 where t.type = 'V';
 GRANT SELECT ON sys.all_views TO PUBLIC;
+
+-- TODO: BABEL-3127
+CREATE OR REPLACE VIEW sys.all_sql_modules_internal AS
+SELECT
+  ao.object_id AS object_id
+  , CAST(
+      CASE WHEN ao.type in ('P', 'FN', 'IN', 'TF', 'RF') THEN pg_get_functiondef(ao.object_id)
+      WHEN ao.type = 'V' THEN NULL
+      WHEN ao.type = 'TR' THEN NULL
+      ELSE NULL
+      END
+    AS sys.nvarchar(4000)) AS definition  -- Object definition work in progress, will update definition with BABEL-3127 Jira.
+  , CAST(1 as sys.bit)  AS uses_ansi_nulls
+  , CAST(1 as sys.bit)  AS uses_quoted_identifier
+  , CAST(0 as sys.bit)  AS is_schema_bound
+  , CAST(0 as sys.bit)  AS uses_database_collation
+  , CAST(0 as sys.bit)  AS is_recompiled
+  , CAST(
+      CASE WHEN ao.type IN ('P', 'FN', 'IN', 'TF', 'RF') THEN
+        CASE WHEN p.proisstrict THEN 1
+        ELSE 0 
+        END
+      ELSE 0
+      END
+    AS sys.bit) as null_on_null_input
+  , null::integer as execute_as_principal_id
+  , CAST(0 as sys.bit) as uses_native_compilation
+  , CAST(ao.is_ms_shipped as INT) as is_ms_shipped
+FROM sys.all_objects ao
+LEFT JOIN pg_proc p ON ao.object_id = CAST(p.oid AS INT)
+WHERE ao.type in ('P', 'RF', 'V', 'TR', 'FN', 'IF', 'TF', 'R');
+GRANT SELECT ON sys.all_sql_modules_internal TO PUBLIC;
+
+CREATE OR REPLACE VIEW sys.all_sql_modules AS
+SELECT
+     CAST(t1.object_id as int)
+    ,CAST(t1.definition as sys.nvarchar(4000))
+    ,CAST(t1.uses_ansi_nulls as sys.bit)
+    ,CAST(t1.uses_quoted_identifier as sys.bit)
+    ,CAST(t1.is_schema_bound as sys.bit)
+    ,CAST(t1.uses_database_collation as sys.bit)
+    ,CAST(t1.is_recompiled as sys.bit)
+    ,CAST(t1.null_on_null_input as sys.bit)
+    ,CAST(t1.execute_as_principal_id as int)
+    ,CAST(t1.uses_native_compilation as sys.bit)
+FROM sys.all_sql_modules_internal t1;
+GRANT SELECT ON sys.all_sql_modules TO PUBLIC;
+
+CREATE OR REPLACE VIEW sys.system_sql_modules AS
+SELECT
+     CAST(t1.object_id as int)
+    ,CAST(t1.definition as sys.nvarchar(4000))
+    ,CAST(t1.uses_ansi_nulls as sys.bit)
+    ,CAST(t1.uses_quoted_identifier as sys.bit)
+    ,CAST(t1.is_schema_bound as sys.bit)
+    ,CAST(t1.uses_database_collation as sys.bit)
+    ,CAST(t1.is_recompiled as sys.bit)
+    ,CAST(t1.null_on_null_input as sys.bit)
+    ,CAST(t1.execute_as_principal_id as int)
+    ,CAST(t1.uses_native_compilation as sys.bit)
+FROM sys.all_sql_modules_internal t1
+WHERE t1.is_ms_shipped = 1;
+GRANT SELECT ON sys.system_sql_modules TO PUBLIC;
+
+CREATE OR REPLACE VIEW sys.sql_modules AS
+SELECT
+     CAST(t1.object_id as int)
+    ,CAST(t1.definition as sys.nvarchar(4000))
+    ,CAST(t1.uses_ansi_nulls as sys.bit)
+    ,CAST(t1.uses_quoted_identifier as sys.bit)
+    ,CAST(t1.is_schema_bound as sys.bit)
+    ,CAST(t1.uses_database_collation as sys.bit)
+    ,CAST(t1.is_recompiled as sys.bit)
+    ,CAST(t1.null_on_null_input as sys.bit)
+    ,CAST(t1.execute_as_principal_id as int)
+    ,CAST(t1.uses_native_compilation as sys.bit)
+FROM sys.all_sql_modules_internal t1
+WHERE t1.is_ms_shipped = 0;
+GRANT SELECT ON sys.sql_modules TO PUBLIC;
 
 CREATE VIEW sys.syscharsets
 AS
