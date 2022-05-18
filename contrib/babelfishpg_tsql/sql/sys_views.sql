@@ -2061,3 +2061,38 @@ SELECT database_id,
 	CAST(NULL AS numeric(25,0)) AS mirroring_replication_lsn
 FROM sys.databases;
 GRANT SELECT ON sys.database_mirroring TO PUBLIC;
+
+CREATE OR REPLACE VIEW sys.database_files
+AS
+SELECT
+    CAST(1 as INT) AS file_id,
+    CAST(NULL as sys.uniqueidentifier) AS file_guid,
+    CAST(0 as sys.TINYINT) AS type,
+    CAST('' as sys.NVARCHAR(60)) AS type_desc,
+    CAST(0 as INT) AS data_space_id,
+    CAST('' as sys.SYSNAME) AS name,
+    CAST('' as sys.NVARCHAR(260)) AS physical_name,
+    CAST(0 as sys.TINYINT) AS state,
+    CAST('' as sys.NVARCHAR(60)) AS state_desc,
+    CAST(0 as INT) AS size,
+    CAST(0 as INT) AS max_size,
+    CAST(0 as INT) AS growth,
+    CAST(0 as sys.BIT) AS is_media_read_only,
+    CAST(0 as sys.BIT) AS is_read_only,
+    CAST(0 as sys.BIT) AS is_sparse,
+    CAST(0 as sys.BIT) AS is_percent_growth,
+    CAST(0 as sys.BIT) AS is_name_reserved,
+    CAST(0 as NUMERIC(25,0)) AS create_lsn,
+    CAST(0 as NUMERIC(25,0)) AS drop_lsn,
+    CAST(0 as NUMERIC(25,0)) AS read_only_lsn,
+    CAST(0 as NUMERIC(25,0)) AS read_write_lsn,
+    CAST(0 as NUMERIC(25,0)) AS differential_base_lsn,
+    CAST(NULL as sys.uniqueidentifier) AS differential_base_guid,
+    CAST(NULL as sys.datetime) AS differential_base_time,
+    CAST(0 as NUMERIC(25,0)) AS redo_start_lsn,
+    CAST(NULL as sys.uniqueidentifier) AS redo_start_fork_guid,
+    CAST(0 as NUMERIC(25,0)) AS redo_target_lsn,
+    CAST(NULL as sys.uniqueidentifier) AS redo_target_fork_guid,
+    CAST(0 as NUMERIC(25,0)) AS backup_lsn
+WHERE false;
+GRANT SELECT ON sys.database_files TO PUBLIC;
