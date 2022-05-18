@@ -1957,6 +1957,141 @@ $$;
 
 CALL sys.babel_create_msdb_if_not_exists();
 
+ALTER TABLE sys.syslanguages RENAME TO babelfish_syslanguages;
+
+CREATE OR REPLACE FUNCTION sys.babelfish_get_lang_metadata_json(IN p_lang_spec_culture TEXT)
+RETURNS JSONB
+AS
+$BODY$
+DECLARE
+    v_locale_parts TEXT[] COLLATE "C";
+    v_lang_data_jsonb JSONB;
+    v_lang_spec_culture VARCHAR COLLATE "C";
+    v_is_cached BOOLEAN := FALSE;
+BEGIN
+    v_lang_spec_culture := upper(trim(p_lang_spec_culture));
+
+    IF (char_length(v_lang_spec_culture) > 0)
+    THEN
+        BEGIN
+            v_lang_data_jsonb := nullif(current_setting(format('sys.lang_metadata_json.%s',
+                                                               v_lang_spec_culture)), '')::JSONB;
+        EXCEPTION
+            WHEN undefined_object THEN
+            v_lang_data_jsonb := NULL;
+        END;
+
+        IF (v_lang_data_jsonb IS NULL)
+        THEN
+            v_lang_spec_culture := upper(regexp_replace(v_lang_spec_culture, '-\s*', '_', 'gi'));
+            IF (v_lang_spec_culture IN ('AR', 'FI') OR
+                v_lang_spec_culture ~ '_')
+            THEN
+                SELECT lang_data_jsonb
+                  INTO STRICT v_lang_data_jsonb
+                  FROM sys.babelfish_syslanguages
+                 WHERE spec_culture = v_lang_spec_culture;
+            ELSE
+                SELECT lang_data_jsonb
+                  INTO STRICT v_lang_data_jsonb
+                  FROM sys.babelfish_syslanguages
+                 WHERE lang_name_mssql = v_lang_spec_culture
+                    OR lang_alias_mssql = v_lang_spec_culture;
+            END IF;
+        ELSE
+            v_is_cached := TRUE;
+        END IF;
+    ELSE
+        v_lang_spec_culture := current_setting('LC_TIME');
+
+        v_lang_spec_culture := CASE
+                                  WHEN (v_lang_spec_culture !~ '\.') THEN v_lang_spec_culture
+                                  ELSE substring(v_lang_spec_culture, '(.*)(?:\.)')
+                               END;
+
+        v_lang_spec_culture := upper(regexp_replace(v_lang_spec_culture, ',\s*', '_', 'gi'));
+
+        BEGIN
+            v_lang_data_jsonb := nullif(current_setting(format('sys.lang_metadata_json.%s',
+                                                               v_lang_spec_culture)), '')::JSONB;
+        EXCEPTION
+            WHEN undefined_object THEN
+            v_lang_data_jsonb := NULL;
+        END;
+
+        IF (v_lang_data_jsonb IS NULL)
+        THEN
+            BEGIN
+                IF (char_length(v_lang_spec_culture) = 5)
+                THEN
+                    SELECT lang_data_jsonb
+                      INTO STRICT v_lang_data_jsonb
+                      FROM sys.babelfish_syslanguages
+                     WHERE spec_culture = v_lang_spec_culture;
+                ELSE
+                    v_locale_parts := string_to_array(v_lang_spec_culture, '-');
+
+                    SELECT lang_data_jsonb
+                      INTO STRICT v_lang_data_jsonb
+                      FROM sys.babelfish_syslanguages
+                     WHERE lang_name_pg = v_locale_parts[1]
+                       AND territory = v_locale_parts[2];
+                END IF;
+            EXCEPTION
+                WHEN OTHERS THEN
+                    v_lang_spec_culture := 'EN_US';
+
+                    SELECT lang_data_jsonb
+                      INTO v_lang_data_jsonb
+                      FROM sys.babelfish_syslanguages
+                     WHERE spec_culture = v_lang_spec_culture;
+            END;
+        ELSE
+            v_is_cached := TRUE;
+        END IF;
+    END IF;
+
+    IF (NOT v_is_cached) THEN
+        PERFORM set_config(format('sys.lang_metadata_json.%s',
+                                  v_lang_spec_culture),
+                           v_lang_data_jsonb::TEXT,
+                           FALSE);
+    END IF;
+
+    RETURN v_lang_data_jsonb;
+EXCEPTION
+    WHEN invalid_text_representation THEN
+        RAISE USING MESSAGE := format('The language metadata JSON value extracted from chache is not a valid JSON object.',
+                                      p_lang_spec_culture),
+                    HINT := 'Drop the current session, fix the appropriate record in "sys.babelfish_syslanguages" table, and try again after reconnection.';
+
+    WHEN OTHERS THEN
+        RAISE USING MESSAGE := format('"%s" is not a valid special culture or language name parameter.',
+                                      p_lang_spec_culture),
+                    DETAIL := 'Use of incorrect "lang_spec_culture" parameter value during conversion process.',
+                    HINT := 'Change "lang_spec_culture" parameter to the proper value and try again.';
+END;
+$BODY$
+LANGUAGE plpgsql
+VOLATILE;
+ 
+CREATE OR REPLACE VIEW sys.syslanguages
+AS
+SELECT
+    lang_id AS langid,
+    CAST(lower(lang_data_jsonb ->> 'date_format') AS SYS.NCHAR(3)) AS dateformat,
+    CAST(lang_data_jsonb -> 'date_first' AS SYS.TINYINT) AS datefirst,
+    CAST(NULL AS INT) AS upgrade,
+    CAST(coalesce(lang_name_mssql, lang_name_pg) AS SYS.SYSNAME) AS name,
+    CAST(coalesce(lang_alias_mssql, lang_alias_pg) AS SYS.SYSNAME) AS alias,
+    CAST(array_to_string(ARRAY(SELECT jsonb_array_elements_text(lang_data_jsonb -> 'months_names')), ',') AS SYS.NVARCHAR(372)) AS months,
+    CAST(array_to_string(ARRAY(SELECT jsonb_array_elements_text(lang_data_jsonb -> 'months_shortnames')),',') AS SYS.NVARCHAR(132)) AS shortmonths,
+    CAST(array_to_string(ARRAY(SELECT jsonb_array_elements_text(lang_data_jsonb -> 'days_shortnames')),',') AS SYS.NVARCHAR(217)) AS days,
+    CAST(NULL AS INT) AS lcid,
+    CAST(NULL AS SMALLINT) AS msglangid
+FROM sys.babelfish_syslanguages;
+GRANT SELECT ON sys.syslanguages TO PUBLIC;
+
 -- Role member functions
 CREATE OR REPLACE FUNCTION sys.is_rolemember_internal(
 	IN role sys.SYSNAME,
@@ -2775,6 +2910,89 @@ $BODY$
 SELECT CAST(CURRENT_TIMESTAMP AT TIME ZONE 'UTC'::pg_catalog.text AS sys.DATETIME);
 $BODY$
 LANGUAGE SQL PARALLEL SAFE;
+
+ALTER VIEW sys.all_columns RENAME TO all_columns_deprecated;
+
+create or replace view sys.all_columns as
+select CAST(c.oid as int) as object_id
+, CAST(a.attname as sys.sysname) as name
+, CAST(a.attnum as int) as column_id
+, CAST(t.oid as int) as system_type_id
+, CAST(t.oid as int) as user_type_id
+, CAST(sys.tsql_type_max_length_helper(coalesce(tsql_type_name, tsql_base_type_name), a.attlen, a.atttypmod) as smallint) as max_length
+, CAST(case
+	when a.atttypmod != -1 then 
+		sys.tsql_type_precision_helper(coalesce(tsql_type_name, tsql_base_type_name), a.atttypmod)
+	else 
+		sys.tsql_type_precision_helper(coalesce(tsql_type_name, tsql_base_type_name), t.typtypmod)
+	end as sys.tinyint) as precision
+, CAST(case
+	when a.atttypmod != -1 THEN 
+		sys.tsql_type_scale_helper(coalesce(tsql_type_name, tsql_base_type_name), a.atttypmod, false)
+	else 
+		sys.tsql_type_scale_helper(coalesce(tsql_type_name, tsql_base_type_name), t.typtypmod, false)
+	end as sys.tinyint) as scale
+, CAST(coll.collname as sys.sysname) as collation_name
+, case when a.attnotnull then CAST(0 as sys.bit) else CAST(1 as sys.bit) end as is_nullable
+, CAST(0 as sys.bit) as is_ansi_padded
+, CAST(0 as sys.bit) as is_rowguidcol
+, CAST(0 as sys.bit) as is_identity
+, CAST(0 as sys.bit) as is_computed
+, CAST(0 as sys.bit) as is_filestream
+, CAST(0 as sys.bit) as is_replicated
+, CAST(0 as sys.bit) as is_non_sql_subscribed
+, CAST(0 as sys.bit) as is_merge_published
+, CAST(0 as sys.bit) as is_dts_replicated
+, CAST(0 as sys.bit) as is_xml_document
+, CAST(0 as int) as xml_collection_id
+, CAST(coalesce(d.oid, 0) as int) as default_object_id
+, CAST(coalesce((select oid from pg_constraint where conrelid = t.oid and contype = 'c' and a.attnum = any(conkey) limit 1), 0) as int) as rule_object_id
+, CAST(0 as sys.bit) as is_sparse
+, CAST(0 as sys.bit) as is_column_set
+, CAST(0 as sys.tinyint) as generated_always_type
+, CAST('NOT_APPLICABLE' as sys.nvarchar(60)) as generated_always_type_desc
+from pg_attribute a
+inner join pg_class c on c.oid = a.attrelid
+inner join pg_type t on t.oid = a.atttypid
+inner join pg_namespace s on s.oid = c.relnamespace
+left join pg_attrdef d on c.oid = d.adrelid and a.attnum = d.adnum
+left join pg_collation coll on coll.oid = a.attcollation
+, sys.translate_pg_type_to_tsql(a.atttypid) AS tsql_type_name
+, sys.translate_pg_type_to_tsql(t.typbasetype) AS tsql_base_type_name
+where not a.attisdropped
+and (s.oid in (select schema_id from sys.schemas) or s.nspname = 'sys')
+-- r = ordinary table, i = index, S = sequence, t = TOAST table, v = view, m = materialized view, c = composite type, f = foreign table, p = partitioned table
+and c.relkind in ('r', 'v', 'm', 'f', 'p')
+and has_schema_privilege(s.oid, 'USAGE')
+and has_column_privilege(quote_ident(s.nspname) ||'.'||quote_ident(c.relname), a.attname, 'SELECT,INSERT,UPDATE,REFERENCES')
+and a.attnum > 0;
+GRANT SELECT ON sys.all_columns TO PUBLIC;
+
+-- Rebuild dependent view
+ALTER VIEW sys.spt_tablecollations_view RENAME TO spt_tablecollations_view_deprecated;
+CREATE OR REPLACE VIEW sys.spt_tablecollations_view AS
+	SELECT
+		o.object_id         AS object_id,
+		o.schema_id         AS schema_id,
+		c.column_id         AS colid,
+		CASE WHEN p.attoptions[1] LIKE 'bbf_original_name=%' THEN split_part(p.attoptions[1], '=', 2)
+			ELSE c.name END AS name,
+		CAST(CollationProperty(c.collation_name,'tdscollation') AS binary(5)) AS tds_collation_28,
+		CAST(CollationProperty(c.collation_name,'tdscollation') AS binary(5)) AS tds_collation_90,
+		CAST(CollationProperty(c.collation_name,'tdscollation') AS binary(5)) AS tds_collation_100,
+		CAST(c.collation_name AS nvarchar(128)) AS collation_28,
+		CAST(c.collation_name AS nvarchar(128)) AS collation_90,
+		CAST(c.collation_name AS nvarchar(128)) AS collation_100
+	FROM
+		sys.all_columns c INNER JOIN
+		sys.all_objects o ON (c.object_id = o.object_id) JOIN
+		pg_attribute p ON (c.name = p.attname AND c.object_id = p.attrelid)
+	WHERE
+		c.is_sparse = 0 AND p.attnum >= 0;
+GRANT SELECT ON sys.spt_tablecollations_view TO PUBLIC;
+
+CALL sys.babelfish_drop_deprecated_view('sys', 'all_columns_deprecated');
+CALL sys.babelfish_drop_deprecated_view('sys', 'spt_tablecollations_view_deprecated');
 
 CREATE OR REPLACE VIEW sys.data_spaces
 AS
