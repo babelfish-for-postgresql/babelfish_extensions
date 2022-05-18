@@ -2250,14 +2250,15 @@ BEGIN
 END;
 $body$
 LANGUAGE 'plpgsql';
+
 CREATE OR REPLACE FUNCTION sys.babelfish_get_lang_metadata_json(IN p_lang_spec_culture TEXT)
 RETURNS JSONB
 AS
 $BODY$
 DECLARE
-    v_locale_parts TEXT[];
+    v_locale_parts TEXT[] COLLATE "C";
     v_lang_data_jsonb JSONB;
-    v_lang_spec_culture VARCHAR;
+    v_lang_spec_culture VARCHAR COLLATE "C";
     v_is_cached BOOLEAN := FALSE;
 BEGIN
     v_lang_spec_culture := upper(trim(p_lang_spec_culture));
@@ -2280,12 +2281,12 @@ BEGIN
             THEN
                 SELECT lang_data_jsonb
                   INTO STRICT v_lang_data_jsonb
-                  FROM sys.syslanguages
+                  FROM sys.babelfish_syslanguages
                  WHERE spec_culture = v_lang_spec_culture;
             ELSE
                 SELECT lang_data_jsonb
                   INTO STRICT v_lang_data_jsonb
-                  FROM sys.syslanguages
+                  FROM sys.babelfish_syslanguages
                  WHERE lang_name_mssql = v_lang_spec_culture
                     OR lang_alias_mssql = v_lang_spec_culture;
             END IF;
@@ -2317,14 +2318,14 @@ BEGIN
                 THEN
                     SELECT lang_data_jsonb
                       INTO STRICT v_lang_data_jsonb
-                      FROM sys.syslanguages
+                      FROM sys.babelfish_syslanguages
                      WHERE spec_culture = v_lang_spec_culture;
                 ELSE
                     v_locale_parts := string_to_array(v_lang_spec_culture, '-');
 
                     SELECT lang_data_jsonb
                       INTO STRICT v_lang_data_jsonb
-                      FROM sys.syslanguages
+                      FROM sys.babelfish_syslanguages
                      WHERE lang_name_pg = v_locale_parts[1]
                        AND territory = v_locale_parts[2];
                 END IF;
@@ -2334,7 +2335,7 @@ BEGIN
 
                     SELECT lang_data_jsonb
                       INTO v_lang_data_jsonb
-                      FROM sys.syslanguages
+                      FROM sys.babelfish_syslanguages
                      WHERE spec_culture = v_lang_spec_culture;
             END;
         ELSE
@@ -2354,7 +2355,7 @@ EXCEPTION
     WHEN invalid_text_representation THEN
         RAISE USING MESSAGE := format('The language metadata JSON value extracted from chache is not a valid JSON object.',
                                       p_lang_spec_culture),
-                    HINT := 'Drop the current session, fix the appropriate record in "sys.syslanguages" table, and try again after reconnection.';
+                    HINT := 'Drop the current session, fix the appropriate record in "sys.babelfish_syslanguages" table, and try again after reconnection.';
 
     WHEN OTHERS THEN
         RAISE USING MESSAGE := format('"%s" is not a valid special culture or language name parameter.',

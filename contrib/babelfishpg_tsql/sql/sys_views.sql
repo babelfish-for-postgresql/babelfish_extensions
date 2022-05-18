@@ -1922,6 +1922,23 @@ SELECT  value_in_use AS value,
 FROM sys.babelfish_configurations;
 GRANT SELECT ON sys.sysconfigures TO PUBLIC;
 
+CREATE OR REPLACE VIEW sys.syslanguages
+AS
+SELECT
+    lang_id AS langid,
+    CAST(lower(lang_data_jsonb ->> 'date_format') AS SYS.NCHAR(3)) AS dateformat,
+    CAST(lang_data_jsonb -> 'date_first' AS SYS.TINYINT) AS datefirst,
+    CAST(NULL AS INT) AS upgrade,
+    CAST(coalesce(lang_name_mssql, lang_name_pg) AS SYS.SYSNAME) AS name,
+    CAST(coalesce(lang_alias_mssql, lang_alias_pg) AS SYS.SYSNAME) AS alias,
+    CAST(array_to_string(ARRAY(SELECT jsonb_array_elements_text(lang_data_jsonb -> 'months_names')), ',') AS SYS.NVARCHAR(372)) AS months,
+    CAST(array_to_string(ARRAY(SELECT jsonb_array_elements_text(lang_data_jsonb -> 'months_shortnames')),',') AS SYS.NVARCHAR(132)) AS shortmonths,
+    CAST(array_to_string(ARRAY(SELECT jsonb_array_elements_text(lang_data_jsonb -> 'days_shortnames')),',') AS SYS.NVARCHAR(217)) AS days,
+    CAST(NULL AS INT) AS lcid,
+    CAST(NULL AS SMALLINT) AS msglangid
+FROM sys.babelfish_syslanguages;
+GRANT SELECT ON sys.syslanguages TO PUBLIC;
+
 CREATE OR REPLACE VIEW sys.xml_schema_collections
 AS
 SELECT
