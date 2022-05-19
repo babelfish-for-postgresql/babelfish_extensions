@@ -10,19 +10,6 @@
 
 all
 
-# We have rds_superuser privelege when connecting to a instance in
-# mammoth. So tests doing an ALTER SYSTEM don't need to run
-ignore#!#BABEL-1454
-ignore#!#BABEL-SYS-DATABASES
-ignore#!#BABEL-LOGIN-USER-EXT
-ignore#!#BABEL-2403
-ignore#!#BABEL-2578
-ignore#!#BABEL-2975
-
-# max_connections is 5000 and not 100 in mammoth/elephant instances so
-# we are ignoring it in application smoke test run
-ignore#!#sys-max_connections
-
 #TDS fault injection framework is meant for internal testing only. So, ignore tds_faultinjection tests in stable branch
 ignore#!#tds_faultinjection
 
