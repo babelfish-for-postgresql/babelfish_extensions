@@ -98,8 +98,7 @@ GO
 SELECT IS_ROLEMEMBER('test_user1', 'test_user1')
 GO
 
--- Should return NULL
--- TODO: admin user should be able to view members of db_owner
+-- Should return 0
 SELECT IS_ROLEMEMBER('db_owner', 'test_role1')
 GO
 SELECT IS_ROLEMEMBER('db_owner', 'test_user1')

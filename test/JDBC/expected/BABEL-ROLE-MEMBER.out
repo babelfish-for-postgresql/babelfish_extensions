@@ -71,6 +71,7 @@ EXEC babel_role_members
 GO
 ~~START~~
 varchar#!#char#!#varchar#!#char
+db_owner#!#R#!#dbo#!#S
 test_role1#!#R#!#test_role2#!#R
 test_role1#!#R#!#test_user1#!#S
 test_role2#!#R#!#test_role3#!#R
@@ -173,20 +174,19 @@ int
 ~~END~~
 
 
--- Should return NULL
--- TODO: admin user should be able to view members of db_owner
+-- Should return 0
 SELECT IS_ROLEMEMBER('db_owner', 'test_role1')
 GO
 ~~START~~
 int
-<NULL>
+0
 ~~END~~
 
 SELECT IS_ROLEMEMBER('db_owner', 'test_user1')
 GO
 ~~START~~
 int
-<NULL>
+0
 ~~END~~
 
 
