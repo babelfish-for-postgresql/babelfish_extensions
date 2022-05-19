@@ -36,6 +36,8 @@ PG_FUNCTION_INFO_V1(sp_describe_first_result_set_internal);
 PG_FUNCTION_INFO_V1(sp_describe_undeclared_parameters_internal);
 PG_FUNCTION_INFO_V1(xp_qv_internal);
 PG_FUNCTION_INFO_V1(create_xp_qv_in_master_dbo_internal);
+PG_FUNCTION_INFO_V1(xp_instance_regread_internal);
+PG_FUNCTION_INFO_V1(create_xp_instance_regread_in_master_dbo_internal);
 
 extern void delete_cached_batch(int handle);
 extern InlineCodeBlockArgs *create_args(int numargs);
@@ -893,6 +895,97 @@ create_xp_qv_in_master_dbo_internal(PG_FUNCTION_ARGS)
 			elog(ERROR, "SPI_connect failed: %s", SPI_result_code_string(rc));
 
 		if ((rc = SPI_execute(query, false, 1)) < 0)
+			elog(ERROR, "SPI_execute failed: %s", SPI_result_code_string(rc));
+
+		if ((rc = SPI_finish()) != SPI_OK_FINISH)
+			elog(ERROR, "SPI_finish failed: %s", SPI_result_code_string(rc));
+	}
+	PG_CATCH();
+	{
+		SPI_finish();
+		PG_RE_THROW();
+	}
+	PG_END_TRY();
+
+	PG_RETURN_INT32(0);
+}
+
+/*
+ * Internal function used by procedure xp_instance_regread.
+ * The xp_instance_regread procedure is called by SSMS. Only the minimum implementation is required.
+ */
+Datum
+xp_instance_regread_internal(PG_FUNCTION_ARGS)
+{
+	int	nargs = PG_NARGS() - 1;
+	/* Get data type OID of last parameter, which should be the OUT parameter. */
+	Oid	argtypeid = get_fn_expr_argtype(fcinfo->flinfo, nargs);
+
+ 	HeapTuple	tuple;
+  	HeapTupleHeader result;
+	TupleDesc tupdesc;
+	bool isnull = true;
+	Datum values[1];
+
+	tupdesc = CreateTemplateTupleDesc(1);
+
+	if (argtypeid == INT4OID)
+	{
+		values[0] = Int32GetDatum(NULL);
+		TupleDescInitEntry(tupdesc, (AttrNumber) 1, "out_param", INT4OID, -1, 0);
+	}
+
+	else
+	{
+		values[0] = CStringGetDatum(NULL);
+		TupleDescInitEntry(tupdesc, (AttrNumber) 1, "out_param", CSTRINGOID, -1, 0);
+	}
+	
+  	tupdesc = BlessTupleDesc(tupdesc);
+  	tuple = heap_form_tuple(tupdesc, values, &isnull);
+
+  	result = (HeapTupleHeader) palloc(tuple->t_len);
+  	memcpy(result, tuple->t_data, tuple->t_len);
+
+  	heap_freetuple(tuple);
+  	ReleaseTupleDesc(tupdesc);
+
+  	PG_RETURN_HEAPTUPLEHEADER(result);
+}
+
+/*
+ * Internal function to create the xp_instance_regread procedure in master.dbo schema.
+ * Some applications invoke this referencing master.dbo.xp_instance_regread
+ */
+Datum 
+create_xp_instance_regread_in_master_dbo_internal(PG_FUNCTION_ARGS)
+{	
+	char *query = NULL;
+	char *query2 = NULL;
+	int rc = -1;
+
+	char *tempq = "CREATE OR REPLACE PROCEDURE %s.xp_instance_regread(IN p1 sys.nvarchar(512), IN p2 sys.sysname, IN p3 sys.nvarchar(512), INOUT out_param int)"
+				  "AS \'babelfishpg_tsql\', \'xp_instance_regread_internal\' LANGUAGE C";
+
+	char *tempq2 = "CREATE OR REPLACE PROCEDURE %s.xp_instance_regread(IN p1 sys.nvarchar(512), IN p2 sys.sysname, IN p3 sys.nvarchar(512), INOUT out_param sys.nvarchar(512))"
+				   "AS \'babelfishpg_tsql\', \'xp_instance_regread_internal\' LANGUAGE C";
+
+	const char  *dbo_scm = get_dbo_schema_name("master");
+	if (dbo_scm == NULL) 
+		elog(ERROR, "Failed to retrieve dbo schema name");
+
+	query = psprintf(tempq, dbo_scm);
+	query2 = psprintf(tempq2, dbo_scm);
+
+	PG_TRY();
+	{
+		if ((rc = SPI_connect()) != SPI_OK_CONNECT)
+			elog(ERROR, "SPI_connect failed: %s", SPI_result_code_string(rc));
+
+		if ((rc = SPI_execute(query, false, 1)) < 0)
+			elog(ERROR, "SPI_execute failed: %s", SPI_result_code_string(rc));
+
+		if ((rc = SPI_execute(query2, false, 1)) < 0)
 			elog(ERROR, "SPI_execute failed: %s", SPI_result_code_string(rc));
 
 		if ((rc = SPI_finish()) != SPI_OK_FINISH)

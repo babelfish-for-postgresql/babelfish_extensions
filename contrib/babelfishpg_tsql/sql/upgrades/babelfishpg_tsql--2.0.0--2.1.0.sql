@@ -3488,6 +3488,25 @@ CREATE OR REPLACE FUNCTION sys.openjson_with(json_string text, path text, VARIAD
 RETURNS SETOF RECORD
 AS 'babelfishpg_tsql', 'tsql_openjson_with' LANGUAGE C STRICT IMMUTABLE PARALLEL SAFE;
 
+CREATE PROCEDURE xp_instance_regread(IN p1 sys.nvarchar(512), 
+	IN p2 sys.sysname, IN p3 sys.nvarchar(512), INOUT out_param int)
+AS 'babelfishpg_tsql', 'xp_instance_regread_internal'
+LANGUAGE C;
+
+CREATE PROCEDURE xp_instance_regread(IN p1 sys.nvarchar(512), 
+	IN p2 sys.sysname, IN p3 sys.nvarchar(512), INOUT out_param sys.nvarchar(512))
+AS 'babelfishpg_tsql', 'xp_instance_regread_internal'
+LANGUAGE C;
+
+CREATE OR REPLACE PROCEDURE sys.create_xp_instance_regread_in_master_dbo()
+LANGUAGE C
+AS 'babelfishpg_tsql', 'create_xp_instance_regread_in_master_dbo_internal';
+
+CALL sys.create_xp_instance_regread_in_master_dbo();
+ALTER PROCEDURE master_dbo.xp_instance_regread(sys.nvarchar(512), sys.sysname, sys.nvarchar(512), int) OWNER TO sysadmin;
+ALTER PROCEDURE master_dbo.xp_instance_regread(sys.nvarchar(512), sys.sysname, sys.nvarchar(512), sys.nvarchar(512)) OWNER TO sysadmin;
+DROP PROCEDURE sys.create_xp_instance_regread_in_master_dbo;
+
 CREATE OR REPLACE FUNCTION sys.sysutcdatetime() RETURNS sys.datetime2
     AS $$select (clock_timestamp() AT TIME ZONE 'UTC'::pg_catalog.text)::sys.datetime2;$$
     LANGUAGE SQL;
