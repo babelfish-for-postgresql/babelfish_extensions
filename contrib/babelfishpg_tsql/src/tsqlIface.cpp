@@ -23,6 +23,7 @@ extern "C" {
 #include "pltsql.h"
 #include "pltsql-2.h"
 #include "pl_explain.h"
+#include "session.h"
 
 #include "catalog/namespace.h"
 #include "catalog/pg_proc.h"
@@ -917,7 +918,9 @@ public:
     int nodeID = 0;
     tree::ParseTree *parser;
     MyInputStream &stream;
-    
+
+	bool is_cross_db = false;
+
 	// We keep a stack of the containers that are active during a traversal.
 	// A container will correspond to a block or a batch - these are containers
 	// because they contain a list of the PLtsql_stmt structures.
@@ -1321,6 +1324,10 @@ public:
 			ctx->insert_statement()->insert_statement_value() &&
 			ctx->insert_statement()->insert_statement_value()->execute_statement();
 
+		// record whether stmt is cross-db
+		if (is_cross_db)
+			stmt->is_cross_db = true;
+
 		if (is_compiling_create_function())
 		{
 			/* select without destination should be blocked. We can use already information about desitnation, which is already processed. */
@@ -1506,6 +1513,30 @@ public:
 		if (ctx->start)
 		{
 			local_id_positions.emplace(std::make_pair(ctx->start->getStartIndex(), local_id_str));
+		}
+	}
+
+	void exitFull_object_name(TSqlParser::Full_object_nameContext *ctx) override
+	{
+		tsqlCommonMutator::exitFull_object_name(ctx);
+		if (ctx && ctx->database)
+		{
+			std::string db_name = stripQuoteFromId(ctx->database);
+
+			if (!string_matches(db_name.c_str(), get_cur_db_name()))
+				is_cross_db = true;
+		}
+	}
+
+	void exitTable_name(TSqlParser::Table_nameContext *ctx) override
+	{
+		tsqlCommonMutator::exitTable_name(ctx);
+		if (ctx && ctx->database)
+		{
+			std::string db_name = stripQuoteFromId(ctx->database);
+
+			if (!string_matches(db_name.c_str(), get_cur_db_name()))
+				is_cross_db = true;
 		}
 	}
 
