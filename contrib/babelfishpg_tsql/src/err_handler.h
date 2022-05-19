@@ -40,6 +40,7 @@ uint8_t override_txn_behaviour(PLtsql_stmt *stmt);
 #define SQL_ERROR_180 180
 #define SQL_ERROR_201 201
 #define SQL_ERROR_206 206
+#define SQL_ERROR_213 213
 #define SQL_ERROR_217 217
 #define SQL_ERROR_219 219
 #define SQL_ERROR_220 220

@@ -150,9 +150,8 @@ TEST_F(Prepared_Statements, DISABLED_SQLDescribeParam_Success) {
   
 }
 
-// Tests SQLDescribeParam for error 21S01
-// DISABLED: PLEASE SEE BABELFISH-110
-TEST_F(Prepared_Statements, DISABLED_SQLDescribeParam_21S01) {
+// Tests SQLDescribeParam for error 21S01 (Insert values list does not match column list)
+TEST_F(Prepared_Statements, SQLDescribeParam_21S01) {
 
   OdbcHandler odbcHandler;
   RETCODE rcode;
