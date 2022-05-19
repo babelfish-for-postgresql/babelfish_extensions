@@ -310,30 +310,33 @@ AS $$
   SELECT sys.int2fixeddecimaldiv($1, $2)::sys.MONEY;
 $$ LANGUAGE SQL IMMUTABLE STRICT PARALLEL SAFE;
 
+-- DROP OPERATOR can't work if other DB objects already refer to the operator.
+-- We keep the operator as it is for minor version upgrade.
+-- It will be fixed in major version upgrade by pg_dump and pg_restore.
 
-DROP OPERATOR IF EXISTS sys./ (INT8, FIXEDDECIMAL);
+--DROP OPERATOR IF EXISTS sys./ (INT8, FIXEDDECIMAL);
 
-CREATE OPERATOR sys./ (
-    LEFTARG    = INT8,
-    RIGHTARG   = FIXEDDECIMAL,
-    PROCEDURE  = int8fixeddecimaldiv_money
-);
+--CREATE OPERATOR sys./ (
+--    LEFTARG    = INT8,
+--    RIGHTARG   = FIXEDDECIMAL,
+--    PROCEDURE  = int8fixeddecimaldiv_money
+--);
 
-DROP OPERATOR IF EXISTS sys./ (INT4, FIXEDDECIMAL);
+--DROP OPERATOR IF EXISTS sys./ (INT4, FIXEDDECIMAL);
 
-CREATE OPERATOR sys./ (
-    LEFTARG    = INT4,
-    RIGHTARG   = FIXEDDECIMAL,
-    PROCEDURE  = int4fixeddecimaldiv_money
-);
+--CREATE OPERATOR sys./ (
+--    LEFTARG    = INT4,
+--    RIGHTARG   = FIXEDDECIMAL,
+--    PROCEDURE  = int4fixeddecimaldiv_money
+--);
 
-DROP OPERATOR IF EXISTS sys./ (INT2, FIXEDDECIMAL);
+--DROP OPERATOR IF EXISTS sys./ (INT2, FIXEDDECIMAL);
 
-CREATE OPERATOR sys./ (
-    LEFTARG    = INT2,
-    RIGHTARG   = FIXEDDECIMAL,
-    PROCEDURE  = int2fixeddecimaldiv_money
-);
+--CREATE OPERATOR sys./ (
+--    LEFTARG    = INT2,
+--    RIGHTARG   = FIXEDDECIMAL,
+--    PROCEDURE  = int2fixeddecimaldiv_money
+--);
 
 CREATE FUNCTION sys.fixeddecimalum(sys.SMALLMONEY)
 RETURNS sys.SMALLMONEY
@@ -871,13 +874,17 @@ $$
 $$
 LANGUAGE SQL VOLATILE;
 
-DROP OPERATOR IF EXISTS sys.+(text, text);
+-- DROP OPERATOR can't work if other DB objects already refer to the operator.
+-- We keep the operator as it is for minor version upgrade.
+-- It will be fixed in major version upgrade by pg_dump and pg_restore.
 
-CREATE OPERATOR sys.+ (
-    LEFTARG = text,
-    RIGHTARG = text,
-    FUNCTION = sys.babelfish_concat_wrapper_outer
-);
+--DROP OPERATOR IF EXISTS sys.+(text, text);
+
+--CREATE OPERATOR sys.+ (
+--    LEFTARG = text,
+--    RIGHTARG = text,
+--    FUNCTION = sys.babelfish_concat_wrapper_outer
+--);
 
 CREATE OR REPLACE FUNCTION sys.babelfish_concat_wrapper(leftarg sys.varchar, rightarg sys.varchar) RETURNS sys.varchar(8000) AS
 $$
