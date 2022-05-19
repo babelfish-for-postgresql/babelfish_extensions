@@ -16,8 +16,7 @@ class Transactions : public testing::Test {
 };
 
 // Complete a transaction and assert that the values were correctly inserted
-// DISABLED: Please see BABELFISH-113 
-TEST_F(Transactions, DISABLED_SQLEndTran_Commit) {
+TEST_F(Transactions, SQLEndTran_Commit) {
   OdbcHandler odbcHandler;
   RETCODE rcode;
   string query{};
@@ -59,11 +58,14 @@ TEST_F(Transactions, DISABLED_SQLEndTran_Commit) {
   rcode = SQLGetData(odbcHandler.GetStatementHandle(), col_num, SQL_C_ULONG, &buf, 0, nullptr);
   ASSERT_EQ(rcode, SQL_SUCCESS) << odbcHandler.GetErrorMessage(SQL_HANDLE_STMT, rcode);
   ASSERT_EQ(buf, 2);
+  
+  // Transaction needs to commit before disconnect due to Postgres locking behaviour
+  rcode = SQLEndTran(SQL_HANDLE_DBC, odbcHandler.GetConnectionHandle(), SQL_COMMIT);
+  ASSERT_EQ(rcode, SQL_SUCCESS) << odbcHandler.GetErrorMessage(SQL_HANDLE_DBC, rcode);
 }
 
 // Rollbacks back the transaction and assert that nothing was created
-// DISABLED: Please see BABELFISH-113 
-TEST_F(Transactions, DISABLED_SQLEndTran_Rollback) {
+TEST_F(Transactions, SQLEndTran_Rollback) {
   OdbcHandler odbcHandler;
   RETCODE rcode;
   
@@ -89,11 +91,14 @@ TEST_F(Transactions, DISABLED_SQLEndTran_Rollback) {
 
   rcode = SQLFetch(odbcHandler.GetStatementHandle());
   ASSERT_EQ(rcode, SQL_NO_DATA);
+
+  // Transaction needs to commit before disconnect due to Postgres locking behaviour
+  rcode = SQLEndTran(SQL_HANDLE_DBC, odbcHandler.GetConnectionHandle(), SQL_COMMIT);
+  ASSERT_EQ(rcode, SQL_SUCCESS) << odbcHandler.GetErrorMessage(SQL_HANDLE_DBC, rcode);
 }
 
 // Attempt to disconnect during a transaction
-// DISABLED: Please see BABELFISH-113 
-TEST_F(Transactions, DISABLED_SQL_DisconnectAttemptDuringTransaction) {
+TEST_F(Transactions, SQL_DisconnectAttemptDuringTransaction) {
   OdbcHandler odbcHandler;
   RETCODE rcode;
   string sql_state;
@@ -126,4 +131,8 @@ TEST_F(Transactions, DISABLED_SQL_DisconnectAttemptDuringTransaction) {
 
   rcode = SQLFetch(odbcHandler.GetStatementHandle());
   ASSERT_EQ(rcode, SQL_NO_DATA);
+
+  // Transaction needs to commit before disconnect due to Postgres locking behaviour
+  rcode = SQLEndTran(SQL_HANDLE_DBC, odbcHandler.GetConnectionHandle(), SQL_COMMIT);
+  ASSERT_EQ(rcode, SQL_SUCCESS) << odbcHandler.GetErrorMessage(SQL_HANDLE_DBC, rcode);
 }
