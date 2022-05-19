@@ -6,26 +6,6 @@ master
 ~~END~~
 
 
-SELECT rolname, type, orig_username, database_name
-FROM sys.babelfish_authid_user_ext
-WHERE type = 'R'
-ORDER BY rolname, orig_username
-GO
-~~START~~
-varchar#!#char#!#nvarchar#!#nvarchar
-~~END~~
-
-
-SELECT name, type_desc
-FROM sys.database_principals
-WHERE type = 'R'
-ORDER BY name
-GO
-~~START~~
-varchar#!#nvarchar
-~~END~~
-
-
 -- Test CREATE ROLE
 CREATE ROLE test1
 GO
@@ -251,6 +231,7 @@ EXEC babel_role_members
 GO
 ~~START~~
 varchar#!#char#!#varchar#!#char
+db_owner#!#R#!#dbo#!#S
 test1#!#R#!#test2#!#R
 test1#!#R#!#test3#!#S
 test2#!#R#!#test4#!#S
@@ -289,6 +270,7 @@ EXEC babel_role_members
 GO
 ~~START~~
 varchar#!#char#!#varchar#!#char
+db_owner#!#R#!#dbo#!#S
 test1_new#!#R#!#test2#!#R
 test1_new#!#R#!#test3#!#S
 test2#!#R#!#test4#!#S
@@ -333,6 +315,7 @@ EXEC babel_role_members
 GO
 ~~START~~
 varchar#!#char#!#varchar#!#char
+db_owner#!#R#!#dbo#!#S
 test1_new#!#R#!#test2#!#R
 test1_new#!#R#!#test3#!#S
 test2#!#R#!#test4#!#S

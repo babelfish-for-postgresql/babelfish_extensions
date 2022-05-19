@@ -455,9 +455,8 @@ create_bbf_db_internal(const char *dbname, List *options, const char *owner, int
 		set_cur_db(old_dbid, old_dbname);
 		if (dbo_role)
 			add_to_bbf_authid_user_ext(dbo_role, "dbo", dbname, "dbo", NULL, false);
-		/* TODO: change it into role */
 		if (db_owner_role)
-			add_to_bbf_authid_user_ext(db_owner_role, "db_owner", dbname, NULL, NULL, false);
+			add_to_bbf_authid_user_ext(db_owner_role, "db_owner", dbname, NULL, NULL, true);
 		if (guest)
 			add_to_bbf_authid_user_ext(guest, "guest", dbname, NULL, NULL, false);
 	}

@@ -991,9 +991,8 @@ add_existing_users_to_catalog(PG_FUNCTION_ARGS)
 			dbo_list = lappend(dbo_list, rolspec);
 			add_to_bbf_authid_user_ext(dbo_role, "dbo", db_name, "dbo", NULL, false);
 		}
-		/* TODO: change it into role */
 		if (db_owner_role)
-			add_to_bbf_authid_user_ext(db_owner_role, "db_owner", db_name, NULL, NULL, false);
+			add_to_bbf_authid_user_ext(db_owner_role, "db_owner", db_name, NULL, NULL, true);
 		if (guest)
 			add_to_bbf_authid_user_ext(guest, "guest", db_name, NULL, NULL, false);
 
