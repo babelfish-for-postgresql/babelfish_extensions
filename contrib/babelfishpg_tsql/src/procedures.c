@@ -203,7 +203,7 @@ sp_babelfish_configure(PG_FUNCTION_ARGS)
 	receiver = CreateDestReceiver(DestRemote);
 	SetRemoteDestReceiverParams(receiver, portal);
 
-	// fetch the result and return the result-set
+	/* fetch the result and return the result-set */
 	PortalRun(portal, FETCH_ALL, true, true, receiver, receiver, NULL);
 
 	receiver->rDestroy(receiver);
@@ -618,6 +618,7 @@ sp_describe_undeclared_parameters_internal(PG_FUNCTION_ARGS)
 		relation_close(r, AccessShareLock);
 		pfree(pstate);
 
+		/* Parse the list of parameters, and determine which and how many are undeclared. */
 		select_stmt = (SelectStmt *)insert_stmt->selectStmt;
 		values_list = select_stmt->valuesLists;
 		foreach(lc, values_list)
@@ -628,6 +629,11 @@ sp_describe_undeclared_parameters_internal(PG_FUNCTION_ARGS)
 			int numtotalvalues = list_length(sublist);
 			undeclaredparams->paramnames = (char **) palloc(sizeof(char *) * numtotalvalues);
 			undeclaredparams->paramindexes = (int *) palloc(sizeof(int) * numtotalvalues);
+			if (list_length(sublist) != num_target_attnums) {
+				ereport(ERROR,
+					(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+					errmsg("Column name or number of supplied values does not match table definition.")));
+			}
 			foreach(sublc, sublist)
 			{
 				ColumnRef *columnref = lfirst(sublc);
@@ -681,6 +687,7 @@ sp_describe_undeclared_parameters_internal(PG_FUNCTION_ARGS)
 	attinmeta = funcctx->attinmeta;
 	undeclaredparams = funcctx->user_fctx;
 
+	/* This is the main recursive work, to determine the appropriate parameter type for each parameter. */
 	if (call_cntr < max_calls)
 	{
 		char **values;
@@ -830,7 +837,9 @@ sp_describe_undeclared_parameters_internal(PG_FUNCTION_ARGS)
 
 		values = (char **) palloc(numresultcols * sizeof(char *));
 
+		/* This sets the parameter ordinal attribute correctly, since the above query can't infer that information */
 		values[0] = psprintf("%d", call_cntr + 1);
+		/* Then, pull the appropriate parameter name from the data type */
 		values[1] = undeclaredparams->paramnames[call_cntr];
 		for (col = 2; col < numresultcols; col++)
 		{
