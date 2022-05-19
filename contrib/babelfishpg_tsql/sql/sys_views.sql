@@ -1287,7 +1287,8 @@ create or replace view sys.shipped_objects_not_in_sys AS
 select t.name,t.type, ns.oid as schemaid from
 (
   values 
-    ('xp_qv','master_dbo','P') 
+    ('xp_qv','master_dbo','P'),
+    ('xp_instance_regread','master_dbo','P')  
 ) t(name,schema_name, type)
 inner join pg_catalog.pg_namespace ns on t.schema_name = ns.nspname
 
