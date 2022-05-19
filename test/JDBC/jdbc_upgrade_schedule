@@ -1,4 +1,4 @@
-# Schedule File for JDBC Test Framework for local run
+# Schedule File for JDBC Test Framework for local run via Upgarde workflow
 # 1. Lines starting with '#' will be treated as comments
 # 2. To run a postgres command:	cmd#!#postgresql#!#<enter postgres command>
 # 3. To run a T-SQL command: cmd#!#sqlserver#!#<enter T-SQL command>
@@ -17,8 +17,8 @@ ignore#!#tds_faultinjection
 ignore#!#insertbulk
 ignore#!#BABEL-SQLvariant
 
-# Ignore Upgrade related tests
-ignore#!#BABEL-2983_upgrade
-ignore#!#BABEL-2687_upgrade
-ignore#!#BABEL-2303_upgrade
-ignore#!#babel_money_upgrade
+# Only run the corresponding upgrade tests for the below input files
+ignore#!#BABEL-2983
+ignore#!#BABEL-2687
+ignore#!#BABEL-2303
+ignore#!#babel_money

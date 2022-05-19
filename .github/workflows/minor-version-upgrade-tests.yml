@@ -14,6 +14,7 @@ jobs:
       EXTENSION_VER_FROM: BABEL_1_0_0
       ENGINE_VER_TO: BABEL_1_X_DEV__PG_13_6
       EXTENSION_VER_TO: BABEL_1_X_DEV
+      scheduleFile: ./jdbc_upgrade_schedule
 
     name: Build and test
     runs-on: ubuntu-latest
