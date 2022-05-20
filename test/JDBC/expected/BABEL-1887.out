@@ -28,7 +28,7 @@ select ansi_warnings, ansi_padding, ansi_nulls, concat_null_yields_null, transac
 GO
 ~~START~~
 bit#!#bit#!#bit#!#bit#!#smallint
-1#!#1#!#1#!#1#!#1
+1#!#1#!#1#!#1#!#2
 ~~END~~
 
 
@@ -65,8 +65,8 @@ select ansi_warnings, ansi_padding, ansi_nulls, concat_null_yields_null, transac
 GO
 ~~START~~
 bit#!#bit#!#bit#!#bit#!#smallint
-1#!#1#!#1#!#1#!#1
-1#!#1#!#1#!#1#!#1
+1#!#1#!#1#!#1#!#2
+1#!#1#!#1#!#1#!#2
 ~~END~~
 
 
