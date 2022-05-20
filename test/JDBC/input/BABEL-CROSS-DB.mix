@@ -81,12 +81,6 @@ GO
 EXECUTE master.dbo.master_p1;
 GO
 
-UPDATE dbo.db1_t1
-SET dbo.db1_t1.a = dbo.db1_t1.a + 1
-FROM master.dbo.master_t1 AS x
-WHERE dbo.db1_t1.a = x.a;
-GO
-
 SELECT current_user;
 GO
 
@@ -104,9 +98,6 @@ SELECT * FROM master.dbo.master_t1 ORDER BY id;
 GO
 
 USE MASTER;
-GO
-
-SELECT * FROM db1.dbo.db1_t1 ORDER BY a;
 GO
 
 --tsql
@@ -159,9 +150,6 @@ GO
 
 -- tsql user=johndoe password=12345678
 USE MASTER;
-GO
-
-SELECT * FROM db1.dbo.db1_t1 ORDER BY a;
 GO
 
 USE db1;

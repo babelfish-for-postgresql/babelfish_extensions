@@ -134,14 +134,6 @@ GO
 ~~ERROR (Message: permission denied for procedure master_p1)~~
 
 
-UPDATE dbo.db1_t1
-SET dbo.db1_t1.a = dbo.db1_t1.a + 1
-FROM master.dbo.master_t1 AS x
-WHERE dbo.db1_t1.a = x.a;
-GO
-~~ROW COUNT: 4~~
-
-
 SELECT current_user;
 GO
 ~~START~~
@@ -178,17 +170,6 @@ int#!#int
 
 USE MASTER;
 GO
-
-SELECT * FROM db1.dbo.db1_t1 ORDER BY a;
-GO
-~~START~~
-int
-11
-11
-11
-31
-~~END~~
-
 
 --tsql
 USE MASTER;
@@ -259,17 +240,6 @@ GO
 -- tsql user=johndoe password=12345678
 USE MASTER;
 GO
-
-SELECT * FROM db1.dbo.db1_t1 ORDER BY a;
-GO
-~~START~~
-int
-11
-11
-11
-31
-~~END~~
-
 
 USE db1;
 GO
