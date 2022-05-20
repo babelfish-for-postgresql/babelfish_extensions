@@ -143,6 +143,7 @@ static Constraint *get_rowversion_default_constraint(TypeName *typname);
 extern bool is_tsql_rowversion_or_timestamp_datatype(Oid oid);
 static void revoke_type_permission_from_public(PlannedStmt *pstmt, const char *queryString, bool readOnlyTree,
 		ProcessUtilityContext context, ParamListInfo params, QueryEnvironment *queryEnv, DestReceiver *dest, QueryCompletion *qc, List *type_name);
+bool pltsql_is_fmtonly_stmt();
 
 PG_FUNCTION_INFO_V1(pltsql_inline_handler);
 
@@ -3356,6 +3357,7 @@ _PG_init(void)
 		(*pltsql_protocol_plugin_ptr)->pltsql_is_login = &is_login;
 		(*pltsql_protocol_plugin_ptr)->pltsql_get_generic_typmod = &probin_read_ret_typmod;
 		(*pltsql_protocol_plugin_ptr)->pltsql_get_logical_schema_name = &get_logical_schema_name;
+		(*pltsql_protocol_plugin_ptr)->pltsql_is_fmtonly_stmt = &pltsql_is_fmtonly_stmt;
 	}
 
 	*pltsql_config_ptr = &myConfig;

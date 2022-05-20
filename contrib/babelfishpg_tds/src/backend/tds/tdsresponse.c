@@ -2967,14 +2967,17 @@ SetAttributesForColmetada(TdsColumnMetaData *col)
 	HeapTuple	  tp;
 	Form_pg_attribute att_tup;
 
-	tp = SearchSysCache2(ATTNUM, 
-			ObjectIdGetDatum(col->relOid),
-			Int16GetDatum(col->attrNum));
-
 	/* Initialise to false if no valid heap tuple is found. */
 	col->attNotNull = false;
 	col->attidentity = false;
 	col->attgenerated = false;
+
+	if (!pltsql_plugin_handler_ptr->pltsql_is_fmtonly_stmt())
+		return;
+
+	tp = SearchSysCache2(ATTNUM, 
+		ObjectIdGetDatum(col->relOid),
+		Int16GetDatum(col->attrNum));
 
 	if (HeapTupleIsValid(tp))
 	{

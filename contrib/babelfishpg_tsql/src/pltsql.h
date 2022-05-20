@@ -1587,6 +1587,8 @@ typedef struct PLtsql_protocol_plugin
 
 	const char* (*pltsql_get_logical_schema_name) (const char *physical_schema_name, bool missingOk);
 
+	bool (*pltsql_is_fmtonly_stmt) ();
+
 } PLtsql_protocol_plugin;
 
 /*
@@ -1826,6 +1828,7 @@ extern Oid pltsql_exec_get_datum_type(PLtsql_execstate *estate,
 extern void pltsql_exec_get_datum_type_info(PLtsql_execstate *estate,
 								 PLtsql_datum *datum,
 								 Oid *typeId, int32 *typMod, Oid *collation);
+extern bool pltsql_is_fmtonly_stmt();
 
 /*
  * Functions for namespace handling in pl_funcs.c

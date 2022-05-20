@@ -4569,6 +4569,18 @@ is_impl_txn_required_for_execsql(PLtsql_stmt_execsql *stmt)
 	return true;
 }
 
+bool is_fmtonly_stmt = false;
+
+bool pltsql_is_fmtonly_stmt()
+{
+	if (is_fmtonly_stmt)
+	{
+		is_fmtonly_stmt = false;
+		return true;
+	}
+	return false;
+}
+
 /* ----------
  * exec_stmt_execsql			Execute an SQL statement (possibly with INTO).
  *
@@ -4610,6 +4622,7 @@ exec_stmt_execsql(PLtsql_execstate *estate,
          */
         if (pltsql_fmtonly && is_select && !strcasestr(estate->func->fn_signature, "sp_describe_first_result_set") && fmtonly_enabled && strcasestr(stmt->sqlstmt->query, "SELECT *"))
         {
+            is_fmtonly_stmt = true;
             initStringInfo(&query);
             appendStringInfo(&query, "SELECT TOP 0");
             appendStringInfoString(&query, stmt->sqlstmt->query + 6);
