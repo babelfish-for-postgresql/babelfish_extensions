@@ -36,12 +36,6 @@ GO
 
 ~~ERROR (Message: relation "t1" does not exist)~~
 
-SELECT * FROM db1.dbo.t1;
-GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: Cross DB query is not supported)~~
-
 SELECT * FROM dbo.t1; -- error expected, querying master.dbo.t1
 GO
 ~~ERROR (Code: 33557097)~~

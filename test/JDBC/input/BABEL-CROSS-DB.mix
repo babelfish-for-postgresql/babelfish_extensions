@@ -1,0 +1,245 @@
+-- tsql
+USE MASTER;
+GO
+
+CREATE TABLE dbo.master_t1 (id int identity, a int);
+GO
+
+CREATE PROCEDURE dbo.master_p1
+AS
+SELECT a FROM dbo.master_t1;
+GO
+
+CREATE DATABASE db1;
+GO
+
+USE db1;
+GO
+
+SELECT current_user;
+GO
+
+INSERT INTO master.dbo.master_t1 VALUES (10);
+GO
+
+SELECT * FROM master.dbo.master_t1 ORDER BY id;
+GO
+
+SELECT * FROM master..master_t1 ORDER BY id;
+GO
+
+UPDATE master.dbo.master_t1
+SET a = 11
+WHERE id = 1;
+GO
+
+SELECT * FROM master.dbo.master_t1 ORDER BY id;
+GO
+
+DELETE FROM master.dbo.master_t1
+WHERE id = 1;
+GO
+
+SELECT * FROM master.dbo.master_t1 ORDER BY id;
+GO
+
+SELECT current_user;
+GO
+
+CREATE PROCEDURE p1
+AS
+INSERT INTO master.dbo.master_t1 VALUES (10);
+GO
+
+EXEC p1;
+GO
+
+EXEC p1;
+GO
+
+EXEC p1;
+GO
+
+CREATE TABLE dbo.db1_t1 (a int);
+GO
+
+INSERT INTO dbo.db1_t1 (a)
+SELECT (a) FROM master.dbo.master_t1;
+GO
+
+INSERT INTO dbo.db1_t1 (a)
+OUTPUT inserted.a INTO master.dbo.master_t1 (a)
+VALUES (30);
+GO
+
+-- Expect an error
+INSERT INTO dbo.db1_t1 (a)
+EXECUTE master.dbo.master_p1;
+GO
+
+-- Expect an error
+EXECUTE master.dbo.master_p1;
+GO
+
+SELECT current_user;
+GO
+
+CREATE TABLE dbo.db1_t2 (a int);
+GO
+
+INSERT INTO dbo.db1_t2 VALUES (20);
+GO
+
+INSERT INTO master.dbo.master_t1 (a)
+SELECT (a) FROM db1_t2;
+GO
+
+SELECT * FROM master.dbo.master_t1 ORDER BY id;
+GO
+
+USE MASTER;
+GO
+
+--tsql
+USE MASTER;
+GO
+
+CREATE LOGIN johndoe WITH PASSWORD = '12345678';
+GO
+
+CREATE USER master_janedoe FOR LOGIN johndoe;
+GO
+
+USE db1;
+GO
+
+CREATE USER db1_janedoe FOR LOGIN johndoe;
+GO
+
+-- tsql    user=johndoe    password=12345678
+USE MASTER;
+GO
+
+SELECT current_user;
+GO
+
+SELECT * FROM db1.dbo.db1_t1 ORDER BY a;
+GO
+
+USE db1;
+GO
+
+SELECT current_user;
+GO
+
+SELECT * FROM master.dbo.master_t1 ORDER BY id;
+GO
+
+-- tsql
+USE MASTER;
+GO
+
+GRANT SELECT ON dbo.master_t1 TO master_janedoe;
+GO
+
+USE db1;
+GO
+
+GRANT SELECT ON dbo.db1_t1 TO db1_janedoe;
+GO
+
+-- tsql user=johndoe password=12345678
+USE MASTER;
+GO
+
+USE db1;
+GO
+
+SELECT * FROM master.dbo.master_t1 ORDER BY id;
+GO
+
+USE master;
+GO
+
+-- tsql
+USE MASTER;
+GO
+
+DROP DATABASE db1;
+GO
+
+DROP TABLE dbo.master_t1;
+GO
+
+DROP PROC dbo.master_p1;
+GO
+
+DROP USER master_janedoe;
+GO
+
+DROP LOGIN johndoe;
+GO
+
+-- psql
+ALTER SYSTEM SET babelfishpg_tsql.migration_mode = 'multi-db';
+SELECT pg_reload_conf();
+GO
+
+-- tsql
+USE master;
+GO
+
+CREATE DATABASE db1;
+GO
+
+CREATE DATABASE db2;
+GO
+
+USE db1;
+GO
+
+CREATE TABLE dbo.db1_t1 (id int identity, a int);
+GO
+
+USE db2;
+GO
+
+INSERT INTO db1.dbo.db1_t1 (a) VALUES (10);
+GO
+
+CREATE PROCEDURE p1
+AS
+INSERT INTO db1.dbo.db1_t1 VALUES (1);
+GO
+
+EXEC p1;
+GO
+
+EXEC p1;
+GO
+
+CREATE TABLE dbo.db2_t1 (b int);
+GO
+
+INSERT INTO dbo.db2_t1 (b)
+SELECT a FROM db1.dbo.db1_t1
+WHERE id = 1;
+GO
+
+SELECT * FROM dbo.db2_t1 ORDER BY b;
+GO
+
+-- tsql
+USE master;
+GO
+
+DROP DATABASE db1;
+GO
+
+DROP DATABASE db2;
+GO
+
+-- psql
+ALTER SYSTEM SET babelfishpg_tsql.migration_mode = 'single-db';
+SELECT pg_reload_conf();
+GO

@@ -46,10 +46,6 @@ go
 drop table master..t2455;
 go
 
--- error due to cross db access
-create table yourdb..t2455(a int);
-go
-
 create table .s2455.t2455(a int);
 insert into .s2455.t2455 values (1);
 go

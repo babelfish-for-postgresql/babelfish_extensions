@@ -4596,10 +4596,23 @@ exec_stmt_execsql(PLtsql_execstate *estate,
 	CmdType 	cmd = CMD_UNKNOWN;
 	bool		enable_txn_in_triggers = !pltsql_disable_txn_in_triggers;
     StringInfoData query;
+	Oid			current_user_id = GetUserId();
 
+	if (stmt->is_cross_db)
+		SetCurrentRoleId(GetSessionUserId(), false);
+
+	PG_TRY();
+	{
 	/* Handle naked SELECT stmt differently for INSERT ... EXECUTE */
 	if (stmt->need_to_push_result && estate->insert_exec)
-		return exec_stmt_insert_execute_select(estate, expr);
+	{
+		int ret = exec_stmt_insert_execute_select(estate, expr);
+
+		if (stmt->is_cross_db)
+			SetCurrentRoleId(current_user_id, false);
+
+		return ret;
+	}
 
 	if (expr->plan == NULL)
     {
@@ -4957,6 +4970,17 @@ exec_stmt_execsql(PLtsql_execstate *estate,
 			 stmt->txn_data->stmt_kind == TRANS_STMT_ROLLBACK_TO))
 			restore_session_properties();
 	}
+	}
+	PG_CATCH();
+	{
+		if (stmt->is_cross_db)
+			SetCurrentRoleId(current_user_id, false);
+		PG_RE_THROW();
+	}
+	PG_END_TRY();
+
+	if (stmt->is_cross_db)
+		SetCurrentRoleId(current_user_id, false);
 
 	return PLTSQL_RC_OK;
 }

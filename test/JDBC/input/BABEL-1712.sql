@@ -20,8 +20,6 @@ USE master;
 GO
 SELECT * FROM t1; -- doesn't exist expected, querying master.dbo.t1
 GO
-SELECT * FROM db1.dbo.t1;
-GO
 SELECT * FROM dbo.t1; -- error expected, querying master.dbo.t1
 GO
 -- search path

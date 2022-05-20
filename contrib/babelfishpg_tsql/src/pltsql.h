@@ -1013,6 +1013,7 @@ typedef struct PLtsql_stmt_execsql
 	bool		need_to_push_result; /* push result to client */
 	bool		is_tsql_select_assign_stmt; /* T-SQL SELECT-assign (i.e. SELECT @a=1) */
 	bool 		insert_exec; 	/* INSERT-EXEC stmt? */
+	bool		is_cross_db;	/* cross database reference */
 } PLtsql_stmt_execsql;
 
 /*
