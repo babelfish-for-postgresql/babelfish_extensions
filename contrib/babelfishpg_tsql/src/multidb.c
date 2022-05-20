@@ -940,13 +940,7 @@ get_physical_schema_name(char *db_name, const char *schema_name)
 	 */
 	truncate_tsql_identifier(name);
 
-	/* JIRA-1793: Workaround: temperarily disable cross db reference */
-	if (strcmp(db_name, get_cur_db_name()) != 0)
-		ereport(ERROR,
-			(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-				errmsg("Cross DB query is not supported")));
-
-	else if (SINGLE_DB == get_migration_mode())
+	if (SINGLE_DB == get_migration_mode())
 	{
 		if ((strlen(db_name) == 6 && (strncmp(db_name, "master", 6) == 0)) ||
 			(strlen(db_name) == 6 && (strncmp(db_name, "tempdb", 6) == 0)) ||
