@@ -3272,8 +3272,8 @@ end;
 $$
 LANGUAGE plpgsql;
 
--- Need to DROP first because input types are changed during upgrade
-DROP FUNCTION sys.sp_describe_undeclared_parameters_internal;
+-- Need to rename and recreate the object due to previous incorrect definition.
+ALTER FUNCTION sys.sp_describe_undeclared_parameters_internal RENAME TO sp_describe_undeclared_parameters_internal_deprecated_1_2;
 -- BABEL-1797: initial support of sp_describe_undeclared_parameters
 -- sys.sp_describe_undeclared_parameters_internal: internal function
 -- For the result rows, can we create a template table for it?
@@ -3311,8 +3311,9 @@ AS 'babelfishpg_tsql', 'sp_describe_undeclared_parameters_internal'
 LANGUAGE C;
 GRANT ALL on FUNCTION sys.sp_describe_undeclared_parameters_internal TO PUBLIC;
 
--- Need to DROP first because input types are changed during upgrade
-DROP PROCEDURE sys.sp_describe_undeclared_parameters;
+-- Need to rename and recreate the object due to previous incorrect definition.
+ALTER PROCEDURE sys.sp_describe_undeclared_parameters RENAME TO sp_describe_undeclared_parameters_deprecated_1_2;
+
 CREATE OR REPLACE PROCEDURE sys.sp_describe_undeclared_parameters (
  "@tsql" sys.nvarchar(4000),
     "@params" sys.nvarchar(4000) = NULL)
@@ -3448,15 +3449,15 @@ $$
 LANGUAGE 'pltsql';
 GRANT EXECUTE ON PROCEDURE sys.sp_fkeys TO PUBLIC;
 
--- Need to drop previous incorrect definition.
-DROP FUNCTION sys.checksum;
+-- Need to rename and recreate the object due to previous incorrect definition.
+ALTER FUNCTION sys.checksum RENAME TO checksum_deprecated_1_2;
 CREATE OR REPLACE FUNCTION sys.checksum(VARIADIC arr TEXT[])
 RETURNS INTEGER
 AS 'babelfishpg_tsql', 'checksum'
 LANGUAGE C IMMUTABLE PARALLEL SAFE;
 
--- Need to drop previous incorrect definition.
-DROP FUNCTION sys.babelfish_inconsistent_metadata;
+-- Need to rename and recreate the object due to previous incorrect definition.
+ALTER FUNCTION sys.babelfish_inconsistent_metadata RENAME TO babelfish_inconsistent_metadata_deprecated_1_2;
 CREATE OR REPLACE FUNCTION sys.babelfish_inconsistent_metadata(return_consistency boolean default false)
 RETURNS table (
 	object_type varchar(32),
