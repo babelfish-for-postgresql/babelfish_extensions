@@ -338,9 +338,9 @@ static Plan *find_recursive_union(deparse_namespace *dpns,
 static text *string_to_text(char *str);
 static char *tsql_get_constraintdef_worker(Oid constraintId, bool fullCommand,
 										 int prettyFlags, bool missing_ok);
-extern Datum translate_pg_type_to_tsql(PG_FUNCTION_ARGS);
 static char *tsql_printTypmod(const char *typname, int32 typmod, Oid typmodout);
-static char * tsql_format_type_with_typemod(Oid type_oid, int32 typemod);
+extern Datum translate_pg_type_to_tsql(PG_FUNCTION_ARGS);
+static char *tsql_format_type_extended(Oid type_oid, int32 typemod, bits16 flags);
 
 /*
  * tsql_get_constraintdef
@@ -1221,8 +1221,9 @@ get_variable(Var *var, int levelsup, bool istoplevel, deparse_context *context)
 		appendStringInfoChar(buf, '*');
 		if (istoplevel)
 			appendStringInfo(buf, " AS %s)",
-							 tsql_format_type_with_typemod(var->vartype,
-													  var->vartypmod));
+							tsql_format_type_extended(var->vartype,
+									var->vartypmod,
+									FORMAT_TYPE_TYPEMOD_GIVEN));
 	}
 
 	return attname;
@@ -1265,8 +1266,9 @@ get_const_expr(Const *constval, deparse_context *context, int showtype)
 		if (showtype >= 0)
 		{
 			appendStringInfo(buf, "CAST(%s AS %s)", valbuf->data,
-							 tsql_format_type_with_typemod(constval->consttype,
-													  constval->consttypmod));
+							 tsql_format_type_extended(constval->consttype,
+								 		constval->consttypmod,
+										FORMAT_TYPE_TYPEMOD_GIVEN));
 			get_const_collation(constval, context);
 		}
 		else
@@ -1376,8 +1378,9 @@ get_const_expr(Const *constval, deparse_context *context, int showtype)
 	if (needlabel || showtype > 0)
 	{
 		appendStringInfo(buf, "CAST(%s AS %s)", valbuf->data,
-						 tsql_format_type_with_typemod(constval->consttype,
-												  constval->consttypmod));
+						 tsql_format_type_extended(constval->consttype,
+							 		constval->consttypmod,
+									FORMAT_TYPE_TYPEMOD_GIVEN));
 	}
 	else
 	{
@@ -2153,7 +2156,8 @@ get_coercion_expr(Node *arg, deparse_context *context,
 	 * would work fine.
 	 */
 	appendStringInfo(buf, " AS %s)",
-					 tsql_format_type_with_typemod(resulttype, resulttypmod));
+					 tsql_format_type_extended(resulttype, resulttypmod,
+						 		FORMAT_TYPE_TYPEMOD_GIVEN));
 }
 
 /*
@@ -2285,7 +2289,7 @@ find_recursive_union(deparse_namespace *dpns, WorkTableScan *wtscan)
  *
  * Returns a palloc'd string.
  */
-char *
+static char *
 tsql_format_type_extended(Oid type_oid, int32 typemod, bits16 flags)
 {
 	HeapTuple		tuple;
@@ -2402,13 +2406,4 @@ tsql_printTypmod(const char *typname, int32 typmod, Oid typmodout)
 		}
 	}
 	return res;
-}
-
-/*
- * This version allows a nondefault typemod to be specified.
- */
-static char *
-tsql_format_type_with_typemod(Oid type_oid, int32 typemod)
-{
-	return tsql_format_type_extended(type_oid, typemod, FORMAT_TYPE_TYPEMOD_GIVEN);
 }
