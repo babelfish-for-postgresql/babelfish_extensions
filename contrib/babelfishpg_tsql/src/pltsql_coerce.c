@@ -43,6 +43,9 @@ extern determine_datatype_precedence_hook_type determine_datatype_precedence_hoo
 extern func_select_candidate_hook_type func_select_candidate_hook;
 extern coerce_string_literal_hook_type coerce_string_literal_hook;
 
+PG_FUNCTION_INFO_V1(init_tsql_coerce_hash_tab);
+PG_FUNCTION_INFO_V1(init_tsql_datatype_precedence_hash_tab);
+
 extern bool is_tsql_binary_datatype(Oid oid);
 extern bool is_tsql_varbinary_datatype(Oid oid);
 
@@ -364,6 +367,7 @@ typedef struct tsql_cast_info_entry
 static tsql_cast_info_key_t *tsql_cast_info_keys = NULL;
 static tsql_cast_info_entry_t *tsql_cast_info_entries = NULL;
 static HTAB *ht_tsql_cast_info = NULL;
+static bool inited_ht_tsql_cast_info = false;
 
 static CoercionPathType tsql_find_coercion_pathway(Oid sourceTypeId, Oid targetTypeId, CoercionContext ccontext, Oid *funcid)
 {
@@ -414,6 +418,13 @@ static CoercionPathType tsql_find_coercion_pathway(Oid sourceTypeId, Oid targetT
 	key.castsource = sourceTypeId;
 	key.casttarget = targetTypeId;
 
+	/* Initialise T-SQL coercion hash table if not already done */
+	if (!inited_ht_tsql_cast_info)
+	{
+		FunctionCallInfo fcinfo  = NULL;  /* empty interface */
+		init_tsql_coerce_hash_tab(fcinfo);
+	}
+
 	entry = (tsql_cast_info_entry_t*) hash_search(ht_tsql_cast_info, &key, HASH_FIND, NULL);
 	if (entry == NULL)
 		return COERCION_PATH_NONE;
@@ -460,8 +471,6 @@ static CoercionPathType tsql_find_coercion_pathway(Oid sourceTypeId, Oid targetT
 
 	return result;
 }
-
-PG_FUNCTION_INFO_V1(init_tsql_coerce_hash_tab);
 
 Datum
 init_tsql_coerce_hash_tab(PG_FUNCTION_ARGS)
@@ -510,6 +519,9 @@ init_tsql_coerce_hash_tab(PG_FUNCTION_ARGS)
                                         HASH_ELEM | HASH_CONTEXT | HASH_BLOBS);
     }
 
+	/* mark the hash table initialised */
+	inited_ht_tsql_cast_info = true;
+
     for (int i=0;i<TOTAL_TSQL_CAST_COUNT;i++)
     {
         Oid castsource;
@@ -547,8 +559,11 @@ init_tsql_coerce_hash_tab(PG_FUNCTION_ARGS)
                         ReleaseSysCache(tuple);
                     }
                     else
+                    {
                         /* function is not loaded. wait for next scan */
+                        inited_ht_tsql_cast_info = false;
                         continue;
+                    }
                     break;
                 case TSQL_CAST_ENTRY:
                     entry->castfunc = GetSysCacheOid3(PROCNAMEARGSNSP, Anum_pg_proc_oid,
@@ -556,8 +571,11 @@ init_tsql_coerce_hash_tab(PG_FUNCTION_ARGS)
                                 PointerGetDatum(buildoidvector(&castsource, 1)),
                                 ObjectIdGetDatum(sys_nspoid));
                     if (!OidIsValid(entry->castfunc))
+                    {
                         /* function is not loaded. wait for next scan */
+                        inited_ht_tsql_cast_info = false;
                         continue;
+                    }
                     break;
                 case TSQL_CAST_WITHOUT_FUNC_ENTRY:
                     entry->castfunc = 0;
@@ -589,6 +607,7 @@ typedef struct tsql_datatype_precedence_info_entry
 
 static tsql_datatype_precedence_info_entry_t *tsql_datatype_precedence_info_entries = NULL;
 static HTAB *ht_tsql_datatype_precedence_info = NULL;
+static bool inited_ht_tsql_datatype_precedence_info = false;
 
 /*
  * smaller value has higher precedence
@@ -597,6 +616,13 @@ static HTAB *ht_tsql_datatype_precedence_info = NULL;
 static int tsql_get_type_precedence(Oid typeId)
 {
 	tsql_datatype_precedence_info_entry_t *entry;
+
+	/* Initialise T-SQL datatype precedence hash table if not already done */
+	if (!inited_ht_tsql_datatype_precedence_info)
+	{
+		FunctionCallInfo fcinfo  = NULL;  /* empty interface */
+		init_tsql_datatype_precedence_hash_tab(fcinfo);
+	}
 
 	entry = (tsql_datatype_precedence_info_entry_t*) hash_search(ht_tsql_datatype_precedence_info, &typeId, HASH_FIND, NULL);
 	if (entry == NULL)
@@ -967,8 +993,6 @@ tsql_coerce_string_literal_hook(ParseCallbackState *pcbstate, Oid targetTypeId,
 	return NULL;
 }
 
-PG_FUNCTION_INFO_V1(init_tsql_datatype_precedence_hash_tab);
-
 Datum
 init_tsql_datatype_precedence_hash_tab(PG_FUNCTION_ARGS)
 {
@@ -1015,6 +1039,9 @@ init_tsql_datatype_precedence_hash_tab(PG_FUNCTION_ARGS)
 										HASH_ELEM | HASH_CONTEXT | HASH_BLOBS);
 	}
 
+	/* mark the hash table initialised */
+	inited_ht_tsql_datatype_precedence_info = true;
+
 	for (int i = 0; i < TOTAL_TSQL_PRECEDENCE_COUNT; i++)
 	{
 		nspoid = strcmp(tsql_precedence_infos[i].nsp, "sys") == 0 ? sys_nspoid : PG_CATALOG_NAMESPACE;
@@ -1026,6 +1053,11 @@ init_tsql_datatype_precedence_hash_tab(PG_FUNCTION_ARGS)
 			value = hash_search(ht_tsql_datatype_precedence_info, &typoid, HASH_ENTER, NULL);
 			value->typ = typoid;
 			value->precedence = tsql_precedence_infos[i].precedence;
+        }
+        else
+        {
+			/* type is not loaded. wait for next scan */
+			inited_ht_tsql_datatype_precedence_info = false;
         }
 	}
 
