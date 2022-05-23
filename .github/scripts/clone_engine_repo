@@ -1,5 +1,8 @@
 #!/usr/bin/env bash
 
+env
+cat $GITHUB_EVENT_PATH
+exit 1
 set -e
 
 # Attempt to clone the engine repository based on where the workflow is being run from.
