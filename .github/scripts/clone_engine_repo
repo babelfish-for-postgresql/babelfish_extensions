@@ -1,8 +1,5 @@
 #!/usr/bin/env bash
 
-env
-exit 1
-
 set -e
 
 # Attempt to clone the engine repository based on where the workflow is being run from.
@@ -28,8 +25,22 @@ if [ "$1" == -n ]; then
     shift
 fi
 
-GH_USER=$1
-BRANCH=$2
+# Per [1], referenced from [2], as of 2022-05-23 Github actions work
+# differently when run in pull requests vs branches. In a PR, GITHUB_HEAD_REF
+# contains the original branch name while GITHUB_REF and GITHUB_REF_NAME refer
+# to something generated for the PR (see [3] and [4], which were created by
+# hacking this script to run `env`). For a branch, GITHUB_HEAD_REF is blank and
+# GITHUB_REF_NAME is the name of the branch (see [5] and [6]).
+#
+# 1: https://github.com/ScribeMD/slack-templates/blob/f98a8930d8a36f65adbd581518b79fca78557f4b/src/slack_notification.py#L125-L139
+# 2: https://github.com/github/docs/issues/15319
+# 3: https://github.com/babelfish-for-postgresql/babelfish_extensions/runs/6562890249?check_suite_focus=true#step:4:43
+# 4: https://github.com/babelfish-for-postgresql/babelfish_extensions/runs/6562890249?check_suite_focus=true#step:4:107
+# 5: https://github.com/nasbyj/babelfish_extensions/runs/6562881485?check_suite_focus=true#step:4:105
+# 6: https://github.com/nasbyj/babelfish_extensions/runs/6562881485?check_suite_focus=true#step:4:83
+BRANCH=$GITHUB_HEAD_REF
+[ -n "$BRANCH" ] || BRANCH=$GITHUB_REF_NAME
+GH_USER=$GITHUB_REPOSITORY_OWNER
 
 # See if user has an engine repository with the same name and branch.
 # See https://unix.stackexchange.com/questions/474805/verify-if-a-url-exists
