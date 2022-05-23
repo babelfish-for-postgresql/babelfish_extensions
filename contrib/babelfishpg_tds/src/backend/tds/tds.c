@@ -58,6 +58,7 @@
 
 #define LIBDATALEN 32
 #define LANGDATALEN 128
+#define XACT_SNAPSHOT 5
 
 PG_MODULE_MAGIC;
 
@@ -605,6 +606,7 @@ tds_stat_get_activity(Datum *values, bool *nulls, int len, int pid, int curr_bac
 {
 	LocalTdsStatus *local_tdsentry;
 	TdsStatus *tdsentry;
+	int tsql_isolation_level;
 
 	MemSet(values, 0, len);
 	MemSet(nulls, false, len);
@@ -662,10 +664,22 @@ tds_stat_get_activity(Datum *values, bool *nulls, int len, int pid, int curr_bac
 	 * XACT_READ_COMMITTED		2
 	 * XACT_REPEATABLE_READ		3
 	 * XACT_SERIALIZABLE		4
+	 * XACT_SNAPSHOT		5
 	 *
-	 * So adding 1 while storing value in tuples
+	 * So adding 1 while storing value in tuples with one exception. 
+	 * We are treating T-SQL SNAPSHOT isolation as REPEATABLE_READ in
+	 * Babelfish so handling this case separately. We don't support
+	 * T-SQL REPEATABLE_READ isolation level in Babelfish yet so this
+	 * logic holds for now. Once we support REPEATABLE_READ isolation
+	 * level in Babelfish, we need to figure out if XACT_REPEATABLE_READ
+	 * PG isolation level represents T-SQL SNAPSHOT or REPEATABLE_READ.
 	 */
-	values[15] = Int16GetDatum(tdsentry->transaction_isolation + 1);
+	if (tdsentry->transaction_isolation == XACT_REPEATABLE_READ)
+		tsql_isolation_level = XACT_SNAPSHOT;
+	else
+		tsql_isolation_level = tdsentry->transaction_isolation + 1;
+
+	values[15] = Int16GetDatum(tsql_isolation_level);
 
 	/* Client PID must be valid */
 	if (tdsentry->client_pid != 0)
