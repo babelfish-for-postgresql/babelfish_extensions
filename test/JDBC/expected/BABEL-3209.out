@@ -25,6 +25,6 @@ repeatable read
 
 ~~START~~
 smallint
-3
+5
 ~~END~~
 
