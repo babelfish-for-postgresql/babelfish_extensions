@@ -4,6 +4,10 @@ runs:
   using: "composite"
   steps:
     - name: Checkout, Build, and Install the Modified PostgreSQL Instance and Run Tests
+      env:
+        # See scripts/clone_engine_repo for details
+        GH_PR_HEAD_REPO_FULL_NAME: ${{ github.event.pull_request.head.repo.full_name }}
+        GH_REPOSITORY_FULL_NAME: ${{ github.event.repository.full_name }}
       run: |
         cd ..
         $GITHUB_WORKSPACE/.github/scripts/clone_engine_repo
@@ -14,3 +18,5 @@ runs:
         make check
         cd contrib && make && sudo make install
       shell: bash
+ 
+# vi: ts=2 sw=2

@@ -1,8 +1,5 @@
 #!/usr/bin/env bash
 
-env
-cat $GITHUB_EVENT_PATH
-exit 1
 set -e
 
 # Attempt to clone the engine repository based on where the workflow is being run from.
@@ -25,6 +22,13 @@ fi
 
 if [ "$1" == -n ]; then
     DRY_RUN=1
+    echo
+    echo DRY RUN MODE
+    echo
+    env
+    cat $GITHUB_EVENT_PATH
+    echo 
+    echo
     shift
 fi
 
@@ -44,10 +48,18 @@ fi
 
 # Spit out some debug info. NOTE! this will differentiate between a *blank*
 # variable and a non-existant one, so don't replace this with `echo`!
-env | egrep 'GITHUB_REPOSITORY_OWNER|GITHUB_EVENT_NAME|GITHUB_HEAD_REF|GITHUB_REF|GITHUB_REF_NAME' | sort
+env | egrep '^GH_*|GITHUB_REPOSITORY_OWNER|GITHUB_EVENT_NAME|GITHUB_HEAD_REF|GITHUB_REF|GITHUB_REF_NAME' | sort
 BRANCH=$GITHUB_HEAD_REF
 [ -n "$BRANCH" ] || BRANCH=$GITHUB_REF_NAME
-GH_USER=$GITHUB_REPOSITORY_OWNER
+
+# Likewise, getting the repo name is also tricky. There are two places buried
+# in event.json (found at $GITHUB_EVENT_PATH) to look, depending on if the
+# event is a pull request or not. The easiest way to dig into those is for our
+# action to set some environment variables (see
+# ../composite-actions/build-modified-postgres/action.yml). Here we simply see
+# if the PR one is empty and punt to the non-PR version if so.
+REPO_NAME=$GH_PR_HEAD_REPO_FULL_NAME
+[ -n "$REPO_NAME" ] || REPO_NAME=$GH_REPOSITORY_FULL_NAME
 
 # See if user has an engine repository with the same name and branch.
 # See https://unix.stackexchange.com/questions/474805/verify-if-a-url-exists
@@ -56,7 +68,7 @@ check_repo () {
     wget --spider "$1" || return $?
 }
 
-BASE_URL=https://github.com/$GH_USER/postgresql_modified_for_babelfish # NO /
+BASE_URL=https://github.com/$REPO_NAME/postgresql_modified_for_babelfish # NO /
 BRANCH_OPTION="--branch $BRANCH"
 if check_repo "${BASE_URL}/tree/$BRANCH"; then
     echo "Found matching branch $BRANCH at $BASE_URL, using that instead of public repo"
@@ -89,6 +101,11 @@ else
     fi
 fi
 GIT_URL=${BASE_URL}.git
+
+if [ -n "$DRY_RUN" ]; then
+    echo DRY RUN: NOT EXECUTING \'git clone "$BRANCH_OPTION" "$GIT_URL"\'
+    exit 1
+fi
 
 echo running git clone "$BRANCH_OPTION" "$GIT_URL"
 git clone $BRANCH_OPTION "$GIT_URL" && exit
