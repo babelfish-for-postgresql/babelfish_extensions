@@ -76,6 +76,9 @@ PG_CXXFLAGS += -Wno-undef -Wall -Wcpp
 PG_CXXFLAGS += -Wno-register # otherwise C++17 gags on PostgreSQL headers
 PG_CXXFLAGS += -I$(ANTLR4_RUNTIME_INCLUDE_DIR)
 PG_CFLAGS += -g
+ifndef USE_PGXS
+PG_SRC = ../../..
+endif
 PG_CPPFLAGS += -I$(TSQLSRC) -I$(PG_SRC) -DFAULT_INJECTOR
 
 SHLIB_LINK += -L$(ANTLR4_RUNTIME_LIB_DIR) $(ANTLR4_RUNTIME_LIB) -lcrypto
@@ -108,17 +111,22 @@ DATA_built = \
 
 #include ../Makefile.common
 
-# Get Postgres version, as well as major (9.4, etc) version. Remove '.' from MAJORVER.
+ifdef USE_PGXS
 VERSION 	 = $(shell $(PG_CONFIG) --version | awk '{print $$2}' | sed -e 's/devel$$//')
+PGXS := $(shell $(PG_CONFIG) --pgxs)
+include $(PGXS)
+else
+subdir = babelfish_extensions/contrib/babelfishpg_tsql
+top_builddir = ../../..
+include $(top_builddir)/src/Makefile.global
+include $(top_srcdir)/contrib/contrib-global.mk
+endif
 MAJORVER 	 = $(shell echo $(VERSION) | cut -d . -f1,2 | tr -d .)
 
 # Function for testing a condition
 test		 = $(shell test $(1) $(2) $(3) && echo yes || echo no)
 
 GE91		 = $(call test, $(MAJORVER), -ge, 91)
-
-PGXS := $(shell $(PG_CONFIG) --pgxs)
-include $(PGXS)
 
 ifeq ($(GE91),yes)
 all: sql/$(EXTENSION)--$(EXTVERSION).sql $(UPGRADES)
@@ -154,8 +162,11 @@ GEN_KEYWORDLIST = $(PERL) -I $(TOOLSDIR) $(TOOLSDIR)/gen_keywordlist.pl
 GEN_KEYWORDLIST_DEPS = $(TOOLSDIR)/gen_keywordlist.pl $(TOOLSDIR)/PerfectHash.pm
 TSQLSRC = .
 
+ifndef USE_PGXS
+cmake = cmake
+endif
 antlr/Makefile: antlr/CMakeLists.txt antlr/TSqlLexer.g4 antlr/TSqlLexer.g4
-	cd antlr && $(cmake) . && cd ..
+	cd antlr && CFLAGS="$(shell echo $(CFLAGS) | sed -e 's/-fexcess-precision=[^ ]*//' -e 's/-Wmissing-prototypes//' -e 's/-Wdeclaration-after-statement//')" $(cmake) . && cd ..
 
 .PHONY: antlr/libantlr_tsql.a  # to allow CMake's make check the build
 antlr/libantlr_tsql.a: antlr/Makefile

@@ -10,6 +10,9 @@ tds_backend = $(tds_top_dir)/src/backend
 tds_include = $(tds_top_dir)/src/include
 TSQL_SRC = ../babelfishpg_tsql
 
+ifndef USE_PGXS
+PG_SRC = ../../..
+endif
 PG_CPPFLAGS += -I$(TSQL_SRC) -I$(PG_SRC) -I$(tds_top_dir) -DFAULT_INJECTOR
 
 # Exclude the following files from the build (sometimes these
@@ -28,11 +31,15 @@ $(tds_include)/error_mapping.h: error_mapping.txt generate_error_mapping.pl
 	$(PERL) generate_error_mapping.pl $< > $@
 $(tds_backend)/tds/err_handler.o: $(tds_include)/error_mapping.h
 
-# Disable for now
-#NO_PGXS = 1
-
+ifdef USE_PGXS
 PGXS := $(shell $(PG_CONFIG) --pgxs)
 include $(PGXS)
+else
+subdir = babelfish_extensions/contrib/babelfishpg_tds
+top_builddir = ../../..
+include $(top_builddir)/src/Makefile.global
+include $(top_srcdir)/contrib/contrib-global.mk
+endif
 
 #include ../Makefile.common
 
