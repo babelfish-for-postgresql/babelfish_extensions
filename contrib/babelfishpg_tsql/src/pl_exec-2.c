@@ -2589,7 +2589,8 @@ execute_bulk_load_insert(int ncol, int nrow, Oid *argtypes,
 	int count = 1;
 
 	elog(DEBUG2, "Insert Bulk operation on destination table: %s", bulk_load_table_name);
-	appendStringInfo(src, "Insert into %s values ", bulk_load_table_name);
+	appendStringInfo(src, "Insert into %s OVERRIDING SYSTEM VALUE values ", bulk_load_table_name);
+
 	for (int i = 0; i < nrow; i++)
 	{
 		for (int j = 0; j < ncol; j++)
