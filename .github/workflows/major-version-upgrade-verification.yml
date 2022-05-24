@@ -6,10 +6,8 @@ jobs:
     env:
       OLD_INSTALL_DIR: postgres13
       NEW_INSTALL_DIR: postgres14
-      ENGINE_VER_FROM: BABEL_1_X_DEV__PG_13_6
-      EXTENSION_VER_FROM: BABEL_1_X_DEV
-      ENGINE_VER_TO: mvu-dev
-      EXTENSION_VER_TO: mvu-dev
+      ENGINE_BRANCH_FROM: BABEL_1_X_DEV__PG_13_6
+      EXTENSION_BRANCH_FROM: BABEL_1_X_DEV
 
     runs-on: ubuntu-latest
     steps:
@@ -20,12 +18,12 @@ jobs:
         if: always()
         uses: ./.github/composite-actions/install-dependencies
 
-      - name: Build Modified Postgres using ${{env.ENGINE_VER_FROM}}
+      - name: Build Modified Postgres using ${{env.ENGINE_BRANCH_FROM}}
         id: build-modified-postgres-old
         if: always() && steps.install-dependencies.outcome == 'success'
         run: |
           cd ..
-          git clone --branch ${{env.ENGINE_VER_FROM}} https://github.com/babelfish-for-postgresql/postgresql_modified_for_babelfish.git
+          git clone --branch ${{env.ENGINE_BRANCH_FROM}} https://github.com/babelfish-for-postgresql/postgresql_modified_for_babelfish.git
           cd postgresql_modified_for_babelfish
           ./configure --prefix=$HOME/${{env.OLD_INSTALL_DIR}} --with-python PYTHON=/usr/bin/python2.7 --enable-debug CFLAGS="-ggdb" --with-libxml --with-uuid=ossp --with-icu
           make clean
@@ -45,9 +43,9 @@ jobs:
       - uses: actions/checkout@v2
         with:
           repository: babelfish-for-postgresql/babelfish_extensions
-          ref: ${{env.EXTENSION_VER_FROM}}
+          ref: ${{env.EXTENSION_BRANCH_FROM}}
 
-      - name: Build Extensions using ${{env.EXTENSION_VER_FROM}}
+      - name: Build Extensions using ${{env.EXTENSION_BRANCH_FROM}}
         id: build-extensions-old
         if: always() && steps.compile-antlr.outcome == 'success'
         run: |
@@ -63,7 +61,7 @@ jobs:
           cd ../babelfishpg_tsql
           make && make install
       
-      - name: Install Extensions using ${{env.EXTENSION_VER_FROM}}
+      - name: Install Extensions using ${{env.EXTENSION_BRANCH_FROM}}
         id: install-extensions-old
         if: always() && steps.build-extensions-old.outcome == 'success'
         run: |
@@ -93,25 +91,18 @@ jobs:
           cd test/JDBC/
           export inputFilesPath=upgrade/preparation
           mvn test
-          cd Info
-          timestamp=`ls -Art | tail -n 1`
-          cd $timestamp
-          mkdir -p ~/upgrade
-          mv $timestamp.diff ~/upgrade/output-diff-preparation.diff
-          mv "$timestamp"_runSummary.log ~/upgrade/run-summary-preparation.log
 
-      - name: Build Modified Postgres using ${{env.ENGINE_VER_TO}}
+      - name: Build Modified Postgres using latest version
         id: build-modified-postgres-new
         if: always() && steps.run-preparation-test.outcome == 'success'
         uses: ./.github/composite-actions/build-modified-postgres
         with:
-          engine_branch: ${{env.ENGINE_VER_TO}}
           install_dir: ${{env.NEW_INSTALL_DIR}}
 
       - name: Copy ANTLR
         run: cp "/usr/local/lib/libantlr4-runtime.so.4.9.3" ~/${{env.NEW_INSTALL_DIR}}/lib/
 
-      - name: Build Extensions using ${{env.EXTENSION_VER_TO}}
+      - name: Build Extensions using latest version
         id: build-extensions-new
         if: always() && steps.build-modified-postgres-new.outcome == 'success'
         uses: ./.github/composite-actions/build-extensions
@@ -145,18 +136,25 @@ jobs:
           cd test/JDBC/
           export inputFilesPath=upgrade/verification
           mvn test
-          cd Info
+
+      - name: Rename Test Summary Files
+        id: test-file-rename
+        if: always() && (steps.run-preparation-test.outcome == 'failure' || steps.run-verification-test.outcome == 'failure')
+        run: |
+          cd test/JDBC/Info
           timestamp=`ls -Art | tail -n 1`
           cd $timestamp
-          mv $timestamp.diff ~/upgrade/output-diff-verification.diff
-          mv "$timestamp"_runSummary.log ~/upgrade/run-summary-verification.log
+          mkdir -p ~/upgrade
+          mv $timestamp.diff ~/upgrade/output-diff.diff
+          mv "$timestamp"_runSummary.log ~/upgrade/run-summary.log
 
       - name: Upload Logs
-        if: always() && (steps.run-preparation-test.outcome == 'failure' || steps.run-pg_upgrade.outcome == 'failure' || steps.run-verification-test.outcome == 'failure')
+        if: always() && steps.test-file-rename.outcome == 'success'
         uses: actions/upload-artifact@v2
         with:
           name: upgrade-logs
           path: |
             ~/upgrade/*.log
             ~/upgrade/*.diff
-            ~/${{env.OLD_INSTALL_DIR}}/data/logfile14
+            ~/${{env.OLD_INSTALL_DIR}}/data/logfile13
+            ~/${{env.NEW_INSTALL_DIR}}/data/logfile14

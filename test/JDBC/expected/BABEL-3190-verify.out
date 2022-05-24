@@ -4,7 +4,7 @@ go
 select name,max_length,precision,scale from sys.columns where object_id = OBJECT_ID('t1') order by name;
 GO
 ~~START~~
-varchar#!#smallint#!#int#!#int
+varchar#!#smallint#!#tinyint#!#tinyint
 c1#!#6#!#19#!#0
 c2#!#8#!#26#!#6
 c3#!#8#!#26#!#0

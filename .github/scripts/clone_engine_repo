@@ -14,7 +14,7 @@ set -e
 # WARNING! Use "GH" instead of "GITHUB" for variable names to avoid possible
 # conflict with github workflow environment variables.
 
-# Look for a config file and read it if it's there. Intentionally use -x
+# Look for a config file and read it if it's there. Intentionally use -e
 # instead of -r so we get an error if we can't read the config file.
 CONFIG_FILE=${0}.conf
 if [ -r "$CONFIG_FILE" ]; then
