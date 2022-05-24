@@ -2919,14 +2919,26 @@ GetTdsEstateErrorData(int *number, int *severity, int *state)
 static void
 SetAttributesForColmetada(TdsColumnMetaData *col)
 {
-	tp = SearchSysCache2(ATTNUM, 
-			ObjectIdGetDatum(col->relOid),
-			Int16GetDatum(col->attrNum));
+	HeapTuple	  tp;
+	Form_pg_attribute att_tup;
 
 	/* Initialise to false if no valid heap tuple is found. */
 	col->attNotNull = false;
 	col->attidentity = false;
 	col->attgenerated = false;
+
+	/*
+	 * Send the right column-metadata only for FMTONLY Statements.
+	 * FIXME: We need to find a generic solution where we do not rely
+	 * on the catalog for constraint information.
+	 */
+	if (pltsql_plugin_handler_ptr &&
+			!(*pltsql_plugin_handler_ptr->pltsql_is_fmtonly_stmt))
+		return;
+
+	tp = SearchSysCache2(ATTNUM, 
+		ObjectIdGetDatum(col->relOid),
+		Int16GetDatum(col->attrNum));
 
 	if (HeapTupleIsValid(tp))
 	{
