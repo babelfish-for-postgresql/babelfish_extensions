@@ -12,7 +12,7 @@ WHERE name =  'jdbc_user';
 GO
 ~~START~~
 varchar#!#char#!#nvarchar#!#varchar#!#varchar#!#int#!#int!#bit
-jdbc_user#!#S#!#SQL_LOGIN#!#master#!#English#!#-1#!#-1!#0
+jdbc_user#!#S#!#SQL_LOGIN#!#master#!#English#!#-1#!#-1#!#0
 ~~END~~
 
 
@@ -22,7 +22,7 @@ WHERE name =  'sysadmin';
 GO
 ~~START~~
 varchar#!#char#!#nvarchar#!#varchar#!#varchar#!#int#!#int!#bit
-sysadmin#!#R#!#SERVER_ROLE#!#<NULL>#!#English#!#<NULL>#!#1!#1
+sysadmin#!#R#!#SERVER_ROLE#!#<NULL>#!#English#!#<NULL>#!#1#!#1
 ~~END~~
 
 
