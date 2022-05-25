@@ -52,7 +52,7 @@ go
 alter table test_null add constraint constraint2 check(a<=20 and b>a and (a between 40 and 50));
 go
 
-select * from information_schema_tsql.check_constraints order by check_clause;
+select * from information_schema_tsql.check_constraints order by "CONSTRAINT_NAME";
 go
 
 drop table test_tsql_const
@@ -65,7 +65,7 @@ go
 use master
 go
 
-select * from information_schema_tsql.check_constraints;
+select * from information_schema_tsql.check_constraints order by "CONSTRAINT_NAME";
 go
 
 drop database db1
@@ -83,7 +83,7 @@ go
 create table sch1.test_like(a int, b char, CHECK (NOT a like '%[^0-9]%'));
 go
 
-select * from information_schema_tsql.check_constraints order by "CHECK_CLAUSE";
+select * from information_schema_tsql.check_constraints order by "CONSTRAINT_NAME";
 go
 
 drop table sch1.test_date;
