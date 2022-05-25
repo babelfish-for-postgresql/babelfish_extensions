@@ -1,3 +1,24 @@
+-- Test check constraint def with number of characters more than 4000
+create table ltable( a varchar, check(a = 'provvwstdjtlyzygsxcnqlkyukpjlseachjalbtttvujvdnhooyursfkalzuixjyhogeijfpyidmrjciefitzurwxrazaqbmpljryfhmraftlwmktxqzsrhnbfgftqdxpxsacoeyzmmrfptpuorfbsyaiumgwumeejdpgfkhekumxqqzplnpojlzwpeoznospniqdyfmgyifgrqjpiapjszcykssdgfnzjsgsbzjfcebtlxytwtczrufccrpczitbvpgdhyishwlkatimhxkzvsgqxdrqdiieglnizryhllxlqhfnxeyjofmopglwczssmrocmkqdstpmldifjwvdzwebyruaxlcaxqyiljfmmmohealrzerdjymvoetanchzpfpfxtnkenlsxolaoibfdqkhvwpvcvnovvzmgmjbxowimunqmqqlrvvdhlvdvokuvwbdurvxzonhmdnqxejtwraxtkmtzsvgawpsvtscmcnevslmantvrvbcaeotvhqbfukdadxxiwvumryaasyerhdnexyztbjdlpourvdnfmkxysjysksivurxowjjsizchrkciwhutpnxxqknjgkuvbmxywpbdleydsfyahzhhjzmadkjizjvnqweqdztdepjnaowwhqdixrwhkqnhpeyujpbczsimjfxtdfmtlqvlkxpmhgcpgnvqiwgxigliotyfyfdumuxrrxpyaepflxwvnxrneyladslmmkrvapylaezrczkykiwtgiuxjgbkgpshlptwxzmefdjqpbjaxszrqkcujxhkdksbbskiuazijfoivmskwqtbnglqedoknyofvvjiyowjsunswyukjypmejicaivpxslbrfsmbostwmdoypilvjsqucymywzqbzyicyyjsqslnqfbqegoejxivmrffvpumhjouhgvzfgyajrhjilxcckznwbmpehsmztlwuvthgqtghlghdydgoxxatxmtwrwnelmpolxytoibraaldzbdndccayqsqwqumcifenspaxztpqaxdcotbgsrnlriwkkvzgdextdivauvzpipgaodgsoqnutzklkiebpbmygeguartyqxascsaepwwdrdxdxbfgzjypmwisibntyckagqpseqoqbrzgxtpxbtwsxogyvszsocvurmfyhyvrzwwsoiglyoyuwbimbdfuuxjkhubgvrfodfbmsafvuzbhqavujwifvlpswykpgcjvywpvuwqcqmqtjwsezttpjqcbghrhprxmplsqafbomdipbyhdsendkokartnklgggprtjdoegrjrmvaudgahzfmeljseivxkflgkfatfgogmcnbgsnyhvzstelyxfzcufotrjjodijlkdusbrcnkubbfgjtgbzymwgwbfpaxdhrchgnipfomyyiikhbconzphustwlpbkgvcpctczctgmzohcjfcccbjycehksregjffvfoymcbrsxgjqfjnfjfhvskohydaoxjpiunoflvwwgtjdilntlxruztsfizglsxzihqtvznczxvpbygqpaxxoienkgydytnfzmtzdhtakoikhneaapanhbcshvdxganertfbjtmbaioxiacmfguopzdaswgvzvzwyimbvkjivhddeyaijgjcezpyprnuhzrrefrnxsbcsodhpawjepsngcbyftltqvmdlmoifeffzarkkabglekkxnanpueylybjllbkjwpplxqyympjnsyitqpubftpeiacohxrogjkdcpqepcwebvsqsuenkprjrkvakazbneqwfrkhaiuuekrhdvdmdeftofrnihzrsnbalqjlzzxuhcmluhbqhsnnnrwywyzhyrimnojsynssscxdmmpyqoyqqerfvjwbpzcrvjqksampppyffoktbvnlejekvhivdgrbhnfbxekanpylutuwvvayysnrqajxvcsjaqwgzbnsljgzhapkkorsfwyiftfrhllcjwkzpbphiliiwnpsfiofiwioniousqmyfabldkogeahufsorgcdaulusynkcowzkgzwnclzycxmtxtiqmkxebrwpiwnvvxxmitrclpmfsslwboswpnyjncpyfllllhbzauhrztubiriulxedzqduzvygomolxssbbvyrevgiirzkjchteyimchgqfzdzwbubdcptwamyegsncyhxngqyhlnninraksjbfwthlgsehhukjqfspnttatpqnwryohzhfldfhfxmvgnxbzerwnmmceaokxgongbxlgtwwwlyuwejrhvbnnsqalbsnzmaorwrdrfyjklkcyxxzatfzajwkoryfalpirewqmwvtxttuvsyftuvilnnmjagxhajnspfiywchskgvairrexlrayyrkbwsgxxaoxcjuslgnwrotofwvyqbdrvfgdsjuslsfwrvgsoghflwjyivumqiauuqktdsgeecqktsfqcgpnpqypoevoeuxtliqcvrioednzxsygdklfufcdqkkfiysbiqdbrlsgiznbxdpjbkeqhawyuzwkfxgmykmqrqyuwnzcbmpthnuknmkgrnlzcfutcnvthoejiiinmugidsyogvcsiwfwvdzauwenxonrdudwfsmocsfhqdanzrdyiafnztshpwaivbxnihtaornxujdjgdrirfoghvaniejkboptmxjzsmmbmxzirnsvejpdmjrgknbqhovuioofmyyaylrscvhyilbihpcimebumipsefbcpkbboajblaemlgbdhziuoewdahiyomgdvyijtdqwvgrpmrntyfdsrlyvqxrqlrepyjnswysanekarpzkoeonordbcueojxcsdawbwbpyxhnikfgodsgqnawwbjfynaorgkaltsiciptjeadqijiawcvvcdjxwfmftgsqthdjkwletsknosrflsexbumdhrptkzkckfvlxaooansrylwdgazzoofvwaoifwogthkrthrywfdazakaeqemgtepmpjpimcqrcqwqozgmymbavbziztmdeothaxljdvvjxldjczjwtouedwzewwwnbugjouhtytwbjosbvbhwhgjzmvunvhuftajlzxtedauvudznbdznfdsegoiwaewshchsuprvbgcyxuvvphmyncfucszaioeqbtrdhpatnwinbenkxsfchuagcqpkepkktcujnazepbcujcjoopsyidlggxhyerkgqhxozuxlexrjexjkeocvhbsgefwrxtcvrunsdsqkivgfbveuwbkdpuqykckjjzkyiurviccyhkigqgwauqfudxhfqehcsidgrdeqveqicqnlubecuhihchrgscrmtvromvklfmcgckvdlljqybumgzqdtirizlithvtjghxsvdpwhqhmlntqpugtslhtebznfkbvuihtrgwymxbfamykqqjnaosueenotsnmvwpwzbzjkdspesiboniokannleitpjuvqxteiioozzymvmnohcksmqtigmeamguheqbiesnxuwhfrobdveiwqykxcfxfgiojmdhdoyhwwcdietkrtwclibdwftbafyioskcmzdozabrvzofsoanzpmolpyhsnyquihpzdquksylxbpbyogzdlrfazfvefoyavralxogzicjoxgmsjqcznyiuwaizwpwfxdtlhxiyadgurhwmnjdliymurukkxugdtpzsyqtrxrcmxihounkkrqpnirputcjynozfopvrjymupchfjcbgebiwhbejmsrhlonbjxadmxekwwmbsfcgikmgfvzwyrbunlxcwmihykwywozqdyfdvjjpiammriimvcxemadanokpgmcspgohxonrdaylklymiugkqfabhrgyfcjaylrehyzwwddvhmcfhikodhoifqfffvuaoqfwvrjmdcmxrifwgvuwzyipiraayhxdfbzyefbktrlulbapwfjbhypdvumdpxvsvdfvefvsdjvhbdjhcbusichiucbwbcvnbskjcnsdkjcvnkdvabcdefghijklmnopqrstuvwxyz'));
+go
+
+select length(tsql_get_constraintdef(oid)) from pg_constraint where contype='c' and conrelid = (select oid from pg_class where relname='ltable');
+go
+
+-- The check constraint defnition only shows upto 4000 number of characters.
+select "CHECK_CLAUSE", length("CHECK_CLAUSE") from information_schema_tsql.check_constraints;
+go
+
+drop table ltable;
+go
+
+-- cross db ref for check constraint object definition
+create database db1;
+go
+
+use db1;
+go
+
 create table test_tsql_const(
 	c_int int primary key,
 	c_bit sys.bit check(c_bit <> cast(1 as sys.bit)),
@@ -25,34 +46,52 @@ go
 create table test_null(a int, b int, check(a IS NOT NULL), CONSTRAINT constraint1 check (a>10));
 go
 
-alter table test_null add constraint constraint2 check(a<=20 and b>a);
+create table test_upper(a char, check (upper(a) in ('A','B')));
 go
 
-create table test_date(
-	c_datetime datetime check(c_datetime < CAST('20060830' AS datetime)),
-);
+alter table test_null add constraint constraint2 check(a<=20 and b>a and (a between 40 and 50));
 go
 
-select tsql_get_constraintdef(oid) from pg_constraint where contype='c' and conrelid = (select oid from pg_class where relname='test_null');
-go
-
-select tsql_get_constraintdef(oid) from pg_constraint where contype='c' and conrelid = (select oid from pg_class where relname='test_tsql_const');
-go
-
-select tsql_get_constraintdef(oid) from pg_constraint where contype='c' and conrelid = (select oid from pg_class where relname='test_tsql_collate');
-go
-
-select tsql_get_constraintdef(oid) from pg_constraint where contype='c' and conrelid = (select oid from pg_class where relname='test_tsql_cast');
-go
-
-select tsql_get_constraintdef(oid) from pg_constraint where contype='c' and conrelid = (select oid from pg_class where relname='test_date');
+select * from information_schema_tsql.check_constraints order by check_clause;
 go
 
 drop table test_tsql_const
 drop table test_null
 drop table test_tsql_collate
 drop table test_tsql_cast
-drop table test_date
+drop table test_upper
 go
 
+use master
+go
+
+select * from information_schema_tsql.check_constraints;
+go
+
+drop database db1
+go
+
+-- cross schema ref for check constraint object definition
+create schema sch1;
+go
+
+create table sch1.test_date(
+	c_datetime datetime check(c_datetime < CAST('20060830' AS datetime)),
+);
+go
+
+create table sch1.test_like(a int, b char, CHECK (NOT a like '%[^0-9]%'));
+go
+
+select * from information_schema_tsql.check_constraints order by "CHECK_CLAUSE";
+go
+
+drop table sch1.test_date;
+go
+
+drop table sch1.test_like;
+go
+
+drop schema sch1;
+go
 

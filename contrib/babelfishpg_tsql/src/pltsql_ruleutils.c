@@ -354,36 +354,10 @@ tsql_get_constraintdef(PG_FUNCTION_ARGS)
 	Oid			constraintId = PG_GETARG_OID(0);
 	int			prettyFlags;
 	char	   *res;
-	const char *sql_dialect_value_old;
 
+	prettyFlags = PRETTYFLAG_INDENT;
 
-	sql_dialect_value_old = GetConfigOption("babelfishpg_tsql.sql_dialect", true, true);
-	set_config_option("babelfishpg_tsql.sql_dialect", "tsql",
-					  (superuser() ? PGC_SUSET : PGC_USERSET),
-					  PGC_S_SESSION,
-					  GUC_ACTION_SAVE,
-					  true,
-					  0,
-					  false);
-
-	PG_TRY();
-	{
-		prettyFlags = PRETTYFLAG_INDENT;
-
-		res = tsql_get_constraintdef_worker(constraintId, false, prettyFlags, true);
-	}
-	PG_CATCH();
-	{
-		set_config_option("babelfishpg_tsql.sql_dialect", sql_dialect_value_old,
-						  (superuser() ? PGC_SUSET : PGC_USERSET),
-						  PGC_S_SESSION,
-						  GUC_ACTION_SAVE,
-						  true,
-						  0,
-						  false);
-		PG_RE_THROW();
-	}
-	PG_END_TRY();
+	res = tsql_get_constraintdef_worker(constraintId, false, prettyFlags, true);
 
 	if (res == NULL)
 		PG_RETURN_NULL();
@@ -585,7 +559,6 @@ generate_operator_name(Oid operid, Oid arg1, Oid arg2)
 	HeapTuple	opertup;
 	Form_pg_operator operform;
 	char	   *oprname;
-	char	   *nspname;
 	Operator	p_result;
 
 	initStringInfo(&buf);
@@ -595,6 +568,10 @@ generate_operator_name(Oid operid, Oid arg1, Oid arg2)
 		elog(ERROR, "cache lookup failed for operator %u", operid);
 	operform = (Form_pg_operator) GETSTRUCT(opertup);
 	oprname = NameStr(operform->oprname);
+
+	if(strcmp(oprname,"~~") == 0)
+		oprname = "LIKE";
+
 
 	/*
 	 * The idea here is to schema-qualify only if the parser would fail to
@@ -617,18 +594,7 @@ generate_operator_name(Oid operid, Oid arg1, Oid arg2)
 			break;
 	}
 
-	if (p_result != NULL && oprid(p_result) == operid)
-		nspname = NULL;
-	else
-	{
-		nspname = get_namespace_name(operform->oprnamespace);
-		appendStringInfo(&buf, "OPERATOR(%s.", quote_identifier(nspname));
-	}
-
 	appendStringInfoString(&buf, oprname);
-
-	if (nspname)
-		appendStringInfoChar(&buf, ')');
 
 	if (p_result != NULL)
 		ReleaseSysCache(p_result);
@@ -828,21 +794,32 @@ get_rule_expr(Node *node, deparse_context *context,
 								 (int) ntest->nulltesttype);
 					}
 				}
-				else
-				{
-					switch (ntest->nulltesttype)
-					{
-						case IS_NULL:
-							appendStringInfoString(buf, " IS NOT DISTINCT FROM NULL");
-							break;
-						case IS_NOT_NULL:
-							appendStringInfoString(buf, " IS DISTINCT FROM NULL");
-							break;
-						default:
-							elog(ERROR, "unrecognized nulltesttype: %d",
-								 (int) ntest->nulltesttype);
-					}
-				}
+				if (!PRETTY_PAREN(context))
+					appendStringInfoChar(buf, ')');
+			}
+			break;
+
+		case T_ScalarArrayOpExpr:
+			{
+				ScalarArrayOpExpr *expr = (ScalarArrayOpExpr *) node;
+				List	   *args = expr->args;
+				Node	   *arg1 = (Node *) linitial(args);
+				Node	   *arg2 = (Node *) lsecond(args);
+				char		*opername;
+
+				if (!PRETTY_PAREN(context))
+					appendStringInfoChar(buf, '(');
+				get_rule_expr_paren(arg1, context, true, node);
+				opername = generate_operator_name(expr->opno, exprType(arg1),
+									get_base_element_type(exprType(arg2)));
+				if (strcmp(opername,"=")==0)
+					appendStringInfoString(buf, " IN (");
+				else if (strcmp(opername,"<>")==0)
+					appendStringInfoString(buf, " NOT IN (");
+
+				get_rule_expr_paren(arg2, context, true, node);
+
+				appendStringInfoChar(buf, ')');
 				if (!PRETTY_PAREN(context))
 					appendStringInfoChar(buf, ')');
 			}
@@ -919,6 +896,50 @@ get_rule_expr(Node *node, deparse_context *context,
 					get_coercion_expr(arg, context,
 									  relabel->resulttype,
 									  relabel->resulttypmod,
+									  node);
+				}
+			}
+			break;
+
+		case T_ArrayExpr:
+			{
+				ArrayExpr  *arrayexpr = (ArrayExpr *) node;
+
+				get_rule_expr((Node *) arrayexpr->elements, context, true);
+			}
+			break;
+
+		case T_List:
+			{
+				char	   *sep;
+				ListCell   *l;
+
+				sep = "";
+				foreach(l, (List *) node)
+				{
+					appendStringInfoString(buf, sep);
+					get_rule_expr((Node *) lfirst(l), context, showimplicit);
+					sep = ", ";
+				}
+			}
+			break;
+
+		case T_CoerceViaIO:
+			{
+				CoerceViaIO *iocoerce = (CoerceViaIO *) node;
+				Node	   *arg = (Node *) iocoerce->arg;
+
+				if (iocoerce->coerceformat == COERCE_IMPLICIT_CAST &&
+					!showimplicit)
+				{
+					/* don't show the implicit cast */
+					get_rule_expr_paren(arg, context, false, node);
+				}
+				else
+				{
+					get_coercion_expr(arg, context,
+									  iocoerce->resulttype,
+									  -1,
 									  node);
 				}
 			}
@@ -2294,7 +2315,6 @@ tsql_format_type_extended(Oid type_oid, int32 typemod, bits16 flags)
 {
 	HeapTuple		tuple;
 	Form_pg_type	typeform;
-	Oid				array_base_type;
 	Datum			tsql_typename;
 	char		   *buf;
 	bool			with_typemod;
