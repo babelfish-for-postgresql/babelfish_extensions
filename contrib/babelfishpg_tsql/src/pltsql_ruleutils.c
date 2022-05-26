@@ -1585,13 +1585,13 @@ get_func_expr(FuncExpr *expr, deparse_context *context,
 									  context->special_exprkind);
 
 	/*
-	 * AT TIMEZONE from TSQL is parsed to timezone function internally. 
+	 * AT TIMEZONE from TSQL is parsed to timezone function internally.
 	 * While de-parsing, convert it to AT TIME ZONE explicitly.
 	 */
 	if (strcmp(funcname,"timezone") == 0)
 	{
 		get_rule_expr((Node *) list_nth(expr->args, 1), context, false);
-		appendStringInfoString(buf, "AT TIME ZONE ");
+		appendStringInfoString(buf, " AT TIME ZONE ");
 		get_rule_expr((Node *) list_nth(expr->args, 0), context, false);
 	}
 	else
