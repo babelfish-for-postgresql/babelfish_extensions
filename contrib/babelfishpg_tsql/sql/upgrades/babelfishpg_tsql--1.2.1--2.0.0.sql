@@ -3,6 +3,31 @@
 
 SELECT set_config('search_path', 'sys, '||current_setting('search_path'), false);
 
+-- Drops a function if it does not have any dependent objects.
+-- Is a temporary procedure for use by the upgrade script. Will be dropped at the end of the upgrade.
+-- Please have this be one of the first statements executed in this upgrade script. 
+CREATE OR REPLACE PROCEDURE babelfish_drop_deprecated_function(schema_name varchar, func_name varchar) AS
+$$
+DECLARE
+    error_msg text;
+    query1 text;
+    query2 text;
+BEGIN
+    query1 := format('alter extension babelfishpg_tsql drop function %s.%s', schema_name, func_name);
+    query2 := format('drop function %s.%s', schema_name, func_name);
+    execute query1;
+    execute query2;
+EXCEPTION
+    when object_not_in_prerequisite_state then --if 'alter extension' statement fails
+        GET STACKED DIAGNOSTICS error_msg = MESSAGE_TEXT;
+        raise warning '%', error_msg;
+    when dependent_objects_still_exist then --if 'drop function' statement fails
+        GET STACKED DIAGNOSTICS error_msg = MESSAGE_TEXT;
+        raise warning '%', error_msg;
+end
+$$
+LANGUAGE plpgsql;
+
 -- Fix sys.syslanguages
 truncate sys.syslanguages;
 
@@ -2148,14 +2173,11 @@ $BODY$
 LANGUAGE plpgsql
 VOLATILE;
 
--- Fix sys.tsql_stat_get_activity
+-- Rename function for dependencies
+ALTER FUNCTION sys.tsql_stat_get_activity(text) RENAME TO tsql_stat_get_activity_deprecated_2_0;
+ALTER FUNCTION sys.sp_datatype_info_helper(smallint, bool) RENAME TO sp_datatype_info_helper_deprecated_2_0;
 
--- need to drop dependent objects for sys.tsql_stat_get_activity(text)
-drop view if exists sys.sysprocesses;
-drop view if exists sys.dm_exec_sessions;
-drop view if exists sys.dm_exec_connections;
-
-drop function if exists sys.tsql_stat_get_activity(text);
+-- Re-create the renamed functions
 CREATE OR REPLACE FUNCTION sys.tsql_stat_get_activity(
   IN view_name text,
   OUT procid int,
@@ -2186,7 +2208,39 @@ RETURNS SETOF RECORD
 AS 'babelfishpg_tsql', 'tsql_stat_get_activity'
 LANGUAGE C VOLATILE STRICT;
 
--- restore dependent objects for sys.tsql_stat_get_activity(text)
+CREATE OR REPLACE FUNCTION sys.sp_datatype_info_helper(
+    IN odbcVer smallint,
+    IN is_100 bool,
+    OUT TYPE_NAME VARCHAR(20),
+    OUT DATA_TYPE INT,
+    OUT "PRECISION" BIGINT,
+    OUT LITERAL_PREFIX VARCHAR(20),
+    OUT LITERAL_SUFFIX VARCHAR(20),
+    OUT CREATE_PARAMS VARCHAR(20),
+    OUT NULLABLE INT,
+    OUT CASE_SENSITIVE INT,
+    OUT SEARCHABLE INT,
+    OUT UNSIGNED_ATTRIBUTE INT,
+    OUT MONEY INT,
+    OUT AUTO_INCREMENT INT,
+    OUT LOCAL_TYPE_NAME VARCHAR(20),
+    OUT MINIMUM_SCALE INT,
+    OUT MAXIMUM_SCALE INT,
+    OUT SQL_DATA_TYPE INT,
+    OUT SQL_DATETIME_SUB INT,
+    OUT NUM_PREC_RADIX INT,
+    OUT INTERVAL_PRECISION INT,
+    OUT USERTYPE INT,
+    OUT LENGTH INT,
+    OUT SS_DATA_TYPE smallint,
+-- below column is added in order to join PG's information_schema.columns for sys.sp_columns_100_view
+    OUT PG_TYPE_NAME VARCHAR(20)
+)
+RETURNS SETOF RECORD
+AS 'babelfishpg_tsql', 'sp_datatype_info_helper'
+LANGUAGE C IMMUTABLE STRICT;
+
+-- Re-create dependent objects for sys.tsql_stat_get_activity(text)
 create or replace view sys.sysprocesses as
 select
   a.pid as spid
@@ -2324,46 +2378,7 @@ create or replace view sys.dm_exec_connections
  RIGHT JOIN sys.tsql_stat_get_activity('connections') AS d ON (a.pid = d.procid);
  GRANT SELECT ON sys.dm_exec_connections TO PUBLIC;
 
-
--- Fix sys.sp_datatype_info_helper
-
--- need to drop dependent objects for sys.sp_datatype_info_helper(smallint, bool);
-drop view if exists sys.sp_special_columns_view;
-
-drop function if exists sys.sp_datatype_info_helper(smallint, bool);
-CREATE OR REPLACE FUNCTION sys.sp_datatype_info_helper(
-    IN odbcVer smallint,
-    IN is_100 bool,
-    OUT TYPE_NAME VARCHAR(20),
-    OUT DATA_TYPE INT,
-    OUT "PRECISION" BIGINT,
-    OUT LITERAL_PREFIX VARCHAR(20),
-    OUT LITERAL_SUFFIX VARCHAR(20),
-    OUT CREATE_PARAMS VARCHAR(20),
-    OUT NULLABLE INT,
-    OUT CASE_SENSITIVE INT,
-    OUT SEARCHABLE INT,
-    OUT UNSIGNED_ATTRIBUTE INT,
-    OUT MONEY INT,
-    OUT AUTO_INCREMENT INT,
-    OUT LOCAL_TYPE_NAME VARCHAR(20),
-    OUT MINIMUM_SCALE INT,
-    OUT MAXIMUM_SCALE INT,
-    OUT SQL_DATA_TYPE INT,
-    OUT SQL_DATETIME_SUB INT,
-    OUT NUM_PREC_RADIX INT,
-    OUT INTERVAL_PRECISION INT,
-    OUT USERTYPE INT,
-    OUT LENGTH INT,
-    OUT SS_DATA_TYPE smallint,
--- below column is added in order to join PG's information_schema.columns for sys.sp_columns_100_view
-    OUT PG_TYPE_NAME VARCHAR(20)
-)
-RETURNS SETOF RECORD
-AS 'babelfishpg_tsql', 'sp_datatype_info_helper'
-LANGUAGE C IMMUTABLE STRICT;
-
--- restore dependent objects for sys.sp_datatype_info_helper(smallint, bool)
+-- Re-create dependent objects for sys.sp_datatype_info_helper(smallint, bool)
 CREATE OR REPLACE VIEW sys.sp_special_columns_view AS
 SELECT DISTINCT 
 CAST(1 as smallint) AS SCOPE,
@@ -2412,6 +2427,14 @@ FROM pg_catalog.pg_class t1
 	AND has_schema_privilege(s1.schema_id, 'USAGE');
   
 GRANT SELECT ON sys.sp_special_columns_view TO PUBLIC;
+
+-- === DROP deprecated functions (if exists)
+CALL sys.babelfish_drop_deprecated_function('sys', 'tsql_stat_get_activity_deprecated_2_0');
+CALL sys.babelfish_drop_deprecated_function('sys', 'sp_datatype_info_helper_deprecated_2_0');
+
+-- Drops the temporary procedure used by the upgrade script.
+-- Please have this be one of the last statements executed in this upgrade script.
+DROP PROCEDURE sys.babelfish_drop_deprecated_function(varchar, varchar);
 
 -- Reset search_path to not affect any subsequent scripts
 SELECT set_config('search_path', trim(leading 'sys, ' from current_setting('search_path')), false);
