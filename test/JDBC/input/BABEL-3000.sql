@@ -13,6 +13,12 @@ go
 create table nums(a int, b smallint, c bigint, d float, e real, f numeric(5,3))
 go
 
+create table num_identity(a int identity, b int) 
+go
+
+create table sp_describe_t1(a int)
+go
+
 exec sp_describe_first_result_set N'select * from var'
 go
 
@@ -23,6 +29,19 @@ exec sp_describe_first_result_set N'select * from dbo.nums'
 go
 
 exec sp_describe_first_result_set N'select * from isc_udt'
+go
+
+exec sp_describe_first_result_set N'select * from master..num_identity'
+go
+
+-- no result testing
+exec sp_describe_first_result_set N'insert into sp_describe_t1 values(1)', NULL, 0
+go
+
+exec sp_describe_first_result_set
+go
+
+exec sp_describe_first_result_set N''
 go
 
 -- cross schema testing
@@ -54,6 +73,8 @@ go
 drop table var
 drop table dates
 drop table nums
+drop table num_identity
+drop table sp_describe_t1
 drop table sc_result_set.nums
 drop schema sc_result_set
 drop database db_result_set

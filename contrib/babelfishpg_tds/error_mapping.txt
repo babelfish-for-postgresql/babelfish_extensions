@@ -122,6 +122,7 @@ XX000 ERRCODE_INTERNAL_ERROR	"CREATE FUNCTION failed because a column name is no
 22023 ERRCODE_INVALID_PARAMETER_VALUE 	"MINVALUE (%s) must be less than MAXVALUE (%s)" SQL_ERROR_11705	16
 21000 ERRCODE_CARDINALITY_VIOLATION	"more than one row returned by a subquery used as an expression"	SQL_ERROR_512	16
 23514 ERRCODE_CHECK_VIOLATION	"new row for relation \"%s\" violates check constraint \"%s\""	SQL_ERROR_547	16
+XX000 ERRCODE_INTERNAL_ERROR	"no owned sequence found" SQL_ERROR_550	16
 44000 ERRCODE_WITH_CHECK_OPTION_VIOLATION	"new row violates check option for view \"%s\"" SQL_ERROR_550	16
 23502 ERRCODE_NOT_NULL_VIOLATION	"null value in column \"%s\" of relation \"%s\" violates not-null constraint"	SQL_ERROR_515	16
 22023 ERRCODE_INVALID_PARAMETER_VALUE	"msg_id argument of RAISERROR should be no less than 50000"	SQL_ERROR_2732 16
