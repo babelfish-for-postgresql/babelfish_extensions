@@ -885,19 +885,7 @@ get_rule_expr(Node *node, deparse_context *context,
 				RelabelType *relabel = (RelabelType *) node;
 				Node	   *arg = (Node *) relabel->arg;
 
-				if (relabel->relabelformat == COERCE_IMPLICIT_CAST &&
-					!showimplicit)
-				{
-					/* don't show the implicit cast */
-					get_rule_expr_paren(arg, context, false, node);
-				}
-				else
-				{
-					get_coercion_expr(arg, context,
-									  relabel->resulttype,
-									  relabel->resulttypmod,
-									  node);
-				}
+				get_rule_expr_paren(arg, context, false, node);
 			}
 			break;
 
@@ -1376,6 +1364,8 @@ get_const_expr(Const *constval, deparse_context *context, int showtype)
 	switch (constval->consttype)
 	{
 		case BOOLOID:
+		case TEXTOID:
+		case CHAROID:
 		case UNKNOWNOID:
 			/* These types can be left unlabeled */
 			needlabel = false;
@@ -1533,6 +1523,7 @@ get_func_expr(FuncExpr *expr, deparse_context *context,
 	int			nargs;
 	List	   *argnames;
 	bool		use_variadic;
+	char	   *funcname;
 	ListCell   *l;
 
 	/*
@@ -1587,22 +1578,36 @@ get_func_expr(FuncExpr *expr, deparse_context *context,
 		nargs++;
 	}
 
-	appendStringInfo(buf, "%s(",
-					 generate_function_name(funcoid, nargs,
-											argnames, argtypes,
-											expr->funcvariadic,
-											&use_variadic,
-											context->special_exprkind));
-	nargs = 0;
-	foreach(l, expr->args)
+	funcname = generate_function_name(funcoid, nargs,
+									  argnames, argtypes,
+									  expr->funcvariadic,
+									  &use_variadic,
+									  context->special_exprkind);
+
+	/*
+	 * AT TIMEZONE from TSQL is parsed to timezone function internally. 
+	 * While de-parsing, convert it to AT TIME ZONE explicitly.
+	 */
+	if (strcmp(funcname,"timezone") == 0)
 	{
-		if (nargs++ > 0)
-			appendStringInfoString(buf, ", ");
-		if (use_variadic && lnext(expr->args, l) == NULL)
-			appendStringInfoString(buf, "VARIADIC ");
-		get_rule_expr((Node *) lfirst(l), context, true);
+		get_rule_expr((Node *) list_nth(expr->args, 1), context, false);
+		appendStringInfoString(buf, "AT TIME ZONE ");
+		get_rule_expr((Node *) list_nth(expr->args, 0), context, false);
 	}
-	appendStringInfoChar(buf, ')');
+	else
+	{
+		appendStringInfo(buf, "%s(", funcname);
+		nargs = 0;
+		foreach(l, expr->args)
+		{
+			if (nargs++ > 0)
+				appendStringInfoString(buf, ", ");
+			if (use_variadic && lnext(expr->args, l) == NULL)
+				appendStringInfoString(buf, "VARIADIC ");
+			get_rule_expr((Node *) lfirst(l), context, false);
+		}
+		appendStringInfoChar(buf, ')');
+	}
 }
 
 /*

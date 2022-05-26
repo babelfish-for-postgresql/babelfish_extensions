@@ -43,6 +43,25 @@ create table test_tsql_collate(
 );
 go
 
+create table test_datetime(
+	c_time time check(cast(c_time as time) < cast('09:00:00' as time) and c_time < cast('09:00:00' as time(6))),
+	c_date date check(c_date < cast('2001-01-01' as date)),
+	c_datetime datetime check(c_datetime < cast('2020-10-20 09:00:00' as datetime)),
+	c_datetime2 datetime2 check(c_datetime2 < cast('2020-10-20 09:00:00' as datetime2) and c_datetime2 < cast('2020-10-20 09:00:00' as datetime2(6)) ),
+	c_datetimeoffset datetimeoffset check(c_datetimeoffset < cast('12-10-25 12:32:10 +01:00' as datetimeoffset) and c_datetimeoffset < cast('12-10-25 12:32:10 +01:00' as datetimeoffset(4))),
+	c_smalldatetime smalldatetime check(c_smalldatetime < cast('2007-05-08 12:35:29.123' AS smalldatetime)),
+);
+go
+
+create table test_functioncall(
+	col1 sys.nvarchar,
+	check (isjson(col1) > 0),
+	check (right(col1,1) <> ','),
+	check (ltrim(col1) <> ''),
+	check (CONVERT([nvarchar](128),(getutcdate() AT TIME ZONE [col1]))<>'')
+);
+go
+
 create table test_null(a int, b int, check(a IS NOT NULL), CONSTRAINT constraint1 check (a>10));
 go
 
@@ -56,6 +75,8 @@ select * from information_schema_tsql.check_constraints order by "CONSTRAINT_NAM
 go
 
 drop table test_tsql_const
+drop table test_datetime
+drop table test_functioncall
 drop table test_null
 drop table test_tsql_collate
 drop table test_tsql_cast
@@ -76,7 +97,7 @@ create schema sch1;
 go
 
 create table sch1.test_date(
-	c_datetime datetime check(c_datetime < CAST('20060830' AS datetime)),
+	col_datetime datetime check(col_datetime < CAST('20060830' AS datetime)),
 );
 go
 
