@@ -139,7 +139,7 @@ jobs:
 
       - name: Rename Test Summary Files
         id: test-file-rename
-        if: always() && (steps.run-preparation-test.outcome == 'failure' || steps.run-verification-test.outcome == 'failure')
+        if: always() && (steps.run-pg_upgrade.outcome == 'failure' || steps.run-preparation-test.outcome == 'failure' || steps.run-verification-test.outcome == 'failure')
         run: |
           cd test/JDBC/Info
           timestamp=`ls -Art | tail -n 1`

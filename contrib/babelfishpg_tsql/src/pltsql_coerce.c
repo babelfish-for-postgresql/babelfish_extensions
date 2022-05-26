@@ -940,6 +940,7 @@ tsql_coerce_string_literal_hook(ParseCallbackState *pcbstate, Oid targetTypeId,
 						char *msg;
 						List *args;
 						FuncExpr *errFunc;
+						Node *coerced;
 
 						msg = pstrdup("An empty or space-only string cannot be converted into numeric/decimal data type");
 						args = list_make1(makeConst(TEXTOID,
@@ -949,7 +950,7 @@ tsql_coerce_string_literal_hook(ParseCallbackState *pcbstate, Oid targetTypeId,
 													PointerGetDatum(cstring_to_text(msg)),
 													false,
 													false));
-						errFunc = makeFuncExpr(errFuncOid, targetTypeId, args, 0, 0, cformat);
+						errFunc = makeFuncExpr(errFuncOid, targetTypeId, args, 0, 0, COERCE_EXPLICIT_CALL);
 
 						cancel_parser_errposition_callback(pcbstate);
 
@@ -962,6 +963,11 @@ tsql_coerce_string_literal_hook(ParseCallbackState *pcbstate, Oid targetTypeId,
 													  targetTypeId,
 													  ccontext, cformat, location,
 													  false);
+
+						coerced = coerce_to_target_type(NULL, result, ANYCOMPATIBLEOID,
+														NUMERICOID, targetTypeMod, COERCION_PLPGSQL,
+														cformat, location);
+						result = coerced ? coerced : result;
 
 						ReleaseSysCache(baseType);
 
