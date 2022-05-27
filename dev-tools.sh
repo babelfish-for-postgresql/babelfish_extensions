@@ -154,7 +154,7 @@ elif [ "$1" == "pg_upgrade" ]; then
     ../postgres/bin/pg_upgrade -U $USER \
         -b $SOURCE_WS/postgres/bin -B $TARGET_WS/postgres/bin \
         -d $SOURCE_WS/postgres/data -D $TARGET_WS/postgres/data \
-        -p 5432 -P 5433 -j 4 --link --verbose
+        -p 5432 -P 5433 -j 4 --link --verbose --retain
     echo ""
 
     ./delete_old_cluster.sh
