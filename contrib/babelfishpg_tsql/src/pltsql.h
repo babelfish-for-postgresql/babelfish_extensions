@@ -1416,26 +1416,6 @@ typedef struct PLtsql_plugin
 } PLtsql_plugin;
 
 /*
- * When we load this extension, we create a rendezvous variable named
- * "PLtsql_config" that points to an instance of type PLtsql_config.
- *
- * We use this rendezvous variable to safely share information with
- * the engine even before the extension is loaded.  If you call 
- * find_rendezvous_variable("PLtsql_config") and find  that *result
- * is NULL, then the extension has not been loaded.  If you find
- * that *result is non-NULL, it points to an instance of the 
- * PLtsql_config struct shown here.
- */
-
-typedef struct PLtsql_config
-{
-	char	*version;         /* Extension version info */
-	Oid		 handler_oid;     /* Oid of language handler function */
-	Oid		 validator_oid;   /* Oid of language validator function */
-} PLtsql_config;
-
-
-/*
  * When we load instrumentation extension, we create a rendezvous variable named
  * "PLtsql_instr_plugin" that points to an instance of type PLtsql_instr_plugin.
  *

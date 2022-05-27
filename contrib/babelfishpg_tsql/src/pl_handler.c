@@ -100,6 +100,7 @@ extern PLtsql_execstate *get_current_tsql_estate(void);
 extern PLtsql_execstate *get_outermost_tsql_estate(int *nestlevel);
 extern void pre_check_trigger_schema(List *object, bool missing_ok);
 static void  get_language_procs(const char *langname, Oid *compiler, Oid *validator);
+static void get_func_language_oids(Oid *lang_handler, Oid *lang_validator);
 extern bool pltsql_suppress_string_truncation_error();
 static Oid bbf_table_var_lookup(const char *relname, Oid relnamespace);
 extern void assign_object_access_hook_drop_relation(void);
@@ -148,7 +149,8 @@ static void revoke_type_permission_from_public(PlannedStmt *pstmt, const char *q
 
 PG_FUNCTION_INFO_V1(pltsql_inline_handler);
 
-static PLtsql_config myConfig;
+static Oid lang_handler_oid = InvalidOid;     /* Oid of language handler function */
+static Oid lang_validator_oid = InvalidOid;   /* Oid of language validator function */
 
 PG_MODULE_MAGIC;
 
@@ -208,7 +210,6 @@ tsql_identity_insert_fields tsql_identity_insert = {false, InvalidOid, InvalidOi
 
 /* Hook for plugins */
 PLtsql_plugin **pltsql_plugin_ptr = NULL;
-PLtsql_config **pltsql_config_ptr = NULL;
 PLtsql_instr_plugin **pltsql_instr_plugin_ptr = NULL;
 PLtsql_protocol_plugin **pltsql_protocol_plugin_ptr = NULL;
 
@@ -220,6 +221,7 @@ static pltsql_identity_datatype_hook_type prev_pltsql_identity_datatype_hook = N
 static pltsql_sequence_datatype_hook_type prev_pltsql_sequence_datatype_hook = NULL;
 static relname_lookup_hook_type prev_relname_lookup_hook = NULL;
 static ProcessUtility_hook_type prev_ProcessUtility = NULL;
+static get_func_language_oids_hook_type prev_get_func_language_oids_hook = NULL;
 plansource_complete_hook_type prev_plansource_complete_hook = NULL;
 plansource_revalidate_hook_type prev_plansource_revalidate_hook = NULL;
 planner_node_transformer_hook_type prev_planner_node_transformer_hook = NULL;
@@ -3313,7 +3315,6 @@ _PG_init(void)
 	
 	/* Set up a rendezvous point with optional instrumentation plugin */
 	pltsql_plugin_ptr = (PLtsql_plugin **) find_rendezvous_variable("PLtsql_plugin");
-	pltsql_config_ptr = (PLtsql_config **) find_rendezvous_variable("PLtsql_config");
 	pltsql_instr_plugin_ptr = (PLtsql_instr_plugin **) find_rendezvous_variable("PLtsql_instr_plugin");
 	coll_cb_ptr = (Tsql_collation_callbacks **) find_rendezvous_variable("PLtsql_collation_callbacks");
 	*coll_cb_ptr = get_collation_callbacks();
@@ -3364,9 +3365,7 @@ _PG_init(void)
 		(*pltsql_protocol_plugin_ptr)->pltsql_is_fmtonly_stmt = &pltsql_fmtonly;
 	}
 
-	*pltsql_config_ptr = &myConfig;
-
-	get_language_procs("pltsql", &myConfig.handler_oid, &myConfig.validator_oid);
+	get_language_procs("pltsql", &lang_handler_oid, &lang_validator_oid);
 
 	/* Install hooks. */
 	raw_parser_hook = babelfishpg_tsql_raw_parser;
@@ -3437,10 +3436,8 @@ _PG_init(void)
 	prev_non_tsql_proc_entry_hook = non_tsql_proc_entry_hook;
 	non_tsql_proc_entry_hook = pltsql_non_tsql_proc_entry;
 
-	/*
-	 * NOTE: change the version when you change the layout of myConfig
-	 */
-	myConfig.version = "1.0.0";
+	prev_get_func_language_oids_hook = get_func_language_oids_hook;
+	get_func_language_oids_hook = get_func_language_oids;
 
 	inited = true;
 }
@@ -3468,6 +3465,7 @@ _PG_fini(void)
 	guc_push_old_value_hook = prev_guc_push_old_value_hook;
 	validate_set_config_function_hook = prev_validate_set_config_function_hook;
 	non_tsql_proc_entry_hook = prev_non_tsql_proc_entry_hook;
+	get_func_language_oids_hook = prev_get_func_language_oids_hook;
 
 	UninstallExtendedHooks();
 }
@@ -4378,6 +4376,21 @@ get_language_procs(const char *langname, Oid *compiler, Oid *validator)
 		*compiler = InvalidOid;
 		*validator = InvalidOid;
 	}
+}
+
+/*
+ * Engine hook to get OID for language handler and validator for
+ * TSQL language
+ */
+static void
+get_func_language_oids(Oid *lang_handler, Oid *lang_validator)
+{
+	if (lang_handler_oid == InvalidOid || lang_validator_oid == InvalidOid)
+	{
+		get_language_procs("pltsql", &lang_handler_oid, &lang_validator_oid);
+	}
+	*lang_handler = lang_handler_oid;
+	*lang_validator = lang_validator_oid;
 }
 
 /*
