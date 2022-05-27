@@ -2372,6 +2372,12 @@ tsql_format_type_extended(Oid type_oid, int32 typemod, bits16 flags)
 
 		typname = NameStr(typeform->typname);
 
+		/*
+		 * Replace bbf_binary with binary
+		 */
+		if (strcmp(typname, "bbf_binary") == 0)
+				typname = "binary"; 
+
 		buf = quote_qualified_identifier(nspname, typname);
 	}
 
