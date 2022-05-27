@@ -32,6 +32,9 @@ if [ ! $1 ]; then
     echo ""
     echo "  test INPUT_DIR [TARGET_WS]"
     echo "      run JDBC test"
+    echo ""
+    echo "  minor_version_upgrade SOURCE_WS [TARGET_WS]"
+    echo "      upgrade minor version using ALTER EXTENSION ... UPDATE"
     exit 0
 fi
 
@@ -46,7 +49,7 @@ CUR_WS=$PWD
 echo "Current Workspace: $CUR_WS"
 
 TARGET_WS=$2
-if [ "$1" == "pg_upgrade" ] || [ "$1" == "test" ]; then
+if [ "$1" == "pg_upgrade" ] || [ "$1" == "test" ] || [ "$1" == "minor_version_upgrade" ]; then
     TARGET_WS=$3
 fi
 if [ ! $TARGET_WS ]; then
@@ -184,5 +187,41 @@ elif [ "$1" == "test" ]; then
     rm -rf output
     export inputFilesPath=$INPUT_DIR
     mvn test
+    exit 0
+elif [ "$1" == "minor_version_upgrade" ]; then
+    echo "Building from $SOURCE_WS..."
+    SOURCE_WS=$2
+    cd $SOURCE_WS/postgresql_modified_for_babelfish
+    ./configure --prefix=$TARGET_WS/postgres/ --without-readline --without-zlib --enable-debug CFLAGS="-ggdb" --with-libxml --with-uuid=ossp --with-icu
+    make -j 4
+    make install
+    cd contrib && make && sudo make install
+
+    cd $SOURCE_WS/babelfish_extensions
+    export PG_CONFIG=$TARGET_WS/postgres/bin/pg_config
+    export PG_SRC=$SOURCE_WS/postgresql_modified_for_babelfish
+    export cmake=$(which cmake)
+    cd contrib/babelfishpg_money
+    make clean && make && make install
+    cd ../babelfishpg_common
+    make clean && make && make install
+    cd ../babelfishpg_tds
+    make clean && make && make install
+    cd ../babelfishpg_tsql
+    make clean && make && make install
+
+    echo "Initializing from $SOURCE_WS..."
+    init_db $TARGET_WS
+    $TARGET_WS/babelfish_extensions/test/JDBC/init.sh
+
+    echo "Building from $TARGET_WS..."
+    build_pg $TARGET_WS
+    build_bbf $TARGET_WS
+    restart $TARGET_WS
+
+    echo "Updating Babelfish..."
+    cd $TARGET_WS/postgres
+    bin/psql -d $TEST_DB -U $USER -c \
+        "ALTER EXTENSION babelfishpg_common UPDATE; ALTER EXTENSION babelfishpg_tsql UPDATE;"
     exit 0
 fi
