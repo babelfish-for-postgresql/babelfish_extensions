@@ -1,0 +1,367 @@
+#Q#Create table sourceTable(a int, b int not null)
+#Q#Create table destinationTable(a int, b int not null)
+#Q#Insert into sourceTable values (1, 1);
+#Q#Insert into sourceTable values (NULL, 2);
+#Q#Select * from sourceTable
+#D#int#!#int
+1#!#1
+#!#2
+#Q#Select * from destinationTable
+#D#int#!#int
+1#!#1
+#!#2
+#Q#drop table sourceTable
+#Q#drop table destinationTable
+#Q#Create table sourceTable(a smallint, b smallint not null)
+#Q#Create table destinationTable(a smallint, b smallint not null)
+#Q#Insert into sourceTable values (1, 1);
+#Q#Insert into sourceTable values (NULL, 2);
+#Q#Select * from sourceTable
+#D#smallint#!#smallint
+1#!#1
+#!#2
+#Q#Select * from destinationTable
+#D#smallint#!#smallint
+1#!#1
+#!#2
+#Q#drop table sourceTable
+#Q#drop table destinationTable
+#Q#Create table sourceTable(a bigint, b bigint not null)
+#Q#Create table destinationTable(a bigint, b bigint not null)
+#Q#Insert into sourceTable values (1, 1);
+#Q#Insert into sourceTable values (NULL, 2);
+#Q#Select * from sourceTable
+#D#bigint#!#bigint
+1#!#1
+#!#2
+#Q#Select * from destinationTable
+#D#bigint#!#bigint
+1#!#1
+#!#2
+#Q#drop table sourceTable
+#Q#drop table destinationTable
+#Q#Create table sourceTable(a bit, b bit not null)
+#Q#Create table destinationTable(a bit, b bit not null)
+#Q#Insert into sourceTable values (1, 1);
+#Q#Insert into sourceTable values (NULL, 0);
+#Q#Select * from sourceTable
+#D#bit#!#bit
+True#!#True
+#!#False
+#Q#Select * from destinationTable
+#D#bit#!#bit
+True#!#True
+#!#False
+#Q#drop table sourceTable
+#Q#drop table destinationTable
+#Q#Create table sourceTable(a float, b float not null)
+#Q#Create table destinationTable(a float, b float not null)
+#Q#Insert into sourceTable values (1.1101, 0.00010);
+#Q#Insert into sourceTable values (NULL, 0.101010);
+#Q#Select * from sourceTable
+#D#float#!#float
+1.1101#!#0.0001
+#!#0.10101
+#Q#Select * from destinationTable
+#D#float#!#float
+1.1101#!#0.0001
+#!#0.10101
+#Q#drop table sourceTable
+#Q#drop table destinationTable
+#Q#Create table sourceTable(a real, b real not null)
+#Q#Create table destinationTable(a real, b real not null)
+#Q#Insert into sourceTable values (1.1101, 0.00010);
+#Q#Insert into sourceTable values (NULL, 0.101010);
+#Q#Select * from sourceTable
+#D#real#!#real
+1.1101#!#0.0001
+#!#0.10101
+#Q#Select * from destinationTable
+#D#real#!#real
+1.1101#!#0.0001
+#!#0.10101
+#Q#drop table sourceTable
+#Q#drop table destinationTable
+#Q#Create table sourceTable(a char(10), b char(10) not null)
+#Q#Create table destinationTable(a char(10), b char(10) not null)
+#Q#Insert into sourceTable values ('hello', 'jello');
+#Q#Insert into sourceTable values (NULL, 'mellow');
+#Q#Select * from sourceTable
+#D#char#!#char
+hello     #!#jello     
+#!#mellow    
+#Q#Select * from destinationTable
+#D#char#!#char
+hello     #!#jello     
+#!#mellow    
+#Q#drop table sourceTable
+#Q#drop table destinationTable
+#Q#Create table sourceTable(a nchar(10), b nchar(10) not null)
+#Q#Create table destinationTable(a nchar(10), b nchar(10) not null)
+#Q#Insert into sourceTable values ('hello', 'jello');
+#Q#Insert into sourceTable values (NULL, 'mellow');
+#Q#Select * from sourceTable
+#D#nchar#!#nchar
+hello     #!#jello     
+#!#mellow    
+#Q#Select * from destinationTable
+#D#nchar#!#nchar
+hello     #!#jello     
+#!#mellow    
+#Q#drop table sourceTable
+#Q#drop table destinationTable
+#Q#Create table sourceTable(a varchar(10), b varchar(10) not null)
+#Q#Create table destinationTable(a varchar(10), b varchar(10) not null)
+#Q#Insert into sourceTable values ('hello', 'jello');
+#Q#Insert into sourceTable values (NULL, 'mellow');
+#Q#Select * from sourceTable
+#D#varchar#!#varchar
+hello#!#jello
+#!#mellow
+#Q#Select * from destinationTable
+#D#varchar#!#varchar
+hello#!#jello
+#!#mellow
+#Q#drop table sourceTable
+#Q#drop table destinationTable
+#Q#Create table sourceTable(a nvarchar(10), b nvarchar(10) not null)
+#Q#Create table destinationTable(a nvarchar(10), b nvarchar(10) not null)
+#Q#Insert into sourceTable values ('hello', 'jello');
+#Q#Insert into sourceTable values (NULL, 'mellow');
+#Q#Select * from sourceTable
+#D#nvarchar#!#nvarchar
+hello#!#jello
+#!#mellow
+#Q#Select * from destinationTable
+#D#nvarchar#!#nvarchar
+hello#!#jello
+#!#mellow
+#Q#drop table sourceTable
+#Q#drop table destinationTable
+#Q#Create table sourceTable(a text, b text not null)
+#Q#Create table destinationTable(a text, b text not null)
+#Q#Insert into sourceTable values ('hello', 'jello');
+#Q#Insert into sourceTable values (NULL, 'mellow');
+#Q#Select * from sourceTable
+#D#text#!#text
+hello#!#jello
+#!#mellow
+#Q#Select * from destinationTable
+#D#text#!#text
+hello#!#jello
+#!#mellow
+#Q#drop table sourceTable
+#Q#drop table destinationTable
+#Q#Create table sourceTable(a ntext, b ntext not null)
+#Q#Create table destinationTable(a ntext, b ntext not null)
+#Q#Insert into sourceTable values ('hello', 'jello');
+#Q#Insert into sourceTable values (NULL, 'mellow');
+#Q#Select * from sourceTable
+#D#ntext#!#ntext
+hello#!#jello
+#!#mellow
+#Q#Select * from destinationTable
+#D#ntext#!#ntext
+hello#!#jello
+#!#mellow
+#Q#drop table sourceTable
+#Q#drop table destinationTable
+#Q#Create table sourceTable(a binary(10), b binary(10) not null)
+#Q#Create table destinationTable(a binary(10), b binary(10) not null)
+#Q#Insert into sourceTable values (0x31323334, 0x9241);
+#Q#Insert into sourceTable values (NULL, 0x4202);
+#Q#Select * from sourceTable
+#D#binary#!#binary
+49505152000000#!#1466500000000
+
+66200000000
+#Q#Select * from destinationTable
+#D#binary#!#binary
+49505152000000#!#1466500000000
+
+66200000000
+#Q#drop table sourceTable
+#Q#drop table destinationTable
+#Q#Create table sourceTable(a varbinary(10), b varbinary(10) not null)
+#Q#Create table destinationTable(a varbinary(10), b varbinary(10) not null)
+#Q#Insert into sourceTable values (0x31323334, 0x9241);
+#Q#Insert into sourceTable values (NULL, 0x4202);
+#Q#Select * from sourceTable
+#D#varbinary#!#varbinary
+49505152#!#14665
+
+662
+#Q#Select * from destinationTable
+#D#varbinary#!#varbinary
+49505152#!#14665
+
+662
+#Q#drop table sourceTable
+#Q#drop table destinationTable
+#Q#Create table sourceTable(a numeric(38, 22), b numeric(38, 22) not null)
+#Q#Create table destinationTable(a numeric(38, 22), b numeric(38, 22) not null)
+#Q#Insert into sourceTable values (1.1101, 0.00010);
+#Q#Insert into sourceTable values (NULL, 0.101010);
+#Q#Select * from sourceTable
+#D#decimal#!#decimal
+1.1101000000000000000000#!#0.0001000000000000000000
+#!#0.1010100000000000000000
+#Q#Select * from destinationTable
+#D#decimal#!#decimal
+1.1101000000000000000000#!#0.0001000000000000000000
+#!#0.1010100000000000000000
+#Q#drop table sourceTable
+#Q#drop table destinationTable
+#Q#Create table sourceTable(a decimal(38, 22), b decimal(38, 22) not null)
+#Q#Create table destinationTable(a decimal(38, 22), b decimal(38, 22) not null)
+#Q#Insert into sourceTable values (1.1101, 0.00010);
+#Q#Insert into sourceTable values (NULL, 0.101010);
+#Q#Select * from sourceTable
+#D#decimal#!#decimal
+1.1101000000000000000000#!#0.0001000000000000000000
+#!#0.1010100000000000000000
+#Q#Select * from destinationTable
+#D#decimal#!#decimal
+1.1101000000000000000000#!#0.0001000000000000000000
+#!#0.1010100000000000000000
+#Q#drop table sourceTable
+#Q#drop table destinationTable
+#Q#Create table sourceTable(a money, b money not null)
+#Q#Create table destinationTable(a money, b money not null)
+#Q#Insert into sourceTable values (100.11, 0.10);
+#Q#Insert into sourceTable values (NULL, 91.12);
+#Q#Select * from sourceTable
+#D#money#!#money
+100.1100#!#0.1000
+#!#91.1200
+#Q#Select * from destinationTable
+#D#money#!#money
+100.1100#!#0.1000
+#!#91.1200
+#Q#drop table sourceTable
+#Q#drop table destinationTable
+#Q#Create table sourceTable(a smallmoney, b smallmoney not null)
+#Q#Create table destinationTable(a smallmoney, b smallmoney not null)
+#Q#Insert into sourceTable values (100.11, 0.10);
+#Q#Insert into sourceTable values (NULL, 91.12);
+#Q#Select * from sourceTable
+#D#smallmoney#!#smallmoney
+100.1100#!#0.1000
+#!#91.1200
+#Q#Select * from destinationTable
+#D#smallmoney#!#smallmoney
+100.1100#!#0.1000
+#!#91.1200
+#Q#drop table sourceTable
+#Q#drop table destinationTable
+#Q#Create table sourceTable(a uniqueidentifier, b uniqueidentifier not null)
+#Q#Create table destinationTable(a uniqueidentifier, b uniqueidentifier not null)
+#Q#Insert into sourceTable values ('51f178a6-53c7-472c-9be1-1c08942342d7', 'dd8cb046-461d-411e-be40-d219252ce849');
+#Q#Insert into sourceTable values (NULL, 'b84ebcc9-c927-4cfe-b08e-dc7f25b5087c');
+#Q#Select * from sourceTable
+#D#uniqueidentifier#!#uniqueidentifier
+51f178a6-53c7-472c-9be1-1c08942342d7#!#dd8cb046-461d-411e-be40-d219252ce849
+#!#b84ebcc9-c927-4cfe-b08e-dc7f25b5087c
+#Q#Select * from destinationTable
+#D#uniqueidentifier#!#uniqueidentifier
+51f178a6-53c7-472c-9be1-1c08942342d7#!#dd8cb046-461d-411e-be40-d219252ce849
+#!#b84ebcc9-c927-4cfe-b08e-dc7f25b5087c
+#Q#drop table sourceTable
+#Q#drop table destinationTable
+#Q#Create table sourceTable(a date, b date not null)
+#Q#Create table destinationTable(a date, b date not null)
+#Q#Insert into sourceTable values ('2000-02-28', '0001-01-01');
+#Q#Insert into sourceTable values (NULL, '1001-11-11');
+#Q#Select * from sourceTable
+#D#date#!#date
+02/28/2000 00:00:00#!#01/01/0001 00:00:00
+#!#11/11/1001 00:00:00
+#Q#Select * from destinationTable
+#D#date#!#date
+02/28/2000 00:00:00#!#01/01/0001 00:00:00
+#!#11/11/1001 00:00:00
+#Q#drop table sourceTable
+#Q#drop table destinationTable
+#Q#Create table sourceTable(a time(6), b time(6) not null)
+#Q#Create table destinationTable(a time(6), b time(6) not null)
+#Q#Insert into sourceTable values ('12:45:37.123', '12:45:37.12');
+#Q#Insert into sourceTable values (NULL, '12:45:37.123456');
+#Q#Select * from sourceTable
+#D#time#!#time
+12:45:37.1230000#!#12:45:37.1200000
+#!#12:45:37.1234560
+#Q#Select * from destinationTable
+#D#time#!#time
+12:45:37.1230000#!#12:45:37.1200000
+#!#12:45:37.1234560
+#Q#drop table sourceTable
+#Q#drop table destinationTable
+#Q#Create table sourceTable(a datetime, b datetime not null)
+#Q#Create table destinationTable(a datetime, b datetime not null)
+#Q#Insert into sourceTable values ('2000-12-13 12:58:23.123', '1900-02-28 23:59:59.989');
+#Q#Insert into sourceTable values (NULL, '9999-12-31 23:59:59.997');
+#Q#Select * from sourceTable
+#D#datetime#!#datetime
+12/13/2000 12:58:23#!#02/28/1900 23:59:59
+#!#12/31/9999 23:59:59
+#Q#Select * from destinationTable
+#D#datetime#!#datetime
+12/13/2000 12:58:23#!#02/28/1900 23:59:59
+#!#12/31/9999 23:59:59
+#Q#drop table sourceTable
+#Q#drop table destinationTable
+#Q#Create table sourceTable(a smalldatetime, b smalldatetime not null)
+#Q#Create table destinationTable(a smalldatetime, b smalldatetime not null)
+#Q#Insert into sourceTable values ('2007-05-08 12:35:29', '2000-12-13 12:58:23');
+#Q#Insert into sourceTable values (NULL, '2000-02-28 23:45:30');
+#Q#Select * from sourceTable
+#D#smalldatetime#!#smalldatetime
+05/08/2007 12:35:00#!#12/13/2000 12:58:00
+#!#02/28/2000 23:46:00
+#Q#Select * from destinationTable
+#D#smalldatetime#!#smalldatetime
+05/08/2007 12:35:00#!#12/13/2000 12:58:00
+#!#02/28/2000 23:46:00
+#Q#drop table sourceTable
+#Q#drop table destinationTable
+#Q#Create table sourceTable(a Datetime2(6), b Datetime2(6) not null)
+#Q#Create table destinationTable(a Datetime2(6), b Datetime2(6) not null)
+#Q#Insert into sourceTable values ('2016-10-23 12:45:37.123', '2016-10-23 12:45:37.123');
+#Q#Insert into sourceTable values (NULL, '2016-10-23 12:45:37.123456');
+#Q#Select * from sourceTable
+#D#datetime2#!#datetime2
+10/23/2016 12:45:37#!#10/23/2016 12:45:37
+#!#10/23/2016 12:45:37
+#Q#Select * from destinationTable
+#D#datetime2#!#datetime2
+10/23/2016 12:45:37#!#10/23/2016 12:45:37
+#!#10/23/2016 12:45:37
+#Q#drop table sourceTable
+#Q#drop table destinationTable
+#Q#Create table sourceTable(a sql_variant, b sql_variant not null)
+#Q#Create table destinationTable(a sql_variant, b sql_variant not null)
+#Q#Insert into sourceTable values (NULL, cast ('14:37:45.123456' as time(5)));
+#Q#Select * from sourceTable
+#D#sql_variant#!#sql_variant
+#!#14:37:45.1234600
+#Q#Select * from destinationTable
+#D#sql_variant#!#sql_variant
+#!#14:37:45.1234600
+#Q#drop table sourceTable
+#Q#drop table destinationTable
+#Q#Create table sourceTable(a image, b image not null)
+#Q#Create table destinationTable(a image, b image not null)
+#Q#Insert into sourceTable values (0x31323334, 0x9241);
+#Q#Insert into sourceTable values (NULL, 0x4202);
+#Q#Select * from sourceTable
+#D#image#!#image
+49505152#!#14665
+
+662
+#Q#Select * from destinationTable
+#D#image#!#image
+49505152#!#14665
+
+662
+#Q#drop table sourceTable
+#Q#drop table destinationTable
