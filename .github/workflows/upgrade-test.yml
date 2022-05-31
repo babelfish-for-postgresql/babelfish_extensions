@@ -29,13 +29,12 @@ jobs:
             yq '.upgrade-version[0]' ${{ github.workspace }}/.github/configuration/upgrade-test-configuration.yml
           )"
 
-      - name: find-branch
-        id: find-branch
+      - name: find-engine-branch
+        id: find-engine-branch
         run: >
           echo "::set-output name=base-engine-branch::$(
             yq '.${{ steps.read-base-version.outputs.base-version }}.engine-branch' ${{ github.workspace }}/.github/template/version-branch-template.yml
-          )"
-        run: >
+          )" &&
           echo "::set-output name=base-extension-branch::$(
             yq '.${{ steps.read-base-version.outputs.base-version }}.extension-branch' ${{ github.workspace }}/.github/template/version-branch-template.yml
           )"
