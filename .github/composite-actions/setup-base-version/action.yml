@@ -23,7 +23,7 @@ runs:
 
     - uses: actions/checkout@v2
       with:
-        repository: babelfish-for-postgresql/babelfish_extensions
+        repository: rohit01010/babelfish_extensions
         ref: ${{ inputs.extension_branch }}
 
     - name: Set env variables and build extensions using ${{ inputs.extension_branch }}
