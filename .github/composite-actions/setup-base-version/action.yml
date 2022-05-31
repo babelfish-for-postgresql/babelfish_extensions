@@ -1,13 +1,21 @@
 name: 'Setup Base Version'
+inputs:
+  engine_branch: 
+    description: "Engine Branch"
+    required: true
+  extension_branch: 
+    description: "Extension Branch"
+    required: true
+
 runs:
   using: "composite"
   steps:    
-    - name: Clone, build, and run tests for Postgres engine using ${{INPUT_ENGINE_VER}}
+    - name: Clone, build, and run tests for Postgres engine using ${{ inputs.engine_branch }}
       id: build-modified-postgres-older
       if: always() && steps.install-dependencies.outcome == 'success'
       uses: ./.github/composite-actions/build-modified-postgres
       with:
-        engine_branch: ${{INPUT_ENGINE_VER}}
+        engine_branch: ${{ inputs.engine_branch }}
 
     - name: Compile ANTLR
       id: compile-antlr
@@ -17,9 +25,9 @@ runs:
     - uses: actions/checkout@v2
       with:
         repository: babelfish-for-postgresql/babelfish_extensions
-        ref: ${{INPUT_EXTENSION_VER}}
+        ref: ${{ inputs.extension_branch }}
 
-    - name: Set env variables and build extensions using ${{INPUT_EXTENSION_VER}}
+    - name: Set env variables and build extensions using ${{ inputs.extension_branch }}
       if: always() && steps.compile-antlr.outcome == 'success'
       run: |
         export PG_CONFIG=~/postgres/bin/pg_config
