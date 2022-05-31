@@ -43,7 +43,7 @@ jobs:
             yq -r '."${{ steps.read-base-version.outputs.base-version }}".extension_branch' ${{ github.workspace }}/.github/template/version-branch-template.yml
           )"
 
-      - name: Setup Base Version
+      - name: Setup Base Version and Runs Tests
         id: setup-base-version
         timeout-minutes: 20
         if: always() && steps.install-dependencies.outcome == 'success' && steps.find-branch.outcome == 'success'
