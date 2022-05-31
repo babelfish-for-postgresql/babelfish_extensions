@@ -25,7 +25,7 @@ runs:
 
     - name: Compile ANTLR
       id: compile-antlr
-      if: always() && steps.build-modified-postgres-older.outcome == 'success'
+      if: always() && steps.build-modified-postgres.outcome == 'success'
       uses: ./.github/composite-actions/compile-antlr
 
     - uses: actions/checkout@v2
