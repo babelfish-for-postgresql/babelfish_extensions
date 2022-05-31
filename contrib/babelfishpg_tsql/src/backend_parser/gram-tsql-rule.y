@@ -1566,6 +1566,19 @@ joined_table:
 					n->quals = NULL;
 					$$ = n;
 				}
+			| table_ref OUTER_P table_ref
+				{
+					/* OUTER APPLY is the same as LEFT JOIN LATERAL */
+					JoinExpr *n = makeNode(JoinExpr);
+					n->jointype = JOIN_LEFT;
+					n->isNatural = false;
+					n->larg = $1;
+					n->rarg = $3;
+					n->usingClause = NIL;
+					n->join_using_alias = NULL;
+					n->quals = NULL;
+					$$ = n;
+				}
 		;
 
 func_expr_common_subexpr:
