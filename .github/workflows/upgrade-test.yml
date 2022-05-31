@@ -52,8 +52,37 @@ jobs:
           engine_branch: ${{ steps.find-branch.outputs.base-engine-branch }}
           extension_branch: ${{ steps.find-branch.outputs.base-extension-branch }}
 
+      - name: read next upgrade version
+        id: read-next-upgrade-version
+        if: always() && steps.install-yq.outcome == 'success'
+        run: > 
+          echo "::set-output name=next-version::$(
+            yq '."upgrade-version"[1]' ${{ github.workspace }}/.github/configuration/upgrade-test-configuration.yml
+          )"
+
+      - name: find branch of next version
+        id: find-branch-next-version
+        if: always() && steps.read-next-upgrade-version.outcome == 'success'
+        run: >
+          echo "::set-output name=next-engine-branch::$(
+            yq -r '."${{ steps.read-next-upgrade-version.outputs.next-version }}".engine_branch' ${{ github.workspace }}/.github/template/version-branch-template.yml
+          )" &&
+          echo "::set-output name=next-extension-branch::$(
+            yq -r '."${{ steps.read-next-upgrade-version.outputs.next-version }}".extension_branch' ${{ github.workspace }}/.github/template/version-branch-template.yml
+          )"
+
+      - name: Upgrade Version
+        id: upgrade-version
+        timeout-minutes: 30
+        if: always() && steps.find-branch-next-version.outcome == 'success' && steps.setup-base-version.outcome == 'success'
+        uses: ./.github/composite-actions/upgrade-version
+        with: 
+          engine_branch: ${{ steps.find-branch-next-version.outputs.next-engine-branch }}
+          extension_branch: ${{ steps.find-branch-next-version.outputs.next-extension-branch }}
+          is_final_ver: true
+
       - name: Upload Log
-        if: always() && steps.setup-base-version.outcome == 'failure'
+        if: always() && steps.upgrade-version.outcome == 'failure'
         uses: actions/upload-artifact@v2
         with:
           name: postgres-log
@@ -62,7 +91,7 @@ jobs:
       # The test summary files contain paths with ':' characters, which is not allowed with the upload-artifact actions
       - name: Rename Test Summary Files
         id: test-file-rename
-        if: always() && steps.setup-base-version.outcome == 'failure'
+        if: always() && steps.upgrade-version.outcome == 'failure'
         run: |
           cd test/JDBC/Info
           timestamp=`ls -Art | tail -n 1`
@@ -78,7 +107,7 @@ jobs:
           path: test/JDBC/Info/run-summary.log
 
       - name: Upload Output Diff
-        if: always() && steps.setup-base-version.outcome == 'failure'
+        if: always() && steps.upgrade-version.outcome == 'failure'
         uses: actions/upload-artifact@v2
         with:
           name: output-diff.diff
