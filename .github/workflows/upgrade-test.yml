@@ -49,8 +49,8 @@ jobs:
         if: always() && steps.install-dependencies.outcome == 'success' && steps.find-branch.outcome == 'success'
         uses: ./.github/composite-actions/setup-base-version
         with:
-          engine_branch: steps.find-branch.outputs.base-engine-branch
-          extension_branch: steps.find-branch.outputs.base-extension-branch
+          engine_branch: ${{ steps.find-branch.outputs.base-engine-branch }}
+          extension_branch: ${{ steps.find-branch.outputs.base-extension-branch }}
 
       - name: Upload Log
         if: always() && steps.setup-base-version.outcome == 'failure'
