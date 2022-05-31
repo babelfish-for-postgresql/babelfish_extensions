@@ -12,7 +12,6 @@ runs:
   steps:    
     - name: Clone, build, and run tests for Postgres engine using ${{ inputs.engine_branch }}
       id: build-modified-postgres-older
-      if: always() && steps.install-dependencies.outcome == 'success'
       uses: ./.github/composite-actions/build-modified-postgres
       with:
         engine_branch: ${{ inputs.engine_branch }}
