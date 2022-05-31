@@ -37,10 +37,10 @@ jobs:
         if: always() && steps.read-base-version.outcome == 'success'
         run: >
           echo "::set-output name=base-engine-branch::$(
-            yq '.${{ steps.read-base-version.outputs.base-version }}.engine-branch' ${{ github.workspace }}/.github/template/version-branch-template.yml
+            yq '."${{ steps.read-base-version.outputs.base-version }}".engine_branch' ${{ github.workspace }}/.github/template/version-branch-template.yml
           )" &&
           echo "::set-output name=base-extension-branch::$(
-            yq '.${{ steps.read-base-version.outputs.base-version }}.extension-branch' ${{ github.workspace }}/.github/template/version-branch-template.yml
+            yq '."${{ steps.read-base-version.outputs.base-version }}".extension_branch' ${{ github.workspace }}/.github/template/version-branch-template.yml
           )"
 
       - name: Setup Base Version
