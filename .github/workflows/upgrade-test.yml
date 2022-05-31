@@ -1,0 +1,81 @@
+name: Version Upgrade Test Framework
+on:
+  push:
+    branches:
+      - BABEL_2_X_DEV_upgrade_test
+  pull_request:
+    branches:
+      - BABEL_2_X_DEV_upgrade_test
+
+jobs:
+  version-upgrade-tests:
+    name: Upgrade version and test
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      
+      - name: Install Dependencies
+        id: install-dependencies
+        if: always()
+        uses: ./.github/composite-actions/install-dependencies
+
+      - name: Install yq - yaml parser
+        run: pip3 install yq
+
+      - name: read base version
+        id: read-base-version
+        run: > 
+          echo "::set-output name=base-version::$(
+            yq '.upgrade-version[0]' ${{ github.workspace }}/.github/configuration/upgrade-test-configuration.yml
+          )"
+
+      - name: find-branch
+        id: find-branch
+        run: >
+          echo "::set-output name=base-engine-branch::$(
+            yq '.${{ steps.read-base-version.outputs.base-version }}.engine-branch' ${{ github.workspace }}/.github/template/version-branch-template.yml
+          )"
+        run: >
+          echo "::set-output name=base-extension-branch::$(
+            yq '.${{ steps.read-base-version.outputs.base-version }}.extension-branch' ${{ github.workspace }}/.github/template/version-branch-template.yml
+          )"
+
+      - name: Setup Base Version
+        id: setup-base-version
+        if: always() && steps.install-dependencies.outcome == 'success'
+        uses: ./.github/composite-actions/setup-base-version
+        with:
+          engine_ver: steps.find-branch.outputs.base-engine-branch
+          extension_ver: steps.find-branch.outputs.base-extension-branch
+
+      - name: Upload Log
+        if: always() && steps.setup-base-version.outcome == 'failure'
+        uses: actions/upload-artifact@v2
+        with:
+          name: postgres-log
+          path: ~/postgres/data/logfile
+
+      # The test summary files contain paths with ':' characters, which is not allowed with the upload-artifact actions
+      - name: Rename Test Summary Files
+        id: test-file-rename
+        if: always() && steps.setup-base-version.outcome == 'failure'
+        run: |
+          cd test/JDBC/Info
+          timestamp=`ls -Art | tail -n 1`
+          cd $timestamp
+          mv $timestamp.diff ../output-diff.diff
+          mv "$timestamp"_runSummary.log ../run-summary.log
+
+      - name: Upload Run Summary 
+        if: always() && steps.test-file-rename == 'success'
+        uses: actions/upload-artifact@v2
+        with:
+          name: run-summary.log
+          path: test/JDBC/Info/run-summary.log
+
+      - name: Upload Output Diff
+        if: always() && steps.setup-base-version.outcome == 'failure'
+        uses: actions/upload-artifact@v2
+        with:
+          name: output-diff.diff
+          path: test/JDBC/Info/output-diff.diff
