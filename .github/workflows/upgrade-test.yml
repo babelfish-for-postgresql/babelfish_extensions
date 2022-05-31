@@ -45,7 +45,7 @@ jobs:
 
       - name: Setup Base Version and Runs Tests
         id: setup-base-version
-        timeout-minutes: 60
+        timeout-minutes: 30
         if: always() && steps.install-dependencies.outcome == 'success' && steps.find-branch.outcome == 'success'
         uses: ./.github/composite-actions/setup-base-version
         with:

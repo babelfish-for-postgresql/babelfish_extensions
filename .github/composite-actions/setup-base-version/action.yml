@@ -79,13 +79,19 @@ runs:
         sqlcmd -S localhost -U jdbc_user -P 12345678 -Q "SELECT @@version GO"
       shell: bash
 
-    - uses: actions/checkout@v2
-
-    - name: Run JDBC Tests
+    - name: Run JDBC Standard Tests
       id: jdbc
       run: |
         cd test/JDBC/
         mvn test
+      shell: bash
+
+    - uses: actions/checkout@v2
+
+    - name: Run JDBC Upgrade Tests
+      id: jdbc
+      run: |
+        cd test/JDBC/
         sudo sed -i 's/inputFilesPath = input/inputFilesPath = upgrade\/preparation/g' src/main/resources/config.txt
         mvn test
         sudo sed -i 's/inputFilesPath = upgrade\/preparation/inputFilesPath = upgrade\/verification/g' src/main/resources/config.txt
