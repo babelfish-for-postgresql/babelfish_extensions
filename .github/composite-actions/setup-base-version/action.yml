@@ -79,6 +79,8 @@ runs:
         sqlcmd -S localhost -U jdbc_user -P 12345678 -Q "SELECT @@version GO"
       shell: bash
 
+    - uses: actions/checkout@v2
+
     - name: Run JDBC Tests
       id: jdbc
       run: |
