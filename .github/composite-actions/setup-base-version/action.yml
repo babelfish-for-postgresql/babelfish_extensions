@@ -80,7 +80,7 @@ runs:
       shell: bash
 
     - name: Run JDBC Standard Tests
-      id: jdbc
+      id: jdbc-standard-tests
       run: |
         cd test/JDBC/
         mvn test
@@ -89,7 +89,7 @@ runs:
     - uses: actions/checkout@v2
 
     - name: Run JDBC Upgrade Tests
-      id: jdbc
+      id: jdbc-upgrade-tests
       run: |
         cd test/JDBC/
         sudo sed -i 's/inputFilesPath = input/inputFilesPath = upgrade\/preparation/g' src/main/resources/config.txt
