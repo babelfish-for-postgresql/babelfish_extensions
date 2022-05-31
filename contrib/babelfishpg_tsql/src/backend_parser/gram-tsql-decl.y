@@ -1,5 +1,7 @@
 %expect 1
 
+%left OUTER_P
+
 %debug
 %verbose
 
