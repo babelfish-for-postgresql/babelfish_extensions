@@ -6,11 +6,13 @@ if [ ! $1 ]; then
     echo "This is a tool helping developers to build and test Babelfish easily."
     echo ""
     echo "Prerequisites:"
-    echo "  (1) postgresql_modified_for_babelfish, babelfish_extensions, and postgres should be in the same workspace."
-    echo "  (2) should be executed in the \"babelfish_extension\" directory."
+    echo "  (1) Each workspace should contain postgresql_modified_for_babelfish and babelfish_extensions directories."
     echo ""
     echo "Commands:"
     echo "  (if TARGET_WS is not provided, the current workspace will be used)"
+    echo ""
+    echo "  initpg [TARGET_WS]"
+    echo "      init postgres directory + build pg and contrib + copy ANTLR lib"
     echo ""
     echo "  initdb [TARGET_WS]"
     echo "      init data directory + modify postgresql.conf + restart db"
@@ -32,21 +34,20 @@ if [ ! $1 ]; then
     echo ""
     echo "  test INPUT_DIR [TARGET_WS]"
     echo "      run JDBC test"
+    echo ""
+    echo "  minor_version_upgrade SOURCE_WS [TARGET_WS]"
+    echo "      upgrade minor version using ALTER EXTENSION ... UPDATE"
     exit 0
 fi
 
-CUR_DIR=`basename "$PWD"`
-if [ "$CUR_DIR" != "babelfish_extensions" ]; then
-    echo "Error: This script should be executed in the \"babelfish_extensions\" directory." 1>&2
-    exit 1
-fi
-
+SCRIPT_DIR="$( cd -- "$( dirname -- "${BASH_SOURCE[0]:-$0}"; )" &> /dev/null && pwd 2> /dev/null; )";
+cd $SCRIPT_DIR
 cd ..
 CUR_WS=$PWD
 echo "Current Workspace: $CUR_WS"
 
 TARGET_WS=$2
-if [ "$1" == "pg_upgrade" ] || [ "$1" == "test" ]; then
+if [ "$1" == "pg_upgrade" ] || [ "$1" == "test" ] || [ "$1" == "minor_version_upgrade" ]; then
     TARGET_WS=$3
 fi
 if [ ! $TARGET_WS ]; then
@@ -57,12 +58,12 @@ echo "Target Workspace: $TARGET_WS"
 TEST_DB="jdbc_testdb"
 
 cd $TARGET_WS
-if [ ! -d "./postgres" ]; then
-    echo "Error: Directory \"postgres\" should exist in the target workspace." 1>&2
-    exit 1
-fi
 if [ ! -d "./postgresql_modified_for_babelfish" ]; then
     echo "Error: Directory \"postgresql_modified_for_babelfish\" should exist in the target workspace." 1>&2
+    exit 1
+fi
+if [ ! -d "./babelfish_extensions" ]; then
+    echo "Error: Directory \"babelfish_extensions\" should exist in the target workspace." 1>&2
     exit 1
 fi
 
@@ -83,7 +84,7 @@ build_pg() {
 
 build_bbf() {
     cd $1/babelfish_extensions
-    export PG_CONFIG=$1/postgres/bin/pg_config
+    export PG_CONFIG=$2/postgres/bin/pg_config
     export PG_SRC=$1/postgresql_modified_for_babelfish
     export cmake=$(which cmake)
     cd contrib/babelfishpg_money
@@ -114,8 +115,20 @@ init_db() {
     restart $1
 }
 
+init_pg() {
+    cd $1/postgresql_modified_for_babelfish
+    ./configure --prefix=$2/postgres/ --without-readline --without-zlib --enable-debug CFLAGS="-ggdb" --with-libxml --with-uuid=ossp --with-icu
+    make -j 4
+    make install
+    cd contrib && make && sudo make install
+    cp "/usr/local/lib/libantlr4-runtime.so.4.9.3" $2/postgres/lib/
+}
+
 if [ "$1" == "initdb" ]; then
     init_db $TARGET_WS
+    exit 0
+elif [ "$1" == "initpg" ]; then
+    init_pg $TARGET_WS $TARGET_WS
     exit 0
 elif [ "$1" == "initbbf" ]; then
     $TARGET_WS/babelfish_extensions/test/JDBC/init.sh
@@ -125,12 +138,12 @@ elif [ "$1" == "buildpg" ]; then
     restart $TARGET_WS
     exit 0
 elif [ "$1" == "buildbbf" ]; then
-    build_bbf $TARGET_WS
+    build_bbf $TARGET_WS $TARGET_WS
     restart $TARGET_WS
     exit 0
 elif [ "$1" == "buildall" ]; then
     build_pg $TARGET_WS
-    build_bbf $TARGET_WS
+    build_bbf $TARGET_WS $TARGET_WS
     restart $TARGET_WS
     exit 0
 elif [ "$1" == "pg_upgrade" ]; then
@@ -151,7 +164,7 @@ elif [ "$1" == "pg_upgrade" ]; then
     ../postgres/bin/pg_upgrade -U $USER \
         -b $SOURCE_WS/postgres/bin -B $TARGET_WS/postgres/bin \
         -d $SOURCE_WS/postgres/data -D $TARGET_WS/postgres/data \
-        -p 5432 -P 5433 -j 4 --link --verbose
+        -p 5432 -P 5433 -j 4 --link --verbose --retain
     echo ""
 
     ./delete_old_cluster.sh
@@ -184,5 +197,25 @@ elif [ "$1" == "test" ]; then
     rm -rf output
     export inputFilesPath=$INPUT_DIR
     mvn test
+    exit 0
+elif [ "$1" == "minor_version_upgrade" ]; then
+    echo "Building from $SOURCE_WS..."
+    SOURCE_WS=$2
+    init_pg $SOURCE_WS $TARGET_WS
+    build_bbf $SOURCE_WS $TARGET_WS
+
+    echo "Initializing from $SOURCE_WS..."
+    init_db $TARGET_WS
+    $TARGET_WS/babelfish_extensions/test/JDBC/init.sh
+
+    echo "Building from $TARGET_WS..."
+    build_pg $TARGET_WS
+    build_bbf $TARGET_WS $TARGET_WS
+    restart $TARGET_WS
+
+    echo "Updating Babelfish..."
+    cd $TARGET_WS/postgres
+    bin/psql -d $TEST_DB -U $USER -c \
+        "ALTER EXTENSION babelfishpg_common UPDATE; ALTER EXTENSION babelfishpg_tsql UPDATE;"
     exit 0
 fi
