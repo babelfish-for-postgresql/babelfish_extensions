@@ -73,7 +73,7 @@ jobs:
 
       - name: Upgrade Version
         id: upgrade-version
-        timeout-minutes: 30
+        timeout-minutes: 25
         if: always() && steps.find-branch-next-version.outcome == 'success' && steps.setup-base-version.outcome == 'success'
         uses: ./.github/composite-actions/upgrade-version
         with: 
