@@ -39,6 +39,8 @@ bool	tds_ssl_encrypt = false;
 int 	tds_default_protocol_version = 0;
 int32_t tds_default_packet_size = 4096;
 int	tds_debug_log_level = 1;
+int insert_bulk_rows_per_batch = 1000;
+int insert_bulk_kilobytes_per_batch = 8;
 #ifdef FAULT_INJECTOR
 static bool TdsFaultInjectionEnabled = false;
 #endif
@@ -270,6 +272,30 @@ TdsDefineGucs(void)
 		PGC_SIGHUP,
 		GUC_NOT_IN_SAMPLE,
 		NULL,
+		NULL,
+		NULL);
+
+	DefineCustomIntVariable(
+		"babelfishpg_tds.insert_bulk_rows_per_batch",
+		gettext_noop("Sets the number of rows per batch to be processed for Insert Bulk"),
+		NULL,
+		&insert_bulk_rows_per_batch,
+		1000, 1, INT_MAX,
+		PGC_SIGHUP,
+		GUC_NOT_IN_SAMPLE,
+		NULL,
+		NULL,
+		NULL);
+
+	DefineCustomIntVariable(
+		"babelfishpg_tds.insert_bulk_kilobytes_per_batch",
+		gettext_noop("Sets the number of bytes per batch to be processed for Insert Bulk"),
+		NULL,
+		&tds_default_packet_size,
+		8, 1, INT_MAX,
+		PGC_SIGHUP,
+		GUC_NOT_IN_SAMPLE,
+		TdsGucDefaultPacketSizeCheck,
 		NULL,
 		NULL);
 
