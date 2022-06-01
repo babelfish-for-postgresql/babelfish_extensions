@@ -32,7 +32,20 @@ runs:
 
     - name: Set env variables and build extensions using ${{ inputs.extension_branch }}
       id: build-extensions-newer
-      uses: ./.github/composite-actions/build-extensions
+      run: |
+        export PG_CONFIG=~/postgres/bin/pg_config
+        export PG_SRC=~/work/babelfish_extensions/postgresql_modified_for_babelfish
+        export cmake=$(which cmake)
+        cd contrib/babelfishpg_money
+        make && make install
+        cd ../babelfishpg_common
+        make && make install
+        cd ../babelfishpg_tds
+        make && make install
+        cd ../babelfishpg_tsql
+        make && make install
+      shell: bash
+      #uses: ./.github/composite-actions/build-extensions
 
     - name: Update extensions
       if: always() && steps.build-extensions-newer.outcome == 'success'
