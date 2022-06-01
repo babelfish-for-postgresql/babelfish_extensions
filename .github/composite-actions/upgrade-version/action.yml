@@ -58,13 +58,13 @@ runs:
         sqlcmd -S localhost -U jdbc_user -P 12345678 -Q "SELECT @@version GO"
       shell: bash
 
-    - name: Run JDBC Standard Tests
-      id: jdbc-standard-tests
-      if: always() && inputs.is_final_ver
-      run: |
-        cd test/JDBC/
-        mvn test
-      shell: bash
+    # - name: Run JDBC Standard Tests
+    #   id: jdbc-standard-tests
+    #   if: always() && inputs.is_final_ver
+    #   run: |
+    #     cd test/JDBC/
+    #     mvn test
+    #   shell: bash
 
     - uses: actions/checkout@v2
 
