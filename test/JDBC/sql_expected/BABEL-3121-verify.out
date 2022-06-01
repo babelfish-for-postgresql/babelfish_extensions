@@ -1,6 +1,3 @@
-USE db_babel_3121;
-go
-
 select * from babel_3121_t;
 go
 ~~START~~
@@ -8,12 +5,4 @@ int#!#varchar
 1#!#success
 ~~END~~
 
-
-select attname, attoptions from pg_class C, pg_attribute A where C.oid = A.attrelid and C.relname like 'babel_3121_t' and A.attnum > 0 and attisdropped = 'f' order by attname;
-go
-~~START~~
-varchar#!#varchar
-bala_##!#{bbf_original_name=BALA_#}
-id#!#{bbf_original_name=id}
-~~END~~
 
