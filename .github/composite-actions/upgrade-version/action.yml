@@ -81,6 +81,7 @@ runs:
       id: jdbc-cleanup-tests
       if: always() && steps.jdbc-upgrade-tests.outcome == 'success' && inputs.is_final_ver
       run: |
+        pwd
         sudo sed -i 's/inputFilesPath = input/inputFilesPath = upgrade\/cleanup/g' src/main/resources/config.txt
         mvn test
         sudo sed -i 's/inputFilesPath = upgrade\/cleanup/inputFilesPath = input/g' src/main/resources/config.txt
