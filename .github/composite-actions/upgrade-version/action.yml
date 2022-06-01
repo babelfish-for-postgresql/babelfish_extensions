@@ -26,6 +26,9 @@ runs:
       shell: bash
 
     - uses: actions/checkout@v2
+      with:
+        repository: babelfish-for-postgresql/babelfish_extensions
+        ref: ${{ inputs.extension_branch }}
 
     - name: Set env variables and build extensions using ${{ inputs.extension_branch }}
       id: build-extensions-newer
@@ -62,7 +65,7 @@ runs:
     
     - name: Run JDBC Cleanup Tests
       id: jdbc-cleanup-tests
-      if: always() && inputs.is_final_ver
+      if: always() && steps.jdbc-upgrade-tests.outcome == 'success' && inputs.is_final_ver
       run: |
         sudo sed -i 's/inputFilesPath = input/inputFilesPath = upgrade\/cleanup/g' src/main/resources/config.txt
         mvn test
