@@ -227,6 +227,7 @@ typedef struct
 } TdsErrorContextData;
 
 extern TdsErrorContextData *TdsErrorContext;
+extern int BulkCopyPacketStatus;
 
 
 /* Socket functions */

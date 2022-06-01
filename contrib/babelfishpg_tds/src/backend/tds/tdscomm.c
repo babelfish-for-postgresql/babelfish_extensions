@@ -930,6 +930,15 @@ TdsReadNextRequest(StringInfo message, uint8_t *status, uint8_t *messageType)
 		if (TdsGetbytes(message->data + message->len, readBytes))
 			return EOF;
 		message->len += readBytes;
+
+		if (TdsRecvMessageType == TDS_BULK_LOAD)
+		{
+			/* if this is the last packet then notify the caller. */
+			if (TdsRecvPacketStatus & TDS_PACKET_HEADER_STATUS_EOM)
+				BulkCopyPacketStatus = 1;
+			TdsDoProcessHeader = true;
+			return 0;
+		}
 		/* if this is the last packet, break the loop */
 		if (TdsRecvPacketStatus & TDS_PACKET_HEADER_STATUS_EOM)
 		{

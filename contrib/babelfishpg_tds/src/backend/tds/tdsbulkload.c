@@ -94,6 +94,12 @@ FetchMoreBcpData(StringInfo *message)
 
 	temp = makeStringInfo();
 	appendBinaryStringInfo(temp, (*message)->data + offset, (*message)->len - offset);
+	if ((*message))
+	{
+		if ((*message)->data)
+			pfree((*message)->data);
+		pfree((*message));
+	}
 
 	/*
 	 * We should hold the interrupts until we read the next
@@ -107,7 +113,7 @@ FetchMoreBcpData(StringInfo *message)
 	{
 		TdsErrorContext->reqType = 0;
 		TdsErrorContext->err_text = "EOF on TDS socket while fetching For Bulk Load Request";
-		pfree((*message)->data);
+		pfree(temp->data);
 		pfree(temp);
 		ereport(ERROR,
 				(errcode(ERRCODE_PROTOCOL_VIOLATION),
@@ -115,12 +121,6 @@ FetchMoreBcpData(StringInfo *message)
 		return;
 	}
 
-	if ((*message))
-	{
-		if ((*message)->data)
-			pfree((*message)->data);
-		pfree((*message));
-	}
 	offset = 0;
 	(*message) = temp;
 }
@@ -136,7 +136,6 @@ GetBulkLoadRequest(StringInfo message)
 	TDSRequestBulkLoad		request;
 	uint16_t 				colCount;
 	BulkLoadColMetaData 			*colmetadata;
-	BulkCopyPacketStatus = 0;
 
 	TdsErrorContext->err_text = "Fetching Bulk Load Request";
 
