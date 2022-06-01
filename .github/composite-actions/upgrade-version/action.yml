@@ -60,6 +60,7 @@ runs:
 
     - name: Run JDBC Standard Tests
       id: jdbc-standard-tests
+      if: always() && inputs.is_final_ver
       run: |
         cd test/JDBC/
         mvn test
