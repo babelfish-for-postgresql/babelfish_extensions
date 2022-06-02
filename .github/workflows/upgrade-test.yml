@@ -63,7 +63,7 @@ jobs:
         uses: ./.github/composite-actions/upgrade-version
 
       - name: Upload Log
-        if: always() && steps.upgrade-version.outcome == 'failure'
+        if: always() && steps.upgrade-and-test.outcome == 'failure'
         uses: actions/upload-artifact@v2
         with:
           name: postgres-log
@@ -72,7 +72,7 @@ jobs:
       # The test summary files contain paths with ':' characters, which is not allowed with the upload-artifact actions
       - name: Rename Test Summary Files
         id: test-file-rename
-        if: always() && steps.upgrade-version.outcome == 'failure'
+        if: always() && steps.upgrade-and-test.outcome == 'failure'
         run: |
           cd test/JDBC/Info
           timestamp=`ls -Art | tail -n 1`
@@ -88,7 +88,7 @@ jobs:
           path: test/JDBC/Info/run-summary.log
 
       - name: Upload Output Diff
-        if: always() && steps.upgrade-version.outcome == 'failure'
+        if: always() && steps.upgrade-and-test.outcome == 'failure'
         uses: actions/upload-artifact@v2
         with:
           name: output-diff.diff
