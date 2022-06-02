@@ -21,7 +21,7 @@ varchar#!#varchar#!#varchar#!#sql_variant
 exec [sys].sp_columns_100 N't23',N'dbo',NULL,NULL,@ODBCVer=3,@fUsePattern=1;
 go
 ~~START~~
-varchar#!#varchar#!#varchar#!#varchar#!#smallint#!#varchar#!#int#!#int#!#smallint#!#smallint#!#smallint#!#varchar#!#nvarchar#!#smallint#!#smallint#!#int#!#int#!#varchar#!#smallint#!#smallint#!#smallint#!#smallint#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#tinyint
+varchar#!#varchar#!#varchar#!#varchar#!#smallint#!#varchar#!#int#!#int#!#smallint#!#smallint#!#smallint#!#varchar#!#nvarchar#!#smallint#!#smallint#!#int#!#int#!#varchar#!#smallint#!#smallint#!#smallint#!#smallint#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#int
 ~~END~~
 
 

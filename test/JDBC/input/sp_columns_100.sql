@@ -115,6 +115,57 @@ GO
 EXEC [sys].sp_columns_100 'tidentityintbigwithareallylongtablenamewhickcausesbabelfishtoaddahashcodetothenamebecauseofdefault63', 'dbo', NULL, NULL, @ODBCVer = 3, @fUsePattern = 1
 GO
 
+-- test with identity columns
+create table tiny_int_identity ( i_col tinyint identity(1,1), tinyint_col tinyint );
+go
+create table small_int_identity ( i_col smallint identity(1,1), smallint_col smallint );
+go
+create table int_identity ( i_col int identity(1,1), int_col int );
+go
+create table big_int_identity ( i_col bigint identity(1,1), bigint_col bigint );
+go
+create table decimal_int_identity ( i_col decimal(5,0) identity(1,1), dec5int_col decimal(5,0) );
+go
+create table numeric_int_identity ( i_col numeric(5,0) identity(1,1), num5int_col numeric(5,0) );
+go
+create table numeric13_int_identity ( i_col numeric(13,0) identity(1,1), num13int_col numeric(13,0) );
+go
+
+exec [sys].sp_columns_100 N'tiny_int_identity',N'dbo',NULL,NULL,@ODBCVer=3,@fUsePattern=1;
+go
+exec [sys].sp_columns N'tiny_int_identity',N'dbo',NULL,NULL,@ODBCVer=3;
+go
+
+exec [sys].sp_columns_100 N'small_int_identity',N'dbo',NULL,NULL,@ODBCVer=3,@fUsePattern=1;
+go
+exec [sys].sp_columns N'small_int_identity',N'dbo',NULL,NULL,@ODBCVer=3,@fUsePattern=1;
+go
+
+exec [sys].sp_columns_100 N'int_identity',N'dbo',NULL,NULL,@ODBCVer=3,@fUsePattern=1;
+go
+exec [sys].sp_columns N'int_identity',N'dbo',NULL,NULL,@ODBCVer=3,@fUsePattern=1;
+go
+
+exec [sys].sp_columns_100 N'big_int_identity',N'dbo',NULL,NULL,@ODBCVer=3,@fUsePattern=1;
+go
+exec [sys].sp_columns N'big_int_identity',N'dbo',NULL,NULL,@ODBCVer=3,@fUsePattern=1;
+go
+
+exec [sys].sp_columns_100 N'decimal_int_identity',N'dbo',NULL,NULL,@ODBCVer=3,@fUsePattern=1;
+go
+exec [sys].sp_columns N'decimal_int_identity',N'dbo',NULL,NULL,@ODBCVer=3,@fUsePattern=1;
+go
+
+exec [sys].sp_columns_100 N'numeric_int_identity',N'dbo',NULL,NULL,@ODBCVer=3,@fUsePattern=1;
+go
+exec [sys].sp_columns N'numeric_int_identity',N'dbo',NULL,NULL,@ODBCVer=3,@fUsePattern=1;
+go
+
+exec [sys].sp_columns_100 N'numeric13_int_identity',N'dbo',NULL,NULL,@ODBCVer=3,@fUsePattern=1;
+go
+exec [sys].sp_columns N'numeric13_int_identity',N'dbo',NULL,NULL,@ODBCVer=3,@fUsePattern=1;
+go
+
 -- Cleanup
 drop table var;
 drop table dates;
@@ -122,6 +173,13 @@ drop table nums;
 drop table vart;
 drop table maxx;
 drop table tidentityintbigwithareallylongtablenamewhickcausesbabelfishtoaddahashcodetothenamebecauseofdefault63;
+drop table tiny_int_identity;
+drop table small_int_identity;
+drop table int_identity;
+drop table big_int_identity;
+drop table decimal_int_identity;
+drop table numeric_int_identity;
+drop table numeric13_int_identity;
 drop type char_t;
 drop type nchar_t;
 drop type varchar_t;

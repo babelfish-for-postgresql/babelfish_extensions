@@ -19,7 +19,7 @@ GO
 EXEC sp_columns @table_name = 't_time'
 GO
 ~~START~~
-varchar#!#varchar#!#varchar#!#varchar#!#smallint#!#varchar#!#int#!#int#!#smallint#!#smallint#!#smallint#!#varchar#!#nvarchar#!#smallint#!#smallint#!#int#!#int#!#varchar#!#tinyint
+varchar#!#varchar#!#varchar#!#varchar#!#smallint#!#varchar#!#int#!#int#!#smallint#!#smallint#!#smallint#!#varchar#!#nvarchar#!#smallint#!#smallint#!#int#!#int#!#varchar#!#int
 mydb1#!#dbo#!#t_time#!#a#!#-154#!#time#!#15#!#12#!#6#!#<NULL>#!#1#!#<NULL>#!#<NULL>#!#-154#!#0#!#<NULL>#!#1#!#YES#!#0
 ~~END~~
 
@@ -29,7 +29,7 @@ GO
 exec sp_columns @table_name = 't_text'
 GO
 ~~START~~
-varchar#!#varchar#!#varchar#!#varchar#!#smallint#!#varchar#!#int#!#int#!#smallint#!#smallint#!#smallint#!#varchar#!#nvarchar#!#smallint#!#smallint#!#int#!#int#!#varchar#!#tinyint
+varchar#!#varchar#!#varchar#!#varchar#!#smallint#!#varchar#!#int#!#int#!#smallint#!#smallint#!#smallint#!#varchar#!#nvarchar#!#smallint#!#smallint#!#int#!#int#!#varchar#!#int
 mydb1#!#dbo#!#t_text#!#a#!#-1#!#text#!#2147483647#!#2147483647#!#<NULL>#!#<NULL>#!#1#!#<NULL>#!#<NULL>#!#-1#!#<NULL>#!#2147483647#!#1#!#YES#!#35
 ~~END~~
 
@@ -39,7 +39,7 @@ GO
 exec sp_columns @table_name = 't_int'
 GO
 ~~START~~
-varchar#!#varchar#!#varchar#!#varchar#!#smallint#!#varchar#!#int#!#int#!#smallint#!#smallint#!#smallint#!#varchar#!#nvarchar#!#smallint#!#smallint#!#int#!#int#!#varchar#!#tinyint
+varchar#!#varchar#!#varchar#!#varchar#!#smallint#!#varchar#!#int#!#int#!#smallint#!#smallint#!#smallint#!#varchar#!#nvarchar#!#smallint#!#smallint#!#int#!#int#!#varchar#!#int
 mydb1#!#dbo#!#t_int#!#a#!#4#!#int#!#10#!#4#!#0#!#10#!#1#!#<NULL>#!#<NULL>#!#4#!#<NULL>#!#<NULL>#!#1#!#YES#!#38
 ~~END~~
 
@@ -49,7 +49,7 @@ GO
 exec sp_columns @table_name = 't_money'
 GO
 ~~START~~
-varchar#!#varchar#!#varchar#!#varchar#!#smallint#!#varchar#!#int#!#int#!#smallint#!#smallint#!#smallint#!#varchar#!#nvarchar#!#smallint#!#smallint#!#int#!#int#!#varchar#!#tinyint
+varchar#!#varchar#!#varchar#!#varchar#!#smallint#!#varchar#!#int#!#int#!#smallint#!#smallint#!#smallint#!#varchar#!#nvarchar#!#smallint#!#smallint#!#int#!#int#!#varchar#!#int
 mydb1#!#dbo#!#t_money#!#a#!#3#!#money#!#19#!#21#!#4#!#10#!#1#!#<NULL>#!#<NULL>#!#3#!#<NULL>#!#<NULL>#!#1#!#YES#!#110
 ~~END~~
 
@@ -58,14 +58,14 @@ mydb1#!#dbo#!#t_money#!#a#!#3#!#money#!#19#!#21#!#4#!#10#!#1#!#<NULL>#!#<NULL>#!
 EXEC sp_columns @table_name = 't_int', @table_owner = 'dbo', @table_qualifier = 'mydb1', @column_name = 'a'
 GO
 ~~START~~
-varchar#!#varchar#!#varchar#!#varchar#!#smallint#!#varchar#!#int#!#int#!#smallint#!#smallint#!#smallint#!#varchar#!#nvarchar#!#smallint#!#smallint#!#int#!#int#!#varchar#!#tinyint
+varchar#!#varchar#!#varchar#!#varchar#!#smallint#!#varchar#!#int#!#int#!#smallint#!#smallint#!#smallint#!#varchar#!#nvarchar#!#smallint#!#smallint#!#int#!#int#!#varchar#!#int
 mydb1#!#dbo#!#t_int#!#a#!#4#!#int#!#10#!#4#!#0#!#10#!#1#!#<NULL>#!#<NULL>#!#4#!#<NULL>#!#<NULL>#!#1#!#YES#!#38
 ~~END~~
 
 EXEC sp_columns 't_int', 'dbo', 'mydb1', 'a'
 GO
 ~~START~~
-varchar#!#varchar#!#varchar#!#varchar#!#smallint#!#varchar#!#int#!#int#!#smallint#!#smallint#!#smallint#!#varchar#!#nvarchar#!#smallint#!#smallint#!#int#!#int#!#varchar#!#tinyint
+varchar#!#varchar#!#varchar#!#varchar#!#smallint#!#varchar#!#int#!#int#!#smallint#!#smallint#!#smallint#!#varchar#!#nvarchar#!#smallint#!#smallint#!#int#!#int#!#varchar#!#int
 mydb1#!#dbo#!#t_int#!#a#!#4#!#int#!#10#!#4#!#0#!#10#!#1#!#<NULL>#!#<NULL>#!#4#!#<NULL>#!#<NULL>#!#1#!#YES#!#38
 ~~END~~
 
@@ -74,7 +74,7 @@ mydb1#!#dbo#!#t_int#!#a#!#4#!#int#!#10#!#4#!#0#!#10#!#1#!#<NULL>#!#<NULL>#!#4#!#
 EXEC sp_columns_100 '%_money', 'dbo', NULL, NULL, 0, 2, 1
 GO
 ~~START~~
-varchar#!#varchar#!#varchar#!#varchar#!#smallint#!#varchar#!#int#!#int#!#smallint#!#smallint#!#smallint#!#varchar#!#nvarchar#!#smallint#!#smallint#!#int#!#int#!#varchar#!#smallint#!#smallint#!#smallint#!#smallint#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#tinyint
+varchar#!#varchar#!#varchar#!#varchar#!#smallint#!#varchar#!#int#!#int#!#smallint#!#smallint#!#smallint#!#varchar#!#nvarchar#!#smallint#!#smallint#!#int#!#int#!#varchar#!#smallint#!#smallint#!#smallint#!#smallint#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#int
 mydb1#!#dbo#!#t_money#!#a#!#3#!#money#!#19#!#21#!#4#!#10#!#1#!#<NULL>#!#<NULL>#!#3#!#<NULL>#!#<NULL>#!#1#!#YES#!#0#!#0#!#0#!#0#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#110
 ~~END~~
 
@@ -83,7 +83,7 @@ mydb1#!#dbo#!#t_money#!#a#!#3#!#money#!#19#!#21#!#4#!#10#!#1#!#<NULL>#!#<NULL>#!
 EXEC sp_columns_100 '%_money', 'dbo', NULL, NULL, 0, 2, 0
 GO
 ~~START~~
-varchar#!#varchar#!#varchar#!#varchar#!#smallint#!#varchar#!#int#!#int#!#smallint#!#smallint#!#smallint#!#varchar#!#nvarchar#!#smallint#!#smallint#!#int#!#int#!#varchar#!#smallint#!#smallint#!#smallint#!#smallint#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#tinyint
+varchar#!#varchar#!#varchar#!#varchar#!#smallint#!#varchar#!#int#!#int#!#smallint#!#smallint#!#smallint#!#varchar#!#nvarchar#!#smallint#!#smallint#!#int#!#int#!#varchar#!#smallint#!#smallint#!#smallint#!#smallint#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#int
 ~~ERROR (Code: 33557097)~~
 
 ~~ERROR (Message: structure of query does not match function result type)~~
@@ -93,7 +93,7 @@ varchar#!#varchar#!#varchar#!#varchar#!#smallint#!#varchar#!#int#!#int#!#smallin
 EXEC sp_columns_100 '%[_]money', 'dbo', NULL, NULL, 0, 2, 1
 GO
 ~~START~~
-varchar#!#varchar#!#varchar#!#varchar#!#smallint#!#varchar#!#int#!#int#!#smallint#!#smallint#!#smallint#!#varchar#!#nvarchar#!#smallint#!#smallint#!#int#!#int#!#varchar#!#smallint#!#smallint#!#smallint#!#smallint#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#tinyint
+varchar#!#varchar#!#varchar#!#varchar#!#smallint#!#varchar#!#int#!#int#!#smallint#!#smallint#!#smallint#!#varchar#!#nvarchar#!#smallint#!#smallint#!#int#!#int#!#varchar#!#smallint#!#smallint#!#smallint#!#smallint#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#int
 mydb1#!#dbo#!#t_money#!#a#!#3#!#money#!#19#!#21#!#4#!#10#!#1#!#<NULL>#!#<NULL>#!#3#!#<NULL>#!#<NULL>#!#1#!#YES#!#0#!#0#!#0#!#0#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#110
 ~~END~~
 
@@ -101,7 +101,7 @@ mydb1#!#dbo#!#t_money#!#a#!#3#!#money#!#19#!#21#!#4#!#10#!#1#!#<NULL>#!#<NULL>#!
 EXEC sp_columns_100 '%[_]MONEY', 'dbo', NULL, NULL, 0, 2, 1
 GO
 ~~START~~
-varchar#!#varchar#!#varchar#!#varchar#!#smallint#!#varchar#!#int#!#int#!#smallint#!#smallint#!#smallint#!#varchar#!#nvarchar#!#smallint#!#smallint#!#int#!#int#!#varchar#!#smallint#!#smallint#!#smallint#!#smallint#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#tinyint
+varchar#!#varchar#!#varchar#!#varchar#!#smallint#!#varchar#!#int#!#int#!#smallint#!#smallint#!#smallint#!#varchar#!#nvarchar#!#smallint#!#smallint#!#int#!#int#!#varchar#!#smallint#!#smallint#!#smallint#!#smallint#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#int
 mydb1#!#dbo#!#t_money#!#a#!#3#!#money#!#19#!#21#!#4#!#10#!#1#!#<NULL>#!#<NULL>#!#3#!#<NULL>#!#<NULL>#!#1#!#YES#!#0#!#0#!#0#!#0#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#110
 ~~END~~
 
@@ -109,7 +109,7 @@ mydb1#!#dbo#!#t_money#!#a#!#3#!#money#!#19#!#21#!#4#!#10#!#1#!#<NULL>#!#<NULL>#!
 EXEC sp_columns_100 't_[a-z][a-z][a-z][a-z][a-z]', 'dbo', NULL, NULL, 0, 2, 1
 GO
 ~~START~~
-varchar#!#varchar#!#varchar#!#varchar#!#smallint#!#varchar#!#int#!#int#!#smallint#!#smallint#!#smallint#!#varchar#!#nvarchar#!#smallint#!#smallint#!#int#!#int#!#varchar#!#smallint#!#smallint#!#smallint#!#smallint#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#tinyint
+varchar#!#varchar#!#varchar#!#varchar#!#smallint#!#varchar#!#int#!#int#!#smallint#!#smallint#!#smallint#!#varchar#!#nvarchar#!#smallint#!#smallint#!#int#!#int#!#varchar#!#smallint#!#smallint#!#smallint#!#smallint#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#int
 mydb1#!#dbo#!#t_money#!#a#!#3#!#money#!#19#!#21#!#4#!#10#!#1#!#<NULL>#!#<NULL>#!#3#!#<NULL>#!#<NULL>#!#1#!#YES#!#0#!#0#!#0#!#0#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#110
 ~~END~~
 
@@ -117,7 +117,7 @@ mydb1#!#dbo#!#t_money#!#a#!#3#!#money#!#19#!#21#!#4#!#10#!#1#!#<NULL>#!#<NULL>#!
 EXEC sp_columns_100 't_[a-z][a-z][a-z][a-z][a-z]', 'dbo', NULL, NULL, 0, 2, 1
 GO
 ~~START~~
-varchar#!#varchar#!#varchar#!#varchar#!#smallint#!#varchar#!#int#!#int#!#smallint#!#smallint#!#smallint#!#varchar#!#nvarchar#!#smallint#!#smallint#!#int#!#int#!#varchar#!#smallint#!#smallint#!#smallint#!#smallint#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#tinyint
+varchar#!#varchar#!#varchar#!#varchar#!#smallint#!#varchar#!#int#!#int#!#smallint#!#smallint#!#smallint#!#varchar#!#nvarchar#!#smallint#!#smallint#!#int#!#int#!#varchar#!#smallint#!#smallint#!#smallint#!#smallint#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#int
 mydb1#!#dbo#!#t_money#!#a#!#3#!#money#!#19#!#21#!#4#!#10#!#1#!#<NULL>#!#<NULL>#!#3#!#<NULL>#!#<NULL>#!#1#!#YES#!#0#!#0#!#0#!#0#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#110
 ~~END~~
 
@@ -125,7 +125,7 @@ mydb1#!#dbo#!#t_money#!#a#!#3#!#money#!#19#!#21#!#4#!#10#!#1#!#<NULL>#!#<NULL>#!
 EXEC sp_columns_100 'T_[A-Z][A-Z][A-Z][A-Z][A-Z]', 'dbo', NULL, NULL, 0, 2, 1
 GO
 ~~START~~
-varchar#!#varchar#!#varchar#!#varchar#!#smallint#!#varchar#!#int#!#int#!#smallint#!#smallint#!#smallint#!#varchar#!#nvarchar#!#smallint#!#smallint#!#int#!#int#!#varchar#!#smallint#!#smallint#!#smallint#!#smallint#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#tinyint
+varchar#!#varchar#!#varchar#!#varchar#!#smallint#!#varchar#!#int#!#int#!#smallint#!#smallint#!#smallint#!#varchar#!#nvarchar#!#smallint#!#smallint#!#int#!#int#!#varchar#!#smallint#!#smallint#!#smallint#!#smallint#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#int
 mydb1#!#dbo#!#t_money#!#a#!#3#!#money#!#19#!#21#!#4#!#10#!#1#!#<NULL>#!#<NULL>#!#3#!#<NULL>#!#<NULL>#!#1#!#YES#!#0#!#0#!#0#!#0#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#110
 ~~END~~
 
@@ -133,7 +133,7 @@ mydb1#!#dbo#!#t_money#!#a#!#3#!#money#!#19#!#21#!#4#!#10#!#1#!#<NULL>#!#<NULL>#!
 EXEC sp_columns_100 't_[a-z][a-z][a-z][a-z][^a-z]', 'dbo', NULL, NULL, 0, 2, 1
 GO
 ~~START~~
-varchar#!#varchar#!#varchar#!#varchar#!#smallint#!#varchar#!#int#!#int#!#smallint#!#smallint#!#smallint#!#varchar#!#nvarchar#!#smallint#!#smallint#!#int#!#int#!#varchar#!#smallint#!#smallint#!#smallint#!#smallint#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#tinyint
+varchar#!#varchar#!#varchar#!#varchar#!#smallint#!#varchar#!#int#!#int#!#smallint#!#smallint#!#smallint#!#varchar#!#nvarchar#!#smallint#!#smallint#!#int#!#int#!#varchar#!#smallint#!#smallint#!#smallint#!#smallint#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#int
 ~~END~~
 
 

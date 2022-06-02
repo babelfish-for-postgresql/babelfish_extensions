@@ -15,7 +15,7 @@ go
 EXEC [sys].sp_columns_100 'var', 'dbo', NULL, NULL, @ODBCVer = 3, @fUsePattern = 1
 go
 ~~START~~
-varchar#!#varchar#!#varchar#!#varchar#!#smallint#!#varchar#!#int#!#int#!#smallint#!#smallint#!#smallint#!#varchar#!#nvarchar#!#smallint#!#smallint#!#int#!#int#!#varchar#!#smallint#!#smallint#!#smallint#!#smallint#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#tinyint
+varchar#!#varchar#!#varchar#!#varchar#!#smallint#!#varchar#!#int#!#int#!#smallint#!#smallint#!#smallint#!#varchar#!#nvarchar#!#smallint#!#smallint#!#int#!#int#!#varchar#!#smallint#!#smallint#!#smallint#!#smallint#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#int
 master#!#dbo#!#var#!#a#!#1#!#char#!#10#!#10#!#<NULL>#!#<NULL>#!#1#!#<NULL>#!#<NULL>#!#1#!#<NULL>#!#10#!#1#!#YES#!#0#!#0#!#0#!#0#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#39
 master#!#dbo#!#var#!#b#!#-8#!#nchar#!#9#!#18#!#<NULL>#!#<NULL>#!#1#!#<NULL>#!#<NULL>#!#-8#!#<NULL>#!#18#!#2#!#YES#!#0#!#0#!#0#!#0#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#39
 master#!#dbo#!#var#!#c#!#-9#!#nvarchar#!#8#!#16#!#<NULL>#!#<NULL>#!#1#!#<NULL>#!#<NULL>#!#-9#!#<NULL>#!#16#!#3#!#YES#!#0#!#0#!#0#!#0#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#39
@@ -32,7 +32,7 @@ master#!#dbo#!#var#!#j#!#-152#!#xml#!#0#!#0#!#<NULL>#!#<NULL>#!#1#!#<NULL>#!#<NU
 EXEC [sys].sp_columns_100 'dates', 'dbo', NULL, NULL, @ODBCVer = 3, @fUsePattern = 1
 go
 ~~START~~
-varchar#!#varchar#!#varchar#!#varchar#!#smallint#!#varchar#!#int#!#int#!#smallint#!#smallint#!#smallint#!#varchar#!#nvarchar#!#smallint#!#smallint#!#int#!#int#!#varchar#!#smallint#!#smallint#!#smallint#!#smallint#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#tinyint
+varchar#!#varchar#!#varchar#!#varchar#!#smallint#!#varchar#!#int#!#int#!#smallint#!#smallint#!#smallint#!#varchar#!#nvarchar#!#smallint#!#smallint#!#int#!#int#!#varchar#!#smallint#!#smallint#!#smallint#!#smallint#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#int
 master#!#dbo#!#dates#!#a#!#91#!#date#!#10#!#6#!#0#!#<NULL>#!#1#!#<NULL>#!#<NULL>#!#9#!#1#!#<NULL>#!#1#!#YES#!#0#!#0#!#0#!#0#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#0
 master#!#dbo#!#dates#!#b#!#-154#!#time#!#14#!#12#!#5#!#<NULL>#!#1#!#<NULL>#!#<NULL>#!#-154#!#0#!#<NULL>#!#2#!#YES#!#0#!#0#!#0#!#0#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#0
 master#!#dbo#!#dates#!#c#!#93#!#datetime#!#23#!#16#!#3#!#<NULL>#!#1#!#<NULL>#!#<NULL>#!#9#!#3#!#<NULL>#!#3#!#YES#!#0#!#0#!#0#!#0#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#111
@@ -45,7 +45,7 @@ master#!#dbo#!#dates#!#f#!#-150#!#sql_variant#!#0#!#8000#!#<NULL>#!#10#!#1#!#<NU
 EXEC [sys].sp_columns_100 'nums', 'dbo', NULL, NULL, @ODBCVer = 3, @fUsePattern = 1
 go
 ~~START~~
-varchar#!#varchar#!#varchar#!#varchar#!#smallint#!#varchar#!#int#!#int#!#smallint#!#smallint#!#smallint#!#varchar#!#nvarchar#!#smallint#!#smallint#!#int#!#int#!#varchar#!#smallint#!#smallint#!#smallint#!#smallint#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#tinyint
+varchar#!#varchar#!#varchar#!#varchar#!#smallint#!#varchar#!#int#!#int#!#smallint#!#smallint#!#smallint#!#varchar#!#nvarchar#!#smallint#!#smallint#!#int#!#int#!#varchar#!#smallint#!#smallint#!#smallint#!#smallint#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#int
 master#!#dbo#!#nums#!#a#!#4#!#int#!#10#!#4#!#0#!#10#!#1#!#<NULL>#!#<NULL>#!#4#!#<NULL>#!#<NULL>#!#1#!#YES#!#0#!#0#!#0#!#0#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#38
 master#!#dbo#!#nums#!#b#!#5#!#smallint#!#5#!#2#!#0#!#10#!#1#!#<NULL>#!#<NULL>#!#5#!#<NULL>#!#<NULL>#!#2#!#YES#!#0#!#0#!#0#!#0#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#38
 master#!#dbo#!#nums#!#c#!#-6#!#tinyint#!#3#!#1#!#0#!#10#!#1#!#<NULL>#!#<NULL>#!#-6#!#<NULL>#!#<NULL>#!#3#!#YES#!#0#!#0#!#0#!#0#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#38
@@ -72,7 +72,7 @@ go
 EXEC [sys].sp_columns_100 'tbl_rv', 'dbo', NULL, NULL, @ODBCVer = 3, @fUsePattern = 1
 go
 ~~START~~
-varchar#!#varchar#!#varchar#!#varchar#!#smallint#!#varchar#!#int#!#int#!#smallint#!#smallint#!#smallint#!#varchar#!#nvarchar#!#smallint#!#smallint#!#int#!#int#!#varchar#!#smallint#!#smallint#!#smallint#!#smallint#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#tinyint
+varchar#!#varchar#!#varchar#!#varchar#!#smallint#!#varchar#!#int#!#int#!#smallint#!#smallint#!#smallint#!#varchar#!#nvarchar#!#smallint#!#smallint#!#int#!#int#!#varchar#!#smallint#!#smallint#!#smallint#!#smallint#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#int
 master#!#dbo#!#tbl_rv#!#id#!#4#!#int#!#10#!#4#!#0#!#10#!#1#!#<NULL>#!#<NULL>#!#4#!#<NULL>#!#<NULL>#!#1#!#YES#!#0#!#0#!#0#!#0#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#38
 master#!#dbo#!#tbl_rv#!#rv#!#-2#!#timestamp#!#8#!#8#!#<NULL>#!#<NULL>#!#1#!#<NULL>#!#(get_current_full_xact_id())::rowversion#!#-2#!#<NULL>#!#<NULL>#!#2#!#YES#!#0#!#0#!#0#!#0#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#45
 ~~END~~
@@ -81,7 +81,7 @@ master#!#dbo#!#tbl_rv#!#rv#!#-2#!#timestamp#!#8#!#8#!#<NULL>#!#<NULL>#!#1#!#<NUL
 EXEC [sys].sp_columns_100 'tbl_tm', 'dbo', NULL, NULL, @ODBCVer = 3, @fUsePattern = 1
 go
 ~~START~~
-varchar#!#varchar#!#varchar#!#varchar#!#smallint#!#varchar#!#int#!#int#!#smallint#!#smallint#!#smallint#!#varchar#!#nvarchar#!#smallint#!#smallint#!#int#!#int#!#varchar#!#smallint#!#smallint#!#smallint#!#smallint#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#tinyint
+varchar#!#varchar#!#varchar#!#varchar#!#smallint#!#varchar#!#int#!#int#!#smallint#!#smallint#!#smallint#!#varchar#!#nvarchar#!#smallint#!#smallint#!#int#!#int#!#varchar#!#smallint#!#smallint#!#smallint#!#smallint#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#int
 master#!#dbo#!#tbl_tm#!#id#!#4#!#int#!#10#!#4#!#0#!#10#!#1#!#<NULL>#!#<NULL>#!#4#!#<NULL>#!#<NULL>#!#1#!#YES#!#0#!#0#!#0#!#0#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#38
 master#!#dbo#!#tbl_tm#!#tm#!#-2#!#timestamp#!#8#!#8#!#<NULL>#!#<NULL>#!#1#!#<NULL>#!#(get_current_full_xact_id())::"timestamp"#!#-2#!#<NULL>#!#<NULL>#!#2#!#YES#!#0#!#0#!#0#!#0#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#45
 ~~END~~
@@ -97,7 +97,7 @@ go
 EXEC [sys].sp_columns_100 'maxx', 'dbo', NULL, NULL, @ODBCVer = 3, @fUsePattern = 1
 go
 ~~START~~
-varchar#!#varchar#!#varchar#!#varchar#!#smallint#!#varchar#!#int#!#int#!#smallint#!#smallint#!#smallint#!#varchar#!#nvarchar#!#smallint#!#smallint#!#int#!#int#!#varchar#!#smallint#!#smallint#!#smallint#!#smallint#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#tinyint
+varchar#!#varchar#!#varchar#!#varchar#!#smallint#!#varchar#!#int#!#int#!#smallint#!#smallint#!#smallint#!#varchar#!#nvarchar#!#smallint#!#smallint#!#int#!#int#!#varchar#!#smallint#!#smallint#!#smallint#!#smallint#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#int
 master#!#dbo#!#maxx#!#a#!#12#!#varchar#!#0#!#0#!#<NULL>#!#<NULL>#!#1#!#<NULL>#!#<NULL>#!#12#!#<NULL>#!#0#!#1#!#YES#!#0#!#0#!#0#!#0#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#39
 master#!#dbo#!#maxx#!#b#!#-9#!#nvarchar#!#0#!#0#!#<NULL>#!#<NULL>#!#1#!#<NULL>#!#<NULL>#!#-9#!#<NULL>#!#0#!#2#!#YES#!#0#!#0#!#0#!#0#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#39
 master#!#dbo#!#maxx#!#c#!#-3#!#varbinary#!#0#!#0#!#<NULL>#!#<NULL>#!#1#!#<NULL>#!#<NULL>#!#-3#!#<NULL>#!#0#!#3#!#YES#!#0#!#0#!#0#!#0#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#37
@@ -138,7 +138,7 @@ go
 EXEC [sys].sp_columns_100 'vart', 'dbo', NULL, NULL, @ODBCVer = 3, @fUsePattern = 1
 go
 ~~START~~
-varchar#!#varchar#!#varchar#!#varchar#!#smallint#!#varchar#!#int#!#int#!#smallint#!#smallint#!#smallint#!#varchar#!#nvarchar#!#smallint#!#smallint#!#int#!#int#!#varchar#!#smallint#!#smallint#!#smallint#!#smallint#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#tinyint
+varchar#!#varchar#!#varchar#!#varchar#!#smallint#!#varchar#!#int#!#int#!#smallint#!#smallint#!#smallint#!#varchar#!#nvarchar#!#smallint#!#smallint#!#int#!#int#!#varchar#!#smallint#!#smallint#!#smallint#!#smallint#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#int
 master#!#dbo#!#vart#!#a#!#1#!#char_t#!#10#!#10#!#<NULL>#!#<NULL>#!#1#!#<NULL>#!#<NULL>#!#1#!#<NULL>#!#10#!#1#!#YES#!#0#!#0#!#0#!#0#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#39
 master#!#dbo#!#vart#!#b#!#1#!#nchar_t#!#9#!#9#!#<NULL>#!#<NULL>#!#1#!#<NULL>#!#<NULL>#!#1#!#<NULL>#!#9#!#2#!#YES#!#0#!#0#!#0#!#0#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#39
 master#!#dbo#!#vart#!#c#!#-9#!#nvarchar_t#!#8#!#16#!#<NULL>#!#<NULL>#!#1#!#<NULL>#!#<NULL>#!#-9#!#<NULL>#!#16#!#3#!#YES#!#0#!#0#!#0#!#0#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#39
@@ -161,7 +161,7 @@ go
 EXEC [sys].sp_columns_100 'vart', 'dbo', NULL, NULL, @ODBCVer = 3, @fUsePattern = 1
 go
 ~~START~~
-varchar#!#varchar#!#varchar#!#varchar#!#smallint#!#varchar#!#int#!#int#!#smallint#!#smallint#!#smallint#!#varchar#!#nvarchar#!#smallint#!#smallint#!#int#!#int#!#varchar#!#smallint#!#smallint#!#smallint#!#smallint#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#tinyint
+varchar#!#varchar#!#varchar#!#varchar#!#smallint#!#varchar#!#int#!#int#!#smallint#!#smallint#!#smallint#!#varchar#!#nvarchar#!#smallint#!#smallint#!#int#!#int#!#varchar#!#smallint#!#smallint#!#smallint#!#smallint#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#int
 ~~END~~
 
 
@@ -171,7 +171,7 @@ go
 EXEC [sys].sp_columns_100 'vart', 'dbo', NULL, NULL, @ODBCVer = 3, @fUsePattern = 1
 go
 ~~START~~
-varchar#!#varchar#!#varchar#!#varchar#!#smallint#!#varchar#!#int#!#int#!#smallint#!#smallint#!#smallint#!#varchar#!#nvarchar#!#smallint#!#smallint#!#int#!#int#!#varchar#!#smallint#!#smallint#!#smallint#!#smallint#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#tinyint
+varchar#!#varchar#!#varchar#!#varchar#!#smallint#!#varchar#!#int#!#int#!#smallint#!#smallint#!#smallint#!#varchar#!#nvarchar#!#smallint#!#smallint#!#int#!#int#!#varchar#!#smallint#!#smallint#!#smallint#!#smallint#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#int
 ~~END~~
 
 
@@ -193,12 +193,147 @@ GO
 EXEC [sys].sp_columns_100 'tidentityintbigwithareallylongtablenamewhickcausesbabelfishtoaddahashcodetothenamebecauseofdefault63', 'dbo', NULL, NULL, @ODBCVer = 3, @fUsePattern = 1
 GO
 ~~START~~
-varchar#!#varchar#!#varchar#!#varchar#!#smallint#!#varchar#!#int#!#int#!#smallint#!#smallint#!#smallint#!#varchar#!#nvarchar#!#smallint#!#smallint#!#int#!#int#!#varchar#!#smallint#!#smallint#!#smallint#!#smallint#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#tinyint
+varchar#!#varchar#!#varchar#!#varchar#!#smallint#!#varchar#!#int#!#int#!#smallint#!#smallint#!#smallint#!#varchar#!#nvarchar#!#smallint#!#smallint#!#int#!#int#!#varchar#!#smallint#!#smallint#!#smallint#!#smallint#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#int
 master#!#dbo#!#tidentityintbigwithareallylongteba669a8099c8b172adc8a937e6cf71d#!#data_type_test#!#1#!#char#!#50#!#50#!#<NULL>#!#<NULL>#!#1#!#<NULL>#!#<NULL>#!#1#!#<NULL>#!#50#!#1#!#YES#!#0#!#0#!#0#!#0#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#39
 master#!#dbo#!#tidentityintbigwithareallylongteba669a8099c8b172adc8a937e6cf71d#!#test_scenario#!#1#!#char#!#60#!#60#!#<NULL>#!#<NULL>#!#1#!#<NULL>#!#<NULL>#!#1#!#<NULL>#!#60#!#2#!#YES#!#0#!#0#!#0#!#0#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#39
-master#!#dbo#!#tidentityintbigwithareallylongteba669a8099c8b172adc8a937e6cf71d#!#value_test#!#-5#!#bigint#!#19#!#8#!#0#!#10#!#0#!#<NULL>#!#<NULL>#!#-5#!#<NULL>#!#<NULL>#!#3#!#NO#!#0#!#0#!#0#!#1#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#108
+master#!#dbo#!#tidentityintbigwithareallylongteba669a8099c8b172adc8a937e6cf71d#!#value_test#!#-5#!#bigint#!#19#!#8#!#0#!#10#!#0#!#<NULL>#!#<NULL>#!#-5#!#<NULL>#!#<NULL>#!#3#!#NO#!#0#!#0#!#0#!#1#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#63
 master#!#dbo#!#tidentityintbigwithareallylongteba669a8099c8b172adc8a937e6cf71d#!#inserted_dt#!#93#!#datetime#!#23#!#16#!#3#!#<NULL>#!#1#!#<NULL>#!#getdate()#!#9#!#3#!#<NULL>#!#4#!#YES#!#0#!#0#!#0#!#0#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#111
 master#!#dbo#!#tidentityintbigwithareallylongteba669a8099c8b172adc8a937e6cf71d#!#user_login#!#1#!#char#!#255#!#255#!#<NULL>#!#<NULL>#!#1#!#<NULL>#!#user_name_sysname()#!#1#!#<NULL>#!#255#!#5#!#YES#!#0#!#0#!#0#!#0#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#39
+~~END~~
+
+
+-- test with identity columns
+create table tiny_int_identity ( i_col tinyint identity(1,1), tinyint_col tinyint );
+go
+create table small_int_identity ( i_col smallint identity(1,1), smallint_col smallint );
+go
+create table int_identity ( i_col int identity(1,1), int_col int );
+go
+create table big_int_identity ( i_col bigint identity(1,1), bigint_col bigint );
+go
+create table decimal_int_identity ( i_col decimal(5,0) identity(1,1), dec5int_col decimal(5,0) );
+go
+create table numeric_int_identity ( i_col numeric(5,0) identity(1,1), num5int_col numeric(5,0) );
+go
+create table numeric13_int_identity ( i_col numeric(13,0) identity(1,1), num13int_col numeric(13,0) );
+go
+
+exec [sys].sp_columns_100 N'tiny_int_identity',N'dbo',NULL,NULL,@ODBCVer=3,@fUsePattern=1;
+go
+~~START~~
+varchar#!#varchar#!#varchar#!#varchar#!#smallint#!#varchar#!#int#!#int#!#smallint#!#smallint#!#smallint#!#varchar#!#nvarchar#!#smallint#!#smallint#!#int#!#int#!#varchar#!#smallint#!#smallint#!#smallint#!#smallint#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#int
+master#!#dbo#!#tiny_int_identity#!#i_col#!#5#!#smallint#!#5#!#2#!#0#!#10#!#0#!#<NULL>#!#<NULL>#!#5#!#<NULL>#!#<NULL>#!#1#!#NO#!#0#!#0#!#0#!#1#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#52
+master#!#dbo#!#tiny_int_identity#!#tinyint_col#!#-6#!#tinyint#!#3#!#1#!#0#!#10#!#1#!#<NULL>#!#<NULL>#!#-6#!#<NULL>#!#<NULL>#!#2#!#YES#!#0#!#0#!#0#!#0#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#38
+~~END~~
+
+exec [sys].sp_columns N'tiny_int_identity',N'dbo',NULL,NULL,@ODBCVer=3;
+go
+~~START~~
+varchar#!#varchar#!#varchar#!#varchar#!#smallint#!#varchar#!#int#!#int#!#smallint#!#smallint#!#smallint#!#varchar#!#nvarchar#!#smallint#!#smallint#!#int#!#int#!#varchar#!#int
+master#!#dbo#!#tiny_int_identity#!#i_col#!#5#!#smallint#!#5#!#2#!#0#!#10#!#0#!#<NULL>#!#<NULL>#!#5#!#<NULL>#!#<NULL>#!#1#!#NO#!#52
+master#!#dbo#!#tiny_int_identity#!#tinyint_col#!#-6#!#tinyint#!#3#!#1#!#0#!#10#!#1#!#<NULL>#!#<NULL>#!#-6#!#<NULL>#!#<NULL>#!#2#!#YES#!#38
+~~END~~
+
+
+exec [sys].sp_columns_100 N'small_int_identity',N'dbo',NULL,NULL,@ODBCVer=3,@fUsePattern=1;
+go
+~~START~~
+varchar#!#varchar#!#varchar#!#varchar#!#smallint#!#varchar#!#int#!#int#!#smallint#!#smallint#!#smallint#!#varchar#!#nvarchar#!#smallint#!#smallint#!#int#!#int#!#varchar#!#smallint#!#smallint#!#smallint#!#smallint#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#int
+master#!#dbo#!#small_int_identity#!#i_col#!#5#!#smallint#!#5#!#2#!#0#!#10#!#0#!#<NULL>#!#<NULL>#!#5#!#<NULL>#!#<NULL>#!#1#!#NO#!#0#!#0#!#0#!#1#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#52
+master#!#dbo#!#small_int_identity#!#smallint_col#!#5#!#smallint#!#5#!#2#!#0#!#10#!#1#!#<NULL>#!#<NULL>#!#5#!#<NULL>#!#<NULL>#!#2#!#YES#!#0#!#0#!#0#!#0#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#38
+~~END~~
+
+exec [sys].sp_columns N'small_int_identity',N'dbo',NULL,NULL,@ODBCVer=3,@fUsePattern=1;
+go
+~~START~~
+varchar#!#varchar#!#varchar#!#varchar#!#smallint#!#varchar#!#int#!#int#!#smallint#!#smallint#!#smallint#!#varchar#!#nvarchar#!#smallint#!#smallint#!#int#!#int#!#varchar#!#int
+master#!#dbo#!#small_int_identity#!#i_col#!#5#!#smallint#!#5#!#2#!#0#!#10#!#0#!#<NULL>#!#<NULL>#!#5#!#<NULL>#!#<NULL>#!#1#!#NO#!#52
+master#!#dbo#!#small_int_identity#!#smallint_col#!#5#!#smallint#!#5#!#2#!#0#!#10#!#1#!#<NULL>#!#<NULL>#!#5#!#<NULL>#!#<NULL>#!#2#!#YES#!#38
+~~END~~
+
+
+exec [sys].sp_columns_100 N'int_identity',N'dbo',NULL,NULL,@ODBCVer=3,@fUsePattern=1;
+go
+~~START~~
+varchar#!#varchar#!#varchar#!#varchar#!#smallint#!#varchar#!#int#!#int#!#smallint#!#smallint#!#smallint#!#varchar#!#nvarchar#!#smallint#!#smallint#!#int#!#int#!#varchar#!#smallint#!#smallint#!#smallint#!#smallint#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#int
+master#!#dbo#!#int_identity#!#i_col#!#4#!#int#!#10#!#4#!#0#!#10#!#0#!#<NULL>#!#<NULL>#!#4#!#<NULL>#!#<NULL>#!#1#!#NO#!#0#!#0#!#0#!#1#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#56
+master#!#dbo#!#int_identity#!#int_col#!#4#!#int#!#10#!#4#!#0#!#10#!#1#!#<NULL>#!#<NULL>#!#4#!#<NULL>#!#<NULL>#!#2#!#YES#!#0#!#0#!#0#!#0#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#38
+~~END~~
+
+exec [sys].sp_columns N'int_identity',N'dbo',NULL,NULL,@ODBCVer=3,@fUsePattern=1;
+go
+~~START~~
+varchar#!#varchar#!#varchar#!#varchar#!#smallint#!#varchar#!#int#!#int#!#smallint#!#smallint#!#smallint#!#varchar#!#nvarchar#!#smallint#!#smallint#!#int#!#int#!#varchar#!#int
+master#!#dbo#!#int_identity#!#i_col#!#4#!#int#!#10#!#4#!#0#!#10#!#0#!#<NULL>#!#<NULL>#!#4#!#<NULL>#!#<NULL>#!#1#!#NO#!#56
+master#!#dbo#!#int_identity#!#int_col#!#4#!#int#!#10#!#4#!#0#!#10#!#1#!#<NULL>#!#<NULL>#!#4#!#<NULL>#!#<NULL>#!#2#!#YES#!#38
+~~END~~
+
+
+exec [sys].sp_columns_100 N'big_int_identity',N'dbo',NULL,NULL,@ODBCVer=3,@fUsePattern=1;
+go
+~~START~~
+varchar#!#varchar#!#varchar#!#varchar#!#smallint#!#varchar#!#int#!#int#!#smallint#!#smallint#!#smallint#!#varchar#!#nvarchar#!#smallint#!#smallint#!#int#!#int#!#varchar#!#smallint#!#smallint#!#smallint#!#smallint#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#int
+master#!#dbo#!#big_int_identity#!#i_col#!#-5#!#bigint#!#19#!#8#!#0#!#10#!#0#!#<NULL>#!#<NULL>#!#-5#!#<NULL>#!#<NULL>#!#1#!#NO#!#0#!#0#!#0#!#1#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#63
+master#!#dbo#!#big_int_identity#!#bigint_col#!#-5#!#bigint#!#19#!#8#!#0#!#10#!#1#!#<NULL>#!#<NULL>#!#-5#!#<NULL>#!#<NULL>#!#2#!#YES#!#0#!#0#!#0#!#0#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#108
+~~END~~
+
+exec [sys].sp_columns N'big_int_identity',N'dbo',NULL,NULL,@ODBCVer=3,@fUsePattern=1;
+go
+~~START~~
+varchar#!#varchar#!#varchar#!#varchar#!#smallint#!#varchar#!#int#!#int#!#smallint#!#smallint#!#smallint#!#varchar#!#nvarchar#!#smallint#!#smallint#!#int#!#int#!#varchar#!#int
+master#!#dbo#!#big_int_identity#!#i_col#!#-5#!#bigint#!#19#!#8#!#0#!#10#!#0#!#<NULL>#!#<NULL>#!#-5#!#<NULL>#!#<NULL>#!#1#!#NO#!#63
+master#!#dbo#!#big_int_identity#!#bigint_col#!#-5#!#bigint#!#19#!#8#!#0#!#10#!#1#!#<NULL>#!#<NULL>#!#-5#!#<NULL>#!#<NULL>#!#2#!#YES#!#108
+~~END~~
+
+
+exec [sys].sp_columns_100 N'decimal_int_identity',N'dbo',NULL,NULL,@ODBCVer=3,@fUsePattern=1;
+go
+~~START~~
+varchar#!#varchar#!#varchar#!#varchar#!#smallint#!#varchar#!#int#!#int#!#smallint#!#smallint#!#smallint#!#varchar#!#nvarchar#!#smallint#!#smallint#!#int#!#int#!#varchar#!#smallint#!#smallint#!#smallint#!#smallint#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#int
+master#!#dbo#!#decimal_int_identity#!#i_col#!#-5#!#bigint#!#19#!#8#!#0#!#10#!#0#!#<NULL>#!#<NULL>#!#-5#!#<NULL>#!#<NULL>#!#1#!#NO#!#0#!#0#!#0#!#1#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#63
+master#!#dbo#!#decimal_int_identity#!#dec5int_col#!#3#!#decimal#!#5#!#7#!#0#!#<NULL>#!#1#!#<NULL>#!#<NULL>#!#3#!#<NULL>#!#<NULL>#!#2#!#YES#!#0#!#0#!#0#!#0#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#106
+~~END~~
+
+exec [sys].sp_columns N'decimal_int_identity',N'dbo',NULL,NULL,@ODBCVer=3,@fUsePattern=1;
+go
+~~START~~
+varchar#!#varchar#!#varchar#!#varchar#!#smallint#!#varchar#!#int#!#int#!#smallint#!#smallint#!#smallint#!#varchar#!#nvarchar#!#smallint#!#smallint#!#int#!#int#!#varchar#!#int
+master#!#dbo#!#decimal_int_identity#!#i_col#!#-5#!#bigint#!#19#!#8#!#0#!#10#!#0#!#<NULL>#!#<NULL>#!#-5#!#<NULL>#!#<NULL>#!#1#!#NO#!#63
+master#!#dbo#!#decimal_int_identity#!#dec5int_col#!#3#!#decimal#!#5#!#7#!#0#!#<NULL>#!#1#!#<NULL>#!#<NULL>#!#3#!#<NULL>#!#<NULL>#!#2#!#YES#!#106
+~~END~~
+
+
+exec [sys].sp_columns_100 N'numeric_int_identity',N'dbo',NULL,NULL,@ODBCVer=3,@fUsePattern=1;
+go
+~~START~~
+varchar#!#varchar#!#varchar#!#varchar#!#smallint#!#varchar#!#int#!#int#!#smallint#!#smallint#!#smallint#!#varchar#!#nvarchar#!#smallint#!#smallint#!#int#!#int#!#varchar#!#smallint#!#smallint#!#smallint#!#smallint#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#int
+master#!#dbo#!#numeric_int_identity#!#i_col#!#-5#!#bigint#!#19#!#8#!#0#!#10#!#0#!#<NULL>#!#<NULL>#!#-5#!#<NULL>#!#<NULL>#!#1#!#NO#!#0#!#0#!#0#!#1#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#63
+master#!#dbo#!#numeric_int_identity#!#num5int_col#!#2#!#numeric#!#5#!#7#!#0#!#10#!#1#!#<NULL>#!#<NULL>#!#2#!#<NULL>#!#<NULL>#!#2#!#YES#!#0#!#0#!#0#!#0#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#108
+~~END~~
+
+exec [sys].sp_columns N'numeric_int_identity',N'dbo',NULL,NULL,@ODBCVer=3,@fUsePattern=1;
+go
+~~START~~
+varchar#!#varchar#!#varchar#!#varchar#!#smallint#!#varchar#!#int#!#int#!#smallint#!#smallint#!#smallint#!#varchar#!#nvarchar#!#smallint#!#smallint#!#int#!#int#!#varchar#!#int
+master#!#dbo#!#numeric_int_identity#!#i_col#!#-5#!#bigint#!#19#!#8#!#0#!#10#!#0#!#<NULL>#!#<NULL>#!#-5#!#<NULL>#!#<NULL>#!#1#!#NO#!#63
+master#!#dbo#!#numeric_int_identity#!#num5int_col#!#2#!#numeric#!#5#!#7#!#0#!#10#!#1#!#<NULL>#!#<NULL>#!#2#!#<NULL>#!#<NULL>#!#2#!#YES#!#108
+~~END~~
+
+
+exec [sys].sp_columns_100 N'numeric13_int_identity',N'dbo',NULL,NULL,@ODBCVer=3,@fUsePattern=1;
+go
+~~START~~
+varchar#!#varchar#!#varchar#!#varchar#!#smallint#!#varchar#!#int#!#int#!#smallint#!#smallint#!#smallint#!#varchar#!#nvarchar#!#smallint#!#smallint#!#int#!#int#!#varchar#!#smallint#!#smallint#!#smallint#!#smallint#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#int
+master#!#dbo#!#numeric13_int_identity#!#i_col#!#-5#!#bigint#!#19#!#8#!#0#!#10#!#0#!#<NULL>#!#<NULL>#!#-5#!#<NULL>#!#<NULL>#!#1#!#NO#!#0#!#0#!#0#!#1#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#63
+master#!#dbo#!#numeric13_int_identity#!#num13int_col#!#2#!#numeric#!#13#!#15#!#0#!#10#!#1#!#<NULL>#!#<NULL>#!#2#!#<NULL>#!#<NULL>#!#2#!#YES#!#0#!#0#!#0#!#0#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#108
+~~END~~
+
+exec [sys].sp_columns N'numeric13_int_identity',N'dbo',NULL,NULL,@ODBCVer=3,@fUsePattern=1;
+go
+~~START~~
+varchar#!#varchar#!#varchar#!#varchar#!#smallint#!#varchar#!#int#!#int#!#smallint#!#smallint#!#smallint#!#varchar#!#nvarchar#!#smallint#!#smallint#!#int#!#int#!#varchar#!#int
+master#!#dbo#!#numeric13_int_identity#!#i_col#!#-5#!#bigint#!#19#!#8#!#0#!#10#!#0#!#<NULL>#!#<NULL>#!#-5#!#<NULL>#!#<NULL>#!#1#!#NO#!#63
+master#!#dbo#!#numeric13_int_identity#!#num13int_col#!#2#!#numeric#!#13#!#15#!#0#!#10#!#1#!#<NULL>#!#<NULL>#!#2#!#<NULL>#!#<NULL>#!#2#!#YES#!#108
 ~~END~~
 
 
@@ -209,6 +344,13 @@ drop table nums;
 drop table vart;
 drop table maxx;
 drop table tidentityintbigwithareallylongtablenamewhickcausesbabelfishtoaddahashcodetothenamebecauseofdefault63;
+drop table tiny_int_identity;
+drop table small_int_identity;
+drop table int_identity;
+drop table big_int_identity;
+drop table decimal_int_identity;
+drop table numeric_int_identity;
+drop table numeric13_int_identity;
 drop type char_t;
 drop type nchar_t;
 drop type varchar_t;
