@@ -52,34 +52,15 @@ jobs:
           engine_branch: ${{ steps.find-branch.outputs.base-engine-branch }}
           extension_branch: ${{ steps.find-branch.outputs.base-extension-branch }}
 
-      - name: read next upgrade version
-        id: read-next-upgrade-version
-        if: always() && steps.install-yq.outcome == 'success'
-        run: > 
-          echo "::set-output name=next-version::$(
-            yq '."upgrade-version"[1]' ${{ github.workspace }}/.github/configuration/upgrade-test-configuration.yml
-          )"
+      - name: Setup Upgrade Version Composite Action
+        id: setup-upgrade-ver-ca
+        if: always() && steps.install-yq.outcome == 'success' && steps.setup-base-version.outcome == 'success'
+        uses: ./.github/composite-actions/setup-upgrade-version-ca
 
-      - name: find branch of next version
-        id: find-branch-next-version
-        if: always() && steps.read-next-upgrade-version.outcome == 'success'
-        run: >
-          echo "::set-output name=next-engine-branch::$(
-            yq -r '."${{ steps.read-next-upgrade-version.outputs.next-version }}".engine_branch' ${{ github.workspace }}/.github/template/version-branch-template.yml
-          )" &&
-          echo "::set-output name=next-extension-branch::$(
-            yq -r '."${{ steps.read-next-upgrade-version.outputs.next-version }}".extension_branch' ${{ github.workspace }}/.github/template/version-branch-template.yml
-          )"
-
-      - name: Upgrade Version
-        id: upgrade-version
-        timeout-minutes: 25
-        if: always() && steps.find-branch-next-version.outcome == 'success' && steps.setup-base-version.outcome == 'success'
+      - name: Upgrade and Test
+        id: upgrade-and-test
+        if: always() && steps.setup-upgrade-ver-ca.outcome == 'success'
         uses: ./.github/composite-actions/upgrade-version
-        with: 
-          engine_branch: ${{ steps.find-branch-next-version.outputs.next-engine-branch }}
-          extension_branch: ${{ steps.find-branch-next-version.outputs.next-extension-branch }}
-          is_final_ver: true
 
       - name: Upload Log
         if: always() && steps.upgrade-version.outcome == 'failure'
