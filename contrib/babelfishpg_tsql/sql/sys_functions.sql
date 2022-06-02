@@ -345,7 +345,7 @@ BEGIN
     IF (expr IS NULL) THEN
 	    RETURN 0;
     END IF;
-    IF ($1::VARCHAR ~ '^\s*$') THEN 
+    IF ($1::VARCHAR COLLATE "C" ~ '^\s*$') THEN 
 	    RETURN 0;
     END IF;
     IF pg_typeof(expr) IN ('bigint'::regtype, 'int'::regtype, 'smallint'::regtype,'sys.tinyint'::regtype,
@@ -376,7 +376,9 @@ BEGIN
     IF (expr IS NULL) THEN
 	    RETURN 0;
     END IF;
-    IF ($1::VARCHAR ~ '^\s*$') THEN 
+
+    -- IF ($1::VARCHAR ~ '^\s*$') THEN 
+    IF (expr COLLATE "C" ~ '^\s*$') THEN 
 	    RETURN 0;
     END IF;
     IF pg_typeof(expr) IN ('bigint'::regtype, 'int'::regtype, 'smallint'::regtype,'sys.tinyint'::regtype,
@@ -449,32 +451,32 @@ BEGIN
             RETURN NULL;
         END IF;
 
-        if object_type <> '' then
+        if obj_type <> '' then
             case
                 -- Schema does not apply as much to temp objects.
-                when upper(object_type) in ('S', 'U', 'V', 'IT', 'ET', 'SO') and is_temp_object then
+                when upper(obj_type) in ('S', 'U', 'V', 'IT', 'ET', 'SO') and is_temp_object then
                     id := (select reloid from sys.babelfish_get_enr_list() where lower(relname) = obj_name limit 1);
 
-                when upper(object_type) in ('S', 'U', 'V', 'IT', 'ET', 'SO') and not is_temp_object then
+                when upper(obj_type) in ('S', 'U', 'V', 'IT', 'ET', 'SO') and not is_temp_object then
                     id := (select oid from pg_class where lower(relname) = obj_name 
                             and relnamespace = schema_oid limit 1);
 
-                when upper(object_type) in ('C', 'D', 'F', 'PK', 'UQ') then
+                when upper(obj_type) in ('C', 'D', 'F', 'PK', 'UQ') then
                     id := (select oid from pg_constraint where lower(conname) = obj_name 
                             and connamespace = schema_oid limit 1);
 
-                when upper(object_type) in ('AF', 'FN', 'FS', 'FT', 'IF', 'P', 'PC', 'TF', 'RF', 'X') then
+                when upper(obj_type) in ('AF', 'FN', 'FS', 'FT', 'IF', 'P', 'PC', 'TF', 'RF', 'X') then
                     id := (select oid from pg_proc where lower(proname) = obj_name 
                             and pronamespace = schema_oid limit 1);
 
-                when upper(object_type) in ('TR', 'TA') then
+                when upper(obj_type) in ('TR', 'TA') then
                     id := (select oid from pg_trigger where lower(tgname) = obj_name limit 1);
 
                 -- Throwing exception as a reminder to add support in the future.
-                when upper(object_type) in ('R', 'EC', 'PG', 'SN', 'SQ', 'TT') then
+                when upper(obj_type) in ('R', 'EC', 'PG', 'SN', 'SQ', 'TT') then
                     RAISE EXCEPTION 'Object type currently unsupported.';
 
-                -- unsupported object_type
+                -- unsupported obj_type
                 else id := null;
             end case;
         else
@@ -512,7 +514,7 @@ RETURNS VARCHAR AS $$
 EXTENSION PACK function PARSENAME(x)
 ***************************************************************/
 SELECT CASE
-		WHEN char_length($1) < char_length(replace($1, '.', '')) + 4
+		WHEN char_length($1) < char_length(pg_catalog.replace($1, '.', '')) + 4
 			AND $2 BETWEEN 1
 				AND 4
 			THEN reverse(split_part(reverse($1), '.', $2))
@@ -647,6 +649,7 @@ $BODY$
 STRICT
 LANGUAGE SQL IMMUTABLE;
 
+
 -- Duplicate functions with arg TEXT since ANYELEMNT cannot handle type unknown.
 CREATE OR REPLACE FUNCTION sys.stuff(expr TEXT, start INTEGER, length INTEGER, replace_expr TEXT)
 RETURNS TEXT AS
@@ -759,33 +762,48 @@ end
 $body$
 language 'plpgsql';
 
-create or replace function sys.PATINDEX(in pattern character varying, in expression character varying) returns bigint as
+CREATE OR REPLACE FUNCTION sys.is_collated_ci_as_internal(IN input_string TEXT) RETURNS BOOL
+AS 'babelfishpg_tsql', 'is_collated_ci_as_internal'
+LANGUAGE C VOLATILE PARALLEL SAFE;
+
+CREATE OR REPLACE FUNCTION sys.is_collated_ci_as(IN input_string TEXT)
+RETURNS BOOL AS
+$$
+	SELECT sys.is_collated_ci_as_internal(input_string);
+$$
+LANGUAGE SQL VOLATILE PARALLEL SAFE;
+
+create or replace function sys.PATINDEX(in pattern varchar, in expression varchar) returns bigint as
 $body$
 declare
-  v_find_result character varying;
+  v_find_result VARCHAR;
   v_pos bigint;
-  v_regexp_pattern character varying;
+  v_regexp_pattern VARCHAR;
 begin
-  v_pos := null;
+  if pattern is null or expression is null then
+    return null;
+  end if;
   if left(pattern, 1) = '%' then
-    v_regexp_pattern := regexp_replace(pattern, '^%', '%#"');
+    v_regexp_pattern := regexp_replace(pattern, '^%', '%#"', 'i');
   else
     v_regexp_pattern := '#"' || pattern;
   end if;
 
   if right(pattern, 1) = '%' then
-    v_regexp_pattern := regexp_replace(v_regexp_pattern, '%$', '#"%');
+    v_regexp_pattern := regexp_replace(v_regexp_pattern, '%$', '#"%', 'i');
   else
    v_regexp_pattern := v_regexp_pattern || '#"';
- end if;
-  v_find_result := substring(expression from v_regexp_pattern for '#');
+  end if;
+  v_find_result := substring(expression, v_regexp_pattern, '#');
   if v_find_result <> '' then
     v_pos := strpos(expression, v_find_result);
+  else
+    v_pos := 0;
   end if;
   return v_pos;
 end;
 $body$
-language plpgsql returns null on null input;
+language plpgsql immutable returns null on null input;
 
 create or replace function sys.RAND(x in int)returns double precision
 AS 'babelfishpg_tsql', 'tsql_random'
@@ -2587,6 +2605,22 @@ $$
 	SELECT sys.is_rolemember_internal(role, database_principal);
 $$
 LANGUAGE SQL STRICT STABLE PARALLEL SAFE;
+
+CREATE OR REPLACE FUNCTION sys.replace (in input_string text, in pattern text, in replacement text) returns TEXT as
+$body$
+begin
+   if pattern is null or replacement is null then
+       return null;
+   elsif pattern = '' then
+       return input_string;
+   elsif sys.is_collated_ci_as(input_string) then
+       return regexp_replace(input_string, '***=' || pattern, replacement, 'ig');
+   else
+       return regexp_replace(input_string, '***=' || pattern, replacement, 'g');
+   end if;
+end
+$body$
+LANGUAGE plpgsql STABLE PARALLEL SAFE STRICT;
 
 CREATE OR REPLACE FUNCTION OBJECTPROPERTY(IN object_id INT, IN property sys.varchar)
 RETURNS INT AS

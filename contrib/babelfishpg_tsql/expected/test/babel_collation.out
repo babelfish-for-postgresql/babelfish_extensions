@@ -445,7 +445,7 @@ select * from testing5 where c1 LIKE 'AB%';
 SELECT 'JONES' like 'jo%';
  ?column? 
 ----------
- f
+ t
 (1 row)
 
 SELECT 'JONES' COLLATE SQL_Latin1_General_CP1_CI_AS like 'jo%' ;

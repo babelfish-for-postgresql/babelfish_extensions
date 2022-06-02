@@ -3390,7 +3390,7 @@ _PG_init(void)
 	plansource_revalidate_hook = pltsql_check_guc_plan;
 
 	prev_planner_node_transformer_hook = planner_node_transformer_hook;
-	planner_node_transformer_hook = pltsql_like_ilike_transformer;
+	planner_node_transformer_hook = pltsql_planner_node_transformer;
 
 	prev_pltsql_nextval_hook = pltsql_nextval_hook;
 	pltsql_nextval_hook = pltsql_nextval_identity;

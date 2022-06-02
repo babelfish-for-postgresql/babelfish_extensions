@@ -20,13 +20,18 @@ GRANT EXECUTE ON FUNCTION sys.unicode(IN VARCHAR) TO PUBLIC;
 
 CREATE OR REPLACE FUNCTION sys.string_split(IN string VARCHAR, IN separator VARCHAR, OUT value VARCHAR) RETURNS SETOF VARCHAR AS
 $body$
+DECLARE
+    v_string VARCHAR COLLATE "C";
+    v_separator VARCHAR COLLATE "C";
 BEGIN
 	if length(separator) != 1 then
 		RAISE EXCEPTION 'Invalid separator: %', separator USING HINT =
 		'Separator must be length 1';
-else
-		RETURN QUERY(SELECT cast(unnest(string_to_array(string, separator)) as varchar));
-end if;
+        else
+	        v_string := string; -- use COLLATE "C"
+		v_separator := separator; -- use COLLATE "C"
+		RETURN QUERY(SELECT cast(unnest(string_to_array(v_string, v_separator)) as varchar));
+        end if;
 END
 $body$
 LANGUAGE plpgsql IMMUTABLE STRICT PARALLEL SAFE;

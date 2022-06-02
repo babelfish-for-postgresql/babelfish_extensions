@@ -77,10 +77,10 @@ coll_translate_t coll_translations[] =
   { "sql_latin1_general_cp1_ci_as", "bbf_unicode_cp1_ci_as", 1252 }, /* default */
   { "sql_latin1_general_cp1_cs_ai", "bbf_unicode_cp1_cs_ai", 1252 },
   { "sql_latin1_general_cp1_cs_as", "bbf_unicode_cp1_cs_as", 1252 },
-  
+
   //  { "sql_latin1_general_cp850_ci_as", "bbf_unicode_cp850_ci_as", 850 },
   //  { "sql_latin1_general_cp850_cs_as", "bbf_unicode_cp850_cs_as", 850 },
-  
+
   { "sql_latin1_general_cp874_ci_as", "bbf_unicode_cp874_ci_as", 874 },
   { "sql_latin1_general_cp874_cs_as", "bbf_unicode_cp874_cs_as", 874 },
   { "sql_latin1_general_pref_cp1_cs_as", "bbf_unicode_pref_cp1_cs_as", 1252 }
@@ -397,14 +397,14 @@ locale_info_t locales[] =
  */
 like_ilike_info_t like_ilike_table[] =
 {
-    {0, "~~",   "~~*",  "pg_catalog", "name",   "pg_catalog", "text", false,  0},
-    {0, "!~~",  "!~~*", "pg_catalog", "name",   "pg_catalog", "text", true,   0},
-    {0, "~~",   "~~*",  "pg_catalog", "text",   "pg_catalog", "text", false,  0},
-    {0, "!~~",  "!~~*", "pg_catalog", "text",   "pg_catalog", "text", true,   0},
-    {0, "~~",   "~~*",  "pg_catalog", "bpchar", "pg_catalog", "text", false,  0},
-    {0, "!~~",  "!~~*", "pg_catalog", "bpchar", "pg_catalog", "text", true,  0},
-    {0, "~~",   "~~*",  "sys",        "bpchar", "pg_catalog", "text", false,  0},
-    {0, "!~~",  "!~~*", "sys",        "bpchar", "pg_catalog", "text", true,  0},
+	{0, "~~",   "~~*",  "pg_catalog", "name",   "pg_catalog", "text", false,  0},
+	{0, "!~~",  "!~~*", "pg_catalog", "name",   "pg_catalog", "text", true,   0},
+	{0, "~~",   "~~*",  "pg_catalog", "text",   "pg_catalog", "text", false,  0},
+	{0, "!~~",  "!~~*", "pg_catalog", "text",   "pg_catalog", "text", true,   0},
+	{0, "~~",   "~~*",  "pg_catalog", "bpchar", "pg_catalog", "text", false,  0},
+	{0, "!~~",  "!~~*", "pg_catalog", "bpchar", "pg_catalog", "text", true,  0},
+	{0, "~~",   "~~*",  "sys",        "bpchar", "pg_catalog", "text", false,  0},
+	{0, "!~~",  "!~~*", "sys",        "bpchar", "pg_catalog", "text", true,  0},
 };
 
 #define TOTAL_LIKE_OP_COUNT (sizeof(like_ilike_table)/sizeof(like_ilike_table[0]))
@@ -426,11 +426,17 @@ find_collation(const char *collation_name);
 static int
 translate_collation(const char *collation_name);
 static Node *
-pgtsql_like_to_ilike_mutator(Node *node, void* context);
+pgtsql_expression_tree_mutator(Node *node, void* context);
 
-static Node* like2ilike_transformer(Node *expr);
+static Node*
+pltsql_predicate_transformer(Node *expr);
+
 /* transform LIKE node to ILIKE */
-static Node* transform_likenode(Node* expr);
+static Node*
+transform_likenode(Node* expr);
+
+static Node*
+transform_funcexpr(Node* node);
 
 static Expr *
 make_op_with_func(Oid opno, Oid opresulttype, bool opretset,
@@ -441,10 +447,10 @@ static Node *
 make_or_qual(Node *qual1, Node *qual2);
 
 extern int pattern_fixed_prefix_wrapper(Const *patt,
-                                        int ptype,
-                                        Oid collation,
-                                        Const **prefix,
-                                        Selectivity *rest_selec);
+										int ptype,
+										Oid collation,
+										Const **prefix,
+										Selectivity *rest_selec);
 
 /* pattern prefix status for pattern_fixed_prefix_wrapper
  * Pattern_Prefix_None: no prefix found, this means the first character is a wildcard character
@@ -459,25 +465,27 @@ typedef enum
 PG_FUNCTION_INFO_V1(init_collid_trans_tab);
 PG_FUNCTION_INFO_V1(init_like_ilike_table);
 PG_FUNCTION_INFO_V1(get_server_collation_oid); 
+PG_FUNCTION_INFO_V1(is_collated_ci_as_internal);
  
 /* this function is no longer needed and is only a placeholder for upgrade script */
 PG_FUNCTION_INFO_V1(init_server_collation);
 Datum init_server_collation(PG_FUNCTION_ARGS) 
 {
-    PG_RETURN_INT32(0);
+	PG_RETURN_INT32(0);
 }
 /* this function is no longer needed and is only a placeholder for upgrade script */
 PG_FUNCTION_INFO_V1(init_server_collation_oid);
 Datum init_server_collation_oid(PG_FUNCTION_ARGS)
 {
-    PG_RETURN_INT32(0);
+	PG_RETURN_INT32(0);
 }
+
 
 bool
 is_server_collation_CI_AS()
 {
-    get_server_collation_oid_internal();
-    return pltsql_db_collation_is_CI_AS;
+	get_server_collation_oid_internal();
+	return pltsql_db_collation_is_CI_AS;
 }
 
 /* Given a coll_infos index, return the CS_AS or BIN2 collation with
@@ -486,127 +494,127 @@ is_server_collation_CI_AS()
 int
 find_cs_as_collation(int collidx)
 {
-    int cur_collidx = collidx;
+	int cur_collidx = collidx;
 
-    if (NOT_FOUND == collidx)
+	if (NOT_FOUND == collidx)
 	return collidx;
 
-    while (cur_collidx < TOTAL_COLL_COUNT &&
-	   coll_infos[cur_collidx].lcid == coll_infos[collidx].lcid)
-    {
+	while (cur_collidx < TOTAL_COLL_COUNT &&
+		   coll_infos[cur_collidx].lcid == coll_infos[collidx].lcid)
+	{
 	if ( coll_infos[cur_collidx].collateflags == 0x000c /* CS_AS  */ ||
-	     coll_infos[cur_collidx].collateflags == 0x0220 /* BIN2 */ )
-	    return cur_collidx;
+		 coll_infos[cur_collidx].collateflags == 0x0220 /* BIN2 */ )
+		return cur_collidx;
 
 	cur_collidx++;
-    }
+	}
 
-    return NOT_FOUND;
+	return NOT_FOUND;
 }
 
 int
 find_any_collation(const char *collation_name)
 {
-    int collidx = translate_collation(collation_name);
+	int collidx = translate_collation(collation_name);
 
-    if (NOT_FOUND == collidx)
+	if (NOT_FOUND == collidx)
 	collidx = find_collation(collation_name);
 
-    return collidx;
+	return collidx;
 }
 
 static int
 find_collation(const char *collation_name)
 {
-    int first = 0;
-    int last = TOTAL_COLL_COUNT - 1;
-    int middle = 37;  /* optimization: usually it's the default collation (first + last) / 2; */
-    int compare;
+	int first = 0;
+	int last = TOTAL_COLL_COUNT - 1;
+	int middle = 37;  /* optimization: usually it's the default collation (first + last) / 2; */
+	int compare;
 
-    while (first <= last)
-    {
+	while (first <= last)
+	{
 	compare = pg_strcasecmp(coll_infos[middle].collname, collation_name);
 
 	if (compare < 0)
-	    first = middle + 1;
+		first = middle + 1;
 	else if (compare == 0)
-	    return middle;
+		return middle;
 	else
-	    last = middle - 1;
+		last = middle - 1;
 
 	middle = (first + last) / 2;
-    }
+	}
 
-    return NOT_FOUND;
+	return NOT_FOUND;
 }
 
 static int
 translate_collation(const char *collation_name)
 {
-    int first = 0;
-    int last = TOTAL_COLL_TRANSLATION_COUNT - 1;
-    int middle = 25; /* optimization: usually it's the default collation (first + last) / 2; */
-    int compare;
+	int first = 0;
+	int last = TOTAL_COLL_TRANSLATION_COUNT - 1;
+	int middle = 25; /* optimization: usually it's the default collation (first + last) / 2; */
+	int compare;
 
-    while (first <= last)
-    {
+	while (first <= last)
+	{
 	compare = pg_strcasecmp(coll_translations[middle].from_collname, collation_name);
 	if (compare < 0)
-	    first = middle + 1;
+		first = middle + 1;
 	else if (compare == 0)
-	    return find_collation(coll_translations[middle].to_collname);
+		return find_collation(coll_translations[middle].to_collname);
 	else
-	    last = middle - 1;
+		last = middle - 1;
 
 	middle = (first + last) / 2;
-    }
+	}
 
-    return NOT_FOUND;;
+	return NOT_FOUND;;
 }
 
 int
 find_locale(const char *given_locale)
 {
-    int i;
-    char *normalized_locale = NULL;
+	int i;
+	char *normalized_locale = NULL;
 
-    /* Normalize given_locale before searching the locales array
-     */
-    if (NULL == given_locale ||
+	/* Normalize given_locale before searching the locales array
+	 */
+	if (NULL == given_locale ||
 	0 == strlen(given_locale) ||
 	strlen(given_locale) > MAX_ICU_LOCALE_LEN)
-    {
-      // normalized_locale = palloc0(strlen("en-US") + 1);
-      // memmove(normalized_locale, "en-US", strlen("en-US"));
-        return NOT_FOUND;
-    }
-    else
-    {
-        char *underscore_pos;
+	{
+		// normalized_locale = palloc0(strlen("en-US") + 1);
+		// memmove(normalized_locale, "en-US", strlen("en-US"));
+		return NOT_FOUND;
+	}
+	else
+	{
+		char *underscore_pos;
 
-        normalized_locale = palloc0(strlen(given_locale) + 1);
-	memcpy(normalized_locale, given_locale, strlen(given_locale));
-	underscore_pos = strstr(normalized_locale, "_");	
+		normalized_locale = palloc0(strlen(given_locale) + 1);
+		memcpy(normalized_locale, given_locale, strlen(given_locale));
+		underscore_pos = strstr(normalized_locale, "_");
 
-        while (NULL != underscore_pos)
-        {
-	    *underscore_pos = '-';
-	    underscore_pos = strstr(normalized_locale, "_");
+		while (NULL != underscore_pos)
+		{
+			*underscore_pos = '-';
+			underscore_pos = strstr(normalized_locale, "_");
+		}
+
 	}
 
-    }
+	for (i=0; i < TOTAL_LOCALES; ++i)
+	{
+		if (0 == pg_strcasecmp(normalized_locale, locales[i].icu_locale))
+		{
+			pfree(normalized_locale);
+			return (i);
+		}
+	}
 
-    for (i=0; i < TOTAL_LOCALES; ++i)
-    {
-        if (0 == pg_strcasecmp(normalized_locale, locales[i].icu_locale))
-        {
-	    pfree(normalized_locale);
-	    return (i);
-        }
-    }
-
-    pfree(normalized_locale);
-    return NOT_FOUND;
+	pfree(normalized_locale);
+	return NOT_FOUND;
 }
 
 /*
@@ -626,7 +634,6 @@ init_collid_trans_tab(PG_FUNCTION_ARGS)
 	Oid nspoid;
 	ht_oid2collid_entry_t *entry;
 	int locale_pos = -1;
-	HeapTuple tp;
 	char *atsign;
 	char *locale;
 
@@ -691,14 +698,14 @@ init_collid_trans_tab(PG_FUNCTION_ARGS)
 			if (locale)
 				pfree(locale);
 		}
-		
+
 		if (OidIsValid(coll_infos[i].oid))
 		{
 			entry = hash_search(ht_oid2collid, &coll_infos[i].oid, HASH_ENTER, NULL);
 			entry->persist_id = i;
 		}
 	}
-    PG_RETURN_INT32(0);
+	PG_RETURN_INT32(0);
 }
 
 /*
@@ -707,10 +714,10 @@ init_collid_trans_tab(PG_FUNCTION_ARGS)
 int
 get_server_collation_collidx(void)
 {
-    if (NOT_FOUND == server_collation_collidx)
+	if (NOT_FOUND == server_collation_collidx)
 	server_collation_collidx = find_any_collation(pltsql_server_collation_name);
 
-    return server_collation_collidx;
+	return server_collation_collidx;
 }
 
 /*
@@ -720,63 +727,63 @@ get_server_collation_collidx(void)
 coll_info_t
 lookup_collation_table(Oid coll_oid)
 {
-    ht_oid2collid_entry_t  *hinfo;
-    bool					found;
+	ht_oid2collid_entry_t  *hinfo;
+	bool					found;
 
-    Assert(ht_oid2collid != NULL);
+	Assert(ht_oid2collid != NULL);
 
-    if (!OidIsValid(coll_oid))
-    {
+	if (!OidIsValid(coll_oid))
+	{
 	int collidx = get_server_collation_collidx();
 
 	if (NOT_FOUND != collidx)
-	    return coll_infos[collidx];
-    }
+		return coll_infos[collidx];
+	}
 
-    hinfo = (ht_oid2collid_entry_t *) hash_search(ht_oid2collid,
-						  &coll_oid,
-						  HASH_FIND,
-						  &found);
+	hinfo = (ht_oid2collid_entry_t *) hash_search(ht_oid2collid,
+												  &coll_oid,
+												  HASH_FIND,
+												  &found);
 
-    /*
-     * TODO: Change it to Error, and reload the cache again.
-     * If not found, raise the error.
-     * For now, silently return NULL, so that we can use
-     * the default values
-     */
-    if (!found)
-    {
-        coll_info_t invalid;
-	invalid.oid = InvalidOid;
-	elog(DEBUG2, "collation oid %d not found, using default collation", coll_oid);
-	return invalid;
-    }
+	/*
+	 * TODO: Change it to Error, and reload the cache again.
+	 * If not found, raise the error.
+	 * For now, silently return NULL, so that we can use
+	 * the default values
+	 */
+	if (!found)
+	{
+		coll_info_t invalid;
+		invalid.oid = InvalidOid;
+		elog(DEBUG2, "collation oid %d not found, using default collation", coll_oid);
+		return invalid;
+	}
 
-    return coll_infos[hinfo->persist_id];
+	return coll_infos[hinfo->persist_id];
 }
 
 int8_t
 cmp_collation(uint16_t coll1, uint16_t coll2){
-    coll_info_t * coll_info1 = &coll_infos[coll1];
-    coll_info_t * coll_info2 = &coll_infos[coll2];
-    if (coll_info1->lcid < coll_info2-> lcid)
-        return -1;
-    else if (coll_info1->lcid > coll_info2-> lcid)
-        return 1;
-    else if (coll_info1->ver < coll_info2-> ver)
-        return -1;
-    else if (coll_info1->ver > coll_info2-> ver)
-        return 1;
-    else if (coll_info1->style < coll_info2-> style)
-        return -1;
-    else if (coll_info1->style > coll_info2-> style)
-        return 1;
-    else if (coll_info1->sortid < coll_info2-> sortid)
-        return -1;
-    else if (coll_info1->sortid > coll_info2-> sortid)
-        return 1;
-    else
-        return 0;
+	coll_info_t * coll_info1 = &coll_infos[coll1];
+	coll_info_t * coll_info2 = &coll_infos[coll2];
+	if (coll_info1->lcid < coll_info2-> lcid)
+		return -1;
+	else if (coll_info1->lcid > coll_info2-> lcid)
+		return 1;
+	else if (coll_info1->ver < coll_info2-> ver)
+		return -1;
+	else if (coll_info1->ver > coll_info2-> ver)
+		return 1;
+	else if (coll_info1->style < coll_info2-> style)
+		return -1;
+	else if (coll_info1->style > coll_info2-> style)
+		return 1;
+	else if (coll_info1->sortid < coll_info2-> sortid)
+		return -1;
+	else if (coll_info1->sortid > coll_info2-> sortid)
+		return 1;
+	else
+		return 0;
 }
 
 PG_FUNCTION_INFO_V1(collation_list);
@@ -784,185 +791,200 @@ PG_FUNCTION_INFO_V1(collation_list);
 Datum
 collation_list(PG_FUNCTION_ARGS)
 {
-    ReturnSetInfo *rsinfo = (ReturnSetInfo *) fcinfo->resultinfo;
-    TupleDesc tupdesc;
-    Tuplestorestate *tupstore;
-    MemoryContext per_query_ctx;
-    MemoryContext oldcontext;
+	ReturnSetInfo *rsinfo = (ReturnSetInfo *) fcinfo->resultinfo;
+	TupleDesc tupdesc;
+	Tuplestorestate *tupstore;
+	MemoryContext per_query_ctx;
+	MemoryContext oldcontext;
 
-    /* check to see if caller supports us returning a tuplestore */
-    if (rsinfo == NULL || !IsA(rsinfo, ReturnSetInfo))
-        ereport(ERROR,
-                (errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-                 errmsg("set-valued function called in context that cannot accept a set")));
-    if (!(rsinfo->allowedModes & SFRM_Materialize))
-        ereport(ERROR,
-                (errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-                 errmsg("materialize mode required, but it is not " \
-                        "allowed in this context")));
+	/* check to see if caller supports us returning a tuplestore */
+	if (rsinfo == NULL || !IsA(rsinfo, ReturnSetInfo))
+		ereport(ERROR,
+				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+				 errmsg("set-valued function called in context that cannot accept a set")));
+	if (!(rsinfo->allowedModes & SFRM_Materialize))
+		ereport(ERROR,
+				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+				 errmsg("materialize mode required, but it is not " \
+						"allowed in this context")));
 
-    /* need to build tuplestore in query context */
-    per_query_ctx = rsinfo->econtext->ecxt_per_query_memory;
-    oldcontext = MemoryContextSwitchTo(per_query_ctx);
+	/* need to build tuplestore in query context */
+	per_query_ctx = rsinfo->econtext->ecxt_per_query_memory;
+	oldcontext = MemoryContextSwitchTo(per_query_ctx);
 
-    /*
-     * build tupdesc for result tuples.
-     */
-    tupdesc = CreateTemplateTupleDesc(7);
-    TupleDescInitEntry(tupdesc, (AttrNumber) 1, "oid",
-                       INT4OID, -1, 0);
-    TupleDescInitEntry(tupdesc, (AttrNumber) 2, "collation_name",
-                       TEXTOID, -1, 0);
-    TupleDescInitEntry(tupdesc, (AttrNumber) 3, "l1_priority",
-                       INT4OID, -1, 0);
-    TupleDescInitEntry(tupdesc, (AttrNumber) 4, "l2_priority",
-                       INT4OID, -1, 0);
-    TupleDescInitEntry(tupdesc, (AttrNumber) 5, "l3_priority",
-                       INT4OID, -1, 0);
-    TupleDescInitEntry(tupdesc, (AttrNumber) 6, "l4_priority",
-                       INT4OID, -1, 0);
-    TupleDescInitEntry(tupdesc, (AttrNumber) 7, "l5_priority",
-                       INT4OID, -1, 0);
+	/*
+	 * build tupdesc for result tuples.
+	 */
+	tupdesc = CreateTemplateTupleDesc(7);
+	TupleDescInitEntry(tupdesc, (AttrNumber) 1, "oid",
+					   INT4OID, -1, 0);
+	TupleDescInitEntry(tupdesc, (AttrNumber) 2, "collation_name",
+					   TEXTOID, -1, 0);
+	TupleDescInitEntry(tupdesc, (AttrNumber) 3, "l1_priority",
+					   INT4OID, -1, 0);
+	TupleDescInitEntry(tupdesc, (AttrNumber) 4, "l2_priority",
+					   INT4OID, -1, 0);
+	TupleDescInitEntry(tupdesc, (AttrNumber) 5, "l3_priority",
+					   INT4OID, -1, 0);
+	TupleDescInitEntry(tupdesc, (AttrNumber) 6, "l4_priority",
+					   INT4OID, -1, 0);
+	TupleDescInitEntry(tupdesc, (AttrNumber) 7, "l5_priority",
+					   INT4OID, -1, 0);
 
-    tupstore =
-        tuplestore_begin_heap(rsinfo->allowedModes & SFRM_Materialize_Random,
-                              false, 1024);
-    /* generate junk in short-term context */
-    MemoryContextSwitchTo(oldcontext);
+	tupstore =
+		tuplestore_begin_heap(rsinfo->allowedModes & SFRM_Materialize_Random,
+							  false, 1024);
+	/* generate junk in short-term context */
+	MemoryContextSwitchTo(oldcontext);
 
-    /* scan all the variables in top estate */
-    for (int i = 0; i < TOTAL_COLL_COUNT; i++)
-    {
-        coll_info_t *info = &coll_infos[i];
-        Datum		values[7];
-        bool		nulls[7];
+	/* scan all the variables in top estate */
+	for (int i = 0; i < TOTAL_COLL_COUNT; i++)
+	{
+		coll_info_t *info = &coll_infos[i];
+		Datum		values[7];
+		bool		nulls[7];
 
-        MemSet(nulls, 0, sizeof(nulls));
+		MemSet(nulls, 0, sizeof(nulls));
 
-        values[0] = info->oid;
-        values[1] = CStringGetTextDatum(info->collname);
-        values[2] = info->lcid;
-        values[3] = info->ver;
-        values[4] = info->style;
-        values[5] = info->sortid;
-        values[6] = info->collateflags;
+		values[0] = info->oid;
+		values[1] = CStringGetTextDatum(info->collname);
+		values[2] = info->lcid;
+		values[3] = info->ver;
+		values[4] = info->style;
+		values[5] = info->sortid;
+		values[6] = info->collateflags;
 
-        tuplestore_putvalues(tupstore, tupdesc, values, nulls);
-    }
+		tuplestore_putvalues(tupstore, tupdesc, values, nulls);
+	}
 
-    /* clean up and return the tuplestore */
-    tuplestore_donestoring(tupstore);
+	/* clean up and return the tuplestore */
+	tuplestore_donestoring(tupstore);
 
-    rsinfo->returnMode = SFRM_Materialize;
-    rsinfo->setResult = tupstore;
-    rsinfo->setDesc = tupdesc;
+	rsinfo->returnMode = SFRM_Materialize;
+	rsinfo->setResult = tupstore;
+	rsinfo->setDesc = tupdesc;
 
-    PG_RETURN_NULL();
+	PG_RETURN_NULL();
 }
 
 Datum
 get_server_collation_oid(PG_FUNCTION_ARGS)
 {
-    PG_RETURN_OID(get_server_collation_oid_internal());
+	PG_RETURN_OID(get_server_collation_oid_internal());
 }
 
 Oid
 get_server_collation_oid_internal(void)
 {
-    Oid nspoid;
-    const char *collname = pltsql_server_collation_name;
-    int collidx;
+	Oid nspoid;
+	const char *collname = pltsql_server_collation_name;
+	int collidx;
 
-    if (OidIsValid(server_collation_oid))
-        return server_collation_oid;;
+	if (OidIsValid(server_collation_oid))
+		return server_collation_oid;;
 
-    /* The server_collation_name is permitted to be the name of a sql
-     * or windows collation that is translated into a bbf collation.
-     * If that's what it is then get the translated name.
-     */
-    if (NOT_FOUND != (collidx = translate_collation(collname)))
-        collname = coll_infos[collidx].collname;
+	/* The server_collation_name is permitted to be the name of a sql
+	 * or windows collation that is translated into a bbf collation.
+	 * If that's what it is then get the translated name.
+	 */
+	if (NOT_FOUND != (collidx = translate_collation(collname)))
+		collname = coll_infos[collidx].collname;
 
-    nspoid = get_namespace_oid("sys", false);
-    server_collation_oid = GetSysCacheOid3(COLLNAMEENCNSP, Anum_pg_collation_oid,
+	nspoid = get_namespace_oid("sys", false);
+	server_collation_oid = GetSysCacheOid3(COLLNAMEENCNSP, Anum_pg_collation_oid,
 					 PointerGetDatum(collname),
 					 Int32GetDatum(-1),
 					 ObjectIdGetDatum(nspoid));
 
-    if (!OidIsValid(server_collation_oid))
+	if (!OidIsValid(server_collation_oid))
 	server_collation_oid = GetSysCacheOid3(COLLNAMEENCNSP, Anum_pg_collation_oid,
 					 PointerGetDatum(collname),
 					 Int32GetDatum(COLL_DEFAULT_ENCODING),
 					 ObjectIdGetDatum(nspoid));
 
-    if (!OidIsValid(server_collation_oid))
-    {
+	if (!OidIsValid(server_collation_oid))
+	{
 	ereport(WARNING,
 		(errcode(ERRCODE_INTERNAL_ERROR),
 		 errmsg("Server default collation sys.\"%s\" is not defined, using the cluster default collation",
 			pltsql_server_collation_name)));
-	server_collation_oid = DEFAULT_COLLATION_OID;
+	// server_collation_oid = DEFAULT_COLLATION_OID;
 	pltsql_db_collation_is_CI_AS = false;
 	server_collation_collidx = NOT_FOUND;
-    }
-    else
-    {
+		return DEFAULT_COLLATION_OID;
+	}
+	else
+	{
 	pltsql_db_collation_is_CI_AS = collation_is_CI_AS(server_collation_oid);
 	server_collation_collidx = get_server_collation_collidx();
-    }
+	}
 
-    return server_collation_oid;
+	return server_collation_oid;
 }
 
 Oid BABELFISH_CLUSTER_COLLATION_OID()
 {
-    get_server_collation_oid_internal(); /* set and cache server_collation_oid */
-    
-    if (sql_dialect == SQL_DIALECT_TSQL
-        && OidIsValid(server_collation_oid))
-    {
+	get_server_collation_oid_internal(); /* set and cache server_collation_oid */
+
+	if (sql_dialect == SQL_DIALECT_TSQL
+		&& OidIsValid(server_collation_oid))
+	{
 	return server_collation_oid;
-    }
-    else
+	}
+	else
 	return DEFAULT_COLLATION_OID;
 }
 
 bool collation_is_CI_AS(Oid colloid)
 {
-    HeapTuple	tp;
-    char       *collcollate = NULL;
-    char        collprovider;
-    bool        collisdeterministic;
+	HeapTuple	tp;
+	char	   *collcollate = NULL;
+	char		collprovider;
+	bool		collisdeterministic;
 
-    if (InvalidOid == colloid)
+	if (InvalidOid == colloid)
 	return false;
 
-    if (GetDatabaseEncoding() != PG_UTF8)
+	if (GetDatabaseEncoding() != PG_UTF8)
 	return false;
 
-    tp = SearchSysCache1(COLLOID, ObjectIdGetDatum(colloid));
-    if (!HeapTupleIsValid(tp))
-	elog(ERROR, "cache lookup failed for collation %u", colloid);
+	tp = SearchSysCache1(COLLOID, ObjectIdGetDatum(colloid));
+	if (!HeapTupleIsValid(tp))
+		elog(ERROR, "cache lookup failed for collation %u", colloid);
 
-    collcollate = pstrdup(NameStr(((Form_pg_collation) GETSTRUCT(tp))->collcollate));
-    collprovider = ((Form_pg_collation) GETSTRUCT(tp))->collprovider;
-    collisdeterministic = ((Form_pg_collation) GETSTRUCT(tp))->collisdeterministic;
-    ReleaseSysCache(tp);
+	collcollate = pstrdup(NameStr(((Form_pg_collation) GETSTRUCT(tp))->collcollate));
+	collprovider = ((Form_pg_collation) GETSTRUCT(tp))->collprovider;
+	collisdeterministic = ((Form_pg_collation) GETSTRUCT(tp))->collisdeterministic;
+	ReleaseSysCache(tp);
 
-    if (collisdeterministic == true || collprovider != COLLPROVIDER_ICU)
-	return false;
+	if (collisdeterministic == true || collprovider != COLLPROVIDER_ICU)
+		return false;
 
-    /* colStrength secondary, or level2, corresponds to a CI_AS collation, unless
-     * colCaseLevel=yes is also specified
-     */
-    if(0 != strstr(lowerstr(collcollate), lowerstr("colStrength=secondary")) && /* CI_AS */
-       0 == strstr(lowerstr(collcollate), lowerstr("colCaseLevel=yes"))) /* without a colCaseLevel - not CS_AI */
+	/* colStrength secondary, or level2, corresponds to a CI_AS collation, unless
+	 * colCaseLevel=yes is also specified
+	 */
+	if(0 != strstr(lowerstr(collcollate), lowerstr("colStrength=secondary")) && /* CI_AS */
+	   0 == strstr(lowerstr(collcollate), lowerstr("colCaseLevel=yes"))) /* without a colCaseLevel - not CS_AI */
 	return true;
 
-    return false;
+	return false;
 }
+
+Datum is_collated_ci_as_internal(PG_FUNCTION_ARGS)
+{
+	Oid colloid = PG_GET_COLLATION();
+	
+	if (!OidIsValid(colloid))
+		PG_RETURN_BOOL(false);
+	
+	if (collation_is_CI_AS(colloid))
+		PG_RETURN_BOOL(true);
+
+	PG_RETURN_BOOL(false);
+}
+
 /*
- *                  Translation Table Initializers
+ *				  Translation Table Initializers
  *  Load information from C arrays into hash tables
  *  Initializers are called right after shared library loading
  *  During "CREATE EXTENSION", data types are created after initialization call
@@ -974,78 +996,78 @@ bool collation_is_CI_AS(Oid colloid)
 Datum
 init_like_ilike_table(PG_FUNCTION_ARGS)
 {
-    HASHCTL hashCtl;
-    ht_like2ilike_entry_t *entry;
-    if (TransMemoryContext == NULL)  /* initialize memory context */
-    {
-        TransMemoryContext =
-        AllocSetContextCreateInternal(NULL,
-                                    "SQL Variant Memory Context",
-                                    ALLOCSET_DEFAULT_SIZES);
-    }
+	HASHCTL hashCtl;
+	ht_like2ilike_entry_t *entry;
+	if (TransMemoryContext == NULL)  /* initialize memory context */
+	{
+		TransMemoryContext =
+		AllocSetContextCreateInternal(NULL,
+									"SQL Variant Memory Context",
+									ALLOCSET_DEFAULT_SIZES);
+	}
 
-    if (ht_like2ilike == NULL)  /* create hash table */
-    {
-        MemSet(&hashCtl, 0, sizeof(hashCtl));
-        hashCtl.keysize = sizeof(Oid);
-        hashCtl.entrysize = sizeof(ht_like2ilike_entry_t);
-        hashCtl.hcxt = TransMemoryContext;
-        ht_like2ilike = hash_create("OID to Persist like to ilike Mapping",
-                                    TOTAL_LIKE_OP_COUNT,
-                                    &hashCtl,
-                                   HASH_ELEM | HASH_CONTEXT | HASH_BLOBS);
-    }
+	if (ht_like2ilike == NULL)  /* create hash table */
+	{
+		MemSet(&hashCtl, 0, sizeof(hashCtl));
+		hashCtl.keysize = sizeof(Oid);
+		hashCtl.entrysize = sizeof(ht_like2ilike_entry_t);
+		hashCtl.hcxt = TransMemoryContext;
+		ht_like2ilike = hash_create("OID to Persist like to ilike Mapping",
+									TOTAL_LIKE_OP_COUNT,
+									&hashCtl,
+								   HASH_ELEM | HASH_CONTEXT | HASH_BLOBS);
+	}
 
-    /* retrieve oid and setup hashtable */
-    for (int i=0; i<TOTAL_LIKE_OP_COUNT; i++)
-    {
-        char    *like_opname = like_ilike_table[i].like_op_name;
-        char    *ilike_opname = like_ilike_table[i].ilike_op_name;
-        const TypeName *typename;
-        Type    tup;
-        Oid     loid, roid;
+	/* retrieve oid and setup hashtable */
+	for (int i=0; i<TOTAL_LIKE_OP_COUNT; i++)
+	{
+		char	*like_opname = like_ilike_table[i].like_op_name;
+		char	*ilike_opname = like_ilike_table[i].ilike_op_name;
+		const TypeName *typename;
+		Type	tup;
+		Oid	 loid, roid;
 
-        typename = makeTypeNameFromNameList(list_make2(makeString(like_ilike_table[i].op_left_schema), makeString(like_ilike_table[i].op_left_name)));
-        tup = LookupTypeName(NULL, typename, NULL, true);
-        if (!tup)
-            continue; /* this can happen when _PG_Init is called to verify C function before creating datatype */
-        loid = ((Form_pg_type) GETSTRUCT(tup))->oid;
-        ReleaseSysCache(tup);
+		typename = makeTypeNameFromNameList(list_make2(makeString(like_ilike_table[i].op_left_schema), makeString(like_ilike_table[i].op_left_name)));
+		tup = LookupTypeName(NULL, typename, NULL, true);
+		if (!tup)
+			continue; /* this can happen when _PG_Init is called to verify C function before creating datatype */
+		loid = ((Form_pg_type) GETSTRUCT(tup))->oid;
+		ReleaseSysCache(tup);
 
-        if (!OidIsValid(loid))
-            ereport(ERROR,
-                (errcode(ERRCODE_INTERNAL_ERROR),
-                 errmsg("type %s.%s is invalid!",
-                    like_ilike_table[i].op_left_schema, like_ilike_table[i].op_left_name)));
+		if (!OidIsValid(loid))
+			ereport(ERROR,
+				(errcode(ERRCODE_INTERNAL_ERROR),
+				 errmsg("type %s.%s is invalid!",
+					like_ilike_table[i].op_left_schema, like_ilike_table[i].op_left_name)));
 
 
-        typename = makeTypeNameFromNameList(list_make2(makeString(like_ilike_table[i].op_right_schema), makeString(like_ilike_table[i].op_right_name)));
-        tup = LookupTypeName(NULL, typename, NULL, true);
-        if (!tup)
-          continue; /* this can happen when _PG_Init is called to verify C function before creating datatype */
-        roid = ((Form_pg_type) GETSTRUCT(tup))->oid;
-        ReleaseSysCache(tup);
+		typename = makeTypeNameFromNameList(list_make2(makeString(like_ilike_table[i].op_right_schema), makeString(like_ilike_table[i].op_right_name)));
+		tup = LookupTypeName(NULL, typename, NULL, true);
+		if (!tup)
+		  continue; /* this can happen when _PG_Init is called to verify C function before creating datatype */
+		roid = ((Form_pg_type) GETSTRUCT(tup))->oid;
+		ReleaseSysCache(tup);
 
-        if (!OidIsValid(roid))
-            ereport(ERROR,
-                (errcode(ERRCODE_INTERNAL_ERROR),
-                 errmsg("type %s.%s is invalid!",
-                    like_ilike_table[i].op_right_schema, like_ilike_table[i].op_right_name)));
+		if (!OidIsValid(roid))
+			ereport(ERROR,
+				(errcode(ERRCODE_INTERNAL_ERROR),
+				 errmsg("type %s.%s is invalid!",
+					like_ilike_table[i].op_right_schema, like_ilike_table[i].op_right_name)));
 
-        like_ilike_table[i].like_oid = OpernameGetOprid(list_make1(makeString(like_opname)),
-                                loid,
-                                roid);
-        if (OidIsValid(like_ilike_table[i].like_oid))
-        {
-            entry = hash_search(ht_like2ilike, &like_ilike_table[i].like_oid, HASH_ENTER, NULL);
-            entry->persist_id = i;
-        }
-        like_ilike_table[i].ilike_oid = OpernameGetOprid(list_make1(makeString(ilike_opname)),
+		like_ilike_table[i].like_oid = OpernameGetOprid(list_make1(makeString(like_opname)),
+								loid,
+								roid);
+		if (OidIsValid(like_ilike_table[i].like_oid))
+		{
+			entry = hash_search(ht_like2ilike, &like_ilike_table[i].like_oid, HASH_ENTER, NULL);
+			entry->persist_id = i;
+		}
+		like_ilike_table[i].ilike_oid = OpernameGetOprid(list_make1(makeString(ilike_opname)),
 							 loid,
 							 roid);
-        like_ilike_table[i].ilike_opfuncid = get_opcode(like_ilike_table[i].ilike_oid);
-    }
-    PG_RETURN_INT32(0);
+		like_ilike_table[i].ilike_opfuncid = get_opcode(like_ilike_table[i].ilike_oid);
+	}
+	PG_RETURN_INT32(0);
 }
 
 
@@ -1054,20 +1076,20 @@ init_like_ilike_table(PG_FUNCTION_ARGS)
  */
 like_ilike_info_t
 lookup_like_ilike_table(Oid opno)
-{	
+{
 	ht_like2ilike_entry_t  *hinfo;
 	bool					found;
 
 	Assert(ht_like2ilike != NULL);
 
 	hinfo = (ht_like2ilike_entry_t *) hash_search(ht_like2ilike,
-						      &opno,
-						      HASH_FIND,
-						      &found);
+												  &opno,
+												  HASH_FIND,
+												  &found);
 	/* return invalid oid when not found */
-    if (!found)
+	if (!found)
 	{
-        like_ilike_info_t invalid;
+		like_ilike_info_t invalid;
 		invalid.like_oid = InvalidOid;
 		return invalid;
 	}
@@ -1075,111 +1097,231 @@ lookup_like_ilike_table(Oid opno)
 	return like_ilike_table[hinfo->persist_id];
 }
 
-/* transform LIKE to ILIKE for any ci_as babelfish collation
- */
-Node* pltsql_like_ilike_transformer(PlannerInfo *root,
-                                    Node *expr,
-                                    int kind)
+Node* pltsql_planner_node_transformer(PlannerInfo *root,
+									  Node *expr,
+									  int kind)
 {
-    /*
-    * Fall out quickly if expression is empty.
-    */
-    if (expr == NULL)
-        return NULL;
-    if (EXPRKIND_TARGET == kind)
-    {
-        /* If expr is NOT a Boolean expression then recurse through
-        * its expresion tree
-        */
-        return expression_tree_mutator(
-                expr,
-                pgtsql_like_to_ilike_mutator,
-                NULL);
-    }
-    return like2ilike_transformer(expr);
+	/*
+	* Fall out quickly if expression is empty.
+	*/
+	if (expr == NULL)
+		return NULL;
+
+	if (EXPRKIND_TARGET == kind)
+	{
+		/* If expr is NOT a Boolean expression then recurse through
+		* its expresion tree
+		*/
+		return expression_tree_mutator(
+			expr,
+			pgtsql_expression_tree_mutator,
+			NULL);
+	}
+	return pltsql_predicate_transformer(expr);
 }
 
-static Node* like2ilike_transformer(Node *expr)
+static Node* pltsql_predicate_transformer(Node *expr)
 {
-    if(expr == NULL)
-        return expr;
-    if(IsA(expr, OpExpr))
-    {
-        /* Singleton predicate */
-        return transform_likenode(expr);
-    }
-    else
-    {
-        /* Nonsingleton predicate, which could either a BoolExpr
-         * with a list of predicates or a simple List of
-         * predicates.
-         */
-        BoolExpr   *boolexpr = (BoolExpr *) expr;
-        ListCell   *lc;
-        List       *new_predicates = NIL;
-        List       *predicates;
+	if(expr == NULL)
+		return expr;
 
-        if (IsA(expr, List))
-        {
-            predicates = (List *) expr;
-        }
-        else if (IsA(expr, BoolExpr))
-        {
-            if (boolexpr->boolop != AND_EXPR &&
-                boolexpr->boolop != OR_EXPR)
-                return expression_tree_mutator(
-                        expr,
-                        pgtsql_like_to_ilike_mutator,
-                        NULL);
+	if(IsA(expr, OpExpr))
+	{
+		/* Singleton predicate */
+		return transform_likenode(expr);
+	}
+	else
+	{
+		/* Nonsingleton predicate, which could either a BoolExpr
+		 * with a list of predicates or a simple List of
+		 * predicates.
+		 */
+		BoolExpr   *boolexpr = (BoolExpr *) expr;
+		ListCell   *lc;
+		List	   *new_predicates = NIL;
+		List	   *predicates;
 
-            predicates = boolexpr->args;
-        }
-        else
-            return expr;
+		if (IsA(expr, List))
+		{
+			predicates = (List *) expr;
+		}
+		else if (IsA(expr, BoolExpr))
+		{
+			if (boolexpr->boolop != AND_EXPR &&
+				boolexpr->boolop != OR_EXPR)
+				return expression_tree_mutator(
+						expr,
+						pgtsql_expression_tree_mutator,
+						NULL);
 
-        /* Process each predicate, and recursively process
-        * any nested predicate clauses of a toplevel predicate
-        */
-        foreach(lc, predicates)
-        {
-            Node *qual = (Node *) lfirst(lc);
-            if (is_andclause(qual) || is_orclause(qual))
-            {
-                new_predicates = lappend(new_predicates,
-                                    like2ilike_transformer(qual));
-            }
-            else if (IsA(qual, OpExpr))
-            {
-                new_predicates = lappend(new_predicates,
-                                    transform_likenode(qual));
-            }
-            else
-                new_predicates = lappend(new_predicates, qual);
-        }
+			predicates = boolexpr->args;
+		}
+		else if (IsA(expr, FuncExpr))
+	{
+		// This is performed even in the postgres dialect to handle babelfish CI_AS
+		// collations so that regexp operators can work inside plpgsql functions
+		expr = expression_tree_mutator(expr, pgtsql_expression_tree_mutator, NULL);
+		return transform_funcexpr(expr);
+	}
+		else
+			return expr;
 
-        if (IsA(expr, BoolExpr))
-        {
-            boolexpr->args = new_predicates;
-            return expr;
-        }
-        else
-        {
-            return (Node *) new_predicates;
-        }
-    }
+		/* Process each predicate, and recursively process
+		* any nested predicate clauses of a toplevel predicate
+		*/
+		foreach(lc, predicates)
+		{
+			Node *qual = (Node *) lfirst(lc);
+			if (is_andclause(qual) || is_orclause(qual))
+			{
+				new_predicates = lappend(new_predicates,
+									pltsql_predicate_transformer(qual));
+			}
+			else if (IsA(qual, OpExpr))
+			{
+				new_predicates = lappend(new_predicates,
+									transform_likenode(qual));
+			}
+			else
+				new_predicates = lappend(new_predicates, qual);
+		}
+
+		if (IsA(expr, BoolExpr))
+		{
+			boolexpr->args = new_predicates;
+			return expr;
+		}
+		else
+		{
+			return (Node *) new_predicates;
+		}
+	}
 }
 
 bool
 collation_is_accent_insensitive(int collidx)
 {
-    if (collidx < 0 || collidx >= TOTAL_COLL_COUNT)
-        return false;
+	if (collidx < 0 || collidx >= TOTAL_COLL_COUNT)
+		return false;
 
-    if (coll_infos[collidx].collateflags == 0x000f  || /* CI_AI  */
-	coll_infos[collidx].collateflags == 0x000e)    /* CS_AI  */
-        return true;
+	if (coll_infos[collidx].collateflags == 0x000f  || /* CI_AI  */
+		coll_infos[collidx].collateflags == 0x000e)	/* CS_AI  */
+		return true;
 
-    return false;
+	return false;
+}
+
+static Node*
+transform_funcexpr(Node* node)
+{
+	if (node && IsA(node, FuncExpr))
+	{
+		FuncExpr *fe = (FuncExpr *) node;
+		int	   collidx_of_cs_as;
+
+		if (fe->funcid == 868  ||  // strpos - see pg_proc.dat
+			// fe->funcid == 394  ||  // string_to_array, 3-arg form
+			// fe->funcid == 376  ||  // string_to_array, 2-arg form
+			fe->funcid == 2073 ||  // substring - 2-arg form, see pg_proc.dat
+			fe->funcid == 2074 ||  // substring - 3-arg form, see pg_proc.dat
+
+			fe->funcid == 2285 ||  // regexp_replace, flags in 4th arg
+			fe->funcid == 3397 ||  // regexp_match (find first match), flags in 3rd arg
+			fe->funcid == 2764)	// regexp_matches, flags in 4th arg
+		{
+			coll_info_t coll_info_of_inputcollid = lookup_collation_table(fe->inputcollid);
+			Node*	   leftop = (Node *) linitial(fe->args);
+			Node*	   rightop = (Node *) lsecond(fe->args);
+
+			if (OidIsValid(coll_info_of_inputcollid.oid) &&
+				coll_info_of_inputcollid.collateflags == 0x000d /* CI_AS  */ )
+			{
+				Oid lower_funcid = 870; // lower
+				Oid result_type = 25;   // text
+
+				get_server_collation_oid_internal();
+
+				if (!OidIsValid(server_collation_oid))
+					return node;
+
+				/* Find the CS_AS collation corresponding to the CI_AS collation
+				 * Change the collation of the func op to the CS_AS collation 
+				 */
+				collidx_of_cs_as =
+					find_cs_as_collation(
+						find_collation(coll_info_of_inputcollid.collname));
+
+				if (NOT_FOUND == collidx_of_cs_as)
+					return node;
+
+				if (fe->funcid == 2285 || fe->funcid == 3397 || fe->funcid == 2764)
+				{
+					Node* flags = (fe->funcid == 3397) ? lthird(fe->args) : lfourth(fe->args);
+
+					if (!IsA(flags, Const))
+						return node;
+					else
+					{
+						char *patt = TextDatumGetCString(((Const *)flags)->constvalue);
+						int f = 0;
+
+						while (patt[f] != '\0')
+						{
+							if (patt[f] == 'i')
+								break;
+
+							f++;
+						}
+
+						/* If the 'i' flag was specified then the operation is case-insensitive
+						 * and so the ci_as collation may be replaced with the corresponding
+						 * deterministic cs_as collation. If not, return.
+						 */
+						if (patt[f] != 'i')
+							return node;
+					}
+				}
+
+				fe->inputcollid = coll_infos[collidx_of_cs_as].oid;
+
+				if (fe->funcid >= 2285)
+					return node;  // regexp operators have their own way to handle case-insensitivity
+
+				if (!IsA(leftop, FuncExpr) || ((FuncExpr *)leftop)->funcid != lower_funcid)
+					leftop = (Node *) makeFuncExpr(lower_funcid,
+												   result_type,
+												   list_make1(leftop),
+												   fe->inputcollid,
+												   fe->inputcollid,
+												   COERCE_EXPLICIT_CALL);
+				if (!IsA(rightop, FuncExpr) || ((FuncExpr *)rightop)->funcid != lower_funcid)
+					rightop = (Node *) makeFuncExpr(lower_funcid,
+													result_type,
+													list_make1(rightop),
+													fe->inputcollid,
+													fe->inputcollid,
+													COERCE_EXPLICIT_CALL);
+
+				if (list_length(fe->args) == 3)
+				{
+					Node* thirdop = (Node *) makeFuncExpr(lower_funcid,
+														  result_type,
+														  list_make1(lthird(fe->args)),
+														  fe->inputcollid,
+														  fe->inputcollid,
+														  COERCE_EXPLICIT_CALL);
+
+					fe->args = list_make3(leftop, rightop, thirdop);
+				}
+				else if (list_length(fe->args) == 2)
+				{
+					fe->args = list_make2(leftop, rightop);
+				}
+			}
+		}
+	}
+
+	return node;
 }
 
 /*
@@ -1187,195 +1329,209 @@ collation_is_accent_insensitive(int collidx)
  * transform the LIKE OpExpr to ILIKE OpExpr:
  *
  * Case 1: if the pattern is a constant stirng
- *         col LIKE PATTERN -> col = PATTERN
+ *		 col LIKE PATTERN -> col = PATTERN
  * Case 2: if the pattern have a constant prefix
- *         col LIKE PATTERN -> 
- *              col LIKE PATTERN BETWEEN prefix AND prefix||E'\uFFFF'
+ *		 col LIKE PATTERN -> 
+ *		 col LIKE PATTERN BETWEEN prefix AND prefix||E'\uFFFF'
  * Case 3: if the pattern doesn't have a constant prefix
- *         col LIKE PATTERN -> col ILIKE PATTERN
+ *		 col LIKE PATTERN -> col ILIKE PATTERN
  */
 static Node*
 transform_likenode(Node* node)
 {
-    if (node && IsA(node, OpExpr))
-    {
-        OpExpr     *op = (OpExpr *) node;
-        like_ilike_info_t like_entry = lookup_like_ilike_table(op->opno);
-        coll_info_t coll_info_of_inputcollid = lookup_collation_table(op->inputcollid);
-	
-        /* check if this is LIKE expr, and collation is CI_AS */
-        if (OidIsValid(like_entry.like_oid) &&
-	    OidIsValid(coll_info_of_inputcollid.oid) &&
-            coll_info_of_inputcollid.collateflags == 0x000d /* CI_AS  */ )
-        {
-            Node*       leftop = (Node *) linitial(op->args);
-            Node*       rightop = (Node *) lsecond(op->args);
-            Oid         ltypeId = exprType(leftop);
-            Oid         rtypeId = exprType(rightop);
-            char*       op_str;
-            Node*       ret;
-            Const*      patt;
-            Const*      prefix;
-            Operator    optup;
-            Pattern_Prefix_Status pstatus;
-	    int         collidx_of_cs_as;
+	if (node && IsA(node, OpExpr))
+	{
+		OpExpr	 *op = (OpExpr *) node;
+		like_ilike_info_t like_entry = lookup_like_ilike_table(op->opno);
+		coll_info_t coll_info_of_inputcollid = lookup_collation_table(op->inputcollid);
 
-            get_server_collation_oid_internal();
+		/* check if this is LIKE expr, and collation is CI_AS */
+		if (OidIsValid(like_entry.like_oid) &&
+			OidIsValid(coll_info_of_inputcollid.oid) &&
+			coll_info_of_inputcollid.collateflags == 0x000d /* CI_AS  */ )
+		{
+			Node*	   leftop = (Node *) linitial(op->args);
+			Node*	   rightop = (Node *) lsecond(op->args);
+			Oid		 ltypeId = exprType(leftop);
+			Oid		 rtypeId = exprType(rightop);
+			char*	   op_str;
+			Node*	   ret;
+			Const*	  patt;
+			Const*	  prefix;
+			Operator	optup;
+			Pattern_Prefix_Status pstatus;
+			int		 collidx_of_cs_as;
 
-	    if (!OidIsValid(server_collation_oid))
-	        return node;
-	    
-	    /* Find the CS_AS collation corresponding to the CI_AS collation
-             * Change the collation of the ILIKE op to the CS_AS collation 
-	     */
-	    collidx_of_cs_as =
-	        find_cs_as_collation(
-		    find_collation(coll_info_of_inputcollid.collname));
+			get_server_collation_oid_internal();
 
-	    /* A CS_AS collation should always exist unless a Babelfish
-	     * CS_AS collation was dropped or the lookup tables were not
-	     * defined in lexicographic order.  Program defensively here
-	     * and just do no transformation in this case, which will
-	     * generate a 'nondeterministic collation not supported' error.
-	     */
-	    if (NOT_FOUND == collidx_of_cs_as)
-	        return node;
-	    
-	    /* Change the opno and oprfuncid to ILIKE */
-            op->opno = like_entry.ilike_oid;
-            op->opfuncid = like_entry.ilike_opfuncid;
+			if (!OidIsValid(server_collation_oid))
+				return node;
 
-	    op->inputcollid = coll_infos[collidx_of_cs_as].oid;
+			/* Find the CS_AS collation corresponding to the CI_AS collation
+			 * Change the collation of the ILIKE op to the CS_AS collation 
+			 */
+			collidx_of_cs_as =
+				find_cs_as_collation(
+					find_collation(coll_info_of_inputcollid.collname));
 
-            /* no constant prefix found in pattern, or pattern is not constant */
-            if (IsA(leftop, Const) || !IsA(rightop, Const) ||
-                    ((Const *) rightop)->constisnull)
-            {
-                return node;
-            }
-	    
-            patt = (Const *) rightop;
+			/* A CS_AS collation should always exist unless a Babelfish
+			 * CS_AS collation was dropped or the lookup tables were not
+			 * defined in lexicographic order.  Program defensively here
+			 * and just do no transformation in this case, which will
+			 * generate a 'nondeterministic collation not supported' error.
+			 */
+			if (NOT_FOUND == collidx_of_cs_as)
+				return node;
 
-            /* extract pattern */
-            pstatus = pattern_fixed_prefix_wrapper(patt, 1, server_collation_oid,
-								   &prefix, NULL);
+			/* Change the opno and oprfuncid to ILIKE */
+			op->opno = like_entry.ilike_oid;
+			op->opfuncid = like_entry.ilike_opfuncid;
 
-            /* If there is no constant prefix then there's nothing more to do */
-            if (pstatus == Pattern_Prefix_None)
-	    {
-                return node;
-	    }
-	    
-            /*
-            * If we found an exact-match pattern, generate an "=" indexqual.
-            */
-            if (pstatus == Pattern_Prefix_Exact)
-            {
-                op_str = like_entry.is_not_match ? "<>" : "=";
-                optup = compatible_oper(NULL, list_make1(makeString(op_str)), ltypeId, ltypeId,
-							true, -1);
-                if (optup == (Operator) NULL)
-                    return node;
+			op->inputcollid = coll_infos[collidx_of_cs_as].oid;
 
-                ret = (Node*)(make_op_with_func(oprid(optup), BOOLOID, false,
-                                    (Expr *) leftop, (Expr *) prefix,
-                                    InvalidOid, server_collation_oid ,oprfuncid(optup)));
+			/* no constant prefix found in pattern, or pattern is not constant */
+			if (IsA(leftop, Const) || !IsA(rightop, Const) ||
+				((Const *) rightop)->constisnull)
+			{
+				return node;
+			}
 
-                ReleaseSysCache(optup);
-                return ret;
-            }
-            else
-            {
-                Expr *greater_equal, *less_equal, *concat_expr;
-                Node* constant_suffix;
-                Const* highest_sort_key;
-                /* construct leftop >= pattern */
-                optup = compatible_oper(NULL, list_make1(makeString(">=")), ltypeId, ltypeId,
-							true, -1);
-                if (optup == (Operator) NULL)
-                    return node;
-                greater_equal = make_op_with_func(oprid(optup), BOOLOID, false,
-                                    (Expr *) leftop, (Expr *) prefix,
-                                    InvalidOid, server_collation_oid ,oprfuncid(optup));
-                ReleaseSysCache(optup);
-                /* construct pattern||E'\uFFFF' */
-                highest_sort_key = makeConst(TEXTOID,-1, server_collation_oid, -1,
-                                    PointerGetDatum(cstring_to_text(SORT_KEY_STR)), false, false);
+			patt = (Const *) rightop;
 
-                optup = compatible_oper(NULL, list_make1(makeString("||")), rtypeId, rtypeId,
-							true, -1);
-                if (optup == (Operator) NULL)
-                    return node;
-                concat_expr = make_op_with_func(oprid(optup), rtypeId, false,
-                                    (Expr *) prefix, (Expr *) highest_sort_key,
-                                    InvalidOid, server_collation_oid, oprfuncid(optup));
-                ReleaseSysCache(optup);
-                /* construct leftop < pattern */
-                optup = compatible_oper(NULL, list_make1(makeString("<")), ltypeId, ltypeId,
-							true, -1);
-                if (optup == (Operator) NULL)
-                    return node;
+			/* extract pattern */
+			pstatus = pattern_fixed_prefix_wrapper(patt, 1, server_collation_oid,
+												   &prefix, NULL);
 
-                less_equal = make_op_with_func(oprid(optup), BOOLOID, false,
-                                    (Expr *) leftop, (Expr *) concat_expr,
-                                    InvalidOid, server_collation_oid, oprfuncid(optup));
-                constant_suffix = make_and_qual((Node*)greater_equal, (Node*)less_equal);
-                if(like_entry.is_not_match)
-                {
-                    constant_suffix = (Node*)make_notclause((Expr*)constant_suffix);
-                    ret = make_or_qual(node, constant_suffix);
-                }
-                else
-                {
-                    constant_suffix = make_and_qual((Node*)greater_equal, (Node*)less_equal);
-                    ret = make_and_qual(node, constant_suffix);
-                }
-                ReleaseSysCache(optup);
-                return ret;
-            }
-        }
-    }
-    return node;
+			/* If there is no constant prefix then there's nothing more to do */
+			if (pstatus == Pattern_Prefix_None)
+			{
+				return node;
+			}
+
+			/*
+			 * If we found an exact-match pattern, generate an "=" indexqual.
+			 */
+			if (pstatus == Pattern_Prefix_Exact)
+			{
+				op_str = like_entry.is_not_match ? "<>" : "=";
+				optup = compatible_oper(NULL, list_make1(makeString(op_str)), ltypeId, ltypeId,
+										true, -1);
+				if (optup == (Operator) NULL)
+					return node;
+
+				ret = (Node*)(make_op_with_func(oprid(optup), BOOLOID, false,
+												(Expr *) leftop, (Expr *) prefix,
+												InvalidOid, server_collation_oid ,oprfuncid(optup)));
+
+				ReleaseSysCache(optup);
+				return ret;
+			}
+			else
+			{
+				Expr *greater_equal, *less_equal, *concat_expr;
+				Node* constant_suffix;
+				Const* highest_sort_key;
+				/* construct leftop >= pattern */
+				optup = compatible_oper(NULL, list_make1(makeString(">=")), ltypeId, ltypeId,
+										true, -1);
+				if (optup == (Operator) NULL)
+					return node;
+				greater_equal = make_op_with_func(oprid(optup), BOOLOID, false,
+												  (Expr *) leftop, (Expr *) prefix,
+												  InvalidOid, server_collation_oid ,oprfuncid(optup));
+				ReleaseSysCache(optup);
+				/* construct pattern||E'\uFFFF' */
+				highest_sort_key = makeConst(TEXTOID,-1, server_collation_oid, -1,
+											 PointerGetDatum(cstring_to_text(SORT_KEY_STR)), false, false);
+
+				optup = compatible_oper(NULL, list_make1(makeString("||")), rtypeId, rtypeId,
+										true, -1);
+				if (optup == (Operator) NULL)
+					return node;
+				concat_expr = make_op_with_func(oprid(optup), rtypeId, false,
+												(Expr *) prefix, (Expr *) highest_sort_key,
+												InvalidOid, server_collation_oid, oprfuncid(optup));
+				ReleaseSysCache(optup);
+				/* construct leftop < pattern */
+				optup = compatible_oper(NULL, list_make1(makeString("<")), ltypeId, ltypeId,
+										true, -1);
+				if (optup == (Operator) NULL)
+					return node;
+
+				less_equal = make_op_with_func(oprid(optup), BOOLOID, false,
+											   (Expr *) leftop, (Expr *) concat_expr,
+											   InvalidOid, server_collation_oid, oprfuncid(optup));
+				constant_suffix = make_and_qual((Node*)greater_equal, (Node*)less_equal);
+				if(like_entry.is_not_match)
+				{
+					constant_suffix = (Node*)make_notclause((Expr*)constant_suffix);
+					ret = make_or_qual(node, constant_suffix);
+				}
+				else
+				{
+					constant_suffix = make_and_qual((Node*)greater_equal, (Node*)less_equal);
+					ret = make_and_qual(node, constant_suffix);
+				}
+				ReleaseSysCache(optup);
+				return ret;
+			}
+		}
+	}
+	return node;
 }
 
 static Node *
-pgtsql_like_to_ilike_mutator(Node *node, void* context)
+pgtsql_expression_tree_mutator(Node *node, void* context)
 {
-    if (NULL == node)
-        return node;
-    if(IsA(node, CaseExpr))
-    {
-        CaseExpr *caseexpr = (CaseExpr *) node;
-        if (caseexpr->arg != NULL)  // CASE expression WHEN ...
-        {
-            like2ilike_transformer((Node*)caseexpr->arg);
-        }
-    }
-    else if (IsA(node, CaseWhen)) //CASE WHEN expr
-    {
-        CaseWhen *casewhen = (CaseWhen *) node;
-        like2ilike_transformer((Node*)casewhen->expr);
-    }
-    else if (IsA(node, TargetEntry)) //process target_entry expr
-    {
-        TargetEntry *targetentry = (TargetEntry *) node;
-        like2ilike_transformer((Node*)targetentry->expr);
-    }
-    return expression_tree_mutator(node, pgtsql_like_to_ilike_mutator, NULL);
+	if (NULL == node)
+		return node;
+	if(IsA(node, CaseExpr))
+	{
+		CaseExpr *caseexpr = (CaseExpr *) node;
+		if (caseexpr->arg != NULL)  // CASE expression WHEN ...
+		{
+			pltsql_predicate_transformer((Node*)caseexpr->arg);
+		}
+	}
+	else if (IsA(node, CaseWhen)) //CASE WHEN expr
+	{
+		CaseWhen *casewhen = (CaseWhen *) node;
+		pltsql_predicate_transformer((Node*)casewhen->expr);
+	}
+
+	/* Recurse through the operands of node */
+	node = expression_tree_mutator(node, pgtsql_expression_tree_mutator, NULL);
+
+	if (IsA(node, FuncExpr))
+	{
+		// This is performed even in the postgres dialect to handle babelfish CI_AS
+		// collations so that regexp operators can work inside plpgsql functions
+		node = transform_funcexpr(node);
+	}
+	else if (IsA(node, OpExpr))
+	{
+		/* Possibly a singleton LIKE predicate:  SELECT 'abc' LIKE 'ABC'; 
+		 * This is done even in the postgres dialect.
+		 */
+		node = transform_likenode(node);
+	}
+	
+
+	return node;
 }
 
 static Expr *
 make_op_with_func(Oid opno, Oid opresulttype, bool opretset,
-			  Expr *leftop, Expr *rightop,
-			  Oid opcollid, Oid inputcollid, Oid oprfuncid)
+				  Expr *leftop, Expr *rightop,
+				  Oid opcollid, Oid inputcollid, Oid oprfuncid)
 {
 	OpExpr  *expr = (OpExpr*)make_opclause(opno,
-                                        opresulttype,
-                                        opretset,
-                                        leftop,
-                                        rightop,
-                                        opcollid,
-                                        inputcollid);
+										   opresulttype,
+										   opretset,
+										   leftop,
+										   rightop,
+										   opcollid,
+										   inputcollid);
 
 	expr->opfuncid = oprfuncid;
 	return (Expr *) expr;
@@ -1401,93 +1557,93 @@ void BabelfishPreCreateCollation_hook(
 	const char *collversion
 	)
 {
-    const char *collcollate = *pCollcollate;
-    const char *collctype = *pCollctype;
-    
-    if (NULL != prev_PreCreateCollation_hook)
-    {
-        (*prev_PreCreateCollation_hook)(collprovider,
-					collisdeterministic,
-					collencoding,
-					&collcollate,
-					&collctype,
-					collversion);
-	*pCollcollate = collcollate;
-	*pCollctype = collctype;
-    }
-    
-    if (strlen(pltsql_default_locale) > 0)
-    {
-        /* If the first character of the locale is '@' and if
-         * a pltsql_default_locale override has been specified, then
-         * prepend the pltsql_default_locale to the specified locale.
-	 * Note that since the target is a const char *, we
-	 * cannot modify the initial string, but we can modify
-	 * the pointer to point somewhere else.
-         */
-        if (collcollate[0] == '@')
-        {
-	    char *catcollcollate = palloc0(strlen(pltsql_default_locale) +
-					   strlen(collcollate) + 1);
-			
-	    memcpy(catcollcollate, pltsql_default_locale, strlen(pltsql_default_locale));
-	    strncat(catcollcollate, collcollate, strlen(collcollate));
-	    *pCollcollate = catcollcollate;
+	const char *collcollate = *pCollcollate;
+	const char *collctype = *pCollctype;
+
+	if (NULL != prev_PreCreateCollation_hook)
+	{
+		(*prev_PreCreateCollation_hook)(collprovider,
+										collisdeterministic,
+										collencoding,
+										&collcollate,
+										&collctype,
+										collversion);
+		*pCollcollate = collcollate;
+		*pCollctype = collctype;
 	}
 
-        if (collctype[0] == '@')
+	if (strlen(pltsql_default_locale) > 0)
 	{
-	    char *catcollctype = palloc0(strlen(pltsql_default_locale) +
-					 strlen(collctype) + 1);
-			
-	    memcpy(catcollctype, pltsql_default_locale, strlen(pltsql_default_locale));
-	    strncat(catcollctype, collcollate, strlen(collcollate));
-	    *pCollctype = catcollctype;
+		/* If the first character of the locale is '@' and if
+		 * a pltsql_default_locale override has been specified, then
+		 * prepend the pltsql_default_locale to the specified locale.
+		 * Note that since the target is a const char *, we
+		 * cannot modify the initial string, but we can modify
+		 * the pointer to point somewhere else.
+		 */
+		if (collcollate[0] == '@')
+		{
+			char *catcollcollate = palloc0(strlen(pltsql_default_locale) +
+										   strlen(collcollate) + 1);
+
+			memcpy(catcollcollate, pltsql_default_locale, strlen(pltsql_default_locale));
+			strncat(catcollcollate, collcollate, strlen(collcollate));
+			*pCollcollate = catcollcollate;
+		}
+
+		if (collctype[0] == '@')
+		{
+			char *catcollctype = palloc0(strlen(pltsql_default_locale) +
+										 strlen(collctype) + 1);
+
+			memcpy(catcollctype, pltsql_default_locale, strlen(pltsql_default_locale));
+			strncat(catcollctype, collcollate, strlen(collcollate));
+			*pCollctype = catcollctype;
+		}
 	}
-    }
 }
 
 const char *
 BabelfishTranslateCollation_hook(const char *collname, Oid collnamespace, int32 encoding)
 {
-    if (prev_TranslateCollation_hook)
-    {
-        const char *newCollname = (*prev_TranslateCollation_hook)(collname, collnamespace, encoding);
-
-	if (newCollname)
-	    return newCollname;
-    }
-
-    if (sql_dialect != SQL_DIALECT_TSQL)
-        return NULL;
-    
-    if (pltsql_case_insensitive_identifiers && strcmp(collname, "c") == 0)
-    {
-        return "C";  /* Special case for "C" collation */
-    }
-    else
-    {
-        int collidx = translate_collation(collname);
-
-	if (collidx >= 0)
+	if (prev_TranslateCollation_hook)
 	{
-	    return coll_infos[collidx].collname;
+		const char *newCollname = (*prev_TranslateCollation_hook)(collname, collnamespace, encoding);
+
+		if (newCollname)
+			return newCollname;
 	}
-    }
-    
-    return NULL;
+
+	if (sql_dialect != SQL_DIALECT_TSQL)
+		return NULL;
+
+	if (pltsql_case_insensitive_identifiers && strcmp(collname, "c") == 0)
+	{
+		return "C";  /* Special case for "C" collation */
+	}
+	else
+	{
+		int collidx = translate_collation(collname);
+
+		if (collidx >= 0)
+		{
+			return coll_infos[collidx].collname;
+		}
+	}
+
+	return NULL;
 }
 
 bool
 is_valid_server_collation_name(const char *collname)
 {
-    int collidx = find_any_collation(collname);
+	int collidx = find_any_collation(collname);
 
-    if (NOT_FOUND != collidx &&
-        !collation_is_accent_insensitive(collidx))
-        return true;
+	if (NOT_FOUND != collidx &&
+		!collation_is_accent_insensitive(collidx))
+		return true;
 
-    return false;
+	return false;
 }
 
 Oid get_tsql_collation_oid(int persist_coll_id)
@@ -1502,15 +1658,15 @@ int get_persist_collation_id(Oid coll_oid)
 
 	entry = hash_search(ht_oid2collid, &coll_oid, HASH_FIND, &found_coll);
 
-    if (found_coll)
+	if (found_coll)
 	{
-        return entry->persist_id;
+		return entry->persist_id;
 	}
 
 	coll_oid = get_server_collation_collidx();
 	entry = hash_search(ht_oid2collid, &coll_oid, HASH_FIND, &found_coll);
 	Assert(found_coll);
-    return entry->persist_id;
+	return entry->persist_id;
 }
 
 Tsql_collation_callbacks *
