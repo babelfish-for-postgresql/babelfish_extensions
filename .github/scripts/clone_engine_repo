@@ -69,9 +69,6 @@ else
 fi
 GIT_URL=${BASE_URL}.git
 
-BRANCH_OPTION="--branch jungkook-migration"
-GIT_URL="https://github.com/amazon-aurora/postgresql_modified_for_babelfish.git"
-
 echo running git clone "$BRANCH_OPTION" "$GIT_URL"
 git clone $BRANCH_OPTION "$GIT_URL" && exit
 rc=$?
