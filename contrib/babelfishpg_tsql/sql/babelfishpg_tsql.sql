@@ -466,19 +466,25 @@ begin
 				ss_xml_schemacollection_name,
 				ss_data_type
 		from sys.sp_columns_100_view
-	    where lower(table_name) similar to lower(in_table_name)
-	      and ((SELECT coalesce(in_table_owner,'')) = '' or table_owner like in_table_owner)
-	      and ((SELECT coalesce(in_table_qualifier,'')) = '' or table_qualifier like in_table_qualifier)
-	      and ((SELECT coalesce(in_column_name,'')) = '' or column_name like in_column_name)
-		order by table_qualifier, table_owner, table_name, ordinal_position;
+	    where lower(table_name) similar to lower(in_table_name) COLLATE "C" -- TBD - this should be changed to ci_as
+	      and ((SELECT coalesce(in_table_owner,'')) = '' or table_owner like in_table_owner collate sys.bbf_unicode_general_ci_as)
+	      and ((SELECT coalesce(in_table_qualifier,'')) = '' or table_qualifier like in_table_qualifier collate sys.bbf_unicode_general_ci_as)
+	      and ((SELECT coalesce(in_column_name,'')) = '' or column_name like in_column_name collate sys.bbf_unicode_general_ci_as)
+		order by table_qualifier,
+		         table_owner,
+			 table_name,
+			 ordinal_position;
 	ELSE 
 		return query
 	    select table_qualifier, precision from sys.sp_columns_100_view
-	      where in_table_name = table_name
-	      and ((SELECT coalesce(in_table_owner,'')) = '' or table_owner = in_table_owner)
-	      and ((SELECT coalesce(in_table_qualifier,'')) = '' or table_qualifier = in_table_qualifier)
-	      and ((SELECT coalesce(in_column_name,'')) = '' or column_name = in_column_name)
-		order by table_qualifier, table_owner, table_name, ordinal_position;
+	      where in_table_name = table_name collate sys.bbf_unicode_general_ci_as
+	      and ((SELECT coalesce(in_table_owner,'')) = '' or table_owner = in_table_owner collate sys.bbf_unicode_general_ci_as)
+	      and ((SELECT coalesce(in_table_qualifier,'')) = '' or table_qualifier = in_table_qualifier collate sys.bbf_unicode_general_ci_as)
+	      and ((SELECT coalesce(in_column_name,'')) = '' or column_name = in_column_name collate sys.bbf_unicode_general_ci_as)
+		order by table_qualifier,
+		         table_owner,
+			 table_name,
+			 ordinal_position;
 	END IF;
 end;
 $$
@@ -970,12 +976,13 @@ CREATE OR REPLACE FUNCTION sys.sp_tables_internal(
 	AS $$
 		DECLARE opt_table sys.varchar(16) = '';
 		DECLARE opt_view sys.varchar(16) = '';
+		DECLARE cs_as_in_table_type varchar COLLATE "C" = in_table_type;
 	BEGIN
 	   
-		IF (SELECT count(*) FROM unnest(string_to_array(in_table_type, ',')) WHERE upper(trim(unnest)) = 'TABLE' OR upper(trim(unnest)) = '''TABLE''') >= 1 THEN
+		IF (SELECT count(*) FROM unnest(string_to_array(cs_as_in_table_type, ',')) WHERE upper(trim(unnest)) = 'TABLE' OR upper(trim(unnest)) = '''TABLE''') >= 1 THEN
 			opt_table = 'TABLE';
 		END IF;
-		IF (SELECT count(*) from unnest(string_to_array(in_table_type, ',')) WHERE upper(trim(unnest)) = 'VIEW' OR upper(trim(unnest)) = '''VIEW''') >= 1 THEN
+		IF (SELECT count(*) from unnest(string_to_array(cs_as_in_table_type, ',')) WHERE upper(trim(unnest)) = 'VIEW' OR upper(trim(unnest)) = '''VIEW''') >= 1 THEN
 			opt_view = 'VIEW';
 		END IF;
 		IF in_fusepattern = 1 THEN
@@ -987,10 +994,12 @@ CREATE OR REPLACE FUNCTION sys.sp_tables_internal(
 			CAST(table_type AS sys.varchar(32)) AS TABLE_TYPE,
 			CAST(remarks AS sys.varchar(254)) AS REMARKS
 			FROM sys.sp_tables_view
-			WHERE ((SELECT coalesce(in_table_name,'')) = '' OR lower(table_name) LIKE lower(in_table_name))
-			AND ((SELECT coalesce(in_table_owner,'')) = '' OR lower(table_owner) LIKE lower(in_table_owner))
-			AND ((SELECT coalesce(in_table_qualifier,'')) = '' OR lower(table_qualifier) LIKE lower(in_table_qualifier))
-			AND ((SELECT coalesce(in_table_type,'')) = '' OR table_type = opt_table OR table_type = opt_view)
+			WHERE ((SELECT coalesce(in_table_name,'')) = '' OR table_name LIKE in_table_name collate sys.bbf_unicode_general_ci_as)
+			AND ((SELECT coalesce(in_table_owner,'')) = '' OR table_owner LIKE in_table_owner collate sys.bbf_unicode_general_ci_as)
+			AND ((SELECT coalesce(in_table_qualifier,'')) = '' OR table_qualifier LIKE in_table_qualifier collate sys.bbf_unicode_general_ci_as)
+			AND ((SELECT coalesce(cs_as_in_table_type,'')) = ''
+			    OR table_type collate sys.bbf_unicode_general_ci_as = opt_table
+			    OR table_type collate sys.bbf_unicode_general_ci_as= opt_view)
 			ORDER BY table_qualifier, table_owner, table_name;
 		ELSE 
 			RETURN query
@@ -1001,10 +1010,12 @@ CREATE OR REPLACE FUNCTION sys.sp_tables_internal(
 			CAST(table_type AS sys.varchar(32)) AS TABLE_TYPE,
 			CAST(remarks AS sys.varchar(254)) AS REMARKS
 			FROM sys.sp_tables_view
-			WHERE ((SELECT coalesce(in_table_name,'')) = '' OR lower(table_name) = lower(in_table_name))
-			AND ((SELECT coalesce(in_table_owner,'')) = '' OR lower(table_owner) = lower(in_table_owner))
-			AND ((SELECT coalesce(in_table_qualifier,'')) = '' OR lower(table_qualifier) = lower(in_table_qualifier))
-			AND ((SELECT coalesce(in_table_type,'')) = '' OR table_type = opt_table OR table_type = opt_view)
+			WHERE ((SELECT coalesce(in_table_name,'')) = '' OR table_name = in_table_name collate sys.bbf_unicode_general_ci_as)
+			AND ((SELECT coalesce(in_table_owner,'')) = '' OR table_owner = in_table_owner collate sys.bbf_unicode_general_ci_as)
+			AND ((SELECT coalesce(in_table_qualifier,'')) = '' OR table_qualifier = in_table_qualifier collate sys.bbf_unicode_general_ci_as)
+			AND ((SELECT coalesce(cs_as_in_table_type,'')) = ''
+			    OR table_type = opt_table
+			    OR table_type = opt_view)
 			ORDER BY table_qualifier, table_owner, table_name;
 		END IF;
 	END;
@@ -1122,10 +1133,15 @@ as $$
 begin
 	return query
 	select * from sys.sp_pkeys_view
-	where in_table_name = table_name
-		and table_owner = coalesce(in_table_owner,'dbo')
-		and ((SELECT coalesce(in_table_qualifier,'')) = '' or table_qualifier = in_table_qualifier)
-	order by table_qualifier, table_owner, table_name, key_seq;
+	where table_name = in_table_name collate sys.bbf_unicode_general_ci_as
+		and table_owner = coalesce(in_table_owner,'dbo') collate sys.bbf_unicode_general_ci_as
+		and ((SELECT
+		         coalesce(in_table_qualifier,'')) = '' or
+		         table_qualifier = in_table_qualifier collate sys.bbf_unicode_general_ci_as)
+	order by table_qualifier,
+	         table_owner,
+		 table_name,
+		 key_seq;
 end;
 $$
 LANGUAGE plpgsql;
@@ -1238,11 +1254,11 @@ as $$
 begin
     return query
     select * from sys.sp_statistics_view
-    where in_table_name = table_name
-        and ((SELECT coalesce(in_table_owner,'')) = '' or table_owner = in_table_owner)
-        and ((SELECT coalesce(in_table_qualifier,'')) = '' or table_qualifier = in_table_qualifier)
-        and ((SELECT coalesce(in_index_name,'')) = '' or index_name like in_index_name)
-        and ((in_is_unique = 'Y' and (non_unique IS NULL or non_unique = 0)) or (in_is_unique = 'N'))
+    where in_table_name = table_name COLLATE sys.bbf_unicode_general_ci_as
+        and ((SELECT coalesce(in_table_owner,'')) = '' or table_owner = in_table_owner  COLLATE sys.bbf_unicode_general_ci_as)
+        and ((SELECT coalesce(in_table_qualifier,'')) = '' or table_qualifier = in_table_qualifier COLLATE sys.bbf_unicode_general_ci_as)
+        and ((SELECT coalesce(in_index_name,'')) = '' or index_name like in_index_name COLLATE sys.bbf_unicode_general_ci_as)
+        and ((UPPER(in_is_unique) = 'Y' and (non_unique IS NULL or non_unique = 0)) or (UPPER(in_is_unique) = 'N'))
     order by non_unique, type, index_name, seq_in_index;
 end;
 $$

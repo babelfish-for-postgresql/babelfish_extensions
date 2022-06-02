@@ -112,7 +112,7 @@ DECLARE
   server boolean := false;
   prev_user text;
 BEGIN
-  IF lower("@option_name") like 'babelfishpg_tsql.%' THEN
+  IF lower("@option_name") like 'babelfishpg_tsql.%' collate "C" THEN
     SELECT "@option_name" INTO normalized_name;
   ELSE
     SELECT concat('babelfishpg_tsql.',"@option_name") INTO normalized_name;
@@ -124,12 +124,12 @@ BEGIN
     RAISE EXCEPTION 'invalid option: %', "@option_scope";
   END IF;
 
-  SELECT COUNT(*) INTO cnt FROM pg_catalog.pg_settings WHERE name like normalized_name and name like '%escape_hatch%';
+  SELECT COUNT(*) INTO cnt FROM pg_catalog.pg_settings WHERE name collate "C" like normalized_name and name collate "C" like '%escape_hatch%';
   IF cnt = 0 THEN
     RAISE EXCEPTION 'unknown configuration: %', normalized_name;
   END IF;
 
-  OPEN cur FOR SELECT name FROM pg_catalog.pg_settings WHERE name like normalized_name and name like '%escape_hatch%';
+  OPEN cur FOR SELECT name FROM pg_catalog.pg_settings WHERE name collate "C" like normalized_name and name collate "C" like '%escape_hatch%';
 
   LOOP
     FETCH NEXT FROM cur into eh_name;
