@@ -2680,7 +2680,7 @@ CREATE OR REPLACE FUNCTION babelfish_remove_delimiter_pair(IN name TEXT)
 RETURNS TEXT AS
 $BODY$
 BEGIN
-    IF name IN('[', ']', '"') COLLATE "C" THEN
+    IF name IN('[' COLLATE "C", ']' COLLATE "C", '"' COLLATE "C") THEN
         RETURN NULL;
 
     ELSIF length(name) >= 2 AND left(name, 1) = '[' COLLATE "C" AND right(name, 1) = ']' COLLATE "C" THEN
