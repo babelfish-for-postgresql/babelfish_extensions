@@ -916,6 +916,43 @@ BEGIN
 END
 $$;
 
+create or replace function sys.sp_statistics_internal(
+    in_table_name sys.sysname,
+    in_table_owner sys.sysname = '',
+    in_table_qualifier sys.sysname = '',
+    in_index_name sys.sysname = '',
+	in_is_unique char = 'N',
+	in_accuracy char = 'Q'
+)
+returns table(
+    out_table_qualifier sys.sysname,
+    out_table_owner sys.sysname,
+    out_table_name sys.sysname,
+	out_non_unique smallint,
+	out_index_qualifier sys.sysname,
+	out_index_name sys.sysname,
+	out_type smallint,
+	out_seq_in_index smallint,
+	out_column_name sys.sysname,
+	out_collation sys.varchar(1),
+	out_cardinality int,
+	out_pages int,
+	out_filter_condition sys.varchar(128)
+)
+as $$
+begin
+    return query
+    select * from sys.sp_statistics_view
+    where in_table_name = table_name COLLATE sys.bbf_unicode_general_ci_as
+        and ((SELECT coalesce(in_table_owner,'')) = '' or table_owner = in_table_owner  COLLATE sys.bbf_unicode_general_ci_as)
+        and ((SELECT coalesce(in_table_qualifier,'')) = '' or table_qualifier = in_table_qualifier COLLATE sys.bbf_unicode_general_ci_as)
+        and ((SELECT coalesce(in_index_name,'')) = '' or index_name like in_index_name COLLATE sys.bbf_unicode_general_ci_as)
+        and ((UPPER(in_is_unique) = 'Y' and (non_unique IS NULL or non_unique = 0)) or (UPPER(in_is_unique) = 'N'))
+    order by non_unique, type, index_name, seq_in_index;
+end;
+$$
+LANGUAGE plpgsql;
+
 CREATE OR REPLACE PROCEDURE sys.sp_statistics(
     "@table_name" sys.sysname,
     "@table_owner" sys.sysname = '',
@@ -1296,32 +1333,32 @@ BEGIN
             RETURN NULL;
         END IF;
 
-        if object_type <> '' then
+        if obj_type <> '' then
             case
                 -- Schema does not apply as much to temp objects.
-                when upper(object_type) in ('S', 'U', 'V', 'IT', 'ET', 'SO') and is_temp_object then
+                when upper(obj_type) in ('S', 'U', 'V', 'IT', 'ET', 'SO') and is_temp_object then
                     id := (select reloid from sys.babelfish_get_enr_list() where lower(relname) = obj_name limit 1);
 
-                when upper(object_type) in ('S', 'U', 'V', 'IT', 'ET', 'SO') and not is_temp_object then
+                when upper(obj_type) in ('S', 'U', 'V', 'IT', 'ET', 'SO') and not is_temp_object then
                     id := (select oid from pg_class where lower(relname) = obj_name 
                             and relnamespace = schema_oid limit 1);
 
-                when upper(object_type) in ('C', 'D', 'F', 'PK', 'UQ') then
+                when upper(obj_type) in ('C', 'D', 'F', 'PK', 'UQ') then
                     id := (select oid from pg_constraint where lower(conname) = obj_name 
                             and connamespace = schema_oid limit 1);
 
-                when upper(object_type) in ('AF', 'FN', 'FS', 'FT', 'IF', 'P', 'PC', 'TF', 'RF', 'X') then
+                when upper(obj_type) in ('AF', 'FN', 'FS', 'FT', 'IF', 'P', 'PC', 'TF', 'RF', 'X') then
                     id := (select oid from pg_proc where lower(proname) = obj_name 
                             and pronamespace = schema_oid limit 1);
 
-                when upper(object_type) in ('TR', 'TA') then
+                when upper(obj_type) in ('TR', 'TA') then
                     id := (select oid from pg_trigger where lower(tgname) = obj_name limit 1);
 
                 -- Throwing exception as a reminder to add support in the future.
-                when upper(object_type) in ('R', 'EC', 'PG', 'SN', 'SQ', 'TT') then
+                when upper(obj_type) in ('R', 'EC', 'PG', 'SN', 'SQ', 'TT') then
                     RAISE EXCEPTION 'Object type currently unsupported.';
 
-                -- unsupported object_type
+                -- unsupported obj_type
                 else id := null;
             end case;
         else
@@ -5775,122 +5812,6 @@ LANGUAGE plpgsql
 VOLATILE
 RETURNS NULL ON NULL INPUT;
 
-CREATE OR REPLACE FUNCTION sys.babelfish_get_lang_metadata_json(IN p_lang_spec_culture TEXT)
-RETURNS JSONB
-AS
-$BODY$
-DECLARE
-    v_locale_parts TEXT[] COLLATE "C";
-    v_lang_data_jsonb JSONB;
-    v_lang_spec_culture VARCHAR COLLATE "C";
-    v_is_cached BOOLEAN := FALSE;
-BEGIN
-    v_lang_spec_culture := upper(trim(p_lang_spec_culture));
-
-    IF (char_length(v_lang_spec_culture) > 0)
-    THEN
-        BEGIN
-            v_lang_data_jsonb := nullif(current_setting(format('sys.lang_metadata_json.%s',
-                                                               v_lang_spec_culture)), '')::JSONB;
-        EXCEPTION
-            WHEN undefined_object THEN
-            v_lang_data_jsonb := NULL;
-        END;
-
-        IF (v_lang_data_jsonb IS NULL)
-        THEN
-            v_lang_spec_culture := upper(regexp_replace(v_lang_spec_culture, '-\s*', '_', 'gi'));
-            IF (v_lang_spec_culture IN ('AR', 'FI') OR
-                v_lang_spec_culture ~ '_')
-            THEN
-                SELECT lang_data_jsonb
-                  INTO STRICT v_lang_data_jsonb
-                  FROM sys.syslanguages
-                 WHERE spec_culture = v_lang_spec_culture;
-            ELSE
-                SELECT lang_data_jsonb
-                  INTO STRICT v_lang_data_jsonb
-                  FROM sys.syslanguages
-                 WHERE lang_name_mssql = v_lang_spec_culture
-                    OR lang_alias_mssql = v_lang_spec_culture;
-            END IF;
-        ELSE
-            v_is_cached := TRUE;
-        END IF;
-    ELSE
-        v_lang_spec_culture := current_setting('LC_TIME');
-
-        v_lang_spec_culture := CASE
-                                  WHEN (v_lang_spec_culture !~ '\.') THEN v_lang_spec_culture
-                                  ELSE substring(v_lang_spec_culture, '(.*)(?:\.)')
-                               END;
-
-        v_lang_spec_culture := upper(regexp_replace(v_lang_spec_culture, ',\s*', '_', 'gi'));
-
-        BEGIN
-            v_lang_data_jsonb := nullif(current_setting(format('sys.lang_metadata_json.%s',
-                                                               v_lang_spec_culture)), '')::JSONB;
-        EXCEPTION
-            WHEN undefined_object THEN
-            v_lang_data_jsonb := NULL;
-        END;
-
-        IF (v_lang_data_jsonb IS NULL)
-        THEN
-            BEGIN
-                IF (char_length(v_lang_spec_culture) = 5)
-                THEN
-                    SELECT lang_data_jsonb
-                      INTO STRICT v_lang_data_jsonb
-                      FROM sys.syslanguages
-                     WHERE spec_culture = v_lang_spec_culture;
-                ELSE
-                    v_locale_parts := string_to_array(v_lang_spec_culture, '-');
-
-                    SELECT lang_data_jsonb
-                      INTO STRICT v_lang_data_jsonb
-                      FROM sys.syslanguages
-                     WHERE lang_name_pg = v_locale_parts[1]
-                       AND territory = v_locale_parts[2];
-                END IF;
-            EXCEPTION
-                WHEN OTHERS THEN
-                    v_lang_spec_culture := 'EN_US';
-
-                    SELECT lang_data_jsonb
-                      INTO v_lang_data_jsonb
-                      FROM sys.syslanguages
-                     WHERE spec_culture = v_lang_spec_culture;
-            END;
-        ELSE
-            v_is_cached := TRUE;
-        END IF;
-    END IF;
-
-    IF (NOT v_is_cached) THEN
-        PERFORM set_config(format('sys.lang_metadata_json.%s',
-                                  v_lang_spec_culture),
-                           v_lang_data_jsonb::TEXT,
-                           FALSE);
-    END IF;
-
-    RETURN v_lang_data_jsonb;
-EXCEPTION
-    WHEN invalid_text_representation THEN
-        RAISE USING MESSAGE := format('The language metadata JSON value extracted from chache is not a valid JSON object.',
-                                      p_lang_spec_culture),
-                    HINT := 'Drop the current session, fix the appropriate record in "sys.syslanguages" table, and try again after reconnection.';
-
-    WHEN OTHERS THEN
-        RAISE USING MESSAGE := format('"%s" is not a valid special culture or language name parameter.',
-                                      p_lang_spec_culture),
-                    DETAIL := 'Use of incorrect "lang_spec_culture" parameter value during conversion process.',
-                    HINT := 'Change "lang_spec_culture" parameter to the proper value and try again.';
-END;
-$BODY$
-LANGUAGE plpgsql
-VOLATILE;
-
 CREATE OR REPLACE FUNCTION sys.babelfish_parse_to_date(IN p_datestring TEXT,
                                                            IN p_culture TEXT DEFAULT '')
 RETURNS DATE
@@ -9150,170 +9071,6 @@ $BODY$
 LANGUAGE plpgsql
 VOLATILE CALLED ON NULL INPUT;
 
--- Return the object ID given the object name. Can specify optional type.
-CREATE OR REPLACE FUNCTION sys.object_id(IN object_name TEXT, IN object_type char(2) DEFAULT '')
-RETURNS INTEGER AS
-$BODY$
-DECLARE
-        id oid;
-        lower_object_name text collate "C";
-        names text[2] collate "C";
-        counter int;
-        cur_pos int;
-        db_name text collate "C";
-        input_schema_name text collate "C";
-	schema_name text collate "C";
-        schema_oid oid;
-        obj_name text collate "C";
-        is_temp_object boolean;
-	obj_type char(2) collate "C";
-BEGIN
-        obj_type = object_type;
-        id = null;
-        lower_object_name = lower(trim(object_name));
-        counter = 1;
-        cur_pos = position('.' in lower_object_name);
-        schema_oid = NULL;
-
-        -- Parse user input into names split by '.'
-        WHILE cur_pos > 0 LOOP
-            IF counter > 3 THEN
-                -- Too many names provided
-                RETURN NULL;
-            END IF;
-            names[counter] = sys.babelfish_single_unbracket_name(left(lower_object_name, cur_pos - 1));
-            lower_object_name = substring(lower_object_name from cur_pos + 1);
-            counter = counter + 1;
-            cur_pos = position('.' in lower_object_name);
-        END LOOP;
-
-        -- Assign each name accordingly
-        obj_name = sys.babelfish_truncate_identifier(sys.babelfish_single_unbracket_name(lower_object_name));
-        CASE counter
-            WHEN 1 THEN
-                db_name = NULL;
-                schema_name = NULL;
-            WHEN 2 THEN
-                db_name = NULL;
-                input_schema_name = sys.babelfish_truncate_identifier(names[1]);
-		schema_name = sys.bbf_get_current_physical_schema_name(input_schema_name);
-            WHEN 3 THEN
-                db_name = sys.babelfish_truncate_identifier(names[1]);
-                input_schema_name = sys.babelfish_truncate_identifier(names[2]);
-		schema_name = sys.bbf_get_current_physical_schema_name(input_schema_name);
-            ELSE
-                RETURN NULL;
-        END CASE;
-
-        -- Check if looking for temp object.
-        is_temp_object = left(obj_name, 1) = '#';
-
-        -- Can only search in current database. Allowing tempdb for temp objects.
-        IF db_name IS NOT NULL AND db_name <> current_database() AND db_name <> 'tempdb' THEN
-            RAISE EXCEPTION 'Can only do lookup in current database.';
-        END IF;
-
-        IF schema_name IS NOT NULL AND schema_name <> '' THEN
-            -- Searching within a schema. Get schema oid.
-            schema_oid = (SELECT oid FROM pg_namespace WHERE nspname = schema_name);
-            IF schema_oid IS NULL THEN
-                RETURN NULL;
-            END IF;
-
-            if obj_type <> '' then
-                case
-                    -- Schema does not apply as much to temp objects.
-                    when upper(obj_type) in ('S', 'U', 'V', 'IT', 'ET', 'SO') and is_temp_object then
-	                id := (select reloid from sys.babelfish_get_enr_list() where lower(relname) = obj_name limit 1);
-
-                    when upper(obj_type) in ('S', 'U', 'V', 'IT', 'ET', 'SO') and not is_temp_object then
-	                id := (select oid from pg_class where lower(relname) = obj_name 
-                                and relnamespace = schema_oid limit 1);
-
-                    when upper(obj_type) in ('C', 'D', 'F', 'PK', 'UQ') then
-	                id := (select oid from pg_constraint where lower(conname) = obj_name 
-                                and connamespace = schema_oid limit 1);
-
-                    when upper(obj_type) in ('AF', 'FN', 'FS', 'FT', 'IF', 'P', 'PC', 'TF', 'RF', 'X') then
-	                id := (select oid from pg_proc where lower(proname) = obj_name 
-                                and pronamespace = schema_oid limit 1);
-
-                    when upper(obj_type) in ('TR', 'TA') then
-	                id := (select oid from pg_trigger where lower(tgname) = obj_name limit 1);
-
-                    -- Throwing exception as a reminder to add support in the future.
-                    when upper(obj_type) in ('R', 'EC', 'PG', 'SN', 'SQ', 'TT') then
-                        RAISE EXCEPTION 'Object type currently unsupported.';
-
-                    -- unsupported obj_type
-                    else id := null;
-                end case;
-            else
-                if not is_temp_object then id := (
-                                                select oid from pg_class where lower(relname) = obj_name
-                                                    and relnamespace = schema_oid
-					            union
-				                select oid from pg_constraint where lower(conname) = obj_name
-					            and connamespace = schema_oid
-                                                    union
-				                select oid from pg_proc where lower(proname) = obj_name
-					            and pronamespace = schema_oid
-                                                    union
-				                select oid from pg_trigger where lower(tgname) = obj_name
-				                limit 1);
-                else
-                    -- temp object without "object_type" in-argument
-                    id := (select reloid from sys.babelfish_get_enr_list() where lower(relname) = obj_name limit 1);
-                end if;
-            end if;
-        ELSE 
-            -- Schema not specified.
-            if obj_type <> '' then
-                case
-                    when upper(obj_type) in ('S', 'U', 'V', 'IT', 'ET', 'SO') and is_temp_object then
-	                id := (select reloid from sys.babelfish_get_enr_list() where lower(relname) = obj_name limit 1);
-
-                    when upper(obj_type) in ('S', 'U', 'V', 'IT', 'ET', 'SO') and not is_temp_object then
-	                id := (select oid from pg_class where lower(relname) = obj_name limit 1);
-
-                    when upper(obj_type) in ('C', 'D', 'F', 'PK', 'UQ') then
-	                id := (select oid from pg_constraint where lower(conname) = obj_name limit 1);
-
-                    when upper(obj_type) in ('AF', 'FN', 'FS', 'FT', 'IF', 'P', 'PC', 'TF', 'RF', 'X') then
-	                id := (select oid from pg_proc where lower(proname) = obj_name limit 1);
-
-                    when upper(obj_type) in ('TR', 'TA') then
-	                id := (select oid from pg_trigger where lower(tgname) = obj_name limit 1);
-
-                    -- Throwing exception as a reminder to add support in the future.
-                    when upper(obj_type) in ('R', 'EC', 'PG', 'SN', 'SQ', 'TT') then
-                        RAISE EXCEPTION 'Object type currently unsupported.';
-
-                    -- unsupported obj_type
-                    else id := null;
-                end case;
-            else
-                if not is_temp_object then id := (
-                                                select oid from pg_class where lower(relname) = obj_name
-					            union
-				                select oid from pg_constraint where lower(conname) = obj_name
-					            union
-				                select oid from pg_proc where lower(proname) = obj_name
-					            union
-				                select oid from pg_trigger where lower(tgname) = obj_name
-				                limit 1);
-                else
-                    -- temp object without "object_type" in-argument
-                    id := (select reloid from sys.babelfish_get_enr_list() where lower(relname) = obj_name limit 1);
-                end if;
-            end if;
-        END IF;
-
-        RETURN id::integer;
-END;
-$BODY$
-LANGUAGE plpgsql STABLE RETURNS NULL ON NULL INPUT;
-
 create or replace function sys.PATINDEX(in pattern varchar, in expression varchar) returns bigint as
 $body$
 declare
@@ -9545,6 +9302,68 @@ begin
 end
 $body$
 LANGUAGE plpgsql STABLE PARALLEL SAFE STRICT;
+
+CREATE OR REPLACE FUNCTION sys.sp_tables_internal(
+	in_table_name sys.nvarchar(384) = '',
+	in_table_owner sys.nvarchar(384) = '', 
+	in_table_qualifier sys.sysname = '',
+	in_table_type sys.varchar(100) = '',
+	in_fusepattern sys.bit = '1')
+	RETURNS TABLE (
+		out_table_qualifier sys.sysname,
+		out_table_owner sys.sysname,
+		out_table_name sys.sysname,
+		out_table_type sys.varchar(32),
+		out_remarks sys.varchar(254)
+	)
+	AS $$
+		DECLARE opt_table sys.varchar(16) = '';
+		DECLARE opt_view sys.varchar(16) = '';
+		DECLARE cs_as_in_table_type varchar COLLATE "C" = in_table_type;
+	BEGIN
+	   
+		IF (SELECT count(*) FROM unnest(string_to_array(cs_as_in_table_type, ',')) WHERE upper(trim(unnest)) = 'TABLE' OR upper(trim(unnest)) = '''TABLE''') >= 1 THEN
+			opt_table = 'TABLE';
+		END IF;
+		IF (SELECT count(*) from unnest(string_to_array(cs_as_in_table_type, ',')) WHERE upper(trim(unnest)) = 'VIEW' OR upper(trim(unnest)) = '''VIEW''') >= 1 THEN
+			opt_view = 'VIEW';
+		END IF;
+		IF in_fusepattern = 1 THEN
+			RETURN query
+			SELECT 
+			CAST(table_qualifier AS sys.sysname) AS TABLE_QUALIFIER,
+			CAST(table_owner AS sys.sysname) AS TABLE_OWNER,
+			CAST(table_name AS sys.sysname) AS TABLE_NAME,
+			CAST(table_type AS sys.varchar(32)) AS TABLE_TYPE,
+			CAST(remarks AS sys.varchar(254)) AS REMARKS
+			FROM sys.sp_tables_view
+			WHERE ((SELECT coalesce(in_table_name,'')) = '' OR table_name LIKE in_table_name collate sys.bbf_unicode_general_ci_as)
+			AND ((SELECT coalesce(in_table_owner,'')) = '' OR table_owner LIKE in_table_owner collate sys.bbf_unicode_general_ci_as)
+			AND ((SELECT coalesce(in_table_qualifier,'')) = '' OR table_qualifier LIKE in_table_qualifier collate sys.bbf_unicode_general_ci_as)
+			AND ((SELECT coalesce(cs_as_in_table_type,'')) = ''
+			    OR table_type collate sys.bbf_unicode_general_ci_as = opt_table
+			    OR table_type collate sys.bbf_unicode_general_ci_as= opt_view)
+			ORDER BY table_qualifier, table_owner, table_name;
+		ELSE 
+			RETURN query
+			SELECT 
+			CAST(table_qualifier AS sys.sysname) AS TABLE_QUALIFIER,
+			CAST(table_owner AS sys.sysname) AS TABLE_OWNER,
+			CAST(table_name AS sys.sysname) AS TABLE_NAME,
+			CAST(table_type AS sys.varchar(32)) AS TABLE_TYPE,
+			CAST(remarks AS sys.varchar(254)) AS REMARKS
+			FROM sys.sp_tables_view
+			WHERE ((SELECT coalesce(in_table_name,'')) = '' OR table_name = in_table_name collate sys.bbf_unicode_general_ci_as)
+			AND ((SELECT coalesce(in_table_owner,'')) = '' OR table_owner = in_table_owner collate sys.bbf_unicode_general_ci_as)
+			AND ((SELECT coalesce(in_table_qualifier,'')) = '' OR table_qualifier = in_table_qualifier collate sys.bbf_unicode_general_ci_as)
+			AND ((SELECT coalesce(cs_as_in_table_type,'')) = ''
+			    OR table_type = opt_table
+			    OR table_type = opt_view)
+			ORDER BY table_qualifier, table_owner, table_name;
+		END IF;
+	END;
+$$
+LANGUAGE plpgsql;
 
 -- Drops the temporary procedure used by the upgrade script.
 -- Please have this be one of the last statements executed in this upgrade script.
