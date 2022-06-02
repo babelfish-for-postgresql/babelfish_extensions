@@ -9530,6 +9530,22 @@ $$
 $$
 LANGUAGE SQL VOLATILE PARALLEL SAFE;
 
+CREATE OR REPLACE FUNCTION sys.replace (in input_string text, in pattern text, in replacement text) returns TEXT as
+$body$
+begin
+    if pattern is null or replacement is null then
+        return null;
+    elsif pattern = '' then
+        return input_string;
+    elsif sys.is_collated_ci_as(input_string) then
+        return regexp_replace(input_string, '***=' || pattern, replacement, 'ig');
+    else
+        return regexp_replace(input_string, '***=' || pattern, replacement, 'g');
+    end if;
+end
+$body$
+LANGUAGE plpgsql STABLE PARALLEL SAFE STRICT;
+
 -- Drops the temporary procedure used by the upgrade script.
 -- Please have this be one of the last statements executed in this upgrade script.
 DROP PROCEDURE sys.babelfish_drop_deprecated_view(varchar, varchar);
