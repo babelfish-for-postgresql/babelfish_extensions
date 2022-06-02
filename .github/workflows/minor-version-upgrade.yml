@@ -10,9 +10,9 @@ on:
 jobs:
   extension-tests:
     env:
-      ENGINE_VER_FROM: jungkook-migration
+      ENGINE_VER_FROM: BABEL_2_X_DEV__PG_14_2
       EXTENSION_VER_FROM: BABEL_2_0_STABLE
-      ENGINE_VER_TO: jungkook-migration
+      ENGINE_VER_TO: BABEL_2_X_DEV__PG_14_2
       EXTENSION_VER_TO: BABEL_2_X_DEV
 
     name: Build and test
