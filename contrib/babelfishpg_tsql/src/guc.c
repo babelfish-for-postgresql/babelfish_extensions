@@ -119,12 +119,12 @@ static const struct config_enum_entry escape_hatch_options[] = {
 
 static bool check_server_collation_name(char **newval, void **extra, GucSource source)
 {
-	if (is_valid_server_collation_name(*newval))
+	if (tsql_is_valid_server_collation_name(*newval))
 	{
 		/*
-		 * We are storing value in lower case since
-		 * Collation names are stored in lowercase into pg catalog (pg_collation).
-		 */
+			* We are storing value in lower case since
+			* Collation names are stored in lowercase into pg catalog (pg_collation).
+			*/
 		char *dupval = pstrdup(*newval);
 		strcpy(*newval, downcase_identifier(dupval, strlen(dupval), false, false));
 		pfree(dupval);
@@ -135,10 +135,9 @@ static bool check_server_collation_name(char **newval, void **extra, GucSource s
 
 static bool check_default_locale (char **newval, void **extra, GucSource source)
 {
-    if (find_locale(*newval) >= 0)
-	return true;
-
-    return false;
+	if (tsql_find_locale(*newval) >= 0)
+		return true;
+	return false;
 }
 
 static bool check_ansi_null_dflt_on (bool *newval, void **extra, GucSource source)
