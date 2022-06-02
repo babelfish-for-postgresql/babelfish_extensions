@@ -518,7 +518,17 @@ BEGIN
 			out_char_octet_length as CHAR_OCTET_LENGTH,
 			out_ordinal_position as ORDINAL_POSITION,
 			out_is_nullable as IS_NULLABLE,
-			out_ss_data_type as SS_DATA_TYPE
+			(
+			CASE
+				WHEN out_ss_is_identity = 1 AND out_sql_data_type = -6 THEN 48 -- Tinyint Identity
+				WHEN out_ss_is_identity = 1 AND out_sql_data_type = 5 THEN 52 -- Smallint Identity
+				WHEN out_ss_is_identity = 1 AND out_sql_data_type = 4 THEN 56 -- Int Identity
+				WHEN out_ss_is_identity = 1 AND out_sql_data_type = -5 THEN 63 -- Bigint Identity
+				WHEN out_ss_is_identity = 1 AND out_sql_data_type = 3 THEN 55 -- Decimal Identity
+				WHEN out_ss_is_identity = 1 AND out_sql_data_type = 2 THEN 63 -- Numeric Identity
+				ELSE out_ss_data_type
+			END
+			) as SS_DATA_TYPE
 	from sys.sp_columns_100_internal(sys.babelfish_truncate_identifier(@table_name),
 		sys.babelfish_truncate_identifier(@table_owner),
 		sys.babelfish_truncate_identifier(@table_qualifier),
@@ -566,7 +576,17 @@ BEGIN
 			out_ss_xml_schemacollection_catalog_name as SS_XML_SCHEMACOLLECTION_CATALOG_NAME,
 			out_ss_xml_schemacollection_schema_name as SS_XML_SCHEMACOLLECTION_SCHEMA_NAME,
 			out_ss_xml_schemacollection_name as SS_XML_SCHEMACOLLECTION_NAME,
-			out_ss_data_type as SS_DATA_TYPE
+			(
+			CASE
+				WHEN out_ss_is_identity = 1 AND out_sql_data_type = -6 THEN 48 -- Tinyint Identity
+				WHEN out_ss_is_identity = 1 AND out_sql_data_type = 5 THEN 52 -- Smallint Identity
+				WHEN out_ss_is_identity = 1 AND out_sql_data_type = 4 THEN 56 -- Int Identity
+				WHEN out_ss_is_identity = 1 AND out_sql_data_type = -5 THEN 63 -- Bigint Identity
+				WHEN out_ss_is_identity = 1 AND out_sql_data_type = 3 THEN 55 -- Decimal Identity
+				WHEN out_ss_is_identity = 1 AND out_sql_data_type = 2 THEN 63 -- Numeric Identity
+				ELSE out_ss_data_type
+			END
+			) as SS_DATA_TYPE
 	from sys.sp_columns_100_internal(sys.babelfish_truncate_identifier(@table_name),
 		sys.babelfish_truncate_identifier(@table_owner),
 		sys.babelfish_truncate_identifier(@table_qualifier),
