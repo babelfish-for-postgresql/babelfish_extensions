@@ -65,7 +65,9 @@ jobs:
       - name: Cleanup Upgrade Version Composite Action
         id: cleanup-upgrade-version-ca
         if: always() && steps.upgrade-and-test.outcome == 'success'
-        run: rm -r ${{ github.workspace }}/.github/composite-action/upgrade-version
+        run: |
+          git branch
+          rm -r ./.github/composite-actions/upgrade-version
 
       - name: Upload Log
         if: always() && steps.upgrade-and-test.outcome == 'failure'
