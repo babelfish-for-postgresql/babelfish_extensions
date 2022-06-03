@@ -11,8 +11,8 @@ runs:
             echo "ERROR: Upgrade path length less than 2" 1>&2
             exit 1
         fi
-        mkdir ${{ github.workspace }}/.github/composite-actions/upgrade-version
-        touch ${{ github.workspace }}/.github/composite-actions/upgrade-version/action.yml
+        #mkdir ${{ github.workspace }}/.github/composite-actions/upgrade-version
+        #touch ${{ github.workspace }}/.github/composite-actions/upgrade-version/action.yml
         printf 'name: Upgrade and Test \nruns: \n  using: "composite"\n  steps:\n' > ${{ github.workspace }}/.github/composite-actions/upgrade-version/action.yml
         for (( i=1 ; i<$LEN ; i++ )); 
         do
