@@ -25,6 +25,7 @@ create table test_tsql_const(
 	check(c_int < 10),
 	c_smallint smallint check(c_smallint < cast(cast(CAST('20' AS smallint) as sql_variant) as smallint)),
 	c_binary binary(8) check(c_binary > cast(0xfe as binary(8))),
+	c_varbinary varbinary(8) check(c_varbinary > cast(0xfe as varbinary(8)))
 );
 go
 
@@ -44,11 +45,11 @@ create table test_tsql_collate(
 go
 
 create table test_datetime(
-	c_time time check(cast(c_time as time) < cast('09:00:00' as time) and c_time < cast('09:00:00' as time(6))),
+	c_time time check(cast(c_time as pg_catalog.time) < cast('09:00:00' as time) and c_time < cast('09:00:00' as time(6))),
 	c_date date check(c_date < cast('2001-01-01' as date)),
 	c_datetime datetime check(c_datetime < cast('2020-10-20 09:00:00' as datetime)),
 	c_datetime2 datetime2 check(c_datetime2 < cast('2020-10-20 09:00:00' as datetime2) and c_datetime2 < cast('2020-10-20 09:00:00' as datetime2(6)) ),
-	c_datetimeoffset datetimeoffset check(c_datetimeoffset < cast('12-10-25 12:32:10 +01:00' as datetimeoffset) and c_datetimeoffset < cast('12-10-25 12:32:10 +01:00' as datetimeoffset(4))),
+	c_datetimeoffset datetimeoffset check(c_datetimeoffset < cast('12-10-25 12:32:10 +01:00' as sys.datetimeoffset) and c_datetimeoffset < cast('12-10-25 12:32:10 +01:00' as datetimeoffset(4))),
 	c_smalldatetime smalldatetime check(c_smalldatetime < cast('2007-05-08 12:35:29.123' AS smalldatetime)),
 );
 go
@@ -58,7 +59,7 @@ create table test_functioncall(
 	check (isjson(col1) > 0),
 	check (right(col1,1) <> ','),
 	check (ltrim(col1) <> ''),
-	check (CONVERT([nvarchar](128),(getutcdate() AT TIME ZONE [col1]))<>'')
+	check (CONVERT([nvarchar](128),(sys.getutcdate() AT TIME ZONE [col1]))<>'')
 );
 go
 
@@ -71,6 +72,17 @@ go
 alter table test_null add constraint constraint2 check(a<=20 and b>a and (a between 40 and 50));
 go
 
+set ansi_nulls on;
+go
+create table test_null1(a int, b int, check(a <> NULL), check(b = NULL));
+go
+	
+set ansi_nulls off;
+go
+
+create table test_null2(a int, b int, check(a <> NULL), check(b = NULL));
+go
+
 select * from information_schema_tsql.check_constraints order by "CONSTRAINT_NAME";
 go
 
@@ -81,6 +93,8 @@ drop table test_null
 drop table test_tsql_collate
 drop table test_tsql_cast
 drop table test_upper
+drop table test_null1
+drop table test_null2
 go
 
 use master

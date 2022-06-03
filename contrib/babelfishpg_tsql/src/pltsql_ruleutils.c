@@ -1243,13 +1243,13 @@ get_variable(Var *var, int levelsup, bool istoplevel, deparse_context *context)
  *
  *	Make a string representation of a Const
  *
- * showtype can be -1 to never show "::typename" decoration, or +1 to always
+ * showtype can be -1 to never show "CAST(%s AS typename)" decoration, or +1 to always
  * show it, or 0 to show it only if the constant wouldn't be assumed to be
  * the right type by default.
  *
  * If the Const's collation isn't default for its type, show that too.
  * We mustn't do this when showtype is -1 (since that means the caller will
- * print "::typename", and we can't put a COLLATE clause in between).  It's
+ * print "CAST(%s AS typename)", and we can't put a COLLATE clause in between).  It's
  * caller's responsibility that collation isn't missed in such cases.
  * ----------
  */
@@ -1351,14 +1351,11 @@ get_const_expr(Const *constval, deparse_context *context, int showtype)
 	if (showtype < 0)
 	{
 		appendStringInfoString(buf, valbuf->data);
+		pfree(valbuf->data);
 		return;
 	}
 
-	/*
-	 * For showtype == 0, append ::typename unless the constant will be
-	 * implicitly typed as the right type when it is read in.
-	 *
-	 * XXX this code has to be kept in sync with the behavior of the parser,
+	/* XXX this code has to be kept in sync with the behavior of the parser,
 	 * especially make_const.
 	 */
 	switch (constval->consttype)
@@ -2323,6 +2320,7 @@ tsql_format_type_extended(Oid type_oid, int32 typemod, bits16 flags)
 	Datum			tsql_typename;
 	char		   *buf;
 	bool			with_typemod;
+	LOCAL_FCINFO(fcinfo, 1);
 
 	if (type_oid == InvalidOid && (flags & FORMAT_TYPE_ALLOW_INVALID) != 0)
 		return pstrdup("-");
@@ -2340,7 +2338,6 @@ tsql_format_type_extended(Oid type_oid, int32 typemod, bits16 flags)
 	with_typemod = (flags & FORMAT_TYPE_TYPEMOD_GIVEN) != 0 && (typemod >= 0);
 
 	buf = NULL;
-	LOCAL_FCINFO(fcinfo, 1);
 
 	InitFunctionCallInfoData(*fcinfo, NULL, 0, InvalidOid, NULL, NULL);
 	fcinfo->args[0].value = ObjectIdGetDatum(type_oid);
