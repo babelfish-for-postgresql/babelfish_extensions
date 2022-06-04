@@ -1,4 +1,4 @@
-name: 'Upgrade Version Utility'
+name: 'Minor Version Upgrade Utility'
 inputs:
   engine_branch: 
     description: "Engine Branch"
@@ -9,6 +9,9 @@ inputs:
   is_final_ver:
     description: "Is this the final version"
     required: true
+  install_dir:
+    description: "Install new version in this directory"
+    required: true
 
 runs:
   using: "composite"
@@ -17,7 +20,7 @@ runs:
       run: |
         cd ../postgresql_modified_for_babelfish
         git checkout ${{ inputs.engine_branch }}
-        ./configure --prefix=$HOME/postgres/ --with-python PYTHON=/usr/bin/python2.7 --enable-debug CFLAGS="-ggdb" --with-libxml --with-uuid=ossp --with-icu
+        ./configure --prefix=$HOME/${{ inputs.install_dir }}/ --with-python PYTHON=/usr/bin/python2.7 --enable-debug CFLAGS="-ggdb" --with-libxml --with-uuid=ossp --with-icu
         make clean
         make -j 4 2>error.txt
         make install
@@ -33,7 +36,7 @@ runs:
     - name: Set env variables and build extensions using ${{ inputs.extension_branch }}
       id: build-extensions-newer
       run: |
-        export PG_CONFIG=~/postgres/bin/pg_config
+        export PG_CONFIG=~/${{ inputs.install_dir }}/bin/pg_config
         export PG_SRC=~/work/babelfish_extensions/postgresql_modified_for_babelfish
         export cmake=$(which cmake)
         cd contrib/babelfishpg_money
@@ -51,10 +54,10 @@ runs:
       if: always() && steps.build-extensions-newer.outcome == 'success'
       run: |
         cd ~
-        ~/postgres/bin/pg_ctl -D ~/postgres/data/ -l logfile restart
-        sudo ~/postgres/bin/psql -d jdbc_testdb -U runner -c "\dx"
-        sudo ~/postgres/bin/psql -d jdbc_testdb -U runner -c "ALTER EXTENSION "babelfishpg_common" UPDATE; ALTER EXTENSION "babelfishpg_tsql" UPDATE;"
-        sudo ~/postgres/bin/psql -d jdbc_testdb -U runner -c "\dx"
+        ~/${{ inputs.install_dir }}/bin/pg_ctl -D ~/${{ inputs.install_dir }}/data/ -l logfile restart
+        sudo ~/${{ inputs.install_dir }}/bin/psql -d jdbc_testdb -U runner -c "\dx"
+        sudo ~/${{ inputs.install_dir }}/bin/psql -d jdbc_testdb -U runner -c "ALTER EXTENSION "babelfishpg_common" UPDATE; ALTER EXTENSION "babelfishpg_tsql" UPDATE;"
+        sudo ~/${{ inputs.install_dir }}/bin/psql -d jdbc_testdb -U runner -c "\dx"
         sqlcmd -S localhost -U jdbc_user -P 12345678 -Q "SELECT @@version GO"
       shell: bash
 

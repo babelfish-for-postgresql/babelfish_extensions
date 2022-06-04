@@ -1,37 +1,52 @@
 name: 'Setup Upgrade Version Composite Action'
+inputs:
+  base_version: 
+    description: "Base version"
+    required: true
 
 runs:
   using: "composite"
   steps:
     - name: setup upgrade version composite action
       run: |
+        upgrade_version_dir_path=${{ github.workspace }}/.github/composite-actions/upgrade-version/
+
         LEN=$(yq -r '."upgrade-version" | length' ${{ github.workspace }}/.github/configuration/upgrade-test-configuration.yml)
         if [[ $LEN -le 1 ]]
         then
             echo "ERROR: Upgrade path length less than 2" 1>&2
             exit 1
         fi
-        mkdir ${{ github.workspace }}/.github/composite-actions/upgrade-version
-        touch ${{ github.workspace }}/.github/composite-actions/upgrade-version/action.yml
-        printf 'name: Upgrade and Test \nruns: \n  using: "composite"\n  steps:\n' > ${{ github.workspace }}/.github/composite-actions/upgrade-version/action.yml
+        mkdir $upgrade_version_dir_path
+        touch $upgrade_version_dir_path/action.yml
+        printf 'name: Upgrade and Test \nruns: \n  using: "composite"\n  steps:\n' > $upgrade_version_dir_path/action.yml
+        prev_ver=${{ inputs.base_version }}
         for (( i=1 ; i<$LEN ; i++ )); 
         do
-            version_var=".\"upgrade-version\"[$i]" 
-            next_upgrade_version=$(yq -r $version_var ${{ github.workspace }}/.github/configuration/upgrade-test-configuration.yml)
-            next_upgrade_version_engb=".\""${next_upgrade_version}"\".engine_branch"
-            engine_branch=$(yq -r $next_upgrade_version_engb ${{ github.workspace }}/.github/template/version-branch-template.yml)
-            next_upgrade_version_extb=".\""${next_upgrade_version}"\".extension_branch"
-            extension_branch=$(yq -r $next_upgrade_version_extb ${{ github.workspace }}/.github/template/version-branch-template.yml)
-            is_final_ver=false; [[ i -eq $LEN-1 ]] && is_final_ver=true
-            sudo cat ${{ github.workspace }}/.github/template/upgrade-version-template.yml >> ${{ github.workspace }}/.github/composite-actions/upgrade-version/action.yml
+          version_var=".\"upgrade-version\"[$i]" 
+          next_upgrade_version=$(yq $version_var ${{ github.workspace }}/.github/configuration/upgrade-test-configuration.yml)
+          next_upgrade_version_engb=".\""${next_upgrade_version}"\".engine_branch"
+          engine_branch=$(yq $next_upgrade_version_engb ${{ github.workspace }}/.github/template/version-branch-template.yml)
+          next_upgrade_version_extb=".\""${next_upgrade_version}"\".extension_branch"
+          extension_branch=$(yq $next_upgrade_version_extb ${{ github.workspace }}/.github/template/version-branch-template.yml)
+          is_final_ver=false; [[ i -eq $LEN-1 ]] && is_final_ver=true
+          install_dir=$(echo postgres$(awk '{$0=int($0)}1' <<< $next_upgrade_version))
+          uses_file=""
+          uses_file=$(if [[ $(awk '{$0=int($0)}1' <<< $prev_ver) == $(awk '{$0=int($0)}1' <<< $next_upgrade_version) ]]; then echo .\\/.github\\/composite-actions\\/minor-version-upgrade-util; else echo .\\/.github\\/composite-actions\\/major-version-upgrade-util; fi)
+          echo $uses_file
+          sudo cat ${{ github.workspace }}/.github/template/upgrade-version-template.yml >> $upgrade_version_dir_path/action.yml
 
-            sed -i "s/name: Upgrade Version to #/name: Upgrade Version to $next_upgrade_version/g" ${{ github.workspace }}/.github/composite-actions/upgrade-version/action.yml
-            sed -i "s/id: upgrade-version-#/id: upgrade-version-$i/g" ${{ github.workspace }}/.github/composite-actions/upgrade-version/action.yml
-            temp="\&\& steps.upgrade-version-$(($i-1)).outcome == 'success'"; [[ i -eq 1 ]] && temp=""
-            sed -i "s/#if: always()/if: always() $temp/g" ${{ github.workspace }}/.github/composite-actions/upgrade-version/action.yml
-            sed -i "s/engine_branch: #/engine_branch: ${engine_branch}/g" ${{ github.workspace }}/.github/composite-actions/upgrade-version/action.yml
-            sed -i "s/extension_branch: #/extension_branch: ${extension_branch}/g" ${{ github.workspace }}/.github/composite-actions/upgrade-version/action.yml
-            sed -i "s/is_final_ver: #/is_final_ver: ${is_final_ver}/g" ${{ github.workspace }}/.github/composite-actions/upgrade-version/action.yml
+          sed -i "s/name: Upgrade Version to #/name: Upgrade Version to $next_upgrade_version/g" $upgrade_version_dir_path/action.yml
+          sed -i "s/id: upgrade-version-#/id: upgrade-version-$i/g" $upgrade_version_dir_path/action.yml
+          temp="\&\& steps.upgrade-version-$(($i-1)).outcome == 'success'"; [[ i -eq 1 ]] && temp=""
+          sed -i "s/#if: always()/if: always() $temp/g" $upgrade_version_dir_path/action.yml
+          sed -i "s/uses: #/uses: ${uses_file}/g" $upgrade_version_dir_path/action.yml
+          sed -i "s/engine_branch: #/engine_branch: ${engine_branch}/g" $upgrade_version_dir_path/action.yml
+          sed -i "s/extension_branch: #/extension_branch: ${extension_branch}/g" $upgrade_version_dir_path/action.yml
+          sed -i "s/is_final_ver: #/is_final_ver: ${is_final_ver}/g" $upgrade_version_dir_path/action.yml
+          sed -i "s/install_dir: #/install_dir: ${install_dir}/g" $upgrade_version_dir_path/action.yml
+
+          prev_ver=$next_upgrade_version
         done
       shell: bash
           

@@ -1,0 +1,43 @@
+name: 'Run pg_upgrade'
+
+inputs:
+  migration_mode:
+    description: 'Database migration mode'
+    required: no
+    default: 'single-db'
+  prev_install_dir:
+    description: "Previous postgres intall directory"
+    required: false
+    default: postgres13
+  curr_install_dir:
+    description: "Current postgres intall directory"
+    required: false
+    default: postgres14
+
+runs:
+  using: "composite"
+  steps:
+    - name: Run pg_upgrade
+      run: |
+        echo 'Starting pg_upgrade...'
+        cd ~
+        mkdir -p upgrade
+        cd upgrade
+        ~/${{ inputs.prev_install_dir }}/bin/pg_ctl -D ~/${{ inputs.prev_install_dir }}/data stop
+        export PATH="$HOME/${{ inputs.curr_install_dir}}/bin:$HOME/${{ inputs.prev_install_dir }}/bin:$PATH"
+        export LD_LIBRARY_PATH="$HOME/${{ inputs.curr_install_dir}}/lib:$HOME/${{ inputs.prev_install_dir }}/lib:$LD_LIBRARY_PATH"
+        ~/${{ inputs.curr_install_dir}}/bin/pg_upgrade -U runner -b ~/${{ inputs.prev_install_dir }}/bin -B ~/${{ inputs.curr_install_dir}}/bin \
+        -d ~/${{ inputs.prev_install_dir }}/data -D ~/${{ inputs.curr_install_dir}}/data -p 5432 -P 5433 -j 4 --link --verbose
+        echo 'pg_upgrade completed!'
+        echo 'Updating babelfish extensions...'
+        cd ~/work/babelfish_extensions/babelfish_extensions/
+        ~/${{ inputs.curr_install_dir}}/bin/pg_ctl -D ~/${{ inputs.curr_install_dir}}/data -l ~/${{ inputs.curr_install_dir}}/data/logfile14 start
+        sudo ~/${{ inputs.curr_install_dir}}/bin/psql -d jdbc_testdb -U runner -c "ALTER EXTENSION babelfishpg_common UPDATE; ALTER EXTENSION babelfishpg_tsql UPDATE;"
+        sudo ~/${{ inputs.curr_install_dir}}/bin/psql -d jdbc_testdb -U runner -c "\dx"
+        echo 'Reset bbf database settings...'
+        sudo ~/${{ inputs.curr_install_dir}}/bin/psql -d jdbc_testdb -U runner -c "ALTER SYSTEM SET babelfishpg_tsql.database_name = 'jdbc_testdb';"
+        sudo ~/${{ inputs.curr_install_dir}}/bin/psql -d jdbc_testdb -U runner -c "ALTER SYSTEM SET babelfishpg_tsql.migration_mode = '${{inputs.migration_mode}}';"
+        sudo ~/${{ inputs.curr_install_dir}}/bin/psql -d jdbc_testdb -U runner -c "SELECT pg_reload_conf();"
+        export PATH=/opt/mssql-tools/bin:$PATH
+        sqlcmd -S localhost -U jdbc_user -P 12345678 -Q "SELECT @@version GO"
+      shell: bash
