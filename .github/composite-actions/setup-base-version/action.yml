@@ -70,9 +70,9 @@ runs:
         ipaddress=$(ifconfig eth0 | grep 'inet ' | cut -d: -f2 | awk '{ print $2}')
         sudo echo "host    all             all             $ipaddress/32            trust" >> pg_hba.conf
         ~/${{ inputs.install_dir }}/bin/pg_ctl -D ~/${{ inputs.install_dir }}/data/ -l logfile restart
-        sudo ~/${{ inputs.install_dir }}/bin/psql -d ${{ inputs.install_dir }} -U runner -c "CREATE USER jdbc_user WITH SUPERUSER CREATEDB CREATEROLE PASSWORD '12345678' INHERIT;"
-        sudo ~/${{ inputs.install_dir }}/bin/psql -d ${{ inputs.install_dir }} -U runner -c "DROP DATABASE IF EXISTS jdbc_testdb;"
-        sudo ~/${{ inputs.install_dir }}/bin/psql -d ${{ inputs.install_dir }} -U runner -c "CREATE DATABASE jdbc_testdb OWNER jdbc_user;"
+        sudo ~/${{ inputs.install_dir }}/bin/psql -d postgres -U runner -c "CREATE USER jdbc_user WITH SUPERUSER CREATEDB CREATEROLE PASSWORD '12345678' INHERIT;"
+        sudo ~/${{ inputs.install_dir }}/bin/psql -d postgres -U runner -c "DROP DATABASE IF EXISTS jdbc_testdb;"
+        sudo ~/${{ inputs.install_dir }}/bin/psql -d postgres -U runner -c "CREATE DATABASE jdbc_testdb OWNER jdbc_user;"
         sudo ~/${{ inputs.install_dir }}/bin/psql -d jdbc_testdb -U runner -c "set allow_system_table_mods = on;"
         sudo ~/${{ inputs.install_dir }}/bin/psql -d jdbc_testdb -U runner -c "CREATE EXTENSION "babelfishpg_tds" CASCADE;"
         sudo ~/${{ inputs.install_dir }}/bin/psql -d jdbc_testdb -U runner -c "GRANT ALL ON SCHEMA sys to jdbc_user;"
