@@ -18,12 +18,13 @@ runs:
   steps:    
     - name: Build Modified Postgres using latest version
       id: build-modified-postgres-new
-      if: always() && steps.run-preparation-test.outcome == 'success'
+      if: always()
       uses: ./.github/composite-actions/build-modified-postgres
       with:
         install_dir: ${{ inputs.install_dir }}
 
     - name: Copy ANTLR
+      if: always() && steps.build-modified-postgres-new.outcome == 'success'
       run: cp "/usr/local/lib/libantlr4-runtime.so.4.9.3" ~/${{ inputs.install_dir }}/lib/
       shell: bash
 
