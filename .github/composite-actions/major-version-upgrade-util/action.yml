@@ -25,6 +25,7 @@ runs:
 
     - name: Copy ANTLR
       run: cp "/usr/local/lib/libantlr4-runtime.so.4.9.3" ~/${{ inputs.install_dir }}/lib/
+      shell: bash
 
     - name: Build Extensions using latest version
     id: build-extensions-new
