@@ -186,7 +186,7 @@ go
 select name, column_id, precision, scale from sys.columns where object_id=OBJECT_ID('t1') order by name;
 go
 ~~START~~
-varchar#!#smallint#!#int#!#int
+varchar#!#int#!#tinyint#!#tinyint
 a#!#1#!#10#!#0
 b#!#2#!#53#!#0
 c#!#3#!#19#!#0
@@ -205,7 +205,7 @@ go
 select name, column_id, is_identity, is_computed from sys.columns where object_id=OBJECT_ID('t2') order by name;
 go
 ~~START~~
-varchar#!#smallint#!#int#!#int
+varchar#!#int#!#bit#!#bit
 a#!#1#!#0#!#0
 b#!#2#!#1#!#0
 c#!#3#!#0#!#1
@@ -218,7 +218,7 @@ go
 select name, column_id, is_ansi_padded from sys.columns where object_id=OBJECT_ID('t3') order by name;
 go
 ~~START~~
-varchar#!#smallint#!#int
+varchar#!#int#!#bit
 a#!#1#!#1
 b#!#2#!#1
 c#!#3#!#1
@@ -237,7 +237,7 @@ go
 select name, column_id, collation_name from sys.columns where object_id=OBJECT_ID('t4') order by name;
 go
 ~~START~~
-varchar#!#smallint#!#varchar
+varchar#!#int#!#varchar
 c1#!#1#!#bbf_unicode_cp1_ci_ai
 c2#!#2#!#bbf_unicode_cp1_ci_as
 c3#!#3#!#bbf_unicode_cp1_cs_ai
@@ -293,7 +293,7 @@ GO
 select name,max_length,precision,scale from sys.columns where object_id = OBJECT_ID('test_columns') order by name;
 GO
 ~~START~~
-varchar#!#smallint#!#int#!#int
+varchar#!#smallint#!#tinyint#!#tinyint
 c1#!#8#!#19#!#0
 c10#!#8#!#53#!#0
 c11#!#16#!#0#!#0
@@ -344,7 +344,7 @@ CREATE TABLE t1(c1 datetime2(0)
 select name,max_length,precision,scale from sys.columns where object_id = OBJECT_ID('t1') order by name;
 GO
 ~~START~~
-varchar#!#smallint#!#int#!#int
+varchar#!#smallint#!#tinyint#!#tinyint
 c1#!#6#!#19#!#0
 c2#!#8#!#26#!#6
 c3#!#8#!#26#!#0

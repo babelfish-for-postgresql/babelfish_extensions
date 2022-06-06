@@ -123,7 +123,7 @@ tbl_pk_pkey#!#sch1#!#tbl_pk#!#PRIMARY KEY
 ~~END~~
 
 ~~START~~
-varchar#!#varchar#!#varchar#!#text
+varchar#!#varchar#!#varchar#!#nvarchar
 tbl_fk_a_fkey#!#dbo#!#tbl_fk#!#FOREIGN_KEY_CONSTRAINT
 tbl_fk_a_fkey#!#sch1#!#tbl_fk#!#FOREIGN_KEY_CONSTRAINT
 tbl_fk_pkey#!#dbo#!#tbl_fk#!#PRIMARY_KEY_CONSTRAINT

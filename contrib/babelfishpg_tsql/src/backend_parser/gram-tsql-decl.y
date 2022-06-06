@@ -18,6 +18,7 @@
 %type <node> tsql_DropIndexStmt tsql_InsertStmt
 %type <node> tsql_CreateLoginStmt tsql_AlterLoginStmt tsql_DropLoginStmt
 %type <node> tsql_CreateUserStmt tsql_DropRoleStmt tsql_AlterUserStmt
+%type <node> tsql_CreateRoleStmt
 %type <node> tsql_nchar
 %type <list> tsql_login_option_list1 tsql_login_option_list2
 %type <list> tsql_alter_login_option_list
@@ -79,7 +80,8 @@
 %type <istmt> tsql_output_insert_rest tsql_output_insert_rest_no_paren
 
 %type <node> tsql_output_simple_select tsql_values_clause
-%type <list> tsql_output_clause tsql_output_into_target_columns
+%type <list> tsql_output_clause tsql_output_target_list tsql_output_into_target_columns
+%type <target> tsql_output_target_el
 %type <node> tsql_alter_server_role
 
 %token <keyword> TSQL_ATAT TSQL_ALLOW_SNAPSHOT_ISOLATION

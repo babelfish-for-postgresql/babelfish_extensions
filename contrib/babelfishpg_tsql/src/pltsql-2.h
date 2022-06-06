@@ -235,18 +235,6 @@ typedef struct PLtsql_stmt_goto
 } PLtsql_stmt_goto;
 
 /*
- *  Init variables statement
- *  Represents the variable initialization for begin-end blocks
- */
-typedef struct PLtsql_stmt_init_vars
-{
-	PLtsql_stmt_type	 cmd_type;
-	int					 lineno;
-	int                  n_initvars;  /* Length of initvarnos[] */
-	int                  *initvarnos;  /* dnos of variables declared in this block */
-} PLtsql_stmt_init_vars;
-
-/*
  *  Label
  */
 #define INTERNAL_LABEL_FORMAT "LABEL-0x%lX"

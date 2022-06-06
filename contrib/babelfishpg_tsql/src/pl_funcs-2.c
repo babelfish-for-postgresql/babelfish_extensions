@@ -144,7 +144,7 @@ pltsqlMakeRangeVarFromName(const char *ident)
 	 * confirm since it affects the parser.
 	 */
 	Assert(sql_dialect == SQL_DIALECT_TSQL);
-	parsetree = raw_parser(query.data);
+	parsetree = raw_parser(query.data, RAW_PARSE_DEFAULT);
 
 	sel_stmt = (SelectStmt *) (((RawStmt *) linitial(parsetree))->stmt);
 	n = linitial(sel_stmt->fromClause);
@@ -445,6 +445,7 @@ free_stmt2(PLtsql_stmt *stmt)
 	    case PLTSQL_STMT_LABEL:
 		case PLTSQL_STMT_USEDB:
         case PLTSQL_STMT_INSERT_BULK:
+		case PLTSQL_STMT_SET_EXPLAIN_MODE:
 		{
 			/* Nothing to free */
 			break;
@@ -467,7 +468,6 @@ free_stmt2(PLtsql_stmt *stmt)
 				free_expr((PLtsql_expr *) lfirst(l));
 			break;
 		}
-        case PLTSQL_STMT_INIT_VARS:
         case PLTSQL_STMT_SAVE_CTX:
         case PLTSQL_STMT_RESTORE_CTX_FULL:
         case PLTSQL_STMT_RESTORE_CTX_PARTIAL:

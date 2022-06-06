@@ -98,9 +98,9 @@ bool stmt_walker(PLtsql_stmt *stmt, WalkerFunc walker, void *context)
 		case PLTSQL_STMT_THROW:
         case PLTSQL_STMT_USEDB:
         case PLTSQL_STMT_INSERT_BULK:
+        case PLTSQL_STMT_SET_EXPLAIN_MODE:
             break;
         /* TSQL-only executable node */
-        case PLTSQL_STMT_INIT_VARS:
         case PLTSQL_STMT_SAVE_CTX:
         case PLTSQL_STMT_RESTORE_CTX_FULL:
         case PLTSQL_STMT_RESTORE_CTX_PARTIAL:
@@ -191,9 +191,9 @@ bool general_walker_func(PLtsql_stmt *stmt, void *context)
 		DISPATCH(THROW, throw)
         DISPATCH(USEDB, usedb)
         DISPATCH(INSERT_BULK, insert_bulk)
+        DISPATCH(SET_EXPLAIN_MODE, set_explain_mode)
 
         /* TSQL-only executable node */
-        DISPATCH(INIT_VARS, init_vars)
         DISPATCH(SAVE_CTX, save_ctx)
         DISPATCH(RESTORE_CTX_FULL, restore_ctx_full)
         DISPATCH(RESTORE_CTX_PARTIAL, restore_ctx_partial)

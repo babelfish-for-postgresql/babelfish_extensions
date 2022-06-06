@@ -28,6 +28,7 @@
 #include "parser/parse_coerce.h"
 #include "utils/fmgroids.h"
 #include "utils/lsyscache.h"
+#include "utils/syscache.h"
 #include "utils/memdebug.h"
 #include "utils/numeric.h"
 #include "utils/portal.h"
@@ -125,7 +126,7 @@ static void FillTabNameWithNumParts(StringInfo buf, uint8 numParts, TdsRelationM
 static void FillTabNameWithoutNumParts(StringInfo buf, uint8 numParts, TdsRelationMetaDataInfo relMetaDataInfo);
 static void SetTdsEstateErrorData(void);
 static void ResetTdsEstateErrorData(void);
-static bool get_attnotnull(Oid relid, AttrNumber attnum);
+static void SetAttributesForColmetada(TdsColumnMetaData *col);
 
 static inline void
 SendPendingDone(bool more)
@@ -644,11 +645,40 @@ resolve_numeric_typmod_from_exp(Node *expr)
 			/* select max(a) from t; max(a) is an Aggref */
 			Aggref *aggref = (Aggref *) expr;
 			TargetEntry *te;
+			const char *aggFuncName;
+			int32 typmod;
+			uint8_t precision, scale;
 
 			Assert(aggref->args != NIL);
 
 			te = (TargetEntry *) linitial(aggref->args);
-			return resolve_numeric_typmod_from_exp((Node *) te->expr);
+			typmod = resolve_numeric_typmod_from_exp((Node *) te->expr);
+			aggFuncName = get_func_name(aggref->aggfnoid);
+
+			scale = (typmod - VARHDRSZ) & 0xffff;
+			precision = ((typmod - VARHDRSZ) >> 16) & 0xffff;
+
+			/*
+			 * [BABEL-3074] NUMERIC overflow causes TDS error for aggregate
+			 * function sum(); resultant precision should be tds_default_numeric_precision 
+			 */
+			if (aggFuncName && strlen(aggFuncName) == 3 &&
+					(strncmp(aggFuncName, "sum", 3) == 0))
+				precision = tds_default_numeric_precision;
+
+			/*
+			 * For aggregate function avg(); resultant precision should be
+			 * tds_default_numeric_precision and resultant scale = max(input scale, 6)
+			 */
+			if (aggFuncName && strlen(aggFuncName) == 3 &&
+					(strncmp(aggFuncName, "avg", 3) == 0))
+			{
+				precision = tds_default_numeric_precision;
+				scale = Max(scale, 6);
+			}
+
+			pfree(aggFuncName);
+			return ((precision << 16) | scale) + VARHDRSZ;
 		}
 		case T_PlaceHolderVar:
 		{
@@ -1363,7 +1393,8 @@ PrepareRowDescription(TupleDesc typeinfo, List *targetlist, int16 *formats,
 			col->attrNum = 0;
 		}
 
-		col->attNotNull = get_attnotnull(col->relOid, col->attrNum);
+		SetAttributesForColmetada(col);
+
 		switch (finfo->sendFuncId)
 		{
 			/*
@@ -1671,8 +1702,9 @@ PrepareRowDescription(TupleDesc typeinfo, List *targetlist, int16 *formats,
 			/* if not found, add one */
 			if (!found)
 			{
-				Relation 				rel;
-				TdsRelationMetaDataInfo relMetaDataInfo;
+				Relation		rel;
+				TdsRelationMetaDataInfo	relMetaDataInfo;
+				const char		*physical_schema_name;
 
 				relMetaDataInfo = (TdsRelationMetaDataInfo) palloc(sizeof(TdsRelationMetaDataInfoData));
 				tableNum++;
@@ -1693,7 +1725,24 @@ PrepareRowDescription(TupleDesc typeinfo, List *targetlist, int16 *formats,
 
 				/* fetch the relation name, schema name */
 				relMetaDataInfo->partName[0] = RelationGetRelationName(rel);
-				relMetaDataInfo->partName[1] = get_namespace_name(RelationGetNamespace(rel));
+				physical_schema_name = get_namespace_name(RelationGetNamespace(rel));
+
+				/*
+				 * Here, we are assuming that we must have received a valid schema name from the engine.
+				 * So first try to find the logical schema name corresponding to received physical schema name.
+				 * If we could not find the logical schema name then we can say that received schema name is
+				 * shared schema and we do not have to translate it to logical schema name.
+				 */
+				if (pltsql_plugin_handler_ptr && 
+					pltsql_plugin_handler_ptr->pltsql_get_logical_schema_name)
+					relMetaDataInfo->partName[1] = pltsql_plugin_handler_ptr->pltsql_get_logical_schema_name(physical_schema_name, true);
+
+				/* If we could not find logical schema name then send physical schema name only assuming its shared schema. */
+				if (relMetaDataInfo->partName[1] == NULL)
+					relMetaDataInfo->partName[1] = strdup(physical_schema_name);
+
+				if (physical_schema_name)
+					pfree(physical_schema_name);
 
 				relation_close(rel, AccessShareLock);
 
@@ -2911,30 +2960,41 @@ GetTdsEstateErrorData(int *number, int *severity, int *state)
 }
 
 /*
- * get_attnotnull
- *		Given the relation id and the attribute number,
- *		return the "attnotnull" field from the attribute relation.
  */
-static bool
-get_attnotnull(Oid relid, AttrNumber attnum)
+static void
+SetAttributesForColmetada(TdsColumnMetaData *col)
 {
 	HeapTuple	  tp;
 	Form_pg_attribute att_tup;
 
-	tp = SearchSysCache2(ATTNUM,
-			ObjectIdGetDatum(relid),
-			Int16GetDatum(attnum));
+	/* Initialise to false if no valid heap tuple is found. */
+	col->attNotNull = false;
+	col->attidentity = false;
+	col->attgenerated = false;
+
+	/*
+	 * Send the right column-metadata only for FMTONLY Statements.
+	 * FIXME: We need to find a generic solution where we do not rely
+	 * on the catalog for constraint information.
+	 */
+	if (pltsql_plugin_handler_ptr &&
+			!(*pltsql_plugin_handler_ptr->pltsql_is_fmtonly_stmt))
+		return;
+
+	tp = SearchSysCache2(ATTNUM, 
+		ObjectIdGetDatum(col->relOid),
+		Int16GetDatum(col->attrNum));
 
 	if (HeapTupleIsValid(tp))
 	{
-		bool result;
-
 		att_tup = (Form_pg_attribute) GETSTRUCT(tp);
-		result = att_tup->attnotnull;
-		ReleaseSysCache(tp);
+		col->attNotNull = att_tup->attnotnull;
+		if (att_tup->attgenerated != '\0')
+			col->attgenerated = true;
 
-		return result;
+		if (att_tup->attidentity != '\0')
+			col->attidentity = true;
+
+		ReleaseSysCache(tp);
 	}
-	/* Assume att is nullable if no valid heap tuple is found */
-	return false;
 }

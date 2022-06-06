@@ -28,6 +28,14 @@
 #include "utils/pg_locale.h"
 #include "utils/varlena.h"
 #include "mb/pg_wchar.h"
+#include "utils/xml.h"
+#include "utils/bytea.h"
+#include "utils/cash.h"
+#include "utils/date.h"
+#include "utils/datetime.h"
+#include "utils/uuid.h"
+#include "utils/timestamp.h"
+#include "utils/numeric.h"
 
 int  TsqlUTF8LengthInUTF16(const void *vin, int len);
 void TsqlCheckUTF16Length_varchar(const char *s_data, int32 len, int32 maxlen, bool isExplicit);
@@ -320,6 +328,10 @@ PG_FUNCTION_INFO_V1(varchar2int4);
 PG_FUNCTION_INFO_V1(varchar2int8);
 PG_FUNCTION_INFO_V1(varchar2float4);
 PG_FUNCTION_INFO_V1(varchar2float8);
+PG_FUNCTION_INFO_V1(varchar2date);
+PG_FUNCTION_INFO_V1(varchar2time);
+PG_FUNCTION_INFO_V1(varchar2money);
+PG_FUNCTION_INFO_V1(varchar2numeric);
 
 /*****************************************************************************
  *	 varchar - varchar(n)
@@ -683,6 +695,58 @@ varchar2float8(PG_FUNCTION_ARGS)
 
 	num = varchar2cstring(source);
 	PG_RETURN_FLOAT8(float8in_internal(num, NULL, "double precision", num));
+}
+
+Datum
+varchar2date(PG_FUNCTION_ARGS)
+{
+	VarChar *source = PG_GETARG_VARCHAR_PP(0);
+	char	*str;
+	DateADT date;
+
+	str = varchar2cstring(source);
+	date = DatumGetDateADT(DirectFunctionCall1(date_in, CStringGetDatum(str)));
+	pfree(str);
+	PG_RETURN_DATEADT(date);
+}
+
+Datum
+varchar2time(PG_FUNCTION_ARGS)
+{
+	VarChar *source = PG_GETARG_VARCHAR_PP(0);
+	char	*str;
+	TimeADT time;
+
+	str = varchar2cstring(source);
+	time = DatumGetTimeADT(DirectFunctionCall1(time_in, CStringGetDatum(str)));
+	pfree(str);
+	PG_RETURN_TIMEADT(time);
+}
+
+Datum
+varchar2money(PG_FUNCTION_ARGS)
+{
+	VarChar *source = PG_GETARG_VARCHAR_PP(0);
+	uint64	val;
+
+	if (varcharTruelen(source) == 0)
+		PG_RETURN_CASH(0);
+
+	(void) scanint8(varchar2cstring(source), false, &val);
+	PG_RETURN_CASH((Cash)val);
+}
+
+Datum
+varchar2numeric(PG_FUNCTION_ARGS)
+{
+	VarChar *source = PG_GETARG_VARCHAR_PP(0);
+	Numeric result;
+	char	*str;
+
+	str = varchar2cstring(source);
+	result = DatumGetNumeric(DirectFunctionCall1(numeric_in, CStringGetDatum(str)));
+	pfree(str);
+	PG_RETURN_NUMERIC(result);
 }
 
 /*****************************************************************************

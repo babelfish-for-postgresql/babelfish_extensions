@@ -278,7 +278,7 @@ void pltsql_read_procedure_info(StringInfo inout_str,
 	initStringInfo(&proc_stmt);
 	appendStringInfoString(&proc_stmt, str1);
 	appendStringInfoString(&proc_stmt, inout_str->data);
-	parsetree = raw_parser(proc_stmt.data);
+	parsetree = raw_parser(proc_stmt.data, RAW_PARSE_DEFAULT);
 	cstmt  = (CallStmt *) ((RawStmt *) linitial(parsetree))->stmt;
 
 	funccall = cstmt->funccall;
@@ -287,7 +287,7 @@ void pltsql_read_procedure_info(StringInfo inout_str,
 	 * Parse the name into components and see if it matches any
 	 * pg_proc entries in the current search path.
 	 */
-	clist = FuncnameGetCandidates(funccall->funcname, -1, NIL, false, false, false);
+	clist = FuncnameGetCandidates(funccall->funcname, -1, NIL, false, false, false, false);
 
 	if (clist == NULL)
 	{
@@ -646,7 +646,22 @@ update_DropRoleStmt(Node *n, const char *role)
 
 	if (role && stmt->roles)
 	{
-		RoleSpec *tmp = (RoleSpec *) llast(stmt->roles);
+		/* 
+		 * Delete the first element if it's is_role flag, in this way we won't
+		 * need to rewrite the role names during internal call.
+		 */
+		RoleSpec *tmp = (RoleSpec *) linitial(stmt->roles);
+
+		if (strcmp(tmp->rolename, "is_role") == 0)
+			stmt->roles = list_delete_cell(stmt->roles, list_head(stmt->roles));
+
+		pfree(tmp);
+
+		if (!stmt->roles)
+			return;
+
+		/* Update the statement with given role name */
+		tmp = (RoleSpec *) llast(stmt->roles);
 		tmp->rolename = pstrdup(role);
 	}
 }
@@ -759,4 +774,36 @@ UnlockLogicalDatabaseForSession(int16 dbid, LOCKMODE lockmode, bool force)
 		return;
 
 	LockRelease(&tag, lockmode, true);
+}
+
+/*
+ * Converts a BpChar (TSQL CHAR(n)) type to cstring
+ */
+char *
+bpchar_to_cstring(const BpChar *bpchar)
+{
+	const char *bp_data = VARDATA_ANY(bpchar);
+	int len = VARSIZE_ANY_EXHDR(bpchar);
+
+	char *result = (char *) palloc(len + 1);
+	memcpy(result, bp_data, len);
+	result[len] = '\0';
+
+	return result;
+}
+
+/*
+ * Converts a VarChar type to cstring
+ */
+char *
+varchar_to_cstring(const VarChar *varchar)
+{
+	const char *vc_data = VARDATA_ANY(varchar);
+	int len = VARSIZE_ANY_EXHDR(varchar);
+
+	char *result = (char *) palloc(len + 1);
+	memcpy(result, vc_data, len);
+	result[len] = '\0';
+
+	return result;
 }

@@ -11,10 +11,14 @@
 
 /* Start of exsiting grammar rule in gram.y */
 
-stmtblock:
+parse_toplevel:
 			DIALECT_TSQL tsql_stmtmulti
 				{
 					pg_yyget_extra(yyscanner)->parsetree = $2;
+				}
+			| MODE_TYPE_NAME DIALECT_TSQL Typename
+				{
+					pg_yyget_extra(yyscanner)->parsetree = list_make1($3);
 				}
 		;
 
@@ -159,6 +163,61 @@ tsql_windows_options:
 			| TSQL_DEFAULT_LANGUAGE '=' NonReservedWord
 		;
 
+/*
+ * CREATE ROLE statement needs to satisefy the following two use cases
+ *
+ * 1. TSQL syntax
+ * 	This is the TSQL query that users would call in most cases. For example,
+ * 		CREATE ROLE role_name [ AUTHORIZAION owner_name ]
+ * 	would be mapped into PG syntax
+ * 		CREATE ROLE <cur_db>_role_name INHERIT NOLOGIN ROLE '<cur_db>_db_owner'
+ * 		[ ADMIN <cur_db>_owner_name ]
+ *
+ * 2. PSQL syntax
+ * 	This is for specific role creating process during Babelfish initialization,
+ * 	database creation, etc. For example,
+ * 		CREATE ROLE sysadmin CREATEDB CREATEROLE INHERIT ROLE sa_name
+ */
+tsql_CreateRoleStmt:
+			CREATE ROLE RoleId opt_with OptRoleList
+				{
+					CreateRoleStmt  *n = makeNode(CreateRoleStmt);
+					n->stmt_type = ROLESTMT_ROLE;
+					n->role = $3;
+
+					/* If there are specified options, this is PSQL syntax */
+					if ($5 != NIL)
+						n->options = $5;
+					/* Otherwise, this is TSQL syntax, do query mapping */
+					else
+					{
+						n->options = list_make1(makeDefElem("isrole",
+												(Node *)makeInteger(true),
+												@1)); /* Must be first */
+						n->options = lappend(n->options,
+											 makeDefElem("inherit",
+														 (Node *)makeInteger(true),
+														 @1));
+						n->options = lappend(n->options,
+											 makeDefElem("canlogin",
+														 (Node *)makeInteger(false),
+														 @1));
+						/* 
+						 * Prepare an empty rolemember option for ROLE 
+						 * '<cur_db>_db_owner', we'll fill it in later.
+						 */
+						n->options = lappend(n->options,
+						makeDefElem("rolemembers", NULL, @1));
+
+						n->options = lappend(n->options,
+											 makeDefElem("name_location",
+														 (Node *)makeInteger(@3),
+														 @3));
+					}
+					$$ = (Node *)n;
+				}
+			;
+
 tsql_CreateUserStmt:
 			CREATE USER RoleId tsql_create_user_login tsql_create_user_options
 				{
@@ -214,6 +273,67 @@ tsql_create_user_options:
 				}
 			| /* EMPTY */	{ $$ = NULL; }
 		;
+
+/*
+ * Similar to tsql_CreateRoleStmt, we need to satisefy the following two use
+ * cases
+ *
+ * 1. TSQL syntax
+ * 	This is the TSQL query that users would call in most cases. For example,
+ * 		ALTER ROLE role_name
+ * 		{
+ * 			ADD MEMBER database_principal
+ *			| DROP MEMBER database_principal
+ *			| WITH NAME = new_name
+ *		}
+ *
+ * 2. PSQL syntax
+ *	This is for specific role altering process during Babelfish upgrade
+ *	procedure. For example,
+ *		ALTER ROLE dbo WITH createrole;
+ */ 
+AlterRoleStmt:
+			ALTER ROLE ColId ADD_P TSQL_MEMBER RoleSpec
+				{
+					GrantRoleStmt *n = makeNode(GrantRoleStmt);
+					AccessPriv *ap = makeNode(AccessPriv);
+
+					ap->priv_name = $3;
+					n->is_grant = true;
+					n->granted_roles = list_make1(ap);
+					n->grantee_roles = list_make1($6);
+					n->admin_opt = false;
+					n->grantor = NULL;
+					$$ = (Node *) n;
+				}
+			| ALTER ROLE ColId DROP TSQL_MEMBER RoleSpec
+				{
+					GrantRoleStmt *n = makeNode(GrantRoleStmt);
+					AccessPriv *ap = makeNode(AccessPriv);
+
+					ap->priv_name = $3;
+					n->is_grant = false;
+					n->granted_roles = list_make1(ap);
+					n->grantee_roles = list_make1($6);
+					n->admin_opt = false;
+					n->grantor = NULL;
+					$$ = (Node *) n;
+				}
+			| ALTER ROLE RoleSpec WITH NAME_P '=' ColId
+				{
+					AlterRoleStmt *n = makeNode(AlterRoleStmt);
+					n->role = $3;
+					n->action = +1; /* add, if there are members */
+					n->options = list_make1(makeDefElem("isrole",
+											(Node *)makeInteger(true),
+											@1)); /* Must be first */
+					n->options = lappend(n->options, 
+										 makeDefElem("rename",
+													 (Node *)makeString($7),
+													 @1));
+					$$ = (Node *) n;
+				}
+			;
 
 tsql_AlterUserStmt:
 			ALTER USER RoleSpec WITH tsql_alter_user_options
@@ -390,16 +510,24 @@ tsql_DropLoginStmt:
 tsql_DropRoleStmt:
 			DROP ROLE role_list
 				{
-					DropRoleStmt *n = makeNode(DropRoleStmt);
+					DropRoleStmt	*n = makeNode(DropRoleStmt);
+					RoleSpec		*is_role;
+
+					is_role = makeRoleSpec(ROLESPEC_CSTRING, @1);
+					is_role->rolename = "is_role";
 					n->missing_ok = false;
-					n->roles = $3;
+					n->roles = lcons(is_role, $3);
 					$$ = (Node *)n;
 				}
 			| DROP ROLE IF_P EXISTS role_list
 				{
-					DropRoleStmt *n = makeNode(DropRoleStmt);
+					DropRoleStmt	*n = makeNode(DropRoleStmt);
+					RoleSpec        *is_role;
+
+					is_role = makeRoleSpec(ROLESPEC_CSTRING, @1);
+					is_role->rolename = "is_role";
 					n->missing_ok = true;
-					n->roles = $5;
+					n->roles = lcons(is_role, $5);
 					$$ = (Node *)n;
 				}
 			| DROP USER role_list
@@ -886,7 +1014,7 @@ def_arg:	func_type tsql_on_ident_partitions_list			{ $$ = (Node *)$1; }
 		;
 
 DropStmt:
-			DROP drop_type_name_on_any_name tsql_triggername
+			DROP object_type_name_on_any_name tsql_triggername
 				{
 					DropStmt *n = makeNode(DropStmt);
 
@@ -904,7 +1032,7 @@ DropStmt:
 					n->concurrent = false;
 					$$ = (Node *) n;
 				}
-			| DROP drop_type_name_on_any_name IF_P EXISTS tsql_triggername
+			| DROP object_type_name_on_any_name IF_P EXISTS tsql_triggername
 				{
 					DropStmt *n = makeNode(DropStmt);
 
@@ -925,7 +1053,7 @@ DropStmt:
 			;
 
 tsql_DropIndexStmt:
-			DROP drop_type_any_name index_name ON name_list
+			DROP object_type_any_name name ON name_list
 				{
 					DropStmt *n = makeNode(DropStmt);
 					if(sql_dialect != SQL_DIALECT_TSQL)
@@ -949,7 +1077,7 @@ tsql_DropIndexStmt:
 					n->concurrent = false;
 					$$ = (Node *)n;
 				}
-			| DROP drop_type_any_name IF_P EXISTS index_name ON name_list
+			| DROP object_type_any_name IF_P EXISTS name ON name_list
 				{
 					DropStmt *n = makeNode(DropStmt);
 					if(sql_dialect != SQL_DIALECT_TSQL)
@@ -1328,7 +1456,8 @@ simple_select:
 					n->intoClause = $5;
 					n->fromClause = $6;
 					n->whereClause = $7;
-					n->groupClause = $8;
+					n->groupClause = ($8)->list;
+					n->groupDistinct = ($8)->distinct;
 					n->havingClause = $9;
 					n->windowClause = $10;
 					$$ = (Node *)n;
@@ -1351,7 +1480,8 @@ simple_select:
 					n->intoClause = $5;
 					n->fromClause = $6;
 					n->whereClause = $7;
-					n->groupClause = $8;
+					n->groupClause = ($8)->list;
+					n->groupDistinct = ($8)->distinct;
 					n->havingClause = $9;
 					n->windowClause = $10;
 					$$ = (Node *)n;
@@ -1387,6 +1517,7 @@ func_expr_common_subexpr:
 				{
 					$$ = (Node *) makeFuncCall(TsqlSystemFuncName2("update"),
 											   list_make1(makeStringConst($3,@3)),
+											   COERCE_EXPLICIT_CALL,
 											   @1);
 				}
 			| TSQL_TRY_CAST '(' a_expr AS Typename ')'
@@ -1419,6 +1550,7 @@ func_expr_common_subexpr:
 					$$ = (Node *) makeFuncCall(TsqlSystemFuncName2("dateadd"),
 											   list_make3(makeStringConst($3, @3),
 														  $5, $7),
+											   COERCE_EXPLICIT_CALL,
 											   @1);
 				}
 			| TSQL_PARSE '(' a_expr AS Typename ')'
@@ -1443,18 +1575,21 @@ func_expr_common_subexpr:
 				{
 					$$ = (Node *) makeFuncCall(TsqlSystemFuncName2("datediff"),
 											   list_make3(makeStringConst($3, @3), $5, $7),
+											   COERCE_EXPLICIT_CALL,
 											   @1);
 				}
 			| TSQL_DATEPART '(' datepart_arg ',' a_expr ')'
 				{
 					$$ = (Node *) makeFuncCall(TsqlSystemFuncName2("datepart"),
 											   list_make2(makeStringConst($3, @3), $5),
+											   COERCE_EXPLICIT_CALL,
 											   @1);
 				}
 			| TSQL_DATENAME '(' datepart_arg ',' a_expr ')'
 				{
 					$$ = (Node *) makeFuncCall(TsqlSystemFuncName2("datename"),
 											   list_make2(makeStringConst($3, @3), $5),
+											   COERCE_EXPLICIT_CALL,
 											   @1);
 				}
 			| TSQL_ISNULL '(' a_expr ',' a_expr ')'
@@ -1470,15 +1605,15 @@ func_expr_common_subexpr:
 				}
 			| TSQL_ATAT IDENT
 				{
-					$$ = (Node *) makeFuncCall(TsqlSystemFuncName2($2), NIL, @1);
+					$$ = (Node *) makeFuncCall(TsqlSystemFuncName2($2), NIL, COERCE_EXPLICIT_CALL, @1);
 				}
 			| TSQL_ATAT VERSION_P
 				{
-					$$ = (Node *) makeFuncCall(TsqlSystemFuncName2("version"),NIL, @1);
+					$$ = (Node *) makeFuncCall(TsqlSystemFuncName2("version"),NIL, COERCE_EXPLICIT_CALL, @1);
 				}
 			| TSQL_ATAT IDENTITY_P
 				{
-					$$ = (Node *) makeFuncCall(TsqlSystemFuncName("babelfish_get_last_identity_numeric"), NIL, @1);
+					$$ = (Node *) makeFuncCall(TsqlSystemFuncName("babelfish_get_last_identity_numeric"), NIL, COERCE_EXPLICIT_CALL, @1);
 				}
 		;
 
@@ -1616,7 +1751,8 @@ tsql_output_simple_select:
 					n->intoClause = $4;
 					n->fromClause = $5;
 					n->whereClause = $6;
-					n->groupClause = $7;
+					n->groupClause = ($7)->list;
+					n->groupDistinct = ($7)->distinct;
 					n->havingClause = $8;
 					n->windowClause = $9;
 					$$ = (Node *)n;
@@ -1631,23 +1767,24 @@ tsql_output_simple_select:
 					n->intoClause = $4;
 					n->fromClause = $5;
 					n->whereClause = $6;
-					n->groupClause = $7;
+					n->groupClause = ($7)->list;
+					n->groupDistinct = ($7)->distinct;
 					n->havingClause = $8;
 					n->windowClause = $9;
 					$$ = (Node *)n;
 				}
 			| tsql_values_clause							{ $$ = $1; }
-			| tsql_output_simple_select UNION all_or_distinct tsql_output_simple_select
+			| tsql_output_simple_select UNION set_quantifier tsql_output_simple_select
 				{
-					$$ = makeSetOp(SETOP_UNION, $3, $1, $4);
+					$$ = makeSetOp(SETOP_UNION, $3 == SET_QUANTIFIER_ALL, $1, $4);
 				}
-			| tsql_output_simple_select INTERSECT all_or_distinct tsql_output_simple_select
+			| tsql_output_simple_select INTERSECT set_quantifier tsql_output_simple_select
 				{
-					$$ = makeSetOp(SETOP_INTERSECT, $3, $1, $4);
+					$$ = makeSetOp(SETOP_INTERSECT, $3 == SET_QUANTIFIER_ALL, $1, $4);
 				}
-			| tsql_output_simple_select EXCEPT all_or_distinct tsql_output_simple_select
+			| tsql_output_simple_select EXCEPT set_quantifier tsql_output_simple_select
 				{
-					$$ = makeSetOp(SETOP_EXCEPT, $3, $1, $4);
+					$$ = makeSetOp(SETOP_EXCEPT, $3 == SET_QUANTIFIER_ALL, $1, $4);
 				}
 			
 		;
@@ -1668,7 +1805,69 @@ tsql_values_clause:
 		;
 
 tsql_output_clause:
-					TSQL_OUTPUT target_list	{ $$ = $2; }
+					TSQL_OUTPUT tsql_output_target_list	{ $$ = $2; }
+		;
+
+tsql_output_target_list:
+			tsql_output_target_el								{ $$ = list_make1($1); }
+			| tsql_output_target_list ',' tsql_output_target_el				{ $$ = lappend($1, $3); }
+		;
+
+
+tsql_output_target_el: /* same as target_el but BareColLabel is not allowed. keep a_expr IDENT instead */
+				a_expr AS AS_ColLabel
+				{
+					$$ = makeNode(ResTarget);
+					$$->name = $3;
+					$$->name_location = @3;
+					$$->indirection = NIL;
+					$$->val = (Node *)$1;
+					$$->location = @1;
+				}
+			/*
+			 * We support omitting AS only for column labels that aren't
+			 * any known keyword.  There is an ambiguity against postfix
+			 * operators: is "a ! b" an infix expression, or a postfix
+			 * expression and a column label?  We prefer to resolve this
+			 * as an infix expression, which we accomplish by assigning
+			 * IDENT a precedence higher than POSTFIXOP.
+			 */
+			| a_expr IDENT
+				{
+					$$ = makeNode(ResTarget);
+
+					/* In TSQL we need to preserve the case of the AS clause in the outermost
+					 * query block, at least.  Target list references must be resolved case-
+					 * insensitively when the database collation is case-insensitive.
+					 */
+					$$->name = $2;
+					$$->name_location = @2;
+					$$->indirection = NIL;
+					$$->val = (Node *)$1;
+					$$->location = @1;
+				}
+			| a_expr
+				{
+					$$ = makeNode(ResTarget);
+					$$->name = NULL;
+					$$->name_location = -1;
+					$$->indirection = NIL;
+					$$->val = (Node *)$1;
+					$$->location = @1;
+				}
+			| '*'
+				{
+					ColumnRef *n = makeNode(ColumnRef);
+					n->fields = list_make1(makeNode(A_Star));
+					n->location = @1;
+
+					$$ = makeNode(ResTarget);
+					$$->name = NULL;
+					$$->name_location = -1;
+					$$->indirection = NIL;
+					$$->val = (Node *)n;
+					$$->location = @1;
+				}
 		;
 
 tsql_output_into_target_columns:
@@ -1697,7 +1896,7 @@ tsql_output_ExecStmt:
 					}
 
 					n = makeNode(CallStmt);
-					n->funccall = makeFuncCall(name, args, @1);
+					n->funccall = makeFuncCall(name, args, COERCE_EXPLICIT_CALL, @1);
 
 					$$ = (Node *) n;
 				}
@@ -1717,7 +1916,6 @@ tsql_stmt :
 			| AlterExtensionStmt
 			| AlterExtensionContentsStmt
 			| AlterFdwStmt
-			| AlterForeignTableStmt
 			| AlterFunctionStmt
 			| AlterGroupStmt
 			| tsql_AlterLoginStmt
@@ -1775,7 +1973,7 @@ tsql_stmt :
 			| CreateTransformStmt
 			| tsql_CreateTrigStmt
 			| CreateEventTrigStmt
-			| CreateRoleStmt
+			| tsql_CreateRoleStmt
 			| tsql_CreateUserStmt
 			| CreatedbStmt
 			| DeallocateStmt
@@ -1789,7 +1987,6 @@ tsql_stmt :
 			| DropOpClassStmt
 			| DropOpFamilyStmt
 			| DropOwnedStmt
-			| DropPLangStmt
 			| tsql_DropIndexStmt
 			| DropStmt
 			| DropSubscriptionStmt
@@ -2012,7 +2209,7 @@ tsql_ExecStmt:
 					}
 
 					n = makeNode(CallStmt);
-					n->funccall = makeFuncCall(name, args, @1);
+					n->funccall = makeFuncCall(name, args, COERCE_EXPLICIT_CALL, @1);
 
 					$$ = (Node *) n;
 				}
@@ -2037,7 +2234,7 @@ tsql_ExecStmt:
 					}
 
 					n = makeNode(CallStmt);
-					n->funccall = makeFuncCall(name, args, @1);
+					n->funccall = makeFuncCall(name, args, COERCE_EXPLICIT_CALL, @1);
 
 					$$ = (Node *) n;
 				}
@@ -2731,11 +2928,11 @@ tsql_top_clause:
 						A_Const* n = (A_Const *)$3;
 						if(n->val.type == T_Integer && n->val.val.ival == 100)
 						{
-								$$ = makeNullAConst(@1);
+								$$ = NULL;
 						}
 						else if(n->val.type == T_Float && atof(n->val.val.str) == 100.0)
 						{
-								$$ = makeNullAConst(@1);
+								$$ = NULL;
 						}
 						else
 						{
@@ -2760,11 +2957,11 @@ tsql_top_clause:
 					A_Const* n = (A_Const *)$2;
 					if(n->val.type == T_Integer && n->val.val.ival == 100)
 					{
-							$$ = makeNullAConst(@1);
+							$$ = NULL;
 					}
 					else if(n->val.type == T_Float && atof(n->val.val.str) == 100.0)
 					{
-							$$ = makeNullAConst(@1);
+							$$ = NULL;
 					}
 					else
 					{

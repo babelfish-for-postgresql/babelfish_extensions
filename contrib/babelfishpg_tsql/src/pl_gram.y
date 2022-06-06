@@ -6759,7 +6759,7 @@ IncrementInstr(List *raw_parsetree_list)
 				break;
 
 			case T_CreateTableAsStmt:
-				switch (((CreateTableAsStmt *) parsetree)->relkind)
+				switch (((CreateTableAsStmt *) parsetree)->objtype)
 				{
 					case OBJECT_TABLE:
 						if (((CreateTableAsStmt *) parsetree)->is_select_into)
@@ -7135,7 +7135,7 @@ check_sql_expr(const char *stmt, int location, int leaderlen)
 
 	oldCxt = MemoryContextSwitchTo(pltsql_compile_tmp_cxt);
 
-	IncrementInstr(raw_parser(stmt));
+	IncrementInstr(raw_parser(stmt, RAW_PARSE_DEFAULT));
 
 	MemoryContextSwitchTo(oldCxt);
 

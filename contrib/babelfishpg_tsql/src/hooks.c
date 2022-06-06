@@ -12,11 +12,14 @@
 #include "catalog/pg_proc.h"
 #include "catalog/pg_type.h"
 #include "commands/copy.h"
+#include "commands/explain.h"
 #include "commands/tablecmds.h"
+#include "commands/view.h"
 #include "funcapi.h"
 #include "nodes/makefuncs.h"
 #include "nodes/nodeFuncs.h"
 #include "optimizer/optimizer.h"
+#include "parser/analyze.h"
 #include "parser/parse_clause.h"
 #include "parser/parse_coerce.h"
 #include "parser/parse_expr.h"
@@ -40,6 +43,8 @@
 #include "pltsql.h"
 #include "backend_parser/scanner.h"
 #include "hooks.h"
+#include "pltsql.h"
+#include "pl_explain.h"
 #include "catalog.h"
 #include "rolecmds.h"
 
@@ -65,6 +70,7 @@ static bool tle_name_comparison(const char *tlename, const char *identifier);
 static void resolve_target_list_unknowns(ParseState *pstate, List *targetlist);
 static inline bool is_identifier_char(char c);
 static int find_attr_by_name_from_relation(Relation rd, const char *attname, bool sysColOK);
+static void modify_insert_stmt(InsertStmt *stmt, Oid relid);
 
 /*****************************************
  * 			Commands Hooks
@@ -75,15 +81,34 @@ static int find_attr_by_name_from_column_def_list(const char *attributeName, Lis
  * 			Utility Hooks
  *****************************************/
 static void pltsql_report_proc_not_found_error(List *names, List *argnames, int nargs, ParseState *pstate, int location, bool proc_call);
+extern PLtsql_execstate *get_outermost_tsql_estate(int *nestlevel);
+static void preserve_view_constraints_from_base_table(ColumnDef  *col, Oid tableOid, AttrNumber colId);
+
+/*****************************************
+ * 			Executor Hooks
+ *****************************************/
+static void pltsql_ExecutorStart(QueryDesc *queryDesc, int eflags);
+static void pltsql_ExecutorRun(QueryDesc *queryDesc, ScanDirection direction, uint64 count, bool execute_once);
+static void pltsql_ExecutorFinish(QueryDesc *queryDesc);
+static void pltsql_ExecutorEnd(QueryDesc *queryDesc);
 
 /*****************************************
  * 			Replication Hooks
  *****************************************/
 static void logicalrep_modify_slot(Relation rel, EState *estate, TupleTableSlot *slot);
 
+/*****************************************
+ * 			Object Access Hook
+ *****************************************/
+static object_access_hook_type prev_object_access_hook = NULL;
+static void bbf_object_access_hook(ObjectAccessType access, Oid classId, Oid objectId, int subId, void *arg);
+static void revoke_func_permission_from_public(Oid objectId);
+static char *gen_func_arg_list(Oid objectId);
+
 /* Save hook values in case of unload */
 static core_yylex_hook_type prev_core_yylex_hook = NULL;
 static pre_transform_returning_hook_type prev_pre_transform_returning_hook = NULL;
+static pre_transform_insert_hook_type prev_pre_transform_insert_hook = NULL;
 static post_transform_insert_row_hook_type prev_post_transform_insert_row_hook = NULL;
 static pre_transform_target_entry_hook_type prev_pre_transform_target_entry_hook = NULL;
 static tle_name_comparison_hook_type prev_tle_name_comparison_hook = NULL;
@@ -93,15 +118,11 @@ static find_attr_by_name_from_relation_hook_type prev_find_attr_by_name_from_rel
 static report_proc_not_found_error_hook_type prev_report_proc_not_found_error_hook = NULL;
 static logicalrep_modify_slot_hook_type prev_logicalrep_modify_slot_hook = NULL;
 static is_tsql_rowversion_or_timestamp_datatype_hook_type prev_is_tsql_rowversion_or_timestamp_datatype_hook = NULL;
-
-
-/*****************************************
- * 			Object Access Hook
- *****************************************/
-static object_access_hook_type prev_object_access_hook = NULL;
-static void bbf_object_access_hook(ObjectAccessType access, Oid classId, Oid objectId, int subId, void *arg);
-static void revoke_func_permission_from_public(Oid objectId);
-static char *gen_func_arg_list(Oid objectId);
+static ExecutorStart_hook_type prev_ExecutorStart = NULL;
+static ExecutorRun_hook_type prev_ExecutorRun = NULL;
+static ExecutorFinish_hook_type prev_ExecutorFinish = NULL;
+static ExecutorEnd_hook_type prev_ExecutorEnd = NULL;
+static inherit_view_constraints_from_table_hook_type prev_inherit_view_constraints_from_table = NULL;
 
 /*****************************************
  * 			Install / Uninstall
@@ -124,6 +145,9 @@ InstallExtendedHooks(void)
 
 	prev_pre_transform_returning_hook = pre_transform_returning_hook;
 	pre_transform_returning_hook = handle_returning_qualifiers;
+
+	prev_pre_transform_insert_hook = pre_transform_insert_hook;
+	pre_transform_insert_hook = modify_insert_stmt;
 
 	prev_post_transform_insert_row_hook = post_transform_insert_row_hook;
 	post_transform_insert_row_hook = check_insert_row;
@@ -155,6 +179,21 @@ InstallExtendedHooks(void)
 
 	prev_is_tsql_rowversion_or_timestamp_datatype_hook = is_tsql_rowversion_or_timestamp_datatype_hook;
 	is_tsql_rowversion_or_timestamp_datatype_hook = is_tsql_rowversion_or_timestamp_datatype;
+
+	prev_ExecutorStart = ExecutorStart_hook;
+	ExecutorStart_hook = pltsql_ExecutorStart;
+
+	prev_ExecutorRun = ExecutorRun_hook;
+	ExecutorRun_hook = pltsql_ExecutorRun;
+
+	prev_ExecutorFinish = ExecutorFinish_hook;
+	ExecutorFinish_hook = pltsql_ExecutorFinish;
+
+	prev_ExecutorEnd = ExecutorEnd_hook;
+	ExecutorEnd_hook = pltsql_ExecutorEnd;
+
+	prev_inherit_view_constraints_from_table = inherit_view_constraints_from_table_hook;
+	inherit_view_constraints_from_table_hook = preserve_view_constraints_from_base_table;
 }
 
 void
@@ -168,6 +207,7 @@ UninstallExtendedHooks(void)
 	get_output_clause_status_hook = NULL;
 	pre_output_clause_transformation_hook = NULL;
 	pre_transform_returning_hook = prev_pre_transform_returning_hook;
+	pre_transform_insert_hook = prev_pre_transform_insert_hook ;
 	post_transform_insert_row_hook = prev_post_transform_insert_row_hook;
 	post_transform_column_definition_hook = NULL;
 	post_transform_table_definition_hook = NULL;
@@ -179,11 +219,113 @@ UninstallExtendedHooks(void)
 	report_proc_not_found_error_hook = prev_report_proc_not_found_error_hook;
 	logicalrep_modify_slot_hook = prev_logicalrep_modify_slot_hook;
 	is_tsql_rowversion_or_timestamp_datatype_hook = prev_is_tsql_rowversion_or_timestamp_datatype_hook;
+	ExecutorStart_hook = prev_ExecutorStart;
+	ExecutorRun_hook = prev_ExecutorRun;
+	ExecutorFinish_hook = prev_ExecutorFinish;
+	ExecutorEnd_hook = prev_ExecutorEnd;
+	inherit_view_constraints_from_table_hook = prev_inherit_view_constraints_from_table;
 }
 
 /*****************************************
  * 			Hook Functions
  *****************************************/
+
+static void
+pltsql_ExecutorStart(QueryDesc *queryDesc, int eflags)
+{
+	int ef = pltsql_explain_only ? EXEC_FLAG_EXPLAIN_ONLY : eflags;
+	if (is_explain_analyze_mode())
+	{
+		if (pltsql_explain_timing)
+			queryDesc->instrument_options |= INSTRUMENT_TIMER;
+		else
+			queryDesc->instrument_options |= INSTRUMENT_ROWS;
+		if (pltsql_explain_buffers)
+			queryDesc->instrument_options |= INSTRUMENT_BUFFERS;
+		if (pltsql_explain_wal)
+			queryDesc->instrument_options |= INSTRUMENT_WAL;
+	}
+
+	if (prev_ExecutorStart)
+		prev_ExecutorStart(queryDesc, ef);
+	else
+		standard_ExecutorStart(queryDesc, ef);
+
+	if (is_explain_analyze_mode() && !queryDesc->totaltime)
+	{
+		/*
+		 * Set up to track total elapsed time in ExecutorRun. Make sure the
+		 * space is allocated in the per-query context so it will go away at
+		 * ExecutorEnd.
+		 */
+		MemoryContext oldcxt;
+
+		oldcxt = MemoryContextSwitchTo(queryDesc->estate->es_query_cxt);
+		queryDesc->totaltime = InstrAlloc(1, INSTRUMENT_ALL, false);
+		MemoryContextSwitchTo(oldcxt);
+	}
+}
+
+static void
+pltsql_ExecutorRun(QueryDesc *queryDesc, ScanDirection direction, uint64 count, bool execute_once)
+{
+	if (pltsql_explain_only)
+	{
+		EState	   *estate;
+		CmdType		operation;
+		DestReceiver *dest;
+		MemoryContext oldcontext;
+
+		Assert(queryDesc != NULL);
+		estate = queryDesc->estate;
+		Assert(estate != NULL);
+
+		oldcontext = MemoryContextSwitchTo(estate->es_query_cxt);
+		operation = queryDesc->operation;
+		dest = queryDesc->dest;
+
+		/*
+		 * startup tuple receiver, if we will be emitting tuples
+		 */
+		estate->es_processed = 0;
+		if (operation == CMD_SELECT || queryDesc->plannedstmt->hasReturning)
+		{
+			dest->rStartup(dest, operation, queryDesc->tupDesc);
+			dest->rShutdown(dest);
+		}
+
+		MemoryContextSwitchTo(oldcontext);
+		return;
+	}
+
+	if (prev_ExecutorRun)
+		prev_ExecutorRun(queryDesc, direction, count, execute_once);
+	else
+		standard_ExecutorRun(queryDesc, direction, count, execute_once);
+}
+
+static void
+pltsql_ExecutorFinish(QueryDesc *queryDesc)
+{
+	if (pltsql_explain_only)
+		return;
+
+	if (prev_ExecutorFinish)
+		prev_ExecutorFinish(queryDesc);
+	else
+		standard_ExecutorFinish(queryDesc);
+}
+
+static void
+pltsql_ExecutorEnd(QueryDesc *queryDesc)
+{
+	append_explain_info(queryDesc, NULL);
+
+	if (prev_ExecutorEnd)
+		prev_ExecutorEnd(queryDesc);
+	else
+		standard_ExecutorEnd(queryDesc);
+}
 
 static Node *
 output_update_self_join_transformation(ParseState *pstate, UpdateStmt *stmt, CmdType command)
@@ -455,41 +597,8 @@ handle_returning_qualifiers(CmdType command, List *returningList, ParseState *ps
 static void
 check_insert_row(List *icolumns, List *exprList, Oid relid)
 {
-	Relation	pg_attribute;
-	ScanKeyData scankey;
-	SysScanDesc scan;
-	HeapTuple	tuple;
-	int 		defaultCols = 0;
-	
-	if (prev_post_transform_insert_row_hook)
-		prev_post_transform_insert_row_hook(icolumns, exprList, relid);
-
-	if (sql_dialect != SQL_DIALECT_TSQL)
-		return;
-
-	/* Check for number of default columns in the relation */
-	ScanKeyInit(&scankey,
-				Anum_pg_attribute_attrelid,
-				BTEqualStrategyNumber, F_OIDEQ,
-				ObjectIdGetDatum(relid));
-
-	pg_attribute = table_open(AttributeRelationId, AccessShareLock);
-	
-	scan = systable_beginscan(pg_attribute, AttributeRelidNumIndexId, true,
-							  NULL, 1, &scankey);
-
-	while (HeapTupleIsValid(tuple = systable_getnext(scan)))
-	{
-		Form_pg_attribute att = (Form_pg_attribute) GETSTRUCT(tuple);
-		if (att->atthasdef && att->attgenerated == '\0')
-			defaultCols += 1;
-	}
-
-	systable_endscan(scan);
-	table_close(pg_attribute, AccessShareLock);
-
 	/* Do not allow more target columns than expressions */
-	if (exprList != NIL && list_length(exprList) < list_length(icolumns) - defaultCols)
+	if (exprList != NIL && list_length(exprList) < list_length(icolumns))
 		ereport(ERROR,
 				(errcode(ERRCODE_SYNTAX_ERROR),
 				 errmsg("Number of given values does not match target table definition")));
@@ -623,7 +732,7 @@ pltsql_post_transform_column_definition(ParseState *pstate, RangeVar* relation, 
 	stmt = makeNode(AlterTableStmt);
 	stmt->relation = relation;
 	stmt->cmds = NIL;
-	stmt->relkind = OBJECT_TABLE;
+	stmt->objtype = OBJECT_TABLE;
 	stmt->cmds = lappend(stmt->cmds, cmd);
 
 	(*alist) = lappend(*alist, stmt);
@@ -673,7 +782,7 @@ pltsql_post_transform_table_definition(ParseState *pstate, RangeVar* relation, c
 	stmt = makeNode(AlterTableStmt);
 	stmt->relation = relation;
 	stmt->cmds = NIL;
-	stmt->relkind = OBJECT_TABLE;
+	stmt->objtype = OBJECT_TABLE;
 	stmt->cmds = lappend(stmt->cmds, cmd);
 
 	(*alist) = lappend(*alist, stmt);
@@ -964,7 +1073,7 @@ pltsql_report_proc_not_found_error(List *names, List *given_argnames, int nargs,
 	bool found = false;
 	const char *obj_type = proc_call ? "procedure" : "function";
 
-	candidates = FuncnameGetCandidates(names, -1, NIL, false, false, true); /* search all possible candidate regardless of the # of arguments */
+	candidates = FuncnameGetCandidates(names, -1, NIL, false, false, false, true); /* search all possible candidate regardless of the # of arguments */
 	if (candidates == NULL)
 		return; /* no candidates at all. let backend handle the proc-not-found error */
 
@@ -1230,7 +1339,7 @@ static void revoke_func_permission_from_public(Oid objectId)
 	else
 		query = psprintf("REVOKE ALL ON FUNCTION [%s].[%s](%s) FROM PUBLIC", phy_sch_name, obj_name, arg_list);
 
-	res = raw_parser(query);
+	res = raw_parser(query, RAW_PARSE_DEFAULT);
 
 	if (list_length(res) != 1)
 		ereport(ERROR,
@@ -1249,6 +1358,7 @@ static void revoke_func_permission_from_public(Oid objectId)
 
 	ProcessUtility(wrapper,
 				   query,
+				   false,
 				   PROCESS_UTILITY_SUBCOMMAND,
 				   NULL,
 				   NULL,
@@ -1291,4 +1401,90 @@ static char *gen_func_arg_list(Oid objectId)
 	}
 
 	return arg_list.data;
+}
+
+/*
+* This function adds column names to the insert target relation in rewritten
+* CTE for OUTPUT INTO clause. 
+*/
+static void 
+modify_insert_stmt(InsertStmt *stmt, Oid relid)
+{
+	Relation	pg_attribute;
+	ScanKeyData scankey;
+	SysScanDesc scan;
+	HeapTuple	tuple;
+	List		*insert_col_list = NIL, *temp_col_list;
+		
+	if (prev_pre_transform_insert_hook)
+		(*prev_pre_transform_insert_hook) (stmt, relid);
+	
+	if (sql_dialect != SQL_DIALECT_TSQL)
+		return;
+
+	if (!output_into_insert_transformation)
+		return;
+
+	if (stmt->cols != NIL)
+		return;
+
+	/* Get column names from the relation */
+	ScanKeyInit(&scankey,
+				Anum_pg_attribute_attrelid,
+				BTEqualStrategyNumber, F_OIDEQ,
+				ObjectIdGetDatum(relid));
+
+	pg_attribute = table_open(AttributeRelationId, AccessShareLock);
+	
+	scan = systable_beginscan(pg_attribute, AttributeRelidNumIndexId, true,
+							  NULL, 1, &scankey);
+
+	while (HeapTupleIsValid(tuple = systable_getnext(scan)))
+	{
+		ResTarget *col = makeNode(ResTarget);
+		Form_pg_attribute att = (Form_pg_attribute) GETSTRUCT(tuple);
+		temp_col_list = NIL;
+
+		if (att->attnum > 0)
+		{
+			col->name = NameStr(att->attname);
+			col->indirection = NIL;
+			col->val = NULL;
+			col->location = 1;
+			col->name_location = 1;
+			temp_col_list = list_make1(col);
+			insert_col_list = list_concat(insert_col_list, temp_col_list);
+		}
+	}
+	stmt->cols = insert_col_list;
+	systable_endscan(scan);
+	table_close(pg_attribute, AccessShareLock);
+
+}
+
+static void
+preserve_view_constraints_from_base_table(ColumnDef  *col, Oid tableOid, AttrNumber colId)
+{
+	/*
+	 * In TSQL Dialect Preserve the constraints only for the internal view
+	 * created by sp_describe_first_result_set procedure.
+	 */
+	if (sp_describe_first_result_set_inprogress && sql_dialect == SQL_DIALECT_TSQL)
+	{
+		HeapTuple	  tp;
+		Form_pg_attribute att_tup;
+
+		tp = SearchSysCache2(ATTNUM, 
+					ObjectIdGetDatum(tableOid),
+					Int16GetDatum(colId));
+
+		if (HeapTupleIsValid(tp))
+		{
+			att_tup = (Form_pg_attribute) GETSTRUCT(tp);
+			col->is_not_null = att_tup->attnotnull;
+			col->identity 	 = att_tup->attidentity;
+			col->generated 	 = att_tup->attgenerated;
+			ReleaseSysCache(tp);
+		}
+	}
 }

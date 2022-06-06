@@ -205,18 +205,18 @@ TsqlFunctionConvert(TypeName *typename, Node *arg, Node *style, bool try, int lo
 	TSQLInstrumentation(INSTR_TSQL_FUNCTION_CONVERT);
 
 	if (type_oid == DATEOID)
-        result = (Node *) makeFuncCall(TsqlSystemFuncName("babelfish_conv_helper_to_date"), args, location);
+        result = (Node *) makeFuncCall(TsqlSystemFuncName("babelfish_conv_helper_to_date"), args, COERCE_EXPLICIT_CALL, location);
 	else if (type_oid == TIMEOID)
-	    result = (Node *) makeFuncCall(TsqlSystemFuncName("babelfish_conv_helper_to_time"), args, location);
+	    result = (Node *) makeFuncCall(TsqlSystemFuncName("babelfish_conv_helper_to_time"), args, COERCE_EXPLICIT_CALL, location);
 	else if (type_oid == typenameTypeId(NULL, makeTypeName("datetime")))
-	    result = (Node *) makeFuncCall(TsqlSystemFuncName("babelfish_conv_helper_to_datetime"), args, location);
+	    result = (Node *) makeFuncCall(TsqlSystemFuncName("babelfish_conv_helper_to_datetime"), args, COERCE_EXPLICIT_CALL, location);
 	else if (strcmp(typename_string, "varchar") == 0)
 	{
 		Node *helperFuncCall;
 
         typename_string = format_type_extended(VARCHAROID, typmod, FORMAT_TYPE_TYPEMOD_GIVEN);
 	    args = lcons(makeStringConst(typename_string, typename->location), args);
-	    helperFuncCall = (Node *) makeFuncCall(TsqlSystemFuncName("babelfish_conv_helper_to_varchar"), args, location);
+	    helperFuncCall = (Node *) makeFuncCall(TsqlSystemFuncName("babelfish_conv_helper_to_varchar"), args, COERCE_EXPLICIT_CALL, location);
 		/* BABEL-1661, add a type cast on top of the CONVERT helper function so typmod can be applied */
 		result = makeTypeCast(helperFuncCall, typename, location);
     }
@@ -263,11 +263,11 @@ TsqlFunctionParse(Node *arg, TypeName *typename, Node *culture, bool try, int lo
         TSQLInstrumentation(INSTR_TSQL_FUNCTION_PARSE);
 
         if (type_oid == DATEOID)
-                result = (Node *) makeFuncCall(TsqlSystemFuncName("babelfish_parse_helper_to_date"), args, location);
+                result = (Node *) makeFuncCall(TsqlSystemFuncName("babelfish_parse_helper_to_date"), args, COERCE_EXPLICIT_CALL, location);
         else if (type_oid == TIMEOID)
-                result = (Node *) makeFuncCall(TsqlSystemFuncName("babelfish_parse_helper_to_time"), args, location);
+                result = (Node *) makeFuncCall(TsqlSystemFuncName("babelfish_parse_helper_to_time"), args, COERCE_EXPLICIT_CALL, location);
         else if (type_oid == typenameTypeId(NULL, makeTypeName("datetime")))
-                result = (Node *) makeFuncCall(TsqlSystemFuncName("babelfish_parse_helper_to_datetime"), args, location);
+                result = (Node *) makeFuncCall(TsqlSystemFuncName("babelfish_parse_helper_to_datetime"), args, COERCE_EXPLICIT_CALL, location);
         else
         {
                 if (try)
@@ -301,11 +301,11 @@ TsqlFunctionTryCast(Node *arg, TypeName *typename, int location)
          * float to int.
          */
         if (type_oid == INT2OID)
-                result = (Node *) makeFuncCall(TsqlSystemFuncName("babelfish_try_cast_floor_smallint"), list_make1(arg), location);
+                result = (Node *) makeFuncCall(TsqlSystemFuncName("babelfish_try_cast_floor_smallint"), list_make1(arg), COERCE_EXPLICIT_CALL, location);
         else if (type_oid == INT4OID)
-                result = (Node *) makeFuncCall(TsqlSystemFuncName("babelfish_try_cast_floor_int"), list_make1(arg), location);
+                result = (Node *) makeFuncCall(TsqlSystemFuncName("babelfish_try_cast_floor_int"), list_make1(arg), COERCE_EXPLICIT_CALL, location);
         else if (type_oid == INT8OID)
-                result = (Node *) makeFuncCall(TsqlSystemFuncName("babelfish_try_cast_floor_bigint"), list_make1(arg), location);
+                result = (Node *) makeFuncCall(TsqlSystemFuncName("babelfish_try_cast_floor_bigint"), list_make1(arg), COERCE_EXPLICIT_CALL, location);
         else
         {
                 Node *arg_const = makeTypeCast(arg, SystemTypeName("text"), location);
@@ -314,7 +314,7 @@ TsqlFunctionTryCast(Node *arg, TypeName *typename, int location)
                 Node *null_const = makeTypeCast(makeNullAConst(location), typename, location);
 
                 List *args = list_make3(arg_const, null_const, makeIntConst(typmod, location));
-                result = (Node *) makeFuncCall(TsqlSystemFuncName("babelfish_try_cast_to_any"), args, location);
+                result = (Node *) makeFuncCall(TsqlSystemFuncName("babelfish_try_cast_to_any"), args, COERCE_EXPLICIT_CALL, location);
         }
 
         return result;
@@ -507,7 +507,7 @@ TsqlForXMLMakeFuncCall(TSQL_ForClause* forclause, char* src_query, size_t start_
 		appendStringInfoString(format_query, end_param);
 		format_func_args = list_concat(list_make1(makeStringConst(format_query->data, -1)),
 									   params);
-		format_fc = makeFuncCall(list_make1(makeString("format")), format_func_args, -1);
+		format_fc = makeFuncCall(list_make1(makeString("format")), format_func_args, COERCE_EXPLICIT_CALL, -1);
 		arg1 = (Node *) format_fc;
 	}
 	else
@@ -529,7 +529,7 @@ TsqlForXMLMakeFuncCall(TSQL_ForClause* forclause, char* src_query, size_t start_
 						   makeStringConst("row", -1),
 						   makeBoolAConst(binary_base64, -1));
 	func_args = lappend(func_args, root_name ? makeStringConst(root_name, -1) : makeStringConst("", -1));
-	fc = makeFuncCall(func_name, func_args, -1);
+	fc = makeFuncCall(func_name, func_args, COERCE_EXPLICIT_CALL, -1);
 
 	rt->name = NULL;
 	rt->indirection = NIL;
@@ -811,7 +811,7 @@ tsql_insert_output_into_cte_transformation(WithClause *opt_with_clause, RangeVar
 	internal_ctename = pstrdup(ctename);
 	
 	// PreparableStmt inside CTE
-	i->cols = NIL;
+	i->cols = insert_column_list;
 	i->selectStmt = tsql_output_insert_rest->selectStmt;
 	i->relation = insert_target;
 	i->onConflictClause = NULL;
@@ -909,6 +909,9 @@ tsql_insert_output_into_cte_transformation(WithClause *opt_with_clause, RangeVar
 		w->location = 1;
 		tsql_output_insert_rest->withClause = w;
 	}
+
+	output_into_insert_transformation = true; 
+	
 	return (Node *) tsql_output_insert_rest;
 }
 
@@ -1251,7 +1254,8 @@ get_transformed_output_list(List *tsql_output_clause)
 			{
 				ResTarget *target = makeNode(ResTarget);
 				ColumnRef  *cref = (ColumnRef *) node;
- 
+				local_variable = false;
+				
 				if(!strcmp(strVal(linitial(cref->fields)), "deleted") && list_length(cref->fields) >= 2)
 				{
 					if (IsA((Node*) llast(cref->fields), String))
@@ -1287,7 +1291,6 @@ get_transformed_output_list(List *tsql_output_clause)
 				}
 				else
 				{
-					local_variable = false;
 					if(!strncmp(strVal(linitial(cref->fields)), "@", 1) && estate)
 					{
 						for (i = 0; i < estate->ndatums; i++)

@@ -99,26 +99,26 @@ RETURNS TEXT
 AS
 $BODY$
 DECLARE
-    v_day VARCHAR;
+    v_day VARCHAR COLLATE "C";
     v_dateval DATE;
     v_style SMALLINT;
     v_month SMALLINT;
-    v_resmask VARCHAR;
-    v_datatype VARCHAR;
-    v_language VARCHAR;
-    v_monthname VARCHAR;
-    v_resstring VARCHAR;
-    v_lengthexpr VARCHAR;
+    v_resmask VARCHAR COLLATE "C";
+    v_datatype VARCHAR COLLATE "C";
+    v_language VARCHAR COLLATE "C";
+    v_monthname VARCHAR COLLATE "C";
+    v_resstring VARCHAR COLLATE "C";
+    v_lengthexpr VARCHAR COLLATE "C";
     v_maxlength SMALLINT;
     v_res_length SMALLINT;
-    v_err_message VARCHAR;
-    v_res_datatype VARCHAR;
+    v_err_message VARCHAR COLLATE "C";
+    v_res_datatype VARCHAR COLLATE "C";
     v_lang_metadata_json JSONB;
     VARCHAR_MAX CONSTANT SMALLINT := 8000;
     NVARCHAR_MAX CONSTANT SMALLINT := 4000;
-    CONVERSION_LANG CONSTANT VARCHAR := '';
-    DATATYPE_REGEXP CONSTANT VARCHAR := '^\s*(CHAR|NCHAR|VARCHAR|NVARCHAR|CHARACTER VARYING)\s*$';
-    DATATYPE_MASK_REGEXP CONSTANT VARCHAR := '^\s*(?:CHAR|NCHAR|VARCHAR|NVARCHAR|CHARACTER VARYING)\s*\(\s*(\d+|MAX)\s*\)\s*$';
+    CONVERSION_LANG CONSTANT VARCHAR COLLATE "C" := '';
+    DATATYPE_REGEXP CONSTANT VARCHAR COLLATE "C" := '^\s*(CHAR|NCHAR|VARCHAR|NVARCHAR|CHARACTER VARYING)\s*$';
+    DATATYPE_MASK_REGEXP CONSTANT VARCHAR COLLATE "C" := '^\s*(?:CHAR|NCHAR|VARCHAR|NVARCHAR|CHARACTER VARYING)\s*\(\s*(\d+|MAX)\s*\)\s*$';
 BEGIN
     v_datatype := upper(trim(p_datatype));
     v_style := floor(p_style)::SMALLINT;
@@ -171,6 +171,7 @@ BEGIN
                      WHEN (v_style IN (130, 131)) THEN 'HIJRI'
                      ELSE CONVERSION_LANG
                   END;
+ RAISE NOTICE 'v_language=[%]', v_language;		  
     BEGIN
         v_lang_metadata_json := sys.babelfish_get_lang_metadata_json(v_language);
     EXCEPTION
@@ -208,8 +209,7 @@ BEGIN
                  END;
 
     v_resstring := to_char(v_dateval, v_resmask);
-    v_resstring := replace(v_resstring, '$mnme$', v_monthname);
-
+    v_resstring := pg_catalog.replace(v_resstring, '$mnme$', v_monthname);
     v_resstring := substring(v_resstring, 1, coalesce(v_res_length, char_length(v_resstring)));
     v_res_length := coalesce(v_res_length,
                              CASE v_res_datatype
@@ -277,31 +277,31 @@ RETURNS TEXT
 AS
 $BODY$
 DECLARE
-    v_day VARCHAR;
-    v_hour VARCHAR;
+    v_day VARCHAR COLLATE "C";
+    v_hour VARCHAR COLLATE "C";
     v_month SMALLINT;
     v_style SMALLINT;
     v_scale SMALLINT;
-    v_resmask VARCHAR;
-    v_language VARCHAR;
-    v_datatype VARCHAR;
-    v_fseconds VARCHAR;
-    v_fractsep VARCHAR;
-    v_monthname VARCHAR;
-    v_resstring VARCHAR;
-    v_lengthexpr VARCHAR;
+    v_resmask VARCHAR COLLATE "C";
+    v_language VARCHAR COLLATE "C";
+    v_datatype VARCHAR COLLATE "C";
+    v_fseconds VARCHAR COLLATE "C";
+    v_fractsep VARCHAR COLLATE "C";
+    v_monthname VARCHAR COLLATE "C";
+    v_resstring VARCHAR COLLATE "C";
+    v_lengthexpr VARCHAR COLLATE "C";
     v_maxlength SMALLINT;
     v_res_length SMALLINT;
-    v_err_message VARCHAR;
-    v_src_datatype VARCHAR;
-    v_res_datatype VARCHAR;
+    v_err_message VARCHAR COLLATE "C";
+    v_src_datatype VARCHAR COLLATE "C";
+    v_res_datatype VARCHAR COLLATE "C";
     v_lang_metadata_json JSONB;
     VARCHAR_MAX CONSTANT SMALLINT := 8000;
     NVARCHAR_MAX CONSTANT SMALLINT := 4000;
-    CONVERSION_LANG CONSTANT VARCHAR := '';
-    DATATYPE_REGEXP CONSTANT VARCHAR := '^\s*(CHAR|NCHAR|VARCHAR|NVARCHAR|CHARACTER VARYING)\s*$';
-    SRCDATATYPE_MASK_REGEXP VARCHAR := '^(?:DATETIME|SMALLDATETIME|DATETIME2)\s*(?:\s*\(\s*(\d+)\s*\)\s*)?$';
-    DATATYPE_MASK_REGEXP CONSTANT VARCHAR := '^\s*(?:CHAR|NCHAR|VARCHAR|NVARCHAR|CHARACTER VARYING)\s*\(\s*(\d+|MAX)\s*\)\s*$';
+    CONVERSION_LANG CONSTANT VARCHAR COLLATE "C" := '';
+    DATATYPE_REGEXP CONSTANT VARCHAR COLLATE "C" := '^\s*(CHAR|NCHAR|VARCHAR|NVARCHAR|CHARACTER VARYING)\s*$';
+    SRCDATATYPE_MASK_REGEXP VARCHAR COLLATE "C" := '^(?:DATETIME|SMALLDATETIME|DATETIME2)\s*(?:\s*\(\s*(\d+)\s*\)\s*)?$';
+    DATATYPE_MASK_REGEXP CONSTANT VARCHAR COLLATE "C" := '^\s*(?:CHAR|NCHAR|VARCHAR|NVARCHAR|CHARACTER VARYING)\s*\(\s*(\d+|MAX)\s*\)\s*$';
     v_datetimeval TIMESTAMP(6) WITHOUT TIME ZONE;
 BEGIN
     v_datatype := upper(trim(p_datatype));
@@ -484,8 +484,8 @@ BEGIN
     END IF;
 
     v_resstring := to_char(v_datetimeval, v_resmask);
-    v_resstring := replace(v_resstring, '$mnme$', v_monthname);
-    v_resstring := replace(v_resstring, '$rem$', '');
+    v_resstring := pg_catalog.replace(v_resstring, '$mnme$', v_monthname);
+    v_resstring := pg_catalog.replace(v_resstring, '$rem$', '');
 
     v_resstring := substring(v_resstring, 1, coalesce(v_res_length, char_length(v_resstring)));
     v_res_length := coalesce(v_res_length,
@@ -698,7 +698,7 @@ DECLARE
     v_day SMALLINT;
     v_month SMALLINT;
     v_year INTEGER;
-    v_err_message VARCHAR;
+    v_err_message VARCHAR COLLATE "C";
     v_jdnum DOUBLE PRECISION;
     v_lnum DOUBLE PRECISION;
     v_inum DOUBLE PRECISION;
@@ -812,65 +812,65 @@ RETURNS DATE
 AS
 $BODY$
 DECLARE
-    v_day VARCHAR;
-    v_year VARCHAR;
-    v_month VARCHAR;
+    v_day VARCHAR COLLATE "C";
+    v_year VARCHAR COLLATE "C";
+    v_month VARCHAR COLLATE "C";
     v_hijridate DATE;
     v_style SMALLINT;
-    v_leftpart VARCHAR;
-    v_middlepart VARCHAR;
-    v_rightpart VARCHAR;
-    v_fractsecs VARCHAR;
-    v_datestring VARCHAR;
-    v_err_message VARCHAR;
-    v_date_format VARCHAR;
+    v_leftpart VARCHAR COLLATE "C";
+    v_middlepart VARCHAR COLLATE "C";
+    v_rightpart VARCHAR COLLATE "C";
+    v_fractsecs VARCHAR COLLATE "C";
+    v_datestring VARCHAR COLLATE "C";
+    v_err_message VARCHAR COLLATE "C";
+    v_date_format VARCHAR COLLATE "C";
     v_regmatch_groups TEXT[];
     v_lang_metadata_json JSONB;
-    v_compmonth_regexp VARCHAR;
-    CONVERSION_LANG CONSTANT VARCHAR := '';
-    DATE_FORMAT CONSTANT VARCHAR := '';
-    DAYMM_REGEXP CONSTANT VARCHAR := '(\d{1,2})';
-    FULLYEAR_REGEXP CONSTANT VARCHAR := '(\d{4})';
-    SHORTYEAR_REGEXP CONSTANT VARCHAR := '(\d{1,2})';
-    COMPYEAR_REGEXP CONSTANT VARCHAR := '(\d{1,2}|\d{4})';
-    AMPM_REGEXP CONSTANT VARCHAR := '(?:[AP]M)';
-    TIMEUNIT_REGEXP CONSTANT VARCHAR := '\s*\d{1,2}\s*';
-    FRACTSECS_REGEXP CONSTANT VARCHAR := '\s*\d{1,9}';
-    HHMMSSFS_PART_REGEXP CONSTANT VARCHAR := concat('(', TIMEUNIT_REGEXP, AMPM_REGEXP, '|',
+    v_compmonth_regexp VARCHAR COLLATE "C";
+    CONVERSION_LANG CONSTANT VARCHAR COLLATE "C" := '';
+    DATE_FORMAT CONSTANT VARCHAR COLLATE "C" := '';
+    DAYMM_REGEXP CONSTANT VARCHAR COLLATE "C" := '(\d{1,2})';
+    FULLYEAR_REGEXP CONSTANT VARCHAR COLLATE "C" := '(\d{4})';
+    SHORTYEAR_REGEXP CONSTANT VARCHAR COLLATE "C" := '(\d{1,2})';
+    COMPYEAR_REGEXP CONSTANT VARCHAR COLLATE "C" := '(\d{1,2}|\d{4})';
+    AMPM_REGEXP CONSTANT VARCHAR COLLATE "C" := '(?:[AP]M)';
+    TIMEUNIT_REGEXP CONSTANT VARCHAR COLLATE "C" := '\s*\d{1,2}\s*';
+    FRACTSECS_REGEXP CONSTANT VARCHAR COLLATE "C" := '\s*\d{1,9}';
+    HHMMSSFS_PART_REGEXP CONSTANT VARCHAR COLLATE "C" := concat('(', TIMEUNIT_REGEXP, AMPM_REGEXP, '|',
                                                     TIMEUNIT_REGEXP, '\:', TIMEUNIT_REGEXP, '|',
                                                     TIMEUNIT_REGEXP, '\:', TIMEUNIT_REGEXP, '\:', TIMEUNIT_REGEXP, '|',
                                                     TIMEUNIT_REGEXP, '\:', TIMEUNIT_REGEXP, '\:', TIMEUNIT_REGEXP, '(?:\.|\:)', FRACTSECS_REGEXP,
                                                     ')\s*', AMPM_REGEXP, '?');
-    HHMMSSFS_DOTPART_REGEXP CONSTANT VARCHAR := concat('(', TIMEUNIT_REGEXP, AMPM_REGEXP, '|',
+    HHMMSSFS_DOTPART_REGEXP CONSTANT VARCHAR COLLATE "C" := concat('(', TIMEUNIT_REGEXP, AMPM_REGEXP, '|',
                                                        TIMEUNIT_REGEXP, '\:', TIMEUNIT_REGEXP, '|',
                                                        TIMEUNIT_REGEXP, '\:', TIMEUNIT_REGEXP, '\:', TIMEUNIT_REGEXP, '|',
                                                        TIMEUNIT_REGEXP, '\:', TIMEUNIT_REGEXP, '\:', TIMEUNIT_REGEXP, '\.', FRACTSECS_REGEXP,
                                                        ')\s*', AMPM_REGEXP, '?');
-    HHMMSSFS_REGEXP CONSTANT VARCHAR := concat('^', HHMMSSFS_PART_REGEXP, '$');
-    HHMMSSFS_DOT_REGEXP CONSTANT VARCHAR := concat('^', HHMMSSFS_DOTPART_REGEXP, '$');
-    v_defmask1_regexp VARCHAR := concat('^($comp_month$)\s*', DAYMM_REGEXP, '\s+', COMPYEAR_REGEXP, '$');
-    v_defmask2_regexp VARCHAR := concat('^', DAYMM_REGEXP, '\s*($comp_month$)\s*', COMPYEAR_REGEXP, '$');
-    v_defmask3_regexp VARCHAR := concat('^', FULLYEAR_REGEXP, '\s*($comp_month$)\s*', DAYMM_REGEXP, '$');
-    v_defmask4_regexp VARCHAR := concat('^', FULLYEAR_REGEXP, '\s+', DAYMM_REGEXP, '\s*($comp_month$)$');
-    v_defmask5_regexp VARCHAR := concat('^', DAYMM_REGEXP, '\s+', COMPYEAR_REGEXP, '\s*($comp_month$)$');
-    v_defmask6_regexp VARCHAR := concat('^($comp_month$)\s*', FULLYEAR_REGEXP, '\s+', DAYMM_REGEXP, '$');
-    v_defmask7_regexp VARCHAR := concat('^($comp_month$)\s*', DAYMM_REGEXP, '\s*\,\s*', COMPYEAR_REGEXP, '$');
-    v_defmask8_regexp VARCHAR := concat('^', FULLYEAR_REGEXP, '\s*($comp_month$)$');
-    v_defmask9_regexp VARCHAR := concat('^($comp_month$)\s*', FULLYEAR_REGEXP, '$');
-    v_defmask10_regexp VARCHAR := concat('^', DAYMM_REGEXP, '\s*(?:\.|/|-)\s*($comp_month$)\s*(?:\.|/|-)\s*', COMPYEAR_REGEXP, '$');
-    DOT_SHORTYEAR_REGEXP CONSTANT VARCHAR := concat('^', DAYMM_REGEXP, '\s*\.\s*', DAYMM_REGEXP, '\s*\.\s*', SHORTYEAR_REGEXP, '$');
-    DOT_FULLYEAR_REGEXP CONSTANT VARCHAR := concat('^', DAYMM_REGEXP, '\s*\.\s*', DAYMM_REGEXP, '\s*\.\s*', FULLYEAR_REGEXP, '$');
-    SLASH_SHORTYEAR_REGEXP CONSTANT VARCHAR := concat('^', DAYMM_REGEXP, '\s*/\s*', DAYMM_REGEXP, '\s*/\s*', SHORTYEAR_REGEXP, '$');
-    SLASH_FULLYEAR_REGEXP CONSTANT VARCHAR := concat('^', DAYMM_REGEXP, '\s*/\s*', DAYMM_REGEXP, '\s*/\s*', FULLYEAR_REGEXP, '$');
-    DASH_SHORTYEAR_REGEXP CONSTANT VARCHAR := concat('^', DAYMM_REGEXP, '\s*-\s*', DAYMM_REGEXP, '\s*-\s*', SHORTYEAR_REGEXP, '$');
-    DASH_FULLYEAR_REGEXP CONSTANT VARCHAR := concat('^', DAYMM_REGEXP, '\s*-\s*', DAYMM_REGEXP, '\s*-\s*', FULLYEAR_REGEXP, '$');
-    DOT_SLASH_DASH_YEAR_REGEXP CONSTANT VARCHAR := concat('^', DAYMM_REGEXP, '\s*(?:\.|/|-)\s*', DAYMM_REGEXP, '\s*(?:\.|/|-)\s*', COMPYEAR_REGEXP, '$');
-    YEAR_DOTMASK_REGEXP CONSTANT VARCHAR := concat('^', FULLYEAR_REGEXP, '\s*\.\s*', DAYMM_REGEXP, '\s*\.\s*', DAYMM_REGEXP, '$');
-    YEAR_SLASHMASK_REGEXP CONSTANT VARCHAR := concat('^', FULLYEAR_REGEXP, '\s*/\s*', DAYMM_REGEXP, '\s*/\s*', DAYMM_REGEXP, '$');
-    YEAR_DASHMASK_REGEXP CONSTANT VARCHAR := concat('^', FULLYEAR_REGEXP, '\s*-\s*', DAYMM_REGEXP, '\s*-\s*', DAYMM_REGEXP, '$');
-    YEAR_DOT_SLASH_DASH_REGEXP CONSTANT VARCHAR := concat('^', FULLYEAR_REGEXP, '\s*(?:\.|/|-)\s*', DAYMM_REGEXP, '\s*(?:\.|/|-)\s*', DAYMM_REGEXP, '$');
-    DIGITMASK1_REGEXP CONSTANT VARCHAR := '^\d{6}$';
-    DIGITMASK2_REGEXP CONSTANT VARCHAR := '^\d{8}$';
+    HHMMSSFS_REGEXP CONSTANT VARCHAR COLLATE "C" := concat('^', HHMMSSFS_PART_REGEXP, '$');
+    HHMMSSFS_DOT_REGEXP CONSTANT VARCHAR COLLATE "C" := concat('^', HHMMSSFS_DOTPART_REGEXP, '$');
+    v_defmask1_regexp VARCHAR COLLATE "C" := concat('^($comp_month$)\s*', DAYMM_REGEXP, '\s+', COMPYEAR_REGEXP, '$');
+    v_defmask2_regexp VARCHAR COLLATE "C" := concat('^', DAYMM_REGEXP, '\s*($comp_month$)\s*', COMPYEAR_REGEXP, '$');
+    v_defmask3_regexp VARCHAR COLLATE "C" := concat('^', FULLYEAR_REGEXP, '\s*($comp_month$)\s*', DAYMM_REGEXP, '$');
+    v_defmask4_regexp VARCHAR COLLATE "C" := concat('^', FULLYEAR_REGEXP, '\s+', DAYMM_REGEXP, '\s*($comp_month$)$');
+    v_defmask5_regexp VARCHAR COLLATE "C" := concat('^', DAYMM_REGEXP, '\s+', COMPYEAR_REGEXP, '\s*($comp_month$)$');
+    v_defmask6_regexp VARCHAR COLLATE "C" := concat('^($comp_month$)\s*', FULLYEAR_REGEXP, '\s+', DAYMM_REGEXP, '$');
+    v_defmask7_regexp VARCHAR COLLATE "C" := concat('^($comp_month$)\s*', DAYMM_REGEXP, '\s*\,\s*', COMPYEAR_REGEXP, '$');
+    v_defmask8_regexp VARCHAR COLLATE "C" := concat('^', FULLYEAR_REGEXP, '\s*($comp_month$)$');
+    v_defmask9_regexp VARCHAR COLLATE "C" := concat('^($comp_month$)\s*', FULLYEAR_REGEXP, '$');
+    v_defmask10_regexp VARCHAR COLLATE "C" := concat('^', DAYMM_REGEXP, '\s*(?:\.|/|-)\s*($comp_month$)\s*(?:\.|/|-)\s*', COMPYEAR_REGEXP, '$');
+    DOT_SHORTYEAR_REGEXP CONSTANT VARCHAR COLLATE "C" := concat('^', DAYMM_REGEXP, '\s*\.\s*', DAYMM_REGEXP, '\s*\.\s*', SHORTYEAR_REGEXP, '$');
+    DOT_FULLYEAR_REGEXP CONSTANT VARCHAR COLLATE "C" := concat('^', DAYMM_REGEXP, '\s*\.\s*', DAYMM_REGEXP, '\s*\.\s*', FULLYEAR_REGEXP, '$');
+    SLASH_SHORTYEAR_REGEXP CONSTANT VARCHAR COLLATE "C" := concat('^', DAYMM_REGEXP, '\s*/\s*', DAYMM_REGEXP, '\s*/\s*', SHORTYEAR_REGEXP, '$');
+    SLASH_FULLYEAR_REGEXP CONSTANT VARCHAR COLLATE "C" := concat('^', DAYMM_REGEXP, '\s*/\s*', DAYMM_REGEXP, '\s*/\s*', FULLYEAR_REGEXP, '$');
+    DASH_SHORTYEAR_REGEXP CONSTANT VARCHAR COLLATE "C" := concat('^', DAYMM_REGEXP, '\s*-\s*', DAYMM_REGEXP, '\s*-\s*', SHORTYEAR_REGEXP, '$');
+    DASH_FULLYEAR_REGEXP CONSTANT VARCHAR COLLATE "C" := concat('^', DAYMM_REGEXP, '\s*-\s*', DAYMM_REGEXP, '\s*-\s*', FULLYEAR_REGEXP, '$');
+    DOT_SLASH_DASH_YEAR_REGEXP CONSTANT VARCHAR COLLATE "C" := concat('^', DAYMM_REGEXP, '\s*(?:\.|/|-)\s*', DAYMM_REGEXP, '\s*(?:\.|/|-)\s*', COMPYEAR_REGEXP, '$');
+    YEAR_DOTMASK_REGEXP CONSTANT VARCHAR COLLATE "C" := concat('^', FULLYEAR_REGEXP, '\s*\.\s*', DAYMM_REGEXP, '\s*\.\s*', DAYMM_REGEXP, '$');
+    YEAR_SLASHMASK_REGEXP CONSTANT VARCHAR COLLATE "C" := concat('^', FULLYEAR_REGEXP, '\s*/\s*', DAYMM_REGEXP, '\s*/\s*', DAYMM_REGEXP, '$');
+    YEAR_DASHMASK_REGEXP CONSTANT VARCHAR COLLATE "C" := concat('^', FULLYEAR_REGEXP, '\s*-\s*', DAYMM_REGEXP, '\s*-\s*', DAYMM_REGEXP, '$');
+    YEAR_DOT_SLASH_DASH_REGEXP CONSTANT VARCHAR COLLATE "C" := concat('^', FULLYEAR_REGEXP, '\s*(?:\.|/|-)\s*', DAYMM_REGEXP, '\s*(?:\.|/|-)\s*', DAYMM_REGEXP, '$');
+    DIGITMASK1_REGEXP CONSTANT VARCHAR COLLATE "C" := '^\d{6}$';
+    DIGITMASK2_REGEXP CONSTANT VARCHAR COLLATE "C" := '^\d{8}$';
 BEGIN
     v_style := floor(p_style)::SMALLINT;
     v_datestring := trim(p_datestring);
@@ -887,7 +887,7 @@ BEGIN
 
     IF (v_datestring ~* HHMMSSFS_PART_REGEXP AND v_datestring !~* HHMMSSFS_REGEXP)
     THEN
-        v_datestring := trim(regexp_replace(v_datestring, HHMMSSFS_PART_REGEXP, '', 'gi'));
+        v_datestring := trim(regexp_pg_catalog.replace(v_datestring, HHMMSSFS_PART_REGEXP, '', 'gi'));
     END IF;
 
     BEGIN
@@ -902,16 +902,16 @@ BEGIN
     v_compmonth_regexp := array_to_string(array_cat(ARRAY(SELECT jsonb_array_elements_text(v_lang_metadata_json -> 'months_shortnames')),
                                                     ARRAY(SELECT jsonb_array_elements_text(v_lang_metadata_json -> 'months_names'))), '|');
 
-    v_defmask1_regexp := replace(v_defmask1_regexp, '$comp_month$', v_compmonth_regexp);
-    v_defmask2_regexp := replace(v_defmask2_regexp, '$comp_month$', v_compmonth_regexp);
-    v_defmask3_regexp := replace(v_defmask3_regexp, '$comp_month$', v_compmonth_regexp);
-    v_defmask4_regexp := replace(v_defmask4_regexp, '$comp_month$', v_compmonth_regexp);
-    v_defmask5_regexp := replace(v_defmask5_regexp, '$comp_month$', v_compmonth_regexp);
-    v_defmask6_regexp := replace(v_defmask6_regexp, '$comp_month$', v_compmonth_regexp);
-    v_defmask7_regexp := replace(v_defmask7_regexp, '$comp_month$', v_compmonth_regexp);
-    v_defmask8_regexp := replace(v_defmask8_regexp, '$comp_month$', v_compmonth_regexp);
-    v_defmask9_regexp := replace(v_defmask9_regexp, '$comp_month$', v_compmonth_regexp);
-    v_defmask10_regexp := replace(v_defmask10_regexp, '$comp_month$', v_compmonth_regexp);
+    v_defmask1_regexp := pg_catalog.replace(v_defmask1_regexp, '$comp_month$', v_compmonth_regexp);
+    v_defmask2_regexp := pg_catalog.replace(v_defmask2_regexp, '$comp_month$', v_compmonth_regexp);
+    v_defmask3_regexp := pg_catalog.replace(v_defmask3_regexp, '$comp_month$', v_compmonth_regexp);
+    v_defmask4_regexp := pg_catalog.replace(v_defmask4_regexp, '$comp_month$', v_compmonth_regexp);
+    v_defmask5_regexp := pg_catalog.replace(v_defmask5_regexp, '$comp_month$', v_compmonth_regexp);
+    v_defmask6_regexp := pg_catalog.replace(v_defmask6_regexp, '$comp_month$', v_compmonth_regexp);
+    v_defmask7_regexp := pg_catalog.replace(v_defmask7_regexp, '$comp_month$', v_compmonth_regexp);
+    v_defmask8_regexp := pg_catalog.replace(v_defmask8_regexp, '$comp_month$', v_compmonth_regexp);
+    v_defmask9_regexp := pg_catalog.replace(v_defmask9_regexp, '$comp_month$', v_compmonth_regexp);
+    v_defmask10_regexp := pg_catalog.replace(v_defmask10_regexp, '$comp_month$', v_compmonth_regexp);
 
     IF (v_datestring ~* v_defmask1_regexp OR
         v_datestring ~* v_defmask2_regexp OR
@@ -1202,117 +1202,117 @@ RETURNS TIMESTAMP WITHOUT TIME ZONE
 AS
 $BODY$
 DECLARE
-    v_day VARCHAR;
-    v_year VARCHAR;
-    v_month VARCHAR;
+    v_day VARCHAR COLLATE "C";
+    v_year VARCHAR COLLATE "C";
+    v_month VARCHAR COLLATE "C";
     v_style SMALLINT;
     v_scale SMALLINT;
-    v_hours VARCHAR;
+    v_hours VARCHAR COLLATE "C";
     v_hijridate DATE;
-    v_minutes VARCHAR;
-    v_seconds VARCHAR;
-    v_fseconds VARCHAR;
-    v_datatype VARCHAR;
-    v_timepart VARCHAR;
-    v_leftpart VARCHAR;
-    v_middlepart VARCHAR;
-    v_rightpart VARCHAR;
-    v_datestring VARCHAR;
-    v_err_message VARCHAR;
-    v_date_format VARCHAR;
-    v_res_datatype VARCHAR;
-    v_datetimestring VARCHAR;
+    v_minutes VARCHAR COLLATE "C";
+    v_seconds VARCHAR COLLATE "C";
+    v_fseconds VARCHAR COLLATE "C";
+    v_datatype VARCHAR COLLATE "C";
+    v_timepart VARCHAR COLLATE "C";
+    v_leftpart VARCHAR COLLATE "C";
+    v_middlepart VARCHAR COLLATE "C";
+    v_rightpart VARCHAR COLLATE "C";
+    v_datestring VARCHAR COLLATE "C";
+    v_err_message VARCHAR COLLATE "C";
+    v_date_format VARCHAR COLLATE "C";
+    v_res_datatype VARCHAR COLLATE "C";
+    v_datetimestring VARCHAR COLLATE "C";
     v_datatype_groups TEXT[];
     v_regmatch_groups TEXT[];
     v_lang_metadata_json JSONB;
-    v_compmonth_regexp VARCHAR;
+    v_compmonth_regexp VARCHAR COLLATE "C";
     v_resdatetime TIMESTAMP(6) WITHOUT TIME ZONE;
-    CONVERSION_LANG CONSTANT VARCHAR := '';
-    DATE_FORMAT CONSTANT VARCHAR := '';
-    DAYMM_REGEXP CONSTANT VARCHAR := '(\d{1,2})';
-    FULLYEAR_REGEXP CONSTANT VARCHAR := '(\d{4})';
-    SHORTYEAR_REGEXP CONSTANT VARCHAR := '(\d{1,2})';
-    COMPYEAR_REGEXP CONSTANT VARCHAR := '(\d{1,2}|\d{4})';
-    AMPM_REGEXP CONSTANT VARCHAR := '(?:[AP]M)';
-    MASKSEP_REGEXP CONSTANT VARCHAR := '(?:\.|-|/)';
-    TIMEUNIT_REGEXP CONSTANT VARCHAR := '\s*\d{1,2}\s*';
-    FRACTSECS_REGEXP CONSTANT VARCHAR := '\s*\d{1,9}\s*';
-    DATATYPE_REGEXP CONSTANT VARCHAR := '^(DATETIME|SMALLDATETIME|DATETIME2)\s*(?:\()?\s*((?:-)?\d+)?\s*(?:\))?$';
-    HHMMSSFS_PART_REGEXP CONSTANT VARCHAR := concat(TIMEUNIT_REGEXP, AMPM_REGEXP, '|',
+    CONVERSION_LANG CONSTANT VARCHAR COLLATE "C" := '';
+    DATE_FORMAT CONSTANT VARCHAR COLLATE "C" := '';
+    DAYMM_REGEXP CONSTANT VARCHAR COLLATE "C" := '(\d{1,2})';
+    FULLYEAR_REGEXP CONSTANT VARCHAR COLLATE "C" := '(\d{4})';
+    SHORTYEAR_REGEXP CONSTANT VARCHAR COLLATE "C" := '(\d{1,2})';
+    COMPYEAR_REGEXP CONSTANT VARCHAR COLLATE "C" := '(\d{1,2}|\d{4})';
+    AMPM_REGEXP CONSTANT VARCHAR COLLATE "C" := '(?:[AP]M)';
+    MASKSEP_REGEXP CONSTANT VARCHAR COLLATE "C" := '(?:\.|-|/)';
+    TIMEUNIT_REGEXP CONSTANT VARCHAR COLLATE "C" := '\s*\d{1,2}\s*';
+    FRACTSECS_REGEXP CONSTANT VARCHAR COLLATE "C" := '\s*\d{1,9}\s*';
+    DATATYPE_REGEXP CONSTANT VARCHAR COLLATE "C" := '^(DATETIME|SMALLDATETIME|DATETIME2)\s*(?:\()?\s*((?:-)?\d+)?\s*(?:\))?$';
+    HHMMSSFS_PART_REGEXP CONSTANT VARCHAR COLLATE "C" := concat(TIMEUNIT_REGEXP, AMPM_REGEXP, '|',
                                                     TIMEUNIT_REGEXP, '\:', TIMEUNIT_REGEXP, AMPM_REGEXP, '?|',
                                                     TIMEUNIT_REGEXP, '\:', TIMEUNIT_REGEXP, '\.', FRACTSECS_REGEXP, AMPM_REGEXP, '?|',
                                                     TIMEUNIT_REGEXP, '\:', TIMEUNIT_REGEXP, '\:', TIMEUNIT_REGEXP, AMPM_REGEXP, '?|',
                                                     TIMEUNIT_REGEXP, '\:', TIMEUNIT_REGEXP, '\:', TIMEUNIT_REGEXP, '(?:\.|\:)', FRACTSECS_REGEXP, AMPM_REGEXP, '?');
-    HHMMSSFS_DOT_PART_REGEXP CONSTANT VARCHAR := concat(TIMEUNIT_REGEXP, AMPM_REGEXP, '|',
+    HHMMSSFS_DOT_PART_REGEXP CONSTANT VARCHAR COLLATE "C" := concat(TIMEUNIT_REGEXP, AMPM_REGEXP, '|',
                                                         TIMEUNIT_REGEXP, '\:', TIMEUNIT_REGEXP, AMPM_REGEXP, '?|',
                                                         TIMEUNIT_REGEXP, '\:', TIMEUNIT_REGEXP, '\.', FRACTSECS_REGEXP, AMPM_REGEXP, '?|',
                                                         TIMEUNIT_REGEXP, '\:', TIMEUNIT_REGEXP, '\:', TIMEUNIT_REGEXP, AMPM_REGEXP, '?|',
                                                         TIMEUNIT_REGEXP, '\:', TIMEUNIT_REGEXP, '\:', TIMEUNIT_REGEXP, '(?:\.)', FRACTSECS_REGEXP, AMPM_REGEXP, '?');
-    HHMMSSFS_REGEXP CONSTANT VARCHAR := concat('^(', HHMMSSFS_PART_REGEXP, ')$');
-    DEFMASK1_0_REGEXP CONSTANT VARCHAR := concat('^(', HHMMSSFS_PART_REGEXP, ')?\s*',
+    HHMMSSFS_REGEXP CONSTANT VARCHAR COLLATE "C" := concat('^(', HHMMSSFS_PART_REGEXP, ')$');
+    DEFMASK1_0_REGEXP CONSTANT VARCHAR COLLATE "C" := concat('^(', HHMMSSFS_PART_REGEXP, ')?\s*',
                                                  MASKSEP_REGEXP, '*\s*($comp_month$)\s*', DAYMM_REGEXP, '\s+', COMPYEAR_REGEXP,
                                                  '\s*(', HHMMSSFS_PART_REGEXP, ')?$');
-    DEFMASK1_1_REGEXP CONSTANT VARCHAR := concat('^', MASKSEP_REGEXP, '?\s*($comp_month$)\s*', DAYMM_REGEXP, '\s+', COMPYEAR_REGEXP, '$');
-    DEFMASK1_2_REGEXP CONSTANT VARCHAR := concat('^', MASKSEP_REGEXP, '\s*($comp_month$)\s*', DAYMM_REGEXP, '\s+', COMPYEAR_REGEXP, '$');
-    DEFMASK2_0_REGEXP CONSTANT VARCHAR := concat('^(', HHMMSSFS_PART_REGEXP, ')?\s*',
+    DEFMASK1_1_REGEXP CONSTANT VARCHAR COLLATE "C" := concat('^', MASKSEP_REGEXP, '?\s*($comp_month$)\s*', DAYMM_REGEXP, '\s+', COMPYEAR_REGEXP, '$');
+    DEFMASK1_2_REGEXP CONSTANT VARCHAR COLLATE "C" := concat('^', MASKSEP_REGEXP, '\s*($comp_month$)\s*', DAYMM_REGEXP, '\s+', COMPYEAR_REGEXP, '$');
+    DEFMASK2_0_REGEXP CONSTANT VARCHAR COLLATE "C" := concat('^(', HHMMSSFS_PART_REGEXP, ')?\s*',
                                                  DAYMM_REGEXP, '\s*', MASKSEP_REGEXP, '*\s*($comp_month$)\s*', COMPYEAR_REGEXP,
                                                  '\s*(', HHMMSSFS_PART_REGEXP, ')?$');
-    DEFMASK2_1_REGEXP CONSTANT VARCHAR := concat('^', DAYMM_REGEXP, '\s*', MASKSEP_REGEXP, '?\s*($comp_month$)\s*', COMPYEAR_REGEXP, '$');
-    DEFMASK2_2_REGEXP CONSTANT VARCHAR := concat('^', DAYMM_REGEXP, '\s*', MASKSEP_REGEXP, '\s*($comp_month$)\s*', COMPYEAR_REGEXP, '$');
-    DEFMASK3_0_REGEXP CONSTANT VARCHAR := concat('^(', HHMMSSFS_PART_REGEXP, ')?\s*',
+    DEFMASK2_1_REGEXP CONSTANT VARCHAR COLLATE "C" := concat('^', DAYMM_REGEXP, '\s*', MASKSEP_REGEXP, '?\s*($comp_month$)\s*', COMPYEAR_REGEXP, '$');
+    DEFMASK2_2_REGEXP CONSTANT VARCHAR COLLATE "C" := concat('^', DAYMM_REGEXP, '\s*', MASKSEP_REGEXP, '\s*($comp_month$)\s*', COMPYEAR_REGEXP, '$');
+    DEFMASK3_0_REGEXP CONSTANT VARCHAR COLLATE "C" := concat('^(', HHMMSSFS_PART_REGEXP, ')?\s*',
                                                  FULLYEAR_REGEXP, '\s*', MASKSEP_REGEXP, '*\s*($comp_month$)\s*', DAYMM_REGEXP,
                                                  '\s*(', HHMMSSFS_PART_REGEXP, ')?$');
-    DEFMASK3_1_REGEXP CONSTANT VARCHAR := concat('^', FULLYEAR_REGEXP, '\s*', MASKSEP_REGEXP, '?\s*($comp_month$)\s*', DAYMM_REGEXP, '$');
-    DEFMASK3_2_REGEXP CONSTANT VARCHAR := concat('^', FULLYEAR_REGEXP, '\s*', MASKSEP_REGEXP, '\s*($comp_month$)\s*', DAYMM_REGEXP, '$');
-    DEFMASK4_0_REGEXP CONSTANT VARCHAR := concat('^(', HHMMSSFS_PART_REGEXP, ')?\s*',
+    DEFMASK3_1_REGEXP CONSTANT VARCHAR COLLATE "C" := concat('^', FULLYEAR_REGEXP, '\s*', MASKSEP_REGEXP, '?\s*($comp_month$)\s*', DAYMM_REGEXP, '$');
+    DEFMASK3_2_REGEXP CONSTANT VARCHAR COLLATE "C" := concat('^', FULLYEAR_REGEXP, '\s*', MASKSEP_REGEXP, '\s*($comp_month$)\s*', DAYMM_REGEXP, '$');
+    DEFMASK4_0_REGEXP CONSTANT VARCHAR COLLATE "C" := concat('^(', HHMMSSFS_PART_REGEXP, ')?\s*',
                                                  FULLYEAR_REGEXP, '\s+', DAYMM_REGEXP, '\s*', MASKSEP_REGEXP, '*\s*($comp_month$)',
                                                  '\s*(', HHMMSSFS_PART_REGEXP, ')?$');
-    DEFMASK4_1_REGEXP CONSTANT VARCHAR := concat('^', FULLYEAR_REGEXP, '\s+', DAYMM_REGEXP, '\s*', MASKSEP_REGEXP, '?\s*($comp_month$)$');
-    DEFMASK4_2_REGEXP CONSTANT VARCHAR := concat('^', FULLYEAR_REGEXP, '\s+', DAYMM_REGEXP, '\s*', MASKSEP_REGEXP, '\s*($comp_month$)$');
-    DEFMASK5_0_REGEXP CONSTANT VARCHAR := concat('^(', HHMMSSFS_PART_REGEXP, ')?\s*',
+    DEFMASK4_1_REGEXP CONSTANT VARCHAR COLLATE "C" := concat('^', FULLYEAR_REGEXP, '\s+', DAYMM_REGEXP, '\s*', MASKSEP_REGEXP, '?\s*($comp_month$)$');
+    DEFMASK4_2_REGEXP CONSTANT VARCHAR COLLATE "C" := concat('^', FULLYEAR_REGEXP, '\s+', DAYMM_REGEXP, '\s*', MASKSEP_REGEXP, '\s*($comp_month$)$');
+    DEFMASK5_0_REGEXP CONSTANT VARCHAR COLLATE "C" := concat('^(', HHMMSSFS_PART_REGEXP, ')?\s*',
                                                  DAYMM_REGEXP, '\s+', COMPYEAR_REGEXP, '\s*', MASKSEP_REGEXP, '*\s*($comp_month$)',
                                                  '\s*(', HHMMSSFS_PART_REGEXP, ')?$');
-    DEFMASK5_1_REGEXP CONSTANT VARCHAR := concat('^', DAYMM_REGEXP, '\s+', COMPYEAR_REGEXP, '\s*', MASKSEP_REGEXP, '?\s*($comp_month$)$');
-    DEFMASK5_2_REGEXP CONSTANT VARCHAR := concat('^', DAYMM_REGEXP, '\s+', COMPYEAR_REGEXP, '\s*', MASKSEP_REGEXP, '\s*($comp_month$)$');
-    DEFMASK6_0_REGEXP CONSTANT VARCHAR := concat('^(', HHMMSSFS_PART_REGEXP, ')?\s*',
+    DEFMASK5_1_REGEXP CONSTANT VARCHAR COLLATE "C" := concat('^', DAYMM_REGEXP, '\s+', COMPYEAR_REGEXP, '\s*', MASKSEP_REGEXP, '?\s*($comp_month$)$');
+    DEFMASK5_2_REGEXP CONSTANT VARCHAR COLLATE "C" := concat('^', DAYMM_REGEXP, '\s+', COMPYEAR_REGEXP, '\s*', MASKSEP_REGEXP, '\s*($comp_month$)$');
+    DEFMASK6_0_REGEXP CONSTANT VARCHAR COLLATE "C" := concat('^(', HHMMSSFS_PART_REGEXP, ')?\s*',
                                                  MASKSEP_REGEXP, '*\s*($comp_month$)\s*', FULLYEAR_REGEXP, '\s+', DAYMM_REGEXP,
                                                  '\s*(', HHMMSSFS_PART_REGEXP, ')?$');
-    DEFMASK6_1_REGEXP CONSTANT VARCHAR := concat('^', MASKSEP_REGEXP, '?\s*($comp_month$)\s*', FULLYEAR_REGEXP, '\s+', DAYMM_REGEXP, '$');
-    DEFMASK6_2_REGEXP CONSTANT VARCHAR := concat('^', MASKSEP_REGEXP, '\s*($comp_month$)\s*', FULLYEAR_REGEXP, '\s+', DAYMM_REGEXP, '$');
-    DEFMASK7_0_REGEXP CONSTANT VARCHAR := concat('^(', HHMMSSFS_PART_REGEXP, ')?\s*',
+    DEFMASK6_1_REGEXP CONSTANT VARCHAR COLLATE "C" := concat('^', MASKSEP_REGEXP, '?\s*($comp_month$)\s*', FULLYEAR_REGEXP, '\s+', DAYMM_REGEXP, '$');
+    DEFMASK6_2_REGEXP CONSTANT VARCHAR COLLATE "C" := concat('^', MASKSEP_REGEXP, '\s*($comp_month$)\s*', FULLYEAR_REGEXP, '\s+', DAYMM_REGEXP, '$');
+    DEFMASK7_0_REGEXP CONSTANT VARCHAR COLLATE "C" := concat('^(', HHMMSSFS_PART_REGEXP, ')?\s*',
                                                  MASKSEP_REGEXP, '*\s*($comp_month$)\s*', DAYMM_REGEXP, '\s*,\s*', COMPYEAR_REGEXP,
                                                  '\s*(', HHMMSSFS_PART_REGEXP, ')?$');
-    DEFMASK7_1_REGEXP CONSTANT VARCHAR := concat('^', MASKSEP_REGEXP, '?\s*($comp_month$)\s*', DAYMM_REGEXP, '\s*,\s*', COMPYEAR_REGEXP, '$');
-    DEFMASK7_2_REGEXP CONSTANT VARCHAR := concat('^', MASKSEP_REGEXP, '\s*($comp_month$)\s*', DAYMM_REGEXP, '\s*,\s*', COMPYEAR_REGEXP, '$');
-    DEFMASK8_0_REGEXP CONSTANT VARCHAR := concat('^(', HHMMSSFS_PART_REGEXP, ')?\s*',
+    DEFMASK7_1_REGEXP CONSTANT VARCHAR COLLATE "C" := concat('^', MASKSEP_REGEXP, '?\s*($comp_month$)\s*', DAYMM_REGEXP, '\s*,\s*', COMPYEAR_REGEXP, '$');
+    DEFMASK7_2_REGEXP CONSTANT VARCHAR COLLATE "C" := concat('^', MASKSEP_REGEXP, '\s*($comp_month$)\s*', DAYMM_REGEXP, '\s*,\s*', COMPYEAR_REGEXP, '$');
+    DEFMASK8_0_REGEXP CONSTANT VARCHAR COLLATE "C" := concat('^(', HHMMSSFS_PART_REGEXP, ')?\s*',
                                                  FULLYEAR_REGEXP, '\s*', MASKSEP_REGEXP, '*\s*($comp_month$)',
                                                  '\s*(', HHMMSSFS_PART_REGEXP, ')?$');
-    DEFMASK8_1_REGEXP CONSTANT VARCHAR := concat('^', FULLYEAR_REGEXP, '\s*', MASKSEP_REGEXP, '?\s*($comp_month$)$');
-    DEFMASK8_2_REGEXP CONSTANT VARCHAR := concat('^', FULLYEAR_REGEXP, '\s*', MASKSEP_REGEXP, '\s*($comp_month$)$');
-    DEFMASK9_0_REGEXP CONSTANT VARCHAR := concat('^(', HHMMSSFS_PART_REGEXP, ')?\s*',
+    DEFMASK8_1_REGEXP CONSTANT VARCHAR COLLATE "C" := concat('^', FULLYEAR_REGEXP, '\s*', MASKSEP_REGEXP, '?\s*($comp_month$)$');
+    DEFMASK8_2_REGEXP CONSTANT VARCHAR COLLATE "C" := concat('^', FULLYEAR_REGEXP, '\s*', MASKSEP_REGEXP, '\s*($comp_month$)$');
+    DEFMASK9_0_REGEXP CONSTANT VARCHAR COLLATE "C" := concat('^(', HHMMSSFS_PART_REGEXP, ')?\s*',
                                                  MASKSEP_REGEXP, '*\s*($comp_month$)\s*', FULLYEAR_REGEXP,
                                                  '\s*(', HHMMSSFS_PART_REGEXP, ')?$');
-    DEFMASK9_1_REGEXP CONSTANT VARCHAR := concat('^', MASKSEP_REGEXP, '?\s*($comp_month$)\s*', FULLYEAR_REGEXP, '$');
-    DEFMASK9_2_REGEXP CONSTANT VARCHAR := concat('^', MASKSEP_REGEXP, '\s*($comp_month$)\s*', FULLYEAR_REGEXP, '$');
-    DEFMASK10_0_REGEXP CONSTANT VARCHAR := concat('^(', HHMMSSFS_PART_REGEXP, ')?\s*',
+    DEFMASK9_1_REGEXP CONSTANT VARCHAR COLLATE "C" := concat('^', MASKSEP_REGEXP, '?\s*($comp_month$)\s*', FULLYEAR_REGEXP, '$');
+    DEFMASK9_2_REGEXP CONSTANT VARCHAR COLLATE "C" := concat('^', MASKSEP_REGEXP, '\s*($comp_month$)\s*', FULLYEAR_REGEXP, '$');
+    DEFMASK10_0_REGEXP CONSTANT VARCHAR COLLATE "C" := concat('^(', HHMMSSFS_PART_REGEXP, ')?\s*',
                                                   DAYMM_REGEXP, '\s*', MASKSEP_REGEXP, '\s*($comp_month$)\s*', MASKSEP_REGEXP, '\s*', COMPYEAR_REGEXP,
                                                   '\s*(', HHMMSSFS_PART_REGEXP, ')?$');
-    DEFMASK10_1_REGEXP CONSTANT VARCHAR := concat('^', DAYMM_REGEXP, '\s*', MASKSEP_REGEXP, '\s*($comp_month$)\s*', MASKSEP_REGEXP, '\s*', COMPYEAR_REGEXP, '$');
-    DOT_SLASH_DASH_COMPYEAR1_0_REGEXP CONSTANT VARCHAR := concat('^(', HHMMSSFS_PART_REGEXP, ')?\s*',
+    DEFMASK10_1_REGEXP CONSTANT VARCHAR COLLATE "C" := concat('^', DAYMM_REGEXP, '\s*', MASKSEP_REGEXP, '\s*($comp_month$)\s*', MASKSEP_REGEXP, '\s*', COMPYEAR_REGEXP, '$');
+    DOT_SLASH_DASH_COMPYEAR1_0_REGEXP CONSTANT VARCHAR COLLATE "C" := concat('^(', HHMMSSFS_PART_REGEXP, ')?\s*',
                                                                  DAYMM_REGEXP, '\s*(?:\.|/|-)\s*', DAYMM_REGEXP, '\s*(?:\.|/|-)\s*', COMPYEAR_REGEXP,
                                                                  '\s*(', HHMMSSFS_PART_REGEXP, ')?$');
-    DOT_SLASH_DASH_COMPYEAR1_1_REGEXP CONSTANT VARCHAR := concat('^', DAYMM_REGEXP, '\s*', MASKSEP_REGEXP, '\s*', DAYMM_REGEXP, '\s*', MASKSEP_REGEXP, '\s*', COMPYEAR_REGEXP, '$');
-    DOT_SLASH_DASH_SHORTYEAR_REGEXP CONSTANT VARCHAR := concat('^', DAYMM_REGEXP, '\s*', MASKSEP_REGEXP, '\s*', DAYMM_REGEXP, '\s*', MASKSEP_REGEXP, '\s*', SHORTYEAR_REGEXP, '$');
-    DOT_SLASH_DASH_FULLYEAR1_0_REGEXP CONSTANT VARCHAR := concat('^(', HHMMSSFS_PART_REGEXP, ')?\s*',
+    DOT_SLASH_DASH_COMPYEAR1_1_REGEXP CONSTANT VARCHAR COLLATE "C" := concat('^', DAYMM_REGEXP, '\s*', MASKSEP_REGEXP, '\s*', DAYMM_REGEXP, '\s*', MASKSEP_REGEXP, '\s*', COMPYEAR_REGEXP, '$');
+    DOT_SLASH_DASH_SHORTYEAR_REGEXP CONSTANT VARCHAR COLLATE "C" := concat('^', DAYMM_REGEXP, '\s*', MASKSEP_REGEXP, '\s*', DAYMM_REGEXP, '\s*', MASKSEP_REGEXP, '\s*', SHORTYEAR_REGEXP, '$');
+    DOT_SLASH_DASH_FULLYEAR1_0_REGEXP CONSTANT VARCHAR COLLATE "C" := concat('^(', HHMMSSFS_PART_REGEXP, ')?\s*',
                                                                  DAYMM_REGEXP, '\s*(?:\.|/|-)\s*', DAYMM_REGEXP, '\s*(?:\.|/|-)\s*', FULLYEAR_REGEXP,
                                                                  '\s*(', HHMMSSFS_PART_REGEXP, ')?$');
-    DOT_SLASH_DASH_FULLYEAR1_1_REGEXP CONSTANT VARCHAR := concat('^', DAYMM_REGEXP, '\s*', MASKSEP_REGEXP, '\s*', DAYMM_REGEXP, '\s*', MASKSEP_REGEXP, '\s*', FULLYEAR_REGEXP, '$');
-    FULLYEAR_DOT_SLASH_DASH1_0_REGEXP CONSTANT VARCHAR := concat('^(', HHMMSSFS_PART_REGEXP, ')?\s*',
+    DOT_SLASH_DASH_FULLYEAR1_1_REGEXP CONSTANT VARCHAR COLLATE "C" := concat('^', DAYMM_REGEXP, '\s*', MASKSEP_REGEXP, '\s*', DAYMM_REGEXP, '\s*', MASKSEP_REGEXP, '\s*', FULLYEAR_REGEXP, '$');
+    FULLYEAR_DOT_SLASH_DASH1_0_REGEXP CONSTANT VARCHAR COLLATE "C" := concat('^(', HHMMSSFS_PART_REGEXP, ')?\s*',
                                                                  FULLYEAR_REGEXP, '\s*', MASKSEP_REGEXP, '\s*', DAYMM_REGEXP, '\s*', MASKSEP_REGEXP, '\s*', DAYMM_REGEXP,
                                                                  '\s*(', HHMMSSFS_PART_REGEXP, ')?$');
-    FULLYEAR_DOT_SLASH_DASH1_1_REGEXP CONSTANT VARCHAR := concat('^', FULLYEAR_REGEXP, '\s*', MASKSEP_REGEXP, '\s*', DAYMM_REGEXP, '\s*', MASKSEP_REGEXP, '\s*', DAYMM_REGEXP, '$');
-    SHORT_DIGITMASK1_0_REGEXP CONSTANT VARCHAR := concat('^(', HHMMSSFS_PART_REGEXP, ')?\s*\d{6}\s*(', HHMMSSFS_PART_REGEXP, ')?$');
-    FULL_DIGITMASK1_0_REGEXP CONSTANT VARCHAR := concat('^(', HHMMSSFS_PART_REGEXP, ')?\s*\d{8}\s*(', HHMMSSFS_PART_REGEXP, ')?$');
+    FULLYEAR_DOT_SLASH_DASH1_1_REGEXP CONSTANT VARCHAR COLLATE "C" := concat('^', FULLYEAR_REGEXP, '\s*', MASKSEP_REGEXP, '\s*', DAYMM_REGEXP, '\s*', MASKSEP_REGEXP, '\s*', DAYMM_REGEXP, '$');
+    SHORT_DIGITMASK1_0_REGEXP CONSTANT VARCHAR COLLATE "C" := concat('^(', HHMMSSFS_PART_REGEXP, ')?\s*\d{6}\s*(', HHMMSSFS_PART_REGEXP, ')?$');
+    FULL_DIGITMASK1_0_REGEXP CONSTANT VARCHAR COLLATE "C" := concat('^(', HHMMSSFS_PART_REGEXP, ')?\s*\d{8}\s*(', HHMMSSFS_PART_REGEXP, ')?$');
 BEGIN
     v_datatype := trim(p_datatype);
     v_datetimestring := upper(trim(p_datetimestring));
@@ -1361,16 +1361,16 @@ BEGIN
     v_compmonth_regexp := array_to_string(array_cat(ARRAY(SELECT jsonb_array_elements_text(v_lang_metadata_json -> 'months_shortnames')),
                                                     ARRAY(SELECT jsonb_array_elements_text(v_lang_metadata_json -> 'months_names'))), '|');
 
-    IF (v_datetimestring ~* replace(DEFMASK1_0_REGEXP, '$comp_month$', v_compmonth_regexp) OR
-        v_datetimestring ~* replace(DEFMASK2_0_REGEXP, '$comp_month$', v_compmonth_regexp) OR
-        v_datetimestring ~* replace(DEFMASK3_0_REGEXP, '$comp_month$', v_compmonth_regexp) OR
-        v_datetimestring ~* replace(DEFMASK4_0_REGEXP, '$comp_month$', v_compmonth_regexp) OR
-        v_datetimestring ~* replace(DEFMASK5_0_REGEXP, '$comp_month$', v_compmonth_regexp) OR
-        v_datetimestring ~* replace(DEFMASK6_0_REGEXP, '$comp_month$', v_compmonth_regexp) OR
-        v_datetimestring ~* replace(DEFMASK7_0_REGEXP, '$comp_month$', v_compmonth_regexp) OR
-        v_datetimestring ~* replace(DEFMASK8_0_REGEXP, '$comp_month$', v_compmonth_regexp) OR
-        v_datetimestring ~* replace(DEFMASK9_0_REGEXP, '$comp_month$', v_compmonth_regexp) OR
-        v_datetimestring ~* replace(DEFMASK10_0_REGEXP, '$comp_month$', v_compmonth_regexp))
+    IF (v_datetimestring ~* pg_catalog.replace(DEFMASK1_0_REGEXP, '$comp_month$', v_compmonth_regexp) OR
+        v_datetimestring ~* pg_catalog.replace(DEFMASK2_0_REGEXP, '$comp_month$', v_compmonth_regexp) OR
+        v_datetimestring ~* pg_catalog.replace(DEFMASK3_0_REGEXP, '$comp_month$', v_compmonth_regexp) OR
+        v_datetimestring ~* pg_catalog.replace(DEFMASK4_0_REGEXP, '$comp_month$', v_compmonth_regexp) OR
+        v_datetimestring ~* pg_catalog.replace(DEFMASK5_0_REGEXP, '$comp_month$', v_compmonth_regexp) OR
+        v_datetimestring ~* pg_catalog.replace(DEFMASK6_0_REGEXP, '$comp_month$', v_compmonth_regexp) OR
+        v_datetimestring ~* pg_catalog.replace(DEFMASK7_0_REGEXP, '$comp_month$', v_compmonth_regexp) OR
+        v_datetimestring ~* pg_catalog.replace(DEFMASK8_0_REGEXP, '$comp_month$', v_compmonth_regexp) OR
+        v_datetimestring ~* pg_catalog.replace(DEFMASK9_0_REGEXP, '$comp_month$', v_compmonth_regexp) OR
+        v_datetimestring ~* pg_catalog.replace(DEFMASK10_0_REGEXP, '$comp_month$', v_compmonth_regexp))
     THEN
         IF ((v_style IN (127, 130, 131) AND v_res_datatype IN ('DATETIME', 'SMALLDATETIME')) OR
             (v_style IN (130, 131) AND v_res_datatype = 'DATETIME2'))
@@ -1378,86 +1378,86 @@ BEGIN
             RAISE invalid_datetime_format;
         END IF;
 
-        IF ((v_datestring ~* replace(DEFMASK1_2_REGEXP, '$comp_month$', v_compmonth_regexp) OR
-             v_datestring ~* replace(DEFMASK2_2_REGEXP, '$comp_month$', v_compmonth_regexp) OR
-             v_datestring ~* replace(DEFMASK3_2_REGEXP, '$comp_month$', v_compmonth_regexp) OR
-             v_datestring ~* replace(DEFMASK4_2_REGEXP, '$comp_month$', v_compmonth_regexp) OR
-             v_datestring ~* replace(DEFMASK5_2_REGEXP, '$comp_month$', v_compmonth_regexp) OR
-             v_datestring ~* replace(DEFMASK6_2_REGEXP, '$comp_month$', v_compmonth_regexp) OR
-             v_datestring ~* replace(DEFMASK7_2_REGEXP, '$comp_month$', v_compmonth_regexp) OR
-             v_datestring ~* replace(DEFMASK8_2_REGEXP, '$comp_month$', v_compmonth_regexp) OR
-             v_datestring ~* replace(DEFMASK9_2_REGEXP, '$comp_month$', v_compmonth_regexp)) AND
+        IF ((v_datestring ~* pg_catalog.replace(DEFMASK1_2_REGEXP, '$comp_month$', v_compmonth_regexp) OR
+             v_datestring ~* pg_catalog.replace(DEFMASK2_2_REGEXP, '$comp_month$', v_compmonth_regexp) OR
+             v_datestring ~* pg_catalog.replace(DEFMASK3_2_REGEXP, '$comp_month$', v_compmonth_regexp) OR
+             v_datestring ~* pg_catalog.replace(DEFMASK4_2_REGEXP, '$comp_month$', v_compmonth_regexp) OR
+             v_datestring ~* pg_catalog.replace(DEFMASK5_2_REGEXP, '$comp_month$', v_compmonth_regexp) OR
+             v_datestring ~* pg_catalog.replace(DEFMASK6_2_REGEXP, '$comp_month$', v_compmonth_regexp) OR
+             v_datestring ~* pg_catalog.replace(DEFMASK7_2_REGEXP, '$comp_month$', v_compmonth_regexp) OR
+             v_datestring ~* pg_catalog.replace(DEFMASK8_2_REGEXP, '$comp_month$', v_compmonth_regexp) OR
+             v_datestring ~* pg_catalog.replace(DEFMASK9_2_REGEXP, '$comp_month$', v_compmonth_regexp)) AND
             v_res_datatype = 'DATETIME2')
         THEN
             RAISE invalid_datetime_format;
         END IF;
 
-        IF (v_datestring ~* replace(DEFMASK1_1_REGEXP, '$comp_month$', v_compmonth_regexp))
+        IF (v_datestring ~* pg_catalog.replace(DEFMASK1_1_REGEXP, '$comp_month$', v_compmonth_regexp))
         THEN
-            v_regmatch_groups := regexp_matches(v_datestring, replace(DEFMASK1_1_REGEXP, '$comp_month$', v_compmonth_regexp), 'gi');
+            v_regmatch_groups := regexp_matches(v_datestring, pg_catalog.replace(DEFMASK1_1_REGEXP, '$comp_month$', v_compmonth_regexp), 'gi');
             v_day := v_regmatch_groups[2];
             v_month := sys.babelfish_get_monthnum_by_name(v_regmatch_groups[1], v_lang_metadata_json);
             v_year := sys.babelfish_get_full_year(v_regmatch_groups[3]);
 
-        ELSIF (v_datestring ~* replace(DEFMASK2_1_REGEXP, '$comp_month$', v_compmonth_regexp))
+        ELSIF (v_datestring ~* pg_catalog.replace(DEFMASK2_1_REGEXP, '$comp_month$', v_compmonth_regexp))
         THEN
-            v_regmatch_groups := regexp_matches(v_datestring, replace(DEFMASK2_1_REGEXP, '$comp_month$', v_compmonth_regexp), 'gi');
+            v_regmatch_groups := regexp_matches(v_datestring, pg_catalog.replace(DEFMASK2_1_REGEXP, '$comp_month$', v_compmonth_regexp), 'gi');
             v_day := v_regmatch_groups[1];
             v_month := sys.babelfish_get_monthnum_by_name(v_regmatch_groups[2], v_lang_metadata_json);
             v_year := sys.babelfish_get_full_year(v_regmatch_groups[3]);
 
-        ELSIF (v_datestring ~* replace(DEFMASK3_1_REGEXP, '$comp_month$', v_compmonth_regexp))
+        ELSIF (v_datestring ~* pg_catalog.replace(DEFMASK3_1_REGEXP, '$comp_month$', v_compmonth_regexp))
         THEN
-            v_regmatch_groups := regexp_matches(v_datestring, replace(DEFMASK3_1_REGEXP, '$comp_month$', v_compmonth_regexp), 'gi');
+            v_regmatch_groups := regexp_matches(v_datestring, pg_catalog.replace(DEFMASK3_1_REGEXP, '$comp_month$', v_compmonth_regexp), 'gi');
             v_day := v_regmatch_groups[3];
             v_month := sys.babelfish_get_monthnum_by_name(v_regmatch_groups[2], v_lang_metadata_json);
             v_year := v_regmatch_groups[1];
 
-        ELSIF (v_datestring ~* replace(DEFMASK4_1_REGEXP, '$comp_month$', v_compmonth_regexp))
+        ELSIF (v_datestring ~* pg_catalog.replace(DEFMASK4_1_REGEXP, '$comp_month$', v_compmonth_regexp))
         THEN
-            v_regmatch_groups := regexp_matches(v_datestring, replace(DEFMASK4_1_REGEXP, '$comp_month$', v_compmonth_regexp), 'gi');
+            v_regmatch_groups := regexp_matches(v_datestring, pg_catalog.replace(DEFMASK4_1_REGEXP, '$comp_month$', v_compmonth_regexp), 'gi');
             v_day := v_regmatch_groups[2];
             v_month := sys.babelfish_get_monthnum_by_name(v_regmatch_groups[3], v_lang_metadata_json);
             v_year := v_regmatch_groups[1];
 
-        ELSIF (v_datestring ~* replace(DEFMASK5_1_REGEXP, '$comp_month$', v_compmonth_regexp))
+        ELSIF (v_datestring ~* pg_catalog.replace(DEFMASK5_1_REGEXP, '$comp_month$', v_compmonth_regexp))
         THEN
-            v_regmatch_groups := regexp_matches(v_datestring, replace(DEFMASK5_1_REGEXP, '$comp_month$', v_compmonth_regexp), 'gi');
+            v_regmatch_groups := regexp_matches(v_datestring, pg_catalog.replace(DEFMASK5_1_REGEXP, '$comp_month$', v_compmonth_regexp), 'gi');
             v_day := v_regmatch_groups[1];
             v_month := sys.babelfish_get_monthnum_by_name(v_regmatch_groups[3], v_lang_metadata_json);
             v_year := sys.babelfish_get_full_year(v_regmatch_groups[2]);
 
-        ELSIF (v_datestring ~* replace(DEFMASK6_1_REGEXP, '$comp_month$', v_compmonth_regexp))
+        ELSIF (v_datestring ~* pg_catalog.replace(DEFMASK6_1_REGEXP, '$comp_month$', v_compmonth_regexp))
         THEN
-            v_regmatch_groups := regexp_matches(v_datestring, replace(DEFMASK6_1_REGEXP, '$comp_month$', v_compmonth_regexp), 'gi');
+            v_regmatch_groups := regexp_matches(v_datestring, pg_catalog.replace(DEFMASK6_1_REGEXP, '$comp_month$', v_compmonth_regexp), 'gi');
             v_day := v_regmatch_groups[3];
             v_month := sys.babelfish_get_monthnum_by_name(v_regmatch_groups[1], v_lang_metadata_json);
             v_year := v_regmatch_groups[2];
 
-        ELSIF (v_datestring ~* replace(DEFMASK7_1_REGEXP, '$comp_month$', v_compmonth_regexp))
+        ELSIF (v_datestring ~* pg_catalog.replace(DEFMASK7_1_REGEXP, '$comp_month$', v_compmonth_regexp))
         THEN
-            v_regmatch_groups := regexp_matches(v_datestring, replace(DEFMASK7_1_REGEXP, '$comp_month$', v_compmonth_regexp), 'gi');
+            v_regmatch_groups := regexp_matches(v_datestring, pg_catalog.replace(DEFMASK7_1_REGEXP, '$comp_month$', v_compmonth_regexp), 'gi');
             v_day := v_regmatch_groups[2];
             v_month := sys.babelfish_get_monthnum_by_name(v_regmatch_groups[1], v_lang_metadata_json);
             v_year := sys.babelfish_get_full_year(v_regmatch_groups[3]);
 
-        ELSIF (v_datestring ~* replace(DEFMASK8_1_REGEXP, '$comp_month$', v_compmonth_regexp))
+        ELSIF (v_datestring ~* pg_catalog.replace(DEFMASK8_1_REGEXP, '$comp_month$', v_compmonth_regexp))
         THEN
-            v_regmatch_groups := regexp_matches(v_datestring, replace(DEFMASK8_1_REGEXP, '$comp_month$', v_compmonth_regexp), 'gi');
+            v_regmatch_groups := regexp_matches(v_datestring, pg_catalog.replace(DEFMASK8_1_REGEXP, '$comp_month$', v_compmonth_regexp), 'gi');
             v_day := '01';
             v_month := sys.babelfish_get_monthnum_by_name(v_regmatch_groups[2], v_lang_metadata_json);
             v_year := v_regmatch_groups[1];
 
-        ELSIF (v_datestring ~* replace(DEFMASK9_1_REGEXP, '$comp_month$', v_compmonth_regexp))
+        ELSIF (v_datestring ~* pg_catalog.replace(DEFMASK9_1_REGEXP, '$comp_month$', v_compmonth_regexp))
         THEN
-            v_regmatch_groups := regexp_matches(v_datestring, replace(DEFMASK9_1_REGEXP, '$comp_month$', v_compmonth_regexp), 'gi');
+            v_regmatch_groups := regexp_matches(v_datestring, pg_catalog.replace(DEFMASK9_1_REGEXP, '$comp_month$', v_compmonth_regexp), 'gi');
             v_day := '01';
             v_month := sys.babelfish_get_monthnum_by_name(v_regmatch_groups[1], v_lang_metadata_json);
             v_year := v_regmatch_groups[2];
 
-        ELSIF (v_datestring ~* replace(DEFMASK10_1_REGEXP, '$comp_month$', v_compmonth_regexp))
+        ELSIF (v_datestring ~* pg_catalog.replace(DEFMASK10_1_REGEXP, '$comp_month$', v_compmonth_regexp))
         THEN
-            v_regmatch_groups := regexp_matches(v_datestring, replace(DEFMASK10_1_REGEXP, '$comp_month$', v_compmonth_regexp), 'gi');
+            v_regmatch_groups := regexp_matches(v_datestring, pg_catalog.replace(DEFMASK10_1_REGEXP, '$comp_month$', v_compmonth_regexp), 'gi');
             v_day := v_regmatch_groups[1];
             v_month := sys.babelfish_get_monthnum_by_name(v_regmatch_groups[2], v_lang_metadata_json);
             v_year := sys.babelfish_get_full_year(v_regmatch_groups[3]);
@@ -1796,29 +1796,29 @@ DECLARE
     v_hours SMALLINT;
     v_style SMALLINT;
     v_scale SMALLINT;
-    v_daypart VARCHAR;
-    v_seconds VARCHAR;
+    v_daypart VARCHAR COLLATE "C";
+    v_seconds VARCHAR COLLATE "C";
     v_minutes SMALLINT;
-    v_fseconds VARCHAR;
-    v_datatype VARCHAR;
-    v_timestring VARCHAR;
-    v_err_message VARCHAR;
-    v_src_datatype VARCHAR;
-    v_timeunit_mask VARCHAR;
+    v_fseconds VARCHAR COLLATE "C";
+    v_datatype VARCHAR COLLATE "C";
+    v_timestring VARCHAR COLLATE "C";
+    v_err_message VARCHAR COLLATE "C";
+    v_src_datatype VARCHAR COLLATE "C";
+    v_timeunit_mask VARCHAR COLLATE "C";
     v_datatype_groups TEXT[];
     v_regmatch_groups TEXT[];
-    AMPM_REGEXP CONSTANT VARCHAR := '\s*([AP]M)';
-    TIMEUNIT_REGEXP CONSTANT VARCHAR := '\s*(\d{1,2})\s*';
-    FRACTSECS_REGEXP CONSTANT VARCHAR := '\s*(\d{1,9})';
-    HHMMSSFS_REGEXP CONSTANT VARCHAR := concat('^', TIMEUNIT_REGEXP,
+    AMPM_REGEXP CONSTANT VARCHAR COLLATE "C" := '\s*([AP]M)';
+    TIMEUNIT_REGEXP CONSTANT VARCHAR COLLATE "C" := '\s*(\d{1,2})\s*';
+    FRACTSECS_REGEXP CONSTANT VARCHAR COLLATE "C" := '\s*(\d{1,9})';
+    HHMMSSFS_REGEXP CONSTANT VARCHAR COLLATE "C" := concat('^', TIMEUNIT_REGEXP,
                                                '\:', TIMEUNIT_REGEXP,
                                                '\:', TIMEUNIT_REGEXP,
                                                '(?:\.|\:)', FRACTSECS_REGEXP, '$');
-    HHMMSS_REGEXP CONSTANT VARCHAR := concat('^', TIMEUNIT_REGEXP, '\:', TIMEUNIT_REGEXP, '\:', TIMEUNIT_REGEXP, '$');
-    HHMMFS_REGEXP CONSTANT VARCHAR := concat('^', TIMEUNIT_REGEXP, '\:', TIMEUNIT_REGEXP, '\.', FRACTSECS_REGEXP, '$');
-    HHMM_REGEXP CONSTANT VARCHAR := concat('^', TIMEUNIT_REGEXP, '\:', TIMEUNIT_REGEXP, '$');
-    HH_REGEXP CONSTANT VARCHAR := concat('^', TIMEUNIT_REGEXP, '$');
-    DATATYPE_REGEXP CONSTANT VARCHAR := '^(TIME)\s*(?:\()?\s*((?:-)?\d+)?\s*(?:\))?$';
+    HHMMSS_REGEXP CONSTANT VARCHAR COLLATE "C" := concat('^', TIMEUNIT_REGEXP, '\:', TIMEUNIT_REGEXP, '\:', TIMEUNIT_REGEXP, '$');
+    HHMMFS_REGEXP CONSTANT VARCHAR COLLATE "C" := concat('^', TIMEUNIT_REGEXP, '\:', TIMEUNIT_REGEXP, '\.', FRACTSECS_REGEXP, '$');
+    HHMM_REGEXP CONSTANT VARCHAR COLLATE "C" := concat('^', TIMEUNIT_REGEXP, '\:', TIMEUNIT_REGEXP, '$');
+    HH_REGEXP CONSTANT VARCHAR COLLATE "C" := concat('^', TIMEUNIT_REGEXP, '$');
+    DATATYPE_REGEXP CONSTANT VARCHAR COLLATE "C" := '^(TIME)\s*(?:\()?\s*((?:-)?\d+)?\s*(?:\))?$';
 BEGIN
     v_datatype := trim(regexp_replace(p_datatype, 'DATETIME', 'TIME', 'gi'));
     v_timestring := upper(trim(p_timestring));
@@ -1945,26 +1945,26 @@ RETURNS TEXT
 AS
 $BODY$
 DECLARE
-    v_hours VARCHAR;
+    v_hours VARCHAR COLLATE "C";
     v_style SMALLINT;
     v_scale SMALLINT;
-    v_resmask VARCHAR;
-    v_fseconds VARCHAR;
-    v_datatype VARCHAR;
-    v_resstring VARCHAR;
-    v_lengthexpr VARCHAR;
+    v_resmask VARCHAR COLLATE "C";
+    v_fseconds VARCHAR COLLATE "C";
+    v_datatype VARCHAR COLLATE "C";
+    v_resstring VARCHAR COLLATE "C";
+    v_lengthexpr VARCHAR COLLATE "C";
     v_res_length SMALLINT;
-    v_res_datatype VARCHAR;
-    v_src_datatype VARCHAR;
+    v_res_datatype VARCHAR COLLATE "C";
+    v_src_datatype VARCHAR COLLATE "C";
     v_res_maxlength SMALLINT;
     VARCHAR_MAX CONSTANT SMALLINT := 8000;
     NVARCHAR_MAX CONSTANT SMALLINT := 4000;
     -- We use the regex below to make sure input p_datatype is one of them
-    DATATYPE_REGEXP CONSTANT VARCHAR := '^\s*(CHAR|NCHAR|VARCHAR|NVARCHAR|CHARACTER VARYING)\s*$';
+    DATATYPE_REGEXP CONSTANT VARCHAR COLLATE "C" := '^\s*(CHAR|NCHAR|VARCHAR|NVARCHAR|CHARACTER VARYING)\s*$';
     -- We use the regex below to get the length of the datatype, if specified
     -- For example, to get the '10' out of 'varchar(10)'
-    DATATYPE_MASK_REGEXP CONSTANT VARCHAR := '^\s*(?:CHAR|NCHAR|VARCHAR|NVARCHAR|CHARACTER VARYING)\s*\(\s*(\d+|MAX)\s*\)\s*$';
-    SRCDATATYPE_MASK_REGEXP VARCHAR := '^\s*(?:TIME)\s*(?:\s*\(\s*(\d+)\s*\)\s*)?\s*$';
+    DATATYPE_MASK_REGEXP CONSTANT VARCHAR COLLATE "C" := '^\s*(?:CHAR|NCHAR|VARCHAR|NVARCHAR|CHARACTER VARYING)\s*\(\s*(\d+|MAX)\s*\)\s*$';
+    SRCDATATYPE_MASK_REGEXP VARCHAR COLLATE "C" := '^\s*(?:TIME)\s*(?:\s*\(\s*(\d+)\s*\)\s*)?\s*$';
 BEGIN
     v_datatype := upper(trim(p_datatype));
     v_src_datatype := upper(trim(p_src_datatype));
@@ -2250,14 +2250,15 @@ BEGIN
 END;
 $body$
 LANGUAGE 'plpgsql';
+
 CREATE OR REPLACE FUNCTION sys.babelfish_get_lang_metadata_json(IN p_lang_spec_culture TEXT)
 RETURNS JSONB
 AS
 $BODY$
 DECLARE
-    v_locale_parts TEXT[];
+    v_locale_parts TEXT[] COLLATE "C";
     v_lang_data_jsonb JSONB;
-    v_lang_spec_culture VARCHAR;
+    v_lang_spec_culture VARCHAR COLLATE "C";
     v_is_cached BOOLEAN := FALSE;
 BEGIN
     v_lang_spec_culture := upper(trim(p_lang_spec_culture));
@@ -2274,17 +2275,18 @@ BEGIN
 
         IF (v_lang_data_jsonb IS NULL)
         THEN
+            v_lang_spec_culture := upper(regexp_replace(v_lang_spec_culture, '-\s*', '_', 'gi'));
             IF (v_lang_spec_culture IN ('AR', 'FI') OR
-                v_lang_spec_culture ~ '-')
+                v_lang_spec_culture ~ '_')
             THEN
                 SELECT lang_data_jsonb
                   INTO STRICT v_lang_data_jsonb
-                  FROM sys.syslanguages
+                  FROM sys.babelfish_syslanguages
                  WHERE spec_culture = v_lang_spec_culture;
             ELSE
                 SELECT lang_data_jsonb
                   INTO STRICT v_lang_data_jsonb
-                  FROM sys.syslanguages
+                  FROM sys.babelfish_syslanguages
                  WHERE lang_name_mssql = v_lang_spec_culture
                     OR lang_alias_mssql = v_lang_spec_culture;
             END IF;
@@ -2299,7 +2301,7 @@ BEGIN
                                   ELSE substring(v_lang_spec_culture, '(.*)(?:\.)')
                                END;
 
-        v_lang_spec_culture := upper(regexp_replace(v_lang_spec_culture, '_|,\s*', '-', 'gi'));
+        v_lang_spec_culture := upper(regexp_replace(v_lang_spec_culture, ',\s*', '_', 'gi'));
 
         BEGIN
             v_lang_data_jsonb := nullif(current_setting(format('sys.lang_metadata_json.%s',
@@ -2316,24 +2318,24 @@ BEGIN
                 THEN
                     SELECT lang_data_jsonb
                       INTO STRICT v_lang_data_jsonb
-                      FROM sys.syslanguages
+                      FROM sys.babelfish_syslanguages
                      WHERE spec_culture = v_lang_spec_culture;
                 ELSE
                     v_locale_parts := string_to_array(v_lang_spec_culture, '-');
 
                     SELECT lang_data_jsonb
                       INTO STRICT v_lang_data_jsonb
-                      FROM sys.syslanguages
+                      FROM sys.babelfish_syslanguages
                      WHERE lang_name_pg = v_locale_parts[1]
                        AND territory = v_locale_parts[2];
                 END IF;
             EXCEPTION
                 WHEN OTHERS THEN
-                    v_lang_spec_culture := 'EN-US';
+                    v_lang_spec_culture := 'EN_US';
 
                     SELECT lang_data_jsonb
                       INTO v_lang_data_jsonb
-                      FROM sys.syslanguages
+                      FROM sys.babelfish_syslanguages
                      WHERE spec_culture = v_lang_spec_culture;
             END;
         ELSE
@@ -2353,7 +2355,7 @@ EXCEPTION
     WHEN invalid_text_representation THEN
         RAISE USING MESSAGE := format('The language metadata JSON value extracted from chache is not a valid JSON object.',
                                       p_lang_spec_culture),
-                    HINT := 'Drop the current session, fix the appropriate record in "sys.syslanguages" table, and try again after reconnection.';
+                    HINT := 'Drop the current session, fix the appropriate record in "sys.babelfish_syslanguages" table, and try again after reconnection.';
 
     WHEN OTHERS THEN
         RAISE USING MESSAGE := format('"%s" is not a valid special culture or language name parameter.',
@@ -2373,12 +2375,12 @@ $BODY$
 DECLARE
     v_scale SMALLINT;
     v_decplaces INTEGER;
-    v_fractsecs VARCHAR;
-    v_pureplaces VARCHAR;
+    v_fractsecs VARCHAR COLLATE "C";
+    v_pureplaces VARCHAR COLLATE "C";
     v_rnd_fractsecs INTEGER;
     v_fractsecs_len INTEGER;
     v_pureplaces_len INTEGER;
-    v_err_message VARCHAR;
+    v_err_message VARCHAR COLLATE "C";
 BEGIN
     v_fractsecs := trim(p_fractsecs);
     v_fractsecs_len := char_length(v_fractsecs);
@@ -2396,7 +2398,7 @@ BEGIN
 
     v_rnd_fractsecs := round(v_fractsecs::INTEGER, (v_pureplaces_len - (v_scale - (v_fractsecs_len - v_pureplaces_len))) * (-1));
 
-    v_fractsecs := concat(replace(rpad('', v_decplaces), ' ', '0'), v_rnd_fractsecs);
+    v_fractsecs := concat(pg_catalog.replace(rpad('', v_decplaces), ' ', '0'), v_rnd_fractsecs);
 
     RETURN substring(v_fractsecs, 1, CASE
                                         WHEN (v_scale >= 7) THEN 6
@@ -2482,27 +2484,27 @@ RETURNS VARCHAR
 AS
 $BODY$
 DECLARE
-    v_hours VARCHAR;
-    v_minutes VARCHAR;
-    v_seconds VARCHAR;
-    v_fractsecs VARCHAR;
-    v_daypart VARCHAR;
-    v_timepart VARCHAR;
-    v_timeunit VARCHAR;
-    v_err_message VARCHAR;
-    v_timeunit_mask VARCHAR;
+    v_hours VARCHAR COLLATE "C";
+    v_minutes VARCHAR COLLATE "C";
+    v_seconds VARCHAR COLLATE "C";
+    v_fractsecs VARCHAR COLLATE "C";
+    v_daypart VARCHAR COLLATE "C";
+    v_timepart VARCHAR COLLATE "C";
+    v_timeunit VARCHAR COLLATE "C";
+    v_err_message VARCHAR COLLATE "C";
+    v_timeunit_mask VARCHAR COLLATE "C";
     v_regmatch_groups TEXT[];
-    AMPM_REGEXP CONSTANT VARCHAR := '\s*([AP]M)';
-    TIMEUNIT_REGEXP CONSTANT VARCHAR := '\s*(\d{1,2})\s*';
-    FRACTSECS_REGEXP CONSTANT VARCHAR := '\s*(\d{1,9})';
-    HHMMSSFS_REGEXP CONSTANT VARCHAR := concat('^', TIMEUNIT_REGEXP,
+    AMPM_REGEXP CONSTANT VARCHAR COLLATE "C" := '\s*([AP]M)';
+    TIMEUNIT_REGEXP CONSTANT VARCHAR COLLATE "C" := '\s*(\d{1,2})\s*';
+    FRACTSECS_REGEXP CONSTANT VARCHAR COLLATE "C" := '\s*(\d{1,9})';
+    HHMMSSFS_REGEXP CONSTANT VARCHAR COLLATE "C" := concat('^', TIMEUNIT_REGEXP,
                                                '\:', TIMEUNIT_REGEXP,
                                                '\:', TIMEUNIT_REGEXP,
                                                '(?:\.|\:)', FRACTSECS_REGEXP, '$');
-    HHMMSS_REGEXP CONSTANT VARCHAR := concat('^', TIMEUNIT_REGEXP, '\:', TIMEUNIT_REGEXP, '\:', TIMEUNIT_REGEXP, '$');
-    HHMMFS_REGEXP CONSTANT VARCHAR := concat('^', TIMEUNIT_REGEXP, '\:', TIMEUNIT_REGEXP, '\.', FRACTSECS_REGEXP, '$');
-    HHMM_REGEXP CONSTANT VARCHAR := concat('^', TIMEUNIT_REGEXP, '\:', TIMEUNIT_REGEXP, '$');
-    HH_REGEXP CONSTANT VARCHAR := concat('^', TIMEUNIT_REGEXP, '$');
+    HHMMSS_REGEXP CONSTANT VARCHAR COLLATE "C" := concat('^', TIMEUNIT_REGEXP, '\:', TIMEUNIT_REGEXP, '\:', TIMEUNIT_REGEXP, '$');
+    HHMMFS_REGEXP CONSTANT VARCHAR COLLATE "C" := concat('^', TIMEUNIT_REGEXP, '\:', TIMEUNIT_REGEXP, '\.', FRACTSECS_REGEXP, '$');
+    HHMM_REGEXP CONSTANT VARCHAR COLLATE "C" := concat('^', TIMEUNIT_REGEXP, '\:', TIMEUNIT_REGEXP, '$');
+    HH_REGEXP CONSTANT VARCHAR COLLATE "C" := concat('^', TIMEUNIT_REGEXP, '$');
 BEGIN
     v_timepart := upper(trim(p_timepart));
     v_timeunit := upper(trim(p_timeunit));
@@ -2671,17 +2673,38 @@ end
 $body$
 language 'plpgsql';
 
--- Remove closing square brackets at both ends, otherwise do nothing.
-CREATE OR REPLACE FUNCTION sys.babelfish_single_unbracket_name(IN name TEXT)
+-- Remove single pair of either square brackets or double-quotes from outer ends if present
+-- If name begins with a delimiter but does not end with the matching delimiter return NULL
+-- Otherwise, return the name unchanged
+CREATE OR REPLACE FUNCTION babelfish_remove_delimiter_pair(IN name TEXT)
 RETURNS TEXT AS
 $BODY$
 BEGIN
-    IF length(name) >= 2 AND left(name, 1) = '[' AND right(name, 1) = ']' THEN
+    IF name IN('[' COLLATE "C", ']' COLLATE "C", '"' COLLATE "C") THEN
+        RETURN NULL;
+
+    ELSIF length(name) >= 2 AND left(name, 1) = '[' COLLATE "C" AND right(name, 1) = ']' COLLATE "C" THEN
         IF length(name) = 2 THEN
             RETURN '';
         ELSE
             RETURN substring(name from 2 for length(name)-2);
         END IF;
+    ELSIF length(name) >= 2 AND left(name, 1) = '[' COLLATE "C" AND right(name, 1) != ']' COLLATE "C" THEN
+        RETURN NULL;
+    ELSIF length(name) >= 2 AND left(name, 1) != '[' COLLATE "C" AND right(name, 1) = ']' COLLATE "C" THEN
+        RETURN NULL;
+
+    ELSIF length(name) >= 2 AND left(name, 1) = '"' COLLATE "C" AND right(name, 1) = '"' COLLATE "C" THEN
+        IF length(name) = 2 THEN
+            RETURN '';
+        ELSE
+            RETURN substring(name from 2 for length(name)-2);
+        END IF;
+    ELSIF length(name) >= 2 AND left(name, 1) = '"' COLLATE "C" AND right(name, 1) != '"' COLLATE "C" THEN
+        RETURN NULL;
+    ELSIF length(name) >= 2 AND left(name, 1) != '"' COLLATE "C" AND right(name, 1) = '"' COLLATE "C" THEN
+        RETURN NULL;
+    
     END IF;
     RETURN name;
 END;
@@ -2719,52 +2742,52 @@ RETURNS DATE
 AS
 $BODY$
 DECLARE
-    v_day VARCHAR;
+    v_day VARCHAR COLLATE "C";
     v_year SMALLINT;
-    v_month VARCHAR;
+    v_month VARCHAR COLLATE "C";
     v_res_date DATE;
     v_hijridate DATE;
-    v_culture VARCHAR;
+    v_culture VARCHAR COLLATE "C";
     v_dayparts TEXT[];
-    v_resmask VARCHAR;
-    v_raw_year VARCHAR;
-    v_left_part VARCHAR;
-    v_right_part VARCHAR;
-    v_resmask_fi VARCHAR;
-    v_datestring VARCHAR;
-    v_timestring VARCHAR;
-    v_correctnum VARCHAR;
+    v_resmask VARCHAR COLLATE "C";
+    v_raw_year VARCHAR COLLATE "C";
+    v_left_part VARCHAR COLLATE "C";
+    v_right_part VARCHAR COLLATE "C";
+    v_resmask_fi VARCHAR COLLATE "C";
+    v_datestring VARCHAR COLLATE "C";
+    v_timestring VARCHAR COLLATE "C";
+    v_correctnum VARCHAR COLLATE "C";
     v_weekdaynum SMALLINT;
-    v_err_message VARCHAR;
-    v_date_format VARCHAR;
+    v_err_message VARCHAR COLLATE "C";
+    v_date_format VARCHAR COLLATE "C";
     v_weekdaynames TEXT[];
     v_hours SMALLINT := 0;
     v_minutes SMALLINT := 0;
     v_seconds NUMERIC := 0;
     v_found BOOLEAN := TRUE;
-    v_compday_regexp VARCHAR;
+    v_compday_regexp VARCHAR COLLATE "C";
     v_regmatch_groups TEXT[];
-    v_compmonth_regexp VARCHAR;
+    v_compmonth_regexp VARCHAR COLLATE "C";
     v_lang_metadata_json JSONB;
     v_resmask_cnt SMALLINT := 10;
-    DAYMM_REGEXP CONSTANT VARCHAR := '(\d{1,2})';
-    FULLYEAR_REGEXP CONSTANT VARCHAR := '(\d{3,4})';
-    SHORTYEAR_REGEXP CONSTANT VARCHAR := '(\d{1,2})';
-    COMPYEAR_REGEXP CONSTANT VARCHAR := '(\d{1,4})';
-    AMPM_REGEXP CONSTANT VARCHAR := '(?:[AP]M|ص|م)';
-    TIMEUNIT_REGEXP CONSTANT VARCHAR := '\s*\d{1,2}\s*';
-    MASKSEPONE_REGEXP CONSTANT VARCHAR := '\s*(?:/|-)?';
-    MASKSEPTWO_REGEXP CONSTANT VARCHAR := '\s*(?:\s|/|-|\.|,)';
-    MASKSEPTWO_FI_REGEXP CONSTANT VARCHAR := '\s*(?:\s|/|-|,)';
-    MASKSEPTHREE_REGEXP CONSTANT VARCHAR := '\s*(?:/|-|\.|,)';
-    TIME_MASKSEP_REGEXP CONSTANT VARCHAR := '(?:\s|\.|,)*';
-    TIME_MASKSEP_FI_REGEXP CONSTANT VARCHAR := '(?:\s|,)*';
-    WEEKDAYAMPM_START_REGEXP CONSTANT VARCHAR := '(^|[[:digit:][:space:]\.,])';
-    WEEKDAYAMPM_END_REGEXP CONSTANT VARCHAR := '([[:digit:][:space:]\.,]|$)(?=[^/-]|$)';
-    CORRECTNUM_REGEXP CONSTANT VARCHAR := '(?:([+-]\d{1,4})(?:[[:space:]\.,]|[AP]M|ص|م|$))';
-    ANNO_DOMINI_REGEXP VARCHAR := '(AD|A\.D\.)';
-    ANNO_DOMINI_COMPREGEXP VARCHAR := concat(WEEKDAYAMPM_START_REGEXP, ANNO_DOMINI_REGEXP, WEEKDAYAMPM_END_REGEXP);
-    HHMMSSFS_PART_REGEXP CONSTANT VARCHAR :=
+    DAYMM_REGEXP CONSTANT VARCHAR COLLATE "C" := '(\d{1,2})';
+    FULLYEAR_REGEXP CONSTANT VARCHAR COLLATE "C" := '(\d{3,4})';
+    SHORTYEAR_REGEXP CONSTANT VARCHAR COLLATE "C" := '(\d{1,2})';
+    COMPYEAR_REGEXP CONSTANT VARCHAR COLLATE "C" := '(\d{1,4})';
+    AMPM_REGEXP CONSTANT VARCHAR COLLATE "C" := '(?:[AP]M|ص|م)';
+    TIMEUNIT_REGEXP CONSTANT VARCHAR COLLATE "C" := '\s*\d{1,2}\s*';
+    MASKSEPONE_REGEXP CONSTANT VARCHAR COLLATE "C" := '\s*(?:/|-)?';
+    MASKSEPTWO_REGEXP CONSTANT VARCHAR COLLATE "C" := '\s*(?:\s|/|-|\.|,)';
+    MASKSEPTWO_FI_REGEXP CONSTANT VARCHAR COLLATE "C" := '\s*(?:\s|/|-|,)';
+    MASKSEPTHREE_REGEXP CONSTANT VARCHAR COLLATE "C" := '\s*(?:/|-|\.|,)';
+    TIME_MASKSEP_REGEXP CONSTANT VARCHAR COLLATE "C" := '(?:\s|\.|,)*';
+    TIME_MASKSEP_FI_REGEXP CONSTANT VARCHAR COLLATE "C" := '(?:\s|,)*';
+    WEEKDAYAMPM_START_REGEXP CONSTANT VARCHAR COLLATE "C" := '(^|[[:digit:][:space:]\.,])';
+    WEEKDAYAMPM_END_REGEXP CONSTANT VARCHAR COLLATE "C" := '([[:digit:][:space:]\.,]|$)(?=[^/-]|$)';
+    CORRECTNUM_REGEXP CONSTANT VARCHAR COLLATE "C" := '(?:([+-]\d{1,4})(?:[[:space:]\.,]|[AP]M|ص|م|$))';
+    ANNO_DOMINI_REGEXP VARCHAR COLLATE "C" := '(AD|A\.D\.)';
+    ANNO_DOMINI_COMPREGEXP VARCHAR COLLATE "C" := concat(WEEKDAYAMPM_START_REGEXP, ANNO_DOMINI_REGEXP, WEEKDAYAMPM_END_REGEXP);
+    HHMMSSFS_PART_REGEXP CONSTANT VARCHAR COLLATE "C" :=
         concat(TIMEUNIT_REGEXP, AMPM_REGEXP, '|',
                AMPM_REGEXP, '?', TIME_MASKSEP_REGEXP, TIMEUNIT_REGEXP, '\:', TIME_MASKSEP_REGEXP,
                AMPM_REGEXP, '?', TIME_MASKSEP_REGEXP, TIMEUNIT_REGEXP, '(?!\d)', TIME_MASKSEP_REGEXP, AMPM_REGEXP, '?|',
@@ -2775,7 +2798,7 @@ DECLARE
                AMPM_REGEXP, '?', TIME_MASKSEP_REGEXP, TIMEUNIT_REGEXP, '\:', TIME_MASKSEP_REGEXP,
                AMPM_REGEXP, '?', TIME_MASKSEP_REGEXP, '\s*\d{1,2}\.\d+(?!\d)', TIME_MASKSEP_REGEXP, AMPM_REGEXP, '?|',
                AMPM_REGEXP, '?');
-    HHMMSSFS_PART_FI_REGEXP CONSTANT VARCHAR :=
+    HHMMSSFS_PART_FI_REGEXP CONSTANT VARCHAR COLLATE "C" :=
         concat(TIMEUNIT_REGEXP, AMPM_REGEXP, '|',
                AMPM_REGEXP, '?', TIME_MASKSEP_FI_REGEXP, TIMEUNIT_REGEXP, '[\:\.]', TIME_MASKSEP_FI_REGEXP,
                AMPM_REGEXP, '?', TIME_MASKSEP_FI_REGEXP, TIMEUNIT_REGEXP, '(?!\d)', TIME_MASKSEP_FI_REGEXP, AMPM_REGEXP, '?\.?|',
@@ -2786,7 +2809,7 @@ DECLARE
                AMPM_REGEXP, '?', TIME_MASKSEP_FI_REGEXP, TIMEUNIT_REGEXP, '[\:\.]', TIME_MASKSEP_FI_REGEXP,
                AMPM_REGEXP, '?', TIME_MASKSEP_FI_REGEXP, '\s*\d{1,2}\.\d+(?!\d)\.?', TIME_MASKSEP_FI_REGEXP, AMPM_REGEXP, '?|',
                AMPM_REGEXP, '?');
-    v_defmask1_regexp VARCHAR := concat('^', TIME_MASKSEP_REGEXP, CORRECTNUM_REGEXP, '?', TIME_MASKSEP_REGEXP,
+    v_defmask1_regexp VARCHAR COLLATE "C" := concat('^', TIME_MASKSEP_REGEXP, CORRECTNUM_REGEXP, '?', TIME_MASKSEP_REGEXP,
                                         '(', HHMMSSFS_PART_REGEXP, ')?', TIME_MASKSEP_REGEXP,
                                         CORRECTNUM_REGEXP, '?', TIME_MASKSEP_REGEXP, AMPM_REGEXP, '?', TIME_MASKSEP_REGEXP,
                                         DAYMM_REGEXP,
@@ -2796,7 +2819,7 @@ DECLARE
                                         '(?:[\.|,]+', AMPM_REGEXP, '?', TIME_MASKSEP_REGEXP, CORRECTNUM_REGEXP, '?))', TIME_MASKSEP_REGEXP,
                                         DAYMM_REGEXP,
                                         TIME_MASKSEP_REGEXP, '(?:[\.|,]+', TIME_MASKSEP_REGEXP, AMPM_REGEXP, '?)', TIME_MASKSEP_REGEXP, '$');
-    v_defmask1_fi_regexp VARCHAR := concat('^', TIME_MASKSEP_FI_REGEXP, CORRECTNUM_REGEXP, '?', TIME_MASKSEP_FI_REGEXP,
+    v_defmask1_fi_regexp VARCHAR COLLATE "C" := concat('^', TIME_MASKSEP_FI_REGEXP, CORRECTNUM_REGEXP, '?', TIME_MASKSEP_FI_REGEXP,
                                            '(', HHMMSSFS_PART_FI_REGEXP, ')?', TIME_MASKSEP_FI_REGEXP,
                                            CORRECTNUM_REGEXP, '?', TIME_MASKSEP_REGEXP, AMPM_REGEXP, '?', TIME_MASKSEP_REGEXP,
                                            DAYMM_REGEXP,
@@ -2806,7 +2829,7 @@ DECLARE
                                            '(?:[,]+', AMPM_REGEXP, '?', TIME_MASKSEP_FI_REGEXP, CORRECTNUM_REGEXP, '?))', TIME_MASKSEP_FI_REGEXP,
                                            DAYMM_REGEXP,
                                            TIME_MASKSEP_FI_REGEXP, '(?:[\.|,]+', TIME_MASKSEP_FI_REGEXP, AMPM_REGEXP, ')?', TIME_MASKSEP_FI_REGEXP, '$');
-    v_defmask2_regexp VARCHAR := concat('^', TIME_MASKSEP_REGEXP, CORRECTNUM_REGEXP, '?', TIME_MASKSEP_REGEXP,
+    v_defmask2_regexp VARCHAR COLLATE "C" := concat('^', TIME_MASKSEP_REGEXP, CORRECTNUM_REGEXP, '?', TIME_MASKSEP_REGEXP,
                                         '(', HHMMSSFS_PART_REGEXP, ')?', TIME_MASKSEP_REGEXP,
                                         CORRECTNUM_REGEXP, '?', TIME_MASKSEP_REGEXP, AMPM_REGEXP, '?', TIME_MASKSEP_REGEXP,
                                         FULLYEAR_REGEXP,
@@ -2816,7 +2839,7 @@ DECLARE
                                         DAYMM_REGEXP,
                                         TIME_MASKSEP_REGEXP, '(?:(?:[\.|,]+', TIME_MASKSEP_REGEXP, AMPM_REGEXP, TIME_MASKSEP_REGEXP, CORRECTNUM_REGEXP, '?)|',
                                         CORRECTNUM_REGEXP, TIME_MASKSEP_REGEXP, AMPM_REGEXP, '?)?', TIME_MASKSEP_REGEXP, '$');
-    v_defmask2_fi_regexp VARCHAR := concat('^', TIME_MASKSEP_FI_REGEXP, CORRECTNUM_REGEXP, '?', TIME_MASKSEP_FI_REGEXP,
+    v_defmask2_fi_regexp VARCHAR COLLATE "C" := concat('^', TIME_MASKSEP_FI_REGEXP, CORRECTNUM_REGEXP, '?', TIME_MASKSEP_FI_REGEXP,
                                            '(', HHMMSSFS_PART_FI_REGEXP, ')?', TIME_MASKSEP_FI_REGEXP,
                                            CORRECTNUM_REGEXP, '?', TIME_MASKSEP_FI_REGEXP, AMPM_REGEXP, '?', TIME_MASKSEP_FI_REGEXP,
                                            FULLYEAR_REGEXP,
@@ -2826,40 +2849,40 @@ DECLARE
                                            DAYMM_REGEXP,
                                            TIME_MASKSEP_FI_REGEXP, '(?:(?:[\.|,]+', TIME_MASKSEP_FI_REGEXP, AMPM_REGEXP, TIME_MASKSEP_FI_REGEXP, CORRECTNUM_REGEXP, '?)|',
                                            CORRECTNUM_REGEXP, TIME_MASKSEP_FI_REGEXP, AMPM_REGEXP, '?)?', TIME_MASKSEP_FI_REGEXP, '$');
-    v_defmask3_regexp VARCHAR := concat('^', TIME_MASKSEP_REGEXP, '(', HHMMSSFS_PART_REGEXP, ')?', TIME_MASKSEP_REGEXP,
+    v_defmask3_regexp VARCHAR COLLATE "C" := concat('^', TIME_MASKSEP_REGEXP, '(', HHMMSSFS_PART_REGEXP, ')?', TIME_MASKSEP_REGEXP,
                                         DAYMM_REGEXP,
                                         '(?:(?:', MASKSEPTWO_REGEXP, TIME_MASKSEP_REGEXP, ')|',
                                         '(?:', MASKSEPTHREE_REGEXP, TIME_MASKSEP_REGEXP, AMPM_REGEXP, '))', TIME_MASKSEP_REGEXP,
                                         FULLYEAR_REGEXP,
                                         TIME_MASKSEP_REGEXP, '(', TIME_MASKSEP_REGEXP, AMPM_REGEXP, ')?', TIME_MASKSEP_REGEXP, '$');
-    v_defmask3_fi_regexp VARCHAR := concat('^', TIME_MASKSEP_FI_REGEXP, '(', HHMMSSFS_PART_FI_REGEXP, ')?', TIME_MASKSEP_FI_REGEXP,
+    v_defmask3_fi_regexp VARCHAR COLLATE "C" := concat('^', TIME_MASKSEP_FI_REGEXP, '(', HHMMSSFS_PART_FI_REGEXP, ')?', TIME_MASKSEP_FI_REGEXP,
                                            TIME_MASKSEP_FI_REGEXP, '[\./]?', TIME_MASKSEP_FI_REGEXP,
                                            DAYMM_REGEXP,
                                            '(?:', MASKSEPTWO_REGEXP, TIME_MASKSEP_FI_REGEXP, AMPM_REGEXP, '?)',
                                            FULLYEAR_REGEXP,
                                            TIME_MASKSEP_FI_REGEXP, AMPM_REGEXP, '?', TIME_MASKSEP_FI_REGEXP, '$');
-    v_defmask4_0_regexp VARCHAR := concat('^', TIME_MASKSEP_REGEXP,
+    v_defmask4_0_regexp VARCHAR COLLATE "C" := concat('^', TIME_MASKSEP_REGEXP,
                                           DAYMM_REGEXP,
                                           MASKSEPTWO_REGEXP, TIME_MASKSEP_REGEXP,
                                           DAYMM_REGEXP,
                                           TIME_MASKSEP_REGEXP,
                                           DAYMM_REGEXP, '\s*(', AMPM_REGEXP, ')',
                                           TIME_MASKSEP_REGEXP, '$');
-    v_defmask4_1_regexp VARCHAR := concat('^', TIME_MASKSEP_REGEXP,
+    v_defmask4_1_regexp VARCHAR COLLATE "C" := concat('^', TIME_MASKSEP_REGEXP,
                                           DAYMM_REGEXP,
                                           MASKSEPTWO_REGEXP, TIME_MASKSEP_REGEXP,
                                           DAYMM_REGEXP,
                                           '(?:\s|,)+',
                                           DAYMM_REGEXP, '\s*(', AMPM_REGEXP, ')',
                                           TIME_MASKSEP_REGEXP, '$');
-    v_defmask4_2_regexp VARCHAR := concat('^', TIME_MASKSEP_REGEXP,
+    v_defmask4_2_regexp VARCHAR COLLATE "C" := concat('^', TIME_MASKSEP_REGEXP,
                                           DAYMM_REGEXP,
                                           MASKSEPTWO_REGEXP, TIME_MASKSEP_REGEXP,
                                           DAYMM_REGEXP,
                                           '\s*[\.]+', TIME_MASKSEP_REGEXP,
                                           DAYMM_REGEXP, '\s*(', AMPM_REGEXP, ')',
                                           TIME_MASKSEP_REGEXP, '$');
-    v_defmask5_regexp VARCHAR := concat('^', TIME_MASKSEP_REGEXP, '(', HHMMSSFS_PART_REGEXP, ')?', TIME_MASKSEP_REGEXP,
+    v_defmask5_regexp VARCHAR COLLATE "C" := concat('^', TIME_MASKSEP_REGEXP, '(', HHMMSSFS_PART_REGEXP, ')?', TIME_MASKSEP_REGEXP,
                                         DAYMM_REGEXP,
                                         '(?:(?:', MASKSEPTWO_REGEXP, TIME_MASKSEP_REGEXP, AMPM_REGEXP, '?)|',
                                         '(?:[\.|,]+', AMPM_REGEXP, '))', TIME_MASKSEP_REGEXP,
@@ -2868,7 +2891,7 @@ DECLARE
                                         '(?:[\.|,]+', AMPM_REGEXP, '))', TIME_MASKSEP_REGEXP,
                                         FULLYEAR_REGEXP,
                                         TIME_MASKSEP_REGEXP, '(', HHMMSSFS_PART_REGEXP, ')?', TIME_MASKSEP_REGEXP, '$');
-    v_defmask5_fi_regexp VARCHAR := concat('^', TIME_MASKSEP_FI_REGEXP, '(', HHMMSSFS_PART_FI_REGEXP, ')?', TIME_MASKSEP_FI_REGEXP,
+    v_defmask5_fi_regexp VARCHAR COLLATE "C" := concat('^', TIME_MASKSEP_FI_REGEXP, '(', HHMMSSFS_PART_FI_REGEXP, ')?', TIME_MASKSEP_FI_REGEXP,
                                            DAYMM_REGEXP,
                                            '(?:(?:', MASKSEPTWO_REGEXP, TIME_MASKSEP_FI_REGEXP, AMPM_REGEXP, '?)|',
                                            '(?:[\.|,]+', AMPM_REGEXP, '))', TIME_MASKSEP_FI_REGEXP,
@@ -2877,7 +2900,7 @@ DECLARE
                                            '(?:[\.|,]+', AMPM_REGEXP, '))', TIME_MASKSEP_FI_REGEXP,
                                            FULLYEAR_REGEXP,
                                            TIME_MASKSEP_FI_REGEXP, '(', HHMMSSFS_PART_FI_REGEXP, ')?', TIME_MASKSEP_FI_REGEXP, '$');
-    v_defmask6_regexp VARCHAR := concat('^', TIME_MASKSEP_REGEXP, '(', HHMMSSFS_PART_REGEXP, ')?', TIME_MASKSEP_REGEXP,
+    v_defmask6_regexp VARCHAR COLLATE "C" := concat('^', TIME_MASKSEP_REGEXP, '(', HHMMSSFS_PART_REGEXP, ')?', TIME_MASKSEP_REGEXP,
                                         FULLYEAR_REGEXP,
                                         '(?:(?:', MASKSEPTWO_REGEXP, TIME_MASKSEP_REGEXP, AMPM_REGEXP, '?)|',
                                         '(?:', TIME_MASKSEP_REGEXP, AMPM_REGEXP, '))', TIME_MASKSEP_REGEXP,
@@ -2886,7 +2909,7 @@ DECLARE
                                         '(?:[\.|,]+', AMPM_REGEXP, '))', TIME_MASKSEP_REGEXP,
                                         DAYMM_REGEXP,
                                         '((?:(?:\s|\.|,)+|', AMPM_REGEXP, ')(?:', HHMMSSFS_PART_REGEXP, '))?', TIME_MASKSEP_REGEXP, '$');
-    v_defmask6_fi_regexp VARCHAR := concat('^', TIME_MASKSEP_FI_REGEXP, '(', HHMMSSFS_PART_FI_REGEXP, ')?', TIME_MASKSEP_FI_REGEXP,
+    v_defmask6_fi_regexp VARCHAR COLLATE "C" := concat('^', TIME_MASKSEP_FI_REGEXP, '(', HHMMSSFS_PART_FI_REGEXP, ')?', TIME_MASKSEP_FI_REGEXP,
                                            FULLYEAR_REGEXP,
                                            '(?:(?:', MASKSEPTWO_REGEXP, TIME_MASKSEP_FI_REGEXP, AMPM_REGEXP, '?)|',
                                            '(?:', TIME_MASKSEP_FI_REGEXP, AMPM_REGEXP, '))', TIME_MASKSEP_FI_REGEXP,
@@ -2896,7 +2919,7 @@ DECLARE
                                            DAYMM_REGEXP,
                                            '(?:\s*[\.])?',
                                            '((?:(?:\s|,)+|', AMPM_REGEXP, ')(?:', HHMMSSFS_PART_FI_REGEXP, '))?', TIME_MASKSEP_FI_REGEXP, '$');
-    v_defmask7_regexp VARCHAR := concat('^', TIME_MASKSEP_REGEXP, '(', HHMMSSFS_PART_REGEXP, ')?', TIME_MASKSEP_REGEXP,
+    v_defmask7_regexp VARCHAR COLLATE "C" := concat('^', TIME_MASKSEP_REGEXP, '(', HHMMSSFS_PART_REGEXP, ')?', TIME_MASKSEP_REGEXP,
                                         DAYMM_REGEXP,
                                         '(?:(?:', MASKSEPTWO_REGEXP, TIME_MASKSEP_REGEXP, AMPM_REGEXP, '?)|',
                                         '(?:[\.|,]+', AMPM_REGEXP, '))', TIME_MASKSEP_REGEXP,
@@ -2905,7 +2928,7 @@ DECLARE
                                         '(?:', TIME_MASKSEP_REGEXP, AMPM_REGEXP, '))', TIME_MASKSEP_REGEXP,
                                         DAYMM_REGEXP,
                                         '((?:(?:\s|\.|,)+|', AMPM_REGEXP, ')(?:', HHMMSSFS_PART_REGEXP, '))?', TIME_MASKSEP_REGEXP, '$');
-    v_defmask7_fi_regexp VARCHAR := concat('^', TIME_MASKSEP_FI_REGEXP, '(', HHMMSSFS_PART_FI_REGEXP, ')?', TIME_MASKSEP_FI_REGEXP,
+    v_defmask7_fi_regexp VARCHAR COLLATE "C" := concat('^', TIME_MASKSEP_FI_REGEXP, '(', HHMMSSFS_PART_FI_REGEXP, ')?', TIME_MASKSEP_FI_REGEXP,
                                            DAYMM_REGEXP,
                                            '(?:(?:', MASKSEPTWO_REGEXP, TIME_MASKSEP_FI_REGEXP, AMPM_REGEXP, '?)|',
                                            '(?:[\.|,]+', AMPM_REGEXP, '))', TIME_MASKSEP_FI_REGEXP,
@@ -2914,7 +2937,7 @@ DECLARE
                                            '(?:', TIME_MASKSEP_FI_REGEXP, AMPM_REGEXP, '))', TIME_MASKSEP_FI_REGEXP,
                                            DAYMM_REGEXP,
                                            '((?:(?:\s|,)+|', AMPM_REGEXP, ')(?:', HHMMSSFS_PART_FI_REGEXP, '))?', TIME_MASKSEP_FI_REGEXP, '$');
-    v_defmask8_regexp VARCHAR := concat('^', TIME_MASKSEP_REGEXP, '(', HHMMSSFS_PART_REGEXP, ')?', TIME_MASKSEP_REGEXP,
+    v_defmask8_regexp VARCHAR COLLATE "C" := concat('^', TIME_MASKSEP_REGEXP, '(', HHMMSSFS_PART_REGEXP, ')?', TIME_MASKSEP_REGEXP,
                                         DAYMM_REGEXP,
                                         '(?:(?:', MASKSEPTWO_REGEXP, TIME_MASKSEP_REGEXP, AMPM_REGEXP, '?)|',
                                         '(?:[\.|,]+', AMPM_REGEXP, '))', TIME_MASKSEP_REGEXP,
@@ -2924,7 +2947,7 @@ DECLARE
                                         DAYMM_REGEXP,
                                         '(?:[\.|,]+', AMPM_REGEXP, ')?',
                                         TIME_MASKSEP_REGEXP, '(', HHMMSSFS_PART_REGEXP, ')?', TIME_MASKSEP_REGEXP, '$');
-    v_defmask8_fi_regexp VARCHAR := concat('^', TIME_MASKSEP_FI_REGEXP, '(', HHMMSSFS_PART_FI_REGEXP, ')?', TIME_MASKSEP_FI_REGEXP,
+    v_defmask8_fi_regexp VARCHAR COLLATE "C" := concat('^', TIME_MASKSEP_FI_REGEXP, '(', HHMMSSFS_PART_FI_REGEXP, ')?', TIME_MASKSEP_FI_REGEXP,
                                            DAYMM_REGEXP,
                                            '(?:(?:', MASKSEPTWO_FI_REGEXP, TIME_MASKSEP_FI_REGEXP, AMPM_REGEXP, '?)|',
                                            '(?:[,]+', AMPM_REGEXP, '))', TIME_MASKSEP_FI_REGEXP,
@@ -2934,69 +2957,69 @@ DECLARE
                                            DAYMM_REGEXP,
                                            '(?:(?:[\,]+|\s*/\s*)', AMPM_REGEXP, ')?',
                                            TIME_MASKSEP_FI_REGEXP, '(', HHMMSSFS_PART_FI_REGEXP, ')?', TIME_MASKSEP_FI_REGEXP, '$');
-    v_defmask9_regexp VARCHAR := concat('^', TIME_MASKSEP_REGEXP, '(',
+    v_defmask9_regexp VARCHAR COLLATE "C" := concat('^', TIME_MASKSEP_REGEXP, '(',
                                         HHMMSSFS_PART_REGEXP,
                                         ')', TIME_MASKSEP_REGEXP, '$');
-    v_defmask9_fi_regexp VARCHAR := concat('^', TIME_MASKSEP_FI_REGEXP, AMPM_REGEXP, '?', TIME_MASKSEP_FI_REGEXP, '(',
+    v_defmask9_fi_regexp VARCHAR COLLATE "C" := concat('^', TIME_MASKSEP_FI_REGEXP, AMPM_REGEXP, '?', TIME_MASKSEP_FI_REGEXP, '(',
                                            HHMMSSFS_PART_FI_REGEXP,
                                            ')', TIME_MASKSEP_FI_REGEXP, '$');
-    v_defmask10_regexp VARCHAR := concat('^', TIME_MASKSEP_REGEXP, '(', HHMMSSFS_PART_REGEXP, ')?', TIME_MASKSEP_REGEXP,
+    v_defmask10_regexp VARCHAR COLLATE "C" := concat('^', TIME_MASKSEP_REGEXP, '(', HHMMSSFS_PART_REGEXP, ')?', TIME_MASKSEP_REGEXP,
                                          DAYMM_REGEXP,
                                          '(?:', MASKSEPTHREE_REGEXP, TIME_MASKSEP_REGEXP, '(?:', AMPM_REGEXP, '(?=(?:[[:space:]\.,])+))?)?', TIME_MASKSEP_REGEXP,
                                          '($comp_month$)',
                                          TIME_MASKSEP_REGEXP, '(', HHMMSSFS_PART_REGEXP, ')?', TIME_MASKSEP_REGEXP, '$');
-    v_defmask10_fi_regexp VARCHAR := concat('^', TIME_MASKSEP_FI_REGEXP, '(', HHMMSSFS_PART_FI_REGEXP, ')?', TIME_MASKSEP_FI_REGEXP,
+    v_defmask10_fi_regexp VARCHAR COLLATE "C" := concat('^', TIME_MASKSEP_FI_REGEXP, '(', HHMMSSFS_PART_FI_REGEXP, ')?', TIME_MASKSEP_FI_REGEXP,
                                             DAYMM_REGEXP,
                                             '(?:', MASKSEPTHREE_REGEXP, TIME_MASKSEP_REGEXP, '(?:', AMPM_REGEXP, '(?=(?:[[:space:]\.,])+))?)?', TIME_MASKSEP_REGEXP,
                                             '($comp_month$)',
                                             TIME_MASKSEP_FI_REGEXP, '(', HHMMSSFS_PART_FI_REGEXP, ')?', TIME_MASKSEP_FI_REGEXP, '$');
-    v_defmask11_regexp VARCHAR := concat('^', TIME_MASKSEP_REGEXP, '(', HHMMSSFS_PART_REGEXP, ')?', TIME_MASKSEP_REGEXP,
+    v_defmask11_regexp VARCHAR COLLATE "C" := concat('^', TIME_MASKSEP_REGEXP, '(', HHMMSSFS_PART_REGEXP, ')?', TIME_MASKSEP_REGEXP,
                                          '($comp_month$)',
                                          '(?:', MASKSEPTHREE_REGEXP, TIME_MASKSEP_REGEXP, AMPM_REGEXP, '?)?', TIME_MASKSEP_REGEXP,
                                          DAYMM_REGEXP,
                                          TIME_MASKSEP_REGEXP, '(', HHMMSSFS_PART_REGEXP, ')?', TIME_MASKSEP_REGEXP, '$');
-    v_defmask11_fi_regexp VARCHAR := concat('^', TIME_MASKSEP_FI_REGEXP, '(', HHMMSSFS_PART_FI_REGEXP, ')?', TIME_MASKSEP_FI_REGEXP,
+    v_defmask11_fi_regexp VARCHAR COLLATE "C" := concat('^', TIME_MASKSEP_FI_REGEXP, '(', HHMMSSFS_PART_FI_REGEXP, ')?', TIME_MASKSEP_FI_REGEXP,
                                            '($comp_month$)',
                                            '(?:', MASKSEPTHREE_REGEXP, TIME_MASKSEP_REGEXP, AMPM_REGEXP, '?)?', TIME_MASKSEP_FI_REGEXP,
                                            DAYMM_REGEXP,
                                            '((?:(?:\s|,)+|', AMPM_REGEXP, ')(?:', HHMMSSFS_PART_FI_REGEXP, '))?', TIME_MASKSEP_FI_REGEXP, '$');
-    v_defmask12_regexp VARCHAR := concat('^', TIME_MASKSEP_REGEXP, '(', HHMMSSFS_PART_REGEXP, ')?', TIME_MASKSEP_REGEXP,
+    v_defmask12_regexp VARCHAR COLLATE "C" := concat('^', TIME_MASKSEP_REGEXP, '(', HHMMSSFS_PART_REGEXP, ')?', TIME_MASKSEP_REGEXP,
                                          FULLYEAR_REGEXP,
                                          '(?:(?:', MASKSEPTWO_REGEXP, '?', TIME_MASKSEP_REGEXP, '(?:', AMPM_REGEXP, '(?=(?:[[:space:]\.,])+))?)|',
                                          '(?:(?:', TIME_MASKSEP_REGEXP, AMPM_REGEXP, '(?=(?:[[:space:]\.,])+))))', TIME_MASKSEP_REGEXP,
                                          '($comp_month$)',
                                          TIME_MASKSEP_REGEXP, '(', HHMMSSFS_PART_REGEXP, ')?', TIME_MASKSEP_REGEXP, '$');
-    v_defmask12_fi_regexp VARCHAR := concat('^', TIME_MASKSEP_FI_REGEXP, '(', HHMMSSFS_PART_FI_REGEXP, ')?', TIME_MASKSEP_FI_REGEXP,
+    v_defmask12_fi_regexp VARCHAR COLLATE "C" := concat('^', TIME_MASKSEP_FI_REGEXP, '(', HHMMSSFS_PART_FI_REGEXP, ')?', TIME_MASKSEP_FI_REGEXP,
                                             FULLYEAR_REGEXP,
                                             '(?:(?:', MASKSEPTWO_REGEXP, '?', TIME_MASKSEP_REGEXP, '(?:', AMPM_REGEXP, '(?=(?:[[:space:]\.,])+))?)|',
                                             '(?:(?:', TIME_MASKSEP_REGEXP, AMPM_REGEXP, '(?=(?:[[:space:]\.,])+))))', TIME_MASKSEP_REGEXP,
                                             '($comp_month$)',
                                             TIME_MASKSEP_FI_REGEXP, '(', HHMMSSFS_PART_FI_REGEXP, ')?', TIME_MASKSEP_FI_REGEXP, '$');
-    v_defmask13_regexp VARCHAR := concat('^', TIME_MASKSEP_REGEXP, '(', HHMMSSFS_PART_REGEXP, ')?', TIME_MASKSEP_REGEXP,
+    v_defmask13_regexp VARCHAR COLLATE "C" := concat('^', TIME_MASKSEP_REGEXP, '(', HHMMSSFS_PART_REGEXP, ')?', TIME_MASKSEP_REGEXP,
                                          '($comp_month$)',
                                          '(?:', MASKSEPTHREE_REGEXP, TIME_MASKSEP_REGEXP, AMPM_REGEXP, '?)?', TIME_MASKSEP_REGEXP,
                                          FULLYEAR_REGEXP,
                                          TIME_MASKSEP_REGEXP, AMPM_REGEXP, '?', TIME_MASKSEP_REGEXP, '$');
-    v_defmask13_fi_regexp VARCHAR := concat('^', TIME_MASKSEP_FI_REGEXP, '(', HHMMSSFS_PART_FI_REGEXP, ')?', TIME_MASKSEP_FI_REGEXP,
+    v_defmask13_fi_regexp VARCHAR COLLATE "C" := concat('^', TIME_MASKSEP_FI_REGEXP, '(', HHMMSSFS_PART_FI_REGEXP, ')?', TIME_MASKSEP_FI_REGEXP,
                                             '($comp_month$)',
                                             '(?:', MASKSEPTHREE_REGEXP, TIME_MASKSEP_REGEXP, AMPM_REGEXP, '?)?', TIME_MASKSEP_REGEXP,
                                             FULLYEAR_REGEXP,
                                             TIME_MASKSEP_FI_REGEXP, AMPM_REGEXP, '?', TIME_MASKSEP_FI_REGEXP, '$');
-    v_defmask14_regexp VARCHAR := concat('^', TIME_MASKSEP_REGEXP, '(', HHMMSSFS_PART_REGEXP, ')?', TIME_MASKSEP_REGEXP,
+    v_defmask14_regexp VARCHAR COLLATE "C" := concat('^', TIME_MASKSEP_REGEXP, '(', HHMMSSFS_PART_REGEXP, ')?', TIME_MASKSEP_REGEXP,
                                          '($comp_month$)'
                                          '(?:', MASKSEPTHREE_REGEXP, TIME_MASKSEP_REGEXP, AMPM_REGEXP, '?)?', TIME_MASKSEP_REGEXP,
                                          DAYMM_REGEXP,
                                          '(?:', MASKSEPTWO_REGEXP, TIME_MASKSEP_REGEXP, AMPM_REGEXP, '?)', TIME_MASKSEP_REGEXP,
                                          COMPYEAR_REGEXP,
                                          TIME_MASKSEP_REGEXP, '(', HHMMSSFS_PART_REGEXP, ')?', TIME_MASKSEP_REGEXP, '$');
-    v_defmask14_fi_regexp VARCHAR := concat('^', TIME_MASKSEP_FI_REGEXP, '(', HHMMSSFS_PART_FI_REGEXP, ')?', TIME_MASKSEP_FI_REGEXP,
+    v_defmask14_fi_regexp VARCHAR COLLATE "C" := concat('^', TIME_MASKSEP_FI_REGEXP, '(', HHMMSSFS_PART_FI_REGEXP, ')?', TIME_MASKSEP_FI_REGEXP,
                                             '($comp_month$)'
                                             '(?:', MASKSEPTHREE_REGEXP, TIME_MASKSEP_FI_REGEXP, AMPM_REGEXP, '?)?', TIME_MASKSEP_FI_REGEXP,
                                             DAYMM_REGEXP,
                                             '(?:', MASKSEPTWO_REGEXP, TIME_MASKSEP_FI_REGEXP, AMPM_REGEXP, '?)', TIME_MASKSEP_FI_REGEXP,
                                             COMPYEAR_REGEXP,
                                             '((?:(?:\s|,)+|', AMPM_REGEXP, ')(?:', HHMMSSFS_PART_FI_REGEXP, '))?', TIME_MASKSEP_FI_REGEXP, '$');
-    v_defmask15_regexp VARCHAR := concat('^', TIME_MASKSEP_REGEXP, '(', HHMMSSFS_PART_REGEXP, ')?', TIME_MASKSEP_REGEXP,
+    v_defmask15_regexp VARCHAR COLLATE "C" := concat('^', TIME_MASKSEP_REGEXP, '(', HHMMSSFS_PART_REGEXP, ')?', TIME_MASKSEP_REGEXP,
                                          DAYMM_REGEXP,
                                          '(?:(?:', MASKSEPTWO_REGEXP, '?', TIME_MASKSEP_REGEXP, '(?:', AMPM_REGEXP, '(?=(?:[[:space:]\.,])+))?)|',
                                          '(?:(?:', TIME_MASKSEP_REGEXP, AMPM_REGEXP, '(?=(?:[[:space:]\.,])+))))', TIME_MASKSEP_REGEXP,
@@ -3004,7 +3027,7 @@ DECLARE
                                          '(?:', MASKSEPTHREE_REGEXP, TIME_MASKSEP_REGEXP, AMPM_REGEXP, '?)?', TIME_MASKSEP_REGEXP,
                                          COMPYEAR_REGEXP,
                                          TIME_MASKSEP_REGEXP, '(', HHMMSSFS_PART_REGEXP, ')?', TIME_MASKSEP_REGEXP, '$');
-    v_defmask15_fi_regexp VARCHAR := concat('^', TIME_MASKSEP_FI_REGEXP, '(', HHMMSSFS_PART_FI_REGEXP, ')?', TIME_MASKSEP_FI_REGEXP,
+    v_defmask15_fi_regexp VARCHAR COLLATE "C" := concat('^', TIME_MASKSEP_FI_REGEXP, '(', HHMMSSFS_PART_FI_REGEXP, ')?', TIME_MASKSEP_FI_REGEXP,
                                             DAYMM_REGEXP,
                                             '(?:(?:', MASKSEPTWO_REGEXP, '?', TIME_MASKSEP_REGEXP, '(?:', AMPM_REGEXP, '(?=(?:[[:space:]\.,])+))?)|',
                                             '(?:(?:', TIME_MASKSEP_REGEXP, AMPM_REGEXP, '(?=(?:[[:space:]\.,])+))))', TIME_MASKSEP_REGEXP,
@@ -3012,7 +3035,7 @@ DECLARE
                                             '(?:', MASKSEPTHREE_REGEXP, TIME_MASKSEP_REGEXP, AMPM_REGEXP, '?)?', TIME_MASKSEP_REGEXP,
                                             COMPYEAR_REGEXP,
                                             '((?:(?:\s|,)+|', AMPM_REGEXP, ')(?:', HHMMSSFS_PART_FI_REGEXP, '))?', TIME_MASKSEP_FI_REGEXP, '$');
-    v_defmask16_regexp VARCHAR := concat('^', TIME_MASKSEP_REGEXP, '(', HHMMSSFS_PART_REGEXP, ')?', TIME_MASKSEP_REGEXP,
+    v_defmask16_regexp VARCHAR COLLATE "C" := concat('^', TIME_MASKSEP_REGEXP, '(', HHMMSSFS_PART_REGEXP, ')?', TIME_MASKSEP_REGEXP,
                                          DAYMM_REGEXP,
                                          '(?:', MASKSEPTWO_REGEXP, TIME_MASKSEP_REGEXP, AMPM_REGEXP, '?)', TIME_MASKSEP_REGEXP,
                                          COMPYEAR_REGEXP,
@@ -3020,7 +3043,7 @@ DECLARE
                                          '(?:(?:', TIME_MASKSEP_REGEXP, AMPM_REGEXP, '(?=(?:[[:space:]\.,])+))))', TIME_MASKSEP_REGEXP,
                                          '($comp_month$)',
                                          TIME_MASKSEP_REGEXP, '(', HHMMSSFS_PART_REGEXP, ')?', TIME_MASKSEP_REGEXP, '$');
-    v_defmask16_fi_regexp VARCHAR := concat('^', TIME_MASKSEP_FI_REGEXP, '(', HHMMSSFS_PART_FI_REGEXP, ')?', TIME_MASKSEP_FI_REGEXP,
+    v_defmask16_fi_regexp VARCHAR COLLATE "C" := concat('^', TIME_MASKSEP_FI_REGEXP, '(', HHMMSSFS_PART_FI_REGEXP, ')?', TIME_MASKSEP_FI_REGEXP,
                                             DAYMM_REGEXP,
                                             '(?:', MASKSEPTWO_REGEXP, TIME_MASKSEP_REGEXP, AMPM_REGEXP, '?)', TIME_MASKSEP_REGEXP,
                                             COMPYEAR_REGEXP,
@@ -3028,7 +3051,7 @@ DECLARE
                                             '(?:(?:', TIME_MASKSEP_REGEXP, AMPM_REGEXP, '(?=(?:[[:space:]\.,])+))))', TIME_MASKSEP_REGEXP,
                                             '($comp_month$)',
                                             TIME_MASKSEP_FI_REGEXP, '(', HHMMSSFS_PART_FI_REGEXP, ')?', TIME_MASKSEP_FI_REGEXP, '$');
-    v_defmask17_regexp VARCHAR := concat('^', TIME_MASKSEP_REGEXP, '(', HHMMSSFS_PART_REGEXP, ')?', TIME_MASKSEP_REGEXP,
+    v_defmask17_regexp VARCHAR COLLATE "C" := concat('^', TIME_MASKSEP_REGEXP, '(', HHMMSSFS_PART_REGEXP, ')?', TIME_MASKSEP_REGEXP,
                                          FULLYEAR_REGEXP,
                                          '(?:(?:', MASKSEPTWO_REGEXP, '?', TIME_MASKSEP_REGEXP, '(?:', AMPM_REGEXP, '(?=(?:[[:space:]\.,])+))?)|',
                                          '(?:(?:', TIME_MASKSEP_REGEXP, AMPM_REGEXP, '(?=(?:[[:space:]\.,])+))))', TIME_MASKSEP_REGEXP,
@@ -3036,7 +3059,7 @@ DECLARE
                                          '(?:', MASKSEPTHREE_REGEXP, TIME_MASKSEP_REGEXP, AMPM_REGEXP, '?)?', TIME_MASKSEP_REGEXP,
                                          DAYMM_REGEXP,
                                          TIME_MASKSEP_REGEXP, '(', HHMMSSFS_PART_REGEXP, ')?', TIME_MASKSEP_REGEXP, '$');
-    v_defmask17_fi_regexp VARCHAR := concat('^', TIME_MASKSEP_FI_REGEXP, '(', HHMMSSFS_PART_FI_REGEXP, ')?', TIME_MASKSEP_FI_REGEXP,
+    v_defmask17_fi_regexp VARCHAR COLLATE "C" := concat('^', TIME_MASKSEP_FI_REGEXP, '(', HHMMSSFS_PART_FI_REGEXP, ')?', TIME_MASKSEP_FI_REGEXP,
                                             FULLYEAR_REGEXP,
                                             '(?:(?:', MASKSEPTWO_REGEXP, '?', TIME_MASKSEP_REGEXP, '(?:', AMPM_REGEXP, '(?=(?:[[:space:]\.,])+))?)|',
                                             '(?:(?:', TIME_MASKSEP_REGEXP, AMPM_REGEXP, '(?=(?:[[:space:]\.,])+))))', TIME_MASKSEP_REGEXP,
@@ -3044,7 +3067,7 @@ DECLARE
                                             '(?:', MASKSEPTHREE_REGEXP, TIME_MASKSEP_REGEXP, AMPM_REGEXP, '?)?', TIME_MASKSEP_REGEXP,
                                             DAYMM_REGEXP,
                                             '((?:(?:\s|,)+|', AMPM_REGEXP, ')(?:', HHMMSSFS_PART_FI_REGEXP, '))?', TIME_MASKSEP_FI_REGEXP, '$');
-    v_defmask18_regexp VARCHAR := concat('^', TIME_MASKSEP_REGEXP, '(', HHMMSSFS_PART_REGEXP, ')?', TIME_MASKSEP_REGEXP,
+    v_defmask18_regexp VARCHAR COLLATE "C" := concat('^', TIME_MASKSEP_REGEXP, '(', HHMMSSFS_PART_REGEXP, ')?', TIME_MASKSEP_REGEXP,
                                          FULLYEAR_REGEXP,
                                          '(?:(?:', MASKSEPTWO_REGEXP, TIME_MASKSEP_REGEXP, AMPM_REGEXP, '?)|',
                                          '(?:', TIME_MASKSEP_REGEXP, AMPM_REGEXP, '))', TIME_MASKSEP_REGEXP,
@@ -3053,7 +3076,7 @@ DECLARE
                                          '(?:(?:', TIME_MASKSEP_REGEXP, AMPM_REGEXP, '(?=(?:[[:space:]\.,])+))))', TIME_MASKSEP_REGEXP,
                                          '($comp_month$)',
                                          TIME_MASKSEP_REGEXP, '(', HHMMSSFS_PART_REGEXP, ')?', TIME_MASKSEP_REGEXP, '$');
-    v_defmask18_fi_regexp VARCHAR := concat('^', TIME_MASKSEP_FI_REGEXP, '(', HHMMSSFS_PART_FI_REGEXP, ')?', TIME_MASKSEP_FI_REGEXP,
+    v_defmask18_fi_regexp VARCHAR COLLATE "C" := concat('^', TIME_MASKSEP_FI_REGEXP, '(', HHMMSSFS_PART_FI_REGEXP, ')?', TIME_MASKSEP_FI_REGEXP,
                                             FULLYEAR_REGEXP,
                                             '(?:(?:', MASKSEPTWO_REGEXP, TIME_MASKSEP_REGEXP, AMPM_REGEXP, '?)|',
                                             '(?:', TIME_MASKSEP_REGEXP, AMPM_REGEXP, '))', TIME_MASKSEP_REGEXP,
@@ -3062,7 +3085,7 @@ DECLARE
                                             '(?:(?:', TIME_MASKSEP_REGEXP, AMPM_REGEXP, '(?=(?:[[:space:]\.,])+))))', TIME_MASKSEP_REGEXP,
                                             '($comp_month$)',
                                             TIME_MASKSEP_FI_REGEXP, '(', HHMMSSFS_PART_FI_REGEXP, ')?', TIME_MASKSEP_FI_REGEXP, '$');
-    v_defmask19_regexp VARCHAR := concat('^', TIME_MASKSEP_REGEXP, '(', HHMMSSFS_PART_REGEXP, ')?', TIME_MASKSEP_REGEXP,
+    v_defmask19_regexp VARCHAR COLLATE "C" := concat('^', TIME_MASKSEP_REGEXP, '(', HHMMSSFS_PART_REGEXP, ')?', TIME_MASKSEP_REGEXP,
                                          '($comp_month$)',
                                          '(?:', MASKSEPTHREE_REGEXP, TIME_MASKSEP_REGEXP, AMPM_REGEXP, '?)?', TIME_MASKSEP_REGEXP,
                                          FULLYEAR_REGEXP,
@@ -3070,7 +3093,7 @@ DECLARE
                                          '(?:', TIME_MASKSEP_REGEXP, AMPM_REGEXP, '))', TIME_MASKSEP_REGEXP,
                                          DAYMM_REGEXP,
                                          '((?:(?:\s|\.|,)+|', AMPM_REGEXP, ')(?:', HHMMSSFS_PART_REGEXP, '))?', TIME_MASKSEP_REGEXP, '$');
-    v_defmask19_fi_regexp VARCHAR := concat('^', TIME_MASKSEP_FI_REGEXP, '(', HHMMSSFS_PART_FI_REGEXP, ')?', TIME_MASKSEP_FI_REGEXP,
+    v_defmask19_fi_regexp VARCHAR COLLATE "C" := concat('^', TIME_MASKSEP_FI_REGEXP, '(', HHMMSSFS_PART_FI_REGEXP, ')?', TIME_MASKSEP_FI_REGEXP,
                                             '($comp_month$)',
                                             '(?:', MASKSEPTHREE_REGEXP, TIME_MASKSEP_REGEXP, AMPM_REGEXP, '?)?', TIME_MASKSEP_REGEXP,
                                             FULLYEAR_REGEXP,
@@ -3078,8 +3101,8 @@ DECLARE
                                             '(?:', TIME_MASKSEP_REGEXP, AMPM_REGEXP, '))', TIME_MASKSEP_REGEXP,
                                             DAYMM_REGEXP,
                                             '((?:(?:\s|,)+|', AMPM_REGEXP, ')(?:', HHMMSSFS_PART_FI_REGEXP, '))?', TIME_MASKSEP_FI_REGEXP, '$');
-    CONVERSION_LANG CONSTANT VARCHAR := '';
-    DATE_FORMAT CONSTANT VARCHAR := '';
+    CONVERSION_LANG CONSTANT VARCHAR COLLATE "C" := '';
+    DATE_FORMAT CONSTANT VARCHAR COLLATE "C" := '';
 BEGIN
     v_datestring := upper(trim(p_datestring));
     v_culture := coalesce(nullif(upper(trim(p_culture)), ''), 'EN-US');
@@ -3110,7 +3133,7 @@ BEGIN
     IF (v_weekdaynames[1] IS NOT NULL AND
         v_datestring ~* concat(WEEKDAYAMPM_START_REGEXP, '(', v_compday_regexp, ')', WEEKDAYAMPM_END_REGEXP))
     THEN
-        v_datestring := replace(v_datestring, v_weekdaynames[1], ' ');
+        v_datestring := pg_catalog.replace(v_datestring, v_weekdaynames[1], ' ');
     END IF;
 
     IF (v_datestring ~* ANNO_DOMINI_COMPREGEXP)
@@ -3403,7 +3426,7 @@ BEGIN
 
     WHILE (NOT v_found AND v_resmask_cnt < 20)
     LOOP
-        v_resmask := replace(CASE v_resmask_cnt
+        v_resmask := pg_catalog.replace(CASE v_resmask_cnt
                                 WHEN 10 THEN v_defmask10_regexp
                                 WHEN 11 THEN v_defmask11_regexp
                                 WHEN 12 THEN v_defmask12_regexp
@@ -3417,7 +3440,7 @@ BEGIN
                              END,
                              '$comp_month$', v_compmonth_regexp);
 
-        v_resmask_fi := replace(CASE v_resmask_cnt
+        v_resmask_fi := pg_catalog.replace(CASE v_resmask_cnt
                                    WHEN 10 THEN v_defmask10_fi_regexp
                                    WHEN 11 THEN v_defmask11_fi_regexp
                                    WHEN 12 THEN v_defmask12_fi_regexp
@@ -3624,7 +3647,7 @@ BEGIN
             END IF;
         END IF;
 
-        v_timestring := replace(regexp_replace(v_timestring, '\.?[AP]M|ص|م|\s|\,|\.\D|[\.|:]$', '', 'gi'), ':.', ':');
+        v_timestring := pg_catalog.replace(regexp_replace(v_timestring, '\.?[AP]M|ص|م|\s|\,|\.\D|[\.|:]$', '', 'gi'), ':.', ':');
         BEGIN
             v_hours := coalesce(split_part(v_timestring, ':', 1)::SMALLINT, 0);
 
@@ -3699,60 +3722,60 @@ RETURNS TIMESTAMP WITHOUT TIME ZONE
 AS
 $BODY$
 DECLARE
-    v_day VARCHAR;
+    v_day VARCHAR COLLATE "C";
     v_year SMALLINT;
-    v_month VARCHAR;
+    v_month VARCHAR COLLATE "C";
     v_res_date DATE;
     v_scale SMALLINT;
     v_hijridate DATE;
-    v_culture VARCHAR;
+    v_culture VARCHAR COLLATE "C";
     v_dayparts TEXT[];
-    v_resmask VARCHAR;
-    v_datatype VARCHAR;
-    v_raw_year VARCHAR;
-    v_left_part VARCHAR;
-    v_right_part VARCHAR;
-    v_resmask_fi VARCHAR;
-    v_timestring VARCHAR;
-    v_correctnum VARCHAR;
+    v_resmask VARCHAR COLLATE "C";
+    v_datatype VARCHAR COLLATE "C";
+    v_raw_year VARCHAR COLLATE "C";
+    v_left_part VARCHAR COLLATE "C";
+    v_right_part VARCHAR COLLATE "C";
+    v_resmask_fi VARCHAR COLLATE "C";
+    v_timestring VARCHAR COLLATE "C";
+    v_correctnum VARCHAR COLLATE "C";
     v_weekdaynum SMALLINT;
-    v_err_message VARCHAR;
-    v_date_format VARCHAR;
+    v_err_message VARCHAR COLLATE "C";
+    v_date_format VARCHAR COLLATE "C";
     v_weekdaynames TEXT[];
     v_hours SMALLINT := 0;
     v_minutes SMALLINT := 0;
-    v_res_datatype VARCHAR;
-    v_error_message VARCHAR;
+    v_res_datatype VARCHAR COLLATE "C";
+    v_error_message VARCHAR COLLATE "C";
     v_found BOOLEAN := TRUE;
-    v_compday_regexp VARCHAR;
+    v_compday_regexp VARCHAR COLLATE "C";
     v_regmatch_groups TEXT[];
     v_datatype_groups TEXT[];
-    v_datetimestring VARCHAR;
-    v_seconds VARCHAR := '0';
-    v_fseconds VARCHAR := '0';
-    v_compmonth_regexp VARCHAR;
+    v_datetimestring VARCHAR COLLATE "C";
+    v_seconds VARCHAR COLLATE "C" := '0';
+    v_fseconds VARCHAR COLLATE "C" := '0';
+    v_compmonth_regexp VARCHAR COLLATE "C";
     v_lang_metadata_json JSONB;
     v_resmask_cnt SMALLINT := 10;
     v_res_datetime TIMESTAMP(6) WITHOUT TIME ZONE;
-    DAYMM_REGEXP CONSTANT VARCHAR := '(\d{1,2})';
-    FULLYEAR_REGEXP CONSTANT VARCHAR := '(\d{3,4})';
-    SHORTYEAR_REGEXP CONSTANT VARCHAR := '(\d{1,2})';
-    COMPYEAR_REGEXP CONSTANT VARCHAR := '(\d{1,4})';
-    AMPM_REGEXP CONSTANT VARCHAR := '(?:[AP]M|ص|م)';
-    TIMEUNIT_REGEXP CONSTANT VARCHAR := '\s*\d{1,2}\s*';
-    MASKSEPONE_REGEXP CONSTANT VARCHAR := '\s*(?:/|-)?';
-    MASKSEPTWO_REGEXP CONSTANT VARCHAR := '\s*(?:\s|/|-|\.|,)';
-    MASKSEPTWO_FI_REGEXP CONSTANT VARCHAR := '\s*(?:\s|/|-|,)';
-    MASKSEPTHREE_REGEXP CONSTANT VARCHAR := '\s*(?:/|-|\.|,)';
-    TIME_MASKSEP_REGEXP CONSTANT VARCHAR := '(?:\s|\.|,)*';
-    TIME_MASKSEP_FI_REGEXP CONSTANT VARCHAR := '(?:\s|,)*';
-    WEEKDAYAMPM_START_REGEXP CONSTANT VARCHAR := '(^|[[:digit:][:space:]\.,])';
-    WEEKDAYAMPM_END_REGEXP CONSTANT VARCHAR := '([[:digit:][:space:]\.,]|$)(?=[^/-]|$)';
-    CORRECTNUM_REGEXP CONSTANT VARCHAR := '(?:([+-]\d{1,4})(?:[[:space:]\.,]|[AP]M|ص|م|$))';
-    DATATYPE_REGEXP CONSTANT VARCHAR := '^(DATETIME|SMALLDATETIME|DATETIME2)\s*(?:\()?\s*((?:-)?\d+)?\s*(?:\))?$';
-    ANNO_DOMINI_REGEXP VARCHAR := '(AD|A\.D\.)';
-    ANNO_DOMINI_COMPREGEXP VARCHAR := concat(WEEKDAYAMPM_START_REGEXP, ANNO_DOMINI_REGEXP, WEEKDAYAMPM_END_REGEXP);
-    HHMMSSFS_PART_REGEXP CONSTANT VARCHAR :=
+    DAYMM_REGEXP CONSTANT VARCHAR COLLATE "C" := '(\d{1,2})';
+    FULLYEAR_REGEXP CONSTANT VARCHAR COLLATE "C" := '(\d{3,4})';
+    SHORTYEAR_REGEXP CONSTANT VARCHAR COLLATE "C" := '(\d{1,2})';
+    COMPYEAR_REGEXP CONSTANT VARCHAR COLLATE "C" := '(\d{1,4})';
+    AMPM_REGEXP CONSTANT VARCHAR COLLATE "C" := '(?:[AP]M|ص|م)';
+    TIMEUNIT_REGEXP CONSTANT VARCHAR COLLATE "C" := '\s*\d{1,2}\s*';
+    MASKSEPONE_REGEXP CONSTANT VARCHAR COLLATE "C" := '\s*(?:/|-)?';
+    MASKSEPTWO_REGEXP CONSTANT VARCHAR COLLATE "C" := '\s*(?:\s|/|-|\.|,)';
+    MASKSEPTWO_FI_REGEXP CONSTANT VARCHAR COLLATE "C" := '\s*(?:\s|/|-|,)';
+    MASKSEPTHREE_REGEXP CONSTANT VARCHAR COLLATE "C" := '\s*(?:/|-|\.|,)';
+    TIME_MASKSEP_REGEXP CONSTANT VARCHAR COLLATE "C" := '(?:\s|\.|,)*';
+    TIME_MASKSEP_FI_REGEXP CONSTANT VARCHAR COLLATE "C" := '(?:\s|,)*';
+    WEEKDAYAMPM_START_REGEXP CONSTANT VARCHAR COLLATE "C" := '(^|[[:digit:][:space:]\.,])';
+    WEEKDAYAMPM_END_REGEXP CONSTANT VARCHAR COLLATE "C" := '([[:digit:][:space:]\.,]|$)(?=[^/-]|$)';
+    CORRECTNUM_REGEXP CONSTANT VARCHAR COLLATE "C" := '(?:([+-]\d{1,4})(?:[[:space:]\.,]|[AP]M|ص|م|$))';
+    DATATYPE_REGEXP CONSTANT VARCHAR COLLATE "C" := '^(DATETIME|SMALLDATETIME|DATETIME2)\s*(?:\()?\s*((?:-)?\d+)?\s*(?:\))?$';
+    ANNO_DOMINI_REGEXP VARCHAR COLLATE "C" := '(AD|A\.D\.)';
+    ANNO_DOMINI_COMPREGEXP VARCHAR COLLATE "C" := concat(WEEKDAYAMPM_START_REGEXP, ANNO_DOMINI_REGEXP, WEEKDAYAMPM_END_REGEXP);
+    HHMMSSFS_PART_REGEXP CONSTANT VARCHAR COLLATE "C" :=
         concat(TIMEUNIT_REGEXP, AMPM_REGEXP, '|',
                AMPM_REGEXP, '?', TIME_MASKSEP_REGEXP, TIMEUNIT_REGEXP, '\:', TIME_MASKSEP_REGEXP,
                AMPM_REGEXP, '?', TIME_MASKSEP_REGEXP, TIMEUNIT_REGEXP, '(?!\d)', TIME_MASKSEP_REGEXP, AMPM_REGEXP, '?|',
@@ -3763,7 +3786,7 @@ DECLARE
                AMPM_REGEXP, '?', TIME_MASKSEP_REGEXP, TIMEUNIT_REGEXP, '\:', TIME_MASKSEP_REGEXP,
                AMPM_REGEXP, '?', TIME_MASKSEP_REGEXP, '\s*\d{1,2}\.\d+(?!\d)', TIME_MASKSEP_REGEXP, AMPM_REGEXP, '?|',
                AMPM_REGEXP, '?');
-    HHMMSSFS_PART_FI_REGEXP CONSTANT VARCHAR :=
+    HHMMSSFS_PART_FI_REGEXP CONSTANT VARCHAR COLLATE "C" :=
         concat(TIMEUNIT_REGEXP, AMPM_REGEXP, '|',
                AMPM_REGEXP, '?', TIME_MASKSEP_FI_REGEXP, TIMEUNIT_REGEXP, '[\:\.]', TIME_MASKSEP_FI_REGEXP,
                AMPM_REGEXP, '?', TIME_MASKSEP_FI_REGEXP, TIMEUNIT_REGEXP, '(?!\d)', TIME_MASKSEP_FI_REGEXP, AMPM_REGEXP, '?\.?|',
@@ -3774,7 +3797,7 @@ DECLARE
                AMPM_REGEXP, '?', TIME_MASKSEP_FI_REGEXP, TIMEUNIT_REGEXP, '[\:\.]', TIME_MASKSEP_FI_REGEXP,
                AMPM_REGEXP, '?', TIME_MASKSEP_FI_REGEXP, '\s*\d{1,2}\.\d+(?!\d)\.?', TIME_MASKSEP_FI_REGEXP, AMPM_REGEXP, '?|',
                AMPM_REGEXP, '?');
-    v_defmask1_regexp VARCHAR := concat('^', TIME_MASKSEP_REGEXP, CORRECTNUM_REGEXP, '?', TIME_MASKSEP_REGEXP,
+    v_defmask1_regexp VARCHAR COLLATE "C" := concat('^', TIME_MASKSEP_REGEXP, CORRECTNUM_REGEXP, '?', TIME_MASKSEP_REGEXP,
                                         '(', HHMMSSFS_PART_REGEXP, ')?', TIME_MASKSEP_REGEXP,
                                         CORRECTNUM_REGEXP, '?', TIME_MASKSEP_REGEXP, AMPM_REGEXP, '?', TIME_MASKSEP_REGEXP,
                                         DAYMM_REGEXP,
@@ -3784,7 +3807,7 @@ DECLARE
                                         '(?:[\.|,]+', AMPM_REGEXP, '?', TIME_MASKSEP_REGEXP, CORRECTNUM_REGEXP, '?))', TIME_MASKSEP_REGEXP,
                                         DAYMM_REGEXP,
                                         TIME_MASKSEP_REGEXP, '(?:[\.|,]+', TIME_MASKSEP_REGEXP, AMPM_REGEXP, '?)', TIME_MASKSEP_REGEXP, '$');
-    v_defmask1_fi_regexp VARCHAR := concat('^', TIME_MASKSEP_FI_REGEXP, CORRECTNUM_REGEXP, '?', TIME_MASKSEP_FI_REGEXP,
+    v_defmask1_fi_regexp VARCHAR COLLATE "C" := concat('^', TIME_MASKSEP_FI_REGEXP, CORRECTNUM_REGEXP, '?', TIME_MASKSEP_FI_REGEXP,
                                            '(', HHMMSSFS_PART_FI_REGEXP, ')?', TIME_MASKSEP_FI_REGEXP,
                                            CORRECTNUM_REGEXP, '?', TIME_MASKSEP_REGEXP, AMPM_REGEXP, '?', TIME_MASKSEP_REGEXP,
                                            DAYMM_REGEXP,
@@ -3794,7 +3817,7 @@ DECLARE
                                            '(?:[,]+', AMPM_REGEXP, '?', TIME_MASKSEP_FI_REGEXP, CORRECTNUM_REGEXP, '?))', TIME_MASKSEP_FI_REGEXP,
                                            DAYMM_REGEXP,
                                            TIME_MASKSEP_FI_REGEXP, '(?:[\.|,]+', TIME_MASKSEP_FI_REGEXP, AMPM_REGEXP, ')?', TIME_MASKSEP_FI_REGEXP, '$');
-    v_defmask2_regexp VARCHAR := concat('^', TIME_MASKSEP_REGEXP, CORRECTNUM_REGEXP, '?', TIME_MASKSEP_REGEXP,
+    v_defmask2_regexp VARCHAR COLLATE "C" := concat('^', TIME_MASKSEP_REGEXP, CORRECTNUM_REGEXP, '?', TIME_MASKSEP_REGEXP,
                                         '(', HHMMSSFS_PART_REGEXP, ')?', TIME_MASKSEP_REGEXP,
                                         CORRECTNUM_REGEXP, '?', TIME_MASKSEP_REGEXP, AMPM_REGEXP, '?', TIME_MASKSEP_REGEXP,
                                         FULLYEAR_REGEXP,
@@ -3804,7 +3827,7 @@ DECLARE
                                         DAYMM_REGEXP,
                                         TIME_MASKSEP_REGEXP, '(?:(?:[\.|,]+', TIME_MASKSEP_REGEXP, AMPM_REGEXP, TIME_MASKSEP_REGEXP, CORRECTNUM_REGEXP, '?)|',
                                         CORRECTNUM_REGEXP, TIME_MASKSEP_REGEXP, AMPM_REGEXP, '?)?', TIME_MASKSEP_REGEXP, '$');
-    v_defmask2_fi_regexp VARCHAR := concat('^', TIME_MASKSEP_FI_REGEXP, CORRECTNUM_REGEXP, '?', TIME_MASKSEP_FI_REGEXP,
+    v_defmask2_fi_regexp VARCHAR COLLATE "C" := concat('^', TIME_MASKSEP_FI_REGEXP, CORRECTNUM_REGEXP, '?', TIME_MASKSEP_FI_REGEXP,
                                            '(', HHMMSSFS_PART_FI_REGEXP, ')?', TIME_MASKSEP_FI_REGEXP,
                                            CORRECTNUM_REGEXP, '?', TIME_MASKSEP_FI_REGEXP, AMPM_REGEXP, '?', TIME_MASKSEP_FI_REGEXP,
                                            FULLYEAR_REGEXP,
@@ -3814,40 +3837,40 @@ DECLARE
                                            DAYMM_REGEXP,
                                            TIME_MASKSEP_FI_REGEXP, '(?:(?:[\.|,]+', TIME_MASKSEP_FI_REGEXP, AMPM_REGEXP, TIME_MASKSEP_FI_REGEXP, CORRECTNUM_REGEXP, '?)|',
                                            CORRECTNUM_REGEXP, TIME_MASKSEP_FI_REGEXP, AMPM_REGEXP, '?)?', TIME_MASKSEP_FI_REGEXP, '$');
-    v_defmask3_regexp VARCHAR := concat('^', TIME_MASKSEP_REGEXP, '(', HHMMSSFS_PART_REGEXP, ')?', TIME_MASKSEP_REGEXP,
+    v_defmask3_regexp VARCHAR COLLATE "C" := concat('^', TIME_MASKSEP_REGEXP, '(', HHMMSSFS_PART_REGEXP, ')?', TIME_MASKSEP_REGEXP,
                                         DAYMM_REGEXP,
                                         '(?:(?:', MASKSEPTWO_REGEXP, TIME_MASKSEP_REGEXP, ')|',
                                         '(?:', MASKSEPTHREE_REGEXP, TIME_MASKSEP_REGEXP, AMPM_REGEXP, '))', TIME_MASKSEP_REGEXP,
                                         FULLYEAR_REGEXP,
                                         TIME_MASKSEP_REGEXP, '(', TIME_MASKSEP_REGEXP, AMPM_REGEXP, ')?', TIME_MASKSEP_REGEXP, '$');
-    v_defmask3_fi_regexp VARCHAR := concat('^', TIME_MASKSEP_FI_REGEXP, '(', HHMMSSFS_PART_FI_REGEXP, ')?', TIME_MASKSEP_FI_REGEXP,
+    v_defmask3_fi_regexp VARCHAR COLLATE "C" := concat('^', TIME_MASKSEP_FI_REGEXP, '(', HHMMSSFS_PART_FI_REGEXP, ')?', TIME_MASKSEP_FI_REGEXP,
                                            TIME_MASKSEP_FI_REGEXP, '[\./]?', TIME_MASKSEP_FI_REGEXP,
                                            DAYMM_REGEXP,
                                            '(?:', MASKSEPTWO_REGEXP, TIME_MASKSEP_FI_REGEXP, AMPM_REGEXP, '?)',
                                            FULLYEAR_REGEXP,
                                            TIME_MASKSEP_FI_REGEXP, AMPM_REGEXP, '?', TIME_MASKSEP_FI_REGEXP, '$');
-    v_defmask4_0_regexp VARCHAR := concat('^', TIME_MASKSEP_REGEXP,
+    v_defmask4_0_regexp VARCHAR COLLATE "C" := concat('^', TIME_MASKSEP_REGEXP,
                                           DAYMM_REGEXP,
                                           MASKSEPTWO_REGEXP, TIME_MASKSEP_REGEXP,
                                           DAYMM_REGEXP,
                                           TIME_MASKSEP_REGEXP,
                                           DAYMM_REGEXP, '\s*(', AMPM_REGEXP, ')',
                                           TIME_MASKSEP_REGEXP, '$');
-    v_defmask4_1_regexp VARCHAR := concat('^', TIME_MASKSEP_REGEXP,
+    v_defmask4_1_regexp VARCHAR COLLATE "C" := concat('^', TIME_MASKSEP_REGEXP,
                                           DAYMM_REGEXP,
                                           MASKSEPTWO_REGEXP, TIME_MASKSEP_REGEXP,
                                           DAYMM_REGEXP,
                                           '(?:\s|,)+',
                                           DAYMM_REGEXP, '\s*(', AMPM_REGEXP, ')',
                                           TIME_MASKSEP_REGEXP, '$');
-    v_defmask4_2_regexp VARCHAR := concat('^', TIME_MASKSEP_REGEXP,
+    v_defmask4_2_regexp VARCHAR COLLATE "C" := concat('^', TIME_MASKSEP_REGEXP,
                                           DAYMM_REGEXP,
                                           MASKSEPTWO_REGEXP, TIME_MASKSEP_REGEXP,
                                           DAYMM_REGEXP,
                                           '\s*[\.]+', TIME_MASKSEP_REGEXP,
                                           DAYMM_REGEXP, '\s*(', AMPM_REGEXP, ')',
                                           TIME_MASKSEP_REGEXP, '$');
-    v_defmask5_regexp VARCHAR := concat('^', TIME_MASKSEP_REGEXP, '(', HHMMSSFS_PART_REGEXP, ')?', TIME_MASKSEP_REGEXP,
+    v_defmask5_regexp VARCHAR COLLATE "C" := concat('^', TIME_MASKSEP_REGEXP, '(', HHMMSSFS_PART_REGEXP, ')?', TIME_MASKSEP_REGEXP,
                                         DAYMM_REGEXP,
                                         '(?:(?:', MASKSEPTWO_REGEXP, TIME_MASKSEP_REGEXP, AMPM_REGEXP, '?)|',
                                         '(?:[\.|,]+', AMPM_REGEXP, '))', TIME_MASKSEP_REGEXP,
@@ -3856,7 +3879,7 @@ DECLARE
                                         '(?:[\.|,]+', AMPM_REGEXP, '))', TIME_MASKSEP_REGEXP,
                                         FULLYEAR_REGEXP,
                                         TIME_MASKSEP_REGEXP, '(', HHMMSSFS_PART_REGEXP, ')?', TIME_MASKSEP_REGEXP, '$');
-    v_defmask5_fi_regexp VARCHAR := concat('^', TIME_MASKSEP_FI_REGEXP, '(', HHMMSSFS_PART_FI_REGEXP, ')?', TIME_MASKSEP_FI_REGEXP,
+    v_defmask5_fi_regexp VARCHAR COLLATE "C" := concat('^', TIME_MASKSEP_FI_REGEXP, '(', HHMMSSFS_PART_FI_REGEXP, ')?', TIME_MASKSEP_FI_REGEXP,
                                            DAYMM_REGEXP,
                                            '(?:(?:', MASKSEPTWO_REGEXP, TIME_MASKSEP_FI_REGEXP, AMPM_REGEXP, '?)|',
                                            '(?:[\.|,]+', AMPM_REGEXP, '))', TIME_MASKSEP_FI_REGEXP,
@@ -3865,7 +3888,7 @@ DECLARE
                                            '(?:[\.|,]+', AMPM_REGEXP, '))', TIME_MASKSEP_FI_REGEXP,
                                            FULLYEAR_REGEXP,
                                            TIME_MASKSEP_FI_REGEXP, '(', HHMMSSFS_PART_FI_REGEXP, ')?', TIME_MASKSEP_FI_REGEXP, '$');
-    v_defmask6_regexp VARCHAR := concat('^', TIME_MASKSEP_REGEXP, '(', HHMMSSFS_PART_REGEXP, ')?', TIME_MASKSEP_REGEXP,
+    v_defmask6_regexp VARCHAR COLLATE "C" := concat('^', TIME_MASKSEP_REGEXP, '(', HHMMSSFS_PART_REGEXP, ')?', TIME_MASKSEP_REGEXP,
                                         FULLYEAR_REGEXP,
                                         '(?:(?:', MASKSEPTWO_REGEXP, TIME_MASKSEP_REGEXP, AMPM_REGEXP, '?)|',
                                         '(?:', TIME_MASKSEP_REGEXP, AMPM_REGEXP, '))', TIME_MASKSEP_REGEXP,
@@ -3874,7 +3897,7 @@ DECLARE
                                         '(?:[\.|,]+', AMPM_REGEXP, '))', TIME_MASKSEP_REGEXP,
                                         DAYMM_REGEXP,
                                         '((?:(?:\s|\.|,)+|', AMPM_REGEXP, ')(?:', HHMMSSFS_PART_REGEXP, '))?', TIME_MASKSEP_REGEXP, '$');
-    v_defmask6_fi_regexp VARCHAR := concat('^', TIME_MASKSEP_FI_REGEXP, '(', HHMMSSFS_PART_FI_REGEXP, ')?', TIME_MASKSEP_FI_REGEXP,
+    v_defmask6_fi_regexp VARCHAR COLLATE "C" := concat('^', TIME_MASKSEP_FI_REGEXP, '(', HHMMSSFS_PART_FI_REGEXP, ')?', TIME_MASKSEP_FI_REGEXP,
                                            FULLYEAR_REGEXP,
                                            '(?:(?:', MASKSEPTWO_REGEXP, TIME_MASKSEP_FI_REGEXP, AMPM_REGEXP, '?)|',
                                            '(?:', TIME_MASKSEP_FI_REGEXP, AMPM_REGEXP, '))', TIME_MASKSEP_FI_REGEXP,
@@ -3884,7 +3907,7 @@ DECLARE
                                            DAYMM_REGEXP,
                                            '(?:\s*[\.])?',
                                            '((?:(?:\s|,)+|', AMPM_REGEXP, ')(?:', HHMMSSFS_PART_FI_REGEXP, '))?', TIME_MASKSEP_FI_REGEXP, '$');
-    v_defmask7_regexp VARCHAR := concat('^', TIME_MASKSEP_REGEXP, '(', HHMMSSFS_PART_REGEXP, ')?', TIME_MASKSEP_REGEXP,
+    v_defmask7_regexp VARCHAR COLLATE "C" := concat('^', TIME_MASKSEP_REGEXP, '(', HHMMSSFS_PART_REGEXP, ')?', TIME_MASKSEP_REGEXP,
                                         DAYMM_REGEXP,
                                         '(?:(?:', MASKSEPTWO_REGEXP, TIME_MASKSEP_REGEXP, AMPM_REGEXP, '?)|',
                                         '(?:[\.|,]+', AMPM_REGEXP, '))', TIME_MASKSEP_REGEXP,
@@ -3893,7 +3916,7 @@ DECLARE
                                         '(?:', TIME_MASKSEP_REGEXP, AMPM_REGEXP, '))', TIME_MASKSEP_REGEXP,
                                         DAYMM_REGEXP,
                                         '((?:(?:\s|\.|,)+|', AMPM_REGEXP, ')(?:', HHMMSSFS_PART_REGEXP, '))?', TIME_MASKSEP_REGEXP, '$');
-    v_defmask7_fi_regexp VARCHAR := concat('^', TIME_MASKSEP_FI_REGEXP, '(', HHMMSSFS_PART_FI_REGEXP, ')?', TIME_MASKSEP_FI_REGEXP,
+    v_defmask7_fi_regexp VARCHAR COLLATE "C" := concat('^', TIME_MASKSEP_FI_REGEXP, '(', HHMMSSFS_PART_FI_REGEXP, ')?', TIME_MASKSEP_FI_REGEXP,
                                            DAYMM_REGEXP,
                                            '(?:(?:', MASKSEPTWO_REGEXP, TIME_MASKSEP_FI_REGEXP, AMPM_REGEXP, '?)|',
                                            '(?:[\.|,]+', AMPM_REGEXP, '))', TIME_MASKSEP_FI_REGEXP,
@@ -3902,7 +3925,7 @@ DECLARE
                                            '(?:', TIME_MASKSEP_FI_REGEXP, AMPM_REGEXP, '))', TIME_MASKSEP_FI_REGEXP,
                                            DAYMM_REGEXP,
                                            '((?:(?:\s|,)+|', AMPM_REGEXP, ')(?:', HHMMSSFS_PART_FI_REGEXP, '))?', TIME_MASKSEP_FI_REGEXP, '$');
-    v_defmask8_regexp VARCHAR := concat('^', TIME_MASKSEP_REGEXP, '(', HHMMSSFS_PART_REGEXP, ')?', TIME_MASKSEP_REGEXP,
+    v_defmask8_regexp VARCHAR COLLATE "C" := concat('^', TIME_MASKSEP_REGEXP, '(', HHMMSSFS_PART_REGEXP, ')?', TIME_MASKSEP_REGEXP,
                                         DAYMM_REGEXP,
                                         '(?:(?:', MASKSEPTWO_REGEXP, TIME_MASKSEP_REGEXP, AMPM_REGEXP, '?)|',
                                         '(?:[\.|,]+', AMPM_REGEXP, '))', TIME_MASKSEP_REGEXP,
@@ -3912,7 +3935,7 @@ DECLARE
                                         DAYMM_REGEXP,
                                         '(?:[\.|,]+', AMPM_REGEXP, ')?',
                                         TIME_MASKSEP_REGEXP, '(', HHMMSSFS_PART_REGEXP, ')?', TIME_MASKSEP_REGEXP, '$');
-    v_defmask8_fi_regexp VARCHAR := concat('^', TIME_MASKSEP_FI_REGEXP, '(', HHMMSSFS_PART_FI_REGEXP, ')?', TIME_MASKSEP_FI_REGEXP,
+    v_defmask8_fi_regexp VARCHAR COLLATE "C" := concat('^', TIME_MASKSEP_FI_REGEXP, '(', HHMMSSFS_PART_FI_REGEXP, ')?', TIME_MASKSEP_FI_REGEXP,
                                            DAYMM_REGEXP,
                                            '(?:(?:', MASKSEPTWO_FI_REGEXP, TIME_MASKSEP_FI_REGEXP, AMPM_REGEXP, '?)|',
                                            '(?:[,]+', AMPM_REGEXP, '))', TIME_MASKSEP_FI_REGEXP,
@@ -3922,69 +3945,69 @@ DECLARE
                                            DAYMM_REGEXP,
                                            '(?:(?:[\,]+|\s*/\s*)', AMPM_REGEXP, ')?',
                                            TIME_MASKSEP_FI_REGEXP, '(', HHMMSSFS_PART_FI_REGEXP, ')?', TIME_MASKSEP_FI_REGEXP, '$');
-    v_defmask9_regexp VARCHAR := concat('^', TIME_MASKSEP_REGEXP, '(',
+    v_defmask9_regexp VARCHAR COLLATE "C" := concat('^', TIME_MASKSEP_REGEXP, '(',
                                         HHMMSSFS_PART_REGEXP,
                                         ')', TIME_MASKSEP_REGEXP, '$');
-    v_defmask9_fi_regexp VARCHAR := concat('^', TIME_MASKSEP_FI_REGEXP, AMPM_REGEXP, '?', TIME_MASKSEP_FI_REGEXP, '(',
+    v_defmask9_fi_regexp VARCHAR COLLATE "C" := concat('^', TIME_MASKSEP_FI_REGEXP, AMPM_REGEXP, '?', TIME_MASKSEP_FI_REGEXP, '(',
                                            HHMMSSFS_PART_FI_REGEXP,
                                            ')', TIME_MASKSEP_FI_REGEXP, '$');
-    v_defmask10_regexp VARCHAR := concat('^', TIME_MASKSEP_REGEXP, '(', HHMMSSFS_PART_REGEXP, ')?', TIME_MASKSEP_REGEXP,
+    v_defmask10_regexp VARCHAR COLLATE "C" := concat('^', TIME_MASKSEP_REGEXP, '(', HHMMSSFS_PART_REGEXP, ')?', TIME_MASKSEP_REGEXP,
                                          DAYMM_REGEXP,
                                          '(?:', MASKSEPTHREE_REGEXP, TIME_MASKSEP_REGEXP, '(?:', AMPM_REGEXP, '(?=(?:[[:space:]\.,])+))?)?', TIME_MASKSEP_REGEXP,
                                          '($comp_month$)',
                                          TIME_MASKSEP_REGEXP, '(', HHMMSSFS_PART_REGEXP, ')?', TIME_MASKSEP_REGEXP, '$');
-    v_defmask10_fi_regexp VARCHAR := concat('^', TIME_MASKSEP_FI_REGEXP, '(', HHMMSSFS_PART_FI_REGEXP, ')?', TIME_MASKSEP_FI_REGEXP,
+    v_defmask10_fi_regexp VARCHAR COLLATE "C" := concat('^', TIME_MASKSEP_FI_REGEXP, '(', HHMMSSFS_PART_FI_REGEXP, ')?', TIME_MASKSEP_FI_REGEXP,
                                             DAYMM_REGEXP,
                                             '(?:', MASKSEPTHREE_REGEXP, TIME_MASKSEP_REGEXP, '(?:', AMPM_REGEXP, '(?=(?:[[:space:]\.,])+))?)?', TIME_MASKSEP_REGEXP,
                                             '($comp_month$)',
                                             TIME_MASKSEP_FI_REGEXP, '(', HHMMSSFS_PART_FI_REGEXP, ')?', TIME_MASKSEP_FI_REGEXP, '$');
-    v_defmask11_regexp VARCHAR := concat('^', TIME_MASKSEP_REGEXP, '(', HHMMSSFS_PART_REGEXP, ')?', TIME_MASKSEP_REGEXP,
+    v_defmask11_regexp VARCHAR COLLATE "C" := concat('^', TIME_MASKSEP_REGEXP, '(', HHMMSSFS_PART_REGEXP, ')?', TIME_MASKSEP_REGEXP,
                                          '($comp_month$)',
                                          '(?:', MASKSEPTHREE_REGEXP, TIME_MASKSEP_REGEXP, AMPM_REGEXP, '?)?', TIME_MASKSEP_REGEXP,
                                          DAYMM_REGEXP,
                                          TIME_MASKSEP_REGEXP, '(', HHMMSSFS_PART_REGEXP, ')?', TIME_MASKSEP_REGEXP, '$');
-    v_defmask11_fi_regexp VARCHAR := concat('^', TIME_MASKSEP_FI_REGEXP, '(', HHMMSSFS_PART_FI_REGEXP, ')?', TIME_MASKSEP_FI_REGEXP,
+    v_defmask11_fi_regexp VARCHAR COLLATE "C" := concat('^', TIME_MASKSEP_FI_REGEXP, '(', HHMMSSFS_PART_FI_REGEXP, ')?', TIME_MASKSEP_FI_REGEXP,
                                            '($comp_month$)',
                                            '(?:', MASKSEPTHREE_REGEXP, TIME_MASKSEP_REGEXP, AMPM_REGEXP, '?)?', TIME_MASKSEP_FI_REGEXP,
                                            DAYMM_REGEXP,
                                            '((?:(?:\s|,)+|', AMPM_REGEXP, ')(?:', HHMMSSFS_PART_FI_REGEXP, '))?', TIME_MASKSEP_FI_REGEXP, '$');
-    v_defmask12_regexp VARCHAR := concat('^', TIME_MASKSEP_REGEXP, '(', HHMMSSFS_PART_REGEXP, ')?', TIME_MASKSEP_REGEXP,
+    v_defmask12_regexp VARCHAR COLLATE "C" := concat('^', TIME_MASKSEP_REGEXP, '(', HHMMSSFS_PART_REGEXP, ')?', TIME_MASKSEP_REGEXP,
                                          FULLYEAR_REGEXP,
                                          '(?:(?:', MASKSEPTWO_REGEXP, '?', TIME_MASKSEP_REGEXP, '(?:', AMPM_REGEXP, '(?=(?:[[:space:]\.,])+))?)|',
                                          '(?:(?:', TIME_MASKSEP_REGEXP, AMPM_REGEXP, '(?=(?:[[:space:]\.,])+))))', TIME_MASKSEP_REGEXP,
                                          '($comp_month$)',
                                          TIME_MASKSEP_REGEXP, '(', HHMMSSFS_PART_REGEXP, ')?', TIME_MASKSEP_REGEXP, '$');
-    v_defmask12_fi_regexp VARCHAR := concat('^', TIME_MASKSEP_FI_REGEXP, '(', HHMMSSFS_PART_FI_REGEXP, ')?', TIME_MASKSEP_FI_REGEXP,
+    v_defmask12_fi_regexp VARCHAR COLLATE "C" := concat('^', TIME_MASKSEP_FI_REGEXP, '(', HHMMSSFS_PART_FI_REGEXP, ')?', TIME_MASKSEP_FI_REGEXP,
                                             FULLYEAR_REGEXP,
                                             '(?:(?:', MASKSEPTWO_REGEXP, '?', TIME_MASKSEP_REGEXP, '(?:', AMPM_REGEXP, '(?=(?:[[:space:]\.,])+))?)|',
                                             '(?:(?:', TIME_MASKSEP_REGEXP, AMPM_REGEXP, '(?=(?:[[:space:]\.,])+))))', TIME_MASKSEP_REGEXP,
                                             '($comp_month$)',
                                             TIME_MASKSEP_FI_REGEXP, '(', HHMMSSFS_PART_FI_REGEXP, ')?', TIME_MASKSEP_FI_REGEXP, '$');
-    v_defmask13_regexp VARCHAR := concat('^', TIME_MASKSEP_REGEXP, '(', HHMMSSFS_PART_REGEXP, ')?', TIME_MASKSEP_REGEXP,
+    v_defmask13_regexp VARCHAR COLLATE "C" := concat('^', TIME_MASKSEP_REGEXP, '(', HHMMSSFS_PART_REGEXP, ')?', TIME_MASKSEP_REGEXP,
                                          '($comp_month$)',
                                          '(?:', MASKSEPTHREE_REGEXP, TIME_MASKSEP_REGEXP, AMPM_REGEXP, '?)?', TIME_MASKSEP_REGEXP,
                                          FULLYEAR_REGEXP,
                                          TIME_MASKSEP_REGEXP, AMPM_REGEXP, '?', TIME_MASKSEP_REGEXP, '$');
-    v_defmask13_fi_regexp VARCHAR := concat('^', TIME_MASKSEP_FI_REGEXP, '(', HHMMSSFS_PART_FI_REGEXP, ')?', TIME_MASKSEP_FI_REGEXP,
+    v_defmask13_fi_regexp VARCHAR COLLATE "C" := concat('^', TIME_MASKSEP_FI_REGEXP, '(', HHMMSSFS_PART_FI_REGEXP, ')?', TIME_MASKSEP_FI_REGEXP,
                                             '($comp_month$)',
                                             '(?:', MASKSEPTHREE_REGEXP, TIME_MASKSEP_REGEXP, AMPM_REGEXP, '?)?', TIME_MASKSEP_REGEXP,
                                             FULLYEAR_REGEXP,
                                             TIME_MASKSEP_FI_REGEXP, AMPM_REGEXP, '?', TIME_MASKSEP_FI_REGEXP, '$');
-    v_defmask14_regexp VARCHAR := concat('^', TIME_MASKSEP_REGEXP, '(', HHMMSSFS_PART_REGEXP, ')?', TIME_MASKSEP_REGEXP,
+    v_defmask14_regexp VARCHAR COLLATE "C" := concat('^', TIME_MASKSEP_REGEXP, '(', HHMMSSFS_PART_REGEXP, ')?', TIME_MASKSEP_REGEXP,
                                          '($comp_month$)'
                                          '(?:', MASKSEPTHREE_REGEXP, TIME_MASKSEP_REGEXP, AMPM_REGEXP, '?)?', TIME_MASKSEP_REGEXP,
                                          DAYMM_REGEXP,
                                          '(?:', MASKSEPTWO_REGEXP, TIME_MASKSEP_REGEXP, AMPM_REGEXP, '?)', TIME_MASKSEP_REGEXP,
                                          COMPYEAR_REGEXP,
                                          TIME_MASKSEP_REGEXP, '(', HHMMSSFS_PART_REGEXP, ')?', TIME_MASKSEP_REGEXP, '$');
-    v_defmask14_fi_regexp VARCHAR := concat('^', TIME_MASKSEP_FI_REGEXP, '(', HHMMSSFS_PART_FI_REGEXP, ')?', TIME_MASKSEP_FI_REGEXP,
+    v_defmask14_fi_regexp VARCHAR COLLATE "C" := concat('^', TIME_MASKSEP_FI_REGEXP, '(', HHMMSSFS_PART_FI_REGEXP, ')?', TIME_MASKSEP_FI_REGEXP,
                                             '($comp_month$)'
                                             '(?:', MASKSEPTHREE_REGEXP, TIME_MASKSEP_FI_REGEXP, AMPM_REGEXP, '?)?', TIME_MASKSEP_FI_REGEXP,
                                             DAYMM_REGEXP,
                                             '(?:', MASKSEPTWO_REGEXP, TIME_MASKSEP_FI_REGEXP, AMPM_REGEXP, '?)', TIME_MASKSEP_FI_REGEXP,
                                             COMPYEAR_REGEXP,
                                             '((?:(?:\s|,)+|', AMPM_REGEXP, ')(?:', HHMMSSFS_PART_FI_REGEXP, '))?', TIME_MASKSEP_FI_REGEXP, '$');
-    v_defmask15_regexp VARCHAR := concat('^', TIME_MASKSEP_REGEXP, '(', HHMMSSFS_PART_REGEXP, ')?', TIME_MASKSEP_REGEXP,
+    v_defmask15_regexp VARCHAR COLLATE "C" := concat('^', TIME_MASKSEP_REGEXP, '(', HHMMSSFS_PART_REGEXP, ')?', TIME_MASKSEP_REGEXP,
                                          DAYMM_REGEXP,
                                          '(?:(?:', MASKSEPTWO_REGEXP, '?', TIME_MASKSEP_REGEXP, '(?:', AMPM_REGEXP, '(?=(?:[[:space:]\.,])+))?)|',
                                          '(?:(?:', TIME_MASKSEP_REGEXP, AMPM_REGEXP, '(?=(?:[[:space:]\.,])+))))', TIME_MASKSEP_REGEXP,
@@ -3992,7 +4015,7 @@ DECLARE
                                          '(?:', MASKSEPTHREE_REGEXP, TIME_MASKSEP_REGEXP, AMPM_REGEXP, '?)?', TIME_MASKSEP_REGEXP,
                                          COMPYEAR_REGEXP,
                                          TIME_MASKSEP_REGEXP, '(', HHMMSSFS_PART_REGEXP, ')?', TIME_MASKSEP_REGEXP, '$');
-    v_defmask15_fi_regexp VARCHAR := concat('^', TIME_MASKSEP_FI_REGEXP, '(', HHMMSSFS_PART_FI_REGEXP, ')?', TIME_MASKSEP_FI_REGEXP,
+    v_defmask15_fi_regexp VARCHAR COLLATE "C" := concat('^', TIME_MASKSEP_FI_REGEXP, '(', HHMMSSFS_PART_FI_REGEXP, ')?', TIME_MASKSEP_FI_REGEXP,
                                             DAYMM_REGEXP,
                                             '(?:(?:', MASKSEPTWO_REGEXP, '?', TIME_MASKSEP_REGEXP, '(?:', AMPM_REGEXP, '(?=(?:[[:space:]\.,])+))?)|',
                                             '(?:(?:', TIME_MASKSEP_REGEXP, AMPM_REGEXP, '(?=(?:[[:space:]\.,])+))))', TIME_MASKSEP_REGEXP,
@@ -4000,7 +4023,7 @@ DECLARE
                                             '(?:', MASKSEPTHREE_REGEXP, TIME_MASKSEP_REGEXP, AMPM_REGEXP, '?)?', TIME_MASKSEP_REGEXP,
                                             COMPYEAR_REGEXP,
                                             '((?:(?:\s|,)+|', AMPM_REGEXP, ')(?:', HHMMSSFS_PART_FI_REGEXP, '))?', TIME_MASKSEP_FI_REGEXP, '$');
-    v_defmask16_regexp VARCHAR := concat('^', TIME_MASKSEP_REGEXP, '(', HHMMSSFS_PART_REGEXP, ')?', TIME_MASKSEP_REGEXP,
+    v_defmask16_regexp VARCHAR COLLATE "C" := concat('^', TIME_MASKSEP_REGEXP, '(', HHMMSSFS_PART_REGEXP, ')?', TIME_MASKSEP_REGEXP,
                                          DAYMM_REGEXP,
                                          '(?:', MASKSEPTWO_REGEXP, TIME_MASKSEP_REGEXP, AMPM_REGEXP, '?)', TIME_MASKSEP_REGEXP,
                                          COMPYEAR_REGEXP,
@@ -4008,7 +4031,7 @@ DECLARE
                                          '(?:(?:', TIME_MASKSEP_REGEXP, AMPM_REGEXP, '(?=(?:[[:space:]\.,])+))))', TIME_MASKSEP_REGEXP,
                                          '($comp_month$)',
                                          TIME_MASKSEP_REGEXP, '(', HHMMSSFS_PART_REGEXP, ')?', TIME_MASKSEP_REGEXP, '$');
-    v_defmask16_fi_regexp VARCHAR := concat('^', TIME_MASKSEP_FI_REGEXP, '(', HHMMSSFS_PART_FI_REGEXP, ')?', TIME_MASKSEP_FI_REGEXP,
+    v_defmask16_fi_regexp VARCHAR COLLATE "C" := concat('^', TIME_MASKSEP_FI_REGEXP, '(', HHMMSSFS_PART_FI_REGEXP, ')?', TIME_MASKSEP_FI_REGEXP,
                                             DAYMM_REGEXP,
                                             '(?:', MASKSEPTWO_REGEXP, TIME_MASKSEP_REGEXP, AMPM_REGEXP, '?)', TIME_MASKSEP_REGEXP,
                                             COMPYEAR_REGEXP,
@@ -4016,7 +4039,7 @@ DECLARE
                                             '(?:(?:', TIME_MASKSEP_REGEXP, AMPM_REGEXP, '(?=(?:[[:space:]\.,])+))))', TIME_MASKSEP_REGEXP,
                                             '($comp_month$)',
                                             TIME_MASKSEP_FI_REGEXP, '(', HHMMSSFS_PART_FI_REGEXP, ')?', TIME_MASKSEP_FI_REGEXP, '$');
-    v_defmask17_regexp VARCHAR := concat('^', TIME_MASKSEP_REGEXP, '(', HHMMSSFS_PART_REGEXP, ')?', TIME_MASKSEP_REGEXP,
+    v_defmask17_regexp VARCHAR COLLATE "C" := concat('^', TIME_MASKSEP_REGEXP, '(', HHMMSSFS_PART_REGEXP, ')?', TIME_MASKSEP_REGEXP,
                                          FULLYEAR_REGEXP,
                                          '(?:(?:', MASKSEPTWO_REGEXP, '?', TIME_MASKSEP_REGEXP, '(?:', AMPM_REGEXP, '(?=(?:[[:space:]\.,])+))?)|',
                                          '(?:(?:', TIME_MASKSEP_REGEXP, AMPM_REGEXP, '(?=(?:[[:space:]\.,])+))))', TIME_MASKSEP_REGEXP,
@@ -4024,7 +4047,7 @@ DECLARE
                                          '(?:', MASKSEPTHREE_REGEXP, TIME_MASKSEP_REGEXP, AMPM_REGEXP, '?)?', TIME_MASKSEP_REGEXP,
                                          DAYMM_REGEXP,
                                          TIME_MASKSEP_REGEXP, '(', HHMMSSFS_PART_REGEXP, ')?', TIME_MASKSEP_REGEXP, '$');
-    v_defmask17_fi_regexp VARCHAR := concat('^', TIME_MASKSEP_FI_REGEXP, '(', HHMMSSFS_PART_FI_REGEXP, ')?', TIME_MASKSEP_FI_REGEXP,
+    v_defmask17_fi_regexp VARCHAR COLLATE "C" := concat('^', TIME_MASKSEP_FI_REGEXP, '(', HHMMSSFS_PART_FI_REGEXP, ')?', TIME_MASKSEP_FI_REGEXP,
                                             FULLYEAR_REGEXP,
                                             '(?:(?:', MASKSEPTWO_REGEXP, '?', TIME_MASKSEP_REGEXP, '(?:', AMPM_REGEXP, '(?=(?:[[:space:]\.,])+))?)|',
                                             '(?:(?:', TIME_MASKSEP_REGEXP, AMPM_REGEXP, '(?=(?:[[:space:]\.,])+))))', TIME_MASKSEP_REGEXP,
@@ -4032,7 +4055,7 @@ DECLARE
                                             '(?:', MASKSEPTHREE_REGEXP, TIME_MASKSEP_REGEXP, AMPM_REGEXP, '?)?', TIME_MASKSEP_REGEXP,
                                             DAYMM_REGEXP,
                                             '((?:(?:\s|,)+|', AMPM_REGEXP, ')(?:', HHMMSSFS_PART_FI_REGEXP, '))?', TIME_MASKSEP_FI_REGEXP, '$');
-    v_defmask18_regexp VARCHAR := concat('^', TIME_MASKSEP_REGEXP, '(', HHMMSSFS_PART_REGEXP, ')?', TIME_MASKSEP_REGEXP,
+    v_defmask18_regexp VARCHAR COLLATE "C" := concat('^', TIME_MASKSEP_REGEXP, '(', HHMMSSFS_PART_REGEXP, ')?', TIME_MASKSEP_REGEXP,
                                          FULLYEAR_REGEXP,
                                          '(?:(?:', MASKSEPTWO_REGEXP, TIME_MASKSEP_REGEXP, AMPM_REGEXP, '?)|',
                                          '(?:', TIME_MASKSEP_REGEXP, AMPM_REGEXP, '))', TIME_MASKSEP_REGEXP,
@@ -4041,7 +4064,7 @@ DECLARE
                                          '(?:(?:', TIME_MASKSEP_REGEXP, AMPM_REGEXP, '(?=(?:[[:space:]\.,])+))))', TIME_MASKSEP_REGEXP,
                                          '($comp_month$)',
                                          TIME_MASKSEP_REGEXP, '(', HHMMSSFS_PART_REGEXP, ')?', TIME_MASKSEP_REGEXP, '$');
-    v_defmask18_fi_regexp VARCHAR := concat('^', TIME_MASKSEP_FI_REGEXP, '(', HHMMSSFS_PART_FI_REGEXP, ')?', TIME_MASKSEP_FI_REGEXP,
+    v_defmask18_fi_regexp VARCHAR COLLATE "C" := concat('^', TIME_MASKSEP_FI_REGEXP, '(', HHMMSSFS_PART_FI_REGEXP, ')?', TIME_MASKSEP_FI_REGEXP,
                                             FULLYEAR_REGEXP,
                                             '(?:(?:', MASKSEPTWO_REGEXP, TIME_MASKSEP_REGEXP, AMPM_REGEXP, '?)|',
                                             '(?:', TIME_MASKSEP_REGEXP, AMPM_REGEXP, '))', TIME_MASKSEP_REGEXP,
@@ -4050,7 +4073,7 @@ DECLARE
                                             '(?:(?:', TIME_MASKSEP_REGEXP, AMPM_REGEXP, '(?=(?:[[:space:]\.,])+))))', TIME_MASKSEP_REGEXP,
                                             '($comp_month$)',
                                             TIME_MASKSEP_FI_REGEXP, '(', HHMMSSFS_PART_FI_REGEXP, ')?', TIME_MASKSEP_FI_REGEXP, '$');
-    v_defmask19_regexp VARCHAR := concat('^', TIME_MASKSEP_REGEXP, '(', HHMMSSFS_PART_REGEXP, ')?', TIME_MASKSEP_REGEXP,
+    v_defmask19_regexp VARCHAR COLLATE "C" := concat('^', TIME_MASKSEP_REGEXP, '(', HHMMSSFS_PART_REGEXP, ')?', TIME_MASKSEP_REGEXP,
                                          '($comp_month$)',
                                          '(?:', MASKSEPTHREE_REGEXP, TIME_MASKSEP_REGEXP, AMPM_REGEXP, '?)?', TIME_MASKSEP_REGEXP,
                                          FULLYEAR_REGEXP,
@@ -4058,7 +4081,7 @@ DECLARE
                                          '(?:', TIME_MASKSEP_REGEXP, AMPM_REGEXP, '))', TIME_MASKSEP_REGEXP,
                                          DAYMM_REGEXP,
                                          '((?:(?:\s|\.|,)+|', AMPM_REGEXP, ')(?:', HHMMSSFS_PART_REGEXP, '))?', TIME_MASKSEP_REGEXP, '$');
-    v_defmask19_fi_regexp VARCHAR := concat('^', TIME_MASKSEP_FI_REGEXP, '(', HHMMSSFS_PART_FI_REGEXP, ')?', TIME_MASKSEP_FI_REGEXP,
+    v_defmask19_fi_regexp VARCHAR COLLATE "C" := concat('^', TIME_MASKSEP_FI_REGEXP, '(', HHMMSSFS_PART_FI_REGEXP, ')?', TIME_MASKSEP_FI_REGEXP,
                                             '($comp_month$)',
                                             '(?:', MASKSEPTHREE_REGEXP, TIME_MASKSEP_REGEXP, AMPM_REGEXP, '?)?', TIME_MASKSEP_REGEXP,
                                             FULLYEAR_REGEXP,
@@ -4066,8 +4089,8 @@ DECLARE
                                             '(?:', TIME_MASKSEP_REGEXP, AMPM_REGEXP, '))', TIME_MASKSEP_REGEXP,
                                             DAYMM_REGEXP,
                                             '((?:(?:\s|,)+|', AMPM_REGEXP, ')(?:', HHMMSSFS_PART_FI_REGEXP, '))?', TIME_MASKSEP_FI_REGEXP, '$');
-    CONVERSION_LANG CONSTANT VARCHAR := '';
-    DATE_FORMAT CONSTANT VARCHAR := '';
+    CONVERSION_LANG CONSTANT VARCHAR COLLATE "C" := '';
+    DATE_FORMAT CONSTANT VARCHAR COLLATE "C" := '';
 BEGIN
     v_datatype := trim(p_datatype);
     v_datetimestring := upper(trim(p_datetimestring));
@@ -4116,7 +4139,7 @@ BEGIN
     IF (v_weekdaynames[1] IS NOT NULL AND
         v_datetimestring ~* concat(WEEKDAYAMPM_START_REGEXP, '(', v_compday_regexp, ')', WEEKDAYAMPM_END_REGEXP))
     THEN
-        v_datetimestring := replace(v_datetimestring, v_weekdaynames[1], ' ');
+        v_datetimestring := pg_catalog.replace(v_datetimestring, v_weekdaynames[1], ' ');
     END IF;
 
     IF (v_datetimestring ~* ANNO_DOMINI_COMPREGEXP)
@@ -4409,7 +4432,7 @@ BEGIN
 
     WHILE (NOT v_found AND v_resmask_cnt < 20)
     LOOP
-        v_resmask := replace(CASE v_resmask_cnt
+        v_resmask := pg_catalog.replace(CASE v_resmask_cnt
                                 WHEN 10 THEN v_defmask10_regexp
                                 WHEN 11 THEN v_defmask11_regexp
                                 WHEN 12 THEN v_defmask12_regexp
@@ -4423,7 +4446,7 @@ BEGIN
                              END,
                              '$comp_month$', v_compmonth_regexp);
 
-        v_resmask_fi := replace(CASE v_resmask_cnt
+        v_resmask_fi := pg_catalog.replace(CASE v_resmask_cnt
                                    WHEN 10 THEN v_defmask10_fi_regexp
                                    WHEN 11 THEN v_defmask11_fi_regexp
                                    WHEN 12 THEN v_defmask12_fi_regexp
@@ -4630,7 +4653,7 @@ BEGIN
             END IF;
         END IF;
 
-        v_timestring := replace(regexp_replace(v_timestring, '\.?[AP]M|ص|م|\s|\,|\.\D|[\.|:]$', '', 'gi'), ':.', ':');
+        v_timestring := pg_catalog.replace(regexp_replace(v_timestring, '\.?[AP]M|ص|م|\s|\,|\.\D|[\.|:]$', '', 'gi'), ':.', ':');
         BEGIN
             v_hours := coalesce(split_part(v_timestring, ':', 1)::SMALLINT, 0);
 
@@ -4757,60 +4780,60 @@ RETURNS TIME WITHOUT TIME ZONE
 AS
 $BODY$
 DECLARE
-    v_day VARCHAR;
+    v_day VARCHAR COLLATE "C";
     v_year SMALLINT;
-    v_month VARCHAR;
+    v_month VARCHAR COLLATE "C";
     v_res_date DATE;
     v_scale SMALLINT;
     v_hijridate DATE;
-    v_culture VARCHAR;
+    v_culture VARCHAR COLLATE "C";
     v_dayparts TEXT[];
-    v_resmask VARCHAR;
-    v_datatype VARCHAR;
-    v_raw_year VARCHAR;
-    v_left_part VARCHAR;
-    v_right_part VARCHAR;
-    v_resmask_fi VARCHAR;
-    v_timestring VARCHAR;
-    v_correctnum VARCHAR;
+    v_resmask VARCHAR COLLATE "C";
+    v_datatype VARCHAR COLLATE "C";
+    v_raw_year VARCHAR COLLATE "C";
+    v_left_part VARCHAR COLLATE "C";
+    v_right_part VARCHAR COLLATE "C";
+    v_resmask_fi VARCHAR COLLATE "C";
+    v_timestring VARCHAR COLLATE "C";
+    v_correctnum VARCHAR COLLATE "C";
     v_weekdaynum SMALLINT;
-    v_err_message VARCHAR;
-    v_date_format VARCHAR;
+    v_err_message VARCHAR COLLATE "C";
+    v_date_format VARCHAR COLLATE "C";
     v_weekdaynames TEXT[];
     v_hours SMALLINT := 0;
-    v_srctimestring VARCHAR;
+    v_srctimestring VARCHAR COLLATE "C";
     v_minutes SMALLINT := 0;
-    v_res_datatype VARCHAR;
-    v_error_message VARCHAR;
+    v_res_datatype VARCHAR COLLATE "C";
+    v_error_message VARCHAR COLLATE "C";
     v_found BOOLEAN := TRUE;
-    v_compday_regexp VARCHAR;
+    v_compday_regexp VARCHAR COLLATE "C";
     v_regmatch_groups TEXT[];
     v_datatype_groups TEXT[];
-    v_seconds VARCHAR := '0';
-    v_fseconds VARCHAR := '0';
-    v_compmonth_regexp VARCHAR;
+    v_seconds VARCHAR COLLATE "C" := '0';
+    v_fseconds VARCHAR COLLATE "C" := '0';
+    v_compmonth_regexp VARCHAR COLLATE "C";
     v_lang_metadata_json JSONB;
     v_resmask_cnt SMALLINT := 10;
     v_res_time TIME WITHOUT TIME ZONE;
-    DAYMM_REGEXP CONSTANT VARCHAR := '(\d{1,2})';
-    FULLYEAR_REGEXP CONSTANT VARCHAR := '(\d{3,4})';
-    SHORTYEAR_REGEXP CONSTANT VARCHAR := '(\d{1,2})';
-    COMPYEAR_REGEXP CONSTANT VARCHAR := '(\d{1,4})';
-    AMPM_REGEXP CONSTANT VARCHAR := '(?:[AP]M|ص|م)';
-    TIMEUNIT_REGEXP CONSTANT VARCHAR := '\s*\d{1,2}\s*';
-    MASKSEPONE_REGEXP CONSTANT VARCHAR := '\s*(?:/|-)?';
-    MASKSEPTWO_REGEXP CONSTANT VARCHAR := '\s*(?:\s|/|-|\.|,)';
-    MASKSEPTWO_FI_REGEXP CONSTANT VARCHAR := '\s*(?:\s|/|-|,)';
-    MASKSEPTHREE_REGEXP CONSTANT VARCHAR := '\s*(?:/|-|\.|,)';
-    TIME_MASKSEP_REGEXP CONSTANT VARCHAR := '(?:\s|\.|,)*';
-    TIME_MASKSEP_FI_REGEXP CONSTANT VARCHAR := '(?:\s|,)*';
-    WEEKDAYAMPM_START_REGEXP CONSTANT VARCHAR := '(^|[[:digit:][:space:]\.,])';
-    WEEKDAYAMPM_END_REGEXP CONSTANT VARCHAR := '([[:digit:][:space:]\.,]|$)(?=[^/-]|$)';
-    CORRECTNUM_REGEXP CONSTANT VARCHAR := '(?:([+-]\d{1,4})(?:[[:space:]\.,]|[AP]M|ص|م|$))';
-    DATATYPE_REGEXP CONSTANT VARCHAR := '^(TIME)\s*(?:\()?\s*((?:-)?\d+)?\s*(?:\))?$';
-    ANNO_DOMINI_REGEXP VARCHAR := '(AD|A\.D\.)';
-    ANNO_DOMINI_COMPREGEXP VARCHAR := concat(WEEKDAYAMPM_START_REGEXP, ANNO_DOMINI_REGEXP, WEEKDAYAMPM_END_REGEXP);
-    HHMMSSFS_PART_REGEXP CONSTANT VARCHAR :=
+    DAYMM_REGEXP CONSTANT VARCHAR COLLATE "C" := '(\d{1,2})';
+    FULLYEAR_REGEXP CONSTANT VARCHAR COLLATE "C" := '(\d{3,4})';
+    SHORTYEAR_REGEXP CONSTANT VARCHAR COLLATE "C" := '(\d{1,2})';
+    COMPYEAR_REGEXP CONSTANT VARCHAR COLLATE "C" := '(\d{1,4})';
+    AMPM_REGEXP CONSTANT VARCHAR COLLATE "C" := '(?:[AP]M|ص|م)';
+    TIMEUNIT_REGEXP CONSTANT VARCHAR COLLATE "C" := '\s*\d{1,2}\s*';
+    MASKSEPONE_REGEXP CONSTANT VARCHAR COLLATE "C" := '\s*(?:/|-)?';
+    MASKSEPTWO_REGEXP CONSTANT VARCHAR COLLATE "C" := '\s*(?:\s|/|-|\.|,)';
+    MASKSEPTWO_FI_REGEXP CONSTANT VARCHAR COLLATE "C" := '\s*(?:\s|/|-|,)';
+    MASKSEPTHREE_REGEXP CONSTANT VARCHAR COLLATE "C" := '\s*(?:/|-|\.|,)';
+    TIME_MASKSEP_REGEXP CONSTANT VARCHAR COLLATE "C" := '(?:\s|\.|,)*';
+    TIME_MASKSEP_FI_REGEXP CONSTANT VARCHAR COLLATE "C" := '(?:\s|,)*';
+    WEEKDAYAMPM_START_REGEXP CONSTANT VARCHAR COLLATE "C" := '(^|[[:digit:][:space:]\.,])';
+    WEEKDAYAMPM_END_REGEXP CONSTANT VARCHAR COLLATE "C" := '([[:digit:][:space:]\.,]|$)(?=[^/-]|$)';
+    CORRECTNUM_REGEXP CONSTANT VARCHAR COLLATE "C" := '(?:([+-]\d{1,4})(?:[[:space:]\.,]|[AP]M|ص|م|$))';
+    DATATYPE_REGEXP CONSTANT VARCHAR COLLATE "C" := '^(TIME)\s*(?:\()?\s*((?:-)?\d+)?\s*(?:\))?$';
+    ANNO_DOMINI_REGEXP VARCHAR COLLATE "C" := '(AD|A\.D\.)';
+    ANNO_DOMINI_COMPREGEXP VARCHAR COLLATE "C" := concat(WEEKDAYAMPM_START_REGEXP, ANNO_DOMINI_REGEXP, WEEKDAYAMPM_END_REGEXP);
+    HHMMSSFS_PART_REGEXP CONSTANT VARCHAR COLLATE "C" :=
         concat(TIMEUNIT_REGEXP, AMPM_REGEXP, '|',
                AMPM_REGEXP, '?', TIME_MASKSEP_REGEXP, TIMEUNIT_REGEXP, '\:', TIME_MASKSEP_REGEXP,
                AMPM_REGEXP, '?', TIME_MASKSEP_REGEXP, TIMEUNIT_REGEXP, '(?!\d)', TIME_MASKSEP_REGEXP, AMPM_REGEXP, '?|',
@@ -4821,7 +4844,7 @@ DECLARE
                AMPM_REGEXP, '?', TIME_MASKSEP_REGEXP, TIMEUNIT_REGEXP, '\:', TIME_MASKSEP_REGEXP,
                AMPM_REGEXP, '?', TIME_MASKSEP_REGEXP, '\s*\d{1,2}\.\d+(?!\d)', TIME_MASKSEP_REGEXP, AMPM_REGEXP, '?|',
                AMPM_REGEXP, '?');
-    HHMMSSFS_PART_FI_REGEXP CONSTANT VARCHAR :=
+    HHMMSSFS_PART_FI_REGEXP CONSTANT VARCHAR COLLATE "C" :=
         concat(TIMEUNIT_REGEXP, AMPM_REGEXP, '|',
                AMPM_REGEXP, '?', TIME_MASKSEP_FI_REGEXP, TIMEUNIT_REGEXP, '[\:\.]', TIME_MASKSEP_FI_REGEXP,
                AMPM_REGEXP, '?', TIME_MASKSEP_FI_REGEXP, TIMEUNIT_REGEXP, '(?!\d)', TIME_MASKSEP_FI_REGEXP, AMPM_REGEXP, '?\.?|',
@@ -4832,7 +4855,7 @@ DECLARE
                AMPM_REGEXP, '?', TIME_MASKSEP_FI_REGEXP, TIMEUNIT_REGEXP, '[\:\.]', TIME_MASKSEP_FI_REGEXP,
                AMPM_REGEXP, '?', TIME_MASKSEP_FI_REGEXP, '\s*\d{1,2}\.\d+(?!\d)\.?', TIME_MASKSEP_FI_REGEXP, AMPM_REGEXP, '?|',
                AMPM_REGEXP, '?');
-    v_defmask1_regexp VARCHAR := concat('^', TIME_MASKSEP_REGEXP, CORRECTNUM_REGEXP, '?', TIME_MASKSEP_REGEXP,
+    v_defmask1_regexp VARCHAR COLLATE "C" := concat('^', TIME_MASKSEP_REGEXP, CORRECTNUM_REGEXP, '?', TIME_MASKSEP_REGEXP,
                                         '(', HHMMSSFS_PART_REGEXP, ')?', TIME_MASKSEP_REGEXP,
                                         CORRECTNUM_REGEXP, '?', TIME_MASKSEP_REGEXP, AMPM_REGEXP, '?', TIME_MASKSEP_REGEXP,
                                         DAYMM_REGEXP,
@@ -4842,7 +4865,7 @@ DECLARE
                                         '(?:[\.|,]+', AMPM_REGEXP, '?', TIME_MASKSEP_REGEXP, CORRECTNUM_REGEXP, '?))', TIME_MASKSEP_REGEXP,
                                         DAYMM_REGEXP,
                                         TIME_MASKSEP_REGEXP, '(?:[\.|,]+', TIME_MASKSEP_REGEXP, AMPM_REGEXP, '?)', TIME_MASKSEP_REGEXP, '$');
-    v_defmask1_fi_regexp VARCHAR := concat('^', TIME_MASKSEP_FI_REGEXP, CORRECTNUM_REGEXP, '?', TIME_MASKSEP_FI_REGEXP,
+    v_defmask1_fi_regexp VARCHAR COLLATE "C" := concat('^', TIME_MASKSEP_FI_REGEXP, CORRECTNUM_REGEXP, '?', TIME_MASKSEP_FI_REGEXP,
                                            '(', HHMMSSFS_PART_FI_REGEXP, ')?', TIME_MASKSEP_FI_REGEXP,
                                            CORRECTNUM_REGEXP, '?', TIME_MASKSEP_REGEXP, AMPM_REGEXP, '?', TIME_MASKSEP_REGEXP,
                                            DAYMM_REGEXP,
@@ -4852,7 +4875,7 @@ DECLARE
                                            '(?:[,]+', AMPM_REGEXP, '?', TIME_MASKSEP_FI_REGEXP, CORRECTNUM_REGEXP, '?))', TIME_MASKSEP_FI_REGEXP,
                                            DAYMM_REGEXP,
                                            TIME_MASKSEP_FI_REGEXP, '(?:[\.|,]+', TIME_MASKSEP_FI_REGEXP, AMPM_REGEXP, ')?', TIME_MASKSEP_FI_REGEXP, '$');
-    v_defmask2_regexp VARCHAR := concat('^', TIME_MASKSEP_REGEXP, CORRECTNUM_REGEXP, '?', TIME_MASKSEP_REGEXP,
+    v_defmask2_regexp VARCHAR COLLATE "C" := concat('^', TIME_MASKSEP_REGEXP, CORRECTNUM_REGEXP, '?', TIME_MASKSEP_REGEXP,
                                         '(', HHMMSSFS_PART_REGEXP, ')?', TIME_MASKSEP_REGEXP,
                                         CORRECTNUM_REGEXP, '?', TIME_MASKSEP_REGEXP, AMPM_REGEXP, '?', TIME_MASKSEP_REGEXP,
                                         FULLYEAR_REGEXP,
@@ -4862,7 +4885,7 @@ DECLARE
                                         DAYMM_REGEXP,
                                         TIME_MASKSEP_REGEXP, '(?:(?:[\.|,]+', TIME_MASKSEP_REGEXP, AMPM_REGEXP, TIME_MASKSEP_REGEXP, CORRECTNUM_REGEXP, '?)|',
                                         CORRECTNUM_REGEXP, TIME_MASKSEP_REGEXP, AMPM_REGEXP, '?)?', TIME_MASKSEP_REGEXP, '$');
-    v_defmask2_fi_regexp VARCHAR := concat('^', TIME_MASKSEP_FI_REGEXP, CORRECTNUM_REGEXP, '?', TIME_MASKSEP_FI_REGEXP,
+    v_defmask2_fi_regexp VARCHAR COLLATE "C" := concat('^', TIME_MASKSEP_FI_REGEXP, CORRECTNUM_REGEXP, '?', TIME_MASKSEP_FI_REGEXP,
                                            '(', HHMMSSFS_PART_FI_REGEXP, ')?', TIME_MASKSEP_FI_REGEXP,
                                            CORRECTNUM_REGEXP, '?', TIME_MASKSEP_FI_REGEXP, AMPM_REGEXP, '?', TIME_MASKSEP_FI_REGEXP,
                                            FULLYEAR_REGEXP,
@@ -4872,40 +4895,40 @@ DECLARE
                                            DAYMM_REGEXP,
                                            TIME_MASKSEP_FI_REGEXP, '(?:(?:[\.|,]+', TIME_MASKSEP_FI_REGEXP, AMPM_REGEXP, TIME_MASKSEP_FI_REGEXP, CORRECTNUM_REGEXP, '?)|',
                                            CORRECTNUM_REGEXP, TIME_MASKSEP_FI_REGEXP, AMPM_REGEXP, '?)?', TIME_MASKSEP_FI_REGEXP, '$');
-    v_defmask3_regexp VARCHAR := concat('^', TIME_MASKSEP_REGEXP, '(', HHMMSSFS_PART_REGEXP, ')?', TIME_MASKSEP_REGEXP,
+    v_defmask3_regexp VARCHAR COLLATE "C" := concat('^', TIME_MASKSEP_REGEXP, '(', HHMMSSFS_PART_REGEXP, ')?', TIME_MASKSEP_REGEXP,
                                         DAYMM_REGEXP,
                                         '(?:(?:', MASKSEPTWO_REGEXP, TIME_MASKSEP_REGEXP, ')|',
                                         '(?:', MASKSEPTHREE_REGEXP, TIME_MASKSEP_REGEXP, AMPM_REGEXP, '))', TIME_MASKSEP_REGEXP,
                                         FULLYEAR_REGEXP,
                                         TIME_MASKSEP_REGEXP, '(', TIME_MASKSEP_REGEXP, AMPM_REGEXP, ')?', TIME_MASKSEP_REGEXP, '$');
-    v_defmask3_fi_regexp VARCHAR := concat('^', TIME_MASKSEP_FI_REGEXP, '(', HHMMSSFS_PART_FI_REGEXP, ')?', TIME_MASKSEP_FI_REGEXP,
+    v_defmask3_fi_regexp VARCHAR COLLATE "C" := concat('^', TIME_MASKSEP_FI_REGEXP, '(', HHMMSSFS_PART_FI_REGEXP, ')?', TIME_MASKSEP_FI_REGEXP,
                                            TIME_MASKSEP_FI_REGEXP, '[\./]?', TIME_MASKSEP_FI_REGEXP,
                                            DAYMM_REGEXP,
                                            '(?:', MASKSEPTWO_REGEXP, TIME_MASKSEP_FI_REGEXP, AMPM_REGEXP, '?)',
                                            FULLYEAR_REGEXP,
                                            TIME_MASKSEP_FI_REGEXP, AMPM_REGEXP, '?', TIME_MASKSEP_FI_REGEXP, '$');
-    v_defmask4_0_regexp VARCHAR := concat('^', TIME_MASKSEP_REGEXP,
+    v_defmask4_0_regexp VARCHAR COLLATE "C" := concat('^', TIME_MASKSEP_REGEXP,
                                           DAYMM_REGEXP,
                                           MASKSEPTWO_REGEXP, TIME_MASKSEP_REGEXP,
                                           DAYMM_REGEXP,
                                           TIME_MASKSEP_REGEXP,
                                           DAYMM_REGEXP, '\s*(', AMPM_REGEXP, ')',
                                           TIME_MASKSEP_REGEXP, '$');
-    v_defmask4_1_regexp VARCHAR := concat('^', TIME_MASKSEP_REGEXP,
+    v_defmask4_1_regexp VARCHAR COLLATE "C" := concat('^', TIME_MASKSEP_REGEXP,
                                           DAYMM_REGEXP,
                                           MASKSEPTWO_REGEXP, TIME_MASKSEP_REGEXP,
                                           DAYMM_REGEXP,
                                           '(?:\s|,)+',
                                           DAYMM_REGEXP, '\s*(', AMPM_REGEXP, ')',
                                           TIME_MASKSEP_REGEXP, '$');
-    v_defmask4_2_regexp VARCHAR := concat('^', TIME_MASKSEP_REGEXP,
+    v_defmask4_2_regexp VARCHAR COLLATE "C" := concat('^', TIME_MASKSEP_REGEXP,
                                           DAYMM_REGEXP,
                                           MASKSEPTWO_REGEXP, TIME_MASKSEP_REGEXP,
                                           DAYMM_REGEXP,
                                           '\s*[\.]+', TIME_MASKSEP_REGEXP,
                                           DAYMM_REGEXP, '\s*(', AMPM_REGEXP, ')',
                                           TIME_MASKSEP_REGEXP, '$');
-    v_defmask5_regexp VARCHAR := concat('^', TIME_MASKSEP_REGEXP, '(', HHMMSSFS_PART_REGEXP, ')?', TIME_MASKSEP_REGEXP,
+    v_defmask5_regexp VARCHAR COLLATE "C" := concat('^', TIME_MASKSEP_REGEXP, '(', HHMMSSFS_PART_REGEXP, ')?', TIME_MASKSEP_REGEXP,
                                         DAYMM_REGEXP,
                                         '(?:(?:', MASKSEPTWO_REGEXP, TIME_MASKSEP_REGEXP, AMPM_REGEXP, '?)|',
                                         '(?:[\.|,]+', AMPM_REGEXP, '))', TIME_MASKSEP_REGEXP,
@@ -4914,7 +4937,7 @@ DECLARE
                                         '(?:[\.|,]+', AMPM_REGEXP, '))', TIME_MASKSEP_REGEXP,
                                         FULLYEAR_REGEXP,
                                         TIME_MASKSEP_REGEXP, '(', HHMMSSFS_PART_REGEXP, ')?', TIME_MASKSEP_REGEXP, '$');
-    v_defmask5_fi_regexp VARCHAR := concat('^', TIME_MASKSEP_FI_REGEXP, '(', HHMMSSFS_PART_FI_REGEXP, ')?', TIME_MASKSEP_FI_REGEXP,
+    v_defmask5_fi_regexp VARCHAR COLLATE "C" := concat('^', TIME_MASKSEP_FI_REGEXP, '(', HHMMSSFS_PART_FI_REGEXP, ')?', TIME_MASKSEP_FI_REGEXP,
                                            DAYMM_REGEXP,
                                            '(?:(?:', MASKSEPTWO_REGEXP, TIME_MASKSEP_FI_REGEXP, AMPM_REGEXP, '?)|',
                                            '(?:[\.|,]+', AMPM_REGEXP, '))', TIME_MASKSEP_FI_REGEXP,
@@ -4923,7 +4946,7 @@ DECLARE
                                            '(?:[\.|,]+', AMPM_REGEXP, '))', TIME_MASKSEP_FI_REGEXP,
                                            FULLYEAR_REGEXP,
                                            TIME_MASKSEP_FI_REGEXP, '(', HHMMSSFS_PART_FI_REGEXP, ')?', TIME_MASKSEP_FI_REGEXP, '$');
-    v_defmask6_regexp VARCHAR := concat('^', TIME_MASKSEP_REGEXP, '(', HHMMSSFS_PART_REGEXP, ')?', TIME_MASKSEP_REGEXP,
+    v_defmask6_regexp VARCHAR COLLATE "C" := concat('^', TIME_MASKSEP_REGEXP, '(', HHMMSSFS_PART_REGEXP, ')?', TIME_MASKSEP_REGEXP,
                                         FULLYEAR_REGEXP,
                                         '(?:(?:', MASKSEPTWO_REGEXP, TIME_MASKSEP_REGEXP, AMPM_REGEXP, '?)|',
                                         '(?:', TIME_MASKSEP_REGEXP, AMPM_REGEXP, '))', TIME_MASKSEP_REGEXP,
@@ -4932,7 +4955,7 @@ DECLARE
                                         '(?:[\.|,]+', AMPM_REGEXP, '))', TIME_MASKSEP_REGEXP,
                                         DAYMM_REGEXP,
                                         '((?:(?:\s|\.|,)+|', AMPM_REGEXP, ')(?:', HHMMSSFS_PART_REGEXP, '))?', TIME_MASKSEP_REGEXP, '$');
-    v_defmask6_fi_regexp VARCHAR := concat('^', TIME_MASKSEP_FI_REGEXP, '(', HHMMSSFS_PART_FI_REGEXP, ')?', TIME_MASKSEP_FI_REGEXP,
+    v_defmask6_fi_regexp VARCHAR COLLATE "C" := concat('^', TIME_MASKSEP_FI_REGEXP, '(', HHMMSSFS_PART_FI_REGEXP, ')?', TIME_MASKSEP_FI_REGEXP,
                                            FULLYEAR_REGEXP,
                                            '(?:(?:', MASKSEPTWO_REGEXP, TIME_MASKSEP_FI_REGEXP, AMPM_REGEXP, '?)|',
                                            '(?:', TIME_MASKSEP_FI_REGEXP, AMPM_REGEXP, '))', TIME_MASKSEP_FI_REGEXP,
@@ -4942,7 +4965,7 @@ DECLARE
                                            DAYMM_REGEXP,
                                            '(?:\s*[\.])?',
                                            '((?:(?:\s|,)+|', AMPM_REGEXP, ')(?:', HHMMSSFS_PART_FI_REGEXP, '))?', TIME_MASKSEP_FI_REGEXP, '$');
-    v_defmask7_regexp VARCHAR := concat('^', TIME_MASKSEP_REGEXP, '(', HHMMSSFS_PART_REGEXP, ')?', TIME_MASKSEP_REGEXP,
+    v_defmask7_regexp VARCHAR COLLATE "C" := concat('^', TIME_MASKSEP_REGEXP, '(', HHMMSSFS_PART_REGEXP, ')?', TIME_MASKSEP_REGEXP,
                                         DAYMM_REGEXP,
                                         '(?:(?:', MASKSEPTWO_REGEXP, TIME_MASKSEP_REGEXP, AMPM_REGEXP, '?)|',
                                         '(?:[\.|,]+', AMPM_REGEXP, '))', TIME_MASKSEP_REGEXP,
@@ -4951,7 +4974,7 @@ DECLARE
                                         '(?:', TIME_MASKSEP_REGEXP, AMPM_REGEXP, '))', TIME_MASKSEP_REGEXP,
                                         DAYMM_REGEXP,
                                         '((?:(?:\s|\.|,)+|', AMPM_REGEXP, ')(?:', HHMMSSFS_PART_REGEXP, '))?', TIME_MASKSEP_REGEXP, '$');
-    v_defmask7_fi_regexp VARCHAR := concat('^', TIME_MASKSEP_FI_REGEXP, '(', HHMMSSFS_PART_FI_REGEXP, ')?', TIME_MASKSEP_FI_REGEXP,
+    v_defmask7_fi_regexp VARCHAR COLLATE "C" := concat('^', TIME_MASKSEP_FI_REGEXP, '(', HHMMSSFS_PART_FI_REGEXP, ')?', TIME_MASKSEP_FI_REGEXP,
                                            DAYMM_REGEXP,
                                            '(?:(?:', MASKSEPTWO_REGEXP, TIME_MASKSEP_FI_REGEXP, AMPM_REGEXP, '?)|',
                                            '(?:[\.|,]+', AMPM_REGEXP, '))', TIME_MASKSEP_FI_REGEXP,
@@ -4960,7 +4983,7 @@ DECLARE
                                            '(?:', TIME_MASKSEP_FI_REGEXP, AMPM_REGEXP, '))', TIME_MASKSEP_FI_REGEXP,
                                            DAYMM_REGEXP,
                                            '((?:(?:\s|,)+|', AMPM_REGEXP, ')(?:', HHMMSSFS_PART_FI_REGEXP, '))?', TIME_MASKSEP_FI_REGEXP, '$');
-    v_defmask8_regexp VARCHAR := concat('^', TIME_MASKSEP_REGEXP, '(', HHMMSSFS_PART_REGEXP, ')?', TIME_MASKSEP_REGEXP,
+    v_defmask8_regexp VARCHAR COLLATE "C" := concat('^', TIME_MASKSEP_REGEXP, '(', HHMMSSFS_PART_REGEXP, ')?', TIME_MASKSEP_REGEXP,
                                         DAYMM_REGEXP,
                                         '(?:(?:', MASKSEPTWO_REGEXP, TIME_MASKSEP_REGEXP, AMPM_REGEXP, '?)|',
                                         '(?:[\.|,]+', AMPM_REGEXP, '))', TIME_MASKSEP_REGEXP,
@@ -4970,7 +4993,7 @@ DECLARE
                                         DAYMM_REGEXP,
                                         '(?:[\.|,]+', AMPM_REGEXP, ')?',
                                         TIME_MASKSEP_REGEXP, '(', HHMMSSFS_PART_REGEXP, ')?', TIME_MASKSEP_REGEXP, '$');
-    v_defmask8_fi_regexp VARCHAR := concat('^', TIME_MASKSEP_FI_REGEXP, '(', HHMMSSFS_PART_FI_REGEXP, ')?', TIME_MASKSEP_FI_REGEXP,
+    v_defmask8_fi_regexp VARCHAR COLLATE "C" := concat('^', TIME_MASKSEP_FI_REGEXP, '(', HHMMSSFS_PART_FI_REGEXP, ')?', TIME_MASKSEP_FI_REGEXP,
                                            DAYMM_REGEXP,
                                            '(?:(?:', MASKSEPTWO_FI_REGEXP, TIME_MASKSEP_FI_REGEXP, AMPM_REGEXP, '?)|',
                                            '(?:[,]+', AMPM_REGEXP, '))', TIME_MASKSEP_FI_REGEXP,
@@ -4980,69 +5003,69 @@ DECLARE
                                            DAYMM_REGEXP,
                                            '(?:(?:[\,]+|\s*/\s*)', AMPM_REGEXP, ')?',
                                            TIME_MASKSEP_FI_REGEXP, '(', HHMMSSFS_PART_FI_REGEXP, ')?', TIME_MASKSEP_FI_REGEXP, '$');
-    v_defmask9_regexp VARCHAR := concat('^', TIME_MASKSEP_REGEXP, '(',
+    v_defmask9_regexp VARCHAR COLLATE "C" := concat('^', TIME_MASKSEP_REGEXP, '(',
                                         HHMMSSFS_PART_REGEXP,
                                         ')', TIME_MASKSEP_REGEXP, '$');
-    v_defmask9_fi_regexp VARCHAR := concat('^', TIME_MASKSEP_FI_REGEXP, AMPM_REGEXP, '?', TIME_MASKSEP_FI_REGEXP, '(',
+    v_defmask9_fi_regexp VARCHAR COLLATE "C" := concat('^', TIME_MASKSEP_FI_REGEXP, AMPM_REGEXP, '?', TIME_MASKSEP_FI_REGEXP, '(',
                                            HHMMSSFS_PART_FI_REGEXP,
                                            ')', TIME_MASKSEP_FI_REGEXP, '$');
-    v_defmask10_regexp VARCHAR := concat('^', TIME_MASKSEP_REGEXP, '(', HHMMSSFS_PART_REGEXP, ')?', TIME_MASKSEP_REGEXP,
+    v_defmask10_regexp VARCHAR COLLATE "C" := concat('^', TIME_MASKSEP_REGEXP, '(', HHMMSSFS_PART_REGEXP, ')?', TIME_MASKSEP_REGEXP,
                                          DAYMM_REGEXP,
                                          '(?:', MASKSEPTHREE_REGEXP, TIME_MASKSEP_REGEXP, '(?:', AMPM_REGEXP, '(?=(?:[[:space:]\.,])+))?)?', TIME_MASKSEP_REGEXP,
                                          '($comp_month$)',
                                          TIME_MASKSEP_REGEXP, '(', HHMMSSFS_PART_REGEXP, ')?', TIME_MASKSEP_REGEXP, '$');
-    v_defmask10_fi_regexp VARCHAR := concat('^', TIME_MASKSEP_FI_REGEXP, '(', HHMMSSFS_PART_FI_REGEXP, ')?', TIME_MASKSEP_FI_REGEXP,
+    v_defmask10_fi_regexp VARCHAR COLLATE "C" := concat('^', TIME_MASKSEP_FI_REGEXP, '(', HHMMSSFS_PART_FI_REGEXP, ')?', TIME_MASKSEP_FI_REGEXP,
                                             DAYMM_REGEXP,
                                             '(?:', MASKSEPTHREE_REGEXP, TIME_MASKSEP_REGEXP, '(?:', AMPM_REGEXP, '(?=(?:[[:space:]\.,])+))?)?', TIME_MASKSEP_REGEXP,
                                             '($comp_month$)',
                                             TIME_MASKSEP_FI_REGEXP, '(', HHMMSSFS_PART_FI_REGEXP, ')?', TIME_MASKSEP_FI_REGEXP, '$');
-    v_defmask11_regexp VARCHAR := concat('^', TIME_MASKSEP_REGEXP, '(', HHMMSSFS_PART_REGEXP, ')?', TIME_MASKSEP_REGEXP,
+    v_defmask11_regexp VARCHAR COLLATE "C" := concat('^', TIME_MASKSEP_REGEXP, '(', HHMMSSFS_PART_REGEXP, ')?', TIME_MASKSEP_REGEXP,
                                          '($comp_month$)',
                                          '(?:', MASKSEPTHREE_REGEXP, TIME_MASKSEP_REGEXP, AMPM_REGEXP, '?)?', TIME_MASKSEP_REGEXP,
                                          DAYMM_REGEXP,
                                          TIME_MASKSEP_REGEXP, '(', HHMMSSFS_PART_REGEXP, ')?', TIME_MASKSEP_REGEXP, '$');
-    v_defmask11_fi_regexp VARCHAR := concat('^', TIME_MASKSEP_FI_REGEXP, '(', HHMMSSFS_PART_FI_REGEXP, ')?', TIME_MASKSEP_FI_REGEXP,
+    v_defmask11_fi_regexp VARCHAR COLLATE "C" := concat('^', TIME_MASKSEP_FI_REGEXP, '(', HHMMSSFS_PART_FI_REGEXP, ')?', TIME_MASKSEP_FI_REGEXP,
                                            '($comp_month$)',
                                            '(?:', MASKSEPTHREE_REGEXP, TIME_MASKSEP_REGEXP, AMPM_REGEXP, '?)?', TIME_MASKSEP_FI_REGEXP,
                                            DAYMM_REGEXP,
                                            '((?:(?:\s|,)+|', AMPM_REGEXP, ')(?:', HHMMSSFS_PART_FI_REGEXP, '))?', TIME_MASKSEP_FI_REGEXP, '$');
-    v_defmask12_regexp VARCHAR := concat('^', TIME_MASKSEP_REGEXP, '(', HHMMSSFS_PART_REGEXP, ')?', TIME_MASKSEP_REGEXP,
+    v_defmask12_regexp VARCHAR COLLATE "C" := concat('^', TIME_MASKSEP_REGEXP, '(', HHMMSSFS_PART_REGEXP, ')?', TIME_MASKSEP_REGEXP,
                                          FULLYEAR_REGEXP,
                                          '(?:(?:', MASKSEPTWO_REGEXP, '?', TIME_MASKSEP_REGEXP, '(?:', AMPM_REGEXP, '(?=(?:[[:space:]\.,])+))?)|',
                                          '(?:(?:', TIME_MASKSEP_REGEXP, AMPM_REGEXP, '(?=(?:[[:space:]\.,])+))))', TIME_MASKSEP_REGEXP,
                                          '($comp_month$)',
                                          TIME_MASKSEP_REGEXP, '(', HHMMSSFS_PART_REGEXP, ')?', TIME_MASKSEP_REGEXP, '$');
-    v_defmask12_fi_regexp VARCHAR := concat('^', TIME_MASKSEP_FI_REGEXP, '(', HHMMSSFS_PART_FI_REGEXP, ')?', TIME_MASKSEP_FI_REGEXP,
+    v_defmask12_fi_regexp VARCHAR COLLATE "C" := concat('^', TIME_MASKSEP_FI_REGEXP, '(', HHMMSSFS_PART_FI_REGEXP, ')?', TIME_MASKSEP_FI_REGEXP,
                                             FULLYEAR_REGEXP,
                                             '(?:(?:', MASKSEPTWO_REGEXP, '?', TIME_MASKSEP_REGEXP, '(?:', AMPM_REGEXP, '(?=(?:[[:space:]\.,])+))?)|',
                                             '(?:(?:', TIME_MASKSEP_REGEXP, AMPM_REGEXP, '(?=(?:[[:space:]\.,])+))))', TIME_MASKSEP_REGEXP,
                                             '($comp_month$)',
                                             TIME_MASKSEP_FI_REGEXP, '(', HHMMSSFS_PART_FI_REGEXP, ')?', TIME_MASKSEP_FI_REGEXP, '$');
-    v_defmask13_regexp VARCHAR := concat('^', TIME_MASKSEP_REGEXP, '(', HHMMSSFS_PART_REGEXP, ')?', TIME_MASKSEP_REGEXP,
+    v_defmask13_regexp VARCHAR COLLATE "C" := concat('^', TIME_MASKSEP_REGEXP, '(', HHMMSSFS_PART_REGEXP, ')?', TIME_MASKSEP_REGEXP,
                                          '($comp_month$)',
                                          '(?:', MASKSEPTHREE_REGEXP, TIME_MASKSEP_REGEXP, AMPM_REGEXP, '?)?', TIME_MASKSEP_REGEXP,
                                          FULLYEAR_REGEXP,
                                          TIME_MASKSEP_REGEXP, AMPM_REGEXP, '?', TIME_MASKSEP_REGEXP, '$');
-    v_defmask13_fi_regexp VARCHAR := concat('^', TIME_MASKSEP_FI_REGEXP, '(', HHMMSSFS_PART_FI_REGEXP, ')?', TIME_MASKSEP_FI_REGEXP,
+    v_defmask13_fi_regexp VARCHAR COLLATE "C" := concat('^', TIME_MASKSEP_FI_REGEXP, '(', HHMMSSFS_PART_FI_REGEXP, ')?', TIME_MASKSEP_FI_REGEXP,
                                             '($comp_month$)',
                                             '(?:', MASKSEPTHREE_REGEXP, TIME_MASKSEP_REGEXP, AMPM_REGEXP, '?)?', TIME_MASKSEP_REGEXP,
                                             FULLYEAR_REGEXP,
                                             TIME_MASKSEP_FI_REGEXP, AMPM_REGEXP, '?', TIME_MASKSEP_FI_REGEXP, '$');
-    v_defmask14_regexp VARCHAR := concat('^', TIME_MASKSEP_REGEXP, '(', HHMMSSFS_PART_REGEXP, ')?', TIME_MASKSEP_REGEXP,
+    v_defmask14_regexp VARCHAR COLLATE "C" := concat('^', TIME_MASKSEP_REGEXP, '(', HHMMSSFS_PART_REGEXP, ')?', TIME_MASKSEP_REGEXP,
                                          '($comp_month$)'
                                          '(?:', MASKSEPTHREE_REGEXP, TIME_MASKSEP_REGEXP, AMPM_REGEXP, '?)?', TIME_MASKSEP_REGEXP,
                                          DAYMM_REGEXP,
                                          '(?:', MASKSEPTWO_REGEXP, TIME_MASKSEP_REGEXP, AMPM_REGEXP, '?)', TIME_MASKSEP_REGEXP,
                                          COMPYEAR_REGEXP,
                                          TIME_MASKSEP_REGEXP, '(', HHMMSSFS_PART_REGEXP, ')?', TIME_MASKSEP_REGEXP, '$');
-    v_defmask14_fi_regexp VARCHAR := concat('^', TIME_MASKSEP_FI_REGEXP, '(', HHMMSSFS_PART_FI_REGEXP, ')?', TIME_MASKSEP_FI_REGEXP,
+    v_defmask14_fi_regexp VARCHAR COLLATE "C" := concat('^', TIME_MASKSEP_FI_REGEXP, '(', HHMMSSFS_PART_FI_REGEXP, ')?', TIME_MASKSEP_FI_REGEXP,
                                             '($comp_month$)'
                                             '(?:', MASKSEPTHREE_REGEXP, TIME_MASKSEP_FI_REGEXP, AMPM_REGEXP, '?)?', TIME_MASKSEP_FI_REGEXP,
                                             DAYMM_REGEXP,
                                             '(?:', MASKSEPTWO_REGEXP, TIME_MASKSEP_FI_REGEXP, AMPM_REGEXP, '?)', TIME_MASKSEP_FI_REGEXP,
                                             COMPYEAR_REGEXP,
                                             '((?:(?:\s|,)+|', AMPM_REGEXP, ')(?:', HHMMSSFS_PART_FI_REGEXP, '))?', TIME_MASKSEP_FI_REGEXP, '$');
-    v_defmask15_regexp VARCHAR := concat('^', TIME_MASKSEP_REGEXP, '(', HHMMSSFS_PART_REGEXP, ')?', TIME_MASKSEP_REGEXP,
+    v_defmask15_regexp VARCHAR COLLATE "C" := concat('^', TIME_MASKSEP_REGEXP, '(', HHMMSSFS_PART_REGEXP, ')?', TIME_MASKSEP_REGEXP,
                                          DAYMM_REGEXP,
                                          '(?:(?:', MASKSEPTWO_REGEXP, '?', TIME_MASKSEP_REGEXP, '(?:', AMPM_REGEXP, '(?=(?:[[:space:]\.,])+))?)|',
                                          '(?:(?:', TIME_MASKSEP_REGEXP, AMPM_REGEXP, '(?=(?:[[:space:]\.,])+))))', TIME_MASKSEP_REGEXP,
@@ -5050,7 +5073,7 @@ DECLARE
                                          '(?:', MASKSEPTHREE_REGEXP, TIME_MASKSEP_REGEXP, AMPM_REGEXP, '?)?', TIME_MASKSEP_REGEXP,
                                          COMPYEAR_REGEXP,
                                          TIME_MASKSEP_REGEXP, '(', HHMMSSFS_PART_REGEXP, ')?', TIME_MASKSEP_REGEXP, '$');
-    v_defmask15_fi_regexp VARCHAR := concat('^', TIME_MASKSEP_FI_REGEXP, '(', HHMMSSFS_PART_FI_REGEXP, ')?', TIME_MASKSEP_FI_REGEXP,
+    v_defmask15_fi_regexp VARCHAR COLLATE "C" := concat('^', TIME_MASKSEP_FI_REGEXP, '(', HHMMSSFS_PART_FI_REGEXP, ')?', TIME_MASKSEP_FI_REGEXP,
                                             DAYMM_REGEXP,
                                             '(?:(?:', MASKSEPTWO_REGEXP, '?', TIME_MASKSEP_REGEXP, '(?:', AMPM_REGEXP, '(?=(?:[[:space:]\.,])+))?)|',
                                             '(?:(?:', TIME_MASKSEP_REGEXP, AMPM_REGEXP, '(?=(?:[[:space:]\.,])+))))', TIME_MASKSEP_REGEXP,
@@ -5058,7 +5081,7 @@ DECLARE
                                             '(?:', MASKSEPTHREE_REGEXP, TIME_MASKSEP_REGEXP, AMPM_REGEXP, '?)?', TIME_MASKSEP_REGEXP,
                                             COMPYEAR_REGEXP,
                                             '((?:(?:\s|,)+|', AMPM_REGEXP, ')(?:', HHMMSSFS_PART_FI_REGEXP, '))?', TIME_MASKSEP_FI_REGEXP, '$');
-    v_defmask16_regexp VARCHAR := concat('^', TIME_MASKSEP_REGEXP, '(', HHMMSSFS_PART_REGEXP, ')?', TIME_MASKSEP_REGEXP,
+    v_defmask16_regexp VARCHAR COLLATE "C" := concat('^', TIME_MASKSEP_REGEXP, '(', HHMMSSFS_PART_REGEXP, ')?', TIME_MASKSEP_REGEXP,
                                          DAYMM_REGEXP,
                                          '(?:', MASKSEPTWO_REGEXP, TIME_MASKSEP_REGEXP, AMPM_REGEXP, '?)', TIME_MASKSEP_REGEXP,
                                          COMPYEAR_REGEXP,
@@ -5066,7 +5089,7 @@ DECLARE
                                          '(?:(?:', TIME_MASKSEP_REGEXP, AMPM_REGEXP, '(?=(?:[[:space:]\.,])+))))', TIME_MASKSEP_REGEXP,
                                          '($comp_month$)',
                                          TIME_MASKSEP_REGEXP, '(', HHMMSSFS_PART_REGEXP, ')?', TIME_MASKSEP_REGEXP, '$');
-    v_defmask16_fi_regexp VARCHAR := concat('^', TIME_MASKSEP_FI_REGEXP, '(', HHMMSSFS_PART_FI_REGEXP, ')?', TIME_MASKSEP_FI_REGEXP,
+    v_defmask16_fi_regexp VARCHAR COLLATE "C" := concat('^', TIME_MASKSEP_FI_REGEXP, '(', HHMMSSFS_PART_FI_REGEXP, ')?', TIME_MASKSEP_FI_REGEXP,
                                             DAYMM_REGEXP,
                                             '(?:', MASKSEPTWO_REGEXP, TIME_MASKSEP_REGEXP, AMPM_REGEXP, '?)', TIME_MASKSEP_REGEXP,
                                             COMPYEAR_REGEXP,
@@ -5074,7 +5097,7 @@ DECLARE
                                             '(?:(?:', TIME_MASKSEP_REGEXP, AMPM_REGEXP, '(?=(?:[[:space:]\.,])+))))', TIME_MASKSEP_REGEXP,
                                             '($comp_month$)',
                                             TIME_MASKSEP_FI_REGEXP, '(', HHMMSSFS_PART_FI_REGEXP, ')?', TIME_MASKSEP_FI_REGEXP, '$');
-    v_defmask17_regexp VARCHAR := concat('^', TIME_MASKSEP_REGEXP, '(', HHMMSSFS_PART_REGEXP, ')?', TIME_MASKSEP_REGEXP,
+    v_defmask17_regexp VARCHAR COLLATE "C" := concat('^', TIME_MASKSEP_REGEXP, '(', HHMMSSFS_PART_REGEXP, ')?', TIME_MASKSEP_REGEXP,
                                          FULLYEAR_REGEXP,
                                          '(?:(?:', MASKSEPTWO_REGEXP, '?', TIME_MASKSEP_REGEXP, '(?:', AMPM_REGEXP, '(?=(?:[[:space:]\.,])+))?)|',
                                          '(?:(?:', TIME_MASKSEP_REGEXP, AMPM_REGEXP, '(?=(?:[[:space:]\.,])+))))', TIME_MASKSEP_REGEXP,
@@ -5082,7 +5105,7 @@ DECLARE
                                          '(?:', MASKSEPTHREE_REGEXP, TIME_MASKSEP_REGEXP, AMPM_REGEXP, '?)?', TIME_MASKSEP_REGEXP,
                                          DAYMM_REGEXP,
                                          TIME_MASKSEP_REGEXP, '(', HHMMSSFS_PART_REGEXP, ')?', TIME_MASKSEP_REGEXP, '$');
-    v_defmask17_fi_regexp VARCHAR := concat('^', TIME_MASKSEP_FI_REGEXP, '(', HHMMSSFS_PART_FI_REGEXP, ')?', TIME_MASKSEP_FI_REGEXP,
+    v_defmask17_fi_regexp VARCHAR COLLATE "C" := concat('^', TIME_MASKSEP_FI_REGEXP, '(', HHMMSSFS_PART_FI_REGEXP, ')?', TIME_MASKSEP_FI_REGEXP,
                                             FULLYEAR_REGEXP,
                                             '(?:(?:', MASKSEPTWO_REGEXP, '?', TIME_MASKSEP_REGEXP, '(?:', AMPM_REGEXP, '(?=(?:[[:space:]\.,])+))?)|',
                                             '(?:(?:', TIME_MASKSEP_REGEXP, AMPM_REGEXP, '(?=(?:[[:space:]\.,])+))))', TIME_MASKSEP_REGEXP,
@@ -5090,7 +5113,7 @@ DECLARE
                                             '(?:', MASKSEPTHREE_REGEXP, TIME_MASKSEP_REGEXP, AMPM_REGEXP, '?)?', TIME_MASKSEP_REGEXP,
                                             DAYMM_REGEXP,
                                             '((?:(?:\s|,)+|', AMPM_REGEXP, ')(?:', HHMMSSFS_PART_FI_REGEXP, '))?', TIME_MASKSEP_FI_REGEXP, '$');
-    v_defmask18_regexp VARCHAR := concat('^', TIME_MASKSEP_REGEXP, '(', HHMMSSFS_PART_REGEXP, ')?', TIME_MASKSEP_REGEXP,
+    v_defmask18_regexp VARCHAR COLLATE "C" := concat('^', TIME_MASKSEP_REGEXP, '(', HHMMSSFS_PART_REGEXP, ')?', TIME_MASKSEP_REGEXP,
                                          FULLYEAR_REGEXP,
                                          '(?:(?:', MASKSEPTWO_REGEXP, TIME_MASKSEP_REGEXP, AMPM_REGEXP, '?)|',
                                          '(?:', TIME_MASKSEP_REGEXP, AMPM_REGEXP, '))', TIME_MASKSEP_REGEXP,
@@ -5099,7 +5122,7 @@ DECLARE
                                          '(?:(?:', TIME_MASKSEP_REGEXP, AMPM_REGEXP, '(?=(?:[[:space:]\.,])+))))', TIME_MASKSEP_REGEXP,
                                          '($comp_month$)',
                                          TIME_MASKSEP_REGEXP, '(', HHMMSSFS_PART_REGEXP, ')?', TIME_MASKSEP_REGEXP, '$');
-    v_defmask18_fi_regexp VARCHAR := concat('^', TIME_MASKSEP_FI_REGEXP, '(', HHMMSSFS_PART_FI_REGEXP, ')?', TIME_MASKSEP_FI_REGEXP,
+    v_defmask18_fi_regexp VARCHAR COLLATE "C" := concat('^', TIME_MASKSEP_FI_REGEXP, '(', HHMMSSFS_PART_FI_REGEXP, ')?', TIME_MASKSEP_FI_REGEXP,
                                             FULLYEAR_REGEXP,
                                             '(?:(?:', MASKSEPTWO_REGEXP, TIME_MASKSEP_REGEXP, AMPM_REGEXP, '?)|',
                                             '(?:', TIME_MASKSEP_REGEXP, AMPM_REGEXP, '))', TIME_MASKSEP_REGEXP,
@@ -5108,7 +5131,7 @@ DECLARE
                                             '(?:(?:', TIME_MASKSEP_REGEXP, AMPM_REGEXP, '(?=(?:[[:space:]\.,])+))))', TIME_MASKSEP_REGEXP,
                                             '($comp_month$)',
                                             TIME_MASKSEP_FI_REGEXP, '(', HHMMSSFS_PART_FI_REGEXP, ')?', TIME_MASKSEP_FI_REGEXP, '$');
-    v_defmask19_regexp VARCHAR := concat('^', TIME_MASKSEP_REGEXP, '(', HHMMSSFS_PART_REGEXP, ')?', TIME_MASKSEP_REGEXP,
+    v_defmask19_regexp VARCHAR COLLATE "C" := concat('^', TIME_MASKSEP_REGEXP, '(', HHMMSSFS_PART_REGEXP, ')?', TIME_MASKSEP_REGEXP,
                                          '($comp_month$)',
                                          '(?:', MASKSEPTHREE_REGEXP, TIME_MASKSEP_REGEXP, AMPM_REGEXP, '?)?', TIME_MASKSEP_REGEXP,
                                          FULLYEAR_REGEXP,
@@ -5116,7 +5139,7 @@ DECLARE
                                          '(?:', TIME_MASKSEP_REGEXP, AMPM_REGEXP, '))', TIME_MASKSEP_REGEXP,
                                          DAYMM_REGEXP,
                                          '((?:(?:\s|\.|,)+|', AMPM_REGEXP, ')(?:', HHMMSSFS_PART_REGEXP, '))?', TIME_MASKSEP_REGEXP, '$');
-    v_defmask19_fi_regexp VARCHAR := concat('^', TIME_MASKSEP_FI_REGEXP, '(', HHMMSSFS_PART_FI_REGEXP, ')?', TIME_MASKSEP_FI_REGEXP,
+    v_defmask19_fi_regexp VARCHAR COLLATE "C" := concat('^', TIME_MASKSEP_FI_REGEXP, '(', HHMMSSFS_PART_FI_REGEXP, ')?', TIME_MASKSEP_FI_REGEXP,
                                             '($comp_month$)',
                                             '(?:', MASKSEPTHREE_REGEXP, TIME_MASKSEP_REGEXP, AMPM_REGEXP, '?)?', TIME_MASKSEP_REGEXP,
                                             FULLYEAR_REGEXP,
@@ -5124,8 +5147,8 @@ DECLARE
                                             '(?:', TIME_MASKSEP_REGEXP, AMPM_REGEXP, '))', TIME_MASKSEP_REGEXP,
                                             DAYMM_REGEXP,
                                             '((?:(?:\s|,)+|', AMPM_REGEXP, ')(?:', HHMMSSFS_PART_FI_REGEXP, '))?', TIME_MASKSEP_FI_REGEXP, '$');
-    CONVERSION_LANG CONSTANT VARCHAR := '';
-    DATE_FORMAT CONSTANT VARCHAR := '';
+    CONVERSION_LANG CONSTANT VARCHAR COLLATE "C" := '';
+    DATE_FORMAT CONSTANT VARCHAR COLLATE "C" := '';
 BEGIN
     v_datatype := trim(p_datatype);
     v_srctimestring := upper(trim(p_srctimestring));
@@ -5171,7 +5194,7 @@ BEGIN
     IF (v_weekdaynames[1] IS NOT NULL AND
         v_srctimestring ~* concat(WEEKDAYAMPM_START_REGEXP, '(', v_compday_regexp, ')', WEEKDAYAMPM_END_REGEXP))
     THEN
-        v_srctimestring := replace(v_srctimestring, v_weekdaynames[1], ' ');
+        v_srctimestring := pg_catalog.replace(v_srctimestring, v_weekdaynames[1], ' ');
     END IF;
 
     IF (v_srctimestring ~* ANNO_DOMINI_COMPREGEXP)
@@ -5464,7 +5487,7 @@ BEGIN
 
     WHILE (NOT v_found AND v_resmask_cnt < 20)
     LOOP
-        v_resmask := replace(CASE v_resmask_cnt
+        v_resmask := pg_catalog.replace(CASE v_resmask_cnt
                                 WHEN 10 THEN v_defmask10_regexp
                                 WHEN 11 THEN v_defmask11_regexp
                                 WHEN 12 THEN v_defmask12_regexp
@@ -5478,7 +5501,7 @@ BEGIN
                              END,
                              '$comp_month$', v_compmonth_regexp);
 
-        v_resmask_fi := replace(CASE v_resmask_cnt
+        v_resmask_fi := pg_catalog.replace(CASE v_resmask_cnt
                                    WHEN 10 THEN v_defmask10_fi_regexp
                                    WHEN 11 THEN v_defmask11_fi_regexp
                                    WHEN 12 THEN v_defmask12_fi_regexp
@@ -5695,7 +5718,7 @@ BEGIN
             END IF;
         END IF;
 
-        v_timestring := replace(regexp_replace(v_timestring, '\.?[AP]M|ص|م|\s|\,|\.\D|[\.|:]$', '', 'gi'), ':.', ':');
+        v_timestring := pg_catalog.replace(regexp_replace(v_timestring, '\.?[AP]M|ص|م|\s|\,|\.\D|[\.|:]$', '', 'gi'), ':.', ':');
 
         BEGIN
             v_hours := coalesce(split_part(v_timestring, ':', 1)::SMALLINT, 0);
@@ -9788,7 +9811,7 @@ AS
 $BODY$
 DECLARE
 	v_style SMALLINT;
-	v_format VARCHAR;
+	v_format VARCHAR COLLATE "C";
 	v_moneyval NUMERIC(19,4) := p_moneyval::NUMERIC(19,4);
 	v_moneysign NUMERIC(19,4) := sign(v_moneyval);
 	v_moneyabs NUMERIC(19,4) := abs(v_moneyval);
@@ -9796,7 +9819,7 @@ DECLARE
 	v_integral_digits SMALLINT;
 	v_decimal_digits SMALLINT;
 	v_res_length SMALLINT;
-	MASK_REGEXP CONSTANT VARCHAR := '^\s*(?:character varying)\s*\(\s*(\d+|MAX)\s*\)\s*$';
+	MASK_REGEXP CONSTANT VARCHAR COLLATE "C" := '^\s*(?:character varying)\s*\(\s*(\d+|MAX)\s*\)\s*$';
 	v_result TEXT;
 BEGIN
 	v_style := floor(p_style)::SMALLINT;
@@ -9847,7 +9870,7 @@ AS
 $BODY$
 DECLARE
 	v_style SMALLINT;
-	v_format VARCHAR;
+	v_format VARCHAR COLLATE "C";
 	v_floatval NUMERIC := abs(p_floatval);
 	v_digits SMALLINT;
 	v_integral_digits SMALLINT;
@@ -9855,7 +9878,7 @@ DECLARE
 	v_sign SMALLINT := sign(p_floatval);
 	v_result TEXT;
 	v_res_length SMALLINT;
-	MASK_REGEXP CONSTANT VARCHAR := '^\s*(?:character varying)\s*\(\s*(\d+|MAX)\s*\)\s*$';
+	MASK_REGEXP CONSTANT VARCHAR COLLATE "C" := '^\s*(?:character varying)\s*\(\s*(\d+|MAX)\s*\)\s*$';
 BEGIN
 	v_style := floor(p_style)::SMALLINT;
 	IF (v_style = 0) THEN
@@ -10060,6 +10083,149 @@ $BODY$
                                                       )/1000::numeric);
 $BODY$
 LANGUAGE SQL;
+
+CREATE OR REPLACE FUNCTION babelfish_get_name_delimiter_pos(name TEXT)
+RETURNS INTEGER
+AS $$
+DECLARE
+    pos int;
+BEGIN
+    IF (length(name) <= 2 AND (position('"' IN name) != 0 OR position(']' IN name) != 0 OR position('[' IN name) != 0))
+        -- invalid name
+        THEN RETURN 0;
+    ELSIF left(name, 1) = '[' THEN
+        pos = position('].' IN name);
+        IF pos = 0 THEN 
+            -- invalid name
+            RETURN 0;
+        ELSE
+            RETURN pos + 1;
+        END IF;
+    ELSIF left(name, 1) = '"' THEN
+        -- search from position 1 in case name starts with ".
+        pos = position('".' IN right(name, length(name) - 1));
+        IF pos = 0 THEN
+            -- invalid name
+            RETURN 0;
+        ELSE
+            RETURN pos + 2;
+        END IF;
+    ELSE
+        RETURN position('.' IN name);
+    END IF;
+END;
+$$
+LANGUAGE plpgsql;
+
+-- valid names are db_name.schema_name.object_name or schema_name.object_name or object_name
+CREATE OR REPLACE FUNCTION babelfish_split_object_name(
+    name TEXT, 
+    OUT db_name TEXT, 
+    OUT schema_name TEXT, 
+    OUT object_name TEXT)
+AS $$
+DECLARE
+    lower_object_name text;
+    names text[2];
+    counter int;
+    cur_pos int;
+BEGIN
+    lower_object_name = lower(rtrim(name));
+
+    counter = 1;
+    cur_pos = babelfish_get_name_delimiter_pos(lower_object_name);
+
+    -- Parse user input into names split by '.'
+    WHILE cur_pos > 0 LOOP
+        IF counter > 3 THEN
+            -- Too many names provided
+            RETURN;
+        END IF;
+
+        names[counter] = babelfish_remove_delimiter_pair(rtrim(left(lower_object_name, cur_pos - 1)));
+        
+        -- invalid name
+        IF names[counter] IS NULL THEN
+            RETURN;
+        END IF;
+
+        lower_object_name = substring(lower_object_name from cur_pos + 1);
+        counter = counter + 1;
+        cur_pos = babelfish_get_name_delimiter_pos(lower_object_name);
+    END LOOP;
+
+    CASE counter
+        WHEN 1 THEN
+            db_name = NULL;
+            schema_name = NULL;
+        WHEN 2 THEN
+            db_name = NULL;
+            schema_name = sys.babelfish_truncate_identifier(names[1]);
+        WHEN 3 THEN
+            db_name = sys.babelfish_truncate_identifier(names[1]);
+            schema_name = sys.babelfish_truncate_identifier(names[2]);
+        ELSE
+            RETURN;
+    END CASE;
+
+    -- Assign each name accordingly
+    object_name = sys.babelfish_truncate_identifier(babelfish_remove_delimiter_pair(rtrim(lower_object_name)));
+END;
+$$
+LANGUAGE plpgsql;
+
+CREATE OR REPLACE FUNCTION babelfish_has_any_privilege(
+    perm_target_type text,
+    schema_name text,
+    object_name text)
+RETURNS INTEGER
+AS
+$BODY$
+DECLARE 
+    relevant_permissions text[];
+    namespace_id oid;
+    function_signature text;
+    qualified_name text;
+    permission text;
+BEGIN
+    IF perm_target_type IS NULL OR perm_target_type NOT IN('table', 'function', 'procedure')
+        THEN RETURN NULL;
+    END IF;
+
+    relevant_permissions := (
+        SELECT CASE
+            WHEN perm_target_type = 'table'
+                THEN '{"select", "insert", "update", "delete", "references"}'
+            WHEN perm_target_type IN('function', 'procedure')
+                THEN '{"execute"}'
+        END
+    );
+
+    SELECT oid INTO namespace_id FROM pg_catalog.pg_namespace WHERE nspname = schema_name;
+
+    IF perm_target_type IN('function', 'procedure')
+        THEN SELECT oid::regprocedure 
+                INTO function_signature 
+                FROM pg_catalog.pg_proc 
+                WHERE proname = object_name
+                    AND pronamespace = namespace_id;
+    END IF;
+
+    -- Surround with double-quotes to handle names that contain periods/spaces
+    qualified_name := concat('"', schema_name, '"."', object_name, '"');
+
+    FOREACH permission IN ARRAY relevant_permissions
+    LOOP
+        IF perm_target_type = 'table' AND has_table_privilege(qualified_name, permission)::integer = 1
+            THEN RETURN 1;
+        ELSIF perm_target_type IN('function', 'procedure') AND has_function_privilege(function_signature, permission)::integer = 1
+            THEN RETURN 1;
+        END IF;
+    END LOOP;
+    RETURN 0;
+END
+$BODY$
+LANGUAGE plpgsql;
 
 -- internal table function for sp_cursor_list and sp_decribe_cursor
 CREATE OR REPLACE FUNCTION sys.babelfish_cursor_list(cursor_source integer)

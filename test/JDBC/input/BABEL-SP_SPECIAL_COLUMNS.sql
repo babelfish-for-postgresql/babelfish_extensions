@@ -275,6 +275,32 @@ go
 exec sp_special_columns 'unique_idx_table2' -- only primary key should be shown
 go
 
+CREATE TABLE dbo.tidentityintbig (
+ data_type_test CHAR(50) NULL
+ , test_scenario CHAR(60) NULL
+ , value_test BIGINT IDENTITY (202202081842, 100 ) NOT NULL  -- Used for unique index
+ , inserted_dt DATETIME DEFAULT GETDATE()
+ , user_login CHAR(255) DEFAULT CURRENT_USER
+)
+GO
+CREATE UNIQUE NONCLUSTERED INDEX dbo_tidentityintbig_value_test ON dbo.tidentityintbig (value_test ASC); -- 3rd column in the table
+GO
+EXEC sp_special_columns @table_name = 'tidentityintbig', @table_owner = 'dbo' , @col_type = 'R', @nullable = 'U', @ODBCVer = 3
+GO
+
+CREATE TABLE dbo.tidentityintbigmulti (
+    data_type_test CHAR(50) NULL
+    , test_scenario CHAR(60) NULL
+    , value_test BIGINT IDENTITY (202202081842, 100 ) NOT NULL
+    , inserted_dt DATETIME DEFAULT GETDATE()
+    , user_login CHAR(255) DEFAULT CURRENT_USER
+)
+GO
+CREATE UNIQUE NONCLUSTERED INDEX dbo_tidentityintbigmulti_value_test ON dbo.tidentityintbigmulti (user_login ASC, value_test ASC, test_scenario ASC);
+GO
+EXEC sp_special_columns @table_name = 'tidentityintbigmulti', @table_owner = 'dbo' , @col_type = 'R', @nullable = 'U', @ODBCVer = 3
+GO
+
 -- cleanup
 drop table t1
 go
@@ -385,6 +411,10 @@ go
 DROP TABLE type_binary_7
 go
 DROP TABLE type_varbinary_7
+go
+DROP TABLE dbo.tidentityintbig
+go
+DROP TABLE dbo.tidentityintbigmulti
 go
 use master
 go

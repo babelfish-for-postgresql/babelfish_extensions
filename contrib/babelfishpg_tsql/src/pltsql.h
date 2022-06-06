@@ -174,8 +174,8 @@ typedef enum PLtsql_stmt_type
 	PLTSQL_STMT_RAISERROR,
 	PLTSQL_STMT_THROW,
 	PLTSQL_STMT_USEDB,
+	PLTSQL_STMT_SET_EXPLAIN_MODE,
     /* TSQL-only executable node */
-    PLTSQL_STMT_INIT_VARS,
     PLTSQL_STMT_SAVE_CTX,
     PLTSQL_STMT_RESTORE_CTX_FULL,
     PLTSQL_STMT_RESTORE_CTX_PARTIAL,
@@ -915,6 +915,7 @@ typedef struct PLtsql_stmt_insert_bulk
     char  *table_name;
     char  *schema_name;
     char  *db_name;
+    char  *column_refs;
 } PLtsql_stmt_insert_bulk;
 
 /*
@@ -1012,7 +1013,23 @@ typedef struct PLtsql_stmt_execsql
 	bool		need_to_push_result; /* push result to client */
 	bool		is_tsql_select_assign_stmt; /* T-SQL SELECT-assign (i.e. SELECT @a=1) */
 	bool 		insert_exec; 	/* INSERT-EXEC stmt? */
+	bool		is_cross_db;	/* cross database reference */
 } PLtsql_stmt_execsql;
+
+/*
+ * SET statement to change EXPLAIN MODE
+ * The main reason for this PLtsql statement is
+ * to turn off EXPLAIN ONLY MODE while it is on.
+ */
+typedef struct PLtsql_stmt_set_explain_mode
+{
+	PLtsql_stmt_type cmd_type;
+	int lineno;
+	char *query;
+	bool is_explain_only;
+	bool is_explain_analyze;
+	bool val;
+} PLtsql_stmt_set_explain_mode;
 
 /*
  * Dynamic SQL string to execute
@@ -1246,6 +1263,15 @@ typedef struct
     bool                    partial_restored;  /* set true before executing catch block */
 } PLtsql_errctx;
 
+typedef struct ExplainInfo
+{
+	/* Estimated (or Actual) Query Execution Plan for a single statement */
+	char *data;
+
+	/* indent for the next ExplainInfo */
+	size_t next_indent;
+} ExplainInfo;
+
 typedef struct PLtsql_execstate
 {
 	PLtsql_function *func;		/* function being executed */
@@ -1340,6 +1366,8 @@ typedef struct PLtsql_execstate
 	 * EXECUTE, and can behave differently.
 	 */
 	bool 		insert_exec;
+
+	List 		*explain_infos;
 } PLtsql_execstate;
 
 /*
@@ -1558,6 +1586,10 @@ typedef struct PLtsql_protocol_plugin
 
 	int (*pltsql_get_generic_typmod) (Oid funcid, int nargs, Oid declared_oid);
 
+	const char* (*pltsql_get_logical_schema_name) (const char *physical_schema_name, bool missingOk);
+
+	bool *pltsql_is_fmtonly_stmt;
+
 } PLtsql_protocol_plugin;
 
 /*
@@ -1626,8 +1658,6 @@ extern TranslateCollation_hook_type prev_TranslateCollation_hook;
 extern char *pltsql_default_locale;
 
 extern int  pltsql_variable_conflict;
-
-extern bool pltsql_use_antlr;
 
 /* extra compile-time checks */
 #define PLTSQL_XCHECK_NONE			0
@@ -1893,6 +1923,8 @@ extern void update_ViewStmt(Node *n, const char *view_schema);
 extern void pltsql_check_or_set_default_typmod(TypeName * typeName, int32 *typmod, bool is_cast);
 extern bool TryLockLogicalDatabaseForSession(int16 dbid, LOCKMODE lockmode);
 extern void UnlockLogicalDatabaseForSession(int16 dbid, LOCKMODE lockmode, bool force);
+extern char *bpchar_to_cstring(const BpChar *bpchar);
+extern char *varchar_to_cstring(const VarChar *varchar);
 
 typedef struct
 {

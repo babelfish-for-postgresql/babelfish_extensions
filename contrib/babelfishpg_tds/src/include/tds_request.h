@@ -246,6 +246,9 @@ typedef TDSRequestData *TDSRequest;
 #define TDS_COL_METADATA_DEFAULT_FLAGS  TDS_COLMETA_NULLABLE | \
 					TDS_COLMETA_UPD_UNKNOWN
 #define TDS_COL_METADATA_NOT_NULL_FLAGS TDS_COLMETA_UPD_UNKNOWN
+#define TDS_COL_METADATA_IDENTITY_FLAGS TDS_COLMETA_IDENTITY
+#define TDS_COL_METADATA_COMPUTED_FLAGS TDS_COLMETA_NULLABLE | \
+					TDS_COLMETA_COMPUTED
 
 /* Macro for TVP tokens. */
 #define TVP_ROW_TOKEN				0x01
@@ -675,19 +678,24 @@ SetColMetadataForFixedType(TdsColumnMetaData *col, uint8_t tdsType, uint8_t maxS
 	/*
 	 * If column is Not NULL constrained then we don't want to send
 	 * maxSize except for uniqueidentifier and xml.
-       * TODO: We should send TDS_COL_METADATA_NOT_NULL_FLAGS
-       * This needs to be done for identity contraints
+	 * This needs to be done for identity contraints as well.
 	 */
 	if (col->attNotNull && tdsType != TDS_TYPE_UNIQUEIDENTIFIER && tdsType != TDS_TYPE_XML)
-      {
+	{
 		col->metaLen = sizeof(col->metaEntry.type1) - 1;
-	        col->metaEntry.type1.flags = TDS_COL_METADATA_NOT_NULL_FLAGS;
-      }
-      else
-      {
+		if (col->attidentity)
+			col->metaEntry.type1.flags = TDS_COL_METADATA_IDENTITY_FLAGS;
+		else
+			col->metaEntry.type1.flags = TDS_COL_METADATA_NOT_NULL_FLAGS;
+	}
+	else
+	{
 		col->metaLen = sizeof(col->metaEntry.type1);
-              col->metaEntry.type1.flags = TDS_COL_METADATA_DEFAULT_FLAGS;
-      }
+		if (col->attgenerated)
+			col->metaEntry.type1.flags = TDS_COL_METADATA_COMPUTED_FLAGS;
+		else
+			col->metaEntry.type1.flags = TDS_COL_METADATA_DEFAULT_FLAGS;
+	}
 	col->metaEntry.type1.tdsTypeId = tdsType;
 	col->metaEntry.type1.maxSize = maxSize;
 }

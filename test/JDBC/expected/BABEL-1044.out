@@ -48,32 +48,7 @@ int
 ~~END~~
 
 
--- object_id(<table_name>) for both original namd shortend name
-select (case when object_id('table_longer_than_63_0abcdefgij1abcdefgij2abcdefgij3abcdefgij4abcdefgij5abcdefgij6abcdefgij7abcdefgij8abcdefghij9abcdefghij') is not null then 'exists' else 'error' end) result;
-GO
-~~START~~
-text
-exists
-~~END~~
-
-
-select (case when object_id('table_longer_than_63_0abcdefgijc2ed7b983a352405e4e26c711bd071bf') is not null then 'exists' else 'error' end) result;
-GO
-~~START~~
-text
-exists
-~~END~~
-
-
-select (case when object_id('table_longer_than_63_0abcdefgij1abcdefgij2abcdefgij3abcdefgij4abcdefgij5abcdefgij6abcdefgij7abcdefgij8abcdefghij9abcdefghij') = object_id('table_longer_than_63_0abcdefgijc2ed7b983a352405e4e26c711bd071bf') then 'correct' else 'error' end) result;
-GO
-~~START~~
-text
-correct
-~~END~~
-
-
--- object_id(<schema_name>.<table_name>) for both original namd shortend name
+-- object_id(<schema_name>.<table_name>) for both original name and shortened name
 select (case when object_id('schema_longer_than_63_0abcdefgij1abcdefgij2abcdefgij3abcdefgij4abcdefgij5abcdefgij6abcdefgij7abcdefgij8abcdefghij9abcdefghij.table_longer_than_63_0abcdefgij1abcdefgij2abcdefgij3abcdefgij4abcdefgij5abcdefgij6abcdefgij7abcdefgij8abcdefghij9abcdefghij') is not null then 'exists' else 'error' end) result;
 GO
 ~~START~~
@@ -111,6 +86,31 @@ GO
 insert into table_longer_than_63_0abcdefgij1abcdefgij2abcdefgij3abcdefgij4abcdefgij5abcdefgij6abcdefgij7abcdefgij8abcdefghij9abcdefghij values (42);
 GO
 ~~ROW COUNT: 1~~
+
+
+-- object_id(<table_name>) for both original name and shortened name
+select (case when object_id('table_longer_than_63_0abcdefgij1abcdefgij2abcdefgij3abcdefgij4abcdefgij5abcdefgij6abcdefgij7abcdefgij8abcdefghij9abcdefghij') is not null then 'exists' else 'error' end) result;
+GO
+~~START~~
+text
+exists
+~~END~~
+
+
+select (case when object_id('table_longer_than_63_0abcdefgijc2ed7b983a352405e4e26c711bd071bf') is not null then 'exists' else 'error' end) result;
+GO
+~~START~~
+text
+exists
+~~END~~
+
+
+select (case when object_id('table_longer_than_63_0abcdefgij1abcdefgij2abcdefgij3abcdefgij4abcdefgij5abcdefgij6abcdefgij7abcdefgij8abcdefghij9abcdefghij') = object_id('table_longer_than_63_0abcdefgijc2ed7b983a352405e4e26c711bd071bf') then 'correct' else 'error' end) result;
+GO
+~~START~~
+text
+correct
+~~END~~
 
 
 -- char/varchar/text -> name casting

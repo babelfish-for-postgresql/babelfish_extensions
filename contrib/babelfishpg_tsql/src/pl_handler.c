@@ -76,6 +76,7 @@
 #include "schemacmds.h"
 #include "session.h"
 #include "pltsql.h"
+#include "pl_explain.h"
 #include "datatypes.h"
 
 #include "access/xact.h"
@@ -83,7 +84,7 @@
 extern bool escape_hatch_unique_constraint;
 extern bool pltsql_recursive_triggers;
 
-extern List *babelfishpg_tsql_raw_parser(const char *str);
+extern List *babelfishpg_tsql_raw_parser(const char *str, RawParseMode mode);
 extern bool install_backend_gram_hooks();
 
 static void assign_identity_insert(const char *newval, void *extra);
@@ -94,6 +95,7 @@ extern Datum init_tsql_coerce_hash_tab(PG_FUNCTION_ARGS);
 extern Datum init_tsql_datatype_precedence_hash_tab(PG_FUNCTION_ARGS);
 extern Datum init_tsql_cursor_hash_tab(PG_FUNCTION_ARGS);
 extern PLtsql_execstate *get_current_tsql_estate(void);
+extern PLtsql_execstate *get_outermost_tsql_estate(int *nestlevel);
 extern void pre_check_trigger_schema(List *object, bool missing_ok);
 static void  get_language_procs(const char *langname, Oid *compiler, Oid *validator);
 extern bool pltsql_suppress_string_truncation_error();
@@ -105,6 +107,7 @@ bool canCommitTransaction(void);
 extern void assign_tablecmds_hook(void);
 static void bbf_ProcessUtility(PlannedStmt *pstmt,
 		const char *queryString,
+		bool readOnlyTree,
 		ProcessUtilityContext context,
 		ParamListInfo params,
 		QueryEnvironment *queryEnv,
@@ -138,7 +141,7 @@ static void validate_rowversion_column_constraints(ColumnDef *column);
 static void validate_rowversion_table_constraint(Constraint *c, char *rowversion_column_name);
 static Constraint *get_rowversion_default_constraint(TypeName *typname);
 extern bool is_tsql_rowversion_or_timestamp_datatype(Oid oid);
-static void revoke_type_permission_from_public(PlannedStmt *pstmt, const char *queryString,
+static void revoke_type_permission_from_public(PlannedStmt *pstmt, const char *queryString, bool readOnlyTree,
 		ProcessUtilityContext context, ParamListInfo params, QueryEnvironment *queryEnv, DestReceiver *dest, QueryCompletion *qc, List *type_name);
 
 PG_FUNCTION_INFO_V1(pltsql_inline_handler);
@@ -176,6 +179,7 @@ int			pltsql_extra_errors;
 bool		pltsql_debug_parser = false;
 char       *identity_insert_string;
 bool		output_update_transformation = false;
+bool		output_into_insert_transformation = false;
 char       *update_delete_target_alias = NULL;
 int			pltsql_trigger_depth = 0;
 
@@ -627,7 +631,7 @@ pltsql_pre_parse_analyze(ParseState *pstate, RawStmt *parseTree)
 				func->args_unspecified = true;
 
 				/* function, procedure */
-				func_oid = LookupFuncName(plan_name, -1, &argoids, true);
+				func_oid = LookupFuncWithArgs(OBJECT_ROUTINE, func, true);
 				if (func_oid != InvalidOid)
 				{
 					char kind = get_func_prokind(func_oid);
@@ -802,10 +806,10 @@ pltsql_set_nulls_first(Query *query)
 }
 
 static void
-pltsql_post_parse_analyze(ParseState *pstate, Query *query)
+pltsql_post_parse_analyze(ParseState *pstate, Query *query, JumbleState *jstate)
 {
 	if (prev_post_parse_analyze_hook)
-	  prev_post_parse_analyze_hook(pstate, query);
+	  prev_post_parse_analyze_hook(pstate, query, jstate);
 
 	if (sql_dialect != SQL_DIALECT_TSQL)
 		return;
@@ -1429,7 +1433,7 @@ get_rowversion_default_constraint(TypeName *typname)
 	FuncCall *funccallnode;
 	Constraint *constraint;
 
-	funccallnode = makeFuncCall(list_make2(makeString("sys"), makeString("get_current_full_xact_id")), NIL, -1);
+	funccallnode = makeFuncCall(list_make2(makeString("sys"), makeString("get_current_full_xact_id")), NIL, COERCE_EXPLICIT_CALL, -1);
 	castnode = makeNode(TypeCast);
 	castnode->typeName = typname;
 	castnode->arg = (Node *) funccallnode;
@@ -1444,7 +1448,7 @@ get_rowversion_default_constraint(TypeName *typname)
 }
 
 static void
-revoke_type_permission_from_public(PlannedStmt *pstmt, const char *queryString,
+revoke_type_permission_from_public(PlannedStmt *pstmt, const char *queryString, bool readOnlyTree,
 		ProcessUtilityContext context, ParamListInfo params, QueryEnvironment *queryEnv, DestReceiver *dest, QueryCompletion *qc, List *type_name)
 {
 	const char 	*template = "REVOKE ALL ON TYPE dummy FROM PUBLIC";
@@ -1460,7 +1464,7 @@ revoke_type_permission_from_public(PlannedStmt *pstmt, const char *queryString,
 	CommandCounterIncrement();
 
 	/* prepare subcommand */
-	res = raw_parser(template);
+	res = raw_parser(template, RAW_PARSE_DEFAULT);
 
 	if (list_length(res) != 1)
 		ereport(ERROR,
@@ -1480,6 +1484,7 @@ revoke_type_permission_from_public(PlannedStmt *pstmt, const char *queryString,
 
 	ProcessUtility(wrapper,
 				   queryString,
+				   readOnlyTree,
 				   PROCESS_UTILITY_SUBCOMMAND,
 				   params,
 				   queryEnv,
@@ -1973,6 +1978,52 @@ PLTsqlProcessTransaction(Node *parsetree,
 }
 
 /*
+ * It returns TRUE when we should not execute the utility statement,
+ * e.g., CREATE FUNCTION, in EXPLAIN ONLY MODE.
+ * If it returns FALSE, it means we can execute the utility statement.
+ * For some cases, e.g., EXEC procedure, we need to execute the procedure
+ * even in EXPLAIN ONLY MODE. In that case, EXPLAIN ONLY MODE should be considered
+ * for individual statements inside the procedure.
+ */
+static inline bool process_utility_stmt_explain_only_mode(const char *queryString, Node *parsetree)
+{
+	CallStmt *callstmt;
+	HeapTuple proctuple;
+	Oid procid;
+	Oid langoid;
+	char *langname;
+
+	if (!pltsql_explain_only)
+		return false;
+
+	append_explain_info(NULL, queryString);
+
+	if (nodeTag(parsetree) != T_CallStmt)
+		return true;
+
+	callstmt = (CallStmt *) parsetree;
+	procid = callstmt->funcexpr->funcid;
+	proctuple = SearchSysCache1(PROCOID, ObjectIdGetDatum(procid));
+	if (!HeapTupleIsValid(proctuple))
+		return true;
+
+	langoid = ((Form_pg_proc) GETSTRUCT(proctuple))->prolang;
+	ReleaseSysCache(proctuple);
+
+	langname = get_language_name(langoid, true);
+	if (!langname)
+		return true;
+
+	/* If a procedure language is pltsql, it is safe to execute the procedure.
+	 * EXPLAIN ONLY MODE will be considered for each statements inside the procedure.
+	 */
+	if (pg_strcasecmp("pltsql", langname) == 0)
+		return false;
+
+	return true;
+}
+
+/*
  * Use this hook to handle utility statements that needs special treatment, and
  * use the standard ProcessUtility for other statements.
  * CreateFunctionStmt could have elements in the options list that are specific
@@ -1980,6 +2031,7 @@ PLTsqlProcessTransaction(Node *parsetree,
  */
 static void bbf_ProcessUtility(PlannedStmt *pstmt,
 		const char *queryString,
+		bool readOnlyTree,
 		ProcessUtilityContext context,
 		ParamListInfo params,
 		QueryEnvironment *queryEnv,
@@ -1989,6 +2041,9 @@ static void bbf_ProcessUtility(PlannedStmt *pstmt,
 	Node	   				*parsetree = pstmt->utilityStmt;
 	ParseState 				*pstate = make_parsestate(NULL);
 	pstate->p_sourcetext = 	queryString;
+
+	if (process_utility_stmt_explain_only_mode(queryString, parsetree))
+		return; /* Don't execute anything */
 
 	switch (nodeTag(parsetree))
 	{
@@ -2056,6 +2111,7 @@ static void bbf_ProcessUtility(PlannedStmt *pstmt,
 
 						ProcessUtility(wrapper,
 									   queryString,
+									   readOnlyTree,
 									   PROCESS_UTILITY_SUBCOMMAND,
 									   params,
 									   NULL,
@@ -2153,6 +2209,7 @@ static void bbf_ProcessUtility(PlannedStmt *pstmt,
 				ListCell		*option;
 				bool			islogin = false;
 				bool			isuser = false;
+				bool			isrole = false;
 
 				/* Check if creating login or role. Expect islogin first */
 				if (stmt->options != NIL)
@@ -2225,6 +2282,45 @@ static void bbf_ProcessUtility(PlannedStmt *pstmt,
 															   -1));
 						}
 					}
+					else if (strcmp(headel->defname, "isrole") == 0)
+					{
+						int location = -1;
+
+						isrole = true;
+						stmt->options = list_delete_cell(stmt->options,
+														 list_head(stmt->options));
+														 pfree(headel);
+
+						/* Filter TSQL role options from default role options */
+						foreach(option, stmt->options)
+						{
+							DefElem *defel = (DefElem *) lfirst(option);
+
+							if (strcmp(defel->defname, "name_location") == 0)
+							{
+								location = defel->location;
+								user_options = lappend(user_options, defel);
+							}
+						}
+
+						foreach(option, user_options)
+						{
+							stmt->options = list_delete_ptr(stmt->options,
+															lfirst(option));
+						}
+
+						if (location >= 0)
+						{
+							char        *orig_user_name;
+
+							orig_user_name = extract_identifier(queryString + location);
+							user_options = lappend(user_options,
+												   makeDefElem("original_user_name",
+															   (Node *) makeString(orig_user_name),
+															   -1));
+						}
+					}
+
 				}
 
 				if (islogin)
@@ -2247,11 +2343,11 @@ static void bbf_ProcessUtility(PlannedStmt *pstmt,
 					PG_TRY();
 					{
 						if (prev_ProcessUtility)
-							prev_ProcessUtility(pstmt, queryString, context,
+							prev_ProcessUtility(pstmt, queryString,readOnlyTree, context,
 												params, queryEnv, dest,
 												qc);
 						else
-							standard_ProcessUtility(pstmt, queryString, context,
+							standard_ProcessUtility(pstmt, queryString, readOnlyTree, context,
 													params, queryEnv, dest,
 													qc);
 
@@ -2270,7 +2366,7 @@ static void bbf_ProcessUtility(PlannedStmt *pstmt,
 
 					return;
 				}
-				else if (isuser)
+				else if (isuser || isrole)
 				{
 					/* Set current user to dbo user for create permissions */
 					prev_current_user = GetUserNameFromId(GetUserId(), false);
@@ -2280,17 +2376,21 @@ static void bbf_ProcessUtility(PlannedStmt *pstmt,
 					PG_TRY();
 					{
 						if (prev_ProcessUtility)
-							prev_ProcessUtility(pstmt, queryString, context,
+							prev_ProcessUtility(pstmt, queryString, readOnlyTree, context,
 												params, queryEnv, dest,
 												qc);
 						else
-							standard_ProcessUtility(pstmt, queryString, context,
+							standard_ProcessUtility(pstmt, queryString, readOnlyTree, context,
 													params, queryEnv, dest,
 													qc);
 
 						stmt->options = list_concat(stmt->options,
 													user_options);
-						create_bbf_authid_user_ext(stmt, true, true);
+						/*
+						 * If the stmt is CREATE USER, it must have a
+						 * corresponding login and a schema name
+						 */
+						create_bbf_authid_user_ext(stmt, isuser, isuser);
 					}
 					PG_CATCH();
 					{
@@ -2317,6 +2417,7 @@ static void bbf_ProcessUtility(PlannedStmt *pstmt,
 				ListCell		*option;
 				bool			islogin = false;
 				bool			isuser = false;
+				bool			isrole = false;
 				Oid				prev_current_user;
 
 				prev_current_user = GetUserId();
@@ -2376,6 +2477,28 @@ static void bbf_ProcessUtility(PlannedStmt *pstmt,
 															lfirst(option));
 						}
 					}
+					else if (strcmp(headel->defname, "isrole") == 0)
+					{
+						isrole = true;
+						stmt->options = list_delete_cell(stmt->options,
+														 list_head(stmt->options));
+														 pfree(headel);
+
+						/* Filter user options from default role options */
+						foreach(option, stmt->options)
+						{
+							DefElem *defel = (DefElem *) lfirst(option);
+
+							if (strcmp(defel->defname, "rename") == 0)
+								user_options = lappend(user_options, defel);
+						}
+
+						foreach(option, user_options)
+						{
+							stmt->options = list_delete_ptr(stmt->options,
+															lfirst(option));
+						}
+					}
 				}
 
 				if (islogin)
@@ -2412,11 +2535,11 @@ static void bbf_ProcessUtility(PlannedStmt *pstmt,
 					PG_TRY();
 					{
 						if (prev_ProcessUtility)
-							prev_ProcessUtility(pstmt, queryString, context,
+							prev_ProcessUtility(pstmt, queryString, readOnlyTree, context,
 												params, queryEnv, dest,
 												qc);
 						else
-							standard_ProcessUtility(pstmt, queryString, context,
+							standard_ProcessUtility(pstmt, queryString, readOnlyTree, context,
 													params, queryEnv, dest,
 													qc);
 
@@ -2435,7 +2558,7 @@ static void bbf_ProcessUtility(PlannedStmt *pstmt,
 
 					return;
 				}
-				else if (isuser)
+				else if (isuser || isrole)
 				{
 					const char	*db_name;
 					const char	*dbo_name;
@@ -2480,11 +2603,11 @@ static void bbf_ProcessUtility(PlannedStmt *pstmt,
 					PG_TRY();
 					{
 						if (prev_ProcessUtility)
-							prev_ProcessUtility(pstmt, queryString, context,
+							prev_ProcessUtility(pstmt, queryString, readOnlyTree, context,
 												params, queryEnv, dest,
 												qc);
 						else
-							standard_ProcessUtility(pstmt, queryString, context,
+							standard_ProcessUtility(pstmt, queryString, readOnlyTree, context,
 													params, queryEnv, dest,
 													qc);
 
@@ -2517,6 +2640,7 @@ static void bbf_ProcessUtility(PlannedStmt *pstmt,
 				bool			drop_user = false;
 				bool			all_logins = false;
 				bool			all_users = false;
+				bool			all_roles = false;
 				char 			*role_name = NULL;
 				bool			other = false;
 				ListCell		*item;
@@ -2526,7 +2650,8 @@ static void bbf_ProcessUtility(PlannedStmt *pstmt,
 				{
 					RoleSpec		*headrol = linitial(stmt->roles);
 
-					if (strcmp(headrol->rolename, "is_user") == 0)
+					if (strcmp(headrol->rolename, "is_user") == 0 ||
+						strcmp(headrol->rolename, "is_role") == 0)
 					{
 						char *db_name = NULL;
 
@@ -2577,31 +2702,31 @@ static void bbf_ProcessUtility(PlannedStmt *pstmt,
 						all_logins = true;
 					else if (is_user(roleform->oid))
 						all_users = true;
+					else if (is_role(roleform->oid))
+						all_roles = true;
 					else
 						other = true;
 
 					ReleaseSysCache(tuple);
 
-					if ((all_logins && (all_users || other)) || (all_users && other))
+					/* Only one should be true */
+					if (all_logins + all_users + all_roles + other != 1)
 						ereport(ERROR,
 								(errcode(ERRCODE_INTERNAL_ERROR),
 								 errmsg("cannot mix dropping babelfish role types")));
 				}
 
-				/* until role is supported, if not user, then login */
+				/* If not user or role, then login */
 				if (!drop_user && get_role_oid(role_name, true) == InvalidOid)
 					  ereport(ERROR, (errcode(ERRCODE_DUPLICATE_OBJECT), 
 								  errmsg("Cannot drop the login '%s', because it does not exist or you do not have permission.", role_name)));
 
-				if (all_logins || all_users)
+				if (all_logins || all_users || all_roles)
 				{
 					/* Set current user as appropriate for drop permissions */
 					prev_current_user = GetUserNameFromId(GetUserId(), false);
 
-					/*
-					 * Only use dbo if dropping a user in a Babelfish session.
-					 * drop_user enabled guarantees a current Babelfish db.
-					 */
+					/* Only use dbo if dropping a user/role in a Babelfish session. */
 					if (drop_user)
 						bbf_set_current_user(get_dbo_role_name(get_cur_db_name()));
 					else
@@ -2610,11 +2735,11 @@ static void bbf_ProcessUtility(PlannedStmt *pstmt,
 					PG_TRY();
 					{
 						if (prev_ProcessUtility)
-							prev_ProcessUtility(pstmt, queryString, context,
+							prev_ProcessUtility(pstmt, queryString, readOnlyTree, context,
 												params, queryEnv, dest,
 												qc);
 						else
-							standard_ProcessUtility(pstmt, queryString, context,
+							standard_ProcessUtility(pstmt, queryString, readOnlyTree, context,
 													params, queryEnv, dest,
 													qc);
 					}
@@ -2649,15 +2774,15 @@ static void bbf_ProcessUtility(PlannedStmt *pstmt,
 					orig_schema = "dbo";
 
 				if (prev_ProcessUtility)
-					prev_ProcessUtility(pstmt, queryString, context, params,
+					prev_ProcessUtility(pstmt, queryString, readOnlyTree, context, params,
 							queryEnv, dest, qc);
 				else
-					standard_ProcessUtility(pstmt, queryString, context, params,
+					standard_ProcessUtility(pstmt, queryString, readOnlyTree, context, params,
 							queryEnv, dest, qc);
 
 				add_ns_ext_info(create_schema, queryString, orig_schema);
 
-				res = raw_parser(grant_query);
+				res = raw_parser(grant_query, RAW_PARSE_DEFAULT);
 
 				if (list_length(res) != 1)
 					ereport(ERROR,
@@ -2678,6 +2803,7 @@ static void bbf_ProcessUtility(PlannedStmt *pstmt,
 
 				ProcessUtility(wrapper,
 							   queryString,
+							   readOnlyTree,
 							   PROCESS_UTILITY_SUBCOMMAND,
 							   params,
 							   NULL,
@@ -2703,20 +2829,20 @@ static void bbf_ProcessUtility(PlannedStmt *pstmt,
 				del_ns_ext_info(strVal(lfirst(list_head(drop_stmt->objects))), drop_stmt->missing_ok);
 
 				if (prev_ProcessUtility)
-					prev_ProcessUtility(pstmt, queryString, context, params,
+					prev_ProcessUtility(pstmt, queryString, readOnlyTree, context, params,
 							queryEnv, dest, qc);
 				else
-					standard_ProcessUtility(pstmt, queryString, context, params,
+					standard_ProcessUtility(pstmt, queryString, readOnlyTree, context, params,
 							queryEnv, dest, qc);
 				return;
 			}
 			else
 			{
 				if (prev_ProcessUtility)
-					prev_ProcessUtility(pstmt, queryString, context, params,
+					prev_ProcessUtility(pstmt, queryString, readOnlyTree, context, params,
 							queryEnv, dest, qc);
 				else
-					standard_ProcessUtility(pstmt, queryString, context, params,
+					standard_ProcessUtility(pstmt, queryString, readOnlyTree, context, params,
 							queryEnv, dest, qc);
 				check_extra_schema_restrictions(parsetree);
 				return;
@@ -2758,10 +2884,41 @@ static void bbf_ProcessUtility(PlannedStmt *pstmt,
 					{
 
 						if (prev_ProcessUtility)
-							prev_ProcessUtility(pstmt, queryString, context, params,
+							prev_ProcessUtility(pstmt, queryString, readOnlyTree, context, params,
 									queryEnv, dest, qc);
 						else
-							standard_ProcessUtility(pstmt, queryString, context, params,
+							standard_ProcessUtility(pstmt, queryString, readOnlyTree, context, params,
+									queryEnv, dest, qc);
+
+					}
+					PG_CATCH();
+					{
+						/* Clean up. Restore previous state. */
+						bbf_set_current_user(prev_current_user);
+						PG_RE_THROW();
+					}
+					PG_END_TRY();
+					/* Clean up. Restore previous state. */
+					bbf_set_current_user(prev_current_user);
+					return;
+				}
+				else if (is_alter_role_stmt(grant_role))
+				{
+					const char      *prev_current_user;
+					const char      *session_user_name;
+
+					check_alter_role_stmt(grant_role);
+					prev_current_user = GetUserNameFromId(GetUserId(), false);
+					session_user_name = GetUserNameFromId(GetSessionUserId(), false);
+
+					bbf_set_current_user(session_user_name);
+					PG_TRY();
+					{
+						if (prev_ProcessUtility)
+							prev_ProcessUtility(pstmt, queryString, readOnlyTree, context, params,
+									queryEnv, dest, qc);
+						else
+							standard_ProcessUtility(pstmt, queryString, readOnlyTree, context, params,
 									queryEnv, dest, qc);
 
 					}
@@ -2780,10 +2937,10 @@ static void bbf_ProcessUtility(PlannedStmt *pstmt,
 		case T_RenameStmt:
 			{
 				if (prev_ProcessUtility)
-					prev_ProcessUtility(pstmt, queryString, context, params,
+					prev_ProcessUtility(pstmt, queryString, readOnlyTree, context, params,
 							queryEnv, dest, qc);
 				else
-					standard_ProcessUtility(pstmt, queryString, context, params,
+					standard_ProcessUtility(pstmt, queryString, readOnlyTree, context, params,
 							queryEnv, dest, qc);
 
 				check_extra_schema_restrictions(parsetree);
@@ -2801,10 +2958,10 @@ static void bbf_ProcessUtility(PlannedStmt *pstmt,
 				AttrNumber attr_num;
 
 				if (prev_ProcessUtility)
-					prev_ProcessUtility(pstmt, queryString, context, params,
+					prev_ProcessUtility(pstmt, queryString, readOnlyTree, context, params,
 							queryEnv, dest, qc);
 				else
-					standard_ProcessUtility(pstmt, queryString, context, params,
+					standard_ProcessUtility(pstmt, queryString, readOnlyTree, context, params,
 							queryEnv, dest, qc);
 
 				relid = RangeVarGetRelid(stmt->into->rel, NoLock, false);
@@ -2851,10 +3008,10 @@ static void bbf_ProcessUtility(PlannedStmt *pstmt,
 				CreateStmt *create_stmt = (CreateStmt *) parsetree;
 
 				if (prev_ProcessUtility)
-					prev_ProcessUtility(pstmt, queryString, context, params,
+					prev_ProcessUtility(pstmt, queryString, readOnlyTree, context, params,
 							queryEnv, dest, qc);
 				else
-					standard_ProcessUtility(pstmt, queryString, context, params,
+					standard_ProcessUtility(pstmt, queryString, readOnlyTree, context, params,
 							queryEnv, dest, qc);
 
 				if (create_stmt->tsql_tabletype)
@@ -2866,7 +3023,7 @@ static void bbf_ProcessUtility(PlannedStmt *pstmt,
 					else
 						name = list_make1(makeString(rel->relname));
 
-					revoke_type_permission_from_public(pstmt, queryString, context, params, queryEnv, dest, qc, name);
+					revoke_type_permission_from_public(pstmt, queryString, readOnlyTree, context, params, queryEnv, dest, qc, name);
 				}
 
 				return;
@@ -2876,13 +3033,13 @@ static void bbf_ProcessUtility(PlannedStmt *pstmt,
 				CreateDomainStmt *create_domain = (CreateDomainStmt *) parsetree;
 
 				if (prev_ProcessUtility)
-					prev_ProcessUtility(pstmt, queryString, context, params,
+					prev_ProcessUtility(pstmt, queryString, readOnlyTree, context, params,
 							queryEnv, dest, qc);
 				else
-					standard_ProcessUtility(pstmt, queryString, context, params,
+					standard_ProcessUtility(pstmt, queryString, readOnlyTree, context, params,
 							queryEnv, dest, qc);
 
-				revoke_type_permission_from_public(pstmt, queryString, context, params, queryEnv, dest, qc, create_domain->domainname);
+				revoke_type_permission_from_public(pstmt, queryString, readOnlyTree, context, params, queryEnv, dest, qc, create_domain->domainname);
 				return;
 			}
 		default:
@@ -2890,10 +3047,10 @@ static void bbf_ProcessUtility(PlannedStmt *pstmt,
 	}
 
 	if (prev_ProcessUtility)
-		prev_ProcessUtility(pstmt, queryString, context, params,
+		prev_ProcessUtility(pstmt, queryString, readOnlyTree, context, params,
 				queryEnv, dest, qc);
 	else
-		standard_ProcessUtility(pstmt, queryString, context, params,
+		standard_ProcessUtility(pstmt, queryString, readOnlyTree, context, params,
 				queryEnv, dest, qc);
 }
 
@@ -3198,6 +3355,8 @@ _PG_init(void)
 		(*pltsql_protocol_plugin_ptr)->pltsql_get_login_default_db = &get_login_default_db;
 		(*pltsql_protocol_plugin_ptr)->pltsql_is_login = &is_login;
 		(*pltsql_protocol_plugin_ptr)->pltsql_get_generic_typmod = &probin_read_ret_typmod;
+		(*pltsql_protocol_plugin_ptr)->pltsql_get_logical_schema_name = &get_logical_schema_name;
+		(*pltsql_protocol_plugin_ptr)->pltsql_is_fmtonly_stmt = &pltsql_fmtonly;
 	}
 
 	*pltsql_config_ptr = &myConfig;
@@ -3231,7 +3390,7 @@ _PG_init(void)
 	plansource_revalidate_hook = pltsql_check_guc_plan;
 
 	prev_planner_node_transformer_hook = planner_node_transformer_hook;
-	planner_node_transformer_hook = pltsql_like_ilike_transformer;
+	planner_node_transformer_hook = pltsql_planner_node_transformer;
 
 	prev_pltsql_nextval_hook = pltsql_nextval_hook;
 	pltsql_nextval_hook = pltsql_nextval_identity;
@@ -3318,8 +3477,15 @@ _PG_fini(void)
 static void terminate_batch(bool send_error, bool compile_error)
 {
 	bool error_mapping_failed = false;
+	int rc;
 
 	elog(DEBUG2, "TSQL TXN finish current batch, error : %d compilation error : %d", send_error, compile_error);
+
+	/*
+	 * Disconnect from SPI manager
+	 */
+	if ((rc = SPI_finish()) != SPI_OK_FINISH)
+		elog(ERROR, "SPI_finish failed: %s", SPI_result_code_string(rc));
 
 	if (send_error)
 	{
@@ -3353,6 +3519,7 @@ static void terminate_batch(bool send_error, bool compile_error)
 				 */
 				while (ActiveSnapshotSet())
 					PopActiveSnapshot();
+				pltsql_snapshot_portal->portalSnapshot = NULL;
 			}
 			MarkPortalDone(pltsql_snapshot_portal);
 			PortalDrop(pltsql_snapshot_portal, false);
@@ -3548,12 +3715,6 @@ pltsql_call_handler(PG_FUNCTION_ARGS)
 	remove_queryEnv();
 	pltsql_revert_guc(save_nestlevel);
 
-	/*
-	 * Disconnect from SPI manager
-	 */
-	if ((rc = SPI_finish()) != SPI_OK_FINISH)
-		elog(ERROR, "SPI_finish failed: %s", SPI_result_code_string(rc));
-
 	terminate_batch(false /* send_error */, false /* compile_error */);
 
 	return retval;
@@ -3584,6 +3745,13 @@ pltsql_inline_handler(PG_FUNCTION_ARGS)
 	bool nonatomic;
 	bool support_tsql_trans = pltsql_support_tsql_transactions();
 	ReturnSetInfo rsinfo; /* for INSERT ... EXECUTE */
+
+	/* 
+	 * FIXME: We leak sp_describe_first_result_set_inprogress if CREATE VIEW fails
+	 * internally when executing sp_describe_first_result_set procedure. So we
+	 * reset sp_describe_first_result_set_inprogress here to work around this.
+	 */
+	sp_describe_first_result_set_inprogress = false;
 
 	Assert((nargs > 2 ? nargs - 2 : 0) <= FUNC_MAX_ARGS);
 	Assert(exec_state_call_stack != NULL || !AbortCurTransaction);
@@ -3793,12 +3961,6 @@ pltsql_inline_handler(PG_FUNCTION_ARGS)
 		FreeExecutorState(simple_eval_estate);
 		pltsql_free_function_memory(func);
 	}
-	/*
-	 * Disconnect from SPI manager
-	 */
-	if ((rc = SPI_finish()) != SPI_OK_FINISH)
-		elog(ERROR, "SPI_finish failed: %s", SPI_result_code_string(rc));
-
 	sql_dialect = saved_dialect;
 	
 	terminate_batch(false /* send_error */, false /* compile_error */);
@@ -3863,7 +4025,7 @@ pltsql_validator(PG_FUNCTION_ARGS)
 		 */
 		if (proc->prorettype == TRIGGEROID)
 			is_dml_trigger = true;
-		else if (proc->prorettype == EVTTRIGGEROID)
+		else if (proc->prorettype == EVENT_TRIGGEROID)
 			is_event_trigger = true;
 		else if (proc->prorettype != RECORDOID &&
 				 proc->prorettype != VOIDOID &&

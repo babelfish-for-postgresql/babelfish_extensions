@@ -7,6 +7,7 @@
 #include "nodes/nodeFuncs.h"
 #include "parser/scansup.h"
 #include "parser/parser.h"
+#include "utils/acl.h"
 #include "utils/builtins.h"
 #include "utils/guc.h"
 
@@ -185,6 +186,50 @@ rewrite_object_refs(Node *stmt)
 			}
 			break;
 		}
+		case T_GrantRoleStmt:
+		{
+			GrantRoleStmt	*grant_role = (GrantRoleStmt *) stmt;
+			AccessPriv		*granted;
+			RoleSpec		*grantee;
+			char			*role_name;
+			char			*physical_role_name;
+			char			*principal_name;
+			char			*physical_principal_name;
+			char			*db_name = get_cur_db_name();
+
+			/* Check if this is ALTER ROLE statement */
+			if (list_length(grant_role->granted_roles) != 1 || 
+				list_length(grant_role->grantee_roles) != 1)
+				break;
+
+			/* Try to get physical granted role name, see if it's an existing db role */
+			granted = (AccessPriv *) linitial(grant_role->granted_roles);
+			role_name = granted->priv_name;
+			physical_role_name = get_physical_user_name(db_name, role_name);
+			if (get_role_oid(physical_role_name, true) == InvalidOid)
+				break;
+
+			/* This is ALTER ROLE statement */
+			grantee = (RoleSpec *) linitial(grant_role->grantee_roles);
+			principal_name = grantee->rolename;
+
+			/* Forbidden the use of some special principals */
+			if (strcmp(principal_name, "dbo") == 0 ||
+				strcmp(principal_name, "db_owner") == 0)
+				ereport(ERROR,
+						(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+						 errmsg("Cannot use the special principal '%s'", principal_name)));
+
+			/* Rewrite granted and grantee roles */
+			pfree(granted->priv_name);
+			granted->priv_name = physical_role_name;
+
+			physical_principal_name = get_physical_user_name(db_name, principal_name);
+			pfree(grantee->rolename);
+			grantee->rolename = physical_principal_name;
+
+			break;
+		}
 		case T_CreateStmt:
 		{
 			CreateStmt *create = (CreateStmt *) stmt;
@@ -240,7 +285,8 @@ rewrite_object_refs(Node *stmt)
 			{
 				DefElem *headel = (DefElem *) linitial(create_role->options);
 
-				if (strcmp(headel->defname, "isuser") == 0)
+				if (strcmp(headel->defname, "isuser") == 0 ||
+					strcmp(headel->defname, "isrole") == 0)
 				{
 					ListCell	*option;
 					char		*user_name;
@@ -256,7 +302,6 @@ rewrite_object_refs(Node *stmt)
 
 						if (strcmp(defel->defname, "rolemembers") == 0)
 						{
-							List		*rolemembers = NIL;
 							RoleSpec	*spec;
 
 							spec = makeNode(RoleSpec);
@@ -264,8 +309,14 @@ rewrite_object_refs(Node *stmt)
 							spec->location = -1;
 							spec->rolename = pstrdup(get_db_owner_name(db_name));
 
-							rolemembers = (List *) defel->arg;
-							rolemembers = lappend(rolemembers, spec);
+							if (defel->arg == NULL)
+								defel->arg = (Node *) list_make1(spec);
+							else
+							{
+								List *rolemembers = NIL;
+								rolemembers = (List *) defel->arg;
+								rolemembers = lappend(rolemembers, spec);
+							}
 						}
 					}
 				}
@@ -280,13 +331,15 @@ rewrite_object_refs(Node *stmt)
 			{
 				DefElem *headel = (DefElem *) linitial(alter_role->options);
 
-				if (strcmp(headel->defname, "isuser") == 0)
+				if (strcmp(headel->defname, "isuser") == 0 ||
+					strcmp(headel->defname, "isrole") == 0)
 				{
 					char		*user_name;
 					char		*physical_user_name;
 					char		*db_name = get_cur_db_name();
 
 					user_name = alter_role->role->rolename;
+					/* TODO: allow ALTER ROLE db_owner */
 					if (strcmp(user_name, "dbo") == 0 ||
 						strcmp(user_name, "db_owner") == 0 ||
 						strcmp(user_name, "guest") == 0)
@@ -887,15 +940,11 @@ get_physical_schema_name(char *db_name, const char *schema_name)
 	 */
 	truncate_tsql_identifier(name);
 
-	/* JIRA-1793: Workaround: temperarily disable cross db reference */
-	if (strcmp(db_name, get_cur_db_name()) != 0)
-		ereport(ERROR,
-			(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-				errmsg("Cross DB query is not supported")));
-
-	else if (SINGLE_DB == get_migration_mode())
+	if (SINGLE_DB == get_migration_mode())
 	{
-		if ((strcmp(db_name, "master") == 0) || (strcmp(db_name, "tempdb") == 0))
+		if ((strlen(db_name) == 6 && (strncmp(db_name, "master", 6) == 0)) ||
+			(strlen(db_name) == 6 && (strncmp(db_name, "tempdb", 6) == 0)) ||
+			(strlen(db_name) == 4 && (strncmp(db_name, "msdb", 4) == 0)))
 		{
 			result = palloc0(MAX_BBF_NAMEDATALEND);
 			snprintf(result, (MAX_BBF_NAMEDATALEND), "%s_%s", db_name, name);
@@ -964,10 +1013,16 @@ get_physical_user_name(char *db_name, char *user_name)
 	 */
 	if (SINGLE_DB == get_migration_mode())
 	{
-		if ((strcmp(db_name, "master") != 0) && (strcmp(db_name, "tempdb") != 0))
+		// check that db_name is not "master", "tempdb", or "msdb"
+		if ((strlen(db_name) != 6 || (strncmp(db_name, "master", 6) != 0)) &&
+			(strlen(db_name) != 6 || (strncmp(db_name, "tempdb", 6) != 0)) &&
+			(strlen(db_name) != 4 || (strncmp(db_name, "msdb", 4) != 0)))
 		{
-			if (strncmp(user_name, "dbo", 3) == 0 || ( strncmp(user_name, "db_owner", 8) == 0))
+			if ((strlen(user_name) == 3 && strncmp(user_name, "dbo", 3) == 0) ||
+				(strlen(user_name) == 8 && strncmp(user_name, "db_owner", 8) == 0))
+			{
 				return new_user_name;
+			}
 		}
 	}
 
@@ -987,6 +1042,8 @@ get_dbo_schema_name(const char *dbname)
 		return "master_dbo";
 	if (0 == strcmp(dbname , "tempdb"))
 		return "tempdb_dbo";
+	if (0 == strcmp(dbname , "msdb"))
+		return "msdb_dbo";
 	if (SINGLE_DB == get_migration_mode())
 		return "dbo";
 	else
@@ -1005,6 +1062,8 @@ get_dbo_role_name(const char *dbname)
 		return "master_dbo";
 	if (0 == strcmp(dbname , "tempdb"))
 		return "tempdb_dbo";
+	if (0 == strcmp(dbname , "msdb"))
+		return "msdb_dbo";
 	if (SINGLE_DB == get_migration_mode())
 		return "dbo";
 	else
@@ -1023,6 +1082,8 @@ get_db_owner_name(const char *dbname)
 		return "master_db_owner";
 	if (0 == strcmp(dbname , "tempdb"))
 		return "tempdb_db_owner";
+	if (0 == strcmp(dbname , "msdb"))
+		return "msdb_db_owner";
 	if (SINGLE_DB == get_migration_mode())
 		return "db_owner";
 	else
@@ -1040,7 +1101,9 @@ const char *get_guest_role_name(const char *dbname)
 		return "master_guest";
 	if (0 == strcmp(dbname , "tempdb"))
 		return "tempdb_guest";
-	/* BABEL-2430: Disable guest user for DB other than master/tempdb */
+	if (0 == strcmp(dbname , "msdb"))
+		return "msdb_guest";
+	/* BABEL-2430: Disable guest user for DB other than master/tempdb/msdb */
 	else
 		return NULL;
 }
@@ -1081,3 +1144,4 @@ truncate_tsql_identifier(char *ident)
 				PGC_S_SESSION, GUC_ACTION_SAVE, true, 0, false);
 
 }
+

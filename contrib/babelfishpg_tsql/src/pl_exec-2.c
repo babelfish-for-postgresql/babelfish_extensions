@@ -10,10 +10,12 @@
 #include "nodes/parsenodes.h"
 
 #include "catalog.h"
+#include "pl_explain.h"
 #include "session.h"
 
 /* helper function to get current T-SQL estate */
 PLtsql_execstate *get_current_tsql_estate(void);
+PLtsql_execstate *get_outermost_tsql_estate(int *nestlevel);
 
 /*
  * NOTE:
@@ -118,6 +120,25 @@ PLtsql_execstate *get_current_tsql_estate()
 
 	/* Couldn't find any T-SQL estate */
 	return NULL;
+}
+
+PLtsql_execstate *get_outermost_tsql_estate(int *nestlevel)
+{
+	PLtsql_execstate *estate = NULL;
+	ErrorContextCallback *plerrcontext = error_context_stack;
+	*nestlevel = 0;
+	while (plerrcontext != NULL)
+	{
+		/* Check plerrcontext was created in T-SQL */
+		if (plerrcontext->callback == pltsql_exec_error_callback)
+		{
+			estate = (PLtsql_execstate *) plerrcontext->arg;
+			(*nestlevel)++;
+		}
+		plerrcontext = plerrcontext->previous;
+	}
+
+	return estate;
 }
 
 static int
@@ -605,6 +626,7 @@ exec_stmt_exec(PLtsql_execstate *estate, PLtsql_stmt_exec *stmt)
 	LocalTransactionId after_lxid;
 	volatile int rc;
 	SimpleEcontextStackEntry *topEntry;
+	SPIExecuteOptions options;
 
 	/* PG_TRY to ensure we clear the plan link, if needed, on failure */
 	PG_TRY();
@@ -720,6 +742,7 @@ exec_stmt_exec(PLtsql_execstate *estate, PLtsql_stmt_exec *stmt)
 			 * Extract function arguments, and expand any named-arg notation
 			 */
 			funcargs = expand_function_arguments(funcexpr->args,
+												 false,
 												 funcexpr->funcresulttype,
 												 func_tuple);
 
@@ -850,7 +873,7 @@ exec_stmt_exec(PLtsql_execstate *estate, PLtsql_stmt_exec *stmt)
 
 			tss = tuplestore_begin_heap(false, false, work_mem);
 			dest = CreateTuplestoreDestReceiver();
-			SetTuplestoreDestReceiverParams(dest, tss, CurrentMemoryContext, false);
+			SetTuplestoreDestReceiverParams(dest, tss, CurrentMemoryContext, false, NULL, NULL);
 			dest->rStartup(dest, -1, estate->rsi->expectedDesc);
 
 			callstmt = (CallStmt *)node;
@@ -865,8 +888,12 @@ exec_stmt_exec(PLtsql_execstate *estate, PLtsql_stmt_exec *stmt)
 		before_lxid = MyProc->lxid;
 		topEntry = simple_econtext_stack;
 
-		rc = SPI_execute_plan_with_paramlist(expr->plan, paramLI,
-											 estate->readonly_func, 0);
+		memset(&options, 0, sizeof(options));
+		options.params = paramLI;
+		options.read_only = estate->readonly_func;
+		options.allow_nonatomic = true;
+
+		rc = SPI_execute_plan_extended(expr->plan, &options);
 
 		after_lxid = MyProc->lxid;
 
@@ -1006,38 +1033,64 @@ exec_stmt_decl_table(PLtsql_execstate *estate, PLtsql_stmt_decl_table *stmt)
 	int rc;
 	bool isnull;
 	int old_client_min_messages;
+	bool old_pltsql_explain_only = pltsql_explain_only;
 
-	if (estate->nestlevel == -1)
+	pltsql_explain_only = false; /* Create temporary table even in EXPLAIN ONLY mode */
+
+	PG_TRY();
 	{
-		rc = SPI_execute("SELECT @@nestlevel", true, 0);
-		if (rc != SPI_OK_SELECT || SPI_processed != 1)
-			elog(ERROR, "Failed to get @@NESTLEVEL when declaring table variable %s", var->refname);
-		estate->nestlevel = DatumGetInt32(SPI_getbinval(SPI_tuptable->vals[0], SPI_tuptable->tupdesc, 1, &isnull));
+		if (estate->nestlevel == -1)
+		{
+			rc = SPI_execute("SELECT @@nestlevel", true, 0);
+			if (rc != SPI_OK_SELECT || SPI_processed != 1)
+				elog(ERROR, "Failed to get @@NESTLEVEL when declaring table variable %s", var->refname);
+			estate->nestlevel = DatumGetInt32(SPI_getbinval(SPI_tuptable->vals[0], SPI_tuptable->tupdesc, 1, &isnull));
+		}
+
+		tblname = psprintf("%s_%d", var->refname, estate->nestlevel);
+		if (stmt->tbltypname)
+			query = psprintf("CREATE TEMPORARY TABLE IF NOT EXISTS %s (like %s including all)",
+							tblname, stmt->tbltypname);
+		else
+			query = psprintf("CREATE TEMPORARY TABLE IF NOT EXISTS %s%s",
+							tblname, stmt->coldef);
+
+		/*
+		* If a table with the same name already exists, we should just use that
+		* table, and ignore the NOTICE of "relation already exists, skipping".
+		*/
+		old_client_min_messages = client_min_messages;
+		client_min_messages = WARNING;
+		rc = SPI_execute(query, false, 0);
+		client_min_messages = old_client_min_messages;
+		if (rc != SPI_OK_UTILITY)
+			elog(ERROR, "Failed to create the underlying table for table variable %s", var->refname);
+
+		if (old_pltsql_explain_only)
+		{
+			/* Restore EXPLAIN ONLY mode and append explain info */
+			StringInfo strinfo = makeStringInfo();
+			appendStringInfo(strinfo, "DECLARE TABLE %s", var->refname);
+
+			pltsql_explain_only = true;
+
+			append_explain_info(NULL, strinfo->data);
+			increment_explain_indent();
+			append_explain_info(NULL, query);
+			decrement_explain_indent();
+		}
+
+		var->tblname = tblname;
+		if (var->tbltypeid == InvalidOid)
+			var->tbltypeid = TypenameGetTypid(tblname);
+		var->need_drop = true;
 	}
-
-	tblname = psprintf("%s_%d", var->refname, estate->nestlevel);
-	if (stmt->tbltypname)
-		query = psprintf("CREATE TEMPORARY TABLE IF NOT EXISTS %s (like %s including all)",
-						 tblname, stmt->tbltypname);
-	else
-		query = psprintf("CREATE TEMPORARY TABLE IF NOT EXISTS %s%s",
-						 tblname, stmt->coldef);
-
-	/*
-	 * If a table with the same name already exists, we should just use that
-	 * table, and ignore the NOTICE of "relation already exists, skipping".
-	 */
-	old_client_min_messages = client_min_messages;
-	client_min_messages = WARNING;
-	rc = SPI_execute(query, false, 0);
-	client_min_messages = old_client_min_messages;
-	if (rc != SPI_OK_UTILITY)
-		elog(ERROR, "Failed to create the underlying table for table variable %s", var->refname);
-
-	var->tblname = tblname;
-	if (var->tbltypeid == InvalidOid)
-		var->tbltypeid = TypenameGetTypid(tblname);
-	var->need_drop = true;
+	PG_CATCH();
+	{
+		pltsql_explain_only = old_pltsql_explain_only; /* Recover EXPLAIN ONLY mode */
+		PG_RE_THROW();
+	}
+	PG_END_TRY();
 
 	return PLTSQL_RC_OK;
 }
@@ -1765,13 +1818,19 @@ exec_stmt_exec_sp(PLtsql_execstate *estate, PLtsql_stmt_exec_sp *stmt)
 
 				paramdefstr = convert_value_to_string(estate, paramdef, restype);
 
-				read_param_def(args, paramdefstr);
+				if (strcmp(paramdefstr, "") != 0) /* check edge cases for sp_executesql */
+				{
+					read_param_def(args, paramdefstr);
 
-				if (args->numargs != stmt->paramno)
-					ereport(ERROR, (errcode(ERRCODE_SYNTAX_ERROR),
-							errmsg("param definition mismatches with inputs")));
+					if (args->numargs != stmt->paramno)
+						ereport(ERROR, (errcode(ERRCODE_SYNTAX_ERROR),
+								errmsg("param definition mismatches with inputs")));
+				}
 			}
-			ret = execute_batch(estate, batchstr, args, stmt->params);
+			if (strcmp(batchstr, "") != 0) /* check edge cases for sp_executesql */
+			{
+				ret = execute_batch(estate, batchstr, args, stmt->params);
+			}
 
 			if (stmt->return_code_dno != -1)
 			{
@@ -2064,7 +2123,7 @@ read_param_def(InlineCodeBlockArgs *args, const char *paramdefstr)
 	appendStringInfoString(&proc_stmt, paramdefstr);
 	appendStringInfoString(&proc_stmt, str2);
 
-	parsetree = raw_parser(proc_stmt.data);
+	parsetree = raw_parser(proc_stmt.data, RAW_PARSE_DEFAULT);
 	
 	/* 
 	 * Seperate each param definition, and calculate the total number of
@@ -2501,6 +2560,13 @@ int exec_stmt_insert_bulk(PLtsql_execstate *estate, PLtsql_stmt_insert_bulk *stm
 		bulk_load_table_name = pstrdup(stmt->table_name);
 	}
 
+	/* if columns to be inserted into are explicitly mentioned then update the table name with them */
+	if (stmt->column_refs)
+	{
+		char *temp = bulk_load_table_name;
+		bulk_load_table_name = psprintf("%s (%s)", temp, stmt->column_refs);
+		pfree(temp);
+	}
 	MemoryContextSwitchTo(oldContext);
 
 	if (!OidIsValid(rel_oid))
@@ -2627,8 +2693,15 @@ execute_plan_and_push_result(PLtsql_execstate *estate, PLtsql_expr *expr, ParamL
 		elog(ERROR, "could not open implicit cursor for query \"%s\": %s",
 				expr->query, SPI_result_code_string(SPI_result));
 
-	receiver = CreateDestReceiver(DestRemote);
-	SetRemoteDestReceiverParams(receiver, portal);
+	if (pltsql_explain_only)
+	{
+		receiver = None_Receiver;
+	}
+	else
+	{
+		receiver = CreateDestReceiver(DestRemote);
+		SetRemoteDestReceiverParams(receiver, portal);
+	}
 
 	success = PortalRun(portal,
 					 FETCH_ALL,

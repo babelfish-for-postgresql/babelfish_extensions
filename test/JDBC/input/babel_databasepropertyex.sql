@@ -23,8 +23,6 @@ select databasepropertyex(N'master',N'Updateability');
 GO
 select databasepropertyex(N'master',N'Status');
 GO
-SELECT (case when charindex(cast(databasepropertyex(N'master',N'Version') as nvarchar), version()) > 0 then 'true' else 'false' end) result
-GO
 -- test unsupported properties(expect return NULL or 0)
 select databasepropertyex(N'master',N'IsArithmeticAbortEnabled');
 GO

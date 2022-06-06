@@ -17,6 +17,7 @@
 #include "executor/spi.h"
 #include "fmgr.h"
 #include "funcapi.h"
+#include "hooks.h"
 #include "miscadmin.h"
 #include "utils/builtins.h"
 #include "utils/guc.h"
@@ -32,15 +33,22 @@
 PG_FUNCTION_INFO_V1(sp_unprepare);
 PG_FUNCTION_INFO_V1(sp_prepare);
 PG_FUNCTION_INFO_V1(sp_babelfish_configure);
+PG_FUNCTION_INFO_V1(sp_describe_first_result_set_internal);
 PG_FUNCTION_INFO_V1(sp_describe_undeclared_parameters_internal);
 PG_FUNCTION_INFO_V1(xp_qv_internal);
 PG_FUNCTION_INFO_V1(create_xp_qv_in_master_dbo_internal);
+PG_FUNCTION_INFO_V1(xp_instance_regread_internal);
+PG_FUNCTION_INFO_V1(create_xp_instance_regread_in_master_dbo_internal);
 
 extern void delete_cached_batch(int handle);
 extern InlineCodeBlockArgs *create_args(int numargs);
 extern void read_param_def(InlineCodeBlockArgs * args, const char *paramdefstr);
 extern int execute_batch(PLtsql_execstate *estate, char *batch, InlineCodeBlockArgs *args, List *params);
 extern PLtsql_execstate *get_current_tsql_estate(void);
+
+char *sp_describe_first_result_set_view_name = NULL;
+
+bool sp_describe_first_result_set_inprogress = false;
 
 Datum
 sp_unprepare(PG_FUNCTION_ARGS)
@@ -200,7 +208,7 @@ sp_babelfish_configure(PG_FUNCTION_ARGS)
 	receiver = CreateDestReceiver(DestRemote);
 	SetRemoteDestReceiverParams(receiver, portal);
 
-	// fetch the result and return the result-set
+	/* fetch the result and return the result-set */
 	PortalRun(portal, FETCH_ALL, true, true, receiver, receiver, NULL);
 
 	receiver->rDestroy(receiver);
@@ -242,6 +250,242 @@ typedef struct UndeclaredParams
 	/* The Oid of the table's schema */
 	Oid 			schemaoid;
 } UndeclaredParams;
+
+static char *sp_describe_first_result_set_query(char *viewName)
+{
+	return
+	psprintf(
+	"SELECT "
+		"CAST(0 AS sys.bit) AS is_hidden, "
+		"CAST(t3.\"ORDINAL_POSITION\" AS int) AS column_ordinal, "
+		"CAST(t3.\"COLUMN_NAME\" AS sys.sysname) AS name, "
+		"case "
+			"when t1.is_nullable = \'YES\' then CAST(1 AS sys.bit) "
+			"else CAST(0 AS sys.bit) "
+		"end as is_nullable, "
+		"t4.system_type_id::int as system_type_id, "
+		"CAST(t3.\"DATA_TYPE\" as sys.nvarchar(256)) as system_type_name, "
+		"CAST(CASE WHEN t3.\"DATA_TYPE\" IN (\'text\', \'ntext\', \'image\') THEN -1 ELSE t4.max_length END AS smallint) AS max_length, "
+		"CAST(t4.precision AS sys.tinyint) AS precision, "
+		"CAST(t4.scale AS sys.tinyint) AS scale, "
+		"CAST(t4.collation_name AS sys.sysname) as collation_name, "
+		"CAST(CASE WHEN t4.system_type_id = t4.user_type_id THEN NULL "
+			"ELSE t4.user_type_id END as int) as user_type_id, "
+		"CAST(NULL as sys.sysname) as user_type_database, "
+		"CAST(NULL as sys.sysname) as user_type_schema, "
+		"CAST(CASE WHEN t4.system_type_id = t4.user_type_id THEN NULL "
+			"ELSE sys.OBJECT_NAME(t4.user_type_id::int) END as sys.sysname) as user_type_name, "
+		"CAST(NULL as sys.nvarchar(4000)) as assembly_qualified_type_name, "
+		"CAST(NULL as int) as xml_collection_id, "
+		"CAST(NULL as sys.sysname) as xml_collection_database, "
+		"CAST(NULL as sys.sysname) as xml_collection_schema, "
+		"CAST(NULL as sys.sysname) as xml_collection_name, "
+		"case "
+			"when t3.\"DATA_TYPE\" = \'xml\' then CAST(1 AS sys.bit) "
+			"else CAST(0 AS sys.bit) "
+		"end as is_xml_document, "
+		"0::sys.bit as is_case_sensitive, "
+		"CAST(0 as sys.bit) as is_fixed_length_clr_type, "
+		"CAST(NULL as sys.sysname) as source_server,  "
+		"CAST(NULL as sys.sysname) as source_database, "
+		"CAST(NULL as sys.sysname) as source_schema, "
+		"CAST(NULL as sys.sysname) as source_table, "
+		"CAST(NULL as sys.sysname) as source_column, "
+		"case "
+			"when t1.is_identity = \'YES\' then CAST(1 AS sys.bit) "
+			"else CAST(0 AS sys.bit) "
+		"end as is_identity_column, "
+		"CAST(NULL as sys.bit) as is_part_of_unique_key, " /* pg_constraint */
+		"case  "
+			"when t1.is_updatable = \'YES\' AND t1.is_generated = \'NEVER\' AND t1.is_identity = \'NO\' then CAST(1 AS sys.bit) "
+			"else CAST(0 AS sys.bit) "
+		"end as is_updateable, "
+		"case "
+			"when t1.is_generated = \'NEVER\' then CAST(0 AS sys.bit) "
+			"else CAST(1 AS sys.bit) "
+		"end as is_computed_column, "
+		"CAST(0 as sys.bit) as is_sparse_column_set, "
+		"CAST(NULL as smallint) ordinal_in_order_by_list, "
+		"CAST(NULL as smallint) order_by_list_length, "
+		"CAST(NULL as smallint) order_by_is_descending, "
+		/* below are for internal usage */
+		"CAST(sys.get_tds_id(t3.\"DATA_TYPE\") as int) as tds_type_id, "
+		"CAST( "
+		"CASE "
+			"WHEN t3.\"DATA_TYPE\" = \'xml\' THEN 8100 "
+			"WHEN t3.\"DATA_TYPE\" = \'sql_variant\' THEN 8009 "
+			"WHEN t3.\"DATA_TYPE\" = \'numeric\' THEN 17 "
+			"WHEN t3.\"DATA_TYPE\" = \'decimal\' THEN 17 "
+			"ELSE t4.max_length END as int) "
+		"as tds_length, "
+		"CAST(NULL as int) as tds_collation_id, "
+		"CAST(NULL AS sys.tinyint) AS tds_collation_sort_id "
+	"FROM information_schema.columns t1, information_schema_tsql.columns t3, "
+	"sys.columns t4, pg_class t5 "
+	"LEFT OUTER JOIN (sys.babelfish_namespace_ext ext JOIN sys.pg_namespace_ext t6 ON t6.nspname = ext.nspname) "
+		"on t5.relnamespace = t6.oid "
+	"WHERE (t1.table_name = \'%s\' AND t1.table_schema = ext.nspname) "
+	"AND (t3.\"TABLE_NAME\" = t1.table_name AND t3.\"TABLE_SCHEMA\" = ext.orig_name) "
+	"AND t5.relname = t1.table_name "
+	"AND (t5.oid = t4.object_id AND t3.\"ORDINAL_POSITION\" = t4.column_id) "
+	"AND ext.dbid = cast(sys.db_id() as oid) "
+	"AND t1.dtd_identifier::int = t3.\"ORDINAL_POSITION\";", viewName);
+}
+
+/*
+ * Internal function used by procedure sys.sp_describe_first_result_set.
+ */
+Datum
+sp_describe_first_result_set_internal(PG_FUNCTION_ARGS)
+{
+	/* SRF related things to keep enough state between calls */
+	FuncCallContext *funcctx;
+	int call_cntr = 0;
+	int max_calls = 0;
+	TupleDesc tupdesc;
+	AttInMetadata *attinmeta;
+
+	SPITupleTable *tuptable;
+	char *batch;
+	char *params;
+	int browseMode;
+	char *query;
+	int rc;
+	ANTLR_result result;
+	char *parsedbatch = NULL;
+
+	/* stuff done only on the first call of the function */
+	if (SRF_IS_FIRSTCALL())
+	{
+		MemoryContext   oldcontext;
+		funcctx = SRF_FIRSTCALL_INIT();
+		oldcontext = MemoryContextSwitchTo(funcctx->multi_call_memory_ctx);
+		
+		batch		= PG_ARGISNULL(0) ? NULL : TextDatumGetCString(PG_GETARG_TEXT_PP(0));
+		params	= PG_ARGISNULL(1) ? NULL : TextDatumGetCString(PG_GETARG_TEXT_PP(1));
+		browseMode 	= PG_ARGISNULL(2) ? 0 : PG_GETARG_INT32(0);
+		sp_describe_first_result_set_view_name = psprintf("sp_describe_first_result_set_view_%d", rand());
+
+		get_call_result_type(fcinfo, NULL, &tupdesc);
+		attinmeta = TupleDescGetAttInMetadata(tupdesc);
+		funcctx->attinmeta = attinmeta;
+
+		/* First, pass the batch to the ANTLR parser. */
+		if (batch)
+		{
+			result = antlr_parser_cpp(batch);
+			if (!result.success)
+				report_antlr_error(result);
+
+			/* Skip if NULL query was passed. */
+			if (pltsql_parse_result->body)
+				parsedbatch = ((PLtsql_stmt_execsql *)lsecond(pltsql_parse_result->body))->sqlstmt->query;
+		}
+
+		/* If TSQL Query is NULL string or a non-select query then send no rows. */
+		if (parsedbatch && strncmp(parsedbatch, "select", 6) == 0)
+		{
+			sp_describe_first_result_set_inprogress = true;
+			query = psprintf("CREATE VIEW %s as %s", sp_describe_first_result_set_view_name, parsedbatch);
+	
+			/* Switch Dialect so that SPI_execute creates a TSQL View, obeying TSQL Syntax. */
+			set_config_option("babelfishpg_tsql.sql_dialect", "tsql",
+										(superuser() ? PGC_SUSET : PGC_USERSET),
+											PGC_S_SESSION, GUC_ACTION_SAVE, true, 0, false);
+			if ((rc = SPI_execute(query, false, 1)) < 0)
+			{
+				sp_describe_first_result_set_inprogress = false;
+				set_config_option("babelfishpg_tsql.sql_dialect", "postgres",
+										(superuser() ? PGC_SUSET : PGC_USERSET),
+											PGC_S_SESSION, GUC_ACTION_SAVE, true, 0, false);
+				elog(ERROR, "SPI_execute failed: %s", SPI_result_code_string(rc));
+			}
+
+			sp_describe_first_result_set_inprogress = false;
+
+			set_config_option("babelfishpg_tsql.sql_dialect", "postgres",
+										(superuser() ? PGC_SUSET : PGC_USERSET),
+											PGC_S_SESSION, GUC_ACTION_SAVE, true, 0, false);
+			pfree(query);
+
+			/* Execute the Select statement in try/catch so that we drop the view in case of an error. */
+			PG_TRY();
+			{
+				/* Now execute the actual query which fetches us the result. */
+				query = sp_describe_first_result_set_query(sp_describe_first_result_set_view_name);
+				if ((rc = SPI_execute(query, false, 0)) != SPI_OK_SELECT)
+					elog(ERROR, "SPI_execute failed: %s", SPI_result_code_string(rc));
+
+				if (SPI_processed == 0)
+					ereport(ERROR,
+							(errcode(ERRCODE_INTERNAL_ERROR),
+							 errmsg("SPI_execute returned no rows: %s", query)));
+				pfree(query);
+			}
+			PG_CATCH();
+			{
+				query = psprintf("DROP VIEW %s", sp_describe_first_result_set_view_name);
+
+				if ((rc = SPI_execute(query, false, 1)) < 0)
+					elog(ERROR, "SPI_execute failed: %s", SPI_result_code_string(rc));
+
+				pfree(query);
+				pfree(sp_describe_first_result_set_view_name);
+				SPI_finish();
+				PG_RE_THROW();
+			}
+			PG_END_TRY();
+			funcctx->user_fctx = (void *) SPI_tuptable;
+			funcctx->max_calls = SPI_processed;
+		}
+		else
+			funcctx->max_calls = 0;
+
+		MemoryContextSwitchTo(oldcontext);
+
+	}
+	
+
+	funcctx = SRF_PERCALL_SETUP();
+	call_cntr = funcctx->call_cntr;
+	max_calls = funcctx->max_calls;
+	attinmeta = funcctx->attinmeta;
+	tuptable =  funcctx->user_fctx;
+
+	if (call_cntr < max_calls)
+	{
+		char **values;
+		HeapTuple tuple;
+		Datum result;
+		int col;
+		int numCols = 39;
+
+		values = (char **) palloc(numCols * sizeof(char *));
+
+		for (col = 0; col < numCols; col++)
+			values[col] = SPI_getvalue(tuptable->vals[call_cntr],
+									   tuptable->tupdesc, col+1);
+
+		tuple = BuildTupleFromCStrings(attinmeta, values);
+		result = HeapTupleGetDatum(tuple);
+
+		SRF_RETURN_NEXT(funcctx, result);
+	}
+	else
+	{
+		if (max_calls != 0)
+		{
+			SPI_freetuptable(tuptable);
+			query = psprintf("DROP VIEW %s", sp_describe_first_result_set_view_name);
+			if ((rc = SPI_execute(query, false, 0)) < 0)
+				elog(ERROR, "SPI_execute failed: %s", SPI_result_code_string(rc));
+			pfree(query);
+		}
+		pfree(sp_describe_first_result_set_view_name);
+		SRF_RETURN_DONE(funcctx);
+	}
+}
+
 
 /*
  * Internal function used by procedure sys.sp_describe_undeclared_parameters
@@ -395,6 +639,7 @@ sp_describe_undeclared_parameters_internal(PG_FUNCTION_ARGS)
 		relation_close(r, AccessShareLock);
 		pfree(pstate);
 
+		/* Parse the list of parameters, and determine which and how many are undeclared. */
 		select_stmt = (SelectStmt *)insert_stmt->selectStmt;
 		values_list = select_stmt->valuesLists;
 		foreach(lc, values_list)
@@ -405,6 +650,11 @@ sp_describe_undeclared_parameters_internal(PG_FUNCTION_ARGS)
 			int numtotalvalues = list_length(sublist);
 			undeclaredparams->paramnames = (char **) palloc(sizeof(char *) * numtotalvalues);
 			undeclaredparams->paramindexes = (int *) palloc(sizeof(int) * numtotalvalues);
+			if (list_length(sublist) != num_target_attnums) {
+				ereport(ERROR,
+					(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+					errmsg("Column name or number of supplied values does not match table definition.")));
+			}
 			foreach(sublc, sublist)
 			{
 				ColumnRef *columnref = lfirst(sublc);
@@ -458,6 +708,7 @@ sp_describe_undeclared_parameters_internal(PG_FUNCTION_ARGS)
 	attinmeta = funcctx->attinmeta;
 	undeclaredparams = funcctx->user_fctx;
 
+	/* This is the main recursive work, to determine the appropriate parameter type for each parameter. */
 	if (call_cntr < max_calls)
 	{
 		char **values;
@@ -607,7 +858,9 @@ sp_describe_undeclared_parameters_internal(PG_FUNCTION_ARGS)
 
 		values = (char **) palloc(numresultcols * sizeof(char *));
 
+		/* This sets the parameter ordinal attribute correctly, since the above query can't infer that information */
 		values[0] = psprintf("%d", call_cntr + 1);
+		/* Then, pull the appropriate parameter name from the data type */
 		values[1] = undeclaredparams->paramnames[call_cntr];
 		for (col = 2; col < numresultcols; col++)
 		{
@@ -661,6 +914,97 @@ create_xp_qv_in_master_dbo_internal(PG_FUNCTION_ARGS)
 			elog(ERROR, "SPI_connect failed: %s", SPI_result_code_string(rc));
 
 		if ((rc = SPI_execute(query, false, 1)) < 0)
+			elog(ERROR, "SPI_execute failed: %s", SPI_result_code_string(rc));
+
+		if ((rc = SPI_finish()) != SPI_OK_FINISH)
+			elog(ERROR, "SPI_finish failed: %s", SPI_result_code_string(rc));
+	}
+	PG_CATCH();
+	{
+		SPI_finish();
+		PG_RE_THROW();
+	}
+	PG_END_TRY();
+
+	PG_RETURN_INT32(0);
+}
+
+/*
+ * Internal function used by procedure xp_instance_regread.
+ * The xp_instance_regread procedure is called by SSMS. Only the minimum implementation is required.
+ */
+Datum
+xp_instance_regread_internal(PG_FUNCTION_ARGS)
+{
+	int	nargs = PG_NARGS() - 1;
+	/* Get data type OID of last parameter, which should be the OUT parameter. */
+	Oid	argtypeid = get_fn_expr_argtype(fcinfo->flinfo, nargs);
+
+ 	HeapTuple	tuple;
+  	HeapTupleHeader result;
+	TupleDesc tupdesc;
+	bool isnull = true;
+	Datum values[1];
+
+	tupdesc = CreateTemplateTupleDesc(1);
+
+	if (argtypeid == INT4OID)
+	{
+		values[0] = Int32GetDatum(NULL);
+		TupleDescInitEntry(tupdesc, (AttrNumber) 1, "out_param", INT4OID, -1, 0);
+	}
+
+	else
+	{
+		values[0] = CStringGetDatum(NULL);
+		TupleDescInitEntry(tupdesc, (AttrNumber) 1, "out_param", CSTRINGOID, -1, 0);
+	}
+	
+  	tupdesc = BlessTupleDesc(tupdesc);
+  	tuple = heap_form_tuple(tupdesc, values, &isnull);
+
+  	result = (HeapTupleHeader) palloc(tuple->t_len);
+  	memcpy(result, tuple->t_data, tuple->t_len);
+
+  	heap_freetuple(tuple);
+  	ReleaseTupleDesc(tupdesc);
+
+  	PG_RETURN_HEAPTUPLEHEADER(result);
+}
+
+/*
+ * Internal function to create the xp_instance_regread procedure in master.dbo schema.
+ * Some applications invoke this referencing master.dbo.xp_instance_regread
+ */
+Datum 
+create_xp_instance_regread_in_master_dbo_internal(PG_FUNCTION_ARGS)
+{	
+	char *query = NULL;
+	char *query2 = NULL;
+	int rc = -1;
+
+	char *tempq = "CREATE OR REPLACE PROCEDURE %s.xp_instance_regread(IN p1 sys.nvarchar(512), IN p2 sys.sysname, IN p3 sys.nvarchar(512), INOUT out_param int)"
+				  "AS \'babelfishpg_tsql\', \'xp_instance_regread_internal\' LANGUAGE C";
+
+	char *tempq2 = "CREATE OR REPLACE PROCEDURE %s.xp_instance_regread(IN p1 sys.nvarchar(512), IN p2 sys.sysname, IN p3 sys.nvarchar(512), INOUT out_param sys.nvarchar(512))"
+				   "AS \'babelfishpg_tsql\', \'xp_instance_regread_internal\' LANGUAGE C";
+
+	const char  *dbo_scm = get_dbo_schema_name("master");
+	if (dbo_scm == NULL) 
+		elog(ERROR, "Failed to retrieve dbo schema name");
+
+	query = psprintf(tempq, dbo_scm);
+	query2 = psprintf(tempq2, dbo_scm);
+
+	PG_TRY();
+	{
+		if ((rc = SPI_connect()) != SPI_OK_CONNECT)
+			elog(ERROR, "SPI_connect failed: %s", SPI_result_code_string(rc));
+
+		if ((rc = SPI_execute(query, false, 1)) < 0)
+			elog(ERROR, "SPI_execute failed: %s", SPI_result_code_string(rc));
+
+		if ((rc = SPI_execute(query2, false, 1)) < 0)
 			elog(ERROR, "SPI_execute failed: %s", SPI_result_code_string(rc));
 
 		if ((rc = SPI_finish()) != SPI_OK_FINISH)

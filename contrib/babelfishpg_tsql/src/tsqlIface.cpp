@@ -1,3 +1,4 @@
+#include <algorithm>
 #include <functional>
 #include <iostream>
 #include <strstream>
@@ -21,6 +22,8 @@ extern "C" {
 #else
 #include "pltsql.h"
 #include "pltsql-2.h"
+#include "pl_explain.h"
+#include "session.h"
 
 #include "catalog/namespace.h"
 #include "catalog/pg_proc.h"
@@ -86,6 +89,7 @@ PLtsql_stmt *makeSQL(ParserRuleContext *ctx);
 std::vector<PLtsql_stmt *> makeAnother(TSqlParser::Another_statementContext *ctx, tsqlBuilder &builder);
 PLtsql_stmt *makeExecBodyBatch(TSqlParser::Execute_body_batchContext *ctx);
 PLtsql_stmt *makeInsertBulkStatement(TSqlParser::Dml_statementContext *ctx);
+PLtsql_stmt *makeSetExplainModeStatement(TSqlParser::Set_statementContext *ctx, bool is_explain_only);
 PLtsql_expr *makeTsqlExpr(const std::string &fragment, bool addSelect);
 PLtsql_expr *makeTsqlExpr(ParserRuleContext *ctx, bool addSelect);
 void * makeBlockStmt(ParserRuleContext *ctx, tsqlBuilder &builder);
@@ -734,6 +738,134 @@ public:
 			}
 		}
 	}
+
+	void exitOpen_json(TSqlParser::Open_jsonContext *ctx) override
+	{
+		if (!ctx->WITH())
+		{
+			/* Map to openjson_simple() */
+			rewritten_query_fragment.emplace(std::make_pair(ctx->getStart()->getStartIndex(),
+											 std::make_pair(ctx->getStart()->getText(), "OPENJSON_SIMPLE")));
+		}
+		else
+		{
+			std::string expr,
+						col_str,
+						col_name,
+						col_type,
+						col_path,
+						col_info,
+						token,
+						with_clause;
+			std::vector<std::string> 	col_defs;
+			/* Map to openjson_with */
+			rewritten_query_fragment.emplace(std::make_pair(ctx->getStart()->getStartIndex(),
+											 std::make_pair(ctx->getStart()->getText(), "OPENJSON_WITH")));
+			/* build the rest of the statement after the JSON or PATH expressions. This is to conform to the parameters expected
+			 * by OPENJSON_WITH(json_expr, json_path, [column_definition_list]). For example, this expression:
+			 *
+			 * select * from openjson(@json, '$.obj') WITH
+			 * 		(
+			 *			a varchar(20),
+			 *			b_col varchar(20) '$.b',
+			 *			o nvarchar(max) '$' AS JSON
+			 *		)
+			 *
+			 * would be rewritten as:
+			 *
+			 * select * from openjson_with(@json, '$.obj', '$.a varchar(20)', '$.b varchar(20)', '$ nvarchar AS JSON') AS
+			 *		f(
+			 *			a varchar(20),
+			 *			b_col varchar(20),
+			 *			o nvarchar
+			 *		)
+			 */
+			if (!ctx->COMMA()) /* check for PATH parameter */
+				expr = ",'$'";
+			/* extract column definitions */
+			for (TSqlParser::Json_column_declarationContext *column : ctx->json_declaration()->json_column_declaration())
+			{
+				col_str = ::getFullText(column);
+				/* split col_str by whitespace */
+				std::istringstream buffer(col_str);
+				std::vector<std::string> col_tokens{std::istream_iterator<std::string>(buffer),
+									std::istream_iterator<std::string>()};
+				col_name = "";
+				col_type = "";
+				col_path = "";
+				for (uint i = 0; i < col_tokens.size(); i++)
+				{
+					token = col_tokens[i];
+					if (col_name == "")
+					{
+						col_name = token;
+						/* handle space-separated column names */
+						if (col_name.size() > 0 && col_name.front() == '[')
+						{
+							while (col_name.back() != ']' && i < col_tokens.size() - 1)
+							{
+								col_name += " " + col_tokens[++i];
+							}
+						}
+						if (col_name.size() > 0 && col_name.front() == '"')
+						{
+							while (col_name.back() != '"' && i < col_tokens.size() - 1)
+							{
+								col_name += " " + col_tokens[++i];
+							}
+						}
+					}
+					else if (col_type == "")
+						col_type = token;
+					else if (col_path == "")
+					{
+						/* check if path param was skipped */
+						if (pg_strcasecmp(token.c_str(), "as") == 0)
+							break;
+						col_path = token;
+						/* check for lax/strict and add the rest of the path parameter */
+						if (col_path.compare("'lax") == 0 || col_path.compare("'strict") == 0)
+						{
+							col_path += " " + col_tokens[++i];
+						}
+					}
+				}
+				/* PG cannot handle varchar(max) or nvarchar(max) so just remove the (max) part */
+				if (col_type.length() > 5 && pg_strcasecmp(col_type.substr(col_type.length() - 5).c_str(), "(max)") == 0)
+					col_type.erase(col_type.length() - 5);
+				/* if path is not defined, use col_name as default path */
+				if (col_path == "")
+					col_path = "'$." + col_name + "'";
+				/* Add path and type to main expr and save column definition in list */
+				col_path.pop_back();
+				col_info = col_path + " " + col_type + (column->AS() && column->JSON() ? " AS JSON" : "") + "'";
+				expr += "," + col_info;
+				col_defs.push_back(col_name + " " + col_type);
+			}
+			expr += ") AS f(";
+			/* add AS clause with column definitions */
+			for (auto & col_def : col_defs)
+			{
+				expr += col_def + std::string(",");
+			}
+			if (expr.back() == ',')
+				expr.pop_back();
+			expr += std::string(")");
+			/* replace end of OPENJSON statement with new column definition arguments */
+			rewritten_query_fragment.emplace(std::make_pair(ctx->RR_BRACKET(0)->getSymbol()->getStartIndex(),
+											 std::make_pair(ctx->RR_BRACKET(0)->getText(), expr)));
+			/* remove with clause */
+			rewritten_query_fragment.emplace(std::make_pair(ctx->WITH()->getSymbol()->getStartIndex(),
+											 std::make_pair(::getFullText(ctx->WITH()), "")));
+			rewritten_query_fragment.emplace(std::make_pair(ctx->LR_BRACKET(1)->getSymbol()->getStartIndex(),
+											 std::make_pair(ctx->LR_BRACKET(1)->getText(), "")));
+			rewritten_query_fragment.emplace(std::make_pair((ctx->json_declaration()->getStart()->getStartIndex()),
+											 std::make_pair(::getFullText(ctx->json_declaration()), "")));
+			rewritten_query_fragment.emplace(std::make_pair(ctx->RR_BRACKET().back()->getSymbol()->getStartIndex(),
+											 std::make_pair(ctx->RR_BRACKET().back()->getText(), "")));
+		}
+
+	}
 };
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -786,7 +918,9 @@ public:
     int nodeID = 0;
     tree::ParseTree *parser;
     MyInputStream &stream;
-    
+
+	bool is_cross_db = false;
+
 	// We keep a stack of the containers that are active during a traversal.
 	// A container will correspond to a block or a batch - these are containers
 	// because they contain a list of the PLtsql_stmt structures.
@@ -1190,6 +1324,10 @@ public:
 			ctx->insert_statement()->insert_statement_value() &&
 			ctx->insert_statement()->insert_statement_value()->execute_statement();
 
+		// record whether stmt is cross-db
+		if (is_cross_db)
+			stmt->is_cross_db = true;
+
 		if (is_compiling_create_function())
 		{
 			/* select without destination should be blocked. We can use already information about desitnation, which is already processed. */
@@ -1375,6 +1513,30 @@ public:
 		if (ctx->start)
 		{
 			local_id_positions.emplace(std::make_pair(ctx->start->getStartIndex(), local_id_str));
+		}
+	}
+
+	void exitFull_object_name(TSqlParser::Full_object_nameContext *ctx) override
+	{
+		tsqlCommonMutator::exitFull_object_name(ctx);
+		if (ctx && ctx->database)
+		{
+			std::string db_name = stripQuoteFromId(ctx->database);
+
+			if (!string_matches(db_name.c_str(), get_cur_db_name()))
+				is_cross_db = true;
+		}
+	}
+
+	void exitTable_name(TSqlParser::Table_nameContext *ctx) override
+	{
+		tsqlCommonMutator::exitTable_name(ctx);
+		if (ctx && ctx->database)
+		{
+			std::string db_name = stripQuoteFromId(ctx->database);
+
+			if (!string_matches(db_name.c_str(), get_cur_db_name()))
+				is_cross_db = true;
 		}
 	}
 
@@ -2403,7 +2565,7 @@ handleBatchLevelStatement(TSqlParser::Batch_level_statementContext *ctx, tsqlSel
 	PLtsql_stmt_execsql *execsql = (PLtsql_stmt_execsql *) makeSQL(ctx);
 
 	rewriteBatchLevelStatement(ctx, ssm, execsql->sqlstmt);
-	lappend(result->body, execsql);
+	result->body = lappend(result->body, execsql);
 
 	Token* start_body_token = get_start_token_of_batch_level_stmt_body(ctx);
 
@@ -3674,6 +3836,9 @@ makeSetStatement(TSqlParser::Set_statementContext *ctx, tsqlBuilder &builder)
 		}
 		else if (set_special_ctx->set_on_off_option().size() == 1)
 		{
+			auto option = set_special_ctx->set_on_off_option().front();
+			if (option->BABELFISH_SHOWPLAN_ALL())
+				return makeSetExplainModeStatement(ctx, true);
 			return makeSQL(ctx);
 		}
 		else if (!set_special_ctx->id().empty())
@@ -3691,6 +3856,8 @@ makeSetStatement(TSqlParser::Set_statementContext *ctx, tsqlBuilder &builder)
 			return nullptr;
 		else if (set_special_ctx->STATISTICS())
 			return nullptr;
+		else if (set_special_ctx->BABELFISH_STATISTICS() && set_special_ctx->PROFILE())
+			return makeSetExplainModeStatement(ctx, false);
 		else
 			return makeSQL(ctx);
 	}
@@ -3699,14 +3866,57 @@ makeSetStatement(TSqlParser::Set_statementContext *ctx, tsqlBuilder &builder)
 }
 
 PLtsql_stmt *
+makeSetExplainModeStatement(TSqlParser::Set_statementContext *ctx, bool is_explain_only)
+{
+	TSqlParser::Set_specialContext *set_special_ctx;
+	PLtsql_stmt_set_explain_mode *stmt;
+	std::string on_off;
+	size_t len;
+
+	set_special_ctx = static_cast<TSqlParser::Set_specialContext*> (ctx->set_special());
+	if (!set_special_ctx)
+		return nullptr;
+
+	stmt = (PLtsql_stmt_set_explain_mode *) palloc0(sizeof(PLtsql_stmt_set_explain_mode));
+	on_off = getFullText(set_special_ctx->on_off());
+	len = on_off.length();
+
+	stmt->cmd_type = PLTSQL_STMT_SET_EXPLAIN_MODE;
+	stmt->lineno = getLineNo(ctx);
+	stmt->query = pstrdup(getFullText(ctx).c_str());
+	if (is_explain_only)
+	{
+		stmt->is_explain_only = true;
+		stmt->is_explain_analyze = false;
+	}
+	else
+	{
+		stmt->is_explain_only = false;
+		stmt->is_explain_analyze = true;
+	}
+
+	if (pg_strncasecmp(on_off.c_str(), "on", len) == 0)
+		stmt->val = true;
+	else if (pg_strncasecmp(on_off.c_str(), "off", len) == 0)
+		stmt->val = false;
+	else
+		return nullptr;
+
+	attachPLtsql_fragment(ctx, (PLtsql_stmt *) stmt);
+	return (PLtsql_stmt *) stmt;
+}
+
+PLtsql_stmt *
 makeInsertBulkStatement(TSqlParser::Dml_statementContext *ctx)
 {
 	PLtsql_stmt_insert_bulk *stmt = (PLtsql_stmt_insert_bulk *) palloc0(sizeof(*stmt));
 	TSqlParser::Bulk_insert_statementContext *bulk_ctx = ctx->bulk_insert_statement();
+	std::vector<TSqlParser::Insert_bulk_column_definitionContext *> column_list = bulk_ctx->insert_bulk_column_definition();
 
 	std::string table_name;
 	std::string schema_name;
 	std::string db_name;
+	std::stringstream column_refs;
 
 	if (!bulk_ctx)
 	{
@@ -3740,6 +3950,20 @@ makeInsertBulkStatement(TSqlParser::Dml_statementContext *ctx)
 		if (!db_name.empty())
 		{
 			stmt->db_name = pstrdup(downcase_truncate_identifier(db_name.c_str(), db_name.length(), true));
+		}
+
+		/* create a list of columns to insert into */
+		if (!column_list.empty())
+		{
+			for (size_t i = 0; i < column_list.size() - 1; i++)
+			{
+				if (column_list[i]->simple_column_name())
+					column_refs << ::stripQuoteFromId(column_list[i]->simple_column_name()->id()) << ", ";
+			}
+			if (column_list[column_list.size() - 1]->simple_column_name())
+				column_refs << ::stripQuoteFromId(column_list[column_list.size() - 1]->simple_column_name()->id());
+
+			stmt->column_refs = pstrdup(column_refs.str().c_str());
 		}
 	}
 
@@ -5112,7 +5336,7 @@ makeSpStatement(const std::string& name_str, TSqlParser::Execute_statement_argCo
 	else if (string_matches(name_str.c_str(), "sp_executesql"))
 	{
 		result->sp_type_code = PLTSQL_EXEC_SP_EXECUTESQL;
-		if (paramno == 0 || paramno == 2)
+		if (paramno < 1)
 			throw PGErrorWrapperException(ERROR, ERRCODE_INVALID_PARAMETER_VALUE, format_errmsg("%s procedure was called with an incorrect number of parameters", name_str.c_str()), getLineAndPos(sp_args));
 
 		result->query = getNthParamExpr(params, 1);
@@ -5407,7 +5631,7 @@ rewrite_information_schema_to_information_schema_tsql(T ctx, GetCtxFunc<T> getSc
 	auto schema = getSchema(ctx);
 	if (!schema)
 		return "";
-	else if (string_matches(getFullText(ctx->schema).c_str(), "information_schema"))
+	else if (string_matches(stripQuoteFromId(ctx->schema).c_str(), "information_schema"))
 		return "information_schema_tsql";
 	else
 		return "";
