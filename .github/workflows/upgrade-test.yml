@@ -66,13 +66,6 @@ jobs:
         if: always() && steps.setup-upgrade-ver-ca.outcome == 'success'
         uses: ./.github/composite-actions/upgrade-version
 
-      - name: Cleanup Upgrade Version Composite Action
-        id: cleanup-upgrade-version-ca
-        if: always() && steps.upgrade-and-test.outcome == 'success'
-        run: |
-          git branch
-          rm -r ./.github/composite-actions/upgrade-version
-
       - name: Rename Test Summary Files
         id: test-file-rename
         if: always() && steps.upgrade-and-test.outcome == 'failure'
