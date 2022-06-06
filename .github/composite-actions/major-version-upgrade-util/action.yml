@@ -31,13 +31,14 @@ runs:
       shell: bash
 
     - name: Copy ANTLR
+      id: copy-antlr
       if: always() && steps.build-modified-postgres-new.outcome == 'success'
       run: cp "/usr/local/lib/libantlr4-runtime.so.4.9.3" ~/${{ inputs.install_dir }}/lib/
       shell: bash
 
     - name: Build Extensions using latest version
       id: build-extensions-new
-      if: always() && steps.build-modified-postgres-new.outcome == 'success'
+      if: always() && steps.copy-antlr.outcome == 'success'
       uses: ./.github/composite-actions/build-extensions
       with:
         install_dir: ${{ inputs.install_dir }}
@@ -73,6 +74,7 @@ runs:
     - uses: actions/checkout@v2
 
     - name: Run JDBC Upgrade Tests
+      if: always() && steps.run-pg_upgrade.outcome == 'success'
       id: jdbc-upgrade-tests
       run: |
         cd test/JDBC/
