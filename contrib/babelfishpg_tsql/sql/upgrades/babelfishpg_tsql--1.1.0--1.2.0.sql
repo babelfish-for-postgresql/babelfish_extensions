@@ -20,6 +20,21 @@ $$ LANGUAGE plpgsql;
 CALL sys.sp_babelfish_grant_usage_to_all();
 DROP PROCEDURE sys.sp_babelfish_grant_usage_to_all;
 
+CREATE OR REPLACE PROCEDURE sys.sp_babelfish_grant_usage_to_all()
+AS $$
+DECLARE
+	schema_name text;
+BEGIN
+	FOR schema_name IN SELECT nspname FROM sys.babelfish_namespace_ext
+	LOOP
+		EXECUTE format('GRANT USAGE ON SCHEMA %I TO PUBLIC', schema_name);
+	END LOOP;
+END;
+$$ LANGUAGE plpgsql;
+
+CALL sys.sp_babelfish_grant_usage_to_all();
+DROP PROCEDURE sys.sp_babelfish_grant_usage_to_all;
+
 CREATE OR REPLACE FUNCTION sys.lock_timeout()
 RETURNS integer
 LANGUAGE plpgsql

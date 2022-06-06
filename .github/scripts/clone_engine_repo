@@ -28,6 +28,8 @@ fi
 GH_USER=$1
 BRANCH=$2
 
+BRANCH_OVERRIDE=$3 # See below for explanation
+
 # See if user has an engine repository with the same name and branch.
 # See https://unix.stackexchange.com/questions/474805/verify-if-a-url-exists
 check_repo () {
@@ -68,6 +70,17 @@ else
     fi
 fi
 GIT_URL=${BASE_URL}.git
+
+
+# When testing upgrades or updates we need the ability to explicitly override
+# the branch that we're checking out. Right now this logic isn't great, since
+# the BASE_URL logic above could decide to use a fork, but checking this here
+# seems like the safest thing to do for right now (worst case here is we get a
+# false test fail, but if we try to take BRANCH_OVERRIDE into account above I
+# fear we might silently test the wrong branch).
+if [ -n "$BRANCH_OVERRIDE" ]; then
+    BRANCH_OPTION="--branch $BRANCH_OVERRIDE"
+fi
 
 echo running git clone "$BRANCH_OPTION" "$GIT_URL"
 git clone $BRANCH_OPTION "$GIT_URL" && exit

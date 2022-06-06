@@ -1188,33 +1188,33 @@ select
  from sys.procedures pr
 union all
 select
-    CAST(def.name as sys.sysname) as name
-  , CAST(def.object_id as int) as object_id
-  , CAST(def.principal_id as int) as principal_id
-  , CAST(def.schema_id as int) as schema_id
-  , CAST(def.parent_object_id as int) as parent_object_id
-  , CAST(def.type as char(2)) as type
-  , CAST(def.type_desc as sys.nvarchar(60)) as type_desc
-  , CAST(def.create_date as sys.datetime) as create_date
-  , CAST(def.modified_date as sys.datetime) as modify_date
-  , CAST(def.is_ms_shipped as sys.bit) as is_ms_shipped
-  , CAST(def.is_published as sys.bit) as is_published
-  , CAST(def.is_schema_published as sys.bit) as is_schema_published
+    def.name::name
+  , def.object_id
+  , def.principal_id
+  , def.schema_id
+  , def.parent_object_id
+  , def.type
+  , def.type_desc
+  , def.create_date
+  , def.modified_date as modify_date
+  , def.is_ms_shipped::int
+  , def.is_published::int
+  , def.is_schema_published::int
   from sys.default_constraints def
 union all
 select
-    CAST(chk.name as sys.sysname) as name
-  , CAST(chk.object_id as int) as object_id
-  , CAST(chk.principal_id as int) as principal_id
-  , CAST(chk.schema_id as int) as schema_id
-  , CAST(chk.parent_object_id as int) as parent_object_id
-  , CAST(chk.type as char(2)) as type
-  , CAST(chk.type_desc as sys.nvarchar(60)) as type_desc
-  , CAST(chk.create_date as sys.datetime) as create_date
-  , CAST(chk.modify_date as sys.datetime) as modify_date
-  , CAST(chk.is_ms_shipped as sys.bit) as is_ms_shipped
-  , CAST(chk.is_published as sys.bit) as is_published
-  , CAST(chk.is_schema_published as sys.bit) as is_schema_published
+    chk.name::name
+  , chk.object_id
+  , chk.principal_id
+  , chk.schema_id
+  , chk.parent_object_id
+  , chk.type
+  , chk.type_desc
+  , chk.create_date
+  , chk.modify_date
+  , chk.is_ms_shipped::int
+  , chk.is_published::int
+  , chk.is_schema_published::int
   from sys.check_constraints chk
 union all
 select
@@ -1236,18 +1236,18 @@ and p.relkind = 'S'
 and has_schema_privilege(s.schema_id, 'USAGE')
 union all
 select
-    CAST(('TT_' || tt.name || '_' || tt.type_table_object_id) as sys.sysname) as name
-  , CAST(tt.type_table_object_id as int) as object_id
-  , CAST(tt.principal_id as int) as principal_id
-  , CAST(tt.schema_id as int) as schema_id
-  , CAST(0 as int) as parent_object_id
-  , CAST('TT' as char(2)) as type
-  , CAST('TABLE_TYPE' as sys.nvarchar(60)) as type_desc
-  , CAST(null as sys.datetime) as create_date
-  , CAST(null as sys.datetime) as modify_date
-  , CAST(1 as sys.bit) as is_ms_shipped
-  , CAST(0 as sys.bit) as is_published
-  , CAST(0 as sys.bit) as is_schema_published
+    ('TT_' || tt.name || '_' || tt.type_table_object_id)::name as name
+  , tt.type_table_object_id as object_id
+  , tt.principal_id as principal_id
+  , tt.schema_id as schema_id
+  , 0 as parent_object_id
+  , 'TT'::varchar(2) as type
+  , 'TABLE_TYPE'::varchar(60) as type_desc
+  , null::timestamp as create_date
+  , null::timestamp as modify_date
+  , 1 as is_ms_shipped
+  , 0 as is_published
+  , 0 as is_schema_published
 from sys.table_types tt;
 GRANT SELECT ON sys.objects TO PUBLIC;
 

@@ -4596,7 +4596,6 @@ exec_stmt_execsql(PLtsql_execstate *estate,
 	CmdType 	cmd = CMD_UNKNOWN;
 	bool		enable_txn_in_triggers = !pltsql_disable_txn_in_triggers;
     StringInfoData query;
-	Oid			current_user_id = GetUserId();
 
 	if (stmt->is_cross_db)
 		SetCurrentRoleId(GetSessionUserId(), false);
