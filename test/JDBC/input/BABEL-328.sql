@@ -57,31 +57,41 @@ OUTER APPLY
    ) A 
 GO
  
--- SELECT * FROM Department D 
--- LEFT OUTER JOIN Employee E ON D.DepartmentID = E.DepartmentID 
--- GO
+SELECT * FROM Department D 
+LEFT OUTER JOIN Employee E ON D.DepartmentID = E.DepartmentID 
+GO
 
 --Script #4 - APPLY with table-valued function 
--- CREATE FUNCTION dbo.fn_GetAllEmployeeOfADepartment(@DeptID AS INT)  
--- RETURNS TABLE 
--- AS 
--- RETURN 
---    ( 
---    SELECT * FROM Employee E 
---    WHERE E.DepartmentID = @DeptID 
---    ) 
--- GO
+CREATE FUNCTION dbo.fn_GetAllEmployeeOfADepartment(@DeptID AS INT)  
+RETURNS TABLE 
+AS 
+RETURN 
+   ( 
+   SELECT * FROM Employee E 
+   WHERE E.DepartmentID = @DeptID 
+   ) 
+GO
  
--- SELECT * FROM Department D 
--- CROSS APPLY dbo.fn_GetAllEmployeeOfADepartment(D.DepartmentID) 
--- GO
+SELECT * FROM Department D 
+CROSS APPLY dbo.fn_GetAllEmployeeOfADepartment(D.DepartmentID) 
+GO
  
--- SELECT * FROM Department D 
--- OUTER APPLY dbo.fn_GetAllEmployeeOfADepartment(D.DepartmentID) 
--- GO
+SELECT * FROM Department D 
+OUTER APPLY dbo.fn_GetAllEmployeeOfADepartment(D.DepartmentID) 
+GO
 
--- DROP FUNCTION dbo.fn_GetAllEmployeeOfADepartment
--- GO
+DROP FUNCTION dbo.fn_GetAllEmployeeOfADepartment
+GO
+
+--Script #5 - Regression test to make sure CROSS/OUTER are still parsed correctly
+--These calls should return an error
+SELECT * FROM Department D
+CROSS Employee E
+GO
+
+SELECT * FROM Department D
+OUTER Employee E
+GO
 
 DROP TABLE [Employee]
 GO
