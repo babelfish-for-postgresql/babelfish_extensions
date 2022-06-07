@@ -4124,7 +4124,8 @@ unreserved_keyword:
 		;
 
 reserved_keyword:
-			  TSQL_CHOOSE
+			  TSQL_APPLY
+			| TSQL_CHOOSE
 			| TSQL_CONVERT
 			| TSQL_DATEADD
 			| TSQL_DATEDIFF
