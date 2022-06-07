@@ -56,6 +56,7 @@ CREATE OR REPLACE VIEW information_schema_tsql.check_constraints AS
                OR has_table_privilege(r.oid, 'SELECT, INSERT, UPDATE, DELETE, TRUNCATE, REFERENCES, TRIGGER')
                OR has_any_column_privilege(r.oid, 'SELECT, INSERT, UPDATE, REFERENCES'))
 		  AND  extc.dbid = cast(sys.db_id() as oid);
+GRANT SELECT ON information_schema_tsql.check_constraints TO PUBLIC;
 
 -- Drops the temporary procedure used by the upgrade script.
 -- Please have this be one of the last statements executed in this upgrade script.
