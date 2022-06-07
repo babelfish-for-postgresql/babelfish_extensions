@@ -66,6 +66,8 @@
 #include "utils/varlena.h"
 #include "utils/xml.h"
 
+#include "datatypes.h"
+
 /* ----------
  * Pretty formatting constants
  * ----------
@@ -2319,6 +2321,7 @@ tsql_format_type_extended(Oid type_oid, int32 typemod, bits16 flags)
 	Form_pg_type	typeform;
 	Datum			tsql_typename;
 	char		   *buf;
+	char		   *nspname;
 	bool			with_typemod;
 	LOCAL_FCINFO(fcinfo, 1);
 
@@ -2335,7 +2338,15 @@ tsql_format_type_extended(Oid type_oid, int32 typemod, bits16 flags)
 	}
 	typeform = (Form_pg_type) GETSTRUCT(tuple);
 
+	/*
+	 * Assign -1 as typmod which is equivalent to not printing the typmod for
+	 * smalldatetime
+	 */
+	if (is_tsql_smalldatetime_datatype(type_oid))
+		typemod = -1;
+
 	with_typemod = (flags & FORMAT_TYPE_TYPEMOD_GIVEN) != 0 && (typemod >= 0);
+	nspname = get_namespace_name_or_temp(typeform->typnamespace);
 
 	buf = NULL;
 
@@ -2348,9 +2359,10 @@ tsql_format_type_extended(Oid type_oid, int32 typemod, bits16 flags)
 	 * If it is TSQL type then report it without any qualification.
 	 */
 	if (tsql_typename)
+	{
 		buf = text_to_cstring(DatumGetTextPP(tsql_typename));
-
-	if (buf == NULL)
+	}
+	else
 	{
 		/*
 		 * Default handling: report the name as it appears in the catalog.
@@ -2358,30 +2370,43 @@ tsql_format_type_extended(Oid type_oid, int32 typemod, bits16 flags)
 		 * path or if caller requests it; and we must double-quote it if it's
 		 * not a standard identifier or if it matches any keyword.
 		 */
-		char	   *nspname;
 		char	   *typname;
-
-		if ((flags & FORMAT_TYPE_FORCE_QUALIFY) == 0 &&
-			TypeIsVisible(type_oid))
-			nspname = NULL;
-		else
-			nspname = get_namespace_name_or_temp(typeform->typnamespace);
 
 		typname = NameStr(typeform->typname);
 
-
-		buf = quote_qualified_identifier(nspname, typname);
+		if ((flags & FORMAT_TYPE_FORCE_QUALIFY) == 0 &&
+			TypeIsVisible(type_oid))
+			buf = quote_qualified_identifier(NULL, typname);
+		else
+			buf = quote_qualified_identifier(nspname, typname);
 
 		/*
-		 * Replace bbf_binary with binary
+		 * Assign correct typename in case of sys.binary, it gives bbf_binary
+		 * internally
 		 */
-		if (strcmp(buf, "bbf_binary") == 0)
+		if (is_tsql_binary_datatype(type_oid))
 				buf = pstrdup("binary");
+		if (is_tsql_varbinary_datatype(type_oid))
+				buf = pstrdup("varbinary");
 	}
 
 	if (with_typemod)
 	{
-		buf = tsql_printTypmod(buf, typemod, typeform->typmodout);
+		int		typmodout = typeform->typmodout;
+		/*
+		* In case of time, datetime2 or datetimeoffset print typmod
+		* info directly because it uses timestamp typmodout function
+		* which appends timezone data along with typmod which is not
+		* required. Directly print typename for smalldatetime as it
+		* doesn't support typmod.
+		*/
+		if (type_oid == TIMEOID ||
+			is_tsql_datetime2_datatype(type_oid) ||
+			is_tsql_datetimeoffset_datatype(type_oid))
+		{
+			typmodout = InvalidOid;
+		}
+		buf = tsql_printTypmod(buf, typemod, typmodout);
 	}
 
 	ReleaseSysCache(tuple);
@@ -2400,39 +2425,19 @@ tsql_printTypmod(const char *typname, int32 typmod, Oid typmodout)
 	/* Shouldn't be called if typmod is -1 */
 	Assert(typmod >= 0);
 
-	/*
-	* In case of time, datetime2 or datetimeoffset print typmod
-	* info directly because it uses timestamp typmodout function
-	* which appends timezone data along with typmod which is not
-	* required. Directly print typename for smalldatetime as it
-	* doesn't support typmod.
-	*/
-	if (strcmp(typname, "time") == 0 ||
-	   strcmp(typname, "datetime2") == 0 ||
-	   strcmp(typname, "datetimeoffset") == 0)
+	if (typmodout == InvalidOid)
 	{
+		/* Default behavior: just print the integer typmod with parens */
 		res = psprintf("%s(%d)", typname, (int) typmod);
-	}
-	else if (strcmp(typname, "smalldatetime") == 0)
-	{
-		res = pstrdup(typname);
 	}
 	else
 	{
-		if (typmodout == InvalidOid)
-		{
-			/* Default behavior: just print the integer typmod with parens */
-			res = psprintf("%s(%d)", typname, (int) typmod);
-		}
-		else
-		{
-			/* Use the type-specific typmodout procedure */
-			char	   *tmstr;
+		/* Use the type-specific typmodout procedure */
+		char	   *tmstr;
 
-			tmstr = DatumGetCString(OidFunctionCall1(typmodout,
-													 Int32GetDatum(typmod)));
-			res = psprintf("%s%s", typname, tmstr);
-		}
+		tmstr = DatumGetCString(OidFunctionCall1(typmodout,
+													Int32GetDatum(typmod)));
+		res = psprintf("%s%s", typname, tmstr);
 	}
 	return res;
 }

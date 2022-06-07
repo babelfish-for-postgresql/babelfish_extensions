@@ -63,6 +63,20 @@ create table test_functioncall(
 );
 go
 
+create schema sch1;
+create type sch1.udd_float from sys.float;
+create type sch1.udd_datetime from sys.datetime;
+create type sch1.udd_time from time(6);
+go
+
+-- Inside check constraint definition alias datatypes are not allowed
+create table test_udd(
+	c_udd sch1.udd_float check(c_udd < 133.230182309832423),
+	c_udd1 sch1.udd_datetime check(c_udd1 < '2020-10-20 09:00:00'),
+	c_udd2 sch1.udd_time check(c_udd2 < '09:00:00'),
+);
+go
+
 create table test_null(a int, b int, check(a IS NOT NULL), CONSTRAINT constraint1 check (a>10));
 go
 
@@ -95,6 +109,13 @@ drop table test_tsql_cast
 drop table test_upper
 drop table test_null1
 drop table test_null2
+drop table test_udd
+go
+
+drop type sch1.udd_float;
+drop type sch1.udd_datetime;
+drop type sch1.udd_time;
+drop schema sch1;
 go
 
 use master
