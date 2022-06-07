@@ -77,7 +77,7 @@ extern bool is_valid_server_collation_name(const char *collname);
 
 extern Oid BABELFISH_CLUSTER_COLLATION_OID(void);
 
-extern Node* pltsql_like_ilike_transformer (PlannerInfo *root,
+extern Node* pltsql_planner_node_transformer (PlannerInfo *root,
                                             Node *expr,
                                             int kind);
 
