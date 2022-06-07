@@ -309,5 +309,47 @@ ok
 drop table t1;
 go
 
+-- dbts value should not be constant inside a transaction
+create table babel_3139_t(c1 int, rv rowversion, dbts_after_insert binary(8));
+go
+
+
+
+begin tran;
+insert into babel_3139_t(c1) values(1);
+update babel_3139_t set dbts_after_insert = @@dbts where c1 = 1;
+insert into babel_3139_t(c1) values(2);
+update babel_3139_t set dbts_after_insert = @@dbts where c1 = 2;
+insert into babel_3139_t(c1) values(3);
+update babel_3139_t set dbts_after_insert = @@dbts where c1 = 3;
+commit;
+go
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+
+select case when dbts_after_insert > prev_dbts then 'increasing' else 'not increasing' end
+    from (select dbts_after_insert, lag(dbts_after_insert) over (order by c1) as prev_dbts from babel_3139_t) t
+    where prev_dbts is not null;
+go
+~~START~~
+text
+increasing
+increasing
+~~END~~
+
+
+drop table babel_3139_t;
+go
+
 EXEC sp_babelfish_configure 'babelfishpg_tsql.escape_hatch_rowversion', 'strict';
 go

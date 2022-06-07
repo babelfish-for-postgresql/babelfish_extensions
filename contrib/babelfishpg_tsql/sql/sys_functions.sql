@@ -1436,7 +1436,7 @@ BEGIN
     IF eh_setting = 'strict' THEN
         RAISE EXCEPTION 'DBTS is not currently supported in Babelfish. please use babelfishpg_tsql.escape_hatch_rowversion to ignore';
     ELSE
-        RETURN pg_snapshot_xmin(pg_current_snapshot())::sys.ROWVERSION;
+        RETURN sys.get_current_full_xact_id()::sys.ROWVERSION;
     END IF;
 END;
 $$
