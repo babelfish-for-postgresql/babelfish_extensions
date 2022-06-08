@@ -31,7 +31,7 @@ LANGUAGE plpgsql;
 
 
 -- please add your SQL here
-CREATE OR REPLACE FUNCTION sys.tsql_get_constraintdef(IN login OID DEFAULT NULL)
+CREATE OR REPLACE FUNCTION sys.tsql_get_constraintdef(IN constraint_id OID DEFAULT NULL)
 RETURNS text
 AS 'babelfishpg_tsql', 'tsql_get_constraintdef'
 LANGUAGE C IMMUTABLE PARALLEL SAFE;
