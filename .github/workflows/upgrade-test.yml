@@ -68,7 +68,7 @@ jobs:
 
       - name: Rename Test Summary Files
         id: test-file-rename
-        if: always() && steps.upgrade-and-test.outcome == 'failure'
+        if: always() || steps.setup-base-version.outcome == 'failure' || steps.upgrade-and-test.outcome == 'failure'
         run: |
           cd test/JDBC/Info
           timestamp=`ls -Art | tail -n 1`
