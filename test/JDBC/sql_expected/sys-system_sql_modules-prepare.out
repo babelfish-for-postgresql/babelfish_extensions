@@ -1,6 +1,2 @@
 CREATE DATABASE sys_system_sql_modules_db1
 GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: Only one user database allowed under single-db mode. User database "sys_databases_test_db" already exists)~~
-
