@@ -29,6 +29,7 @@ create table test_tsql_const(
 );
 go
 
+-- float(7) will be displayed as real in the constraint definition  
 create table test_tsql_cast(
 	c_float float check(c_float < cast(133.230182309832423 as float) and c_float < cast(133.230182309832423 as float(7))),
 	c_real real check(c_real < cast(133.230182309832423 as real)),
@@ -40,6 +41,7 @@ go
 create table test_tsql_collate(
 	c_varchar varchar check(c_varchar <> cast('sflkjasdlkfjf' as varchar(12)) COLLATE bbf_unicode_cp1_ci_as),
 	c_char char check(c_char <> cast('sflkjasdlkfjf' as char(7)) COLLATE bbf_unicode_cp1_ci_as),
+	c_char1 char check(c_char <> cast('abcd' as char(7)) COLLATE "default"),
 	c_nchar nchar check(cast(c_nchar as nchar(7)) <> cast('sflkjasdlkfjf' as nchar(7)) COLLATE bbf_unicode_cp1_ci_as),
 );
 go

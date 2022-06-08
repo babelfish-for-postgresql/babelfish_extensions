@@ -405,21 +405,20 @@ GRANT SELECT ON information_schema_tsql.table_constraints TO PUBLIC;
  */
 
 CREATE VIEW information_schema_tsql.check_constraints AS
-	SELECT CAST(nc.dbname AS sys.nvarchar(128)) AS "CONSTRAINT_CATALOG",
-		CAST(extc.orig_name AS sys.nvarchar(128)) AS "CONSTRAINT_SCHEMA",
-        	CAST(c.conname AS sys.sysname) AS "CONSTRAINT_NAME",
-		CAST(sys.tsql_get_constraintdef(c.oid) AS sys.nvarchar(4000)) AS "CHECK_CLAUSE"
+    SELECT CAST(nc.dbname AS sys.nvarchar(128)) AS "CONSTRAINT_CATALOG",
+	    CAST(extc.orig_name AS sys.nvarchar(128)) AS "CONSTRAINT_SCHEMA",
+           CAST(c.conname AS sys.sysname) AS "CONSTRAINT_NAME",
+	    CAST(sys.tsql_get_constraintdef(c.oid) AS sys.nvarchar(4000)) AS "CHECK_CLAUSE"
 
     FROM sys.pg_namespace_ext nc LEFT OUTER JOIN sys.babelfish_namespace_ext extc ON nc.nspname = extc.nspname,
-         sys.pg_namespace_ext nr LEFT OUTER JOIN sys.babelfish_namespace_ext extr ON nr.nspname = extr.nspname,
          pg_constraint c,
          pg_class r
 
-    WHERE nc.oid = c.connamespace AND nr.oid = r.relnamespace
+    WHERE nc.oid = c.connamespace AND nc.oid = r.relnamespace
           AND c.conrelid = r.oid
           AND c.contype = 'c'
           AND r.relkind IN ('r', 'p')
-          AND (NOT pg_is_other_temp_schema(nr.oid))
+          AND (NOT pg_is_other_temp_schema(nc.oid))
           AND (pg_has_role(r.relowner, 'USAGE')
                OR has_table_privilege(r.oid, 'SELECT, INSERT, UPDATE, DELETE, TRUNCATE, REFERENCES, TRIGGER')
                OR has_any_column_privilege(r.oid, 'SELECT, INSERT, UPDATE, REFERENCES'))
