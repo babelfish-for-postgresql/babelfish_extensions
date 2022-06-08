@@ -22,7 +22,7 @@ jobs:
         id: compile-antlr
         if: always() && steps.build-modified-postgres.outcome == 'success'
         uses: ./.github/composite-actions/compile-antlr
-
+      
       - name: Build Extensions
         id: build-extensions
         if: always() && steps.compile-antlr.outcome == 'success'
