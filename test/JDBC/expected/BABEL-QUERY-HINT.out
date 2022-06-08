@@ -1,0 +1,35 @@
+drop table if exists jira3291
+go
+
+create table jira3291(a1 int PRIMARY KEY, b1 int)
+go
+
+set babelfish_showplan_all on
+go
+
+select /*+SeqScan(jira3291)*/ * from jira3291 where a1 = 1
+go
+~~START~~
+text
+Query Text: select /*+SeqScan(jira3291)*/ * from jira3291 where a1 = 1
+Seq Scan on jira3291  (cost=0.00..38.25 rows=1 width=8)
+  Filter: (a1 = 1)
+~~END~~
+
+
+select * from jira3291 where a1 = 1
+go
+~~START~~
+text
+Query Text: select * from jira3291 where a1 = 1
+Index Scan using jira3291_pkey on jira3291  (cost=0.15..8.17 rows=1 width=8)
+  Index Cond: (a1 = 1)
+~~END~~
+
+
+set babelfish_showplan_all off
+go
+
+-- cleanup
+drop table jira3291
+go
