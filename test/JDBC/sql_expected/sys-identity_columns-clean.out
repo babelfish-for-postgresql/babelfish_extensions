@@ -1,0 +1,12 @@
+USE master
+go
+
+DROP TABLE IF EXISTS sys_identity_columns
+go
+
+DROP DATABASE sys_identity_columns_db1
+go
+~~ERROR (Code: 3701)~~
+
+~~ERROR (Message: database "sys_identity_columns_db1" does not exist)~~
+

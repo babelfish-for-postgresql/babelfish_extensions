@@ -1,0 +1,9 @@
+USE master
+GO
+
+DROP DATABASE sys_system_sql_modules_db1
+GO
+~~ERROR (Code: 3701)~~
+
+~~ERROR (Message: database "sys_system_sql_modules_db1" does not exist)~~
+
