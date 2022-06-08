@@ -17,9 +17,9 @@ runs:
             echo "ERROR: Upgrade path length less than 2" 1>&2
             exit 1
         fi
-        mkdir $upgrade_version_dir_path
-        touch $upgrade_version_dir_path/action.yml
-        printf 'name: Upgrade and Test \nruns: \n  using: "composite"\n  steps:\n' > $upgrade_version_dir_path/action.yml
+        # mkdir $upgrade_version_dir_path
+        # touch $upgrade_version_dir_path/action.yml
+        # printf 'name: Upgrade and Test \nruns: \n  using: "composite"\n  steps:\n' > $upgrade_version_dir_path/action.yml
         prev_ver=${{ inputs.base_version }}
         for (( i=1 ; i<$LEN ; i++ )); 
         do

@@ -74,7 +74,7 @@ runs:
     - uses: actions/checkout@v2
 
     - name: Run JDBC Upgrade Tests
-      if: always() && steps.run-pg_upgrade.outcome == 'success'
+      if: always() && steps.run-pg_upgrade.outcome == 'success' && inputs.is_final_ver
       id: jdbc-upgrade-tests
       run: |
         cd test/JDBC/

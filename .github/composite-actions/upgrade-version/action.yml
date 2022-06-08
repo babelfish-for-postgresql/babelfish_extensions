@@ -1,0 +1,6 @@
+name: Upgrade and Test 
+runs: 
+  using: "composite"
+    steps:
+      - name: "Print Upgrade Path"
+        run: echo "Upgrading to Next Version ..."

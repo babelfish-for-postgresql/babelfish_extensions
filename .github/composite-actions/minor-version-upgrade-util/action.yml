@@ -73,6 +73,7 @@ runs:
 
     - name: Run JDBC Upgrade Tests
       id: jdbc-upgrade-tests
+      if: always() && inputs.is_final_ver
       run: |
         cd test/JDBC/
         sudo sed -i 's/inputFilesPath = input/inputFilesPath = upgrade\/verification/g' src/main/resources/config.txt

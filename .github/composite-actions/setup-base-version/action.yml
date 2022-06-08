@@ -99,7 +99,7 @@ runs:
         cd test/JDBC/
         sudo sed -i 's/inputFilesPath = input/inputFilesPath = upgrade\/preparation/g' src/main/resources/config.txt
         mvn test
-        sudo sed -i 's/inputFilesPath = upgrade\/preparation/inputFilesPath = upgrade\/verification/g' src/main/resources/config.txt
-        mvn test
-        sudo sed -i 's/inputFilesPath = upgrade\/verification/inputFilesPath = input/g' src/main/resources/config.txt
+        # sudo sed -i 's/inputFilesPath = upgrade\/preparation/inputFilesPath = upgrade\/verification/g' src/main/resources/config.txt
+        # mvn test
+        sudo sed -i 's/inputFilesPath = upgrade\/preparation/inputFilesPath = input/g' src/main/resources/config.txt
       shell: bash
