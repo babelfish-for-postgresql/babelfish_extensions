@@ -1,0 +1,12 @@
+#!/usr/bin/env bash
+
+set -e
+
+BASE_URL=https://github.com/ossc-db/pg_hint_plan
+GIT_URL=${BASE_URL}.git
+
+echo running git clone "$GIT_URL"
+git clone "$GIT_URL" && exit
+rc=$?
+echo "git clone failed with return code $rc"
+exit $rc
