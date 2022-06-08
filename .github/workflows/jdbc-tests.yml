@@ -22,6 +22,11 @@ jobs:
         id: compile-antlr
         if: always() && steps.build-modified-postgres.outcome == 'success'
         uses: ./.github/composite-actions/compile-antlr
+
+      - name: Build pg-hint-plan
+        id: build-pg-hint-plan
+        if: always() && steps.compile-antlr.outcome == 'success'
+        uses: ./.github/composite-actions/build-pg-hint-plan
       
       - name: Build Extensions
         id: build-extensions
@@ -39,6 +44,14 @@ jobs:
         timeout-minutes: 15
         run: |
           cd test/JDBC/
+          mvn test
+
+      - name: Run pg-hint-plan JDBC tests
+        id: run-pg-hint-plan-test
+        if: always() && steps.build-pg-hint-plan.outcome == 'success'
+        run: |
+          cd test/JDBC/
+          export inputFilesPath=pg-hint-plan
           mvn test
       
       - name: Upload Log
