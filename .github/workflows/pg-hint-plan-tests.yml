@@ -51,7 +51,7 @@ jobs:
         if: always() && steps.build-pg-hint-plan.outcome == 'success'
         run: |
           cd test/JDBC/
-          export inputFilesPath=pg-hint-plan
+          export inputFilesPath=pg_hint_plan
           mvn test
       
       - name: Upload Log
