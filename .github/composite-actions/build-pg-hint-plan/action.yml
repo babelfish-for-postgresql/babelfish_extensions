@@ -8,6 +8,7 @@ runs:
         cd ..
         $GITHUB_WORKSPACE/.github/scripts/clone_pg_hint_plan_repo
         cd pg_hint_plan
+        export PATH=~/postgres/bin:$PATH
         make
         make install
         make check
