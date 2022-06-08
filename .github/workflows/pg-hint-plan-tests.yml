@@ -1,8 +1,8 @@
-name: JDBC Tests
+name: pg-hint-plan Tests
 on: [push, pull_request]
 
 jobs:
-  run-babelfish-jdbc-tests:
+  run-pg-hint-plan-tests:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
