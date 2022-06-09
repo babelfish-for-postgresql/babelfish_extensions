@@ -1,6 +1,5 @@
 name: Github workflow Tests
-on: pull_request:
-  types: [opened, reopened, edited]
+on: [pull_request]
 
 jobs:
   run-babelfish-python-tests:
