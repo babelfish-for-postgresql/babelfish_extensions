@@ -61,20 +61,20 @@ runs:
         sqlcmd -S localhost -U jdbc_user -P 12345678 -Q "SELECT @@version GO"
       shell: bash
 
-    - name: Change migration mode to multi-db
-      id: change-migration-mode
-      run: |
-        sudo ~/${{ inputs.install_dir}}/bin/psql -d jdbc_testdb -U runner -c "ALTER SYSTEM SET babelfishpg_tsql.migration_mode = 'multi-db';"
-        sudo ~/${{ inputs.install_dir}}/bin/psql -d jdbc_testdb -U runner -c "SELECT pg_reload_conf();"
-      shell: bash
-
-    # - name: Run JDBC Standard Tests
-    #   id: jdbc-standard-tests
-    #   if: always() && steps.change-migration-mode.outcome == 'success' && inputs.is_final_ver
+    # - name: Change migration mode to multi-db
+    #   id: change-migration-mode
     #   run: |
-    #     cd test/JDBC/
-    #     mvn test
+    #     sudo ~/${{ inputs.install_dir}}/bin/psql -d jdbc_testdb -U runner -c "ALTER SYSTEM SET babelfishpg_tsql.migration_mode = 'multi-db';"
+    #     sudo ~/${{ inputs.install_dir}}/bin/psql -d jdbc_testdb -U runner -c "SELECT pg_reload_conf();"
     #   shell: bash
+
+    - name: Run JDBC Standard Tests
+      id: jdbc-standard-tests
+      if: always() && steps.change-migration-mode.outcome == 'success' && inputs.is_final_ver
+      run: |
+        cd test/JDBC/
+        mvn test
+      shell: bash
 
     - uses: actions/checkout@v2
 
