@@ -93,12 +93,12 @@ runs:
 
     - uses: actions/checkout@v2
 
-    # - name: Change migration mode to multi-db
-    #   id: change-migration-mode
-    #   run: |
-    #     sudo ~/${{ inputs.install_dir}}/bin/psql -d jdbc_testdb -U runner -c "ALTER SYSTEM SET babelfishpg_tsql.migration_mode = 'multi-db';"
-    #     sudo ~/${{ inputs.install_dir}}/bin/psql -d jdbc_testdb -U runner -c "SELECT pg_reload_conf();"
-    #   shell: bash
+    - name: Change migration mode to multi-db
+      id: change-migration-mode
+      run: |
+        sudo ~/${{ inputs.install_dir}}/bin/psql -d jdbc_testdb -U runner -c "ALTER SYSTEM SET babelfishpg_tsql.migration_mode = 'multi-db';"
+        sudo ~/${{ inputs.install_dir}}/bin/psql -d jdbc_testdb -U runner -c "SELECT pg_reload_conf();"
+      shell: bash
 
     - name: Run JDBC Upgrade Tests
       id: jdbc-upgrade-tests
