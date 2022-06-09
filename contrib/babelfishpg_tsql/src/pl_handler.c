@@ -3356,6 +3356,7 @@ _PG_init(void)
 		(*pltsql_protocol_plugin_ptr)->pltsql_is_login = &is_login;
 		(*pltsql_protocol_plugin_ptr)->pltsql_get_generic_typmod = &probin_read_ret_typmod;
 		(*pltsql_protocol_plugin_ptr)->pltsql_get_logical_schema_name = &get_logical_schema_name;
+		(*pltsql_protocol_plugin_ptr)->pltsql_is_fmtonly_stmt = &pltsql_fmtonly;
 	}
 
 	*pltsql_config_ptr = &myConfig;
@@ -3389,7 +3390,7 @@ _PG_init(void)
 	plansource_revalidate_hook = pltsql_check_guc_plan;
 
 	prev_planner_node_transformer_hook = planner_node_transformer_hook;
-	planner_node_transformer_hook = pltsql_like_ilike_transformer;
+	planner_node_transformer_hook = pltsql_planner_node_transformer;
 
 	prev_pltsql_nextval_hook = pltsql_nextval_hook;
 	pltsql_nextval_hook = pltsql_nextval_identity;
@@ -3744,6 +3745,13 @@ pltsql_inline_handler(PG_FUNCTION_ARGS)
 	bool nonatomic;
 	bool support_tsql_trans = pltsql_support_tsql_transactions();
 	ReturnSetInfo rsinfo; /* for INSERT ... EXECUTE */
+
+	/* 
+	 * FIXME: We leak sp_describe_first_result_set_inprogress if CREATE VIEW fails
+	 * internally when executing sp_describe_first_result_set procedure. So we
+	 * reset sp_describe_first_result_set_inprogress here to work around this.
+	 */
+	sp_describe_first_result_set_inprogress = false;
 
 	Assert((nargs > 2 ? nargs - 2 : 0) <= FUNC_MAX_ARGS);
 	Assert(exec_state_call_stack != NULL || !AbortCurTransaction);

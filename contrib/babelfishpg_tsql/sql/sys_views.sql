@@ -241,14 +241,15 @@ AS $$
 DECLARE
 	max_length SMALLINT;
 	precision INT;
+	v_type TEXT COLLATE "C" := type;
 BEGIN
 	-- unknown tsql type
-	IF type IS NULL THEN
+	IF v_type IS NULL THEN
 		RETURN CAST(typelen as SMALLINT);
 	END IF;
 
 	IF typelen != -1 THEN
-		CASE type 
+		CASE v_type 
 		WHEN 'tinyint' THEN max_length = 1;
 		WHEN 'date' THEN max_length = 3;
 		WHEN 'smalldatetime' THEN max_length = 4;
@@ -281,24 +282,24 @@ BEGIN
 
 	IF typemod = -1 THEN
 		CASE 
-		WHEN type in ('image', 'text', 'ntext') THEN max_length = 16;
-		WHEN type = 'sql_variant' THEN max_length = 8016;
-		WHEN type in ('varbinary', 'varchar', 'nvarchar') THEN 
+		WHEN v_type in ('image', 'text', 'ntext') THEN max_length = 16;
+		WHEN v_type = 'sql_variant' THEN max_length = 8016;
+		WHEN v_type in ('varbinary', 'varchar', 'nvarchar') THEN 
 			IF for_sys_types THEN max_length = 8000;
 			ELSE max_length = -1;
 			END IF;
-		WHEN type in ('binary', 'char', 'bpchar', 'nchar') THEN max_length = 8000;
-		WHEN type in ('decimal', 'numeric') THEN max_length = 17;
+		WHEN v_type in ('binary', 'char', 'bpchar', 'nchar') THEN max_length = 8000;
+		WHEN v_type in ('decimal', 'numeric') THEN max_length = 17;
 		ELSE max_length = typemod;
 		END CASE;
 		RETURN max_length;
 	END IF;
 
 	CASE
-	WHEN type in ('char', 'bpchar', 'varchar', 'binary', 'varbinary') THEN max_length = typemod - 4;
-	WHEN type in ('nchar', 'nvarchar') THEN max_length = (typemod - 4) * 2;
-	WHEN type = 'sysname' THEN max_length = (typemod - 4) * 2;
-	WHEN type in ('numeric', 'decimal') THEN
+	WHEN v_type in ('char', 'bpchar', 'varchar', 'binary', 'varbinary') THEN max_length = typemod - 4;
+	WHEN v_type in ('nchar', 'nvarchar') THEN max_length = (typemod - 4) * 2;
+	WHEN v_type = 'sysname' THEN max_length = (typemod - 4) * 2;
+	WHEN v_type in ('numeric', 'decimal') THEN
 		precision = ((typemod - 4) >> 16) & 65535;
 		IF precision >= 1 and precision <= 9 THEN max_length = 5;
 		ELSIF precision <= 19 THEN max_length = 9;

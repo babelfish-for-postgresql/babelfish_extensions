@@ -22,15 +22,20 @@ INSERT INTO check_charindex_case_insensitive (check_for, document) VALUES ('Test
 INSERT INTO check_charindex_case_insensitive (check_for, document) VALUES ('Test','test Test test');
 INSERT INTO check_charindex_case_insensitive (check_for, document) VALUES ('TEST','This is a test');
 GO
-~~ERROR (Code: 33557097)~~
+~~ROW COUNT: 1~~
 
-~~ERROR (Message: nondeterministic collations are not supported for substring searches)~~
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
 
 
 Select ci from check_charindex_case_insensitive;
 GO
 ~~START~~
 int
+11
+1
+11
 ~~END~~
 
 

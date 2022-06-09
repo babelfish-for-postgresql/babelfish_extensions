@@ -1,0 +1,26 @@
+CREATE TABLE t1(
+	id INT,
+	comment NVARCHAR(20)
+) 
+go
+CREATE TABLE t2(
+	id INT,
+	t1_id INT,
+	PRIMARY KEY(id ASC)
+) 
+go
+INSERT t1 VALUES (1, 'test')	
+go
+~~ROW COUNT: 1~~
+
+select * from t1 a left join t2 b on b.t1_id = a.id 
+go
+~~START~~
+int#!#nvarchar#!#int#!#int
+1#!#test#!#<NULL>#!#<NULL>
+~~END~~
+
+
+DROP Table t1
+DROP Table t2
+go
