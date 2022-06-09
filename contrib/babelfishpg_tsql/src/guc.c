@@ -59,6 +59,8 @@ char*	pltsql_host_destribution = NULL;
 char*	pltsql_host_release = NULL;
 char*	pltsql_host_service_pack_level = NULL;
 
+bool	pltsql_enable_ddl_from_pgendpoint = false;
+
 static const struct config_enum_entry explain_format_options[] = {
 	{"text", EXPLAIN_FORMAT_TEXT, false},
 	{"xml", EXPLAIN_FORMAT_XML, false},
@@ -978,6 +980,15 @@ define_custom_variables(void)
 				 "",
 				 PGC_SIGHUP,
 				 GUC_NOT_IN_SAMPLE,
+				 NULL, NULL, NULL);
+
+	DefineCustomBoolVariable("babelfishpg_tsql.enable_ddl_from_pgendpoint",
+				 gettext_noop("Enables blocked DDL statements from PG endpoint"),
+				 NULL,
+				 &pltsql_enable_ddl_from_pgendpoint,
+				 false,
+				 PGC_USERSET,
+				 GUC_NOT_IN_SAMPLE | GUC_DISALLOW_IN_FILE | GUC_DISALLOW_IN_AUTO_FILE,
 				 NULL, NULL, NULL);
 }
 

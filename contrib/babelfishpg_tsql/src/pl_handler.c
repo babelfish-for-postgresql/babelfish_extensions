@@ -83,6 +83,7 @@
 
 extern bool escape_hatch_unique_constraint;
 extern bool pltsql_recursive_triggers;
+extern bool pltsql_enable_ddl_from_pgendpoint;
 
 extern List *babelfishpg_tsql_raw_parser(const char *str, RawParseMode mode);
 extern bool install_backend_gram_hooks();
@@ -2046,23 +2047,20 @@ static void bbf_ProcessUtility(PlannedStmt *pstmt,
 		return; /* Don't execute anything */
 
 	/*
-	 * Block ALTER VIEW and CREATE OR REPLACE VIEW statements from PG dialect
+	 * Block ALTER VIEW and CREATE OR REPLACE VIEW statements from PG client
 	 * executed on TSQL views which has entries in view_def catalog
 	 */
-	if (sql_dialect == SQL_DIALECT_PG)
+	if (!IS_TDS_CLIENT())
 	{
 		switch (nodeTag(parsetree))
 		{
 			case T_ViewStmt:
 			{
-				ViewStmt *vstmt = (ViewStmt *) parsetree;
-				Oid relid;
-				relid = RangeVarGetRelid(vstmt->view, NoLock, true);
-				if (vstmt->replace && check_is_tsql_view(relid))
+				if(!pltsql_enable_ddl_from_pgendpoint)
 				{
 					ereport(ERROR,
 							(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-							errmsg("REPLACE VIEW is not allowed on TSQL views which has entry in babelfish_view_def")));
+							errmsg("CREATE [OR REPLACE] VIEW is blocked from PG endpoint. Please set babelfishpg_tsql.enable_ddl_from_pgendpoint to true to enable.")));
 				}
 				break;
 			}
@@ -2071,14 +2069,11 @@ static void bbf_ProcessUtility(PlannedStmt *pstmt,
 				AlterTableStmt	*atstmt = (AlterTableStmt *) parsetree;
 				if (atstmt->objtype == OBJECT_VIEW)
 				{
-					Oid relid;
-					relid = RangeVarGetRelid(atstmt->relation, NoLock, true);
-
-					if (check_is_tsql_view(relid))
+					if(!pltsql_enable_ddl_from_pgendpoint)
 					{
 						ereport(ERROR,
 								(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-								errmsg("ALTER VIEW is not allowed on TSQL views which has entry in babelfish_view_def")));
+								errmsg("ALTER VIEW is blocked from PG endpoint. Please set babelfishpg_tsql.enable_ddl_from_pgendpoint to true to enable.")));
 					}
 				}
 				break;
@@ -2088,13 +2083,11 @@ static void bbf_ProcessUtility(PlannedStmt *pstmt,
 				RenameStmt *rnstmt = (RenameStmt *) parsetree;
 				if (rnstmt->renameType == OBJECT_VIEW)
 				{
-					Oid relid;
-					relid = RangeVarGetRelid(rnstmt->relation, NoLock, true);
-					if (check_is_tsql_view(relid))
+					if(!pltsql_enable_ddl_from_pgendpoint)
 					{
 						ereport(ERROR,
 								(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-								errmsg("REPLACE VIEW is not allowed on TSQL views which has entry in babelfish_view_def")));
+								errmsg("ALTER VIEW is blocked from PG endpoint. Please set babelfishpg_tsql.enable_ddl_from_pgendpoint to true to enable.")));
 					}
 				}
 				break;
@@ -2104,13 +2097,11 @@ static void bbf_ProcessUtility(PlannedStmt *pstmt,
 				AlterObjectSchemaStmt *altschstmt = (AlterObjectSchemaStmt *) parsetree;
 				if (altschstmt->objectType == OBJECT_VIEW)
 				{
-					Oid relid;
-					relid = RangeVarGetRelid(altschstmt->relation, NoLock, true);
-					if (check_is_tsql_view(relid))
+					if(!pltsql_enable_ddl_from_pgendpoint)
 					{
 						ereport(ERROR,
 								(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-								errmsg("REPLACE VIEW is not allowed on TSQL views which has entry in babelfish_view_def")));
+								errmsg("ALTER VIEW is blocked from PG endpoint. Please set babelfishpg_tsql.enable_ddl_from_pgendpoint to true to enable.")));
 					}
 				}
 				break;
