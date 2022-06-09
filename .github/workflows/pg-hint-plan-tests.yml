@@ -52,7 +52,7 @@ jobs:
         run: |
           cd test/JDBC/
           export inputFilesPath=pg_hint_plan
-          sudo psql -c "ALTER DATABASE jdbc_testdb SET session_preload_libraries = pg_hint_plan;"
+          sudo ~/postgres/bin/psql -d jdbc_testdb -U runner -c "ALTER DATABASE jdbc_testdb SET session_preload_libraries = pg_hint_plan;"
           mvn test
       
       - name: Upload Log
