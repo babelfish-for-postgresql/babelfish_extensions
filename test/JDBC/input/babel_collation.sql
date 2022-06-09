@@ -19,7 +19,7 @@ go
 SELECT * from fn_helpcollations();
 go
 
-select count(*) fn_helpcollations();
+select count(*) from fn_helpcollations();
 go
 
 -- BABEL-1697 Collation and Codepage information for DMS

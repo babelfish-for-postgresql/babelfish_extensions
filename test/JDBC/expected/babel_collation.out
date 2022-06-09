@@ -196,11 +196,12 @@ vietnamese_ci_ai#!#Vietnamese, case-insensitive, accent-insensitive, kanatype-in
 ~~END~~
 
 
-select count(*) fn_helpcollations();
+select count(*) from fn_helpcollations();
 go
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: syntax error near ')' at line 1 and character position 34)~~
+~~START~~
+int
+141
+~~END~~
 
 
 -- BABEL-1697 Collation and Codepage information for DMS
