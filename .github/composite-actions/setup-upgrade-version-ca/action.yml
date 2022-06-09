@@ -33,7 +33,7 @@ runs:
           install_dir=$(echo postgres$(awk '{$0=int($0)}1' <<< $next_upgrade_version))
           uses_file=""
           uses_file=$(if [[ $(awk '{$0=int($0)}1' <<< $prev_ver) == $(awk '{$0=int($0)}1' <<< $next_upgrade_version) ]]; then echo .\\/.github\\/composite-actions\\/minor-version-upgrade-util; else echo .\\/.github\\/composite-actions\\/major-version-upgrade-util; fi)
-          echo $uses_file
+
           sudo cat ${{ github.workspace }}/.github/template/upgrade-version-template.yml >> $upgrade_version_dir_path/action.yml
 
           sed -i "s/name: Upgrade Version to #/name: Upgrade Version to $next_upgrade_version/g" $upgrade_version_dir_path/action.yml
