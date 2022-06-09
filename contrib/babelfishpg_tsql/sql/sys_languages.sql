@@ -1,5 +1,5 @@
 /* Tsql DMLs*/
-INSERT INTO sys.syslanguages
+INSERT INTO sys.babelfish_syslanguages
      VALUES (1,
              'ENGLISH',
              'ENGLISH (AUSTRALIA)',
@@ -14,7 +14,7 @@ INSERT INTO sys.syslanguages
                                 'days_names', jsonb_build_array('Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'),
                                 'days_shortnames', jsonb_build_array('Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun')));
 
-INSERT INTO sys.syslanguages
+INSERT INTO sys.babelfish_syslanguages
      VALUES (2,
              'ENGLISH',
              'ENGLISH (BELGIUM)',
@@ -29,7 +29,7 @@ INSERT INTO sys.syslanguages
                                 'days_names', jsonb_build_array('Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'),
                                 'days_shortnames', jsonb_build_array('Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun')));
 
-INSERT INTO sys.syslanguages
+INSERT INTO sys.babelfish_syslanguages
      VALUES (3,
              'ENGLISH',
              'ENGLISH (BELIZE)',
@@ -44,7 +44,7 @@ INSERT INTO sys.syslanguages
                                 'days_names', jsonb_build_array('Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'),
                                 'days_shortnames', jsonb_build_array('Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun')));
 
-INSERT INTO sys.syslanguages
+INSERT INTO sys.babelfish_syslanguages
      VALUES (4,
              'ENGLISH',
              'ENGLISH (BOTSWANA)',
@@ -59,7 +59,7 @@ INSERT INTO sys.syslanguages
                                 'days_names', jsonb_build_array('Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'),
                                 'days_shortnames', jsonb_build_array('Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun')));
 
-INSERT INTO sys.syslanguages
+INSERT INTO sys.babelfish_syslanguages
      VALUES (5,
              'ENGLISH',
              'ENGLISH (CAMEROON)',
@@ -74,7 +74,7 @@ INSERT INTO sys.syslanguages
                                 'days_names', jsonb_build_array('Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'),
                                 'days_shortnames', jsonb_build_array('Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun')));
 
-INSERT INTO sys.syslanguages
+INSERT INTO sys.babelfish_syslanguages
      VALUES (6,
              'ENGLISH',
              'ENGLISH (CANADA)',
@@ -89,7 +89,7 @@ INSERT INTO sys.syslanguages
                                 'days_names', jsonb_build_array('Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'),
                                 'days_shortnames', jsonb_build_array('Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun')));
 
-INSERT INTO sys.syslanguages
+INSERT INTO sys.babelfish_syslanguages
      VALUES (7,
              'ENGLISH',
              'ENGLISH (ERITREA)',
@@ -104,7 +104,7 @@ INSERT INTO sys.syslanguages
                                 'days_names', jsonb_build_array('Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'),
                                 'days_shortnames', jsonb_build_array('Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun')));
 
-INSERT INTO sys.syslanguages
+INSERT INTO sys.babelfish_syslanguages
      VALUES (8,
              'ENGLISH',
              'ENGLISH (INDIA)',
@@ -119,7 +119,7 @@ INSERT INTO sys.syslanguages
                                 'days_names', jsonb_build_array('Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'),
                                 'days_shortnames', jsonb_build_array('Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun')));
 
-INSERT INTO sys.syslanguages
+INSERT INTO sys.babelfish_syslanguages
      VALUES (9,
              'ENGLISH',
              'ENGLISH (IRELAND)',
@@ -134,7 +134,7 @@ INSERT INTO sys.syslanguages
                                 'days_names', jsonb_build_array('Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'),
                                 'days_shortnames', jsonb_build_array('Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun')));
 
-INSERT INTO sys.syslanguages
+INSERT INTO sys.babelfish_syslanguages
      VALUES (10,
              'ENGLISH',
              'ENGLISH (JAMAICA)',
@@ -149,7 +149,7 @@ INSERT INTO sys.syslanguages
                                 'days_names', jsonb_build_array('Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'),
                                 'days_shortnames', jsonb_build_array('Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun')));
 
-INSERT INTO sys.syslanguages
+INSERT INTO sys.babelfish_syslanguages
      VALUES (11,
              'ENGLISH',
              'ENGLISH (KENYA)',
@@ -164,7 +164,7 @@ INSERT INTO sys.syslanguages
                                 'days_names', jsonb_build_array('Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'),
                                 'days_shortnames', jsonb_build_array('Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun')));
 
-INSERT INTO sys.syslanguages
+INSERT INTO sys.babelfish_syslanguages
      VALUES (12,
              'ENGLISH',
              'ENGLISH (MALAYSIA)',
@@ -179,7 +179,7 @@ INSERT INTO sys.syslanguages
                                 'days_names', jsonb_build_array('Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'),
                                 'days_shortnames', jsonb_build_array('Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun')));
 
-INSERT INTO sys.syslanguages
+INSERT INTO sys.babelfish_syslanguages
      VALUES (13,
              'ENGLISH',
              'ENGLISH (MALTA)',
@@ -194,7 +194,7 @@ INSERT INTO sys.syslanguages
                                 'days_names', jsonb_build_array('Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'),
                                 'days_shortnames', jsonb_build_array('Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun')));
 
-INSERT INTO sys.syslanguages
+INSERT INTO sys.babelfish_syslanguages
      VALUES (14,
              'ENGLISH',
              'ENGLISH (NEW ZEALAND)',
@@ -209,7 +209,7 @@ INSERT INTO sys.syslanguages
                                 'days_names', jsonb_build_array('Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'),
                                 'days_shortnames', jsonb_build_array('Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun')));
 
-INSERT INTO sys.syslanguages
+INSERT INTO sys.babelfish_syslanguages
      VALUES (15,
              'ENGLISH',
              'ENGLISH (NIGERIA)',
@@ -224,7 +224,7 @@ INSERT INTO sys.syslanguages
                                 'days_names', jsonb_build_array('Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'),
                                 'days_shortnames', jsonb_build_array('Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun')));
 
-INSERT INTO sys.syslanguages
+INSERT INTO sys.babelfish_syslanguages
      VALUES (16,
              'ENGLISH',
              'ENGLISH (PAKISTAN)',
@@ -239,7 +239,7 @@ INSERT INTO sys.syslanguages
                                 'days_names', jsonb_build_array('Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'),
                                 'days_shortnames', jsonb_build_array('Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun')));
 
-INSERT INTO sys.syslanguages
+INSERT INTO sys.babelfish_syslanguages
      VALUES (17,
              'ENGLISH',
              'ENGLISH (PHILIPPINES)',
@@ -254,7 +254,7 @@ INSERT INTO sys.syslanguages
                                 'days_names', jsonb_build_array('Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'),
                                 'days_shortnames', jsonb_build_array('Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun')));
 
-INSERT INTO sys.syslanguages
+INSERT INTO sys.babelfish_syslanguages
      VALUES (18,
              'ENGLISH',
              'ENGLISH (PUERTO RICO)',
@@ -269,7 +269,7 @@ INSERT INTO sys.syslanguages
                                 'days_names', jsonb_build_array('Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'),
                                 'days_shortnames', jsonb_build_array('Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun')));
 
-INSERT INTO sys.syslanguages
+INSERT INTO sys.babelfish_syslanguages
      VALUES (19,
              'ENGLISH',
              'ENGLISH (SINGAPORE)',
@@ -284,7 +284,7 @@ INSERT INTO sys.syslanguages
                                 'days_names', jsonb_build_array('Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'),
                                 'days_shortnames', jsonb_build_array('Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun')));
 
-INSERT INTO sys.syslanguages
+INSERT INTO sys.babelfish_syslanguages
      VALUES (20,
              'ENGLISH',
              'ENGLISH (SOUTH AFRICA)',
@@ -299,7 +299,7 @@ INSERT INTO sys.syslanguages
                                 'days_names', jsonb_build_array('Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'),
                                 'days_shortnames', jsonb_build_array('Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun')));
 
-INSERT INTO sys.syslanguages
+INSERT INTO sys.babelfish_syslanguages
      VALUES (21,
              'ENGLISH',
              'ENGLISH (TRINIDAD & TOBAGO)',
@@ -314,7 +314,7 @@ INSERT INTO sys.syslanguages
                                 'days_names', jsonb_build_array('Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'),
                                 'days_shortnames', jsonb_build_array('Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun')));
 
-INSERT INTO sys.syslanguages
+INSERT INTO sys.babelfish_syslanguages
      VALUES (22,
              'ENGLISH',
              'ENGLISH (GREAT BRITAIN)',
@@ -329,7 +329,7 @@ INSERT INTO sys.syslanguages
                                 'days_names', jsonb_build_array('Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'),
                                 'days_shortnames', jsonb_build_array('Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun')));
 
-INSERT INTO sys.syslanguages
+INSERT INTO sys.babelfish_syslanguages
      VALUES (23,
              'ENGLISH',
              'ENGLISH (UNITED KINGDOM)',
@@ -344,7 +344,7 @@ INSERT INTO sys.syslanguages
                                 'days_names', jsonb_build_array('Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'),
                                 'days_shortnames', jsonb_build_array('Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun')));
 
-INSERT INTO sys.syslanguages
+INSERT INTO sys.babelfish_syslanguages
      VALUES (24,
              'ENGLISH',
              'ENGLISH (ENGLAND)',
@@ -359,7 +359,7 @@ INSERT INTO sys.syslanguages
                                 'days_names', jsonb_build_array('Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'),
                                 'days_shortnames', jsonb_build_array('Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun')));
 
-INSERT INTO sys.syslanguages
+INSERT INTO sys.babelfish_syslanguages
      VALUES (25,
              'ENGLISH',
              'ENGLISH (UNITED STATES)',
@@ -374,7 +374,7 @@ INSERT INTO sys.syslanguages
                                 'days_names', jsonb_build_array('Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'),
                                 'days_shortnames', jsonb_build_array('Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun')));
 
-INSERT INTO sys.syslanguages
+INSERT INTO sys.babelfish_syslanguages
      VALUES (26,
              'ENGLISH',
              'ENGLISH (ZIMBABWE)',
@@ -389,7 +389,7 @@ INSERT INTO sys.syslanguages
                                 'days_names', jsonb_build_array('Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'),
                                 'days_shortnames', jsonb_build_array('Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun')));
 
-INSERT INTO sys.syslanguages
+INSERT INTO sys.babelfish_syslanguages
      VALUES (27,
              'GERMAN',
              'GERMAN (AUSTRIA)',
@@ -404,7 +404,7 @@ INSERT INTO sys.syslanguages
                                 'days_names', jsonb_build_array('Montag', 'Dienstag', 'Mittwoch', 'Donnerstag', 'Freitag', 'Samstag', 'Sonntag'),
                                 'days_shortnames', jsonb_build_array('Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun')));
 
-INSERT INTO sys.syslanguages
+INSERT INTO sys.babelfish_syslanguages
      VALUES (28,
              'GERMAN',
              'GERMAN (BELGIUM)',
@@ -419,7 +419,7 @@ INSERT INTO sys.syslanguages
                                 'days_names', jsonb_build_array('Montag', 'Dienstag', 'Mittwoch', 'Donnerstag', 'Freitag', 'Samstag', 'Sonntag'),
                                 'days_shortnames', jsonb_build_array('Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun')));
 
-INSERT INTO sys.syslanguages
+INSERT INTO sys.babelfish_syslanguages
      VALUES (29,
              'GERMAN',
              'GERMAN (GERMANY)',
@@ -437,7 +437,7 @@ INSERT INTO sys.syslanguages
                                 'days_shortnames', jsonb_build_array('Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'),
                                 'days_extrashortnames', jsonb_build_array('Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday')));
 
-INSERT INTO sys.syslanguages
+INSERT INTO sys.babelfish_syslanguages
      VALUES (30,
              'GERMAN',
              'GERMAN (LIECHTENSTEIN)',
@@ -452,7 +452,7 @@ INSERT INTO sys.syslanguages
                                 'days_names', jsonb_build_array('Montag', 'Dienstag', 'Mittwoch', 'Donnerstag', 'Freitag', 'Samstag', 'Sonntag'),
                                 'days_shortnames', jsonb_build_array('Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun')));
 
-INSERT INTO sys.syslanguages
+INSERT INTO sys.babelfish_syslanguages
      VALUES (31,
              'GERMAN',
              'GERMAN (LUXEMBOURG)',
@@ -467,7 +467,7 @@ INSERT INTO sys.syslanguages
                                 'days_names', jsonb_build_array('Montag', 'Dienstag', 'Mittwoch', 'Donnerstag', 'Freitag', 'Samstag', 'Sonntag'),
                                 'days_shortnames', jsonb_build_array('Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun')));
 
-INSERT INTO sys.syslanguages
+INSERT INTO sys.babelfish_syslanguages
      VALUES (32,
              'GERMAN',
              'GERMAN (SWITZERLAND)',
@@ -482,7 +482,7 @@ INSERT INTO sys.syslanguages
                                 'days_names', jsonb_build_array('Montag', 'Dienstag', 'Mittwoch', 'Donnerstag', 'Freitag', 'Samstag', 'Sonntag'),
                                 'days_shortnames', jsonb_build_array('Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun')));
 
-INSERT INTO sys.syslanguages
+INSERT INTO sys.babelfish_syslanguages
      VALUES (33,
              'FRENCH',
              'FRENCH (ALGERIA)',
@@ -497,7 +497,7 @@ INSERT INTO sys.syslanguages
                                 'days_names', jsonb_build_array('lundi', 'mardi', 'mercredi', 'jeudi', 'vendredi', 'samedi', 'dimanche'),
                                 'days_shortnames', jsonb_build_array('Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun')));
 
-INSERT INTO sys.syslanguages
+INSERT INTO sys.babelfish_syslanguages
      VALUES (34,
              'FRENCH',
              'FRENCH (BELGIUM)',
@@ -512,7 +512,7 @@ INSERT INTO sys.syslanguages
                                 'days_names', jsonb_build_array('lundi', 'mardi', 'mercredi', 'jeudi', 'vendredi', 'samedi', 'dimanche'),
                                 'days_shortnames', jsonb_build_array('Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun')));
 
-INSERT INTO sys.syslanguages
+INSERT INTO sys.babelfish_syslanguages
      VALUES (35,
              'FRENCH',
              'FRENCH (CAMEROON)',
@@ -527,7 +527,7 @@ INSERT INTO sys.syslanguages
                                 'days_names', jsonb_build_array('lundi', 'mardi', 'mercredi', 'jeudi', 'vendredi', 'samedi', 'dimanche'),
                                 'days_shortnames', jsonb_build_array('Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun')));
 
-INSERT INTO sys.syslanguages
+INSERT INTO sys.babelfish_syslanguages
      VALUES (36,
              'FRENCH',
              'FRENCH (CANADA)',
@@ -542,7 +542,7 @@ INSERT INTO sys.syslanguages
                                 'days_names', jsonb_build_array('lundi', 'mardi', 'mercredi', 'jeudi', 'vendredi', 'samedi', 'dimanche'),
                                 'days_shortnames', jsonb_build_array('Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun')));
 
-INSERT INTO sys.syslanguages
+INSERT INTO sys.babelfish_syslanguages
      VALUES (37,
              'FRENCH',
              'FRENCH (FRANCE)',
@@ -560,7 +560,7 @@ INSERT INTO sys.syslanguages
                                 'days_shortnames', jsonb_build_array('Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'),
                                 'days_extrashortnames', jsonb_build_array('Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday')));
 
-INSERT INTO sys.syslanguages
+INSERT INTO sys.babelfish_syslanguages
      VALUES (38,
              'FRENCH',
              'FRENCH (HAITI)',
@@ -575,7 +575,7 @@ INSERT INTO sys.syslanguages
                                 'days_names', jsonb_build_array('lundi', 'mardi', 'mercredi', 'jeudi', 'vendredi', 'samedi', 'dimanche'),
                                 'days_shortnames', jsonb_build_array('Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun')));
 
-INSERT INTO sys.syslanguages
+INSERT INTO sys.babelfish_syslanguages
      VALUES (39,
              'FRENCH',
              'FRENCH (LUXEMBOURG)',
@@ -590,7 +590,7 @@ INSERT INTO sys.syslanguages
                                 'days_names', jsonb_build_array('lundi', 'mardi', 'mercredi', 'jeudi', 'vendredi', 'samedi', 'dimanche'),
                                 'days_shortnames', jsonb_build_array('Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun')));
 
-INSERT INTO sys.syslanguages
+INSERT INTO sys.babelfish_syslanguages
      VALUES (40,
              'FRENCH',
              'FRENCH (MALI)',
@@ -605,7 +605,7 @@ INSERT INTO sys.syslanguages
                                 'days_names', jsonb_build_array('lundi', 'mardi', 'mercredi', 'jeudi', 'vendredi', 'samedi', 'dimanche'),
                                 'days_shortnames', jsonb_build_array('Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun')));
 
-INSERT INTO sys.syslanguages
+INSERT INTO sys.babelfish_syslanguages
      VALUES (41,
              'FRENCH',
              'FRENCH (MONACO)',
@@ -620,7 +620,7 @@ INSERT INTO sys.syslanguages
                                 'days_names', jsonb_build_array('lundi', 'mardi', 'mercredi', 'jeudi', 'vendredi', 'samedi', 'dimanche'),
                                 'days_shortnames', jsonb_build_array('Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun')));
 
-INSERT INTO sys.syslanguages
+INSERT INTO sys.babelfish_syslanguages
      VALUES (42,
              'FRENCH',
              'FRENCH (MOROCCO)',
@@ -635,7 +635,7 @@ INSERT INTO sys.syslanguages
                                 'days_names', jsonb_build_array('lundi', 'mardi', 'mercredi', 'jeudi', 'vendredi', 'samedi', 'dimanche'),
                                 'days_shortnames', jsonb_build_array('Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun')));
 
-INSERT INTO sys.syslanguages
+INSERT INTO sys.babelfish_syslanguages
      VALUES (43,
              'FRENCH',
              'FRENCH (SENEGAL)',
@@ -650,7 +650,7 @@ INSERT INTO sys.syslanguages
                                 'days_names', jsonb_build_array('lundi', 'mardi', 'mercredi', 'jeudi', 'vendredi', 'samedi', 'dimanche'),
                                 'days_shortnames', jsonb_build_array('Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun')));
 
-INSERT INTO sys.syslanguages
+INSERT INTO sys.babelfish_syslanguages
      VALUES (44,
              'FRENCH',
              'FRENCH (SWITZERLAND)',
@@ -665,7 +665,7 @@ INSERT INTO sys.syslanguages
                                 'days_names', jsonb_build_array('lundi', 'mardi', 'mercredi', 'jeudi', 'vendredi', 'samedi', 'dimanche'),
                                 'days_shortnames', jsonb_build_array('Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun')));
 
-INSERT INTO sys.syslanguages
+INSERT INTO sys.babelfish_syslanguages
      VALUES (45,
              'FRENCH',
              'FRENCH (SYRIA)',
@@ -680,7 +680,7 @@ INSERT INTO sys.syslanguages
                                 'days_names', jsonb_build_array('lundi', 'mardi', 'mercredi', 'jeudi', 'vendredi', 'samedi', 'dimanche'),
                                 'days_shortnames', jsonb_build_array('Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun')));
 
-INSERT INTO sys.syslanguages
+INSERT INTO sys.babelfish_syslanguages
      VALUES (46,
              'FRENCH',
              'FRENCH (TUNISIA)',
@@ -695,7 +695,7 @@ INSERT INTO sys.syslanguages
                                 'days_names', jsonb_build_array('lundi', 'mardi', 'mercredi', 'jeudi', 'vendredi', 'samedi', 'dimanche'),
                                 'days_shortnames', jsonb_build_array('Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun')));
 
-INSERT INTO sys.syslanguages
+INSERT INTO sys.babelfish_syslanguages
      VALUES (47,
              'JAPANESE',
              'JAPANESE (JAPAN)',
@@ -711,7 +711,7 @@ INSERT INTO sys.syslanguages
                                 'days_shortnames', jsonb_build_array('Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'),
                                 'days_extrashortnames', jsonb_build_array('Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday')));
 
-INSERT INTO sys.syslanguages
+INSERT INTO sys.babelfish_syslanguages
      VALUES (48,
              'DANISH',
              'DANISH (DENMARK)',
@@ -729,7 +729,7 @@ INSERT INTO sys.syslanguages
                                 'days_shortnames', jsonb_build_array('Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'),
                                 'days_extrashortnames', jsonb_build_array('Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday')));
 
-INSERT INTO sys.syslanguages
+INSERT INTO sys.babelfish_syslanguages
      VALUES (49,
              'DANISH',
              'DANISH (GREENLAND)',
@@ -744,7 +744,7 @@ INSERT INTO sys.syslanguages
                                 'days_names', jsonb_build_array('mandag', 'tirsdag', 'onsdag', 'torsdag', 'fredag', 'lørdag', 'søndag'),
                                 'days_shortnames', jsonb_build_array('Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun')));
 
-INSERT INTO sys.syslanguages
+INSERT INTO sys.babelfish_syslanguages
      VALUES (50,
              'SPANISH',
              'SPANISH (ARGENTINA)',
@@ -759,7 +759,7 @@ INSERT INTO sys.syslanguages
                                 'days_names', jsonb_build_array('Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado', 'Domingo'),
                                 'days_shortnames', jsonb_build_array('Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun')));
 
-INSERT INTO sys.syslanguages
+INSERT INTO sys.babelfish_syslanguages
      VALUES (51,
              'SPANISH',
              'SPANISH (BOLIVIA)',
@@ -774,7 +774,7 @@ INSERT INTO sys.syslanguages
                                 'days_names', jsonb_build_array('Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado', 'Domingo'),
                                 'days_shortnames', jsonb_build_array('Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun')));
 
-INSERT INTO sys.syslanguages
+INSERT INTO sys.babelfish_syslanguages
      VALUES (52,
              'SPANISH',
              'SPANISH (CHILE)',
@@ -789,7 +789,7 @@ INSERT INTO sys.syslanguages
                                 'days_names', jsonb_build_array('Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado', 'Domingo'),
                                 'days_shortnames', jsonb_build_array('Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun')));
 
-INSERT INTO sys.syslanguages
+INSERT INTO sys.babelfish_syslanguages
      VALUES (53,
              'SPANISH',
              'SPANISH (COLOMBIA)',
@@ -804,7 +804,7 @@ INSERT INTO sys.syslanguages
                                 'days_names', jsonb_build_array('Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado', 'Domingo'),
                                 'days_shortnames', jsonb_build_array('Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun')));
 
-INSERT INTO sys.syslanguages
+INSERT INTO sys.babelfish_syslanguages
      VALUES (54,
              'SPANISH',
              'SPANISH (COSTA RICA)',
@@ -819,7 +819,7 @@ INSERT INTO sys.syslanguages
                                 'days_names', jsonb_build_array('Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado', 'Domingo'),
                                 'days_shortnames', jsonb_build_array('Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun')));
 
-INSERT INTO sys.syslanguages
+INSERT INTO sys.babelfish_syslanguages
      VALUES (55,
              'SPANISH',
              'SPANISH (CUBA)',
@@ -834,7 +834,7 @@ INSERT INTO sys.syslanguages
                                 'days_names', jsonb_build_array('Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado', 'Domingo'),
                                 'days_shortnames', jsonb_build_array('Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun')));
 
-INSERT INTO sys.syslanguages
+INSERT INTO sys.babelfish_syslanguages
      VALUES (56,
              'SPANISH',
              'SPANISH (DOMINICAN REPUBLIC)',
@@ -849,7 +849,7 @@ INSERT INTO sys.syslanguages
                                 'days_names', jsonb_build_array('Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado', 'Domingo'),
                                 'days_shortnames', jsonb_build_array('Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun')));
 
-INSERT INTO sys.syslanguages
+INSERT INTO sys.babelfish_syslanguages
      VALUES (57,
              'SPANISH',
              'SPANISH (ECUADOR)',
@@ -864,7 +864,7 @@ INSERT INTO sys.syslanguages
                                 'days_names', jsonb_build_array('Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado', 'Domingo'),
                                 'days_shortnames', jsonb_build_array('Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun')));
 
-INSERT INTO sys.syslanguages
+INSERT INTO sys.babelfish_syslanguages
      VALUES (58,
              'SPANISH',
              'SPANISH (EL SALVADOR)',
@@ -879,7 +879,7 @@ INSERT INTO sys.syslanguages
                                 'days_names', jsonb_build_array('Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado', 'Domingo'),
                                 'days_shortnames', jsonb_build_array('Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun')));
 
-INSERT INTO sys.syslanguages
+INSERT INTO sys.babelfish_syslanguages
      VALUES (59,
              'SPANISH',
              'SPANISH (GUATEMALA)',
@@ -894,7 +894,7 @@ INSERT INTO sys.syslanguages
                                 'days_names', jsonb_build_array('Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado', 'Domingo'),
                                 'days_shortnames', jsonb_build_array('Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun')));
 
-INSERT INTO sys.syslanguages
+INSERT INTO sys.babelfish_syslanguages
      VALUES (60,
              'SPANISH',
              'SPANISH (HONDURASALA)',
@@ -909,7 +909,7 @@ INSERT INTO sys.syslanguages
                                 'days_names', jsonb_build_array('Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado', 'Domingo'),
                                 'days_shortnames', jsonb_build_array('Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun')));
 
-INSERT INTO sys.syslanguages
+INSERT INTO sys.babelfish_syslanguages
      VALUES (61,
              'SPANISH',
              'SPANISH (MEXICO)',
@@ -924,7 +924,7 @@ INSERT INTO sys.syslanguages
                                 'days_names', jsonb_build_array('Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado', 'Domingo'),
                                 'days_shortnames', jsonb_build_array('Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun')));
 
-INSERT INTO sys.syslanguages
+INSERT INTO sys.babelfish_syslanguages
      VALUES (62,
              'SPANISH',
              'SPANISH (NICARAGUA)',
@@ -939,7 +939,7 @@ INSERT INTO sys.syslanguages
                                 'days_names', jsonb_build_array('Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado', 'Domingo'),
                                 'days_shortnames', jsonb_build_array('Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun')));
 
-INSERT INTO sys.syslanguages
+INSERT INTO sys.babelfish_syslanguages
      VALUES (63,
              'SPANISH',
              'SPANISH (PANAMA)',
@@ -954,7 +954,7 @@ INSERT INTO sys.syslanguages
                                 'days_names', jsonb_build_array('Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado', 'Domingo'),
                                 'days_shortnames', jsonb_build_array('Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun')));
 
-INSERT INTO sys.syslanguages
+INSERT INTO sys.babelfish_syslanguages
      VALUES (64,
              'SPANISH',
              'SPANISH (PARAGUAY)',
@@ -969,7 +969,7 @@ INSERT INTO sys.syslanguages
                                 'days_names', jsonb_build_array('Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado', 'Domingo'),
                                 'days_shortnames', jsonb_build_array('Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun')));
 
-INSERT INTO sys.syslanguages
+INSERT INTO sys.babelfish_syslanguages
      VALUES (65,
              'SPANISH',
              'SPANISH (PERU)',
@@ -984,7 +984,7 @@ INSERT INTO sys.syslanguages
                                 'days_names', jsonb_build_array('Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado', 'Domingo'),
                                 'days_shortnames', jsonb_build_array('Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun')));
 
-INSERT INTO sys.syslanguages
+INSERT INTO sys.babelfish_syslanguages
      VALUES (66,
              'SPANISH',
              'SPANISH (PHILIPPINES)',
@@ -999,7 +999,7 @@ INSERT INTO sys.syslanguages
                                 'days_names', jsonb_build_array('Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado', 'Domingo'),
                                 'days_shortnames', jsonb_build_array('Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun')));
 
-INSERT INTO sys.syslanguages
+INSERT INTO sys.babelfish_syslanguages
      VALUES (67,
              'SPANISH',
              'SPANISH (PUERTO RICO)',
@@ -1014,7 +1014,7 @@ INSERT INTO sys.syslanguages
                                 'days_names', jsonb_build_array('Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado', 'Domingo'),
                                 'days_shortnames', jsonb_build_array('Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun')));
 
-INSERT INTO sys.syslanguages
+INSERT INTO sys.babelfish_syslanguages
      VALUES (68,
              'SPANISH',
              'SPANISH (SPAIN)',
@@ -1032,7 +1032,7 @@ INSERT INTO sys.syslanguages
                                 'days_shortnames', jsonb_build_array('Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'),
                                 'days_extrashortnames', jsonb_build_array('Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday')));
 
-INSERT INTO sys.syslanguages
+INSERT INTO sys.babelfish_syslanguages
      VALUES (69,
              'SPANISH',
              'SPANISH (UNITED STATES)',
@@ -1047,7 +1047,7 @@ INSERT INTO sys.syslanguages
                                 'days_names', jsonb_build_array('Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado', 'Domingo'),
                                 'days_shortnames', jsonb_build_array('Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun')));
 
-INSERT INTO sys.syslanguages
+INSERT INTO sys.babelfish_syslanguages
      VALUES (70,
              'SPANISH',
              'SPANISH (URUGUAY)',
@@ -1062,7 +1062,7 @@ INSERT INTO sys.syslanguages
                                 'days_names', jsonb_build_array('Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado', 'Domingo'),
                                 'days_shortnames', jsonb_build_array('Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun')));
 
-INSERT INTO sys.syslanguages
+INSERT INTO sys.babelfish_syslanguages
      VALUES (71,
              'SPANISH',
              'SPANISH (VENEZUELA)',
@@ -1077,7 +1077,7 @@ INSERT INTO sys.syslanguages
                                 'days_names', jsonb_build_array('Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado', 'Domingo'),
                                 'days_shortnames', jsonb_build_array('Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun')));
 
-INSERT INTO sys.syslanguages
+INSERT INTO sys.babelfish_syslanguages
      VALUES (72,
              'ITALIAN',
              'ITALIAN (ITALY)',
@@ -1095,7 +1095,7 @@ INSERT INTO sys.syslanguages
                                 'days_shortnames', jsonb_build_array('Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'),
                                 'days_extrashortnames', jsonb_build_array('Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday')));
 
-INSERT INTO sys.syslanguages
+INSERT INTO sys.babelfish_syslanguages
      VALUES (73,
              'ITALIAN',
              'ITALIAN (SWITZERLAND)',
@@ -1110,7 +1110,7 @@ INSERT INTO sys.syslanguages
                                 'days_names', jsonb_build_array('lunedì', 'martedì', 'mercoledì', 'giovedì', 'venerdì', 'sabato', 'domenica'),
                                 'days_shortnames', jsonb_build_array('Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun')));
 
-INSERT INTO sys.syslanguages
+INSERT INTO sys.babelfish_syslanguages
      VALUES (74,
              'DUTCH',
              'DUTCH (BELGIUM)',
@@ -1125,7 +1125,7 @@ INSERT INTO sys.syslanguages
                                 'days_names', jsonb_build_array('maandag', 'dinsdag', 'woensdag', 'donderdag', 'vrijdag', 'zaterdag', 'zondag'),
                                 'days_shortnames', jsonb_build_array('Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun')));
 
-INSERT INTO sys.syslanguages
+INSERT INTO sys.babelfish_syslanguages
      VALUES (75,
              'DUTCH',
              'DUTCH (NETHERLANDS)',
@@ -1143,7 +1143,7 @@ INSERT INTO sys.syslanguages
                                 'days_shortnames', jsonb_build_array('Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'),
                                 'days_extrashortnames', jsonb_build_array('Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday')));
 
-INSERT INTO sys.syslanguages
+INSERT INTO sys.babelfish_syslanguages
      VALUES (76,
              'NORWEGIAN',
              'NORWEGIAN (NORWAY)',
@@ -1158,7 +1158,7 @@ INSERT INTO sys.syslanguages
                                 'days_names', jsonb_build_array('mandag', 'tirsdag', 'onsdag', 'torsdag', 'fredag', 'lørdag', 'søndag'),
                                 'days_shortnames', jsonb_build_array('Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun')));
 
-INSERT INTO sys.syslanguages
+INSERT INTO sys.babelfish_syslanguages
      VALUES (77,
              'NORWEGIAN (MS SQL)',
              'NORWEGIAN NYNORSK (NORWAY)',
@@ -1176,7 +1176,7 @@ INSERT INTO sys.syslanguages
                                 'days_shortnames', jsonb_build_array('Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'),
                                 'days_extrashortnames', jsonb_build_array('Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday')));
 
-INSERT INTO sys.syslanguages
+INSERT INTO sys.babelfish_syslanguages
      VALUES (78,
              'PORTUGUESE',
              'PORTUGUESE (BRAZIL)',
@@ -1194,7 +1194,7 @@ INSERT INTO sys.syslanguages
                                 'days_shortnames', jsonb_build_array('Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'),
                                 'days_extrashortnames', jsonb_build_array('Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday')));
 
-INSERT INTO sys.syslanguages
+INSERT INTO sys.babelfish_syslanguages
      VALUES (79,
              'PORTUGUESE',
              'PORTUGUESE (PORTUGAL)',
@@ -1212,7 +1212,7 @@ INSERT INTO sys.syslanguages
                                 'days_shortnames', jsonb_build_array('Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'),
                                 'days_extrashortnames', jsonb_build_array('Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday')));
 
-INSERT INTO sys.syslanguages
+INSERT INTO sys.babelfish_syslanguages
      VALUES (80,
              'FINNISH',
              'FINNISH (FINLAND)',
@@ -1227,7 +1227,7 @@ INSERT INTO sys.syslanguages
                                 'days_names', jsonb_build_array('maanantai', 'tiistai', 'keskiviikko', 'torstai', 'perjantai', 'lauantai', 'sunnuntai'),
                                 'days_shortnames', jsonb_build_array('Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun')));
 
-INSERT INTO sys.syslanguages
+INSERT INTO sys.babelfish_syslanguages
      VALUES (81,
              'FINNISH (MS SQL)',
              'FINNISH (FINLAND)',
@@ -1245,7 +1245,7 @@ INSERT INTO sys.syslanguages
                                 'days_shortnames', jsonb_build_array('Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'),
                                 'days_extrashortnames', jsonb_build_array('Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday')));
 
-INSERT INTO sys.syslanguages
+INSERT INTO sys.babelfish_syslanguages
      VALUES (82,
              'SWEDISH',
              'SWEDISH (FINLAND)',
@@ -1260,7 +1260,7 @@ INSERT INTO sys.syslanguages
                                 'days_names', jsonb_build_array('måndag', 'tisdag', 'onsdag', 'torsdag', 'fredag', 'lördag', 'söndag'),
                                 'days_shortnames', jsonb_build_array('Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun')));
 
-INSERT INTO sys.syslanguages
+INSERT INTO sys.babelfish_syslanguages
      VALUES (83,
              'SWEDISH',
              'SWEDISH (SWEDEN)',
@@ -1278,7 +1278,7 @@ INSERT INTO sys.syslanguages
                                 'days_shortnames', jsonb_build_array('Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'),
                                 'days_extrashortnames', jsonb_build_array('Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday')));
 
-INSERT INTO sys.syslanguages
+INSERT INTO sys.babelfish_syslanguages
      VALUES (84,
              'CZECH',
              'CZECH (CZECH REPUBLIC)',
@@ -1296,7 +1296,7 @@ INSERT INTO sys.syslanguages
                                 'days_shortnames', jsonb_build_array('Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'),
                                 'days_extrashortnames', jsonb_build_array('Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday')));
 
-INSERT INTO sys.syslanguages
+INSERT INTO sys.babelfish_syslanguages
      VALUES (85,
              'HUNGARIAN',
              'HUNGARIAN (HUNGARY)',
@@ -1313,7 +1313,7 @@ INSERT INTO sys.syslanguages
                                 'days_shortnames', jsonb_build_array('Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'),
                                 'days_extrashortnames', jsonb_build_array('Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday')));
 
-INSERT INTO sys.syslanguages
+INSERT INTO sys.babelfish_syslanguages
      VALUES (86,
              'POLISH',
              'POLISH (POLAND)',
@@ -1331,7 +1331,7 @@ INSERT INTO sys.syslanguages
                                 'days_shortnames', jsonb_build_array('Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'),
                                 'days_extrashortnames', jsonb_build_array('Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday')));
 
-INSERT INTO sys.syslanguages
+INSERT INTO sys.babelfish_syslanguages
      VALUES (87,
              'ROMANIAN',
              'ROMANIAN (MOLDOVA)',
@@ -1346,7 +1346,7 @@ INSERT INTO sys.syslanguages
                                 'days_names', jsonb_build_array('luni', 'marţi', 'miercuri', 'joi', 'vineri', 'sîmbătă', 'duminică'),
                                 'days_shortnames', jsonb_build_array('Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun')));
 
-INSERT INTO sys.syslanguages
+INSERT INTO sys.babelfish_syslanguages
      VALUES (88,
              'ROMANIAN',
              'ROMANIAN (ROMANIA)',
@@ -1364,7 +1364,7 @@ INSERT INTO sys.syslanguages
                                 'days_shortnames', jsonb_build_array('Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'),
                                 'days_extrashortnames', jsonb_build_array('Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday')));
 
-INSERT INTO sys.syslanguages
+INSERT INTO sys.babelfish_syslanguages
      VALUES (89,
              'CROATIAN',
              'CROATIAN (CROATIA)',
@@ -1382,7 +1382,7 @@ INSERT INTO sys.syslanguages
                                 'days_shortnames', jsonb_build_array('Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'),
                                 'days_extrashortnames', jsonb_build_array('Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday')));
 
-INSERT INTO sys.syslanguages
+INSERT INTO sys.babelfish_syslanguages
      VALUES (90,
              'SLOVAK',
              'SLOVAK (SLOVAKIA)',
@@ -1400,7 +1400,7 @@ INSERT INTO sys.syslanguages
                                 'days_shortnames', jsonb_build_array('Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'),
                                 'days_extrashortnames', jsonb_build_array('Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday')));
 
-INSERT INTO sys.syslanguages
+INSERT INTO sys.babelfish_syslanguages
      VALUES (91,
              'SLOVENIAN',
              'SLOVENIAN (SLOVENIA)',
@@ -1418,7 +1418,7 @@ INSERT INTO sys.syslanguages
                                 'days_shortnames', jsonb_build_array('Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'),
                                 'days_extrashortnames', jsonb_build_array('Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday')));
 
-INSERT INTO sys.syslanguages
+INSERT INTO sys.babelfish_syslanguages
      VALUES (92,
              'GREEK',
              'GREEK (GREECE)',
@@ -1436,7 +1436,7 @@ INSERT INTO sys.syslanguages
                                 'days_shortnames', jsonb_build_array('Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'),
                                 'days_extrashortnames', jsonb_build_array('Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday')));
 
-INSERT INTO sys.syslanguages
+INSERT INTO sys.babelfish_syslanguages
      VALUES (93,
              'BULGARIAN',
              'BULGARIAN (BULGARIA)',
@@ -1454,7 +1454,7 @@ INSERT INTO sys.syslanguages
                                 'days_shortnames', jsonb_build_array('Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'),
                                 'days_extrashortnames', jsonb_build_array('Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday')));
 
-INSERT INTO sys.syslanguages
+INSERT INTO sys.babelfish_syslanguages
      VALUES (94,
              'RUSSIAN',
              'RUSSIAN (BELARUS)',
@@ -1469,7 +1469,7 @@ INSERT INTO sys.syslanguages
                                 'days_names', jsonb_build_array('понедельник', 'вторник', 'среда', 'четверг', 'пятница', 'суббота', 'воскресенье'),
                                 'days_shortnames', jsonb_build_array('Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun')));
 
-INSERT INTO sys.syslanguages
+INSERT INTO sys.babelfish_syslanguages
      VALUES (95,
              'RUSSIAN',
              'RUSSIAN (KAZAKHSTAN)',
@@ -1484,7 +1484,7 @@ INSERT INTO sys.syslanguages
                                 'days_names', jsonb_build_array('понедельник', 'вторник', 'среда', 'четверг', 'пятница', 'суббота', 'воскресенье'),
                                 'days_shortnames', jsonb_build_array('Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun')));
 
-INSERT INTO sys.syslanguages
+INSERT INTO sys.babelfish_syslanguages
      VALUES (96,
              'RUSSIAN',
              'RUSSIAN (KYRGYZSTAN)',
@@ -1499,7 +1499,7 @@ INSERT INTO sys.syslanguages
                                 'days_names', jsonb_build_array('понедельник', 'вторник', 'среда', 'четверг', 'пятница', 'суббота', 'воскресенье'),
                                 'days_shortnames', jsonb_build_array('Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun')));
 
-INSERT INTO sys.syslanguages
+INSERT INTO sys.babelfish_syslanguages
      VALUES (97,
              'RUSSIAN',
              'RUSSIAN (MOLDOVA)',
@@ -1514,7 +1514,7 @@ INSERT INTO sys.syslanguages
                                 'days_names', jsonb_build_array('понедельник', 'вторник', 'среда', 'четверг', 'пятница', 'суббота', 'воскресенье'),
                                 'days_shortnames', jsonb_build_array('Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun')));
 
-INSERT INTO sys.syslanguages
+INSERT INTO sys.babelfish_syslanguages
      VALUES (98,
              'RUSSIAN',
              'RUSSIAN (RUSSIA)',
@@ -1532,7 +1532,7 @@ INSERT INTO sys.syslanguages
                                 'days_shortnames', jsonb_build_array('Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'),
                                 'days_extrashortnames', jsonb_build_array('Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday')));
 
-INSERT INTO sys.syslanguages
+INSERT INTO sys.babelfish_syslanguages
      VALUES (99,
              'RUSSIAN',
              'RUSSIAN (UKRAINE)',
@@ -1547,7 +1547,7 @@ INSERT INTO sys.syslanguages
                                 'days_names', jsonb_build_array('понедельник', 'вторник', 'среда', 'четверг', 'пятница', 'суббота', 'воскресенье'),
                                 'days_shortnames', jsonb_build_array('Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun')));
 
-INSERT INTO sys.syslanguages
+INSERT INTO sys.babelfish_syslanguages
      VALUES (100,
              'TURKISH',
              'TURKISH (TURKEY)',
@@ -1565,7 +1565,7 @@ INSERT INTO sys.syslanguages
                                 'days_shortnames', jsonb_build_array('Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'),
                                 'days_extrashortnames', jsonb_build_array('Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday')));
 
-INSERT INTO sys.syslanguages
+INSERT INTO sys.babelfish_syslanguages
      VALUES (101,
              'ESTONIAN',
              'ESTONIAN (ESTONIA)',
@@ -1583,7 +1583,7 @@ INSERT INTO sys.syslanguages
                                 'days_shortnames', jsonb_build_array('Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'),
                                 'days_extrashortnames', jsonb_build_array('Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday')));
 
-INSERT INTO sys.syslanguages
+INSERT INTO sys.babelfish_syslanguages
      VALUES (102,
              'LATVIAN',
              'LATVIAN (LATVIA)',
@@ -1601,7 +1601,7 @@ INSERT INTO sys.syslanguages
                                 'days_shortnames', jsonb_build_array('Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'),
                                 'days_extrashortnames', jsonb_build_array('Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday')));
 
-INSERT INTO sys.syslanguages
+INSERT INTO sys.babelfish_syslanguages
      VALUES (103,
              'LITHUANIAN',
              'LITHUANIAN (LITHUANIA)',
@@ -1619,7 +1619,7 @@ INSERT INTO sys.syslanguages
                                 'days_shortnames', jsonb_build_array('Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'),
                                 'days_extrashortnames', jsonb_build_array('Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday')));
 
-INSERT INTO sys.syslanguages
+INSERT INTO sys.babelfish_syslanguages
      VALUES (104,
              'CHINESE (TRADITIONAL)',
              'CHINESE (TRADITIONAL, CHINA)',
@@ -1637,7 +1637,7 @@ INSERT INTO sys.syslanguages
                                 'days_shortnames', jsonb_build_array('Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'),
                                 'days_extrashortnames', jsonb_build_array('Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday')));
 
-INSERT INTO sys.syslanguages
+INSERT INTO sys.babelfish_syslanguages
      VALUES (105,
              'KOREAN',
              'KOREAN (NORTH KOREA)',
@@ -1652,7 +1652,7 @@ INSERT INTO sys.syslanguages
                                 'days_names', jsonb_build_array('월요일', '화요일', '수요일', '목요일', '금요일', '토요일', '일요일'),
                                 'days_shortnames', jsonb_build_array('Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun')));
 
-INSERT INTO sys.syslanguages
+INSERT INTO sys.babelfish_syslanguages
      VALUES (106,
              'KOREAN',
              'KOREAN (SOUTH KOREA)',
@@ -1670,7 +1670,7 @@ INSERT INTO sys.syslanguages
                                 'days_shortnames', jsonb_build_array('Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'),
                                 'days_extrashortnames', jsonb_build_array('Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday')));
 
-INSERT INTO sys.syslanguages
+INSERT INTO sys.babelfish_syslanguages
      VALUES (107,
              'CHINESE (SIMPLIFIED)',
              'CHINESE (SIMPLIFIED, CHINA)',
@@ -1688,7 +1688,7 @@ INSERT INTO sys.syslanguages
                                 'days_shortnames', jsonb_build_array('Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'),
                                 'days_extrashortnames', jsonb_build_array('Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday')));
 
-INSERT INTO sys.syslanguages
+INSERT INTO sys.babelfish_syslanguages
      VALUES (108,
              'ARABIC (MS SQL)',
              'ARABIC (ARABIC)',
@@ -1704,7 +1704,7 @@ INSERT INTO sys.syslanguages
                                 'days_names', jsonb_build_array('Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'),
                                 'days_shortnames', jsonb_build_array('Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun')));
 
-INSERT INTO sys.syslanguages
+INSERT INTO sys.babelfish_syslanguages
      VALUES (109,
              'ARABIC',
              'ARABIC (ALGERIA)',
@@ -1719,7 +1719,7 @@ INSERT INTO sys.syslanguages
                                 'days_names', jsonb_build_array('Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'),
                                 'days_shortnames', jsonb_build_array('Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun')));
 
-INSERT INTO sys.syslanguages
+INSERT INTO sys.babelfish_syslanguages
      VALUES (110,
              'ARABIC',
              'ARABIC (BAHRAIN)',
@@ -1734,7 +1734,7 @@ INSERT INTO sys.syslanguages
                                 'days_names', jsonb_build_array('Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'),
                                 'days_shortnames', jsonb_build_array('Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun')));
 
-INSERT INTO sys.syslanguages
+INSERT INTO sys.babelfish_syslanguages
      VALUES (111,
              'ARABIC',
              'ARABIC (EGYPT)',
@@ -1749,7 +1749,7 @@ INSERT INTO sys.syslanguages
                                 'days_names', jsonb_build_array('Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'),
                                 'days_shortnames', jsonb_build_array('Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun')));
 
-INSERT INTO sys.syslanguages
+INSERT INTO sys.babelfish_syslanguages
      VALUES (112,
              'ARABIC',
              'ARABIC (ERITREA)',
@@ -1764,7 +1764,7 @@ INSERT INTO sys.syslanguages
                                 'days_names', jsonb_build_array('Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'),
                                 'days_shortnames', jsonb_build_array('Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun')));
 
-INSERT INTO sys.syslanguages
+INSERT INTO sys.babelfish_syslanguages
      VALUES (113,
              'ARABIC',
              'ARABIC (IRAQ)',
@@ -1779,7 +1779,7 @@ INSERT INTO sys.syslanguages
                                 'days_names', jsonb_build_array('Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'),
                                 'days_shortnames', jsonb_build_array('Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun')));
 
-INSERT INTO sys.syslanguages
+INSERT INTO sys.babelfish_syslanguages
      VALUES (114,
              'ARABIC',
              'ARABIC (ISRAEL)',
@@ -1794,7 +1794,7 @@ INSERT INTO sys.syslanguages
                                 'days_names', jsonb_build_array('Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'),
                                 'days_shortnames', jsonb_build_array('Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun')));
 
-INSERT INTO sys.syslanguages
+INSERT INTO sys.babelfish_syslanguages
      VALUES (115,
              'ARABIC',
              'ARABIC (JORDAN)',
@@ -1809,7 +1809,7 @@ INSERT INTO sys.syslanguages
                                 'days_names', jsonb_build_array('Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'),
                                 'days_shortnames', jsonb_build_array('Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun')));
 
-INSERT INTO sys.syslanguages
+INSERT INTO sys.babelfish_syslanguages
      VALUES (116,
              'ARABIC',
              'ARABIC (KUWAIT)',
@@ -1824,7 +1824,7 @@ INSERT INTO sys.syslanguages
                                 'days_names', jsonb_build_array('Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'),
                                 'days_shortnames', jsonb_build_array('Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun')));
 
-INSERT INTO sys.syslanguages
+INSERT INTO sys.babelfish_syslanguages
      VALUES (117,
              'ARABIC',
              'ARABIC (LEBANON)',
@@ -1839,7 +1839,7 @@ INSERT INTO sys.syslanguages
                                 'days_names', jsonb_build_array('Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'),
                                 'days_shortnames', jsonb_build_array('Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun')));
 
-INSERT INTO sys.syslanguages
+INSERT INTO sys.babelfish_syslanguages
      VALUES (118,
              'ARABIC',
              'ARABIC (LIBYA)',
@@ -1854,7 +1854,7 @@ INSERT INTO sys.syslanguages
                                 'days_names', jsonb_build_array('Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'),
                                 'days_shortnames', jsonb_build_array('Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun')));
 
-INSERT INTO sys.syslanguages
+INSERT INTO sys.babelfish_syslanguages
      VALUES (119,
              'ARABIC',
              'ARABIC (MOROCCO)',
@@ -1869,7 +1869,7 @@ INSERT INTO sys.syslanguages
                                 'days_names', jsonb_build_array('Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'),
                                 'days_shortnames', jsonb_build_array('Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun')));
 
-INSERT INTO sys.syslanguages
+INSERT INTO sys.babelfish_syslanguages
      VALUES (120,
              'ARABIC',
              'ARABIC (OMAN)',
@@ -1884,7 +1884,7 @@ INSERT INTO sys.syslanguages
                                 'days_names', jsonb_build_array('Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'),
                                 'days_shortnames', jsonb_build_array('Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun')));
 
-INSERT INTO sys.syslanguages
+INSERT INTO sys.babelfish_syslanguages
      VALUES (121,
              'ARABIC',
              'ARABIC (QATAR)',
@@ -1899,7 +1899,7 @@ INSERT INTO sys.syslanguages
                                 'days_names', jsonb_build_array('Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'),
                                 'days_shortnames', jsonb_build_array('Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun')));
 
-INSERT INTO sys.syslanguages
+INSERT INTO sys.babelfish_syslanguages
      VALUES (122,
              'ARABIC',
              'ARABIC (SAUDI ARABIA)',
@@ -1915,7 +1915,7 @@ INSERT INTO sys.syslanguages
                                 'days_names', jsonb_build_array('Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'),
                                 'days_shortnames', jsonb_build_array('Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun')));
 
-INSERT INTO sys.syslanguages
+INSERT INTO sys.babelfish_syslanguages
      VALUES (123,
              'ARABIC',
              'ARABIC (SOMALIA)',
@@ -1930,7 +1930,7 @@ INSERT INTO sys.syslanguages
                                 'days_names', jsonb_build_array('Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'),
                                 'days_shortnames', jsonb_build_array('Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun')));
 
-INSERT INTO sys.syslanguages
+INSERT INTO sys.babelfish_syslanguages
      VALUES (124,
              'ARABIC',
              'ARABIC (SYRIA)',
@@ -1945,7 +1945,7 @@ INSERT INTO sys.syslanguages
                                 'days_names', jsonb_build_array('Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'),
                                 'days_shortnames', jsonb_build_array('Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun')));
 
-INSERT INTO sys.syslanguages
+INSERT INTO sys.babelfish_syslanguages
      VALUES (125,
              'ARABIC',
              'ARABIC (TUNISIA)',
@@ -1960,7 +1960,7 @@ INSERT INTO sys.syslanguages
                                 'days_names', jsonb_build_array('Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'),
                                 'days_shortnames', jsonb_build_array('Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun')));
 
-INSERT INTO sys.syslanguages
+INSERT INTO sys.babelfish_syslanguages
      VALUES (126,
              'ARABIC',
              'ARABIC (UNITED ARAB EMIRATES)',
@@ -1975,7 +1975,7 @@ INSERT INTO sys.syslanguages
                                 'days_names', jsonb_build_array('Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'),
                                 'days_shortnames', jsonb_build_array('Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun')));
 
-INSERT INTO sys.syslanguages
+INSERT INTO sys.babelfish_syslanguages
      VALUES (127,
              'ARABIC',
              'ARABIC (YEMEN)',
@@ -1990,7 +1990,7 @@ INSERT INTO sys.syslanguages
                                 'days_names', jsonb_build_array('Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'),
                                 'days_shortnames', jsonb_build_array('Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun')));
 
-INSERT INTO sys.syslanguages
+INSERT INTO sys.babelfish_syslanguages
      VALUES (128,
              'THAI',
              'THAI (THAILAND)',
@@ -2007,7 +2007,7 @@ INSERT INTO sys.syslanguages
                                 'days_names', jsonb_build_array('จันทร์', 'อังคาร', 'พุธ', 'พฤหัสบดี', 'ศุกร์', 'เสาร์', 'อาทิตย์'),
                                 'days_shortnames', jsonb_build_array('Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun')));
 
-INSERT INTO sys.syslanguages
+INSERT INTO sys.babelfish_syslanguages
      VALUES (129,
              'HIJRI',
              'HIJRI (ISLAMIC)',

@@ -108,7 +108,10 @@ create_bbf_authid_login_ext(CreateRoleStmt *stmt)
 
 	new_record_login_ext[LOGIN_EXT_ROLNAME] = CStringGetDatum(stmt->role);
 	new_record_login_ext[LOGIN_EXT_IS_DISABLED] = Int32GetDatum(0);
-	new_record_login_ext[LOGIN_EXT_TYPE] = CStringGetTextDatum("S");
+	if (strcmp(stmt->role, "sysadmin") == 0)
+		new_record_login_ext[LOGIN_EXT_TYPE] = CStringGetTextDatum("R");
+	else
+		new_record_login_ext[LOGIN_EXT_TYPE] = CStringGetTextDatum("S");
 	new_record_login_ext[LOGIN_EXT_CREDENTIAL_ID] = Int32GetDatum(-1); /* placeholder */
 	new_record_login_ext[LOGIN_EXT_OWNING_PRINCIPAL_ID] = Int32GetDatum(-1); /* placeholder */
 	new_record_login_ext[LOGIN_EXT_IS_FIXED_ROLE] = Int32GetDatum(0);
@@ -247,7 +250,7 @@ drop_bbf_roles(ObjectAccessType access,
 {
 	if (is_login(roleid))
 		drop_bbf_authid_login_ext(access, classId, roleid, subId, arg);
-	else if (is_user(roleid))
+	else if (is_user(roleid) || is_role(roleid))
 		drop_bbf_authid_user_ext(access, classId, roleid, subId, arg);
 }
 
@@ -716,7 +719,7 @@ Datum drop_all_logins(PG_FUNCTION_ARGS)
 		 * Remove SA from authid_login_ext now but do not add it to the list
 		 * because we don't want to remove the corresponding PG role.
 		 */
-		if (role_is_sa(get_role_oid(rolname, false)))
+		if (role_is_sa(get_role_oid(rolname, false)) || (strcmp(rolname, "sysadmin") == 0))
 			CatalogTupleDelete(bbf_authid_login_ext_rel, &tuple->t_self);
 		else
 			rolname_list = lcons(rolname, rolname_list);
@@ -790,7 +793,8 @@ add_to_bbf_authid_user_ext(const char *user_name,
 						   const char *orig_user_name,
 						   const char *db_name,
 						   const char *schema_name,
-						   const char *login_name)
+						   const char *login_name,
+						   bool is_role)
 {
 	Relation		bbf_authid_user_ext_rel;
 	TupleDesc		bbf_authid_user_ext_dsc;
@@ -817,7 +821,10 @@ add_to_bbf_authid_user_ext(const char *user_name,
 		new_record_user_ext[USER_EXT_LOGIN_NAME] = CStringGetDatum(pstrdup(login_name));
 	else
 		new_record_user_ext[USER_EXT_LOGIN_NAME] = CStringGetDatum("");
-	new_record_user_ext[USER_EXT_TYPE] = CStringGetTextDatum("S"); /* placeholder */
+	if (is_role)
+		new_record_user_ext[USER_EXT_TYPE] = CStringGetTextDatum("R"); 
+	else
+		new_record_user_ext[USER_EXT_TYPE] = CStringGetTextDatum("S");
 	new_record_user_ext[USER_EXT_OWNING_PRINCIPAL_ID] = Int32GetDatum(-1); /* placeholder */
 	new_record_user_ext[USER_EXT_IS_FIXED_ROLE] = Int32GetDatum(-1); /* placeholder */
 	new_record_user_ext[USER_EXT_AUTHENTICATION_TYPE] = Int32GetDatum(-1); /* placeholder */
@@ -859,13 +866,14 @@ create_bbf_authid_user_ext(CreateRoleStmt *stmt, bool has_schema, bool has_login
 	char			*original_user_name = NULL;
 	RoleSpec		*login = NULL;
 	NameData		*login_name;
+	char			*login_name_str = NULL;
 
 	/* Extract options from the statement node tree */
 	foreach(option, stmt->options)
 	{
 		DefElem    *defel = (DefElem *) lfirst(option);
 
-		if (strcmp(defel->defname, "default_schema") == 0)
+		if (has_login && strcmp(defel->defname, "default_schema") == 0)
 		{
 			if (defel->arg)
 				default_schema = strVal(defel->arg);
@@ -875,7 +883,8 @@ create_bbf_authid_user_ext(CreateRoleStmt *stmt, bool has_schema, bool has_login
 			if (defel->arg)
 				original_user_name = strVal(defel->arg);
 		}
-		else if (strcmp(defel->defname, "rolemembers") == 0)
+		/* Extract login info if the stmt is CREATE USER */
+		else if (has_login && strcmp(defel->defname, "rolemembers") == 0)
 		{
 			List		*rolemembers = NIL;
 
@@ -925,10 +934,12 @@ create_bbf_authid_user_ext(CreateRoleStmt *stmt, bool has_schema, bool has_login
 
 		table_endscan(scan);
 		table_close(bbf_authid_user_ext_rel, RowExclusiveLock);
+
+		login_name_str = login->rolename;
 	}
 
 	/* Add to the catalog table. Adds current database name by default */
-	add_to_bbf_authid_user_ext(stmt->role, original_user_name, NULL, default_schema, login->rolename);
+	add_to_bbf_authid_user_ext(stmt->role, original_user_name, NULL, default_schema, login_name_str, !has_login);
 }
 
 PG_FUNCTION_INFO_V1(add_existing_users_to_catalog);
@@ -978,12 +989,12 @@ add_existing_users_to_catalog(PG_FUNCTION_ARGS)
 			rolspec->location = -1;
 			rolspec->rolename = pstrdup(dbo_role);
 			dbo_list = lappend(dbo_list, rolspec);
-			add_to_bbf_authid_user_ext(dbo_role, "dbo", db_name, "dbo", NULL);
+			add_to_bbf_authid_user_ext(dbo_role, "dbo", db_name, "dbo", NULL, false);
 		}
 		if (db_owner_role)
-			add_to_bbf_authid_user_ext(db_owner_role, "db_owner", db_name, NULL, NULL);
+			add_to_bbf_authid_user_ext(db_owner_role, "db_owner", db_name, NULL, NULL, true);
 		if (guest)
-			add_to_bbf_authid_user_ext(guest, "guest", db_name, NULL, NULL);
+			add_to_bbf_authid_user_ext(guest, "guest", db_name, NULL, NULL, false);
 
 		tuple = heap_getnext(scan, ForwardScanDirection);
 	}
@@ -1241,105 +1252,6 @@ gen_droprole_subcmds(const char *user)
 	return res;
 }
 
-PG_FUNCTION_INFO_V1(drop_all_users);
-Datum drop_all_users(PG_FUNCTION_ARGS)
-{
-	Relation	bbf_authid_user_ext_rel;
-	HeapTuple	tuple;
-	SysScanDesc	scan;
-	char*		rolname;
-	List		*rolname_list = NIL;
-	const char  *prev_current_user;
-	List        *parsetree_list;
-	ListCell    *parsetree_item;
-	int         saved_dialect = sql_dialect;
-
-	/* Only allow superuser or SA to drop all users. */
-	if (!superuser() && !role_is_sa(GetUserId()))
-          ereport(ERROR,
-                  (errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
-                   errmsg("user %s not allowed to drop all users in babelfish database %s",
-					   GetUserNameFromId(GetUserId(), true), get_database_name(MyDatabaseId))));
-
-	/* Fetch the relation */
-	bbf_authid_user_ext_rel = table_open(get_authid_user_ext_oid(),
-										  RowExclusiveLock);
-	scan = systable_beginscan(bbf_authid_user_ext_rel, 0, false, NULL, 0, NULL);
-
-	/* Get all the user names beforehand. */
-	while (HeapTupleIsValid(tuple = systable_getnext(scan))) {
-		Form_authid_user_ext  userform = (Form_authid_user_ext) GETSTRUCT(tuple);
-		rolname = NameStr(userform->rolname);
-		rolname_list = lcons(rolname, rolname_list);
-	}
-
-	systable_endscan(scan);
-	table_close(bbf_authid_user_ext_rel, RowExclusiveLock);
-
-	/* Set current user to session user for dropping permissions */
-	prev_current_user = GetUserNameFromId(GetUserId(), false);
-	bbf_set_current_user("sysadmin");
-
-	sql_dialect = SQL_DIALECT_TSQL;
-
-	while (rolname_list != NIL) {
-		char *rolname = linitial(rolname_list);
-		rolname_list = list_delete_first(rolname_list);
-
-		PG_TRY();
-		{
-			/* Advance cmd counter to make the delete visible */
-			CommandCounterIncrement();
-
-			parsetree_list = gen_droprole_subcmds(rolname);
-
-			/* Run all subcommands */
-			foreach(parsetree_item, parsetree_list)
-			{
-				Node	   *stmt = ((RawStmt *) lfirst(parsetree_item))->stmt;
-				PlannedStmt *wrapper;
-
-				/* need to make a wrapper PlannedStmt */
-				wrapper = makeNode(PlannedStmt);
-				wrapper->commandType = CMD_UTILITY;
-				wrapper->canSetTag = false;
-				wrapper->utilityStmt = stmt;
-				wrapper->stmt_location = 0;
-				wrapper->stmt_len = 16;
-
-				/* do this step */
-				ProcessUtility(wrapper,
-							   "(DROP ROLE )",
-							   false,
-							   PROCESS_UTILITY_SUBCOMMAND,
-							   NULL,
-							   NULL,
-							   None_Receiver,
-							   NULL);
-
-				/* make sure later steps can see the object created here */
-				CommandCounterIncrement();
-			}
-
-			/* Clean up role from user catalog */
-			drop_bbf_authid_user_ext_by_rolname(rolname);
-		}
-		PG_CATCH();
-		{
-			/* Clean up. Restore previous state. */
-			bbf_set_current_user(prev_current_user);
-			sql_dialect = saved_dialect;
-			PG_RE_THROW();
-		}
-		PG_END_TRY();
-	}
-
-	/* Set current user back to previous user */
-	bbf_set_current_user(prev_current_user);
-	sql_dialect = saved_dialect;
-	PG_RETURN_INT32(0);
-}
-
 PG_FUNCTION_INFO_V1(babelfish_set_role);
 Datum
 babelfish_set_role(PG_FUNCTION_ARGS)
@@ -1419,6 +1331,61 @@ check_alter_server_stmt(GrantRoleStmt *stmt)
 	ReleaseSysCacheList(memlist);
 }
 
+bool
+is_alter_role_stmt(GrantRoleStmt *stmt)
+{
+	/*
+	 * The statement is ALTER ROLE if 
+	 * 1. There is only one grantee role
+	 * 2. There is only one granted role and it's an existing babelfish db role
+	 */
+	if (list_length(stmt->granted_roles) != 1 || list_length(stmt->grantee_roles) != 1)
+		return false;
+	else
+	{
+		RoleSpec *spec = (RoleSpec *) linitial(stmt->granted_roles);        
+		Oid granted = get_role_oid(spec->rolename, true);
+		/* Check if the granted role is an existing database role */
+		if (granted == InvalidOid || !is_role(granted))
+			return false;
+	}
+
+	return true;
+}
+
+void
+check_alter_role_stmt(GrantRoleStmt *stmt)
+{
+	Oid         granted;
+	Oid         grantee;
+	const char  *granted_name;
+	const char  *grantee_name;
+	RoleSpec    *granted_spec;
+	RoleSpec    *grantee_spec;
+
+	/* The grantee must be a db user or a user-defined db role */
+	grantee_spec = (RoleSpec *) linitial(stmt->grantee_roles);      
+	grantee_name = grantee_spec->rolename;
+	grantee = get_role_oid(grantee_name, false);
+
+	if (!is_user(grantee) && !is_role(grantee))
+		ereport(ERROR,
+				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+				 errmsg("%s is not a database user or a user-defined database role",
+						grantee_name)));
+
+	/* Need to have permission on the granted role */
+	granted_spec = (RoleSpec *) linitial(stmt->granted_roles);
+	granted_name = granted_spec->rolename;
+	granted = get_role_oid(granted_name, false);
+
+	if (!has_privs_of_role(GetSessionUserId(), granted))
+		ereport(ERROR,
+				(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
+				 errmsg("Current login %s do not have permission to alter role %s", 
+						GetUserNameFromId(GetSessionUserId(), true), granted_name)));
+}
+
 PG_FUNCTION_INFO_V1(role_id);
 Datum
 role_id(PG_FUNCTION_ARGS)
@@ -1443,4 +1410,67 @@ role_id(PG_FUNCTION_ARGS)
 		PG_RETURN_NULL();
 	else
 		PG_RETURN_INT32(result);
+}
+
+/*
+ * Internal function for IS_MEMBER and IS_ROLEMEMBER
+ */
+PG_FUNCTION_INFO_V1(is_rolemember);
+Datum
+is_rolemember(PG_FUNCTION_ARGS)
+{
+	Oid		role_oid;
+	Oid		principal_oid;
+	Oid		cur_user_oid = GetUserId();
+	char	*role;
+	char	*physical_role_name;
+	char	*physical_principal_name;
+
+	if (PG_ARGISNULL(0))
+		PG_RETURN_NULL();
+
+	/* Do role name mapping */
+	role = text_to_cstring(PG_GETARG_TEXT_P(0));
+	physical_role_name = get_physical_user_name(get_cur_db_name(), role);
+	role_oid = get_role_oid(physical_role_name, true);
+
+	/* If principal name is NULL, take current user instead */
+	if (PG_ARGISNULL(1))
+		principal_oid = cur_user_oid;
+	else
+	{
+		/* Do principal name mapping */
+		char *principal = text_to_cstring(PG_GETARG_TEXT_P(1));
+		physical_principal_name = get_physical_user_name(get_cur_db_name(), principal);
+		principal_oid = get_role_oid(physical_principal_name, true);
+	}
+
+	/* Return NULL if given role or principal doesn't exist */
+	if (role_oid == InvalidOid || principal_oid == InvalidOid)
+		PG_RETURN_NULL();
+
+	/* Return 1 if given role and principal are the same */
+	if (role_oid == principal_oid)
+		PG_RETURN_INT32(1);
+
+	/* 
+	 * Return NULL if given role is not a real role, or if current user doesn't 
+	 * directly/indirectly have privilges over the given role and principal.
+	 * Note that if given principal is current user, we'll always have
+	 * permissions.
+	 */
+	if (!is_role(role_oid) ||
+		(principal_oid != cur_user_oid &&
+		 (!has_privs_of_role(cur_user_oid, role_oid) ||
+		  !has_privs_of_role(cur_user_oid, principal_oid))))
+		PG_RETURN_NULL();
+
+	/* 
+	 * Recursively check if the given principal is a member of the role, not
+	 * considering superuserness
+	 */
+	if (is_member_of_role_nosuper(principal_oid, role_oid))
+		PG_RETURN_INT32(1);
+	else
+		PG_RETURN_INT32(0);
 }

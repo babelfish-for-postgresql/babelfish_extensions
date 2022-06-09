@@ -87,6 +87,7 @@ static void pltsql_report_proc_not_found_error(List *names, List *argnames, int 
 extern PLtsql_execstate *get_outermost_tsql_estate(int *nestlevel);
 static void pltsql_store_view_definition(const char *queryString, ObjectAddress address);
 static void pltsql_drop_view_definition(Oid objectId);
+static void preserve_view_constraints_from_base_table(ColumnDef  *col, Oid tableOid, AttrNumber colId);
 
 /*****************************************
  * 			Executor Hooks
@@ -127,6 +128,7 @@ static ExecutorStart_hook_type prev_ExecutorStart = NULL;
 static ExecutorRun_hook_type prev_ExecutorRun = NULL;
 static ExecutorFinish_hook_type prev_ExecutorFinish = NULL;
 static ExecutorEnd_hook_type prev_ExecutorEnd = NULL;
+static inherit_view_constraints_from_table_hook_type prev_inherit_view_constraints_from_table = NULL;
 
 /*****************************************
  * 			Install / Uninstall
@@ -198,6 +200,9 @@ InstallExtendedHooks(void)
 
 	prev_ExecutorEnd = ExecutorEnd_hook;
 	ExecutorEnd_hook = pltsql_ExecutorEnd;
+
+	prev_inherit_view_constraints_from_table = inherit_view_constraints_from_table_hook;
+	inherit_view_constraints_from_table_hook = preserve_view_constraints_from_base_table;
 }
 
 void
@@ -228,6 +233,7 @@ UninstallExtendedHooks(void)
 	ExecutorRun_hook = prev_ExecutorRun;
 	ExecutorFinish_hook = prev_ExecutorFinish;
 	ExecutorEnd_hook = prev_ExecutorEnd;
+	inherit_view_constraints_from_table_hook = prev_inherit_view_constraints_from_table;
 }
 
 /*****************************************
@@ -1611,4 +1617,31 @@ pltsql_drop_view_definition(Oid objectId)
 
 	ReleaseSysCache(reltuple);
 	table_close(bbf_view_def_rel, RowExclusiveLock);
+}
+
+static void
+preserve_view_constraints_from_base_table(ColumnDef  *col, Oid tableOid, AttrNumber colId)
+{
+	/*
+	 * In TSQL Dialect Preserve the constraints only for the internal view
+	 * created by sp_describe_first_result_set procedure.
+	 */
+	if (sp_describe_first_result_set_inprogress && sql_dialect == SQL_DIALECT_TSQL)
+	{
+		HeapTuple	  tp;
+		Form_pg_attribute att_tup;
+
+		tp = SearchSysCache2(ATTNUM, 
+					ObjectIdGetDatum(tableOid),
+					Int16GetDatum(colId));
+
+		if (HeapTupleIsValid(tp))
+		{
+			att_tup = (Form_pg_attribute) GETSTRUCT(tp);
+			col->is_not_null = att_tup->attnotnull;
+			col->identity 	 = att_tup->attidentity;
+			col->generated 	 = att_tup->attgenerated;
+			ReleaseSysCache(tp);
+		}
+	}
 }

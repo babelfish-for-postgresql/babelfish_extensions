@@ -6,6 +6,7 @@
 #include "utils/builtins.h"
 #include "utils/guc.h"
 
+#include <ctype.h>
 #include "catalog.h"
 #include "dbcmds.h"
 #include "multidb.h"
@@ -154,6 +155,10 @@ Datum babelfish_db_id(PG_FUNCTION_ARGS)
 	if (PG_NARGS() > 0)
 	{
 		str = TextDatumGetCString(PG_GETARG_DATUM(0));
+		if (pltsql_case_insensitive_identifiers)
+			// Lowercase the entry, if needed
+			for (char *p = str ; *p; ++p) *p = tolower(*p);
+	
 		dbid = get_db_id(str);
 	}
 	else
@@ -180,13 +185,18 @@ Datum babelfish_db_name(PG_FUNCTION_ARGS)
 
 	if (dbid == 1)
 	{
-		dbname = palloc(128 * sizeof(char));
+		dbname = palloc((strlen("master") + 1) * sizeof(char));
 		strncpy(dbname, "master", sizeof("master"));
 	}
 	else if (dbid == 2)
 	{
-		dbname = palloc(128 * sizeof(char));
+		dbname = palloc((strlen("tempdb") + 1) * sizeof(char));
 		strncpy(dbname, "tempdb", sizeof("tempdb"));
+	}
+	else if (dbid == 4)
+	{
+		dbname = palloc((strlen("msdb") + 1) * sizeof(char));
+		strncpy(dbname, "msdb", sizeof("msdb"));
 	}
 	else
 		dbname = get_db_name(dbid);

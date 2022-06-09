@@ -43,6 +43,16 @@ CREATE OR REPLACE FUNCTION UPDATE (TEXT)
 CREATE OR REPLACE PROCEDURE xp_qv(IN nvarchar(256), IN nvarchar(256))
 	   AS 'babelfishpg_tsql', 'xp_qv_internal' LANGUAGE C;
 
+CREATE PROCEDURE xp_instance_regread(IN p1 sys.nvarchar(512), 
+	IN p2 sys.sysname, IN p3 sys.nvarchar(512), INOUT out_param int)
+AS 'babelfishpg_tsql', 'xp_instance_regread_internal'
+LANGUAGE C;
+
+CREATE PROCEDURE xp_instance_regread(IN p1 sys.nvarchar(512), 
+	IN p2 sys.sysname, IN p3 sys.nvarchar(512), INOUT out_param sys.nvarchar(512))
+AS 'babelfishpg_tsql', 'xp_instance_regread_internal'
+LANGUAGE C;
+
 --
 -- The procedures below requires return code as a RETURN statement which is
 -- only possible in pltsql. Therefore, we create them here and call into the
@@ -456,19 +466,25 @@ begin
 				ss_xml_schemacollection_name,
 				ss_data_type
 		from sys.sp_columns_100_view
-	    where lower(table_name) similar to lower(in_table_name)
-	      and ((SELECT coalesce(in_table_owner,'')) = '' or table_owner like in_table_owner)
-	      and ((SELECT coalesce(in_table_qualifier,'')) = '' or table_qualifier like in_table_qualifier)
-	      and ((SELECT coalesce(in_column_name,'')) = '' or column_name like in_column_name)
-		order by table_qualifier, table_owner, table_name, ordinal_position;
+	    where lower(table_name) similar to lower(in_table_name) COLLATE "C" -- TBD - this should be changed to ci_as
+	      and ((SELECT coalesce(in_table_owner,'')) = '' or table_owner like in_table_owner collate sys.bbf_unicode_general_ci_as)
+	      and ((SELECT coalesce(in_table_qualifier,'')) = '' or table_qualifier like in_table_qualifier collate sys.bbf_unicode_general_ci_as)
+	      and ((SELECT coalesce(in_column_name,'')) = '' or column_name like in_column_name collate sys.bbf_unicode_general_ci_as)
+		order by table_qualifier,
+		         table_owner,
+			 table_name,
+			 ordinal_position;
 	ELSE 
 		return query
 	    select table_qualifier, precision from sys.sp_columns_100_view
-	      where in_table_name = table_name
-	      and ((SELECT coalesce(in_table_owner,'')) = '' or table_owner = in_table_owner)
-	      and ((SELECT coalesce(in_table_qualifier,'')) = '' or table_qualifier = in_table_qualifier)
-	      and ((SELECT coalesce(in_column_name,'')) = '' or column_name = in_column_name)
-		order by table_qualifier, table_owner, table_name, ordinal_position;
+	      where in_table_name = table_name collate sys.bbf_unicode_general_ci_as
+	      and ((SELECT coalesce(in_table_owner,'')) = '' or table_owner = in_table_owner collate sys.bbf_unicode_general_ci_as)
+	      and ((SELECT coalesce(in_table_qualifier,'')) = '' or table_qualifier = in_table_qualifier collate sys.bbf_unicode_general_ci_as)
+	      and ((SELECT coalesce(in_column_name,'')) = '' or column_name = in_column_name collate sys.bbf_unicode_general_ci_as)
+		order by table_qualifier,
+		         table_owner,
+			 table_name,
+			 ordinal_position;
 	END IF;
 end;
 $$
@@ -502,7 +518,17 @@ BEGIN
 			out_char_octet_length as CHAR_OCTET_LENGTH,
 			out_ordinal_position as ORDINAL_POSITION,
 			out_is_nullable as IS_NULLABLE,
-			out_ss_data_type as SS_DATA_TYPE
+			(
+			CASE
+				WHEN out_ss_is_identity = 1 AND out_sql_data_type = -6 THEN 48 -- Tinyint Identity
+				WHEN out_ss_is_identity = 1 AND out_sql_data_type = 5 THEN 52 -- Smallint Identity
+				WHEN out_ss_is_identity = 1 AND out_sql_data_type = 4 THEN 56 -- Int Identity
+				WHEN out_ss_is_identity = 1 AND out_sql_data_type = -5 THEN 63 -- Bigint Identity
+				WHEN out_ss_is_identity = 1 AND out_sql_data_type = 3 THEN 55 -- Decimal Identity
+				WHEN out_ss_is_identity = 1 AND out_sql_data_type = 2 THEN 63 -- Numeric Identity
+				ELSE out_ss_data_type
+			END
+			) as SS_DATA_TYPE
 	from sys.sp_columns_100_internal(sys.babelfish_truncate_identifier(@table_name),
 		sys.babelfish_truncate_identifier(@table_owner),
 		sys.babelfish_truncate_identifier(@table_qualifier),
@@ -550,7 +576,17 @@ BEGIN
 			out_ss_xml_schemacollection_catalog_name as SS_XML_SCHEMACOLLECTION_CATALOG_NAME,
 			out_ss_xml_schemacollection_schema_name as SS_XML_SCHEMACOLLECTION_SCHEMA_NAME,
 			out_ss_xml_schemacollection_name as SS_XML_SCHEMACOLLECTION_NAME,
-			out_ss_data_type as SS_DATA_TYPE
+			(
+			CASE
+				WHEN out_ss_is_identity = 1 AND out_sql_data_type = -6 THEN 48 -- Tinyint Identity
+				WHEN out_ss_is_identity = 1 AND out_sql_data_type = 5 THEN 52 -- Smallint Identity
+				WHEN out_ss_is_identity = 1 AND out_sql_data_type = 4 THEN 56 -- Int Identity
+				WHEN out_ss_is_identity = 1 AND out_sql_data_type = -5 THEN 63 -- Bigint Identity
+				WHEN out_ss_is_identity = 1 AND out_sql_data_type = 3 THEN 55 -- Decimal Identity
+				WHEN out_ss_is_identity = 1 AND out_sql_data_type = 2 THEN 63 -- Numeric Identity
+				ELSE out_ss_data_type
+			END
+			) as SS_DATA_TYPE
 	from sys.sp_columns_100_internal(sys.babelfish_truncate_identifier(@table_name),
 		sys.babelfish_truncate_identifier(@table_owner),
 		sys.babelfish_truncate_identifier(@table_qualifier),
@@ -960,12 +996,13 @@ CREATE OR REPLACE FUNCTION sys.sp_tables_internal(
 	AS $$
 		DECLARE opt_table sys.varchar(16) = '';
 		DECLARE opt_view sys.varchar(16) = '';
+		DECLARE cs_as_in_table_type varchar COLLATE "C" = in_table_type;
 	BEGIN
 	   
-		IF (SELECT count(*) FROM unnest(string_to_array(in_table_type, ',')) WHERE upper(trim(unnest)) = 'TABLE' OR upper(trim(unnest)) = '''TABLE''') >= 1 THEN
+		IF (SELECT count(*) FROM unnest(string_to_array(cs_as_in_table_type, ',')) WHERE upper(trim(unnest)) = 'TABLE' OR upper(trim(unnest)) = '''TABLE''') >= 1 THEN
 			opt_table = 'TABLE';
 		END IF;
-		IF (SELECT count(*) from unnest(string_to_array(in_table_type, ',')) WHERE upper(trim(unnest)) = 'VIEW' OR upper(trim(unnest)) = '''VIEW''') >= 1 THEN
+		IF (SELECT count(*) from unnest(string_to_array(cs_as_in_table_type, ',')) WHERE upper(trim(unnest)) = 'VIEW' OR upper(trim(unnest)) = '''VIEW''') >= 1 THEN
 			opt_view = 'VIEW';
 		END IF;
 		IF in_fusepattern = 1 THEN
@@ -977,10 +1014,12 @@ CREATE OR REPLACE FUNCTION sys.sp_tables_internal(
 			CAST(table_type AS sys.varchar(32)) AS TABLE_TYPE,
 			CAST(remarks AS sys.varchar(254)) AS REMARKS
 			FROM sys.sp_tables_view
-			WHERE ((SELECT coalesce(in_table_name,'')) = '' OR lower(table_name) LIKE lower(in_table_name))
-			AND ((SELECT coalesce(in_table_owner,'')) = '' OR lower(table_owner) LIKE lower(in_table_owner))
-			AND ((SELECT coalesce(in_table_qualifier,'')) = '' OR lower(table_qualifier) LIKE lower(in_table_qualifier))
-			AND ((SELECT coalesce(in_table_type,'')) = '' OR table_type = opt_table OR table_type = opt_view)
+			WHERE ((SELECT coalesce(in_table_name,'')) = '' OR table_name LIKE in_table_name collate sys.bbf_unicode_general_ci_as)
+			AND ((SELECT coalesce(in_table_owner,'')) = '' OR table_owner LIKE in_table_owner collate sys.bbf_unicode_general_ci_as)
+			AND ((SELECT coalesce(in_table_qualifier,'')) = '' OR table_qualifier LIKE in_table_qualifier collate sys.bbf_unicode_general_ci_as)
+			AND ((SELECT coalesce(cs_as_in_table_type,'')) = ''
+			    OR table_type collate sys.bbf_unicode_general_ci_as = opt_table
+			    OR table_type collate sys.bbf_unicode_general_ci_as= opt_view)
 			ORDER BY table_qualifier, table_owner, table_name;
 		ELSE 
 			RETURN query
@@ -991,10 +1030,12 @@ CREATE OR REPLACE FUNCTION sys.sp_tables_internal(
 			CAST(table_type AS sys.varchar(32)) AS TABLE_TYPE,
 			CAST(remarks AS sys.varchar(254)) AS REMARKS
 			FROM sys.sp_tables_view
-			WHERE ((SELECT coalesce(in_table_name,'')) = '' OR lower(table_name) = lower(in_table_name))
-			AND ((SELECT coalesce(in_table_owner,'')) = '' OR lower(table_owner) = lower(in_table_owner))
-			AND ((SELECT coalesce(in_table_qualifier,'')) = '' OR lower(table_qualifier) = lower(in_table_qualifier))
-			AND ((SELECT coalesce(in_table_type,'')) = '' OR table_type = opt_table OR table_type = opt_view)
+			WHERE ((SELECT coalesce(in_table_name,'')) = '' OR table_name = in_table_name collate sys.bbf_unicode_general_ci_as)
+			AND ((SELECT coalesce(in_table_owner,'')) = '' OR table_owner = in_table_owner collate sys.bbf_unicode_general_ci_as)
+			AND ((SELECT coalesce(in_table_qualifier,'')) = '' OR table_qualifier = in_table_qualifier collate sys.bbf_unicode_general_ci_as)
+			AND ((SELECT coalesce(cs_as_in_table_type,'')) = ''
+			    OR table_type = opt_table
+			    OR table_type = opt_view)
 			ORDER BY table_qualifier, table_owner, table_name;
 		END IF;
 	END;
@@ -1112,10 +1153,15 @@ as $$
 begin
 	return query
 	select * from sys.sp_pkeys_view
-	where in_table_name = table_name
-		and table_owner = coalesce(in_table_owner,'dbo')
-		and ((SELECT coalesce(in_table_qualifier,'')) = '' or table_qualifier = in_table_qualifier)
-	order by table_qualifier, table_owner, table_name, key_seq;
+	where table_name = in_table_name collate sys.bbf_unicode_general_ci_as
+		and table_owner = coalesce(in_table_owner,'dbo') collate sys.bbf_unicode_general_ci_as
+		and ((SELECT
+		         coalesce(in_table_qualifier,'')) = '' or
+		         table_qualifier = in_table_qualifier collate sys.bbf_unicode_general_ci_as)
+	order by table_qualifier,
+	         table_owner,
+		 table_name,
+		 key_seq;
 end;
 $$
 LANGUAGE plpgsql;
@@ -1228,11 +1274,11 @@ as $$
 begin
     return query
     select * from sys.sp_statistics_view
-    where in_table_name = table_name
-        and ((SELECT coalesce(in_table_owner,'')) = '' or table_owner = in_table_owner)
-        and ((SELECT coalesce(in_table_qualifier,'')) = '' or table_qualifier = in_table_qualifier)
-        and ((SELECT coalesce(in_index_name,'')) = '' or index_name like in_index_name)
-        and ((in_is_unique = 'Y' and (non_unique IS NULL or non_unique = 0)) or (in_is_unique = 'N'))
+    where in_table_name = table_name COLLATE sys.bbf_unicode_general_ci_as
+        and ((SELECT coalesce(in_table_owner,'')) = '' or table_owner = in_table_owner  COLLATE sys.bbf_unicode_general_ci_as)
+        and ((SELECT coalesce(in_table_qualifier,'')) = '' or table_qualifier = in_table_qualifier COLLATE sys.bbf_unicode_general_ci_as)
+        and ((SELECT coalesce(in_index_name,'')) = '' or index_name like in_index_name COLLATE sys.bbf_unicode_general_ci_as)
+        and ((UPPER(in_is_unique) = 'Y' and (non_unique IS NULL or non_unique = 0)) or (UPPER(in_is_unique) = 'N'))
     order by non_unique, type, index_name, seq_in_index;
 end;
 $$
@@ -2214,58 +2260,196 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql;
 
-CREATE PROCEDURE sys.sp_helpuser("@name_in_db" sys.SYSNAME = NULL) AS
+CREATE OR REPLACE PROCEDURE sys.sp_helpuser("@name_in_db" sys.SYSNAME = NULL) AS
 $$
 BEGIN
+	-- If security account is not specified, return info about all users
 	IF @name_in_db IS NULL
 	BEGIN
-		SELECT CAST(Ext.orig_username AS SYS.SYSNAME) AS 'UserName',
-			   CAST(CASE WHEN Ext.orig_username = 'dbo' THEN 'db_owner' ELSE 'PUBLIC' END AS SYS.SYSNAME) AS 'RoleName',
-			   CAST(Ext.login_name AS SYS.SYSNAME) AS 'LoginName',
+		SELECT CAST(Ext1.orig_username AS SYS.SYSNAME) AS 'UserName',
+			   CAST(CASE WHEN Ext1.orig_username = 'dbo' THEN 'db_owner' 
+					WHEN Ext2.orig_username IS NULL THEN 'public'
+					ELSE Ext2.orig_username END 
+					AS SYS.SYSNAME) AS 'RoleName',
+			   CAST(Ext1.login_name AS SYS.SYSNAME) AS 'LoginName',
 			   CAST(LogExt.default_database_name AS SYS.SYSNAME) AS 'DefDBName',
-			   CAST(Ext.default_schema_name AS SYS.SYSNAME) AS 'DefSchemaName',
-			   CAST(Base.oid AS INT) AS 'UserID',
-			   CAST(CAST(Base.oid AS INT) AS SYS.VARBINARY(85))  AS 'SID'
-			FROM pg_catalog.pg_roles AS Base INNER JOIN sys.babelfish_authid_user_ext AS Ext
-			ON Base.rolname = Ext.rolname
-			LEFT OUTER JOIN sys.babelfish_authid_login_ext As LogExt
-			ON LogExt.rolname = Ext.orig_username
-			WHERE Ext.database_name = DB_NAME()
+			   CAST(Ext1.default_schema_name AS SYS.SYSNAME) AS 'DefSchemaName',
+			   CAST(Base1.oid AS INT) AS 'UserID',
+			   CAST(CAST(Base1.oid AS INT) AS SYS.VARBINARY(85)) AS 'SID'
+		FROM sys.babelfish_authid_user_ext AS Ext1
+		INNER JOIN pg_catalog.pg_roles AS Base1 ON Base1.rolname = Ext1.rolname
+		LEFT OUTER JOIN pg_catalog.pg_auth_members AS Authmbr ON Base1.oid = Authmbr.member
+		LEFT OUTER JOIN pg_catalog.pg_roles AS Base2 ON Base2.oid = Authmbr.roleid
+		LEFT OUTER JOIN sys.babelfish_authid_user_ext AS Ext2 ON Base2.rolname = Ext2.rolname
+		LEFT OUTER JOIN sys.babelfish_authid_login_ext As LogExt ON LogExt.rolname = Ext1.login_name
+		WHERE Ext1.database_name = DB_NAME()
+		AND Ext1.type = 'S'
+		ORDER BY UserName, RoleName;
 	END
+	-- If the security account is the db fixed role - db_owner
     ELSE IF @name_in_db = 'db_owner'
 	BEGIN
-		-- simplification of role case, since no user defined roles exist yet
+		-- TODO: Need to change after we can add/drop members to/from db_owner
 		SELECT CAST('db_owner' AS SYS.SYSNAME) AS 'Role_name',
 			   ROLE_ID('db_owner') AS 'Role_id',
-			   CAST('dbo' AS SYS.SYSNAME) AS Users_in_role,
+			   CAST('dbo' AS SYS.SYSNAME) AS 'Users_in_role',
 			   USER_ID('dbo') AS 'Userid';
 	END
+	-- If the security account is a db role
 	ELSE IF EXISTS (SELECT 1
-					  FROM sys.babelfish_authid_user_ext
-						WHERE (orig_username = @name_in_db
-						      OR lower(orig_username) = lower(@name_in_db))
-						      AND database_name = DB_NAME())
+					FROM sys.babelfish_authid_user_ext
+					WHERE (orig_username = @name_in_db
+					OR lower(orig_username) = lower(@name_in_db))
+					AND database_name = DB_NAME()
+					AND type = 'R')
 	BEGIN
-		SELECT CAST(Ext.orig_username AS SYS.SYSNAME) AS 'UserName',
-			   CAST(CASE WHEN Ext.orig_username = 'dbo' THEN 'db_owner' ELSE 'PUBLIC' END AS SYS.SYSNAME) AS 'RoleName',
-			   CAST(Ext.login_name AS SYS.SYSNAME) AS 'LoginName',
-			   CAST(LogExt.default_database_name AS SYS.SYSNAME) AS 'DefDBName',
-			   CAST(Ext.default_schema_name AS SYS.SYSNAME) AS 'DefSchemaName',
-			   CAST(Base.oid AS INT) AS 'UserID',
-			   CAST(CAST(Base.oid AS INT) AS SYS.VARBINARY(85))  AS 'SID'
-			FROM pg_catalog.pg_roles AS Base INNER JOIN sys.babelfish_authid_user_ext AS Ext
-			ON Base.rolname = Ext.rolname
-			LEFT OUTER JOIN sys.babelfish_authid_login_ext As LogExt
-			ON LogExt.rolname = Ext.orig_username
-			WHERE Ext.database_name = DB_NAME()
-				  AND (orig_username = @name_in_db OR lower(orig_username) = lower(@name_in_db));
+		SELECT CAST(Ext1.orig_username AS SYS.SYSNAME) AS 'Role_name',
+			   CAST(Base1.oid AS INT) AS 'Role_id',
+			   CAST(Ext2.orig_username AS SYS.SYSNAME) AS 'Users_in_role',
+			   CAST(Base2.oid AS INT) AS 'Userid'
+		FROM sys.babelfish_authid_user_ext AS Ext2
+		INNER JOIN pg_catalog.pg_roles AS Base2 ON Base2.rolname = Ext2.rolname
+		INNER JOIN pg_catalog.pg_auth_members AS Authmbr ON Base2.oid = Authmbr.member
+		LEFT OUTER JOIN pg_catalog.pg_roles AS Base1 ON Base1.oid = Authmbr.roleid
+		LEFT OUTER JOIN sys.babelfish_authid_user_ext AS Ext1 ON Base1.rolname = Ext1.rolname
+		WHERE Ext1.database_name = DB_NAME()
+		AND Ext2.database_name = DB_NAME()
+		AND Ext1.type = 'R'
+		AND Ext2.orig_username != 'db_owner'
+		AND (Ext1.orig_username = @name_in_db OR lower(Ext1.orig_username) = lower(@name_in_db))
+		ORDER BY Role_name, Users_in_role;
 	END
+	-- If the security account is a user
+	ELSE IF EXISTS (SELECT 1
+					FROM sys.babelfish_authid_user_ext
+					WHERE (orig_username = @name_in_db
+					OR lower(orig_username) = lower(@name_in_db))
+					AND database_name = DB_NAME()
+					AND type = 'S')
+	BEGIN
+		SELECT CAST(Ext1.orig_username AS SYS.SYSNAME) AS 'UserName',
+			   CAST(CASE WHEN Ext1.orig_username = 'dbo' THEN 'db_owner' 
+					WHEN Ext2.orig_username IS NULL THEN 'public' 
+					ELSE Ext2.orig_username END 
+					AS SYS.SYSNAME) AS 'RoleName',
+			   CAST(Ext1.login_name AS SYS.SYSNAME) AS 'LoginName',
+			   CAST(LogExt.default_database_name AS SYS.SYSNAME) AS 'DefDBName',
+			   CAST(Ext1.default_schema_name AS SYS.SYSNAME) AS 'DefSchemaName',
+			   CAST(Base1.oid AS INT) AS 'UserID',
+			   CAST(CAST(Base1.oid AS INT) AS SYS.VARBINARY(85)) AS 'SID'
+		FROM sys.babelfish_authid_user_ext AS Ext1
+		INNER JOIN pg_catalog.pg_roles AS Base1 ON Base1.rolname = Ext1.rolname
+		LEFT OUTER JOIN pg_catalog.pg_auth_members AS Authmbr ON Base1.oid = Authmbr.member
+		LEFT OUTER JOIN pg_catalog.pg_roles AS Base2 ON Base2.oid = Authmbr.roleid
+		LEFT OUTER JOIN sys.babelfish_authid_user_ext AS Ext2 ON Base2.rolname = Ext2.rolname
+		LEFT OUTER JOIN sys.babelfish_authid_login_ext As LogExt ON LogExt.rolname = Ext1.login_name
+		WHERE Ext1.database_name = DB_NAME()
+		AND Ext1.type = 'S'
+		AND (Ext1.orig_username = @name_in_db OR lower(Ext1.orig_username) = lower(@name_in_db))
+		ORDER BY UserName, RoleName;
+	END
+	-- If the security account is not valid
 	ELSE 
 		RAISERROR ( 'The name supplied (%s) is not a user, role, or aliased login.', 16, 1, @name_in_db);
 END;
 $$
 LANGUAGE 'pltsql';
 GRANT EXECUTE on PROCEDURE sys.sp_helpuser TO PUBLIC;
+
+CREATE OR REPLACE PROCEDURE sys.sp_helprole("@rolename" sys.SYSNAME = NULL) AS
+$$
+BEGIN
+	-- If role is not specified, return info for all roles in the current db
+	IF @rolename IS NULL
+	BEGIN
+		SELECT CAST(Ext.orig_username AS sys.SYSNAME) AS 'RoleName',
+			   CAST(Base.oid AS INT) AS 'RoleId',
+			   0 AS 'IsAppRole'
+		FROM pg_catalog.pg_roles AS Base 
+		INNER JOIN sys.babelfish_authid_user_ext AS Ext
+		ON Base.rolname = Ext.rolname
+		WHERE Ext.database_name = DB_NAME()
+		AND Ext.type = 'R'
+		ORDER BY RoleName;
+	END
+	-- If a valid role is specified, return its info
+	ELSE IF EXISTS (SELECT 1 
+					FROM sys.babelfish_authid_user_ext
+					WHERE (orig_username = @rolename
+					OR lower(orig_username) = lower(@rolename))
+					AND database_name = DB_NAME()
+					AND type = 'R')
+	BEGIN
+		SELECT CAST(Ext.orig_username AS sys.SYSNAME) AS 'RoleName',
+			   CAST(Base.oid AS INT) AS 'RoleId',
+			   0 AS 'IsAppRole'
+		FROM pg_catalog.pg_roles AS Base 
+		INNER JOIN sys.babelfish_authid_user_ext AS Ext
+		ON Base.rolname = Ext.rolname
+		WHERE Ext.database_name = DB_NAME()
+		AND Ext.type = 'R'
+		AND (Ext.orig_username = @rolename OR lower(Ext.orig_username) = lower(@rolename))
+		ORDER BY RoleName;
+	END
+	-- If the specified role is not valid
+	ELSE
+		RAISERROR('%s is not a role.', 16, 1, @rolename);
+END;
+$$
+LANGUAGE 'pltsql';
+GRANT EXECUTE ON PROCEDURE sys.sp_helprole TO PUBLIC;
+
+CREATE OR REPLACE PROCEDURE sys.sp_helprolemember("@rolename" sys.SYSNAME = NULL) AS
+$$
+BEGIN
+	-- If role is not specified, return info for all roles that have at least
+	-- one member in the current db
+	IF @rolename IS NULL
+	BEGIN
+		SELECT CAST(Ext1.orig_username AS sys.SYSNAME) AS 'RoleName',
+			   CAST(Ext2.orig_username AS sys.SYSNAME) AS 'MemberName',
+			   CAST(CAST(Base2.oid AS INT) AS sys.VARBINARY(85)) AS 'MemberSID'
+		FROM pg_catalog.pg_auth_members AS Authmbr
+		INNER JOIN pg_catalog.pg_roles AS Base1 ON Base1.oid = Authmbr.roleid
+		INNER JOIN pg_catalog.pg_roles AS Base2 ON Base2.oid = Authmbr.member
+		INNER JOIN sys.babelfish_authid_user_ext AS Ext1 ON Base1.rolname = Ext1.rolname
+		INNER JOIN sys.babelfish_authid_user_ext AS Ext2 ON Base2.rolname = Ext2.rolname
+		WHERE Ext1.database_name = DB_NAME()
+		AND Ext2.database_name = DB_NAME()
+		AND Ext1.type = 'R'
+		AND Ext2.orig_username != 'db_owner'
+		ORDER BY RoleName, MemberName;
+	END
+	-- If a valid role is specified, return its member info
+	ELSE IF EXISTS (SELECT 1
+					FROM sys.babelfish_authid_user_ext
+					WHERE (orig_username = @rolename
+					OR lower(orig_username) = lower(@rolename))
+					AND database_name = DB_NAME()
+					AND type = 'R')
+	BEGIN
+		SELECT CAST(Ext1.orig_username AS sys.SYSNAME) AS 'RoleName',
+			   CAST(Ext2.orig_username AS sys.SYSNAME) AS 'MemberName',
+			   CAST(CAST(Base2.oid AS INT) AS sys.VARBINARY(85)) AS 'MemberSID'
+		FROM pg_catalog.pg_auth_members AS Authmbr
+		INNER JOIN pg_catalog.pg_roles AS Base1 ON Base1.oid = Authmbr.roleid
+		INNER JOIN pg_catalog.pg_roles AS Base2 ON Base2.oid = Authmbr.member
+		INNER JOIN sys.babelfish_authid_user_ext AS Ext1 ON Base1.rolname = Ext1.rolname
+		INNER JOIN sys.babelfish_authid_user_ext AS Ext2 ON Base2.rolname = Ext2.rolname
+		WHERE Ext1.database_name = DB_NAME()
+		AND Ext2.database_name = DB_NAME()
+		AND Ext1.type = 'R'
+		AND Ext2.orig_username != 'db_owner'
+		AND (Ext1.orig_username = @rolename OR lower(Ext1.orig_username) = lower(@rolename))
+		ORDER BY RoleName, MemberName;
+	END
+	-- If the specified role is not valid
+	ELSE
+		RAISERROR('%s is not a role.', 16, 1, @rolename);
+END;
+$$
+LANGUAGE 'pltsql';
+GRANT EXECUTE ON PROCEDURE sys.sp_helprolemember TO PUBLIC;
 
 CREATE OR REPLACE VIEW sys.sp_sproc_columns_view AS
 -- Get parameters (if any) for a user-defined stored procedure/function

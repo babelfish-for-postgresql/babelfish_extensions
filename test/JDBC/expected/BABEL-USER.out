@@ -33,6 +33,9 @@ dbo#!##!#dbo#!#db1#!#dbo
 master_db_owner#!##!#db_owner#!#master#!#
 master_dbo#!##!#dbo#!#master#!#dbo
 master_guest#!##!#guest#!#master#!#
+msdb_db_owner#!##!#db_owner#!#msdb#!#
+msdb_dbo#!##!#dbo#!#msdb#!#dbo
+msdb_guest#!##!#guest#!#msdb#!#
 tempdb_db_owner#!##!#db_owner#!#tempdb#!#
 tempdb_dbo#!##!#dbo#!#tempdb#!#dbo
 tempdb_guest#!##!#guest#!#tempdb#!#
@@ -44,7 +47,7 @@ FROM sys.database_principals
 ORDER BY default_schema_name DESC, name;
 GO
 ~~START~~
-nvarchar#!#nvarchar
+varchar#!#varchar
 dbo#!#dbo
 db_owner#!#
 guest#!#
@@ -59,6 +62,7 @@ GO
 varchar#!#bit
 dbo#!#1
 master_dbo#!#1
+msdb_dbo#!#1
 tempdb_dbo#!#1
 ~~END~~
 
@@ -82,7 +86,7 @@ FROM sys.database_principals
 WHERE name = 'test1';
 GO
 ~~START~~
-nvarchar#!#nvarchar
+varchar#!#varchar
 test1#!#dbo
 ~~END~~
 
@@ -121,7 +125,7 @@ FROM sys.database_principals
 WHERE name = 'test2';
 GO
 ~~START~~
-nvarchar#!#nvarchar
+varchar#!#varchar
 test2#!#dbo
 ~~END~~
 
@@ -148,7 +152,7 @@ FROM sys.database_principals
 WHERE name = 'test3';
 GO
 ~~START~~
-nvarchar#!#nvarchar
+varchar#!#varchar
 test3#!#sch3
 ~~END~~
 
@@ -182,7 +186,7 @@ FROM sys.database_principals
 WHERE name = 'AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA';
 GO
 ~~START~~
-nvarchar#!#nvarchar
+varchar#!#varchar
 AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA#!#dbo
 ~~END~~
 
@@ -206,7 +210,7 @@ FROM sys.database_principals
 WHERE name = 'test1';
 GO
 ~~START~~
-nvarchar#!#nvarchar
+varchar#!#varchar
 test1#!#sch3
 ~~END~~
 
@@ -229,7 +233,7 @@ FROM sys.database_principals
 WHERE name = 'test1';
 GO
 ~~START~~
-nvarchar#!#nvarchar
+varchar#!#varchar
 test1#!#dbo
 ~~END~~
 
@@ -252,7 +256,7 @@ FROM sys.database_principals
 WHERE name = 'new_test1';
 GO
 ~~START~~
-nvarchar#!#nvarchar
+varchar#!#varchar
 new_test1#!#dbo
 ~~END~~
 
@@ -296,7 +300,7 @@ FROM sys.database_principals
 WHERE name = 'test1';
 GO
 ~~START~~
-nvarchar#!#nvarchar
+varchar#!#varchar
 ~~END~~
 
 
@@ -308,7 +312,7 @@ FROM sys.database_principals
 WHERE name = 'test2';
 GO
 ~~START~~
-nvarchar#!#nvarchar
+varchar#!#varchar
 ~~END~~
 
 
@@ -320,7 +324,7 @@ FROM sys.database_principals
 WHERE name = 'test3';
 GO
 ~~START~~
-nvarchar#!#nvarchar
+varchar#!#varchar
 ~~END~~
 
 
@@ -332,7 +336,7 @@ FROM sys.database_principals
 WHERE name = 'AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA';
 GO
 ~~START~~
-nvarchar#!#nvarchar
+varchar#!#varchar
 ~~END~~
 
 

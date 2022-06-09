@@ -25,6 +25,7 @@
 #include "hooks.h"
 #include "multidb.h"
 #include "rolecmds.h"
+#include "pltsql.h"
 
 /*****************************************
  *			SYS schema
@@ -219,7 +220,10 @@ const char *get_one_user_db_name(void)
 								  rel->rd_att, &is_null);
 		db_name = TextDatumGetCString(name);
 
-		if ((strncmp(db_name, "master", 6) != 0) && (strncmp(db_name, "tempdb", 6) != 0))
+		// check that db_name is not "master", "tempdb", or "msdb"
+		if ((strlen(db_name) != 6 || (strncmp(db_name, "master", 6) != 0)) &&
+			(strlen(db_name) != 6 || (strncmp(db_name, "tempdb", 6) != 0)) &&
+			(strlen(db_name) != 4 || (strncmp(db_name, "msdb", 4) != 0)))
 		{
 			user_db_name = db_name;
 			break;
@@ -345,10 +349,12 @@ babelfish_helpdb(PG_FUNCTION_ARGS)
 
 		values[2] = CStringGetTextDatum(NameStr(sysdb->owner));
 
-		if (strcmp(db_name_entry, "master") == 0)
+		if (strlen(db_name_entry) == 6 && (strncmp(db_name_entry, "master", 6) == 0))
 			values[3] = 1;
-		else if (strcmp(db_name_entry, "tempdb") == 0)
+		else if (strlen(db_name_entry) == 6 && (strncmp(db_name_entry, "tempdb", 6) == 0))
 			values[3] = 2;
+		else if (strlen(db_name_entry) == 4 && (strncmp(db_name_entry, "msdb", 4) == 0))
+			values[3] = 4;
 		else
         	values[3] = sysdb->dbid;
 
@@ -646,6 +652,8 @@ is_user(Oid role_oid)
 	HeapTuple	tuple;
 	HeapTuple	authtuple;
 	NameData	rolname;
+	BpChar		type;
+	char		*type_str = "";
 
 	authtuple = SearchSysCache1(AUTHOID, ObjectIdGetDatum(role_oid));
 	if (!HeapTupleIsValid(authtuple))
@@ -670,12 +678,70 @@ is_user(Oid role_oid)
 	if (!HeapTupleIsValid(tuple))
 		is_user = false;
 
+	type = ((Form_authid_user_ext) GETSTRUCT(tuple))->type;
+	type_str = bpchar_to_cstring(&type);
+
+	if (strcmp(type_str, "S") != 0)
+		is_user = false;
+
 	systable_endscan(scan);
 	table_close(relation, AccessShareLock);
 
 	ReleaseSysCache(authtuple);
 
 	return is_user;
+}
+
+bool
+is_role(Oid role_oid)
+{
+	Relation	relation;
+	bool		is_role = true;
+	ScanKeyData	scanKey;
+	SysScanDesc	scan;
+	HeapTuple	tuple;
+	HeapTuple	authtuple;
+	NameData	rolname;
+	BpChar 		type;
+	char		*type_str = "";
+
+	authtuple = SearchSysCache1(AUTHOID, ObjectIdGetDatum(role_oid));
+	if (!HeapTupleIsValid(authtuple))
+	ereport(ERROR,
+			(errcode(ERRCODE_UNDEFINED_OBJECT),
+			errmsg("role with OID %u does not exist", role_oid)));
+	rolname = ((Form_pg_authid) GETSTRUCT(authtuple))->rolname;
+
+	relation = table_open(get_authid_user_ext_oid(), AccessShareLock);
+
+	ScanKeyInit(&scanKey,
+				Anum_bbf_authid_user_ext_rolname,
+				BTEqualStrategyNumber, F_NAMEEQ,
+				NameGetDatum(&rolname));
+
+	scan = systable_beginscan(relation,
+							  get_authid_user_ext_idx_oid(),
+							  true, NULL, 1, &scanKey);
+
+	tuple = systable_getnext(scan);
+
+	if (!HeapTupleIsValid(tuple))
+		is_role = false;
+	else
+	{
+		type = ((Form_authid_user_ext) GETSTRUCT(tuple))->type;
+		type_str = bpchar_to_cstring(&type);
+
+		if (strcmp(type_str, "R") != 0)
+		is_role = false;
+	}
+
+	systable_endscan(scan);
+	table_close(relation, AccessShareLock);
+
+	ReleaseSysCache(authtuple);
+
+	return is_role;
 }
 
 Oid
@@ -966,15 +1032,19 @@ static void metadata_inconsistency_check(Tuplestorestate *res_tupstore, TupleDes
 /* Value function declaration */
 static Datum get_master(HeapTuple tuple, TupleDesc dsc);
 static Datum get_tempdb(HeapTuple tuple, TupleDesc dsc);
+static Datum get_msdb(HeapTuple tuple, TupleDesc dsc);
 static Datum get_cur_rolname(HeapTuple tuple, TupleDesc dsc);
 static Datum get_master_dbo(HeapTuple tuple, TupleDesc dsc);
 static Datum get_tempdb_dbo(HeapTuple tuple, TupleDesc dsc);
+static Datum get_msdb_dbo(HeapTuple tuple, TupleDesc dsc);
 static Datum get_dbo(HeapTuple tuple, TupleDesc dsc);
 static Datum get_db_owner(HeapTuple tuple, TupleDesc dsc);
 static Datum get_master_db_owner(HeapTuple tuple, TupleDesc dsc);
 static Datum get_master_guest(HeapTuple tuple, TupleDesc dsc);
 static Datum get_tempdb_db_owner(HeapTuple tuple, TupleDesc dsc);
 static Datum get_tempdb_guest(HeapTuple tuple, TupleDesc dsc);
+static Datum get_msdb_db_owner(HeapTuple tuple, TupleDesc dsc);
+static Datum get_msdb_guest(HeapTuple tuple, TupleDesc dsc);
 static Datum get_owner(HeapTuple tuple, TupleDesc dsc);
 static Datum get_name_db_owner(HeapTuple tuple, TupleDesc dsc);
 static Datum get_name_dbo(HeapTuple tuple, TupleDesc dsc);
@@ -1030,12 +1100,16 @@ Rule must_have_rules[] =
 	 "babelfish_sysdatabases", "name", NULL, get_master, NULL, check_exist, NULL},
 	{"tempdb must exist in babelfish_sysdatabases",
 	 "babelfish_sysdatabases", "name", NULL, get_tempdb, NULL, check_exist, NULL},
+	{"msdb must exist in babelfish_sysdatabases",
+	 "babelfish_sysdatabases", "name", NULL, get_msdb, NULL, check_exist, NULL},
 	{"Current role name must exist in babelfish_authid_login_ext",
 	 "babelfish_authid_login_ext", "rolname", NULL, get_cur_rolname, NULL, check_exist, NULL},
 	{"master_dbo must exist in babelfish_namespace_ext",
 	 "babelfish_namespace_ext", "nspname", NULL, get_master_dbo, NULL, check_exist, NULL},
 	{"tempdb_dbo must exist in babelfish_namespace_ext",
 	 "babelfish_namespace_ext", "nspname", NULL, get_tempdb_dbo, NULL, check_exist, NULL},
+	{"msdb_dbo must exist in babelfish_namespace_ext",
+	 "babelfish_namespace_ext", "nspname", NULL, get_msdb_dbo, NULL, check_exist, NULL},
 	{"In single-db mode, if user db exists, dbo must exist in babelfish_namespace_ext",
 	 "babelfish_namespace_ext", "nspname", NULL, get_dbo, is_singledb_exists_userdb, check_exist, NULL},
 	{"In single-db mode, if user db exists, db_owner must exist in babelfish_authid_user_ext",
@@ -1053,7 +1127,13 @@ Rule must_have_rules[] =
 	{"tempdb_dbo must exist in babelfish_authid_user_ext",
 	 "babelfish_authid_user_ext", "rolname", NULL, get_tempdb_dbo, NULL, check_exist, NULL},
 	{"tempdb_guest must exist in babelfish_authid_user_ext",
-	 "babelfish_authid_user_ext", "rolname", NULL, get_tempdb_guest, NULL, check_exist, NULL}
+	 "babelfish_authid_user_ext", "rolname", NULL, get_tempdb_guest, NULL, check_exist, NULL},
+	{"msdb_db_owner must exist in babelfish_authid_user_ext",
+	 "babelfish_authid_user_ext", "rolname", NULL, get_msdb_db_owner, NULL, check_exist, NULL},
+	{"msdb_dbo must exist in babelfish_authid_user_ext",
+	 "babelfish_authid_user_ext", "rolname", NULL, get_msdb_dbo, NULL, check_exist, NULL},
+	{"msdb_guest must exist in babelfish_authid_user_ext",
+	 "babelfish_authid_user_ext", "rolname", NULL, get_msdb_guest, NULL, check_exist, NULL}
 };
 
 /* Must match rules, MUST comply with metadata_inconsistency_check() */
@@ -1321,6 +1401,12 @@ get_tempdb(HeapTuple tuple, TupleDesc dsc)
 }
 
 static Datum
+get_msdb(HeapTuple tuple, TupleDesc dsc)
+{
+	return CStringGetTextDatum("msdb");
+}
+
+static Datum
 get_cur_rolname(HeapTuple tuple, TupleDesc dsc)
 {
 	char *rolname = GetUserNameFromId(GetSessionUserId(), false);
@@ -1338,6 +1424,12 @@ static Datum
 get_tempdb_dbo(HeapTuple tuple, TupleDesc dsc)
 {
 	return CStringGetDatum("tempdb_dbo");
+}
+
+static Datum
+get_msdb_dbo(HeapTuple tuple, TupleDesc dsc)
+{
+	return CStringGetDatum("msdb_dbo");
 }
 
 static Datum
@@ -1374,6 +1466,18 @@ static Datum
 get_tempdb_guest(HeapTuple tuple, TupleDesc dsc)
 {
 	return CStringGetDatum("tempdb_guest");
+}
+
+static Datum
+get_msdb_db_owner(HeapTuple tuple, TupleDesc dsc)
+{
+	return CStringGetDatum("msdb_db_owner");
+}
+
+static Datum
+get_msdb_guest(HeapTuple tuple, TupleDesc dsc)
+{
+	return CStringGetDatum("msdb_guest");
 }
 
 static Datum

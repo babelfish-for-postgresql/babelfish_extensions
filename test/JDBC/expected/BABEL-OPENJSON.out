@@ -1,0 +1,304 @@
+
+
+-- OPENJSON()
+-- OPENJSON without WITH clause
+select * from OPENJSON(N'{"a":null,"b":"a","c":1,"d":true,"e":[1,2],"f":{"name":"John"}}');
+go
+~~START~~
+nvarchar#!#nvarchar#!#int
+a#!#<NULL>#!#0
+b#!#a#!#1
+c#!#1#!#2
+d#!#true#!#3
+e#!#[1, 2]#!#4
+f#!#{"name": "John"}#!#5
+~~END~~
+
+DECLARE @jsonvar NVARCHAR(2048) = N'{
+   "String_value": "John",
+   "DoublePrecisionFloatingPoint_value": 45,
+   "DoublePrecisionFloatingPoint_value": 2.3456,
+   "BooleanTrue_value": true,
+   "BooleanFalse_value": false,
+   "Null_value": null,
+   "Array_value": ["a","r","r","a","y"],
+   "Object_value": {"obj":"ect"}
+}';
+SELECT * FROM OpenJson(@jsonvar);
+go
+~~START~~
+nvarchar#!#nvarchar#!#int
+Null_value#!#<NULL>#!#0
+Array_value#!#["a", "r", "r", "a", "y"]#!#4
+Object_value#!#{"obj": "ect"}#!#5
+String_value#!#John#!#1
+BooleanTrue_value#!#true#!#3
+BooleanFalse_value#!#false#!#3
+DoublePrecisionFloatingPoint_value#!#45#!#2
+DoublePrecisionFloatingPoint_value#!#2.3456#!#2
+~~END~~
+
+SELECT [key], value FROM OPENJSON(N'{"path":{"to":{"sub-object":["en-GB", "en-UK","de-AT","es-AR","sr-Cyrl"]}}}','$.path.to."sub-object"');
+go
+~~START~~
+nvarchar#!#nvarchar
+0#!#en-GB
+1#!#en-UK
+2#!#de-AT
+3#!#es-AR
+4#!#sr-Cyrl
+~~END~~
+
+-- check that value is an object
+select * from openjson(N'{"a":1}', 'strict $.a')
+GO
+~~START~~
+nvarchar#!#nvarchar#!#int
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Object or array cannot be found in the specified JSON path.)~~
+
+-- check lax/strict path
+select * from openjson(N'{"obj":{"a":1}}', 'lax $.a')
+go
+~~START~~
+nvarchar#!#nvarchar#!#int
+~~END~~
+
+select * from openjson(N'{"obj":{"a":1}}', 'strict $.a')
+go
+~~START~~
+nvarchar#!#nvarchar#!#int
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: JSON object does not contain key "a")~~
+
+-- check non-ascii characters
+select * from openjson(N'{"nonascii":"ちょまど@初詣おみくじ凶\n - description: ( *ﾟ▽ﾟ* っ)З腐女子！絵描き！| H26新卒文系SE (入社して4ヶ月目の8月にSIer(適応障害になった)を辞職し開発者に転職) | H26秋応用情報合格！| 自作bot (in PHP) chomado_bot | プログラミングガチ初心者\n"}')
+go
+~~START~~
+nvarchar#!#nvarchar#!#int
+nonascii#!#ちょまど@初詣おみくじ凶\n - description: ( *ﾟ▽ﾟ* っ)З腐女子！絵描き！| H26新卒文系SE (入社して4ヶ月目の8月にSIer(適応障害になった)を辞職し開発者に転職) | H26秋応用情報合格！| 自作bot (in PHP) chomado_bot | プログラミングガチ初心者\n#!#1
+~~END~~
+
+
+-- OPENJSON with WITH clause
+DECLARE @json NVARCHAR(MAX) = N'{"obj":{"a":1}}'
+DECLARE @path NVARCHAR(MAX) = N'$.obj'
+SELECT * FROM OPENJSON(@json, @path) with (a nvarchar(20))
+GO
+~~START~~
+nvarchar
+1
+~~END~~
+
+-- invalid json input
+SELECT * FROM OPENJSON(N'{"a"') with (a nvarchar(20))
+GO
+~~START~~
+nvarchar
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: invalid input syntax for type json)~~
+
+-- test cases with invalid path params
+select * from openjson(N'{"a":1}', 'strict $.a') with (a nvarchar(20))
+go
+~~START~~
+nvarchar
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Value referenced by JSON path is not an array or object and cannot be opened with OPENJSON.)~~
+
+select * from openjson(N'{"a":1}', '$.a') with (a nvarchar(20))
+go
+~~START~~
+nvarchar
+~~END~~
+
+-- test array with WITH clause
+select * from openjson(N'[1,2,3,4,null]') WITH (a_col varchar(20) '$');
+GO
+~~START~~
+varchar
+1
+2
+3
+4
+<NULL>
+~~END~~
+
+DECLARE @json NVARCHAR(MAX);
+SET @json=N'[{"a":1},{"a":2}]';
+SELECT * FROM OPENJSON(@json) with (name nvarchar(max) '$.a');
+GO
+~~START~~
+nvarchar
+1
+2
+~~END~~
+
+DECLARE @json NVARCHAR(MAX);
+SET @json=N'[{"a":1},{"a":2}]';
+SELECT * FROM OPENJSON(@json, '$[0]') with (name nvarchar(max) '$.a');
+GO
+~~START~~
+nvarchar
+1
+~~END~~
+
+-- test case where with clause is split into multiple lines
+select * from openjson(N'{"a":1}') with (
+  a integer
+);
+GO
+~~START~~
+int
+1
+~~END~~
+
+-- test output truncation
+select * from openjson(N'{"a":"long string"}') with (a nvarchar(5));
+GO
+~~START~~
+nvarchar
+long 
+~~END~~
+
+select * from openjson(N'{"a":123456}') with (a nvarchar(5));
+GO
+~~START~~
+nvarchar
+12345
+~~END~~
+
+select * from openjson(N'{"a":null}') with (a nvarchar(2)); -- should return NULL
+go
+~~START~~
+nvarchar
+<NULL>
+~~END~~
+
+-- AS JSON
+DECLARE @json NVARCHAR(MAX);
+SET @json=N'[{"a":1},[1,2],"a"]';
+SELECT * FROM OPENJSON(@json, '$') with (name nvarchar(max) '$' AS JSON);
+GO
+~~START~~
+nvarchar
+{"a": 1}
+[1, 2]
+<NULL>
+~~END~~
+
+DECLARE @json NVARCHAR(MAX);
+SET @json=N'[{"a":1},[1,2],"a"]';
+SELECT * FROM OPENJSON(@json) with (name nvarchar(max) '$');
+GO
+~~START~~
+nvarchar
+<NULL>
+<NULL>
+a
+~~END~~
+
+-- Test invalid column type with AS JSON
+SELECT * FROM OPENJSON(N'{"a":1}') WITH (obj nvarchar(20) '$' AS JSON);
+GO
+~~START~~
+nvarchar
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: AS JSON in WITH clause can only be specified for column of type nvarchar(max))~~
+
+-- TODO fix case with no length specification
+SELECT * from OPENJSON(N'{"a":1}') with (obj nvarchar '$' AS JSON);
+GO
+~~START~~
+nvarchar
+{"a": 1}
+~~END~~
+
+-- check lax/strict path
+DECLARE @json NVARCHAR(MAX) = N'{"obj":{"a":1}}'
+DECLARE @path NVARCHAR(MAX) = N'$.obj'
+SELECT * FROM OPENJSON(@json, @path) with (a nvarchar(20), b nvarchar(20) 'lax $.b')
+GO
+~~START~~
+nvarchar#!#nvarchar
+1#!#<NULL>
+~~END~~
+
+DECLARE @json NVARCHAR(MAX) = N'{"obj":{"a":1}}'
+DECLARE @path NVARCHAR(MAX) = N'$.obj'
+SELECT * FROM OPENJSON(@json, @path) with (a nvarchar(20), b nvarchar(20) 'strict $.b')
+GO
+~~START~~
+nvarchar#!#nvarchar
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: JSON object does not contain key "b")~~
+
+-- check non-ascii characters
+select * from openjson(N'{"nonascii":"ちょまど@初詣おみくじ凶\n - description: ( *ﾟ▽ﾟ* っ)З腐女子！絵描き！| H26新卒文系SE (入社して4ヶ月目の8月にSIer(適応障害になった)を辞職し開発者に転職) | H26秋応用情報合格！| 自作bot (in PHP) chomado_bot | プログラミングガチ初心者\n"}') with 
+(
+  nonascii nvarchar(max)
+)
+go
+~~START~~
+nvarchar
+ちょまど@初詣おみくじ凶\n - description: ( *ﾟ▽ﾟ* っ)З腐女子！絵描き！| H26新卒文系SE (入社して4ヶ月目の8月にSIer(適応障害になった)を辞職し開発者に転職) | H26秋応用情報合格！| 自作bot (in PHP) chomado_bot | プログラミングガチ初心者\n
+~~END~~
+
+-- check 2-byte characters
+select * from openjson(N'{"a":"հձղճմ"}') with (a nvarchar(3));
+go
+~~START~~
+nvarchar
+հձղ
+~~END~~
+
+-- test gaps in data
+DECLARE @json NVARCHAR(MAX) = N'[{"b":1},{"a":2},{"a":3,"b":3},{}]'
+SELECT * FROM OPENJSON(@json) WITH (a int, b int, o nvarchar(max) '$' AS JSON)
+GO
+~~START~~
+int#!#int#!#nvarchar
+<NULL>#!#1#!#{"b": 1}
+2#!#<NULL>#!#{"a": 2}
+3#!#3#!#{"a": 3, "b": 3}
+<NULL>#!#<NULL>#!#{}
+~~END~~
+
+
+
+-- comprehensive testing
+DECLARE @json NVARCHAR(4000) = N'{ 
+    "pets" : {
+            "cats" : [
+            { "id" : 1, "name" : "Fluffy", "sex" : "Female" },
+            { "id" : 2, "name" : "Long Tail", "sex" : "Female" },
+            { "id" : 3, "name" : "Scratch", "sex" : "Male" }
+        ],
+            "dogs" : [
+            { "name" : "Fetch", "sex" : "Male" },
+            { "name" : "Fluffy", "sex" : "Male" },
+            { "name" : "Wag", "sex" : "Female" }
+        ]
+    }
+}';
+SELECT * FROM OPENJSON(@json, '$.pets.cats')
+WITH  (
+        [Cat Id]    int             '$.id',  
+        "Cat Name"  varchar(60)     '$.name', 
+        [Sex]       varchar(6)      '$.sex', 
+        [Cats]      nvarchar(max)   '$' AS JSON   
+    );
+GO
+~~START~~
+int#!#varchar#!#varchar#!#nvarchar
+1#!#Fluffy#!#Female#!#{"id": 1, "sex": "Female", "name": "Fluffy"}
+2#!#Long Tail#!#Female#!#{"id": 2, "sex": "Female", "name": "Long Tail"}
+3#!#Scratch#!#Male#!#{"id": 3, "sex": "Male", "name": "Scratch"}
+~~END~~
+

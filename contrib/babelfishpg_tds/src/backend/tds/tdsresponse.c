@@ -660,11 +660,22 @@ resolve_numeric_typmod_from_exp(Node *expr)
 
 			/*
 			 * [BABEL-3074] NUMERIC overflow causes TDS error for aggregate
-			 * function sum(); resultant precision should be individual precision + 1
+			 * function sum(); resultant precision should be tds_default_numeric_precision 
 			 */
 			if (aggFuncName && strlen(aggFuncName) == 3 &&
 					(strncmp(aggFuncName, "sum", 3) == 0))
-				precision++;
+				precision = tds_default_numeric_precision;
+
+			/*
+			 * For aggregate function avg(); resultant precision should be
+			 * tds_default_numeric_precision and resultant scale = max(input scale, 6)
+			 */
+			if (aggFuncName && strlen(aggFuncName) == 3 &&
+					(strncmp(aggFuncName, "avg", 3) == 0))
+			{
+				precision = tds_default_numeric_precision;
+				scale = Max(scale, 6);
+			}
 
 			pfree(aggFuncName);
 			return ((precision << 16) | scale) + VARHDRSZ;
@@ -2956,14 +2967,23 @@ SetAttributesForColmetada(TdsColumnMetaData *col)
 	HeapTuple	  tp;
 	Form_pg_attribute att_tup;
 
-	tp = SearchSysCache2(ATTNUM, 
-			ObjectIdGetDatum(col->relOid),
-			Int16GetDatum(col->attrNum));
-
 	/* Initialise to false if no valid heap tuple is found. */
 	col->attNotNull = false;
 	col->attidentity = false;
 	col->attgenerated = false;
+
+	/*
+	 * Send the right column-metadata only for FMTONLY Statements.
+	 * FIXME: We need to find a generic solution where we do not rely
+	 * on the catalog for constraint information.
+	 */
+	if (pltsql_plugin_handler_ptr &&
+			!(*pltsql_plugin_handler_ptr->pltsql_is_fmtonly_stmt))
+		return;
+
+	tp = SearchSysCache2(ATTNUM, 
+		ObjectIdGetDatum(col->relOid),
+		Int16GetDatum(col->attrNum));
 
 	if (HeapTupleIsValid(tp))
 	{

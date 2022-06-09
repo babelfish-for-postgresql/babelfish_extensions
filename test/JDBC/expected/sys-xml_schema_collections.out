@@ -1,0 +1,7 @@
+-- Test function stub
+SELECT * FROM sys.xml_schema_collections
+GO
+~~START~~
+int#!#int#!#int#!#varchar#!#datetime#!#datetime
+~~END~~
+

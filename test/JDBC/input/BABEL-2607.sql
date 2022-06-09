@@ -26,6 +26,11 @@ FROM babelfish_helpdb('tempdb')
 WHERE name = 'tempdb'
 go
 
+SELECT name, dbid
+FROM babelfish_helpdb('msdb')
+WHERE name = 'msdb'
+go
+
 SELECT name
 FROM babelfish_helpdb('babel_2607_db') 
 WHERE name = 'babel_2607_db';
