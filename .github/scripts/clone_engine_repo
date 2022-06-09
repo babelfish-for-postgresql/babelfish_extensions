@@ -40,6 +40,10 @@ fi
 GH_USER=$1
 BRANCH=$2
 
+echo "$1"
+echo "$2"
+exit 0
+
 # See if user has an engine repository with the same name and branch.
 # See https://unix.stackexchange.com/questions/474805/verify-if-a-url-exists
 check_repo () {

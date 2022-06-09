@@ -8,5 +8,6 @@ jobs:
       - name: Print PR body
         id: print-pr-body
         if: always()
-        run: echo '${{github.event.pull_request.body}}'
+        run: |
+          $GITHUB_WORKSPACE/.github/scripts/clone_engine_repo "engine" "${{github.event.pull_request.body}}"
 
