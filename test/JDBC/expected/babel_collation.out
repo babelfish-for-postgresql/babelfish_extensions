@@ -117,12 +117,24 @@ chinese_prc_ci_as#!#Chinese-PRC, case-insensitive, accent-sensitive, kanatype-in
 cyrillic_general_cs_as#!#Cyrillic-General, case-sensitive, accent-sensitive, kanatype-insensitive, width-insensitive
 cyrillic_general_ci_ai#!#Cyrillic-General, case-insensitive, accent-insensitive, kanatype-insensitive, width-insensitive
 cyrillic_general_ci_as#!#Cyrillic-General, case-insensitive, accent-sensitive, kanatype-insensitive, width-insensitive
+estonian_ci_ai#!#Estonian, case-insensitive, accent-insensitive, kanatype-insensitive, width-insensitive
+estonian_ci_as#!#Estonian, case-insensitive, accent-sensitive, kanatype-insensitive, width-insensitive
+estonian_cs_as#!#Estonian, case-sensitive, accent-sensitive, kanatype-insensitive, width-insensitive
 finnish_swedish_cs_as#!#Finnish-Swedish, case-sensitive, accent-sensitive, kanatype-insensitive, width-insensitive
 finnish_swedish_ci_as#!#Finnish-Swedish, case-insensitive, accent-sensitive, kanatype-insensitive, width-insensitive
 finnish_swedish_ci_ai#!#Finnish-Swedish, case-insensitive, accent-insensitive, kanatype-insensitive, width-insensitive
 french_cs_as#!#French, case-sensitive, accent-sensitive, kanatype-insensitive, width-insensitive
 french_ci_as#!#French, case-insensitive, accent-sensitive, kanatype-insensitive, width-insensitive
 french_ci_ai#!#French, case-insensitive, accent-insensitive, kanatype-insensitive, width-insensitive
+greek_ci_ai#!#Greek, case-insensitive, accent-insensitive, kanatype-insensitive, width-insensitive
+greek_ci_as#!#Greek, case-insensitive, accent-sensitive, kanatype-insensitive, width-insensitive
+greek_cs_as#!#Greek, case-sensitive, accent-sensitive, kanatype-insensitive, width-insensitive
+hebrew_ci_ai#!#Hebrew, case-insensitive, accent-insensitive, kanatype-insensitive, width-insensitive
+hebrew_ci_as#!#Hebrew, case-insensitive, accent-sensitive, kanatype-insensitive, width-insensitives
+hebrew_cs_as#!#Hebrew, case-sensitive, accent-sensitive, kanatype-insensitive, width-insensitive
+japanese_ci_ai#!#Japanese, case-insensitive, accent-insensitive, kanatype-insensitive, width-insensitive
+japanese_ci_as#!#Japanese, case-insensitive, accent-sensitive, kanatype-insensitive, width-insensitive
+japanese_cs_as#!#Japanese, case-sensitive, accent-sensitive, kanatype-insensitive, width-insensitive
 korean_wansung_cs_as#!#Korean-Wansung, case-sensitive, accent-sensitive, kanatype-insensitive, width-insensitive
 korean_wansung_ci_as#!#Korean-Wansung, case-insensitive, accent-sensitive, kanatype-insensitive, width-insensitive
 korean_wansung_ci_ai#!#Korean-Wansung, case-insensitive, accent-insensitive, kanatype-insensitive, width-insensitive
@@ -137,6 +149,9 @@ latin1_general_cs_as#!#Virtual, default locale, code page 1252, case-sensitive, 
 modern_spanish_cs_as#!#Traditional-Spanish, case-sensitive, accent-sensitive, kanatype-insensitive, width-insensitive
 modern_spanish_ci_as#!#Traditional-Spanish, case-insensitive, accent-sensitive, kanatype-insensitive, width-insensitive
 modern_spanish_ci_ai#!#Traditional-Spanish, case-insensitive, accent-insensitive, kanatype-insensitive, width-insensitive
+mongolian_ci_ai#!#Mongolian, case-insensitive, accent-insensitive, kanatype-insensitive, width-insensitive
+mongolian_ci_as#!#Mongolian, case-insensitive, accent-sensitive, kanatype-insensitive, width-insensitive
+mongolian_cs_as#!#Mongolian, case-sensitive, accent-sensitive, kanatype-insensitive, width-insensitive
 polish_cs_as#!#Polish, case-sensitive, accent-sensitive, kanatype-insensitive, width-insensitive
 polish_ci_as#!#Polish, case-insensitive, accent-sensitive, kanatype-insensitive, width-insensitive
 polish_ci_ai#!#Polish, case-insensitive, accent-insensitive, kanatype-insensitive, width-insensitive
@@ -161,6 +176,8 @@ sql_latin1_general_cp1257_ci_as#!#Virtual, default locale, code page 1257, case-
 sql_latin1_general_cp1257_cs_as#!#Virtual, default locale, code page 1257, case-sensitive, accent-sensitive, kanatype-insensitive, width-insensitive
 sql_latin1_general_cp1258_ci_as#!#Virtual, default locale, code page 1258, case-insensitive, accent-sensitive, kanatype-insensitive, width-insensitive
 sql_latin1_general_cp1258_cs_as#!#Virtual, default locale, code page 1258, case-sensitive, accent-sensitive, kanatype-insensitive, width-insensitive
+sql_latin1_general_cp874_ci_as#!#Virtual, default locale, code page 874, case-insensitive, accent-sensitive, kanatype-insensitive, width-insensitive
+sql_latin1_general_cp874_cs_as#!#Virtual, default locale, code page 874, case-sensitive, accent-sensitive, kanatype-insensitive, width-insensitive
 thai_cs_as#!#Thai, case-sensitive, accent-sensitive, kanatype-insensitive, width-insensitive
 thai_ci_as#!#Thai, case-insensitive, accent-sensitive, kanatype-insensitive, width-insensitive
 thai_ci_ai#!#Thai, case-insensitive, accent-insensitive, kanatype-insensitive, width-insensitive
@@ -177,6 +194,13 @@ vietnamese_cs_as#!#Vietnamese, case-sensitive, accent-sensitive, kanatype-insens
 vietnamese_ci_as#!#Vietnamese, case-insensitive, accent-sensitive, kanatype-insensitive, width-insensitive
 vietnamese_ci_ai#!#Vietnamese, case-insensitive, accent-insensitive, kanatype-insensitive, width-insensitive
 ~~END~~
+
+
+select count(*) fn_helpcollations();
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: syntax error near ')' at line 1 and character position 34)~~
 
 
 -- BABEL-1697 Collation and Codepage information for DMS

@@ -19,6 +19,9 @@ go
 SELECT * from fn_helpcollations();
 go
 
+select count(*) fn_helpcollations();
+go
+
 -- BABEL-1697 Collation and Codepage information for DMS
 SELECT CAST( COLLATIONPROPERTY(Name, 'CodePage') AS INT) FROM fn_helpcollations() where Name = DATABASEPROPERTYEX('master', 'Collation');
 go
