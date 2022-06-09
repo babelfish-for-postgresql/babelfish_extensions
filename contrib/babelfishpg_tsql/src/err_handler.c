@@ -234,6 +234,7 @@ bool is_batch_txn_aborting_error(int pg_error_code, uint8_t override_flag)
 		case SQL_ERROR_9451:
 		case SQL_ERROR_11701:
 		case SQL_ERROR_3616:
+                case SQL_ERROR_911:
 		{
 			elog(DEBUG1, "TSQL TXN is_batch_txn_aborting_error %d", latest_error_code);
 			return true;

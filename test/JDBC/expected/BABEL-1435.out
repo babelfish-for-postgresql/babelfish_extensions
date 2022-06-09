@@ -152,7 +152,7 @@ true
 -- test error
 USE db2;
 GO
-~~ERROR (Code: 3701)~~
+~~ERROR (Code: 911)~~
 
 ~~ERROR (Message: database "db2" does not exist)~~
 
