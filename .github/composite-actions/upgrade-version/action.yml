@@ -1,7 +1,9 @@
-name: Upgrade and Test 
+name: 'Upgrade and Test'
+
 runs: 
   using: "composite"
-    steps:
-      - name: "Print Upgrade Path"
-        run: echo "Upgrading to Next Version ..."
+  steps:
+    - name: Print Upgrade Path
+      run: echo "Upgrading to Next Version ..."
+      shell: bash
 
