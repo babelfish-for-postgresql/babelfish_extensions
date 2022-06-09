@@ -38,14 +38,6 @@ jobs:
         if: always() && steps.build-extensions.outcome == 'success'
         uses: ./.github/composite-actions/install-extensions
 
-      - name: Run JDBC Tests
-        id: jdbc
-        if: always() && steps.install-extensions.outcome == 'success'
-        timeout-minutes: 15
-        run: |
-          cd test/JDBC/
-          mvn test
-
       - name: Run pg-hint-plan tests
         id: run-pg-hint-plan-test
         if: always() && steps.build-pg-hint-plan.outcome == 'success'
