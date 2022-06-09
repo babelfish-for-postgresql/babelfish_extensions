@@ -11,5 +11,4 @@ runs:
         export PATH=~/postgres/bin:$PATH
         make
         make install
-        make installcheck
       shell: bash
