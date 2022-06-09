@@ -1,0 +1,35 @@
+drop table if exists babel_3291_t1
+go
+
+create table babel_3291_t1(a1 int PRIMARY KEY, b1 int)
+go
+
+set babelfish_showplan_all on
+go
+
+select /*+SeqScan(babel_3291_t1)*/ * from babel_3291_t1 where a1 = 1
+go
+~~START~~
+text
+Query Text: select /*+SeqScan(babel_3291_t1)*/ * from babel_3291_t1 where a1 = 1
+Seq Scan on babel_3291_t1  (cost=0.00..38.25 rows=1 width=8)
+  Filter: (a1 = 1)
+~~END~~
+
+
+select * from babel_3291_t1 where a1 = 1
+go
+~~START~~
+text
+Query Text: select * from babel_3291_t1 where a1 = 1
+Index Scan using babel_3291_t1_pkey on babel_3291_t1  (cost=0.15..8.17 rows=1 width=8)
+  Index Cond: (a1 = 1)
+~~END~~
+
+
+set babelfish_showplan_all off
+go
+
+-- cleanup
+drop table babel_3291_t1
+go
