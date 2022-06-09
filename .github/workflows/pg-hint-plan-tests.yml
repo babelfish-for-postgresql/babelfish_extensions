@@ -1,0 +1,80 @@
+name: pg-hint-plan Tests
+on: [push, pull_request]
+
+jobs:
+  run-pg-hint-plan-tests:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+        id: checkout
+
+      - name: Install Dependencies
+        id: install-dependencies
+        if: always()
+        uses: ./.github/composite-actions/install-dependencies
+
+      - name: Build Modified Postgres
+        id: build-modified-postgres
+        if: always() && steps.install-dependencies.outcome == 'success'
+        uses: ./.github/composite-actions/build-modified-postgres
+      
+      - name: Compile ANTLR
+        id: compile-antlr
+        if: always() && steps.build-modified-postgres.outcome == 'success'
+        uses: ./.github/composite-actions/compile-antlr
+      
+      - name: Build Extensions
+        id: build-extensions
+        if: always() && steps.compile-antlr.outcome == 'success'
+        uses: ./.github/composite-actions/build-extensions
+      
+      - name: Install Extensions
+        id: install-extensions
+        if: always() && steps.build-extensions.outcome == 'success'
+        uses: ./.github/composite-actions/install-extensions
+
+      - name: Build pg-hint-plan
+        id: build-pg-hint-plan
+        if: always() && steps.install-extensions.outcome == 'success'
+        uses: ./.github/composite-actions/build-pg-hint-plan
+
+      - name: Run pg-hint-plan tests
+        id: run-pg-hint-plan-test
+        if: always() && steps.build-pg-hint-plan.outcome == 'success'
+        run: |
+          cd test/JDBC/
+          export inputFilesPath=pg_hint_plan
+          sudo ~/postgres/bin/psql -d jdbc_testdb -U runner -c "ALTER DATABASE jdbc_testdb SET session_preload_libraries = pg_hint_plan;"
+          mvn test
+      
+      - name: Upload Log
+        if: always() && steps.run-pg-hint-plan-test.outcome == 'failure'
+        uses: actions/upload-artifact@v2
+        with:
+          name: postgres-log
+          path: ~/postgres/data/logfile
+      
+      # The test summary files contain paths with ':' characters, which is not allowed with the upload-artifact actions
+      - name: Rename Test Summary Files
+        id: test-file-rename
+        if: always() && steps.run-pg-hint-plan-test.outcome == 'failure'
+        run: |
+          cd test/JDBC/Info
+          timestamp=`ls -Art | tail -n 1`
+          cd $timestamp
+          mv $timestamp.diff ../output-diff.diff
+          mv "$timestamp"_runSummary.log ../run-summary.log
+      
+      - name: Upload Run Summary 
+        if: always() && steps.test-file-rename == 'success'
+        uses: actions/upload-artifact@v2
+        with:
+          name: run-summary.log
+          path: test/JDBC/Info/run-summary.log
+      
+      - name: Upload Output Diff
+        if: always() && steps.run-pg-hint-plan-test.outcome == 'failure'
+        uses: actions/upload-artifact@v2
+        with:
+          name: output-diff.diff
+          path: test/JDBC/Info/output-diff.diff

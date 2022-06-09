@@ -1,0 +1,35 @@
+#!/usr/bin/env bash
+
+set -e
+
+# Look for a config file and read it if it's there. Intentionally use -x
+# instead of -r so we get an error if we can't read the config file.
+CONFIG_FILE=${0}.conf
+if [ -r "$CONFIG_FILE" ]; then
+    echo "Sourcing config file $CONFIG_FILE"
+    . $CONFIG_FILE
+else
+    if [ -e "$CONFIG_FILE" ]; then
+        # Unlike the case below, if the file exists but isn't readable that is
+        # almost certainly not what the user is expecting, so treat it as an error.
+        echo "ERROR: config file $CONFIG_FILE is not readable"
+        exit 1
+    else
+        echo "WARNING: config file $CONNFIG_FILE not found; using defaults."
+    fi
+fi
+
+if [ -n "$DEFAULT_TAG" ]; then
+    BRANCH_OPTION="--branch $DEFAULT_TAG"
+else
+    BRANCH_OPTION=''
+fi
+
+BASE_URL=https://github.com/ossc-db/pg_hint_plan
+GIT_URL=${BASE_URL}.git
+
+echo running git clone --depth 1 "$BRANCH_OPTION" "$GIT_URL"
+git clone --depth 1 $BRANCH_OPTION "$GIT_URL" && exit
+rc=$?
+echo "git clone failed with return code $rc"
+exit $rc
