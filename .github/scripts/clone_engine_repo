@@ -36,13 +36,21 @@ if [ "$1" == -n ]; then
     echo
     echo DRY RUN MODE
     echo
-    # TODO: move these to a seperate debug mode (https://docs.github.com/en/actions/monitoring-and-troubleshooting-workflows/enabling-debug-logging)
+
+    shift
+fi
+ACTIONS_STEP_DEBUG=1
+if [ -n "$ACTIONS_STEP_DEBUG" -o -n "$DRY_RUN" ]; then
+    echo
+    echo "ACTIONS_STEP_DEBUG='$ACTIONS_STEP_DEBUG'"
+    echo environment:
     env
+    echo
+    echo $GITHUB_EVENT_PATH
+    echo
     cat $GITHUB_EVENT_PATH
     echo 
     echo
-
-    shift
 fi
 
 # Spit out some debug info. NOTE! this will differentiate between a *blank*
@@ -71,8 +79,8 @@ BRANCH=$GITHUB_HEAD_REF
 # action to set some environment variables (see
 # ../composite-actions/build-modified-postgres/action.yml). Here we simply see
 # if the PR one is empty and punt to the non-PR version if so.
-REPO_NAME=$GH_PR_HEAD_REPO_FULL_NAME
-[ -n "$REPO_NAME" ] || REPO_NAME=$GH_REPOSITORY_FULL_NAME
+REPO_FULL_NAME=$GH_PR_HEAD_REPO_FULL_NAME
+[ -n "$REPO_FULL_NAME" ] || REPO_NAME=$GH_REPOSITORY_FULL_NAME
 
 # See if user has an engine repository with the same name and branch.
 # See https://unix.stackexchange.com/questions/474805/verify-if-a-url-exists
@@ -81,7 +89,7 @@ check_repo () {
     wget --spider "$1" || return $?
 }
 
-BASE_URL=https://github.com/$REPO_NAME/postgresql_modified_for_babelfish # NO /
+BASE_URL=https://github.com/$REPO_NAME/postgresql_modified_for_babelfish # NO '/'
 BRANCH_OPTION="--branch $BRANCH"
 if check_repo "${BASE_URL}/tree/$BRANCH"; then
     echo "Found matching branch $BRANCH at $BASE_URL, using that instead of public repo"
@@ -90,7 +98,7 @@ else
 
     # Maybe there's a matching branch in the public repo
     BASE_URL=
-    BASE_URL=https://github.com/babelfish-for-postgresql/postgresql_modified_for_babelfish # NO /
+    BASE_URL=https://github.com/babelfish-for-postgresql/postgresql_modified_for_babelfish # NO '/'
 
     if check_repo "${BASE_URL}/tree/$BRANCH"; then
         echo "Using $BRANCH from project engine repo"
