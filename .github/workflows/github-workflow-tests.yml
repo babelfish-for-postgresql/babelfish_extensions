@@ -5,6 +5,9 @@ jobs:
   run-babelfish-python-tests:
     runs-on: ubuntu-latest
     steps:
+      - uses: actions/checkout@v2
+        id: checkout
+
       - name: Print PR body
         id: print-pr-body
         if: always()
