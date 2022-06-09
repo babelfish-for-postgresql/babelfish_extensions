@@ -16,16 +16,12 @@ int
 
 USE sys_identity_columns_db1
 go
-~~ERROR (Code: 3701)~~
-
-~~ERROR (Message: database "sys_identity_columns_db1" does not exist)~~
-
 
 -- should not be visible here
 SELECT COUNT(*) FROM sys.identity_columns WHERE object_id = object_id('sys_identity_columns');
 go
 ~~START~~
 int
-1
+0
 ~~END~~
 

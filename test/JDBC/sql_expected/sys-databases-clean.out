@@ -1,6 +1,2 @@
 DROP DATABASE IF EXISTS sys_databases_test_db;
 GO
-~~ERROR (Code: 3701)~~
-
-~~ERROR (Message: database "sys_databases_test_db" does not exist)~~
-

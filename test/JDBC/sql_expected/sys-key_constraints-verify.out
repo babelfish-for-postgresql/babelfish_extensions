@@ -1,9 +1,5 @@
 USE sys_key_constraints_db1
 GO
-~~ERROR (Code: 3701)~~
-
-~~ERROR (Message: database "sys_key_constraints_db1" does not exist)~~
-
 
 select count(*) from sys.key_constraints where parent_object_id = object_id('sys_key_constraints_uq_1');
 GO
@@ -20,7 +16,7 @@ select count(*) from sys.key_constraints where parent_object_id = object_id('sys
 GO
 ~~START~~
 int
-1
+0
 ~~END~~
 
 
@@ -34,15 +30,11 @@ int
 
 USE sys_key_constraints_db1
 GO
-~~ERROR (Code: 3701)~~
-
-~~ERROR (Message: database "sys_key_constraints_db1" does not exist)~~
-
 
 select count(*) from sys.key_constraints where parent_object_id = object_id('sys_key_constraints_uq_2');
 GO
 ~~START~~
 int
-1
+0
 ~~END~~
 
