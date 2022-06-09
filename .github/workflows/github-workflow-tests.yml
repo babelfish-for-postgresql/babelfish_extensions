@@ -1,0 +1,12 @@
+name: Github workflow Tests
+on: [pull_request]
+
+jobs:
+  run-babelfish-python-tests:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Print PR body
+        id: print-pr-body
+        if: always()
+        run: echo '${{github.event.pull_request.body}}'
+
