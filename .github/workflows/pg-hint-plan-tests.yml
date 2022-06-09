@@ -46,12 +46,13 @@ jobs:
           cd test/JDBC/
           mvn test
 
-      - name: Run pg-hint-plan JDBC tests
+      - name: Run pg-hint-plan tests
         id: run-pg-hint-plan-test
         if: always() && steps.build-pg-hint-plan.outcome == 'success'
         run: |
           cd test/JDBC/
           export inputFilesPath=pg_hint_plan
+          psql -d jdbc_testdb -U runner -c "ALTER DATABASE jdbc_testdb SET session_preload_libraries = pg_hint_plan;"
           mvn test
       
       - name: Upload Log
