@@ -32,6 +32,10 @@ if [ "$1" == -n ]; then
     shift
 fi
 
+# Spit out some debug info. NOTE! this will differentiate between a *blank*
+# variable and a non-existant one, so don't replace this with `echo`!
+env | egrep '^GH_*|GITHUB_REPOSITORY_OWNER|GITHUB_EVENT_NAME|GITHUB_HEAD_REF|GITHUB_REF|GITHUB_REF_NAME' | sort
+
 # Per [1], referenced from [2], as of 2022-05-23 Github actions work
 # differently when run in pull requests vs branches. In a PR, GITHUB_HEAD_REF
 # contains the original branch name while GITHUB_REF and GITHUB_REF_NAME refer
@@ -45,10 +49,6 @@ fi
 # 4: https://github.com/babelfish-for-postgresql/babelfish_extensions/runs/6562890249?check_suite_focus=true#step:4:107
 # 5: https://github.com/nasbyj/babelfish_extensions/runs/6562881485?check_suite_focus=true#step:4:105
 # 6: https://github.com/nasbyj/babelfish_extensions/runs/6562881485?check_suite_focus=true#step:4:83
-
-# Spit out some debug info. NOTE! this will differentiate between a *blank*
-# variable and a non-existant one, so don't replace this with `echo`!
-env | egrep '^GH_*|GITHUB_REPOSITORY_OWNER|GITHUB_EVENT_NAME|GITHUB_HEAD_REF|GITHUB_REF|GITHUB_REF_NAME' | sort
 BRANCH=$GITHUB_HEAD_REF
 [ -n "$BRANCH" ] || BRANCH=$GITHUB_REF_NAME
 
