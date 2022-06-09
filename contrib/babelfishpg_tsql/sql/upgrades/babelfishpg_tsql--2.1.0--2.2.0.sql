@@ -49,6 +49,11 @@ $$
 STRICT
 LANGUAGE plpgsql;
 
+CREATE OR REPLACE FUNCTION sys.sqlvariant_datetime2(sys.SQL_VARIANT)
+RETURNS sys.DATETIME2
+AS 'babelfishpg_common', 'sqlvariant2datetime2'
+LANGUAGE C VOLATILE STRICT PARALLEL SAFE;
+
 -- Drops the temporary procedure used by the upgrade script.
 -- Please have this be one of the last statements executed in this upgrade script.
 DROP PROCEDURE sys.babelfish_drop_deprecated_view(varchar, varchar);
