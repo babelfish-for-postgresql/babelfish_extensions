@@ -1,6 +1,6 @@
 name: Github workflow Tests
 on: 
-  push
+  push:
   workflow_dispatch:
     inputs:
       logLevel:
