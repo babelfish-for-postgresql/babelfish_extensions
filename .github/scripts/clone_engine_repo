@@ -26,21 +26,12 @@ clone() {
     # exit $rc
 }
 
-echo "DEBUG"
-echo $PR_BODY
-
-if [ ! "$PR_BODY" ]; then
-    clone "${!PATTERN}"
+FOUND=$(echo $PR_BODY | grep -o "{$PATTERN:[^\}]*}" | head -1 | sed -n -e "s/{$PATTERN://p" | sed -n -e "s/}$//p")
+if [ "$FOUND" ]; then
+    echo "Pattern found"
+    clone "$FOUND"
 fi
-
-IFS='\n' read -ra lines <<< "$PR_BODY"
-for i in "${lines[@]}"; do
-    branch=$(echo $i | sed -n -e "s/^$PATTERN://p")
-    if [ "$branch" ]; then
-        clone "$branch"
-    fi
-done
-
+echo "Pattern not found; use the default value"
 clone "${!PATTERN}"
 
 exit 0
