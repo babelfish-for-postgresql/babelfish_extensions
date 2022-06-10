@@ -17,6 +17,7 @@
 #include "nodes/makefuncs.h"
 #include "nodes/nodeFuncs.h"
 #include "optimizer/optimizer.h"
+#include "parser/analyze.h"
 #include "parser/parse_clause.h"
 #include "parser/parse_coerce.h"
 #include "parser/parse_expr.h"
@@ -65,6 +66,7 @@ static bool tle_name_comparison(const char *tlename, const char *identifier);
 static void resolve_target_list_unknowns(ParseState *pstate, List *targetlist);
 static inline bool is_identifier_char(char c);
 static int find_attr_by_name_from_relation(Relation rd, const char *attname, bool sysColOK);
+static void modify_insert_stmt(InsertStmt *stmt, Oid relid);
 
 /*****************************************
  * 			Commands Hooks
@@ -84,6 +86,7 @@ static void logicalrep_modify_slot(Relation rel, EState *estate, TupleTableSlot 
 /* Save hook values in case of unload */
 static core_yylex_hook_type prev_core_yylex_hook = NULL;
 static pre_transform_returning_hook_type prev_pre_transform_returning_hook = NULL;
+static pre_transform_insert_hook_type prev_pre_transform_insert_hook = NULL;
 static post_transform_insert_row_hook_type prev_post_transform_insert_row_hook = NULL;
 static pre_transform_target_entry_hook_type prev_pre_transform_target_entry_hook = NULL;
 static tle_name_comparison_hook_type prev_tle_name_comparison_hook = NULL;
@@ -124,6 +127,9 @@ InstallExtendedHooks(void)
 
 	prev_pre_transform_returning_hook = pre_transform_returning_hook;
 	pre_transform_returning_hook = handle_returning_qualifiers;
+
+	prev_pre_transform_insert_hook = pre_transform_insert_hook;
+	pre_transform_insert_hook = modify_insert_stmt;
 
 	prev_post_transform_insert_row_hook = post_transform_insert_row_hook;
 	post_transform_insert_row_hook = check_insert_row;
@@ -168,6 +174,7 @@ UninstallExtendedHooks(void)
 	get_output_clause_status_hook = NULL;
 	pre_output_clause_transformation_hook = NULL;
 	pre_transform_returning_hook = prev_pre_transform_returning_hook;
+	pre_transform_insert_hook = prev_pre_transform_insert_hook ;
 	post_transform_insert_row_hook = prev_post_transform_insert_row_hook;
 	post_transform_column_definition_hook = NULL;
 	post_transform_table_definition_hook = NULL;
@@ -455,41 +462,8 @@ handle_returning_qualifiers(CmdType command, List *returningList, ParseState *ps
 static void
 check_insert_row(List *icolumns, List *exprList, Oid relid)
 {
-	Relation	pg_attribute;
-	ScanKeyData scankey;
-	SysScanDesc scan;
-	HeapTuple	tuple;
-	int 		defaultCols = 0;
-	
-	if (prev_post_transform_insert_row_hook)
-		prev_post_transform_insert_row_hook(icolumns, exprList, relid);
-
-	if (sql_dialect != SQL_DIALECT_TSQL)
-		return;
-
-	/* Check for number of default columns in the relation */
-	ScanKeyInit(&scankey,
-				Anum_pg_attribute_attrelid,
-				BTEqualStrategyNumber, F_OIDEQ,
-				ObjectIdGetDatum(relid));
-
-	pg_attribute = table_open(AttributeRelationId, AccessShareLock);
-	
-	scan = systable_beginscan(pg_attribute, AttributeRelidNumIndexId, true,
-							  NULL, 1, &scankey);
-
-	while (HeapTupleIsValid(tuple = systable_getnext(scan)))
-	{
-		Form_pg_attribute att = (Form_pg_attribute) GETSTRUCT(tuple);
-		if (att->atthasdef && att->attgenerated == '\0')
-			defaultCols += 1;
-	}
-
-	systable_endscan(scan);
-	table_close(pg_attribute, AccessShareLock);
-
 	/* Do not allow more target columns than expressions */
-	if (exprList != NIL && list_length(exprList) < list_length(icolumns) - defaultCols)
+	if (exprList != NIL && list_length(exprList) < list_length(icolumns))
 		ereport(ERROR,
 				(errcode(ERRCODE_SYNTAX_ERROR),
 				 errmsg("Number of given values does not match target table definition")));
@@ -1291,4 +1265,63 @@ static char *gen_func_arg_list(Oid objectId)
 	}
 
 	return arg_list.data;
+}
+
+/*
+* This function adds column names to the insert target relation in rewritten
+* CTE for OUTPUT INTO clause. 
+*/
+static void 
+modify_insert_stmt(InsertStmt *stmt, Oid relid)
+{
+	Relation	pg_attribute;
+	ScanKeyData scankey;
+	SysScanDesc scan;
+	HeapTuple	tuple;
+	List		*insert_col_list = NIL, *temp_col_list;
+		
+	if (prev_pre_transform_insert_hook)
+		(*prev_pre_transform_insert_hook) (stmt, relid);
+	
+	if (sql_dialect != SQL_DIALECT_TSQL)
+		return;
+
+	if (!output_into_insert_transformation)
+		return;
+
+	if (stmt->cols != NIL)
+		return;
+
+	/* Get column names from the relation */
+	ScanKeyInit(&scankey,
+				Anum_pg_attribute_attrelid,
+				BTEqualStrategyNumber, F_OIDEQ,
+				ObjectIdGetDatum(relid));
+
+	pg_attribute = table_open(AttributeRelationId, AccessShareLock);
+	
+	scan = systable_beginscan(pg_attribute, AttributeRelidNumIndexId, true,
+							  NULL, 1, &scankey);
+
+	while (HeapTupleIsValid(tuple = systable_getnext(scan)))
+	{
+		ResTarget *col = makeNode(ResTarget);
+		Form_pg_attribute att = (Form_pg_attribute) GETSTRUCT(tuple);
+		temp_col_list = NIL;
+
+		if (att->attnum > 0)
+		{
+			col->name = NameStr(att->attname);
+			col->indirection = NIL;
+			col->val = NULL;
+			col->location = 1;
+			col->name_location = 1;
+			temp_col_list = list_make1(col);
+			insert_col_list = list_concat(insert_col_list, temp_col_list);
+		}
+	}
+	stmt->cols = insert_col_list;
+	systable_endscan(scan);
+	table_close(pg_attribute, AccessShareLock);
+
 }
