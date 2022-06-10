@@ -12,6 +12,8 @@ jobs:
         id: print-pr-body
         if: always()
         run: |
-          cd ..
-          $GITHUB_WORKSPACE/.github/scripts/clone_engine_repo "engine" "${{github.event.pull_request.body}}"
+          $GITHUB_WORKSPACE/.github/scripts/clone_engine_repo "ENGINE" "${{github.event.pull_request.body}}"
+          $GITHUB_WORKSPACE/.github/scripts/clone_engine_repo "ENGINE_MINOR_VERSION_UPGRADE_FROM" "${{github.event.pull_request.body}}"
+          $GITHUB_WORKSPACE/.github/scripts/clone_engine_repo "ENGINE_MAJOR_VERSION_UPGRADE_FROM" "${{github.event.pull_request.body}}"
+          $GITHUB_WORKSPACE/.github/scripts/clone_engine_repo "PG_HINT_PLAN" "${{github.event.pull_request.body}}"
 

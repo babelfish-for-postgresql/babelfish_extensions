@@ -2,6 +2,44 @@
 
 set -e
 
+ENGINE_REPO="https://github.com/babelfish-for-postgresql/postgresql_modified_for_babelfish.git"
+ENGINE="--branch BABEL_2_X_DEV__PG_14_3 $ENGINE_REPO"
+ENGINE_MINOR_VERSION_UPGRADE_FROM="--branch BABEL_2_1_STABLE__PG_14_3 $ENGINE_REPO"
+ENGINE_MAJOR_VERSION_UPGRADE_FROM="--branch BABEL_1_X_DEV__PG_13_6 $ENGINE_REPO"
+PG_HINT_PLAN="--depth 1 --branch REL14_1_4_0 https://github.com/ossc-db/pg_hint_plan.git"
+
+PATTERN=$1
+PR_BODY=$2
+
+if [ ! "${!PATTERN}" ]; then
+    echo "Invalid pattern: $PATTERN"
+    exit 1
+fi
+
+clone() {
+    echo "running git clone $1"
+
+    exit 0
+    # git clone $1 && exit
+    # rc=$?
+    # echo "git clone failed with return code $rc"
+    # exit $rc
+}
+
+if [ ! "$PR_BODY" ]; then
+    clone "${!PATTERN}"
+fi
+
+IFS='\n' read -ra lines <<< "$PR_BODY"
+for i in "${lines[@]}"; do
+    branch=$(echo $i | sed -n -e "s/^$PATTERN://p")
+    if [ "$branch" ]; then
+        clone "$branch"
+    fi
+done
+
+exit 0
+
 # Attempt to clone the engine repository based on where the workflow is being run from.
 # First, see if the user who triggered the workflow has a fork of the engine
 # repo that also contains a branch with the same name as the branch that
