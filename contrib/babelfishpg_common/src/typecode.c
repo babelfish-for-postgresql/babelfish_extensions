@@ -228,6 +228,9 @@ Oid tsql_binary_oid = InvalidOid;
 Oid tsql_varbinary_oid = InvalidOid;
 Oid tsql_rowversion_oid = InvalidOid;
 Oid tsql_timestamp_oid = InvalidOid;
+Oid tsql_datetime2_oid = InvalidOid;
+Oid tsql_smalldatetime_oid = InvalidOid;
+Oid tsql_datetimeoffset_oid = InvalidOid;
 
 Oid
 lookup_tsql_datatype_oid(const char *typename)
@@ -333,5 +336,29 @@ bool
 is_tsql_rowversion_or_timestamp_datatype(Oid oid)
 {
     return (is_tsql_rowversion_datatype(oid) || is_tsql_timestamp_datatype(oid));
+}
+
+bool
+is_tsql_datetime2_datatype(Oid oid)
+{
+	if (tsql_datetime2_oid == InvalidOid)
+		tsql_datetime2_oid = lookup_tsql_datatype_oid("datetime2");
+	return tsql_datetime2_oid == oid;
+}
+
+bool
+is_tsql_smalldatetime_datatype(Oid oid)
+{
+	if (tsql_smalldatetime_oid == InvalidOid)
+		tsql_smalldatetime_oid = lookup_tsql_datatype_oid("smalldatetime");
+	return tsql_smalldatetime_oid == oid;
+}
+
+bool
+is_tsql_datetimeoffset_datatype(Oid oid)
+{
+	if (tsql_datetimeoffset_oid == InvalidOid)
+		tsql_datetimeoffset_oid = lookup_tsql_datatype_oid("datetimeoffset");
+	return tsql_datetimeoffset_oid == oid;
 }
 

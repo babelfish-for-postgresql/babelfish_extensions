@@ -16,3 +16,8 @@ extern bool is_tsql_nvarchar_datatype(Oid oid);
 extern bool is_tsql_text_datatype(Oid oid);
 extern bool is_tsql_ntext_datatype(Oid oid);
 extern bool is_tsql_image_datatype(Oid oid);
+extern bool is_tsql_binary_datatype(Oid oid);
+extern bool is_tsql_varbinary_datatype(Oid oid);
+extern bool is_tsql_datetime2_datatype(Oid oid);
+extern bool is_tsql_smalldatetime_datatype(Oid oid);
+extern bool is_tsql_datetimeoffset_datatype(Oid oid);
