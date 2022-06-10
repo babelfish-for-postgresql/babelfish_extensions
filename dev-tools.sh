@@ -189,6 +189,10 @@ elif [ "$1" == "test" ]; then
     else
         bin/psql -d $TEST_DB -U $USER -c \
             "ALTER SYSTEM SET babelfishpg_tsql.migration_mode = 'single-db';"
+        if [ "$INPUT_DIR" == "pg_hint_plan" ]; then
+            bin/psql -d $TEST_DB -U $USER -c \
+                "ALTER DATABASE $TEST_DB SET session_preload_libraries = pg_hint_plan;"
+        fi
     fi
     bin/psql -d $TEST_DB -U $USER -c \
         "SELECT pg_reload_conf();"
