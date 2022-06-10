@@ -1,7 +1,6 @@
 name: Github workflow Tests
 on: 
-  pull_request:
-    types: [opened, reopened]
+  [pull_request]
   workflow_dispatch:
     inputs:
       logLevel:
