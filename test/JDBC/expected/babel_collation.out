@@ -48,7 +48,7 @@ JoNés
 
 
 -- all the currently supported TSQL collations
-SELECT * from fn_helpcollations();
+SELECT * from fn_helpcollations() order by name;
 go
 ~~START~~
 varchar#!#varchar
