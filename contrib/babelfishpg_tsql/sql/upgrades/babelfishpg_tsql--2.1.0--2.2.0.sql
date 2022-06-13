@@ -282,6 +282,58 @@ $$
 STRICT
 LANGUAGE plpgsql;
 
+CREATE OR REPLACE VIEW sys.hash_indexes
+AS
+SELECT 
+  si.object_id,
+  si.name,
+  si.index_id,
+  si.type,
+  si.type_desc,
+  si.is_unique,
+  si.data_space_id,
+  si.ignore_dup_key,
+  si.is_primary_key,
+  si.is_unique_constraint,
+  si.fill_factor,
+  si.is_padded,
+  si.is_disabled,
+  si.is_hypothetical,
+  si.allow_row_locks,
+  si.allow_page_locks,
+  si.has_filter,
+  si.filter_definition,
+  CAST(0 as INT) AS bucket_count,
+  si.auto_created
+FROM sys.indexes si
+WHERE FALSE;
+GRANT SELECT ON sys.hash_indexes TO PUBLIC;
+
+CREATE OR REPLACE VIEW sys.filetable_system_defined_objects
+AS
+SELECT 
+  CAST(0 as INT) AS object_id,
+  CAST(0 as INT) AS parent_object_id
+  WHERE FALSE;
+GRANT SELECT ON sys.filetable_system_defined_objects TO PUBLIC;
+
+CREATE OR REPLACE VIEW sys.database_filestream_options
+AS
+SELECT
+  CAST(0 as INT) AS database_id,
+  CAST('' as NVARCHAR(255)) AS directory_name,
+  CAST(0 as TINYINT) AS non_transacted_access,
+  CAST('' as NVARCHAR(60)) AS non_transacted_access_desc
+WHERE FALSE;
+GRANT SELECT ON sys.database_filestream_options TO PUBLIC;
+
+CREATE OR REPLACE FUNCTION sys.sid_binary(IN login sys.nvarchar)
+RETURNS SYS.VARBINARY
+AS $$
+    SELECT CAST(NULL AS SYS.VARBINARY);
+$$ 
+LANGUAGE SQL IMMUTABLE PARALLEL RESTRICTED;
+
 -- Drops the temporary procedure used by the upgrade script.
 -- Please have this be one of the last statements executed in this upgrade script.
 DROP PROCEDURE sys.babelfish_drop_deprecated_view(varchar, varchar);

@@ -1,0 +1,6 @@
+SELECT * FROM sys.database_filestream_options;
+GO
+~~START~~
+int#!#nvarchar#!#tinyint#!#nvarchar
+~~END~~
+
