@@ -625,58 +625,66 @@ AND (c.connamespace IN (SELECT schema_id FROM sys.schemas))
 AND has_schema_privilege(c.connamespace, 'USAGE');
 GRANT SELECT ON sys.foreign_key_columns TO PUBLIC;
 
-create or replace view sys.foreign_keys as
-select
-  c.conname as name
-  , c.oid as object_id
-  , null::integer as principal_id
-  , sch.schema_id as schema_id
-  , c.conrelid as parent_object_id
-  , 'F'::varchar(2) as type
-  , 'FOREIGN_KEY_CONSTRAINT'::varchar(60) as type_desc
-  , null::timestamp as create_date
-  , null::timestamp as modify_date
-  , 0 as is_ms_shipped
-  , 0 as is_published
-  , 0 as is_schema_published
-  , c.confrelid as referenced_object_id
-  , c.confkey as key_index_id
-  , 0 as is_disabled
-  , 0 as is_not_for_replication
-  , 0 as is_not_trusted
-  , case c.confdeltype
-      when 'a' then 0
-      when 'r' then 0
-      when 'c' then 1
-      when 'n' then 2
-      when 'd' then 3
-    end as delete_referential_action
-  , case c.confdeltype
-      when 'a' then 'NO_ACTION'
-      when 'r' then 'NO_ACTION'
-      when 'c' then 'CASCADE'
-      when 'n' then 'SET_NULL'
-      when 'd' then 'SET_DEFAULT'
-    end as delete_referential_action_desc
-  , case c.confupdtype
-      when 'a' then 0
-      when 'r' then 0
-      when 'c' then 1
-      when 'n' then 2
-      when 'd' then 3
-    end as update_referential_action
-  , case c.confupdtype
-      when 'a' then 'NO_ACTION'
-      when 'r' then 'NO_ACTION'
-      when 'c' then 'CASCADE'
-      when 'n' then 'SET_NULL'
-      when 'd' then 'SET_DEFAULT'
-    end as update_referential_action_desc
-  , 1 as is_system_named
-from pg_constraint c
-inner join sys.schemas sch on sch.schema_id = c.connamespace
-where has_schema_privilege(sch.schema_id, 'USAGE')
-and c.contype = 'f';
+CREATE OR replace view sys.foreign_keys AS
+SELECT
+  CAST(c.conname AS sys.SYSNAME) AS name
+, CAST(c.oid AS INT) AS object_id
+, CAST(NULL AS INT) AS principal_id
+, CAST(sch.schema_id AS INT) AS schema_id
+, CAST(c.conrelid AS INT) AS parent_object_id
+, CAST('F' AS CHAR(2)) AS type
+, CAST('FOREIGN_KEY_CONSTRAINT' AS NVARCHAR(60)) AS type_desc
+, CAST(NULL AS sys.DATETIME) AS create_date
+, CAST(NULL AS sys.DATETIME) AS modify_date
+, CAST(0 AS sys.BIT) AS is_ms_shipped
+, CAST(0 AS sys.BIT) AS is_published
+, CAST(0 AS sys.BIT) as is_schema_published
+, CAST(c.confrelid AS INT) AS referenced_object_id
+, CAST(c.conindid AS INT) AS key_index_id
+, CAST(0 AS sys.BIT) AS is_disabled
+, CAST(0 AS sys.BIT) AS is_not_for_replication
+, CAST(0 AS sys.BIT) AS is_not_trusted
+, CAST(
+    (CASE c.confdeltype
+    WHEN 'a' THEN 0
+    WHEN 'r' THEN 0
+    WHEN 'c' THEN 1
+    WHEN 'n' THEN 2
+    WHEN 'd' THEN 3
+    END) 
+    AS sys.TINYINT) AS delete_referential_action
+, CAST(
+    (CASE c.confdeltype
+    WHEN 'a' THEN 'NO_ACTION'
+    WHEN 'r' THEN 'NO_ACTION'
+    WHEN 'c' THEN 'CASCADE'
+    WHEN 'n' THEN 'SET_NULL'
+    WHEN 'd' THEN 'SET_DEFAULT'
+    END) 
+    AS sys.NVARCHAR(60)) AS delete_referential_action_desc
+, CAST(
+    (CASE c.confupdtype
+    WHEN 'a' THEN 0
+    WHEN 'r' THEN 0
+    WHEN 'c' THEN 1
+    WHEN 'n' THEN 2
+    WHEN 'd' THEN 3
+    END)
+    AS sys.TINYINT) AS update_referential_action
+, CAST(
+    (CASE c.confupdtype
+    WHEN 'a' THEN 'NO_ACTION'
+    WHEN 'r' THEN 'NO_ACTION'
+    WHEN 'c' THEN 'CASCADE'
+    WHEN 'n' THEN 'SET_NULL'
+    WHEN 'd' THEN 'SET_DEFAULT'
+    END)
+    AS sys.NVARCHAR(60)) update_referential_action_desc
+, CAST(1 AS sys.BIT) AS is_system_named
+FROM pg_constraint c
+INNER JOIN sys.schemas sch ON sch.schema_id = c.connamespace
+WHERE has_schema_privilege(sch.schema_id, 'USAGE')
+AND c.contype = 'f';
 GRANT SELECT ON sys.foreign_keys TO PUBLIC;
 
 create or replace view sys.identity_columns AS
