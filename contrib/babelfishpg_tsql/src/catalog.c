@@ -93,7 +93,10 @@ PG_FUNCTION_INFO_V1(init_catalog);
 Datum init_catalog(PG_FUNCTION_ARGS)
 {
 	/* sys schema */
-	sys_schema_oid = get_namespace_oid("sys", false);
+	sys_schema_oid = get_namespace_oid("sys", true);
+
+	if (!OidIsValid(sys_schema_oid))
+	       	PG_RETURN_INT32(0);
 
 	/* sysdatabases */
 	sysdatabases_oid = get_relname_relid(SYSDATABASES_TABLE_NAME, sys_schema_oid);

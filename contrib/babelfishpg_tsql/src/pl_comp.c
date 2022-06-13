@@ -877,20 +877,6 @@ do_compile(FunctionCallInfo fcinfo,
 	function->fetch_status_varno = var->dno;
 
 	/*
-	 * Set the dialect to tsql - we have to do that here because the fmgr
-	 * has set the dialect to postgres. That happens when we are validating
-	 * a PL/tsql program because the validator function is not written in 
-	 * PL/tsql, it's written in C.
-	 */
-	set_config_option("babelfishpg_tsql.sql_dialect", "tsql",
-					  (superuser() ? PGC_SUSET : PGC_USERSET),
-					  PGC_S_SESSION,
-					  GUC_ACTION_SAVE,
-					  true,
-					  0,
-					  false);
-
-	/*
 	 * Now parse the function's text
 	 */
 	{
@@ -1254,20 +1240,6 @@ pltsql_compile_inline(char *proc_source, InlineCodeBlockArgs *args)
 														NULL),
 								true);
 	function->fetch_status_varno = var->dno;
-
-	/*
-	 * Set the dialect to tsql -- we have to do that here because the fmgr
-	 * has set the dialect to postgres. That happens when we are validating
-	 * a PL/tsql program because the validator function is not written in
-	 * PL/tsql, it's written in C.
-	 */
-	set_config_option("babelfishpg_tsql.sql_dialect", "tsql",
-					(superuser() ? PGC_SUSET : PGC_USERSET),
-					PGC_S_SESSION,
-					GUC_ACTION_SAVE,
-					true,
-					0,
-					false);
 
 	/*
 	 * Now parse the function's text
