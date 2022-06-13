@@ -1597,6 +1597,7 @@ func_expr_common_subexpr:
 					CoalesceExpr *c = makeNode(CoalesceExpr);
 					c->args=list_make2($3, $5);
 					c->location = @1;
+					c->tsql_is_null = true;
 					$$ = (Node *)c;
 				}
 			| TSQL_IIF '(' a_expr ',' a_expr ',' a_expr ')'
