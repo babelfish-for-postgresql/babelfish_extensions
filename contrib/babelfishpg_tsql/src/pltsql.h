@@ -1368,6 +1368,7 @@ typedef struct PLtsql_execstate
 	bool 		insert_exec;
 
 	List 		*explain_infos;
+	bool            is_inside_execute;
 } PLtsql_execstate;
 
 /*

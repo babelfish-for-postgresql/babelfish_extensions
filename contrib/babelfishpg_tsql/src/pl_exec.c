@@ -4250,6 +4250,7 @@ pltsql_estate_setup(PLtsql_execstate *estate,
 	estate->paramLI->parserSetupArg = NULL; /* filled during use */
 	estate->paramLI->numParams = estate->ndatums;
 	estate->use_shared_simple_eval_state = false;
+	estate->is_inside_execute = false;
 
 	/* set up for use of appropriate simple-expression EState and cast hash */
 	if (simple_eval_estate)
