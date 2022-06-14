@@ -126,7 +126,13 @@ jobs:
           # temporarily ignore test BABEL-2086
           echo 'ignore#!#BABEL-2086' >> jdbc_schedule
           mvn test
-     
+
+      - name: Cleanup babelfish database
+        id: cleanup
+        if: always() && steps.run-pg_upgrade.outcome == 'success'
+        run: |
+          sudo ~/${{env.NEW_INSTALL_DIR}}/bin/psql -d postgres -U runner -v user="jdbc_user" -v db="jdbc_testdb" -f .github/scripts/cleanup_babelfish_database.sql
+
       - name: Upload Postgres log
         if: always() && steps.jdbc.outcome == 'failure'
         uses: actions/upload-artifact@v2

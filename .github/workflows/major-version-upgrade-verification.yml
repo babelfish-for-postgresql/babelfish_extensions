@@ -137,6 +137,12 @@ jobs:
           export inputFilesPath=upgrade/verification
           mvn test
 
+      - name: Cleanup babelfish database
+        id: cleanup
+        if: always() && steps.run-pg_upgrade.outcome == 'success'
+        run: |
+          sudo ~/${{env.NEW_INSTALL_DIR}}/bin/psql -d postgres -U runner -v user="jdbc_user" -v db="jdbc_testdb" -f .github/scripts/cleanup_babelfish_database.sql
+
       - name: Rename Test Summary Files
         id: test-file-rename
         if: always() && (steps.run-pg_upgrade.outcome == 'failure' || steps.run-preparation-test.outcome == 'failure' || steps.run-verification-test.outcome == 'failure')
