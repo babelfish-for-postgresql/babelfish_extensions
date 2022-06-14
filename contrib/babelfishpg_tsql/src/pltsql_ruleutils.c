@@ -67,6 +67,7 @@
 #include "utils/xml.h"
 
 #include "datatypes.h"
+#include "catalog.h"
 
 /* ----------
  * Pretty formatting constants
@@ -343,6 +344,11 @@ static char *tsql_get_constraintdef_worker(Oid constraintId, bool fullCommand,
 static char *tsql_printTypmod(const char *typname, int32 typmod, Oid typmodout);
 extern Datum translate_pg_type_to_tsql(PG_FUNCTION_ARGS);
 static char *tsql_format_type_extended(Oid type_oid, int32 typemod, bits16 flags);
+static void print_function_trftypes(StringInfo buf, HeapTuple proctup);
+int print_function_arguments(StringInfo buf, HeapTuple proctup,
+		bool print_table_args, bool print_defaults);
+char *tsql_quote_qualified_identifier(const char *qualifier, const char *ident);
+const char *tsql_quote_identifier(const char *ident);
 
 /*
  * tsql_get_constraintdef
@@ -368,6 +374,266 @@ tsql_get_constraintdef(PG_FUNCTION_ARGS)
 }
 
 PG_FUNCTION_INFO_V1(tsql_get_constraintdef);
+
+/*
+ * tsql_get_functiondef
+ *		Returns the complete "CREATE OR REPLACE FUNCTION ..." statement for
+ *		the specified function.
+ *
+ * Note: if you change the output format of this function, be careful not
+ * to break psql's rules (in \ef and \sf) for identifying the start of the
+ * function body.  To wit: the function body starts on a line that begins
+ * with "AS ", and no preceding line will look like that.
+ */
+Datum
+tsql_get_functiondef(PG_FUNCTION_ARGS)
+{
+	Oid			funcid = PG_GETARG_OID(0);
+	StringInfoData buf;
+	StringInfoData dq;
+	HeapTuple	proctup;
+	Form_pg_proc proc;
+	bool		isfunction;
+	Datum		tmp;
+	bool		isnull;
+	const char *prosrc;
+	const char *name;
+	const char *nsp;
+	const char *nnsp;
+	float4		procost;
+	int			oldlen;
+
+	initStringInfo(&buf);
+
+	/* Look up the function */
+	proctup = SearchSysCache1(PROCOID, ObjectIdGetDatum(funcid));
+	if (!HeapTupleIsValid(proctup))
+		PG_RETURN_NULL();
+
+	proc = (Form_pg_proc) GETSTRUCT(proctup);
+	name = NameStr(proc->proname);
+
+	if (proc->prokind == PROKIND_AGGREGATE)
+		ereport(ERROR,
+				(errcode(ERRCODE_WRONG_OBJECT_TYPE),
+				 errmsg("\"%s\" is an aggregate function", name)));
+
+	isfunction = (proc->prokind != PROKIND_PROCEDURE);
+
+	/*
+	 * We always qualify the function name, to ensure the right function gets
+	 * replaced.
+	 */
+	nsp = get_namespace_name(proc->pronamespace);
+	nnsp= get_logical_schema_name(nsp,true);
+	appendStringInfo(&buf, "CREATE %s %s(",
+					 isfunction ? "FUNCTION" : "PROCEDURE",
+					 tsql_quote_qualified_identifier(nnsp, name));
+	(void) print_function_arguments(&buf, proctup, false, true);
+	appendStringInfoString(&buf, ")");
+	if (isfunction)
+	{
+		appendStringInfoString(&buf, " RETURNS ");
+		print_function_rettype(&buf, proctup);
+	      /*	appendStringInfoChar(&buf, '\n');*/
+	}
+
+	print_function_trftypes(&buf, proctup);
+
+	/* Emit some miscellaneous options on one line */
+	oldlen = buf.len;
+
+      /*	if (proc->prokind == PROKIND_WINDOW)
+		appendStringInfoString(&buf, " WINDOW");
+	switch (proc->provolatile)
+	{
+		case PROVOLATILE_IMMUTABLE:
+			appendStringInfoString(&buf, " IMMUTABLE");
+			break;
+		case PROVOLATILE_STABLE:
+			appendStringInfoString(&buf, " STABLE");
+			break;
+		case PROVOLATILE_VOLATILE:
+			break;
+	}
+
+	switch (proc->proparallel)
+	{
+		case PROPARALLEL_SAFE:
+			appendStringInfoString(&buf, " PARALLEL SAFE");
+			break;
+		case PROPARALLEL_RESTRICTED:
+			appendStringInfoString(&buf, " PARALLEL RESTRICTED");
+			break;
+		case PROPARALLEL_UNSAFE:
+			break;
+	}
+
+	if (proc->proisstrict)
+		appendStringInfoString(&buf, " STRICT");
+	if (proc->prosecdef)
+		appendStringInfoString(&buf, " SECURITY DEFINER");
+	if (proc->proleakproof)
+		appendStringInfoString(&buf, " LEAKPROOF"); */
+
+	/* This code for the default cost and rows should match functioncmds.c */
+      /*	if (proc->prolang == INTERNALlanguageId ||
+		proc->prolang == ClanguageId)
+		procost = 1;
+	else
+		procost = 100;
+	if (proc->procost != procost)
+		appendStringInfo(&buf, " COST %g", proc->procost);
+
+	if (proc->prorows > 0 && proc->prorows != 1000)
+		appendStringInfo(&buf, " ROWS %g", proc->prorows);*/
+
+	if (proc->prosupport)
+	{
+		Oid			argtypes[1];
+
+		/*
+		 * We should qualify the support function's name if it wouldn't be
+		 * resolved by lookup in the current search path.
+		 */
+		argtypes[0] = INTERNALOID;
+		appendStringInfo(&buf, " SUPPORT %s",
+						 generate_function_name(proc->prosupport, 1,
+												NIL, argtypes,
+												false, NULL, EXPR_KIND_NONE));
+	}
+
+	/*if (oldlen != buf.len)
+		appendStringInfoChar(&buf, '\n');*/
+
+	/* Emit any proconfig options, one per line */
+	tmp = SysCacheGetAttr(PROCOID, proctup, Anum_pg_proc_proconfig, &isnull);
+	if (!isnull)
+	{
+		ArrayType  *a = DatumGetArrayTypeP(tmp);
+		int			i;
+
+		Assert(ARR_ELEMTYPE(a) == TEXTOID);
+		Assert(ARR_NDIM(a) == 1);
+		Assert(ARR_LBOUND(a)[0] == 1);
+
+		for (i = 1; i <= ARR_DIMS(a)[0]; i++)
+		{
+			Datum		d;
+
+			d = array_ref(a, 1, &i,
+						  -1 /* varlenarray */ ,
+						  -1 /* TEXT's typlen */ ,
+						  false /* TEXT's typbyval */ ,
+						  TYPALIGN_INT /* TEXT's typalign */ ,
+						  &isnull);
+			if (!isnull)
+			{
+				char	   *configitem = TextDatumGetCString(d);
+				char	   *pos;
+
+				pos = strchr(configitem, '=');
+				if (pos == NULL)
+					continue;
+				*pos++ = '\0';
+
+				appendStringInfo(&buf, " SET %s TO ",
+								 tsql_quote_identifier(configitem));
+
+				/*
+				 * Variables that are marked GUC_LIST_QUOTE were already fully
+				 * quoted by flatten_set_variable_args() before they were put
+				 * into the proconfig array.  However, because the quoting
+				 * rules used there aren't exactly like SQL's, we have to
+				 * break the list value apart and then quote the elements as
+				 * string literals.  (The elements may be double-quoted as-is,
+				 * but we can't just feed them to the SQL parser; it would do
+				 * the wrong thing with elements that are zero-length or
+				 * longer than NAMEDATALEN.)
+				 *
+				 * Variables that are not so marked should just be emitted as
+				 * simple string literals.  If the variable is not known to
+				 * guc.c, we'll do that; this makes it unsafe to use
+				 * GUC_LIST_QUOTE for extension variables.
+				 */
+				if (GetConfigOptionFlags(configitem, true) & GUC_LIST_QUOTE)
+				{
+					List	   *namelist;
+					ListCell   *lc;
+
+					/* Parse string into list of identifiers */
+					if (!SplitGUCList(pos, ',', &namelist))
+					{
+						/* this shouldn't fail really */
+						elog(ERROR, "invalid list syntax in proconfig item");
+					}
+					foreach(lc, namelist)
+					{
+						char	   *curname = (char *) lfirst(lc);
+
+						simple_quote_literal(&buf, curname);
+						if (lnext(namelist, lc))
+							appendStringInfoString(&buf, ", ");
+					}
+				}
+				else
+					simple_quote_literal(&buf, pos);
+			/*	appendStringInfoChar(&buf, '\n');*/
+			}
+		}
+	}
+
+	/* And finally the function definition ... */
+	(void) SysCacheGetAttr(PROCOID, proctup, Anum_pg_proc_prosqlbody, &isnull);
+	/* if (proc->prolang == SQLlanguageId && !isnull)
+	{
+		print_function_sqlbody(&buf, proctup);
+	}
+	else
+	{*/
+		appendStringInfoString(&buf, " AS ");
+
+		tmp = SysCacheGetAttr(PROCOID, proctup, Anum_pg_proc_probin, &isnull);
+		if (!isnull)
+		{
+			/*simple_quote_literal(&buf, TextDatumGetCString(tmp));
+		     	appendStringInfoString(&buf, ", ");*/  /*assume prosrc isn't null */
+               }
+
+		tmp = SysCacheGetAttr(PROCOID, proctup, Anum_pg_proc_prosrc, &isnull);
+		/*if (isnull)
+			elog(ERROR, "null prosrc");*/
+		prosrc = TextDatumGetCString(tmp); 
+
+		/*
+		 * We always use dollar quoting.  Figure out a suitable delimiter.
+		 *
+		 * Since the user is likely to be editing the function body string, we
+		 * shouldn't use a short delimiter that he might easily create a
+		 * conflict with.  Hence prefer "$function$"/"$procedure$", but extend
+		 * if needed.
+		 */
+
+		initStringInfo(&dq);
+		/*appendStringInfoChar(&dq, '$');
+		appendStringInfoString(&dq, (isfunction ? "function" : "procedure"));
+		while (strstr(prosrc, dq.data) != NULL)
+			appendStringInfoChar(&dq, 'x');
+		appendStringInfoChar(&dq, '$');*/
+
+	      /*	appendBinaryStringInfo(&buf, dq.data, dq.len); */ 
+		appendStringInfoString(&buf, prosrc);
+	/*	appendBinaryStringInfo(&buf, dq.data, dq.len);*/
+	
+
+     /*	appendStringInfoChar(&buf, '\n');*/
+
+	ReleaseSysCache(proctup);
+
+	PG_RETURN_TEXT_P(string_to_text(buf.data));
+}
+
+PG_FUNCTION_INFO_V1(tsql_get_functiondef);
 
 /*
  * As of 9.4, we now use an MVCC snapshot for this.
@@ -432,7 +698,7 @@ tsql_get_constraintdef_worker(Oid constraintId, bool fullCommand,
 			 */
 			appendStringInfo(&buf, "ALTER TABLE %s ADD CONSTRAINT %s ",
 							 generate_qualified_relation_name(conForm->conrelid),
-							 quote_identifier(NameStr(conForm->conname)));
+							 tsql_quote_identifier(NameStr(conForm->conname)));
 		}
 		else
 		{
@@ -440,7 +706,7 @@ tsql_get_constraintdef_worker(Oid constraintId, bool fullCommand,
 			Assert(OidIsValid(conForm->contypid));
 			appendStringInfo(&buf, "ALTER DOMAIN %s ADD CONSTRAINT %s ",
 							 generate_qualified_type_name(conForm->contypid),
-							 quote_identifier(NameStr(conForm->conname)));
+							 tsql_quote_identifier(NameStr(conForm->conname)));
 		}
 	}
 
@@ -511,6 +777,221 @@ tsql_get_constraintdef_worker(Oid constraintId, bool fullCommand,
 }
 
 /*
+ * Guts of pg_get_function_result: append the function's return type
+ * to the specified buffer.
+ */
+void
+print_function_rettype(StringInfo buf, HeapTuple proctup)
+{
+	Form_pg_proc proc = (Form_pg_proc) GETSTRUCT(proctup);
+	int			ntabargs = 0;
+	StringInfoData rbuf;
+
+	initStringInfo(&rbuf);
+
+	if (proc->proretset)
+	{
+		/* It might be a table function; try to print the arguments */
+		appendStringInfoString(&rbuf, "TABLE(");
+		ntabargs = print_function_arguments(&rbuf, proctup, true, false);
+		if (ntabargs > 0)
+			appendStringInfoChar(&rbuf, ')');
+		else
+			resetStringInfo(&rbuf);
+	}
+
+	if (ntabargs == 0)
+	{
+		/* Not a table function, so do the normal thing */
+		if (proc->proretset)
+			appendStringInfoString(&rbuf, "SETOF ");
+		appendStringInfoString(&rbuf, tsql_format_type_extended(proc->prorettype,-1,0));
+	}
+
+	appendBinaryStringInfo(buf, rbuf.data, rbuf.len);
+}
+
+/*
+ * Common code for pg_get_function_arguments and pg_get_function_result:
+ * append the desired subset of arguments to buf.  We print only TABLE
+ * arguments when print_table_args is true, and all the others when it's false.
+ * We print argument defaults only if print_defaults is true.
+ * Function return value is the number of arguments printed.
+ */
+int
+print_function_arguments(StringInfo buf, HeapTuple proctup,
+						 bool print_table_args, bool print_defaults)
+{
+	Form_pg_proc proc = (Form_pg_proc) GETSTRUCT(proctup);
+	int			numargs;
+	Oid		   *argtypes;
+	char	  **argnames;
+	char	   *argmodes;
+	int			insertorderbyat = -1;
+	int			argsprinted;
+	int			inputargno;
+	int			nlackdefaults;
+	List	   *argdefaults = NIL;
+	ListCell   *nextargdefault = NULL;
+	int			i;
+
+	numargs = get_func_arg_info(proctup,
+								&argtypes, &argnames, &argmodes);
+
+	nlackdefaults = numargs;
+	if (print_defaults && proc->pronargdefaults > 0)
+	{
+		Datum		proargdefaults;
+		bool		isnull;
+
+		proargdefaults = SysCacheGetAttr(PROCOID, proctup,
+										 Anum_pg_proc_proargdefaults,
+										 &isnull);
+		if (!isnull)
+		{
+			char	   *str;
+
+			str = TextDatumGetCString(proargdefaults);
+			argdefaults = castNode(List, stringToNode(str));
+			pfree(str);
+			nextargdefault = list_head(argdefaults);
+			/* nlackdefaults counts only *input* arguments lacking defaults */
+			nlackdefaults = proc->pronargs - list_length(argdefaults);
+		}
+	}
+
+	/* Check for special treatment of ordered-set aggregates */
+	if (proc->prokind == PROKIND_AGGREGATE)
+	{
+		HeapTuple	aggtup;
+		Form_pg_aggregate agg;
+
+		aggtup = SearchSysCache1(AGGFNOID, proc->oid);
+		if (!HeapTupleIsValid(aggtup))
+			elog(ERROR, "cache lookup failed for aggregate %u",
+				 proc->oid);
+		agg = (Form_pg_aggregate) GETSTRUCT(aggtup);
+		if (AGGKIND_IS_ORDERED_SET(agg->aggkind))
+			insertorderbyat = agg->aggnumdirectargs;
+		ReleaseSysCache(aggtup);
+	}
+
+	argsprinted = 0;
+	inputargno = 0;
+	for (i = 0; i < numargs; i++)
+	{
+		Oid			argtype = argtypes[i];
+		char	   *argname = argnames ? argnames[i] : NULL;
+		char		argmode = argmodes ? argmodes[i] : PROARGMODE_IN;
+		const char *modename;
+		bool		isinput;
+
+		switch (argmode)
+		{
+			case PROARGMODE_IN:
+
+				/*
+				 * For procedures, explicitly mark all argument modes, so as
+				 * to avoid ambiguity with the SQL syntax for DROP PROCEDURE.
+				 */
+				if (proc->prokind == PROKIND_PROCEDURE)
+					modename = "";
+				else
+					modename = "";
+				isinput = true;
+				break;
+			case PROARGMODE_INOUT:
+				modename = " OUTPUT";
+				isinput = true;
+				break;
+			case PROARGMODE_OUT:
+				modename = "OUT ";
+				isinput = false;
+				break;
+			case PROARGMODE_VARIADIC:
+				modename = "";
+				isinput = true;
+				break;
+			case PROARGMODE_TABLE:
+				modename = "";
+				isinput = false;
+				break;
+			default:
+				elog(ERROR, "invalid parameter mode '%c'", argmode);
+				modename = NULL;	/* keep compiler quiet */
+				isinput = false;
+				break;
+		}
+		if (isinput)
+			inputargno++;		/* this is a 1-based counter */
+
+		if (print_table_args != (argmode == PROARGMODE_TABLE))
+			continue;
+
+		if (argsprinted == insertorderbyat)
+		{
+			if (argsprinted)
+				appendStringInfoChar(buf, ' ');
+			appendStringInfoString(buf, "ORDER BY ");
+		}
+		else if (argsprinted)
+			appendStringInfoString(buf, ", ");
+
+		if (argname && argname[0])
+			appendStringInfo(buf," %s ", tsql_quote_identifier(argname));
+		appendStringInfoString(buf, tsql_format_type_extended(argtype,-1,0)); 
+		   appendStringInfoString(buf, modename);
+		if (print_defaults && isinput && inputargno > nlackdefaults)
+		{
+			Node	   *expr;
+
+			Assert(nextargdefault != NULL);
+			expr = (Node *) lfirst(nextargdefault);
+			nextargdefault = lnext(argdefaults, nextargdefault);
+
+			appendStringInfo(buf, "= %s",
+							 deparse_expression(expr, NIL, false, false));
+		}
+		argsprinted++;
+
+		/* nasty hack: print the last arg twice for variadic ordered-set agg */
+		if (argsprinted == insertorderbyat && i == numargs - 1)
+		{
+			i--;
+			/* aggs shouldn't have defaults anyway, but just to be sure ... */
+			print_defaults = false;
+		}
+	}
+
+	return argsprinted;
+}
+
+/*
+ * Append used transformed types to specified buffer
+ */
+static void
+print_function_trftypes(StringInfo buf, HeapTuple proctup)
+{
+	Oid		   *trftypes;
+	int			ntypes;
+
+	ntypes = get_func_trftypes(proctup, &trftypes);
+	if (ntypes > 0)
+	{
+		int			i;
+
+		appendStringInfoString(buf, " TRANSFORM ");
+		for (i = 0; i < ntypes; i++)
+		{
+			if (i != 0)
+				appendStringInfoString(buf, ", ");
+			appendStringInfo(buf, "FOR TYPE %s", format_type_be(trftypes[i]));
+		}
+		appendStringInfoChar(buf, '\n');
+	}
+}
+
+/*
  * generate_qualified_relation_name
  *		Compute the name to display for a relation specified by OID
  *
@@ -536,7 +1017,7 @@ generate_qualified_relation_name(Oid relid)
 		elog(ERROR, "cache lookup failed for namespace %u",
 			 reltup->relnamespace);
 
-	result = quote_qualified_identifier(nspname, relname);
+	result =tsql_quote_qualified_identifier(nspname, relname);
 
 	ReleaseSysCache(tp);
 
@@ -635,7 +1116,7 @@ generate_qualified_type_name(Oid typid)
 		elog(ERROR, "cache lookup failed for namespace %u",
 			 typtup->typnamespace);
 
-	result = quote_qualified_identifier(nspname, typname);
+	result = tsql_quote_qualified_identifier(nspname, typname);
 
 	ReleaseSysCache(tp);
 
@@ -1222,11 +1703,11 @@ get_variable(Var *var, int levelsup, bool istoplevel, deparse_context *context)
 	}
 	if (refname && (context->varprefix || attname == NULL))
 	{
-		appendStringInfoString(buf, quote_identifier(refname));
+		appendStringInfoString(buf, tsql_quote_identifier(refname));
 		appendStringInfoChar(buf, '.');
 	}
 	if (attname)
-		appendStringInfoString(buf, quote_identifier(attname));
+		appendStringInfoString(buf, tsql_quote_identifier(attname));
 	else
 	{
 		appendStringInfoChar(buf, '*');
@@ -1711,7 +2192,7 @@ generate_function_name(Oid funcid, int nargs, List *argnames, Oid *argtypes,
 	else
 		nspname = get_namespace_name(procform->pronamespace);
 
-	result = quote_qualified_identifier(nspname, proname);
+	result = tsql_quote_qualified_identifier(nspname, proname);
 
 	ReleaseSysCache(proctup);
 
@@ -1892,8 +2373,10 @@ isSimpleNode(Node *node, Node *parentNode, int prettyFlags)
  * space-wasteful but well worth it for notational simplicity.
  */
 const char *
-quote_identifier(const char *ident)
+tsql_quote_identifier(const char *ident)
 {
+
+//	if(ident[0]== '@') return ident;
 	/*
 	 * Can avoid quoting if ident starts with a lowercase letter or underscore
 	 * and contains only lowercase letters, digits, and underscores, *and* is
@@ -1909,7 +2392,7 @@ quote_identifier(const char *ident)
 	 * would like to use <ctype.h> macros here, but they might yield unwanted
 	 * locale-specific results...
 	 */
-	safe = ((ident[0] >= 'a' && ident[0] <= 'z') || ident[0] == '_');
+	safe = ((ident[0] >= 'a' && ident[0] <= 'z') || ident[0] == '_' || ident[0] == '@' );
 
 	for (ptr = ident; *ptr; ptr++)
 	{
@@ -1917,7 +2400,7 @@ quote_identifier(const char *ident)
 
 		if ((ch >= 'a' && ch <= 'z') ||
 			(ch >= '0' && ch <= '9') ||
-			(ch == '_'))
+			(ch == '_') || (ch == '@') )
 		{
 			/* okay */
 		}
@@ -1929,11 +2412,15 @@ quote_identifier(const char *ident)
 		}
 	}
 
-	if (quote_all_identifiers)
+         if (quote_all_identifiers)
 		safe = false;
 
 	if (safe)
 	{
+	
+
+
+	
 		/*
 		 * Check for keyword.  We quote keywords except for unreserved ones.
 		 * (In some cases we could avoid quoting a col_name or type_func_name
@@ -1942,14 +2429,20 @@ quote_identifier(const char *ident)
 		 * Note: ScanKeywordLookup() does case-insensitive comparison, but
 		 * that's fine, since we already know we have all-lower-case.
 		 */
-		int			kwnum = ScanKeywordLookup(ident, &ScanKeywords);
+		 int			kwnum = ScanKeywordLookup(ident, &ScanKeywords);
 
 		if (kwnum >= 0 && ScanKeywordCategories[kwnum] != UNRESERVED_KEYWORD)
 			safe = false;
+		
+
 	}
 
+    
+
 	if (safe)
-		return ident;			/* no change needed */
+	       return ident;
+	
+	/* no change needed */
 
 	result = (char *) palloc(strlen(ident) + nquotes + 2 + 1);
 
@@ -1976,15 +2469,15 @@ quote_identifier(const char *ident)
  * is NULL, quoting each component if necessary.  The result is palloc'd.
  */
 char *
-quote_qualified_identifier(const char *qualifier,
+tsql_quote_qualified_identifier(const char *qualifier,
 						   const char *ident)
 {
 	StringInfoData buf;
 
 	initStringInfo(&buf);
 	if (qualifier)
-		appendStringInfo(&buf, "%s.", quote_identifier(qualifier));
-	appendStringInfoString(&buf, quote_identifier(ident));
+		appendStringInfo(&buf, "%s.", tsql_quote_identifier(qualifier));
+	appendStringInfoString(&buf, tsql_quote_identifier(ident));
 	return buf.data;
 }
 
@@ -2376,9 +2869,9 @@ tsql_format_type_extended(Oid type_oid, int32 typemod, bits16 flags)
 
 		if ((flags & FORMAT_TYPE_FORCE_QUALIFY) == 0 &&
 			TypeIsVisible(type_oid))
-			buf = quote_qualified_identifier(NULL, typname);
+			buf = tsql_quote_qualified_identifier(NULL, typname);
 		else
-			buf = quote_qualified_identifier(nspname, typname);
+			buf = tsql_quote_qualified_identifier(nspname, typname);
 
 		/*
 		 * Assign correct typename in case of sys.binary, it gives bbf_binary
@@ -2441,3 +2934,4 @@ tsql_printTypmod(const char *typname, int32 typmod, Oid typmodout)
 	}
 	return res;
 }
+
