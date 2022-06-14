@@ -8,7 +8,7 @@ t
 ~~END~~
 
 -- tsql
-
+ 
 --aborts the transaction when database is not found
 use db1;
 go
