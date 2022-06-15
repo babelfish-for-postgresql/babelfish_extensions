@@ -9,6 +9,10 @@ inputs:
   is_final_ver:
     description: "Is this the final version"
     required: true
+  prev_install_dir: 
+    description: "Previous version installed in this directory"
+    required: false
+    default: postgres13
   install_dir:
     description: "Install new version in this directory"
     required: true
@@ -54,9 +58,9 @@ runs:
       id: run-pg_upgrade
       if: always() && steps.setup-new-datadir.outcome == 'success'
       uses: ./.github/composite-actions/run-pg-upgrade
-      with:
-        migration_mode: 'multi-db'
-
+      env:
+        OLD_INSTALL_DIR: ${{ inputs.prev_install_dir }}
+        
     - name: Change migration mode to multi-db
       id: change-migration-mode
       run: |
