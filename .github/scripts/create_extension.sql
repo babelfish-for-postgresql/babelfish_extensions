@@ -7,6 +7,6 @@ CREATE EXTENSION IF NOT EXISTS "babelfishpg_tds" CASCADE;
 GRANT ALL ON SCHEMA sys to :user;
 ALTER USER :user CREATEDB;
 ALTER SYSTEM SET babelfishpg_tsql.database_name = :db;
-ALTER SYSTEM SET babelfishpg_tsql.migration_mode = :migration_mode;
+ALTER SYSTEM SET babelfishpg_tsql.migration_mode = :'migration_mode';
 SELECT pg_reload_conf();
 CALL SYS.INITIALIZE_BABELFISH(:'user');

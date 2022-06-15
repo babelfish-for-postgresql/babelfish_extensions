@@ -29,6 +29,23 @@ end
 $$
 LANGUAGE plpgsql;
 
+-- Removes a member object from the extension. The object is not dropped, only disassociated from the extension.
+-- It is a temporary procedure for use by the upgrade script. Will be dropped at the end of the upgrade.
+CREATE OR REPLACE PROCEDURE babelfish_remove_object_from_extension(obj_type varchar, qualified_obj_name varchar) AS
+$$
+DECLARE
+    error_msg text;
+    query text;
+BEGIN
+    query := format('alter extension babelfishpg_tsql drop %s %s', obj_type, qualified_obj_name);
+    execute query;
+EXCEPTION
+    when object_not_in_prerequisite_state then --if 'alter extension' statement fails
+        GET STACKED DIAGNOSTICS error_msg = MESSAGE_TEXT;
+        raise warning '%', error_msg;
+END
+$$
+LANGUAGE plpgsql;
 
 -- please add your SQL here
 CREATE OR REPLACE FUNCTION sys.tsql_get_constraintdef(IN constraint_id OID DEFAULT NULL)
@@ -334,9 +351,18 @@ AS $$
 $$ 
 LANGUAGE SQL IMMUTABLE PARALLEL RESTRICTED;
 
+-- Disassociate msdb objects from the extension
+CALL sys.babelfish_remove_object_from_extension('view', 'msdb_dbo.sysdatabases');
+CALL sys.babelfish_remove_object_from_extension('schema', 'msdb_dbo');
+-- Disassociate procedures under master_dbo schema from the extension
+CALL sys.babelfish_remove_object_from_extension('procedure', 'master_dbo.xp_qv(sys.nvarchar, sys.nvarchar)');
+CALL sys.babelfish_remove_object_from_extension('procedure', 'master_dbo.xp_instance_regread(sys.nvarchar, sys.sysname, sys.nvarchar, int)');
+CALL sys.babelfish_remove_object_from_extension('procedure', 'master_dbo.xp_instance_regread(sys.nvarchar, sys.sysname, sys.nvarchar, sys.nvarchar)');
+
 -- Drops the temporary procedure used by the upgrade script.
 -- Please have this be one of the last statements executed in this upgrade script.
 DROP PROCEDURE sys.babelfish_drop_deprecated_view(varchar, varchar);
+DROP PROCEDURE sys.babelfish_remove_object_from_extension(varchar, varchar);
 
 -- Reset search_path to not affect any subsequent scripts
 SELECT set_config('search_path', trim(leading 'sys, ' from current_setting('search_path')), false);
