@@ -1145,14 +1145,11 @@ exec_stmt_exec_batch(PLtsql_execstate *estate, PLtsql_stmt_exec_batch *stmt)
 	volatile LocalTransactionId before_lxid;
 	LocalTransactionId after_lxid;
 	SimpleEcontextStackEntry *topEntry;
-      	char *old_db_name = NULL;
-      	char *cur_db_name = NULL;
 	LOCAL_FCINFO(fcinfo,1);
 
 	PG_TRY();
 	{
-                old_db_name = get_cur_db_name();
-                /*
+		/*
 		* First we evaluate the string expression. Its result is the
 		* querystring we have to execute.
 		*/
@@ -1179,18 +1176,12 @@ exec_stmt_exec_batch(PLtsql_execstate *estate, PLtsql_stmt_exec_batch *stmt)
 
 		/* Pass the control the inline handler */
 		pltsql_inline_handler(fcinfo);
-                cur_db_name = get_cur_db_name();
 
-                if(strcmp(cur_db_name, old_db_name) != 0)
-                        set_session_properties(old_db_name);
 		if (fcinfo->isnull)
 			elog(ERROR, "pltsql_inline_handler failed");
 	}
 	PG_CATCH();
 	{
-                cur_db_name = get_cur_db_name();
-                if(strcmp(cur_db_name, old_db_name) != 0)
-                        set_session_properties(old_db_name);
 		PG_RE_THROW();
 	}
 	PG_END_TRY();
@@ -2441,7 +2432,6 @@ exec_stmt_usedb(PLtsql_execstate *estate, PLtsql_stmt_usedb *stmt)
 	char message[128];
 	int16 old_db_id = get_cur_db_id();
 	int16 new_db_id = get_db_id(stmt->db_name);
-        PLExecStateCallStack *top_es_entry;
 
 	if (!DbidIsValid(new_db_id))
 		ereport(ERROR,
@@ -2460,21 +2450,7 @@ exec_stmt_usedb(PLtsql_execstate *estate, PLtsql_stmt_usedb *stmt)
 						stmt->db_name, stmt->db_name)));
 
 	set_session_properties(stmt->db_name);
-        top_es_entry = exec_state_call_stack->next;
-        while(top_es_entry != NULL)
-        {
-                /*traverse through the estate stack. If the occurrence of
-                * execute() is found in the stack, suppress the database context
-                * message and avoid sending env token and message to user.
-                */
-                if(top_es_entry->estate && top_es_entry->estate->err_stmt &&
-                       (top_es_entry->estate->err_stmt->cmd_type == PLTSQL_STMT_EXEC_BATCH))
-                       return PLTSQL_RC_OK;
-                else
-                       top_es_entry = top_es_entry->next;
-        }
-
-        snprintf(message, sizeof(message), "Changed database context to '%s'.", stmt->db_name);
+	snprintf(message, sizeof(message), "Changed database context to '%s'.", stmt->db_name);
 	/* send env change token to user */
 	if (*pltsql_protocol_plugin_ptr && (*pltsql_protocol_plugin_ptr)->send_env_change)
 		((*pltsql_protocol_plugin_ptr)->send_env_change) (1, stmt->db_name, old_db_name);
