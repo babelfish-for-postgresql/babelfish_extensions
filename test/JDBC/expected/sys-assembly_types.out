@@ -1,0 +1,6 @@
+SELECT * FROM sys.assembly_types
+GO
+~~START~~
+varchar#!#int#!#int#!#int#!#int#!#smallint#!#tinyint#!#tinyint#!#varchar#!#bit#!#bit#!#int#!#int#!#int#!#varchar#!#bit#!#bit#!#nvarchar#!#nvarchar
+~~END~~
+
