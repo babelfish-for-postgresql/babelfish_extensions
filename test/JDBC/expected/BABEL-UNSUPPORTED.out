@@ -554,7 +554,7 @@ GO
 
 DROP DATABASE db_unsupported6;
 GO
-~~ERROR (Code: 3701)~~
+~~ERROR (Code: 911)~~
 
 ~~ERROR (Message: database "db_unsupported6" does not exist)~~
 

@@ -65,6 +65,7 @@ OBJS += src/special_keywords.o
 OBJS += antlr/libantlr_tsql.a
 OBJS += src/multidb.o
 OBJS += src/json_funcs.o
+OBJS += src/pltsql_ruleutils.o
 
 export ANTLR4_JAVA_BIN=java
 export ANTLR4_RUNTIME_LIB=-lantlr4-runtime
@@ -79,7 +80,7 @@ PG_CXXFLAGS += -I$(ANTLR4_RUNTIME_INCLUDE_DIR)
 PG_CFLAGS += -g
 PG_CPPFLAGS += -I$(TSQLSRC) -I$(PG_SRC) -DFAULT_INJECTOR
 
-SHLIB_LINK += -L$(ANTLR4_RUNTIME_LIB_DIR) $(ANTLR4_RUNTIME_LIB) -lcrypto
+SHLIB_LINK += -L$(ANTLR4_RUNTIME_LIB_DIR) $(ANTLR4_RUNTIME_LIB) -lcrypto -L$(pkglibdir) -l:babelfishpg_common.so
 
 UPGRADES = $(patsubst sql/upgrades/%.sql,sql/%.sql,$(wildcard sql/upgrades/*.sql))
 

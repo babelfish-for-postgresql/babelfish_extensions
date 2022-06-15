@@ -17,6 +17,11 @@ RETURNS sys.NVARCHAR(128)
 AS 'babelfishpg_tsql', 'user_name'
 LANGUAGE C IMMUTABLE PARALLEL SAFE;
 
+CREATE OR REPLACE FUNCTION sys.tsql_get_constraintdef(IN constraint_id OID DEFAULT NULL)
+RETURNS text
+AS 'babelfishpg_tsql', 'tsql_get_constraintdef'
+LANGUAGE C IMMUTABLE PARALLEL SAFE;
+
 CREATE OR REPLACE FUNCTION sys.user_id(IN user_name TEXT DEFAULT NULL)
 RETURNS OID
 AS 'babelfishpg_tsql', 'user_id'
@@ -1436,7 +1441,7 @@ BEGIN
     IF eh_setting = 'strict' THEN
         RAISE EXCEPTION 'DBTS is not currently supported in Babelfish. please use babelfishpg_tsql.escape_hatch_rowversion to ignore';
     ELSE
-        RETURN pg_snapshot_xmin(pg_current_snapshot())::sys.ROWVERSION;
+        RETURN sys.get_current_full_xact_id()::sys.ROWVERSION;
     END IF;
 END;
 $$
@@ -2639,3 +2644,10 @@ BEGIN
 END;
 $$
 LANGUAGE plpgsql;
+
+CREATE OR REPLACE FUNCTION sys.sid_binary(IN login sys.nvarchar)
+RETURNS SYS.VARBINARY
+AS $$
+    SELECT CAST(NULL AS SYS.VARBINARY);
+$$ 
+LANGUAGE SQL IMMUTABLE PARALLEL RESTRICTED;

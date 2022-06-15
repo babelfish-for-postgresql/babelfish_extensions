@@ -71,6 +71,9 @@ extern Oid tsql_binary_oid;
 extern Oid tsql_varbinary_oid;
 extern Oid tsql_rowversion_oid;
 extern Oid tsql_timestamp_oid;
+extern Oid tsql_datetime2_oid;
+extern Oid tsql_smalldatetime_oid;
+extern Oid tsql_datetimeoffset_oid;
 
 extern Oid lookup_tsql_datatype_oid(const char *typename);
 extern bool is_tsql_bpchar_datatype(Oid oid);
@@ -85,5 +88,8 @@ extern bool is_tsql_varbinary_datatype(Oid oid);
 extern bool is_tsql_rowversion_datatype(Oid oid);
 extern bool is_tsql_timestamp_datatype(Oid oid);
 extern bool is_tsql_rowversion_or_timestamp_datatype(Oid oid);
+extern bool is_tsql_datetime2_datatype(Oid oid);
+extern bool is_tsql_smalldatetime_datatype(Oid oid);
+extern bool is_tsql_datetimeoffset_datatype(Oid oid);
 
 #endif
