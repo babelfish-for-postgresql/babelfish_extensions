@@ -3,7 +3,7 @@ name: 'Run pg_upgrade'
 inputs:
   migration_mode:
     description: 'Database migration mode'
-    required: no
+    required: false
     default: 'single-db'
   prev_install_dir:
     description: "Previous postgres intall directory"

@@ -1,9 +1,9 @@
-name: 'Upgrade and Test'
+name: 'Upgrade till final version and run verify tests'
 
 runs: 
   using: "composite"
   steps:
     - name: Print Upgrade Path
-      run: echo "Upgrading to Next Version ..."
+      run: echo "Upgrading to final version through intermediate versions ..."
       shell: bash
 

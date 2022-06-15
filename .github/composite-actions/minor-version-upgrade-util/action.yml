@@ -48,7 +48,6 @@ runs:
         cd ../babelfishpg_tsql
         make && make install
       shell: bash
-      #uses: ./.github/composite-actions/build-extensions
 
     - name: Update extensions
       if: always() && steps.build-extensions-newer.outcome == 'success'
@@ -61,27 +60,19 @@ runs:
         sqlcmd -S localhost -U jdbc_user -P 12345678 -Q "SELECT @@version GO"
       shell: bash
 
-    # - name: Run JDBC Standard Tests
-    #   id: jdbc-standard-tests
-    #   if: always() && inputs.is_final_ver
-    #   run: |
-    #     cd test/JDBC/
-    #     mvn test
-    #   shell: bash
-
     - uses: actions/checkout@v2
   
     - name: Change migration mode to multi-db
       id: change-migration-mode
-      if: always() && inputs.is_final_ver
+      if: always() && inputs.is_final_ver == 'true'
       run: |
         sudo ~/${{ inputs.install_dir}}/bin/psql -d jdbc_testdb -U runner -c "ALTER SYSTEM SET babelfishpg_tsql.migration_mode = 'multi-db';"
         sudo ~/${{ inputs.install_dir}}/bin/psql -d jdbc_testdb -U runner -c "SELECT pg_reload_conf();"
       shell: bash
 
-    - name: Run JDBC Upgrade Tests
-      id: jdbc-upgrade-tests
-      if: always() && steps.change-migration-mode.outcome == 'success' && inputs.is_final_ver
+    - name: Run JDBC Verify Tests
+      id: jdbc-verify-tests
+      if: always() && steps.change-migration-mode.outcome == 'success' && inputs.is_final_ver == 'true'
       run: |
         cd test/JDBC/
         sudo sed -i 's/inputFilesPath = input/inputFilesPath = upgrade\/verification/g' src/main/resources/config.txt
@@ -89,12 +80,3 @@ runs:
         sudo sed -i 's/inputFilesPath = upgrade\/verification/inputFilesPath = input/g' src/main/resources/config.txt
       shell: bash
     
-    - name: Run JDBC Cleanup Tests
-      id: jdbc-cleanup-tests
-      if: always() && steps.jdbc-upgrade-tests.outcome == 'success' && inputs.is_final_ver
-      run: |
-        cd test/JDBC
-        sudo sed -i 's/inputFilesPath = input/inputFilesPath = upgrade\/cleanup/g' src/main/resources/config.txt
-        mvn test
-        sudo sed -i 's/inputFilesPath = upgrade\/cleanup/inputFilesPath = input/g' src/main/resources/config.txt
-      shell: bash

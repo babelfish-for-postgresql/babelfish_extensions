@@ -84,13 +84,6 @@ runs:
         sqlcmd -S localhost -U jdbc_user -P 12345678 -Q "SELECT @@version GO"
       shell: bash
 
-    # - name: Run JDBC Standard Tests
-    #   id: jdbc-standard-tests
-    #   run: |
-    #     cd test/JDBC/
-    #     mvn test
-    #   shell: bash
-
     - uses: actions/checkout@v2
 
     - name: Change migration mode to multi-db
@@ -106,7 +99,5 @@ runs:
         cd test/JDBC/
         sudo sed -i 's/inputFilesPath = input/inputFilesPath = upgrade\/preparation/g' src/main/resources/config.txt
         mvn test
-        # sudo sed -i 's/inputFilesPath = upgrade\/preparation/inputFilesPath = upgrade\/verification/g' src/main/resources/config.txt
-        # mvn test
         sudo sed -i 's/inputFilesPath = upgrade\/preparation/inputFilesPath = input/g' src/main/resources/config.txt
       shell: bash

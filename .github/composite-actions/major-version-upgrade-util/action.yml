@@ -19,16 +19,10 @@ runs:
     - name: Build Modified Postgres using latest version
       id: build-modified-postgres-new
       if: always()
-      run: |
-        cd ../postgresql_modified_for_babelfish
-        git checkout ${{ inputs.engine_branch }}
-        ./configure --prefix=$HOME/${{ inputs.install_dir }}/ --with-python PYTHON=/usr/bin/python2.7 --enable-debug CFLAGS="-ggdb" --with-libxml --with-uuid=ossp --with-icu
-        make clean
-        make -j 4 2>error.txt
-        make install
-        make check
-        cd contrib && make && sudo make install
-      shell: bash
+      uses: ./.github/composite-actions/build-modified-postgres
+      with:
+        engine_branch: ${{ inputs.engine_branch }}
+        install_dir: ${{ inputs.install_dir }}
 
     - name: Copy ANTLR
       id: copy-antlr
@@ -66,23 +60,15 @@ runs:
     - name: Change migration mode to multi-db
       id: change-migration-mode
       run: |
-        sudo ~/${{ inputs.install_dir}}/bin/psql -d jdbc_testdb -U runner -c "ALTER SYSTEM SET babelfishpg_tsql.migration_mode = 'multi-db';"
-        sudo ~/${{ inputs.install_dir}}/bin/psql -d jdbc_testdb -U runner -c "SELECT pg_reload_conf();"
+        sudo ~/${{ inputs.install_dir }}/bin/psql -d jdbc_testdb -U runner -c "ALTER SYSTEM SET babelfishpg_tsql.migration_mode = 'multi-db';"
+        sudo ~/${{ inputs.install_dir }}/bin/psql -d jdbc_testdb -U runner -c "SELECT pg_reload_conf();"
       shell: bash
-
-    # - name: Run JDBC Standard Tests
-    #   id: jdbc-standard-tests
-    #   if: always() && steps.run-pg_upgrade.outcome == 'success' && inputs.is_final_ver
-    #   run: |
-    #     cd test/JDBC/
-    #     mvn test
-    #   shell: bash
 
     - uses: actions/checkout@v2
 
-    - name: Run JDBC Upgrade Tests
-      if: always() && steps.change-migration-mode.outcome == 'success' && inputs.is_final_ver
-      id: jdbc-upgrade-tests
+    - name: Run JDBC Verify Tests
+      if: always() && steps.change-migration-mode.outcome == 'success' && inputs.is_final_ver == 'true'
+      id: jdbc-verify-tests
       run: |
         cd test/JDBC/
         sudo sed -i 's/inputFilesPath = input/inputFilesPath = upgrade\/verification/g' src/main/resources/config.txt
@@ -90,12 +76,3 @@ runs:
         sudo sed -i 's/inputFilesPath = upgrade\/verification/inputFilesPath = input/g' src/main/resources/config.txt
       shell: bash
     
-    - name: Run JDBC Cleanup Tests
-      id: jdbc-cleanup-tests
-      if: always() && steps.jdbc-upgrade-tests.outcome == 'success' && inputs.is_final_ver
-      run: |
-        cd test/JDBC
-        sudo sed -i 's/inputFilesPath = input/inputFilesPath = upgrade\/cleanup/g' src/main/resources/config.txt
-        mvn test
-        sudo sed -i 's/inputFilesPath = upgrade\/cleanup/inputFilesPath = input/g' src/main/resources/config.txt
-      shell: bash

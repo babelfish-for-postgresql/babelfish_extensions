@@ -1,15 +1,9 @@
 name: Version Upgrade Test Framework
-on:
-  push:
-    branches:
-      - BABEL_2_X_DEV_upgrade_test
-  pull_request:
-    branches:
-      - BABEL_2_X_DEV_upgrade_test
+on: [push, pull_request]
 
 jobs:
   version-upgrade-tests:
-    name: Upgrade version and test
+    name: Version Upgrade Test Framework
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
@@ -24,15 +18,18 @@ jobs:
         if: always()
         run: pip3 install yq
 
-      - name: read base version
+      - name: Read Base Version and Final Version
         id: read-base-version
         if: always() && steps.install-yq.outcome == 'success'
         run: > 
           echo "::set-output name=base-version::$(
             yq '."upgrade-version"[0]' ${{ github.workspace }}/.github/configuration/upgrade-test-configuration.yml
+          )" && 
+          echo "::set-output name=final-version::$(
+            yq '."upgrade-version"[-1]' ${{ github.workspace }}/.github/configuration/upgrade-test-configuration.yml
           )"
 
-      - name: find-branch
+      - name: Find Engine and Extension Branches for Base Version ${{ steps.read-base-version.outputs.base-version }}
         id: find-branch
         if: always() && steps.read-base-version.outcome == 'success'
         run: >
@@ -44,9 +41,8 @@ jobs:
           )" &&
           echo "::set-output name=base-dir::$(echo postgres$(awk '{$0=int($0)}1' <<< ${{ steps.read-base-version.outputs.base-version }}))"
 
-      - name: Setup Base Version and Runs Tests
+      - name: Setup Base Version ${{ steps.read-base-version.outputs.base-version }} and Run Preparation Tests
         id: setup-base-version
-        timeout-minutes: 30
         if: always() && steps.install-dependencies.outcome == 'success' && steps.find-branch.outcome == 'success'
         uses: ./.github/composite-actions/setup-base-version
         with:
@@ -61,9 +57,9 @@ jobs:
         with: 
           base_version: ${{ steps.read-base-version.outputs.base-version }}
 
-      - name: Upgrade and Test
+      - name: Upgrade till final version ${{ steps.read-base-version.outputs.final-version }} and run verify scripts
         id: upgrade-and-test
-        if: always() && steps.setup-upgrade-ver-ca.outcome == 'success'
+        if: always() && steps.setup-upgrade-ver-ca.outcome == 'success' 
         uses: ./.github/composite-actions/upgrade-version
 
       - name: Rename Test Summary Files
@@ -86,5 +82,3 @@ jobs:
             ~/upgrade/*.log
             ~/upgrade/*.diff
             ~/postgres*/data/logfile
-            
-      - uses: actions/checkout@v2
