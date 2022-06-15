@@ -8,6 +8,7 @@
 #    new line
 # 6. If you want the framework to not run certain files, use: ignore#!#<test name>
 
+SYSTEM_USER
 BABEL-2725
 BABEL-1173
 BABEL-1715
