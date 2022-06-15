@@ -334,6 +334,13 @@ AS $$
 $$ 
 LANGUAGE SQL IMMUTABLE PARALLEL RESTRICTED;
 
+CREATE OR REPLACE FUNCTION sys.system_user()
+RETURNS sys.nvarchar(128) AS
+$BODY$
+	SELECT SESSION_USER;
+$BODY$
+LANGUAGE SQL;
+
 -- Drops the temporary procedure used by the upgrade script.
 -- Please have this be one of the last statements executed in this upgrade script.
 DROP PROCEDURE sys.babelfish_drop_deprecated_view(varchar, varchar);
