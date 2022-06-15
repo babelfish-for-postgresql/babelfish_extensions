@@ -351,6 +351,13 @@ AS $$
 $$ 
 LANGUAGE SQL IMMUTABLE PARALLEL RESTRICTED;
 
+CREATE OR REPLACE FUNCTION sys.system_user()
+RETURNS sys.nvarchar(128) AS
+$BODY$
+	SELECT SESSION_USER;
+$BODY$
+LANGUAGE SQL;
+
 -- Disassociate msdb objects from the extension
 CALL sys.babelfish_remove_object_from_extension('view', 'msdb_dbo.sysdatabases');
 CALL sys.babelfish_remove_object_from_extension('schema', 'msdb_dbo');
@@ -358,6 +365,7 @@ CALL sys.babelfish_remove_object_from_extension('schema', 'msdb_dbo');
 CALL sys.babelfish_remove_object_from_extension('procedure', 'master_dbo.xp_qv(sys.nvarchar, sys.nvarchar)');
 CALL sys.babelfish_remove_object_from_extension('procedure', 'master_dbo.xp_instance_regread(sys.nvarchar, sys.sysname, sys.nvarchar, int)');
 CALL sys.babelfish_remove_object_from_extension('procedure', 'master_dbo.xp_instance_regread(sys.nvarchar, sys.sysname, sys.nvarchar, sys.nvarchar)');
+
 
 -- Drops the temporary procedure used by the upgrade script.
 -- Please have this be one of the last statements executed in this upgrade script.
