@@ -334,6 +334,11 @@ AS $$
 $$ 
 LANGUAGE SQL IMMUTABLE PARALLEL RESTRICTED;
 
+CREATE OR REPLACE FUNCTION sys.tsql_get_functiondef(IN function_id OID DEFAULT NULL)
+RETURNS text
+AS 'babelfishpg_tsql', 'tsql_get_functiondef'
+LANGUAGE C IMMUTABLE PARALLEL SAFE;
+
 -- Drops the temporary procedure used by the upgrade script.
 -- Please have this be one of the last statements executed in this upgrade script.
 DROP PROCEDURE sys.babelfish_drop_deprecated_view(varchar, varchar);
