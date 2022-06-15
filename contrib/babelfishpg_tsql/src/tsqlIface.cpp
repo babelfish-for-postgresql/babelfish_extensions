@@ -1565,6 +1565,15 @@ public:
 			}
 		}
 
+		if (ctx->built_in_functions())
+		{
+			auto bctx = ctx->built_in_functions();
+
+			/* Re-write system_user to sys.system_user(). */
+			if (bctx->bif_no_brackets && bctx->SYSTEM_USER())
+				rewritten_query_fragment.emplace(std::make_pair(bctx->bif_no_brackets->getStartIndex(), std::make_pair(::getFullText(bctx->SYSTEM_USER()), "sys.system_user()")));
+		}
+
 		/* analyze scalar function call */
 		if (ctx->func_proc_name_server_database_schema())
 		{
