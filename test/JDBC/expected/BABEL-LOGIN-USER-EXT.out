@@ -37,6 +37,10 @@ go
 -- Create Login through tsql
 CREATE LOGIN r1 WITH PASSWORD = 'abc';
 go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: The Server principal 'r1' already exists)~~
+
 
 CREATE USER r1;
 go
@@ -209,6 +213,10 @@ go
 
 DROP LOGIN r1;
 go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Could not drop login 'r1' as the user is currently logged in.)~~
+
 
 DROP USER r2;
 go
@@ -218,36 +226,48 @@ go
 
 DROP LOGIN r2;
 go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Could not drop login 'r2' as the user is currently logged in.)~~
+
 
 -- Test initialization
 SELECT COUNT(*) FROM sys.babelfish_authid_login_ext;
 go
 ~~START~~
 int
-2
+14
 ~~END~~
 
 
 CREATE LOGIN r1 WITH PASSWORD = 'abc';
 go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: The Server principal 'r1' already exists)~~
+
 
 SELECT COUNT(*) FROM sys.babelfish_authid_login_ext;
 go
 ~~START~~
 int
-3
+14
 ~~END~~
 
 
 -- Test initialization with password
 CREATE LOGIN r2 WITH PASSWORD = '123'
 go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: The Server principal 'r2' already exists)~~
+
 
 SELECT COUNT(*) FROM sys.babelfish_authid_login_ext;
 go
 ~~START~~
 int
-4
+14
 ~~END~~
 
 
@@ -310,23 +330,31 @@ go
 -- Test dropping
 DROP LOGIN r1;
 go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Could not drop login 'r1' as the user is currently logged in.)~~
+
 
 SELECT COUNT(*) FROM sys.babelfish_authid_login_ext;
 go
 ~~START~~
 int
-3
+14
 ~~END~~
 
 
 DROP LOGIN r2;
 go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Could not drop login 'r2' as the user is currently logged in.)~~
+
 
 SELECT COUNT(*) FROM sys.babelfish_authid_login_ext;
 go
 ~~START~~
 int
-2
+14
 ~~END~~
 
 
@@ -867,6 +895,43 @@ tempdb_dbo#!#dbo#!##!#tempdb#!#dbo
 tempdb_guest#!#guest#!##!#tempdb#!#
 ~~END~~
 
+
+-- Prevent dropping active login
+CREATE LOGIN lgn_3232 WITH PASSWORD='123';
+GO
+
+CREATE USER lgn_3232; 
+GO
+
+-- tsql		user=lgn_3232		password=123
+
+-- tsql
+-- Session 1
+-- Logged into Session 1 with lgn_3232 login
+-- Session 2 - Try to drop lgn_3232 which is active on Session 1
+DROP LOGIN lgn_3232;
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Could not drop login 'lgn_3232' as the user is currently logged in.)~~
+
+
+-- psql
+-- Need to terminate Session 1 before cleanup the login
+SELECT pg_terminate_backend(pid) FROM pg_stat_activity WHERE usename='lgn_3232';
+GO
+~~START~~
+bool
+t
+~~END~~
+
+
+-- tsql
+DROP LOGIN lgn_3232;
+GO
+
+DROP USER lgn_3232;
+GO
 
 -- psql
 ALTER SYSTEM SET babelfishpg_tsql.migration_mode = 'single-db';

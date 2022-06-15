@@ -420,6 +420,34 @@ FROM sys.babelfish_authid_user_ext
 ORDER BY rolname;
 GO
 
+-- Prevent dropping active login
+CREATE LOGIN lgn_3232 WITH PASSWORD='123';
+GO
+
+CREATE USER lgn_3232; 
+GO
+
+-- Session 1
+-- tsql		user=lgn_3232		password=123
+-- Logged into Session 1 with lgn_3232 login
+
+-- Session 2 - Try to drop lgn_3232 which is active on Session 1
+-- tsql
+DROP LOGIN lgn_3232;
+GO
+
+-- Need to terminate Session 1 before cleanup the login
+-- psql
+SELECT pg_terminate_backend(pid) FROM pg_stat_activity WHERE usename='lgn_3232';
+GO
+
+-- tsql
+DROP LOGIN lgn_3232;
+GO
+
+DROP USER lgn_3232;
+GO
+
 -- psql
 ALTER SYSTEM SET babelfishpg_tsql.migration_mode = 'single-db';
 ALTER SYSTEM SET babelfishpg_tsql.allow_antlr_to_unsupported_grammar_for_testing = false;
