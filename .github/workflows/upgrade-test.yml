@@ -16,10 +16,10 @@ jobs:
       - name: Install yq - yaml parser
         id: install-yq
         if: always()
-        run: pip3 install yq
+        run: sudo snap install yq
 
       - name: Read Base Version and Final Version
-        id: read-base-version
+        id: read-base-and-final-version
         if: always() && steps.install-yq.outcome == 'success'
         run: > 
           echo "::set-output name=base-version::$(
@@ -29,19 +29,19 @@ jobs:
             yq '."upgrade-version"[-1]' ${{ github.workspace }}/.github/configuration/upgrade-test-configuration.yml
           )"
 
-      - name: Find Engine and Extension Branches for Base Version ${{ steps.read-base-version.outputs.base-version }}
+      - name: Find Engine and Extension Branches for Base Version ${{ steps.read-base-and-final-version.outputs.base-version }}
         id: find-branch
-        if: always() && steps.read-base-version.outcome == 'success'
+        if: always() && steps.read-base-and-final-version.outcome == 'success'
         run: >
           echo "::set-output name=base-engine-branch::$(
-            yq -r '."${{ steps.read-base-version.outputs.base-version }}".engine_branch' ${{ github.workspace }}/.github/template/version-branch-template.yml
+            yq '."${{ steps.read-base-and-final-version.outputs.base-version }}".engine_branch' ${{ github.workspace }}/.github/template/version-branch-template.yml
           )" &&
           echo "::set-output name=base-extension-branch::$(
-            yq -r '."${{ steps.read-base-version.outputs.base-version }}".extension_branch' ${{ github.workspace }}/.github/template/version-branch-template.yml
+            yq '."${{ steps.read-base-and-final-version.outputs.base-version }}".extension_branch' ${{ github.workspace }}/.github/template/version-branch-template.yml
           )" &&
-          echo "::set-output name=base-dir::$(echo postgres$(awk '{$0=int($0)}1' <<< ${{ steps.read-base-version.outputs.base-version }}))"
+          echo "::set-output name=base-dir::$(echo postgres$(awk '{$0=int($0)}1' <<< ${{ steps.read-base-and-final-version.outputs.base-version }}))"
 
-      - name: Setup Base Version ${{ steps.read-base-version.outputs.base-version }} and Run Preparation Tests
+      - name: Setup Base Version ${{ steps.read-base-and-final-version.outputs.base-version }} and Run Preparation Tests
         id: setup-base-version
         if: always() && steps.install-dependencies.outcome == 'success' && steps.find-branch.outcome == 'success'
         uses: ./.github/composite-actions/setup-base-version
@@ -55,9 +55,9 @@ jobs:
         if: always() && steps.install-yq.outcome == 'success' && steps.setup-base-version.outcome == 'success'
         uses: ./.github/composite-actions/setup-upgrade-version-ca
         with: 
-          base_version: ${{ steps.read-base-version.outputs.base-version }}
+          base_version: ${{ steps.read-base-and-final-version.outputs.base-version }}
 
-      - name: Upgrade till final version ${{ steps.read-base-version.outputs.final-version }} and run verify scripts
+      - name: Upgrade till final version ${{ steps.read-base-and-final-version.outputs.final-version }} and run verify scripts
         id: upgrade-and-test
         if: always() && steps.setup-upgrade-ver-ca.outcome == 'success' 
         uses: ./.github/composite-actions/upgrade-version

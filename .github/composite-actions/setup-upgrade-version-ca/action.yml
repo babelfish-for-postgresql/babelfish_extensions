@@ -11,7 +11,7 @@ runs:
       run: |
         upgrade_version_dir_path=${{ github.workspace }}/.github/composite-actions/upgrade-version/
 
-        LEN=$(yq -r '."upgrade-version" | length' ${{ github.workspace }}/.github/configuration/upgrade-test-configuration.yml)
+        LEN=$(yq '."upgrade-version" | length' ${{ github.workspace }}/.github/configuration/upgrade-test-configuration.yml)
         if [[ $LEN -le 1 ]]
         then
             echo "ERROR: Upgrade path length less than 2" 1>&2

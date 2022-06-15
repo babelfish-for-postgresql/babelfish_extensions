@@ -1,8 +1,0 @@
-select * from babel_3121_t;
-go
-~~START~~
-int#!#varchar
-1#!#success
-~~END~~
-
-
