@@ -24,6 +24,8 @@ create procedure sc1.test_si(@a SMALLINT ,@b INT OUTPUT)
 AS
 BEGIN
         SELECT @a=70;
+	set @a=8;
+	SELECT @a as a;
 END;
 go
 
@@ -52,14 +54,12 @@ go
 select tsql_get_functiondef(oid) from pg_proc where proname='test_dec';
 go
 
-drop function test_dec;
-go
-
 #char
 create procedure test_char(@ch char)
 AS
 BEGIN
 	set @ch ='c';
+	SELECT @ch as 's';
 END;
 go
 
@@ -69,12 +69,13 @@ go
 drop procedure test_char;
 go
 
-#tinyint and bigint
-create procedure test_ti(@a tinyint OUTPUT, @b BIGINT )
+#tinyint, float and bigint
+create procedure test_ti(@a tinyint OUTPUT, @b BIGINT, @c float )
 AS
 BEGIN
 	set @a=79;
 	select @b=19;
+	SELECT @c * 20 +1000;
 END;
 go
 
@@ -84,25 +85,13 @@ go
 drop procedure test_ti;
 go
 
-#float
-create procedure test_float(@a float )
-AS
-BEGIN
-	set @a=98.0;
-END;
-go
-
-select tsql_get_functiondef(oid) from pg_proc where proname='test_float';
-go
-
-drop procedure test_float;
-go
-
 #numeric
 create procedure test_num(@a numeric(20,6) OUTPUT)
 AS
 BEGIN
 	set @a = 65;
+	SELECT test_dec(23,60.76,43.88);
+	
 END;
 go
 
@@ -110,6 +99,9 @@ select tsql_get_functiondef(oid) from pg_proc where proname='test_num';
 go
 
 drop procedure test_num;
+go
+
+drop function test_dec;
 go
 
 #time and date
@@ -146,6 +138,7 @@ create procedure test_uid(@a uniqueidentifier output)
 AS
 BEGIN
 	set @a ='ce8af10a-2709-43b0-9e4e-a02753929d17';
+	SELECT @a as a;
 END;
 go
 
@@ -172,6 +165,7 @@ create procedure test_b1
 AS
 BEGIN
 	select * from customers;
+        select * from customers where customer_id = 25;
 END;
 go
 
@@ -184,6 +178,7 @@ go
 create procedure test_b2(@id int)
 AS
 BEGIN
+	select count(state) from customers;
 	select * from customers where customer_id = @id;
 END;
 go
@@ -211,6 +206,7 @@ create procedure test_b4(@id int)
 AS
 BEGIN
 	DELETE from customers where customer_id = @id;
+	ALTER TABLE customers ADD email varchar(255);
 
 END;
 go
@@ -221,10 +217,10 @@ go
 drop procedure test_b4;
 go
 
-create procedure test_b5(@id int)
+create procedure test_b5 @paramout varchar(20) out
 AS
 BEGIN
-	select customer_name,city,address from customers where customer_id=@id;
+SELECT @paramout ='helloworld';
 END;
 go
 
@@ -238,6 +234,7 @@ create procedure test_b6(@id int)
 AS
 BEGIN
 	select city,state,zip_code from customers where customer_id=@id;
+	UPDATE customers SET city = 'RANCHI' where state = 'JHARKHAND';
 END;
 go
 
@@ -247,24 +244,35 @@ go
 drop procedure test_b6;
 go
 
-create procedure test_b7(@name char(50))
-AS
-BEGIN
-	select customer_id,city,address from customers where customer_name=@name;
-END;
+DROP  FUNCTION IF EXISTS test_bd7;
 go
 
-select tsql_get_functiondef(oid) from pg_proc where proname='test_b7';
-go
-
-drop procedure test_b7;
-go
-
-create function test_b8 (@cost int)
+create function test_bd7 (@cost int)
 RETURNS INT
 AS
 BEGIN
+	set @cost = 100;
 	RETURN @cost * 10;
+
+END;
+go
+
+select tsql_get_functiondef(oid) from pg_proc where proname='test_bd7';
+go
+
+drop table customers;
+go
+
+create function test_b8(
+    @a INT,
+    @b DEC(10,2),
+    @c DEC(4,2)
+)
+RETURNS DEC(10,2)
+AS 
+BEGIN
+	RETURN test_bd7(199) * 79;
+    RETURN @a * @b * (1 - @c);
 END;
 go
 
@@ -274,32 +282,28 @@ go
 drop function test_b8;
 go
 
-drop table customers;
+DROP  FUNCTION IF EXISTS test_bd9;
 go
 
-create function test_b9(
-    @a INT,
-    @b DEC(10,2),
-    @c DEC(4,2)
-)
-RETURNS DEC(10,2)
-AS 
-BEGIN
-    RETURN @a * @b * (1 - @c);
+create function test_bd9(@x int, @y int)
+RETURNS int
+AS
+BEGIN 
+	RETURN test_bd7(4);
+	RETURN 200+(@x * @y);
 END;
 go
 
-select tsql_get_functiondef(oid) from pg_proc where proname='test_b9';
+select tsql_get_functiondef(oid) from pg_proc where proname='test_bd9';
 go
 
-drop function test_b9;
-go
-
-create function test_b10(@x int, @y int)
-RETURNS int
+create function test_b10(@k SMALLINT)
+RETURNS SMALLINT
 AS
 BEGIN
-	RETURN 200+(@x * @y);
+	set @k =88;
+	SELECT @k = 32;
+	RETURN @k/27;
 END;
 go
 
@@ -309,39 +313,33 @@ go
 drop function test_b10;
 go
 
-create function test_b11(@k SMALLINT)
-RETURNS SMALLINT
+create schema s1;
+go
+
+create function s1.test_b11 (@a varchar)
+RETURNS varchar
 AS
 BEGIN
-	RETURN @k/27;
+        RETURN test_bd9(2,6);
+	set @a= 'smile please';
+	RETURN test_bd7(65);
+	RETURN @a;
 END;
 go
 
 select tsql_get_functiondef(oid) from pg_proc where proname='test_b11';
 go
 
-drop function test_b11;
+DROP  FUNCTION IF EXISTS test_bd7;
 go
 
-create schema s1;
+DROP  FUNCTION IF EXISTS test_bd9;
 go
 
-create function s1.test_b12 (@a varchar)
-RETURNS varchar
-AS
-BEGIN
-	RETURN @a;
-END;
-go
-
-select tsql_get_functiondef(oid) from pg_proc where proname='test_b12';
-go
-
-drop function s1.test_b12;
+drop function s1.test_b11;
 go
 
 drop schema s1;
 go
-
 
 

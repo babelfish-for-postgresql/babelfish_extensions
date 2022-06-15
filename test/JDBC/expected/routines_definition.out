@@ -14,7 +14,7 @@ select tsql_get_functiondef(oid) from pg_proc where proname='test_nvar';
 go
 ~~START~~
 text
-CREATE PROCEDURE dbo.test_nvar( @a nvarchar,  @b int= 8) AS BEGIN<newline>        SELECT @b=8;<newline>END
+CREATE PROCEDURE test_nvar(@a nvarchar, @b int= 8) AS BEGIN<newline>        SELECT @b=8;<newline>END
 ~~END~~
 
 
@@ -29,6 +29,8 @@ create procedure sc1.test_si(@a SMALLINT ,@b INT OUTPUT)
 AS
 BEGIN
         SELECT @a=70;
+	set @a=8;
+	SELECT @a as a;
 END;
 go
 
@@ -36,7 +38,7 @@ select tsql_get_functiondef(oid) from pg_proc where proname='test_si';
 go
 ~~START~~
 text
-CREATE PROCEDURE sc1.test_si( @a smallint,  @b int OUTPUT) AS BEGIN<newline>        SELECT @a=70;<newline>END;
+CREATE PROCEDURE sc1.test_si(@a smallint, @b int OUTPUT ) AS BEGIN<newline>        SELECT @a=70;<newline>	set @a=8;<newline>	SELECT @a as a;<newline>END;
 ~~END~~
 
 
@@ -63,18 +65,16 @@ select tsql_get_functiondef(oid) from pg_proc where proname='test_dec';
 go
 ~~START~~
 text
-CREATE FUNCTION dbo.test_dec( @quantity int,  @list_price decimal,  @discount decimal) RETURNS decimal AS BEGIN<newline>    RETURN @quantity * @list_price * (1 - @discount);<newline>END;
+CREATE FUNCTION test_dec(@quantity int, @list_price decimal, @discount decimal) RETURNS decimal AS BEGIN<newline>    RETURN @quantity * @list_price * (1 - @discount);<newline>END;
 ~~END~~
 
-
-drop function test_dec;
-go
 
 #char
 create procedure test_char(@ch char)
 AS
 BEGIN
 	set @ch ='c';
+	SELECT @ch as 's';
 END;
 go
 
@@ -82,19 +82,20 @@ select tsql_get_functiondef(oid) from pg_proc where proname='test_char';
 go
 ~~START~~
 text
-CREATE PROCEDURE dbo.test_char( @ch char) AS BEGIN<newline>	set @ch ='c';<newline>END;
+CREATE PROCEDURE test_char(@ch char) AS BEGIN<newline>	set @ch ='c';<newline>	SELECT @ch as 's';<newline>END;
 ~~END~~
 
 
 drop procedure test_char;
 go
 
-#tinyint and bigint
-create procedure test_ti(@a tinyint OUTPUT, @b BIGINT )
+#tinyint, float and bigint
+create procedure test_ti(@a tinyint OUTPUT, @b BIGINT, @c float )
 AS
 BEGIN
 	set @a=79;
 	select @b=19;
+	SELECT @c * 20 +1000;
 END;
 go
 
@@ -102,30 +103,11 @@ select tsql_get_functiondef(oid) from pg_proc where proname='test_ti';
 go
 ~~START~~
 text
-CREATE PROCEDURE dbo.test_ti( @a tinyint OUTPUT,  @b bigint) AS BEGIN<newline>	set @a=79;<newline>	select @b=19;<newline>END;
+CREATE PROCEDURE test_ti(@a tinyint OUTPUT , @b bigint, @c float) AS BEGIN<newline>	set @a=79;<newline>	select @b=19;<newline>	SELECT @c * 20 +1000;<newline>END;
 ~~END~~
 
 
 drop procedure test_ti;
-go
-
-#float
-create procedure test_float(@a float )
-AS
-BEGIN
-	set @a=98.0;
-END;
-go
-
-select tsql_get_functiondef(oid) from pg_proc where proname='test_float';
-go
-~~START~~
-text
-CREATE PROCEDURE dbo.test_float( @a float) AS BEGIN<newline>	set @a=98.0;<newline>END;
-~~END~~
-
-
-drop procedure test_float;
 go
 
 #numeric
@@ -133,6 +115,8 @@ create procedure test_num(@a numeric(20,6) OUTPUT)
 AS
 BEGIN
 	set @a = 65;
+	SELECT test_dec(23,60.76,43.88);
+	
 END;
 go
 
@@ -140,11 +124,14 @@ select tsql_get_functiondef(oid) from pg_proc where proname='test_num';
 go
 ~~START~~
 text
-CREATE PROCEDURE dbo.test_num( @a numeric OUTPUT) AS BEGIN<newline>	set @a = 65;<newline>END;
+CREATE PROCEDURE test_num(@a numeric OUTPUT ) AS BEGIN<newline>	set @a = 65;<newline>	SELECT test_dec(23,60.76,43.88);<newline>	<newline>END;
 ~~END~~
 
 
 drop procedure test_num;
+go
+
+drop function test_dec;
 go
 
 #time and date
@@ -160,7 +147,7 @@ select tsql_get_functiondef(oid) from pg_proc where proname='test_time';
 go
 ~~START~~
 text
-CREATE PROCEDURE dbo.test_time( @a time OUTPUT,  @b date OUTPUT) AS BEGIN<newline>	set @a='12:54';<newline>	set @b='2022-06-11';<newline>END;
+CREATE PROCEDURE test_time(@a time OUTPUT , @b date OUTPUT ) AS BEGIN<newline>	set @a='12:54';<newline>	set @b='2022-06-11';<newline>END;
 ~~END~~
 
 
@@ -179,7 +166,7 @@ select tsql_get_functiondef(oid) from pg_proc where proname='test_dt';
 go
 ~~START~~
 text
-CREATE PROCEDURE dbo.test_dt( @a datetime OUTPUT) AS BEGIN<newline>	set @a='2022 -06-12 12:43';<newline>END;
+CREATE PROCEDURE test_dt(@a datetime OUTPUT ) AS BEGIN<newline>	set @a='2022 -06-12 12:43';<newline>END;
 ~~END~~
 
 
@@ -191,6 +178,7 @@ create procedure test_uid(@a uniqueidentifier output)
 AS
 BEGIN
 	set @a ='ce8af10a-2709-43b0-9e4e-a02753929d17';
+	SELECT @a as a;
 END;
 go
 
@@ -198,7 +186,7 @@ select tsql_get_functiondef(oid) from pg_proc where proname='test_uid';
 go
 ~~START~~
 text
-CREATE PROCEDURE dbo.test_uid( @a uniqueidentifier OUTPUT) AS BEGIN<newline>	set @a ='ce8af10a-2709-43b0-9e4e-a02753929d17';<newline>END;
+CREATE PROCEDURE test_uid(@a uniqueidentifier OUTPUT ) AS BEGIN<newline>	set @a ='ce8af10a-2709-43b0-9e4e-a02753929d17';<newline>	SELECT @a as a;<newline>END;
 ~~END~~
 
 
@@ -222,6 +210,7 @@ create procedure test_b1
 AS
 BEGIN
 	select * from customers;
+        select * from customers where customer_id = 25;
 END;
 go
 
@@ -229,7 +218,7 @@ select tsql_get_functiondef(oid) from pg_proc where proname='test_b1';
 go
 ~~START~~
 text
-CREATE PROCEDURE dbo.test_b1() AS BEGIN<newline>	select * from customers;<newline>END;
+CREATE PROCEDURE test_b1() AS BEGIN<newline>	select * from customers;<newline>        select * from customers where customer_id = 25;<newline>END;
 ~~END~~
 
 
@@ -239,6 +228,7 @@ go
 create procedure test_b2(@id int)
 AS
 BEGIN
+	select count(state) from customers;
 	select * from customers where customer_id = @id;
 END;
 go
@@ -247,7 +237,7 @@ select tsql_get_functiondef(oid) from pg_proc where proname='test_b2';
 go
 ~~START~~
 text
-CREATE PROCEDURE dbo.test_b2( @id int) AS BEGIN<newline>	select * from customers where customer_id = @id;<newline>END;
+CREATE PROCEDURE test_b2(@id int) AS BEGIN<newline>	select count(state) from customers;<newline>	select * from customers where customer_id = @id;<newline>END;
 ~~END~~
 
 
@@ -265,7 +255,7 @@ select tsql_get_functiondef(oid) from pg_proc where proname='test_b3';
 go
 ~~START~~
 text
-CREATE PROCEDURE dbo.test_b3( @name char,  @city char,  @address char,  @state char,  @cust_id int) AS BEGIN<newline>	INSERT INTO customers (customer_name,address,city,state,customer_id) VALUES (@name,@address,@city,@state,@cust_id);<newline>END;
+CREATE PROCEDURE test_b3(@name char, @city char, @address char, @state char, @cust_id int) AS BEGIN<newline>	INSERT INTO customers (customer_name,address,city,state,customer_id) VALUES (@name,@address,@city,@state,@cust_id);<newline>END;
 ~~END~~
 
 
@@ -277,6 +267,7 @@ create procedure test_b4(@id int)
 AS
 BEGIN
 	DELETE from customers where customer_id = @id;
+	ALTER TABLE customers ADD email varchar(255);
 END;
 go
 
@@ -284,17 +275,17 @@ select tsql_get_functiondef(oid) from pg_proc where proname='test_b4';
 go
 ~~START~~
 text
-CREATE PROCEDURE dbo.test_b4( @id int) AS BEGIN<newline>	DELETE from customers where customer_id = @id;<newline>END;
+CREATE PROCEDURE test_b4(@id int) AS BEGIN<newline>	DELETE from customers where customer_id = @id;<newline>	ALTER TABLE customers ADD email varchar(255);<newline>END;
 ~~END~~
 
 
 drop procedure test_b4;
 go
 
-create procedure test_b5(@id int)
+create procedure test_b5 @paramout varchar(20) out
 AS
 BEGIN
-	select customer_name,city,address from customers where customer_id=@id;
+SELECT @paramout ='helloworld';
 END;
 go
 
@@ -302,7 +293,7 @@ select tsql_get_functiondef(oid) from pg_proc where proname='test_b5';
 go
 ~~START~~
 text
-CREATE PROCEDURE dbo.test_b5( @id int) AS BEGIN<newline>	select customer_name,city,address from customers where customer_id=@id;<newline>END;
+CREATE PROCEDURE test_b5(@paramout varchar OUTPUT ) AS BEGIN<newline>SELECT @paramout ='helloworld';<newline>END;
 ~~END~~
 
 
@@ -313,6 +304,7 @@ create procedure test_b6(@id int)
 AS
 BEGIN
 	select city,state,zip_code from customers where customer_id=@id;
+	UPDATE customers SET city = 'RANCHI' where state = 'JHARKHAND';
 END;
 go
 
@@ -320,54 +312,38 @@ select tsql_get_functiondef(oid) from pg_proc where proname='test_b6';
 go
 ~~START~~
 text
-CREATE PROCEDURE dbo.test_b6( @id int) AS BEGIN<newline>	select city,state,zip_code from customers where customer_id=@id;<newline>END;
+CREATE PROCEDURE test_b6(@id int) AS BEGIN<newline>	select city,state,zip_code from customers where customer_id=@id;<newline>	UPDATE customers SET city = 'RANCHI' where state = 'JHARKHAND';<newline>END;
 ~~END~~
 
 
 drop procedure test_b6;
 go
 
-create procedure test_b7(@name char(50))
-AS
-BEGIN
-	select customer_id,city,address from customers where customer_name=@name;
-END;
+DROP  FUNCTION IF EXISTS test_bd7;
 go
 
-select tsql_get_functiondef(oid) from pg_proc where proname='test_b7';
-go
-~~START~~
-text
-CREATE PROCEDURE dbo.test_b7( @name char) AS BEGIN<newline>	select customer_id,city,address from customers where customer_name=@name;<newline>END;
-~~END~~
 
-
-drop procedure test_b7;
-go
-
-create function test_b8 (@cost int)
+create function test_bd7 (@cost int)
 RETURNS INT
 AS
 BEGIN
+	set @cost = 100;
 	RETURN @cost * 10;
 END;
 go
 
-select tsql_get_functiondef(oid) from pg_proc where proname='test_b8';
+select tsql_get_functiondef(oid) from pg_proc where proname='test_bd7';
 go
 ~~START~~
 text
-CREATE FUNCTION dbo.test_b8( @cost int) RETURNS int AS BEGIN<newline>	RETURN @cost * 10;<newline>END;
+CREATE FUNCTION test_bd7(@cost int) RETURNS int AS BEGIN<newline>	set @cost = 100;<newline>	RETURN @cost * 10;<newline>END;
 ~~END~~
 
-
-drop function test_b8;
-go
 
 drop table customers;
 go
 
-create function test_b9(
+create function test_b8(
     @a INT,
     @b DEC(10,2),
     @c DEC(4,2)
@@ -375,26 +351,49 @@ create function test_b9(
 RETURNS DEC(10,2)
 AS 
 BEGIN
+	RETURN test_bd7(199) * 79;
     RETURN @a * @b * (1 - @c);
 END;
 go
 
-select tsql_get_functiondef(oid) from pg_proc where proname='test_b9';
+select tsql_get_functiondef(oid) from pg_proc where proname='test_b8';
 go
 ~~START~~
 text
-CREATE FUNCTION dbo.test_b9( @a int,  @b decimal,  @c decimal) RETURNS decimal AS BEGIN<newline>    RETURN @a * @b * (1 - @c);<newline>END;
+CREATE FUNCTION test_b8(@a int, @b decimal, @c decimal) RETURNS decimal AS BEGIN<newline>	RETURN test_bd7(199) * 79;<newline>    RETURN @a * @b * (1 - @c);<newline>END;
 ~~END~~
 
 
-drop function test_b9;
+drop function test_b8;
 go
 
-create function test_b10(@x int, @y int)
+DROP  FUNCTION IF EXISTS test_bd9;
+go
+
+create function test_bd9(@x int, @y int)
 RETURNS int
 AS
-BEGIN
+BEGIN 
+	RETURN test_bd7(4);
 	RETURN 200+(@x * @y);
+END;
+go
+
+select tsql_get_functiondef(oid) from pg_proc where proname='test_bd9';
+go
+~~START~~
+text
+CREATE FUNCTION test_bd9(@x int, @y int) RETURNS int AS BEGIN <newline>	RETURN test_bd7(4);<newline>	RETURN 200+(@x * @y);<newline>END;
+~~END~~
+
+
+create function test_b10(@k SMALLINT)
+RETURNS SMALLINT
+AS
+BEGIN
+	set @k =88;
+	SELECT @k = 32;
+	RETURN @k/27;
 END;
 go
 
@@ -402,18 +401,24 @@ select tsql_get_functiondef(oid) from pg_proc where proname='test_b10';
 go
 ~~START~~
 text
-CREATE FUNCTION dbo.test_b10( @x int,  @y int) RETURNS int AS BEGIN<newline>	RETURN 200+(@x * @y);<newline>END;
+CREATE FUNCTION test_b10(@k smallint) RETURNS smallint AS BEGIN<newline>	set @k =88;<newline>	SELECT @k = 32;<newline>	RETURN @k/27;<newline>END;
 ~~END~~
 
 
 drop function test_b10;
 go
 
-create function test_b11(@k SMALLINT)
-RETURNS SMALLINT
+create schema s1;
+go
+
+create function s1.test_b11 (@a varchar)
+RETURNS varchar
 AS
 BEGIN
-	RETURN @k/27;
+        RETURN test_bd9(2,6);
+	set @a= 'smile please';
+	RETURN test_bd7(65);
+	RETURN @a;
 END;
 go
 
@@ -421,37 +426,20 @@ select tsql_get_functiondef(oid) from pg_proc where proname='test_b11';
 go
 ~~START~~
 text
-CREATE FUNCTION dbo.test_b11( @k smallint) RETURNS smallint AS BEGIN<newline>	RETURN @k/27;<newline>END;
+CREATE FUNCTION s1.test_b11(@a varchar) RETURNS varchar AS BEGIN<newline>        RETURN test_bd9(2,6);<newline>	set @a= 'smile please';<newline>	RETURN test_bd7(65);<newline>	RETURN @a;<newline>END;
 ~~END~~
 
 
-drop function test_b11;
+DROP  FUNCTION IF EXISTS test_bd7;
 go
 
-create schema s1;
+DROP  FUNCTION IF EXISTS test_bd9;
 go
 
-create function s1.test_b12 (@a varchar)
-RETURNS varchar
-AS
-BEGIN
-	RETURN @a;
-END;
-go
-
-select tsql_get_functiondef(oid) from pg_proc where proname='test_b12';
-go
-~~START~~
-text
-CREATE FUNCTION s1.test_b12( @a varchar) RETURNS varchar AS BEGIN<newline>	RETURN @a;<newline>END;
-~~END~~
-
-
-drop function s1.test_b12;
+drop function s1.test_b11;
 go
 
 drop schema s1;
 go
-
 
 

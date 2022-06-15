@@ -421,7 +421,7 @@ tsql_get_functiondef(PG_FUNCTION_ARGS)
 	nnsp= get_logical_schema_name(nsp,true);
 	appendStringInfo(&buf, "CREATE %s %s(",
 					 isfunction ? "FUNCTION" : "PROCEDURE",
-					 tsql_quote_qualified_identifier(nnsp, name));
+					 tsql_quote_qualified_identifier(nnsp[0]=='d' && nnsp[1]=='b' && nnsp[2]=='o'?NULL:nnsp, name));
 	(void) print_function_arguments(&buf, proctup, false, true);
 	appendStringInfoString(&buf, ")");
 	if (isfunction)
@@ -813,7 +813,9 @@ print_function_arguments(StringInfo buf, HeapTuple proctup,
 		if (argname && argname[0])
 			appendStringInfo(buf,"%s ", tsql_quote_identifier(argname));
 		appendStringInfoString(buf, tsql_format_type_extended(argtype, -1, 0)); 
-	        appendStringInfoString(buf, modename);
+	        
+		if(modename != "")
+		       	appendStringInfo(buf," %s", modename);
 
 		if (print_defaults && isinput && inputargno > nlackdefaults)
 		{
