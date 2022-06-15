@@ -344,7 +344,6 @@ static char *tsql_get_constraintdef_worker(Oid constraintId, bool fullCommand,
 static char *tsql_printTypmod(const char *typname, int32 typmod, Oid typmodout);
 extern Datum translate_pg_type_to_tsql(PG_FUNCTION_ARGS);
 static char *tsql_format_type_extended(Oid type_oid, int32 typemod, bits16 flags);
-static void print_function_trftypes(StringInfo buf, HeapTuple proctup);
 int print_function_arguments(StringInfo buf, HeapTuple proctup,
 		bool print_table_args, bool print_defaults);
 char *tsql_quote_qualified_identifier(const char *qualifier, const char *ident);
@@ -391,17 +390,16 @@ tsql_get_functiondef(PG_FUNCTION_ARGS)
 	Oid			funcid = PG_GETARG_OID(0);
 	StringInfoData buf;
 	StringInfoData dq;
-	HeapTuple	proctup;
+	HeapTuple      proctup;
 	Form_pg_proc proc;
 	bool		isfunction;
 	Datum		tmp;
-	bool		isnull;
+	bool	   isnull;
 	const char *prosrc;
 	const char *name;
 	const char *nsp;
 	const char *nnsp;
-	float4		procost;
-	int			oldlen;
+	int	oldlen;
 
 	initStringInfo(&buf);
 
@@ -412,11 +410,6 @@ tsql_get_functiondef(PG_FUNCTION_ARGS)
 
 	proc = (Form_pg_proc) GETSTRUCT(proctup);
 	name = NameStr(proc->proname);
-
-	if (proc->prokind == PROKIND_AGGREGATE)
-		ereport(ERROR,
-				(errcode(ERRCODE_WRONG_OBJECT_TYPE),
-				 errmsg("\"%s\" is an aggregate function", name)));
 
 	isfunction = (proc->prokind != PROKIND_PROCEDURE);
 
@@ -435,76 +428,12 @@ tsql_get_functiondef(PG_FUNCTION_ARGS)
 	{
 		appendStringInfoString(&buf, " RETURNS ");
 		print_function_rettype(&buf, proctup);
-	      /*	appendStringInfoChar(&buf, '\n');*/
 	}
 
-	print_function_trftypes(&buf, proctup);
+	// print_function_trftypes(&buf, proctup);
 
 	/* Emit some miscellaneous options on one line */
 	oldlen = buf.len;
-
-      /*	if (proc->prokind == PROKIND_WINDOW)
-		appendStringInfoString(&buf, " WINDOW");
-	switch (proc->provolatile)
-	{
-		case PROVOLATILE_IMMUTABLE:
-			appendStringInfoString(&buf, " IMMUTABLE");
-			break;
-		case PROVOLATILE_STABLE:
-			appendStringInfoString(&buf, " STABLE");
-			break;
-		case PROVOLATILE_VOLATILE:
-			break;
-	}
-
-	switch (proc->proparallel)
-	{
-		case PROPARALLEL_SAFE:
-			appendStringInfoString(&buf, " PARALLEL SAFE");
-			break;
-		case PROPARALLEL_RESTRICTED:
-			appendStringInfoString(&buf, " PARALLEL RESTRICTED");
-			break;
-		case PROPARALLEL_UNSAFE:
-			break;
-	}
-
-	if (proc->proisstrict)
-		appendStringInfoString(&buf, " STRICT");
-	if (proc->prosecdef)
-		appendStringInfoString(&buf, " SECURITY DEFINER");
-	if (proc->proleakproof)
-		appendStringInfoString(&buf, " LEAKPROOF"); */
-
-	/* This code for the default cost and rows should match functioncmds.c */
-      /*	if (proc->prolang == INTERNALlanguageId ||
-		proc->prolang == ClanguageId)
-		procost = 1;
-	else
-		procost = 100;
-	if (proc->procost != procost)
-		appendStringInfo(&buf, " COST %g", proc->procost);
-
-	if (proc->prorows > 0 && proc->prorows != 1000)
-		appendStringInfo(&buf, " ROWS %g", proc->prorows);*/
-
-	if (proc->prosupport)
-	{
-		Oid			argtypes[1];
-
-		/*
-		 * We should qualify the support function's name if it wouldn't be
-		 * resolved by lookup in the current search path.
-		 */
-		argtypes[0] = INTERNALOID;
-		appendStringInfo(&buf, " SUPPORT %s",
-						 generate_function_name(proc->prosupport, 1,
-												NIL, argtypes,
-												false, NULL, EXPR_KIND_NONE));
-	}
-
-	/*if (oldlen != buf.len)
-		appendStringInfoChar(&buf, '\n');*/
 
 	/* Emit any proconfig options, one per line */
 	tmp = SysCacheGetAttr(PROCOID, proctup, Anum_pg_proc_proconfig, &isnull);
@@ -578,7 +507,6 @@ tsql_get_functiondef(PG_FUNCTION_ARGS)
 				}
 				else
 					simple_quote_literal(&buf, pos);
-			/*	appendStringInfoChar(&buf, '\n');*/
 			}
 		}
 	}
@@ -604,29 +532,7 @@ tsql_get_functiondef(PG_FUNCTION_ARGS)
 		/*if (isnull)
 			elog(ERROR, "null prosrc");*/
 		prosrc = TextDatumGetCString(tmp); 
-
-		/*
-		 * We always use dollar quoting.  Figure out a suitable delimiter.
-		 *
-		 * Since the user is likely to be editing the function body string, we
-		 * shouldn't use a short delimiter that he might easily create a
-		 * conflict with.  Hence prefer "$function$"/"$procedure$", but extend
-		 * if needed.
-		 */
-
-		initStringInfo(&dq);
-		/*appendStringInfoChar(&dq, '$');
-		appendStringInfoString(&dq, (isfunction ? "function" : "procedure"));
-		while (strstr(prosrc, dq.data) != NULL)
-			appendStringInfoChar(&dq, 'x');
-		appendStringInfoChar(&dq, '$');*/
-
-	      /*	appendBinaryStringInfo(&buf, dq.data, dq.len); */ 
 		appendStringInfoString(&buf, prosrc);
-	/*	appendBinaryStringInfo(&buf, dq.data, dq.len);*/
-	
-
-     /*	appendStringInfoChar(&buf, '\n');*/
 
 	ReleaseSysCache(proctup);
 
@@ -812,7 +718,6 @@ print_function_rettype(StringInfo buf, HeapTuple proctup)
 }
 
 /*
- * Common code for pg_get_function_arguments and pg_get_function_result:
  * append the desired subset of arguments to buf.  We print only TABLE
  * arguments when print_table_args is true, and all the others when it's false.
  * We print argument defaults only if print_defaults is true.
@@ -860,22 +765,6 @@ print_function_arguments(StringInfo buf, HeapTuple proctup,
 		}
 	}
 
-	/* Check for special treatment of ordered-set aggregates */
-	if (proc->prokind == PROKIND_AGGREGATE)
-	{
-		HeapTuple	aggtup;
-		Form_pg_aggregate agg;
-
-		aggtup = SearchSysCache1(AGGFNOID, proc->oid);
-		if (!HeapTupleIsValid(aggtup))
-			elog(ERROR, "cache lookup failed for aggregate %u",
-				 proc->oid);
-		agg = (Form_pg_aggregate) GETSTRUCT(aggtup);
-		if (AGGKIND_IS_ORDERED_SET(agg->aggkind))
-			insertorderbyat = agg->aggnumdirectargs;
-		ReleaseSysCache(aggtup);
-	}
-
 	argsprinted = 0;
 	inputargno = 0;
 	for (i = 0; i < numargs; i++)
@@ -889,31 +778,15 @@ print_function_arguments(StringInfo buf, HeapTuple proctup,
 		switch (argmode)
 		{
 			case PROARGMODE_IN:
-
-				/*
-				 * For procedures, explicitly mark all argument modes, so as
-				 * to avoid ambiguity with the SQL syntax for DROP PROCEDURE.
-				 */
-				if (proc->prokind == PROKIND_PROCEDURE)
-					modename = "";
-				else
-					modename = "";
+				modename = "";
 				isinput = true;
 				break;
 			case PROARGMODE_INOUT:
-				modename = " OUTPUT";
+				modename = "OUTPUT ";
 				isinput = true;
 				break;
 			case PROARGMODE_OUT:
 				modename = "OUT ";
-				isinput = false;
-				break;
-			case PROARGMODE_VARIADIC:
-				modename = "";
-				isinput = true;
-				break;
-			case PROARGMODE_TABLE:
-				modename = "";
 				isinput = false;
 				break;
 			default:
@@ -938,9 +811,10 @@ print_function_arguments(StringInfo buf, HeapTuple proctup,
 			appendStringInfoString(buf, ", ");
 
 		if (argname && argname[0])
-			appendStringInfo(buf," %s ", tsql_quote_identifier(argname));
-		appendStringInfoString(buf, tsql_format_type_extended(argtype,-1,0)); 
-		   appendStringInfoString(buf, modename);
+			appendStringInfo(buf,"%s ", tsql_quote_identifier(argname));
+		appendStringInfoString(buf, tsql_format_type_extended(argtype, -1, 0)); 
+	        appendStringInfoString(buf, modename);
+
 		if (print_defaults && isinput && inputargno > nlackdefaults)
 		{
 			Node	   *expr;
@@ -964,31 +838,6 @@ print_function_arguments(StringInfo buf, HeapTuple proctup,
 	}
 
 	return argsprinted;
-}
-
-/*
- * Append used transformed types to specified buffer
- */
-static void
-print_function_trftypes(StringInfo buf, HeapTuple proctup)
-{
-	Oid		   *trftypes;
-	int			ntypes;
-
-	ntypes = get_func_trftypes(proctup, &trftypes);
-	if (ntypes > 0)
-	{
-		int			i;
-
-		appendStringInfoString(buf, " TRANSFORM ");
-		for (i = 0; i < ntypes; i++)
-		{
-			if (i != 0)
-				appendStringInfoString(buf, ", ");
-			appendStringInfo(buf, "FOR TYPE %s", format_type_be(trftypes[i]));
-		}
-		appendStringInfoChar(buf, '\n');
-	}
 }
 
 /*
@@ -2378,8 +2227,8 @@ tsql_quote_identifier(const char *ident)
 
 //	if(ident[0]== '@') return ident;
 	/*
-	 * Can avoid quoting if ident starts with a lowercase letter or underscore
-	 * and contains only lowercase letters, digits, and underscores, *and* is
+	 * Can avoid quoting if ident starts with a lowercase letter ,underscore or at the rate(@)
+	 * and contains only lowercase letters, digits, at the rate or  underscores, *and* is
 	 * not any SQL keyword.  Otherwise, supply quotes.
 	 */
 	int			nquotes = 0;
@@ -2436,8 +2285,6 @@ tsql_quote_identifier(const char *ident)
 		
 
 	}
-
-    
 
 	if (safe)
 	       return ident;
