@@ -1,0 +1,11 @@
+-- psql
+show babelfishpg_tsql.dump_restore;
+go
+set babelfishpg_tsql.dump_restore to on;
+go
+show babelfishpg_tsql.dump_restore;
+go
+reset babelfishpg_tsql.dump_restore;
+go
+show babelfishpg_tsql.dump_restore;
+go

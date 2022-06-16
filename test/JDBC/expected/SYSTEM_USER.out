@@ -1,0 +1,37 @@
+-- tsql
+SELECT session_user, system_user, current_user, db_name();
+GO
+~~START~~
+varchar#!#nvarchar#!#varchar#!#nvarchar
+jdbc_user#!#jdbc_user#!#dbo#!#master
+~~END~~
+
+
+CREATE LOGIN r1 WITH PASSWORD = '123';
+GO
+
+CREATE LOGIN r2 WITH PASSWORD = '123';
+GO
+
+-- tsql user=r1 password=123
+SELECT session_user, system_user, current_user, db_name();
+GO
+~~START~~
+varchar#!#nvarchar#!#varchar#!#nvarchar
+r1#!#r1#!#guest#!#master
+~~END~~
+
+
+-- tsql user=r2 password=123
+SELECT session_user, system_user, current_user, db_name();
+GO
+~~START~~
+varchar#!#nvarchar#!#varchar#!#nvarchar
+r2#!#r2#!#guest#!#master
+~~END~~
+
+
+-- tsql
+DROP LOGIN r1;
+DROP LOGIN r2;
+GO

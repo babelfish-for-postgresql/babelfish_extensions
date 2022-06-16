@@ -83,6 +83,8 @@
 
 extern bool escape_hatch_unique_constraint;
 extern bool pltsql_recursive_triggers;
+extern bool restore_tsql_tabletype;
+extern bool babelfish_dump_restore;
 
 extern List *babelfishpg_tsql_raw_parser(const char *str, RawParseMode mode);
 extern bool install_backend_gram_hooks();
@@ -98,6 +100,7 @@ extern PLtsql_execstate *get_current_tsql_estate(void);
 extern PLtsql_execstate *get_outermost_tsql_estate(int *nestlevel);
 extern void pre_check_trigger_schema(List *object, bool missing_ok);
 static void  get_language_procs(const char *langname, Oid *compiler, Oid *validator);
+static void get_func_language_oids(Oid *lang_handler, Oid *lang_validator);
 extern bool pltsql_suppress_string_truncation_error();
 static Oid bbf_table_var_lookup(const char *relname, Oid relnamespace);
 extern void assign_object_access_hook_drop_relation(void);
@@ -146,7 +149,8 @@ static void revoke_type_permission_from_public(PlannedStmt *pstmt, const char *q
 
 PG_FUNCTION_INFO_V1(pltsql_inline_handler);
 
-static PLtsql_config myConfig;
+static Oid lang_handler_oid = InvalidOid;     /* Oid of language handler function */
+static Oid lang_validator_oid = InvalidOid;   /* Oid of language validator function */
 
 PG_MODULE_MAGIC;
 
@@ -206,7 +210,6 @@ tsql_identity_insert_fields tsql_identity_insert = {false, InvalidOid, InvalidOi
 
 /* Hook for plugins */
 PLtsql_plugin **pltsql_plugin_ptr = NULL;
-PLtsql_config **pltsql_config_ptr = NULL;
 PLtsql_instr_plugin **pltsql_instr_plugin_ptr = NULL;
 PLtsql_protocol_plugin **pltsql_protocol_plugin_ptr = NULL;
 
@@ -218,6 +221,7 @@ static pltsql_identity_datatype_hook_type prev_pltsql_identity_datatype_hook = N
 static pltsql_sequence_datatype_hook_type prev_pltsql_sequence_datatype_hook = NULL;
 static relname_lookup_hook_type prev_relname_lookup_hook = NULL;
 static ProcessUtility_hook_type prev_ProcessUtility = NULL;
+static get_func_language_oids_hook_type prev_get_func_language_oids_hook = NULL;
 plansource_complete_hook_type prev_plansource_complete_hook = NULL;
 plansource_revalidate_hook_type prev_plansource_revalidate_hook = NULL;
 planner_node_transformer_hook_type prev_planner_node_transformer_hook = NULL;
@@ -2124,7 +2128,7 @@ static void bbf_ProcessUtility(PlannedStmt *pstmt,
 
 					address = CreateFunction(pstate, (CreateFunctionStmt *) parsetree);
 
-					if (tbltypStmt)
+					if (tbltypStmt || restore_tsql_tabletype)
 					{
 						/*
 						 * Add internal dependency between the table type and
@@ -3007,6 +3011,9 @@ static void bbf_ProcessUtility(PlannedStmt *pstmt,
 			{
 				CreateStmt *create_stmt = (CreateStmt *) parsetree;
 
+				if(restore_tsql_tabletype)
+					create_stmt->tsql_tabletype = true;
+
 				if (prev_ProcessUtility)
 					prev_ProcessUtility(pstmt, queryString, readOnlyTree, context, params,
 							queryEnv, dest, qc);
@@ -3308,7 +3315,6 @@ _PG_init(void)
 	
 	/* Set up a rendezvous point with optional instrumentation plugin */
 	pltsql_plugin_ptr = (PLtsql_plugin **) find_rendezvous_variable("PLtsql_plugin");
-	pltsql_config_ptr = (PLtsql_config **) find_rendezvous_variable("PLtsql_config");
 	pltsql_instr_plugin_ptr = (PLtsql_instr_plugin **) find_rendezvous_variable("PLtsql_instr_plugin");
 	coll_cb_ptr = (Tsql_collation_callbacks **) find_rendezvous_variable("PLtsql_collation_callbacks");
 	*coll_cb_ptr = get_collation_callbacks();
@@ -3359,9 +3365,7 @@ _PG_init(void)
 		(*pltsql_protocol_plugin_ptr)->pltsql_is_fmtonly_stmt = &pltsql_fmtonly;
 	}
 
-	*pltsql_config_ptr = &myConfig;
-
-	get_language_procs("pltsql", &myConfig.handler_oid, &myConfig.validator_oid);
+	get_language_procs("pltsql", &lang_handler_oid, &lang_validator_oid);
 
 	/* Install hooks. */
 	raw_parser_hook = babelfishpg_tsql_raw_parser;
@@ -3432,10 +3436,8 @@ _PG_init(void)
 	prev_non_tsql_proc_entry_hook = non_tsql_proc_entry_hook;
 	non_tsql_proc_entry_hook = pltsql_non_tsql_proc_entry;
 
-	/*
-	 * NOTE: change the version when you change the layout of myConfig
-	 */
-	myConfig.version = "1.0.0";
+	prev_get_func_language_oids_hook = get_func_language_oids_hook;
+	get_func_language_oids_hook = get_func_language_oids;
 
 	inited = true;
 }
@@ -3463,6 +3465,7 @@ _PG_fini(void)
 	guc_push_old_value_hook = prev_guc_push_old_value_hook;
 	validate_set_config_function_hook = prev_validate_set_config_function_hook;
 	non_tsql_proc_entry_hook = prev_non_tsql_proc_entry_hook;
+	get_func_language_oids_hook = prev_get_func_language_oids_hook;
 
 	UninstallExtendedHooks();
 }
@@ -3622,6 +3625,7 @@ pltsql_call_handler(PG_FUNCTION_ARGS)
 	bool support_tsql_trans = pltsql_support_tsql_transactions();
 	Oid prev_procid = InvalidOid;
 	int save_pltsql_trigger_depth = pltsql_trigger_depth;
+	int saved_dialect = sql_dialect;
 
 	create_queryEnv2(CacheMemoryContext, false);
 
@@ -3651,59 +3655,76 @@ pltsql_call_handler(PG_FUNCTION_ARGS)
 
 	elog(DEBUG2, "TSQL TXN call handler, nonatomic : %d Tsql transaction support %d", nonatomic, support_tsql_trans);
 
-	/* Find or compile the function */
-	func = pltsql_compile(fcinfo, false);
-
-	/* Must save and restore prior value of cur_estate */
-	save_cur_estate = func->cur_estate;
-
-	/* Mark the function as busy, so it can't be deleted from under us */
-	func->use_count++;
-
-	save_nestlevel = pltsql_new_guc_nest_level();
-
-	prev_procid = procid_var;
 	PG_TRY();
 	{
-		set_procid(func->fn_oid);
 		/*
-		 * Determine if called as function or trigger and call appropriate
-		 * subhandler
+		 * Set the dialect to tsql - we have to do that here because the fmgr
+		 * has set the dialect to postgres. That happens when we are validating
+		 * a PL/tsql program because the validator function is not written in
+		 * PL/tsql, it's written in C.
 		 */
-		if (CALLED_AS_TRIGGER(fcinfo)){
-			if (!pltsql_recursive_triggers && save_cur_estate!=NULL 
-			&& is_recursive_trigger(save_cur_estate)){
-				retval = (Datum) 0;
-			}else{
-				pltsql_trigger_depth++;
-				retval = PointerGetDatum(pltsql_exec_trigger(func,
-														  (TriggerData *) fcinfo->context));
-				pltsql_trigger_depth = save_pltsql_trigger_depth;
-			}
-		}
-		else if (CALLED_AS_EVENT_TRIGGER(fcinfo))
-		{
-			pltsql_exec_event_trigger(func,
-									   (EventTriggerData *) fcinfo->context);
-			retval = (Datum) 0;
-		}
-		else
-			retval = pltsql_exec_function(func, fcinfo, NULL, false);
+		sql_dialect = SQL_DIALECT_TSQL;
 
-		set_procid(prev_procid);
+		/* Find or compile the function */
+		func = pltsql_compile(fcinfo, false);
+
+		/* Must save and restore prior value of cur_estate */
+		save_cur_estate = func->cur_estate;
+
+		/* Mark the function as busy, so it can't be deleted from under us */
+		func->use_count++;
+
+		save_nestlevel = pltsql_new_guc_nest_level();
+
+		prev_procid = procid_var;
+		PG_TRY();
+		{
+			set_procid(func->fn_oid);
+			/*
+			 * Determine if called as function or trigger and call appropriate
+			 * subhandler
+			 */
+			if (CALLED_AS_TRIGGER(fcinfo)){
+				if (!pltsql_recursive_triggers && save_cur_estate!=NULL
+				&& is_recursive_trigger(save_cur_estate)){
+					retval = (Datum) 0;
+				}else{
+					pltsql_trigger_depth++;
+					retval = PointerGetDatum(pltsql_exec_trigger(func,
+															(TriggerData *) fcinfo->context));
+					pltsql_trigger_depth = save_pltsql_trigger_depth;
+				}
+			}
+			else if (CALLED_AS_EVENT_TRIGGER(fcinfo))
+			{
+				pltsql_exec_event_trigger(func,
+										(EventTriggerData *) fcinfo->context);
+				retval = (Datum) 0;
+			}
+			else
+				retval = pltsql_exec_function(func, fcinfo, NULL, false);
+
+			set_procid(prev_procid);
+		}
+		PG_CATCH();
+		{
+			set_procid(prev_procid);
+			/* Decrement use-count, restore cur_estate, and propagate error */
+			pltsql_trigger_depth = save_pltsql_trigger_depth;
+			func->use_count--;
+			func->cur_estate = save_cur_estate;
+			ENRDropTempTables(currentQueryEnv);
+			remove_queryEnv();
+			pltsql_revert_guc(save_nestlevel);
+			terminate_batch(true /* send_error */, false /* compile_error */);
+			sql_dialect = saved_dialect;
+			return retval;
+		}
+		PG_END_TRY();
 	}
-	PG_CATCH();
+	PG_FINALLY();
 	{
-		set_procid(prev_procid);
-		/* Decrement use-count, restore cur_estate, and propagate error */
-		pltsql_trigger_depth = save_pltsql_trigger_depth;
-		func->use_count--;
-		func->cur_estate = save_cur_estate;
-		ENRDropTempTables(currentQueryEnv);
-		remove_queryEnv();
-		pltsql_revert_guc(save_nestlevel);
-		terminate_batch(true /* send_error */, false /* compile_error */);
-		return retval;
+		sql_dialect = saved_dialect;
 	}
 	PG_END_TRY();
 
@@ -3995,6 +4016,7 @@ pltsql_validator(PG_FUNCTION_ARGS)
 	bool 		is_itvf;
 	char		*prosrc = NULL;
 	MemoryContext oldMemoryContext = CurrentMemoryContext;
+	int 		saved_dialect = sql_dialect;
 
 	if (!CheckFunctionValidatorAccess(fcinfo->flinfo->fn_oid, funcoid))
 		PG_RETURN_VOID();
@@ -4006,7 +4028,10 @@ pltsql_validator(PG_FUNCTION_ARGS)
 	proc = (Form_pg_proc) GETSTRUCT(tuple);
 
 	/* Disallow text, ntext, and image type result */
-	if (is_tsql_text_datatype(proc->prorettype) || is_tsql_ntext_datatype(proc->prorettype) || is_tsql_image_datatype(proc->prorettype))
+	if (!babelfish_dump_restore &&
+		(is_tsql_text_datatype(proc->prorettype) ||
+		 is_tsql_ntext_datatype(proc->prorettype) ||
+		 is_tsql_image_datatype(proc->prorettype)))
 	{
 		ereport(ERROR,
 			(errcode(ERRCODE_INVALID_FUNCTION_DEFINITION),
@@ -4056,242 +4081,273 @@ pltsql_validator(PG_FUNCTION_ARGS)
 	is_itvf = proc->prokind == PROKIND_FUNCTION && proc->proretset &&
 			  get_typtype(proc->prorettype) != TYPTYPE_COMPOSITE;
 
-	/* 
-	 * Postpone body checks if !check_function_bodies, except for 
-	 * itvf which we always needs to test-compile to record the query. 
-	 */
-	if (check_function_bodies || is_itvf)
+	PG_TRY();
 	{
-		LOCAL_FCINFO(fake_fcinfo, 0);
-		FmgrInfo	flinfo;
-		int			rc;
-		TriggerData trigdata;
-		EventTriggerData etrigdata;
-	    PLtsql_function *func;
+		/*
+		 * Set the dialect to tsql - we have to do that here because the fmgr
+		 * has set the dialect to postgres. That happens when we are validating
+		 * a PL/tsql program because the validator function is not written in
+		 * PL/tsql, it's written in C.
+		 */
+		sql_dialect = SQL_DIALECT_TSQL;
 
 		/*
-		 * Connect to SPI manager (is this needed for compilation?)
+		 * Postpone body checks if !check_function_bodies, except for
+		 * itvf which we always needs to test-compile to record the query.
 		 */
-		if ((rc = SPI_connect()) != SPI_OK_CONNECT)
-			elog(ERROR, "SPI_connect failed: %s", SPI_result_code_string(rc));
-
-		/*
-		 * Set up a fake fcinfo with just enough info to satisfy
-		 * pltsql_compile().
-		 */
-		MemSet(fake_fcinfo, 0, SizeForFunctionCallInfo(0));
-		MemSet(&flinfo, 0, sizeof(flinfo));
-		fake_fcinfo->flinfo = &flinfo;
-		flinfo.fn_oid = funcoid;
-		flinfo.fn_mcxt = CurrentMemoryContext;
-		if (is_dml_trigger)
+		if (check_function_bodies || is_itvf)
 		{
-			MemSet(&trigdata, 0, sizeof(trigdata));
-			trigdata.type = T_TriggerData;
-			fake_fcinfo->context = (Node *) &trigdata;
-		}
-		else if (is_event_trigger)
-		{
-			MemSet(&etrigdata, 0, sizeof(etrigdata));
-			etrigdata.type = T_EventTriggerData;
-			fake_fcinfo->context = (Node *) &etrigdata;
-		}
-
-		/* Test-compile the function */
-		if (is_itvf)
-		{
-			PLtsql_stmt_return_query *returnQueryStmt;
-			/*
-			 * For inline table-valued function, we need to record its query so
-			 * that we can construct the column definition list.
-			 */
-			func = pltsql_compile(fake_fcinfo, true);
-			returnQueryStmt = (PLtsql_stmt_return_query *) linitial(func->action->body);
-
-			/* ITVF should contain 2 statements - RETURN QUERY and PUSH RESULT */
-			if (list_length(func->action->body) != 2 ||
-				(returnQueryStmt && returnQueryStmt->cmd_type != PLTSQL_STMT_RETURN_QUERY))
-				ereport(ERROR,
-						(errcode(ERRCODE_RESTRICT_VIOLATION),
-						 errmsg("Inline table-valued function must have a single RETURN SELECT statement")));
-
-			prosrc = MemoryContextStrdup(oldMemoryContext, returnQueryStmt->query->itvf_query);
-		} else
-			func = pltsql_compile(fake_fcinfo, true);
-
-		/*
-		 * Disconnect from SPI manager
-		 */
-		if ((rc = SPI_finish()) != SPI_OK_FINISH)
-			elog(ERROR, "SPI_finish failed: %s", SPI_result_code_string(rc));
-	}
-
-	ReleaseSysCache(tuple);
-
-	/*
-	 * For inline table-valued function, we need to construct the column
-	 * definition list by planning the query in the function, and modifying the
-	 * pg_proc entry for this function.
-	 */
-	if (is_itvf)
-	{
-		SPIPlanPtr	spi_plan;
-		int			spi_rc;
-		Relation	rel;
-		HeapTuple	tup;
-		HeapTuple	oldtup;
-		bool		nulls[Natts_pg_proc];
-		Datum		values[Natts_pg_proc];
-		bool		replaces[Natts_pg_proc];
-		TupleDesc	tupDesc;
-		ArrayType	*allParameterTypesPointer;
-		ArrayType	*parameterModesPointer;
-		ArrayType	*parameterNamesPointer;
-		Datum		*allTypesNew;
-		Datum		*paramModesNew;
-		Datum		*paramNamesNew;
-		int			parameterCountNew;
-		List *plansources;
-		CachedPlanSource *plansource;
-		Query *query;
-		TupleDesc tupdesc;
-		int			targetListLength;
-		ListCell	*lc;
-		MemoryContext SPIMemoryContext;
-		Oid			rettypeNew = InvalidOid;
-		int 		numresjunks = 0;
-
-		if ((spi_rc = SPI_connect()) != SPI_OK_CONNECT)
-			elog(ERROR, "SPI_connect() failed in pltsql_validator with return code %d", spi_rc);
-
-		spi_plan = SPI_prepare(prosrc, numargs, argtypes);
-		if (spi_plan == NULL)
-			elog(WARNING, "SPI_prepare_params failed for \"%s\": %s",
-				 prosrc, SPI_result_code_string(SPI_result));
-
-		plansources = SPI_plan_get_plan_sources(spi_plan);
-		Assert(list_length(plansources) == 1);
-		plansource = (CachedPlanSource *) linitial(plansources);
-		Assert(list_length(plansource->query_list) == 1);
-		query = (Query *) linitial(plansource->query_list);
-		tupdesc = ExecCleanTypeFromTL(query->targetList);
-		targetListLength = list_length(query->targetList);
-
-		/* Existing atts in pg_proc entry - no need to replace */
-		for (i = 0; i < Natts_pg_proc; ++i)
-		{
-			nulls[i] = false;
-			values[i] = PointerGetDatum(NULL);
-			replaces[i] = false;
-		}
-
-		rel = table_open(ProcedureRelationId, RowExclusiveLock);
-		tupDesc = RelationGetDescr(rel);
-		oldtup = SearchSysCache1(PROCOID, ObjectIdGetDatum(funcoid));
-
-		parameterCountNew = numargs + targetListLength;
-		SPIMemoryContext = MemoryContextSwitchTo(oldMemoryContext);
-		allTypesNew = (Datum *) palloc(parameterCountNew * sizeof(Datum));
-		paramModesNew = (Datum *) palloc(parameterCountNew * sizeof(Datum));
-		paramNamesNew = (Datum *) palloc(parameterCountNew * sizeof(Datum));
-
-		/* Copy existing args into the array */
-		for (i = 0; i < numargs; ++i)
-		{
-			allTypesNew[i] = ObjectIdGetDatum(argtypes[i]);
-			paramModesNew[i] = argmodes ? CharGetDatum(argmodes[i]) : CharGetDatum(PROARGMODE_IN);
-			paramNamesNew[i] = argnames ? CStringGetTextDatum(argnames[i]) : PointerGetDatum(NULL);
-		}
-
-		/* Copy new table args into the array */
-		i = 0;
-		foreach(lc, query->targetList)
-		{
-			TargetEntry *te = (TargetEntry *) lfirst(lc);
-			int new_i;
-			Oid new_type;
+			LOCAL_FCINFO(fake_fcinfo, 0);
+			FmgrInfo	flinfo;
+			int			rc;
+			TriggerData trigdata;
+			EventTriggerData etrigdata;
+			PLtsql_function *func;
 
 			/*
-			 * If resjunk is true then the column is a working column and should
-			 * be removed from the final output of the query, according to the
-			 * definition of TargetEntry.
+			 * Connect to SPI manager (is this needed for compilation?)
 			 */
-			if (te->resjunk)
+			if ((rc = SPI_connect()) != SPI_OK_CONNECT)
+				elog(ERROR, "SPI_connect failed: %s", SPI_result_code_string(rc));
+
+			/*
+			 * Set up a fake fcinfo with just enough info to satisfy
+			 * pltsql_compile().
+			 */
+			MemSet(fake_fcinfo, 0, SizeForFunctionCallInfo(0));
+			MemSet(&flinfo, 0, sizeof(flinfo));
+			fake_fcinfo->flinfo = &flinfo;
+			flinfo.fn_oid = funcoid;
+			flinfo.fn_mcxt = CurrentMemoryContext;
+			if (is_dml_trigger)
 			{
-				numresjunks += 1;
-				continue;
+				MemSet(&trigdata, 0, sizeof(trigdata));
+				trigdata.type = T_TriggerData;
+				fake_fcinfo->context = (Node *) &trigdata;
+			}
+			else if (is_event_trigger)
+			{
+				MemSet(&etrigdata, 0, sizeof(etrigdata));
+				etrigdata.type = T_EventTriggerData;
+				fake_fcinfo->context = (Node *) &etrigdata;
 			}
 
-			if (!te->resname || strcmp(te->resname, "?column?") == 0)
+			/* Test-compile the function */
+			if (is_itvf && !babelfish_dump_restore)
 			{
-				pfree(prosrc);
-				pfree(allTypesNew);
-				pfree(paramModesNew);
-				pfree(paramNamesNew);
-				elog(ERROR,
-					 "CREATE FUNCTION failed because a column name is not specified for column %d",
-					 i+1);
-			}
+				PLtsql_stmt_return_query *returnQueryStmt;
+				/*
+				 * For inline table-valued function, we need to record its query so
+				 * that we can construct the column definition list.
+				 */
+				func = pltsql_compile(fake_fcinfo, true);
+				returnQueryStmt = (PLtsql_stmt_return_query *) linitial(func->action->body);
 
-			new_i = i + numargs;
-			new_type = SPI_gettypeid(tupdesc, te->resno);
+				/* ITVF should contain 2 statements - RETURN QUERY and PUSH RESULT */
+				if (list_length(func->action->body) != 2 ||
+					(returnQueryStmt && returnQueryStmt->cmd_type != PLTSQL_STMT_RETURN_QUERY))
+					ereport(ERROR,
+							(errcode(ERRCODE_RESTRICT_VIOLATION),
+							errmsg("Inline table-valued function must have a single RETURN SELECT statement")));
+
+				prosrc = MemoryContextStrdup(oldMemoryContext, returnQueryStmt->query->itvf_query);
+			} else
+				func = pltsql_compile(fake_fcinfo, true);
 
 			/*
-			 * Record the type in case we need to change the function return
-			 * type to it later
+			 * Disconnect from SPI manager
 			 */
-			rettypeNew = new_type;
-
-			allTypesNew[new_i] = ObjectIdGetDatum(new_type);
-			paramModesNew[new_i] = CharGetDatum(PROARGMODE_TABLE);
-			paramNamesNew[new_i] = CStringGetTextDatum(te->resname);
-			++i;
+			if ((rc = SPI_finish()) != SPI_OK_FINISH)
+				elog(ERROR, "SPI_finish failed: %s", SPI_result_code_string(rc));
 		}
-		MemoryContextSwitchTo(SPIMemoryContext);
 
-		if ((spi_rc = SPI_finish()) != SPI_OK_FINISH)
-			elog(ERROR, "SPI_finish() failed in pltsql_validator with return code %d", spi_rc);
+		ReleaseSysCache(tuple);
 
 		/*
-		 * For table functions whose return table only has one column, Postgres
-		 * considers them as scalar functions. So, we need to update the
-		 * function's return type to be the type of that column, instead of
-		 * RECORD.
+		 * For inline table-valued function, we need to construct the column
+		 * definition list by planning the query in the function, and modifying the
+		 * pg_proc entry for this function.
 		 */
-		if (i == 1)
+		if (is_itvf && !babelfish_dump_restore)
 		{
-			values[Anum_pg_proc_prorettype - 1] = ObjectIdGetDatum(rettypeNew);
-			replaces[Anum_pg_proc_prorettype - 1] = true;
+			SPIPlanPtr spi_plan;
+			int spi_rc;
+			Relation rel;
+			HeapTuple tup;
+			HeapTuple oldtup;
+			bool nulls[Natts_pg_proc];
+			Datum values[Natts_pg_proc];
+			bool replaces[Natts_pg_proc];
+			TupleDesc tupDesc;
+			ArrayType *allParameterTypesPointer;
+			ArrayType *parameterModesPointer;
+			ArrayType *parameterNamesPointer;
+			Datum *allTypesNew;
+			Datum *paramModesNew;
+			Datum *paramNamesNew;
+			int parameterCountNew;
+			List *plansources;
+			CachedPlanSource *plansource;
+			Query *query;
+			TupleDesc tupdesc;
+			int targetListLength;
+			ListCell *lc;
+			MemoryContext SPIMemoryContext;
+			Oid rettypeNew = InvalidOid;
+			int numresjunks = 0;
+
+			if ((spi_rc = SPI_connect()) != SPI_OK_CONNECT)
+				elog(ERROR, "SPI_connect() failed in pltsql_validator with return code %d", spi_rc);
+
+			spi_plan = SPI_prepare(prosrc, numargs, argtypes);
+			if (spi_plan == NULL)
+				elog(WARNING, "SPI_prepare_params failed for \"%s\": %s",
+					prosrc, SPI_result_code_string(SPI_result));
+
+			plansources = SPI_plan_get_plan_sources(spi_plan);
+			Assert(list_length(plansources) == 1);
+			plansource = (CachedPlanSource *) linitial(plansources);
+			Assert(list_length(plansource->query_list) == 1);
+			query = (Query *) linitial(plansource->query_list);
+			tupdesc = ExecCleanTypeFromTL(query->targetList);
+			targetListLength = list_length(query->targetList);
+
+			/* Existing atts in pg_proc entry - no need to replace */
+			for (i = 0; i < Natts_pg_proc; ++i)
+			{
+				nulls[i] = false;
+				values[i] = PointerGetDatum(NULL);
+				replaces[i] = false;
+			}
+
+			rel = table_open(ProcedureRelationId, RowExclusiveLock);
+			tupDesc = RelationGetDescr(rel);
+			oldtup = SearchSysCache1(PROCOID, ObjectIdGetDatum(funcoid));
+
+			parameterCountNew = numargs + targetListLength;
+			SPIMemoryContext = MemoryContextSwitchTo(oldMemoryContext);
+			allTypesNew = (Datum *) palloc(parameterCountNew * sizeof(Datum));
+			paramModesNew = (Datum *) palloc(parameterCountNew * sizeof(Datum));
+			paramNamesNew = (Datum *) palloc(parameterCountNew * sizeof(Datum));
+
+			/* Copy existing args into the array */
+			for (i = 0; i < numargs; ++i)
+			{
+				allTypesNew[i] = ObjectIdGetDatum(argtypes[i]);
+				paramModesNew[i] = argmodes ? CharGetDatum(argmodes[i]) : CharGetDatum(PROARGMODE_IN);
+				paramNamesNew[i] = argnames ? CStringGetTextDatum(argnames[i]) : PointerGetDatum(NULL);
+			}
+
+			/* Copy new table args into the array */
+			i = 0;
+			foreach(lc, query->targetList)
+			{
+				TargetEntry *te = (TargetEntry *) lfirst(lc);
+				int new_i;
+				Oid new_type;
+				ListCell *prev_lc;
+
+				/*
+				 * If resjunk is true then the column is a working column and should
+				 * be removed from the final output of the query, according to the
+				 * definition of TargetEntry.
+				 */
+				if (te->resjunk)
+				{
+					numresjunks += 1;
+					continue;
+				}
+
+				if (!te->resname || strcmp(te->resname, "?column?") == 0)
+				{
+					pfree(prosrc);
+					pfree(allTypesNew);
+					pfree(paramModesNew);
+					pfree(paramNamesNew);
+					elog(ERROR,
+						"CREATE FUNCTION failed because a column name is not specified for column %d",
+						i+1);
+				}
+
+				foreach(prev_lc, query->targetList)
+				{
+					TargetEntry *prev_te = (TargetEntry *) lfirst(prev_lc);
+
+					if (prev_te == te)
+						break;
+
+					if (strcmp(prev_te->resname, te->resname) == 0)
+						ereport(ERROR,
+								(errcode(ERRCODE_INVALID_FUNCTION_DEFINITION),
+								 errmsg("parameter name \"%s\" used more than once",
+								 	te->resname)));
+				}
+
+				new_i = i + numargs;
+				new_type = SPI_gettypeid(tupdesc, te->resno);
+
+				/*
+				 * Record the type in case we need to change the function return
+				 * type to it later
+				 */
+				rettypeNew = new_type;
+
+				allTypesNew[new_i] = ObjectIdGetDatum(new_type);
+				paramModesNew[new_i] = CharGetDatum(PROARGMODE_TABLE);
+				paramNamesNew[new_i] = CStringGetTextDatum(te->resname);
+				++i;
+			}
+			MemoryContextSwitchTo(SPIMemoryContext);
+
+			if ((spi_rc = SPI_finish()) != SPI_OK_FINISH)
+				elog(ERROR, "SPI_finish() failed in pltsql_validator with return code %d", spi_rc);
+
+			/*
+			 * For table functions whose return table only has one column, Postgres
+			 * considers them as scalar functions. So, we need to update the
+			 * function's return type to be the type of that column, instead of
+			 * RECORD.
+			 */
+			if (i == 1)
+			{
+				values[Anum_pg_proc_prorettype - 1] = ObjectIdGetDatum(rettypeNew);
+				replaces[Anum_pg_proc_prorettype - 1] = true;
+			}
+
+			parameterCountNew -= numresjunks;
+			allParameterTypesPointer = construct_array(allTypesNew, parameterCountNew, OIDOID,
+													sizeof(Oid), true, 'i');
+			parameterModesPointer = construct_array(paramModesNew, parameterCountNew, CHAROID,
+													1, true, 'c');
+			parameterNamesPointer = construct_array(paramNamesNew, parameterCountNew, TEXTOID,
+													-1, false, 'i');
+
+			values[Anum_pg_proc_proallargtypes - 1] = PointerGetDatum(allParameterTypesPointer);
+			values[Anum_pg_proc_proargmodes - 1] = PointerGetDatum(parameterModesPointer);
+			values[Anum_pg_proc_proargnames - 1] = PointerGetDatum(parameterNamesPointer);
+			replaces[Anum_pg_proc_proallargtypes - 1] = true;
+			replaces[Anum_pg_proc_proargmodes - 1] = true;
+			replaces[Anum_pg_proc_proargnames - 1] = true;
+
+			tup = heap_modify_tuple(oldtup, tupDesc, values, nulls, replaces);
+			CatalogTupleUpdate(rel, &tup->t_self, tup);
+
+			ReleaseSysCache(oldtup);
+
+			heap_freetuple(tup);
+			table_close(rel, RowExclusiveLock);
+
+			pfree(prosrc);
+			pfree(allTypesNew);
+			pfree(paramModesNew);
+			pfree(paramNamesNew);
 		}
-
-		parameterCountNew -= numresjunks;
-		allParameterTypesPointer = construct_array(allTypesNew, parameterCountNew, OIDOID,
-												   sizeof(Oid), true, 'i');
-		parameterModesPointer = construct_array(paramModesNew, parameterCountNew, CHAROID,
-												1, true, 'c');
-		parameterNamesPointer = construct_array(paramNamesNew, parameterCountNew, TEXTOID,
-												-1, false, 'i');
-
-		values[Anum_pg_proc_proallargtypes - 1] = PointerGetDatum(allParameterTypesPointer);
-		values[Anum_pg_proc_proargmodes - 1] = PointerGetDatum(parameterModesPointer);
-		values[Anum_pg_proc_proargnames - 1] = PointerGetDatum(parameterNamesPointer);
-		replaces[Anum_pg_proc_proallargtypes - 1] = true;
-		replaces[Anum_pg_proc_proargmodes - 1] = true;
-		replaces[Anum_pg_proc_proargnames - 1] = true;
-
-		tup = heap_modify_tuple(oldtup, tupDesc, values, nulls, replaces);
-		CatalogTupleUpdate(rel, &tup->t_self, tup);
-
-		ReleaseSysCache(oldtup);
-
-		heap_freetuple(tup);
-		table_close(rel, RowExclusiveLock);
-
-		pfree(prosrc);
-		pfree(allTypesNew);
-		pfree(paramModesNew);
-		pfree(paramNamesNew);
 	}
+	PG_FINALLY();
+	{
+		sql_dialect = saved_dialect;
+	}
+	PG_END_TRY();
 
 	PG_RETURN_VOID();
 }
@@ -4320,6 +4376,21 @@ get_language_procs(const char *langname, Oid *compiler, Oid *validator)
 		*compiler = InvalidOid;
 		*validator = InvalidOid;
 	}
+}
+
+/*
+ * Engine hook to get OID for language handler and validator for
+ * TSQL language
+ */
+static void
+get_func_language_oids(Oid *lang_handler, Oid *lang_validator)
+{
+	if (lang_handler_oid == InvalidOid || lang_validator_oid == InvalidOid)
+	{
+		get_language_procs("pltsql", &lang_handler_oid, &lang_validator_oid);
+	}
+	*lang_handler = lang_handler_oid;
+	*lang_validator = lang_validator_oid;
 }
 
 /*
