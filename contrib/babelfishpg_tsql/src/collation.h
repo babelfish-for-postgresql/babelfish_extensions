@@ -71,7 +71,7 @@ extern int get_server_collation_collidx(void);
 extern int find_any_collation(const char *collation_name);
 extern bool is_server_collation_CI_AS(void);
 extern int find_cs_as_collation(int collidx);
-extern Oid get_server_collation_oid_internal(void);
+extern Oid get_server_collation_oid_internal(bool missingOk);
 extern int find_locale(const char *given_locale);
 extern bool is_valid_server_collation_name(const char *collname);
 

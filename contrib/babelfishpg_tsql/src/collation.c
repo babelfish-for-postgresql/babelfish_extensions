@@ -484,7 +484,7 @@ Datum init_server_collation_oid(PG_FUNCTION_ARGS)
 bool
 is_server_collation_CI_AS()
 {
-	get_server_collation_oid_internal();
+	get_server_collation_oid_internal(false);
 	return pltsql_db_collation_is_CI_AS;
 }
 
@@ -873,11 +873,11 @@ collation_list(PG_FUNCTION_ARGS)
 Datum
 get_server_collation_oid(PG_FUNCTION_ARGS)
 {
-	PG_RETURN_OID(get_server_collation_oid_internal());
+	PG_RETURN_OID(get_server_collation_oid_internal(false));
 }
 
 Oid
-get_server_collation_oid_internal(void)
+get_server_collation_oid_internal(bool missingOk)
 {
 	Oid nspoid;
 	const char *collname = pltsql_server_collation_name;
@@ -900,26 +900,29 @@ get_server_collation_oid_internal(void)
 					 ObjectIdGetDatum(nspoid));
 
 	if (!OidIsValid(server_collation_oid))
-	server_collation_oid = GetSysCacheOid3(COLLNAMEENCNSP, Anum_pg_collation_oid,
-					 PointerGetDatum(collname),
-					 Int32GetDatum(COLL_DEFAULT_ENCODING),
-					 ObjectIdGetDatum(nspoid));
+		server_collation_oid = GetSysCacheOid3(COLLNAMEENCNSP, Anum_pg_collation_oid,
+								PointerGetDatum(collname),
+								Int32GetDatum(COLL_DEFAULT_ENCODING),
+								ObjectIdGetDatum(nspoid));
 
 	if (!OidIsValid(server_collation_oid))
 	{
-	ereport(WARNING,
-		(errcode(ERRCODE_INTERNAL_ERROR),
-		 errmsg("Server default collation sys.\"%s\" is not defined, using the cluster default collation",
-			pltsql_server_collation_name)));
-	// server_collation_oid = DEFAULT_COLLATION_OID;
-	pltsql_db_collation_is_CI_AS = false;
-	server_collation_collidx = NOT_FOUND;
-		return DEFAULT_COLLATION_OID;
+		if (!missingOk)
+			ereport(ERROR,
+					(errcode(ERRCODE_INTERNAL_ERROR),
+					 errmsg("Server default collation sys.\"%s\" is not defined, using the cluster default collation",
+					 pltsql_server_collation_name)));
+		else
+		{
+			pltsql_db_collation_is_CI_AS = false;
+			server_collation_collidx = NOT_FOUND;
+			return DEFAULT_COLLATION_OID;
+		}
 	}
 	else
 	{
-	pltsql_db_collation_is_CI_AS = collation_is_CI_AS(server_collation_oid);
-	server_collation_collidx = get_server_collation_collidx();
+		pltsql_db_collation_is_CI_AS = collation_is_CI_AS(server_collation_oid);
+		server_collation_collidx = get_server_collation_collidx();
 	}
 
 	return server_collation_oid;
@@ -927,7 +930,7 @@ get_server_collation_oid_internal(void)
 
 Oid BABELFISH_CLUSTER_COLLATION_OID()
 {
-	get_server_collation_oid_internal(); /* set and cache server_collation_oid */
+	get_server_collation_oid_internal(false); /* set and cache server_collation_oid */
 
 	if (sql_dialect == SQL_DIALECT_TSQL
 		&& OidIsValid(server_collation_oid))
@@ -1242,7 +1245,7 @@ transform_funcexpr(Node* node)
 				Oid lower_funcid = 870; // lower
 				Oid result_type = 25;   // text
 
-				get_server_collation_oid_internal();
+				get_server_collation_oid_internal(true);
 
 				if (!OidIsValid(server_collation_oid))
 					return node;
@@ -1365,7 +1368,7 @@ transform_likenode(Node* node)
 			Pattern_Prefix_Status pstatus;
 			int		 collidx_of_cs_as;
 
-			get_server_collation_oid_internal();
+			get_server_collation_oid_internal(true);
 
 			if (!OidIsValid(server_collation_oid))
 				return node;

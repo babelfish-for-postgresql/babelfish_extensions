@@ -945,7 +945,7 @@ tsql_coerce_string_literal_hook(ParseCallbackState *pcbstate, Oid targetTypeId,
 						msg = pstrdup("An empty or space-only string cannot be converted into numeric/decimal data type");
 						args = list_make1(makeConst(TEXTOID,
 													-1,
-													get_server_collation_oid_internal(),
+													get_server_collation_oid_internal(false),
 													-1,
 													PointerGetDatum(cstring_to_text(msg)),
 													false,

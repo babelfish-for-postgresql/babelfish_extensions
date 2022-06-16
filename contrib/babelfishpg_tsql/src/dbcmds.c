@@ -331,11 +331,11 @@ create_bbf_db_internal(const char *dbname, List *options, const char *owner, int
 
 	/* TODO: Extract options */
 
-	tuple = SearchSysCache1(COLLOID, ObjectIdGetDatum(get_server_collation_oid_internal()));
+	tuple = SearchSysCache1(COLLOID, ObjectIdGetDatum(get_server_collation_oid_internal(false)));
 	if (!HeapTupleIsValid(tuple))
 		ereport(ERROR,
 				(errcode(ERRCODE_UNDEFINED_OBJECT),
-				errmsg("collation with OID %u does not exist", get_server_collation_oid_internal())));
+				errmsg("OID corresponding to collation \"%s\" does not exist", pltsql_server_collation_name)));
 	default_collation = ((Form_pg_collation) GETSTRUCT(tuple))->collname;
 	ReleaseSysCache(tuple);
 
