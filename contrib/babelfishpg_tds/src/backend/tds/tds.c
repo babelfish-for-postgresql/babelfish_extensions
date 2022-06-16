@@ -169,6 +169,8 @@ static relname_lookup_hook_type prev_relname_lookup_hook = NULL;
 /* Shmem hook */
 static shmem_startup_hook_type next_shmem_startup_hook = NULL;
 
+static Size tds_memsize(void);
+
 /* Shmem init interfaces */
 static void tds_status_shmem_startup(void);
 static void tds_stats_shmem_shutdown(int code, Datum arg);
@@ -198,6 +200,13 @@ _PG_init(void)
 	tds_instr_plugin_ptr = (TdsInstrPlugin **) find_rendezvous_variable("TdsInstrPlugin");
 
 	pe_init();
+
+	/*
+	 * Request additional shared resources.  (These are no-ops if we're not in
+	 * the postmaster process.)  We'll allocate or attach to the shared
+	 * resources in tds_status_shmem_startup().
+	 */
+	RequestAddinShmemSpace(tds_memsize());
 
 	prev_relname_lookup_hook = relname_lookup_hook;
 	relname_lookup_hook = tvp_lookup;
@@ -235,6 +244,17 @@ static Size
 TdsLanguageBufferSize()
 {
 	return mul_size(LANGDATALEN, NumBackendStatSlots);
+}
+
+static Size
+tds_memsize()
+{
+	Size	size;
+
+	size = TdsStatusArraySize();
+	size = add_size(size, TdsLibraryNameBufferSize());
+	size = add_size(size, TdsLanguageBufferSize());
+	return size;
 }
 
 /*
