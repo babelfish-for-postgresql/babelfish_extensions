@@ -29,6 +29,31 @@ end
 $$
 LANGUAGE plpgsql;
 
+-- Drops a function if it does not have any dependent objects.
+-- Is a temporary procedure for use by the upgrade script. Will be dropped at the end of the upgrade.
+-- Please have this be one of the first statements executed in this upgrade script. 
+CREATE OR REPLACE PROCEDURE babelfish_drop_deprecated_function(schema_name varchar, func_name varchar) AS
+$$
+DECLARE
+    error_msg text;
+    query1 text;
+    query2 text;
+BEGIN
+    query1 := format('alter extension babelfishpg_tsql drop function %s.%s', schema_name, func_name);
+    query2 := format('drop function %s.%s', schema_name, func_name);
+    execute query1;
+    execute query2;
+EXCEPTION
+    when object_not_in_prerequisite_state then --if 'alter extension' statement fails
+        GET STACKED DIAGNOSTICS error_msg = MESSAGE_TEXT;
+        raise warning '%', error_msg;
+    when dependent_objects_still_exist then --if 'drop function' statement fails
+        GET STACKED DIAGNOSTICS error_msg = MESSAGE_TEXT;
+        raise warning '%', error_msg;
+end
+$$
+LANGUAGE plpgsql;
+
 -- Removes a member object from the extension. The object is not dropped, only disassociated from the extension.
 -- It is a temporary procedure for use by the upgrade script. Will be dropped at the end of the upgrade.
 CREATE OR REPLACE PROCEDURE babelfish_remove_object_from_extension(obj_type varchar, qualified_obj_name varchar) AS
@@ -282,6 +307,125 @@ GRANT SELECT ON sys.objects TO PUBLIC;
 
 CALL sys.babelfish_drop_deprecated_view('sys', 'foreign_keys_deprecated');
 
+ALTER FUNCTION OBJECTPROPERTY(INT, SYS.VARCHAR) RENAME TO objectproperty_deprecated_2_1_0;
+
+CREATE OR REPLACE FUNCTION objectproperty(
+    id INT,
+    property SYS.VARCHAR
+    )
+RETURNS INT
+AS $$
+BEGIN
+
+    IF NOT EXISTS(SELECT ao.object_id FROM sys.all_objects ao WHERE object_id = id)
+    THEN
+        RETURN NULL;
+    END IF;
+
+    property := RTRIM(LOWER(COALESCE(property, '')));
+
+    IF property = 'ownerid' -- OwnerId
+    THEN
+        RETURN (
+                SELECT CAST(COALESCE(t1.principal_id, pn.nspowner) AS INT)
+                FROM sys.all_objects t1
+                INNER JOIN pg_catalog.pg_namespace pn ON pn.oid = t1.schema_id
+                WHERE t1.object_id = id);
+
+    ELSEIF property = 'isdefaultcnst' -- IsDefaultCnst
+    THEN
+        RETURN (SELECT count(distinct dc.object_id) FROM sys.default_constraints dc WHERE dc.object_id = id);
+
+    ELSEIF property = 'execisquotedidenton' -- ExecIsQuotedIdentOn
+    THEN
+        RETURN (SELECT CAST(sm.uses_quoted_identifier as int) FROM sys.all_sql_modules sm WHERE sm.object_id = id);
+
+    ELSEIF property = 'tablefulltextpopulatestatus' -- TableFullTextPopulateStatus
+    THEN
+        IF NOT EXISTS (SELECT object_id FROM sys.tables t WHERE t.object_id = id) THEN
+            RETURN NULL;
+        END IF;
+        RETURN 0;
+
+    ELSEIF property = 'tablehasvardecimalstorageformat' -- TableHasVarDecimalStorageFormat
+    THEN
+        IF NOT EXISTS (SELECT object_id FROM sys.tables t WHERE t.object_id = id) THEN
+            RETURN NULL;
+        END IF;
+        RETURN 0;
+
+    ELSEIF property = 'ismsshipped' -- IsMSShipped
+    THEN
+        RETURN (SELECT CAST(ao.is_ms_shipped AS int) FROM sys.all_objects ao WHERE ao.object_id = id);
+
+    ELSEIF property = 'isschemabound' -- IsSchemaBound
+    THEN
+        RETURN (SELECT CAST(sm.is_schema_bound AS int) FROM sys.all_sql_modules sm WHERE sm.object_id = id);
+
+    ELSEIF property = 'execisansinullson' -- ExecIsAnsiNullsOn
+    THEN
+        RETURN (SELECT CAST(sm.uses_ansi_nulls AS int) FROM sys.all_sql_modules sm WHERE sm.object_id = id);
+
+    ELSEIF property = 'isdeterministic' -- IsDeterministic
+    THEN
+        RETURN 0;
+    
+    ELSEIF property = 'isprocedure' -- IsProcedure
+    THEN
+        RETURN (SELECT count(distinct object_id) from sys.all_objects WHERE object_id = id and type = 'P');
+
+    ELSEIF property = 'istable' -- IsTable
+    THEN
+        RETURN (SELECT count(distinct object_id) from sys.all_objects WHERE object_id = id and type in ('IT', 'TT', 'U', 'S'));
+
+    ELSEIF property = 'isview' -- IsView
+    THEN
+        RETURN (SELECT count(distinct object_id) from sys.all_objects WHERE object_id = id and type = 'V');
+    
+    ELSEIF property = 'isusertable' -- IsUserTable
+    THEN
+        RETURN (SELECT count(distinct object_id) from sys.all_objects WHERE object_id = id and type = 'U' and is_ms_shipped = 0);
+    
+    ELSEIF property = 'istablefunction' -- IsTableFunction
+    THEN
+        RETURN (SELECT count(distinct object_id) from sys.all_objects WHERE object_id = id and type in ('IF', 'TF', 'FT'));
+    
+    ELSEIF property = 'isinlinefunction' -- IsInlineFunction
+    THEN
+        RETURN 0;
+    
+    ELSEIF property = 'isscalarfunction' -- IsScalarFunction
+    THEN
+        RETURN (SELECT count(distinct object_id) from sys.all_objects WHERE object_id = id and type in ('FN', 'FS'));
+
+    ELSEIF property = 'isprimarykey' -- IsPrimaryKey
+    THEN
+        RETURN (SELECT count(distinct object_id) from sys.all_objects WHERE object_id = id and type = 'PK');
+    
+    ELSEIF property = 'isindexed' -- IsIndexed
+    THEN
+        RETURN (SELECT count(distinct object_id) from sys.indexes WHERE object_id = id and index_id > 0);
+
+    ELSEIF property = 'isdefault' -- IsDefault
+    THEN
+        RETURN 0;
+
+    ELSEIF property = 'isrule' -- IsRule
+    THEN
+        RETURN 0;
+    
+    ELSEIF property = 'istrigger' -- IsTrigger
+    THEN
+        RETURN (SELECT count(distinct object_id) from sys.all_objects WHERE object_id = id and type in ('TA', 'TR'));
+    END IF;
+
+    RETURN NULL;
+END;
+$$
+LANGUAGE plpgsql;
+
+CALL sys.babelfish_drop_deprecated_function('sys', 'objectproperty_deprecated_2_1_0');
+
 CREATE OR REPLACE FUNCTION sys.DBTS()
 RETURNS sys.ROWVERSION AS
 $$
@@ -371,6 +515,7 @@ CALL sys.babelfish_remove_object_from_extension('procedure', 'master_dbo.xp_inst
 -- Please have this be one of the last statements executed in this upgrade script.
 DROP PROCEDURE sys.babelfish_drop_deprecated_view(varchar, varchar);
 DROP PROCEDURE sys.babelfish_remove_object_from_extension(varchar, varchar);
+DROP PROCEDURE sys.babelfish_drop_deprecated_function(varchar, varchar);
 
 -- Reset search_path to not affect any subsequent scripts
 SELECT set_config('search_path', trim(leading 'sys, ' from current_setting('search_path')), false);
