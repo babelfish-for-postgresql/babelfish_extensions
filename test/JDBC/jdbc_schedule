@@ -16,3 +16,7 @@ ignore#!#BABEL-SQLvariant
 
 # Temporarily ignore due to BABEL-3279
 ignore#!#BABEL-EXTENDEDPROPERTY
+
+#TDS fault injection framework is meant for internal testing only. So, ignore tds_faultinjection tests in stable branch
+ignore#!#tds_faultinjection
+ignore#!#babel_tds_fault_injection
