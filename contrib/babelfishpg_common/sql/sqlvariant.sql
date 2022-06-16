@@ -257,7 +257,7 @@ WITH FUNCTION sys.sqlvariant_datetime (sys.SQL_VARIANT) AS ASSIGNMENT;
 
 CREATE OR REPLACE FUNCTION sys.sqlvariant_datetime2(sys.SQL_VARIANT)
 RETURNS sys.DATETIME2
-AS 'babelfishpg_common', 'sqlvariant2timestamp'
+AS 'babelfishpg_common', 'sqlvariant2datetime2'
 LANGUAGE C VOLATILE STRICT PARALLEL SAFE;
 
 CREATE CAST (sys.SQL_VARIANT AS sys.DATETIME2)

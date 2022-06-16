@@ -1017,6 +1017,7 @@ uniqueidentifier2sqlvariant(PG_FUNCTION_ARGS)
  */
 
 PG_FUNCTION_INFO_V1(sqlvariant2timestamp);
+PG_FUNCTION_INFO_V1(sqlvariant2datetime2);
 PG_FUNCTION_INFO_V1(sqlvariant2datetimeoffset);
 PG_FUNCTION_INFO_V1(sqlvariant2date);
 PG_FUNCTION_INFO_V1(sqlvariant2time);
@@ -1042,6 +1043,18 @@ PG_FUNCTION_INFO_V1(sqlvariant2uniqueidentifier);
 */
 Datum
 sqlvariant2timestamp(PG_FUNCTION_ARGS)
+{
+    bytea     *sv    = PG_GETARG_BYTEA_PP(0);
+    Oid       coll   = PG_GET_COLLATION();
+    Timestamp result;
+
+    result = DatumGetTimestamp(gen_type_datum_from_sqlvariant_bytea(sv, DATETIME_T, -1, coll));
+
+    PG_RETURN_TIMESTAMP(result);
+}
+
+Datum
+sqlvariant2datetime2(PG_FUNCTION_ARGS)
 {
     bytea     *sv    = PG_GETARG_BYTEA_PP(0);
     Oid       coll   = PG_GET_COLLATION();
