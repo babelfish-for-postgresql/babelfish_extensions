@@ -1,11 +1,5 @@
 name: JDBC Unit Tests
-on:
-  push:
-    branches:
-      - BABEL_1_X_DEV
-  pull_request:
-    branches:
-      - BABEL_1_X_DEV
+on: [push, pull_request]
 
 jobs:
   extension-tests:
@@ -14,9 +8,11 @@ jobs:
     steps:
       - uses: actions/checkout@v2
       - name: Clone, build, and run tests for Postgres engine
+        id: postgres
+        if: always()
         run: |
           cd ..
-          git clone https://github.com/babelfish-for-postgresql/postgresql_modified_for_babelfish.git
+          git clone --branch BABEL_1_2_STABLE__PG_13_6 https://github.com/babelfish-for-postgresql/postgresql_modified_for_babelfish.git
           sudo apt-get update
           sudo apt-get install uuid-dev openjdk-8-jre libicu-dev libxml2-dev openssl libssl-dev python-dev libossp-uuid-dev libpq-dev cmake pkg-config g++ build-essential bison 
           cd postgresql_modified_for_babelfish

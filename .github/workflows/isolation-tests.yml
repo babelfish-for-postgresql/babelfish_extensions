@@ -16,7 +16,7 @@ jobs:
         if: always()
         run: |
           cd ..
-          git clone https://github.com/babelfish-for-postgresql/postgresql_modified_for_babelfish.git
+          git clone --branch BABEL_1_2_STABLE__PG_13_6 https://github.com/babelfish-for-postgresql/postgresql_modified_for_babelfish.git
           sudo apt-get update
           sudo apt-get install uuid-dev openjdk-8-jre libicu-dev libxml2-dev openssl libssl-dev python-dev libossp-uuid-dev libpq-dev cmake pkg-config g++ build-essential bison 
           cd postgresql_modified_for_babelfish
@@ -83,7 +83,7 @@ jobs:
           curl https://packages.microsoft.com/config/ubuntu/20.04/prod.list | sudo tee /etc/apt/sources.list.d/mssql-release.list
           cd ~/work/babelfish_extensions/babelfish_extensions/test/python
           sudo ACCEPT_EULA=Y apt-get install -y msodbcsql17 python3-dev
-          pip3 install pyodbc pymssql pytest pytest-xdist antlr4-python3-runtime
+          pip3 install pyodbc pymssql pytest pytest-xdist antlr4-python3-runtime==4.9.3
       - name: Generate .spec file parser
         run: |
           cd ~/work/babelfish_extensions/babelfish_extensions/test/python/isolationtest/
