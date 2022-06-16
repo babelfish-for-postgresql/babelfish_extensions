@@ -251,6 +251,9 @@ go
 -- float to datetime
 select cast(cast(cast(3.1415926 as float) as sql_variant) as datetime);
 go
+-- int to datetime2
+select cast(cast(cast(123 as int) as sql_variant) as datetime2);
+go
 -- numeric to varbinary
 select cast(cast(cast(3.1415926 as numeric(4, 3)) as sql_variant) as varbinary(6));
 go
