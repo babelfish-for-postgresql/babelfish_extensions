@@ -8,6 +8,8 @@ jobs:
     steps:
       - uses: actions/checkout@v2
       - name: Clone, build, and run tests for Postgres engine
+        id: postgres
+        if: always()
         run: |
           cd ..
           git clone --branch BABEL_1_2_STABLE__PG_13_6 https://github.com/babelfish-for-postgresql/postgresql_modified_for_babelfish.git
