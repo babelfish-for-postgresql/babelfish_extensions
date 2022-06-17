@@ -1394,11 +1394,21 @@ select
   , t.is_ms_shipped
   , t.is_published
   , t.is_schema_published
-  -- check columns, they don't seem to match SQL Server
-  , 0 as with_check_option
-  , 0 as is_date_correlation_view
-  , 0 as is_tracked_by_cdc
+  , CAST(0 as sys.BIT) AS is_replicated
+  , CAST(0 as sys.BIT) AS has_replication_filter
+  , CAST(0 as sys.BIT) AS has_opaque_metadata
+  , CAST(0 as sys.BIT) AS has_unchecked_assembly_data
+  , CAST(
+      CASE 
+        WHEN (v.check_option = 'NONE') 
+          THEN 0
+        ELSE 1
+      END
+    AS sys.BIT) AS with_check_option
+  , CAST(0 as sys.BIT) AS is_date_correlation_view
 from sys.all_objects t
+INNER JOIN pg_namespace ns ON t.schema_id = ns.oid
+INNER JOIN information_schema.views v ON t.name = v.table_name AND ns.nspname = v.table_schema
 where t.type = 'V';
 GRANT SELECT ON sys.all_views TO PUBLIC;
 

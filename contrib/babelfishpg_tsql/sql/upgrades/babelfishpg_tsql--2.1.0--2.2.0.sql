@@ -784,6 +784,42 @@ $$
 	END
 $$;
 
+ALTER VIEW sys.all_views RENAME TO all_views_deprecated_2_1_0;
+
+create or replace view sys.all_views as
+select
+    t.name
+  , t.object_id
+  , t.principal_id
+  , t.schema_id
+  , t.parent_object_id
+  , t.type
+  , t.type_desc
+  , t.create_date
+  , t.modify_date
+  , t.is_ms_shipped
+  , t.is_published
+  , t.is_schema_published
+  , CAST(0 as sys.BIT) AS is_replicated
+  , CAST(0 as sys.BIT) AS has_replication_filter
+  , CAST(0 as sys.BIT) AS has_opaque_metadata
+  , CAST(0 as sys.BIT) AS has_unchecked_assembly_data
+  , CAST(
+      CASE 
+        WHEN (v.check_option = 'NONE') 
+          THEN 0
+        ELSE 1
+      END
+    AS sys.BIT) AS with_check_option
+  , CAST(0 as sys.BIT) AS is_date_correlation_view
+from sys.all_objects t
+INNER JOIN pg_namespace ns ON t.schema_id = ns.oid
+INNER JOIN information_schema.views v ON t.name = v.table_name AND ns.nspname = v.table_schema
+where t.type = 'V';
+GRANT SELECT ON sys.all_views TO PUBLIC;
+
+CALL sys.babelfish_drop_deprecated_view('sys', 'all_views_deprecated_2_1_0');
+
 CREATE OR REPLACE VIEW sys.assembly_modules
 AS
 SELECT 
@@ -1568,6 +1604,41 @@ INSERT INTO sys.babelfish_helpcollation VALUES (N'mongolian_cs_as', N'Mongolian,
 
 INSERT INTO sys.babelfish_helpcollation VALUES (N'sql_latin1_general_cp874_ci_as', N'Virtual, default locale, code page 874, case-insensitive, accent-sensitive, kanatype-insensitive, width-insensitive');
 INSERT INTO sys.babelfish_helpcollation VALUES (N'sql_latin1_general_cp874_cs_as', N'Virtual, default locale, code page 874, case-sensitive, accent-sensitive, kanatype-insensitive, width-insensitive');
+ALTER VIEW sys.all_views RENAME TO all_views_deprecated_2_1_0;
+
+create or replace view sys.all_views as
+select
+    t.name
+  , t.object_id
+  , t.principal_id
+  , t.schema_id
+  , t.parent_object_id
+  , t.type
+  , t.type_desc
+  , t.create_date
+  , t.modify_date
+  , t.is_ms_shipped
+  , t.is_published
+  , t.is_schema_published
+  , CAST(0 as sys.BIT) AS is_replicated
+  , CAST(0 as sys.BIT) AS has_replication_filter
+  , CAST(0 as sys.BIT) AS has_opaque_metadata
+  , CAST(0 as sys.BIT) AS has_unchecked_assembly_data
+  , CAST(
+      CASE 
+        WHEN (v.check_option = 'NONE') 
+          THEN 0
+        ELSE 1
+      END
+    AS sys.BIT) AS with_check_option
+  , CAST(0 as sys.BIT) AS is_date_correlation_view
+from sys.all_objects t
+INNER JOIN pg_namespace ns ON t.schema_id = ns.oid
+INNER JOIN information_schema.views v ON t.name = v.table_name AND ns.nspname = v.table_schema
+where t.type = 'V';
+GRANT SELECT ON sys.all_views TO PUBLIC;
+
+CALL sys.babelfish_drop_deprecated_view('sys', 'all_views_deprecated_2_1_0');
 
 -- Drops the temporary procedure used by the upgrade script.
 -- Please have this be one of the last statements executed in this upgrade script.
