@@ -7,6 +7,12 @@ go
 create index index_babel_3292_t1_b1 on babel_3292_t1(b1)
 go
 
+create table babel_3292_t2(a2 int PRIMARY KEY, b2 int)
+go
+
+create index index_babel_3292_t2_b2 on babel_3292_t2(b2)
+go
+
 set babelfish_showplan_all on
 go
 
@@ -35,9 +41,25 @@ go
 select * from babel_3292_t1 with(index=index_babel_3292_t1_b1) where b1 = 1
 go
 
+
+/*
+ * Test with multiple index hints
+ */
+select * from babel_3292_t1, babel_3292_t2 where b1 = 1 and b2 = 1
+go
+
+select * from babel_3292_t1 with(index(index_babel_3292_t1_b1)), babel_3292_t2 with(index(index_babel_3292_t2_b2)) where b1 = 1 and b2 = 1
+go
+
+select * from babel_3292_t1 with(index=index_babel_3292_t1_b1), babel_3292_t2 with(index=index_babel_3292_t2_b2) where b1 = 1 and b2 = 1
+go
+
 set babelfish_showplan_all off
 go
 
 -- cleanup
 drop table babel_3292_t1
+go
+
+drop table babel_3292_t2
 go
