@@ -1,25 +1,23 @@
 drop table if exists babel_3292_t1
 go
 
-create table babel_3292_t1(a1 int PRIMARY KEY, b1 int)
+drop table if exists babel_3292_t2
+go
+
+create table babel_3292_t1(a1 int PRIMARY KEY, b1 int, c1 int)
 go
 
 create index index_babel_3292_t1_b1 on babel_3292_t1(b1)
 go
 
+create index index_babel_3292_t1_c1 on babel_3292_t1(c1)
+go
+
 create table babel_3292_t2(a2 int PRIMARY KEY, b2 int)
 go
-~~ERROR (Code: 2714)~~
-
-~~ERROR (Message: relation "babel_3292_t2" already exists)~~
-
 
 create index index_babel_3292_t2_b2 on babel_3292_t2(b2)
 go
-~~ERROR (Code: 2714)~~
-
-~~ERROR (Message: relation "index_babel_3292_t2_b2babel_3297b13d7f53f3b499d8db9cc07605bd434" already exists)~~
-
 
 set babelfish_showplan_all on
 go
@@ -35,9 +33,9 @@ go
 ~~START~~
 text
 Query Text: select * from babel_3292_t1 where b1 = 1
-Bitmap Heap Scan on babel_3292_t1  (cost=4.24..14.91 rows=11 width=8)
+Bitmap Heap Scan on babel_3292_t1  (cost=4.23..14.79 rows=10 width=12)
   Recheck Cond: (b1 = 1)
-  ->  Bitmap Index Scan on index_babel_3292_t1_b1babel_329eaeb7a8893929b580f3d762dc8499736  (cost=0.00..4.24 rows=11 width=0)
+  ->  Bitmap Index Scan on index_babel_3292_t1_b1babel_329eaeb7a8893929b580f3d762dc8499736  (cost=0.00..4.23 rows=10 width=0)
         Index Cond: (b1 = 1)
 ~~END~~
 
@@ -51,7 +49,7 @@ go
 ~~START~~
 text
 Query Text: /*+ IndexScan(babel_3292_t1 index_babel_3292_t1_b1babel_329eaeb7a8893929b580f3d762dc8499736) */ select * from babel_3292_t1                                 where b1 = 1
-Index Scan using index_babel_3292_t1_b1babel_329eaeb7a8893929b580f3d762dc8499736 on babel_3292_t1  (cost=0.15..36.35 rows=11 width=8)
+Index Scan using index_babel_3292_t1_b1babel_329eaeb7a8893929b580f3d762dc8499736 on babel_3292_t1  (cost=0.15..32.33 rows=10 width=12)
   Index Cond: (b1 = 1)
 ~~END~~
 
@@ -61,7 +59,7 @@ go
 ~~START~~
 text
 Query Text: /*+ IndexScan(babel_3292_t1 index_babel_3292_t1_b1babel_329eaeb7a8893929b580f3d762dc8499736) */ select * from babel_3292_t1                                where b1 = 1
-Index Scan using index_babel_3292_t1_b1babel_329eaeb7a8893929b580f3d762dc8499736 on babel_3292_t1  (cost=0.15..36.35 rows=11 width=8)
+Index Scan using index_babel_3292_t1_b1babel_329eaeb7a8893929b580f3d762dc8499736 on babel_3292_t1  (cost=0.15..32.33 rows=10 width=12)
   Index Cond: (b1 = 1)
 ~~END~~
 
@@ -71,7 +69,7 @@ go
 ~~START~~
 text
 Query Text: /*+ IndexScan(babel_3292_t1 index_babel_3292_t1_b1babel_329eaeb7a8893929b580f3d762dc8499736) */ select * from babel_3292_t1                                     where b1 = 1
-Index Scan using index_babel_3292_t1_b1babel_329eaeb7a8893929b580f3d762dc8499736 on babel_3292_t1  (cost=0.15..36.35 rows=11 width=8)
+Index Scan using index_babel_3292_t1_b1babel_329eaeb7a8893929b580f3d762dc8499736 on babel_3292_t1  (cost=0.15..32.33 rows=10 width=12)
   Index Cond: (b1 = 1)
 ~~END~~
 
@@ -81,30 +79,58 @@ go
 ~~START~~
 text
 Query Text: /*+ IndexScan(babel_3292_t1 index_babel_3292_t1_b1babel_329eaeb7a8893929b580f3d762dc8499736) */ select * from babel_3292_t1                                    where b1 = 1
-Index Scan using index_babel_3292_t1_b1babel_329eaeb7a8893929b580f3d762dc8499736 on babel_3292_t1  (cost=0.15..36.35 rows=11 width=8)
+Index Scan using index_babel_3292_t1_b1babel_329eaeb7a8893929b580f3d762dc8499736 on babel_3292_t1  (cost=0.15..32.33 rows=10 width=12)
   Index Cond: (b1 = 1)
 ~~END~~
 
 
-
 /*
  * Test with multiple index hints
+ */
+select * from babel_3292_t1 where b1 = 1 and c1 = 1
+go
+~~START~~
+text
+Query Text: select * from babel_3292_t1 where b1 = 1 and c1 = 1
+Bitmap Heap Scan on babel_3292_t1  (cost=8.71..12.72 rows=1 width=12)
+  Recheck Cond: ((c1 = 1) AND (b1 = 1))
+  ->  BitmapAnd  (cost=8.71..8.71 rows=1 width=0)
+        ->  Bitmap Index Scan on index_babel_3292_t1_c1babel_329c7d18660bd3d9742036705bdc0da925c  (cost=0.00..4.23 rows=10 width=0)
+              Index Cond: (c1 = 1)
+        ->  Bitmap Index Scan on index_babel_3292_t1_b1babel_329eaeb7a8893929b580f3d762dc8499736  (cost=0.00..4.23 rows=10 width=0)
+              Index Cond: (b1 = 1)
+~~END~~
+
+
+select * from babel_3292_t1 with(index(index_babel_3292_t1_b1), index(index_babel_3292_t1_c1)) where b1 = 1 and c1 = 1
+go
+~~START~~
+text
+Query Text: /*+ IndexScan(babel_3292_t1 index_babel_3292_t1_b1babel_329eaeb7a8893929b580f3d762dc8499736) IndexScan(babel_3292_t1 index_babel_3292_t1_c1babel_329c7d18660bd3d9742036705bdc0da925c) */ select * from babel_3292_t1                                                                    where b1 = 1 and c1 = 1
+Index Scan using index_babel_3292_t1_c1babel_329c7d18660bd3d9742036705bdc0da925c on babel_3292_t1  (cost=0.15..32.35 rows=1 width=12)
+  Index Cond: (c1 = 1)
+  Filter: (b1 = 1)
+~~END~~
+
+
+/*
+ * Test with multiple tables
  */
 select * from babel_3292_t1, babel_3292_t2 where b1 = 1 and b2 = 1
 go
 ~~START~~
 text
 Query Text: select * from babel_3292_t1, babel_3292_t2 where b1 = 1 and b2 = 1
-Nested Loop  (cost=8.48..31.36 rows=121 width=16)
-  ->  Bitmap Heap Scan on babel_3292_t1  (cost=4.24..14.91 rows=11 width=8)
-        Recheck Cond: (b1 = 1)
-        ->  Bitmap Index Scan on index_babel_3292_t1_b1babel_329eaeb7a8893929b580f3d762dc8499736  (cost=0.00..4.24 rows=11 width=0)
-              Index Cond: (b1 = 1)
-  ->  Materialize  (cost=4.24..14.97 rows=11 width=8)
-        ->  Bitmap Heap Scan on babel_3292_t2  (cost=4.24..14.91 rows=11 width=8)
-              Recheck Cond: (b2 = 1)
-              ->  Bitmap Index Scan on index_babel_3292_t2_b2babel_3297b13d7f53f3b499d8db9cc07605bd434  (cost=0.00..4.24 rows=11 width=0)
-                    Index Cond: (b2 = 1)
+Nested Loop  (cost=8.47..31.10 rows=110 width=20)
+  ->  Bitmap Heap Scan on babel_3292_t2  (cost=4.24..14.91 rows=11 width=8)
+        Recheck Cond: (b2 = 1)
+        ->  Bitmap Index Scan on index_babel_3292_t2_b2babel_3297b13d7f53f3b499d8db9cc07605bd434  (cost=0.00..4.24 rows=11 width=0)
+              Index Cond: (b2 = 1)
+  ->  Materialize  (cost=4.23..14.84 rows=10 width=12)
+        ->  Bitmap Heap Scan on babel_3292_t1  (cost=4.23..14.79 rows=10 width=12)
+              Recheck Cond: (b1 = 1)
+              ->  Bitmap Index Scan on index_babel_3292_t1_b1babel_329eaeb7a8893929b580f3d762dc8499736  (cost=0.00..4.23 rows=10 width=0)
+                    Index Cond: (b1 = 1)
 ~~END~~
 
 
@@ -113,12 +139,12 @@ go
 ~~START~~
 text
 Query Text: /*+ IndexScan(babel_3292_t1 index_babel_3292_t1_b1babel_329eaeb7a8893929b580f3d762dc8499736) IndexScan(babel_3292_t2 index_babel_3292_t2_b2babel_3297b13d7f53f3b499d8db9cc07605bd434) */ select * from babel_3292_t1                                    , babel_3292_t2                                     where b1 = 1 and b2 = 1
-Nested Loop  (cost=0.31..74.23 rows=121 width=16)
-  ->  Index Scan using index_babel_3292_t1_b1babel_329eaeb7a8893929b580f3d762dc8499736 on babel_3292_t1  (cost=0.15..36.35 rows=11 width=8)
-        Index Cond: (b1 = 1)
-  ->  Materialize  (cost=0.15..36.40 rows=11 width=8)
-        ->  Index Scan using index_babel_3292_t2_b2babel_3297b13d7f53f3b499d8db9cc07605bd434 on babel_3292_t2  (cost=0.15..36.35 rows=11 width=8)
-              Index Cond: (b2 = 1)
+Nested Loop  (cost=0.31..70.07 rows=110 width=20)
+  ->  Index Scan using index_babel_3292_t2_b2babel_3297b13d7f53f3b499d8db9cc07605bd434 on babel_3292_t2  (cost=0.15..36.35 rows=11 width=8)
+        Index Cond: (b2 = 1)
+  ->  Materialize  (cost=0.15..32.38 rows=10 width=12)
+        ->  Index Scan using index_babel_3292_t1_b1babel_329eaeb7a8893929b580f3d762dc8499736 on babel_3292_t1  (cost=0.15..32.33 rows=10 width=12)
+              Index Cond: (b1 = 1)
 ~~END~~
 
 
@@ -127,12 +153,12 @@ go
 ~~START~~
 text
 Query Text: /*+ IndexScan(babel_3292_t1 index_babel_3292_t1_b1babel_329eaeb7a8893929b580f3d762dc8499736) IndexScan(babel_3292_t2 index_babel_3292_t2_b2babel_3297b13d7f53f3b499d8db9cc07605bd434) */ select * from babel_3292_t1                                   , babel_3292_t2                                    where b1 = 1 and b2 = 1
-Nested Loop  (cost=0.31..74.23 rows=121 width=16)
-  ->  Index Scan using index_babel_3292_t1_b1babel_329eaeb7a8893929b580f3d762dc8499736 on babel_3292_t1  (cost=0.15..36.35 rows=11 width=8)
-        Index Cond: (b1 = 1)
-  ->  Materialize  (cost=0.15..36.40 rows=11 width=8)
-        ->  Index Scan using index_babel_3292_t2_b2babel_3297b13d7f53f3b499d8db9cc07605bd434 on babel_3292_t2  (cost=0.15..36.35 rows=11 width=8)
-              Index Cond: (b2 = 1)
+Nested Loop  (cost=0.31..70.07 rows=110 width=20)
+  ->  Index Scan using index_babel_3292_t2_b2babel_3297b13d7f53f3b499d8db9cc07605bd434 on babel_3292_t2  (cost=0.15..36.35 rows=11 width=8)
+        Index Cond: (b2 = 1)
+  ->  Materialize  (cost=0.15..32.38 rows=10 width=12)
+        ->  Index Scan using index_babel_3292_t1_b1babel_329eaeb7a8893929b580f3d762dc8499736 on babel_3292_t1  (cost=0.15..32.33 rows=10 width=12)
+              Index Cond: (b1 = 1)
 ~~END~~
 
 

@@ -1,10 +1,16 @@
 drop table if exists babel_3292_t1
 go
 
-create table babel_3292_t1(a1 int PRIMARY KEY, b1 int)
+drop table if exists babel_3292_t2
+go
+
+create table babel_3292_t1(a1 int PRIMARY KEY, b1 int, c1 int)
 go
 
 create index index_babel_3292_t1_b1 on babel_3292_t1(b1)
+go
+
+create index index_babel_3292_t1_c1 on babel_3292_t1(c1)
 go
 
 create table babel_3292_t2(a2 int PRIMARY KEY, b2 int)
@@ -41,9 +47,17 @@ go
 select * from babel_3292_t1 with(index=index_babel_3292_t1_b1) where b1 = 1
 go
 
-
 /*
  * Test with multiple index hints
+ */
+select * from babel_3292_t1 where b1 = 1 and c1 = 1
+go
+
+select * from babel_3292_t1 with(index(index_babel_3292_t1_b1), index(index_babel_3292_t1_c1)) where b1 = 1 and c1 = 1
+go
+
+/*
+ * Test with multiple tables
  */
 select * from babel_3292_t1, babel_3292_t2 where b1 = 1 and b2 = 1
 go
