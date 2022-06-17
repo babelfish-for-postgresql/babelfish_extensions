@@ -29,7 +29,7 @@ Bitmap Heap Scan on babel_3292_t1  (cost=4.24..14.91 rows=11 width=8)
 
 
 /*
- * Run SELECT queries and give the hint to follow a index scan. 
+ * Run SELECT queries and give the hint to follow a index scan using different syntaxes.
  * The query plan should now use a idex scan instead of the bitmap heap and bitmap index scan it uses in the un-hinted test above.
  */
 select * from babel_3292_t1 (index(index_babel_3292_t1_b1)) where b1 = 1
@@ -47,6 +47,26 @@ go
 ~~START~~
 text
 Query Text: /*+ IndexScan(babel_3292_t1 index_babel_3292_t1_b1babel_329eaeb7a8893929b580f3d762dc8499736) */ select * from babel_3292_t1                                where b1 = 1
+Index Scan using index_babel_3292_t1_b1babel_329eaeb7a8893929b580f3d762dc8499736 on babel_3292_t1  (cost=0.15..36.35 rows=11 width=8)
+  Index Cond: (b1 = 1)
+~~END~~
+
+
+select * from babel_3292_t1 with(index(index_babel_3292_t1_b1)) where b1 = 1
+go
+~~START~~
+text
+Query Text: /*+ IndexScan(babel_3292_t1 index_babel_3292_t1_b1babel_329eaeb7a8893929b580f3d762dc8499736) */ select * from babel_3292_t1                                     where b1 = 1
+Index Scan using index_babel_3292_t1_b1babel_329eaeb7a8893929b580f3d762dc8499736 on babel_3292_t1  (cost=0.15..36.35 rows=11 width=8)
+  Index Cond: (b1 = 1)
+~~END~~
+
+
+select * from babel_3292_t1 with(index=index_babel_3292_t1_b1) where b1 = 1
+go
+~~START~~
+text
+Query Text: /*+ IndexScan(babel_3292_t1 index_babel_3292_t1_b1babel_329eaeb7a8893929b580f3d762dc8499736) */ select * from babel_3292_t1                                    where b1 = 1
 Index Scan using index_babel_3292_t1_b1babel_329eaeb7a8893929b580f3d762dc8499736 on babel_3292_t1  (cost=0.15..36.35 rows=11 width=8)
   Index Cond: (b1 = 1)
 ~~END~~

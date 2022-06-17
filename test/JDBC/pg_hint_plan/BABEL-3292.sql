@@ -20,13 +20,19 @@ select * from babel_3292_t1 where b1 = 1
 go
 
 /*
- * Run SELECT queries and give the hint to follow a index scan. 
+ * Run SELECT queries and give the hint to follow a index scan using different syntaxes.
  * The query plan should now use a idex scan instead of the bitmap heap and bitmap index scan it uses in the un-hinted test above.
  */
 select * from babel_3292_t1 (index(index_babel_3292_t1_b1)) where b1 = 1
 go
 
 select * from babel_3292_t1 (index=index_babel_3292_t1_b1) where b1 = 1
+go
+
+select * from babel_3292_t1 with(index(index_babel_3292_t1_b1)) where b1 = 1
+go
+
+select * from babel_3292_t1 with(index=index_babel_3292_t1_b1) where b1 = 1
 go
 
 set babelfish_showplan_all off
