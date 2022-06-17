@@ -110,6 +110,13 @@ go
 DROP USER new_r1;
 go
 
+-- psql
+-- Need to terminate active session before cleaning up the login
+SELECT pg_terminate_backend(pid) FROM pg_stat_get_activity(NULL)
+WHERE sys.suser_name(usesysid) = 'r1' AND backend_type = 'client backend' AND usesysid IS NOT NULL;
+GO
+
+-- tsql
 DROP LOGIN r1;
 go
 
@@ -119,6 +126,13 @@ go
 DROP SCHEMA sch2;
 go
 
+-- psql
+-- Need to terminate active session before cleaning up the login
+SELECT pg_terminate_backend(pid) FROM pg_stat_get_activity(NULL)
+WHERE sys.suser_name(usesysid) = 'r2' AND backend_type = 'client backend' AND usesysid IS NOT NULL;
+GO
+
+-- tsql
 DROP LOGIN r2;
 go
 
@@ -166,12 +180,27 @@ ALTER LOGIN r2 WITH PASSWORD = '456'
 go
 
 -- Test dropping
+
+-- psql
+-- Need to terminate active session before cleaning up the login
+SELECT pg_terminate_backend(pid) FROM pg_stat_get_activity(NULL)
+WHERE sys.suser_name(usesysid) = 'r1' AND backend_type = 'client backend' AND usesysid IS NOT NULL;
+GO
+
+-- tsql
 DROP LOGIN r1;
 go
 
 SELECT COUNT(*) FROM sys.babelfish_authid_login_ext;
 go
 
+-- psql
+-- Need to terminate active session before cleaning up the login
+SELECT pg_terminate_backend(pid) FROM pg_stat_get_activity(NULL)
+WHERE sys.suser_name(usesysid) = 'r2' AND backend_type = 'client backend' AND usesysid IS NOT NULL;
+GO
+
+-- tsql
 DROP LOGIN r2;
 go
 
@@ -203,6 +232,13 @@ WHERE roleid = (SELECT oid FROM pg_roles WHERE rolname = 'sysadmin')
 AND "member" = (SELECT oid FROM pg_roles WHERE rolname = 'r3');
 GO
 
+-- psql
+-- Need to terminate active session before cleaning up the login
+SELECT pg_terminate_backend(pid) FROM pg_stat_get_activity(NULL)
+WHERE sys.suser_name(usesysid) = 'r3' AND backend_type = 'client backend' AND usesysid IS NOT NULL;
+GO
+
+-- tsql
 DROP LOGIN r3;
 GO
 
@@ -320,6 +356,13 @@ FROM sys.babelfish_authid_user_ext
 ORDER BY rolname;
 GO
 
+-- psql
+-- Need to terminate active session before cleaning up the login
+SELECT pg_terminate_backend(pid) FROM pg_stat_get_activity(NULL)
+WHERE sys.suser_name(usesysid) = 'login1' AND backend_type = 'client backend' AND usesysid IS NOT NULL;
+GO
+
+-- tsql
 DROP LOGIN login1;
 GO
 
@@ -436,9 +479,10 @@ GO
 DROP LOGIN lgn_3232;
 GO
 
--- Need to terminate Session 1 before cleanup the login
 -- psql
-SELECT pg_terminate_backend(pid) FROM pg_stat_activity WHERE usename='lgn_3232';
+-- Need to terminate active session before cleaning up the login
+SELECT pg_terminate_backend(pid) FROM pg_stat_get_activity(NULL)
+WHERE sys.suser_name(usesysid) = 'lgn_3232' AND backend_type = 'client backend' AND usesysid IS NOT NULL;
 GO
 
 -- tsql
