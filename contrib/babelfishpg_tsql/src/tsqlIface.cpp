@@ -1458,7 +1458,6 @@ public:
 			add_rewritten_query_fragment_to_mutator(&mutator);
 			mutator.run();
 		}
-		clear_query_hints();
 		clear_rewritten_query_fragment();
 	}
 
