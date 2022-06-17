@@ -67,3 +67,25 @@ DROP TYPE int_a
 DROP TYPE varchar_a
 DROP DATABASE isc_db
 go
+
+-- Tests for numeric scale and precision
+create type numeric_test from numeric(15,6)
+GO
+
+create type decimal_test from decimal(15,6)
+GO
+
+create table babel_2863(_numcol_bbf_13d0 decimal(13), _numcol_bbf_13n0 numeric(13), _numcol_bbf_15d6 decimal(15,6), _numcol_bbf_15n6 numeric(15,6), _numcol_numeric_test numeric_test, _numcol_decimal_test decimal_test)
+GO
+
+select column_name,numeric_precision, numeric_scale from information_schema.columns where column_name like '_numcol_%';
+GO
+
+drop table babel_2863;
+GO
+
+drop type numeric_test;
+GO
+
+drop type decimal_test;
+GO
