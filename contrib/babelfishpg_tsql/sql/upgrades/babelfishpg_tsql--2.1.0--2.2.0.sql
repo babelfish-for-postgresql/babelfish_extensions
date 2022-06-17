@@ -510,6 +510,59 @@ CALL sys.babelfish_remove_object_from_extension('procedure', 'master_dbo.xp_qv(s
 CALL sys.babelfish_remove_object_from_extension('procedure', 'master_dbo.xp_instance_regread(sys.nvarchar, sys.sysname, sys.nvarchar, int)');
 CALL sys.babelfish_remove_object_from_extension('procedure', 'master_dbo.xp_instance_regread(sys.nvarchar, sys.sysname, sys.nvarchar, sys.nvarchar)');
 
+CREATE OR REPLACE FUNCTION information_schema_tsql._pgtsql_numeric_precision(type text, typid oid, typmod int4) RETURNS integer
+	LANGUAGE sql
+	IMMUTABLE
+	PARALLEL SAFE
+	RETURNS NULL ON NULL INPUT
+	AS
+$$
+	SELECT
+	CASE typid
+		WHEN 21 /*int2*/ THEN 5
+		WHEN 23 /*int4*/ THEN 10
+		WHEN 20 /*int8*/ THEN 19
+		WHEN 1700 /*numeric*/ THEN
+			CASE WHEN typmod = -1 THEN null
+				ELSE ((typmod - 4) >> 16) & 65535
+			END
+		WHEN 700 /*float4*/ THEN 24
+		WHEN 701 /*float8*/ THEN 53
+		ELSE
+			CASE WHEN type = 'tinyint' THEN 3
+				WHEN type = 'money' THEN 19
+				WHEN type = 'smallmoney' THEN 10
+				WHEN type = 'decimal'	THEN
+					CASE WHEN typmod = -1 THEN null
+						ELSE ((typmod - 4) >> 16) & 65535
+					END
+				ELSE null
+			END
+	END
+$$;
+
+CREATE OR REPLACE FUNCTION information_schema_tsql._pgtsql_numeric_scale(type text, typid oid, typmod int4) RETURNS integer
+	LANGUAGE sql
+	IMMUTABLE
+	PARALLEL SAFE
+	RETURNS NULL ON NULL INPUT
+	AS
+$$
+	SELECT
+	CASE WHEN typid IN (21, 23, 20) THEN 0
+		WHEN typid IN (1700) THEN
+			CASE WHEN typmod = -1 THEN null
+				ELSE (typmod - 4) & 65535
+			END
+		WHEN type = 'tinyint' THEN 0
+		WHEN type IN ('money', 'smallmoney') THEN 4
+		WHEN type = 'decimal' THEN
+			CASE WHEN typmod = -1 THEN NULL
+				ELSE (typmod - 4) & 65535
+			END
+		ELSE null
+	END
+$$;
 
 -- Drops the temporary procedure used by the upgrade script.
 -- Please have this be one of the last statements executed in this upgrade script.
