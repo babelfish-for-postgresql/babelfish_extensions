@@ -65,6 +65,7 @@ extern "C"
 
 	extern size_t get_num_column_names_to_be_delimited();
 	extern size_t get_num_pg_reserved_keywords_to_be_delimited();
+	extern char * construct_unique_index_name(char *index_name, char *relation_name);
 }
 
 static void toDotRecursive(ParseTree *t, const std::vector<std::string> &ruleNames, const std::string &sourceText);
@@ -97,6 +98,8 @@ void replaceTokenStringFromQuery(PLtsql_expr* expr, TerminalNode* tokenNode, con
 void replaceCtxStringFromQuery(PLtsql_expr* expr, ParserRuleContext *ctx, const char *repl, ParserRuleContext *baseCtx);
 void removeTokenStringFromQuery(PLtsql_expr* expr, TerminalNode* tokenNode, ParserRuleContext *baseCtx);
 void removeCtxStringFromQuery(PLtsql_expr* expr, ParserRuleContext *ctx, ParserRuleContext *baseCtx);
+void extractTableHints(TSqlParser::With_table_hintsContext *ctx, std::string table_name);
+std::string extractIndexValues(std::vector<TSqlParser::Index_valueContext *> index_valuesCtx, char *table_name);
 
 static void *makeBatch(TSqlParser::Tsql_fileContext *ctx, tsqlBuilder &builder);
 //static void *makeBatch(TSqlParser::Block_statementContext *ctx, tsqlBuilder &builder);
@@ -194,6 +197,9 @@ static void clear_rewritten_query_fragment();
 // add information of rewritten_query_fragment information to mutator
 static void add_rewritten_query_fragment_to_mutator(PLtsql_expr_query_mutator *mutator);
 
+static std::vector<std::string> query_hints;
+static void add_query_hints(PLtsql_expr* expr);
+static void clear_query_hints();
 
 
 static void
@@ -541,6 +547,27 @@ add_rewritten_query_fragment_to_mutator(PLtsql_expr_query_mutator *mutator)
 	Assert(mutator);
 	for (auto &entry : rewritten_query_fragment)
 		mutator->add(entry.first, entry.second.first, entry.second.second);
+}
+
+static void
+add_query_hints(PLtsql_expr *expr)
+{
+	std::string hint =  "/*+ ";
+	for(auto q_hint: query_hints) {
+		hint += q_hint;
+		hint += " ";
+	}
+	hint += "*/";
+	StringInfoData new_query;
+	initStringInfo(&new_query);
+	appendStringInfo(&new_query, "%s %s", const_cast <char *>(hint.c_str()), expr->query);
+	expr->query = new_query.data;
+}
+
+static void
+clear_query_hints()
+{
+	query_hints.clear();
 }
 
 /*
@@ -1431,6 +1458,7 @@ public:
 			add_rewritten_query_fragment_to_mutator(&mutator);
 			mutator.run();
 		}
+		clear_query_hints();
 		clear_rewritten_query_fragment();
 	}
 
@@ -2093,6 +2121,12 @@ static void process_query_specification(
 			}
 		}
 	}
+	
+	if(query_hints.size()) {
+		add_query_hints(expr);
+		clear_query_hints();
+	}
+	
 }
 
 /*
@@ -3089,6 +3123,30 @@ void removeCtxStringFromQuery(PLtsql_expr* expr, ParserRuleContext *ctx, ParserR
 {
 	replaceTokenStringFromQuery(expr, ctx->getStart(), ctx->getStop(), NULL, baseCtx);
 }
+
+void extractTableHints(TSqlParser::With_table_hintsContext *ctx, std::string table_name) {
+	for(auto table_hint : ctx -> table_hint()) {
+		if(table_hint->INDEX()) {
+			std::string index_values = extractIndexValues(table_hint->index_value(), const_cast <char *>(table_name.c_str()));
+			query_hints.push_back("IndexScan(" + table_name + " " + index_values + ")");
+		}
+	}
+}
+
+std::string extractIndexValues(std::vector<TSqlParser::Index_valueContext *> index_valuesCtx, char *table_name) {
+	std::string index_values;
+	for(auto ictx: index_valuesCtx) {
+		if(ictx->id()) {
+			if(index_values.size()) {
+				index_values += " ";
+			}
+			char * index_value = construct_unique_index_name(const_cast <char *>(::getFullText(ictx->id()).c_str()), table_name);
+			index_values += std::string(index_value);
+		}
+	}
+	return index_values;
+}
+
 
 #if 0
 static void *
@@ -4658,9 +4716,25 @@ static void post_process_table_source(TSqlParser::Table_source_itemContext *ctx,
 	for (auto cctx : ctx->table_source_item())
 		post_process_table_source(cctx, expr, baseCtx);
 
-	for (auto wctx : ctx->with_table_hints())
+	for (auto wctx : ctx->with_table_hints()) {
+		if(!wctx->sample_clause()) {
+			std::string table_name;
+			std::string schema_name;
+			std::string db_name;
+			if(ctx->full_object_name()) {
+				if (ctx->full_object_name()->object_name)
+					table_name = stripQuoteFromId(ctx->full_object_name()->object_name);
+				if (ctx->full_object_name()->schema)
+					schema_name = stripQuoteFromId(ctx->full_object_name()->schema);
+				if (ctx->full_object_name()->database)
+					db_name = stripQuoteFromId(ctx->full_object_name()->database);
+			}
+			else
+				table_name = ::getFullText(ctx->local_id());
+			extractTableHints(wctx, table_name);
+		}
 		removeCtxStringFromQuery(expr, wctx, baseCtx);
-
+	}
 	if (ctx->join_hint())
 		removeCtxStringFromQuery(expr, ctx->join_hint(), baseCtx);
 }
