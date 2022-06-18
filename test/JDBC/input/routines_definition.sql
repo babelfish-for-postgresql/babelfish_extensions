@@ -150,6 +150,9 @@ go
 
 #check with different sqlbody.#
 
+drop TABLE if exists customers;
+go
+
 CREATE TABLE customers
 ( customer_id int NOT NULL,
   customer_name char(50) NOT NULL,
@@ -187,6 +190,8 @@ select tsql_get_functiondef(oid) from pg_proc where proname='test_b2';
 go
 
 drop procedure test_b2;
+go
+drop procedure if exists test_b3
 go
 
 create procedure test_b3(@name char(255), @city char(255), @address char(255), @state char(255), @cust_id int)
@@ -258,6 +263,21 @@ END;
 go
 
 select tsql_get_functiondef(oid) from pg_proc where proname='test_bd7';
+go
+
+create procedure test_bb(@a int, @b char(255), @c char(255), @d char(255))
+AS
+SET @a=10; SET Nocount ON;
+DECLARE @temp int =12; 
+BEGIN
+        INSERT INTO customers (customer_name,address,city,customer_id) VALUES (@b,@c,@d,@a);
+END;
+go
+
+select tsql_get_functiondef(oid) from pg_proc where proname='test_bb';
+go
+
+DROP PROCEDURE IF EXISTS test_bb;
 go
 
 drop table customers;
@@ -341,5 +361,87 @@ go
 
 drop schema s1;
 go
+
+CREATE FUNCTION dbo.fnGetUserID (@name varchar(10))
+RETURNS INT
+ WITH RETURNS NULL ON NULL INPUT
+AS
+BEGIN
+	RETURN 2;
+END;
+go
+
+select tsql_get_functiondef(oid) from pg_proc where proname='fngetuserid';
+go
+
+drop function dbo.fnGetUserID;
+go
+
+create function test_s (@a char(45)) RETURNS char(45)
+WITH SCHEMABINDING
+AS 
+BEGIN
+	RETURN @a;
+END;
+go
+
+select tsql_get_functiondef(oid) from pg_proc where proname='test_s';
+go
+
+drop function test_s;
+go
+
+create function test_arg (@b binary, @v varbinary) RETURNS int
+AS 
+BEGIN
+         set @v = 110;
+	return 345;
+END
+go
+
+select tsql_get_functiondef(oid) from pg_proc where proname='test_arg';
+go
+
+drop function test_arg;
+go
+
+create function test_con(@a int)
+RETURNS INT
+ WITH CALLED ON NULL INPUT
+AS
+BEGIN
+RETURN @a;
+END;
+go
+
+select tsql_get_functiondef(oid) from pg_proc where proname='test_con';
+go
+
+drop function test_con;
+go
+
+create procedure test_t (@a int)
+AS
+BEGIN
+        begin try
+                begin transaction
+                        update Empl set Name ="Arman" where id =99;
+                        update Empl set Name ="Anand" where id =100;
+                commit transaction
+                        print 'transaction committed'
+        END try
+                BEGIN catch
+                        rollback transaction
+                        print 'rollback'
+                end catch
+END;
+go
+
+select tsql_get_functiondef(oid) from pg_proc where proname='test_t';
+go
+
+drop procedure test_t;
+go
+
 
 

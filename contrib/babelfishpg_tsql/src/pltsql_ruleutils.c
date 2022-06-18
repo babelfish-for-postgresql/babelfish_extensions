@@ -345,9 +345,11 @@ static char *tsql_printTypmod(const char *typname, int32 typmod, Oid typmodout);
 extern Datum translate_pg_type_to_tsql(PG_FUNCTION_ARGS);
 static char *tsql_format_type_extended(Oid type_oid, int32 typemod, bits16 flags);
 int print_function_arguments(StringInfo buf, HeapTuple proctup,
-		bool print_table_args, bool print_defaults);
+		bool print_table_args, bool print_defaults, int** typmod_arr_arg);
 char *tsql_quote_qualified_identifier(const char *qualifier, const char *ident);
 const char *tsql_quote_identifier(const char *ident);
+void probin_json_reader(text* probin, int** typmod_arr_p, int typmod_arr_len);
+int adjustTypmod(Oid oid, int typmod);
 
 /*
  * tsql_get_constraintdef
@@ -400,6 +402,8 @@ tsql_get_functiondef(PG_FUNCTION_ARGS)
 	const char *nsp;
 	const char *nnsp;
 	int	oldlen;
+        int* typmod_arr = NULL;
+        int number_args;
 
 	initStringInfo(&buf);
 
@@ -421,19 +425,29 @@ tsql_get_functiondef(PG_FUNCTION_ARGS)
 	nnsp= get_logical_schema_name(nsp,true);
 	appendStringInfo(&buf, "CREATE %s %s(",
 					 isfunction ? "FUNCTION" : "PROCEDURE",
-					 tsql_quote_qualified_identifier(nnsp[0]=='d' && nnsp[1]=='b' && nnsp[2]=='o'?NULL:nnsp, name));
-	(void) print_function_arguments(&buf, proctup, false, true);
+					 tsql_quote_qualified_identifier(nnsp, name));
+	tmp = SysCacheGetAttr(PROCOID, proctup, Anum_pg_proc_probin, &isnull);
+        number_args=proc->pronargs; 
+        if(isfunction) number_args++;
+       	probin_json_reader(tmp, &typmod_arr, number_args);
+	(void) print_function_arguments(&buf, proctup, false, true, &typmod_arr);
 	appendStringInfoString(&buf, ")");
 	if (isfunction)
 	{
 		appendStringInfoString(&buf, " RETURNS ");
 		print_function_rettype(&buf, proctup);
+		/* if (typmod_arr[number_args-1] != -1)
+                        typmod_arr[number_args] += adjustTypmod(argtype, typmod_arr[number_args-1]);
+                appendStringInfoString(buf, tsql_format_type_extended(argtype, (typmod_arr[number_args-1], FORMAT_TYPE_TYPEMOD_GIVEN)));*/
+		if (typmod_arr[number_args-1] != -1)
+			appendStringInfo(&buf, "(%d)", typmod_arr[number_args-1]);
 	}
-
-	// print_function_trftypes(&buf, proctup);
 
 	/* Emit some miscellaneous options on one line */
 	oldlen = buf.len;
+
+        if (proc->proisstrict)
+		appendStringInfoString(&buf, " WITH RETURNS NULL ON NULL INPUT");
 
 	/* Emit any proconfig options, one per line */
 	tmp = SysCacheGetAttr(PROCOID, proctup, Anum_pg_proc_proconfig, &isnull);
@@ -699,7 +713,7 @@ print_function_rettype(StringInfo buf, HeapTuple proctup)
 	{
 		/* It might be a table function; try to print the arguments */
 		appendStringInfoString(&rbuf, "TABLE(");
-		ntabargs = print_function_arguments(&rbuf, proctup, true, false);
+		ntabargs = print_function_arguments(&rbuf, proctup, true, false, NULL);
 		if (ntabargs > 0)
 			appendStringInfoChar(&rbuf, ')');
 		else
@@ -725,7 +739,7 @@ print_function_rettype(StringInfo buf, HeapTuple proctup)
  */
 int
 print_function_arguments(StringInfo buf, HeapTuple proctup,
-						 bool print_table_args, bool print_defaults)
+						 bool print_table_args, bool print_defaults, int** typmod_arr_arg)
 {
 	Form_pg_proc proc = (Form_pg_proc) GETSTRUCT(proctup);
 	int			numargs;
@@ -812,8 +826,11 @@ print_function_arguments(StringInfo buf, HeapTuple proctup,
 
 		if (argname && argname[0])
 			appendStringInfo(buf,"%s ", tsql_quote_identifier(argname));
-		appendStringInfoString(buf, tsql_format_type_extended(argtype, -1, 0)); 
-	        
+	        if ((*typmod_arr_arg)[i] != -1)
+	       	        (*typmod_arr_arg)[i] += adjustTypmod(argtype, (*typmod_arr_arg)[i]);
+		appendStringInfoString(buf, tsql_format_type_extended(argtype, (*typmod_arr_arg)[i], FORMAT_TYPE_TYPEMOD_GIVEN));
+
+
 		if(modename != "")
 		       	appendStringInfo(buf," %s", modename);
 
