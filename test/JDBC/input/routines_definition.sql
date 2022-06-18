@@ -443,5 +443,22 @@ go
 drop procedure test_t;
 go
 
+CREATE PROCEDURE dbo.uspCurrencyCursor
+@CurrencyCursor CURSOR VARYING OUTPUT
+As
+SET NOCOUNT ON;
+SET @CurrencyCursor = CURSOR
+FORWARD_ONLY STATIC FOR
+SELECT CurrencyCode, Name
+FROM Sales.Currency;
+
+OPEN @CurrencyCursor;
+go
+
+select tsql_get_functiondef(oid) from pg_proc where proname='uspcurrencycursor';
+go
+
+drop procedure dbo.uspcurrencycursor;
+go
 
 
