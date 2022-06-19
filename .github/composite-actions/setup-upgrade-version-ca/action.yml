@@ -35,7 +35,7 @@ runs:
           next_upgrade_type=$(yq $upgrade_type_var ${{ github.workspace }}/.github/configuration/upgrade-test-configuration.yml)
           uses_file=.\\/.github\\/composite-actions\\/$next_upgrade_type-version-upgrade-util
 
-          sudo cat ${{ github.workspace }}/.github/template/upgrade-version-template.yml >> $upgrade_version_dir_path/action.yml
+          printf "    - name: Upgrade Version to #\n      id: upgrade-version-#\n      if: #\n      uses: #\n      with: \n        engine_branch: #\n        extension_branch: #\n        is_final_ver: #\n        install_dir: #\n\n"   >> $upgrade_version_dir_path/action.yml
 
           sed -i "s/name: Upgrade Version to #/name: Upgrade Version to $next_upgrade_version/g" $upgrade_version_dir_path/action.yml
           sed -i "s/id: upgrade-version-#/id: upgrade-version-$i/g" $upgrade_version_dir_path/action.yml
