@@ -80,6 +80,12 @@ jobs:
         if: always() && steps.setup-upgrade-ver-ca.outcome == 'success' 
         uses: ./.github/composite-actions/upgrade-version
 
+      - name: Recreate Upgrade Version Composite Action
+        if: always() && steps.install-yq.outcome == 'success' && steps.setup-base-version.outcome == 'success'
+        uses: ./.github/composite-actions/setup-upgrade-version-ca
+        with: 
+          base_version: ${{ steps.read-base-and-final-version.outputs.base-version }}
+
       - name: Rename Test Summary Files
         id: test-file-rename
         if: always() && (steps.setup-base-version.outcome == 'failure' || steps.upgrade-and-test.outcome == 'failure')

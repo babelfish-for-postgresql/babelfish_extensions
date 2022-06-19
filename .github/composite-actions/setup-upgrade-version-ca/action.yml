@@ -11,6 +11,10 @@ runs:
       run: |
         upgrade_version_dir_path=${{ github.workspace }}/.github/composite-actions/upgrade-version/
 
+        mkdir $upgrade_version_dir_path
+        touch $upgrade_version_dir_path/action.yml
+        printf 'name: "Upgrade till final version and run verify tests"\nruns:\n  using: "composite"\n  steps:\n' > $upgrade_version_dir_path/action.yml
+
         LEN=$(yq '."upgrade-version"[${{ matrix.upgrade-path-id }}] | length' ${{ github.workspace }}/.github/configuration/upgrade-test-configuration.yml)
         if [[ $LEN -le 1 ]]
         then
