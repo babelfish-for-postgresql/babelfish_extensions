@@ -65,7 +65,7 @@ select tsql_get_functiondef(oid) from pg_proc where proname='test_dec';
 go
 ~~START~~
 text
-CREATE FUNCTION dbo.test_dec(@quantity int, @list_price decimal(10,2), @discount decimal(4,2)) RETURNS decimal(655366) AS BEGIN<newline>    RETURN @quantity * @list_price * (1 - @discount);<newline>END;
+CREATE FUNCTION dbo.test_dec(@quantity int, @list_price decimal(10,2), @discount decimal(4,2)) RETURNS decimal(10,2) AS BEGIN<newline>    RETURN @quantity * @list_price * (1 - @discount);<newline>END;
 ~~END~~
 
 
@@ -385,7 +385,7 @@ select tsql_get_functiondef(oid) from pg_proc where proname='test_b8';
 go
 ~~START~~
 text
-CREATE FUNCTION dbo.test_b8(@a int, @b decimal(10,2), @c decimal(4,2)) RETURNS decimal(655366) AS BEGIN<newline>	RETURN test_bd7(199) * 79;<newline>    RETURN @a * @b * (1 - @c);<newline>END;
+CREATE FUNCTION dbo.test_b8(@a int, @b decimal(10,2), @c decimal(4,2)) RETURNS decimal(10,2) AS BEGIN<newline>	RETURN test_bd7(199) * 79;<newline>    RETURN @a * @b * (1 - @c);<newline>END;
 ~~END~~
 
 

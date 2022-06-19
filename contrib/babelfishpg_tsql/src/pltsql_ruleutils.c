@@ -435,12 +435,7 @@ tsql_get_functiondef(PG_FUNCTION_ARGS)
 	if (isfunction)
 	{
 		appendStringInfoString(&buf, " RETURNS ");
-		print_function_rettype(&buf, proctup);
-		/* if (typmod_arr[number_args-1] != -1)
-                        typmod_arr[number_args] += adjustTypmod(argtype, typmod_arr[number_args-1]);
-                appendStringInfoString(buf, tsql_format_type_extended(argtype, (typmod_arr[number_args-1], FORMAT_TYPE_TYPEMOD_GIVEN)));*/
-		if (typmod_arr[number_args-1] != -1)
-			appendStringInfo(&buf, "(%d)", typmod_arr[number_args-1]);
+		print_function_rettype(&buf, proctup, &typmod_arr, number_args);
 	}
 
 	/* Emit some miscellaneous options on one line */
@@ -701,7 +696,7 @@ tsql_get_constraintdef_worker(Oid constraintId, bool fullCommand,
  * to the specified buffer.
  */
 void
-print_function_rettype(StringInfo buf, HeapTuple proctup)
+print_function_rettype(StringInfo buf, HeapTuple proctup, int** typmod_arr_ret, int number_args) 
 {
 	Form_pg_proc proc = (Form_pg_proc) GETSTRUCT(proctup);
 	int			ntabargs = 0;
@@ -725,7 +720,9 @@ print_function_rettype(StringInfo buf, HeapTuple proctup)
 		/* Not a table function, so do the normal thing */
 		if (proc->proretset)
 			appendStringInfoString(&rbuf, "SETOF ");
-		appendStringInfoString(&rbuf, tsql_format_type_extended(proc->prorettype,-1,0));
+	        if ((*typmod_arr_ret)[number_args-1] != -1)
+                        (*typmod_arr_ret)[number_args-1] += adjustTypmod(proc->prorettype, (*typmod_arr_ret)[number_args-1]);
+		appendStringInfoString(&rbuf, tsql_format_type_extended(proc->prorettype, (*typmod_arr_ret)[number_args-1], FORMAT_TYPE_TYPEMOD_GIVEN));
 	}
 
 	appendBinaryStringInfo(buf, rbuf.data, rbuf.len);
