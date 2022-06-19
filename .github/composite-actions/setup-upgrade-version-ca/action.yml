@@ -11,7 +11,7 @@ runs:
       run: |
         upgrade_version_dir_path=${{ github.workspace }}/.github/composite-actions/upgrade-version/
 
-        LEN=$(yq '."upgrade-version" | length' ${{ github.workspace }}/.github/configuration/upgrade-test-configuration.yml)
+        LEN=$(yq '."upgrade-version"[${{ matrix.upgrade-path-id }}] | length' ${{ github.workspace }}/.github/configuration/upgrade-test-configuration.yml)
         if [[ $LEN -le 1 ]]
         then
             echo "ERROR: Upgrade path length less than 2" 1>&2
@@ -22,7 +22,7 @@ runs:
         
         for (( i=1 ; i<$LEN ; i++ )); 
         do
-          version_var=".\"upgrade-version\"[$i]" 
+          version_var=".\"upgrade-version\"[${{ matrix.upgrade-path-id }}][$i].version"
           next_upgrade_version=$(yq $version_var ${{ github.workspace }}/.github/configuration/upgrade-test-configuration.yml)
           next_upgrade_version_engb=".\""${next_upgrade_version}"\".engine_branch"
           engine_branch=$(yq $next_upgrade_version_engb ${{ github.workspace }}/.github/template/version-branch-template.yml)
@@ -30,8 +30,10 @@ runs:
           extension_branch=$(yq $next_upgrade_version_extb ${{ github.workspace }}/.github/template/version-branch-template.yml)
           is_final_ver=false; [[ i -eq $LEN-1 ]] && is_final_ver=true
           install_dir=$(echo postgres$(awk '{$0=int($0)}1' <<< $next_upgrade_version))
-          uses_file=""
-          uses_file=$(if [[ $(awk '{$0=int($0)}1' <<< $prev_ver) == $(awk '{$0=int($0)}1' <<< $next_upgrade_version) ]]; then echo .\\/.github\\/composite-actions\\/minor-version-upgrade-util; else echo .\\/.github\\/composite-actions\\/major-version-upgrade-util; fi)
+          
+          upgrade_type_var=".\"upgrade-version\"[${{ matrix.upgrade-path-id }}][$i].\"upgrade-type\"" 
+          next_upgrade_type=$(yq $upgrade_type_var ${{ github.workspace }}/.github/configuration/upgrade-test-configuration.yml)
+          uses_file=.\\/.github\\/composite-actions\\/$next_upgrade_type-version-upgrade-util
 
           sudo cat ${{ github.workspace }}/.github/template/upgrade-version-template.yml >> $upgrade_version_dir_path/action.yml
 

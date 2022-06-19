@@ -2,8 +2,26 @@ name: Version Upgrade Test Framework
 on: [push, pull_request]
 
 jobs:
+  generate-upgrade-path-id-list:
+    runs-on: ubuntu-latest
+    outputs:
+      upgrade-path-id-list: ${{ steps.generate.outputs.upgrade-path-id-list }}
+    steps:
+      - uses: actions/checkout@v2
+      
+      - id: generate
+        run: |
+          LEN=$(yq '."upgrade-version" | length' ${{ github.workspace }}/.github/configuration/upgrade-test-configuration.yml)
+          UPGRADE_PATH_ID_LIST=$(node -e "let r=[]; for(let i = 0; i < $LEN; i++) { r.push(i) }; console.log(JSON.stringify(r));")
+          echo "::set-output name=upgrade-path-id-list::$UPGRADE_PATH_ID_LIST"
+
   version-upgrade-tests:
     name: Version Upgrade Test Framework
+    needs: generate-upgrade-path-id-list
+    strategy:
+      fail-fast: false
+      matrix:
+        upgrade-path-id: ${{ fromJson(needs.generate-upgrade-path-id-list.outputs.upgrade-path-id-list) }}
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
@@ -23,10 +41,10 @@ jobs:
         if: always() && steps.install-yq.outcome == 'success'
         run: > 
           echo "::set-output name=base-version::$(
-            yq '."upgrade-version"[0]' ${{ github.workspace }}/.github/configuration/upgrade-test-configuration.yml
+            yq '."upgrade-version"[${{ matrix.upgrade-path-id }}][0].version' ${{ github.workspace }}/.github/configuration/upgrade-test-configuration.yml
           )" && 
           echo "::set-output name=final-version::$(
-            yq '."upgrade-version"[-1]' ${{ github.workspace }}/.github/configuration/upgrade-test-configuration.yml
+            yq '."upgrade-version"[${{ matrix.upgrade-path-id }}][-1].version' ${{ github.workspace }}/.github/configuration/upgrade-test-configuration.yml
           )"
 
       - name: Find Engine and Extension Branches for Base Version ${{ steps.read-base-and-final-version.outputs.base-version }}
@@ -82,3 +100,4 @@ jobs:
             ~/upgrade/*.log
             ~/upgrade/*.diff
             ~/postgres*/data/logfile
+            
