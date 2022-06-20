@@ -1387,6 +1387,12 @@ public:
 		/* common routine for select and non-select */
 		add_rewritten_query_fragment_to_mutator(statementMutator.get());
 
+		/* Add query hints */
+		if(query_hints.size()) {
+			add_query_hints(statementMutator.get()->expr);
+			clear_query_hints();
+		}
+
 		statementMutator->run();
 		statementMutator = nullptr;
 		clear_rewritten_query_fragment();
@@ -1458,7 +1464,6 @@ public:
 			add_rewritten_query_fragment_to_mutator(&mutator);
 			mutator.run();
 		}
-		clear_query_hints();
 		clear_rewritten_query_fragment();
 	}
 
@@ -2121,12 +2126,6 @@ static void process_query_specification(
 			}
 		}
 	}
-	
-	if(query_hints.size()) {
-		add_query_hints(expr);
-		clear_query_hints();
-	}
-	
 }
 
 /*
@@ -4719,16 +4718,8 @@ static void post_process_table_source(TSqlParser::Table_source_itemContext *ctx,
 	for (auto wctx : ctx->with_table_hints()) {
 		if(!wctx->sample_clause()) {
 			std::string table_name;
-			std::string schema_name;
-			std::string db_name;
-			if(ctx->full_object_name()) {
-				if (ctx->full_object_name()->object_name)
-					table_name = stripQuoteFromId(ctx->full_object_name()->object_name);
-				if (ctx->full_object_name()->schema)
-					schema_name = stripQuoteFromId(ctx->full_object_name()->schema);
-				if (ctx->full_object_name()->database)
-					db_name = stripQuoteFromId(ctx->full_object_name()->database);
-			}
+			if(ctx->full_object_name())
+				table_name = ::getFullText(ctx->full_object_name());
 			else
 				table_name = ::getFullText(ctx->local_id());
 			extractTableHints(wctx, table_name);
@@ -4744,8 +4735,17 @@ void process_execsql_remove_unsupported_tokens(TSqlParser::Dml_statementContext 
 	if (ctx->insert_statement())
 	{
 		auto ictx = ctx->insert_statement();
-		if (ictx->with_table_hints() && ictx->with_table_hints()->WITH()) // table hints
+		if (ictx->with_table_hints() && ictx->with_table_hints()->WITH()) { // table hints
+			if(!ictx->with_table_hints()->sample_clause() && ictx->ddl_object()) {
+				std::string table_name;
+				if(ictx->ddl_object()->full_object_name())
+					table_name = ::getFullText(ictx->ddl_object()->full_object_name());
+				else
+					table_name = ::getFullText(ictx->ddl_object()->local_id());
+				extractTableHints(ictx->with_table_hints(), table_name);
+			}
 			removeCtxStringFromQuery(stmt->sqlstmt, ictx->with_table_hints(), ctx);
+		}
 		if (ictx->option_clause()) // query hints
 			removeCtxStringFromQuery(stmt->sqlstmt, ictx->option_clause(), ctx);
 	}
@@ -4755,8 +4755,17 @@ void process_execsql_remove_unsupported_tokens(TSqlParser::Dml_statementContext 
 		if (uctx->table_sources())
 			for (auto tctx : uctx->table_sources()->table_source_item()) // from-clause (to remove hints)
 				post_process_table_source(tctx, stmt->sqlstmt, ctx);
-		if (uctx->with_table_hints()) // table hints
+		if (uctx->with_table_hints()) { // table hints
+			if(!uctx->with_table_hints()->sample_clause() && uctx->ddl_object()) {
+				std::string table_name;
+				if(uctx->ddl_object()->full_object_name())
+					table_name = ::getFullText(uctx->ddl_object()->full_object_name());
+				else
+					table_name = ::getFullText(uctx->ddl_object()->local_id());
+				extractTableHints(uctx->with_table_hints(), table_name);
+			}
 			removeCtxStringFromQuery(stmt->sqlstmt, uctx->with_table_hints(), ctx);
+		}
 		if (uctx->option_clause()) // query hints
 			removeCtxStringFromQuery(stmt->sqlstmt, uctx->option_clause(), ctx);
 	}
@@ -4765,8 +4774,17 @@ void process_execsql_remove_unsupported_tokens(TSqlParser::Dml_statementContext 
 		auto dctx = ctx->delete_statement();
 		if (dctx->delete_statement_from()->table_alias() && dctx->delete_statement_from()->table_alias()->with_table_hints())
 			removeCtxStringFromQuery(stmt->sqlstmt, dctx->delete_statement_from()->table_alias()->with_table_hints(), ctx);
-		if (dctx->with_table_hints()) // table hints
+		if (dctx->with_table_hints()) { // table hints
+			if(!dctx->with_table_hints()->sample_clause() && dctx->delete_statement_from()->ddl_object()) {
+				std::string table_name;
+				if(dctx->delete_statement_from()->ddl_object()->full_object_name())
+					table_name = ::getFullText(dctx->delete_statement_from()->ddl_object()->full_object_name());
+				else
+					table_name = ::getFullText(dctx->delete_statement_from()->ddl_object()->local_id());
+				extractTableHints(dctx->with_table_hints(), table_name);
+			}
 			removeCtxStringFromQuery(stmt->sqlstmt, dctx->with_table_hints(), ctx);
+		}
 		if (dctx->option_clause()) // query hints
 			removeCtxStringFromQuery(stmt->sqlstmt, dctx->option_clause(), ctx);
 	}
