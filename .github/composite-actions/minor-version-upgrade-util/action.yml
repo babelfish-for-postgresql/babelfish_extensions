@@ -17,16 +17,10 @@ runs:
   using: "composite"
   steps:    
     - name: Build and run tests for Postgres engine using ${{ inputs.engine_branch }}
-      run: |
-        cd ../postgresql_modified_for_babelfish
-        git checkout ${{ inputs.engine_branch }}
-        ./configure --prefix=$HOME/${{ inputs.install_dir }}/ --with-python PYTHON=/usr/bin/python2.7 --enable-debug CFLAGS="-ggdb" --with-libxml --with-uuid=ossp --with-icu
-        make clean
-        make -j 4 2>error.txt
-        make install
-        make check
-        cd contrib && make && sudo make install
-      shell: bash
+      uses: ./.github/composite-actions/build-modified-postgres
+      with:
+        engine_branch: ${{ inputs.engine_branch }}
+        install_dir: ${{ inputs.install_dir }}
 
     - uses: actions/checkout@v2
       with:
@@ -35,19 +29,10 @@ runs:
 
     - name: Set env variables and build extensions using ${{ inputs.extension_branch }}
       id: build-extensions-newer
-      run: |
-        export PG_CONFIG=~/${{ inputs.install_dir }}/bin/pg_config
-        export PG_SRC=~/work/babelfish_extensions/postgresql_modified_for_babelfish
-        export cmake=$(which cmake)
-        cd contrib/babelfishpg_money
-        make && make install
-        cd ../babelfishpg_common
-        make && make install
-        cd ../babelfishpg_tds
-        make && make install
-        cd ../babelfishpg_tsql
-        make && make install
-      shell: bash
+      uses: ./.github/composite-actions/build-extensions
+      with: 
+        install_dir: ${{ inputs.install_dir }}
+        extension_branch: ${{ inputs.extension_branch }}
 
     - name: Update extensions
       if: always() && steps.build-extensions-newer.outcome == 'success'

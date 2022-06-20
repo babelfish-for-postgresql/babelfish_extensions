@@ -15,16 +15,10 @@ runs:
   steps:
     - name: Clone, build, and run tests for Postgres engine using ${{ inputs.engine_branch }}
       id: build-modified-postgres
-      run: |
-        cd ..
-        git clone --branch ${{ inputs.engine_branch }} https://github.com/babelfish-for-postgresql/postgresql_modified_for_babelfish.git
-        cd postgresql_modified_for_babelfish
-        ./configure --prefix=$HOME/${{ inputs.install_dir }}/ --with-python PYTHON=/usr/bin/python2.7 --enable-debug CFLAGS="-ggdb" --with-libxml --with-uuid=ossp --with-icu
-        make -j 4 2>error.txt
-        make install
-        make check
-        cd contrib && make && sudo make install
-      shell: bash
+      uses: ./.github/composite-actions/build-modified-postgres
+      with:
+        engine_branch: ${{ inputs.engine_branch }}
+        install_dir: ${{ inputs.install_dir }}
 
     - name: Compile ANTLR
       id: compile-antlr
@@ -33,27 +27,12 @@ runs:
       with:
         install_dir: ${{ inputs.install_dir }}
 
-    - uses: actions/checkout@v2
-      with:
-        repository: babelfish-for-postgresql/babelfish_extensions
-        ref: ${{ inputs.extension_branch }}
-
     - name: Set env variables and build extensions using ${{ inputs.extension_branch }}
       if: always() && steps.compile-antlr.outcome == 'success'
-      run: |
-        export PG_CONFIG=~/${{ inputs.install_dir }}/bin/pg_config
-        export PG_SRC=~/work/babelfish_extensions/postgresql_modified_for_babelfish
-        export cmake=$(which cmake)
-        cd contrib/babelfishpg_money
-        make && make install
-        cd ../babelfishpg_common
-        make && make install
-        cd ../babelfishpg_tds
-        make && make install
-        echo Now building bbf_tsql
-        cd ../babelfishpg_tsql
-        make && make install
-      shell: bash
+      uses: ./.github/composite-actions/build-extensions
+      with: 
+        install_dir: ${{ inputs.install_dir }}
+        extension_branch: ${{ inputs.extension_branch }}
 
     - name: Install extensions
       run: |
