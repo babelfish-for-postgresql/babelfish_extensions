@@ -3703,10 +3703,12 @@ makeInsertBulkStatement(TSqlParser::Dml_statementContext *ctx)
 {
 	PLtsql_stmt_insert_bulk *stmt = (PLtsql_stmt_insert_bulk *) palloc0(sizeof(*stmt));
 	TSqlParser::Bulk_insert_statementContext *bulk_ctx = ctx->bulk_insert_statement();
+	std::vector<TSqlParser::Insert_bulk_column_definitionContext *> column_list = bulk_ctx->insert_bulk_column_definition();
 
 	std::string table_name;
 	std::string schema_name;
 	std::string db_name;
+	std::stringstream column_refs;
 
 	if (!bulk_ctx)
 	{
@@ -3740,6 +3742,20 @@ makeInsertBulkStatement(TSqlParser::Dml_statementContext *ctx)
 		if (!db_name.empty())
 		{
 			stmt->db_name = pstrdup(downcase_truncate_identifier(db_name.c_str(), db_name.length(), true));
+		}
+
+		/* create a list of columns to insert into */
+		if (!column_list.empty())
+		{
+			for (size_t i = 0; i < column_list.size() - 1; i++)
+			{
+				if (column_list[i]->simple_column_name())
+					column_refs << ::stripQuoteFromId(column_list[i]->simple_column_name()->id()) << ", ";
+			}
+			if (column_list[column_list.size() - 1]->simple_column_name())
+				column_refs << ::stripQuoteFromId(column_list[column_list.size() - 1]->simple_column_name()->id());
+
+			stmt->column_refs = pstrdup(column_refs.str().c_str());
 		}
 	}
 
