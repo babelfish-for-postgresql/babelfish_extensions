@@ -164,6 +164,40 @@ WHERE has_schema_privilege(sch.schema_id, 'USAGE')
 AND c.contype = 'f';
 GRANT SELECT ON sys.foreign_keys TO PUBLIC;
 
+ALTER VIEW sys.key_constraints RENAME TO key_constraints_deprecated;
+
+CREATE OR replace view sys.key_constraints AS
+SELECT
+    CAST(c.conname AS SYSNAME) AS name
+  , CAST(c.oid AS INT) AS object_id
+  , CAST(0 AS INT) AS principal_id
+  , CAST(sch.schema_id AS INT) AS schema_id
+  , CAST(c.conrelid AS INT) AS parent_object_id
+  , CAST(
+    (CASE contype
+      WHEN 'p' THEN 'PK'
+      WHEN 'u' THEN 'UQ'
+    END) 
+    AS CHAR(2)) AS type
+  , CAST(
+    (CASE contype
+      WHEN 'p' THEN 'PRIMARY_KEY_CONSTRAINT'
+      WHEN 'u' THEN 'UNIQUE_CONSTRAINT'
+    END)
+    AS NVARCHAR(60)) AS type_desc
+  , CAST(NULL AS DATETIME) AS create_date
+  , CAST(NULL AS DATETIME) AS modify_date
+  , CAST(c.conindid AS INT) AS unique_index_id
+  , CAST(0 AS sys.BIT) AS is_ms_shipped
+  , CAST(0 AS sys.BIT) AS is_published
+  , CAST(0 AS sys.BIT) AS is_schema_published
+  , CAST(1 as sys.BIT) as is_system_named
+FROM pg_constraint c
+INNER JOIN sys.schemas sch ON sch.schema_id = c.connamespace
+WHERE has_schema_privilege(sch.schema_id, 'USAGE')
+AND c.contype IN ('p', 'u');
+GRANT SELECT ON sys.key_constraints TO PUBLIC;
+
 create or replace view sys.objects as
 select
       CAST(t.name as sys.sysname) as name 
@@ -305,6 +339,7 @@ select
 from sys.table_types tt;
 GRANT SELECT ON sys.objects TO PUBLIC;
 
+CALL sys.babelfish_drop_deprecated_view('sys', 'key_constraints_deprecated');
 CALL sys.babelfish_drop_deprecated_view('sys', 'foreign_keys_deprecated');
 
 ALTER FUNCTION OBJECTPROPERTY(INT, SYS.VARCHAR) RENAME TO objectproperty_deprecated_2_1_0;
