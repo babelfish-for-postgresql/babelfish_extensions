@@ -80,6 +80,8 @@ jobs:
         if: always() && steps.setup-upgrade-ver-ca.outcome == 'success' 
         uses: ./.github/composite-actions/upgrade-version
 
+      # Due to some action/checkout's in previous step the dynamically generated upgrade-version composite action isn't available,
+      # hence to avoid error in post action step recreated the upgrade-version composite action
       - name: Recreate Upgrade Version Composite Action
         if: always() && steps.install-yq.outcome == 'success' && steps.setup-base-version.outcome == 'success'
         uses: ./.github/composite-actions/setup-upgrade-version-ca

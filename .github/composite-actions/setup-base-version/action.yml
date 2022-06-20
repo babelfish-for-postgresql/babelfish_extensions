@@ -34,12 +34,11 @@ runs:
         install_dir: ${{ inputs.install_dir }}
         extension_branch: ${{ inputs.extension_branch }}
 
+    # Not used composite action install-extension here since, in the previous step it has 
+    # checked out a branch/tag which may not have the updated install-extension composite action
     - name: Install extensions
       run: |
         cd ~
-        curl https://packages.microsoft.com/keys/microsoft.asc | sudo apt-key add -
-        curl https://packages.microsoft.com/config/ubuntu/20.04/prod.list | sudo tee /etc/apt/sources.list.d/msprod.list
-        sudo apt-get install mssql-tools unixodbc-dev
         export PATH=/opt/mssql-tools/bin:$PATH
         ~/${{ inputs.install_dir }}/bin/initdb -D ~/${{ inputs.install_dir }}/data/
         ~/${{ inputs.install_dir }}/bin/pg_ctl -D ~/${{ inputs.install_dir }}/data/ -l logfile start

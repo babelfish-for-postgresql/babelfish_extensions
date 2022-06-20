@@ -22,11 +22,6 @@ runs:
         engine_branch: ${{ inputs.engine_branch }}
         install_dir: ${{ inputs.install_dir }}
 
-    - uses: actions/checkout@v2
-      with:
-        repository: babelfish-for-postgresql/babelfish_extensions
-        ref: ${{ inputs.extension_branch }}
-
     - name: Set env variables and build extensions using ${{ inputs.extension_branch }}
       id: build-extensions-newer
       uses: ./.github/composite-actions/build-extensions
@@ -34,6 +29,8 @@ runs:
         install_dir: ${{ inputs.install_dir }}
         extension_branch: ${{ inputs.extension_branch }}
 
+    # Not created and used composite action update-extensions here since, in the previous step it has 
+    # checked out a branch/tag which may not have the updated update-extension composite action
     - name: Update extensions
       if: always() && steps.build-extensions-newer.outcome == 'success'
       run: |
