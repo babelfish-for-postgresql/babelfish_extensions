@@ -544,3 +544,31 @@ numeric
 
 
 DROP TABLE decimal_table;
+
+# BABEL-3074
+CREATE TABLE overflow_test (id integer PRIMARY KEY, amount decimal(6, 2));
+INSERT INTO overflow_test VALUES (1, 5000.00);
+~~ROW COUNT: 1~~
+
+INSERT INTO overflow_test VALUES (2, 6000.00);
+~~ROW COUNT: 1~~
+
+SELECT count(*), sum(amount) FROM overflow_test;
+~~START~~
+int#!#numeric
+2#!#11000.00
+~~END~~
+
+SELECT count(*), sum(amount) + 100 FROM overflow_test;
+~~START~~
+int#!#numeric
+2#!#11100.00
+~~END~~
+
+SELECT (100 / SUM((((amount) * 8.00) / 1024))) FROM overflow_test;
+~~START~~
+numeric
+1.16363636363636360
+~~END~~
+
+DROP TABLE overflow_test;

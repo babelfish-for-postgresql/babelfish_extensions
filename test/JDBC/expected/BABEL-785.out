@@ -183,7 +183,7 @@ select (100 / SUM((((size) * 8.00) / 1024))) from testTbl as T;
 go
 ~~START~~
 numeric
-0.0073942620526
+0.00739426205264
 ~~END~~
 
 
