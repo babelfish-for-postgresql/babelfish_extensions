@@ -1,0 +1,80 @@
+
+-- psql
+
+-- This is a temporary test.
+-- Once we have a Github action that can test Major Version Upgrade from 13.4 to 14.latest,
+-- then this test should be removed.
+update pg_catalog.pg_operator
+set oprresult = 25,
+    oprcode = 'sys.babelfish_concat_wrapper(text, text)'::regprocedure::regproc
+where oprname = '+' and
+        oprleft = 25 and
+        oprright = 25 and
+        oprnamespace = (select oid from pg_namespace where nspname = 'sys');
+go
+~~ROW COUNT: 1~~
+
+
+update pg_catalog.pg_operator
+set oprcode = 'sys.int8fixeddecimaldiv(bigint, sys.fixeddecimal)'::regprocedure::regproc,
+    oprresult = 701
+where oprname = '/' and
+        oprleft = 20 and
+        oprright = (select oid from pg_type where typname = 'fixeddecimal') and
+        oprnamespace = (select oid from pg_namespace where nspname = 'sys');
+go
+~~ROW COUNT: 1~~
+
+
+update pg_catalog.pg_operator
+set oprcode = 'sys.int4fixeddecimaldiv(int, sys.fixeddecimal)'::regprocedure::regproc,
+    oprresult = 701
+where oprname = '/' and
+        oprleft = 23 and
+        oprright = (select oid from pg_type where typname = 'fixeddecimal') and
+        oprnamespace = (select oid from pg_namespace where nspname = 'sys');
+go
+~~ROW COUNT: 1~~
+
+
+update pg_operator
+set oprcode = 'sys.int2fixeddecimaldiv(smallint, sys.fixeddecimal)'::regprocedure::regproc,
+    oprresult = 701
+where oprname = '/' and
+        oprleft = 21 and
+        oprright = (select oid from pg_type where typname = 'fixeddecimal') and
+        oprnamespace = (select oid from pg_namespace where nspname = 'sys');
+go
+~~ROW COUNT: 1~~
+
+
+-- tsql
+
+select cast('abc' as text) + cast('def' as text);
+go
+~~START~~
+text
+abcdef
+~~END~~
+
+select CAST(2.56 as bigint) / CAST(3.60 as money);
+go
+~~START~~
+float
+0.5555555555555556
+~~END~~
+
+select CAST(2.56 as int) / CAST(3.60 as money);
+go
+~~START~~
+float
+0.5555555555555556
+~~END~~
+
+select CAST(2.56 as smallint) / CAST(3.60 as money);
+go
+~~START~~
+float
+0.5555555555555556
+~~END~~
+

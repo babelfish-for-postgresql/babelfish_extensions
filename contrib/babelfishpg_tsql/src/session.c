@@ -6,6 +6,7 @@
 #include "utils/builtins.h"
 #include "utils/guc.h"
 
+#include <ctype.h>
 #include "catalog.h"
 #include "dbcmds.h"
 #include "multidb.h"
@@ -154,6 +155,10 @@ Datum babelfish_db_id(PG_FUNCTION_ARGS)
 	if (PG_NARGS() > 0)
 	{
 		str = TextDatumGetCString(PG_GETARG_DATUM(0));
+		if (pltsql_case_insensitive_identifiers)
+			// Lowercase the entry, if needed
+			for (char *p = str ; *p; ++p) *p = tolower(*p);
+	
 		dbid = get_db_id(str);
 	}
 	else

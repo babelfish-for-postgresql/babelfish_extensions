@@ -1,5 +1,6 @@
 #include "postgres.h"
 #include "commands/explain.h"
+#include "parser/scansup.h"  /* downcase_identifier */
 #include "utils/guc.h"
 
 #include "guc.h"
@@ -68,6 +69,10 @@ static const struct config_enum_entry explain_format_options[] = {
 
 extern bool Transform_null_equals;
 
+/* Dump and Restore */
+bool babelfish_dump_restore = false;
+bool restore_tsql_tabletype = false;
+
 static bool check_server_collation_name(char **newval, void **extra, GucSource source);
 static bool check_default_locale (char **newval, void **extra, GucSource source);
 static bool check_ansi_null_dflt_on (bool *newval, void **extra, GucSource source);
@@ -111,7 +116,18 @@ static const struct config_enum_entry escape_hatch_options[] = {
 
 static bool check_server_collation_name(char **newval, void **extra, GucSource source)
 {
-    return is_valid_server_collation_name(*newval);
+	if (is_valid_server_collation_name(*newval))
+	{
+		/*
+		 * We are storing value in lower case since
+		 * Collation names are stored in lowercase into pg catalog (pg_collation).
+		 */
+		char *dupval = pstrdup(*newval);
+		strcpy(*newval, downcase_identifier(dupval, strlen(dupval), false, false));
+		pfree(dupval);
+		return true;
+	}
+	return false;
 }
 
 static bool check_default_locale (char **newval, void **extra, GucSource source)
@@ -968,6 +984,25 @@ define_custom_variables(void)
 				 "",
 				 PGC_SIGHUP,
 				 GUC_NOT_IN_SAMPLE,
+				 NULL, NULL, NULL);
+
+	/* Dump and Restore */
+	DefineCustomBoolVariable("babelfishpg_tsql.dump_restore",
+				 gettext_noop("Enable special handlings during dump and restore"),
+				 NULL,
+				 &babelfish_dump_restore,
+				 false,
+				 PGC_USERSET,
+				 GUC_NOT_IN_SAMPLE | GUC_DISALLOW_IN_FILE | GUC_DISALLOW_IN_AUTO_FILE,
+				 NULL, NULL, NULL);
+
+	DefineCustomBoolVariable("babelfishpg_tsql.restore_tsql_tabletype",
+				 gettext_noop("Shows that if a table is creating a T-SQL table type during restore"),
+				 NULL,
+				 &restore_tsql_tabletype,
+				 false,
+				 PGC_USERSET,
+				 GUC_NOT_IN_SAMPLE | GUC_DISALLOW_IN_FILE | GUC_DISALLOW_IN_AUTO_FILE,
 				 NULL, NULL, NULL);
 }
 
