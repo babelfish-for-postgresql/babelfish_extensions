@@ -346,7 +346,7 @@ SELECT
   , CAST(idx.allow_row_locks AS sys.bit) AS allow_row_locks
   , CAST(idx.allow_page_locks AS sys.bit) AS allow_page_locks
   , CAST(idx.has_filter AS sys.bit) AS has_filter
-  , CAST(idx.filter_definition AS sys.nvarchar) AS filter_definition
+  , CAST(idx.filter_definition AS sys.nvarchar(4000)) AS filter_definition
   , CAST(idx.auto_created AS sys.bit) AS auto_created
   , CAST(NULL AS INT) AS using_xml_index_id
   , CAST(NULL AS char(1)) AS secondary_type
