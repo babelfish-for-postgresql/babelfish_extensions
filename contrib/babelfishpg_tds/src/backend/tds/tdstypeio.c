@@ -571,6 +571,22 @@ TdsLookupTypeFunctionsByTdsId(int32_t typeId, int32_t typeLen)
 	if (found)
 		return &(fc2ent->data);
 
+	/*
+	 * In spite of being fixed length datatypes, Numeric and Decimal at times
+	 * come on wire with a different length as part of the column-metadata.
+	 * We shall update the tdstypelen and search again.
+	 */
+	if (typeId == TDS_TYPE_NUMERICN || typeId == TDS_TYPE_DECIMALN)
+	{
+		fc2key.tdstypelen = TDS_MAXLEN_NUMERIC;
+		fc2ent = (FunctionCacheByTdsIdEntry *)hash_search(functionInfoCacheByTdsId,
+														  &fc2key,
+														  HASH_FIND,
+														  &found);
+		if (found)
+			return &(fc2ent->data);
+	}
+
 	/* Not found either way */
 	ereport(ERROR,
 			(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
