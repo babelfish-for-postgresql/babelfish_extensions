@@ -1,0 +1,6 @@
+SELECT * FROM sys.fulltext_catalogs;
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: data type bit is not supported yet)~~
+
