@@ -2353,7 +2353,7 @@ SELECT
    CAST(0 as sys.BIT) AS user_created,
    CAST(0 as sys.BIT) AS no_recompute,
    CAST(0 as sys.BIT) AS has_filter,
-   CAST('' as sys.NVARCHAR) AS filter_definition,
+   CAST('' as sys.NVARCHAR(4000)) AS filter_definition,
    CAST(0 as sys.BIT) AS is_temporary,
    CAST(0 as sys.BIT) AS is_incremental,
    CAST(0 as sys.BIT) AS has_persisted_sample,
