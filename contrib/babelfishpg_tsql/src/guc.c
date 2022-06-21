@@ -1,5 +1,6 @@
 #include "postgres.h"
 #include "commands/explain.h"
+#include "parser/scansup.h"  /* downcase_identifier */
 #include "utils/guc.h"
 
 #include "guc.h"
@@ -115,7 +116,18 @@ static const struct config_enum_entry escape_hatch_options[] = {
 
 static bool check_server_collation_name(char **newval, void **extra, GucSource source)
 {
-    return is_valid_server_collation_name(*newval);
+	if (is_valid_server_collation_name(*newval))
+	{
+		/*
+		 * We are storing value in lower case since
+		 * Collation names are stored in lowercase into pg catalog (pg_collation).
+		 */
+		char *dupval = pstrdup(*newval);
+		strcpy(*newval, downcase_identifier(dupval, strlen(dupval), false, false));
+		pfree(dupval);
+		return true;
+	}
+	return false;
 }
 
 static bool check_default_locale (char **newval, void **extra, GucSource source)
