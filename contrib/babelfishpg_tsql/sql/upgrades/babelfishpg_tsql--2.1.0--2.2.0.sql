@@ -580,8 +580,8 @@ AS
 SELECT 
    CAST(0 AS INT) AS property_list_id,
    CAST('' AS SYSNAME) AS name,
-   CAST('2022-02-22 22:22:22.222' AS DATETIME) AS create_date,
-   CAST('2022-02-22 22:22:22.222' AS DATETIME) AS modify_date,
+   CAST(NULL AS DATETIME) AS create_date,
+   CAST(NULL AS DATETIME) AS modify_date,
    CAST(0 AS INT) AS principal_id
 WHERE FALSE;
 GRANT SELECT ON sys.registered_search_property_lists TO PUBLIC;
