@@ -19,6 +19,9 @@ go
 create index index_babel_3292_t2_b2 on babel_3292_t2(b2)
 go
 
+select set_config('babelfishpg_tsql.explain_costs', 'off', false)
+go
+
 set babelfish_showplan_all on
 go
 
