@@ -88,7 +88,7 @@ set_session_properties(const char *db_name)
 		else
 			user = get_guest_role_name(db_name);
 
-		if (!user)
+		if (!user || is_member_of_role(get_role_oid(user, false), GetSessionUserId()))
 			ereport(ERROR,
 					(errcode(ERRCODE_UNDEFINED_DATABASE),
 					 errmsg("The server principal \"%s\" is not able to access "
