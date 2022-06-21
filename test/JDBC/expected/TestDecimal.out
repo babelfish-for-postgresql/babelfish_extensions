@@ -553,9 +553,6 @@ INSERT INTO overflow_test VALUES (1, 5000.00);
 INSERT INTO overflow_test VALUES (2, 6000.00);
 ~~ROW COUNT: 1~~
 
-INSERT INTO overflow_test VALUES (2, 6000.00);
-~~ROW COUNT: 1~~
- 
 SELECT count(*), sum(amount) FROM overflow_test;
 ~~START~~
 int#!#numeric
