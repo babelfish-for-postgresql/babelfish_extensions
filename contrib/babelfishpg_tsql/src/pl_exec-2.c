@@ -2618,7 +2618,7 @@ execute_bulk_load_insert(int ncol, int nrow, Oid *argtypes,
 	PG_TRY();
 	{
 		elog(DEBUG2, "Insert Bulk operation on destination table: %s", bulk_load_table_name);
-		appendStringInfo(src, "Insert into %s values ", bulk_load_table_name);
+		appendStringInfo(src, "Insert into %s OVERRIDING SYSTEM VALUE values ", bulk_load_table_name);
 
 		/* Disable triggers on the table. */
 		rel = table_open(bulk_load_table_oid, AccessShareLock);
