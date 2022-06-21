@@ -1,0 +1,181 @@
+
+-- [BABEL-2769] Nullable DATETIME column does not store NULL
+CREATE DATABASE db_babel_2769;
+go
+
+USE db_babel_2769;
+go
+
+CREATE TABLE Smalldatetime2769 (c1 VARCHAR(32) NOT NULL, c2 SMALLDATETIME NULL);
+go
+INSERT INTO Smalldatetime2769 ( c1 ) VALUES ('First');
+go
+~~ROW COUNT: 1~~
+
+INSERT INTO Smalldatetime2769 ( c1 ) VALUES ('Second');
+go
+~~ROW COUNT: 1~~
+
+SELECT * FROM Smalldatetime2769;
+go
+~~START~~
+varchar#!#smalldatetime
+First#!#<NULL>
+Second#!#<NULL>
+~~END~~
+
+DROP TABLE Smalldatetime2769;
+go
+
+CREATE TABLE Datetime2769 (c1 VARCHAR(32) NOT NULL, c2 DATETIME NULL);
+go
+INSERT INTO Datetime2769 ( c1 ) VALUES ('First');
+go
+~~ROW COUNT: 1~~
+
+INSERT INTO Datetime2769 ( c1 ) VALUES ('Second');
+go
+~~ROW COUNT: 1~~
+
+SELECT * FROM Datetime2769;
+go
+~~START~~
+varchar#!#datetime
+First#!#<NULL>
+Second#!#<NULL>
+~~END~~
+
+DROP TABLE Datetime2769;
+go
+
+CREATE TABLE Datetime2_2769 (c1 VARCHAR(32) NOT NULL, c2 DATETIME2(3) NULL);
+go
+INSERT INTO Datetime2_2769 ( c1 ) VALUES ('First');
+go
+~~ROW COUNT: 1~~
+
+INSERT INTO Datetime2_2769 ( c1 ) VALUES ('Second');
+go
+~~ROW COUNT: 1~~
+
+SELECT * FROM Datetime2_2769;
+go
+~~START~~
+varchar#!#datetime2
+First#!#<NULL>
+Second#!#<NULL>
+~~END~~
+
+DROP TABLE Datetime2_2769;
+go
+
+CREATE TABLE Datetimeoffset2769 (c1 VARCHAR(32) NOT NULL, c2 DATETIMEOFFSET(5) NULL);
+go
+INSERT INTO Datetimeoffset2769 ( c1 ) VALUES ('First');
+go
+~~ROW COUNT: 1~~
+
+INSERT INTO Datetimeoffset2769 ( c1 ) VALUES ('Second');
+go
+~~ROW COUNT: 1~~
+
+SELECT * FROM Datetimeoffset2769;
+go
+~~START~~
+varchar#!#datetimeoffset
+First#!#<NULL>
+Second#!#<NULL>
+~~END~~
+
+DROP TABLE Datetimeoffset2769;
+go
+
+create table #srtestnull_t1 (a varchar(2), dt smalldatetime null);
+go
+insert into #srtestnull_t1 values ('A', '');
+go
+~~ROW COUNT: 1~~
+
+insert into #srtestnull_t1 (a) values ('B');
+go
+~~ROW COUNT: 1~~
+
+select * from #srtestnull_t1;
+go
+~~START~~
+varchar#!#smalldatetime
+A#!#1900-01-01 00:00:00.0
+B#!#<NULL>
+~~END~~
+
+drop table #srtestnull_t1;
+go
+
+create table #srtestnull_t2 (a varchar(2), dt datetime null);
+go
+insert into #srtestnull_t2 values ('A', '');
+go
+~~ROW COUNT: 1~~
+
+insert into #srtestnull_t2 (a) values ('B');
+go
+~~ROW COUNT: 1~~
+
+select * from #srtestnull_t2;
+go
+~~START~~
+varchar#!#datetime
+A#!#1900-01-01 00:00:00.0
+B#!#<NULL>
+~~END~~
+
+drop table #srtestnull_t2;
+go
+
+create table #srtestnull_t3 (a varchar(2), dt datetime2(4) null);
+go
+insert into #srtestnull_t3 values ('A', '');
+go
+~~ROW COUNT: 1~~
+
+insert into #srtestnull_t3 (a) values ('B');
+go
+~~ROW COUNT: 1~~
+
+select * from #srtestnull_t3;
+go
+~~START~~
+varchar#!#datetime2
+A#!#1900-01-01 00:00:00.0000
+B#!#<NULL>
+~~END~~
+
+drop table #srtestnull_t3;
+go
+
+create table #srtestnull_t4 (a varchar(2), dt datetimeoffset(6) null);
+go
+insert into #srtestnull_t4 values ('A', '');
+go
+~~ROW COUNT: 1~~
+
+insert into #srtestnull_t4 (a) values ('B');
+go
+~~ROW COUNT: 1~~
+
+select * from #srtestnull_t4;
+go
+~~START~~
+varchar#!#datetimeoffset
+A#!#1900-01-01 00:00:00.000000 +00:00
+B#!#<NULL>
+~~END~~
+
+drop table #srtestnull_t4;
+go
+
+USE master;
+go
+
+DROP DATABASE db_babel_2769;
+go

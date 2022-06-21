@@ -28,4 +28,6 @@
 /* Range-check a datetime */
 #define IS_VALID_DATETIME(t)  (MIN_DATETIME <= (t) && (t) < END_DATETIME)
 
+extern Timestamp initializeToDefaultDatetime(void);
+
 #endif							/* PLTSQL_DATETIME_H */

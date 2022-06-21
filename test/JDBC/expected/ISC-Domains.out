@@ -66,9 +66,9 @@ master#!#isc_domains#!#binary_t#!#binary#!#8#!#8#!#<NULL>#!#<NULL>#!#<NULL>#!#<N
 master#!#isc_domains#!#bit_t#!#bit#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>
 master#!#isc_domains#!#char_t#!#char#!#10#!#10#!#<NULL>#!#<NULL>#!#sql_latin1_general_cp1_ci_as#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>
 master#!#isc_domains#!#date_t#!#date#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#0#!#<NULL>
-master#!#isc_domains#!#datetime2_t#!#datetime2#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#5#!#1900-01-01 00:00:00
-master#!#isc_domains#!#datetime_t#!#datetime#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#3#!#1900-01-01 00:00:00
-master#!#isc_domains#!#datetimeoffset_t#!#datetimeoffset#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#5#!#1900-01-01 00:00+0
+master#!#isc_domains#!#datetime2_t#!#datetime2#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#5#!#<NULL>
+master#!#isc_domains#!#datetime_t#!#datetime#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#3#!#<NULL>
+master#!#isc_domains#!#datetimeoffset_t#!#datetimeoffset#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#5#!#<NULL>
 master#!#isc_domains#!#image_t#!#image#!#2147483647#!#2147483647#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>
 master#!#isc_domains#!#int_t#!#int#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#10#!#10#!#0#!#<NULL>#!#<NULL>
 master#!#isc_domains#!#money_t#!#money#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#19#!#10#!#4#!#<NULL>#!#<NULL>
@@ -78,7 +78,7 @@ master#!#isc_domains#!#ntext_t#!#ntext#!#1073741823#!#2147483646#!#<NULL>#!#<NUL
 master#!#isc_domains#!#numeric_t#!#numeric#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#5#!#10#!#3#!#<NULL>#!#<NULL>
 master#!#isc_domains#!#nvarchar_t#!#nvarchar#!#8#!#16#!#<NULL>#!#<NULL>#!#sql_latin1_general_cp1_ci_as#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>
 master#!#isc_domains#!#real_t#!#real#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#24#!#2#!#<NULL>#!#<NULL>#!#<NULL>
-master#!#isc_domains#!#smalldatetime_t#!#smalldatetime#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#0#!#1900-01-01 00:00
+master#!#isc_domains#!#smalldatetime_t#!#smalldatetime#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#0#!#<NULL>
 master#!#isc_domains#!#smallint_t#!#smallint#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#5#!#10#!#0#!#<NULL>#!#<NULL>
 master#!#isc_domains#!#smallmoney_t#!#smallmoney#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#10#!#10#!#4#!#<NULL>#!#<NULL>
 master#!#isc_domains#!#sql_variant_t#!#sql_variant#!#0#!#0#!#<NULL>#!#<NULL>#!#sql_latin1_general_cp1_ci_as#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>
