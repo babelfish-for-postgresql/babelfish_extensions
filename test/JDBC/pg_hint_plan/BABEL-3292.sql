@@ -47,6 +47,9 @@ go
 select * from babel_3292_t1 with(index=index_babel_3292_t1_b1) where b1 = 1
 go
 
+select * from babel_3292_t1 where b1=1 option(table hint(babel_3292_t1, index(index_babel_3292_t1_b1)))
+go
+
 /*
  * Test with multiple index hints
  */
@@ -54,6 +57,9 @@ select * from babel_3292_t1 where b1 = 1 and c1 = 1
 go
 
 select * from babel_3292_t1 with(index(index_babel_3292_t1_b1), index(index_babel_3292_t1_c1)) where b1 = 1 and c1 = 1
+go
+
+select * from babel_3292_t1 where b1 = 1 and c1 = 1 option(table hint(babel_3292_t1, index(index_babel_3292_t1_b1), index(index_babel_3292_t1_c1)))
 go
 
 /*
@@ -66,6 +72,9 @@ select * from babel_3292_t1 with(index(index_babel_3292_t1_b1)), babel_3292_t2 w
 go
 
 select * from babel_3292_t1 with(index=index_babel_3292_t1_b1), babel_3292_t2 with(index=index_babel_3292_t2_b2) where b1 = 1 and b2 = 1
+go
+
+select * from babel_3292_t1, babel_3292_t2 where b1 = 1 and b2 = 1 option(table hint(babel_3292_t1, index(index_babel_3292_t1_b1)), table hint(babel_3292_t2, index(index_babel_3292_t2_b2)))
 go
 
 set babelfish_showplan_all off
