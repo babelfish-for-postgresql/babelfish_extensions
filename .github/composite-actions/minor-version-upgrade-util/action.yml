@@ -1,0 +1,63 @@
+name: 'Minor Version Upgrade Utility'
+inputs:
+  engine_branch: 
+    description: "Engine Branch"
+    required: true
+  extension_branch: 
+    description: "Extension Branch"
+    required: true
+  is_final_ver:
+    description: "Is this the final version"
+    required: true
+  install_dir:
+    description: "Install new version in this directory"
+    required: true
+
+runs:
+  using: "composite"
+  steps:    
+    - name: Build and run tests for Postgres engine using ${{ inputs.engine_branch }}
+      uses: ./.github/composite-actions/build-modified-postgres
+      with:
+        engine_branch: ${{ inputs.engine_branch }}
+        install_dir: ${{ inputs.install_dir }}
+
+    - name: Set env variables and build extensions using ${{ inputs.extension_branch }}
+      id: build-extensions-newer
+      uses: ./.github/composite-actions/build-extensions
+      with: 
+        install_dir: ${{ inputs.install_dir }}
+        extension_branch: ${{ inputs.extension_branch }}
+
+    # Not created and used composite action update-extensions here since, in the previous step it has 
+    # checked out a branch/tag which may not have the updated update-extension composite action
+    - name: Update extensions
+      if: always() && steps.build-extensions-newer.outcome == 'success'
+      run: |
+        cd ~
+        ~/${{ inputs.install_dir }}/bin/pg_ctl -D ~/${{ inputs.install_dir }}/data/ -l logfile restart
+        sudo ~/${{ inputs.install_dir }}/bin/psql -d jdbc_testdb -U runner -c "\dx"
+        sudo ~/${{ inputs.install_dir }}/bin/psql -d jdbc_testdb -U runner -c "ALTER EXTENSION "babelfishpg_common" UPDATE; ALTER EXTENSION "babelfishpg_tsql" UPDATE;"
+        sudo ~/${{ inputs.install_dir }}/bin/psql -d jdbc_testdb -U runner -c "\dx"
+        sqlcmd -S localhost -U jdbc_user -P 12345678 -Q "SELECT @@version GO"
+      shell: bash
+
+    - uses: actions/checkout@v2
+  
+    - name: Change migration mode to multi-db
+      id: change-migration-mode
+      if: always() && inputs.is_final_ver == 'true'
+      run: |
+        sudo ~/${{ inputs.install_dir}}/bin/psql -d jdbc_testdb -U runner -c "ALTER SYSTEM SET babelfishpg_tsql.migration_mode = 'multi-db';"
+        sudo ~/${{ inputs.install_dir}}/bin/psql -d jdbc_testdb -U runner -c "SELECT pg_reload_conf();"
+      shell: bash
+
+    - name: Run JDBC Verify Tests
+      id: jdbc-verify-tests
+      if: always() && steps.change-migration-mode.outcome == 'success' && inputs.is_final_ver == 'true'
+      run: |
+        cd test/JDBC/
+        export inputFilesPath=upgrade/verification
+        mvn test
+      shell: bash
+    

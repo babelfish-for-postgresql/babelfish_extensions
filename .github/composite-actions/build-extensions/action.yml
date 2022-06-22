@@ -1,17 +1,26 @@
 name: 'Build Extensions'
-
 inputs:
   install_dir:
     description: 'Engine install directory'
     required: no
     default: postgres
+  extension_branch: 
+    description: 'Extension Branch name which needs to checkout first'
+    required: no
+    default: 'not_specified'
 
 runs:
   using: "composite"
   steps:
+    - if: always() && (inputs.extension_branch != 'not_specified')
+      uses: actions/checkout@v2
+      with:
+        repository: babelfish-for-postgresql/babelfish_extensions
+        ref: ${{ inputs.extension_branch }}
+
     - name: Build Extensions
       run: |
-        export PG_CONFIG=~/${{inputs.install_dir}}/bin/pg_config
+        export PG_CONFIG=~/${{ inputs.install_dir }}/bin/pg_config
         export PG_SRC=~/work/babelfish_extensions/postgresql_modified_for_babelfish
         export cmake=$(which cmake)
         cd contrib/babelfishpg_money
