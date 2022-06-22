@@ -7,7 +7,7 @@ go
 SELECT seed_value, increment_value, last_value FROM sys.identity_columns WHERE object_id = object_id('sys_identity_columns');
 go
 ~~START~~
-bigint#!#bigint#!#bigint
+sql_variant#!#sql_variant#!#sql_variant
 1#!#1#!#1
 ~~END~~
 
