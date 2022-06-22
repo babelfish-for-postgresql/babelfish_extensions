@@ -3134,13 +3134,7 @@ void extractQueryHintsFromOptionClause(TSqlParser::Option_clauseContext *octx)
 	{
 		if (option->TABLE())
 		{
-			std::string table_name = ::getFullText(option->table_name());
-			size_t idx = table_name.find('.');
-			while (idx != std::string::npos)
-			{
-				table_name = table_name.substr(idx + 1);
-				idx = table_name.find('.');
-			}
+			std::string table_name = ::getFullText(option->table_name()->table);
 			if (!table_name.empty())
 			{
 				for(auto table_hint: option->table_hint())
