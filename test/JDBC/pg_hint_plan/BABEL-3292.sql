@@ -153,7 +153,7 @@ go
 
 
 -- Test all queries by specifying a database and schema name
-use d
+use tempdb
 go
 
 drop table if exists babel_3292_schema.t1
@@ -189,46 +189,46 @@ go
 set babelfish_showplan_all on
 go
 
-select * from d.babel_3292_schema.t1 (index(index_babel_3292_schema_t1_b1)) where b1 = 1
+select * from tempdb.babel_3292_schema.t1 (index(index_babel_3292_schema_t1_b1)) where b1 = 1
 go
 
-select * from d.babel_3292_schema.t1 where b1=1 option(table hint(d.babel_3292_schema.t1, index(index_babel_3292_schema_t1_b1)))
+select * from tempdb.babel_3292_schema.t1 where b1=1 option(table hint(tempdb.babel_3292_schema.t1, index(index_babel_3292_schema_t1_b1)))
 go
 
-select * from d.babel_3292_schema.t1 with(index(index_babel_3292_schema_t1_b1), index(index_babel_3292_schema_t1_c1)) where b1 = 1 and c1 = 1
+select * from tempdb.babel_3292_schema.t1 with(index(index_babel_3292_schema_t1_b1), index(index_babel_3292_schema_t1_c1)) where b1 = 1 and c1 = 1
 go
 
-select * from d.babel_3292_schema.t1 where b1 = 1 and c1 = 1 option(table hint(d.babel_3292_schema.t1, index(index_babel_3292_schema_t1_b1), index(index_babel_3292_schema_t1_c1)))
+select * from tempdb.babel_3292_schema.t1 where b1 = 1 and c1 = 1 option(table hint(tempdb.babel_3292_schema.t1, index(index_babel_3292_schema_t1_b1), index(index_babel_3292_schema_t1_c1)))
 go
 
-select * from d.babel_3292_schema.t1 with(index(index_babel_3292_schema_t1_b1)), d.dbo.babel_3292_t2 with(index(index_babel_3292_t2_b2)) where b1 = 1 and b2 = 1
+select * from tempdb.babel_3292_schema.t1 with(index(index_babel_3292_schema_t1_b1)), tempdb.dbo.babel_3292_t2 with(index(index_babel_3292_t2_b2)) where b1 = 1 and b2 = 1
 go
 
-select * from d.babel_3292_schema.t1, d.dbo.babel_3292_t2 where b1 = 1 and b2 = 1 option(table hint(d.babel_3292_schema.t1, index(index_babel_3292_schema_t1_b1)), table hint(d.dbo.babel_3292_t2, index(index_babel_3292_t2_b2)))
+select * from tempdb.babel_3292_schema.t1, tempdb.dbo.babel_3292_t2 where b1 = 1 and b2 = 1 option(table hint(tempdb.babel_3292_schema.t1, index(index_babel_3292_schema_t1_b1)), table hint(tempdb.dbo.babel_3292_t2, index(index_babel_3292_t2_b2)))
 go
 
-insert into d.dbo.babel_3292_t2 select * from d.babel_3292_schema.t1 with(index(index_babel_3292_schema_t1_b1)) where b1 = 1
+insert into tempdb.dbo.babel_3292_t2 select * from tempdb.babel_3292_schema.t1 with(index(index_babel_3292_schema_t1_b1)) where b1 = 1
 go
 
-insert into d.dbo.babel_3292_t2 select * from d.babel_3292_schema.t1 where b1 = 1 option(table hint(d.babel_3292_schema.t1, index(index_babel_3292_schema_t1_b1)))
+insert into tempdb.dbo.babel_3292_t2 select * from tempdb.babel_3292_schema.t1 where b1 = 1 option(table hint(tempdb.babel_3292_schema.t1, index(index_babel_3292_schema_t1_b1)))
 go
 
-update d.babel_3292_schema.t1 with(index(index_babel_3292_schema_t1_b1)) set a1 = 1 where b1 = 1
+update tempdb.babel_3292_schema.t1 with(index(index_babel_3292_schema_t1_b1)) set a1 = 1 where b1 = 1
 go
 
-update d.babel_3292_schema.t1 set a1 = 1 where b1 = 1 option(table hint(d.babel_3292_schema.t1, index(index_babel_3292_schema_t1_b1)))
+update tempdb.babel_3292_schema.t1 set a1 = 1 where b1 = 1 option(table hint(tempdb.babel_3292_schema.t1, index(index_babel_3292_schema_t1_b1)))
 go
 
-delete from d.babel_3292_schema.t1 with(index(index_babel_3292_schema_t1_b1)) where b1 = 1
+delete from tempdb.babel_3292_schema.t1 with(index(index_babel_3292_schema_t1_b1)) where b1 = 1
 go
 
-delete from d.babel_3292_schema.t1 where b1 = 1 option(table hint(d.babel_3292_schema.t1, index(index_babel_3292_schema_t1_b1)))
+delete from tempdb.babel_3292_schema.t1 where b1 = 1 option(table hint(tempdb.babel_3292_schema.t1, index(index_babel_3292_schema_t1_b1)))
 go
 
-select * from d.babel_3292_schema.t1 with(index=index_babel_3292_schema_t1_b1) where b1 = 1 UNION select * from d.dbo.babel_3292_t2 with(index=index_babel_3292_t2_b2) where b2 = 1
+select * from tempdb.babel_3292_schema.t1 with(index=index_babel_3292_schema_t1_b1) where b1 = 1 UNION select * from tempdb.dbo.babel_3292_t2 with(index=index_babel_3292_t2_b2) where b2 = 1
 go
 
-select * from d.babel_3292_schema.t1 where b1 = 1 UNION select * from d.dbo.babel_3292_t2 where b2 = 1 option(table hint(d.babel_3292_schema.t1, index(index_babel_3292_schema_t1_b1)), table hint(d.dbo.babel_3292_t2, index(index_babel_3292_t2_b2))) -- Both queries have a hint
+select * from tempdb.babel_3292_schema.t1 where b1 = 1 UNION select * from tempdb.dbo.babel_3292_t2 where b2 = 1 option(table hint(tempdb.babel_3292_schema.t1, index(index_babel_3292_schema_t1_b1)), table hint(tempdb.dbo.babel_3292_t2, index(index_babel_3292_t2_b2))) -- Both queries have a hint
 go
 
 set babelfish_showplan_all off
