@@ -2368,12 +2368,12 @@ SELECT
    CAST(0 as INT) AS fulltext_catalog_id,
    CAST('' as SYSNAME) AS name,
    CAST('' as NVARCHAR(260)) AS path,
-   CAST(0 as BIT) AS is_default,
-   CAST(0 as BIT) AS is_accent_sensitivity_on,
+   CAST(0 as sys.BIT) AS is_default,
+   CAST(0 as sys.BIT) AS is_accent_sensitivity_on,
    CAST(0 as INT) AS data_space_id,
    CAST(0 as INT) AS file_id,
    CAST(0 as INT) AS principal_id,
-   CAST(2 as BIT) AS is_importing
+   CAST(2 as sys.BIT) AS is_importing
 WHERE FALSE;
 GRANT SELECT ON sys.fulltext_catalogs TO PUBLIC;
 
@@ -2394,10 +2394,10 @@ SELECT
    CAST(0 as INT) AS object_id,
    CAST(0 as INT) AS unique_index_id,
    CAST(0 as INT) AS fulltext_catalog_id,
-   CAST(0 as BIT) AS is_enabled,
+   CAST(0 as sys.BIT) AS is_enabled,
    CAST('O' as CHAR(1)) AS change_tracking_state,
    CAST('' as NVARCHAR(60)) AS change_tracking_state_desc,
-   CAST(0 as BIT) AS has_crawl_completed,
+   CAST(0 as sys.BIT) AS has_crawl_completed,
    CAST('' as CHAR(1)) AS crawl_type,
    CAST('' as NVARCHAR(60)) AS crawl_type_desc,
    CAST(NULL as DATETIME) AS crawl_start_date,
