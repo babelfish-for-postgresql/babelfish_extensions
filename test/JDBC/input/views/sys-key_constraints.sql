@@ -28,6 +28,9 @@ GO
 select count(*) from sys.key_constraints where parent_object_id = object_id('uq_2');
 GO
 
+select is_system_named from sys.key_constraints where parent_object_id = object_id('uq_2');
+GO
+
 drop table uq_1;
 GO
 
