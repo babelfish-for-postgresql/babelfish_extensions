@@ -2159,6 +2159,79 @@ SELECT
 WHERE FALSE;
 GRANT SELECT ON sys.database_filestream_options TO PUBLIC;
 
+CREATE OR REPLACE VIEW sys.fulltext_languages
+AS
+SELECT 
+   CAST(0 as INT) AS lcid,
+   CAST('' as SYSNAME) AS name
+WHERE FALSE;
+GRANT SELECT ON sys.fulltext_languages TO PUBLIC;
+
+CREATE OR REPLACE VIEW sys.fulltext_index_columns
+AS
+SELECT 
+   CAST(0 as INT) AS object_id,
+   CAST(0 as INT) AS column_id,
+   CAST(0 as INT) AS type_column_id,
+   CAST(0 as INT) AS language_id,
+   CAST(0 as INT) AS statistical_semantics
+WHERE FALSE;
+GRANT SELECT ON sys.fulltext_index_columns TO PUBLIC;
+
+CREATE OR REPLACE VIEW sys.selective_xml_index_paths
+AS
+SELECT 
+   CAST(0 as INT) AS object_id,
+   CAST(0 as INT) AS index_id,
+   CAST(0 as INT) AS path_id,
+   CAST('' as NVARCHAR(4000)) AS path,
+   CAST('' as SYSNAME) AS name,
+   CAST(0 as TINYINT) AS path_type,
+   CAST(0 as SYSNAME) AS path_type_desc,
+   CAST(0 as INT) AS xml_component_id,
+   CAST('' as NVARCHAR(4000)) AS xquery_type_description,
+   CAST(0 as sys.BIT) AS is_xquery_type_inferred,
+   CAST(0 as SMALLINT) AS xquery_max_length,
+   CAST(0 as sys.BIT) AS is_xquery_max_length_inferred,
+   CAST(0 as sys.BIT) AS is_node,
+   CAST(0 as TINYINT) AS system_type_id,
+   CAST(0 as TINYINT) AS user_type_id,
+   CAST(0 as SMALLINT) AS max_length,
+   CAST(0 as TINYINT) AS precision,
+   CAST(0 as TINYINT) AS scale,
+   CAST('' as SYSNAME) AS collation_name,
+   CAST(0 as sys.BIT) AS is_singleton
+WHERE FALSE;
+GRANT SELECT ON sys.selective_xml_index_paths TO PUBLIC;
+
+CREATE OR REPLACE VIEW sys.spatial_indexes
+AS
+SELECT 
+   object_id,
+   name,
+   index_id,
+   type,
+   type_desc,
+   is_unique,
+   data_space_id,
+   ignore_dup_key,
+   is_primary_key,
+   is_unique_constraint,
+   fill_factor,
+   is_padded,
+   is_disabled,
+   is_hypothetical,
+   allow_row_locks,
+   allow_page_locks,
+   CAST(1 as TINYINT) AS spatial_index_type,
+   CAST('' as NVARCHAR(60)) AS spatial_index_type_desc,
+   CAST('' as SYSNAME) AS tessellation_scheme,
+   has_filter,
+   filter_definition,
+   auto_created
+FROM sys.indexes WHERE FALSE;
+GRANT SELECT ON sys.spatial_indexes TO PUBLIC;
+
 CREATE OR REPLACE VIEW sys.filetables
 AS
 SELECT 
@@ -2180,3 +2253,4 @@ SELECT
    CAST(0 AS INT) AS principal_id
 WHERE FALSE;
 GRANT SELECT ON sys.registered_search_property_lists TO PUBLIC;
+
