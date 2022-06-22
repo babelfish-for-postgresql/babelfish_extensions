@@ -1,0 +1,113 @@
+name: Version Upgrade Test Framework
+on: [push, pull_request]
+
+jobs:
+  generate-version-upgrade-tests:
+    name: Generate Version Upgrade Tests
+    runs-on: ubuntu-latest
+    outputs:
+      upgrade-path-list: ${{ steps.generate-upgrade-path.outputs.upgrade-path-list }}
+    steps:
+      - uses: actions/checkout@v2
+      
+      - id: generate-upgrade-path
+        run: |
+          config="'$(yq -o=json ${{ github.workspace }}/.github/configuration/upgrade-test-configuration.yml)'"
+          config=$(echo $config | sed "s/\"/\\\\\"/g")
+          UPGRADE_PATH_LIST=$(node -e "let k = JSON.parse($config); let p = k['upgrade-version'].map((itm, index) => ({ id: index, path: ''+itm[0].version + ' - '+itm[itm.length-1].version})); console.log(JSON.stringify(p));")
+          echo "::set-output name=upgrade-path-list::$UPGRADE_PATH_LIST"
+          
+  run-version-upgrade-test:
+    needs: generate-version-upgrade-tests
+    strategy:
+      fail-fast: false
+      matrix:
+        upgrade-path: ${{ fromJson(needs.generate-version-upgrade-tests.outputs.upgrade-path-list) }}
+    name: Run Version Upgrade Test for ${{ matrix.upgrade-path.path }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      
+      - name: Install Dependencies
+        id: install-dependencies
+        if: always()
+        uses: ./.github/composite-actions/install-dependencies
+
+      - name: Install yq - yaml parser
+        id: install-yq
+        if: always()
+        run: sudo snap install yq
+
+      - name: Read Base Version and Final Version
+        id: read-base-and-final-version
+        if: always() && steps.install-yq.outcome == 'success'
+        run: > 
+          echo "::set-output name=base-version::$(
+            yq '."upgrade-version"[${{ matrix.upgrade-path.id }}][0].version' ${{ github.workspace }}/.github/configuration/upgrade-test-configuration.yml
+          )" && 
+          echo "::set-output name=final-version::$(
+            yq '."upgrade-version"[${{ matrix.upgrade-path.id }}][-1].version' ${{ github.workspace }}/.github/configuration/upgrade-test-configuration.yml
+          )"
+
+      - name: Find Engine and Extension Branches for Base Version ${{ steps.read-base-and-final-version.outputs.base-version }}
+        id: find-branch
+        if: always() && steps.read-base-and-final-version.outcome == 'success'
+        run: >
+          echo "::set-output name=base-engine-branch::$(
+            yq '."${{ steps.read-base-and-final-version.outputs.base-version }}".engine_branch' ${{ github.workspace }}/.github/template/version-branch-template.yml
+          )" &&
+          echo "::set-output name=base-extension-branch::$(
+            yq '."${{ steps.read-base-and-final-version.outputs.base-version }}".extension_branch' ${{ github.workspace }}/.github/template/version-branch-template.yml
+          )" &&
+          echo "::set-output name=base-dir::$(echo postgres$(awk '{$0=int($0)}1' <<< ${{ steps.read-base-and-final-version.outputs.base-version }}))"
+
+      - name: Setup Base Version ${{ steps.read-base-and-final-version.outputs.base-version }} and Run Preparation Tests
+        id: setup-base-version
+        if: always() && steps.install-dependencies.outcome == 'success' && steps.find-branch.outcome == 'success'
+        uses: ./.github/composite-actions/setup-base-version
+        with:
+          engine_branch: ${{ steps.find-branch.outputs.base-engine-branch }}
+          extension_branch: ${{ steps.find-branch.outputs.base-extension-branch }}
+          install_dir: ${{ steps.find-branch.outputs.base-dir }}
+
+      - name: Setup Upgrade Version Composite Action
+        id: setup-upgrade-ver-ca
+        if: always() && steps.install-yq.outcome == 'success' && steps.setup-base-version.outcome == 'success'
+        uses: ./.github/composite-actions/setup-upgrade-version-ca
+        with: 
+          base_version: ${{ steps.read-base-and-final-version.outputs.base-version }}
+
+      - name: Upgrade till final version ${{ steps.read-base-and-final-version.outputs.final-version }} and run verify scripts
+        id: upgrade-and-test
+        if: always() && steps.setup-upgrade-ver-ca.outcome == 'success' 
+        uses: ./.github/composite-actions/upgrade-version
+
+      # Due to some action/checkout's in previous step the dynamically generated upgrade-version composite action isn't available,
+      # hence to avoid error in post action step recreated the upgrade-version composite action
+      - name: Recreate Upgrade Version Composite Action
+        if: always() && steps.install-yq.outcome == 'success' && steps.setup-base-version.outcome == 'success'
+        uses: ./.github/composite-actions/setup-upgrade-version-ca
+        with: 
+          base_version: ${{ steps.read-base-and-final-version.outputs.base-version }}
+
+      - name: Rename Test Summary Files
+        id: test-file-rename
+        if: always() && (steps.setup-base-version.outcome == 'failure' || steps.upgrade-and-test.outcome == 'failure')
+        run: |
+          cd test/JDBC/Info
+          timestamp=`ls -Art | tail -n 1`
+          cd $timestamp
+          mkdir -p ~/upgrade
+          mv $timestamp.diff ~/upgrade/output-diff.diff
+          mv "$timestamp"_runSummary.log ~/upgrade/run-summary.log
+  
+      - name: Upload Logs
+        if: always() && steps.test-file-rename.outcome == 'success'
+        uses: actions/upload-artifact@v2
+        with:
+          name: upgrade-logs-${{ matrix.upgrade-path.path }}
+          path: |
+            ~/upgrade/*.log
+            ~/upgrade/*.diff
+            ~/postgres*/data/logfile
+            

@@ -1,4 +1,4 @@
-name: Minor Version Upgrade Tests
+name: Minor Version Upgrade Tests for empty database
 on: [push, pull_request]
 
 jobs:

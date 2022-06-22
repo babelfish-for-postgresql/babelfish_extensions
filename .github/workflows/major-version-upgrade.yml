@@ -1,4 +1,4 @@
-name: Major Version Upgrade Tests
+name: Major Version Upgrade Tests for empty database
 on: [push, pull_request]
 
 jobs:
