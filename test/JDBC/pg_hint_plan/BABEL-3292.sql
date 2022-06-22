@@ -150,3 +150,96 @@ go
 
 drop table babel_3292_t2
 go
+
+
+-- Test all queries by specifying a database and schema name
+use d
+go
+
+drop table if exists babel_3292_schema.t1
+go
+
+drop table if exists babel_3292_t2
+go
+
+drop schema if exists babel_3292_schema
+go
+
+create schema babel_3292_schema
+go
+
+create table babel_3292_schema.t1(a1 int PRIMARY KEY, b1 int, c1 int)
+go
+
+create index index_babel_3292_schema_t1_b1 on babel_3292_schema.t1(b1)
+go
+
+create index index_babel_3292_schema_t1_c1 on babel_3292_schema.t1(c1)
+go
+
+create table babel_3292_t2(a2 int PRIMARY KEY, b2 int, c2 int)
+go
+
+create index index_babel_3292_t2_b2 on babel_3292_t2(b2)
+go
+
+select set_config('babelfishpg_tsql.explain_costs', 'off', false)
+go
+
+set babelfish_showplan_all on
+go
+
+select * from d.babel_3292_schema.t1 (index(index_babel_3292_schema_t1_b1)) where b1 = 1
+go
+
+select * from d.babel_3292_schema.t1 where b1=1 option(table hint(d.babel_3292_schema.t1, index(index_babel_3292_schema_t1_b1)))
+go
+
+select * from d.babel_3292_schema.t1 with(index(index_babel_3292_schema_t1_b1), index(index_babel_3292_schema_t1_c1)) where b1 = 1 and c1 = 1
+go
+
+select * from d.babel_3292_schema.t1 where b1 = 1 and c1 = 1 option(table hint(d.babel_3292_schema.t1, index(index_babel_3292_schema_t1_b1), index(index_babel_3292_schema_t1_c1)))
+go
+
+select * from d.babel_3292_schema.t1 with(index(index_babel_3292_schema_t1_b1)), d.dbo.babel_3292_t2 with(index(index_babel_3292_t2_b2)) where b1 = 1 and b2 = 1
+go
+
+select * from d.babel_3292_schema.t1, d.dbo.babel_3292_t2 where b1 = 1 and b2 = 1 option(table hint(d.babel_3292_schema.t1, index(index_babel_3292_schema_t1_b1)), table hint(d.dbo.babel_3292_t2, index(index_babel_3292_t2_b2)))
+go
+
+insert into d.dbo.babel_3292_t2 select * from d.babel_3292_schema.t1 with(index(index_babel_3292_schema_t1_b1)) where b1 = 1
+go
+
+insert into d.dbo.babel_3292_t2 select * from d.babel_3292_schema.t1 where b1 = 1 option(table hint(d.babel_3292_schema.t1, index(index_babel_3292_schema_t1_b1)))
+go
+
+update d.babel_3292_schema.t1 with(index(index_babel_3292_schema_t1_b1)) set a1 = 1 where b1 = 1
+go
+
+update d.babel_3292_schema.t1 set a1 = 1 where b1 = 1 option(table hint(d.babel_3292_schema.t1, index(index_babel_3292_schema_t1_b1)))
+go
+
+delete from d.babel_3292_schema.t1 with(index(index_babel_3292_schema_t1_b1)) where b1 = 1
+go
+
+delete from d.babel_3292_schema.t1 where b1 = 1 option(table hint(d.babel_3292_schema.t1, index(index_babel_3292_schema_t1_b1)))
+go
+
+select * from d.babel_3292_schema.t1 with(index=index_babel_3292_schema_t1_b1) where b1 = 1 UNION select * from d.dbo.babel_3292_t2 with(index=index_babel_3292_t2_b2) where b2 = 1
+go
+
+select * from d.babel_3292_schema.t1 where b1 = 1 UNION select * from d.dbo.babel_3292_t2 where b2 = 1 option(table hint(d.babel_3292_schema.t1, index(index_babel_3292_schema_t1_b1)), table hint(d.dbo.babel_3292_t2, index(index_babel_3292_t2_b2))) -- Both queries have a hint
+go
+
+set babelfish_showplan_all off
+go
+
+-- cleanup
+drop table babel_3292_schema.t1 
+go
+
+drop table babel_3292_t2
+go
+
+drop schema babel_3292_schema
+go
