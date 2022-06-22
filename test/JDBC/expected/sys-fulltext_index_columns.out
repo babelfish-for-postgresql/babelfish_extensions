@@ -1,0 +1,6 @@
+SELECT * FROM sys.fulltext_index_columns;
+GO
+~~START~~
+int#!#int#!#int#!#int#!#int
+~~END~~
+
