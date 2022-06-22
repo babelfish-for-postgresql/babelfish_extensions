@@ -819,31 +819,36 @@ from
 ) as indexes_select order by object_id, type_desc;
 GRANT SELECT ON sys.indexes TO PUBLIC;
 
-create or replace view sys.key_constraints as
-select
-  c.conname as name
-  , c.oid as object_id
-  , null::integer as principal_id
-  , sch.schema_id as schema_id
-  , c.conrelid as parent_object_id
-  , case contype
-      when 'p' then 'PK'::varchar(2)
-      when 'u' then 'UQ'::varchar(2)
-    end as type
-  , case contype
-      when 'p' then 'PRIMARY_KEY_CONSTRAINT'::varchar(60)
-      when 'u' then 'UNIQUE_CONSTRAINT'::varchar(60)
-    end  as type_desc
-  , null::timestamp as create_date
-  , null::timestamp as modify_date
-  , c.conindid as unique_index_id
-  , 0 as is_ms_shipped
-  , 0 as is_published
-  , 0 as is_schema_published
-from pg_constraint c
-inner join sys.schemas sch on sch.schema_id = c.connamespace
-where has_schema_privilege(sch.schema_id, 'USAGE')
-and c.contype in ('p', 'u');
+CREATE OR replace view sys.key_constraints AS
+SELECT
+    CAST(c.conname AS SYSNAME) AS name
+  , CAST(c.oid AS INT) AS object_id
+  , CAST(0 AS INT) AS principal_id
+  , CAST(sch.schema_id AS INT) AS schema_id
+  , CAST(c.conrelid AS INT) AS parent_object_id
+  , CAST(
+    (CASE contype
+      WHEN 'p' THEN 'PK'
+      WHEN 'u' THEN 'UQ'
+    END) 
+    AS CHAR(2)) AS type
+  , CAST(
+    (CASE contype
+      WHEN 'p' THEN 'PRIMARY_KEY_CONSTRAINT'
+      WHEN 'u' THEN 'UNIQUE_CONSTRAINT'
+    END)
+    AS NVARCHAR(60)) AS type_desc
+  , CAST(NULL AS DATETIME) AS create_date
+  , CAST(NULL AS DATETIME) AS modify_date
+  , CAST(c.conindid AS INT) AS unique_index_id
+  , CAST(0 AS sys.BIT) AS is_ms_shipped
+  , CAST(0 AS sys.BIT) AS is_published
+  , CAST(0 AS sys.BIT) AS is_schema_published
+  , CAST(1 as sys.BIT) as is_system_named
+FROM pg_constraint c
+INNER JOIN sys.schemas sch ON sch.schema_id = c.connamespace
+WHERE has_schema_privilege(sch.schema_id, 'USAGE')
+AND c.contype IN ('p', 'u');
 GRANT SELECT ON sys.key_constraints TO PUBLIC;
 
 create or replace view sys.procedures as
