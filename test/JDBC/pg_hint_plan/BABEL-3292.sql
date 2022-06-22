@@ -84,11 +84,17 @@ go
 insert into babel_3292_t2 select * from babel_3292_t1 with(index(index_babel_3292_t1_b1)) where b1 = 1
 go
 
+insert into babel_3292_t2 select * from babel_3292_t1 where b1 = 1 option(table hint(babel_3292_t1, index(index_babel_3292_t1_b1)))
+go
+
 -- Test UPDATE queries with and without hints
 update babel_3292_t1 set a1 = 1 where b1 = 1
 go
 
 update babel_3292_t1 with(index(index_babel_3292_t1_b1)) set a1 = 1 where b1 = 1
+go
+
+update babel_3292_t1 set a1 = 1 where b1 = 1 option(table hint(babel_3292_t1, index(index_babel_3292_t1_b1)))
 go
 
 -- Test DELETE queries with and without hints
@@ -98,6 +104,9 @@ go
 delete from babel_3292_t1 with(index(index_babel_3292_t1_b1)) where b1 = 1
 go
 
+delete from babel_3292_t1 where b1 = 1 option(table hint(babel_3292_t1, index(index_babel_3292_t1_b1)))
+go
+
 -- Test UNION queries with and without hints
 select * from babel_3292_t1 where b1 = 1 UNION select * from babel_3292_t2 where b2 = 1 -- None of the queries have a hint
 go
@@ -105,7 +114,31 @@ go
 select * from babel_3292_t1 where b1 = 1 UNION select * from babel_3292_t2 with(index=index_babel_3292_t2_b2) where b2 = 1 -- Only one query has a hint
 go
 
+select * from babel_3292_t1 where b1 = 1 UNION select * from babel_3292_t2 where b2 = 1 option(table hint(babel_3292_t1, index(index_babel_3292_t1_b1))) -- Only one query has a hint
+go
+
 select * from babel_3292_t1 with(index=index_babel_3292_t1_b1) where b1 = 1 UNION select * from babel_3292_t2 with(index=index_babel_3292_t2_b2) where b2 = 1 -- Both queries have a hint
+go
+
+select * from babel_3292_t1 where b1 = 1 UNION select * from babel_3292_t2 where b2 = 1 option(table hint(babel_3292_t1, index(index_babel_3292_t1_b1)), table hint(babel_3292_t2, index(index_babel_3292_t2_b2))) -- Both queries have a hint
+go
+
+-- Test CTE queries with and without hints
+with babel_3292_t1_cte (a1, b1, c1) as (select * from babel_3292_t1 where b1 = 1) select * from babel_3292_t1_cte where c1 = 1
+go
+
+with babel_3292_t1_cte (a1, b1, c1) as (select * from babel_3292_t1 with(index=index_babel_3292_t1_b1) where b1 = 1) select * from babel_3292_t1_cte where c1 = 1
+go
+
+with babel_3292_t1_cte (a1, b1, c1) as (select * from babel_3292_t1 where b1 = 1) select * from babel_3292_t1_cte where c1 = 1 option(table hint(babel_3292_t1, index(index_babel_3292_t1_b1)))
+go
+
+-- Limitation: Hint given on a CTE is not applied
+with babel_3292_t1_cte (a1, b1, c1) as (select * from babel_3292_t1 where b1 = 1) select * from babel_3292_t1_cte with(index=index_babel_3292_t1_c1) where c1 = 1
+go
+
+-- Only the hint given on an existing table will be applied
+with babel_3292_t1_cte (a1, b1, c1) as (select * from babel_3292_t1 with(index=index_babel_3292_t1_b1) where b1 = 1) select * from babel_3292_t1_cte with(index=index_babel_3292_t1_c1) where c1 = 1
 go
 
 set babelfish_showplan_all off
