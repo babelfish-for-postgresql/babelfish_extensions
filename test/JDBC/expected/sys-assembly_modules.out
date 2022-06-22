@@ -1,0 +1,6 @@
+SELECT * FROM sys.assembly_modules;
+GO
+~~START~~
+int#!#int#!#varchar#!#varchar#!#bit#!#int
+~~END~~
+

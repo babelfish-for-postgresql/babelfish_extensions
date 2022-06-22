@@ -1,0 +1,6 @@
+SELECT * FROM sys.database_recovery_status;
+GO
+~~START~~
+int#!#uniqueidentifier#!#uniqueidentifier#!#numeric#!#uniqueidentifier#!#uniqueidentifier#!#numeric
+~~END~~
+

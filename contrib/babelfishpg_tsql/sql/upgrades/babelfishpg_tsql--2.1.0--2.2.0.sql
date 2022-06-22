@@ -599,6 +599,42 @@ $$
 	END
 $$;
 
+CREATE OR REPLACE VIEW sys.assembly_modules
+AS
+SELECT 
+   CAST(0 as INT) AS object_id,
+   CAST(0 as INT) AS assembly_id,
+   CAST('' AS SYSNAME) AS assembly_class,
+   CAST('' AS SYSNAME) AS assembly_method,
+   CAST(0 AS sys.BIT) AS null_on_null_input,
+   CAST(0 as INT) AS execute_as_principal_id
+   WHERE FALSE;
+GRANT SELECT ON sys.assembly_modules TO PUBLIC;
+
+CREATE OR REPLACE VIEW sys.change_tracking_databases
+AS
+SELECT
+   CAST(0 as INT) AS database_id,
+   CAST(0 as sys.BIT) AS is_auto_cleanup_on,
+   CAST(0 as INT) AS retention_period,
+   CAST('' as NVARCHAR(60)) AS retention_period_units_desc,
+   CAST(0 as TINYINT) AS retention_period_units
+WHERE FALSE;
+GRANT SELECT ON sys.change_tracking_databases TO PUBLIC;
+
+CREATE OR REPLACE VIEW sys.database_recovery_status
+AS
+SELECT
+   CAST(0 as INT) AS database_id,
+   CAST(NULL as UNIQUEIDENTIFIER) AS database_guid,
+   CAST(NULL as UNIQUEIDENTIFIER) AS family_guid,
+   CAST(0 as NUMERIC(25,0)) AS last_log_backup_lsn,
+   CAST(NULL as UNIQUEIDENTIFIER) AS recovery_fork_guid,
+   CAST(NULL as UNIQUEIDENTIFIER) AS first_recovery_fork_guid,
+   CAST(0 as NUMERIC(25,0)) AS fork_point_lsn
+WHERE FALSE;
+GRANT SELECT ON sys.database_recovery_status TO PUBLIC;
+
 CREATE OR REPLACE VIEW sys.fulltext_languages
 AS
 SELECT 
