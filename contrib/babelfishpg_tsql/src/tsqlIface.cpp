@@ -3135,6 +3135,12 @@ void extractQueryHintsFromOptionClause(TSqlParser::Option_clauseContext *octx)
 		if (option->TABLE())
 		{
 			std::string table_name = ::getFullText(option->table_name());
+			size_t idx = table_name.find('.');
+			while (idx != std::string::npos)
+			{
+				table_name = table_name.substr(idx + 1);
+				idx = table_name.find('.');
+			}
 			if (!table_name.empty())
 			{
 				for(auto table_hint: option->table_hint())
@@ -3159,7 +3165,7 @@ std::string extractTableName(TSqlParser::Ddl_objectContext *ctx)
 {
 	std::string table_name;
 	if (ctx->full_object_name())
-		table_name = ::getFullText(ctx->full_object_name());
+		table_name = stripQuoteFromId(ctx->full_object_name()->object_name);
 	else if (ctx->local_id())
 		table_name = ::getFullText(ctx->local_id());
 	return table_name;
@@ -4764,7 +4770,7 @@ static void post_process_table_source(TSqlParser::Table_source_itemContext *ctx,
 		if (!wctx->sample_clause()) {
 			std::string table_name;
 			if (ctx->full_object_name())
-				table_name = ::getFullText(ctx->full_object_name());
+				table_name = stripQuoteFromId(ctx->full_object_name()->object_name);
 			else if (ctx->local_id())
 				table_name = ::getFullText(ctx->local_id());
 			extractTableHints(wctx, table_name);
