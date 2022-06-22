@@ -2,7 +2,8 @@ name: Version Upgrade Test Framework
 on: [push, pull_request]
 
 jobs:
-  generate-upgrade-path-id-list:
+  generate-version-upgrade-tests:
+    name: Generate Version Upgrade Tests
     runs-on: ubuntu-latest
     outputs:
       upgrade-path-id-list: ${{ steps.generate.outputs.upgrade-path-id-list }}
@@ -15,13 +16,13 @@ jobs:
           UPGRADE_PATH_ID_LIST=$(node -e "let r=[]; for(let i = 0; i < $LEN; i++) { r.push(i) }; console.log(JSON.stringify(r));")
           echo "::set-output name=upgrade-path-id-list::$UPGRADE_PATH_ID_LIST"
 
-  version-upgrade-tests:
-    name: Version Upgrade Test Framework
-    needs: generate-upgrade-path-id-list
+  run-version-upgrade-test:
+    name: Run Version Upgrade Test
+    needs: generate-version-upgrade-tests
     strategy:
       fail-fast: false
       matrix:
-        upgrade-path-id: ${{ fromJson(needs.generate-upgrade-path-id-list.outputs.upgrade-path-id-list) }}
+        upgrade-path-id: ${{ fromJson(needs.generate-version-upgrade-tests.outputs.upgrade-path-id-list) }}
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
