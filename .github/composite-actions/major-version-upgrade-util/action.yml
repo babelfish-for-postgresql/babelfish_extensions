@@ -78,4 +78,4 @@ runs:
       if: always() && steps.jdbc-verify-tests.outcome == 'success' && inputs.is_final_ver == 'true'
       run: |
         sudo ~/postgres/bin/psql -d postgres -U runner -v user="jdbc_user" -v db="jdbc_testdb" -f .github/scripts/cleanup_babelfish_database.sql
-    
+      shell: bash
