@@ -75,7 +75,6 @@ runs:
       id: jdbc-upgrade-tests
       run: |
         cd test/JDBC/
-        sudo sed -i 's/inputFilesPath = input/inputFilesPath = upgrade\/preparation/g' src/main/resources/config.txt
+        export inputFilesPath=upgrade/preparation
         mvn test
-        sudo sed -i 's/inputFilesPath = upgrade\/preparation/inputFilesPath = input/g' src/main/resources/config.txt
       shell: bash
