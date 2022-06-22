@@ -564,6 +564,82 @@ $$
 	END
 $$;
 
+CREATE OR REPLACE VIEW sys.filetables
+AS
+SELECT 
+   CAST(0 AS INT) AS object_id,
+   CAST(0 AS sys.BIT) AS is_enabled,
+   CAST('' AS VARCHAR(255)) AS directory_name,
+   CAST(0 AS INT) AS filename_collation_id,
+   CAST('' AS VARCHAR) AS filename_collation_name
+   WHERE FALSE;
+GRANT SELECT ON sys.filetables TO PUBLIC;
+
+CREATE OR REPLACE VIEW sys.registered_search_property_lists
+AS
+SELECT 
+   CAST(0 AS INT) AS property_list_id,
+   CAST('' AS SYSNAME) AS name,
+   CAST(NULL AS DATETIME) AS create_date,
+   CAST(NULL AS DATETIME) AS modify_date,
+   CAST(0 AS INT) AS principal_id
+WHERE FALSE;
+GRANT SELECT ON sys.registered_search_property_lists TO PUBLIC;
+
+ALTER VIEW sys.identity_columns RENAME TO identity_columns_deprecated;
+
+CREATE OR replace view sys.identity_columns AS
+SELECT 
+  CAST(out_object_id AS INT) AS object_id
+  , CAST(out_name AS SYSNAME) AS name
+  , CAST(out_column_id AS INT) AS column_id
+  , CAST(out_system_type_id AS TINYINT) AS system_type_id
+  , CAST(out_user_type_id AS INT) AS user_type_id
+  , CAST(out_max_length AS SMALLINT) AS max_length
+  , CAST(out_precision AS TINYINT) AS precision
+  , CAST(out_scale AS TINYINT) AS scale
+  , CAST(out_collation_name AS SYSNAME) AS collation_name
+  , CAST(out_is_nullable AS sys.BIT) AS is_nullable
+  , CAST(out_is_ansi_padded AS sys.BIT) AS is_ansi_padded
+  , CAST(out_is_rowguidcol AS sys.BIT) AS is_rowguidcol
+  , CAST(out_is_identity AS sys.BIT) AS is_identity
+  , CAST(out_is_computed AS sys.BIT) AS is_computed
+  , CAST(out_is_filestream AS sys.BIT) AS is_filestream
+  , CAST(out_is_replicated AS sys.BIT) AS is_replicated
+  , CAST(out_is_non_sql_subscribed AS sys.BIT) AS is_non_sql_subscribed
+  , CAST(out_is_merge_published AS sys.BIT) AS is_merge_published
+  , CAST(out_is_dts_replicated AS sys.BIT) AS is_dts_replicated
+  , CAST(out_is_xml_document AS sys.BIT) AS is_xml_document
+  , CAST(out_xml_collection_id AS INT) AS xml_collection_id
+  , CAST(out_default_object_id AS INT) AS default_object_id
+  , CAST(out_rule_object_id AS INT) AS rule_object_id
+  , CAST(out_is_sparse AS sys.BIT) AS is_sparse
+  , CAST(out_is_column_set AS sys.BIT) AS is_column_set
+  , CAST(out_generated_always_type AS TINYINT) AS generated_always_type
+  , CAST(out_generated_always_type_desc AS NVARCHAR(60)) AS generated_always_type_desc
+  , CAST(out_encryption_type AS INT) AS encryption_type
+  , CAST(out_encryption_type_desc AS NVARCHAR(60)) AS encryption_type_desc
+  , CAST(out_encryption_algorithm_name AS SYSNAME) AS encryption_algorithm_name
+  , CAST(out_column_encryption_key_id AS INT) column_encryption_key_id
+  , CAST(out_column_encryption_key_database_name AS SYSNAME) AS column_encryption_key_database_name
+  , CAST(out_is_hidden AS sys.BIT) AS is_hidden
+  , CAST(out_is_masked AS sys.BIT) AS is_masked
+  , CAST(sys.ident_seed(OBJECT_NAME(sc.out_object_id)) AS SQL_VARIANT) AS seed_value
+  , CAST(sys.ident_incr(OBJECT_NAME(sc.out_object_id)) AS SQL_VARIANT) AS increment_value
+  , CAST(sys.babelfish_get_sequence_value(pg_get_serial_sequence(quote_ident(ext.nspname)||'.'||quote_ident(c.relname), a.attname)) AS SQL_VARIANT) AS last_value
+  , CAST(0 as sys.BIT) as is_not_for_replication
+FROM sys.columns_internal() sc
+INNER JOIN pg_attribute a ON sc.out_name = a.attname AND sc.out_column_id = a.attnum
+INNER JOIN pg_class c ON c.oid = a.attrelid
+INNER JOIN sys.pg_namespace_ext ext ON ext.oid = c.relnamespace
+WHERE NOT a.attisdropped
+AND sc.out_is_identity::INTEGER = 1
+AND pg_get_serial_sequence(quote_ident(ext.nspname)||'.'||quote_ident(c.relname), a.attname) IS NOT NULL
+AND has_sequence_privilege(pg_get_serial_sequence(quote_ident(ext.nspname)||'.'||quote_ident(c.relname), a.attname), 'USAGE,SELECT,UPDATE');
+GRANT SELECT ON sys.identity_columns TO PUBLIC;
+
+CALL sys.babelfish_drop_deprecated_view('sys', 'identity_columns_deprecated');
+
 -- Drops the temporary procedure used by the upgrade script.
 -- Please have this be one of the last statements executed in this upgrade script.
 DROP PROCEDURE sys.babelfish_drop_deprecated_view(varchar, varchar);
