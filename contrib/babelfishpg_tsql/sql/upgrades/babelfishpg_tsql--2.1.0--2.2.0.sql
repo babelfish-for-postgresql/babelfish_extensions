@@ -856,6 +856,17 @@ SELECT
 WHERE FALSE;
 GRANT SELECT ON sys.stats TO PUBLIC;
 
+CREATE OR REPLACE VIEW sys.change_tracking_tables
+AS
+SELECT 
+   CAST(0 as INT) AS object_id,
+   CAST(0 as sys.BIT) AS is_track_columns_updated_on,
+   CAST(0 AS sys.BIGINT) AS begin_version,
+   CAST(0 AS sys.BIGINT) AS cleanup_version,
+   CAST(0 AS sys.BIGINT) AS min_valid_version
+   WHERE FALSE;
+GRANT SELECT ON sys.change_tracking_tables TO PUBLIC;
+
 -- Drops the temporary procedure used by the upgrade script.
 -- Please have this be one of the last statements executed in this upgrade script.
 DROP PROCEDURE sys.babelfish_drop_deprecated_view(varchar, varchar);
