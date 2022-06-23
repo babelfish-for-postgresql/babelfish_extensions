@@ -48,6 +48,13 @@ int
 ~~END~~
 
 
+select is_system_named from sys.key_constraints where parent_object_id = object_id('uq_2');
+GO
+~~START~~
+bit
+~~END~~
+
+
 drop table uq_1;
 GO
 
