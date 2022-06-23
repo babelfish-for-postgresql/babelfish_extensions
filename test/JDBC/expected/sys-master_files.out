@@ -1,0 +1,6 @@
+SELECT * FROM sys.master_files;
+GO
+~~START~~
+int#!#int#!#uniqueidentifier#!#tinyint#!#nvarchar#!#int#!#varchar#!#nvarchar#!#tinyint#!#nvarchar#!#int#!#int#!#int#!#bit#!#bit#!#bit#!#bit#!#bit#!#numeric#!#numeric#!#numeric#!#numeric#!#numeric#!#uniqueidentifier#!#datetime#!#numeric#!#uniqueidentifier#!#numeric#!#uniqueidentifier#!#numeric#!#int
+~~END~~
+
