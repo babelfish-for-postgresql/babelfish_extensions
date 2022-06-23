@@ -12,8 +12,23 @@ int#!#varchar
 ~~ROW COUNT: 1~~
 
 
+SELECT PRONAME FROM PG_PROC WHERE PRONAME = 'trig_babel_3294_prepare_for'
+GO
+~~START~~
+varchar
+trig_babel_3294_prepare_for
+~~END~~
+
+
 DROP TRIGGER TRIG_BABEL_3294_PREPARE_FOR
 GO
+
+SELECT PRONAME FROM PG_PROC WHERE PRONAME = 'trig_babel_3294_prepare_for'
+GO
+~~START~~
+varchar
+~~END~~
+
 
 DROP TRIGGER TRIG_BABEL_3294_PREPARE_AFTER
 GO
