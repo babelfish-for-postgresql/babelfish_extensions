@@ -3,6 +3,7 @@
 
 #include "funcapi.h"
 
+#include "access/table.h"
 #include "catalog/namespace.h"
 #include "catalog/pg_language.h"
 #include "commands/proclang.h"
@@ -104,6 +105,7 @@ static Node *get_underlying_node_from_implicit_casting(Node *n, NodeTag underlyi
 int pltsql_proc_return_code;
 
 char *bulk_load_table_name = NULL;
+Oid bulk_load_table_oid = InvalidOid;
 
 PLtsql_execstate *get_current_tsql_estate()
 {
@@ -1145,11 +1147,14 @@ exec_stmt_exec_batch(PLtsql_execstate *estate, PLtsql_stmt_exec_batch *stmt)
 	volatile LocalTransactionId before_lxid;
 	LocalTransactionId after_lxid;
 	SimpleEcontextStackEntry *topEntry;
+      	char *old_db_name = NULL;
+      	char *cur_db_name = NULL;
 	LOCAL_FCINFO(fcinfo,1);
 
 	PG_TRY();
 	{
-		/*
+                old_db_name = get_cur_db_name();
+                /*
 		* First we evaluate the string expression. Its result is the
 		* querystring we have to execute.
 		*/
@@ -1176,12 +1181,18 @@ exec_stmt_exec_batch(PLtsql_execstate *estate, PLtsql_stmt_exec_batch *stmt)
 
 		/* Pass the control the inline handler */
 		pltsql_inline_handler(fcinfo);
+                cur_db_name = get_cur_db_name();
 
+                if(strcmp(cur_db_name, old_db_name) != 0)
+                        set_session_properties(old_db_name);
 		if (fcinfo->isnull)
 			elog(ERROR, "pltsql_inline_handler failed");
 	}
 	PG_CATCH();
 	{
+                cur_db_name = get_cur_db_name();
+                if(strcmp(cur_db_name, old_db_name) != 0)
+                        set_session_properties(old_db_name);
 		PG_RE_THROW();
 	}
 	PG_END_TRY();
@@ -2432,6 +2443,7 @@ exec_stmt_usedb(PLtsql_execstate *estate, PLtsql_stmt_usedb *stmt)
 	char message[128];
 	int16 old_db_id = get_cur_db_id();
 	int16 new_db_id = get_db_id(stmt->db_name);
+        PLExecStateCallStack *top_es_entry;
 
 	if (!DbidIsValid(new_db_id))
 		ereport(ERROR,
@@ -2450,7 +2462,21 @@ exec_stmt_usedb(PLtsql_execstate *estate, PLtsql_stmt_usedb *stmt)
 						stmt->db_name, stmt->db_name)));
 
 	set_session_properties(stmt->db_name);
-	snprintf(message, sizeof(message), "Changed database context to '%s'.", stmt->db_name);
+        top_es_entry = exec_state_call_stack->next;
+        while(top_es_entry != NULL)
+        {
+                /*traverse through the estate stack. If the occurrence of
+                * execute() is found in the stack, suppress the database context
+                * message and avoid sending env token and message to user.
+                */
+                if(top_es_entry->estate && top_es_entry->estate->err_stmt &&
+                       (top_es_entry->estate->err_stmt->cmd_type == PLTSQL_STMT_EXEC_BATCH))
+                       return PLTSQL_RC_OK;
+                else
+                       top_es_entry = top_es_entry->next;
+        }
+
+        snprintf(message, sizeof(message), "Changed database context to '%s'.", stmt->db_name);
 	/* send env change token to user */
 	if (*pltsql_protocol_plugin_ptr && (*pltsql_protocol_plugin_ptr)->send_env_change)
 		((*pltsql_protocol_plugin_ptr)->send_env_change) (1, stmt->db_name, old_db_name);
@@ -2527,7 +2553,6 @@ int exec_stmt_insert_bulk(PLtsql_execstate *estate, PLtsql_stmt_insert_bulk *stm
 {
 	char *bulk_load_schema_name = NULL;
 	MemoryContext	oldContext;
-	Oid rel_oid = InvalidOid;
 	Oid schema_oid = InvalidOid;
 
 	if (!stmt->db_name || stmt->db_name[0] == '\0')
@@ -2550,13 +2575,13 @@ int exec_stmt_insert_bulk(PLtsql_execstate *estate, PLtsql_stmt_insert_bulk *stm
 	/* save the table name for the next Bulk load Request */
 	if (bulk_load_schema_name)
 	{
-		rel_oid = get_relname_relid(stmt->table_name, schema_oid);
+		bulk_load_table_oid = get_relname_relid(stmt->table_name, schema_oid);
 		bulk_load_table_name = psprintf("\"%s\".\"%s\"", bulk_load_schema_name, stmt->table_name);
 		pfree(bulk_load_schema_name);
 	}
 	else
 	{
-		rel_oid = RelnameGetRelid(stmt->table_name);
+		bulk_load_table_oid = RelnameGetRelid(stmt->table_name);
 		bulk_load_table_name = pstrdup(stmt->table_name);
 	}
 
@@ -2569,7 +2594,7 @@ int exec_stmt_insert_bulk(PLtsql_execstate *estate, PLtsql_stmt_insert_bulk *stm
 	}
 	MemoryContextSwitchTo(oldContext);
 
-	if (!OidIsValid(rel_oid))
+	if (!OidIsValid(bulk_load_table_oid))
 		ereport(ERROR,
 				(errcode(ERRCODE_UNDEFINED_TABLE),
 						errmsg("relation \"%s\" does not exist",
@@ -2582,33 +2607,42 @@ int
 execute_bulk_load_insert(int ncol, int nrow, Oid *argtypes,
 				Datum *Values, const char *Nulls)
 {
+	Relation rel;
 	int rc;
 	int retValue = -1;
 	StringInfo src = makeStringInfo();
 	StringInfo bindParams = makeStringInfo();
 	int count = 1;
-
-	elog(DEBUG2, "Insert Bulk operation on destination table: %s", bulk_load_table_name);
-	appendStringInfo(src, "Insert into %s values ", bulk_load_table_name);
-	for (int i = 0; i < nrow; i++)
-	{
-		for (int j = 0; j < ncol; j++)
-			appendStringInfo(bindParams, ",$%d", count++);
-
-		bindParams->data[0] = ' ';
-		appendStringInfo(src, "(%s),", bindParams->data);
-		resetStringInfo(bindParams);
-	}
-	src->data[src->len - 1] = ' '; /* Taking care of the last ',' */
-
-	set_config_option("babelfishpg_tsql.sql_dialect", "postgres",
-						  (superuser() ? PGC_SUSET : PGC_USERSET),
-						  PGC_S_SESSION, GUC_ACTION_SAVE, true, 0, false);
-
-	PushActiveSnapshot(GetTransactionSnapshot());
+	Snapshot snap;
 
 	PG_TRY();
 	{
+		elog(DEBUG2, "Insert Bulk operation on destination table: %s", bulk_load_table_name);
+		appendStringInfo(src, "Insert into %s OVERRIDING SYSTEM VALUE values ", bulk_load_table_name);
+
+		/* Disable triggers on the table. */
+		rel = table_open(bulk_load_table_oid, AccessShareLock);
+		EnableDisableTrigger(rel, NULL, TRIGGER_DISABLED, false, AccessShareLock);
+		relation_close(rel, AccessShareLock);
+
+		for (int i = 0; i < nrow; i++)
+		{
+			for (int j = 0; j < ncol; j++)
+				appendStringInfo(bindParams, ",$%d", count++);
+
+			bindParams->data[0] = ' ';
+			appendStringInfo(src, "(%s),", bindParams->data);
+			resetStringInfo(bindParams);
+		}
+		src->data[src->len - 1] = ' '; /* Taking care of the last ',' */
+
+		set_config_option("babelfishpg_tsql.sql_dialect", "postgres",
+							  (superuser() ? PGC_SUSET : PGC_USERSET),
+							  PGC_S_SESSION, GUC_ACTION_SAVE, true, 0, false);
+
+		snap = GetTransactionSnapshot();
+		PushActiveSnapshot(snap);
+
 		if ((rc = SPI_connect()) < 0)
 			elog(ERROR, "SPI_connect() failed with return code %d", rc);
 
@@ -2623,14 +2657,20 @@ execute_bulk_load_insert(int ncol, int nrow, Oid *argtypes,
 		PopActiveSnapshot();
 
 		set_config_option("babelfishpg_tsql.sql_dialect", "tsql",
-									(superuser() ? PGC_SUSET :  PGC_USERSET),
-										PGC_S_SESSION, GUC_ACTION_SAVE, true, 0, false);
+							  (superuser() ? PGC_SUSET : PGC_USERSET),
+							  PGC_S_SESSION, GUC_ACTION_SAVE, true, 0, false);
+
+		/* Re-Enable triggers on the table after insertion. */
+		rel = table_open(bulk_load_table_oid, AccessShareLock);
+		EnableDisableTrigger(rel, NULL, TRIGGER_FIRES_ON_ORIGIN, false, AccessShareLock);
+		relation_close(rel, AccessShareLock);
 	}
 	PG_CATCH();
 	{
 		MemoryContext oldcontext;
 		SPI_finish();
-		PopActiveSnapshot();
+		if (ActiveSnapshotSet() && GetActiveSnapshot() == snap)
+			PopActiveSnapshot();
 		oldcontext = CurrentMemoryContext;
 
 		/*
@@ -2647,8 +2687,13 @@ execute_bulk_load_insert(int ncol, int nrow, Oid *argtypes,
 		MemoryContextSwitchTo(oldcontext);
 
 		set_config_option("babelfishpg_tsql.sql_dialect", "tsql",
-									(superuser() ? PGC_SUSET : PGC_USERSET),
-										PGC_S_SESSION, GUC_ACTION_SAVE, true, 0, false);
+							  (superuser() ? PGC_SUSET : PGC_USERSET),
+							  PGC_S_SESSION, GUC_ACTION_SAVE, true, 0, false);
+
+		/* Re-Enable triggers on the table incase of an error. */
+		rel = table_open(bulk_load_table_oid, AccessShareLock);
+		EnableDisableTrigger(rel, NULL, TRIGGER_FIRES_ON_ORIGIN, false, AccessShareLock);
+		relation_close(rel, AccessShareLock);
 
 		PG_RE_THROW();
 	}
@@ -2674,6 +2719,7 @@ execute_bulk_load_insert(int ncol, int nrow, Oid *argtypes,
 		pfree(src);
 	}
 	bulk_load_table_name = NULL;
+	bulk_load_table_oid = InvalidOid;
 	return retValue;
 }
 
