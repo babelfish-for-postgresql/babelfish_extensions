@@ -3143,6 +3143,18 @@ void extractQueryHintsFromOptionClause(TSqlParser::Option_clauseContext *octx)
 				}
 			}
 		}
+		else if (option->MAXDOP() && option->DECIMAL())
+		{
+			std::string value = ::getFullText(option->DECIMAL());
+			if (!value.empty())
+				query_hints.push_back("Set(max_parallel_workers_per_gather " + value + ")");
+		}
+		else if (option->MAXRECURSION() && option->DECIMAL())
+		{
+			std::string value = ::getFullText(option->DECIMAL());
+			if (!value.empty())
+				query_hints.push_back("Set(max_stack_depth " + value + ")");
+		}
 	}
 }
 
@@ -4760,8 +4772,10 @@ static void post_process_table_source(TSqlParser::Table_source_itemContext *ctx,
 	for (auto cctx : ctx->table_source_item())
 		post_process_table_source(cctx, expr, baseCtx);
 
-	for (auto wctx : ctx->with_table_hints()) {
-		if (!wctx->sample_clause()) {
+	for (auto wctx : ctx->with_table_hints())
+	{
+		if (!wctx->sample_clause())
+		{
 			std::string table_name;
 			if (ctx->full_object_name())
 				table_name = stripQuoteFromId(ctx->full_object_name()->object_name);
