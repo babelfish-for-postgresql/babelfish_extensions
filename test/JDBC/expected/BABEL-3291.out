@@ -4,6 +4,14 @@ go
 create table babel_3291_t1(a1 int PRIMARY KEY, b1 int)
 go
 
+select set_config('babelfishpg_tsql.explain_costs', 'off', false)
+go
+~~START~~
+text
+off
+~~END~~
+
+
 set babelfish_showplan_all on
 go
 
@@ -18,7 +26,7 @@ go
 ~~START~~
 text
 Query Text: select * from babel_3291_t1 where a1 = 1
-Index Scan using babel_3291_t1_pkey on babel_3291_t1  (cost=0.15..8.17 rows=1 width=8)
+Index Scan using babel_3291_t1_pkey on babel_3291_t1
   Index Cond: (a1 = 1)
 ~~END~~
 
@@ -32,7 +40,7 @@ go
 ~~START~~
 text
 Query Text: select /*+SeqScan(babel_3291_t1)*/ * from babel_3291_t1 where a1 = 1
-Seq Scan on babel_3291_t1  (cost=0.00..38.25 rows=1 width=8)
+Seq Scan on babel_3291_t1
   Filter: (a1 = 1)
 ~~END~~
 

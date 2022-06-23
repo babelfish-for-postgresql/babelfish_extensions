@@ -65,6 +65,7 @@ extern "C"
 
 	extern size_t get_num_column_names_to_be_delimited();
 	extern size_t get_num_pg_reserved_keywords_to_be_delimited();
+	extern char * construct_unique_index_name(char *index_name, char *relation_name);
 }
 
 static void toDotRecursive(ParseTree *t, const std::vector<std::string> &ruleNames, const std::string &sourceText);
@@ -97,6 +98,11 @@ void replaceTokenStringFromQuery(PLtsql_expr* expr, TerminalNode* tokenNode, con
 void replaceCtxStringFromQuery(PLtsql_expr* expr, ParserRuleContext *ctx, const char *repl, ParserRuleContext *baseCtx);
 void removeTokenStringFromQuery(PLtsql_expr* expr, TerminalNode* tokenNode, ParserRuleContext *baseCtx);
 void removeCtxStringFromQuery(PLtsql_expr* expr, ParserRuleContext *ctx, ParserRuleContext *baseCtx);
+void extractQueryHintsFromOptionClause(TSqlParser::Option_clauseContext *octx);
+void extractTableHints(TSqlParser::With_table_hintsContext *tctx, std::string table_name);
+std::string extractTableName(TSqlParser::Ddl_objectContext *ctx);
+void extractTableHint(TSqlParser::Table_hintContext *table_hint, std::string table_name);
+std::string extractIndexValues(std::vector<TSqlParser::Index_valueContext *> index_valuesCtx, char *table_name);
 
 static void *makeBatch(TSqlParser::Tsql_fileContext *ctx, tsqlBuilder &builder);
 //static void *makeBatch(TSqlParser::Block_statementContext *ctx, tsqlBuilder &builder);
@@ -194,6 +200,9 @@ static void clear_rewritten_query_fragment();
 // add information of rewritten_query_fragment information to mutator
 static void add_rewritten_query_fragment_to_mutator(PLtsql_expr_query_mutator *mutator);
 
+static std::vector<std::string> query_hints;
+static void add_query_hints(PLtsql_expr* expr);
+static void clear_query_hints();
 
 
 static void
@@ -541,6 +550,27 @@ add_rewritten_query_fragment_to_mutator(PLtsql_expr_query_mutator *mutator)
 	Assert(mutator);
 	for (auto &entry : rewritten_query_fragment)
 		mutator->add(entry.first, entry.second.first, entry.second.second);
+}
+
+static void
+add_query_hints(PLtsql_expr *expr)
+{
+	std::string hint =  "/*+ ";
+	for(auto q_hint: query_hints) {
+		hint += q_hint;
+		hint += " ";
+	}
+	hint += "*/";
+	StringInfoData new_query;
+	initStringInfo(&new_query);
+	appendStringInfo(&new_query, "%s %s", const_cast <char *>(hint.c_str()), expr->query);
+	expr->query = new_query.data;
+}
+
+static void
+clear_query_hints()
+{
+	query_hints.clear();
 }
 
 /*
@@ -1360,6 +1390,12 @@ public:
 		/* common routine for select and non-select */
 		add_rewritten_query_fragment_to_mutator(statementMutator.get());
 
+		/* Add query hints */
+		if (query_hints.size()) {
+			add_query_hints(statementMutator.get()->expr);
+			clear_query_hints();
+		}
+
 		statementMutator->run();
 		statementMutator = nullptr;
 		clear_rewritten_query_fragment();
@@ -2126,8 +2162,10 @@ static void process_select_statement(
 	Assert(mutator);
 	PLtsql_expr *expr = mutator->expr;
 	ParserRuleContext* baseCtx = mutator->ctx;
-	for (auto octx : selectCtx->option_clause()) // query hint
+	for (auto octx : selectCtx->option_clause()) {// query hint
+		extractQueryHintsFromOptionClause(octx);
 		removeCtxStringFromQuery(expr, octx, baseCtx);
+	}
 }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -3089,6 +3127,70 @@ void removeCtxStringFromQuery(PLtsql_expr* expr, ParserRuleContext *ctx, ParserR
 {
 	replaceTokenStringFromQuery(expr, ctx->getStart(), ctx->getStop(), NULL, baseCtx);
 }
+
+void extractQueryHintsFromOptionClause(TSqlParser::Option_clauseContext *octx)
+{
+	for (auto option: octx->option())
+	{
+		if (option->TABLE())
+		{
+			std::string table_name = ::getFullText(option->table_name()->table);
+			if (!table_name.empty())
+			{
+				for(auto table_hint: option->table_hint())
+				{
+					extractTableHint(table_hint, table_name);
+				}
+			}
+		}
+	}
+}
+
+void extractTableHints(TSqlParser::With_table_hintsContext *tctx, std::string table_name)
+{
+	if (!table_name.empty())
+	{
+		for (auto table_hint: tctx->table_hint())
+			extractTableHint(table_hint, table_name);
+	}
+}
+
+std::string extractTableName(TSqlParser::Ddl_objectContext *ctx)
+{
+	std::string table_name;
+	if (ctx->full_object_name())
+		table_name = stripQuoteFromId(ctx->full_object_name()->object_name);
+	else if (ctx->local_id())
+		table_name = ::getFullText(ctx->local_id());
+	return table_name;
+}
+
+void extractTableHint(TSqlParser::Table_hintContext *table_hint, std::string table_name)
+{
+	if (table_hint->INDEX())
+	{
+		std::string index_values = extractIndexValues(table_hint->index_value(), const_cast <char *>(table_name.c_str()));
+		if (!index_values.empty())
+			query_hints.push_back("IndexScan(" + table_name + " " + index_values + ")");
+	}
+}
+
+std::string extractIndexValues(std::vector<TSqlParser::Index_valueContext *> index_valuesCtx, char *table_name)
+{
+	std::string index_values;
+	for (auto ictx: index_valuesCtx)
+	{
+		if (ictx->id())
+		{
+			if (index_values.size())
+				index_values += " ";
+			char * index_value = construct_unique_index_name(const_cast <char *>(::getFullText(ictx->id()).c_str()), table_name);
+			index_values += std::string(index_value);
+		}
+	}
+	return index_values;
+}
+
 
 #if 0
 static void *
@@ -4658,9 +4760,17 @@ static void post_process_table_source(TSqlParser::Table_source_itemContext *ctx,
 	for (auto cctx : ctx->table_source_item())
 		post_process_table_source(cctx, expr, baseCtx);
 
-	for (auto wctx : ctx->with_table_hints())
+	for (auto wctx : ctx->with_table_hints()) {
+		if (!wctx->sample_clause()) {
+			std::string table_name;
+			if (ctx->full_object_name())
+				table_name = stripQuoteFromId(ctx->full_object_name()->object_name);
+			else if (ctx->local_id())
+				table_name = ::getFullText(ctx->local_id());
+			extractTableHints(wctx, table_name);
+		}
 		removeCtxStringFromQuery(expr, wctx, baseCtx);
-
+	}
 	if (ctx->join_hint())
 		removeCtxStringFromQuery(expr, ctx->join_hint(), baseCtx);
 }
@@ -4671,9 +4781,19 @@ void process_execsql_remove_unsupported_tokens(TSqlParser::Dml_statementContext 
 	{
 		auto ictx = ctx->insert_statement();
 		if (ictx->with_table_hints() && ictx->with_table_hints()->WITH()) // table hints
+		{
+			if (!ictx->with_table_hints()->sample_clause() && ictx->ddl_object())
+			{
+				std::string table_name = extractTableName(ictx->ddl_object());
+				extractTableHints(ictx->with_table_hints(), table_name);
+			}
 			removeCtxStringFromQuery(stmt->sqlstmt, ictx->with_table_hints(), ctx);
+		}
 		if (ictx->option_clause()) // query hints
+		{
 			removeCtxStringFromQuery(stmt->sqlstmt, ictx->option_clause(), ctx);
+			extractQueryHintsFromOptionClause(ictx->option_clause());
+		}
 	}
 	else if (ctx->update_statement())
 	{
@@ -4682,19 +4802,46 @@ void process_execsql_remove_unsupported_tokens(TSqlParser::Dml_statementContext 
 			for (auto tctx : uctx->table_sources()->table_source_item()) // from-clause (to remove hints)
 				post_process_table_source(tctx, stmt->sqlstmt, ctx);
 		if (uctx->with_table_hints()) // table hints
+		{
+			if (!uctx->with_table_hints()->sample_clause() && uctx->ddl_object())
+			{
+				std::string table_name = extractTableName(uctx->ddl_object());
+				extractTableHints(uctx->with_table_hints(), table_name);
+			}
 			removeCtxStringFromQuery(stmt->sqlstmt, uctx->with_table_hints(), ctx);
+		}
 		if (uctx->option_clause()) // query hints
+		{
 			removeCtxStringFromQuery(stmt->sqlstmt, uctx->option_clause(), ctx);
+			extractQueryHintsFromOptionClause(uctx->option_clause());
+		}
 	}
 	else if (ctx->delete_statement())
 	{
 		auto dctx = ctx->delete_statement();
 		if (dctx->delete_statement_from()->table_alias() && dctx->delete_statement_from()->table_alias()->with_table_hints())
+		{
+			if (!dctx->delete_statement_from()->table_alias()->with_table_hints()->sample_clause()) 
+			{
+				std::string table_name = ::getFullText(dctx->delete_statement_from()->table_alias()->id());
+				extractTableHints(dctx->delete_statement_from()->table_alias()->with_table_hints(), table_name);
+			}
 			removeCtxStringFromQuery(stmt->sqlstmt, dctx->delete_statement_from()->table_alias()->with_table_hints(), ctx);
+		}
 		if (dctx->with_table_hints()) // table hints
+		{
+			if (!dctx->with_table_hints()->sample_clause() && dctx->delete_statement_from()->ddl_object()) 
+			{
+				std::string table_name = extractTableName(dctx->delete_statement_from()->ddl_object());
+				extractTableHints(dctx->with_table_hints(), table_name);
+			}
 			removeCtxStringFromQuery(stmt->sqlstmt, dctx->with_table_hints(), ctx);
+		}
 		if (dctx->option_clause()) // query hints
+		{
 			removeCtxStringFromQuery(stmt->sqlstmt, dctx->option_clause(), ctx);
+			extractQueryHintsFromOptionClause(dctx->option_clause());
+		}
 	}
 }
 

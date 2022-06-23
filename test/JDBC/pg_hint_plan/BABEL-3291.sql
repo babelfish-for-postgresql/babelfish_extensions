@@ -4,6 +4,9 @@ go
 create table babel_3291_t1(a1 int PRIMARY KEY, b1 int)
 go
 
+select set_config('babelfishpg_tsql.explain_costs', 'off', false)
+go
+
 set babelfish_showplan_all on
 go
 
