@@ -140,6 +140,8 @@ CREATE COLLATION IF NOT EXISTS sys.Vietnamese_CS_AS (provider = icu, locale = 'v
 CREATE COLLATION sys.Vietnamese_CI_AI (provider = icu, locale = 'vi_VN@colStrength=primary', deterministic = false);
 CREATE COLLATION sys.Vietnamese_CI_AS (provider = icu, locale = 'vi_VN@colStrength=secondary', deterministic = false);
 
+CREATE COLLATION IF NOT EXISTS catalog_default FROM ucs_basic;
+
 -- collation catalog
 create table sys.babelfish_helpcollation(
     Name VARCHAR(128) NOT NULL,

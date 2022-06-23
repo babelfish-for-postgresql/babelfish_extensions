@@ -1,0 +1,39 @@
+CREATE TABLE col_test1 (a varchar(128) COLLATE CATALOG_DEFAULT);
+insert into col_test1 values 
+('Hello'), 
+('Holla');
+GO
+~~ROW COUNT: 2~~
+
+
+CREATE TABLE col_test2 (a nvarchar(128) COLLATE CATALOG_DEFAULT);
+insert into col_test2 values 
+('Bonjour'),
+('Guten Tag');
+GO
+~~ROW COUNT: 2~~
+
+
+select a from col_test1;
+GO
+~~START~~
+varchar
+Hello
+Holla
+~~END~~
+
+
+select a from col_test2;
+GO
+~~START~~
+nvarchar
+Bonjour
+Guten Tag
+~~END~~
+
+
+drop table col_test1;
+GO
+
+drop table col_test2;
+GO
