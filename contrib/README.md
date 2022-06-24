@@ -221,21 +221,11 @@ For detailed instructions on how to write, add, and run tests in JDBC test frame
 
 # BabelFish in Docker
 To use docker for babelfish, postgresql_modified_for_babelfish, babelfish_extensions, and Dockerfile should be in the same workspace.
-- ```builddocker```   build docker image environment for babelfish
-- rundocker
-    run docker container for babelfish
-- execdocker
-    launch a terminal within babelfish container
-- initdb
-    init data directory + modify postgresql.conf + restart db
-- initbbf
-    echo "      execute babelfish_extensions/test/JDBC/init.sh"
-    echo ""
-    echo "  buildpg"
-    echo "      build postgresql_modified_for_babelfish + restart db"
-    echo ""
-    echo "  buildbbf"
-    echo "      build babelfish_extensions + restart db"
-    echo ""
-    echo "  buildall"
-    echo "      build postgresql_modified_for_babelfish + build babelfish_extensions + restart db"
+- ```builddocker```  Build docker image environment for babelfish
+- ```rundocker```  Run docker container for babelfish
+- ```execdocker``` Launch a terminal within babelfish container
+- ```buildpg```  Build postgresql_modified_for_babelfish + Restart db
+- ```buildbbf```  Build babelfish_extensions + Restart db
+- ```buildall``` Build postgresql_modified_for_babelfish + Build babelfish_extensions + Restart db
+- ```initdb``` Init data directory + Modify postgresql.conf + Restart db
+- ```initbbf``` Execute babelfish_extensions/test/JDBC/init.sh
