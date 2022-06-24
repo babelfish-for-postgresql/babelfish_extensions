@@ -1,0 +1,7 @@
+SELECT @@LANGUAGE;
+GO
+~~START~~
+nvarchar
+us_english
+~~END~~
+
