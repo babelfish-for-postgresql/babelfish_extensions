@@ -1147,13 +1147,12 @@ exec_stmt_exec_batch(PLtsql_execstate *estate, PLtsql_stmt_exec_batch *stmt)
 	volatile LocalTransactionId before_lxid;
 	LocalTransactionId after_lxid;
 	SimpleEcontextStackEntry *topEntry;
-      	char *old_db_name = NULL;
+      	char *old_db_name = get_cur_db_name();
       	char *cur_db_name = NULL;
 	LOCAL_FCINFO(fcinfo,1);
 
 	PG_TRY();
 	{
-                old_db_name = get_cur_db_name();
                 /*
 		* First we evaluate the string expression. Its result is the
 		* querystring we have to execute.
