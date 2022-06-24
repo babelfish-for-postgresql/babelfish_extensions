@@ -3327,7 +3327,6 @@ tsql_CreateFunctionStmt:
 						n->replace = $2;
 						n->funcname = $4;
 						n->parameters = $5;
-						tsql_completeDefaultValues(n->parameters);
 						n->returnType = $7;
 						n->options = list_concat(list_make2(lang, body), $8);
 						$$ = (Node *)n;
@@ -3343,7 +3342,6 @@ tsql_CreateFunctionStmt:
 					n->replace = $2;
 					n->funcname = $4;
 					n->parameters = $5;
-					tsql_completeDefaultValues(n->parameters);
 					n->returnType = NULL;
 					n->options = list_concat(list_make2(lang, body), $6);
 					$$ = (Node *)n;
@@ -3396,7 +3394,6 @@ tsql_CreateFunctionStmt:
 					n2->is_procedure = false;
 					n2->replace = $2;
 					n2->funcname = $4;
-					tsql_completeDefaultValues($5);
 					n2->parameters = lappend($5, out_param);
 					n2->returnType = makeTypeNameFromNameList(tbltyp);
 					n2->returnType->setof = true;
@@ -3422,7 +3419,6 @@ tsql_CreateFunctionStmt:
 					 * pltsql_validator()
 					 */
 					n->parameters = $5;
-					tsql_completeDefaultValues(n->parameters);
 					/*
 					 * Use RECORD type here. In case of single result column,
 					 * will be changed to that column's type in
