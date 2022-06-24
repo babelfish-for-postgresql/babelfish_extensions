@@ -1,0 +1,39 @@
+Unexpected drop found for cast  in file ../../contrib/babelfishpg_common/sql/upgrades/babelfishpg_common--1.0.0--1.1.0.sql
+Unexpected drop found for cast  in file ../../contrib/babelfishpg_common/sql/upgrades/babelfishpg_common--1.0.0--1.1.0.sql
+Unexpected drop found for cast  in file ../../contrib/babelfishpg_common/sql/upgrades/babelfishpg_common--1.0.0--1.1.0.sql
+Unexpected drop found for cast  in file ../../contrib/babelfishpg_common/sql/upgrades/babelfishpg_common--1.0.0--1.1.0.sql
+Unexpected drop found for function sys.babelfish_single_unbracket_name in file ../../contrib/babelfishpg_tsql/sql/upgrades/babelfishpg_tsql--2.0.0--2.1.0.sql
+Unexpected drop found for function sys.sp_columns_100_internal in file ../../contrib/babelfishpg_tsql/sql/upgrades/babelfishpg_tsql--2.0.0--2.1.0.sql
+Unexpected drop found for operator family sys.fixeddecimal_ops in file ../../contrib/babelfishpg_common/sql/upgrades/babelfishpg_common--1.0.0--1.1.0.sql
+Unexpected drop found for operator family sys.fixeddecimal_ops in file ../../contrib/babelfishpg_common/sql/upgrades/babelfishpg_common--1.0.0--1.1.0.sql
+Unexpected drop found for operator sys.fixeddecimal_int2_ops in file ../../contrib/babelfishpg_common/sql/upgrades/babelfishpg_common--1.0.0--1.1.0.sql
+Unexpected drop found for operator sys.fixeddecimal_int2_ops in file ../../contrib/babelfishpg_common/sql/upgrades/babelfishpg_common--1.0.0--1.1.0.sql
+Unexpected drop found for operator sys.fixeddecimal_int4_ops in file ../../contrib/babelfishpg_common/sql/upgrades/babelfishpg_common--1.0.0--1.1.0.sql
+Unexpected drop found for operator sys.fixeddecimal_int4_ops in file ../../contrib/babelfishpg_common/sql/upgrades/babelfishpg_common--1.0.0--1.1.0.sql
+Unexpected drop found for operator sys.fixeddecimal_int8_ops in file ../../contrib/babelfishpg_common/sql/upgrades/babelfishpg_common--1.0.0--1.1.0.sql
+Unexpected drop found for operator sys.fixeddecimal_int8_ops in file ../../contrib/babelfishpg_common/sql/upgrades/babelfishpg_common--1.0.0--1.1.0.sql
+Unexpected drop found for operator sys.fixeddecimal_numeric_ops in file ../../contrib/babelfishpg_common/sql/upgrades/babelfishpg_common--1.0.0--1.1.0.sql
+Unexpected drop found for operator sys.fixeddecimal_numeric_ops in file ../../contrib/babelfishpg_common/sql/upgrades/babelfishpg_common--1.0.0--1.1.0.sql
+Unexpected drop found for operator sys.fixeddecimal_ops in file ../../contrib/babelfishpg_common/sql/upgrades/babelfishpg_common--1.0.0--1.1.0.sql
+Unexpected drop found for operator sys.fixeddecimal_ops in file ../../contrib/babelfishpg_common/sql/upgrades/babelfishpg_common--1.0.0--1.1.0.sql
+Unexpected drop found for operator sys./ in file ../../contrib/babelfishpg_common/sql/upgrades/babelfishpg_common--1.1.0--1.2.0.sql
+Unexpected drop found for operator sys./ in file ../../contrib/babelfishpg_common/sql/upgrades/babelfishpg_common--1.1.0--1.2.0.sql
+Unexpected drop found for operator sys./ in file ../../contrib/babelfishpg_common/sql/upgrades/babelfishpg_common--1.1.0--1.2.0.sql
+Unexpected drop found for operator sys.+ in file ../../contrib/babelfishpg_common/sql/upgrades/babelfishpg_common--1.1.0--1.2.0.sql
+Unexpected drop found for operator sys.int2_fixeddecimal_ops in file ../../contrib/babelfishpg_common/sql/upgrades/babelfishpg_common--1.0.0--1.1.0.sql
+Unexpected drop found for operator sys.int2_fixeddecimal_ops in file ../../contrib/babelfishpg_common/sql/upgrades/babelfishpg_common--1.0.0--1.1.0.sql
+Unexpected drop found for operator sys.int4_fixeddecimal_ops in file ../../contrib/babelfishpg_common/sql/upgrades/babelfishpg_common--1.0.0--1.1.0.sql
+Unexpected drop found for operator sys.int4_fixeddecimal_ops in file ../../contrib/babelfishpg_common/sql/upgrades/babelfishpg_common--1.0.0--1.1.0.sql
+Unexpected drop found for operator sys.int8_fixeddecimal_ops in file ../../contrib/babelfishpg_common/sql/upgrades/babelfishpg_common--1.0.0--1.1.0.sql
+Unexpected drop found for operator sys.int8_fixeddecimal_ops in file ../../contrib/babelfishpg_common/sql/upgrades/babelfishpg_common--1.0.0--1.1.0.sql
+Unexpected drop found for operator sys.numeric_fixeddecimal_ops in file ../../contrib/babelfishpg_common/sql/upgrades/babelfishpg_common--1.0.0--1.1.0.sql
+Unexpected drop found for operator sys.numeric_fixeddecimal_ops in file ../../contrib/babelfishpg_common/sql/upgrades/babelfishpg_common--1.0.0--1.1.0.sql
+Unexpected drop found for procedure sys.babelfish_drop_deprecated_function in file ../../contrib/babelfishpg_tsql/sql/upgrades/babelfishpg_tsql--1.2.1--2.0.0.sql
+Unexpected drop found for procedure sys.babelfish_drop_deprecated_function in file ../../contrib/babelfishpg_tsql/sql/upgrades/babelfishpg_tsql--2.1.0--2.2.0.sql
+Unexpected drop found for procedure sys.babelfish_drop_deprecated_view in file ../../contrib/babelfishpg_tsql/sql/upgrades/babelfishpg_tsql--2.0.0--2.1.0.sql
+Unexpected drop found for procedure sys.babelfish_drop_deprecated_view in file ../../contrib/babelfishpg_tsql/sql/upgrades/babelfishpg_tsql--2.1.0--2.2.0.sql
+Unexpected drop found for procedure sys.babelfish_remove_object_from_extension in file ../../contrib/babelfishpg_tsql/sql/upgrades/babelfishpg_tsql--2.1.0--2.2.0.sql
+Unexpected drop found for procedure sys.create_xp_instance_regread_in_master_dbo in file ../../contrib/babelfishpg_tsql/sql/upgrades/babelfishpg_tsql--2.0.0--2.1.0.sql
+Unexpected drop found for procedure sys.create_xp_qv_in_master_dbo in file ../../contrib/babelfishpg_tsql/sql/upgrades/babelfishpg_tsql--1.1.0--1.2.0.sql
+Unexpected drop found for procedure sys.sp_babelfish_grant_usage_to_all in file ../../contrib/babelfishpg_tsql/sql/upgrades/babelfishpg_tsql--1.1.0--1.2.0.sql
+Unexpected drop found for view sys.sysindexes in file ../../contrib/babelfishpg_tsql/sql/upgrades/babelfishpg_tsql--1.0.0--1.1.0.sql
