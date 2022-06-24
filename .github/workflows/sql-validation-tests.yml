@@ -13,7 +13,14 @@ jobs:
         with:
           python-version: 3.7
       - name: Run tests
-        id: run-test
+        id: run-test 
+        if: always() && steps.install-python.outcome == 'success'
         run: |
           cd test/python
           python3 sql_validation.py
+      - name: Upload artifacts
+        if: always() && steps.run-test.outcome == 'failure'
+        uses: actions/upload-artifact@v2
+        with:
+          name: expected-output-files
+          path: test/python/output/*
