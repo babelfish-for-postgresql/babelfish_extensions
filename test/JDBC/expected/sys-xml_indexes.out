@@ -1,0 +1,6 @@
+SELECT * FROM sys.xml_indexes
+GO
+~~START~~
+int#!#varchar#!#int#!#tinyint#!#nvarchar#!#bit#!#int#!#bit#!#bit#!#bit#!#tinyint#!#bit#!#bit#!#bit#!#bit#!#bit#!#bit#!#nvarchar#!#bit#!#int#!#char#!#nvarchar#!#tinyint#!#nvarchar#!#int
+~~END~~
+
