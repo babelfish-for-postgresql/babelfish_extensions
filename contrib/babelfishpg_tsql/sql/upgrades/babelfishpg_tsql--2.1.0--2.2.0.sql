@@ -815,6 +815,136 @@ GRANT SELECT ON sys.identity_columns TO PUBLIC;
 
 CALL sys.babelfish_drop_deprecated_view('sys', 'identity_columns_deprecated');
 
+CREATE OR REPLACE VIEW sys.filegroups
+AS
+SELECT 
+   ds.name,
+   ds.data_space_id,
+   ds.type,
+   ds.type_desc,
+   ds.is_default,
+   ds.is_system,
+   CAST(NULL as UNIQUEIDENTIFIER) AS filegroup_guid,
+   CAST(0 as INT) AS log_filegroup_id,
+   CAST(0 as sys.BIT) AS is_read_only,
+   CAST(0 as sys.BIT) AS is_autogrow_all_files
+FROM sys.data_spaces ds WHERE type = 'FG';
+GRANT SELECT ON sys.filegroups TO PUBLIC;
+
+CREATE OR REPLACE VIEW sys.master_files
+AS
+SELECT
+    CAST(0 as INT) AS database_id,
+    CAST(0 as INT) AS file_id,
+    CAST(NULL as UNIQUEIDENTIFIER) AS file_guid,
+    CAST(0 as sys.TINYINT) AS type,
+    CAST('' as NVARCHAR(60)) AS type_desc,
+    CAST(0 as INT) AS data_space_id,
+    CAST('' as SYSNAME) AS name,
+    CAST('' as NVARCHAR(260)) AS physical_name,
+    CAST(0 as sys.TINYINT) AS state,
+    CAST('' as NVARCHAR(60)) AS state_desc,
+    CAST(0 as INT) AS size,
+    CAST(0 as INT) AS max_size,
+    CAST(0 as INT) AS growth,
+    CAST(0 as sys.BIT) AS is_media_read_only,
+    CAST(0 as sys.BIT) AS is_read_only,
+    CAST(0 as sys.BIT) AS is_sparse,
+    CAST(0 as sys.BIT) AS is_percent_growth,
+    CAST(0 as sys.BIT) AS is_name_reserved,
+    CAST(0 as NUMERIC(25,0)) AS create_lsn,
+    CAST(0 as NUMERIC(25,0)) AS drop_lsn,
+    CAST(0 as NUMERIC(25,0)) AS read_only_lsn,
+    CAST(0 as NUMERIC(25,0)) AS read_write_lsn,
+    CAST(0 as NUMERIC(25,0)) AS differential_base_lsn,
+    CAST(NULL as UNIQUEIDENTIFIER) AS differential_base_guid,
+    CAST(NULL as DATETIME) AS differential_base_time,
+    CAST(0 as NUMERIC(25,0)) AS redo_start_lsn,
+    CAST(NULL as UNIQUEIDENTIFIER) AS redo_start_fork_guid,
+    CAST(0 as NUMERIC(25,0)) AS redo_target_lsn,
+    CAST(NULL as UNIQUEIDENTIFIER) AS redo_target_fork_guid,
+    CAST(0 as NUMERIC(25,0)) AS backup_lsn,
+    CAST(0 as INT) AS credential_id
+WHERE FALSE;
+GRANT SELECT ON sys.master_files TO PUBLIC;
+
+CREATE OR REPLACE VIEW sys.stats
+AS
+SELECT 
+   CAST(0 as INT) AS object_id,
+   CAST('' as SYSNAME) AS name,
+   CAST(0 as INT) AS stats_id,
+   CAST(0 as sys.BIT) AS auto_created,
+   CAST(0 as sys.BIT) AS user_created,
+   CAST(0 as sys.BIT) AS no_recompute,
+   CAST(0 as sys.BIT) AS has_filter,
+   CAST('' as sys.NVARCHAR(4000)) AS filter_definition,
+   CAST(0 as sys.BIT) AS is_temporary,
+   CAST(0 as sys.BIT) AS is_incremental,
+   CAST(0 as sys.BIT) AS has_persisted_sample,
+   CAST(0 as INT) AS stats_generation_method,
+   CAST('' as VARCHAR(255)) AS stats_generation_method_desc
+WHERE FALSE;
+GRANT SELECT ON sys.stats TO PUBLIC;
+
+CREATE OR REPLACE VIEW sys.change_tracking_tables
+AS
+SELECT 
+   CAST(0 as INT) AS object_id,
+   CAST(0 as sys.BIT) AS is_track_columns_updated_on,
+   CAST(0 AS sys.BIGINT) AS begin_version,
+   CAST(0 AS sys.BIGINT) AS cleanup_version,
+   CAST(0 AS sys.BIGINT) AS min_valid_version
+   WHERE FALSE;
+GRANT SELECT ON sys.change_tracking_tables TO PUBLIC;
+
+CREATE OR REPLACE VIEW sys.fulltext_catalogs
+AS
+SELECT 
+   CAST(0 as INT) AS fulltext_catalog_id,
+   CAST('' as SYSNAME) AS name,
+   CAST('' as NVARCHAR(260)) AS path,
+   CAST(0 as sys.BIT) AS is_default,
+   CAST(0 as sys.BIT) AS is_accent_sensitivity_on,
+   CAST(0 as INT) AS data_space_id,
+   CAST(0 as INT) AS file_id,
+   CAST(0 as INT) AS principal_id,
+   CAST(2 as sys.BIT) AS is_importing
+WHERE FALSE;
+GRANT SELECT ON sys.fulltext_catalogs TO PUBLIC;
+
+CREATE OR REPLACE VIEW sys.fulltext_stoplists
+AS
+SELECT 
+   CAST(0 as INT) AS stoplist_id,
+   CAST('' as SYSNAME) AS name,
+   CAST(NULL as DATETIME) AS create_date,
+   CAST(NULL as DATETIME) AS modify_date,
+   CAST(0 as INT) AS Principal_id
+WHERE FALSE;
+GRANT SELECT ON sys.fulltext_stoplists TO PUBLIC;
+
+CREATE OR REPLACE VIEW sys.fulltext_indexes
+AS
+SELECT 
+   CAST(0 as INT) AS object_id,
+   CAST(0 as INT) AS unique_index_id,
+   CAST(0 as INT) AS fulltext_catalog_id,
+   CAST(0 as sys.BIT) AS is_enabled,
+   CAST('O' as CHAR(1)) AS change_tracking_state,
+   CAST('' as NVARCHAR(60)) AS change_tracking_state_desc,
+   CAST(0 as sys.BIT) AS has_crawl_completed,
+   CAST('' as CHAR(1)) AS crawl_type,
+   CAST('' as NVARCHAR(60)) AS crawl_type_desc,
+   CAST(NULL as DATETIME) AS crawl_start_date,
+   CAST(NULL as DATETIME) AS crawl_end_date,
+   CAST(NULL as BINARY(8)) AS incremental_timestamp,
+   CAST(0 as INT) AS stoplist_id,
+   CAST(0 as INT) AS data_space_id,
+   CAST(0 as INT) AS property_list_id
+WHERE FALSE;
+GRANT SELECT ON sys.fulltext_indexes TO PUBLIC;
+
 -- Drops the temporary procedure used by the upgrade script.
 -- Please have this be one of the last statements executed in this upgrade script.
 DROP PROCEDURE sys.babelfish_drop_deprecated_view(varchar, varchar);
