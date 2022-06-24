@@ -70,6 +70,7 @@ PG_FUNCTION_INFO_V1(get_current_full_xact_id);
 PG_FUNCTION_INFO_V1(checksum);
 PG_FUNCTION_INFO_V1(has_dbaccess);
 PG_FUNCTION_INFO_V1(sp_datatype_info_helper);
+PG_FUNCTION_INFO_V1(language);
 
 /* Not supported -- only syntax support */
 PG_FUNCTION_INFO_V1(procid);
@@ -77,6 +78,7 @@ PG_FUNCTION_INFO_V1(procid);
 void* get_servername_internal(void);
 void* get_servicename_internal(void);
 extern bool canCommitTransaction(void);
+void* get_language(void);
 
 extern int pltsql_datefirst;
 extern bool pltsql_implicit_transactions;
@@ -97,6 +99,7 @@ extern bool pltsql_case_insensitive_identifiers;
 
 char *bbf_servername = "BABELFISH";
 const char *bbf_servicename = "MSSQLSERVER";
+char *bbf_language = "us_english";
 #define MD5_HASH_LEN 32
 
 Datum
@@ -174,6 +177,11 @@ void* get_servicename_internal()
 {
 	return string_to_tsql_varchar(bbf_servicename);
 }
+
+void* get_language()
+	{
+		return string_to_tsql_varchar(bbf_language);
+	}
 
 /*
  * This function will return the servername.
@@ -1004,4 +1012,10 @@ sp_datatype_info_helper(PG_FUNCTION_ARGS)
 	tuplestore_donestoring(tupstore);
 
 	return (Datum) 0;
+}
+
+Datum
+language(PG_FUNCTION_ARGS)
+{
+	PG_RETURN_VARCHAR_P(get_language());
 }
