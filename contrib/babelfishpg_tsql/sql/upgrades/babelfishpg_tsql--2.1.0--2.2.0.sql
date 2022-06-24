@@ -914,6 +914,9 @@ SELECT
 WHERE FALSE;
 GRANT SELECT ON sys.fulltext_indexes TO PUBLIC;
 
+CREATE OR REPLACE FUNCTION sys.language()
+	        RETURNS sys.NVARCHAR(128)  AS 'babelfishpg_tsql' LANGUAGE C;
+
 -- Drops the temporary procedure used by the upgrade script.
 -- Please have this be one of the last statements executed in this upgrade script.
 DROP PROCEDURE sys.babelfish_drop_deprecated_view(varchar, varchar);
