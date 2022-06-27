@@ -1327,7 +1327,7 @@ check_alter_server_stmt(GrantRoleStmt *stmt)
 	if (!has_privs_of_role(GetSessionUserId(), sysadmin))
 		ereport(ERROR,
 				(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
-				 errmsg("Current login %s do not have permission to alter server role",
+				 errmsg("Current login %s does not have permission to alter server role",
 					 GetUserNameFromId(GetSessionUserId(), true))));
 
 	/* could not drop the last member of sysadmin */
@@ -1401,7 +1401,7 @@ check_alter_role_stmt(GrantRoleStmt *stmt)
 	if (!has_privs_of_role(GetSessionUserId(), granted))
 		ereport(ERROR,
 				(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
-				 errmsg("Current login %s do not have permission to alter role %s", 
+				 errmsg("Current login %s does not have permission to alter role %s", 
 						GetUserNameFromId(GetSessionUserId(), true), granted_name)));
 }
 
