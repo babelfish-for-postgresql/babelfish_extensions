@@ -61,6 +61,35 @@ public class TestQueryFile {
         }
     }
 
+    // helper function to fetch the prefix of a prepare,
+    // verify or cleanup test file name
+    public static String getFileNamePrefix (String fileName) {
+        if (fileName.contains("-vu-prepare")) {
+            return fileName.split("-vu-prepare")[0];
+        } else if (fileName.contains("-vu-verify")) {
+            return fileName.split("-vu-verify")[0];
+        } else if (fileName.contains("-vu-cleanup")) {
+            return fileName.split("-vu-cleanup")[0];
+        } else {
+            return fileName;
+        }
+    }
+
+    // helper function to tell us whether a file is a prepare
+    // verify or a cleanup file. Numbers are allocated based on
+    // what ordering we want the files to be in
+    public static int getFileOrderUtil (String fileName) {
+        if (fileName.contains("-vu-prepare")) {
+            return 0;
+        } else if (fileName.contains("-vu-verify")) {
+            return 1;
+        } else if (fileName.contains("-vu-cleanup")) {
+            return 2;
+        } else {
+            return 3;
+        }
+    }
+
     public static void createTestFilesList(String directory) {
         for(String testToRun : testsToRun) {
             /* prefix indicates it is a postgres command */
@@ -140,6 +169,24 @@ public class TestQueryFile {
         }
         
         createTestFilesList(dir.getAbsolutePath());
+
+        // if this is a normal JDBC test run, we need to run the prepare, verify
+        // and cleanup scripts for one use-case, one after the other
+        if (!isUpgradeTestMode) {
+            Collections.sort(fileList, new Comparator<String>() {
+                // sort in such a way that filenames that have same prefix should run
+                // prepare file first, verify file next and cleanup file at the end
+                @Override
+                public int compare (String file1, String file2) {
+                    if (getFileNamePrefix(file1).equals(getFileNamePrefix(file2))) {
+                        return getFileOrderUtil(file1) - getFileOrderUtil(file2);
+                    } else {
+                        return file1.compareTo(file2);
+                    }
+                }
+            });
+        }
+
         return fileList.stream();
     }
 
