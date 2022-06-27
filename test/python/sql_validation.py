@@ -23,14 +23,13 @@ def list_scripts_drop():
     return scripts
 
 
-def find_pattern_drop(fname,logger):
+def find_pattern_drop(pattern, fname, logger):
     path = Path.cwd().joinpath("output", "Sql_validation_framework")
     Path.mkdir(path, parents = True, exist_ok = True)
-    f_path = path.joinpath(fname+".out")
-    logger.info("Finding unexpected drop statements")
+    f_path = path.joinpath(fname + ".out")
+    logger.info("Finding unexpected {0} statements".format(re.sub("[^a-zA-Z0-9 ]", "", pattern)))
     with open(f_path, "w") as expected_file:
         scripts = list_scripts_drop()
-        pattern = r"^drop "
 
         for filename in scripts:
             with  open(filename, "r") as file:
@@ -45,7 +44,7 @@ def find_pattern_drop(fname,logger):
                         line = file.readline()
                         continue
                     elif readflag == True:
-                        match_f = re.search(pattern,line,re.I)
+                        match_f = re.search(pattern, line, re.I)
                         if match_f:
                             # print(filename)
                             # print(line)
@@ -54,7 +53,7 @@ def find_pattern_drop(fname,logger):
                                 newline = newline.split('(')[0]
                                 # print(line)
 
-                            newline=newline.rstrip(';')
+                            newline = newline.rstrip(';')
                             if "using" in newline.lower():
                                 newline = newline.lower().split('using')[0]
 
@@ -63,7 +62,7 @@ def find_pattern_drop(fname,logger):
                             category = 'object'
                             for word in linewords:
                                 if word.lower() in object_category:
-                                    category=word.lower()
+                                    category = word.lower()
                                     break
                             if category == 'class' or category == 'family':
                                 category = 'operator ' + category
@@ -72,11 +71,11 @@ def find_pattern_drop(fname,logger):
                             resultwords  = [word for word in linewords if word.lower() not in stopwords]
                             obj_name = ' '.join(resultwords)
                             # print("result : ",obj_name)
-                            expected_file.write("Unexpected drop found for {0} {1} in file {2}\n".format(category,obj_name,filename))
-                    if len(re.findall(r"[$]{2}",line,re.I)) == 1:
+                            expected_file.write("Unexpected {0} found for {1} {2} in file {3}\n".format(re.sub("[^a-zA-Z0-9 ]", "", pattern), category, obj_name, filename))
+                    if len(re.findall(r"[$]{2}", line, re.I)) == 1:
                         readflag = not readflag
                     line = file.readline()
-    logger.info("Searching drop statements completed successfully!")
+    logger.info("Searching {0} statements completed successfully!".format(re.sub("[^a-zA-Z0-9 ]", "", pattern)))
 
 
 
@@ -101,7 +100,7 @@ def list_scripts_create():
         scripts.append(f)
 
     #Removing helper functions
-    scripts.remove(Path(inpPath+"/sys_function_helpers.sql"))
+    scripts.remove(Path(inpPath + "/sys_function_helpers.sql"))
     return scripts
 
 
@@ -120,7 +119,7 @@ def list_files(inpPath):
 
 def find_pattern_create(logger):
     scripts = list_scripts_create()
-    object_names=set()
+    object_names = set()
     
     logger.info("Searching for create statements!")
     
@@ -141,9 +140,9 @@ def find_pattern_create(logger):
                     match_f = re.search(pat,line,re.I)
                     if match_f:
                         # print(line)
-                        newline = line
+                        newline = line.lower()
                         if "(" in newline:
-                            newline = newline.split('(')[0]+"[(]"
+                            newline = newline.split('(')[0] + "[(]"
                         
                         # if " as " in line.lower():
                         #     line=line.lower().split(' as ')[0]
@@ -151,25 +150,25 @@ def find_pattern_create(logger):
                         #     line=line.split(' ON ')[0]
                             # print(line)
 
-                        newline=newline.rstrip(';')
-                        linewords=newline.split()
-                        object_category=['table','view','function','procedure','role','aggregate','schema','domain','collation','index']
-                        category='object'
+                        newline = newline.rstrip(';')
+                        linewords = newline.split()
+                        object_category = ['table','view','function','procedure','role','aggregate','schema','domain','collation','index']
+                        category = 'object'
                         for word in linewords:
-                            if word.lower() in object_category:
-                                category=word.lower()
+                            if word in object_category:
+                                category = word
                         stopwords = ['drop','create','view','procedure','function','table','domain',
                                     'index','schema','temporary','aggregate','cascade','if','exists','owned',
                                     'by','role','as','or','replace','collation','not','select']
-                        resultwords  = [word for word in linewords if word.lower() not in stopwords]
+                        resultwords  = [word for word in linewords if word not in stopwords]
                         obj_name = ' '.join(resultwords)
 
                         # print("word to be searched : ",obj_name.lower())
 
                         object_names.add((category,obj_name))
-                if len(re.findall(r"[$]{2}",line,re.I)) == 1:
-                    readflag=not readflag    
-                line=file.readline()
+                if len(re.findall(r"[$]{2}", line, re.I)) == 1:
+                    readflag = not readflag    
+                line = file.readline()
                 
     # print(object_names)
     logger.info("Found all create objects successfully!")
@@ -177,60 +176,60 @@ def find_pattern_create(logger):
 
 
 def find_inp_JDBC(fname,logger):
-    files=list_files("../JDBC/input")
-    object_name=find_pattern_create(logger)
+    files = list_files("../JDBC/input")
+    object_name = find_pattern_create(logger)
     path = Path.cwd().joinpath("output", "Sql_validation_framework")
     Path.mkdir(path, parents = True, exist_ok = True)
-    f_path = path.joinpath(fname+".out")
+    f_path = path.joinpath(fname + ".out")
     with open(f_path, "w") as expected_file:
         for object in object_name:
 
             #Flag for object name found or not in the JDBC input files
-            flag=False
+            flag = False
             # print(object[1])
             for i in files:
                 with open(i, "r") as testfile:
-                    testline=testfile.readline()
+                    testline = testfile.readline()
 
                     while testline:
-                        testline=testline.strip()
+                        testline = testline.strip()
                         if testline.startswith("--") or testline.startswith("/*") or testline.startswith("#"):
-                            testline=testfile.readline()
+                            testline = testfile.readline()
                             continue
 
-                        elif(re.search(r"\b"+object[1]+r"\b",testline,re.I)):
-                            flag=True
+                        elif(re.search(r"\b" + object[1] + r"\b", testline, re.I)):
+                            flag = True
                             # print("Found\nline :   ",testline)
                             # print("file name : ",i)
                             break
-                        testline=testfile.readline()
+                        testline = testfile.readline()
                     else:
                         continue
                     break
 
-            if(flag==False and "sys." in object[1]):
-                result_wo_sys=object[1].split('.',maxsplit=2)[1]
+            if(flag == False and "sys." in object[1]):
+                result_wo_sys = object[1].split('.',maxsplit=2)[1]
 
                 for i in files:
                     with open(i, "r") as testfile:
-                        testline=testfile.readline()
+                        testline = testfile.readline()
                                 
                         while testline:
-                            testline=testline.strip()
+                            testline = testline.strip()
                             if testline.startswith("--") or testline.startswith("/*") or testline.startswith("#"):
-                                testline=testfile.readline()
+                                testline = testfile.readline()
                                 continue
 
-                            elif(re.search(r"\b"+result_wo_sys+r"\b", testline,re.I)):
-                                flag=True
+                            elif(re.search(r"\b" + result_wo_sys + r"\b", testline, re.I)):
+                                flag = True
                                 # print("Found\nline :   ",testline)
                                 # print("file name : ",i)
                                 break
-                            testline=testfile.readline()
+                            testline = testfile.readline()
                         else:
                             continue
                         break
-            if flag==False:
+            if flag == False:
                 expected_file.write("Could not find tests for {0} {1}\n".format(object[0],object[1].split('[')[0]))
     logger.info("Tests for finding JDBC input objects completed successfully!")
 
@@ -239,35 +238,22 @@ def find_inp_JDBC(fname,logger):
 ##For any search
 
 
-def find_patterns(logger):
-    files = list_files("../../contrib/babelfishpg_tsql/sql/upgrades")
+def find_patterns(logfname, logger):
     
-    path = Path.cwd().joinpath("output", "Sql_validation_framework")
-    Path.mkdir(path, parents = True, exist_ok = True)
-    f_path = path.joinpath("Pattern_match_results.out")
+    logger.info("Running tests for pattern search!!")
     
-    logger.info("Running random pattern search!!")
-    
-    with open(f_path, "w") as expected_file:
-        patterns = cfg["searchPatterns"].split(',')
+    patterns = cfg["searchPatterns"].split(',')
 
-        for pattern in patterns:
-            # pattern = r"{0}".format(pattern)
-            # pattern="query\d"
-            # print(pattern)
-            expected_file.write("Pattern : {0} \n".format(pattern))
-            for filename in files:
-                with  open(filename, "r") as file:
-  
-                    line = file.readline()
-
-                    while line:
-                        match_found = re.findall(pattern,line,re.I)
-                        if match_found:
-                            # print(line)
-                            expected_file.write("{0} \n".format(line))
-                        line=file.readline()
+    result = True
+    for pattern in patterns:
+        filename = "Expected_" + re.sub("[^a-zA-Z0-9 ]", "", pattern)
+        find_pattern_drop(pattern, filename, logger)
+        expected_file = Path.cwd().joinpath("expected", "Sql_validation_framework",filename + ".out")
+        outfile = Path.cwd().joinpath("output", "Sql_validation_framework",filename + ".out")
+        result1 = compare_outfiles(outfile, expected_file, logfname, filename, logger)
+        result = result and result1
     logger.info("Patterns found successfully!!")
+    return result
 
 
 #------------------------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -324,7 +310,7 @@ def create_logger():
 
     #Creating logger with two handlers, file as well as console
     #File logger
-    file_path=path.joinpath(logname)
+    file_path = path.joinpath(logname)
 
     fh = logging.FileHandler(filename = file_path, mode = "w")
     formatter = logging.Formatter('%(asctime)s-%(levelname)s-%(message)s')
@@ -352,22 +338,23 @@ def close_logger(logger):
 
 def main():
 
-    fname_drop = "Expected_drop"
+    # fname_drop = "Expected_drop"
     fname_create = "Expected_create"
 
-    logfname,logger=create_logger()
+    logfname,logger = create_logger()
 
-    find_pattern_drop(fname_drop, logger)
-    expected_file=Path.cwd().joinpath("expected", "Sql_validation_framework",fname_drop+".out")
-    outfile = Path.cwd().joinpath("output", "Sql_validation_framework",fname_drop+".out")
-    result1 = compare_outfiles(outfile, expected_file, logfname, fname_drop, logger)
-    
+    # find_pattern_drop(fname_drop, logger)
+    # expected_file=Path.cwd().joinpath("expected", "Sql_validation_framework", fname_drop + ".out")
+    # outfile = Path.cwd().joinpath("output", "Sql_validation_framework", fname_drop + ".out")
+    # result1 = compare_outfiles(outfile, expected_file, logfname, fname_drop, logger)
+    result1 = find_patterns(logfname, logger)
+
     find_inp_JDBC(fname_create, logger)
-    expected_file = Path.cwd().joinpath("expected", "Sql_validation_framework",fname_create+".out")
-    outfile = Path.cwd().joinpath("output", "Sql_validation_framework",fname_create+".out")
+    expected_file = Path.cwd().joinpath("expected", "Sql_validation_framework",fname_create + ".out")
+    outfile = Path.cwd().joinpath("output", "Sql_validation_framework", fname_create + ".out")
     result2 = compare_outfiles(outfile, expected_file, logfname, fname_create, logger)
 
-    find_patterns(logger)
+    
     
 
     try:
@@ -380,5 +367,5 @@ def main():
 
     assert result1 == True and result2 == True
 
-if __name__=="__main__":
+if __name__ == "__main__":
     main()
