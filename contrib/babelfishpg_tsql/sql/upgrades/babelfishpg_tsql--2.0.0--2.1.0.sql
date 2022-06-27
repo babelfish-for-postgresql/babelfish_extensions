@@ -28,6 +28,57 @@ end
 $$
 LANGUAGE plpgsql;
 
+-- Drops a function if it does not have any dependent objects.
+-- Is a temporary procedure for use by the upgrade script. Will be dropped at the end of the upgrade.
+-- Please have this be one of the first statements executed in this upgrade script. 
+CREATE OR REPLACE PROCEDURE babelfish_drop_deprecated_function(schema_name varchar, func_name varchar) AS
+$$
+DECLARE
+    error_msg text;
+    query1 text;
+    query2 text;
+BEGIN
+    query1 := format('alter extension babelfishpg_tsql drop function %s.%s', schema_name, func_name);
+    query2 := format('drop function %s.%s', schema_name, func_name);
+    execute query1;
+    execute query2;
+EXCEPTION
+    when object_not_in_prerequisite_state then --if 'alter extension' statement fails
+        GET STACKED DIAGNOSTICS error_msg = MESSAGE_TEXT;
+        raise warning '%', error_msg;
+    when dependent_objects_still_exist then --if 'drop function' statement fails
+        GET STACKED DIAGNOSTICS error_msg = MESSAGE_TEXT;
+        raise warning '%', error_msg;
+end
+$$
+LANGUAGE plpgsql;
+
+-- Drops a procedure if it does not have any dependent objects.
+-- Is a temporary procedure for use by the upgrade script. Will be dropped at the end of the upgrade.
+-- Please have this be one of the first statements executed in this upgrade script. 
+CREATE OR REPLACE PROCEDURE babelfish_drop_deprecated_procedure(schema_name varchar, proc_name varchar) AS
+$$
+DECLARE
+    error_msg text;
+    query1 text;
+    query2 text;
+BEGIN
+    query1 := format('alter extension babelfishpg_tsql drop procedure %s.%s', schema_name, proc_name);
+    query2 := format('drop procedure %s.%s', schema_name, proc_name);
+    execute query1;
+    execute query2;
+EXCEPTION
+    when object_not_in_prerequisite_state then --if 'alter extension' statement fails
+        GET STACKED DIAGNOSTICS error_msg = MESSAGE_TEXT;
+        raise warning '%', error_msg;
+    when dependent_objects_still_exist then --if 'drop procedure' statement fails
+        GET STACKED DIAGNOSTICS error_msg = MESSAGE_TEXT;
+        raise warning '%', error_msg;
+end
+$$
+LANGUAGE plpgsql;
+
+
 -- TODO: BABEL-2838
 CREATE OR REPLACE VIEW sys.sp_special_columns_view AS
 SELECT DISTINCT 
@@ -1387,7 +1438,8 @@ END;
 $BODY$
 LANGUAGE plpgsql STABLE RETURNS NULL ON NULL INPUT;
 
-DROP FUNCTION IF EXISTS sys.babelfish_single_unbracket_name;
+ALTER FUNCTION sys.babelfish_single_unbracket_name RENAME TO babelfish_single_unbracket_name_deprecated_2_1;
+CALL sys.babelfish_drop_deprecated_function('sys', 'babelfish_single_unbracket_name_deprecated_2_1');
 
 CREATE OR REPLACE FUNCTION babelfish_has_any_privilege(
     perm_target_type text,
@@ -3481,6 +3533,7 @@ GRANT SELECT ON sys.sql_modules TO PUBLIC;
 call sys.babelfish_drop_deprecated_view('sys', 'sql_modules_deprecated');
 
 ALTER PROCEDURE sys.babel_drop_all_users() RENAME TO babel_drop_all_users_deprecated_2_1;
+CALL sys.babelfish_drop_deprecated_procedure('sys', 'babel_drop_all_users_deprecated_2_1');
 
 ALTER VIEW sys.database_principals RENAME TO database_principals_deprecated;
 -- sys.database_principals don't have any dependent objects
@@ -3638,7 +3691,8 @@ AS 'babelfishpg_tsql', 'create_xp_instance_regread_in_master_dbo_internal';
 CALL sys.create_xp_instance_regread_in_master_dbo();
 ALTER PROCEDURE master_dbo.xp_instance_regread(sys.nvarchar(512), sys.sysname, sys.nvarchar(512), int) OWNER TO sysadmin;
 ALTER PROCEDURE master_dbo.xp_instance_regread(sys.nvarchar(512), sys.sysname, sys.nvarchar(512), sys.nvarchar(512)) OWNER TO sysadmin;
-DROP PROCEDURE sys.create_xp_instance_regread_in_master_dbo;
+ALTER PROCEDURE sys.create_xp_instance_regread_in_master_dbo RENAME TO create_xp_instance_regread_in_master_dbo_deprecated_2_1;
+CALL sys.babelfish_drop_deprecated_procedure('sys', 'create_xp_instance_regread_in_master_dbo_deprecated_2_1');
 
 CREATE OR REPLACE FUNCTION sys.sysutcdatetime() RETURNS sys.datetime2
     AS $$select (clock_timestamp() AT TIME ZONE 'UTC'::pg_catalog.text)::sys.datetime2;$$
@@ -3825,14 +3879,16 @@ GRANT SELECT ON sys.database_files TO PUBLIC;
 
 -- Upgrades to support collated all-constant expressions
 -- internal function in order to workaround BABEL-1597 for BABEL-1784
-drop function if exists sys.sp_columns_100_internal(
+ALTER FUNCTION sys.sp_columns_100_internal(
 	in_table_name sys.nvarchar(384),
     in_table_owner sys.nvarchar(384),
     in_table_qualifier sys.nvarchar(384),
     in_column_name sys.nvarchar(384),
 	in_NameScope int,
     in_ODBCVer int,
-    in_fusepattern smallint);
+    in_fusepattern smallint)
+RENAME TO sp_columns_100_internal_deprecated_2_1;
+
 create function sys.sp_columns_100_internal(
 	in_table_name sys.nvarchar(384),
     in_table_owner sys.nvarchar(384) = '', 
@@ -3929,6 +3985,8 @@ begin
 end;
 $$
 LANGUAGE plpgsql;
+
+CALL sys.babelfish_drop_deprecated_function('sys', 'sp_columns_100_internal_deprecated_2_1');
 
 CREATE OR REPLACE PROCEDURE sys.sp_columns_100 (
 	"@table_name" sys.nvarchar(384),
@@ -9436,6 +9494,8 @@ LANGUAGE plpgsql;
 -- Drops the temporary procedure used by the upgrade script.
 -- Please have this be one of the last statements executed in this upgrade script.
 DROP PROCEDURE sys.babelfish_drop_deprecated_view(varchar, varchar);
+DROP PROCEDURE sys.babelfish_drop_deprecated_function(varchar, varchar);
+DROP PROCEDURE sys.babelfish_drop_deprecated_procedure(varchar, varchar);
 
 -- Reset search_path to not affect any subsequent scripts
 SELECT set_config('search_path', trim(leading 'sys, ' from current_setting('search_path')), false);
