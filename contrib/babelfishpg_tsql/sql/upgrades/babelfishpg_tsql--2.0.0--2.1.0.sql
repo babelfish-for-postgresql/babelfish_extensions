@@ -3,25 +3,27 @@
  
 SELECT set_config('search_path', 'sys, '||current_setting('search_path'), false);
 
--- Drops a view if it does not have any dependent objects.
+-- Drops an object (view/function/procedure) if it does not have any dependent objects.
 -- Is a temporary procedure for use by the upgrade script. Will be dropped at the end of the upgrade.
 -- Please have this be one of the first statements executed in this upgrade script. 
-CREATE OR REPLACE PROCEDURE babelfish_drop_deprecated_view(schema_name varchar, view_name varchar) AS
+CREATE OR REPLACE PROCEDURE babelfish_drop_deprecated_object(
+	object_type varchar, schema_name varchar, view_name varchar
+) AS
 $$
 DECLARE
     error_msg text;
     query1 text;
     query2 text;
 BEGIN
-    query1 := format('alter extension babelfishpg_tsql drop view %s.%s', schema_name, view_name);
-    query2 := format('drop view %s.%s', schema_name, view_name);
+    query1 := format('alter extension babelfishpg_tsql drop %s %s.%s', object_type, schema_name, view_name);
+    query2 := format('drop %s %s.%s', object_type, schema_name, view_name);
     execute query1;
     execute query2;
 EXCEPTION
     when object_not_in_prerequisite_state then --if 'alter extension' statement fails
         GET STACKED DIAGNOSTICS error_msg = MESSAGE_TEXT;
         raise warning '%', error_msg;
-    when dependent_objects_still_exist then --if 'drop view' statement fails
+    when dependent_objects_still_exist then --if 'drop view/function/procedure' statement fails
         GET STACKED DIAGNOSTICS error_msg = MESSAGE_TEXT;
         raise warning '%', error_msg;
 end
@@ -1387,7 +1389,8 @@ END;
 $BODY$
 LANGUAGE plpgsql STABLE RETURNS NULL ON NULL INPUT;
 
-DROP FUNCTION IF EXISTS sys.babelfish_single_unbracket_name;
+ALTER FUNCTION sys.babelfish_single_unbracket_name RENAME TO babelfish_single_unbracket_name_deprecated_2_1;
+CALL sys.babelfish_drop_deprecated_object('function', 'sys', 'babelfish_single_unbracket_name_deprecated_2_1');
 
 CREATE OR REPLACE FUNCTION babelfish_has_any_privilege(
     perm_target_type text,
@@ -2519,7 +2522,7 @@ FROM pg_catalog.pg_class t1
   
 GRANT SELECT ON sys.sp_special_columns_view TO PUBLIC;
 
-call sys.babelfish_drop_deprecated_view('sys', 'indexes_deprecated');
+call sys.babelfish_drop_deprecated_object('view', 'sys', 'indexes_deprecated');
 
 create or replace view sys.shipped_objects_not_in_sys AS
 -- This portion of view retrieves information on objects that reside in a schema in one specfic database.
@@ -2816,10 +2819,10 @@ CREATE OR REPLACE VIEW sys.spt_tablecollations_view AS
     c.is_sparse = 0 AND p.attnum >= 0;
 GRANT SELECT ON sys.spt_tablecollations_view TO PUBLIC;
 
-call sys.babelfish_drop_deprecated_view('sys', 'spt_tablecollations_view_deprecated');
-call sys.babelfish_drop_deprecated_view('sys', 'system_objects_deprecated');
-call sys.babelfish_drop_deprecated_view('sys', 'all_views_deprecated');
-call sys.babelfish_drop_deprecated_view('sys', 'all_objects_deprecated');
+call sys.babelfish_drop_deprecated_object('view', 'sys', 'spt_tablecollations_view_deprecated');
+call sys.babelfish_drop_deprecated_object('view', 'sys', 'system_objects_deprecated');
+call sys.babelfish_drop_deprecated_object('view', 'sys', 'all_views_deprecated');
+call sys.babelfish_drop_deprecated_object('view', 'sys', 'all_objects_deprecated');
 
 CREATE OR REPLACE FUNCTION OBJECTPROPERTY(IN object_id INT, IN property sys.varchar)
 RETURNS INT AS
@@ -3333,11 +3336,11 @@ GRANT SELECT ON sys.sp_special_columns_view TO PUBLIC;
 
 -- === DROP deprecated tables (if exists) for sys.tables, sys.objects, sys.columns, sys.sysobjects, and sys.default_constraints ===
 
-CALL sys.babelfish_drop_deprecated_view('sys', 'sysobjects_deprecated');
-CALL sys.babelfish_drop_deprecated_view('sys', 'objects_deprecated');
-CALL sys.babelfish_drop_deprecated_view('sys', 'default_constraints_deprecated');
-CALL sys.babelfish_drop_deprecated_view('sys', 'columns_deprecated');
-CALL sys.babelfish_drop_deprecated_view('sys', 'tables_deprecated');
+CALL sys.babelfish_drop_deprecated_object('view', 'sys', 'sysobjects_deprecated');
+CALL sys.babelfish_drop_deprecated_object('view', 'sys', 'objects_deprecated');
+CALL sys.babelfish_drop_deprecated_object('view', 'sys', 'default_constraints_deprecated');
+CALL sys.babelfish_drop_deprecated_object('view', 'sys', 'columns_deprecated');
+CALL sys.babelfish_drop_deprecated_object('view', 'sys', 'tables_deprecated');
 
 -- ===== UPGRADE ENDS for sys.tables, sys.objects, sys.columns, sys.sysobjects, and sys.default_constraints ====
 
@@ -3478,9 +3481,10 @@ FROM sys.all_sql_modules_internal t1
 WHERE t1.is_ms_shipped = 0;
 GRANT SELECT ON sys.sql_modules TO PUBLIC;
 
-call sys.babelfish_drop_deprecated_view('sys', 'sql_modules_deprecated');
+call sys.babelfish_drop_deprecated_object('view', 'sys', 'sql_modules_deprecated');
 
 ALTER PROCEDURE sys.babel_drop_all_users() RENAME TO babel_drop_all_users_deprecated_2_1;
+CALL sys.babelfish_drop_deprecated_object('procedure', 'sys', 'babel_drop_all_users_deprecated_2_1');
 
 ALTER VIEW sys.database_principals RENAME TO database_principals_deprecated;
 -- sys.database_principals don't have any dependent objects
@@ -3512,7 +3516,7 @@ WHERE Ext.database_name = DB_NAME();
 GRANT SELECT ON sys.database_principals TO PUBLIC;
 
 -- Drop the deprecated view if there isn't any dependent object
-CALL sys.babelfish_drop_deprecated_view('sys', 'database_principals_deprecated');
+CALL sys.babelfish_drop_deprecated_object('view', 'sys', 'database_principals_deprecated');
 
 ALTER VIEW sys.server_principals RENAME TO server_principals_deprecated;
 -- sys.server_principals is used only in is_srvrolemember() function.
@@ -3545,7 +3549,7 @@ GRANT SELECT ON sys.server_principals TO PUBLIC;
 CALL sys.babel_initialize_logins('sysadmin');
 
 -- Drop the deprecated view if there isn't any dependent object
-CALL sys.babelfish_drop_deprecated_view('sys', 'server_principals_deprecated');
+CALL sys.babelfish_drop_deprecated_object('view', 'sys', 'server_principals_deprecated');
 
 -- OPENJSON functions
 CREATE OR REPLACE FUNCTION sys.openjson_object(json_string text)
@@ -3638,7 +3642,8 @@ AS 'babelfishpg_tsql', 'create_xp_instance_regread_in_master_dbo_internal';
 CALL sys.create_xp_instance_regread_in_master_dbo();
 ALTER PROCEDURE master_dbo.xp_instance_regread(sys.nvarchar(512), sys.sysname, sys.nvarchar(512), int) OWNER TO sysadmin;
 ALTER PROCEDURE master_dbo.xp_instance_regread(sys.nvarchar(512), sys.sysname, sys.nvarchar(512), sys.nvarchar(512)) OWNER TO sysadmin;
-DROP PROCEDURE sys.create_xp_instance_regread_in_master_dbo;
+ALTER PROCEDURE sys.create_xp_instance_regread_in_master_dbo RENAME TO create_xp_instance_regread_in_master_dbo_deprecated_2_1;
+CALL sys.babelfish_drop_deprecated_object('procedure', 'sys', 'create_xp_instance_regread_in_master_dbo_deprecated_2_1');
 
 CREATE OR REPLACE FUNCTION sys.sysutcdatetime() RETURNS sys.datetime2
     AS $$select (clock_timestamp() AT TIME ZONE 'UTC'::pg_catalog.text)::sys.datetime2;$$
@@ -3665,7 +3670,7 @@ AND (c.connamespace IN (SELECT schema_id FROM sys.schemas))
 AND has_schema_privilege(c.connamespace, 'USAGE');
 GRANT SELECT ON sys.foreign_key_columns TO PUBLIC;
 
-CALL sys.babelfish_drop_deprecated_view('sys', 'foreign_key_columns_deprecated');
+CALL sys.babelfish_drop_deprecated_object('view', 'sys', 'foreign_key_columns_deprecated');
 
 ALTER VIEW sys.all_columns RENAME TO all_columns_deprecated;
 
@@ -3747,8 +3752,8 @@ CREATE OR REPLACE VIEW sys.spt_tablecollations_view AS
 		c.is_sparse = 0 AND p.attnum >= 0;
 GRANT SELECT ON sys.spt_tablecollations_view TO PUBLIC;
 
-CALL sys.babelfish_drop_deprecated_view('sys', 'all_columns_deprecated');
-CALL sys.babelfish_drop_deprecated_view('sys', 'spt_tablecollations_view_deprecated');
+CALL sys.babelfish_drop_deprecated_object('view', 'sys', 'all_columns_deprecated');
+CALL sys.babelfish_drop_deprecated_object('view', 'sys', 'spt_tablecollations_view_deprecated');
 
 CREATE OR REPLACE VIEW sys.data_spaces
 AS
@@ -3825,14 +3830,16 @@ GRANT SELECT ON sys.database_files TO PUBLIC;
 
 -- Upgrades to support collated all-constant expressions
 -- internal function in order to workaround BABEL-1597 for BABEL-1784
-drop function if exists sys.sp_columns_100_internal(
+ALTER FUNCTION sys.sp_columns_100_internal(
 	in_table_name sys.nvarchar(384),
     in_table_owner sys.nvarchar(384),
     in_table_qualifier sys.nvarchar(384),
     in_column_name sys.nvarchar(384),
 	in_NameScope int,
     in_ODBCVer int,
-    in_fusepattern smallint);
+    in_fusepattern smallint)
+RENAME TO sp_columns_100_internal_deprecated_2_1;
+
 create function sys.sp_columns_100_internal(
 	in_table_name sys.nvarchar(384),
     in_table_owner sys.nvarchar(384) = '', 
@@ -3929,6 +3936,8 @@ begin
 end;
 $$
 LANGUAGE plpgsql;
+
+CALL sys.babelfish_drop_deprecated_object('function', 'sys', 'sp_columns_100_internal_deprecated_2_1');
 
 CREATE OR REPLACE PROCEDURE sys.sp_columns_100 (
 	"@table_name" sys.nvarchar(384),
@@ -9435,7 +9444,7 @@ LANGUAGE plpgsql;
 
 -- Drops the temporary procedure used by the upgrade script.
 -- Please have this be one of the last statements executed in this upgrade script.
-DROP PROCEDURE sys.babelfish_drop_deprecated_view(varchar, varchar);
+DROP PROCEDURE sys.babelfish_drop_deprecated_object(varchar, varchar, varchar);
 
 -- Reset search_path to not affect any subsequent scripts
 SELECT set_config('search_path', trim(leading 'sys, ' from current_setting('search_path')), false);
