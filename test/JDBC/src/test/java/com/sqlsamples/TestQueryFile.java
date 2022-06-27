@@ -64,12 +64,12 @@ public class TestQueryFile {
     // helper function to fetch the prefix of a prepare,
     // verify or cleanup test file name
     public static String getFileNamePrefix (String fileName) {
-        if (fileName.contains("-prepare")) {
-            return fileName.split("-prepare")[0];
-        } else if (fileName.contains("-verify")) {
-            return fileName.split("-verify")[0];
-        } else if (fileName.contains("-cleanup")) {
-            return fileName.split("-cleanup")[0];
+        if (fileName.contains("-vu-prepare")) {
+            return fileName.split("-vu-prepare")[0];
+        } else if (fileName.contains("-vu-verify")) {
+            return fileName.split("-vu-verify")[0];
+        } else if (fileName.contains("-vu-cleanup")) {
+            return fileName.split("-vu-cleanup")[0];
         } else {
             return fileName;
         }
@@ -79,11 +79,11 @@ public class TestQueryFile {
     // verify or a cleanup file. Numbers are allocated based on
     // what ordering we want the files to be in
     public static int getFileOrderUtil (String fileName) {
-        if (fileName.contains("-prepare")) {
+        if (fileName.contains("-vu-prepare")) {
             return 0;
-        } else if (fileName.contains("-verify")) {
+        } else if (fileName.contains("-vu-verify")) {
             return 1;
-        } else if (fileName.contains("-cleanup")) {
+        } else if (fileName.contains("-vu-cleanup")) {
             return 2;
         } else {
             return 3;
