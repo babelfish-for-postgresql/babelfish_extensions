@@ -1188,8 +1188,6 @@ antlrcpp::Any TsqlUnsupportedFeatureHandlerImpl::visitSecurity_statement(TSqlPar
 
 antlrcpp::Any TsqlUnsupportedFeatureHandlerImpl::visitTable_source_item(TSqlParser::Table_source_itemContext *ctx)
 {
-	if (ctx->APPLY())
-		handle(INSTR_UNSUPPORTED_TSQL_APPLY, ctx->APPLY());
 	if (ctx->PIVOT())
 		handle(INSTR_UNSUPPORTED_TSQL_PIVOT, ctx->PIVOT());
 	if (ctx->UNPIVOT())

@@ -2298,14 +2298,6 @@ GO
 ~~ERROR (Message: 'KILL' is not currently supported in Babelfish)~~
 
 
--- apply
-SELECT * FROM t1 CROSS APPLY (SELECT * FROM Employee E WHERE E.DepartmentID = D.DepartmentID) A
-GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: 'APPLY' is not currently supported in Babelfish)~~
-
-
 -- alter view (BABEL-2017)
 CREATE TABLE t_babel_2017(a int, b int);
 GO
@@ -2446,22 +2438,6 @@ GO
 ~~ERROR (Message: 'NEXT VALUE FOR' is not currently supported in Babelfish)~~
 
 DROP SEQUENCE s11738;
-GO
-
--- APPLY (4101)
-CREATE TABLE t4101(c1 VARCHAR(60), c2 INT)
-GO
-CREATE FUNCTION f4101(@n1 INT, @n2 INT) RETURNS TABLE AS RETURN (SELECT 1 AS ret);
-GO
-SELECT t.c1, tmp.t2 FROM t4101 t CROSS APPLY (SELECT SUM(c2) AS t2)tmp
-GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: 'APPLY' is not currently supported in Babelfish)~~
-
-DROP FUNCTION f4101;
-GO
-DROP TABLE t4101;
 GO
 
 -- XMLNAMESPACES (6869, 6870, 6871)
