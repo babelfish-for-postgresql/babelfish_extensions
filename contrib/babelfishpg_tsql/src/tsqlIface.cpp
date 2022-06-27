@@ -3134,19 +3134,19 @@ void removeCtxStringFromQuery(PLtsql_expr* expr, ParserRuleContext *ctx, ParserR
 
 void extractQueryHintsFromOptionClause(TSqlParser::Option_clauseContext *octx)
 {
-	if (enable_hint_mapping)
+	if (!enable_hint_mapping)
+		return; // do nothing
+
+	for (auto option: octx->option())
 	{
-		for (auto option: octx->option())
+		if (option->TABLE())
 		{
-			if (option->TABLE())
+			std::string table_name = ::getFullText(option->table_name()->table);
+			if (!table_name.empty())
 			{
-				std::string table_name = ::getFullText(option->table_name()->table);
-				if (!table_name.empty())
+				for (auto table_hint: option->table_hint())
 				{
-					for (auto table_hint: option->table_hint())
-					{
-						extractTableHint(table_hint, table_name);
-					}
+					extractTableHint(table_hint, table_name);
 				}
 			}
 		}
