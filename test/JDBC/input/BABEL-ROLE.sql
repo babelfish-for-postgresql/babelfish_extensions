@@ -129,6 +129,13 @@ GO
 ALTER ROLE test1 ADD MEMBER db_owner
 GO
 
+-- Add/drop member to db_owner, should fail before full support
+ALTER ROLE db_owner ADD MEMBER test1
+GO
+
+ALTER ROLE db_owner DROP MEMBER test1
+GO
+
 CREATE USER test4
 GO
 

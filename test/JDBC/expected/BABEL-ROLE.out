@@ -195,6 +195,21 @@ GO
 ~~ERROR (Message: Cannot use the special principal 'db_owner')~~
 
 
+-- Add/drop member to db_owner, should fail before full support
+ALTER ROLE db_owner ADD MEMBER test1
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Adding members to db_owner is not currently supported in Babelfish)~~
+
+
+ALTER ROLE db_owner DROP MEMBER test1
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Dropping members to db_owner is not currently supported in Babelfish)~~
+
+
 CREATE USER test4
 GO
 
