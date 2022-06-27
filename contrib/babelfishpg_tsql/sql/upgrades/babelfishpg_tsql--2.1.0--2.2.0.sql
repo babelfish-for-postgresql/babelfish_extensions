@@ -956,6 +956,44 @@ SELECT
 WHERE FALSE;
 GRANT SELECT ON sys.fulltext_indexes TO PUBLIC;
 
+CREATE OR REPLACE VIEW sys.synonyms
+AS
+SELECT 
+    CAST(obj.name as sys.sysname) AS name
+    , CAST(obj.object_id as int) AS object_id
+    , CAST(obj.principal_id as int) AS principal_id
+    , CAST(obj.schema_id as int) AS schema_id
+    , CAST(obj.parent_object_id as int) AS parent_object_id
+    , CAST(obj.type as char(2)) AS type
+    , CAST(obj.type_desc as sys.nvarchar(60)) AS type_desc
+    , CAST(obj.create_date as sys.datetime) as create_date
+    , CAST(obj.modify_date as sys.datetime) as modify_date
+    , CAST(obj.is_ms_shipped as sys.bit) as is_ms_shipped
+    , CAST(obj.is_published as sys.bit) as is_published
+    , CAST(obj.is_schema_published as sys.bit) as is_schema_published
+    , CAST('' as sys.nvarchar(1035)) AS base_object_name
+FROM sys.objects obj
+WHERE type='SN';
+GRANT SELECT ON sys.synonyms TO PUBLIC;
+
+CREATE OR REPLACE VIEW sys.plan_guides
+AS
+SELECT 
+    CAST(0 as int) AS plan_guide_id
+    , CAST(NULL as sys.sysname) AS name
+    , CAST(NULL as sys.datetime) as create_date
+    , CAST(NULL as sys.datetime) as modify_date
+    , CAST(0 as sys.bit) as is_disabled
+    , CAST('' as sys.nvarchar) AS query_text
+    , CAST(0 as sys.tinyint) AS scope_type
+    , CAST('' as sys.nvarchar(60)) AS scope_type_desc
+    , CAST(0 as int) AS scope_type_id
+    , CAST('' as sys.nvarchar) AS scope_batch
+    , CAST('' as sys.nvarchar) AS parameters
+    , CAST('' as sys.nvarchar) AS hints
+WHERE FALSE;
+GRANT SELECT ON sys.plan_guides TO PUBLIC;
+
 -- Drops the temporary procedure used by the upgrade script.
 -- Please have this be one of the last statements executed in this upgrade script.
 DROP PROCEDURE sys.babelfish_drop_deprecated_view(varchar, varchar);
