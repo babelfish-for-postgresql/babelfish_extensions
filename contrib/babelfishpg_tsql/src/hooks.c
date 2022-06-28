@@ -1155,6 +1155,11 @@ pltsql_report_proc_not_found_error(List *names, List *given_argnames, int nargs,
 				char *first_unknown_argname = NULL;
 				bool arggiven[FUNC_MAX_ARGS];
 				ListCell *lc;
+				bool special = false;
+				ListCell *def_item = NULL;
+				Datum proargdefaults;
+				char *str;
+				List *argdefaults = NIL;
 
 				if (nargs > pronargs) /* Too many parameters provided. */
 				{
@@ -1205,11 +1210,51 @@ pltsql_report_proc_not_found_error(List *names, List *given_argnames, int nargs,
 				}
 
 				/* Traverse arggiven list to check if a non-default parameter is not supplied. */
-				for (pp = numposargs; pp < first_arg_with_default; pp++)
+				proargdefaults = SysCacheGetAttr(PROCOID, tup,
+												 Anum_pg_proc_proargdefaults,
+												 &isnull);
+				if (!isnull)
+				{
+					str = TextDatumGetCString(proargdefaults);
+					argdefaults = castNode(List, stringToNode(str));
+					def_item = list_head(argdefaults);
+					special = IsA(lfirst(def_item), FuncDefault) ? true : false;
+					pfree(str);
+				}
+
+				for (pp = numposargs; pp < pronargs; pp++)
 				{
 					if (arggiven[pp])
 						continue;
-					else
+
+					if (special)
+					{
+						bool default_exists = false;
+
+						while (def_item != NULL)
+						{
+							FuncDefault *node;
+
+							Assert(IsA(lfirst(def_item), FuncDefault));
+							node = (FuncDefault *) lfirst(def_item);
+							if (node->position == pp)
+							{
+								default_exists = true;
+								def_item = lnext(argdefaults, def_item);
+								break;
+							}
+							else if (node->position > pp)
+								break;
+							def_item = lnext(argdefaults, def_item);
+						}
+
+						if (!default_exists)
+							ereport(ERROR,
+									(errcode(ERRCODE_UNDEFINED_FUNCTION),
+									 errmsg("%s %s expects parameter \"%s\", which was not supplied.", obj_type, NameListToString(names), p_argnames[pp])),
+									 parser_errposition(pstate, location));
+					}
+					else if (pp < first_arg_with_default)
 					{
 						ereport(ERROR,
 								(errcode(ERRCODE_UNDEFINED_FUNCTION),
@@ -1218,7 +1263,7 @@ pltsql_report_proc_not_found_error(List *names, List *given_argnames, int nargs,
 					}
 				}
 				/* Default arguments are also supplied but parameter name is unknown. */
-				if((nargs > first_arg_with_default) && first_unknown_argname)
+				if(first_unknown_argname)
 				{
 					ereport(ERROR,
 							(errcode(ERRCODE_UNDEFINED_FUNCTION),
