@@ -191,6 +191,7 @@ Could not find tests for procedure babel_create_msdb_if_not_exists
 Could not find tests for procedure babel_create_msdb_if_not_exists_internal
 Could not find tests for procedure babel_datatype_precedence_initializer
 Could not find tests for procedure babelfish_drop_deprecated_function
+Could not find tests for procedure babelfish_drop_deprecated_object
 Could not find tests for procedure babelfish_drop_deprecated_view
 Could not find tests for procedure babelfish_remove_object_from_extension
 Could not find tests for procedure initialize_babel_extras
