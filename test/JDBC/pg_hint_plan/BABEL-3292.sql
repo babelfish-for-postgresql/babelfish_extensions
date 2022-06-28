@@ -54,16 +54,16 @@ go
 select * from babel_3292_t1 with(index=index_babel_3292_t1_b1) where b1 = 1
 go
 
-select * from babel_3292_t1 t with(index=index_babel_3292_t1_b1) where b1 = 1
+select * from babel_3292_t1 t1 with(index=index_babel_3292_t1_b1) where b1 = 1
 go
 
-select * from babel_3292_t1 as t with(index=index_babel_3292_t1_b1) where b1 = 1
+select * from babel_3292_t1 as t1 with(index=index_babel_3292_t1_b1) where b1 = 1
 go
 
 select * from babel_3292_t1 where b1=1 option(table hint(babel_3292_t1, index(index_babel_3292_t1_b1)))
 go
 
-select * from babel_3292_t1 t where b1=1 option(table hint(t, index(index_babel_3292_t1_b1)))
+select * from babel_3292_t1 t1 where b1=1 option(table hint(t1, index(index_babel_3292_t1_b1)))
 go
 
 -- Test with multiple index hints

@@ -4803,7 +4803,6 @@ static void post_process_table_source(TSqlParser::Table_source_itemContext *ctx,
 				extractTableHints(actx->table_alias()->with_table_hints(), alias_name);
 			removeCtxStringFromQuery(expr, actx->table_alias()->with_table_hints(), baseCtx);
 		}
-		
 	}
 	
 	if (ctx->join_hint())

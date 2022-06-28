@@ -101,22 +101,22 @@ Index Scan using index_babel_3292_t1_b1babel_329eaeb7a8893929b580f3d762dc8499736
 ~~END~~
 
 
-select * from babel_3292_t1 t with(index=index_babel_3292_t1_b1) where b1 = 1
+select * from babel_3292_t1 t1 with(index=index_babel_3292_t1_b1) where b1 = 1
 go
 ~~START~~
 text
-Query Text: /*+ IndexScan(t index_babel_3292_t1_b1babel_329eaeb7a8893929b580f3d762dc8499736) */ select * from babel_3292_t1 t                                    where b1 = 1
-Index Scan using index_babel_3292_t1_b1babel_329eaeb7a8893929b580f3d762dc8499736 on babel_3292_t1 t
+Query Text: /*+ IndexScan(t1 index_babel_3292_t1_b1babel_329eaeb7a8893929b580f3d762dc8499736) */ select * from babel_3292_t1 t1                                    where b1 = 1
+Index Scan using index_babel_3292_t1_b1babel_329eaeb7a8893929b580f3d762dc8499736 on babel_3292_t1 t1
   Index Cond: (b1 = 1)
 ~~END~~
 
 
-select * from babel_3292_t1 as t with(index=index_babel_3292_t1_b1) where b1 = 1
+select * from babel_3292_t1 as t1 with(index=index_babel_3292_t1_b1) where b1 = 1
 go
 ~~START~~
 text
-Query Text: /*+ IndexScan(t index_babel_3292_t1_b1babel_329eaeb7a8893929b580f3d762dc8499736) */ select * from babel_3292_t1 as t                                    where b1 = 1
-Index Scan using index_babel_3292_t1_b1babel_329eaeb7a8893929b580f3d762dc8499736 on babel_3292_t1 t
+Query Text: /*+ IndexScan(t1 index_babel_3292_t1_b1babel_329eaeb7a8893929b580f3d762dc8499736) */ select * from babel_3292_t1 as t1                                    where b1 = 1
+Index Scan using index_babel_3292_t1_b1babel_329eaeb7a8893929b580f3d762dc8499736 on babel_3292_t1 t1
   Index Cond: (b1 = 1)
 ~~END~~
 
@@ -131,12 +131,12 @@ Index Scan using index_babel_3292_t1_b1babel_329eaeb7a8893929b580f3d762dc8499736
 ~~END~~
 
 
-select * from babel_3292_t1 t where b1=1 option(table hint(t, index(index_babel_3292_t1_b1)))
+select * from babel_3292_t1 t1 where b1=1 option(table hint(t1, index(index_babel_3292_t1_b1)))
 go
 ~~START~~
 text
-Query Text: /*+ IndexScan(t index_babel_3292_t1_b1babel_329eaeb7a8893929b580f3d762dc8499736) */ select * from babel_3292_t1 t where b1=1                                                     
-Index Scan using index_babel_3292_t1_b1babel_329eaeb7a8893929b580f3d762dc8499736 on babel_3292_t1 t
+Query Text: /*+ IndexScan(t1 index_babel_3292_t1_b1babel_329eaeb7a8893929b580f3d762dc8499736) */ select * from babel_3292_t1 t1 where b1=1                                                      
+Index Scan using index_babel_3292_t1_b1babel_329eaeb7a8893929b580f3d762dc8499736 on babel_3292_t1 t1
   Index Cond: (b1 = 1)
 ~~END~~
 
