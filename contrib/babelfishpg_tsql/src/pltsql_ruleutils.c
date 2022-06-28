@@ -445,7 +445,6 @@ tsql_get_functiondef(PG_FUNCTION_ARGS)
 		appendStringInfoString(&buf, " WITH RETURNS NULL ON NULL INPUT");
 
 	/* Emit any proconfig options, one per line */
-	tmp = SysCacheGetAttr(PROCOID, proctup, Anum_pg_proc_proconfig, &isnull);
 	if (!isnull)
 	{
 		ArrayType  *a = DatumGetArrayTypeP(tmp);

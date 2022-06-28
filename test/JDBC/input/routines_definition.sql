@@ -13,6 +13,9 @@ go
 select tsql_get_functiondef(oid) from pg_proc where proname='test_nvar';
 go
 
+select SPECIFIC_CATALOG, SPECIFIC_SCHEMA, SPECIFIC_NAME from information_schema_tsql.routines where SPECIFIC_NAME NOT LIKE 'xp%';
+go
+
 drop procedure test_nvar;
 go
 
@@ -30,6 +33,9 @@ END;
 go
 
 select tsql_get_functiondef(oid) from pg_proc where proname='test_si';
+go
+
+select ROUTINE_CATALOG, ROUTINE_SCHEMA, ROUTINE_NAME  from information_schema_tsql.routines where SPECIFIC_NAME NOT LIKE 'xp%';
 go
 
 drop procedure sc1.test_si;
@@ -54,6 +60,9 @@ go
 select tsql_get_functiondef(oid) from pg_proc where proname='test_dec';
 go
 
+select ROUTINE_TYPE, DATA_TYPE, CHARACTER_MAXIMUM_LENGTH  from information_schema_tsql.routines where SPECIFIC_NAME NOT LIKE 'xp%';
+go
+
 #char
 create procedure test_char(@ch char)
 AS
@@ -64,6 +73,9 @@ END;
 go
 
 select tsql_get_functiondef(oid) from pg_proc where proname='test_char';
+go
+
+select CHARACTER_OCTET_LENGTH, COLLATION_NAME  from information_schema_tsql.routines where SPECIFIC_NAME NOT LIKE 'xp%';
 go
 
 drop procedure test_char;
@@ -80,6 +92,9 @@ END;
 go
 
 select tsql_get_functiondef(oid) from pg_proc where proname='test_ti';
+go
+
+select ROUTINE_BODY, ROUTINE_DEFINITION  from information_schema_tsql.routines where SPECIFIC_NAME NOT LIKE 'xp%';
 go
 
 drop procedure test_ti;
