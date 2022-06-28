@@ -139,10 +139,10 @@ def find_pattern_create(logger):
                 elif readflag == True:
                     match_f = re.search(pat,line,re.I)
                     if match_f:
-                        # print(line)
+                        print(line)
                         newline = line.lower()
                         if "(" in newline:
-                            newline = newline.split('(')[0] + "[(]"
+                            newline = newline.split('(')[0].strip()
                         
                         # if " as " in line.lower():
                         #     line=line.lower().split(' as ')[0]
@@ -163,6 +163,8 @@ def find_pattern_create(logger):
                         resultwords  = [word for word in linewords if word not in stopwords]
                         obj_name = ' '.join(resultwords)
 
+                        if category=='function':
+                            obj_name+=r"\s{0,2}[(]"
                         # print("word to be searched : ",obj_name.lower())
 
                         object_names.add((category,obj_name))
@@ -186,7 +188,13 @@ def find_inp_JDBC(fname,logger):
 
             #Flag for object name found or not in the JDBC input files
             flag = False
-            # print(object[1])
+            print(object)
+            pattern=object[1]
+            if "." in object[1]:
+                pattern=object[1].replace(".","[.]")
+
+            if not object[0] == 'function':
+                pattern=pattern + r"\b"
             for i in files:
                 with open(i, "r") as testfile:
                     testline = testfile.readline()
@@ -197,10 +205,11 @@ def find_inp_JDBC(fname,logger):
                             testline = testfile.readline()
                             continue
 
-                        elif(re.search(r"\b" + object[1] + r"\b", testline, re.I)):
+                        elif(re.search( r"\b" + pattern, testline, re.I)):
                             flag = True
-                            # print("Found\nline :   ",testline)
-                            # print("file name : ",i)
+                            print("Found ,",object[0])
+                            print("line :   ",testline)
+                            print("file name : ",i)
                             break
                         testline = testfile.readline()
                     else:
@@ -208,7 +217,10 @@ def find_inp_JDBC(fname,logger):
                     break
 
             if(flag == False and "sys." in object[1]):
-                result_wo_sys = object[1].split('.',maxsplit=2)[1]
+                result_wo_sys = pattern.replace("sys[.]","")
+                
+                if not object[0] == 'function':
+                    result_wo_sys=result_wo_sys + r"\b"
 
                 for i in files:
                     with open(i, "r") as testfile:
@@ -220,17 +232,18 @@ def find_inp_JDBC(fname,logger):
                                 testline = testfile.readline()
                                 continue
 
-                            elif(re.search(r"\b" + result_wo_sys + r"\b", testline, re.I)):
+                            elif(re.search(r"\b" + result_wo_sys , testline, re.I)):
                                 flag = True
-                                # print("Found\nline :   ",testline)
-                                # print("file name : ",i)
+                                print("Found ,",object[0])
+                                print("line :   ",testline)
+                                print("file name : ",i)
                                 break
                             testline = testfile.readline()
                         else:
                             continue
                         break
             if flag == False:
-                expected_file.write("Could not find tests for {0} {1}\n".format(object[0],object[1].split('[')[0]))
+                expected_file.write("Could not find tests for {0} {1}\n".format(object[0],object[1].split('\s')[0]))
     logger.info("Tests for finding JDBC input objects completed successfully!")
 
 
