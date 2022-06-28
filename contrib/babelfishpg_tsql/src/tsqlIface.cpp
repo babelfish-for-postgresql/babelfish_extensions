@@ -66,6 +66,7 @@ extern "C"
 	extern size_t get_num_column_names_to_be_delimited();
 	extern size_t get_num_pg_reserved_keywords_to_be_delimited();
 	extern char * construct_unique_index_name(char *index_name, char *relation_name);
+	extern bool enable_hint_mapping;
 }
 
 static void toDotRecursive(ParseTree *t, const std::vector<std::string> &ruleNames, const std::string &sourceText);
@@ -556,7 +557,8 @@ static void
 add_query_hints(PLtsql_expr *expr)
 {
 	std::string hint =  "/*+ ";
-	for(auto q_hint: query_hints) {
+	for (auto q_hint: query_hints)
+	{
 		hint += q_hint;
 		hint += " ";
 	}
@@ -1391,7 +1393,8 @@ public:
 		add_rewritten_query_fragment_to_mutator(statementMutator.get());
 
 		/* Add query hints */
-		if (query_hints.size()) {
+		if (query_hints.size())
+		{
 			add_query_hints(statementMutator.get()->expr);
 			clear_query_hints();
 		}
@@ -2162,7 +2165,8 @@ static void process_select_statement(
 	Assert(mutator);
 	PLtsql_expr *expr = mutator->expr;
 	ParserRuleContext* baseCtx = mutator->ctx;
-	for (auto octx : selectCtx->option_clause()) {// query hint
+	for (auto octx : selectCtx->option_clause()) // query hint
+	{
 		extractQueryHintsFromOptionClause(octx);
 		removeCtxStringFromQuery(expr, octx, baseCtx);
 	}
@@ -3130,6 +3134,9 @@ void removeCtxStringFromQuery(PLtsql_expr* expr, ParserRuleContext *ctx, ParserR
 
 void extractQueryHintsFromOptionClause(TSqlParser::Option_clauseContext *octx)
 {
+	if (!enable_hint_mapping)
+		return; // do nothing
+
 	for (auto option: octx->option())
 	{
 		if (option->TABLE())
@@ -3137,7 +3144,7 @@ void extractQueryHintsFromOptionClause(TSqlParser::Option_clauseContext *octx)
 			std::string table_name = ::getFullText(option->table_name()->table);
 			if (!table_name.empty())
 			{
-				for(auto table_hint: option->table_hint())
+				for (auto table_hint: option->table_hint())
 				{
 					extractTableHint(table_hint, table_name);
 				}
@@ -3148,7 +3155,7 @@ void extractQueryHintsFromOptionClause(TSqlParser::Option_clauseContext *octx)
 
 void extractTableHints(TSqlParser::With_table_hintsContext *tctx, std::string table_name)
 {
-	if (!table_name.empty())
+	if (enable_hint_mapping && !table_name.empty())
 	{
 		for (auto table_hint: tctx->table_hint())
 			extractTableHint(table_hint, table_name);
@@ -4760,8 +4767,10 @@ static void post_process_table_source(TSqlParser::Table_source_itemContext *ctx,
 	for (auto cctx : ctx->table_source_item())
 		post_process_table_source(cctx, expr, baseCtx);
 
-	for (auto wctx : ctx->with_table_hints()) {
-		if (!wctx->sample_clause()) {
+	for (auto wctx : ctx->with_table_hints())
+	{
+		if (enable_hint_mapping && !wctx->sample_clause())
+		{
 			std::string table_name;
 			if (ctx->full_object_name())
 				table_name = stripQuoteFromId(ctx->full_object_name()->object_name);
