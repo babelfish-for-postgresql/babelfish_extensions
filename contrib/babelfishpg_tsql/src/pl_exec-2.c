@@ -1147,13 +1147,12 @@ exec_stmt_exec_batch(PLtsql_execstate *estate, PLtsql_stmt_exec_batch *stmt)
 	volatile LocalTransactionId before_lxid;
 	LocalTransactionId after_lxid;
 	SimpleEcontextStackEntry *topEntry;
-      	char *old_db_name = NULL;
+      	char *old_db_name = get_cur_db_name();
       	char *cur_db_name = NULL;
 	LOCAL_FCINFO(fcinfo,1);
 
 	PG_TRY();
 	{
-                old_db_name = get_cur_db_name();
                 /*
 		* First we evaluate the string expression. Its result is the
 		* querystring we have to execute.
@@ -2618,7 +2617,7 @@ execute_bulk_load_insert(int ncol, int nrow, Oid *argtypes,
 	PG_TRY();
 	{
 		elog(DEBUG2, "Insert Bulk operation on destination table: %s", bulk_load_table_name);
-		appendStringInfo(src, "Insert into %s values ", bulk_load_table_name);
+		appendStringInfo(src, "Insert into %s OVERRIDING SYSTEM VALUE values ", bulk_load_table_name);
 
 		/* Disable triggers on the table. */
 		rel = table_open(bulk_load_table_oid, AccessShareLock);
