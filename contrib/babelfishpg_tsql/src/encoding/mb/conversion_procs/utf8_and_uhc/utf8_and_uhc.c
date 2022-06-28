@@ -1,8 +1,8 @@
 #include "postgres.h"
 #include "fmgr.h"
 #include "mb/pg_wchar.h"
-#include "../../../../../../../src/backend/utils/mb/Unicode/uhc_to_utf8.map"
-#include "../../../../../../../src/backend/utils/mb/Unicode/utf8_to_uhc.map"
+#include "src/backend/utils/mb/Unicode/uhc_to_utf8.map"
+#include "src/backend/utils/mb/Unicode/utf8_to_uhc.map"
 
 #include "src/encoding/encoding.h"
 
