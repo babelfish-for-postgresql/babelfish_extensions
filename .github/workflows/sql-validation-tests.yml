@@ -1,5 +1,5 @@
 name: validate installation/upgrade scripts
-on: [pull_request]
+on: [push, pull_request]
 
 jobs:
   run-sql-validation-tests:
@@ -23,4 +23,4 @@ jobs:
         uses: actions/upload-artifact@v2
         with:
           name: expected-output-files
-          path: test/python/output/*
+          path: test/python/output/Sql_validation_framework/*

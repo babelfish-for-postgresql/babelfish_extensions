@@ -139,7 +139,7 @@ def find_pattern_create(logger):
                 elif readflag == True:
                     match_f = re.search(pat,line,re.I)
                     if match_f:
-                        print(line)
+                        # print(line)
                         newline = line.lower()
                         if "(" in newline:
                             newline = newline.split('(')[0].strip()
@@ -188,7 +188,7 @@ def find_inp_JDBC(fname,logger):
 
             #Flag for object name found or not in the JDBC input files
             flag = False
-            print(object)
+            # print(object)
             pattern=object[1]
             if "." in object[1]:
                 pattern=object[1].replace(".","[.]")
@@ -207,9 +207,9 @@ def find_inp_JDBC(fname,logger):
 
                         elif(re.search( r"\b" + pattern, testline, re.I)):
                             flag = True
-                            print("Found ,",object[0])
-                            print("line :   ",testline)
-                            print("file name : ",i)
+                            # print("Found ,",object[0])
+                            # print("line :   ",testline)
+                            # print("file name : ",i)
                             break
                         testline = testfile.readline()
                     else:
@@ -234,9 +234,9 @@ def find_inp_JDBC(fname,logger):
 
                             elif(re.search(r"\b" + result_wo_sys , testline, re.I)):
                                 flag = True
-                                print("Found ,",object[0])
-                                print("line :   ",testline)
-                                print("file name : ",i)
+                                # print("Found ,",object[0])
+                                # print("line :   ",testline)
+                                # print("file name : ",i)
                                 break
                             testline = testfile.readline()
                         else:
