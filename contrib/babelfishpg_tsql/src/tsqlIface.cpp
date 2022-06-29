@@ -4825,11 +4825,7 @@ static void post_process_table_source(TSqlParser::Table_source_itemContext *ctx,
 	{
 		if (enable_hint_mapping && !wctx->sample_clause())
 		{
-			std::string table_name;
-			if (ctx->full_object_name())
-				table_name = stripQuoteFromId(ctx->full_object_name()->object_name);
-			else if (ctx->local_id())
-				table_name = ::getFullText(ctx->local_id());
+			std::string table_name = extractTableName(nullptr, ctx);
 			extractTableHints(wctx, table_name);
 		}
 		removeCtxStringFromQuery(expr, wctx, baseCtx);
@@ -4838,11 +4834,7 @@ static void post_process_table_source(TSqlParser::Table_source_itemContext *ctx,
 	for (auto actx : ctx->as_table_alias())
 	{
 		std::string alias_name = ::getFullText(actx->table_alias()->id());
-		std::string table_name;
-		if (ctx->full_object_name())
-			table_name = stripQuoteFromId(ctx->full_object_name()->object_name);
-		else if (ctx->local_id())
-			table_name = ::getFullText(ctx->local_id());
+		std::string table_name = extractTableName(nullptr, ctx);
 		if (!table_name.empty())
 		{
 			alias_mapping[alias_name] = table_name;
