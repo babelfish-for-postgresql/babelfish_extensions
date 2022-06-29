@@ -2492,12 +2492,12 @@ SELECT
   , CAST(NULL as sys.datetime) as create_date
   , CAST(NULL as sys.datetime) as modify_date
   , CAST(0 as sys.bit) as is_disabled
-  , CAST('' as sys.nvarchar) AS query_text
+  , CAST('' as sys.nvarchar(4000)) AS query_text
   , CAST(0 as sys.tinyint) AS scope_type
   , CAST('' as sys.nvarchar(60)) AS scope_type_desc
   , CAST(0 as int) AS scope_type_id
-  , CAST('' as sys.nvarchar) AS scope_batch
-  , CAST('' as sys.nvarchar) AS parameters
-  , CAST('' as sys.nvarchar) AS hints
+  , CAST('' as sys.nvarchar(4000)) AS scope_batch
+  , CAST('' as sys.nvarchar(4000)) AS parameters
+  , CAST('' as sys.nvarchar(4000)) AS hints
 WHERE FALSE;
 GRANT SELECT ON sys.plan_guides TO PUBLIC;
