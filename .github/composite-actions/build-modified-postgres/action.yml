@@ -3,7 +3,7 @@ inputs:
   engine_branch:
     description: 'Engine Branch'
     required: no
-    default: $GITHUB_REF_NAME
+    default: jira-babel-3090
   install_dir:
     description: 'Engine install directory'
     required: no
