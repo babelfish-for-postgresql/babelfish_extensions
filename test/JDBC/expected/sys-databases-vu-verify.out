@@ -1,0 +1,23 @@
+SELECT * FROM sys_databases_view
+GO
+~~START~~
+varchar#!#tinyint#!#varchar
+db_sys_databases#!#120#!#bbf_unicode_cp1_ci_as
+~~END~~
+
+
+EXEC sys_databases_proc
+GO
+~~START~~
+varchar#!#tinyint#!#varchar
+db_sys_databases#!#120#!#bbf_unicode_cp1_ci_as
+~~END~~
+
+
+SELECT * FROM sys_databases_func()
+GO
+~~START~~
+varchar#!#tinyint#!#varchar
+db_sys_databases#!#120#!#bbf_unicode_cp1_ci_as
+~~END~~
+
