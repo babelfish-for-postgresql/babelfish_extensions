@@ -54,6 +54,13 @@ $BODY$
 $BODY$
 LANGUAGE SQL;
 
+CREATE OR REPLACE FUNCTION sys.system_user()
+RETURNS sys.nvarchar(128) AS
+$BODY$
+	SELECT SESSION_USER;
+$BODY$
+LANGUAGE SQL;
+
 CREATE OR REPLACE FUNCTION sys.babelfish_get_identity_param(IN tablename TEXT, IN optionname TEXT)
 RETURNS INT8
 AS 'babelfishpg_tsql', 'get_identity_param'

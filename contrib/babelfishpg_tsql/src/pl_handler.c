@@ -2146,6 +2146,7 @@ static void bbf_ProcessUtility(PlannedStmt *pstmt,
 					 * the function is created, and record bidirectional
 					 * dependency so that Drop Trigger CASCADE will drop the
 					 * implicit trigger function.
+					 * Create trigger takes care of dependency addition.
 					 */
 					if(trigStmt)
 					{
@@ -2153,7 +2154,6 @@ static void bbf_ProcessUtility(PlannedStmt *pstmt,
 									  pstate->p_sourcetext, InvalidOid, InvalidOid,
 									  InvalidOid, InvalidOid, address.objectId,
 									  InvalidOid, NULL, false, false);
-						recordDependencyOn(&address, &trig, DEPENDENCY_NORMAL);
 					}
 
 					/*
@@ -2332,7 +2332,7 @@ static void bbf_ProcessUtility(PlannedStmt *pstmt,
 					if (!has_privs_of_role(GetSessionUserId(), get_role_oid("sysadmin", false))) 
 						ereport(ERROR,
 								(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
-								errmsg("Current login %s do not have permission to create new login",
+								errmsg("Current login %s does not have permission to create new login",
 									GetUserNameFromId(GetSessionUserId(), true))));
 
 					if (get_role_oid(stmt->role, true) != InvalidOid)

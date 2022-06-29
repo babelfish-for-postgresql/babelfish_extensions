@@ -284,3 +284,26 @@ Select * from sourceTable
 Select * from destinationTable
 drop table sourceTable
 drop table destinationTable
+
+# identity
+Create table sourceTable(a int identity, b int)
+Create table destinationTable(a int identity, b int)
+insert into sourceTable values (1)
+insert into sourceTable values (2)
+insertbulk#!#sourceTable#!#destinationTable
+Select * from sourceTable
+Select * from destinationTable
+drop table sourceTable
+drop table destinationTable
+
+# trigger
+create table t_rcv (a int)
+create table t_rcv2 (b int)
+create trigger tri on t_rcv for insert as begin insert t_rcv2 select a*-1 from inserted end
+insert t_rcv values (123)
+insertbulk#!#t_rcv#!#t_rcv
+insertbulk#!#t_rcv2#!#t_rcv
+select * from t_rcv
+select * from t_rcv2
+drop table t_rcv
+drop table t_rcv2
