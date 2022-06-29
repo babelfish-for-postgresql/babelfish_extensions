@@ -54,7 +54,16 @@ go
 select * from babel_3292_t1 with(index=index_babel_3292_t1_b1) where b1 = 1
 go
 
+select * from babel_3292_t1 t1 with(index=index_babel_3292_t1_b1) where b1 = 1
+go
+
+select * from babel_3292_t1 as t1 with(index=index_babel_3292_t1_b1) where b1 = 1
+go
+
 select * from babel_3292_t1 where b1=1 option(table hint(babel_3292_t1, index(index_babel_3292_t1_b1)))
+go
+
+select * from babel_3292_t1 t1 where b1=1 option(table hint(t1, index(index_babel_3292_t1_b1)))
 go
 
 -- Test with multiple index hints
@@ -78,6 +87,12 @@ select * from babel_3292_t1 with(index=index_babel_3292_t1_b1), babel_3292_t2 wi
 go
 
 select * from babel_3292_t1, babel_3292_t2 where b1 = 1 and b2 = 1 option(table hint(babel_3292_t1, index(index_babel_3292_t1_b1)), table hint(babel_3292_t2, index(index_babel_3292_t2_b2)))
+go
+
+select * from babel_3292_t1 t1 with(index=index_babel_3292_t1_b1), babel_3292_t2 t2 with(index=index_babel_3292_t2_b2) where b1 = 1 and b2 = 1
+go
+
+select * from babel_3292_t1 t1, babel_3292_t2 t2 where b1 = 1 and b2 = 1 option(table hint(t1, index(index_babel_3292_t1_b1)), table hint(t2, index(index_babel_3292_t2_b2)))
 go
 
 -- Test INSERT queries with and without hints
@@ -195,7 +210,13 @@ go
 select * from tempdb.babel_3292_schema.t1 (index(index_babel_3292_schema_t1_b1)) where b1 = 1
 go
 
+select * from tempdb.babel_3292_schema.t1 t1 (index(index_babel_3292_schema_t1_b1)) where b1 = 1
+go
+
 select * from tempdb.babel_3292_schema.t1 where b1=1 option(table hint(tempdb.babel_3292_schema.t1, index(index_babel_3292_schema_t1_b1)))
+go
+
+select * from tempdb.babel_3292_schema.t1 t1 where b1=1 option(table hint(t1, index(index_babel_3292_schema_t1_b1)))
 go
 
 select * from tempdb.babel_3292_schema.t1 with(index(index_babel_3292_schema_t1_b1), index(index_babel_3292_schema_t1_c1)) where b1 = 1 and c1 = 1
@@ -207,7 +228,13 @@ go
 select * from tempdb.babel_3292_schema.t1 with(index(index_babel_3292_schema_t1_b1)), tempdb.dbo.babel_3292_t2 with(index(index_babel_3292_t2_b2)) where b1 = 1 and b2 = 1
 go
 
+select * from tempdb.babel_3292_schema.t1 t1 with(index(index_babel_3292_schema_t1_b1)), tempdb.dbo.babel_3292_t2 t2 with(index(index_babel_3292_t2_b2)) where b1 = 1 and b2 = 1
+go
+
 select * from tempdb.babel_3292_schema.t1, tempdb.dbo.babel_3292_t2 where b1 = 1 and b2 = 1 option(table hint(tempdb.babel_3292_schema.t1, index(index_babel_3292_schema_t1_b1)), table hint(tempdb.dbo.babel_3292_t2, index(index_babel_3292_t2_b2)))
+go
+
+select * from tempdb.babel_3292_schema.t1 t1, tempdb.dbo.babel_3292_t2 t2 where b1 = 1 and b2 = 1 option(table hint(t1, index(index_babel_3292_schema_t1_b1)), table hint(t2, index(index_babel_3292_t2_b2)))
 go
 
 insert into tempdb.dbo.babel_3292_t2 select * from tempdb.babel_3292_schema.t1 with(index(index_babel_3292_schema_t1_b1)) where b1 = 1
@@ -231,7 +258,13 @@ go
 select * from tempdb.babel_3292_schema.t1 with(index=index_babel_3292_schema_t1_b1) where b1 = 1 UNION select * from tempdb.dbo.babel_3292_t2 with(index=index_babel_3292_t2_b2) where b2 = 1
 go
 
+select * from tempdb.babel_3292_schema.t1 t1 with(index=index_babel_3292_schema_t1_b1) where b1 = 1 UNION select * from tempdb.dbo.babel_3292_t2 t2 with(index=index_babel_3292_t2_b2) where b2 = 1
+go
+
 select * from tempdb.babel_3292_schema.t1 where b1 = 1 UNION select * from tempdb.dbo.babel_3292_t2 where b2 = 1 option(table hint(tempdb.babel_3292_schema.t1, index(index_babel_3292_schema_t1_b1)), table hint(tempdb.dbo.babel_3292_t2, index(index_babel_3292_t2_b2))) -- Both queries have a hint
+go
+
+select * from tempdb.babel_3292_schema.t1 t1 where b1 = 1 UNION select * from tempdb.dbo.babel_3292_t2 t2 where b2 = 1 option(table hint(t1, index(index_babel_3292_schema_t1_b1)), table hint(t2, index(index_babel_3292_t2_b2))) -- Both queries have a hint
 go
 
 set babelfish_showplan_all off
