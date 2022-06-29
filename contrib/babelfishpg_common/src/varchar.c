@@ -18,6 +18,7 @@
 #include "access/hash.h"
 #include "babelfishpg_common.h"
 #include "catalog/pg_collation.h"
+#include "catalog/pg_type.h"
 #include "fmgr.h"
 #include "libpq/pqformat.h"
 #include "nodes/nodeFuncs.h"

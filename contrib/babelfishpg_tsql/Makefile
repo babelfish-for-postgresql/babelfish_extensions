@@ -235,6 +235,8 @@ src/backend_parser/scan-backend.c: src/backend_parser/scan-backend.l
 # Force these dependencies to be known even without dependency info built:
 src/backend_parser/gram-backend.o src/backend_parser/scan-backend.o src/backend_parser/parser.o: src/backend_parser/gram-backend.h
 
+include $(PGXS)
+
 .DEFAULT_GOAL := all
 .PHONY: sql/$(EXTENSION)--$(EXTVERSION).sql
 
