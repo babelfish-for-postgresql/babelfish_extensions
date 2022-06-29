@@ -101,12 +101,42 @@ Index Scan using index_babel_3292_t1_b1babel_329eaeb7a8893929b580f3d762dc8499736
 ~~END~~
 
 
+select * from babel_3292_t1 t1 with(index=index_babel_3292_t1_b1) where b1 = 1
+go
+~~START~~
+text
+Query Text: /*+ IndexScan(t1 index_babel_3292_t1_b1babel_329eaeb7a8893929b580f3d762dc8499736) */ select * from babel_3292_t1 t1                                    where b1 = 1
+Index Scan using index_babel_3292_t1_b1babel_329eaeb7a8893929b580f3d762dc8499736 on babel_3292_t1 t1
+  Index Cond: (b1 = 1)
+~~END~~
+
+
+select * from babel_3292_t1 as t1 with(index=index_babel_3292_t1_b1) where b1 = 1
+go
+~~START~~
+text
+Query Text: /*+ IndexScan(t1 index_babel_3292_t1_b1babel_329eaeb7a8893929b580f3d762dc8499736) */ select * from babel_3292_t1 as t1                                    where b1 = 1
+Index Scan using index_babel_3292_t1_b1babel_329eaeb7a8893929b580f3d762dc8499736 on babel_3292_t1 t1
+  Index Cond: (b1 = 1)
+~~END~~
+
+
 select * from babel_3292_t1 where b1=1 option(table hint(babel_3292_t1, index(index_babel_3292_t1_b1)))
 go
 ~~START~~
 text
 Query Text: /*+ IndexScan(babel_3292_t1 index_babel_3292_t1_b1babel_329eaeb7a8893929b580f3d762dc8499736) */ select * from babel_3292_t1 where b1=1                                                                 
 Index Scan using index_babel_3292_t1_b1babel_329eaeb7a8893929b580f3d762dc8499736 on babel_3292_t1
+  Index Cond: (b1 = 1)
+~~END~~
+
+
+select * from babel_3292_t1 t1 where b1=1 option(table hint(t1, index(index_babel_3292_t1_b1)))
+go
+~~START~~
+text
+Query Text: /*+ IndexScan(t1 index_babel_3292_t1_b1babel_329eaeb7a8893929b580f3d762dc8499736) */ select * from babel_3292_t1 t1 where b1=1                                                      
+Index Scan using index_babel_3292_t1_b1babel_329eaeb7a8893929b580f3d762dc8499736 on babel_3292_t1 t1
   Index Cond: (b1 = 1)
 ~~END~~
 
@@ -206,6 +236,34 @@ Nested Loop
         Index Cond: (b1 = 1)
   ->  Materialize
         ->  Index Scan using index_babel_3292_t2_b2babel_3297b13d7f53f3b499d8db9cc07605bd434 on babel_3292_t2
+              Index Cond: (b2 = 1)
+~~END~~
+
+
+select * from babel_3292_t1 t1 with(index=index_babel_3292_t1_b1), babel_3292_t2 t2 with(index=index_babel_3292_t2_b2) where b1 = 1 and b2 = 1
+go
+~~START~~
+text
+Query Text: /*+ IndexScan(t1 index_babel_3292_t1_b1babel_329eaeb7a8893929b580f3d762dc8499736) IndexScan(t2 index_babel_3292_t2_b2babel_3297b13d7f53f3b499d8db9cc07605bd434) */ select * from babel_3292_t1 t1                                   , babel_3292_t2 t2                                    where b1 = 1 and b2 = 1
+Nested Loop
+  ->  Index Scan using index_babel_3292_t1_b1babel_329eaeb7a8893929b580f3d762dc8499736 on babel_3292_t1 t1
+        Index Cond: (b1 = 1)
+  ->  Materialize
+        ->  Index Scan using index_babel_3292_t2_b2babel_3297b13d7f53f3b499d8db9cc07605bd434 on babel_3292_t2 t2
+              Index Cond: (b2 = 1)
+~~END~~
+
+
+select * from babel_3292_t1 t1, babel_3292_t2 t2 where b1 = 1 and b2 = 1 option(table hint(t1, index(index_babel_3292_t1_b1)), table hint(t2, index(index_babel_3292_t2_b2)))
+go
+~~START~~
+text
+Query Text: /*+ IndexScan(t1 index_babel_3292_t1_b1babel_329eaeb7a8893929b580f3d762dc8499736) IndexScan(t2 index_babel_3292_t2_b2babel_3297b13d7f53f3b499d8db9cc07605bd434) */ select * from babel_3292_t1 t1, babel_3292_t2 t2 where b1 = 1 and b2 = 1                                                                                                     
+Nested Loop
+  ->  Index Scan using index_babel_3292_t1_b1babel_329eaeb7a8893929b580f3d762dc8499736 on babel_3292_t1 t1
+        Index Cond: (b1 = 1)
+  ->  Materialize
+        ->  Index Scan using index_babel_3292_t2_b2babel_3297b13d7f53f3b499d8db9cc07605bd434 on babel_3292_t2 t2
               Index Cond: (b2 = 1)
 ~~END~~
 
@@ -531,11 +589,31 @@ Index Scan using index_babel_3292_schema_t1_b1t15233a6e220046e22743bc3bf322e4297
 ~~END~~
 
 
+select * from tempdb.babel_3292_schema.t1 t1 (index(index_babel_3292_schema_t1_b1)) where b1 = 1
+go
+~~START~~
+text
+Query Text: /*+ IndexScan(t1 index_babel_3292_schema_t1_b1t15233a6e220046e22743bc3bf322e4297) */ select * from tempdb.babel_3292_schema.t1 t1                                        where b1 = 1
+Index Scan using index_babel_3292_schema_t1_b1t15233a6e220046e22743bc3bf322e4297 on t1
+  Index Cond: (b1 = 1)
+~~END~~
+
+
 select * from tempdb.babel_3292_schema.t1 where b1=1 option(table hint(tempdb.babel_3292_schema.t1, index(index_babel_3292_schema_t1_b1)))
 go
 ~~START~~
 text
 Query Text: /*+ IndexScan(t1 index_babel_3292_schema_t1_b1t15233a6e220046e22743bc3bf322e4297) */ select * from tempdb.babel_3292_schema.t1 where b1=1                                                                                      
+Index Scan using index_babel_3292_schema_t1_b1t15233a6e220046e22743bc3bf322e4297 on t1
+  Index Cond: (b1 = 1)
+~~END~~
+
+
+select * from tempdb.babel_3292_schema.t1 t1 where b1=1 option(table hint(t1, index(index_babel_3292_schema_t1_b1)))
+go
+~~START~~
+text
+Query Text: /*+ IndexScan(t1 index_babel_3292_schema_t1_b1t15233a6e220046e22743bc3bf322e4297) */ select * from tempdb.babel_3292_schema.t1 t1 where b1=1                                                             
 Index Scan using index_babel_3292_schema_t1_b1t15233a6e220046e22743bc3bf322e4297 on t1
   Index Cond: (b1 = 1)
 ~~END~~
@@ -577,6 +655,20 @@ Nested Loop
 ~~END~~
 
 
+select * from tempdb.babel_3292_schema.t1 t1 with(index(index_babel_3292_schema_t1_b1)), tempdb.dbo.babel_3292_t2 t2 with(index(index_babel_3292_t2_b2)) where b1 = 1 and b2 = 1
+go
+~~START~~
+text
+Query Text: /*+ IndexScan(t1 index_babel_3292_schema_t1_b1t15233a6e220046e22743bc3bf322e4297) IndexScan(t2 index_babel_3292_t2_b2babel_3297b13d7f53f3b499d8db9cc07605bd434) */ select * from tempdb.babel_3292_schema.t1 t1                                           , tempdb.dbo.babel_3292_t2 t2                                     where b1 = 1 and b2 = 1
+Nested Loop
+  ->  Index Scan using index_babel_3292_schema_t1_b1t15233a6e220046e22743bc3bf322e4297 on t1
+        Index Cond: (b1 = 1)
+  ->  Materialize
+        ->  Index Scan using index_babel_3292_t2_b2babel_3297b13d7f53f3b499d8db9cc07605bd434 on babel_3292_t2 t2
+              Index Cond: (b2 = 1)
+~~END~~
+
+
 select * from tempdb.babel_3292_schema.t1, tempdb.dbo.babel_3292_t2 where b1 = 1 and b2 = 1 option(table hint(tempdb.babel_3292_schema.t1, index(index_babel_3292_schema_t1_b1)), table hint(tempdb.dbo.babel_3292_t2, index(index_babel_3292_t2_b2)))
 go
 ~~START~~
@@ -587,6 +679,20 @@ Nested Loop
         Index Cond: (b1 = 1)
   ->  Materialize
         ->  Index Scan using index_babel_3292_t2_b2babel_3297b13d7f53f3b499d8db9cc07605bd434 on babel_3292_t2
+              Index Cond: (b2 = 1)
+~~END~~
+
+
+select * from tempdb.babel_3292_schema.t1 t1, tempdb.dbo.babel_3292_t2 t2 where b1 = 1 and b2 = 1 option(table hint(t1, index(index_babel_3292_schema_t1_b1)), table hint(t2, index(index_babel_3292_t2_b2)))
+go
+~~START~~
+text
+Query Text: /*+ IndexScan(t1 index_babel_3292_schema_t1_b1t15233a6e220046e22743bc3bf322e4297) IndexScan(t2 index_babel_3292_t2_b2babel_3297b13d7f53f3b499d8db9cc07605bd434) */ select * from tempdb.babel_3292_schema.t1 t1, tempdb.dbo.babel_3292_t2 t2 where b1 = 1 and b2 = 1                                                                                                            
+Nested Loop
+  ->  Index Scan using index_babel_3292_schema_t1_b1t15233a6e220046e22743bc3bf322e4297 on t1
+        Index Cond: (b1 = 1)
+  ->  Materialize
+        ->  Index Scan using index_babel_3292_t2_b2babel_3297b13d7f53f3b499d8db9cc07605bd434 on babel_3292_t2 t2
               Index Cond: (b2 = 1)
 ~~END~~
 
@@ -672,6 +778,21 @@ HashAggregate
 ~~END~~
 
 
+select * from tempdb.babel_3292_schema.t1 t1 with(index=index_babel_3292_schema_t1_b1) where b1 = 1 UNION select * from tempdb.dbo.babel_3292_t2 t2 with(index=index_babel_3292_t2_b2) where b2 = 1
+go
+~~START~~
+text
+Query Text: /*+ IndexScan(t1 index_babel_3292_schema_t1_b1t15233a6e220046e22743bc3bf322e4297) IndexScan(t2 index_babel_3292_t2_b2babel_3297b13d7f53f3b499d8db9cc07605bd434) */ select * from tempdb.babel_3292_schema.t1 t1                                           where b1 = 1 UNION select * from tempdb.dbo.babel_3292_t2 t2                                    where b2 = 1
+HashAggregate
+  Group Key: t1.a1, t1.b1, t1.c1
+  ->  Append
+        ->  Index Scan using index_babel_3292_schema_t1_b1t15233a6e220046e22743bc3bf322e4297 on t1
+              Index Cond: (b1 = 1)
+        ->  Index Scan using index_babel_3292_t2_b2babel_3297b13d7f53f3b499d8db9cc07605bd434 on babel_3292_t2 t2
+              Index Cond: (b2 = 1)
+~~END~~
+
+
 select * from tempdb.babel_3292_schema.t1 where b1 = 1 UNION select * from tempdb.dbo.babel_3292_t2 where b2 = 1 option(table hint(tempdb.babel_3292_schema.t1, index(index_babel_3292_schema_t1_b1)), table hint(tempdb.dbo.babel_3292_t2, index(index_babel_3292_t2_b2))) -- Both queries have a hint
 go
 ~~START~~
@@ -683,6 +804,21 @@ HashAggregate
         ->  Index Scan using index_babel_3292_schema_t1_b1t15233a6e220046e22743bc3bf322e4297 on t1
               Index Cond: (b1 = 1)
         ->  Index Scan using index_babel_3292_t2_b2babel_3297b13d7f53f3b499d8db9cc07605bd434 on babel_3292_t2
+              Index Cond: (b2 = 1)
+~~END~~
+
+
+select * from tempdb.babel_3292_schema.t1 t1 where b1 = 1 UNION select * from tempdb.dbo.babel_3292_t2 t2 where b2 = 1 option(table hint(t1, index(index_babel_3292_schema_t1_b1)), table hint(t2, index(index_babel_3292_t2_b2))) -- Both queries have a hint
+go
+~~START~~
+text
+Query Text: /*+ IndexScan(t1 index_babel_3292_schema_t1_b1t15233a6e220046e22743bc3bf322e4297) IndexScan(t2 index_babel_3292_t2_b2babel_3297b13d7f53f3b499d8db9cc07605bd434) */ select * from tempdb.babel_3292_schema.t1 t1 where b1 = 1 UNION select * from tempdb.dbo.babel_3292_t2 t2 where b2 = 1                                                                                                            
+HashAggregate
+  Group Key: t1.a1, t1.b1, t1.c1
+  ->  Append
+        ->  Index Scan using index_babel_3292_schema_t1_b1t15233a6e220046e22743bc3bf322e4297 on t1
+              Index Cond: (b1 = 1)
+        ->  Index Scan using index_babel_3292_t2_b2babel_3297b13d7f53f3b499d8db9cc07605bd434 on babel_3292_t2 t2
               Index Cond: (b2 = 1)
 ~~END~~
 

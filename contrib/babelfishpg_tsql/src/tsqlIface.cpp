@@ -105,7 +105,7 @@ std::string extractTableName(TSqlParser::Ddl_objectContext *ctx, TSqlParser::Tab
 void extractTableHint(TSqlParser::Table_hintContext *table_hint, std::string table_name);
 void extractJoinHint(TSqlParser::Join_hintContext *join_hint, std::string table_name1, std::string table_name2);
 void extractJoinHintFromOption(TSqlParser::OptionContext *option);
-std::string extractIndexValues(std::vector<TSqlParser::Index_valueContext *> index_valuesCtx, char *table_name);
+std::string extractIndexValues(std::vector<TSqlParser::Index_valueContext *> index_valuesCtx, std::string table_name);
 
 static void *makeBatch(TSqlParser::Tsql_fileContext *ctx, tsqlBuilder &builder);
 //static void *makeBatch(TSqlParser::Block_statementContext *ctx, tsqlBuilder &builder);
@@ -203,6 +203,7 @@ static void clear_rewritten_query_fragment();
 // add information of rewritten_query_fragment information to mutator
 static void add_rewritten_query_fragment_to_mutator(PLtsql_expr_query_mutator *mutator);
 
+static std::unordered_map<std::string, std::string> alias_mapping;
 static std::vector<std::string> query_hints;
 static void add_query_hints(PLtsql_expr* expr);
 static void clear_query_hints();
@@ -575,6 +576,7 @@ static void
 clear_query_hints()
 {
 	query_hints.clear();
+	alias_mapping.clear();
 }
 
 /*
@@ -3192,7 +3194,7 @@ void extractTableHint(TSqlParser::Table_hintContext *table_hint, std::string tab
 {
 	if (table_hint->INDEX())
 	{
-		std::string index_values = extractIndexValues(table_hint->index_value(), const_cast <char *>(table_name.c_str()));
+		std::string index_values = extractIndexValues(table_hint->index_value(), table_name);
 		if (!index_values.empty())
 			query_hints.push_back("IndexScan(" + table_name + " " + index_values + ")");
 	}
@@ -3232,8 +3234,10 @@ void extractJoinHintFromOption(TSqlParser::OptionContext *option) {
 	}
 }
 
-std::string extractIndexValues(std::vector<TSqlParser::Index_valueContext *> index_valuesCtx, char *table_name)
+std::string extractIndexValues(std::vector<TSqlParser::Index_valueContext *> index_valuesCtx, std::string table_name)
 {
+	if(alias_mapping.find(table_name) != alias_mapping.end())
+		table_name = alias_mapping[table_name];
 	std::string index_values;
 	for (auto ictx: index_valuesCtx)
 	{
@@ -3241,7 +3245,7 @@ std::string extractIndexValues(std::vector<TSqlParser::Index_valueContext *> ind
 		{
 			if (index_values.size())
 				index_values += " ";
-			char * index_value = construct_unique_index_name(const_cast <char *>(::getFullText(ictx->id()).c_str()), table_name);
+			char * index_value = construct_unique_index_name(const_cast <char *>(::getFullText(ictx->id()).c_str()), const_cast <char *>(table_name.c_str()));
 			index_values += std::string(index_value);
 		}
 	}
@@ -4830,6 +4834,27 @@ static void post_process_table_source(TSqlParser::Table_source_itemContext *ctx,
 		}
 		removeCtxStringFromQuery(expr, wctx, baseCtx);
 	}
+
+	for (auto actx : ctx->as_table_alias())
+	{
+		std::string alias_name = ::getFullText(actx->table_alias()->id());
+		std::string table_name;
+		if (ctx->full_object_name())
+			table_name = stripQuoteFromId(ctx->full_object_name()->object_name);
+		else if (ctx->local_id())
+			table_name = ::getFullText(ctx->local_id());
+		if (!table_name.empty())
+		{
+			alias_mapping[alias_name] = table_name;
+		}
+		if (actx->table_alias()->with_table_hints())
+		{
+			if (enable_hint_mapping && !actx->table_alias()->with_table_hints()->sample_clause())
+				extractTableHints(actx->table_alias()->with_table_hints(), alias_name);
+			removeCtxStringFromQuery(expr, actx->table_alias()->with_table_hints(), baseCtx);
+		}
+	}
+	
 	if (ctx->join_hint())
 	{
 		std::string table_name1;
