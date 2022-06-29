@@ -103,7 +103,7 @@ void extractQueryHintsFromOptionClause(TSqlParser::Option_clauseContext *octx);
 void extractTableHints(TSqlParser::With_table_hintsContext *tctx, std::string table_name);
 std::string extractTableName(TSqlParser::Ddl_objectContext *ctx, TSqlParser::Table_source_itemContext *tctx);
 void extractTableHint(TSqlParser::Table_hintContext *table_hint, std::string table_name);
-void extractJoinHint(TSqlParser::Join_hintContext *join_hint, std::string table_name1, std::string table_name2);
+void extractJoinHint(TSqlParser::Join_hintContext *join_hint, std::string table_name1, std::string table_names);
 void extractJoinHintFromOption(TSqlParser::OptionContext *option);
 std::string extractIndexValues(std::vector<TSqlParser::Index_valueContext *> index_valuesCtx, std::string table_name);
 
@@ -205,6 +205,7 @@ static void add_rewritten_query_fragment_to_mutator(PLtsql_expr_query_mutator *m
 
 static std::unordered_map<std::string, std::string> alias_mapping;
 static std::vector<std::string> query_hints;
+static std::string leading_hint;
 static void add_query_hints(PLtsql_expr* expr);
 static void clear_query_hints();
 
@@ -564,6 +565,11 @@ add_query_hints(PLtsql_expr *expr)
 	{
 		hint += q_hint;
 		hint += " ";
+	}
+	if (!leading_hint.empty())
+	{
+		hint += leading_hint;
+		leading_hint.clear();
 	}
 	hint += "*/";
 	StringInfoData new_query;
@@ -3200,19 +3206,19 @@ void extractTableHint(TSqlParser::Table_hintContext *table_hint, std::string tab
 	}
 }
 
-void extractJoinHint(TSqlParser::Join_hintContext *join_hint, std::string table_name1, std::string table_name2)
+void extractJoinHint(TSqlParser::Join_hintContext *join_hint, std::string table_names)
 {
 	if (join_hint->LOOP())
 	{
-		query_hints.push_back("NestLoop(" + table_name1 + " " + table_name2 + ")");
+		query_hints.push_back("NestLoop(" + table_names + ")");
 	}
 	else if (join_hint->HASH())
 	{
-		query_hints.push_back("HashJoin(" + table_name1 + " " + table_name2 + ")");
+		query_hints.push_back("HashJoin(" + table_names + ")");
 	}
 	else if(join_hint->MERGE())
 	{
-		query_hints.push_back("MergeJoin(" + table_name1 + " " + table_name2 + ")");
+		query_hints.push_back("MergeJoin(" + table_names + ")");
 	}
 }
 
@@ -4849,14 +4855,30 @@ static void post_process_table_source(TSqlParser::Table_source_itemContext *ctx,
 	
 	if (ctx->join_hint())
 	{
-		std::string table_name1;
-		if (ctx->table_source_item()[0]->JOIN())
-			table_name1 = extractTableName(nullptr, ctx->table_source_item()[0]->table_source_item()[0]);
-		else
-			table_name1 = extractTableName(nullptr, ctx->table_source_item()[0]);
-		std::string table_name2 = extractTableName(nullptr, ctx->table_source_item()[1]);
-		if (!table_name1.empty() && !table_name2.empty())
-			extractJoinHint(ctx->join_hint(), table_name1, table_name2);
+		std::string table_names_left;
+		auto current_item = ctx->table_source_item()[0];
+		std::stack<std::string> st;
+		while (current_item -> JOIN())
+		{
+			st.push(extractTableName(nullptr, current_item->table_source_item()[1]));
+			current_item = current_item->table_source_item()[0];
+		}
+		st.push(extractTableName(nullptr, current_item));
+		bool is_multi_join_query = st.size() > 1;
+		while (!st.empty())
+		{
+			if(!table_names_left.empty())
+				table_names_left += " ";
+			table_names_left += st.top();
+			st.pop();
+		}
+		std::string table_name_right = extractTableName(nullptr, ctx->table_source_item()[1]);
+		if (!table_names_left.empty() && !table_name_right.empty())
+		{
+			if (is_multi_join_query)
+				leading_hint = "Leading(" + table_names_left + " " + table_name_right + ")";
+			extractJoinHint(ctx->join_hint(), table_names_left + " " + table_name_right);
+		}
 		removeCtxStringFromQuery(expr, ctx->join_hint(), baseCtx);
 	}
 }

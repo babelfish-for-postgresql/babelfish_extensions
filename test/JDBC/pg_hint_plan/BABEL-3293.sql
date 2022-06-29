@@ -65,6 +65,9 @@ go
 select * from babel_3293_t1 left outer loop join babel_3293_t2 on babel_3293_t1.a1 = babel_3293_t2.a2 inner loop join babel_3293_t3 on babel_3293_t2.a2 = babel_3293_t3.a3 where b1 = 1 and b2 = 1 and b3 = 1
 go
 
+select * from babel_3293_t1 left outer merge join babel_3293_t2 on babel_3293_t1.a1 = babel_3293_t2.a2 inner loop join babel_3293_t3 on babel_3293_t2.a2 = babel_3293_t3.a3 where b1 = 1 and b2 = 1 and b3 = 1
+go
+
 -- Join hints through option clause
 select * from babel_3293_t1 join babel_3293_t2 on babel_3293_t1.a1 = babel_3293_t2.a2 where b1 = 1 and b2 = 1 option(hash join)
 go
@@ -109,6 +112,21 @@ go
 delete babel_3293_t1 from babel_3293_t1 with(index(index_babel_3293_t1_b1)) left outer merge join babel_3293_t2 on babel_3293_t1.a1 = babel_3293_t2.a2 where b1 = 1 and b2 = 1
 go
 
+-- Test FORCE ORDER hints
+/**
+ * Run a SELECT query with multiple joins such that the join order indicated by the query syntax is not preserved during query optimization.
+ * This ensures that when the FORCE ORDER query hint is given in the test below, the join order is preserved.
+ * If the join order was to be preserved even without the hint, the next test would not prove that the FORCE ORDER hint is working.
+ */
+select * from babel_3293_t1 join babel_3293_t2 on babel_3293_t1.a1 = babel_3293_t2.a2 join babel_3293_t3 on babel_3293_t1.b1 = babel_3293_t3.b3
+go
+
+/*
+ * Run the above SELECT query and give the FORCE ORDER query hint to make sure that the join order is preserved
+ */
+select * from babel_3293_t1 join babel_3293_t2 on babel_3293_t1.a1 = babel_3293_t2.a2 join babel_3293_t3 on babel_3293_t1.b1 = babel_3293_t3.b3 option(force order)
+go
+
 set babelfish_showplan_all off
 go
 
@@ -132,6 +150,9 @@ go
 drop table if exists babel_3293_t2
 go
 
+drop table if exists babel_3293_t3
+go
+
 drop schema if exists babel_3293_schema
 go
 
@@ -150,7 +171,7 @@ go
 create index index_babel_3293_t2_b2 on babel_3293_t2(b2)
 go
 
-select set_config('babelfishpg_tsql.explain_costs', 'off', false)
+create table babel_3293_t3(a3 int PRIMARY KEY, b3 int)
 go
 
 set babelfish_showplan_all on
@@ -159,10 +180,13 @@ go
 select * from tempdb.babel_3293_schema.t1 inner merge join tempdb.dbo.babel_3293_t2 on tempdb.babel_3293_schema.t1.a1 = tempdb.dbo.babel_3293_t2.a2 where b1 = 1 and b2 = 1
 go
 
-select * from tempdb.babel_3293_schema.t1 with(index(index_babel_3293_schema_t1_b1)) join babel_3293_t2 (index(index_babel_3293_t2_b2)) on tempdb.babel_3293_schema.t1.a1 = tempdb.dbo.babel_3293_t2.a2 where b1 = 1 and b2 = 1 -- Join query with just table hints
+select * from tempdb.babel_3293_schema.t1 with(index(index_babel_3293_schema_t1_b1)) join tempdb.dbo.babel_3293_t2 (index(index_babel_3293_t2_b2)) on tempdb.babel_3293_schema.t1.a1 = tempdb.dbo.babel_3293_t2.a2 where b1 = 1 and b2 = 1 -- Join query with just table hints
 go
 
-select * from tempdb.babel_3293_schema.t1 join babel_3293_t2 on tempdb.babel_3293_schema.t1.a1 = tempdb.dbo.babel_3293_t2.a2 where b1 = 1 and b2 = 1 option(merge join, table hint(tempdb.babel_3293_schema.t1, index(index_babel_3293_schema_t1_b1)), table hint(tempdb.dbo.babel_3293_t2, index(index_babel_3293_t2_b2)))
+select * from tempdb.babel_3293_schema.t1 join tempdb.dbo.babel_3293_t2 on tempdb.babel_3293_schema.t1.a1 = tempdb.dbo.babel_3293_t2.a2 where b1 = 1 and b2 = 1 option(merge join, table hint(tempdb.babel_3293_schema.t1, index(index_babel_3293_schema_t1_b1)), table hint(tempdb.dbo.babel_3293_t2, index(index_babel_3293_t2_b2)))
+go
+
+select * from tempdb.babel_3293_schema.t1 join tempdb.dbo.babel_3293_t2 on tempdb.babel_3293_schema.t1.a1 = tempdb.dbo.babel_3293_t2.a2 join tempdb.dbo.babel_3293_t3 on tempdb.babel_3293_schema.t1.b1 = tempdb.dbo.babel_3293_t3.b3 option(force order)
 go
 
 set babelfish_showplan_all off
@@ -176,6 +200,9 @@ drop table babel_3293_schema.t1
 go
 
 drop table babel_3293_t2
+go
+
+drop table babel_3293_t3
 go
 
 drop schema babel_3293_schema

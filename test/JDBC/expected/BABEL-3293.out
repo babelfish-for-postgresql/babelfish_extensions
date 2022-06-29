@@ -181,16 +181,43 @@ select * from babel_3293_t1 join babel_3293_t2 on babel_3293_t1.a1 = babel_3293_
 go
 ~~START~~
 text
-Query Text: /*+ MergeJoin(babel_3293_t1 babel_3293_t3) */ select * from babel_3293_t1 join babel_3293_t2 on babel_3293_t1.a1 = babel_3293_t2.a2 inner       join babel_3293_t3 on babel_3293_t2.a2 = babel_3293_t3.a3 where b1 = 1 and b2 = 1 and b3 = 1
+Query Text: /*+ MergeJoin(babel_3293_t1 babel_3293_t2 babel_3293_t3) Leading(babel_3293_t1 babel_3293_t2 babel_3293_t3)*/ select * from babel_3293_t1 join babel_3293_t2 on babel_3293_t1.a1 = babel_3293_t2.a2 inner       join babel_3293_t3 on babel_3293_t2.a2 = babel_3293_t3.a3 where b1 = 1 and b2 = 1 and b3 = 1
+Merge Join
+  Merge Cond: (babel_3293_t1.a1 = babel_3293_t3.a3)
+  ->  Sort
+        Sort Key: babel_3293_t1.a1
+        ->  Hash Join
+              Hash Cond: (babel_3293_t1.a1 = babel_3293_t2.a2)
+              ->  Bitmap Heap Scan on babel_3293_t1
+                    Recheck Cond: (b1 = 1)
+                    ->  Bitmap Index Scan on index_babel_3293_t1_b1babel_329dabb714f0f2c475b9c9e7d1d90cbd210
+                          Index Cond: (b1 = 1)
+              ->  Hash
+                    ->  Bitmap Heap Scan on babel_3293_t2
+                          Recheck Cond: (b2 = 1)
+                          ->  Bitmap Index Scan on index_babel_3293_t2_b2babel_329ea1aa3a9e72f8fece1b90ee8c2a8f24e
+                                Index Cond: (b2 = 1)
+  ->  Sort
+        Sort Key: babel_3293_t3.a3
+        ->  Seq Scan on babel_3293_t3
+              Filter: (b3 = 1)
+~~END~~
+
+
+select * from babel_3293_t1 left outer loop join babel_3293_t2 on babel_3293_t1.a1 = babel_3293_t2.a2 inner loop join babel_3293_t3 on babel_3293_t2.a2 = babel_3293_t3.a3 where b1 = 1 and b2 = 1 and b3 = 1
+go
+~~START~~
+text
+Query Text: /*+ NestLoop(babel_3293_t1 babel_3293_t2) NestLoop(babel_3293_t1 babel_3293_t2 babel_3293_t3) Leading(babel_3293_t1 babel_3293_t2 babel_3293_t3)*/ select * from babel_3293_t1 left outer      join babel_3293_t2 on babel_3293_t1.a1 = babel_3293_t2.a2 inner      join babel_3293_t3 on babel_3293_t2.a2 = babel_3293_t3.a3 where b1 = 1 and b2 = 1 and b3 = 1
 Nested Loop
   Join Filter: (babel_3293_t1.a1 = babel_3293_t3.a3)
-  ->  Hash Join
-        Hash Cond: (babel_3293_t1.a1 = babel_3293_t2.a2)
+  ->  Nested Loop
+        Join Filter: (babel_3293_t1.a1 = babel_3293_t2.a2)
         ->  Bitmap Heap Scan on babel_3293_t1
               Recheck Cond: (b1 = 1)
               ->  Bitmap Index Scan on index_babel_3293_t1_b1babel_329dabb714f0f2c475b9c9e7d1d90cbd210
                     Index Cond: (b1 = 1)
-        ->  Hash
+        ->  Materialize
               ->  Bitmap Heap Scan on babel_3293_t2
                     Recheck Cond: (b2 = 1)
                     ->  Bitmap Index Scan on index_babel_3293_t2_b2babel_329ea1aa3a9e72f8fece1b90ee8c2a8f24e
@@ -201,20 +228,23 @@ Nested Loop
 ~~END~~
 
 
-select * from babel_3293_t1 left outer loop join babel_3293_t2 on babel_3293_t1.a1 = babel_3293_t2.a2 inner loop join babel_3293_t3 on babel_3293_t2.a2 = babel_3293_t3.a3 where b1 = 1 and b2 = 1 and b3 = 1
+select * from babel_3293_t1 left outer merge join babel_3293_t2 on babel_3293_t1.a1 = babel_3293_t2.a2 inner loop join babel_3293_t3 on babel_3293_t2.a2 = babel_3293_t3.a3 where b1 = 1 and b2 = 1 and b3 = 1
 go
 ~~START~~
 text
-Query Text: /*+ NestLoop(babel_3293_t1 babel_3293_t2) NestLoop(babel_3293_t1 babel_3293_t3) */ select * from babel_3293_t1 left outer      join babel_3293_t2 on babel_3293_t1.a1 = babel_3293_t2.a2 inner      join babel_3293_t3 on babel_3293_t2.a2 = babel_3293_t3.a3 where b1 = 1 and b2 = 1 and b3 = 1
+Query Text: /*+ MergeJoin(babel_3293_t1 babel_3293_t2) NestLoop(babel_3293_t1 babel_3293_t2 babel_3293_t3) Leading(babel_3293_t1 babel_3293_t2 babel_3293_t3)*/ select * from babel_3293_t1 left outer       join babel_3293_t2 on babel_3293_t1.a1 = babel_3293_t2.a2 inner      join babel_3293_t3 on babel_3293_t2.a2 = babel_3293_t3.a3 where b1 = 1 and b2 = 1 and b3 = 1
 Nested Loop
   Join Filter: (babel_3293_t1.a1 = babel_3293_t3.a3)
-  ->  Nested Loop
-        Join Filter: (babel_3293_t1.a1 = babel_3293_t2.a2)
-        ->  Bitmap Heap Scan on babel_3293_t1
-              Recheck Cond: (b1 = 1)
-              ->  Bitmap Index Scan on index_babel_3293_t1_b1babel_329dabb714f0f2c475b9c9e7d1d90cbd210
-                    Index Cond: (b1 = 1)
-        ->  Materialize
+  ->  Merge Join
+        Merge Cond: (babel_3293_t1.a1 = babel_3293_t2.a2)
+        ->  Sort
+              Sort Key: babel_3293_t1.a1
+              ->  Bitmap Heap Scan on babel_3293_t1
+                    Recheck Cond: (b1 = 1)
+                    ->  Bitmap Index Scan on index_babel_3293_t1_b1babel_329dabb714f0f2c475b9c9e7d1d90cbd210
+                          Index Cond: (b1 = 1)
+        ->  Sort
+              Sort Key: babel_3293_t2.a2
               ->  Bitmap Heap Scan on babel_3293_t2
                     Recheck Cond: (b2 = 1)
                     ->  Bitmap Index Scan on index_babel_3293_t2_b2babel_329ea1aa3a9e72f8fece1b90ee8c2a8f24e
@@ -512,6 +542,53 @@ Delete on babel_3293_t1
 ~~END~~
 
 
+-- Test FORCE ORDER hints
+/**
+ * Run a SELECT query with multiple joins such that the join order indicated by the query syntax is not preserved during query optimization.
+ * This ensures that when the FORCE ORDER query hint is given in the test below, the join order is preserved.
+ * If the join order was to be preserved even without the hint, the next test would not prove that the FORCE ORDER hint is working.
+ */
+select * from babel_3293_t1 join babel_3293_t2 on babel_3293_t1.a1 = babel_3293_t2.a2 join babel_3293_t3 on babel_3293_t1.b1 = babel_3293_t3.b3
+go
+~~START~~
+text
+Query Text: select * from babel_3293_t1 join babel_3293_t2 on babel_3293_t1.a1 = babel_3293_t2.a2 join babel_3293_t3 on babel_3293_t1.b1 = babel_3293_t3.b3
+Hash Join
+  Hash Cond: (babel_3293_t1.a1 = babel_3293_t2.a2)
+  ->  Merge Join
+        Merge Cond: (babel_3293_t1.b1 = babel_3293_t3.b3)
+        ->  Index Scan using index_babel_3293_t1_b1babel_329dabb714f0f2c475b9c9e7d1d90cbd210 on babel_3293_t1
+        ->  Sort
+              Sort Key: babel_3293_t3.b3
+              ->  Seq Scan on babel_3293_t3
+  ->  Hash
+        ->  Seq Scan on babel_3293_t2
+~~END~~
+
+
+/*
+ * Run the above SELECT query and give the FORCE ORDER query hint to make sure that the join order is preserved
+ */
+select * from babel_3293_t1 join babel_3293_t2 on babel_3293_t1.a1 = babel_3293_t2.a2 join babel_3293_t3 on babel_3293_t1.b1 = babel_3293_t3.b3 option(force order)
+go
+~~START~~
+text
+Query Text: /*+ Set(join_collapse_limit 1) */ select * from babel_3293_t1 join babel_3293_t2 on babel_3293_t1.a1 = babel_3293_t2.a2 join babel_3293_t3 on babel_3293_t1.b1 = babel_3293_t3.b3                    
+Merge Join
+  Merge Cond: (babel_3293_t1.b1 = babel_3293_t3.b3)
+  ->  Sort
+        Sort Key: babel_3293_t1.b1
+        ->  Hash Join
+              Hash Cond: (babel_3293_t1.a1 = babel_3293_t2.a2)
+              ->  Seq Scan on babel_3293_t1
+              ->  Hash
+                    ->  Seq Scan on babel_3293_t2
+  ->  Sort
+        Sort Key: babel_3293_t3.b3
+        ->  Seq Scan on babel_3293_t3
+~~END~~
+
+
 set babelfish_showplan_all off
 go
 
@@ -535,6 +612,9 @@ go
 drop table if exists babel_3293_t2
 go
 
+drop table if exists babel_3293_t3
+go
+
 drop schema if exists babel_3293_schema
 go
 
@@ -553,13 +633,8 @@ go
 create index index_babel_3293_t2_b2 on babel_3293_t2(b2)
 go
 
-select set_config('babelfishpg_tsql.explain_costs', 'off', false)
+create table babel_3293_t3(a3 int PRIMARY KEY, b3 int)
 go
-~~START~~
-text
-off
-~~END~~
-
 
 set babelfish_showplan_all on
 go
@@ -586,11 +661,11 @@ Merge Join
 ~~END~~
 
 
-select * from tempdb.babel_3293_schema.t1 with(index(index_babel_3293_schema_t1_b1)) join babel_3293_t2 (index(index_babel_3293_t2_b2)) on tempdb.babel_3293_schema.t1.a1 = tempdb.dbo.babel_3293_t2.a2 where b1 = 1 and b2 = 1 -- Join query with just table hints
+select * from tempdb.babel_3293_schema.t1 with(index(index_babel_3293_schema_t1_b1)) join tempdb.dbo.babel_3293_t2 (index(index_babel_3293_t2_b2)) on tempdb.babel_3293_schema.t1.a1 = tempdb.dbo.babel_3293_t2.a2 where b1 = 1 and b2 = 1 -- Join query with just table hints
 go
 ~~START~~
 text
-Query Text: /*+ IndexScan(t1 index_babel_3293_schema_t1_b1t1baa4a261b22c51c48cc060f8d390c3e9) IndexScan(babel_3293_t2 index_babel_3293_t2_b2babel_329ea1aa3a9e72f8fece1b90ee8c2a8f24e) */ select * from tempdb.babel_3293_schema.t1                                            join babel_3293_t2                                 on tempdb.babel_3293_schema.t1.a1 = tempdb.dbo.babel_3293_t2.a2 where b1 = 1 and b2 = 1
+Query Text: /*+ IndexScan(t1 index_babel_3293_schema_t1_b1t1baa4a261b22c51c48cc060f8d390c3e9) IndexScan(babel_3293_t2 index_babel_3293_t2_b2babel_329ea1aa3a9e72f8fece1b90ee8c2a8f24e) */ select * from tempdb.babel_3293_schema.t1                                            join tempdb.dbo.babel_3293_t2                                 on tempdb.babel_3293_schema.t1.a1 = tempdb.dbo.babel_3293_t2.a2 where b1 = 1 and b2 = 1
 Hash Join
   Hash Cond: (t1.a1 = babel_3293_t2.a2)
   ->  Index Scan using index_babel_3293_schema_t1_b1t1baa4a261b22c51c48cc060f8d390c3e9 on t1
@@ -601,11 +676,11 @@ Hash Join
 ~~END~~
 
 
-select * from tempdb.babel_3293_schema.t1 join babel_3293_t2 on tempdb.babel_3293_schema.t1.a1 = tempdb.dbo.babel_3293_t2.a2 where b1 = 1 and b2 = 1 option(merge join, table hint(tempdb.babel_3293_schema.t1, index(index_babel_3293_schema_t1_b1)), table hint(tempdb.dbo.babel_3293_t2, index(index_babel_3293_t2_b2)))
+select * from tempdb.babel_3293_schema.t1 join tempdb.dbo.babel_3293_t2 on tempdb.babel_3293_schema.t1.a1 = tempdb.dbo.babel_3293_t2.a2 where b1 = 1 and b2 = 1 option(merge join, table hint(tempdb.babel_3293_schema.t1, index(index_babel_3293_schema_t1_b1)), table hint(tempdb.dbo.babel_3293_t2, index(index_babel_3293_t2_b2)))
 go
 ~~START~~
 text
-Query Text: /*+ Set(enable_hashjoin off) Set(enable_nestloop off) IndexScan(t1 index_babel_3293_schema_t1_b1t1baa4a261b22c51c48cc060f8d390c3e9) IndexScan(babel_3293_t2 index_babel_3293_t2_b2babel_329ea1aa3a9e72f8fece1b90ee8c2a8f24e) */ select * from tempdb.babel_3293_schema.t1 join babel_3293_t2 on tempdb.babel_3293_schema.t1.a1 = tempdb.dbo.babel_3293_t2.a2 where b1 = 1 and b2 = 1                                                                                                                                                                       
+Query Text: /*+ Set(enable_hashjoin off) Set(enable_nestloop off) IndexScan(t1 index_babel_3293_schema_t1_b1t1baa4a261b22c51c48cc060f8d390c3e9) IndexScan(babel_3293_t2 index_babel_3293_t2_b2babel_329ea1aa3a9e72f8fece1b90ee8c2a8f24e) */ select * from tempdb.babel_3293_schema.t1 join tempdb.dbo.babel_3293_t2 on tempdb.babel_3293_schema.t1.a1 = tempdb.dbo.babel_3293_t2.a2 where b1 = 1 and b2 = 1                                                                                                                                                                       
 Merge Join
   Merge Cond: (t1.a1 = babel_3293_t2.a2)
   ->  Sort
@@ -616,6 +691,26 @@ Merge Join
         Sort Key: babel_3293_t2.a2
         ->  Index Scan using index_babel_3293_t2_b2babel_329ea1aa3a9e72f8fece1b90ee8c2a8f24e on babel_3293_t2
               Index Cond: (b2 = 1)
+~~END~~
+
+
+select * from tempdb.babel_3293_schema.t1 join tempdb.dbo.babel_3293_t2 on tempdb.babel_3293_schema.t1.a1 = tempdb.dbo.babel_3293_t2.a2 join tempdb.dbo.babel_3293_t3 on tempdb.babel_3293_schema.t1.b1 = tempdb.dbo.babel_3293_t3.b3 option(force order)
+go
+~~START~~
+text
+Query Text: /*+ Set(join_collapse_limit 1) */ select * from tempdb.babel_3293_schema.t1 join tempdb.dbo.babel_3293_t2 on tempdb.babel_3293_schema.t1.a1 = tempdb.dbo.babel_3293_t2.a2 join tempdb.dbo.babel_3293_t3 on tempdb.babel_3293_schema.t1.b1 = tempdb.dbo.babel_3293_t3.b3                    
+Merge Join
+  Merge Cond: (t1.b1 = babel_3293_t3.b3)
+  ->  Sort
+        Sort Key: t1.b1
+        ->  Hash Join
+              Hash Cond: (t1.a1 = babel_3293_t2.a2)
+              ->  Seq Scan on t1
+              ->  Hash
+                    ->  Seq Scan on babel_3293_t2
+  ->  Sort
+        Sort Key: babel_3293_t3.b3
+        ->  Seq Scan on babel_3293_t3
 ~~END~~
 
 
@@ -635,6 +730,9 @@ drop table babel_3293_schema.t1
 go
 
 drop table babel_3293_t2
+go
+
+drop table babel_3293_t3
 go
 
 drop schema babel_3293_schema
