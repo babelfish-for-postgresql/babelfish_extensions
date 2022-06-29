@@ -144,8 +144,8 @@ select ROUTINE_BODY, ROUTINE_DEFINITION  from information_schema_tsql.routines w
 go
 ~~START~~
 nvarchar#!#nvarchar
-EXTERNAL#!#CREATE FUNCTION dbo.test_dec(@quantity int, @list_price decimal(10,2), @discount decimal(4,2)) RETURNS decimal(10,2) AS BEGIN<newline>    RETURN @quantity * @list_price * (1 - @discount);<newline>END;
 EXTERNAL#!#CREATE PROCEDURE dbo.test_ti(@a tinyint OUTPUT , @b bigint, @c float) AS BEGIN<newline>	set @a=79;<newline>	select @b=19;<newline>	SELECT @c * 20 +1000;<newline>END;
+EXTERNAL#!#CREATE FUNCTION dbo.test_dec(@quantity int, @list_price decimal(10,2), @discount decimal(4,2)) RETURNS decimal(10,2) AS BEGIN<newline>    RETURN @quantity * @list_price * (1 - @discount);<newline>END;
 ~~END~~
 
 
