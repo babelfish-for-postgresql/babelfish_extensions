@@ -61,4 +61,4 @@ jobs:
       - name: Upload
         uses: codecov/codecov-action@v2
         with:
-          files: ./../../postgresql_modified_for_babelfish/src/test/regress/*.gcov
+          files: "./contrib/babelfishpg_tds/src/backend/tds/tdscomm.gcda"
