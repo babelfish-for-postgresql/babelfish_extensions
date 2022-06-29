@@ -15,7 +15,7 @@ int
 SELECT name FROM sys.databases where name = 'my_test_database';
 GO
 ~~START~~
-text
+varchar
 my_test_database
 ~~END~~
 
