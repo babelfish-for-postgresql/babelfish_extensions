@@ -94,7 +94,7 @@ go
 select tsql_get_functiondef(oid) from pg_proc where proname='test_ti';
 go
 
-select ROUTINE_BODY, ROUTINE_DEFINITION  from information_schema_tsql.routines where SPECIFIC_NAME NOT LIKE 'xp%';
+select ROUTINE_BODY, ROUTINE_DEFINITION  from information_schema_tsql.routines where SPECIFIC_NAME NOT LIKE 'xp%' ORDER BY ROUTINE_DEFINITION;
 go
 
 drop procedure test_ti;
@@ -418,6 +418,9 @@ select tsql_get_functiondef(oid) from pg_proc where proname='test_arg';
 go
 
 drop function test_arg;
+go
+
+drop function if exists test_con;
 go
 
 create function test_con(@a int)
