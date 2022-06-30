@@ -61,7 +61,6 @@ jobs:
           cd ../../../
           lcov -d . -c -o lcov.info
           pwd
-          cd ../
           ls
           sudo gcov -abcfu **/*.c
       - name: Upload
