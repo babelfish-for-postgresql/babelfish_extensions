@@ -1707,6 +1707,7 @@ extern bool pltsql_cursor_close_on_commit;
 extern bool pltsql_disable_batch_auto_commit;
 extern bool pltsql_disable_internal_savepoint;
 extern bool pltsql_disable_txn_in_triggers;
+extern bool pltsql_recursive_triggers;
 
 extern int text_size;
 extern int pltsql_rowcount;

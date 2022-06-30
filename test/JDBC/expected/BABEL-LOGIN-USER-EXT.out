@@ -388,6 +388,36 @@ GO
 ~~ERROR (Message: only sysadmin role is supported in ALTER SERVER ROLE statement)~~
 
 
+CREATE LOGIN err_user WITH PASSWORD = '123';
+GO
+
+CREATE USER err_user;
+GO
+
+-- tsql      user=err_user      password=123
+-- Should fail, does not have permission to alter sysadmin
+ALTER SERVER ROLE sysadmin ADD MEMBER err_user
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Current login err_user does not have permission to alter server role)~~
+
+
+-- Shoud fail, does not have permission to create login
+CREATE LOGIN dummy WITH PASSWORD = '123';
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Current login err_user does not have permission to create new login)~~
+
+
+-- tsql
+DROP USER err_user;
+GO
+
+DROP LOGIN err_user;
+GO
+
 -- Test User functions
 USE MASTER;
 GO
