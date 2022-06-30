@@ -58,6 +58,10 @@ int
 1
 ~~END~~
 
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
 ~~START~~
 int
 1
@@ -67,6 +71,8 @@ int
 int#!#varchar
 2#!#second
 ~~END~~
+
+~~ROW COUNT: 1~~
 
 
 begin tran;
@@ -85,6 +91,10 @@ int
 1
 ~~END~~
 
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
 ~~START~~
 int
 1
@@ -94,6 +104,8 @@ int
 int#!#varchar
 3#!#third
 ~~END~~
+
+~~ROW COUNT: 1~~
 
 commit;
 go
@@ -112,6 +124,10 @@ int
 1
 ~~END~~
 
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
 
 begin tran
 go
@@ -128,6 +144,10 @@ int
 int
 1
 ~~END~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
 
 if (@@trancount > 0) rollback;
 go
@@ -148,6 +168,10 @@ int
 1
 ~~END~~
 
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
 ~~START~~
 int
 1
@@ -157,6 +181,8 @@ int
 int#!#varchar
 6#!#six
 ~~END~~
+
+~~ROW COUNT: 1~~
 
 if (@@trancount > 0) rollback;
 go
@@ -186,6 +212,10 @@ int
 1
 ~~END~~
 
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
 ~~START~~
 int
 1
@@ -195,6 +225,8 @@ int
 int#!#varchar
 2#!#second
 ~~END~~
+
+~~ROW COUNT: 1~~
 
 
 begin tran;
@@ -213,6 +245,10 @@ int
 1
 ~~END~~
 
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
 ~~START~~
 int
 1
@@ -222,6 +258,8 @@ int
 int#!#varchar
 3#!#third
 ~~END~~
+
+~~ROW COUNT: 1~~
 
 if (@@trancount > 0) rollback;
 go
@@ -308,6 +346,10 @@ int
 1
 ~~END~~
 
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
 ~~START~~
 int
 1
@@ -334,6 +376,10 @@ int
 int
 1
 ~~END~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
 
 ~~START~~
 int
@@ -368,6 +414,10 @@ int
 1
 ~~END~~
 
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
 ~~START~~
 int
 1
@@ -394,6 +444,10 @@ int
 int
 1
 ~~END~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
 
 ~~START~~
 int
@@ -431,6 +485,10 @@ int
 int
 1
 ~~END~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
 
 ~~START~~
 int
@@ -474,6 +532,10 @@ int
 int
 1
 ~~END~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
 
 ~~START~~
 int
@@ -543,6 +605,10 @@ int
 1
 ~~END~~
 
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
 ~~START~~
 int
 1
@@ -552,6 +618,8 @@ int
 int#!#varchar
 3#!#third
 ~~END~~
+
+~~ROW COUNT: 1~~
 
 
 drop table tmp__1 
@@ -567,9 +635,9 @@ go
 
 insert into triggerErrorTab values(1);
 go
-~~ERROR (Code: 33557097)~~
+~~ERROR (Code: 515)~~
 
-~~ERROR (Message: relation "invalidtab" does not exist)~~
+~~ERROR (Message: null value in column "c1" of relation "triggererrortab" violates not-null constraint)~~
 
 
 
@@ -650,6 +718,8 @@ go
 
 insert into triggerTab1 values(1, 'value3');
 go
+~~ROW COUNT: 1~~
+
 
 
 drop procedure triggerProc1;
@@ -708,6 +778,12 @@ varchar
 nest level 3
 ~~END~~
 
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
 
 begin tran
 go
@@ -717,6 +793,12 @@ go
 varchar
 nest level 3
 ~~END~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
 
 if (@@trancount > 0) rollback tran;
 go
@@ -759,6 +841,10 @@ varchar
 nest level 3
 ~~END~~
 
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
 
 begin tran
 go
@@ -768,6 +854,10 @@ go
 varchar
 nest level 3
 ~~END~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
 
 if (@@trancount > 0) rollback tran;
 go
@@ -780,6 +870,12 @@ go
 varchar
 nest level 3
 ~~END~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
 
 if (@@trancount > 0) rollback tran;
 go
@@ -828,6 +924,8 @@ varchar
 nest level 3
 ~~END~~
 
+~~ROW COUNT: 1~~
+
 
 begin tran
 go
@@ -837,6 +935,8 @@ go
 varchar
 nest level 3
 ~~END~~
+
+~~ROW COUNT: 1~~
 
 if (@@trancount > 0) rollback tran;
 go
@@ -849,6 +949,12 @@ go
 varchar
 nest level 3
 ~~END~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
 
 if (@@trancount > 0) rollback tran;
 go
@@ -939,6 +1045,12 @@ varchar
 nest level 3
 ~~END~~
 
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
 if (@@trancount > 0) rollback tran;
 go
 
@@ -960,6 +1072,12 @@ nest level 2
 varchar
 nest level 3
 ~~END~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
 
 if (@@trancount > 0) rollback tran;
 go
@@ -1020,6 +1138,12 @@ nest level 2
 varchar
 nest level 3
 ~~END~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
 
 if (@@trancount > 0) rollback tran;
 go
