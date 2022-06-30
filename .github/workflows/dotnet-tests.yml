@@ -81,7 +81,7 @@ jobs:
         if: always()
         uses: codecov/codecov-action@v2
         with:
-          files: "./../../**/*.gcno"
+          files: "**/*.gcov"
       - name: Genhtml
         if: always()
         uses: actions/upload-artifact@v2
