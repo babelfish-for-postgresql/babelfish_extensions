@@ -60,6 +60,8 @@ jobs:
             dotnet test
           cd ../../../
           lcov -d . -c -o lcov.info
+          ls **/*.gcno
+          ls **/*.gcda
           pwd
           ls
           sudo gcov -abcfu **/*.c
