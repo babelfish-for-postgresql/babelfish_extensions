@@ -60,8 +60,10 @@ jobs:
             dotnet test
           cd ../../../
           lcov -d . -c -o lcov.info
-          ls **/*.gcno
+          genhtml lcov.info --output-directory out --ignore-errors source
+          zip -r out.zip out
           ls **/*.gcda
+          ls **/*.gcno
           pwd
           ls
           sudo gcov -abcfu **/*.c
@@ -69,3 +71,8 @@ jobs:
         uses: codecov/codecov-action@v2
         with:
           files: "./../../**/*.gcno"
+      - name: Genhtml
+        uses: actions/upload-artifact@v2
+        with:
+          name: coverage
+          path: ./out.zip
