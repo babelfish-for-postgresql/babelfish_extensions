@@ -2463,3 +2463,25 @@ SELECT
    CAST(0 as INT) AS property_list_id
 WHERE FALSE;
 GRANT SELECT ON sys.fulltext_indexes TO PUBLIC;
+
+CREATE OR REPLACE VIEW sys.spatial_index_tessellations 
+AS
+SELECT 
+    CAST(0 as int) AS object_id
+  , CAST(0 as int) AS index_id
+  , CAST('' as sys.sysname) AS tessellation_scheme
+  , CAST(0 as float(53)) AS bounding_box_xmin
+  , CAST(0 as float(53)) AS bounding_box_ymin
+  , CAST(0 as float(53)) AS bounding_box_xmax
+  , CAST(0 as float(53)) AS bounding_box_ymax
+  , CAST(0 as smallint) as level_1_grid
+  , CAST('' as sys.nvarchar(60)) AS level_1_grid_desc
+  , CAST(0 as smallint) as level_2_grid
+  , CAST('' as sys.nvarchar(60)) AS level_2_grid_desc
+  , CAST(0 as smallint) as level_3_grid
+  , CAST('' as sys.nvarchar(60)) AS level_3_grid_desc
+  , CAST(0 as smallint) as level_4_grid
+  , CAST('' as sys.nvarchar(60)) AS level_4_grid_desc
+  , CAST(0 as int) as cells_per_object
+WHERE FALSE;
+GRANT SELECT ON sys.spatial_index_tessellations TO PUBLIC;
