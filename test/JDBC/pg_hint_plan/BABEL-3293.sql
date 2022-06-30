@@ -74,7 +74,7 @@ go
 select * from babel_3293_t1 t1, babel_3293_t2 t2 inner merge join babel_3293_t3 t3 on t2.a2 = t3.a3 where t1.a1 = t3.a3
 go
 
-select * from babel_3293_t1 t1, babel_3293_t2 t2 inner hash join babel_3293_t3 t3 on t2.a2 = t3.a3 where t1.a1 = t3.a3
+select * from babel_3293_t1 t1, babel_3293_t2 t2 inner hash join babel_3293_t3 t3 on t2.a2 = t3.a3
 go
 
 -- Join hints through option clause
@@ -100,6 +100,28 @@ go
 select * from babel_3293_t1 join babel_3293_t2 on babel_3293_t1.a1 = babel_3293_t2.a2 where b1 = 1 and b2 = 1 option(loop join, table hint(babel_3293_t1, index(index_babel_3293_t1_b1)), table hint(babel_3293_t2, index(index_babel_3293_t2_b2)))
 go
 
+-- Join hints on nested subqueries are not supported
+select * from (select distinct a1 as a1 from babel_3293_t1) s1 inner merge join babel_3293_t2 on s1.a1 = babel_3293_t2.a2
+go
+
+select * from (select babel_3293_t1.* from babel_3293_t1 inner merge join babel_3293_t2 on babel_3293_t1.a1 = babel_3293_t2.a2) s1 inner join (select babel_3293_t1.* from babel_3293_t1 inner hash join babel_3293_t2 on babel_3293_t1.a1 = babel_3293_t2.a2) s2 on s1.a1 = s2.a1
+go
+
+-- Test FORCE ORDER hints
+/**
+ * Run a SELECT query with multiple joins such that the join order indicated by the query syntax is not preserved during query optimization.
+ * This ensures that when the FORCE ORDER query hint is given in the test below, the join order is preserved.
+ * If the join order was to be preserved even without the hint, the next test would not prove that the FORCE ORDER hint is working.
+ */
+select * from babel_3293_t1 join babel_3293_t2 on babel_3293_t1.a1 = babel_3293_t2.a2 join babel_3293_t3 on babel_3293_t1.b1 = babel_3293_t3.b3
+go
+
+/*
+ * Run the above SELECT query and give the FORCE ORDER query hint to make sure that the join order is preserved
+ */
+select * from babel_3293_t1 join babel_3293_t2 on babel_3293_t1.a1 = babel_3293_t2.a2 join babel_3293_t3 on babel_3293_t1.b1 = babel_3293_t3.b3 option(force order)
+go
+
 -- UPDATE and DELETE queries with join hints needs to be revisited later. pg_hint_plan is currently not following the given join hints 
 -- Test UPDATE queries with and without hints
 update babel_3293_t1 set a1 = 1 from babel_3293_t1 join babel_3293_t2 on babel_3293_t1.a1 = babel_3293_t2.a2 where b1 = 1 and b2 = 1
@@ -119,21 +141,6 @@ delete babel_3293_t1 from babel_3293_t1 inner merge join babel_3293_t2 on babel_
 go
 
 delete babel_3293_t1 from babel_3293_t1 with(index(index_babel_3293_t1_b1)) left outer merge join babel_3293_t2 on babel_3293_t1.a1 = babel_3293_t2.a2 where b1 = 1 and b2 = 1
-go
-
--- Test FORCE ORDER hints
-/**
- * Run a SELECT query with multiple joins such that the join order indicated by the query syntax is not preserved during query optimization.
- * This ensures that when the FORCE ORDER query hint is given in the test below, the join order is preserved.
- * If the join order was to be preserved even without the hint, the next test would not prove that the FORCE ORDER hint is working.
- */
-select * from babel_3293_t1 join babel_3293_t2 on babel_3293_t1.a1 = babel_3293_t2.a2 join babel_3293_t3 on babel_3293_t1.b1 = babel_3293_t3.b3
-go
-
-/*
- * Run the above SELECT query and give the FORCE ORDER query hint to make sure that the join order is preserved
- */
-select * from babel_3293_t1 join babel_3293_t2 on babel_3293_t1.a1 = babel_3293_t2.a2 join babel_3293_t3 on babel_3293_t1.b1 = babel_3293_t3.b3 option(force order)
 go
 
 set babelfish_showplan_all off
@@ -196,6 +203,9 @@ select * from tempdb.babel_3293_schema.t1 join tempdb.dbo.babel_3293_t2 on tempd
 go
 
 select * from tempdb.babel_3293_schema.t1 join tempdb.dbo.babel_3293_t2 on tempdb.babel_3293_schema.t1.a1 = tempdb.dbo.babel_3293_t2.a2 join tempdb.dbo.babel_3293_t3 on tempdb.babel_3293_schema.t1.b1 = tempdb.dbo.babel_3293_t3.b3 option(force order)
+go
+
+select * from tempdb.babel_3293_schema.t1 inner loop join tempdb.dbo.babel_3293_t2 on tempdb.babel_3293_schema.t1.a1 = tempdb.dbo.babel_3293_t2.a2 left outer merge join tempdb.dbo.babel_3293_t3 on tempdb.babel_3293_schema.t1.b1 = tempdb.dbo.babel_3293_t3.b3
 go
 
 set babelfish_showplan_all off
