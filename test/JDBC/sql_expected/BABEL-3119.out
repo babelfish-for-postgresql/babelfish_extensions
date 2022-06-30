@@ -10,6 +10,8 @@ GO
 
 INSERT INTO t(c1) VALUES(1) 
 GO
+~~ROW COUNT: 1~~
+
 
 CREATE TABLE t2(c1 int)
 GO

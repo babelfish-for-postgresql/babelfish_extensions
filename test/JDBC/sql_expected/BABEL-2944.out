@@ -51,6 +51,8 @@ int
 0
 ~~END~~
 
+~~ROW COUNT: 1~~
+
 
 drop trigger updEmployeeData;
 GO

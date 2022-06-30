@@ -39,6 +39,8 @@ int
 1
 ~~END~~
 
+~~ROW COUNT: 1~~
+
 
 select * from t_405_insert2;
 go
@@ -59,6 +61,8 @@ go
 insert into t_405_insert2 values(2);
 select * from t_405_insert2;
 go
+~~ROW COUNT: 1~~
+
 ~~START~~
 int
 ~~END~~
@@ -122,6 +126,8 @@ int
 1
 ~~END~~
 
+~~ROW COUNT: 1~~
+
 
 select * from t_405_delete2;
 go
@@ -143,6 +149,8 @@ go
 delete from t_405_delete2;
 select * from t_405_delete2;
 go
+~~ROW COUNT: 1~~
+
 ~~START~~
 int
 2
@@ -159,6 +167,8 @@ go
 varchar
 1
 ~~END~~
+
+~~ROW COUNT: 1~~
 
 ~~START~~
 int
@@ -214,6 +224,8 @@ int
 1
 ~~END~~
 
+~~ROW COUNT: 1~~
+
   
 select * from t_405_update2;
 go
@@ -235,6 +247,8 @@ go
 update t_405_update2 set x = 3 where 1 = 1;
 select * from t_405_update2;
 go
+~~ROW COUNT: 1~~
+
 ~~START~~
 int
 1
@@ -295,6 +309,8 @@ int
 1
 1
 ~~END~~
+
+~~ROW COUNT: 1~~
 
 
 drop trigger tr1;

@@ -14,6 +14,8 @@ int
 3
 ~~END~~
 
+~~ROW COUNT: 3~~
+
 
 select count(*) from employeeData;
 GO
@@ -51,6 +53,8 @@ GO
 int
 4
 ~~END~~
+
+~~ROW COUNT: 4~~
 
 
 select * from employeeData;
@@ -96,6 +100,8 @@ int#!#varchar
 8#!#a
 ~~END~~
 
+~~ROW COUNT: 1~~
+
 
 update employeeData set Emp_First_name = 'kkk' where Emp_First_name = 'a'
 GO
@@ -108,6 +114,8 @@ int#!#varchar
 int#!#varchar
 8#!#a
 ~~END~~
+
+~~ROW COUNT: 1~~
 
 
 update employeeData set Emp_First_name = 'ddd'
@@ -127,6 +135,8 @@ int#!#varchar
 10#!#c
 11#!#d
 ~~END~~
+
+~~ROW COUNT: 4~~
 
 
 drop trigger updEmployeeData
