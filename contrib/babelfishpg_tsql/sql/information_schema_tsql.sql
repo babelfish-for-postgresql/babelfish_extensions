@@ -437,3 +437,45 @@ CREATE VIEW information_schema_tsql.check_constraints AS
 GRANT SELECT ON information_schema_tsql.check_constraints TO PUBLIC;
 
 SELECT set_config('search_path', 'sys, '||current_setting('search_path'), false);
+
+/*
+ * COLUMN_DOMAIN_USAGE
+ */
+
+CREATE OR REPLACE VIEW information_schema_tsql.COLUMN_DOMAIN_USAGE AS
+	SELECT CAST(CASE WHEN t.typtype = 'd' AND nt.nspname <> 'pg_catalog' AND nt.nspname <> 'sys'
+				THEN nc.dbname ELSE null END
+				AS sys.nvarchar(128)) AS "DOMAIN_CATALOG",
+			CAST(CASE WHEN t.typtype = 'd' AND nt.nspname <> 'pg_catalog' AND nt.nspname <> 'sys'
+				THEN ext.orig_name ELSE null END
+				AS sys.nvarchar(128)) AS "DOMAIN_SCHEMA",
+			CAST(CASE WHEN t.typtype = 'd' AND nt.nspname <> 'pg_catalog' AND nt.nspname <> 'sys'
+				THEN t.typname ELSE null END
+				AS sys.sysname) AS "DOMAIN_NAME",
+	        CAST(nc.dbname AS sys.nvarchar(128)) AS "TABLE_CATALOG",
+			CAST(ext.orig_name AS sys.nvarchar(128)) AS "TABLE_SCHEMA",
+			CAST(c.relname AS sys.sysname) AS "TABLE_NAME",
+			CAST(a.attname AS sys.sysname) AS "COLUMN_NAME"
+
+
+	FROM (pg_attribute a LEFT JOIN pg_attrdef ad ON attrelid = adrelid AND attnum = adnum)
+		JOIN (pg_class c JOIN sys.pg_namespace_ext nc ON (c.relnamespace = nc.oid)) ON a.attrelid = c.oid
+		JOIN (pg_type t JOIN pg_namespace nt ON (t.typnamespace = nt.oid)) ON a.atttypid = t.oid
+		LEFT JOIN (pg_type bt JOIN pg_namespace nbt ON (bt.typnamespace = nbt.oid))
+			ON (t.typtype = 'd' AND t.typbasetype = bt.oid)
+		LEFT JOIN pg_collation co on co.oid = a.attcollation
+		LEFT OUTER JOIN sys.babelfish_namespace_ext ext on nc.nspname = ext.nspname,
+		information_schema_tsql._pgtsql_truetypid(nt, a, t) AS true_typid,
+		information_schema_tsql._pgtsql_truetypmod(nt, a, t) AS true_typmod,
+		sys.translate_pg_type_to_tsql(true_typid) AS tsql_type_name
+
+	WHERE (NOT pg_is_other_temp_schema(nc.oid))
+		AND a.attnum > 0 AND NOT a.attisdropped
+		AND c.relkind IN ('r', 'v', 'p')
+		AND t.typtype = 'd'
+		AND (pg_has_role(c.relowner, 'USAGE')
+			OR has_column_privilege(c.oid, a.attnum,
+									'SELECT, INSERT, UPDATE, REFERENCES'))
+		AND ext.dbid = cast(sys.db_id() as oid);
+
+GRANT SELECT ON information_schema_tsql.COLUMN_DOMAIN_USAGE TO PUBLIC;
