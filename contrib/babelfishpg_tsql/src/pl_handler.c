@@ -2332,7 +2332,7 @@ static void bbf_ProcessUtility(PlannedStmt *pstmt,
 					if (!has_privs_of_role(GetSessionUserId(), get_role_oid("sysadmin", false))) 
 						ereport(ERROR,
 								(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
-								errmsg("Current login %s do not have permission to create new login",
+								errmsg("Current login %s does not have permission to create new login",
 									GetUserNameFromId(GetSessionUserId(), true))));
 
 					if (get_role_oid(stmt->role, true) != InvalidOid)

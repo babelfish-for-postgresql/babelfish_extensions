@@ -26,6 +26,7 @@ public class Config {
     static boolean outputErrorCode = Boolean.parseBoolean(properties.getProperty("outputErrorCode"));
     static String scheduleFileName = properties.getProperty("scheduleFile");
     static String testFileRoot = properties.getProperty("testFileRoot");
+    static boolean isUpgradeTestMode =  Boolean.parseBoolean(properties.getProperty("isUpgradeTestMode"));
 
     static String connectionString = constructConnectionString();
 
