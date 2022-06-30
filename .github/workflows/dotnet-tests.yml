@@ -59,7 +59,10 @@ jobs:
             testName="all---TestUDD.txt;TestChar.txt;TestSqlVariant.txt;TestVarChar.txt;TestTvp.txt;TestAuthentication.txt;TestText.txt" \
             dotnet test
           cd ../../../
+          lcov -d . -c -o lcov.info
           pwd
+          cd ../
+          ls
           sudo gcov -abcfu **/*.c
       - name: Upload
         uses: codecov/codecov-action@v2

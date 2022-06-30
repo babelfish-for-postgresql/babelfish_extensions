@@ -21,5 +21,6 @@ runs:
         make -j 4 2>error.txt
         make install
         make check
+        lcov -d . -c -o lcov.info
         cd contrib && make && sudo make install
       shell: bash
