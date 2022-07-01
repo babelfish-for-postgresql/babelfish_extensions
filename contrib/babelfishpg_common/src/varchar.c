@@ -503,7 +503,7 @@ varchar(PG_FUNCTION_ARGS)
 	size_t		maxmblen;
 	int		i;
 	char		*s_data;
-	coll_info_t	collInfo;
+	coll_info_t	collInfo = (coll_info_t) {0, NULL, DEFAULT_LCID, 0, 0, 0, 0, 0};
 	int 		charLength;
 	char 		*tmp = NULL;	/* To hold the string encoded in target column's collation. */
 	char		*resStr = NULL; /* To hold the final string in UTF8 encoding. */
@@ -511,7 +511,7 @@ varchar(PG_FUNCTION_ARGS)
 	int		encodedByteLen;
 
 	/* If type of target is NVARCHAR then handle it differently. */
-	if (is_basetype_nchar_nvarchar(((FuncExpr *) fcinfo->flinfo->fn_expr)->funcresulttype))
+	if (fcinfo->flinfo->fn_expr && is_basetype_nchar_nvarchar(((FuncExpr *) fcinfo->flinfo->fn_expr)->funcresulttype))
 		return nvarchar(fcinfo);
 
 	byteLen = VARSIZE_ANY_EXHDR(source);
@@ -527,12 +527,9 @@ varchar(PG_FUNCTION_ARGS)
 	{
 		if (((FuncExpr *)fcinfo->flinfo->fn_expr)->funccollid == DEFAULT_COLLATION_OID)
 			collInfo = (pltsql_plugin_handler_ptr)->lookup_collation_table_callback(CLUSTER_COLLATION_OID());
-		else
+		else if (fcinfo->flinfo->fn_expr)
 			collInfo = (pltsql_plugin_handler_ptr)->lookup_collation_table_callback(((FuncExpr *)fcinfo->flinfo->fn_expr)->funccollid);
 	}
-	else
-		/* Dummy value. */
-		collInfo = (coll_info_t) {0, NULL, DEFAULT_LCID, 0, 0, 0, 0, 0};
 
 	/* Try to find the encoding based on lcid found above. */
 	if ((pltsql_plugin_handler_ptr) && (pltsql_plugin_handler_ptr)->TdsGetEncodingFromLcid)
@@ -1068,13 +1065,13 @@ bpchar(PG_FUNCTION_ARGS)
 	int		charLen;	/* number of characters in the input string + VARHDRSZ */
 	char		*tmp = NULL;    /* To hold the string encoded in target column's collation. */
 	char		*resStr = NULL;	/* To hold the final string in UTF8 encoding. */
-	coll_info_t	collInfo;
+	coll_info_t	collInfo = (coll_info_t) {0, NULL, DEFAULT_LCID, 0, 0, 0, 0, 0};
 	int			enc;
 	int 		blankSpace = 0;		/* How many blank space we need to pad. */
 	int 		encodedByteLen;
 
 	/* If type of target is NCHAR then handle it differently. */
-	if (is_basetype_nchar_nvarchar(((FuncExpr *) fcinfo->flinfo->fn_expr)->funcresulttype))
+	if (fcinfo->flinfo->fn_expr && is_basetype_nchar_nvarchar(((FuncExpr *) fcinfo->flinfo->fn_expr)->funcresulttype))
 		return nchar(fcinfo);
 
 	/* No work if typmod is invalid */
@@ -1091,12 +1088,9 @@ bpchar(PG_FUNCTION_ARGS)
 	{
 		if (((FuncExpr *)fcinfo->flinfo->fn_expr)->funccollid == DEFAULT_COLLATION_OID)
 			collInfo = (pltsql_plugin_handler_ptr)->lookup_collation_table_callback(CLUSTER_COLLATION_OID());
-		else
+		else if (fcinfo->flinfo->fn_expr)
 			collInfo = (pltsql_plugin_handler_ptr)->lookup_collation_table_callback(((FuncExpr *)fcinfo->flinfo->fn_expr)->funccollid);
 	}
-	else
-		/* Dummy value. */
-		collInfo = (coll_info_t) {0, NULL, DEFAULT_LCID, 0, 0, 0, 0, 0};
 
 	/* Try to find the encoding based on lcid found above. */
 	if ((pltsql_plugin_handler_ptr) && (pltsql_plugin_handler_ptr)->TdsGetEncodingFromLcid)
