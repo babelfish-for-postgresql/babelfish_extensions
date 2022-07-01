@@ -525,7 +525,7 @@ varchar(PG_FUNCTION_ARGS)
 	/* Try to find the lcid corresponding to the collation of the target column. */
 	if ((pltsql_plugin_handler_ptr) && (pltsql_plugin_handler_ptr)->lookup_collation_table_callback)
 	{
-		if (((FuncExpr *)fcinfo->flinfo->fn_expr)->funccollid == DEFAULT_COLLATION_OID)
+		if (fcinfo->flinfo->fn_expr && ((FuncExpr *)fcinfo->flinfo->fn_expr)->funccollid == DEFAULT_COLLATION_OID)
 			collInfo = (pltsql_plugin_handler_ptr)->lookup_collation_table_callback(CLUSTER_COLLATION_OID());
 		else if (fcinfo->flinfo->fn_expr)
 			collInfo = (pltsql_plugin_handler_ptr)->lookup_collation_table_callback(((FuncExpr *)fcinfo->flinfo->fn_expr)->funccollid);
@@ -1086,7 +1086,7 @@ bpchar(PG_FUNCTION_ARGS)
 	/* Try to find the lcid corresponding to the collation of the target column. */
 	if ((pltsql_plugin_handler_ptr) && (pltsql_plugin_handler_ptr)->lookup_collation_table_callback)
 	{
-		if (((FuncExpr *)fcinfo->flinfo->fn_expr)->funccollid == DEFAULT_COLLATION_OID)
+		if (fcinfo->flinfo->fn_expr && ((FuncExpr *)fcinfo->flinfo->fn_expr)->funccollid == DEFAULT_COLLATION_OID)
 			collInfo = (pltsql_plugin_handler_ptr)->lookup_collation_table_callback(CLUSTER_COLLATION_OID());
 		else if (fcinfo->flinfo->fn_expr)
 			collInfo = (pltsql_plugin_handler_ptr)->lookup_collation_table_callback(((FuncExpr *)fcinfo->flinfo->fn_expr)->funccollid);
