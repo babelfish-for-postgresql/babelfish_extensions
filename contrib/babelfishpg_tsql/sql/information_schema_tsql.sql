@@ -449,7 +449,7 @@ CREATE OR REPLACE VIEW information_schema_tsql.routines AS
            CAST(ext.orig_name AS sys.nvarchar(128)) AS "ROUTINE_SCHEMA",
            CAST(p.proname AS sys.nvarchar(128)) AS "ROUTINE_NAME",
            CAST(CASE p.prokind WHEN 'f' THEN 'FUNCTION' WHEN 'p' THEN 'PROCEDURE' END
-             AS sys.nvarchar(128)) AS "ROUTINE_TYPE",
+           	 AS sys.nvarchar(20)) AS "ROUTINE_TYPE",
            CAST(NULL AS sys.nvarchar(128)) AS "MODULE_CATALOG",
            CAST(NULL AS sys.nvarchar(128)) AS "MODULE_SCHEMA",
            CAST(NULL AS sys.nvarchar(128)) AS "MODULE_NAME",
@@ -457,27 +457,25 @@ CREATE OR REPLACE VIEW information_schema_tsql.routines AS
            CAST(NULL AS sys.nvarchar(128)) AS "UDT_SCHEMA",
            CAST(NULL AS sys.nvarchar(128)) AS "UDT_NAME",
            CAST(CASE WHEN p.prokind = 'p' THEN NULL
-                  WHEN t.typelem <> 0 AND t.typlen = -1 THEN 'ARRAY'
-                  WHEN nc.nspname = 'pg_catalog' THEN format_type(t.oid, null)
-                  ELSE 'USER-DEFINED' END AS sys.nvarchar(128)) AS "DATA_TYPE",
+                 WHEN t.typelem <> 0 AND t.typlen = -1 THEN 'ARRAY'
+                 WHEN nc.nspname = 'pg_catalog' THEN format_type(t.oid, null)
+                 ELSE 'USER-DEFINED' END AS sys.nvarchar(128)) AS "DATA_TYPE",
            CAST(information_schema_tsql._pgtsql_char_max_length(tsql_type_name, t.typtypmod)
-                        AS int)
+                 AS int)
            AS "CHARACTER_MAXIMUM_LENGTH",
            CAST(information_schema_tsql._pgtsql_char_octet_length(tsql_type_name, t.typtypmod)
-                        AS int)
+                 AS int)
            AS "CHARACTER_OCTET_LENGTH",
            CAST(NULL AS sys.nvarchar(128)) AS "COLLATION_CATALOG",
            CAST(NULL AS sys.nvarchar(128)) AS "COLLATION_SCHEMA",
            CAST(
-                        CASE co.collname
-                                WHEN 'default' THEN current_setting('babelfishpg_tsql.server_collation_name')
-                                ELSE co.collname
-                        END
-                       AS sys.nvarchar(128))
-            AS "COLLATION_NAME",
+                 CASE co.collname
+                       WHEN 'default' THEN current_setting('babelfishpg_tsql.server_collation_name')
+                       ELSE co.collname
+                 END
+            AS sys.nvarchar(128)) AS "COLLATION_NAME",
             CAST(NULL AS sys.nvarchar(128)) AS "CHARACTER_SET_CATALOG",
             CAST(NULL AS sys.nvarchar(128)) AS "CHARACTER_SET_SCHEMA",
-            
 	    /*
                  * TODO: We need to first create mapping of collation name to char-set name;
                  * Until then return null.
@@ -490,9 +488,8 @@ CREATE OR REPLACE VIEW information_schema_tsql.routines AS
                         AS smallint)
             AS "NUMERIC_PRECISION_RADIX",
             CAST(information_schema_tsql._pgtsql_numeric_scale(tsql_type_name, t.typbasetype, t.typtypmod)
-                        AS int)
+                        AS smallint)
             AS "NUMERIC_SCALE",
-
             CAST(information_schema_tsql._pgtsql_datetime_precision(tsql_type_name, t.typtypmod)
                         AS smallint)
             AS "DATETIME_PRECISION",
@@ -525,20 +522,19 @@ CREATE OR REPLACE VIEW information_schema_tsql.routines AS
        FROM sys.pg_namespace_ext nc LEFT JOIN sys.babelfish_namespace_ext ext ON nc.nspname = ext.nspname,
             pg_proc p LEFT JOIN sys.all_objects ao ON ao.object_id = CAST(p.oid AS INT),
             pg_language l,
-             pg_type t
-             LEFT JOIN pg_collation co ON t.typcollation = co.oid,
-             sys.translate_pg_type_to_tsql(t.typbasetype) AS tsql_type_name,
-             sys.is_table_type(t.typrelid) as is_tbl_type
+            pg_type t LEFT JOIN pg_collation co ON t.typcollation = co.oid,
+            sys.translate_pg_type_to_tsql(t.typbasetype) AS tsql_type_name,
+            sys.is_table_type(t.typrelid) as is_tbl_type
 
-         where 
-              ao.type in ('P', 'FN')
-              AND (NOT pg_is_other_temp_schema(nc.oid))
-              AND has_function_privilege(p.oid, 'EXECUTE')
-              AND (pg_has_role(t.typowner, 'USAGE')
-              OR has_type_privilege(t.oid, 'USAGE'))
-              AND ext.dbid = cast(sys.db_id() as oid)
-              AND p.prolang = l.oid
-              AND p.prorettype = t.oid
-              AND p.pronamespace = nc.oid;      
+       WHERE 
+            ao.type in ('P', 'FN')
+            AND (NOT pg_is_other_temp_schema(nc.oid))
+            AND has_function_privilege(p.oid, 'EXECUTE')
+            AND (pg_has_role(t.typowner, 'USAGE')
+            OR has_type_privilege(t.oid, 'USAGE'))
+            AND ext.dbid = cast(sys.db_id() as oid)
+            AND p.prolang = l.oid
+            AND p.prorettype = t.oid
+            AND p.pronamespace = nc.oid;      
 
 GRANT SELECT ON information_schema_tsql.routines TO PUBLIC;
