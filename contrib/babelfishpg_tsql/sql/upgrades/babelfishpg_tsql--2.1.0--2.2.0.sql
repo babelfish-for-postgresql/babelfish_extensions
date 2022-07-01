@@ -579,9 +579,40 @@ $BODY$
 $BODY$
 LANGUAGE SQL;
 
+CREATE OR REPLACE VIEW msdb_dbo.syspolicy_system_health_state
+AS
+    SELECT 
+        CAST(0 as BIGINT) AS health_state_id,
+        CAST(0 as INT) AS policy_id,
+        CAST(NULL AS sys.DATETIME) AS last_run_date,
+        CAST('' AS sys.NVARCHAR(400)) AS target_query_expression_with_id,
+        CAST('' AS sys.NVARCHAR) AS target_query_expression,
+        CAST(1 as sys.BIT) AS result
+    WHERE FALSE;
+GRANT SELECT ON msdb_dbo.syspolicy_system_health_state TO sysadmin;
+
+CREATE OR REPLACE FUNCTION msdb_dbo.fn_syspolicy_is_automation_enabled()
+RETURNS INTEGER
+AS 
+$fn_body$    
+    SELECT 0;
+$fn_body$
+LANGUAGE SQL IMMUTABLE PARALLEL SAFE;
+
+CREATE OR REPLACE VIEW msdb_dbo.syspolicy_configuration
+AS
+    SELECT
+        CAST(NULL AS sys.SYSNAME) AS name,
+        CAST(NULL AS sys.sql_variant) AS current_value
+    WHERE FALSE; -- Condition will result in view with an empty result set
+GRANT SELECT ON msdb_dbo.syspolicy_configuration TO sysadmin;
+
 -- Disassociate msdb objects from the extension
 CALL sys.babelfish_remove_object_from_extension('view', 'msdb_dbo.sysdatabases');
 CALL sys.babelfish_remove_object_from_extension('schema', 'msdb_dbo');
+CALL sys.babelfish_remove_object_from_extension('view', 'msdb_dbo.syspolicy_system_health_state');
+CALL sys.babelfish_remove_object_from_extension('view', 'msdb_dbo.syspolicy_configuration');
+CALL sys.babelfish_remove_object_from_extension('function', 'msdb_dbo.fn_syspolicy_is_automation_enabled');
 -- Disassociate procedures under master_dbo schema from the extension
 CALL sys.babelfish_remove_object_from_extension('procedure', 'master_dbo.xp_qv(sys.nvarchar, sys.nvarchar)');
 CALL sys.babelfish_remove_object_from_extension('procedure', 'master_dbo.xp_instance_regread(sys.nvarchar, sys.sysname, sys.nvarchar, int)');
@@ -955,6 +986,60 @@ SELECT
    CAST(0 as INT) AS property_list_id
 WHERE FALSE;
 GRANT SELECT ON sys.fulltext_indexes TO PUBLIC;
+
+ALTER FUNCTION OBJECTPROPERTYEX(INT, SYS.VARCHAR) RENAME TO objectpropertyex_deprecated_2_1_0;
+
+CREATE OR REPLACE FUNCTION OBJECTPROPERTYEX(
+    id INT,
+    property SYS.VARCHAR
+)
+RETURNS SYS.SQL_VARIANT
+AS $$
+BEGIN
+	property := RTRIM(LOWER(COALESCE(property, '')));
+	
+	IF NOT EXISTS(SELECT ao.object_id FROM sys.all_objects ao WHERE object_id = id)
+	THEN
+		RETURN NULL;
+	END IF;
+
+	IF property = 'basetype' -- BaseType
+	THEN
+		RETURN (SELECT CAST(ao.type AS SYS.SQL_VARIANT) 
+                FROM sys.all_objects ao
+                WHERE ao.object_id = id
+                LIMIT 1
+                );
+    END IF;
+
+    RETURN CAST(OBJECTPROPERTY(id, property) AS SYS.SQL_VARIANT);
+END
+$$
+LANGUAGE plpgsql;
+
+CALL sys.babelfish_drop_deprecated_function('sys', 'objectpropertyex_deprecated_2_1_0');
+
+CREATE OR REPLACE VIEW sys.spatial_index_tessellations 
+AS
+SELECT 
+    CAST(0 as int) AS object_id
+    , CAST(0 as int) AS index_id
+    , CAST('' as sys.sysname) AS tessellation_scheme
+    , CAST(0 as float(53)) AS bounding_box_xmin
+    , CAST(0 as float(53)) AS bounding_box_ymin
+    , CAST(0 as float(53)) AS bounding_box_xmax
+    , CAST(0 as float(53)) AS bounding_box_ymax
+    , CAST(0 as smallint) as level_1_grid
+    , CAST('' as sys.nvarchar(60)) AS level_1_grid_desc
+    , CAST(0 as smallint) as level_2_grid
+    , CAST('' as sys.nvarchar(60)) AS level_2_grid_desc
+    , CAST(0 as smallint) as level_3_grid
+    , CAST('' as sys.nvarchar(60)) AS level_3_grid_desc
+    , CAST(0 as smallint) as level_4_grid
+    , CAST('' as sys.nvarchar(60)) AS level_4_grid_desc
+    , CAST(0 as int) as cells_per_object
+WHERE FALSE;
+GRANT SELECT ON sys.spatial_index_tessellations TO PUBLIC;
 
 INSERT INTO sys.babelfish_helpcollation VALUES (N'estonian_ci_ai', N'Estonian, case-insensitive, accent-insensitive, kanatype-insensitive, width-insensitive');
 INSERT INTO sys.babelfish_helpcollation VALUES (N'estonian_ci_as', N'Estonian, case-insensitive, accent-sensitive, kanatype-insensitive, width-insensitive');
