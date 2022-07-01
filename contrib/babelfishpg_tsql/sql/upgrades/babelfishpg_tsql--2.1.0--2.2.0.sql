@@ -111,7 +111,6 @@ SELECT isc_col."DOMAIN_CATALOG",
        CAST(isc_col."TABLE_NAME" AS sys.sysname),
        CAST(isc_col."COLUMN_NAME" AS sys.sysname)
 
-
 FROM information_schema_tsql.columns AS isc_col
 
 WHERE isc_col."DOMAIN_NAME" IS NOT NULL;
