@@ -110,6 +110,38 @@ BEGIN
   ALTER PROCEDURE master_dbo.xp_instance_regread(sys.nvarchar(512), sys.sysname, sys.nvarchar(512), int) OWNER TO sysadmin;
   ALTER PROCEDURE master_dbo.xp_instance_regread(sys.nvarchar(512), sys.sysname, sys.nvarchar(512), sys.nvarchar(512)) OWNER TO sysadmin;
   DROP PROCEDURE sys.create_xp_instance_regread_in_master_dbo;
+
+  CREATE OR REPLACE VIEW msdb_dbo.syspolicy_system_health_state
+  AS
+    SELECT 
+      CAST(0 as BIGINT) AS health_state_id,
+      CAST(0 as INT) AS policy_id,
+      CAST(NULL AS sys.DATETIME) AS last_run_date,
+      CAST('' AS sys.NVARCHAR(400)) AS target_query_expression_with_id,
+      CAST('' AS sys.NVARCHAR) AS target_query_expression,
+      CAST(1 as sys.BIT) AS result
+    WHERE FALSE;
+  GRANT SELECT ON msdb_dbo.syspolicy_system_health_state TO PUBLIC;
+  ALTER VIEW msdb_dbo.syspolicy_system_health_state OWNER TO sysadmin;
+
+  CREATE OR REPLACE FUNCTION msdb_dbo.fn_syspolicy_is_automation_enabled()
+  RETURNS INTEGER
+  AS 
+  $fn_body$    
+    SELECT 0;
+  $fn_body$
+  LANGUAGE SQL IMMUTABLE PARALLEL SAFE;
+  ALTER FUNCTION msdb_dbo.fn_syspolicy_is_automation_enabled() OWNER TO sysadmin;
+
+  CREATE OR REPLACE VIEW msdb_dbo.syspolicy_configuration
+  AS
+    SELECT
+      CAST(NULL AS sys.SYSNAME) AS name,
+      CAST(NULL AS sys.sql_variant) AS current_value
+    WHERE FALSE; -- Condition will result in view with an empty result set
+  GRANT SELECT ON msdb_dbo.syspolicy_configuration TO PUBLIC;
+  ALTER VIEW msdb_dbo.syspolicy_configuration OWNER TO sysadmin;
+
 END
 $$;
 
