@@ -1,0 +1,7 @@
+SELECT msdb.dbo.fn_syspolicy_is_automation_enabled()
+GO
+~~START~~
+int
+0
+~~END~~
+
