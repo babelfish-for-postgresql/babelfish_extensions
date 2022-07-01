@@ -436,6 +436,8 @@ CREATE VIEW information_schema_tsql.check_constraints AS
 
 GRANT SELECT ON information_schema_tsql.check_constraints TO PUBLIC;
 
+SELECT set_config('search_path', 'sys, '||current_setting('search_path'), false);
+
 /*
  * COLUMN_DOMAIN_USAGE
  */
@@ -463,12 +465,10 @@ CREATE OR REPLACE VIEW information_schema_tsql.COLUMN_DOMAIN_USAGE AS
 	WHERE (NOT pg_is_other_temp_schema(nc.oid))
 		AND a.attnum > 0 AND NOT a.attisdropped
 		AND c.relkind IN ('r', 'v', 'p')
-		AND t.typcategory = 'U'
+		AND t.typtype = 'd'
 		AND (pg_has_role(c.relowner, 'USAGE')
 			OR has_column_privilege(c.oid, a.attnum,
 									'SELECT, INSERT, UPDATE, REFERENCES'))
 		AND ext.dbid = cast(sys.db_id() as oid);
 
 GRANT SELECT ON information_schema_tsql.COLUMN_DOMAIN_USAGE TO PUBLIC;
-
-SELECT set_config('search_path', 'sys, '||current_setting('search_path'), false);
