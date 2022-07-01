@@ -10,6 +10,16 @@ AS
 SELECT a FROM dbo.master_t1;
 GO
 
+CREATE PROCEDURE dbo.master_p2
+AS
+SELECT 1;
+GO
+
+CREATE PROCEDURE dbo.master_p3
+AS
+SELECT 1/0;
+GO
+
 CREATE DATABASE db1;
 GO
 
@@ -26,6 +36,20 @@ SELECT * FROM master.dbo.master_t1 ORDER BY id;
 GO
 
 SELECT * FROM master..master_t1 ORDER BY id;
+GO
+
+-- Expects error due to incorrect schema resolution in BBF
+EXEC master.dbo.master_p1
+GO
+
+EXEC master.dbo.master_p2
+GO
+
+-- runtime error
+EXEC master.dbo.master_p3
+GO
+
+EXEC master..master_p2
 GO
 
 UPDATE master.dbo.master_t1
@@ -129,6 +153,9 @@ GO
 USE db1;
 GO
 
+EXEC master.dbo.master_p2
+GO
+
 SELECT current_user;
 GO
 
@@ -142,6 +169,9 @@ GO
 GRANT SELECT ON dbo.master_t1 TO master_janedoe;
 GO
 
+GRANT EXECUTE ON dbo.master_p2 TO master_janedoe;
+GO
+
 USE db1;
 GO
 
@@ -153,6 +183,9 @@ USE MASTER;
 GO
 
 USE db1;
+GO
+
+EXEC master.dbo.master_p2
 GO
 
 SELECT * FROM master.dbo.master_t1 ORDER BY id;
@@ -172,6 +205,12 @@ DROP TABLE dbo.master_t1;
 GO
 
 DROP PROC dbo.master_p1;
+GO
+
+DROP PROC dbo.master_p2;
+GO
+
+DROP PROC dbo.master_p3;
 GO
 
 DROP USER master_janedoe;
@@ -196,6 +235,12 @@ CREATE DATABASE db2;
 GO
 
 USE db1;
+GO
+
+CREATE PROCEDURE p1
+AS
+EXEC('USE db1');
+SELECT 10;
 GO
 
 CREATE TABLE dbo.db1_t1 (id int identity, a int);
@@ -227,6 +272,12 @@ WHERE id = 1;
 GO
 
 SELECT * FROM dbo.db2_t1 ORDER BY b;
+GO
+
+EXEC db1.dbo.p1;
+GO
+
+DROP PROCEDURE p1
 GO
 
 -- tsql
