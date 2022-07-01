@@ -457,17 +457,10 @@ CREATE OR REPLACE VIEW information_schema_tsql.COLUMN_DOMAIN_USAGE AS
 			CAST(c.relname AS sys.sysname) AS "TABLE_NAME",
 			CAST(a.attname AS sys.sysname) AS "COLUMN_NAME"
 
-
-	FROM (pg_attribute a LEFT JOIN pg_attrdef ad ON attrelid = adrelid AND attnum = adnum)
+        FROM (pg_attribute a LEFT JOIN pg_attrdef ad ON attrelid = adrelid AND attnum = adnum)
 		JOIN (pg_class c JOIN sys.pg_namespace_ext nc ON (c.relnamespace = nc.oid)) ON a.attrelid = c.oid
 		JOIN (pg_type t JOIN pg_namespace nt ON (t.typnamespace = nt.oid)) ON a.atttypid = t.oid
-		LEFT JOIN (pg_type bt JOIN pg_namespace nbt ON (bt.typnamespace = nbt.oid))
-			ON (t.typtype = 'd' AND t.typbasetype = bt.oid)
-		LEFT JOIN pg_collation co on co.oid = a.attcollation
-		LEFT OUTER JOIN sys.babelfish_namespace_ext ext on nc.nspname = ext.nspname,
-		information_schema_tsql._pgtsql_truetypid(nt, a, t) AS true_typid,
-		information_schema_tsql._pgtsql_truetypmod(nt, a, t) AS true_typmod,
-		sys.translate_pg_type_to_tsql(true_typid) AS tsql_type_name
+		LEFT OUTER JOIN sys.babelfish_namespace_ext ext on nc.nspname = ext.nspname
 
 	WHERE (NOT pg_is_other_temp_schema(nc.oid))
 		AND a.attnum > 0 AND NOT a.attisdropped
