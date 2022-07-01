@@ -41,7 +41,6 @@ go
 ~~START~~
 varchar#!#nvarchar#!#varchar#!#varchar
 ntyp#!#src#!#col_test#!#r
-<NULL>#!#src#!#col_test#!#t
 ~~END~~
 
 

@@ -127,7 +127,7 @@ CREATE OR REPLACE VIEW information_schema_tsql.COLUMN_DOMAIN_USAGE AS
 	WHERE (NOT pg_is_other_temp_schema(nc.oid))
 		AND a.attnum > 0 AND NOT a.attisdropped
 		AND c.relkind IN ('r', 'v', 'p')
-		AND t.typtype = 'd'
+		AND t.typcategory = 'U'
 		AND (pg_has_role(c.relowner, 'USAGE')
 			OR has_column_privilege(c.oid, a.attnum,
 									'SELECT, INSERT, UPDATE, REFERENCES'))
