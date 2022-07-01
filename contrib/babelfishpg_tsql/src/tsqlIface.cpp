@@ -4124,10 +4124,17 @@ makeExecuteStatement(TSqlParser::Execute_statementContext *ctx)
 	{
 		std::string func_proc_name;
 		TSqlParser::Execute_statement_argContext *func_proc_args = body->execute_statement_arg();
+		bool is_cross_db = false;
 
 		if (body->func_proc_name_server_database_schema())
 		{
 			func_proc_name = ::getFullText(body->func_proc_name_server_database_schema());
+			if (body->func_proc_name_server_database_schema()->database)
+			{
+				std::string db_name = stripQuoteFromId(body->func_proc_name_server_database_schema()->database);
+				if (!string_matches(db_name.c_str(), get_cur_db_name()))
+				is_cross_db = true;
+			}
 		}
 		else 
 		{
@@ -4154,6 +4161,9 @@ makeExecuteStatement(TSqlParser::Execute_statementContext *ctx)
 		result->return_code_dno = return_code_dno;
 		result->paramno = 0;
 		result->params = NIL;
+		// record whether stmt is cross-db
+		if (is_cross_db)
+			result->is_cross_db = true;
 
 		if (func_proc_args)
 		{
