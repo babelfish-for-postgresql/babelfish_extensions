@@ -521,26 +521,11 @@ tsql_get_functiondef(PG_FUNCTION_ARGS)
 
 	/* And finally the function definition ... */
 	(void) SysCacheGetAttr(PROCOID, proctup, Anum_pg_proc_prosqlbody, &isnull);
-	/* if (proc->prolang == SQLlanguageId && !isnull)
-	{
-		print_function_sqlbody(&buf, proctup);
-	}
-	else
-	{*/
-		appendStringInfoString(&buf, " AS ");
-
-		tmp = SysCacheGetAttr(PROCOID, proctup, Anum_pg_proc_probin, &isnull);
-		if (!isnull)
-		{
-			/*simple_quote_literal(&buf, TextDatumGetCString(tmp));
-		     	appendStringInfoString(&buf, ", ");*/  /*assume prosrc isn't null */
-               }
-
-		tmp = SysCacheGetAttr(PROCOID, proctup, Anum_pg_proc_prosrc, &isnull);
-		/*if (isnull)
-			elog(ERROR, "null prosrc");*/
-		prosrc = TextDatumGetCString(tmp); 
-		appendStringInfoString(&buf, prosrc);
+	
+        appendStringInfoString(&buf, " AS ");
+	tmp = SysCacheGetAttr(PROCOID, proctup, Anum_pg_proc_prosrc, &isnull);
+	prosrc = TextDatumGetCString(tmp); 
+	appendStringInfoString(&buf, prosrc);
 
 	ReleaseSysCache(proctup);
 
@@ -2239,8 +2224,6 @@ isSimpleNode(Node *node, Node *parentNode, int prettyFlags)
 const char *
 tsql_quote_identifier(const char *ident)
 {
-
-//	if(ident[0]== '@') return ident;
 	/*
 	 * Can avoid quoting if ident starts with a lowercase letter ,underscore or at the rate(@)
 	 * and contains only lowercase letters, digits, at the rate or  underscores, *and* is
@@ -2276,15 +2259,11 @@ tsql_quote_identifier(const char *ident)
 		}
 	}
 
-         if (quote_all_identifiers)
+        if (quote_all_identifiers)
 		safe = false;
 
 	if (safe)
-	{
-	
-
-
-	
+	{	
 		/*
 		 * Check for keyword.  We quote keywords except for unreserved ones.
 		 * (In some cases we could avoid quoting a col_name or type_func_name
@@ -2293,18 +2272,14 @@ tsql_quote_identifier(const char *ident)
 		 * Note: ScanKeywordLookup() does case-insensitive comparison, but
 		 * that's fine, since we already know we have all-lower-case.
 		 */
-		 int			kwnum = ScanKeywordLookup(ident, &ScanKeywords);
+		int			kwnum = ScanKeywordLookup(ident, &ScanKeywords);
 
 		if (kwnum >= 0 && ScanKeywordCategories[kwnum] != UNRESERVED_KEYWORD)
 			safe = false;
-		
-
 	}
 
 	if (safe)
-	       return ident;
-	
-	/* no change needed */
+	        return ident;			/* no change needed */
 
 	result = (char *) palloc(strlen(ident) + nquotes + 2 + 1);
 
