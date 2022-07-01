@@ -1,0 +1,6 @@
+SELECT * FROM sys.stats;
+GO
+~~START~~
+int#!#varchar#!#int#!#bit#!#bit#!#bit#!#bit#!#nvarchar#!#bit#!#bit#!#bit#!#int#!#varchar
+~~END~~
+

@@ -505,6 +505,48 @@ FROM sys.indexes si
 WHERE FALSE;
 GRANT SELECT ON sys.hash_indexes TO PUBLIC;
 
+CREATE OR REPLACE VIEW sys.xml_indexes
+AS
+SELECT
+    CAST(idx.object_id AS INT) AS object_id
+  , CAST(idx.name AS sys.sysname) AS name
+  , CAST(idx.index_id AS INT)  AS index_id
+  , CAST(idx.type AS sys.tinyint) AS type
+  , CAST(idx.type_desc AS sys.nvarchar(60)) AS type_desc
+  , CAST(idx.is_unique AS sys.bit) AS is_unique
+  , CAST(idx.data_space_id AS int) AS data_space_id
+  , CAST(idx.ignore_dup_key AS sys.bit) AS ignore_dup_key
+  , CAST(idx.is_primary_key AS sys.bit) AS is_primary_key
+  , CAST(idx.is_unique_constraint AS sys.bit) AS is_unique_constraint
+  , CAST(idx.fill_factor AS sys.tinyint) AS fill_factor
+  , CAST(idx.is_padded AS sys.bit) AS is_padded
+  , CAST(idx.is_disabled AS sys.bit) AS is_disabled
+  , CAST(idx.is_hypothetical AS sys.bit) AS is_hypothetical
+  , CAST(idx.allow_row_locks AS sys.bit) AS allow_row_locks
+  , CAST(idx.allow_page_locks AS sys.bit) AS allow_page_locks
+  , CAST(idx.has_filter AS sys.bit) AS has_filter
+  , CAST(idx.filter_definition AS sys.nvarchar(4000)) AS filter_definition
+  , CAST(idx.auto_created AS sys.bit) AS auto_created
+  , CAST(NULL AS INT) AS using_xml_index_id
+  , CAST(NULL AS char(1)) AS secondary_type
+  , CAST(NULL AS sys.nvarchar(60)) AS secondary_type_desc
+  , CAST(0 AS sys.tinyint) AS xml_index_type
+  , CAST(NULL AS sys.nvarchar(60)) AS xml_index_type_description
+  , CAST(NULL AS INT) AS path_id
+FROM  sys.indexes idx
+WHERE idx.type = 3; -- 3 is of type XML
+GRANT SELECT ON sys.xml_indexes TO PUBLIC;
+
+CREATE OR REPLACE VIEW sys.dm_hadr_cluster
+AS
+SELECT
+   CAST('' as sys.nvarchar(128)) as cluster_name
+  ,CAST(0 as sys.tinyint) as quorum_type
+  ,CAST('NODE_MAJORITY' as sys.nvarchar(50)) as quorum_type_desc
+  ,CAST(0 as sys.tinyint) as quorum_state
+  ,CAST('NORMAL_QUORUM' as sys.nvarchar(50)) as quorum_state_desc;
+GRANT SELECT ON sys.dm_hadr_cluster TO PUBLIC;
+
 CREATE OR REPLACE VIEW sys.filetable_system_defined_objects
 AS
 SELECT 
@@ -537,9 +579,40 @@ $BODY$
 $BODY$
 LANGUAGE SQL;
 
+CREATE OR REPLACE VIEW msdb_dbo.syspolicy_system_health_state
+AS
+    SELECT 
+        CAST(0 as BIGINT) AS health_state_id,
+        CAST(0 as INT) AS policy_id,
+        CAST(NULL AS sys.DATETIME) AS last_run_date,
+        CAST('' AS sys.NVARCHAR(400)) AS target_query_expression_with_id,
+        CAST('' AS sys.NVARCHAR) AS target_query_expression,
+        CAST(1 as sys.BIT) AS result
+    WHERE FALSE;
+GRANT SELECT ON msdb_dbo.syspolicy_system_health_state TO sysadmin;
+
+CREATE OR REPLACE FUNCTION msdb_dbo.fn_syspolicy_is_automation_enabled()
+RETURNS INTEGER
+AS 
+$fn_body$    
+    SELECT 0;
+$fn_body$
+LANGUAGE SQL IMMUTABLE PARALLEL SAFE;
+
+CREATE OR REPLACE VIEW msdb_dbo.syspolicy_configuration
+AS
+    SELECT
+        CAST(NULL AS sys.SYSNAME) AS name,
+        CAST(NULL AS sys.sql_variant) AS current_value
+    WHERE FALSE; -- Condition will result in view with an empty result set
+GRANT SELECT ON msdb_dbo.syspolicy_configuration TO sysadmin;
+
 -- Disassociate msdb objects from the extension
 CALL sys.babelfish_remove_object_from_extension('view', 'msdb_dbo.sysdatabases');
 CALL sys.babelfish_remove_object_from_extension('schema', 'msdb_dbo');
+CALL sys.babelfish_remove_object_from_extension('view', 'msdb_dbo.syspolicy_system_health_state');
+CALL sys.babelfish_remove_object_from_extension('view', 'msdb_dbo.syspolicy_configuration');
+CALL sys.babelfish_remove_object_from_extension('function', 'msdb_dbo.fn_syspolicy_is_automation_enabled');
 -- Disassociate procedures under master_dbo schema from the extension
 CALL sys.babelfish_remove_object_from_extension('procedure', 'master_dbo.xp_qv(sys.nvarchar, sys.nvarchar)');
 CALL sys.babelfish_remove_object_from_extension('procedure', 'master_dbo.xp_instance_regread(sys.nvarchar, sys.sysname, sys.nvarchar, int)');
@@ -783,6 +856,190 @@ AND has_sequence_privilege(pg_get_serial_sequence(quote_ident(ext.nspname)||'.'|
 GRANT SELECT ON sys.identity_columns TO PUBLIC;
 
 CALL sys.babelfish_drop_deprecated_view('sys', 'identity_columns_deprecated');
+
+CREATE OR REPLACE VIEW sys.filegroups
+AS
+SELECT 
+   ds.name,
+   ds.data_space_id,
+   ds.type,
+   ds.type_desc,
+   ds.is_default,
+   ds.is_system,
+   CAST(NULL as UNIQUEIDENTIFIER) AS filegroup_guid,
+   CAST(0 as INT) AS log_filegroup_id,
+   CAST(0 as sys.BIT) AS is_read_only,
+   CAST(0 as sys.BIT) AS is_autogrow_all_files
+FROM sys.data_spaces ds WHERE type = 'FG';
+GRANT SELECT ON sys.filegroups TO PUBLIC;
+
+CREATE OR REPLACE VIEW sys.master_files
+AS
+SELECT
+    CAST(0 as INT) AS database_id,
+    CAST(0 as INT) AS file_id,
+    CAST(NULL as UNIQUEIDENTIFIER) AS file_guid,
+    CAST(0 as sys.TINYINT) AS type,
+    CAST('' as NVARCHAR(60)) AS type_desc,
+    CAST(0 as INT) AS data_space_id,
+    CAST('' as SYSNAME) AS name,
+    CAST('' as NVARCHAR(260)) AS physical_name,
+    CAST(0 as sys.TINYINT) AS state,
+    CAST('' as NVARCHAR(60)) AS state_desc,
+    CAST(0 as INT) AS size,
+    CAST(0 as INT) AS max_size,
+    CAST(0 as INT) AS growth,
+    CAST(0 as sys.BIT) AS is_media_read_only,
+    CAST(0 as sys.BIT) AS is_read_only,
+    CAST(0 as sys.BIT) AS is_sparse,
+    CAST(0 as sys.BIT) AS is_percent_growth,
+    CAST(0 as sys.BIT) AS is_name_reserved,
+    CAST(0 as NUMERIC(25,0)) AS create_lsn,
+    CAST(0 as NUMERIC(25,0)) AS drop_lsn,
+    CAST(0 as NUMERIC(25,0)) AS read_only_lsn,
+    CAST(0 as NUMERIC(25,0)) AS read_write_lsn,
+    CAST(0 as NUMERIC(25,0)) AS differential_base_lsn,
+    CAST(NULL as UNIQUEIDENTIFIER) AS differential_base_guid,
+    CAST(NULL as DATETIME) AS differential_base_time,
+    CAST(0 as NUMERIC(25,0)) AS redo_start_lsn,
+    CAST(NULL as UNIQUEIDENTIFIER) AS redo_start_fork_guid,
+    CAST(0 as NUMERIC(25,0)) AS redo_target_lsn,
+    CAST(NULL as UNIQUEIDENTIFIER) AS redo_target_fork_guid,
+    CAST(0 as NUMERIC(25,0)) AS backup_lsn,
+    CAST(0 as INT) AS credential_id
+WHERE FALSE;
+GRANT SELECT ON sys.master_files TO PUBLIC;
+
+CREATE OR REPLACE VIEW sys.stats
+AS
+SELECT 
+   CAST(0 as INT) AS object_id,
+   CAST('' as SYSNAME) AS name,
+   CAST(0 as INT) AS stats_id,
+   CAST(0 as sys.BIT) AS auto_created,
+   CAST(0 as sys.BIT) AS user_created,
+   CAST(0 as sys.BIT) AS no_recompute,
+   CAST(0 as sys.BIT) AS has_filter,
+   CAST('' as sys.NVARCHAR(4000)) AS filter_definition,
+   CAST(0 as sys.BIT) AS is_temporary,
+   CAST(0 as sys.BIT) AS is_incremental,
+   CAST(0 as sys.BIT) AS has_persisted_sample,
+   CAST(0 as INT) AS stats_generation_method,
+   CAST('' as VARCHAR(255)) AS stats_generation_method_desc
+WHERE FALSE;
+GRANT SELECT ON sys.stats TO PUBLIC;
+
+CREATE OR REPLACE VIEW sys.change_tracking_tables
+AS
+SELECT 
+   CAST(0 as INT) AS object_id,
+   CAST(0 as sys.BIT) AS is_track_columns_updated_on,
+   CAST(0 AS sys.BIGINT) AS begin_version,
+   CAST(0 AS sys.BIGINT) AS cleanup_version,
+   CAST(0 AS sys.BIGINT) AS min_valid_version
+   WHERE FALSE;
+GRANT SELECT ON sys.change_tracking_tables TO PUBLIC;
+
+CREATE OR REPLACE VIEW sys.fulltext_catalogs
+AS
+SELECT 
+   CAST(0 as INT) AS fulltext_catalog_id,
+   CAST('' as SYSNAME) AS name,
+   CAST('' as NVARCHAR(260)) AS path,
+   CAST(0 as sys.BIT) AS is_default,
+   CAST(0 as sys.BIT) AS is_accent_sensitivity_on,
+   CAST(0 as INT) AS data_space_id,
+   CAST(0 as INT) AS file_id,
+   CAST(0 as INT) AS principal_id,
+   CAST(2 as sys.BIT) AS is_importing
+WHERE FALSE;
+GRANT SELECT ON sys.fulltext_catalogs TO PUBLIC;
+
+CREATE OR REPLACE VIEW sys.fulltext_stoplists
+AS
+SELECT 
+   CAST(0 as INT) AS stoplist_id,
+   CAST('' as SYSNAME) AS name,
+   CAST(NULL as DATETIME) AS create_date,
+   CAST(NULL as DATETIME) AS modify_date,
+   CAST(0 as INT) AS Principal_id
+WHERE FALSE;
+GRANT SELECT ON sys.fulltext_stoplists TO PUBLIC;
+
+CREATE OR REPLACE VIEW sys.fulltext_indexes
+AS
+SELECT 
+   CAST(0 as INT) AS object_id,
+   CAST(0 as INT) AS unique_index_id,
+   CAST(0 as INT) AS fulltext_catalog_id,
+   CAST(0 as sys.BIT) AS is_enabled,
+   CAST('O' as CHAR(1)) AS change_tracking_state,
+   CAST('' as NVARCHAR(60)) AS change_tracking_state_desc,
+   CAST(0 as sys.BIT) AS has_crawl_completed,
+   CAST('' as CHAR(1)) AS crawl_type,
+   CAST('' as NVARCHAR(60)) AS crawl_type_desc,
+   CAST(NULL as DATETIME) AS crawl_start_date,
+   CAST(NULL as DATETIME) AS crawl_end_date,
+   CAST(NULL as BINARY(8)) AS incremental_timestamp,
+   CAST(0 as INT) AS stoplist_id,
+   CAST(0 as INT) AS data_space_id,
+   CAST(0 as INT) AS property_list_id
+WHERE FALSE;
+GRANT SELECT ON sys.fulltext_indexes TO PUBLIC;
+
+ALTER FUNCTION OBJECTPROPERTYEX(INT, SYS.VARCHAR) RENAME TO objectpropertyex_deprecated_2_1_0;
+
+CREATE OR REPLACE FUNCTION OBJECTPROPERTYEX(
+    id INT,
+    property SYS.VARCHAR
+)
+RETURNS SYS.SQL_VARIANT
+AS $$
+BEGIN
+	property := RTRIM(LOWER(COALESCE(property, '')));
+	
+	IF NOT EXISTS(SELECT ao.object_id FROM sys.all_objects ao WHERE object_id = id)
+	THEN
+		RETURN NULL;
+	END IF;
+
+	IF property = 'basetype' -- BaseType
+	THEN
+		RETURN (SELECT CAST(ao.type AS SYS.SQL_VARIANT) 
+                FROM sys.all_objects ao
+                WHERE ao.object_id = id
+                LIMIT 1
+                );
+    END IF;
+
+    RETURN CAST(OBJECTPROPERTY(id, property) AS SYS.SQL_VARIANT);
+END
+$$
+LANGUAGE plpgsql;
+
+CALL sys.babelfish_drop_deprecated_function('sys', 'objectpropertyex_deprecated_2_1_0');
+
+CREATE OR REPLACE VIEW sys.spatial_index_tessellations 
+AS
+SELECT 
+    CAST(0 as int) AS object_id
+    , CAST(0 as int) AS index_id
+    , CAST('' as sys.sysname) AS tessellation_scheme
+    , CAST(0 as float(53)) AS bounding_box_xmin
+    , CAST(0 as float(53)) AS bounding_box_ymin
+    , CAST(0 as float(53)) AS bounding_box_xmax
+    , CAST(0 as float(53)) AS bounding_box_ymax
+    , CAST(0 as smallint) as level_1_grid
+    , CAST('' as sys.nvarchar(60)) AS level_1_grid_desc
+    , CAST(0 as smallint) as level_2_grid
+    , CAST('' as sys.nvarchar(60)) AS level_2_grid_desc
+    , CAST(0 as smallint) as level_3_grid
+    , CAST('' as sys.nvarchar(60)) AS level_3_grid_desc
+    , CAST(0 as smallint) as level_4_grid
+    , CAST('' as sys.nvarchar(60)) AS level_4_grid_desc
+    , CAST(0 as int) as cells_per_object
+WHERE FALSE;
+GRANT SELECT ON sys.spatial_index_tessellations TO PUBLIC;
 
 -- Drops the temporary procedure used by the upgrade script.
 -- Please have this be one of the last statements executed in this upgrade script.
