@@ -1,0 +1,49 @@
+# Schedule File for JDBC Test Framework for local run
+# 1. Lines starting with '#' will be treated as comments
+# 2. To run a postgres command:	cmd#!#postgresql#!#<enter postgres command>
+# 3. To run a T-SQL command: cmd#!#sqlserver#!#<enter T-SQL command>
+# 4. Keyword "all" is equivalent to running all test files in
+#    input folder
+# 5. To add a test, add test name (without extension Eg. BABEL-TEST) on a
+#    new line
+# 6. If you want the framework to not run certain files, use: ignore#!#<test name>
+
+TestBigInt
+TestReal
+TestBinary
+TestBIT
+TestSmallDatetime
+TestChar
+TestSmallInt
+TestDatetime2
+TestSmallMoney
+TestDatetime
+TestSQLVariant
+TestDate
+TestText
+TestDecimal
+TestTime
+TestFloat
+TestTinyInt
+TestImage
+TestUDD
+TestInt
+TestUniqueIdentifier
+TestMoney
+TestVarChar
+TestNumeric
+TestXML
+BABEL-3112
+BABEL-3166
+BABEL-3192
+BABEL-3221
+BABEL-3249
+BABEL-3204
+BABEL-3234
+
+# JDBC bulk insert API seems to call SET FMTONLY ON without calling SET FMTONLY OFF, causing some spurious test failures.
+ignore#!#insertbulk
+ignore#!#BABEL-SQLvariant
+
+# Temporarily ignore due to BABEL-3279
+ignore#!#BABEL-EXTENDEDPROPERTY

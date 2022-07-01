@@ -1,0 +1,406 @@
+CREATE TABLE testdecimal_table1(num decimal(5, 2));
+
+prepst#!#INSERT INTO testdecimal_table1(num) VALUES(?) #!#decimal|-|a|-|3|-|5|-|2
+~~ROW COUNT: 1~~
+
+prepst#!#exec#!#decimal|-|a|-|123.456|-|5|-|2
+~~ROW COUNT: 1~~
+
+prepst#!#exec#!#decimal|-|a|-|123.4|-|5|-|2
+~~ROW COUNT: 1~~
+
+prepst#!#exec#!#decimal|-|a|-|123|-|5|-|2
+~~ROW COUNT: 1~~
+
+prepst#!#exec#!#decimal|-|a|-|123.45|-|5|-|2
+~~ROW COUNT: 1~~
+
+prepst#!#exec#!#decimal|-|a|-|<NULL>|-|5|-|2
+~~ROW COUNT: 1~~
+
+prepst#!#exec#!#decimal|-|a|-|-123.456|-|5|-|2
+~~ROW COUNT: 1~~
+
+prepst#!#exec#!#decimal|-|a|-|-123.4|-|5|-|2
+~~ROW COUNT: 1~~
+
+prepst#!#exec#!#decimal|-|a|-|-123|-|5|-|2
+~~ROW COUNT: 1~~
+
+#prepst#!#exec#!#decimal|-|a|-|0|-|5|-|2
+prepst#!#exec#!#decimal|-|a|-|-1|-|3|-|2
+~~ROW COUNT: 1~~
+
+prepst#!#exec#!#decimal|-|a|-|-123|-|9|-|2
+~~ROW COUNT: 1~~
+
+
+CREATE TABLE testdecimal_table2(num decimal(38, 3));
+
+prepst#!#INSERT INTO testdecimal_table2(num) VALUES(?) #!#decimal|-|a1|-|3|-|5|-|2
+~~ROW COUNT: 1~~
+
+prepst#!#exec#!#decimal|-|a1|-|123.456|-|5|-|2
+~~ROW COUNT: 1~~
+
+prepst#!#exec#!#decimal|-|a1|-|123.4|-|5|-|2
+~~ROW COUNT: 1~~
+
+prepst#!#exec#!#decimal|-|a1|-|123|-|5|-|2
+~~ROW COUNT: 1~~
+
+prepst#!#exec#!#decimal|-|a1|-|123.45|-|5|-|2
+~~ROW COUNT: 1~~
+
+prepst#!#exec#!#decimal|-|a1|-|<NULL>|-|5|-|2
+~~ROW COUNT: 1~~
+
+prepst#!#exec#!#decimal|-|a1|-|-123.456|-|5|-|2
+~~ROW COUNT: 1~~
+
+prepst#!#exec#!#decimal|-|a1|-|-123.4|-|5|-|2
+~~ROW COUNT: 1~~
+
+prepst#!#exec#!#decimal|-|a1|-|-123|-|5|-|2
+~~ROW COUNT: 1~~
+
+#prepst#!#exec#!#decimal|-|a1|-|0|-|5|-|2
+prepst#!#exec#!#decimal|-|a1|-|-1|-|3|-|2
+~~ROW COUNT: 1~~
+
+prepst#!#exec#!#decimal|-|a1|-|-123|-|9|-|2
+~~ROW COUNT: 1~~
+
+
+prepst#!#exec#!#decimal|-|a1|-|2147483647|-|10|-|0
+~~ROW COUNT: 1~~
+
+prepst#!#exec#!#decimal|-|a1|-|-2147483647|-|10|-|0
+~~ROW COUNT: 1~~
+
+prepst#!#exec#!#decimal|-|a1|-|2147483646|-|10|-|0
+~~ROW COUNT: 1~~
+
+prepst#!#exec#!#decimal|-|a1|-|-2147483646|-|10|-|0
+~~ROW COUNT: 1~~
+
+prepst#!#exec#!#decimal|-|a1|-|2147483648|-|10|-|0
+~~ROW COUNT: 1~~
+
+prepst#!#exec#!#decimal|-|a1|-|-2147483648|-|10|-|0
+~~ROW COUNT: 1~~
+
+
+# JIRA 507, WORKING FOR BABEL
+#CREATE TABLE testdecimal_table3(num decimal(39, 20));
+
+CREATE TABLE testdecimal_table3(num decimal(38, 20));
+
+prepst#!#INSERT INTO testdecimal_table3(num) VALUES(?) #!#decimal|-|a2|-|3|-|5|-|2
+~~ROW COUNT: 1~~
+
+prepst#!#exec#!#decimal|-|a2|-|123.456|-|5|-|2
+~~ROW COUNT: 1~~
+
+prepst#!#exec#!#decimal|-|a2|-|123.4|-|5|-|2
+~~ROW COUNT: 1~~
+
+prepst#!#exec#!#decimal|-|a2|-|123|-|5|-|2
+~~ROW COUNT: 1~~
+
+prepst#!#exec#!#decimal|-|a2|-|123.45|-|5|-|2
+~~ROW COUNT: 1~~
+
+prepst#!#exec#!#decimal|-|a2|-|<NULL>|-|5|-|2
+~~ROW COUNT: 1~~
+
+prepst#!#exec#!#decimal|-|a2|-|-123.456|-|5|-|2
+~~ROW COUNT: 1~~
+
+prepst#!#exec#!#decimal|-|a2|-|-123.4|-|5|-|2
+~~ROW COUNT: 1~~
+
+prepst#!#exec#!#decimal|-|a2|-|-123|-|5|-|2
+~~ROW COUNT: 1~~
+
+#prepst#!#exec#!#decimal|-|a2|-|0|-|5|-|2
+prepst#!#exec#!#decimal|-|a2|-|-1|-|3|-|2
+~~ROW COUNT: 1~~
+
+prepst#!#exec#!#decimal|-|a2|-|-123|-|9|-|2
+~~ROW COUNT: 1~~
+
+prepst#!#exec#!#decimal|-|a2|-|2147483647|-|10|-|0
+~~ROW COUNT: 1~~
+
+
+CREATE TABLE testdecimal_table4(num decimal(38, 20));
+prepst#!#INSERT INTO testdecimal_table4(num) VALUES(?) #!#decimal|-|a3|-|3|-|5|-|2
+~~ROW COUNT: 1~~
+
+prepst#!#exec#!#decimal|-|a3|-|123.456|-|5|-|2
+~~ROW COUNT: 1~~
+
+prepst#!#exec#!#decimal|-|a3|-|123.4|-|5|-|2
+~~ROW COUNT: 1~~
+
+prepst#!#exec#!#decimal|-|a3|-|123|-|5|-|2
+~~ROW COUNT: 1~~
+
+prepst#!#exec#!#decimal|-|a3|-|123.45|-|5|-|2
+~~ROW COUNT: 1~~
+
+prepst#!#exec#!#decimal|-|a3|-|<NULL>|-|5|-|2
+~~ROW COUNT: 1~~
+
+prepst#!#exec#!#decimal|-|a3|-|-123.456|-|5|-|2
+~~ROW COUNT: 1~~
+
+prepst#!#exec#!#decimal|-|a3|-|-123.4|-|5|-|2
+~~ROW COUNT: 1~~
+
+prepst#!#exec#!#decimal|-|a3|-|-123|-|5|-|2
+~~ROW COUNT: 1~~
+
+#prepst#!#exec#!#decimal|-|a3|-|0|-|5|-|2
+prepst#!#exec#!#decimal|-|a3|-|-1|-|3|-|2
+~~ROW COUNT: 1~~
+
+prepst#!#exec#!#decimal|-|a3|-|-123|-|9|-|2
+~~ROW COUNT: 1~~
+
+prepst#!#exec#!#decimal|-|a3|-|2147483647|-|10|-|0
+~~ROW COUNT: 1~~
+
+
+CREATE TABLE testdecimal_table5(num decimal(38, 21));
+prepst#!#INSERT INTO testdecimal_table5(num) VALUES(?) #!#decimal|-|a4|-|3|-|5|-|2
+~~ROW COUNT: 1~~
+
+prepst#!#exec#!#decimal|-|a4|-|123.456|-|5|-|2
+~~ROW COUNT: 1~~
+
+prepst#!#exec#!#decimal|-|a4|-|123.4|-|5|-|2
+~~ROW COUNT: 1~~
+
+prepst#!#exec#!#decimal|-|a4|-|123|-|5|-|2
+~~ROW COUNT: 1~~
+
+prepst#!#exec#!#decimal|-|a4|-|123.45|-|5|-|2
+~~ROW COUNT: 1~~
+
+prepst#!#exec#!#decimal|-|a4|-|<NULL>|-|5|-|2
+~~ROW COUNT: 1~~
+
+prepst#!#exec#!#decimal|-|a4|-|-123.456|-|5|-|2
+~~ROW COUNT: 1~~
+
+prepst#!#exec#!#decimal|-|a4|-|-123.4|-|5|-|2
+~~ROW COUNT: 1~~
+
+prepst#!#exec#!#decimal|-|a4|-|-123|-|5|-|2
+~~ROW COUNT: 1~~
+
+#prepst#!#exec#!#decimal|-|a4|-|0|-|5|-|2
+prepst#!#exec#!#decimal|-|a4|-|-1|-|3|-|2
+~~ROW COUNT: 1~~
+
+prepst#!#exec#!#decimal|-|a4|-|-123|-|9|-|2
+~~ROW COUNT: 1~~
+
+prepst#!#exec#!#decimal|-|a4|-|2147483647|-|10|-|0
+~~ROW COUNT: 1~~
+
+
+CREATE TABLE testdecimal_table6(num decimal(38, 22));
+prepst#!#INSERT INTO testdecimal_table6(num) VALUES(?) #!#decimal|-|a5|-|3|-|5|-|2
+~~ROW COUNT: 1~~
+
+prepst#!#exec#!#decimal|-|a5|-|123.456|-|5|-|2
+~~ROW COUNT: 1~~
+
+prepst#!#exec#!#decimal|-|a5|-|123.4|-|5|-|2
+~~ROW COUNT: 1~~
+
+prepst#!#exec#!#decimal|-|a5|-|123|-|5|-|2
+~~ROW COUNT: 1~~
+
+prepst#!#exec#!#decimal|-|a5|-|123.45|-|5|-|2
+~~ROW COUNT: 1~~
+
+prepst#!#exec#!#decimal|-|a5|-|<NULL>|-|5|-|2
+~~ROW COUNT: 1~~
+
+prepst#!#exec#!#decimal|-|a5|-|-123.456|-|5|-|2
+~~ROW COUNT: 1~~
+
+prepst#!#exec#!#decimal|-|a5|-|-123.4|-|5|-|2
+~~ROW COUNT: 1~~
+
+prepst#!#exec#!#decimal|-|a5|-|-123|-|5|-|2
+~~ROW COUNT: 1~~
+
+#prepst#!#exec#!#decimal|-|a5|-|0|-|5|-|2
+prepst#!#exec#!#decimal|-|a5|-|-1|-|3|-|2
+~~ROW COUNT: 1~~
+
+prepst#!#exec#!#decimal|-|a5|-|-123|-|9|-|2
+~~ROW COUNT: 1~~
+
+prepst#!#exec#!#decimal|-|a5|-|2147483647|-|10|-|0
+~~ROW COUNT: 1~~
+
+
+CREATE TABLE testdecimal_table7(num decimal(38, 23));
+prepst#!#INSERT INTO testdecimal_table7(num) VALUES(?) #!#decimal|-|a6|-|3|-|5|-|2
+~~ROW COUNT: 1~~
+
+prepst#!#exec#!#decimal|-|a6|-|123.456|-|5|-|2
+~~ROW COUNT: 1~~
+
+prepst#!#exec#!#decimal|-|a6|-|123.4|-|5|-|2
+~~ROW COUNT: 1~~
+
+prepst#!#exec#!#decimal|-|a6|-|123|-|5|-|2
+~~ROW COUNT: 1~~
+
+prepst#!#exec#!#decimal|-|a6|-|123.45|-|5|-|2
+~~ROW COUNT: 1~~
+
+prepst#!#exec#!#decimal|-|a6|-|<NULL>|-|5|-|2
+~~ROW COUNT: 1~~
+
+prepst#!#exec#!#decimal|-|a6|-|-123.456|-|5|-|2
+~~ROW COUNT: 1~~
+
+prepst#!#exec#!#decimal|-|a6|-|-123.4|-|5|-|2
+~~ROW COUNT: 1~~
+
+prepst#!#exec#!#decimal|-|a6|-|-123|-|5|-|2
+~~ROW COUNT: 1~~
+
+#prepst#!#exec#!#decimal|-|a6|-|0|-|5|-|2
+prepst#!#exec#!#decimal|-|a6|-|-1|-|3|-|2
+~~ROW COUNT: 1~~
+
+prepst#!#exec#!#decimal|-|a6|-|-123|-|9|-|2
+~~ROW COUNT: 1~~
+
+prepst#!#exec#!#decimal|-|a6|-|2147483647|-|10|-|0
+~~ROW COUNT: 1~~
+
+
+CREATE TABLE testdecimal_table8(num decimal(38, 25));
+prepst#!#INSERT INTO testdecimal_table8(num) VALUES(?) #!#decimal|-|a7|-|3|-|5|-|2
+~~ROW COUNT: 1~~
+
+prepst#!#exec#!#decimal|-|a7|-|123.456|-|5|-|2
+~~ROW COUNT: 1~~
+
+prepst#!#exec#!#decimal|-|a7|-|123.4|-|5|-|2
+~~ROW COUNT: 1~~
+
+prepst#!#exec#!#decimal|-|a7|-|123|-|5|-|2
+~~ROW COUNT: 1~~
+
+prepst#!#exec#!#decimal|-|a7|-|123.45|-|5|-|2
+~~ROW COUNT: 1~~
+
+prepst#!#exec#!#decimal|-|a7|-|<NULL>|-|5|-|2
+~~ROW COUNT: 1~~
+
+prepst#!#exec#!#decimal|-|a7|-|-123.456|-|5|-|2
+~~ROW COUNT: 1~~
+
+prepst#!#exec#!#decimal|-|a7|-|-123.4|-|5|-|2
+~~ROW COUNT: 1~~
+
+prepst#!#exec#!#decimal|-|a7|-|-123|-|5|-|2
+~~ROW COUNT: 1~~
+
+#prepst#!#exec#!#decimal|-|a7|-|0|-|5|-|2
+prepst#!#exec#!#decimal|-|a7|-|-1|-|3|-|2
+~~ROW COUNT: 1~~
+
+prepst#!#exec#!#decimal|-|a7|-|-123|-|9|-|2
+~~ROW COUNT: 1~~
+
+prepst#!#exec#!#decimal|-|a7|-|247483647|-|10|-|0
+~~ROW COUNT: 1~~
+
+prepst#!#exec#!#decimal|-|a7|-|-247483647|-|10|-|0
+~~ROW COUNT: 1~~
+
+
+CREATE TABLE testdecimal_table9(num decimal(38, 25));
+
+insert into testdecimal_table9 values (2147483647)
+~~ROW COUNT: 1~~
+
+insert into testdecimal_table9 values (-2147483647)
+~~ROW COUNT: 1~~
+
+
+insert into testdecimal_table9 values (2147483646)
+~~ROW COUNT: 1~~
+
+insert into testdecimal_table9 values (-2147483646)
+~~ROW COUNT: 1~~
+
+
+insert into testdecimal_table9 values (2147483648)
+~~ROW COUNT: 1~~
+
+insert into testdecimal_table9 values (-2147483648)
+~~ROW COUNT: 1~~
+
+
+#insert into testdecimal_table9 values(123456789123456789.1234567891234567891234567);
+#insert into testdecimal_table9 values(1234567891234567891.1234567891234567891234567);
+#insert into testdecimal_table9 values(123456789123456789.12345678912345678912345678);
+insert into testdecimal_table9 values(0.0);
+~~ROW COUNT: 1~~
+
+insert into testdecimal_table9 values(0.0000000000000000000000000);
+~~ROW COUNT: 1~~
+
+insert into testdecimal_table9 values(0.00000000000000000000000000);
+~~ROW COUNT: 1~~
+
+
+# BABEL-3074
+CREATE TABLE testdecimal_overflow_test1 (id integer PRIMARY KEY, amount decimal(6, 2));
+INSERT INTO testdecimal_overflow_test1 VALUES (1, 5000.00);
+~~ROW COUNT: 1~~
+
+INSERT INTO testdecimal_overflow_test1 VALUES (2, 6000.00);
+~~ROW COUNT: 1~~
+
+
+# BABEL-3157
+CREATE TABLE testdecimal_overflow_test2 (id integer PRIMARY KEY, amount decimal(6, 2));
+INSERT INTO testdecimal_overflow_test2 VALUES (1, 9999.99), (2, 9999.99), (3, 9999.99), (4,9999.99), (5, 9999.99), (6, 9999.99), (7, 9999.99), (8,9999.99), (9, 9999.99), (10,9999.99), (11, 9999.99), (12, 9999.99), (13, 9999.99), (14,9999.99), (15, 9999.99), (16,9999.99);
+~~ROW COUNT: 16~~
+
+
+#testing resultant scale when i/p scale > 6
+CREATE TABLE testdecimal_overflow_test3 (amount decimal(10, 8));
+INSERT INTO testdecimal_overflow_test3 VALUES(99.123);
+~~ROW COUNT: 1~~
+
+INSERT INTO testdecimal_overflow_test3 VALUES(1.123);
+~~ROW COUNT: 1~~
+
+ 
+CREATE TABLE testdecimal_overflow_test4 (amount decimal(5, 2));
+INSERT INTO testdecimal_overflow_test4 VALUES(999.12);
+~~ROW COUNT: 1~~
+
+INSERT INTO testdecimal_overflow_test4 VALUES(1.12);
+~~ROW COUNT: 1~~
+
+
+CREATE TABLE testdecimal_overflow_test5 (id integer PRIMARY KEY, amount1 decimal(6, 2), amount2 decimal(6,3), amount3 decimal(11,8));
+INSERT INTO testdecimal_overflow_test5 VALUES (1, 9999.99, 999.999, 999.12345678), (2, 9999.99, 999.999, 999.12345678), (3, 9999.99, 999.999, 999.12345678), (4, 9999.99, 999.999, 999.12345678), (5, 9999.99, 999.999, 999.12345678), (6, 9999.99, 999.999, 999.12345678), (7, 9999.99, 999.999, 999.12345678), (8, 9999.99, 999.999, 999.12345678), (9, 9999.99, 999.999, 999.12345678), (10,9999.99, 999.999, 999.12345678), (11, 9999.99, 999.999, 999.12345678), (12, 9999.9, 999.999, 999.12345678), (13, 9999.99, 999.999, 999.12345678), (14,9999.99, 999.999, 999.12345678), (15, 9999.99, 999.999, 999.12345678), (16, 9999.99, 999.999, 999.12345678), (17, 9999.99, 999.999, 999.12345678), (18, 9999.99, 999.999, 999.12345678), (19, 9999.99, 999.999, 999.12345678), (20,9999.99, 999.999, 999.12345678), (21, 9999.99, 999.999, 999.12345678), (22,9999.99, 999.999, 999.12345678);
+~~ROW COUNT: 22~~
+

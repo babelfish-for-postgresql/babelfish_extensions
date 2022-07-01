@@ -75,6 +75,14 @@ runs:
       id: jdbc-upgrade-tests
       run: |
         cd test/JDBC/
-        export inputFilesPath=upgrade/preparation
+        export isUpgradeTestMode=true
+        export inputFilesPath=upgrade/${{ matrix.upgrade-path.path[0] }}/preparation
+        mvn test
+        export isUpgradeTestMode=false
+        export inputFilesPath=input
+        for filename in $(grep -v "^ignore.*\|^#.*\|^cmd.*\|^all.*\|^$" upgrade/${{ matrix.upgrade-path.path[0] }}/schedule); do
+          sed -i "s/$filename[ ]*$/$filename-vu-prepare/g" upgrade/${{ matrix.upgrade-path.path[0] }}/schedule
+        done
+        export scheduleFile=upgrade/${{ matrix.upgrade-path.path[0] }}/schedule
         mvn test
       shell: bash

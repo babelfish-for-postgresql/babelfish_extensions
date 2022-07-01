@@ -1,0 +1,23 @@
+CREATE TABLE smallmoney_dt(a smallmoney);
+
+prepst#!#INSERT INTO smallmoney_dt(a) VALUES (@a) #!#smallmoney|-|a|-|100.5
+prepst#!#exec#!#smallmoney|-|a|-|10
+prepst#!#exec#!#smallmoney|-|a|-|-10.05
+prepst#!#exec#!#smallmoney|-|a|-|-214748.3648
+prepst#!#exec#!#smallmoney|-|a|-|214748.3647
+prepst#!#exec#!#smallmoney|-|a|-|214748.3647
+prepst#!#exec#!#smallmoney|-|a|-|-214,748.3648
+prepst#!#exec#!#smallmoney|-|a|-|214,748.3647
+prepst#!#exec#!#smallmoney|-|a|-|214,748.3647
+prepst#!#exec#!#smallmoney|-|a|-|<NULL>
+INSERT INTO smallmoney_dt(a) values(100.5);
+INSERT INTO smallmoney_dt(a) values('$10');
+INSERT INTO smallmoney_dt(a) values('-10.05');
+INSERT INTO smallmoney_dt(a) values('10.05');
+INSERT INTO smallmoney_dt(a) values(-214748.3648);
+INSERT INTO smallmoney_dt(a) values(14748.3647);
+INSERT INTO smallmoney_dt(a) values('$214748.3647');
+INSERT INTO smallmoney_dt(a) values('-214,748.3648');
+INSERT INTO smallmoney_dt(a) values('214,748.3647');
+INSERT INTO smallmoney_dt(a) values('$214,748.3647');
+INSERT INTO smallmoney_dt(a) values(NULL);
