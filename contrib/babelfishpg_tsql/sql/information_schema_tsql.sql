@@ -520,14 +520,22 @@ CREATE OR REPLACE VIEW information_schema_tsql.routines AS
             CAST(NULL AS sys.datetime) AS "LAST_ALTERED"
 
        FROM sys.pg_namespace_ext nc LEFT JOIN sys.babelfish_namespace_ext ext ON nc.nspname = ext.nspname,
-            pg_proc p LEFT JOIN sys.all_objects ao ON ao.object_id = CAST(p.oid AS INT),
+            pg_proc p,
             pg_language l,
             pg_type t LEFT JOIN pg_collation co ON t.typcollation = co.oid,
             sys.translate_pg_type_to_tsql(t.typbasetype) AS tsql_type_name,
             sys.is_table_type(t.typrelid) as is_tbl_type
 
-       WHERE 
-            ao.type in ('P', 'FN')
+       WHERE
+            (case p.prokind 
+	       when 'p' then true 
+	       when 'a' then false
+               else 
+    	           (case format_type(p.prorettype, null) 
+	   	      when 'trigger' then false 
+	   	      else true 
+   		    end) 
+            end)  
             AND (NOT pg_is_other_temp_schema(nc.oid))
             AND has_function_privilege(p.oid, 'EXECUTE')
             AND (pg_has_role(t.typowner, 'USAGE')
