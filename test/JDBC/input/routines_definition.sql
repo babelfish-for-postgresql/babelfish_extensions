@@ -113,6 +113,9 @@ go
 select tsql_get_functiondef(oid) from pg_proc where proname='test_num';
 go
 
+select NUMERIC_PRECISION, NUMERIC_PRECISION_RADIX, NUMERIC_SCALE, ROUTINE_BODY, ROUTINE_DEFINITION  from information_schema_tsql.routines where SPECIFIC_NAME NOT LIKE 'xp%' ORDER BY ROUTINE_DEFINITION;
+go
+
 drop procedure test_num;
 go
 
@@ -131,6 +134,9 @@ go
 select tsql_get_functiondef(oid) from pg_proc where proname='test_time';
 go
 
+select ROUTINE_BODY, ROUTINE_DEFINITION, DATETIME_PRECISION, IS_DETERMINISTIC, SQL_DATA_ACCESS  from information_schema_tsql.routines where SPECIFIC_NAME NOT LIKE 'xp%' ORDER BY ROUTINE_DEFINITION;
+go
+
 drop procedure test_time;
 go
 
@@ -143,6 +149,9 @@ END;
 go
 
 select tsql_get_functiondef(oid) from pg_proc where proname='test_dt';
+go
+
+select IS_NULL_CALL, SCHEMA_LEVEL_ROUTINE, MAX_DYNAMIC_RESULT_SETS, IS_USER_DEFINED_CAST, IS_IMPLICITLY_INVOCABLE, ROUTINE_BODY, ROUTINE_DEFINITION  from information_schema_tsql.routines where SPECIFIC_NAME NOT LIKE 'xp%' ORDER BY ROUTINE_DEFINITION;
 go
 
 drop procedure test_dt;
