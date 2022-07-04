@@ -83,6 +83,7 @@ XX000 ERRCODE_INTERNAL_ERROR	"CREATE FUNCTION failed because a column name is no
 42883 ERRCODE_UNDEFINED_FUNCTION	"%s %s has too many arguments specified."	SQL_ERROR_8144	16
 42883 ERRCODE_UNDEFINED_FUNCTION	"\"%s\" is not an parameter for %s %s."	SQL_ERROR_8145	16
 42883 ERRCODE_UNDEFINED_FUNCTION	"The %s %s is found but cannot be used. Possibly due to datatype mismatch and implicit casting is not allowed."	SQL_ERROR_206	16
+57014 ERRCODE_QUERY_CANCELED "canceling statement due to user request" SQL_ERROR_3621 16
 42P03 ERRCODE_DUPLICATE_CURSOR		"cursor \"%s\" already exists" SQL_ERROR_16915	16
 42704 ERRCODE_UNDEFINED_OBJECT          "cursor %d doesn't exist"       SQL_ERROR_16916 16
 22004 ERRCODE_NULL_VALUE_NOT_ALLOWED	"cursor variable \"%s\" is null"	SQL_ERROR_16950	16

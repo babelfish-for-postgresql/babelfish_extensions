@@ -53,6 +53,8 @@
 #include "src/include/tds_response.h"
 #include "src/include/faultinjection.h"
 
+#include "libpq/pqsignal.h"
+#include "storage/ipc.h"
 /*
  * When we reset the connection, we save the required information in the following
  * structure that should be restored after the reset.
@@ -76,6 +78,45 @@ ResetConnection	resetCon = NULL;
 static void ResetTDSConnection(void);
 static TDSRequest GetTDSRequest(bool *resetProtocol);
 static void ProcessTDSRequest(TDSRequest request);
+
+
+static void attention_listener_handler(SIGNAL_ARGS)
+{
+	int	save_errno;
+
+	if (TdsRequestCtrl->phase == TDS_REQUEST_PHASE_FETCH || TdsRequestCtrl->phase == TDS_REQUEST_PHASE_INIT || TdsRequestCtrl->phase == TDS_REQUEST_PHASE_FLUSH)
+		return ;
+
+	elog(LOG, "Attention signal received for process: %d", getpid());
+
+	MemoryContext	oldContext = MemoryContextSwitchTo(TdsRequestCtrl->requestContext);
+	if (TdsReadNextBuffer() == EOF)
+		/* TODO: should be FATAL? */
+		elog(LOG, "Reading OOB data into buffer failed");
+	MemoryContextSwitchTo(oldContext);
+
+	/* TODO: If OOB request is not a TDS_ATTENTION then it is protocol violation. */
+	if (!TdsCheckMessageType(TDS_ATTENTION))
+		return;
+
+	/* Below portion is copied from StatementCancelHandler */
+	save_errno = errno;
+
+	/*
+	 * Don't joggle the elbow of proc_exit
+	 */
+	if (!proc_exit_inprogress)
+	{
+		InterruptPending = true;
+		QueryCancelPending = true;
+	}
+
+	/* If we're still here, waken anything waiting on the process latch */
+	SetLatch(MyLatch);
+
+	errno = save_errno;
+	/* Copied portion end. */
+}
 
 /*
  * TDSDiscardAll - copy of DiscardAll
@@ -442,6 +483,29 @@ TdsProtocolInit(void)
 	TdsRequestCtrl->status = 0;
 
 	MemoryContextSwitchTo(oldContext);
+
+	/* Define the signal handler for SIGIO. */
+	pqsignal(SIGIO, attention_listener_handler);
+
+	/* Assign the parent process to the socket. */
+	if (fcntl(MyProcPort->sock, F_SETOWN, getpid()) < 0) 
+	{
+		/* Todo: Should be FATAL. */
+		elog(LOG, "setting parent process to socket is failed");
+	}
+
+	/* Allow asynchronous notification of pending requests. */
+	if (fcntl(MyProcPort->sock, F_SETFL, FASYNC) < 0) 
+	{
+		/* Todo: Should be FATAL. */
+		elog(LOG, "Settiing ASYNC option to socket failed");
+	}
+
+	/*
+	* Allow SIGIO signal now which might be generated if OOB data (attention packet) comes on socket.
+	*/
+	sigdelset(&UnBlockSig, SIGIO);
+	PG_SETMASK(&UnBlockSig);
 }
 
 void
