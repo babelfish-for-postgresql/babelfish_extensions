@@ -22,6 +22,9 @@ go
 select set_config('babelfishpg_tsql.explain_costs', 'off', false)
 go
 
+select set_config('babelfishpg_tsql.enable_hint_mapping', 'on', false)
+go
+
 set babelfish_showplan_all on
 go
 
@@ -29,8 +32,8 @@ go
 /*
  * Run a SELECT query without any hints to ensure that un-hinted queries still work.
  * This also ensures that when the SELECT query is not hinted it produces a different plan(bitmap heap scan and bitmap index scan)
- * than the index scan that we're hinting in the query below. This verifies that the next test is actually valid.
- * If the planner was going to choose a sequential scan anyway, the next test wouldn't actually prove that hints were working.
+ * than the index scan that we're hinting in the queries below. This verifies that the next set of tests are actually valid.
+ * If the planner was going to choose a index scan anyway, the next test wouldn't actually prove that hints were working.
  */
 select * from babel_3292_t1 where b1 = 1
 go
@@ -51,7 +54,16 @@ go
 select * from babel_3292_t1 with(index=index_babel_3292_t1_b1) where b1 = 1
 go
 
+select * from babel_3292_t1 t1 with(index=index_babel_3292_t1_b1) where b1 = 1
+go
+
+select * from babel_3292_t1 as t1 with(index=index_babel_3292_t1_b1) where b1 = 1
+go
+
 select * from babel_3292_t1 where b1=1 option(table hint(babel_3292_t1, index(index_babel_3292_t1_b1)))
+go
+
+select * from babel_3292_t1 t1 where b1=1 option(table hint(t1, index(index_babel_3292_t1_b1)))
 go
 
 -- Test with multiple index hints
@@ -75,6 +87,12 @@ select * from babel_3292_t1 with(index=index_babel_3292_t1_b1), babel_3292_t2 wi
 go
 
 select * from babel_3292_t1, babel_3292_t2 where b1 = 1 and b2 = 1 option(table hint(babel_3292_t1, index(index_babel_3292_t1_b1)), table hint(babel_3292_t2, index(index_babel_3292_t2_b2)))
+go
+
+select * from babel_3292_t1 t1 with(index=index_babel_3292_t1_b1), babel_3292_t2 t2 with(index=index_babel_3292_t2_b2) where b1 = 1 and b2 = 1
+go
+
+select * from babel_3292_t1 t1, babel_3292_t2 t2 where b1 = 1 and b2 = 1 option(table hint(t1, index(index_babel_3292_t1_b1)), table hint(t2, index(index_babel_3292_t2_b2)))
 go
 
 -- Test INSERT queries with and without hints
@@ -183,16 +201,19 @@ go
 create index index_babel_3292_t2_b2 on babel_3292_t2(b2)
 go
 
-select set_config('babelfishpg_tsql.explain_costs', 'off', false)
-go
-
 set babelfish_showplan_all on
 go
 
 select * from tempdb.babel_3292_schema.t1 (index(index_babel_3292_schema_t1_b1)) where b1 = 1
 go
 
+select * from tempdb.babel_3292_schema.t1 t1 (index(index_babel_3292_schema_t1_b1)) where b1 = 1
+go
+
 select * from tempdb.babel_3292_schema.t1 where b1=1 option(table hint(tempdb.babel_3292_schema.t1, index(index_babel_3292_schema_t1_b1)))
+go
+
+select * from tempdb.babel_3292_schema.t1 t1 where b1=1 option(table hint(t1, index(index_babel_3292_schema_t1_b1)))
 go
 
 select * from tempdb.babel_3292_schema.t1 with(index(index_babel_3292_schema_t1_b1), index(index_babel_3292_schema_t1_c1)) where b1 = 1 and c1 = 1
@@ -204,7 +225,13 @@ go
 select * from tempdb.babel_3292_schema.t1 with(index(index_babel_3292_schema_t1_b1)), tempdb.dbo.babel_3292_t2 with(index(index_babel_3292_t2_b2)) where b1 = 1 and b2 = 1
 go
 
+select * from tempdb.babel_3292_schema.t1 t1 with(index(index_babel_3292_schema_t1_b1)), tempdb.dbo.babel_3292_t2 t2 with(index(index_babel_3292_t2_b2)) where b1 = 1 and b2 = 1
+go
+
 select * from tempdb.babel_3292_schema.t1, tempdb.dbo.babel_3292_t2 where b1 = 1 and b2 = 1 option(table hint(tempdb.babel_3292_schema.t1, index(index_babel_3292_schema_t1_b1)), table hint(tempdb.dbo.babel_3292_t2, index(index_babel_3292_t2_b2)))
+go
+
+select * from tempdb.babel_3292_schema.t1 t1, tempdb.dbo.babel_3292_t2 t2 where b1 = 1 and b2 = 1 option(table hint(t1, index(index_babel_3292_schema_t1_b1)), table hint(t2, index(index_babel_3292_t2_b2)))
 go
 
 insert into tempdb.dbo.babel_3292_t2 select * from tempdb.babel_3292_schema.t1 with(index(index_babel_3292_schema_t1_b1)) where b1 = 1
@@ -228,13 +255,22 @@ go
 select * from tempdb.babel_3292_schema.t1 with(index=index_babel_3292_schema_t1_b1) where b1 = 1 UNION select * from tempdb.dbo.babel_3292_t2 with(index=index_babel_3292_t2_b2) where b2 = 1
 go
 
+select * from tempdb.babel_3292_schema.t1 t1 with(index=index_babel_3292_schema_t1_b1) where b1 = 1 UNION select * from tempdb.dbo.babel_3292_t2 t2 with(index=index_babel_3292_t2_b2) where b2 = 1
+go
+
 select * from tempdb.babel_3292_schema.t1 where b1 = 1 UNION select * from tempdb.dbo.babel_3292_t2 where b2 = 1 option(table hint(tempdb.babel_3292_schema.t1, index(index_babel_3292_schema_t1_b1)), table hint(tempdb.dbo.babel_3292_t2, index(index_babel_3292_t2_b2))) -- Both queries have a hint
+go
+
+select * from tempdb.babel_3292_schema.t1 t1 where b1 = 1 UNION select * from tempdb.dbo.babel_3292_t2 t2 where b2 = 1 option(table hint(t1, index(index_babel_3292_schema_t1_b1)), table hint(t2, index(index_babel_3292_t2_b2))) -- Both queries have a hint
 go
 
 set babelfish_showplan_all off
 go
 
 -- cleanup
+select set_config('babelfishpg_tsql.enable_hint_mapping', 'off', false);
+go
+
 drop table babel_3292_schema.t1 
 go
 

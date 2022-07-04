@@ -1,0 +1,50 @@
+CREATE TABLE t
+(
+c1 int IDENTITY(1,1) PRIMARY KEY,
+c2 varchar(20) UNIQUE not null
+);
+GO
+
+INSERT INTO t(c2) VALUES ('Joe'), ('Steve');
+GO
+~~ROW COUNT: 2~~
+
+
+SELECT * FROM t
+go
+~~START~~
+int#!#varchar
+1#!#Joe
+2#!#Steve
+~~END~~
+
+
+CREATE TRIGGER TR_t ON t INSTEAD OF INSERT
+AS
+DECLARE @c1 int, @c2 varchar(20);
+SELECT @c1 = c1, @c2 = c2 FROM inserted;
+INSERT INTO t (c2) VALUES(@c2 + '2') --BUG: This INSERT disappears
+GO
+
+INSERT INTO t(c2) VALUES ('Joe')
+GO
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+
+SELECT * FROM t
+GO
+~~START~~
+int#!#varchar
+1#!#Joe
+2#!#Steve
+4#!#Joe2
+~~END~~
+
+
+drop trigger TR_t
+GO
+
+drop table t
+GO

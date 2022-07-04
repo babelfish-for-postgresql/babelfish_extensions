@@ -92,6 +92,8 @@ static void pltsql_ExecutorRun(QueryDesc *queryDesc, ScanDirection direction, ui
 static void pltsql_ExecutorFinish(QueryDesc *queryDesc);
 static void pltsql_ExecutorEnd(QueryDesc *queryDesc);
 
+static bool plsql_TriggerRecursiveCheck(ResultRelInfo *resultRelInfo);
+
 /*****************************************
  * 			Replication Hooks
  *****************************************/
@@ -194,6 +196,7 @@ InstallExtendedHooks(void)
 
 	prev_inherit_view_constraints_from_table = inherit_view_constraints_from_table_hook;
 	inherit_view_constraints_from_table_hook = preserve_view_constraints_from_base_table;
+	TriggerRecuresiveCheck_hook = plsql_TriggerRecursiveCheck;
 }
 
 void
@@ -325,6 +328,51 @@ pltsql_ExecutorEnd(QueryDesc *queryDesc)
 		prev_ExecutorEnd(queryDesc);
 	else
 		standard_ExecutorEnd(queryDesc);
+}
+
+/**
+ * @brief 
+ *  the function will depend on PLtsql_execstate to find whether 
+ *  the trigger is called before on this query stack, so that's why we 
+ *  have to add a hook into Postgres code to callback into babel code,
+ *  since we need to get access to PLtsql_execstate to iterate the 
+ *  stack triggers
+ *  
+ *  return true if it's a recursive call of trigger
+ *  return false if it's not
+ * 
+ * @param resultRelInfo 
+ * @return true 
+ * @return false 
+ */
+static bool
+plsql_TriggerRecursiveCheck(ResultRelInfo *resultRelInfo)
+{
+	if (resultRelInfo->ri_TrigDesc == NULL)
+		return false;
+	if (pltsql_recursive_triggers)
+		return false;
+	int i;
+	PLExecStateCallStack * cur;
+	PLtsql_execstate *estate;
+	cur = exec_state_call_stack;
+	while (cur != NULL){
+		estate = cur->estate;
+		if (estate->trigdata != NULL && estate->trigdata->tg_trigger != NULL
+		&& resultRelInfo->ri_TrigDesc != NULL 
+		&& (resultRelInfo->ri_TrigDesc->trig_insert_instead_statement
+		|| resultRelInfo->ri_TrigDesc->trig_delete_instead_statement 
+		|| resultRelInfo->ri_TrigDesc->trig_update_instead_statement)){
+			for (i = 0; i<resultRelInfo->ri_TrigDesc->numtriggers; ++i){
+				Trigger    *trigger = &resultRelInfo->ri_TrigDesc->triggers[i];
+				if (trigger->tgoid == estate->trigdata->tg_trigger->tgoid){
+					return true;
+				}
+			}
+		}
+		cur = cur->next;
+	}
+	return false;
 }
 
 static Node *
