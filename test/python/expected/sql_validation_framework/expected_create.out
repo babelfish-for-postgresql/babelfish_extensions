@@ -214,10 +214,6 @@ Could not find tests for table sys.spt_datatype_info_table
 Could not find tests for table sys.versions
 Could not find tests for table "#temp_schedules_to_delete"
 Could not find tests for view babelfish_has_perms_by_name_permissions
-Could not find tests for view information_schema_tsql.columns
-Could not find tests for view information_schema_tsql.domains
-Could not find tests for view information_schema_tsql.table_constraints
-Could not find tests for view information_schema_tsql.tables
 Could not find tests for view sys.all_sql_modules_internal
 Could not find tests for view sys.pg_namespace_ext
 Could not find tests for view sys.shipped_objects_not_in_sys

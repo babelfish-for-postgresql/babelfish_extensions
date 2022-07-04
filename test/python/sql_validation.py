@@ -18,7 +18,7 @@ def list_files(inpPath, filefilter):
 
 
 # search for patterns in the upgrade scripts
-def find_pattern_drop(pattern, fname, logger):
+def find_pattern(pattern, fname, logger):
 
     # create output file path
     path = Path.cwd().joinpath("output", "sql_validation_framework")
@@ -187,8 +187,8 @@ def find_pattern_create(logger):
     return object_names
 
 
-# find if given pattern exists in the files passed by a list
-def find_obj(files, pattern):
+# find if given object_name exists in the files passed by a list
+def find_obj(files, obj_name):
     for i in files:
         with open(i, "r") as testfile:
             testline = testfile.readline()
@@ -202,7 +202,7 @@ def find_obj(files, pattern):
                     continue
 
                 # if pattern exists, return true
-                elif(re.search( pattern, testline, re.I)):
+                elif(re.search( obj_name, testline, re.I)):
                     return True
                 testline = testfile.readline()
     return False
@@ -215,7 +215,7 @@ def find_in_JDBC(fname, logger):
     files = list_files("../JDBC/input", "*.*")
 
     # get the set of create object_name
-    object_name = find_pattern_create(logger)
+    object_names = find_pattern_create(logger)
     
     # set output file path
     path = Path.cwd().joinpath("output", "sql_validation_framework")
@@ -223,34 +223,33 @@ def find_in_JDBC(fname, logger):
     f_path = path.joinpath(fname + ".out")
 
     with open(f_path, "w") as expected_file:
-        for object in object_name:
+        for object in object_names:
 
             # flag for object name found or not in the JDBC input files
             flag = False
 
-            pattern = object[1]
+            object_name = object[1]
 
             # replacing . as in regex it means any character
             if "." in object[1]:
-                pattern = object[1].replace(".", "[.]")
+                object_name = object[1].replace(".", "[.]")
 
             # adding word boundary if object is not a function
             if not object[0] == 'function':
-                pattern = pattern + r"\b"
+                object_name = object_name + r"\b"
 
-            flag = find_obj(files, r"\b" + pattern)
+            flag = find_obj(files, r"\b" + object_name)
 
-            # searching again without schema name for objects in sys schema
+            # searching again without schema name for objects in all schemas
+            if(flag == False and "." in object[1]):
+                object_name = r"\b" + object_name.split(".]")[-1]
 
-            if(flag == False and "sys." in object[1]):
-                pattern = r"\b" + pattern.replace("sys[.]", "")
-                
                 # creating pattern to identify @@func calls
                 if object[0] == 'function':
-                    pattern = "(" + "@@" + pattern.replace("\s{0,2}[(]", "").replace("\\b", "") + ")|(" +  pattern + ")"
+                    object_name = "(" + "@@" + object_name.replace("\s{0,2}[(]", "").replace("\\b", "") + ")|(" +  object_name + ")"
                 
 
-                flag = find_obj(files, pattern)
+                flag = find_obj(files, object_name)
             
             # if tests not found, add it to output file
             if flag == False:
@@ -274,7 +273,7 @@ def find_patterns(logfname, logger):
         filename = "expected_" + re.sub("[^a-zA-Z0-9 ]", "", pattern)
         
         # search for the pattern
-        find_pattern_drop(pattern, filename, logger)
+        find_pattern(pattern, filename, logger)
         
         expected_file = Path.cwd().joinpath("expected", "sql_validation_framework", filename + ".out")
         outfile = Path.cwd().joinpath("output", "sql_validation_framework", filename + ".out")
