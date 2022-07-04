@@ -15,6 +15,7 @@
 #include "utils/timestamp.h"
 
 #include "miscadmin.h"
+#include "datetime.h"
 
 PG_FUNCTION_INFO_V1(smalldatetime_in);
 PG_FUNCTION_INFO_V1(smalldatetime_recv);
@@ -63,6 +64,15 @@ smalldatetime_in_str(char *str)
 	char	   *field[MAXDATEFIELDS];
 	int			ftype[MAXDATEFIELDS];
 	char		workbuf[MAXDATELEN + MAXDATEFIELDS];
+
+	/* Set input to default '1900-01-01 00:00:00' if empty string encountered */
+	if (*str == '\0')
+	{
+		result = initializeToDefaultDatetime();
+		AdjustTimestampForSmallDatetime(&result);
+
+		PG_RETURN_TIMESTAMP(result);
+	}
 
 	dterr = ParseDateTime(str, workbuf, sizeof(workbuf),
 						  field, ftype, MAXDATEFIELDS, &nf);
