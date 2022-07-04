@@ -630,6 +630,10 @@ exec_stmt_exec(PLtsql_execstate *estate, PLtsql_stmt_exec *stmt)
 	SimpleEcontextStackEntry *topEntry;
 	SPIExecuteOptions options;
 
+	Oid current_user_id = GetUserId();
+	if (stmt->is_cross_db)
+		SetCurrentRoleId(GetSessionUserId(), false);
+
 	/* PG_TRY to ensure we clear the plan link, if needed, on failure */
 	PG_TRY();
 	{
@@ -971,6 +975,8 @@ exec_stmt_exec(PLtsql_execstate *estate, PLtsql_stmt_exec *stmt)
 	}
 	PG_CATCH();
 	{
+		if (stmt->is_cross_db)
+			SetCurrentRoleId(current_user_id, false);
 		/*
 		 * If we aren't saving the plan, unset the pointer.  Note that it
 		 * could have been unset already, in case of a recursive call.
@@ -984,6 +990,9 @@ exec_stmt_exec(PLtsql_execstate *estate, PLtsql_stmt_exec *stmt)
 		PG_RE_THROW();
 	}
 	PG_END_TRY();
+
+	if (stmt->is_cross_db)
+		SetCurrentRoleId(current_user_id, false);
 
 	if (expr->plan && !expr->plan->saved)
 	{

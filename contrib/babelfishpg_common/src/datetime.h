@@ -25,6 +25,8 @@
 /* upper bond: 9999-12-31 23:59:29.999 */
 #define END_DATETIME	INT64CONST(252455615999999000)
 
+extern Timestamp initializeToDefaultDatetime(void);
+
 /* Range-check a datetime */
 #define IS_VALID_DATETIME(t)  (MIN_DATETIME <= (t) && (t) < END_DATETIME)
 
