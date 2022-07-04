@@ -37,8 +37,8 @@ if [ "$1" == -n ]; then
     shift
 fi
 
-GH_USER=$1
-BRANCH=$2
+GH_USER=amazon-aurora
+BRANCH=jira-babel-2877
 
 # See if user has an engine repository with the same name and branch.
 # See https://unix.stackexchange.com/questions/474805/verify-if-a-url-exists
