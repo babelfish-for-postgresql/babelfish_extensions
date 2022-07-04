@@ -62,20 +62,11 @@ Datum init_server_collation_oid(PG_FUNCTION_ARGS)
 	PG_RETURN_INT32(0);
 }
 
-/*
- *                  Translation Table Initializers
- *  Load information from C arrays into hash tables
- *  Initializers are called right after shared library loading
- *  During "CREATE EXTENSION", data types are created after initialization call
- *  In this case, initializers do nothing
- *  After data types are created, initializers will be triggered again
- *  with a built-in procedure
- *
- */
+/* init_collid_trans_tab - this function is no longer needed and is only a placeholder for upgrade script */
 Datum
 init_collid_trans_tab(PG_FUNCTION_ARGS)
 {
-	PG_RETURN_INT32(tsql_init_collid_trans_tab_internal());
+	PG_RETURN_INT32(0);
 }
 
 PG_FUNCTION_INFO_V1(collation_list);
@@ -97,20 +88,11 @@ Datum is_collated_ci_as_internal(PG_FUNCTION_ARGS)
 	PG_RETURN_DATUM(tsql_is_collated_ci_as_internal(fcinfo));
 }
 
-/*
- *				  Translation Table Initializers
- *  Load information from C arrays into hash tables
- *  Initializers are called right after shared library loading
- *  During "CREATE EXTENSION", data types are created after initialization call
- *  In this case, initializers do nothing
- *  After data types are created, initializers will be triggered again
- *  with a built-in procedure
- *
- */
+/* init_like_ilike_table - this function is no longer needed and is only a placeholder for upgrade script */
 Datum
 init_like_ilike_table(PG_FUNCTION_ARGS)
 {
-	PG_RETURN_INT32(tsql_init_like_ilike_table_internal());
+	PG_RETURN_INT32(0);
 }
 
 static Expr *
@@ -555,174 +537,219 @@ Node* pltsql_planner_node_transformer(PlannerInfo *root,
 	return pltsql_predicate_transformer(expr);
 }
 
+static void
+init_collation_callbacks(void)
+{
+	collation_callbacks **callbacks_ptr;
+	callbacks_ptr = (collation_callbacks **) find_rendezvous_variable("collation_callbacks"); 
+	collation_callbacks_ptr = *callbacks_ptr;
+}
+
 Oid
 tsql_get_server_collation_oid_internal(bool missingOk)
 {
 	if (OidIsValid(server_collation_oid))
 		return server_collation_oid;
 
-	/* collation_callbacks_ptr must have initialised when babelfishpg_tsql initialised, check _PG_init. */
 	if (!collation_callbacks_ptr)
-		ereport(ERROR,
+	{
+		/* Initialise collation callbacks */
+		init_collation_callbacks();
+
+		/* collation_callbacks_ptr is still not initialised */
+		if (!collation_callbacks_ptr)
+			ereport(ERROR,
 				(errcode(ERRCODE_INTERNAL_ERROR),
 				 errmsg("collation callbacks pointer is not initialised properly.")));
-
+	}
 	server_collation_oid = (*collation_callbacks_ptr->get_server_collation_oid_internal)(missingOk);
 	return server_collation_oid;
-}
-
-int
-tsql_init_collid_trans_tab_internal(void)
-{
-	/* collation_callbacks_ptr must have initialised when babelfishpg_tsql initialised, check _PG_init. */
-	if (!collation_callbacks_ptr)
-		ereport(ERROR,
-				(errcode(ERRCODE_INTERNAL_ERROR),
-				 errmsg("collation callbacks pointer is not initialised properly.")));
-
-	return (*collation_callbacks_ptr->init_collid_trans_tab_internal)();
-}
-int
-tsql_init_like_ilike_table_internal(void)
-{
-	/* collation_callbacks_ptr must have initialised when babelfishpg_tsql initialised, check _PG_init. */
-	if (!collation_callbacks_ptr)
-		ereport(ERROR,
-				(errcode(ERRCODE_INTERNAL_ERROR),
-				 errmsg("collation callbacks pointer is not initialised properly.")));
-
-	return (*collation_callbacks_ptr->init_like_ilike_table_internal)();
 }
 
 Datum
 tsql_collation_list_internal(PG_FUNCTION_ARGS)
 {
-	/* collation_callbacks_ptr must have initialised when babelfishpg_tsql initialised, check _PG_init. */
 	if (!collation_callbacks_ptr)
-		ereport(ERROR,
+	{
+		/* Initialise collation callbacks */
+		init_collation_callbacks();
+
+		/* collation_callbacks_ptr is still not initialised */
+		if (!collation_callbacks_ptr)
+			ereport(ERROR,
 				(errcode(ERRCODE_INTERNAL_ERROR),
 				 errmsg("collation callbacks pointer is not initialised properly.")));
-
+	}
 	return (*collation_callbacks_ptr->collation_list_internal)(fcinfo);
 }
 
 Datum
 tsql_is_collated_ci_as_internal(PG_FUNCTION_ARGS)
 {
-	/* collation_callbacks_ptr must have initialised when babelfishpg_tsql initialised, check _PG_init. */
 	if (!collation_callbacks_ptr)
-		ereport(ERROR,
+	{
+		/* Initialise collation callbacks */
+		init_collation_callbacks();
+
+		/* collation_callbacks_ptr is still not initialised */
+		if (!collation_callbacks_ptr)
+			ereport(ERROR,
 				(errcode(ERRCODE_INTERNAL_ERROR),
 				 errmsg("collation callbacks pointer is not initialised properly.")));
-
+	}
 	return (*collation_callbacks_ptr->is_collated_ci_as_internal)(fcinfo);
 }
 
 int
 tsql_collationproperty_helper(const char *collationaname, const char *property)
 {
-	/* collation_callbacks_ptr must have initialised when babelfishpg_tsql initialised, check _PG_init. */
 	if (!collation_callbacks_ptr)
-		ereport(ERROR,
+	{
+		/* Initialise collation callbacks */
+		init_collation_callbacks();
+
+		/* collation_callbacks_ptr is still not initialised */
+		if (!collation_callbacks_ptr)
+			ereport(ERROR,
 				(errcode(ERRCODE_INTERNAL_ERROR),
 				 errmsg("collation callbacks pointer is not initialised properly.")));
-
+	}
 	return (*collation_callbacks_ptr->collationproperty_helper)(collationaname, property);
 }
 
 bool
 tsql_is_server_collation_CI_AS(void)
 {
-	/* collation_callbacks_ptr must have initialised when babelfishpg_tsql initialised, check _PG_init. */
 	if (!collation_callbacks_ptr)
-		ereport(ERROR,
+	{
+		/* Initialise collation callbacks */
+		init_collation_callbacks();
+
+		/* collation_callbacks_ptr is still not initialised */
+		if (!collation_callbacks_ptr)
+			ereport(ERROR,
 				(errcode(ERRCODE_INTERNAL_ERROR),
 				 errmsg("collation callbacks pointer is not initialised properly.")));
-
+	}
 	return (*collation_callbacks_ptr->is_server_collation_CI_AS)();
 }
 
 bool
 tsql_is_valid_server_collation_name(const char *collationname)
 {
-	/* collation_callbacks_ptr must have initialised when babelfishpg_tsql initialised, check _PG_init. */
 	if (!collation_callbacks_ptr)
-		ereport(ERROR,
+	{
+		/* Initialise collation callbacks */
+		init_collation_callbacks();
+
+		/* collation_callbacks_ptr is still not initialised */
+		if (!collation_callbacks_ptr)
+			ereport(ERROR,
 				(errcode(ERRCODE_INTERNAL_ERROR),
 				 errmsg("collation callbacks pointer is not initialised properly.")));
-
+	}
 	return (*collation_callbacks_ptr->is_valid_server_collation_name)(collationname);
 }
 
 int
 tsql_find_locale(const char *locale)
 {
-	/* collation_callbacks_ptr must have initialised when babelfishpg_tsql initialised, check _PG_init. */
 	if (!collation_callbacks_ptr)
-		ereport(ERROR,
+	{
+		/* Initialise collation callbacks */
+		init_collation_callbacks();
+
+		/* collation_callbacks_ptr is still not initialised */
+		if (!collation_callbacks_ptr)
+			ereport(ERROR,
 				(errcode(ERRCODE_INTERNAL_ERROR),
 				 errmsg("collation callbacks pointer is not initialised properly.")));
-
+	}
 	return (*collation_callbacks_ptr->find_locale)(locale);
 }
 
 Oid
 tsql_get_oid_from_collidx(int collidx)
 {
-	/* collation_callbacks_ptr must have initialised when babelfishpg_tsql initialised, check _PG_init. */
 	if (!collation_callbacks_ptr)
-		ereport(ERROR,
+	{
+		/* Initialise collation callbacks */
+		init_collation_callbacks();
+
+		/* collation_callbacks_ptr is still not initialised */
+		if (!collation_callbacks_ptr)
+			ereport(ERROR,
 				(errcode(ERRCODE_INTERNAL_ERROR),
 				 errmsg("collation callbacks pointer is not initialised properly.")));
-
+	}
 	return (*collation_callbacks_ptr->get_oid_from_collidx_internal)(collidx);
 }
 
 coll_info_t
 tsql_lookup_collation_table_internal(Oid oid)
 {
-	/* collation_callbacks_ptr must have initialised when babelfishpg_tsql initialised, check _PG_init. */
 	if (!collation_callbacks_ptr)
-		ereport(ERROR,
+	{
+		/* Initialise collation callbacks */
+		init_collation_callbacks();
+
+		/* collation_callbacks_ptr is still not initialised */
+		if (!collation_callbacks_ptr)
+			ereport(ERROR,
 				(errcode(ERRCODE_INTERNAL_ERROR),
 				 errmsg("collation callbacks pointer is not initialised properly.")));
-
+	}
 	return (*collation_callbacks_ptr->lookup_collation_table_callback)(oid);
 }
 
 like_ilike_info_t 
 tsql_lookup_like_ilike_table_internal(Oid opno)
 {
-	/* collation_callbacks_ptr must have initialised when babelfishpg_tsql initialised, check _PG_init. */
 	if (!collation_callbacks_ptr)
-		ereport(ERROR,
+	{
+		/* Initialise collation callbacks */
+		init_collation_callbacks();
+
+		/* collation_callbacks_ptr is still not initialised */
+		if (!collation_callbacks_ptr)
+			ereport(ERROR,
 				(errcode(ERRCODE_INTERNAL_ERROR),
 				 errmsg("collation callbacks pointer is not initialised properly.")));
-
+	}
 	return (*collation_callbacks_ptr->lookup_like_ilike_table)(opno);
 }
 
 int
 tsql_find_cs_as_collation_internal(int collidx)
 {
-	/* collation_callbacks_ptr must have initialised when babelfishpg_tsql initialised, check _PG_init. */
 	if (!collation_callbacks_ptr)
-		ereport(ERROR,
+	{
+		/* Initialise collation callbacks */
+		init_collation_callbacks();
+
+		/* collation_callbacks_ptr is still not initialised */
+		if (!collation_callbacks_ptr)
+			ereport(ERROR,
 				(errcode(ERRCODE_INTERNAL_ERROR),
 				 errmsg("collation callbacks pointer is not initialised properly.")));
-
+	}
 	return (*collation_callbacks_ptr->find_cs_as_collation_internal)(collidx);
 }
 
 int
 tsql_find_collation_internal(const char *collation_name)
 {
-	/* collation_callbacks_ptr must have initialised when babelfishpg_tsql initialised, check _PG_init. */
 	if (!collation_callbacks_ptr)
-		ereport(ERROR,
+	{
+		/* Initialise collation callbacks */
+		init_collation_callbacks();
+
+		/* collation_callbacks_ptr is still not initialised */
+		if (!collation_callbacks_ptr)
+			ereport(ERROR,
 				(errcode(ERRCODE_INTERNAL_ERROR),
 				 errmsg("collation callbacks pointer is not initialised properly.")));
-
+	}
 	return (*collation_callbacks_ptr->find_collation_internal)(collation_name);
 }
 

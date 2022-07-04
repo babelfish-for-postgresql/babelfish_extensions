@@ -2228,7 +2228,12 @@ get_tds_login_domainname(void)
 static void 
 TdsDefineDefaultCollationInfo(void)
 {
-	coll_info_t cinfo = TdsLookupCollationTableCallback(InvalidOid);
+	coll_info_t cinfo;
+
+	StartTransactionCommand();
+	cinfo = TdsLookupCollationTableCallback(InvalidOid);
+	CommitTransactionCommand();
+
 	if (unlikely(cinfo.oid == InvalidOid))
 		elog(FATAL, "Oid of default collation is not valid, This might mean that value of server_collation_name GUC is invalid");
 

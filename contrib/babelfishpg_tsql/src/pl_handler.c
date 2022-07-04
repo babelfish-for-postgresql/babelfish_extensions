@@ -3185,14 +3185,6 @@ pltsql_truncate_identifier_func(PG_FUNCTION_ARGS)
 	PG_RETURN_TEXT_P(cstring_to_text(name));
 }
 
-static void
-init_collation_callbacks(void)
-{
-	collation_callbacks **callbacks_ptr;
-	callbacks_ptr = (collation_callbacks **) find_rendezvous_variable("collation_callbacks"); 
-	collation_callbacks_ptr = *callbacks_ptr;
-}
-
 /*
  * _PG_init()			- library load-time initialization
  *
@@ -3208,18 +3200,8 @@ _PG_init(void)
 	if (inited)
 		return;
 
-	/* Initialise collation callbacks */
-	init_collation_callbacks();
-
-	/* unlikely */
-	if(!collation_callbacks_ptr)
-		ereport(ERROR,
-				(errcode(ERRCODE_INTERNAL_ERROR),
-				 errmsg("Failed to initialise collation callbacks")));
-	
-	/* One time setup: Install hooks from babelfishpg_common extension. */
-	if (collation_callbacks_ptr && collation_callbacks_ptr->init_hooks_from_common_ext)
-		(*collation_callbacks_ptr->init_hooks_from_common_ext)();
+	/* Fixme: Handle loading of pgtsql_common_library_name library cleanly. */
+	load_libraries("babelfishpg_common", NULL, false);
 
 	pg_bindtextdomain(TEXTDOMAIN);
 
@@ -3314,8 +3296,6 @@ _PG_init(void)
 
 	pltsql_HashTableInit();
 
-    init_collid_trans_tab(fcinfo);
-	init_like_ilike_table(fcinfo);
 	init_tsql_coerce_hash_tab(fcinfo);
 	init_tsql_datatype_precedence_hash_tab(fcinfo);
 	init_tsql_cursor_hash_tab(fcinfo);

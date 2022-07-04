@@ -20,7 +20,7 @@
 
 #define NOT_FOUND -1
 
-collation_callbacks collation_callbacks_var = {NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL};
+collation_callbacks collation_callbacks_var = {NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL};
 
 /* Cached values derived from server_collation_name */
 static int server_collation_collidx = NOT_FOUND;
@@ -963,6 +963,9 @@ get_server_collation_oid_internal(bool missingOk)
 
 	init_server_collation_name();
 
+	if (server_collation_name == NULL)
+		return DEFAULT_COLLATION_OID;
+
 	/* The server_collation_name is permitted to be the name of a sql
 	 * or windows collation that is translated into a bbf collation.
 	 * If that's what it is then get the translated name.
@@ -1192,7 +1195,7 @@ void BabelfishPreCreateCollation_hook(
 
 	init_default_locale();
 
-	if (strlen(default_locale) > 0)
+	if (default_locale && strlen(default_locale) > 0)
 	{
 		/* If the first character of the locale is '@' and if
 		 * a babelfishpg_tsql_default_locale override has been specified, then
@@ -1235,9 +1238,8 @@ get_oid_from_collidx(int collidx)
 collation_callbacks *
 get_collation_callbacks(void)
 {
-	if (!collation_callbacks_var.init_hooks_from_common_ext)
+	if (!collation_callbacks_var.get_server_collation_oid_internal)
 	{
-		collation_callbacks_var.init_hooks_from_common_ext = &install_hooks;
 		collation_callbacks_var.get_server_collation_oid_internal = &get_server_collation_oid_internal;
 		collation_callbacks_var.collation_list_internal = &collation_list_internal;
 		collation_callbacks_var.is_collated_ci_as_internal = &is_collated_ci_as_internal;
@@ -1247,8 +1249,6 @@ get_collation_callbacks(void)
 		collation_callbacks_var.is_server_collation_CI_AS = &is_server_collation_CI_AS;
 		collation_callbacks_var.is_valid_server_collation_name = &is_valid_server_collation_name;
 		collation_callbacks_var.find_locale = &find_locale;
-		collation_callbacks_var.init_like_ilike_table_internal = &init_like_ilike_table_internal;
-		collation_callbacks_var.init_collid_trans_tab_internal = &init_collid_trans_tab_internal;
 		collation_callbacks_var.EncodingConversion = &server_to_any;
 		collation_callbacks_var.get_oid_from_collidx_internal = &get_oid_from_collidx;
 		collation_callbacks_var.find_cs_as_collation_internal = &find_cs_as_collation;

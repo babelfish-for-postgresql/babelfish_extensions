@@ -41,15 +41,9 @@ typedef struct like_ilike_info
 typedef struct collation_callbacks
 {
 	/* Function pointers set up by the plugin */
-	void (*init_hooks_from_common_ext)(void);
-
 	char* (*EncodingConversion)(const char *s, int len, int encoding, int *encodedByteLen);
 
 	Oid (*get_server_collation_oid_internal)(bool missingOk);
-
-	int (*init_collid_trans_tab_internal)(void);
-
-	int (*init_like_ilike_table_internal)(void);
 
 	coll_info_t (*lookup_collation_table_callback) (Oid oid);
 
@@ -79,8 +73,6 @@ extern collation_callbacks *collation_callbacks_ptr;
 
 /* Wrappers to call any callback functions from collation_callbacks_ptr. */
 extern Oid tsql_get_server_collation_oid_internal(bool missingOk);
-extern int tsql_init_collid_trans_tab_internal(void);
-extern int tsql_init_like_ilike_table_internal(void);
 extern Datum tsql_collation_list_internal(PG_FUNCTION_ARGS);
 extern Datum tsql_is_collated_ci_as_internal(PG_FUNCTION_ARGS);
 extern int tsql_collationproperty_helper(const char *collationaname, const char *property);
