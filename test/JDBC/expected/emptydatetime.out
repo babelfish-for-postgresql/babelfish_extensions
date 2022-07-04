@@ -1,0 +1,97 @@
+
+-- [BABEL-3306] Support for empty input string handling in datetime, smalldatetime, datetime2, datetimeoffset datatypes
+create table #srtestnull_t1 (a varchar(2), dt smalldatetime null);
+go
+insert into #srtestnull_t1 values ('A', '');
+go
+~~ROW COUNT: 1~~
+
+select * from #srtestnull_t1;
+go
+~~START~~
+varchar#!#smalldatetime
+A#!#1900-01-01 00:00:00.0
+~~END~~
+
+drop table #srtestnull_t1;
+go
+
+create table #srtestnull_t2 (a varchar(2), dt datetime null);
+go
+insert into #srtestnull_t2 values ('A', '');
+go
+~~ROW COUNT: 1~~
+
+select * from #srtestnull_t2;
+go
+~~START~~
+varchar#!#datetime
+A#!#1900-01-01 00:00:00.0
+~~END~~
+
+drop table #srtestnull_t2;
+go
+
+create table #srtestnull_t3 (a varchar(2), dt datetime2(4) null);
+go
+insert into #srtestnull_t3 values ('A', '');
+go
+~~ROW COUNT: 1~~
+
+select * from #srtestnull_t3;
+go
+~~START~~
+varchar#!#datetime2
+A#!#1900-01-01 00:00:00.0000
+~~END~~
+
+drop table #srtestnull_t3;
+go
+
+create table #srtestnull_t4 (a varchar(2), dt datetimeoffset(6) null);
+go
+insert into #srtestnull_t4 values ('A', '');
+go
+~~ROW COUNT: 1~~
+
+select * from #srtestnull_t4;
+go
+~~START~~
+varchar#!#datetimeoffset
+A#!#1900-01-01 00:00:00.000000 +00:00
+~~END~~
+
+drop table #srtestnull_t4;
+go
+
+select cast('' as datetime);
+go
+~~START~~
+datetime
+1900-01-01 00:00:00.0
+~~END~~
+
+
+select cast('' as smalldatetime);
+go
+~~START~~
+smalldatetime
+1900-01-01 00:00:00.0
+~~END~~
+
+
+select cast('' as datetime2(4));
+go
+~~START~~
+datetime2
+1900-01-01 00:00:00.0000
+~~END~~
+
+
+select cast('' as datetimeoffset(6));
+go
+~~START~~
+datetimeoffset
+1900-01-01 00:00:00.000000 +00:00
+~~END~~
+

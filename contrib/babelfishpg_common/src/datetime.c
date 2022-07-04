@@ -64,6 +64,15 @@ datetime_in_str(char *str)
 	int			ftype[MAXDATEFIELDS];
 	char		workbuf[MAXDATELEN + MAXDATEFIELDS];
 
+	/*
+	 * Set input to default '1900-01-01 00:00:00.000' if empty string encountered
+	 */
+	if (*str == '\0')
+	{
+		result = initializeToDefaultDatetime();
+		PG_RETURN_TIMESTAMP(result);
+	}
+
 	dterr = ParseDateTime(str, workbuf, sizeof(workbuf),
 						  field, ftype, MAXDATEFIELDS, &nf);
 	if (dterr == 0)
@@ -598,3 +607,22 @@ datetime_mi_float8(PG_FUNCTION_ARGS)
 	CheckDatetimeRange(result);
 	PG_RETURN_TIMESTAMP(result);
 }
+
+/*
+ * Set input to default '1900-01-01 00:00:00' if empty string encountered
+ */
+Timestamp
+initializeToDefaultDatetime(void)
+{
+	Timestamp result;
+	struct pg_tm tt, *tm = &tt;
+
+	tm->tm_year = 1900;
+	tm->tm_mon = 1;
+	tm->tm_mday = 1;
+	tm->tm_hour = tm->tm_min = tm->tm_sec = 0;
+
+	tm2timestamp(tm, 0, NULL, &result);
+
+	return result;
+} 
