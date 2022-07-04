@@ -2472,7 +2472,7 @@ SELECT
   , CAST(obj.principal_id as int) AS principal_id
   , CAST(obj.schema_id as int) AS schema_id
   , CAST(obj.parent_object_id as int) AS parent_object_id
-  , CAST(obj.type as char(2)) AS type
+  , CAST(obj.type as sys.bpchar(2)) AS type
   , CAST(obj.type_desc as sys.nvarchar(60)) AS type_desc
   , CAST(obj.create_date as sys.datetime) as create_date
   , CAST(obj.modify_date as sys.datetime) as modify_date
