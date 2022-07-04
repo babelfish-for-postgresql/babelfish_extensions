@@ -1,0 +1,45 @@
+CREATE TABLE BIT_dt (a BIT)
+prepst#!# INSERT INTO BIT_dt(a) values(?) #!#BIT|-|a|-|false
+~~ROW COUNT: 1~~
+
+prepst#!#exec#!#BIT|-|a|-|true
+~~ROW COUNT: 1~~
+
+#next two lines are not allowed
+#prepst#!#exec#!#BIT|-|a|-|0
+#prepst#!#exec#!#BIT|-|a|-|1
+prepst#!#exec#!#BIT|-|a|-|<NULL>
+~~ROW COUNT: 1~~
+
+SELECT * FROM BIT_dt;
+~~START~~
+bit
+0
+1
+<NULL>
+~~END~~
+
+INSERT INTO BIT_dt(a) values(1)
+~~ROW COUNT: 1~~
+
+INSERT INTO BIT_dt(a) values(0)
+~~ROW COUNT: 1~~
+
+#next two lines are not allowed
+#INSERT INTO BIT_dt(a) values(false)
+#INSERT INTO BIT_dt(a) values(true)
+INSERT INTO BIT_dt(a) values(NULL)
+~~ROW COUNT: 1~~
+
+SELECT * FROM BIT_dt;
+~~START~~
+bit
+0
+1
+<NULL>
+1
+0
+<NULL>
+~~END~~
+
+DROP TABLE BIT_dt;

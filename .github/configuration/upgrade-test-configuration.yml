@@ -6,7 +6,7 @@ upgrade-version: [[
   { 
     version: 14.3,
     upgrade-type: major 
-  },
+  }
 ],
 [
   {
@@ -16,5 +16,19 @@ upgrade-version: [[
   { 
     version: 13.6,
     upgrade-type: minor 
+  }
+],
+[
+  {
+    version: 13.5,
+    upgrade-type: null
   },
+  { 
+    version: 13.6,
+    upgrade-type: minor 
+  },
+  { 
+    version: 14.3,
+    upgrade-type: major 
+  }
 ]]

@@ -70,7 +70,7 @@ runs:
       run: |
         cd test/JDBC/
         export isUpgradeTestMode=false
-        export inputFilesPath=upgrade/${{ matrix.upgrade-path.path[0] }}/verification_cleanup/${{ matrix.upgrade-path.last_version }}
+        export inputFilesPath=upgrade/${{ matrix.upgrade-path.last_version }}/verification_cleanup/${{ matrix.upgrade-path.path[0] }}
         mvn test
         export inputFilesPath=input
         for filename in $(grep -v "^ignore.*\|^#.*\|^cmd.*\|^all.*\|^$" upgrade/${{ matrix.upgrade-path.path[0] }}/schedule); do
