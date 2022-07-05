@@ -642,6 +642,11 @@ sp_describe_undeclared_parameters_internal(PG_FUNCTION_ARGS)
 		/* Parse the list of parameters, and determine which and how many are undeclared. */
 		select_stmt = (SelectStmt *)insert_stmt->selectStmt;
 		values_list = select_stmt->valuesLists;
+		if (list_length(values_list) > 1) {
+			ereport(ERROR,
+				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+					errmsg("Unsupported use case in sp_describe_undeclared_parameters")));
+		}
 		foreach(lc, values_list)
 		{
 			List *sublist = lfirst(lc);
