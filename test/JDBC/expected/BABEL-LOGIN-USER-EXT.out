@@ -969,12 +969,12 @@ varchar#!#nvarchar#!#varchar#!#nvarchar#!#nvarchar
 java_auth#!#database|-|db1#!#user|-|lgn_2978#!#password|-|123
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: The server principal "lgn_2978" is not able to access the database "db1" under the current security context )~~
+~~ERROR (Message: Cannot open database "db1" requested by the login. The login failed )~~
 
 java_auth#!#database|-|db2#!#user|-|lgn_2978#!#password|-|123
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: The server principal "lgn_2978" is not able to access the database "db2" under the current security context )~~
+~~ERROR (Message: Cannot open database "db2" requested by the login. The login failed )~~
 
 
 -- tsql      user=lgn_2978      password=123

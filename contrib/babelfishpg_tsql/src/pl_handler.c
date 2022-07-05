@@ -3357,6 +3357,7 @@ _PG_init(void)
 		(*pltsql_protocol_plugin_ptr)->pltsql_get_generic_typmod = &probin_read_ret_typmod;
 		(*pltsql_protocol_plugin_ptr)->pltsql_get_logical_schema_name = &get_logical_schema_name;
 		(*pltsql_protocol_plugin_ptr)->pltsql_is_fmtonly_stmt = &pltsql_fmtonly;
+		(*pltsql_protocol_plugin_ptr)->pltsql_get_user_for_database = &get_user_for_database;
 	}
 
 	*pltsql_config_ptr = &myConfig;
