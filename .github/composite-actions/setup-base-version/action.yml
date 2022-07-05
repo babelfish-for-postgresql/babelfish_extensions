@@ -75,6 +75,20 @@ runs:
       id: jdbc-upgrade-tests
       run: |
         cd test/JDBC/
-        export inputFilesPath=upgrade/preparation
+        export isUpgradeTestMode=true
+        export inputFilesPath=upgrade/${{ matrix.upgrade-path.path[0] }}/preparation
+        mvn test
+        for filename in $(grep -v "^ignore.*\|^#.*\|^cmd.*\|^all.*\|^$" upgrade/${{ matrix.upgrade-path.path[0] }}/schedule); do
+          if [[ ! ($(find input/ -name $filename"-vu-prepare.*") || $(find input/ -name $filename"-vu-verify.*")) ]]; then 
+            printf '%s\n' "ERROR: Cannot find Test file "$filename"-vu-prepare or "$filename"-vu-verify in input directory !!" >&2
+            exit 1
+          fi
+        done
+        export isUpgradeTestMode=false
+        export inputFilesPath=input
+        for filename in $(grep -v "^ignore.*\|^#.*\|^cmd.*\|^all.*\|^$" upgrade/${{ matrix.upgrade-path.path[0] }}/schedule); do
+          sed -i "s/$filename[ ]*$/$filename-vu-prepare/g" upgrade/${{ matrix.upgrade-path.path[0] }}/schedule
+        done
+        export scheduleFile=upgrade/${{ matrix.upgrade-path.path[0] }}/schedule
         mvn test
       shell: bash

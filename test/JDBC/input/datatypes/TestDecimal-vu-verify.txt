@@ -1,0 +1,40 @@
+SELECT * FROM testdecimal_table1;
+
+SELECT * FROM testdecimal_table2;
+
+# JIRA 507, WORKING FOR BABEL
+SELECT * FROM testdecimal_table3;
+
+SELECT * FROM testdecimal_table4;
+
+SELECT * FROM testdecimal_table5;
+
+SELECT * FROM testdecimal_table6;
+
+SELECT * FROM testdecimal_table7;
+
+SELECT * FROM testdecimal_table8;
+
+SELECT * FROM testdecimal_table9;
+
+# BABEL-3074
+SELECT count(*), sum(amount) FROM testdecimal_overflow_test1;
+
+# BABEL-3157
+#testing default precision for both sum() and avg()
+#o/p scale = 2 [i/p scale for sum()], o/p scale = 6 [max(6, i/p scale) for avg()]
+With Top10 as (select top (10) * from testdecimal_overflow_test2) select sum(amount), avg(amount) from Top10;
+With Top11 as (select top (11) * from testdecimal_overflow_test2) select sum(amount), avg(amount) from Top11;
+
+#testing resultant scale when i/p scale > 6
+#o/p scale = 8 [i/p scale for sum()], o/p scale = 8 [max(6, i/p scale) for avg()]
+SELECT sum(amount) from testdecimal_overflow_test3;
+SELECT avg(amount) from testdecimal_overflow_test3;
+
+#o/p precision = 38, so sum() won't cause an overflow even when #output digits > input precision
+SELECT sum(amount) from testdecimal_overflow_test4;
+SELECT avg(amount) from testdecimal_overflow_test4;
+
+select sum(amount1), sum(amount2), sum(amount3), avg(amount1), avg(amount2), avg(amount3) from testdecimal_overflow_test5;
+With Top10 as (select top (10) * from testdecimal_overflow_test5) select sum(amount1), sum(amount2), sum(amount3), avg(amount1), avg(amount2), avg(amount3) from Top10;
+With Top11 as (select top (11) * from testdecimal_overflow_test5) select sum(amount1), sum(amount2), sum(amount3), avg(amount1), avg(amount2), avg(amount3) from Top11;

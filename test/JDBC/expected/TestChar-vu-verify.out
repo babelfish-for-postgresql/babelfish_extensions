@@ -1,0 +1,15 @@
+SELECT * FROM testCHAR_dt;
+~~START~~
+char#!#nchar
+Dipesh                  #!#Dhameliya               
+ Dipesh                 #!# Dhameliya              
+   D                    #!#   🤣😃                 
+                        #!#                        
+                        #!#😊😋😎😍😅😆            
+<NULL>#!#<NULL>
+Dipesh                  #!#Dhameliya               
+ Dipesh                 #!# Dhameliya              
+                        #!#                        
+<NULL>#!#<NULL>
+~~END~~
+

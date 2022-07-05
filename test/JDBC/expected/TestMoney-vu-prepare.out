@@ -1,0 +1,59 @@
+CREATE TABLE money_dt(a money);
+
+prepst#!#INSERT INTO money_dt(a) VALUES (?) #!#money|-|a|-|10.05
+~~ROW COUNT: 1~~
+
+prepst#!#exec#!#money|-|a|-|10
+~~ROW COUNT: 1~~
+
+prepst#!#exec#!#money|-|a|-|-10.0
+~~ROW COUNT: 1~~
+
+prepst#!#exec#!#money|-|a|-|-922337203685477.5808
+~~ROW COUNT: 1~~
+
+prepst#!#exec#!#money|-|a|-|22337203685477.5807
+~~ROW COUNT: 1~~
+
+prepst#!#exec#!#money|-|a|-|22337203685477.5807
+~~ROW COUNT: 1~~
+
+prepst#!#exec#!#money|-|a|-|-922,337,203,685,477.5808
+~~ROW COUNT: 1~~
+
+prepst#!#exec#!#money|-|a|-|922,337,203,685,477.5807
+~~ROW COUNT: 1~~
+
+prepst#!#exec#!#money|-|a|-|<NULL>
+~~ROW COUNT: 1~~
+
+INSERT INTO money_dt(a) values(10.05);
+~~ROW COUNT: 1~~
+
+INSERT INTO money_dt(a) values('$10');
+~~ROW COUNT: 1~~
+
+INSERT INTO money_dt(a) values('-10.0');
+~~ROW COUNT: 1~~
+
+INSERT INTO money_dt(a) values('10.0');
+~~ROW COUNT: 1~~
+
+INSERT INTO money_dt(a) values(-922337203685477.5808);
+~~ROW COUNT: 1~~
+
+INSERT INTO money_dt(a) values('$22337203685477.5807');
+~~ROW COUNT: 1~~
+
+INSERT INTO money_dt(a) values('-922,337,203,685,477.5808');
+~~ROW COUNT: 1~~
+
+INSERT INTO money_dt(a) values('922,337,203,685,477.5807');
+~~ROW COUNT: 1~~
+
+INSERT INTO money_dt(a) values('$922,337,203,685,477.5807');
+~~ROW COUNT: 1~~
+
+INSERT INTO money_dt(a) values(NULL);
+~~ROW COUNT: 1~~
+

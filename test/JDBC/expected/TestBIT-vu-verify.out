@@ -1,0 +1,11 @@
+SELECT * FROM testBIT_dt;
+~~START~~
+bit
+0
+1
+<NULL>
+1
+0
+<NULL>
+~~END~~
+

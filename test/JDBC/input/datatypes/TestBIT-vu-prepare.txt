@@ -1,0 +1,13 @@
+CREATE TABLE testBIT_dt (a BIT)
+prepst#!# INSERT INTO testBIT_dt(a) values(@a) #!#BIT|-|a|-|false
+prepst#!#exec#!#BIT|-|a|-|true
+#next two lines are not allowed
+#prepst#!#exec#!#BIT|-|a|-|0
+#prepst#!#exec#!#BIT|-|a|-|1
+prepst#!#exec#!#BIT|-|a|-|<NULL>
+INSERT INTO testBIT_dt(a) values(1)
+INSERT INTO testBIT_dt(a) values(0)
+#next two lines are not allowed
+#INSERT INTO testBIT_dt(a) values(false)
+#INSERT INTO testBIT_dt(a) values(true)
+INSERT INTO testBIT_dt(a) values(NULL)

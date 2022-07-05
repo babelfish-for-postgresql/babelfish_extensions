@@ -1,0 +1,19 @@
+CREATE TABLE IMAGE_dt1(a IMAGE);
+#inserting random values
+INSERT INTO IMAGE_dt1(a) values (1234);
+INSERT INTO IMAGE_dt1(a) values (NULL);
+INSERT INTO IMAGE_dt1(a) values (0x31323334);
+INSERT INTO IMAGE_dt1(a) values (0x00000000);
+INSERT INTO IMAGE_dt1(a) values (0xffffffff);
+INSERT INTO IMAGE_dt1(a) values (4294967293);
+INSERT INTO IMAGE_dt1(a) values (68719476735);
+INSERT INTO IMAGE_dt1(a) values (18446744073709551614);
+
+create table IMAGE_dt2 (a IMAGE, b int, c int, d int, e int ,f int, g int, h int, i int);
+insert into IMAGE_dt2 (a,b,c,d,e,f,g,h,i) values (NULL,1,2,3,4,5,6,7,8);
+
+CREATE TABLE IMAGE_dt3(a IMAGE);
+INSERT INTO IMAGE_dt3(a) values (12345);
+prepst#!# INSERT INTO IMAGE_dt3(a) values(@a) #!#image|-|a|-|utils/Blank.jpeg
+prepst#!#exec#!#image|-|a|-|<NULL>
+prepst#!#exec#!#image|-|a|-|utils/flower.jpg

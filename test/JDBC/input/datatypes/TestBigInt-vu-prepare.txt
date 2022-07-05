@@ -1,0 +1,21 @@
+CREATE TABLE testBIGINT_dt (a BIGINT)
+prepst#!# INSERT INTO testBIGINT_dt(a) values(@a) #!#BIGINT|-|a|-|0
+prepst#!#exec#!#BIGINT|-|a|-|-10
+prepst#!#exec#!#BIGINT|-|a|-|122100
+prepst#!#exec#!#BIGINT|-|a|-|0001202
+prepst#!#exec#!#BIGINT|-|a|-|-024112329
+prepst#!#exec#!#BIGINT|-|a|-|-0000000000000000002
+prepst#!#exec#!#BIGINT|-|a|-|0000000000000000086
+prepst#!#exec#!#BIGINT|-|a|-|-9223372036854775808
+prepst#!#exec#!#BIGINT|-|a|-|9223372036854775807
+prepst#!#exec#!#BIGINT|-|a|-|<NULL>
+INSERT INTO testBIGINT_dt(a) values(0)
+INSERT INTO testBIGINT_dt(a) values(-120)
+INSERT INTO testBIGINT_dt(a) values(00100)
+INSERT INTO testBIGINT_dt(a) values(-004)
+INSERT INTO testBIGINT_dt(a) values(-012245532534)
+INSERT INTO testBIGINT_dt(a) values(-0000000000000000002)
+INSERT INTO testBIGINT_dt(a) values(0000000000000000086)
+INSERT INTO testBIGINT_dt(a) values(-9223372036854775808)
+INSERT INTO testBIGINT_dt(a) values(9223372036854775807)
+INSERT INTO testBIGINT_dt(a) values(NULL)
