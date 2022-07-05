@@ -5,6 +5,7 @@ import org.apache.logging.log4j.LogManager;
 import org.junit.jupiter.api.*;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.MethodSource;
+import org.junit.jupiter.params.provider.NullSource;
 import java.io.*;
 import java.sql.*;
 import java.text.SimpleDateFormat;
@@ -345,8 +346,10 @@ public class TestQueryFile {
 
     // parameterized test
     @ParameterizedTest(name="{0}")
+    @NullSource
     @MethodSource("inputFileNames")
     public void TestQueryBatch(String inputFileName) throws SQLException, ClassNotFoundException, Throwable {
+        if(inputFileName == null) return;
 
         // if it is a command and not a fileName
         if (inputFileName.startsWith("cmd#!#")) {
@@ -368,8 +371,17 @@ public class TestQueryFile {
         
         boolean result; // whether test passed or failed
         int failed;
-        
-        File outputFile = new File(outputFilesDirectoryPath + inputFileName + ".out");
+
+        String outputFileName;
+
+        if(inputFilesDirectoryPath.substring(inputFilesDirectoryPath.length() - 1) == "/"){
+            outputFileName = inputFilesDirectoryPath.split("/",2).length > 1 ? inputFilesDirectoryPath.split("/",2)[1].replace("/","__") + inputFileName : inputFileName;
+        }
+        else{
+            outputFileName = inputFilesDirectoryPath.split("/",2).length > 1 ? inputFilesDirectoryPath.split("/",2)[1].replace("/","__") + "__" + inputFileName : inputFileName;
+        }
+
+        File outputFile = new File(outputFilesDirectoryPath + outputFileName + ".out");
 
         // generate buffer reader associated with the file
         FileWriter fw = new FileWriter(outputFile);
@@ -377,8 +389,8 @@ public class TestQueryFile {
         batch_run.batch_run_sql(connection_bbl, bw, testFilePath, logger);
         bw.close();
         
-        File expectedFile = new File(generatedFilesDirectoryPath + inputFileName + ".out");
-        File sqlExpectedFile = new File(sqlServerGeneratedFilesDirectoryPath + inputFileName + ".out");
+        File expectedFile = new File(generatedFilesDirectoryPath + outputFileName + ".out");
+        File sqlExpectedFile = new File(sqlServerGeneratedFilesDirectoryPath + outputFileName + ".out");
 
         if (expectedFile.exists()) {
             // get the diff

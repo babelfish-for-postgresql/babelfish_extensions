@@ -32,8 +32,8 @@ go
 /*
  * Run a SELECT query without any hints to ensure that un-hinted queries still work.
  * This also ensures that when the SELECT query is not hinted it produces a different plan(bitmap heap scan and bitmap index scan)
- * than the index scan that we're hinting in the query below. This verifies that the next test is actually valid.
- * If the planner was going to choose a sequential scan anyway, the next test wouldn't actually prove that hints were working.
+ * than the index scan that we're hinting in the queries below. This verifies that the next set of tests are actually valid.
+ * If the planner was going to choose a index scan anyway, the next test wouldn't actually prove that hints were working.
  */
 select * from babel_3292_t1 where b1 = 1
 go
@@ -199,9 +199,6 @@ create table babel_3292_t2(a2 int PRIMARY KEY, b2 int, c2 int)
 go
 
 create index index_babel_3292_t2_b2 on babel_3292_t2(b2)
-go
-
-select set_config('babelfishpg_tsql.explain_costs', 'off', false)
 go
 
 set babelfish_showplan_all on
