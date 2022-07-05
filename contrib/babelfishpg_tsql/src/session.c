@@ -88,13 +88,6 @@ set_session_properties(const char *db_name)
 		else
 			user = get_guest_role_name(db_name);
 
-		if (!user || is_member_of_role(get_role_oid(user, false), GetSessionUserId()))
-			ereport(ERROR,
-					(errcode(ERRCODE_UNDEFINED_DATABASE),
-					 errmsg("The server principal \"%s\" is not able to access "
-							"the database \"%s\" under the current security context",
-							login, db_name)));
-
 		physical_schema = get_dbo_schema_name(db_name);
 	}
 	else
@@ -104,6 +97,13 @@ set_session_properties(const char *db_name)
 		schema = get_authid_user_ext_schema_name(db_name, user);
 		physical_schema = get_physical_schema_name(pstrdup(db_name), schema);
 	}
+
+	if (!user || !is_member_of_role(GetSessionUserId(), get_role_oid(user, false)))
+		ereport(ERROR,
+				(errcode(ERRCODE_UNDEFINED_DATABASE),
+				 errmsg("The server principal \"%s\" is not able to access "
+						"the database \"%s\" under the current security context",
+						login, db_name)));
 
 	/* set current user */
 	bbf_set_current_user(user);
