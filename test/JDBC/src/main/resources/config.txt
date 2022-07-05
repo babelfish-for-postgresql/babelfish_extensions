@@ -38,3 +38,6 @@ scheduleFile = ./jdbc_schedule
 
 # Where to find the input, output, expected, etc.
 testFileRoot = ./
+
+# WHETHER TEST RUN MODE IS UPGRADE TEST RUN
+isUpgradeTestMode = false

@@ -1,0 +1,38 @@
+DELETE FROM TAB_BABEL_3294_PREPARE WHERE C1 = 1;
+GO
+~~START~~
+int#!#varchar
+2#!#ghl
+3#!#xyz
+10#!#fjf
+~~END~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+
+SELECT PRONAME FROM PG_PROC WHERE PRONAME = 'trig_babel_3294_prepare_for'
+GO
+~~START~~
+varchar
+trig_babel_3294_prepare_for
+~~END~~
+
+
+DROP TRIGGER TRIG_BABEL_3294_PREPARE_FOR
+GO
+
+SELECT PRONAME FROM PG_PROC WHERE PRONAME = 'trig_babel_3294_prepare_for'
+GO
+~~START~~
+varchar
+~~END~~
+
+
+DROP TRIGGER TRIG_BABEL_3294_PREPARE_AFTER
+GO
+
+DROP TABLE TAB_BABEL_3294_PREPARE
+GO
+

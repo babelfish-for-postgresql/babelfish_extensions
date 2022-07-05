@@ -1312,6 +1312,25 @@ gen_droprole_subcmds(const char *user)
 	return res;
 }
 
+PG_FUNCTION_INFO_V1(drop_all_users);
+Datum drop_all_users(PG_FUNCTION_ARGS)
+{
+	/*
+	 * This function has been deprecated since v2.1.
+	 * However, we cannot remove this function entirely because,
+	 * in PG13, sys.babel_drop_all_users() procedure refers it.
+	 * Without this function, MVU from PG13 to PG14 will fail.
+	 *
+	 * Removing the procedure sys.babel_drop_all_users() during pg_dump
+	 * cannot be an option because other user-defined procedures
+	 * are able to refer this function as well.
+	 */
+	ereport(WARNING,
+			(errcode(ERRCODE_WARNING_DEPRECATED_FEATURE),
+			 errmsg("This function has been deprecated and will no longer drop all users.")));
+	PG_RETURN_INT32(0);
+}
+
 PG_FUNCTION_INFO_V1(babelfish_set_role);
 Datum
 babelfish_set_role(PG_FUNCTION_ARGS)
@@ -1368,7 +1387,7 @@ check_alter_server_stmt(GrantRoleStmt *stmt)
 	if (!has_privs_of_role(GetSessionUserId(), sysadmin))
 		ereport(ERROR,
 				(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
-				 errmsg("Current login %s do not have permission to alter server role",
+				 errmsg("Current login %s does not have permission to alter server role",
 					 GetUserNameFromId(GetSessionUserId(), true))));
 
 	/* could not drop the last member of sysadmin */
@@ -1442,7 +1461,7 @@ check_alter_role_stmt(GrantRoleStmt *stmt)
 	if (!has_privs_of_role(GetSessionUserId(), granted))
 		ereport(ERROR,
 				(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
-				 errmsg("Current login %s do not have permission to alter role %s", 
+				 errmsg("Current login %s does not have permission to alter role %s", 
 						GetUserNameFromId(GetSessionUserId(), true), granted_name)));
 }
 

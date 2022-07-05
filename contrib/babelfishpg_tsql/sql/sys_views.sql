@@ -625,106 +625,116 @@ AND (c.connamespace IN (SELECT schema_id FROM sys.schemas))
 AND has_schema_privilege(c.connamespace, 'USAGE');
 GRANT SELECT ON sys.foreign_key_columns TO PUBLIC;
 
-create or replace view sys.foreign_keys as
-select
-  c.conname as name
-  , c.oid as object_id
-  , null::integer as principal_id
-  , sch.schema_id as schema_id
-  , c.conrelid as parent_object_id
-  , 'F'::varchar(2) as type
-  , 'FOREIGN_KEY_CONSTRAINT'::varchar(60) as type_desc
-  , null::timestamp as create_date
-  , null::timestamp as modify_date
-  , 0 as is_ms_shipped
-  , 0 as is_published
-  , 0 as is_schema_published
-  , c.confrelid as referenced_object_id
-  , c.confkey as key_index_id
-  , 0 as is_disabled
-  , 0 as is_not_for_replication
-  , 0 as is_not_trusted
-  , case c.confdeltype
-      when 'a' then 0
-      when 'r' then 0
-      when 'c' then 1
-      when 'n' then 2
-      when 'd' then 3
-    end as delete_referential_action
-  , case c.confdeltype
-      when 'a' then 'NO_ACTION'
-      when 'r' then 'NO_ACTION'
-      when 'c' then 'CASCADE'
-      when 'n' then 'SET_NULL'
-      when 'd' then 'SET_DEFAULT'
-    end as delete_referential_action_desc
-  , case c.confupdtype
-      when 'a' then 0
-      when 'r' then 0
-      when 'c' then 1
-      when 'n' then 2
-      when 'd' then 3
-    end as update_referential_action
-  , case c.confupdtype
-      when 'a' then 'NO_ACTION'
-      when 'r' then 'NO_ACTION'
-      when 'c' then 'CASCADE'
-      when 'n' then 'SET_NULL'
-      when 'd' then 'SET_DEFAULT'
-    end as update_referential_action_desc
-  , 1 as is_system_named
-from pg_constraint c
-inner join sys.schemas sch on sch.schema_id = c.connamespace
-where has_schema_privilege(sch.schema_id, 'USAGE')
-and c.contype = 'f';
+CREATE OR replace view sys.foreign_keys AS
+SELECT
+  CAST(c.conname AS sys.SYSNAME) AS name
+, CAST(c.oid AS INT) AS object_id
+, CAST(NULL AS INT) AS principal_id
+, CAST(sch.schema_id AS INT) AS schema_id
+, CAST(c.conrelid AS INT) AS parent_object_id
+, CAST('F' AS CHAR(2)) AS type
+, CAST('FOREIGN_KEY_CONSTRAINT' AS NVARCHAR(60)) AS type_desc
+, CAST(NULL AS sys.DATETIME) AS create_date
+, CAST(NULL AS sys.DATETIME) AS modify_date
+, CAST(0 AS sys.BIT) AS is_ms_shipped
+, CAST(0 AS sys.BIT) AS is_published
+, CAST(0 AS sys.BIT) as is_schema_published
+, CAST(c.confrelid AS INT) AS referenced_object_id
+, CAST(c.conindid AS INT) AS key_index_id
+, CAST(0 AS sys.BIT) AS is_disabled
+, CAST(0 AS sys.BIT) AS is_not_for_replication
+, CAST(0 AS sys.BIT) AS is_not_trusted
+, CAST(
+    (CASE c.confdeltype
+    WHEN 'a' THEN 0
+    WHEN 'r' THEN 0
+    WHEN 'c' THEN 1
+    WHEN 'n' THEN 2
+    WHEN 'd' THEN 3
+    END) 
+    AS sys.TINYINT) AS delete_referential_action
+, CAST(
+    (CASE c.confdeltype
+    WHEN 'a' THEN 'NO_ACTION'
+    WHEN 'r' THEN 'NO_ACTION'
+    WHEN 'c' THEN 'CASCADE'
+    WHEN 'n' THEN 'SET_NULL'
+    WHEN 'd' THEN 'SET_DEFAULT'
+    END) 
+    AS sys.NVARCHAR(60)) AS delete_referential_action_desc
+, CAST(
+    (CASE c.confupdtype
+    WHEN 'a' THEN 0
+    WHEN 'r' THEN 0
+    WHEN 'c' THEN 1
+    WHEN 'n' THEN 2
+    WHEN 'd' THEN 3
+    END)
+    AS sys.TINYINT) AS update_referential_action
+, CAST(
+    (CASE c.confupdtype
+    WHEN 'a' THEN 'NO_ACTION'
+    WHEN 'r' THEN 'NO_ACTION'
+    WHEN 'c' THEN 'CASCADE'
+    WHEN 'n' THEN 'SET_NULL'
+    WHEN 'd' THEN 'SET_DEFAULT'
+    END)
+    AS sys.NVARCHAR(60)) update_referential_action_desc
+, CAST(1 AS sys.BIT) AS is_system_named
+FROM pg_constraint c
+INNER JOIN sys.schemas sch ON sch.schema_id = c.connamespace
+WHERE has_schema_privilege(sch.schema_id, 'USAGE')
+AND c.contype = 'f';
 GRANT SELECT ON sys.foreign_keys TO PUBLIC;
 
-create or replace view sys.identity_columns AS
-select out_object_id::bigint as object_id
-  , out_name::name as name
-  , out_column_id::smallint as column_id
-  , out_system_type_id::oid as system_type_id
-  , out_user_type_id::oid as user_type_id
-  , out_max_length as max_length
-  , out_precision::integer as precision
-  , out_scale::integer as scale
-  , out_collation_name::name as collation_name
-  , out_is_nullable::integer as is_nullable
-  , out_is_ansi_padded::integer as is_ansi_padded
-  , out_is_rowguidcol::integer as is_rowguidcol
-  , out_is_identity::integer as is_identity
-  , out_is_computed::integer as is_computed
-  , out_is_filestream::integer as is_filestream
-  , out_is_replicated::integer as is_replicated
-  , out_is_non_sql_subscribed::integer as is_non_sql_subscribed
-  , out_is_merge_published::integer as is_merge_published
-  , out_is_dts_replicated::integer as is_dts_replicated
-  , out_is_xml_document::integer as is_xml_document
-  , out_xml_collection_id::integer as xml_collection_id
-  , out_default_object_id::oid as default_object_id
-  , out_rule_object_id::oid as rule_object_id
-  , out_is_sparse::integer as is_sparse
-  , out_is_column_set::integer as is_column_set
-  , out_generated_always_type::integer as generated_always_type
-  , out_generated_always_type_desc::character varying(60) as generated_always_type_desc
-  , out_encryption_type::integer as encryption_type
-  , out_encryption_type_desc::character varying(64)  as encryption_type_desc
-  , out_encryption_algorithm_name::character varying as encryption_algorithm_name
-  , out_column_encryption_key_id::integer as column_encryption_key_id
-  , out_column_encryption_key_database_name::character varying as column_encryption_key_database_name
-  , out_is_hidden::integer as is_hidden
-  , out_is_masked::integer as is_masked
-  , sys.ident_seed(OBJECT_NAME(sc.out_object_id))::bigint as seed_value
-  , sys.ident_incr(OBJECT_NAME(sc.out_object_id))::bigint as increment_value
-  , sys.babelfish_get_sequence_value(pg_get_serial_sequence(quote_ident(ext.nspname)||'.'||quote_ident(c.relname), a.attname)) as last_value
-from sys.columns_internal() sc
+CREATE OR replace view sys.identity_columns AS
+SELECT 
+  CAST(out_object_id AS INT) AS object_id
+  , CAST(out_name AS SYSNAME) AS name
+  , CAST(out_column_id AS INT) AS column_id
+  , CAST(out_system_type_id AS TINYINT) AS system_type_id
+  , CAST(out_user_type_id AS INT) AS user_type_id
+  , CAST(out_max_length AS SMALLINT) AS max_length
+  , CAST(out_precision AS TINYINT) AS precision
+  , CAST(out_scale AS TINYINT) AS scale
+  , CAST(out_collation_name AS SYSNAME) AS collation_name
+  , CAST(out_is_nullable AS sys.BIT) AS is_nullable
+  , CAST(out_is_ansi_padded AS sys.BIT) AS is_ansi_padded
+  , CAST(out_is_rowguidcol AS sys.BIT) AS is_rowguidcol
+  , CAST(out_is_identity AS sys.BIT) AS is_identity
+  , CAST(out_is_computed AS sys.BIT) AS is_computed
+  , CAST(out_is_filestream AS sys.BIT) AS is_filestream
+  , CAST(out_is_replicated AS sys.BIT) AS is_replicated
+  , CAST(out_is_non_sql_subscribed AS sys.BIT) AS is_non_sql_subscribed
+  , CAST(out_is_merge_published AS sys.BIT) AS is_merge_published
+  , CAST(out_is_dts_replicated AS sys.BIT) AS is_dts_replicated
+  , CAST(out_is_xml_document AS sys.BIT) AS is_xml_document
+  , CAST(out_xml_collection_id AS INT) AS xml_collection_id
+  , CAST(out_default_object_id AS INT) AS default_object_id
+  , CAST(out_rule_object_id AS INT) AS rule_object_id
+  , CAST(out_is_sparse AS sys.BIT) AS is_sparse
+  , CAST(out_is_column_set AS sys.BIT) AS is_column_set
+  , CAST(out_generated_always_type AS TINYINT) AS generated_always_type
+  , CAST(out_generated_always_type_desc AS NVARCHAR(60)) AS generated_always_type_desc
+  , CAST(out_encryption_type AS INT) AS encryption_type
+  , CAST(out_encryption_type_desc AS NVARCHAR(60)) AS encryption_type_desc
+  , CAST(out_encryption_algorithm_name AS SYSNAME) AS encryption_algorithm_name
+  , CAST(out_column_encryption_key_id AS INT) column_encryption_key_id
+  , CAST(out_column_encryption_key_database_name AS SYSNAME) AS column_encryption_key_database_name
+  , CAST(out_is_hidden AS sys.BIT) AS is_hidden
+  , CAST(out_is_masked AS sys.BIT) AS is_masked
+  , CAST(sys.ident_seed(OBJECT_NAME(sc.out_object_id)) AS SQL_VARIANT) AS seed_value
+  , CAST(sys.ident_incr(OBJECT_NAME(sc.out_object_id)) AS SQL_VARIANT) AS increment_value
+  , CAST(sys.babelfish_get_sequence_value(pg_get_serial_sequence(quote_ident(ext.nspname)||'.'||quote_ident(c.relname), a.attname)) AS SQL_VARIANT) AS last_value
+  , CAST(0 as sys.BIT) as is_not_for_replication
+FROM sys.columns_internal() sc
 INNER JOIN pg_attribute a ON sc.out_name = a.attname AND sc.out_column_id = a.attnum
-inner join pg_class c on c.oid = a.attrelid
-inner join sys.pg_namespace_ext ext on ext.oid = c.relnamespace
-where not a.attisdropped
-and sc.out_is_identity::integer = 1
-and pg_get_serial_sequence(quote_ident(ext.nspname)||'.'||quote_ident(c.relname), a.attname)  is not null
-and has_sequence_privilege(pg_get_serial_sequence(quote_ident(ext.nspname)||'.'||quote_ident(c.relname), a.attname), 'USAGE,SELECT,UPDATE');
+INNER JOIN pg_class c ON c.oid = a.attrelid
+INNER JOIN sys.pg_namespace_ext ext ON ext.oid = c.relnamespace
+WHERE NOT a.attisdropped
+AND sc.out_is_identity::INTEGER = 1
+AND pg_get_serial_sequence(quote_ident(ext.nspname)||'.'||quote_ident(c.relname), a.attname) IS NOT NULL
+AND has_sequence_privilege(pg_get_serial_sequence(quote_ident(ext.nspname)||'.'||quote_ident(c.relname), a.attname), 'USAGE,SELECT,UPDATE');
 GRANT SELECT ON sys.identity_columns TO PUBLIC;
 
 create or replace view sys.indexes as
@@ -809,31 +819,36 @@ from
 ) as indexes_select order by object_id, type_desc;
 GRANT SELECT ON sys.indexes TO PUBLIC;
 
-create or replace view sys.key_constraints as
-select
-  c.conname as name
-  , c.oid as object_id
-  , null::integer as principal_id
-  , sch.schema_id as schema_id
-  , c.conrelid as parent_object_id
-  , case contype
-      when 'p' then 'PK'::varchar(2)
-      when 'u' then 'UQ'::varchar(2)
-    end as type
-  , case contype
-      when 'p' then 'PRIMARY_KEY_CONSTRAINT'::varchar(60)
-      when 'u' then 'UNIQUE_CONSTRAINT'::varchar(60)
-    end  as type_desc
-  , null::timestamp as create_date
-  , null::timestamp as modify_date
-  , c.conindid as unique_index_id
-  , 0 as is_ms_shipped
-  , 0 as is_published
-  , 0 as is_schema_published
-from pg_constraint c
-inner join sys.schemas sch on sch.schema_id = c.connamespace
-where has_schema_privilege(sch.schema_id, 'USAGE')
-and c.contype in ('p', 'u');
+CREATE OR replace view sys.key_constraints AS
+SELECT
+    CAST(c.conname AS SYSNAME) AS name
+  , CAST(c.oid AS INT) AS object_id
+  , CAST(0 AS INT) AS principal_id
+  , CAST(sch.schema_id AS INT) AS schema_id
+  , CAST(c.conrelid AS INT) AS parent_object_id
+  , CAST(
+    (CASE contype
+      WHEN 'p' THEN 'PK'
+      WHEN 'u' THEN 'UQ'
+    END) 
+    AS CHAR(2)) AS type
+  , CAST(
+    (CASE contype
+      WHEN 'p' THEN 'PRIMARY_KEY_CONSTRAINT'
+      WHEN 'u' THEN 'UNIQUE_CONSTRAINT'
+    END)
+    AS NVARCHAR(60)) AS type_desc
+  , CAST(NULL AS DATETIME) AS create_date
+  , CAST(NULL AS DATETIME) AS modify_date
+  , CAST(c.conindid AS INT) AS unique_index_id
+  , CAST(0 AS sys.BIT) AS is_ms_shipped
+  , CAST(0 AS sys.BIT) AS is_published
+  , CAST(0 AS sys.BIT) AS is_schema_published
+  , CAST(1 as sys.BIT) as is_system_named
+FROM pg_constraint c
+INNER JOIN sys.schemas sch ON sch.schema_id = c.connamespace
+WHERE has_schema_privilege(sch.schema_id, 'USAGE')
+AND c.contype IN ('p', 'u');
 GRANT SELECT ON sys.key_constraints TO PUBLIC;
 
 create or replace view sys.procedures as
@@ -2098,3 +2113,375 @@ SELECT
     CAST(0 as NUMERIC(25,0)) AS backup_lsn
 WHERE false;
 GRANT SELECT ON sys.database_files TO PUBLIC;
+
+CREATE OR REPLACE VIEW sys.hash_indexes
+AS
+SELECT 
+  si.object_id,
+  si.name,
+  si.index_id,
+  si.type,
+  si.type_desc,
+  si.is_unique,
+  si.data_space_id,
+  si.ignore_dup_key,
+  si.is_primary_key,
+  si.is_unique_constraint,
+  si.fill_factor,
+  si.is_padded,
+  si.is_disabled,
+  si.is_hypothetical,
+  si.allow_row_locks,
+  si.allow_page_locks,
+  si.has_filter,
+  si.filter_definition,
+  CAST(0 as INT) AS bucket_count,
+  si.auto_created
+FROM sys.indexes si
+WHERE FALSE;
+GRANT SELECT ON sys.hash_indexes TO PUBLIC;
+
+CREATE OR REPLACE VIEW sys.filetable_system_defined_objects
+AS
+SELECT 
+  CAST(0 as INT) AS object_id,
+  CAST(0 as INT) AS parent_object_id
+  WHERE FALSE;
+GRANT SELECT ON sys.filetable_system_defined_objects TO PUBLIC;
+
+CREATE OR REPLACE VIEW sys.database_filestream_options
+AS
+SELECT
+  CAST(0 as INT) AS database_id,
+  CAST('' as NVARCHAR(255)) AS directory_name,
+  CAST(0 as TINYINT) AS non_transacted_access,
+  CAST('' as NVARCHAR(60)) AS non_transacted_access_desc
+WHERE FALSE;
+GRANT SELECT ON sys.database_filestream_options TO PUBLIC;
+
+CREATE OR REPLACE VIEW sys.xml_indexes
+AS
+SELECT
+    CAST(idx.object_id AS INT) AS object_id
+  , CAST(idx.name AS sys.sysname) AS name
+  , CAST(idx.index_id AS INT)  AS index_id
+  , CAST(idx.type AS sys.tinyint) AS type
+  , CAST(idx.type_desc AS sys.nvarchar(60)) AS type_desc
+  , CAST(idx.is_unique AS sys.bit) AS is_unique
+  , CAST(idx.data_space_id AS int) AS data_space_id
+  , CAST(idx.ignore_dup_key AS sys.bit) AS ignore_dup_key
+  , CAST(idx.is_primary_key AS sys.bit) AS is_primary_key
+  , CAST(idx.is_unique_constraint AS sys.bit) AS is_unique_constraint
+  , CAST(idx.fill_factor AS sys.tinyint) AS fill_factor
+  , CAST(idx.is_padded AS sys.bit) AS is_padded
+  , CAST(idx.is_disabled AS sys.bit) AS is_disabled
+  , CAST(idx.is_hypothetical AS sys.bit) AS is_hypothetical
+  , CAST(idx.allow_row_locks AS sys.bit) AS allow_row_locks
+  , CAST(idx.allow_page_locks AS sys.bit) AS allow_page_locks
+  , CAST(idx.has_filter AS sys.bit) AS has_filter
+  , CAST(idx.filter_definition AS sys.nvarchar(4000)) AS filter_definition
+  , CAST(idx.auto_created AS sys.bit) AS auto_created
+  , CAST(NULL AS INT) AS using_xml_index_id
+  , CAST(NULL AS char(1)) AS secondary_type
+  , CAST(NULL AS sys.nvarchar(60)) AS secondary_type_desc
+  , CAST(0 AS sys.tinyint) AS xml_index_type
+  , CAST(NULL AS sys.nvarchar(60)) AS xml_index_type_description
+  , CAST(NULL AS INT) AS path_id
+FROM  sys.indexes idx
+WHERE idx.type = 3; -- 3 is of type XML
+GRANT SELECT ON sys.xml_indexes TO PUBLIC;
+
+CREATE OR REPLACE VIEW sys.dm_hadr_cluster
+AS
+SELECT
+   CAST('' as sys.nvarchar(128)) as cluster_name
+  ,CAST(0 as sys.tinyint) as quorum_type
+  ,CAST('NODE_MAJORITY' as sys.nvarchar(50)) as quorum_type_desc
+  ,CAST(0 as sys.tinyint) as quorum_state
+  ,CAST('NORMAL_QUORUM' as sys.nvarchar(50)) as quorum_state_desc;
+GRANT SELECT ON sys.dm_hadr_cluster TO PUBLIC;
+
+CREATE OR REPLACE VIEW sys.assembly_modules
+AS
+SELECT 
+   CAST(0 as INT) AS object_id,
+   CAST(0 as INT) AS assembly_id,
+   CAST('' AS SYSNAME) AS assembly_class,
+   CAST('' AS SYSNAME) AS assembly_method,
+   CAST(0 AS sys.BIT) AS null_on_null_input,
+   CAST(0 as INT) AS execute_as_principal_id
+   WHERE FALSE;
+GRANT SELECT ON sys.assembly_modules TO PUBLIC;
+
+CREATE OR REPLACE VIEW sys.change_tracking_databases
+AS
+SELECT
+   CAST(0 as INT) AS database_id,
+   CAST(0 as sys.BIT) AS is_auto_cleanup_on,
+   CAST(0 as INT) AS retention_period,
+   CAST('' as NVARCHAR(60)) AS retention_period_units_desc,
+   CAST(0 as TINYINT) AS retention_period_units
+WHERE FALSE;
+GRANT SELECT ON sys.change_tracking_databases TO PUBLIC;
+
+CREATE OR REPLACE VIEW sys.database_recovery_status
+AS
+SELECT
+   CAST(0 as INT) AS database_id,
+   CAST(NULL as UNIQUEIDENTIFIER) AS database_guid,
+   CAST(NULL as UNIQUEIDENTIFIER) AS family_guid,
+   CAST(0 as NUMERIC(25,0)) AS last_log_backup_lsn,
+   CAST(NULL as UNIQUEIDENTIFIER) AS recovery_fork_guid,
+   CAST(NULL as UNIQUEIDENTIFIER) AS first_recovery_fork_guid,
+   CAST(0 as NUMERIC(25,0)) AS fork_point_lsn
+WHERE FALSE;
+GRANT SELECT ON sys.database_recovery_status TO PUBLIC;
+
+CREATE OR REPLACE VIEW sys.fulltext_languages
+AS
+SELECT 
+   CAST(0 as INT) AS lcid,
+   CAST('' as SYSNAME) AS name
+WHERE FALSE;
+GRANT SELECT ON sys.fulltext_languages TO PUBLIC;
+
+CREATE OR REPLACE VIEW sys.fulltext_index_columns
+AS
+SELECT 
+   CAST(0 as INT) AS object_id,
+   CAST(0 as INT) AS column_id,
+   CAST(0 as INT) AS type_column_id,
+   CAST(0 as INT) AS language_id,
+   CAST(0 as INT) AS statistical_semantics
+WHERE FALSE;
+GRANT SELECT ON sys.fulltext_index_columns TO PUBLIC;
+
+CREATE OR REPLACE VIEW sys.selective_xml_index_paths
+AS
+SELECT 
+   CAST(0 as INT) AS object_id,
+   CAST(0 as INT) AS index_id,
+   CAST(0 as INT) AS path_id,
+   CAST('' as NVARCHAR(4000)) AS path,
+   CAST('' as SYSNAME) AS name,
+   CAST(0 as TINYINT) AS path_type,
+   CAST(0 as SYSNAME) AS path_type_desc,
+   CAST(0 as INT) AS xml_component_id,
+   CAST('' as NVARCHAR(4000)) AS xquery_type_description,
+   CAST(0 as sys.BIT) AS is_xquery_type_inferred,
+   CAST(0 as SMALLINT) AS xquery_max_length,
+   CAST(0 as sys.BIT) AS is_xquery_max_length_inferred,
+   CAST(0 as sys.BIT) AS is_node,
+   CAST(0 as TINYINT) AS system_type_id,
+   CAST(0 as TINYINT) AS user_type_id,
+   CAST(0 as SMALLINT) AS max_length,
+   CAST(0 as TINYINT) AS precision,
+   CAST(0 as TINYINT) AS scale,
+   CAST('' as SYSNAME) AS collation_name,
+   CAST(0 as sys.BIT) AS is_singleton
+WHERE FALSE;
+GRANT SELECT ON sys.selective_xml_index_paths TO PUBLIC;
+
+CREATE OR REPLACE VIEW sys.spatial_indexes
+AS
+SELECT 
+   object_id,
+   name,
+   index_id,
+   type,
+   type_desc,
+   is_unique,
+   data_space_id,
+   ignore_dup_key,
+   is_primary_key,
+   is_unique_constraint,
+   fill_factor,
+   is_padded,
+   is_disabled,
+   is_hypothetical,
+   allow_row_locks,
+   allow_page_locks,
+   CAST(1 as TINYINT) AS spatial_index_type,
+   CAST('' as NVARCHAR(60)) AS spatial_index_type_desc,
+   CAST('' as SYSNAME) AS tessellation_scheme,
+   has_filter,
+   filter_definition,
+   auto_created
+FROM sys.indexes WHERE FALSE;
+GRANT SELECT ON sys.spatial_indexes TO PUBLIC;
+
+CREATE OR REPLACE VIEW sys.filetables
+AS
+SELECT 
+   CAST(0 AS INT) AS object_id,
+   CAST(0 AS sys.BIT) AS is_enabled,
+   CAST('' AS VARCHAR(255)) AS directory_name,
+   CAST(0 AS INT) AS filename_collation_id,
+   CAST('' AS VARCHAR) AS filename_collation_name
+   WHERE FALSE;
+GRANT SELECT ON sys.filetables TO PUBLIC;
+
+CREATE OR REPLACE VIEW sys.registered_search_property_lists
+AS
+SELECT 
+   CAST(0 AS INT) AS property_list_id,
+   CAST('' AS SYSNAME) AS name,
+   CAST(NULL AS DATETIME) AS create_date,
+   CAST(NULL AS DATETIME) AS modify_date,
+   CAST(0 AS INT) AS principal_id
+WHERE FALSE;
+GRANT SELECT ON sys.registered_search_property_lists TO PUBLIC;
+
+CREATE OR REPLACE VIEW sys.filegroups
+AS
+SELECT 
+   ds.name,
+   ds.data_space_id,
+   ds.type,
+   ds.type_desc,
+   ds.is_default,
+   ds.is_system,
+   CAST(NULL as UNIQUEIDENTIFIER) AS filegroup_guid,
+   CAST(0 as INT) AS log_filegroup_id,
+   CAST(0 as sys.BIT) AS is_read_only,
+   CAST(0 as sys.BIT) AS is_autogrow_all_files
+FROM sys.data_spaces ds WHERE type = 'FG';
+GRANT SELECT ON sys.filegroups TO PUBLIC;
+
+CREATE OR REPLACE VIEW sys.master_files
+AS
+SELECT
+    CAST(0 as INT) AS database_id,
+    CAST(0 as INT) AS file_id,
+    CAST(NULL as UNIQUEIDENTIFIER) AS file_guid,
+    CAST(0 as sys.TINYINT) AS type,
+    CAST('' as NVARCHAR(60)) AS type_desc,
+    CAST(0 as INT) AS data_space_id,
+    CAST('' as SYSNAME) AS name,
+    CAST('' as NVARCHAR(260)) AS physical_name,
+    CAST(0 as sys.TINYINT) AS state,
+    CAST('' as NVARCHAR(60)) AS state_desc,
+    CAST(0 as INT) AS size,
+    CAST(0 as INT) AS max_size,
+    CAST(0 as INT) AS growth,
+    CAST(0 as sys.BIT) AS is_media_read_only,
+    CAST(0 as sys.BIT) AS is_read_only,
+    CAST(0 as sys.BIT) AS is_sparse,
+    CAST(0 as sys.BIT) AS is_percent_growth,
+    CAST(0 as sys.BIT) AS is_name_reserved,
+    CAST(0 as NUMERIC(25,0)) AS create_lsn,
+    CAST(0 as NUMERIC(25,0)) AS drop_lsn,
+    CAST(0 as NUMERIC(25,0)) AS read_only_lsn,
+    CAST(0 as NUMERIC(25,0)) AS read_write_lsn,
+    CAST(0 as NUMERIC(25,0)) AS differential_base_lsn,
+    CAST(NULL as UNIQUEIDENTIFIER) AS differential_base_guid,
+    CAST(NULL as DATETIME) AS differential_base_time,
+    CAST(0 as NUMERIC(25,0)) AS redo_start_lsn,
+    CAST(NULL as UNIQUEIDENTIFIER) AS redo_start_fork_guid,
+    CAST(0 as NUMERIC(25,0)) AS redo_target_lsn,
+    CAST(NULL as UNIQUEIDENTIFIER) AS redo_target_fork_guid,
+    CAST(0 as NUMERIC(25,0)) AS backup_lsn,
+    CAST(0 as INT) AS credential_id
+WHERE FALSE;
+GRANT SELECT ON sys.master_files TO PUBLIC;
+
+CREATE OR REPLACE VIEW sys.stats
+AS
+SELECT 
+   CAST(0 as INT) AS object_id,
+   CAST('' as SYSNAME) AS name,
+   CAST(0 as INT) AS stats_id,
+   CAST(0 as sys.BIT) AS auto_created,
+   CAST(0 as sys.BIT) AS user_created,
+   CAST(0 as sys.BIT) AS no_recompute,
+   CAST(0 as sys.BIT) AS has_filter,
+   CAST('' as sys.NVARCHAR(4000)) AS filter_definition,
+   CAST(0 as sys.BIT) AS is_temporary,
+   CAST(0 as sys.BIT) AS is_incremental,
+   CAST(0 as sys.BIT) AS has_persisted_sample,
+   CAST(0 as INT) AS stats_generation_method,
+   CAST('' as VARCHAR(255)) AS stats_generation_method_desc
+WHERE FALSE;
+GRANT SELECT ON sys.stats TO PUBLIC;
+
+
+CREATE OR REPLACE VIEW sys.change_tracking_tables
+AS
+SELECT 
+   CAST(0 as INT) AS object_id,
+   CAST(0 as sys.BIT) AS is_track_columns_updated_on,
+   CAST(0 AS sys.BIGINT) AS begin_version,
+   CAST(0 AS sys.BIGINT) AS cleanup_version,
+   CAST(0 AS sys.BIGINT) AS min_valid_version
+   WHERE FALSE;
+GRANT SELECT ON sys.change_tracking_tables TO PUBLIC;
+
+
+CREATE OR REPLACE VIEW sys.fulltext_catalogs
+AS
+SELECT 
+   CAST(0 as INT) AS fulltext_catalog_id,
+   CAST('' as SYSNAME) AS name,
+   CAST('' as NVARCHAR(260)) AS path,
+   CAST(0 as sys.BIT) AS is_default,
+   CAST(0 as sys.BIT) AS is_accent_sensitivity_on,
+   CAST(0 as INT) AS data_space_id,
+   CAST(0 as INT) AS file_id,
+   CAST(0 as INT) AS principal_id,
+   CAST(2 as sys.BIT) AS is_importing
+WHERE FALSE;
+GRANT SELECT ON sys.fulltext_catalogs TO PUBLIC;
+
+CREATE OR REPLACE VIEW sys.fulltext_stoplists
+AS
+SELECT 
+   CAST(0 as INT) AS stoplist_id,
+   CAST('' as SYSNAME) AS name,
+   CAST(NULL as DATETIME) AS create_date,
+   CAST(NULL as DATETIME) AS modify_date,
+   CAST(0 as INT) AS Principal_id
+WHERE FALSE;
+GRANT SELECT ON sys.fulltext_stoplists TO PUBLIC;
+
+CREATE OR REPLACE VIEW sys.fulltext_indexes
+AS
+SELECT 
+   CAST(0 as INT) AS object_id,
+   CAST(0 as INT) AS unique_index_id,
+   CAST(0 as INT) AS fulltext_catalog_id,
+   CAST(0 as sys.BIT) AS is_enabled,
+   CAST('O' as CHAR(1)) AS change_tracking_state,
+   CAST('' as NVARCHAR(60)) AS change_tracking_state_desc,
+   CAST(0 as sys.BIT) AS has_crawl_completed,
+   CAST('' as CHAR(1)) AS crawl_type,
+   CAST('' as NVARCHAR(60)) AS crawl_type_desc,
+   CAST(NULL as DATETIME) AS crawl_start_date,
+   CAST(NULL as DATETIME) AS crawl_end_date,
+   CAST(NULL as BINARY(8)) AS incremental_timestamp,
+   CAST(0 as INT) AS stoplist_id,
+   CAST(0 as INT) AS data_space_id,
+   CAST(0 as INT) AS property_list_id
+WHERE FALSE;
+GRANT SELECT ON sys.fulltext_indexes TO PUBLIC;
+
+CREATE OR REPLACE VIEW sys.spatial_index_tessellations 
+AS
+SELECT 
+    CAST(0 as int) AS object_id
+  , CAST(0 as int) AS index_id
+  , CAST('' as sys.sysname) AS tessellation_scheme
+  , CAST(0 as float(53)) AS bounding_box_xmin
+  , CAST(0 as float(53)) AS bounding_box_ymin
+  , CAST(0 as float(53)) AS bounding_box_xmax
+  , CAST(0 as float(53)) AS bounding_box_ymax
+  , CAST(0 as smallint) as level_1_grid
+  , CAST('' as sys.nvarchar(60)) AS level_1_grid_desc
+  , CAST(0 as smallint) as level_2_grid
+  , CAST('' as sys.nvarchar(60)) AS level_2_grid_desc
+  , CAST(0 as smallint) as level_3_grid
+  , CAST('' as sys.nvarchar(60)) AS level_3_grid_desc
+  , CAST(0 as smallint) as level_4_grid
+  , CAST('' as sys.nvarchar(60)) AS level_4_grid_desc
+  , CAST(0 as int) as cells_per_object
+WHERE FALSE;
+GRANT SELECT ON sys.spatial_index_tessellations TO PUBLIC;

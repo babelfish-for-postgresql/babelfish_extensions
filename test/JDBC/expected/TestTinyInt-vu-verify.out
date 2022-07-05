@@ -1,0 +1,23 @@
+SELECT * FROM TINYINT_dt;
+~~START~~
+tinyint
+0
+100
+2
+29
+4
+87
+0
+255
+<NULL>
+0
+120
+100
+4
+0
+2
+86
+255
+<NULL>
+~~END~~
+

@@ -1,0 +1,2 @@
+SELECT * FROM udd_dt1;
+SELECT * FROM udd_dt2;
