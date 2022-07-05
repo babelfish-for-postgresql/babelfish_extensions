@@ -1684,6 +1684,10 @@ func_expr_common_subexpr:
 				{
 					$$ = (Node *) makeFuncCall(TsqlSystemFuncName("babelfish_get_last_identity_numeric"), NIL, COERCE_EXPLICIT_CALL, @1);
 				}
+			| TSQL_ATAT LANGUAGE
+	 			{
+	 				$$ = (Node *) makeFuncCall(TsqlSystemFuncName2("language"),NIL, COERCE_EXPLICIT_CALL, @1);
+	 			}	
 		;
 
 target_el:

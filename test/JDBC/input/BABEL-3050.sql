@@ -1,0 +1,2 @@
+SELECT @@LANGUAGE;
+GO
