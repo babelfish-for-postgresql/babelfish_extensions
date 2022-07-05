@@ -1,0 +1,6 @@
+SELECT * FROM sys.plan_guides
+GO
+~~START~~
+int#!#varchar#!#datetime#!#datetime#!#bit#!#nvarchar#!#tinyint#!#nvarchar#!#int#!#nvarchar#!#nvarchar#!#nvarchar
+~~END~~
+
