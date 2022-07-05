@@ -16,7 +16,10 @@ select * from testing_collation where col collate SQL_Latin1_General_CP1_CI_AI =
 go
 
 -- all the currently supported TSQL collations
-SELECT * from fn_helpcollations();
+SELECT * from fn_helpcollations() order by name;
+go
+
+select count(*) from fn_helpcollations();
 go
 
 -- BABEL-1697 Collation and Codepage information for DMS
