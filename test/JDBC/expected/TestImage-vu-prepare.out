@@ -1,0 +1,47 @@
+CREATE TABLE IMAGE_dt1(a IMAGE);
+#inserting random values
+INSERT INTO IMAGE_dt1(a) values (1234);
+~~ROW COUNT: 1~~
+
+INSERT INTO IMAGE_dt1(a) values (NULL);
+~~ROW COUNT: 1~~
+
+INSERT INTO IMAGE_dt1(a) values (0x31323334);
+~~ROW COUNT: 1~~
+
+INSERT INTO IMAGE_dt1(a) values (0x00000000);
+~~ROW COUNT: 1~~
+
+INSERT INTO IMAGE_dt1(a) values (0xffffffff);
+~~ROW COUNT: 1~~
+
+INSERT INTO IMAGE_dt1(a) values (4294967293);
+~~ROW COUNT: 1~~
+
+INSERT INTO IMAGE_dt1(a) values (68719476735);
+~~ROW COUNT: 1~~
+
+INSERT INTO IMAGE_dt1(a) values (18446744073709551614);
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: column "a" is of type image but expression is of type numeric)~~
+
+
+create table IMAGE_dt2 (a IMAGE, b int, c int, d int, e int ,f int, g int, h int, i int);
+insert into IMAGE_dt2 (a,b,c,d,e,f,g,h,i) values (NULL,1,2,3,4,5,6,7,8);
+~~ROW COUNT: 1~~
+
+
+CREATE TABLE IMAGE_dt3(a IMAGE);
+INSERT INTO IMAGE_dt3(a) values (12345);
+~~ROW COUNT: 1~~
+
+prepst#!# INSERT INTO IMAGE_dt3(a) values(?) #!#image|-|a|-|utils/Blank.jpeg
+~~ROW COUNT: 1~~
+
+prepst#!#exec#!#image|-|a|-|<NULL>
+~~ROW COUNT: 1~~
+
+prepst#!#exec#!#image|-|a|-|utils/flower.jpg
+~~ROW COUNT: 1~~
+

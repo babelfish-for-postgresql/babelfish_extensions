@@ -57,7 +57,15 @@ runs:
       if: always() && steps.change-migration-mode.outcome == 'success' && inputs.is_final_ver == 'true'
       run: |
         cd test/JDBC/
-        export inputFilesPath=upgrade/verification
+        export isUpgradeTestMode=false
+        export inputFilesPath=upgrade/${{ matrix.upgrade-path.last_version }}/verification_cleanup/${{ matrix.upgrade-path.path[0] }}
+        mvn test
+        export inputFilesPath=input
+        for filename in $(grep -v "^ignore.*\|^#.*\|^cmd.*\|^all.*\|^$" upgrade/${{ matrix.upgrade-path.path[0] }}/schedule); do
+          sed -i "s/$filename[ ]*$/$filename-vu-verify\\n$filename-vu-cleanup/g" upgrade/${{ matrix.upgrade-path.path[0] }}/schedule
+        done
+        export scheduleFile=upgrade/${{ matrix.upgrade-path.path[0] }}/schedule
         mvn test
       shell: bash
+
     

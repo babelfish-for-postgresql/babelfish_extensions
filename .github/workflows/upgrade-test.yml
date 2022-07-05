@@ -10,11 +10,12 @@ jobs:
     steps:
       - uses: actions/checkout@v2
       
-      - id: generate-upgrade-path
+      - name: "Read and setup upgrade path list from configuration"
+        id: generate-upgrade-path
         run: |
           config="'$(yq -o=json ${{ github.workspace }}/.github/configuration/upgrade-test-configuration.yml)'"
           config=$(echo $config | sed "s/\"/\\\\\"/g")
-          UPGRADE_PATH_LIST=$(node -e "let k = JSON.parse($config); let p = k['upgrade-version'].map((itm, index) => ({ id: index, path: ''+itm[0].version + ' - '+itm[itm.length-1].version})); console.log(JSON.stringify(p));")
+          UPGRADE_PATH_LIST=$(node -e "let k = JSON.parse($config); let p = k['upgrade-version'].map((itm, index) => ({ id: index, path: itm.map(i => i.version.toString().replace(/[.]/g, \"_\")), title: itm.map(i => i.version.toString().replace(/[.]/g, \"_\")).join(\"-\"), last_version: itm[itm.length - 1].version.toString().replace(/[.]/g, \"_\") })); console.log(JSON.stringify(p));")
           echo "::set-output name=upgrade-path-list::$UPGRADE_PATH_LIST"
           
   run-version-upgrade-test:
@@ -23,7 +24,7 @@ jobs:
       fail-fast: false
       matrix:
         upgrade-path: ${{ fromJson(needs.generate-version-upgrade-tests.outputs.upgrade-path-list) }}
-    name: Run Version Upgrade Test for ${{ matrix.upgrade-path.path }}
+    name: Run Version Upgrade Test for ${{ matrix.upgrade-path.title }}
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
@@ -105,7 +106,7 @@ jobs:
         if: always() && steps.test-file-rename.outcome == 'success'
         uses: actions/upload-artifact@v2
         with:
-          name: upgrade-logs-${{ matrix.upgrade-path.path }}
+          name: upgrade-logs-${{ matrix.upgrade-path.title }}
           path: |
             ~/upgrade/*.log
             ~/upgrade/*.diff

@@ -1,0 +1,65 @@
+CREATE TABLE smallmoney_dt(a smallmoney);
+
+prepst#!#INSERT INTO smallmoney_dt(a) VALUES (?) #!#smallmoney|-|a|-|100.5
+~~ROW COUNT: 1~~
+
+prepst#!#exec#!#smallmoney|-|a|-|10
+~~ROW COUNT: 1~~
+
+prepst#!#exec#!#smallmoney|-|a|-|-10.05
+~~ROW COUNT: 1~~
+
+prepst#!#exec#!#smallmoney|-|a|-|-214748.3648
+~~ROW COUNT: 1~~
+
+prepst#!#exec#!#smallmoney|-|a|-|214748.3647
+~~ROW COUNT: 1~~
+
+prepst#!#exec#!#smallmoney|-|a|-|214748.3647
+~~ROW COUNT: 1~~
+
+prepst#!#exec#!#smallmoney|-|a|-|-214,748.3648
+~~ROW COUNT: 1~~
+
+prepst#!#exec#!#smallmoney|-|a|-|214,748.3647
+~~ROW COUNT: 1~~
+
+prepst#!#exec#!#smallmoney|-|a|-|214,748.3647
+~~ROW COUNT: 1~~
+
+prepst#!#exec#!#smallmoney|-|a|-|<NULL>
+~~ROW COUNT: 1~~
+
+INSERT INTO smallmoney_dt(a) values(100.5);
+~~ROW COUNT: 1~~
+
+INSERT INTO smallmoney_dt(a) values('$10');
+~~ROW COUNT: 1~~
+
+INSERT INTO smallmoney_dt(a) values('-10.05');
+~~ROW COUNT: 1~~
+
+INSERT INTO smallmoney_dt(a) values('10.05');
+~~ROW COUNT: 1~~
+
+INSERT INTO smallmoney_dt(a) values(-214748.3648);
+~~ROW COUNT: 1~~
+
+INSERT INTO smallmoney_dt(a) values(14748.3647);
+~~ROW COUNT: 1~~
+
+INSERT INTO smallmoney_dt(a) values('$214748.3647');
+~~ROW COUNT: 1~~
+
+INSERT INTO smallmoney_dt(a) values('-214,748.3648');
+~~ROW COUNT: 1~~
+
+INSERT INTO smallmoney_dt(a) values('214,748.3647');
+~~ROW COUNT: 1~~
+
+INSERT INTO smallmoney_dt(a) values('$214,748.3647');
+~~ROW COUNT: 1~~
+
+INSERT INTO smallmoney_dt(a) values(NULL);
+~~ROW COUNT: 1~~
+
