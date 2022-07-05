@@ -12,6 +12,12 @@ GO
 
 EXEC sp_describe_undeclared_parameters @tsql = N'INSERT INTO simpletable VALUES (1)';
 GO
+
+EXEC sp_describe_undeclared_parameters @tsql = N'INSERT INTO simpletable VALUES (@P1), (@P2)'
+GO
+
+EXEC sp_describe_undeclared_parameters @tsql = N'INSERT INTO simpletable VALUES (@P1), (@P2), (@P3)'
+GO
 -- Done testing simple error scenario
 
 -- Set-up
