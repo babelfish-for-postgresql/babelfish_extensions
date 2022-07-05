@@ -25,6 +25,25 @@ int#!#nvarchar#!#int#!#nvarchar#!#smallint#!#tinyint#!#tinyint#!#int#!#nvarchar#
 ~~END~~
 
 
+EXEC sp_describe_undeclared_parameters @tsql = N'INSERT INTO simpletable VALUES (@P1), (@P2)'
+GO
+~~START~~
+int#!#nvarchar#!#int#!#nvarchar#!#smallint#!#tinyint#!#tinyint#!#int#!#nvarchar#!#nvarchar#!#nvarchar#!#nvarchar#!#int#!#nvarchar#!#nvarchar#!#nvarchar#!#bit#!#bit#!#bit#!#bit#!#bit#!#nvarchar#!#int#!#int
+1#!#@P1#!#56#!#int#!#4#!#10#!#0#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#0#!#0#!#0#!#1#!#0#!#<NULL>#!#38#!#4
+2#!#@P2#!#56#!#int#!#4#!#10#!#0#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#0#!#0#!#0#!#1#!#0#!#<NULL>#!#38#!#4
+~~END~~
+
+
+EXEC sp_describe_undeclared_parameters @tsql = N'INSERT INTO simpletable VALUES (@P1), (@P2), (@P3)'
+GO
+~~START~~
+int#!#nvarchar#!#int#!#nvarchar#!#smallint#!#tinyint#!#tinyint#!#int#!#nvarchar#!#nvarchar#!#nvarchar#!#nvarchar#!#int#!#nvarchar#!#nvarchar#!#nvarchar#!#bit#!#bit#!#bit#!#bit#!#bit#!#nvarchar#!#int#!#int
+1#!#@P1#!#56#!#int#!#4#!#10#!#0#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#0#!#0#!#0#!#1#!#0#!#<NULL>#!#38#!#4
+2#!#@P2#!#56#!#int#!#4#!#10#!#0#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#0#!#0#!#0#!#1#!#0#!#<NULL>#!#38#!#4
+3#!#@P3#!#56#!#int#!#4#!#10#!#0#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#0#!#0#!#0#!#1#!#0#!#<NULL>#!#38#!#4
+~~END~~
+
+
 -- Done testing simple error scenario
 -- Set-up
 CREATE SCHEMA error_mapping;
