@@ -40,7 +40,7 @@
 #include "../src/catalog.h"
 #include "../src/rolecmds.h"
 
-#define TSQL_STAT_GET_ACTIVITY_COLS 24
+#define TSQL_STAT_GET_ACTIVITY_COLS 25
 #define SP_DATATYPE_INFO_HELPER_COLS 23
 
 PG_FUNCTION_INFO_V1(trancount);
@@ -71,6 +71,7 @@ PG_FUNCTION_INFO_V1(checksum);
 PG_FUNCTION_INFO_V1(has_dbaccess);
 PG_FUNCTION_INFO_V1(sp_datatype_info_helper);
 PG_FUNCTION_INFO_V1(language);
+PG_FUNCTION_INFO_V1(host_name);
 
 /* Not supported -- only syntax support */
 PG_FUNCTION_INFO_V1(procid);
@@ -711,6 +712,7 @@ tsql_stat_get_activity(PG_FUNCTION_ARGS)
 	TupleDescInitEntry(tupdesc, (AttrNumber) 22, "packet_size", INT4OID, -1, 0);
 	TupleDescInitEntry(tupdesc, (AttrNumber) 23, "encrypt_option", VARCHAROID, 40, 0);
 	TupleDescInitEntry(tupdesc, (AttrNumber) 24, "database_id", INT2OID, -1, 0);
+	TupleDescInitEntry(tupdesc, (AttrNumber) 25, "host_name", VARCHAROID, 128, 0);
 	tupdesc = BlessTupleDesc(tupdesc);
 
 	per_query_ctx = rsinfo->econtext->ecxt_per_query_memory;
@@ -1018,4 +1020,13 @@ Datum
 language(PG_FUNCTION_ARGS)
 {
 	PG_RETURN_VARCHAR_P(get_language());
+}
+
+Datum
+host_name(PG_FUNCTION_ARGS)
+{
+	if (*pltsql_protocol_plugin_ptr && (*pltsql_protocol_plugin_ptr)->get_host_name)
+		PG_RETURN_VARCHAR_P(string_to_tsql_varchar((*pltsql_protocol_plugin_ptr)->get_host_name()));
+	else
+		PG_RETURN_NULL();
 }

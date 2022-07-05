@@ -53,7 +53,8 @@ public class JDBCCrossDialect {
             if (connAttribute.contains("user=")) {
                 newUser = connAttribute.split("=")[1];
             } else if (connAttribute.contains("password=")) {
-                newPassword = connAttribute.split("=")[1];
+                // Any other connection properties can be specified by appending it to password itself
+                newPassword = connAttribute.split("=", 2)[1];
             } else if (connAttribute.contains("database=")) {
                 newDatabase = connAttribute.split("=")[1];
             } else if (connAttribute.contains("currentSchema=")) {

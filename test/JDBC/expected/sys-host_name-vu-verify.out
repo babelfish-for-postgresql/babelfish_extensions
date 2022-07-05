@@ -1,0 +1,19 @@
+
+-- tsql password=12345678;workstationID=a_nice_workstation_name
+-- explicitly specify a workstation name to check the HOST_NAME
+-- T-SQL function and hostname entry in sys.sysprocesses view
+SELECT HOST_NAME()
+GO
+~~START~~
+nvarchar
+a_nice_workstation_name
+~~END~~
+
+
+SELECT DISTINCT hostname FROM sys.sysprocesses WHERE spid = @@SPID
+GO
+~~START~~
+nchar
+a_nice_workstation_name                                                                                                         
+~~END~~
+
