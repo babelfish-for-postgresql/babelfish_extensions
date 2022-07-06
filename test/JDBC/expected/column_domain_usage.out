@@ -9,7 +9,7 @@ go
 CREATE TABLE tb1(a int, b char, c varchar, d typ1);
 go
 
-SELECT DOMAIN_CATALOG, DOMAIN_SCHEMA, TABLE_NAME, COLUMN_NAME FROM information_schema_tsql.COLUMN_DOMAIN_USAGE WHERE TABLE_NAME NOT LIKE 'sys%' ORDER BY COLUMN_NAME;
+SELECT DOMAIN_CATALOG, DOMAIN_SCHEMA, TABLE_NAME, COLUMN_NAME FROM information_schema.COLUMN_DOMAIN_USAGE WHERE TABLE_NAME NOT LIKE 'sys%' ORDER BY COLUMN_NAME;
 go
 ~~START~~
 nvarchar#!#nvarchar#!#varchar#!#varchar
@@ -23,10 +23,10 @@ go
 USE src;
 go
 
-SELECT DOMAIN_CATALOG, DOMAIN_SCHEMA, TABLE_NAME, COLUMN_NAME FROM information_schema_tsql.COLUMN_DOMAIN_USAGE WHERE TABLE_NAME NOT LIKE 'sys%' ORDER BY COLUMN_NAME;
+SELECT DOMAIN_CATALOG, DOMAIN_SCHEMA, TABLE_NAME, TABLE_SCHEMA, COLUMN_NAME FROM information_schema.COLUMN_DOMAIN_USAGE WHERE TABLE_NAME NOT LIKE 'sys%' ORDER BY COLUMN_NAME;
 go
 ~~START~~
-nvarchar#!#nvarchar#!#varchar#!#varchar
+nvarchar#!#nvarchar#!#varchar#!#nvarchar#!#varchar
 ~~END~~
 
 
@@ -36,11 +36,11 @@ go
 create table col_test( s int, t nvarchar(8), r NTYP);
 go
 
-SELECT DOMAIN_NAME, TABLE_CATALOG, TABLE_NAME, COLUMN_NAME  FROM information_schema_tsql.COLUMN_DOMAIN_USAGE WHERE TABLE_NAME NOT LIKE 'sys%' ORDER BY COLUMN_NAME;
+SELECT DOMAIN_NAME, TABLE_CATALOG, TABLE_SCHEMA, TABLE_NAME, COLUMN_NAME  FROM information_schema.COLUMN_DOMAIN_USAGE WHERE TABLE_NAME NOT LIKE 'sys%' ORDER BY COLUMN_NAME;
 go
 ~~START~~
-varchar#!#nvarchar#!#varchar#!#varchar
-ntyp#!#src#!#col_test#!#r
+varchar#!#nvarchar#!#nvarchar#!#varchar#!#varchar
+ntyp#!#src#!#dbo#!#col_test#!#r
 ~~END~~
 
 
