@@ -325,24 +325,6 @@ extern void TDSBackendRun(Port *port, bool loadedSSL, char *extraOptions);
 extern void pe_init(void);
 extern void pe_fin(void);
 
-/* Functions in encoding/encoding_utils.c */
-extern char *server_to_any(const char *s, int len, int encoding);
-
-/* Functions in backend/utils/mb/conv.c */
-extern void tds_UtfToLocal(const unsigned char *utf, int len,
-		   unsigned char *iso,
-		   const pg_mb_radix_tree *map,
-		   const pg_utf_to_local_combined *cmap, int cmapsize,
-		   utf_local_conversion_func conv_func,
-		   int encoding);
-
-/* Functions in backend/utils/mb/conversion_procs */
-extern void utf8_to_win(int src_encoding, int dest_encoding, const unsigned char *src, unsigned char *result, int len);
-extern void utf8_to_big5(int src_encoding, int dest_encoding, const unsigned char *src, unsigned char *result, int len);
-extern void utf8_to_gbk(int src_encoding, int dest_encoding, const unsigned char *src, unsigned char *result, int len);
-extern void utf8_to_uhc(int src_encoding, int dest_encoding, const unsigned char *src, unsigned char *result, int len);
-extern void utf8_to_sjis(int src_encoding, int dest_encoding, const unsigned char *src, unsigned char *result, int len);
-
 /* Functions in backend/utils/adt/numeric.c */
 extern Numeric TdsSetVarFromStrWrapper(const char *str);
 extern int32_t numeric_get_typmod(Numeric num);
