@@ -1,0 +1,52 @@
+-- tsql
+CREATE DATABASE db_babel_3267;
+go
+
+USE db_babel_3267;
+go
+
+-- special character
+create table [T3267#] (c varchar(10));
+insert into [T3267#] values ('success');
+go
+~~ROW COUNT: 1~~
+
+
+-- space
+create table [T3267 a] (c varchar(10));
+insert into [T3267 a] values ('success');
+go
+~~ROW COUNT: 1~~
+
+
+-- single quote
+create table [T3267'b] (c varchar(10));
+insert into [T3267'b] values ('success');
+go
+~~ROW COUNT: 1~~
+
+
+-- backslash
+create table [T3267\c] (c varchar(10));
+insert into [T3267\c] values ('success');
+go
+~~ROW COUNT: 1~~
+
+
+
+-- double quote
+create table [T3267"d] (c varchar(10));
+insert into [T3267"d] values ('success');
+select relname, array_to_string(reloptions,',') reloptions from pg_class C where C.relname like 't3267%' order by relname;
+go
+~~ROW COUNT: 1~~
+
+~~START~~
+varchar#!#text
+t3267 a#!#<NULL>
+t3267"d#!#<NULL>
+t3267##!#<NULL>
+t3267'b#!#<NULL>
+t3267\c#!#<NULL>
+~~END~~
+

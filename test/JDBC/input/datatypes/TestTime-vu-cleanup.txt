@@ -1,0 +1,7 @@
+Drop table TestTime1
+Drop table TestTime2
+Drop table TestTime3
+Drop table TestTime4
+Drop table TestTime5
+Drop table TestTime6
+Drop table TestTime7
