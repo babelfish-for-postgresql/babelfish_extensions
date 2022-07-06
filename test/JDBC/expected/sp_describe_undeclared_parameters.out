@@ -31,6 +31,24 @@ int#!#varchar#!#int#!#nvarchar#!#smallint#!#tinyint#!#tinyint#!#int#!#varchar#!#
 ~~ERROR (Message: Unsupported use case in sp_describe_undeclared_parameters)~~
 
 
+EXEC sp_describe_undeclared_parameters @tsql = N'INSERT INTO simpletable VALUES (@P1), (@P2)'
+GO
+~~START~~
+int#!#varchar#!#int#!#nvarchar#!#smallint#!#tinyint#!#tinyint#!#int#!#varchar#!#varchar#!#varchar#!#nvarchar#!#int#!#varchar#!#varchar#!#varchar#!#bit#!#bit#!#bit#!#bit#!#bit#!#varchar#!#int#!#int
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Unsupported use case in sp_describe_undeclared_parameters)~~
+
+
+EXEC sp_describe_undeclared_parameters @tsql = N'INSERT INTO simpletable VALUES (@P1), (@P2), (@P3)'
+GO
+~~START~~
+int#!#varchar#!#int#!#nvarchar#!#smallint#!#tinyint#!#tinyint#!#int#!#varchar#!#varchar#!#varchar#!#nvarchar#!#int#!#varchar#!#varchar#!#varchar#!#bit#!#bit#!#bit#!#bit#!#bit#!#varchar#!#int#!#int
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Unsupported use case in sp_describe_undeclared_parameters)~~
+
+
 -- Done testing simple error scenario
 -- Set-up
 CREATE SCHEMA error_mapping;

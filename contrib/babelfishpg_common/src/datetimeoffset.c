@@ -17,6 +17,7 @@
 #include "fmgr.h"
 #include "miscadmin.h"
 #include "datetimeoffset.h"
+#include "datetime.h"
 
 static void AdjustDatetimeoffsetForTypmod(Timestamp *time, int32 typmod);
 static void CheckDatetimeoffsetRange(const tsql_datetimeoffset* df);
@@ -92,6 +93,17 @@ datetimeoffset_in(PG_FUNCTION_ARGS)
 	char		workbuf[MAXDATELEN + MAXDATEFIELDS];
 
 	datetimeoffset = (tsql_datetimeoffset *)palloc(DATETIMEOFFSET_LEN);
+
+	/* Set input to default '1900-01-01 00:00:00.* 00:00' if empty string encountered */
+ 	if (*str == '\0')
+	{
+		tsql_ts = initializeToDefaultDatetime();
+		AdjustDatetimeoffsetForTypmod(&tsql_ts, typmod);
+		datetimeoffset->tsql_ts = (int64)tsql_ts;
+		datetimeoffset->tsql_tz = 0;
+		PG_RETURN_DATETIMEOFFSET(datetimeoffset);
+	}
+
 	dterr = ParseDateTime(str, workbuf, sizeof(workbuf),
 						  field, ftype, MAXDATEFIELDS, &nf);
 

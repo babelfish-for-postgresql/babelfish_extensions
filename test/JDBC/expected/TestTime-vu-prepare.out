@@ -1,0 +1,188 @@
+Create table TestTime1(a1 time(6)) 
+
+prepst#!# Insert into TestTime1 Values(?) #!#Time|-|a1|-|12:45:37.123|-|0
+~~ROW COUNT: 1~~
+
+prepst#!#exec#!#Time|-|a1|-|12:45:37.123|-|3
+~~ROW COUNT: 1~~
+
+prepst#!#exec#!#Time|-|a1|-|12:45:37.12|-|2
+~~ROW COUNT: 1~~
+
+prepst#!#exec#!#Time|-|a1|-|12:45:37.1|-|1
+~~ROW COUNT: 1~~
+
+prepst#!#exec#!#Time|-|a1|-|12:45:37.1234|-|4
+~~ROW COUNT: 1~~
+
+prepst#!#exec#!#Time|-|a1|-|12:45:37.123456|-|6
+~~ROW COUNT: 1~~
+
+prepst#!#exec#!#Time|-|a1|-|12:45:37.123456|-|5
+~~ROW COUNT: 1~~
+
+prepst#!#exec#!#Time|-|a1|-|<NULL>
+~~ROW COUNT: 1~~
+
+
+Create table TestTime2(a2 time(5)) 
+
+prepst#!# Insert into TestTime2 Values(?) #!#Time|-|a2|-|12:45:37.123|-|0
+~~ROW COUNT: 1~~
+
+prepst#!#exec#!#Time|-|a2|-|12:45:37.123|-|3
+~~ROW COUNT: 1~~
+
+prepst#!#exec#!#Time|-|a2|-|12:45:37.12|-|2
+~~ROW COUNT: 1~~
+
+prepst#!#exec#!#Time|-|a2|-|12:45:37.1|-|1
+~~ROW COUNT: 1~~
+
+prepst#!#exec#!#Time|-|a2|-|12:45:37.1234|-|4
+~~ROW COUNT: 1~~
+
+prepst#!#exec#!#Time|-|a2|-|12:45:37.123456|-|6
+~~ROW COUNT: 1~~
+
+prepst#!#exec#!#Time|-|a2|-|12:45:37.123456|-|5
+~~ROW COUNT: 1~~
+
+prepst#!#exec#!#Time|-|a2|-|<NULL>
+~~ROW COUNT: 1~~
+
+
+Create table TestTime3(a3 time(4)) 
+
+prepst#!# Insert into TestTime3 Values(?) #!#Time|-|a3|-|12:45:37.123|-|0
+~~ROW COUNT: 1~~
+
+prepst#!#exec#!#Time|-|a3|-|12:45:37.123|-|3
+~~ROW COUNT: 1~~
+
+prepst#!#exec#!#Time|-|a3|-|12:45:37.12|-|2
+~~ROW COUNT: 1~~
+
+prepst#!#exec#!#Time|-|a3|-|12:45:37.1|-|1
+~~ROW COUNT: 1~~
+
+prepst#!#exec#!#Time|-|a3|-|12:45:37.1234|-|4
+~~ROW COUNT: 1~~
+
+prepst#!#exec#!#Time|-|a3|-|12:45:37.123456|-|6
+~~ROW COUNT: 1~~
+
+prepst#!#exec#!#Time|-|a3|-|12:45:37.123456|-|5
+~~ROW COUNT: 1~~
+
+prepst#!#exec#!#Time|-|a3|-|<NULL>
+~~ROW COUNT: 1~~
+
+
+Create table TestTime4(a4 time(3)) 
+
+prepst#!# Insert into TestTime4 Values(?) #!#Time|-|a4|-|12:45:37.123|-|0
+~~ROW COUNT: 1~~
+
+prepst#!#exec#!#Time|-|a4|-|12:45:37.123|-|3
+~~ROW COUNT: 1~~
+
+prepst#!#exec#!#Time|-|a4|-|12:45:37.12|-|2
+~~ROW COUNT: 1~~
+
+prepst#!#exec#!#Time|-|a4|-|12:45:37.1|-|1
+~~ROW COUNT: 1~~
+
+prepst#!#exec#!#Time|-|a4|-|12:45:37.1234|-|4
+~~ROW COUNT: 1~~
+
+prepst#!#exec#!#Time|-|a4|-|12:45:37.123456|-|6
+~~ROW COUNT: 1~~
+
+prepst#!#exec#!#Time|-|a4|-|12:45:37.123456|-|5
+~~ROW COUNT: 1~~
+
+prepst#!#exec#!#Time|-|a4|-|<NULL>
+~~ROW COUNT: 1~~
+
+
+Create table TestTime5(a5 time(2)) 
+
+prepst#!# Insert into TestTime5 Values(?) #!#Time|-|a5|-|12:45:37.123|-|0
+~~ROW COUNT: 1~~
+
+prepst#!#exec#!#Time|-|a5|-|12:45:37.123|-|3
+~~ROW COUNT: 1~~
+
+prepst#!#exec#!#Time|-|a5|-|12:45:37.12|-|2
+~~ROW COUNT: 1~~
+
+prepst#!#exec#!#Time|-|a5|-|12:45:37.1|-|1
+~~ROW COUNT: 1~~
+
+prepst#!#exec#!#Time|-|a5|-|12:45:37.1234|-|4
+~~ROW COUNT: 1~~
+
+prepst#!#exec#!#Time|-|a5|-|12:45:37.123456|-|6
+~~ROW COUNT: 1~~
+
+prepst#!#exec#!#Time|-|a5|-|12:45:37.123456|-|5
+~~ROW COUNT: 1~~
+
+prepst#!#exec#!#Time|-|a5|-|<NULL>
+~~ROW COUNT: 1~~
+
+
+Create table TestTime6(a6 time(1)) 
+
+prepst#!# Insert into TestTime6 Values(?) #!#Time|-|a6|-|12:45:37.123|-|0
+~~ROW COUNT: 1~~
+
+prepst#!#exec#!#Time|-|a6|-|12:45:37.123|-|3
+~~ROW COUNT: 1~~
+
+prepst#!#exec#!#Time|-|a6|-|12:45:37.12|-|2
+~~ROW COUNT: 1~~
+
+prepst#!#exec#!#Time|-|a6|-|12:45:37.1|-|1
+~~ROW COUNT: 1~~
+
+prepst#!#exec#!#Time|-|a6|-|12:45:37.1234|-|4
+~~ROW COUNT: 1~~
+
+prepst#!#exec#!#Time|-|a6|-|12:45:37.123456|-|6
+~~ROW COUNT: 1~~
+
+prepst#!#exec#!#Time|-|a6|-|12:45:37.123456|-|5
+~~ROW COUNT: 1~~
+
+prepst#!#exec#!#Time|-|a6|-|<NULL>
+~~ROW COUNT: 1~~
+
+
+Create table TestTime7(a7 time(0)) 
+
+prepst#!# Insert into TestTime7 Values(?) #!#Time|-|a7|-|12:45:37.123|-|0
+~~ROW COUNT: 1~~
+
+prepst#!#exec#!#Time|-|a7|-|12:45:37.123|-|3
+~~ROW COUNT: 1~~
+
+prepst#!#exec#!#Time|-|a7|-|12:45:37.12|-|2
+~~ROW COUNT: 1~~
+
+prepst#!#exec#!#Time|-|a7|-|12:45:37.1|-|1
+~~ROW COUNT: 1~~
+
+prepst#!#exec#!#Time|-|a7|-|12:45:37.1234|-|4
+~~ROW COUNT: 1~~
+
+prepst#!#exec#!#Time|-|a7|-|12:45:37.123456|-|6
+~~ROW COUNT: 1~~
+
+prepst#!#exec#!#Time|-|a7|-|12:45:37.123456|-|5
+~~ROW COUNT: 1~~
+
+prepst#!#exec#!#Time|-|a7|-|<NULL>
+~~ROW COUNT: 1~~
+

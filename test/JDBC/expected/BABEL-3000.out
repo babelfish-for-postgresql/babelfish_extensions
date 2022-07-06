@@ -23,7 +23,7 @@ exec sp_describe_first_result_set N'select * from var'
 go
 ~~START~~
 bit#!#int#!#varchar#!#bit#!#int#!#nvarchar#!#smallint#!#tinyint#!#tinyint#!#varchar#!#int#!#varchar#!#varchar#!#varchar#!#nvarchar#!#int#!#varchar#!#varchar#!#varchar#!#bit#!#bit#!#bit#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#bit#!#bit#!#bit#!#bit#!#bit#!#smallint#!#smallint#!#smallint#!#int#!#int#!#int#!#tinyint
-0#!#1#!#a#!#1#!#25#!#text#!#-1#!#0#!#0#!#bbf_unicode_cp1_ci_as#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#0#!#0#!#0#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#0#!#<NULL>#!#1#!#0#!#0#!#<NULL>#!#<NULL>#!#<NULL>#!#35#!#16#!#<NULL>#!#<NULL>
+0#!#1#!#a#!#1#!#25#!#text#!#-1#!#0#!#0#!#bbf_unicode_cp1_ci_as#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#0#!#0#!#0#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#0#!#<NULL>#!#1#!#0#!#0#!#<NULL>#!#<NULL>#!#<NULL>#!#35#!#16#!#13632521#!#52
 0#!#2#!#b#!#1#!#142#!#xml#!#-1#!#0#!#0#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#1#!#0#!#0#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#0#!#<NULL>#!#1#!#0#!#0#!#<NULL>#!#<NULL>#!#<NULL>#!#241#!#8100#!#<NULL>#!#<NULL>
 ~~END~~
 
