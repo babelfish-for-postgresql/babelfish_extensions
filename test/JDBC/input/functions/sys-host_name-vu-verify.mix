@@ -5,5 +5,8 @@
 SELECT HOST_NAME()
 GO
 
-SELECT DISTINCT hostname FROM sys.sysprocesses WHERE spid = @@SPID
+SELECT host_name_func()
+GO
+
+SELECT * FROM host_name_view
 GO
