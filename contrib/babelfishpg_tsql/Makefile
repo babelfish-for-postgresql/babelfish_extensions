@@ -65,6 +65,7 @@ OBJS += src/special_keywords.o
 OBJS += antlr/libantlr_tsql.a
 OBJS += src/multidb.o
 OBJS += src/json_funcs.o
+OBJS += src/pltsql_ruleutils.o
 
 export ANTLR4_JAVA_BIN=java
 export ANTLR4_RUNTIME_LIB=-lantlr4-runtime
