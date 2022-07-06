@@ -1,0 +1,76 @@
+Create table TestTime1(a1 time(6)) 
+
+prepst#!# Insert into TestTime1 Values(@a1) #!#Time|-|a1|-|12:45:37.123|-|0
+prepst#!#exec#!#Time|-|a1|-|12:45:37.123|-|3
+prepst#!#exec#!#Time|-|a1|-|12:45:37.12|-|2
+prepst#!#exec#!#Time|-|a1|-|12:45:37.1|-|1
+prepst#!#exec#!#Time|-|a1|-|12:45:37.1234|-|4
+prepst#!#exec#!#Time|-|a1|-|12:45:37.123456|-|6
+prepst#!#exec#!#Time|-|a1|-|12:45:37.123456|-|5
+prepst#!#exec#!#Time|-|a1|-|<NULL>
+
+Create table TestTime2(a2 time(5)) 
+
+prepst#!# Insert into TestTime2 Values(@a2) #!#Time|-|a2|-|12:45:37.123|-|0
+prepst#!#exec#!#Time|-|a2|-|12:45:37.123|-|3
+prepst#!#exec#!#Time|-|a2|-|12:45:37.12|-|2
+prepst#!#exec#!#Time|-|a2|-|12:45:37.1|-|1
+prepst#!#exec#!#Time|-|a2|-|12:45:37.1234|-|4
+prepst#!#exec#!#Time|-|a2|-|12:45:37.123456|-|6
+prepst#!#exec#!#Time|-|a2|-|12:45:37.123456|-|5
+prepst#!#exec#!#Time|-|a2|-|<NULL>
+
+Create table TestTime3(a3 time(4)) 
+
+prepst#!# Insert into TestTime3 Values(@a3) #!#Time|-|a3|-|12:45:37.123|-|0
+prepst#!#exec#!#Time|-|a3|-|12:45:37.123|-|3
+prepst#!#exec#!#Time|-|a3|-|12:45:37.12|-|2
+prepst#!#exec#!#Time|-|a3|-|12:45:37.1|-|1
+prepst#!#exec#!#Time|-|a3|-|12:45:37.1234|-|4
+prepst#!#exec#!#Time|-|a3|-|12:45:37.123456|-|6
+prepst#!#exec#!#Time|-|a3|-|12:45:37.123456|-|5
+prepst#!#exec#!#Time|-|a3|-|<NULL>
+
+Create table TestTime4(a4 time(3)) 
+
+prepst#!# Insert into TestTime4 Values(@a4) #!#Time|-|a4|-|12:45:37.123|-|0
+prepst#!#exec#!#Time|-|a4|-|12:45:37.123|-|3
+prepst#!#exec#!#Time|-|a4|-|12:45:37.12|-|2
+prepst#!#exec#!#Time|-|a4|-|12:45:37.1|-|1
+prepst#!#exec#!#Time|-|a4|-|12:45:37.1234|-|4
+prepst#!#exec#!#Time|-|a4|-|12:45:37.123456|-|6
+prepst#!#exec#!#Time|-|a4|-|12:45:37.123456|-|5
+prepst#!#exec#!#Time|-|a4|-|<NULL>
+
+Create table TestTime5(a5 time(2)) 
+
+prepst#!# Insert into TestTime5 Values(@a5) #!#Time|-|a5|-|12:45:37.123|-|0
+prepst#!#exec#!#Time|-|a5|-|12:45:37.123|-|3
+prepst#!#exec#!#Time|-|a5|-|12:45:37.12|-|2
+prepst#!#exec#!#Time|-|a5|-|12:45:37.1|-|1
+prepst#!#exec#!#Time|-|a5|-|12:45:37.1234|-|4
+prepst#!#exec#!#Time|-|a5|-|12:45:37.123456|-|6
+prepst#!#exec#!#Time|-|a5|-|12:45:37.123456|-|5
+prepst#!#exec#!#Time|-|a5|-|<NULL>
+
+Create table TestTime6(a6 time(1)) 
+
+prepst#!# Insert into TestTime6 Values(@a) #!#Time|-|a6|-|12:45:37.123|-|0
+prepst#!#exec#!#Time|-|a6|-|12:45:37.123|-|3
+prepst#!#exec#!#Time|-|a6|-|12:45:37.12|-|2
+prepst#!#exec#!#Time|-|a6|-|12:45:37.1|-|1
+prepst#!#exec#!#Time|-|a6|-|12:45:37.1234|-|4
+prepst#!#exec#!#Time|-|a6|-|12:45:37.123456|-|6
+prepst#!#exec#!#Time|-|a6|-|12:45:37.123456|-|5
+prepst#!#exec#!#Time|-|a6|-|<NULL>
+
+Create table TestTime7(a7 time(0)) 
+
+prepst#!# Insert into TestTime7 Values(@a7) #!#Time|-|a7|-|12:45:37.123|-|0
+prepst#!#exec#!#Time|-|a7|-|12:45:37.123|-|3
+prepst#!#exec#!#Time|-|a7|-|12:45:37.12|-|2
+prepst#!#exec#!#Time|-|a7|-|12:45:37.1|-|1
+prepst#!#exec#!#Time|-|a7|-|12:45:37.1234|-|4
+prepst#!#exec#!#Time|-|a7|-|12:45:37.123456|-|6
+prepst#!#exec#!#Time|-|a7|-|12:45:37.123456|-|5
+prepst#!#exec#!#Time|-|a7|-|<NULL>

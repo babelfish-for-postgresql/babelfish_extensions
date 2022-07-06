@@ -16,7 +16,9 @@
 
 
 #include "access/hash.h"
+#include "babelfishpg_common.h"
 #include "catalog/pg_collation.h"
+#include "catalog/pg_type.h"
 #include "fmgr.h"
 #include "libpq/pqformat.h"
 #include "nodes/nodeFuncs.h"
@@ -33,9 +35,11 @@
 #include "utils/cash.h"
 #include "utils/date.h"
 #include "utils/datetime.h"
+#include "utils/syscache.h"
 #include "utils/uuid.h"
 #include "utils/timestamp.h"
 #include "utils/numeric.h"
+#include "typecode.h"
 
 int  TsqlUTF8LengthInUTF16(const void *vin, int len);
 void TsqlCheckUTF16Length_varchar(const char *s_data, int32 len, int32 maxlen, bool isExplicit);
@@ -44,6 +48,45 @@ void TsqlCheckUTF16Length_bpchar_input(const char *s, int32 len, int32 maxlen, i
 void TsqlCheckUTF16Length_varchar_input(const char *s, int32 len, int32 maxlen);
 void *tsql_varchar_input(const char *s, size_t len, int32 atttypmod);
 static inline int varcharTruelen(VarChar *arg);
+
+#define DEFAULT_LCID 1033
+
+/*
+ * is_basetype_nchar_nvarchar - given datatype is nvarchar or nchar 
+ *     or created over nvarchar or nchar.
+ */
+static bool 
+is_basetype_nchar_nvarchar(Oid typid)
+{
+	if (tsql_nvarchar_oid == InvalidOid)
+	 	tsql_nvarchar_oid = lookup_tsql_datatype_oid("nvarchar");
+	if (tsql_nchar_oid == InvalidOid)
+	 	tsql_nchar_oid = lookup_tsql_datatype_oid("nchar");
+
+	for (;;)
+	{
+		HeapTuple	tup;
+		Form_pg_type typTup;
+
+		if (typid == tsql_nvarchar_oid || typid == tsql_nchar_oid)
+			return true;
+
+		tup = SearchSysCache1(TYPEOID, ObjectIdGetDatum(typid));
+		if (!HeapTupleIsValid(tup))
+			elog(ERROR, "cache lookup failed for type %u", typid);
+		typTup = (Form_pg_type) GETSTRUCT(tup);
+		if (typTup->typtype != TYPTYPE_DOMAIN)
+		{
+			/* Not a domain, so done */
+			ReleaseSysCache(tup);
+			break;
+		}
+		typid = typTup->typbasetype;
+		ReleaseSysCache(tup);
+	}
+	return false;
+}
+
 
 /*
  * GetUTF8CodePoint - extract the next Unicode code point from 1..4
@@ -303,6 +346,7 @@ void TsqlCheckUTF16Length_bpchar_input(const char *s, int32 len, int32 maxlen, i
 /*  Function Registeration  */
 PG_FUNCTION_INFO_V1(bpcharin);
 PG_FUNCTION_INFO_V1(bpchar);
+PG_FUNCTION_INFO_V1(nchar);
 PG_FUNCTION_INFO_V1(bpcharrecv);
 
 PG_FUNCTION_INFO_V1(bpchar2int2);
@@ -313,6 +357,7 @@ PG_FUNCTION_INFO_V1(bpchar2float8);
 
 PG_FUNCTION_INFO_V1(varcharin);
 PG_FUNCTION_INFO_V1(varchar);
+PG_FUNCTION_INFO_V1(nvarchar);
 PG_FUNCTION_INFO_V1(varcharrecv);
 PG_FUNCTION_INFO_V1(varchareq);
 PG_FUNCTION_INFO_V1(varcharne);
@@ -449,6 +494,127 @@ varcharrecv(PG_FUNCTION_ARGS)
  */
 Datum
 varchar(PG_FUNCTION_ARGS)
+{
+	VarChar    *source = PG_GETARG_VARCHAR_PP(0);	/* source string is in UTF8 */
+	int32		typmod = PG_GETARG_INT32(1);
+	bool		isExplicit = PG_GETARG_BOOL(2);
+	int32		byteLen;
+	int32		maxByteLen;
+	size_t		maxmblen;
+	int		i;
+	char		*s_data;
+	coll_info_t	collInfo = (coll_info_t) {0, NULL, DEFAULT_LCID, 0, 0, 0, 0, 0};
+	int 		charLength;
+	char 		*tmp = NULL;	/* To hold the string encoded in target column's collation. */
+	char		*resStr = NULL; /* To hold the final string in UTF8 encoding. */
+	int		enc;
+	int		encodedByteLen;
+
+	/* If type of target is NVARCHAR then handle it differently. */
+	if (fcinfo->flinfo->fn_expr && is_basetype_nchar_nvarchar(((FuncExpr *) fcinfo->flinfo->fn_expr)->funcresulttype))
+		return nvarchar(fcinfo);
+
+	byteLen = VARSIZE_ANY_EXHDR(source);
+	s_data = VARDATA_ANY(source);
+	maxByteLen = typmod - VARHDRSZ;
+
+	/* No work if typmod is invalid or supplied data fits it already */
+	if (maxByteLen < 0)
+		PG_RETURN_VARCHAR_P(source);
+
+	/* Try to find the lcid corresponding to the collation of the target column. */
+	if ((pltsql_plugin_handler_ptr) && (pltsql_plugin_handler_ptr)->lookup_collation_table_callback)
+	{
+		if (fcinfo->flinfo->fn_expr && ((FuncExpr *)fcinfo->flinfo->fn_expr)->funccollid == DEFAULT_COLLATION_OID)
+			collInfo = (pltsql_plugin_handler_ptr)->lookup_collation_table_callback(CLUSTER_COLLATION_OID());
+		else if (fcinfo->flinfo->fn_expr)
+			collInfo = (pltsql_plugin_handler_ptr)->lookup_collation_table_callback(((FuncExpr *)fcinfo->flinfo->fn_expr)->funccollid);
+	}
+
+	/* Try to find the encoding based on lcid found above. */
+	if ((pltsql_plugin_handler_ptr) && (pltsql_plugin_handler_ptr)->TdsGetEncodingFromLcid)
+		enc = (pltsql_plugin_handler_ptr)->TdsGetEncodingFromLcid(collInfo.lcid);
+	else 
+		/* Default encoding of Babelfish database. */
+		enc = PG_UTF8;
+
+	/* count the number of chars present in input string. */
+	charLength = pg_mbstrlen_with_len(s_data, byteLen);
+
+	/* 
+	 * Optimisation: Check if we can accommodate charLength number of chars considering every char requires 
+	 * max number of bytes for given encoding.
+	 */
+	if (charLength * pg_encoding_max_length(enc) <= maxByteLen)
+		PG_RETURN_VARCHAR_P(source);
+
+	/*  And encode the input string (usually in UTF8 encoding) in desired encoding. */
+	if ((pltsql_plugin_handler_ptr) && (pltsql_plugin_handler_ptr)->TsqlEncodingConversion)
+	{
+		tmp = (pltsql_plugin_handler_ptr)->TsqlEncodingConversion(s_data, byteLen, enc, &encodedByteLen);
+		byteLen = encodedByteLen;
+	}
+	else
+	{
+		ereport(ERROR, 
+				(errcode(ERRCODE_INTERNAL_ERROR),
+				errmsg("Could not encode the input string to the collation of target column")));
+	}
+
+	/* 
+	 * We used byteLen here because we are interested in byte length of input string
+	 * encoded in target column's collation.
+	 */
+	if (tmp && byteLen <= maxByteLen)
+	{
+		if (tmp != s_data)
+			pfree(tmp);
+		PG_RETURN_VARCHAR_P(source);
+	}
+
+	/* only reach here if string is too long... */
+
+	/* 
+	 * Truncate multibyte string (already encoded to the collation of target column) 
+	 * preserving multibyte boundary.
+	 */
+	maxmblen = pg_encoding_mbcliplen(enc, tmp, byteLen, maxByteLen);
+
+	if (!isExplicit &&
+		!(suppress_string_truncation_error_hook && (*suppress_string_truncation_error_hook)()))
+	{
+		for (i = maxmblen; i < byteLen; i++)
+			if (tmp[i] != ' ')
+				ereport(ERROR,
+						(errcode(ERRCODE_STRING_DATA_RIGHT_TRUNCATION),
+						 errmsg("value too long for type character varying(%d)",
+								maxByteLen)));
+	}
+
+	/* Encode the input string back to UTF8 */
+	resStr = pg_any_to_server(tmp, maxmblen, enc);
+
+	if (tmp && s_data != tmp)
+		pfree(tmp);
+
+	/* Output of pg_any_to_server would always be NULL terminated So we can use cstring_to_text directly. */
+	PG_RETURN_VARCHAR_P((VarChar *) cstring_to_text(resStr));
+}
+
+/*
+ * Converts a NVARCHAR type to the specified size.
+ *
+ * maxlen is the typmod, ie, declared length plus VARHDRSZ bytes.
+ * isExplicit is true if this is for an explicit cast to nvarchar(N).
+ *
+ * Truncation rules: for an explicit cast, silently truncate to the given
+ * length; for an implicit cast, raise error unless extra characters are
+ * all spaces.  (This is sort-of per SQL: the spec would actually have us
+ * raise a "completion condition" for the explicit cast case, but Postgres
+ * hasn't got such a concept.)
+ */
+Datum
+nvarchar(PG_FUNCTION_ARGS)
 {
 	VarChar    *source = PG_GETARG_VARCHAR_PP(0);
 	int32		typmod = PG_GETARG_INT32(1);
@@ -887,6 +1053,134 @@ bpcharrecv(PG_FUNCTION_ARGS)
  */
 Datum
 bpchar(PG_FUNCTION_ARGS)
+{
+	BpChar	   *source = PG_GETARG_BPCHAR_PP(0);	/* source string in UTF8 */
+	int32		maxByteLen = PG_GETARG_INT32(1);
+	bool		isExplicit = PG_GETARG_BOOL(2);
+	BpChar		*result;
+	int32		byteLen;
+	char		*r;
+	char		*s_data;
+	int			i;
+	int		charLen;	/* number of characters in the input string + VARHDRSZ */
+	char		*tmp = NULL;    /* To hold the string encoded in target column's collation. */
+	char		*resStr = NULL;	/* To hold the final string in UTF8 encoding. */
+	coll_info_t	collInfo = (coll_info_t) {0, NULL, DEFAULT_LCID, 0, 0, 0, 0, 0};
+	int			enc;
+	int 		blankSpace = 0;		/* How many blank space we need to pad. */
+	int 		encodedByteLen;
+
+	/* If type of target is NCHAR then handle it differently. */
+	if (fcinfo->flinfo->fn_expr && is_basetype_nchar_nvarchar(((FuncExpr *) fcinfo->flinfo->fn_expr)->funcresulttype))
+		return nchar(fcinfo);
+
+	/* No work if typmod is invalid */
+	if (maxByteLen < (int32) VARHDRSZ)
+		PG_RETURN_BPCHAR_P(source);
+
+	maxByteLen -= VARHDRSZ;
+
+	byteLen = VARSIZE_ANY_EXHDR(source);
+	s_data = VARDATA_ANY(source);
+
+	/* Try to find the lcid corresponding to the collation of the target column. */
+	if ((pltsql_plugin_handler_ptr) && (pltsql_plugin_handler_ptr)->lookup_collation_table_callback)
+	{
+		if (fcinfo->flinfo->fn_expr && ((FuncExpr *)fcinfo->flinfo->fn_expr)->funccollid == DEFAULT_COLLATION_OID)
+			collInfo = (pltsql_plugin_handler_ptr)->lookup_collation_table_callback(CLUSTER_COLLATION_OID());
+		else if (fcinfo->flinfo->fn_expr)
+			collInfo = (pltsql_plugin_handler_ptr)->lookup_collation_table_callback(((FuncExpr *)fcinfo->flinfo->fn_expr)->funccollid);
+	}
+
+	/* Try to find the encoding based on lcid found above. */
+	if ((pltsql_plugin_handler_ptr) && (pltsql_plugin_handler_ptr)->TdsGetEncodingFromLcid)
+		enc = (pltsql_plugin_handler_ptr)->TdsGetEncodingFromLcid(collInfo.lcid);
+	else 
+		/* Default encoding of Babelfish database. */
+		enc = PG_UTF8;
+
+	/* And encode the input string (usually in UTF8 encoding) in desired encoding. */
+	if ((pltsql_plugin_handler_ptr) && (pltsql_plugin_handler_ptr)->TsqlEncodingConversion)
+	{
+		tmp = (pltsql_plugin_handler_ptr)->TsqlEncodingConversion(s_data, byteLen, enc, &encodedByteLen);
+		byteLen = encodedByteLen;
+	}
+	else
+	{
+		ereport(ERROR, 
+				(errcode(ERRCODE_INTERNAL_ERROR),
+				errmsg("Could not encode the input string to the collation of target column")));
+	}
+
+	if (byteLen == maxByteLen)
+		PG_RETURN_BPCHAR_P(source);
+
+	if (byteLen > maxByteLen)
+	{
+		/*
+		 * Verify that extra characters are spaces, and clip them off
+		 * preserving multibyte boundary.
+		 */
+		size_t		maxmblen;
+
+		maxmblen = pg_encoding_mbcliplen(enc, tmp, byteLen, maxByteLen);
+
+		if (!isExplicit &&
+			!(suppress_string_truncation_error_hook && (*suppress_string_truncation_error_hook)()))
+		{
+			for (i = maxmblen; i < byteLen; i++)
+				if (tmp[i] != ' ')
+					ereport(ERROR,
+							(errcode(ERRCODE_STRING_DATA_RIGHT_TRUNCATION),
+							 errmsg("value too long for type character(%d)",
+									maxByteLen)));
+		}
+
+		/* Encode the input string back to UTF8 */
+		resStr = pg_any_to_server(tmp, maxmblen, enc);
+		byteLen = strlen(resStr);
+	}
+	else
+	{
+		blankSpace = maxByteLen - byteLen;
+		/* Encode the input string back to UTF8 */
+		resStr = pg_any_to_server(tmp, byteLen, enc);
+
+		/* And override the len with actual length of string (encoded in UTF-8) */
+		if (resStr != tmp)
+			byteLen = strlen(resStr);
+	}
+
+	result = palloc(byteLen + blankSpace + VARHDRSZ);
+	SET_VARSIZE(result, byteLen + blankSpace + VARHDRSZ);
+	r = VARDATA(result);
+
+	memcpy(r, resStr, byteLen);
+
+	/* blank pad the string if necessary */
+	if (blankSpace > 0)
+		memset(r + byteLen, ' ', blankSpace);
+	
+	if (tmp && s_data != tmp)
+		pfree(tmp);
+
+	PG_RETURN_BPCHAR_P(result);
+}
+
+/*
+ * Converts a NCHAR type to the specified size.
+ *
+ * maxlen is the typmod, ie, declared length plus VARHDRSZ bytes.
+ * isExplicit is true if this is for an explicit cast to nchar(N).
+ *
+ * Truncation rules: for an explicit cast, silently truncate to the given
+ * length; for an implicit cast, raise error unless extra characters are
+ * all spaces.  (This is sort-of per SQL: the spec would actually have us
+ * raise a "completion condition" for the explicit cast case, but Postgres
+ * hasn't got such a concept.)
+ */
+Datum
+nchar(PG_FUNCTION_ARGS)
 {
 	BpChar	   *source = PG_GETARG_BPCHAR_PP(0);
 	int32		maxlen = PG_GETARG_INT32(1);
