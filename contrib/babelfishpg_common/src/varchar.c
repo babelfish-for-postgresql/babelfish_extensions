@@ -1071,7 +1071,6 @@ bpchar(PG_FUNCTION_ARGS)
 
 	byteLen = VARSIZE_ANY_EXHDR(source);
 	s_data = VARDATA_ANY(source);
-
 	/* 
 	 * Try to find the lcid corresponding to the collation of the target column.
 	 */
