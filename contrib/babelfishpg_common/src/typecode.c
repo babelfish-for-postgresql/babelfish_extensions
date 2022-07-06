@@ -11,6 +11,7 @@
 #include "catalog/namespace.h"
 #include "catalog/pg_namespace.h"
 #include "catalog/pg_type.h"
+#include "utils/lsyscache.h"
 
 
 /*  Memory context  */
@@ -366,3 +367,68 @@ is_tsql_datetimeoffset_datatype(Oid oid)
 	return tsql_datetimeoffset_oid == oid;
 }
 
+/*
+ * handle_type_and_collation - is implemented to handle the domain id and
+ * collation id assigned to FuncExpr of the target column. (Maily for target types
+ * based on [n][var]char including domains created over it.)
+ */
+void 
+handle_type_and_collation(Node *node, Oid typeid, Oid collationid)
+{
+	FuncExpr *expr;
+
+	/*
+	 * We want to preserve the datatype and collation of the target column, so that it can be 
+	 * used later in datatype input function. 
+	 */
+	if (nodeTag(node) == T_FuncExpr)
+		expr = (FuncExpr *) node;
+	/* 
+	 * If datatype of target column is created as domain over varchar or char (e.g., nvarchar or nchar)
+	 * Or if datatypes is user defined datatype created over [n][var]char
+	 * then override funcresulttype with the oid of the domain type and store the collation using
+	 * funccollid field so that we can make distinction inside input function to handle the input.
+	 */
+	else if (nodeTag(node) == T_CoerceToDomain &&
+			 ((CoerceToDomain *) node)->arg &&
+			 nodeTag(((CoerceToDomain *) node)->arg) == T_FuncExpr)
+		expr = (FuncExpr *) ((CoerceToDomain *) node)->arg;
+	else if (nodeTag(node) == T_RelabelType &&
+			 ((RelabelType *) node)->arg &&
+			 nodeTag(((RelabelType *) node)->arg) == T_CoerceToDomain &&
+			 ((CoerceToDomain *) ((RelabelType *) node)->arg)->arg &&
+			 nodeTag(((CoerceToDomain *) ((RelabelType *) node)->arg)->arg) == T_FuncExpr)
+		expr = (FuncExpr *) ((CoerceToDomain *) ((RelabelType *) node)->arg)->arg;
+	else
+		return ;
+
+	if (!check_target_type_is_sys_varchar(expr->funcid))
+		return;
+
+	expr->funcresulttype = typeid;
+
+	if (OidIsValid(collationid))
+		expr->funccollid = collationid;
+
+	return;
+}
+
+/*
+ * check_target_type_is_varchar - checks whether target type is [n][var]char based on supplied funcid
+ */
+bool
+check_target_type_is_sys_varchar(Oid funcid)
+{
+	char *func_namespace = NULL;
+	char *funcname = NULL;
+
+	func_namespace = get_namespace_name(get_func_namespace(funcid));
+	if (!func_namespace || strcmp("sys", func_namespace) != 0)
+		return false;
+
+	funcname = get_func_name(funcid);
+	if (!funcname || (strcmp("varchar", funcname) != 0 && strcmp("bpchar", funcname) != 0))
+		return false;
+
+	return true;
+}
