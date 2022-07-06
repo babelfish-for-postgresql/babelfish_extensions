@@ -7,61 +7,81 @@
 #include "utils/memutils.h"
 #include "utils/syscache.h"
 
-#include "src/include/tds_int.h"
+#include "src/encoding/encoding.h"
 
-static unsigned char *do_encoding_conversion(unsigned char *src, int len, int src_encoding, int dest_encoding);
+static unsigned char *do_encoding_conversion(unsigned char *src, int len, int src_encoding, int dest_encoding, int *encodedByteLen);
 
 /*
  * Convert server encoding to any encoding.
- *
- * See the notes about string conversion functions at the top of this file.
+ * 
+ * s: input string encoded in server's encoding
+ * len: byte length of input string s
+ * encoding: desired encoding in which input string should be encoded to
+ * encodedByteLen: byte length of output string encoded in desired encoding
  */
 char *
-server_to_any(const char *s, int len, int encoding)
+server_to_any(const char *s, int len, int encoding, int *encodedByteLen)
 {
 	if (len <= 0)
+	{
+		*encodedByteLen = len;
 		return (char *) s;		/* empty string is always valid */
+	}
 
 	if (encoding == GetDatabaseEncoding() ||
 		encoding == PG_SQL_ASCII)
+	{
+		*encodedByteLen = len;
 		return (char *) s;		/* assume data is valid */
+	}
 
 	if (GetDatabaseEncoding() == PG_SQL_ASCII)
 	{
 		/* No conversion is possible, but we must validate the result */
 		(void) pg_verify_mbstr(encoding, s, len, false);
+		encodedByteLen = len;
 		return (char *) s;
 	}
 	return (char *) do_encoding_conversion((unsigned char *) s,
 											  len,
 											  GetDatabaseEncoding(),
-											  encoding);
+											  encoding,
+											  encodedByteLen);
 }
 
 /*
  * Convert src string to another encoding (general case).
  *
- * See the notes about string conversion functions at the top of this file.
  */
 static unsigned char *
 do_encoding_conversion(unsigned char *src, int len,
-						  int src_encoding, int dest_encoding)
+						  int src_encoding, int dest_encoding, int *encodedByteLen)
 {
 	unsigned char *result;
 
 	if (len <= 0)
+	{
+		*encodedByteLen = len;
 		return src;				/* empty string is always valid */
+	}
 
 	if (src_encoding == dest_encoding)
+	{
+		*encodedByteLen = len;
 		return src;				/* no conversion required, assume valid */
+	}
 
 	if (dest_encoding == PG_SQL_ASCII)
+	{
+		*encodedByteLen = len;
 		return src;				/* any string is valid in SQL_ASCII */
+	}
 
 	if (src_encoding == PG_SQL_ASCII)
 	{
 		/* No conversion is possible, but we must validate the result */
 		(void) pg_verify_mbstr(dest_encoding, (const char *) src, len, false);
+		*encodedByteLen = len;
 		return src;
 	}
 
@@ -88,15 +108,15 @@ do_encoding_conversion(unsigned char *src, int len,
 							   (Size) len * MAX_CONVERSION_GROWTH + 1);
 
         if (dest_encoding == PG_BIG5)
-                utf8_to_big5(src_encoding, dest_encoding, src, result, len);
+                *encodedByteLen = utf8_to_big5(src_encoding, dest_encoding, src, result, len);
         else if (dest_encoding == PG_GBK)
-                utf8_to_gbk(src_encoding, dest_encoding, src, result, len);
+                *encodedByteLen = utf8_to_gbk(src_encoding, dest_encoding, src, result, len);
         else if (dest_encoding == PG_UHC)
-                utf8_to_uhc(src_encoding, dest_encoding, src, result, len);
+                *encodedByteLen = utf8_to_uhc(src_encoding, dest_encoding, src, result, len);
         else if (dest_encoding == PG_SJIS)
-                utf8_to_sjis(src_encoding, dest_encoding, src, result, len);
+                *encodedByteLen = utf8_to_sjis(src_encoding, dest_encoding, src, result, len);
         else
-	        utf8_to_win(src_encoding, dest_encoding, src, result, len);
+	        *encodedByteLen = utf8_to_win(src_encoding, dest_encoding, src, result, len);
 
 	/*
 	 * If the result is large, it's worth repalloc'ing to release any extra

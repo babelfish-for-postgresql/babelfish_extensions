@@ -1,19 +1,7 @@
-/*-------------------------------------------------------------------------
- *
- *	  Utility functions for conversion procs.
- *
- * Portions Copyright (c) 1996-2018, PostgreSQL Global Development Group
- * Portions Copyright (c) 1994, Regents of the University of California
- *
- * IDENTIFICATION
- *	  src/backend/utils/mb/conv.c
- *
- *-------------------------------------------------------------------------
- */
 #include "postgres.h"
 #include "mb/pg_wchar.h"
 
-#include "src/include/tds_int.h"
+#include "src/encoding/encoding.h"
 
 /*
  * comparison routine for bsearch()
@@ -38,16 +26,28 @@ compare3(const void *p1, const void *p2)
  * store 32bit character representation into multibyte stream
  */
 static inline unsigned char *
-store_coded_char(unsigned char *dest, uint32 code)
+store_coded_char(unsigned char *dest, uint32 code, int *byteLen)
 {
 	if (code & 0xff000000)
+	{
 		*dest++ = code >> 24;
+		*byteLen += 1;
+	}
 	if (code & 0x00ff0000)
+	{
 		*dest++ = code >> 16;
+		*byteLen += 1;
+	}
 	if (code & 0x0000ff00)
+	{
 		*dest++ = code >> 8;
+		*byteLen += 1;
+	}
 	if (code & 0x000000ff)
+	{
 		*dest++ = code;
+		*byteLen += 1;
+	}
 	return dest;
 }
 
@@ -185,20 +185,23 @@ pg_mb_radix_conv(const pg_mb_radix_tree *rt,
  * For each character, the cmap (if provided) is consulted first; if no match,
  * the map is consulted next; if still no match, the conv_func (if provided)
  * is applied.  An error is raised if no match is found.
+ * 
+ * Returns byte length of result string encoded in desired encoding
  *
  * See pg_wchar.h for more details about the data structures used here.
  */
-void
-tds_UtfToLocal(const unsigned char *utf, int len,
+int
+TsqlUtfToLocal(const unsigned char *utf, int len,
 		   unsigned char *iso,
 		   const pg_mb_radix_tree *map,
 		   const pg_utf_to_local_combined *cmap, int cmapsize,
 		   utf_local_conversion_func conv_func,
 		   int encoding)
 {
-	uint32		iutf;
-	int			l;
-	const pg_utf_to_local_combined *cp;
+	uint32	iutf;
+	int		l;
+	const	pg_utf_to_local_combined *cp;
+	int		encodedByteLen = 0;	
 
 	if (!PG_VALID_ENCODING(encoding))
 		ereport(ERROR,
@@ -227,6 +230,7 @@ tds_UtfToLocal(const unsigned char *utf, int len,
 		{
 			/* ASCII case is easy, assume it's one-to-one conversion */
 			*iso++ = *utf++;
+			encodedByteLen += 1;
 			continue;
 		}
 
@@ -311,7 +315,7 @@ tds_UtfToLocal(const unsigned char *utf, int len,
 
 				if (cp)
 				{
-					iso = store_coded_char(iso, cp->code);
+					iso = store_coded_char(iso, cp->code, &encodedByteLen);
 					continue;
 				}
 			}
@@ -329,7 +333,7 @@ tds_UtfToLocal(const unsigned char *utf, int len,
 
 			if (converted)
 			{
-				iso = store_coded_char(iso, converted);
+				iso = store_coded_char(iso, converted, &encodedByteLen);
 				continue;
 			}
 		}
@@ -341,7 +345,7 @@ tds_UtfToLocal(const unsigned char *utf, int len,
 
 			if (converted)
 			{
-				iso = store_coded_char(iso, converted);
+				iso = store_coded_char(iso, converted, &encodedByteLen);
 				continue;
 			}
 		}
@@ -350,7 +354,7 @@ tds_UtfToLocal(const unsigned char *utf, int len,
 		 * TSQL puts question mark '?'
 		 * if it can not recognize the UTF8 byte or byte sequence
 		 */
-		iso = store_coded_char(iso, '?');
+		iso = store_coded_char(iso, '?', &encodedByteLen);
 	}
 
 	/* if we broke out of loop early, must be invalid input */
@@ -358,4 +362,5 @@ tds_UtfToLocal(const unsigned char *utf, int len,
 		report_invalid_encoding(PG_UTF8, (const char *) utf, len);
 
 	*iso = '\0';
+	return encodedByteLen;
 }

@@ -257,7 +257,7 @@ RESET enable_domain_typmod;
 
 CREATE OR REPLACE FUNCTION sys.nvarchar(sys.nvarchar, integer, boolean)
 RETURNS sys.nvarchar
-AS 'babelfishpg_common', 'varchar'
+AS 'babelfishpg_common', 'nvarchar'
 LANGUAGE C IMMUTABLE STRICT PARALLEL SAFE;
 
 SET client_min_messages = 'ERROR';

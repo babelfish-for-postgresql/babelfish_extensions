@@ -11,6 +11,7 @@
 #include "storage/lock.h"
 #include "utils/builtins.h"
 #include "utils/elog.h"
+#include "utils/lsyscache.h"
 #include "utils/syscache.h"
 #include "datatypes.h"
 

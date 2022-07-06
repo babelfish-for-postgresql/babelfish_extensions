@@ -66,6 +66,13 @@ OBJS += antlr/libantlr_tsql.a
 OBJS += src/multidb.o
 OBJS += src/json_funcs.o
 OBJS += src/pltsql_ruleutils.o
+OBJS += src/encoding/encoding_utils.o
+OBJS += src/encoding/mb/conv.o
+OBJS += src/encoding/mb/conversion_procs/utf8_and_big5/utf8_and_big5.o
+OBJS += src/encoding/mb/conversion_procs/utf8_and_gbk/utf8_and_gbk.o
+OBJS += src/encoding/mb/conversion_procs/utf8_and_sjis/utf8_and_sjis.o
+OBJS += src/encoding/mb/conversion_procs/utf8_and_uhc/utf8_and_uhc.o
+OBJS += src/encoding/mb/conversion_procs/utf8_and_win/utf8_and_win.o
 
 export ANTLR4_JAVA_BIN=java
 export ANTLR4_RUNTIME_LIB=-lantlr4-runtime
@@ -227,6 +234,8 @@ src/backend_parser/scan-backend.c: src/backend_parser/scan-backend.l
 
 # Force these dependencies to be known even without dependency info built:
 src/backend_parser/gram-backend.o src/backend_parser/scan-backend.o src/backend_parser/parser.o: src/backend_parser/gram-backend.h
+
+include $(PGXS)
 
 .DEFAULT_GOAL := all
 .PHONY: sql/$(EXTENSION)--$(EXTVERSION).sql
