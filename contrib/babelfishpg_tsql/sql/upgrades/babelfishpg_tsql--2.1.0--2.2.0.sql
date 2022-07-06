@@ -788,18 +788,18 @@ ALTER VIEW sys.all_views RENAME TO all_views_deprecated_2_1_0;
 
 create or replace view sys.all_views as
 select
-    t.name
-  , t.object_id
-  , t.principal_id
-  , t.schema_id
-  , t.parent_object_id
-  , t.type
-  , t.type_desc
-  , t.create_date
-  , t.modify_date
-  , t.is_ms_shipped
-  , t.is_published
-  , t.is_schema_published
+    CAST(t.name as sys.SYSNAME) AS name
+  , CAST(t.object_id as int) AS object_id
+  , CAST(t.principal_id as int) AS principal_id
+  , CAST(t.schema_id as int) AS schema_id
+  , CAST(t.parent_object_id as int) AS parent_object_id
+  , CAST(t.type as sys.bpchar(2)) AS type
+  , CAST(t.type_desc as sys.nvarchar(60)) AS type_desc
+  , CAST(t.create_date as sys.datetime) AS create_date
+  , CAST(t.modify_date as sys.datetime) AS modify_date
+  , CAST(t.is_ms_shipped as sys.BIT) AS is_ms_shipped
+  , CAST(t.is_published as sys.BIT) AS is_published
+  , CAST(t.is_schema_published as sys.BIT) AS is_schema_published 
   , CAST(0 as sys.BIT) AS is_replicated
   , CAST(0 as sys.BIT) AS has_replication_filter
   , CAST(0 as sys.BIT) AS has_opaque_metadata
