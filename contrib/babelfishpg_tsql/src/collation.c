@@ -538,11 +538,20 @@ Node* pltsql_planner_node_transformer(PlannerInfo *root,
 }
 
 static void
-init_collation_callbacks(void)
+init_and_check_collation_callbacks(void)
 {
-	collation_callbacks **callbacks_ptr;
-	callbacks_ptr = (collation_callbacks **) find_rendezvous_variable("collation_callbacks"); 
-	collation_callbacks_ptr = *callbacks_ptr;
+	if (!collation_callbacks_ptr)
+	{
+		collation_callbacks **callbacks_ptr;
+		callbacks_ptr = (collation_callbacks **) find_rendezvous_variable("collation_callbacks"); 
+		collation_callbacks_ptr = *callbacks_ptr;
+
+		/* collation_callbacks_ptr is still not initialised */
+		if (!collation_callbacks_ptr)
+			ereport(ERROR,
+				(errcode(ERRCODE_INTERNAL_ERROR),
+				 errmsg("collation callbacks pointer is not initialised properly.")));
+	}
 }
 
 Oid
@@ -551,17 +560,9 @@ tsql_get_server_collation_oid_internal(bool missingOk)
 	if (OidIsValid(server_collation_oid))
 		return server_collation_oid;
 
-	if (!collation_callbacks_ptr)
-	{
-		/* Initialise collation callbacks */
-		init_collation_callbacks();
+	/* Initialise collation callbacks */
+	init_and_check_collation_callbacks();
 
-		/* collation_callbacks_ptr is still not initialised */
-		if (!collation_callbacks_ptr)
-			ereport(ERROR,
-				(errcode(ERRCODE_INTERNAL_ERROR),
-				 errmsg("collation callbacks pointer is not initialised properly.")));
-	}
 	server_collation_oid = (*collation_callbacks_ptr->get_server_collation_oid_internal)(missingOk);
 	return server_collation_oid;
 }
@@ -569,187 +570,99 @@ tsql_get_server_collation_oid_internal(bool missingOk)
 Datum
 tsql_collation_list_internal(PG_FUNCTION_ARGS)
 {
-	if (!collation_callbacks_ptr)
-	{
-		/* Initialise collation callbacks */
-		init_collation_callbacks();
+	/* Initialise collation callbacks */
+	init_and_check_collation_callbacks();
 
-		/* collation_callbacks_ptr is still not initialised */
-		if (!collation_callbacks_ptr)
-			ereport(ERROR,
-				(errcode(ERRCODE_INTERNAL_ERROR),
-				 errmsg("collation callbacks pointer is not initialised properly.")));
-	}
 	return (*collation_callbacks_ptr->collation_list_internal)(fcinfo);
 }
 
 Datum
 tsql_is_collated_ci_as_internal(PG_FUNCTION_ARGS)
 {
-	if (!collation_callbacks_ptr)
-	{
-		/* Initialise collation callbacks */
-		init_collation_callbacks();
+	/* Initialise collation callbacks */
+	init_and_check_collation_callbacks();
 
-		/* collation_callbacks_ptr is still not initialised */
-		if (!collation_callbacks_ptr)
-			ereport(ERROR,
-				(errcode(ERRCODE_INTERNAL_ERROR),
-				 errmsg("collation callbacks pointer is not initialised properly.")));
-	}
 	return (*collation_callbacks_ptr->is_collated_ci_as_internal)(fcinfo);
 }
 
 int
 tsql_collationproperty_helper(const char *collationaname, const char *property)
 {
-	if (!collation_callbacks_ptr)
-	{
-		/* Initialise collation callbacks */
-		init_collation_callbacks();
+	/* Initialise collation callbacks */
+	init_and_check_collation_callbacks();
 
-		/* collation_callbacks_ptr is still not initialised */
-		if (!collation_callbacks_ptr)
-			ereport(ERROR,
-				(errcode(ERRCODE_INTERNAL_ERROR),
-				 errmsg("collation callbacks pointer is not initialised properly.")));
-	}
 	return (*collation_callbacks_ptr->collationproperty_helper)(collationaname, property);
 }
 
 bool
 tsql_is_server_collation_CI_AS(void)
 {
-	if (!collation_callbacks_ptr)
-	{
-		/* Initialise collation callbacks */
-		init_collation_callbacks();
+	/* Initialise collation callbacks */
+	init_and_check_collation_callbacks();
 
-		/* collation_callbacks_ptr is still not initialised */
-		if (!collation_callbacks_ptr)
-			ereport(ERROR,
-				(errcode(ERRCODE_INTERNAL_ERROR),
-				 errmsg("collation callbacks pointer is not initialised properly.")));
-	}
 	return (*collation_callbacks_ptr->is_server_collation_CI_AS)();
 }
 
 bool
 tsql_is_valid_server_collation_name(const char *collationname)
 {
-	if (!collation_callbacks_ptr)
-	{
-		/* Initialise collation callbacks */
-		init_collation_callbacks();
+	/* Initialise collation callbacks */
+	init_and_check_collation_callbacks();
 
-		/* collation_callbacks_ptr is still not initialised */
-		if (!collation_callbacks_ptr)
-			ereport(ERROR,
-				(errcode(ERRCODE_INTERNAL_ERROR),
-				 errmsg("collation callbacks pointer is not initialised properly.")));
-	}
 	return (*collation_callbacks_ptr->is_valid_server_collation_name)(collationname);
 }
 
 int
 tsql_find_locale(const char *locale)
 {
-	if (!collation_callbacks_ptr)
-	{
-		/* Initialise collation callbacks */
-		init_collation_callbacks();
+	/* Initialise collation callbacks */
+	init_and_check_collation_callbacks();
 
-		/* collation_callbacks_ptr is still not initialised */
-		if (!collation_callbacks_ptr)
-			ereport(ERROR,
-				(errcode(ERRCODE_INTERNAL_ERROR),
-				 errmsg("collation callbacks pointer is not initialised properly.")));
-	}
 	return (*collation_callbacks_ptr->find_locale)(locale);
 }
 
 Oid
 tsql_get_oid_from_collidx(int collidx)
 {
-	if (!collation_callbacks_ptr)
-	{
-		/* Initialise collation callbacks */
-		init_collation_callbacks();
+	/* Initialise collation callbacks */
+	init_and_check_collation_callbacks();
 
-		/* collation_callbacks_ptr is still not initialised */
-		if (!collation_callbacks_ptr)
-			ereport(ERROR,
-				(errcode(ERRCODE_INTERNAL_ERROR),
-				 errmsg("collation callbacks pointer is not initialised properly.")));
-	}
 	return (*collation_callbacks_ptr->get_oid_from_collidx_internal)(collidx);
 }
 
 coll_info_t
 tsql_lookup_collation_table_internal(Oid oid)
 {
-	if (!collation_callbacks_ptr)
-	{
-		/* Initialise collation callbacks */
-		init_collation_callbacks();
+	/* Initialise collation callbacks */
+	init_and_check_collation_callbacks();
 
-		/* collation_callbacks_ptr is still not initialised */
-		if (!collation_callbacks_ptr)
-			ereport(ERROR,
-				(errcode(ERRCODE_INTERNAL_ERROR),
-				 errmsg("collation callbacks pointer is not initialised properly.")));
-	}
 	return (*collation_callbacks_ptr->lookup_collation_table_callback)(oid);
 }
 
 like_ilike_info_t 
 tsql_lookup_like_ilike_table_internal(Oid opno)
 {
-	if (!collation_callbacks_ptr)
-	{
-		/* Initialise collation callbacks */
-		init_collation_callbacks();
+	/* Initialise collation callbacks */
+	init_and_check_collation_callbacks();
 
-		/* collation_callbacks_ptr is still not initialised */
-		if (!collation_callbacks_ptr)
-			ereport(ERROR,
-				(errcode(ERRCODE_INTERNAL_ERROR),
-				 errmsg("collation callbacks pointer is not initialised properly.")));
-	}
 	return (*collation_callbacks_ptr->lookup_like_ilike_table)(opno);
 }
 
 int
 tsql_find_cs_as_collation_internal(int collidx)
 {
-	if (!collation_callbacks_ptr)
-	{
-		/* Initialise collation callbacks */
-		init_collation_callbacks();
+	/* Initialise collation callbacks */
+	init_and_check_collation_callbacks();
 
-		/* collation_callbacks_ptr is still not initialised */
-		if (!collation_callbacks_ptr)
-			ereport(ERROR,
-				(errcode(ERRCODE_INTERNAL_ERROR),
-				 errmsg("collation callbacks pointer is not initialised properly.")));
-	}
 	return (*collation_callbacks_ptr->find_cs_as_collation_internal)(collidx);
 }
 
 int
 tsql_find_collation_internal(const char *collation_name)
 {
-	if (!collation_callbacks_ptr)
-	{
-		/* Initialise collation callbacks */
-		init_collation_callbacks();
+	/* Initialise collation callbacks */
+	init_and_check_collation_callbacks();
 
-		/* collation_callbacks_ptr is still not initialised */
-		if (!collation_callbacks_ptr)
-			ereport(ERROR,
-				(errcode(ERRCODE_INTERNAL_ERROR),
-				 errmsg("collation callbacks pointer is not initialised properly.")));
-	}
 	return (*collation_callbacks_ptr->find_collation_internal)(collation_name);
 }
 
