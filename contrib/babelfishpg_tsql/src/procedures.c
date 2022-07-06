@@ -318,8 +318,8 @@ static char *sp_describe_first_result_set_query(char *viewName)
 			"WHEN t3.\"DATA_TYPE\" = \'decimal\' THEN 17 "
 			"ELSE t4.max_length END as int) "
 		"as tds_length, "
-		"CAST(NULL as int) as tds_collation_id, "
-		"CAST(NULL AS sys.tinyint) AS tds_collation_sort_id "
+		"CAST(COLLATIONPROPERTY(t4.collation_name, 'CollationId') as int) as tds_collation_id, "
+		"CAST(COLLATIONPROPERTY(t4.collation_name, 'SortId') as int) AS tds_collation_sort_id "
 	"FROM information_schema.columns t1, information_schema_tsql.columns t3, "
 	"sys.columns t4, pg_class t5 "
 	"LEFT OUTER JOIN (sys.babelfish_namespace_ext ext JOIN sys.pg_namespace_ext t6 ON t6.nspname = ext.nspname) "
@@ -383,7 +383,7 @@ sp_describe_first_result_set_internal(PG_FUNCTION_ARGS)
 		}
 
 		/* If TSQL Query is NULL string or a non-select query then send no rows. */
-		if (parsedbatch && strncmp(parsedbatch, "select", 6) == 0)
+		if (parsedbatch && strncasecmp(parsedbatch, "select", 6) == 0)
 		{
 			sp_describe_first_result_set_inprogress = true;
 			query = psprintf("CREATE VIEW %s as %s", sp_describe_first_result_set_view_name, parsedbatch);
