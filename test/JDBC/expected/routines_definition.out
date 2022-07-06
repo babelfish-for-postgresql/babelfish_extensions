@@ -18,11 +18,11 @@ CREATE PROCEDURE dbo.test_nvar(@a nvarchar, @b int= 8) AS BEGIN<newline>        
 ~~END~~
 
 
-select SPECIFIC_CATALOG, SPECIFIC_SCHEMA, SPECIFIC_NAME from information_schema_tsql.routines where SPECIFIC_NAME NOT LIKE 'xp%';
+select SPECIFIC_CATALOG, SPECIFIC_SCHEMA, SPECIFIC_NAME, ROUTINE_DEFINITION from information_schema.routines where SPECIFIC_NAME NOT LIKE 'xp%';
 go
 ~~START~~
-nvarchar#!#nvarchar#!#nvarchar
-master#!#dbo#!#test_nvar
+nvarchar#!#nvarchar#!#nvarchar#!#nvarchar
+master#!#dbo#!#test_nvar#!#CREATE PROCEDURE dbo.test_nvar(@a nvarchar, @b int= 8) AS BEGIN<newline>        SELECT @b=8;<newline>END
 ~~END~~
 
 
@@ -50,11 +50,11 @@ CREATE PROCEDURE sc1.test_si(@a smallint, @b int OUTPUT ) AS BEGIN<newline>     
 ~~END~~
 
 
-select ROUTINE_CATALOG, ROUTINE_SCHEMA, ROUTINE_NAME  from information_schema_tsql.routines where SPECIFIC_NAME NOT LIKE 'xp%';
+select ROUTINE_CATALOG, ROUTINE_SCHEMA, ROUTINE_NAME, ROUTINE_DEFINITION  from information_schema.routines where SPECIFIC_NAME NOT LIKE 'xp%';
 go
 ~~START~~
-nvarchar#!#nvarchar#!#nvarchar
-master#!#sc1#!#test_si
+nvarchar#!#nvarchar#!#nvarchar#!#nvarchar
+master#!#sc1#!#test_si#!#CREATE PROCEDURE sc1.test_si(@a smallint, @b int OUTPUT ) AS BEGIN<newline>        SELECT @a=70;<newline>	set @a=8;<newline>	SELECT @a as a;<newline>END;
 ~~END~~
 
 
@@ -85,11 +85,11 @@ CREATE FUNCTION dbo.test_dec(@quantity int, @list_price decimal(10,2), @discount
 ~~END~~
 
 
-select ROUTINE_TYPE, DATA_TYPE, CHARACTER_MAXIMUM_LENGTH  from information_schema_tsql.routines where SPECIFIC_NAME NOT LIKE 'xp%';
+select ROUTINE_TYPE, DATA_TYPE, CHARACTER_MAXIMUM_LENGTH, ROUTINE_DEFINITION  from information_schema.routines where SPECIFIC_NAME NOT LIKE 'xp%';
 go
 ~~START~~
-nvarchar#!#nvarchar#!#int
-FUNCTION#!#USER-DEFINED#!#<NULL>
+nvarchar#!#nvarchar#!#int#!#nvarchar
+FUNCTION#!#decimal#!#<NULL>#!#CREATE FUNCTION dbo.test_dec(@quantity int, @list_price decimal(10,2), @discount decimal(4,2)) RETURNS decimal(10,2) AS BEGIN<newline>    RETURN @quantity * @list_price * (1 - @discount);<newline>END;
 ~~END~~
 
 
@@ -110,12 +110,12 @@ CREATE PROCEDURE dbo.test_char(@ch char) AS BEGIN<newline>	set @ch ='c';<newline
 ~~END~~
 
 
-select CHARACTER_OCTET_LENGTH, COLLATION_NAME  from information_schema_tsql.routines where SPECIFIC_NAME NOT LIKE 'xp%';
+select CHARACTER_OCTET_LENGTH, COLLATION_NAME, ROUTINE_DEFINITION  from information_schema.routines where SPECIFIC_NAME NOT LIKE 'xp%';
 go
 ~~START~~
-int#!#nvarchar
-<NULL>#!#<NULL>
-<NULL>#!#<NULL>
+int#!#nvarchar#!#nvarchar
+<NULL>#!#<NULL>#!#CREATE PROCEDURE dbo.test_char(@ch char) AS BEGIN<newline>	set @ch ='c';<newline>	SELECT @ch as 's';<newline>END;
+<NULL>#!#<NULL>#!#CREATE FUNCTION dbo.test_dec(@quantity int, @list_price decimal(10,2), @discount decimal(4,2)) RETURNS decimal(10,2) AS BEGIN<newline>    RETURN @quantity * @list_price * (1 - @discount);<newline>END;
 ~~END~~
 
 
@@ -140,12 +140,12 @@ CREATE PROCEDURE dbo.test_ti(@a tinyint OUTPUT , @b bigint, @c float) AS BEGIN<n
 ~~END~~
 
 
-select ROUTINE_BODY, ROUTINE_DEFINITION  from information_schema_tsql.routines where SPECIFIC_NAME NOT LIKE 'xp%' ORDER BY ROUTINE_DEFINITION;
+select ROUTINE_BODY, ROUTINE_DEFINITION  from information_schema.routines where SPECIFIC_NAME NOT LIKE 'xp%' ORDER BY ROUTINE_DEFINITION;
 go
 ~~START~~
 nvarchar#!#nvarchar
-EXTERNAL#!#CREATE FUNCTION dbo.test_dec(@quantity int, @list_price decimal(10,2), @discount decimal(4,2)) RETURNS decimal(10,2) AS BEGIN<newline>    RETURN @quantity * @list_price * (1 - @discount);<newline>END;
-EXTERNAL#!#CREATE PROCEDURE dbo.test_ti(@a tinyint OUTPUT , @b bigint, @c float) AS BEGIN<newline>	set @a=79;<newline>	select @b=19;<newline>	SELECT @c * 20 +1000;<newline>END;
+SQL#!#CREATE FUNCTION dbo.test_dec(@quantity int, @list_price decimal(10,2), @discount decimal(4,2)) RETURNS decimal(10,2) AS BEGIN<newline>    RETURN @quantity * @list_price * (1 - @discount);<newline>END;
+SQL#!#CREATE PROCEDURE dbo.test_ti(@a tinyint OUTPUT , @b bigint, @c float) AS BEGIN<newline>	set @a=79;<newline>	select @b=19;<newline>	SELECT @c * 20 +1000;<newline>END;
 ~~END~~
 
 
@@ -170,12 +170,12 @@ CREATE PROCEDURE dbo.test_num(@a numeric(20,6) OUTPUT ) AS BEGIN<newline>	set @a
 ~~END~~
 
 
-select NUMERIC_PRECISION, NUMERIC_PRECISION_RADIX, NUMERIC_SCALE, ROUTINE_BODY, ROUTINE_DEFINITION  from information_schema_tsql.routines where SPECIFIC_NAME NOT LIKE 'xp%' ORDER BY ROUTINE_DEFINITION;
+select NUMERIC_PRECISION, NUMERIC_PRECISION_RADIX, NUMERIC_SCALE, ROUTINE_BODY, ROUTINE_DEFINITION  from information_schema.routines where SPECIFIC_NAME NOT LIKE 'xp%' ORDER BY ROUTINE_DEFINITION;
 go
 ~~START~~
 smallint#!#smallint#!#smallint#!#nvarchar#!#nvarchar
-<NULL>#!#10#!#<NULL>#!#EXTERNAL#!#CREATE FUNCTION dbo.test_dec(@quantity int, @list_price decimal(10,2), @discount decimal(4,2)) RETURNS decimal(10,2) AS BEGIN<newline>    RETURN @quantity * @list_price * (1 - @discount);<newline>END;
-<NULL>#!#<NULL>#!#<NULL>#!#EXTERNAL#!#CREATE PROCEDURE dbo.test_num(@a numeric(20,6) OUTPUT ) AS BEGIN<newline>	set @a = 65;<newline>	SELECT test_dec(23,60.76,43.88);<newline>	<newline>END;
+<NULL>#!#10#!#<NULL>#!#SQL#!#CREATE FUNCTION dbo.test_dec(@quantity int, @list_price decimal(10,2), @discount decimal(4,2)) RETURNS decimal(10,2) AS BEGIN<newline>    RETURN @quantity * @list_price * (1 - @discount);<newline>END;
+<NULL>#!#<NULL>#!#<NULL>#!#SQL#!#CREATE PROCEDURE dbo.test_num(@a numeric(20,6) OUTPUT ) AS BEGIN<newline>	set @a = 65;<newline>	SELECT test_dec(23,60.76,43.88);<newline>	<newline>END;
 ~~END~~
 
 
@@ -202,11 +202,11 @@ CREATE PROCEDURE dbo.test_time(@a time(5) OUTPUT , @b date OUTPUT ) AS BEGIN<new
 ~~END~~
 
 
-select ROUTINE_BODY, ROUTINE_DEFINITION, DATETIME_PRECISION, IS_DETERMINISTIC, SQL_DATA_ACCESS  from information_schema_tsql.routines where SPECIFIC_NAME NOT LIKE 'xp%' ORDER BY ROUTINE_DEFINITION;
+select ROUTINE_BODY, ROUTINE_DEFINITION, DATETIME_PRECISION, IS_DETERMINISTIC, SQL_DATA_ACCESS  from information_schema.routines where SPECIFIC_NAME NOT LIKE 'xp%' ORDER BY ROUTINE_DEFINITION;
 go
 ~~START~~
 nvarchar#!#nvarchar#!#smallint#!#nvarchar#!#nvarchar
-EXTERNAL#!#CREATE PROCEDURE dbo.test_time(@a time(5) OUTPUT , @b date OUTPUT ) AS BEGIN<newline>	set @a='12:54';<newline>	set @b='2022-06-11';<newline>END;#!#<NULL>#!#NO#!#MODIFIES
+SQL#!#CREATE PROCEDURE dbo.test_time(@a time(5) OUTPUT , @b date OUTPUT ) AS BEGIN<newline>	set @a='12:54';<newline>	set @b='2022-06-11';<newline>END;#!#<NULL>#!#NO#!#MODIFIES
 ~~END~~
 
 
@@ -229,11 +229,11 @@ CREATE PROCEDURE dbo.test_dt(@a datetime OUTPUT ) AS BEGIN<newline>	set @a='2022
 ~~END~~
 
 
-select IS_NULL_CALL, SCHEMA_LEVEL_ROUTINE, MAX_DYNAMIC_RESULT_SETS, IS_USER_DEFINED_CAST, IS_IMPLICITLY_INVOCABLE, ROUTINE_BODY, ROUTINE_DEFINITION  from information_schema_tsql.routines where SPECIFIC_NAME NOT LIKE 'xp%' ORDER BY ROUTINE_DEFINITION;
+select IS_NULL_CALL, SCHEMA_LEVEL_ROUTINE, MAX_DYNAMIC_RESULT_SETS, IS_USER_DEFINED_CAST, IS_IMPLICITLY_INVOCABLE, ROUTINE_BODY, ROUTINE_DEFINITION  from information_schema.routines where SPECIFIC_NAME NOT LIKE 'xp%' ORDER BY ROUTINE_DEFINITION;
 go
 ~~START~~
 nvarchar#!#nvarchar#!#smallint#!#nvarchar#!#nvarchar#!#nvarchar#!#nvarchar
-f#!#YES#!#0#!#NO#!#NO#!#EXTERNAL#!#CREATE PROCEDURE dbo.test_dt(@a datetime OUTPUT ) AS BEGIN<newline>	set @a='2022 -06-12 12:43';<newline>END;
+<NULL>#!#YES#!#0#!#NO#!#NO#!#SQL#!#CREATE PROCEDURE dbo.test_dt(@a datetime OUTPUT ) AS BEGIN<newline>	set @a='2022 -06-12 12:43';<newline>END;
 ~~END~~
 
 

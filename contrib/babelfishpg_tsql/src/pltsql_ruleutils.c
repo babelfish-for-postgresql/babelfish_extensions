@@ -386,6 +386,8 @@ PG_FUNCTION_INFO_V1(tsql_get_constraintdef);
  * function body.  To wit: the function body starts on a line that begins
  * with "AS ", and no preceding line will look like that.
  */
+PG_FUNCTION_INFO_V1(tsql_get_functiondef);
+
 Datum
 tsql_get_functiondef(PG_FUNCTION_ARGS)
 {
@@ -426,6 +428,14 @@ tsql_get_functiondef(PG_FUNCTION_ARGS)
 	appendStringInfo(&buf, "CREATE %s %s(",
 					 isfunction ? "FUNCTION" : "PROCEDURE",
 					 tsql_quote_qualified_identifier(nnsp, name));
+	
+	/* we will not pfree name because as we can see name = NameStr(proc->proname) 
+         * here we are not allocating extra space for name, we’re just using proc-> proname.
+         * also at the end, we’re releasing proctup (that will free proc->proname).  
+         */
+	pfree(nsp);
+	pfree(nnsp);
+        
 	tmp = SysCacheGetAttr(PROCOID, proctup, Anum_pg_proc_probin, &isnull);
         number_args=proc->pronargs; 
         if(isfunction) number_args++;
@@ -437,7 +447,9 @@ tsql_get_functiondef(PG_FUNCTION_ARGS)
 		appendStringInfoString(&buf, " RETURNS ");
 		print_function_rettype(&buf, proctup, &typmod_arr, number_args);
 	}
-
+        if(typmod_arr)
+		pfree(typmod_arr);
+ 
 	/* Emit some miscellaneous options on one line */
 	oldlen = buf.len;
 
@@ -529,10 +541,10 @@ tsql_get_functiondef(PG_FUNCTION_ARGS)
 
 	ReleaseSysCache(proctup);
 
+        pfree(prosrc);
+	
 	PG_RETURN_TEXT_P(string_to_text(buf.data));
 }
-
-PG_FUNCTION_INFO_V1(tsql_get_functiondef);
 
 /*
  * As of 9.4, we now use an MVCC snapshot for this.

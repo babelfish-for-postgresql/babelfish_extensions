@@ -592,10 +592,7 @@ CREATE OR REPLACE VIEW information_schema_tsql.routines AS
            CAST(NULL AS sys.nvarchar(128)) AS "UDT_CATALOG",
            CAST(NULL AS sys.nvarchar(128)) AS "UDT_SCHEMA",
            CAST(NULL AS sys.nvarchar(128)) AS "UDT_NAME",
-           CAST(CASE WHEN p.prokind = 'p' THEN NULL
-                 WHEN t.typelem <> 0 AND t.typlen = -1 THEN 'ARRAY'
-                 WHEN nc.nspname = 'pg_catalog' THEN format_type(t.oid, null)
-                 ELSE 'USER-DEFINED' END AS sys.nvarchar(128)) AS "DATA_TYPE",
+           CAST(CASE p.prokind WHEN 'p' THEN 'NULL' ELSE t.typname END AS sys.nvarchar(128)) AS "DATA_TYPE",
            CAST(information_schema_tsql._pgtsql_char_max_length(tsql_type_name, t.typtypmod)
                  AS int)
            AS "CHARACTER_MAXIMUM_LENGTH",
@@ -639,14 +636,15 @@ CREATE OR REPLACE VIEW information_schema_tsql.routines AS
             CAST(NULL AS sys.nvarchar(128)) AS "SCOPE_NAME",
             CAST(NULL AS bigint) AS "MAXIMUM_CARDINALITY",
             CAST(NULL AS sys.nvarchar(128)) AS "DTD_IDENTIFIER",
-            CAST(CASE WHEN l.lanname = 'sql' THEN 'SQL' ELSE 'EXTERNAL' END AS sys.nvarchar(30)) AS "ROUTINE_BODY",
+            CAST(CASE WHEN l.lanname = 'sql' THEN 'SQL' WHEN l.lanname = 'pltsql' THEN 'SQL' ELSE 'EXTERNAL' END AS sys.nvarchar(30)) AS "ROUTINE_BODY",
             CAST(sys.tsql_get_functiondef(p.oid) AS sys.nvarchar(4000)) AS "ROUTINE_DEFINITION",
             CAST(NULL AS sys.nvarchar(128)) AS "EXTERNAL_NAME",
             CAST(NULL AS sys.nvarchar(30)) AS "EXTERNAL_LANGUAGE",
             CAST(NULL AS sys.nvarchar(30)) AS "PARAMETER_STYLE",
             CAST(CASE WHEN p.provolatile = 'i' THEN 'YES' ELSE 'NO' END AS sys.nvarchar(10)) AS "IS_DETERMINISTIC",
 	    CAST(CASE p.prokind WHEN 'p' THEN 'MODIFIES' ELSE 'READS' END AS sys.nvarchar(30)) AS "SQL_DATA_ACCESS",
-            CAST(p.proisstrict AS sys.nvarchar(10)) AS "IS_NULL_CALL",
+            CAST(CASE WHEN p.prokind <> 'p' THEN
+              CASE WHEN p.proisstrict THEN 'YES' ELSE 'NO' END END AS sys.nvarchar(10)) AS "IS_NULL_CALL",
             CAST(NULL AS sys.nvarchar(128)) AS "SQL_PATH",
             CAST('YES' AS sys.nvarchar(10)) AS "SCHEMA_LEVEL_ROUTINE",
             CAST(0 AS smallint) AS "MAX_DYNAMIC_RESULT_SETS",
@@ -656,7 +654,7 @@ CREATE OR REPLACE VIEW information_schema_tsql.routines AS
             CAST(NULL AS sys.datetime) AS "LAST_ALTERED"
 
        FROM sys.pg_namespace_ext nc LEFT JOIN sys.babelfish_namespace_ext ext ON nc.nspname = ext.nspname,
-            pg_proc p,
+            pg_proc p inner join sys.schemas sch on sch.schema_id = p.pronamespace,
             pg_language l,
             pg_type t LEFT JOIN pg_collation co ON t.typcollation = co.oid,
             sys.translate_pg_type_to_tsql(t.typbasetype) AS tsql_type_name,

@@ -13,7 +13,7 @@ go
 select tsql_get_functiondef(oid) from pg_proc where proname='test_nvar';
 go
 
-select SPECIFIC_CATALOG, SPECIFIC_SCHEMA, SPECIFIC_NAME from information_schema_tsql.routines where SPECIFIC_NAME NOT LIKE 'xp%';
+select SPECIFIC_CATALOG, SPECIFIC_SCHEMA, SPECIFIC_NAME, ROUTINE_DEFINITION from information_schema.routines where SPECIFIC_NAME NOT LIKE 'xp%';
 go
 
 drop procedure test_nvar;
@@ -35,7 +35,7 @@ go
 select tsql_get_functiondef(oid) from pg_proc where proname='test_si';
 go
 
-select ROUTINE_CATALOG, ROUTINE_SCHEMA, ROUTINE_NAME  from information_schema_tsql.routines where SPECIFIC_NAME NOT LIKE 'xp%';
+select ROUTINE_CATALOG, ROUTINE_SCHEMA, ROUTINE_NAME, ROUTINE_DEFINITION  from information_schema.routines where SPECIFIC_NAME NOT LIKE 'xp%';
 go
 
 drop procedure sc1.test_si;
@@ -60,7 +60,7 @@ go
 select tsql_get_functiondef(oid) from pg_proc where proname='test_dec';
 go
 
-select ROUTINE_TYPE, DATA_TYPE, CHARACTER_MAXIMUM_LENGTH  from information_schema_tsql.routines where SPECIFIC_NAME NOT LIKE 'xp%';
+select ROUTINE_TYPE, DATA_TYPE, CHARACTER_MAXIMUM_LENGTH, ROUTINE_DEFINITION  from information_schema.routines where SPECIFIC_NAME NOT LIKE 'xp%';
 go
 
 #char
@@ -75,7 +75,7 @@ go
 select tsql_get_functiondef(oid) from pg_proc where proname='test_char';
 go
 
-select CHARACTER_OCTET_LENGTH, COLLATION_NAME  from information_schema_tsql.routines where SPECIFIC_NAME NOT LIKE 'xp%';
+select CHARACTER_OCTET_LENGTH, COLLATION_NAME, ROUTINE_DEFINITION  from information_schema.routines where SPECIFIC_NAME NOT LIKE 'xp%';
 go
 
 drop procedure test_char;
@@ -94,7 +94,7 @@ go
 select tsql_get_functiondef(oid) from pg_proc where proname='test_ti';
 go
 
-select ROUTINE_BODY, ROUTINE_DEFINITION  from information_schema_tsql.routines where SPECIFIC_NAME NOT LIKE 'xp%' ORDER BY ROUTINE_DEFINITION;
+select ROUTINE_BODY, ROUTINE_DEFINITION  from information_schema.routines where SPECIFIC_NAME NOT LIKE 'xp%' ORDER BY ROUTINE_DEFINITION;
 go
 
 drop procedure test_ti;
@@ -113,7 +113,7 @@ go
 select tsql_get_functiondef(oid) from pg_proc where proname='test_num';
 go
 
-select NUMERIC_PRECISION, NUMERIC_PRECISION_RADIX, NUMERIC_SCALE, ROUTINE_BODY, ROUTINE_DEFINITION  from information_schema_tsql.routines where SPECIFIC_NAME NOT LIKE 'xp%' ORDER BY ROUTINE_DEFINITION;
+select NUMERIC_PRECISION, NUMERIC_PRECISION_RADIX, NUMERIC_SCALE, ROUTINE_BODY, ROUTINE_DEFINITION  from information_schema.routines where SPECIFIC_NAME NOT LIKE 'xp%' ORDER BY ROUTINE_DEFINITION;
 go
 
 drop procedure test_num;
@@ -134,7 +134,7 @@ go
 select tsql_get_functiondef(oid) from pg_proc where proname='test_time';
 go
 
-select ROUTINE_BODY, ROUTINE_DEFINITION, DATETIME_PRECISION, IS_DETERMINISTIC, SQL_DATA_ACCESS  from information_schema_tsql.routines where SPECIFIC_NAME NOT LIKE 'xp%' ORDER BY ROUTINE_DEFINITION;
+select ROUTINE_BODY, ROUTINE_DEFINITION, DATETIME_PRECISION, IS_DETERMINISTIC, SQL_DATA_ACCESS  from information_schema.routines where SPECIFIC_NAME NOT LIKE 'xp%' ORDER BY ROUTINE_DEFINITION;
 go
 
 drop procedure test_time;
@@ -151,7 +151,7 @@ go
 select tsql_get_functiondef(oid) from pg_proc where proname='test_dt';
 go
 
-select IS_NULL_CALL, SCHEMA_LEVEL_ROUTINE, MAX_DYNAMIC_RESULT_SETS, IS_USER_DEFINED_CAST, IS_IMPLICITLY_INVOCABLE, ROUTINE_BODY, ROUTINE_DEFINITION  from information_schema_tsql.routines where SPECIFIC_NAME NOT LIKE 'xp%' ORDER BY ROUTINE_DEFINITION;
+select IS_NULL_CALL, SCHEMA_LEVEL_ROUTINE, MAX_DYNAMIC_RESULT_SETS, IS_USER_DEFINED_CAST, IS_IMPLICITLY_INVOCABLE, ROUTINE_BODY, ROUTINE_DEFINITION  from information_schema.routines where SPECIFIC_NAME NOT LIKE 'xp%' ORDER BY ROUTINE_DEFINITION;
 go
 
 drop procedure test_dt;
