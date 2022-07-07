@@ -734,7 +734,7 @@ MakeEmptyParameterToken(char *name, int atttypid, int32 atttypmod, int attcollat
 	Oid 			serverCollationOid;
 	uint32_t tdsVersion = GetClientTDSVersion();
 
-	coll_info_t cinfo = (pltsql_plugin_handler_ptr)->lookup_collation_table_callback(InvalidOid);
+	coll_info_t cinfo = TdsLookupCollationTableCallback(InvalidOid);
 	serverCollationOid = cinfo.oid;
 	if (unlikely(serverCollationOid == InvalidOid))
 		elog(FATAL, "Oid of default collation is not valid, This might mean that value of server_collation_name GUC is invalid");
@@ -1338,7 +1338,7 @@ PrepareRowDescription(TupleDesc typeinfo, List *targetlist, int16 *formats,
 		TdsColumnMetaData  *col = &colMetaData[attno];
 		uint32_t 			tdsVersion = GetClientTDSVersion();
 		TargetEntry *tle = NULL;
-		coll_info_t cinfo = (pltsql_plugin_handler_ptr)->lookup_collation_table_callback(InvalidOid);
+		coll_info_t cinfo = TdsLookupCollationTableCallback(InvalidOid);
 
 		serverCollationOid = cinfo.oid;
 		if (unlikely(serverCollationOid == InvalidOid))

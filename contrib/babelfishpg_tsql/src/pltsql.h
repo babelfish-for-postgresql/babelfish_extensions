@@ -1537,7 +1537,6 @@ typedef struct PLtsql_protocol_plugin
 	int (*sp_cursorfetch_callback)(int cursor_handle, int *fetchtype, int *rownum, int *nrows);
 	int (*sp_cursorclose_callback)(int cursor_handle);
 
-	coll_info_t (*lookup_collation_table_callback) (Oid oid);
 	int			*pltsql_read_proc_return_status;
 
 	void        (*send_column_metadata) (TupleDesc typeinfo, List *targetlist, int16 *formats);
@@ -1637,8 +1636,6 @@ extern plansource_revalidate_hook_type prev_plansource_revalidate_hook;
 extern pltsql_nextval_hook_type prev_pltsql_nextval_hook;
 extern pltsql_resetcache_hook_type prev_pltsql_resetcache_hook;
 
-extern PreCreateCollation_hook_type prev_PreCreateCollation_hook;
-extern TranslateCollation_hook_type prev_TranslateCollation_hook;
 extern char *pltsql_default_locale;
 
 extern int  pltsql_variable_conflict;
@@ -1766,24 +1763,6 @@ extern void pltsql_adddatum(PLtsql_datum *newdatum);
 extern int	pltsql_add_initdatums(int **varnos);
 extern void pltsql_HashTableInit(void);
 extern void reset_cache(void);
-
-/*
- * Functions in collation.c
- */
-extern void
-BabelfishPreCreateCollation_hook(
-	char collprovider,
-	bool collisdeterministic,
-	int32 collencoding,
-	const char **collcollate,
-	const char **collctype,
-	const char *collversion);
-
-extern const char *
-BabelfishTranslateCollation_hook(
-        const char *collname,
-	Oid collnamespace,
-	int32 encoding);
 
 /*
  * Functions in pl_handler.c

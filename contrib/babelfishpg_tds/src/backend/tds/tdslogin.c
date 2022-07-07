@@ -125,6 +125,7 @@ static int CheckGSSAuth(Port *port);
 int TdsDefaultLcid;
 int TdsDefaultCollationFlags;
 uint8_t TdsDefaultSortid;
+pg_enc TdsDefaultClientEncoding;
 
 static void TdsDefineDefaultCollationInfo(void);
 
@@ -2227,13 +2228,19 @@ get_tds_login_domainname(void)
 static void 
 TdsDefineDefaultCollationInfo(void)
 {
-	coll_info_t cinfo = (pltsql_plugin_handler_ptr)->lookup_collation_table_callback(InvalidOid);
+	coll_info_t cinfo;
+
+	StartTransactionCommand();
+	cinfo = TdsLookupCollationTableCallback(InvalidOid);
+	CommitTransactionCommand();
+
 	if (unlikely(cinfo.oid == InvalidOid))
 		elog(FATAL, "Oid of default collation is not valid, This might mean that value of server_collation_name GUC is invalid");
 
 	TdsDefaultLcid = cinfo.lcid;
 	TdsDefaultCollationFlags = cinfo.collateflags;
 	TdsDefaultSortid = (uint8_t) cinfo.sortid;
+	TdsDefaultClientEncoding = cinfo.enc;
 }
 
 /*
