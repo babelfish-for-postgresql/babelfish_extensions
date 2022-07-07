@@ -624,6 +624,11 @@ RETURNS text
 AS 'babelfishpg_tsql', 'tsql_get_functiondef'
 LANGUAGE C IMMUTABLE PARALLEL SAFE;
 
+CREATE OR REPLACE FUNCTION sys.tsql_get_returnTypmodValue(IN function_id OID DEFAULT NULL)
+RETURNS INTEGER
+AS 'babelfishpg_tsql', 'tsql_get_returnTypmodValue'
+LANGUAGE C IMMUTABLE PARALLEL SAFE;
+
 CREATE OR REPLACE VIEW information_schema_tsql.routines AS
     SELECT CAST(nc.dbname AS sys.nvarchar(128)) AS "SPECIFIC_CATALOG",
            CAST(ext.orig_name AS sys.nvarchar(128)) AS "SPECIFIC_SCHEMA",
