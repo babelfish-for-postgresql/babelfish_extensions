@@ -3204,6 +3204,13 @@ _PG_init(void)
 	/* Fixme: Handle loading of pgtsql_common_library_name library cleanly. */
 	load_libraries("babelfishpg_common", NULL, false);
 
+	/* Initialise collation callbacks */
+	init_and_check_collation_callbacks();
+
+	/* One time setup: Install hooks from babelfishpg_common extension. */
+	if (collation_callbacks_ptr && collation_callbacks_ptr->init_hooks_from_common_ext)
+		(*collation_callbacks_ptr->init_hooks_from_common_ext)();
+
 	pg_bindtextdomain(TEXTDOMAIN);
 
 	DefineCustomBoolVariable("babelfishpg_tsql.debug_parser",

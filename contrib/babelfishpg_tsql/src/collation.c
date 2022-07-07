@@ -537,7 +537,7 @@ Node* pltsql_planner_node_transformer(PlannerInfo *root,
 	return pltsql_predicate_transformer(expr);
 }
 
-static void
+void
 init_and_check_collation_callbacks(void)
 {
 	if (!collation_callbacks_ptr)

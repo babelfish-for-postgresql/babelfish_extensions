@@ -20,7 +20,7 @@
 
 #define NOT_FOUND -1
 
-collation_callbacks collation_callbacks_var = {NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL};
+collation_callbacks collation_callbacks_var = {NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL};
 
 /* Cached values derived from server_collation_name */
 static int server_collation_collidx = NOT_FOUND;
@@ -963,9 +963,6 @@ get_server_collation_oid_internal(bool missingOk)
 
 	init_server_collation_name();
 
-	if (server_collation_name == NULL)
-		return DEFAULT_COLLATION_OID;
-
 	/* The server_collation_name is permitted to be the name of a sql
 	 * or windows collation that is translated into a bbf collation.
 	 * If that's what it is then get the translated name.
@@ -1240,6 +1237,7 @@ get_collation_callbacks(void)
 {
 	if (!collation_callbacks_var.get_server_collation_oid_internal)
 	{
+		collation_callbacks_var.init_hooks_from_common_ext = &install_hooks;
 		collation_callbacks_var.get_server_collation_oid_internal = &get_server_collation_oid_internal;
 		collation_callbacks_var.collation_list_internal = &collation_list_internal;
 		collation_callbacks_var.is_collated_ci_as_internal = &is_collated_ci_as_internal;
