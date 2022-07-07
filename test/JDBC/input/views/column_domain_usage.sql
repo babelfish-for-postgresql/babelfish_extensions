@@ -75,5 +75,3 @@ go
 drop schema sch;
 go
 
-
-
