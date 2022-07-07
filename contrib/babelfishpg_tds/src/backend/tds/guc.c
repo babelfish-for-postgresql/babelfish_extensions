@@ -291,7 +291,7 @@ TdsDefineGucs(void)
 		"babelfishpg_tds.insert_bulk_kilobytes_per_batch",
 		gettext_noop("Sets the number of bytes per batch to be processed for Insert Bulk"),
 		NULL,
-		&tds_default_packet_size,
+		&insert_bulk_kilobytes_per_batch,
 		8, 1, INT_MAX,
 		PGC_SIGHUP,
 		GUC_NOT_IN_SAMPLE,
