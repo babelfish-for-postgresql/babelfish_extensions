@@ -97,4 +97,11 @@ extern bool is_tsql_datetimeoffset_datatype(Oid oid);
 extern void handle_type_and_collation(struct Node *node, Oid typid, Oid collationid);
 extern bool check_target_type_is_sys_varchar(Oid funcid);
 
+/* 
+ * TransMemoryContext Memory context is created to load hash table to 
+ * store 1. "OID to Persist Type Code Mapping" and 2. "OID to Persist 
+ * like to ilike Mapping" and 3. "OID to Persist Collation ID Mapping".
+ */
+extern MemoryContext TransMemoryContext;
+
 #endif

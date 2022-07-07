@@ -38,6 +38,7 @@
 #include "../src/multidb.h"
 #include "../src/session.h"
 #include "../src/catalog.h"
+#include "../src/collation.h"
 #include "../src/rolecmds.h"
 
 #define TSQL_STAT_GET_ACTIVITY_COLS 24
@@ -856,8 +857,10 @@ sp_datatype_info_helper(PG_FUNCTION_ARGS)
 	Tuplestorestate *tupstore;
 	MemoryContext per_query_ctx;
 	MemoryContext oldcontext;
-
 	int i;
+	Oid nspoid = get_namespace_oid("sys", false);
+	Oid sys_varcharoid = GetSysCacheOid2(TYPENAMENSP, Anum_pg_type_oid, CStringGetDatum("varchar"), ObjectIdGetDatum(nspoid));
+	Oid colloid = tsql_get_server_collation_oid_internal(false);
 
 	/* check to see if caller supports us returning a tuplestore */
 	if (rsinfo == NULL || !IsA(rsinfo, ReturnSetInfo))
@@ -872,19 +875,19 @@ sp_datatype_info_helper(PG_FUNCTION_ARGS)
 
 	/* Build tupdesc for result tuples. */
 	tupdesc = CreateTemplateTupleDesc(SP_DATATYPE_INFO_HELPER_COLS);
-	TupleDescInitEntry(tupdesc, (AttrNumber) 1, "TYPE_NAME", VARCHAROID, 20, 0);
+	TupleDescInitEntry(tupdesc, (AttrNumber) 1, "TYPE_NAME", sys_varcharoid, 20, 0);
 	TupleDescInitEntry(tupdesc, (AttrNumber) 2, "DATA_TYPE", INT4OID, -1, 0);
 	TupleDescInitEntry(tupdesc, (AttrNumber) 3, "PRECISION", INT8OID, -1, 0);
-	TupleDescInitEntry(tupdesc, (AttrNumber) 4, "LITERAL_PREFIX", VARCHAROID, 20, 0);
-	TupleDescInitEntry(tupdesc, (AttrNumber) 5, "LITERAL_SUFFIX", VARCHAROID, 20, 0);
-	TupleDescInitEntry(tupdesc, (AttrNumber) 6, "CREATE_PARAMS", VARCHAROID, 20, 0);
+	TupleDescInitEntry(tupdesc, (AttrNumber) 4, "LITERAL_PREFIX", sys_varcharoid, 20, 0);
+	TupleDescInitEntry(tupdesc, (AttrNumber) 5, "LITERAL_SUFFIX", sys_varcharoid, 20, 0);
+	TupleDescInitEntry(tupdesc, (AttrNumber) 6, "CREATE_PARAMS", sys_varcharoid, 20, 0);
 	TupleDescInitEntry(tupdesc, (AttrNumber) 7, "NULLABLE", INT4OID, -1, 0);
 	TupleDescInitEntry(tupdesc, (AttrNumber) 8, "CASE_SENSITIVE", INT4OID, -1, 0);
 	TupleDescInitEntry(tupdesc, (AttrNumber) 9, "SEARCHABLE", INT4OID, -1, 0);
 	TupleDescInitEntry(tupdesc, (AttrNumber) 10, "UNSIGNED_ATTRIBUTE", INT4OID, -1, 0);
 	TupleDescInitEntry(tupdesc, (AttrNumber) 11, "MONEY", INT4OID, -1, 0);
 	TupleDescInitEntry(tupdesc, (AttrNumber) 12, "AUTO_INCREMENT", INT4OID, -1, 0);
-	TupleDescInitEntry(tupdesc, (AttrNumber) 13, "LOCAL_TYPE_NAME", VARCHAROID, 20, 0);
+	TupleDescInitEntry(tupdesc, (AttrNumber) 13, "LOCAL_TYPE_NAME", sys_varcharoid, 20, 0);
 	TupleDescInitEntry(tupdesc, (AttrNumber) 14, "MINIMUM_SCALE", INT4OID, -1, 0);
 	TupleDescInitEntry(tupdesc, (AttrNumber) 15, "MAXIMUM_SCALE", INT4OID, -1, 0);
 	TupleDescInitEntry(tupdesc, (AttrNumber) 16, "SQL_DATA_TYPE", INT4OID, -1, 0);
@@ -894,8 +897,16 @@ sp_datatype_info_helper(PG_FUNCTION_ARGS)
 	TupleDescInitEntry(tupdesc, (AttrNumber) 20, "USERTYPE", INT4OID, -1, 0);
 	TupleDescInitEntry(tupdesc, (AttrNumber) 21, "LENGTH", INT4OID, -1, 0);
 	TupleDescInitEntry(tupdesc, (AttrNumber) 22, "SS_DATA_TYPE", INT2OID, -1, 0);
-	TupleDescInitEntry(tupdesc, (AttrNumber) 23, "PG_TYPE_NAME", VARCHAROID, 20, 0);
+	TupleDescInitEntry(tupdesc, (AttrNumber) 23, "PG_TYPE_NAME", sys_varcharoid, 20, 0);
 	tupdesc = BlessTupleDesc(tupdesc);
+
+	/* And set the correct collations to the required fields. */
+	TupleDescInitEntryCollation(tupdesc, (AttrNumber) 1, colloid);
+	TupleDescInitEntryCollation(tupdesc, (AttrNumber) 4, colloid);
+	TupleDescInitEntryCollation(tupdesc, (AttrNumber) 5, colloid);
+	TupleDescInitEntryCollation(tupdesc, (AttrNumber) 6, colloid);
+	TupleDescInitEntryCollation(tupdesc, (AttrNumber) 13, colloid);
+	TupleDescInitEntryCollation(tupdesc, (AttrNumber) 23, colloid);
 
 	per_query_ctx = rsinfo->econtext->ecxt_per_query_memory;
 	oldcontext = MemoryContextSwitchTo(per_query_ctx);

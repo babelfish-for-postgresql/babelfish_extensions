@@ -222,6 +222,45 @@ getRecvFunc(int funcId)
 	}
 }
 
+collation_callbacks *collation_callbacks_ptr = NULL;
+
+static void
+init_collation_callbacks(void)
+{
+	collation_callbacks **callbacks_ptr;
+	callbacks_ptr = (collation_callbacks **) find_rendezvous_variable("collation_callbacks"); 
+	collation_callbacks_ptr = *callbacks_ptr;
+}
+
+char * TdsEncodingConversion(const char *s, int len, int encoding, int *encodedByteLen)
+{
+	if (!collation_callbacks_ptr)
+		init_collation_callbacks();
+
+	if (collation_callbacks_ptr && collation_callbacks_ptr->EncodingConversion)
+		return (*collation_callbacks_ptr->EncodingConversion)(s, len, encoding, encodedByteLen);
+	else
+		/* unlikely */
+		ereport(ERROR, 
+				(errcode(ERRCODE_INTERNAL_ERROR),
+				 errmsg("Could not encode the string to the client encoding")));
+}
+
+coll_info_t TdsLookupCollationTableCallback(Oid oid)
+{
+	if (!collation_callbacks_ptr)
+		init_collation_callbacks();
+
+	if (collation_callbacks_ptr && collation_callbacks_ptr->lookup_collation_table_callback)
+		return (*collation_callbacks_ptr->lookup_collation_table_callback)(oid);
+	else
+	{
+		coll_info_t invalidCollInfo;
+		invalidCollInfo.oid = InvalidOid;
+		return invalidCollInfo;
+	}
+}
+
 #ifdef USE_LIBXML
 
 static int
@@ -2359,13 +2398,7 @@ TdsSendTypeVarchar(FmgrInfo *finfo, Datum value, void *vMetaData)
 
 	len = strlen(buf);
 
-	if (pltsql_plugin_handler_ptr && pltsql_plugin_handler_ptr->TsqlEncodingConversion)
-		destBuf = pltsql_plugin_handler_ptr->TsqlEncodingConversion(buf, len, col->encoding, &actualLen);
-	else
-		/* unlikely */
-		ereport(ERROR, 
-				(errcode(ERRCODE_INTERNAL_ERROR),
-				 errmsg("Could not encode the string to the client encoding")));
+	destBuf = TdsEncodingConversion(buf, len, col->encoding, &actualLen);
 	maxLen = col->metaEntry.type2.maxSize;
 
 	if (maxLen != 0xffff)
@@ -2402,14 +2435,7 @@ TdsSendTypeChar(FmgrInfo *finfo, Datum value, void *vMetaData)
 
 	len = strlen(buf);
 
-	if (pltsql_plugin_handler_ptr && pltsql_plugin_handler_ptr->TsqlEncodingConversion)
-		destBuf = pltsql_plugin_handler_ptr->TsqlEncodingConversion(buf, len, col->encoding, &actualLen);
-	else
-		/* unlikely */
-		ereport(ERROR, 
-				(errcode(ERRCODE_INTERNAL_ERROR),
-				 errmsg("Could not encode the string to the client encoding")));
-	
+	destBuf = TdsEncodingConversion(buf, len, col->encoding, &actualLen);
 	maxLen = col->metaEntry.type2.maxSize;
 
 	if (unlikely(maxLen != actualLen))
@@ -2478,13 +2504,7 @@ TdsSendTypeText(FmgrInfo *finfo, Datum value, void *vMetaData)
 	SendTextPtrInfo();
 
 	len = strlen(buf);
-	if (pltsql_plugin_handler_ptr && pltsql_plugin_handler_ptr->TsqlEncodingConversion)
-		destBuf = pltsql_plugin_handler_ptr->TsqlEncodingConversion(buf, len, col->encoding, &encodedByteLen);
-	else
-		/* unlikely */
-		ereport(ERROR, 
-				(errcode(ERRCODE_INTERNAL_ERROR),
-				 errmsg("Could not encode the string to the client encoding")));
+	destBuf = TdsEncodingConversion(buf, len, col->encoding, &encodedByteLen);
 
 	if ((rc = TdsPutUInt32LE(encodedByteLen)) == 0)
 		rc = TdsPutbytes(destBuf, encodedByteLen);
@@ -3416,15 +3436,7 @@ TdsSendTypeSqlvariant(FmgrInfo *finfo, Datum value, void *vMetaData)
 			 * from sql_variant sender for char class basetypes
 			 */
 			if (dataLen > 0)
-			{
-				if (pltsql_plugin_handler_ptr && pltsql_plugin_handler_ptr->TsqlEncodingConversion)
-					destBuf = pltsql_plugin_handler_ptr->TsqlEncodingConversion(buf + VARHDRSZ, dataLen, PG_WIN1252, &actualDataLen);
-				else
-					/* unlikely */
-					ereport(ERROR, 
-							(errcode(ERRCODE_INTERNAL_ERROR),
-							 errmsg("Could not encode the string to the client encoding")));
-			}
+				destBuf = TdsEncodingConversion(buf + VARHDRSZ, dataLen, PG_WIN1252, &actualDataLen);
 			else
 				/* We can not assume that buf would be NULL terminated. */
 				actualDataLen = 0;

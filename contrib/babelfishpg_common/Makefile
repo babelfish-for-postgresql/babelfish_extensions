@@ -22,6 +22,8 @@ DATA_built = \
     $(EXTENSION).control \
     sql/$(EXTENSION)--$(EXTVERSION).sql
 
+PG_CPPFLAGS += -I$(PG_SRC)
+
 OBJS  = src/babelfishpg_common.o
 OBJS += src/varchar.o
 OBJS += src/bit.o
@@ -36,6 +38,14 @@ OBJS += src/smalldatetime.o
 OBJS += src/datetimeoffset.o
 OBJS += src/sqlvariant.o
 OBJS += src/coerce.o
+OBJS += src/collation.o
+OBJS += src/encoding/encoding_utils.o
+OBJS += src/encoding/mb/conv.o
+OBJS += src/encoding/mb/conversion_procs/utf8_and_big5/utf8_and_big5.o
+OBJS += src/encoding/mb/conversion_procs/utf8_and_gbk/utf8_and_gbk.o
+OBJS += src/encoding/mb/conversion_procs/utf8_and_sjis/utf8_and_sjis.o
+OBJS += src/encoding/mb/conversion_procs/utf8_and_uhc/utf8_and_uhc.o
+OBJS += src/encoding/mb/conversion_procs/utf8_and_win/utf8_and_win.o
 
 PGXS := $(shell $(PG_CONFIG) --pgxs)
 include $(PGXS)

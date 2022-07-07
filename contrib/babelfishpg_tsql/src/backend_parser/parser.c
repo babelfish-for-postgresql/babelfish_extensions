@@ -47,9 +47,10 @@ babelfishpg_tsql_raw_parser(const char *str, RawParseMode mode)
 	pgtsql_base_yy_extra_type yyextra;
 	int			yyresult;
 	List	*raw_parsetree_list;
-	/* parse identifiers case-insensitively if the database collation is CI_AS
+	/* 
+	 * parse identifiers case-insensitively if the database collation is CI_AS
 	 */
-	pltsql_case_insensitive_identifiers = is_server_collation_CI_AS();
+	pltsql_case_insensitive_identifiers = tsql_is_server_collation_CI_AS();
 	
 	/* initialize the flex scanner */
 	yyscanner = pgtsql_scanner_init(str, &yyextra.core_yy_extra,

@@ -7,7 +7,7 @@
 #define DATATYPE_INFO_TABLE_ROWS 37
 
 typedef struct DatatypeInfo {
-	const char type_name[20];
+	const char *type_name;
 
 	/* data_type is OdbcVer and procedure dependent */
 	int	data_type_2;
@@ -15,16 +15,16 @@ typedef struct DatatypeInfo {
 	int	data_type_2_100;
 	int	data_type_3_100;
 	uint64	precision;
-	const char literal_prefix[20];
-	const char literal_suffix[20];
-	const char create_params[20];
+	const char *literal_prefix;
+	const char *literal_suffix;
+	const char *create_params;
 	int	nullable;
 	int	case_sensitive;
 	int	searchable;
 	int	unsigned_attribute;
 	int	money;
 	int	auto_increment;
-	const char local_type_name[20];
+	const char *local_type_name;
 	int	minimum_scale;
 	int	maximum_scale;
 	int	sql_data_type;
@@ -34,7 +34,7 @@ typedef struct DatatypeInfo {
 	int	usertype;
 	int	length;
 	int	ss_data_type;
-	const char pg_type_name[20];
+	const char *pg_type_name;
 } DatatypeInfo;
 
 /*
