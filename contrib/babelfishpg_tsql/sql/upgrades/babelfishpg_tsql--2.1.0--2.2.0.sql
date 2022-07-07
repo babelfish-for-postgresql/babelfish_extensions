@@ -1502,7 +1502,7 @@ create or replace view sys.dm_exec_sessions
   as
   select a.pid as session_id
     , a.backend_start::sys.datetime as login_time
-    , a.client_hostname::sys.nvarchar(128) as host_name
+    , d.host_name::sys.nvarchar(128) as host_name
     , a.application_name::sys.nvarchar(128) as program_name
     , d.client_pid as host_process_id
     , d.client_version as client_version

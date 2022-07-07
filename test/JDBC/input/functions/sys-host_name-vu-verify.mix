@@ -5,8 +5,29 @@
 SELECT HOST_NAME()
 GO
 
-SELECT host_name_func()
+SELECT * from host_name_func(@@SPID)
 GO
 
 SELECT * FROM host_name_view
+GO
+
+EXECUTE host_name_proc
+GO
+
+SELECT * from dm_exec_connections_func(@@SPID)
+GO
+
+SELECT * FROM dm_exec_connections_view
+GO
+
+EXECUTE dm_exec_connections_proc
+GO
+
+SELECT * from dm_exec_sessions_func(@@SPID)
+GO
+
+SELECT * FROM dm_exec_sessions_view
+GO
+
+EXECUTE dm_exec_sessions_proc
 GO
