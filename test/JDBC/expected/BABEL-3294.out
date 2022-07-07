@@ -7,6 +7,7 @@ go
 alter table babel_3294_t1 set (parallel_workers = 16)
 go
 
+-- Encourage use of parallel plans
 select set_config('force_parallel_mode', '1', false)
 go
 ~~START~~
@@ -39,6 +40,14 @@ on
 ~~END~~
 
 
+select set_config('babelfishpg_tsql.explain_costs', 'off', false)
+go
+~~START~~
+text
+off
+~~END~~
+
+
 set babelfish_showplan_all on
 go
 
@@ -47,9 +56,9 @@ go
 ~~START~~
 text
 Query Text: /*+ Set(max_parallel_workers_per_gather 1) */ select * from babel_3294_t1 t1 where a1 = 1                 
-Gather  (cost=0.00..28.75 rows=13 width=4)
+Gather
   Workers Planned: 1
-  ->  Parallel Seq Scan on babel_3294_t1 t1  (cost=0.00..28.75 rows=8 width=4)
+  ->  Parallel Seq Scan on babel_3294_t1 t1
         Filter: (a1 = 1)
 ~~END~~
 
@@ -59,9 +68,9 @@ go
 ~~START~~
 text
 Query Text: /*+ Set(max_parallel_workers_per_gather 2) */ select * from babel_3294_t1 t1 where a1 = 1                 
-Gather  (cost=0.00..23.28 rows=13 width=4)
+Gather
   Workers Planned: 2
-  ->  Parallel Seq Scan on babel_3294_t1 t1  (cost=0.00..23.28 rows=5 width=4)
+  ->  Parallel Seq Scan on babel_3294_t1 t1
         Filter: (a1 = 1)
 ~~END~~
 
@@ -71,9 +80,9 @@ go
 ~~START~~
 text
 Query Text: /*+ Set(max_parallel_workers_per_gather 4) */ select * from babel_3294_t1 t1 where a1 = 1                 
-Gather  (cost=0.00..17.97 rows=13 width=4)
+Gather
   Workers Planned: 4
-  ->  Parallel Seq Scan on babel_3294_t1 t1  (cost=0.00..17.97 rows=3 width=4)
+  ->  Parallel Seq Scan on babel_3294_t1 t1
         Filter: (a1 = 1)
 ~~END~~
 
@@ -83,9 +92,9 @@ go
 ~~START~~
 text
 Query Text: /*+ Set(max_parallel_workers_per_gather 8) */ select * from babel_3294_t1 t1 where a1 = 1                 
-Gather  (cost=0.00..13.98 rows=13 width=4)
+Gather
   Workers Planned: 8
-  ->  Parallel Seq Scan on babel_3294_t1 t1  (cost=0.00..13.98 rows=2 width=4)
+  ->  Parallel Seq Scan on babel_3294_t1 t1
         Filter: (a1 = 1)
 ~~END~~
 
@@ -95,21 +104,9 @@ go
 ~~START~~
 text
 Query Text: /*+ Set(max_parallel_workers_per_gather 16) */ select * from babel_3294_t1 t1 where a1 = 1                  
-Gather  (cost=0.00..11.99 rows=13 width=4)
+Gather
   Workers Planned: 16
-  ->  Parallel Seq Scan on babel_3294_t1 t1  (cost=0.00..11.99 rows=1 width=4)
-        Filter: (a1 = 1)
-~~END~~
-
-
-select * from babel_3294_t1 t1 where a1 = 1 option(maxdop 20)
-go
-~~START~~
-text
-Query Text: /*+ Set(max_parallel_workers_per_gather 20) */ select * from babel_3294_t1 t1 where a1 = 1                  
-Gather  (cost=0.00..11.99 rows=13 width=4)
-  Workers Planned: 16
-  ->  Parallel Seq Scan on babel_3294_t1 t1  (cost=0.00..11.99 rows=1 width=4)
+  ->  Parallel Seq Scan on babel_3294_t1 t1
         Filter: (a1 = 1)
 ~~END~~
 

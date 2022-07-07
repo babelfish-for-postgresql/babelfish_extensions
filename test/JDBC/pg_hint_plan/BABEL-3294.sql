@@ -7,6 +7,7 @@ go
 alter table babel_3294_t1 set (parallel_workers = 16)
 go
 
+-- Encourage use of parallel plans
 select set_config('force_parallel_mode', '1', false)
 go
 
@@ -17,6 +18,9 @@ select set_config('parallel_tuple_cost', '0', false)
 go
 
 select set_config('babelfishpg_tsql.enable_hint_mapping', 'on', false)
+go
+
+select set_config('babelfishpg_tsql.explain_costs', 'off', false)
 go
 
 set babelfish_showplan_all on
@@ -35,9 +39,6 @@ select * from babel_3294_t1 t1 where a1 = 1 option(maxdop 8)
 go
 
 select * from babel_3294_t1 t1 where a1 = 1 option(maxdop 16)
-go
-
-select * from babel_3294_t1 t1 where a1 = 1 option(maxdop 20)
 go
 
 set babelfish_showplan_all off
