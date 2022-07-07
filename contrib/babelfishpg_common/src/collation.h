@@ -69,8 +69,6 @@ typedef struct ht_like2ilike_entry{
 typedef struct collation_callbacks
 {
 	/* Function pointers set up by the plugin */
-	void (*init_hooks_from_common_ext)(void);
-
 	char* (*EncodingConversion)(const char *s, int len, int encoding, int *encodedByteLen);
 
 	Oid (*get_server_collation_oid_internal)(bool missingOk);
@@ -120,7 +118,6 @@ extern int init_like_ilike_table_internal(void);
 extern like_ilike_info lookup_like_ilike_table(Oid opno);
 extern int find_collation(const char *collation_name);
 Oid get_oid_from_collidx(int collidx);
-extern void install_hooks(void);
 
 extern collation_callbacks *get_collation_callbacks(void);
 

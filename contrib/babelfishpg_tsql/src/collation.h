@@ -41,8 +41,6 @@ typedef struct like_ilike_info
 typedef struct collation_callbacks
 {
 	/* Function pointers set up by the plugin */
-	void (*init_hooks_from_common_ext)(void);
-
 	char* (*EncodingConversion)(const char *s, int len, int encoding, int *encodedByteLen);
 
 	Oid (*get_server_collation_oid_internal)(bool missingOk);
@@ -82,11 +80,10 @@ extern bool tsql_is_server_collation_CI_AS(void);
 extern bool tsql_is_valid_server_collation_name(const char *collationname);
 extern int tsql_find_locale(const char *locale);
 extern Oid tsql_get_oid_from_collidx(int collidx);
-extern coll_info_t tsql_lookup_collation_table_internal(Oid oid);
-extern like_ilike_info_t tsql_lookup_like_ilike_table_internal(Oid opno);
-extern int tsql_find_cs_as_collation_internal(int collidx);
-extern int tsql_find_collation_internal(const char *collation_name);
-extern void init_and_check_collation_callbacks(void);
+coll_info_t tsql_lookup_collation_table_internal(Oid oid);
+like_ilike_info_t tsql_lookup_like_ilike_table_internal(Oid opno);
+int tsql_find_cs_as_collation_internal(int collidx);
+int tsql_find_collation_internal(const char *collation_name);
 
 extern Node* pltsql_planner_node_transformer(PlannerInfo *root,
 									  Node *expr,

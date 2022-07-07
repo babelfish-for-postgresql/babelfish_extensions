@@ -26,23 +26,6 @@ CLUSTER_COLLATION_OID_hook_type prev_CLUSTER_COLLATION_OID_hook = NULL;
 TranslateCollation_hook_type prev_TranslateCollation_hook = NULL;
 PreCreateCollation_hook_type prev_PreCreateCollation_hook = NULL;
 
-/*
- * init_hooks - init hooks and rendezvous variables required by other extension or 
- * by engine to make datatypes working properly.
- */
-void
-install_hooks(void)
-{
-	prev_CLUSTER_COLLATION_OID_hook = CLUSTER_COLLATION_OID_hook;
-	CLUSTER_COLLATION_OID_hook = BABELFISH_CLUSTER_COLLATION_OID;
-
-	prev_TranslateCollation_hook = TranslateCollation_hook;
-	TranslateCollation_hook = BabelfishTranslateCollation;
-
-	prev_PreCreateCollation_hook = PreCreateCollation_hook;
-	PreCreateCollation_hook = BabelfishPreCreateCollation_hook;
-}
-
 /* Module callbacks */
 void	_PG_init(void);
 void	_PG_fini(void);
@@ -61,6 +44,15 @@ _PG_init(void)
 
 	handle_type_and_collation_hook = handle_type_and_collation;
 	avoid_collation_override_hook = check_target_type_is_sys_varchar;
+
+	prev_CLUSTER_COLLATION_OID_hook = CLUSTER_COLLATION_OID_hook;
+	CLUSTER_COLLATION_OID_hook = BABELFISH_CLUSTER_COLLATION_OID;
+
+	prev_TranslateCollation_hook = TranslateCollation_hook;
+	TranslateCollation_hook = BabelfishTranslateCollation;
+
+	prev_PreCreateCollation_hook = PreCreateCollation_hook;
+	PreCreateCollation_hook = BabelfishPreCreateCollation_hook;
 }
 void
 _PG_fini(void)
