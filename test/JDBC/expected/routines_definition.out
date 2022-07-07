@@ -22,8 +22,6 @@ select SPECIFIC_CATALOG, SPECIFIC_SCHEMA, SPECIFIC_NAME, ROUTINE_DEFINITION from
 go
 ~~START~~
 nvarchar#!#nvarchar#!#nvarchar#!#nvarchar
-master#!#dbo#!#test#!#CREATE FUNCTION dbo.test(@a numeric(2,1)) RETURNS numeric(2,1) AS BEGIN return @a END;
-master#!#dbo#!#tests_dec#!#CREATE FUNCTION dbo.tests_dec(@quantity int, @list_price decimal(4,2), @discount decimal(4,2)) RETURNS decimal(4,2) AS BEGIN RETURN @quantity * @list_price * (1 - @discount);END;
 master#!#dbo#!#test_nvar#!#CREATE PROCEDURE dbo.test_nvar(@a nvarchar, @b int= 8) AS BEGIN<newline>        SELECT @b=8;<newline>END
 ~~END~~
 
@@ -56,8 +54,6 @@ select ROUTINE_CATALOG, ROUTINE_SCHEMA, ROUTINE_NAME, ROUTINE_DEFINITION  from i
 go
 ~~START~~
 nvarchar#!#nvarchar#!#nvarchar#!#nvarchar
-master#!#dbo#!#test#!#CREATE FUNCTION dbo.test(@a numeric(2,1)) RETURNS numeric(2,1) AS BEGIN return @a END;
-master#!#dbo#!#tests_dec#!#CREATE FUNCTION dbo.tests_dec(@quantity int, @list_price decimal(4,2), @discount decimal(4,2)) RETURNS decimal(4,2) AS BEGIN RETURN @quantity * @list_price * (1 - @discount);END;
 master#!#sc1#!#test_si#!#CREATE PROCEDURE sc1.test_si(@a smallint, @b int OUTPUT ) AS BEGIN<newline>        SELECT @a=70;<newline>	set @a=8;<newline>	SELECT @a as a;<newline>END;
 ~~END~~
 
@@ -93,8 +89,6 @@ select ROUTINE_TYPE, DATA_TYPE, CHARACTER_MAXIMUM_LENGTH, ROUTINE_DEFINITION  fr
 go
 ~~START~~
 nvarchar#!#nvarchar#!#int#!#nvarchar
-FUNCTION#!#numeric#!#<NULL>#!#CREATE FUNCTION dbo.test(@a numeric(2,1)) RETURNS numeric(2,1) AS BEGIN return @a END;
-FUNCTION#!#decimal#!#<NULL>#!#CREATE FUNCTION dbo.tests_dec(@quantity int, @list_price decimal(4,2), @discount decimal(4,2)) RETURNS decimal(4,2) AS BEGIN RETURN @quantity * @list_price * (1 - @discount);END;
 FUNCTION#!#decimal#!#<NULL>#!#CREATE FUNCTION dbo.test_dec(@quantity int, @list_price decimal(10,2), @discount decimal(4,2)) RETURNS decimal(10,2) AS BEGIN<newline>    RETURN @quantity * @list_price * (1 - @discount);<newline>END;
 ~~END~~
 
@@ -120,8 +114,6 @@ select CHARACTER_OCTET_LENGTH, COLLATION_NAME, ROUTINE_DEFINITION  from informat
 go
 ~~START~~
 int#!#nvarchar#!#nvarchar
-<NULL>#!#<NULL>#!#CREATE FUNCTION dbo.test(@a numeric(2,1)) RETURNS numeric(2,1) AS BEGIN return @a END;
-<NULL>#!#<NULL>#!#CREATE FUNCTION dbo.tests_dec(@quantity int, @list_price decimal(4,2), @discount decimal(4,2)) RETURNS decimal(4,2) AS BEGIN RETURN @quantity * @list_price * (1 - @discount);END;
 <NULL>#!#<NULL>#!#CREATE FUNCTION dbo.test_dec(@quantity int, @list_price decimal(10,2), @discount decimal(4,2)) RETURNS decimal(10,2) AS BEGIN<newline>    RETURN @quantity * @list_price * (1 - @discount);<newline>END;
 <NULL>#!#<NULL>#!#CREATE PROCEDURE dbo.test_char(@ch char) AS BEGIN<newline>	set @ch ='c';<newline>	SELECT @ch as 's';<newline>END;
 ~~END~~
@@ -152,9 +144,7 @@ select ROUTINE_BODY, ROUTINE_DEFINITION  from information_schema.routines where 
 go
 ~~START~~
 nvarchar#!#nvarchar
-SQL#!#CREATE FUNCTION dbo.test(@a numeric(2,1)) RETURNS numeric(2,1) AS BEGIN return @a END;
 SQL#!#CREATE FUNCTION dbo.test_dec(@quantity int, @list_price decimal(10,2), @discount decimal(4,2)) RETURNS decimal(10,2) AS BEGIN<newline>    RETURN @quantity * @list_price * (1 - @discount);<newline>END;
-SQL#!#CREATE FUNCTION dbo.tests_dec(@quantity int, @list_price decimal(4,2), @discount decimal(4,2)) RETURNS decimal(4,2) AS BEGIN RETURN @quantity * @list_price * (1 - @discount);END;
 SQL#!#CREATE PROCEDURE dbo.test_ti(@a tinyint OUTPUT , @b bigint, @c float) AS BEGIN<newline>	set @a=79;<newline>	select @b=19;<newline>	SELECT @c * 20 +1000;<newline>END;
 ~~END~~
 
@@ -184,9 +174,7 @@ select NUMERIC_PRECISION, NUMERIC_PRECISION_RADIX, NUMERIC_SCALE, ROUTINE_BODY, 
 go
 ~~START~~
 smallint#!#smallint#!#smallint#!#nvarchar#!#nvarchar
-2#!#10#!#1#!#SQL#!#CREATE FUNCTION dbo.test(@a numeric(2,1)) RETURNS numeric(2,1) AS BEGIN return @a END;
 10#!#10#!#2#!#SQL#!#CREATE FUNCTION dbo.test_dec(@quantity int, @list_price decimal(10,2), @discount decimal(4,2)) RETURNS decimal(10,2) AS BEGIN<newline>    RETURN @quantity * @list_price * (1 - @discount);<newline>END;
-4#!#10#!#2#!#SQL#!#CREATE FUNCTION dbo.tests_dec(@quantity int, @list_price decimal(4,2), @discount decimal(4,2)) RETURNS decimal(4,2) AS BEGIN RETURN @quantity * @list_price * (1 - @discount);END;
 <NULL>#!#<NULL>#!#<NULL>#!#SQL#!#CREATE PROCEDURE dbo.test_num(@a numeric(20,6) OUTPUT ) AS BEGIN<newline>	set @a = 65;<newline>	SELECT test_dec(23,60.76,43.88);<newline>	<newline>END;
 ~~END~~
 
@@ -218,8 +206,6 @@ select ROUTINE_BODY, ROUTINE_DEFINITION, DATETIME_PRECISION, IS_DETERMINISTIC, S
 go
 ~~START~~
 nvarchar#!#nvarchar#!#smallint#!#nvarchar#!#nvarchar
-SQL#!#CREATE FUNCTION dbo.test(@a numeric(2,1)) RETURNS numeric(2,1) AS BEGIN return @a END;#!#<NULL>#!#NO#!#READS
-SQL#!#CREATE FUNCTION dbo.tests_dec(@quantity int, @list_price decimal(4,2), @discount decimal(4,2)) RETURNS decimal(4,2) AS BEGIN RETURN @quantity * @list_price * (1 - @discount);END;#!#<NULL>#!#NO#!#READS
 SQL#!#CREATE PROCEDURE dbo.test_time(@a time(5) OUTPUT , @b date OUTPUT ) AS BEGIN<newline>	set @a='12:54';<newline>	set @b='2022-06-11';<newline>END;#!#<NULL>#!#NO#!#MODIFIES
 ~~END~~
 
@@ -247,8 +233,6 @@ select IS_NULL_CALL, SCHEMA_LEVEL_ROUTINE, MAX_DYNAMIC_RESULT_SETS, IS_USER_DEFI
 go
 ~~START~~
 nvarchar#!#nvarchar#!#smallint#!#nvarchar#!#nvarchar#!#nvarchar#!#nvarchar
-NO#!#YES#!#0#!#NO#!#NO#!#SQL#!#CREATE FUNCTION dbo.test(@a numeric(2,1)) RETURNS numeric(2,1) AS BEGIN return @a END;
-NO#!#YES#!#0#!#NO#!#NO#!#SQL#!#CREATE FUNCTION dbo.tests_dec(@quantity int, @list_price decimal(4,2), @discount decimal(4,2)) RETURNS decimal(4,2) AS BEGIN RETURN @quantity * @list_price * (1 - @discount);END;
 <NULL>#!#YES#!#0#!#NO#!#NO#!#SQL#!#CREATE PROCEDURE dbo.test_dt(@a datetime OUTPUT ) AS BEGIN<newline>	set @a='2022 -06-12 12:43';<newline>END;
 ~~END~~
 
@@ -277,9 +261,6 @@ drop procedure test_uid;
 go
 
 #check with different sqlbody.#
-
-drop TABLE if exists customers;
-go
 
 CREATE TABLE customers
 ( customer_id int NOT NULL,
@@ -328,8 +309,6 @@ CREATE PROCEDURE dbo.test_b2(@id int) AS BEGIN<newline>	select count(state) from
 
 
 drop procedure test_b2;
-go
-drop procedure if exists test_b3
 go
 
 create procedure test_b3(@name char(255), @city char(255), @address char(255), @state char(255), @cust_id int)
@@ -407,9 +386,6 @@ CREATE PROCEDURE dbo.test_b6(@id int) AS BEGIN<newline>	select city,state,zip_co
 drop procedure test_b6;
 go
 
-DROP  FUNCTION IF EXISTS test_bd7;
-go
-
 
 create function test_bd7 (@cost int)
 RETURNS INT
@@ -445,7 +421,7 @@ CREATE PROCEDURE dbo.test_bb(@a int, @b char(255), @c char(255), @d char(255)) A
 ~~END~~
 
 
-DROP PROCEDURE IF EXISTS test_bb;
+DROP PROCEDURE test_bb;
 go
 
 drop table customers;
@@ -473,9 +449,6 @@ CREATE FUNCTION dbo.test_b8(@a int, @b decimal(10,2), @c decimal(4,2)) RETURNS d
 
 
 drop function test_b8;
-go
-
-DROP  FUNCTION IF EXISTS test_bd9;
 go
 
 create function test_bd9(@x int, @y int)
@@ -538,10 +511,10 @@ CREATE FUNCTION s1.test_b11(@a varchar) RETURNS varchar AS BEGIN<newline>       
 ~~END~~
 
 
-DROP  FUNCTION IF EXISTS test_bd7;
+DROP  FUNCTION test_bd7;
 go
 
-DROP  FUNCTION IF EXISTS test_bd9;
+DROP  FUNCTION test_bd9;
 go
 
 drop function s1.test_b11;
@@ -606,9 +579,6 @@ CREATE FUNCTION dbo.test_arg(@b binary, @v varbinary) RETURNS int AS BEGIN<newli
 
 
 drop function test_arg;
-go
-
-drop function if exists test_con;
 go
 
 create function test_con(@a int)

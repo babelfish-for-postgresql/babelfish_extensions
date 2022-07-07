@@ -174,9 +174,6 @@ go
 
 #check with different sqlbody.#
 
-drop TABLE if exists customers;
-go
-
 CREATE TABLE customers
 ( customer_id int NOT NULL,
   customer_name char(50) NOT NULL,
@@ -214,8 +211,6 @@ select tsql_get_functiondef(oid) from pg_proc where proname='test_b2';
 go
 
 drop procedure test_b2;
-go
-drop procedure if exists test_b3
 go
 
 create procedure test_b3(@name char(255), @city char(255), @address char(255), @state char(255), @cust_id int)
@@ -273,9 +268,6 @@ go
 drop procedure test_b6;
 go
 
-DROP  FUNCTION IF EXISTS test_bd7;
-go
-
 create function test_bd7 (@cost int)
 RETURNS INT
 AS
@@ -301,7 +293,7 @@ go
 select tsql_get_functiondef(oid) from pg_proc where proname='test_bb';
 go
 
-DROP PROCEDURE IF EXISTS test_bb;
+DROP PROCEDURE test_bb;
 go
 
 drop table customers;
@@ -324,9 +316,6 @@ select tsql_get_functiondef(oid) from pg_proc where proname='test_b8';
 go
 
 drop function test_b8;
-go
-
-DROP  FUNCTION IF EXISTS test_bd9;
 go
 
 create function test_bd9(@x int, @y int)
@@ -374,10 +363,10 @@ go
 select tsql_get_functiondef(oid) from pg_proc where proname='test_b11';
 go
 
-DROP  FUNCTION IF EXISTS test_bd7;
+DROP  FUNCTION test_bd7;
 go
 
-DROP  FUNCTION IF EXISTS test_bd9;
+DROP  FUNCTION test_bd9;
 go
 
 drop function s1.test_b11;
@@ -427,9 +416,6 @@ select tsql_get_functiondef(oid) from pg_proc where proname='test_arg';
 go
 
 drop function test_arg;
-go
-
-drop function if exists test_con;
 go
 
 create function test_con(@a int)
