@@ -11,10 +11,9 @@ go
 
 SELECT DOMAIN_CATALOG, DOMAIN_SCHEMA, TABLE_NAME, COLUMN_NAME FROM information_schema.COLUMN_DOMAIN_USAGE WHERE TABLE_NAME NOT LIKE 'sys%' ORDER BY COLUMN_NAME;
 go
-~~START~~
-nvarchar#!#nvarchar#!#varchar#!#varchar
-master#!#dbo#!#tb1#!#d
-~~END~~
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: relation "information_schema_tsql.column_domain_usage" does not exist)~~
 
 
 CREATE DATABASE src;
@@ -25,9 +24,9 @@ go
 
 SELECT DOMAIN_CATALOG, DOMAIN_SCHEMA, TABLE_NAME, TABLE_SCHEMA, COLUMN_NAME FROM information_schema.COLUMN_DOMAIN_USAGE WHERE TABLE_NAME NOT LIKE 'sys%' ORDER BY COLUMN_NAME;
 go
-~~START~~
-nvarchar#!#nvarchar#!#varchar#!#nvarchar#!#varchar
-~~END~~
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: relation "information_schema_tsql.column_domain_usage" does not exist)~~
 
 
 CREATE TYPE NTYP FROM varchar(11) NOT NULL;
@@ -38,10 +37,9 @@ go
 
 SELECT DOMAIN_NAME, TABLE_CATALOG, TABLE_SCHEMA, TABLE_NAME, COLUMN_NAME  FROM information_schema.COLUMN_DOMAIN_USAGE WHERE TABLE_NAME NOT LIKE 'sys%' ORDER BY COLUMN_NAME;
 go
-~~START~~
-varchar#!#nvarchar#!#nvarchar#!#varchar#!#varchar
-ntyp#!#src#!#dbo#!#col_test#!#r
-~~END~~
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: relation "information_schema_tsql.column_domain_usage" does not exist)~~
 
 
 use master;
@@ -79,10 +77,9 @@ go
 
 SELECT DOMAIN_NAME, TABLE_CATALOG, TABLE_NAME, DOMAIN_SCHEMA, COLUMN_NAME FROM information_schema.COLUMN_DOMAIN_USAGE WHERE TABLE_NAME NOT LIKE 'sys%' ORDER BY COLUMN_NAME;
 go
-~~START~~
-varchar#!#nvarchar#!#varchar#!#nvarchar#!#varchar
-ty4#!#master#!#tb4#!#sch#!#c
-~~END~~
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: relation "information_schema_tsql.column_domain_usage" does not exist)~~
 
 
 drop table sch.tb4;
@@ -93,6 +90,4 @@ go
 
 drop schema sch;
 go
-
-
 
