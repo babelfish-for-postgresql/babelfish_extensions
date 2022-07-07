@@ -1012,14 +1012,15 @@ get_server_collation_oid_internal(bool missingOk)
 
 Oid BABELFISH_CLUSTER_COLLATION_OID()
 {
-	get_server_collation_oid_internal(false); /* set and cache server_collation_oid */
 
-	if (sql_dialect == SQL_DIALECT_TSQL && OidIsValid(server_collation_oid))
+	if (sql_dialect == SQL_DIALECT_TSQL)
 	{
-		return server_collation_oid;
+		get_server_collation_oid_internal(false); /* set and cache server_collation_oid */
+
+		if (OidIsValid(server_collation_oid))
+			return server_collation_oid;
 	}
-	else
-		return DEFAULT_COLLATION_OID;
+	return DEFAULT_COLLATION_OID;
 }
 
 /*
