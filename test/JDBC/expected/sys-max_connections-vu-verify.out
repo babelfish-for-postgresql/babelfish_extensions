@@ -1,0 +1,30 @@
+SELECT * FROM sys.max_connections() 
+GO
+~~START~~
+int
+100
+~~END~~
+
+
+SET MAX_CONNECTIONS 3 --Should error out. Not possible for user to change.
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: unrecognized configuration parameter: MAX_CONNECTIONS)~~
+
+
+SELECT @@MAX_CONNECTIONS
+GO
+~~START~~
+int
+100
+~~END~~
+
+
+SELECT sys.max_connections() 
+GO
+~~START~~
+int
+100
+~~END~~
+
