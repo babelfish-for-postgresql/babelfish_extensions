@@ -639,11 +639,11 @@ CREATE OR REPLACE VIEW information_schema_tsql.routines AS
            CAST(NULL AS sys.nvarchar(128)) AS "UDT_CATALOG",
            CAST(NULL AS sys.nvarchar(128)) AS "UDT_SCHEMA",
            CAST(NULL AS sys.nvarchar(128)) AS "UDT_NAME",
-           CAST(CASE p.prokind WHEN 'p' THEN 'NULL' ELSE t.typname END AS sys.nvarchar(128)) AS "DATA_TYPE",
-           CAST(information_schema_tsql._pgtsql_char_max_length(tsql_type_name, t.typtypmod)
+           CAST(case when is_tbl_type THEN 'table' when p.prokind = 'p' THEN 'NULL' ELSE tsql_type_name END AS sys.nvarchar(128)) AS "DATA_TYPE",
+           CAST(information_schema_tsql._pgtsql_char_max_length(tsql_type_name, true_typmod)
                  AS int)
            AS "CHARACTER_MAXIMUM_LENGTH",
-           CAST(information_schema_tsql._pgtsql_char_octet_length(tsql_type_name, t.typtypmod)
+           CAST(information_schema_tsql._pgtsql_char_octet_length(tsql_type_name, true_typmod)
                  AS int)
            AS "CHARACTER_OCTET_LENGTH",
            CAST(NULL AS sys.nvarchar(128)) AS "COLLATION_CATALOG",
@@ -661,16 +661,16 @@ CREATE OR REPLACE VIEW information_schema_tsql.routines AS
                  * Until then return null.
             */
 	    CAST(null AS sys.nvarchar(128)) AS "CHARACTER_SET_NAME",
-            CAST(information_schema_tsql._pgtsql_numeric_precision(tsql_type_name, t.typbasetype, t.typtypmod)
+            CAST(information_schema_tsql._pgtsql_numeric_precision(tsql_type_name, t.oid, true_typmod)
                         AS smallint)
             AS "NUMERIC_PRECISION",
-            CAST(information_schema_tsql._pgtsql_numeric_precision_radix(tsql_type_name, t.typbasetype, t.typtypmod)
+            CAST(information_schema_tsql._pgtsql_numeric_precision_radix(tsql_type_name, t.oid, true_typmod)
                         AS smallint)
             AS "NUMERIC_PRECISION_RADIX",
-            CAST(information_schema_tsql._pgtsql_numeric_scale(tsql_type_name, t.typbasetype, t.typtypmod)
+            CAST(information_schema_tsql._pgtsql_numeric_scale(tsql_type_name, t.oid, true_typmod)
                         AS smallint)
             AS "NUMERIC_SCALE",
-            CAST(information_schema_tsql._pgtsql_datetime_precision(tsql_type_name, t.typtypmod)
+            CAST(information_schema_tsql._pgtsql_datetime_precision(tsql_type_name, true_typmod)
                         AS smallint)
             AS "DATETIME_PRECISION",
             CAST(NULL AS sys.nvarchar(30)) AS "INTERVAL_TYPE",
@@ -704,7 +704,8 @@ CREATE OR REPLACE VIEW information_schema_tsql.routines AS
             pg_proc p inner join sys.schemas sch on sch.schema_id = p.pronamespace,
             pg_language l,
             pg_type t LEFT JOIN pg_collation co ON t.typcollation = co.oid,
-            sys.translate_pg_type_to_tsql(t.typbasetype) AS tsql_type_name,
+            sys.translate_pg_type_to_tsql(t.oid) AS tsql_type_name,
+	    tsql_get_returnTypmodValue(p.oid) AS true_typmod,
             sys.is_table_type(t.typrelid) as is_tbl_type
 
        WHERE 

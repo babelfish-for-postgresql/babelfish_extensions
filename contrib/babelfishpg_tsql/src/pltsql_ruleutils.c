@@ -546,6 +546,45 @@ tsql_get_functiondef(PG_FUNCTION_ARGS)
 	PG_RETURN_TEXT_P(string_to_text(buf.data));
 }
 
+PG_FUNCTION_INFO_V1(tsql_get_returnTypmodValue);
+/*
+ * function that will return the typmod value of return type
+ */ 
+Datum 
+tsql_get_returnTypmodValue(PG_FUNCTION_ARGS){
+        Oid                     funcid = PG_GETARG_OID(0);
+        HeapTuple      proctup;
+        Form_pg_proc proc;
+        bool            isfunction;
+        Datum           tmp;
+        bool       isnull;
+        int* typmod_arr = NULL;
+        int number_args;
+
+        proctup = SearchSysCache1(PROCOID, ObjectIdGetDatum(funcid));
+        if (!HeapTupleIsValid(proctup)) 
+                PG_RETURN_INT32(-1);
+
+        proc = (Form_pg_proc) GETSTRUCT(proctup);   
+
+        isfunction = (proc->prokind != PROKIND_PROCEDURE);
+
+        if (!isfunction)  
+                PG_RETURN_INT32(-1) ;
+
+        tmp = SysCacheGetAttr(PROCOID, proctup, Anum_pg_proc_probin, &isnull);
+        number_args=proc->pronargs;
+        number_args++;  
+
+        probin_json_reader(tmp, &typmod_arr, number_args);
+
+        if (typmod_arr[number_args-1] != -1)
+               typmod_arr[number_args-1] += adjustTypmod(proc->prorettype, typmod_arr[number_args-1]);
+    
+        PG_RETURN_INT32(typmod_arr[number_args-1]);
+
+}
+
 /*
  * As of 9.4, we now use an MVCC snapshot for this.
  */
