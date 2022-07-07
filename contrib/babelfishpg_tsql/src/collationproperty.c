@@ -37,6 +37,14 @@ Datum collationproperty(PG_FUNCTION_ARGS) {
 		PG_RETURN_BYTEA_P(convertIntToSQLVariantByteA(coll.style));
 	    else if (strcasecmp(property, "Version") == 0)
 		PG_RETURN_BYTEA_P(convertIntToSQLVariantByteA(coll.ver));
+	    /*
+	     * Below properties are added for internal usage with sp_describe_first_result_set
+	     * to return correct tds_collation_id and tds_collation_sort_id fields.
+	     */
+	    else if (strcasecmp(property, "CollationId") == 0)
+		PG_RETURN_BYTEA_P(convertIntToSQLVariantByteA((coll.collateflags << 20) | coll.lcid));
+	    else if (strcasecmp(property, "SortId") == 0)
+		PG_RETURN_BYTEA_P(convertIntToSQLVariantByteA(coll.sortid));
 	    else
 		PG_RETURN_NULL();
 	}

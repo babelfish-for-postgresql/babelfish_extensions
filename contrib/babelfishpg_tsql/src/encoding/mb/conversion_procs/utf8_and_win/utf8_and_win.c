@@ -1,16 +1,3 @@
-/*-------------------------------------------------------------------------
- *
- *	  WIN <--> UTF8
- *
- * Portions Copyright (c) 1996-2018, PostgreSQL Global Development Group
- * Portions Copyright (c) 1994, Regents of the University of California
- *
- * IDENTIFICATION
- *	  src/backend/utils/mb/conversion_procs/utf8_and_win/utf8_and_win.c
- *
- *-------------------------------------------------------------------------
- */
-
 #include "postgres.h"
 #include "fmgr.h"
 #include "mb/pg_wchar.h"
@@ -37,18 +24,7 @@
 #include "src/backend/utils/mb/Unicode/win874_to_utf8.map"
 #include "src/backend/utils/mb/Unicode/win1258_to_utf8.map"
 
-#include "src/include/tds_int.h"
-
-/* ----------
- * conv_proc(
- *		INTEGER,	-- source encoding id
- *		INTEGER,	-- destination encoding id
- *		CSTRING,	-- source string (null terminated C string)
- *		CSTRING,	-- destination string (null terminated C string)
- *		INTEGER		-- source string length
- * ) returns VOID;
- * ----------
- */
+#include "src/encoding/encoding.h"
 
 typedef struct
 {
@@ -71,7 +47,17 @@ static const pg_conv_map maps[] = {
 	{PG_WIN1258, &win1258_to_unicode_tree, &win1258_from_unicode_tree},
 };
 
-void
+/* ----------
+ * utf8_to_win: 
+ *		src_encoding,	-- source encoding id
+ *		dest_encoding,	-- destination encoding id
+ *		src,			-- source string (null terminated C string)
+ *		dest,			-- destination string (null terminated C string)
+ *		len,			-- source string length
+ * Returns byte length of result string encoded in desired encoding
+ * ----------
+ */
+int
 utf8_to_win(int src_encoding, int dest_encoding, const unsigned char *src,unsigned char *dest, int len)
 {
 	int			i;
@@ -80,12 +66,11 @@ utf8_to_win(int src_encoding, int dest_encoding, const unsigned char *src,unsign
 	{
 		if (dest_encoding == maps[i].encoding)
 		{
-			tds_UtfToLocal(src, len, dest,
+			return TsqlUtfToLocal(src, len, dest,
 					   maps[i].map2,
 					   NULL, 0,
 					   NULL,
 					   dest_encoding);
-			return ;
 		}
 	}
 
@@ -94,5 +79,5 @@ utf8_to_win(int src_encoding, int dest_encoding, const unsigned char *src,unsign
 			 errmsg("unexpected encoding ID %d for WIN character sets",
 					dest_encoding)));
 
-	return ;
+	return -1;
 }
