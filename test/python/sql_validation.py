@@ -17,9 +17,49 @@ def list_files(inpPath, filefilter):
     return files
 
 
+# get object_name and object_type
+def get_object(line):
+    newline = line.lower()
+    if "(" in newline:
+        newline = newline.split('(')[0]
+
+    newline = newline.rstrip(';')
+    linewords = newline.split()
+
+    # list of object types
+    object_types = ['table', 'view', 'function', 'procedure', 'role', 'aggregate', 'schema', 'domain', 'collation', 'index', 'type', 'class', 'cast', 'family']
+                            
+    # setting default object type as object
+    obj_type = 'object'
+                            
+    for word in linewords:
+        if word in object_types:
+            obj_type = word
+            break
+                            
+    if obj_type == 'class' or obj_type == 'family':
+        obj_type = 'operator ' + obj_type
+                            
+    # list of syntax words
+    syntax_words = ['drop', 'create', 'view', 'procedure', 'function', 'table', 'domain', 
+            'index', 'schema', 'temporary', 'aggregate', 'cascade', 'if', 'exists', 'owned', 
+            'class', 'operator', 'cast', 'family', 'type', 'using', 
+            'by', 'role', 'as', 'or', 'replace', 'collation', 'not', 'select']
+                            
+    # creating list of line words that are not present in syntax words
+    resultwords  = [word for word in linewords if word not in syntax_words]
+
+    # no object_name for cast
+    if obj_type == 'cast':
+        obj_name = ''
+    # the first word will give the object_name
+    else:
+        obj_name = resultwords[0]
+    return obj_type,obj_name
+
+
 # search for patterns in the upgrade scripts
 def find_pattern(pattern, fname, logger):
-
     # create output file path
     path = Path.cwd().joinpath("output", "sql_validation_framework")
     Path.mkdir(path, parents = True, exist_ok = True)
@@ -47,40 +87,11 @@ def find_pattern(pattern, fname, logger):
                         line = file.readline()
                         continue
 
+                    # if pattern is found
                     elif readflag == True and re.search(pattern, line, re.I):
-                        # logic to get object name and type from the line
-                        newline = line.lower()
-                        if "(" in newline:
-                            newline = newline.split('(')[0]
 
-                        newline = newline.rstrip(';')
-                        if "using" in newline:
-                            newline = newline.split('using')[0]
-
-                        linewords = newline.split()
-
-                        object_types = ['table', 'view', 'function', 'procedure', 'role', 'class', 'cast', 'family']
-                            
-                        # setting default object category as object
-                        obj_type = 'object'
-                            
-                        for word in linewords:
-                            if word in object_types:
-                                obj_type = word
-                                break
-                            
-                        if obj_type == 'class' or obj_type == 'family':
-                            obj_type = 'operator ' + obj_type
-                            
-                        # list of syntax words
-                        syntax_words = ['drop', 'create', 'view', 'procedure', 'function', 'table', 'domain', 
-                                'index', 'schema', 'temporary', 'aggregate', 'cascade', 'if', 'exists', 'owned', 
-                                'class', 'operator', 'cast', 'family',
-                                'by', 'role', 'as', 'or', 'replace', 'collation', 'not', 'select']
-                            
-                        # creating list of line words that are not present in syntax words so that we are left with object name
-                        resultwords  = [word for word in linewords if word not in syntax_words]
-                        obj_name = ' '.join(resultwords)
+                        # get object_type and object name from line
+                        obj_type, obj_name = get_object(line)
 
                         # add to output file
                         expected_file.write("Unexpected {0} found for {1} {2} in file {3}\n".format(re.sub("[^a-zA-Z0-9 ]", "", pattern), obj_type, obj_name, filename))
@@ -97,10 +108,8 @@ def find_pattern(pattern, fname, logger):
 
 
 # list of installation and upgrade scripts
-def list_scripts_create():
-    inpPath = "../../contrib/babelfishpg_tsql/sql"
-    path = Path(inpPath)
-
+def list_scripts_create(inpPath):
+    path = Path.cwd().joinpath(inpPath)
     scripts = []
 
     for f in path.glob("*.sql"):
@@ -110,27 +119,47 @@ def list_scripts_create():
     for f in path.glob("*.sql"):
         scripts.append(f)
 
-    # removing helper functions
-    scripts.remove(Path(inpPath + "/sys_function_helpers.sql"))
     return scripts
 
 
 # search for create statements and return a set of tuple (object_type, object_name)
 def find_pattern_create(logger):
-    scripts = list_scripts_create()
+    # getting files for babelfish_tsql extension
+    inpPath = "../../contrib/babelfishpg_tsql/sql"
+    scripts = list_scripts_create(inpPath)
+
+    # removing scripts having helper functions and redundant script
+    scripts.remove(Path.cwd().joinpath(inpPath + "/sys_function_helpers.sql"))
+    scripts.remove(Path.cwd().joinpath(inpPath + "/babelfishpg_tsql--1.0.0.sql"))
+    
+    # getting files for babelfish_common extension
+    inpPath = "../../contrib/babelfishpg_common/sql"
+    scripts.extend(list_scripts_create(inpPath))
+    
+    # removing redundant script
+    scripts.remove(Path.cwd().joinpath(inpPath + "/babelfishpg_common--1.0.0.sql"))
 
     # set to avoid searching for redundant object names
     object_names = set()
     
     logger.info("Searching created objects!!")
     
-    # getting list of object types to be searched from config
-    pattern = r"^create [\w\s]*\b({0})\b".format(cfg["createObjectSearch"].replace(',', '|'))
+    # getting list of object types to be searched from config for babelfishpg_tsql extension
+    pattern_tsql = r"^create [\w\s]*\b({0})\b".format(cfg["createObjectSearch"].replace(',', '|'))
     
+    # searching only for type and domain in babelfishpg_common extension
+    pattern_com = r"^create [\w\s]*\b(type|domain)\b"
+
     # looping through all the scripts
     for filename in scripts:
         with  open(filename, "r") as file:
             line = file.readline()
+
+            # get pattern based on extension
+            if "babelfishpg_common" in filename.as_uri():
+                pattern = pattern_com
+            else:
+                pattern = pattern_tsql
 
             # flag for ignoring body of procedure
             readflag = True
@@ -142,43 +171,24 @@ def find_pattern_create(logger):
                     line = file.readline()
                     continue
 
+                # if pattern is found
                 elif readflag == True and re.search(pattern, line, re.I):
-                    # logic to get object name and type from the line
-                    newline = line.lower()
-                    
-                    if "(" in newline:
-                        newline = newline.split('(')[0].strip()
 
-                    newline = newline.rstrip(';')
-                    linewords = newline.split()
-                    object_types = ['table', 'view', 'function', 'procedure', 'role', 'aggregate', 'schema', 'domain', 'collation', 'index']
-                        
-                    # setting default object category as object
-                    obj_type = 'object'
-                    for word in linewords:
-                        if word in object_types:
-                            obj_type = word
-                        
-                    # list of syntax words
-                    syntax_words = ['drop', 'create', 'view', 'procedure', 'function', 'table', 'domain', 
-                                'index', 'schema', 'temporary', 'aggregate', 'cascade', 'if', 'exists', 'owned', 
-                                'class', 'operator', 'cast', 'family',
-                                'by', 'role', 'as', 'or', 'replace', 'collation', 'not', 'select']
-
-                    # creating list of line words that are not present in syntax words so that we are left with object name
-                    resultwords  = [word for word in linewords if word not in syntax_words]
-                    obj_name = ' '.join(resultwords)
+                     # get object_type and object name from line
+                    obj_type, obj_name = get_object(line)
 
                     # adding bracket at the end of regex for functions
                     # such that func(, func ( and func  ( are considered valid
                     if obj_type == 'function':
                         obj_name += r"\s{0,2}[(]"
 
-                    object_names.add((obj_type, obj_name))
+                    # ignoring helper functions (having ._ )
+                    if not re.search("[.]_", obj_name, re.I):
+                        object_names.add((obj_type, obj_name))
 
                 # enable or disable the readflag (flag to ignore the body of procedures)
                 # at max $$ can be present twice in a line
-                # if $$ present twice, we dont change the readflag
+                # if $$ present twice, don't change the readflag
                 if len(re.findall(r"[$]{2}", line, re.I)) == 1:
                     readflag = not readflag    
                 line = file.readline()
@@ -227,7 +237,6 @@ def find_in_JDBC(fname, logger):
 
             # flag for object name found or not in the JDBC input files
             flag = False
-
             object_name = object[1]
 
             # replacing . as in regex it means any character
@@ -243,12 +252,11 @@ def find_in_JDBC(fname, logger):
             # searching again without schema name for objects in all schemas
             if(flag == False and "." in object[1]):
                 object_name = r"\b" + object_name.split(".]")[-1]
-
+                
                 # creating pattern to identify @@func calls
                 if object[0] == 'function':
                     object_name = "(" + "@@" + object_name.replace("\s{0,2}[(]", "").replace("\\b", "") + ")|(" +  object_name + ")"
                 
-
                 flag = find_obj(files, object_name)
             
             # if tests not found, add it to output file
