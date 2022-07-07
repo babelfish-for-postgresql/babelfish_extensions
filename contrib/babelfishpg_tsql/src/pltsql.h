@@ -1570,6 +1570,10 @@ typedef struct PLtsql_protocol_plugin
 
 	bool *pltsql_is_fmtonly_stmt;
 
+	char* (*TsqlEncodingConversion)(const char *s, int len, int encoding, int *encodedByteLen);
+
+	int (*TdsGetEncodingFromLcid)(int32_t lcid);
+
 } PLtsql_protocol_plugin;
 
 /*

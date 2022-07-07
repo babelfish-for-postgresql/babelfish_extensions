@@ -353,11 +353,19 @@ TdsLookupEncodingByLCID(int lcid)
 
 	/*
 	 * TODO: which encoding by default we should consider 
-	 * if appropriate Encoding is not found. 
+	 * if appropriate Encoding is not found.
 	 */
 	if (!found)
 	{
-		return -1;
+		mInfo = (TdsLCIDToEncodingMapInfo)hash_search(TdsEncodingInfoCacheByLCID,
+													&TdsDefaultLcid,
+													HASH_FIND,
+													&found);
+		/*
+		 * could not find encoding corresponding to default lcid still.
+		 */
+		if (!found)
+			return -1;
 	}
 	return mInfo->enc;
 }
@@ -2350,10 +2358,15 @@ TdsSendTypeVarchar(FmgrInfo *finfo, Datum value, void *vMetaData)
 	TdsColumnMetaData	*col = (TdsColumnMetaData *)vMetaData;
 
 	len = strlen(buf);
-	destBuf = server_to_any(buf, len, col->encoding);
 
+	if (pltsql_plugin_handler_ptr && pltsql_plugin_handler_ptr->TsqlEncodingConversion)
+		destBuf = pltsql_plugin_handler_ptr->TsqlEncodingConversion(buf, len, col->encoding, &actualLen);
+	else
+		/* unlikely */
+		ereport(ERROR, 
+				(errcode(ERRCODE_INTERNAL_ERROR),
+				 errmsg("Could not encode the string to the client encoding")));
 	maxLen = col->metaEntry.type2.maxSize;
-	actualLen = (buf != destBuf) ? strlen(destBuf) : len;
 
 	if (maxLen != 0xffff)
 	{
@@ -2388,10 +2401,17 @@ TdsSendTypeChar(FmgrInfo *finfo, Datum value, void *vMetaData)
 	TdsColumnMetaData	*col = (TdsColumnMetaData *)vMetaData;
 
 	len = strlen(buf);
-	destBuf = server_to_any(buf, len, col->encoding);
 
+	if (pltsql_plugin_handler_ptr && pltsql_plugin_handler_ptr->TsqlEncodingConversion)
+		destBuf = pltsql_plugin_handler_ptr->TsqlEncodingConversion(buf, len, col->encoding, &actualLen);
+	else
+		/* unlikely */
+		ereport(ERROR, 
+				(errcode(ERRCODE_INTERNAL_ERROR),
+				 errmsg("Could not encode the string to the client encoding")));
+	
 	maxLen = col->metaEntry.type2.maxSize;
-	actualLen = (buf != destBuf) ? strlen(destBuf) : len;
+
 	if (unlikely(maxLen != actualLen))
 		elog(ERROR, "Number of bytes required for the field of char(n) does not match with max bytes specified of the field");
 
@@ -2452,18 +2472,22 @@ TdsSendTypeText(FmgrInfo *finfo, Datum value, void *vMetaData)
 	int					rc;
 	uint32_t			len;
 	char			   	*destBuf, *buf = OutputFunctionCall(finfo, value);
-	TdsColumnMetaData		*col = (TdsColumnMetaData *)vMetaData;
+	TdsColumnMetaData	*col = (TdsColumnMetaData *)vMetaData;
+	int					encodedByteLen;
 
 	SendTextPtrInfo();
 
 	len = strlen(buf);
-	destBuf = server_to_any(buf, len, col->encoding);
-	if (destBuf != buf)
-	{
-		len = strlen(destBuf);
-	}
-	if ((rc = TdsPutUInt32LE(len)) == 0)
-		rc = TdsPutbytes(destBuf, len);
+	if (pltsql_plugin_handler_ptr && pltsql_plugin_handler_ptr->TsqlEncodingConversion)
+		destBuf = pltsql_plugin_handler_ptr->TsqlEncodingConversion(buf, len, col->encoding, &encodedByteLen);
+	else
+		/* unlikely */
+		ereport(ERROR, 
+				(errcode(ERRCODE_INTERNAL_ERROR),
+				 errmsg("Could not encode the string to the client encoding")));
+
+	if ((rc = TdsPutUInt32LE(encodedByteLen)) == 0)
+		rc = TdsPutbytes(destBuf, encodedByteLen);
 
 	pfree(buf);
 	return rc;
@@ -3393,8 +3417,13 @@ TdsSendTypeSqlvariant(FmgrInfo *finfo, Datum value, void *vMetaData)
 			 */
 			if (dataLen > 0)
 			{
-				destBuf = server_to_any(buf + VARHDRSZ, dataLen, PG_WIN1252);
-				actualDataLen = strlen(destBuf);
+				if (pltsql_plugin_handler_ptr && pltsql_plugin_handler_ptr->TsqlEncodingConversion)
+					destBuf = pltsql_plugin_handler_ptr->TsqlEncodingConversion(buf + VARHDRSZ, dataLen, PG_WIN1252, &actualDataLen);
+				else
+					/* unlikely */
+					ereport(ERROR, 
+							(errcode(ERRCODE_INTERNAL_ERROR),
+							 errmsg("Could not encode the string to the client encoding")));
 			}
 			else
 				/* We can not assume that buf would be NULL terminated. */
