@@ -115,8 +115,6 @@ coll_translate_t coll_translations[] =
 	{ "sql_latin1_general_cp874_cs_as", "bbf_unicode_cp874_cs_as", 874 },
 	{ "sql_latin1_general_pref_cp1_cs_as", "bbf_unicode_pref_cp1_cs_as", 1252 }
 
-	// Special handling for catalog_default and database_default which should be mapped to server_collation_name
-
 };
 #define TOTAL_COLL_TRANSLATION_COUNT (sizeof(coll_translations)/sizeof(coll_translations[0]))
 
