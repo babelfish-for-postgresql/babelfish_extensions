@@ -54,6 +54,7 @@ bool  pltsql_showplan_text = false;
 bool  pltsql_showplan_xml = false;
 bool    pltsql_fmtonly = false;
 bool 	pltsql_enable_tsql_information_schema = true;
+bool 	pltsql_no_browsetable = false;
 
 char*	pltsql_host_destribution = NULL;
 char*	pltsql_host_release = NULL;
@@ -103,6 +104,7 @@ static void assign_concat_null_yields_null (bool newval, void *extra);
 static void assign_language (const char *newval, void *extra);
 static void assign_lock_timeout (int newval, void *extra);
 static void assign_datefirst (int newval, void *extra);
+static bool check_no_browsetable (bool *newval, void **extra, GucSource source);
 int escape_hatch_session_settings; /* forward declaration */
 
 static const struct config_enum_entry migration_mode_options[] = {
@@ -345,6 +347,22 @@ static bool check_showplan_text (bool *newval, void **extra, GucSource source)
 		*newval = false; /* overwrite to a default value */
 	}
 	return true;
+}
+
+static bool check_no_browsetable (bool *newval, void **extra, GucSource source)
+{
+	if (*newval == false && escape_hatch_session_settings != EH_IGNORE)
+    {
+		TSQLInstrumentation(INSTR_UNSUPPORTED_TSQL_OPTION_NO_BROWSETABLE);
+		ereport(ERROR,
+			(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+		 	errmsg("OFF setting is not allowed for option NO_BROWSETABLE. please use babelfishpg_tsql.escape_hatch_session_settings to ignore")));
+    }
+	else if (escape_hatch_session_settings == EH_IGNORE)
+	{
+		*newval = true; /* overwrite to a default value */
+	}
+    return true;
 }
 
 static bool check_showplan_xml (bool *newval, void **extra, GucSource source)
@@ -869,6 +887,15 @@ define_custom_variables(void)
 				 GUC_NOT_IN_SAMPLE | GUC_DISALLOW_IN_FILE | GUC_DISALLOW_IN_AUTO_FILE,
 				 check_showplan_text, NULL, NULL);
 
+	DefineCustomBoolVariable("babelfishpg_tsql.no_browsetable",
+				 gettext_noop("SQL-Server compatibility NO_BROWSETABLE option."),
+				 NULL,
+				 &pltsql_no_browsetable,
+				 true,
+				 PGC_USERSET,
+				 GUC_NOT_IN_SAMPLE | GUC_DISALLOW_IN_FILE | GUC_DISALLOW_IN_AUTO_FILE,
+				 check_no_browsetable, NULL, NULL);
+				 
 	DefineCustomBoolVariable("babelfishpg_tsql.showplan_xml",
 				 gettext_noop("SQL-Server compatibility SHOWPLAN_XML option."),
 				 NULL,

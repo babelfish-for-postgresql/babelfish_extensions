@@ -49,6 +49,9 @@ GO
 SET LANGUAGE 'english'
 GO
 
+SET NO_BROWSETABLE ON;
+GO
+
 -- one supported + one unsupported
 SET ANSI_NULLS, ANSI_PADDING OFF;
 GO
@@ -111,6 +114,11 @@ GO
 SET SHOWPLAN_XML ON;
 GO
 select current_setting('babelfishpg_tsql.showplan_xml');
+GO
+
+SET NO_BROWSETABLE OFF;
+GO
+select current_setting('babelfishpg_tsql.no_browsetable');
 GO
 
 -- these statement will be ignored silently

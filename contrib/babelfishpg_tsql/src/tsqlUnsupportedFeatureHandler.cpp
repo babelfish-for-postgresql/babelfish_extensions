@@ -1101,6 +1101,8 @@ antlrcpp::Any TsqlUnsupportedFeatureHandlerImpl::visitSet_statement(TSqlParser::
 				handle(INSTR_UNSUPPORTED_TSQL_OPTION_SHOWPLAN_TEXT, option->SHOWPLAN_TEXT(), &st_escape_hatch_session_settings);
 			if (option->SHOWPLAN_XML())
 				handle(INSTR_UNSUPPORTED_TSQL_OPTION_SHOWPLAN_XML, option->SHOWPLAN_XML(), &st_escape_hatch_session_settings);
+			if (option->NO_BROWSETABLE())
+	 			handle(INSTR_UNSUPPORTED_TSQL_OPTION_NO_BROWSETABLE, option->NO_BROWSETABLE(), &st_escape_hatch_session_settings);
 		}
 
 		if (!sctx->id().empty())
