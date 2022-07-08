@@ -31,7 +31,6 @@ TestMoney
 TestVarChar
 TestNumeric
 TestXML
-sys-configurations
 BABEL-3166
 BABEL-3192
 BABEL-3221
