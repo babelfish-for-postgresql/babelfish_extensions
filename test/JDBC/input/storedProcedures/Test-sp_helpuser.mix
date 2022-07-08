@@ -1,0 +1,61 @@
+-- tsql
+CREATE PROCEDURE check_helpuser @user_or_role AS SYS.SYSNAME = NULL
+AS
+BEGIN
+	DECLARE @tablevar TABLE(userName sys.SYSNAME, roleName sys.SYSNAME, loginName sys.SYSNAME NULL, defdb sys.SYSNAME NULL, defschema sys.SYSNAME, userid INT, sid sys.VARBINARY(85));
+	INSERT INTO @tablevar(userName, roleName, loginName, defdb, defschema, userid, sid) EXEC sp_helpuser @user_or_role;
+	SELECT UserName, RoleName, (CASE WHEN (loginName IS NULL) THEN 0 ELSE 1 END), defdb, defschema, user_name(userid), (CASE WHEN (sid IS NULL) THEN 0 ELSE 1 END) from @tablevar;
+END;
+GO
+
+-- dbo should show database owner login
+EXEC check_helpuser;
+GO
+
+EXEC check_helpuser 'dbo';
+GO
+
+-- psql
+ALTER SYSTEM SET babelfishpg_tsql.migration_mode = 'multi-db';
+SELECT pg_reload_conf();
+GO
+
+-- tsql
+CREATE DATABASE db1;
+GO
+
+USE db1;
+GO
+
+CREATE PROCEDURE check_helpuser @user_or_role AS SYS.SYSNAME = NULL
+AS
+BEGIN
+	DECLARE @tablevar TABLE(userName sys.SYSNAME, roleName sys.SYSNAME, loginName sys.SYSNAME NULL, defdb sys.SYSNAME NULL, defschema sys.SYSNAME, userid INT, sid sys.VARBINARY(85));
+	INSERT INTO @tablevar(userName, roleName, loginName, defdb, defschema, userid, sid) EXEC sp_helpuser @user_or_role;
+	SELECT UserName, RoleName, (CASE WHEN (loginName IS NULL) THEN 0 ELSE 1 END), defdb, defschema, user_name(userid), (CASE WHEN (sid IS NULL) THEN 0 ELSE 1 END) from @tablevar;
+END;
+GO
+
+EXEC check_helpuser;
+GO
+
+EXEC check_helpuser 'dbo';
+GO
+
+-- cleanup
+DROP PROCEDURE check_helpuser
+GO
+
+USE master;
+GO
+
+DROP DATABASE db1;
+GO
+
+DROP PROCEDURE check_helpuser
+GO
+
+-- psql
+ALTER SYSTEM SET babelfishpg_tsql.migration_mode = 'single-db';
+SELECT pg_reload_conf();
+GO
