@@ -1,4 +1,4 @@
-name: validate installation/upgrade scripts
+name: Validate Installation/Upgrade Scripts
 on: [push, pull_request]
 
 jobs:

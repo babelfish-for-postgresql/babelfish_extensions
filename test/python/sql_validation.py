@@ -43,7 +43,7 @@ def get_object(line):
     # list of syntax words
     syntax_words = ['drop', 'create', 'view', 'procedure', 'function', 'table', 'domain', 
             'index', 'schema', 'temporary', 'aggregate', 'cascade', 'if', 'exists', 'owned', 
-            'class', 'operator', 'cast', 'family', 'type', 'using', 
+            'class', 'operator', 'cast', 'family', 'type', 'using', 'alter', 
             'by', 'role', 'as', 'or', 'replace', 'collation', 'not', 'select']
                             
     # creating list of line words that are not present in syntax words
@@ -106,9 +106,8 @@ def find_pattern(pattern, fname, logger):
     logger.info("Searching {0} statements completed successfully!".format(re.sub("[^a-zA-Z0-9 ]", "", pattern)))
 
 
-
 # list of installation and upgrade scripts
-def list_scripts_create(inpPath):
+def list_scripts(inpPath):
     path = Path.cwd().joinpath(inpPath)
     scripts = []
 
@@ -126,18 +125,21 @@ def list_scripts_create(inpPath):
 def find_pattern_create(logger):
     # getting files for babelfish_tsql extension
     inpPath = "../../contrib/babelfishpg_tsql/sql"
-    scripts = list_scripts_create(inpPath)
+    scripts = list_scripts(inpPath)
 
     # removing scripts having helper functions and redundant script
-    scripts.remove(Path.cwd().joinpath(inpPath + "/sys_function_helpers.sql"))
-    scripts.remove(Path.cwd().joinpath(inpPath + "/babelfishpg_tsql--1.0.0.sql"))
+    if Path.cwd().joinpath(inpPath + "/sys_function_helpers.sql") in scripts:
+        scripts.remove(Path.cwd().joinpath(inpPath + "/sys_function_helpers.sql"))
+    if Path.cwd().joinpath(inpPath + "/babelfishpg_tsql--1.0.0.sql") in scripts:
+        scripts.remove(Path.cwd().joinpath(inpPath + "/babelfishpg_tsql--1.0.0.sql"))
     
     # getting files for babelfish_common extension
     inpPath = "../../contrib/babelfishpg_common/sql"
-    scripts.extend(list_scripts_create(inpPath))
+    scripts.extend(list_scripts(inpPath))
     
     # removing redundant script
-    scripts.remove(Path.cwd().joinpath(inpPath + "/babelfishpg_common--1.0.0.sql"))
+    if Path.cwd().joinpath(inpPath + "/babelfishpg_common--1.0.0.sql") in scripts:
+        scripts.remove(Path.cwd().joinpath(inpPath + "/babelfishpg_common--1.0.0.sql"))
 
     # set to avoid searching for redundant object names
     object_names = set()
@@ -336,7 +338,6 @@ def compare_outfiles(outfile, expected_file, logfname, filename, logger):
         logger.error(str(e))
     
     return False
-
 
 
 # set up logger for the framework
