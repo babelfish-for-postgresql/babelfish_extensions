@@ -73,36 +73,36 @@ set_session_properties(const char *db_name)
 					 errmsg("database \"%s\" does not exist", db_name)));
 
 	login = GetUserNameFromId(GetSessionUserId(), false);
-	user = get_authid_user_ext_physical_name(db_name, login);
+	user = get_user_for_database(db_name);
 
 	/* set current DB */
 	set_cur_db(db_id, db_name);
 
 	if (!user)
 	{
-		Oid				datdba;
-
-		datdba = get_role_oid("sysadmin", false);
-		if (is_member_of_role(GetSessionUserId(), datdba))
-			user = get_dbo_role_name(db_name);
-		else
-			user = get_guest_role_name(db_name);
-
-		if (!user)
-			ereport(ERROR,
-					(errcode(ERRCODE_UNDEFINED_DATABASE),
-					 errmsg("The server principal \"%s\" is not able to access "
-							"the database \"%s\" under the current security context",
-							login, db_name)));
-
-		physical_schema = get_dbo_schema_name(db_name);
+		ereport(ERROR,
+				(errcode(ERRCODE_UNDEFINED_DATABASE),
+				 errmsg("The server principal \"%s\" is not able to access "
+						"the database \"%s\" under the current security context",
+						login, db_name)));
 	}
 	else
 	{
-		const char		*schema;
+		char	*dbo_role_name = get_dbo_role_name(db_name);
+		char	*guest_role_name = get_guest_role_name(db_name);
 
-		schema = get_authid_user_ext_schema_name(db_name, user);
-		physical_schema = get_physical_schema_name(pstrdup(db_name), schema);
+		if ((dbo_role_name && strcmp(user, get_dbo_role_name(db_name)) == 0) ||
+			(guest_role_name && strcmp(user, get_guest_role_name(db_name)) == 0))
+		{
+			physical_schema = get_dbo_schema_name(db_name);
+		}
+		else
+		{
+			const char		*schema;
+
+			schema = get_authid_user_ext_schema_name(db_name, user);
+			physical_schema = get_physical_schema_name(pstrdup(db_name), schema);
+		}
 	}
 
 	/* set current user */

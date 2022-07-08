@@ -898,6 +898,155 @@ tempdb_guest#!#guest#!##!#tempdb#!#
 ~~END~~
 
 
+-- BABEL-2978 - Prevent login from accessing database without creating DB user after DROP/CREATE login 
+CREATE LOGIN lgn_2978 WITH PASSWORD='123';
+GO
+
+CREATE DATABASE db1;
+GO
+
+USE db1;
+GO
+
+CREATE USER lgn_2978;
+GO
+
+CREATE DATABASE db2;
+GO
+
+USE db2;
+GO
+
+CREATE USER lgn_2978_2 FROM LOGIN lgn_2978;
+GO
+
+USE master;
+GO
+
+SELECT rolname, orig_username, login_name, database_name, default_schema_name
+FROM sys.babelfish_authid_user_ext
+WHERE login_name LIKE 'lgn_2978%'
+ORDER BY rolname;
+GO
+~~START~~
+varchar#!#nvarchar#!#varchar#!#nvarchar#!#nvarchar
+db1_lgn_2978#!#lgn_2978#!#lgn_2978#!#db1#!#dbo
+db2_lgn_2978_2#!#lgn_2978_2#!#lgn_2978#!#db2#!#dbo
+~~END~~
+
+
+java_auth#!#database|-|db1#!#user|-|lgn_2978#!#password|-|123
+~~SUCCESS~~
+java_auth#!#database|-|db2#!#user|-|lgn_2978#!#password|-|123
+~~SUCCESS~~
+java_auth#!#user|-|lgn_2978#!#password|-|123
+~~SUCCESS~~
+java_auth#!#user|-|lgn_2978#!#password|-|123
+~~SUCCESS~~
+
+-- tsql
+-- Login should be succeded
+USE master;
+GO
+
+-- tsql
+DROP LOGIN lgn_2978;
+GO
+
+-- lgn_2978 login entries should have been invalidated
+SELECT rolname, orig_username, login_name, database_name, default_schema_name
+FROM sys.babelfish_authid_user_ext
+WHERE login_name LIKE 'lgn_2978%' OR rolname LIKE '%lgn_2978%'
+ORDER BY rolname;
+GO
+~~START~~
+varchar#!#nvarchar#!#varchar#!#nvarchar#!#nvarchar
+db1_lgn_2978#!#lgn_2978#!##!#db1#!#dbo
+db2_lgn_2978_2#!#lgn_2978_2#!##!#db2#!#dbo
+~~END~~
+
+
+
+java_auth#!#database|-|db1#!#user|-|lgn_2978#!#password|-|123
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: role "lgn_2978" does not exist )~~
+
+java_auth#!#database|-|db2#!#user|-|lgn_2978#!#password|-|123
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: role "lgn_2978" does not exist )~~
+
+
+-- tsql
+-- It should be failed since there is no relevant login
+-- recreate the login with same name
+CREATE LOGIN lgn_2978 WITH PASSWORD='123';
+GO
+
+-- verify that USER lgn_2978 should have "" as LOGIN since it is dropped
+SELECT rolname, orig_username, login_name, database_name, default_schema_name
+FROM sys.babelfish_authid_user_ext
+WHERE login_name LIKE 'lgn_2978%'
+ORDER BY rolname;
+GO
+~~START~~
+varchar#!#nvarchar#!#varchar#!#nvarchar#!#nvarchar
+~~END~~
+
+
+
+java_auth#!#database|-|db1#!#user|-|lgn_2978#!#password|-|123
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Cannot open database "db1" requested by the login. The login failed )~~
+
+java_auth#!#database|-|db2#!#user|-|lgn_2978#!#password|-|123
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Cannot open database "db2" requested by the login. The login failed )~~
+
+
+-- tsql      user=lgn_2978      password=123
+-- It should be failed since there is no relevant login
+USE db1;
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: The server principal "lgn_2978" is not able to access the database "db1" under the current security context)~~
+
+
+USE db2;
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: The server principal "lgn_2978" is not able to access the database "db2" under the current security context)~~
+
+
+USE master;
+GO
+
+SELECT current_user;
+GO
+~~START~~
+varchar
+guest
+~~END~~
+
+
+-- tsql
+USE master;
+GO
+
+DROP LOGIN lgn_2978;
+GO
+
+DROP DATABASE db1;
+GO
+
+DROP DATABASE db2;
+GO
+
 -- psql
 ALTER SYSTEM SET babelfishpg_tsql.migration_mode = 'single-db';
 ALTER SYSTEM SET babelfishpg_tsql.allow_antlr_to_unsupported_grammar_for_testing = false;
