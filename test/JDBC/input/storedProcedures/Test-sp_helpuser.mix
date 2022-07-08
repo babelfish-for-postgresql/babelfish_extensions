@@ -1,3 +1,8 @@
+-- psql
+ALTER SYSTEM SET babelfishpg_tsql.migration_mode = 'multi-db';
+SELECT pg_reload_conf();
+GO
+
 -- tsql
 CREATE PROCEDURE check_helpuser @user_or_role AS SYS.SYSNAME = NULL
 AS
@@ -15,12 +20,6 @@ GO
 EXEC check_helpuser 'dbo';
 GO
 
--- psql
-ALTER SYSTEM SET babelfishpg_tsql.migration_mode = 'multi-db';
-SELECT pg_reload_conf();
-GO
-
--- tsql
 CREATE DATABASE db1;
 GO
 
