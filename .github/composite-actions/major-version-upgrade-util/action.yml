@@ -15,6 +15,10 @@ inputs:
   pg_new_dir:
     description: "Install new version in this directory"
     required: true
+  is_version_latest: 
+    description: 'Whether the Version that needs to be installed is latest'
+    required: false
+    default: 'false'
 
 runs:
   using: "composite"
@@ -33,12 +37,16 @@ runs:
       run: cp "/usr/local/lib/libantlr4-runtime.so.4.9.3" ~/${{ inputs.pg_new_dir }}/lib/
       shell: bash
 
-    - name: Build Extensions using latest version
+    - name: Build Extensions
       id: build-extensions-new
       if: always() && steps.copy-antlr.outcome == 'success'
       uses: ./.github/composite-actions/build-extensions
       with:
         install_dir: ${{ inputs.pg_new_dir }}
+        extension_branch: ${{ inputs.extension_branch }}
+        is_extension_version_latest: ${{ inputs.is_version_latest }}
+
+    - uses: actions/checkout@v2
 
     - name: Setup new data directory
       id: setup-new-datadir
@@ -61,8 +69,6 @@ runs:
         migration_mode: 'multi-db'
         pg_old_dir: ${{ inputs.pg_old_dir }}
         pg_new_dir: ${{ inputs.pg_new_dir }}
-
-    - uses: actions/checkout@v2
 
     - name: Run JDBC Verify Tests
       if: always() && inputs.is_final_ver == 'true'

@@ -9,6 +9,10 @@ inputs:
   install_dir:
     description: "Install base version in this directory"
     required: true
+  is_version_latest: 
+    description: 'If true, the Version that needs to be installed is latest'
+    required: false
+    default: 'false'
 
 runs:
   using: "composite"
@@ -33,6 +37,7 @@ runs:
       with: 
         install_dir: ${{ inputs.install_dir }}
         extension_branch: ${{ inputs.extension_branch }}
+        is_extension_version_latest: ${{ inputs.is_version_latest }}
 
     # Not used composite action install-extension here since, in the previous step it has 
     # checked out a branch/tag which may not have the updated install-extension composite action
