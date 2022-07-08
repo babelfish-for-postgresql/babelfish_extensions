@@ -1569,6 +1569,8 @@ typedef struct PLtsql_protocol_plugin
 
 	bool *pltsql_is_fmtonly_stmt;
 
+	char* (*pltsql_get_user_for_database) (const char *db_name);
+
 	char* (*TsqlEncodingConversion)(const char *s, int len, int encoding, int *encodedByteLen);
 
 	int (*TdsGetEncodingFromLcid)(int32_t lcid);

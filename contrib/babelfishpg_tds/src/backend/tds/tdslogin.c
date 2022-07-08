@@ -1910,7 +1910,7 @@ TdsSendLoginAck(Port *port)
 {
 	uint16_t	temp16;
 	char		mbuf[1024];
-	char	   *dbname;			/* TODO: where to get this? */
+	char	   *dbname = NULL;
 	int			prognameLen = pg_mbstrlen(default_server_name);
 	LoginRequest request;
 	StringInfoData	buf;
@@ -1918,6 +1918,7 @@ TdsSendLoginAck(Port *port)
 	uint32_t	collationInfo;
 	char collationBytesNew[5];
 	char *useDbCommand = NULL;
+	char	*user = NULL;
 	MemoryContext  oldContext;
 	uint32_t tdsVersion = pg_hton32(loginInfo->tdsVersion);
 
@@ -2046,6 +2047,7 @@ TdsSendLoginAck(Port *port)
 
 			/* Any delimitated/quoted db name identifier requested in login must be already handled before this point. */
 			useDbCommand = psprintf("USE [%s]", request->database);
+			dbname = pstrdup(request->database);
 		}
 		else
 		{
@@ -2061,9 +2063,23 @@ TdsSendLoginAck(Port *port)
 						 errmsg("could not find default database for user \"%s\"", port->user_name)));
 
 			useDbCommand = psprintf("USE [%s]", temp);
+			dbname = pstrdup(temp);
 			CommitTransactionCommand();
 			MemoryContextSwitchTo(oldContext);
 		}
+
+		/*
+		 * Check if user has privileges to access current database
+		 */
+		StartTransactionCommand();
+		user = pltsql_plugin_handler_ptr->pltsql_get_user_for_database(dbname);
+		if (!user)
+			ereport(ERROR,
+					(errcode(ERRCODE_UNDEFINED_DATABASE),
+					 errmsg("Cannot open database \"%s\" requested by the login. The login failed", dbname)));
+		CommitTransactionCommand();
+		if (dbname)
+			pfree(dbname);
 
 		/*
 		 * Request has a database name provided, so we execute
