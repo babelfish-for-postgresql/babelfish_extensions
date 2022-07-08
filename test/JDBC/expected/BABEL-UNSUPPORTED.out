@@ -109,6 +109,13 @@ GO
 ~~ERROR (Message: Settings other than "us_english" are not allowed for option LANGUAGE. Please use babelfishpg_tsql.escape_hatch_session_settings to ignore)~~
 
 
+SET NO_BROWSETABLE ON;
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: 'NO_BROWSETABLE' is not currently supported in Babelfish. please use babelfishpg_tsql.escape_hatch_session_settings to ignore)~~
+
+
 -- one supported + one unsupported
 SET ANSI_NULLS, ANSI_PADDING OFF;
 GO
@@ -233,6 +240,16 @@ GO
 ~~START~~
 text
 off
+~~END~~
+
+
+SET NO_BROWSETABLE OFF;
+GO
+select current_setting('babelfishpg_tsql.no_browsetable');
+GO
+~~START~~
+text
+on
 ~~END~~
 
 
