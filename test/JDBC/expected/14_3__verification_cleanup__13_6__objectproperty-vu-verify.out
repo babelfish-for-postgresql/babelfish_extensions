@@ -680,7 +680,7 @@ SELECT OBJECTPROPERTY(OBJECT_ID('IsTrigger_trigger', 'TR'), 'IsTrigger')
 GO
 ~~START~~
 int
-0
+NULL
 ~~END~~
 
 
