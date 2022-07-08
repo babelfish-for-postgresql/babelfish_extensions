@@ -34,11 +34,9 @@ BABEL-3249
 fulltextserviceproperty
 is_srvrolemember
 msdb-dbo-fn_syspolicy_is_automation_enabled
-objectproperty
 objectpropertyex
 sys-column-property
 sys-datefirst
-sys-has_perms_by_name
 sys-lock_timeout
 sys-max_connections
 sys-original_login

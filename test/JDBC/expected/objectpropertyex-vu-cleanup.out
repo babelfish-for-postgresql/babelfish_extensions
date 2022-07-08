@@ -1,6 +1,3 @@
-USE db1
-GO
-
 DROP TABLE ownerid_schema.ownerid_table
 GO
 
@@ -26,10 +23,4 @@ GO
 -- =============== Special Input Cases ===============
 -- Cleanup
 DROP TABLE specialinput_table
-GO
-
--- Global cleanup for tests
-USE master
-GO
-DROP DATABASE db1
 GO
