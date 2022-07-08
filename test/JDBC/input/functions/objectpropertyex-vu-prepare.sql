@@ -1,3 +1,9 @@
+-- Global setup for tests
+CREATE DATABASE db2
+GO
+USE db2
+GO
+
 -- Setup
 CREATE SCHEMA ownerid_schema
 GO

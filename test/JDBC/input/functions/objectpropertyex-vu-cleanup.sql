@@ -1,3 +1,6 @@
+USE db2
+GO
+
 DROP TABLE ownerid_schema.ownerid_table
 GO
 
@@ -23,4 +26,10 @@ GO
 
 -- Cleanup
 DROP TABLE specialinput_table
+GO
+
+-- Global cleanup for tests
+USE master
+GO
+DROP DATABASE db2
 GO

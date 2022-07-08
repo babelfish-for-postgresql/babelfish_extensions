@@ -33,8 +33,6 @@ BABEL-3192
 BABEL-3249
 fulltextserviceproperty
 is_srvrolemember
-msdb-dbo-fn_syspolicy_is_automation_enabled
-objectpropertyex
 sys-column-property
 sys-datefirst
 sys-lock_timeout

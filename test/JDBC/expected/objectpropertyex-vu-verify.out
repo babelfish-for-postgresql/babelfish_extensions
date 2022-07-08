@@ -1,3 +1,6 @@
+USE db2
+GO
+
 -- Check for correct case
 SELECT CASE
     WHEN OBJECTPROPERTY(OBJECT_ID('ownerid_schema.ownerid_table'), 'OwnerId')  = (SELECT principal_id 
