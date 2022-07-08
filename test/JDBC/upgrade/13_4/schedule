@@ -28,6 +28,7 @@ TestUniqueIdentifier
 TestMoney
 TestVarChar
 TestXML
+sys-configurations
 BABEL-3166
 BABEL-3192
 BABEL-3249
