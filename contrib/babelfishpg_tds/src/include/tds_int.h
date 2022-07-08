@@ -158,6 +158,7 @@
 
 /* Globals */
 extern PLtsql_protocol_plugin *pltsql_plugin_handler_ptr;
+extern collation_callbacks *collation_callbacks_ptr;
 
 /* Globals in backend/tds/tdscomm.c */
 extern MemoryContext	TdsMemoryContext;
@@ -166,6 +167,7 @@ extern MemoryContext	TdsMemoryContext;
 extern int TdsDefaultLcid;
 extern int TdsDefaultCollationFlags;
 extern uint8_t TdsDefaultSortid;
+extern pg_enc TdsDefaultClientEncoding;
 
 #define TDS_DEBUG1 1
 #define TDS_DEBUG2 2
@@ -338,5 +340,9 @@ extern void *tds_xml_parse(text *data, int xmloption_arg, bool preserve_whitespa
 				int encoding);
 extern int tds_parse_xml_decl(const xmlChar *str, size_t *lenp,
 								 xmlChar **version, xmlChar **encoding, int *standalone);
+
+/* Functions in tdstypeio.c */
+extern char * TdsEncodingConversion(const char *s, int len, int encoding, int *encodedByteLen);
+extern coll_info_t TdsLookupCollationTableCallback(Oid oid);
 
 #endif	/* TDS_INT_H */

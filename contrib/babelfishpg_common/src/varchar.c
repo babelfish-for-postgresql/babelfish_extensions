@@ -16,9 +16,10 @@
 
 
 #include "access/hash.h"
-#include "babelfishpg_common.h"
+#include "collation.h"
 #include "catalog/pg_collation.h"
 #include "catalog/pg_type.h"
+#include "encoding/encoding.h"
 #include "fmgr.h"
 #include "libpq/pqformat.h"
 #include "nodes/nodeFuncs.h"
@@ -503,11 +504,10 @@ varchar(PG_FUNCTION_ARGS)
 	size_t		maxmblen;
 	int		i;
 	char		*s_data;
-	coll_info_t	collInfo = (coll_info_t) {0, NULL, DEFAULT_LCID, 0, 0, 0, 0, 0};
+	coll_info	collInfo;
 	int 		charLength;
 	char 		*tmp = NULL;	/* To hold the string encoded in target column's collation. */
 	char		*resStr = NULL; /* To hold the final string in UTF8 encoding. */
-	int		enc;
 	int		encodedByteLen;
 
 	/* If type of target is NVARCHAR then handle it differently. */
@@ -522,21 +522,21 @@ varchar(PG_FUNCTION_ARGS)
 	if (maxByteLen < 0)
 		PG_RETURN_VARCHAR_P(source);
 
-	/* Try to find the lcid corresponding to the collation of the target column. */
-	if ((pltsql_plugin_handler_ptr) && (pltsql_plugin_handler_ptr)->lookup_collation_table_callback)
+	/* 
+	 * Try to find the lcid corresponding to the collation of the target column.
+	 */
+	if (fcinfo->flinfo->fn_expr)
 	{
-		if (fcinfo->flinfo->fn_expr && ((FuncExpr *)fcinfo->flinfo->fn_expr)->funccollid == DEFAULT_COLLATION_OID)
-			collInfo = (pltsql_plugin_handler_ptr)->lookup_collation_table_callback(CLUSTER_COLLATION_OID());
-		else if (fcinfo->flinfo->fn_expr)
-			collInfo = (pltsql_plugin_handler_ptr)->lookup_collation_table_callback(((FuncExpr *)fcinfo->flinfo->fn_expr)->funccollid);
+		collInfo = lookup_collation_table(((FuncExpr *)fcinfo->flinfo->fn_expr)->funccollid);
 	}
-
-	/* Try to find the encoding based on lcid found above. */
-	if ((pltsql_plugin_handler_ptr) && (pltsql_plugin_handler_ptr)->TdsGetEncodingFromLcid)
-		enc = (pltsql_plugin_handler_ptr)->TdsGetEncodingFromLcid(collInfo.lcid);
-	else 
-		/* Default encoding of Babelfish database. */
-		enc = PG_UTF8;
+	else
+	{
+		/* 
+		 * Special handling required for OUTPUT params because this input function, varchar would be
+		 * called from TDS to send the OUTPUT params of stored proc.
+		 */
+		collInfo = lookup_collation_table(get_server_collation_oid_internal(false));
+	}
 
 	/* count the number of chars present in input string. */
 	charLength = pg_mbstrlen_with_len(s_data, byteLen);
@@ -545,25 +545,16 @@ varchar(PG_FUNCTION_ARGS)
 	 * Optimisation: Check if we can accommodate charLength number of chars considering every char requires 
 	 * max number of bytes for given encoding.
 	 */
-	if (charLength * pg_encoding_max_length(enc) <= maxByteLen)
+	if (charLength * pg_encoding_max_length(collInfo.enc) <= maxByteLen)
 		PG_RETURN_VARCHAR_P(source);
 
 	/*  And encode the input string (usually in UTF8 encoding) in desired encoding. */
-	if ((pltsql_plugin_handler_ptr) && (pltsql_plugin_handler_ptr)->TsqlEncodingConversion)
-	{
-		tmp = (pltsql_plugin_handler_ptr)->TsqlEncodingConversion(s_data, byteLen, enc, &encodedByteLen);
-		byteLen = encodedByteLen;
-	}
-	else
-	{
-		ereport(ERROR, 
-				(errcode(ERRCODE_INTERNAL_ERROR),
-				errmsg("Could not encode the input string to the collation of target column")));
-	}
+	tmp = server_to_any(s_data, byteLen, collInfo.enc, &encodedByteLen);
+	byteLen = encodedByteLen;
 
 	/* 
 	 * We used byteLen here because we are interested in byte length of input string
-	 * encoded in target column's collation.
+	 * encoded using the code page of the target column's collation.
 	 */
 	if (tmp && byteLen <= maxByteLen)
 	{
@@ -578,7 +569,7 @@ varchar(PG_FUNCTION_ARGS)
 	 * Truncate multibyte string (already encoded to the collation of target column) 
 	 * preserving multibyte boundary.
 	 */
-	maxmblen = pg_encoding_mbcliplen(enc, tmp, byteLen, maxByteLen);
+	maxmblen = pg_encoding_mbcliplen(collInfo.enc, tmp, byteLen, maxByteLen);
 
 	if (!isExplicit &&
 		!(suppress_string_truncation_error_hook && (*suppress_string_truncation_error_hook)()))
@@ -592,13 +583,13 @@ varchar(PG_FUNCTION_ARGS)
 	}
 
 	/* Encode the input string back to UTF8 */
-	resStr = pg_any_to_server(tmp, maxmblen, enc);
+	resStr = pg_any_to_server(tmp, maxmblen, collInfo.enc);
 
 	if (tmp && s_data != tmp)
 		pfree(tmp);
 
 	/* Output of pg_any_to_server would always be NULL terminated So we can use cstring_to_text directly. */
-	PG_RETURN_VARCHAR_P((VarChar *) cstring_to_text(resStr));
+	PG_RETURN_VARCHAR_P((VarChar *) cstring_to_text_with_len(resStr, strlen(resStr)));
 }
 
 /*
@@ -1062,11 +1053,9 @@ bpchar(PG_FUNCTION_ARGS)
 	char		*r;
 	char		*s_data;
 	int			i;
-	int		charLen;	/* number of characters in the input string + VARHDRSZ */
 	char		*tmp = NULL;    /* To hold the string encoded in target column's collation. */
 	char		*resStr = NULL;	/* To hold the final string in UTF8 encoding. */
-	coll_info_t	collInfo = (coll_info_t) {0, NULL, DEFAULT_LCID, 0, 0, 0, 0, 0};
-	int			enc;
+	coll_info	collInfo;
 	int 		blankSpace = 0;		/* How many blank space we need to pad. */
 	int 		encodedByteLen;
 
@@ -1082,35 +1071,25 @@ bpchar(PG_FUNCTION_ARGS)
 
 	byteLen = VARSIZE_ANY_EXHDR(source);
 	s_data = VARDATA_ANY(source);
-
-	/* Try to find the lcid corresponding to the collation of the target column. */
-	if ((pltsql_plugin_handler_ptr) && (pltsql_plugin_handler_ptr)->lookup_collation_table_callback)
+	/* 
+	 * Try to find the lcid corresponding to the collation of the target column.
+	 */
+	if (fcinfo->flinfo->fn_expr)
 	{
-		if (fcinfo->flinfo->fn_expr && ((FuncExpr *)fcinfo->flinfo->fn_expr)->funccollid == DEFAULT_COLLATION_OID)
-			collInfo = (pltsql_plugin_handler_ptr)->lookup_collation_table_callback(CLUSTER_COLLATION_OID());
-		else if (fcinfo->flinfo->fn_expr)
-			collInfo = (pltsql_plugin_handler_ptr)->lookup_collation_table_callback(((FuncExpr *)fcinfo->flinfo->fn_expr)->funccollid);
-	}
-
-	/* Try to find the encoding based on lcid found above. */
-	if ((pltsql_plugin_handler_ptr) && (pltsql_plugin_handler_ptr)->TdsGetEncodingFromLcid)
-		enc = (pltsql_plugin_handler_ptr)->TdsGetEncodingFromLcid(collInfo.lcid);
-	else 
-		/* Default encoding of Babelfish database. */
-		enc = PG_UTF8;
-
-	/* And encode the input string (usually in UTF8 encoding) in desired encoding. */
-	if ((pltsql_plugin_handler_ptr) && (pltsql_plugin_handler_ptr)->TsqlEncodingConversion)
-	{
-		tmp = (pltsql_plugin_handler_ptr)->TsqlEncodingConversion(s_data, byteLen, enc, &encodedByteLen);
-		byteLen = encodedByteLen;
+		collInfo = lookup_collation_table(((FuncExpr *)fcinfo->flinfo->fn_expr)->funccollid);
 	}
 	else
 	{
-		ereport(ERROR, 
-				(errcode(ERRCODE_INTERNAL_ERROR),
-				errmsg("Could not encode the input string to the collation of target column")));
+		/* 
+			* Special handling required for OUTPUT params because this input function, bpchar would be
+			* called from TDS to send the OUTPUT params of stored proc.
+			*/
+		collInfo = lookup_collation_table(get_server_collation_oid_internal(false));
 	}
+
+	/* And encode the input string (usually in UTF8 encoding) in desired encoding. */
+	tmp = server_to_any(s_data, byteLen, collInfo.enc, &encodedByteLen);
+	byteLen = encodedByteLen;
 
 	if (byteLen == maxByteLen)
 		PG_RETURN_BPCHAR_P(source);
@@ -1123,7 +1102,7 @@ bpchar(PG_FUNCTION_ARGS)
 		 */
 		size_t		maxmblen;
 
-		maxmblen = pg_encoding_mbcliplen(enc, tmp, byteLen, maxByteLen);
+		maxmblen = pg_encoding_mbcliplen(collInfo.enc, tmp, byteLen, maxByteLen);
 
 		if (!isExplicit &&
 			!(suppress_string_truncation_error_hook && (*suppress_string_truncation_error_hook)()))
@@ -1137,14 +1116,14 @@ bpchar(PG_FUNCTION_ARGS)
 		}
 
 		/* Encode the input string back to UTF8 */
-		resStr = pg_any_to_server(tmp, maxmblen, enc);
+		resStr = pg_any_to_server(tmp, maxmblen, collInfo.enc);
 		byteLen = strlen(resStr);
 	}
 	else
 	{
 		blankSpace = maxByteLen - byteLen;
 		/* Encode the input string back to UTF8 */
-		resStr = pg_any_to_server(tmp, byteLen, enc);
+		resStr = pg_any_to_server(tmp, byteLen, collInfo.enc);
 
 		/* And override the len with actual length of string (encoded in UTF-8) */
 		if (resStr != tmp)

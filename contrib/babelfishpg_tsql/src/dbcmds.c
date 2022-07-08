@@ -331,7 +331,7 @@ create_bbf_db_internal(const char *dbname, List *options, const char *owner, int
 
 	/* TODO: Extract options */
 
-	tuple = SearchSysCache1(COLLOID, ObjectIdGetDatum(get_server_collation_oid_internal(false)));
+	tuple = SearchSysCache1(COLLOID, ObjectIdGetDatum(tsql_get_server_collation_oid_internal(false)));
 	if (!HeapTupleIsValid(tuple))
 		ereport(ERROR,
 				(errcode(ERRCODE_UNDEFINED_OBJECT),
