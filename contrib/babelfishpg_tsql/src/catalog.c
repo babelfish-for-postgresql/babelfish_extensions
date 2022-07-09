@@ -93,7 +93,10 @@ PG_FUNCTION_INFO_V1(init_catalog);
 Datum init_catalog(PG_FUNCTION_ARGS)
 {
 	/* sys schema */
-	sys_schema_oid = get_namespace_oid("sys", false);
+	sys_schema_oid = get_namespace_oid("sys", true);
+
+	if (!OidIsValid(sys_schema_oid))
+	       	PG_RETURN_INT32(0);
 
 	/* sysdatabases */
 	sysdatabases_oid = get_relname_relid(SYSDATABASES_TABLE_NAME, sys_schema_oid);
@@ -838,6 +841,38 @@ get_authid_user_ext_db_users(const char *db_name)
 	table_close(bbf_authid_user_ext_rel, RowExclusiveLock);
 
 	return db_users_list;
+}
+
+/*
+ * Checks if there exists any user for respective database and login,
+ * if there is not any then use dbo or guest user.
+ * Checks whether decided user role has privileges of current login role and
+ * returns the user name.
+ */
+char *
+get_user_for_database(const char *db_name)
+{
+	const char		*user = NULL;
+	const char		*login;
+
+	login = GetUserNameFromId(GetSessionUserId(), false);
+	user = get_authid_user_ext_physical_name(db_name, login);
+
+	if (!user)
+	{
+		Oid				datdba;
+
+		datdba = get_role_oid("sysadmin", false);
+		if (is_member_of_role(GetSessionUserId(), datdba))
+			user = get_dbo_role_name(db_name);
+		else
+			user = get_guest_role_name(db_name);
+	}
+
+	if (user && !is_member_of_role(GetSessionUserId(), get_role_oid(user, false)))
+		user = NULL;
+
+	return user;
 }
 
 /*****************************************

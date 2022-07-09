@@ -10,6 +10,16 @@ AS
 SELECT a FROM dbo.master_t1;
 GO
 
+CREATE PROCEDURE dbo.master_p2
+AS
+SELECT 1;
+GO
+
+CREATE PROCEDURE dbo.master_p3
+AS
+SELECT 1/0;
+GO
+
 CREATE DATABASE db1;
 GO
 
@@ -42,6 +52,38 @@ GO
 ~~START~~
 int#!#int
 1#!#10
+~~END~~
+
+
+-- Expects error due to incorrect schema resolution in BBF
+EXEC master.dbo.master_p1
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: relation "dbo.master_t1" does not exist)~~
+
+
+EXEC master.dbo.master_p2
+GO
+~~START~~
+int
+1
+~~END~~
+
+
+-- runtime error
+EXEC master.dbo.master_p3
+GO
+~~ERROR (Code: 8134)~~
+
+~~ERROR (Message: division by zero)~~
+
+
+EXEC master..master_p2
+GO
+~~START~~
+int
+1
 ~~END~~
 
 
@@ -131,7 +173,7 @@ EXECUTE master.dbo.master_p1;
 GO
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: permission denied for procedure master_p1)~~
+~~ERROR (Message: relation "dbo.master_t1" does not exist)~~
 
 
 SELECT current_user;
@@ -209,6 +251,13 @@ GO
 USE db1;
 GO
 
+EXEC master.dbo.master_p2
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: permission denied for procedure master_p2)~~
+
+
 SELECT current_user;
 GO
 ~~START~~
@@ -231,6 +280,9 @@ GO
 GRANT SELECT ON dbo.master_t1 TO master_janedoe;
 GO
 
+GRANT EXECUTE ON dbo.master_p2 TO master_janedoe;
+GO
+
 USE db1;
 GO
 
@@ -243,6 +295,14 @@ GO
 
 USE db1;
 GO
+
+EXEC master.dbo.master_p2
+GO
+~~START~~
+int
+1
+~~END~~
+
 
 SELECT * FROM master.dbo.master_t1 ORDER BY id;
 GO
@@ -272,6 +332,12 @@ GO
 DROP PROC dbo.master_p1;
 GO
 
+DROP PROC dbo.master_p2;
+GO
+
+DROP PROC dbo.master_p3;
+GO
+
 DROP USER master_janedoe;
 GO
 
@@ -299,6 +365,12 @@ CREATE DATABASE db2;
 GO
 
 USE db1;
+GO
+
+CREATE PROCEDURE p1
+AS
+EXEC('USE db1');
+SELECT 10;
 GO
 
 CREATE TABLE dbo.db1_t1 (id int identity, a int);
@@ -344,6 +416,17 @@ int
 10
 ~~END~~
 
+
+EXEC db1.dbo.p1;
+GO
+~~START~~
+int
+10
+~~END~~
+
+
+DROP PROCEDURE p1
+GO
 
 -- tsql
 USE master;

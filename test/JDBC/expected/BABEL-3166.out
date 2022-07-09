@@ -1,0 +1,39 @@
+-- psql
+-- function
+CREATE OR REPLACE FUNCTION "master_dbo"."babel_3166_func"("@a" numeric, "@b" "sys"."varchar", "@c" "sys"."varchar", "@d" "sys"."varchar", "@e" "sys"."binary")
+RETURNS "sys"."varbinary"
+LANGUAGE "pltsql"
+AS '{"version_num": "1", "typmod_array": ["1179652", "-1", "-8000", "8", "6", "8"], "original_probin": ""}',
+'BEGIN return @e end;';
+go
+
+-- Look at the probin for typmod information
+SELECT proname, probin FROM pg_proc WHERE proname = 'babel_3166_func';
+go
+~~START~~
+name#!#text
+babel_3166_func#!#{"version_num": "1", "typmod_array": ["1179652", "-1", "-8000", "8", "6", "8"], "original_probin": ""}
+~~END~~
+
+
+DROP FUNCTION "master_dbo"."babel_3166_func";
+go
+
+-- procedure
+CREATE OR REPLACE PROCEDURE "master_dbo"."babel_3166_proc"(IN "@a" numeric, IN "@b" "sys"."varchar", IN "@c" "sys"."varchar", IN "@d" "sys"."varchar", IN "@e" "sys"."binary")
+LANGUAGE "pltsql"
+AS '{"version_num": "1", "typmod_array": ["1179652", "-1", "-8000", "8", "6"], "original_probin": ""}',
+'select @e';
+go
+
+-- Look at the probin for typmod information
+SELECT proname, probin FROM pg_proc WHERE proname = 'babel_3166_proc';
+go
+~~START~~
+name#!#text
+babel_3166_proc#!#{"version_num": "1", "typmod_array": ["1179652", "-1", "-8000", "8", "6"], "original_probin": ""}
+~~END~~
+
+
+DROP PROCEDURE "master_dbo"."babel_3166_proc";
+go

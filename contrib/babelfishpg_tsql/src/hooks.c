@@ -14,6 +14,7 @@
 #include "commands/copy.h"
 #include "commands/explain.h"
 #include "commands/tablecmds.h"
+#include "commands/view.h"
 #include "funcapi.h"
 #include "nodes/makefuncs.h"
 #include "nodes/nodeFuncs.h"
@@ -81,6 +82,7 @@ static int find_attr_by_name_from_column_def_list(const char *attributeName, Lis
  *****************************************/
 static void pltsql_report_proc_not_found_error(List *names, List *argnames, int nargs, ParseState *pstate, int location, bool proc_call);
 extern PLtsql_execstate *get_outermost_tsql_estate(int *nestlevel);
+static void preserve_view_constraints_from_base_table(ColumnDef  *col, Oid tableOid, AttrNumber colId);
 
 /*****************************************
  * 			Executor Hooks
@@ -89,6 +91,8 @@ static void pltsql_ExecutorStart(QueryDesc *queryDesc, int eflags);
 static void pltsql_ExecutorRun(QueryDesc *queryDesc, ScanDirection direction, uint64 count, bool execute_once);
 static void pltsql_ExecutorFinish(QueryDesc *queryDesc);
 static void pltsql_ExecutorEnd(QueryDesc *queryDesc);
+
+static bool plsql_TriggerRecursiveCheck(ResultRelInfo *resultRelInfo);
 
 /*****************************************
  * 			Replication Hooks
@@ -120,6 +124,7 @@ static ExecutorStart_hook_type prev_ExecutorStart = NULL;
 static ExecutorRun_hook_type prev_ExecutorRun = NULL;
 static ExecutorFinish_hook_type prev_ExecutorFinish = NULL;
 static ExecutorEnd_hook_type prev_ExecutorEnd = NULL;
+static inherit_view_constraints_from_table_hook_type prev_inherit_view_constraints_from_table = NULL;
 
 /*****************************************
  * 			Install / Uninstall
@@ -188,6 +193,10 @@ InstallExtendedHooks(void)
 
 	prev_ExecutorEnd = ExecutorEnd_hook;
 	ExecutorEnd_hook = pltsql_ExecutorEnd;
+
+	prev_inherit_view_constraints_from_table = inherit_view_constraints_from_table_hook;
+	inherit_view_constraints_from_table_hook = preserve_view_constraints_from_base_table;
+	TriggerRecuresiveCheck_hook = plsql_TriggerRecursiveCheck;
 }
 
 void
@@ -217,6 +226,7 @@ UninstallExtendedHooks(void)
 	ExecutorRun_hook = prev_ExecutorRun;
 	ExecutorFinish_hook = prev_ExecutorFinish;
 	ExecutorEnd_hook = prev_ExecutorEnd;
+	inherit_view_constraints_from_table_hook = prev_inherit_view_constraints_from_table;
 }
 
 /*****************************************
@@ -318,6 +328,51 @@ pltsql_ExecutorEnd(QueryDesc *queryDesc)
 		prev_ExecutorEnd(queryDesc);
 	else
 		standard_ExecutorEnd(queryDesc);
+}
+
+/**
+ * @brief 
+ *  the function will depend on PLtsql_execstate to find whether 
+ *  the trigger is called before on this query stack, so that's why we 
+ *  have to add a hook into Postgres code to callback into babel code,
+ *  since we need to get access to PLtsql_execstate to iterate the 
+ *  stack triggers
+ *  
+ *  return true if it's a recursive call of trigger
+ *  return false if it's not
+ * 
+ * @param resultRelInfo 
+ * @return true 
+ * @return false 
+ */
+static bool
+plsql_TriggerRecursiveCheck(ResultRelInfo *resultRelInfo)
+{
+	if (resultRelInfo->ri_TrigDesc == NULL)
+		return false;
+	if (pltsql_recursive_triggers)
+		return false;
+	int i;
+	PLExecStateCallStack * cur;
+	PLtsql_execstate *estate;
+	cur = exec_state_call_stack;
+	while (cur != NULL){
+		estate = cur->estate;
+		if (estate->trigdata != NULL && estate->trigdata->tg_trigger != NULL
+		&& resultRelInfo->ri_TrigDesc != NULL 
+		&& (resultRelInfo->ri_TrigDesc->trig_insert_instead_statement
+		|| resultRelInfo->ri_TrigDesc->trig_delete_instead_statement 
+		|| resultRelInfo->ri_TrigDesc->trig_update_instead_statement)){
+			for (i = 0; i<resultRelInfo->ri_TrigDesc->numtriggers; ++i){
+				Trigger    *trigger = &resultRelInfo->ri_TrigDesc->triggers[i];
+				if (trigger->tgoid == estate->trigdata->tg_trigger->tgoid){
+					return true;
+				}
+			}
+		}
+		cur = cur->next;
+	}
+	return false;
 }
 
 static Node *
@@ -1453,4 +1508,31 @@ modify_insert_stmt(InsertStmt *stmt, Oid relid)
 	systable_endscan(scan);
 	table_close(pg_attribute, AccessShareLock);
 
+}
+
+static void
+preserve_view_constraints_from_base_table(ColumnDef  *col, Oid tableOid, AttrNumber colId)
+{
+	/*
+	 * In TSQL Dialect Preserve the constraints only for the internal view
+	 * created by sp_describe_first_result_set procedure.
+	 */
+	if (sp_describe_first_result_set_inprogress && sql_dialect == SQL_DIALECT_TSQL)
+	{
+		HeapTuple	  tp;
+		Form_pg_attribute att_tup;
+
+		tp = SearchSysCache2(ATTNUM, 
+					ObjectIdGetDatum(tableOid),
+					Int16GetDatum(colId));
+
+		if (HeapTupleIsValid(tp))
+		{
+			att_tup = (Form_pg_attribute) GETSTRUCT(tp);
+			col->is_not_null = att_tup->attnotnull;
+			col->identity 	 = att_tup->attidentity;
+			col->generated 	 = att_tup->attgenerated;
+			ReleaseSysCache(tp);
+		}
+	}
 }

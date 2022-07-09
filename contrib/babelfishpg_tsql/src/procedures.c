@@ -17,6 +17,7 @@
 #include "executor/spi.h"
 #include "fmgr.h"
 #include "funcapi.h"
+#include "hooks.h"
 #include "miscadmin.h"
 #include "utils/builtins.h"
 #include "utils/guc.h"
@@ -46,6 +47,8 @@ extern int execute_batch(PLtsql_execstate *estate, char *batch, InlineCodeBlockA
 extern PLtsql_execstate *get_current_tsql_estate(void);
 
 char *sp_describe_first_result_set_view_name = NULL;
+
+bool sp_describe_first_result_set_inprogress = false;
 
 Datum
 sp_unprepare(PG_FUNCTION_ARGS)
@@ -294,7 +297,7 @@ static char *sp_describe_first_result_set_query(char *viewName)
 		"end as is_identity_column, "
 		"CAST(NULL as sys.bit) as is_part_of_unique_key, " /* pg_constraint */
 		"case  "
-			"when t1.is_updatable = \'YES\' then CAST(1 AS sys.bit) "
+			"when t1.is_updatable = \'YES\' AND t1.is_generated = \'NEVER\' AND t1.is_identity = \'NO\' then CAST(1 AS sys.bit) "
 			"else CAST(0 AS sys.bit) "
 		"end as is_updateable, "
 		"case "
@@ -315,8 +318,8 @@ static char *sp_describe_first_result_set_query(char *viewName)
 			"WHEN t3.\"DATA_TYPE\" = \'decimal\' THEN 17 "
 			"ELSE t4.max_length END as int) "
 		"as tds_length, "
-		"CAST(NULL as int) as tds_collation_id, "
-		"CAST(NULL AS sys.tinyint) AS tds_collation_sort_id "
+		"CAST(COLLATIONPROPERTY(t4.collation_name, 'CollationId') as int) as tds_collation_id, "
+		"CAST(COLLATIONPROPERTY(t4.collation_name, 'SortId') as int) AS tds_collation_sort_id "
 	"FROM information_schema.columns t1, information_schema_tsql.columns t3, "
 	"sys.columns t4, pg_class t5 "
 	"LEFT OUTER JOIN (sys.babelfish_namespace_ext ext JOIN sys.pg_namespace_ext t6 ON t6.nspname = ext.nspname) "
@@ -348,6 +351,8 @@ sp_describe_first_result_set_internal(PG_FUNCTION_ARGS)
 	int browseMode;
 	char *query;
 	int rc;
+	ANTLR_result result;
+	char *parsedbatch = NULL;
 
 	/* stuff done only on the first call of the function */
 	if (SRF_IS_FIRSTCALL())
@@ -365,24 +370,38 @@ sp_describe_first_result_set_internal(PG_FUNCTION_ARGS)
 		attinmeta = TupleDescGetAttInMetadata(tupdesc);
 		funcctx->attinmeta = attinmeta;
 
-		/* If TSQL Query is NULL string then send no rows. */
-		if (batch && batch[0] != '\0')
+		/* First, pass the batch to the ANTLR parser. */
+		if (batch)
 		{
-			/* TODO call ANTLR to parse the query and return NULL for valid non-select queries. */
-			if (strncmp(batch, "select", 6) != 0)
-					ereport(ERROR,
-							 (errcode(ERRCODE_INTERNAL_ERROR),
-							 errmsg("sp_describe_first_result_set supports only select statements %s", query)));
+			result = antlr_parser_cpp(batch);
+			if (!result.success)
+				report_antlr_error(result);
 
-			query = psprintf("CREATE VIEW %s as %s", sp_describe_first_result_set_view_name, batch);
+			/* Skip if NULL query was passed. */
+			if (pltsql_parse_result->body)
+				parsedbatch = ((PLtsql_stmt_execsql *)lsecond(pltsql_parse_result->body))->sqlstmt->query;
+		}
+
+		/* If TSQL Query is NULL string or a non-select query then send no rows. */
+		if (parsedbatch && strncasecmp(parsedbatch, "select", 6) == 0)
+		{
+			sp_describe_first_result_set_inprogress = true;
+			query = psprintf("CREATE VIEW %s as %s", sp_describe_first_result_set_view_name, parsedbatch);
 	
 			/* Switch Dialect so that SPI_execute creates a TSQL View, obeying TSQL Syntax. */
 			set_config_option("babelfishpg_tsql.sql_dialect", "tsql",
 										(superuser() ? PGC_SUSET : PGC_USERSET),
 											PGC_S_SESSION, GUC_ACTION_SAVE, true, 0, false);
-
 			if ((rc = SPI_execute(query, false, 1)) < 0)
+			{
+				sp_describe_first_result_set_inprogress = false;
+				set_config_option("babelfishpg_tsql.sql_dialect", "postgres",
+										(superuser() ? PGC_SUSET : PGC_USERSET),
+											PGC_S_SESSION, GUC_ACTION_SAVE, true, 0, false);
 				elog(ERROR, "SPI_execute failed: %s", SPI_result_code_string(rc));
+			}
+
+			sp_describe_first_result_set_inprogress = false;
 
 			set_config_option("babelfishpg_tsql.sql_dialect", "postgres",
 										(superuser() ? PGC_SUSET : PGC_USERSET),
@@ -623,6 +642,11 @@ sp_describe_undeclared_parameters_internal(PG_FUNCTION_ARGS)
 		/* Parse the list of parameters, and determine which and how many are undeclared. */
 		select_stmt = (SelectStmt *)insert_stmt->selectStmt;
 		values_list = select_stmt->valuesLists;
+		if (list_length(values_list) > 1) {
+			ereport(ERROR,
+				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+					errmsg("Unsupported use case in sp_describe_undeclared_parameters")));
+		}
 		foreach(lc, values_list)
 		{
 			List *sublist = lfirst(lc);
