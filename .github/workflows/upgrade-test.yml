@@ -96,9 +96,6 @@ jobs:
         if: always() && (steps.setup-base-version.outcome == 'failure' || steps.upgrade-and-test.outcome == 'failure')
         run: |
           cd test/JDBC/Info
-          cd test/JDBC
-          cp -r output ~/output
-          cd Info
           timestamp=`ls -Art | tail -n 1`
           cd $timestamp
           mkdir -p ~/upgrade
