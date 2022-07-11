@@ -44,7 +44,6 @@ objectproperty
 objectpropertyex
 sys-column-property
 sys-datefirst
-sys-has_perms_by_name
 sys-lock_timeout
 sys-max_connections
 sys-original_login
