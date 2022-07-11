@@ -33,7 +33,6 @@ void ProcessBCPRequest(TDSRequest request);
 static void FetchMoreBcpData(StringInfo *message);
 static int ReadBcpPlp(ParameterToken temp, StringInfo *message, TDSRequestBulkLoad request);
 uint64_t offset = 0;
-int BulkCopyPacketStatus = 0;
 
 #define COLUMNMETADATA_HEADER_LEN			sizeof(uint32_t) + sizeof(uint16) + 1
 #define FIXED_LEN_TYPE_COLUMNMETADATA_LEN	1
@@ -82,34 +81,39 @@ static void
 FetchMoreBcpData(StringInfo *message)
 {
 	StringInfo temp;
+	int ret;
+
+	/* Unlikely that message will be NULL. */
+	if (message == NULL)
+		ereport(ERROR,
+				(errcode(ERRCODE_PROTOCOL_VIOLATION),
+					errmsg("Protocol violation: Message data is NULL")));
 
 	/*
 	 * If previous return value was 1 then that means that we have reached the EOM.
 	 * No data left to read, we shall throw an error if we reach here.
 	 */
-	if (BulkCopyPacketStatus == 1)
+	if (TdsGetRecvPacketEomStatus())
 		ereport(ERROR,
 				(errcode(ERRCODE_PROTOCOL_VIOLATION),
 					errmsg("Trying to read more data than available in BCP request.")));
 
 	temp = makeStringInfo();
 	appendBinaryStringInfo(temp, (*message)->data + offset, (*message)->len - offset);
-	if ((*message))
-	{
-		if ((*message)->data)
-			pfree((*message)->data);
-		pfree((*message));
-	}
+
+	if ((*message)->data)
+		pfree((*message)->data);
+	pfree((*message));
 
 	/*
 	 * We should hold the interrupts until we read the next
 	 * request frame.
 	 */
 	HOLD_CANCEL_INTERRUPTS();
-	BulkCopyPacketStatus = TdsReadNextPendingBcpRequest(temp);
+	ret = TdsReadNextPendingBcpRequest(temp);
 	RESUME_CANCEL_INTERRUPTS();
 
-	if (BulkCopyPacketStatus < 0)
+	if (ret < 0)
 	{
 		TdsErrorContext->reqType = 0;
 		TdsErrorContext->err_text = "EOF on TDS socket while fetching For Bulk Load Request";
@@ -798,11 +802,12 @@ ProcessBCPRequest(TDSRequest request)
 			}
 			PG_CATCH();
 			{
+				int ret;
 				HOLD_CANCEL_INTERRUPTS();
-				BulkCopyPacketStatus = TdsDiscardAllPendingBcpRequest();
+				ret = TdsDiscardAllPendingBcpRequest();
 				RESUME_CANCEL_INTERRUPTS();
 
-				if (BulkCopyPacketStatus < 0)
+				if (ret < 0)
 					TdsErrorContext->err_text = "EOF on TDS socket while fetching For Bulk Load Request";
 
 				if (TDS_DEBUG_ENABLED(TDS_DEBUG2))

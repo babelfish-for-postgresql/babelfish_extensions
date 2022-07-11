@@ -933,9 +933,6 @@ TdsReadNextRequest(StringInfo message, uint8_t *status, uint8_t *messageType)
 
 		if (TdsRecvMessageType == TDS_BULK_LOAD)
 		{
-			/* if this is the last packet then notify the caller. */
-			if (TdsRecvPacketStatus & TDS_PACKET_HEADER_STATUS_EOM)
-				BulkCopyPacketStatus = 1;
 			TdsDoProcessHeader = true;
 			return 0;
 		}
@@ -1008,4 +1005,9 @@ TdsWriteMessage(StringInfo message, uint8_t messageType)
 	if (TdsSocketFlush())
 		return EOF;
 	return 0;
+}
+
+bool TdsGetRecvPacketEomStatus(void)
+{
+	return TdsRecvPacketStatus & TDS_PACKET_HEADER_STATUS_EOM;
 }

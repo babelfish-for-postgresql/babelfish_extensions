@@ -227,7 +227,6 @@ typedef struct
 } TdsErrorContextData;
 
 extern TdsErrorContextData *TdsErrorContext;
-extern int BulkCopyPacketStatus;
 
 
 /* Socket functions */
@@ -267,6 +266,7 @@ extern int TdsTestProtocol(void);
 extern int TdsPutUInt16LE(uint16_t value);
 extern int TdsPutUInt64LE(uint64_t value);
 extern int TdsPutDate(uint32_t value);
+extern bool TdsGetRecvPacketEomStatus(void);
 
 /* Functions in backend/tds/tdslogin.c */
 extern void TdsSetBufferSize(uint32_t newSize);
