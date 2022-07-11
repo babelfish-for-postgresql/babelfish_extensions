@@ -40,7 +40,6 @@ BABEL-3234
 fulltextserviceproperty
 is_srvrolemember
 msdb-dbo-fn_syspolicy_is_automation_enabled
-objectproperty
 objectpropertyex
 sys-column-property
 sys-datefirst
