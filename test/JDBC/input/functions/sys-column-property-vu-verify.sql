@@ -1,5 +1,5 @@
 DECLARE @table_id INT
-SET @table_id = (select OBJECT_ID('t_column_property'));
+SET @table_id = (select OBJECT_ID('sys_column_property_vu_t_column_property'));
 
 SELECT * FROM sys.columnproperty(@table_id, 'cp1', 'charmaxlen');
 SELECT * FROM sys.columnproperty(@table_id, 'cp2', 'charmaxlen');
@@ -10,7 +10,7 @@ SELECT * FROM sys.columnproperty(@table_id, 'cp6', 'charmaxlen');
 GO
 
 DECLARE @table_id INT
-SET @table_id = (select OBJECT_ID('t_column_property'));
+SET @table_id = (select OBJECT_ID('sys_column_property_vu_t_column_property'));
 
 SELECT * FROM sys.columnproperty(@table_id, 'cp1', 'allowsnull');
 SELECT * FROM sys.columnproperty(@table_id, 'cp2', 'allowsnull');

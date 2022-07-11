@@ -1,2 +1,2 @@
-DROP TABLE t1
+DROP TABLE sys_trigger_nestlevel_vu_t1
 GO

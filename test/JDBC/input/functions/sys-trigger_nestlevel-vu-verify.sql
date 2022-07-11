@@ -1,7 +1,7 @@
-INSERT INTO t1(c1) VALUES (0);
+INSERT INTO sys_trigger_nestlevel_vu_t1(c1) VALUES (0);
 GO
 
-SELECT * FROM t1
+SELECT * FROM sys_trigger_nestlevel_vu_t1
 GO
 
 SELECT trigger_nestlevel()
