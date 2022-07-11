@@ -84,7 +84,7 @@ FetchMoreBcpData(StringInfo *message)
 	int ret;
 
 	/* Unlikely that message will be NULL. */
-	if (message == NULL)
+	if ((*message) == NULL)
 		ereport(ERROR,
 				(errcode(ERRCODE_PROTOCOL_VIOLATION),
 					errmsg("Protocol violation: Message data is NULL")));
