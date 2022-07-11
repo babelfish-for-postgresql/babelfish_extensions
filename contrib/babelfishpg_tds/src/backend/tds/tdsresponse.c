@@ -1255,9 +1255,9 @@ int TdsGetGenericTypmod(Node *expr)
 				func = (FuncExpr *) expr;
 
 				/*
-				* Look up the return type typmod from a persistent
-				* store using function oid.
-				*/
+				 * Look up the return type typmod from a persistent
+				 * store using function oid.
+				 */
 				func_oid = func->funcid;
 				Assert(func_oid != InvalidOid);
 
