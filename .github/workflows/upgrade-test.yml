@@ -95,6 +95,7 @@ jobs:
         id: test-file-rename
         if: always() && (steps.setup-base-version.outcome == 'failure' || steps.upgrade-and-test.outcome == 'failure')
         run: |
+          cd test/JDBC/Info
           cd test/JDBC
           cp -r output ~/output
           cd Info
@@ -110,7 +111,6 @@ jobs:
         with:
           name: upgrade-logs-${{ matrix.upgrade-path.title }}
           path: |
-            ~/output
             ~/upgrade/*.log
             ~/upgrade/*.diff
             ~/postgres*/data/logfile
