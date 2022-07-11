@@ -629,7 +629,7 @@ RETURNS INTEGER
 AS 'babelfishpg_tsql', 'tsql_get_returnTypmodValue'
 LANGUAGE C IMMUTABLE PARALLEL SAFE;
 
-CREATE OR REPLACE FUNCTION information_schema_tsql._pgtsql_char_max_length(type text, typmod int4) RETURNS integer
+CREATE OR REPLACE FUNCTION information_schema_tsql._pgtsql_char_max_length_for_routines(type text, typmod int4) RETURNS integer
         LANGUAGE sql
         IMMUTABLE
         PARALLEL SAFE
@@ -654,7 +654,7 @@ $$SELECT
                 ELSE null
         END$$;
 
-CREATE OR REPLACE FUNCTION information_schema_tsql._pgtsql_char_octet_length(type text, typmod int4) RETURNS integer
+CREATE OR REPLACE FUNCTION information_schema_tsql._pgtsql_char_octet_length_for_routines(type text, typmod int4) RETURNS integer
         LANGUAGE sql
         IMMUTABLE
         PARALLEL SAFE
@@ -700,10 +700,10 @@ CREATE OR REPLACE VIEW information_schema_tsql.routines AS
            CAST(NULL AS sys.nvarchar(128)) AS "UDT_SCHEMA",
            CAST(NULL AS sys.nvarchar(128)) AS "UDT_NAME",
            CAST(case when is_tbl_type THEN 'table' when p.prokind = 'p' THEN 'NULL' ELSE tsql_type_name END AS sys.nvarchar(128)) AS "DATA_TYPE",
-           CAST(information_schema_tsql._pgtsql_char_max_length(tsql_type_name, true_typmod)
+           CAST(information_schema_tsql._pgtsql_char_max_length_for_routines(tsql_type_name, true_typmod)
                  AS int)
            AS "CHARACTER_MAXIMUM_LENGTH",
-           CAST(information_schema_tsql._pgtsql_char_octet_length(tsql_type_name, true_typmod)
+           CAST(information_schema_tsql._pgtsql_char_octet_length_for_routines(tsql_type_name, true_typmod)
                  AS int)
            AS "CHARACTER_OCTET_LENGTH",
            CAST(NULL AS sys.nvarchar(128)) AS "COLLATION_CATALOG",
