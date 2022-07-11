@@ -1,35 +1,26 @@
-USE db2
+DROP TABLE objectpropertyex_ownerid_schema.objectpropertyex_ownerid_table
 GO
 
-DROP TABLE ownerid_schema.ownerid_table
-GO
-
-DROP SCHEMA ownerid_schema
+DROP SCHEMA objectpropertyex_ownerid_schema
 GO
 
 
 -- =============== BaseType ===============
 -- Cleanup
-DROP TABLE basetype_table
+DROP TABLE objectpropertyex_basetype_table
 GO
 
-DROP VIEW basetype_view
+DROP VIEW objectpropertyex_basetype_view
 GO
 
-DROP FUNCTION basetype_function
+DROP FUNCTION objectpropertyex_basetype_function
 GO
 
-DROP PROC basetype_proc
+DROP PROC objectpropertyex_basetype_proc
 GO
 
 
 -- =============== Special Input Cases ===============
 -- Cleanup
-DROP TABLE specialinput_table
-GO
-
--- Global cleanup for tests
-USE master
-GO
-DROP DATABASE db2
+DROP TABLE objectpropertyex_specialinput_table
 GO
