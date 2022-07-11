@@ -15,4 +15,4 @@
   extension_branch: BABEL_2_1_STABLE
 '14.latest':
   engine_branch: ${{ github.ref_name }}
-  extension_branch: default
+  extension_branch: latest
