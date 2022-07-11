@@ -32,7 +32,7 @@ jobs:
         id: install-extensions
         if: always() && steps.build-extensions.outcome == 'success'
         uses: ./.github/composite-actions/install-extensions
-		
+      
       - name: Install MSSQL Tools
         id: install-mssql-tools
         if: always() && steps.install-mssql-tools.outcome == 'success'
