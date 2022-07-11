@@ -1072,6 +1072,7 @@ BEGIN
 		LEFT OUTER JOIN pg_catalog.pg_roles AS Base4 ON Base4.rolname = Bsdb.owner
 		WHERE Ext1.database_name = DB_NAME()
 		AND Ext1.type = 'S'
+		AND Ext1.orig_username != 'db_owner'
 		ORDER BY UserName, RoleName;
 	END
 	-- If the security account is the db fixed role - db_owner
@@ -1140,6 +1141,7 @@ BEGIN
 		LEFT OUTER JOIN pg_catalog.pg_roles AS Base4 ON Base4.rolname = Bsdb.owner
 		WHERE Ext1.database_name = DB_NAME()
 		AND Ext1.type = 'S'
+		AND Ext1.orig_username != 'db_owner'
 		AND (Ext1.orig_username = @name_in_db OR lower(Ext1.orig_username) = lower(@name_in_db))
 		ORDER BY UserName, RoleName;
 	END
