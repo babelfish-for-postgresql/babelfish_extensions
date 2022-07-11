@@ -48,7 +48,7 @@ CREATE OR REPLACE FUNCTION information_schema_tsql._pgtsql_char_max_length(type 
 $$SELECT
 	CASE WHEN type IN ('char', 'nchar', 'varchar', 'nvarchar', 'binary', 'varbinary')
 		THEN CASE WHEN typmod = -1
-			THEN -1
+			THEN 1
 			ELSE typmod - 4
 			END
 		WHEN type IN ('text', 'image')
@@ -73,12 +73,12 @@ CREATE OR REPLACE FUNCTION information_schema_tsql._pgtsql_char_octet_length(typ
 $$SELECT
 	CASE WHEN type IN ('char', 'varchar', 'binary', 'varbinary')
 		THEN CASE WHEN typmod = -1 /* default typmod */
-			THEN -1
+			THEN 1
 			ELSE typmod - 4
 			END
 		WHEN type IN ('nchar', 'nvarchar')
 		THEN CASE WHEN typmod = -1 /* default typmod */
-			THEN -1
+			THEN 2
 			ELSE (typmod - 4) * 2
 			END
 		WHEN type IN ('text', 'image')
@@ -477,7 +477,7 @@ CREATE OR REPLACE VIEW information_schema_tsql.routines AS
                  * TODO: We need to first create mapping of collation name to char-set name;
                  * Until then return null.
             */
-	    CAST(null AS sys.nvarchar(128)) AS "CHARACTER_SET_NAME",
+	    CAST(case when tsql_type_name IN ('nchar','nvarchar') THEN 'UNICODE' when tsql_type_name IN ('char','varchar') THEN 'iso_1' ELSE 'NULL' END AS sys.nvarchar(128)) AS "CHARACTER_SET_NAME",
 	    CAST(information_schema_tsql._pgtsql_numeric_precision(tsql_type_name, t.oid, true_typmod)
                         AS smallint)
             AS "NUMERIC_PRECISION",

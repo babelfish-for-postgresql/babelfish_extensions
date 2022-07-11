@@ -13,12 +13,6 @@ go
 select tsql_get_functiondef(oid) from pg_proc where proname='test_nvar';
 go
 
-select SPECIFIC_CATALOG, SPECIFIC_SCHEMA, SPECIFIC_NAME, ROUTINE_DEFINITION from information_schema.routines where SPECIFIC_NAME NOT LIKE 'xp%';
-go
-
-drop procedure test_nvar;
-go
-
 #SMALLINT and INT OUTPUT
 create schema sc1;
 go
@@ -33,15 +27,6 @@ END;
 go
 
 select tsql_get_functiondef(oid) from pg_proc where proname='test_si';
-go
-
-select ROUTINE_CATALOG, ROUTINE_SCHEMA, ROUTINE_NAME, ROUTINE_DEFINITION  from information_schema.routines where SPECIFIC_NAME NOT LIKE 'xp%';
-go
-
-drop procedure sc1.test_si;
-go
-
-drop schema sc1;
 go
 
 #decimal
@@ -60,7 +45,41 @@ go
 select tsql_get_functiondef(oid) from pg_proc where proname='test_dec';
 go
 
-select ROUTINE_TYPE, DATA_TYPE, CHARACTER_MAXIMUM_LENGTH, ROUTINE_DEFINITION  from information_schema.routines where SPECIFIC_NAME NOT LIKE 'xp%';
+#checking for function with char,nchar,varchar,nvarchar,binary,varbinary
+create function fc(@a char) RETURNS char AS BEGIN return @a END;
+go
+
+create function fc1(@a nvarchar) RETURNS nvarchar AS BEGIN return @a END;
+go
+
+create function fc2(@a varchar) RETURNS varchar AS BEGIN return @a END;
+go
+
+create function fc3(@a nchar) RETURNS nchar AS BEGIN return @a END;
+go
+
+create function fc4(@a binary) RETURNS binary AS BEGIN return @a END;
+go
+
+create function fc5(@a varbinary) RETURNS varbinary AS BEGIN return @a END;
+go
+
+select tsql_get_functiondef(oid) from pg_proc where proname='fc';
+go
+
+select tsql_get_functiondef(oid) from pg_proc where proname='fc1';
+go
+
+select tsql_get_functiondef(oid) from pg_proc where proname='fc2';
+go
+
+select tsql_get_functiondef(oid) from pg_proc where proname='fc3';
+go
+
+select tsql_get_functiondef(oid) from pg_proc where proname='fc4';
+go
+
+select tsql_get_functiondef(oid) from pg_proc where proname='fc5';
 go
 
 #char
@@ -73,12 +92,6 @@ END;
 go
 
 select tsql_get_functiondef(oid) from pg_proc where proname='test_char';
-go
-
-select CHARACTER_OCTET_LENGTH, COLLATION_NAME, ROUTINE_DEFINITION  from information_schema.routines where SPECIFIC_NAME NOT LIKE 'xp%';
-go
-
-drop procedure test_char;
 go
 
 #tinyint, float and bigint
@@ -94,12 +107,6 @@ go
 select tsql_get_functiondef(oid) from pg_proc where proname='test_ti';
 go
 
-select ROUTINE_BODY, ROUTINE_DEFINITION  from information_schema.routines where SPECIFIC_NAME NOT LIKE 'xp%' ORDER BY ROUTINE_DEFINITION;
-go
-
-drop procedure test_ti;
-go
-
 #numeric
 create procedure test_num(@a numeric(20,6) OUTPUT)
 AS
@@ -111,15 +118,6 @@ END;
 go
 
 select tsql_get_functiondef(oid) from pg_proc where proname='test_num';
-go
-
-select NUMERIC_PRECISION, NUMERIC_PRECISION_RADIX, NUMERIC_SCALE, ROUTINE_BODY, ROUTINE_DEFINITION  from information_schema.routines where SPECIFIC_NAME NOT LIKE 'xp%' ORDER BY ROUTINE_DEFINITION;
-go
-
-drop procedure test_num;
-go
-
-drop function test_dec;
 go
 
 #time and date
@@ -134,12 +132,6 @@ go
 select tsql_get_functiondef(oid) from pg_proc where proname='test_time';
 go
 
-select ROUTINE_BODY, ROUTINE_DEFINITION, DATETIME_PRECISION, IS_DETERMINISTIC, SQL_DATA_ACCESS  from information_schema.routines where SPECIFIC_NAME NOT LIKE 'xp%' ORDER BY ROUTINE_DEFINITION;
-go
-
-drop procedure test_time;
-go
-
 #datetime
 create procedure test_dt(@a datetime output)
 AS
@@ -151,10 +143,7 @@ go
 select tsql_get_functiondef(oid) from pg_proc where proname='test_dt';
 go
 
-select IS_NULL_CALL, SCHEMA_LEVEL_ROUTINE, MAX_DYNAMIC_RESULT_SETS, IS_USER_DEFINED_CAST, IS_IMPLICITLY_INVOCABLE, ROUTINE_BODY, ROUTINE_DEFINITION  from information_schema.routines where SPECIFIC_NAME NOT LIKE 'xp%' ORDER BY ROUTINE_DEFINITION;
-go
-
-drop procedure test_dt;
+select SPECIFIC_CATALOG, SPECIFIC_SCHEMA, SPECIFIC_NAME, ROUTINE_CATALOG, ROUTINE_SCHEMA, ROUTINE_NAME, ROUTINE_TYPE, DATA_TYPE, CHARACTER_MAXIMUM_LENGTH, CHARACTER_OCTET_LENGTH, COLLATION_NAME, CHARACTER_SET_NAME, NUMERIC_PRECISION, NUMERIC_PRECISION_RADIX, NUMERIC_SCALE, DATETIME_PRECISION, ROUTINE_BODY, ROUTINE_DEFINITION, IS_DETERMINISTIC, SQL_DATA_ACCESS, IS_NULL_CALL, SCHEMA_LEVEL_ROUTINE, MAX_DYNAMIC_RESULT_SETS, IS_USER_DEFINED_CAST, IS_IMPLICITLY_INVOCABLE from information_schema.routines where SPECIFIC_NAME NOT LIKE 'xp%' ORDER BY ROUTINE_DEFINITION;
 go
 
 #UID
@@ -169,11 +158,7 @@ go
 select tsql_get_functiondef(oid) from pg_proc where proname='test_uid';
 go
 
-drop procedure test_uid;
-go
-
 #check with different sqlbody.#
-
 CREATE TABLE customers
 ( customer_id int NOT NULL,
   customer_name char(50) NOT NULL,
@@ -196,9 +181,6 @@ go
 select tsql_get_functiondef(oid) from pg_proc where proname='test_b1';
 go
 
-drop procedure test_b1;
-go
-
 create procedure test_b2(@id int)
 AS
 BEGIN
@@ -210,9 +192,6 @@ go
 select tsql_get_functiondef(oid) from pg_proc where proname='test_b2';
 go
 
-drop procedure test_b2;
-go
-
 create procedure test_b3(@name char(255), @city char(255), @address char(255), @state char(255), @cust_id int)
 AS
 BEGIN
@@ -221,9 +200,6 @@ END;
 go
 
 select tsql_get_functiondef(oid) from pg_proc where proname='test_b3';
-go
-
-drop procedure test_b3;
 go
 
 create procedure test_b4(@id int)
@@ -238,9 +214,6 @@ go
 select tsql_get_functiondef(oid) from pg_proc where proname='test_b4';
 go
 
-drop procedure test_b4;
-go
-
 create procedure test_b5 @paramout varchar(20) out
 AS
 BEGIN
@@ -249,9 +222,6 @@ END;
 go
 
 select tsql_get_functiondef(oid) from pg_proc where proname='test_b5';
-go
-
-drop procedure test_b5;
 go
 
 create procedure test_b6(@id int)
@@ -263,9 +233,6 @@ END;
 go
 
 select tsql_get_functiondef(oid) from pg_proc where proname='test_b6';
-go
-
-drop procedure test_b6;
 go
 
 create function test_bd7 (@cost int)
@@ -293,12 +260,6 @@ go
 select tsql_get_functiondef(oid) from pg_proc where proname='test_bb';
 go
 
-DROP PROCEDURE test_bb;
-go
-
-drop table customers;
-go
-
 create function test_b8(
     @a INT,
     @b DEC(10,2),
@@ -315,9 +276,6 @@ go
 select tsql_get_functiondef(oid) from pg_proc where proname='test_b8';
 go
 
-drop function test_b8;
-go
-
 create function test_bd9(@x int, @y int)
 RETURNS int
 AS
@@ -328,6 +286,12 @@ END;
 go
 
 select tsql_get_functiondef(oid) from pg_proc where proname='test_bd9';
+go
+
+create function func_nvar (@a nvarchar(23)) returns nvarchar(23) AS BEGIN return @a END;
+go
+
+select tsql_get_functiondef(oid) from pg_proc where proname='func_nvar';
 go
 
 create function test_b10(@k SMALLINT)
@@ -341,9 +305,6 @@ END;
 go
 
 select tsql_get_functiondef(oid) from pg_proc where proname='test_b10';
-go
-
-drop function test_b10;
 go
 
 create schema s1;
@@ -363,19 +324,7 @@ go
 select tsql_get_functiondef(oid) from pg_proc where proname='test_b11';
 go
 
-DROP  FUNCTION test_bd7;
-go
-
-DROP  FUNCTION test_bd9;
-go
-
-drop function s1.test_b11;
-go
-
-drop schema s1;
-go
-
-CREATE FUNCTION dbo.fnGetUserID (@name varchar(10))
+CREATE FUNCTION dbo.test_func_opt (@name varchar(10))
 RETURNS INT
  WITH RETURNS NULL ON NULL INPUT
 AS
@@ -384,10 +333,7 @@ BEGIN
 END;
 go
 
-select tsql_get_functiondef(oid) from pg_proc where proname='fngetuserid';
-go
-
-drop function dbo.fnGetUserID;
+select tsql_get_functiondef(oid) from pg_proc where proname='test_func_opt';
 go
 
 create function test_s (@a char(45)) RETURNS char(45)
@@ -401,9 +347,6 @@ go
 select tsql_get_functiondef(oid) from pg_proc where proname='test_s';
 go
 
-drop function test_s;
-go
-
 create function test_arg (@b binary, @v varbinary) RETURNS int
 AS 
 BEGIN
@@ -413,9 +356,6 @@ END
 go
 
 select tsql_get_functiondef(oid) from pg_proc where proname='test_arg';
-go
-
-drop function test_arg;
 go
 
 create function test_con(@a int)
@@ -428,9 +368,6 @@ END;
 go
 
 select tsql_get_functiondef(oid) from pg_proc where proname='test_con';
-go
-
-drop function test_con;
 go
 
 create procedure test_t (@a int)
@@ -453,10 +390,7 @@ go
 select tsql_get_functiondef(oid) from pg_proc where proname='test_t';
 go
 
-drop procedure test_t;
-go
-
-CREATE PROCEDURE dbo.uspCurrencyCursor
+CREATE PROCEDURE dbo.cur_var
 @CurrencyCursor CURSOR VARYING OUTPUT
 As
 SET NOCOUNT ON;
@@ -468,10 +402,116 @@ FROM Sales.Currency;
 OPEN @CurrencyCursor;
 go
 
-select tsql_get_functiondef(oid) from pg_proc where proname='uspcurrencycursor';
+select tsql_get_functiondef(oid) from pg_proc where proname='cur_var';
 go
 
-drop procedure dbo.uspcurrencycursor;
+drop procedure test_nvar;
 go
 
+drop procedure sc1.test_si;
+go
 
+drop schema sc1;
+go
+
+drop procedure test_char;
+go
+
+drop procedure test_ti;
+go
+
+drop procedure test_num;
+go
+
+drop function test_dec;
+go
+
+drop procedure test_time;
+go
+
+drop procedure test_dt;
+go
+
+drop procedure test_uid;
+go
+
+drop procedure test_b1;
+go
+
+drop procedure test_b2;
+go
+
+drop procedure test_b3;
+go
+
+drop procedure test_b4;
+go
+
+drop procedure test_b5;
+go
+
+drop procedure test_b6;
+go
+
+DROP PROCEDURE test_bb;
+go
+
+DROP TABLE customers;
+go
+
+DROP function test_b8;
+go
+
+DROP function func_nvar;
+go
+
+DROP function test_b10;
+go
+
+DROP  FUNCTION test_bd7;
+go
+
+DROP  FUNCTION test_bd9;
+go
+
+drop function s1.test_b11;
+go
+
+drop schema s1;
+go
+
+drop function dbo.test_func_opt;
+go
+
+drop function test_s;
+go
+
+drop function test_arg;
+go
+
+drop function test_con;
+go
+
+drop procedure test_t;
+go
+
+drop procedure dbo.cur_var;
+go
+
+drop function fc;
+go
+
+drop function fc1;
+go
+
+drop function fc2;
+go
+
+drop function fc3;
+go
+
+drop function fc4;
+go
+
+drop function fc5;
+go

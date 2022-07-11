@@ -2276,7 +2276,7 @@ const char *
 tsql_quote_identifier(const char *ident)
 {
 	/*
-	 * Can avoid quoting if ident starts with a lowercase letter ,underscore or at the rate(@)
+	 * Can avoid quoting if ident starts with a lowercase letter, underscore or at the rate(@)
 	 * and contains only lowercase letters, digits, at the rate or  underscores, *and* is
 	 * not any SQL keyword.  Otherwise, supply quotes.
 	 */
@@ -2314,7 +2314,7 @@ tsql_quote_identifier(const char *ident)
 		safe = false;
 
 	if (safe)
-	{	
+	{
 		/*
 		 * Check for keyword.  We quote keywords except for unreserved ones.
 		 * (In some cases we could avoid quoting a col_name or type_func_name

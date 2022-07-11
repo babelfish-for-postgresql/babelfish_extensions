@@ -18,17 +18,6 @@ CREATE PROCEDURE dbo.test_nvar(@a nvarchar, @b int= 8) AS BEGIN<newline>        
 ~~END~~
 
 
-select SPECIFIC_CATALOG, SPECIFIC_SCHEMA, SPECIFIC_NAME, ROUTINE_DEFINITION from information_schema.routines where SPECIFIC_NAME NOT LIKE 'xp%';
-go
-~~START~~
-nvarchar#!#nvarchar#!#nvarchar#!#nvarchar
-master#!#dbo#!#test_nvar#!#CREATE PROCEDURE dbo.test_nvar(@a nvarchar, @b int= 8) AS BEGIN<newline>        SELECT @b=8;<newline>END
-~~END~~
-
-
-drop procedure test_nvar;
-go
-
 #SMALLINT and INT OUTPUT
 create schema sc1;
 go
@@ -49,20 +38,6 @@ text
 CREATE PROCEDURE sc1.test_si(@a smallint, @b int OUTPUT ) AS BEGIN<newline>        SELECT @a=70;<newline>	set @a=8;<newline>	SELECT @a as a;<newline>END;
 ~~END~~
 
-
-select ROUTINE_CATALOG, ROUTINE_SCHEMA, ROUTINE_NAME, ROUTINE_DEFINITION  from information_schema.routines where SPECIFIC_NAME NOT LIKE 'xp%';
-go
-~~START~~
-nvarchar#!#nvarchar#!#nvarchar#!#nvarchar
-master#!#sc1#!#test_si#!#CREATE PROCEDURE sc1.test_si(@a smallint, @b int OUTPUT ) AS BEGIN<newline>        SELECT @a=70;<newline>	set @a=8;<newline>	SELECT @a as a;<newline>END;
-~~END~~
-
-
-drop procedure sc1.test_si;
-go
-
-drop schema sc1;
-go
 
 #decimal
 CREATE FUNCTION test_dec(
@@ -85,11 +60,70 @@ CREATE FUNCTION dbo.test_dec(@quantity int, @list_price decimal(10,2), @discount
 ~~END~~
 
 
-select ROUTINE_TYPE, DATA_TYPE, CHARACTER_MAXIMUM_LENGTH, ROUTINE_DEFINITION  from information_schema.routines where SPECIFIC_NAME NOT LIKE 'xp%';
+#checking for function with char,nchar,varchar,nvarchar,binary,varbinary
+create function fc(@a char) RETURNS char AS BEGIN return @a END;
+go
+
+create function fc1(@a nvarchar) RETURNS nvarchar AS BEGIN return @a END;
+go
+
+create function fc2(@a varchar) RETURNS varchar AS BEGIN return @a END;
+go
+
+create function fc3(@a nchar) RETURNS nchar AS BEGIN return @a END;
+go
+
+create function fc4(@a binary) RETURNS binary AS BEGIN return @a END;
+go
+
+create function fc5(@a varbinary) RETURNS varbinary AS BEGIN return @a END;
+go
+
+select tsql_get_functiondef(oid) from pg_proc where proname='fc';
 go
 ~~START~~
-nvarchar#!#nvarchar#!#int#!#nvarchar
-FUNCTION#!#decimal#!#<NULL>#!#CREATE FUNCTION dbo.test_dec(@quantity int, @list_price decimal(10,2), @discount decimal(4,2)) RETURNS decimal(10,2) AS BEGIN<newline>    RETURN @quantity * @list_price * (1 - @discount);<newline>END;
+text
+CREATE FUNCTION dbo.fc(@a char) RETURNS char AS BEGIN return @a END;
+~~END~~
+
+
+select tsql_get_functiondef(oid) from pg_proc where proname='fc1';
+go
+~~START~~
+text
+CREATE FUNCTION dbo.fc1(@a nvarchar) RETURNS nvarchar AS BEGIN return @a END;
+~~END~~
+
+
+select tsql_get_functiondef(oid) from pg_proc where proname='fc2';
+go
+~~START~~
+text
+CREATE FUNCTION dbo.fc2(@a varchar) RETURNS varchar AS BEGIN return @a END;
+~~END~~
+
+
+select tsql_get_functiondef(oid) from pg_proc where proname='fc3';
+go
+~~START~~
+text
+CREATE FUNCTION dbo.fc3(@a nchar) RETURNS nchar AS BEGIN return @a END;
+~~END~~
+
+
+select tsql_get_functiondef(oid) from pg_proc where proname='fc4';
+go
+~~START~~
+text
+CREATE FUNCTION dbo.fc4(@a binary) RETURNS binary AS BEGIN return @a END;
+~~END~~
+
+
+select tsql_get_functiondef(oid) from pg_proc where proname='fc5';
+go
+~~START~~
+text
+CREATE FUNCTION dbo.fc5(@a varbinary) RETURNS varbinary AS BEGIN return @a END;
 ~~END~~
 
 
@@ -110,18 +144,6 @@ CREATE PROCEDURE dbo.test_char(@ch char) AS BEGIN<newline>	set @ch ='c';<newline
 ~~END~~
 
 
-select CHARACTER_OCTET_LENGTH, COLLATION_NAME, ROUTINE_DEFINITION  from information_schema.routines where SPECIFIC_NAME NOT LIKE 'xp%';
-go
-~~START~~
-int#!#nvarchar#!#nvarchar
-<NULL>#!#<NULL>#!#CREATE FUNCTION dbo.test_dec(@quantity int, @list_price decimal(10,2), @discount decimal(4,2)) RETURNS decimal(10,2) AS BEGIN<newline>    RETURN @quantity * @list_price * (1 - @discount);<newline>END;
-<NULL>#!#<NULL>#!#CREATE PROCEDURE dbo.test_char(@ch char) AS BEGIN<newline>	set @ch ='c';<newline>	SELECT @ch as 's';<newline>END;
-~~END~~
-
-
-drop procedure test_char;
-go
-
 #tinyint, float and bigint
 create procedure test_ti(@a tinyint OUTPUT, @b BIGINT, @c float )
 AS
@@ -139,18 +161,6 @@ text
 CREATE PROCEDURE dbo.test_ti(@a tinyint OUTPUT , @b bigint, @c float) AS BEGIN<newline>	set @a=79;<newline>	select @b=19;<newline>	SELECT @c * 20 +1000;<newline>END;
 ~~END~~
 
-
-select ROUTINE_BODY, ROUTINE_DEFINITION  from information_schema.routines where SPECIFIC_NAME NOT LIKE 'xp%' ORDER BY ROUTINE_DEFINITION;
-go
-~~START~~
-nvarchar#!#nvarchar
-SQL#!#CREATE FUNCTION dbo.test_dec(@quantity int, @list_price decimal(10,2), @discount decimal(4,2)) RETURNS decimal(10,2) AS BEGIN<newline>    RETURN @quantity * @list_price * (1 - @discount);<newline>END;
-SQL#!#CREATE PROCEDURE dbo.test_ti(@a tinyint OUTPUT , @b bigint, @c float) AS BEGIN<newline>	set @a=79;<newline>	select @b=19;<newline>	SELECT @c * 20 +1000;<newline>END;
-~~END~~
-
-
-drop procedure test_ti;
-go
 
 #numeric
 create procedure test_num(@a numeric(20,6) OUTPUT)
@@ -170,21 +180,6 @@ CREATE PROCEDURE dbo.test_num(@a numeric(20,6) OUTPUT ) AS BEGIN<newline>	set @a
 ~~END~~
 
 
-select NUMERIC_PRECISION, NUMERIC_PRECISION_RADIX, NUMERIC_SCALE, ROUTINE_BODY, ROUTINE_DEFINITION  from information_schema.routines where SPECIFIC_NAME NOT LIKE 'xp%' ORDER BY ROUTINE_DEFINITION;
-go
-~~START~~
-smallint#!#smallint#!#smallint#!#nvarchar#!#nvarchar
-10#!#10#!#2#!#SQL#!#CREATE FUNCTION dbo.test_dec(@quantity int, @list_price decimal(10,2), @discount decimal(4,2)) RETURNS decimal(10,2) AS BEGIN<newline>    RETURN @quantity * @list_price * (1 - @discount);<newline>END;
-<NULL>#!#<NULL>#!#<NULL>#!#SQL#!#CREATE PROCEDURE dbo.test_num(@a numeric(20,6) OUTPUT ) AS BEGIN<newline>	set @a = 65;<newline>	SELECT test_dec(23,60.76,43.88);<newline>	<newline>END;
-~~END~~
-
-
-drop procedure test_num;
-go
-
-drop function test_dec;
-go
-
 #time and date
 create procedure test_time(@a time(5) OUTPUT , @b date OUTPUT)
 AS
@@ -202,17 +197,6 @@ CREATE PROCEDURE dbo.test_time(@a time(5) OUTPUT , @b date OUTPUT ) AS BEGIN<new
 ~~END~~
 
 
-select ROUTINE_BODY, ROUTINE_DEFINITION, DATETIME_PRECISION, IS_DETERMINISTIC, SQL_DATA_ACCESS  from information_schema.routines where SPECIFIC_NAME NOT LIKE 'xp%' ORDER BY ROUTINE_DEFINITION;
-go
-~~START~~
-nvarchar#!#nvarchar#!#smallint#!#nvarchar#!#nvarchar
-SQL#!#CREATE PROCEDURE dbo.test_time(@a time(5) OUTPUT , @b date OUTPUT ) AS BEGIN<newline>	set @a='12:54';<newline>	set @b='2022-06-11';<newline>END;#!#<NULL>#!#NO#!#MODIFIES
-~~END~~
-
-
-drop procedure test_time;
-go
-
 #datetime
 create procedure test_dt(@a datetime output)
 AS
@@ -229,16 +213,26 @@ CREATE PROCEDURE dbo.test_dt(@a datetime OUTPUT ) AS BEGIN<newline>	set @a='2022
 ~~END~~
 
 
-select IS_NULL_CALL, SCHEMA_LEVEL_ROUTINE, MAX_DYNAMIC_RESULT_SETS, IS_USER_DEFINED_CAST, IS_IMPLICITLY_INVOCABLE, ROUTINE_BODY, ROUTINE_DEFINITION  from information_schema.routines where SPECIFIC_NAME NOT LIKE 'xp%' ORDER BY ROUTINE_DEFINITION;
+select SPECIFIC_CATALOG, SPECIFIC_SCHEMA, SPECIFIC_NAME, ROUTINE_CATALOG, ROUTINE_SCHEMA, ROUTINE_NAME, ROUTINE_TYPE, DATA_TYPE, CHARACTER_MAXIMUM_LENGTH, CHARACTER_OCTET_LENGTH, COLLATION_NAME, CHARACTER_SET_NAME, NUMERIC_PRECISION, NUMERIC_PRECISION_RADIX, NUMERIC_SCALE, DATETIME_PRECISION, ROUTINE_BODY, ROUTINE_DEFINITION, IS_DETERMINISTIC, SQL_DATA_ACCESS, IS_NULL_CALL, SCHEMA_LEVEL_ROUTINE, MAX_DYNAMIC_RESULT_SETS, IS_USER_DEFINED_CAST, IS_IMPLICITLY_INVOCABLE from information_schema.routines where SPECIFIC_NAME NOT LIKE 'xp%' ORDER BY ROUTINE_DEFINITION;
 go
 ~~START~~
-nvarchar#!#nvarchar#!#smallint#!#nvarchar#!#nvarchar#!#nvarchar#!#nvarchar
-<NULL>#!#YES#!#0#!#NO#!#NO#!#SQL#!#CREATE PROCEDURE dbo.test_dt(@a datetime OUTPUT ) AS BEGIN<newline>	set @a='2022 -06-12 12:43';<newline>END;
+nvarchar#!#nvarchar#!#nvarchar#!#nvarchar#!#nvarchar#!#nvarchar#!#nvarchar#!#nvarchar#!#int#!#int#!#nvarchar#!#nvarchar#!#smallint#!#smallint#!#smallint#!#smallint#!#nvarchar#!#nvarchar#!#nvarchar#!#nvarchar#!#nvarchar#!#nvarchar#!#smallint#!#nvarchar#!#nvarchar
+master#!#dbo#!#fc1#!#master#!#dbo#!#fc1#!#FUNCTION#!#nvarchar#!#1#!#2#!#sql_latin1_general_cp1_ci_as#!#UNICODE#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#SQL#!#CREATE FUNCTION dbo.fc1(@a nvarchar) RETURNS nvarchar AS BEGIN return @a END;#!#NO#!#READS#!#NO#!#YES#!#0#!#NO#!#NO
+master#!#dbo#!#fc2#!#master#!#dbo#!#fc2#!#FUNCTION#!#varchar#!#1#!#1#!#sql_latin1_general_cp1_ci_as#!#iso_1#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#SQL#!#CREATE FUNCTION dbo.fc2(@a varchar) RETURNS varchar AS BEGIN return @a END;#!#NO#!#READS#!#NO#!#YES#!#0#!#NO#!#NO
+master#!#dbo#!#fc3#!#master#!#dbo#!#fc3#!#FUNCTION#!#nchar#!#1#!#2#!#sql_latin1_general_cp1_ci_as#!#UNICODE#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#SQL#!#CREATE FUNCTION dbo.fc3(@a nchar) RETURNS nchar AS BEGIN return @a END;#!#NO#!#READS#!#NO#!#YES#!#0#!#NO#!#NO
+master#!#dbo#!#fc4#!#master#!#dbo#!#fc4#!#FUNCTION#!#binary#!#1#!#1#!#<NULL>#!#NULL#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#SQL#!#CREATE FUNCTION dbo.fc4(@a binary) RETURNS binary AS BEGIN return @a END;#!#NO#!#READS#!#NO#!#YES#!#0#!#NO#!#NO
+master#!#dbo#!#fc5#!#master#!#dbo#!#fc5#!#FUNCTION#!#varbinary#!#1#!#1#!#<NULL>#!#NULL#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#SQL#!#CREATE FUNCTION dbo.fc5(@a varbinary) RETURNS varbinary AS BEGIN return @a END;#!#NO#!#READS#!#NO#!#YES#!#0#!#NO#!#NO
+master#!#dbo#!#fc#!#master#!#dbo#!#fc#!#FUNCTION#!#char#!#1#!#1#!#sql_latin1_general_cp1_ci_as#!#iso_1#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#SQL#!#CREATE FUNCTION dbo.fc(@a char) RETURNS char AS BEGIN return @a END;#!#NO#!#READS#!#NO#!#YES#!#0#!#NO#!#NO
+master#!#dbo#!#test_dec#!#master#!#dbo#!#test_dec#!#FUNCTION#!#decimal#!#<NULL>#!#<NULL>#!#<NULL>#!#NULL#!#10#!#10#!#2#!#<NULL>#!#SQL#!#CREATE FUNCTION dbo.test_dec(@quantity int, @list_price decimal(10,2), @discount decimal(4,2)) RETURNS decimal(10,2) AS BEGIN<newline>    RETURN @quantity * @list_price * (1 - @discount);<newline>END;#!#NO#!#READS#!#NO#!#YES#!#0#!#NO#!#NO
+master#!#dbo#!#test_char#!#master#!#dbo#!#test_char#!#PROCEDURE#!#NULL#!#<NULL>#!#<NULL>#!#<NULL>#!#NULL#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#SQL#!#CREATE PROCEDURE dbo.test_char(@ch char) AS BEGIN<newline>	set @ch ='c';<newline>	SELECT @ch as 's';<newline>END;#!#NO#!#MODIFIES#!#<NULL>#!#YES#!#0#!#NO#!#NO
+master#!#dbo#!#test_dt#!#master#!#dbo#!#test_dt#!#PROCEDURE#!#NULL#!#<NULL>#!#<NULL>#!#<NULL>#!#NULL#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#SQL#!#CREATE PROCEDURE dbo.test_dt(@a datetime OUTPUT ) AS BEGIN<newline>	set @a='2022 -06-12 12:43';<newline>END;#!#NO#!#MODIFIES#!#<NULL>#!#YES#!#0#!#NO#!#NO
+master#!#dbo#!#test_num#!#master#!#dbo#!#test_num#!#PROCEDURE#!#NULL#!#<NULL>#!#<NULL>#!#<NULL>#!#NULL#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#SQL#!#CREATE PROCEDURE dbo.test_num(@a numeric(20,6) OUTPUT ) AS BEGIN<newline>	set @a = 65;<newline>	SELECT test_dec(23,60.76,43.88);<newline>	<newline>END;#!#NO#!#MODIFIES#!#<NULL>#!#YES#!#0#!#NO#!#NO
+master#!#dbo#!#test_nvar#!#master#!#dbo#!#test_nvar#!#PROCEDURE#!#NULL#!#<NULL>#!#<NULL>#!#<NULL>#!#NULL#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#SQL#!#CREATE PROCEDURE dbo.test_nvar(@a nvarchar, @b int= 8) AS BEGIN<newline>        SELECT @b=8;<newline>END#!#NO#!#MODIFIES#!#<NULL>#!#YES#!#0#!#NO#!#NO
+master#!#dbo#!#test_ti#!#master#!#dbo#!#test_ti#!#PROCEDURE#!#NULL#!#<NULL>#!#<NULL>#!#<NULL>#!#NULL#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#SQL#!#CREATE PROCEDURE dbo.test_ti(@a tinyint OUTPUT , @b bigint, @c float) AS BEGIN<newline>	set @a=79;<newline>	select @b=19;<newline>	SELECT @c * 20 +1000;<newline>END;#!#NO#!#MODIFIES#!#<NULL>#!#YES#!#0#!#NO#!#NO
+master#!#dbo#!#test_time#!#master#!#dbo#!#test_time#!#PROCEDURE#!#NULL#!#<NULL>#!#<NULL>#!#<NULL>#!#NULL#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#SQL#!#CREATE PROCEDURE dbo.test_time(@a time(5) OUTPUT , @b date OUTPUT ) AS BEGIN<newline>	set @a='12:54';<newline>	set @b='2022-06-11';<newline>END;#!#NO#!#MODIFIES#!#<NULL>#!#YES#!#0#!#NO#!#NO
+master#!#sc1#!#test_si#!#master#!#sc1#!#test_si#!#PROCEDURE#!#NULL#!#<NULL>#!#<NULL>#!#<NULL>#!#NULL#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#SQL#!#CREATE PROCEDURE sc1.test_si(@a smallint, @b int OUTPUT ) AS BEGIN<newline>        SELECT @a=70;<newline>	set @a=8;<newline>	SELECT @a as a;<newline>END;#!#NO#!#MODIFIES#!#<NULL>#!#YES#!#0#!#NO#!#NO
 ~~END~~
 
-
-drop procedure test_dt;
-go
 
 #UID
 create procedure test_uid(@a uniqueidentifier output)
@@ -257,11 +251,7 @@ CREATE PROCEDURE dbo.test_uid(@a uniqueidentifier OUTPUT ) AS BEGIN<newline>	set
 ~~END~~
 
 
-drop procedure test_uid;
-go
-
 #check with different sqlbody.#
-
 CREATE TABLE customers
 ( customer_id int NOT NULL,
   customer_name char(50) NOT NULL,
@@ -289,9 +279,6 @@ CREATE PROCEDURE dbo.test_b1() AS BEGIN<newline>	select * from customers;<newlin
 ~~END~~
 
 
-drop procedure test_b1;
-go
-
 create procedure test_b2(@id int)
 AS
 BEGIN
@@ -308,9 +295,6 @@ CREATE PROCEDURE dbo.test_b2(@id int) AS BEGIN<newline>	select count(state) from
 ~~END~~
 
 
-drop procedure test_b2;
-go
-
 create procedure test_b3(@name char(255), @city char(255), @address char(255), @state char(255), @cust_id int)
 AS
 BEGIN
@@ -325,9 +309,6 @@ text
 CREATE PROCEDURE dbo.test_b3(@name char(255), @city char(255), @address char(255), @state char(255), @cust_id int) AS BEGIN<newline>	INSERT INTO customers (customer_name,address,city,state,customer_id) VALUES (@name,@address,@city,@state,@cust_id);<newline>END;
 ~~END~~
 
-
-drop procedure test_b3;
-go
 
 
 create procedure test_b4(@id int)
@@ -346,9 +327,6 @@ CREATE PROCEDURE dbo.test_b4(@id int) AS BEGIN<newline>	DELETE from customers wh
 ~~END~~
 
 
-drop procedure test_b4;
-go
-
 create procedure test_b5 @paramout varchar(20) out
 AS
 BEGIN
@@ -363,9 +341,6 @@ text
 CREATE PROCEDURE dbo.test_b5(@paramout varchar(20) OUTPUT ) AS BEGIN<newline>SELECT @paramout ='helloworld';<newline>END;
 ~~END~~
 
-
-drop procedure test_b5;
-go
 
 create procedure test_b6(@id int)
 AS
@@ -382,9 +357,6 @@ text
 CREATE PROCEDURE dbo.test_b6(@id int) AS BEGIN<newline>	select city,state,zip_code from customers where customer_id=@id;<newline>	UPDATE customers SET city = 'RANCHI' where state = 'JHARKHAND';<newline>END;
 ~~END~~
 
-
-drop procedure test_b6;
-go
 
 
 create function test_bd7 (@cost int)
@@ -421,12 +393,6 @@ CREATE PROCEDURE dbo.test_bb(@a int, @b char(255), @c char(255), @d char(255)) A
 ~~END~~
 
 
-DROP PROCEDURE test_bb;
-go
-
-drop table customers;
-go
-
 create function test_b8(
     @a INT,
     @b DEC(10,2),
@@ -448,9 +414,6 @@ CREATE FUNCTION dbo.test_b8(@a int, @b decimal(10,2), @c decimal(4,2)) RETURNS d
 ~~END~~
 
 
-drop function test_b8;
-go
-
 create function test_bd9(@x int, @y int)
 RETURNS int
 AS
@@ -465,6 +428,17 @@ go
 ~~START~~
 text
 CREATE FUNCTION dbo.test_bd9(@x int, @y int) RETURNS int AS BEGIN <newline>	RETURN test_bd7(4);<newline>	RETURN 200+(@x * @y);<newline>END;
+~~END~~
+
+
+create function func_nvar (@a nvarchar(23)) returns nvarchar(23) AS BEGIN return @a END;
+go
+
+select tsql_get_functiondef(oid) from pg_proc where proname='func_nvar';
+go
+~~START~~
+text
+CREATE FUNCTION dbo.func_nvar(@a nvarchar(23)) RETURNS nvarchar(23) AS BEGIN return @a END;
 ~~END~~
 
 
@@ -485,9 +459,6 @@ text
 CREATE FUNCTION dbo.test_b10(@k smallint) RETURNS smallint AS BEGIN<newline>	set @k =88;<newline>	SELECT @k = 32;<newline>	RETURN @k/27;<newline>END;
 ~~END~~
 
-
-drop function test_b10;
-go
 
 create schema s1;
 go
@@ -511,19 +482,7 @@ CREATE FUNCTION s1.test_b11(@a varchar) RETURNS varchar AS BEGIN<newline>       
 ~~END~~
 
 
-DROP  FUNCTION test_bd7;
-go
-
-DROP  FUNCTION test_bd9;
-go
-
-drop function s1.test_b11;
-go
-
-drop schema s1;
-go
-
-CREATE FUNCTION dbo.fnGetUserID (@name varchar(10))
+CREATE FUNCTION dbo.test_func_opt (@name varchar(10))
 RETURNS INT
  WITH RETURNS NULL ON NULL INPUT
 AS
@@ -532,16 +491,13 @@ BEGIN
 END;
 go
 
-select tsql_get_functiondef(oid) from pg_proc where proname='fngetuserid';
+select tsql_get_functiondef(oid) from pg_proc where proname='test_func_opt';
 go
 ~~START~~
 text
-CREATE FUNCTION dbo.fngetuserid(@name varchar(10)) RETURNS int WITH RETURNS NULL ON NULL INPUT AS BEGIN<newline>	RETURN 2;<newline>END;
+CREATE FUNCTION dbo.test_func_opt(@name varchar(10)) RETURNS int WITH RETURNS NULL ON NULL INPUT AS BEGIN<newline>	RETURN 2;<newline>END;
 ~~END~~
 
-
-drop function dbo.fnGetUserID;
-go
 
 create function test_s (@a char(45)) RETURNS char(45)
 WITH SCHEMABINDING
@@ -559,9 +515,6 @@ CREATE FUNCTION dbo.test_s(@a char(45)) RETURNS char(45) AS BEGIN<newline>	RETUR
 ~~END~~
 
 
-drop function test_s;
-go
-
 create function test_arg (@b binary, @v varbinary) RETURNS int
 AS 
 BEGIN
@@ -577,9 +530,6 @@ text
 CREATE FUNCTION dbo.test_arg(@b binary, @v varbinary) RETURNS int AS BEGIN<newline>         set @v = 110;<newline>	return 345;<newline>END
 ~~END~~
 
-
-drop function test_arg;
-go
 
 create function test_con(@a int)
 RETURNS INT
@@ -597,9 +547,6 @@ text
 CREATE FUNCTION dbo.test_con(@a int) RETURNS int AS BEGIN<newline>RETURN @a;<newline>END;
 ~~END~~
 
-
-drop function test_con;
-go
 
 create procedure test_t (@a int)
 AS
@@ -626,11 +573,8 @@ CREATE PROCEDURE dbo.test_t(@a int) AS BEGIN<newline>        begin try<newline> 
 ~~END~~
 
 
-drop procedure test_t;
-go
 
-
-CREATE PROCEDURE dbo.uspCurrencyCursor
+CREATE PROCEDURE dbo.cur_var
 @CurrencyCursor CURSOR VARYING OUTPUT
 As
 SET NOCOUNT ON;
@@ -641,15 +585,121 @@ FROM Sales.Currency;
 OPEN @CurrencyCursor;
 go
 
-select tsql_get_functiondef(oid) from pg_proc where proname='uspcurrencycursor';
+select tsql_get_functiondef(oid) from pg_proc where proname='cur_var';
 go
 ~~START~~
 text
-CREATE PROCEDURE dbo.uspcurrencycursor(@currencycursor cursor OUTPUT ) AS SET NOCOUNT ON;<newline>SET @CurrencyCursor = CURSOR<newline>FORWARD_ONLY STATIC FOR<newline>SELECT CurrencyCode, Name<newline>FROM Sales.Currency;<newline>OPEN @CurrencyCursor;
+CREATE PROCEDURE dbo.cur_var(@currencycursor cursor OUTPUT ) AS SET NOCOUNT ON;<newline>SET @CurrencyCursor = CURSOR<newline>FORWARD_ONLY STATIC FOR<newline>SELECT CurrencyCode, Name<newline>FROM Sales.Currency;<newline>OPEN @CurrencyCursor;
 ~~END~~
 
 
-drop procedure dbo.uspcurrencycursor;
+drop procedure test_nvar;
 go
 
+drop procedure sc1.test_si;
+go
 
+drop schema sc1;
+go
+
+drop procedure test_char;
+go
+
+drop procedure test_ti;
+go
+
+drop procedure test_num;
+go
+
+drop function test_dec;
+go
+
+drop procedure test_time;
+go
+
+drop procedure test_dt;
+go
+
+drop procedure test_uid;
+go
+
+drop procedure test_b1;
+go
+
+drop procedure test_b2;
+go
+
+drop procedure test_b3;
+go
+
+drop procedure test_b4;
+go
+
+drop procedure test_b5;
+go
+
+drop procedure test_b6;
+go
+
+DROP PROCEDURE test_bb;
+go
+
+DROP TABLE customers;
+go
+
+DROP function test_b8;
+go
+
+DROP function func_nvar;
+go
+
+DROP function test_b10;
+go
+
+DROP  FUNCTION test_bd7;
+go
+
+DROP  FUNCTION test_bd9;
+go
+
+drop function s1.test_b11;
+go
+
+drop schema s1;
+go
+
+drop function dbo.test_func_opt;
+go
+
+drop function test_s;
+go
+
+drop function test_arg;
+go
+
+drop function test_con;
+go
+
+drop procedure test_t;
+go
+
+drop procedure dbo.cur_var;
+go
+
+drop function fc;
+go
+
+drop function fc1;
+go
+
+drop function fc2;
+go
+
+drop function fc3;
+go
+
+drop function fc4;
+go
+
+drop function fc5;
+go
