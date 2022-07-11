@@ -17,7 +17,7 @@ jobs:
           config=$(echo $config | sed "s/\"/\\\\\"/g")
           UPGRADE_PATH_LIST=$(node -e "let k = JSON.parse($config); let p = k['upgrade-version'].map((itm, index) => ({ id: index, path: itm.map(i => i.version.toString().replace(/[.]/g, \"_\")), title: itm.map(i => i.version.toString().replace(/[.]/g, \"_\")).join(\"-\"), last_version: itm[itm.length - 1].version.toString().replace(/[.]/g, \"_\") })); console.log(JSON.stringify(p));")
           echo "::set-output name=upgrade-path-list::$UPGRADE_PATH_LIST"
-          
+
   run-version-upgrade-test:
     needs: generate-version-upgrade-tests
     strategy:
@@ -71,7 +71,6 @@ jobs:
           engine_branch: ${{ steps.find-branch.outputs.base-engine-branch }}
           extension_branch: ${{ steps.find-branch.outputs.base-extension-branch }}
           install_dir: ${{ steps.find-branch.outputs.base-dir }}
-          is_version_latest: ${{ steps.find-branch.outputs.is-base-version-latest }}
 
       - name: Setup Upgrade Version Composite Action
         id: setup-upgrade-ver-ca

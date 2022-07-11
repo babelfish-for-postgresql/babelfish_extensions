@@ -15,14 +15,10 @@ inputs:
   pg_new_dir:
     description: "Install new version in this directory"
     required: true
-  is_version_latest: 
-    description: 'Whether the Version that needs to be installed is latest'
-    required: false
-    default: 'false'
 
 runs:
   using: "composite"
-  steps:    
+  steps:
     - name: Build Modified Postgres using latest version
       id: build-modified-postgres-new
       if: always()
@@ -44,7 +40,6 @@ runs:
       with:
         install_dir: ${{ inputs.pg_new_dir }}
         extension_branch: ${{ inputs.extension_branch }}
-        is_extension_version_latest: ${{ inputs.is_version_latest }}
 
     - uses: actions/checkout@v2
 

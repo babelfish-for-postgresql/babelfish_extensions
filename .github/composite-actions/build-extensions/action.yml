@@ -8,21 +8,17 @@ inputs:
     description: 'Extension Branch name which needs to checkout first'
     required: no
     default: 'not_specified'
-  is_extension_version_latest: 
-    description: 'Whether the Extension Version that needs to be build is latest'
-    required: no
-    default: 'false'
 
 runs:
   using: "composite"
   steps:
-    - if: always() && (inputs.extension_branch != 'not_specified') && (inputs.is_extension_version_latest == 'false')
+    - if: always() && (inputs.extension_branch != 'default' && inputs.extension_branch != 'not_specified')
       uses: actions/checkout@v2
       with:
         repository: babelfish-for-postgresql/babelfish_extensions
         ref: ${{ inputs.extension_branch }}
 
-    - if: always() && (inputs.extension_branch != 'not_specified') && (inputs.is_extension_version_latest == 'true')
+    - if: always() && (inputs.extension_branch == 'default')
       uses: actions/checkout@v2
 
     - name: Build Extensions
