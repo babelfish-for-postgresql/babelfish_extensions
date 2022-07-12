@@ -16,6 +16,14 @@
 #include "../antlr/antlr4cpp_generated_src/TSqlParser/TSqlParserBaseListener.h"
 #include "tsqlIface.hpp"
 
+#define LOOP_JOIN_HINT 0
+#define HASH_JOIN_HINT 1
+#define MERGE_JOIN_HINT 2
+#define LOOP_QUERY_HINT 3
+#define HASH_QUERY_HINT 4
+#define MERGE_QUERY_HINT 5
+#define JOIN_HINTS_INFO_VECTOR_SIZE 6
+
 extern "C" {
 #if 0
 #include "tsqlNodes.h"
@@ -206,7 +214,7 @@ static void add_rewritten_query_fragment_to_mutator(PLtsql_expr_query_mutator *m
 static std::unordered_map<std::string, std::string> alias_to_table_mapping;
 static std::unordered_map<std::string, std::string> table_to_alias_mapping;
 static std::vector<std::string> query_hints;
-static std::vector<bool> join_hints_info(6, false);
+static std::vector<bool> join_hints_info(JOIN_HINTS_INFO_VECTOR_SIZE, false);
 static bool isJoinHintInOptionClause = false;
 static std::string table_names;
 static int num_of_tables = 0;
@@ -568,10 +576,10 @@ add_query_hints(PLtsql_expr *expr)
 {
 	ParserRuleContext* ctx = nullptr;
 	// If a query has both join hint and query hint which is a join hint, it should have all the join hints as the query hints as well
-	if (isJoinHintInOptionClause && ((join_hints_info[0] && !join_hints_info[3]) || (join_hints_info[1] && !join_hints_info[4]) || (join_hints_info[2] && !join_hints_info[5])))
+	if (isJoinHintInOptionClause && ((join_hints_info[LOOP_JOIN_HINT] && !join_hints_info[LOOP_QUERY_HINT]) || (join_hints_info[HASH_JOIN_HINT] && !join_hints_info[HASH_QUERY_HINT]) || (join_hints_info[MERGE_JOIN_HINT] && !join_hints_info[MERGE_QUERY_HINT])))
 	{
 		isJoinHintInOptionClause = false;
-		for (int i=0;i<6;i++)
+		for (size_t i=0; i<JOIN_HINTS_INFO_VECTOR_SIZE; i++)
 			join_hints_info[i] = false;
 		throw PGErrorWrapperException(ERROR, ERRCODE_FEATURE_NOT_SUPPORTED, "Conflicting JOIN optimizer hints specified", getLineAndPos(ctx));
 	}
@@ -595,7 +603,7 @@ clear_query_hints()
 {
 	query_hints.clear();
 	leading_hint.clear();
-	for (int i=0;i<6;i++)
+	for (size_t i=0; i<JOIN_HINTS_INFO_VECTOR_SIZE; i++)
 		join_hints_info[i] = false;
 	isJoinHintInOptionClause = false;
 }
@@ -3241,17 +3249,17 @@ void extractJoinHint(TSqlParser::Join_hintContext *join_hint, std::string table_
 {
 	if (join_hint->LOOP())
 	{
-		join_hints_info[0] = true;
+		join_hints_info[LOOP_JOIN_HINT] = true;
 		query_hints.push_back("NestLoop(" + table_names + ")");
 	}
 	else if (join_hint->HASH())
 	{
-		join_hints_info[1] = true;
+		join_hints_info[HASH_JOIN_HINT] = true;
 		query_hints.push_back("HashJoin(" + table_names + ")");
 	}
 	else if (join_hint->MERGE())
 	{
-		join_hints_info[2] = true;
+		join_hints_info[MERGE_JOIN_HINT] = true;
 		query_hints.push_back("MergeJoin(" + table_names + ")");
 	}
 }
@@ -3260,19 +3268,19 @@ void extractJoinHintFromOption(TSqlParser::OptionContext *option) {
 	isJoinHintInOptionClause = true;
 	if (option->LOOP())
 	{
-		join_hints_info[3] = true;
+		join_hints_info[LOOP_QUERY_HINT] = true;
 		query_hints.push_back("Set(enable_hashjoin off)");
 		query_hints.push_back("Set(enable_mergejoin off)");
 	}
 	else if (option->HASH())
 	{
-		join_hints_info[4] = true;
+		join_hints_info[HASH_QUERY_HINT] = true;
 		query_hints.push_back("Set(enable_mergejoin off)");
 		query_hints.push_back("Set(enable_nestloop off)");
 	}
 	else if (option->MERGE())
 	{
-		join_hints_info[5] = true;
+		join_hints_info[MERGE_QUERY_HINT] = true;
 		query_hints.push_back("Set(enable_hashjoin off)");
 		query_hints.push_back("Set(enable_nestloop off)");
 	}
