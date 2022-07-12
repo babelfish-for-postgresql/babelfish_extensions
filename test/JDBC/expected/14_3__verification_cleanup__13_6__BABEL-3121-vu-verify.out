@@ -103,6 +103,23 @@ id#!#bbf_original_name=id
 ~~END~~
 
 
+select * from babel_3121_t7;
+go
+~~START~~
+int#!#varchar
+1#!#success
+~~END~~
+
+
+select attname, array_to_string(attoptions,',') attoptions from pg_class C, pg_attribute A where C.oid = A.attrelid and C.relname like 'babel_3121_t7' and A.attnum > 0 and attisdropped = 'f' order by attname;
+go
+~~START~~
+varchar#!#text
+bala(g#,#!#bbf_original_name=BALA(G#,
+id#!#bbf_original_name=id
+~~END~~
+
+
 USE master;
 go
 

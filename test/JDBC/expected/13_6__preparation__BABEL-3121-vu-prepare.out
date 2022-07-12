@@ -106,3 +106,19 @@ bala#f#!#bbf_original_name=BALA#F,n_distinct=10
 id#!#bbf_original_name=id
 ~~END~~
 
+
+-- comma
+create table babel_3121_t7(id int, [BALA(G#,] varchar(40));
+insert into babel_3121_t7 values (1, 'success');
+go
+~~ROW COUNT: 1~~
+
+
+select attname, array_to_string(attoptions,',') attoptions from pg_class C, pg_attribute A where C.oid = A.attrelid and C.relname like 'babel_3121_t7' and A.attnum > 0 and attisdropped = 'f' order by attname;
+go
+~~START~~
+varchar#!#text
+bala(g#,#!#bbf_original_name=BALA(G#,
+id#!#bbf_original_name=id
+~~END~~
+

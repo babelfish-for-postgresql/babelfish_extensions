@@ -58,3 +58,11 @@ GO
 -- tsql
 select attname, array_to_string(attoptions,',') attoptions from pg_class C, pg_attribute A where C.oid = A.attrelid and C.relname like 'babel_3121_t6' and A.attnum > 0 and attisdropped = 'f' order by attname;
 go
+
+-- comma
+create table babel_3121_t7(id int, [BALA(G#,] varchar(40));
+insert into babel_3121_t7 values (1, 'success');
+go
+
+select attname, array_to_string(attoptions,',') attoptions from pg_class C, pg_attribute A where C.oid = A.attrelid and C.relname like 'babel_3121_t7' and A.attnum > 0 and attisdropped = 'f' order by attname;
+go
