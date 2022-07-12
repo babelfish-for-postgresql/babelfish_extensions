@@ -1,0 +1,167 @@
+SELECT is_srvrolemember('PUBLIC')
+GO
+~~START~~
+int
+1
+~~END~~
+
+
+SELECT is_srvrolemember('public')
+GO
+~~START~~
+int
+1
+~~END~~
+
+
+SELECT is_srvrolemember('public     ')
+GO
+~~START~~
+int
+1
+~~END~~
+
+
+SELECT is_srvrolemember('     public')
+GO
+~~START~~
+int
+<NULL>
+~~END~~
+
+
+SELECT is_srvrolemember('public', 'non_existent')
+GO
+~~START~~
+int
+<NULL>
+~~END~~
+
+
+SELECT is_srvrolemember('public', 'jdbc_user')
+GO
+~~START~~
+int
+1
+~~END~~
+
+
+SELECT is_srvrolemember('SYSADMIN')
+GO
+~~START~~
+int
+1
+~~END~~
+
+
+SELECT is_srvrolemember('sysadmin')
+GO
+~~START~~
+int
+1
+~~END~~
+
+
+SELECT is_srvrolemember('sysadmin', 'jdbc_user')
+GO
+~~START~~
+int
+1
+~~END~~
+
+
+SELECT is_srvrolemember('sysadmin', 'jdbc_user   ')
+GO
+~~START~~
+int
+1
+~~END~~
+
+
+SELECT is_srvrolemember('sysadmin', '   jdbc_user')
+GO
+~~START~~
+int
+<NULL>
+~~END~~
+
+
+SELECT is_srvrolemember('serveradmin')
+GO
+~~START~~
+int
+0
+~~END~~
+
+
+SELECT is_srvrolemember('SERVERADMIN')
+GO
+~~START~~
+int
+0
+~~END~~
+
+
+SELECT is_srvrolemember('serveradmin', 'non_existent')
+GO
+~~START~~
+int
+<NULL>
+~~END~~
+
+
+SELECT is_srvrolemember('setupadmin')
+GO
+~~START~~
+int
+0
+~~END~~
+
+
+SELECT is_srvrolemember('securityadmin')
+GO
+~~START~~
+int
+0
+~~END~~
+
+
+SELECT is_srvrolemember('processadmin')
+GO
+~~START~~
+int
+0
+~~END~~
+
+
+SELECT is_srvrolemember('dbcreator')
+GO
+~~START~~
+int
+0
+~~END~~
+
+
+SELECT is_srvrolemember('diskadmin')
+GO
+~~START~~
+int
+0
+~~END~~
+
+
+SELECT is_srvrolemember('bulkadmin')
+GO
+~~START~~
+int
+0
+~~END~~
+
+
+SELECT is_srvrolemember('non_existent')
+GO
+~~START~~
+int
+<NULL>
+~~END~~
+
