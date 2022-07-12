@@ -5,8 +5,14 @@
   engine_branch: BABEL_1_X_DEV__PG_13_5
   extension_branch: BABEL_1_1_0
 '13.6':
-  engine_branch: BABEL_1_X_DEV__PG_13_6
-  extension_branch: BABEL_1_X_DEV
+  engine_branch: BABEL_1_2_STABLE__PG_13_6
+  extension_branch: BABEL_1_2_0
+'13.7':
+  engine_branch: BABEL_1_3_STABLE__PG_13_7
+  extension_branch: BABEL_1_3_0
 '14.3':
-  engine_branch: BABEL_2_X_DEV__PG_14_3
-  extension_branch: BABEL_2_X_DEV
+  engine_branch: BABEL_2_1_STABLE__PG_14_3
+  extension_branch: BABEL_2_1_STABLE
+'14.latest':
+  engine_branch: ${{ github.ref_name }}
+  extension_branch: latest
