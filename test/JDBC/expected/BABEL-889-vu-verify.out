@@ -1,0 +1,333 @@
+-- Test cast from SQL_Variant with no pg_cast functions (implicit casting)
+-- datetime2
+select cast(cast(cast('2020-10-20 09:00:00' as varchar) as sql_variant) as datetime2);
+go
+~~START~~
+datetime2
+2020-10-20 09:00:00.000000
+~~END~~
+
+select cast(cast(cast('2020-10-20 09:00:00' as datetime2) as sql_variant) as varchar);
+go
+~~START~~
+varchar
+2020-10-20 09:00:00
+~~END~~
+
+-- datetime
+select cast(cast(cast('2020-10-20 09:00:00' as varchar) as sql_variant) as datetime);
+go
+~~START~~
+datetime
+2020-10-20 09:00:00.0
+~~END~~
+
+select cast(cast(cast('2020-10-20 09:00:00' as datetime) as sql_variant) as varchar);
+go
+~~START~~
+varchar
+2020-10-20 09:00:00
+~~END~~
+
+-- smalldatetime
+select cast(cast(cast('2020-10-20 09:00:00' as varchar) as sql_variant) as smalldatetime);
+go
+~~START~~
+smalldatetime
+2020-10-20 09:00:00.0
+~~END~~
+
+select cast(cast(cast('2020-10-20 09:00:00' as smalldatetime) as sql_variant) as varchar);
+go
+~~START~~
+varchar
+2020-10-20 09:00:00
+~~END~~
+
+-- date
+select cast(cast(cast('2020-10-20' as varchar) as sql_variant) as date);
+go
+~~START~~
+date
+2020-10-20
+~~END~~
+
+select cast(cast(cast('2020-10-20' as date) as sql_variant) as varchar);
+go
+~~START~~
+varchar
+2020-10-20
+~~END~~
+
+-- time
+select cast(cast(cast('09:00:00' as varchar) as sql_variant) as time);
+go
+~~START~~
+time
+09:00:00.000000
+~~END~~
+
+select cast(cast(cast('09:00:00' as time) as sql_variant) as varchar);
+go
+~~START~~
+varchar
+09:00:00
+~~END~~
+
+-- float
+select cast(cast(cast('3.1415926' as varchar) as sql_variant) as float);
+go
+~~START~~
+float
+3.1415926
+~~END~~
+
+select cast(cast(cast('3.1415926' as float) as sql_variant) as varchar);
+go
+~~START~~
+varchar
+3.1415926
+~~END~~
+
+-- real
+select cast(cast(cast('3.1415926' as varchar) as sql_variant) as real);
+go
+~~START~~
+real
+3.1415925
+~~END~~
+
+select cast(cast(cast('3.1415926' as real) as sql_variant) as varchar);
+go
+~~START~~
+varchar
+3.1415925
+~~END~~
+
+-- numeric
+select cast(cast(cast('3.1415926' as varchar) as sql_variant) as numeric(4, 3));
+go
+~~START~~
+numeric
+3.142
+~~END~~
+
+select cast(cast(cast('3.1415926' as numeric(4, 3)) as sql_variant) as varchar);
+go
+~~START~~
+varchar
+3.142
+~~END~~
+
+-- money
+select cast(cast(cast('$123.123' as varchar) as sql_variant) as money);
+go
+~~START~~
+money
+123.1230
+~~END~~
+
+select cast(cast(cast('$123.123' as money) as sql_variant) as varchar);
+go
+~~START~~
+varchar
+123.1230
+~~END~~
+
+-- smallmoney
+select cast(cast(cast('$123.123' as varchar) as sql_variant) as smallmoney);
+go
+~~START~~
+smallmoney
+123.1230
+~~END~~
+
+select cast(cast(cast('$123.123' as smallmoney) as sql_variant) as varchar);
+go
+~~START~~
+varchar
+123.1230
+~~END~~
+
+-- bigint
+select cast(cast(cast('2147483648' as varchar) as sql_variant) as bigint);
+go
+~~START~~
+bigint
+2147483648
+~~END~~
+
+select cast(cast(cast('2147483648' as bigint) as sql_variant) as varchar);
+go
+~~START~~
+varchar
+2147483648
+~~END~~
+
+-- int
+select cast(cast(cast('32768' as varchar) as sql_variant) as int);
+go
+~~START~~
+int
+32768
+~~END~~
+
+select cast(cast(cast('32768' as int) as sql_variant) as varchar);
+go
+~~START~~
+varchar
+32768
+~~END~~
+
+-- smallint
+select cast(cast(cast('256' as varchar) as sql_variant) as smallint);
+go
+~~START~~
+smallint
+256
+~~END~~
+
+select cast(cast(cast('256' as smallint) as sql_variant) as varchar);
+go
+~~START~~
+varchar
+256
+~~END~~
+
+-- tinyint
+select cast(cast(cast('255' as varchar) as sql_variant) as tinyint);
+go
+~~START~~
+tinyint
+255
+~~END~~
+
+select cast(cast(cast('255' as tinyint) as sql_variant) as varchar);
+go
+~~START~~
+varchar
+255
+~~END~~
+
+-- bit
+select cast(cast(cast('1' as varchar) as sql_variant) as bit);
+go
+~~START~~
+bit
+1
+~~END~~
+
+select cast(cast(cast('1' as bit) as sql_variant) as varchar);
+go
+~~START~~
+varchar
+1
+~~END~~
+
+-- nvarchar
+select cast(cast(cast('£' as varchar) as sql_variant) as nvarchar(1));
+go
+~~START~~
+nvarchar
+£
+~~END~~
+
+select cast(cast(cast('£' as nvarchar(1)) as sql_variant) as varchar);
+go
+~~START~~
+varchar
+£
+~~END~~
+
+-- varchar
+select cast(cast(cast('£' as varchar) as sql_variant) as varchar(1));
+go
+~~START~~
+varchar
+£
+~~END~~
+
+select cast(cast(cast('£' as varchar(1)) as sql_variant) as varchar);
+go
+~~START~~
+varchar
+£
+~~END~~
+
+-- nchar
+select cast(cast(cast('£' as varchar) as sql_variant) as nchar(1));
+go
+~~START~~
+nchar
+£
+~~END~~
+
+select cast(cast(cast('£' as nchar(1)) as sql_variant) as varchar);
+go
+~~START~~
+varchar
+£
+~~END~~
+
+-- char
+select cast(cast(cast('£' as varchar) as sql_variant) as char(1));
+go
+~~START~~
+char
+£
+~~END~~
+
+select cast(cast(cast('£' as char(1)) as sql_variant) as varchar);
+go
+~~START~~
+varchar
+£
+~~END~~
+
+-- varbinary
+select cast(cast(cast('abc' as varchar) as sql_variant) as varbinary(3));
+go
+~~START~~
+varbinary
+616263
+~~END~~
+
+select cast(cast(cast('abc' as varbinary(3)) as sql_variant) as varchar);
+go
+~~START~~
+varchar
+abc
+~~END~~
+
+-- binary
+select cast(cast(cast('abc' as varchar) as sql_variant) as binary(3));
+go
+~~START~~
+binary
+616263
+~~END~~
+
+select cast(cast(cast('abc' as binary(3)) as sql_variant) as varchar);
+go
+~~START~~
+varchar
+abc
+~~END~~
+
+-- uniqueidentifier
+select cast(cast(cast('0E984725-C51C-4BF4-9960-E1C80E27ABA0' as varchar(36))
+                as sql_variant) as uniqueidentifier);
+go
+~~START~~
+uniqueidentifier
+0E984725-C51C-4BF4-9960-E1C80E27ABA0
+~~END~~
+
+select cast(cast(cast('0E984725-C51C-4BF4-9960-E1C80E27ABA0' as uniqueidentifier)
+                as sql_variant) as varchar(36));
+go
+~~START~~
+varchar
+0E984725-C51C-4BF4-9960-E1C80E27ABA0
+~~END~~
+

@@ -1,0 +1,30 @@
+-- cleanup
+DROP TYPE isc_domains.char_t
+DROP TYPE isc_domains.nchar_t
+DROP TYPE isc_domains.varchar_t
+DROP TYPE isc_domains.nvarchar_t
+DROP TYPE isc_domains.text_t
+DROP TYPE isc_domains.ntext_t
+DROP TYPE isc_domains.varbinary_t
+DROP TYPE isc_domains.binary_t
+DROP TYPE isc_domains.image_t
+DROP TYPE isc_domains.int_t
+DROP TYPE isc_domains.smallint_t
+DROP TYPE isc_domains.tinyint_t
+DROP TYPE isc_domains.bigint_t
+DROP TYPE isc_domains.bit_t
+DROP TYPE isc_domains.real_t
+DROP TYPE isc_domains.numeric_t
+DROP TYPE isc_domains.money_t
+DROP TYPE isc_domains.smallmoney_t
+DROP TYPE isc_domains.date_t
+DROP TYPE isc_domains.time_t
+DROP TYPE isc_domains.datetime_t
+DROP TYPE isc_domains.datetime2_t
+DROP TYPE isc_domains.smalldatetime_t
+DROP TYPE isc_domains.datetimeoffset_t
+DROP TYPE isc_domains.sql_variant_t
+DROP TYPE isc_domains.my_tbl_type 
+DROP SCHEMA isc_domains
+DROP DATABASE isc_domain_db
+go

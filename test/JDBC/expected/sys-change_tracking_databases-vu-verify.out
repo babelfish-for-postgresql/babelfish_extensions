@@ -1,0 +1,6 @@
+SELECT * FROM sys.change_tracking_databases;
+GO
+~~START~~
+int#!#bit#!#int#!#nvarchar#!#tinyint
+~~END~~
+
