@@ -1,0 +1,80 @@
+
+-- Check default value for lock_timeout guc
+SELECT @@lock_timeout;
+GO
+~~START~~
+int
+-1
+~~END~~
+
+
+-- SET lock_timeout to 2 seconds (2000 ms)
+SET lock_timeout 2000;
+GO
+SELECT @@lock_timeout;
+GO
+~~START~~
+int
+2000
+~~END~~
+
+
+-- SET guc to max value (INT_MAX)
+SET lock_timeout 2147483647;
+GO
+SELECT @@lock_timeout;
+GO
+~~START~~
+int
+2147483647
+~~END~~
+
+
+-- SET guc to value greater than INT_MAX
+SET lock_timeout 2147483648; -- Shoud throw error
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: invalid value for parameter "babelfishpg_tsql.lock_timeout": "2147483648")~~
+
+
+-- SET guc to min value (INT_MIN)
+SET lock_timeout -2147483648;
+GO
+SELECT @@lock_timeout;
+GO
+~~START~~
+int
+-2147483648
+~~END~~
+
+
+-- SET guc to value less than INT_MIN
+SET lock_timeout -2147483649; -- Shoud throw error
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: invalid value for parameter "babelfishpg_tsql.lock_timeout": "-2147483649")~~
+
+
+-- SET guc to 0
+SET lock_timeout 0;
+GO
+SELECT @@lock_timeout;
+GO
+~~START~~
+int
+0
+~~END~~
+
+
+-- RESET guc to -1
+SET lock_timeout -1;
+GO
+SELECT @@lock_timeout;
+GO
+~~START~~
+int
+-1
+~~END~~
+

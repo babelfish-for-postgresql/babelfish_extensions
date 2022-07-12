@@ -36,3 +36,16 @@ BABEL-3192
 BABEL-3221
 BABEL-3249
 BABEL-3204
+fulltextserviceproperty
+is_srvrolemember
+msdb-dbo-fn_syspolicy_is_automation_enabled
+objectpropertyex
+sys-column-property
+sys-datefirst
+sys-lock_timeout
+sys-max_connections
+sys-original_login
+sys-schema-name
+sys-suser_sid
+sys-suser_sname
+sys-trigger_nestlevel

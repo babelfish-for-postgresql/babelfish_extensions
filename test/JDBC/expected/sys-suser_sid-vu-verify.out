@@ -1,0 +1,27 @@
+DECLARE @id SYS.VARBINARY(85)
+SET @id = (SELECT SYS.SUSER_SID())
+SELECT SYS.SUSER_SNAME(@id)
+GO
+~~START~~
+nvarchar
+jdbc_user
+~~END~~
+
+
+DECLARE @id SYS.VARBINARY(85)
+SET @id = (SELECT SYS.SUSER_SID('jdbc_user'))
+SELECT SYS.SUSER_SNAME(@id)
+GO
+~~START~~
+nvarchar
+jdbc_user
+~~END~~
+
+
+SELECT SYS.SUSER_SID('non_existent_user')
+GO
+~~START~~
+varbinary
+<NULL>
+~~END~~
+

@@ -1,0 +1,2 @@
+DROP TABLE IF EXISTS sys_column_property_vu_t_column_property
+GO

@@ -1,0 +1,23 @@
+INSERT INTO sys_trigger_nestlevel_vu_t1(c1) VALUES (0);
+GO
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+
+SELECT * FROM sys_trigger_nestlevel_vu_t1
+GO
+~~START~~
+int
+0
+1
+~~END~~
+
+
+SELECT trigger_nestlevel()
+GO
+~~START~~
+int
+0
+~~END~~
+
