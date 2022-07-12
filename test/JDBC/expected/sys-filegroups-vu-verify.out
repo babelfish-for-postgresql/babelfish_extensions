@@ -1,0 +1,34 @@
+USE master
+GO
+
+SELECT * FROM sys.filegroups
+GO
+~~START~~
+varchar#!#int#!#char#!#nvarchar#!#bit#!#bit#!#uniqueidentifier#!#int#!#bit#!#bit
+PRIMARY#!#1#!#FG#!#ROWS_FILEGROUP#!#1#!#0#!#<NULL>#!#0#!#0#!#0
+~~END~~
+
+
+SELECT * FROM sys_filegroups_vu_prepare_view
+GO
+~~START~~
+varchar#!#int#!#char#!#nvarchar#!#bit#!#bit#!#uniqueidentifier#!#int#!#bit#!#bit
+PRIMARY#!#1#!#FG#!#ROWS_FILEGROUP#!#1#!#0#!#<NULL>#!#0#!#0#!#0
+~~END~~
+
+
+EXEC sys_filegroups_vu_prepare_proc
+GO
+~~START~~
+varchar#!#int#!#char#!#nvarchar#!#bit#!#bit#!#uniqueidentifier#!#int#!#bit#!#bit
+PRIMARY#!#1#!#FG#!#ROWS_FILEGROUP#!#1#!#0#!#<NULL>#!#0#!#0#!#0
+~~END~~
+
+
+SELECT dbo.sys_filegroups_vu_prepare_func()
+GO
+~~START~~
+int
+1
+~~END~~
+
