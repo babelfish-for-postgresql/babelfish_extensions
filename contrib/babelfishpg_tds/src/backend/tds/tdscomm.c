@@ -931,11 +931,6 @@ TdsReadNextRequest(StringInfo message, uint8_t *status, uint8_t *messageType)
 			return EOF;
 		message->len += readBytes;
 
-		if (TdsRecvMessageType == TDS_BULK_LOAD)
-		{
-			TdsDoProcessHeader = true;
-			return 0;
-		}
 		/* if this is the last packet, break the loop */
 		if (TdsRecvPacketStatus & TDS_PACKET_HEADER_STATUS_EOM)
 		{
@@ -943,6 +938,11 @@ TdsReadNextRequest(StringInfo message, uint8_t *status, uint8_t *messageType)
 				TdsDoProcessHeader = true;
 			return 0;
 		}
+
+		/*
+		 * If this is a Bulk Load Request then read only the first packet of the request.
+		 * We will fetch the rest of the data as and when required during the processing phase.
+		 */
 		if (TdsRecvMessageType == TDS_BULK_LOAD)
 		{
 			TdsDoProcessHeader = true;
