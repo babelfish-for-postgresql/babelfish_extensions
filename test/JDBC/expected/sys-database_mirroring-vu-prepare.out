@@ -7,7 +7,9 @@ SELECT * FROM sys.database_mirroring WHERE database_id = 1
 GO
 
 CREATE FUNCTION sys_database_mirroring_func()
-RETURNS TABLE
+RETURNS INT
 AS
-RETURN (SELECT * FROM sys.database_mirroring WHERE database_id = 1)
+BEGIN
+	RETURN (SELECT mirroring_state FROM sys.database_mirroring WHERE database_id = 1)
+END
 GO

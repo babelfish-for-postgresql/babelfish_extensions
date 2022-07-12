@@ -1,7 +1,7 @@
 SELECT * FROM sys_database_mirroring_view
 GO
 ~~START~~
-int#!#uniqueidentifier#!#tinyint#!#nvarchar#!#tinyint#!#nvarchar#!#int#!#tinyint#!#nvarchar#!#int#!#nvarchar#!#nvarchar#!#nvarchar#!#tinyint#!#nvarchar#!#numeric#!#int#!#int#!#nvarchar#!#numeric#!#numeric
+smallint#!#uniqueidentifier#!#tinyint#!#nvarchar#!#tinyint#!#nvarchar#!#int#!#tinyint#!#nvarchar#!#int#!#nvarchar#!#nvarchar#!#nvarchar#!#tinyint#!#nvarchar#!#numeric#!#int#!#int#!#nvarchar#!#numeric#!#numeric
 1#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>
 ~~END~~
 
@@ -17,7 +17,7 @@ int#!#uniqueidentifier#!#tinyint#!#nvarchar#!#tinyint#!#nvarchar#!#int#!#tinyint
 SELECT * FROM sys_database_mirroring_func()
 GO
 ~~START~~
-int#!#uniqueidentifier#!#tinyint#!#nvarchar#!#tinyint#!#nvarchar#!#int#!#tinyint#!#nvarchar#!#int#!#nvarchar#!#nvarchar#!#nvarchar#!#tinyint#!#nvarchar#!#numeric#!#int#!#int#!#nvarchar#!#numeric#!#numeric
-1#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>
+int
+<NULL>
 ~~END~~
 

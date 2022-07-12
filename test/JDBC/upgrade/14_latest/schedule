@@ -31,6 +31,8 @@ TestUDD
 TestUniqueIdentifier
 TestVarChar
 TestXML
+sys-database_mirroring
+sys-databases
 BABEL-3166
 BABEL-3192
 BABEL-3221

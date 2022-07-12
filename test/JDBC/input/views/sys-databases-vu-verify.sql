@@ -1,8 +1,8 @@
-SELECT * FROM sys_databases_view
+SELECT name, compatibility_level, collation_name FROM sys_databases_view
 GO
 
 EXEC sys_databases_proc
 GO
 
-SELECT * FROM sys_databases_func()
+SELECT sys_databases_func()
 GO

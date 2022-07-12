@@ -10,7 +10,9 @@ SELECT name, compatibility_level, collation_name FROM sys.databases WHERE name =
 GO
 
 CREATE FUNCTION sys_databases_func()
-RETURNS TABLE
+RETURNS TINYINT
 AS
-RETURN (SELECT name, compatibility_level, collation_name FROM sys.databases WHERE name = 'db_sys_databases')
+BEGIN
+    RETURN (SELECT compatibility_level FROM sys.databases WHERE name = 'db_sys_databases')
+END
 GO
