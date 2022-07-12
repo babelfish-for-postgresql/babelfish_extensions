@@ -10,9 +10,11 @@ SELECT * FROM sys.configurations
 GO
 
 CREATE FUNCTION sys_configurations_func()
-RETURNS TABLE
+RETURNS INT
 AS
-RETURN (SELECT * FROM sys.configurations)
+BEGIN
+    RETURN (SELECT COUNT(*) FROM sys.sysconfigures)
+END
 GO
 
 CREATE VIEW sys_syscurconfigs_view AS
@@ -24,9 +26,11 @@ SELECT * FROM sys.syscurconfigs
 GO
 
 CREATE FUNCTION sys_syscurconfigs_func()
-RETURNS TABLE
+RETURNS INT
 AS
-RETURN (SELECT * FROM sys.syscurconfigs)
+BEGIN
+    RETURN (SELECT COUNT(*) FROM sys.sysconfigures)
+END
 GO
 
 CREATE VIEW sys_sysconfigures_view AS
@@ -38,7 +42,9 @@ SELECT * FROM sys.sysconfigures
 GO
 
 CREATE FUNCTION sys_sysconfigures_func()
-RETURNS TABLE
+RETURNS INT
 AS
-RETURN (SELECT * FROM sys.sysconfigures)
+BEGIN
+    RETURN (SELECT COUNT(*) FROM sys.sysconfigures)
+END
 GO
