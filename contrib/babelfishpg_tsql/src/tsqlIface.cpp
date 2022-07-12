@@ -3175,6 +3175,12 @@ void extractQueryHintsFromOptionClause(TSqlParser::Option_clauseContext *octx)
 			extractJoinHintFromOption(option);
 		else if (option->FORCE() && option->ORDER())
 			query_hints.push_back("Set(join_collapse_limit 1)");
+		else if (option->MAXDOP() && option->DECIMAL())
+		{
+			std::string value = ::getFullText(option->DECIMAL());
+			if (!value.empty())
+				query_hints.push_back("Set(max_parallel_workers_per_gather " + value + ")");
+		}
 	}
 }
 
@@ -4887,8 +4893,7 @@ static void post_process_table_source(TSqlParser::Table_source_itemContext *ctx,
 	{
 		if (num_of_tables > 1)
 		{
-			if (num_of_tables > 2)
-				leading_hint = "Leading(" + table_names + ")";
+			leading_hint = "Leading(" + table_names + ")";
 			extractJoinHint(ctx->join_hint(), table_names);
 		}
 		removeCtxStringFromQuery(expr, ctx->join_hint(), baseCtx);
