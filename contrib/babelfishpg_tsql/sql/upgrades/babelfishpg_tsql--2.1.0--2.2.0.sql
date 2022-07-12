@@ -724,7 +724,7 @@ CREATE OR REPLACE VIEW information_schema_tsql.routines AS
             CAST(information_schema_tsql._pgtsql_numeric_precision(tsql_type_name, t.oid, true_typmod)
                         AS smallint)
             AS "NUMERIC_PRECISION",
-            CAST(information_schema_tsql._pgtsql_numeric_precision_radix(tsql_type_name, t.oid, true_typmod)
+            CAST(information_schema_tsql._pgtsql_numeric_precision_radix(tsql_type_name, case when t.typtype = 'd' THEN t.typbasetype ELSE t.oid END, true_typmod)
                         AS smallint)
             AS "NUMERIC_PRECISION_RADIX",
             CAST(information_schema_tsql._pgtsql_numeric_scale(tsql_type_name, t.oid, true_typmod)
