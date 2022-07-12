@@ -61,9 +61,6 @@ CREATE FUNCTION dbo.test_dec(@quantity int, @list_price decimal(10,2), @discount
 
 
 #checking for function with char,nchar,varchar,nvarchar,binary,varbinary
-create function fc(@a char) RETURNS char AS BEGIN return @a END;
-go
-
 create function fc1(@a nvarchar) RETURNS nvarchar AS BEGIN return @a END;
 go
 
@@ -79,13 +76,8 @@ go
 create function fc5(@a varbinary) RETURNS varbinary AS BEGIN return @a END;
 go
 
-select tsql_get_functiondef(oid) from pg_proc where proname='fc';
+create function fc6(@a char) RETURNS char AS BEGIN return @a END;
 go
-~~START~~
-text
-CREATE FUNCTION dbo.fc(@a char) RETURNS char AS BEGIN return @a END;
-~~END~~
-
 
 select tsql_get_functiondef(oid) from pg_proc where proname='fc1';
 go
@@ -124,6 +116,14 @@ go
 ~~START~~
 text
 CREATE FUNCTION dbo.fc5(@a varbinary) RETURNS varbinary AS BEGIN return @a END;
+~~END~~
+
+
+select tsql_get_functiondef(oid) from pg_proc where proname='fc6';
+go
+~~START~~
+text
+CREATE FUNCTION dbo.fc6(@a char) RETURNS char AS BEGIN return @a END;
 ~~END~~
 
 
@@ -222,7 +222,7 @@ master#!#dbo#!#fc2#!#master#!#dbo#!#fc2#!#FUNCTION#!#varchar#!#1#!#1#!#sql_latin
 master#!#dbo#!#fc3#!#master#!#dbo#!#fc3#!#FUNCTION#!#nchar#!#1#!#2#!#sql_latin1_general_cp1_ci_as#!#UNICODE#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#SQL#!#CREATE FUNCTION dbo.fc3(@a nchar) RETURNS nchar AS BEGIN return @a END;#!#NO#!#READS#!#NO#!#YES#!#0#!#NO#!#NO
 master#!#dbo#!#fc4#!#master#!#dbo#!#fc4#!#FUNCTION#!#binary#!#1#!#1#!#<NULL>#!#NULL#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#SQL#!#CREATE FUNCTION dbo.fc4(@a binary) RETURNS binary AS BEGIN return @a END;#!#NO#!#READS#!#NO#!#YES#!#0#!#NO#!#NO
 master#!#dbo#!#fc5#!#master#!#dbo#!#fc5#!#FUNCTION#!#varbinary#!#1#!#1#!#<NULL>#!#NULL#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#SQL#!#CREATE FUNCTION dbo.fc5(@a varbinary) RETURNS varbinary AS BEGIN return @a END;#!#NO#!#READS#!#NO#!#YES#!#0#!#NO#!#NO
-master#!#dbo#!#fc#!#master#!#dbo#!#fc#!#FUNCTION#!#char#!#1#!#1#!#sql_latin1_general_cp1_ci_as#!#iso_1#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#SQL#!#CREATE FUNCTION dbo.fc(@a char) RETURNS char AS BEGIN return @a END;#!#NO#!#READS#!#NO#!#YES#!#0#!#NO#!#NO
+master#!#dbo#!#fc6#!#master#!#dbo#!#fc6#!#FUNCTION#!#char#!#1#!#1#!#sql_latin1_general_cp1_ci_as#!#iso_1#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#SQL#!#CREATE FUNCTION dbo.fc6(@a char) RETURNS char AS BEGIN return @a END;#!#NO#!#READS#!#NO#!#YES#!#0#!#NO#!#NO
 master#!#dbo#!#test_dec#!#master#!#dbo#!#test_dec#!#FUNCTION#!#decimal#!#<NULL>#!#<NULL>#!#<NULL>#!#NULL#!#10#!#10#!#2#!#<NULL>#!#SQL#!#CREATE FUNCTION dbo.test_dec(@quantity int, @list_price decimal(10,2), @discount decimal(4,2)) RETURNS decimal(10,2) AS BEGIN<newline>    RETURN @quantity * @list_price * (1 - @discount);<newline>END;#!#NO#!#READS#!#NO#!#YES#!#0#!#NO#!#NO
 master#!#dbo#!#test_char#!#master#!#dbo#!#test_char#!#PROCEDURE#!#NULL#!#<NULL>#!#<NULL>#!#<NULL>#!#NULL#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#SQL#!#CREATE PROCEDURE dbo.test_char(@ch char) AS BEGIN<newline>	set @ch ='c';<newline>	SELECT @ch as 's';<newline>END;#!#NO#!#MODIFIES#!#<NULL>#!#YES#!#0#!#NO#!#NO
 master#!#dbo#!#test_dt#!#master#!#dbo#!#test_dt#!#PROCEDURE#!#NULL#!#<NULL>#!#<NULL>#!#<NULL>#!#NULL#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#SQL#!#CREATE PROCEDURE dbo.test_dt(@a datetime OUTPUT ) AS BEGIN<newline>	set @a='2022 -06-12 12:43';<newline>END;#!#NO#!#MODIFIES#!#<NULL>#!#YES#!#0#!#NO#!#NO
@@ -686,9 +686,6 @@ go
 drop procedure dbo.cur_var;
 go
 
-drop function fc;
-go
-
 drop function fc1;
 go
 
@@ -702,4 +699,7 @@ drop function fc4;
 go
 
 drop function fc5;
+go
+
+drop function fc6;
 go

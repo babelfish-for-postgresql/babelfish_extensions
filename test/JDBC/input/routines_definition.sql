@@ -46,9 +46,6 @@ select tsql_get_functiondef(oid) from pg_proc where proname='test_dec';
 go
 
 #checking for function with char,nchar,varchar,nvarchar,binary,varbinary
-create function fc(@a char) RETURNS char AS BEGIN return @a END;
-go
-
 create function fc1(@a nvarchar) RETURNS nvarchar AS BEGIN return @a END;
 go
 
@@ -64,7 +61,7 @@ go
 create function fc5(@a varbinary) RETURNS varbinary AS BEGIN return @a END;
 go
 
-select tsql_get_functiondef(oid) from pg_proc where proname='fc';
+create function fc6(@a char) RETURNS char AS BEGIN return @a END;
 go
 
 select tsql_get_functiondef(oid) from pg_proc where proname='fc1';
@@ -80,6 +77,9 @@ select tsql_get_functiondef(oid) from pg_proc where proname='fc4';
 go
 
 select tsql_get_functiondef(oid) from pg_proc where proname='fc5';
+go
+
+select tsql_get_functiondef(oid) from pg_proc where proname='fc6';
 go
 
 #char
@@ -498,9 +498,6 @@ go
 drop procedure dbo.cur_var;
 go
 
-drop function fc;
-go
-
 drop function fc1;
 go
 
@@ -514,4 +511,7 @@ drop function fc4;
 go
 
 drop function fc5;
+go
+
+drop function fc6;
 go
