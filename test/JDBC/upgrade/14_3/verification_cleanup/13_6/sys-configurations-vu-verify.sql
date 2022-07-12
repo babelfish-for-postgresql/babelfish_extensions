@@ -1,4 +1,4 @@
-USE db_sys_configurations;
+USE master;
 GO
 
 SELECT * FROM sys_configurations_view
@@ -53,10 +53,4 @@ DROP PROC sys_syscurconfigs_proc
 GO
 
 DROP FUNCTION sys_syscurconfigs_func
-GO
-
-USE master
-GO
-
-DROP DATABASE db_sys_configurations
 GO

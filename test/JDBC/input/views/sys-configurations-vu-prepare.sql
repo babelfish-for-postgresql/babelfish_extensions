@@ -1,7 +1,4 @@
-CREATE DATABASE db_sys_configurations;
-GO
-
-USE db_sys_configurations;
+USE master;
 GO
 
 CREATE VIEW sys_configurations_view AS
