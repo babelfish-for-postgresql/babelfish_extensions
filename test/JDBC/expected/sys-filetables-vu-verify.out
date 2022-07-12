@@ -1,0 +1,34 @@
+USE master
+GO
+
+SELECT COUNT(*) FROM sys.filetables
+GO
+~~START~~
+int
+0
+~~END~~
+
+
+SELECT * FROM sys_filetables_vu_prepare_view
+GO
+~~START~~
+int
+0
+~~END~~
+
+
+EXEC sys_filetables_vu_prepare_proc
+GO
+~~START~~
+int
+0
+~~END~~
+
+
+SELECT dbo.sys_filetables_vu_prepare_func()
+GO
+~~START~~
+int
+0
+~~END~~
+
