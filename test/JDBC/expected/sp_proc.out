@@ -3,18 +3,18 @@ go
 
 exec sp_hello
 go
-~START~~
+~~START~~
 int
 1
-~END~~
+~~END~~
 
 
 exec dbo.sp_hello
 go
-~START~~
+~~START~~
 int
 1
-~END~~
+~~END~~
 
 
 create database db1
@@ -25,42 +25,42 @@ go
 
 exec master.dbo.sp_hello
 go
-~START~~
+~~START~~
 int
 1
-~END~~
+~~END~~
 
 
 exec sp_hello
 go
-~START~~
+~~START~~
 int
 1
-~END~~
+~~END~~
 
 
 exec .sp_hello
 go
-~START~~
+~~START~~
 int
 1
-~END~~
+~~END~~
 
 
 exec ..sp_hello
 go
-~START~~
+~~START~~
 int
 1
-~END~~
+~~END~~
 
 
 exec dbo.sp_hello
 go
-~START~~
+~~START~~
 int
 1
-~END~~
+~~END~~
 
 
 create proc call_sp_helllo as exec sp_hello
@@ -68,10 +68,10 @@ go
 
 exec call_sp_helllo
 go
-~START~~
+~~START~~
 int
 1
-~END~~
+~~END~~
 
 
 create proc sp_hello as select 2
@@ -80,26 +80,26 @@ go
 --Executes the sp_hello in db1
 exec sp_hello
 go
-~START~~
+~~START~~
 int
 2
-~END~~
+~~END~~
 
 
 exec dbo.sp_hello
 go
-~START~~
+~~START~~
 int
 2
-~END~~
+~~END~~
 
 
 exec call_sp_helllo
 go
-~START~~
+~~START~~
 int
 2
-~END~~
+~~END~~
 
 
 drop proc sp_hello
@@ -113,16 +113,16 @@ go
 
 exec sp_hello;
 go
-~ERROR (Code: 8134)~~
+~~ERROR (Code: 8134)~~
 
-~ERROR (Message: division by zero)~~
+~~ERROR (Message: division by zero)~~
 
 
 exec @a;
 go
-~ERROR (Code: 33557097)~~
+~~ERROR (Code: 33557097)~~
 
-~ERROR (Message: procedure @a() does not exist)~~
+~~ERROR (Message: procedure @a() does not exist)~~
 
 
 drop proc sp_hello;
