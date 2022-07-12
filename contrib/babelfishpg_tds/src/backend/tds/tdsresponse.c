@@ -1250,8 +1250,6 @@ int TdsGetGenericTypmod(Node *expr)
 				FuncExpr *func;
 				Oid     func_oid = InvalidOid;
 
-				if (!expr)
-					return rettypmod;
 				func = (FuncExpr *) expr;
 
 				/*
