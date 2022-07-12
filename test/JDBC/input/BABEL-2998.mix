@@ -33,7 +33,7 @@ GO
 
 -- psql
 -- create a function from PG endpoint and try calling it from T-SQL endpoint
-CREATE FUNCTION sys.func_2998() RETURNS CHAR(20) LANGUAGE SQL RETURN 'abc';
+CREATE FUNCTION sys.func_2998() RETURNS CHAR(20) LANGUAGE SQL AS 'SELECT ''abc''';
 GO
 
 -- tsql
