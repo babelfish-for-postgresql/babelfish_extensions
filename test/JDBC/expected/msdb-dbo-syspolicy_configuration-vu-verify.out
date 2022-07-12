@@ -1,0 +1,6 @@
+SELECT * FROM msdb.dbo.syspolicy_configuration
+GO
+~~START~~
+varchar#!#sql_variant
+~~END~~
+

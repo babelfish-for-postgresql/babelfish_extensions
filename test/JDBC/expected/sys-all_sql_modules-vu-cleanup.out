@@ -1,0 +1,34 @@
+-- tsql
+USE db1_sys_all_sql_modules
+GO
+
+DROP LOGIN all_sql_modules_user
+GO
+
+-- Cleanup
+DROP PROC all_sql_modules_proc
+GO
+
+DROP TRIGGER all_sql_mod_trig
+GO
+
+DROP TABLE all_sql_modules_table1
+GO
+
+DROP TABLE all_sql_modules_table2
+GO
+
+DROP VIEW all_sql_modules_view
+GO
+
+DROP FUNCTION all_sql_modules_function
+GO
+
+USE master
+GO
+
+DROP VIEW my_master_view_sys_all_sql_modules
+GO
+
+DROP DATABASE db1_sys_all_sql_modules
+GO

@@ -1,0 +1,7 @@
+-- tsql
+drop type tt_type;
+GO
+
+-- psql
+DROP TYPE master_dbo.comp_type
+GO
