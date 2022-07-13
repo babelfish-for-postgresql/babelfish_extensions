@@ -447,6 +447,7 @@ CREATE OR REPLACE VIEW information_schema_tsql.views AS
 
 GRANT SELECT ON information_schema_tsql.views TO PUBLIC;
 
+/*
  * CHECK_CONSTRAINTS view
  */
 

@@ -3,6 +3,8 @@
 
 -- add 'sys' to search path for the convenience
 SELECT set_config('search_path', 'sys, '||current_setting('search_path'), false);
+-- enable DDL from pgendpoint
+SELECT set_config('babelfishpg_tsql.enable_ddl_from_pgendpoint', 'true', false);
 
 -- Drops a view if it does not have any dependent objects.
 -- Is a temporary procedure for use by the upgrade script. Will be dropped at the end of the upgrade.
@@ -1458,6 +1460,7 @@ DROP PROCEDURE sys.babelfish_drop_deprecated_view(varchar, varchar);
 DROP PROCEDURE sys.babelfish_remove_object_from_extension(varchar, varchar);
 DROP PROCEDURE sys.babelfish_drop_deprecated_function(varchar, varchar);
 
+SELECT set_config('babelfishpg_tsql.enable_ddl_from_pgendpoint', 'false', false);
 -- Reset search_path to not affect any subsequent scripts
 SELECT set_config('search_path', trim(leading 'sys, ' from current_setting('search_path')), false);
 
