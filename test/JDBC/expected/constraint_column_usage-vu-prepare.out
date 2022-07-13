@@ -1,51 +1,23 @@
 create database db1;
 go
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: Database 'db1' already exists. Choose a different database name.)~~
-
 
 Use db1;
 go
 
 create table tbl1(a int, b int, primary key(a));
 go
-~~ERROR (Code: 2714)~~
-
-~~ERROR (Message: relation "tbl1" already exists)~~
-
 
 create table tbl2(a int, b int, primary key(a), foreign key(b) references tbl1(a));
 go
-~~ERROR (Code: 2714)~~
-
-~~ERROR (Message: relation "tbl2" already exists)~~
-
 
 create schema sc1;
 go
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: schema "sc1" already exists)~~
-
 
 create table tbl3 (a int, b int, primary key (a,b));
 go
-~~ERROR (Code: 2714)~~
-
-~~ERROR (Message: relation "tbl3" already exists)~~
-
 
 create table sc1.tbl4 (a int, b int, check ( a > 0  and b < 0));
 go
-~~ERROR (Code: 2714)~~
-
-~~ERROR (Message: relation "tbl4" already exists)~~
-
 
 create table tbl5 (a int, b int, c int, foreign key(b,c) references tbl3(a,b));
 go
-~~ERROR (Code: 2714)~~
-
-~~ERROR (Message: relation "tbl5" already exists)~~
-
