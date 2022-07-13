@@ -822,7 +822,7 @@ ProcessBCPRequest(TDSRequest request)
 				HOLD_CANCEL_INTERRUPTS();
 
 				/* Discard only if End of Message has not been reached for the current packet. */
-				if (TdsGetRecvPacketEomStatus())
+				if (!TdsGetRecvPacketEomStatus())
 					ret = TdsDiscardAllPendingBcpRequest();
 
 				RESUME_CANCEL_INTERRUPTS();
