@@ -1,16 +1,16 @@
-Use db1;
+Use db_constraint_column_usage;
 go
 
-SELECT * FROM information_schema.CONSTRAINT_COLUMN_USAGE WHERE TABLE_NAME NOT LIKE 'sys%' ORDER BY CONSTRAINT_NAME;
+SELECT * FROM information_schema.CONSTRAINT_COLUMN_USAGE WHERE TABLE_NAME NOT LIKE 'sys%' ORDER BY COLUMN_NAME;
 go
 
 Use master;
 go
 
-SELECT * FROM information_schema.CONSTRAINT_COLUMN_USAGE WHERE TABLE_NAME NOT LIKE 'sys%' ORDER BY CONSTRAINT_NAME;
+SELECT * FROM information_schema.CONSTRAINT_COLUMN_USAGE WHERE TABLE_NAME NOT LIKE 'sys%' ORDER BY COLUMN_NAME;
 go
 
-use db1;
+use db_constraint_column_usage;
 go
 
 drop table tbl2;
@@ -29,5 +29,5 @@ go
 use master
 go
 
-drop database db1;
+drop database db_constraint_column_usage;
 go
