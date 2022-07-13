@@ -40,6 +40,7 @@
 #include "utils/uuid.h"
 #include "utils/varbit.h"
 
+#include "collation.h"
 #include "datetimeoffset.h"
 #include "typecode.h"
 #include "numeric.h"
@@ -122,28 +123,6 @@ PG_FUNCTION_INFO_V1(sqlvariantsend);
 
 bytea *convertVarcharToSQLVariantByteA(VarChar *vch, Oid coll);
 bytea *convertIntToSQLVariantByteA(int ret);
-
-
-/******************** Collation Utilities *************************/
-
-/* match definition in babelfishpg_tsql:collation.h  */
-typedef struct Tsql_collation_callbacks
-{
-    /* Function pointers set up by the plugin */
-    Oid (*get_tsql_collation_oid_f)(int persist_coll_id);
-    int (*get_persist_collation_id_f)(Oid coll_oid);
-    int (*get_server_collation_collidx_f)(void);
-    int8_t (*cmp_collation_f)(uint16_t coll1, uint16_t coll2);
-
-} Tsql_collation_callbacks;
-
-Tsql_collation_callbacks *collation_callbacks_ptr = NULL;
-
-static void init_collation_callbacks(void);
-static Oid get_tsql_collation_oid(int persist_coll_id);
-static int get_persist_collation_id(Oid coll_oid);
-static int get_server_collation_collidx(void);
-static int8_t cmp_collation(uint16_t coll1, uint16_t coll2);
 
 /* extract type and coll related info*/
 extern type_info_t type_infos[];
@@ -2335,61 +2314,5 @@ bytea *convertVarcharToSQLVariantByteA(VarChar *vch, Oid coll) {
     svhdr->collid = get_persist_collation_id(coll);
 
     return result;
-}
-
-static void
-init_collation_callbacks(void)
-{
-	Tsql_collation_callbacks **callbacks_ptr;
-	callbacks_ptr = (Tsql_collation_callbacks **) find_rendezvous_variable("PLtsql_collation_callbacks"); 
-	collation_callbacks_ptr = *callbacks_ptr;
-}
-
-static Oid
-get_tsql_collation_oid(int persist_coll_id)
-{
-	if (collation_callbacks_ptr)
-		init_collation_callbacks();
-
-	if (collation_callbacks_ptr && collation_callbacks_ptr->get_tsql_collation_oid_f)
-		return (*collation_callbacks_ptr->get_tsql_collation_oid_f)(persist_coll_id);
-	else
-		return -1;
-}
-
-static int
-get_persist_collation_id(Oid coll_oid)
-{
-	if (collation_callbacks_ptr)
-		init_collation_callbacks();
-
-	if (collation_callbacks_ptr && collation_callbacks_ptr->get_persist_collation_id_f)
-		return (*collation_callbacks_ptr->get_persist_collation_id_f)(coll_oid);
-	else
-		return -1;
-}
-
-static int
-get_server_collation_collidx(void)
-{
-	if (collation_callbacks_ptr)
-		init_collation_callbacks();
-
-	if (collation_callbacks_ptr && collation_callbacks_ptr->get_server_collation_collidx_f)
-		return (*collation_callbacks_ptr->get_server_collation_collidx_f)();
-	else
-		return -1;
-}
-
-static int8_t
-cmp_collation(uint16_t coll1, uint16_t coll2)
-{
-	if (collation_callbacks_ptr)
-		init_collation_callbacks();
-
-	if (collation_callbacks_ptr && collation_callbacks_ptr->cmp_collation_f)
-		return (*collation_callbacks_ptr->cmp_collation_f)(coll1, coll2);
-	else
-		return 0;
 }
 

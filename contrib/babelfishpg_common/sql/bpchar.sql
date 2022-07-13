@@ -311,7 +311,7 @@ RESET enable_domain_typmod;
 
 CREATE OR REPLACE FUNCTION sys.nchar(sys.nchar, integer, boolean)
 RETURNS sys.nchar
-AS 'babelfishpg_common', 'bpchar'
+AS 'babelfishpg_common', 'nchar'
 LANGUAGE C IMMUTABLE STRICT PARALLEL SAFE;
 
 
