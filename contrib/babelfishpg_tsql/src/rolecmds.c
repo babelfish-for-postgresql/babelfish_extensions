@@ -262,11 +262,20 @@ drop_bbf_authid_login_ext(ObjectAccessType access,
 							void *arg)
 {
 	Relation	bbf_authid_login_ext_rel;
-	HeapTuple	tuple;
+	Relation	bbf_authid_user_ext_rel;
+	TupleDesc	bbf_authid_user_ext_dsc;
+	HeapTuple	logintuple;
+	HeapTuple	usertuple;
+	HeapTuple	new_tuple;
 	HeapTuple	authtuple;
+	Datum		new_record_user_ext[BBF_AUTHID_USER_EXT_NUM_COLS];
+	bool		new_record_nulls_user_ext[BBF_AUTHID_USER_EXT_NUM_COLS];
+	bool		new_record_repl_user_ext[BBF_AUTHID_USER_EXT_NUM_COLS];
 	ScanKeyData	scanKey;
 	SysScanDesc	scan;
+	TableScanDesc	tblscan;
 	NameData	rolname;
+	NameData   *invalidated_login_name;
 
 	authtuple = SearchSysCache1(AUTHOID, ObjectIdGetDatum(roleid));
 	if (!HeapTupleIsValid(authtuple))
@@ -289,15 +298,66 @@ drop_bbf_authid_login_ext(ObjectAccessType access,
 							  get_authid_login_ext_idx_oid(),
 							  true, NULL, 1, &scanKey);
 
-	tuple = systable_getnext(scan);
+	logintuple = systable_getnext(scan);
 
-	if (HeapTupleIsValid(tuple))
+	if (HeapTupleIsValid(logintuple))
 		CatalogTupleDelete(bbf_authid_login_ext_rel,
-						   &tuple->t_self);
+						   &logintuple->t_self);
 
 	systable_endscan(scan);
 	table_close(bbf_authid_login_ext_rel, RowExclusiveLock);
 	ReleaseSysCache(authtuple);
+
+	/*
+	 * Invalidate the corresponding entries in user_ext which are related to
+	 * this login
+	 */
+	bbf_authid_user_ext_rel = table_open(get_authid_user_ext_oid(),
+										 RowExclusiveLock);
+	bbf_authid_user_ext_dsc = RelationGetDescr(bbf_authid_user_ext_rel);
+
+	/* Search and obtain the tuple on the login name*/
+	ScanKeyInit(&scanKey,
+				Anum_bbf_authid_user_ext_login_name,
+				BTEqualStrategyNumber, F_NAMEEQ,
+				NameGetDatum(&rolname));
+
+	tblscan = table_beginscan_catalog(bbf_authid_user_ext_rel, 1, &scanKey);
+
+	MemSet(new_record_user_ext, 0, sizeof(new_record_user_ext));
+	MemSet(new_record_nulls_user_ext, false, sizeof(new_record_nulls_user_ext));
+	MemSet(new_record_repl_user_ext, false, sizeof(new_record_repl_user_ext));
+
+	usertuple = heap_getnext(tblscan, ForwardScanDirection);
+
+	while (HeapTupleIsValid(usertuple))
+	{
+		/*
+		 * Insert empty string as login_name as an invalidation mark for this login
+		 */
+		invalidated_login_name = (NameData *) palloc0(NAMEDATALEN);
+		snprintf(invalidated_login_name->data, NAMEDATALEN, "%s", "");
+		new_record_user_ext[USER_EXT_LOGIN_NAME] = NameGetDatum(invalidated_login_name);
+		new_record_repl_user_ext[USER_EXT_LOGIN_NAME] = true;
+
+		new_tuple = heap_modify_tuple(usertuple,
+									  bbf_authid_user_ext_dsc,
+									  new_record_user_ext,
+									  new_record_nulls_user_ext,
+									  new_record_repl_user_ext);
+
+		CatalogTupleUpdate(bbf_authid_user_ext_rel, &new_tuple->t_self, new_tuple);
+
+		usertuple = heap_getnext(tblscan, ForwardScanDirection);
+
+		heap_freetuple(new_tuple);
+	}
+
+	/* Advance the command counter to see the new record */
+	CommandCounterIncrement();
+
+	table_endscan(tblscan);
+	table_close(bbf_authid_user_ext_rel, RowExclusiveLock);
 }
 
 static void
