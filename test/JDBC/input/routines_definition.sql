@@ -1,5 +1,3 @@
-
-
 #testing for all the datatypes of agrument#
 
 #int, default value and nvarchar#
@@ -8,9 +6,6 @@ AS
 BEGIN
         SELECT @b=8;
 END
-go
-
-select tsql_get_functiondef(oid) from pg_proc where proname='test_nvar';
 go
 
 #SMALLINT and INT OUTPUT
@@ -26,9 +21,6 @@ BEGIN
 END;
 go
 
-select tsql_get_functiondef(oid) from pg_proc where proname='test_si';
-go
-
 #decimal
 CREATE FUNCTION test_dec(
     @quantity INT,
@@ -40,9 +32,6 @@ AS
 BEGIN
     RETURN @quantity * @list_price * (1 - @discount);
 END;
-go
-
-select tsql_get_functiondef(oid) from pg_proc where proname='test_dec';
 go
 
 #checking for function with char,nchar,varchar,nvarchar,binary,varbinary
@@ -64,24 +53,6 @@ go
 create function fc6(@a char) RETURNS char AS BEGIN return @a END;
 go
 
-select tsql_get_functiondef(oid) from pg_proc where proname='fc1';
-go
-
-select tsql_get_functiondef(oid) from pg_proc where proname='fc2';
-go
-
-select tsql_get_functiondef(oid) from pg_proc where proname='fc3';
-go
-
-select tsql_get_functiondef(oid) from pg_proc where proname='fc4';
-go
-
-select tsql_get_functiondef(oid) from pg_proc where proname='fc5';
-go
-
-select tsql_get_functiondef(oid) from pg_proc where proname='fc6';
-go
-
 #char
 create procedure test_char(@ch char)
 AS
@@ -89,9 +60,6 @@ BEGIN
 	set @ch ='c';
 	SELECT @ch as 's';
 END;
-go
-
-select tsql_get_functiondef(oid) from pg_proc where proname='test_char';
 go
 
 #tinyint, float and bigint
@@ -104,9 +72,6 @@ BEGIN
 END;
 go
 
-select tsql_get_functiondef(oid) from pg_proc where proname='test_ti';
-go
-
 #numeric
 create procedure test_num(@a numeric(20,6) OUTPUT)
 AS
@@ -115,9 +80,6 @@ BEGIN
 	SELECT test_dec(23,60.76,43.88);
 	
 END;
-go
-
-select tsql_get_functiondef(oid) from pg_proc where proname='test_num';
 go
 
 #time and date
@@ -129,9 +91,6 @@ BEGIN
 END;
 go
 
-select tsql_get_functiondef(oid) from pg_proc where proname='test_time';
-go
-
 #datetime
 create procedure test_dt(@a datetime output)
 AS
@@ -140,10 +99,22 @@ BEGIN
 END;
 go
 
-select tsql_get_functiondef(oid) from pg_proc where proname='test_dt';
+select SPECIFIC_CATALOG, SPECIFIC_SCHEMA, SPECIFIC_NAME, ROUTINE_CATALOG, ROUTINE_SCHEMA, ROUTINE_NAME, ROUTINE_TYPE, DATA_TYPE, CHARACTER_MAXIMUM_LENGTH, CHARACTER_OCTET_LENGTH, COLLATION_NAME, CHARACTER_SET_NAME, NUMERIC_PRECISION, NUMERIC_PRECISION_RADIX, NUMERIC_SCALE, DATETIME_PRECISION, ROUTINE_BODY, ROUTINE_DEFINITION, IS_DETERMINISTIC, SQL_DATA_ACCESS, IS_NULL_CALL, SCHEMA_LEVEL_ROUTINE, MAX_DYNAMIC_RESULT_SETS, IS_USER_DEFINED_CAST, IS_IMPLICITLY_INVOCABLE from information_schema.routines where SPECIFIC_NAME NOT LIKE 'xp%' ORDER BY ROUTINE_DEFINITION;
+go
+
+create database db1;
+go
+
+use db1;
 go
 
 select SPECIFIC_CATALOG, SPECIFIC_SCHEMA, SPECIFIC_NAME, ROUTINE_CATALOG, ROUTINE_SCHEMA, ROUTINE_NAME, ROUTINE_TYPE, DATA_TYPE, CHARACTER_MAXIMUM_LENGTH, CHARACTER_OCTET_LENGTH, COLLATION_NAME, CHARACTER_SET_NAME, NUMERIC_PRECISION, NUMERIC_PRECISION_RADIX, NUMERIC_SCALE, DATETIME_PRECISION, ROUTINE_BODY, ROUTINE_DEFINITION, IS_DETERMINISTIC, SQL_DATA_ACCESS, IS_NULL_CALL, SCHEMA_LEVEL_ROUTINE, MAX_DYNAMIC_RESULT_SETS, IS_USER_DEFINED_CAST, IS_IMPLICITLY_INVOCABLE from information_schema.routines where SPECIFIC_NAME NOT LIKE 'xp%' ORDER BY ROUTINE_DEFINITION;
+go
+
+use master;
+go
+
+drop database db1;
 go
 
 #UID

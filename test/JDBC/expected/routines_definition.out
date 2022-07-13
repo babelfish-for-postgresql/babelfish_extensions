@@ -1,5 +1,3 @@
-
-
 #testing for all the datatypes of agrument#
 
 #int, default value and nvarchar#
@@ -9,14 +7,6 @@ BEGIN
         SELECT @b=8;
 END
 go
-
-select tsql_get_functiondef(oid) from pg_proc where proname='test_nvar';
-go
-~~START~~
-text
-CREATE PROCEDURE dbo.test_nvar(@a nvarchar, @b int= 8) AS BEGIN<newline>        SELECT @b=8;<newline>END
-~~END~~
-
 
 #SMALLINT and INT OUTPUT
 create schema sc1;
@@ -31,14 +21,6 @@ BEGIN
 END;
 go
 
-select tsql_get_functiondef(oid) from pg_proc where proname='test_si';
-go
-~~START~~
-text
-CREATE PROCEDURE sc1.test_si(@a smallint, @b int OUTPUT ) AS BEGIN<newline>        SELECT @a=70;<newline>	set @a=8;<newline>	SELECT @a as a;<newline>END;
-~~END~~
-
-
 #decimal
 CREATE FUNCTION test_dec(
     @quantity INT,
@@ -51,14 +33,6 @@ BEGIN
     RETURN @quantity * @list_price * (1 - @discount);
 END;
 go
-
-select tsql_get_functiondef(oid) from pg_proc where proname='test_dec';
-go
-~~START~~
-text
-CREATE FUNCTION dbo.test_dec(@quantity int, @list_price decimal(10,2), @discount decimal(4,2)) RETURNS decimal(10,2) AS BEGIN<newline>    RETURN @quantity * @list_price * (1 - @discount);<newline>END;
-~~END~~
-
 
 #checking for function with char,nchar,varchar,nvarchar,binary,varbinary
 create function fc1(@a nvarchar) RETURNS nvarchar AS BEGIN return @a END;
@@ -79,54 +53,6 @@ go
 create function fc6(@a char) RETURNS char AS BEGIN return @a END;
 go
 
-select tsql_get_functiondef(oid) from pg_proc where proname='fc1';
-go
-~~START~~
-text
-CREATE FUNCTION dbo.fc1(@a nvarchar) RETURNS nvarchar AS BEGIN return @a END;
-~~END~~
-
-
-select tsql_get_functiondef(oid) from pg_proc where proname='fc2';
-go
-~~START~~
-text
-CREATE FUNCTION dbo.fc2(@a varchar) RETURNS varchar AS BEGIN return @a END;
-~~END~~
-
-
-select tsql_get_functiondef(oid) from pg_proc where proname='fc3';
-go
-~~START~~
-text
-CREATE FUNCTION dbo.fc3(@a nchar) RETURNS nchar AS BEGIN return @a END;
-~~END~~
-
-
-select tsql_get_functiondef(oid) from pg_proc where proname='fc4';
-go
-~~START~~
-text
-CREATE FUNCTION dbo.fc4(@a binary) RETURNS binary AS BEGIN return @a END;
-~~END~~
-
-
-select tsql_get_functiondef(oid) from pg_proc where proname='fc5';
-go
-~~START~~
-text
-CREATE FUNCTION dbo.fc5(@a varbinary) RETURNS varbinary AS BEGIN return @a END;
-~~END~~
-
-
-select tsql_get_functiondef(oid) from pg_proc where proname='fc6';
-go
-~~START~~
-text
-CREATE FUNCTION dbo.fc6(@a char) RETURNS char AS BEGIN return @a END;
-~~END~~
-
-
 #char
 create procedure test_char(@ch char)
 AS
@@ -135,14 +61,6 @@ BEGIN
 	SELECT @ch as 's';
 END;
 go
-
-select tsql_get_functiondef(oid) from pg_proc where proname='test_char';
-go
-~~START~~
-text
-CREATE PROCEDURE dbo.test_char(@ch char) AS BEGIN<newline>	set @ch ='c';<newline>	SELECT @ch as 's';<newline>END;
-~~END~~
-
 
 #tinyint, float and bigint
 create procedure test_ti(@a tinyint OUTPUT, @b BIGINT, @c float )
@@ -154,14 +72,6 @@ BEGIN
 END;
 go
 
-select tsql_get_functiondef(oid) from pg_proc where proname='test_ti';
-go
-~~START~~
-text
-CREATE PROCEDURE dbo.test_ti(@a tinyint OUTPUT , @b bigint, @c float) AS BEGIN<newline>	set @a=79;<newline>	select @b=19;<newline>	SELECT @c * 20 +1000;<newline>END;
-~~END~~
-
-
 #numeric
 create procedure test_num(@a numeric(20,6) OUTPUT)
 AS
@@ -172,14 +82,6 @@ BEGIN
 END;
 go
 
-select tsql_get_functiondef(oid) from pg_proc where proname='test_num';
-go
-~~START~~
-text
-CREATE PROCEDURE dbo.test_num(@a numeric(20,6) OUTPUT ) AS BEGIN<newline>	set @a = 65;<newline>	SELECT test_dec(23,60.76,43.88);<newline>	<newline>END;
-~~END~~
-
-
 #time and date
 create procedure test_time(@a time(5) OUTPUT , @b date OUTPUT)
 AS
@@ -189,14 +91,6 @@ BEGIN
 END;
 go
 
-select tsql_get_functiondef(oid) from pg_proc where proname='test_time';
-go
-~~START~~
-text
-CREATE PROCEDURE dbo.test_time(@a time(5) OUTPUT , @b date OUTPUT ) AS BEGIN<newline>	set @a='12:54';<newline>	set @b='2022-06-11';<newline>END;
-~~END~~
-
-
 #datetime
 create procedure test_dt(@a datetime output)
 AS
@@ -204,14 +98,6 @@ BEGIN
 	set @a='2022 -06-12 12:43';
 END;
 go
-
-select tsql_get_functiondef(oid) from pg_proc where proname='test_dt';
-go
-~~START~~
-text
-CREATE PROCEDURE dbo.test_dt(@a datetime OUTPUT ) AS BEGIN<newline>	set @a='2022 -06-12 12:43';<newline>END;
-~~END~~
-
 
 select SPECIFIC_CATALOG, SPECIFIC_SCHEMA, SPECIFIC_NAME, ROUTINE_CATALOG, ROUTINE_SCHEMA, ROUTINE_NAME, ROUTINE_TYPE, DATA_TYPE, CHARACTER_MAXIMUM_LENGTH, CHARACTER_OCTET_LENGTH, COLLATION_NAME, CHARACTER_SET_NAME, NUMERIC_PRECISION, NUMERIC_PRECISION_RADIX, NUMERIC_SCALE, DATETIME_PRECISION, ROUTINE_BODY, ROUTINE_DEFINITION, IS_DETERMINISTIC, SQL_DATA_ACCESS, IS_NULL_CALL, SCHEMA_LEVEL_ROUTINE, MAX_DYNAMIC_RESULT_SETS, IS_USER_DEFINED_CAST, IS_IMPLICITLY_INVOCABLE from information_schema.routines where SPECIFIC_NAME NOT LIKE 'xp%' ORDER BY ROUTINE_DEFINITION;
 go
@@ -233,6 +119,25 @@ master#!#dbo#!#test_time#!#master#!#dbo#!#test_time#!#PROCEDURE#!#NULL#!#<NULL>#
 master#!#sc1#!#test_si#!#master#!#sc1#!#test_si#!#PROCEDURE#!#NULL#!#<NULL>#!#<NULL>#!#<NULL>#!#NULL#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#SQL#!#CREATE PROCEDURE sc1.test_si(@a smallint, @b int OUTPUT ) AS BEGIN<newline>        SELECT @a=70;<newline>	set @a=8;<newline>	SELECT @a as a;<newline>END;#!#NO#!#MODIFIES#!#<NULL>#!#YES#!#0#!#NO#!#NO
 ~~END~~
 
+
+create database db1;
+go
+
+use db1;
+go
+
+select SPECIFIC_CATALOG, SPECIFIC_SCHEMA, SPECIFIC_NAME, ROUTINE_CATALOG, ROUTINE_SCHEMA, ROUTINE_NAME, ROUTINE_TYPE, DATA_TYPE, CHARACTER_MAXIMUM_LENGTH, CHARACTER_OCTET_LENGTH, COLLATION_NAME, CHARACTER_SET_NAME, NUMERIC_PRECISION, NUMERIC_PRECISION_RADIX, NUMERIC_SCALE, DATETIME_PRECISION, ROUTINE_BODY, ROUTINE_DEFINITION, IS_DETERMINISTIC, SQL_DATA_ACCESS, IS_NULL_CALL, SCHEMA_LEVEL_ROUTINE, MAX_DYNAMIC_RESULT_SETS, IS_USER_DEFINED_CAST, IS_IMPLICITLY_INVOCABLE from information_schema.routines where SPECIFIC_NAME NOT LIKE 'xp%' ORDER BY ROUTINE_DEFINITION;
+go
+~~START~~
+nvarchar#!#nvarchar#!#nvarchar#!#nvarchar#!#nvarchar#!#nvarchar#!#nvarchar#!#nvarchar#!#int#!#int#!#nvarchar#!#nvarchar#!#smallint#!#smallint#!#smallint#!#smallint#!#nvarchar#!#nvarchar#!#nvarchar#!#nvarchar#!#nvarchar#!#nvarchar#!#smallint#!#nvarchar#!#nvarchar
+~~END~~
+
+
+use master;
+go
+
+drop database db1;
+go
 
 #UID
 create procedure test_uid(@a uniqueidentifier output)
