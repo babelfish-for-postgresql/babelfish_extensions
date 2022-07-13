@@ -1397,8 +1397,6 @@ from sys.table_types tt
 ) ot;
 GRANT SELECT ON sys.all_objects TO PUBLIC;
 
-CREATE OR REPLACE FUNCTION sys.language()
-RETURNS sys.NVARCHAR(128)  AS 'babelfishpg_tsql' LANGUAGE C;
 
 CREATE OR REPLACE FUNCTION sys.dateadd_internal_df(IN datepart PG_CATALOG.TEXT, IN num INTEGER, IN startdate datetimeoffset) RETURNS datetimeoffset AS $$
 BEGIN
@@ -1484,10 +1482,6 @@ END;
 $$
 STRICT
 LANGUAGE plpgsql IMMUTABLE;
-
-CREATE OR REPLACE FUNCTION sys.language()
-RETURNS sys.NVARCHAR(128)  AS 'babelfishpg_tsql' LANGUAGE C;
-
 
 INSERT INTO sys.babelfish_helpcollation VALUES (N'estonian_ci_ai', N'Estonian, case-insensitive, accent-insensitive, kanatype-insensitive, width-insensitive');
 INSERT INTO sys.babelfish_helpcollation VALUES (N'estonian_ci_as', N'Estonian, case-insensitive, accent-sensitive, kanatype-insensitive, width-insensitive');
