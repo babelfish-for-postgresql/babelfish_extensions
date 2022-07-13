@@ -260,12 +260,15 @@ extern int TdsPutFloat8LE(float8 value);
 extern bool TdsCheckMessageType(uint8_t messageType);
 extern int TdsReadNextRequest(StringInfo message, uint8_t *status, uint8_t *messageType);
 extern int TdsReadMessage(StringInfo message, uint8_t messageType);
+extern int TdsReadNextPendingBcpRequest(StringInfo message);
+extern int TdsDiscardAllPendingBcpRequest();
 extern int TdsWriteMessage(StringInfo message, uint8_t messageType);
 extern int TdsHandleTestQuery(StringInfo message);
 extern int TdsTestProtocol(void);
 extern int TdsPutUInt16LE(uint16_t value);
 extern int TdsPutUInt64LE(uint64_t value);
 extern int TdsPutDate(uint32_t value);
+extern bool TdsGetRecvPacketEomStatus(void);
 
 /* Functions in backend/tds/tdslogin.c */
 extern void TdsSetBufferSize(uint32_t newSize);

@@ -2618,10 +2618,22 @@ execute_bulk_load_insert(int ncol, int nrow, Oid *argtypes,
 	Relation rel;
 	int rc;
 	int retValue = -1;
-	StringInfo src = makeStringInfo();
-	StringInfo bindParams = makeStringInfo();
+	StringInfo src;
+	StringInfo bindParams;
 	int count = 1;
 	Snapshot snap;
+
+	if (nrow == 0 && ncol == 0)
+	{
+		if (bulk_load_table_name)
+			pfree(bulk_load_table_name);
+		bulk_load_table_name = NULL;
+		bulk_load_table_oid = InvalidOid;
+		return 0;
+	}
+
+	src = makeStringInfo();
+	bindParams = makeStringInfo();
 
 	PG_TRY();
 	{
@@ -2712,8 +2724,6 @@ execute_bulk_load_insert(int ncol, int nrow, Oid *argtypes,
 			errmsg("Failed to insert in the table %s for bulk load", bulk_load_table_name)));
 
 	/* Cleanup all the pointers. */
-	if (bulk_load_table_name)
-		pfree(bulk_load_table_name);
 	if (bindParams)
 	{
 		if (bindParams->data)
@@ -2726,8 +2736,6 @@ execute_bulk_load_insert(int ncol, int nrow, Oid *argtypes,
 			pfree(src->data);
 		pfree(src);
 	}
-	bulk_load_table_name = NULL;
-	bulk_load_table_oid = InvalidOid;
 	return retValue;
 }
 
