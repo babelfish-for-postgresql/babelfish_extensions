@@ -87,13 +87,13 @@ extern SPIPlanPtr	prepare_stmt_exec(PLtsql_execstate *estate, PLtsql_function *f
 
 extern int sp_prepare_count;
 
-bool insert_bulk_keep_nulls = false;
 int insert_bulk_rows_per_batch = DEFAULT_INSERT_BULK_ROWS_PER_BATCH;
 int insert_bulk_kilobytes_per_batch = DEFAULT_INSERT_BULK_PACKET_SIZE;
+bool insert_bulk_keep_nulls = false;
 
-int prev_insert_bulk_rows_per_batch = DEFAULT_INSERT_BULK_ROWS_PER_BATCH;
-int prev_insert_bulk_kilobytes_per_batch = DEFAULT_INSERT_BULK_PACKET_SIZE;
-bool prev_insert_bulk_keep_nulls = false;
+static int prev_insert_bulk_rows_per_batch = DEFAULT_INSERT_BULK_ROWS_PER_BATCH;
+static int prev_insert_bulk_kilobytes_per_batch = DEFAULT_INSERT_BULK_PACKET_SIZE;
+static bool prev_insert_bulk_keep_nulls = false;
 
 /* return a underlying node if n is implicit casting and underlying node is a certain type of node */
 static Node *get_underlying_node_from_implicit_casting(Node *n, NodeTag underlying_nodetype);
@@ -2820,12 +2820,10 @@ execute_bulk_load_insert(int ncol, int nrow, Oid *argtypes,
 			pfree(src->data);
 		pfree(src);
 	}
-
 	/* Reset Insert-Bulk Options. */
 	insert_bulk_keep_nulls = prev_insert_bulk_keep_nulls;
 	insert_bulk_rows_per_batch = prev_insert_bulk_rows_per_batch;
 	insert_bulk_kilobytes_per_batch = prev_insert_bulk_kilobytes_per_batch;
-
 	return retValue;
 }
 
@@ -2900,4 +2898,19 @@ get_param_mode(List *params, int paramno, char **modes)
 		p = (tsql_exec_param *) lfirst(lc);
 		(*modes)[i++] = p->mode;
 	}
+}
+
+bool get_insert_bulk_keep_nulls()
+{
+	return insert_bulk_keep_nulls;
+}
+
+int get_insert_bulk_rows_per_batch()
+{
+	return insert_bulk_rows_per_batch;
+}
+
+int get_insert_bulk_kilobytes_per_batch()
+{
+	return insert_bulk_kilobytes_per_batch;
 }

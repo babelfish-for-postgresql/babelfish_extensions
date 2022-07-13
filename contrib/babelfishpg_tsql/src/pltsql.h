@@ -917,10 +917,10 @@ typedef struct PLtsql_stmt_insert_bulk
     char  *db_name;
     char  *column_refs;
 
-	/* Insert Bulk Options. */
-	char *kilobytes_per_batch;
-	char *rows_per_batch;
-	bool keep_nulls;
+    /* Insert Bulk Options. */
+    char *kilobytes_per_batch;
+    char *rows_per_batch;
+    bool keep_nulls;
 } PLtsql_stmt_insert_bulk;
 
 /*
@@ -1580,11 +1580,11 @@ typedef struct PLtsql_protocol_plugin
 
 	int (*TdsGetEncodingFromLcid)(int32_t lcid);
 
-	bool *insert_bulk_keep_nulls;
+	bool (*get_insert_bulk_keep_nulls) ();
 
-	int *insert_bulk_rows_per_batch;
+	int (*get_insert_bulk_rows_per_batch) ();
 
-	int *insert_bulk_kilobytes_per_batch;
+	int (*get_insert_bulk_kilobytes_per_batch) ();
 
 } PLtsql_protocol_plugin;
 
@@ -1814,6 +1814,10 @@ extern Oid pltsql_exec_get_datum_type(PLtsql_execstate *estate,
 extern void pltsql_exec_get_datum_type_info(PLtsql_execstate *estate,
 								 PLtsql_datum *datum,
 								 Oid *typeId, int32 *typMod, Oid *collation);
+
+extern bool get_insert_bulk_keep_nulls();
+extern int get_insert_bulk_rows_per_batch();
+extern int get_insert_bulk_kilobytes_per_batch();
 
 /*
  * Functions for namespace handling in pl_funcs.c

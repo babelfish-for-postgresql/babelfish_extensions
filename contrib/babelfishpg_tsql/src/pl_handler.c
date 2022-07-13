@@ -3355,10 +3355,9 @@ _PG_init(void)
 		(*pltsql_protocol_plugin_ptr)->pltsql_get_logical_schema_name = &get_logical_schema_name;
 		(*pltsql_protocol_plugin_ptr)->pltsql_is_fmtonly_stmt = &pltsql_fmtonly;
 		(*pltsql_protocol_plugin_ptr)->pltsql_get_user_for_database = &get_user_for_database;
-		(*pltsql_protocol_plugin_ptr)->TsqlEncodingConversion = &server_to_any;
-		(*pltsql_protocol_plugin_ptr)->insert_bulk_keep_nulls = &insert_bulk_keep_nulls;
-		(*pltsql_protocol_plugin_ptr)->insert_bulk_rows_per_batch = &insert_bulk_rows_per_batch;
-		(*pltsql_protocol_plugin_ptr)->insert_bulk_kilobytes_per_batch = &insert_bulk_kilobytes_per_batch;
+		(*pltsql_protocol_plugin_ptr)->get_insert_bulk_keep_nulls = get_insert_bulk_keep_nulls;
+		(*pltsql_protocol_plugin_ptr)->get_insert_bulk_rows_per_batch = &get_insert_bulk_rows_per_batch;
+		(*pltsql_protocol_plugin_ptr)->get_insert_bulk_kilobytes_per_batch = &get_insert_bulk_kilobytes_per_batch;
 	}
 
 	get_language_procs("pltsql", &lang_handler_oid, &lang_validator_oid);

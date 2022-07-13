@@ -407,8 +407,8 @@ SetBulkLoadRowData(TDSRequestBulkLoad request, StringInfo message)
 
 	/* Loop over each row. */
 	while((uint8_t)message->data[offset] == TDS_TOKEN_ROW
-			&& request->currentBatchSize < (*pltsql_plugin_handler_ptr->insert_bulk_kilobytes_per_batch) * 1024
-			&& request->rowCount < (*pltsql_plugin_handler_ptr->insert_bulk_rows_per_batch))
+			&& request->currentBatchSize < pltsql_plugin_handler_ptr->get_insert_bulk_kilobytes_per_batch() * 1024
+			&& request->rowCount < pltsql_plugin_handler_ptr->get_insert_bulk_rows_per_batch())
 	{
 		int i = 0; /* Current Column Number. */
 		BulkLoadRowData *rowData = palloc0(sizeof(BulkLoadRowData));
@@ -657,8 +657,8 @@ SetBulkLoadRowData(TDSRequestBulkLoad request, StringInfo message)
 	 */
 	CheckMessageHasEnoughBytesToRead(&message, 1);
 
-	if (request->rowCount < (*pltsql_plugin_handler_ptr->insert_bulk_rows_per_batch)
-			&& request->currentBatchSize < (*pltsql_plugin_handler_ptr->insert_bulk_kilobytes_per_batch) * 1024
+	if (request->rowCount < pltsql_plugin_handler_ptr->get_insert_bulk_rows_per_batch()
+			&& request->currentBatchSize < pltsql_plugin_handler_ptr->get_insert_bulk_kilobytes_per_batch() * 1024
 			&& (uint8_t)message->data[offset] != TDS_TOKEN_DONE)
 		ereport(ERROR,
 				(errcode(ERRCODE_PROTOCOL_VIOLATION),
@@ -733,10 +733,10 @@ ProcessBCPRequest(TDSRequest request)
 				tempFuncInfo = TdsLookupTypeFunctionsByTdsId(colMetaData[currentColumn].columnTdsType, colMetaData[currentColumn].maxLen);
 				GetPgOid(argtypes[count], tempFuncInfo);
 				if (row->isNull[currentColumn] == 'n') /* null */
-					if (*pltsql_plugin_handler_ptr->insert_bulk_keep_nulls)
+					if (pltsql_plugin_handler_ptr->get_insert_bulk_keep_nulls())
 						nulls[count++] = row->isNull[currentColumn];
 					else
-						defaults[nargs] = row->isNull[currentColumn];
+						defaults[nargs] = true;
 				else
 				{
 					switch(colMetaData[currentColumn].columnTdsType)
@@ -822,7 +822,11 @@ ProcessBCPRequest(TDSRequest request)
 				int ret;
 				HOLD_CANCEL_INTERRUPTS();
 
-				/* Discard only if End of Message has not been reached for the current packet. */
+				/*
+				 * Discard remaining TDS_BULK_LOAD packets only if End of Message has not been reached for the
+				 * current request. Otherwise we have no TDS_BULK_LOAD packets left for the current request
+				 * that need to be discarded.
+				 */
 				if (!TdsGetRecvPacketEomStatus())
 					ret = TdsDiscardAllPendingBcpRequest();
 
