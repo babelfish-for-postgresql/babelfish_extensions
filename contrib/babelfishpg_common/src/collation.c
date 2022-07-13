@@ -1179,6 +1179,10 @@ void BabelfishPreCreateCollation_hook(
 	const char *collversion
 	)
 {
+	/* This hook should only be called when dialect is tsql. */
+	if (sql_dialect != SQL_DIALECT_TSQL)
+		return;
+
 	const char *collcollate = *pCollcollate;
 	const char *collctype = *pCollctype;
 
