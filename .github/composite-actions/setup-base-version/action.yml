@@ -27,7 +27,7 @@ runs:
       with:
         install_dir: ${{ inputs.install_dir }}
 
-    - name: Set env variables and build extensions using ${{ inputs.extension_branch }}
+    - name: Set env variables and build extensions
       if: always() && steps.compile-antlr.outcome == 'success'
       uses: ./.github/composite-actions/build-extensions
       with: 
