@@ -393,3 +393,17 @@ hello#!#jello
 -123
 #Q#drop table t_rcv
 #Q#drop table t_rcv2
+#Q#Create table sourceTable(a int Default 10, b varchar(10) default 'yellow')
+#Q#Create table destinationTable(a int Default 10, b varchar(10) default 'yellow')
+#Q#Insert into sourceTable values (NULL, NULL);
+#Q#Insert into sourceTable values (10, 'hello');
+#Q#Select * from sourceTable
+#D#int#!#varchar
+#!#
+10#!#hello
+#Q#Select * from destinationTable
+#D#int#!#varchar
+10#!#yellow
+10#!#hello
+#Q#drop table sourceTable
+#Q#drop table destinationTable
