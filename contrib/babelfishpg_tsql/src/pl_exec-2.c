@@ -85,6 +85,16 @@ extern PLtsql_function 	*find_cached_batch(int handle);
 
 extern SPIPlanPtr	prepare_stmt_exec(PLtsql_execstate *estate, PLtsql_function *func, PLtsql_stmt_exec *stmt, bool keepplan);
 
+extern int sp_prepare_count;
+
+bool insert_bulk_keep_nulls = false;
+int insert_bulk_rows_per_batch = DEFAULT_INSERT_BULK_ROWS_PER_BATCH;
+int insert_bulk_kilobytes_per_batch = DEFAULT_INSERT_BULK_PACKET_SIZE;
+
+int prev_insert_bulk_rows_per_batch = DEFAULT_INSERT_BULK_ROWS_PER_BATCH;
+int prev_insert_bulk_kilobytes_per_batch = DEFAULT_INSERT_BULK_PACKET_SIZE;
+bool prev_insert_bulk_keep_nulls = false;
+
 /* return a underlying node if n is implicit casting and underlying node is a certain type of node */
 static Node *get_underlying_node_from_implicit_casting(Node *n, NodeTag underlying_nodetype);
 
@@ -2608,12 +2618,28 @@ int exec_stmt_insert_bulk(PLtsql_execstate *estate, PLtsql_stmt_insert_bulk *stm
 						errmsg("relation \"%s\" does not exist",
 							stmt->table_name)));
 
+	/* Set the Insert Bulk Options for the session. */
+	if (stmt->rows_per_batch)
+	{
+		prev_insert_bulk_rows_per_batch = insert_bulk_rows_per_batch;
+		insert_bulk_rows_per_batch = atoi(stmt->rows_per_batch);
+	}
+	if (stmt->kilobytes_per_batch)
+	{
+		prev_insert_bulk_kilobytes_per_batch = insert_bulk_kilobytes_per_batch;
+		insert_bulk_kilobytes_per_batch = atoi(stmt->kilobytes_per_batch);
+	}
+	if (stmt->keep_nulls)
+	{
+		prev_insert_bulk_keep_nulls = insert_bulk_keep_nulls;
+		insert_bulk_keep_nulls = true;
+	}
 	return PLTSQL_RC_OK;
 }
 
 int
 execute_bulk_load_insert(int ncol, int nrow, Oid *argtypes,
-				Datum *Values, const char *Nulls)
+				Datum *Values, const char *Nulls, bool *Defaults)
 {
 	Relation rel;
 	int rc;
@@ -2648,12 +2674,18 @@ execute_bulk_load_insert(int ncol, int nrow, Oid *argtypes,
 		for (int i = 0; i < nrow; i++)
 		{
 			for (int j = 0; j < ncol; j++)
-				appendStringInfo(bindParams, ",$%d", count++);
-
+			{
+				/* If Defaults is set then we need to insert default value for this index. */
+				if (Defaults[i * ncol + j])
+					appendStringInfo(bindParams, ",DEFAULT");
+				else
+					appendStringInfo(bindParams, ",$%d", count++);
+			}
 			bindParams->data[0] = ' ';
 			appendStringInfo(src, "(%s),", bindParams->data);
 			resetStringInfo(bindParams);
 		}
+
 		src->data[src->len - 1] = ' '; /* Taking care of the last ',' */
 
 		set_config_option("babelfishpg_tsql.sql_dialect", "postgres",
@@ -2667,7 +2699,7 @@ execute_bulk_load_insert(int ncol, int nrow, Oid *argtypes,
 			elog(ERROR, "SPI_connect() failed with return code %d", rc);
 
 		rc = SPI_execute_with_args(src->data,
-				ncol * nrow, argtypes,
+				count - 1, argtypes,
 				Values, Nulls,
 				false, 1);
 
@@ -2715,6 +2747,9 @@ execute_bulk_load_insert(int ncol, int nrow, Oid *argtypes,
 		EnableDisableTrigger(rel, NULL, TRIGGER_FIRES_ON_ORIGIN, false, AccessShareLock);
 		relation_close(rel, AccessShareLock);
 
+		/* Reset Insert-Bulk Options. */
+		insert_bulk_keep_nulls = prev_insert_bulk_keep_nulls;
+
 		PG_RE_THROW();
 	}
 	PG_END_TRY();
@@ -2736,6 +2771,10 @@ execute_bulk_load_insert(int ncol, int nrow, Oid *argtypes,
 			pfree(src->data);
 		pfree(src);
 	}
+	/* Reset Insert-Bulk Options. */
+	insert_bulk_keep_nulls = prev_insert_bulk_keep_nulls;
+	insert_bulk_rows_per_batch = prev_insert_bulk_rows_per_batch;
+	insert_bulk_kilobytes_per_batch = prev_insert_bulk_kilobytes_per_batch;
 	return retValue;
 }
 
