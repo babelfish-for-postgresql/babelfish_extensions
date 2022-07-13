@@ -1,0 +1,127 @@
+-- should auto-name the primary key index as t1_pkey
+create table t1(c1 int PRIMARY KEY (c1))
+go
+
+-- A NULL parameter should return NULL
+select INDEXPROPERTY(OBJECT_ID('t1'), NULL, 'IsClustered')
+go
+~~START~~
+int
+<NULL>
+~~END~~
+
+
+-- Invalid value for 'property' parameter should return NULL
+select INDEXPROPERTY(OBJECT_ID('t1'), 't1_pkey', 'PropertyDoesNotExist')
+go
+~~START~~
+int
+<NULL>
+~~END~~
+
+
+-- case insensitive invocation of 'property' parameter with leading & trailing whitespace - should work as normal
+select INDEXPROPERTY(OBJECT_ID('t1'), '     t1_pkey  ', '     InDexDepTh     ')
+go
+~~START~~
+int
+0
+~~END~~
+
+
+-- test all other valid values of the 'property' parameter except 'IndexID' as it's not static
+-- some parameters will have leading/trailing whitespace & case insensitive invocation
+select INDEXPROPERTY(OBJECT_ID('t1'), 't1_pkey', 'IndexFillFactor')
+go
+~~START~~
+int
+0
+~~END~~
+
+select INDEXPROPERTY(OBJECT_ID('t1'), 't1_pkey', 'IsAutoStatistics')
+go
+~~START~~
+int
+0
+~~END~~
+
+select INDEXPROPERTY(OBJECT_ID('t1'), 't1_pkey', 'ISCLUSTERED')
+go
+~~START~~
+int
+0
+~~END~~
+
+select INDEXPROPERTY(OBJECT_ID('t1'), '   t1_pkey', 'isdisabled')
+go
+~~START~~
+int
+0
+~~END~~
+
+select INDEXPROPERTY(OBJECT_ID('t1'), 't1_pkey', 'IsFulltextKey')
+go
+~~START~~
+int
+0
+~~END~~
+
+select INDEXPROPERTY(OBJECT_ID('t1'), 't1_pkey', 'IsHypothetical')
+go
+~~START~~
+int
+0
+~~END~~
+
+select INDEXPROPERTY(OBJECT_ID('t1'), 't1_pkey   ', 'IsPadIndex')
+go
+~~START~~
+int
+0
+~~END~~
+
+select INDEXPROPERTY(OBJECT_ID('t1'), 't1_pkey', 'IsPageLockDisallowed')
+go
+~~START~~
+int
+0
+~~END~~
+
+select INDEXPROPERTY(OBJECT_ID('t1'), 't1_pkey', 'IsRowLockDisallowed   ')
+go
+~~START~~
+int
+0
+~~END~~
+
+select INDEXPROPERTY(OBJECT_ID('t1'), 't1_pkey', '   IsStatistics')
+go
+~~START~~
+int
+0
+~~END~~
+
+select INDEXPROPERTY(OBJECT_ID('t1'), 't1_pkey', 'ISunique')
+go
+~~START~~
+int
+1
+~~END~~
+
+select INDEXPROPERTY(OBJECT_ID('t1'), 't1_pkey', 'IsColumnstore')
+go
+~~START~~
+int
+0
+~~END~~
+
+select INDEXPROPERTY(OBJECT_ID('t1'), 't1_pkey', 'IsOptimizedForSequentialKey')
+go
+~~START~~
+int
+0
+~~END~~
+
+
+drop table t1
+go
