@@ -4227,6 +4227,8 @@ makeExecuteStatement(TSqlParser::Execute_statementContext *ctx)
 		std::string func_proc_name;
 		TSqlParser::Execute_statement_argContext *func_proc_args = body->execute_statement_arg();
 		bool is_cross_db = false;
+		std::string proc_name;
+		std::string schema_name;
 
 		if (body->func_proc_name_server_database_schema())
 		{
@@ -4237,6 +4239,10 @@ makeExecuteStatement(TSqlParser::Execute_statementContext *ctx)
 				if (!string_matches(db_name.c_str(), get_cur_db_name()))
 				is_cross_db = true;
 			}
+			if (body->func_proc_name_server_database_schema()->schema)
+				schema_name = stripQuoteFromId(body->func_proc_name_server_database_schema()->schema);
+			if (body->func_proc_name_server_database_schema()->procedure)
+				proc_name = stripQuoteFromId(body->func_proc_name_server_database_schema()->procedure);
 		}
 		else 
 		{
@@ -4267,6 +4273,15 @@ makeExecuteStatement(TSqlParser::Execute_statementContext *ctx)
 		if (is_cross_db)
 			result->is_cross_db = true;
 
+		if (!proc_name.empty())
+		{
+			result->proc_name = pstrdup(downcase_truncate_identifier(proc_name.c_str(), proc_name.length(), true));
+		}
+		if (!schema_name.empty())
+		{
+			result->schema_name = pstrdup(downcase_truncate_identifier(schema_name.c_str(), schema_name.length(), true));
+		}
+
 		if (func_proc_args)
 		{
 			std::vector<tsql_exec_param *> params;
@@ -4289,7 +4304,11 @@ makeExecuteStatement(TSqlParser::Execute_statementContext *ctx)
 		}
 
 		std::stringstream ss;
-		ss << "EXEC " << (!rewritten_name.empty() ? rewritten_name : func_proc_name);
+		std::string name = (!rewritten_name.empty() ? rewritten_name : func_proc_name);
+		// Rewrite proc name to sp_* if the schema is "dbo" and proc name starts with "sp_"
+		if (pg_strncasecmp(name.c_str(), "dbo.sp_", 6) == 0)
+			name.erase(name.begin() + 0, name.begin() + 4);
+		ss << "EXEC " << name;
 		if (func_proc_args)
 			ss << " " << ::getFullText(func_proc_args);
 		std::string expr_query = ss.str();
