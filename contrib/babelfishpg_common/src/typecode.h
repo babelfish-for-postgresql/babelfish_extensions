@@ -43,6 +43,8 @@
 
 #define TOTAL_TYPECODE_COUNT 33
 
+struct Node;
+
 typedef struct type_info
 {
     Oid oid; /* oid is only retrievable during runtime, so we have to init to 0 */
@@ -71,6 +73,9 @@ extern Oid tsql_binary_oid;
 extern Oid tsql_varbinary_oid;
 extern Oid tsql_rowversion_oid;
 extern Oid tsql_timestamp_oid;
+extern Oid tsql_datetime2_oid;
+extern Oid tsql_smalldatetime_oid;
+extern Oid tsql_datetimeoffset_oid;
 
 extern Oid lookup_tsql_datatype_oid(const char *typename);
 extern bool is_tsql_bpchar_datatype(Oid oid);
@@ -85,5 +90,18 @@ extern bool is_tsql_varbinary_datatype(Oid oid);
 extern bool is_tsql_rowversion_datatype(Oid oid);
 extern bool is_tsql_timestamp_datatype(Oid oid);
 extern bool is_tsql_rowversion_or_timestamp_datatype(Oid oid);
+extern bool is_tsql_datetime2_datatype(Oid oid);
+extern bool is_tsql_smalldatetime_datatype(Oid oid);
+extern bool is_tsql_datetimeoffset_datatype(Oid oid);
+
+extern void handle_type_and_collation(struct Node *node, Oid typid, Oid collationid);
+extern bool check_target_type_is_sys_varchar(Oid funcid);
+
+/* 
+ * TransMemoryContext Memory context is created to load hash table to 
+ * store 1. "OID to Persist Type Code Mapping" and 2. "OID to Persist 
+ * like to ilike Mapping" and 3. "OID to Persist Collation ID Mapping".
+ */
+extern MemoryContext TransMemoryContext;
 
 #endif

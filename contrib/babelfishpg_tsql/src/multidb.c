@@ -202,9 +202,25 @@ rewrite_object_refs(Node *stmt)
 				list_length(grant_role->grantee_roles) != 1)
 				break;
 
-			/* Try to get physical granted role name, see if it's an existing db role */
 			granted = (AccessPriv *) linitial(grant_role->granted_roles);
 			role_name = granted->priv_name;
+
+			/* Forbidden ALTER ROLE db_owner ADD/DROP MEMBER */
+			if (strcmp(role_name, "db_owner") == 0)
+			{
+				if (grant_role->is_grant)
+					ereport(ERROR,
+							(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+							 errmsg("Adding members to db_owner is not currently supported "
+									"in Babelfish")));
+				else
+					ereport(ERROR,
+							(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+							 errmsg("Dropping members to db_owner is not currently supported "
+									"in Babelfish")));
+			}
+
+			/* Try to get physical granted role name, see if it's an existing db role */
 			physical_role_name = get_physical_user_name(db_name, role_name);
 			if (get_role_oid(physical_role_name, true) == InvalidOid)
 				break;

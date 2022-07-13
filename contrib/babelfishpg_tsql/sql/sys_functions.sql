@@ -17,6 +17,11 @@ RETURNS sys.NVARCHAR(128)
 AS 'babelfishpg_tsql', 'user_name'
 LANGUAGE C IMMUTABLE PARALLEL SAFE;
 
+CREATE OR REPLACE FUNCTION sys.tsql_get_constraintdef(IN constraint_id OID DEFAULT NULL)
+RETURNS text
+AS 'babelfishpg_tsql', 'tsql_get_constraintdef'
+LANGUAGE C IMMUTABLE PARALLEL SAFE;
+
 CREATE OR REPLACE FUNCTION sys.user_id(IN user_name TEXT DEFAULT NULL)
 RETURNS OID
 AS 'babelfishpg_tsql', 'user_id'
@@ -2622,20 +2627,155 @@ end
 $body$
 LANGUAGE plpgsql STABLE PARALLEL SAFE STRICT;
 
-CREATE OR REPLACE FUNCTION OBJECTPROPERTY(IN object_id INT, IN property sys.varchar)
-RETURNS INT AS
-$$
+CREATE OR REPLACE FUNCTION objectproperty(
+    id INT,
+    property SYS.VARCHAR
+    )
+RETURNS INT
+AS $$
 BEGIN
+
+    IF NOT EXISTS(SELECT ao.object_id FROM sys.all_objects ao WHERE object_id = id)
+    THEN
+        RETURN NULL;
+    END IF;
+
+    property := RTRIM(LOWER(COALESCE(property, '')));
+
+    IF property = 'ownerid' -- OwnerId
+    THEN
+        RETURN (
+                SELECT CAST(COALESCE(t1.principal_id, pn.nspowner) AS INT)
+                FROM sys.all_objects t1
+                INNER JOIN pg_catalog.pg_namespace pn ON pn.oid = t1.schema_id
+                WHERE t1.object_id = id);
+
+    ELSEIF property = 'isdefaultcnst' -- IsDefaultCnst
+    THEN
+        RETURN (SELECT count(distinct dc.object_id) FROM sys.default_constraints dc WHERE dc.object_id = id);
+
+    ELSEIF property = 'execisquotedidenton' -- ExecIsQuotedIdentOn
+    THEN
+        RETURN (SELECT CAST(sm.uses_quoted_identifier as int) FROM sys.all_sql_modules sm WHERE sm.object_id = id);
+
+    ELSEIF property = 'tablefulltextpopulatestatus' -- TableFullTextPopulateStatus
+    THEN
+        IF NOT EXISTS (SELECT object_id FROM sys.tables t WHERE t.object_id = id) THEN
+            RETURN NULL;
+        END IF;
+        RETURN 0;
+
+    ELSEIF property = 'tablehasvardecimalstorageformat' -- TableHasVarDecimalStorageFormat
+    THEN
+        IF NOT EXISTS (SELECT object_id FROM sys.tables t WHERE t.object_id = id) THEN
+            RETURN NULL;
+        END IF;
+        RETURN 0;
+
+    ELSEIF property = 'ismsshipped' -- IsMSShipped
+    THEN
+        RETURN (SELECT CAST(ao.is_ms_shipped AS int) FROM sys.all_objects ao WHERE ao.object_id = id);
+
+    ELSEIF property = 'isschemabound' -- IsSchemaBound
+    THEN
+        RETURN (SELECT CAST(sm.is_schema_bound AS int) FROM sys.all_sql_modules sm WHERE sm.object_id = id);
+
+    ELSEIF property = 'execisansinullson' -- ExecIsAnsiNullsOn
+    THEN
+        RETURN (SELECT CAST(sm.uses_ansi_nulls AS int) FROM sys.all_sql_modules sm WHERE sm.object_id = id);
+
+    ELSEIF property = 'isdeterministic' -- IsDeterministic
+    THEN
+        RETURN 0;
+    
+    ELSEIF property = 'isprocedure' -- IsProcedure
+    THEN
+        RETURN (SELECT count(distinct object_id) from sys.all_objects WHERE object_id = id and type = 'P');
+
+    ELSEIF property = 'istable' -- IsTable
+    THEN
+        RETURN (SELECT count(distinct object_id) from sys.all_objects WHERE object_id = id and type in ('IT', 'TT', 'U', 'S'));
+
+    ELSEIF property = 'isview' -- IsView
+    THEN
+        RETURN (SELECT count(distinct object_id) from sys.all_objects WHERE object_id = id and type = 'V');
+    
+    ELSEIF property = 'isusertable' -- IsUserTable
+    THEN
+        RETURN (SELECT count(distinct object_id) from sys.all_objects WHERE object_id = id and type = 'U' and is_ms_shipped = 0);
+    
+    ELSEIF property = 'istablefunction' -- IsTableFunction
+    THEN
+        RETURN (SELECT count(distinct object_id) from sys.all_objects WHERE object_id = id and type in ('IF', 'TF', 'FT'));
+    
+    ELSEIF property = 'isinlinefunction' -- IsInlineFunction
+    THEN
+        RETURN 0;
+    
+    ELSEIF property = 'isscalarfunction' -- IsScalarFunction
+    THEN
+        RETURN (SELECT count(distinct object_id) from sys.all_objects WHERE object_id = id and type in ('FN', 'FS'));
+
+    ELSEIF property = 'isprimarykey' -- IsPrimaryKey
+    THEN
+        RETURN (SELECT count(distinct object_id) from sys.all_objects WHERE object_id = id and type = 'PK');
+    
+    ELSEIF property = 'isindexed' -- IsIndexed
+    THEN
+        RETURN (SELECT count(distinct object_id) from sys.indexes WHERE object_id = id and index_id > 0);
+
+    ELSEIF property = 'isdefault' -- IsDefault
+    THEN
+        RETURN 0;
+
+    ELSEIF property = 'isrule' -- IsRule
+    THEN
+        RETURN 0;
+    
+    ELSEIF property = 'istrigger' -- IsTrigger
+    THEN
+        RETURN (SELECT count(distinct object_id) from sys.all_objects WHERE object_id = id and type in ('TA', 'TR'));
+    END IF;
+
     RETURN NULL;
 END;
 $$
 LANGUAGE plpgsql;
 
-CREATE OR REPLACE FUNCTION OBJECTPROPERTYEX(IN object_id INT, IN property sys.varchar)
-RETURNS SYS.SQL_VARIANT AS
-$$
+CREATE OR REPLACE FUNCTION OBJECTPROPERTYEX(
+    id INT,
+    property SYS.VARCHAR
+)
+RETURNS SYS.SQL_VARIANT
+AS $$
 BEGIN
-    RETURN NULL;
-END;
+	property := RTRIM(LOWER(COALESCE(property, '')));
+	
+	IF NOT EXISTS(SELECT ao.object_id FROM sys.all_objects ao WHERE object_id = id)
+	THEN
+		RETURN NULL;
+	END IF;
+
+	IF property = 'basetype' -- BaseType
+	THEN
+		RETURN (SELECT CAST(ao.type AS SYS.SQL_VARIANT) 
+                FROM sys.all_objects ao
+                WHERE ao.object_id = id
+                LIMIT 1
+                );
+    END IF;
+
+    RETURN CAST(OBJECTPROPERTY(id, property) AS SYS.SQL_VARIANT);
+END
 $$
 LANGUAGE plpgsql;
+
+CREATE OR REPLACE FUNCTION sys.sid_binary(IN login sys.nvarchar)
+RETURNS SYS.VARBINARY
+AS $$
+    SELECT CAST(NULL AS SYS.VARBINARY);
+$$ 
+LANGUAGE SQL IMMUTABLE PARALLEL RESTRICTED;
+
+CREATE OR REPLACE FUNCTION sys.language()
+RETURNS sys.NVARCHAR(128)  AS 'babelfishpg_tsql' LANGUAGE C;

@@ -16,7 +16,6 @@ CREATE SCHEMA information_schema_tsql;
 GRANT USAGE ON SCHEMA information_schema_tsql TO PUBLIC;
 SET search_path TO information_schema_tsql;
 
-
 /*
  * Introducing information_schema_tsql Utility functions;
  * Re-using most of the original functions provided by Postgres.
@@ -101,25 +100,30 @@ CREATE OR REPLACE FUNCTION information_schema_tsql._pgtsql_numeric_precision(typ
 	PARALLEL SAFE
 	RETURNS NULL ON NULL INPUT
 	AS
-$$SELECT
-  CASE typid
-		 WHEN 21 /*int2*/ THEN 5
-		 WHEN 23 /*int4*/ THEN 10
-		 WHEN 20 /*int8*/ THEN 19
-		 WHEN 1700 /*numeric*/ THEN
-			  CASE WHEN typmod = -1
-				   THEN null
-				   ELSE ((typmod - 4) >> 16) & 65535
-				   END
-		 WHEN 700 /*float4*/ THEN 24
-		 WHEN 701 /*float8*/ THEN 53
-		 ELSE
+$$
+	SELECT
+	CASE typid
+		WHEN 21 /*int2*/ THEN 5
+		WHEN 23 /*int4*/ THEN 10
+		WHEN 20 /*int8*/ THEN 19
+		WHEN 1700 /*numeric*/ THEN
+			CASE WHEN typmod = -1 THEN null
+				ELSE ((typmod - 4) >> 16) & 65535
+			END
+		WHEN 700 /*float4*/ THEN 24
+		WHEN 701 /*float8*/ THEN 53
+		ELSE
 			CASE WHEN type = 'tinyint' THEN 3
 				WHEN type = 'money' THEN 19
 				WHEN type = 'smallmoney' THEN 10
+				WHEN type = 'decimal'	THEN
+					CASE WHEN typmod = -1 THEN null
+						ELSE ((typmod - 4) >> 16) & 65535
+					END
 				ELSE null
 			END
-  END$$;
+	END
+$$;
 
 CREATE OR REPLACE FUNCTION information_schema_tsql._pgtsql_numeric_precision_radix(type text, typid oid, typmod int4) RETURNS integer
 	LANGUAGE sql
@@ -140,17 +144,22 @@ CREATE OR REPLACE FUNCTION information_schema_tsql._pgtsql_numeric_scale(type te
 	PARALLEL SAFE
 	RETURNS NULL ON NULL INPUT
 	AS
-$$SELECT
+$$
+	SELECT
 	CASE WHEN typid IN (21, 23, 20) THEN 0
 		WHEN typid IN (1700) THEN
-			CASE WHEN typmod = -1
-				 THEN null
-				 ELSE (typmod - 4) & 65535
-				 END
+			CASE WHEN typmod = -1 THEN null
+				ELSE (typmod - 4) & 65535
+			END
 		WHEN type = 'tinyint' THEN 0
-			WHEN type IN ('money', 'smallmoney') THEN 4
+		WHEN type IN ('money', 'smallmoney') THEN 4
+		WHEN type = 'decimal' THEN
+			CASE WHEN typmod = -1 THEN NULL
+				ELSE (typmod - 4) & 65535
+			END
 		ELSE null
-	END$$;
+	END
+$$;
 
 CREATE OR REPLACE FUNCTION information_schema_tsql._pgtsql_datetime_precision(type text, typmod int4) RETURNS integer
 	LANGUAGE sql
@@ -437,5 +446,30 @@ CREATE OR REPLACE VIEW information_schema_tsql.views AS
 		AND ext.dbid = cast(sys.db_id() as oid);
 
 GRANT SELECT ON information_schema_tsql.views TO PUBLIC;
+
+ * CHECK_CONSTRAINTS view
+ */
+
+CREATE VIEW information_schema_tsql.check_constraints AS
+    SELECT CAST(nc.dbname AS sys.nvarchar(128)) AS "CONSTRAINT_CATALOG",
+	    CAST(extc.orig_name AS sys.nvarchar(128)) AS "CONSTRAINT_SCHEMA",
+           CAST(c.conname AS sys.sysname) AS "CONSTRAINT_NAME",
+	    CAST(sys.tsql_get_constraintdef(c.oid) AS sys.nvarchar(4000)) AS "CHECK_CLAUSE"
+
+    FROM sys.pg_namespace_ext nc LEFT OUTER JOIN sys.babelfish_namespace_ext extc ON nc.nspname = extc.nspname,
+         pg_constraint c,
+         pg_class r
+
+    WHERE nc.oid = c.connamespace AND nc.oid = r.relnamespace
+          AND c.conrelid = r.oid
+          AND c.contype = 'c'
+          AND r.relkind IN ('r', 'p')
+          AND (NOT pg_is_other_temp_schema(nc.oid))
+          AND (pg_has_role(r.relowner, 'USAGE')
+               OR has_table_privilege(r.oid, 'SELECT, INSERT, UPDATE, DELETE, TRUNCATE, REFERENCES, TRIGGER')
+               OR has_any_column_privilege(r.oid, 'SELECT, INSERT, UPDATE, REFERENCES'))
+		  AND  extc.dbid = cast(sys.db_id() as oid);
+
+GRANT SELECT ON information_schema_tsql.check_constraints TO PUBLIC;
 
 SELECT set_config('search_path', 'sys, '||current_setting('search_path'), false);

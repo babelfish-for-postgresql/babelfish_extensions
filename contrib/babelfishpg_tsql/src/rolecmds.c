@@ -262,11 +262,20 @@ drop_bbf_authid_login_ext(ObjectAccessType access,
 							void *arg)
 {
 	Relation	bbf_authid_login_ext_rel;
-	HeapTuple	tuple;
+	Relation	bbf_authid_user_ext_rel;
+	TupleDesc	bbf_authid_user_ext_dsc;
+	HeapTuple	logintuple;
+	HeapTuple	usertuple;
+	HeapTuple	new_tuple;
 	HeapTuple	authtuple;
+	Datum		new_record_user_ext[BBF_AUTHID_USER_EXT_NUM_COLS];
+	bool		new_record_nulls_user_ext[BBF_AUTHID_USER_EXT_NUM_COLS];
+	bool		new_record_repl_user_ext[BBF_AUTHID_USER_EXT_NUM_COLS];
 	ScanKeyData	scanKey;
 	SysScanDesc	scan;
+	TableScanDesc	tblscan;
 	NameData	rolname;
+	NameData   *invalidated_login_name;
 
 	authtuple = SearchSysCache1(AUTHOID, ObjectIdGetDatum(roleid));
 	if (!HeapTupleIsValid(authtuple))
@@ -289,15 +298,66 @@ drop_bbf_authid_login_ext(ObjectAccessType access,
 							  get_authid_login_ext_idx_oid(),
 							  true, NULL, 1, &scanKey);
 
-	tuple = systable_getnext(scan);
+	logintuple = systable_getnext(scan);
 
-	if (HeapTupleIsValid(tuple))
+	if (HeapTupleIsValid(logintuple))
 		CatalogTupleDelete(bbf_authid_login_ext_rel,
-						   &tuple->t_self);
+						   &logintuple->t_self);
 
 	systable_endscan(scan);
 	table_close(bbf_authid_login_ext_rel, RowExclusiveLock);
 	ReleaseSysCache(authtuple);
+
+	/*
+	 * Invalidate the corresponding entries in user_ext which are related to
+	 * this login
+	 */
+	bbf_authid_user_ext_rel = table_open(get_authid_user_ext_oid(),
+										 RowExclusiveLock);
+	bbf_authid_user_ext_dsc = RelationGetDescr(bbf_authid_user_ext_rel);
+
+	/* Search and obtain the tuple on the login name*/
+	ScanKeyInit(&scanKey,
+				Anum_bbf_authid_user_ext_login_name,
+				BTEqualStrategyNumber, F_NAMEEQ,
+				NameGetDatum(&rolname));
+
+	tblscan = table_beginscan_catalog(bbf_authid_user_ext_rel, 1, &scanKey);
+
+	MemSet(new_record_user_ext, 0, sizeof(new_record_user_ext));
+	MemSet(new_record_nulls_user_ext, false, sizeof(new_record_nulls_user_ext));
+	MemSet(new_record_repl_user_ext, false, sizeof(new_record_repl_user_ext));
+
+	usertuple = heap_getnext(tblscan, ForwardScanDirection);
+
+	while (HeapTupleIsValid(usertuple))
+	{
+		/*
+		 * Insert empty string as login_name as an invalidation mark for this login
+		 */
+		invalidated_login_name = (NameData *) palloc0(NAMEDATALEN);
+		snprintf(invalidated_login_name->data, NAMEDATALEN, "%s", "");
+		new_record_user_ext[USER_EXT_LOGIN_NAME] = NameGetDatum(invalidated_login_name);
+		new_record_repl_user_ext[USER_EXT_LOGIN_NAME] = true;
+
+		new_tuple = heap_modify_tuple(usertuple,
+									  bbf_authid_user_ext_dsc,
+									  new_record_user_ext,
+									  new_record_nulls_user_ext,
+									  new_record_repl_user_ext);
+
+		CatalogTupleUpdate(bbf_authid_user_ext_rel, &new_tuple->t_self, new_tuple);
+
+		usertuple = heap_getnext(tblscan, ForwardScanDirection);
+
+		heap_freetuple(new_tuple);
+	}
+
+	/* Advance the command counter to see the new record */
+	CommandCounterIncrement();
+
+	table_endscan(tblscan);
+	table_close(bbf_authid_user_ext_rel, RowExclusiveLock);
 }
 
 static void
@@ -1252,6 +1312,25 @@ gen_droprole_subcmds(const char *user)
 	return res;
 }
 
+PG_FUNCTION_INFO_V1(drop_all_users);
+Datum drop_all_users(PG_FUNCTION_ARGS)
+{
+	/*
+	 * This function has been deprecated since v2.1.
+	 * However, we cannot remove this function entirely because,
+	 * in PG13, sys.babel_drop_all_users() procedure refers it.
+	 * Without this function, MVU from PG13 to PG14 will fail.
+	 *
+	 * Removing the procedure sys.babel_drop_all_users() during pg_dump
+	 * cannot be an option because other user-defined procedures
+	 * are able to refer this function as well.
+	 */
+	ereport(WARNING,
+			(errcode(ERRCODE_WARNING_DEPRECATED_FEATURE),
+			 errmsg("This function has been deprecated and will no longer drop all users.")));
+	PG_RETURN_INT32(0);
+}
+
 PG_FUNCTION_INFO_V1(babelfish_set_role);
 Datum
 babelfish_set_role(PG_FUNCTION_ARGS)
@@ -1308,7 +1387,7 @@ check_alter_server_stmt(GrantRoleStmt *stmt)
 	if (!has_privs_of_role(GetSessionUserId(), sysadmin))
 		ereport(ERROR,
 				(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
-				 errmsg("Current login %s do not have permission to alter server role",
+				 errmsg("Current login %s does not have permission to alter server role",
 					 GetUserNameFromId(GetSessionUserId(), true))));
 
 	/* could not drop the last member of sysadmin */
@@ -1382,7 +1461,7 @@ check_alter_role_stmt(GrantRoleStmt *stmt)
 	if (!has_privs_of_role(GetSessionUserId(), granted))
 		ereport(ERROR,
 				(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
-				 errmsg("Current login %s do not have permission to alter role %s", 
+				 errmsg("Current login %s does not have permission to alter role %s", 
 						GetUserNameFromId(GetSessionUserId(), true), granted_name)));
 }
 

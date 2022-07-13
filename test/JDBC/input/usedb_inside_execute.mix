@@ -1,0 +1,82 @@
+-- psql
+ALTER SYSTEM SET babelfishpg_tsql.migration_mode = 'multi-db';
+SELECT pg_reload_conf();
+GO
+
+-- tsql
+--aborts the transaction when database is not found
+use db1;
+go
+
+create database db1;
+go
+
+create database db2;
+go
+
+create database db3;
+go
+
+-- should be master
+select db_name();
+go
+
+-- should not change the session to db1 after exec
+exec('use db1 select db_name()'); select db_name();
+go
+
+-- should change the context to db1
+use db1; select db_name();
+go
+
+use db2; create table t1(a int); use master;
+go
+
+-- handle the catch scenario, the error should abort the batch and
+-- database would be reset to master 
+EXECUTE('USE db1; EXECUTE(''USE db2 create table t1(a int)''); SELECT db_name();'); select db_name()
+go
+
+select db_name()
+go
+
+use db2; drop table t1; use master;
+go
+
+-- nested execute; should not change the database context
+execute('USE db2; EXECUTE(''USE db1 SELECT db_name()''); SELECT db_name();'); select db_name();
+go
+
+use db2;
+go
+
+create procedure use_db as begin EXECUTE('USE db3 SELECT db_name()') end
+go
+
+use master
+go
+
+-- nested execute with procedure
+EXECUTE('USE db1; EXECUTE(''USE db2; exec use_db; SELECT db_name();''); SELECT db_name();') select db_name();
+go
+
+-- nested execute with runtime error
+EXECUTE('USE db1; EXECUTE(''USE db2 SELECT 1/0''); SELECT db_name();'); select db_name();
+go
+
+use db2; drop procedure use_db; use master;
+go
+
+drop database db1;
+go
+
+drop database db2;
+go
+
+drop database db3;
+go
+
+-- psql
+ALTER SYSTEM SET babelfishpg_tsql.migration_mode = 'single-db';
+SELECT pg_reload_conf();
+GO

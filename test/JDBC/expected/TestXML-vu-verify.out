@@ -1,0 +1,7 @@
+SELECT * FROM XML_dt;
+~~START~~
+xml
+<contact><name>Contact Name 2</name><phone>YYY-YYY-YYYY</phone></contact>
+<NULL>
+~~END~~
+

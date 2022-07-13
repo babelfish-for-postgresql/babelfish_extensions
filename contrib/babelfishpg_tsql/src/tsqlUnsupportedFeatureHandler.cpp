@@ -1101,6 +1101,8 @@ antlrcpp::Any TsqlUnsupportedFeatureHandlerImpl::visitSet_statement(TSqlParser::
 				handle(INSTR_UNSUPPORTED_TSQL_OPTION_SHOWPLAN_TEXT, option->SHOWPLAN_TEXT(), &st_escape_hatch_session_settings);
 			if (option->SHOWPLAN_XML())
 				handle(INSTR_UNSUPPORTED_TSQL_OPTION_SHOWPLAN_XML, option->SHOWPLAN_XML(), &st_escape_hatch_session_settings);
+			if (option->NO_BROWSETABLE())
+	 			handle(INSTR_UNSUPPORTED_TSQL_OPTION_NO_BROWSETABLE, option->NO_BROWSETABLE(), &st_escape_hatch_session_settings);
 		}
 
 		if (!sctx->id().empty())
@@ -1188,8 +1190,6 @@ antlrcpp::Any TsqlUnsupportedFeatureHandlerImpl::visitSecurity_statement(TSqlPar
 
 antlrcpp::Any TsqlUnsupportedFeatureHandlerImpl::visitTable_source_item(TSqlParser::Table_source_itemContext *ctx)
 {
-	if (ctx->APPLY())
-		handle(INSTR_UNSUPPORTED_TSQL_APPLY, ctx->APPLY());
 	if (ctx->PIVOT())
 		handle(INSTR_UNSUPPORTED_TSQL_PIVOT, ctx->PIVOT());
 	if (ctx->UNPIVOT())

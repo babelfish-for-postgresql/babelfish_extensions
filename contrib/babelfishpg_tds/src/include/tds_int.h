@@ -158,6 +158,7 @@
 
 /* Globals */
 extern PLtsql_protocol_plugin *pltsql_plugin_handler_ptr;
+extern collation_callbacks *collation_callbacks_ptr;
 
 /* Globals in backend/tds/tdscomm.c */
 extern MemoryContext	TdsMemoryContext;
@@ -166,6 +167,7 @@ extern MemoryContext	TdsMemoryContext;
 extern int TdsDefaultLcid;
 extern int TdsDefaultCollationFlags;
 extern uint8_t TdsDefaultSortid;
+extern pg_enc TdsDefaultClientEncoding;
 
 #define TDS_DEBUG1 1
 #define TDS_DEBUG2 2
@@ -325,24 +327,6 @@ extern void TDSBackendRun(Port *port, bool loadedSSL, char *extraOptions);
 extern void pe_init(void);
 extern void pe_fin(void);
 
-/* Functions in encoding/encoding_utils.c */
-extern char *server_to_any(const char *s, int len, int encoding);
-
-/* Functions in backend/utils/mb/conv.c */
-extern void tds_UtfToLocal(const unsigned char *utf, int len,
-		   unsigned char *iso,
-		   const pg_mb_radix_tree *map,
-		   const pg_utf_to_local_combined *cmap, int cmapsize,
-		   utf_local_conversion_func conv_func,
-		   int encoding);
-
-/* Functions in backend/utils/mb/conversion_procs */
-extern void utf8_to_win(int src_encoding, int dest_encoding, const unsigned char *src, unsigned char *result, int len);
-extern void utf8_to_big5(int src_encoding, int dest_encoding, const unsigned char *src, unsigned char *result, int len);
-extern void utf8_to_gbk(int src_encoding, int dest_encoding, const unsigned char *src, unsigned char *result, int len);
-extern void utf8_to_uhc(int src_encoding, int dest_encoding, const unsigned char *src, unsigned char *result, int len);
-extern void utf8_to_sjis(int src_encoding, int dest_encoding, const unsigned char *src, unsigned char *result, int len);
-
 /* Functions in backend/utils/adt/numeric.c */
 extern Numeric TdsSetVarFromStrWrapper(const char *str);
 extern int32_t numeric_get_typmod(Numeric num);
@@ -356,5 +340,9 @@ extern void *tds_xml_parse(text *data, int xmloption_arg, bool preserve_whitespa
 				int encoding);
 extern int tds_parse_xml_decl(const xmlChar *str, size_t *lenp,
 								 xmlChar **version, xmlChar **encoding, int *standalone);
+
+/* Functions in tdstypeio.c */
+extern char * TdsEncodingConversion(const char *s, int len, int encoding, int *encodedByteLen);
+extern coll_info_t TdsLookupCollationTableCallback(Oid oid);
 
 #endif	/* TDS_INT_H */
