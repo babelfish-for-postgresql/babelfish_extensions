@@ -816,9 +816,8 @@ SetColMetadataForCharTypeHelper(TdsColumnMetaData *col, uint8_t tdsType,
 								Oid collation, int32 atttypmod)
 {
 	coll_info_t	cinfo;
-	pg_enc	enc;
 
-	cinfo = (pltsql_plugin_handler_ptr)->lookup_collation_table_callback(collation);
+	cinfo = TdsLookupCollationTableCallback(collation);
 
 	/*
 	 * TODO: Remove the NULL condition once all the Postgres collations are mapped
@@ -826,20 +825,18 @@ SetColMetadataForCharTypeHelper(TdsColumnMetaData *col, uint8_t tdsType,
 	 */
 	if (cinfo.oid == InvalidOid)
 	{
-		enc = TdsLookupEncodingByLCID(TdsDefaultLcid);
 		SetColMetadataForCharType(col, tdsType,
 								  TdsDefaultLcid,			/* collation lcid */
-								  enc,
+								  TdsDefaultClientEncoding,
 								  TdsDefaultCollationFlags,		/* collation flags */
 								  TdsDefaultSortid,			/* sort id */
 								  atttypmod);
 	}
 	else
 	{
-		enc = TdsLookupEncodingByLCID(cinfo.lcid);
 		SetColMetadataForCharType(col, tdsType,
 								  cinfo.lcid,
-								  enc,
+								  cinfo.enc,
 								  cinfo.collateflags,
 								  cinfo.sortid,
 								  atttypmod);
@@ -857,9 +854,8 @@ SetColMetadataForTextTypeHelper(TdsColumnMetaData *col, uint8_t tdsType,
 								Oid collation, int32 atttypmod)
 {
 	coll_info_t cinfo;
-	pg_enc	enc;
 
-	cinfo = (pltsql_plugin_handler_ptr)->lookup_collation_table_callback(collation);
+	cinfo = TdsLookupCollationTableCallback(collation);
 
 	/*
 	 * TODO: Remove the NULL condition once all the Postgres collations are mapped
@@ -867,20 +863,18 @@ SetColMetadataForTextTypeHelper(TdsColumnMetaData *col, uint8_t tdsType,
 	 */
 	if (cinfo.oid == InvalidOid)
 	{
-		enc = TdsLookupEncodingByLCID(TdsDefaultLcid);
 		SetColMetadataForTextType(col, tdsType,
 								  TdsDefaultLcid,			/* collation lcid */
-								  enc,
+								  TdsDefaultClientEncoding,
 								  TdsDefaultCollationFlags,		/* collation flags */
 								  TdsDefaultSortid,			/* sort id */
 								  atttypmod);
 	}
 	else
 	{
-		enc = TdsLookupEncodingByLCID(cinfo.lcid);
 		SetColMetadataForTextType(col, tdsType,
 								  cinfo.lcid,
-								  enc,
+								  cinfo.enc,
 								  cinfo.collateflags,
 								  cinfo.sortid,
 								  atttypmod);
