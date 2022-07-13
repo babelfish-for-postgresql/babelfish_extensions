@@ -808,3 +808,25 @@ varchar_to_cstring(const VarChar *varchar)
 
 	return result;
 }
+
+/*
+ * Convert list of schema OIDs to schema names.
+ */
+
+char *
+flatten_search_path(List *oid_list)
+{
+	StringInfoData pathbuf;
+	ListCell   *lc;
+
+	initStringInfo(&pathbuf);
+
+	foreach(lc, oid_list)
+	{
+		Oid			schema_oid = lfirst_oid(lc);
+		char	   *schema_name = get_namespace_name(schema_oid);
+		appendStringInfo(&pathbuf, " %s,", quote_identifier(schema_name));
+	}
+	pathbuf.data[strlen(pathbuf.data) - 1] = '\0';
+	return pathbuf.data;
+}
