@@ -178,6 +178,11 @@ typedef struct TDSRequestBulkLoadData
 	int 					colCount;
 	int 					rowCount;
 
+	/* Holds the First Message data to be transfered from TDS Fetch to TDS Process phase. */
+	StringInfo 				firstMessage;
+
+	int 					currentBatchSize; /* Current Batch Size in byes */
+
 	BulkLoadColMetaData 	*colMetaData; /* Array of each column's metadata. */
 	List 					*rowData;     /* List holding each row. */
 } TDSRequestBulkLoadData;
