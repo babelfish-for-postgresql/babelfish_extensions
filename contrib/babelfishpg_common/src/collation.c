@@ -507,9 +507,9 @@ find_cs_as_collation(int collidx)
 }
 
 int
-find_any_collation(const char *collation_name, bool guccheck)
+find_any_collation(const char *collation_name, bool check_for_server_collation_name_guc)
 {
-	int collidx = translate_collation(collation_name, guccheck);
+	int collidx = translate_collation(collation_name, check_for_server_collation_name_guc);
 
 	if (NOT_FOUND == collidx)
 		collidx = find_collation(collation_name);
@@ -522,7 +522,7 @@ find_any_collation(const char *collation_name, bool guccheck)
  * by looking into coll_translations array or returns NOT_FOUND.
  */
 int
-translate_collation(const char *collname, bool guccheck)
+translate_collation(const char *collname, bool check_for_server_collation_name_guc)
 {
 	int first = 0;
 	int last = TOTAL_COLL_TRANSLATION_COUNT - 1;
@@ -532,7 +532,7 @@ translate_collation(const char *collname, bool guccheck)
 	int idx = NOT_FOUND;
 
 	/* Special case handling for database_default and catalog_default collations which should be translated to server_collation_name. */
-	if (!guccheck && (pg_strcasecmp(collname, DATABASE_DEFAULT) == 0 || pg_strcasecmp(collname, CATALOG_DEFAULT) == 0))
+	if (!check_for_server_collation_name_guc && (pg_strcasecmp(collname, DATABASE_DEFAULT) == 0 || pg_strcasecmp(collname, CATALOG_DEFAULT) == 0))
 	{
 		init_server_collation_name();
 		if (server_collation_name)
