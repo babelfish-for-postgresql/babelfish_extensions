@@ -13,10 +13,6 @@ GO
 INSERT INTO t_3147_2 VALUES (10.1234, 10.123);
 INSERT INTO t_3147_2 VALUES (NULL, 101.123);
 GO
-~~ROW COUNT: 1~~
-
-~~ROW COUNT: 1~~
-
 
 CREATE TABLE t_3147_3 (
         a decimal(6, 4),
@@ -26,40 +22,4 @@ GO
 
 INSERT INTO t_3147_3 VALUES (10.1234, 10.123);
 INSERT INTO t_3147_3 VALUES (NULL, 101.123);
-GO
-~~ROW COUNT: 1~~
-
-~~ROW COUNT: 1~~
-
-
-SELECT c_comp FROM t_3147_1
-GO
-~~START~~
-char
-~~END~~
-
-
--- Test ISNULL with numeric columns
-SELECT ISNULL(a, b) FROM t_3147_2
-GO
-~~START~~
-numeric
-10.1234
-101.1230
-~~END~~
-
-
--- Test ISNULL with decimal columns
-SELECT ISNULL(a, b) FROM t_3147_3
-GO
-~~START~~
-numeric
-10.1234
-101.1230
-~~END~~
-
-
-DROP TABLE t_3147_1
-DROP TABLE t_3147_2
-DROP TABLE t_3147_3
 GO
