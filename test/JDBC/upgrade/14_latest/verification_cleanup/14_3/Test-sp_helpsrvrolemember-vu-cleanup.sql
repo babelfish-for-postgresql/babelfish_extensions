@@ -1,5 +1,0 @@
-DROP FUNCTION test_sp_helpsrvrolemember_func
-GO
-
-DROP PROC test_sp_helpsrvrolemember_proc
-GO
