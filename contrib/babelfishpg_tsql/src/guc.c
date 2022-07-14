@@ -1017,11 +1017,15 @@ define_custom_variables(void)
 				 GUC_NOT_IN_SAMPLE,
 				 NULL, NULL, NULL);
 
+	/*
+	 * Block DDL from PG endpoint
+	 * Currently only blocks DDLs for View object
+	 */
 	DefineCustomBoolVariable("babelfishpg_tsql.enable_ddl_from_pgendpoint",
 				 gettext_noop("Enables blocked DDL statements from PG endpoint"),
 				 NULL,
 				 &pltsql_enable_ddl_from_pgendpoint,
-         false,
+				 false,
 				 PGC_USERSET,
 				 GUC_NOT_IN_SAMPLE | GUC_DISALLOW_IN_FILE | GUC_DISALLOW_IN_AUTO_FILE,
 				 NULL, NULL, NULL);

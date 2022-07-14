@@ -624,16 +624,21 @@ PG_FUNCTION_INFO_V1(create_builtin_dbs);
 Datum create_builtin_dbs(PG_FUNCTION_ARGS)
 {	
 	const char  *sql_dialect_value_old;
+	const char	*enable_ddl_from_pgendpoint_old;
 	const char  *tsql_dialect = "tsql";
 	const char  *sa_name = text_to_cstring(PG_GETARG_TEXT_PP(0));
 
 	sql_dialect_value_old = GetConfigOption("babelfishpg_tsql.sql_dialect", true, true);
+	enable_ddl_from_pgendpoint_old = GetConfigOption(
+			"babelfishpg_tsql.enable_ddl_from_pgendpoint", true, true);
 
 	PG_TRY();
 	{
 		set_config_option("babelfishpg_tsql.sql_dialect", tsql_dialect,
 							(superuser() ? PGC_SUSET : PGC_USERSET),
 				  			PGC_S_SESSION, GUC_ACTION_SAVE, true, 0, false);
+		set_config_option("babelfishpg_tsql.enable_ddl_from_pgendpoint", "true",
+							PGC_USERSET, PGC_S_SESSION, GUC_ACTION_SAVE, true, 0, false);
 		do_create_bbf_db("master", NULL, sa_name);
 		do_create_bbf_db("tempdb", NULL, sa_name);
 		do_create_bbf_db("msdb", NULL, sa_name);
@@ -646,6 +651,9 @@ Datum create_builtin_dbs(PG_FUNCTION_ARGS)
 		set_config_option("babelfishpg_tsql.sql_dialect", sql_dialect_value_old,
 							(superuser() ? PGC_SUSET : PGC_USERSET),
 				  			PGC_S_SESSION, GUC_ACTION_SAVE, true, 0, false);
+		set_config_option("babelfishpg_tsql.enable_ddl_from_pgendpoint",
+							enable_ddl_from_pgendpoint_old,
+							PGC_USERSET, PGC_S_SESSION, GUC_ACTION_SAVE, true, 0, false);
 
 	}
 	PG_END_TRY();
