@@ -1,6 +1,21 @@
-SELECT * FROM sys.assembly_types
+SELECT * FROM sys_assembly_types_view
+GO
+~~START~~
+int#!#varchar
+~~END~~
+
+
+EXEC sys_assembly_types_proc
 GO
 ~~START~~
 varchar#!#int#!#int#!#int#!#int#!#smallint#!#tinyint#!#tinyint#!#varchar#!#bit#!#bit#!#bit#!#int#!#int#!#int#!#varchar#!#bit#!#bit#!#nvarchar#!#nvarchar#!#bit
+~~END~~
+
+
+SELECT * FROM sys_assembly_types_func()
+GO
+~~START~~
+int
+0
 ~~END~~
 
