@@ -2,7 +2,7 @@ SELECT * FROM information_schema.COLUMN_DOMAIN_USAGE WHERE TABLE_NAME NOT LIKE '
 go
 ~~START~~
 nvarchar#!#nvarchar#!#varchar#!#nvarchar#!#nvarchar#!#varchar#!#varchar
-master#!#dbo#!#typ1#!#master#!#dbo#!#tb1#!#d
+master#!#dbo#!#column_domain_usage_typ1#!#master#!#dbo#!#column_domain_usage_tb1#!#arg4
 ~~END~~
 
 
@@ -13,26 +13,26 @@ SELECT * FROM information_schema.COLUMN_DOMAIN_USAGE WHERE TABLE_NAME NOT LIKE '
 go
 ~~START~~
 nvarchar#!#nvarchar#!#varchar#!#nvarchar#!#nvarchar#!#varchar#!#varchar
-db_column_domain_usage#!#dbo#!#ntyp#!#db_column_domain_usage#!#dbo#!#col_test#!#r
+db_column_domain_usage#!#dbo#!#column_domain_usage_ntyp#!#db_column_domain_usage#!#dbo#!#column_domain_usage_col_test#!#arg7
 ~~END~~
 
 
 use master;
 go
 
-drop table tb1;
+drop table column_domain_usage_tb1;
 go
 
-drop type typ1;
+drop type column_domain_usage_typ1;
 go
 
 use db_column_domain_usage;
 go
 
-drop table col_test;
+drop table column_domain_usage_col_test;
 go
 
-drop type NTYP;
+drop type column_domain_usage_NTYP;
 go
 
 use master;
