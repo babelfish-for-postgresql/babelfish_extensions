@@ -3,7 +3,7 @@ inputs:
   engine_branch:
     description: 'Engine Branch'
     required: no
-    default: 'latest'
+    default: 'jira-babel-3135'
   install_dir:
     description: 'Engine install directory'
     required: no
@@ -33,8 +33,7 @@ runs:
           REPOSITORY_OWNER=$GITHUB_REPOSITORY_OWNER
         fi
 
-        # $GITHUB_WORKSPACE/.github/scripts/clone_engine_repo "$REPOSITORY_OWNER" "$ENGINE_BRANCH"
-        git clone --branch jira-babel-3135 https://github.com/amazon-aurora/postgresql_modified_for_babelfish.git
+        $GITHUB_WORKSPACE/.github/scripts/clone_engine_repo "$REPOSITORY_OWNER" "$ENGINE_BRANCH"
         cd postgresql_modified_for_babelfish
         ./configure --prefix=$HOME/${{ inputs.install_dir }}/ --with-python PYTHON=/usr/bin/python2.7 --enable-debug CFLAGS="-ggdb" --with-libxml --with-uuid=ossp --with-icu
         make -j 4 2>error.txt
