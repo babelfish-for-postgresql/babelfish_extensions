@@ -248,7 +248,7 @@ def list_upgrade_files():
                 line = line.strip()
 
                 # ignoring comments and empty lines in the schedule file
-                if line.startswith("#") or line == '':
+                if line.startswith("#") or not line:
                     line = file.readline()
                     continue
 
