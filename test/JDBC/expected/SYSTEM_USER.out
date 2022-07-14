@@ -2,8 +2,8 @@
 SELECT session_user, system_user, current_user, db_name();
 GO
 ~~START~~
-varchar#!#nvarchar#!#varchar#!#nvarchar
-jdbc_user#!#jdbc_user#!#dbo#!#master
+nvarchar#!#nvarchar#!#varchar#!#nvarchar
+dbo#!#jdbc_user#!#dbo#!#master
 ~~END~~
 
 
@@ -17,8 +17,8 @@ GO
 SELECT session_user, system_user, current_user, db_name();
 GO
 ~~START~~
-varchar#!#nvarchar#!#varchar#!#nvarchar
-r1#!#r1#!#guest#!#master
+nvarchar#!#nvarchar#!#varchar#!#nvarchar
+guest#!#r1#!#guest#!#master
 ~~END~~
 
 
@@ -26,8 +26,8 @@ r1#!#r1#!#guest#!#master
 SELECT session_user, system_user, current_user, db_name();
 GO
 ~~START~~
-varchar#!#nvarchar#!#varchar#!#nvarchar
-r2#!#r2#!#guest#!#master
+nvarchar#!#nvarchar#!#varchar#!#nvarchar
+guest#!#r2#!#guest#!#master
 ~~END~~
 
 
