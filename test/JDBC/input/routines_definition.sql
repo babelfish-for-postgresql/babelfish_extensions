@@ -1,111 +1,66 @@
 #testing for all the datatypes of agrument#
 
 #int, default value and nvarchar#
-create procedure test_nvar(@a nvarchar , @b int = 8)
+create procedure routines_test_nvar(@test_nvar_a nvarchar , @test_nvar_b int = 8)
 AS
 BEGIN
-        SELECT @b=8;
+        SELECT @test_nvar_b=8;
 END
 go
 
-#SMALLINT and INT OUTPUT
-create schema sc1;
+#SMALLINT, INT, decimal
+create schema routines_sc1;
 go
 
-create procedure sc1.test_si(@a SMALLINT ,@b INT OUTPUT)
-AS
-BEGIN
-        SELECT @a=70;
-	set @a=8;
-	SELECT @a as a;
-END;
-go
-
-#decimal
-CREATE FUNCTION test_dec(
-    @quantity INT,
-    @list_price DEC(10,2),
-    @discount DEC(4,2)
+CREATE FUNCTION routines_sc1.routines_test_dec(
+    @test_dec_a SMALLINT, 
+    @test_dec_b INT,
+    @test_dec_c INT,
+    @test_dec_d DEC(10,2),
+    @test_dec_e DEC(4,2)
 )
 RETURNS DEC(10,2)
 AS
 BEGIN
-    RETURN @quantity * @list_price * (1 - @discount);
+    RETURN @test_dec_c * @test_dec_d * (1 - @test_dec_e);
 END;
 go
 
 #checking for function with char,nchar,varchar,nvarchar,binary,varbinary
-create function fc1(@a nvarchar) RETURNS nvarchar AS BEGIN return @a END;
+create function routines_fc1(@fc1_a nvarchar) RETURNS nvarchar AS BEGIN return @fc1_a END;
 go
 
-create function fc2(@a varchar) RETURNS varchar AS BEGIN return @a END;
+create function routines_fc2(@fc2_a varchar) RETURNS varchar AS BEGIN return @fc2_a END;
 go
 
-create function fc3(@a nchar) RETURNS nchar AS BEGIN return @a END;
+create function routines_fc3(@fc3_a nchar) RETURNS nchar AS BEGIN return @fc3_a END;
 go
 
-create function fc4(@a binary) RETURNS binary AS BEGIN return @a END;
+create function routines_fc4(@fc4_a binary, @fc4_b tinyint, @fc4_c BIGINT, @fc4_d float) RETURNS binary AS BEGIN return @fc4_a END;
 go
 
-create function fc5(@a varbinary) RETURNS varbinary AS BEGIN return @a END;
+create function routines_fc5(@fc5_a varbinary) RETURNS varbinary AS BEGIN return @fc5_a END;
 go
 
-create function fc6(@a char) RETURNS char AS BEGIN return @a END;
+create function routines_fc6(@fc6_a char) RETURNS char AS BEGIN return @fc6_a END;
 go
 
-#char
-create procedure test_char(@ch char)
+#numeric, time, datetime and date
+create procedure routines_test_num(@test_num_a numeric(20,6) OUTPUT, @test_num_b time(5) OUTPUT, @test_num_c date OUTPUT, @test_num_d datetime OUTPUT)
 AS
 BEGIN
-	set @ch ='c';
-	SELECT @ch as 's';
-END;
-go
-
-#tinyint, float and bigint
-create procedure test_ti(@a tinyint OUTPUT, @b BIGINT, @c float )
-AS
-BEGIN
-	set @a=79;
-	select @b=19;
-	SELECT @c * 20 +1000;
-END;
-go
-
-#numeric
-create procedure test_num(@a numeric(20,6) OUTPUT)
-AS
-BEGIN
-	set @a = 65;
-	SELECT test_dec(23,60.76,43.88);
-	
-END;
-go
-
-#time and date
-create procedure test_time(@a time(5) OUTPUT , @b date OUTPUT)
-AS
-BEGIN
-	set @a='12:54';
-	set @b='2022-06-11';
-END;
-go
-
-#datetime
-create procedure test_dt(@a datetime output)
-AS
-BEGIN
-	set @a='2022 -06-12 12:43';
+	set @test_num_a = 65;
+	SELECT routines_test_dec(23,60.76,43.88);
 END;
 go
 
 select SPECIFIC_CATALOG, SPECIFIC_SCHEMA, SPECIFIC_NAME, ROUTINE_CATALOG, ROUTINE_SCHEMA, ROUTINE_NAME, ROUTINE_TYPE, DATA_TYPE, CHARACTER_MAXIMUM_LENGTH, CHARACTER_OCTET_LENGTH, COLLATION_NAME, CHARACTER_SET_NAME, NUMERIC_PRECISION, NUMERIC_PRECISION_RADIX, NUMERIC_SCALE, DATETIME_PRECISION, ROUTINE_BODY, ROUTINE_DEFINITION, IS_DETERMINISTIC, SQL_DATA_ACCESS, IS_NULL_CALL, SCHEMA_LEVEL_ROUTINE, MAX_DYNAMIC_RESULT_SETS, IS_USER_DEFINED_CAST, IS_IMPLICITLY_INVOCABLE from information_schema.routines where SPECIFIC_NAME NOT LIKE 'xp%' ORDER BY ROUTINE_DEFINITION;
 go
 
-create database db1;
+create database db_routines;
 go
 
-use db1;
+use db_routines;
 go
 
 select SPECIFIC_CATALOG, SPECIFIC_SCHEMA, SPECIFIC_NAME, ROUTINE_CATALOG, ROUTINE_SCHEMA, ROUTINE_NAME, ROUTINE_TYPE, DATA_TYPE, CHARACTER_MAXIMUM_LENGTH, CHARACTER_OCTET_LENGTH, COLLATION_NAME, CHARACTER_SET_NAME, NUMERIC_PRECISION, NUMERIC_PRECISION_RADIX, NUMERIC_SCALE, DATETIME_PRECISION, ROUTINE_BODY, ROUTINE_DEFINITION, IS_DETERMINISTIC, SQL_DATA_ACCESS, IS_NULL_CALL, SCHEMA_LEVEL_ROUTINE, MAX_DYNAMIC_RESULT_SETS, IS_USER_DEFINED_CAST, IS_IMPLICITLY_INVOCABLE from information_schema.routines where SPECIFIC_NAME NOT LIKE 'xp%' ORDER BY ROUTINE_DEFINITION;
@@ -114,23 +69,23 @@ go
 use master;
 go
 
-drop database db1;
+drop database db_routines;
 go
 
 #UID
-create procedure test_uid(@a uniqueidentifier output)
+create procedure routines_test_uid(@test_uid_a uniqueidentifier output)
 AS
 BEGIN
-	set @a ='ce8af10a-2709-43b0-9e4e-a02753929d17';
-	SELECT @a as a;
+	set @test_uid_a ='ce8af10a-2709-43b0-9e4e-a02753929d17';
+	SELECT @test_uid_a as test_uid_a;
 END;
 go
 
-select tsql_get_functiondef(oid) from pg_proc where proname='test_uid';
+select tsql_get_functiondef(oid) from pg_proc where proname='routines_test_uid';
 go
 
 #check with different sqlbody.#
-CREATE TABLE customers
+CREATE TABLE routines_customers
 ( customer_id int NOT NULL,
   customer_name char(50) NOT NULL,
   address char(50),
@@ -141,161 +96,85 @@ CREATE TABLE customers
 );
 go
 
-create procedure test_b1
+create procedure routines_test_b1
 AS
 BEGIN
 	select * from customers;
         select * from customers where customer_id = 25;
+        select count(state) from customers;
 END;
 go
 
-select tsql_get_functiondef(oid) from pg_proc where proname='test_b1';
+select tsql_get_functiondef(oid) from pg_proc where proname='routines_test_b1';
 go
 
-create procedure test_b2(@id int)
+create procedure routines_test_b2(@test_b2_name char(255), @test_b2_city char(255), @test_b2_id int, @test_b2_address char(255), @test_b2_state char(255), @test_b2_cust_id int)
 AS
 BEGIN
-	select count(state) from customers;
-	select * from customers where customer_id = @id;
+	INSERT INTO customers (customer_name,address,city,state,customer_id) VALUES (@test_b2_name,@test_b2_address,@test_b2_city,@test_b2_state,@test_b2_cust_id);
+        DELETE from customers where customer_id = @test_b2_id;
+        ALTER TABLE customers ADD email varchar(255);
 END;
 go
 
-select tsql_get_functiondef(oid) from pg_proc where proname='test_b2';
+select tsql_get_functiondef(oid) from pg_proc where proname='routines_test_b2';
 go
 
-create procedure test_b3(@name char(255), @city char(255), @address char(255), @state char(255), @cust_id int)
+create procedure routines_test_b3 @test_b3_paramout varchar(20) out
 AS
 BEGIN
-	INSERT INTO customers (customer_name,address,city,state,customer_id) VALUES (@name,@address,@city,@state,@cust_id);
+SELECT @test_b3_paramout ='helloworld';
 END;
 go
 
-select tsql_get_functiondef(oid) from pg_proc where proname='test_b3';
+select tsql_get_functiondef(oid) from pg_proc where proname='routines_test_b3';
 go
 
-create procedure test_b4(@id int)
+create procedure routines_test_b4(@test_b4_a int, @test_b4_b char(255), @test_b4_c char(255), @test_b4_d char(255))
 AS
+SET @test_b4_a=10; SET Nocount ON;
+DECLARE @test_b4_temp int =12; 
 BEGIN
-	DELETE from customers where customer_id = @id;
-	ALTER TABLE customers ADD email varchar(255);
-
+        INSERT INTO customers (customer_name,address,city,customer_id) VALUES (@test_b4_b,@test_b4_c,@test_b4_d,@test_b4_a);
 END;
 go
 
-select tsql_get_functiondef(oid) from pg_proc where proname='test_b4';
+select tsql_get_functiondef(oid) from pg_proc where proname='routines_test_b4';
 go
 
-create procedure test_b5 @paramout varchar(20) out
-AS
-BEGIN
-SELECT @paramout ='helloworld';
-END;
-go
-
-select tsql_get_functiondef(oid) from pg_proc where proname='test_b5';
-go
-
-create procedure test_b6(@id int)
-AS
-BEGIN
-	select city,state,zip_code from customers where customer_id=@id;
-	UPDATE customers SET city = 'RANCHI' where state = 'JHARKHAND';
-END;
-go
-
-select tsql_get_functiondef(oid) from pg_proc where proname='test_b6';
-go
-
-create function test_bd7 (@cost int)
+create function routines_test_b5 (@test_b5_a int)
 RETURNS INT
 AS
 BEGIN
-	set @cost = 100;
-	RETURN @cost * 10;
+	set @test_b5_a = 100;
+	RETURN @test_b5_a * 10;
 
 END;
 go
 
-select tsql_get_functiondef(oid) from pg_proc where proname='test_bd7';
-go
-
-create procedure test_bb(@a int, @b char(255), @c char(255), @d char(255))
-AS
-SET @a=10; SET Nocount ON;
-DECLARE @temp int =12; 
-BEGIN
-        INSERT INTO customers (customer_name,address,city,customer_id) VALUES (@b,@c,@d,@a);
-END;
-go
-
-select tsql_get_functiondef(oid) from pg_proc where proname='test_bb';
-go
-
-create function test_b8(
-    @a INT,
-    @b DEC(10,2),
-    @c DEC(4,2)
+create function routines_test_b6(
+    @test_b6_a INT,
+    @test_b6_b DEC(10,2),
+    @test_b6_c DEC(4,2)
 )
 RETURNS DEC(10,2)
 AS 
 BEGIN
-	RETURN test_bd7(199) * 79;
-    RETURN @a * @b * (1 - @c);
+	RETURN routines_test_b5(199) * 79;
+    RETURN @test_b6_a * @test_b6_b * (1 - @test_b6_c);
 END;
 go
 
-select tsql_get_functiondef(oid) from pg_proc where proname='test_b8';
+select tsql_get_functiondef(oid) from pg_proc where proname='routines_test_b6';
 go
 
-create function test_bd9(@x int, @y int)
-RETURNS int
-AS
-BEGIN 
-	RETURN test_bd7(4);
-	RETURN 200+(@x * @y);
-END;
+create function routines_func_nvar (@func_nvar_a nvarchar(23)) returns nvarchar(23) AS BEGIN return @func_nvar_a END;
 go
 
-select tsql_get_functiondef(oid) from pg_proc where proname='test_bd9';
+select tsql_get_functiondef(oid) from pg_proc where proname='routines_func_nvar';
 go
 
-create function func_nvar (@a nvarchar(23)) returns nvarchar(23) AS BEGIN return @a END;
-go
-
-select tsql_get_functiondef(oid) from pg_proc where proname='func_nvar';
-go
-
-create function test_b10(@k SMALLINT)
-RETURNS SMALLINT
-AS
-BEGIN
-	set @k =88;
-	SELECT @k = 32;
-	RETURN @k/27;
-END;
-go
-
-select tsql_get_functiondef(oid) from pg_proc where proname='test_b10';
-go
-
-create schema s1;
-go
-
-create function s1.test_b11 (@a varchar)
-RETURNS varchar
-AS
-BEGIN
-        RETURN test_bd9(2,6);
-	set @a= 'smile please';
-	RETURN test_bd7(65);
-	RETURN @a;
-END;
-go
-
-select tsql_get_functiondef(oid) from pg_proc where proname='test_b11';
-go
-
-CREATE FUNCTION dbo.test_func_opt (@name varchar(10))
+CREATE FUNCTION routines_test_func_opt (@test_func_opt_name varchar(10))
 RETURNS INT
  WITH RETURNS NULL ON NULL INPUT
 AS
@@ -304,44 +183,33 @@ BEGIN
 END;
 go
 
-select tsql_get_functiondef(oid) from pg_proc where proname='test_func_opt';
+select tsql_get_functiondef(oid) from pg_proc where proname='routines_test_func_opt';
 go
 
-create function test_s (@a char(45)) RETURNS char(45)
+create function routines_test_s (@test_s_a char(45)) RETURNS char(45)
 WITH SCHEMABINDING
 AS 
 BEGIN
-	RETURN @a;
+	RETURN @test_s_a;
 END;
 go
 
-select tsql_get_functiondef(oid) from pg_proc where proname='test_s';
+select tsql_get_functiondef(oid) from pg_proc where proname='routines_test_s';
 go
 
-create function test_arg (@b binary, @v varbinary) RETURNS int
-AS 
-BEGIN
-         set @v = 110;
-	return 345;
-END
-go
-
-select tsql_get_functiondef(oid) from pg_proc where proname='test_arg';
-go
-
-create function test_con(@a int)
+create function routines_test_con(@test_con_a int)
 RETURNS INT
  WITH CALLED ON NULL INPUT
 AS
 BEGIN
-RETURN @a;
+RETURN @test_con_a;
 END;
 go
 
-select tsql_get_functiondef(oid) from pg_proc where proname='test_con';
+select tsql_get_functiondef(oid) from pg_proc where proname='routines_test_con';
 go
 
-create procedure test_t (@a int)
+create procedure routines_test_t (@test_t_a int)
 AS
 BEGIN
         begin try
@@ -358,131 +226,92 @@ BEGIN
 END;
 go
 
-select tsql_get_functiondef(oid) from pg_proc where proname='test_t';
+select tsql_get_functiondef(oid) from pg_proc where proname='routines_test_t';
 go
 
-CREATE PROCEDURE dbo.cur_var
-@CurrencyCursor CURSOR VARYING OUTPUT
+CREATE PROCEDURE routines_cur_var
+@cur_var_a CURSOR VARYING OUTPUT
 As
 SET NOCOUNT ON;
-SET @CurrencyCursor = CURSOR
+SET @cur_var_a = CURSOR
 FORWARD_ONLY STATIC FOR
 SELECT CurrencyCode, Name
 FROM Sales.Currency;
 
-OPEN @CurrencyCursor;
+OPEN @cur_var_a;
 go
 
-select tsql_get_functiondef(oid) from pg_proc where proname='cur_var';
+select tsql_get_functiondef(oid) from pg_proc where proname='routines_cur_var';
 go
 
-drop procedure test_nvar;
+drop procedure routines_test_nvar;
 go
 
-drop procedure sc1.test_si;
+drop procedure routines_test_num;
 go
 
-drop schema sc1;
+drop function routines_sc1.routines_test_dec;
 go
 
-drop procedure test_char;
+drop schema routines_sc1;
 go
 
-drop procedure test_ti;
+drop procedure routines_test_uid;
 go
 
-drop procedure test_num;
+drop procedure routines_test_b1;
 go
 
-drop function test_dec;
+drop procedure routines_test_b2;
 go
 
-drop procedure test_time;
+drop procedure routines_test_b3;
 go
 
-drop procedure test_dt;
+drop procedure routines_test_b4;
 go
 
-drop procedure test_uid;
+DROP TABLE routines_customers;
 go
 
-drop procedure test_b1;
+drop function routines_test_b6;
 go
 
-drop procedure test_b2;
+drop function routines_test_b5;
 go
 
-drop procedure test_b3;
+DROP function routines_func_nvar;
 go
 
-drop procedure test_b4;
+drop function routines_test_func_opt;
 go
 
-drop procedure test_b5;
+drop function routines_test_s;
 go
 
-drop procedure test_b6;
+drop function routines_test_con;
 go
 
-DROP PROCEDURE test_bb;
+drop procedure routines_test_t;
 go
 
-DROP TABLE customers;
+drop procedure routines_cur_var;
 go
 
-DROP function test_b8;
+drop function routines_fc1;
 go
 
-DROP function func_nvar;
+drop function routines_fc2;
 go
 
-DROP function test_b10;
+drop function routines_fc3;
 go
 
-DROP  FUNCTION test_bd7;
+drop function routines_fc4;
 go
 
-DROP  FUNCTION test_bd9;
+drop function routines_fc5;
 go
 
-drop function s1.test_b11;
-go
-
-drop schema s1;
-go
-
-drop function dbo.test_func_opt;
-go
-
-drop function test_s;
-go
-
-drop function test_arg;
-go
-
-drop function test_con;
-go
-
-drop procedure test_t;
-go
-
-drop procedure dbo.cur_var;
-go
-
-drop function fc1;
-go
-
-drop function fc2;
-go
-
-drop function fc3;
-go
-
-drop function fc4;
-go
-
-drop function fc5;
-go
-
-drop function fc6;
+drop function routines_fc6;
 go
