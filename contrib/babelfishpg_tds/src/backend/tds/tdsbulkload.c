@@ -656,6 +656,7 @@ SetBulkLoadRowData(TDSRequestBulkLoad request, StringInfo message)
 	 * the next byte should be the done token.
 	 */
 	CheckMessageHasEnoughBytesToRead(&message, 1);
+
 	if (request->rowCount < (*pltsql_plugin_handler_ptr->insert_bulk_rows_per_batch)
 			&& request->currentBatchSize < (*pltsql_plugin_handler_ptr->insert_bulk_kilobytes_per_batch) * 1024
 			&& (uint8_t)message->data[offset] != TDS_TOKEN_DONE)
