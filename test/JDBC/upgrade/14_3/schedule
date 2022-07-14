@@ -37,6 +37,7 @@ BABEL-3221
 BABEL-3249
 BABEL-3204
 BABEL-3234
+sys-server_principals
 fulltextserviceproperty
 is_srvrolemember
 msdb-dbo-fn_syspolicy_is_automation_enabled
@@ -51,3 +52,4 @@ sys-suser_sid
 sys-suser_sname
 sys-trigger_nestlevel
 constraint_column_usage
+
