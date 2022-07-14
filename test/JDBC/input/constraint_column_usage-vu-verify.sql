@@ -13,17 +13,17 @@ go
 use db_constraint_column_usage;
 go
 
-drop table tbl2;
+drop table constraint_column_usage_tbl2;
 go
-drop table tbl1;
+drop table constraint_column_usage_tbl1;
 go
-drop table tbl5;
+drop table constraint_column_usage_tbl5;
 go
-drop table tbl3;
+drop table constraint_column_usage_tbl3;
 go
-drop table sc1.tbl4;
+drop table constraint_column_usage_sc1.constraint_column_usage_tbl4;
 go
-drop schema sc1;
+drop schema constraint_column_usage_sc1;
 go
 
 use master
