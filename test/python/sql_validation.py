@@ -12,7 +12,7 @@ def list_files(inpPath, filefilter):
     path = Path(inpPath)
 
     files = []
-    for f in path.rglob(filefilter):
+    for f in path.glob(filefilter):
         files.append(f)
     return files
 
@@ -106,40 +106,9 @@ def find_pattern(pattern, fname, logger):
     logger.info("Searching {0} statements completed successfully!".format(re.sub("[^a-zA-Z0-9 ]", "", pattern)))
 
 
-# list of installation and upgrade scripts
-def list_scripts(inpPath):
-    path = Path.cwd().joinpath(inpPath)
-    scripts = []
-
-    for f in path.glob("*.sql"):
-        scripts.append(f)
-
-    path = path.joinpath("upgrades")
-    for f in path.glob("*.sql"):
-        scripts.append(f)
-
-    return scripts
-
 
 # search for create statements and return a set of tuple (object_type, object_name)
-def find_pattern_create(logger):
-    # getting files for babelfish_tsql extension
-    inpPath = "../../contrib/babelfishpg_tsql/sql"
-    scripts = list_scripts(inpPath)
-
-    # removing scripts having helper functions and redundant script
-    if Path.cwd().joinpath(inpPath + "/sys_function_helpers.sql") in scripts:
-        scripts.remove(Path.cwd().joinpath(inpPath + "/sys_function_helpers.sql"))
-    if Path.cwd().joinpath(inpPath + "/babelfishpg_tsql--1.0.0.sql") in scripts:
-        scripts.remove(Path.cwd().joinpath(inpPath + "/babelfishpg_tsql--1.0.0.sql"))
-    
-    # getting files for babelfish_common extension
-    inpPath = "../../contrib/babelfishpg_common/sql"
-    scripts.extend(list_scripts(inpPath))
-    
-    # removing redundant script
-    if Path.cwd().joinpath(inpPath + "/babelfishpg_common--1.0.0.sql") in scripts:
-        scripts.remove(Path.cwd().joinpath(inpPath + "/babelfishpg_common--1.0.0.sql"))
+def find_pattern_create(scripts, logger):
 
     # set to avoid searching for redundant object names
     object_names = set()
@@ -158,7 +127,7 @@ def find_pattern_create(logger):
             line = file.readline()
 
             # get pattern based on extension
-            if "babelfishpg_common" in filename.as_uri():
+            if re.search("babelfishpg_common",str(filename)):
                 pattern = pattern_com
             else:
                 pattern = pattern_tsql
@@ -221,20 +190,9 @@ def find_obj(files, obj_name):
 
 
 # find the object name in the test files
-def find_in_JDBC(fname, logger):
+def find_in_testfiles(type, searchinfiles, object_names, f_path, logger):
 
-    # get the list of JDBC input files
-    files = list_files("../JDBC/input", "*.*")
-
-    # get the set of create object_name
-    object_names = find_pattern_create(logger)
-    
-    # set output file path
-    path = Path.cwd().joinpath("output", "sql_validation_framework")
-    Path.mkdir(path, parents = True, exist_ok = True)
-    f_path = path.joinpath(fname + ".out")
-
-    with open(f_path, "w") as expected_file:
+    with open(f_path, "a") as expected_file:
         for object in object_names:
 
             # flag for object name found or not in the JDBC input files
@@ -249,7 +207,7 @@ def find_in_JDBC(fname, logger):
             if not object[0] == 'function':
                 object_name = object_name + r"\b"
 
-            flag = find_obj(files, r"\b" + object_name)
+            flag = find_obj(searchinfiles, r"\b" + object_name)
 
             # searching again without schema name for objects in all schemas
             if(flag == False and "." in object[1]):
@@ -259,20 +217,105 @@ def find_in_JDBC(fname, logger):
                 if object[0] == 'function':
                     object_name = "(" + "@@" + object_name.replace("\s{0,2}[(]", "").replace("\\b", "") + ")|(" +  object_name + ")"
                 
-                flag = find_obj(files, object_name)
+                flag = find_obj(searchinfiles, object_name)
             
             # if tests not found, add it to output file
             if flag == False:
-                expected_file.write("Could not find tests for {0} {1}\n".format(object[0], object[1].split('\s')[0]))
-    logger.info("Tests for objects found successfully!")
+                expected_file.write("Could not find {0}tests for {1} {2}\n".format(type, object[0], object[1].split('\s')[0]))
+    logger.info("{}Tests for objects found successfully!".format(type))
 
+
+# creates list of all files to be searched for upgrade test
+def list_upgrade_files():
+    upgrade_files = []
+
+    inpPath = "../JDBC/upgrade"
+
+    # searching prepare and verify scripts in upgrade directory
+    update_files = list_files(inpPath, "**/*[-][v][u][-][!c]*.*")
+    upgrade_files.extend(update_files)
+
+    # list all schedule files
+    sch_files = list_files(inpPath, "**/schedule")
+
+    # create a set of test files to be looked into JDBC input
+    search_tests = set()
+    for filename in sch_files:
+        with  open(filename, "r") as file:
+            line = file.readline()
+
+            while line:
+                line = line.strip()
+
+                # ignoring comments and empty lines in the schedule file
+                if line.startswith("#") or line == '':
+                    line = file.readline()
+                    continue
+
+                search_tests.add(line)
+                line = file.readline()
+
+    # search prepare and verify scripts for the test file
+    path=Path("../JDBC/input")
+    for test in search_tests:
+        for i in path.rglob("*.*"):
+            if re.search(test + "-vu-prepare.*", str(i)):
+                upgrade_files.append(i)
+            if re.search(test + "-vu-verify.*", str(i)):
+                upgrade_files.append(i)
+
+    return upgrade_files
+
+
+def find_tests(fname, logger):
+    # set output file path
+    path = Path.cwd().joinpath("output", "sql_validation_framework")
+    Path.mkdir(path, parents = True, exist_ok = True)
+    f_path = path.joinpath(fname + ".out")
+
+    f = open(f_path,"w")
+    f.close()
+
+    # getting installation scripts for babelfish_tsql extension
+    inpPath = "../../contrib/babelfishpg_tsql/sql"
+    inst_scripts = list_files(inpPath, "*.sql")
+
+    # removing scripts having helper functions and redundant script
+    for i in inst_scripts:
+        if re.search("sys_function_helpers.sql", str(i)):
+            inst_scripts.remove(Path(inpPath).joinpath("sys_function_helpers.sql"))
+        if re.search("babelfishpg_tsql--1.0.0.sql", str(i)):
+            inst_scripts.remove(Path(inpPath).joinpath("babelfishpg_tsql--1.0.0.sql"))
+    
+    # getting installation scripts for babelfish_common extension
+    inpPath = "../../contrib/babelfishpg_common/sql"
+    inst_scripts.extend(list_files(inpPath, "*.sql"))
+    
+    # removing redundant script
+    for i in inst_scripts:
+        if re.search("babelfishpg_common--1.0.0.sql", str(i)):
+            inst_scripts.remove(Path(inpPath).joinpath("babelfishpg_common--1.0.0.sql"))
+
+    # get the set of create object_name for installation scripts
+    object_names_inst = find_pattern_create(inst_scripts, logger)
+
+    # get the list of JDBC/input files
+    all_files = list_files("../JDBC/input", "**/*.*")
+
+    # search for objects in the JDBC input files
+    find_in_testfiles("", all_files, object_names_inst, f_path, logger)
+
+    # get list of prepare and verify scripts in schedule and upgrade directory
+    upgrade_files = list_upgrade_files()
+
+    # search for objects in upgrade test files
+    find_in_testfiles("upgrade ", upgrade_files, object_names_inst, f_path, logger)
 
 
 # find patterns in the framework
 def find_patterns(logfname, logger):
-    
     logger.info("Running tests for pattern search!!")
-    
+
     # get the list of patterns from config
     patterns = cfg["searchPatterns"].split(',')
     found = True
@@ -391,7 +434,7 @@ def main():
 
     result1 = find_patterns(logfname, logger)
 
-    find_in_JDBC(fname_create, logger)
+    find_tests(fname_create, logger)
     expected_file = Path.cwd().joinpath("expected", "sql_validation_framework", fname_create + ".out")
     outfile = Path.cwd().joinpath("output", "sql_validation_framework", fname_create + ".out")
     result2 = compare_outfiles(outfile, expected_file, logfname, fname_create, logger)
