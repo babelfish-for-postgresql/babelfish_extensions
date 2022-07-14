@@ -629,10 +629,40 @@ exec_stmt_exec(PLtsql_execstate *estate, PLtsql_stmt_exec *stmt)
 	volatile int rc;
 	SimpleEcontextStackEntry *topEntry;
 	SPIExecuteOptions options;
+	bool		need_path_reset = false;
 
 	Oid current_user_id = GetUserId();
+	char *cur_dbname = get_cur_db_name();
+
+	/* fetch current search_path */
+	List *path_oids = fetch_search_path(false);
+	char *old_search_path = flatten_search_path(path_oids);
+	char *new_search_path;
+	if (stmt->proc_name == NULL)
+		stmt->proc_name = "";
+
 	if (stmt->is_cross_db)
 		SetCurrentRoleId(GetSessionUserId(), false);
+
+	/*
+	 * TODO: BABEL-2992 The following check can be removed after the
+	 * correct implementation of schema resolution for SQL objects.
+	 */
+	if (strcmp(stmt->proc_name, "sp_describe_first_result_set") != 0)
+	{
+		if (strncmp(stmt->proc_name, "sp_", 3) == 0 && strcmp(cur_dbname, "master") != 0
+			&& (stmt->schema_name == '\0' || strncmp(stmt->schema_name, "dbo", strlen(stmt->schema_name)) == 0))
+			{
+				new_search_path = psprintf("%s, master_dbo", old_search_path);
+
+				/* Add master_dbo to the new search path */
+				(void) set_config_option("search_path", new_search_path,
+								PGC_USERSET, PGC_S_SESSION,
+								GUC_ACTION_SAVE, true, 0, false);
+				SetCurrentRoleId(GetSessionUserId(), false);
+				need_path_reset = true;
+			}
+	}
 
 	/* PG_TRY to ensure we clear the plan link, if needed, on failure */
 	PG_TRY();
@@ -975,6 +1005,14 @@ exec_stmt_exec(PLtsql_execstate *estate, PLtsql_stmt_exec *stmt)
 	}
 	PG_CATCH();
 	{
+		if (need_path_reset)
+		{
+			(void) set_config_option("search_path", old_search_path,
+						PGC_USERSET, PGC_S_SESSION,
+						GUC_ACTION_SAVE, true, 0, false);
+			SetCurrentRoleId(current_user_id, false);
+		}
+
 		if (stmt->is_cross_db)
 			SetCurrentRoleId(current_user_id, false);
 		/*
@@ -993,6 +1031,15 @@ exec_stmt_exec(PLtsql_execstate *estate, PLtsql_stmt_exec *stmt)
 
 	if (stmt->is_cross_db)
 		SetCurrentRoleId(current_user_id, false);
+
+	if (need_path_reset)
+	{
+		(void) set_config_option("search_path", old_search_path,
+							PGC_USERSET, PGC_S_SESSION,
+							GUC_ACTION_SAVE, true, 0, false);
+		SetCurrentRoleId(current_user_id, false);
+	}
+	list_free(path_oids);
 
 	if (expr->plan && !expr->plan->saved)
 	{
