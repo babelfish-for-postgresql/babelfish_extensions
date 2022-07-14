@@ -1,0 +1,53 @@
+-- tsql
+-- typmod associated with NULL will be -1 so this will throw an error
+SELECT CAST('1' AS CHAR(10)) AS Col1
+UNION 
+SELECT NULL AS Col1
+GO
+
+SELECT CAST('1' AS CHAR(10)) AS Col1
+UNION ALL
+SELECT NULL AS Col1
+GO
+
+-- taking suggestion from above error, added explicit CAST and CONVERT
+SELECT CAST('1' AS CHAR(10)) AS Col1
+UNION 
+SELECT CAST(NULL AS CHAR(10)) AS Col1
+GO
+
+SELECT CAST('1' AS CHAR(10)) AS Col1
+UNION ALL
+SELECT CONVERT(CHAR(10), NULL) AS Col1
+GO
+
+SELECT CAST('1' AS CHAR(10)) AS Col1
+UNION ALL
+SELECT CAST(NULL AS CHAR(10)) AS Col1
+GO
+
+SELECT CAST('1' AS CHAR(10)) AS Col1
+UNION 
+SELECT CONVERT(CHAR(10), NULL) AS Col1
+GO
+
+-- psql
+-- create a function from PG endpoint and try calling it from T-SQL endpoint
+CREATE FUNCTION sys.func_2998() RETURNS CHAR(20) LANGUAGE SQL RETURN 'abc';
+GO
+
+-- tsql
+-- throws error
+SELECT func_2998()
+GO
+
+-- taking suggestion from above error, added explicit CAST and CONVERT
+SELECT CAST(func_2998() AS CHAR(20))
+GO
+
+SELECT CONVERT(CHAR(20), func_2998())
+GO
+
+-- psql
+DROP FUNCTION sys.func_2998()
+GO
