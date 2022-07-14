@@ -2796,8 +2796,8 @@ execute_bulk_load_insert(int ncol, int nrow, Oid *argtypes,
 
 		/* Reset Insert-Bulk Options. */
 		insert_bulk_keep_nulls = prev_insert_bulk_keep_nulls;
-    insert_bulk_rows_per_batch = prev_insert_bulk_rows_per_batch;
-  	insert_bulk_kilobytes_per_batch = prev_insert_bulk_kilobytes_per_batch;
+		insert_bulk_rows_per_batch = prev_insert_bulk_rows_per_batch;
+		insert_bulk_kilobytes_per_batch = prev_insert_bulk_kilobytes_per_batch;
 
 		PG_RE_THROW();
 	}
