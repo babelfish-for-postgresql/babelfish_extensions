@@ -1,0 +1,110 @@
+USE master;
+GO
+
+SELECT * FROM sys_configurations_view
+GO
+~~START~~
+int#!#nvarchar#!#sql_variant#!#sql_variant#!#sql_variant#!#sql_variant#!#nvarchar#!#bit#!#bit
+16387#!#SMO and DMO XPs#!#1#!#0#!#1#!#1#!#Enable or disable SMO and DMO XPs#!#1#!#1
+1534#!#user options#!#0#!#0#!#32767#!#0#!#user options#!#1#!#0
+115#!#nested triggers#!#1#!#0#!#1#!#1#!#Allow triggers to be invoked within triggers#!#1#!#0
+124#!#default language#!#0#!#0#!#9999#!#0#!#default language#!#1#!#0
+1126#!#default full-text language#!#1033#!#0#!#2147483647#!#1033#!#default full-text language#!#1#!#1
+1127#!#two digit year cutoff#!#2049#!#1753#!#9999#!#2049#!#two digit year cutoff#!#1#!#1
+1555#!#transform noise words#!#0#!#0#!#1#!#0#!#Transform noise words for full-text query#!#1#!#1
+~~END~~
+
+
+EXEC sys_configurations_proc
+GO
+~~START~~
+int#!#nvarchar#!#sql_variant#!#sql_variant#!#sql_variant#!#sql_variant#!#nvarchar#!#bit#!#bit
+16387#!#SMO and DMO XPs#!#1#!#0#!#1#!#1#!#Enable or disable SMO and DMO XPs#!#1#!#1
+1534#!#user options#!#0#!#0#!#32767#!#0#!#user options#!#1#!#0
+115#!#nested triggers#!#1#!#0#!#1#!#1#!#Allow triggers to be invoked within triggers#!#1#!#0
+124#!#default language#!#0#!#0#!#9999#!#0#!#default language#!#1#!#0
+1126#!#default full-text language#!#1033#!#0#!#2147483647#!#1033#!#default full-text language#!#1#!#1
+1127#!#two digit year cutoff#!#2049#!#1753#!#9999#!#2049#!#two digit year cutoff#!#1#!#1
+1555#!#transform noise words#!#0#!#0#!#1#!#0#!#Transform noise words for full-text query#!#1#!#1
+~~END~~
+
+
+SELECT * FROM sys_configurations_func()
+GO
+~~START~~
+int
+7
+~~END~~
+
+
+SELECT * FROM sys_syscurconfigs_view
+GO
+~~START~~
+sql_variant#!#int#!#nvarchar#!#smallint
+1#!#16387#!#Enable or disable SMO and DMO XPs#!#3
+0#!#1534#!#user options#!#1
+1#!#115#!#Allow triggers to be invoked within triggers#!#1
+0#!#124#!#default language#!#1
+1033#!#1126#!#default full-text language#!#3
+2049#!#1127#!#two digit year cutoff#!#3
+0#!#1555#!#Transform noise words for full-text query#!#3
+~~END~~
+
+
+EXEC sys_syscurconfigs_proc
+GO
+~~START~~
+sql_variant#!#int#!#nvarchar#!#smallint
+1#!#16387#!#Enable or disable SMO and DMO XPs#!#3
+0#!#1534#!#user options#!#1
+1#!#115#!#Allow triggers to be invoked within triggers#!#1
+0#!#124#!#default language#!#1
+1033#!#1126#!#default full-text language#!#3
+2049#!#1127#!#two digit year cutoff#!#3
+0#!#1555#!#Transform noise words for full-text query#!#3
+~~END~~
+
+
+SELECT * FROM sys_syscurconfigs_func()
+GO
+~~START~~
+int
+7
+~~END~~
+
+
+SELECT * FROM sys_sysconfigures_view
+GO
+~~START~~
+sql_variant#!#int#!#nvarchar#!#smallint
+1#!#16387#!#Enable or disable SMO and DMO XPs#!#3
+0#!#1534#!#user options#!#1
+1#!#115#!#Allow triggers to be invoked within triggers#!#1
+0#!#124#!#default language#!#1
+1033#!#1126#!#default full-text language#!#3
+2049#!#1127#!#two digit year cutoff#!#3
+0#!#1555#!#Transform noise words for full-text query#!#3
+~~END~~
+
+
+EXEC sys_sysconfigures_proc
+GO
+~~START~~
+sql_variant#!#int#!#nvarchar#!#smallint
+1#!#16387#!#Enable or disable SMO and DMO XPs#!#3
+0#!#1534#!#user options#!#1
+1#!#115#!#Allow triggers to be invoked within triggers#!#1
+0#!#124#!#default language#!#1
+1033#!#1126#!#default full-text language#!#3
+2049#!#1127#!#two digit year cutoff#!#3
+0#!#1555#!#Transform noise words for full-text query#!#3
+~~END~~
+
+
+SELECT * FROM sys_sysconfigures_func()
+GO
+~~START~~
+int
+7
+~~END~~
+

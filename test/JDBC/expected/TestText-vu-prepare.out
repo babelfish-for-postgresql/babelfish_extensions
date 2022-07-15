@@ -1,0 +1,20 @@
+CREATE TABLE TEXT_dt (a text, b ntext)
+#path to file should be with respect to root of test suite
+prepst#!# INSERT INTO TEXT_dt(a, b) values(?, ?) #!#TEXT|-|a|-|utils/sample.txt#!#NTEXT|-|b|-|utils/sample.txt
+~~ROW COUNT: 1~~
+
+prepst#!#exec#!#TEXT|-|a|-|utils/blank.txt#!#NTEXT|-|b|-|utils/blank.txt
+~~ROW COUNT: 1~~
+
+prepst#!#exec#!#TEXT|-|a|-|<NULL>#!#NTEXT|-|b|-|<NULL>
+~~ROW COUNT: 1~~
+
+prepst#!#exec#!#TEXT|-|a|-|<NULL>#!#NTEXT|-|b|-|utils/utf16.txt
+~~ROW COUNT: 1~~
+
+prepst#!#exec#!#TEXT|-|a|-|<NULL>#!#NTEXT|-|b|-|utils/emojisText.txt
+~~ROW COUNT: 1~~
+
+prepst#!#exec#!#TEXT|-|a|-|<NULL>#!#NTEXT|-|b|-|utils/devanagari.txt
+~~ROW COUNT: 1~~
+

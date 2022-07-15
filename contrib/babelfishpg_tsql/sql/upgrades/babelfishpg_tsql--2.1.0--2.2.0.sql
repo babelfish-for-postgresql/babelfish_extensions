@@ -4,6 +4,26 @@
 -- add 'sys' to search path for the convenience
 SELECT set_config('search_path', 'sys, '||current_setting('search_path'), false);
 
+-- SERVER_PRINCIPALS
+CREATE OR REPLACE VIEW sys.server_principals
+AS SELECT
+  CAST(Base.rolname AS sys.SYSNAME) AS name,
+  CAST(Base.oid As INT) AS principal_id,
+  CAST(CAST(Base.oid as INT) as sys.varbinary(85)) AS sid,
+  CAST(Ext.type AS CHAR(1)) as type,
+  CAST(CASE WHEN Ext.type = 'S' THEN 'SQL_LOGIN'
+  WHEN Ext.type = 'R' THEN 'SERVER_ROLE'
+  ELSE NULL END AS NVARCHAR(60)) AS type_desc,
+  CAST(Ext.is_disabled AS INT) AS is_disabled,
+  CAST(Ext.create_date AS SYS.DATETIME) AS create_date,
+  CAST(Ext.modify_date AS SYS.DATETIME) AS modify_date,
+  CAST(CASE WHEN Ext.type = 'R' THEN NULL ELSE Ext.default_database_name END AS SYS.SYSNAME) AS default_database_name,
+  CAST(Ext.default_language_name AS SYS.SYSNAME) AS default_language_name,
+  CAST(CASE WHEN Ext.type = 'R' THEN NULL ELSE Ext.credential_id END AS INT) AS credential_id,
+  CAST(CASE WHEN Ext.type = 'R' THEN 1 ELSE Ext.owning_principal_id END AS INT) AS owning_principal_id,
+  CAST(CASE WHEN Ext.type = 'R' THEN 1 ELSE Ext.is_fixed_role END AS sys.BIT) AS is_fixed_role
+FROM pg_catalog.pg_authid AS Base INNER JOIN sys.babelfish_authid_login_ext AS Ext ON Base.rolname = Ext.rolname;
+
 -- Drops a view if it does not have any dependent objects.
 -- Is a temporary procedure for use by the upgrade script. Will be dropped at the end of the upgrade.
 -- Please have this be one of the first statements executed in this upgrade script. 
@@ -102,6 +122,20 @@ GRANT SELECT ON information_schema_tsql.check_constraints TO PUBLIC;
 
 ALTER VIEW sys.foreign_keys RENAME TO foreign_keys_deprecated;
 
+CREATE OR REPLACE VIEW information_schema_tsql.COLUMN_DOMAIN_USAGE AS
+    SELECT isc_col."DOMAIN_CATALOG",
+           isc_col."DOMAIN_SCHEMA" ,
+           CAST(isc_col."DOMAIN_NAME" AS sys.sysname),
+           isc_col."TABLE_CATALOG",
+           isc_col."TABLE_SCHEMA",
+           CAST(isc_col."TABLE_NAME" AS sys.sysname),
+           CAST(isc_col."COLUMN_NAME" AS sys.sysname)
+
+    FROM information_schema_tsql.columns AS isc_col
+    WHERE isc_col."DOMAIN_NAME" IS NOT NULL;
+
+GRANT SELECT ON information_schema_tsql.COLUMN_DOMAIN_USAGE TO PUBLIC;
+
 CREATE OR replace view sys.foreign_keys AS
 SELECT
   CAST(c.conname AS sys.SYSNAME) AS name
@@ -163,6 +197,37 @@ INNER JOIN sys.schemas sch ON sch.schema_id = c.connamespace
 WHERE has_schema_privilege(sch.schema_id, 'USAGE')
 AND c.contype = 'f';
 GRANT SELECT ON sys.foreign_keys TO PUBLIC;
+
+CREATE OR REPLACE VIEW sys.triggers
+AS
+SELECT
+  CAST(p.proname as sys.sysname) as name,
+  CAST(p.oid as int) as object_id,
+  CAST(1 as sys.tinyint) as parent_class,
+  CAST('OBJECT_OR_COLUMN' as sys.nvarchar(60)) AS parent_class_desc,
+  CAST(tr.tgrelid as int) AS parent_id,
+  CAST('TR' as sys.bpchar(2)) AS type,
+  CAST('SQL_TRIGGER' as sys.nvarchar(60)) AS type_desc,
+  CAST(NULL as sys.datetime) AS create_date,
+  CAST(NULL as sys.datetime) AS modify_date,
+  CAST(0 as sys.bit) AS is_ms_shipped,
+  CAST(
+      CASE WHEN tr.tgenabled = 'D'
+      THEN 1
+      ELSE 0
+      END
+      AS sys.bit
+  )	AS is_disabled,
+  CAST(0 as sys.bit) AS is_not_for_replication,
+  CAST(get_bit(CAST(CAST(tr.tgtype as int) as bit(7)),0) as sys.bit) AS is_instead_of_trigger
+FROM pg_proc p
+inner join sys.schemas sch on sch.schema_id = p.pronamespace
+left join pg_trigger tr on tr.tgfoid = p.oid
+where has_schema_privilege(sch.schema_id, 'USAGE')
+and has_function_privilege(p.oid, 'EXECUTE')
+and p.prokind = 'f'
+and format_type(p.prorettype, null) = 'trigger';
+GRANT SELECT ON sys.triggers TO PUBLIC;
 
 ALTER VIEW sys.key_constraints RENAME TO key_constraints_deprecated;
 
@@ -275,6 +340,22 @@ select
     , CAST(pr.is_schema_published as sys.bit) as is_schema_published
  from sys.procedures pr
 union all
+select
+      CAST(tr.name as sys.sysname) as name
+    , CAST(tr.object_id as int) as object_id
+    , CAST(NULL as int) as principal_id
+    , CAST(p.pronamespace as int) as schema_id
+    , CAST(tr.parent_id as int) as parent_object_id
+    , CAST(tr.type as char(2)) as type
+    , CAST(tr.type_desc as sys.nvarchar(60)) as type_desc
+    , CAST(tr.create_date as sys.datetime) as create_date
+    , CAST(tr.modify_date as sys.datetime) as modify_date
+    , CAST(tr.is_ms_shipped as sys.bit) as is_ms_shipped
+    , CAST(0 as sys.bit) as is_published
+    , CAST(0 as sys.bit) as is_schema_published
+  from sys.triggers tr
+  inner join pg_proc p on p.oid = tr.object_id
+union all 
 select
     CAST(def.name as sys.sysname) as name
   , CAST(def.object_id as int) as object_id
@@ -581,15 +662,16 @@ LANGUAGE SQL;
 
 CREATE OR REPLACE VIEW msdb_dbo.syspolicy_system_health_state
 AS
-    SELECT 
-        CAST(0 as BIGINT) AS health_state_id,
-        CAST(0 as INT) AS policy_id,
-        CAST(NULL AS sys.DATETIME) AS last_run_date,
-        CAST('' AS sys.NVARCHAR(400)) AS target_query_expression_with_id,
-        CAST('' AS sys.NVARCHAR) AS target_query_expression,
-        CAST(1 as sys.BIT) AS result
-    WHERE FALSE;
-GRANT SELECT ON msdb_dbo.syspolicy_system_health_state TO sysadmin;
+SELECT 
+    CAST(0 as BIGINT) AS health_state_id,
+    CAST(0 as INT) AS policy_id,
+    CAST(NULL AS sys.DATETIME) AS last_run_date,
+    CAST('' AS sys.NVARCHAR(400)) AS target_query_expression_with_id,
+    CAST('' AS sys.NVARCHAR) AS target_query_expression,
+    CAST(1 as sys.BIT) AS result
+WHERE FALSE;
+GRANT SELECT ON msdb_dbo.syspolicy_system_health_state TO PUBLIC;
+ALTER VIEW msdb_dbo.syspolicy_system_health_state OWNER TO sysadmin;
 
 CREATE OR REPLACE FUNCTION msdb_dbo.fn_syspolicy_is_automation_enabled()
 RETURNS INTEGER
@@ -598,14 +680,44 @@ $fn_body$
     SELECT 0;
 $fn_body$
 LANGUAGE SQL IMMUTABLE PARALLEL SAFE;
+ALTER FUNCTION msdb_dbo.fn_syspolicy_is_automation_enabled() OWNER TO sysadmin;
 
 CREATE OR REPLACE VIEW msdb_dbo.syspolicy_configuration
 AS
-    SELECT
-        CAST(NULL AS sys.SYSNAME) AS name,
-        CAST(NULL AS sys.sql_variant) AS current_value
-    WHERE FALSE; -- Condition will result in view with an empty result set
-GRANT SELECT ON msdb_dbo.syspolicy_configuration TO sysadmin;
+SELECT
+    CAST(NULL AS sys.SYSNAME) AS name,
+    CAST(NULL AS sys.sql_variant) AS current_value
+WHERE FALSE; -- Condition will result in view with an empty result set
+GRANT SELECT ON msdb_dbo.syspolicy_configuration TO PUBLIC;
+ALTER VIEW msdb_dbo.syspolicy_configuration OWNER TO sysadmin;
+
+create or replace view sys.shipped_objects_not_in_sys AS
+-- This portion of view retrieves information on objects that reside in a schema in one specfic database.
+-- For example, 'master_dbo' schema can only exist in the 'master' database.
+-- Internally stored schema name (nspname) must be provided.
+select t.name,t.type, ns.oid as schemaid from
+(
+  values 
+    ('xp_qv','master_dbo','P'),
+    ('xp_instance_regread','master_dbo','P'),
+    ('fn_syspolicy_is_automation_enabled', 'msdb_dbo', 'FN'),
+    ('syspolicy_configuration', 'msdb_dbo', 'V'),
+    ('syspolicy_system_health_state', 'msdb_dbo', 'V')
+) t(name,schema_name, type)
+inner join pg_catalog.pg_namespace ns on t.schema_name = ns.nspname
+
+union all 
+
+-- This portion of view retrieves information on objects that reside in a schema in any number of databases.
+-- For example, 'dbo' schema can exist in the 'master', 'tempdb', 'msdb', and any user created database.
+select t.name,t.type, ns.oid  as schemaid from
+(
+  values 
+    ('sysdatabases','dbo','V')
+) t (name, schema_name, type)
+inner join sys.babelfish_namespace_ext b on t.schema_name=b.orig_name
+inner join pg_catalog.pg_namespace ns on b.nspname = ns.nspname;
+GRANT SELECT ON sys.shipped_objects_not_in_sys TO PUBLIC;
 
 -- Disassociate msdb objects from the extension
 CALL sys.babelfish_remove_object_from_extension('view', 'msdb_dbo.sysdatabases');
@@ -987,6 +1099,44 @@ SELECT
 WHERE FALSE;
 GRANT SELECT ON sys.fulltext_indexes TO PUBLIC;
 
+CREATE OR REPLACE VIEW sys.synonyms
+AS
+SELECT 
+    CAST(obj.name as sys.sysname) AS name
+    , CAST(obj.object_id as int) AS object_id
+    , CAST(obj.principal_id as int) AS principal_id
+    , CAST(obj.schema_id as int) AS schema_id
+    , CAST(obj.parent_object_id as int) AS parent_object_id
+    , CAST(obj.type as sys.bpchar(2)) AS type
+    , CAST(obj.type_desc as sys.nvarchar(60)) AS type_desc
+    , CAST(obj.create_date as sys.datetime) as create_date
+    , CAST(obj.modify_date as sys.datetime) as modify_date
+    , CAST(obj.is_ms_shipped as sys.bit) as is_ms_shipped
+    , CAST(obj.is_published as sys.bit) as is_published
+    , CAST(obj.is_schema_published as sys.bit) as is_schema_published
+    , CAST('' as sys.nvarchar(1035)) AS base_object_name
+FROM sys.objects obj
+WHERE type='SN';
+GRANT SELECT ON sys.synonyms TO PUBLIC;
+
+CREATE OR REPLACE VIEW sys.plan_guides
+AS
+SELECT 
+    CAST(0 as int) AS plan_guide_id
+    , CAST(NULL as sys.sysname) AS name
+    , CAST(NULL as sys.datetime) as create_date
+    , CAST(NULL as sys.datetime) as modify_date
+    , CAST(0 as sys.bit) as is_disabled
+    , CAST('' as sys.nvarchar(4000)) AS query_text
+    , CAST(0 as sys.tinyint) AS scope_type
+    , CAST('' as sys.nvarchar(60)) AS scope_type_desc
+    , CAST(0 as int) AS scope_type_id
+    , CAST('' as sys.nvarchar(4000)) AS scope_batch
+    , CAST('' as sys.nvarchar(4000)) AS parameters
+    , CAST('' as sys.nvarchar(4000)) AS hints
+WHERE FALSE;
+GRANT SELECT ON sys.plan_guides TO PUBLIC;
+
 ALTER FUNCTION OBJECTPROPERTYEX(INT, SYS.VARCHAR) RENAME TO objectpropertyex_deprecated_2_1_0;
 
 CREATE OR REPLACE FUNCTION OBJECTPROPERTYEX(
@@ -1019,6 +1169,87 @@ LANGUAGE plpgsql;
 
 CALL sys.babelfish_drop_deprecated_function('sys', 'objectpropertyex_deprecated_2_1_0');
 
+INSERT INTO sys.babelfish_configurations
+VALUES
+  (
+    1534,
+    'user options',
+    0,
+    0,
+    32767,
+    0,
+    'user options',
+    sys.bitin('1'),
+    sys.bitin('0'),
+    'user options',
+    'user options'
+  ),
+  (
+    115,
+    'nested triggers',
+    1,
+    0,
+    1,
+    1,
+    'Allow triggers to be invoked within triggers',
+    sys.bitin('1'),
+    sys.bitin('0'),
+    'Allow triggers to be invoked within triggers',
+    'Allow triggers to be invoked within triggers'
+  ),
+  (
+    124,
+    'default language',
+    0,
+    0,
+    9999,
+    0,
+    'default language',
+    sys.bitin('1'),
+    sys.bitin('0'),
+    'default language',
+    'default language'
+  ),
+  (
+    1126,               
+    'default full-text language',
+    1033,
+    0,
+    2147483647,
+    1033,
+    'default full-text language',
+    sys.bitin('1'),
+    sys.bitin('1'),
+    'default full-text language',
+    'default full-text language'
+  ),
+  (
+    1127,
+    'two digit year cutoff',
+    2049,
+    1753,
+    9999,
+    2049,
+    'two digit year cutoff',
+    sys.bitin('1'),
+    sys.bitin('1'),
+    'two digit year cutoff',
+    'two digit year cutoff'
+  ),
+  (
+    1555,
+    'transform noise words',
+    0,
+    0,
+    1,
+    0,
+    'Transform noise words for full-text query',
+    sys.bitin('1'),
+    sys.bitin('1'),
+    'Transform noise words for full-text query',
+    'Transform noise words for full-text query'
+  );
+
 CREATE OR REPLACE VIEW sys.spatial_index_tessellations 
 AS
 SELECT 
@@ -1040,6 +1271,249 @@ SELECT
     , CAST(0 as int) as cells_per_object
 WHERE FALSE;
 GRANT SELECT ON sys.spatial_index_tessellations TO PUBLIC;
+create or replace view sys.all_objects as
+select 
+    cast (name as sys.sysname) 
+  , cast (object_id as integer) 
+  , cast ( principal_id as integer)
+  , cast (schema_id as integer)
+  , cast (parent_object_id as integer)
+  , cast (type as char(2))
+  , cast (type_desc as sys.nvarchar(60))
+  , cast (create_date as sys.datetime)
+  , cast (modify_date as sys.datetime)
+  , cast (case when (schema_id::regnamespace::text = 'sys') then 1
+          when name in (select name from sys.shipped_objects_not_in_sys nis 
+                        where nis.name = name and nis.schemaid = schema_id and nis.type = type) then 1 
+          else 0 end as sys.bit) as is_ms_shipped
+  , cast (is_published as sys.bit)
+  , cast (is_schema_published as sys.bit)
+from
+(
+-- details of user defined and system tables
+select
+    t.relname as name
+  , t.oid as object_id
+  , null::integer as principal_id
+  , s.oid as schema_id
+  , 0 as parent_object_id
+  , 'U' as type
+  , 'USER_TABLE' as type_desc
+  , null::timestamp as create_date
+  , null::timestamp as modify_date
+  , 0 as is_ms_shipped
+  , 0 as is_published
+  , 0 as is_schema_published
+from pg_class t inner join pg_namespace s on s.oid = t.relnamespace
+where t.relpersistence in ('p', 'u', 't')
+and t.relkind = 'r'
+and (s.oid in (select schema_id from sys.schemas) or s.nspname = 'sys')
+and has_schema_privilege(s.oid, 'USAGE')
+and has_table_privilege(t.oid, 'SELECT,INSERT,UPDATE,DELETE,TRUNCATE,TRIGGER')
+union all
+-- details of user defined and system views
+select
+    t.relname as name
+  , t.oid as object_id
+  , null::integer as principal_id
+  , s.oid as schema_id
+  , 0 as parent_object_id
+  , 'V'::varchar(2) as type
+  , 'VIEW'::varchar(60) as type_desc
+  , null::timestamp as create_date
+  , null::timestamp as modify_date
+  , 0 as is_ms_shipped
+  , 0 as is_published
+  , 0 as is_schema_published
+from pg_class t inner join pg_namespace s on s.oid = t.relnamespace
+where t.relkind = 'v'
+and (s.oid in (select schema_id from sys.schemas) or s.nspname = 'sys')
+and has_schema_privilege(s.oid, 'USAGE')
+and has_table_privilege(quote_ident(s.nspname) ||'.'||quote_ident(t.relname), 'SELECT,INSERT,UPDATE,DELETE,TRUNCATE,TRIGGER')
+union all
+-- details of user defined and system foreign key constraints
+select
+    c.conname as name
+  , c.oid as object_id
+  , null::integer as principal_id
+  , s.oid as schema_id
+  , c.conrelid as parent_object_id
+  , 'F' as type
+  , 'FOREIGN_KEY_CONSTRAINT'
+  , null::timestamp as create_date
+  , null::timestamp as modify_date
+  , 0 as is_ms_shipped
+  , 0 as is_published
+  , 0 as is_schema_published
+from pg_constraint c
+inner join pg_namespace s on s.oid = c.connamespace
+where (s.oid in (select schema_id from sys.schemas) or s.nspname = 'sys')
+and has_schema_privilege(s.oid, 'USAGE')
+and c.contype = 'f'
+union all
+-- details of user defined and system primary key constraints
+select
+    c.conname as name
+  , c.oid as object_id
+  , null::integer as principal_id
+  , s.oid as schema_id
+  , c.conrelid as parent_object_id
+  , 'PK' as type
+  , 'PRIMARY_KEY_CONSTRAINT' as type_desc
+  , null::timestamp as create_date
+  , null::timestamp as modify_date
+  , 0 as is_ms_shipped
+  , 0 as is_published
+  , 0 as is_schema_published
+from pg_constraint c
+inner join pg_namespace s on s.oid = c.connamespace
+where (s.oid in (select schema_id from sys.schemas) or s.nspname = 'sys')
+and has_schema_privilege(s.oid, 'USAGE')
+and c.contype = 'p'
+union all
+-- details of user defined and system defined procedures
+select
+    p.proname as name
+  , p.oid as object_id
+  , null::integer as principal_id
+  , s.oid as schema_id
+  , cast (case when tr.tgrelid is not null 
+  		       then tr.tgrelid 
+  		       else 0 end as int) 
+    as parent_object_id
+  , case p.prokind
+      when 'p' then 'P'::varchar(2)
+      when 'a' then 'AF'::varchar(2)
+      else
+        case format_type(p.prorettype, null) when 'trigger'
+          then 'TR'::varchar(2)
+          else 'FN'::varchar(2)
+        end
+    end as type
+  , case p.prokind
+      when 'p' then 'SQL_STORED_PROCEDURE'::varchar(60)
+      when 'a' then 'AGGREGATE_FUNCTION'::varchar(60)
+      else
+        case format_type(p.prorettype, null) when 'trigger'
+          then 'SQL_TRIGGER'::varchar(60)
+          else 'SQL_SCALAR_FUNCTION'::varchar(60)
+        end
+    end as type_desc
+  , null::timestamp as create_date
+  , null::timestamp as modify_date
+  , 0 as is_ms_shipped
+  , 0 as is_published
+  , 0 as is_schema_published
+from pg_proc p
+inner join pg_namespace s on s.oid = p.pronamespace
+left join pg_trigger tr on tr.tgfoid = p.oid
+where (s.oid in (select schema_id from sys.schemas) or s.nspname = 'sys')
+and has_schema_privilege(s.oid, 'USAGE')
+and has_function_privilege(p.oid, 'EXECUTE')
+union all
+-- details of all default constraints
+select
+    ('DF_' || o.relname || '_' || d.oid)::name as name
+  , d.oid as object_id
+  , null::int as principal_id
+  , o.relnamespace as schema_id
+  , d.adrelid as parent_object_id
+  , 'D'::char(2) as type
+  , 'DEFAULT_CONSTRAINT'::sys.nvarchar(60) AS type_desc
+  , null::timestamp as create_date
+  , null::timestamp as modify_date
+  , 0 as is_ms_shipped
+  , 0 as is_published
+  , 0 as is_schema_published
+from pg_catalog.pg_attrdef d
+inner join pg_attribute a on a.attrelid = d.adrelid and d.adnum = a.attnum
+inner join pg_class o on d.adrelid = o.oid
+inner join pg_namespace s on s.oid = o.relnamespace
+where a.atthasdef = 't' and a.attgenerated = ''
+and (s.oid in (select schema_id from sys.schemas) or s.nspname = 'sys')
+and has_schema_privilege(s.oid, 'USAGE')
+and has_column_privilege(a.attrelid, a.attname, 'SELECT,INSERT,UPDATE,REFERENCES')
+union all
+-- details of all check constraints
+select
+    c.conname::name
+  , c.oid::integer as object_id
+  , NULL::integer as principal_id 
+  , c.connamespace::integer as schema_id
+  , c.conrelid::integer as parent_object_id
+  , 'C'::char(2) as type
+  , 'CHECK_CONSTRAINT'::sys.nvarchar(60) as type_desc
+  , null::sys.datetime as create_date
+  , null::sys.datetime as modify_date
+  , 0 as is_ms_shipped
+  , 0 as is_published
+  , 0 as is_schema_published
+from pg_catalog.pg_constraint as c
+inner join pg_namespace s on s.oid = c.connamespace
+where (s.oid in (select schema_id from sys.schemas) or s.nspname = 'sys')
+and has_schema_privilege(s.oid, 'USAGE')
+and c.contype = 'c' and c.conrelid != 0
+union all
+-- details of user defined and system defined sequence objects
+select
+  p.relname as name
+  , p.oid as object_id
+  , null::integer as principal_id
+  , s.oid as schema_id
+  , 0 as parent_object_id
+  , 'SO'::varchar(2) as type
+  , 'SEQUENCE_OBJECT'::varchar(60) as type_desc
+  , null::timestamp as create_date
+  , null::timestamp as modify_date
+  , 0 as is_ms_shipped
+  , 0 as is_published
+  , 0 as is_schema_published
+from pg_class p
+inner join pg_namespace s on s.oid = p.relnamespace
+where p.relkind = 'S'
+and (s.oid in (select schema_id from sys.schemas) or s.nspname = 'sys')
+and has_schema_privilege(s.oid, 'USAGE')
+union all
+-- details of user defined table types
+select
+    ('TT_' || tt.name || '_' || tt.type_table_object_id)::name as name
+  , tt.type_table_object_id as object_id
+  , tt.principal_id as principal_id
+  , tt.schema_id as schema_id
+  , 0 as parent_object_id
+  , 'TT'::varchar(2) as type
+  , 'TABLE_TYPE'::varchar(60) as type_desc
+  , null::timestamp as create_date
+  , null::timestamp as modify_date
+  , 1 as is_ms_shipped
+  , 0 as is_published
+  , 0 as is_schema_published
+from sys.table_types tt
+) ot;
+GRANT SELECT ON sys.all_objects TO PUBLIC;
+
+INSERT INTO sys.babelfish_helpcollation VALUES (N'estonian_ci_ai', N'Estonian, case-insensitive, accent-insensitive, kanatype-insensitive, width-insensitive');
+INSERT INTO sys.babelfish_helpcollation VALUES (N'estonian_ci_as', N'Estonian, case-insensitive, accent-sensitive, kanatype-insensitive, width-insensitive');
+INSERT INTO sys.babelfish_helpcollation VALUES (N'estonian_cs_as', N'Estonian, case-sensitive, accent-sensitive, kanatype-insensitive, width-insensitive');
+
+INSERT INTO sys.babelfish_helpcollation VALUES (N'greek_ci_ai', N'Greek, case-insensitive, accent-insensitive, kanatype-insensitive, width-insensitive');
+INSERT INTO sys.babelfish_helpcollation VALUES (N'greek_ci_as', N'Greek, case-insensitive, accent-sensitive, kanatype-insensitive, width-insensitive');
+INSERT INTO sys.babelfish_helpcollation VALUES (N'greek_cs_as', N'Greek, case-sensitive, accent-sensitive, kanatype-insensitive, width-insensitive');
+
+INSERT INTO sys.babelfish_helpcollation VALUES (N'hebrew_ci_ai', N'Hebrew, case-insensitive, accent-insensitive, kanatype-insensitive, width-insensitive');
+INSERT INTO sys.babelfish_helpcollation VALUES (N'hebrew_ci_as', N'Hebrew, case-insensitive, accent-sensitive, kanatype-insensitive, width-insensitives');
+INSERT INTO sys.babelfish_helpcollation VALUES (N'hebrew_cs_as', N'Hebrew, case-sensitive, accent-sensitive, kanatype-insensitive, width-insensitive');
+
+INSERT INTO sys.babelfish_helpcollation VALUES (N'japanese_ci_ai', N'Japanese, case-insensitive, accent-insensitive, kanatype-insensitive, width-insensitive');
+INSERT INTO sys.babelfish_helpcollation VALUES (N'japanese_ci_as', N'Japanese, case-insensitive, accent-sensitive, kanatype-insensitive, width-insensitive');
+INSERT INTO sys.babelfish_helpcollation VALUES (N'japanese_cs_as', N'Japanese, case-sensitive, accent-sensitive, kanatype-insensitive, width-insensitive');
+
+INSERT INTO sys.babelfish_helpcollation VALUES (N'mongolian_ci_ai', N'Mongolian, case-insensitive, accent-insensitive, kanatype-insensitive, width-insensitive');
+INSERT INTO sys.babelfish_helpcollation VALUES (N'mongolian_ci_as', N'Mongolian, case-insensitive, accent-sensitive, kanatype-insensitive, width-insensitive');
+INSERT INTO sys.babelfish_helpcollation VALUES (N'mongolian_cs_as', N'Mongolian, case-sensitive, accent-sensitive, kanatype-insensitive, width-insensitive');
+
+INSERT INTO sys.babelfish_helpcollation VALUES (N'sql_latin1_general_cp874_ci_as', N'Virtual, default locale, code page 874, case-insensitive, accent-sensitive, kanatype-insensitive, width-insensitive');
+INSERT INTO sys.babelfish_helpcollation VALUES (N'sql_latin1_general_cp874_cs_as', N'Virtual, default locale, code page 874, case-sensitive, accent-sensitive, kanatype-insensitive, width-insensitive');
 
 -- Drops the temporary procedure used by the upgrade script.
 -- Please have this be one of the last statements executed in this upgrade script.
@@ -1049,3 +1523,6 @@ DROP PROCEDURE sys.babelfish_drop_deprecated_function(varchar, varchar);
 
 -- Reset search_path to not affect any subsequent scripts
 SELECT set_config('search_path', trim(leading 'sys, ' from current_setting('search_path')), false);
+
+CREATE OR REPLACE FUNCTION sys.language()
+RETURNS sys.NVARCHAR(128)  AS 'babelfishpg_tsql' LANGUAGE C;

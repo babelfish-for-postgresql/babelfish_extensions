@@ -11,6 +11,7 @@
 #include "storage/lock.h"
 #include "utils/builtins.h"
 #include "utils/elog.h"
+#include "utils/lsyscache.h"
 #include "utils/syscache.h"
 #include "datatypes.h"
 
@@ -806,4 +807,26 @@ varchar_to_cstring(const VarChar *varchar)
 	result[len] = '\0';
 
 	return result;
+}
+
+/*
+ * Convert list of schema OIDs to schema names.
+ */
+
+char *
+flatten_search_path(List *oid_list)
+{
+	StringInfoData pathbuf;
+	ListCell   *lc;
+
+	initStringInfo(&pathbuf);
+
+	foreach(lc, oid_list)
+	{
+		Oid			schema_oid = lfirst_oid(lc);
+		char	   *schema_name = get_namespace_name(schema_oid);
+		appendStringInfo(&pathbuf, " %s,", quote_identifier(schema_name));
+	}
+	pathbuf.data[strlen(pathbuf.data) - 1] = '\0';
+	return pathbuf.data;
 }
