@@ -1,5 +1,5 @@
 -- create babelfish collations
-/*
+
 CREATE COLLATION IF NOT EXISTS sys.Arabic_CS_AS (provider = icu, locale = 'ar_SA');
 CREATE COLLATION sys.Arabic_CI_AS (provider = icu, locale = 'ar_SA@colStrength=secondary', deterministic = false);
 CREATE COLLATION sys.Arabic_CI_AI (provider = icu, locale = 'ar_SA@colStrength=primary', deterministic = false);
@@ -139,8 +139,9 @@ CREATE COLLATION sys.Ukrainian_CI_AS (provider = icu, locale = 'uk_UA@colStrengt
 CREATE COLLATION IF NOT EXISTS sys.Vietnamese_CS_AS (provider = icu, locale = 'vi_VN');
 CREATE COLLATION sys.Vietnamese_CI_AI (provider = icu, locale = 'vi_VN@colStrength=primary', deterministic = false);
 CREATE COLLATION sys.Vietnamese_CI_AS (provider = icu, locale = 'vi_VN@colStrength=secondary', deterministic = false);
-*/
+
 -- collation catalog
+/*
 create table sys.babelfish_helpcollation(
     Name VARCHAR(128) NOT NULL,
     Description VARCHAR(1000) NOT NULL
@@ -236,10 +237,6 @@ INSERT INTO sys.babelfish_helpcollation VALUES (N'cyrillic_general_cs_as', N'Cyr
 INSERT INTO sys.babelfish_helpcollation VALUES (N'cyrillic_general_ci_ai', N'Cyrillic-General, case-insensitive, accent-insensitive, kanatype-insensitive, width-insensitive');
 INSERT INTO sys.babelfish_helpcollation VALUES (N'cyrillic_general_ci_as', N'Cyrillic-General, case-insensitive, accent-sensitive, kanatype-insensitive, width-insensitive');
 
-INSERT INTO sys.babelfish_helpcollation VALUES (N'estonian_ci_ai', N'Estonian, case-insensitive, accent-insensitive, kanatype-insensitive, width-insensitive');
-INSERT INTO sys.babelfish_helpcollation VALUES (N'estonian_ci_as', N'Estonian, case-insensitive, accent-sensitive, kanatype-insensitive, width-insensitive');
-INSERT INTO sys.babelfish_helpcollation VALUES (N'estonian_cs_as', N'Estonian, case-sensitive, accent-sensitive, kanatype-insensitive, width-insensitive');
-
 INSERT INTO sys.babelfish_helpcollation VALUES (N'finnish_swedish_cs_as', N'Finnish-Swedish, case-sensitive, accent-sensitive, kanatype-insensitive, width-insensitive');
 INSERT INTO sys.babelfish_helpcollation VALUES (N'finnish_swedish_ci_as', N'Finnish-Swedish, case-insensitive, accent-sensitive, kanatype-insensitive, width-insensitive');
 INSERT INTO sys.babelfish_helpcollation VALUES (N'finnish_swedish_ci_ai', N'Finnish-Swedish, case-insensitive, accent-insensitive, kanatype-insensitive, width-insensitive');
@@ -247,18 +244,6 @@ INSERT INTO sys.babelfish_helpcollation VALUES (N'finnish_swedish_ci_ai', N'Finn
 INSERT INTO sys.babelfish_helpcollation VALUES (N'french_cs_as', N'French, case-sensitive, accent-sensitive, kanatype-insensitive, width-insensitive');
 INSERT INTO sys.babelfish_helpcollation VALUES (N'french_ci_as', N'French, case-insensitive, accent-sensitive, kanatype-insensitive, width-insensitive');
 INSERT INTO sys.babelfish_helpcollation VALUES (N'french_ci_ai', N'French, case-insensitive, accent-insensitive, kanatype-insensitive, width-insensitive');
-
-INSERT INTO sys.babelfish_helpcollation VALUES (N'greek_ci_ai', N'Greek, case-insensitive, accent-insensitive, kanatype-insensitive, width-insensitive');
-INSERT INTO sys.babelfish_helpcollation VALUES (N'greek_ci_as', N'Greek, case-insensitive, accent-sensitive, kanatype-insensitive, width-insensitive');
-INSERT INTO sys.babelfish_helpcollation VALUES (N'greek_cs_as', N'Greek, case-sensitive, accent-sensitive, kanatype-insensitive, width-insensitive');
-
-INSERT INTO sys.babelfish_helpcollation VALUES (N'hebrew_ci_ai', N'Hebrew, case-insensitive, accent-insensitive, kanatype-insensitive, width-insensitive');
-INSERT INTO sys.babelfish_helpcollation VALUES (N'hebrew_ci_as', N'Hebrew, case-insensitive, accent-sensitive, kanatype-insensitive, width-insensitives');
-INSERT INTO sys.babelfish_helpcollation VALUES (N'hebrew_cs_as', N'Hebrew, case-sensitive, accent-sensitive, kanatype-insensitive, width-insensitive');
-
-INSERT INTO sys.babelfish_helpcollation VALUES (N'japanese_ci_ai', N'Japanese, case-insensitive, accent-insensitive, kanatype-insensitive, width-insensitive');
-INSERT INTO sys.babelfish_helpcollation VALUES (N'japanese_ci_as', N'Japanese, case-insensitive, accent-sensitive, kanatype-insensitive, width-insensitive');
-INSERT INTO sys.babelfish_helpcollation VALUES (N'japanese_cs_as', N'Japanese, case-sensitive, accent-sensitive, kanatype-insensitive, width-insensitive');
 
 INSERT INTO sys.babelfish_helpcollation VALUES (N'korean_wansung_cs_as', N'Korean-Wansung, case-sensitive, accent-sensitive, kanatype-insensitive, width-insensitive');
 INSERT INTO sys.babelfish_helpcollation VALUES (N'korean_wansung_ci_as', N'Korean-Wansung, case-insensitive, accent-sensitive, kanatype-insensitive, width-insensitive');
@@ -277,10 +262,6 @@ INSERT INTO sys.babelfish_helpcollation VALUES (N'latin1_general_cs_as', N'Virtu
 INSERT INTO sys.babelfish_helpcollation VALUES (N'modern_spanish_cs_as', N'Traditional-Spanish, case-sensitive, accent-sensitive, kanatype-insensitive, width-insensitive');
 INSERT INTO sys.babelfish_helpcollation VALUES (N'modern_spanish_ci_as', N'Traditional-Spanish, case-insensitive, accent-sensitive, kanatype-insensitive, width-insensitive');
 INSERT INTO sys.babelfish_helpcollation VALUES (N'modern_spanish_ci_ai', N'Traditional-Spanish, case-insensitive, accent-insensitive, kanatype-insensitive, width-insensitive');
-
-INSERT INTO sys.babelfish_helpcollation VALUES (N'mongolian_ci_ai', N'Mongolian, case-insensitive, accent-insensitive, kanatype-insensitive, width-insensitive');
-INSERT INTO sys.babelfish_helpcollation VALUES (N'mongolian_ci_as', N'Mongolian, case-insensitive, accent-sensitive, kanatype-insensitive, width-insensitive');
-INSERT INTO sys.babelfish_helpcollation VALUES (N'mongolian_cs_as', N'Mongolian, case-sensitive, accent-sensitive, kanatype-insensitive, width-insensitive');
 
 INSERT INTO sys.babelfish_helpcollation VALUES (N'polish_cs_as', N'Polish, case-sensitive, accent-sensitive, kanatype-insensitive, width-insensitive');
 INSERT INTO sys.babelfish_helpcollation VALUES (N'polish_ci_as', N'Polish, case-insensitive, accent-sensitive, kanatype-insensitive, width-insensitive');
@@ -316,9 +297,6 @@ INSERT INTO sys.babelfish_helpcollation VALUES (N'sql_latin1_general_cp1257_cs_a
 INSERT INTO sys.babelfish_helpcollation VALUES (N'sql_latin1_general_cp1258_ci_as', N'Virtual, default locale, code page 1258, case-insensitive, accent-sensitive, kanatype-insensitive, width-insensitive');
 INSERT INTO sys.babelfish_helpcollation VALUES (N'sql_latin1_general_cp1258_cs_as', N'Virtual, default locale, code page 1258, case-sensitive, accent-sensitive, kanatype-insensitive, width-insensitive');
 
-INSERT INTO sys.babelfish_helpcollation VALUES (N'sql_latin1_general_cp874_ci_as', N'Virtual, default locale, code page 874, case-insensitive, accent-sensitive, kanatype-insensitive, width-insensitive');
-INSERT INTO sys.babelfish_helpcollation VALUES (N'sql_latin1_general_cp874_cs_as', N'Virtual, default locale, code page 874, case-sensitive, accent-sensitive, kanatype-insensitive, width-insensitive');
-
 INSERT INTO sys.babelfish_helpcollation VALUES (N'thai_cs_as', N'Thai, case-sensitive, accent-sensitive, kanatype-insensitive, width-insensitive');
 INSERT INTO sys.babelfish_helpcollation VALUES (N'thai_ci_as', N'Thai, case-insensitive, accent-sensitive, kanatype-insensitive, width-insensitive');
 INSERT INTO sys.babelfish_helpcollation VALUES (N'thai_ci_ai', N'Thai, case-insensitive, accent-insensitive, kanatype-insensitive, width-insensitive');
@@ -338,12 +316,11 @@ INSERT INTO sys.babelfish_helpcollation VALUES (N'ukrainian_ci_ai', N'Ukrainian,
 INSERT INTO sys.babelfish_helpcollation VALUES (N'vietnamese_cs_as', N'Vietnamese, case-sensitive, accent-sensitive, kanatype-insensitive, width-insensitive');
 INSERT INTO sys.babelfish_helpcollation VALUES (N'vietnamese_ci_as', N'Vietnamese, case-insensitive, accent-sensitive, kanatype-insensitive, width-insensitive');
 INSERT INTO sys.babelfish_helpcollation VALUES (N'vietnamese_ci_ai', N'Vietnamese, case-insensitive, accent-insensitive, kanatype-insensitive, width-insensitive');
-
-/*
+*/
 DROP FUNCTION IF EXISTS sys.get_babel_server_collation_oid;
 CREATE OR REPLACE FUNCTION sys.get_babel_server_collation_oid() RETURNS OID
 LANGUAGE C
-AS 'babelfishpg_tsql', 'get_server_collation_oid';
+AS 'babelfishpg_common', 'get_server_collation_oid';
 
 DROP PROCEDURE IF EXISTS sys.init_database_collation_oid;
 CREATE OR REPLACE PROCEDURE sys.init_server_collation_oid()
@@ -363,14 +340,13 @@ CALL sys.init_server_collation_oid();
 -- Fill in the oids in coll_infos
 CREATE OR REPLACE PROCEDURE sys.babel_collation_initializer()
 LANGUAGE C
-AS 'babelfishpg_tsql', 'init_collid_trans_tab';
+AS 'babelfishpg_common', 'init_collid_trans_tab_common';
 CALL sys.babel_collation_initializer();
 DROP PROCEDURE sys.babel_collation_initializer;
 
 -- Manually initialize like mapping table
 CREATE OR REPLACE PROCEDURE sys.babel_like_ilike_info_initializer()
 LANGUAGE C
-AS 'babelfishpg_tsql', 'init_like_ilike_table';
+AS 'babelfishpg_common', 'init_like_ilike_table_common';
 CALL sys.babel_like_ilike_info_initializer();
 DROP PROCEDURE sys.babel_like_ilike_info_initializer;
-*/

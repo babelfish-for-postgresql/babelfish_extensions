@@ -5,6 +5,10 @@
 #include "nodes/nodeFuncs.h"
 #include "nodes/pathnodes.h"
 
+
+extern char *pltsql_default_locale;
+extern char *pltsql_server_collation_name;
+
 /* Set default encoding to UTF8 */
 #define COLL_DEFAULT_ENCODING PG_UTF8
 

@@ -488,25 +488,25 @@ BEGIN
         FROM babelfish_split_object_name(cs_as_object_name) s;
 
         -- Invalid object_name
-        IF obj_name IS NULL OR obj_name = '' THEN
+        IF obj_name IS NULL OR obj_name = '' collate sys.database_default THEN
             RETURN NULL;
         END IF;
 
-        IF bbf_schema_name IS NULL OR bbf_schema_name = '' THEN
+        IF bbf_schema_name IS NULL OR bbf_schema_name = '' collate sys.database_default THEN
             bbf_schema_name := sys.schema_name();
         END IF;
 
         schema_name := sys.bbf_get_current_physical_schema_name(bbf_schema_name);
 
         -- Check if looking for temp object.
-        is_temp_object = left(obj_name, 1) = '#';
+        is_temp_object = left(obj_name, 1) = '#' collate sys.database_default;
 
         -- Can only search in current database. Allowing tempdb for temp objects.
-        IF db_name IS NOT NULL AND db_name <> db_name() AND db_name <> 'tempdb' THEN
+        IF db_name IS NOT NULL AND db_name collate sys.database_default <> db_name() AND db_name collate sys.database_default <> 'tempdb' THEN
             RAISE EXCEPTION 'Can only do lookup in current database.';
         END IF;
 
-        IF schema_name IS NULL OR schema_name = '' THEN
+        IF schema_name IS NULL OR schema_name = '' collate sys.database_default THEN
             RETURN NULL;
         END IF;
 
@@ -519,26 +519,26 @@ BEGIN
         if obj_type <> '' then
             case
                 -- Schema does not apply as much to temp objects.
-                when upper(obj_type) in ('S', 'U', 'V', 'IT', 'ET', 'SO') and is_temp_object then
-                    id := (select reloid from sys.babelfish_get_enr_list() where lower(relname) = obj_name limit 1);
+                when upper(object_type) in ('S', 'U', 'V', 'IT', 'ET', 'SO') and is_temp_object then
+	            id := (select reloid from sys.babelfish_get_enr_list() where lower(relname) collate sys.database_default = obj_name limit 1);
 
-                when upper(obj_type) in ('S', 'U', 'V', 'IT', 'ET', 'SO') and not is_temp_object then
-                    id := (select oid from pg_class where lower(relname) = obj_name 
+                when upper(object_type) in ('S', 'U', 'V', 'IT', 'ET', 'SO') and not is_temp_object then
+	            id := (select oid from pg_class where lower(relname) collate sys.database_default = obj_name 
                             and relnamespace = schema_oid limit 1);
 
-                when upper(obj_type) in ('C', 'D', 'F', 'PK', 'UQ') then
-                    id := (select oid from pg_constraint where lower(conname) = obj_name 
+                when upper(object_type) in ('C', 'D', 'F', 'PK', 'UQ') then
+	            id := (select oid from pg_constraint where lower(conname) collate sys.database_default = obj_name 
                             and connamespace = schema_oid limit 1);
 
-                when upper(obj_type) in ('AF', 'FN', 'FS', 'FT', 'IF', 'P', 'PC', 'TF', 'RF', 'X') then
-                    id := (select oid from pg_proc where lower(proname) = obj_name 
+                when upper(object_type) in ('AF', 'FN', 'FS', 'FT', 'IF', 'P', 'PC', 'TF', 'RF', 'X') then
+	            id := (select oid from pg_proc where lower(proname) collate sys.database_default = obj_name 
                             and pronamespace = schema_oid limit 1);
 
-                when upper(obj_type) in ('TR', 'TA') then
-                    id := (select oid from pg_trigger where lower(tgname) = obj_name limit 1);
+                when upper(object_type) in ('TR', 'TA') then
+	            id := (select oid from pg_trigger where lower(tgname) collate sys.database_default = obj_name limit 1);
 
                 -- Throwing exception as a reminder to add support in the future.
-                when upper(obj_type) in ('R', 'EC', 'PG', 'SN', 'SQ', 'TT') then
+                when upper(object_type) collate sys.database_default in ('R', 'EC', 'PG', 'SN', 'SQ', 'TT') then
                     RAISE EXCEPTION 'Object type currently unsupported.';
 
                 -- unsupported obj_type
@@ -561,7 +561,7 @@ BEGIN
                 );
             else
                 -- temp object without "object_type" in-argument
-                id := (select reloid from sys.babelfish_get_enr_list() where lower(relname) = obj_name limit 1);
+                id := (select reloid from sys.babelfish_get_enr_list() where lower(relname) collate sys.database_default = obj_name limit 1);
             end if;
         end if;
 
@@ -848,19 +848,19 @@ begin
   if pattern is null or expression is null then
     return null;
   end if;
-  if left(pattern, 1) = '%' then
+  if left(pattern, 1) = '%' collate sys.database_default then
     v_regexp_pattern := regexp_replace(pattern, '^%', '%#"', 'i');
   else
     v_regexp_pattern := '#"' || pattern;
   end if;
 
-  if right(pattern, 1) = '%' then
+  if right(pattern, 1) = '%' collate sys.database_default then
     v_regexp_pattern := regexp_replace(v_regexp_pattern, '%$', '#"%', 'i');
   else
    v_regexp_pattern := v_regexp_pattern || '#"';
   end if;
   v_find_result := substring(expression, v_regexp_pattern, '#');
-  if v_find_result <> '' then
+  if v_find_result <> '' collate sys.database_default then
     v_pos := strpos(expression, v_find_result);
   else
     v_pos := 0;
@@ -1673,11 +1673,11 @@ value	sys.sql_variant
 as $$
 begin
 -- currently only support COLUMN property
-IF (((coalesce(property_name COLLATE "C", '')) = '') or
-    ((UPPER(coalesce(property_name COLLATE "C", ''))) = 'COLUMN' COLLATE "C")) THEN
-    IF (((LOWER(coalesce(level0_object_type COLLATE "C", ''))) = 'schema' COLLATE "C") and
-	 	    ((LOWER(coalesce(level1_object_type COLLATE "C", ''))) = 'table' COLLATE "C") and
-	 	    ((LOWER(coalesce(level2_object_type COLLATE "C", ''))) = 'column' COLLATE "C")) THEN
+IF (((SELECT coalesce(property_name COLLATE sys.database_default, '')) = '') or
+    ((SELECT UPPER(coalesce(property_name COLLATE sys.database_default, ''))) = 'COLUMN')) THEN
+	IF (((SELECT LOWER(coalesce(level0_object_type COLLATE sys.database_default, ''))) = 'schema') and
+	    ((SELECT LOWER(coalesce(level1_object_type COLLATE sys.database_default, ''))) = 'table') and
+	    ((SELECT LOWER(coalesce(level2_object_type COLLATE sys.database_default, ''))) = 'column')) THEN
 		RETURN query 
 		select CAST('COLUMN' AS sys.sysname) as objtype,
 		       CAST(t3.column_name AS sys.sysname) as objname,
@@ -1685,9 +1685,9 @@ IF (((coalesce(property_name COLLATE "C", '')) = '') or
 		       t1.value as value
 		from sys.extended_properties t1, pg_catalog.pg_class t2, information_schema.columns t3
 		where t1.major_id = t2.oid and 
-			  t2.relname = t3.table_name and 
-              t2.relname = (coalesce(level1_object_name COLLATE "C", '')) and 
-              t3.column_name = (coalesce(level2_object_name COLLATE "C", ''));
+			  t2.relname = cast(t3.table_name as sys.sysname) COLLATE sys.database_default and 
+		      t2.relname = (SELECT coalesce(level1_object_name COLLATE sys.database_default, '')) COLLATE sys.database_default and 
+			  t3.column_name = (SELECT coalesce(level2_object_name COLLATE sys.database_default, '')) COLLATE sys.database_default;
 	END IF;
 END IF;
 RETURN;
@@ -2133,23 +2133,23 @@ RETURNS integer
 LANGUAGE plpgsql
 AS $$
 DECLARE
-    db_name text COLLATE "C"; 
+    db_name text COLLATE sys.database_default; 
     bbf_schema_name text;
-    pg_schema text COLLATE "C";
+    pg_schema text COLLATE sys.database_default;
     implied_dbo_permissions boolean;
     fully_supported boolean;
-    object_name text COLLATE "C";
+    object_name text COLLATE sys.database_default;
     database_id smallint;
     namespace_id oid;
     object_type text;
     function_signature text;
     qualified_name text;
     return_value integer;
-    cs_as_securable text COLLATE "C" := securable;
-    cs_as_securable_class text COLLATE "C" := securable_class;
-    cs_as_permission text COLLATE "C" := permission;
-    cs_as_sub_securable text COLLATE "C" := sub_securable;
-    cs_as_sub_securable_class text COLLATE "C" := sub_securable_class;
+   	cs_as_securable text COLLATE sys.database_default := securable;
+    cs_as_securable_class text COLLATE sys.database_default := securable_class;
+    cs_as_permission text COLLATE sys.database_default := permission;
+    cs_as_sub_securable text COLLATE sys.database_default := sub_securable;
+    cs_as_sub_securable_class text COLLATE sys.database_default := sub_securable_class;
 BEGIN
     return_value := NULL;
 
@@ -2272,7 +2272,7 @@ BEGIN
     -- Surround with double-quotes to handle names that contain periods/spaces
     qualified_name := concat('"', pg_schema, '"."', object_name, '"');
 
-    SELECT oid INTO namespace_id FROM pg_catalog.pg_namespace WHERE nspname = pg_schema;
+    SELECT oid INTO namespace_id FROM pg_catalog.pg_namespace WHERE nspname = pg_schema COLLATE sys.database_default;
 
     object_type := (
         SELECT CASE
@@ -2291,20 +2291,20 @@ BEGIN
 
             WHEN (SELECT count(relname) 
                     FROM pg_catalog.pg_class 
-                    WHERE relname = object_name 
+                    WHERE relname = object_name COLLATE sys.database_default
                         AND relnamespace = namespace_id) = 1
                 THEN 'table'
 
             WHEN (SELECT count(proname) 
                     FROM pg_catalog.pg_proc 
-                    WHERE proname = object_name 
+                    WHERE proname = object_name COLLATE sys.database_default 
                         AND pronamespace = namespace_id
                         AND prokind = 'f') = 1
                 THEN 'function'
                 
             WHEN (SELECT count(proname) 
                     FROM pg_catalog.pg_proc 
-                    WHERE proname = object_name 
+                    WHERE proname = object_name COLLATE sys.database_default
                         AND pronamespace = namespace_id
                         AND prokind = 'p') = 1
                 THEN 'procedure'
@@ -2322,7 +2322,7 @@ BEGIN
         SELECT CAST(oid AS regprocedure) 
             INTO function_signature 
             FROM pg_catalog.pg_proc 
-            WHERE proname = object_name 
+            WHERE proname = object_name COLLATE sys.database_default
                 AND pronamespace = namespace_id;
     END IF;
 
@@ -2433,9 +2433,9 @@ begin
 	return_value := (
 					select 
 						case  LOWER(property_name)
-							when 'charmaxlen' then 
+							when 'charmaxlen' COLLATE sys.database_default then 
 								(select CASE WHEN a.atttypmod > 0 THEN a.atttypmod - extra_bytes ELSE NULL END  from pg_catalog.pg_attribute a where a.attrelid = object_id and a.attname = property)
-							when 'allowsnull' then
+							when 'allowsnull' COLLATE sys.database_default then
 								(select CASE WHEN a.attnotnull THEN 0 ELSE 1 END from pg_catalog.pg_attribute a where a.attrelid = object_id and a.attname = property)
 							else
 								null

@@ -1,7 +1,7 @@
 /* Tsql system catalog views */
 create or replace view sys.tables as
 select
-  CAST(t.relname as sys._ci_sysname) as name
+  CAST(t.relname as sys._ci_sysname) as name -- should we change datatype to sys.sysname which might fix BABEL-3110.sql test
   , CAST(t.oid as int) as object_id
   , CAST(NULL as int) as principal_id
   , CAST(sch.schema_id as int) as schema_id
@@ -241,7 +241,7 @@ AS $$
 DECLARE
 	max_length SMALLINT;
 	precision INT;
-	v_type TEXT COLLATE "C" := type;
+	v_type TEXT collate sys.database_default := type;
 BEGIN
 	-- unknown tsql type
 	IF v_type IS NULL THEN
@@ -282,24 +282,24 @@ BEGIN
 
 	IF typemod = -1 THEN
 		CASE 
-		WHEN v_type in ('image', 'text', 'ntext') THEN max_length = 16;
-		WHEN v_type = 'sql_variant' THEN max_length = 8016;
-		WHEN v_type in ('varbinary', 'varchar', 'nvarchar') THEN 
+		WHEN v_type collate sys.database_default in ('image', 'text', 'ntext') THEN max_length = 16;
+		WHEN v_type collate sys.database_default = 'sql_variant' THEN max_length = 8016;
+		WHEN v_type collate sys.database_default in ('varbinary', 'varchar', 'nvarchar') THEN 
 			IF for_sys_types THEN max_length = 8000;
 			ELSE max_length = -1;
 			END IF;
-		WHEN v_type in ('binary', 'char', 'bpchar', 'nchar') THEN max_length = 8000;
-		WHEN v_type in ('decimal', 'numeric') THEN max_length = 17;
+		WHEN v_type collate sys.database_default in ('binary', 'char', 'bpchar', 'nchar') THEN max_length = 8000;
+		WHEN v_type collate sys.database_default in ('decimal', 'numeric') THEN max_length = 17;
 		ELSE max_length = typemod;
 		END CASE;
 		RETURN max_length;
 	END IF;
 
 	CASE
-	WHEN v_type in ('char', 'bpchar', 'varchar', 'binary', 'varbinary') THEN max_length = typemod - 4;
-	WHEN v_type in ('nchar', 'nvarchar') THEN max_length = (typemod - 4) * 2;
-	WHEN v_type = 'sysname' THEN max_length = (typemod - 4) * 2;
-	WHEN v_type in ('numeric', 'decimal') THEN
+	WHEN v_type collate sys.database_default in ('char', 'bpchar', 'varchar', 'binary', 'varbinary') THEN max_length = typemod - 4;
+	WHEN v_type collate sys.database_default in ('nchar', 'nvarchar') THEN max_length = (typemod - 4) * 2;
+	WHEN v_type collate sys.database_default = 'sysname' THEN max_length = (typemod - 4) * 2;
+	WHEN v_type collate sys.database_default in ('numeric', 'decimal') THEN
 		precision = ((typemod - 4) >> 16) & 65535;
 		IF precision >= 1 and precision <= 9 THEN max_length = 5;
 		ELSIF precision <= 19 THEN max_length = 9;
@@ -726,7 +726,7 @@ SELECT
   , CAST(sys.babelfish_get_sequence_value(pg_get_serial_sequence(quote_ident(ext.nspname)||'.'||quote_ident(c.relname), a.attname)) AS SQL_VARIANT) AS last_value
   , CAST(0 as sys.BIT) as is_not_for_replication
 FROM sys.columns_internal() sc
-INNER JOIN pg_attribute a ON sc.out_name = a.attname AND sc.out_column_id = a.attnum
+INNER JOIN pg_attribute a ON sc.out_name = cast(a.attname as sys.sysname) COLLATE sys.database_default AND sc.out_column_id = a.attnum
 INNER JOIN pg_class c ON c.oid = a.attrelid
 INNER JOIN sys.pg_namespace_ext ext ON ext.oid = c.relnamespace
 WHERE NOT a.attisdropped
@@ -999,7 +999,7 @@ GRANT SELECT ON sys.sysprocesses TO PUBLIC;
 
 create or replace view sys.types As
 -- For System types
-select tsql_type_name as name
+select tsql_type_name collate sys.database_default as name
   , t.oid as system_type_id
   , t.oid as user_type_id
   , s.oid as schema_id
@@ -1009,7 +1009,7 @@ select tsql_type_name as name
   , cast(sys.tsql_type_scale_helper(tsql_type_name, t.typtypmod, false) as int) as scale
   , CASE c.collname
     WHEN 'default' THEN cast(current_setting('babelfishpg_tsql.server_collation_name') as name)
-    ELSE  c.collname
+    ELSE  c.collname collate "C"
     END as collation_name
   , case when typnotnull then 0 else 1 end as is_nullable
   , 0 as is_user_defined
@@ -1026,7 +1026,7 @@ and pg_type_is_visible(t.oid)
 and (s.nspname = 'pg_catalog' OR s.nspname = 'sys')
 union all 
 -- For User Defined Types
-select cast(t.typname as text) as name
+select cast(t.typname as text) collate sys.database_default as name
   , t.typbasetype as system_type_id
   , t.oid as user_type_id
   , s.oid as schema_id
@@ -1078,7 +1078,7 @@ GRANT SELECT ON sys.table_types TO PUBLIC;
 
 create or replace view sys.default_constraints
 AS
-select CAST(('DF_' || tab.name || '_' || d.oid) as sys.sysname) as name
+select CAST(('DF_' || tab.name collate "C" || '_' || d.oid) as sys.sysname) as name
   , CAST(d.oid as int) as object_id
   , CAST(null as int) as principal_id
   , CAST(tab.schema_id as int) as schema_id
@@ -1140,7 +1140,7 @@ select t.name,t.type, ns.oid as schemaid from
     ('syspolicy_configuration', 'msdb_dbo', 'V'),
     ('syspolicy_system_health_state', 'msdb_dbo', 'V')
 ) t(name,schema_name, type)
-inner join pg_catalog.pg_namespace ns on t.schema_name = ns.nspname
+inner join pg_catalog.pg_namespace ns on cast(t.schema_name as sys.sysname) = cast(ns.nspname as sys.sysname)
 
 union all 
 
@@ -1151,8 +1151,8 @@ select t.name,t.type, ns.oid  as schemaid from
   values 
     ('sysdatabases','dbo','V')
 ) t (name, schema_name, type)
-inner join sys.babelfish_namespace_ext b on t.schema_name=b.orig_name
-inner join pg_catalog.pg_namespace ns on b.nspname = ns.nspname;
+inner join sys.babelfish_namespace_ext b on t.schema_name=b.orig_name COLLATE sys.database_default
+inner join pg_catalog.pg_namespace ns on b.nspname = ns.nspname COLLATE sys.database_default;
 GRANT SELECT ON sys.shipped_objects_not_in_sys TO PUBLIC;
 
 create or replace view sys.all_objects as
@@ -1166,9 +1166,9 @@ select
   , cast (type_desc as sys.nvarchar(60))
   , cast (create_date as sys.datetime)
   , cast (modify_date as sys.datetime)
-  , cast (case when (schema_id::regnamespace::text = 'sys') then 1
+  , cast (case when (schema_id::regnamespace::text = 'sys' collate sys.database_default) then 1
           when name in (select name from sys.shipped_objects_not_in_sys nis 
-                        where nis.name = name and nis.schemaid = schema_id and nis.type = type) then 1 
+                        where nis.name = name collate sys.database_default and nis.schemaid = schema_id and nis.type = type collate sys.database_default) then 1 
           else 0 end as sys.bit) as is_ms_shipped
   , cast (is_published as sys.bit)
   , cast (is_schema_published as sys.bit)
@@ -1176,7 +1176,7 @@ from
 (
 -- details of user defined and system tables
 select
-    t.relname as name
+    t.relname collate sys.database_default as name
   , t.oid as object_id
   , null::integer as principal_id
   , s.oid as schema_id
@@ -1197,7 +1197,7 @@ and has_table_privilege(t.oid, 'SELECT,INSERT,UPDATE,DELETE,TRUNCATE,TRIGGER')
 union all
 -- details of user defined and system views
 select
-    t.relname as name
+    t.relname collate sys.database_default as name
   , t.oid as object_id
   , null::integer as principal_id
   , s.oid as schema_id
@@ -1217,7 +1217,7 @@ and has_table_privilege(quote_ident(s.nspname) ||'.'||quote_ident(t.relname), 'S
 union all
 -- details of user defined and system foreign key constraints
 select
-    c.conname as name
+    c.conname  collate database_default as name
   , c.oid as object_id
   , null::integer as principal_id
   , s.oid as schema_id
@@ -1237,7 +1237,7 @@ and c.contype = 'f'
 union all
 -- details of user defined and system primary key constraints
 select
-    c.conname as name
+    c.conname collate sys.database_default as name
   , c.oid as object_id
   , null::integer as principal_id
   , s.oid as schema_id
@@ -1257,7 +1257,7 @@ and c.contype = 'p'
 union all
 -- details of user defined and system defined procedures
 select
-    p.proname as name
+    p.proname collate sys.database_default as name 
   , p.oid as object_id
   , null::integer as principal_id
   , s.oid as schema_id
@@ -1297,7 +1297,7 @@ and has_function_privilege(p.oid, 'EXECUTE')
 union all
 -- details of all default constraints
 select
-    ('DF_' || o.relname || '_' || d.oid)::name as name
+    ('DF_' || o.relname collate sys.database_default || '_' || d.oid)::name collate sys.database_default as name
   , d.oid as object_id
   , null::int as principal_id
   , o.relnamespace as schema_id
@@ -1320,7 +1320,7 @@ and has_column_privilege(a.attrelid, a.attname, 'SELECT,INSERT,UPDATE,REFERENCES
 union all
 -- details of all check constraints
 select
-    c.conname::name
+    c.conname::name  collate sys.database_default
   , c.oid::integer as object_id
   , NULL::integer as principal_id 
   , c.connamespace::integer as schema_id
@@ -1340,7 +1340,7 @@ and c.contype = 'c' and c.conrelid != 0
 union all
 -- details of user defined and system defined sequence objects
 select
-  p.relname as name
+  p.relname collate sys.database_default as name
   , p.oid as object_id
   , null::integer as principal_id
   , s.oid as schema_id
@@ -1360,7 +1360,7 @@ and has_schema_privilege(s.oid, 'USAGE')
 union all
 -- details of user defined table types
 select
-    ('TT_' || tt.name || '_' || tt.type_table_object_id)::name as name
+    ('TT_' || tt.name collate sys.database_default || '_' || tt.type_table_object_id)::name  collate sys.database_default as name
   , tt.type_table_object_id as object_id
   , tt.principal_id as principal_id
   , tt.schema_id as schema_id
@@ -1402,7 +1402,7 @@ select
   , CAST(0 as sys.BIT) AS has_unchecked_assembly_data
   , CAST(
       CASE 
-        WHEN (v.check_option = 'NONE') 
+        WHEN (v.check_option = 'NONE' COLLATE sys.database_default) 
           THEN 0
         ELSE 1
       END
@@ -1410,7 +1410,7 @@ select
   , CAST(0 as sys.BIT) AS is_date_correlation_view
 from sys.all_objects t
 INNER JOIN pg_namespace ns ON t.schema_id = ns.oid
-INNER JOIN information_schema.views v ON t.name = v.table_name AND ns.nspname = v.table_schema
+INNER JOIN information_schema.views v ON t.name = cast(v.table_name as sys.sysname) AND ns.nspname = v.table_schema
 where t.type = 'V';
 GRANT SELECT ON sys.all_views TO PUBLIC;
 
@@ -1588,7 +1588,7 @@ and p.relkind = 'S'
 and has_schema_privilege(s.schema_id, 'USAGE')
 union all
 select
-    CAST(('TT_' || tt.name || '_' || tt.type_table_object_id) as sys.sysname) as name
+    CAST(('TT_' || tt.name collate "C" || '_' || tt.type_table_object_id) as sys.sysname) as name
   , CAST(tt.type_table_object_id as int) as object_id
   , CAST(tt.principal_id as int) as principal_id
   , CAST(tt.schema_id as int) as schema_id
@@ -1770,7 +1770,7 @@ SELECT out_object_id as object_id
   , 1::sys.bit AS uses_database_collation
   , 0::sys.bit AS is_persisted
 FROM sys.columns_internal() sc
-INNER JOIN pg_attribute a ON sc.out_name = a.attname AND sc.out_column_id = a.attnum
+INNER JOIN pg_attribute a ON sc.out_name = a.attname COLLATE sys.database_default AND sc.out_column_id = a.attnum
 INNER JOIN pg_attrdef d ON d.adrelid = a.attrelid AND d.adnum = a.attnum
 WHERE a.attgenerated = 's' AND sc.out_is_computed::integer = 1;
 GRANT SELECT ON sys.computed_columns TO PUBLIC;
@@ -1834,7 +1834,7 @@ select params.parameter_name::sys.sysname
   , coll.oid::int
   , params.numeric_precision::smallint
   , params.numeric_scale::int
-  , case params.parameter_mode when 'OUT' then 1 when 'INOUT' then 1 else 0 end
+  , case params.parameter_mode when 'OUT' COLLATE sys.database_default then 1 when 'INOUT' COLLATE sys.database_default then 1 else 0 end
   , params.collation_name::sys.sysname
 from information_schema.routines routine
 left join information_schema.parameters params
@@ -2612,9 +2612,9 @@ SELECT
   CAST(pt.tgfoid as int) AS object_id
   , CAST(
       CASE 
-        WHEN tr.event_manipulation='INSERT' THEN 1
-        WHEN tr.event_manipulation='UPDATE' THEN 2
-        WHEN tr.event_manipulation='DELETE' THEN 3
+        WHEN tr.event_manipulation='INSERT' COLLATE sys.database_default THEN 1
+        WHEN tr.event_manipulation='UPDATE' COLLATE sys.database_default THEN 2
+        WHEN tr.event_manipulation='DELETE' COLLATE sys.database_default THEN 3
         ELSE 1
       END as int
   ) AS type

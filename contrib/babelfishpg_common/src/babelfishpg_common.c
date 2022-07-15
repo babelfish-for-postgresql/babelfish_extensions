@@ -7,6 +7,8 @@
 #include "optimizer/planner.h"
 #include "parser/parse_collate.h"
 #include "parser/parse_target.h"
+#include "parser/scansup.h"  /* downcase_identifier */
+#include "utils/guc.h"
 
 #include "collation.h"
 #include "encoding/encoding.h"
@@ -15,6 +17,9 @@
 extern Datum init_tcode_trans_tab(PG_FUNCTION_ARGS);
 
 PG_MODULE_MAGIC;
+
+char *pltsql_default_locale = NULL;
+char *pltsql_server_collation_name = NULL;
 
 const char *
 BabelfishTranslateCollation(
@@ -30,6 +35,29 @@ PreCreateCollation_hook_type prev_PreCreateCollation_hook = NULL;
 void	_PG_init(void);
 void	_PG_fini(void);
 
+static bool check_server_collation_name(char **newval, void **extra, GucSource source)
+{
+	if (is_valid_server_collation_name(*newval))
+	{
+		/*
+			* We are storing value in lower case since
+			* Collation names are stored in lowercase into pg catalog (pg_collation).
+			*/
+		char *dupval = pstrdup(*newval);
+		strcpy(*newval, downcase_identifier(dupval, strlen(dupval), false, false));
+		pfree(dupval);
+		return true;
+	}
+	return false;
+}
+
+static bool check_default_locale (char **newval, void **extra, GucSource source)
+{
+	if (find_locale(*newval) >= 0)
+		return true;
+	return false;
+}
+
 void
 _PG_init(void)
 {
@@ -41,6 +69,25 @@ _PG_init(void)
 
 	coll_cb_ptr = (collation_callbacks **) find_rendezvous_variable("collation_callbacks");
 	*coll_cb_ptr = get_collation_callbacks();
+
+	DefineCustomStringVariable("babelfishpg_tsql.server_collation_name",
+				   gettext_noop("Name of the default server collation."),
+				   NULL,
+				   &pltsql_server_collation_name,
+				   "sql_latin1_general_cp1_ci_as",
+				   PGC_SIGHUP,
+				   GUC_NO_RESET_ALL,
+				   check_server_collation_name, NULL, NULL);
+
+
+	DefineCustomStringVariable("babelfishpg_tsql.default_locale",
+				   gettext_noop("The default locale to use when creating a new collation."),
+				   NULL,
+				   &pltsql_default_locale,
+				   "en_US",
+				   PGC_RDSSUSET,  /* only superuser can set */
+				   0,
+				   check_default_locale, NULL, NULL);
 
 	handle_type_and_collation_hook = handle_type_and_collation;
 	avoid_collation_override_hook = check_target_type_is_sys_varchar;
