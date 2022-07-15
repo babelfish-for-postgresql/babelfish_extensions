@@ -69,7 +69,7 @@ else
         # script in every version, we pull it from the config file.
         #
         # Note that DEFAULT_BRANCH may (or may not) be set in clone_engine_repo.conf
-		BASE_URL=https://github.com/amazon-aurora/postgresql_modified_for_babelfish # NO /
+        BASE_URL=https://github.com/amazon-aurora/postgresql_modified_for_babelfish # NO /
         fi
     fi
 fi
