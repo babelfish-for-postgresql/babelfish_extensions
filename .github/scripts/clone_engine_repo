@@ -56,7 +56,7 @@ else
 
     # Maybe there's a matching branch in the public repo
     BASE_URL=
-    BASE_URL=https://github.com/amazon-aurora/postgresql_modified_for_babelfish # NO /
+    BASE_URL=https://github.com/babelfish-for-postgresql/postgresql_modified_for_babelfish # NO /
 
     if check_repo "${BASE_URL}/tree/$BRANCH"; then
         echo "Using $BRANCH from project engine repo"
@@ -69,13 +69,7 @@ else
         # script in every version, we pull it from the config file.
         #
         # Note that DEFAULT_BRANCH may (or may not) be set in clone_engine_repo.conf
-        echo "Did not find matching engine branch; using project default $DEFAULT_BRANCH"
-        if [ -n "$DEFAULT_BRANCH" ]; then
-            # It doesn't seem worth testing to see if the branch exists.
-            # Presumably people are configuring it correctly.
-            BRANCH_OPTION="--branch $DEFAULT_BRANCH"
-        else
-            BRANCH_OPTION=''
+		BASE_URL=https://github.com/amazon-aurora/postgresql_modified_for_babelfish # NO /
         fi
     fi
 fi
