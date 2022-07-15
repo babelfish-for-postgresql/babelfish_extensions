@@ -122,6 +122,20 @@ GRANT SELECT ON information_schema_tsql.check_constraints TO PUBLIC;
 
 ALTER VIEW sys.foreign_keys RENAME TO foreign_keys_deprecated;
 
+CREATE OR REPLACE VIEW information_schema_tsql.COLUMN_DOMAIN_USAGE AS
+    SELECT isc_col."DOMAIN_CATALOG",
+           isc_col."DOMAIN_SCHEMA" ,
+           CAST(isc_col."DOMAIN_NAME" AS sys.sysname),
+           isc_col."TABLE_CATALOG",
+           isc_col."TABLE_SCHEMA",
+           CAST(isc_col."TABLE_NAME" AS sys.sysname),
+           CAST(isc_col."COLUMN_NAME" AS sys.sysname)
+
+    FROM information_schema_tsql.columns AS isc_col
+    WHERE isc_col."DOMAIN_NAME" IS NOT NULL;
+
+GRANT SELECT ON information_schema_tsql.COLUMN_DOMAIN_USAGE TO PUBLIC;
+
 CREATE OR replace view sys.foreign_keys AS
 SELECT
   CAST(c.conname AS sys.SYSNAME) AS name
