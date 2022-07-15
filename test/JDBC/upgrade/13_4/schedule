@@ -43,3 +43,4 @@ sys-suser_sid
 sys-suser_sname
 sys-trigger_nestlevel
 routines_definition
+column_domain_usage
