@@ -107,6 +107,5 @@ LANGUAGE SQL IMMUTABLE STRICT PARALLEL SAFE;
 CREATE CAST (FIXEDDECIMAL AS sys.DATETIME)
 WITH FUNCTION sys.money2datetime (FIXEDDECIMAL) AS IMPLICIT;
 
-
 -- Reset search_path to not affect any subsequent scripts
 SELECT set_config('search_path', trim(leading 'sys, ' from current_setting('search_path')), false);
