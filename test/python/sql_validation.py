@@ -17,7 +17,7 @@ def list_files(inpPath, filefilter):
     return files
 
 
-# get object_name and object_type
+# extract object_name and object_type from line
 def get_object(line):
     newline = line.lower()
     if "(" in newline:
@@ -94,7 +94,7 @@ def find_pattern(pattern, fname, logger):
                         obj_type, obj_name = get_object(line)
 
                         # add to output file
-                        expected_file.write("Unexpected {0} found for {1} {2} in file {3}\n".format(re.sub("[^a-zA-Z0-9 ]", "", pattern), obj_type, obj_name, filename))
+                        expected_file.write("Unexpected {0} found for {1} {2} in file {3}\n".format(re.sub("[^a-zA-Z0-9 ]", "", pattern), obj_type, obj_name, filename.name))
                     
                     # enable or disable the readflag (flag to ignore the body of procedures)
                     # at max $$ can be present twice in a line
@@ -248,7 +248,7 @@ def list_upgrade_files():
                 line = line.strip()
 
                 # ignoring comments and empty lines in the schedule file
-                if line.startswith("#") or not line:
+                if line.startswith("ignore") or line.startswith("#") or line.startswith("cmd") or line.startswith("all") or line.startswith("$") or not line:
                     line = file.readline()
                     continue
 
@@ -267,6 +267,7 @@ def list_upgrade_files():
     return upgrade_files
 
 
+# initialize and find tests for JDBC and upgrade framework
 def find_tests(fname, logger):
     # set output file path
     path = Path.cwd().joinpath("output", "sql_validation_framework")
@@ -344,17 +345,17 @@ def find_patterns(logfname, logger):
 # compare the generated and expected file using diff
 def compare_outfiles(outfile, expected_file, logfname, filename, logger):
     try:
-        diff_file = Path.cwd().joinpath("logs", logfname, "sql_validation", filename + ".diff")
+        diff_file = Path.cwd().joinpath("logs", logfname, filename + ".diff")
         f_handle = open(diff_file, "wb")
 
         # sorting the files as set will give unordered outputs
         if sys.platform.startswith("win"):
-            proc_sort = subprocess.run(args = ["sort", expected_file, "/o", expected_file])
-            proc_sort = subprocess.run(args = ["sort", outfile, "/o", outfile])
+            subprocess.run(args = ["sort", expected_file, "/o", expected_file])
+            subprocess.run(args = ["sort", outfile, "/o", outfile])
             proc = subprocess.run(args = ["fc", expected_file, outfile], stdout = f_handle, stderr = f_handle)
         else:
-            proc_sort = subprocess.run(args = ["sort", "-o", expected_file, expected_file])
-            proc_sort = subprocess.run(args = ["sort", "-o", outfile, outfile])
+            subprocess.run(args = ["sort", "-o", expected_file, expected_file])
+            subprocess.run(args = ["sort", "-o", outfile, outfile])
             proc = subprocess.run(args = ["diff", "-a", "-u", "-I", "~~ERROR", expected_file, outfile], stdout = f_handle, stderr = f_handle)
         
         rcode = proc.returncode
@@ -384,18 +385,14 @@ def compare_outfiles(outfile, expected_file, logfname, filename, logger):
 
 
 # set up logger for the framework
-def create_logger():
+def create_logger(filename):
 
     # set up path for logger
     log_folder_name = datetime.now().strftime('log_%H_%M_%d_%m_%Y')
     path = Path.cwd().joinpath("logs", log_folder_name)
     Path.mkdir(path, parents = True, exist_ok = True)
 
-    filename = "sql_validation"
     logname = datetime.now().strftime(filename + '_%H_%M_%d_%m_%Y.log')
-
-    path = Path.cwd().joinpath("logs", log_folder_name, filename)
-    Path.mkdir(path, parents = True, exist_ok = True)
 
     # creating logger with two handlers, file as well as console
     # file logger
@@ -429,8 +426,8 @@ def close_logger(logger):
 def main():
 
     fname_create = "expected_create"
-
-    logfname, logger = create_logger()
+    
+    logfname, logger = create_logger("sql_validation")
 
     result1 = find_patterns(logfname, logger)
 
