@@ -99,9 +99,26 @@ jobs:
           timestamp=`ls -Art | tail -n 1`
           cd $timestamp
           mkdir -p ~/upgrade
-          mv $timestamp.diff ~/upgrade/output-diff.diff
-          mv "$timestamp"_runSummary.log ~/upgrade/run-summary.log
-  
+          cp $timestamp.diff ~/upgrade/output-diff.diff
+          cp "$timestamp"_runSummary.log ~/upgrade/run-summary.log
+          mkdir -p ~/failed-testscript-outputs
+          # copy output files of failed test scripts
+          BASE_VERSION=${{ steps.read-base-and-final-version.outputs.base-version }}
+          BASE_VERSION=${BASE_VERSION/./_}
+          FINAL_VERSION=${{ steps.read-base-and-final-version.outputs.final-version }}
+          FINAL_VERSION=${FINAL_VERSION/./_}
+          
+          for f in $(grep "[A-Za-z_\-]*:[ ]*Failed" $timestamp"_runSummary.log" | cut -d ":" -f 1); 
+          do 
+            if [[ -f ../../output/$f".out" ]]; then
+              cp ../../output/$f".out" ~/failed-testscript-outputs/$f".out"
+            elif [[ -f ../../output/$BASE_VERSION"__preparation__"$f".out" ]]; then
+              cp ../../output/$BASE_VERSION"__preparation__"$f".out" ~/failed-testscript-outputs/$BASE_VERSION"__preparation__"$f".out"
+            else
+              cp ../../output/$FINAL_VERSION"__verfication_cleanup__"$BASE_VERSION"__"$f".out" ~/failed-testscript-outputs/$FINAL_VERSION"__verfication_cleanup__"$BASE_VERSION"__"$f".out"
+            fi
+          done
+
       - name: Upload Logs
         if: always() && steps.test-file-rename.outcome == 'success'
         uses: actions/upload-artifact@v2
@@ -111,4 +128,5 @@ jobs:
             ~/upgrade/*.log
             ~/upgrade/*.diff
             ~/postgres*/data/logfile
+            ~/failed-testscript-outputs
             
