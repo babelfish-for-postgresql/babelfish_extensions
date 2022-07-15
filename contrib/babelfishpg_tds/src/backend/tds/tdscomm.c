@@ -852,6 +852,49 @@ TdsSocketFlush(void)
 	return InternalFlush(true);
 }
 
+int
+TdsReadNextPendingBcpRequest(StringInfo message)
+{
+	int		readBytes = 0;
+	if (TdsReadNextBuffer() == EOF)
+		return EOF;
+	Assert(TdsRecvMessageType == TDS_BULK_LOAD);
+
+
+	readBytes = TdsLeftInPacket;
+	enlargeStringInfo(message, readBytes);
+	if (TdsGetbytes(message->data + message->len, readBytes))
+		return EOF;
+	message->len += readBytes;
+
+	/* if this is the last packet, then notify the caller. */
+	if (TdsRecvPacketStatus & TDS_PACKET_HEADER_STATUS_EOM)
+		return 1;
+	return 0;
+}
+
+int
+TdsDiscardAllPendingBcpRequest()
+{
+	int		readBytes = 0;
+	while (1)
+	{
+		if (TdsReadNextBuffer() == EOF)
+			return EOF;
+		Assert(TdsRecvMessageType == TDS_BULK_LOAD);
+
+
+		readBytes = TdsLeftInPacket;
+		if (TdsDiscardbytes(readBytes))
+			return EOF;
+
+		/* if this is the last packet, break the loop */
+		if (TdsRecvPacketStatus & TDS_PACKET_HEADER_STATUS_EOM)
+			return 1;
+	}
+	return 0;
+}
+
 /* --------------------------------
  * TdsReadNextRequest - Read new request
  *
@@ -871,6 +914,7 @@ TdsReadNextRequest(StringInfo message, uint8_t *status, uint8_t *messageType)
 		if (TdsReadNextBuffer() == EOF)
 			return EOF;
               TdsErrorContext->err_text = "Save the status from first packet header";
+
 		/*
 		 * If this is the first packet header for this TDS request, save the
 		 * status.
@@ -886,11 +930,22 @@ TdsReadNextRequest(StringInfo message, uint8_t *status, uint8_t *messageType)
 		if (TdsGetbytes(message->data + message->len, readBytes))
 			return EOF;
 		message->len += readBytes;
+
 		/* if this is the last packet, break the loop */
 		if (TdsRecvPacketStatus & TDS_PACKET_HEADER_STATUS_EOM)
 		{
 			if (TdsLeftInPacket == 0 && TdsRecvStart == TdsRecvEnd)
 				TdsDoProcessHeader = true;
+			return 0;
+		}
+
+		/*
+		 * If this is a Bulk Load Request then read only the first packet of the request.
+		 * We will fetch the rest of the data as and when required during the processing phase.
+		 */
+		if (TdsRecvMessageType == TDS_BULK_LOAD)
+		{
+			TdsDoProcessHeader = true;
 			return 0;
 		}
 	}
@@ -950,4 +1005,9 @@ TdsWriteMessage(StringInfo message, uint8_t messageType)
 	if (TdsSocketFlush())
 		return EOF;
 	return 0;
+}
+
+bool TdsGetRecvPacketEomStatus(void)
+{
+	return TdsRecvPacketStatus & TDS_PACKET_HEADER_STATUS_EOM;
 }
