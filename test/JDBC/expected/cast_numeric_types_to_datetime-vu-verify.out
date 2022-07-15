@@ -1,0 +1,35 @@
+USE master
+GO
+
+SELECT * FROM datetime_table
+GO
+~~START~~
+datetime
+1900-01-11 00:00:00.0
+1900-01-02 00:00:00.0
+1900-08-05 14:14:59.697
+1899-11-15 05:16:48.0
+1900-02-24 15:14:18.25
+1900-01-04 02:55:05.59
+1900-04-09 00:00:00.0
+1900-05-12 00:00:00.0
+1900-01-06 00:00:00.0
+1900-01-10 00:00:00.0
+~~END~~
+
+
+EXEC datetime_procedure
+GO
+~~START~~
+datetime
+1900-02-17 00:00:00.0
+~~END~~
+
+
+SELECT dbo.datetime_function (cast(345.3 AS SMALLMONEY))
+GO
+~~START~~
+datetime
+1900-12-12 07:12:00.0
+~~END~~
+
