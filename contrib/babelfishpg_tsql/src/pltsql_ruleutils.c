@@ -348,7 +348,6 @@ int print_function_arguments(StringInfo buf, HeapTuple proctup,
 		bool print_table_args, bool print_defaults, int** typmod_arr_arg);
 char *tsql_quote_qualified_identifier(const char *qualifier, const char *ident);
 const char *tsql_quote_identifier(const char *ident);
-void probin_json_reader(text* probin, int** typmod_arr_p, int typmod_arr_len);
 int adjustTypmod(Oid oid, int typmod);
 
 /*
