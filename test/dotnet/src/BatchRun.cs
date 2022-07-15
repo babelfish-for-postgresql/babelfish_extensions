@@ -263,11 +263,10 @@ namespace BabelfishDotnetFramework
 						}
 						else if (strLine.ToLowerInvariant().StartsWith("bcp"))
 						{
-							using var file =
-								new StreamWriter(@"./../../../Output/" + testName + ".out", true);
+							using var file = new StreamWriter(@"./../../../Output/" + testName + ".out", true);
 							file.WriteLine(strLine);
 							var result = strLine.Split("#!#", StringSplitOptions.RemoveEmptyEntries);
-							testUtils.bcp(result[1].Trim(), result[2].Trim(), result[3].Trim(), logger);
+							testUtils.bcp(result[1].Trim(), result[2].Trim(), result[3].Trim(), result[0].Trim(), logger);
 						}
 						else
 						{
