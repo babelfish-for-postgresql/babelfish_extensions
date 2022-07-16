@@ -31,6 +31,7 @@ TestXML
 BABEL-3166
 BABEL-3192
 BABEL-3249
+BABEL-3382
 fulltextserviceproperty
 is_srvrolemember
 sys-column-property
