@@ -10,3 +10,21 @@ GO
 
 SELECT SYS.SUSER_SID('non_existent_user')
 GO
+
+SELECT * FROM sys_suser_sid_view
+GO
+
+EXEC sys_suser_sid_proc
+GO
+
+SELECT sys_suser_sid_func()
+GO
+
+SELECT * FROM sys_suser_id_view
+GO
+
+EXEC sys_suser_id_proc
+GO
+
+SELECT sys_suser_id_func()
+GO

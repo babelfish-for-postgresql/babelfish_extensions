@@ -31,6 +31,8 @@ TestUDD
 TestUniqueIdentifier
 TestVarChar
 TestXML
+sys-suser_sid
+sys-suser_sname
 BABEL-3166
 BABEL-3192
 BABEL-3221

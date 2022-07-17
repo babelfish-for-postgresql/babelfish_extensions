@@ -25,3 +25,51 @@ varbinary
 <NULL>
 ~~END~~
 
+
+SELECT * FROM sys_suser_sid_view
+GO
+~~START~~
+varbinary
+<NULL>
+~~END~~
+
+
+EXEC sys_suser_sid_proc
+GO
+~~START~~
+varbinary
+<NULL>
+~~END~~
+
+
+SELECT sys_suser_sid_func()
+GO
+~~START~~
+varbinary
+<NULL>
+~~END~~
+
+
+SELECT * FROM sys_suser_id_view
+GO
+~~START~~
+int
+<NULL>
+~~END~~
+
+
+EXEC sys_suser_id_proc
+GO
+~~START~~
+int
+<NULL>
+~~END~~
+
+
+SELECT sys_suser_id_func()
+GO
+~~START~~
+varbinary
+<NULL>
+~~END~~
+

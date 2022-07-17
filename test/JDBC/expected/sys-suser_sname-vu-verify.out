@@ -30,3 +30,51 @@ nvarchar
 jdbc_user
 ~~END~~
 
+
+SELECT * FROM sys_suser_sname_view
+GO
+~~START~~
+nvarchar
+jdbc_user
+~~END~~
+
+
+EXEC sys_suser_sname_proc
+GO
+~~START~~
+nvarchar
+jdbc_user
+~~END~~
+
+
+SELECT sys_suser_sname_func()
+GO
+~~START~~
+varchar
+jdbc_user
+~~END~~
+
+
+SELECT * FROM sys_suser_name_view
+GO
+~~START~~
+nvarchar
+jdbc_user
+~~END~~
+
+
+EXEC sys_suser_name_proc
+GO
+~~START~~
+nvarchar
+jdbc_user
+~~END~~
+
+
+SELECT sys_suser_name_func()
+GO
+~~START~~
+varchar
+jdbc_user
+~~END~~
+
