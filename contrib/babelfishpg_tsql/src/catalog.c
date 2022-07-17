@@ -12,7 +12,6 @@
 #include "catalog/pg_authid.h"
 #include "catalog/namespace.h"
 #include "parser/scansup.h"
-#include "utils/backend_status.h"
 #include "utils/builtins.h"
 #include "utils/fmgroids.h"
 #include "utils/lsyscache.h"
@@ -467,42 +466,6 @@ is_login(Oid role_oid)
 	ReleaseSysCache(authtuple);
 
 	return is_login;
-}
-
-bool
-is_active_login(Oid role_oid)
-{
-	int		num_backends = pgstat_fetch_stat_numbackends();
-	int		curr_backend;
-
-	/* 1-based index */
-	for (curr_backend = 1; curr_backend <= num_backends; curr_backend++)
-	{
-		/*
-		 * Fetch the backend entry for active backend from pg_statistics and
-		 * check if given role_oid matches with curr_backend's userid, if it
-		 * matches then it is active login.
-		 */
-		PgBackendStatus *beentry;
-
-		if ((beentry = pgstat_fetch_stat_beentry(curr_backend)) == NULL)
-			continue;
-
-		/* The entry is valid iff st_procpid > 0, unused if st_procpid == 0 */
-		if (beentry->st_procpid <= 0)
-			continue;
-
-		/* Only consider client backends */
-		if (beentry->st_backendType != B_BACKEND)
-			continue;
-
-		if (beentry->st_userid != InvalidOid && beentry->st_userid == role_oid)
-		{
-			return true;
-		}
-	}
-
-	return false;
 }
 
 bool

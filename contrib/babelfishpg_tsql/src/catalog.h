@@ -108,7 +108,6 @@ extern Oid			bbf_authid_login_ext_oid;
 extern Oid			bbf_authid_login_ext_idx_oid;
 
 extern bool is_login(Oid role_oid);
-extern bool is_active_login(Oid role_oid);
 extern bool is_login_name(char *rolname);
 extern char *get_login_default_db(char *login_name);
 extern Oid get_authid_login_ext_oid(void);
