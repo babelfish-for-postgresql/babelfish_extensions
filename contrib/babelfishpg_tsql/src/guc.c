@@ -54,6 +54,7 @@ bool  pltsql_showplan_text = false;
 bool  pltsql_showplan_xml = false;
 bool    pltsql_fmtonly = false;
 bool 	pltsql_enable_tsql_information_schema = true;
+bool 	pltsql_no_browsetable = false;
 
 char*	pltsql_host_destribution = NULL;
 char*	pltsql_host_release = NULL;
@@ -72,6 +73,9 @@ extern bool Transform_null_equals;
 /* Dump and Restore */
 bool babelfish_dump_restore = false;
 bool restore_tsql_tabletype = false;
+
+/* T-SQL Hint Mapping */
+bool enable_hint_mapping = false;
 
 static bool check_server_collation_name(char **newval, void **extra, GucSource source);
 static bool check_default_locale (char **newval, void **extra, GucSource source);
@@ -100,6 +104,7 @@ static void assign_concat_null_yields_null (bool newval, void *extra);
 static void assign_language (const char *newval, void *extra);
 static void assign_lock_timeout (int newval, void *extra);
 static void assign_datefirst (int newval, void *extra);
+static bool check_no_browsetable (bool *newval, void **extra, GucSource source);
 int escape_hatch_session_settings; /* forward declaration */
 
 static const struct config_enum_entry migration_mode_options[] = {
@@ -116,12 +121,12 @@ static const struct config_enum_entry escape_hatch_options[] = {
 
 static bool check_server_collation_name(char **newval, void **extra, GucSource source)
 {
-	if (is_valid_server_collation_name(*newval))
+	if (tsql_is_valid_server_collation_name(*newval))
 	{
 		/*
-		 * We are storing value in lower case since
-		 * Collation names are stored in lowercase into pg catalog (pg_collation).
-		 */
+			* We are storing value in lower case since
+			* Collation names are stored in lowercase into pg catalog (pg_collation).
+			*/
 		char *dupval = pstrdup(*newval);
 		strcpy(*newval, downcase_identifier(dupval, strlen(dupval), false, false));
 		pfree(dupval);
@@ -132,10 +137,9 @@ static bool check_server_collation_name(char **newval, void **extra, GucSource s
 
 static bool check_default_locale (char **newval, void **extra, GucSource source)
 {
-    if (find_locale(*newval) >= 0)
-	return true;
-
-    return false;
+	if (tsql_find_locale(*newval) >= 0)
+		return true;
+	return false;
 }
 
 static bool check_ansi_null_dflt_on (bool *newval, void **extra, GucSource source)
@@ -343,6 +347,22 @@ static bool check_showplan_text (bool *newval, void **extra, GucSource source)
 		*newval = false; /* overwrite to a default value */
 	}
 	return true;
+}
+
+static bool check_no_browsetable (bool *newval, void **extra, GucSource source)
+{
+	if (*newval == false && escape_hatch_session_settings != EH_IGNORE)
+    {
+		TSQLInstrumentation(INSTR_UNSUPPORTED_TSQL_OPTION_NO_BROWSETABLE);
+		ereport(ERROR,
+			(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+		 	errmsg("OFF setting is not allowed for option NO_BROWSETABLE. please use babelfishpg_tsql.escape_hatch_session_settings to ignore")));
+    }
+	else if (escape_hatch_session_settings == EH_IGNORE)
+	{
+		*newval = true; /* overwrite to a default value */
+	}
+    return true;
 }
 
 static bool check_showplan_xml (bool *newval, void **extra, GucSource source)
@@ -867,6 +887,15 @@ define_custom_variables(void)
 				 GUC_NOT_IN_SAMPLE | GUC_DISALLOW_IN_FILE | GUC_DISALLOW_IN_AUTO_FILE,
 				 check_showplan_text, NULL, NULL);
 
+	DefineCustomBoolVariable("babelfishpg_tsql.no_browsetable",
+				 gettext_noop("SQL-Server compatibility NO_BROWSETABLE option."),
+				 NULL,
+				 &pltsql_no_browsetable,
+				 true,
+				 PGC_USERSET,
+				 GUC_NOT_IN_SAMPLE | GUC_DISALLOW_IN_FILE | GUC_DISALLOW_IN_AUTO_FILE,
+				 check_no_browsetable, NULL, NULL);
+				 
 	DefineCustomBoolVariable("babelfishpg_tsql.showplan_xml",
 				 gettext_noop("SQL-Server compatibility SHOWPLAN_XML option."),
 				 NULL,
@@ -1000,6 +1029,16 @@ define_custom_variables(void)
 				 gettext_noop("Shows that if a table is creating a T-SQL table type during restore"),
 				 NULL,
 				 &restore_tsql_tabletype,
+				 false,
+				 PGC_USERSET,
+				 GUC_NOT_IN_SAMPLE | GUC_DISALLOW_IN_FILE | GUC_DISALLOW_IN_AUTO_FILE,
+				 NULL, NULL, NULL);
+
+	/* T-SQL Hint Mapping */
+	DefineCustomBoolVariable("babelfishpg_tsql.enable_hint_mapping",
+				 gettext_noop("Enables T-SQL hint mapping"),
+				 NULL,
+				 &enable_hint_mapping,
 				 false,
 				 PGC_USERSET,
 				 GUC_NOT_IN_SAMPLE | GUC_DISALLOW_IN_FILE | GUC_DISALLOW_IN_AUTO_FILE,

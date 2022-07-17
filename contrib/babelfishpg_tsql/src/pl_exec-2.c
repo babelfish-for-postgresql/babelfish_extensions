@@ -3,6 +3,7 @@
 
 #include "funcapi.h"
 
+#include "access/table.h"
 #include "catalog/namespace.h"
 #include "catalog/pg_language.h"
 #include "commands/proclang.h"
@@ -104,6 +105,7 @@ static Node *get_underlying_node_from_implicit_casting(Node *n, NodeTag underlyi
 int pltsql_proc_return_code;
 
 char *bulk_load_table_name = NULL;
+Oid bulk_load_table_oid = InvalidOid;
 
 PLtsql_execstate *get_current_tsql_estate()
 {
@@ -627,6 +629,40 @@ exec_stmt_exec(PLtsql_execstate *estate, PLtsql_stmt_exec *stmt)
 	volatile int rc;
 	SimpleEcontextStackEntry *topEntry;
 	SPIExecuteOptions options;
+	bool		need_path_reset = false;
+
+	Oid current_user_id = GetUserId();
+	char *cur_dbname = get_cur_db_name();
+
+	/* fetch current search_path */
+	List *path_oids = fetch_search_path(false);
+	char *old_search_path = flatten_search_path(path_oids);
+	char *new_search_path;
+	if (stmt->proc_name == NULL)
+		stmt->proc_name = "";
+
+	if (stmt->is_cross_db)
+		SetCurrentRoleId(GetSessionUserId(), false);
+
+	/*
+	 * TODO: BABEL-2992 The following check can be removed after the
+	 * correct implementation of schema resolution for SQL objects.
+	 */
+	if (strcmp(stmt->proc_name, "sp_describe_first_result_set") != 0)
+	{
+		if (strncmp(stmt->proc_name, "sp_", 3) == 0 && strcmp(cur_dbname, "master") != 0
+			&& (stmt->schema_name == '\0' || strncmp(stmt->schema_name, "dbo", strlen(stmt->schema_name)) == 0))
+			{
+				new_search_path = psprintf("%s, master_dbo", old_search_path);
+
+				/* Add master_dbo to the new search path */
+				(void) set_config_option("search_path", new_search_path,
+								PGC_USERSET, PGC_S_SESSION,
+								GUC_ACTION_SAVE, true, 0, false);
+				SetCurrentRoleId(GetSessionUserId(), false);
+				need_path_reset = true;
+			}
+	}
 
 	/* PG_TRY to ensure we clear the plan link, if needed, on failure */
 	PG_TRY();
@@ -969,6 +1005,16 @@ exec_stmt_exec(PLtsql_execstate *estate, PLtsql_stmt_exec *stmt)
 	}
 	PG_CATCH();
 	{
+		if (need_path_reset)
+		{
+			(void) set_config_option("search_path", old_search_path,
+						PGC_USERSET, PGC_S_SESSION,
+						GUC_ACTION_SAVE, true, 0, false);
+			SetCurrentRoleId(current_user_id, false);
+		}
+
+		if (stmt->is_cross_db)
+			SetCurrentRoleId(current_user_id, false);
 		/*
 		 * If we aren't saving the plan, unset the pointer.  Note that it
 		 * could have been unset already, in case of a recursive call.
@@ -982,6 +1028,18 @@ exec_stmt_exec(PLtsql_execstate *estate, PLtsql_stmt_exec *stmt)
 		PG_RE_THROW();
 	}
 	PG_END_TRY();
+
+	if (stmt->is_cross_db)
+		SetCurrentRoleId(current_user_id, false);
+
+	if (need_path_reset)
+	{
+		(void) set_config_option("search_path", old_search_path,
+							PGC_USERSET, PGC_S_SESSION,
+							GUC_ACTION_SAVE, true, 0, false);
+		SetCurrentRoleId(current_user_id, false);
+	}
+	list_free(path_oids);
 
 	if (expr->plan && !expr->plan->saved)
 	{
@@ -1145,13 +1203,12 @@ exec_stmt_exec_batch(PLtsql_execstate *estate, PLtsql_stmt_exec_batch *stmt)
 	volatile LocalTransactionId before_lxid;
 	LocalTransactionId after_lxid;
 	SimpleEcontextStackEntry *topEntry;
-      	char *old_db_name = NULL;
+      	char *old_db_name = get_cur_db_name();
       	char *cur_db_name = NULL;
 	LOCAL_FCINFO(fcinfo,1);
 
 	PG_TRY();
 	{
-                old_db_name = get_cur_db_name();
                 /*
 		* First we evaluate the string expression. Its result is the
 		* querystring we have to execute.
@@ -2551,7 +2608,6 @@ int exec_stmt_insert_bulk(PLtsql_execstate *estate, PLtsql_stmt_insert_bulk *stm
 {
 	char *bulk_load_schema_name = NULL;
 	MemoryContext	oldContext;
-	Oid rel_oid = InvalidOid;
 	Oid schema_oid = InvalidOid;
 
 	if (!stmt->db_name || stmt->db_name[0] == '\0')
@@ -2574,13 +2630,13 @@ int exec_stmt_insert_bulk(PLtsql_execstate *estate, PLtsql_stmt_insert_bulk *stm
 	/* save the table name for the next Bulk load Request */
 	if (bulk_load_schema_name)
 	{
-		rel_oid = get_relname_relid(stmt->table_name, schema_oid);
+		bulk_load_table_oid = get_relname_relid(stmt->table_name, schema_oid);
 		bulk_load_table_name = psprintf("\"%s\".\"%s\"", bulk_load_schema_name, stmt->table_name);
 		pfree(bulk_load_schema_name);
 	}
 	else
 	{
-		rel_oid = RelnameGetRelid(stmt->table_name);
+		bulk_load_table_oid = RelnameGetRelid(stmt->table_name);
 		bulk_load_table_name = pstrdup(stmt->table_name);
 	}
 
@@ -2593,7 +2649,7 @@ int exec_stmt_insert_bulk(PLtsql_execstate *estate, PLtsql_stmt_insert_bulk *stm
 	}
 	MemoryContextSwitchTo(oldContext);
 
-	if (!OidIsValid(rel_oid))
+	if (!OidIsValid(bulk_load_table_oid))
 		ereport(ERROR,
 				(errcode(ERRCODE_UNDEFINED_TABLE),
 						errmsg("relation \"%s\" does not exist",
@@ -2606,33 +2662,54 @@ int
 execute_bulk_load_insert(int ncol, int nrow, Oid *argtypes,
 				Datum *Values, const char *Nulls)
 {
+	Relation rel;
 	int rc;
 	int retValue = -1;
-	StringInfo src = makeStringInfo();
-	StringInfo bindParams = makeStringInfo();
+	StringInfo src;
+	StringInfo bindParams;
 	int count = 1;
+	Snapshot snap;
 
-	elog(DEBUG2, "Insert Bulk operation on destination table: %s", bulk_load_table_name);
-	appendStringInfo(src, "Insert into %s values ", bulk_load_table_name);
-	for (int i = 0; i < nrow; i++)
+	if (nrow == 0 && ncol == 0)
 	{
-		for (int j = 0; j < ncol; j++)
-			appendStringInfo(bindParams, ",$%d", count++);
-
-		bindParams->data[0] = ' ';
-		appendStringInfo(src, "(%s),", bindParams->data);
-		resetStringInfo(bindParams);
+		if (bulk_load_table_name)
+			pfree(bulk_load_table_name);
+		bulk_load_table_name = NULL;
+		bulk_load_table_oid = InvalidOid;
+		return 0;
 	}
-	src->data[src->len - 1] = ' '; /* Taking care of the last ',' */
 
-	set_config_option("babelfishpg_tsql.sql_dialect", "postgres",
-						  (superuser() ? PGC_SUSET : PGC_USERSET),
-						  PGC_S_SESSION, GUC_ACTION_SAVE, true, 0, false);
-
-	PushActiveSnapshot(GetTransactionSnapshot());
+	src = makeStringInfo();
+	bindParams = makeStringInfo();
 
 	PG_TRY();
 	{
+		elog(DEBUG2, "Insert Bulk operation on destination table: %s", bulk_load_table_name);
+		appendStringInfo(src, "Insert into %s OVERRIDING SYSTEM VALUE values ", bulk_load_table_name);
+
+		/* Disable triggers on the table. */
+		rel = table_open(bulk_load_table_oid, AccessShareLock);
+		EnableDisableTrigger(rel, NULL, TRIGGER_DISABLED, false, AccessShareLock);
+		relation_close(rel, AccessShareLock);
+
+		for (int i = 0; i < nrow; i++)
+		{
+			for (int j = 0; j < ncol; j++)
+				appendStringInfo(bindParams, ",$%d", count++);
+
+			bindParams->data[0] = ' ';
+			appendStringInfo(src, "(%s),", bindParams->data);
+			resetStringInfo(bindParams);
+		}
+		src->data[src->len - 1] = ' '; /* Taking care of the last ',' */
+
+		set_config_option("babelfishpg_tsql.sql_dialect", "postgres",
+							  (superuser() ? PGC_SUSET : PGC_USERSET),
+							  PGC_S_SESSION, GUC_ACTION_SAVE, true, 0, false);
+
+		snap = GetTransactionSnapshot();
+		PushActiveSnapshot(snap);
+
 		if ((rc = SPI_connect()) < 0)
 			elog(ERROR, "SPI_connect() failed with return code %d", rc);
 
@@ -2647,14 +2724,20 @@ execute_bulk_load_insert(int ncol, int nrow, Oid *argtypes,
 		PopActiveSnapshot();
 
 		set_config_option("babelfishpg_tsql.sql_dialect", "tsql",
-									(superuser() ? PGC_SUSET :  PGC_USERSET),
-										PGC_S_SESSION, GUC_ACTION_SAVE, true, 0, false);
+							  (superuser() ? PGC_SUSET : PGC_USERSET),
+							  PGC_S_SESSION, GUC_ACTION_SAVE, true, 0, false);
+
+		/* Re-Enable triggers on the table after insertion. */
+		rel = table_open(bulk_load_table_oid, AccessShareLock);
+		EnableDisableTrigger(rel, NULL, TRIGGER_FIRES_ON_ORIGIN, false, AccessShareLock);
+		relation_close(rel, AccessShareLock);
 	}
 	PG_CATCH();
 	{
 		MemoryContext oldcontext;
 		SPI_finish();
-		PopActiveSnapshot();
+		if (ActiveSnapshotSet() && GetActiveSnapshot() == snap)
+			PopActiveSnapshot();
 		oldcontext = CurrentMemoryContext;
 
 		/*
@@ -2671,8 +2754,13 @@ execute_bulk_load_insert(int ncol, int nrow, Oid *argtypes,
 		MemoryContextSwitchTo(oldcontext);
 
 		set_config_option("babelfishpg_tsql.sql_dialect", "tsql",
-									(superuser() ? PGC_SUSET : PGC_USERSET),
-										PGC_S_SESSION, GUC_ACTION_SAVE, true, 0, false);
+							  (superuser() ? PGC_SUSET : PGC_USERSET),
+							  PGC_S_SESSION, GUC_ACTION_SAVE, true, 0, false);
+
+		/* Re-Enable triggers on the table incase of an error. */
+		rel = table_open(bulk_load_table_oid, AccessShareLock);
+		EnableDisableTrigger(rel, NULL, TRIGGER_FIRES_ON_ORIGIN, false, AccessShareLock);
+		relation_close(rel, AccessShareLock);
 
 		PG_RE_THROW();
 	}
@@ -2683,8 +2771,6 @@ execute_bulk_load_insert(int ncol, int nrow, Oid *argtypes,
 			errmsg("Failed to insert in the table %s for bulk load", bulk_load_table_name)));
 
 	/* Cleanup all the pointers. */
-	if (bulk_load_table_name)
-		pfree(bulk_load_table_name);
 	if (bindParams)
 	{
 		if (bindParams->data)
@@ -2697,7 +2783,6 @@ execute_bulk_load_insert(int ncol, int nrow, Oid *argtypes,
 			pfree(src->data);
 		pfree(src);
 	}
-	bulk_load_table_name = NULL;
 	return retValue;
 }
 

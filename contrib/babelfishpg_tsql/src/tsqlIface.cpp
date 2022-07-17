@@ -16,6 +16,14 @@
 #include "../antlr/antlr4cpp_generated_src/TSqlParser/TSqlParserBaseListener.h"
 #include "tsqlIface.hpp"
 
+#define LOOP_JOIN_HINT 0
+#define HASH_JOIN_HINT 1
+#define MERGE_JOIN_HINT 2
+#define LOOP_QUERY_HINT 3
+#define HASH_QUERY_HINT 4
+#define MERGE_QUERY_HINT 5
+#define JOIN_HINTS_INFO_VECTOR_SIZE 6
+
 extern "C" {
 #if 0
 #include "tsqlNodes.h"
@@ -65,6 +73,8 @@ extern "C"
 
 	extern size_t get_num_column_names_to_be_delimited();
 	extern size_t get_num_pg_reserved_keywords_to_be_delimited();
+	extern char * construct_unique_index_name(char *index_name, char *relation_name);
+	extern bool enable_hint_mapping;
 }
 
 static void toDotRecursive(ParseTree *t, const std::vector<std::string> &ruleNames, const std::string &sourceText);
@@ -97,6 +107,13 @@ void replaceTokenStringFromQuery(PLtsql_expr* expr, TerminalNode* tokenNode, con
 void replaceCtxStringFromQuery(PLtsql_expr* expr, ParserRuleContext *ctx, const char *repl, ParserRuleContext *baseCtx);
 void removeTokenStringFromQuery(PLtsql_expr* expr, TerminalNode* tokenNode, ParserRuleContext *baseCtx);
 void removeCtxStringFromQuery(PLtsql_expr* expr, ParserRuleContext *ctx, ParserRuleContext *baseCtx);
+void extractQueryHintsFromOptionClause(TSqlParser::Option_clauseContext *octx);
+void extractTableHints(TSqlParser::With_table_hintsContext *tctx, std::string table_name);
+std::string extractTableName(TSqlParser::Ddl_objectContext *ctx, TSqlParser::Table_source_itemContext *tctx);
+void extractTableHint(TSqlParser::Table_hintContext *table_hint, std::string table_name);
+void extractJoinHint(TSqlParser::Join_hintContext *join_hint, std::string table_name1, std::string table_names);
+void extractJoinHintFromOption(TSqlParser::OptionContext *option);
+std::string extractIndexValues(std::vector<TSqlParser::Index_valueContext *> index_valuesCtx, std::string table_name);
 
 static void *makeBatch(TSqlParser::Tsql_fileContext *ctx, tsqlBuilder &builder);
 //static void *makeBatch(TSqlParser::Block_statementContext *ctx, tsqlBuilder &builder);
@@ -194,6 +211,17 @@ static void clear_rewritten_query_fragment();
 // add information of rewritten_query_fragment information to mutator
 static void add_rewritten_query_fragment_to_mutator(PLtsql_expr_query_mutator *mutator);
 
+static std::unordered_map<std::string, std::string> alias_to_table_mapping;
+static std::unordered_map<std::string, std::string> table_to_alias_mapping;
+static std::vector<std::string> query_hints;
+static std::vector<bool> join_hints_info(JOIN_HINTS_INFO_VECTOR_SIZE, false);
+static bool isJoinHintInOptionClause = false;
+static std::string table_names;
+static int num_of_tables = 0;
+static std::string leading_hint;
+static void add_query_hints(PLtsql_expr* expr);
+static void clear_query_hints();
+static void clear_tables_info();
 
 
 static void
@@ -541,6 +569,52 @@ add_rewritten_query_fragment_to_mutator(PLtsql_expr_query_mutator *mutator)
 	Assert(mutator);
 	for (auto &entry : rewritten_query_fragment)
 		mutator->add(entry.first, entry.second.first, entry.second.second);
+}
+
+static void
+add_query_hints(PLtsql_expr *expr)
+{
+	ParserRuleContext* ctx = nullptr;
+	// If a query has both join hint and query hint which is a join hint, it should have all the join hints as the query hints as well
+	if (isJoinHintInOptionClause && ((join_hints_info[LOOP_JOIN_HINT] && !join_hints_info[LOOP_QUERY_HINT]) || (join_hints_info[HASH_JOIN_HINT] && !join_hints_info[HASH_QUERY_HINT]) || (join_hints_info[MERGE_JOIN_HINT] && !join_hints_info[MERGE_QUERY_HINT])))
+	{
+		isJoinHintInOptionClause = false;
+		for (size_t i=0; i<JOIN_HINTS_INFO_VECTOR_SIZE; i++)
+			join_hints_info[i] = false;
+		throw PGErrorWrapperException(ERROR, ERRCODE_FEATURE_NOT_SUPPORTED, "Conflicting JOIN optimizer hints specified", getLineAndPos(ctx));
+	}
+	std::string hint =  "/*+ ";
+	for (auto q_hint: query_hints)
+	{
+		hint += q_hint;
+		hint += " ";
+	}
+	if (!leading_hint.empty())
+		hint += leading_hint;
+	hint += "*/";
+	StringInfoData new_query;
+	initStringInfo(&new_query);
+	appendStringInfo(&new_query, "%s %s", const_cast <char *>(hint.c_str()), expr->query);
+	expr->query = new_query.data;
+}
+
+static void
+clear_query_hints()
+{
+	query_hints.clear();
+	leading_hint.clear();
+	for (size_t i=0; i<JOIN_HINTS_INFO_VECTOR_SIZE; i++)
+		join_hints_info[i] = false;
+	isJoinHintInOptionClause = false;
+}
+
+static void
+clear_tables_info()
+{
+	table_names.clear();
+	alias_to_table_mapping.clear();
+	table_to_alias_mapping.clear();
+	num_of_tables = 0;
 }
 
 /*
@@ -1360,9 +1434,17 @@ public:
 		/* common routine for select and non-select */
 		add_rewritten_query_fragment_to_mutator(statementMutator.get());
 
+		/* Add query hints */
+		if (query_hints.size())
+		{
+			add_query_hints(statementMutator.get()->expr);
+			clear_query_hints();
+		}
+
 		statementMutator->run();
 		statementMutator = nullptr;
 		clear_rewritten_query_fragment();
+		clear_tables_info();
 	}
 
 	void exitSelect_statement(TSqlParser::Select_statementContext *selectCtx) override
@@ -2127,7 +2209,10 @@ static void process_select_statement(
 	PLtsql_expr *expr = mutator->expr;
 	ParserRuleContext* baseCtx = mutator->ctx;
 	for (auto octx : selectCtx->option_clause()) // query hint
+	{
+		extractQueryHintsFromOptionClause(octx);
 		removeCtxStringFromQuery(expr, octx, baseCtx);
+	}
 }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -3090,6 +3175,136 @@ void removeCtxStringFromQuery(PLtsql_expr* expr, ParserRuleContext *ctx, ParserR
 	replaceTokenStringFromQuery(expr, ctx->getStart(), ctx->getStop(), NULL, baseCtx);
 }
 
+void extractQueryHintsFromOptionClause(TSqlParser::Option_clauseContext *octx)
+{
+	if (!enable_hint_mapping)
+		return; // do nothing
+
+	for (auto option: octx->option())
+	{
+		if (option->TABLE())
+		{
+			std::string table_name = ::getFullText(option->table_name()->table);
+			if (!table_name.empty())
+			{
+				for (auto table_hint: option->table_hint())
+				{
+					extractTableHint(table_hint, table_name);
+				}
+			}
+		}
+		else if (option->JOIN())
+			extractJoinHintFromOption(option);
+		else if (option->FORCE() && option->ORDER())
+			query_hints.push_back("Set(join_collapse_limit 1)");
+		else if (option->MAXDOP() && option->DECIMAL())
+		{
+			std::string value = ::getFullText(option->DECIMAL());
+			if (!value.empty())
+				query_hints.push_back("Set(max_parallel_workers_per_gather " + value + ")");
+		}
+	}
+}
+
+void extractTableHints(TSqlParser::With_table_hintsContext *tctx, std::string table_name)
+{
+	if (enable_hint_mapping && !table_name.empty())
+	{
+		for (auto table_hint: tctx->table_hint())
+			extractTableHint(table_hint, table_name);
+	}
+}
+
+std::string extractTableName(TSqlParser::Ddl_objectContext *dctx, TSqlParser::Table_source_itemContext *tctx)
+{
+	std::string table_name;
+	if (dctx == nullptr)
+	{
+		if (tctx->full_object_name())
+			table_name = stripQuoteFromId(tctx->full_object_name()->object_name);
+		else if (tctx->local_id())
+			table_name = ::getFullText(tctx->local_id());
+	}
+	else
+	{
+		if (dctx->full_object_name())
+			table_name = stripQuoteFromId(dctx->full_object_name()->object_name);
+		else if (dctx->local_id())
+			table_name = ::getFullText(dctx->local_id());
+	}
+	return table_name;
+}
+
+void extractTableHint(TSqlParser::Table_hintContext *table_hint, std::string table_name)
+{
+	if (table_hint->INDEX())
+	{
+		std::string index_values = extractIndexValues(table_hint->index_value(), table_name);
+		if (!index_values.empty())
+			query_hints.push_back("IndexScan(" + table_name + " " + index_values + ")");
+	}
+}
+
+void extractJoinHint(TSqlParser::Join_hintContext *join_hint, std::string table_names)
+{
+	if (join_hint->LOOP())
+	{
+		join_hints_info[LOOP_JOIN_HINT] = true;
+		query_hints.push_back("NestLoop(" + table_names + ")");
+	}
+	else if (join_hint->HASH())
+	{
+		join_hints_info[HASH_JOIN_HINT] = true;
+		query_hints.push_back("HashJoin(" + table_names + ")");
+	}
+	else if (join_hint->MERGE())
+	{
+		join_hints_info[MERGE_JOIN_HINT] = true;
+		query_hints.push_back("MergeJoin(" + table_names + ")");
+	}
+}
+
+void extractJoinHintFromOption(TSqlParser::OptionContext *option) {
+	isJoinHintInOptionClause = true;
+	if (option->LOOP())
+	{
+		join_hints_info[LOOP_QUERY_HINT] = true;
+		query_hints.push_back("Set(enable_hashjoin off)");
+		query_hints.push_back("Set(enable_mergejoin off)");
+	}
+	else if (option->HASH())
+	{
+		join_hints_info[HASH_QUERY_HINT] = true;
+		query_hints.push_back("Set(enable_mergejoin off)");
+		query_hints.push_back("Set(enable_nestloop off)");
+	}
+	else if (option->MERGE())
+	{
+		join_hints_info[MERGE_QUERY_HINT] = true;
+		query_hints.push_back("Set(enable_hashjoin off)");
+		query_hints.push_back("Set(enable_nestloop off)");
+	}
+}
+
+std::string extractIndexValues(std::vector<TSqlParser::Index_valueContext *> index_valuesCtx, std::string table_name)
+{
+	if (alias_to_table_mapping.find(table_name) != alias_to_table_mapping.end())
+		table_name = alias_to_table_mapping[table_name];
+	std::string index_values;
+	for (auto ictx: index_valuesCtx)
+	{
+		if (ictx->id())
+		{
+			if (index_values.size())
+				index_values += " ";
+			char * index_value = construct_unique_index_name(const_cast <char *>(::getFullText(ictx->id()).c_str()), const_cast <char *>(table_name.c_str()));
+			index_values += std::string(index_value);
+		}
+	}
+	return index_values;
+}
+
+
 #if 0
 static void *
 makeBatch(TSqlParser::Block_statementContext *ctx, tsqlBuilder &tsql)
@@ -4011,10 +4226,23 @@ makeExecuteStatement(TSqlParser::Execute_statementContext *ctx)
 	{
 		std::string func_proc_name;
 		TSqlParser::Execute_statement_argContext *func_proc_args = body->execute_statement_arg();
+		bool is_cross_db = false;
+		std::string proc_name;
+		std::string schema_name;
 
 		if (body->func_proc_name_server_database_schema())
 		{
 			func_proc_name = ::getFullText(body->func_proc_name_server_database_schema());
+			if (body->func_proc_name_server_database_schema()->database)
+			{
+				std::string db_name = stripQuoteFromId(body->func_proc_name_server_database_schema()->database);
+				if (!string_matches(db_name.c_str(), get_cur_db_name()))
+				is_cross_db = true;
+			}
+			if (body->func_proc_name_server_database_schema()->schema)
+				schema_name = stripQuoteFromId(body->func_proc_name_server_database_schema()->schema);
+			if (body->func_proc_name_server_database_schema()->procedure)
+				proc_name = stripQuoteFromId(body->func_proc_name_server_database_schema()->procedure);
 		}
 		else 
 		{
@@ -4041,6 +4269,18 @@ makeExecuteStatement(TSqlParser::Execute_statementContext *ctx)
 		result->return_code_dno = return_code_dno;
 		result->paramno = 0;
 		result->params = NIL;
+		// record whether stmt is cross-db
+		if (is_cross_db)
+			result->is_cross_db = true;
+
+		if (!proc_name.empty())
+		{
+			result->proc_name = pstrdup(downcase_truncate_identifier(proc_name.c_str(), proc_name.length(), true));
+		}
+		if (!schema_name.empty())
+		{
+			result->schema_name = pstrdup(downcase_truncate_identifier(schema_name.c_str(), schema_name.length(), true));
+		}
 
 		if (func_proc_args)
 		{
@@ -4064,7 +4304,11 @@ makeExecuteStatement(TSqlParser::Execute_statementContext *ctx)
 		}
 
 		std::stringstream ss;
-		ss << "EXEC " << (!rewritten_name.empty() ? rewritten_name : func_proc_name);
+		std::string name = (!rewritten_name.empty() ? rewritten_name : func_proc_name);
+		// Rewrite proc name to sp_* if the schema is "dbo" and proc name starts with "sp_"
+		if (pg_strncasecmp(name.c_str(), "dbo.sp_", 6) == 0)
+			name.erase(name.begin() + 0, name.begin() + 4);
+		ss << "EXEC " << name;
 		if (func_proc_args)
 			ss << " " << ::getFullText(func_proc_args);
 		std::string expr_query = ss.str();
@@ -4658,11 +4902,50 @@ static void post_process_table_source(TSqlParser::Table_source_itemContext *ctx,
 	for (auto cctx : ctx->table_source_item())
 		post_process_table_source(cctx, expr, baseCtx);
 
+	std::string table_name = extractTableName(nullptr, ctx);
+
 	for (auto wctx : ctx->with_table_hints())
+	{
+		if (enable_hint_mapping && !wctx->sample_clause())
+			extractTableHints(wctx, table_name);
 		removeCtxStringFromQuery(expr, wctx, baseCtx);
+	}
+
+	for (auto actx : ctx->as_table_alias())
+	{
+		std::string alias_name = ::getFullText(actx->table_alias()->id());
+		if (!table_name.empty() && !alias_name.empty())
+		{
+			alias_to_table_mapping[alias_name] = table_name;
+			table_to_alias_mapping[table_name] = alias_name;
+		}
+		if (actx->table_alias()->with_table_hints())
+		{
+			if (enable_hint_mapping && !actx->table_alias()->with_table_hints()->sample_clause())
+				extractTableHints(actx->table_alias()->with_table_hints(), alias_name);
+			removeCtxStringFromQuery(expr, actx->table_alias()->with_table_hints(), baseCtx);
+		}
+	}
+	
+	if (!table_name.empty())
+	{
+		if (table_to_alias_mapping.find(table_name) != table_to_alias_mapping.end())
+			table_name = table_to_alias_mapping[table_name];
+		num_of_tables++;
+		if (!table_names.empty())
+			table_names += " ";
+		table_names += table_name;
+	}
 
 	if (ctx->join_hint())
+	{
+		if (num_of_tables > 1)
+		{
+			leading_hint = "Leading(" + table_names + ")";
+			extractJoinHint(ctx->join_hint(), table_names);
+		}
 		removeCtxStringFromQuery(expr, ctx->join_hint(), baseCtx);
+	}
 }
 
 void process_execsql_remove_unsupported_tokens(TSqlParser::Dml_statementContext *ctx, PLtsql_stmt_execsql *stmt)
@@ -4671,9 +4954,19 @@ void process_execsql_remove_unsupported_tokens(TSqlParser::Dml_statementContext 
 	{
 		auto ictx = ctx->insert_statement();
 		if (ictx->with_table_hints() && ictx->with_table_hints()->WITH()) // table hints
+		{
+			if (!ictx->with_table_hints()->sample_clause() && ictx->ddl_object())
+			{
+				std::string table_name = extractTableName(ictx->ddl_object(), nullptr);
+				extractTableHints(ictx->with_table_hints(), table_name);
+			}
 			removeCtxStringFromQuery(stmt->sqlstmt, ictx->with_table_hints(), ctx);
+		}
 		if (ictx->option_clause()) // query hints
+		{
 			removeCtxStringFromQuery(stmt->sqlstmt, ictx->option_clause(), ctx);
+			extractQueryHintsFromOptionClause(ictx->option_clause());
+		}
 	}
 	else if (ctx->update_statement())
 	{
@@ -4682,19 +4975,51 @@ void process_execsql_remove_unsupported_tokens(TSqlParser::Dml_statementContext 
 			for (auto tctx : uctx->table_sources()->table_source_item()) // from-clause (to remove hints)
 				post_process_table_source(tctx, stmt->sqlstmt, ctx);
 		if (uctx->with_table_hints()) // table hints
+		{
+			if (!uctx->with_table_hints()->sample_clause() && uctx->ddl_object())
+			{
+				std::string table_name = extractTableName(uctx->ddl_object(), nullptr);
+				extractTableHints(uctx->with_table_hints(), table_name);
+			}
 			removeCtxStringFromQuery(stmt->sqlstmt, uctx->with_table_hints(), ctx);
+		}
 		if (uctx->option_clause()) // query hints
+		{
 			removeCtxStringFromQuery(stmt->sqlstmt, uctx->option_clause(), ctx);
+			extractQueryHintsFromOptionClause(uctx->option_clause());
+		}
 	}
 	else if (ctx->delete_statement())
 	{
 		auto dctx = ctx->delete_statement();
+		if (dctx->table_sources())
+		{
+			for (auto tctx : dctx->table_sources()->table_source_item()) // from-clause (to remove hints)
+				post_process_table_source(tctx, stmt->sqlstmt, ctx);
+		}
 		if (dctx->delete_statement_from()->table_alias() && dctx->delete_statement_from()->table_alias()->with_table_hints())
+		{
+			if (!dctx->delete_statement_from()->table_alias()->with_table_hints()->sample_clause()) 
+			{
+				std::string table_name = ::getFullText(dctx->delete_statement_from()->table_alias()->id());
+				extractTableHints(dctx->delete_statement_from()->table_alias()->with_table_hints(), table_name);
+			}
 			removeCtxStringFromQuery(stmt->sqlstmt, dctx->delete_statement_from()->table_alias()->with_table_hints(), ctx);
+		}
 		if (dctx->with_table_hints()) // table hints
+		{
+			if (!dctx->with_table_hints()->sample_clause() && dctx->delete_statement_from()->ddl_object()) 
+			{
+				std::string table_name = extractTableName(dctx->delete_statement_from()->ddl_object(), nullptr);
+				extractTableHints(dctx->with_table_hints(), table_name);
+			}
 			removeCtxStringFromQuery(stmt->sqlstmt, dctx->with_table_hints(), ctx);
+		}
 		if (dctx->option_clause()) // query hints
+		{
 			removeCtxStringFromQuery(stmt->sqlstmt, dctx->option_clause(), ctx);
+			extractQueryHintsFromOptionClause(dctx->option_clause());
+		}
 	}
 }
 

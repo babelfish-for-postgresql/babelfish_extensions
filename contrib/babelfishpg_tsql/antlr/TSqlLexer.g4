@@ -605,6 +605,7 @@ NOTIFICATION:                                    N O T I F I C A T I O N;
 NOTIFICATIONS:                                   N O T I F I C A T I O N S;
 NOUNLOAD:                                        N O U N L O A D;
 NOWAIT:                                          N O W A I T;
+NO_BROWSETABLE:                                  N O  UNDERLINE  B R O W S E T A B L E;
 NO_CHECKSUM:                                     N O  UNDERLINE  C H E C K S U M;
 NO_COMPRESSION:                                  N O  UNDERLINE  C O M P R E S S I O N;
 NO_EVENT_LOSS:                                   N O  UNDERLINE  E V E N T  UNDERLINE  L O S S;

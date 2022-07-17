@@ -5,6 +5,7 @@ import org.apache.logging.log4j.LogManager;
 import org.junit.jupiter.api.*;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.MethodSource;
+import org.junit.jupiter.params.provider.NullSource;
 import java.io.*;
 import java.sql.*;
 import java.text.SimpleDateFormat;
@@ -58,6 +59,35 @@ public class TestQueryFile {
                     }
                 }
             }
+        }
+    }
+
+    // helper function to fetch the prefix of a prepare,
+    // verify or cleanup test file name
+    public static String getFileNamePrefix (String fileName) {
+        if (fileName.contains("-vu-prepare")) {
+            return fileName.split("-vu-prepare")[0];
+        } else if (fileName.contains("-vu-verify")) {
+            return fileName.split("-vu-verify")[0];
+        } else if (fileName.contains("-vu-cleanup")) {
+            return fileName.split("-vu-cleanup")[0];
+        } else {
+            return fileName;
+        }
+    }
+
+    // helper function to tell us whether a file is a prepare
+    // verify or a cleanup file. Numbers are allocated based on
+    // what ordering we want the files to be in
+    public static int getFileOrderUtil (String fileName) {
+        if (fileName.contains("-vu-prepare")) {
+            return 0;
+        } else if (fileName.contains("-vu-verify")) {
+            return 1;
+        } else if (fileName.contains("-vu-cleanup")) {
+            return 2;
+        } else {
+            return 3;
         }
     }
 
@@ -140,6 +170,24 @@ public class TestQueryFile {
         }
         
         createTestFilesList(dir.getAbsolutePath());
+
+        // if this is a normal JDBC test run, we need to run the prepare, verify
+        // and cleanup scripts for one use-case, one after the other
+        if (!isUpgradeTestMode) {
+            Collections.sort(fileList, new Comparator<String>() {
+                // sort in such a way that filenames that have same prefix should run
+                // prepare file first, verify file next and cleanup file at the end
+                @Override
+                public int compare (String file1, String file2) {
+                    if (getFileNamePrefix(file1).equals(getFileNamePrefix(file2))) {
+                        return getFileOrderUtil(file1) - getFileOrderUtil(file2);
+                    } else {
+                        return file1.compareTo(file2);
+                    }
+                }
+            });
+        }
+
         return fileList.stream();
     }
 
@@ -298,8 +346,10 @@ public class TestQueryFile {
 
     // parameterized test
     @ParameterizedTest(name="{0}")
+    @NullSource
     @MethodSource("inputFileNames")
     public void TestQueryBatch(String inputFileName) throws SQLException, ClassNotFoundException, Throwable {
+        if(inputFileName == null) return;
 
         // if it is a command and not a fileName
         if (inputFileName.startsWith("cmd#!#")) {
@@ -321,8 +371,17 @@ public class TestQueryFile {
         
         boolean result; // whether test passed or failed
         int failed;
-        
-        File outputFile = new File(outputFilesDirectoryPath + inputFileName + ".out");
+
+        String outputFileName;
+
+        if(inputFilesDirectoryPath.substring(inputFilesDirectoryPath.length() - 1) == "/"){
+            outputFileName = inputFilesDirectoryPath.split("/",2).length > 1 ? inputFilesDirectoryPath.split("/",2)[1].replace("/","__") + inputFileName : inputFileName;
+        }
+        else{
+            outputFileName = inputFilesDirectoryPath.split("/",2).length > 1 ? inputFilesDirectoryPath.split("/",2)[1].replace("/","__") + "__" + inputFileName : inputFileName;
+        }
+
+        File outputFile = new File(outputFilesDirectoryPath + outputFileName + ".out");
 
         // generate buffer reader associated with the file
         FileWriter fw = new FileWriter(outputFile);
@@ -330,8 +389,8 @@ public class TestQueryFile {
         batch_run.batch_run_sql(connection_bbl, bw, testFilePath, logger);
         bw.close();
         
-        File expectedFile = new File(generatedFilesDirectoryPath + inputFileName + ".out");
-        File sqlExpectedFile = new File(sqlServerGeneratedFilesDirectoryPath + inputFileName + ".out");
+        File expectedFile = new File(generatedFilesDirectoryPath + outputFileName + ".out");
+        File sqlExpectedFile = new File(sqlServerGeneratedFilesDirectoryPath + outputFileName + ".out");
 
         if (expectedFile.exists()) {
             // get the diff
