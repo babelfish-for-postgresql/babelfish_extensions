@@ -1,13 +1,13 @@
 Use db_constraint_column_usage_vu_prepare;
 go
 
-SELECT * FROM information_schema.CONSTRAINT_COLUMN_USAGE WHERE TABLE_NAME NOT LIKE 'sys%' ORDER BY COLUMN_NAME;
+SELECT * FROM information_schema.CONSTRAINT_COLUMN_USAGE WHERE TABLE_NAME LIKE 'constraint_column_usage_vu_prepare%' ORDER BY COLUMN_NAME;
 go
 
 Use master;
 go
 
-SELECT * FROM information_schema.CONSTRAINT_COLUMN_USAGE WHERE TABLE_NAME NOT LIKE 'sys%' ORDER BY COLUMN_NAME;
+SELECT * FROM information_schema.CONSTRAINT_COLUMN_USAGE WHERE TABLE_NAME LIKE 'constraint_column_usage_vu_prepare%' ORDER BY COLUMN_NAME;
 go
 
 use db_constraint_column_usage_vu_prepare;
