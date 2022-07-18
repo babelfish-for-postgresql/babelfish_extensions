@@ -1,9 +1,14 @@
 # Schedule File for JDBC Test Framework for local run
+
 # 1. Lines starting with '#' will be treated as comments
-# 2. To run a postgres command:	cmd#!#postgresql#!#<enter postgres command>
+
+# 2. To run a postgres command: cmd#!#postgresql#!#<enter postgres command>
+
 # 3. To run a T-SQL command: cmd#!#sqlserver#!#<enter T-SQL command>
+
 # 4. Keyword "all" is equivalent to running all test files in input folder
-# 5. To add a test, add test name (without extension, ,  and . For example if test file name is TestBigInt.txt write TestBigInt) on a new line
+
+# 5. To add a test, add test name (without extension, , and . For example if test file name is TestBigInt.txt write TestBigInt) on a new line
 
 TestBigInt
 TestBinary
@@ -78,3 +83,5 @@ BABEL-1994-VARCHAR
 BABEL-889
 babel_417
 babel_sqlvariant_cast_compare
+constraint_column_usage
+column_domain_usage

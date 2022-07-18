@@ -1,26 +1,29 @@
-SELECT * FROM sys.configurations;
+USE master;
 GO
 
-SELECT * FROM sys.syscurconfigs;
+SELECT * FROM sys_configurations_view
 GO
 
-SELECT * FROM sys.sysconfigures;
+EXEC sys_configurations_proc
 GO
 
-SELECT * FROM sys.babelfish_configurations;
+SELECT * FROM sys_configurations_func()
 GO
 
-INSERT INTO sys.babelfish_configurations
-     VALUES (1234,
-             'testing',
-             1,
-             0,
-             0,
-             1,
-             'asdf',
-             sys.bitin('1'),
-             sys.bitin('0'),
-             'testing',
-             'testing'
-             );
+SELECT * FROM sys_syscurconfigs_view
+GO
+
+EXEC sys_syscurconfigs_proc
+GO
+
+SELECT * FROM sys_syscurconfigs_func()
+GO
+
+SELECT * FROM sys_sysconfigures_view
+GO
+
+EXEC sys_sysconfigures_proc
+GO
+
+SELECT * FROM sys_sysconfigures_func()
 GO

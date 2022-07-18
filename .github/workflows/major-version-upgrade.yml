@@ -32,7 +32,7 @@ jobs:
           make check
           cd contrib && make && sudo make install
         shell: bash
-      
+
       - name: Compile ANTLR
         id: compile-antlr
         if: always() && steps.build-modified-postgres-old.outcome == 'success'
@@ -44,7 +44,7 @@ jobs:
         with:
           repository: babelfish-for-postgresql/babelfish_extensions
           ref: ${{env.EXTENSION_BRANCH_FROM}}
-      
+
       - name: Build Extensions using ${{env.EXTENSION_BRANCH_FROM}}
         id: build-extensions-old
         if: always() && steps.compile-antlr.outcome == 'success'
@@ -60,7 +60,7 @@ jobs:
           make && make install
           cd ../babelfishpg_tsql
           make && make install
-      
+
       - name: Install Extensions using ${{env.EXTENSION_BRANCH_FROM}}
         id: install-extensions-old
         if: always() && steps.build-extensions-old.outcome == 'success'
@@ -119,20 +119,20 @@ jobs:
 
       - name: Run JDBC Tests
         id: jdbc
-        timeout-minutes: 20
+        timeout-minutes: 25
         if: always() && steps.run-pg_upgrade.outcome == 'success'
         run: |
           cd test/JDBC/
           # temporarily ignore test BABEL-2086
           echo 'ignore#!#BABEL-2086' >> jdbc_schedule
           mvn test
-     
+
       - name: Upload Postgres log
         if: always() && steps.jdbc.outcome == 'failure'
         uses: actions/upload-artifact@v2
         with:
-         name: postgres-log
-         path: ~/${{env.OLD_INSTALL_DIR}}/data/logfile14
+          name: postgres-log
+          path: ~/${{env.OLD_INSTALL_DIR}}/data/logfile14
 
       - name: Upload upgrade Log
         if: always() && steps.run-pg_upgrade.outcome == 'failure'
@@ -140,7 +140,7 @@ jobs:
         with:
           name: upgrade-logs
           path: ~/upgrade/*.log
-      
+
       # The test summary files contain paths with ':' characters, which is not allowed with the upload-artifact actions
       - name: Rename Test Summary Files
         id: test-file-rename
