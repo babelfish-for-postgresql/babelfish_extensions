@@ -2052,7 +2052,7 @@ static void bbf_ProcessUtility(PlannedStmt *pstmt,
 	 * Block ALTER VIEW and CREATE OR REPLACE VIEW statements from PG client
 	 * executed on TSQL views which has entries in view_def catalog
 	 */
-	if (!IS_TDS_CLIENT())
+	if (!IS_TDS_CLIENT() && !babelfish_dump_restore)
 	{
 		switch (nodeTag(parsetree))
 		{
