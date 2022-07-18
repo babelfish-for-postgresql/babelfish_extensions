@@ -16,6 +16,9 @@ go
 select * from [T3267"d];
 go
 
+select * from [T3267\schema].[T3267.[CustomTable];
+go
+
 select relname, array_to_string(reloptions,',') reloptions from pg_class C where C.relname like 't3267%' order by relname;
 go
 
