@@ -38,4 +38,5 @@ BABEL-3249
 BABEL-3204
 BABEL-3234
 routines_definition
+constraint_column_usage
 column_domain_usage
