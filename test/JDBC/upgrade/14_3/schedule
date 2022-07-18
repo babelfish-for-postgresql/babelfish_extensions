@@ -52,5 +52,6 @@ sys-schema-name
 sys-suser_sid
 sys-suser_sname
 sys-trigger_nestlevel
+constraint_column_usage
 column_domain_usage
 sys-host_name
