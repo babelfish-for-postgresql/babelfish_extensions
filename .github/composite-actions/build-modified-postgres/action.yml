@@ -3,7 +3,7 @@ inputs:
   engine_branch:
     description: 'Engine Branch'
     required: no
-    default: $GITHUB_REF_NAME
+    default: 'latest'
   install_dir:
     description: 'Engine install directory'
     required: no
@@ -16,11 +16,30 @@ runs:
       run: |
         cd ..
         rm -rf postgresql_modified_for_babelfish
-        $GITHUB_WORKSPACE/.github/scripts/clone_engine_repo "$GITHUB_REPOSITORY_OWNER" "${{inputs.engine_branch}}"
+        
+        if [[ $GITHUB_EVENT_NAME == "pull_request" ]]; then
+          if [[ ${{inputs.engine_branch}} == "latest" ]]; then
+            ENGINE_BRANCH=$GITHUB_HEAD_REF
+          else
+            ENGINE_BRANCH=${{inputs.engine_branch}}
+          fi            
+          REPOSITORY_OWNER=$HEAD_OWNER
+        else
+          if [[ ${{inputs.engine_branch}} == "latest" ]]; then
+            ENGINE_BRANCH=$GITHUB_REF_NAME
+          else
+            ENGINE_BRANCH=${{inputs.engine_branch}}
+          fi
+          REPOSITORY_OWNER=$GITHUB_REPOSITORY_OWNER
+        fi
+
+        $GITHUB_WORKSPACE/.github/scripts/clone_engine_repo "$REPOSITORY_OWNER" "$ENGINE_BRANCH"
         cd postgresql_modified_for_babelfish
         ./configure --prefix=$HOME/${{ inputs.install_dir }}/ --with-python PYTHON=/usr/bin/python2.7 --enable-debug CFLAGS="-ggdb" --with-libxml --with-uuid=ossp --with-icu
         make -j 4 2>error.txt
         make install
         make check
         cd contrib && make && sudo make install
+      env:
+        HEAD_OWNER: ${{ github.event.pull_request.head.repo.owner.login }}
       shell: bash
