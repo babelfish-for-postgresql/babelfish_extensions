@@ -1,8 +1,8 @@
-DROP VIEW sys_database_mirroring_view
+DROP VIEW sys_database_mirroring_view_vu_prepare
 GO
 
-DROP PROC sys_database_mirroring_proc
+DROP PROC sys_database_mirroring_proc_vu_prepare
 GO
 
-DROP FUNCTION sys_database_mirroring_func
+DROP FUNCTION sys_database_mirroring_func_vu_prepare
 GO
