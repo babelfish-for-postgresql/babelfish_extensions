@@ -47,7 +47,6 @@ sys-change_tracking_databases
 sys-change_tracking_tables
 sys-check_constraints
 sys-computed_columns
-sys-configurations
 sys-data_spaces
 sys-database_files
 sys-database_filestream_options
