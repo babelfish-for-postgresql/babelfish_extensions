@@ -38,4 +38,5 @@ BABEL-3249
 BABEL-3204
 BABEL-3234
 cast_numeric_types_to_datetime
+constraint_column_usage
 column_domain_usage
