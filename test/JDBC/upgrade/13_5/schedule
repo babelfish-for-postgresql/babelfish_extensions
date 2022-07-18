@@ -1,15 +1,9 @@
 # Schedule File for JDBC Test Framework for local run
-
 # 1. Lines starting with '#' will be treated as comments
-
 # 2. To run a postgres command: cmd#!#postgresql#!#<enter postgres command>
-
 # 3. To run a T-SQL command: cmd#!#sqlserver#!#<enter T-SQL command>
-
 # 4. Keyword "all" is equivalent to running all test files in
-
 # input folder
-
 # 5. To add a test, add test name (without extension, -vu-prepare, -vu-verify and -vu-cleanup. For example if test file name is TestBigInt-vu-prepare.txt write TestBigInt) on a new line
 
 TestBigInt
@@ -53,7 +47,6 @@ sys-change_tracking_databases
 sys-change_tracking_tables
 sys-check_constraints
 sys-computed_columns
-sys-configurations
 sys-data_spaces
 sys-database_files
 sys-database_filestream_options
