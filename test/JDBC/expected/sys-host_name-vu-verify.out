@@ -62,7 +62,7 @@ SELECT * from dm_exec_sessions_func(@@SPID)
 GO
 ~~START~~
 nvarchar#!#nvarchar#!#int#!#text#!#nvarchar#!#nvarchar#!#smallint
-us_english#!#a_nice_workstation_name#!#131592#!#Microsoft JDBC Driver#!#Microsoft JDBC Driver for SQL Server#!#ymd#!#7
+us_english#!#a_nice_workstation_name#!#131592#!#Microsoft JDBC Driver #!#Microsoft JDBC Driver for SQL Server#!#ymd#!#7
 ~~END~~
 
 
@@ -70,7 +70,7 @@ SELECT * FROM dm_exec_sessions_view
 GO
 ~~START~~
 nvarchar#!#nvarchar#!#int#!#text#!#nvarchar#!#nvarchar#!#smallint
-us_english#!#a_nice_workstation_name#!#131592#!#Microsoft JDBC Driver#!#Microsoft JDBC Driver for SQL Server#!#ymd#!#7
+us_english#!#a_nice_workstation_name#!#131592#!#Microsoft JDBC Driver #!#Microsoft JDBC Driver for SQL Server#!#ymd#!#7
 ~~END~~
 
 
@@ -78,6 +78,6 @@ EXECUTE dm_exec_sessions_proc
 GO
 ~~START~~
 nvarchar#!#nvarchar#!#int#!#text#!#nvarchar#!#nvarchar#!#smallint
-us_english#!#a_nice_workstation_name#!#131592#!#Microsoft JDBC Driver#!#Microsoft JDBC Driver for SQL Server#!#ymd#!#7
+us_english#!#a_nice_workstation_name#!#131592#!#Microsoft JDBC Driver #!#Microsoft JDBC Driver for SQL Server#!#ymd#!#7
 ~~END~~
 
