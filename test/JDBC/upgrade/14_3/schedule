@@ -37,7 +37,6 @@ BABEL-3221
 BABEL-3249
 BABEL-3204
 BABEL-3234
-BABEL-3382
 sys-server_principals
 fulltextserviceproperty
 is_srvrolemember
@@ -52,5 +51,6 @@ sys-original_login
 sys-schema-name
 sys-suser_sid
 sys-suser_sname
+sys-sysobjects-2_1_0
 sys-trigger_nestlevel
 column_domain_usage

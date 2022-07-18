@@ -31,7 +31,6 @@ TestXML
 BABEL-3166
 BABEL-3192
 BABEL-3249
-BABEL-3382
 fulltextserviceproperty
 is_srvrolemember
 sys-column-property
@@ -42,5 +41,6 @@ sys-original_login
 sys-schema-name
 sys-suser_sid
 sys-suser_sname
+sys-sysobjects-2_1_0
 sys-trigger_nestlevel
 column_domain_usage

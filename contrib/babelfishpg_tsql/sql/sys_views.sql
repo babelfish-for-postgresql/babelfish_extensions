@@ -1596,6 +1596,10 @@ select
   CAST(s.name as sys._ci_sysname)
   , CAST(s.object_id as int) as id
   , CAST(s.type as sys.bpchar(2)) as xtype
+
+  -- 'uid' is specified as type INT here, and not SMALLINT per SQL Server documentation.
+  -- This is because if you routinely drop and recreate databases, it is possible for the
+  -- dbo schema which relies on pg_catalog oid values to exceed the size of a smallint. 
   , CAST(s.schema_id as int) as uid
   , CAST(0 as smallint) as info
   , CAST(0 as int) as status
