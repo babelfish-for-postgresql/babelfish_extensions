@@ -26,7 +26,7 @@ varbinary
 ~~END~~
 
 
-SELECT * FROM sys_suser_sid_view
+SELECT * FROM sys_suser_sid_view_vu_prepare
 GO
 ~~START~~
 varbinary
@@ -34,7 +34,7 @@ varbinary
 ~~END~~
 
 
-EXEC sys_suser_sid_proc
+EXEC sys_suser_sid_proc_vu_prepare
 GO
 ~~START~~
 varbinary
@@ -42,7 +42,7 @@ varbinary
 ~~END~~
 
 
-SELECT sys_suser_sid_func()
+SELECT sys_suser_sid_func_vu_prepare()
 GO
 ~~START~~
 varbinary
@@ -50,7 +50,7 @@ varbinary
 ~~END~~
 
 
-SELECT * FROM sys_suser_id_view
+SELECT * FROM sys_suser_id_view_vu_prepare
 GO
 ~~START~~
 int
@@ -58,7 +58,7 @@ int
 ~~END~~
 
 
-EXEC sys_suser_id_proc
+EXEC sys_suser_id_proc_vu_prepare
 GO
 ~~START~~
 int
@@ -66,7 +66,7 @@ int
 ~~END~~
 
 
-SELECT sys_suser_id_func()
+SELECT sys_suser_id_func_vu_prepare()
 GO
 ~~START~~
 varbinary

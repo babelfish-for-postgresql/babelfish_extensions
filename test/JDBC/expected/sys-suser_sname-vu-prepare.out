@@ -1,12 +1,12 @@
-CREATE VIEW sys_suser_sname_view AS
+CREATE VIEW sys_suser_sname_view_vu_prepare AS
 SELECT suser_sname(0x0)
 GO
 
-CREATE PROC sys_suser_sname_proc AS
+CREATE PROC sys_suser_sname_proc_vu_prepare AS
 SELECT suser_sname(0x0)
 GO
 
-CREATE FUNCTION sys_suser_sname_func()
+CREATE FUNCTION sys_suser_sname_func_vu_prepare()
 RETURNS sys.varchar(256)
 AS
 BEGIN
@@ -14,15 +14,15 @@ BEGIN
 END
 GO
 
-CREATE VIEW sys_suser_name_view AS
+CREATE VIEW sys_suser_name_view_vu_prepare AS
 SELECT suser_name(0)
 GO
 
-CREATE PROC sys_suser_name_proc AS
+CREATE PROC sys_suser_name_proc_vu_prepare AS
 SELECT suser_name(0)
 GO
 
-CREATE FUNCTION sys_suser_name_func()
+CREATE FUNCTION sys_suser_name_func_vu_prepare()
 RETURNS sys.varchar(256)
 AS
 BEGIN

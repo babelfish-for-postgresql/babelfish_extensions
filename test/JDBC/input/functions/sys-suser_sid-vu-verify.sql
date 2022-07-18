@@ -11,20 +11,20 @@ GO
 SELECT SYS.SUSER_SID('non_existent_user')
 GO
 
-SELECT * FROM sys_suser_sid_view
+SELECT * FROM sys_suser_sid_view_vu_prepare
 GO
 
-EXEC sys_suser_sid_proc
+EXEC sys_suser_sid_proc_vu_prepare
 GO
 
-SELECT sys_suser_sid_func()
+SELECT sys_suser_sid_func_vu_prepare()
 GO
 
-SELECT * FROM sys_suser_id_view
+SELECT * FROM sys_suser_id_view_vu_prepare
 GO
 
-EXEC sys_suser_id_proc
+EXEC sys_suser_id_proc_vu_prepare
 GO
 
-SELECT sys_suser_id_func()
+SELECT sys_suser_id_func_vu_prepare()
 GO
