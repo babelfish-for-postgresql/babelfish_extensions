@@ -6,3 +6,9 @@ GO
 
 SELECT sys_databases_func_vu_prepare()
 GO
+
+SELECT COUNT(*) FROM sys.all_columns WHERE object_id = object_id('sys.databases');
+GO
+
+SELECT name FROM sys.databases where name = 'db_sys_databases_vu_prepare';
+GO
