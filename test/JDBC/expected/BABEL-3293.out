@@ -404,6 +404,76 @@ Merge Join
 ~~END~~
 
 
+-- Conflicting join hints
+select * from babel_3293_t1 inner hash join babel_3293_t2 on babel_3293_t1.a1 = babel_3293_t2.a2 option(merge join)
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Conflicting JOIN optimizer hints specified)~~
+
+
+select * from babel_3293_t1 inner hash join babel_3293_t2 on babel_3293_t1.a1 = babel_3293_t2.a2 option(hash join)
+go
+~~START~~
+text
+Query Text: /*+ HashJoin(babel_3293_t1 babel_3293_t2) Set(enable_hashjoin off) Set(enable_nestloop off) HashJoin(babel_3293_t1 babel_3293_t2 babel_3293_t1 babel_3293_t2) Set(enable_mergejoin off) Set(enable_nestloop off) Leading(babel_3293_t1 babel_3293_t2 babel_3293_t1 babel_3293_t2)*/ select * from babel_3293_t1 inner      join babel_3293_t2 on babel_3293_t1.a1 = babel_3293_t2.a2                  
+Hash Join
+  Hash Cond: (babel_3293_t1.a1 = babel_3293_t2.a2)
+  ->  Seq Scan on babel_3293_t1
+  ->  Hash
+        ->  Seq Scan on babel_3293_t2
+~~END~~
+
+
+select * from babel_3293_t1 join babel_3293_t2 on babel_3293_t1.a1 = babel_3293_t2.a2 option(merge join, loop join)
+go
+~~START~~
+text
+Query Text: /*+ Set(enable_hashjoin off) Set(enable_nestloop off) Set(enable_hashjoin off) Set(enable_mergejoin off) */ select * from babel_3293_t1 join babel_3293_t2 on babel_3293_t1.a1 = babel_3293_t2.a2                              
+Nested Loop
+  ->  Seq Scan on babel_3293_t1
+  ->  Index Scan using babel_3293_t2_pkey on babel_3293_t2
+        Index Cond: (a2 = babel_3293_t1.a1)
+~~END~~
+
+
+select * from babel_3293_t1 inner loop join babel_3293_t2 on babel_3293_t1.a1 = babel_3293_t2.a2 join babel_3293_t3 on babel_3293_t2.a2 = babel_3293_t3.a3 where b1 = 1 and b2 = 1 and b3 = 1 option(merge join)
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Conflicting JOIN optimizer hints specified)~~
+
+
+select * from babel_3293_t1 inner loop join babel_3293_t2 on babel_3293_t1.a1 = babel_3293_t2.a2 inner merge join babel_3293_t3 on babel_3293_t2.a2 = babel_3293_t3.a3 where b1 = 1 and b2 = 1 and b3 = 1 option(merge join)
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Conflicting JOIN optimizer hints specified)~~
+
+
+select * from babel_3293_t1 inner loop join babel_3293_t2 on babel_3293_t1.a1 = babel_3293_t2.a2 inner merge join babel_3293_t3 on babel_3293_t2.a2 = babel_3293_t3.a3 where b1 = 1 and b2 = 1 and b3 = 1 option(merge join, loop join)
+go
+~~START~~
+text
+Query Text: /*+ NestLoop(babel_3293_t1 babel_3293_t2) Set(enable_hashjoin off) Set(enable_nestloop off) NestLoop(babel_3293_t1 babel_3293_t2 babel_3293_t3 babel_3293_t1 babel_3293_t2) MergeJoin(babel_3293_t1 babel_3293_t2 babel_3293_t3 babel_3293_t1 babel_3293_t2 babel_3293_t3) Set(enable_hashjoin off) Set(enable_nestloop off) NestLoop(babel_3293_t1 babel_3293_t2 babel_3293_t3 babel_3293_t1 babel_3293_t2 babel_3293_t3 babel_3293_t1 babel_3293_t2) MergeJoin(babel_3293_t1 babel_3293_t2 babel_3293_t3 babel_3293_t1 babel_3293_t2 babel_3293_t3 babel_3293_t1 babel_3293_t2 babel_3293_t3) Set(enable_hashjoin off) Set(enable_nestloop off) Set(enable_hashjoin off) Set(enable_mergejoin off) Leading(babel_3293_t1 babel_3293_t2 babel_3293_t3 babel_3293_t1 babel_3293_t2 babel_3293_t3 babel_3293_t1 babel_3293_t2 babel_3293_t3)*/ select * from babel_3293_t1 inner      join babel_3293_t2 on babel_3293_t1.a1 = babel_3293_t2.a2 inner       join babel_3293_t3 on babel_3293_t2.a2 = babel_3293_t3.a3 where b1 = 1 and b2 = 1 and b3 = 1                              
+Nested Loop
+  ->  Nested Loop
+        Join Filter: (babel_3293_t1.a1 = babel_3293_t2.a2)
+        ->  Bitmap Heap Scan on babel_3293_t1
+              Recheck Cond: (b1 = 1)
+              ->  Bitmap Index Scan on index_babel_3293_t1_b1babel_329dabb714f0f2c475b9c9e7d1d90cbd210
+                    Index Cond: (b1 = 1)
+        ->  Materialize
+              ->  Bitmap Heap Scan on babel_3293_t2
+                    Recheck Cond: (b2 = 1)
+                    ->  Bitmap Index Scan on index_babel_3293_t2_b2babel_329ea1aa3a9e72f8fece1b90ee8c2a8f24e
+                          Index Cond: (b2 = 1)
+  ->  Index Scan using babel_3293_t3_pkey on babel_3293_t3
+        Index Cond: (a3 = babel_3293_t1.a1)
+        Filter: (b3 = 1)
+~~END~~
+
+
 -- Queries with both table hints and join hints
 select * from babel_3293_t1 with(index(index_babel_3293_t1_b1)) inner loop join babel_3293_t2 (index(index_babel_3293_t2_b2)) on babel_3293_t1.a1 = babel_3293_t2.a2 where b1 = 1 and b2 = 1
 go
