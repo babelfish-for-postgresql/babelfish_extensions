@@ -2,7 +2,7 @@ SELECT name, compatibility_level, collation_name FROM sys_databases_view_vu_prep
 GO
 ~~START~~
 text#!#tinyint#!#nvarchar
-db_sys_databases#!#<NULL>#!#bbf_unicode_cp1_ci_as
+db_sys_databases_vu_prepare#!#<NULL>#!#bbf_unicode_cp1_ci_as
 ~~END~~
 
 
@@ -10,7 +10,7 @@ EXEC sys_databases_proc_vu_prepare
 GO
 ~~START~~
 varchar#!#tinyint#!#varchar
-db_sys_databases#!#120#!#bbf_unicode_cp1_ci_as
+db_sys_databases_vu_prepare#!#120#!#bbf_unicode_cp1_ci_as
 ~~END~~
 
 
@@ -33,7 +33,7 @@ int
 SELECT name FROM sys.databases where name = 'db_sys_databases_vu_prepare';
 GO
 ~~START~~
-text
+varchar
 db_sys_databases_vu_prepare
 ~~END~~
 
