@@ -52,9 +52,8 @@ SELECT ISOWeek_3101(GETDATE())
 GO
 ~~START~~
 tinyint
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: function date_part(unknown, text) does not exist)~~
+29
+~~END~~
 
 
 CREATE FUNCTION table_3101_2()
