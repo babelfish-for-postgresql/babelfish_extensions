@@ -10,11 +10,11 @@ upgrade-version: [[
 ],
 [
   {
-    version: 13.4,
+    version: 14.3,
     upgrade-type: null
   },
   { 
-    version: 13.6,
+    version: 14.latest,
     upgrade-type: minor 
   }
 ],
