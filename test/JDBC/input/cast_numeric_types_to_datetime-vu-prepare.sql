@@ -1,10 +1,10 @@
 USE master
 GO
 
-CREATE TABLE datetime_table(c1 datetime)
+CREATE TABLE datetime_vu_prepare_table(c1 datetime)
 GO
 
-INSERT INTO datetime_table VALUES 
+INSERT INTO datetime_vu_prepare_table VALUES 
 (CAST(10 as DATETIME)), 
 (CAST(CAST (1 as BIT) as DATETIME)), 
 (CAST(CAST (216.5937465072345996348935531215926 as NUMERIC(19,7)) as DATETIME)), 
@@ -17,12 +17,12 @@ INSERT INTO datetime_table VALUES
 (CAST(CAST (9 as TINYINT) as DATETIME))
 GO
 
-CREATE PROCEDURE datetime_procedure 
+CREATE PROCEDURE datetime_vu_prepare_procedure 
 AS
 SELECT CAST(CAST (46.99999999 as MONEY) as DATETIME)
 GO
 
-CREATE FUNCTION dbo.datetime_function (@par SMALLMONEY)
+CREATE FUNCTION dbo.datetime_vu_prepare_function (@par SMALLMONEY)
 RETURNS DATETIME AS
 BEGIN
     Declare @res datetime

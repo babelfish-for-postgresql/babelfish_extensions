@@ -1,7 +1,92 @@
 USE master
 GO
 
-SELECT * FROM datetime_table
+SELECT CAST(10 as DATETIME)
+GO
+~~START~~
+datetime
+1900-01-11 00:00:00.0
+~~END~~
+
+SELECT CAST(CAST (1 as BIT) as DATETIME)
+GO
+~~START~~
+datetime
+1900-01-02 00:00:00.0
+~~END~~
+
+SELECT CAST(CAST (216.5937465072345996348935531215926 as NUMERIC(19,7)) as DATETIME)
+GO
+~~START~~
+datetime
+1900-08-05 14:14:59.697
+~~END~~
+
+SELECT CAST(CAST (-46.781289 as DECIMAL(6,2)) as DATETIME)
+GO
+~~START~~
+datetime
+1899-11-15 05:16:48.0
+~~END~~
+
+SELECT CAST(CAST (54.63493295443232 as FLOAT(12)) as DATETIME)
+GO
+~~START~~
+datetime
+1900-02-24 15:14:18.25
+~~END~~
+
+SELECT CAST(CAST (3.1215926 as REAL) as DATETIME)
+GO
+~~START~~
+datetime
+1900-01-04 02:55:05.59
+~~END~~
+
+SELECT CAST(CAST (98 as INT) as DATETIME) 
+GO
+~~START~~
+datetime
+1900-04-09 00:00:00.0
+~~END~~
+
+SELECT CAST(CAST (131.23 as BIGINT) as DATETIME)
+GO
+~~START~~
+datetime
+1900-05-12 00:00:00.0
+~~END~~
+
+SELECT CAST(CAST (5 as SMALLINT) as DATETIME)
+GO
+~~START~~
+datetime
+1900-01-06 00:00:00.0
+~~END~~
+
+SELECT CAST(CAST (9 as TINYINT) as DATETIME)
+GO
+~~START~~
+datetime
+1900-01-10 00:00:00.0
+~~END~~
+
+SELECT CAST(CAST (46.99999999 as MONEY) as DATETIME)
+GO
+~~START~~
+datetime
+1900-02-17 00:00:00.0
+~~END~~
+
+SELECT CAST(CAST (345.3 AS SMALLMONEY) as DATETIME)
+GO
+~~START~~
+datetime
+1900-12-12 07:12:00.0
+~~END~~
+
+
+SELECT * FROM datetime_vu_prepare_table
 GO
 ~~START~~
 datetime
@@ -18,7 +103,7 @@ datetime
 ~~END~~
 
 
-EXEC datetime_procedure
+EXEC datetime_vu_prepare_procedure
 GO
 ~~START~~
 datetime
@@ -26,7 +111,7 @@ datetime
 ~~END~~
 
 
-SELECT dbo.datetime_function (cast(345.3 AS SMALLMONEY))
+SELECT dbo.datetime_vu_prepare_function (CAST(345.3 AS SMALLMONEY))
 GO
 ~~START~~
 datetime
