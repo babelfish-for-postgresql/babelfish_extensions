@@ -21,8 +21,8 @@ a_nice_workstation_name
 SELECT * FROM host_name_view
 GO
 ~~START~~
-nchar
-a_nice_workstation_name                                                                                                         
+text
+<NULL>
 ~~END~~
 
 
@@ -70,7 +70,7 @@ SELECT * FROM dm_exec_sessions_view
 GO
 ~~START~~
 nvarchar#!#nvarchar#!#int#!#text#!#nvarchar#!#nvarchar#!#smallint
-us_english#!#a_nice_workstation_name#!#131592#!#Microsoft JDBC Driver#!#Microsoft JDBC Driver for SQL Server#!#ymd#!#7
+us_english#!#<NULL>#!#131592#!#Microsoft JDBC Driver#!#Microsoft JDBC Driver for SQL Server#!#ymd#!#7
 ~~END~~
 
 
