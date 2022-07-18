@@ -1,7 +1,7 @@
  
 #create test user and database from psql terminal
 echo "============================== CREATING USER AND DATABASE =============================="
-~/postgres/bin/psql -U "$USER" -d postgres -a << EOF
+psql -U "$USER" -d postgres -a << EOF
 CREATE USER jdbc_user WITH SUPERUSER CREATEDB CREATEROLE PASSWORD '12345678' INHERIT;
 DROP DATABASE IF EXISTS jdbc_testdb;
 CREATE DATABASE jdbc_testdb OWNER jdbc_user;
