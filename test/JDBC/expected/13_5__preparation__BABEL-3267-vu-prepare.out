@@ -33,20 +33,34 @@ go
 ~~ROW COUNT: 1~~
 
 
-
 -- double quote
 create table [T3267"d] (c varchar(10));
 insert into [T3267"d] values ('success');
-select relname, array_to_string(reloptions,',') reloptions from pg_class C where C.relname like 't3267%' order by relname;
 go
 ~~ROW COUNT: 1~~
 
+
+-- '.' character
+SET QUOTED_IDENTIFIER ON;
+go
+create schema [T3267\schema];
+go
+CREATE table [T3267\schema].[T3267.[CustomTable](c varchar(10));
+insert into [T3267\schema].[T3267.[CustomTable] values ('success');
+SET QUOTED_IDENTIFIER OFF;
+go
+~~ROW COUNT: 1~~
+
+
+select relname, array_to_string(reloptions,',') reloptions from pg_class C where C.relname like 't3267%' order by relname;
+go
 ~~START~~
 varchar#!#text
 t3267 a#!#<NULL>
 t3267"d#!#<NULL>
 t3267##!#<NULL>
 t3267'b#!#<NULL>
+t3267.[customtable#!#<NULL>
 t3267\c#!#<NULL>
 ~~END~~
 
