@@ -92,3 +92,33 @@ runs:
         export scheduleFile=upgrade/${{ matrix.upgrade-path.path[0] }}/schedule
         mvn test
       shell: bash
+
+    - name: Install Python
+      id: install-python
+      if: always() && steps.jdbc-upgrade-tests.outcome == 'success'
+      uses: actions/setup-python@v2
+      with:
+        python-version: 3.7
+
+    - name: Configure Python Environment
+      id: configure-python-environment
+      if: always() && steps.install-python.outcome == 'success'
+      run: |
+        cd ~
+        pip3 install psycopg2
+      shell: bash
+
+    - name: Run dependency check
+      id: run-dependency-check
+      if: always() && steps.configure-python-environment.outcome == 'success'
+      run: |
+        cd test/python
+        python3 upgrade_validation.py
+      shell: bash
+
+    - name: Upload artifacts
+      if: always() && steps.run-dependency-check.outcome == 'failure'
+      run: |
+        mkdir -p ~/upgrade
+        cp test/python/output/upgrade_validation/* ~/upgrade
+      shell: bash
