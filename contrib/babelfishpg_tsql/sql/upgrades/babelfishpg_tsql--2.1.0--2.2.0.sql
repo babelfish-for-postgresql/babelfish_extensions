@@ -1422,9 +1422,9 @@ BEGIN
 	WHEN 'second' THEN
 		RETURN startdate OPERATOR(sys.+) make_interval(secs => num);
 	WHEN 'millisecond' THEN
-		RETURN startdate OPERATOR(sys.+) make_interval(secs => CAST(num AS DECIMAL(2,0)) * 0.001);
+		RETURN startdate OPERATOR(sys.+) make_interval(secs => CAST(num AS DECIMAL(20,10)) * 0.001);
 	WHEN 'microsecond' THEN
-		RETURN startdate OPERATOR(sys.+) make_interval(secs => CAST(num AS DECIMAL(2,0)) * 0.000001);
+		RETURN startdate OPERATOR(sys.+) make_interval(secs => CAST(num AS DECIMAL(20,10)) * 0.000001);
 	WHEN 'nanosecond' THEN
 		-- Best we can do - Postgres does not support nanosecond precision
 		RETURN startdate;
@@ -1469,9 +1469,9 @@ BEGIN
 	WHEN 'second' THEN
 		RETURN startdate + make_interval(secs => num);
 	WHEN 'millisecond' THEN
-		RETURN startdate + make_interval(secs => CAST(num AS DECIMAL(2,0)) * 0.001);
+		RETURN startdate + make_interval(secs => CAST(num AS DECIMAL(20,10)) * 0.001);
 	WHEN 'microsecond' THEN
-		RETURN startdate + make_interval(secs => CAST(num AS DECIMAL(2,0)) * 0.000001);
+		RETURN startdate + make_interval(secs => CAST(num AS DECIMAL(20,10)) * 0.000001);
 	WHEN 'nanosecond' THEN
 		-- Best we can do - Postgres does not support nanosecond precision
 		RETURN startdate;
