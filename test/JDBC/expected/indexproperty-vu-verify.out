@@ -1,0 +1,53 @@
+use master
+go
+
+-- A NULL parameter should return NULL
+select INDEXPROPERTY(OBJECT_ID('t1'), NULL, 'IsClustered')
+go
+~~START~~
+int
+<NULL>
+~~END~~
+
+
+-- Invalid value for 'property' parameter should return NULL
+select INDEXPROPERTY(OBJECT_ID('t1'), 't1_pkey', 'PropertyDoesNotExist')
+go
+~~START~~
+int
+<NULL>
+~~END~~
+
+
+-- case insensitive invocation of 'property' parameter with leading & trailing whitespace - should work as normal
+select INDEXPROPERTY(OBJECT_ID('t1'), '     t1_pkey  ', '     InDexDepTh     ')
+go
+~~START~~
+int
+0
+~~END~~
+
+
+select INDEXPROPERTY(OBJECT_ID('t2'), (select name from sys.indexes where name like 'idxt2%'), 'ISunique')
+go
+~~START~~
+int
+1
+~~END~~
+
+
+exec sys_indexproperty_vu_prepare_proc
+go
+~~START~~
+int
+0
+~~END~~
+
+
+select sys_indexproperty_vu_prepare_func()
+go
+~~START~~
+int
+1
+~~END~~
+
