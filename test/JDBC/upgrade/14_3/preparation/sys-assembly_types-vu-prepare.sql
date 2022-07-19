@@ -1,12 +1,12 @@
-CREATE VIEW sys_assembly_types_view AS
+CREATE VIEW sys_assembly_types_view_vu_prepare AS
 SELECT * FROM sys.assembly_types
 GO
 
-CREATE PROC sys_assembly_types_proc AS
+CREATE PROC sys_assembly_types_proc_vu_prepare AS
 SELECT * FROM sys.assembly_types
 GO
 
-CREATE FUNCTION sys_assembly_types_func()
+CREATE FUNCTION sys_assembly_types_func_vu_prepare()
 RETURNS INT
 AS
 BEGIN
