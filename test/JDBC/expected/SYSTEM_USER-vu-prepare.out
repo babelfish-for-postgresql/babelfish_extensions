@@ -1,12 +1,4 @@
 -- tsql
-SELECT session_user, system_user, current_user, db_name();
-GO
-~~START~~
-nvarchar#!#nvarchar#!#varchar#!#nvarchar
-dbo#!#jdbc_user#!#dbo#!#master
-~~END~~
-
-
 CREATE LOGIN system_user_vu_prepare_r1 WITH PASSWORD = '123';
 GO
 
