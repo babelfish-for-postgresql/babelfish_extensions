@@ -973,6 +973,7 @@ search_bbf_view_def(Relation bbf_view_def_rel, int16 dbid, const char *logical_s
 	return oldtup;
 }
 
+/* Checks if it is view created during v2.2.0 or after that */
 bool
 check_is_tsql_view(Oid relid)
 {
