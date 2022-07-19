@@ -53,4 +53,5 @@ sys-suser_sid
 sys-suser_sname
 sys-sysobjects
 sys-trigger_nestlevel
+constraint_column_usage
 column_domain_usage
