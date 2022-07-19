@@ -75,7 +75,7 @@ Could not find tests for procedure sys.printarg
 Could not find tests for procedure sys.sp_columns_managed
 Could not find tests for procedure sys.sp_databases
 Could not find tests for procedure sys.sp_helprole
-Could not find tests for procedure sys.sp_helpsrvrolemember
+Could not find tests for procedure sys.sp_helprolemember
 Could not find tests for procedure sys.sp_helpuser
 Could not find tests for procedure sys.sp_oledb_ro_usrname
 Could not find tests for procedure sys.sp_special_columns_100
