@@ -291,14 +291,12 @@ Could not find upgrade tests for view sys.dm_hadr_cluster
 Could not find upgrade tests for view sys.dm_hadr_database_replica_states
 Could not find upgrade tests for view sys.dm_os_host_info
 Could not find upgrade tests for view sys.endpoints
-Could not find upgrade tests for view sys.filegroups
 Could not find upgrade tests for view sys.filetable_system_defined_objects
 Could not find upgrade tests for view sys.filetables
 Could not find upgrade tests for view sys.foreign_key_columns
 Could not find upgrade tests for view sys.foreign_keys
 Could not find upgrade tests for view sys.fulltext_catalogs
 Could not find upgrade tests for view sys.fulltext_index_columns
-Could not find upgrade tests for view sys.fulltext_indexes
 Could not find upgrade tests for view sys.fulltext_languages
 Could not find upgrade tests for view sys.fulltext_stoplists
 Could not find upgrade tests for view sys.hash_indexes
