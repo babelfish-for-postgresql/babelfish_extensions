@@ -50,5 +50,6 @@ sys-original_login
 sys-schema-name
 sys-suser_sid
 sys-suser_sname
+sys-sysobjects
 sys-trigger_nestlevel
 column_domain_usage
