@@ -1267,24 +1267,44 @@ SendColInfoToken(int natts, bool sendRowStat)
 static
 int TdsGetGenericTypmod(Node *expr)
 {
-	FuncExpr *func;
-	Oid     func_oid = InvalidOid;
 	int rettypmod = -1;
 
 	if (!expr)
 		return rettypmod;
-	func = (FuncExpr *) expr;
 
-	/*
-	 * Look up the return type typmod from a persistent
-	 * store using function oid.
-	 */
-	func_oid = func->funcid;
-	Assert(func_oid != InvalidOid);
+	switch(nodeTag(expr))
+	{
+		case T_FuncExpr:
+			{
+				FuncExpr *func;
+				Oid     func_oid = InvalidOid;
 
-	if (func->funcresulttype != VOIDOID)
-		rettypmod = pltsql_plugin_handler_ptr->pltsql_get_generic_typmod(func_oid,
-				func->args == NIL ? 0 : func->args->length, func->funcresulttype);
+				func = (FuncExpr *) expr;
+
+				/*
+				 * Look up the return type typmod from a persistent
+				 * store using function oid.
+				 */
+				func_oid = func->funcid;
+				Assert(func_oid != InvalidOid);
+
+				if (func->funcresulttype != VOIDOID)
+					rettypmod = pltsql_plugin_handler_ptr->pltsql_get_generic_typmod(func_oid,
+							func->args == NIL ? 0 : func->args->length, func->funcresulttype);
+			}
+			break;
+		default:
+			/*
+			 * TODO: expectation is that apart from Func type expressions, we never get
+			 * typmod = -1 when we reach TDS extension for CHAR/NCHAR datatypes. We
+			 * should figure out a determinstic typmod for all other expression types
+			 * inside the engine or babelfishpg_tsql extension.
+			 */
+			ereport(ERROR, (errcode(ERRCODE_DATA_EXCEPTION),
+					errmsg("The string size for the given CHAR/NCHAR data is not defined. "
+							"Please use an explicit CAST or CONVERT to CHAR(n)/NCHAR(n)")));
+			break;
+	}
 
 	return rettypmod;
 }

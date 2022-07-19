@@ -41,3 +41,5 @@ sys-data_spaces
 sys-filegroups
 sys-filetables
 sys-fulltext_indexes
+constraint_column_usage
+column_domain_usage

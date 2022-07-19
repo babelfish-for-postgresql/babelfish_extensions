@@ -81,7 +81,7 @@ jobs:
 
       - name: Run JDBC Tests
         id: jdbc
-        timeout-minutes: 15
+        timeout-minutes: 25
         run: |
           cd test/JDBC/
           mvn test
