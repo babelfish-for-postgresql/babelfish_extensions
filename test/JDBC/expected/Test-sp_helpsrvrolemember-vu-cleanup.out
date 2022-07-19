@@ -1,0 +1,5 @@
+DROP LOGIN test_sp_helpsrvrolemember_login
+GO
+
+DROP PROC test_sp_helpsrvrolemember_proc
+GO
