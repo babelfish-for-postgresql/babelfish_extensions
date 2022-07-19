@@ -50,4 +50,5 @@ sys-original_login
 sys-schema-name
 sys-suser_sid
 sys-trigger_nestlevel
+constraint_column_usage
 column_domain_usage

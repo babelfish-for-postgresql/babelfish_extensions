@@ -47,4 +47,5 @@ sys-max_connections
 sys-original_login
 sys-schema-name
 sys-trigger_nestlevel
+constraint_column_usage
 column_domain_usage
