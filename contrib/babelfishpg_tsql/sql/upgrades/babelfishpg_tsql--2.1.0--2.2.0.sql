@@ -4,6 +4,26 @@
 -- add 'sys' to search path for the convenience
 SELECT set_config('search_path', 'sys, '||current_setting('search_path'), false);
 
+-- SERVER_PRINCIPALS
+CREATE OR REPLACE VIEW sys.server_principals
+AS SELECT
+  CAST(Base.rolname AS sys.SYSNAME) AS name,
+  CAST(Base.oid As INT) AS principal_id,
+  CAST(CAST(Base.oid as INT) as sys.varbinary(85)) AS sid,
+  CAST(Ext.type AS CHAR(1)) as type,
+  CAST(CASE WHEN Ext.type = 'S' THEN 'SQL_LOGIN'
+  WHEN Ext.type = 'R' THEN 'SERVER_ROLE'
+  ELSE NULL END AS NVARCHAR(60)) AS type_desc,
+  CAST(Ext.is_disabled AS INT) AS is_disabled,
+  CAST(Ext.create_date AS SYS.DATETIME) AS create_date,
+  CAST(Ext.modify_date AS SYS.DATETIME) AS modify_date,
+  CAST(CASE WHEN Ext.type = 'R' THEN NULL ELSE Ext.default_database_name END AS SYS.SYSNAME) AS default_database_name,
+  CAST(Ext.default_language_name AS SYS.SYSNAME) AS default_language_name,
+  CAST(CASE WHEN Ext.type = 'R' THEN NULL ELSE Ext.credential_id END AS INT) AS credential_id,
+  CAST(CASE WHEN Ext.type = 'R' THEN 1 ELSE Ext.owning_principal_id END AS INT) AS owning_principal_id,
+  CAST(CASE WHEN Ext.type = 'R' THEN 1 ELSE Ext.is_fixed_role END AS sys.BIT) AS is_fixed_role
+FROM pg_catalog.pg_authid AS Base INNER JOIN sys.babelfish_authid_login_ext AS Ext ON Base.rolname = Ext.rolname;
+
 -- Drops a view if it does not have any dependent objects.
 -- Is a temporary procedure for use by the upgrade script. Will be dropped at the end of the upgrade.
 -- Please have this be one of the first statements executed in this upgrade script. 
@@ -101,6 +121,20 @@ CREATE OR REPLACE VIEW information_schema_tsql.check_constraints AS
 GRANT SELECT ON information_schema_tsql.check_constraints TO PUBLIC;
 
 ALTER VIEW sys.foreign_keys RENAME TO foreign_keys_deprecated;
+
+CREATE OR REPLACE VIEW information_schema_tsql.COLUMN_DOMAIN_USAGE AS
+    SELECT isc_col."DOMAIN_CATALOG",
+           isc_col."DOMAIN_SCHEMA" ,
+           CAST(isc_col."DOMAIN_NAME" AS sys.sysname),
+           isc_col."TABLE_CATALOG",
+           isc_col."TABLE_SCHEMA",
+           CAST(isc_col."TABLE_NAME" AS sys.sysname),
+           CAST(isc_col."COLUMN_NAME" AS sys.sysname)
+
+    FROM information_schema_tsql.columns AS isc_col
+    WHERE isc_col."DOMAIN_NAME" IS NOT NULL;
+
+GRANT SELECT ON information_schema_tsql.COLUMN_DOMAIN_USAGE TO PUBLIC;
 
 CREATE OR replace view sys.foreign_keys AS
 SELECT
@@ -859,6 +893,60 @@ SELECT
 FROM sys.indexes WHERE FALSE;
 GRANT SELECT ON sys.spatial_indexes TO PUBLIC;
 
+CREATE OR REPLACE VIEW information_schema_tsql.CONSTRAINT_COLUMN_USAGE AS
+SELECT    CAST(tblcat AS sys.nvarchar(128)) AS "TABLE_CATALOG",
+          CAST(tblschema AS sys.nvarchar(128)) AS "TABLE_SCHEMA",
+          CAST(tblname AS sys.nvarchar(128)) AS "TABLE_NAME" ,
+          CAST(colname AS sys.nvarchar(128)) AS "COLUMN_NAME",
+          CAST(cstrcat AS sys.nvarchar(128)) AS "CONSTRAINT_CATALOG",
+          CAST(cstrschema AS sys.nvarchar(128)) AS "CONSTRAINT_SCHEMA",
+          CAST(cstrname AS sys.nvarchar(128)) AS "CONSTRAINT_NAME"
+
+FROM (
+        /* check constraints */
+   SELECT DISTINCT extr.orig_name, r.relname, r.relowner, a.attname, extc.orig_name, c.conname, nr.dbname, nc.dbname
+     FROM sys.pg_namespace_ext nc LEFT OUTER JOIN sys.babelfish_namespace_ext extc ON nc.nspname = extc.nspname,
+          sys.pg_namespace_ext nr LEFT OUTER JOIN sys.babelfish_namespace_ext extr ON nr.nspname = extr.nspname,
+          pg_attribute a,
+          pg_constraint c,
+          pg_class r, pg_depend d
+
+     WHERE nr.oid = r.relnamespace
+          AND r.oid = a.attrelid
+          AND d.refclassid = 'pg_catalog.pg_class'::regclass
+          AND d.refobjid = r.oid
+          AND d.refobjsubid = a.attnum
+          AND d.classid = 'pg_catalog.pg_constraint'::regclass
+          AND d.objid = c.oid
+          AND c.connamespace = nc.oid
+          AND c.contype = 'c'
+          AND r.relkind IN ('r', 'p')
+          AND NOT a.attisdropped
+
+       UNION ALL
+
+        /* unique/primary key/foreign key constraints */
+   SELECT extr.orig_name, r.relname, r.relowner, a.attname, extc.orig_name, c.conname, nr.dbname, nc.dbname
+     FROM sys.pg_namespace_ext nc LEFT OUTER JOIN sys.babelfish_namespace_ext extc ON nc.nspname = extc.nspname,
+          sys.pg_namespace_ext nr LEFT OUTER JOIN sys.babelfish_namespace_ext extr ON nr.nspname = extr.nspname,
+          pg_attribute a,
+          pg_constraint c,
+          pg_class r
+     WHERE nr.oid = r.relnamespace
+          AND r.oid = a.attrelid
+          AND nc.oid = c.connamespace
+          AND r.oid = c.conrelid
+          AND a.attnum = ANY (c.conkey)
+          AND NOT a.attisdropped
+          AND c.contype IN ('p', 'u', 'f')
+          AND r.relkind IN ('r', 'p')
+
+      ) AS x (tblschema, tblname, tblowner, colname, cstrschema, cstrname, tblcat, cstrcat)
+
+WHERE pg_has_role(x.tblowner, 'USAGE');
+
+GRANT SELECT ON information_schema_tsql.CONSTRAINT_COLUMN_USAGE TO PUBLIC;
+
 CREATE OR REPLACE VIEW sys.filetables
 AS
 SELECT 
@@ -1134,6 +1222,87 @@ $$
 LANGUAGE plpgsql;
 
 CALL sys.babelfish_drop_deprecated_function('sys', 'objectpropertyex_deprecated_2_1_0');
+
+INSERT INTO sys.babelfish_configurations
+VALUES
+  (
+    1534,
+    'user options',
+    0,
+    0,
+    32767,
+    0,
+    'user options',
+    sys.bitin('1'),
+    sys.bitin('0'),
+    'user options',
+    'user options'
+  ),
+  (
+    115,
+    'nested triggers',
+    1,
+    0,
+    1,
+    1,
+    'Allow triggers to be invoked within triggers',
+    sys.bitin('1'),
+    sys.bitin('0'),
+    'Allow triggers to be invoked within triggers',
+    'Allow triggers to be invoked within triggers'
+  ),
+  (
+    124,
+    'default language',
+    0,
+    0,
+    9999,
+    0,
+    'default language',
+    sys.bitin('1'),
+    sys.bitin('0'),
+    'default language',
+    'default language'
+  ),
+  (
+    1126,               
+    'default full-text language',
+    1033,
+    0,
+    2147483647,
+    1033,
+    'default full-text language',
+    sys.bitin('1'),
+    sys.bitin('1'),
+    'default full-text language',
+    'default full-text language'
+  ),
+  (
+    1127,
+    'two digit year cutoff',
+    2049,
+    1753,
+    9999,
+    2049,
+    'two digit year cutoff',
+    sys.bitin('1'),
+    sys.bitin('1'),
+    'two digit year cutoff',
+    'two digit year cutoff'
+  ),
+  (
+    1555,
+    'transform noise words',
+    0,
+    0,
+    1,
+    0,
+    'Transform noise words for full-text query',
+    sys.bitin('1'),
+    sys.bitin('1'),
+    'Transform noise words for full-text query',
+    'Transform noise words for full-text query'
+  );
 
 CREATE OR REPLACE VIEW sys.spatial_index_tessellations 
 AS
