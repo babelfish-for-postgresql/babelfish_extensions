@@ -5,6 +5,12 @@ fileGenerator_databaseName =
 fileGenerator_user = 
 fileGenerator_password = 
 
+# SET THESE VARIABLES TO CONNECT WITH PSQL ENDPOINT
+dependencyCheck_URL = localhost
+dependencyCheck_port = 5432
+dependencyCheck_databaseName = jdbc_testdb
+dependencyCheck_user = jdbc_user
+
 # PATH TO INPUT TEST FILES FOLDER
 inputFilesPath = ./input
 

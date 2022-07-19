@@ -2,6 +2,7 @@ from datetime import datetime
 import logging
 from utils.db_client_psql import Db_Client_psycopg
 from pathlib import Path
+from utils.config import config_dict as cfg
 import sys
 import csv
 import subprocess
@@ -10,7 +11,7 @@ def get_dependencies(file, sumfile, logger):
 
     # connect to psql endpoint
     # using default port 5432
-    cnxn = Db_Client_psycopg('localhost', 'jdbc_testdb', 'jdbc_user', logger)
+    cnxn = Db_Client_psycopg(cfg["dependencyCheck_URL"], cfg["dependencyCheck_port"], cfg["dependencyCheck_databaseName"], cfg["dependencyCheck_user"], logger)
 
     try:
         curs2 = cnxn.get_cursor()

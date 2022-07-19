@@ -7,14 +7,15 @@ close_connection_formatter = " Connection closed to {} Server successfully!! "
 
 # make connection object using psycopg
 class Db_Client_psycopg:
-    def __init__(self, server_url, db_name, db_user, logger):
+    def __init__(self, server_url, port, db_name, db_user, logger):
         self.server_url = server_url
+        self.port = port
         self.db_name = db_name
         self.db_user = db_user
         self.logger = logger
         self.cnxn = None
         try:
-            self.cnxn = psycopg2.connect(host = self.server_url, user = self.db_user, dbname = self.db_name)
+            self.cnxn = psycopg2.connect(host = self.server_url, port = self.port, user = self.db_user, dbname = self.db_name)
             self.cnxn.autocommit = True
             self.logger.info(line_formatter.format(connect_server_formatter.format(self.server_url)))           
         except Exception as e:

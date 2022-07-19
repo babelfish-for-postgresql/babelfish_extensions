@@ -1383,7 +1383,6 @@ Could not find dependencies on view sys.babelfish_has_perms_by_name_permissions
 Could not find dependencies on view sys.check_constraints
 Could not find dependencies on view sys.columns
 Could not find dependencies on view sys.computed_columns
-Could not find dependencies on view sys.configurations
 Could not find dependencies on view sys.data_spaces
 Could not find dependencies on view sys.database_files
 Could not find dependencies on view sys.database_mirroring
@@ -1424,8 +1423,6 @@ Could not find dependencies on view sys.spt_tablecollations_view
 Could not find dependencies on view sys.sql_modules
 Could not find dependencies on view sys.syscharsets
 Could not find dependencies on view sys.syscolumns
-Could not find dependencies on view sys.sysconfigures
-Could not find dependencies on view sys.syscurconfigs
 Could not find dependencies on view sys.sysforeignkeys
 Could not find dependencies on view sys.sysindexes
 Could not find dependencies on view sys.syslanguages
