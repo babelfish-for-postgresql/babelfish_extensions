@@ -18,7 +18,7 @@ int
 ~~END~~
 
 
-SELECT * FROM test_sp_helpsrvrolemember_view()
+SELECT * FROM test_sp_helpsrvrolemember_view
 GO
 ~~ROW COUNT: 1~~
 
@@ -52,7 +52,7 @@ int
 ~~END~~
 
 
-SELECT * FROM test_sp_helpsrvrolemember_view()
+SELECT * FROM test_sp_helpsrvrolemember_view
 GO
 ~~ROW COUNT: 1~~
 
@@ -85,7 +85,7 @@ int
 ~~END~~
 
 
-SELECT * FROM test_sp_helpsrvrolemember_view()
+SELECT * FROM test_sp_helpsrvrolemember_view
 GO
 ~~ROW COUNT: 1~~
 

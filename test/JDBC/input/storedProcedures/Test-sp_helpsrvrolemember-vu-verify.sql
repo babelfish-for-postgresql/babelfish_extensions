@@ -4,7 +4,7 @@ GO
 SELECT dbo.test_sp_helpsrvrolemember_func()
 GO
 
-SELECT * FROM test_sp_helpsrvrolemember_view()
+SELECT * FROM test_sp_helpsrvrolemember_view
 GO
 
 ALTER SERVER ROLE sysadmin ADD MEMBER test_sp_helpsrvrolemember_login
@@ -16,7 +16,7 @@ GO
 SELECT dbo.test_sp_helpsrvrolemember_func()
 GO
 
-SELECT * FROM test_sp_helpsrvrolemember_view()
+SELECT * FROM test_sp_helpsrvrolemember_view
 GO
 
 ALTER SERVER ROLE sysadmin DROP MEMBER test_sp_helpsrvrolemember_login
@@ -28,7 +28,7 @@ GO
 SELECT dbo.test_sp_helpsrvrolemember_func()
 GO
 
-SELECT * FROM test_sp_helpsrvrolemember_view()
+SELECT * FROM test_sp_helpsrvrolemember_view
 GO
 
 EXEC sp_helpsrvrolemember 'error'
