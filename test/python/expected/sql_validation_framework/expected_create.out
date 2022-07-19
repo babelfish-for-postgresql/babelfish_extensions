@@ -81,7 +81,6 @@ Could not find tests for procedure sys.sp_oledb_ro_usrname
 Could not find tests for procedure sys.sp_special_columns_100
 Could not find tests for procedure sys.sp_sproc_columns_100
 Could not find tests for table sys.assemblies
-Could not find tests for table sys.assembly_types
 Could not find tests for table sys.babelfish_helpcollation
 Could not find tests for table sys.babelfish_sysdatabases
 Could not find tests for table sys.babelfish_syslanguages
