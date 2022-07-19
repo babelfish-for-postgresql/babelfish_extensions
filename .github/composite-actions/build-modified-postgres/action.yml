@@ -3,7 +3,7 @@ inputs:
   engine_branch:
     description: 'Engine Branch'
     required: no
-    default: 'jira-babel-3135'
+    default: 'jira-babel-3135-test-only'
   install_dir:
     description: 'Engine install directory'
     required: no
