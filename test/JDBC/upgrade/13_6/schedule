@@ -41,6 +41,7 @@ fulltextserviceproperty
 is_srvrolemember
 msdb-dbo-fn_syspolicy_is_automation_enabled
 objectpropertyex
+sys-all_views
 sys-column-property
 sys-configurations
 sys-datefirst

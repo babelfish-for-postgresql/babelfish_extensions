@@ -1,20 +1,26 @@
-CREATE DATABASE db_all_views
+SELECT * FROM sys_all_views_dep_view_vu_prepare
 GO
+~~START~~
+varchar#!#char#!#bit
+sys_all_views_select_vu_prepare#!#V #!#0
+~~END~~
 
-USE db_all_views
-GO
 
-CREATE TABLE t1(a int)
+EXEC sys_all_views_dep_proc_vu_prepare
 GO
+~~START~~
+varchar#!#char#!#bit
+sys_all_views_select_vu_prepare#!#V #!#0
+~~END~~
 
-CREATE VIEW all_views_test1 AS
-SELECT * FROM t1
-GO
 
-CREATE VIEW all_views_check_option AS
-SELECT * FROM t1
-WITH CHECK OPTION
+SELECT * FROM sys_all_views_dep_func_vu_prepare()
 GO
+~~START~~
+int
+1
+~~END~~
+
 
 -- query a view with no options
 SELECT
@@ -34,11 +40,11 @@ SELECT
   , with_check_option
   , is_date_correlation_view
 FROM sys.all_views
-WHERE name = 'all_views_test1'
+WHERE name = 'sys_all_views_select_vu_prepare'
 GO
 ~~START~~
 varchar#!#int#!#char#!#nvarchar#!#datetime#!#datetime#!#bit#!#bit#!#bit#!#bit#!#bit#!#bit#!#bit#!#bit#!#bit
-all_views_test1#!#<NULL>#!#V #!#VIEW#!#<NULL>#!#<NULL>#!#0#!#0#!#0#!#0#!#0#!#0#!#0#!#0#!#0
+sys_all_views_select_vu_prepare#!#<NULL>#!#V #!#VIEW#!#<NULL>#!#<NULL>#!#0#!#0#!#0#!#0#!#0#!#0#!#0#!#0#!#0
 ~~END~~
 
 
@@ -60,11 +66,11 @@ SELECT
   , with_check_option
   , is_date_correlation_view
 FROM sys.all_views
-WHERE name = 'all_views_check_option'
+WHERE name = 'sys_all_views_select_chk_option_vu_prepare'
 GO
 ~~START~~
 varchar#!#int#!#char#!#nvarchar#!#datetime#!#datetime#!#bit#!#bit#!#bit#!#bit#!#bit#!#bit#!#bit#!#bit#!#bit
-all_views_check_option#!#<NULL>#!#V #!#VIEW#!#<NULL>#!#<NULL>#!#0#!#0#!#0#!#0#!#0#!#0#!#0#!#1#!#0
+sys_all_views_select_chk_option_vu_prepare#!#<NULL>#!#V #!#VIEW#!#<NULL>#!#<NULL>#!#0#!#0#!#0#!#0#!#0#!#0#!#0#!#1#!#0
 ~~END~~
 
 
@@ -75,18 +81,3 @@ int
 18
 ~~END~~
 
-
-DROP VIEW all_views_check_option
-GO
-
-DROP VIEW all_views_test1
-GO
-
-DROP TABLE t1
-GO
-
-USE master
-GO
-
-DROP DATABASE db_all_views
-GO

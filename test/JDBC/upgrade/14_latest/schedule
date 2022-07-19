@@ -37,5 +37,6 @@ BABEL-3221
 BABEL-3249
 BABEL-3204
 BABEL-3234
+sys-all_views
 constraint_column_usage
 column_domain_usage

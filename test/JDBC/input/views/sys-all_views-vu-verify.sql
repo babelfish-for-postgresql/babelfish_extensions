@@ -1,19 +1,10 @@
-CREATE DATABASE db_all_views
+SELECT * FROM sys_all_views_dep_view_vu_prepare
 GO
 
-USE db_all_views
+EXEC sys_all_views_dep_proc_vu_prepare
 GO
 
-CREATE TABLE t1(a int)
-GO
-
-CREATE VIEW all_views_test1 AS
-SELECT * FROM t1
-GO
-
-CREATE VIEW all_views_check_option AS
-SELECT * FROM t1
-WITH CHECK OPTION
+SELECT * FROM sys_all_views_dep_func_vu_prepare()
 GO
 
 -- query a view with no options
@@ -34,7 +25,7 @@ SELECT
   , with_check_option
   , is_date_correlation_view
 FROM sys.all_views
-WHERE name = 'all_views_test1'
+WHERE name = 'sys_all_views_select_vu_prepare'
 GO
 
 -- query a view with check option enabled
@@ -55,23 +46,8 @@ SELECT
   , with_check_option
   , is_date_correlation_view
 FROM sys.all_views
-WHERE name = 'all_views_check_option'
+WHERE name = 'sys_all_views_select_chk_option_vu_prepare'
 GO
 
 SELECT COUNT(*) FROM sys.all_columns WHERE object_id = object_id('sys.all_views');
-GO
-
-DROP VIEW all_views_check_option
-GO
-
-DROP VIEW all_views_test1
-GO
-
-DROP TABLE t1
-GO
-
-USE master
-GO
-
-DROP DATABASE db_all_views
 GO
