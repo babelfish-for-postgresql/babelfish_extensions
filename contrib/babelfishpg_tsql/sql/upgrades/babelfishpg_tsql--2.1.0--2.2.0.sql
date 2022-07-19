@@ -1403,12 +1403,12 @@ ALTER VIEW sys.data_spaces RENAME TO data_spaces_deprecated_2_1_0;
 CREATE OR REPLACE VIEW sys.data_spaces
 AS
 SELECT 
-  CAST('PRIMARY' as sys.SYSNAME) AS name,
-  CAST(1 as INT) AS data_space_id,
-  CAST('FG' as sys.BPCHAR(2)) AS type,
-  CAST('ROWS_FILEGROUP' as sys.NVARCHAR(60)) AS type_desc,
-  CAST(1 as sys.BIT) AS is_default,
-  CAST(0 as sys.BIT) AS is_system;
+  CAST('PRIMARY' AS sys.SYSNAME) AS name,
+  CAST(1 AS INT) AS data_space_id,
+  CAST('FG' AS sys.BPCHAR(2)) AS type,
+  CAST('ROWS_FILEGROUP' AS sys.NVARCHAR(60)) AS type_desc,
+  CAST(1 AS sys.BIT) AS is_default,
+  CAST(0 AS sys.BIT) AS is_system;
 GRANT SELECT ON sys.data_spaces TO PUBLIC;
 
 CALL sys.babelfish_drop_deprecated_function('sys', 'data_spaces_deprecated_2_1_0');
