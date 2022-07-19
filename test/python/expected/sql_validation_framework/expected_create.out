@@ -1,0 +1,412 @@
+Could not find tests for function assemblyproperty
+Could not find tests for function pltsql_call_handler
+Could not find tests for function pltsql_inline_handler
+Could not find tests for function pltsql_validator
+Could not find tests for function sys.babelfish_cast_floor_bigint
+Could not find tests for function sys.babelfish_cast_floor_int
+Could not find tests for function sys.babelfish_cast_floor_smallint
+Could not find tests for function sys.babelfish_runtime_error
+Could not find tests for function sys.babelfish_try_cast_floor_bigint
+Could not find tests for function sys.babelfish_try_cast_floor_int
+Could not find tests for function sys.babelfish_try_cast_floor_smallint
+Could not find tests for function sys.babelfish_try_cast_to_any
+Could not find tests for function sys.columns_internal
+Could not find tests for function sys.dateadd_internal
+Could not find tests for function sys.dateadd_internal_df
+Could not find tests for function sys.datediff_internal
+Could not find tests for function sys.datediff_internal_df
+Could not find tests for function sys.datepart_internal
+Could not find tests for function sys.datetime2fromparts
+Could not find tests for function sys.default_domain
+Could not find tests for function sys.get_babel_server_collation_oid
+Could not find tests for function sys.get_current_full_xact_id
+Could not find tests for function sys.get_host_os
+Could not find tests for function sys.get_tds_id
+Could not find tests for function sys.is_collated_ci_as
+Could not find tests for function sys.is_collated_ci_as_internal
+Could not find tests for function sys.is_rolemember_internal
+Could not find tests for function sys.max_precision
+Could not find tests for function sys.openjson_array
+Could not find tests for function sys.openjson_object
+Could not find tests for function sys.openjson_simple
+Could not find tests for function sys.openjson_with
+Could not find tests for function sys.parsename
+Could not find tests for function sys.proc_param_helper
+Could not find tests for function sys.role_id
+Could not find tests for function sys.space
+Could not find tests for function sys.sp_columns_100_internal
+Could not find tests for function sys.sp_columns_managed_internal
+Could not find tests for function sys.sp_datatype_info_helper
+Could not find tests for function sys.sp_describe_first_result_set_internal
+Could not find tests for function sys.sp_describe_undeclared_parameters_internal
+Could not find tests for function sys.sp_getapplock_function
+Could not find tests for function sys.sp_pkeys_internal
+Could not find tests for function sys.sp_releaseapplock_function
+Could not find tests for function sys.sp_special_columns_length_helper
+Could not find tests for function sys.sp_special_columns_precision_helper
+Could not find tests for function sys.sp_special_columns_scale_helper
+Could not find tests for function sys.sp_statistics_internal
+Could not find tests for function sys.sp_tables_internal
+Could not find tests for function sys.stuff
+Could not find tests for function sys.sysdatetime
+Could not find tests for function sys.timefromparts
+Could not find tests for function sys.tsql_query_to_xml
+Could not find tests for function sys.tsql_query_to_xml_text
+Could not find tests for function sys.tsql_stat_get_activity
+Could not find tests for function sys.tsql_type_length_for_sp_columns_helper
+Could not find tests for function sys.tsql_type_max_length_helper
+Could not find tests for function sys.tsql_type_precision_helper
+Could not find tests for function sys.tsql_type_radix_for_sp_columns_helper
+Could not find tests for function sys.tsql_type_scale_helper
+Could not find tests for procedure babel_catalog_initializer
+Could not find tests for procedure babel_coercion_initializer
+Could not find tests for procedure babel_create_builtin_dbs
+Could not find tests for procedure babel_datatype_precedence_initializer
+Could not find tests for procedure initialize_babel_extras
+Could not find tests for procedure initialize_babelfish
+Could not find tests for procedure remove_babelfish
+Could not find tests for procedure sys.babel_collation_initializer
+Could not find tests for procedure sys.babel_drop_all_dbs
+Could not find tests for procedure sys.babel_drop_all_logins
+Could not find tests for procedure sys.babel_initialize_logins
+Could not find tests for procedure sys.babel_like_ilike_info_initializer
+Could not find tests for procedure sys.init_server_collation_oid
+Could not find tests for procedure sys.printarg
+Could not find tests for procedure sys.sp_columns_managed
+Could not find tests for procedure sys.sp_databases
+Could not find tests for procedure sys.sp_helprole
+Could not find tests for procedure sys.sp_helprolemember
+Could not find tests for procedure sys.sp_helpuser
+Could not find tests for procedure sys.sp_oledb_ro_usrname
+Could not find tests for procedure sys.sp_special_columns_100
+Could not find tests for procedure sys.sp_sproc_columns_100
+Could not find tests for table sys.assemblies
+Could not find tests for table sys.assembly_types
+Could not find tests for table sys.babelfish_helpcollation
+Could not find tests for table sys.babelfish_sysdatabases
+Could not find tests for table sys.babelfish_syslanguages
+Could not find tests for table sys.service_settings
+Could not find tests for table sys.spt_datatype_info_table
+Could not find tests for table sys.versions
+Could not find tests for view babelfish_has_perms_by_name_permissions
+Could not find tests for view sys.all_sql_modules_internal
+Could not find tests for view sys.pg_namespace_ext
+Could not find tests for view sys.shipped_objects_not_in_sys
+Could not find tests for view sys.sp_column_privileges_view
+Could not find tests for view sys.sp_columns_100_view
+Could not find tests for view sys.sp_fkeys_view
+Could not find tests for view sys.sp_pkeys_view
+Could not find tests for view sys.sp_special_columns_view
+Could not find tests for view sys.sp_sproc_columns_view
+Could not find tests for view sys.sp_statistics_view
+Could not find tests for view sys.sp_stored_procedures_view
+Could not find tests for view sys.sp_table_privileges_view
+Could not find tests for view sys.spt_columns_view_managed
+Could not find upgrade tests for domain sys.sysname
+Could not find upgrade tests for domain sys.timestamp
+Could not find upgrade tests for function assemblyproperty
+Could not find upgrade tests for function collationproperty
+Could not find upgrade tests for function columns_updated
+Could not find upgrade tests for function connectionproperty
+Could not find upgrade tests for function databasepropertyex
+Could not find upgrade tests for function is_member
+Could not find upgrade tests for function pltsql_call_handler
+Could not find upgrade tests for function pltsql_inline_handler
+Could not find upgrade tests for function pltsql_validator
+Could not find upgrade tests for function schema_id
+Could not find upgrade tests for function serverproperty
+Could not find upgrade tests for function sessionproperty
+Could not find upgrade tests for function sys.applock_mode
+Could not find upgrade tests for function sys.applock_test
+Could not find upgrade tests for function sys.babelfish_cast_floor_bigint
+Could not find upgrade tests for function sys.babelfish_cast_floor_int
+Could not find upgrade tests for function sys.babelfish_cast_floor_smallint
+Could not find upgrade tests for function sys.babelfish_helpdb
+Could not find upgrade tests for function sys.babelfish_inconsistent_metadata
+Could not find upgrade tests for function sys.babelfish_runtime_error
+Could not find upgrade tests for function sys.babelfish_try_cast_floor_bigint
+Could not find upgrade tests for function sys.babelfish_try_cast_floor_int
+Could not find upgrade tests for function sys.babelfish_try_cast_floor_smallint
+Could not find upgrade tests for function sys.babelfish_try_cast_to_any
+Could not find upgrade tests for function sys.ceiling
+Could not find upgrade tests for function sys.checksum
+Could not find upgrade tests for function sys.columns_internal
+Could not find upgrade tests for function sys.cursor_rows
+Could not find upgrade tests for function sys.cursor_status
+Could not find upgrade tests for function sys.datalength
+Could not find upgrade tests for function sys.dateadd
+Could not find upgrade tests for function sys.dateadd_internal
+Could not find upgrade tests for function sys.dateadd_internal_df
+Could not find upgrade tests for function sys.datediff
+Could not find upgrade tests for function sys.datediff_internal
+Could not find upgrade tests for function sys.datediff_internal_df
+Could not find upgrade tests for function sys.datefromparts
+Could not find upgrade tests for function sys.datename
+Could not find upgrade tests for function sys.datepart
+Could not find upgrade tests for function sys.datepart_internal
+Could not find upgrade tests for function sys.datetime2fromparts
+Could not find upgrade tests for function sys.datetimefromparts
+Could not find upgrade tests for function sys.day
+Could not find upgrade tests for function sys.db_id
+Could not find upgrade tests for function sys.db_name
+Could not find upgrade tests for function sys.default_domain
+Could not find upgrade tests for function sys.error
+Could not find upgrade tests for function sys.error_line
+Could not find upgrade tests for function sys.error_message
+Could not find upgrade tests for function sys.error_number
+Could not find upgrade tests for function sys.error_procedure
+Could not find upgrade tests for function sys.error_severity
+Could not find upgrade tests for function sys.error_state
+Could not find upgrade tests for function sys.exp
+Could not find upgrade tests for function sys.fetch_status
+Could not find upgrade tests for function sys.floor
+Could not find upgrade tests for function sys.fn_helpcollations
+Could not find upgrade tests for function sys.fn_listextendedproperty
+Could not find upgrade tests for function sys.fn_mapped_system_error_list
+Could not find upgrade tests for function sys.formatmessage
+Could not find upgrade tests for function sys.get_babel_server_collation_oid
+Could not find upgrade tests for function sys.get_current_full_xact_id
+Could not find upgrade tests for function sys.getdate
+Could not find upgrade tests for function sys.get_host_os
+Could not find upgrade tests for function sys.get_tds_id
+Could not find upgrade tests for function sys.getutcdate
+Could not find upgrade tests for function sys.has_dbaccess
+Could not find upgrade tests for function sys.hashbytes
+Could not find upgrade tests for function sys.has_perms_by_name
+Could not find upgrade tests for function sys.ident_current
+Could not find upgrade tests for function sys.ident_incr
+Could not find upgrade tests for function sys.ident_seed
+Could not find upgrade tests for function sys.is_collated_ci_as
+Could not find upgrade tests for function sys.is_collated_ci_as_internal
+Could not find upgrade tests for function sys.isdate
+Could not find upgrade tests for function sys.isjson
+Could not find upgrade tests for function sys.is_member
+Could not find upgrade tests for function sys.isnull
+Could not find upgrade tests for function sys.isnumeric
+Could not find upgrade tests for function sys.is_rolemember
+Could not find upgrade tests for function sys.is_rolemember_internal
+Could not find upgrade tests for function sys.is_table_type
+Could not find upgrade tests for function sys.json_query
+Could not find upgrade tests for function sys.json_value
+Could not find upgrade tests for function sys.language
+Could not find upgrade tests for function sys.max_precision
+Could not find upgrade tests for function sys.microsoftversion
+Could not find upgrade tests for function sys.month
+Could not find upgrade tests for function sys.nestlevel
+Could not find upgrade tests for function sys.object_name
+Could not find upgrade tests for function sys.openjson_array
+Could not find upgrade tests for function sys.openjson_object
+Could not find upgrade tests for function sys.openjson_simple
+Could not find upgrade tests for function sys.openjson_with
+Could not find upgrade tests for function sys.options
+Could not find upgrade tests for function sys.parsename
+Could not find upgrade tests for function sys.patindex
+Could not find upgrade tests for function sys.pgerror
+Could not find upgrade tests for function sys.procid
+Could not find upgrade tests for function sys.proc_param_helper
+Could not find upgrade tests for function sys.quotename
+Could not find upgrade tests for function sys.rand
+Could not find upgrade tests for function sys.replace
+Could not find upgrade tests for function sys.replicate
+Could not find upgrade tests for function sys.role_id
+Could not find upgrade tests for function sys.rowcount
+Could not find upgrade tests for function sys.schema_id
+Could not find upgrade tests for function sys.scope_identity
+Could not find upgrade tests for function sys.servername
+Could not find upgrade tests for function sys.servicename
+Could not find upgrade tests for function sys.sid_binary
+Could not find upgrade tests for function sys.sign
+Could not find upgrade tests for function sys.space
+Could not find upgrade tests for function sys.sp_columns_100_internal
+Could not find upgrade tests for function sys.sp_columns_managed_internal
+Could not find upgrade tests for function sys.sp_datatype_info_helper
+Could not find upgrade tests for function sys.sp_describe_first_result_set_internal
+Could not find upgrade tests for function sys.sp_describe_undeclared_parameters_internal
+Could not find upgrade tests for function sys.sp_getapplock_function
+Could not find upgrade tests for function sys.spid
+Could not find upgrade tests for function sys.sp_pkeys_internal
+Could not find upgrade tests for function sys.sp_releaseapplock_function
+Could not find upgrade tests for function sys.sp_special_columns_length_helper
+Could not find upgrade tests for function sys.sp_special_columns_precision_helper
+Could not find upgrade tests for function sys.sp_special_columns_scale_helper
+Could not find upgrade tests for function sys.sp_statistics_internal
+Could not find upgrade tests for function sys.sp_tables_internal
+Could not find upgrade tests for function sys.square
+Could not find upgrade tests for function sys.string_escape
+Could not find upgrade tests for function sys.string_split
+Could not find upgrade tests for function sys.stuff
+Could not find upgrade tests for function sys.suser_id
+Could not find upgrade tests for function sys.suser_name
+Could not find upgrade tests for function sys.sysdatetime
+Could not find upgrade tests for function sys.sysdatetimeoffset
+Could not find upgrade tests for function sys.sysutcdatetime
+Could not find upgrade tests for function sys.timefromparts
+Could not find upgrade tests for function sys.trancount
+Could not find upgrade tests for function sys.tsql_get_constraintdef
+Could not find upgrade tests for function sys.tsql_query_to_xml
+Could not find upgrade tests for function sys.tsql_query_to_xml_text
+Could not find upgrade tests for function sys.tsql_stat_get_activity
+Could not find upgrade tests for function sys.tsql_type_length_for_sp_columns_helper
+Could not find upgrade tests for function sys.tsql_type_max_length_helper
+Could not find upgrade tests for function sys.tsql_type_precision_helper
+Could not find upgrade tests for function sys.tsql_type_radix_for_sp_columns_helper
+Could not find upgrade tests for function sys.tsql_type_scale_helper
+Could not find upgrade tests for function sys.unicode
+Could not find upgrade tests for function sys.user_id
+Could not find upgrade tests for function sys.user_name
+Could not find upgrade tests for function sys.version
+Could not find upgrade tests for function sys.xact_state
+Could not find upgrade tests for function sys.year
+Could not find upgrade tests for function update
+Could not find upgrade tests for procedure babel_catalog_initializer
+Could not find upgrade tests for procedure babel_coercion_initializer
+Could not find upgrade tests for procedure babel_create_builtin_dbs
+Could not find upgrade tests for procedure babel_datatype_precedence_initializer
+Could not find upgrade tests for procedure initialize_babel_extras
+Could not find upgrade tests for procedure initialize_babelfish
+Could not find upgrade tests for procedure remove_babelfish
+Could not find upgrade tests for procedure sys.babel_collation_initializer
+Could not find upgrade tests for procedure sys.babel_drop_all_dbs
+Could not find upgrade tests for procedure sys.babel_drop_all_logins
+Could not find upgrade tests for procedure sys.babel_initialize_logins
+Could not find upgrade tests for procedure sys.babel_like_ilike_info_initializer
+Could not find upgrade tests for procedure sys.init_server_collation_oid
+Could not find upgrade tests for procedure sys.printarg
+Could not find upgrade tests for procedure sys.sp_column_privileges
+Could not find upgrade tests for procedure sys.sp_columns
+Could not find upgrade tests for procedure sys.sp_columns_100
+Could not find upgrade tests for procedure sys.sp_columns_managed
+Could not find upgrade tests for procedure sys.sp_cursor_list
+Could not find upgrade tests for procedure sys.sp_databases
+Could not find upgrade tests for procedure sys.sp_datatype_info
+Could not find upgrade tests for procedure sys.sp_datatype_info_100
+Could not find upgrade tests for procedure sys.sp_describe_cursor
+Could not find upgrade tests for procedure sys.sp_describe_first_result_set
+Could not find upgrade tests for procedure sys.sp_describe_undeclared_parameters
+Could not find upgrade tests for procedure sys.sp_fkeys
+Could not find upgrade tests for procedure sys.sp_getapplock
+Could not find upgrade tests for procedure sys.sp_helpdb
+Could not find upgrade tests for procedure sys.sp_helprole
+Could not find upgrade tests for procedure sys.sp_helprolemember
+Could not find upgrade tests for procedure sys.sp_helpuser
+Could not find upgrade tests for procedure sys.sp_oledb_ro_usrname
+Could not find upgrade tests for procedure sys.sp_pkeys
+Could not find upgrade tests for procedure sys.sp_prepare
+Could not find upgrade tests for procedure sys.sp_releaseapplock
+Could not find upgrade tests for procedure sys.sp_special_columns
+Could not find upgrade tests for procedure sys.sp_special_columns_100
+Could not find upgrade tests for procedure sys.sp_sproc_columns
+Could not find upgrade tests for procedure sys.sp_sproc_columns_100
+Could not find upgrade tests for procedure sys.sp_statistics
+Could not find upgrade tests for procedure sys.sp_statistics_100
+Could not find upgrade tests for procedure sys.sp_stored_procedures
+Could not find upgrade tests for procedure sys.sp_tablecollations_100
+Could not find upgrade tests for procedure sys.sp_table_privileges
+Could not find upgrade tests for procedure sys.sp_tables
+Could not find upgrade tests for procedure sys.sp_unprepare
+Could not find upgrade tests for procedure sys.sp_updatestats
+Could not find upgrade tests for procedure xp_instance_regread
+Could not find upgrade tests for procedure xp_qv
+Could not find upgrade tests for table sys.assemblies
+Could not find upgrade tests for table sys.assembly_types
+Could not find upgrade tests for table sys.babelfish_authid_login_ext
+Could not find upgrade tests for table sys.babelfish_authid_user_ext
+Could not find upgrade tests for table sys.babelfish_configurations
+Could not find upgrade tests for table sys.babelfish_helpcollation
+Could not find upgrade tests for table sys.babelfish_namespace_ext
+Could not find upgrade tests for table sys.babelfish_sysdatabases
+Could not find upgrade tests for table sys.babelfish_syslanguages
+Could not find upgrade tests for table sys.extended_properties
+Could not find upgrade tests for table sys.service_settings
+Could not find upgrade tests for table sys.spt_datatype_info_table
+Could not find upgrade tests for table sys.versions
+Could not find upgrade tests for type sys.bbf_binary
+Could not find upgrade tests for type sys.bbf_varbinary
+Could not find upgrade tests for type sys.bpchar
+Could not find upgrade tests for view babelfish_has_perms_by_name_permissions
+Could not find upgrade tests for view information_schema_tsql.check_constraints
+Could not find upgrade tests for view information_schema_tsql.domains
+Could not find upgrade tests for view information_schema_tsql.table_constraints
+Could not find upgrade tests for view information_schema_tsql.tables
+Could not find upgrade tests for view sys.all_objects
+Could not find upgrade tests for view sys.all_sql_modules
+Could not find upgrade tests for view sys.all_sql_modules_internal
+Could not find upgrade tests for view sys.all_views
+Could not find upgrade tests for view sys.assembly_modules
+Could not find upgrade tests for view sys.change_tracking_databases
+Could not find upgrade tests for view sys.change_tracking_tables
+Could not find upgrade tests for view sys.check_constraints
+Could not find upgrade tests for view sys.computed_columns
+Could not find upgrade tests for view sys.database_files
+Could not find upgrade tests for view sys.database_filestream_options
+Could not find upgrade tests for view sys.database_mirroring
+Could not find upgrade tests for view sys.database_recovery_status
+Could not find upgrade tests for view sys.database_role_members
+Could not find upgrade tests for view sys.databases
+Could not find upgrade tests for view sys.data_spaces
+Could not find upgrade tests for view sys.default_constraints
+Could not find upgrade tests for view sys.dm_exec_connections
+Could not find upgrade tests for view sys.dm_exec_sessions
+Could not find upgrade tests for view sys.dm_hadr_cluster
+Could not find upgrade tests for view sys.dm_hadr_database_replica_states
+Could not find upgrade tests for view sys.dm_os_host_info
+Could not find upgrade tests for view sys.endpoints
+Could not find upgrade tests for view sys.filegroups
+Could not find upgrade tests for view sys.filetables
+Could not find upgrade tests for view sys.filetable_system_defined_objects
+Could not find upgrade tests for view sys.foreign_key_columns
+Could not find upgrade tests for view sys.foreign_keys
+Could not find upgrade tests for view sys.fulltext_catalogs
+Could not find upgrade tests for view sys.fulltext_index_columns
+Could not find upgrade tests for view sys.fulltext_indexes
+Could not find upgrade tests for view sys.fulltext_languages
+Could not find upgrade tests for view sys.fulltext_stoplists
+Could not find upgrade tests for view sys.hash_indexes
+Could not find upgrade tests for view sys.identity_columns
+Could not find upgrade tests for view sys.index_columns
+Could not find upgrade tests for view sys.indexes
+Could not find upgrade tests for view sys.key_constraints
+Could not find upgrade tests for view sys.master_files
+Could not find upgrade tests for view sys.objects
+Could not find upgrade tests for view sys.pg_namespace_ext
+Could not find upgrade tests for view sys.plan_guides
+Could not find upgrade tests for view sys.procedures
+Could not find upgrade tests for view sys.registered_search_property_lists
+Could not find upgrade tests for view sys.schemas
+Could not find upgrade tests for view sys.selective_xml_index_paths
+Could not find upgrade tests for view sys.shipped_objects_not_in_sys
+Could not find upgrade tests for view sys.spatial_indexes
+Could not find upgrade tests for view sys.spatial_index_tessellations
+Could not find upgrade tests for view sys.sp_column_privileges_view
+Could not find upgrade tests for view sys.sp_columns_100_view
+Could not find upgrade tests for view sys.sp_databases_view
+Could not find upgrade tests for view sys.sp_fkeys_view
+Could not find upgrade tests for view sys.sp_pkeys_view
+Could not find upgrade tests for view sys.sp_special_columns_view
+Could not find upgrade tests for view sys.sp_sproc_columns_view
+Could not find upgrade tests for view sys.sp_statistics_view
+Could not find upgrade tests for view sys.sp_stored_procedures_view
+Could not find upgrade tests for view sys.sp_table_privileges_view
+Could not find upgrade tests for view sys.sp_tables_view
+Could not find upgrade tests for view sys.spt_columns_view_managed
+Could not find upgrade tests for view sys.spt_tablecollations_view
+Could not find upgrade tests for view sys.sql_modules
+Could not find upgrade tests for view sys.stats
+Could not find upgrade tests for view sys.synonyms
+Could not find upgrade tests for view sys.syscharsets
+Could not find upgrade tests for view sys.syscolumns
+Could not find upgrade tests for view sys.sysdatabases
+Could not find upgrade tests for view sys.sysforeignkeys
+Could not find upgrade tests for view sys.sysindexes
+Could not find upgrade tests for view sys.syslanguages
+Could not find upgrade tests for view sys.sysobjects
+Could not find upgrade tests for view sys.sysprocesses
+Could not find upgrade tests for view sys.system_objects
+Could not find upgrade tests for view sys.system_sql_modules
+Could not find upgrade tests for view sys.tables
+Could not find upgrade tests for view sys.table_types
+Could not find upgrade tests for view sys.triggers
+Could not find upgrade tests for view sys.types
+Could not find upgrade tests for view sys.views
+Could not find upgrade tests for view sys.xml_indexes
+Could not find upgrade tests for view sys.xml_schema_collections
