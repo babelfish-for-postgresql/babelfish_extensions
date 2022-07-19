@@ -16,7 +16,7 @@ BEGIN
 	DECLARE @tmp_sp_helpsrvrolemember TABLE(ServerRole sys.SYSNAME,
 											MemberName sys.SYSNAME,
 											MemberSID sys.VARBINARY(85));
-	INSERT INTO @tmp_sp_helpsrvrolemember (ServerRole, MemberName, MemberSID) EXEC sp_helpsrvrolemember @rolename;
+	INSERT INTO @tmp_sp_helpsrvrolemember (ServerRole, MemberName, MemberSID) EXEC sp_helpsrvrolemember;
 	RETURN (SELECT COUNT(*) FROM @tmp_sp_helpsrvrolemember);
 END
 GO
