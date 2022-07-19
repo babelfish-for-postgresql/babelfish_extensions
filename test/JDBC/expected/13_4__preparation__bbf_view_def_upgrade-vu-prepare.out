@@ -1,0 +1,11 @@
+CREATE VIEW view_3135_upd AS SELECT 1;
+GO
+
+CREATE VIEW dep_view_3135 AS SELECT * FROM sys.babelfish_view_def;
+GO
+~ERROR (Code: 33557097)~~
+
+~ERROR (Message: relation "sys.babelfish_view_def" does not exist)~~
+
+
+
