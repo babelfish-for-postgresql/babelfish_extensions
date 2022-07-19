@@ -51,3 +51,4 @@ sys-schema-name
 sys-suser_sid
 sys-suser_sname
 sys-trigger_nestlevel
+bbf_view_def_upgrade
