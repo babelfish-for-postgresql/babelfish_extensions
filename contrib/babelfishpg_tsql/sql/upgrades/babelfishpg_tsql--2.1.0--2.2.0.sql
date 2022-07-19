@@ -1411,7 +1411,7 @@ SELECT
   CAST(0 AS sys.BIT) AS is_system;
 GRANT SELECT ON sys.data_spaces TO PUBLIC;
 
-CALL sys.babelfish_drop_deprecated_function('sys', 'data_spaces_deprecated_2_1_0');
+CALL sys.babelfish_drop_deprecated_view('sys', 'data_spaces_deprecated_2_1_0');
 
 CREATE OR REPLACE VIEW sys.filegroups
 AS
