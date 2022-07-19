@@ -39,6 +39,7 @@
 #include "src/include/tds_int.h"
 #include "src/include/tds_protocol.h"
 #include "src/include/tds_response.h"
+#include "src/include/tds_timestamp.h"
 #include "src/include/guc.h"
 
 #define SP_FLAGS_WITHRECOMP			0x01
@@ -911,7 +912,7 @@ MakeEmptyParameterToken(char *name, int atttypid, int32 atttypmod, int attcollat
 				 * postgres supports upto 6 digits after decimal point
 				 */
 				if (atttypmod == -1)
-					atttypmod = 6;
+					atttypmod = DATETIMEOFFSETMAXSCALE;
 				SetColMetadataForTimeType(col, TDS_TYPE_TIME, atttypmod);
 				temp->maxLen = 5;
 			}
@@ -933,7 +934,7 @@ MakeEmptyParameterToken(char *name, int atttypid, int32 atttypmod, int attcollat
 				 * postgres supports upto 6 digits after decimal point
 				 */
 				if (atttypmod == -1)
-					atttypmod = 6;
+					atttypmod = DATETIMEOFFSETMAXSCALE;
 				SetColMetadataForTimeType(col, TDS_TYPE_DATETIME2, atttypmod);
 				temp->maxLen = 8;
 			}
@@ -964,7 +965,7 @@ MakeEmptyParameterToken(char *name, int atttypid, int32 atttypmod, int attcollat
 			else
 			{
 				if (atttypmod == -1)
-					atttypmod = 6;
+					atttypmod = DATETIMEOFFSETMAXSCALE;
 				SetColMetadataForTimeType(col, TDS_TYPE_DATETIMEOFFSET, atttypmod);
 				temp->maxLen = 10;
 			}
@@ -1611,7 +1612,7 @@ PrepareRowDescription(TupleDesc typeinfo, List *targetlist, int16 *formats,
 					* postgres supports upto 6 digits after decimal point
 					*/
 					if (atttypmod == -1)
-						atttypmod = 6;
+						atttypmod = DATETIMEOFFSETMAXSCALE;
 					SetColMetadataForTimeType(col, TDS_TYPE_TIME, atttypmod);
 				}
 				break;
@@ -1632,7 +1633,7 @@ PrepareRowDescription(TupleDesc typeinfo, List *targetlist, int16 *formats,
 					* postgres supports upto 6 digits after decimal point
 					*/
 					if (atttypmod == -1)
-						atttypmod = 6;
+						atttypmod = DATETIMEOFFSETMAXSCALE;
 					SetColMetadataForTimeType(col, TDS_TYPE_DATETIME2, atttypmod);
 				}
 				break;
@@ -1665,7 +1666,7 @@ PrepareRowDescription(TupleDesc typeinfo, List *targetlist, int16 *formats,
 				else
 				{
 					if (atttypmod == -1)
-						atttypmod = 6;
+						atttypmod = DATETIMEOFFSETMAXSCALE;
 					SetColMetadataForTimeType(col, TDS_TYPE_DATETIMEOFFSET, atttypmod);
 				}
 				break;

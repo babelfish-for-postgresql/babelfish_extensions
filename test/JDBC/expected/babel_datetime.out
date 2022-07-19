@@ -107,7 +107,7 @@ select CAST(CAST('2020-03-15 23:59:29.99' AS datetime) AS datetime2)
 go
 ~~START~~
 datetime2
-2020-03-15 23:59:29.990000
+2020-03-15 23:59:29.9900000
 ~~END~~
 
 select CAST(CAST('2079-06-06 23:59:29.99' AS datetime2) AS datetime)
@@ -176,21 +176,21 @@ select CAST(CAST('1900-05-06 23:59:29.998' AS datetime) AS time)
 go
 ~~START~~
 time
-23:59:29.998000
+23:59:29.9980000
 ~~END~~
 
 select CAST(CAST('2050-05-06 00:00:00' AS datetime) AS time)
 go
 ~~START~~
 time
-00:00:00.000000
+00:00:00.0000000
 ~~END~~
 
 select CAST(CAST('2050-05-06 23:59:29.998' AS datetime) AS time)
 go
 ~~START~~
 time
-23:59:29.998000
+23:59:29.9980000
 ~~END~~
 
 
@@ -231,7 +231,7 @@ select CAST(CAST('2020-03-15 23:59:29.99' AS datetime) AS datetimeoffset)
 go
 ~~START~~
 datetimeoffset
-2020-03-15 23:59:29.990000 +00:00
+2020-03-15 23:59:29.9900000 +00:00
 ~~END~~
 
 select CAST(CAST('2079-06-06 23:59:29.998 +8:00' AS datetimeoffset) AS datetime)

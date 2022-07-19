@@ -1060,7 +1060,7 @@ TdsTypeDatetime2ToDatum(StringInfo buf, int scale, int len)
 	Timestamp	timestamp;
 
 	if (scale == 255)
-		scale = 6;
+		scale = DATETIMEOFFSETMAXSCALE;
 
 	memcpy(&numMicro, &buf->data[buf->cursor], len - 3);
 	buf->cursor += len - 3;
@@ -1130,11 +1130,10 @@ TdsTypeTimeToDatum(StringInfo buf, int scale, int len)
 
 	/*
 	 * if time data has no specific scale specified in the query, default scale
-	 * to be considered is 7 always. However, setting default scale to 6 since
-	 * postgres supports upto 6 digits after decimal point
+	 * to be considered is 7 always.
 	 */
 	if (scale == 255)
-		scale = 6;
+		scale = DATETIMEOFFSETMAXSCALE;
 
 	memcpy(&numMicro, &buf->data[buf->cursor], len);
 	buf->cursor += len;
@@ -1164,11 +1163,10 @@ TdsTypeDatetimeoffsetToDatum(StringInfo buf, int scale, int len)
 	TimestampTz	timestamp;
 	/*
 	 * if Datetimeoffset data has no specific scale specified in the query, default scale
-	 * to be considered is 7 always. However, setting default scale to 6 since
-	 * postgres supports upto 6 digits after decimal point
+	 * to be considered is 7 always.
 	 */
 	if (scale == 0xFF)
-		scale = 6;
+		scale = DATETIMEOFFSETMAXSCALE;
 
 	memcpy(&numMicro, &buf->data[buf->cursor], len - 5);
 	buf->cursor += len - 5;
@@ -2912,11 +2910,10 @@ TdsSendTypeTime(FmgrInfo *finfo, Datum value, void *vMetaData)
 
 	/*
 	 * if time data has no specific scale specified in the query, default scale
-	 * to be considered is 7 always. However, setting default scale to 6 since
-	 * postgres supports upto 6 digits after decimal point
+	 * to be considered is 7 always.
 	 */
 	if (scale == 255)
-		scale = 6;
+		scale = DATETIMEOFFSETMAXSCALE;
 
 	if (scale >= 0 && scale < 3)
 		length = 3;
@@ -2928,6 +2925,8 @@ TdsSendTypeTime(FmgrInfo *finfo, Datum value, void *vMetaData)
 	numSec = (double)value / 1000000;
 	while (scale--)
 		numSec *= 10;
+	/* Round res to the nearest integer */
+	numSec += 0.5;
 
 	res = (uint64_t)numSec;
 	if ((rc = TdsPutInt8(length)) == 0)
@@ -2953,11 +2952,10 @@ TdsSendTypeDatetime2(FmgrInfo *finfo, Datum value, void *vMetaData)
 	scale = col->metaEntry.type6.scale;
 	/*
 	 * if Datetime2 data has no specific scale specified in the query, default scale
-	 * to be considered is 7 always. However, setting default scale to 6 since
-	 * postgres supports upto 6 digits after decimal point
+	 * to be considered is 7 always.
 	 */
 	if (scale == 255)
-		scale = 6;
+		scale = DATETIMEOFFSETMAXSCALE;
 
 	if (scale >= 0 && scale < 3)
 		length = 6;
@@ -3172,7 +3170,7 @@ TdsTypeSqlVariantToDatum(StringInfo buf)
 		temp = scale;	
 		/* postgres limitation */
 		if (scale > 7 || scale < 0)
-			scale = 6;
+			scale = DATETIMEOFFSETMAXSCALE;
 
 		if (scale <= 2)
 			dataLen = 3;
@@ -3205,7 +3203,7 @@ TdsTypeSqlVariantToDatum(StringInfo buf)
 	
 		/* postgres limitation */
                 if (scale > 7 || scale == 0xff || scale < 0)
-			scale = 6;
+			scale = DATETIMEOFFSETMAXSCALE;
 
 		if (scale <= 2)
 			dataLen = 6;
@@ -3231,7 +3229,7 @@ TdsTypeSqlVariantToDatum(StringInfo buf)
 	
 		/* postgres limitation */
 		if (scale > 7 || scale == 0xff || scale < 0)
-			scale = 6;
+			scale = DATETIMEOFFSETMAXSCALE;
 
 		if (scale <= 2)
 			dataLen = 8;
@@ -3588,7 +3586,7 @@ TdsSendTypeSqlvariant(FmgrInfo *finfo, Datum value, void *vMetaData)
 		 *              scale(1B) + data(3B-5B)
 		 */
 			if (scale == 0xff || scale < 0 || scale > 7)
-				scale = 6;
+				scale = DATETIMEOFFSETMAXSCALE;
 
 			if (scale >= 0 && scale < 3)
 				dataLen = 3;
@@ -3621,7 +3619,7 @@ TdsSendTypeSqlvariant(FmgrInfo *finfo, Datum value, void *vMetaData)
 		 *              scale(1B) + data(6B-8B)
 		 */
 			if (scale == 0xff || scale < 0 || scale > 7)
-				scale = 6;
+				scale = DATETIMEOFFSETMAXSCALE;
 
 			if (scale >= 0 && scale < 3)
 				dataLen = 6;
@@ -3654,7 +3652,7 @@ TdsSendTypeSqlvariant(FmgrInfo *finfo, Datum value, void *vMetaData)
 			timestamptz += (timezone * SECS_PER_MINUTE * USECS_PER_SEC);
 			
 			if (scale == 0xff || scale < 0 || scale > 7)
-				scale = 6;
+				scale = DATETIMEOFFSETMAXSCALE;
 
 			if (scale >= 0 && scale < 3)
 				dataLen = 8;
@@ -3727,11 +3725,10 @@ TdsSendTypeDatetimeoffset(FmgrInfo *finfo, Datum value, void *vMetaData)
 	scale = col->metaEntry.type6.scale;
 	/*
 	 * if Datetimeoffset data has no specific scale specified in the query, default scale
-	 * to be considered is 7 always. However, setting default scale to 6 since
-	 * postgres supports upto 6 digits after decimal point
+	 * to be considered is 7 always.
 	 */
 	if (scale == 0xFF)
-		scale = 6;
+		scale = DATETIMEOFFSETMAXSCALE;
 
 	if (scale >= 0 && scale < 3)
 		length = 8;
