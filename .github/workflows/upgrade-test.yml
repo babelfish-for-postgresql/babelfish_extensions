@@ -118,7 +118,7 @@ jobs:
               cp ../../output/$FINAL_VERSION"__verification_cleanup__"$BASE_VERSION"__"$f".out" ~/failed-testscript-outputs/$FINAL_VERSION"__verification_cleanup__"$BASE_VERSION"__"$f".out"
             fi
           done
-
+ 
       - name: Upload Logs
         if: always() && steps.test-file-rename.outcome == 'success'
         uses: actions/upload-artifact@v2
