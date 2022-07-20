@@ -115,10 +115,10 @@ jobs:
             elif [[ -f ../../output/$BASE_VERSION"__preparation__"$f".out" ]]; then
               cp ../../output/$BASE_VERSION"__preparation__"$f".out" ~/failed-testscript-outputs/$BASE_VERSION"__preparation__"$f".out"
             else
-              cp ../../output/$FINAL_VERSION"__verfication_cleanup__"$BASE_VERSION"__"$f".out" ~/failed-testscript-outputs/$FINAL_VERSION"__verfication_cleanup__"$BASE_VERSION"__"$f".out"
+              cp ../../output/$FINAL_VERSION"__verification_cleanup__"$BASE_VERSION"__"$f".out" ~/failed-testscript-outputs/$FINAL_VERSION"__verification_cleanup__"$BASE_VERSION"__"$f".out"
             fi
           done
-
+ 
       - name: Upload Logs
         if: always() && steps.test-file-rename.outcome == 'success'
         uses: actions/upload-artifact@v2
