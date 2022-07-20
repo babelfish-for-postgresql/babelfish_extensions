@@ -3,7 +3,7 @@ GO
 ~~ROW COUNT: 1~~
 
 
-SELECT * FROM test_sp_helpsrvrolemember_tbl
+SELECT ServerRole, MemberName, (CASE WHEN MemberSID IS NULL THEN 0 ELSE 1 END) FROM test_sp_helpsrvrolemember_tbl
 GO
 ~~START~~
 varchar#!#varchar#!#int
@@ -22,7 +22,7 @@ GO
 TRUNCATE TABLE test_sp_helpsrvrolemember_tbl
 GO
 
-SELECT * FROM test_sp_helpsrvrolemember_tbl
+SELECT ServerRole, MemberName, (CASE WHEN MemberSID IS NULL THEN 0 ELSE 1 END) FROM test_sp_helpsrvrolemember_tbl
 GO
 ~~START~~
 varchar#!#varchar#!#int
@@ -42,7 +42,7 @@ GO
 TRUNCATE TABLE test_sp_helpsrvrolemember_tbl
 GO
 
-SELECT * FROM test_sp_helpsrvrolemember_tbl
+SELECT ServerRole, MemberName, (CASE WHEN MemberSID IS NULL THEN 0 ELSE 1 END) FROM test_sp_helpsrvrolemember_tbl
 GO
 ~~START~~
 varchar#!#varchar#!#int
