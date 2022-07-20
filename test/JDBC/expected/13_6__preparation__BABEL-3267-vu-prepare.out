@@ -50,7 +50,6 @@ insert into [T3267\schema].[T3267.[CustomTable] values ('success');
 go
 ~~ROW COUNT: 1~~
 
-
 SET QUOTED_IDENTIFIER OFF;
 go
 
