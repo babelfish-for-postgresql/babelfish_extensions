@@ -1,18 +1,16 @@
-from datetime import datetime
-import logging
+from sql_validation import create_logger, close_logger, compare_outfiles
 from utils.db_client_psql import Db_Client_psycopg
 from pathlib import Path
 from utils.config import config_dict as cfg
-import sys
 import csv
-import subprocess
+
 
 def get_dependencies(file, sumfile, logger):
 
     # connect to psql endpoint
-    # using default port 5432
-    cnxn = Db_Client_psycopg(cfg["dependencyCheck_URL"], cfg["dependencyCheck_port"], cfg["dependencyCheck_databaseName"], cfg["dependencyCheck_user"], logger)
+    cnxn = Db_Client_psycopg(cfg["psql_URL"], cfg["psql_port"], cfg["psql_databaseName"], cfg["psql_user"], logger)
 
+    # check if connection is successful
     try:
         curs2 = cnxn.get_cursor()
         curs2.close()
@@ -46,7 +44,7 @@ def get_dependencies(file, sumfile, logger):
             resultset = cursor.fetchall()
             object = [i[0] for i in resultset]
 
-            query = """SELECT d.refobjid, d.refobjid::regclass, count(distinct v.oid) AS total_count 
+            query = """SELECT d.refobjid::regclass, count(distinct v.oid) AS total_count 
                 FROM pg_depend AS d 
                 JOIN pg_rewrite AS r ON r.oid = d.objid  
                 JOIN pg_class AS v ON v.oid = r.ev_class 
@@ -60,9 +58,10 @@ def get_dependencies(file, sumfile, logger):
             result = cursor.fetchall()
             dep_object = []
 
+            # write objects with dependency count in summary file
             for i in result:
-                writer.writerow(["view", i[1], i[2]])
-                dep_object.append(i[1])
+                writer.writerow(["view", i[0], i[1]])
+                dep_object.append(i[0])
 
             # get views with no dependency 
             for i in set(object) - set(dep_object):
@@ -76,9 +75,9 @@ def get_dependencies(file, sumfile, logger):
             resultset = cursor.fetchall()
             object = [l[0] for l in resultset]
 
-            query = """SELECT id, id::regprocedure AS obj_name, sum(total_count) as dep_count 
+            query = """SELECT id::regprocedure AS obj_name, sum(total_count) as dep_count 
                 FROM
-                (   (   SELECT d.refobjid AS id, d.refobjid::regprocedure, count(distinct v.oid) AS total_count 
+                (   (   SELECT d.refobjid AS id, count(distinct v.oid) AS total_count 
                         FROM pg_depend AS d 
                         JOIN pg_rewrite AS r ON r.oid = d.objid
                         JOIN pg_class AS v ON v.oid = r.ev_class
@@ -90,7 +89,7 @@ def get_dependencies(file, sumfile, logger):
                         GROUP BY d.refobjid
                     )
                     UNION ALL
-                    (   SELECT d.refobjid, d.refobjid::regprocedure, count(distinct v.oid) AS total_count 
+                    (   SELECT d.refobjid, count(distinct v.oid) AS total_count 
                         FROM pg_depend AS d 
                         JOIN pg_class AS v on v.oid = d.objid 
                         WHERE d.refclassid = 'pg_proc'::regclass 
@@ -105,8 +104,8 @@ def get_dependencies(file, sumfile, logger):
             dep_object = []
             result = cursor.fetchall()
             for i in result:
-                writer.writerow(["function", i[1], i[2]])
-                dep_object.append(i[1])
+                writer.writerow(["function", i[0], i[1]])
+                dep_object.append(i[0])
 
             # get functions with no dependency 
             for i in set(object) - set(dep_object):
@@ -119,9 +118,9 @@ def get_dependencies(file, sumfile, logger):
             resultset = cursor.fetchall()
             object = [l[0] for l in resultset]
 
-            query = """SELECT id, id::regoperator AS obj_name, sum(total_count) AS dep_count 
+            query = """SELECT id::regoperator AS obj_name, sum(total_count) AS dep_count 
                 FROM
-                (   (   SELECT d.refobjid AS id, d.refobjid::regoperator, count(distinct v.oid) AS total_count 
+                (   (   SELECT d.refobjid AS id, count(distinct v.oid) AS total_count 
                         FROM pg_depend AS d 
                         JOIN pg_rewrite AS r ON r.oid = d.objid
                         JOIN pg_class AS v ON v.oid = r.ev_class
@@ -133,7 +132,7 @@ def get_dependencies(file, sumfile, logger):
                         GROUP BY refobjid
                     )
                         UNION ALL
-                    (   SELECT d.refobjid, d.refobjid::regoperator, count(distinct v.oid) AS total_count 
+                    (   SELECT d.refobjid, count(distinct v.oid) AS total_count 
                         FROM pg_depend AS d 
                         JOIN pg_class AS v on v.oid = d.objid 
                         WHERE d.refclassid = 'pg_operator'::regclass 
@@ -148,8 +147,8 @@ def get_dependencies(file, sumfile, logger):
             dep_object = []
             result = cursor.fetchall()
             for i in result:
-                writer.writerow(["operator", i[1], i[2]])
-                dep_object.append(i[1])
+                writer.writerow(["operator", i[0], i[1]])
+                dep_object.append(i[0])
 
             # get operators with no dependency 
             for i in set(object) - set(dep_object):
@@ -162,9 +161,9 @@ def get_dependencies(file, sumfile, logger):
             resultset = cursor.fetchall()
             object = [l[0] for l in resultset]
 
-            query = """SELECT id, id::regtype AS obj_name, sum(total_count) AS dep_count 
+            query = """SELECT id::regtype AS obj_name, sum(total_count) AS dep_count 
                 FROM
-                (   (   SELECT d.refobjid AS id, d.refobjid::regtype, count(distinct v.oid) AS total_count 
+                (   (   SELECT d.refobjid AS id, count(distinct v.oid) AS total_count 
                         FROM pg_depend AS d 
                         JOIN pg_class AS v on v.oid = d.objid 
                         WHERE d.refclassid = 'pg_type'::regclass 
@@ -174,7 +173,7 @@ def get_dependencies(file, sumfile, logger):
                         GROUP BY d.refobjid
                     )
                         UNION ALL
-                    (   SELECT d.refobjid, d.refobjid::regtype, count(distinct v.oid) AS total_count 
+                    (   SELECT d.refobjid, count(distinct v.oid) AS total_count 
                         FROM pg_depend AS d 
                         JOIN pg_proc AS v on v.oid = d.objid 
                         WHERE d.refclassid = 'pg_type'::regclass 
@@ -184,7 +183,7 @@ def get_dependencies(file, sumfile, logger):
                         GROUP BY d.refobjid
                     )
                         UNION ALL
-                    (   SELECT d.refobjid, d.refobjid::regtype, count(distinct v.oid) AS total_count 
+                    (   SELECT d.refobjid, count(distinct v.oid) AS total_count 
                         FROM pg_depend AS d 
                         JOIN pg_type AS v on v.oid = d.objid 
                         WHERE d.refclassid = 'pg_type'::regclass 
@@ -200,8 +199,8 @@ def get_dependencies(file, sumfile, logger):
             dep_object = []
             result = cursor.fetchall()
             for i in result:
-                writer.writerow(["type", i[1], i[2]])
-                dep_object.append(i[1])
+                writer.writerow(["type", i[0], i[1]])
+                dep_object.append(i[0])
 
             # get type with no dependency 
             for i in set(object) - set(dep_object):
@@ -215,7 +214,7 @@ def get_dependencies(file, sumfile, logger):
             resultset = cursor.fetchall()
             object = [l[0] for l in resultset]          
 
-            query = """SELECT d.refobjid, d.refobjid::regcollation, count(distinct v.oid) AS total_count 
+            query = """SELECT d.refobjid::regcollation, count(distinct v.oid) AS total_count 
                 FROM pg_depend AS d 
                 JOIN pg_class AS v on v.oid = d.objid 
                 WHERE d.refclassid = 'pg_collation'::regclass 
@@ -227,8 +226,8 @@ def get_dependencies(file, sumfile, logger):
             dep_object = []
             result = cursor.fetchall()
             for i in result:
-                writer.writerow(["collation", i[1], i[2]])
-                dep_object.append(i[1])
+                writer.writerow(["collation", i[0], i[1]])
+                dep_object.append(i[0])
 
             # get collations with no dependency 
             for i in set(object) - set(dep_object):
@@ -243,87 +242,6 @@ def get_dependencies(file, sumfile, logger):
         logger.info(str(e))
     return version
 
-# compare the generated and expected file using diff
-def compare_outfiles(outfile, expected_file, logfname, filename, logger):
-    try:
-        diff_file = Path.cwd().joinpath("logs", logfname, filename + ".diff")
-        f_handle = open(diff_file, "wb")
-
-        # sorting the files as set will give unordered outputs
-        if sys.platform.startswith("win"):
-            subprocess.run(args = ["sort", expected_file, "/o", expected_file])
-            subprocess.run(args = ["sort", outfile, "/o", outfile])
-            proc = subprocess.run(args = ["fc", expected_file, outfile], stdout = f_handle, stderr = f_handle)
-        else:
-            subprocess.run(args = ["sort", "-o", expected_file, expected_file])
-            subprocess.run(args = ["sort", "-o", outfile, outfile])
-            proc = subprocess.run(args = ["diff", "-a", "-u", "-I", "~~ERROR", expected_file, outfile], stdout = f_handle, stderr = f_handle)
-        
-        rcode = proc.returncode
-        f_handle.close()
-        
-        # adding logs based on the returncode of diff command
-        if rcode == 0:
-            logger.info("No difference found!")
-            return True
-        elif rcode ==  1:
-            with open(diff_file, "r") as f:
-                logger.info("\n" + f.read())
-            return False
-        elif rcode == 2:
-            with open(diff_file, "r") as f:
-                logger.info("\n" + f.read())
-            logger.error("Some error occured while executing the diff command!")
-            return False
-        else:
-            logger.error("Unknown exit code encountered while running diff!")
-            return False
-        
-    except Exception as e:
-        logger.error(str(e))
-    
-    return False
-
-
-# set up logger for the framework
-def create_logger(filename):
-
-    # set up path for logger
-    log_folder_name = datetime.now().strftime('log_%H_%M_%d_%m_%Y')
-    path = Path.cwd().joinpath("logs", log_folder_name)
-    Path.mkdir(path, parents = True, exist_ok = True)
-
-    logname = datetime.now().strftime(filename + '_%H_%M_%d_%m_%Y.log')
-
-    # creating logger with two handlers, file as well as console
-    # file logger
-    file_path = path.joinpath(logname)
-
-    fh = logging.FileHandler(filename = file_path, mode = "w")
-    formatter = logging.Formatter('%(asctime)s-%(levelname)s-%(message)s')
-    fh.setFormatter(formatter)
-    logger = logging.getLogger(filename)
-    logger.addHandler(fh)
-    logger.setLevel(logging.DEBUG)
-
-    # console logger
-    sh = logging.StreamHandler()
-    sh.setFormatter(formatter)
-    logger.addHandler(sh)
-    logger.setLevel(logging.DEBUG)
-
-    return log_folder_name, logger
-
-
-# remove and close log handlers
-def close_logger(logger):
-    if logger is None:
-        return
-    else:
-        for handler in list(logger.handlers):
-            logger.removeHandler(handler) 
-            handler.close()
-
 
 def main():
 
@@ -334,7 +252,7 @@ def main():
     # path for output file
     outfile = Path.cwd().joinpath("output", "upgrade_validation")
     Path.mkdir(outfile, parents = True, exist_ok = True)
-    summaryfile = outfile.joinpath("dependency_count" + ".csv")
+    summaryfile = outfile.joinpath("dependency_summary" + ".csv")
     outfile = outfile.joinpath(file_name + ".out")
 
     version = get_dependencies(outfile, summaryfile, logger)
@@ -347,6 +265,7 @@ def main():
 
     assert version > 0
 
+    # get expected file based on engine version
     expected_file = Path.cwd().joinpath("expected", "upgrade_validation", str(version).replace('.','_'), file_name + ".out")
 
     result = compare_outfiles(outfile, expected_file, logfname, file_name, logger)

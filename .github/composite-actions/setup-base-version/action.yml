@@ -113,10 +113,10 @@ runs:
       if: always() && steps.configure-python-environment.outcome == 'success'
       run: |
         cd test/python
-        dependencyCheck_URL=localhost \
-        dependencyCheck_port=5432 \
-        dependencyCheck_databaseName=jdbc_testdb \
-        dependencyCheck_user=jdbc_user \
+        psql_URL=localhost \
+        psql_port=5432 \
+        psql_databaseName=jdbc_testdb \
+        psql_user=jdbc_user \
         python3 upgrade_validation.py
       shell: bash
 
