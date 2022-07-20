@@ -45,3 +45,6 @@ go
 
 drop table dbo.t7
 go
+
+select cast('12:15:04.1234567' as TIME(7))
+go
