@@ -51,3 +51,4 @@ sys-suser_sname
 sys-trigger_nestlevel
 constraint_column_usage
 column_domain_usage
+Test-sp_helpsrvrolemember
