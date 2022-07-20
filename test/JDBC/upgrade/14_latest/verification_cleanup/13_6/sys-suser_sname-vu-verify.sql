@@ -12,6 +12,9 @@ SET @id = CAST(CAST((SELECT oid FROM pg_catalog.pg_roles WHERE rolname = 'jdbc_u
 SELECT SYS.SUSER_SNAME(@id)
 GO
 
+SELECT SYS.SUSER_SNAME(NULL)
+GO
+
 SELECT * FROM sys_suser_sname_view_vu_prepare
 GO
 

@@ -49,11 +49,7 @@ sys-max_connections
 sys-original_login
 sys-schema-name
 sys-suser_sid
-<<<<<<< HEAD
-=======
-sys-suser_sname
 sys-sysobjects
->>>>>>> BABEL_2_X_DEV
 sys-trigger_nestlevel
 constraint_column_usage
 column_domain_usage
