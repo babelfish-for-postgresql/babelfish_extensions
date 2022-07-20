@@ -1,8 +1,8 @@
 SELECT * FROM sys_all_views_dep_view_vu_prepare
 GO
 ~~START~~
-varchar#!#varchar#!#int
-sys_all_views_select_vu_prepare#!#V#!#0
+varchar#!#char#!#int
+sys_all_views_select_vu_prepare#!#V #!#0
 ~~END~~
 
 
