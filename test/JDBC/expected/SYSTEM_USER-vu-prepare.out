@@ -4,3 +4,8 @@ GO
 
 CREATE LOGIN system_user_vu_prepare_r2 WITH PASSWORD = '123';
 GO
+
+CREATE PROCEDURE system_user_vu_prepare_procedure
+AS
+   SELECT session_user, system_user, current_user, db_name();
+GO
