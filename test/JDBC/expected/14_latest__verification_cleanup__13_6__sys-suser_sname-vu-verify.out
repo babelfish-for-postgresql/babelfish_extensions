@@ -31,6 +31,14 @@ jdbc_user
 ~~END~~
 
 
+SELECT SYS.SUSER_SNAME(NULL)
+GO
+~~START~~
+nvarchar
+<NULL>
+~~END~~
+
+
 SELECT * FROM sys_suser_sname_view_vu_prepare
 GO
 ~~START~~
