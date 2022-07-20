@@ -9,3 +9,15 @@ CREATE PROCEDURE system_user_vu_prepare_procedure
 AS
    SELECT session_user, system_user, current_user, db_name();
 GO
+
+-- tsql user=system_user_vu_prepare_r1 password=123
+CREATE PROCEDURE system_user_vu_prepare_procedure_r1
+AS
+   SELECT session_user, system_user, current_user, db_name();
+GO
+
+-- tsql user=system_user_vu_prepare_r2 password=123
+CREATE PROCEDURE system_user_vu_prepare_procedure_r2
+AS
+   SELECT session_user, system_user, current_user, db_name();
+GO
