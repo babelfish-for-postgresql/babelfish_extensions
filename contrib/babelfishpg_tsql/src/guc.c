@@ -1043,6 +1043,24 @@ define_custom_variables(void)
 				 PGC_USERSET,
 				 GUC_NOT_IN_SAMPLE | GUC_DISALLOW_IN_FILE | GUC_DISALLOW_IN_AUTO_FILE,
 				 NULL, NULL, NULL);
+
+	DefineCustomIntVariable("babelfishpg_tsql.insert_bulk_rows_per_batch",
+				gettext_noop("Sets the number of rows per batch to be processed for Insert Bulk"),
+				NULL,
+				&insert_bulk_rows_per_batch,
+				DEFAULT_INSERT_BULK_ROWS_PER_BATCH, 1, INT_MAX,
+				PGC_USERSET,
+				GUC_NOT_IN_SAMPLE,
+				NULL, NULL, NULL);
+
+	DefineCustomIntVariable("babelfishpg_tsql.insert_bulk_kilobytes_per_batch",
+				gettext_noop("Sets the number of bytes per batch to be processed for Insert Bulk"),
+				NULL,
+				&insert_bulk_kilobytes_per_batch,
+				DEFAULT_INSERT_BULK_PACKET_SIZE, 1, INT_MAX,
+				PGC_USERSET,
+				GUC_NOT_IN_SAMPLE,
+				NULL, NULL, NULL);
 }
 
 int escape_hatch_storage_options = EH_IGNORE;

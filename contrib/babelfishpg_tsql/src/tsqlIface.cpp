@@ -4136,6 +4136,7 @@ makeInsertBulkStatement(TSqlParser::Dml_statementContext *ctx)
 	PLtsql_stmt_insert_bulk *stmt = (PLtsql_stmt_insert_bulk *) palloc0(sizeof(*stmt));
 	TSqlParser::Bulk_insert_statementContext *bulk_ctx = ctx->bulk_insert_statement();
 	std::vector<TSqlParser::Insert_bulk_column_definitionContext *> column_list = bulk_ctx->insert_bulk_column_definition();
+	std::vector<TSqlParser::Bulk_insert_optionContext *> option_list = bulk_ctx->bulk_insert_option();
 
 	std::string table_name;
 	std::string schema_name;
@@ -4188,6 +4189,48 @@ makeInsertBulkStatement(TSqlParser::Dml_statementContext *ctx)
 				column_refs << ::stripQuoteFromId(column_list[column_list.size() - 1]->simple_column_name()->id());
 
 			stmt->column_refs = pstrdup(column_refs.str().c_str());
+		}
+
+		if (!option_list.empty())
+		{
+			for (size_t i = 0; i < option_list.size(); i++)
+			{
+				if (option_list[i]->ORDER())
+					throw PGErrorWrapperException(ERROR, ERRCODE_FEATURE_NOT_SUPPORTED, "insert bulk option order is not yet supported in babelfish", getLineAndPos(bulk_ctx->WITH()));
+
+				else if (pg_strcasecmp("ROWS_PER_BATCH", ::getFullText(option_list[i]->id()).c_str()) == 0)
+				{
+					if (option_list[i]->expression())
+						stmt->rows_per_batch = pstrdup(::getFullText(option_list[i]->expression()).c_str());
+					else
+						throw PGErrorWrapperException(ERROR, ERRCODE_SYNTAX_ERROR, format_errmsg("incorrect syntax near %s",
+													::getFullText(option_list[i]->id()).c_str()),
+													getLineAndPos(option_list[i]->expression()));
+				}
+				else if (pg_strcasecmp("KILOBYTES_PER_BATCH", ::getFullText(option_list[i]->id()).c_str()) == 0)
+				{
+					if (option_list[i]->expression())
+						stmt->kilobytes_per_batch = pstrdup(::getFullText(option_list[i]->expression()).c_str());
+					else
+						throw PGErrorWrapperException(ERROR, ERRCODE_SYNTAX_ERROR, format_errmsg("incorrect syntax near %s",
+													::getFullText(option_list[i]->id()).c_str()),
+													getLineAndPos(option_list[i]->expression()));
+				}
+				else if (pg_strcasecmp("KEEP_NULLS", ::getFullText(option_list[i]->id()).c_str()) == 0)
+					stmt->keep_nulls = true;
+
+				else if (pg_strcasecmp("CHECK_CONSTRAINTS", ::getFullText(option_list[i]->id()).c_str()) == 0)
+					throw PGErrorWrapperException(ERROR, ERRCODE_FEATURE_NOT_SUPPORTED, "insert bulk option check_constraints is not yet supported in babelfish", getLineAndPos(bulk_ctx->WITH()));
+
+				else if (pg_strcasecmp("FIRE_TRIGGERS", ::getFullText(option_list[i]->id()).c_str()) == 0)
+					throw PGErrorWrapperException(ERROR, ERRCODE_FEATURE_NOT_SUPPORTED, "insert bulk option fire_triggers is not yet supported in babelfish", getLineAndPos(bulk_ctx->WITH()));
+
+				else if (pg_strcasecmp("TABLOCK", ::getFullText(option_list[i]->id()).c_str()) == 0)
+					throw PGErrorWrapperException(ERROR, ERRCODE_FEATURE_NOT_SUPPORTED, "insert bulk option tablock is not yet supported in babelfish", getLineAndPos(bulk_ctx->WITH()));
+
+				else
+					throw PGErrorWrapperException(ERROR, ERRCODE_SYNTAX_ERROR, format_errmsg("invalid insert bulk option %s", ::getFullText(option_list[i]->id()).c_str()), getLineAndPos(bulk_ctx->WITH()));
+			}
 		}
 	}
 
