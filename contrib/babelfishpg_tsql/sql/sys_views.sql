@@ -1593,30 +1593,34 @@ GRANT SELECT ON sys.objects TO PUBLIC;
 
 create or replace view sys.sysobjects as
 select
-  s.name
-  , s.object_id as id
-  , s.type as xtype
-  , CAST(s.schema_id as smallint) as uid
+  CAST(s.name as sys._ci_sysname)
+  , CAST(s.object_id as int) as id
+  , CAST(s.type as sys.bpchar(2)) as xtype
+
+  -- 'uid' is specified as type INT here, and not SMALLINT per SQL Server documentation.
+  -- This is because if you routinely drop and recreate databases, it is possible for the
+  -- dbo schema which relies on pg_catalog oid values to exceed the size of a smallint. 
+  , CAST(s.schema_id as int) as uid
   , CAST(0 as smallint) as info
-  , 0 as status
-  , 0 as base_schema_ver
-  , 0 as replinfo
-  , s.parent_object_id as parent_obj
-  , s.create_date as crdate
+  , CAST(0 as int) as status
+  , CAST(0 as int) as base_schema_ver
+  , CAST(0 as int) as replinfo
+  , CAST(s.parent_object_id as int) as parent_obj
+  , CAST(s.create_date as sys.datetime) as crdate
   , CAST(0 as smallint) as ftcatid
-  , 0 as schema_ver
-  , 0 as stats_schema_ver
-  , s.type
+  , CAST(0 as int) as schema_ver
+  , CAST(0 as int) as stats_schema_ver
+  , CAST(s.type as sys.bpchar(2)) as type
   , CAST(0 as smallint) as userstat
   , CAST(0 as smallint) as sysstat
   , CAST(0 as smallint) as indexdel
   , CAST(s.modify_date as sys.datetime) as refdate
-  , 0 as version
-  , 0 as deltrig
-  , 0 as instrig
-  , 0 as updtrig
-  , 0 as seltrig
-  , 0 as category
+  , CAST(0 as int) as version
+  , CAST(0 as int) as deltrig
+  , CAST(0 as int) as instrig
+  , CAST(0 as int) as updtrig
+  , CAST(0 as int) as seltrig
+  , CAST(0 as int) as category
   , CAST(0 as smallint) as cache
 from sys.objects s;
 GRANT SELECT ON sys.sysobjects TO PUBLIC;
