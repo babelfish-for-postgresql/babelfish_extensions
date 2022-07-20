@@ -399,7 +399,6 @@ Could not find upgrade tests for view sys.sysdatabases
 Could not find upgrade tests for view sys.sysforeignkeys
 Could not find upgrade tests for view sys.sysindexes
 Could not find upgrade tests for view sys.syslanguages
-Could not find upgrade tests for view sys.sysobjects
 Could not find upgrade tests for view sys.sysprocesses
 Could not find upgrade tests for view sys.system_objects
 Could not find upgrade tests for view sys.system_sql_modules

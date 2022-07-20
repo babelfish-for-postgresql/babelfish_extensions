@@ -1569,6 +1569,45 @@ INSERT INTO sys.babelfish_helpcollation VALUES (N'mongolian_cs_as', N'Mongolian,
 INSERT INTO sys.babelfish_helpcollation VALUES (N'sql_latin1_general_cp874_ci_as', N'Virtual, default locale, code page 874, case-insensitive, accent-sensitive, kanatype-insensitive, width-insensitive');
 INSERT INTO sys.babelfish_helpcollation VALUES (N'sql_latin1_general_cp874_cs_as', N'Virtual, default locale, code page 874, case-sensitive, accent-sensitive, kanatype-insensitive, width-insensitive');
 
+
+ALTER VIEW sys.sysobjects RENAME TO sysobjects_deprecated_2_1_0;
+
+create or replace view sys.sysobjects as
+select
+  CAST(s.name as sys._ci_sysname)
+  , CAST(s.object_id as int) as id
+  , CAST(s.type as sys.bpchar(2)) as xtype
+
+  -- 'uid' is specified as type INT here, and not SMALLINT per SQL Server documentation.
+  -- This is because if you routinely drop and recreate databases, it is possible for the
+  -- dbo schema which relies on pg_catalog oid values to exceed the size of a smallint. 
+  , CAST(s.schema_id as int) as uid
+  , CAST(0 as smallint) as info
+  , CAST(0 as int) as status
+  , CAST(0 as int) as base_schema_ver
+  , CAST(0 as int) as replinfo
+  , CAST(s.parent_object_id as int) as parent_obj
+  , CAST(s.create_date as sys.datetime) as crdate
+  , CAST(0 as smallint) as ftcatid
+  , CAST(0 as int) as schema_ver
+  , CAST(0 as int) as stats_schema_ver
+  , CAST(s.type as sys.bpchar(2)) as type
+  , CAST(0 as smallint) as userstat
+  , CAST(0 as smallint) as sysstat
+  , CAST(0 as smallint) as indexdel
+  , CAST(s.modify_date as sys.datetime) as refdate
+  , CAST(0 as int) as version
+  , CAST(0 as int) as deltrig
+  , CAST(0 as int) as instrig
+  , CAST(0 as int) as updtrig
+  , CAST(0 as int) as seltrig
+  , CAST(0 as int) as category
+  , CAST(0 as smallint) as cache
+from sys.objects s;
+GRANT SELECT ON sys.sysobjects TO PUBLIC;
+
+CALL sys.babelfish_drop_deprecated_view('sys', 'sysobjects_deprecated_2_1_0');
+
 -- Drops the temporary procedure used by the upgrade script.
 -- Please have this be one of the last statements executed in this upgrade script.
 DROP PROCEDURE sys.babelfish_drop_deprecated_view(varchar, varchar);
