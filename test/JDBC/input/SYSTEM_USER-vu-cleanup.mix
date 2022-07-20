@@ -3,11 +3,3 @@ DROP LOGIN system_user_vu_prepare_r1;
 DROP LOGIN system_user_vu_prepare_r2;
 DROP PROCEDURE system_user_vu_prepare_procedure;
 GO
-
--- tsql user=system_user_vu_prepare_r1 password=123
-DROP PROCEDURE system_user_vu_prepare_procedure_r1;
-GO
-
--- tsql user=system_user_vu_prepare_r2 password=123
-DROP PROCEDURE system_user_vu_prepare_procedure_r2;
-GO
