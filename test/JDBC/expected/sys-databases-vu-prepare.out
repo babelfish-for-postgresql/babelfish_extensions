@@ -1,4 +1,21 @@
+-- psql
+ALTER SYSTEM SET babelfishpg_tsql.migration_mode = 'multi-db';
+SELECT pg_reload_conf();
+GO
+~~START~~
+bool
+t
+~~END~~
+
+
+-- tsql
 CREATE DATABASE db_sys_databases_vu_prepare
+GO
+
+CREATE DATABASE db_sys_databases_vu_prepare1;
+GO
+
+CREATE DATABASE db_sys_databases_vu_prepare2;
 GO
 
 CREATE VIEW sys_databases_view_vu_prepare AS
