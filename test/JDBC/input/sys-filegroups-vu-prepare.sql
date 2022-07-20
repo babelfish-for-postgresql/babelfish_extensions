@@ -1,0 +1,18 @@
+USE master
+GO
+
+CREATE VIEW sys_filegroups_vu_prepare_view AS
+SELECT * FROM sys.filegroups
+GO
+
+CREATE PROC sys_filegroups_vu_prepare_proc AS
+SELECT * FROM sys.filegroups
+GO
+
+CREATE FUNCTION dbo.sys_filegroups_vu_prepare_func()
+RETURNS INT
+AS
+BEGIN
+RETURN (SELECT COUNT(*) FROM sys.filegroups)
+END
+GO
