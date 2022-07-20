@@ -46,6 +46,12 @@ sys-lock_timeout
 sys-max_connections
 sys-original_login
 sys-schema-name
+<<<<<<< HEAD
+=======
+sys-suser_sid
+sys-suser_sname
+sys-sysobjects
+>>>>>>> BABEL_2_X_DEV
 sys-trigger_nestlevel
 constraint_column_usage
 column_domain_usage
