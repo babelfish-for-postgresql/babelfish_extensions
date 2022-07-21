@@ -2114,7 +2114,8 @@ GRANT SELECT ON sys.data_spaces TO PUBLIC;
 
 CREATE OR REPLACE VIEW sys.database_mirroring
 AS
-SELECT database_id,
+SELECT 
+  CAST(database_id AS int) AS database_id,
 	CAST(NULL AS sys.uniqueidentifier) AS mirroring_guid,
 	CAST(NULL AS sys.tinyint) AS mirroring_state,
 	CAST(NULL AS sys.nvarchar(60)) AS mirroring_state_desc,

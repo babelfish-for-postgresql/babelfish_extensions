@@ -338,96 +338,98 @@ RETURNS table (
 
 create or replace view sys.databases as
 select
-  d.name as name
-  , sys.db_id(d.name) as database_id
-  , null::integer as source_database_id
-  , cast(cast(r.oid as int) as varbinary(85)) as owner_sid
+  CAST(d.name as SYS.SYSNAME) as name
+  , CAST(sys.db_id(d.name) as INT) as database_id
+  , CAST(NULL as INT) as source_database_id
+  , cast(cast(r.oid as INT) as SYS.VARBINARY(85)) as owner_sid
   , CAST(d.crdate AS SYS.DATETIME) as create_date
-  , CAST(NULL AS SYS.TINYINT) as compatibility_level
-  , c.collname::sys.nvarchar(128) as collation_name
-  , 0 as user_access
-  , 'MULTI_USER'::varchar(60) as user_access_desc
-  , 0 as is_read_only
-  , 0 as is_auto_close_on
-  , 0 as is_auto_shrink_on
-  , 0 as state
-  , 'ONLINE'::varchar(60) as state_desc
-  , CASE 
-		WHEN pg_is_in_recovery() is false THEN 0 
-		WHEN pg_is_in_recovery() is true THEN 1 
-	END as is_in_standby
-  , 0 as is_cleanly_shutdown
-  , 0 as is_supplemental_logging_enabled
-  , 1 as snapshot_isolation_state
-  , 'ON'::varchar(60) as snapshot_isolation_state_desc
-  , 1 as is_read_committed_snapshot_on
-  , 1 as recovery_model
-  , 'FULL'::varchar(60) as recovery_model_desc
-  , 0 as page_verify_option
-  , null::varchar(60) as page_verify_option_desc
-  , 1 as is_auto_create_stats_on
-  , 0 as is_auto_create_stats_incremental_on
-  , 0 as is_auto_update_stats_on
-  , 0 as is_auto_update_stats_async_on
-  , 0 as is_ansi_null_default_on
-  , 0 as is_ansi_nulls_on
-  , 0 as is_ansi_padding_on
-  , 0 as is_ansi_warnings_on
-  , 0 as is_arithabort_on
-  , 0 as is_concat_null_yields_null_on
-  , 0 as is_numeric_roundabort_on
-  , 0 as is_quoted_identifier_on
-  , 0 as is_recursive_triggers_on
-  , 0 as is_cursor_close_on_commit_on
-  , 0 as is_local_cursor_default
-  , 0 as is_fulltext_enabled
-  , 0 as is_trustworthy_on
-  , 0 as is_db_chaining_on
-  , 0 as is_parameterization_forced
-  , 0 as is_master_key_encrypted_by_server
-  , 0 as is_query_store_on
-  , 0 as is_published
-  , 0 as is_subscribed
-  , 0 as is_merge_published
-  , 0 as is_distributor
-  , 0 as is_sync_with_backup
-  , null::sys.UNIQUEIDENTIFIER as service_broker_guid
-  , 0 as is_broker_enabled
-  , 0 as log_reuse_wait
-  , 'NOTHING'::varchar(60) as log_reuse_wait_desc
-  , 0 as is_date_correlation_on
-  , 0 as is_cdc_enabled
-  , 0 as is_encrypted
-  , 0 as is_honor_broker_priority_on
-  , null::sys.UNIQUEIDENTIFIER as replica_id
-  , null::sys.UNIQUEIDENTIFIER as group_database_id
-  , null::int as resource_pool_id
-  , null::smallint as default_language_lcid
-  , null::sys.nvarchar(128) as default_language_name
-  , null::int as default_fulltext_language_lcid
-  , null::sys.nvarchar(128) as default_fulltext_language_name
-  , null::sys.bit as is_nested_triggers_on
-  , null::sys.bit as is_transform_noise_words_on
-  , null::smallint as two_digit_year_cutoff
-  , 0 as containment
-  , 'NONE'::varchar(60) as containment_desc
-  , 0 as target_recovery_time_in_seconds
-  , 0 as delayed_durability
-  , null::sys.nvarchar(60) as delayed_durability_desc
-  , 0 as is_memory_optimized_elevate_to_snapshot_on
-  , 0 as is_federation_member
-  , 0 as is_remote_data_archive_enabled
-  , 0 as is_mixed_page_allocation_on
-  , 0 as is_temporal_history_retention_enabled
-  , 0 as catalog_collation_type
-  , 'Not Applicable'::sys.nvarchar(60) as catalog_collation_type_desc
-  , null::sys.nvarchar(128) as physical_database_name
-  , 0 as is_result_set_caching_on
-  , 0 as is_accelerated_database_recovery_on
-  , 0 as is_tempdb_spill_to_remote_store
-  , 0 as is_stale_page_detection_on
-  , 0 as is_memory_optimized_enabled
-  , 0 as is_ledger_on
+  , CAST(120 AS SYS.TINYINT) as compatibility_level
+  , CAST(c.collname as SYS.SYSNAME) as collation_name
+  , CAST(0 AS SYS.TINYINT)  as user_access
+  , CAST('MULTI_USER' AS SYS.NVARCHAR(60)) as user_access_desc
+  , CAST(0 AS SYS.BIT) as is_read_only
+  , CAST(0 AS SYS.BIT) as is_auto_close_on
+  , CAST(0 AS SYS.BIT) as is_auto_shrink_on
+  , CAST(0 AS SYS.TINYINT) as state
+  , CAST('ONLINE' AS SYS.NVARCHAR(60)) as state_desc
+  , CAST(
+	  	CASE 
+			WHEN pg_is_in_recovery() is false THEN 0 
+			WHEN pg_is_in_recovery() is true THEN 1 
+		END 
+	AS SYS.BIT) as is_in_standby
+  , CAST(0 AS SYS.BIT) as is_cleanly_shutdown
+  , CAST(0 AS SYS.BIT) as is_supplemental_logging_enabled
+  , CAST(1 AS SYS.TINYINT) as snapshot_isolation_state
+  , CAST('ON' AS SYS.NVARCHAR(60)) as snapshot_isolation_state_desc
+  , CAST(1 AS SYS.BIT) as is_read_committed_snapshot_on
+  , CAST(1 AS SYS.TINYINT) as recovery_model
+  , CAST('FULL' AS SYS.NVARCHAR(60)) as recovery_model_desc
+  , CAST(0 AS SYS.TINYINT) as page_verify_option
+  , CAST(NULL AS SYS.NVARCHAR(60)) as page_verify_option_desc
+  , CAST(1 AS SYS.BIT) as is_auto_create_stats_on
+  , CAST(0 AS SYS.BIT) as is_auto_create_stats_incremental_on
+  , CAST(0 AS SYS.BIT) as is_auto_update_stats_on
+  , CAST(0 AS SYS.BIT) as is_auto_update_stats_async_on
+  , CAST(0 AS SYS.BIT) as is_ansi_null_default_on
+  , CAST(0 AS SYS.BIT) as is_ansi_nulls_on
+  , CAST(0 AS SYS.BIT) as is_ansi_padding_on
+  , CAST(0 AS SYS.BIT) as is_ansi_warnings_on
+  , CAST(0 AS SYS.BIT) as is_arithabort_on
+  , CAST(0 AS SYS.BIT) as is_concat_null_yields_null_on
+  , CAST(0 AS SYS.BIT) as is_numeric_roundabort_on
+  , CAST(0 AS SYS.BIT) as is_quoted_identifier_on
+  , CAST(0 AS SYS.BIT) as is_recursive_triggers_on
+  , CAST(0 AS SYS.BIT) as is_cursor_close_on_commit_on
+  , CAST(0 AS SYS.BIT) as is_local_cursor_default
+  , CAST(0 AS SYS.BIT) as is_fulltext_enabled
+  , CAST(0 AS SYS.BIT) as is_trustworthy_on
+  , CAST(0 AS SYS.BIT) as is_db_chaining_on
+  , CAST(0 AS SYS.BIT) as is_parameterization_forced
+  , CAST(0 AS SYS.BIT) as is_master_key_encrypted_by_server
+  , CAST(0 AS SYS.BIT) as is_query_store_on
+  , CAST(0 AS SYS.BIT) as is_published
+  , CAST(0 AS SYS.BIT) as is_subscribed
+  , CAST(0 AS SYS.BIT) as is_merge_published
+  , CAST(0 AS SYS.BIT) as is_distributor
+  , CAST(0 AS SYS.BIT) as is_sync_with_backup
+  , CAST(NULL AS SYS.UNIQUEIDENTIFIER) as service_broker_guid
+  , CAST(0 AS SYS.BIT) as is_broker_enabled
+  , CAST(0 AS SYS.TINYINT) as log_reuse_wait
+  , CAST('NOTHING' AS SYS.NVARCHAR(60)) as log_reuse_wait_desc
+  , CAST(0 AS SYS.BIT) as is_date_correlation_on
+  , CAST(0 AS SYS.BIT) as is_cdc_enabled
+  , CAST(0 AS SYS.BIT) as is_encrypted
+  , CAST(0 AS SYS.BIT) as is_honor_broker_priority_on
+  , CAST(NULL AS SYS.UNIQUEIDENTIFIER) as replica_id
+  , CAST(NULL AS SYS.UNIQUEIDENTIFIER) as group_database_id
+  , CAST(NULL AS INT) as resource_pool_id
+  , CAST(NULL AS SMALLINT) as default_language_lcid
+  , CAST(NULL AS SYS.NVARCHAR(128)) as default_language_name
+  , CAST(NULL AS INT) as default_fulltext_language_lcid
+  , CAST(NULL AS SYS.NVARCHAR(128)) as default_fulltext_language_name
+  , CAST(NULL AS SYS.BIT) as is_nested_triggers_on
+  , CAST(NULL AS SYS.BIT) as is_transform_noise_words_on
+  , CAST(NULL AS SMALLINT) as two_digit_year_cutoff
+  , CAST(0 AS SYS.TINYINT) as containment
+  , CAST('NONE' AS SYS.NVARCHAR(60)) as containment_desc
+  , CAST(0 AS INT) as target_recovery_time_in_seconds
+  , CAST(0 AS INT) as delayed_durability
+  , CAST(NULL AS SYS.NVARCHAR(60)) as delayed_durability_desc
+  , CAST(0 AS SYS.BIT) as is_memory_optimized_elevate_to_snapshot_on
+  , CAST(0 AS SYS.BIT) as is_federation_member
+  , CAST(0 AS SYS.BIT) as is_remote_data_archive_enabled
+  , CAST(0 AS SYS.BIT) as is_mixed_page_allocation_on
+  , CAST(0 AS SYS.BIT) as is_temporal_history_retention_enabled
+  , CAST(0 AS INT) as catalog_collation_type
+  , CAST('Not Applicable' AS SYS.NVARCHAR(60)) as catalog_collation_type_desc
+  , CAST(NULL AS SYS.NVARCHAR(128)) as physical_database_name
+  , CAST(0 AS SYS.BIT) as is_result_set_caching_on
+  , CAST(0 AS SYS.BIT) as is_accelerated_database_recovery_on
+  , CAST(0 AS SYS.BIT) as is_tempdb_spill_to_remote_store
+  , CAST(0 AS SYS.BIT) as is_stale_page_detection_on
+  , CAST(0 AS SYS.BIT) as is_memory_optimized_enabled
+  , CAST(0 AS SYS.BIT) as is_ledger_on
  from sys.babelfish_sysdatabases d LEFT OUTER JOIN pg_catalog.pg_collation c ON d.default_collation = c.collname
  LEFT OUTER JOIN pg_catalog.pg_roles r on r.rolname = d.owner;
 

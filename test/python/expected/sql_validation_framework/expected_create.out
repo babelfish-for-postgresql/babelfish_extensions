@@ -342,10 +342,8 @@ Could not find upgrade tests for view sys.check_constraints
 Could not find upgrade tests for view sys.computed_columns
 Could not find upgrade tests for view sys.database_files
 Could not find upgrade tests for view sys.database_filestream_options
-Could not find upgrade tests for view sys.database_mirroring
 Could not find upgrade tests for view sys.database_recovery_status
 Could not find upgrade tests for view sys.database_role_members
-Could not find upgrade tests for view sys.databases
 Could not find upgrade tests for view sys.data_spaces
 Could not find upgrade tests for view sys.default_constraints
 Could not find upgrade tests for view sys.dm_exec_connections
