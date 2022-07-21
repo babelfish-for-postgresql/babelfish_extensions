@@ -13,12 +13,8 @@ GO
 SELECT name FROM sys.databases where name = 'db_sys_databases_vu_prepare';
 GO
 
-SELECT name, compatibility_level, collation_name FROM sys.databases
-WHERE name in ('db_sys_databases_vu_prepare', 'db_sys_databases_vu_prepare1', 'db_sys_databases_vu_prepare2', 'master', 'msdb', 'tempdb')
-ORDER BY name;
+SELECT name, compatibility_level, collation_name FROM sys.databases ORDER BY name;
 GO
 
-SELECT name, snapshot_isolation_state, catalog_collation_type_desc FROM sys.databases
-WHERE name in ('db_sys_databases_vu_prepare', 'db_sys_databases_vu_prepare1', 'db_sys_databases_vu_prepare2', 'master', 'msdb', 'tempdb')
-ORDER BY name;
+SELECT name, snapshot_isolation_state, catalog_collation_type_desc FROM sys.databases ORDER BY name;
 GO
