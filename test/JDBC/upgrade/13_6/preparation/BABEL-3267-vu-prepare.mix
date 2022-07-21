@@ -28,6 +28,18 @@ go
 -- double quote
 create table [T3267"d] (c varchar(10));
 insert into [T3267"d] values ('success');
+go
+
+-- '.' character
+SET QUOTED_IDENTIFIER ON;
+go
+create schema [T3267\schema];
+go
+create table [T3267\schema].[T3267.[CustomTable](c varchar(10));
+insert into [T3267\schema].[T3267.[CustomTable] values ('success');
+go
+SET QUOTED_IDENTIFIER OFF;
+go
 
 select relname, array_to_string(reloptions,',') reloptions from pg_class C where C.relname like 't3267%' order by relname;
 go

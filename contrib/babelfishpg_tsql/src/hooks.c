@@ -800,9 +800,17 @@ pltsql_post_transform_table_definition(ParseState *pstate, RangeVar* relation, c
 
 	table_name_start = pstate->p_sourcetext + relation->location;
 
-	/* Could be the case that the fully qualified name is included, so just find the text after '.' in the identifier. */
+	/*
+	 * Could be the case that the fully qualified name is included,
+	 * so just find the text after '.' in the identifier.
+	 * We need to be careful as there can be '.' in the table name
+	 * itself, so we will break the loop if current string matches
+	 * with actual relname.
+	 */
 	temp = strpbrk(table_name_start, ". ");
-	while (temp && temp[0] != ' ')
+	while (temp && temp[0] != ' ' &&
+		strncasecmp(relname, table_name_start, strlen(relname)) != 0 &&
+		strncasecmp(relname, table_name_start + 1, strlen(relname)) != 0) /* match after skipping delimiter */
 	{
 		temp += 1;
 		table_name_start = temp;

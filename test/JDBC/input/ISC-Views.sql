@@ -7,7 +7,19 @@ go
 create table nums(a int, b smallint, c tinyint, d bigint, e bit, f float, g real, h numeric(5,3), i money, j smallmoney)
 go
 
-Select * from information_schema.tables WHERE TABLE_NAME in ('nums', 'dates', 'var')  ORDER BY TABLE_NAME
+-- Testing bbf_original_table_name with special characters (BABEL-3398)
+SET QUOTED_IDENTIFIER ON;
+go
+create schema [CUSTOM\schema];
+go
+create table [CUSTOM\schema].[CUSTOM.[CustomTable](a varchar(10));
+go
+
+Select * from information_schema.tables WHERE TABLE_NAME in ('nums', 'dates', 'var', 'CUSTOM.[CustomTable')  ORDER BY TABLE_NAME
+go
+
+drop table [CUSTOM\schema].[CUSTOM.[CustomTable];
+drop schema [CUSTOM\schema];
 go
 
 -- Testing generic columns for columns schema
