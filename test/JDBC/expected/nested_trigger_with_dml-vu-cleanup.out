@@ -1,0 +1,39 @@
+drop trigger nested_trigger_with_dml_trig1
+drop trigger nested_trigger_with_dml_trig2
+drop trigger nested_trigger_with_dml_trig3
+go
+
+drop trigger nested_trigger_with_dml_trig4
+drop trigger nested_trigger_with_dml_trig5
+drop trigger nested_trigger_with_dml_trig6
+go
+
+drop trigger nested_trigger_with_dml_trig7
+drop trigger nested_trigger_with_dml_trig8
+drop trigger nested_trigger_with_dml_trig9
+go
+
+drop table nested_trigger_with_dml_t1
+drop table nested_trigger_with_dml_t2
+drop table nested_trigger_with_dml_t3
+go
+
+drop trigger nested_trigger_with_dml_trig11
+drop trigger nested_trigger_with_dml_trig22
+drop trigger nested_trigger_with_dml_trig33
+go
+
+drop trigger nested_trigger_with_dml_trig44
+drop trigger nested_trigger_with_dml_trig55
+drop trigger nested_trigger_with_dml_trig66
+go
+
+drop trigger nested_trigger_with_dml_trig77
+drop trigger nested_trigger_with_dml_trig88
+drop trigger nested_trigger_with_dml_trig99
+go
+
+drop table nested_trigger_with_dml_t11
+drop table nested_trigger_with_dml_t22
+drop table nested_trigger_with_dml_t33
+go
