@@ -1,3 +1,6 @@
+USE master
+GO
+
 DROP TABLE datetime_vu_prepare_table
 GO
 
