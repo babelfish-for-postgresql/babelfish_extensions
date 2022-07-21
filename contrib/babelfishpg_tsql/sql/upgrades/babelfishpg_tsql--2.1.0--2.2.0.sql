@@ -1302,6 +1302,479 @@ SELECT
 WHERE FALSE;
 GRANT SELECT ON sys.fulltext_stoplists TO PUBLIC;
 
+alter view sys.databases rename to databases_deprecated_2_1_0;
+
+create or replace view sys.databases as
+select
+  CAST(d.name as SYS.SYSNAME) as name
+  , CAST(sys.db_id(d.name) as INT) as database_id
+  , CAST(NULL as INT) as source_database_id
+  , cast(cast(r.oid as INT) as SYS.VARBINARY(85)) as owner_sid
+  , CAST(d.crdate AS SYS.DATETIME) as create_date
+  , CAST(120 AS SYS.TINYINT) as compatibility_level
+  , CAST(c.collname as SYS.SYSNAME) as collation_name
+  , CAST(0 AS SYS.TINYINT)  as user_access
+  , CAST('MULTI_USER' AS SYS.NVARCHAR(60)) as user_access_desc
+  , CAST(0 AS SYS.BIT) as is_read_only
+  , CAST(0 AS SYS.BIT) as is_auto_close_on
+  , CAST(0 AS SYS.BIT) as is_auto_shrink_on
+  , CAST(0 AS SYS.TINYINT) as state
+  , CAST('ONLINE' AS SYS.NVARCHAR(60)) as state_desc
+  , CAST(
+	  	CASE 
+			WHEN pg_is_in_recovery() is false THEN 0 
+			WHEN pg_is_in_recovery() is true THEN 1 
+		END 
+	AS SYS.BIT) as is_in_standby
+  , CAST(0 AS SYS.BIT) as is_cleanly_shutdown
+  , CAST(0 AS SYS.BIT) as is_supplemental_logging_enabled
+  , CAST(1 AS SYS.TINYINT) as snapshot_isolation_state
+  , CAST('ON' AS SYS.NVARCHAR(60)) as snapshot_isolation_state_desc
+  , CAST(1 AS SYS.BIT) as is_read_committed_snapshot_on
+  , CAST(1 AS SYS.TINYINT) as recovery_model
+  , CAST('FULL' AS SYS.NVARCHAR(60)) as recovery_model_desc
+  , CAST(0 AS SYS.TINYINT) as page_verify_option
+  , CAST(NULL AS SYS.NVARCHAR(60)) as page_verify_option_desc
+  , CAST(1 AS SYS.BIT) as is_auto_create_stats_on
+  , CAST(0 AS SYS.BIT) as is_auto_create_stats_incremental_on
+  , CAST(0 AS SYS.BIT) as is_auto_update_stats_on
+  , CAST(0 AS SYS.BIT) as is_auto_update_stats_async_on
+  , CAST(0 AS SYS.BIT) as is_ansi_null_default_on
+  , CAST(0 AS SYS.BIT) as is_ansi_nulls_on
+  , CAST(0 AS SYS.BIT) as is_ansi_padding_on
+  , CAST(0 AS SYS.BIT) as is_ansi_warnings_on
+  , CAST(0 AS SYS.BIT) as is_arithabort_on
+  , CAST(0 AS SYS.BIT) as is_concat_null_yields_null_on
+  , CAST(0 AS SYS.BIT) as is_numeric_roundabort_on
+  , CAST(0 AS SYS.BIT) as is_quoted_identifier_on
+  , CAST(0 AS SYS.BIT) as is_recursive_triggers_on
+  , CAST(0 AS SYS.BIT) as is_cursor_close_on_commit_on
+  , CAST(0 AS SYS.BIT) as is_local_cursor_default
+  , CAST(0 AS SYS.BIT) as is_fulltext_enabled
+  , CAST(0 AS SYS.BIT) as is_trustworthy_on
+  , CAST(0 AS SYS.BIT) as is_db_chaining_on
+  , CAST(0 AS SYS.BIT) as is_parameterization_forced
+  , CAST(0 AS SYS.BIT) as is_master_key_encrypted_by_server
+  , CAST(0 AS SYS.BIT) as is_query_store_on
+  , CAST(0 AS SYS.BIT) as is_published
+  , CAST(0 AS SYS.BIT) as is_subscribed
+  , CAST(0 AS SYS.BIT) as is_merge_published
+  , CAST(0 AS SYS.BIT) as is_distributor
+  , CAST(0 AS SYS.BIT) as is_sync_with_backup
+  , CAST(NULL AS SYS.UNIQUEIDENTIFIER) as service_broker_guid
+  , CAST(0 AS SYS.BIT) as is_broker_enabled
+  , CAST(0 AS SYS.TINYINT) as log_reuse_wait
+  , CAST('NOTHING' AS SYS.NVARCHAR(60)) as log_reuse_wait_desc
+  , CAST(0 AS SYS.BIT) as is_date_correlation_on
+  , CAST(0 AS SYS.BIT) as is_cdc_enabled
+  , CAST(0 AS SYS.BIT) as is_encrypted
+  , CAST(0 AS SYS.BIT) as is_honor_broker_priority_on
+  , CAST(NULL AS SYS.UNIQUEIDENTIFIER) as replica_id
+  , CAST(NULL AS SYS.UNIQUEIDENTIFIER) as group_database_id
+  , CAST(NULL AS INT) as resource_pool_id
+  , CAST(NULL AS SMALLINT) as default_language_lcid
+  , CAST(NULL AS SYS.NVARCHAR(128)) as default_language_name
+  , CAST(NULL AS INT) as default_fulltext_language_lcid
+  , CAST(NULL AS SYS.NVARCHAR(128)) as default_fulltext_language_name
+  , CAST(NULL AS SYS.BIT) as is_nested_triggers_on
+  , CAST(NULL AS SYS.BIT) as is_transform_noise_words_on
+  , CAST(NULL AS SMALLINT) as two_digit_year_cutoff
+  , CAST(0 AS SYS.TINYINT) as containment
+  , CAST('NONE' AS SYS.NVARCHAR(60)) as containment_desc
+  , CAST(0 AS INT) as target_recovery_time_in_seconds
+  , CAST(0 AS INT) as delayed_durability
+  , CAST(NULL AS SYS.NVARCHAR(60)) as delayed_durability_desc
+  , CAST(0 AS SYS.BIT) as is_memory_optimized_elevate_to_snapshot_on
+  , CAST(0 AS SYS.BIT) as is_federation_member
+  , CAST(0 AS SYS.BIT) as is_remote_data_archive_enabled
+  , CAST(0 AS SYS.BIT) as is_mixed_page_allocation_on
+  , CAST(0 AS SYS.BIT) as is_temporal_history_retention_enabled
+  , CAST(0 AS INT) as catalog_collation_type
+  , CAST('Not Applicable' AS SYS.NVARCHAR(60)) as catalog_collation_type_desc
+  , CAST(NULL AS SYS.NVARCHAR(128)) as physical_database_name
+  , CAST(0 AS SYS.BIT) as is_result_set_caching_on
+  , CAST(0 AS SYS.BIT) as is_accelerated_database_recovery_on
+  , CAST(0 AS SYS.BIT) as is_tempdb_spill_to_remote_store
+  , CAST(0 AS SYS.BIT) as is_stale_page_detection_on
+  , CAST(0 AS SYS.BIT) as is_memory_optimized_enabled
+  , CAST(0 AS SYS.BIT) as is_ledger_on
+ from sys.babelfish_sysdatabases d LEFT OUTER JOIN pg_catalog.pg_collation c ON d.default_collation = c.collname
+ LEFT OUTER JOIN pg_catalog.pg_roles r on r.rolname = d.owner;
+
+GRANT SELECT ON sys.databases TO PUBLIC;
+
+CREATE OR REPLACE VIEW sys.sp_stored_procedures_view AS
+SELECT 
+CAST(d.name AS sys.sysname) AS PROCEDURE_QUALIFIER,
+CAST(s1.name AS sys.sysname) AS PROCEDURE_OWNER, 
+
+CASE 
+	WHEN p.prokind = 'p' THEN CAST(concat(p.proname, ';1') AS sys.nvarchar(134))
+	ELSE CAST(concat(p.proname, ';0') AS sys.nvarchar(134))
+END AS PROCEDURE_NAME,
+
+-1 AS NUM_INPUT_PARAMS,
+-1 AS NUM_OUTPUT_PARAMS,
+-1 AS NUM_RESULT_SETS,
+CAST(NULL AS varchar(254)) AS REMARKS,
+cast(2 AS smallint) AS PROCEDURE_TYPE
+
+FROM pg_catalog.pg_proc p 
+
+INNER JOIN sys.schemas s1 ON p.pronamespace = s1.schema_id 
+INNER JOIN sys.databases d ON d.database_id = sys.db_id()
+WHERE has_schema_privilege(s1.schema_id, 'USAGE')
+
+UNION 
+
+SELECT CAST((SELECT sys.db_name()) AS sys.sysname) AS PROCEDURE_QUALIFIER,
+CAST(nspname AS sys.sysname) AS PROCEDURE_OWNER,
+
+CASE 
+	WHEN prokind = 'p' THEN cast(concat(proname, ';1') AS sys.nvarchar(134))
+	ELSE cast(concat(proname, ';0') AS sys.nvarchar(134))
+END AS PROCEDURE_NAME,
+
+-1 AS NUM_INPUT_PARAMS,
+-1 AS NUM_OUTPUT_PARAMS,
+-1 AS NUM_RESULT_SETS,
+CAST(NULL AS varchar(254)) AS REMARKS,
+cast(2 AS smallint) AS PROCEDURE_TYPE
+
+FROM    pg_catalog.pg_namespace n 
+JOIN    pg_catalog.pg_proc p 
+ON      pronamespace = n.oid   
+WHERE nspname = 'sys' AND (proname LIKE 'sp\_%' OR proname LIKE 'xp\_%' OR proname LIKE 'dm\_%' OR proname LIKE 'fn\_%');
+
+GRANT SELECT ON sys.sp_stored_procedures_view TO PUBLIC;
+
+CREATE OR REPLACE VIEW sys.sp_sproc_columns_view AS
+-- Get parameters (if any) for a user-defined stored procedure/function
+(SELECT 
+	CAST(d.name AS sys.sysname) AS PROCEDURE_QUALIFIER,
+	CAST(ext.orig_name AS sys.sysname) AS PROCEDURE_OWNER,
+	CASE 
+		WHEN proc.routine_type='PROCEDURE' THEN CAST(CONCAT(proc.routine_name, ';1') AS sys.nvarchar(134)) 
+		ELSE CAST(CONCAT(proc.routine_name, ';0') AS sys.nvarchar(134)) 
+	END AS PROCEDURE_NAME,
+	
+	CAST(coalesce(args.parameter_name, '') AS sys.sysname) AS COLUMN_NAME,
+	CAST(1 AS smallint) AS COLUMN_TYPE,
+	CAST(t5.data_type AS smallint) AS DATA_TYPE,
+	CAST(coalesce(t6.name, '') AS sys.sysname) AS TYPE_NAME,
+	CAST(t6.precision AS int) AS PRECISION,
+	CAST(t6.max_length AS int) AS LENGTH,
+	CAST(t6.scale AS smallint) AS SCALE,
+	CAST(t5.num_prec_radix AS smallint) AS RADIX,
+	CAST(t6.is_nullable AS smallint) AS NULLABLE,
+	CAST(NULL AS varchar(254)) AS REMARKS,
+	CAST(NULL AS sys.nvarchar(4000)) AS COLUMN_DEF,
+	CAST(t5.sql_data_type AS smallint) AS SQL_DATA_TYPE,
+	CAST(t5.sql_datetime_sub AS smallint) AS SQL_DATETIME_SUB,
+	CAST(NULL AS int) AS CHAR_OCTET_LENGTH,
+	CAST(args.ordinal_position AS int) AS ORDINAL_POSITION,
+	CAST('YES' AS varchar(254)) AS IS_NULLABLE,
+	CAST(t5.ss_data_type AS sys.tinyint) AS SS_DATA_TYPE,
+	CAST(proc.routine_name AS sys.nvarchar(134)) AS original_procedure_name
+	
+	FROM information_schema.routines proc
+	JOIN information_schema.parameters args
+		ON proc.specific_schema = args.specific_schema AND proc.specific_name = args.specific_name
+	INNER JOIN sys.babelfish_namespace_ext ext ON proc.specific_schema = ext.nspname
+	INNER JOIN sys.databases d ON d.database_id =ext.dbid
+	INNER JOIN sys.spt_datatype_info_table AS t5 
+		JOIN sys.types t6
+		JOIN sys.types t7 ON t6.system_type_id = t7.user_type_id
+			ON t7.name = t5.type_name
+		ON (args.data_type != 'USER-DEFINED' AND args.udt_name = t5.pg_type_name AND t6.name = t7.name)
+		OR (args.data_type='USER-DEFINED' AND args.udt_name = t6.name)
+	WHERE coalesce(args.parameter_name, '') LIKE '@%'
+		AND ext.dbid = sys.db_id()
+		AND has_schema_privilege(proc.specific_schema, 'USAGE')
+
+UNION ALL
+
+-- Create row describing return type for a user-defined stored procedure/function
+SELECT 
+	CAST(d.name AS sys.sysname) AS PROCEDURE_QUALIFIER,
+	CAST(ext.orig_name AS sys.sysname) AS PROCEDURE_OWNER,
+	CASE 
+		WHEN proc.routine_type='PROCEDURE' THEN CAST(CONCAT(proc.routine_name, ';1') AS sys.nvarchar(134)) 
+		ELSE CAST(CONCAT(proc.routine_name, ';0') AS sys.nvarchar(134)) 
+	END AS PROCEDURE_NAME,
+	
+	CASE 
+		WHEN pg_function_result_type LIKE '%TABLE%' THEN cast('@TABLE_RETURN_VALUE' AS sys.sysname)
+		ELSE cast('@RETURN_VALUE' AS sys.sysname)
+ 	END AS COLUMN_NAME,
+	 
+	CASE 
+		WHEN pg_function_result_type LIKE '%TABLE%' THEN CAST(3 AS smallint)
+		ELSE CAST(5 as smallint) 
+	END AS COLUMN_TYPE,
+	
+	CASE 
+		WHEN proc.routine_type='PROCEDURE' THEN cast((SELECT data_type FROM sys.spt_datatype_info_table WHERE type_name = 'int') AS smallint)
+		WHEN pg_function_result_type LIKE '%TABLE%' THEN cast(null AS smallint)
+		ELSE CAST(t5.data_type AS smallint)
+	END AS DATA_TYPE,
+	
+	CASE 
+		WHEN proc.routine_type='PROCEDURE' THEN CAST('int' AS sys.sysname) 
+		WHEN pg_function_result_type like '%TABLE%' then CAST('table' AS sys.sysname)
+		ELSE CAST(coalesce(t6.name, '') AS sys.sysname) 
+	END AS TYPE_NAME,
+	
+	CASE 
+		WHEN proc.routine_type='PROCEDURE' THEN CAST(10 AS int) 
+		WHEN pg_function_result_type LIKE '%TABLE%' THEN CAST(0 AS int) 
+		ELSE CAST(t6.precision AS int) 
+	END AS PRECISION,
+	
+	CASE 
+		WHEN proc.routine_type='PROCEDURE' THEN CAST(4 AS int) 
+		WHEN pg_function_result_type LIKE '%TABLE%' THEN CAST(0 AS int) 
+		ELSE CAST(t6.max_length AS int) 
+	END AS LENGTH,
+	CASE 
+		WHEN proc.routine_type='PROCEDURE' THEN CAST(0 AS smallint) 
+		WHEN pg_function_result_type LIKE '%TABLE%' THEN CAST(0 AS smallint) 
+		ELSE CAST(t6.scale AS smallint) 
+	END AS SCALE,
+	CASE 
+		WHEN proc.routine_type='PROCEDURE' THEN CAST(10 AS smallint) 
+		WHEN pg_function_result_type LIKE '%TABLE%' THEN CAST(0 AS smallint) 
+		ELSE CAST(t5.num_prec_radix AS smallint) 
+	END AS RADIX,
+	CASE 
+		WHEN proc.routine_type='PROCEDURE' THEN CAST(0 AS smallint)
+		WHEN pg_function_result_type LIKE '%TABLE%' THEN CAST(0 AS smallint)
+		ELSE CAST(t6.is_nullable AS smallint)
+	END AS NULLABLE,
+	CASE 
+		WHEN pg_function_result_type LIKE '%TABLE%' THEN CAST('Result table returned by table valued function' AS varchar(254)) 
+		ELSE CAST(NULL AS varchar(254)) 
+	END AS REMARKS,
+	
+	CAST(NULL AS sys.nvarchar(4000)) AS COLUMN_DEF,
+	CASE 
+		WHEN proc.routine_type='PROCEDURE' THEN CAST((SELECT sql_data_type FROM sys.spt_datatype_info_table WHERE type_name = 'int') AS smallint) 
+		WHEN pg_function_result_type LIKE '%TABLE%' THEN CAST(null AS smallint) 
+		ELSE CAST(t5.sql_data_type AS smallint) 
+	END AS SQL_DATA_TYPE,
+	
+	CAST(null AS smallint) AS SQL_DATETIME_SUB,
+	CAST(null AS int) AS CHAR_OCTET_LENGTH,
+	CAST(0 AS int) AS ORDINAL_POSITION,
+	CASE 
+		WHEN proc.routine_type='PROCEDURE' THEN CAST('NO' AS varchar(254)) 
+		WHEN pg_function_result_type LIKE '%TABLE%' THEN CAST('NO' AS varchar(254))
+		ELSE CAST('YES' AS varchar(254)) 
+	END AS IS_NULLABLE,
+	
+	CASE 
+		WHEN proc.routine_type='PROCEDURE' THEN CAST(56 AS sys.tinyint) 
+		WHEN pg_function_result_type LIKE '%TABLE%' THEN CAST(0 AS sys.tinyint) 
+		ELSE CAST(t5.ss_data_type AS sys.tinyint) 
+	END AS SS_DATA_TYPE,
+	CAST(proc.routine_name AS sys.nvarchar(134)) AS original_procedure_name
+
+	FROM information_schema.routines proc
+	INNER JOIN sys.babelfish_namespace_ext ext ON proc.specific_schema = ext.nspname
+	INNER JOIN sys.databases d ON d.database_id = ext.dbid
+	INNER JOIN pg_catalog.pg_proc p ON proc.specific_name = p.proname || '_' || p.oid
+	LEFT JOIN sys.spt_datatype_info_table AS t5 
+		JOIN sys.types t6
+		JOIN sys.types t7 ON t6.system_type_id = t7.user_type_id
+		ON t7.name = t5.type_name
+	ON (proc.data_type != 'USER-DEFINED' 
+			AND proc.type_udt_name = t5.pg_type_name 
+			AND t6.name = t7.name)
+		OR (proc.data_type = 'USER-DEFINED' 
+			AND proc.type_udt_name = t6.name),
+	pg_get_function_result(p.oid) AS pg_function_result_type
+	WHERE ext.dbid = sys.db_id() AND has_schema_privilege(proc.specific_schema, 'USAGE'))
+
+UNION ALL 
+
+-- Get parameters (if any) for a system stored procedure/function
+(SELECT 
+	CAST((SELECT sys.db_name()) AS sys.sysname) AS PROCEDURE_QUALIFIER,
+	CAST(args.specific_schema AS sys.sysname) AS PROCEDURE_OWNER,
+	CASE 
+		WHEN proc.routine_type='PROCEDURE' then CAST(CONCAT(proc.routine_name, ';1') AS sys.nvarchar(134)) 
+		ELSE CAST(CONCAT(proc.routine_name, ';0') AS sys.nvarchar(134)) 
+	END AS PROCEDURE_NAME,
+	
+	CAST(coalesce(args.parameter_name, '') AS sys.sysname) AS COLUMN_NAME,
+	CAST(1 as smallint) AS COLUMN_TYPE,
+	CAST(t5.data_type AS smallint) AS DATA_TYPE,
+	CAST(coalesce(t6.name, '') as sys.sysname) as TYPE_NAME,
+	CAST(t6.precision as int) as PRECISION,
+	CAST(t6.max_length as int) as LENGTH,
+	CAST(t6.scale AS smallint) AS SCALE,
+	CAST(t5.num_prec_radix AS smallint) AS RADIX,
+	CAST(t6.is_nullable as smallint) AS NULLABLE,
+	CAST(NULL AS varchar(254)) AS REMARKS,
+	CAST(NULL AS sys.nvarchar(4000)) AS COLUMN_DEF,
+	CAST(t5.sql_data_type AS smallint) AS SQL_DATA_TYPE,
+	CAST(t5.sql_datetime_sub AS smallint) AS SQL_DATETIME_SUB,
+	CAST(NULL AS int) AS CHAR_OCTET_LENGTH,
+	CAST(args.ordinal_position AS int) AS ORDINAL_POSITION,
+	CAST('YES' AS varchar(254)) AS IS_NULLABLE,
+	CAST(t5.ss_data_type AS sys.tinyint) AS SS_DATA_TYPE,
+	CAST(proc.routine_name AS sys.nvarchar(134)) AS original_procedure_name
+	
+	FROM information_schema.routines proc
+	JOIN information_schema.parameters args
+		on proc.specific_schema = args.specific_schema
+		and proc.specific_name = args.specific_name 
+	LEFT JOIN sys.spt_datatype_info_table AS t5 
+		LEFT JOIN sys.types t6 ON t6.name = t5.type_name
+		ON args.udt_name = t5.pg_type_name OR args.udt_name = t5.type_name
+	WHERE args.specific_schema ='sys' 
+		AND coalesce(args.parameter_name, '') LIKE '@%' 
+		AND (args.specific_name LIKE 'sp\_%' 
+			OR args.specific_name LIKE 'xp\_%'
+			OR args.specific_name LIKE 'dm\_%'
+			OR  args.specific_name LIKE 'fn\_%')
+		AND has_schema_privilege(proc.specific_schema, 'USAGE')
+		
+UNION ALL
+
+-- Create row describing return type for a system stored procedure/function
+SELECT 
+	CAST((SELECT sys.db_name()) AS sys.sysname) AS PROCEDURE_QUALIFIER,
+	CAST(proc.specific_schema AS sys.sysname) AS PROCEDURE_OWNER,
+	CASE 
+		WHEN proc.routine_type='PROCEDURE' then CAST(CONCAT(proc.routine_name, ';1') AS sys.nvarchar(134)) 
+		ELSE CAST(CONCAT(proc.routine_name, ';0') AS sys.nvarchar(134)) 
+	END AS PROCEDURE_NAME,
+	
+	CASE 
+		WHEN pg_function_result_type LIKE '%TABLE%' THEN cast('@TABLE_RETURN_VALUE' AS sys.sysname)
+		ELSE cast('@RETURN_VALUE' AS sys.sysname)
+ 	END AS COLUMN_NAME,
+	 
+	CASE 
+		WHEN pg_function_result_type LIKE '%TABLE%' THEN CAST(3 AS smallint)
+		ELSE CAST(5 AS smallint) 
+	END AS COLUMN_TYPE,
+	
+	CASE 
+		WHEN proc.routine_type='PROCEDURE' THEN cast((SELECT sql_data_type FROM sys.spt_datatype_info_table WHERE type_name = 'int') AS smallint)
+		WHEN pg_function_result_type LIKE '%TABLE%' THEN cast(null AS smallint)
+		ELSE CAST(t5.data_type AS smallint)
+	END AS DATA_TYPE,
+	
+	CASE 
+		WHEN proc.routine_type='PROCEDURE' THEN CAST('int' AS sys.sysname) 
+		WHEN pg_function_result_type LIKE '%TABLE%' THEN CAST('table' AS sys.sysname)
+		ELSE CAST(coalesce(t6.name, '') AS sys.sysname) 
+	END AS TYPE_NAME,
+	
+	CASE 
+		WHEN proc.routine_type='PROCEDURE' THEN CAST(10 AS int) 
+		WHEN pg_function_result_type LIKE '%TABLE%' THEN CAST(0 AS int) 
+		ELSE CAST(t6.precision AS int) 
+	END AS PRECISION,
+	
+	CASE 
+		WHEN proc.routine_type='PROCEDURE' THEN CAST(4 AS int) 
+		WHEN pg_function_result_type LIKE '%TABLE%' THEN CAST(0 AS int) 
+		ELSE CAST(t6.max_length AS int) 
+	END AS LENGTH,
+	CASE 
+		WHEN proc.routine_type='PROCEDURE' THEN CAST(0 AS smallint) 
+		WHEN pg_function_result_type LIKE '%TABLE%' THEN CAST(0 AS smallint) 
+		ELSE CAST(t6.scale AS smallint) 
+	END AS SCALE,
+	CASE 
+		WHEN proc.routine_type='PROCEDURE' THEN CAST(10 AS smallint) 
+		WHEN pg_function_result_type LIKE '%TABLE%' THEN CAST(0 AS smallint) 
+		ELSE CAST(t5.num_prec_radix AS smallint) 
+	END AS RADIX,
+	CASE 
+		WHEN proc.routine_type='PROCEDURE' THEN CAST(0 AS smallint)
+		WHEN pg_function_result_type LIKE '%TABLE%' THEN CAST(0 AS smallint)
+		ELSE CAST(t6.is_nullable AS smallint)
+	END AS NULLABLE,
+	
+	CASE 
+		WHEN pg_function_result_type LIKE '%TABLE%' THEN CAST('Result table returned by table valued function' AS varchar(254)) 
+		ELSE CAST(NULL AS varchar(254)) 
+	END AS REMARKS,
+	
+	CAST(NULL AS sys.nvarchar(4000)) AS COLUMN_DEF,
+	CASE 
+		WHEN proc.routine_type='PROCEDURE' THEN CAST((SELECT sql_data_type FROM sys.spt_datatype_info_table WHERE type_name = 'int') AS smallint) 
+		WHEN pg_function_result_type LIKE '%TABLE%' THEN CAST(null AS smallint) 
+		ELSE CAST(t5.sql_data_type AS smallint) 
+	END AS SQL_DATA_TYPE,
+	
+	CAST(null AS smallint) AS SQL_DATETIME_SUB,
+	CAST(null AS int) AS CHAR_OCTET_LENGTH,
+	CAST(0 AS int) AS ORDINAL_POSITION,
+	CASE 
+		WHEN proc.routine_type='PROCEDURE' THEN CAST('NO' AS varchar(254)) 
+		WHEN pg_function_result_type LIKE '%TABLE%' THEN CAST('NO' AS varchar(254))
+		ELSE CAST('YES' AS varchar(254)) 
+	END AS IS_NULLABLE,
+	
+	CASE 
+		WHEN proc.routine_type='PROCEDURE' THEN CAST(56 AS sys.tinyint) 
+		WHEN pg_function_result_type LIKE '%TABLE%' THEN CAST(0 AS sys.tinyint) 
+		ELSE CAST(t5.ss_data_type AS sys.tinyint) 
+	END AS SS_DATA_TYPE,
+	CAST(proc.routine_name AS sys.nvarchar(134)) AS original_procedure_name
+	
+	FROM information_schema.routines proc
+	INNER JOIN pg_catalog.pg_proc p ON proc.specific_name = p.proname || '_' || p.oid
+	LEFT JOIN sys.spt_datatype_info_table AS t5
+		LEFT JOIN sys.types t6 ON t6.name = t5.type_name
+	ON proc.type_udt_name = t5.pg_type_name OR proc.type_udt_name = t5.type_name, 
+	pg_get_function_result(p.oid) AS pg_function_result_type
+	WHERE proc.specific_schema = 'sys' 
+		AND (proc.specific_name LIKE 'sp\_%' 
+			OR proc.specific_name LIKE 'xp\_%' 
+			OR proc.specific_name LIKE 'dm\_%'
+			OR  proc.specific_name LIKE 'fn\_%')
+		AND has_schema_privilege(proc.specific_schema, 'USAGE')
+	);	
+GRANT SELECT ON sys.sp_sproc_columns_view TO PUBLIC;
+
+alter view sys.database_mirroring rename to database_mirroring_deprecated_2_1_0;
+
+CREATE OR REPLACE VIEW sys.database_mirroring
+AS
+SELECT 
+      CAST(database_id AS int) AS database_id,
+      CAST(NULL AS sys.uniqueidentifier) AS mirroring_guid,
+      CAST(NULL AS sys.tinyint) AS mirroring_state,
+      CAST(NULL AS sys.nvarchar(60)) AS mirroring_state_desc,
+      CAST(NULL AS sys.tinyint) AS mirroring_role,
+      CAST(NULL AS sys.nvarchar(60)) AS mirroring_role_desc,
+      CAST(NULL AS int) AS mirroring_role_sequence,
+      CAST(NULL AS sys.tinyint) as mirroring_safety_level,
+      CAST(NULL AS sys.nvarchar(60)) AS mirroring_safety_level_desc,
+      CAST(NULL AS int) as mirroring_safety_sequence,
+      CAST(NULL AS sys.nvarchar(128)) AS mirroring_partner_name,
+      CAST(NULL AS sys.nvarchar(128)) AS mirroring_partner_instance,
+      CAST(NULL AS sys.nvarchar(128)) AS mirroring_witness_name,
+      CAST(NULL AS sys.tinyint) AS mirroring_witness_state,
+      CAST(NULL AS sys.nvarchar(60)) AS mirroring_witness_state_desc,
+      CAST(NULL AS numeric(25,0)) AS mirroring_failover_lsn,
+      CAST(NULL AS int) AS mirroring_connection_timeout,
+      CAST(NULL AS int) AS mirroring_redo_queue,
+      CAST(NULL AS sys.nvarchar(60)) AS mirroring_redo_queue_type,
+      CAST(NULL AS numeric(25,0)) AS mirroring_end_of_log_lsn,
+      CAST(NULL AS numeric(25,0)) AS mirroring_replication_lsn
+FROM sys.databases;
+GRANT SELECT ON sys.database_mirroring TO PUBLIC;
+
+call babelfish_drop_deprecated_view('sys', 'databases_deprecated_2_1_0');
+call babelfish_drop_deprecated_view('sys', 'database_mirroring_deprecated_2_1_0');
+
 CREATE OR REPLACE VIEW sys.fulltext_indexes
 AS
 SELECT 
