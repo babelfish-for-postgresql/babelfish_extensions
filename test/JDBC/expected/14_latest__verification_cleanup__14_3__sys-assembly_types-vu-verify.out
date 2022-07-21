@@ -1,0 +1,29 @@
+SELECT * FROM sys_assembly_types_view_vu_prepare
+GO
+~~START~~
+int#!#varchar
+~~END~~
+
+
+EXEC sys_assembly_types_proc_vu_prepare
+GO
+~~START~~
+varchar#!#int#!#int#!#int#!#int#!#smallint#!#tinyint#!#tinyint#!#varchar#!#bit#!#bit#!#bit#!#int#!#int#!#int#!#varchar#!#bit#!#bit#!#nvarchar#!#nvarchar#!#bit
+~~END~~
+
+
+SELECT * FROM sys_assembly_types_func_vu_prepare()
+GO
+~~START~~
+int
+0
+~~END~~
+
+
+-- Test from sys-assembly_types.sql
+SELECT * FROM sys.assembly_types
+GO
+~~START~~
+varchar#!#int#!#int#!#int#!#int#!#smallint#!#tinyint#!#tinyint#!#varchar#!#bit#!#bit#!#bit#!#int#!#int#!#int#!#varchar#!#bit#!#bit#!#nvarchar#!#nvarchar#!#bit
+~~END~~
+
