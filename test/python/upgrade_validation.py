@@ -1,4 +1,6 @@
-from sql_validation import create_logger, close_logger, compare_outfiles
+from sql_validation import create_logger, close_logger
+import sys
+import subprocess
 from utils.db_client_psql import Db_Client_psycopg
 from pathlib import Path
 from utils.config import config_dict as cfg
@@ -35,12 +37,13 @@ def get_dependencies(file, sumfile, logger):
 
             writer = csv.writer(summary_file, delimiter = ",")
             writer.writerow(["Object_class", "Object_name", "dependency_count"])
+            expected_file.write("Could not find dependencies on\n")
 
             # get user defined objects from pg_class dependent on sys views
             logger.info('Finding dependencies on views')
 
             # get names of all babelfish system views
-            cursor.execute("SELECT oid::regclass FROM pg_class where relkind = 'v' and relnamespace = 'sys'::regnamespace;")
+            cursor.execute("SELECT oid::regclass FROM pg_class WHERE relkind = 'v' AND relnamespace = 'sys'::regnamespace;")
             resultset = cursor.fetchall()
             object = [i[0] for i in resultset]
 
@@ -51,7 +54,7 @@ def get_dependencies(file, sumfile, logger):
                 WHERE d.classid = 'pg_rewrite'::regclass 
                     AND d.refclassid = 'pg_class'::regclass 
                     AND d.deptype in('n') 
-                    AND d.refobjid in (SELECT oid FROM pg_class where relkind = 'v' and relnamespace = 'sys'::regnamespace)
+                    AND d.refobjid in (SELECT oid FROM pg_class WHERE relkind = 'v' AND relnamespace = 'sys'::regnamespace)
                     AND v.relnamespace not in('sys'::regnamespace, 'pg_catalog'::regnamespace, 'information_schema'::regnamespace{0})
                 GROUP BY d.refobjid; """
             cursor.execute(query.format(schema))
@@ -64,14 +67,38 @@ def get_dependencies(file, sumfile, logger):
                 dep_object.append(i[0])
 
             # get views with no dependency 
-            for i in set(object) - set(dep_object):
-                expected_file.write("Could not find dependencies on view {}\n".format(i))
+            obj_no_dep = list(set(object) - set(dep_object))
+            obj_no_dep.sort()
+            for i in obj_no_dep:
+                expected_file.write("{0} {1}\n".format("View", i))
 
 
             # get user defined objects from pg_class dependent on sys functions 
+            # ignoring the functions used by types, operators and casts internally
             logger.info('Finding dependencies on functions')
 
-            cursor.execute("SELECT oid::regprocedure FROM pg_proc where prokind = 'f' and pronamespace = 'sys'::regnamespace;")
+            query = """SELECT oid::regprocedure FROM pg_proc WHERE prokind = 'f' AND pronamespace = 'sys'::regnamespace
+                    EXCEPT     
+                    (   SELECT typinput::oid FROM pg_type WHERE typnamespace = 'sys'::regnamespace 
+                        UNION
+                        SELECT typoutput::oid FROM pg_type WHERE typnamespace = 'sys'::regnamespace 
+                        UNION
+                        SELECT typreceive::oid FROM pg_type WHERE typnamespace = 'sys'::regnamespace 
+                        UNION
+                        SELECT typsend::oid FROM pg_type WHERE typnamespace = 'sys'::regnamespace 
+                        UNION
+                        SELECT typmodin::oid FROM pg_type WHERE typnamespace = 'sys'::regnamespace 
+                        UNION
+                        SELECT typmodout::oid FROM pg_type WHERE typnamespace = 'sys'::regnamespace 
+                        UNION
+                        SELECT typanalyze::oid FROM pg_type WHERE typnamespace = 'sys'::regnamespace 
+                        UNION
+                        SELECT oprcode::oid FROM pg_operator 
+                        UNION
+                        SELECT castfunc FROM pg_cast
+                    );"""
+
+            cursor.execute(query)
             resultset = cursor.fetchall()
             object = [l[0] for l in resultset]
 
@@ -84,17 +111,17 @@ def get_dependencies(file, sumfile, logger):
                         WHERE d.classid = 'pg_rewrite'::regclass
                             AND d.refclassid = 'pg_proc'::regclass 
                             AND d.deptype in('n') 
-                            AND d.refobjid in (SELECT oid FROM pg_proc where prokind = 'f' and pronamespace = 'sys'::regnamespace)
+                            AND d.refobjid in (SELECT oid FROM pg_proc WHERE prokind = 'f' AND pronamespace = 'sys'::regnamespace AND oid NOT IN (SELECT castfunc from pg_cast))
                             AND v.relnamespace not in('sys'::regnamespace, 'pg_catalog'::regnamespace, 'information_schema'::regnamespace{0})
                         GROUP BY d.refobjid
                     )
                     UNION ALL
                     (   SELECT d.refobjid, count(distinct v.oid) AS total_count 
                         FROM pg_depend AS d 
-                        JOIN pg_class AS v on v.oid = d.objid 
+                        JOIN pg_class AS v ON v.oid = d.objid 
                         WHERE d.refclassid = 'pg_proc'::regclass 
                             AND d.deptype in ('a')
-                            AND d.refobjid in (SELECT oid FROM pg_proc where prokind = 'f' and pronamespace = 'sys'::regnamespace)
+                            AND d.refobjid in (SELECT oid FROM pg_proc WHERE prokind = 'f' AND pronamespace = 'sys'::regnamespace AND oid NOT IN (SELECT castfunc from pg_cast))
                             AND v.relnamespace not in ('sys'::regnamespace, 'pg_catalog'::regnamespace, 'information_schema'::regnamespace{0})
                         GROUP BY d.refobjid
                     )
@@ -108,13 +135,15 @@ def get_dependencies(file, sumfile, logger):
                 dep_object.append(i[0])
 
             # get functions with no dependency 
-            for i in set(object) - set(dep_object):
-                expected_file.write("Could not find dependencies on function {}\n".format(i))
+            obj_no_dep = list(set(object) - set(dep_object))
+            obj_no_dep.sort()
+            for i in obj_no_dep:
+                expected_file.write("{0} {1}\n".format("Function", i))
 
             # get user defined views dependent on sys operators   
             logger.info('Finding dependencies on operators')   
 
-            cursor.execute("SELECT oid::regoperator FROM pg_operator where oid > 16384;")
+            cursor.execute("SELECT oid::regoperator FROM pg_operator WHERE oid > 16384;")
             resultset = cursor.fetchall()
             object = [l[0] for l in resultset]
 
@@ -127,17 +156,17 @@ def get_dependencies(file, sumfile, logger):
                         WHERE d.classid = 'pg_rewrite'::regclass
                             AND d.refclassid = 'pg_operator'::regclass 
                             AND d.deptype in('n') 
-                            AND d.refobjid in (SELECT oid FROM pg_operator where oid > 16384)
+                            AND d.refobjid in (SELECT oid FROM pg_operator WHERE oid > 16384)
                             AND v.relnamespace not in('sys'::regnamespace, 'pg_catalog'::regnamespace, 'information_schema'::regnamespace{0})
                         GROUP BY refobjid
                     )
                         UNION ALL
                     (   SELECT d.refobjid, count(distinct v.oid) AS total_count 
                         FROM pg_depend AS d 
-                        JOIN pg_class AS v on v.oid = d.objid 
+                        JOIN pg_class AS v ON v.oid = d.objid 
                         WHERE d.refclassid = 'pg_operator'::regclass 
                             AND d.deptype in ('a')
-                            AND d.refobjid in (select oid FROM pg_operator where oid > 16384)
+                            AND d.refobjid in (SELECT oid FROM pg_operator WHERE oid > 16384)
                             AND v.relnamespace not in ('sys'::regnamespace, 'pg_catalog'::regnamespace, 'information_schema'::regnamespace{0})
                         GROUP BY d.refobjid
                     )
@@ -151,8 +180,10 @@ def get_dependencies(file, sumfile, logger):
                 dep_object.append(i[0])
 
             # get operators with no dependency 
-            for i in set(object) - set(dep_object):
-                expected_file.write("Could not find dependencies on operator {}\n".format(i))
+            obj_no_dep = list(set(object) - set(dep_object))
+            obj_no_dep.sort()
+            for i in obj_no_dep:
+                expected_file.write("{0} {1}\n".format("Operator", i))
 
             # get user defined views & tables, union functions & procedures, union types dependent on sys types
             logger.info('Finding dependencies on types') 
@@ -165,7 +196,7 @@ def get_dependencies(file, sumfile, logger):
                 FROM
                 (   (   SELECT d.refobjid AS id, count(distinct v.oid) AS total_count 
                         FROM pg_depend AS d 
-                        JOIN pg_class AS v on v.oid = d.objid 
+                        JOIN pg_class AS v ON v.oid = d.objid 
                         WHERE d.refclassid = 'pg_type'::regclass 
                             AND d.deptype in ('n')
                             AND d.refobjid in (SELECT oid FROM pg_type WHERE typnamespace = 'sys'::regnamespace AND typtype in ('b','d') AND typcategory <> 'A')
@@ -175,7 +206,7 @@ def get_dependencies(file, sumfile, logger):
                         UNION ALL
                     (   SELECT d.refobjid, count(distinct v.oid) AS total_count 
                         FROM pg_depend AS d 
-                        JOIN pg_proc AS v on v.oid = d.objid 
+                        JOIN pg_proc AS v ON v.oid = d.objid 
                         WHERE d.refclassid = 'pg_type'::regclass 
                             AND d.deptype in ('n')
                             AND d.refobjid in (SELECT oid FROM pg_type WHERE typnamespace = 'sys'::regnamespace AND typtype in ('b','d') AND typcategory <> 'A')
@@ -185,7 +216,7 @@ def get_dependencies(file, sumfile, logger):
                         UNION ALL
                     (   SELECT d.refobjid, count(distinct v.oid) AS total_count 
                         FROM pg_depend AS d 
-                        JOIN pg_type AS v on v.oid = d.objid 
+                        JOIN pg_type AS v ON v.oid = d.objid 
                         WHERE d.refclassid = 'pg_type'::regclass 
                             AND d.deptype in ('n')
                             AND d.refobjid in (SELECT oid FROM pg_type WHERE typnamespace = 'sys'::regnamespace AND typtype in ('b','d') AND typcategory <> 'A')
@@ -203,24 +234,26 @@ def get_dependencies(file, sumfile, logger):
                 dep_object.append(i[0])
 
             # get type with no dependency 
-            for i in set(object) - set(dep_object):
-                expected_file.write("Could not find dependencies on type {}\n".format(i))
+            obj_no_dep = list(set(object) - set(dep_object))
+            obj_no_dep.sort()
+            for i in obj_no_dep:
+                expected_file.write("{0} {1}\n".format("Type", i))
 
 
             # get user defined views,tables dependent on sys collations      
             logger.info('Finding dependencies on collations')
 
-            cursor.execute("SELECT oid::regcollation FROM pg_collation where collnamespace = 'sys'::regnamespace;")
+            cursor.execute("SELECT oid::regcollation FROM pg_collation WHERE collnamespace = 'sys'::regnamespace;")
             resultset = cursor.fetchall()
             object = [l[0] for l in resultset]          
 
             query = """SELECT d.refobjid::regcollation, count(distinct v.oid) AS total_count 
                 FROM pg_depend AS d 
-                JOIN pg_class AS v on v.oid = d.objid 
+                JOIN pg_class AS v ON v.oid = d.objid 
                 WHERE d.refclassid = 'pg_collation'::regclass 
                     AND d.deptype in ('n')
-                    AND d.refobjid in (SELECT oid FROM pg_collation where collnamespace = 'sys'::regnamespace)
-                    AND v.relnamespace not in ('sys'::regnamespace, 'pg_catalog'::regnamespace, 'information_schema'::regnamespace{0})
+                    AND d.refobjid in (SELECT oid FROM pg_collation WHERE collnamespace = 'sys'::regnamespace)
+                    AND v.relnamespace NOT IN ('sys'::regnamespace, 'pg_catalog'::regnamespace, 'information_schema'::regnamespace{0})
                 GROUP BY d.refobjid;"""  
             cursor.execute(query.format(schema))
             dep_object = []
@@ -230,8 +263,10 @@ def get_dependencies(file, sumfile, logger):
                 dep_object.append(i[0])
 
             # get collations with no dependency 
-            for i in set(object) - set(dep_object):
-                expected_file.write("Could not find dependencies on collation {}\n".format(i))
+            obj_no_dep = list(set(object) - set(dep_object))
+            obj_no_dep.sort()
+            for i in obj_no_dep:
+                expected_file.write("{0} {1}\n".format("Collation", i))
         
         cursor.close()
 
@@ -241,6 +276,46 @@ def get_dependencies(file, sumfile, logger):
     except Exception as e:
         logger.info(str(e))
     return version
+
+
+
+# compare the generated and expected file using diff
+def compare_outfiles(outfile, expected_file, logfname, filename, logger):
+    try:
+        diff_file = Path.cwd().joinpath("logs", logfname, filename + ".diff")
+        f_handle = open(diff_file, "wb")
+
+        # sorting the files as set will give unordered outputs
+        if sys.platform.startswith("win"):
+            proc = subprocess.run(args = ["fc", expected_file, outfile], stdout = f_handle, stderr = f_handle)
+        else:
+            proc = subprocess.run(args = ["diff", "-a", "-u", "-I", "~~ERROR", expected_file, outfile], stdout = f_handle, stderr = f_handle)
+        
+        rcode = proc.returncode
+        f_handle.close()
+        
+        # adding logs based on the returncode of diff command
+        if rcode == 0:
+            logger.info("No difference found!")
+            return True
+        elif rcode ==  1:
+            with open(diff_file, "r") as f:
+                logger.info("\n" + f.read())
+            return False
+        elif rcode == 2:
+            with open(diff_file, "r") as f:
+                logger.info("\n" + f.read())
+            logger.error("Some error occured while executing the diff command!")
+            return False
+        else:
+            logger.error("Unknown exit code encountered while running diff!")
+            return False
+        
+    except Exception as e:
+        logger.error(str(e))
+    
+    return False
+
 
 
 def main():
