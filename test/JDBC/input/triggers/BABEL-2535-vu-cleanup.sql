@@ -1,0 +1,16 @@
+DROP TRIGGER babel_2535_trg1;
+GO
+DROP TRIGGER babel_2535_trg2;
+GO
+DROP TABLE babel_2535_t2;
+GO
+DROP TABLE babel_2535_t1;
+GO
+DROP TABLE babel_2535_tab;
+GO
+DROP TABLE babel_2535_tab_1;
+GO
+DROP TABLE babel_2535_tmp;
+GO
+DROP TABLE babel_2535_tmp_1;
+GO
