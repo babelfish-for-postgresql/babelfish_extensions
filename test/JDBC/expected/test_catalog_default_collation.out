@@ -1,0 +1,33 @@
+create table babel_3300 (a varchar(5) collate catalog_default, b char(5) collate catalog_default);
+GO
+
+insert into babel_3300 values ('abcd', 'abcd');
+GO
+~~ROW COUNT: 1~~
+
+
+insert into babel_3300 values ('abcdef', 'abcdef');
+GO
+~~ERROR (Code: 8152)~~
+
+~~ERROR (Message: value too long for type character varying(5))~~
+
+
+select * from babel_3300;
+GO
+~~START~~
+varchar#!#char
+abcd#!#abcd 
+~~END~~
+
+
+drop table babel_3300;
+GO
+
+SELECT CAST( N'Name' AS NVARCHAR(10) ) collate database_default as name;
+GO
+~~START~~
+nvarchar
+Name
+~~END~~
+
