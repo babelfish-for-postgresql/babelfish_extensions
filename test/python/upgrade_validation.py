@@ -39,38 +39,33 @@ def get_dependencies(file, sumfile, logger):
             writer.writerow(["Object_class", "Object_name", "dependency_count"])
             expected_file.write("Could not find dependencies on\n")
 
-            # get user defined objects from pg_class dependent on sys views
-            logger.info('Finding dependencies on views')
+            # get user defined views,tables dependent on sys collations      
+            logger.info('Finding dependencies on collations')
 
-            # get names of all babelfish system views
-            cursor.execute("SELECT oid::regclass FROM pg_class WHERE relkind = 'v' AND relnamespace = 'sys'::regnamespace;")
+            cursor.execute("SELECT oid::regcollation FROM pg_collation WHERE collnamespace = 'sys'::regnamespace;")
             resultset = cursor.fetchall()
-            object = [i[0] for i in resultset]
+            object = [l[0] for l in resultset]          
 
-            query = """SELECT d.refobjid::regclass, count(distinct v.oid) AS total_count 
+            query = """SELECT d.refobjid::regcollation, count(distinct v.oid) AS total_count 
                 FROM pg_depend AS d 
-                JOIN pg_rewrite AS r ON r.oid = d.objid  
-                JOIN pg_class AS v ON v.oid = r.ev_class 
-                WHERE d.classid = 'pg_rewrite'::regclass 
-                    AND d.refclassid = 'pg_class'::regclass 
-                    AND d.deptype in('n') 
-                    AND d.refobjid in (SELECT oid FROM pg_class WHERE relkind = 'v' AND relnamespace = 'sys'::regnamespace)
-                    AND v.relnamespace not in('sys'::regnamespace, 'pg_catalog'::regnamespace, 'information_schema'::regnamespace{0})
-                GROUP BY d.refobjid; """
+                JOIN pg_class AS v ON v.oid = d.objid 
+                WHERE d.refclassid = 'pg_collation'::regclass 
+                    AND d.deptype in ('n')
+                    AND d.refobjid in (SELECT oid FROM pg_collation WHERE collnamespace = 'sys'::regnamespace)
+                    AND v.relnamespace NOT IN ('sys'::regnamespace, 'pg_catalog'::regnamespace, 'information_schema'::regnamespace{0})
+                GROUP BY d.refobjid;"""  
             cursor.execute(query.format(schema))
-            result = cursor.fetchall()
             dep_object = []
-
-            # write objects with dependency count in summary file
+            result = cursor.fetchall()
             for i in result:
-                writer.writerow(["view", i[0], i[1]])
+                writer.writerow(["collation", i[0], i[1]])
                 dep_object.append(i[0])
 
-            # get views with no dependency 
+            # get collations with no dependency 
             obj_no_dep = list(set(object) - set(dep_object))
             obj_no_dep.sort()
             for i in obj_no_dep:
-                expected_file.write("{0} {1}\n".format("View", i))
+                expected_file.write("{0} {1}\n".format("Collation", i))
 
 
             # get user defined objects from pg_class dependent on sys functions 
@@ -240,33 +235,38 @@ def get_dependencies(file, sumfile, logger):
                 expected_file.write("{0} {1}\n".format("Type", i))
 
 
-            # get user defined views,tables dependent on sys collations      
-            logger.info('Finding dependencies on collations')
+            # get user defined objects from pg_class dependent on sys views
+            logger.info('Finding dependencies on views')
 
-            cursor.execute("SELECT oid::regcollation FROM pg_collation WHERE collnamespace = 'sys'::regnamespace;")
+            # get names of all babelfish system views
+            cursor.execute("SELECT oid::regclass FROM pg_class WHERE relkind = 'v' AND relnamespace in ('sys'::regnamespace{0});".format(schema))
             resultset = cursor.fetchall()
-            object = [l[0] for l in resultset]          
+            object = [i[0] for i in resultset]
 
-            query = """SELECT d.refobjid::regcollation, count(distinct v.oid) AS total_count 
+            query = """SELECT d.refobjid::regclass, count(distinct v.oid) AS total_count 
                 FROM pg_depend AS d 
-                JOIN pg_class AS v ON v.oid = d.objid 
-                WHERE d.refclassid = 'pg_collation'::regclass 
-                    AND d.deptype in ('n')
-                    AND d.refobjid in (SELECT oid FROM pg_collation WHERE collnamespace = 'sys'::regnamespace)
-                    AND v.relnamespace NOT IN ('sys'::regnamespace, 'pg_catalog'::regnamespace, 'information_schema'::regnamespace{0})
-                GROUP BY d.refobjid;"""  
+                JOIN pg_rewrite AS r ON r.oid = d.objid  
+                JOIN pg_class AS v ON v.oid = r.ev_class 
+                WHERE d.classid = 'pg_rewrite'::regclass 
+                    AND d.refclassid = 'pg_class'::regclass 
+                    AND d.deptype in('n') 
+                    AND d.refobjid in (SELECT oid FROM pg_class WHERE relkind = 'v' AND relnamespace = 'sys'::regnamespace)
+                    AND v.relnamespace not in('sys'::regnamespace, 'pg_catalog'::regnamespace, 'information_schema'::regnamespace{0})
+                GROUP BY d.refobjid; """
             cursor.execute(query.format(schema))
-            dep_object = []
             result = cursor.fetchall()
+            dep_object = []
+
+            # write objects with dependency count in summary file
             for i in result:
-                writer.writerow(["collation", i[0], i[1]])
+                writer.writerow(["view", i[0], i[1]])
                 dep_object.append(i[0])
 
-            # get collations with no dependency 
+            # get views with no dependency 
             obj_no_dep = list(set(object) - set(dep_object))
             obj_no_dep.sort()
             for i in obj_no_dep:
-                expected_file.write("{0} {1}\n".format("Collation", i))
+                expected_file.write("{0} {1}\n".format("View", i))
         
         cursor.close()
 
@@ -315,7 +315,6 @@ def compare_outfiles(outfile, expected_file, logfname, filename, logger):
         logger.error(str(e))
     
     return False
-
 
 
 def main():
