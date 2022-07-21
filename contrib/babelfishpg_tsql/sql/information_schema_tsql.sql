@@ -651,7 +651,7 @@ CREATE OR REPLACE VIEW information_schema_tsql.routines AS
             pg_language l,
             pg_type t LEFT JOIN pg_collation co ON t.typcollation = co.oid,
             sys.translate_pg_type_to_tsql(t.oid) AS tsql_type_name,
-            tsql_get_returnTypmodValue(p.oid) AS true_typmod,
+            sys.tsql_get_returnTypmodValue(p.oid) AS true_typmod,
 	    sys.is_table_type(t.typrelid) as is_tbl_type
 
        WHERE
