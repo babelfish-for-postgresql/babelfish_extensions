@@ -38,12 +38,17 @@ db_sys_databases_vu_prepare
 ~~END~~
 
 
-SELECT name, compatibility_level, collation_name FROM sys.databases
-WHERE name in ('db_sys_databases_vu_prepare', 'db_sys_databases_vu_prepare1', 'db_sys_databases_vu_prepare2', 'master', 'msdb', 'tempdb')
-ORDER BY name;
+SELECT name, compatibility_level, collation_name FROM sys.databases ORDER BY name;
 GO
 ~~START~~
 varchar#!#tinyint#!#varchar
+db_babel_3166#!#120#!#bbf_unicode_cp1_ci_as
+db_babel_3192#!#120#!#bbf_unicode_cp1_ci_as
+db_babel_3204#!#120#!#bbf_unicode_cp1_ci_as
+db_babel_3221#!#120#!#bbf_unicode_cp1_ci_as
+db_babel_3234#!#120#!#bbf_unicode_cp1_ci_as
+db_column_domain_usage_vu_prepare#!#120#!#bbf_unicode_cp1_ci_as
+db_constraint_column_usage_vu_prepare#!#120#!#bbf_unicode_cp1_ci_as
 db_sys_databases_vu_prepare#!#120#!#bbf_unicode_cp1_ci_as
 db_sys_databases_vu_prepare1#!#120#!#bbf_unicode_cp1_ci_as
 db_sys_databases_vu_prepare2#!#120#!#bbf_unicode_cp1_ci_as
@@ -53,12 +58,17 @@ tempdb#!#120#!#bbf_unicode_cp1_ci_as
 ~~END~~
 
 
-SELECT name, snapshot_isolation_state, catalog_collation_type_desc FROM sys.databases
-WHERE name in ('db_sys_databases_vu_prepare', 'db_sys_databases_vu_prepare1', 'db_sys_databases_vu_prepare2', 'master', 'msdb', 'tempdb')
-ORDER BY name;
+SELECT name, snapshot_isolation_state, catalog_collation_type_desc FROM sys.databases ORDER BY name;
 GO
 ~~START~~
 varchar#!#tinyint#!#nvarchar
+db_babel_3166#!#1#!#Not Applicable
+db_babel_3192#!#1#!#Not Applicable
+db_babel_3204#!#1#!#Not Applicable
+db_babel_3221#!#1#!#Not Applicable
+db_babel_3234#!#1#!#Not Applicable
+db_column_domain_usage_vu_prepare#!#1#!#Not Applicable
+db_constraint_column_usage_vu_prepare#!#1#!#Not Applicable
 db_sys_databases_vu_prepare#!#1#!#Not Applicable
 db_sys_databases_vu_prepare1#!#1#!#Not Applicable
 db_sys_databases_vu_prepare2#!#1#!#Not Applicable
