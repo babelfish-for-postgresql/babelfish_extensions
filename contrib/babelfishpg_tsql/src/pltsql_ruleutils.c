@@ -406,12 +406,12 @@ tsql_get_functiondef(PG_FUNCTION_ARGS)
         int* typmod_arr = NULL;
         int number_args;
 
-	initStringInfo(&buf);
-
 	/* Look up the function */
 	proctup = SearchSysCache1(PROCOID, ObjectIdGetDatum(funcid));
 	if (!HeapTupleIsValid(proctup))
 		PG_RETURN_NULL();
+
+	initStringInfo(&buf);
 
 	proc = (Form_pg_proc) GETSTRUCT(proctup);
 	name = NameStr(proc->proname);
