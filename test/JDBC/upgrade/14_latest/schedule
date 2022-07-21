@@ -37,3 +37,6 @@ BABEL-3221
 BABEL-3249
 BABEL-3204
 BABEL-3234
+column_domain_usage
+constraint_column_usage
+sys-sysobjects
