@@ -962,7 +962,7 @@ select
   , 0 as open_tran
   , a.state as status
   , null::bytea as sid
-  , t.host_name::sys.nchar(128) as hostname
+  , CAST(t.host_name AS sys.nchar(128)) as hostname
   , a.application_name as program_name
   , null::varchar(10) as hostprocess
   , a.query as cmd
