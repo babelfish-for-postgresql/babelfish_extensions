@@ -98,7 +98,7 @@ typedef struct collation_callbacks
 } collation_callbacks;
 
 extern int find_cs_as_collation(int collidx);
-extern int find_any_collation(const char *collation_name);
+extern int find_any_collation(const char *collation_name, bool check_for_server_collation_name_guc);
 extern Oid get_server_collation_oid_internal(bool missingOk);
 extern coll_info lookup_collation_table(Oid collid);
 extern int8_t cmp_collation(uint16_t coll1, uint16_t coll2);
@@ -112,7 +112,7 @@ extern Datum collation_list_internal(PG_FUNCTION_ARGS);
 extern Datum is_collated_ci_as_internal(PG_FUNCTION_ARGS);
 extern int collationproperty_helper(const char *collationaname, const char *property);
 extern bool is_server_collation_CI_AS(void);
-extern int translate_collation(const char *collation_name);
+extern int translate_collation(const char *collation_name, bool check_for_server_collation_name_guc);
 extern int init_collid_trans_tab_internal(void);
 extern int init_like_ilike_table_internal(void);
 extern like_ilike_info lookup_like_ilike_table(Oid opno);
