@@ -1,8 +1,5 @@
 -- tsql
-CREATE DATABASE db_babel_3121;
-go
-
-USE db_babel_3121;
+USE master;
 go
 
 -- special character #
@@ -52,7 +49,7 @@ go
 
 -- psql
 set babelfishpg_tsql.sql_dialect = "tsql"; -- not realistic but this is an easy way to generate multiple attoptions
-alter table db_babel_3121_dbo.babel_3121_t6 alter column "bala#f" set (n_distinct=10);
+alter table master_dbo.babel_3121_t6 alter column "bala#f" set (n_distinct=10);
 GO
 
 -- tsql
