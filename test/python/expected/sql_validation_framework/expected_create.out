@@ -332,7 +332,6 @@ Could not find upgrade tests for view information_schema_tsql.tables
 Could not find upgrade tests for view sys.all_objects
 Could not find upgrade tests for view sys.all_sql_modules
 Could not find upgrade tests for view sys.all_sql_modules_internal
-Could not find upgrade tests for view sys.all_views
 Could not find upgrade tests for view sys.assembly_modules
 Could not find upgrade tests for view sys.change_tracking_databases
 Could not find upgrade tests for view sys.change_tracking_tables

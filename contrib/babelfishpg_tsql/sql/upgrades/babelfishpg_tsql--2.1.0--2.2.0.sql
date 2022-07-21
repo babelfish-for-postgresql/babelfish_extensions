@@ -1014,6 +1014,42 @@ $$
 	END
 $$;
 
+ALTER VIEW sys.all_views RENAME TO all_views_deprecated_2_1_0;
+
+create or replace view sys.all_views as
+select
+    CAST(t.name as sys.SYSNAME) AS name
+  , CAST(t.object_id as int) AS object_id
+  , CAST(t.principal_id as int) AS principal_id
+  , CAST(t.schema_id as int) AS schema_id
+  , CAST(t.parent_object_id as int) AS parent_object_id
+  , CAST(t.type as sys.bpchar(2)) AS type
+  , CAST(t.type_desc as sys.nvarchar(60)) AS type_desc
+  , CAST(t.create_date as sys.datetime) AS create_date
+  , CAST(t.modify_date as sys.datetime) AS modify_date
+  , CAST(t.is_ms_shipped as sys.BIT) AS is_ms_shipped
+  , CAST(t.is_published as sys.BIT) AS is_published
+  , CAST(t.is_schema_published as sys.BIT) AS is_schema_published 
+  , CAST(0 as sys.BIT) AS is_replicated
+  , CAST(0 as sys.BIT) AS has_replication_filter
+  , CAST(0 as sys.BIT) AS has_opaque_metadata
+  , CAST(0 as sys.BIT) AS has_unchecked_assembly_data
+  , CAST(
+      CASE 
+        WHEN (v.check_option = 'NONE') 
+          THEN 0
+        ELSE 1
+      END
+    AS sys.BIT) AS with_check_option
+  , CAST(0 as sys.BIT) AS is_date_correlation_view
+from sys.all_objects t
+INNER JOIN pg_namespace ns ON t.schema_id = ns.oid
+INNER JOIN information_schema.views v ON t.name = v.table_name AND ns.nspname = v.table_schema
+where t.type = 'V';
+GRANT SELECT ON sys.all_views TO PUBLIC;
+
+CALL sys.babelfish_drop_deprecated_view('sys', 'all_views_deprecated_2_1_0');
+
 CREATE OR REPLACE VIEW sys.assembly_modules
 AS
 SELECT 
