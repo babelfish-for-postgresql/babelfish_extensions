@@ -1,0 +1,6 @@
+SELECT * FROM sys.fulltext_stoplists;
+GO
+~~START~~
+int#!#varchar#!#datetime#!#datetime#!#int
+~~END~~
+

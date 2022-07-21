@@ -1,0 +1,10 @@
+SELECT type, type_desc from sys.all_objects  where name like 'sysall_objects%' order by type;
+GO
+~~START~~
+text#!#text
+FN#!#SQL_SCALAR_FUNCTION
+P#!#SQL_STORED_PROCEDURE
+P#!#SQL_STORED_PROCEDURE
+TR#!#SQL_TRIGGER
+~~END~~
+
