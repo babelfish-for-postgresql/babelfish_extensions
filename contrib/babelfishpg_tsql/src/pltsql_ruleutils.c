@@ -423,7 +423,7 @@ tsql_get_functiondef(PG_FUNCTION_ARGS)
 	 * replaced.
 	 */
 	nsp = get_namespace_name(proc->pronamespace);
-	nnsp= get_logical_schema_name(nsp,true);
+	nnsp = get_logical_schema_name(nsp,true);
 	appendStringInfo(&buf, "CREATE %s %s(",
 					 isfunction ? "FUNCTION" : "PROCEDURE",
 					 tsql_quote_qualified_identifier(nnsp, name));
@@ -436,7 +436,7 @@ tsql_get_functiondef(PG_FUNCTION_ARGS)
 	pfree(nnsp);
         
 	tmp = SysCacheGetAttr(PROCOID, proctup, Anum_pg_proc_probin, &isnull);
-        number_args=proc->pronargs; 
+        number_args = proc->pronargs;
         if(isfunction) number_args++;
        	probin_json_reader(tmp, &typmod_arr, number_args);
 	(void) print_function_arguments(&buf, proctup, false, true, &typmod_arr);
@@ -466,7 +466,7 @@ tsql_get_functiondef(PG_FUNCTION_ARGS)
 	ReleaseSysCache(proctup);
 
         pfree(prosrc);
-	
+
 	PG_RETURN_TEXT_P(string_to_text(buf.data));
 }
 
@@ -497,7 +497,7 @@ tsql_get_returnTypmodValue(PG_FUNCTION_ARGS){
                 PG_RETURN_INT32(-1) ;
 
         tmp = SysCacheGetAttr(PROCOID, proctup, Anum_pg_proc_probin, &isnull);
-        number_args=proc->pronargs;
+        number_args = proc->pronargs;
         number_args++;  
 
         probin_json_reader(tmp, &typmod_arr, number_args);
@@ -685,6 +685,7 @@ print_function_rettype(StringInfo buf, HeapTuple proctup, int** typmod_arr_ret, 
 	}
 
 	appendBinaryStringInfo(buf, rbuf.data, rbuf.len);
+        pfree(rbuf.data);
 }
 
 /*
@@ -841,7 +842,7 @@ generate_qualified_relation_name(Oid relid)
 		elog(ERROR, "cache lookup failed for namespace %u",
 			 reltup->relnamespace);
 
-	result =tsql_quote_qualified_identifier(nspname, relname);
+	result = tsql_quote_qualified_identifier(nspname, relname);
 
 	ReleaseSysCache(tp);
 
