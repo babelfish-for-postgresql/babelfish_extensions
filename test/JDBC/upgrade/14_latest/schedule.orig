@@ -39,6 +39,10 @@ BABEL-3204
 BABEL-3234
 column_domain_usage
 constraint_column_usage
-sys-sysobjects
+<<<<<<< HEAD
+column_domain_usage
 Test-sp_helpsrvrolemember
-Test-sp_helpsrvrolemember-dep
+Test-sp_helpsrvrolemember-14_4
+=======
+sys-sysobjects
+>>>>>>> upstream/BABEL_2_X_DEV
