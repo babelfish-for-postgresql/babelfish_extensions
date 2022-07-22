@@ -268,6 +268,9 @@ set babelfish_showplan_all off
 go
 
 -- cleanup
+select set_config('babelfishpg_tsql.explain_costs', 'on', false)
+go
+
 select set_config('babelfishpg_tsql.enable_hint_mapping', 'off', false);
 go
 
