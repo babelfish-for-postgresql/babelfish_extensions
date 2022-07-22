@@ -246,13 +246,13 @@ GO
 
 DROP PROC myschema.proc2;
 go
-	 
+
 DROP TABLE tab1;
 go
-	 
+
 DROP TABLE myschema.tab1;
 GO
-	 
+
 DROP SCHEMA myschema;
 GO
 

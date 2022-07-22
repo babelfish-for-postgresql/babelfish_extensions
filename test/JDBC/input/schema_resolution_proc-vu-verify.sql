@@ -8,7 +8,7 @@ go
 -- Without schema specified, select for t1 takes place in "sch1"
 exec sch1.select_tab
 go
-	 
+
 drop table sch1.t1
 go
 	 
