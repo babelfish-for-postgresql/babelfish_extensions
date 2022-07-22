@@ -1,0 +1,33 @@
+SELECT * FROM sys_database_mirroring_view_vu_prepare
+GO
+~~START~~
+smallint#!#uniqueidentifier#!#tinyint#!#nvarchar#!#tinyint#!#nvarchar#!#int#!#tinyint#!#nvarchar#!#int#!#nvarchar#!#nvarchar#!#nvarchar#!#tinyint#!#nvarchar#!#numeric#!#int#!#int#!#nvarchar#!#numeric#!#numeric
+1#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>
+~~END~~
+
+
+EXEC sys_database_mirroring_proc_vu_prepare
+GO
+~~START~~
+int#!#uniqueidentifier#!#tinyint#!#nvarchar#!#tinyint#!#nvarchar#!#int#!#tinyint#!#nvarchar#!#int#!#nvarchar#!#nvarchar#!#nvarchar#!#tinyint#!#nvarchar#!#numeric#!#int#!#int#!#nvarchar#!#numeric#!#numeric
+1#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>
+~~END~~
+
+
+SELECT * FROM sys_database_mirroring_func_vu_prepare()
+GO
+~~START~~
+int
+<NULL>
+~~END~~
+
+
+SELECT * FROM sys.database_mirroring WHERE database_id IN (1,2,4);
+GO
+~~START~~
+int#!#uniqueidentifier#!#tinyint#!#nvarchar#!#tinyint#!#nvarchar#!#int#!#tinyint#!#nvarchar#!#int#!#nvarchar#!#nvarchar#!#nvarchar#!#tinyint#!#nvarchar#!#numeric#!#int#!#int#!#nvarchar#!#numeric#!#numeric
+1#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>
+2#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>
+4#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>
+~~END~~
+

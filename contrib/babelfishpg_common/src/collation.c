@@ -20,6 +20,9 @@
 
 #define NOT_FOUND -1
 
+#define DATABASE_DEFAULT "database_default"
+#define CATALOG_DEFAULT "catalog_default"
+
 collation_callbacks collation_callbacks_var = {NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL};
 
 /* Cached values derived from server_collation_name */
@@ -76,41 +79,42 @@ like_ilike_info like_ilike_table[] =
  */
 coll_translate_t coll_translations[] =
 {
-  { "latin1_general_100_bin2", "bbf_unicode_bin2", 1252 },
-  { "latin1_general_140_bin2", "bbf_unicode_bin2", 1252 },
-  { "latin1_general_90_bin2", "bbf_unicode_bin2", 1252 },
-  { "latin1_general_bin2", "bbf_unicode_bin2", 1252 },
-  { "latin1_general_ci_ai", "bbf_unicode_cp1_ci_ai", 1252 },
-  { "latin1_general_ci_as", "bbf_unicode_cp1_ci_as", 1252 },
-  { "latin1_general_cs_ai", "bbf_unicode_cp1_cs_ai", 1252 },
-  { "latin1_general_cs_as", "bbf_unicode_cp1_cs_as", 1252 },
-  { "sql_latin1_general_cp1250_ci_as", "bbf_unicode_cp1250_ci_as", 1250 },
-  { "sql_latin1_general_cp1250_cs_as", "bbf_unicode_cp1250_cs_as", 1250 },
-  { "sql_latin1_general_cp1251_ci_as", "bbf_unicode_cp1_ci_as", 1251 },
-  { "sql_latin1_general_cp1251_cs_as", "bbf_unicode_cp1_cs_as", 1251 },
-  { "sql_latin1_general_cp1253_ci_as", "bbf_unicode_cp1253_ci_as", 1253 },
-  { "sql_latin1_general_cp1253_cs_as", "bbf_unicode_cp1253_cs_as", 1253 },
-  { "sql_latin1_general_cp1254_ci_as", "bbf_unicode_cp1254_ci_as", 1254 },
-  { "sql_latin1_general_cp1254_cs_as", "bbf_unicode_cp1254_cs_as", 1254 },
-  { "sql_latin1_general_cp1255_ci_as", "bbf_unicode_cp1255_ci_as", 1255 },
-  { "sql_latin1_general_cp1255_cs_as", "bbf_unicode_cp1255_cs_as", 1255 },
-  { "sql_latin1_general_cp1256_ci_as", "bbf_unicode_cp1256_ci_as", 1256 },
-  { "sql_latin1_general_cp1256_cs_as", "bbf_unicode_cp1256_cs_as", 1256 },
-  { "sql_latin1_general_cp1257_ci_as", "bbf_unicode_cp1257_ci_as", 1257 },
-  { "sql_latin1_general_cp1257_cs_as", "bbf_unicode_cp1257_cs_as", 1257 },
-  { "sql_latin1_general_cp1258_ci_as", "bbf_unicode_cp1258_ci_as", 1258 },
-  { "sql_latin1_general_cp1258_cs_as", "bbf_unicode_cp1258_cs_as", 1258 },
-  { "sql_latin1_general_cp1_ci_ai", "bbf_unicode_cp1_ci_ai", 1252 },
-  { "sql_latin1_general_cp1_ci_as", "bbf_unicode_cp1_ci_as", 1252 }, /* default */
-  { "sql_latin1_general_cp1_cs_ai", "bbf_unicode_cp1_cs_ai", 1252 },
-  { "sql_latin1_general_cp1_cs_as", "bbf_unicode_cp1_cs_as", 1252 },
+	{ "latin1_general_100_bin2", "bbf_unicode_bin2", 1252 },
+	{ "latin1_general_140_bin2", "bbf_unicode_bin2", 1252 },
+	{ "latin1_general_90_bin2", "bbf_unicode_bin2", 1252 },
+	{ "latin1_general_bin2", "bbf_unicode_bin2", 1252 },
+	{ "latin1_general_ci_ai", "bbf_unicode_cp1_ci_ai", 1252 },
+	{ "latin1_general_ci_as", "bbf_unicode_cp1_ci_as", 1252 },
+	{ "latin1_general_cs_ai", "bbf_unicode_cp1_cs_ai", 1252 },
+	{ "latin1_general_cs_as", "bbf_unicode_cp1_cs_as", 1252 },
+	{ "sql_latin1_general_cp1250_ci_as", "bbf_unicode_cp1250_ci_as", 1250 },
+	{ "sql_latin1_general_cp1250_cs_as", "bbf_unicode_cp1250_cs_as", 1250 },
+	{ "sql_latin1_general_cp1251_ci_as", "bbf_unicode_cp1_ci_as", 1251 },
+	{ "sql_latin1_general_cp1251_cs_as", "bbf_unicode_cp1_cs_as", 1251 },
+	{ "sql_latin1_general_cp1253_ci_as", "bbf_unicode_cp1253_ci_as", 1253 },
+	{ "sql_latin1_general_cp1253_cs_as", "bbf_unicode_cp1253_cs_as", 1253 },
+	{ "sql_latin1_general_cp1254_ci_as", "bbf_unicode_cp1254_ci_as", 1254 },
+	{ "sql_latin1_general_cp1254_cs_as", "bbf_unicode_cp1254_cs_as", 1254 },
+	{ "sql_latin1_general_cp1255_ci_as", "bbf_unicode_cp1255_ci_as", 1255 },
+	{ "sql_latin1_general_cp1255_cs_as", "bbf_unicode_cp1255_cs_as", 1255 },
+	{ "sql_latin1_general_cp1256_ci_as", "bbf_unicode_cp1256_ci_as", 1256 },
+	{ "sql_latin1_general_cp1256_cs_as", "bbf_unicode_cp1256_cs_as", 1256 },
+	{ "sql_latin1_general_cp1257_ci_as", "bbf_unicode_cp1257_ci_as", 1257 },
+	{ "sql_latin1_general_cp1257_cs_as", "bbf_unicode_cp1257_cs_as", 1257 },
+	{ "sql_latin1_general_cp1258_ci_as", "bbf_unicode_cp1258_ci_as", 1258 },
+	{ "sql_latin1_general_cp1258_cs_as", "bbf_unicode_cp1258_cs_as", 1258 },
+	{ "sql_latin1_general_cp1_ci_ai", "bbf_unicode_cp1_ci_ai", 1252 },
+	{ "sql_latin1_general_cp1_ci_as", "bbf_unicode_cp1_ci_as", 1252 }, /* default */
+	{ "sql_latin1_general_cp1_cs_ai", "bbf_unicode_cp1_cs_ai", 1252 },
+	{ "sql_latin1_general_cp1_cs_as", "bbf_unicode_cp1_cs_as", 1252 },
 
-  //{ "sql_latin1_general_cp850_ci_as", "bbf_unicode_cp850_ci_as", 850 },
-  //{ "sql_latin1_general_cp850_cs_as", "bbf_unicode_cp850_cs_as", 850 },
+	//{ "sql_latin1_general_cp850_ci_as", "bbf_unicode_cp850_ci_as", 850 },
+	//{ "sql_latin1_general_cp850_cs_as", "bbf_unicode_cp850_cs_as", 850 },
 
-  { "sql_latin1_general_cp874_ci_as", "bbf_unicode_cp874_ci_as", 874 },
-  { "sql_latin1_general_cp874_cs_as", "bbf_unicode_cp874_cs_as", 874 },
-  { "sql_latin1_general_pref_cp1_cs_as", "bbf_unicode_pref_cp1_cs_as", 1252 }
+	{ "sql_latin1_general_cp874_ci_as", "bbf_unicode_cp874_ci_as", 874 },
+	{ "sql_latin1_general_cp874_cs_as", "bbf_unicode_cp874_cs_as", 874 },
+	{ "sql_latin1_general_pref_cp1_cs_as", "bbf_unicode_pref_cp1_cs_as", 1252 }
+
 };
 #define TOTAL_COLL_TRANSLATION_COUNT (sizeof(coll_translations)/sizeof(coll_translations[0]))
 
@@ -503,9 +507,9 @@ find_cs_as_collation(int collidx)
 }
 
 int
-find_any_collation(const char *collation_name)
+find_any_collation(const char *collation_name, bool check_for_server_collation_name_guc)
 {
-	int collidx = translate_collation(collation_name);
+	int collidx = translate_collation(collation_name, check_for_server_collation_name_guc);
 
 	if (NOT_FOUND == collidx)
 		collidx = find_collation(collation_name);
@@ -518,12 +522,30 @@ find_any_collation(const char *collation_name)
  * by looking into coll_translations array or returns NOT_FOUND.
  */
 int
-translate_collation(const char *collation_name)
+translate_collation(const char *collname, bool check_for_server_collation_name_guc)
 {
 	int first = 0;
 	int last = TOTAL_COLL_TRANSLATION_COUNT - 1;
 	int middle = 25; /* optimization: usually it's the default collation (first + last) / 2; */
 	int compare;
+	char *collation_name = NULL;
+	int idx = NOT_FOUND;
+
+	/* Special case handling for database_default and catalog_default collations which should be translated to server_collation_name. */
+	if (!check_for_server_collation_name_guc && (pg_strcasecmp(collname, DATABASE_DEFAULT) == 0 || pg_strcasecmp(collname, CATALOG_DEFAULT) == 0))
+	{
+		init_server_collation_name();
+		if (server_collation_name)
+			collation_name = pstrdup(server_collation_name);
+		else
+			ereport(ERROR,
+					(errcode(ERRCODE_INTERNAL_ERROR),
+					 errmsg("invalid setting detected for babelfishpg_tsql.server_collation_name")));
+	}
+	else
+	{
+		collation_name = pstrdup(collname);
+	}
 
 	while (first <= last)
 	{
@@ -531,14 +553,20 @@ translate_collation(const char *collation_name)
 		if (compare < 0)
 			first = middle + 1;
 		else if (compare == 0)
-			return find_collation(coll_translations[middle].to_collname);
+		{
+			idx = find_collation(coll_translations[middle].to_collname);
+			break;
+		}
 		else
 			last = middle - 1;
 
 		middle = (first + last) / 2;
 	}
 
-	return NOT_FOUND;;
+	if (collation_name)
+		pfree(collation_name);
+
+	return idx;
 }
 
 /*
@@ -836,7 +864,7 @@ get_server_collation_collidx(void)
 {
 	init_server_collation_name();
 	if (NOT_FOUND == server_collation_collidx)
-		server_collation_collidx = find_any_collation(server_collation_name);
+		server_collation_collidx = find_any_collation(server_collation_name, false);
 
 	return server_collation_collidx;
 }
@@ -970,7 +998,7 @@ get_server_collation_oid_internal(bool missingOk)
 	 * or windows collation that is translated into a bbf collation.
 	 * If that's what it is then get the translated name.
 	 */
-	if (NOT_FOUND != (collidx = translate_collation(server_collation_name)))
+	if (NOT_FOUND != (collidx = translate_collation(server_collation_name, false)))
 		collname = coll_infos[collidx].collname;
 	else
 		collname = server_collation_name;
@@ -1093,7 +1121,7 @@ BabelfishTranslateCollation(const char *collname, Oid collnamespace, int32 encod
 	}
 	else
 	{
-		int collidx = translate_collation(collname);
+		int collidx = translate_collation(collname, false);
 
 		if (collidx >= 0)
 		{
@@ -1107,7 +1135,7 @@ BabelfishTranslateCollation(const char *collname, Oid collnamespace, int32 encod
 bool
 is_valid_server_collation_name(const char *collname)
 {
-	int collidx = find_any_collation(collname);
+	int collidx = find_any_collation(collname, true);
 
 	if (NOT_FOUND != collidx &&
 		!collation_is_accent_insensitive(collidx))
@@ -1142,7 +1170,7 @@ int get_persist_collation_id(Oid coll_oid)
 int
 collationproperty_helper(const char *collationname, const char *property)
 {
-	int collidx = find_any_collation(collationname);
+	int collidx = find_any_collation(collationname, false);
 	if (collidx >= 0)
 	{
 		coll_info coll = coll_infos[collidx];

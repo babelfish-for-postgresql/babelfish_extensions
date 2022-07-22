@@ -307,3 +307,14 @@ select * from t_rcv
 select * from t_rcv2
 drop table t_rcv
 drop table t_rcv2
+
+# Testing with default values
+Create table sourceTable(a int Default 10, b varchar(10) default 'yellow')
+Create table destinationTable(a int Default 10, b varchar(10) default 'yellow')
+Insert into sourceTable values (NULL, NULL);
+Insert into sourceTable values (10, 'hello');
+insertbulk#!#sourceTable#!#destinationTable
+Select * from sourceTable
+Select * from destinationTable
+drop table sourceTable
+drop table destinationTable
