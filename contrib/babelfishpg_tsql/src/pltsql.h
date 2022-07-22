@@ -1558,6 +1558,8 @@ typedef struct PLtsql_protocol_plugin
 
 	int (*pltsql_get_generic_typmod) (Oid funcid, int nargs, Oid declared_oid);
 
+	bool *pltsql_is_fmtonly_stmt;
+
 } PLtsql_protocol_plugin;
 
 /*

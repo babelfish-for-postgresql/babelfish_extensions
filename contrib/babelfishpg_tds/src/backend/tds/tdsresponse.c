@@ -28,6 +28,7 @@
 #include "parser/parse_coerce.h"
 #include "utils/fmgroids.h"
 #include "utils/lsyscache.h"
+#include "utils/syscache.h"
 #include "utils/memdebug.h"
 #include "utils/numeric.h"
 #include "utils/portal.h"
@@ -125,7 +126,7 @@ static void FillTabNameWithNumParts(StringInfo buf, uint8 numParts, TdsRelationM
 static void FillTabNameWithoutNumParts(StringInfo buf, uint8 numParts, TdsRelationMetaDataInfo relMetaDataInfo);
 static void SetTdsEstateErrorData(void);
 static void ResetTdsEstateErrorData(void);
-static bool get_attnotnull(Oid relid, AttrNumber attnum);
+static void SetAttributesForColmetada(TdsColumnMetaData *col);
 
 static inline void
 SendPendingDone(bool more)
@@ -1363,7 +1364,8 @@ PrepareRowDescription(TupleDesc typeinfo, List *targetlist, int16 *formats,
 			col->attrNum = 0;
 		}
 
-		col->attNotNull = get_attnotnull(col->relOid, col->attrNum);
+		SetAttributesForColmetada(col);
+
 		switch (finfo->sendFuncId)
 		{
 			/*
@@ -2911,30 +2913,43 @@ GetTdsEstateErrorData(int *number, int *severity, int *state)
 }
 
 /*
- * get_attnotnull
- *		Given the relation id and the attribute number,
- *		return the "attnotnull" field from the attribute relation.
+ * Using the relation id and the attribute number, set the attributes
+ * required in the TDS Column Metadata from the attributes relation.
  */
-static bool
-get_attnotnull(Oid relid, AttrNumber attnum)
+static void
+SetAttributesForColmetada(TdsColumnMetaData *col)
 {
 	HeapTuple	  tp;
 	Form_pg_attribute att_tup;
 
-	tp = SearchSysCache2(ATTNUM,
-			ObjectIdGetDatum(relid),
-			Int16GetDatum(attnum));
+	/* Initialise to false if no valid heap tuple is found. */
+	col->attNotNull = false;
+	col->attidentity = false;
+	col->attgenerated = false;
+
+	/*
+	 * Send the right column-metadata only for FMTONLY Statements.
+	 * FIXME: We need to find a generic solution where we do not rely
+	 * on the catalog for constraint information.
+	 */
+	if (pltsql_plugin_handler_ptr &&
+			!(*pltsql_plugin_handler_ptr->pltsql_is_fmtonly_stmt))
+		return;
+
+	tp = SearchSysCache2(ATTNUM, 
+		ObjectIdGetDatum(col->relOid),
+		Int16GetDatum(col->attrNum));
 
 	if (HeapTupleIsValid(tp))
 	{
-		bool result;
-
 		att_tup = (Form_pg_attribute) GETSTRUCT(tp);
-		result = att_tup->attnotnull;
-		ReleaseSysCache(tp);
+		col->attNotNull = att_tup->attnotnull;
+		if (att_tup->attgenerated != '\0')
+			col->attgenerated = true;
 
-		return result;
+		if (att_tup->attidentity != '\0')
+			col->attidentity = true;
+
+		ReleaseSysCache(tp);
 	}
-	/* Assume att is nullable if no valid heap tuple is found */
-	return false;
 }
