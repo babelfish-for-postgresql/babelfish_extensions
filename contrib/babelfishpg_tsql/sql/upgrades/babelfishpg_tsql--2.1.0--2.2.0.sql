@@ -2308,10 +2308,6 @@ INSERT INTO sys.babelfish_helpcollation VALUES (N'mongolian_cs_as', N'Mongolian,
 INSERT INTO sys.babelfish_helpcollation VALUES (N'sql_latin1_general_cp874_ci_as', N'Virtual, default locale, code page 874, case-insensitive, accent-sensitive, kanatype-insensitive, width-insensitive');
 INSERT INTO sys.babelfish_helpcollation VALUES (N'sql_latin1_general_cp874_cs_as', N'Virtual, default locale, code page 874, case-sensitive, accent-sensitive, kanatype-insensitive, width-insensitive');
 
-<<<<<<< HEAD
-=======
-
->>>>>>> 803d4a3b82874ece5dc2324d1578b1421bc6ba16
 -- Deprecate the function sp_describe_first_result_set_internal and process sp_describe_first_result_set
 ALTER FUNCTION sys.sp_describe_first_result_set_internal RENAME TO sp_describe_first_result_set_internal_deprecated_2_1;
 ALTER PROCEDURE sys.sp_describe_first_result_set RENAME TO sp_describe_first_result_set_deprecated_2_1;
