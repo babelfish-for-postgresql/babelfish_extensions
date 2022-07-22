@@ -1,20 +1,20 @@
-CREATE TABLE dbo.t7 (c TIME(7) NULL, d TIME(7) NULL)
+CREATE TABLE BABEL-2934 (c TIME(7) NULL, d TIME(7) NULL)
 GO
-INSERT dbo.t7 VALUES ('00:59:59.9999123' , NULL)
+INSERT BABEL-2934 VALUES ('00:59:59.9999123' , NULL)
 GO
 ~~ROW COUNT: 1~~
 
-INSERT dbo.t7 VALUES ('00:00:01.0000120' , NULL)
+INSERT BABEL-2934 VALUES ('00:00:01.0000120' , NULL)
 go
 ~~ROW COUNT: 1~~
 
 
 -- add 300 nanoseconds (the 7th digit shows as '3')
-update dbo.t7 set d = dateadd(ns, 300, c)
+update BABEL-2934 set d = dateadd(ns, 300, c)
 go
 ~~ROW COUNT: 2~~
 
-select c, d, convert(varchar(30), c, 109) as c2, convert(varchar(30), d, 109) as d2 from dbo.t7
+select c, d, convert(varchar(30), c, 109) as c2, convert(varchar(30), d, 109) as d2 from BABEL-2934
 go
 ~~START~~
 time#!#time#!#varchar#!#varchar
@@ -23,26 +23,26 @@ time#!#time#!#varchar#!#varchar
 ~~END~~
 
 
-drop table dbo.t7
+drop table BABEL-2934
 go
 
-CREATE TABLE dbo.t7 (c DATETIME2(7) NULL, d DATETIME2(7) NULL)
+CREATE TABLE BABEL-2934 (c DATETIME2(7) NULL, d DATETIME2(7) NULL)
 GO
-INSERT dbo.t7 VALUES ('00:59:59.9999123' , NULL)
+INSERT BABEL-2934 VALUES ('00:59:59.9999123' , NULL)
 GO
 ~~ROW COUNT: 1~~
 
-INSERT dbo.t7 VALUES ('00:00:01.0000120' , NULL)
+INSERT BABEL-2934 VALUES ('00:00:01.0000120' , NULL)
 go
 ~~ROW COUNT: 1~~
 
 
 -- add 300 nanoseconds (the 7th digit shows as '3')
-update dbo.t7 set d = dateadd(ns, 300, c)
+update BABEL-2934 set d = dateadd(ns, 300, c)
 go
 ~~ROW COUNT: 2~~
 
-select c, d, convert(varchar(30), c, 109) as c2, convert(varchar(30), d, 109) as d2 from dbo.t7
+select c, d, convert(varchar(30), c, 109) as c2, convert(varchar(30), d, 109) as d2 from BABEL-2934
 go
 ~~START~~
 datetime2#!#datetime2#!#varchar#!#varchar
@@ -51,26 +51,26 @@ datetime2#!#datetime2#!#varchar#!#varchar
 ~~END~~
 
 
-drop table dbo.t7
+drop table BABEL-2934
 go
 
-CREATE TABLE dbo.t7 (c DATETIMEOFFSET(7) NULL, d DATETIMEOFFSET(7) NULL)
+CREATE TABLE BABEL-2934 (c DATETIMEOFFSET(7) NULL, d DATETIMEOFFSET(7) NULL)
 GO
-INSERT dbo.t7 VALUES ('00:59:59.9999123' , NULL)
+INSERT BABEL-2934 VALUES ('00:59:59.9999123' , NULL)
 GO
 ~~ROW COUNT: 1~~
 
-INSERT dbo.t7 VALUES ('00:00:01.0000120' , NULL)
+INSERT BABEL-2934 VALUES ('00:00:01.0000120' , NULL)
 go
 ~~ROW COUNT: 1~~
 
 
 -- add 300 nanoseconds (the 7th digit shows as '3')
-update dbo.t7 set d = dateadd(ns, 300, c)
+update BABEL-2934 set d = dateadd(ns, 300, c)
 go
 ~~ROW COUNT: 2~~
 
-select c, d, convert(varchar(30), c, 109) as c2, convert(varchar(30), d, 109) as d2 from dbo.t7
+select c, d, convert(varchar(30), c, 109) as c2, convert(varchar(30), d, 109) as d2 from BABEL-2934
 go
 ~~START~~
 datetimeoffset#!#datetimeoffset#!#varchar#!#varchar
@@ -79,7 +79,7 @@ datetimeoffset#!#datetimeoffset#!#varchar#!#varchar
 ~~END~~
 
 
-drop table dbo.t7
+drop table BABEL-2934
 go
 
 select cast('12:15:04.1234567' as TIME(7))
