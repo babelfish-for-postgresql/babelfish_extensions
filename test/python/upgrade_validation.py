@@ -250,7 +250,7 @@ def get_dependencies(file, sumfile, logger):
                 WHERE d.classid = 'pg_rewrite'::regclass 
                     AND d.refclassid = 'pg_class'::regclass 
                     AND d.deptype in('n') 
-                    AND d.refobjid in (SELECT oid FROM pg_class WHERE relkind = 'v' AND relnamespace = 'sys'::regnamespace)
+                    AND d.refobjid in (SELECT oid FROM pg_class WHERE relkind = 'v' AND relnamespace in ('sys'::regnamespace{0}))
                     AND v.relnamespace not in('sys'::regnamespace, 'pg_catalog'::regnamespace, 'information_schema'::regnamespace{0})
                 GROUP BY d.refobjid; """
             cursor.execute(query.format(schema))
