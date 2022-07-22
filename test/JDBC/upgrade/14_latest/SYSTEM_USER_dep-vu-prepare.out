@@ -19,7 +19,3 @@ BEGIN
 RETURN (SELECT session_user)
 END
 GO
-
-CREATE VIEW system_user_dep_vu_prepare_view AS
-SELECT session_user as a, system_user as b;
-GO

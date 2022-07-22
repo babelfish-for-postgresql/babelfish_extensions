@@ -22,11 +22,3 @@ nvarchar
 jdbc_user
 ~~END~~
 
-
-SELECT * FROM system_user_dep_vu_prepare_view
-GO
-~~START~~
-nvarchar#!#nvarchar
-dbo#!#jdbc_user
-~~END~~
-
