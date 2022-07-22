@@ -11,7 +11,7 @@ go
 
 drop table sch1.t1
 go
-	 
+
 -- searches for t1 in "sch1" first, if not found then searches in default schema
 exec sch1.select_tab
 go
