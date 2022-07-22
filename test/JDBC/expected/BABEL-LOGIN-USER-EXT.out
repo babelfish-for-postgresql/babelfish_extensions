@@ -207,6 +207,18 @@ r2
 DROP USER new_r1;
 go
 
+-- psql
+-- Need to terminate active session before cleaning up the login
+SELECT pg_terminate_backend(pid) FROM pg_stat_get_activity(NULL)
+WHERE sys.suser_name(usesysid) = 'r1' AND backend_type = 'client backend' AND usesysid IS NOT NULL;
+GO
+~~START~~
+bool
+t
+~~END~~
+
+
+-- tsql
 DROP LOGIN r1;
 go
 
@@ -216,6 +228,18 @@ go
 DROP SCHEMA sch2;
 go
 
+-- psql
+-- Need to terminate active session before cleaning up the login
+SELECT pg_terminate_backend(pid) FROM pg_stat_get_activity(NULL)
+WHERE sys.suser_name(usesysid) = 'r2' AND backend_type = 'client backend' AND usesysid IS NOT NULL;
+GO
+~~START~~
+bool
+t
+~~END~~
+
+
+-- tsql
 DROP LOGIN r2;
 go
 
@@ -307,7 +331,19 @@ r1#!#0
 ALTER LOGIN r2 WITH PASSWORD = '456'
 go
 
+
+-- psql
 -- Test dropping
+-- Need to terminate active session before cleaning up the login
+SELECT pg_terminate_backend(pid) FROM pg_stat_get_activity(NULL)
+WHERE sys.suser_name(usesysid) = 'r1' AND backend_type = 'client backend' AND usesysid IS NOT NULL;
+GO
+~~START~~
+bool
+~~END~~
+
+
+-- tsql
 DROP LOGIN r1;
 go
 
@@ -319,6 +355,17 @@ int
 ~~END~~
 
 
+-- psql
+-- Need to terminate active session before cleaning up the login
+SELECT pg_terminate_backend(pid) FROM pg_stat_get_activity(NULL)
+WHERE sys.suser_name(usesysid) = 'r2' AND backend_type = 'client backend' AND usesysid IS NOT NULL;
+GO
+~~START~~
+bool
+~~END~~
+
+
+-- tsql
 DROP LOGIN r2;
 go
 
@@ -370,6 +417,17 @@ int
 ~~END~~
 
 
+-- psql
+-- Need to terminate active session before cleaning up the login
+SELECT pg_terminate_backend(pid) FROM pg_stat_get_activity(NULL)
+WHERE sys.suser_name(usesysid) = 'r3' AND backend_type = 'client backend' AND usesysid IS NOT NULL;
+GO
+~~START~~
+bool
+~~END~~
+
+
+-- tsql
 DROP LOGIN r3;
 GO
 
@@ -417,6 +475,10 @@ GO
 
 DROP LOGIN err_user;
 GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Could not drop login 'err_user' as the user is currently logged in.)~~
+
 
 -- Test User functions
 USE MASTER;
@@ -668,6 +730,17 @@ tempdb_guest#!#guest#!##!#tempdb#!#
 ~~END~~
 
 
+-- psql
+-- Need to terminate active session before cleaning up the login
+SELECT pg_terminate_backend(pid) FROM pg_stat_get_activity(NULL)
+WHERE sys.suser_name(usesysid) = 'login1' AND backend_type = 'client backend' AND usesysid IS NOT NULL;
+GO
+~~START~~
+bool
+~~END~~
+
+
+-- tsql
 DROP LOGIN login1;
 GO
 
@@ -1034,6 +1107,17 @@ guest
 ~~END~~
 
 
+-- psql
+-- Need to terminate active session before cleaning up the login
+SELECT pg_terminate_backend(pid) FROM pg_stat_get_activity(NULL)
+WHERE sys.suser_name(usesysid) = 'lgn_2978' AND backend_type = 'client backend' AND usesysid IS NOT NULL;
+GO
+~~START~~
+bool
+t
+~~END~~
+
+
 -- tsql
 USE master;
 GO
@@ -1045,6 +1129,44 @@ DROP DATABASE db1;
 GO
 
 DROP DATABASE db2;
+GO
+
+-- Prevent dropping active login
+CREATE LOGIN lgn_3232 WITH PASSWORD='123';
+GO
+
+CREATE USER lgn_3232; 
+GO
+
+-- tsql		user=lgn_3232		password=123
+
+-- tsql
+-- Session 1
+-- Logged into Session 1 with lgn_3232 login
+-- Session 2 - Try to drop lgn_3232 which is active on Session 1
+DROP LOGIN lgn_3232;
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Could not drop login 'lgn_3232' as the user is currently logged in.)~~
+
+
+-- psql
+-- Need to terminate active session before cleaning up the login
+SELECT pg_terminate_backend(pid) FROM pg_stat_get_activity(NULL)
+WHERE sys.suser_name(usesysid) = 'lgn_3232' AND backend_type = 'client backend' AND usesysid IS NOT NULL;
+GO
+~~START~~
+bool
+t
+~~END~~
+
+
+-- tsql
+DROP LOGIN lgn_3232;
+GO
+
+DROP USER lgn_3232;
 GO
 
 -- psql
