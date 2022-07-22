@@ -12,7 +12,7 @@ CREATE PROCEDURE dbo.master_p1
 AS
 SELECT a FROM dbo.master_t1;
 GO
-
+ 
 CREATE TABLE myschema.tab1( a int);
 GO
 
@@ -382,15 +382,15 @@ GO
 
 DROP PROC myschema.proc2;
 go
-
+     
 DROP TABLE tab1;
 go
-
+     
 DROP TABLE myschema.tab1;
 GO
 
 DROP SCHEMA myschema;
-GO	
+GO
 
 DROP USER master_janedoe;
 GO

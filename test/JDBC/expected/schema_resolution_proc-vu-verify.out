@@ -22,7 +22,7 @@ char#!#int
 a#!#1
 ~~END~~
 
-
+     
 drop table sch1.t1
 go
 	 

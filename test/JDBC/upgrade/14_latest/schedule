@@ -45,3 +45,4 @@ column_domain_usage
 constraint_column_usage
 sys-all_views
 sys-sysobjects
+schema_resolution_proc
