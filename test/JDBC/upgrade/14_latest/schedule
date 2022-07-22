@@ -46,4 +46,5 @@ constraint_column_usage
 column_domain_usage
 datepart
 sys-all_views
+datepart
 sys-sysobjects
