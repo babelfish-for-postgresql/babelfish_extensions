@@ -1569,7 +1569,7 @@ INSERT INTO sys.babelfish_helpcollation VALUES (N'mongolian_cs_as', N'Mongolian,
 INSERT INTO sys.babelfish_helpcollation VALUES (N'sql_latin1_general_cp874_ci_as', N'Virtual, default locale, code page 874, case-insensitive, accent-sensitive, kanatype-insensitive, width-insensitive');
 INSERT INTO sys.babelfish_helpcollation VALUES (N'sql_latin1_general_cp874_cs_as', N'Virtual, default locale, code page 874, case-sensitive, accent-sensitive, kanatype-insensitive, width-insensitive');
 
-CREATE OR REPLACE FUNCTION sys.datepart(IN datepart PG_CATALOG.TEXT, IN arg TEXT) RETURNS INTEGER
+CREATE OR REPLACE FUNCTION sys.datepart(IN datepart TEXT, IN arg TEXT) RETURNS INTEGER
 AS
 $body$
 BEGIN
@@ -1577,7 +1577,7 @@ BEGIN
         return sys.datepart_internal(datepart, arg::timestamp,
                      sys.babelfish_get_datetimeoffset_tzoffset(arg)::integer);
     ELSIF pg_typeof(arg) = 'pg_catalog.text'::regtype THEN
-        return sys.datepart_internal(datepart, CAST(CAST(arg as sys.nvarchar) as sys.datetime));
+        return sys.datepart_internal(datepart, arg::sys.nvarchar::sys.datetime);
     ELSE
         return sys.datepart_internal(datepart, arg);
     END IF;
