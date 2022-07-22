@@ -26,7 +26,7 @@ jdbc_user
 SELECT * FROM system_user_dep_vu_prepare_view
 GO
 ~~START~~
-nvarchar#!#nvarchar#!#varchar#!#nvarchar
-dbo#!#jdbc_user#!#dbo#!#master
+nvarchar#!#nvarchar
+dbo#!#jdbc_user
 ~~END~~
 
