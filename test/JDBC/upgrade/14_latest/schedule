@@ -31,12 +31,17 @@ TestUDD
 TestUniqueIdentifier
 TestVarChar
 TestXML
+sys-assembly_types
+sys-database_mirroring
+sys-databases
 BABEL-3166
 BABEL-3192
 BABEL-3221
 BABEL-3249
 BABEL-3204
 BABEL-3234
+routines_definition
 column_domain_usage
 constraint_column_usage
+sys-all_views
 sys-sysobjects
