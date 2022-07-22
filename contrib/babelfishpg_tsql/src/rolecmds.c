@@ -1563,7 +1563,7 @@ is_active_login(Oid role_oid)
 	int			tries;
 
 	/* 50 tries with 100ms sleep between tries makes 5 sec total wait */
-	for (tries = 0; tries < 50; tries++)
+	for (tries = 0; tries < 1; tries++)
 	{
 		CHECK_FOR_INTERRUPTS();
 
