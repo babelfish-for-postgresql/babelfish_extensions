@@ -27,19 +27,18 @@ def get_object(line):
     linewords = newline.split()
 
     # list of object types
-    object_types = ['table', 'view', 'function', 'procedure', 'role', 'aggregate', 'schema', 'domain', 'collation', 'index', 'type', 'class', 'cast', 'family']
+    object_types = ['table', 'view', 'function', 'procedure', 'role', 'aggregate', 'schema', 'domain', 'collation', 'index', 'type', 'operator', 'cast', 'family', 'class']
                             
     # setting default object type as object
     obj_type = 'object'
                             
-    for word in linewords:
-        if word in object_types:
-            obj_type = word
+    for i in range(len(linewords)):
+        if linewords[i] in object_types:
+            obj_type = linewords[i]
+            if linewords[i] == 'operator' and linewords[i+1] in object_types:
+                obj_type = obj_type + ' ' + linewords[i+1]
             break
-                            
-    if obj_type == 'class' or obj_type == 'family':
-        obj_type = 'operator ' + obj_type
-                            
+
     # list of syntax words
     syntax_words = ['drop', 'create', 'view', 'procedure', 'function', 'table', 'domain', 
             'index', 'schema', 'temporary', 'aggregate', 'cascade', 'if', 'exists', 'owned', 
@@ -55,7 +54,7 @@ def get_object(line):
     # the first word will give the object_name
     else:
         obj_name = resultwords[0]
-    return obj_type,obj_name
+    return obj_type, obj_name
 
 
 # search for patterns in the upgrade scripts
@@ -203,6 +202,9 @@ def find_in_testfiles(type, searchinfiles, object_names, f_path, logger):
             if "." in object[1]:
                 object_name = object[1].replace(".", "[.]")
 
+            if "information_schema_tsql" in object[1]:
+                object_name = object[1].replace("information_schema_tsql", "information_schema")
+
             # adding word boundary if object is not a function
             if not object[0] == 'function':
                 object_name = object_name + r"\b"
@@ -211,7 +213,7 @@ def find_in_testfiles(type, searchinfiles, object_names, f_path, logger):
 
             # searching again without schema name for objects in all schemas
             if(flag == False and "." in object[1]):
-                object_name = r"\b" + object_name.split(".]")[-1]
+                object_name = r"\b(?<![.])" + object_name.split(".]")[-1]
                 
                 # creating pattern to identify @@func calls
                 if object[0] == 'function':
