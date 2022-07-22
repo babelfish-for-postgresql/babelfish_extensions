@@ -12,10 +12,10 @@ CREATE PROCEDURE dbo.master_p1
 AS
 SELECT a FROM dbo.master_t1;
 GO
- 
+
 CREATE TABLE myschema.tab1( a int);
 GO
-
+ 
 CREATE PROCEDURE myschema.proc1
 AS
 INSERT INTO tab1 values(1);
@@ -382,13 +382,13 @@ GO
 
 DROP PROC myschema.proc2;
 go
-     
+    
 DROP TABLE tab1;
 go
-     
+    
 DROP TABLE myschema.tab1;
 GO
-
+    
 DROP SCHEMA myschema;
 GO
 
