@@ -1,0 +1,74 @@
+CREATE TABLE dbo.babel2934_1 (c TIME(7) NULL, d TIME(7) NULL)
+GO
+INSERT dbo.babel2934_1 VALUES ('00:59:59.9999123' , NULL)
+GO
+~~ROW COUNT: 1~~
+
+INSERT dbo.babel2934_1 VALUES ('00:00:01.0000120' , NULL)
+go
+~~ROW COUNT: 1~~
+
+
+-- add 300 nanoseconds (the 7th digit shows as '3')
+update dbo.babel2934_1 set d = dateadd(ns, 300, c)
+go
+~~ROW COUNT: 2~~
+
+select c, d, convert(varchar(30), c, 109) as c2, convert(varchar(30), d, 109) as d2 from dbo.babel2934_1
+go
+~~START~~
+time#!#time#!#varchar#!#varchar
+00:59:59.999912#!#00:59:59.999912#!#12:59:59.9999120AM#!#12:59:59.9999120AM
+00:00:01.000011#!#00:00:01.000011#!#12:00:01.0000120AM#!#12:00:01.0000120AM
+~~END~~
+
+
+CREATE TABLE dbo.babel2934_2 (c DATETIME2(7) NULL, d DATETIME2(7) NULL)
+GO
+INSERT dbo.babel2934_2 VALUES ('00:59:59.9999123' , NULL)
+GO
+~~ROW COUNT: 1~~
+
+INSERT dbo.babel2934_2 VALUES ('00:00:01.0000120' , NULL)
+go
+~~ROW COUNT: 1~~
+
+
+-- add 300 nanoseconds (the 7th digit shows as '3')
+update dbo.babel2934_2 set d = dateadd(ns, 300, c)
+go
+~~ROW COUNT: 2~~
+
+select c, d, convert(varchar(30), c, 109) as c2, convert(varchar(30), d, 109) as d2 from dbo.babel2934_2
+go
+~~START~~
+datetime2#!#datetime2#!#varchar#!#varchar
+1900-01-01 00:59:59.999912#!#1900-01-01 00:59:59.999912#!#1900-01-01 00:59:59.999912#!#1900-01-01 00:59:59.999912
+1900-01-01 00:00:01.000011#!#1900-01-01 00:00:01.000011#!#1900-01-01 00:00:01.000012#!#1900-01-01 00:00:01.000012
+~~END~~
+
+
+CREATE TABLE dbo.babel2934_3 (c DATETIMEOFFSET(7) NULL, d DATETIMEOFFSET(7) NULL)
+GO
+INSERT dbo.babel2934_3 VALUES ('00:59:59.9999123' , NULL)
+GO
+~~ROW COUNT: 1~~
+
+INSERT dbo.babel2934_3 VALUES ('00:00:01.0000120' , NULL)
+go
+~~ROW COUNT: 1~~
+
+
+-- add 300 nanoseconds (the 7th digit shows as '3')
+update dbo.babel2934_3 set d = dateadd(ns, 300, c)
+go
+~~ROW COUNT: 2~~
+
+select c, d, convert(varchar(30), c, 109) as c2, convert(varchar(30), d, 109) as d2 from dbo.babel2934_3
+go
+~~START~~
+datetimeoffset#!#datetimeoffset#!#varchar#!#varchar
+1900-01-01 00:59:59.999912 +00:00#!#1900-01-01 00:59:59.999912 +00:00#!#1900-01-01 00:59:59.999912 +00#!#1900-01-01 00:59:59.999912 +00
+1900-01-01 00:00:01.000011 +00:00#!#1900-01-01 00:00:01.000011 +00:00#!#1900-01-01 00:00:01.000012 +00#!#1900-01-01 00:00:01.000012 +00
+~~END~~
+
