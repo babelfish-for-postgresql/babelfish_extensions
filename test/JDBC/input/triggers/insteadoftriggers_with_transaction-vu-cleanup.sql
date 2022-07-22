@@ -1,6 +1,0 @@
-drop table insteadoftriggers_with_transaction_t1;
-go
-drop table insteadoftriggers_with_transaction_t2;
-go
-drop table insteadoftriggers_with_transaction_t3;
-go
