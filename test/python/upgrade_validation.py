@@ -54,6 +54,7 @@ def get_dependencies(file, sumfile, logger):
                     AND d.refobjid in (SELECT oid FROM pg_collation WHERE collnamespace = 'sys'::regnamespace)
                     AND v.relnamespace NOT IN ('sys'::regnamespace, 'pg_catalog'::regnamespace, 'information_schema'::regnamespace{0})
                 GROUP BY d.refobjid;"""  
+
             cursor.execute(query.format(schema))
             dep_object = []
             result = cursor.fetchall()
@@ -72,7 +73,7 @@ def get_dependencies(file, sumfile, logger):
             # ignoring the functions used by types, operators and casts internally
             logger.info('Finding dependencies on functions')
 
-            query = """SELECT oid::regprocedure FROM pg_proc WHERE prokind = 'f' AND pronamespace = 'sys'::regnamespace
+            query = """SELECT oid::regprocedure FROM pg_proc WHERE prokind = 'f' AND pronamespace IN ('sys'::regnamespace{0}) AND proname NOT LIKE '\_%'
                     EXCEPT     
                     (   SELECT typinput::oid FROM pg_type WHERE typnamespace = 'sys'::regnamespace 
                         UNION
@@ -93,7 +94,7 @@ def get_dependencies(file, sumfile, logger):
                         SELECT castfunc FROM pg_cast
                     );"""
 
-            cursor.execute(query)
+            cursor.execute(query.format(schema))
             resultset = cursor.fetchall()
             object = [l[0] for l in resultset]
 
@@ -106,7 +107,10 @@ def get_dependencies(file, sumfile, logger):
                         WHERE d.classid = 'pg_rewrite'::regclass
                             AND d.refclassid = 'pg_proc'::regclass 
                             AND d.deptype in('n') 
-                            AND d.refobjid in (SELECT oid FROM pg_proc WHERE prokind = 'f' AND pronamespace = 'sys'::regnamespace AND oid NOT IN (SELECT castfunc from pg_cast))
+                            AND d.refobjid in (SELECT oid FROM pg_proc WHERE prokind = 'f' 
+                                                AND pronamespace IN ('sys'::regnamespace{0}) 
+                                                AND proname NOT LIKE '\_%' 
+                                                AND oid NOT IN (SELECT castfunc from pg_cast))
                             AND v.relnamespace not in('sys'::regnamespace, 'pg_catalog'::regnamespace, 'information_schema'::regnamespace{0})
                         GROUP BY d.refobjid
                     )
@@ -116,7 +120,10 @@ def get_dependencies(file, sumfile, logger):
                         JOIN pg_class AS v ON v.oid = d.objid 
                         WHERE d.refclassid = 'pg_proc'::regclass 
                             AND d.deptype in ('a')
-                            AND d.refobjid in (SELECT oid FROM pg_proc WHERE prokind = 'f' AND pronamespace = 'sys'::regnamespace AND oid NOT IN (SELECT castfunc from pg_cast))
+                            AND d.refobjid in (SELECT oid FROM pg_proc WHERE prokind = 'f' 
+                                                AND pronamespace IN ('sys'::regnamespace{0}) 
+                                                AND proname NOT LIKE '\_%' 
+                                                AND oid NOT IN (SELECT castfunc from pg_cast))
                             AND v.relnamespace not in ('sys'::regnamespace, 'pg_catalog'::regnamespace, 'information_schema'::regnamespace{0})
                         GROUP BY d.refobjid
                     )
