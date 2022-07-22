@@ -7,7 +7,7 @@ babel_password = <password>
 
 # GIVE PATH TO YOUR QUERY FOLDER
 queryFolder=./../../../input/
-
+bcpPath=/usr/local/bin/bcp
 
 runInParallel = false
 printToConsole = true
