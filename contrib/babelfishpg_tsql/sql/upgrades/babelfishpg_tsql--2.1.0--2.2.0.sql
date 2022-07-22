@@ -2572,8 +2572,6 @@ GRANT SELECT ON sys.dm_exec_connections TO PUBLIC;
 
 CALL sys.babelfish_drop_deprecated_function('sys', 'tsql_stat_get_activity_deprecated_2_1');
 CALL sys.babelfish_drop_deprecated_view('sys', 'sysprocesses_deprecated_2_1');
-CALL sys.babelfish_drop_deprecated_view('sys', 'dm_exec_sessions_deprecated_2_1');
-CALL sys.babelfish_drop_deprecated_view('sys', 'dm_exec_connections_deprecated_2_1');
 
 ALTER VIEW sys.sysobjects RENAME TO sysobjects_deprecated_2_1_0;
 
