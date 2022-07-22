@@ -17,23 +17,3 @@ drop table nested_trigger_with_dml_t1
 drop table nested_trigger_with_dml_t2
 drop table nested_trigger_with_dml_t3
 go
-
-drop trigger nested_trigger_with_dml_trig11
-drop trigger nested_trigger_with_dml_trig22
-drop trigger nested_trigger_with_dml_trig33
-go
-
-drop trigger nested_trigger_with_dml_trig44
-drop trigger nested_trigger_with_dml_trig55
-drop trigger nested_trigger_with_dml_trig66
-go
-
-drop trigger nested_trigger_with_dml_trig77
-drop trigger nested_trigger_with_dml_trig88
-drop trigger nested_trigger_with_dml_trig99
-go
-
-drop table nested_trigger_with_dml_t11
-drop table nested_trigger_with_dml_t22
-drop table nested_trigger_with_dml_t33
-go

@@ -1,0 +1,19 @@
+drop trigger insteadof_nested_trigger_with_dml_trig11
+drop trigger insteadof_nested_trigger_with_dml_trig22
+drop trigger insteadof_nested_trigger_with_dml_trig33
+go
+
+drop trigger insteadof_nested_trigger_with_dml_trig44
+drop trigger insteadof_nested_trigger_with_dml_trig55
+drop trigger insteadof_nested_trigger_with_dml_trig66
+go
+
+drop trigger insteadof_nested_trigger_with_dml_trig77
+drop trigger insteadof_nested_trigger_with_dml_trig88
+drop trigger insteadof_nested_trigger_with_dml_trig99
+go
+
+drop table insteadof_nested_trigger_with_dml_t11
+drop table insteadof_nested_trigger_with_dml_t22
+drop table insteadof_nested_trigger_with_dml_t33
+go

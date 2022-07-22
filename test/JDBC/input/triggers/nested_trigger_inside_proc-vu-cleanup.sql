@@ -30,32 +30,3 @@ drop table nested_trigger_inside_proc_t2
 drop table nested_trigger_inside_proc_t3
 go
 
-drop trigger nested_trigger_inside_proc_trig11
-drop trigger nested_trigger_inside_proc_trig22
-drop trigger nested_trigger_inside_proc_trig33
-go
-
-drop trigger nested_trigger_inside_proc_trig44
-drop trigger nested_trigger_inside_proc_trig55
-drop trigger nested_trigger_inside_proc_trig66
-go
-
-drop trigger nested_trigger_inside_proc_trig77
-drop trigger nested_trigger_inside_proc_trig88
-drop trigger nested_trigger_inside_proc_trig99
-go
-
-drop procedure nested_trigger_inside_proc_p11;
-drop procedure nested_trigger_inside_proc_p22;
-drop procedure nested_trigger_inside_proc_p33;
-drop procedure nested_trigger_inside_proc_p011;
-drop procedure nested_trigger_inside_proc_p022;
-drop procedure nested_trigger_inside_proc_p033;
-drop procedure nested_trigger_inside_proc_p0011;
-drop procedure nested_trigger_inside_proc_p0022;
-drop procedure nested_trigger_inside_proc_p0033;
-
-drop table nested_trigger_inside_proc_t11
-drop table nested_trigger_inside_proc_t22
-drop table nested_trigger_inside_proc_t33
-go
