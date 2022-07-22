@@ -7,8 +7,8 @@ go
 drop function sys_indexproperty_vu_prepare_func
 go
 
-drop table t2
+drop table indexproperty_vu_prepare_table2
 go
 
-drop table t1
+drop table indexproperty_vu_prepare_table1
 go
