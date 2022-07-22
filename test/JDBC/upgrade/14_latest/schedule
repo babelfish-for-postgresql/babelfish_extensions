@@ -44,7 +44,6 @@ routines_definition
 column_domain_usage
 constraint_column_usage
 column_domain_usage
-datepart
 sys-all_views
 datepart
 sys-sysobjects
