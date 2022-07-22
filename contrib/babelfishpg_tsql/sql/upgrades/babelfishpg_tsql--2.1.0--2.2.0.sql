@@ -2377,7 +2377,7 @@ GRANT ALL on PROCEDURE sys.sp_describe_first_result_set TO PUBLIC;
 
 -- Drop the deprecated function and procedure
 CALL sys.babelfish_drop_deprecated_function('sys', 'sp_describe_first_result_set_internal_deprecated_2_1');
-CALL sys.babelfish_remove_object_from_extension('procedure','sys.sp_describe_first_result_set_deprecated_2_1(sys.nvarchar,sys.nvarchar,sys.tinyint)');
+CALL sys.babelfish_remove_object_from_extension('procedure','sys.sp_describe_first_result_set_deprecated_2_1(varchar,varchar,sys.tinyint)');
 
 
 ALTER VIEW sys.sysobjects RENAME TO sysobjects_deprecated_2_1_0;
