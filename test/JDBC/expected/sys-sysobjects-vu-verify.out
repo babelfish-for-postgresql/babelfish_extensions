@@ -1,0 +1,34 @@
+USE master;
+GO
+
+SELECT COUNT(*) FROM sys.sysobjects s where s.name = 'sys_sysobjects_vu_prepare_table'
+GO
+~~START~~
+int
+1
+~~END~~
+
+
+SELECT * FROM sys_sysobjects_vu_prepare_view
+GO
+~~START~~
+int
+1
+~~END~~
+
+
+EXEC sys_sysobjects_vu_prepare_proc
+GO
+~~START~~
+int
+1
+~~END~~
+
+
+SELECT dbo.sys_sysobjects_vu_prepare_func()
+GO
+~~START~~
+int
+1
+~~END~~
+
