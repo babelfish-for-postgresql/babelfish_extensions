@@ -7,14 +7,6 @@ dbo#!#jdbc_user#!#dbo#!#master
 ~~END~~
 
 
-SELECT * FROM system_user_vu_prepare_view
-GO
-~~START~~
-nvarchar#!#nvarchar#!#varchar#!#nvarchar
-dbo#!#jdbc_user#!#dbo#!#master
-~END~~
-
-
 SELECT dbo.system_user_vu_prepare_function()
 GO
 ~~START~~
@@ -26,7 +18,7 @@ dbo
 SELECT dbo.session_user_vu_prepare_function()
 GO
 ~~START~~
-nvarchr
+nvarchar
 jdbc_user
 ~END~~
 

@@ -2,9 +2,6 @@
 EXEC system_user_vu_prepare_procedure;
 GO
 
-SELECT * FROM system_user_vu_prepare_view
-GO
-
 SELECT dbo.system_user_vu_prepare_function()
 GO
 

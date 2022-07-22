@@ -10,10 +10,6 @@ AS
    SELECT session_user, system_user, current_user, db_name();
 GO
 
-CREATE VIEW system_user_vu_prepare_view AS
-SELECT session_user, system_user, current_user, db_name();
-GO
-
 CREATE FUNCTION dbo.system_user_vu_prepare_function()
 RETURNS sys.nvarchar(128)
 AS
