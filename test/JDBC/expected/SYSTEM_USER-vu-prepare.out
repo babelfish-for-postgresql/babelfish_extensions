@@ -10,22 +10,22 @@ AS
    SELECT session_user, system_user, current_user, db_name();
 GO
 
-CREATE VIEW system_user_vu_prepare_view
+CREATE VIEW system_user_vu_prepare_view AS
 SELECT session_user, system_user, current_user, db_name();
 GO
 
 CREATE FUNCTION dbo.system_user_vu_prepare_function()
-RETURNS INT
+RETURNS sys.nvarchar(128)
 AS
 BEGIN
-RETURN (SELECT COUNT(*) FROM sys.system_user)
+RETURN (SELECT system_user)
 END
 GO
 
 CREATE FUNCTION dbo.session_user_vu_prepare_function()
-RETURNS INT
+RETURNS sys.nvarchar(128)
 AS
 BEGIN
-RETURN (SELECT COUNT(*) FROM sys.session_user)
+RETURN (SELECT session_user)
 END
 GO

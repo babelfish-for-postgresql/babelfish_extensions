@@ -18,16 +18,16 @@ dbo#!#jdbc_user#!#dbo#!#master
 SELECT dbo.system_user_vu_prepare_function()
 GO
 ~~START~~
-int
-1
+nvarchar
+dbo
 ~END~~
 
 
 SELECT dbo.session_user_vu_prepare_function()
 GO
 ~~START~~
-int
-1
+nvarchr
+jdbc_user
 ~END~~
 
 
