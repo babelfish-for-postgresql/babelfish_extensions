@@ -47,5 +47,6 @@ column_domain_usage
 constraint_column_usage
 sys-all_views
 sys-sysobjects
+schema_resolution_proc
 Test-sp_helpsrvrolemember
 Test-sp_helpsrvrolemember-dep

@@ -648,15 +648,20 @@ exec_stmt_exec(PLtsql_execstate *estate, PLtsql_stmt_exec *stmt)
 	List *path_oids = fetch_search_path(false);
 	char *old_search_path = flatten_search_path(path_oids);
 	char *new_search_path;
+	estate->db_name = NULL;
 	if (stmt->proc_name == NULL)
 		stmt->proc_name = "";
 
 	if (stmt->is_cross_db)
+	{
+	 	estate->db_name = stmt->db_name;
 		SetCurrentRoleId(GetSessionUserId(), false);
+	}
 
-	/*
-	 * TODO: BABEL-2992 The following check can be removed after the
-	 * correct implementation of schema resolution for SQL objects.
+ 	/* 
+	 * "sp_describe_first_result_set" needs special handling. It is a
+	 * sys function and satisfies the below condition and it appends "master_dbo"
+	 * to the search path which is not required for sys functions.
 	 */
 	if (strcmp(stmt->proc_name, "sp_describe_first_result_set") != 0)
 	{
@@ -673,6 +678,10 @@ exec_stmt_exec(PLtsql_execstate *estate, PLtsql_stmt_exec *stmt)
 				need_path_reset = true;
 			}
 	}
+	if (stmt->schema_name != '\0')
+	 	estate->schema_name = stmt->schema_name;
+	else
+		estate->schema_name = NULL;
 
 	/* PG_TRY to ensure we clear the plan link, if needed, on failure */
 	PG_TRY();
