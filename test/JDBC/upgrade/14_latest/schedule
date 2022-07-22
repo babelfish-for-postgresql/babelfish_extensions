@@ -47,3 +47,4 @@ column_domain_usage
 SYSTEM_USER
 sys-all_views
 sys-sysobjects
+SYSTEM_USER_dep

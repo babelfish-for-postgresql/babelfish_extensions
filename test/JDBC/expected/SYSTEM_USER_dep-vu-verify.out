@@ -1,0 +1,32 @@
+-- tsql
+EXEC system_user_vu_prepare_procedure;
+GO
+~~START~~
+nvarchar#!#nvarchar#!#varchar#!#nvarchar
+dbo#!#jdbc_user#!#dbo#!#master
+~~END~~
+
+
+SELECT dbo.system_user_vu_prepare_function()
+GO
+~~START~~
+nvarchar
+dbo
+~~END~~
+
+
+SELECT dbo.session_user_vu_prepare_function()
+GO
+~~START~~
+nvarchar
+jdbc_user
+~~END~~
+
+
+SELECT * FROM system_user_dep_vu_prepare_view
+GO
+~~START~~
+nvarchar#!#nvarchar#!#varchar#!#nvarchar
+dbo#!#jdbc_user#!#dbo#!#master
+~~END~~
+
