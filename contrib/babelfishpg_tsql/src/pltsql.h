@@ -1501,6 +1501,7 @@ typedef struct PLtsql_protocol_plugin
 	void		(*set_db_stat_var) (int16 db_id);
 	bool		(*get_stat_values) (Datum *values, bool *nulls, int len, int pid, int curr_backend);
 	void		(*invalidate_stat_view) (void);
+	char*		(*get_host_name) (void);
 
 	/* Function pointers set by PL/tsql itself */
 	Datum		(*sql_batch_callback) (PG_FUNCTION_ARGS);

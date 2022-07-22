@@ -1,0 +1,7 @@
+SELECT DISTINCT hostname FROM sys.sysprocesses WHERE spid = @@SPID
+GO
+~~START~~
+text
+<NULL>
+~~END~~
+

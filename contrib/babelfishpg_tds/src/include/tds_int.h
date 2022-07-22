@@ -198,6 +198,7 @@ typedef TdsParamNameData *TdsParamName;
 
 extern PGDLLIMPORT uint32_t MyTdsClientVersion;
 extern PGDLLIMPORT char* MyTdsLibraryName;
+extern PGDLLIMPORT char* MyTdsHostName;
 extern PGDLLIMPORT uint32_t MyTdsClientPid;
 extern PGDLLIMPORT uint32_t MyTdsProtocolVersion;
 extern PGDLLIMPORT uint32_t MyTdsPacketSize;
@@ -313,6 +314,7 @@ extern void TdsSetAtAtStatVariable(const char *at_at_var, int intVal, uint64 big
 extern void TdsSetDatabaseStatVariable(int16 db_id);
 extern bool tds_stat_get_activity(Datum *values, bool *nulls, int len, int pid, int curr_backend);
 extern void invalidate_stat_table(void);
+extern char* get_tds_host_name(void);
 
 /* Functions in backend/tds/tdspostgres.c */
 extern void TDSPostgresMain(int argc, char *argv[],
