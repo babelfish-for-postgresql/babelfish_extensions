@@ -1,0 +1,708 @@
+USE master
+GO
+
+SELECT CAST(0 as DATETIME)
+GO
+~~START~~
+datetime
+1900-01-01 00:00:00.0
+~~END~~
+
+
+SELECT CAST(10 as DATETIME)
+GO
+~~START~~
+datetime
+1900-01-11 00:00:00.0
+~~END~~
+
+
+SELECT CAST(3.1215926 as DATETIME)
+GO
+~~START~~
+datetime
+1900-01-04 02:55:05.6
+~~END~~
+
+
+SELECT CAST(216.5937465072345996348935531215926 as DATETIME)
+GO
+~~START~~
+datetime
+1900-08-05 14:14:59.697
+~~END~~
+
+
+SELECT CAST(-46.781289 as DATETIME)
+GO
+~~START~~
+datetime
+1899-11-15 05:14:56.63
+~~END~~
+
+
+SELECT CAST(999999999 as DATETIME)
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: timestamp out of range)~~
+
+
+SELECT CAST(-999999999 as DATETIME)
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: timestamp out of range)~~
+
+
+--=== Test casting BIT to DATETIME ===--
+SELECT CAST(CAST (0 as BIT) as DATETIME)
+GO
+~~START~~
+datetime
+1900-01-01 00:00:00.0
+~~END~~
+
+
+SELECT CAST(CAST (1 as BIT) as DATETIME)
+GO
+~~START~~
+datetime
+1900-01-02 00:00:00.0
+~~END~~
+
+
+SELECT CAST(CAST (-1 as BIT) as DATETIME)
+GO
+~~START~~
+datetime
+1900-01-02 00:00:00.0
+~~END~~
+
+
+SELECT CAST(CAST (5 as BIT) as DATETIME)
+GO
+~~START~~
+datetime
+1900-01-02 00:00:00.0
+~~END~~
+
+
+SELECT CAST(CAST (-5 as BIT) as DATETIME)
+GO
+~~START~~
+datetime
+1900-01-02 00:00:00.0
+~~END~~
+
+
+--=== Test casting NUMERIC to DATETIME ===--
+SELECT CAST(CAST (0 as NUMERIC) as DATETIME)
+GO
+~~START~~
+datetime
+1900-01-01 00:00:00.0
+~~END~~
+
+
+SELECT CAST(CAST (10 as NUMERIC) as DATETIME)
+GO
+~~START~~
+datetime
+1900-01-11 00:00:00.0
+~~END~~
+
+
+SELECT CAST(CAST (3.1215926 as NUMERIC) as DATETIME)
+GO
+~~START~~
+datetime
+1900-01-04 00:00:00.0
+~~END~~
+
+
+SELECT CAST(CAST (216.5937465072345996348935531215926 as NUMERIC(19,7)) as DATETIME)
+GO
+~~START~~
+datetime
+1900-08-05 14:14:59.697
+~~END~~
+
+
+SELECT CAST(CAST (-46.781289 as NUMERIC(6,2)) as DATETIME)
+GO
+~~START~~
+datetime
+1899-11-15 05:16:48.0
+~~END~~
+
+
+SELECT CAST(CAST (-46.781289 as NUMERIC(32,17)) as DATETIME)
+GO
+~~START~~
+datetime
+1899-11-15 05:14:56.63
+~~END~~
+
+
+SELECT CAST(CAST (10 as NUMERIC(1,2)) as DATETIME)
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: NUMERIC scale 2 must be between 0 and precision 1)~~
+
+
+--=== Test casting DECIMAL to DATETIME ===--
+SELECT CAST(CAST (0 as DECIMAL) as DATETIME)
+GO
+~~START~~
+datetime
+1900-01-01 00:00:00.0
+~~END~~
+
+
+SELECT CAST(CAST (10 as DECIMAL) as DATETIME)
+GO
+~~START~~
+datetime
+1900-01-11 00:00:00.0
+~~END~~
+
+
+SELECT CAST(CAST (3.1215926 as DECIMAL) as DATETIME)
+GO
+~~START~~
+datetime
+1900-01-04 00:00:00.0
+~~END~~
+
+
+SELECT CAST(CAST (216.5937465072345996348935531215926 as DECIMAL(19,7)) as DATETIME)
+GO
+~~START~~
+datetime
+1900-08-05 14:14:59.697
+~~END~~
+
+
+SELECT CAST(CAST (-46.781289 as DECIMAL(6,2)) as DATETIME)
+GO
+~~START~~
+datetime
+1899-11-15 05:16:48.0
+~~END~~
+
+
+SELECT CAST(CAST (-46.781289 as DECIMAL(32,17)) as DATETIME)
+GO
+~~START~~
+datetime
+1899-11-15 05:14:56.63
+~~END~~
+
+
+SELECT CAST(CAST (10 as DECIMAL(1,2)) as DATETIME)
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: NUMERIC scale 2 must be between 0 and precision 1)~~
+
+
+--=== Test casting FLOAT to DATETIME ===--
+SELECT CAST(CAST (0 as FLOAT) as DATETIME)
+GO
+~~START~~
+datetime
+1900-01-01 00:00:00.0
+~~END~~
+
+
+SELECT CAST(CAST (10 as FLOAT) as DATETIME)
+GO
+~~START~~
+datetime
+1900-01-11 00:00:00.0
+~~END~~
+
+
+SELECT CAST(CAST (3.1215926 as FLOAT) as DATETIME)
+GO
+~~START~~
+datetime
+1900-01-04 02:55:05.6
+~~END~~
+
+
+SELECT CAST(CAST (216.5937465072345996348935531215926 as FLOAT(12)) as DATETIME)
+GO
+~~START~~
+datetime
+1900-08-05 14:15:00.0
+~~END~~
+
+
+SELECT CAST(CAST (-46.781289 as FLOAT(50)) as DATETIME)
+GO
+~~START~~
+datetime
+1899-11-15 05:14:56.63
+~~END~~
+
+
+SELECT CAST(CAST (-46.781289 as FLOAT(1)) as DATETIME)
+GO
+~~START~~
+datetime
+1899-11-15 05:14:56.7
+~~END~~
+
+
+SELECT CAST(CAST (999999999 as FLOAT(53)) as DATETIME)
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: timestamp out of range)~~
+
+
+SELECT CAST(CAST (-999999999 as FLOAT(53)) as DATETIME)
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: timestamp out of range)~~
+
+
+--=== Test casting REAL to DATETIME ===--
+SELECT CAST(CAST (0 as REAL) as DATETIME)
+GO
+~~START~~
+datetime
+1900-01-01 00:00:00.0
+~~END~~
+
+
+SELECT CAST(CAST (10 as REAL) as DATETIME)
+GO
+~~START~~
+datetime
+1900-01-11 00:00:00.0
+~~END~~
+
+
+SELECT CAST(CAST (3.1215926 as REAL) as DATETIME)
+GO
+~~START~~
+datetime
+1900-01-04 02:55:05.59
+~~END~~
+
+
+SELECT CAST(CAST (216.5937465072345996348935531215926 as REAL) as DATETIME)
+GO
+~~START~~
+datetime
+1900-08-05 14:15:00.0
+~~END~~
+
+
+SELECT CAST(CAST (-46.781289 as REAL) as DATETIME)
+GO
+~~START~~
+datetime
+1899-11-15 05:14:56.7
+~~END~~
+
+
+SELECT CAST(CAST (999999999 as REAL) as DATETIME)
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: timestamp out of range)~~
+
+
+SELECT CAST(CAST (-999999999 as REAL) as DATETIME)
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: timestamp out of range)~~
+
+
+--=== Test casting INT to DATETIME ===--
+SELECT CAST(CAST (0 as INT) as DATETIME)
+GO
+~~START~~
+datetime
+1900-01-01 00:00:00.0
+~~END~~
+
+
+SELECT CAST(CAST (10 as INT) as DATETIME)
+GO
+~~START~~
+datetime
+1900-01-11 00:00:00.0
+~~END~~
+
+
+SELECT CAST(CAST (3.1215926 as INT) as DATETIME)
+GO
+~~START~~
+datetime
+1900-01-04 00:00:00.0
+~~END~~
+
+
+SELECT CAST(CAST (216.5937465072345996348935531215926 as INT) as DATETIME)
+GO
+~~START~~
+datetime
+1900-08-05 00:00:00.0
+~~END~~
+
+
+SELECT CAST(CAST (-46.781289 as INT) as DATETIME)
+GO
+~~START~~
+datetime
+1899-11-16 00:00:00.0
+~~END~~
+
+
+--=== Test casting BIGINT to DATETIME ===--
+SELECT CAST(CAST (0 as BIGINT) as DATETIME)
+GO
+~~START~~
+datetime
+1900-01-01 00:00:00.0
+~~END~~
+
+
+SELECT CAST(CAST (10 as BIGINT) as DATETIME)
+GO
+~~START~~
+datetime
+1900-01-11 00:00:00.0
+~~END~~
+
+
+SELECT CAST(CAST (3.1215926 as BIGINT) as DATETIME)
+GO
+~~START~~
+datetime
+1900-01-04 00:00:00.0
+~~END~~
+
+
+SELECT CAST(CAST (216.5937465072345996348935531215926 as BIGINT) as DATETIME)
+GO
+~~START~~
+datetime
+1900-08-05 00:00:00.0
+~~END~~
+
+
+SELECT CAST(CAST (-46.781289 as BIGINT) as DATETIME)
+GO
+~~START~~
+datetime
+1899-11-16 00:00:00.0
+~~END~~
+
+
+SELECT CAST(CAST (999999999 as BIGINT) as DATETIME)
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: timestamp out of range)~~
+
+
+SELECT CAST(CAST (-999999999 as BIGINT) as DATETIME)
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: timestamp out of range)~~
+
+
+--=== Test casting SMALLINT to DATETIME ===--
+SELECT CAST(CAST (0 as SMALLINT) as DATETIME)
+GO
+~~START~~
+datetime
+1900-01-01 00:00:00.0
+~~END~~
+
+
+SELECT CAST(CAST (10 as SMALLINT) as DATETIME)
+GO
+~~START~~
+datetime
+1900-01-11 00:00:00.0
+~~END~~
+
+
+SELECT CAST(CAST (3.1215926 as SMALLINT) as DATETIME)
+GO
+~~START~~
+datetime
+1900-01-04 00:00:00.0
+~~END~~
+
+
+SELECT CAST(CAST (216.5937465072345996348935531215926 as SMALLINT) as DATETIME)
+GO
+~~START~~
+datetime
+1900-08-05 00:00:00.0
+~~END~~
+
+
+SELECT CAST(CAST (-46.781289 as SMALLINT) as DATETIME)
+GO
+~~START~~
+datetime
+1899-11-16 00:00:00.0
+~~END~~
+
+
+SELECT CAST(CAST (999999999 as SMALLINT) as DATETIME)
+GO
+~~ERROR (Code: 220)~~
+
+~~ERROR (Message: smallint out of range)~~
+
+
+SELECT CAST(CAST (-999999999 as SMALLINT) as DATETIME)
+GO
+~~ERROR (Code: 220)~~
+
+~~ERROR (Message: smallint out of range)~~
+
+
+--=== Test casting TINYINT to DATETIME ===--
+SELECT CAST(CAST (0 as TINYINT) as DATETIME)
+GO
+~~START~~
+datetime
+1900-01-01 00:00:00.0
+~~END~~
+
+
+SELECT CAST(CAST (10 as TINYINT) as DATETIME)
+GO
+~~START~~
+datetime
+1900-01-11 00:00:00.0
+~~END~~
+
+
+SELECT CAST(CAST (3.1215926 as TINYINT) as DATETIME)
+GO
+~~START~~
+datetime
+1900-01-04 00:00:00.0
+~~END~~
+
+
+SELECT CAST(CAST (260.5937465072345996348935531215926 as TINYINT) as DATETIME)
+GO
+~~START~~
+datetime
+~~ERROR (Code: 220)~~
+
+~~ERROR (Message: value for domain tinyint violates check constraint "tinyint_check")~~
+
+
+SELECT CAST(CAST (-1 as TINYINT) as DATETIME)
+GO
+~~START~~
+datetime
+~~ERROR (Code: 220)~~
+
+~~ERROR (Message: value for domain tinyint violates check constraint "tinyint_check")~~
+
+
+--=== Test casting MONEY to DATETIME ===--
+SELECT CAST(CAST (0 as MONEY) as DATETIME)
+GO
+~~START~~
+datetime
+1900-01-01 00:00:00.0
+~~END~~
+
+
+SELECT CAST(CAST (10 as MONEY) as DATETIME)
+GO
+~~START~~
+datetime
+1900-01-11 00:00:00.0
+~~END~~
+
+
+SELECT CAST(CAST (3.1215926 as MONEY) as DATETIME)
+GO
+~~START~~
+datetime
+1900-01-04 02:55:06.24
+~~END~~
+
+
+SELECT CAST(CAST (216.5937465072345996348935531215926 as MONEY) as DATETIME)
+GO
+~~START~~
+datetime
+1900-08-05 14:14:55.68
+~~END~~
+
+
+SELECT CAST(CAST (-46.781289 as MONEY) as DATETIME)
+GO
+~~START~~
+datetime
+1899-11-15 05:14:55.68
+~~END~~
+
+
+SELECT CAST(CAST (46.99999999 as MONEY) as DATETIME)
+GO
+~~START~~
+datetime
+1900-02-17 00:00:00.0
+~~END~~
+
+
+
+SELECT CAST(CAST (999999999 as MONEY) as DATETIME)
+GO
+~~START~~
+datetime
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: timestamp out of range)~~
+
+
+SELECT CAST(CAST (-999999999 as MONEY) as DATETIME)
+GO
+~~START~~
+datetime
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: timestamp out of range)~~
+
+
+--=== Test casting SMALLMONEY to DATETIME ===--
+SELECT CAST(CAST (0 as SMALLMONEY) as DATETIME)
+GO
+~~START~~
+datetime
+1900-01-01 00:00:00.0
+~~END~~
+
+
+SELECT CAST(CAST (10 as SMALLMONEY) as DATETIME)
+GO
+~~START~~
+datetime
+1900-01-11 00:00:00.0
+~~END~~
+
+
+SELECT CAST(CAST (3.1215926 as SMALLMONEY) as DATETIME)
+GO
+~~START~~
+datetime
+1900-01-04 02:55:06.24
+~~END~~
+
+
+SELECT CAST(CAST (216.5937465072345996348935531215926 as SMALLMONEY) as DATETIME)
+GO
+~~START~~
+datetime
+1900-08-05 14:14:55.68
+~~END~~
+
+
+SELECT CAST(CAST (-46.781289 as SMALLMONEY) as DATETIME)
+GO
+~~START~~
+datetime
+1899-11-15 05:14:55.68
+~~END~~
+
+
+SELECT CAST(CAST (46.99999999 as SMALLMONEY) as DATETIME)
+GO
+~~START~~
+datetime
+1900-02-17 00:00:00.0
+~~END~~
+
+
+SELECT CAST(CAST (215000 as SMALLMONEY) as DATETIME)
+GO
+~~START~~
+datetime
+~~ERROR (Code: 220)~~
+
+~~ERROR (Message: value for domain smallmoney violates check constraint "smallmoney_check")~~
+
+
+SELECT CAST(CAST (-215000 as SMALLMONEY) as DATETIME)
+GO
+~~START~~
+datetime
+~~ERROR (Code: 220)~~
+
+~~ERROR (Message: value for domain smallmoney violates check constraint "smallmoney_check")~~
+
+
+SELECT CAST(CAST (999999999 as SMALLMONEY) as DATETIME)
+GO
+~~START~~
+datetime
+~~ERROR (Code: 220)~~
+
+~~ERROR (Message: value for domain smallmoney violates check constraint "smallmoney_check")~~
+
+
+SELECT CAST(CAST (-999999999 as SMALLMONEY) as DATETIME)
+GO
+~~START~~
+datetime
+~~ERROR (Code: 220)~~
+
+~~ERROR (Message: value for domain smallmoney violates check constraint "smallmoney_check")~~
+
+
+--=== Version upgrade tests ===--
+SELECT * FROM datetime_vu_prepare_table
+GO
+~~START~~
+datetime
+1900-01-11 00:00:00.0
+1900-01-02 00:00:00.0
+1900-08-05 14:14:59.697
+1899-11-15 05:16:48.0
+1900-02-24 15:14:18.25
+1900-01-04 02:55:05.59
+1900-04-09 00:00:00.0
+1900-05-12 00:00:00.0
+1900-01-06 00:00:00.0
+1900-01-10 00:00:00.0
+~~END~~
+
+
+EXEC datetime_vu_prepare_procedure
+GO
+~~START~~
+datetime
+1900-02-17 00:00:00.0
+~~END~~
+
+
+SELECT dbo.datetime_vu_prepare_function (CAST(345.3 AS SMALLMONEY))
+GO
+~~START~~
+datetime
+1900-12-12 07:12:00.0
+~~END~~
+

@@ -555,9 +555,8 @@ select cast(cast(cast(3.1415926 as float) as sql_variant) as datetime);
 go
 ~~START~~
 datetime
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: unable to cast from internal type double precision to datetime)~~
+1900-01-04 03:23:53.6
+~~END~~
 
 -- int to datetime2
 select cast(cast(cast(123 as int) as sql_variant) as datetime2);
