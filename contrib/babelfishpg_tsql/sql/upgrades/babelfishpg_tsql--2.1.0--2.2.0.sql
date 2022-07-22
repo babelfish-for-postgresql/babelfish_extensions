@@ -1962,6 +1962,94 @@ LANGUAGE plpgsql;
 
 CALL sys.babelfish_drop_deprecated_function('sys', 'objectpropertyex_deprecated_2_1_0');
 
+ALTER FUNCTION sys.suser_name RENAME TO suser_name_deprecated_2_1_0;
+ALTER FUNCTION sys.suser_sname RENAME TO suser_sname_deprecated_2_1_0;
+ALTER FUNCTION sys.suser_id RENAME TO suser_id_deprecated_2_1_0;
+ALTER FUNCTION sys.suser_sid RENAME TO suser_sid_deprecated_2_1_0;
+
+CREATE OR REPLACE FUNCTION sys.suser_name_internal(IN server_user_id OID)
+RETURNS sys.NVARCHAR(128)
+AS 'babelfishpg_tsql', 'suser_name'
+LANGUAGE C IMMUTABLE PARALLEL RESTRICTED;
+
+CREATE OR REPLACE FUNCTION sys.suser_name(IN server_user_id OID)
+RETURNS sys.NVARCHAR(128) AS $$
+    SELECT CASE 
+        WHEN server_user_id IS NULL THEN NULL
+        ELSE sys.suser_name_internal(server_user_id)
+    END;
+$$
+LANGUAGE SQL IMMUTABLE PARALLEL RESTRICTED;
+
+CREATE OR REPLACE FUNCTION sys.suser_name()
+RETURNS sys.NVARCHAR(128)
+AS $$
+    SELECT sys.suser_name_internal(NULL);
+$$
+LANGUAGE SQL IMMUTABLE PARALLEL RESTRICTED;
+
+-- Since SIDs are currently not supported in Babelfish, this essentially behaves the same as suser_name but 
+-- with a different input data type
+CREATE OR REPLACE FUNCTION sys.suser_sname(IN server_user_sid SYS.VARBINARY(85))
+RETURNS SYS.NVARCHAR(128)
+AS $$
+    SELECT sys.suser_name(CAST(server_user_sid AS INT)); 
+$$
+LANGUAGE SQL IMMUTABLE PARALLEL RESTRICTED;
+
+CREATE OR REPLACE FUNCTION sys.suser_sname()
+RETURNS SYS.NVARCHAR(128)
+AS $$
+    SELECT sys.suser_name();
+$$
+LANGUAGE SQL IMMUTABLE PARALLEL RESTRICTED;
+
+CREATE OR REPLACE FUNCTION sys.suser_id_internal(IN login TEXT)
+RETURNS OID
+AS 'babelfishpg_tsql', 'suser_id'
+LANGUAGE C IMMUTABLE PARALLEL RESTRICTED;
+
+CREATE OR REPLACE FUNCTION sys.suser_id(IN login TEXT)
+RETURNS OID AS $$
+    SELECT CASE
+        WHEN login IS NULL THEN NULL
+        ELSE sys.suser_id_internal(login)
+    END;
+$$
+LANGUAGE SQL IMMUTABLE PARALLEL RESTRICTED;
+
+CREATE OR REPLACE FUNCTION sys.suser_id()
+RETURNS OID
+AS $$
+    SELECT sys.suser_id_internal(NULL);
+$$
+LANGUAGE SQL IMMUTABLE PARALLEL RESTRICTED;
+
+-- Since SIDs are currently not supported in Babelfish, this essentially behaves the same as suser_id but 
+-- with different input/output data types. The second argument will be ignored as its functionality is not supported
+CREATE OR REPLACE FUNCTION sys.suser_sid(IN login SYS.SYSNAME, IN Param2 INT DEFAULT NULL)
+RETURNS SYS.VARBINARY(85) AS $$
+    SELECT CASE
+    WHEN login = '' 
+        THEN CAST(CAST(sys.suser_id() AS INT) AS SYS.VARBINARY(85))
+    ELSE 
+        CAST(CAST(sys.suser_id(login) AS INT) AS SYS.VARBINARY(85))
+    END;
+$$
+LANGUAGE SQL IMMUTABLE PARALLEL RESTRICTED;
+
+CREATE OR REPLACE FUNCTION sys.suser_sid()
+RETURNS SYS.VARBINARY(85)
+AS $$
+    SELECT CAST(CAST(sys.suser_id() AS INT) AS SYS.VARBINARY(85));
+$$
+LANGUAGE SQL IMMUTABLE PARALLEL RESTRICTED;
+
+CALL sys.babelfish_drop_deprecated_function('sys', 'suser_name_deprecated_2_1_0');
+CALL sys.babelfish_drop_deprecated_function('sys', 'suser_sname_deprecated_2_1_0');
+CALL sys.babelfish_drop_deprecated_function('sys', 'suser_id_deprecated_2_1_0');
+CALL sys.babelfish_drop_deprecated_function('sys', 'suser_sid_deprecated_2_1_0');
+	  
 INSERT INTO sys.babelfish_configurations
 VALUES
   (
@@ -2284,6 +2372,50 @@ select
 from sys.table_types tt
 ) ot;
 GRANT SELECT ON sys.all_objects TO PUBLIC;
+
+CREATE OR REPLACE PROCEDURE sys.sp_helpsrvrolemember("@srvrolename" sys.SYSNAME = NULL) AS
+$$
+BEGIN
+	-- If server role is not specified, return info for all server roles
+	IF @srvrolename IS NULL
+	BEGIN
+		SELECT CAST(Ext1.rolname AS sys.SYSNAME) AS 'ServerRole',
+			   CAST(Ext2.rolname AS sys.SYSNAME) AS 'MemberName',
+			   CAST(CAST(Base2.oid AS INT) AS sys.VARBINARY(85)) AS 'MemberSID'
+		FROM pg_catalog.pg_auth_members AS Authmbr
+		INNER JOIN pg_catalog.pg_roles AS Base1 ON Base1.oid = Authmbr.roleid
+		INNER JOIN pg_catalog.pg_roles AS Base2 ON Base2.oid = Authmbr.member
+		INNER JOIN sys.babelfish_authid_login_ext AS Ext1 ON Base1.rolname = Ext1.rolname
+		INNER JOIN sys.babelfish_authid_login_ext AS Ext2 ON Base2.rolname = Ext2.rolname
+		WHERE Ext1.type = 'R'
+		ORDER BY ServerRole, MemberName;
+	END
+	-- If a valid server role is specified, return its member info
+	ELSE IF EXISTS (SELECT 1
+					FROM sys.babelfish_authid_login_ext
+					WHERE (rolname = @srvrolename
+					OR lower(rolname) = lower(@srvrolename))
+					AND type = 'R')
+	BEGIN
+		SELECT CAST(Ext1.rolname AS sys.SYSNAME) AS 'ServerRole',
+			   CAST(Ext2.rolname AS sys.SYSNAME) AS 'MemberName',
+			   CAST(CAST(Base2.oid AS INT) AS sys.VARBINARY(85)) AS 'MemberSID'
+		FROM pg_catalog.pg_auth_members AS Authmbr
+		INNER JOIN pg_catalog.pg_roles AS Base1 ON Base1.oid = Authmbr.roleid
+		INNER JOIN pg_catalog.pg_roles AS Base2 ON Base2.oid = Authmbr.member
+		INNER JOIN sys.babelfish_authid_login_ext AS Ext1 ON Base1.rolname = Ext1.rolname
+		INNER JOIN sys.babelfish_authid_login_ext AS Ext2 ON Base2.rolname = Ext2.rolname
+		WHERE Ext1.type = 'R'
+		AND (Ext1.rolname = @srvrolename OR lower(Ext1.rolname) = lower(@srvrolename))
+		ORDER BY ServerRole, MemberName;
+	END
+	-- If the specified server role is not valid
+	ELSE
+		RAISERROR('%s is not a known fixed role.', 16, 1, @srvrolename);
+END;
+$$
+LANGUAGE 'pltsql';
+GRANT EXECUTE ON PROCEDURE sys.sp_helpsrvrolemember TO PUBLIC;
 
 INSERT INTO sys.babelfish_helpcollation VALUES (N'estonian_ci_ai', N'Estonian, case-insensitive, accent-insensitive, kanatype-insensitive, width-insensitive');
 INSERT INTO sys.babelfish_helpcollation VALUES (N'estonian_ci_as', N'Estonian, case-insensitive, accent-sensitive, kanatype-insensitive, width-insensitive');
