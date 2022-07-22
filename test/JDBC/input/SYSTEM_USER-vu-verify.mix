@@ -2,6 +2,15 @@
 EXEC system_user_vu_prepare_procedure;
 GO
 
+SELECT * FROM system_user_vu_prepare_view
+GO
+
+SELECT dbo.system_user_vu_prepare_function()
+GO
+
+SELECT dbo.session_user_vu_prepare_function()
+GO
+
 -- tsql user=system_user_vu_prepare_r1 password=123
 SELECT session_user, system_user, current_user, db_name();
 GO

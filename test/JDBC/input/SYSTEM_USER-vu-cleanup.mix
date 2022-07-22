@@ -3,3 +3,8 @@ DROP LOGIN system_user_vu_prepare_r1;
 DROP LOGIN system_user_vu_prepare_r2;
 DROP PROCEDURE system_user_vu_prepare_procedure;
 GO
+
+DROP VIEW system_user_vu_prepare_view
+DROP FUNCTION dbo.system_user_vu_prepare_function()
+DROP FUNCTION dbo.session_user_vu_prepare_function()
+GO
