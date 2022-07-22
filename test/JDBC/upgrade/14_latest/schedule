@@ -43,7 +43,6 @@ BABEL-3234
 routines_definition
 column_domain_usage
 constraint_column_usage
-column_domain_usage
 SYSTEM_USER
 sys-all_views
 sys-sysobjects
