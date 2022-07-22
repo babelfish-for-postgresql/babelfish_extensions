@@ -1,0 +1,91 @@
+EXEC test_sp_helpsrvrolemember_proc
+GO
+~~ROW COUNT: 1~~
+
+~~START~~
+varchar#!#varchar#!#int
+sysadmin#!#jdbc_user#!#1
+~~END~~
+
+
+SELECT dbo.test_sp_helpsrvrolemember_func()
+GO
+~~START~~
+int
+1
+~~END~~
+
+
+SELECT * FROM test_sp_helpsrvrolemember_view
+GO
+~~START~~
+int
+1
+~~END~~
+
+
+ALTER SERVER ROLE sysadmin ADD MEMBER test_sp_helpsrvrolemember_login
+GO
+
+EXEC test_sp_helpsrvrolemember_proc 'sysadmin'
+GO
+~~ROW COUNT: 2~~
+
+~~START~~
+varchar#!#varchar#!#int
+sysadmin#!#jdbc_user#!#1
+sysadmin#!#test_sp_helpsrvrolemember_login#!#1
+~~END~~
+
+
+SELECT dbo.test_sp_helpsrvrolemember_func()
+GO
+~~START~~
+int
+2
+~~END~~
+
+
+SELECT * FROM test_sp_helpsrvrolemember_view
+GO
+~~START~~
+int
+2
+~~END~~
+
+
+ALTER SERVER ROLE sysadmin DROP MEMBER test_sp_helpsrvrolemember_login
+GO
+
+EXEC test_sp_helpsrvrolemember_proc 'sysadmin'
+GO
+~~ROW COUNT: 1~~
+
+~~START~~
+varchar#!#varchar#!#int
+sysadmin#!#jdbc_user#!#1
+~~END~~
+
+
+SELECT dbo.test_sp_helpsrvrolemember_func()
+GO
+~~START~~
+int
+1
+~~END~~
+
+
+SELECT * FROM test_sp_helpsrvrolemember_view
+GO
+~~START~~
+int
+1
+~~END~~
+
+
+EXEC sp_helpsrvrolemember 'error'
+GO
+~~ERROR (Code: 50000)~~
+
+~~ERROR (Message: error is not a known fixed role.)~~
+

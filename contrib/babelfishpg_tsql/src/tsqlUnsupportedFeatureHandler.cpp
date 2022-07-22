@@ -1544,7 +1544,6 @@ const char *unsupported_sp_procedures[] = {
 	"sp_helpremotelogin",
 	"sp_helprotect",
 	"sp_helpsrvrole",
-	"sp_helpsrvrolemember",
 	"sp_migrate_user_to_contained",
 	"sp_MShasdbaccess",
 	"sp_password",

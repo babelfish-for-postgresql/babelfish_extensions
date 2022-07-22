@@ -102,7 +102,6 @@ Could not find tests for view sys.sp_statistics_view
 Could not find tests for view sys.sp_stored_procedures_view
 Could not find tests for view sys.sp_table_privileges_view
 Could not find tests for view sys.spt_columns_view_managed
-Could not find upgrade tests for domain sys.sysname
 Could not find upgrade tests for domain sys.timestamp
 Could not find upgrade tests for function assemblyproperty
 Could not find upgrade tests for function collationproperty

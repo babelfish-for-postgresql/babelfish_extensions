@@ -1,0 +1,58 @@
+INSERT INTO test_sp_helpsrvrolemember_tbl (ServerRole, MemberName, MemberSID) EXEC sp_helpsrvrolemember
+GO
+~~ROW COUNT: 1~~
+
+
+SELECT ServerRole, MemberName, (CASE WHEN MemberSID IS NULL THEN 0 ELSE 1 END) FROM test_sp_helpsrvrolemember_tbl
+GO
+~~START~~
+varchar#!#varchar#!#int
+sysadmin#!#jdbc_user#!#1
+~~END~~
+
+
+TRUNCATE TABLE test_sp_helpsrvrolemember_tbl
+GO
+
+ALTER SERVER ROLE sysadmin ADD MEMBER test_sp_helpsrvrolemember_login
+GO
+
+INSERT INTO test_sp_helpsrvrolemember_tbl (ServerRole, MemberName, MemberSID) EXEC sp_helpsrvrolemember 'sysadmin'
+GO
+~~ROW COUNT: 2~~
+
+
+SELECT ServerRole, MemberName, (CASE WHEN MemberSID IS NULL THEN 0 ELSE 1 END) FROM test_sp_helpsrvrolemember_tbl
+GO
+~~START~~
+varchar#!#varchar#!#int
+sysadmin#!#jdbc_user#!#1
+sysadmin#!#test_sp_helpsrvrolemember_login#!#1
+~~END~~
+
+
+TRUNCATE TABLE test_sp_helpsrvrolemember_tbl
+GO
+
+ALTER SERVER ROLE sysadmin DROP MEMBER test_sp_helpsrvrolemember_login
+GO
+
+INSERT INTO test_sp_helpsrvrolemember_tbl (ServerRole, MemberName, MemberSID) EXEC sp_helpsrvrolemember 'sysadmin'
+GO
+~~ROW COUNT: 1~~
+
+
+SELECT ServerRole, MemberName, (CASE WHEN MemberSID IS NULL THEN 0 ELSE 1 END) FROM test_sp_helpsrvrolemember_tbl
+GO
+~~START~~
+varchar#!#varchar#!#int
+sysadmin#!#jdbc_user#!#1
+~~END~~
+
+
+EXEC sp_helpsrvrolemember 'error'
+GO
+~~ERROR (Code: 50000)~~
+
+~~ERROR (Message: error is not a known fixed role.)~~
+
