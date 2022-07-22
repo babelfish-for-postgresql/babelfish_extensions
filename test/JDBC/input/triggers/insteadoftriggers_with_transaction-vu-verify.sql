@@ -1,3 +1,6 @@
+Use insteadoftriggers_with_transaction_vu_db;
+go
+
 insert into insteadoftriggers_with_transaction_t1 values(2, 'second');
 go
 
@@ -516,3 +519,10 @@ drop table insteadoftriggers_with_transaction_t2;
 go
 drop table insteadoftriggers_with_transaction_t3;
 go
+
+
+use master;
+GO
+
+drop database insteadoftriggers_with_transaction_vu_db;
+GO
