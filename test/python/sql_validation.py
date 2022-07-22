@@ -31,12 +31,15 @@ def get_object(line):
                             
     # setting default object type as object
     obj_type = 'object'
-                            
+    
+    # if object type is operator, check if it is operator, operator class or operator family
+    # by looking at the next word in line
     for i in range(len(linewords)):
         if linewords[i] in object_types:
             obj_type = linewords[i]
-            if linewords[i] == 'operator' and linewords[i+1] in object_types:
-                obj_type = obj_type + ' ' + linewords[i+1]
+            if linewords[i] == 'operator' and i+1<len(linewords):
+                if linewords[i+1] in object_types:
+                    obj_type = obj_type + ' ' + linewords[i+1]
             break
 
     # list of syntax words
