@@ -33,6 +33,8 @@ Could not find tests for function sys.openjson_with
 Could not find tests for function sys.parsename
 Could not find tests for function sys.proc_param_helper
 Could not find tests for function sys.role_id
+Could not find tests for function sys.suser_id_internal
+Could not find tests for function sys.suser_name_internal
 Could not find tests for function sys.space
 Could not find tests for function sys.sp_columns_100_internal
 Could not find tests for function sys.sp_columns_managed_internal
@@ -234,8 +236,8 @@ Could not find upgrade tests for function sys.square
 Could not find upgrade tests for function sys.string_escape
 Could not find upgrade tests for function sys.string_split
 Could not find upgrade tests for function sys.stuff
-Could not find upgrade tests for function sys.suser_id
-Could not find upgrade tests for function sys.suser_name
+Could not find upgrade tests for function sys.suser_id_internal
+Could not find upgrade tests for function sys.suser_name_internal
 Could not find upgrade tests for function sys.sysdatetime
 Could not find upgrade tests for function sys.sysdatetimeoffset
 Could not find upgrade tests for function sys.sysutcdatetime
