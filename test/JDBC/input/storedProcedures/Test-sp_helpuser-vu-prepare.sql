@@ -1,9 +1,3 @@
--- psql
-ALTER SYSTEM SET babelfishpg_tsql.migration_mode = 'multi-db';
-SELECT pg_reload_conf();
-GO
-
--- tsql
 CREATE PROCEDURE check_helpuser @user_or_role AS SYS.SYSNAME = NULL
 AS
 BEGIN
@@ -13,17 +7,10 @@ BEGIN
 END;
 GO
 
--- dbo should show database owner login
-EXEC check_helpuser;
+CREATE DATABASE db_check_helpuser;
 GO
 
-EXEC check_helpuser 'dbo';
-GO
-
-CREATE DATABASE db1;
-GO
-
-USE db1;
+USE db_check_helpuser;
 GO
 
 CREATE PROCEDURE check_helpuser @user_or_role AS SYS.SYSNAME = NULL
@@ -35,26 +22,3 @@ BEGIN
 END;
 GO
 
-EXEC check_helpuser;
-GO
-
-EXEC check_helpuser 'dbo';
-GO
-
--- cleanup
-DROP PROCEDURE check_helpuser
-GO
-
-USE master;
-GO
-
-DROP DATABASE db1;
-GO
-
-DROP PROCEDURE check_helpuser
-GO
-
--- psql
-ALTER SYSTEM SET babelfishpg_tsql.migration_mode = 'single-db';
-SELECT pg_reload_conf();
-GO
