@@ -1569,11 +1569,10 @@ pltsql_store_view_definition(const char *queryString, ObjectAddress address)
 	}
 
 	/*
-	 * Do not store definition/data in case of sys and information_schema_tsql
-	 * views
+	 * Do not store definition/data in case of sys, information_schema_tsql and
+	 * other shared schemas.
 	 */
-	if (strcmp(physical_schemaname, "sys") == 0 ||
-		strcmp(physical_schemaname, "information_schema_tsql") == 0)
+	if (is_shared_schema(physical_schemaname))
 	{
 		ReleaseSysCache(reltup);
 		return;

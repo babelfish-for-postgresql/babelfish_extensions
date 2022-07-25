@@ -162,8 +162,8 @@ typedef FormData_authid_user_ext *Form_authid_user_ext;
 /*****************************************
  *			VIEW_DEF
  *****************************************/
-#define bbf_view_def_TABLE_NAME "babelfish_view_def"
-#define bbf_view_def_IDX_NAME "babelfish_view_def_pkey"
+#define BBF_VIEW_DEF_TABLE_NAME "babelfish_view_def"
+#define BBF_VIEW_DEF_IDX_NAME "babelfish_view_def_pkey"
 #define Anum_bbf_view_def_dbid 1
 #define Anum_bbf_view_def_schema_name 2
 #define Anum_bbf_view_def_object_name 3

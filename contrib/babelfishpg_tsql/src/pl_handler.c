@@ -84,7 +84,6 @@
 
 extern bool escape_hatch_unique_constraint;
 extern bool pltsql_recursive_triggers;
-extern bool pltsql_enable_ddl_from_pgendpoint;
 extern bool restore_tsql_tabletype;
 extern bool babelfish_dump_restore;
 
