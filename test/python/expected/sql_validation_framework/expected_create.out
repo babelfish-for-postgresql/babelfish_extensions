@@ -363,7 +363,6 @@ Could not find upgrade tests for view sys.fulltext_stoplists
 Could not find upgrade tests for view sys.hash_indexes
 Could not find upgrade tests for view sys.identity_columns
 Could not find upgrade tests for view sys.index_columns
-Could not find upgrade tests for view sys.indexes
 Could not find upgrade tests for view sys.key_constraints
 Could not find upgrade tests for view sys.master_files
 Could not find upgrade tests for view sys.objects
