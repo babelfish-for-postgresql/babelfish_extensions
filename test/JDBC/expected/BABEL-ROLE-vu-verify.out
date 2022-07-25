@@ -1,0 +1,324 @@
+SELECT DB_NAME()
+GO
+~~START~~
+nvarchar
+master
+~~END~~
+
+
+-- Test CREATE ROLE
+CREATE ROLE test_role_role1
+GO
+
+EXEC test_role_proc_babel_user_ext_master
+GO
+~~START~~
+varchar#!#char#!#nvarchar#!#nvarchar
+master_test_role_role1#!#R#!#test_role_role1#!#master
+master_test_role_user1#!#S#!#test_role_user1#!#master
+~~END~~
+
+
+EXEC test_role_proc_babel_db_principal_master
+GO
+~~START~~
+varchar#!#nvarchar
+test_role_role1#!#DATABASE_ROLE
+test_role_user1#!#SQL_USER
+~~END~~
+
+
+-- Test database principal uniqueness
+-- should fail, duplicate role name
+CREATE ROLE test_role_role1
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: role "master_test_role_role1" already exists)~~
+
+
+-- Can create a login with same name
+CREATE LOGIN test_role_role1 WITH PASSWORD = 'abc';
+GO
+
+-- should fail, cannot create a user with same name in same db
+CREATE USER test_role_role1
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: role "master_test_role_role1" already exists)~~
+
+
+-- should fail, already have a user with this name in same db
+CREATE ROLE test_role_user1
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: role "master_test_role_user1" already exists)~~
+
+
+-- Test database principal uniqueness in a new database
+USE test_role_db
+GO
+
+SELECT DB_NAME()
+GO
+~~START~~
+nvarchar
+test_role_db
+~~END~~
+
+
+-- It's ok to use duplicate role name in a different db
+CREATE ROLE test_role_role1
+GO
+
+CREATE ROLE test_role_role2
+GO
+
+EXEC test_role_proc_babel_user_ext
+GO
+~~START~~
+varchar#!#char#!#nvarchar#!#nvarchar
+master_test_role_role1#!#R#!#test_role_role1#!#master
+master_test_role_user1#!#S#!#test_role_user1#!#master
+test_role_db_test_role_role1#!#R#!#test_role_role1#!#test_role_db
+test_role_db_test_role_role2#!#R#!#test_role_role2#!#test_role_db
+~~END~~
+
+
+EXEC test_role_proc_babel_db_principal
+GO
+~~START~~
+varchar#!#nvarchar
+test_role_role1#!#DATABASE_ROLE
+test_role_role2#!#DATABASE_ROLE
+~~END~~
+
+
+-- Test ALTER ROLE
+-- Add role as member
+ALTER ROLE test_role_role1 ADD MEMBER test_role_role2
+GO
+
+-- Add user as member
+CREATE LOGIN test_role_login2 WITH PASSWORD = 'abc'
+GO
+
+CREATE USER test_role_user2 FOR LOGIN test_role_login2
+GO
+
+ALTER ROLE test_role_role1 ADD MEMBER test_role_user2
+GO
+
+CREATE LOGIN test_role_login3 WITH PASSWORD = 'abc'
+GO
+
+-- Add login as member, should fail
+ALTER ROLE test_role_role1 ADD MEMBER test_role_login3
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: role "test_role_db_test_role_login3" does not exist)~~
+
+
+-- Add itself as member, should fail
+ALTER ROLE test_role_role1 ADD MEMBER test_role_role1
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: role "test_role_db_test_role_role1" is a member of role "test_role_db_test_role_role1")~~
+
+
+-- Cross member, should fail
+ALTER ROLE test_role_role2 ADD MEMBER test_role_role1
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: role "test_role_db_test_role_role2" is a member of role "test_role_db_test_role_role1")~~
+
+
+-- Add special principals as member, should fail
+ALTER ROLE test_role_role1 ADD MEMBER dbo
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Cannot use the special principal 'dbo')~~
+
+
+ALTER ROLE test_role_role1 ADD MEMBER db_owner
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Cannot use the special principal 'db_owner')~~
+
+
+-- Add/drop member to db_owner, should fail before full support
+ALTER ROLE db_owner ADD MEMBER test_role_role1
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Adding members to db_owner is not currently supported in Babelfish)~~
+
+
+ALTER ROLE db_owner DROP MEMBER test_role_role1
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Dropping members to db_owner is not currently supported in Babelfish)~~
+
+
+CREATE USER test_role_user3 FOR LOGIN test_role_login3
+GO
+
+ALTER ROLE test_role_role2 ADD MEMBER test_role_user3
+GO
+
+EXEC test_role_proc_babel_user_ext
+GO
+~~START~~
+varchar#!#char#!#nvarchar#!#nvarchar
+master_test_role_role1#!#R#!#test_role_role1#!#master
+master_test_role_user1#!#S#!#test_role_user1#!#master
+test_role_db_test_role_role1#!#R#!#test_role_role1#!#test_role_db
+test_role_db_test_role_role2#!#R#!#test_role_role2#!#test_role_db
+test_role_db_test_role_user2#!#S#!#test_role_user2#!#test_role_db
+test_role_db_test_role_user3#!#S#!#test_role_user3#!#test_role_db
+~~END~~
+
+
+EXEC test_role_proc_babel_db_principal
+GO
+~~START~~
+varchar#!#nvarchar
+test_role_role1#!#DATABASE_ROLE
+test_role_role2#!#DATABASE_ROLE
+test_role_user2#!#SQL_USER
+test_role_user3#!#SQL_USER
+~~END~~
+
+
+EXEC test_role_proc_babel_role_members
+GO
+~~START~~
+varchar#!#char#!#varchar#!#char
+db_owner#!#R#!#dbo#!#S
+test_role_role1#!#R#!#test_role_role2#!#R
+test_role_role1#!#R#!#test_role_user2#!#S
+test_role_role2#!#R#!#test_role_user3#!#S
+~~END~~
+
+
+-- Role renaming
+ALTER ROLE test_role_role1 WITH NAME = test_role_role1_new
+GO
+
+EXEC test_role_proc_babel_user_ext
+GO
+~~START~~
+varchar#!#char#!#nvarchar#!#nvarchar
+master_test_role_role1#!#R#!#test_role_role1#!#master
+master_test_role_user1#!#S#!#test_role_user1#!#master
+test_role_db_test_role_role1_new#!#R#!#test_role_role1_new#!#test_role_db
+test_role_db_test_role_role2#!#R#!#test_role_role2#!#test_role_db
+test_role_db_test_role_user2#!#S#!#test_role_user2#!#test_role_db
+test_role_db_test_role_user3#!#S#!#test_role_user3#!#test_role_db
+~~END~~
+
+
+EXEC test_role_proc_babel_db_principal
+GO
+~~START~~
+varchar#!#nvarchar
+test_role_role1_new#!#DATABASE_ROLE
+test_role_role2#!#DATABASE_ROLE
+test_role_user2#!#SQL_USER
+test_role_user3#!#SQL_USER
+~~END~~
+
+
+EXEC test_role_proc_babel_role_members
+GO
+~~START~~
+varchar#!#char#!#varchar#!#char
+db_owner#!#R#!#dbo#!#S
+test_role_role1_new#!#R#!#test_role_role2#!#R
+test_role_role1_new#!#R#!#test_role_user2#!#S
+test_role_role2#!#R#!#test_role_user3#!#S
+~~END~~
+
+
+-- Drop role from member
+ALTER ROLE test_role_role1_new DROP MEMBER test_role_role2
+GO
+
+-- Drop user from member
+ALTER ROLE test_role_role1_new DROP MEMBER test_role_user2
+GO
+
+EXEC test_role_proc_babel_user_ext
+GO
+~~START~~
+varchar#!#char#!#nvarchar#!#nvarchar
+master_test_role_role1#!#R#!#test_role_role1#!#master
+master_test_role_user1#!#S#!#test_role_user1#!#master
+test_role_db_test_role_role1_new#!#R#!#test_role_role1_new#!#test_role_db
+test_role_db_test_role_role2#!#R#!#test_role_role2#!#test_role_db
+test_role_db_test_role_user2#!#S#!#test_role_user2#!#test_role_db
+test_role_db_test_role_user3#!#S#!#test_role_user3#!#test_role_db
+~~END~~
+
+
+EXEC test_role_proc_babel_db_principal
+GO
+~~START~~
+varchar#!#nvarchar
+test_role_role1_new#!#DATABASE_ROLE
+test_role_role2#!#DATABASE_ROLE
+test_role_user2#!#SQL_USER
+test_role_user3#!#SQL_USER
+~~END~~
+
+
+EXEC test_role_proc_babel_role_members
+GO
+~~START~~
+varchar#!#char#!#varchar#!#char
+db_owner#!#R#!#dbo#!#S
+test_role_role2#!#R#!#test_role_user3#!#S
+~~END~~
+
+
+ALTER ROLE test_role_role2 DROP MEMBER test_role_user3
+GO
+
+-- Test DROP ROLE
+DROP USER test_role_user2
+GO
+
+DROP USER test_role_user3
+GO
+
+DROP ROLE test_role_role1_new
+GO
+
+DROP ROLE test_role_role2
+GO
+
+USE master
+GO
+
+DROP USER test_role_user1
+GO
+
+DROP ROLE test_role_role1
+GO
+
+DROP LOGIN test_role_login1
+GO
+
+DROP LOGIN test_role_login2
+GO
+
+DROP LOGIN test_role_login3
+GO
