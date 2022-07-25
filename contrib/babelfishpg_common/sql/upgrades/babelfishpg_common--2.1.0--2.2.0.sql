@@ -18,5 +18,17 @@ RETURNS sys.nchar
 AS 'babelfishpg_common', 'nchar'
 LANGUAGE C IMMUTABLE STRICT PARALLEL SAFE;
 
+-- [BABEL-2769] Nullable DATETIME column does not store NULL
+-- Solution: Setting typdefault to NULL for datetime, smalldatetime,
+-- datetime2, datetimeoffset datatypes in pg_type table
+
+UPDATE pg_type SET typdefault = null WHERE typname = 'smalldatetime' AND typname IN (SELECT name FROM sys.types);
+
+UPDATE pg_type SET typdefault = null WHERE typname = 'datetime' AND typname IN (SELECT name FROM sys.types);
+
+UPDATE pg_type SET typdefault = null WHERE typname = 'datetime2' AND typname IN (SELECT name FROM sys.types);
+
+UPDATE pg_type SET typdefault = null WHERE typname = 'datetimeoffset' AND typname IN (SELECT name FROM sys.types);
+
 -- Reset search_path to not affect any subsequent scripts
 SELECT set_config('search_path', trim(leading 'sys, ' from current_setting('search_path')), false);
