@@ -1,0 +1,181 @@
+--babel-1149
+select * from tv_itvf_1(5);
+GO
+~~START~~
+int#!#int
+1#!#2
+~~END~~
+
+
+select * from tv_mstvf_1(10);
+GO
+~~START~~
+nvarchar#!#int#!#int
+hello1#!#1#!#100
+~~END~~
+
+
+select tv_func_1(1);
+GO
+~~START~~
+int
+1
+~~END~~
+
+
+exec tv_proc_1
+GO
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+
+--babel-2647
+SELECT * from dbo.tv_mstvf_2();
+go
+~~START~~
+int
+0
+~~END~~
+
+
+--babel-2903
+use master;
+go
+
+select * from tv_t1;
+go
+~~START~~
+int#!#int
+1#!#1
+2#!#2
+~~END~~
+
+
+set BABELFISH_SHOWPLAN_ALL ON;
+go
+
+declare @a int = 5, @b int = 5;
+declare @c int;
+execute tv_outer_proc @a, @b;
+select @a, @b;
+go
+~~START~~
+text
+Query Text: ASSIGN @a = SELECT 5
+  Query Text: SELECT 5
+  ->  Result  (cost=0.00..0.01 rows=1 width=4)
+Query Text: ASSIGN @b = SELECT 5
+  Query Text: SELECT 5
+  ->  Result  (cost=0.00..0.01 rows=1 width=4)
+Query Text: EXEC tv_outer_proc @a, @b
+  Query Text: DECLARE TABLE @t
+    Query Text: CREATE TEMPORARY TABLE IF NOT EXISTS @t_2 (a int, b int)
+  Query Text: ASSIGN @a = SELECT 3
+    Query Text: SELECT 3
+    ->  Result  (cost=0.00..0.01 rows=1 width=4)
+  Query Text: insert into tv_t1 values ("@a", "@b");
+  ->  Insert on tv_t1  (cost=0.00..0.01 rows=0 width=0)
+        ->  Result  (cost=0.00..0.01 rows=1 width=8)
+  Query Text: EXEC tv_inner_proc @b
+    Query Text: ASSIGN @b = SELECT (select top 1 a+b from tv_t1 order by b)
+      Query Text: SELECT (select top 1 a+b from tv_t1 order by b)
+      ->  Result  (cost=49.55..49.56 rows=1 width=4)
+            InitPlan 1 (returns $0)
+              ->  Limit  (cost=49.55..49.55 rows=1 width=8)
+                    ->  Sort  (cost=49.55..55.20 rows=2260 width=8)
+                          Sort Key: tv_t1.b
+                          ->  Seq Scan on tv_t1  (cost=0.00..38.25 rows=2260 width=8)
+    Query Text: insert into tv_t1 values ("@b", "@b");
+    ->  Insert on tv_t1  (cost=0.00..0.01 rows=0 width=0)
+          ->  Result  (cost=0.00..0.01 rows=1 width=8)
+  Query Text: insert into "@t" select * from tv_t1;
+  ->  Insert on "@t_2"  (cost=0.00..32.60 rows=0 width=0)
+        ->  Seq Scan on tv_t1  (cost=0.00..32.60 rows=2260 width=8)
+  Query Text: select * from "@t"
+  ->  Seq Scan on "@t_2"  (cost=0.00..32.60 rows=2260 width=8)
+  Query Text: DROP TABLE @t_2
+Query Text: select "@a", "@b"
+Result  (cost=0.00..0.01 rows=1 width=8)
+~~END~~
+
+
+set BABELFISH_SHOWPLAN_ALL Off;
+go
+
+select * from tv_t1;
+go
+~~START~~
+int#!#int
+1#!#1
+2#!#2
+~~END~~
+
+
+--babel-3101
+select * from tv_my_splitstring('this,is,split')
+GO
+~~START~~
+nvarchar
+this
+is
+split
+~~END~~
+
+
+--babel-3088
+use tv_db
+go
+
+exec tv_proc_2 1;
+go
+~~ROW COUNT: 1~~
+
+~~START~~
+nvarchar
+aaa
+~~END~~
+
+
+use master
+go
+
+--babel-2034
+SELECT count(*) FROM tv_CalculateEasDateTime();
+GO
+~~START~~
+int
+1
+~~END~~
+
+
+select * from tv_mstvf_3(1);
+GO
+~~START~~
+text#!#int#!#int
+hello1#!#1#!#100
+hello2#!#2#!#200
+~~END~~
+
+
+--babel-2676
+-- should return both rows
+select * from tv_mstvf_conditional(0)
+go
+~~START~~
+text
+hello1
+hello2
+~~END~~
+
+
+-- should only return the first row
+select * from tv_mstvf_conditional(1)
+go
+~~START~~
+text
+hello1
+~~END~~
+
+
+

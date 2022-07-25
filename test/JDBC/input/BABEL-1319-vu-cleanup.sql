@@ -1,0 +1,4 @@
+DROP TABLE [bbl_1319_Tag]
+GO
+DROP TABLE [bbl_1319_Item]
+GO

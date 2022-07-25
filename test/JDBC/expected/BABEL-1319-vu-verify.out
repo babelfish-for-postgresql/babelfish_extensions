@@ -1,0 +1,13 @@
+CREATE INDEX [bbl_1319_IX_Tag_Item_id] ON [bbl_1319_Tag] ([Item_id])
+GO
+
+INSERT INTO [bbl_1319_Item] ([Name])
+VALUES ('ItemOne')
+GO
+~~ROW COUNT: 1~~
+
+
+DELETE FROM [bbl_1319_Item] WHERE [Name] = 'ItemOne'
+GO
+~~ROW COUNT: 1~~
+

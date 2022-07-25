@@ -1,0 +1,104 @@
+drop procedure not_null_p1
+
+drop procedure not_null_p2
+
+drop procedure not_null_p3
+
+drop procedure not_null_p4
+
+drop procedure not_null_p5
+
+drop procedure not_null_p6
+
+drop procedure not_null_p7
+
+drop procedure not_null_p8
+
+drop procedure not_null_p9
+
+drop procedure not_null_p10
+
+drop procedure not_null_p11
+
+drop procedure not_null_p12
+
+drop procedure not_null_p13
+
+drop procedure not_null_p14
+
+drop procedure not_null_p15
+
+drop procedure not_null_p16
+
+drop procedure not_null_p17
+
+drop procedure not_null_p18
+
+drop procedure not_null_p19
+
+drop procedure not_null_p20
+
+drop procedure not_null_p21
+
+drop procedure not_null_p22
+
+drop procedure not_null_p23
+
+drop procedure not_null_p24
+
+drop procedure not_null_p25
+
+drop procedure not_null_p26
+
+drop table not_null_t1
+
+drop table not_null_t2
+
+drop table not_null_t3
+
+drop table not_null_t4
+
+drop table not_null_t5
+
+drop table not_null_t6
+
+drop table not_null_t7
+
+drop table not_null_t8
+
+drop table not_null_t9
+
+drop table not_null_t10
+
+drop table not_null_t11
+
+drop table not_null_t12
+
+drop table not_null_t13
+
+drop table not_null_t14
+
+drop table not_null_t15
+
+drop table not_null_t16
+
+drop table not_null_t17
+
+drop table not_null_t18
+
+drop table not_null_t19
+
+drop table not_null_t20
+
+drop table not_null_t21
+
+drop table not_null_t22
+
+drop table not_null_t23
+
+drop table not_null_t24
+
+drop table not_null_t25
+
+drop table not_null_t26
+

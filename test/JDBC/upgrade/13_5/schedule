@@ -52,3 +52,17 @@ routines_definition
 constraint_column_usage
 column_domain_usage
 Test-sp_helpsrvrolemember
+temp_tables
+table_variable
+BABEL-2086
+BABEL-2942
+BABEL-3090
+TestNotNull
+BABEL-1444
+Test-Default-Columns
+BABEL-1319
+BABEL-1251
+BABEL-2765
+BABEL-1715
+BABEL-775
+BABEL-1243

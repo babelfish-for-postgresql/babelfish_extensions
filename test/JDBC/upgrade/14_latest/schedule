@@ -49,3 +49,16 @@ sys-all_views
 sys-sysobjects
 Test-sp_helpsrvrolemember
 Test-sp_helpsrvrolemember-dep
+temp-tables
+table-variable
+BABEL-2086
+TestNotNull
+BABEL-1444
+Test-Default-Columns
+BABEL-1319
+BABEL-1251
+BABEL-1654
+BABEL-2765
+BABEL-1715
+BABEL-775
+BABEL-1243

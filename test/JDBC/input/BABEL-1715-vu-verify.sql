@@ -1,0 +1,22 @@
+USE MASTER
+GO
+
+
+INSERT INTO bbl_1715_t1 VALUES (1, 1);
+INSERT INTO bbl_1715_t1 VALUES (2, 2);
+go
+INSERT INTO bbl_1715_t1 VALUES (2, 3);
+go
+
+INSERT INTO bbl_1715_t2 (a) VALUES (1);
+INSERT INTO bbl_1715_t2 (a) VALUES (2);
+go
+INSERT INTO bbl_1715_t2 (a) VALUES (2);
+go
+
+CREATE TABLE bbl_1715_invalid1 (a int b int);
+go
+CREATE TABLE bbl_1715_invalid2 (a int CONSTRAINT uk_a PRIMARY KEY (a) b int);
+go
+CREATE TABLE bbl_1715_invalid3 (a int CONSTRAINT uk_a PRIMARY KEY (a) CONSTRAINT uk_b UNIQUE (b));
+go
