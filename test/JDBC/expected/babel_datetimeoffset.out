@@ -105,7 +105,7 @@ select a from t1 where b = 1;
 go
 ~~START~~
 datetimeoffset
-1900-01-01 00:00:00.000000 +00:00
+<NULL>
 ~~END~~
 
 
