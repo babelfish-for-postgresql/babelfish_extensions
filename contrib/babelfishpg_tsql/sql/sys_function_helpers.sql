@@ -57,7 +57,14 @@ LANGUAGE SQL;
 CREATE OR REPLACE FUNCTION sys.system_user()
 RETURNS sys.nvarchar(128) AS
 $BODY$
-	SELECT SESSION_USER;
+	SELECT sys.suser_name();
+$BODY$
+LANGUAGE SQL;
+
+CREATE OR REPLACE FUNCTION sys.session_user()
+RETURNS sys.nvarchar(128) AS
+$BODY$
+	SELECT sys.user_name();
 $BODY$
 LANGUAGE SQL;
 

@@ -1,0 +1,6 @@
+-- tsql
+CREATE LOGIN system_user_vu_prepare_r1 WITH PASSWORD = '123';
+GO
+
+CREATE LOGIN system_user_vu_prepare_r2 WITH PASSWORD = '123';
+GO
