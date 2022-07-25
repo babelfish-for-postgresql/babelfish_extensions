@@ -48,11 +48,11 @@ BEGIN
 END
 GO
 
-SELECT ISOWeek_3101(GETDATE())
+SELECT ISOWeek_3101(CAST('25 July 2022 01:23:45' AS datetime))
 GO
 ~~START~~
 tinyint
-29
+30
 ~~END~~
 
 
