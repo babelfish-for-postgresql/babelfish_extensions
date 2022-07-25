@@ -10,6 +10,7 @@
 #include "pltsql-2.h"
 #include "pltsql_instr.h"
 #include "utils/builtins.h"
+#include "utils/syscache.h"
 
 static int cmpfunc(const void *a, const void *b)
 {
@@ -322,6 +323,36 @@ pre_function_call_hook_impl(const char *funcName)
               if(metricName.data != NULL)
                       pfree(metricName.data);
 	}
+}
+
+int32
+coalesce_typmod_hook_impl(CoalesceExpr *cexpr)
+{
+	/*
+	 * For T-SQL ISNULL, the typmod depends only on the first argument of
+	 * the function unlike PG COALESCE, which checks whether all the data
+	 * types and their typmods are in agreement.
+	 */
+
+	Oid nspoid, pg_catalog_numericoid, sys_decimaloid;
+
+	nspoid = get_namespace_oid("pg_catalog", false);
+	pg_catalog_numericoid = GetSysCacheOid2(TYPENAMENSP, Anum_pg_type_oid, CStringGetDatum("numeric"), ObjectIdGetDatum(nspoid));
+
+	nspoid = get_namespace_oid("sys", false);
+	sys_decimaloid = GetSysCacheOid2(TYPENAMENSP, Anum_pg_type_oid, CStringGetDatum("decimal"), ObjectIdGetDatum(nspoid));
+
+	/*
+	 * If data type is numeric/decimal, resolve_numeric_typmod_from_exp
+	 * will figure out the precision and scale.
+	 */
+	if (cexpr->coalescetype == pg_catalog_numericoid || cexpr->coalescetype == sys_decimaloid)
+		return -1;
+
+	if (exprType((Node *) linitial(cexpr->args)) != cexpr->coalescetype)
+		return -1;
+
+	return exprTypmod((Node *) linitial(cexpr->args));
 }
 
 /***********************************************************************************
