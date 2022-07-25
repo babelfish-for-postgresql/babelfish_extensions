@@ -1,6 +1,3 @@
-Use triggers_with_transaction_vu_db;
-go
-
 insert into triggers_with_transaction_t1 values(2, 'second');
 go
 
@@ -518,10 +515,4 @@ go
 drop table triggers_with_transaction_t2;
 go
 drop table triggers_with_transaction_t3;
-go
-
-Use master;
-GO
-
-drop database triggers_with_transaction_vu_db;
 go

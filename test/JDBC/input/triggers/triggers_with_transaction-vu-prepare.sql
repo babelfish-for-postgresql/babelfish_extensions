@@ -1,9 +1,3 @@
-create database  triggers_with_transaction_vu_db;
-go
-
-Use triggers_with_transaction_vu_db;
-go
-
 create table triggers_with_transaction_t1(c1 int, c2 varchar(30), check (c1 < 5))
 go
 

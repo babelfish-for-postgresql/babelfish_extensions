@@ -1,6 +1,3 @@
-use TestTableType_vu_db;
-go
-
 declare @tv TestTableType_t1;
 insert @tv values (1,1);
 insert @tv values (2,2);

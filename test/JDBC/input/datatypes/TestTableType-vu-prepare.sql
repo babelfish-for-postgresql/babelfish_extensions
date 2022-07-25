@@ -1,9 +1,3 @@
-create database  TestTableType_vu_db;
-go
-
-use TestTableType_vu_db;
-go
-
 create type TestTableType_t1 as table (c1 int, c2 int);
 go
 
