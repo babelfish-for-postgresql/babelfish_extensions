@@ -52,7 +52,7 @@ routines_definition
 constraint_column_usage
 column_domain_usage
 Test-sp_helpsrvrolemember
-temp_tables
+temp-tables
 table_variable
 BABEL-2086
 BABEL-2942
