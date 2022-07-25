@@ -128,9 +128,7 @@ jobs:
             ~/upgrade/*.log
             ~/upgrade/*.diff
             ~/upgrade/*.custom
-            ~/postgres14/data/core*
-            ~/postgres14/data/logfile
-            ~/postgres14/core*
-            ~/postgres14/data/*/core*
+            ~/postgres*/core*
+            ~/postgres*/data
             ~/failed-testscript-outputs
             
