@@ -56,7 +56,7 @@ constraint_column_usage
 column_domain_usage
 Test-sp_helpsrvrolemember
 temp-tables
-table-variable
+table_variable
 BABEL-2086
 TestNotNull
 BABEL-1444
