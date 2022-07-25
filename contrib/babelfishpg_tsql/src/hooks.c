@@ -1547,6 +1547,9 @@ pltsql_store_view_definition(const char *queryString, ObjectAddress address)
 	int16		dbid;
 	char		*physical_schemaname, *logical_schemaname;
 
+	if(sql_dialect != SQL_DIALECT_TSQL)
+		return;
+
 	/* Skip if it is for sysdatabases while creating logical database */
 	if(strcmp("(CREATE LOGICAL DATABASE )", queryString) == 0)
 		return;
