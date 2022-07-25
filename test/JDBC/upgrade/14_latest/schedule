@@ -49,3 +49,4 @@ sys-all_views
 sys-sysobjects
 Test-sp_helpsrvrolemember
 Test-sp_helpsrvrolemember-dep
+Test-sp_helpuser
