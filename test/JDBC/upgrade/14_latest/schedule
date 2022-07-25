@@ -46,6 +46,7 @@ routines_definition
 column_domain_usage
 constraint_column_usage
 indexproperty
+msdb-dbo-syspolicy_configuration
 sys-all_views
 sys-sysobjects
 Test-sp_helpsrvrolemember
