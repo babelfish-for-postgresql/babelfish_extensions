@@ -1,8 +1,4 @@
 -- verify
--- dbo should show database owner login
-EXEC check_helpuser;
-GO
-
 EXEC check_helpuser 'dbo';
 GO
 
