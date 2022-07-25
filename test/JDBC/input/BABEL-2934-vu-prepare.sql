@@ -36,3 +36,13 @@ update BABEL_2934_vu_3 set d = dateadd(ns, 300, c)
 go
 select c, d, convert(varchar(30), c, 109) as c2, convert(varchar(30), d, 109) as d2 from BABEL_2934_vu_3
 go
+
+CREATE VIEW BABEL_2934_vu_v1 as select cast('12:15:04.1234567' as TIME(7))
+go
+
+CREATE FUNCTION BABEL_2934_vu_f1 (TIME(7) t)
+RETURNS (TIME(7)) AS
+BEGIN
+    RETURN t
+END;
+go
