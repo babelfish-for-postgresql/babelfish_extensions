@@ -116,7 +116,7 @@ nvarchar#!#nvarchar#!#varchar#!#nvarchar
 db1#!#dbo#!#constraint1test_null987b8e55c77de33d095778885ecd84f4#!#((a > 10))
 db1#!#dbo#!#constraint2test_nullba039d416ebe51c75b9d6d571d9a6f74#!#(((a <= 20) AND (b > a) AND ((a >= 40) AND (a <= 50))))
 db1#!#dbo#!#test_datetime_c_date_check#!#((c_date < CAST('2001-01-01' AS date)))
-db1#!#dbo#!#test_datetime_c_datetime2_check#!#(((c_datetime2 < CAST('2020-10-20 09:00:00' AS datetime2(6))) AND (c_datetime2 < CAST('2020-10-20 09:00:00' AS datetime2(6)))))
+db1#!#dbo#!#test_datetime_c_datetime2_check#!#(((c_datetime2 < CAST('2020-10-20 09:00:00' AS datetime2)) AND (c_datetime2 < CAST('2020-10-20 09:00:00' AS datetime2(6)))))
 db1#!#dbo#!#test_datetime_c_datetime_check#!#((c_datetime < CAST('2020-10-20 09:00:00' AS datetime)))
 db1#!#dbo#!#test_datetime_c_datetimeoffset_check#!#(((c_datetimeoffset < CAST('2025-12-10 12:32:10 +01:00' AS datetimeoffset)) AND (c_datetimeoffset < CAST('2025-12-10 12:32:10 +01:00' AS datetimeoffset(4)))))
 db1#!#dbo#!#test_datetime_c_smalldatetime_check#!#((c_smalldatetime < CAST('2007-05-08 12:35:00' AS smalldatetime)))
