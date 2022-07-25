@@ -1,18 +1,18 @@
 
-insert babel_1189_t1 values(1);
+insert babel_1189_vu_prepare_t1 values(1);
 go
 ~~ROW COUNT: 1~~
 
 
-insert babel_1189_t2 values(1);
+insert babel_1189_vu_prepare_t2 values(1);
 go
 ~~ROW COUNT: 1~~
 
 ~~ROW COUNT: 1~~
 
 
-select * from babel_1189_t1;
-select * from babel_1189_t2;
+select * from babel_1189_vu_prepare_t1;
+select * from babel_1189_vu_prepare_t2;
 go
 ~~START~~
 int

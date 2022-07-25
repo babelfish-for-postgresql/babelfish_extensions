@@ -1,9 +1,9 @@
-INSERT INTO babel_3118_t(c2) VALUES ('Joe'), ('Steve');
+INSERT INTO babel_3118_vu_prepare_t(c2) VALUES ('Joe'), ('Steve');
 GO
 ~~ROW COUNT: 2~~
 
 
-SELECT * FROM babel_3118_t;
+SELECT * FROM babel_3118_vu_prepare_t;
 GO
 ~~START~~
 int#!#varchar
@@ -12,7 +12,7 @@ int#!#varchar
 ~~END~~
 
 
-DELETE FROM babel_3118_t WHERE c2 = 'Steve';
+DELETE FROM babel_3118_vu_prepare_t WHERE c2 = 'Steve';
 GO
 ~~ROW COUNT: 1~~
 
@@ -24,7 +24,7 @@ varchar#!#int
 ~~ROW COUNT: 1~~
 
 
-SELECT  * FROM babel_3118_t;
+SELECT  * FROM babel_3118_vu_prepare_t;
 GO
 ~~START~~
 int#!#varchar

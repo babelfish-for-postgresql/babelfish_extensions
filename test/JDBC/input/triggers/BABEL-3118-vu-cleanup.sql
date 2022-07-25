@@ -1,5 +1,5 @@
-drop trigger babel_3118_tr_txz;
+drop trigger babel_3118_vu_prepare_tr_txz;
 GO
 
-drop table babel_3118_t;
+drop table babel_3118_vu_prepare_t;
 GO

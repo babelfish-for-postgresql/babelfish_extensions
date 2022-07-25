@@ -1,39 +1,39 @@
 -- For INSTEAD OF keyword --
 
 -- with INSERT
-exec insteadof_nested_trigger_inside_proc_p11;
+exec insteadof_nested_trigger_inside_proc_vu_prepare_p11;
 go
 
-select * from insteadof_nested_trigger_inside_proc_t11
+select * from insteadof_nested_trigger_inside_proc_vu_prepare_t11
 go
 
-select * from insteadof_nested_trigger_inside_proc_t22
+select * from insteadof_nested_trigger_inside_proc_vu_prepare_t22
 go
 
-select * from insteadof_nested_trigger_inside_proc_t33
+select * from insteadof_nested_trigger_inside_proc_vu_prepare_t33
 go
 
 -- with update
-exec insteadof_nested_trigger_inside_proc_p011;
+exec insteadof_nested_trigger_inside_proc_vu_prepare_p011;
 go
 
-select * from insteadof_nested_trigger_inside_proc_t11
+select * from insteadof_nested_trigger_inside_proc_vu_prepare_t11
 go
 
-select * from insteadof_nested_trigger_inside_proc_t22
+select * from insteadof_nested_trigger_inside_proc_vu_prepare_t22
 go
 
-select * from insteadof_nested_trigger_inside_proc_t33
+select * from insteadof_nested_trigger_inside_proc_vu_prepare_t33
 go
 -- with delete
-exec insteadof_nested_trigger_inside_proc_p0011;
+exec insteadof_nested_trigger_inside_proc_vu_prepare_p0011;
 go
 
-select * from insteadof_nested_trigger_inside_proc_t11
+select * from insteadof_nested_trigger_inside_proc_vu_prepare_t11
 go
 
-select * from insteadof_nested_trigger_inside_proc_t22
+select * from insteadof_nested_trigger_inside_proc_vu_prepare_t22
 go
 
-select * from insteadof_nested_trigger_inside_proc_t33
+select * from insteadof_nested_trigger_inside_proc_vu_prepare_t33
 go

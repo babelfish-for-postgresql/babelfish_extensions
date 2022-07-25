@@ -1,5 +1,5 @@
-drop trigger babel_1243_updEmployeeDatas
+drop trigger babel_1243_vu_prepare_updEmployeeDatas
 GO
 
-drop table babel_1243_employeeData
+drop table babel_1243_vu_prepare_employeeData
 GO

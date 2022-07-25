@@ -1,8 +1,8 @@
-exec babel_2257_error_mapping.ErrorHandling1;
+exec babel_2257_vu_prepare_error_mapping.ErrorHandling1;
 GO
 
-select * from babel_2257_t1
+select * from babel_2257_vu_prepare_t1
 GO
 
-select * from babel_2257_t2
+select * from babel_2257_vu_prepare_t2
 GO

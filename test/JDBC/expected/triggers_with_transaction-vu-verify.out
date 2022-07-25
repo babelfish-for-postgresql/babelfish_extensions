@@ -1,4 +1,4 @@
-insert into triggers_with_transaction_t1 values(2, 'second');
+insert into triggers_with_transaction_vu_prepare_t1 values(2, 'second');
 go
 ~~START~~
 int
@@ -30,7 +30,7 @@ int#!#varchar
 
 begin tran;
 go
-insert into triggers_with_transaction_t1 values(3, 'third');
+insert into triggers_with_transaction_vu_prepare_t1 values(3, 'third');
 go
 ~~START~~
 int
@@ -62,86 +62,86 @@ int#!#varchar
 commit;
 go
 
-update triggers_with_transaction_t2 set c1 = 6;
+update triggers_with_transaction_vu_prepare_t2 set c1 = 6;
 GO
 ~~ERROR (Code: 547)~~
 
-~~ERROR (Message: new row for relation "triggers_with_transaction_t2" violates check constraint "triggers_with_transaction_t2_c1_check")~~
+~~ERROR (Message: new row for relation "triggers_with_transaction_vu_prepare_t2" violates check constraint "triggers_with_transaction_vu_prepare_t2_c1_check")~~
 
 
 begin tran
 go
-update triggers_with_transaction_t2 set c1 = 6;
+update triggers_with_transaction_vu_prepare_t2 set c1 = 6;
 go
 ~~ERROR (Code: 547)~~
 
-~~ERROR (Message: new row for relation "triggers_with_transaction_t2" violates check constraint "triggers_with_transaction_t2_c1_check")~~
+~~ERROR (Message: new row for relation "triggers_with_transaction_vu_prepare_t2" violates check constraint "triggers_with_transaction_vu_prepare_t2_c1_check")~~
 
 if (@@trancount > 0) rollback;
 go
 
 begin tran
 go
-insert into triggers_with_transaction_t1 values(6, 'six');
+insert into triggers_with_transaction_vu_prepare_t1 values(6, 'six');
 go
 ~~ERROR (Code: 547)~~
 
-~~ERROR (Message: new row for relation "triggers_with_transaction_t1" violates check constraint "triggers_with_transaction_t1_c1_check")~~
+~~ERROR (Message: new row for relation "triggers_with_transaction_vu_prepare_t1" violates check constraint "triggers_with_transaction_vu_prepare_t1_c1_check")~~
 
 if (@@trancount > 0) rollback;
 go
 
-drop trigger triggers_with_transaction_trig1;
+drop trigger triggers_with_transaction_vu_prepare_trig1;
 go
 
-create trigger triggers_with_transaction_trig1 on triggers_with_transaction_t1 for insert as
+create trigger triggers_with_transaction_vu_prepare_trig1 on triggers_with_transaction_vu_prepare_t1 for insert as
 begin tran;
-update triggers_with_transaction_t2 set c1 = 6;
+update triggers_with_transaction_vu_prepare_t2 set c1 = 6;
 commit;
-select * from triggers_with_transaction_t2 order by c1;
+select * from triggers_with_transaction_vu_prepare_t2 order by c1;
 select * from inserted;
 go
 
-insert into triggers_with_transaction_t1 values(2, 'second');
+insert into triggers_with_transaction_vu_prepare_t1 values(2, 'second');
 go
 ~~ERROR (Code: 547)~~
 
-~~ERROR (Message: new row for relation "triggers_with_transaction_t2" violates check constraint "triggers_with_transaction_t2_c1_check")~~
+~~ERROR (Message: new row for relation "triggers_with_transaction_vu_prepare_t2" violates check constraint "triggers_with_transaction_vu_prepare_t2_c1_check")~~
 
 
 begin tran;
 go
-insert into triggers_with_transaction_t1 values(3, 'third');
+insert into triggers_with_transaction_vu_prepare_t1 values(3, 'third');
 go
 ~~ERROR (Code: 547)~~
 
-~~ERROR (Message: new row for relation "triggers_with_transaction_t2" violates check constraint "triggers_with_transaction_t2_c1_check")~~
+~~ERROR (Message: new row for relation "triggers_with_transaction_vu_prepare_t2" violates check constraint "triggers_with_transaction_vu_prepare_t2_c1_check")~~
 
 if (@@trancount > 0) rollback;
 go
 
-drop trigger triggers_with_transaction_trig1;
+drop trigger triggers_with_transaction_vu_prepare_trig1;
 go
 
-drop trigger triggers_with_transaction_trig3;
+drop trigger triggers_with_transaction_vu_prepare_trig3;
 go
 
-create trigger triggers_with_transaction_trig1 on triggers_with_transaction_t1 for insert as
+create trigger triggers_with_transaction_vu_prepare_trig1 on triggers_with_transaction_vu_prepare_t1 for insert as
 begin tran;
-update triggers_with_transaction_t2 set c1 = 2;
+update triggers_with_transaction_vu_prepare_t2 set c1 = 2;
 commit;
-select * from triggers_with_transaction_t2 order by c1;
+select * from triggers_with_transaction_vu_prepare_t2 order by c1;
 select * from inserted;
 go
 
-create trigger triggers_with_transaction_trig3 on triggers_with_transaction_t3 for delete as
-select * from triggers_with_transaction_t3 order by c1;
-insert into triggers_with_transaction_t3 values(6);
+create trigger triggers_with_transaction_vu_prepare_trig3 on triggers_with_transaction_vu_prepare_t3 for delete as
+select * from triggers_with_transaction_vu_prepare_t3 order by c1;
+insert into triggers_with_transaction_vu_prepare_t3 values(6);
 select * from deleted;
 rollback tran sp2;
 go
 
-insert into triggers_with_transaction_t1 values(2, 'second');
+insert into triggers_with_transaction_vu_prepare_t1 values(2, 'second');
 go
 ~~START~~
 int
@@ -149,12 +149,12 @@ int
 
 ~~ERROR (Code: 547)~~
 
-~~ERROR (Message: new row for relation "triggers_with_transaction_t3" violates check constraint "triggers_with_transaction_t3_c1_check")~~
+~~ERROR (Message: new row for relation "triggers_with_transaction_vu_prepare_t3" violates check constraint "triggers_with_transaction_vu_prepare_t3_c1_check")~~
 
 
 begin tran;
 go
-insert into triggers_with_transaction_t1 values(3, 'third');
+insert into triggers_with_transaction_vu_prepare_t1 values(3, 'third');
 go
 ~~START~~
 int
@@ -162,31 +162,31 @@ int
 
 ~~ERROR (Code: 547)~~
 
-~~ERROR (Message: new row for relation "triggers_with_transaction_t3" violates check constraint "triggers_with_transaction_t3_c1_check")~~
+~~ERROR (Message: new row for relation "triggers_with_transaction_vu_prepare_t3" violates check constraint "triggers_with_transaction_vu_prepare_t3_c1_check")~~
 
 if (@@trancount > 0) rollback;
 go
 
-drop trigger triggers_with_transaction_trig3;
+drop trigger triggers_with_transaction_vu_prepare_trig3;
 go
 
-create trigger triggers_with_transaction_trig3 on triggers_with_transaction_t3 for delete as
-select * from triggers_with_transaction_t3 order by c1;
-insert into triggers_with_transaction_t3 values(1);
+create trigger triggers_with_transaction_vu_prepare_trig3 on triggers_with_transaction_vu_prepare_t3 for delete as
+select * from triggers_with_transaction_vu_prepare_t3 order by c1;
+insert into triggers_with_transaction_vu_prepare_t3 values(1);
 select * from deleted;
 rollback tran sp2;
 go
 
-drop trigger triggers_with_transaction_trig1;
+drop trigger triggers_with_transaction_vu_prepare_trig1;
 go
 
-create trigger triggers_with_transaction_trig1 on triggers_with_transaction_t1 for insert as
+create trigger triggers_with_transaction_vu_prepare_trig1 on triggers_with_transaction_vu_prepare_t1 for insert as
 commit;
-update triggers_with_transaction_t2 set c1 = 2;
-select * from triggers_with_transaction_t2 order by c1;
+update triggers_with_transaction_vu_prepare_t2 set c1 = 2;
+select * from triggers_with_transaction_vu_prepare_t2 order by c1;
 go
 
-insert into triggers_with_transaction_t1 values(2, 'second');
+insert into triggers_with_transaction_vu_prepare_t1 values(2, 'second');
 go
 ~~START~~
 int
@@ -216,7 +216,7 @@ int
 begin tran;
 go
 
-insert into triggers_with_transaction_t1 values(2, 'second');
+insert into triggers_with_transaction_vu_prepare_t1 values(2, 'second');
 go
 ~~START~~
 int
@@ -243,16 +243,16 @@ int
 ~~ERROR (Message: The transaction ended in the trigger. The batch has been aborted.)~~
 
 
-drop trigger triggers_with_transaction_trig1;
+drop trigger triggers_with_transaction_vu_prepare_trig1;
 go
 
-create trigger triggers_with_transaction_trig1 on triggers_with_transaction_t1 for insert as
+create trigger triggers_with_transaction_vu_prepare_trig1 on triggers_with_transaction_vu_prepare_t1 for insert as
 rollback;
-update triggers_with_transaction_t2 set c1 = 3;
-select * from triggers_with_transaction_t2 order by c1;
+update triggers_with_transaction_vu_prepare_t2 set c1 = 3;
+select * from triggers_with_transaction_vu_prepare_t2 order by c1;
 go
 
-insert into triggers_with_transaction_t1 values(2, 'second');
+insert into triggers_with_transaction_vu_prepare_t1 values(2, 'second');
 go
 ~~START~~
 int
@@ -282,7 +282,7 @@ int
 begin tran;
 go
 
-insert into triggers_with_transaction_t1 values(2, 'second');
+insert into triggers_with_transaction_vu_prepare_t1 values(2, 'second');
 go
 ~~START~~
 int
@@ -311,14 +311,14 @@ int
 
 create procedure triggerProc1 as
 save tran sp1;
-insert into triggers_with_transaction_t1 values(3, 'third');
+insert into triggers_with_transaction_vu_prepare_t1 values(3, 'third');
 rollback tran sp1;
 go
 
 create procedure triggerProc2 as
 begin tran;
 exec triggerProc1;
-insert into triggers_with_transaction_t1 values(3, 'third');
+insert into triggers_with_transaction_vu_prepare_t1 values(3, 'third');
 commit;
 go
 
@@ -352,19 +352,19 @@ int
 drop procedure triggerProc2;
 go
 
-drop trigger triggers_with_transaction_trig1
+drop trigger triggers_with_transaction_vu_prepare_trig1
 go
 
-create trigger triggers_with_transaction_trig1 on triggers_with_transaction_t1 for insert as
+create trigger triggers_with_transaction_vu_prepare_trig1 on triggers_with_transaction_vu_prepare_t1 for insert as
 commit;
-update triggers_with_transaction_t2 set c1 = 6;
-select * from triggers_with_transaction_t2 order by c1;
+update triggers_with_transaction_vu_prepare_t2 set c1 = 6;
+select * from triggers_with_transaction_vu_prepare_t2 order by c1;
 go
 
 create procedure triggerProc2 as
 begin tran;
 exec triggerProc1;
-insert into triggers_with_transaction_t1 values(6, 'six');
+insert into triggers_with_transaction_vu_prepare_t1 values(6, 'six');
 commit;
 go
 
@@ -372,20 +372,20 @@ exec triggerProc2;
 go
 ~~ERROR (Code: 547)~~
 
-~~ERROR (Message: new row for relation "triggers_with_transaction_t2" violates check constraint "triggers_with_transaction_t2_c1_check")~~
+~~ERROR (Message: new row for relation "triggers_with_transaction_vu_prepare_t2" violates check constraint "triggers_with_transaction_vu_prepare_t2_c1_check")~~
 
 
 if (@@trancount>0) commit;
 go
 
-drop trigger triggers_with_transaction_trig1;
+drop trigger triggers_with_transaction_vu_prepare_trig1;
 go
 
-create trigger triggers_with_transaction_trig1 on triggers_with_transaction_t1 for insert as
+create trigger triggers_with_transaction_vu_prepare_trig1 on triggers_with_transaction_vu_prepare_t1 for insert as
 begin tran;
-update triggers_with_transaction_t2 set c1 = 2;
+update triggers_with_transaction_vu_prepare_t2 set c1 = 2;
 commit;
-select * from triggers_with_transaction_t2 order by c1;
+select * from triggers_with_transaction_vu_prepare_t2 order by c1;
 select * from inserted;
 go
 
@@ -394,24 +394,24 @@ go
 drop procedure triggerProc2;
 go
 
-create table triggers_with_transaction_tmp__1 (a int not null);
+create table triggers_with_transaction_vu_prepare_tmp__1 (a int not null);
 go
 
-insert into triggers_with_transaction_tmp__1 values (1)
+insert into triggers_with_transaction_vu_prepare_tmp__1 values (1)
 go
 ~~ROW COUNT: 1~~
 
 
 create procedure triggerProc1 as
 save tran sp1;
-insert into triggers_with_transaction_tmp__1 values (null);
+insert into triggers_with_transaction_vu_prepare_tmp__1 values (null);
 rollback tran sp1;
 go
 
 create procedure triggerProc2 as
 begin tran;
 exec triggerProc1;
-insert into triggers_with_transaction_t1 values(3, 'third');
+insert into triggers_with_transaction_vu_prepare_t1 values(3, 'third');
 commit;
 go
 
@@ -419,7 +419,7 @@ exec triggerProc2;
 go
 ~~ERROR (Code: 515)~~
 
-~~ERROR (Message: null value in column "a" of relation "triggers_with_transaction_tmp__1" violates not-null constraint)~~
+~~ERROR (Message: null value in column "a" of relation "triggers_with_transaction_vu_prepare_tmp__1" violates not-null constraint)~~
 
 ~~START~~
 int
@@ -449,7 +449,7 @@ int#!#varchar
 ~~ROW COUNT: 1~~
 
 
-drop table triggers_with_transaction_tmp__1 
+drop table triggers_with_transaction_vu_prepare_tmp__1 
 go
 
 create table triggerErrorTab(c1 int not null);
@@ -472,7 +472,7 @@ drop procedure triggerProc1;
 go
 drop procedure triggerProc2;
 go
-drop trigger triggers_with_transaction_trig1
+drop trigger triggers_with_transaction_vu_prepare_trig1
 go
 
 
@@ -484,11 +484,11 @@ create procedure triggerProc2 as
 exec triggerProc1;
 go
 
-create trigger triggers_with_transaction_trig1 on triggers_with_transaction_t1 for insert as
+create trigger triggers_with_transaction_vu_prepare_trig1 on triggers_with_transaction_vu_prepare_t1 for insert as
 exec triggerProc2;
 go
 
-insert into triggers_with_transaction_t1 values(1, 'value1');
+insert into triggers_with_transaction_vu_prepare_t1 values(1, 'value1');
 go
 ~~ERROR (Code: 3609)~~
 
@@ -499,7 +499,7 @@ drop procedure triggerProc1;
 go
 drop procedure triggerProc2;
 go
-drop trigger triggers_with_transaction_trig1
+drop trigger triggers_with_transaction_vu_prepare_trig1
 go
 
 
@@ -511,11 +511,11 @@ create procedure triggerProc2 as
 exec triggerProc1;
 go
 
-create trigger triggers_with_transaction_trig1 on triggers_with_transaction_t1 after insert as
+create trigger triggers_with_transaction_vu_prepare_trig1 on triggers_with_transaction_vu_prepare_t1 after insert as
 exec triggerProc2;
 go
 
-insert into triggers_with_transaction_t1 values(1, 'value2');
+insert into triggers_with_transaction_vu_prepare_t1 values(1, 'value2');
 go
 ~~ERROR (Code: 3609)~~
 
@@ -526,7 +526,7 @@ drop procedure triggerProc1;
 go
 drop procedure triggerProc2;
 go
-drop trigger triggers_with_transaction_trig1
+drop trigger triggers_with_transaction_vu_prepare_trig1
 go
 
 
@@ -538,12 +538,12 @@ create procedure triggerProc2 as
 exec triggerProc1;
 go
 
-create trigger triggers_with_transaction_trig1 on triggers_with_transaction_t1 for insert as
+create trigger triggers_with_transaction_vu_prepare_trig1 on triggers_with_transaction_vu_prepare_t1 for insert as
 save tran sp1;
 exec triggerProc2;
 go
 
-insert into triggers_with_transaction_t1 values(1, 'value3');
+insert into triggers_with_transaction_vu_prepare_t1 values(1, 'value3');
 go
 ~~ROW COUNT: 1~~
 
@@ -553,52 +553,52 @@ drop procedure triggerProc1;
 go
 drop procedure triggerProc2;
 go
-drop table triggers_with_transaction_t1;
+drop table triggers_with_transaction_vu_prepare_t1;
 go
-drop table triggers_with_transaction_t2;
+drop table triggers_with_transaction_vu_prepare_t2;
 go
-drop table triggers_with_transaction_t3;
+drop table triggers_with_transaction_vu_prepare_t3;
 go
 drop table triggerErrorTab
 go
 
-create table triggers_with_transaction_t1(c1 int, c2 varchar(30), check (c1 < 5))
+create table triggers_with_transaction_vu_prepare_t1(c1 int, c2 varchar(30), check (c1 < 5))
 go
 
-create table triggers_with_transaction_t2(c1 int, check (c1 < 5))
+create table triggers_with_transaction_vu_prepare_t2(c1 int, check (c1 < 5))
 go
 
-create table triggers_with_transaction_t3(c1 int, check (c1 < 5))
+create table triggers_with_transaction_vu_prepare_t3(c1 int, check (c1 < 5))
 go
 
-insert into triggers_with_transaction_t1 values(1, 'first')
-go
-~~ROW COUNT: 1~~
-
-
-insert into triggers_with_transaction_t2 values(1)
+insert into triggers_with_transaction_vu_prepare_t1 values(1, 'first')
 go
 ~~ROW COUNT: 1~~
 
 
-insert into triggers_with_transaction_t3 values(1)
+insert into triggers_with_transaction_vu_prepare_t2 values(1)
 go
 ~~ROW COUNT: 1~~
 
 
-create trigger triggers_with_transaction_trig1 on triggers_with_transaction_t1 for insert as
-insert into triggers_with_transaction_t2 values (2);
+insert into triggers_with_transaction_vu_prepare_t3 values(1)
+go
+~~ROW COUNT: 1~~
+
+
+create trigger triggers_with_transaction_vu_prepare_trig1 on triggers_with_transaction_vu_prepare_t1 for insert as
+insert into triggers_with_transaction_vu_prepare_t2 values (2);
 go
 
-create trigger triggers_with_transaction_trig2 on triggers_with_transaction_t2 for insert as
-insert into triggers_with_transaction_t3 values (2);
+create trigger triggers_with_transaction_vu_prepare_trig2 on triggers_with_transaction_vu_prepare_t2 for insert as
+insert into triggers_with_transaction_vu_prepare_t3 values (2);
 go
 
-create trigger triggers_with_transaction_trig3 on triggers_with_transaction_t3 for insert as
+create trigger triggers_with_transaction_vu_prepare_trig3 on triggers_with_transaction_vu_prepare_t3 for insert as
 select 'nest level 3'
 go
 
-insert into triggers_with_transaction_t1 values(2, 'two')
+insert into triggers_with_transaction_vu_prepare_t1 values(2, 'two')
 go
 ~~START~~
 varchar
@@ -614,16 +614,16 @@ nest level 3
 
 begin tran
 go
-insert into triggers_with_transaction_t1 values(6, 'six')
+insert into triggers_with_transaction_vu_prepare_t1 values(6, 'six')
 go
 ~~ERROR (Code: 547)~~
 
-~~ERROR (Message: new row for relation "triggers_with_transaction_t1" violates check constraint "triggers_with_transaction_t1_c1_check")~~
+~~ERROR (Message: new row for relation "triggers_with_transaction_vu_prepare_t1" violates check constraint "triggers_with_transaction_vu_prepare_t1_c1_check")~~
 
 if (@@trancount > 0) rollback tran;
 go
 
-select * from triggers_with_transaction_t1;
+select * from triggers_with_transaction_vu_prepare_t1;
 GO
 ~~START~~
 int#!#varchar
@@ -632,7 +632,7 @@ int#!#varchar
 ~~END~~
 
 
-select * from triggers_with_transaction_t2;
+select * from triggers_with_transaction_vu_prepare_t2;
 GO
 ~~START~~
 int
@@ -641,7 +641,7 @@ int
 ~~END~~
 
 
-select * from triggers_with_transaction_t3;
+select * from triggers_with_transaction_vu_prepare_t3;
 GO
 ~~START~~
 int
@@ -650,14 +650,14 @@ int
 ~~END~~
 
 
-drop trigger triggers_with_transaction_trig1;
+drop trigger triggers_with_transaction_vu_prepare_trig1;
 go
 
-create trigger triggers_with_transaction_trig1 on triggers_with_transaction_t1 for insert as
-insert into triggers_with_transaction_t2 values (6);
+create trigger triggers_with_transaction_vu_prepare_trig1 on triggers_with_transaction_vu_prepare_t1 for insert as
+insert into triggers_with_transaction_vu_prepare_t2 values (6);
 go
 
-insert into triggers_with_transaction_t2 values(2)
+insert into triggers_with_transaction_vu_prepare_t2 values(2)
 go
 ~~START~~
 varchar
@@ -671,27 +671,27 @@ nest level 3
 
 begin tran
 go
-insert into triggers_with_transaction_t2 values(6)
+insert into triggers_with_transaction_vu_prepare_t2 values(6)
 go
 ~~ERROR (Code: 547)~~
 
-~~ERROR (Message: new row for relation "triggers_with_transaction_t2" violates check constraint "triggers_with_transaction_t2_c1_check")~~
+~~ERROR (Message: new row for relation "triggers_with_transaction_vu_prepare_t2" violates check constraint "triggers_with_transaction_vu_prepare_t2_c1_check")~~
 
 if (@@trancount > 0) rollback tran;
 go
 
 begin tran
 go
-insert into triggers_with_transaction_t1 values(3, 'three')
+insert into triggers_with_transaction_vu_prepare_t1 values(3, 'three')
 go
 ~~ERROR (Code: 547)~~
 
-~~ERROR (Message: new row for relation "triggers_with_transaction_t2" violates check constraint "triggers_with_transaction_t2_c1_check")~~
+~~ERROR (Message: new row for relation "triggers_with_transaction_vu_prepare_t2" violates check constraint "triggers_with_transaction_vu_prepare_t2_c1_check")~~
 
 if (@@trancount > 0) rollback tran;
 go
 
-select * from triggers_with_transaction_t1;
+select * from triggers_with_transaction_vu_prepare_t1;
 GO
 ~~START~~
 int#!#varchar
@@ -700,7 +700,7 @@ int#!#varchar
 ~~END~~
 
 
-select * from triggers_with_transaction_t2;
+select * from triggers_with_transaction_vu_prepare_t2;
 GO
 ~~START~~
 int
@@ -710,7 +710,7 @@ int
 ~~END~~
 
 
-select * from triggers_with_transaction_t3;
+select * from triggers_with_transaction_vu_prepare_t3;
 GO
 ~~START~~
 int
@@ -720,20 +720,20 @@ int
 ~~END~~
 
 
-drop trigger triggers_with_transaction_trig1;
+drop trigger triggers_with_transaction_vu_prepare_trig1;
 go
-drop trigger triggers_with_transaction_trig2;
-go
-
-create trigger triggers_with_transaction_trig1 on triggers_with_transaction_t1 for insert as
-insert into triggers_with_transaction_t2 values (2);
+drop trigger triggers_with_transaction_vu_prepare_trig2;
 go
 
-create trigger triggers_with_transaction_trig2 on triggers_with_transaction_t2 for insert as
-insert into triggers_with_transaction_t3 values (6);
+create trigger triggers_with_transaction_vu_prepare_trig1 on triggers_with_transaction_vu_prepare_t1 for insert as
+insert into triggers_with_transaction_vu_prepare_t2 values (2);
 go
 
-insert into triggers_with_transaction_t3 values(2)
+create trigger triggers_with_transaction_vu_prepare_trig2 on triggers_with_transaction_vu_prepare_t2 for insert as
+insert into triggers_with_transaction_vu_prepare_t3 values (6);
+go
+
+insert into triggers_with_transaction_vu_prepare_t3 values(2)
 go
 ~~START~~
 varchar
@@ -745,27 +745,27 @@ nest level 3
 
 begin tran
 go
-insert into triggers_with_transaction_t3 values(6)
+insert into triggers_with_transaction_vu_prepare_t3 values(6)
 go
 ~~ERROR (Code: 547)~~
 
-~~ERROR (Message: new row for relation "triggers_with_transaction_t3" violates check constraint "triggers_with_transaction_t3_c1_check")~~
+~~ERROR (Message: new row for relation "triggers_with_transaction_vu_prepare_t3" violates check constraint "triggers_with_transaction_vu_prepare_t3_c1_check")~~
 
 if (@@trancount > 0) rollback tran;
 go
 
 begin tran
 go
-insert into triggers_with_transaction_t1 values(3, 'three')
+insert into triggers_with_transaction_vu_prepare_t1 values(3, 'three')
 go
 ~~ERROR (Code: 547)~~
 
-~~ERROR (Message: new row for relation "triggers_with_transaction_t3" violates check constraint "triggers_with_transaction_t3_c1_check")~~
+~~ERROR (Message: new row for relation "triggers_with_transaction_vu_prepare_t3" violates check constraint "triggers_with_transaction_vu_prepare_t3_c1_check")~~
 
 if (@@trancount > 0) rollback tran;
 go
 
-select * from triggers_with_transaction_t1;
+select * from triggers_with_transaction_vu_prepare_t1;
 GO
 ~~START~~
 int#!#varchar
@@ -773,7 +773,7 @@ int#!#varchar
 2#!#two
 ~~END~~
 
-select * from triggers_with_transaction_t2;
+select * from triggers_with_transaction_vu_prepare_t2;
 GO
 ~~START~~
 int
@@ -782,7 +782,7 @@ int
 2
 ~~END~~
 
-select * from triggers_with_transaction_t3;
+select * from triggers_with_transaction_vu_prepare_t3;
 GO
 ~~START~~
 int
@@ -793,54 +793,54 @@ int
 ~~END~~
 
 
-drop table triggers_with_transaction_t1;
+drop table triggers_with_transaction_vu_prepare_t1;
 go
-drop table triggers_with_transaction_t2;
+drop table triggers_with_transaction_vu_prepare_t2;
 go
-drop table triggers_with_transaction_t3;
-go
-
-create table triggers_with_transaction_t1(c1 int not null)
+drop table triggers_with_transaction_vu_prepare_t3;
 go
 
-create table triggers_with_transaction_t2(c1 int not null)
+create table triggers_with_transaction_vu_prepare_t1(c1 int not null)
 go
 
-create table triggers_with_transaction_t3(c1 int not null)
+create table triggers_with_transaction_vu_prepare_t2(c1 int not null)
 go
 
-insert into triggers_with_transaction_t1 values(1)
+create table triggers_with_transaction_vu_prepare_t3(c1 int not null)
 go
-~~ROW COUNT: 1~~
 
-
-insert into triggers_with_transaction_t2 values(1)
+insert into triggers_with_transaction_vu_prepare_t1 values(1)
 go
 ~~ROW COUNT: 1~~
 
 
-insert into triggers_with_transaction_t3 values(1)
+insert into triggers_with_transaction_vu_prepare_t2 values(1)
 go
 ~~ROW COUNT: 1~~
 
 
-create trigger triggers_with_transaction_trig1 on triggers_with_transaction_t1 for insert as
+insert into triggers_with_transaction_vu_prepare_t3 values(1)
+go
+~~ROW COUNT: 1~~
+
+
+create trigger triggers_with_transaction_vu_prepare_trig1 on triggers_with_transaction_vu_prepare_t1 for insert as
 select 'nest level 1'
-insert into triggers_with_transaction_t2 values (2);
+insert into triggers_with_transaction_vu_prepare_t2 values (2);
 go
 
-create trigger triggers_with_transaction_trig2 on triggers_with_transaction_t2 for insert as
+create trigger triggers_with_transaction_vu_prepare_trig2 on triggers_with_transaction_vu_prepare_t2 for insert as
 select 'nest level 2'
-insert into triggers_with_transaction_t3 values (null);
+insert into triggers_with_transaction_vu_prepare_t3 values (null);
 go
 
-create trigger triggers_with_transaction_trig3 on triggers_with_transaction_t3 for insert as
+create trigger triggers_with_transaction_vu_prepare_trig3 on triggers_with_transaction_vu_prepare_t3 for insert as
 select 'nest level 3'
 go
 
 begin tran
 go
-insert into triggers_with_transaction_t1 values(2)
+insert into triggers_with_transaction_vu_prepare_t1 values(2)
 go
 ~~START~~
 varchar
@@ -854,37 +854,37 @@ nest level 2
 
 ~~ERROR (Code: 515)~~
 
-~~ERROR (Message: null value in column "c1" of relation "triggers_with_transaction_t3" violates not-null constraint)~~
+~~ERROR (Message: null value in column "c1" of relation "triggers_with_transaction_vu_prepare_t3" violates not-null constraint)~~
 
 if (@@trancount > 0) rollback tran;
 go
 
 begin tran
 go
-insert into triggers_with_transaction_t1 values(NULL)
+insert into triggers_with_transaction_vu_prepare_t1 values(NULL)
 go
 ~~ERROR (Code: 515)~~
 
-~~ERROR (Message: null value in column "c1" of relation "triggers_with_transaction_t1" violates not-null constraint)~~
+~~ERROR (Message: null value in column "c1" of relation "triggers_with_transaction_vu_prepare_t1" violates not-null constraint)~~
 
 if (@@trancount > 0) rollback tran;
 go
 
-select * from triggers_with_transaction_t1;
+select * from triggers_with_transaction_vu_prepare_t1;
 go
 ~~START~~
 int
 1
 ~~END~~
 
-select * from triggers_with_transaction_t2;
+select * from triggers_with_transaction_vu_prepare_t2;
 go
 ~~START~~
 int
 1
 ~~END~~
 
-select * from triggers_with_transaction_t3;
+select * from triggers_with_transaction_vu_prepare_t3;
 go
 ~~START~~
 int
@@ -892,25 +892,25 @@ int
 ~~END~~
 
 
-drop trigger triggers_with_transaction_trig1;
+drop trigger triggers_with_transaction_vu_prepare_trig1;
 go
 
-drop trigger triggers_with_transaction_trig2;
+drop trigger triggers_with_transaction_vu_prepare_trig2;
 go
 
-create trigger triggers_with_transaction_trig1 on triggers_with_transaction_t1 for insert as
+create trigger triggers_with_transaction_vu_prepare_trig1 on triggers_with_transaction_vu_prepare_t1 for insert as
 select 'nest level 1'
-insert into triggers_with_transaction_t2 values (NULL);
+insert into triggers_with_transaction_vu_prepare_t2 values (NULL);
 go
 
-create trigger triggers_with_transaction_trig2 on triggers_with_transaction_t2 for insert as
+create trigger triggers_with_transaction_vu_prepare_trig2 on triggers_with_transaction_vu_prepare_t2 for insert as
 select 'nest level 2'
-insert into triggers_with_transaction_t3 values (3);
+insert into triggers_with_transaction_vu_prepare_t3 values (3);
 go
 
 begin tran
 go
-insert into triggers_with_transaction_t1 values(3)
+insert into triggers_with_transaction_vu_prepare_t1 values(3)
 go
 ~~START~~
 varchar
@@ -919,36 +919,29 @@ nest level 1
 
 ~~ERROR (Code: 515)~~
 
-~~ERROR (Message: null value in column "c1" of relation "triggers_with_transaction_t2" violates not-null constraint)~~
+~~ERROR (Message: null value in column "c1" of relation "triggers_with_transaction_vu_prepare_t2" violates not-null constraint)~~
 
 if (@@trancount > 0) rollback tran;
 go
 
-select * from triggers_with_transaction_t1;
+select * from triggers_with_transaction_vu_prepare_t1;
 go
 ~~START~~
 int
 1
 ~~END~~
 
-select * from triggers_with_transaction_t2;
+select * from triggers_with_transaction_vu_prepare_t2;
 go
 ~~START~~
 int
 1
 ~~END~~
 
-select * from triggers_with_transaction_t3;
+select * from triggers_with_transaction_vu_prepare_t3;
 go
 ~~START~~
 int
 1
 ~~END~~
 
-
-drop table triggers_with_transaction_t1;
-go
-drop table triggers_with_transaction_t2;
-go
-drop table triggers_with_transaction_t3;
-go

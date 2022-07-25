@@ -1,4 +1,4 @@
-INSERT INTO babel_2884_persons
+INSERT INTO babel_2884_vu_prepare_persons
 (PersonName, PersonLastName )
 VALUES
 (N'Salvador', N'Williams'),
@@ -8,7 +8,7 @@ VALUES
 ( N'Jorge', N'Johnson')
  
 GO
-INSERT INTO babel_2884_addressList
+INSERT INTO babel_2884_vu_prepare_addressList
 (PersonId, PostCode, City)
 VALUES
 (1, N'07145', N'Philadelphia'),
@@ -17,7 +17,7 @@ VALUES
 (4, N'96573', N'Chicago')
 GO
 
-UPDATE babel_2884_mytest SET Name = 'x' WHERE Id = 1
+UPDATE babel_2884_vu_prepare_mytest SET Name = 'x' WHERE Id = 1
 go
 --UPDATE Persons SET Persons.PersonCityName = 'ddd' where PersonId = 1;
 --go

@@ -1,42 +1,42 @@
 -- clean up
-drop table babel_trigger_vu_t1
+drop table babel_trigger_vu_prepare_t1
 GO
 
-drop trigger babel_trigger_vu_trg2
+drop trigger babel_trigger_vu_prepare_trg2
 GO
 
-drop table babel_trigger_vu_t2
+drop table babel_trigger_vu_prepare_t2
 GO
 
-drop trigger babel_trigger_vu_trg_product_audit1
+drop trigger babel_trigger_vu_prepare_trg_product_audit1
 GO
 
-drop table babel_trigger_vu_product_audits1
+drop table babel_trigger_vu_prepare_product_audits1
 GO
 
-drop table babel_trigger_vu_products1
+drop table babel_trigger_vu_prepare_products1
 GO
 
-drop table babel_trigger_vu_t3
+drop table babel_trigger_vu_prepare_t3
 GO
 
-drop trigger babel_trigger_vu_trg4
+drop trigger babel_trigger_vu_prepare_trg4
 GO
 
-drop table babel_trigger_vu_t4
+drop table babel_trigger_vu_prepare_t4
 GO
 
-drop trigger babel_trigger_vu_trg_product_audit2
+drop trigger babel_trigger_vu_prepare_trg_product_audit2
 GO
 
-drop table babel_trigger_vu_product_audits2
+drop table babel_trigger_vu_prepare_product_audits2
 GO
 
-drop table babel_trigger_vu_products2
+drop table babel_trigger_vu_prepare_products2
 GO
 
-drop table babel_trigger_vu_t5
+drop table babel_trigger_vu_prepare_t5
 GO
 
-drop table babel_trigger_vu_t6
+drop table babel_trigger_vu_prepare_t6
 GO

@@ -1,7 +1,7 @@
 
 -- For INSTEAD OF keyword --
 -- with INSERT
-insert into insteadof_nested_trigger_with_dml_t11 values(2)
+insert into insteadof_nested_trigger_with_dml_vu_prepare_t11 values(2)
 go
 ~~START~~
 varchar
@@ -25,7 +25,7 @@ nest level 3
 ~~ROW COUNT: 1~~
 
 
-select * from insteadof_nested_trigger_with_dml_t11
+select * from insteadof_nested_trigger_with_dml_vu_prepare_t11
 go
 ~~START~~
 int
@@ -33,7 +33,7 @@ int
 ~~END~~
 
 
-select * from insteadof_nested_trigger_with_dml_t22
+select * from insteadof_nested_trigger_with_dml_vu_prepare_t22
 go
 ~~START~~
 int
@@ -41,7 +41,7 @@ int
 ~~END~~
 
 
-select * from insteadof_nested_trigger_with_dml_t33
+select * from insteadof_nested_trigger_with_dml_vu_prepare_t33
 go
 ~~START~~
 int
@@ -50,7 +50,7 @@ int
 
 
 -- with update
-update insteadof_nested_trigger_with_dml_t11 set c1 = 3 where c1 = 1 ;
+update insteadof_nested_trigger_with_dml_vu_prepare_t11 set c1 = 3 where c1 = 1 ;
 go
 ~~START~~
 varchar
@@ -74,7 +74,7 @@ nest level 3
 ~~ROW COUNT: 1~~
 
 
-select * from insteadof_nested_trigger_with_dml_t11
+select * from insteadof_nested_trigger_with_dml_vu_prepare_t11
 go
 ~~START~~
 int
@@ -82,7 +82,7 @@ int
 ~~END~~
 
 
-select * from insteadof_nested_trigger_with_dml_t22
+select * from insteadof_nested_trigger_with_dml_vu_prepare_t22
 go
 ~~START~~
 int
@@ -90,7 +90,7 @@ int
 ~~END~~
 
 
-select * from insteadof_nested_trigger_with_dml_t33
+select * from insteadof_nested_trigger_with_dml_vu_prepare_t33
 go
 ~~START~~
 int
@@ -98,7 +98,7 @@ int
 ~~END~~
 
 -- with delete
-delete from insteadof_nested_trigger_with_dml_t11 where c1 = 1 ;
+delete from insteadof_nested_trigger_with_dml_vu_prepare_t11 where c1 = 1 ;
 go
 ~~START~~
 varchar
@@ -122,7 +122,7 @@ nest level 3
 ~~ROW COUNT: 1~~
 
 
-select * from insteadof_nested_trigger_with_dml_t11
+select * from insteadof_nested_trigger_with_dml_vu_prepare_t11
 go
 ~~START~~
 int
@@ -130,7 +130,7 @@ int
 ~~END~~
 
 
-select * from insteadof_nested_trigger_with_dml_t22
+select * from insteadof_nested_trigger_with_dml_vu_prepare_t22
 go
 ~~START~~
 int
@@ -138,7 +138,7 @@ int
 ~~END~~
 
 
-select * from insteadof_nested_trigger_with_dml_t33
+select * from insteadof_nested_trigger_with_dml_vu_prepare_t33
 go
 ~~START~~
 int

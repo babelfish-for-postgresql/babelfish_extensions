@@ -1,9 +1,9 @@
 -- cleanup
-drop trigger babel_1963_trig
+drop trigger babel_1963_vu_prepare_trig
 go
 
-drop table babel_1963_t2;
+drop table babel_1963_vu_prepare_t2;
 go
 
-drop procedure babel_1963_p1
+drop procedure babel_1963_vu_prepare_p1
 go

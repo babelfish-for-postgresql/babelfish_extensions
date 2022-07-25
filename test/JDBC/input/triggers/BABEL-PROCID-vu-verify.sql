@@ -3,47 +3,47 @@ SELECT @@PROCID;
 GO
 
 -- Test procedure
-EXEC babel_procid_proc1;
+EXEC babel_procid_vu_prepare_proc1;
 GO
 
 -- Test nested procedure
-EXEC babel_procid_proc2;
+EXEC babel_procid_vu_prepare_proc2;
 GO
 
 -- Test UDF function
-SELECT babel_procid_func1();
+SELECT babel_procid_vu_prepare_func1();
 GO
 
 -- Test nested function inside a procedure
-EXEC babel_procid_proc3;
+EXEC babel_procid_vu_prepare_proc3;
 GO
 
 -- Test nested function inside a function
-SELECT * FROM babel_procid_func3();
+SELECT * FROM babel_procid_vu_prepare_func3();
 GO
 
 -- Test triggers
-INSERT INTO babel_procid_data1(a) VALUES(1);
+INSERT INTO babel_procid_vu_prepare_data1(a) VALUES(1);
 GO
 
 -- Should print name of the trigger
-SELECT * FROM babel_procid_data_log;
+SELECT * FROM babel_procid_vu_prepare_data_log;
 GO
 
 
 --Test nested function and procedure inside a trigger
-INSERT INTO babel_procid_data2(a) VALUES(1);
+INSERT INTO babel_procid_vu_prepare_data2(a) VALUES(1);
 GO
 
 
 -- Test when nested module throws error
-EXEC babel_procid_proc5;
+EXEC babel_procid_vu_prepare_proc5;
 GO
 
-INSERT INTO babel_procid_data3(a) VALUES(3);
+INSERT INTO babel_procid_vu_prepare_data3(a) VALUES(3);
 GO
 
 -- Test insert through a procedure
-EXEC babel_procid_table_insert 4;
+EXEC babel_procid_vu_prepare_table_insert 4;
 GO
 

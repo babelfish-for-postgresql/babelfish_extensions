@@ -1,7 +1,7 @@
 
 -- For AFTER keyword --
 -- with INSERT
-insert into nested_trigger_with_dml_t1 values(2)
+insert into nested_trigger_with_dml_vu_prepare_t1 values(2)
 go
 ~~START~~
 varchar
@@ -25,7 +25,7 @@ nest level 3
 ~~ROW COUNT: 1~~
 
 
-select * from nested_trigger_with_dml_t1
+select * from nested_trigger_with_dml_vu_prepare_t1
 go
 ~~START~~
 int
@@ -34,7 +34,7 @@ int
 ~~END~~
 
 
-select * from nested_trigger_with_dml_t2
+select * from nested_trigger_with_dml_vu_prepare_t2
 go
 ~~START~~
 int
@@ -43,7 +43,7 @@ int
 ~~END~~
 
 
-select * from nested_trigger_with_dml_t3
+select * from nested_trigger_with_dml_vu_prepare_t3
 go
 ~~START~~
 int
@@ -53,7 +53,7 @@ int
 
 
 -- with update
-update nested_trigger_with_dml_t1 set c1 = 3 where c1 = 2 ;
+update nested_trigger_with_dml_vu_prepare_t1 set c1 = 3 where c1 = 2 ;
 go
 ~~START~~
 varchar
@@ -77,7 +77,7 @@ nest level 3
 ~~ROW COUNT: 1~~
 
 
-select * from nested_trigger_with_dml_t1
+select * from nested_trigger_with_dml_vu_prepare_t1
 go
 ~~START~~
 int
@@ -86,7 +86,7 @@ int
 ~~END~~
 
 
-select * from nested_trigger_with_dml_t2
+select * from nested_trigger_with_dml_vu_prepare_t2
 go
 ~~START~~
 int
@@ -95,7 +95,7 @@ int
 ~~END~~
 
 
-select * from nested_trigger_with_dml_t3
+select * from nested_trigger_with_dml_vu_prepare_t3
 go
 ~~START~~
 int
@@ -104,7 +104,7 @@ int
 ~~END~~
 
 -- with delete
-delete from nested_trigger_with_dml_t1 where c1 = 1 ;
+delete from nested_trigger_with_dml_vu_prepare_t1 where c1 = 1 ;
 go
 ~~START~~
 varchar
@@ -128,7 +128,7 @@ nest level 3
 ~~ROW COUNT: 1~~
 
 
-select * from nested_trigger_with_dml_t1
+select * from nested_trigger_with_dml_vu_prepare_t1
 go
 ~~START~~
 int
@@ -136,7 +136,7 @@ int
 ~~END~~
 
 
-select * from nested_trigger_with_dml_t2
+select * from nested_trigger_with_dml_vu_prepare_t2
 go
 ~~START~~
 int
@@ -144,7 +144,7 @@ int
 ~~END~~
 
 
-select * from nested_trigger_with_dml_t3
+select * from nested_trigger_with_dml_vu_prepare_t3
 go
 ~~START~~
 int

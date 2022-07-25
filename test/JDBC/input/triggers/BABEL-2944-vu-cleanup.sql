@@ -1,8 +1,8 @@
-drop trigger babel_2944_updEmployeeData3;
+drop trigger babel_2944_vu_prepare_updEmployeeData3;
 GO
 
-drop trigger babel_2944_updEmployeeData2;
+drop trigger babel_2944_vu_prepare_updEmployeeData2;
 GO
 
-drop table babel_2944_employeeData
+drop table babel_2944_vu_prepare_employeeData
 GO

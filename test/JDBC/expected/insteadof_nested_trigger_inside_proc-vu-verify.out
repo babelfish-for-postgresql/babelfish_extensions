@@ -1,7 +1,7 @@
 
 -- For INSTEAD OF keyword --
 -- with INSERT
-exec insteadof_nested_trigger_inside_proc_p11;
+exec insteadof_nested_trigger_inside_proc_vu_prepare_p11;
 go
 ~~START~~
 varchar
@@ -25,7 +25,7 @@ nest level 3
 ~~ROW COUNT: 1~~
 
 
-select * from insteadof_nested_trigger_inside_proc_t11
+select * from insteadof_nested_trigger_inside_proc_vu_prepare_t11
 go
 ~~START~~
 int
@@ -33,7 +33,7 @@ int
 ~~END~~
 
 
-select * from insteadof_nested_trigger_inside_proc_t22
+select * from insteadof_nested_trigger_inside_proc_vu_prepare_t22
 go
 ~~START~~
 int
@@ -41,7 +41,7 @@ int
 ~~END~~
 
 
-select * from insteadof_nested_trigger_inside_proc_t33
+select * from insteadof_nested_trigger_inside_proc_vu_prepare_t33
 go
 ~~START~~
 int
@@ -50,7 +50,7 @@ int
 
 
 -- with update
-exec insteadof_nested_trigger_inside_proc_p011;
+exec insteadof_nested_trigger_inside_proc_vu_prepare_p011;
 go
 ~~START~~
 varchar
@@ -74,7 +74,7 @@ nest level 3
 ~~ROW COUNT: 1~~
 
 
-select * from insteadof_nested_trigger_inside_proc_t11
+select * from insteadof_nested_trigger_inside_proc_vu_prepare_t11
 go
 ~~START~~
 int
@@ -82,7 +82,7 @@ int
 ~~END~~
 
 
-select * from insteadof_nested_trigger_inside_proc_t22
+select * from insteadof_nested_trigger_inside_proc_vu_prepare_t22
 go
 ~~START~~
 int
@@ -90,7 +90,7 @@ int
 ~~END~~
 
 
-select * from insteadof_nested_trigger_inside_proc_t33
+select * from insteadof_nested_trigger_inside_proc_vu_prepare_t33
 go
 ~~START~~
 int
@@ -98,7 +98,7 @@ int
 ~~END~~
 
 -- with delete
-exec insteadof_nested_trigger_inside_proc_p0011;
+exec insteadof_nested_trigger_inside_proc_vu_prepare_p0011;
 go
 ~~START~~
 varchar
@@ -122,7 +122,7 @@ nest level 3
 ~~ROW COUNT: 1~~
 
 
-select * from insteadof_nested_trigger_inside_proc_t11
+select * from insteadof_nested_trigger_inside_proc_vu_prepare_t11
 go
 ~~START~~
 int
@@ -130,7 +130,7 @@ int
 ~~END~~
 
 
-select * from insteadof_nested_trigger_inside_proc_t22
+select * from insteadof_nested_trigger_inside_proc_vu_prepare_t22
 go
 ~~START~~
 int
@@ -138,7 +138,7 @@ int
 ~~END~~
 
 
-select * from insteadof_nested_trigger_inside_proc_t33
+select * from insteadof_nested_trigger_inside_proc_vu_prepare_t33
 go
 ~~START~~
 int
