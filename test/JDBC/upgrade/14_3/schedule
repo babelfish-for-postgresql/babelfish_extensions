@@ -56,4 +56,5 @@ sys-trigger_nestlevel
 routines_definition
 constraint_column_usage
 column_domain_usage
+datepart
 Test-sp_helpsrvrolemember
