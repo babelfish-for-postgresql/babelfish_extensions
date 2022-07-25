@@ -2271,19 +2271,27 @@ BEGIN
 					WHEN Ext2.orig_username IS NULL THEN 'public'
 					ELSE Ext2.orig_username END 
 					AS SYS.SYSNAME) AS 'RoleName',
-			   CAST(Ext1.login_name AS SYS.SYSNAME) AS 'LoginName',
+			   CAST(CASE WHEN Ext1.orig_username = 'dbo' THEN Base4.rolname
+					ELSE Base3.rolname END
+					AS SYS.SYSNAME) AS 'LoginName',
 			   CAST(LogExt.default_database_name AS SYS.SYSNAME) AS 'DefDBName',
 			   CAST(Ext1.default_schema_name AS SYS.SYSNAME) AS 'DefSchemaName',
 			   CAST(Base1.oid AS INT) AS 'UserID',
-			   CAST(CAST(Base1.oid AS INT) AS SYS.VARBINARY(85)) AS 'SID'
+			   CAST(CASE WHEN Ext1.orig_username = 'dbo' THEN CAST(Base4.oid AS INT)
+					ELSE CAST(Base3.oid AS INT) END
+					AS SYS.VARBINARY(85)) AS 'SID'
 		FROM sys.babelfish_authid_user_ext AS Ext1
 		INNER JOIN pg_catalog.pg_roles AS Base1 ON Base1.rolname = Ext1.rolname
 		LEFT OUTER JOIN pg_catalog.pg_auth_members AS Authmbr ON Base1.oid = Authmbr.member
 		LEFT OUTER JOIN pg_catalog.pg_roles AS Base2 ON Base2.oid = Authmbr.roleid
 		LEFT OUTER JOIN sys.babelfish_authid_user_ext AS Ext2 ON Base2.rolname = Ext2.rolname
 		LEFT OUTER JOIN sys.babelfish_authid_login_ext As LogExt ON LogExt.rolname = Ext1.login_name
+		LEFT OUTER JOIN pg_catalog.pg_roles AS Base3 ON Base3.rolname = LogExt.rolname
+		LEFT OUTER JOIN sys.babelfish_sysdatabases AS Bsdb ON Bsdb.name = DB_NAME()
+		LEFT OUTER JOIN pg_catalog.pg_roles AS Base4 ON Base4.rolname = Bsdb.owner
 		WHERE Ext1.database_name = DB_NAME()
 		AND Ext1.type = 'S'
+		AND Ext1.orig_username != 'db_owner'
 		ORDER BY UserName, RoleName;
 	END
 	-- If the security account is the db fixed role - db_owner
@@ -2332,19 +2340,27 @@ BEGIN
 					WHEN Ext2.orig_username IS NULL THEN 'public' 
 					ELSE Ext2.orig_username END 
 					AS SYS.SYSNAME) AS 'RoleName',
-			   CAST(Ext1.login_name AS SYS.SYSNAME) AS 'LoginName',
+			   CAST(CASE WHEN Ext1.orig_username = 'dbo' THEN Base4.rolname
+					ELSE Base3.rolname END
+					AS SYS.SYSNAME) AS 'LoginName',
 			   CAST(LogExt.default_database_name AS SYS.SYSNAME) AS 'DefDBName',
 			   CAST(Ext1.default_schema_name AS SYS.SYSNAME) AS 'DefSchemaName',
 			   CAST(Base1.oid AS INT) AS 'UserID',
-			   CAST(CAST(Base1.oid AS INT) AS SYS.VARBINARY(85)) AS 'SID'
+			   CAST(CASE WHEN Ext1.orig_username = 'dbo' THEN CAST(Base4.oid AS INT)
+					ELSE CAST(Base3.oid AS INT) END
+					AS SYS.VARBINARY(85)) AS 'SID'
 		FROM sys.babelfish_authid_user_ext AS Ext1
 		INNER JOIN pg_catalog.pg_roles AS Base1 ON Base1.rolname = Ext1.rolname
 		LEFT OUTER JOIN pg_catalog.pg_auth_members AS Authmbr ON Base1.oid = Authmbr.member
 		LEFT OUTER JOIN pg_catalog.pg_roles AS Base2 ON Base2.oid = Authmbr.roleid
 		LEFT OUTER JOIN sys.babelfish_authid_user_ext AS Ext2 ON Base2.rolname = Ext2.rolname
 		LEFT OUTER JOIN sys.babelfish_authid_login_ext As LogExt ON LogExt.rolname = Ext1.login_name
+		LEFT OUTER JOIN pg_catalog.pg_roles AS Base3 ON Base3.rolname = LogExt.rolname
+		LEFT OUTER JOIN sys.babelfish_sysdatabases AS Bsdb ON Bsdb.name = DB_NAME()
+		LEFT OUTER JOIN pg_catalog.pg_roles AS Base4 ON Base4.rolname = Bsdb.owner
 		WHERE Ext1.database_name = DB_NAME()
 		AND Ext1.type = 'S'
+		AND Ext1.orig_username != 'db_owner'
 		AND (Ext1.orig_username = @name_in_db OR lower(Ext1.orig_username) = lower(@name_in_db))
 		ORDER BY UserName, RoleName;
 	END
