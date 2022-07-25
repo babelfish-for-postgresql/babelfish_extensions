@@ -55,3 +55,4 @@ routines_definition
 constraint_column_usage
 column_domain_usage
 Test-sp_helpsrvrolemember
+BABEL-ROLE
