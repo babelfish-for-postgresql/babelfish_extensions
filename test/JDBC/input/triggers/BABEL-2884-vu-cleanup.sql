@@ -1,0 +1,6 @@
+drop trigger babel_2884_vu_prepare_mytrig
+drop table babel_2884_vu_prepare_mytest
+drop trigger babel_2884_vu_prepare_mypersontrig
+drop table babel_2884_vu_prepare_persons
+drop table babel_2884_vu_prepare_addressList
+go

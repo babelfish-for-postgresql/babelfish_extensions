@@ -1,0 +1,6 @@
+drop table triggers_with_transaction_vu_prepare_t1;
+go
+drop table triggers_with_transaction_vu_prepare_t2;
+go
+drop table triggers_with_transaction_vu_prepare_t3;
+go

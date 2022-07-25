@@ -1,0 +1,43 @@
+--Rowcount in trigger should return 1
+DELETE FROM babel_2208_vu_prepare_t1 WHERE c1 = 1
+go
+~~START~~
+int
+1
+~~END~~
+
+~~ROW COUNT: 1~~
+
+--Rowcount in trigger should return 2
+DELETE FROM babel_2208_vu_prepare_t1 WHERE c1 IN(2,3)
+go
+~~START~~
+int
+2
+~~END~~
+
+~~ROW COUNT: 2~~
+
+
+
+--Rowcount in trigger should return 4
+INSERT INTO babel_2208_vu_prepare_t2 VALUES (1, 'string1' ),(2, 'string2' ),(3, 'string3' ),(4, 'string4' )
+go
+~~START~~
+int
+4
+~~END~~
+
+~~ROW COUNT: 4~~
+
+
+INSERT INTO babel_2208_vu_prepare_t2 VALUES (1, 'string1' ),(2, 'string2' ),(3, 'string3' )
+GO
+~~START~~
+int
+3
+~~END~~
+
+~~ROW COUNT: 3~~
+
+

@@ -1,0 +1,26 @@
+insert into babel_383_vu_prepare_employeeData values ('d','b',123, 'a','a','a','a','a','a');
+go
+~~ROW COUNT: 1~~
+
+
+update babel_383_vu_prepare_employeeData set Emp_Last_name = 'sss', f = 'ddd' where id = 1;
+go
+~~ROW COUNT: 1~~
+
+
+update babel_383_vu_prepare_employeeData set Emp_First_name = 'sss' where id = 1;
+go
+~~START~~
+int#!#varchar#!#varchar#!#int#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar
+1#!#sss#!#sss#!#123#!#a#!#a#!#a#!#a#!#a#!#ddd
+~~END~~
+
+~~ROW COUNT: 1~~
+
+
+update babel_383_vu_prepare_employeeData set f= 'ddd' where id = 1;
+go
+~~ROW COUNT: 1~~
+
+
+

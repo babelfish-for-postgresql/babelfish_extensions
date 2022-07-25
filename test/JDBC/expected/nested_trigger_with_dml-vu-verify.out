@@ -1,0 +1,153 @@
+
+-- For AFTER keyword --
+-- with INSERT
+insert into nested_trigger_with_dml_vu_prepare_t1 values(2)
+go
+~~START~~
+varchar
+nest level 1
+~~END~~
+
+~~START~~
+varchar
+nest level 2
+~~END~~
+
+~~START~~
+varchar
+nest level 3
+~~END~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+
+select * from nested_trigger_with_dml_vu_prepare_t1
+go
+~~START~~
+int
+1
+2
+~~END~~
+
+
+select * from nested_trigger_with_dml_vu_prepare_t2
+go
+~~START~~
+int
+1
+2
+~~END~~
+
+
+select * from nested_trigger_with_dml_vu_prepare_t3
+go
+~~START~~
+int
+1
+2
+~~END~~
+
+
+-- with update
+update nested_trigger_with_dml_vu_prepare_t1 set c1 = 3 where c1 = 2 ;
+go
+~~START~~
+varchar
+nest level 1
+~~END~~
+
+~~START~~
+varchar
+nest level 2
+~~END~~
+
+~~START~~
+varchar
+nest level 3
+~~END~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+
+select * from nested_trigger_with_dml_vu_prepare_t1
+go
+~~START~~
+int
+1
+3
+~~END~~
+
+
+select * from nested_trigger_with_dml_vu_prepare_t2
+go
+~~START~~
+int
+1
+3
+~~END~~
+
+
+select * from nested_trigger_with_dml_vu_prepare_t3
+go
+~~START~~
+int
+1
+3
+~~END~~
+
+-- with delete
+delete from nested_trigger_with_dml_vu_prepare_t1 where c1 = 1 ;
+go
+~~START~~
+varchar
+nest level 1
+~~END~~
+
+~~START~~
+varchar
+nest level 2
+~~END~~
+
+~~START~~
+varchar
+nest level 3
+~~END~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+
+select * from nested_trigger_with_dml_vu_prepare_t1
+go
+~~START~~
+int
+3
+~~END~~
+
+
+select * from nested_trigger_with_dml_vu_prepare_t2
+go
+~~START~~
+int
+3
+~~END~~
+
+
+select * from nested_trigger_with_dml_vu_prepare_t3
+go
+~~START~~
+int
+3
+~~END~~
+

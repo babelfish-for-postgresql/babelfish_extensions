@@ -1,0 +1,124 @@
+create table babel_405_vu_prepare_insert1(x int);
+create table babel_405_vu_prepare_insert2(x int);
+insert into babel_405_vu_prepare_insert1 values(1);
+insert into babel_405_vu_prepare_insert1 select * from babel_405_vu_prepare_insert1;
+insert into babel_405_vu_prepare_insert1 select * from babel_405_vu_prepare_insert1;
+go
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 2~~
+
+
+create trigger babel_405_vu_prepare_tr1 on babel_405_vu_prepare_insert2 instead of insert
+as
+begin
+select * from babel_405_vu_prepare_insert1;
+end
+go
+
+create trigger babel_405_vu_prepare_tr2 on babel_405_vu_prepare_insert2 instead of insert
+as
+begin
+select * from babel_405_vu_prepare_insert1;
+end
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: cannot create trigger "babel_405_vu_prepare_tr2" for relation "babel_405_vu_prepare_insert2" because an INSTEAD OF INSERT trigger already exists on this object.)~~
+
+
+create table babel_405_vu_prepare_delete1(x int);
+create table babel_405_vu_prepare_delete2(x int);
+insert into babel_405_vu_prepare_delete1 values(1);
+insert into babel_405_vu_prepare_delete1 select * from babel_405_vu_prepare_delete1;
+insert into babel_405_vu_prepare_delete1 select * from babel_405_vu_prepare_delete1;
+insert into babel_405_vu_prepare_delete2 values(2);
+go
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 2~~
+
+~~ROW COUNT: 1~~
+
+
+create trigger babel_405_vu_prepare_tr3 on babel_405_vu_prepare_delete2 instead of delete
+as
+begin
+select * from babel_405_vu_prepare_delete1;
+end
+go
+
+create trigger babel_405_vu_prepare_tr4 on babel_405_vu_prepare_delete2 instead of insert
+as
+begin
+select '1';
+end
+go
+
+create table babel_405_vu_prepare_update1(x int);
+create table babel_405_vu_prepare_update2(x int);
+insert into babel_405_vu_prepare_update1 values(1);
+insert into babel_405_vu_prepare_update1 select * from babel_405_vu_prepare_update1;
+insert into babel_405_vu_prepare_update1 select * from babel_405_vu_prepare_update1;
+insert into babel_405_vu_prepare_update2 values(1);
+go
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 2~~
+
+~~ROW COUNT: 1~~
+
+
+create trigger babel_405_vu_prepare_tr5 on babel_405_vu_prepare_update2 instead of update
+as
+begin
+select * from babel_405_vu_prepare_update1;
+end
+go
+
+create trigger babel_405_vu_prepare_tr6 on babel_405_vu_prepare_update2 instead of update
+as
+begin
+select 'hello';
+end
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: cannot create trigger "babel_405_vu_prepare_tr6" for relation "babel_405_vu_prepare_update2" because an INSTEAD OF UPDATE trigger already exists on this object.)~~
+
+
+create table babel_405_vu_prepare_insert3(x int);
+create table babel_405_vu_prepare_insert4(x int);
+insert into babel_405_vu_prepare_insert3 values(1);
+insert into babel_405_vu_prepare_insert3 select * from babel_405_vu_prepare_insert3;
+insert into babel_405_vu_prepare_insert3 select * from babel_405_vu_prepare_insert3;
+go
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 2~~
+
+
+create trigger babel_405_vu_prepare_tr7 on babel_405_vu_prepare_insert4 instead of insert
+as
+begin
+select * from babel_405_vu_prepare_insert3
+end;
+go
+
+create trigger babel_405_vu_prepare_after_trig on babel_405_vu_prepare_insert4 after insert
+as
+begin
+select 'hello'
+end;
+go
+
+
+

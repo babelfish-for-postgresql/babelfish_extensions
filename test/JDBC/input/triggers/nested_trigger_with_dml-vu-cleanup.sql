@@ -1,0 +1,19 @@
+drop trigger nested_trigger_with_dml_vu_prepare_trig1
+drop trigger nested_trigger_with_dml_vu_prepare_trig2
+drop trigger nested_trigger_with_dml_vu_prepare_trig3
+go
+
+drop trigger nested_trigger_with_dml_vu_prepare_trig4
+drop trigger nested_trigger_with_dml_vu_prepare_trig5
+drop trigger nested_trigger_with_dml_vu_prepare_trig6
+go
+
+drop trigger nested_trigger_with_dml_vu_prepare_trig7
+drop trigger nested_trigger_with_dml_vu_prepare_trig8
+drop trigger nested_trigger_with_dml_vu_prepare_trig9
+go
+
+drop table nested_trigger_with_dml_vu_prepare_t1
+drop table nested_trigger_with_dml_vu_prepare_t2
+drop table nested_trigger_with_dml_vu_prepare_t3
+go

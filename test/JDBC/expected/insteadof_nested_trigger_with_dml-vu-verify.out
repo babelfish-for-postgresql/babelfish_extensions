@@ -1,0 +1,147 @@
+
+-- For INSTEAD OF keyword --
+-- with INSERT
+insert into insteadof_nested_trigger_with_dml_vu_prepare_t11 values(2)
+go
+~~START~~
+varchar
+nest level 1
+~~END~~
+
+~~START~~
+varchar
+nest level 2
+~~END~~
+
+~~START~~
+varchar
+nest level 3
+~~END~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+
+select * from insteadof_nested_trigger_with_dml_vu_prepare_t11
+go
+~~START~~
+int
+1
+~~END~~
+
+
+select * from insteadof_nested_trigger_with_dml_vu_prepare_t22
+go
+~~START~~
+int
+1
+~~END~~
+
+
+select * from insteadof_nested_trigger_with_dml_vu_prepare_t33
+go
+~~START~~
+int
+1
+~~END~~
+
+
+-- with update
+update insteadof_nested_trigger_with_dml_vu_prepare_t11 set c1 = 3 where c1 = 1 ;
+go
+~~START~~
+varchar
+nest level 1
+~~END~~
+
+~~START~~
+varchar
+nest level 2
+~~END~~
+
+~~START~~
+varchar
+nest level 3
+~~END~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+
+select * from insteadof_nested_trigger_with_dml_vu_prepare_t11
+go
+~~START~~
+int
+1
+~~END~~
+
+
+select * from insteadof_nested_trigger_with_dml_vu_prepare_t22
+go
+~~START~~
+int
+1
+~~END~~
+
+
+select * from insteadof_nested_trigger_with_dml_vu_prepare_t33
+go
+~~START~~
+int
+1
+~~END~~
+
+-- with delete
+delete from insteadof_nested_trigger_with_dml_vu_prepare_t11 where c1 = 1 ;
+go
+~~START~~
+varchar
+nest level 1
+~~END~~
+
+~~START~~
+varchar
+nest level 2
+~~END~~
+
+~~START~~
+varchar
+nest level 3
+~~END~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+
+select * from insteadof_nested_trigger_with_dml_vu_prepare_t11
+go
+~~START~~
+int
+1
+~~END~~
+
+
+select * from insteadof_nested_trigger_with_dml_vu_prepare_t22
+go
+~~START~~
+int
+1
+~~END~~
+
+
+select * from insteadof_nested_trigger_with_dml_vu_prepare_t33
+go
+~~START~~
+int
+1
+~~END~~
+

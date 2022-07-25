@@ -1,0 +1,19 @@
+insert into babel_1243_vu_prepare_employeeData values ('a','b',234);
+GO
+~~START~~
+int#!#varchar#!#varchar#!#int
+1#!#a#!#b#!#234
+~~END~~
+
+~~ROW COUNT: 1~~
+
+
+update babel_1243_vu_prepare_employeeData set Emp_Last_name = 'ccc' where id = 1;
+GO
+~~START~~
+int#!#varchar#!#varchar#!#int
+1#!#a#!#ccc#!#234
+~~END~~
+
+~~ROW COUNT: 1~~
+
