@@ -45,8 +45,6 @@ sys-lock_timeout
 sys-max_connections
 sys-original_login
 sys-schema-name
-sys-suser_sid
-sys-suser_sname
 sys-sysobjects
 sys-trigger_nestlevel
 routines_definition
@@ -68,3 +66,5 @@ babel_trigger
 nested_trigger_inside_proc
 nested_trigger_with_dml
 triggers_with_transaction
+Test-sp_helpsrvrolemember
+
