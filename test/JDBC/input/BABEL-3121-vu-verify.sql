@@ -3,122 +3,45 @@ go
 
 select * from babel_3121_vu_prepare_t;
 go
-~~START~~
-int#!#varchar
-1#!#success
-~~END~~
-
 
 select attname, array_to_string(attoptions,',') attoptions from pg_class C, pg_attribute A where C.oid = A.attrelid and C.relname like 'babel_3121_vu_prepare_t' and A.attnum > 0 and attisdropped = 'f' order by attname;
 go
-~~START~~
-varchar#!#text
-bala_##!#bbf_original_name=BALA_#
-id#!#bbf_original_name=id
-~~END~~
-
 
 select * from babel_3121_vu_prepare_t2;
 go
-~~START~~
-int#!#varchar
-1#!#success
-~~END~~
-
 
 select attname, array_to_string(attoptions,',') attoptions from pg_class C, pg_attribute A where C.oid = A.attrelid and C.relname like 'babel_3121_vu_prepare_t2' and A.attnum > 0 and attisdropped = 'f' order by attname;
 go
-~~START~~
-varchar#!#text
-bala cc#!#bbf_original_name=BALA CC
-id#!#bbf_original_name=id
-~~END~~
-
 
 select * from babel_3121_vu_prepare_t3;
 go
-~~START~~
-int#!#varchar
-1#!#success
-~~END~~
-
 
 select attname, array_to_string(attoptions,',') attoptions from pg_class C, pg_attribute A where C.oid = A.attrelid and C.relname like 'babel_3121_vu_prepare_t3' and A.attnum > 0 and attisdropped = 'f' order by attname;
 go
-~~START~~
-varchar#!#text
-bala'd#!#bbf_original_name=BALA'D
-id#!#bbf_original_name=id
-~~END~~
-
 
 select * from babel_3121_vu_prepare_t4;
 go
-~~START~~
-int#!#varchar
-1#!#success
-~~END~~
-
 
 select attname, array_to_string(attoptions,',') attoptions from pg_class C, pg_attribute A where C.oid = A.attrelid and C.relname like 'babel_3121_vu_prepare_t4' and A.attnum > 0 and attisdropped = 'f' order by attname;
 go
-~~START~~
-varchar#!#text
-bala\e#!#bbf_original_name=BALA\E
-id#!#bbf_original_name=id
-~~END~~
-
 
 select * from babel_3121_vu_prepare_t5;
 go
-~~START~~
-int#!#varchar
-1#!#success
-~~END~~
-
 
 select attname, array_to_string(attoptions,',') attoptions from pg_class C, pg_attribute A where C.oid = A.attrelid and C.relname like 'babel_3121_vu_prepare_t5' and A.attnum > 0 and attisdropped = 'f' order by attname;
 go
-~~START~~
-varchar#!#text
-bala"e#!#bbf_original_name=BALA"E
-id#!#bbf_original_name=id
-~~END~~
-
 
 select * from babel_3121_vu_prepare_t6;
 go
-~~START~~
-int#!#varchar
-1#!#success
-~~END~~
-
 
 select attname, array_to_string(attoptions,',') attoptions from pg_class C, pg_attribute A where C.oid = A.attrelid and C.relname like 'babel_3121_vu_prepare_t6' and A.attnum > 0 and attisdropped = 'f' order by attname;
 go
-~~START~~
-varchar#!#text
-bala#f#!#bbf_original_name=BALA#F,n_distinct=10
-id#!#bbf_original_name=id
-~~END~~
-
 
 select * from babel_3121_vu_prepare_t7;
 go
-~~START~~
-int#!#varchar
-1#!#success
-~~END~~
-
 
 select attname, array_to_string(attoptions,',') attoptions from pg_class C, pg_attribute A where C.oid = A.attrelid and C.relname like 'babel_3121_vu_prepare_t7' and A.attnum > 0 and attisdropped = 'f' order by attname;
 go
-~~START~~
-varchar#!#text
-bala(g#,#!#bbf_original_name=BALA(G#,
-id#!#bbf_original_name=id
-~~END~~
-
 
 drop table babel_3121_vu_prepare_t7;
 drop table babel_3121_vu_prepare_t6;

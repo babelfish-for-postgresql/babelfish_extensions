@@ -183,7 +183,7 @@ elif [ "$1" == "pg_upgrade" ]; then
 elif [ "$1" == "test" ]; then
     INPUT_DIR=$2
     cd $TARGET_WS/postgres
-    if [ "$INPUT_DIR" == "upgrade/preparation" ] || [ "$INPUT_DIR" == "upgrade/verification" ]; then
+    if [[ "$INPUT_DIR" == "upgrade/"* ]]; then
         bin/psql -d $TEST_DB -U $USER -c \
             "ALTER SYSTEM SET babelfishpg_tsql.migration_mode = 'multi-db';"
     else
