@@ -22,5 +22,6 @@ extern const char *get_dbo_schema_name(const char *dbname);
 extern const char *get_dbo_role_name(const char *dbname);
 extern const char *get_db_owner_name(const char *dbname);
 extern const char *get_guest_role_name(const char *dbname);
+extern bool is_shared_schema(const char *name);
 
 #endif

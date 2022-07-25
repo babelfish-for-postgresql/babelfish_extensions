@@ -2048,6 +2048,71 @@ static void bbf_ProcessUtility(PlannedStmt *pstmt,
 	if (process_utility_stmt_explain_only_mode(queryString, parsetree))
 		return; /* Don't execute anything */
 
+	/*
+	 * Block ALTER VIEW and CREATE OR REPLACE VIEW statements from PG client
+	 * executed on TSQL views which has entries in view_def catalog
+	 */
+	if (!IS_TDS_CLIENT() && !babelfish_dump_restore)
+	{
+		switch (nodeTag(parsetree))
+		{
+			case T_ViewStmt:
+			{
+				if(!pltsql_enable_ddl_from_pgendpoint)
+				{
+					ereport(ERROR,
+							(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+							errmsg("CREATE [OR REPLACE] VIEW is blocked from PG endpoint. Please set babelfishpg_tsql.enable_ddl_from_pgendpoint to true to enable.")));
+				}
+				break;
+			}
+			case T_AlterTableStmt:
+			{
+				AlterTableStmt	*atstmt = (AlterTableStmt *) parsetree;
+				if (atstmt->objtype == OBJECT_VIEW)
+				{
+					if(!pltsql_enable_ddl_from_pgendpoint)
+					{
+						ereport(ERROR,
+								(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+								errmsg("ALTER VIEW is blocked from PG endpoint. Please set babelfishpg_tsql.enable_ddl_from_pgendpoint to true to enable.")));
+					}
+				}
+				break;
+			}
+			case T_RenameStmt:
+			{
+				RenameStmt *rnstmt = (RenameStmt *) parsetree;
+				if (rnstmt->renameType == OBJECT_VIEW)
+				{
+					if(!pltsql_enable_ddl_from_pgendpoint)
+					{
+						ereport(ERROR,
+								(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+								errmsg("ALTER VIEW is blocked from PG endpoint. Please set babelfishpg_tsql.enable_ddl_from_pgendpoint to true to enable.")));
+					}
+				}
+				break;
+			}
+			case T_AlterObjectSchemaStmt:
+			{
+				AlterObjectSchemaStmt *altschstmt = (AlterObjectSchemaStmt *) parsetree;
+				if (altschstmt->objectType == OBJECT_VIEW)
+				{
+					if(!pltsql_enable_ddl_from_pgendpoint)
+					{
+						ereport(ERROR,
+								(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+								errmsg("ALTER VIEW is blocked from PG endpoint. Please set babelfishpg_tsql.enable_ddl_from_pgendpoint to true to enable.")));
+					}
+				}
+				break;
+			}
+			default:
+				break;
+		}
+	}
+
 	switch (nodeTag(parsetree))
 	{
 		case T_CreateFunctionStmt:

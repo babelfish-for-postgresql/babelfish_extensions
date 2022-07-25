@@ -3,6 +3,8 @@
 
 -- add 'sys' to search path for the convenience
 SELECT set_config('search_path', 'sys, '||current_setting('search_path'), false);
+-- enable DDL from pgendpoint
+SELECT set_config('babelfishpg_tsql.enable_ddl_from_pgendpoint', 'true', false);
 
 -- SERVER_PRINCIPALS
 CREATE OR REPLACE VIEW sys.server_principals
@@ -583,6 +585,58 @@ END;
 $$
 STRICT
 LANGUAGE plpgsql;
+
+CREATE TABLE sys.babelfish_view_def (
+	dbid SMALLINT NOT NULL,
+	schema_name sys.SYSNAME NOT NULL,
+	object_name sys.SYSNAME NOT NULL,
+	definition sys.NTEXT,
+	is_ansi_nulls_on sys.BIT,
+	uses_quoted_identifier sys.BIT,
+	is_schema_bound	sys.BIT,
+	uses_database_collation sys.BIT,
+	PRIMARY KEY(dbid, schema_name, object_name)
+);
+GRANT SELECT ON sys.babelfish_view_def TO PUBLIC;
+
+SELECT pg_catalog.pg_extension_config_dump('sys.babelfish_view_def', '');
+
+/*
+ * VIEWS view
+ */
+
+CREATE OR REPLACE VIEW information_schema_tsql.views AS
+	SELECT CAST(nc.dbname AS sys.nvarchar(128)) AS "TABLE_CATALOG",
+			CAST(ext.orig_name AS sys.nvarchar(128)) AS  "TABLE_SCHEMA",
+			CAST(c.relname AS sys.nvarchar(128)) AS "TABLE_NAME",
+
+			CAST(
+				CASE WHEN LENGTH(vd.definition) <= 4000
+					THEN vd.definition
+					ELSE NULL END
+				AS sys.nvarchar(4000)) AS "VIEW_DEFINITION",
+
+			CAST(
+				CASE WHEN 'check_option=cascaded' = ANY (c.reloptions)
+					THEN 'CASCADE'
+					ELSE 'NONE' END
+				AS sys.varchar(7)) AS "CHECK_OPTION",
+
+			CAST('NO' AS sys.varchar(2)) AS "IS_UPDATABLE"
+
+	FROM sys.pg_namespace_ext nc JOIN pg_class c ON (nc.oid = c.relnamespace)
+		LEFT OUTER JOIN sys.babelfish_namespace_ext ext ON nc.nspname = ext.nspname
+		LEFT OUTER JOIN sys.babelfish_view_def vd
+			ON ext.dbid = vd.dbid AND ext.orig_name = vd.schema_name AND c.relname = vd.object_name
+
+	WHERE c.relkind = 'v'
+		AND (NOT pg_is_other_temp_schema(nc.oid))
+		AND (pg_has_role(c.relowner, 'USAGE')
+			OR has_table_privilege(c.oid, 'SELECT, INSERT, UPDATE, DELETE, TRUNCATE, REFERENCES, TRIGGER')
+			OR has_any_column_privilege(c.oid, 'SELECT, INSERT, UPDATE, REFERENCES') )
+		AND ext.dbid = cast(sys.db_id() as oid);
+
+GRANT SELECT ON information_schema_tsql.views TO PUBLIC;
 
 ALTER TABLE sys.assembly_types RENAME TO assembly_types_deprecated_2_1_0;
 
@@ -2486,6 +2540,7 @@ DROP PROCEDURE sys.babelfish_remove_object_from_extension(varchar, varchar);
 DROP PROCEDURE sys.babelfish_drop_deprecated_function(varchar, varchar);
 DROP PROCEDURE sys.babelfish_drop_deprecated_table(varchar, varchar);
 
+SELECT set_config('babelfishpg_tsql.enable_ddl_from_pgendpoint', 'false', false);
 -- Reset search_path to not affect any subsequent scripts
 SELECT set_config('search_path', trim(leading 'sys, ' from current_setting('search_path')), false);
 
