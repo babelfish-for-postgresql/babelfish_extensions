@@ -806,7 +806,7 @@ rewrite_role_name(RoleSpec *role)
 	role->rolename = get_physical_user_name(cur_db, role->rolename);
 }
 
-static bool
+bool
 is_shared_schema(const char *name)
 {
 	if ((strcmp("sys", name ) == 0)
