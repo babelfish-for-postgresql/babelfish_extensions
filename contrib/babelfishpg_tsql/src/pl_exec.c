@@ -61,6 +61,7 @@
 #include "multidb.h"
 #include "session.h"
 #include "guc.h"
+#include "catalog.h"
 
 uint64 rowcount_var = 0;
 List *columns_updated_list = NIL;
@@ -4606,6 +4607,7 @@ exec_stmt_execsql(PLtsql_execstate *estate,
 	char 		*new_search_path;
 	char 		*physical_schema;
 	char		*dbo_schema;
+	const char      *schema;
 
 	if (stmt->is_cross_db)
 		SetCurrentRoleId(GetSessionUserId(), false);
@@ -4656,9 +4658,11 @@ exec_stmt_execsql(PLtsql_execstate *estate,
 				top_es_entry->estate->err_stmt->cmd_type == PLTSQL_STMT_EXEC &&
 					top_es_entry->estate->db_name != NULL)
 				{
-					dbo_schema = get_dbo_schema_name(top_es_entry->estate->db_name);
-					new_search_path = psprintf("%s, %s", dbo_schema, old_search_path);
-					/* Add dbo schema to the new search path */
+					schema = get_authid_user_ext_schema_name(top_es_entry->estate->db_name,
+							get_user_for_database(top_es_entry->estate->db_name));
+					physical_schema = get_physical_schema_name(top_es_entry->estate->db_name, schema);
+					new_search_path = psprintf("%s, %s", physical_schema, old_search_path);
+					/* Add default schema to the new search path */
 					(void) set_config_option("search_path", new_search_path,
 	 							PGC_USERSET, PGC_S_SESSION,
 	 							GUC_ACTION_SAVE, true, 0, false);
