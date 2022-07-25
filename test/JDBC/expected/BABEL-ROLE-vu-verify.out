@@ -15,7 +15,6 @@ GO
 ~~START~~
 varchar#!#char#!#nvarchar#!#nvarchar
 master_test_role_role1#!#R#!#test_role_role1#!#master
-master_test_role_user1#!#S#!#test_role_user1#!#master
 ~~END~~
 
 
@@ -24,7 +23,6 @@ GO
 ~~START~~
 varchar#!#nvarchar
 test_role_role1#!#DATABASE_ROLE
-test_role_user1#!#SQL_USER
 ~~END~~
 
 
@@ -48,6 +46,9 @@ GO
 
 ~~ERROR (Message: role "master_test_role_role1" already exists)~~
 
+
+CREATE USER test_role_user1 FOR LOGIN test_role_login1
+GO
 
 -- should fail, already have a user with this name in same db
 CREATE ROLE test_role_user1
@@ -102,16 +103,10 @@ ALTER ROLE test_role_role1 ADD MEMBER test_role_role2
 GO
 
 -- Add user as member
-CREATE LOGIN test_role_login2 WITH PASSWORD = 'abc'
-GO
-
 CREATE USER test_role_user2 FOR LOGIN test_role_login2
 GO
 
 ALTER ROLE test_role_role1 ADD MEMBER test_role_user2
-GO
-
-CREATE LOGIN test_role_login3 WITH PASSWORD = 'abc'
 GO
 
 -- Add login as member, should fail
@@ -202,7 +197,6 @@ EXEC test_role_proc_babel_role_members
 GO
 ~~START~~
 varchar#!#char#!#varchar#!#char
-db_owner#!#R#!#dbo#!#S
 test_role_role1#!#R#!#test_role_role2#!#R
 test_role_role1#!#R#!#test_role_user2#!#S
 test_role_role2#!#R#!#test_role_user3#!#S
@@ -241,7 +235,6 @@ EXEC test_role_proc_babel_role_members
 GO
 ~~START~~
 varchar#!#char#!#varchar#!#char
-db_owner#!#R#!#dbo#!#S
 test_role_role1_new#!#R#!#test_role_role2#!#R
 test_role_role1_new#!#R#!#test_role_user2#!#S
 test_role_role2#!#R#!#test_role_user3#!#S
@@ -284,7 +277,6 @@ EXEC test_role_proc_babel_role_members
 GO
 ~~START~~
 varchar#!#char#!#varchar#!#char
-db_owner#!#R#!#dbo#!#S
 test_role_role2#!#R#!#test_role_user3#!#S
 ~~END~~
 
@@ -314,11 +306,5 @@ GO
 DROP ROLE test_role_role1
 GO
 
-DROP LOGIN test_role_login1
-GO
-
-DROP LOGIN test_role_login2
-GO
-
-DROP LOGIN test_role_login3
+DROP LOGIN test_role_role1
 GO

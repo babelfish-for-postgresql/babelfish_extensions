@@ -19,7 +19,10 @@ GO
 CREATE LOGIN test_role_login1 WITH PASSWORD = 'abc'
 GO
 
-CREATE USER test_role_user1 FOR LOGIN test_role_login1
+CREATE LOGIN test_role_login2 WITH PASSWORD = 'abc'
+GO
+
+CREATE LOGIN test_role_login3 WITH PASSWORD = 'abc'
 GO
 
 CREATE DATABASE test_role_db
@@ -55,6 +58,7 @@ BEGIN
 	ON drm.role_principal_id = dp1.principal_id
 	INNER JOIN sys.database_principals AS dp2
 	ON drm.member_principal_id = dp2.principal_id
+	WHERE dp1.name != 'db_owner'
 	ORDER BY dp1.name, dp2.name
 END
 GO

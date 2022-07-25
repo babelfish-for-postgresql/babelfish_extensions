@@ -14,7 +14,13 @@ GO
 USE master
 GO
 
-DROP LOGIN test_role_role1
+DROP LOGIN test_role_login1
+GO
+
+DROP LOGIN test_role_login2
+GO
+
+DROP LOGIN test_role_login3
 GO
 
 -- Check if catalog is cleaned up

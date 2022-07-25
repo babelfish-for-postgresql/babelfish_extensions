@@ -24,6 +24,9 @@ GO
 CREATE USER test_role_role1
 GO
 
+CREATE USER test_role_user1 FOR LOGIN test_role_login1
+GO
+
 -- should fail, already have a user with this name in same db
 CREATE ROLE test_role_user1
 GO
@@ -54,16 +57,10 @@ ALTER ROLE test_role_role1 ADD MEMBER test_role_role2
 GO
 
 -- Add user as member
-CREATE LOGIN test_role_login2 WITH PASSWORD = 'abc'
-GO
-
 CREATE USER test_role_user2 FOR LOGIN test_role_login2
 GO
 
 ALTER ROLE test_role_role1 ADD MEMBER test_role_user2
-GO
-
-CREATE LOGIN test_role_login3 WITH PASSWORD = 'abc'
 GO
 
 -- Add login as member, should fail
@@ -162,11 +159,5 @@ GO
 DROP ROLE test_role_role1
 GO
 
-DROP LOGIN test_role_login1
-GO
-
-DROP LOGIN test_role_login2
-GO
-
-DROP LOGIN test_role_login3
+DROP LOGIN test_role_role1
 GO
