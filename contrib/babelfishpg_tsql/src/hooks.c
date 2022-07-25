@@ -1663,8 +1663,6 @@ pltsql_drop_view_definition(Oid objectId)
 		pfree(physical_schemaname);
 		if (logical_schemaname)
 			pfree(logical_schemaname);
-		if (objectname)
-			pfree(objectname);
 		ReleaseSysCache(reltuple);
 		return;
 	}
@@ -1683,7 +1681,6 @@ pltsql_drop_view_definition(Oid objectId)
 
 	pfree(physical_schemaname);
 	pfree(logical_schemaname);
-	pfree(objectname);
 	ReleaseSysCache(reltuple);
 	table_close(bbf_view_def_rel, RowExclusiveLock);
 }
