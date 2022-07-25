@@ -135,13 +135,10 @@ BEGIN
 
   CREATE OR REPLACE VIEW msdb_dbo.syspolicy_configuration
   AS
-    SELECT CAST(t.name AS sys.sysname), CAST(t.current_value AS sys.sql_variant) FROM
-    (
-      VALUES
-      ('Enabled', 0),
-      ('HistoryRetentionInDays', 0),
-      ('LogOnSuccess', 0)
-    )t (name, current_value);
+    SELECT
+      CAST(NULL AS sys.SYSNAME) AS name,
+      CAST(NULL AS sys.sql_variant) AS current_value
+    WHERE FALSE; -- Condition will result in view with an empty result set
   GRANT SELECT ON msdb_dbo.syspolicy_configuration TO PUBLIC;
   ALTER VIEW msdb_dbo.syspolicy_configuration OWNER TO sysadmin;
 
