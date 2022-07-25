@@ -60,7 +60,7 @@ jobs:
           echo "::set-output name=base-extension-branch::$(
             yq '."${{ steps.read-base-and-final-version.outputs.base-version }}".extension_branch' ${{ github.workspace }}/.github/template/version-branch-template.yml
           )" &&
-          echo "::set-output name=base-dir::$(echo postgres$(awk '{$0=int($0)}1' <<< ${{ steps.read-base-and-final-version.outputs.base-version }}))"
+          echo "::set-output name=base-dir::$(echo postgres$(awk -F. '{print $1}' <<< ${{ steps.read-base-and-final-version.outputs.base-version }}))"
 
       - name: Setup Base Version ${{ steps.read-base-and-final-version.outputs.base-version }} and Run Preparation Tests
         id: setup-base-version
