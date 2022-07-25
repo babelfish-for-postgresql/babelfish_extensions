@@ -481,7 +481,7 @@ datetime_pl_float8(PG_FUNCTION_ARGS)
 {	
 	Timestamp	timestamp = PG_GETARG_TIMESTAMP(0);
 	double		days = PG_GETARG_FLOAT8(1);
-	double 		day_whole, day_fract, sec_whole;
+	double 		day_whole, day_fract;
 	Interval *input_interval;
 	Timestamp	result;
 	
