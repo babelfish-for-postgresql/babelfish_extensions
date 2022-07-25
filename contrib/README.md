@@ -58,8 +58,12 @@ The following build instructions comply with Ubuntu 20.04 and Amazon Linux 2 env
     To get and use the latest version of cmake:
 
     ```
-    wget https://github.com/Kitware/CMake/releases/download/v3.20.6/cmake-3.20.6-linux-x86_64.sh
-    sh cmake-3.20.6-linux-x86_64.sh
+    wget https://github.com/Kitware/CMake/releases/download/v3.23.2/cmake-3.23.2.tar.gz
+    tar vfxz cmake-3.23.2.tar.gz
+    cd cmake-3.23.2
+    ./bootstrap 
+    make
+    sudo make install
     ```
 
 
