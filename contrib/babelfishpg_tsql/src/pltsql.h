@@ -916,6 +916,11 @@ typedef struct PLtsql_stmt_insert_bulk
     char  *schema_name;
     char  *db_name;
     char  *column_refs;
+
+    /* Insert Bulk Options. */
+    char *kilobytes_per_batch;
+    char *rows_per_batch;
+    bool keep_nulls;
 } PLtsql_stmt_insert_bulk;
 
 /*
@@ -1537,7 +1542,6 @@ typedef struct PLtsql_protocol_plugin
 	int (*sp_cursorfetch_callback)(int cursor_handle, int *fetchtype, int *rownum, int *nrows);
 	int (*sp_cursorclose_callback)(int cursor_handle);
 
-	coll_info_t (*lookup_collation_table_callback) (Oid oid);
 	int			*pltsql_read_proc_return_status;
 
 	void        (*send_column_metadata) (TupleDesc typeinfo, List *targetlist, int16 *formats);
@@ -1562,13 +1566,25 @@ typedef struct PLtsql_protocol_plugin
 	int* (*get_mapped_error_list) (void);
 
 	int (*bulk_load_callback) (int ncol, int nrow, Oid *argtypes,
-									Datum *Values, const char *Nulls);
+				Datum *Values, const char *Nulls, bool *Defaults);
 
 	int (*pltsql_get_generic_typmod) (Oid funcid, int nargs, Oid declared_oid);
 
 	const char* (*pltsql_get_logical_schema_name) (const char *physical_schema_name, bool missingOk);
 
 	bool *pltsql_is_fmtonly_stmt;
+
+	char* (*pltsql_get_user_for_database) (const char *db_name);
+
+	char* (*TsqlEncodingConversion)(const char *s, int len, int encoding, int *encodedByteLen);
+
+	int (*TdsGetEncodingFromLcid)(int32_t lcid);
+
+	bool (*get_insert_bulk_keep_nulls) ();
+
+	int (*get_insert_bulk_rows_per_batch) ();
+
+	int (*get_insert_bulk_kilobytes_per_batch) ();
 
 } PLtsql_protocol_plugin;
 
@@ -1633,8 +1649,6 @@ extern plansource_revalidate_hook_type prev_plansource_revalidate_hook;
 extern pltsql_nextval_hook_type prev_pltsql_nextval_hook;
 extern pltsql_resetcache_hook_type prev_pltsql_resetcache_hook;
 
-extern PreCreateCollation_hook_type prev_PreCreateCollation_hook;
-extern TranslateCollation_hook_type prev_TranslateCollation_hook;
 extern char *pltsql_default_locale;
 
 extern int  pltsql_variable_conflict;
@@ -1718,6 +1732,14 @@ extern int pltsql_sys_func_entry_count;
 
 extern char *bulk_load_table_name;
 
+/* Insert Bulk Options */
+#define DEFAULT_INSERT_BULK_ROWS_PER_BATCH 1000
+#define DEFAULT_INSERT_BULK_PACKET_SIZE 8
+
+extern int insert_bulk_rows_per_batch;
+extern int insert_bulk_kilobytes_per_batch;
+extern bool insert_bulk_keep_nulls;
+
 /**********************************************************************
  * Function declarations
  **********************************************************************/
@@ -1764,24 +1786,6 @@ extern void pltsql_HashTableInit(void);
 extern void reset_cache(void);
 
 /*
- * Functions in collation.c
- */
-extern void
-BabelfishPreCreateCollation_hook(
-	char collprovider,
-	bool collisdeterministic,
-	int32 collencoding,
-	const char **collcollate,
-	const char **collctype,
-	const char *collversion);
-
-extern const char *
-BabelfishTranslateCollation_hook(
-        const char *collname,
-	Oid collnamespace,
-	int32 encoding);
-
-/*
  * Functions in pl_handler.c
  */
 extern void _PG_init(void);
@@ -1790,7 +1794,7 @@ extern Datum sp_unprepare(PG_FUNCTION_ARGS);
 extern bool pltsql_support_tsql_transactions(void);
 extern bool pltsql_sys_function_pop(void);
 extern int execute_bulk_load_insert(int ncol, int nrow, Oid *argtypes,
-									Datum *Values, const char *Nulls);
+				Datum *Values, const char *Nulls, bool *Defaults);
 /*
  * Functions in pl_exec.c
  */
@@ -1810,6 +1814,10 @@ extern Oid pltsql_exec_get_datum_type(PLtsql_execstate *estate,
 extern void pltsql_exec_get_datum_type_info(PLtsql_execstate *estate,
 								 PLtsql_datum *datum,
 								 Oid *typeId, int32 *typMod, Oid *collation);
+
+extern bool get_insert_bulk_keep_nulls();
+extern int get_insert_bulk_rows_per_batch();
+extern int get_insert_bulk_kilobytes_per_batch();
 
 /*
  * Functions for namespace handling in pl_funcs.c
@@ -1906,6 +1914,7 @@ extern bool TryLockLogicalDatabaseForSession(int16 dbid, LOCKMODE lockmode);
 extern void UnlockLogicalDatabaseForSession(int16 dbid, LOCKMODE lockmode, bool force);
 extern char *bpchar_to_cstring(const BpChar *bpchar);
 extern char *varchar_to_cstring(const VarChar *varchar);
+extern char *flatten_search_path(List *oid_list);
 
 typedef struct
 {

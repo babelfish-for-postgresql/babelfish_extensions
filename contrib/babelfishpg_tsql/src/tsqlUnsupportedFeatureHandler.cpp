@@ -1101,6 +1101,8 @@ antlrcpp::Any TsqlUnsupportedFeatureHandlerImpl::visitSet_statement(TSqlParser::
 				handle(INSTR_UNSUPPORTED_TSQL_OPTION_SHOWPLAN_TEXT, option->SHOWPLAN_TEXT(), &st_escape_hatch_session_settings);
 			if (option->SHOWPLAN_XML())
 				handle(INSTR_UNSUPPORTED_TSQL_OPTION_SHOWPLAN_XML, option->SHOWPLAN_XML(), &st_escape_hatch_session_settings);
+			if (option->NO_BROWSETABLE())
+	 			handle(INSTR_UNSUPPORTED_TSQL_OPTION_NO_BROWSETABLE, option->NO_BROWSETABLE(), &st_escape_hatch_session_settings);
 		}
 
 		if (!sctx->id().empty())
@@ -1542,7 +1544,6 @@ const char *unsupported_sp_procedures[] = {
 	"sp_helpremotelogin",
 	"sp_helprotect",
 	"sp_helpsrvrole",
-	"sp_helpsrvrolemember",
 	"sp_migrate_user_to_contained",
 	"sp_MShasdbaccess",
 	"sp_password",

@@ -1745,7 +1745,7 @@ insert_bulk_option
 
 bulk_insert_statement
     : BULK INSERT ddl_object FROM char_string ( WITH LR_BRACKET bulk_insert_option (COMMA? bulk_insert_option)* RR_BRACKET )? SEMI?
-    | INSERT BULK ddl_object (LR_BRACKET (insert_bulk_column_definition (COMMA insert_bulk_column_definition)*)? column_constraint* COMMA? RR_BRACKET)
+    | INSERT BULK ddl_object (LR_BRACKET (insert_bulk_column_definition (COMMA insert_bulk_column_definition)*)? column_constraint* COMMA? RR_BRACKET) ( WITH LR_BRACKET bulk_insert_option (COMMA? bulk_insert_option)* RR_BRACKET )?
     ;
 
 bulk_insert_option
@@ -2491,6 +2491,7 @@ sql_option
     | NUMERIC_ROUNDABORT on_off
     | QUOTED_IDENTIFIER on_off
     | RECURSIVE_TRIGGERS on_off
+    | NO_BROWSETABLE on_off
     ;
 
 target_recovery_time_option
@@ -3363,6 +3364,7 @@ set_on_off_option
     | SHOWPLAN_XML
     | XACT_ABORT
     | BABELFISH_SHOWPLAN_ALL
+    | NO_BROWSETABLE
     ;
     
 set_statistics_keyword  
@@ -4625,6 +4627,7 @@ keyword
     | NOTIFICATIONS
     | NOUNLOAD
     | NOWAIT
+    | NO_BROWSETABLE
     | NO_CHECKSUM
     | NO_COMPRESSION
     | NO_EVENT_LOSS

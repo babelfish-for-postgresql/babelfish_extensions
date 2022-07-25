@@ -85,6 +85,16 @@ extern PLtsql_function 	*find_cached_batch(int handle);
 
 extern SPIPlanPtr	prepare_stmt_exec(PLtsql_execstate *estate, PLtsql_function *func, PLtsql_stmt_exec *stmt, bool keepplan);
 
+extern int sp_prepare_count;
+
+int insert_bulk_rows_per_batch = DEFAULT_INSERT_BULK_ROWS_PER_BATCH;
+int insert_bulk_kilobytes_per_batch = DEFAULT_INSERT_BULK_PACKET_SIZE;
+bool insert_bulk_keep_nulls = false;
+
+static int prev_insert_bulk_rows_per_batch = DEFAULT_INSERT_BULK_ROWS_PER_BATCH;
+static int prev_insert_bulk_kilobytes_per_batch = DEFAULT_INSERT_BULK_PACKET_SIZE;
+static bool prev_insert_bulk_keep_nulls = false;
+
 /* return a underlying node if n is implicit casting and underlying node is a certain type of node */
 static Node *get_underlying_node_from_implicit_casting(Node *n, NodeTag underlying_nodetype);
 
@@ -629,10 +639,40 @@ exec_stmt_exec(PLtsql_execstate *estate, PLtsql_stmt_exec *stmt)
 	volatile int rc;
 	SimpleEcontextStackEntry *topEntry;
 	SPIExecuteOptions options;
+	bool		need_path_reset = false;
 
 	Oid current_user_id = GetUserId();
+	char *cur_dbname = get_cur_db_name();
+
+	/* fetch current search_path */
+	List *path_oids = fetch_search_path(false);
+	char *old_search_path = flatten_search_path(path_oids);
+	char *new_search_path;
+	if (stmt->proc_name == NULL)
+		stmt->proc_name = "";
+
 	if (stmt->is_cross_db)
 		SetCurrentRoleId(GetSessionUserId(), false);
+
+	/*
+	 * TODO: BABEL-2992 The following check can be removed after the
+	 * correct implementation of schema resolution for SQL objects.
+	 */
+	if (strcmp(stmt->proc_name, "sp_describe_first_result_set") != 0)
+	{
+		if (strncmp(stmt->proc_name, "sp_", 3) == 0 && strcmp(cur_dbname, "master") != 0
+			&& (stmt->schema_name == '\0' || strncmp(stmt->schema_name, "dbo", strlen(stmt->schema_name)) == 0))
+			{
+				new_search_path = psprintf("%s, master_dbo", old_search_path);
+
+				/* Add master_dbo to the new search path */
+				(void) set_config_option("search_path", new_search_path,
+								PGC_USERSET, PGC_S_SESSION,
+								GUC_ACTION_SAVE, true, 0, false);
+				SetCurrentRoleId(GetSessionUserId(), false);
+				need_path_reset = true;
+			}
+	}
 
 	/* PG_TRY to ensure we clear the plan link, if needed, on failure */
 	PG_TRY();
@@ -975,6 +1015,14 @@ exec_stmt_exec(PLtsql_execstate *estate, PLtsql_stmt_exec *stmt)
 	}
 	PG_CATCH();
 	{
+		if (need_path_reset)
+		{
+			(void) set_config_option("search_path", old_search_path,
+						PGC_USERSET, PGC_S_SESSION,
+						GUC_ACTION_SAVE, true, 0, false);
+			SetCurrentRoleId(current_user_id, false);
+		}
+
 		if (stmt->is_cross_db)
 			SetCurrentRoleId(current_user_id, false);
 		/*
@@ -993,6 +1041,15 @@ exec_stmt_exec(PLtsql_execstate *estate, PLtsql_stmt_exec *stmt)
 
 	if (stmt->is_cross_db)
 		SetCurrentRoleId(current_user_id, false);
+
+	if (need_path_reset)
+	{
+		(void) set_config_option("search_path", old_search_path,
+							PGC_USERSET, PGC_S_SESSION,
+							GUC_ACTION_SAVE, true, 0, false);
+		SetCurrentRoleId(current_user_id, false);
+	}
+	list_free(path_oids);
 
 	if (expr->plan && !expr->plan->saved)
 	{
@@ -2608,20 +2665,48 @@ int exec_stmt_insert_bulk(PLtsql_execstate *estate, PLtsql_stmt_insert_bulk *stm
 						errmsg("relation \"%s\" does not exist",
 							stmt->table_name)));
 
+	/* Set the Insert Bulk Options for the session. */
+	if (stmt->rows_per_batch)
+	{
+		prev_insert_bulk_rows_per_batch = insert_bulk_rows_per_batch;
+		insert_bulk_rows_per_batch = atoi(stmt->rows_per_batch);
+	}
+	if (stmt->kilobytes_per_batch)
+	{
+		prev_insert_bulk_kilobytes_per_batch = insert_bulk_kilobytes_per_batch;
+		insert_bulk_kilobytes_per_batch = atoi(stmt->kilobytes_per_batch);
+	}
+	if (stmt->keep_nulls)
+	{
+		prev_insert_bulk_keep_nulls = insert_bulk_keep_nulls;
+		insert_bulk_keep_nulls = true;
+	}
 	return PLTSQL_RC_OK;
 }
 
 int
 execute_bulk_load_insert(int ncol, int nrow, Oid *argtypes,
-				Datum *Values, const char *Nulls)
+				Datum *Values, const char *Nulls, bool *Defaults)
 {
 	Relation rel;
 	int rc;
 	int retValue = -1;
-	StringInfo src = makeStringInfo();
-	StringInfo bindParams = makeStringInfo();
+	StringInfo src;
+	StringInfo bindParams;
 	int count = 1;
 	Snapshot snap;
+
+	if (nrow == 0 && ncol == 0)
+	{
+		if (bulk_load_table_name)
+			pfree(bulk_load_table_name);
+		bulk_load_table_name = NULL;
+		bulk_load_table_oid = InvalidOid;
+		return 0;
+	}
+
+	src = makeStringInfo();
+	bindParams = makeStringInfo();
 
 	PG_TRY();
 	{
@@ -2636,12 +2721,18 @@ execute_bulk_load_insert(int ncol, int nrow, Oid *argtypes,
 		for (int i = 0; i < nrow; i++)
 		{
 			for (int j = 0; j < ncol; j++)
-				appendStringInfo(bindParams, ",$%d", count++);
-
+			{
+				/* If Defaults is set then we need to insert default value for this index. */
+				if (Defaults[i * ncol + j])
+					appendStringInfo(bindParams, ",DEFAULT");
+				else
+					appendStringInfo(bindParams, ",$%d", count++);
+			}
 			bindParams->data[0] = ' ';
 			appendStringInfo(src, "(%s),", bindParams->data);
 			resetStringInfo(bindParams);
 		}
+
 		src->data[src->len - 1] = ' '; /* Taking care of the last ',' */
 
 		set_config_option("babelfishpg_tsql.sql_dialect", "postgres",
@@ -2655,7 +2746,7 @@ execute_bulk_load_insert(int ncol, int nrow, Oid *argtypes,
 			elog(ERROR, "SPI_connect() failed with return code %d", rc);
 
 		rc = SPI_execute_with_args(src->data,
-				ncol * nrow, argtypes,
+				count - 1, argtypes,
 				Values, Nulls,
 				false, 1);
 
@@ -2703,6 +2794,11 @@ execute_bulk_load_insert(int ncol, int nrow, Oid *argtypes,
 		EnableDisableTrigger(rel, NULL, TRIGGER_FIRES_ON_ORIGIN, false, AccessShareLock);
 		relation_close(rel, AccessShareLock);
 
+		/* Reset Insert-Bulk Options. */
+		insert_bulk_keep_nulls = prev_insert_bulk_keep_nulls;
+		insert_bulk_rows_per_batch = prev_insert_bulk_rows_per_batch;
+		insert_bulk_kilobytes_per_batch = prev_insert_bulk_kilobytes_per_batch;
+
 		PG_RE_THROW();
 	}
 	PG_END_TRY();
@@ -2712,8 +2808,6 @@ execute_bulk_load_insert(int ncol, int nrow, Oid *argtypes,
 			errmsg("Failed to insert in the table %s for bulk load", bulk_load_table_name)));
 
 	/* Cleanup all the pointers. */
-	if (bulk_load_table_name)
-		pfree(bulk_load_table_name);
 	if (bindParams)
 	{
 		if (bindParams->data)
@@ -2726,8 +2820,10 @@ execute_bulk_load_insert(int ncol, int nrow, Oid *argtypes,
 			pfree(src->data);
 		pfree(src);
 	}
-	bulk_load_table_name = NULL;
-	bulk_load_table_oid = InvalidOid;
+	/* Reset Insert-Bulk Options. */
+	insert_bulk_keep_nulls = prev_insert_bulk_keep_nulls;
+	insert_bulk_rows_per_batch = prev_insert_bulk_rows_per_batch;
+	insert_bulk_kilobytes_per_batch = prev_insert_bulk_kilobytes_per_batch;
 	return retValue;
 }
 
@@ -2802,4 +2898,19 @@ get_param_mode(List *params, int paramno, char **modes)
 		p = (tsql_exec_param *) lfirst(lc);
 		(*modes)[i++] = p->mode;
 	}
+}
+
+bool get_insert_bulk_keep_nulls()
+{
+	return insert_bulk_keep_nulls;
+}
+
+int get_insert_bulk_rows_per_batch()
+{
+	return insert_bulk_rows_per_batch;
+}
+
+int get_insert_bulk_kilobytes_per_batch()
+{
+	return insert_bulk_kilobytes_per_batch;
 }

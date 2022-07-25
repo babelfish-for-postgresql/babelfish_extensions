@@ -1,0 +1,139 @@
+create proc sp_hello as select 1
+go
+
+exec sp_hello
+go
+~~START~~
+int
+1
+~~END~~
+
+
+exec dbo.sp_hello
+go
+~~START~~
+int
+1
+~~END~~
+
+
+create database db1
+go
+
+use db1
+go
+
+exec master.dbo.sp_hello
+go
+~~START~~
+int
+1
+~~END~~
+
+
+exec sp_hello
+go
+~~START~~
+int
+1
+~~END~~
+
+
+exec .sp_hello
+go
+~~START~~
+int
+1
+~~END~~
+
+
+exec ..sp_hello
+go
+~~START~~
+int
+1
+~~END~~
+
+
+exec dbo.sp_hello
+go
+~~START~~
+int
+1
+~~END~~
+
+
+create proc call_sp_helllo as exec sp_hello
+go
+
+exec call_sp_helllo
+go
+~~START~~
+int
+1
+~~END~~
+
+
+create proc sp_hello as select 2
+go
+
+--Executes the sp_hello in db1
+exec sp_hello
+go
+~~START~~
+int
+2
+~~END~~
+
+
+exec dbo.sp_hello
+go
+~~START~~
+int
+2
+~~END~~
+
+
+exec call_sp_helllo
+go
+~~START~~
+int
+2
+~~END~~
+
+
+drop proc sp_hello
+go
+
+drop proc call_sp_helllo
+go
+
+create proc sp_hello as select 1/0;
+go
+
+exec sp_hello;
+go
+~~ERROR (Code: 8134)~~
+
+~~ERROR (Message: division by zero)~~
+
+
+exec @a;
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: procedure @a() does not exist)~~
+
+
+drop proc sp_hello;
+go
+
+use master
+go
+
+drop proc sp_hello
+go
+
+drop database db1
+go
+
