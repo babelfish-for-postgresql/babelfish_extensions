@@ -999,7 +999,7 @@ check_is_tsql_view(Oid relid)
 		return false;
 	}
 	/* Fetch the relation */
-	bbf_view_def_rel = table_open(bbf_view_def_oid, RowExclusiveLock);
+	bbf_view_def_rel = table_open(bbf_view_def_oid, AccessShareLock);
 
 	scantup = search_bbf_view_def(bbf_view_def_rel, logical_dbid, logical_schema_name, view_name);
 
@@ -1008,7 +1008,7 @@ check_is_tsql_view(Oid relid)
 		is_tsql_view = true;
 		heap_freetuple(scantup);
 	}
-	table_close(bbf_view_def_rel, RowExclusiveLock);
+	table_close(bbf_view_def_rel, AccessShareLock);
 	return is_tsql_view;
 }
 

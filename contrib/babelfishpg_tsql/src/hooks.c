@@ -1577,6 +1577,7 @@ pltsql_store_view_definition(const char *queryString, ObjectAddress address)
 	 */
 	if (is_shared_schema(physical_schemaname))
 	{
+		pfree(physical_schemaname);
 		ReleaseSysCache(reltup);
 		return;
 	}
@@ -1612,6 +1613,8 @@ pltsql_store_view_definition(const char *queryString, ObjectAddress address)
 
 	CatalogTupleInsert(bbf_view_def_rel, tuple);
 
+	pfree(physical_schemaname);
+	pfree(logical_schemaname);
 	ReleaseSysCache(reltup);
 	heap_freetuple(tuple);
 	table_close(bbf_view_def_rel, RowExclusiveLock);
@@ -1657,6 +1660,11 @@ pltsql_drop_view_definition(Oid objectId)
 	 */
 	if (!DbidIsValid(dbid) || logical_schemaname == NULL || objectname == NULL)
 	{
+		pfree(physical_schemaname);
+		if (logical_schemaname)
+			pfree(logical_schemaname);
+		if (objectname)
+			pfree(objectname);
 		ReleaseSysCache(reltuple);
 		return;
 	}
@@ -1673,6 +1681,9 @@ pltsql_drop_view_definition(Oid objectId)
 		heap_freetuple(scantup);
 	}
 
+	pfree(physical_schemaname);
+	pfree(logical_schemaname);
+	pfree(objectname);
 	ReleaseSysCache(reltuple);
 	table_close(bbf_view_def_rel, RowExclusiveLock);
 }
