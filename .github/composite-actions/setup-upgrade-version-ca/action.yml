@@ -27,6 +27,7 @@ runs:
         # For major version upgrade, we will also need to pass the previous installed version of pg, hence keeping track of previous installed version
         # For the first upgrade the previous installed version will be the base version
         previous_installed_version=${{ inputs.base_version }}
+        j=1
         
         # For every next upgrade in the upgrade path, below 'For' loop will add a step in upgrade-version composite action which will upgrade the current version to next upgrade version
         for (( i=1 ; i<$LEN ; i++ )); 
@@ -39,8 +40,12 @@ runs:
           upgrade_version_extb=".\""${upgrade_version}"\".extension_branch"
           extension_branch=$(yq $upgrade_version_extb ${{ github.workspace }}/.github/template/version-branch-template.yml)
           is_final_ver=false; [[ i -eq $LEN-1 ]] && is_final_ver=true
-          pg_old_dir=$(echo postgres$(awk '{$0=int($0)}1' <<< $previous_installed_version))
-          pg_new_dir=$(echo postgres$(awk '{$0=int($0)}1' <<< $upgrade_version))
+          prev_installed_version_unique=$(echo $previous_installed_version_$j)
+          j=$((j+1))
+          upgrade_version_unique=$(echo $upgrade_version_$j)
+          j=$((j+1))
+          pg_old_dir=$(echo postgres$(awk '{$0=int($0)}1' <<< $prev_installed_version_unique))
+          pg_new_dir=$(echo postgres$(awk '{$0=int($0)}1' <<< $upgrade_version_unique))
           upgrade_type_var=".\"upgrade-version\"[${{ matrix.upgrade-path.id }}][$i].\"upgrade-type\"" 
           upgrade_type=$(yq $upgrade_type_var ${{ github.workspace }}/.github/configuration/upgrade-test-configuration.yml)
           uses_file=./.github/composite-actions/$upgrade_type-version-upgrade-util
