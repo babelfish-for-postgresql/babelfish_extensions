@@ -47,3 +47,4 @@ routines_definition
 constraint_column_usage
 column_domain_usage
 SYSTEM_USER
+Test-sp_helpsrvrolemember

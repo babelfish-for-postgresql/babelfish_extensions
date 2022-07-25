@@ -49,10 +49,10 @@ sys-max_connections
 sys-original_login
 sys-schema-name
 sys-suser_sid
-sys-suser_sname
 sys-sysobjects
 sys-trigger_nestlevel
 routines_definition
 constraint_column_usage
 column_domain_usage
 SYSTEM_USER
+Test-sp_helpsrvrolemember

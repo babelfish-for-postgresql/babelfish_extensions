@@ -34,6 +34,8 @@ TestXML
 sys-assembly_types
 sys-database_mirroring
 sys-databases
+sys-suser_sid
+sys-suser_sname
 BABEL-3166
 BABEL-3192
 BABEL-3221
@@ -47,3 +49,5 @@ SYSTEM_USER
 sys-all_views
 sys-sysobjects
 SYSTEM_USER_dep
+Test-sp_helpsrvrolemember
+Test-sp_helpsrvrolemember-dep
