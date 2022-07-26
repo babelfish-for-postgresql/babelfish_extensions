@@ -46,6 +46,9 @@ go
 select * from babel_3293_t1 inner merge join babel_3293_t2 on babel_3293_t1.a1 = babel_3293_t2.a2 where b1 = 1 and b2 = 1
 go
 
+select * from babel_3293_t1 t1 inner merge join babel_3293_t2 t2 on t1.a1 = t2.a2 where b1 = 1 and b2 = 1
+go
+
 select * from babel_3293_t1 left outer loop join babel_3293_t2 on babel_3293_t1.a1 = babel_3293_t2.a2 where b1 = 1 and b2 = 1
 go
 
@@ -69,6 +72,9 @@ select * from babel_3293_t1 left outer loop join babel_3293_t2 on babel_3293_t1.
 go
 
 select * from babel_3293_t1 left outer merge join babel_3293_t2 on babel_3293_t1.a1 = babel_3293_t2.a2 inner loop join babel_3293_t3 on babel_3293_t2.a2 = babel_3293_t3.a3 where b1 = 1 and b2 = 1 and b3 = 1
+go
+
+select * from babel_3293_t1 t1 left outer merge join babel_3293_t2 t2 on t1.a1 = t2.a2 inner loop join babel_3293_t3 t3 on t2.a2 = t3.a3 where b1 = 1 and b2 = 1 and b3 = 1
 go
 
 select * from babel_3293_t1, babel_3293_t2 inner merge join babel_3293_t3 on babel_3293_t2.a2 = babel_3293_t3.a3 where babel_3293_t1.a1=babel_3293_t3.a3
@@ -234,6 +240,9 @@ set babelfish_showplan_all off
 go
 
 -- cleanup
+select set_config('babelfishpg_tsql.explain_costs', 'on', false)
+go
+
 select set_config('babelfishpg_tsql.enable_hint_mapping', 'off', false)
 go
 

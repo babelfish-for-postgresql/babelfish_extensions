@@ -91,6 +91,28 @@ Merge Join
 ~~END~~
 
 
+select * from babel_3293_t1 t1 inner merge join babel_3293_t2 t2 on t1.a1 = t2.a2 where b1 = 1 and b2 = 1
+go
+~~START~~
+text
+Query Text: /*+ MergeJoin(t1 t2) Leading(t1 t2)*/ select * from babel_3293_t1 t1 inner       join babel_3293_t2 t2 on t1.a1 = t2.a2 where b1 = 1 and b2 = 1
+Merge Join
+  Merge Cond: (t1.a1 = t2.a2)
+  ->  Sort
+        Sort Key: t1.a1
+        ->  Bitmap Heap Scan on babel_3293_t1 t1
+              Recheck Cond: (b1 = 1)
+              ->  Bitmap Index Scan on index_babel_3293_t1_b1babel_329dabb714f0f2c475b9c9e7d1d90cbd210
+                    Index Cond: (b1 = 1)
+  ->  Sort
+        Sort Key: t2.a2
+        ->  Bitmap Heap Scan on babel_3293_t2 t2
+              Recheck Cond: (b2 = 1)
+              ->  Bitmap Index Scan on index_babel_3293_t2_b2babel_329ea1aa3a9e72f8fece1b90ee8c2a8f24e
+                    Index Cond: (b2 = 1)
+~~END~~
+
+
 select * from babel_3293_t1 left outer loop join babel_3293_t2 on babel_3293_t1.a1 = babel_3293_t2.a2 where b1 = 1 and b2 = 1
 go
 ~~START~~
@@ -269,6 +291,33 @@ Nested Loop
 ~~END~~
 
 
+select * from babel_3293_t1 t1 left outer merge join babel_3293_t2 t2 on t1.a1 = t2.a2 inner loop join babel_3293_t3 t3 on t2.a2 = t3.a3 where b1 = 1 and b2 = 1 and b3 = 1
+go
+~~START~~
+text
+Query Text: /*+ MergeJoin(t1 t2) NestLoop(t1 t2 t3) Leading(t1 t2 t3)*/ select * from babel_3293_t1 t1 left outer       join babel_3293_t2 t2 on t1.a1 = t2.a2 inner      join babel_3293_t3 t3 on t2.a2 = t3.a3 where b1 = 1 and b2 = 1 and b3 = 1
+Nested Loop
+  Join Filter: (t1.a1 = t3.a3)
+  ->  Merge Join
+        Merge Cond: (t1.a1 = t2.a2)
+        ->  Sort
+              Sort Key: t1.a1
+              ->  Bitmap Heap Scan on babel_3293_t1 t1
+                    Recheck Cond: (b1 = 1)
+                    ->  Bitmap Index Scan on index_babel_3293_t1_b1babel_329dabb714f0f2c475b9c9e7d1d90cbd210
+                          Index Cond: (b1 = 1)
+        ->  Sort
+              Sort Key: t2.a2
+              ->  Bitmap Heap Scan on babel_3293_t2 t2
+                    Recheck Cond: (b2 = 1)
+                    ->  Bitmap Index Scan on index_babel_3293_t2_b2babel_329ea1aa3a9e72f8fece1b90ee8c2a8f24e
+                          Index Cond: (b2 = 1)
+  ->  Index Scan using babel_3293_t3_pkey on babel_3293_t3 t3
+        Index Cond: (a3 = t2.a2)
+        Filter: (b3 = 1)
+~~END~~
+
+
 select * from babel_3293_t1, babel_3293_t2 inner merge join babel_3293_t3 on babel_3293_t2.a2 = babel_3293_t3.a3 where babel_3293_t1.a1=babel_3293_t3.a3
 go
 ~~START~~
@@ -320,7 +369,7 @@ select * from babel_3293_t1 join babel_3293_t2 on babel_3293_t1.a1 = babel_3293_
 go
 ~~START~~
 text
-Query Text: /*+ Set(enable_mergejoin off) Set(enable_nestloop off) */ select * from babel_3293_t1 join babel_3293_t2 on babel_3293_t1.a1 = babel_3293_t2.a2 where b1 = 1 and b2 = 1                  
+Query Text: /*+ Set(enable_nestloop off) Set(enable_mergejoin off) */ select * from babel_3293_t1 join babel_3293_t2 on babel_3293_t1.a1 = babel_3293_t2.a2 where b1 = 1 and b2 = 1                  
 Hash Join
   Hash Cond: (babel_3293_t1.a1 = babel_3293_t2.a2)
   ->  Bitmap Heap Scan on babel_3293_t1
@@ -339,7 +388,7 @@ select * from babel_3293_t1 join babel_3293_t2 on babel_3293_t1.a1 = babel_3293_
 go
 ~~START~~
 text
-Query Text: /*+ Set(enable_hashjoin off) Set(enable_nestloop off) */ select * from babel_3293_t1 join babel_3293_t2 on babel_3293_t1.a1 = babel_3293_t2.a2 where b1 = 1 and b2 = 1                   
+Query Text: /*+ Set(enable_nestloop off) Set(enable_hashjoin off) */ select * from babel_3293_t1 join babel_3293_t2 on babel_3293_t1.a1 = babel_3293_t2.a2 where b1 = 1 and b2 = 1                   
 Merge Join
   Merge Cond: (babel_3293_t1.a1 = babel_3293_t2.a2)
   ->  Sort
@@ -380,7 +429,7 @@ select * from babel_3293_t1 join babel_3293_t2 on babel_3293_t1.a1 = babel_3293_
 go
 ~~START~~
 text
-Query Text: /*+ Set(enable_hashjoin off) Set(enable_nestloop off) */ select * from babel_3293_t1 join babel_3293_t2 on babel_3293_t1.a1 = babel_3293_t2.a2 join babel_3293_t3 on babel_3293_t2.a2 = babel_3293_t3.a3 where b1 = 1 and b2 = 1 and b3 = 1                   
+Query Text: /*+ Set(enable_nestloop off) Set(enable_hashjoin off) */ select * from babel_3293_t1 join babel_3293_t2 on babel_3293_t1.a1 = babel_3293_t2.a2 join babel_3293_t3 on babel_3293_t2.a2 = babel_3293_t3.a3 where b1 = 1 and b2 = 1 and b3 = 1                   
 Merge Join
   Merge Cond: (babel_3293_t1.a1 = babel_3293_t3.a3)
   ->  Merge Join
@@ -416,7 +465,7 @@ select * from babel_3293_t1 inner hash join babel_3293_t2 on babel_3293_t1.a1 = 
 go
 ~~START~~
 text
-Query Text: /*+ HashJoin(babel_3293_t1 babel_3293_t2) Set(enable_hashjoin off) Set(enable_nestloop off) HashJoin(babel_3293_t1 babel_3293_t2 babel_3293_t1 babel_3293_t2) Set(enable_mergejoin off) Set(enable_nestloop off) Leading(babel_3293_t1 babel_3293_t2 babel_3293_t1 babel_3293_t2)*/ select * from babel_3293_t1 inner      join babel_3293_t2 on babel_3293_t1.a1 = babel_3293_t2.a2                  
+Query Text: /*+ HashJoin(babel_3293_t1 babel_3293_t2) Set(enable_nestloop off) Set(enable_mergejoin off) Leading(babel_3293_t1 babel_3293_t2)*/ select * from babel_3293_t1 inner      join babel_3293_t2 on babel_3293_t1.a1 = babel_3293_t2.a2                  
 Hash Join
   Hash Cond: (babel_3293_t1.a1 = babel_3293_t2.a2)
   ->  Seq Scan on babel_3293_t1
@@ -429,11 +478,11 @@ select * from babel_3293_t1 join babel_3293_t2 on babel_3293_t1.a1 = babel_3293_
 go
 ~~START~~
 text
-Query Text: /*+ Set(enable_hashjoin off) Set(enable_nestloop off) Set(enable_hashjoin off) Set(enable_mergejoin off) */ select * from babel_3293_t1 join babel_3293_t2 on babel_3293_t1.a1 = babel_3293_t2.a2                              
-Nested Loop
-  ->  Seq Scan on babel_3293_t1
+Query Text: /*+ Set(enable_hashjoin off) */ select * from babel_3293_t1 join babel_3293_t2 on babel_3293_t1.a1 = babel_3293_t2.a2                              
+Merge Join
+  Merge Cond: (babel_3293_t1.a1 = babel_3293_t2.a2)
+  ->  Index Scan using babel_3293_t1_pkey on babel_3293_t1
   ->  Index Scan using babel_3293_t2_pkey on babel_3293_t2
-        Index Cond: (a2 = babel_3293_t1.a1)
 ~~END~~
 
 
@@ -455,22 +504,26 @@ select * from babel_3293_t1 inner loop join babel_3293_t2 on babel_3293_t1.a1 = 
 go
 ~~START~~
 text
-Query Text: /*+ NestLoop(babel_3293_t1 babel_3293_t2) Set(enable_hashjoin off) Set(enable_nestloop off) NestLoop(babel_3293_t1 babel_3293_t2 babel_3293_t3 babel_3293_t1 babel_3293_t2) MergeJoin(babel_3293_t1 babel_3293_t2 babel_3293_t3 babel_3293_t1 babel_3293_t2 babel_3293_t3) Set(enable_hashjoin off) Set(enable_nestloop off) NestLoop(babel_3293_t1 babel_3293_t2 babel_3293_t3 babel_3293_t1 babel_3293_t2 babel_3293_t3 babel_3293_t1 babel_3293_t2) MergeJoin(babel_3293_t1 babel_3293_t2 babel_3293_t3 babel_3293_t1 babel_3293_t2 babel_3293_t3 babel_3293_t1 babel_3293_t2 babel_3293_t3) Set(enable_hashjoin off) Set(enable_nestloop off) Set(enable_hashjoin off) Set(enable_mergejoin off) Leading(babel_3293_t1 babel_3293_t2 babel_3293_t3 babel_3293_t1 babel_3293_t2 babel_3293_t3 babel_3293_t1 babel_3293_t2 babel_3293_t3)*/ select * from babel_3293_t1 inner      join babel_3293_t2 on babel_3293_t1.a1 = babel_3293_t2.a2 inner       join babel_3293_t3 on babel_3293_t2.a2 = babel_3293_t3.a3 where b1 = 1 and b2 = 1 and b3 = 1                              
-Nested Loop
-  ->  Nested Loop
-        Join Filter: (babel_3293_t1.a1 = babel_3293_t2.a2)
-        ->  Bitmap Heap Scan on babel_3293_t1
-              Recheck Cond: (b1 = 1)
-              ->  Bitmap Index Scan on index_babel_3293_t1_b1babel_329dabb714f0f2c475b9c9e7d1d90cbd210
-                    Index Cond: (b1 = 1)
-        ->  Materialize
-              ->  Bitmap Heap Scan on babel_3293_t2
-                    Recheck Cond: (b2 = 1)
-                    ->  Bitmap Index Scan on index_babel_3293_t2_b2babel_329ea1aa3a9e72f8fece1b90ee8c2a8f24e
-                          Index Cond: (b2 = 1)
-  ->  Index Scan using babel_3293_t3_pkey on babel_3293_t3
-        Index Cond: (a3 = babel_3293_t1.a1)
-        Filter: (b3 = 1)
+Query Text: /*+ NestLoop(babel_3293_t1 babel_3293_t2) MergeJoin(babel_3293_t1 babel_3293_t2 babel_3293_t3) Set(enable_hashjoin off) Leading(babel_3293_t1 babel_3293_t2 babel_3293_t3)*/ select * from babel_3293_t1 inner      join babel_3293_t2 on babel_3293_t1.a1 = babel_3293_t2.a2 inner       join babel_3293_t3 on babel_3293_t2.a2 = babel_3293_t3.a3 where b1 = 1 and b2 = 1 and b3 = 1                              
+Merge Join
+  Merge Cond: (babel_3293_t1.a1 = babel_3293_t3.a3)
+  ->  Sort
+        Sort Key: babel_3293_t1.a1
+        ->  Nested Loop
+              Join Filter: (babel_3293_t1.a1 = babel_3293_t2.a2)
+              ->  Bitmap Heap Scan on babel_3293_t1
+                    Recheck Cond: (b1 = 1)
+                    ->  Bitmap Index Scan on index_babel_3293_t1_b1babel_329dabb714f0f2c475b9c9e7d1d90cbd210
+                          Index Cond: (b1 = 1)
+              ->  Materialize
+                    ->  Bitmap Heap Scan on babel_3293_t2
+                          Recheck Cond: (b2 = 1)
+                          ->  Bitmap Index Scan on index_babel_3293_t2_b2babel_329ea1aa3a9e72f8fece1b90ee8c2a8f24e
+                                Index Cond: (b2 = 1)
+  ->  Sort
+        Sort Key: babel_3293_t3.a3
+        ->  Seq Scan on babel_3293_t3
+              Filter: (b3 = 1)
 ~~END~~
 
 
@@ -512,7 +565,7 @@ select * from babel_3293_t1 join babel_3293_t2 on babel_3293_t1.a1 = babel_3293_
 go
 ~~START~~
 text
-Query Text: /*+ Set(enable_hashjoin off) Set(enable_mergejoin off) IndexScan(babel_3293_t1 index_babel_3293_t1_b1babel_329dabb714f0f2c475b9c9e7d1d90cbd210) IndexScan(babel_3293_t2 index_babel_3293_t2_b2babel_329ea1aa3a9e72f8fece1b90ee8c2a8f24e) */ select * from babel_3293_t1 join babel_3293_t2 on babel_3293_t1.a1 = babel_3293_t2.a2 where b1 = 1 and b2 = 1                                                                                                                                      
+Query Text: /*+ IndexScan(babel_3293_t1 index_babel_3293_t1_b1babel_329dabb714f0f2c475b9c9e7d1d90cbd210) IndexScan(babel_3293_t2 index_babel_3293_t2_b2babel_329ea1aa3a9e72f8fece1b90ee8c2a8f24e) Set(enable_hashjoin off) Set(enable_mergejoin off) */ select * from babel_3293_t1 join babel_3293_t2 on babel_3293_t1.a1 = babel_3293_t2.a2 where b1 = 1 and b2 = 1                                                                                                                                      
 Nested Loop
   Join Filter: (babel_3293_t1.a1 = babel_3293_t2.a2)
   ->  Index Scan using index_babel_3293_t1_b1babel_329dabb714f0f2c475b9c9e7d1d90cbd210 on babel_3293_t1
@@ -847,7 +900,7 @@ select * from tempdb.babel_3293_schema.t1 join tempdb.dbo.babel_3293_t2 on tempd
 go
 ~~START~~
 text
-Query Text: /*+ Set(enable_hashjoin off) Set(enable_nestloop off) IndexScan(t1 index_babel_3293_schema_t1_b1t1baa4a261b22c51c48cc060f8d390c3e9) IndexScan(babel_3293_t2 index_babel_3293_t2_b2babel_329ea1aa3a9e72f8fece1b90ee8c2a8f24e) */ select * from tempdb.babel_3293_schema.t1 join tempdb.dbo.babel_3293_t2 on tempdb.babel_3293_schema.t1.a1 = tempdb.dbo.babel_3293_t2.a2 where b1 = 1 and b2 = 1                                                                                                                                                                       
+Query Text: /*+ IndexScan(t1 index_babel_3293_schema_t1_b1t1baa4a261b22c51c48cc060f8d390c3e9) IndexScan(babel_3293_t2 index_babel_3293_t2_b2babel_329ea1aa3a9e72f8fece1b90ee8c2a8f24e) Set(enable_nestloop off) Set(enable_hashjoin off) */ select * from tempdb.babel_3293_schema.t1 join tempdb.dbo.babel_3293_t2 on tempdb.babel_3293_schema.t1.a1 = tempdb.dbo.babel_3293_t2.a2 where b1 = 1 and b2 = 1                                                                                                                                                                       
 Merge Join
   Merge Cond: (t1.a1 = babel_3293_t2.a2)
   ->  Sort
@@ -902,6 +955,14 @@ set babelfish_showplan_all off
 go
 
 -- cleanup
+select set_config('babelfishpg_tsql.explain_costs', 'on', false)
+go
+~~START~~
+text
+on
+~~END~~
+
+
 select set_config('babelfishpg_tsql.enable_hint_mapping', 'off', false)
 go
 ~~START~~

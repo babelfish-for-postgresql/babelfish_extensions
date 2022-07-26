@@ -45,6 +45,9 @@ set babelfish_showplan_all off
 go
 
 -- cleanup
+select set_config('babelfishpg_tsql.explain_costs', 'on', false)
+go
+
 select set_config('force_parallel_mode', '0', false)
 go
 

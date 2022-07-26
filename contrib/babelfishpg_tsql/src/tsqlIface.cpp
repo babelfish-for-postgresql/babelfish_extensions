@@ -578,9 +578,8 @@ add_query_hints(PLtsql_expr *expr)
 	// If a query has both join hint and query hint which is a join hint, it should have all the join hints as the query hints as well
 	if (isJoinHintInOptionClause && ((join_hints_info[LOOP_JOIN_HINT] && !join_hints_info[LOOP_QUERY_HINT]) || (join_hints_info[HASH_JOIN_HINT] && !join_hints_info[HASH_QUERY_HINT]) || (join_hints_info[MERGE_JOIN_HINT] && !join_hints_info[MERGE_QUERY_HINT])))
 	{
-		isJoinHintInOptionClause = false;
-		for (size_t i=0; i<JOIN_HINTS_INFO_VECTOR_SIZE; i++)
-			join_hints_info[i] = false;
+		clear_query_hints();
+		clear_tables_info();
 		throw PGErrorWrapperException(ERROR, ERRCODE_FEATURE_NOT_SUPPORTED, "Conflicting JOIN optimizer hints specified", getLineAndPos(ctx));
 	}
 	std::string hint =  "/*+ ";
@@ -1435,7 +1434,7 @@ public:
 		add_rewritten_query_fragment_to_mutator(statementMutator.get());
 
 		/* Add query hints */
-		if (query_hints.size())
+		if (query_hints.size() && enable_hint_mapping)
 		{
 			add_query_hints(statementMutator.get()->expr);
 			clear_query_hints();
@@ -3204,6 +3203,16 @@ void extractQueryHintsFromOptionClause(TSqlParser::Option_clauseContext *octx)
 				query_hints.push_back("Set(max_parallel_workers_per_gather " + value + ")");
 		}
 	}
+
+	if (isJoinHintInOptionClause)
+	{
+		if (!join_hints_info[LOOP_QUERY_HINT])
+			query_hints.push_back("Set(enable_nestloop off)");
+		if (!join_hints_info[HASH_QUERY_HINT])
+			query_hints.push_back("Set(enable_hashjoin off)");
+		if (!join_hints_info[MERGE_QUERY_HINT])
+			query_hints.push_back("Set(enable_mergejoin off)");
+	}
 }
 
 void extractTableHints(TSqlParser::With_table_hintsContext *tctx, std::string table_name)
@@ -3267,23 +3276,11 @@ void extractJoinHint(TSqlParser::Join_hintContext *join_hint, std::string table_
 void extractJoinHintFromOption(TSqlParser::OptionContext *option) {
 	isJoinHintInOptionClause = true;
 	if (option->LOOP())
-	{
 		join_hints_info[LOOP_QUERY_HINT] = true;
-		query_hints.push_back("Set(enable_hashjoin off)");
-		query_hints.push_back("Set(enable_mergejoin off)");
-	}
 	else if (option->HASH())
-	{
 		join_hints_info[HASH_QUERY_HINT] = true;
-		query_hints.push_back("Set(enable_mergejoin off)");
-		query_hints.push_back("Set(enable_nestloop off)");
-	}
 	else if (option->MERGE())
-	{
 		join_hints_info[MERGE_QUERY_HINT] = true;
-		query_hints.push_back("Set(enable_hashjoin off)");
-		query_hints.push_back("Set(enable_nestloop off)");
-	}
 }
 
 std::string extractIndexValues(std::vector<TSqlParser::Index_valueContext *> index_valuesCtx, std::string table_name)
@@ -4949,7 +4946,7 @@ static void post_process_table_source(TSqlParser::Table_source_itemContext *ctx,
 
 	for (auto wctx : ctx->with_table_hints())
 	{
-		if (enable_hint_mapping && !wctx->sample_clause())
+		if (!wctx->sample_clause())
 			extractTableHints(wctx, table_name);
 		removeCtxStringFromQuery(expr, wctx, baseCtx);
 	}
@@ -4964,7 +4961,7 @@ static void post_process_table_source(TSqlParser::Table_source_itemContext *ctx,
 		}
 		if (actx->table_alias()->with_table_hints())
 		{
-			if (enable_hint_mapping && !actx->table_alias()->with_table_hints()->sample_clause())
+			if (!actx->table_alias()->with_table_hints()->sample_clause())
 				extractTableHints(actx->table_alias()->with_table_hints(), alias_name);
 			removeCtxStringFromQuery(expr, actx->table_alias()->with_table_hints(), baseCtx);
 		}
@@ -4982,7 +4979,7 @@ static void post_process_table_source(TSqlParser::Table_source_itemContext *ctx,
 
 	if (ctx->join_hint())
 	{
-		if (num_of_tables > 1)
+		if (enable_hint_mapping && num_of_tables > 1)
 		{
 			leading_hint = "Leading(" + table_names + ")";
 			extractJoinHint(ctx->join_hint(), table_names);
