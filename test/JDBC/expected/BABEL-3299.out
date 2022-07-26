@@ -1,0 +1,30 @@
+SELECT COUNT(*) FROM ::fn_helpcollations() where [Name] = DATABASEPROPERTYEX(DB_NAME(), 'Collation')
+GO
+~~START~~
+int
+1
+~~END~~
+
+
+SELECT * FROM ::isnull(NULL, 0)
+GO
+~~START~~
+int
+0
+~~END~~
+
+
+SELECT * FROM isnull(NULL, 0)
+GO
+~~START~~
+int
+0
+~~END~~
+
+
+SELECT * FROM ::
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: syntax error near '<EOF>' at line 2 and character position 0)~~
+
