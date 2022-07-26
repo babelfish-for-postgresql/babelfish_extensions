@@ -54,6 +54,24 @@ int
 ~~END~~
 
 
+SELECT ISOWeek_3101(CAST('25 July 2022 01:23:45' AS datetime))
+GO
+~~START~~
+tinyint
+30
+~~END~~
+
+
+-- should error out as expected
+SELECT ISOWeek_3101('01-01-1790')
+GO
+~~START~~
+tinyint
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: function master_dbo.isoweek("varchar") does not exist)~~
+
+
 EXECUTE date_part_vu_prepare_proc '07-18-2022'
 GO
 ~~START~~

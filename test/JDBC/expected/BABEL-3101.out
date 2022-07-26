@@ -56,6 +56,16 @@ tinyint
 ~~END~~
 
 
+-- should error out as expected
+SELECT ISOWeek_3101('01-01-1790')
+GO
+~~START~~
+tinyint
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: function master_dbo.isoweek("varchar") does not exist)~~
+
+
 CREATE FUNCTION table_3101_2()
 RETURNS INT
 AS

@@ -7,6 +7,22 @@ AS
 RETURN SELECT * FROM DATEPART(mm, @date_str);
 GO
 
+CREATE FUNCTION ISOweek_3101 (@date datetime)
+RETURNS tinyint
+AS
+BEGIN
+	DECLARE @ISOweek tinyint
+	SET @ISOweek= DATEPART(wk,@date)+1-DATEPART(wk,CAST(DATEPART(yy,@date) as CHAR(4))+'0104')
+	--Special cases: Jan 1-3 may belong to the previous year
+	IF (@ISOweek=0)
+		SET @ISOweek=dbo.ISOweek(CAST(DATEPART(yy,@date)-1 AS CHAR(4))+'12'+ CAST(24+DATEPART(DAY,@date) AS CHAR(2)))+1
+	--Special case: Dec 29-31 may belong to the next year
+	IF ((DATEPART(mm,@date)=12) AND ((DATEPART(dd,@date)-DATEPART(dw,@date))>= 28))
+		SET @ISOweek=1
+	RETURN(@ISOweek)
+END
+GO
+
 CREATE PROCEDURE date_part_vu_prepare_proc @date_str varchar(128)
 AS
 SELECT DATEPART(dd, @date_str)

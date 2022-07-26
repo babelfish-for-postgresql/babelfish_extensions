@@ -19,6 +19,13 @@ GO
 SELECT * FROM date_part_vu_prepare_func('7/18/2022')
 GO
 
+SELECT ISOWeek_3101(CAST('25 July 2022 01:23:45' AS datetime))
+GO
+
+-- should error out as expected
+SELECT ISOWeek_3101('01-01-1790')
+GO
+
 EXECUTE date_part_vu_prepare_proc '07-18-2022'
 GO
 
