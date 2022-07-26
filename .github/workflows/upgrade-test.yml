@@ -127,8 +127,6 @@ jobs:
           path: |
             ~/upgrade/*.log
             ~/upgrade/*.diff
-            ~/upgrade/*.custom
-            ~/postgres*/core*
-            ~/postgres*/data
+            ~/postgres*/data/logfile
             ~/failed-testscript-outputs
             
