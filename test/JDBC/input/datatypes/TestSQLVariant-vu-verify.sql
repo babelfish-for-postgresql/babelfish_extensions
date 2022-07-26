@@ -85,3 +85,9 @@ go
 
 Select * from testsqlvariant_sourceTable22;
 go
+
+Select * from testsqlvariant_view1;
+go
+
+Select * from testsqlvariant_view2;
+go
