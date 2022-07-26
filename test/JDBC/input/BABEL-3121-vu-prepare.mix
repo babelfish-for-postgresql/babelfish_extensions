@@ -1,0 +1,65 @@
+-- tsql
+USE master;
+go
+
+-- special character #
+create table babel_3121_vu_prepare_t(id int, [BALA_#] varchar(40));
+insert into babel_3121_vu_prepare_t values (1, 'success');
+go
+
+select attname, array_to_string(attoptions,',') attoptions from pg_class C, pg_attribute A where C.oid = A.attrelid and C.relname like 'babel_3121_vu_prepare_t' and A.attnum > 0 and attisdropped = 'f' order by attname;
+go
+
+-- space
+create table babel_3121_vu_prepare_t2(id int, [BALA CC] varchar(40));
+insert into babel_3121_vu_prepare_t2 values (1, 'success');
+go
+
+select attname, array_to_string(attoptions,',') attoptions from pg_class C, pg_attribute A where C.oid = A.attrelid and C.relname like 'babel_3121_vu_prepare_t2' and A.attnum > 0 and attisdropped = 'f' order by attname;
+go
+
+-- single quote
+create table babel_3121_vu_prepare_t3(id int, [BALA'D] varchar(40));
+insert into babel_3121_vu_prepare_t3 values (1, 'success');
+go
+
+select attname, array_to_string(attoptions,',') attoptions from pg_class C, pg_attribute A where C.oid = A.attrelid and C.relname like 'babel_3121_vu_prepare_t3' and A.attnum > 0 and attisdropped = 'f' order by attname;
+go
+
+-- backslash
+create table babel_3121_vu_prepare_t4(id int, [BALA\E] varchar(40));
+insert into babel_3121_vu_prepare_t4 values (1, 'success');
+go
+
+select attname, array_to_string(attoptions,',') attoptions from pg_class C, pg_attribute A where C.oid = A.attrelid and C.relname like 'babel_3121_vu_prepare_t4' and A.attnum > 0 and attisdropped = 'f' order by attname;
+go
+
+-- double quote
+create table babel_3121_vu_prepare_t5(id int, [BALA"E] varchar(40));
+insert into babel_3121_vu_prepare_t5 values (1, 'success');
+go
+
+select attname, array_to_string(attoptions,',') attoptions from pg_class C, pg_attribute A where C.oid = A.attrelid and C.relname like 'babel_3121_vu_prepare_t5' and A.attnum > 0 and attisdropped = 'f' order by attname;
+go
+
+-- multiple elements
+create table babel_3121_vu_prepare_t6(id int, [BALA#F] varchar(40));
+insert into babel_3121_vu_prepare_t6 values (1, 'success');
+go
+
+-- psql
+set babelfishpg_tsql.sql_dialect = "tsql"; -- not realistic but this is an easy way to generate multiple attoptions
+alter table master_dbo.babel_3121_vu_prepare_t6 alter column "bala#f" set (n_distinct=10);
+GO
+
+-- tsql
+select attname, array_to_string(attoptions,',') attoptions from pg_class C, pg_attribute A where C.oid = A.attrelid and C.relname like 'babel_3121_vu_prepare_t6' and A.attnum > 0 and attisdropped = 'f' order by attname;
+go
+
+-- comma
+create table babel_3121_vu_prepare_t7(id int, [BALA(G#,] varchar(40));
+insert into babel_3121_vu_prepare_t7 values (1, 'success');
+go
+
+select attname, array_to_string(attoptions,',') attoptions from pg_class C, pg_attribute A where C.oid = A.attrelid and C.relname like 'babel_3121_vu_prepare_t7' and A.attnum > 0 and attisdropped = 'f' order by attname;
+go

@@ -1382,23 +1382,33 @@ GRANT SELECT ON sys.system_objects TO PUBLIC;
 
 create or replace view sys.all_views as
 select
-    t.name
-  , t.object_id
-  , t.principal_id
-  , t.schema_id
-  , t.parent_object_id
-  , t.type
-  , t.type_desc
-  , t.create_date
-  , t.modify_date
-  , t.is_ms_shipped
-  , t.is_published
-  , t.is_schema_published
-  -- check columns, they don't seem to match SQL Server
-  , 0 as with_check_option
-  , 0 as is_date_correlation_view
-  , 0 as is_tracked_by_cdc
+    CAST(t.name as sys.SYSNAME) AS name
+  , CAST(t.object_id as int) AS object_id
+  , CAST(t.principal_id as int) AS principal_id
+  , CAST(t.schema_id as int) AS schema_id
+  , CAST(t.parent_object_id as int) AS parent_object_id
+  , CAST(t.type as sys.bpchar(2)) AS type
+  , CAST(t.type_desc as sys.nvarchar(60)) AS type_desc
+  , CAST(t.create_date as sys.datetime) AS create_date
+  , CAST(t.modify_date as sys.datetime) AS modify_date
+  , CAST(t.is_ms_shipped as sys.BIT) AS is_ms_shipped
+  , CAST(t.is_published as sys.BIT) AS is_published
+  , CAST(t.is_schema_published as sys.BIT) AS is_schema_published 
+  , CAST(0 as sys.BIT) AS is_replicated
+  , CAST(0 as sys.BIT) AS has_replication_filter
+  , CAST(0 as sys.BIT) AS has_opaque_metadata
+  , CAST(0 as sys.BIT) AS has_unchecked_assembly_data
+  , CAST(
+      CASE 
+        WHEN (v.check_option = 'NONE') 
+          THEN 0
+        ELSE 1
+      END
+    AS sys.BIT) AS with_check_option
+  , CAST(0 as sys.BIT) AS is_date_correlation_view
 from sys.all_objects t
+INNER JOIN pg_namespace ns ON t.schema_id = ns.oid
+INNER JOIN information_schema.views v ON t.name = v.table_name AND ns.nspname = v.table_schema
 where t.type = 'V';
 GRANT SELECT ON sys.all_views TO PUBLIC;
 
@@ -2114,7 +2124,8 @@ GRANT SELECT ON sys.data_spaces TO PUBLIC;
 
 CREATE OR REPLACE VIEW sys.database_mirroring
 AS
-SELECT database_id,
+SELECT 
+  CAST(database_id AS int) AS database_id,
 	CAST(NULL AS sys.uniqueidentifier) AS mirroring_guid,
 	CAST(NULL AS sys.tinyint) AS mirroring_state,
 	CAST(NULL AS sys.nvarchar(60)) AS mirroring_state_desc,
