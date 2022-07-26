@@ -105,7 +105,8 @@ runs:
       if: always() && steps.install-python.outcome == 'success'
       run: |
         cd ~
-        pip3 install psycopg2
+        sudo apt-get install unixodbc-dev
+        pip3 install pyodbc pymssql
       shell: bash
 
     - name: Run dependency check
@@ -113,10 +114,12 @@ runs:
       if: always() && steps.configure-python-environment.outcome == 'success'
       run: |
         cd test/python
-        psql_URL=localhost \
-        psql_port=5432 \
-        psql_databaseName=jdbc_testdb \
-        psql_user=jdbc_user \
+        provider="PostgreSQL" \
+        fileGenerator_URL=localhost \
+        fileGenerator_port=5432 \
+        fileGenerator_databaseName=jdbc_testdb \
+        fileGenerator_user=jdbc_user \
+        fileGenerator_password=12345678 \
         python3 upgrade_validation.py
       shell: bash
 
