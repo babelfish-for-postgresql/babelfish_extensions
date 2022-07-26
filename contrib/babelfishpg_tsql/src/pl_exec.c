@@ -4608,7 +4608,8 @@ exec_stmt_execsql(PLtsql_execstate *estate,
 	if (stmt->is_cross_db)
 		SetCurrentRoleId(GetSessionUserId(), false);
 	
-	need_path_reset = reset_search_path(stmt, old_search_path);
+	if(stmt->is_dml || stmt->is_ddl)
+		need_path_reset = reset_search_path(stmt, old_search_path);
 
 	PG_TRY();
 	{
