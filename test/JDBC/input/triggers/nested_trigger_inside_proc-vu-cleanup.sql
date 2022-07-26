@@ -1,0 +1,32 @@
+drop trigger nested_trigger_inside_proc_vu_prepare_trig1
+drop trigger nested_trigger_inside_proc_vu_prepare_trig2
+drop trigger nested_trigger_inside_proc_vu_prepare_trig3
+go
+
+drop trigger nested_trigger_inside_proc_vu_prepare_trig4
+drop trigger nested_trigger_inside_proc_vu_prepare_trig5
+drop trigger nested_trigger_inside_proc_vu_prepare_trig6
+go
+
+drop trigger nested_trigger_inside_proc_vu_prepare_trig7
+drop trigger nested_trigger_inside_proc_vu_prepare_trig8
+drop trigger nested_trigger_inside_proc_vu_prepare_trig9
+go
+
+drop procedure nested_trigger_inside_proc_vu_prepare_p1;
+drop procedure nested_trigger_inside_proc_vu_prepare_p2;
+drop procedure nested_trigger_inside_proc_vu_prepare_p3;
+drop procedure nested_trigger_inside_proc_vu_prepare_p01;
+drop procedure nested_trigger_inside_proc_vu_prepare_p02;
+drop procedure nested_trigger_inside_proc_vu_prepare_p03;
+drop procedure nested_trigger_inside_proc_vu_prepare_p001;
+drop procedure nested_trigger_inside_proc_vu_prepare_p002;
+drop procedure nested_trigger_inside_proc_vu_prepare_p003;
+
+
+
+drop table nested_trigger_inside_proc_vu_prepare_t1
+drop table nested_trigger_inside_proc_vu_prepare_t2
+drop table nested_trigger_inside_proc_vu_prepare_t3
+go
+

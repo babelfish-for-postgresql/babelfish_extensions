@@ -151,9 +151,7 @@ Could not find upgrade tests for function sys.day
 Could not find upgrade tests for function sys.db_id
 Could not find upgrade tests for function sys.db_name
 Could not find upgrade tests for function sys.default_domain
-Could not find upgrade tests for function sys.error
 Could not find upgrade tests for function sys.error_line
-Could not find upgrade tests for function sys.error_message
 Could not find upgrade tests for function sys.error_number
 Could not find upgrade tests for function sys.error_procedure
 Could not find upgrade tests for function sys.error_severity
@@ -194,7 +192,6 @@ Could not find upgrade tests for function sys.max_precision
 Could not find upgrade tests for function sys.microsoftversion
 Could not find upgrade tests for function sys.month
 Could not find upgrade tests for function sys.nestlevel
-Could not find upgrade tests for function sys.object_name
 Could not find upgrade tests for function sys.openjson_array
 Could not find upgrade tests for function sys.openjson_object
 Could not find upgrade tests for function sys.openjson_simple
@@ -203,14 +200,12 @@ Could not find upgrade tests for function sys.options
 Could not find upgrade tests for function sys.parsename
 Could not find upgrade tests for function sys.patindex
 Could not find upgrade tests for function sys.pgerror
-Could not find upgrade tests for function sys.procid
 Could not find upgrade tests for function sys.proc_param_helper
 Could not find upgrade tests for function sys.quotename
 Could not find upgrade tests for function sys.rand
 Could not find upgrade tests for function sys.replace
 Could not find upgrade tests for function sys.replicate
 Could not find upgrade tests for function sys.role_id
-Could not find upgrade tests for function sys.rowcount
 Could not find upgrade tests for function sys.schema_id
 Could not find upgrade tests for function sys.scope_identity
 Could not find upgrade tests for function sys.servername
@@ -242,7 +237,6 @@ Could not find upgrade tests for function sys.sysdatetime
 Could not find upgrade tests for function sys.sysdatetimeoffset
 Could not find upgrade tests for function sys.sysutcdatetime
 Could not find upgrade tests for function sys.timefromparts
-Could not find upgrade tests for function sys.trancount
 Could not find upgrade tests for function sys.tsql_get_constraintdef
 Could not find upgrade tests for function sys.tsql_get_functiondef
 Could not find upgrade tests for function sys.tsql_get_returntypmodvalue
@@ -258,9 +252,7 @@ Could not find upgrade tests for function sys.unicode
 Could not find upgrade tests for function sys.user_id
 Could not find upgrade tests for function sys.user_name
 Could not find upgrade tests for function sys.version
-Could not find upgrade tests for function sys.xact_state
 Could not find upgrade tests for function sys.year
-Could not find upgrade tests for function update
 Could not find upgrade tests for procedure babel_catalog_initializer
 Could not find upgrade tests for procedure babel_coercion_initializer
 Could not find upgrade tests for procedure babel_create_builtin_dbs

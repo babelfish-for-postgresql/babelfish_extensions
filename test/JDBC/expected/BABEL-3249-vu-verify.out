@@ -1,4 +1,4 @@
-DELETE FROM TAB_BABEL_3294_PREPARE WHERE C1 = 1;
+DELETE FROM babel_3249_vu_prepare_TAB WHERE C1 = 1;
 GO
 ~~START~~
 int#!#varchar
@@ -12,27 +12,18 @@ int#!#varchar
 ~~ROW COUNT: 1~~
 
 
-SELECT PRONAME FROM PG_PROC WHERE PRONAME = 'trig_babel_3294_prepare_for'
+SELECT PRONAME FROM PG_PROC WHERE PRONAME = 'babel_3249_vu_prepare_trig_for'
 GO
 ~~START~~
 varchar
-trig_babel_3294_prepare_for
+babel_3249_vu_prepare_trig_for
 ~~END~~
 
 
-DROP TRIGGER TRIG_BABEL_3294_PREPARE_FOR
-GO
-
-SELECT PRONAME FROM PG_PROC WHERE PRONAME = 'trig_babel_3294_prepare_for'
+SELECT PRONAME FROM PG_PROC WHERE PRONAME = 'babel_3249_vu_prepare_trig_after'
 GO
 ~~START~~
 varchar
+babel_3249_vu_prepare_trig_after
 ~~END~~
-
-
-DROP TRIGGER TRIG_BABEL_3294_PREPARE_AFTER
-GO
-
-DROP TABLE TAB_BABEL_3294_PREPARE
-GO
 

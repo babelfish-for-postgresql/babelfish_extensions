@@ -1,0 +1,154 @@
+
+-- For AFTER keyword --
+-- with INSERT
+exec nested_trigger_inside_proc_vu_prepare_p1;
+go
+~~START~~
+varchar
+nest level 1
+~~END~~
+
+~~START~~
+varchar
+nest level 2
+~~END~~
+
+~~START~~
+varchar
+nest level 3
+~~END~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+
+select * from nested_trigger_inside_proc_vu_prepare_t1
+go
+~~START~~
+int
+1
+2
+~~END~~
+
+
+select * from nested_trigger_inside_proc_vu_prepare_t2
+go
+~~START~~
+int
+1
+2
+~~END~~
+
+
+select * from nested_trigger_inside_proc_vu_prepare_t3
+go
+~~START~~
+int
+1
+2
+~~END~~
+
+
+-- with update
+exec nested_trigger_inside_proc_vu_prepare_p01;
+go
+~~START~~
+varchar
+nest level 1
+~~END~~
+
+~~START~~
+varchar
+nest level 2
+~~END~~
+
+~~START~~
+varchar
+nest level 3
+~~END~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+
+select * from nested_trigger_inside_proc_vu_prepare_t1
+go
+~~START~~
+int
+1
+3
+~~END~~
+
+
+select * from nested_trigger_inside_proc_vu_prepare_t2
+go
+~~START~~
+int
+1
+3
+~~END~~
+
+
+select * from nested_trigger_inside_proc_vu_prepare_t3
+go
+~~START~~
+int
+1
+3
+~~END~~
+
+
+-- with delete
+exec nested_trigger_inside_proc_vu_prepare_p001;
+go
+~~START~~
+varchar
+nest level 1
+~~END~~
+
+~~START~~
+varchar
+nest level 2
+~~END~~
+
+~~START~~
+varchar
+nest level 3
+~~END~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+
+select * from nested_trigger_inside_proc_vu_prepare_t1
+go
+~~START~~
+int
+3
+~~END~~
+
+
+select * from nested_trigger_inside_proc_vu_prepare_t2
+go
+~~START~~
+int
+3
+~~END~~
+
+
+select * from nested_trigger_inside_proc_vu_prepare_t3
+go
+~~START~~
+int
+3
+~~END~~
+

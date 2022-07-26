@@ -1,0 +1,145 @@
+-- To test procedure
+CREATE PROCEDURE babel_procid_vu_prepare_proc1
+AS
+DECLARE @proc_name sysname;
+DECLARE @msg varchar(100);
+SET @proc_name = OBJECT_NAME(@@PROCID);
+SET @msg = 'Running stored procedure ' + @proc_name + '!';
+SELECT @msg;
+GO
+
+-- To test nested procedure
+CREATE PROCEDURE babel_procid_vu_prepare_proc2
+AS
+DECLARE @proc_name sysname;
+DECLARE @msg varchar(100);
+EXEC babel_procid_vu_prepare_proc1;
+SET @proc_name = OBJECT_NAME(@@PROCID);
+SET @msg = 'Running stored procedure ' + @proc_name + '!';
+SELECT @msg;
+EXEC babel_procid_vu_prepare_proc1;
+GO
+
+-- To test UDF function
+CREATE FUNCTION babel_procid_vu_prepare_func1()
+RETURNS varchar(100)
+AS
+BEGIN
+	DECLARE @name varchar(100);
+	SET @name = 'Running function ' + OBJECT_NAME(@@PROCID) + '!';
+	RETURN @name;
+END;
+GO
+
+-- To test nested function inside a procedure
+CREATE PROCEDURE babel_procid_vu_prepare_proc3
+AS
+DECLARE @proc_name sysname;
+DECLARE @msg varchar(100);
+-- Execute another procedure
+EXEC babel_procid_vu_prepare_proc1;
+-- Call a function
+SELECT babel_procid_vu_prepare_func1();
+-- Execute this procedure
+SET @proc_name = OBJECT_NAME(@@PROCID);
+SET @msg = 'Running stored procedure ' + @proc_name + '!';
+SELECT @msg;
+-- Again execute another procedure
+EXEC babel_procid_vu_prepare_proc1;
+GO
+
+-- To test nested function inside a function
+CREATE FUNCTION babel_procid_vu_prepare_func2()
+RETURNS varchar(100)
+AS
+BEGIN
+	DECLARE @name varchar(100);
+	SET @name = OBJECT_NAME(@@PROCID);
+	RETURN @name;
+END
+GO
+
+CREATE FUNCTION babel_procid_vu_prepare_func3()
+RETURNS TABLE AS
+RETURN
+(
+	SELECT babel_procid_vu_prepare_func2() as nested_function, OBJECT_NAME(@@PROCID) as current_function
+)
+GO
+
+-- To test triggers
+CREATE TABLE babel_procid_vu_prepare_data1 (a int NOT NULL);
+GO
+
+CREATE TABLE babel_procid_vu_prepare_data_log (procedure_name sysname NULL);
+GO
+
+CREATE TRIGGER babel_procid_vu_prepare_trg_data_log ON babel_procid_vu_prepare_data1 AFTER INSERT
+AS
+INSERT INTO babel_procid_vu_prepare_data_log(procedure_name) VALUES(OBJECT_NAME(@@PROCID));
+GO
+
+--To test nested function and procedure inside a trigger
+CREATE TABLE babel_procid_vu_prepare_data2 (a int NOT NULL);
+INSERT INTO babel_procid_vu_prepare_data2(a) VALUES(1);
+GO
+
+CREATE TRIGGER trg_call_modules ON babel_procid_vu_prepare_data2 AFTER INSERT
+AS
+-- Execute procedure
+EXEC babel_procid_vu_prepare_proc1;
+-- Call function
+SELECT babel_procid_vu_prepare_func1();
+-- Print name of this trigger
+DECLARE @msg varchar(100);
+SET @msg = 'Inside trigger ' + OBJECT_NAME(@@PROCID) + '!';
+SELECT @msg;
+GO
+
+-- To test when nested module throws error
+CREATE PROCEDURE babel_procid_vu_prepare_proc4
+AS
+RAISERROR('Procedure babel_procid_vu_prepare_proc4 failed', 16, 1);
+GO
+
+CREATE PROCEDURE babel_procid_vu_prepare_proc5
+AS
+BEGIN TRY
+	EXEC babel_procid_vu_prepare_proc4;
+END TRY
+BEGIN CATCH
+	DECLARE @msg varchar(100);
+	SET @msg = 'Running procedure ' + OBJECT_NAME(@@PROCID);
+	SELECT @msg;
+END CATCH;
+GO
+
+
+CREATE TABLE babel_procid_vu_prepare_data3 (a int NOT NULL);
+INSERT INTO babel_procid_vu_prepare_data3(a) VALUES(1);
+GO
+
+CREATE TRIGGER babel_procid_vu_prepare_trg_err_check ON babel_procid_vu_prepare_data3 AFTER INSERT
+AS
+BEGIN TRY
+	EXEC babel_procid_vu_prepare_proc4;
+END TRY
+BEGIN CATCH
+	DECLARE @msg varchar(100);
+	SET @msg = 'Running trigger ' + OBJECT_NAME(@@PROCID);
+	SELECT @msg;
+END CATCH;
+GO
+
+-- To test insert through a procedure
+
+
+CREATE PROCEDURE babel_procid_vu_prepare_table_insert
+@val INT
+AS
+-- Insert will invoke the trigger
+INSERT INTO babel_procid_vu_prepare_data3(a) VALUES(@val);
+DECLARE @msg varchar(100);
+SET @msg = 'Running procedure ' + OBJECT_NAME(@@PROCID);
+SELECT @msg;
+GO

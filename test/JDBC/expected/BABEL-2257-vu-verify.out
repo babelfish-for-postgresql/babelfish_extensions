@@ -1,0 +1,25 @@
+exec babel_2257_vu_prepare_error_mapping.ErrorHandling1;
+GO
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+
+select * from babel_2257_vu_prepare_t1
+GO
+~~START~~
+int
+1
+2
+~~END~~
+
+
+select * from babel_2257_vu_prepare_t2
+GO
+~~START~~
+int
+1
+~~END~~
+

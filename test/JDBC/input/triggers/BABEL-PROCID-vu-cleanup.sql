@@ -1,0 +1,29 @@
+DROP PROCEDURE babel_procid_vu_prepare_proc2;
+GO
+
+DROP PROCEDURE babel_procid_vu_prepare_proc3;
+GO
+
+DROP FUNCTION babel_procid_vu_prepare_func2;
+Go
+
+DROP FUNCTION babel_procid_vu_prepare_func3;
+GO
+
+DROP TRIGGER babel_procid_vu_prepare_trg_data_log;
+DROP TABLE babel_procid_vu_prepare_data_log;
+GO
+
+DROP PROCEDURE babel_procid_vu_prepare_proc1;
+DROP FUNCTION babel_procid_vu_prepare_func1;
+DROP TRIGGER babel_procid_vu_prepare_trg_call_modules;
+GO
+
+DROP TRIGGER babel_procid_vu_prepare_trg_err_check;
+DROP TABLE babel_procid_vu_prepare_data1;
+DROP TABLE babel_procid_vu_prepare_data2;
+DROP TABLE babel_procid_vu_prepare_data3;
+DROP PROCEDURE babel_procid_vu_prepare_table_insert;
+DROP PROCEDURE babel_procid_vu_prepare_proc5;
+DROP PROCEDURE babel_procid_vu_prepare_proc4;
+GO
