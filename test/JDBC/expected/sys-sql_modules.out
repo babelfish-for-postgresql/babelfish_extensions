@@ -183,6 +183,14 @@ bool
 t
 ~~END~~
 
+-- Wait to sync with another session
+SELECT pg_sleep(1);
+GO
+~~START~~
+void
+
+~~END~~
+
 
 -- tsql
 USE db1

@@ -557,6 +557,14 @@ bool
 t
 ~~END~~
 
+-- Wait to sync with another session
+SELECT pg_sleep(1);
+GO
+~~START~~
+void
+
+~~END~~
+
 
 -- tsql
 
@@ -573,6 +581,14 @@ bool
 t
 ~~END~~
 
+-- Wait to sync with another session
+SELECT pg_sleep(1);
+GO
+~~START~~
+void
+
+~~END~~
+
 
 -- tsql
 DROP LOGIN test_login2
@@ -586,6 +602,14 @@ GO
 ~~START~~
 bool
 t
+~~END~~
+
+-- Wait to sync with another session
+SELECT pg_sleep(1);
+GO
+~~START~~
+void
+
 ~~END~~
 
 

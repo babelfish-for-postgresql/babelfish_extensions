@@ -217,6 +217,14 @@ bool
 t
 ~~END~~
 
+-- Wait to sync with another session
+SELECT pg_sleep(1);
+GO
+~~START~~
+void
+
+~~END~~
+
 
 -- tsql
 DROP LOGIN r1;
@@ -236,6 +244,14 @@ GO
 ~~START~~
 bool
 t
+~~END~~
+
+-- Wait to sync with another session
+SELECT pg_sleep(1);
+GO
+~~START~~
+void
+
 ~~END~~
 
 
@@ -342,6 +358,14 @@ GO
 bool
 ~~END~~
 
+-- Wait to sync with another session
+SELECT pg_sleep(1);
+GO
+~~START~~
+void
+
+~~END~~
+
 
 -- tsql
 DROP LOGIN r1;
@@ -362,6 +386,14 @@ WHERE sys.suser_name(usesysid) = 'r2' AND backend_type = 'client backend' AND us
 GO
 ~~START~~
 bool
+~~END~~
+
+-- Wait to sync with another session
+SELECT pg_sleep(1);
+GO
+~~START~~
+void
+
 ~~END~~
 
 
@@ -424,6 +456,14 @@ WHERE sys.suser_name(usesysid) = 'r3' AND backend_type = 'client backend' AND us
 GO
 ~~START~~
 bool
+~~END~~
+
+-- Wait to sync with another session
+SELECT pg_sleep(1);
+GO
+~~START~~
+void
+
 ~~END~~
 
 
@@ -737,6 +777,14 @@ WHERE sys.suser_name(usesysid) = 'login1' AND backend_type = 'client backend' AN
 GO
 ~~START~~
 bool
+~~END~~
+
+-- Wait to sync with another session
+SELECT pg_sleep(1);
+GO
+~~START~~
+void
+
 ~~END~~
 
 
@@ -1117,6 +1165,14 @@ bool
 t
 ~~END~~
 
+-- Wait to sync with another session
+SELECT pg_sleep(1);
+GO
+~~START~~
+void
+
+~~END~~
+
 
 -- tsql
 USE master;
@@ -1159,6 +1215,14 @@ GO
 ~~START~~
 bool
 t
+~~END~~
+
+-- Wait to sync with another session
+SELECT pg_sleep(1);
+GO
+~~START~~
+void
+
 ~~END~~
 
 

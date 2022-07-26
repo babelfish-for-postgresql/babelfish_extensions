@@ -70,6 +70,9 @@ go
 SELECT pg_terminate_backend(pid) FROM pg_stat_get_activity(NULL) 
 WHERE sys.suser_name(usesysid) = 'user1' AND backend_type = 'client backend' AND usesysid IS NOT NULL;
 GO
+-- Wait to sync with another session
+SELECT pg_sleep(1);
+GO
 
 -- tsql
 drop login user1;
