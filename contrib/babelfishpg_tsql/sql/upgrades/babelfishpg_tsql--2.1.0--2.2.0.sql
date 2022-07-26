@@ -625,9 +625,12 @@ CREATE OR REPLACE VIEW information_schema_tsql.views AS
 			CAST('NO' AS sys.varchar(2)) AS "IS_UPDATABLE"
 
 	FROM sys.pg_namespace_ext nc JOIN pg_class c ON (nc.oid = c.relnamespace)
-		LEFT OUTER JOIN sys.babelfish_namespace_ext ext ON nc.nspname = ext.nspname
+		LEFT OUTER JOIN sys.babelfish_namespace_ext ext
+			ON (nc.nspname = ext.nspname COLLATE sys.database_default)
 		LEFT OUTER JOIN sys.babelfish_view_def vd
-			ON ext.dbid = vd.dbid AND ext.orig_name = vd.schema_name AND c.relname = vd.object_name
+			ON ext.dbid = vd.dbid
+				AND (ext.orig_name = vd.schema_name COLLATE sys.database_default)
+				AND (c.relname = vd.object_name COLLATE sys.database_default)
 
 	WHERE c.relkind = 'v'
 		AND (NOT pg_is_other_temp_schema(nc.oid))
