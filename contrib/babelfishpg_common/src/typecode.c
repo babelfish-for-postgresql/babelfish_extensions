@@ -121,7 +121,7 @@ init_tcode_trans_tab(PG_FUNCTION_ARGS)
         else
         {
             /* type is not loaded. wait for next scan */
-			inited_ht_oid2typecode = false;
+            inited_ht_oid2typecode = false;
         }
     }
 
