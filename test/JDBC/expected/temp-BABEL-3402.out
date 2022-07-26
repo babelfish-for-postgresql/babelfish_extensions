@@ -17,7 +17,7 @@ select pg_get_viewdef('babel_3402_v1'::regclass);
 go
 ~~START~~
 text
- SELECT sys.suser_sid(('-10'::integer)::sys.sysname(132)) AS suser_sid;
+ SELECT sys.suser_sid(('-10'::integer)::sys.sysname) AS suser_sid;
 ~~END~~
 
 
