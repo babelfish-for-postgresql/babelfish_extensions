@@ -509,16 +509,31 @@ GO
 ~~ERROR (Message: Current login err_user does not have permission to create new login)~~
 
 
+-- psql
+-- Need to terminate active session before cleaning up the login
+SELECT pg_terminate_backend(pid) FROM pg_stat_get_activity(NULL)
+WHERE sys.suser_name(usesysid) = 'err_user' AND backend_type = 'client backend' AND usesysid IS NOT NULL;
+GO
+~~START~~
+bool
+t
+~~END~~
+
+-- Wait to sync with another session
+SELECT pg_sleep(1);
+GO
+~~START~~
+void
+
+~~END~~
+
+
 -- tsql
 DROP USER err_user;
 GO
 
 DROP LOGIN err_user;
 GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: Could not drop login 'err_user' as the user is currently logged in.)~~
-
 
 -- Test User functions
 USE MASTER;
