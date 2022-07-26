@@ -1,6 +1,36 @@
 use schema_res_proc
 go
 
+-- select would resolve to sch2.table1, insert would resolve to sch1.table1
+exec sch1.p1
+go
+
+drop proc sch2.p2
+go
+
+drop proc sch1.p1
+go
+
+drop table sch1.table1;
+drop table sch2.table1;
+go
+
+drop schema sch2;
+go
+
+-- insert is inside exec_batch, so it would be resolved to dbo.table1
+exec sch1.p3
+go
+
+select * from dbo.table1;
+go
+
+drop proc sch1.p3
+go
+
+drop table table1;
+go
+
 -- Without schema specified, insert takes place in "sch1" while create takes place in default schema["dbo" in this case] 
 exec sch1.create_tab;
 go

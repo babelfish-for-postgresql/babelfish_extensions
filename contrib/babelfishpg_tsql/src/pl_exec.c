@@ -10084,6 +10084,10 @@ bool reset_search_path(PLtsql_stmt_execsql *stmt, char *old_search_path)
 				return true;
 			}
 		}
+		/* if the stmt is inside an exec_batch, return false */
+		else if(top_es_entry->estate && top_es_entry->estate->err_stmt &&
+				top_es_entry->estate->err_stmt->cmd_type == PLTSQL_STMT_EXEC_BATCH)
+			return false;
 		top_es_entry = top_es_entry->next;
 	}
 	return false;
