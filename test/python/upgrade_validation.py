@@ -90,8 +90,6 @@ def get_dependencies(file, sumfile, logger):
                         SELECT typanalyze::oid FROM pg_type WHERE typnamespace = 'sys'::regnamespace 
                         UNION
                         SELECT oprcode::oid FROM pg_operator 
-                        UNION
-                        SELECT castfunc FROM pg_cast
                     );"""
 
             cursor.execute(query.format(schema))
@@ -109,8 +107,7 @@ def get_dependencies(file, sumfile, logger):
                             AND d.deptype in('n') 
                             AND d.refobjid in (SELECT oid FROM pg_proc WHERE prokind = 'f' 
                                                 AND pronamespace IN ('sys'::regnamespace{0}) 
-                                                AND proname NOT LIKE '\_%' 
-                                                AND oid NOT IN (SELECT castfunc from pg_cast))
+                                                AND proname NOT LIKE '\_%')
                             AND v.relnamespace not in('sys'::regnamespace, 'pg_catalog'::regnamespace, 'information_schema'::regnamespace{0})
                         GROUP BY d.refobjid
                     )
@@ -122,8 +119,7 @@ def get_dependencies(file, sumfile, logger):
                             AND d.deptype in ('a')
                             AND d.refobjid in (SELECT oid FROM pg_proc WHERE prokind = 'f' 
                                                 AND pronamespace IN ('sys'::regnamespace{0}) 
-                                                AND proname NOT LIKE '\_%' 
-                                                AND oid NOT IN (SELECT castfunc from pg_cast))
+                                                AND proname NOT LIKE '\_%')
                             AND v.relnamespace not in ('sys'::regnamespace, 'pg_catalog'::regnamespace, 'information_schema'::regnamespace{0})
                         GROUP BY d.refobjid
                     )
@@ -190,7 +186,7 @@ def get_dependencies(file, sumfile, logger):
             # get user defined views & tables, union functions & procedures, union types dependent on sys types
             logger.info('Finding dependencies on types') 
 
-            cursor.execute("SELECT oid::regtype FROM pg_type WHERE typnamespace = 'sys'::regnamespace AND typtype in ('b','d') AND typcategory <> 'A';")
+            cursor.execute("SELECT oid::regtype FROM pg_type WHERE typnamespace = 'sys'::regnamespace AND typtype in ('b','d') AND typcategory <> 'A' AND typname NOT LIKE '\_%';")
             resultset = cursor.fetchall()
             object = [l[0] for l in resultset]
 
@@ -201,7 +197,7 @@ def get_dependencies(file, sumfile, logger):
                         JOIN pg_class AS v ON v.oid = d.objid 
                         WHERE d.refclassid = 'pg_type'::regclass 
                             AND d.deptype in ('n')
-                            AND d.refobjid in (SELECT oid FROM pg_type WHERE typnamespace = 'sys'::regnamespace AND typtype in ('b','d') AND typcategory <> 'A')
+                            AND d.refobjid in (SELECT oid FROM pg_type WHERE typnamespace = 'sys'::regnamespace AND typtype in ('b','d') AND typcategory <> 'A' AND typname NOT LIKE '\_%')
                             AND v.relnamespace not in ('sys'::regnamespace, 'pg_catalog'::regnamespace, 'information_schema'::regnamespace{0})
                         GROUP BY d.refobjid
                     )
@@ -211,7 +207,7 @@ def get_dependencies(file, sumfile, logger):
                         JOIN pg_proc AS v ON v.oid = d.objid 
                         WHERE d.refclassid = 'pg_type'::regclass 
                             AND d.deptype in ('n')
-                            AND d.refobjid in (SELECT oid FROM pg_type WHERE typnamespace = 'sys'::regnamespace AND typtype in ('b','d') AND typcategory <> 'A')
+                            AND d.refobjid in (SELECT oid FROM pg_type WHERE typnamespace = 'sys'::regnamespace AND typtype in ('b','d') AND typcategory <> 'A' AND typname NOT LIKE '\_%')
                             AND v.pronamespace not in ('sys'::regnamespace, 'pg_catalog'::regnamespace, 'information_schema'::regnamespace{0})
                         GROUP BY d.refobjid
                     )
@@ -221,7 +217,7 @@ def get_dependencies(file, sumfile, logger):
                         JOIN pg_type AS v ON v.oid = d.objid 
                         WHERE d.refclassid = 'pg_type'::regclass 
                             AND d.deptype in ('n')
-                            AND d.refobjid in (SELECT oid FROM pg_type WHERE typnamespace = 'sys'::regnamespace AND typtype in ('b','d') AND typcategory <> 'A')
+                            AND d.refobjid in (SELECT oid FROM pg_type WHERE typnamespace = 'sys'::regnamespace AND typtype in ('b','d') AND typcategory <> 'A' AND typname NOT LIKE '\_%')
                             AND v.typnamespace not in ('sys'::regnamespace, 'pg_catalog'::regnamespace, 'information_schema'::regnamespace{0})
                         GROUP BY d.refobjid
                     )
