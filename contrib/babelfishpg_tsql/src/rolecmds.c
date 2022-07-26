@@ -1560,19 +1560,8 @@ is_rolemember(PG_FUNCTION_ARGS)
 bool
 is_active_login(Oid role_oid)
 {
-	int			tries;
-
-	/* 50 tries with 100ms sleep between tries makes 5 sec total wait */
-	for (tries = 0; tries < 50; tries++)
-	{
-		CHECK_FOR_INTERRUPTS();
-
-		if (CountUserBackends(role_oid) == 0)
-			return false; /* If there are no backends with given role */
-
-		/* sleep, then try again */
-		pg_usleep(100 * 1000L); /* 100ms */
-	}
+	if (CountUserBackends(role_oid) == 0)
+		return false; /* If there are no backends with given role */
 
 	return true;
 }
