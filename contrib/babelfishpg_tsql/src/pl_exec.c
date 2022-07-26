@@ -10083,9 +10083,8 @@ bool reset_search_path(PLtsql_stmt_execsql *stmt, char *old_search_path)
 								GUC_ACTION_SAVE, true, 0, false);
 				return true;
 			}
-			else
-				top_es_entry = top_es_entry->next;
 		}
+		top_es_entry = top_es_entry->next;
 	}
 	return false;
 }
