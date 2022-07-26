@@ -2302,6 +2302,11 @@ antlr_parser_cpp(const char *sourceText)
 			 */
 			auto ssm = std::make_unique<tsqlSelectStatementMutator>();
 			handleBatchLevelStatement(tsql_file->batch_level_statement(), ssm.get());
+
+            /* If PARSEONLY is enabled, replace with empty statement */
+            if (pltsql_parseonly)
+                pltsql_parse_result = makeEmptyBlockStmt(0);
+
 			result.success = true;
 			return result;
 		}
@@ -2320,6 +2325,10 @@ antlr_parser_cpp(const char *sourceText)
 
 		if (pltsql_dump_antlr_query_graph)
 			toDotRecursive(tree, parser.getRuleNames(), sourceText);
+
+        /* If PARSEONLY is enabled, replace with empty statement */
+        if (pltsql_parseonly)
+            pltsql_parse_result = makeEmptyBlockStmt(0);
 
 		result.success = true;
 		return result;
@@ -4037,6 +4046,9 @@ makeSetStatement(TSqlParser::Set_statementContext *ctx, tsqlBuilder &builder)
 				query += " ";
 				query += getFullText(set_special_ctx->on_off());
 				query += "; ";
+
+				if (option->PARSEONLY() && pg_strcasecmp("off", getFullText(set_special_ctx->on_off()).c_str()) == 0)
+                    pltsql_parseonly = false;
 			}
 
 			if (query.empty())
@@ -4060,6 +4072,10 @@ makeSetStatement(TSqlParser::Set_statementContext *ctx, tsqlBuilder &builder)
 			auto option = set_special_ctx->set_on_off_option().front();
 			if (option->BABELFISH_SHOWPLAN_ALL())
 				return makeSetExplainModeStatement(ctx, true);
+            // PARSEONLY needs to be able to be turned off once it is on, so it is handled at parse time.
+            if (option->PARSEONLY() && pg_strcasecmp("off", getFullText(set_special_ctx->on_off()).c_str()) == 0)
+                pltsql_parseonly = false;
+
 			return makeSQL(ctx);
 		}
 		else if (!set_special_ctx->id().empty())

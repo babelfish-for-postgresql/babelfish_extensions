@@ -32,6 +32,7 @@ lexer grammar TSqlLexer;
 @header
 {
     extern bool pltsql_quoted_identifier;
+    extern bool pltsql_parseonly;
 }
 
 //Keywords
