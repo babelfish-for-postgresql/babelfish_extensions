@@ -25,7 +25,7 @@ upgrade-version: [[
   },
   { 
     version: target.latest,
-    upgrade-type: major 
+    upgrade-type: major
   }
 ],
 [
