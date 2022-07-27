@@ -61,6 +61,7 @@
 #include "multidb.h"
 #include "session.h"
 #include "guc.h"
+#include "catalog.h"
 
 uint64 rowcount_var = 0;
 List *columns_updated_list = NIL;
@@ -459,6 +460,7 @@ static void pltsql_clean_table_variables(PLtsql_execstate *estate, PLtsql_functi
 static void pltsql_init_exec_error_data(PLtsqlErrorData *error_data);
 static void pltsql_copy_exec_error_data(PLtsqlErrorData *src, PLtsqlErrorData *dst, MemoryContext dstCxt);
 PLtsql_estate_err *pltsql_clone_estate_err(PLtsql_estate_err *err);
+bool reset_search_path(PLtsql_stmt_execsql *stmt, char *old_search_path);
 
 extern void pltsql_init_anonymous_cursors(PLtsql_execstate *estate);
 extern void pltsql_cleanup_local_cursors(PLtsql_execstate *estate);
@@ -4597,9 +4599,17 @@ exec_stmt_execsql(PLtsql_execstate *estate,
 	bool		enable_txn_in_triggers = !pltsql_disable_txn_in_triggers;
     StringInfoData query;
 	Oid			current_user_id = GetUserId();
+	bool		need_path_reset = false;
+	char		*cur_dbname = get_cur_db_name();
+	/* fetch current search_path */
+	List 		*path_oids = fetch_search_path(false);
+	char 		*old_search_path = flatten_search_path(path_oids);
 
 	if (stmt->is_cross_db)
 		SetCurrentRoleId(GetSessionUserId(), false);
+	
+	if(stmt->is_dml || stmt->is_ddl)
+		need_path_reset = reset_search_path(stmt, old_search_path);
 
 	PG_TRY();
 	{
@@ -4973,14 +4983,24 @@ exec_stmt_execsql(PLtsql_execstate *estate,
 	}
 	PG_CATCH();
 	{
+		if (need_path_reset)
+	 		(void) set_config_option("search_path", old_search_path,
+	 					PGC_USERSET, PGC_S_SESSION,
+	 					GUC_ACTION_SAVE, true, 0, false);
 		if (stmt->is_cross_db)
 			SetCurrentRoleId(current_user_id, false);
+		list_free(path_oids);
 		PG_RE_THROW();
 	}
 	PG_END_TRY();
 
+	if (need_path_reset)
+	 	(void) set_config_option("search_path", old_search_path,
+	 				PGC_USERSET, PGC_S_SESSION,
+	 				GUC_ACTION_SAVE, true, 0, false);
 	if (stmt->is_cross_db)
 		SetCurrentRoleId(current_user_id, false);
+	list_free(path_oids);
 
 	return PLTSQL_RC_OK;
 }
@@ -10013,4 +10033,63 @@ pltsql_clone_estate_err(PLtsql_estate_err *err)
 	PLtsql_estate_err *clone = palloc(sizeof(PLtsql_estate_err));
 	memcpy(clone, err, sizeof(PLtsql_estate_err));
 	return clone;
+}
+
+bool reset_search_path(PLtsql_stmt_execsql *stmt, char *old_search_path)
+{
+	PLExecStateCallStack *top_es_entry;
+	char		*cur_dbname = get_cur_db_name();
+	char 		*new_search_path;
+	char 		*physical_schema;
+	char		*dbo_schema;
+	const char	*user = NULL;
+	const char	*schema;
+	top_es_entry = exec_state_call_stack->next;
+	while(top_es_entry != NULL)
+	{
+		/* traverse through the estate stack. If the occurrence of
+		 * exec in the call stack, update the search path.
+		 */
+		if(top_es_entry->estate && top_es_entry->estate->err_stmt &&
+			top_es_entry->estate->err_stmt->cmd_type == PLTSQL_STMT_EXEC)
+		{
+			if(top_es_entry->estate->schema_name != NULL && stmt->is_dml)
+			{
+				if (top_es_entry->estate->db_name == NULL)
+				{
+					physical_schema = get_physical_schema_name(cur_dbname, top_es_entry->estate->schema_name);
+					dbo_schema = get_dbo_schema_name(cur_dbname);
+				}
+				else
+				{
+					physical_schema = get_physical_schema_name(top_es_entry->estate->db_name, top_es_entry->estate->schema_name);
+					dbo_schema = get_dbo_schema_name(top_es_entry->estate->db_name);
+				}
+				new_search_path = psprintf("%s, %s, %s", physical_schema, dbo_schema, old_search_path);
+				/* Add the schema where the object is referenced and dbo schema to the new search path */
+				(void) set_config_option("search_path", new_search_path,
+								PGC_USERSET, PGC_S_SESSION,
+								GUC_ACTION_SAVE, true, 0, false);
+				return true;
+			}
+			else if(top_es_entry->estate->db_name != NULL && stmt->is_ddl)
+			{
+				user = get_user_for_database(top_es_entry->estate->db_name);
+				schema = get_authid_user_ext_schema_name(top_es_entry->estate->db_name, user);
+				physical_schema = get_physical_schema_name(top_es_entry->estate->db_name, schema);
+				new_search_path = psprintf("%s, %s", physical_schema, old_search_path);
+				/* Add default schema to the new search path */
+				(void) set_config_option("search_path", new_search_path,
+								PGC_USERSET, PGC_S_SESSION,
+								GUC_ACTION_SAVE, true, 0, false);
+				return true;
+			}
+		}
+		/* if the stmt is inside an exec_batch, return false */
+		else if(top_es_entry->estate && top_es_entry->estate->err_stmt &&
+				top_es_entry->estate->err_stmt->cmd_type == PLTSQL_STMT_EXEC_BATCH)
+			return false;
+		top_es_entry = top_es_entry->next;
+	}
+	return false;
 }

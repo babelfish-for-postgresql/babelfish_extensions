@@ -53,6 +53,7 @@ indexproperty
 sys-all_views
 datepart
 sys-sysobjects
+schema_resolution_proc
 SYSTEM_USER_dep
 Test-sp_helpsrvrolemember
 Test-sp_helpsrvrolemember-dep

@@ -1400,6 +1400,8 @@ public:
 		// record whether stmt is cross-db
 		if (is_cross_db)
 			stmt->is_cross_db = true;
+		// record that the stmt is dml
+	 	stmt->is_dml = true;
 
 		if (is_compiling_create_function())
 		{
@@ -1471,6 +1473,8 @@ public:
 	{
 		PLtsql_stmt_execsql *stmt = (PLtsql_stmt_execsql *) getPLtsql_fragment(ctx);
 		Assert(stmt);
+		// record that the stmt is ddl
+	 	stmt->is_ddl = true;
 
 		if (is_compiling_create_function())
 		{
@@ -4273,13 +4277,14 @@ makeExecuteStatement(TSqlParser::Execute_statementContext *ctx)
 		bool is_cross_db = false;
 		std::string proc_name;
 		std::string schema_name;
+		std::string db_name;
 
 		if (body->func_proc_name_server_database_schema())
 		{
 			func_proc_name = ::getFullText(body->func_proc_name_server_database_schema());
 			if (body->func_proc_name_server_database_schema()->database)
 			{
-				std::string db_name = stripQuoteFromId(body->func_proc_name_server_database_schema()->database);
+				db_name = stripQuoteFromId(body->func_proc_name_server_database_schema()->database);
 				if (!string_matches(db_name.c_str(), get_cur_db_name()))
 				is_cross_db = true;
 			}
@@ -4325,6 +4330,10 @@ makeExecuteStatement(TSqlParser::Execute_statementContext *ctx)
 		{
 			result->schema_name = pstrdup(downcase_truncate_identifier(schema_name.c_str(), schema_name.length(), true));
 		}
+		if (!db_name.empty())
+	 	{
+			result->db_name = pstrdup(downcase_truncate_identifier(db_name.c_str(), db_name.length(), true));
+	 	}
 
 		if (func_proc_args)
 		{
