@@ -39,13 +39,19 @@ runs:
           upgrade_version_extb=".\""${upgrade_version}"\".extension_branch"
           extension_branch=$(yq $upgrade_version_extb ${{ github.workspace }}/.github/template/version-branch-template.yml)
           is_final_ver=false; [[ i -eq $LEN-1 ]] && is_final_ver=true
-          pg_old_dir=$(echo postgres$(awk '{$0=int($0)}1' <<< $previous_installed_version))
-          pg_new_dir=$(echo postgres$(awk '{$0=int($0)}1' <<< $upgrade_version))
+          pg_old_dir=$(echo postgres$(awk -F. '{print $1}' <<< $previous_installed_version))
+          pg_new_dir=$(echo postgres$(awk -F. '{print $1}' <<< $upgrade_version))
+          
           upgrade_type_var=".\"upgrade-version\"[${{ matrix.upgrade-path.id }}][$i].\"upgrade-type\"" 
           upgrade_type=$(yq $upgrade_type_var ${{ github.workspace }}/.github/configuration/upgrade-test-configuration.yml)
           uses_file=./.github/composite-actions/$upgrade_type-version-upgrade-util
 
           temp="&& steps.upgrade-version-$(($i-1)).outcome == 'success'"; [[ i -eq 1 ]] && temp=""
+          # As we are not creating a new directory for minor version upgrade, pg_old_dir and pg_new_dir must be same
+          if [[ $upgrade_type == 'minor' ]]
+          then
+            pg_new_dir=$pg_old_dir
+          fi
 
           # Appending upgrade step in upgrade-version composite action based on upgrade type
           if [[ $upgrade_type == 'major' ]]
