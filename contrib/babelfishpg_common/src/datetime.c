@@ -481,7 +481,7 @@ datetime_pl_float8(PG_FUNCTION_ARGS)
 {	
 	Timestamp	timestamp = PG_GETARG_TIMESTAMP(0);
 	double		days = PG_GETARG_FLOAT8(1);
-	double 		day_whole, day_fract, sec_whole;
+	double 		day_whole, day_fract;
 	Interval *input_interval;
 	Timestamp	result;
 	
@@ -490,10 +490,9 @@ datetime_pl_float8(PG_FUNCTION_ARGS)
 
 	/* split day into whole and fractional parts */
 	day_fract = modf(days, &day_whole);
-	day_fract = modf(SECS_PER_DAY*day_fract, &sec_whole);
 
 	/* make interval */
-	input_interval = (Interval *) DirectFunctionCall7(make_interval, 0, 0, 0, (int32) day_whole, 0, 0, Float8GetDatum(sec_whole));
+	input_interval = (Interval *) DirectFunctionCall7(make_interval, 0, 0, 0, (int32) day_whole, 0, 0, Float8GetDatum(SECS_PER_DAY*day_fract));
 
 	/* add interval */
 	result = DirectFunctionCall2(timestamp_pl_interval, timestamp, PointerGetDatum(input_interval));
