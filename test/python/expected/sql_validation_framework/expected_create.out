@@ -218,7 +218,6 @@ Could not find upgrade tests for function sys.sp_datatype_info_helper
 Could not find upgrade tests for function sys.sp_describe_first_result_set_internal
 Could not find upgrade tests for function sys.sp_describe_undeclared_parameters_internal
 Could not find upgrade tests for function sys.sp_getapplock_function
-Could not find upgrade tests for function sys.spid
 Could not find upgrade tests for function sys.sp_pkeys_internal
 Could not find upgrade tests for function sys.sp_releaseapplock_function
 Could not find upgrade tests for function sys.sp_special_columns_length_helper
@@ -336,8 +335,6 @@ Could not find upgrade tests for view sys.database_recovery_status
 Could not find upgrade tests for view sys.database_role_members
 Could not find upgrade tests for view sys.data_spaces
 Could not find upgrade tests for view sys.default_constraints
-Could not find upgrade tests for view sys.dm_exec_connections
-Could not find upgrade tests for view sys.dm_exec_sessions
 Could not find upgrade tests for view sys.dm_hadr_cluster
 Could not find upgrade tests for view sys.dm_hadr_database_replica_states
 Could not find upgrade tests for view sys.dm_os_host_info
@@ -389,7 +386,6 @@ Could not find upgrade tests for view sys.sysdatabases
 Could not find upgrade tests for view sys.sysforeignkeys
 Could not find upgrade tests for view sys.sysindexes
 Could not find upgrade tests for view sys.syslanguages
-Could not find upgrade tests for view sys.sysprocesses
 Could not find upgrade tests for view sys.system_objects
 Could not find upgrade tests for view sys.system_sql_modules
 Could not find upgrade tests for view sys.tables

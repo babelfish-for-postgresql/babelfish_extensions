@@ -2504,7 +2504,8 @@ CREATE OR REPLACE FUNCTION sys.tsql_stat_get_activity(
   OUT protocol_version int,
   OUT packet_size int,
   OUT encrypyt_option VARCHAR(40),
-  OUT database_id int2)
+  OUT database_id int2,
+  OUT host_name varchar(128))
 RETURNS SETOF RECORD
 AS 'babelfishpg_tsql', 'tsql_stat_get_activity'
 LANGUAGE C VOLATILE STRICT;
@@ -2841,6 +2842,9 @@ LANGUAGE SQL IMMUTABLE PARALLEL RESTRICTED;
 
 CREATE OR REPLACE FUNCTION sys.language()
 RETURNS sys.NVARCHAR(128)  AS 'babelfishpg_tsql' LANGUAGE C;
+
+CREATE OR REPLACE FUNCTION sys.host_name()
+RETURNS sys.NVARCHAR(128)  AS 'babelfishpg_tsql' LANGUAGE C IMMUTABLE PARALLEL SAFE;
 
 CREATE OR REPLACE FUNCTION sys.INDEXPROPERTY(IN object_id INT, IN index_or_statistics_name sys.nvarchar(128), IN property sys.varchar(128))
 RETURNS INT AS
