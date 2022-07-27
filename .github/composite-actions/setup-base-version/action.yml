@@ -106,7 +106,7 @@ runs:
       run: |
         cd ~
         sudo apt-get install unixodbc-dev
-        sudo apt-get install postgresql-odbc
+        sudo apt-get install odbc-postgresql
         pip3 install pyodbc pymssql
       shell: bash
 
@@ -115,7 +115,7 @@ runs:
       if: always() && steps.configure-python-environment.outcome == 'success'
       run: |
         cd test/python
-        provider="PostgreSQL" \
+        provider="PostgreSQL Unicode" \
         fileGenerator_URL=localhost \
         fileGenerator_port=5432 \
         fileGenerator_databaseName=jdbc_testdb \
