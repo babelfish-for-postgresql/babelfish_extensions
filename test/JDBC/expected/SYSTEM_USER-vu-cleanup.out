@@ -1,0 +1,4 @@
+-- tsql
+DROP LOGIN system_user_vu_prepare_r1;
+DROP LOGIN system_user_vu_prepare_r2;
+GO
