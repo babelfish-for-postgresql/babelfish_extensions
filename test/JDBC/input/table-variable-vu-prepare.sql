@@ -1,9 +1,9 @@
 
 -- babel-1149
-create function tv_itvf_1(@number int) returns table as return (select 1 as a, 2 as b);
+create function table_variable_vu_prepareitvf_1(@number int) returns table as return (select 1 as a, 2 as b);
 GO
 
-create function tv_mstvf_1(@i int) returns @tableVar table (a nvarchar(10), b int, c int)
+create function table_variable_vu_preparemstvf_1(@i int) returns @tableVar table (a nvarchar(10), b int, c int)
 as
 begin
 insert into @tableVar values('hello1', 1, 100);
@@ -15,21 +15,21 @@ return;
 end;
 GO
 
-create function tv_func_1(@i int) returns int as begin
+create function table_variable_vu_preparefunc_1(@i int) returns int as begin
 declare @a as table (a int, b int)
 insert into @a values (100, 200)
 return 1;
 end;
 GO
 
-create procedure tv_proc_1 as
+create procedure table_variable_vu_prepareproc_1 as
 declare @a table (a int, b int);
 insert into @a values(1, 100);
 update @a set b = 200;
 GO
 
 -- babel-2647
-CREATE FUNCTION dbo.tv_mstvf_2() RETURNS @tv TABLE (a int NULL)
+CREATE FUNCTION dbo.table_variable_vu_preparemstvf_2() RETURNS @tv TABLE (a int NULL)
 AS
 BEGIN
 	INSERT @tv VALUES(0);
@@ -41,37 +41,37 @@ go
 use master;
 go
 
-drop table if exists tv_t1;
+drop table if exists table_variable_vu_preparet1;
 go
-create table tv_t1 (a int, b int);
+create table table_variable_vu_preparet1 (a int, b int);
 go
-insert into tv_t1 values (1, 1);
+insert into table_variable_vu_preparet1 values (1, 1);
 go
-insert into tv_t1 values (2, 2);
+insert into table_variable_vu_preparet1 values (2, 2);
 go
 
-drop procedure if exists tv_inner_proc;
+drop procedure if exists table_variable_vu_prepareinner_proc;
 go
-create procedure tv_inner_proc @b int
+create procedure table_variable_vu_prepareinner_proc @b int
 as
-    set @b = (select top 1 a+b from tv_t1 order by b);
-    insert into tv_t1 values (@b, @b);
+    set @b = (select top 1 a+b from table_variable_vu_preparet1 order by b);
+    insert into table_variable_vu_preparet1 values (@b, @b);
 go
 
-drop procedure if exists tv_outer_proc;
+drop procedure if exists table_variable_vu_prepareouter_proc;
 go
-create procedure tv_outer_proc @a int, @b int
+create procedure table_variable_vu_prepareouter_proc @a int, @b int
 as
     declare @t table (a int, b int);
     set @a = 3;
-    insert into tv_t1 values (@a, @b);
-    exec tv_inner_proc @b;
-    insert into @t select * from tv_t1;
+    insert into table_variable_vu_preparet1 values (@a, @b);
+    exec table_variable_vu_prepareinner_proc @b;
+    insert into @t select * from table_variable_vu_preparet1;
     select * from @t;
 go
 
 -- babel-3101
-CREATE FUNCTION tv_my_splitstring ( @stringToSplit VARCHAR(MAX) )
+CREATE FUNCTION table_variable_vu_preparemy_splitstring ( @stringToSplit VARCHAR(MAX) )
 RETURNS
 @returnList TABLE ([Value] [nvarchar] (50))
 AS
@@ -96,19 +96,19 @@ END
 GO
 
 -- babel-3088
-create database tv_db
+create database table_variable_vu_preparedb
 go
-use tv_db
-go
-
-create table tv_t2(a nvarchar(50));
-insert into tv_t2 values ('aaa');
+use table_variable_vu_preparedb
 go
 
-create procedure tv_proc_2 (@a int)
+create table table_variable_vu_preparet2(a nvarchar(50));
+insert into table_variable_vu_preparet2 values ('aaa');
+go
+
+create procedure table_variable_vu_prepareproc_2 (@a int)
 as
   declare @tv TABLE(a nvarchar(50))
-  insert into @tv select * from tv_t2;
+  insert into @tv select * from table_variable_vu_preparet2;
   select * from @tv; 
 go
 
@@ -116,14 +116,14 @@ use master
 go
 
 --babel-2034
-CREATE TABLE tv_EasDateTime (EasDateTime pg_catalog.timestamp, LastUpdDateTime pg_catalog.timestamp, LastCompressionMaxDate pg_catalog.timestamp, CompressionRate real);
+CREATE TABLE table_variable_vu_prepareEasDateTime (EasDateTime pg_catalog.timestamp, LastUpdDateTime pg_catalog.timestamp, LastCompressionMaxDate pg_catalog.timestamp, CompressionRate real);
 GO
 
 -- Test ITVF - column references such as "easdatetime" in the query collides
 -- with the column names of the returned rows - should not throw error
-CREATE FUNCTION tv_CalculateEasDateTime (  @InputDate DATETIME = NULL ) RETURNS TABLE AS  RETURN (
+CREATE FUNCTION table_variable_vu_prepareCalculateEasDateTime (  @InputDate DATETIME = NULL ) RETURNS TABLE AS  RETURN (
 WITH
-RawValues  AS (SELECT EasDateTime,  LastUpdDateTime,  LastCompressionMaxDate,  ISNULL(CompressionRate, 1.0) AS compressionrate,  ISNULL(NULL, CURRENT_TIMESTAMP) AS currdatetime  FROM tv_EasDateTime),
+RawValues  AS (SELECT EasDateTime,  LastUpdDateTime,  LastCompressionMaxDate,  ISNULL(CompressionRate, 1.0) AS compressionrate,  ISNULL(NULL, CURRENT_TIMESTAMP) AS currdatetime  FROM table_variable_vu_prepareEasDateTime),
 
 RawValues2  AS (SELECT ISNULL(EasDateTime, currdatetime) AS easdatetime,  ISNULL(LastUpdDateTime, currdatetime) AS lastupddatetime,  LastCompressionMaxDate,  currdatetime,  compressionrate  FROM RawValues),
 
@@ -135,7 +135,7 @@ SELECT TOP 1  easdatetime,  lastupddatetime,  LastCompressionMaxDate,  compressi
 );
 GO
 
-create function tv_mstvf_3(@i int) returns @tableVar table
+create function table_variable_vu_preparemstvf_3(@i int) returns @tableVar table
 (
 	a text not null,
 	b int primary key,
@@ -150,7 +150,7 @@ end;
 GO
 
 -- Duplicate parameter name - should throw error
-create function tv_mstvf_dup_input_arg(@tableVar int) returns @tableVar table
+create function table_variable_vu_preparemstvf_dup_input_arg(@tableVar int) returns @tableVar table
 (
 	a text not null,
 	b int primary key,
@@ -165,7 +165,7 @@ end;
 GO
 
 -- Duplicate variable name - should throw error
-create function tv_mstvf_dup_local_arg(@i int) returns @tableVar table
+create function table_variable_vu_preparemstvf_dup_local_arg(@i int) returns @tableVar table
 (
 	a text not null,
 	b int primary key,
@@ -181,7 +181,7 @@ end;
 GO
 
 --babel-2676
-create function tv_mstvf_conditional(@i int) returns @tableVar table
+create function table_variable_vu_preparemstvf_conditional(@i int) returns @tableVar table
 (
 a text not null
 )

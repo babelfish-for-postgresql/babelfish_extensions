@@ -9,7 +9,7 @@ SELECT 'user: '+ @usr
 SELECT 'current_user: '+ @cur_usr
 GO
 
-SELECT * FROM dbo.babel_1444_t1 ORDER BY id;  
+SELECT * FROM dbo.babel_1444_vu_prepare_t1 ORDER BY id;  
 GO
 
 CREATE DATABASE babel_1444_db1;

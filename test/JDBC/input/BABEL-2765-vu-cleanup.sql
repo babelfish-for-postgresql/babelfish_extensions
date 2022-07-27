@@ -1,16 +1,16 @@
-DROP TABLE babel_2765_t1
+DROP TABLE babel_2765_vu_prepare_t1
 GO
-DROP TABLE babel_2765_t2
+DROP TABLE babel_2765_vu_prepare_t2
 GO
-DROP TABLE babel_2765_t3
+DROP TABLE babel_2765_vu_prepare_t3
 GO
-DROP TABLE babel_2765_t4
+DROP TABLE babel_2765_vu_prepare_t4
 GO
-DROP TABLE babel_2765_t5
+DROP TABLE babel_2765_vu_prepare_t5
 GO
-DROP TABLE babel_2765_t6
+DROP TABLE babel_2765_vu_prepare_t6
 GO
-DROP TABLE babel_2765_t7
+DROP TABLE babel_2765_vu_prepare_t7
 GO
-DROP TABLE babel_2765_t8
+DROP TABLE babel_2765_vu_prepare_t8
 GO

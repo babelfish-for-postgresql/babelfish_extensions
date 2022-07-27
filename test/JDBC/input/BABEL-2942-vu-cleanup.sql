@@ -1,4 +1,4 @@
-drop table bbl_2942_t_japan_csas;
-drop table bbl_2942_t_japan_cias;
-drop table bbl_2942_t_japan_ciai;
+drop table babel_2942_vu_prepare_t_japan_csas;
+drop table babel_2942_vu_prepare_t_japan_cias;
+drop table babel_2942_vu_prepare_t_japan_ciai;
 GO

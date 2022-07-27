@@ -1,82 +1,82 @@
-SELECT * FROM bbl_2086_1;
+SELECT * FROM babel_2086_vu_prepare_1;
 GO
-SELECT * FROM bbl_2086_2;
+SELECT * FROM babel_2086_vu_prepare_2;
 GO
-SELECT * FROM bbl_2086_3;
+SELECT * FROM babel_2086_vu_prepare_3;
 GO
-SELECT * FROM bbl_2086_4;
+SELECT * FROM babel_2086_vu_prepare_4;
 GO
-SELECT * FROM bbl_2086_5;
+SELECT * FROM babel_2086_vu_prepare_5;
 GO
-SELECT * FROM bbl_2086_6;
+SELECT * FROM babel_2086_vu_prepare_6;
 GO
-SELECT * FROM bbl_2086_7;
+SELECT * FROM babel_2086_vu_prepare_7;
 GO
-SELECT * FROM bbl_2086_8;
+SELECT * FROM babel_2086_vu_prepare_8;
 GO
-SELECT * FROM bbl_2086_9;
+SELECT * FROM babel_2086_vu_prepare_9;
 GO
-SELECT * FROM bbl_2086_10;
+SELECT * FROM babel_2086_vu_prepare_10;
 GO
-SELECT * FROM bbl_2086_11;
+SELECT * FROM babel_2086_vu_prepare_11;
 GO
-SELECT * FROM bbl_2086_12;
+SELECT * FROM babel_2086_vu_prepare_12;
 GO
-SELECT * FROM bbl_2086_13;
+SELECT * FROM babel_2086_vu_prepare_13;
 GO
-SELECT * FROM bbl_2086_14;
+SELECT * FROM babel_2086_vu_prepare_14;
 GO
-SELECT * FROM bbl_2086_15;
+SELECT * FROM babel_2086_vu_prepare_15;
 GO
-SELECT * FROM bbl_2086_16;
+SELECT * FROM babel_2086_vu_prepare_16;
 GO
-SELECT * FROM bbl_2086_17;
+SELECT * FROM babel_2086_vu_prepare_17;
 GO
-SELECT * FROM bbl_2086_18;
+SELECT * FROM babel_2086_vu_prepare_18;
 GO
-SELECT * FROM bbl_2086_19;
+SELECT * FROM babel_2086_vu_prepare_19;
 GO
-SELECT * FROM bbl_2086_20;
+SELECT * FROM babel_2086_vu_prepare_20;
 GO
-SELECT * FROM bbl_2086_21;
+SELECT * FROM babel_2086_vu_prepare_21;
 GO
-SELECT * FROM bbl_2086_22;
+SELECT * FROM babel_2086_vu_prepare_22;
 GO
-SELECT * FROM bbl_2086_23;
+SELECT * FROM babel_2086_vu_prepare_23;
 GO
-SELECT * FROM bbl_2086_24;
+SELECT * FROM babel_2086_vu_prepare_24;
 GO
-SELECT * FROM bbl_2086_25;
+SELECT * FROM babel_2086_vu_prepare_25;
 GO
-SELECT * FROM bbl_2086_26;
+SELECT * FROM babel_2086_vu_prepare_26;
 GO
-SELECT * FROM bbl_2086_27;
+SELECT * FROM babel_2086_vu_prepare_27;
 GO
-SELECT * FROM bbl_2086_28;
+SELECT * FROM babel_2086_vu_prepare_28;
 GO
-SELECT * FROM bbl_2086_29;
+SELECT * FROM babel_2086_vu_prepare_29;
 GO
-SELECT * FROM bbl_2086_30;
+SELECT * FROM babel_2086_vu_prepare_30;
 GO
-SELECT * FROM bbl_2086_31;
+SELECT * FROM babel_2086_vu_prepare_31;
 GO
-SELECT * FROM bbl_2086_32;
+SELECT * FROM babel_2086_vu_prepare_32;
 GO
-SELECT * FROM bbl_2086_33;
+SELECT * FROM babel_2086_vu_prepare_33;
 GO
-SELECT * FROM bbl_2086_34;
+SELECT * FROM babel_2086_vu_prepare_34;
 GO
-SELECT * FROM bbl_2086_35;
+SELECT * FROM babel_2086_vu_prepare_35;
 GO
-SELECT * FROM bbl_2086_36;
+SELECT * FROM babel_2086_vu_prepare_36;
 GO
-SELECT * FROM bbl_2086_37;
+SELECT * FROM babel_2086_vu_prepare_37;
 GO
-SELECT * FROM bbl_2086_38;
+SELECT * FROM babel_2086_vu_prepare_38;
 GO
-SELECT * FROM bbl_2086_39;
+SELECT * FROM babel_2086_vu_prepare_39;
 GO
-SELECT * FROM bbl_2086_40;
+SELECT * FROM babel_2086_vu_prepare_40;
 GO
-SELECT * FROM bbl_2086_41;
+SELECT * FROM babel_2086_vu_prepare_41;
 GO

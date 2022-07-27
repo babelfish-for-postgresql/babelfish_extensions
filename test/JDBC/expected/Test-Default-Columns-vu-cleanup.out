@@ -1,44 +1,44 @@
-DROP FUNCTION default_columns_func_1;
+DROP FUNCTION test_default_columns_vu_prepare_func_1;
 GO
 
-DROP FUNCTION default_columns_func_2;
+DROP FUNCTION test_default_columns_vu_prepare_func_2;
 GO
 
-DROP FUNCTION default_columns_func_3;
+DROP FUNCTION test_default_columns_vu_prepare_func_3;
 GO
 
-DROP FUNCTION default_columns_func_4;
+DROP FUNCTION test_default_columns_vu_prepare_func_4;
 GO
 
-DROP FUNCTION default_columns_func_5;
+DROP FUNCTION test_default_columns_vu_prepare_func_5;
 GO
 
-DROP PROCEDURE default_columns_p1
+DROP PROCEDURE test_default_columns_vu_prepare_p1
 GO
 
-DROP PROCEDURE default_columns_p2
+DROP PROCEDURE test_default_columns_vu_prepare_p2
 GO
 
-DROP PROCEDURE default_columns_p3
+DROP PROCEDURE test_default_columns_vu_prepare_p3
 GO
 
-DROP PROCEDURE default_columns_p4
+DROP PROCEDURE test_default_columns_vu_prepare_p4
 GO
 
-DROP PROCEDURE default_columns_p5
+DROP PROCEDURE test_default_columns_vu_prepare_p5
 GO
 
-DROP TABLE default_columns_t1
+DROP TABLE test_default_columns_vu_prepare_t1
 GO
 
-DROP TABLE default_columns_t2
+DROP TABLE test_default_columns_vu_prepare_t2
 GO
 
-DROP TABLE default_columns_t3
+DROP TABLE test_default_columns_vu_prepare_t3
 GO
 
-DROP TABLE default_columns_t4
+DROP TABLE test_default_columns_vu_prepare_t4
 GO
 
-DROP TABLE default_columns_t5
+DROP TABLE test_default_columns_vu_prepare_t5
 GO

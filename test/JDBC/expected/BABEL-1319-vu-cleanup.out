@@ -1,4 +1,4 @@
-DROP TABLE [bbl_1319_Tag]
+DROP TABLE [babel_1319_vu_prepare_Tag]
 GO
-DROP TABLE [bbl_1319_Item]
+DROP TABLE [babel_1319_vu_prepare_Item]
 GO

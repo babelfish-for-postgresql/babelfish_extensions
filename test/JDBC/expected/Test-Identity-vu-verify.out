@@ -1,0 +1,304 @@
+EXEC test_identity_vu_prepare_p1
+GO
+~~ROW COUNT: 1~~
+
+~~START~~
+int
+2
+~~END~~
+
+~~START~~
+numeric
+2
+~~END~~
+
+~~START~~
+numeric
+2
+~~END~~
+
+~~START~~
+numeric
+2
+~~END~~
+
+
+
+INSERT INTO test_identity_vu_prepare_t1 VALUES ('Shah_Nirmit')
+INSERT INTO test_identity_vu_prepare_t1 VALUES ('Sumit_Jaiswal')
+INSERT INTO test_identity_vu_prepare_t1 VALUES ('Jaiswal_Sumit')
+GO
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+
+SELECT MAX(id) as MaximumUsedIdentity FROM test_identity_vu_prepare_t1
+SELECT SCOPE_IDENTITY()
+SELECT @@IDENTITY
+SELECT IDENT_CURRENT('test_identity_vu_prepare_t1')
+GO
+~~START~~
+int
+5
+~~END~~
+
+~~START~~
+numeric
+5
+~~END~~
+
+~~START~~
+numeric
+5
+~~END~~
+
+~~START~~
+numeric
+5
+~~END~~
+
+
+EXEC test_identity_vu_prepare_p1
+GO
+~~ROW COUNT: 1~~
+
+~~START~~
+int
+6
+~~END~~
+
+~~START~~
+numeric
+6
+~~END~~
+
+~~START~~
+numeric
+6
+~~END~~
+
+~~START~~
+numeric
+6
+~~END~~
+
+
+SELECT * FROM test_identity_vu_prepare_t1
+GO
+~~START~~
+int#!#nvarchar
+1#!#Nirmit_Shah
+2#!#Nirmit_Shah
+3#!#Shah_Nirmit
+4#!#Sumit_Jaiswal
+5#!#Jaiswal_Sumit
+6#!#Nirmit_Shah
+~~END~~
+
+
+EXEC test_identity_vu_prepare_p2
+GO
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~START~~
+smallint
+5
+~~END~~
+
+~~START~~
+numeric
+120
+~~END~~
+
+~~START~~
+numeric
+120
+~~END~~
+
+~~START~~
+numeric
+5
+~~END~~
+
+
+EXEC test_identity_vu_prepare_p3
+GO
+~~ROW COUNT: 1~~
+
+~~START~~
+int
+125
+~~END~~
+
+~~START~~
+numeric
+125
+~~END~~
+
+~~START~~
+numeric
+125
+~~END~~
+
+~~START~~
+numeric
+125
+~~END~~
+
+
+SELECT * FROM test_identity_vu_prepare_t2
+GO
+~~START~~
+smallint#!#nvarchar
+1#!#Nirmit
+2#!#Sumit
+3#!#Sharu
+4#!#Raj
+5#!#Nirmit_Shah
+~~END~~
+
+SELECT * FROM test_identity_vu_prepare_t3
+GO
+~~START~~
+int#!#varchar
+100#!#Shah
+105#!#Jaiswal
+110#!#Goel
+115#!#IT
+120#!#IT
+125#!#Nirmit_Shah
+~~END~~
+
+
+SELECT test_identity_vu_prepare_func1()
+GO
+~~START~~
+tinyint
+6
+~~END~~
+
+
+SELECT test_identity_vu_prepare_func2()
+GO
+~~START~~
+tinyint
+5
+~~END~~
+
+
+SELECT test_identity_vu_prepare_func3()
+GO
+~~START~~
+tinyint
+125
+~~END~~
+
+
+SELECT * FROM test_identity_vu_prepare_t4
+GO
+~~START~~
+varchar#!#int
+Shah#!#21
+Jaiswal#!#20
+Goel#!#23
+~~END~~
+
+INSERT test_identity_vu_prepare_t4 values ('Dipesh',23)
+GO
+~~ROW COUNT: 1~~
+
+
+SELECT SCOPE_IDENTITY()
+SELECT @@IDENTITY
+SELECT IDENT_CURRENT('test_identity_vu_prepare_t4')
+GO
+~~START~~
+numeric
+125
+~~END~~
+
+~~START~~
+numeric
+125
+~~END~~
+
+~~START~~
+numeric
+<NULL>
+~~END~~
+
+
+ALTER TABLE test_identity_vu_prepare_t4 ADD id INT IDENTITY(1,1) NOT NULL
+GO
+
+SELECT * FROM test_identity_vu_prepare_t4
+GO
+~~START~~
+varchar#!#int#!#int
+Shah#!#21#!#1
+Jaiswal#!#20#!#2
+Goel#!#23#!#3
+Dipesh#!#23#!#4
+~~END~~
+
+
+SELECT MAX(id) as MaximumUsedIdentity FROM test_identity_vu_prepare_t4
+SELECT SCOPE_IDENTITY()
+SELECT @@IDENTITY
+SELECT IDENT_CURRENT('test_identity_vu_prepare_t4')
+GO
+~~START~~
+int
+4
+~~END~~
+
+~~START~~
+numeric
+4
+~~END~~
+
+~~START~~
+numeric
+4
+~~END~~
+
+~~START~~
+numeric
+4
+~~END~~
+
+
+SELECT * FROM test_identity_vu_prepare_t5
+GO
+~~START~~
+varchar#!#int
+Shah#!#21
+Jaiswal#!#20
+Goel#!#23
+~~END~~
+
+
+SELECT test_identity_vu_prepare_func4()
+GO
+~~START~~
+tinyint
+<NULL>
+~~END~~
+
+
+EXEC test_identity_vu_prepare_p4
+GO
+
+SELECT test_identity_vu_prepare_func4()
+GO
+~~START~~
+tinyint
+3
+~~END~~
+
+

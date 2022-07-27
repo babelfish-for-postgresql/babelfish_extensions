@@ -19,7 +19,7 @@ current_user: dbo
 ~~END~~
 
 
-SELECT * FROM dbo.babel_1444_t1 ORDER BY id;  
+SELECT * FROM dbo.babel_1444_vu_prepare_t1 ORDER BY id;  
 GO
 ~~START~~
 int#!#varchar#!#varchar#!#varchar

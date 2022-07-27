@@ -1,82 +1,82 @@
-DROP TABLE bbl_2086_1;
+DROP TABLE babel_2086_vu_prepare_1;
 GO
-DROP TABLE bbl_2086_2;
+DROP TABLE babel_2086_vu_prepare_2;
 GO
-DROP TABLE bbl_2086_3;
+DROP TABLE babel_2086_vu_prepare_3;
 GO
-DROP TABLE bbl_2086_4;
+DROP TABLE babel_2086_vu_prepare_4;
 GO
-DROP TABLE bbl_2086_5;
+DROP TABLE babel_2086_vu_prepare_5;
 GO
-DROP TABLE bbl_2086_6;
+DROP TABLE babel_2086_vu_prepare_6;
 GO
-DROP TABLE bbl_2086_7;
+DROP TABLE babel_2086_vu_prepare_7;
 GO
-DROP TABLE bbl_2086_8;
+DROP TABLE babel_2086_vu_prepare_8;
 GO
-DROP TABLE bbl_2086_9;
+DROP TABLE babel_2086_vu_prepare_9;
 GO
-DROP TABLE bbl_2086_10;
+DROP TABLE babel_2086_vu_prepare_10;
 GO
-DROP TABLE bbl_2086_11;
+DROP TABLE babel_2086_vu_prepare_11;
 GO
-DROP TABLE bbl_2086_12;
+DROP TABLE babel_2086_vu_prepare_12;
 GO
-DROP TABLE bbl_2086_13;
+DROP TABLE babel_2086_vu_prepare_13;
 GO
-DROP TABLE bbl_2086_14;
+DROP TABLE babel_2086_vu_prepare_14;
 GO
-DROP TABLE bbl_2086_15;
+DROP TABLE babel_2086_vu_prepare_15;
 GO
-DROP TABLE bbl_2086_16;
+DROP TABLE babel_2086_vu_prepare_16;
 GO
-DROP TABLE bbl_2086_17;
+DROP TABLE babel_2086_vu_prepare_17;
 GO
-DROP TABLE bbl_2086_18;
+DROP TABLE babel_2086_vu_prepare_18;
 GO
-DROP TABLE bbl_2086_19;
+DROP TABLE babel_2086_vu_prepare_19;
 GO
-DROP TABLE bbl_2086_20;
+DROP TABLE babel_2086_vu_prepare_20;
 GO
-DROP TABLE bbl_2086_21;
+DROP TABLE babel_2086_vu_prepare_21;
 GO
-DROP TABLE bbl_2086_22;
+DROP TABLE babel_2086_vu_prepare_22;
 GO
-DROP TABLE bbl_2086_23;
+DROP TABLE babel_2086_vu_prepare_23;
 GO
-DROP TABLE bbl_2086_24;
+DROP TABLE babel_2086_vu_prepare_24;
 GO
-DROP TABLE bbl_2086_25;
+DROP TABLE babel_2086_vu_prepare_25;
 GO
-DROP TABLE bbl_2086_26;
+DROP TABLE babel_2086_vu_prepare_26;
 GO
-DROP TABLE bbl_2086_27;
+DROP TABLE babel_2086_vu_prepare_27;
 GO
-DROP TABLE bbl_2086_28;
+DROP TABLE babel_2086_vu_prepare_28;
 GO
-DROP TABLE bbl_2086_29;
+DROP TABLE babel_2086_vu_prepare_29;
 GO
-DROP TABLE bbl_2086_30;
+DROP TABLE babel_2086_vu_prepare_30;
 GO
-DROP TABLE bbl_2086_31;
+DROP TABLE babel_2086_vu_prepare_31;
 GO
-DROP TABLE bbl_2086_32;
+DROP TABLE babel_2086_vu_prepare_32;
 GO
-DROP TABLE bbl_2086_33;
+DROP TABLE babel_2086_vu_prepare_33;
 GO
-DROP TABLE bbl_2086_34;
+DROP TABLE babel_2086_vu_prepare_34;
 GO
-DROP TABLE bbl_2086_35;
+DROP TABLE babel_2086_vu_prepare_35;
 GO
-DROP TABLE bbl_2086_36;
+DROP TABLE babel_2086_vu_prepare_36;
 GO
-DROP TABLE bbl_2086_37;
+DROP TABLE babel_2086_vu_prepare_37;
 GO
-DROP TABLE bbl_2086_38;
+DROP TABLE babel_2086_vu_prepare_38;
 GO
-DROP TABLE bbl_2086_39;
+DROP TABLE babel_2086_vu_prepare_39;
 GO
-DROP TABLE bbl_2086_40;
+DROP TABLE babel_2086_vu_prepare_40;
 GO
-DROP TABLE bbl_2086_41;
+DROP TABLE babel_2086_vu_prepare_41;
 GO

@@ -1,6 +1,6 @@
-SET IDENTITY_INSERT babel_1251.t1 ON;
+SET IDENTITY_INSERT babel_1251_vu_prepare.t1 ON;
 go
-INSERT INTO babel_1251.t1(col1, id) VALUES (1, 10);
+INSERT INTO babel_1251_vu_prepare.t1(col1, id) VALUES (1, 10);
 go
 ~~ROW COUNT: 1~~
 
@@ -11,13 +11,13 @@ numeric
 10
 ~~END~~
 
-SET IDENTITY_INSERT babel_1251.t1 OFF;
+SET IDENTITY_INSERT babel_1251_vu_prepare.t1 OFF;
 go
-INSERT INTO babel_1251.t1(col1) VALUES (1);
+INSERT INTO babel_1251_vu_prepare.t1(col1) VALUES (1);
 go
 ~~ROW COUNT: 1~~
 
-SELECT * FROM babel_1251.t1;
+SELECT * FROM babel_1251_vu_prepare.t1;
 go
 ~~START~~
 int#!#int
@@ -33,9 +33,9 @@ numeric
 ~~END~~
 
 
-SET IDENTITY_INSERT babel_1251.t2 ON;
+SET IDENTITY_INSERT babel_1251_vu_prepare.t2 ON;
 go
-INSERT INTO babel_1251.t2(col1, id, col2) VALUES ('hello', -10, 1);
+INSERT INTO babel_1251_vu_prepare.t2(col1, id, col2) VALUES ('hello', -10, 1);
 go
 ~~ROW COUNT: 1~~
 
@@ -46,9 +46,9 @@ numeric
 -10
 ~~END~~
 
-SET IDENTITY_INSERT babel_1251.t2 OFF;
+SET IDENTITY_INSERT babel_1251_vu_prepare.t2 OFF;
 go
-INSERT INTO babel_1251.t2(col1, col2) VALUES ('world', 1);
+INSERT INTO babel_1251_vu_prepare.t2(col1, col2) VALUES ('world', 1);
 go
 ~~ROW COUNT: 1~~
 
@@ -59,7 +59,7 @@ numeric
 -11
 ~~END~~
 
-SELECT * FROM babel_1251.t2;
+SELECT * FROM babel_1251_vu_prepare.t2;
 go
 ~~START~~
 varchar#!#int#!#int
@@ -68,7 +68,7 @@ world#!#-11#!#1
 ~~END~~
 
 
-INSERT INTO babel_1251.t3(col1, col2) VALUES ('hello', 1);
+INSERT INTO babel_1251_vu_prepare.t3(col1, col2) VALUES ('hello', 1);
 go
 ~~ROW COUNT: 1~~
 
@@ -79,13 +79,13 @@ numeric
 1
 ~~END~~
 
-SET IDENTITY_INSERT babel_1251.t3 ON;
+SET IDENTITY_INSERT babel_1251_vu_prepare.t3 ON;
 go
-INSERT INTO babel_1251.t3(col1, col2, id) VALUES ('hello', 1, 20);
+INSERT INTO babel_1251_vu_prepare.t3(col1, col2, id) VALUES ('hello', 1, 20);
 go
 ~~ROW COUNT: 1~~
 
-SET IDENTITY_INSERT babel_1251.t3 OFF;
+SET IDENTITY_INSERT babel_1251_vu_prepare.t3 OFF;
 go
 SELECT @@IDENTITY;
 go
@@ -94,7 +94,7 @@ numeric
 20
 ~~END~~
 
-INSERT INTO babel_1251.t3(col1, col2) VALUES ('hello', 1);
+INSERT INTO babel_1251_vu_prepare.t3(col1, col2) VALUES ('hello', 1);
 go
 ~~ROW COUNT: 1~~
 
@@ -105,9 +105,9 @@ numeric
 21
 ~~END~~
 
-SET IDENTITY_INSERT babel_1251.t3 ON;
+SET IDENTITY_INSERT babel_1251_vu_prepare.t3 ON;
 go
-INSERT INTO babel_1251.t3(col1, col2, id) VALUES ('hello', 1, 30);
+INSERT INTO babel_1251_vu_prepare.t3(col1, col2, id) VALUES ('hello', 1, 30);
 go
 ~~ROW COUNT: 1~~
 
@@ -118,9 +118,9 @@ numeric
 30
 ~~END~~
 
-SET IDENTITY_INSERT babel_1251.t3 OFF;
+SET IDENTITY_INSERT babel_1251_vu_prepare.t3 OFF;
 go
-SELECT * FROM babel_1251.t3;
+SELECT * FROM babel_1251_vu_prepare.t3;
 go
 ~~START~~
 varchar#!#int#!#int

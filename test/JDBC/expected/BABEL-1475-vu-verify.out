@@ -1,0 +1,71 @@
+SELECT day1, day2 from babel_1475_vu_prepare_t1;
+GO
+~~START~~
+int#!#int
+1#!#25
+~~END~~
+
+
+SELECT month1, month2 from babel_1475_vu_prepare_t2;
+GO
+~~START~~
+int#!#int
+1#!#10
+~~END~~
+
+
+SELECT year1, year2 from babel_1475_vu_prepare_t3;
+GO
+~~START~~
+int#!#int
+2007#!#1912
+~~END~~
+
+
+SELECT diffMonthInDates from babel_1475_vu_prepare_t4;
+GO
+~~START~~
+int
+-1131
+~~END~~
+
+
+SELECT diffMonthInDates from babel_1475_vu_prepare_t5;
+GO
+~~START~~
+int
+-1131
+~~END~~
+
+
+SELECT dateresult from babel_1475_vu_prepare_t6;
+GO
+~~START~~
+date
+1912-10-25
+~~END~~
+
+
+SELECT year, month, weekday, dayofyear, day from babel_1475_vu_prepare_t7;
+GO
+~~START~~
+text#!#text#!#text#!#text#!#text
+1912#!#October#!#Friday#!#299#!#25
+~~END~~
+
+
+SELECT datepart1, datepart2 from babel_1475_vu_prepare_t8;
+GO
+~~START~~
+int#!#int
+1#!#10
+~~END~~
+
+
+SELECT datepart1, datepart2 from babel_1475_vu_prepare_t9;
+GO
+~~START~~
+int#!#int
+2#!#6
+~~END~~
+

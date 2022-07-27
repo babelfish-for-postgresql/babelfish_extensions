@@ -1,10 +1,10 @@
 
-insert into default_columns_t1 DEFAULT VALUES
+insert into test_default_columns_vu_prepare_t1 DEFAULT VALUES
 GO
 ~~ROW COUNT: 1~~
 
 
-SELECT * FROM default_columns_t1
+SELECT * FROM test_default_columns_vu_prepare_t1
 GO
 ~~START~~
 int#!#bigint#!#tinyint#!#binary#!#varbinary
@@ -12,12 +12,12 @@ int#!#bigint#!#tinyint#!#binary#!#varbinary
 ~~END~~
 
 
-insert into default_columns_t2 DEFAULT VALUES
+insert into test_default_columns_vu_prepare_t2 DEFAULT VALUES
 GO
 ~~ROW COUNT: 1~~
 
 
-SELECT * FROM default_columns_t2
+SELECT * FROM test_default_columns_vu_prepare_t2
 GO
 ~~START~~
 bit#!#smallint#!#money#!#numeric#!#numeric
@@ -25,12 +25,12 @@ bit#!#smallint#!#money#!#numeric#!#numeric
 ~~END~~
 
 
-insert into default_columns_t3 DEFAULT VALUES
+insert into test_default_columns_vu_prepare_t3 DEFAULT VALUES
 GO
 ~~ROW COUNT: 1~~
 
 
-SELECT * FROM default_columns_t3
+SELECT * FROM test_default_columns_vu_prepare_t3
 GO
 ~~START~~
 float#!#real#!#char#!#nchar#!#varchar#!#nvarchar#!#text#!#ntext
@@ -38,12 +38,12 @@ float#!#real#!#char#!#nchar#!#varchar#!#nvarchar#!#text#!#ntext
 ~~END~~
 
 
-insert into default_columns_t4 DEFAULT VALUES
+insert into test_default_columns_vu_prepare_t4 DEFAULT VALUES
 GO
 ~~ROW COUNT: 1~~
 
 
-SELECT * FROM default_columns_t4
+SELECT * FROM test_default_columns_vu_prepare_t4
 GO
 ~~START~~
 date#!#datetime#!#datetime2#!#time#!#datetimeoffset#!#smalldatetime
@@ -51,12 +51,12 @@ date#!#datetime#!#datetime2#!#time#!#datetimeoffset#!#smalldatetime
 ~~END~~
 
 
-insert into default_columns_t5 DEFAULT VALUES
+insert into test_default_columns_vu_prepare_t5 DEFAULT VALUES
 GO
 ~~ROW COUNT: 1~~
 
 
-SELECT * FROM default_columns_t5
+SELECT * FROM test_default_columns_vu_prepare_t5
 GO
 ~~START~~
 xml#!#uniqueidentifier#!#sql_variant
@@ -64,12 +64,12 @@ xml#!#uniqueidentifier#!#sql_variant
 ~~END~~
 
 
-EXEC default_columns_p1
+EXEC test_default_columns_vu_prepare_p1
 GO
 ~~ROW COUNT: 1~~
 
 
-SELECT * FROM default_columns_t1
+SELECT * FROM test_default_columns_vu_prepare_t1
 GO
 ~~START~~
 int#!#bigint#!#tinyint#!#binary#!#varbinary
@@ -78,12 +78,12 @@ int#!#bigint#!#tinyint#!#binary#!#varbinary
 ~~END~~
 
 
-EXEC default_columns_p2
+EXEC test_default_columns_vu_prepare_p2
 GO
 ~~ROW COUNT: 1~~
 
 
-SELECT * FROM default_columns_t2
+SELECT * FROM test_default_columns_vu_prepare_t2
 GO
 ~~START~~
 bit#!#smallint#!#money#!#numeric#!#numeric
@@ -92,12 +92,12 @@ bit#!#smallint#!#money#!#numeric#!#numeric
 ~~END~~
 
 
-EXEC default_columns_p3
+EXEC test_default_columns_vu_prepare_p3
 GO
 ~~ROW COUNT: 1~~
 
 
-SELECT * FROM default_columns_t3
+SELECT * FROM test_default_columns_vu_prepare_t3
 GO
 ~~START~~
 float#!#real#!#char#!#nchar#!#varchar#!#nvarchar#!#text#!#ntext
@@ -106,12 +106,12 @@ float#!#real#!#char#!#nchar#!#varchar#!#nvarchar#!#text#!#ntext
 ~~END~~
 
 
-EXEC default_columns_p4
+EXEC test_default_columns_vu_prepare_p4
 GO
 ~~ROW COUNT: 1~~
 
 
-SELECT * FROM default_columns_t4
+SELECT * FROM test_default_columns_vu_prepare_t4
 GO
 ~~START~~
 date#!#datetime#!#datetime2#!#time#!#datetimeoffset#!#smalldatetime
@@ -120,12 +120,12 @@ date#!#datetime#!#datetime2#!#time#!#datetimeoffset#!#smalldatetime
 ~~END~~
 
 
-EXEC default_columns_p5
+EXEC test_default_columns_vu_prepare_p5
 GO
 ~~ROW COUNT: 1~~
 
 
-SELECT * FROM default_columns_t5
+SELECT * FROM test_default_columns_vu_prepare_t5
 GO
 ~~START~~
 xml#!#uniqueidentifier#!#sql_variant
@@ -134,7 +134,7 @@ xml#!#uniqueidentifier#!#sql_variant
 ~~END~~
 
 
-SELECT * from default_columns_func_1(1)
+SELECT * from test_default_columns_vu_prepare_func_1(1)
 GO
 ~~START~~
 int#!#bigint#!#tinyint#!#binary#!#varbinary
@@ -143,7 +143,7 @@ int#!#bigint#!#tinyint#!#binary#!#varbinary
 ~~END~~
 
 
-SELECT * from default_columns_func_2(1)
+SELECT * from test_default_columns_vu_prepare_func_2(1)
 GO
 ~~START~~
 bit#!#smallint#!#money#!#numeric#!#numeric
@@ -152,14 +152,14 @@ bit#!#smallint#!#money#!#numeric#!#numeric
 ~~END~~
 
 
-SELECT * from default_columns_func_3(1)
+SELECT * from test_default_columns_vu_prepare_func_3(1)
 GO
 ~~ERROR (Code: 33557097)~~
 
 ~~ERROR (Message: The string size for the given CHAR/NCHAR data is not defined. Please use an explicit CAST or CONVERT to CHAR(n)/NCHAR(n))~~
 
 
-SELECT * from default_columns_func_4(1)
+SELECT * from test_default_columns_vu_prepare_func_4(1)
 GO
 ~~START~~
 date#!#datetime#!#datetime2#!#time#!#datetimeoffset#!#smalldatetime
@@ -168,7 +168,7 @@ date#!#datetime#!#datetime2#!#time#!#datetimeoffset#!#smalldatetime
 ~~END~~
 
 
-SELECT * from default_columns_func_5(1)
+SELECT * from test_default_columns_vu_prepare_func_5(1)
 GO
 ~~START~~
 xml#!#uniqueidentifier#!#sql_variant

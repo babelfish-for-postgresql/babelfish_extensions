@@ -1,9 +1,9 @@
 USE MASTER
 GO
 
-drop table bbl_1715_t1;
+drop table babel_1715_vu_prepare_t1;
 go
-drop table bbl_1715_t2;
+drop table babel_1715_vu_prepare_t2;
 go
-drop table cx_bbl_1715;
+drop table cx_babel_1715_vu_prepare;
 go

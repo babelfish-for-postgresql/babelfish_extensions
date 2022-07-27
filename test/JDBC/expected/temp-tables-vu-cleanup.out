@@ -1,14 +1,14 @@
 use master
 GO
 
-DROP PROCEDURE temp_table_sp;
+DROP PROCEDURE temp_table_vu_prepare_sp;
 GO
 
-DROP PROCEDURE temp_table_sp_drop;
+DROP PROCEDURE temp_table_vu_prepare_sp_drop;
 GO
 
-DROP PROCEDURE temp_table_sp_exception;
+DROP PROCEDURE temp_table_vu_prepare_sp_exception;
 GO
 
-DROP TABLE tt_test_t1;
+DROP TABLE temp_table_vu_prepare_t1;
 GO

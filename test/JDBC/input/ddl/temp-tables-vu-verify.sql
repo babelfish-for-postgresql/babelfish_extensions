@@ -1,11 +1,11 @@
 use master
 GO
 
-EXEC temp_table_sp;
+EXEC temp_table_vu_prepare_sp;
 GO
 
-EXEC temp_table_sp_drop;
+EXEC temp_table_vu_prepare_sp_drop;
 GO
 
-EXEC temp_table_sp_exception;
+EXEC temp_table_vu_prepare_sp_exception;
 GO

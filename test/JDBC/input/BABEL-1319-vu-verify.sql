@@ -1,9 +1,9 @@
-CREATE INDEX [bbl_1319_IX_Tag_Item_id] ON [bbl_1319_Tag] ([Item_id])
+CREATE INDEX [babel_1319_IX_Tag_Item_id] ON [babel_1319_vu_prepare_Tag] ([Item_id])
 GO
 
-INSERT INTO [bbl_1319_Item] ([Name])
+INSERT INTO [babel_1319_vu_prepare_Item] ([Name])
 VALUES ('ItemOne')
 GO
 
-DELETE FROM [bbl_1319_Item] WHERE [Name] = 'ItemOne'
+DELETE FROM [babel_1319_vu_prepare_Item] WHERE [Name] = 'ItemOne'
 GO

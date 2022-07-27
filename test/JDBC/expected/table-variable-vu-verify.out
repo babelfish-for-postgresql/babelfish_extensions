@@ -1,5 +1,5 @@
 --babel-1149
-select * from tv_itvf_1(5);
+select * from table_variable_vu_prepareitvf_1(5);
 GO
 ~~START~~
 int#!#int
@@ -7,7 +7,7 @@ int#!#int
 ~~END~~
 
 
-select * from tv_mstvf_1(10);
+select * from table_variable_vu_preparemstvf_1(10);
 GO
 ~~START~~
 nvarchar#!#int#!#int
@@ -15,7 +15,7 @@ hello1#!#1#!#100
 ~~END~~
 
 
-select tv_func_1(1);
+select table_variable_vu_preparefunc_1(1);
 GO
 ~~START~~
 int
@@ -23,7 +23,7 @@ int
 ~~END~~
 
 
-exec tv_proc_1
+exec table_variable_vu_prepareproc_1
 GO
 ~~ROW COUNT: 1~~
 
@@ -31,7 +31,7 @@ GO
 
 
 --babel-2647
-SELECT * from dbo.tv_mstvf_2();
+SELECT * from dbo.table_variable_vu_preparemstvf_2();
 go
 ~~START~~
 int
@@ -43,7 +43,7 @@ int
 use master;
 go
 
-select * from tv_t1;
+select * from table_variable_vu_preparet1;
 go
 ~~START~~
 int#!#int
@@ -57,7 +57,7 @@ go
 
 declare @a int = 5, @b int = 5;
 declare @c int;
-execute tv_outer_proc @a, @b;
+execute table_variable_vu_prepareouter_proc @a, @b;
 select @a, @b;
 go
 ~~START~~
@@ -68,30 +68,30 @@ Query Text: ASSIGN @a = SELECT 5
 Query Text: ASSIGN @b = SELECT 5
   Query Text: SELECT 5
   ->  Result  (cost=0.00..0.01 rows=1 width=4)
-Query Text: EXEC tv_outer_proc @a, @b
+Query Text: EXEC table_variable_vu_prepareouter_proc @a, @b
   Query Text: DECLARE TABLE @t
     Query Text: CREATE TEMPORARY TABLE IF NOT EXISTS @t_2 (a int, b int)
   Query Text: ASSIGN @a = SELECT 3
     Query Text: SELECT 3
     ->  Result  (cost=0.00..0.01 rows=1 width=4)
-  Query Text: insert into tv_t1 values ("@a", "@b");
-  ->  Insert on tv_t1  (cost=0.00..0.01 rows=0 width=0)
+  Query Text: insert into table_variable_vu_preparet1 values ("@a", "@b");
+  ->  Insert on table_variable_vu_preparet1  (cost=0.00..0.01 rows=0 width=0)
         ->  Result  (cost=0.00..0.01 rows=1 width=8)
-  Query Text: EXEC tv_inner_proc @b
-    Query Text: ASSIGN @b = SELECT (select top 1 a+b from tv_t1 order by b)
-      Query Text: SELECT (select top 1 a+b from tv_t1 order by b)
+  Query Text: EXEC table_variable_vu_prepareinner_proc @b
+    Query Text: ASSIGN @b = SELECT (select top 1 a+b from table_variable_vu_preparet1 order by b)
+      Query Text: SELECT (select top 1 a+b from table_variable_vu_preparet1 order by b)
       ->  Result  (cost=49.55..49.56 rows=1 width=4)
             InitPlan 1 (returns $0)
               ->  Limit  (cost=49.55..49.55 rows=1 width=8)
                     ->  Sort  (cost=49.55..55.20 rows=2260 width=8)
-                          Sort Key: tv_t1.b
-                          ->  Seq Scan on tv_t1  (cost=0.00..38.25 rows=2260 width=8)
-    Query Text: insert into tv_t1 values ("@b", "@b");
-    ->  Insert on tv_t1  (cost=0.00..0.01 rows=0 width=0)
+                          Sort Key: table_variable_vu_preparet1.b
+                          ->  Seq Scan on table_variable_vu_preparet1  (cost=0.00..38.25 rows=2260 width=8)
+    Query Text: insert into table_variable_vu_preparet1 values ("@b", "@b");
+    ->  Insert on table_variable_vu_preparet1  (cost=0.00..0.01 rows=0 width=0)
           ->  Result  (cost=0.00..0.01 rows=1 width=8)
-  Query Text: insert into "@t" select * from tv_t1;
+  Query Text: insert into "@t" select * from table_variable_vu_preparet1;
   ->  Insert on "@t_2"  (cost=0.00..32.60 rows=0 width=0)
-        ->  Seq Scan on tv_t1  (cost=0.00..32.60 rows=2260 width=8)
+        ->  Seq Scan on table_variable_vu_preparet1  (cost=0.00..32.60 rows=2260 width=8)
   Query Text: select * from "@t"
   ->  Seq Scan on "@t_2"  (cost=0.00..32.60 rows=2260 width=8)
   Query Text: DROP TABLE @t_2
@@ -103,7 +103,7 @@ Result  (cost=0.00..0.01 rows=1 width=8)
 set BABELFISH_SHOWPLAN_ALL Off;
 go
 
-select * from tv_t1;
+select * from table_variable_vu_preparet1;
 go
 ~~START~~
 int#!#int
@@ -113,7 +113,7 @@ int#!#int
 
 
 --babel-3101
-select * from tv_my_splitstring('this,is,split')
+select * from table_variable_vu_preparemy_splitstring('this,is,split')
 GO
 ~~START~~
 nvarchar
@@ -124,10 +124,10 @@ split
 
 
 --babel-3088
-use tv_db
+use table_variable_vu_preparedb
 go
 
-exec tv_proc_2 1;
+exec table_variable_vu_prepareproc_2 1;
 go
 ~~ROW COUNT: 1~~
 
@@ -141,7 +141,7 @@ use master
 go
 
 --babel-2034
-SELECT count(*) FROM tv_CalculateEasDateTime();
+SELECT count(*) FROM table_variable_vu_prepareCalculateEasDateTime();
 GO
 ~~START~~
 int
@@ -149,7 +149,7 @@ int
 ~~END~~
 
 
-select * from tv_mstvf_3(1);
+select * from table_variable_vu_preparemstvf_3(1);
 GO
 ~~START~~
 text#!#int#!#int
@@ -160,7 +160,7 @@ hello2#!#2#!#200
 
 --babel-2676
 -- should return both rows
-select * from tv_mstvf_conditional(0)
+select * from table_variable_vu_preparemstvf_conditional(0)
 go
 ~~START~~
 text
@@ -170,7 +170,7 @@ hello2
 
 
 -- should only return the first row
-select * from tv_mstvf_conditional(1)
+select * from table_variable_vu_preparemstvf_conditional(1)
 go
 ~~START~~
 text

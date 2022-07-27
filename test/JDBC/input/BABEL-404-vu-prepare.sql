@@ -1,0 +1,20 @@
+EXECUTE sp_babelfish_configure 'escape_hatch_unique_constraint', 'ignore'
+go
+
+create table babel_404_vu_prepare_t1 (
+    a int,
+    b int,
+    c int,
+    d int,
+    constraint pk primary key(
+            a asc,
+            b desc,
+            c desc
+    ),
+    unique (
+        a desc,
+        b desc,
+        d desc
+    )
+);
+go
