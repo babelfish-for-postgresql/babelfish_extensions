@@ -973,45 +973,6 @@ search_bbf_view_def(Relation bbf_view_def_rel, int16 dbid, const char *logical_s
 	return oldtup;
 }
 
-/* Checks if it is view created during v2.2.0 or after that */
-bool
-check_is_tsql_view(Oid relid)
-{
-	Oid		schema_oid;
-	Relation	bbf_view_def_rel;
-	HeapTuple	scantup;
-	char		*view_name, *schema_name;
-	int16		logical_dbid;
-	const char	*logical_schema_name;
-	bool		is_tsql_view = false;
-
-	view_name = get_rel_name(relid);
-	schema_oid = get_rel_namespace(relid);
-	schema_name = get_namespace_name(schema_oid);
-	if (view_name == NULL || schema_name == NULL)
-	{
-		return false;
-	}
-	logical_schema_name = get_logical_schema_name(schema_name, true);
-	logical_dbid = get_dbid_from_physical_schema_name(schema_name, true);
-	if (logical_schema_name == NULL || !DbidIsValid(logical_dbid))
-	{
-		return false;
-	}
-	/* Fetch the relation */
-	bbf_view_def_rel = table_open(bbf_view_def_oid, AccessShareLock);
-
-	scantup = search_bbf_view_def(bbf_view_def_rel, logical_dbid, logical_schema_name, view_name);
-
-	if (HeapTupleIsValid(scantup))
-	{
-		is_tsql_view = true;
-		heap_freetuple(scantup);
-	}
-	table_close(bbf_view_def_rel, AccessShareLock);
-	return is_tsql_view;
-}
-
 void
 clean_up_bbf_view_def(int16 dbid)
 {
