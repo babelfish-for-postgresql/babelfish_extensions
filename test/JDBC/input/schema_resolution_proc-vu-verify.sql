@@ -1,65 +1,56 @@
-use schema_res_proc
+-- select would resolve to schema_resolution_proc-vu-prepare_sch2.proc-vu-prepare_table1, insert would resolve to schema_resolution_proc-vu-prepare_sch1.proc-vu-prepare_table1
+exec schema_resolution_proc-vu-prepare_sch1.proc-vu-prepare_p1
 go
 
--- select would resolve to sch2.table1, insert would resolve to sch1.table1
-exec sch1.p1
+drop proc schema_resolution_proc-vu-prepare_sch2.proc-vu-prepare_p2
 go
 
-drop proc sch2.p2
+drop proc schema_resolution_proc-vu-prepare_sch1.proc-vu-prepare_p1
 go
 
-drop proc sch1.p1
+drop table schema_resolution_proc-vu-prepare_sch1.proc-vu-prepare_table1;
+drop table schema_resolution_proc-vu-prepare_sch2.proc-vu-prepare_table1;
 go
 
-drop table sch1.table1;
-drop table sch2.table1;
+drop schema schema_resolution_proc-vu-prepare_sch2;
 go
 
-drop schema sch2;
+-- insert is inside exec_batch, so it would be resolved to dbo.proc-vu-prepare_table1
+exec schema_resolution_proc-vu-prepare_sch1.proc-vu-prepare_p3
 go
 
--- insert is inside exec_batch, so it would be resolved to dbo.table1
-exec sch1.p3
+select * from dbo.proc-vu-prepare_table1;
 go
 
-select * from dbo.table1;
+drop proc schema_resolution_proc-vu-prepare_sch1.proc-vu-prepare_p3
 go
 
-drop proc sch1.p3
+drop table proc-vu-prepare_table1;
 go
 
-drop table table1;
-go
-
--- Without schema specified, insert takes place in "sch1" while create takes place in default schema["dbo" in this case] 
-exec sch1.create_tab;
+-- Without schema specified, insert takes place in "schema_resolution_proc-vu-prepare_sch1" while create takes place in default schema["dbo" in this case] 
+exec schema_resolution_proc-vu-prepare_sch1.proc-vu-prepare_create_tab;
 go
 	 
--- Without schema specified, select for t1 takes place in "sch1"
-exec sch1.select_tab
+-- Without schema specified, select for t1 takes place in "schema_resolution_proc-vu-prepare_sch1"
+exec schema_resolution_proc-vu-prepare_sch1.proc-vu-prepare_select_tab
 go
 
-drop table sch1.t1
+drop table schema_resolution_proc-vu-prepare_sch1.proc-vu-prepare_t1
 go
 
--- searches for t1 in "sch1" first, if not found then searches in default schema
-exec sch1.select_tab
+-- searches for t1 in "schema_resolution_proc-vu-prepare_sch1" first, if not found then searches in default schema
+exec schema_resolution_proc-vu-prepare_sch1.proc-vu-prepare_select_tab
 go
 	 
-drop proc sch1.select_tab
+drop proc schema_resolution_proc-vu-prepare_sch1.proc-vu-prepare_select_tab
 go
 	 
-drop proc sch1.create_tab
+drop proc schema_resolution_proc-vu-prepare_sch1.proc-vu-prepare_create_tab
 go
 	 
-drop table t1
+drop table proc-vu-prepare_t1
 go
 	 
-drop schema sch1
-go
-	 
-use master
-go
-	 
-drop database schema_res_proc
+drop schema schema_resolution_proc-vu-prepare_sch1
 go

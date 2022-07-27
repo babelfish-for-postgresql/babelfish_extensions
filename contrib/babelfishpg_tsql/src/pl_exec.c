@@ -4989,6 +4989,7 @@ exec_stmt_execsql(PLtsql_execstate *estate,
 	 					GUC_ACTION_SAVE, true, 0, false);
 		if (stmt->is_cross_db)
 			SetCurrentRoleId(current_user_id, false);
+		list_free(path_oids);
 		PG_RE_THROW();
 	}
 	PG_END_TRY();
