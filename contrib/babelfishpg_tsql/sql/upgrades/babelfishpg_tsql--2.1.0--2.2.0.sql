@@ -2957,7 +2957,7 @@ BEGIN
 		RETURN 256;
 	ELSIF (v_type in ('char', 'bpchar', 'varchar', 'binary', 'varbinary', 'nchar', 'nvarchar', 'sysname'))
 	THEN
-		IF typemod < 0 THEN -- highest max length
+		IF typemod < 0 THEN -- max value. 
 			RETURN -1;
 		ELSIF v_type in ('nchar', 'nvarchar') THEN
 			RETURN (2 * typemod);
@@ -2965,9 +2965,9 @@ BEGIN
 			RETURN typemod;
 		END IF;
 	END IF;
-	
+
 	RETURN sys.tsql_type_max_length_helper(type, typelen, typemod, for_sys_types);
-		
+
 END;
 $$ LANGUAGE plpgsql IMMUTABLE STRICT;
 
@@ -2979,8 +2979,7 @@ SELECT
   , CAST(
       CASE 
         WHEN is_out_scalar = 1 THEN 0 -- param_id = 0 for output of scalar function
-        ELSE
-        (ss.x).n
+        ELSE (ss.x).n
       END 
     AS INT) AS parameter_id
   -- 'system_type_id' is specified as type INT here, and not TINYINT per SQL Server documentation.
@@ -2992,35 +2991,21 @@ SELECT
       CASE
         WHEN st.is_table_type = 1 THEN -1 -- TVP case
         WHEN st.is_user_defined = 1 THEN st.max_length -- UDT case
-        ELSE
-          sys.tsql_typmod_array_max_length_helper(
-          COALESCE(type_name, base_type_name),
-          t.typlen,
-          CAST(ss.typmod_array->>(ss.x).n-1 AS INT),
-          true)
+        ELSE sys.tsql_typmod_array_max_length_helper(COALESCE(type_name, base_type_name), t.typlen, typmod, true)
       END
     AS smallint) AS max_length
   , CAST(
       CASE
         WHEN st.is_table_type = 1 THEN 0 -- TVP case
         WHEN st.is_user_defined = 1  THEN st.precision -- UDT case
-        ELSE
-          sys.tsql_type_precision_helper(
-          COALESCE(type_name, base_type_name), 
-          CAST(ss.typmod_array->>(ss.x).n-1 AS INT)
-          )
+        ELSE sys.tsql_type_precision_helper(COALESCE(type_name, base_type_name), typmod)
       END
     AS sys.tinyint) AS precision
   , CAST(
       CASE 
         WHEN st.is_table_type = 1 THEN 0 -- TVP case
         WHEN st.is_user_defined = 1  THEN st.scale
-        ELSE
-          sys.tsql_type_scale_helper(
-          COALESCE(type_name, base_type_name), 
-          CAST(ss.typmod_array->>(ss.x).n-1 AS INT),
-          false
-          )
+        ELSE sys.tsql_type_scale_helper(COALESCE(type_name, base_type_name), typmod,false)
       END
     AS sys.tinyint) AS scale
   , CAST(
@@ -3047,52 +3032,46 @@ SELECT
   , CAST(NULL AS int) AS column_encryption_key_id
   , CAST(NULL AS sys.sysname) AS column_encryption_key_database_name
 FROM pg_type t,
-pg_namespace nt,
-sys.types st,
-(
-  SELECT s.schema_id,
-    p.proname,
-    p.oid AS p_oid,
-    p.proowner,
-    p.proargnames,
-    p.proargmodes,
-    p.prokind,
-    json_extract_path(CAST(p.probin as json), 'typmod_array') AS typmod_array,
-    information_schema._pg_expandarray(
-    coalesce(p.proallargtypes,
-      CASE 
-        WHEN p.prokind = 'f' THEN
-        (CAST( p.proargtypes AS oid[]) || p.prorettype) -- Adds return type if not present on proallargtypes
-        ELSE
-        CAST(p.proargtypes AS oid[])
-      END
-        
-    )) AS x
+  pg_namespace nt,
+  sys.types st,
+  (
+    SELECT
+      p.oid AS p_oid,
+      p.proargnames,
+      p.proargmodes,
+      p.prokind,
+      json_extract_path(CAST(p.probin as json), 'typmod_array') AS typmod_array,
+      information_schema._pg_expandarray(
+      COALESCE(p.proallargtypes,
+        CASE 
+          WHEN p.prokind = 'f' THEN (CAST( p.proargtypes AS oid[]) || p.prorettype) -- Adds return type if not present on proallargtypes
+          ELSE CAST(p.proargtypes AS oid[])
+        END
+      )) AS x
     FROM 
     pg_proc p,
     sys.schemas s,
     CAST((select oid FROM pg_namespace where nspname = 'sys' limit 1) AS INT) as sys_id
-    WHERE  ((p.pronamespace = s.schema_id OR p.pronamespace = sys_id) 
-    AND (pg_has_role(p.proowner, 'USAGE') 
-      OR has_function_privilege(p.oid, 'EXECUTE'))
-    AND p.probin like '{%typmod_array%}') -- Needs to have a typmod array in JSON format
-) ss, 
-sys.translate_pg_type_to_tsql(st.user_type_id) AS type_name,
-sys.translate_pg_type_to_tsql(st.system_type_id) AS base_type_name,
-COALESCE(pg_get_function_result(ss.p_oid), '') AS return_type,
-CAST(
-  CASE
-    WHEN ss.prokind = 'f' AND ss.proargnames[(ss.x).n] IS NULL THEN 1 -- checks if param is output of scalar function
-    ELSE 0
-  END 
-AS INT) AS is_out_scalar
+    WHERE ((p.pronamespace = s.schema_id OR p.pronamespace = sys_id) 
+      AND (pg_has_role(p.proowner, 'USAGE') OR has_function_privilege(p.oid, 'EXECUTE'))
+      AND p.probin like '{%typmod_array%}') -- Needs to have a typmod array in JSON format
+  ) ss, 
+  sys.translate_pg_type_to_tsql(st.user_type_id) AS type_name,
+  sys.translate_pg_type_to_tsql(st.system_type_id) AS base_type_name,
+  COALESCE(pg_get_function_result(ss.p_oid), '') AS return_type,
+  CAST(ss.typmod_array->>(ss.x).n-1 AS INT) AS typmod, 
+  CAST(
+    CASE
+      WHEN ss.prokind = 'f' AND ss.proargnames[(ss.x).n] IS NULL THEN 1 -- checks if param is output of scalar function
+      ELSE 0
+    END 
+  AS INT) AS is_out_scalar
 WHERE t.oid = (ss.x).x 
   AND t.typnamespace = nt.oid
   AND t.oid = st.user_type_id
   AND ( -- If it's a Table function, we only want the inputs
       return_type NOT LIKE 'TABLE(%' OR 
-      (return_type LIKE 'TABLE(%' AND ss.proargmodes[(ss.x).n] = 'i')
-      );
+      (return_type LIKE 'TABLE(%' AND ss.proargmodes[(ss.x).n] = 'i'));
 
 GRANT SELECT ON sys.all_parameters TO PUBLIC;
 
