@@ -33,9 +33,6 @@ Could not find tests for function sys.openjson_with
 Could not find tests for function sys.parsename
 Could not find tests for function sys.proc_param_helper
 Could not find tests for function sys.role_id
-Could not find tests for function sys.suser_id_internal
-Could not find tests for function sys.suser_name_internal
-Could not find tests for function sys.space
 Could not find tests for function sys.sp_columns_100_internal
 Could not find tests for function sys.sp_columns_managed_internal
 Could not find tests for function sys.sp_datatype_info_helper
@@ -49,7 +46,10 @@ Could not find tests for function sys.sp_special_columns_precision_helper
 Could not find tests for function sys.sp_special_columns_scale_helper
 Could not find tests for function sys.sp_statistics_internal
 Could not find tests for function sys.sp_tables_internal
+Could not find tests for function sys.space
 Could not find tests for function sys.stuff
+Could not find tests for function sys.suser_id_internal
+Could not find tests for function sys.suser_name_internal
 Could not find tests for function sys.sysdatetime
 Could not find tests for function sys.timefromparts
 Could not find tests for function sys.tsql_get_returntypmodvalue
@@ -79,7 +79,6 @@ Could not find tests for procedure sys.sp_columns_managed
 Could not find tests for procedure sys.sp_databases
 Could not find tests for procedure sys.sp_helprole
 Could not find tests for procedure sys.sp_helprolemember
-Could not find tests for procedure sys.sp_helpuser
 Could not find tests for procedure sys.sp_oledb_ro_usrname
 Could not find tests for procedure sys.sp_special_columns_100
 Could not find tests for procedure sys.sp_sproc_columns_100
@@ -164,26 +163,26 @@ Could not find upgrade tests for function sys.fn_mapped_system_error_list
 Could not find upgrade tests for function sys.formatmessage
 Could not find upgrade tests for function sys.get_babel_server_collation_oid
 Could not find upgrade tests for function sys.get_current_full_xact_id
-Could not find upgrade tests for function sys.getdate
 Could not find upgrade tests for function sys.get_host_os
 Could not find upgrade tests for function sys.get_tds_id
+Could not find upgrade tests for function sys.getdate
 Could not find upgrade tests for function sys.getutcdate
 Could not find upgrade tests for function sys.has_dbaccess
-Could not find upgrade tests for function sys.hashbytes
 Could not find upgrade tests for function sys.has_perms_by_name
+Could not find upgrade tests for function sys.hashbytes
 Could not find upgrade tests for function sys.ident_current
 Could not find upgrade tests for function sys.ident_incr
 Could not find upgrade tests for function sys.ident_seed
 Could not find upgrade tests for function sys.is_collated_ci_as
 Could not find upgrade tests for function sys.is_collated_ci_as_internal
-Could not find upgrade tests for function sys.isdate
-Could not find upgrade tests for function sys.isjson
 Could not find upgrade tests for function sys.is_member
-Could not find upgrade tests for function sys.isnull
-Could not find upgrade tests for function sys.isnumeric
 Could not find upgrade tests for function sys.is_rolemember
 Could not find upgrade tests for function sys.is_rolemember_internal
 Could not find upgrade tests for function sys.is_table_type
+Could not find upgrade tests for function sys.isdate
+Could not find upgrade tests for function sys.isjson
+Could not find upgrade tests for function sys.isnull
+Could not find upgrade tests for function sys.isnumeric
 Could not find upgrade tests for function sys.json_query
 Could not find upgrade tests for function sys.json_value
 Could not find upgrade tests for function sys.language
@@ -211,7 +210,6 @@ Could not find upgrade tests for function sys.servername
 Could not find upgrade tests for function sys.servicename
 Could not find upgrade tests for function sys.sid_binary
 Could not find upgrade tests for function sys.sign
-Could not find upgrade tests for function sys.space
 Could not find upgrade tests for function sys.sp_columns_100_internal
 Could not find upgrade tests for function sys.sp_columns_managed_internal
 Could not find upgrade tests for function sys.sp_datatype_info_helper
@@ -225,6 +223,8 @@ Could not find upgrade tests for function sys.sp_special_columns_precision_helpe
 Could not find upgrade tests for function sys.sp_special_columns_scale_helper
 Could not find upgrade tests for function sys.sp_statistics_internal
 Could not find upgrade tests for function sys.sp_tables_internal
+Could not find upgrade tests for function sys.space
+Could not find upgrade tests for function sys.spid
 Could not find upgrade tests for function sys.square
 Could not find upgrade tests for function sys.string_escape
 Could not find upgrade tests for function sys.string_split
@@ -248,7 +248,6 @@ Could not find upgrade tests for function sys.tsql_type_radix_for_sp_columns_hel
 Could not find upgrade tests for function sys.tsql_type_scale_helper
 Could not find upgrade tests for function sys.unicode
 Could not find upgrade tests for function sys.user_id
-Could not find upgrade tests for function sys.user_name
 Could not find upgrade tests for function sys.version
 Could not find upgrade tests for function sys.year
 Could not find upgrade tests for procedure babel_catalog_initializer
@@ -281,7 +280,6 @@ Could not find upgrade tests for procedure sys.sp_getapplock
 Could not find upgrade tests for procedure sys.sp_helpdb
 Could not find upgrade tests for procedure sys.sp_helprole
 Could not find upgrade tests for procedure sys.sp_helprolemember
-Could not find upgrade tests for procedure sys.sp_helpuser
 Could not find upgrade tests for procedure sys.sp_oledb_ro_usrname
 Could not find upgrade tests for procedure sys.sp_pkeys
 Could not find upgrade tests for procedure sys.sp_prepare
@@ -293,8 +291,8 @@ Could not find upgrade tests for procedure sys.sp_sproc_columns_100
 Could not find upgrade tests for procedure sys.sp_statistics
 Could not find upgrade tests for procedure sys.sp_statistics_100
 Could not find upgrade tests for procedure sys.sp_stored_procedures
-Could not find upgrade tests for procedure sys.sp_tablecollations_100
 Could not find upgrade tests for procedure sys.sp_table_privileges
+Could not find upgrade tests for procedure sys.sp_tablecollations_100
 Could not find upgrade tests for procedure sys.sp_tables
 Could not find upgrade tests for procedure sys.sp_unprepare
 Could not find upgrade tests for procedure sys.sp_updatestats
@@ -329,19 +327,19 @@ Could not find upgrade tests for view sys.change_tracking_databases
 Could not find upgrade tests for view sys.change_tracking_tables
 Could not find upgrade tests for view sys.check_constraints
 Could not find upgrade tests for view sys.computed_columns
+Could not find upgrade tests for view sys.data_spaces
 Could not find upgrade tests for view sys.database_files
 Could not find upgrade tests for view sys.database_filestream_options
 Could not find upgrade tests for view sys.database_recovery_status
 Could not find upgrade tests for view sys.database_role_members
-Could not find upgrade tests for view sys.data_spaces
 Could not find upgrade tests for view sys.default_constraints
 Could not find upgrade tests for view sys.dm_hadr_cluster
 Could not find upgrade tests for view sys.dm_hadr_database_replica_states
 Could not find upgrade tests for view sys.dm_os_host_info
 Could not find upgrade tests for view sys.endpoints
 Could not find upgrade tests for view sys.filegroups
-Could not find upgrade tests for view sys.filetables
 Could not find upgrade tests for view sys.filetable_system_defined_objects
+Could not find upgrade tests for view sys.filetables
 Could not find upgrade tests for view sys.foreign_key_columns
 Could not find upgrade tests for view sys.foreign_keys
 Could not find upgrade tests for view sys.fulltext_catalogs
@@ -362,8 +360,6 @@ Could not find upgrade tests for view sys.registered_search_property_lists
 Could not find upgrade tests for view sys.schemas
 Could not find upgrade tests for view sys.selective_xml_index_paths
 Could not find upgrade tests for view sys.shipped_objects_not_in_sys
-Could not find upgrade tests for view sys.spatial_indexes
-Could not find upgrade tests for view sys.spatial_index_tessellations
 Could not find upgrade tests for view sys.sp_column_privileges_view
 Could not find upgrade tests for view sys.sp_columns_100_view
 Could not find upgrade tests for view sys.sp_databases_view
@@ -375,6 +371,8 @@ Could not find upgrade tests for view sys.sp_statistics_view
 Could not find upgrade tests for view sys.sp_stored_procedures_view
 Could not find upgrade tests for view sys.sp_table_privileges_view
 Could not find upgrade tests for view sys.sp_tables_view
+Could not find upgrade tests for view sys.spatial_index_tessellations
+Could not find upgrade tests for view sys.spatial_indexes
 Could not find upgrade tests for view sys.spt_columns_view_managed
 Could not find upgrade tests for view sys.spt_tablecollations_view
 Could not find upgrade tests for view sys.sql_modules
@@ -388,8 +386,8 @@ Could not find upgrade tests for view sys.sysindexes
 Could not find upgrade tests for view sys.syslanguages
 Could not find upgrade tests for view sys.system_objects
 Could not find upgrade tests for view sys.system_sql_modules
-Could not find upgrade tests for view sys.tables
 Could not find upgrade tests for view sys.table_types
+Could not find upgrade tests for view sys.tables
 Could not find upgrade tests for view sys.triggers
 Could not find upgrade tests for view sys.types
 Could not find upgrade tests for view sys.views

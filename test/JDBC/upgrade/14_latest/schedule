@@ -56,6 +56,7 @@ sys-sysobjects
 SYSTEM_USER_dep
 Test-sp_helpsrvrolemember
 Test-sp_helpsrvrolemember-dep
+Test-sp_helpuser
 BABEL-1189
 BABEL-1243
 BABEL-1963
