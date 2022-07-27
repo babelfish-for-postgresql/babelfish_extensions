@@ -1,0 +1,30 @@
+-- tsql
+-- Clean up
+USE BABEL_ROLE_MEMBER_db
+GO
+DROP USER test_user1
+GO
+DROP USER test_user2
+GO
+DROP USER test_user3
+GO
+DROP ROLE test_role1
+GO
+DROP ROLE test_role2
+GO
+DROP ROLE test_role3
+GO
+DROP ROLE test_role4
+GO
+DROP ROLE test_role5
+GO
+DROP LOGIN test_login1
+GO
+DROP LOGIN test_login2
+GO
+DROP LOGIN test_login3
+GO
+USE master
+GO
+DROP DATABASE BABEL_ROLE_MEMBER_db
+GO

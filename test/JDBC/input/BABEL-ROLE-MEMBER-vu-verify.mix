@@ -1,0 +1,176 @@
+USE BABEL_ROLE_MEMBER_db
+go
+
+-- Print the current membership status
+EXEC babel_role_members
+GO
+
+-- IS_MEMBER and IS_ROLEMEMBER
+-- Basic membership check
+SELECT IS_ROLEMEMBER('test_role1', 'test_role2')
+GO
+SELECT IS_ROLEMEMBER('test_role2', 'test_role3')
+GO
+SELECT IS_ROLEMEMBER('test_role3', 'test_role4')
+GO
+SELECT IS_ROLEMEMBER('test_role1', 'test_user1')
+GO
+SELECT IS_ROLEMEMBER('test_role2', 'test_user2')
+GO
+SELECT IS_ROLEMEMBER('test_role3', 'test_user3')
+GO
+
+-- Not member, should return 0
+SELECT IS_ROLEMEMBER('test_role4', 'test_role1')
+GO
+SELECT IS_ROLEMEMBER('test_role1', 'test_role5')
+GO
+
+-- Nested membership check
+SELECT IS_ROLEMEMBER('test_role1', 'test_role3')
+GO
+SELECT IS_ROLEMEMBER('test_role1', 'test_user3')
+GO
+
+-- Membership of oneself, should return 1, this also applies to user
+SELECT IS_ROLEMEMBER('test_role1', 'test_role1')
+GO
+SELECT IS_ROLEMEMBER('test_user1', 'test_user1')
+GO
+
+-- Should return 0
+SELECT IS_ROLEMEMBER('db_owner', 'test_role1')
+GO
+SELECT IS_ROLEMEMBER('db_owner', 'test_user1')
+GO
+
+-- Invalid role/principal name, should return NULL
+SELECT IS_MEMBER('xxx')
+GO
+SELECT IS_ROLEMEMBER('xxx')
+GO
+SELECT IS_ROLEMEMBER('xxx', 'test_user1')
+GO
+SELECT IS_ROLEMEMBER('test_role1', 'xxx')
+GO
+SELECT IS_ROLEMEMBER(NULL, 'test_user1')
+GO
+SELECT IS_ROLEMEMBER('test_role1', NULL)
+GO
+
+-- Given role name is not a real role, should return NULL
+SELECT IS_MEMBER('test_user1')
+GO
+SELECT IS_ROLEMEMBER('test_user1')
+GO
+SELECT IS_ROLEMEMBER('test_user1', 'test_user2')
+GO
+
+-- NULL input, should return NULL
+SELECT IS_MEMBER(NULL)
+GO
+SELECT IS_ROLEMEMBER(NULL, 'test_user1')
+GO
+SELECT IS_ROLEMEMBER('test_role1', NULL)
+GO
+SELECT IS_ROLEMEMBER(NULL, NULL)
+GO
+
+-- Connect with different logins to test membership view permission
+-- Test on user1
+-- tsql      user=test_login1      password=123
+USE BABEL_ROLE_MEMBER_db
+GO
+SELECT USER_NAME()
+GO
+
+-- Should return 1
+SELECT IS_MEMBER('test_role1')
+GO
+SELECT IS_ROLEMEMBER('test_role1')
+GO
+SELECT IS_MEMBER('test_user1')
+GO
+
+-- Should return 0
+SELECT IS_MEMBER('test_role2')
+GO
+SELECT IS_ROLEMEMBER('test_role3')
+GO
+
+-- Doesn't have permission, should return NULL
+SELECT IS_ROLEMEMBER('test_role2', 'test_user2')
+GO
+SELECT IS_ROLEMEMBER('test_role1', 'test_role2')
+GO
+
+USE master
+GO
+
+-- Test on user2
+-- tsql      user=test_login2      password=123
+USE BABEL_ROLE_MEMBER_db
+GO
+SELECT USER_NAME()
+GO
+
+-- Should return 1
+SELECT IS_MEMBER('test_role2')
+GO
+SELECT IS_ROLEMEMBER('test_role1')
+GO
+SELECT IS_ROLEMEMBER('test_role1', 'test_role2')
+GO
+SELECT IS_MEMBER('test_user2')
+GO
+
+-- Should return 0
+SELECT IS_MEMBER('test_role3')
+GO
+
+-- Doesn't have permission, should return NULL 
+SELECT IS_ROLEMEMBER('test_role1', 'test_role3')
+GO
+SELECT IS_ROLEMEMBER('test_role2', 'test_role3')
+GO
+SELECT IS_ROLEMEMBER('test_role1', 'test_user1')
+GO
+
+USE master
+GO
+
+-- Test on user3
+-- tsql      user=test_login3      password=123
+USE BABEL_ROLE_MEMBER_db
+GO
+SELECT USER_NAME()
+GO
+
+-- Should return 1
+SELECT IS_MEMBER('test_role3')
+GO
+SELECT IS_ROLEMEMBER('test_role2')
+GO
+SELECT IS_ROLEMEMBER('test_role1')
+GO
+SELECT IS_ROLEMEMBER('test_role1', 'test_role2')
+GO
+SELECT IS_ROLEMEMBER('test_role2', 'test_role3')
+GO
+SELECT IS_ROLEMEMBER('test_role1', 'test_role3')
+GO
+SELECT IS_MEMBER('test_user3')
+GO
+
+-- Should return 0
+SELECT IS_MEMBER('test_role4')
+GO
+
+-- Doesn't have permission, should return NULL
+SELECT IS_ROLEMEMBER('test_role3', 'test_role4')
+GO
+SELECT IS_ROLEMEMBER('test_role2', 'test_user2')
+GO
+
+USE master
+GO

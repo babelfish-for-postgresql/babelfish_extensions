@@ -1,0 +1,4 @@
+-- tsql
+DROP LOGIN system_user_1;
+DROP LOGIN system_user_2;
+GO

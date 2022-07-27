@@ -1,0 +1,62 @@
+-- tsql
+CREATE DATABASE BABEL_ROLE_MEMBER_db
+go
+
+USE BABEL_ROLE_MEMBER_db
+go
+
+SELECT DB_NAME()
+GO
+
+CREATE PROC babel_role_members AS
+BEGIN
+	SELECT dp1.name AS RoleName, dp1.type AS RoleType,
+		   dp2.name AS MemberName, dp2.type AS MemberType
+	FROM sys.database_role_members AS drm
+	INNER JOIN sys.database_principals AS dp1
+	ON drm.role_principal_id = dp1.principal_id
+	INNER JOIN sys.database_principals AS dp2
+	ON drm.member_principal_id = dp2.principal_id
+	ORDER BY dp1.name, dp2.name
+END
+GO
+
+CREATE ROLE test_role1
+GO
+CREATE ROLE test_role2
+GO
+CREATE ROLE test_role3
+GO
+CREATE ROLE test_role4 
+GO
+CREATE ROLE test_role5
+GO
+CREATE LOGIN test_login1 WITH PASSWORD = '123'
+GO
+CREATE LOGIN test_login2 WITH PASSWORD = '123'
+GO
+CREATE LOGIN test_login3 WITH PASSWORD = '123'
+GO
+CREATE USER test_user1 FOR LOGIN test_login1
+GO
+CREATE USER test_user2 FOR LOGIN test_login2
+GO
+CREATE USER test_user3 FOR LOGIN test_login3
+GO
+
+-- role1 -> role2 -> role3 -> role4
+ALTER ROLE test_role1 ADD MEMBER test_role2
+GO
+ALTER ROLE test_role2 ADD MEMBER test_role3
+GO
+ALTER ROLE test_role3 ADD MEMBER test_role4
+GO
+-- role1 -> user1
+ALTER ROLE test_role1 ADD MEMBER test_user1
+GO
+-- role2 -> user2
+ALTER ROLE test_role2 ADD MEMBER test_user2
+GO
+-- role3 -> user3
+ALTER ROLE test_role3 ADD MEMBER test_user3
+GO

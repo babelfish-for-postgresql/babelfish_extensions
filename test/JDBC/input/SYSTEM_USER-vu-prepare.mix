@@ -1,0 +1,5 @@
+CREATE LOGIN system_user_1 WITH PASSWORD = '123';
+GO
+
+CREATE LOGIN system_user_2 WITH PASSWORD = '123';
+GO
