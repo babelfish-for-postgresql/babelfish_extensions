@@ -10,7 +10,7 @@ a_nice_workstation_name
 ~~END~~
 
 
-SELECT * from host_name_func(@@SPID)
+SELECT * from sys_host_name_vu_prepare__host_name_func(@@SPID)
 GO
 ~~START~~
 nvarchar
@@ -18,7 +18,7 @@ a_nice_workstation_name
 ~~END~~
 
 
-SELECT * FROM host_name_view
+SELECT * FROM sys_host_name_vu_prepare__host_name_view
 GO
 ~~START~~
 nchar
@@ -26,7 +26,7 @@ a_nice_workstation_name
 ~~END~~
 
 
-EXECUTE host_name_proc
+EXECUTE sys_host_name_vu_prepare__host_name_proc
 GO
 ~~START~~
 nchar
@@ -34,7 +34,7 @@ a_nice_workstation_name
 ~~END~~
 
 
-SELECT * from dm_exec_connections_func(@@SPID)
+SELECT * from sys_host_name_vu_prepare__dm_exec_connections_func(@@SPID)
 GO
 ~~START~~
 nvarchar#!#nvarchar#!#int#!#int#!#nvarchar
@@ -42,7 +42,7 @@ TCP#!#TSQL#!#1946157060#!#4#!#FALSE
 ~~END~~
 
 
-SELECT * FROM dm_exec_connections_view
+SELECT * FROM sys_host_name_vu_prepare__dm_exec_connections_view
 GO
 ~~START~~
 nvarchar#!#nvarchar#!#int#!#int#!#nvarchar
@@ -50,7 +50,7 @@ TCP#!#TSQL#!#1946157060#!#4#!#FALSE
 ~~END~~
 
 
-EXECUTE dm_exec_connections_proc
+EXECUTE sys_host_name_vu_prepare__dm_exec_connections_proc
 GO
 ~~START~~
 nvarchar#!#nvarchar#!#int#!#int#!#nvarchar
@@ -58,7 +58,7 @@ TCP#!#TSQL#!#1946157060#!#4#!#FALSE
 ~~END~~
 
 
-SELECT * from dm_exec_sessions_func(@@SPID)
+SELECT * from sys_host_name_vu_prepare__dm_exec_sessions_func(@@SPID)
 GO
 ~~START~~
 nvarchar#!#nvarchar#!#int#!#text#!#nvarchar#!#nvarchar#!#smallint
@@ -66,7 +66,7 @@ us_english#!#a_nice_workstation_name#!#131592#!#Microsoft JDBC Driver #!#Microso
 ~~END~~
 
 
-SELECT * FROM dm_exec_sessions_view
+SELECT * FROM sys_host_name_vu_prepare__dm_exec_sessions_view
 GO
 ~~START~~
 nvarchar#!#nvarchar#!#int#!#text#!#nvarchar#!#nvarchar#!#smallint
@@ -74,7 +74,7 @@ us_english#!#a_nice_workstation_name#!#131592#!#Microsoft JDBC Driver #!#Microso
 ~~END~~
 
 
-EXECUTE dm_exec_sessions_proc
+EXECUTE sys_host_name_vu_prepare__dm_exec_sessions_proc
 GO
 ~~START~~
 nvarchar#!#nvarchar#!#int#!#text#!#nvarchar#!#nvarchar#!#smallint
