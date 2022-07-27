@@ -1,44 +1,44 @@
-create schema schema_resolution_proc-vu-prepare_sch1;
+create schema schema_resolution_proc_sch1;
 go
 
-create schema schema_resolution_proc-vu-prepare_sch2;
+create schema schema_resolution_proc_sch2;
 go
 
-create table schema_resolution_proc-vu-prepare_sch1.proc-vu-prepare_table1(a int)
+create table schema_resolution_proc_sch1.schema_resolution_proc_table1(a int)
 go
 
-create table schema_resolution_proc-vu-prepare_sch2.proc-vu-prepare_table1(a int, b char)
+create table schema_resolution_proc_sch2.schema_resolution_proc_table1(a int, b char)
 go
 
-create procedure schema_resolution_proc-vu-prepare_sch1.proc-vu-prepare_p1
+create procedure schema_resolution_proc_sch1.schema_resolution_proc_p1
 as
-exec schema_resolution_proc-vu-prepare_sch2.proc-vu-prepare_p2;
-insert into proc-vu-prepare_table1 values(10);
+exec schema_resolution_proc_sch2.schema_resolution_proc_p2;
+insert into schema_resolution_proc_table1 values(10);
 go
 
-create proc schema_resolution_proc-vu-prepare_sch2.proc-vu-prepare_p2
+create proc schema_resolution_proc_sch2.schema_resolution_proc_p2
 as
-select * from proc-vu-prepare_table1;
+select * from schema_resolution_proc_table1;
 go
 
-create table proc-vu-prepare_table1(c int);
+create table schema_resolution_proc_table1(c int);
 go
 
-create proc schema_resolution_proc-vu-prepare_sch1.proc-vu-prepare_p3
+create proc schema_resolution_proc_sch1.schema_resolution_proc_p3
 as
-execute sp_executesql N'insert into proc-vu-prepare_table1 values(2)'
+execute sp_executesql N'insert into schema_resolution_proc_table1 values(2)'
 go
 	 
-create proc schema_resolution_proc-vu-prepare_sch1.proc-vu-prepare_create_tab
+create proc schema_resolution_proc_sch1.schema_resolution_proc_create_tab
 as 
-create table proc-vu-prepare_t1(dbo_t1 int);
-create table schema_resolution_proc-vu-prepare_sch1.proc-vu-prepare_t1(sch1_t1 char, b int);
-insert into proc-vu-prepare_t1 values('a', 1);
-insert into dbo.proc-vu-prepare_t1 values(1);
+create table schema_resolution_proc_t1(dbo_t1 int);
+create table schema_resolution_proc_sch1.schema_resolution_proc_t1(sch1_t1 char, b int);
+insert into schema_resolution_proc_t1 values('a', 1);
+insert into dbo.schema_resolution_proc_t1 values(1);
 go
 	 
-create proc schema_resolution_proc-vu-prepare_sch1.proc-vu-prepare_select_tab
+create proc schema_resolution_proc_sch1.schema_resolution_proc_select_tab
 as 
-select * from dbo.proc-vu-prepare_t1;
-select * from proc-vu-prepare_t1;
+select * from dbo.schema_resolution_proc_t1;
+select * from schema_resolution_proc_t1;
 go
