@@ -50,6 +50,7 @@ constraint_column_usage
 sys-host_name
 SYSTEM_USER
 indexproperty
+sys-all_parameters
 sys-all_views
 datepart
 sys-sysobjects
