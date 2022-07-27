@@ -1,0 +1,120 @@
+insert into babel_2787_vu_prepare_employeeData values ('a'),('b'),('c');
+GO
+~~START~~
+int
+3
+~~END~~
+
+~~ROW COUNT: 3~~
+
+
+select count(*) from babel_2787_vu_prepare_employeeData;
+GO
+~~START~~
+int
+0
+~~END~~
+
+
+drop trigger babel_2787_vu_prepare_updEmployeeData1;
+GO
+
+insert into babel_2787_vu_prepare_employeeData values ('a'),('b'),('c'),('d');
+GO
+~~ROW COUNT: 4~~
+
+
+
+delete from babel_2787_vu_prepare_employeeData where id = 1;
+GO
+~~START~~
+int
+0
+~~END~~
+
+
+delete from babel_2787_vu_prepare_employeeData;
+GO
+~~START~~
+int
+4
+~~END~~
+
+~~ROW COUNT: 4~~
+
+
+select * from babel_2787_vu_prepare_employeeData;
+GO
+~~START~~
+int#!#varchar
+4#!#a
+5#!#b
+6#!#c
+7#!#d
+~~END~~
+
+
+drop trigger babel_2787_vu_prepare_updEmployeeData2;
+GO
+
+delete from babel_2787_vu_prepare_employeeData;
+GO
+~~ROW COUNT: 4~~
+
+
+insert into babel_2787_vu_prepare_employeeData values ('a'),('b'),('c'),('d');
+GO
+~~ROW COUNT: 4~~
+
+
+update babel_2787_vu_prepare_employeeData set Emp_First_name = 'ppp' where Emp_First_name = 'a';
+GO
+~~START~~
+int#!#varchar
+8#!#ppp
+~~END~~
+
+~~START~~
+int#!#varchar
+8#!#a
+~~END~~
+
+~~ROW COUNT: 1~~
+
+
+update babel_2787_vu_prepare_employeeData set Emp_First_name = 'kkk' where Emp_First_name = 'a';
+GO
+~~START~~
+int#!#varchar
+8#!#kkk
+~~END~~
+
+~~START~~
+int#!#varchar
+8#!#a
+~~END~~
+
+~~ROW COUNT: 1~~
+
+
+update babel_2787_vu_prepare_employeeData set Emp_First_name = 'ddd';
+GO
+~~START~~
+int#!#varchar
+8#!#ddd
+9#!#ddd
+10#!#ddd
+11#!#ddd
+~~END~~
+
+~~START~~
+int#!#varchar
+8#!#a
+9#!#b
+10#!#c
+11#!#d
+~~END~~
+
+~~ROW COUNT: 4~~
+
+
