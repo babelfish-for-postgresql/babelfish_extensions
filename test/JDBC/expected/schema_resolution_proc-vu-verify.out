@@ -41,7 +41,7 @@ go
 drop table schema_resolution_proc_table1;
 go
 
--- Without schema specified, insert takes place in "schema_resolution_proc_sch1" while create takes place in default schema["dbo" in this case]
+-- Without schema specified, insert takes place in "schema_resolution_proc_sch1" while create takes place in default schema["dbo" in this case] 
 exec schema_resolution_proc_sch1.schema_resolution_proc_create_tab;
 go
 ~~ROW COUNT: 1~~
