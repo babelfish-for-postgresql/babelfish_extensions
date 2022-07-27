@@ -79,8 +79,8 @@ master_dbo, "$user", sys, pg_catalog
 SELECT session_user, current_user, user;
 GO
 ~~START~~
-varchar#!#varchar#!#nvarchar
-jdbc_user#!#dbo#!#dbo
+nvarchar#!#varchar#!#nvarchar
+dbo#!#dbo#!#dbo
 ~~END~~
 
 SELECT user_name();
@@ -111,8 +111,8 @@ dbo, "$user", sys, pg_catalog
 SELECT session_user, current_user, user;
 GO
 ~~START~~
-varchar#!#varchar#!#nvarchar
-jdbc_user#!#dbo#!#dbo
+nvarchar#!#varchar#!#nvarchar
+dbo#!#dbo#!#dbo
 ~~END~~
 
 SELECT user_name();
@@ -148,8 +148,8 @@ dbo, "$user", sys, pg_catalog
 SELECT session_user, current_user, user;
 GO
 ~~START~~
-varchar#!#varchar#!#nvarchar
-jdbc_user#!#dbo#!#dbo
+nvarchar#!#varchar#!#nvarchar
+dbo#!#dbo#!#dbo
 ~~END~~
 
 SELECT user_name();
@@ -181,8 +181,8 @@ master_dbo, "$user", sys, pg_catalog
 SELECT session_user, current_user, user;
 GO
 ~~START~~
-varchar#!#varchar#!#nvarchar
-jdbc_user#!#dbo#!#dbo
+nvarchar#!#varchar#!#nvarchar
+dbo#!#dbo#!#dbo
 ~~END~~
 
 SELECT user_name();
@@ -213,8 +213,8 @@ master_dbo, "$user", sys, pg_catalog
 SELECT session_user, current_user, user;
 GO
 ~~START~~
-varchar#!#varchar#!#nvarchar
-jdbc_user#!#dbo#!#dbo
+nvarchar#!#varchar#!#nvarchar
+dbo#!#dbo#!#dbo
 ~~END~~
 
 SELECT user_name();
@@ -246,8 +246,8 @@ master_dbo, "$user", sys, pg_catalog
 SELECT session_user, current_user, user;
 GO
 ~~START~~
-varchar#!#varchar#!#nvarchar
-jdbc_user#!#dbo#!#dbo
+nvarchar#!#varchar#!#nvarchar
+dbo#!#dbo#!#dbo
 ~~END~~
 
 SELECT user_name();
