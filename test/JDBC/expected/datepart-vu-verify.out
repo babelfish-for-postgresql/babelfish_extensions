@@ -1,0 +1,123 @@
+SELECT DATEPART(dd, '07-18-2022')
+GO
+~~START~~
+int
+18
+~~END~~
+
+
+SELECT DATEPART(wk, '18 July 2022')
+GO
+~~START~~
+int
+30
+~~END~~
+
+
+SELECT DATEPART(yy, '07-18-2022')
+GO
+~~START~~
+int
+2022
+~~END~~
+
+
+SELECT * FROM date_part_vu_prepare_view
+GO
+~~START~~
+int
+30
+~~END~~
+
+
+SELECT * FROM date_part_vu_prepare_func('07-18-2022')
+GO
+~~START~~
+int
+7
+~~END~~
+
+
+SELECT * FROM date_part_vu_prepare_func('18 July 2022')
+GO
+~~START~~
+int
+7
+~~END~~
+
+
+SELECT * FROM date_part_vu_prepare_func('7/18/2022')
+GO
+~~START~~
+int
+7
+~~END~~
+
+
+SELECT ISOWeek_3101(CAST('25 July 2022 01:23:45' AS datetime))
+GO
+~~START~~
+tinyint
+30
+~~END~~
+
+
+-- should error out as expected
+SELECT ISOWeek_3101('01-01-1790')
+GO
+~~START~~
+tinyint
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: function master_dbo.isoweek("varchar") does not exist)~~
+
+
+EXECUTE date_part_vu_prepare_proc '07-18-2022'
+GO
+~~START~~
+int
+18
+~~END~~
+
+
+EXECUTE date_part_vu_prepare_proc '18 July 2022'
+GO
+~~START~~
+int
+18
+~~END~~
+
+
+EXECUTE date_part_vu_prepare_proc '7/18/2022'
+GO
+~~START~~
+int
+18
+~~END~~
+
+
+SELECT * FROM date_part_vu_prepare_sys_day_view
+GO
+~~START~~
+int
+18
+~~END~~
+
+
+SELECT * FROM date_part_vu_prepare_sys_day_func(CAST('07-18-2022' AS datetime))
+GO
+~~START~~
+int
+18
+~~END~~
+
+
+DECLARE @a datetime
+SET @a = CAST('07-18-2022' AS datetime)
+EXECUTE date_part_vu_prepare_proc @a
+GO
+~~START~~
+int
+18
+~~END~~
+

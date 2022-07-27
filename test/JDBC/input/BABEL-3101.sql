@@ -41,7 +41,11 @@ BEGIN
 END
 GO
 
-SELECT ISOWeek_3101(GETDATE())
+SELECT ISOWeek_3101(CAST('25 July 2022 01:23:45' AS datetime))
+GO
+
+-- should error out as expected
+SELECT ISOWeek_3101('01-01-1790')
 GO
 
 CREATE FUNCTION table_3101_2()

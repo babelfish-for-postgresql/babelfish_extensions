@@ -2447,6 +2447,22 @@ INSERT INTO sys.babelfish_helpcollation VALUES (N'mongolian_cs_as', N'Mongolian,
 INSERT INTO sys.babelfish_helpcollation VALUES (N'sql_latin1_general_cp874_ci_as', N'Virtual, default locale, code page 874, case-insensitive, accent-sensitive, kanatype-insensitive, width-insensitive');
 INSERT INTO sys.babelfish_helpcollation VALUES (N'sql_latin1_general_cp874_cs_as', N'Virtual, default locale, code page 874, case-sensitive, accent-sensitive, kanatype-insensitive, width-insensitive');
 
+CREATE OR REPLACE FUNCTION sys.datepart(IN datepart TEXT, IN arg TEXT) RETURNS INTEGER
+AS
+$body$
+BEGIN
+    IF pg_typeof(arg) = 'sys.DATETIMEOFFSET'::regtype THEN
+        return sys.datepart_internal(datepart, arg::timestamp,
+                     sys.babelfish_get_datetimeoffset_tzoffset(arg)::integer);
+    ELSIF pg_typeof(arg) = 'pg_catalog.text'::regtype THEN
+        return sys.datepart_internal(datepart, arg::sys.nvarchar::sys.datetime);
+    ELSE
+        return sys.datepart_internal(datepart, arg);
+    END IF;
+END;
+$body$
+LANGUAGE plpgsql IMMUTABLE;
+
 CREATE OR REPLACE FUNCTION sys.INDEXPROPERTY(IN object_id INT, IN index_or_statistics_name sys.nvarchar(128), IN property sys.varchar(128))
 RETURNS INT AS
 $BODY$
