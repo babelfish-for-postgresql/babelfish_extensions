@@ -1,4 +1,4 @@
-SELECT sys.babelfish_set_role(session_user);
+SELECT sys.babelfish_set_role(system_user);
 ~~START~~
 int
 1

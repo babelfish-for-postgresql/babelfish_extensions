@@ -81,7 +81,7 @@ master_r1#!#r1#!#r1#!#master#!#dbo
 SELECT session_user;
 go
 ~~START~~
-varchar
+nvarchar
 r1
 ~~END~~
 
@@ -182,7 +182,7 @@ master_r2#!#r2#!#r2#!#master#!#sch2
 SELECT session_user;
 go
 ~~START~~
-varchar
+nvarchar
 r2
 ~~END~~
 
