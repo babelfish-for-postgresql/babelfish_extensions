@@ -817,6 +817,7 @@ FetchLoginRequest(LoginRequest request)
 			{
 				case TDS_LOGIN_ATTR_HOSTNAME:
 					request->hostname = pstrdup(temp_utf8.data);
+					MyTdsHostName = request->hostname;
 					break;
 				case TDS_LOGIN_ATTR_USERNAME:
 					request->username = pstrdup(temp_utf8.data);
