@@ -1,26 +1,26 @@
 -- verify
-EXEC check_helpuser 'dbo';
+EXEC Test_sp_helpuser_vu_prepare_check_helpuser 'dbo';
 GO
 
-USE db_check_helpuser;
+USE Test_sp_helpuser_vu_prepare_db;
 GO
 
-EXEC check_helpuser;
+EXEC Test_sp_helpuser_vu_prepare_check_helpuser;
 GO
 
-EXEC check_helpuser 'dbo';
+EXEC Test_sp_helpuser_vu_prepare_check_helpuser 'dbo';
 GO
 
 -- cleanup
-DROP PROCEDURE check_helpuser
+DROP PROCEDURE Test_sp_helpuser_vu_prepare_check_helpuser
 GO
 
 USE master;
 GO
 
-DROP DATABASE db_check_helpuser;
+DROP DATABASE Test_sp_helpuser_vu_prepare_db;
 GO
 
-DROP PROCEDURE check_helpuser
+DROP PROCEDURE Test_sp_helpuser_vu_prepare_check_helpuser
 GO
 

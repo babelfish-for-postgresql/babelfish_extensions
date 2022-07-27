@@ -1,4 +1,4 @@
-CREATE PROCEDURE check_helpuser @user_or_role AS SYS.SYSNAME = NULL
+CREATE PROCEDURE Test_sp_helpuser_vu_prepare_check_helpuser @user_or_role AS SYS.SYSNAME = NULL
 AS
 BEGIN
 	DECLARE @tablevar TABLE(userName sys.SYSNAME, roleName sys.SYSNAME, loginName sys.SYSNAME NULL, defdb sys.SYSNAME NULL, defschema sys.SYSNAME, userid INT, sid sys.VARBINARY(85));
@@ -7,13 +7,13 @@ BEGIN
 END;
 GO
 
-CREATE DATABASE db_check_helpuser;
+CREATE DATABASE Test_sp_helpuser_vu_prepare_db;
 GO
 
-USE db_check_helpuser;
+USE Test_sp_helpuser_vu_prepare_db;
 GO
 
-CREATE PROCEDURE check_helpuser @user_or_role AS SYS.SYSNAME = NULL
+CREATE PROCEDURE Test_sp_helpuser_vu_prepare_check_helpuser @user_or_role AS SYS.SYSNAME = NULL
 AS
 BEGIN
 	DECLARE @tablevar TABLE(userName sys.SYSNAME, roleName sys.SYSNAME, loginName sys.SYSNAME NULL, defdb sys.SYSNAME NULL, defschema sys.SYSNAME, userid INT, sid sys.VARBINARY(85));
