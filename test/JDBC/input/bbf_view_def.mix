@@ -145,27 +145,32 @@ go
 select sb.name, vd.schema_name, vd.object_name, vd.definition from babelfish_view_def vd left join sys.sysdatabases sb on vd.dbid=sb.dbid order by vd.dbid, vd.schema_name, vd.object_name, vd.definition;
 go
 
--- CAST: Check for session properties like ANSI_NULLS and QUOTED_IDENTIFIER
--- Also check is_schema_bound and uses_database_collation columns
+-- CASE: Check for session properties like ANSI_NULLS and QUOTED_IDENTIFIER
+-- ANSI_NULLS - Last bit from left in flag_values
+-- QUOTED_IDENTIFIER - Second last bit from left in flag_values
+-- flag_validity will be 3 because only last and second last bit is being used(other flags are yet to support in future)
 SET ANSI_NULLS ON;
 go
 
+-- flag_values should be 3 as uses_quoted_identifier = true and is_ansi_nulls_on=true
 create view view_ansinullon as select 1;
 go
 
 SET ANSI_NULLS OFF;
 go
 
+-- flag_values should be 2 as uses_quoted_identifier = true and is_ansi_nulls_on=false
 create view "view_ansinulloff_qidon" as select 1;
 go
 
 SET QUOTED_IDENTIFIER OFF;
 go
 
+-- flag_values should be 0 as uses_quoted_identifier = false and is_ansi_nulls_on=false
 create view view_ansinulloff_qidoff as select 1;
 go
 
-select vd.object_name, vd.definition, vd.is_ansi_nulls_on, vd.uses_quoted_identifier, vd.is_schema_bound, vd.uses_database_collation from babelfish_view_def vd left join sys.sysdatabases sb on vd.dbid=sb.dbid where vd.object_name like ('view_ansi%') order by vd.dbid, vd.schema_name, vd.object_name, vd.definition;
+select vd.object_name, vd.definition, vd.flag_validity, vd.flag_values from babelfish_view_def vd left join sys.sysdatabases sb on vd.dbid=sb.dbid where vd.object_name like ('view_ansi%') order by vd.dbid, vd.schema_name, vd.object_name, vd.definition;
 go
 
 
@@ -193,7 +198,7 @@ create view information_schema_tsql.vvv3 as select 3;
 go
 
 -- tsql
-select vd.object_name, vd.definition, vd.is_ansi_nulls_on, vd.uses_quoted_identifier, vd.is_schema_bound, vd.uses_database_collation from babelfish_view_def vd left join sys.sysdatabases sb on vd.dbid=sb.dbid where vd.object_name like ('vvv%') order by vd.dbid, vd.schema_name, vd.object_name, vd.definition;
+select vd.object_name, vd.definition, vd.flag_validity, vd.flag_values from babelfish_view_def vd left join sys.sysdatabases sb on vd.dbid=sb.dbid where vd.object_name like ('vvv%') order by vd.dbid, vd.schema_name, vd.object_name, vd.definition;
 go
 
 -- tsql

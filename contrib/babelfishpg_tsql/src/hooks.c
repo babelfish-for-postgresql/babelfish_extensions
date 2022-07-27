@@ -1540,11 +1540,12 @@ pltsql_store_view_definition(const char *queryString, ObjectAddress address)
 	/* Store TSQL definition */
 	Relation	bbf_view_def_rel;
 	TupleDesc	bbf_view_def_rel_dsc;
-	Datum		new_record[bbf_view_def_NUM_COLS];
-	bool		new_record_nulls[bbf_view_def_NUM_COLS];
+	Datum		new_record[BBF_VIEW_DEF_NUM_COLS];
+	bool		new_record_nulls[BBF_VIEW_DEF_NUM_COLS];
 	HeapTuple	tuple, reltup;
 	Form_pg_class	form_reltup;
 	int16		dbid;
+	uint64		flag_values = 0, flag_validity = 0;
 	char		*physical_schemaname, *logical_schemaname;
 
 	if(sql_dialect != SQL_DIALECT_TSQL)
@@ -1591,22 +1592,27 @@ pltsql_store_view_definition(const char *queryString, ObjectAddress address)
 				errmsg("Could not find dbid or logical schema for this physical schema '%s'." \
 				"CREATE VIEW from non-babelfish schema/db is not allowed in TSQL dialect.", physical_schemaname)));
 	}
+	/*
+	 * To use particular flag bit to store certain flag, Set corresponding bit
+	 * in flag_validity which tracks currently supported flag bits and then
+	 * set/unset flag_values bit according to flag settings.
+	 * Used !Transform_null_equals instead of pltsql_ansi_nulls because NULL is
+	 * being inserted in catalog if it is used.
+	 * Currently, Only two flags are supported.
+	 */
+	flag_validity |= BBF_VIEW_DEF_FLAG_IS_ANSI_NULLS_ON;
+	if (!Transform_null_equals)
+		flag_values |= BBF_VIEW_DEF_FLAG_IS_ANSI_NULLS_ON;
+	flag_validity |= BBF_VIEW_DEF_FLAG_USES_QUOTED_IDENTIFIER;
+	if (pltsql_quoted_identifier)
+		flag_values |= BBF_VIEW_DEF_FLAG_USES_QUOTED_IDENTIFIER;
+
 	new_record[0] = Int16GetDatum(dbid);
 	new_record[1] = CStringGetTextDatum(logical_schemaname);
 	new_record[2] = CStringGetTextDatum(NameStr(form_reltup->relname));
 	new_record[3] = CStringGetTextDatum(queryString);
-	/*
-	 * Used !Transform_null_equals instead of pltsql_ansi_nulls because
-	 * NULL is being inserted in catalog if it is used.
-	 */
-	new_record[4] = BoolGetDatum(!Transform_null_equals);
-	new_record[5] = BoolGetDatum(pltsql_quoted_identifier);
-	/*
-	 * Inserting false/0 as default value for is_schema_bound and
-	 * uses_database_collation until they're supported
-	 */
-	new_record[6] = BoolGetDatum(0);
-	new_record[7] = BoolGetDatum(0);
+	new_record[4] = UInt64GetDatum(flag_validity);
+	new_record[5] = UInt64GetDatum(flag_values);
 
 	tuple = heap_form_tuple(bbf_view_def_rel_dsc,
 							new_record, new_record_nulls);

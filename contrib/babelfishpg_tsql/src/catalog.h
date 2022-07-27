@@ -168,7 +168,9 @@ typedef FormData_authid_user_ext *Form_authid_user_ext;
 #define Anum_bbf_view_def_schema_name 2
 #define Anum_bbf_view_def_object_name 3
 #define Anum_bbf_view_def_definition 4
-#define bbf_view_def_NUM_COLS 8
+#define BBF_VIEW_DEF_NUM_COLS 6
+#define BBF_VIEW_DEF_FLAG_IS_ANSI_NULLS_ON (1<<0)
+#define BBF_VIEW_DEF_FLAG_USES_QUOTED_IDENTIFIER (1<<1)
 extern Oid			bbf_view_def_oid;
 extern Oid			bbf_view_def_idx_oid;
 
@@ -183,11 +185,8 @@ typedef struct FormData_bbf_view_def
 	VarChar		schema;
 	VarChar		object_name;
 	text		definition;
-	bool		is_ansi_nulls_on;
-	bool		uses_quoted_identifier;
-	bool		is_schema_bound;
-	bool		uses_database_collation;
-
+	uint64		flag_validity;
+	uint64		flag_values;
 } FormData_bbf_view_def;
 
 typedef FormData_bbf_view_def *Form_bbf_view_def;
