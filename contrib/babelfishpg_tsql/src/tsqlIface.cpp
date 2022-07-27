@@ -1653,6 +1653,10 @@ public:
 			/* Re-write system_user to sys.system_user(). */
 			if (bctx->bif_no_brackets && bctx->SYSTEM_USER())
 				rewritten_query_fragment.emplace(std::make_pair(bctx->bif_no_brackets->getStartIndex(), std::make_pair(::getFullText(bctx->SYSTEM_USER()), "sys.system_user()")));
+
+			/* Re-write session_user to sys.session_user(). */
+			if (bctx->bif_no_brackets && bctx->SESSION_USER())
+				rewritten_query_fragment.emplace(std::make_pair(bctx->bif_no_brackets->getStartIndex(), std::make_pair(::getFullText(bctx->SESSION_USER()), "sys.session_user()")));
 		}
 
 		/* analyze scalar function call */

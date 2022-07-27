@@ -47,9 +47,11 @@ cast_numeric_types_to_datetime
 routines_definition
 column_domain_usage
 constraint_column_usage
+SYSTEM_USER
 indexproperty
 sys-all_views
 sys-sysobjects
+SYSTEM_USER_dep
 Test-sp_helpsrvrolemember
 Test-sp_helpsrvrolemember-dep
 BABEL-1189
