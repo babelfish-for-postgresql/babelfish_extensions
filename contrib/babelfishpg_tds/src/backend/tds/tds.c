@@ -58,6 +58,7 @@
 
 #define LIBDATALEN 32
 #define LANGDATALEN 128
+#define HOSTDATALEN 128
 #define XACT_SNAPSHOT 5
 
 PG_MODULE_MAGIC;
@@ -103,6 +104,7 @@ typedef struct TdsStatus
 	int		transaction_isolation;
 
 	char		*st_library_name;	/* Library */
+	char		*st_host_name;		/* Hostname */
 	char		*st_language;		/* Language */
 
 	uint32_t	client_pid;
@@ -145,10 +147,12 @@ static LocalTdsStatus *localTdsStatusTable = NULL;
 uint32_t MyTdsClientVersion = 0;
 uint32_t MyTdsClientPid = -1;
 char *MyTdsLibraryName = NULL;
+char *MyTdsHostName = NULL;
 uint32_t MyTdsProtocolVersion = TDS_DEFAULT_VERSION;
 uint32_t MyTdsPacketSize = 0;
 int MyTdsEncryptOption = TDS_ENCRYPT_OFF;
 static char *TdsLibraryNameBuffer = NULL;
+static char *TdsHostNameBuffer = NULL;
 static char *TdsLanguageBuffer = NULL;
 
 static int localNumBackends = 0;
@@ -241,6 +245,12 @@ TdsLibraryNameBufferSize()
 }
 
 static Size
+TdsHostNameBufferSize()
+{
+	return mul_size(HOSTDATALEN, NumBackendStatSlots);
+}
+
+static Size
 TdsLanguageBufferSize()
 {
 	return mul_size(LANGDATALEN, NumBackendStatSlots);
@@ -253,6 +263,7 @@ tds_memsize()
 
 	size = TdsStatusArraySize();
 	size = add_size(size, TdsLibraryNameBufferSize());
+	size = add_size(size, TdsHostNameBufferSize());
 	size = add_size(size, TdsLanguageBufferSize());
 	return size;
 }
@@ -301,6 +312,25 @@ tds_status_shmem_startup(void)
 		{
 			TdsStatusArray[i].st_library_name = buffer;
 			buffer += LIBDATALEN;
+		}
+	}
+
+	/* Create or attach to the shared TDS host name buffer */
+	TdsHostNameBuffer = (char *)
+		ShmemInitStruct("TDS host name buffer", TdsHostNameBufferSize(), &found);
+
+	if (!found)
+	{
+		int i;
+
+		MemSet(TdsHostNameBuffer, 0, TdsHostNameBufferSize());
+
+		/* Initialize st_host_name pointers. */
+		buffer = TdsHostNameBuffer;
+		for (i = 0; i < MaxBackends; i++)
+		{
+			TdsStatusArray[i].st_host_name = buffer;
+			buffer += HOSTDATALEN;
 		}
 	}
 
@@ -381,6 +411,7 @@ tdsstat_bestart(void)
 
 	int len;
 	char *library_name = NULL;
+	char *host_name = NULL;
 	const char *language = NULL;
 
 	/*
@@ -435,6 +466,15 @@ tdsstat_bestart(void)
 		len = pg_mbcliplen(library_name, strlen(library_name), LIBDATALEN - 1);
 		memcpy((char *) ltdsentry.st_library_name, library_name, len);
 		ltdsentry.st_library_name[len] = '\0';
+	}
+
+	host_name = MyTdsHostName;
+
+	if (host_name != NULL)
+	{
+		len = pg_mbcliplen(host_name, strlen(host_name), HOSTDATALEN - 1);
+		memcpy((char *) ltdsentry.st_host_name, host_name, len);
+		ltdsentry.st_host_name[len] = '\0';
 	}
 
 	ltdsentry.encrypt_option = MyTdsEncryptOption;
@@ -533,6 +573,9 @@ tdsstat_read_current_status(void)
 
 				if (tdsentry->st_library_name)
 					localentry->tdsStatus.st_library_name = tdsentry->st_library_name;
+				
+				if (tdsentry->st_host_name)
+					localentry->tdsStatus.st_host_name = tdsentry->st_host_name;
 
 				if (tdsentry->st_language)
 					localentry->tdsStatus.st_language = tdsentry->st_language;
@@ -720,6 +763,12 @@ tds_stat_get_activity(Datum *values, bool *nulls, int len, int pid, int curr_bac
 	values[22] = CStringGetTextDatum(tdsentry->encrypt_option == 1 ? "TRUE" : "FALSE");
 	values[23] = Int16GetDatum(tdsentry->database_id);
 
+	/* Host name must be valid */
+	if(tdsentry->st_host_name)
+		values[24] = CStringGetTextDatum(tdsentry->st_host_name);
+	else
+		nulls[24] = true;
+
 	return true;
 }
 
@@ -832,4 +881,10 @@ void
 invalidate_stat_table(void)
 {
 	isLocalStatusTableValid = false;
+}
+
+char*
+get_tds_host_name(void)
+{
+	return MyTdsHostName;
 }

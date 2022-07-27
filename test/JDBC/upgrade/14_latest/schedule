@@ -47,6 +47,7 @@ cast_numeric_types_to_datetime
 routines_definition
 column_domain_usage
 constraint_column_usage
+sys-host_name
 SYSTEM_USER
 indexproperty
 sys-all_views
