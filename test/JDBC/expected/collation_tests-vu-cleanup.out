@@ -5,33 +5,33 @@ GO
 DROP VIEW [INNER JOIN DIFF CP]
 GO
 
-DROP TABLE english_collation_varchar_innerjoin;
+DROP TABLE collation_tests_english_collation_varchar_innerjoin;
 GO
 
-DROP TABLE english_collation_varchar;
+DROP TABLE collation_tests_english_collation_varchar;
 GO
 
-DROP TABLE english_collation_varchar_computed_columns;
+DROP TABLE collation_tests_english_collation_varchar_computed_columns;
 GO
 
 --nvarchar
-DROP TABLE english_collation_nvarchar;
+DROP TABLE collation_tests_english_collation_nvarchar;
 GO
 
 --char
-DROP TABLE english_collation_char;
+DROP TABLE collation_tests_english_collation_char;
 GO
 
 --nchar
-DROP TABLE english_collation_nchar;
+DROP TABLE collation_tests_english_collation_nchar;
 GO
 
 --text
-DROP TABLE english_collation_text;
+DROP TABLE collation_tests_english_collation_text;
 GO
 
 --test for primary key
-DROP TABLE english_collation_primary_key;
+DROP TABLE collation_tests_english_collation_primary_key;
 GO
 
 

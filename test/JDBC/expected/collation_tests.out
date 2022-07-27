@@ -1,16 +1,16 @@
 --varchar
-CREATE TABLE english_collation_varchar (name varchar(20) COLLATE 
+CREATE TABLE collation_tests_english_collation_varchar (name varchar(20) COLLATE 
 latin1_general_ci_as);
 GO
-INSERT INTO english_collation_varchar VALUES ('new delhi');
-INSERT INTO english_collation_varchar VALUES ('new Delhi');
-INSERT INTO english_collation_varchar VALUES ('new DELHI');
-INSERT INTO english_collation_varchar VALUES ('NEW delhi');
-INSERT INTO english_collation_varchar VALUES ('NEW Delhi');
-INSERT INTO english_collation_varchar VALUES ('NEW DELHI');
-INSERT INTO english_collation_varchar VALUES ('New delhi');
-INSERT INTO english_collation_varchar VALUES ('New Delhi');
-INSERT INTO english_collation_varchar VALUES ('New DELHI');
+INSERT INTO collation_tests_english_collation_varchar VALUES ('new delhi');
+INSERT INTO collation_tests_english_collation_varchar VALUES ('new Delhi');
+INSERT INTO collation_tests_english_collation_varchar VALUES ('new DELHI');
+INSERT INTO collation_tests_english_collation_varchar VALUES ('NEW delhi');
+INSERT INTO collation_tests_english_collation_varchar VALUES ('NEW Delhi');
+INSERT INTO collation_tests_english_collation_varchar VALUES ('NEW DELHI');
+INSERT INTO collation_tests_english_collation_varchar VALUES ('New delhi');
+INSERT INTO collation_tests_english_collation_varchar VALUES ('New Delhi');
+INSERT INTO collation_tests_english_collation_varchar VALUES ('New DELHI');
 GO
 ~~ROW COUNT: 1~~
 
@@ -31,98 +31,7 @@ GO
 ~~ROW COUNT: 1~~
 
 
-SELECT * FROM english_collation_varchar ORDER BY name;
-GO
-~~START~~
-varchar
-new delhi
-new Delhi
-new DELHI
-NEW delhi
-NEW Delhi
-NEW DELHI
-New delhi
-New Delhi
-New DELHI
-~~END~~
-
-
-SELECT * FROM english_collation_varchar WHERE name LIKE 'n%';
-GO
-~~START~~
-varchar
-new delhi
-new Delhi
-new DELHI
-NEW delhi
-NEW Delhi
-NEW DELHI
-New delhi
-New Delhi
-New DELHI
-~~END~~
-
-SELECT * FROM english_collation_varchar WHERE name LIKE 'n%i';
-GO
-~~START~~
-varchar
-new delhi
-new Delhi
-new DELHI
-NEW delhi
-NEW Delhi
-NEW DELHI
-New delhi
-New Delhi
-New DELHI
-~~END~~
-
-SELECT * FROM english_collation_varchar WHERE name LIKE 'n%D%';
-GO
-~~START~~
-varchar
-new delhi
-new Delhi
-new DELHI
-NEW delhi
-NEW Delhi
-NEW DELHI
-New delhi
-New Delhi
-New DELHI
-~~END~~
-
-SELECT * FROM english_collation_varchar WHERE name LIKE 'N%';
-GO
-~~START~~
-varchar
-new delhi
-new Delhi
-new DELHI
-NEW delhi
-NEW Delhi
-NEW DELHI
-New delhi
-New Delhi
-New DELHI
-~~END~~
-
-SELECT * FROM english_collation_varchar WHERE name LIKE 'N%i';
-GO
-~~START~~
-varchar
-new delhi
-new Delhi
-new DELHI
-NEW delhi
-NEW Delhi
-NEW DELHI
-New delhi
-New Delhi
-New DELHI
-~~END~~
-
-SELECT * FROM english_collation_varchar WHERE name LIKE 'N%D%';
+SELECT * FROM collation_tests_english_collation_varchar ORDER BY name;
 GO
 ~~START~~
 varchar
@@ -138,7 +47,7 @@ New DELHI
 ~~END~~
 
 
-SELECT * FROM english_collation_varchar WHERE name='NeW deLHi';
+SELECT * FROM collation_tests_english_collation_varchar WHERE name LIKE 'n%';
 GO
 ~~START~~
 varchar
@@ -153,7 +62,98 @@ New Delhi
 New DELHI
 ~~END~~
 
-SELECT * FROM english_collation_varchar WHERE name='NeW deLHi' COLLATE latin1_general_cs_as;
+SELECT * FROM collation_tests_english_collation_varchar WHERE name LIKE 'n%i';
+GO
+~~START~~
+varchar
+new delhi
+new Delhi
+new DELHI
+NEW delhi
+NEW Delhi
+NEW DELHI
+New delhi
+New Delhi
+New DELHI
+~~END~~
+
+SELECT * FROM collation_tests_english_collation_varchar WHERE name LIKE 'n%D%';
+GO
+~~START~~
+varchar
+new delhi
+new Delhi
+new DELHI
+NEW delhi
+NEW Delhi
+NEW DELHI
+New delhi
+New Delhi
+New DELHI
+~~END~~
+
+SELECT * FROM collation_tests_english_collation_varchar WHERE name LIKE 'N%';
+GO
+~~START~~
+varchar
+new delhi
+new Delhi
+new DELHI
+NEW delhi
+NEW Delhi
+NEW DELHI
+New delhi
+New Delhi
+New DELHI
+~~END~~
+
+SELECT * FROM collation_tests_english_collation_varchar WHERE name LIKE 'N%i';
+GO
+~~START~~
+varchar
+new delhi
+new Delhi
+new DELHI
+NEW delhi
+NEW Delhi
+NEW DELHI
+New delhi
+New Delhi
+New DELHI
+~~END~~
+
+SELECT * FROM collation_tests_english_collation_varchar WHERE name LIKE 'N%D%';
+GO
+~~START~~
+varchar
+new delhi
+new Delhi
+new DELHI
+NEW delhi
+NEW Delhi
+NEW DELHI
+New delhi
+New Delhi
+New DELHI
+~~END~~
+
+
+SELECT * FROM collation_tests_english_collation_varchar WHERE name='NeW deLHi';
+GO
+~~START~~
+varchar
+new delhi
+new Delhi
+new DELHI
+NEW delhi
+NEW Delhi
+NEW DELHI
+New delhi
+New Delhi
+New DELHI
+~~END~~
+
+SELECT * FROM collation_tests_english_collation_varchar WHERE name='NeW deLHi' COLLATE latin1_general_cs_as;
 GO
 ~~START~~
 varchar
@@ -161,18 +161,18 @@ varchar
 
 
 -- table for inner join
-CREATE TABLE english_collation_varchar_innerjoin(name_same_cp varchar(20) COLLATE latin1_general_ci_as, 
+CREATE TABLE collation_tests_english_collation_varchar_innerjoin(name_same_cp varchar(20) COLLATE latin1_general_ci_as, 
 name_diff_cp varchar(20) COLLATE sql_latin1_general_cp1250_cs_as);
 GO
-INSERT INTO english_collation_varchar_innerjoin VALUES ('new delhi', 'new delhi');
-INSERT INTO english_collation_varchar_innerjoin VALUES ('new Delhi', 'new Delhi');
-INSERT INTO english_collation_varchar_innerjoin VALUES ('new DELHI', 'new DELHI');
-INSERT INTO english_collation_varchar_innerjoin VALUES ('NEW delhi', 'NEW delhi');
-INSERT INTO english_collation_varchar_innerjoin VALUES ('NEW Delhi', 'NEW Delhi');
-INSERT INTO english_collation_varchar_innerjoin VALUES ('NEW DELHI', 'NEW DELHI');
-INSERT INTO english_collation_varchar_innerjoin VALUES ('New delhi', 'New delhi');
-INSERT INTO english_collation_varchar_innerjoin VALUES ('New Delhi', 'New Delhi');
-INSERT INTO english_collation_varchar_innerjoin VALUES ('New DELHI', 'New DELHI');
+INSERT INTO collation_tests_english_collation_varchar_innerjoin VALUES ('new delhi', 'new delhi');
+INSERT INTO collation_tests_english_collation_varchar_innerjoin VALUES ('new Delhi', 'new Delhi');
+INSERT INTO collation_tests_english_collation_varchar_innerjoin VALUES ('new DELHI', 'new DELHI');
+INSERT INTO collation_tests_english_collation_varchar_innerjoin VALUES ('NEW delhi', 'NEW delhi');
+INSERT INTO collation_tests_english_collation_varchar_innerjoin VALUES ('NEW Delhi', 'NEW Delhi');
+INSERT INTO collation_tests_english_collation_varchar_innerjoin VALUES ('NEW DELHI', 'NEW DELHI');
+INSERT INTO collation_tests_english_collation_varchar_innerjoin VALUES ('New delhi', 'New delhi');
+INSERT INTO collation_tests_english_collation_varchar_innerjoin VALUES ('New Delhi', 'New Delhi');
+INSERT INTO collation_tests_english_collation_varchar_innerjoin VALUES ('New DELHI', 'New DELHI');
 GO
 ~~ROW COUNT: 1~~
 
@@ -194,9 +194,9 @@ GO
 
 
 CREATE VIEW [INNER JOIN SAME CP] AS
-SELECT english_collation_varchar.name AS name, english_collation_varchar_innerjoin.name_same_cp AS same_name
-FROM english_collation_varchar
-INNER JOIN english_collation_varchar_innerjoin ON english_collation_varchar.name = english_collation_varchar_innerjoin.name_same_cp;
+SELECT collation_tests_english_collation_varchar.name AS name, collation_tests_english_collation_varchar_innerjoin.name_same_cp AS same_name
+FROM collation_tests_english_collation_varchar
+INNER JOIN collation_tests_english_collation_varchar_innerjoin ON collation_tests_english_collation_varchar.name = collation_tests_english_collation_varchar_innerjoin.name_same_cp;
 GO
 SELECT * FROM [INNER JOIN SAME CP] WHERE same_name = 'new DelHI';
 GO
@@ -287,9 +287,9 @@ New DELHI#!#New DELHI
 
 
 CREATE VIEW [INNER JOIN DIFF CP] AS
-SELECT english_collation_varchar.name AS name , english_collation_varchar_innerjoin.name_diff_cp AS diff_name
-FROM english_collation_varchar
-INNER JOIN english_collation_varchar_innerjoin ON english_collation_varchar.name = english_collation_varchar_innerjoin.name_diff_cp;
+SELECT collation_tests_english_collation_varchar.name AS name , collation_tests_english_collation_varchar_innerjoin.name_diff_cp AS diff_name
+FROM collation_tests_english_collation_varchar
+INNER JOIN collation_tests_english_collation_varchar_innerjoin ON collation_tests_english_collation_varchar.name = collation_tests_english_collation_varchar_innerjoin.name_diff_cp;
 GO
 SELECT * FROM [INNER JOIN DIFF CP] WHERE diff_name = 'NEW DELHI';
 GO
@@ -305,28 +305,28 @@ GO
 DROP VIEW [INNER JOIN DIFF CP]
 GO
 
-DROP TABLE english_collation_varchar_innerjoin;
+DROP TABLE collation_tests_english_collation_varchar_innerjoin;
 GO
 
-DROP TABLE english_collation_varchar;
+DROP TABLE collation_tests_english_collation_varchar;
 GO
 
 -- table for computed columns on string
 -- 1st column is for the actual string
 -- 2nd column is for the substring
-CREATE TABLE english_collation_varchar_computed_columns(name_same varchar(20) COLLATE latin1_general_ci_as, 
+CREATE TABLE collation_tests_english_collation_varchar_computed_columns(name_same varchar(20) COLLATE latin1_general_ci_as, 
 substr AS SUBSTRING (name_same, 1, 5));
 GO
 
-INSERT INTO english_collation_varchar_computed_columns VALUES ('new delhi');
-INSERT INTO english_collation_varchar_computed_columns VALUES ('new Delhi');
-INSERT INTO english_collation_varchar_computed_columns VALUES ('new DELHI');
-INSERT INTO english_collation_varchar_computed_columns VALUES ('NEW delhi');
-INSERT INTO english_collation_varchar_computed_columns VALUES ('NEW Delhi');
-INSERT INTO english_collation_varchar_computed_columns VALUES ('NEW DELHI');
-INSERT INTO english_collation_varchar_computed_columns VALUES ('New delhi');
-INSERT INTO english_collation_varchar_computed_columns VALUES ('New Delhi');
-INSERT INTO english_collation_varchar_computed_columns VALUES ('New DELHI');
+INSERT INTO collation_tests_english_collation_varchar_computed_columns VALUES ('new delhi');
+INSERT INTO collation_tests_english_collation_varchar_computed_columns VALUES ('new Delhi');
+INSERT INTO collation_tests_english_collation_varchar_computed_columns VALUES ('new DELHI');
+INSERT INTO collation_tests_english_collation_varchar_computed_columns VALUES ('NEW delhi');
+INSERT INTO collation_tests_english_collation_varchar_computed_columns VALUES ('NEW Delhi');
+INSERT INTO collation_tests_english_collation_varchar_computed_columns VALUES ('NEW DELHI');
+INSERT INTO collation_tests_english_collation_varchar_computed_columns VALUES ('New delhi');
+INSERT INTO collation_tests_english_collation_varchar_computed_columns VALUES ('New Delhi');
+INSERT INTO collation_tests_english_collation_varchar_computed_columns VALUES ('New DELHI');
 GO
 ~~ROW COUNT: 1~~
 
@@ -347,7 +347,7 @@ GO
 ~~ROW COUNT: 1~~
 
 
-SELECT substr FROM english_collation_varchar_computed_columns;
+SELECT substr FROM collation_tests_english_collation_varchar_computed_columns;
 GO
 ~~START~~
 varchar
@@ -362,6 +362,23 @@ New D
 New D
 ~~END~~
 
+
+SELECT substr FROM collation_tests_english_collation_varchar_computed_columns WHERE substr='NEw d';
+GO
+~~START~~
+varchar
+new d
+new D
+new D
+NEW d
+NEW D
+NEW D
+New d
+New D
+New D
+~~END~~
+
+
 SELECT 
     name, 
     collation_name 
@@ -374,24 +391,22 @@ substr#!#bbf_unicode_cp1_ci_as
 ~~END~~
 
 
---SELECT cast ( case when collation_name = 'latin1_general_ci_as' then 1 else 0 end as int) as cmp from sys.all_columns where name = 'substr';
---GO
-DROP TABLE english_collation_varchar_computed_columns;
+DROP TABLE collation_tests_english_collation_varchar_computed_columns;
 GO
 
 --nvarchar
-CREATE TABLE english_collation_nvarchar (name nvarchar(20) COLLATE 
+CREATE TABLE collation_tests_english_collation_nvarchar (name nvarchar(20) COLLATE 
 latin1_general_ci_as);
 GO
-INSERT INTO english_collation_nvarchar VALUES ('new delhi');
-INSERT INTO english_collation_nvarchar VALUES ('new Delhi');
-INSERT INTO english_collation_nvarchar VALUES ('new DELHI');
-INSERT INTO english_collation_nvarchar VALUES ('NEW delhi');
-INSERT INTO english_collation_nvarchar VALUES ('NEW Delhi');
-INSERT INTO english_collation_nvarchar VALUES ('NEW DELHI');
-INSERT INTO english_collation_nvarchar VALUES ('New delhi');
-INSERT INTO english_collation_nvarchar VALUES ('New Delhi');
-INSERT INTO english_collation_nvarchar VALUES ('New DELHI');
+INSERT INTO collation_tests_english_collation_nvarchar VALUES ('new delhi');
+INSERT INTO collation_tests_english_collation_nvarchar VALUES ('new Delhi');
+INSERT INTO collation_tests_english_collation_nvarchar VALUES ('new DELHI');
+INSERT INTO collation_tests_english_collation_nvarchar VALUES ('NEW delhi');
+INSERT INTO collation_tests_english_collation_nvarchar VALUES ('NEW Delhi');
+INSERT INTO collation_tests_english_collation_nvarchar VALUES ('NEW DELHI');
+INSERT INTO collation_tests_english_collation_nvarchar VALUES ('New delhi');
+INSERT INTO collation_tests_english_collation_nvarchar VALUES ('New Delhi');
+INSERT INTO collation_tests_english_collation_nvarchar VALUES ('New DELHI');
 GO
 ~~ROW COUNT: 1~~
 
@@ -413,7 +428,7 @@ GO
 
 
 
-SELECT * FROM english_collation_nvarchar ORDER BY name;
+SELECT * FROM collation_tests_english_collation_nvarchar ORDER BY name;
 GO
 ~~START~~
 nvarchar
@@ -429,7 +444,7 @@ New DELHI
 ~~END~~
 
 
-SELECT * FROM english_collation_nvarchar WHERE name LIKE 'n%';
+SELECT * FROM collation_tests_english_collation_nvarchar WHERE name LIKE 'n%';
 GO
 ~~START~~
 nvarchar
@@ -444,7 +459,7 @@ New Delhi
 New DELHI
 ~~END~~
 
-SELECT * FROM english_collation_nvarchar WHERE name LIKE 'n%i';
+SELECT * FROM collation_tests_english_collation_nvarchar WHERE name LIKE 'n%i';
 GO
 ~~START~~
 nvarchar
@@ -459,7 +474,7 @@ New Delhi
 New DELHI
 ~~END~~
 
-SELECT * FROM english_collation_nvarchar WHERE name LIKE 'n%D%';
+SELECT * FROM collation_tests_english_collation_nvarchar WHERE name LIKE 'n%D%';
 GO
 ~~START~~
 nvarchar
@@ -474,7 +489,7 @@ New Delhi
 New DELHI
 ~~END~~
 
-SELECT * FROM english_collation_nvarchar WHERE name LIKE 'N%';
+SELECT * FROM collation_tests_english_collation_nvarchar WHERE name LIKE 'N%';
 GO
 ~~START~~
 nvarchar
@@ -489,7 +504,7 @@ New Delhi
 New DELHI
 ~~END~~
 
-SELECT * FROM english_collation_nvarchar WHERE name LIKE 'N%i';
+SELECT * FROM collation_tests_english_collation_nvarchar WHERE name LIKE 'N%i';
 GO
 ~~START~~
 nvarchar
@@ -504,7 +519,7 @@ New Delhi
 New DELHI
 ~~END~~
 
-SELECT * FROM english_collation_nvarchar WHERE name LIKE 'N%D%';
+SELECT * FROM collation_tests_english_collation_nvarchar WHERE name LIKE 'N%D%';
 GO
 ~~START~~
 nvarchar
@@ -520,7 +535,7 @@ New DELHI
 ~~END~~
 
 
-SELECT * FROM english_collation_nvarchar WHERE name='NeW deLHi';
+SELECT * FROM collation_tests_english_collation_nvarchar WHERE name='NeW deLHi';
 GO
 ~~START~~
 nvarchar
@@ -535,29 +550,29 @@ New Delhi
 New DELHI
 ~~END~~
 
-SELECT * FROM english_collation_nvarchar WHERE name='NeW deLHi' COLLATE latin1_general_cs_as;
+SELECT * FROM collation_tests_english_collation_nvarchar WHERE name='NeW deLHi' COLLATE latin1_general_cs_as;
 GO
 ~~START~~
 nvarchar
 ~~END~~
 
 
-DROP TABLE english_collation_nvarchar;
+DROP TABLE collation_tests_english_collation_nvarchar;
 GO
 
 --char
-CREATE TABLE english_collation_char (name char(20) COLLATE 
+CREATE TABLE collation_tests_english_collation_char (name char(20) COLLATE 
 latin1_general_ci_as);
 GO
-INSERT INTO english_collation_char VALUES ('new delhi');
-INSERT INTO english_collation_char VALUES ('new Delhi');
-INSERT INTO english_collation_char VALUES ('new DELHI');
-INSERT INTO english_collation_char VALUES ('NEW delhi');
-INSERT INTO english_collation_char VALUES ('NEW Delhi');
-INSERT INTO english_collation_char VALUES ('NEW DELHI');
-INSERT INTO english_collation_char VALUES ('New delhi');
-INSERT INTO english_collation_char VALUES ('New Delhi');
-INSERT INTO english_collation_char VALUES ('New DELHI');
+INSERT INTO collation_tests_english_collation_char VALUES ('new delhi');
+INSERT INTO collation_tests_english_collation_char VALUES ('new Delhi');
+INSERT INTO collation_tests_english_collation_char VALUES ('new DELHI');
+INSERT INTO collation_tests_english_collation_char VALUES ('NEW delhi');
+INSERT INTO collation_tests_english_collation_char VALUES ('NEW Delhi');
+INSERT INTO collation_tests_english_collation_char VALUES ('NEW DELHI');
+INSERT INTO collation_tests_english_collation_char VALUES ('New delhi');
+INSERT INTO collation_tests_english_collation_char VALUES ('New Delhi');
+INSERT INTO collation_tests_english_collation_char VALUES ('New DELHI');
 GO
 ~~ROW COUNT: 1~~
 
@@ -579,7 +594,7 @@ GO
 
 
 
-SELECT * FROM english_collation_char ORDER BY name;
+SELECT * FROM collation_tests_english_collation_char ORDER BY name;
 GO
 ~~START~~
 char
@@ -595,7 +610,7 @@ New DELHI
 ~~END~~
 
 
-SELECT * FROM english_collation_char WHERE name LIKE 'n%';
+SELECT * FROM collation_tests_english_collation_char WHERE name LIKE 'n%';
 GO
 ~~START~~
 char
@@ -610,7 +625,7 @@ New Delhi
 New DELHI           
 ~~END~~
 
-SELECT * FROM english_collation_char WHERE name LIKE 'n%i';
+SELECT * FROM collation_tests_english_collation_char WHERE name LIKE 'n%i';
 GO
 ~~START~~
 char
@@ -625,7 +640,7 @@ New Delhi
 New DELHI           
 ~~END~~
 
-SELECT * FROM english_collation_char WHERE name LIKE 'n%D%';
+SELECT * FROM collation_tests_english_collation_char WHERE name LIKE 'n%D%';
 GO
 ~~START~~
 char
@@ -640,7 +655,7 @@ New Delhi
 New DELHI           
 ~~END~~
 
-SELECT * FROM english_collation_char WHERE name LIKE 'N%';
+SELECT * FROM collation_tests_english_collation_char WHERE name LIKE 'N%';
 GO
 ~~START~~
 char
@@ -655,7 +670,7 @@ New Delhi
 New DELHI           
 ~~END~~
 
-SELECT * FROM english_collation_char WHERE name LIKE 'N%i';
+SELECT * FROM collation_tests_english_collation_char WHERE name LIKE 'N%i';
 GO
 ~~START~~
 char
@@ -670,7 +685,7 @@ New Delhi
 New DELHI           
 ~~END~~
 
-SELECT * FROM english_collation_char WHERE name LIKE 'N%D%';
+SELECT * FROM collation_tests_english_collation_char WHERE name LIKE 'N%D%';
 GO
 ~~START~~
 char
@@ -686,7 +701,7 @@ New DELHI
 ~~END~~
 
 
-SELECT * FROM english_collation_char WHERE name='NeW deLHi';
+SELECT * FROM collation_tests_english_collation_char WHERE name='NeW deLHi';
 GO
 ~~START~~
 char
@@ -701,29 +716,29 @@ New Delhi
 New DELHI           
 ~~END~~
 
-SELECT * FROM english_collation_char WHERE name='NeW deLHi' COLLATE latin1_general_cs_as;
+SELECT * FROM collation_tests_english_collation_char WHERE name='NeW deLHi' COLLATE latin1_general_cs_as;
 GO
 ~~START~~
 char
 ~~END~~
 
 
-DROP TABLE english_collation_char;
+DROP TABLE collation_tests_english_collation_char;
 GO
 
 --nchar
-CREATE TABLE english_collation_nchar (name nchar(20) COLLATE 
+CREATE TABLE collation_tests_english_collation_nchar (name nchar(20) COLLATE 
 latin1_general_ci_as);
 GO
-INSERT INTO english_collation_nchar VALUES ('new delhi');
-INSERT INTO english_collation_nchar VALUES ('new Delhi');
-INSERT INTO english_collation_nchar VALUES ('new DELHI');
-INSERT INTO english_collation_nchar VALUES ('NEW delhi');
-INSERT INTO english_collation_nchar VALUES ('NEW Delhi');
-INSERT INTO english_collation_nchar VALUES ('NEW DELHI');
-INSERT INTO english_collation_nchar VALUES ('New delhi');
-INSERT INTO english_collation_nchar VALUES ('New Delhi');
-INSERT INTO english_collation_nchar VALUES ('New DELHI');
+INSERT INTO collation_tests_english_collation_nchar VALUES ('new delhi');
+INSERT INTO collation_tests_english_collation_nchar VALUES ('new Delhi');
+INSERT INTO collation_tests_english_collation_nchar VALUES ('new DELHI');
+INSERT INTO collation_tests_english_collation_nchar VALUES ('NEW delhi');
+INSERT INTO collation_tests_english_collation_nchar VALUES ('NEW Delhi');
+INSERT INTO collation_tests_english_collation_nchar VALUES ('NEW DELHI');
+INSERT INTO collation_tests_english_collation_nchar VALUES ('New delhi');
+INSERT INTO collation_tests_english_collation_nchar VALUES ('New Delhi');
+INSERT INTO collation_tests_english_collation_nchar VALUES ('New DELHI');
 GO
 ~~ROW COUNT: 1~~
 
@@ -745,7 +760,7 @@ GO
 
 
 
-SELECT * FROM english_collation_nchar ORDER BY name;
+SELECT * FROM collation_tests_english_collation_nchar ORDER BY name;
 GO
 ~~START~~
 nchar
@@ -761,7 +776,7 @@ New DELHI
 ~~END~~
 
 
-SELECT * FROM english_collation_nchar WHERE name LIKE 'n%';
+SELECT * FROM collation_tests_english_collation_nchar WHERE name LIKE 'n%';
 GO
 ~~START~~
 nchar
@@ -776,7 +791,7 @@ New Delhi
 New DELHI           
 ~~END~~
 
-SELECT * FROM english_collation_nchar WHERE name LIKE 'n%i';
+SELECT * FROM collation_tests_english_collation_nchar WHERE name LIKE 'n%i';
 GO
 ~~START~~
 nchar
@@ -791,7 +806,7 @@ New Delhi
 New DELHI           
 ~~END~~
 
-SELECT * FROM english_collation_nchar WHERE name LIKE 'n%D%';
+SELECT * FROM collation_tests_english_collation_nchar WHERE name LIKE 'n%D%';
 GO
 ~~START~~
 nchar
@@ -806,7 +821,7 @@ New Delhi
 New DELHI           
 ~~END~~
 
-SELECT * FROM english_collation_nchar WHERE name LIKE 'N%';
+SELECT * FROM collation_tests_english_collation_nchar WHERE name LIKE 'N%';
 GO
 ~~START~~
 nchar
@@ -821,7 +836,7 @@ New Delhi
 New DELHI           
 ~~END~~
 
-SELECT * FROM english_collation_nchar WHERE name LIKE 'N%i';
+SELECT * FROM collation_tests_english_collation_nchar WHERE name LIKE 'N%i';
 GO
 ~~START~~
 nchar
@@ -836,7 +851,7 @@ New Delhi
 New DELHI           
 ~~END~~
 
-SELECT * FROM english_collation_nchar WHERE name LIKE 'N%D%';
+SELECT * FROM collation_tests_english_collation_nchar WHERE name LIKE 'N%D%';
 GO
 ~~START~~
 nchar
@@ -852,7 +867,7 @@ New DELHI
 ~~END~~
 
 
-SELECT * FROM english_collation_nchar WHERE name='NeW deLHi';
+SELECT * FROM collation_tests_english_collation_nchar WHERE name='NeW deLHi';
 GO
 ~~START~~
 nchar
@@ -867,29 +882,29 @@ New Delhi
 New DELHI           
 ~~END~~
 
-SELECT * FROM english_collation_nchar WHERE name='NeW deLHi' COLLATE latin1_general_cs_as;
+SELECT * FROM collation_tests_english_collation_nchar WHERE name='NeW deLHi' COLLATE latin1_general_cs_as;
 GO
 ~~START~~
 nchar
 ~~END~~
 
 
-DROP TABLE english_collation_nchar;
+DROP TABLE collation_tests_english_collation_nchar;
 GO
 
 --text
-CREATE TABLE english_collation_text (name text COLLATE 
+CREATE TABLE collation_tests_english_collation_text (name text COLLATE 
 latin1_general_ci_as);
 GO
-INSERT INTO english_collation_text VALUES ('new delhi');
-INSERT INTO english_collation_text VALUES ('new Delhi');
-INSERT INTO english_collation_text VALUES ('new DELHI');
-INSERT INTO english_collation_text VALUES ('NEW delhi');
-INSERT INTO english_collation_text VALUES ('NEW Delhi');
-INSERT INTO english_collation_text VALUES ('NEW DELHI');
-INSERT INTO english_collation_text VALUES ('New delhi');
-INSERT INTO english_collation_text VALUES ('New Delhi');
-INSERT INTO english_collation_text VALUES ('New DELHI');
+INSERT INTO collation_tests_english_collation_text VALUES ('new delhi');
+INSERT INTO collation_tests_english_collation_text VALUES ('new Delhi');
+INSERT INTO collation_tests_english_collation_text VALUES ('new DELHI');
+INSERT INTO collation_tests_english_collation_text VALUES ('NEW delhi');
+INSERT INTO collation_tests_english_collation_text VALUES ('NEW Delhi');
+INSERT INTO collation_tests_english_collation_text VALUES ('NEW DELHI');
+INSERT INTO collation_tests_english_collation_text VALUES ('New delhi');
+INSERT INTO collation_tests_english_collation_text VALUES ('New Delhi');
+INSERT INTO collation_tests_english_collation_text VALUES ('New DELHI');
 GO
 ~~ROW COUNT: 1~~
 
@@ -910,7 +925,7 @@ GO
 ~~ROW COUNT: 1~~
 
 
-SELECT * FROM english_collation_text ORDER BY name;
+SELECT * FROM collation_tests_english_collation_text ORDER BY name;
 GO
 ~~START~~
 text
@@ -926,7 +941,7 @@ New DELHI
 ~~END~~
 
 
-SELECT * FROM english_collation_text WHERE name LIKE 'n%';
+SELECT * FROM collation_tests_english_collation_text WHERE name LIKE 'n%';
 GO
 ~~START~~
 text
@@ -941,7 +956,7 @@ New Delhi
 New DELHI
 ~~END~~
 
-SELECT * FROM english_collation_text WHERE name LIKE 'n%i';
+SELECT * FROM collation_tests_english_collation_text WHERE name LIKE 'n%i';
 GO
 ~~START~~
 text
@@ -956,7 +971,7 @@ New Delhi
 New DELHI
 ~~END~~
 
-SELECT * FROM english_collation_text WHERE name LIKE 'n%D%';
+SELECT * FROM collation_tests_english_collation_text WHERE name LIKE 'n%D%';
 GO
 ~~START~~
 text
@@ -971,7 +986,7 @@ New Delhi
 New DELHI
 ~~END~~
 
-SELECT * FROM english_collation_text WHERE name LIKE 'N%';
+SELECT * FROM collation_tests_english_collation_text WHERE name LIKE 'N%';
 GO
 ~~START~~
 text
@@ -986,7 +1001,7 @@ New Delhi
 New DELHI
 ~~END~~
 
-SELECT * FROM english_collation_text WHERE name LIKE 'N%i';
+SELECT * FROM collation_tests_english_collation_text WHERE name LIKE 'N%i';
 GO
 ~~START~~
 text
@@ -1001,7 +1016,7 @@ New Delhi
 New DELHI
 ~~END~~
 
-SELECT * FROM english_collation_text WHERE name LIKE 'N%D%';
+SELECT * FROM collation_tests_english_collation_text WHERE name LIKE 'N%D%';
 GO
 ~~START~~
 text
@@ -1017,7 +1032,7 @@ New DELHI
 ~~END~~
 
 
-SELECT * FROM english_collation_text WHERE name='NeW deLHi';
+SELECT * FROM collation_tests_english_collation_text WHERE name='NeW deLHi';
 GO
 ~~START~~
 text
@@ -1032,33 +1047,33 @@ New Delhi
 New DELHI
 ~~END~~
 
-SELECT * FROM english_collation_text WHERE name='NeW deLHi' COLLATE latin1_general_cs_as;
+SELECT * FROM collation_tests_english_collation_text WHERE name='NeW deLHi' COLLATE latin1_general_cs_as;
 GO
 ~~START~~
 text
 ~~END~~
 
 
-DROP TABLE english_collation_text;
+DROP TABLE collation_tests_english_collation_text;
 GO
 
 
 --test for primary key
-CREATE TABLE english_collation_primary_key(name varchar(20) COLLATE latin1_general_ci_as NOT NULL PRIMARY KEY);
+CREATE TABLE collation_tests_english_collation_primary_key(name varchar(20) COLLATE latin1_general_ci_as NOT NULL PRIMARY KEY);
 GO
 
-INSERT INTO english_collation_primary_key VALUES ('new Delhi');
+INSERT INTO collation_tests_english_collation_primary_key VALUES ('new Delhi');
 GO
 ~~ROW COUNT: 1~~
 
-INSERT INTO english_collation_primary_key VALUES ('neW DElhi');
+INSERT INTO collation_tests_english_collation_primary_key VALUES ('neW DElhi');
 GO
 ~~ERROR (Code: 2627)~~
 
-~~ERROR (Message: duplicate key value violates unique constraint "english_collation_primary_key_pkey")~~
+~~ERROR (Message: duplicate key value violates unique constraint "collation_tests_english_collation_primary_key_pkey")~~
 
 
-SELECT * FROM english_collation_primary_key ORDER BY name;
+SELECT * FROM collation_tests_english_collation_primary_key ORDER BY name;
 GO
 ~~START~~
 varchar
@@ -1066,7 +1081,7 @@ new Delhi
 ~~END~~
 
 
-SELECT * FROM english_collation_primary_key WHERE name LIKE 'NE%h%';
+SELECT * FROM collation_tests_english_collation_primary_key WHERE name LIKE 'NE%h%';
 GO
 ~~START~~
 varchar
@@ -1074,19 +1089,19 @@ new Delhi
 ~~END~~
 
 
-SELECT * FROM english_collation_primary_key WHERE name = 'NeW deLHi';
+SELECT * FROM collation_tests_english_collation_primary_key WHERE name = 'NeW deLHi';
 GO
 ~~START~~
 varchar
 new Delhi
 ~~END~~
 
-SELECT * FROM english_collation_primary_key WHERE name='NeW deLHi' COLLATE latin1_general_cs_as;
+SELECT * FROM collation_tests_english_collation_primary_key WHERE name='NeW deLHi' COLLATE latin1_general_cs_as;
 GO
 ~~START~~
 varchar
 ~~END~~
 
 
-DROP TABLE english_collation_primary_key;
+DROP TABLE collation_tests_english_collation_primary_key;
 GO
