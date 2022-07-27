@@ -1,0 +1,233 @@
+use master
+go
+
+-- A NULL parameter should return NULL
+select INDEXPROPERTY(OBJECT_ID('indexproperty_vu_prepare_table1'), NULL, 'IsClustered')
+go
+~~START~~
+int
+<NULL>
+~~END~~
+
+
+-- Invalid value for 'property' parameter should return NULL
+select INDEXPROPERTY(OBJECT_ID('indexproperty_vu_prepare_table1'), 'indexproperty_vu_prepare_table1_pkey', 'PropertyDoesNotExist')
+go
+~~START~~
+int
+<NULL>
+~~END~~
+
+
+-- case insensitive invocation of 'property' parameter with leading & trailing whitespace - should work as normal
+select INDEXPROPERTY(OBJECT_ID('indexproperty_vu_prepare_table1'), '     indexproperty_vu_prepare_table1_pkey  ', '     InDexDepTh     ')
+go
+~~START~~
+int
+0
+~~END~~
+
+
+-- test all other valid values of the 'property' parameter, except 'IndexID' as it's not static, on 'indexproperty_vu_prepare_table1' table index
+-- some parameters will have leading/trailing whitespace & case insensitive invocation
+select INDEXPROPERTY(OBJECT_ID('indexproperty_vu_prepare_table1'), 'indexproperty_vu_prepare_table1_pkey', 'IndexFillFactor')
+go
+~~START~~
+int
+0
+~~END~~
+
+select INDEXPROPERTY(OBJECT_ID('indexproperty_vu_prepare_table1'), 'indexproperty_vu_prepare_table1_pkey', 'IsAutoStatistics')
+go
+~~START~~
+int
+0
+~~END~~
+
+select INDEXPROPERTY(OBJECT_ID('indexproperty_vu_prepare_table1'), 'indexproperty_vu_prepare_table1_pkey', 'ISCLUSTERED')
+go
+~~START~~
+int
+0
+~~END~~
+
+select INDEXPROPERTY(OBJECT_ID('indexproperty_vu_prepare_table1'), '   indexproperty_vu_prepare_table1_pkey', 'isdisabled')
+go
+~~START~~
+int
+0
+~~END~~
+
+select INDEXPROPERTY(OBJECT_ID('indexproperty_vu_prepare_table1'), 'indexproperty_vu_prepare_table1_pkey', 'IsFulltextKey')
+go
+~~START~~
+int
+0
+~~END~~
+
+select INDEXPROPERTY(OBJECT_ID('indexproperty_vu_prepare_table1'), 'indexproperty_vu_prepare_table1_pkey', 'IsHypothetical')
+go
+~~START~~
+int
+0
+~~END~~
+
+select INDEXPROPERTY(OBJECT_ID('indexproperty_vu_prepare_table1'), 'indexproperty_vu_prepare_table1_pkey   ', 'IsPadIndex')
+go
+~~START~~
+int
+0
+~~END~~
+
+select INDEXPROPERTY(OBJECT_ID('indexproperty_vu_prepare_table1'), 'indexproperty_vu_prepare_table1_pkey', 'IsPageLockDisallowed')
+go
+~~START~~
+int
+0
+~~END~~
+
+select INDEXPROPERTY(OBJECT_ID('indexproperty_vu_prepare_table1'), 'indexproperty_vu_prepare_table1_pkey', 'IsRowLockDisallowed   ')
+go
+~~START~~
+int
+0
+~~END~~
+
+select INDEXPROPERTY(OBJECT_ID('indexproperty_vu_prepare_table1'), 'indexproperty_vu_prepare_table1_pkey', '   IsStatistics')
+go
+~~START~~
+int
+0
+~~END~~
+
+select INDEXPROPERTY(OBJECT_ID('indexproperty_vu_prepare_table1'), 'indexproperty_vu_prepare_table1_pkey', 'ISunique')
+go
+~~START~~
+int
+1
+~~END~~
+
+select INDEXPROPERTY(OBJECT_ID('indexproperty_vu_prepare_table1'), 'indexproperty_vu_prepare_table1_pkey', 'IsColumnstore')
+go
+~~START~~
+int
+0
+~~END~~
+
+select INDEXPROPERTY(OBJECT_ID('indexproperty_vu_prepare_table1'), 'indexproperty_vu_prepare_table1_pkey', 'IsOptimizedForSequentialKey')
+go
+~~START~~
+int
+0
+~~END~~
+
+
+-- test all other valid values of the 'property' parameter, except 'IndexID' as it's not static, on 'indexproperty_vu_prepare_table2' table index
+-- some parameters will have leading/trailing whitespace & case insensitive invocation
+select INDEXPROPERTY(OBJECT_ID('indexproperty_vu_prepare_table2'), (select name from sys.indexes where name like 'indexproperty_vu_prepare_idx%'), 'IndexFillFactor')
+go
+~~START~~
+int
+0
+~~END~~
+
+select INDEXPROPERTY(OBJECT_ID('indexproperty_vu_prepare_table2'), (select name from sys.indexes where name like 'indexproperty_vu_prepare_idx%'), 'IsAutoStatistics')
+go
+~~START~~
+int
+0
+~~END~~
+
+select INDEXPROPERTY(OBJECT_ID('indexproperty_vu_prepare_table2'), (select name from sys.indexes where name like 'indexproperty_vu_prepare_idx%'), 'ISCLUSTERED')
+go
+~~START~~
+int
+0
+~~END~~
+
+select INDEXPROPERTY(OBJECT_ID('indexproperty_vu_prepare_table2'), (select name from sys.indexes where name like 'indexproperty_vu_prepare_idx%'), 'isdisabled')
+go
+~~START~~
+int
+0
+~~END~~
+
+select INDEXPROPERTY(OBJECT_ID('indexproperty_vu_prepare_table2'), (select name from sys.indexes where name like 'indexproperty_vu_prepare_idx%'), 'IsFulltextKey')
+go
+~~START~~
+int
+0
+~~END~~
+
+select INDEXPROPERTY(OBJECT_ID('indexproperty_vu_prepare_table2'), (select name from sys.indexes where name like 'indexproperty_vu_prepare_idx%'), 'IsHypothetical')
+go
+~~START~~
+int
+0
+~~END~~
+
+select INDEXPROPERTY(OBJECT_ID('indexproperty_vu_prepare_table2'), (select name from sys.indexes where name like 'indexproperty_vu_prepare_idx%'), 'IsPadIndex')
+go
+~~START~~
+int
+0
+~~END~~
+
+select INDEXPROPERTY(OBJECT_ID('indexproperty_vu_prepare_table2'), (select name from sys.indexes where name like 'indexproperty_vu_prepare_idx%'), 'IsPageLockDisallowed')
+go
+~~START~~
+int
+0
+~~END~~
+
+select INDEXPROPERTY(OBJECT_ID('indexproperty_vu_prepare_table2'), (select name from sys.indexes where name like 'indexproperty_vu_prepare_idx%'), 'IsRowLockDisallowed   ')
+go
+~~START~~
+int
+0
+~~END~~
+
+select INDEXPROPERTY(OBJECT_ID('indexproperty_vu_prepare_table2'), (select name from sys.indexes where name like 'indexproperty_vu_prepare_idx%'), '   IsStatistics')
+go
+~~START~~
+int
+0
+~~END~~
+
+select INDEXPROPERTY(OBJECT_ID('indexproperty_vu_prepare_table2'), (select name from sys.indexes where name like 'indexproperty_vu_prepare_idx%'), 'ISunique')
+go
+~~START~~
+int
+1
+~~END~~
+
+select INDEXPROPERTY(OBJECT_ID('indexproperty_vu_prepare_table2'), (select name from sys.indexes where name like 'indexproperty_vu_prepare_idx%'), 'IsColumnstore')
+go
+~~START~~
+int
+0
+~~END~~
+
+select INDEXPROPERTY(OBJECT_ID('indexproperty_vu_prepare_table2'), (select name from sys.indexes where name like 'indexproperty_vu_prepare_idx%'), 'IsOptimizedForSequentialKey')
+go
+~~START~~
+int
+0
+~~END~~
+
+
+exec sys_indexproperty_vu_prepare_proc
+go
+~~START~~
+int
+0
+~~END~~
+
+
+select sys_indexproperty_vu_prepare_func()
+go
+~~START~~
+int
+1
+~~END~~
+

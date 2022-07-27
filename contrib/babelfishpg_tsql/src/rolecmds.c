@@ -50,6 +50,8 @@
 #include "session.h"
 #include "pltsql.h"
 
+#include <ctype.h>
+
 static void drop_bbf_authid_login_ext(ObjectAccessType access,
 										Oid classId,
 										Oid roleid,
@@ -729,6 +731,18 @@ suser_id(PG_FUNCTION_ARGS)
 		ret = GetSessionUserId();
 	else
 	{
+		/* Strip trailing whitespace to mimic SQL Server behaviour */
+		int i;
+		i = strlen(login);
+		while (i > 0 && isspace((unsigned char) login[i - 1]))
+			login[--i] = '\0';
+	
+		/* Convert login to lower-case */
+		for (i = 0; login[i]; i++)
+		{
+			login[i] = tolower(login[i]);
+		}
+			
 		/* Check if it is a role and get the oid */
 		auth_tuple = SearchSysCache1(AUTHNAME, CStringGetDatum(login));
 		if (!HeapTupleIsValid(auth_tuple))

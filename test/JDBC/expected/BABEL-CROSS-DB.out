@@ -2,12 +2,29 @@
 USE MASTER;
 GO
 
+CREATE SCHEMA myschema;
+GO
+
 CREATE TABLE dbo.master_t1 (id int identity, a int);
 GO
 
 CREATE PROCEDURE dbo.master_p1
 AS
 SELECT a FROM dbo.master_t1;
+GO
+
+CREATE TABLE myschema.tab1( a int);
+GO
+ 
+CREATE PROCEDURE myschema.proc1
+AS
+INSERT INTO tab1 values(1);
+SELECT * from tab1;
+GO
+
+CREATE PROCEDURE myschema.proc2
+AS
+CREATE TABLE tab1(a int, b int);
 GO
 
 CREATE PROCEDURE dbo.master_p2
@@ -55,7 +72,7 @@ int#!#int
 ~~END~~
 
 
--- Expects error due to incorrect schema resolution in BBF
+-- TODO: BABEL-3403 Expects error due to incorrect schema resolution when the object inside the procedure is schema qualified
 EXEC master.dbo.master_p1
 GO
 ~~ERROR (Code: 33557097)~~
@@ -68,6 +85,28 @@ GO
 ~~START~~
 int
 1
+~~END~~
+
+
+-- tab1 resolves to master.myschema.tab1
+EXEC master.myschema.proc1
+GO
+~~ROW COUNT: 1~~
+
+~~START~~
+int
+1
+~~END~~
+
+
+-- tab1 resolves to master.dbo.tab1
+EXEC master.myschema.proc2
+GO
+
+SELECT * from master.dbo.tab1;
+GO
+~~START~~
+int#!#int
 ~~END~~
 
 
@@ -336,6 +375,21 @@ DROP PROC dbo.master_p2;
 GO
 
 DROP PROC dbo.master_p3;
+GO
+
+DROP PROC myschema.proc1;
+GO
+
+DROP PROC myschema.proc2;
+go
+
+DROP TABLE tab1;
+go
+
+DROP TABLE myschema.tab1;
+GO
+
+DROP SCHEMA myschema;
 GO
 
 DROP USER master_janedoe;

@@ -1,0 +1,5 @@
+drop trigger babel_3116_vu_prepare_trg_t1
+GO
+
+drop table babel_3116_vu_prepare_t1
+GO
