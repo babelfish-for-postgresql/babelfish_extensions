@@ -447,9 +447,9 @@ go
 
 
 -- Test sql_variant cast (Test for BABEL-3404)
-CREATE VIEW testsqlvariant_view1 AS SELECT CAST('abc' AS sql_variant) AS col;
+CREATE VIEW testsqlvariant_vu_prepare_view1 AS SELECT CAST('abc' AS sql_variant) AS col;
 go
 
 -- Test sql_variant comparison function
-CREATE VIEW testsqlvariant_view2 AS SELECT CASE WHEN a > b THEN a ELSE b END AS val FROM testsqlvariant_sourceTable22;
+CREATE VIEW testsqlvariant_vu_prepare_view2 AS SELECT CASE WHEN a > b THEN a ELSE b END AS val FROM testsqlvariant_sourceTable22;
 go

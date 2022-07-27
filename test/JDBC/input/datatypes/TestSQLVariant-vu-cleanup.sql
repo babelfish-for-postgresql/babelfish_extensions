@@ -68,10 +68,10 @@ go
 drop table testsqlvariant_sourceTable21;
 go
 
-drop view testsqlvariant_view1;
+drop view testsqlvariant_vu_prepare_view1;
 go
 
-drop view testsqlvariant_view2;
+drop view testsqlvariant_vu_prepare_view2;
 go
 
 drop table testsqlvariant_sourceTable22;
