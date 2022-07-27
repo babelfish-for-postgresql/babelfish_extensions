@@ -50,6 +50,7 @@ constraint_column_usage
 SYSTEM_USER
 indexproperty
 sys-all_views
+datepart
 sys-sysobjects
 SYSTEM_USER_dep
 Test-sp_helpsrvrolemember
