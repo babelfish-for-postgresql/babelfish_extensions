@@ -2957,6 +2957,211 @@ SELECT
 WHERE FALSE; -- This condition will ensure that the view is empty
 GRANT SELECT ON sys.numbered_procedures TO PUBLIC;
 
+ALTER VIEW sys.procedures RENAME TO procedures_deprecated_2_1_0;
+
+create or replace view sys.procedures as
+select
+  cast(p.proname as sys.sysname) as name
+  , cast(p.oid as int) as object_id
+  , cast(null as int) as principal_id
+  , cast(sch.schema_id as int) as schema_id
+  , cast (case when tr.tgrelid is not null 
+      then tr.tgrelid 
+      else 0 end as int) 
+    as parent_object_id
+  , cast(case p.prokind
+      when 'p' then 'P'
+      when 'a' then 'AF'
+      else
+        case format_type(p.prorettype, null) when 'trigger'
+          then 'TR'
+          else 'FN'
+        end
+    end as sys.bpchar(2)) as type
+  , cast(case p.prokind
+      when 'p' then 'SQL_STORED_PROCEDURE'
+      when 'a' then 'AGGREGATE_FUNCTION'
+      else
+        case format_type(p.prorettype, null) when 'trigger'
+          then 'SQL_TRIGGER'
+          else 'SQL_SCALAR_FUNCTION'
+        end
+    end as sys.nvarchar(60)) as type_desc
+  , cast(null as sys.datetime) as create_date
+  , cast(null as sys.datetime) as modify_date
+  , cast(0 as sys.bit) as is_ms_shipped
+  , cast(0 as sys.bit) as is_published
+  , cast(0 as sys.bit) as is_schema_published
+  , cast(0 as sys.bit) as is_auto_executed
+  , cast(0 as sys.bit) as is_execution_replicated
+  , cast(0 as sys.bit) as is_repl_serializable_only
+  , cast(0 as sys.bit) as skips_repl_constraints
+from pg_proc p
+inner join sys.schemas sch on sch.schema_id = p.pronamespace
+left join pg_trigger tr on tr.tgfoid = p.oid
+where has_schema_privilege(sch.schema_id, 'USAGE')
+and has_function_privilege(p.oid, 'EXECUTE');
+GRANT SELECT ON sys.procedures TO PUBLIC;
+
+CALL sys.babelfish_drop_deprecated_view('sys', 'procedures_deprecated_2_1_0');
+
+create or replace view sys.objects as
+select
+      CAST(t.name as sys.sysname) as name 
+    , CAST(t.object_id as int) as object_id
+    , CAST(t.principal_id as int) as principal_id
+    , CAST(t.schema_id as int) as schema_id
+    , CAST(t.parent_object_id as int) as parent_object_id
+    , CAST('U' as char(2)) as type
+    , CAST('USER_TABLE' as sys.nvarchar(60)) as type_desc
+    , CAST(t.create_date as sys.datetime) as create_date
+    , CAST(t.modify_date as sys.datetime) as modify_date
+    , CAST(t.is_ms_shipped as sys.bit) as is_ms_shipped
+    , CAST(t.is_published as sys.bit) as is_published
+    , CAST(t.is_schema_published as sys.bit) as is_schema_published
+from  sys.tables t
+union all
+select
+      CAST(v.name as sys.sysname) as name
+    , CAST(v.object_id as int) as object_id
+    , CAST(v.principal_id as int) as principal_id
+    , CAST(v.schema_id as int) as schema_id
+    , CAST(v.parent_object_id as int) as parent_object_id
+    , CAST('V' as char(2)) as type
+    , CAST('VIEW' as sys.nvarchar(60)) as type_desc
+    , CAST(v.create_date as sys.datetime) as create_date
+    , CAST(v.modify_date as sys.datetime) as modify_date
+    , CAST(v.is_ms_shipped as sys.bit) as is_ms_shipped
+    , CAST(v.is_published as sys.bit) as is_published
+    , CAST(v.is_schema_published as sys.bit) as is_schema_published
+from  sys.views v
+union all
+select
+      CAST(f.name as sys.sysname) as name
+    , CAST(f.object_id as int) as object_id
+    , CAST(f.principal_id as int) as principal_id
+    , CAST(f.schema_id as int) as schema_id
+    , CAST(f.parent_object_id as int) as parent_object_id
+    , CAST('F' as char(2)) as type
+    , CAST('FOREIGN_KEY_CONSTRAINT' as sys.nvarchar(60)) as type_desc
+    , CAST(f.create_date as sys.datetime) as create_date
+    , CAST(f.modify_date as sys.datetime) as modify_date
+    , CAST(f.is_ms_shipped as sys.bit) as is_ms_shipped
+    , CAST(f.is_published as sys.bit) as is_published
+    , CAST(f.is_schema_published as sys.bit) as is_schema_published
+ from sys.foreign_keys f
+union all
+select
+      CAST(p.name as sys.sysname) as name
+    , CAST(p.object_id as int) as object_id
+    , CAST(p.principal_id as int) as principal_id
+    , CAST(p.schema_id as int) as schema_id
+    , CAST(p.parent_object_id as int) as parent_object_id
+    , CAST('PK' as char(2)) as type
+    , CAST('PRIMARY_KEY_CONSTRAINT' as sys.nvarchar(60)) as type_desc
+    , CAST(p.create_date as sys.datetime) as create_date
+    , CAST(p.modify_date as sys.datetime) as modify_date
+    , CAST(p.is_ms_shipped as sys.bit) as is_ms_shipped
+    , CAST(p.is_published as sys.bit) as is_published
+    , CAST(p.is_schema_published as sys.bit) as is_schema_published
+from sys.key_constraints p
+where p.type = 'PK'
+union all
+select
+      CAST(pr.name as sys.sysname) as name
+    , CAST(pr.object_id as int) as object_id
+    , CAST(pr.principal_id as int) as principal_id
+    , CAST(pr.schema_id as int) as schema_id
+    , CAST(pr.parent_object_id as int) as parent_object_id
+    , CAST(pr.type as char(2)) as type
+    , CAST(pr.type_desc as sys.nvarchar(60)) as type_desc
+    , CAST(pr.create_date as sys.datetime) as create_date
+    , CAST(pr.modify_date as sys.datetime) as modify_date
+    , CAST(pr.is_ms_shipped as sys.bit) as is_ms_shipped
+    , CAST(pr.is_published as sys.bit) as is_published
+    , CAST(pr.is_schema_published as sys.bit) as is_schema_published
+ from sys.procedures pr
+union all
+select
+      CAST(tr.name as sys.sysname) as name
+    , CAST(tr.object_id as int) as object_id
+    , CAST(NULL as int) as principal_id
+    , CAST(p.pronamespace as int) as schema_id
+    , CAST(tr.parent_id as int) as parent_object_id
+    , CAST(tr.type as char(2)) as type
+    , CAST(tr.type_desc as sys.nvarchar(60)) as type_desc
+    , CAST(tr.create_date as sys.datetime) as create_date
+    , CAST(tr.modify_date as sys.datetime) as modify_date
+    , CAST(tr.is_ms_shipped as sys.bit) as is_ms_shipped
+    , CAST(0 as sys.bit) as is_published
+    , CAST(0 as sys.bit) as is_schema_published
+  from sys.triggers tr
+  inner join pg_proc p on p.oid = tr.object_id
+union all 
+select
+    CAST(def.name as sys.sysname) as name
+  , CAST(def.object_id as int) as object_id
+  , CAST(def.principal_id as int) as principal_id
+  , CAST(def.schema_id as int) as schema_id
+  , CAST(def.parent_object_id as int) as parent_object_id
+  , CAST(def.type as char(2)) as type
+  , CAST(def.type_desc as sys.nvarchar(60)) as type_desc
+  , CAST(def.create_date as sys.datetime) as create_date
+  , CAST(def.modified_date as sys.datetime) as modify_date
+  , CAST(def.is_ms_shipped as sys.bit) as is_ms_shipped
+  , CAST(def.is_published as sys.bit) as is_published
+  , CAST(def.is_schema_published as sys.bit) as is_schema_published
+  from sys.default_constraints def
+union all
+select
+    CAST(chk.name as sys.sysname) as name
+  , CAST(chk.object_id as int) as object_id
+  , CAST(chk.principal_id as int) as principal_id
+  , CAST(chk.schema_id as int) as schema_id
+  , CAST(chk.parent_object_id as int) as parent_object_id
+  , CAST(chk.type as char(2)) as type
+  , CAST(chk.type_desc as sys.nvarchar(60)) as type_desc
+  , CAST(chk.create_date as sys.datetime) as create_date
+  , CAST(chk.modify_date as sys.datetime) as modify_date
+  , CAST(chk.is_ms_shipped as sys.bit) as is_ms_shipped
+  , CAST(chk.is_published as sys.bit) as is_published
+  , CAST(chk.is_schema_published as sys.bit) as is_schema_published
+  from sys.check_constraints chk
+union all
+select
+    CAST(p.relname as sys.sysname) as name
+  , CAST(p.oid as int) as object_id
+  , CAST(null as int) as principal_id
+  , CAST(s.schema_id as int) as schema_id
+  , CAST(0 as int) as parent_object_id
+  , CAST('SO' as char(2)) as type
+  , CAST('SEQUENCE_OBJECT' as sys.nvarchar(60)) as type_desc
+  , CAST(null as sys.datetime) as create_date
+  , CAST(null as sys.datetime) as modify_date
+  , CAST(0 as sys.bit) as is_ms_shipped
+  , CAST(0 as sys.bit) as is_published
+  , CAST(0 as sys.bit) as is_schema_published
+from pg_class p
+inner join sys.schemas s on s.schema_id = p.relnamespace
+and p.relkind = 'S'
+and has_schema_privilege(s.schema_id, 'USAGE')
+union all
+select
+    CAST(('TT_' || tt.name || '_' || tt.type_table_object_id) as sys.sysname) as name
+  , CAST(tt.type_table_object_id as int) as object_id
+  , CAST(tt.principal_id as int) as principal_id
+  , CAST(tt.schema_id as int) as schema_id
+  , CAST(0 as int) as parent_object_id
+  , CAST('TT' as char(2)) as type
+  , CAST('TABLE_TYPE' as sys.nvarchar(60)) as type_desc
+  , CAST(null as sys.datetime) as create_date
+  , CAST(null as sys.datetime) as modify_date
+  , CAST(1 as sys.bit) as is_ms_shipped
+  , CAST(0 as sys.bit) as is_published
+  , CAST(0 as sys.bit) as is_schema_published
+from sys.table_types tt;
+GRANT SELECT ON sys.objects TO PUBLIC;
+
 -- Drops the temporary procedure used by the upgrade script.
 -- Please have this be one of the last statements executed in this upgrade script.
 DROP PROCEDURE sys.babelfish_drop_deprecated_view(varchar, varchar);
