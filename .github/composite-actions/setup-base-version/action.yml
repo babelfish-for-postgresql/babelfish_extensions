@@ -106,6 +106,7 @@ runs:
       run: |
         cd ~
         sudo apt-get install unixodbc-dev
+        sudo apt-get install postgresql-odbc
         pip3 install pyodbc pymssql
       shell: bash
 
