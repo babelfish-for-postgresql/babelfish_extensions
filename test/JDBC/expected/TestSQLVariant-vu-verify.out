@@ -268,7 +268,7 @@ sql_variant#!#sql_variant
 ~~END~~
 
 
-Select * from testsqlvariant_view1;
+Select * from testsqlvariant_vu_prepare_view1;
 go
 ~~START~~
 sql_variant
@@ -276,7 +276,7 @@ abc
 ~~END~~
 
 
-Select * from testsqlvariant_view2;
+Select * from testsqlvariant_vu_prepare_view2;
 go
 ~~START~~
 sql_variant
