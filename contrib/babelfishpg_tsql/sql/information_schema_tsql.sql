@@ -490,7 +490,7 @@ CREATE OR REPLACE VIEW information_schema_tsql.views AS
 
 	FROM sys.pg_namespace_ext nc JOIN pg_class c ON (nc.oid = c.relnamespace)
 		LEFT OUTER JOIN sys.babelfish_namespace_ext ext
-			ON (nc.nspname = CAST(ext.nspname AS sys.nvarchar(128)) COLLATE sys.database_default)
+			ON (CAST(nc.nspname AS sys.nvarchar(128)) = ext.nspname COLLATE sys.database_default)
 		LEFT OUTER JOIN sys.babelfish_view_def vd
 			ON ext.dbid = vd.dbid
 				AND (ext.orig_name = vd.schema_name COLLATE sys.database_default)
