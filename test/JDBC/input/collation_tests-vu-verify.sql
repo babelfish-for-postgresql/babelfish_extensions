@@ -24,9 +24,6 @@ GO
 SELECT * FROM [INNER JOIN SAME CP] WHERE same_name = 'new DelHI';
 GO
 
-SELECT * FROM [INNER JOIN DIFF CP] WHERE diff_name = 'NEW DELHI';
-GO
-
 --computed column
 SELECT substr FROM collation_tests_english_collation_varchar_computed_columns;
 GO

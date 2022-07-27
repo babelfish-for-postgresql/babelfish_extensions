@@ -1,6 +1,5 @@
 --varchar
-CREATE TABLE collation_tests_english_collation_varchar (name varchar(20) COLLATE 
-latin1_general_ci_as);
+CREATE TABLE collation_tests_english_collation_varchar (name varchar(20) COLLATE latin1_general_ci_as);
 GO
 INSERT INTO collation_tests_english_collation_varchar VALUES ('new delhi');
 INSERT INTO collation_tests_english_collation_varchar VALUES ('new Delhi');
@@ -57,18 +56,8 @@ GO
 SELECT * FROM [INNER JOIN SAME CP] WHERE same_name = 'new DelHI';
 GO
 
-CREATE VIEW [INNER JOIN DIFF CP] AS
-SELECT collation_tests_english_collation_varchar.name AS name , collation_tests_english_collation_varchar_innerjoin.name_diff_cp AS diff_name
-FROM collation_tests_english_collation_varchar
-INNER JOIN collation_tests_english_collation_varchar_innerjoin ON collation_tests_english_collation_varchar.name = collation_tests_english_collation_varchar_innerjoin.name_diff_cp;
-GO
-SELECT * FROM [INNER JOIN DIFF CP] WHERE diff_name = 'NEW DELHI';
-GO
 
 DROP VIEW [INNER JOIN SAME CP];
-GO
-
-DROP VIEW [INNER JOIN DIFF CP]
 GO
 
 DROP TABLE collation_tests_english_collation_varchar_innerjoin;

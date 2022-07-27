@@ -69,11 +69,6 @@ FROM collation_tests_english_collation_varchar
 INNER JOIN collation_tests_english_collation_varchar_innerjoin ON collation_tests_english_collation_varchar.name = collation_tests_english_collation_varchar_innerjoin.name_same_cp;
 GO
 
-CREATE VIEW [INNER JOIN DIFF CP] AS
-SELECT collation_tests_english_collation_varchar.name AS name , collation_tests_english_collation_varchar_innerjoin.name_diff_cp AS diff_name
-FROM collation_tests_english_collation_varchar
-INNER JOIN collation_tests_english_collation_varchar_innerjoin ON collation_tests_english_collation_varchar.name = collation_tests_english_collation_varchar_innerjoin.name_diff_cp;
-GO
 
 -- table for computed columns on string
 -- 1st column is for the actual string

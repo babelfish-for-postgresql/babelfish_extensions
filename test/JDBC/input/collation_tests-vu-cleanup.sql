@@ -2,9 +2,6 @@
 DROP VIEW [INNER JOIN SAME CP];
 GO
 
-DROP VIEW [INNER JOIN DIFF CP]
-GO
-
 DROP TABLE collation_tests_english_collation_varchar_innerjoin;
 GO
 

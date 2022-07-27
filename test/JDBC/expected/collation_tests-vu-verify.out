@@ -217,14 +217,6 @@ New DELHI#!#New DELHI
 ~~END~~
 
 
-SELECT * FROM [INNER JOIN DIFF CP] WHERE diff_name = 'NEW DELHI';
-GO
-~~START~~
-varchar#!#varchar
-NEW DELHI#!#NEW DELHI
-~~END~~
-
-
 --computed column
 SELECT substr FROM collation_tests_english_collation_varchar_computed_columns;
 GO
