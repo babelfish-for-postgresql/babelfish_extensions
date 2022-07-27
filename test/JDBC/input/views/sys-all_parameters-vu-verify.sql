@@ -60,7 +60,7 @@ encryption_type_desc,
 encryption_algorithm_name,
 column_encryption_key_id,
 column_encryption_key_database_name
-FROM sys.all_parameters WHERE object_id = OBJECT_ID('sys.sp_table_privileges')
+FROM sys.all_parameters WHERE object_id = OBJECT_ID('sys.sp_sproc_columns')
 ORDER BY parameter_id
 GO
 
@@ -204,6 +204,6 @@ GO
 EXEC sys_all_parameters_vu_prepare_upgrade_proc
 GO
 
-SELECT sys_databases_func_vu_prepare()
+SELECT sys_all_parameters_vu_prepare_upgrade_func()
 GO
 

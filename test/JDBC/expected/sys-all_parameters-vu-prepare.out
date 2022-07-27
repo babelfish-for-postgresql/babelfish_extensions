@@ -64,7 +64,7 @@ CREATE PROCEDURE sys_all_parameters_vu_prepare_typeModifier
 @nvarmax nvarchar(max),
 @char char(8000),
 @nchar nchar(4000),
-@bpchar BINARY(8000),
+@binary BINARY(8000),
 @varbinary varbinary(8000),
 @varbinaryMax varbinary(max),
 @sysname sysname

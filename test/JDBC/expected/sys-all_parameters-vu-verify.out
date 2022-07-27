@@ -76,15 +76,17 @@ encryption_type_desc,
 encryption_algorithm_name,
 column_encryption_key_id,
 column_encryption_key_database_name
-FROM sys.all_parameters WHERE object_id = OBJECT_ID('sys.sp_table_privileges')
+FROM sys.all_parameters WHERE object_id = OBJECT_ID('sys.sp_sproc_columns')
 ORDER BY parameter_id
 GO
 ~~START~~
 varchar#!#int#!#smallint#!#tinyint#!#tinyint#!#bit#!#bit#!#bit#!#bit#!#int#!#bit#!#bit#!#int#!#nvarchar#!#varchar#!#int#!#varchar
-@table_name#!#1#!#768#!#0#!#0#!#0#!#0#!#0#!#<NULL>#!#0#!#0#!#1#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>
-@table_owner#!#2#!#768#!#0#!#0#!#0#!#0#!#0#!#<NULL>#!#0#!#0#!#1#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>
-@table_qualifier#!#3#!#256#!#0#!#0#!#0#!#0#!#0#!#<NULL>#!#0#!#0#!#1#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>
-@fusepattern#!#4#!#1#!#1#!#0#!#0#!#0#!#0#!#<NULL>#!#0#!#0#!#1#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>
+@procedure_name#!#1#!#780#!#0#!#0#!#0#!#0#!#0#!#<NULL>#!#0#!#0#!#1#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>
+@procedure_owner#!#2#!#768#!#0#!#0#!#0#!#0#!#0#!#<NULL>#!#0#!#0#!#1#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>
+@procedure_qualifier#!#3#!#256#!#0#!#0#!#0#!#0#!#0#!#<NULL>#!#0#!#0#!#1#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>
+@column_name#!#4#!#768#!#0#!#0#!#0#!#0#!#0#!#<NULL>#!#0#!#0#!#1#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>
+@odbcver#!#5#!#4#!#10#!#0#!#0#!#0#!#0#!#<NULL>#!#0#!#0#!#1#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>
+@fusepattern#!#6#!#1#!#1#!#0#!#0#!#0#!#0#!#<NULL>#!#0#!#0#!#1#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>
 ~~END~~
 
 
@@ -111,8 +113,8 @@ ORDER BY parameter_id
 GO
 ~~START~~
 varchar#!#int#!#smallint#!#tinyint#!#tinyint#!#bit#!#bit#!#bit#!#bit#!#int#!#bit#!#bit#!#int#!#nvarchar#!#varchar#!#int#!#varchar
+#!#0#!#4#!#10#!#0#!#1#!#0#!#0#!#<NULL>#!#0#!#0#!#1#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>
 @a#!#1#!#4#!#10#!#0#!#0#!#0#!#0#!#<NULL>#!#0#!#0#!#1#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>
-#!#2#!#4#!#10#!#0#!#1#!#0#!#0#!#<NULL>#!#0#!#0#!#1#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>
 ~~END~~
 
 
@@ -194,8 +196,8 @@ ORDER BY parameter_id
 GO
 ~~START~~
 varchar#!#int#!#smallint#!#tinyint#!#tinyint#!#bit#!#bit#!#bit#!#bit#!#int#!#bit#!#bit#!#int#!#nvarchar#!#varchar#!#int#!#varchar
-@a#!#1#!#17#!#38#!#38#!#0#!#0#!#0#!#<NULL>#!#0#!#0#!#1#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>
-#!#2#!#17#!#38#!#38#!#1#!#0#!#0#!#<NULL>#!#0#!#0#!#1#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>
+#!#0#!#13#!#23#!#5#!#1#!#0#!#0#!#<NULL>#!#0#!#0#!#1#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>
+@a#!#1#!#13#!#23#!#5#!#0#!#0#!#0#!#<NULL>#!#0#!#0#!#1#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>
 ~~END~~
 
 
@@ -228,7 +230,7 @@ varchar#!#int#!#smallint#!#tinyint#!#tinyint#!#bit#!#bit#!#bit#!#bit#!#int#!#bit
 @nvarmax#!#4#!#-1#!#0#!#0#!#0#!#0#!#0#!#<NULL>#!#0#!#0#!#1#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>
 @char#!#5#!#8000#!#0#!#0#!#0#!#0#!#0#!#<NULL>#!#0#!#0#!#1#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>
 @nchar#!#6#!#8000#!#0#!#0#!#0#!#0#!#0#!#<NULL>#!#0#!#0#!#1#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>
-@bpchar#!#7#!#8000#!#0#!#0#!#0#!#0#!#0#!#<NULL>#!#0#!#0#!#1#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>
+@binary#!#7#!#8000#!#0#!#0#!#0#!#0#!#0#!#<NULL>#!#0#!#0#!#1#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>
 @varbinary#!#8#!#8000#!#0#!#0#!#0#!#0#!#0#!#<NULL>#!#0#!#0#!#1#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>
 @varbinarymax#!#9#!#-1#!#0#!#0#!#0#!#0#!#0#!#<NULL>#!#0#!#0#!#1#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>
 @sysname#!#10#!#256#!#0#!#0#!#0#!#0#!#0#!#<NULL>#!#0#!#0#!#1#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>
@@ -304,10 +306,11 @@ varchar#!#int#!#smallint#!#tinyint#!#tinyint#!#bit#!#bit#!#bit#!#bit#!#int#!#bit
 ~~END~~
 
 
-SELECT sys_databases_func_vu_prepare()
+SELECT sys_all_parameters_vu_prepare_upgrade_func()
 GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: function sys_databases_func_vu_prepare() does not exist)~~
+~~START~~
+int
+1
+~~END~~
 
 
