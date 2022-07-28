@@ -1,0 +1,9 @@
+diff a/contrib/babelfishpg_tsql/antlr/TSqlParser.g4 b/contrib/babelfishpg_tsql/antlr/TSqlParser.g4	(rejected hunks)
+@@ -1745,7 +1745,6 @@ insert_bulk_option
+ 
+ bulk_insert_statement
+     : BULK INSERT ddl_object FROM char_string ( WITH LR_BRACKET bulk_insert_option (COMMA? bulk_insert_option)* RR_BRACKET )? SEMI?
+-    | INSERT BULK ddl_object (LR_BRACKET (insert_bulk_column_definition (COMMA insert_bulk_column_definition)*)? column_constraint* COMMA? RR_BRACKET)
+     ;
+ 
+ bulk_insert_option
