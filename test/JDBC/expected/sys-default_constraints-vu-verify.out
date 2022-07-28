@@ -1,0 +1,54 @@
+SELECT definition FROM sys.default_constraints where name LIKE '%sys_default_definitions%' ORDER BY name;
+GO
+~~START~~
+nvarchar
+'12'
+getdate()
+0
+1
+50
+~~END~~
+
+
+ALTER TABLE sys_default_definitions ADD CONSTRAINT default_column_a_varchar DEFAULT 'ab' FOR column_a
+GO
+
+SELECT COUNT(*) FROM sys.all_columns WHERE object_id = object_id('sys.default_constraints');
+GO
+~~START~~
+int
+15
+~~END~~
+
+
+EXEC sys_default_definitions_proc;
+GO
+~~START~~
+nvarchar
+'ab'
+getdate()
+0
+1
+50
+~~END~~
+
+
+SELECT * FROM sys_default_definitions_func();
+GO
+~~START~~
+int
+5
+~~END~~
+
+
+SELECT * FROM sys_default_definitions_view;
+GO
+~~START~~
+nvarchar
+'ab'
+getdate()
+0
+1
+50
+~~END~~
+
