@@ -1,5 +1,5 @@
 echo "===================================== CLEANING UP ======================================"
-psql -d postgres -U "$USER" << EOF
+sudo ~/postgres/bin/psql -d postgres -U $USER << EOF
 \c jdbc_testdb
 CALL sys.remove_babelfish();
 ALTER SYSTEM RESET babelfishpg_tsql.database_name;
