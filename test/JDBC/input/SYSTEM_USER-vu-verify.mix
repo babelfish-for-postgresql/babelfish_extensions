@@ -9,4 +9,3 @@ GO
 -- tsql user=system_user_vu_prepare_r2 password=123
 SELECT session_user, system_user, current_user, db_name();
 GO
-
