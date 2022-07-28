@@ -2594,6 +2594,7 @@ SELECT
 WHERE FALSE;
 GRANT SELECT ON sys.spatial_index_tessellations TO PUBLIC;
 
+
 -- This helper function is used when getting the max length from a value in the typmod array in pg_proc.probin
 CREATE OR REPLACE FUNCTION sys.tsql_typmod_array_max_length_helper(IN type TEXT, IN typelen INT, IN typemod INT, IN for_sys_types boolean DEFAULT false) 
 RETURNS smallint 
@@ -2723,3 +2724,13 @@ WHERE t.oid = (ss.x).x
       (return_type LIKE 'TABLE(%' AND ss.proargmodes[(ss.x).n] = 'i'));
 
 GRANT SELECT ON sys.all_parameters TO PUBLIC;
+
+CREATE OR REPLACE VIEW sys.numbered_procedures
+AS
+SELECT 
+    CAST(0 as int) AS object_id
+  , CAST(0 as smallint) AS procedure_number
+  , CAST('' as sys.nvarchar(4000)) AS definition
+WHERE FALSE; -- This condition will ensure that the view is empty
+GRANT SELECT ON sys.numbered_procedures TO PUBLIC;
+
