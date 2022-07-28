@@ -68,17 +68,12 @@ runs:
     - name: Run JDBC Verify Tests
       if: always() && inputs.is_final_ver == 'true'
       id: jdbc-verify-tests
+      env:
+        base_dir: ${{ matrix.upgrade-path.path[0] }}
+        tar_dir: ${{ matrix.upgrade-path.last_version }}
       run: |
         cd test/JDBC/
         export isUpgradeTestMode=false
-        base_dir=${{ matrix.upgrade-path.path[0] }}
-        tar_dir=${{ matrix.upgrade-path.last_version }}
-        if [[ "$base_dir" == *"latest"* ]]; then
-          base_dir="latest"
-        fi
-        if [[ "$tar_dir" == *"latest"* ]]; then
-          tar_dir="latest"
-        fi
         export inputFilesPath=upgrade/${{ tar_dir }}/verification_cleanup/${{ base_dir }}
         mvn test
         export inputFilesPath=input
