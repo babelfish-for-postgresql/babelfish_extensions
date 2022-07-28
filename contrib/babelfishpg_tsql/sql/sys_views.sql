@@ -235,7 +235,7 @@ END;
 $$ LANGUAGE plpgsql IMMUTABLE STRICT;
 
 
-CREATE OR REPLACE FUNCTION sys.tsql_type_max_length_helper(IN type TEXT, IN typelen INT, IN typemod INT, IN for_sys_types boolean DEFAULT false)
+CREATE OR REPLACE FUNCTION sys.tsql_type_max_length_helper(IN type TEXT, IN typelen INT, IN typemod INT, IN for_sys_types boolean DEFAULT false, IN used_typmod_array boolean DEFAULT false)
 RETURNS SMALLINT
 AS $$
 DECLARE
@@ -247,6 +247,22 @@ BEGIN
 	IF v_type IS NULL THEN
 		RETURN CAST(typelen as SMALLINT);
 	END IF;
+
+  -- if using typmod_array from pg_proc.probin
+  IF used_typmod_array THEN
+    IF v_type = 'sysname' THEN
+      RETURN 256;
+    ELSIF (v_type in ('char', 'bpchar', 'varchar', 'binary', 'varbinary', 'nchar', 'nvarchar'))
+    THEN
+      IF typemod < 0 THEN -- max value. 
+        RETURN -1;
+      ELSIF v_type in ('nchar', 'nvarchar') THEN
+        RETURN (2 * typemod);
+      ELSE
+        RETURN typemod;
+      END IF;
+    END IF;
+  END IF;
 
 	IF typelen != -1 THEN
 		CASE v_type 
@@ -2594,33 +2610,6 @@ SELECT
 WHERE FALSE;
 GRANT SELECT ON sys.spatial_index_tessellations TO PUBLIC;
 
-
--- This helper function is used when getting the max length from a value in the typmod array in pg_proc.probin
-CREATE OR REPLACE FUNCTION sys.tsql_typmod_array_max_length_helper(IN type TEXT, IN typelen INT, IN typemod INT, IN for_sys_types boolean DEFAULT false) 
-RETURNS smallint 
-AS $$
-DECLARE
-v_type TEXT COLLATE "C" := type;
-BEGIN
-	
-	IF v_type = 'sysname' THEN
-		RETURN 256;
-	ELSIF (v_type in ('char', 'bpchar', 'varchar', 'binary', 'varbinary', 'nchar', 'nvarchar'))
-	THEN
-		IF typemod < 0 THEN -- max value. 
-			RETURN -1;
-		ELSIF v_type in ('nchar', 'nvarchar') THEN
-			RETURN (2 * typemod);
-		ELSE
-			RETURN typemod;
-		END IF;
-	END IF;
-
-	RETURN sys.tsql_type_max_length_helper(type, typelen, typemod, for_sys_types);
-
-END;
-$$ LANGUAGE plpgsql IMMUTABLE STRICT;
-
 CREATE OR REPLACE VIEW sys.all_parameters
 AS
 SELECT
@@ -2641,7 +2630,7 @@ SELECT
       CASE
         WHEN st.is_table_type = 1 THEN -1 -- TVP case
         WHEN st.is_user_defined = 1 THEN st.max_length -- UDT case
-        ELSE sys.tsql_typmod_array_max_length_helper(COALESCE(type_name, base_type_name), t.typlen, typmod, true)
+        ELSE sys.tsql_type_max_length_helper(COALESCE(type_name, base_type_name), t.typlen, typmod, true, true)
       END
     AS smallint) AS max_length
   , CAST(

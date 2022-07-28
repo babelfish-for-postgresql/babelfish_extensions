@@ -2948,29 +2948,98 @@ $$
 LANGUAGE 'pltsql';
 GRANT EXECUTE on PROCEDURE sys.sp_helpuser TO PUBLIC;
 
--- This helper function is used when getting the max length from a value in the typmod array in pg_proc.probin
-CREATE OR REPLACE FUNCTION sys.tsql_typmod_array_max_length_helper(IN type TEXT, IN typelen INT, IN typemod INT, IN for_sys_types boolean DEFAULT false) 
-RETURNS smallint 
+CREATE OR REPLACE FUNCTION sys.tsql_type_max_length_helper(IN type TEXT, IN typelen INT, IN typemod INT, IN for_sys_types boolean DEFAULT false, IN used_typmod_array boolean DEFAULT false)
+RETURNS SMALLINT
 AS $$
 DECLARE
-v_type TEXT COLLATE "C" := type;
+	max_length SMALLINT;
+	precision INT;
+	v_type TEXT COLLATE "C" := type;
 BEGIN
-	
-	IF v_type = 'sysname' THEN
-		RETURN 256;
-	ELSIF (v_type in ('char', 'bpchar', 'varchar', 'binary', 'varbinary', 'nchar', 'nvarchar'))
-	THEN
-		IF typemod < 0 THEN -- max value. 
-			RETURN -1;
-		ELSIF v_type in ('nchar', 'nvarchar') THEN
-			RETURN (2 * typemod);
-		ELSE
-			RETURN typemod;
-		END IF;
+	-- unknown tsql type
+	IF v_type IS NULL THEN
+		RETURN CAST(typelen as SMALLINT);
 	END IF;
 
-	RETURN sys.tsql_type_max_length_helper(type, typelen, typemod, for_sys_types);
+  -- if using typmod_array from pg_proc.probin
+  IF used_typmod_array THEN
+    IF v_type = 'sysname' THEN
+      RETURN 256;
+    ELSIF (v_type in ('char', 'bpchar', 'varchar', 'binary', 'varbinary', 'nchar', 'nvarchar'))
+    THEN
+      IF typemod < 0 THEN -- max value. 
+        RETURN -1;
+      ELSIF v_type in ('nchar', 'nvarchar') THEN
+        RETURN (2 * typemod);
+      ELSE
+        RETURN typemod;
+      END IF;
+    END IF;
+  END IF;
 
+	IF typelen != -1 THEN
+		CASE v_type 
+		WHEN 'tinyint' THEN max_length = 1;
+		WHEN 'date' THEN max_length = 3;
+		WHEN 'smalldatetime' THEN max_length = 4;
+		WHEN 'smallmoney' THEN max_length = 4;
+		WHEN 'datetime2' THEN
+			IF typemod = -1 THEN max_length = 8;
+			ELSIF typemod <= 2 THEN max_length = 6;
+			ELSIF typemod <= 4 THEN max_length = 7;
+			ELSEIF typemod <= 7 THEN max_length = 8;
+			-- typemod = 7 is not possible for datetime2 in Babel
+			END IF;
+		WHEN 'datetimeoffset' THEN
+			IF typemod = -1 THEN max_length = 10;
+			ELSIF typemod <= 2 THEN max_length = 8;
+			ELSIF typemod <= 4 THEN max_length = 9;
+			ELSIF typemod <= 7 THEN max_length = 10;
+			-- typemod = 7 is not possible for datetimeoffset in Babel
+			END IF;
+		WHEN 'time' THEN
+			IF typemod = -1 THEN max_length = 5;
+			ELSIF typemod <= 2 THEN max_length = 3;
+			ELSIF typemod <= 4 THEN max_length = 4;
+			ELSIF typemod <= 7 THEN max_length = 5;
+			END IF;
+		WHEN 'timestamp' THEN max_length = 8;
+		ELSE max_length = typelen;
+		END CASE;
+		RETURN max_length;
+	END IF;
+
+	IF typemod = -1 THEN
+		CASE 
+		WHEN v_type in ('image', 'text', 'ntext') THEN max_length = 16;
+		WHEN v_type = 'sql_variant' THEN max_length = 8016;
+		WHEN v_type in ('varbinary', 'varchar', 'nvarchar') THEN 
+			IF for_sys_types THEN max_length = 8000;
+			ELSE max_length = -1;
+			END IF;
+		WHEN v_type in ('binary', 'char', 'bpchar', 'nchar') THEN max_length = 8000;
+		WHEN v_type in ('decimal', 'numeric') THEN max_length = 17;
+		ELSE max_length = typemod;
+		END CASE;
+		RETURN max_length;
+	END IF;
+
+	CASE
+	WHEN v_type in ('char', 'bpchar', 'varchar', 'binary', 'varbinary') THEN max_length = typemod - 4;
+	WHEN v_type in ('nchar', 'nvarchar') THEN max_length = (typemod - 4) * 2;
+	WHEN v_type = 'sysname' THEN max_length = (typemod - 4) * 2;
+	WHEN v_type in ('numeric', 'decimal') THEN
+		precision = ((typemod - 4) >> 16) & 65535;
+		IF precision >= 1 and precision <= 9 THEN max_length = 5;
+		ELSIF precision <= 19 THEN max_length = 9;
+		ELSIF precision <= 28 THEN max_length = 13;
+		ELSIF precision <= 38 THEN max_length = 17;
+	ELSE max_length = typelen;
+	END IF;
+	ELSE
+		max_length = typemod;
+	END CASE;
+	RETURN max_length;
 END;
 $$ LANGUAGE plpgsql IMMUTABLE STRICT;
 
