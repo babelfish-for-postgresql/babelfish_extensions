@@ -5150,6 +5150,18 @@ post_process_column_definition(TSqlParser::Column_definitionContext *ctx, PLtsql
 	if (ctx->TIMESTAMP())
 		rewritten_query_fragment.emplace(std::make_pair(ctx->TIMESTAMP()->getSymbol()->getStartIndex(), std::make_pair(::getFullText(ctx->TIMESTAMP()), "timestamp " + ::getFullText(ctx->TIMESTAMP()))));
 
+ 	/*
+	* PG doesn't allow for TIME/DATETIME2/DATETIMEOFFSET to be declared with precision 7, but this is permitted in TSQL.
+	* In order to get around this, remove the scale factor so that the typmod is set to -1 (default). Luckily,
+	* in TSQL the default scale is also 7, so we can re-add the decimal digits to meet the scale factor on the return side.
+	*/
+	if (pg_strncasecmp(::getFullText(ctx->data_type()).c_str(), "TIME(7)", 7) == 0)
+		rewritten_query_fragment.emplace(std::make_pair(ctx->data_type()->start->getStartIndex(), std::make_pair(::getFullText(ctx->data_type()), "TIME")));
+	if (pg_strncasecmp(::getFullText(ctx->data_type()).c_str(), "DATETIME2(7)", 12) == 0)
+		rewritten_query_fragment.emplace(std::make_pair(ctx->data_type()->start->getStartIndex(), std::make_pair(::getFullText(ctx->data_type()), "DATETIME2")));
+	if (pg_strncasecmp(::getFullText(ctx->data_type()).c_str(), "DATETIMEOFFSET(7)", 17) == 0)
+		rewritten_query_fragment.emplace(std::make_pair(ctx->data_type()->start->getStartIndex(), std::make_pair(::getFullText(ctx->data_type()), "DATETIMEOFFSET")));
+	 
 	if (ctx->column_inline_index())
 		post_process_column_inline_index(ctx->column_inline_index(), stmt, baseCtx);
 

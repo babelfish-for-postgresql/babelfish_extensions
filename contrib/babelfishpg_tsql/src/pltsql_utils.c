@@ -110,8 +110,6 @@ pltsql_check_or_set_default_typmod(TypeName * typeName, int32 *typmod, bool is_c
 				}
 				else if (strcmp(typname, "smalldatetime") == 0)
 					*typmod = 0;
-				else if (strcmp(typname, "datetime2") == 0)
-					*typmod = 6;
 				else if (strcmp(typname, "decimal") == 0)
 					*typmod = 1179652;  /* decimal(18,0) */
 			}

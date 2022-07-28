@@ -11,7 +11,7 @@ select CAST('12:01:59' AS time);
 GO
 ~~START~~
 time
-12:01:59.000000
+12:01:59.0000000
 ~~END~~
 
 select CAST('2017-08-25 01:01:59PM' AS datetime);
@@ -25,7 +25,7 @@ select CAST('2017-08-25 01:01:59PM' AS datetime2);
 GO
 ~~START~~
 datetime2
-2017-08-25 13:01:59.000000
+2017-08-25 13:01:59.0000000
 ~~END~~
 
 select CAST(CAST('2017-08-25' AS date) AS varchar(30));
@@ -344,7 +344,7 @@ select TRY_CAST('12:01:59' AS time);
 GO
 ~~START~~
 time
-12:01:59.000000
+12:01:59.0000000
 ~~END~~
 
 select TRY_CAST('2017-08-25 01:01:59PM' AS datetime);
@@ -358,7 +358,7 @@ select TRY_CAST('2017-08-25 01:01:59PM' AS datetime2);
 GO
 ~~START~~
 datetime2
-2017-08-25 13:01:59.000000
+2017-08-25 13:01:59.0000000
 ~~END~~
 
 select TRY_CAST(TRY_CAST('2017-08-25' AS date) AS varchar(30));

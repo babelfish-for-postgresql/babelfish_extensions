@@ -223,7 +223,7 @@ select cast(cast(cast('2020-10-20 09:00:00' as datetime2) as sql_variant) as dat
 go
 ~~START~~
 datetime2
-2020-10-20 09:00:00.000000
+2020-10-20 09:00:00.0000000
 ~~END~~
 
 -- datetimeoffset
@@ -231,7 +231,7 @@ select cast(cast(cast('2020-10-05 09:00:00-9:00' as datetimeoffset) as sql_varia
 go
 ~~START~~
 datetimeoffset
-2020-10-05 09:00:00.000000 -09:00
+2020-10-05 09:00:00.0000000 -09:00
 ~~END~~
 
 -- datetime
@@ -263,7 +263,7 @@ select cast(cast(cast('09:00:00' as time) as sql_variant) as time);
 go
 ~~START~~
 time
-09:00:00.000000
+09:00:00.0000000
 ~~END~~
 
 -- float
@@ -448,7 +448,7 @@ select cast(cast(cast('2020-10-20' as date) as sql_variant) as datetime2);
 go
 ~~START~~
 datetime2
-2020-10-20 00:00:00.000000
+2020-10-20 00:00:00.0000000
 ~~END~~
 
 -- datetimeoffset 2 datetime2
@@ -456,7 +456,7 @@ select cast(cast(cast('2020-10-05 09:00:00-9:00' as datetimeoffset) as sql_varia
 go
 ~~START~~
 datetime2
-2020-10-05 18:00:00.000000
+2020-10-05 18:00:00.0000000
 ~~END~~
 
 -- datetime2 2 datetimeoffset
@@ -464,7 +464,7 @@ select cast(cast(cast('2020-10-20 09:00:00' as datetime2) as sql_variant) as dat
 go
 ~~START~~
 datetimeoffset
-2020-10-20 09:00:00.000000 +00:00
+2020-10-20 09:00:00.0000000 +00:00
 ~~END~~
 
 -- float to numeric

@@ -14,6 +14,8 @@
 #include "utils/date.h"
 #include "utils/timestamp.h"
 
+#define DATETIMEOFFSETMAXSCALE 7
+
 extern void TdsGetTimestampFromDayTime(uint32 numDays, uint64 numMicro, int tz,
 							Timestamp *timestamp, int scale);
 extern void TdsGetDayTimeFromTimestamp(Timestamp value, uint32 *numDays,

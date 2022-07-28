@@ -8,10 +8,8 @@
 #ifndef PLTSQL_DATETIME2_H
 #define PLTSQL_DATETIME2_H
 
-/* Maximum precision for datetime2 
- * TODO: alter datetime2 to have max precision == 7
- */
-#define MAX_DATETIME2_PRECISION 6
+/* Maximum precision for datetime2 */
+#define MAX_DATETIME2_PRECISION 7
 
 /* Datetime2 limits */
 /* lower bound: 0001-01-01 00:00:00.000 */

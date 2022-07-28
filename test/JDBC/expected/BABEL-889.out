@@ -4,7 +4,7 @@ select cast(cast(cast('2020-10-20 09:00:00' as varchar) as sql_variant) as datet
 go
 ~~START~~
 datetime2
-2020-10-20 09:00:00.000000
+2020-10-20 09:00:00.0000000
 ~~END~~
 
 select cast(cast(cast('2020-10-20 09:00:00' as datetime2) as sql_variant) as varchar);
@@ -64,7 +64,7 @@ select cast(cast(cast('09:00:00' as varchar) as sql_variant) as time);
 go
 ~~START~~
 time
-09:00:00.000000
+09:00:00.0000000
 ~~END~~
 
 select cast(cast(cast('09:00:00' as time) as sql_variant) as varchar);
