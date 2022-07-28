@@ -46,6 +46,12 @@ go
 -- fails because dbo.schema_resolution_func_t1 doesn't exist
 exec schema_resolution_func_s1.schema_resolution_func_p1;
 go
+~~START~~
+int
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: relation "schema_resolution_func_t1" does not exist)~~
+
 
 drop function schema_resolution_func_s1.schema_resolution_func_f1()
 go
@@ -58,3 +64,4 @@ go
 
 drop schema schema_resolution_func_s1;
 go
+

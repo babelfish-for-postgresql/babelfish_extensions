@@ -38,3 +38,4 @@ go
 
 drop schema schema_resolution_func_s1;
 go
+

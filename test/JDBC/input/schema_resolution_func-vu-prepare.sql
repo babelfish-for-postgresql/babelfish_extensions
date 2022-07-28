@@ -38,3 +38,4 @@ create proc schema_resolution_func_s1.schema_resolution_func_p1
 as
 select dbo.schema_resolution_func_f1()
 go
+
