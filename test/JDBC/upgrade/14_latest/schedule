@@ -34,6 +34,7 @@ TestXML
 sys-assembly_types
 sys-database_mirroring
 sys-databases
+sys-numbered_procedures
 sys-suser_sid
 sys-suser_sname
 BABEL-2934
