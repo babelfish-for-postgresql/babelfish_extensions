@@ -138,9 +138,9 @@ BEGIN
     SELECT CAST(t.name AS sys.sysname), CAST(t.current_value AS sys.sql_variant) FROM
     (
       VALUES
-      ('Enabled', 0),
-      ('HistoryRetentionInDays', 0),
-      ('LogOnSuccess', 0)
+      ('Enabled', CAST(0 AS int)),
+      ('HistoryRetentionInDays', CAST(0 AS int)),
+      ('LogOnSuccess', CAST(0 AS int))
     )t (name, current_value);
   GRANT SELECT ON msdb_dbo.syspolicy_configuration TO PUBLIC;
   ALTER VIEW msdb_dbo.syspolicy_configuration OWNER TO sysadmin;
