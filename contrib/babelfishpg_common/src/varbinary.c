@@ -169,7 +169,7 @@ varbinaryin(PG_FUNCTION_ARGS)
 	len = strlen(inputText);
 
 	if (typmod == TSQLHexConstTypmod ||
-		(dump_restore && strcmp(dump_restore, "on") == 0))
+		(dump_restore && strcmp(dump_restore, "on") == 0)) /* Treat input string as T-SQL hex constant during restore */
 	{
 		/*
 		 * calculate length of the binary code
