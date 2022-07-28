@@ -79,6 +79,9 @@ runs:
         cd test/JDBC/
         export isUpgradeTestMode=true
         base_dir=${{ matrix.upgrade-path.path[0] }}
+        if [[ "$base_dir" == *"latest"* ]]; then
+          base_dir="latest"
+        fi
         export inputFilesPath=upgrade/$base_dir/preparation
         mvn test
         for filename in $(grep -v "^ignore.*\|^#.*\|^cmd.*\|^all.*\|^$" upgrade/$base_dir/schedule); do
