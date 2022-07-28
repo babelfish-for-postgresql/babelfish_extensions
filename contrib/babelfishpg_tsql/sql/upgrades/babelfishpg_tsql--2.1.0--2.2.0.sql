@@ -2957,7 +2957,7 @@ SELECT
 WHERE FALSE; -- This condition will ensure that the view is empty
 GRANT SELECT ON sys.numbered_procedures TO PUBLIC;
 
-ALTER VIEW sys.procedures RENAME TO procedures_deprecated_2_1_0;
+ALTER VIEW sys.procedures RENAME TO procedures_deprecated_in_2_2_0;
 
 create or replace view sys.procedures as
 select
@@ -3002,8 +3002,6 @@ left join pg_trigger tr on tr.tgfoid = p.oid
 where has_schema_privilege(sch.schema_id, 'USAGE')
 and has_function_privilege(p.oid, 'EXECUTE');
 GRANT SELECT ON sys.procedures TO PUBLIC;
-
-CALL sys.babelfish_drop_deprecated_view('sys', 'procedures_deprecated_2_1_0');
 
 create or replace view sys.objects as
 select
@@ -3161,6 +3159,8 @@ select
   , CAST(0 as sys.bit) as is_schema_published
 from sys.table_types tt;
 GRANT SELECT ON sys.objects TO PUBLIC;
+
+CALL sys.babelfish_drop_deprecated_view('sys', 'procedures_deprecated_in_2_2_0');
 
 -- Drops the temporary procedure used by the upgrade script.
 -- Please have this be one of the last statements executed in this upgrade script.
