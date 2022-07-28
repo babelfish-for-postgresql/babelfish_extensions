@@ -1,2 +1,2 @@
-DROP TABLE test_isnumeric
+DROP TABLE babel_isnumeric
 GO

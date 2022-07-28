@@ -2,10 +2,10 @@
 -- Tests for ISNUMERIC function
 --
 
-DROP TABLE IF EXISTS test_isnumeric
+DROP TABLE IF EXISTS babel_isnumeric
 GO
 
-CREATE TABLE test_isnumeric (
+CREATE TABLE babel_isnumeric (
     bigint_type bigint,
     int_type int,
     smallint_type smallint,
@@ -20,7 +20,7 @@ CREATE TABLE test_isnumeric (
 )
 GO
 
-INSERT INTO test_isnumeric (
+INSERT INTO babel_isnumeric (
     bigint_type,
     int_type,
     smallint_type,

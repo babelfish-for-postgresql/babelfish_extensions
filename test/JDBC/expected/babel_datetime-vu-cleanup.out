@@ -1,5 +1,5 @@
 -- Clean up
-drop table datetime_testing
+drop table babel_datetime_vu_testing
 go
-drop table datetime_testing_1
+drop table babel_datetime_vu_testing_1
 go

@@ -1,5 +1,5 @@
 -- Test DAY function for computed columns
-SELECT day1, day2 from dateFunctions_day;
+SELECT day1, day2 from BABEL_1475_vu_day;
 GO
 ~~START~~
 int#!#int
@@ -8,7 +8,7 @@ int#!#int
 
 
 -- Test MONTH function for computed columns
-SELECT month1, month2 from dateFunctions_month;
+SELECT month1, month2 from BABEL_1475_vu_month;
 GO
 ~~START~~
 int#!#int
@@ -17,7 +17,7 @@ int#!#int
 
 
 -- Test YEAR function for computed columns
-SELECT year1, year2 from dateFunctions_year;
+SELECT year1, year2 from BABEL_1475_vu_year;
 GO
 ~~START~~
 int#!#int
@@ -26,7 +26,7 @@ int#!#int
 
 
 -- Test DATEDIFF function with DATE datatype for computed columns
-SELECT diffMonthInDates from dateFunctions_datediff_1;
+SELECT diffMonthInDates from BABEL_1475_vu_datediff_1;
 GO
 ~~START~~
 int
@@ -35,7 +35,7 @@ int
 
 
 -- Test DATEDIFF function with DATETIME2 datatype for computed columns
-SELECT diffMonthInDates from dateFunctions_datediff_2;
+SELECT diffMonthInDates from BABEL_1475_vu_datediff_2;
 GO
 ~~START~~
 int
@@ -44,7 +44,7 @@ int
 
 
 -- Test DATEFROMPARTS function for computed columns
-SELECT dateresult from dateFunctions_datefromparts;
+SELECT dateresult from BABEL_1475_vu_datefromparts;
 GO
 ~~START~~
 date
@@ -53,7 +53,7 @@ date
 
 
 -- Test DATENAME function for computed columns
-SELECT year, month, weekday, dayofyear, day from dateFunctions_datename;
+SELECT year, month, weekday, dayofyear, day from BABEL_1475_vu_datename;
 GO
 ~~START~~
 text#!#text#!#text#!#text#!#text
@@ -62,7 +62,7 @@ text#!#text#!#text#!#text#!#text
 
 
 -- Test DATEPART function for computed columns
-SELECT datepart1, datepart2 from dateFunctions_datepart_1;
+SELECT datepart1, datepart2 from BABEL_1475_vu_datepart_1;
 GO
 ~~START~~
 int#!#int
@@ -71,7 +71,7 @@ int#!#int
 
 
 -- Test DATEPART function for computed columns
-SELECT datepart1, datepart2 from dateFunctions_datepart_2;
+SELECT datepart1, datepart2 from BABEL_1475_vu_datepart_2;
 GO
 ~~START~~
 int#!#int

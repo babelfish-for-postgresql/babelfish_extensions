@@ -1,2 +1,2 @@
-DROP TABLE cubes;
+DROP TABLE BABEL_SQUARE_vu_cubes;
 GO

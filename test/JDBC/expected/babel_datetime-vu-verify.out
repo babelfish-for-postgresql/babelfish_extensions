@@ -1,5 +1,5 @@
 -- Test datetime default value
-select a from datetime_testing_1 where b = 1
+select a from babel_datetime_vu_testing_1 where b = 1
 go
 ~~START~~
 datetime
@@ -8,7 +8,7 @@ datetime
 
 
 -- Testing inserting into the table
-select * from datetime_testing
+select * from babel_datetime_vu_testing
 go
 ~~START~~
 datetime
@@ -25,7 +25,7 @@ datetime
 
 
 -- Test comparision with datetime/smalldatetime/date
-select * from datetime_testing where dt >= smalldatetime('2000-01-01 00:00:59')
+select * from babel_datetime_vu_testing where dt >= smalldatetime('2000-01-01 00:00:59')
 go
 ~~START~~
 datetime
@@ -33,7 +33,7 @@ datetime
 2020-03-14 00:00:00.0
 ~~END~~
 
-select * from datetime_testing where dt >= datetime('1992-05-23 23:40:00') 
+select * from babel_datetime_vu_testing where dt >= datetime('1992-05-23 23:40:00') 
                     and dt < datetime('1992-05-23 23:41:00')
 go
 ~~START~~
@@ -42,7 +42,7 @@ datetime
 1992-05-23 23:40:30.0
 ~~END~~
 
-select * from datetime_testing where dt < date('1992-05-24')
+select * from babel_datetime_vu_testing where dt < date('1992-05-24')
 go
 ~~START~~
 datetime

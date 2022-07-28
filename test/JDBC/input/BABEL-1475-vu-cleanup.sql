@@ -1,26 +1,26 @@
-DROP TABLE dateFunctions_day;
+DROP TABLE BABEL_1475_vu_day;
 GO
 
-DROP TABLE dateFunctions_month;
+DROP TABLE BABEL_1475_vu_month;
 GO
 
-DROP TABLE dateFunctions_year;
+DROP TABLE BABEL_1475_vu_year;
 GO
 
-DROP TABLE dateFunctions_datediff_1;
+DROP TABLE BABEL_1475_vu_datediff_1;
 GO
 
-DROP TABLE dateFunctions_datediff_2;
+DROP TABLE BABEL_1475_vu_datediff_2;
 GO
 
-DROP TABLE dateFunctions_datefromparts;
+DROP TABLE BABEL_1475_vu_datefromparts;
 GO
 
-DROP TABLE dateFunctions_datename;
+DROP TABLE BABEL_1475_vu_datename;
 GO
 
-DROP TABLE dateFunctions_datepart_1;
+DROP TABLE BABEL_1475_vu_datepart_1;
 GO
 
-DROP TABLE dateFunctions_datepart_2;
+DROP TABLE BABEL_1475_vu_datepart_2;
 GO
