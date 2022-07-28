@@ -2326,7 +2326,6 @@ antlr_parser_cpp(const char *sourceText)
 		if (pltsql_dump_antlr_query_graph)
 			toDotRecursive(tree, parser.getRuleNames(), sourceText);
 
-        /* If PARSEONLY is enabled, replace with empty statement */
         if (pltsql_parseonly)
             pltsql_parse_result = makeEmptyBlockStmt(0);
 

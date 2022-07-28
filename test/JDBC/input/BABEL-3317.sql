@@ -1,27 +1,53 @@
+/* batch statement. PARSEONLY must be turned off at parse
+time so that the entire batch executes */
 SET PARSEONLY ON;
 go
-CREATE TABLE t1(a int);
-INSERT INTO t1 values (1);
+CREATE TABLE babel_3317t1(a int);
+INSERT INTO babel_3317t1 values (1);
 SET PARSEONLY OFF;
-SELECT * FROM t1;
+SELECT * FROM babel_3317t1;
 go
 
-
+/* Test normal use */
 SET PARSEONLY ON;
 GO
-INSERT INTO t1 values (2);
+INSERT INTO babel_3317t1 values (2);
 GO
 SET PARSEONLY OFF;
 GO
-SELECT * FROM t1
+SELECT * FROM babel_3317t1
 GO
 
+/* Test turning off multiple settings at once */
 SET PARSEONLY ON;
 SET FMTONLY, PARSEONLY OFF;
 GO
 
-SELECT * FROM t1
+SELECT * FROM babel_3317t1
 GO
 
-DROP TABLE t1
+DROP TABLE babel_3317t1
 GO
+
+/* Parseonly can only be set to true during execution time */
+CREATE TABLE t3317(a int);
+SET PARSEONLY ON;
+GO
+
+SET PARSEONLY OFF;
+SELECT * FROM t3317;
+GO
+
+DROP TABLE t3317;
+GO
+
+/* Test that syntax errors are still thrown with PARSEONLY on. */
+SET PARSEONLY ON
+GO
+
+SELECT * FROM INSERT
+GO
+
+SET PARSEONLY OFF
+GO
+
