@@ -49,6 +49,7 @@ column_domain_usage
 constraint_column_usage
 sys-host_name
 SYSTEM_USER
+Test-Default-Columns
 indexproperty
 sys-all_views
 datepart
