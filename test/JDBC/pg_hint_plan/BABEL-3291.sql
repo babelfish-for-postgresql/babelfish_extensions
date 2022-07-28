@@ -30,5 +30,8 @@ set babelfish_showplan_all off
 go
 
 -- cleanup
+select set_config('babelfishpg_tsql.explain_costs', 'on', false)
+go
+
 drop table babel_3291_t1
 go
