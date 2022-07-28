@@ -71,8 +71,8 @@ runs:
       run: |
         cd test/JDBC/
         export isUpgradeTestMode=false
-        base_dir=$matrix.upgrade-path.path[0]
-        tar_dir=$matrix.upgrade-path.last_version
+        base_dir=${{ matrix.upgrade-path.path[0] }}
+        tar_dir=${{ matrix.upgrade-path.last_version }}
         if [[ "$base_dir" == *"latest"* ]]; then
           base_dir="latest"
         fi
