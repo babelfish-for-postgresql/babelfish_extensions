@@ -53,6 +53,7 @@ sys-host_name
 SYSTEM_USER
 indexproperty
 sys-all_parameters
+msdb-dbo-syspolicy_configuration
 sys-all_views
 datepart
 sys-sysobjects
