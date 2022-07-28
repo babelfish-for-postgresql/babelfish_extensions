@@ -1,17 +1,12 @@
-SELECT vd.schema_name, vd.object_name, vd.definition FROM babelfish_view_def vd WHERE vd.object_name LIKE '%view_3135%' ORDER BY vd.schema_name, vd.object_name, vd.definition;
+SELECT vd.schema_name, vd.object_name, vd.definition FROM babelfish_view_def vd WHERE vd.object_name LIKE '%bbf_view_def_upgrade_vu_prepare%' ORDER BY vd.schema_name, vd.object_name, vd.definition;
 GO
 
-SELECT vd.schema_name, vd.object_name, vd.definition FROM dep_view_3135 vd WHERE vd.object_name LIKE '%view_3135%' ORDER BY vd.schema_name, vd.object_name, vd.definition;
+SELECT * FROM bbf_view_def_upgrade_vu_prepare_dep_view WHERE "TABLE_NAME" LIKE '%bbf_view_def_upgrade_vu_prepare%';
 GO
 
-SELECT * FROM dep_view_3135_2 WHERE "TABLE_NAME" LIKE '%view_3135%';
+DROP VIEW bbf_view_def_upgrade_vu_prepare_view;
 GO
 
-DROP VIEW view_3135_upd;
+DROP VIEW bbf_view_def_upgrade_vu_prepare_dep_view;
 GO
 
-DROP VIEW dep_view_3135;
-GO
-
-DROP VIEW dep_view_3135_2;
-GO
