@@ -307,7 +307,7 @@ hello#!#jello
 #Q#Select * from destinationTable
 #D#datetime#!#datetime
 12/13/2000 12:58:23#!#02/28/1900 23:59:59
-01/01/1900 00:00:00#!#12/31/9999 23:59:59
+#!#12/31/9999 23:59:59
 #Q#drop table sourceTable
 #Q#drop table destinationTable
 #Q#Create table sourceTable(a smalldatetime, b smalldatetime not null)
@@ -321,7 +321,7 @@ hello#!#jello
 #Q#Select * from destinationTable
 #D#smalldatetime#!#smalldatetime
 05/08/2007 12:35:00#!#12/13/2000 12:58:00
-01/01/1900 00:00:00#!#02/28/2000 23:46:00
+#!#02/28/2000 23:46:00
 #Q#drop table sourceTable
 #Q#drop table destinationTable
 #Q#Create table sourceTable(a Datetime2(6), b Datetime2(6) not null)
@@ -335,7 +335,7 @@ hello#!#jello
 #Q#Select * from destinationTable
 #D#datetime2#!#datetime2
 10/23/2016 12:45:37#!#10/23/2016 12:45:37
-01/01/1900 00:00:00#!#10/23/2016 12:45:37
+#!#10/23/2016 12:45:37
 #Q#drop table sourceTable
 #Q#drop table destinationTable
 #Q#Create table sourceTable(a sql_variant, b sql_variant not null)
