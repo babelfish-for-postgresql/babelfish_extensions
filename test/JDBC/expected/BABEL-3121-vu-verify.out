@@ -1,7 +1,7 @@
-USE db_babel_3121;
+USE master;
 go
 
-select * from babel_3121_t;
+select * from babel_3121_vu_prepare_t;
 go
 ~~START~~
 int#!#varchar
@@ -9,7 +9,7 @@ int#!#varchar
 ~~END~~
 
 
-select attname, array_to_string(attoptions,',') attoptions from pg_class C, pg_attribute A where C.oid = A.attrelid and C.relname like 'babel_3121_t' and A.attnum > 0 and attisdropped = 'f' order by attname;
+select attname, array_to_string(attoptions,',') attoptions from pg_class C, pg_attribute A where C.oid = A.attrelid and C.relname like 'babel_3121_vu_prepare_t' and A.attnum > 0 and attisdropped = 'f' order by attname;
 go
 ~~START~~
 varchar#!#text
@@ -18,7 +18,7 @@ id#!#bbf_original_name=id
 ~~END~~
 
 
-select * from babel_3121_t2;
+select * from babel_3121_vu_prepare_t2;
 go
 ~~START~~
 int#!#varchar
@@ -26,7 +26,7 @@ int#!#varchar
 ~~END~~
 
 
-select attname, array_to_string(attoptions,',') attoptions from pg_class C, pg_attribute A where C.oid = A.attrelid and C.relname like 'babel_3121_t2' and A.attnum > 0 and attisdropped = 'f' order by attname;
+select attname, array_to_string(attoptions,',') attoptions from pg_class C, pg_attribute A where C.oid = A.attrelid and C.relname like 'babel_3121_vu_prepare_t2' and A.attnum > 0 and attisdropped = 'f' order by attname;
 go
 ~~START~~
 varchar#!#text
@@ -35,7 +35,7 @@ id#!#bbf_original_name=id
 ~~END~~
 
 
-select * from babel_3121_t3;
+select * from babel_3121_vu_prepare_t3;
 go
 ~~START~~
 int#!#varchar
@@ -43,7 +43,7 @@ int#!#varchar
 ~~END~~
 
 
-select attname, array_to_string(attoptions,',') attoptions from pg_class C, pg_attribute A where C.oid = A.attrelid and C.relname like 'babel_3121_t3' and A.attnum > 0 and attisdropped = 'f' order by attname;
+select attname, array_to_string(attoptions,',') attoptions from pg_class C, pg_attribute A where C.oid = A.attrelid and C.relname like 'babel_3121_vu_prepare_t3' and A.attnum > 0 and attisdropped = 'f' order by attname;
 go
 ~~START~~
 varchar#!#text
@@ -52,7 +52,7 @@ id#!#bbf_original_name=id
 ~~END~~
 
 
-select * from babel_3121_t4;
+select * from babel_3121_vu_prepare_t4;
 go
 ~~START~~
 int#!#varchar
@@ -60,7 +60,7 @@ int#!#varchar
 ~~END~~
 
 
-select attname, array_to_string(attoptions,',') attoptions from pg_class C, pg_attribute A where C.oid = A.attrelid and C.relname like 'babel_3121_t4' and A.attnum > 0 and attisdropped = 'f' order by attname;
+select attname, array_to_string(attoptions,',') attoptions from pg_class C, pg_attribute A where C.oid = A.attrelid and C.relname like 'babel_3121_vu_prepare_t4' and A.attnum > 0 and attisdropped = 'f' order by attname;
 go
 ~~START~~
 varchar#!#text
@@ -69,7 +69,7 @@ id#!#bbf_original_name=id
 ~~END~~
 
 
-select * from babel_3121_t5;
+select * from babel_3121_vu_prepare_t5;
 go
 ~~START~~
 int#!#varchar
@@ -77,7 +77,7 @@ int#!#varchar
 ~~END~~
 
 
-select attname, array_to_string(attoptions,',') attoptions from pg_class C, pg_attribute A where C.oid = A.attrelid and C.relname like 'babel_3121_t5' and A.attnum > 0 and attisdropped = 'f' order by attname;
+select attname, array_to_string(attoptions,',') attoptions from pg_class C, pg_attribute A where C.oid = A.attrelid and C.relname like 'babel_3121_vu_prepare_t5' and A.attnum > 0 and attisdropped = 'f' order by attname;
 go
 ~~START~~
 varchar#!#text
@@ -86,7 +86,7 @@ id#!#bbf_original_name=id
 ~~END~~
 
 
-select * from babel_3121_t6;
+select * from babel_3121_vu_prepare_t6;
 go
 ~~START~~
 int#!#varchar
@@ -94,7 +94,7 @@ int#!#varchar
 ~~END~~
 
 
-select attname, array_to_string(attoptions,',') attoptions from pg_class C, pg_attribute A where C.oid = A.attrelid and C.relname like 'babel_3121_t6' and A.attnum > 0 and attisdropped = 'f' order by attname;
+select attname, array_to_string(attoptions,',') attoptions from pg_class C, pg_attribute A where C.oid = A.attrelid and C.relname like 'babel_3121_vu_prepare_t6' and A.attnum > 0 and attisdropped = 'f' order by attname;
 go
 ~~START~~
 varchar#!#text
@@ -103,8 +103,28 @@ id#!#bbf_original_name=id
 ~~END~~
 
 
-USE master;
+select * from babel_3121_vu_prepare_t7;
 go
+~~START~~
+int#!#varchar
+1#!#success
+~~END~~
 
-DROP DATABASE db_babel_3121;
+
+select attname, array_to_string(attoptions,',') attoptions from pg_class C, pg_attribute A where C.oid = A.attrelid and C.relname like 'babel_3121_vu_prepare_t7' and A.attnum > 0 and attisdropped = 'f' order by attname;
+go
+~~START~~
+varchar#!#text
+bala(g#,#!#bbf_original_name=BALA(G#,
+id#!#bbf_original_name=id
+~~END~~
+
+
+drop table babel_3121_vu_prepare_t7;
+drop table babel_3121_vu_prepare_t6;
+drop table babel_3121_vu_prepare_t5;
+drop table babel_3121_vu_prepare_t4;
+drop table babel_3121_vu_prepare_t3;
+drop table babel_3121_vu_prepare_t2;
+drop table babel_3121_vu_prepare_t;
 go

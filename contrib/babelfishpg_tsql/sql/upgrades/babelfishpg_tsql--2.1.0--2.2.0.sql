@@ -886,7 +886,14 @@ GRANT SELECT ON information_schema_tsql.routines TO PUBLIC;
 CREATE OR REPLACE FUNCTION sys.system_user()
 RETURNS sys.nvarchar(128) AS
 $BODY$
-	SELECT SESSION_USER;
+	SELECT sys.suser_name();
+$BODY$
+LANGUAGE SQL;
+
+CREATE OR REPLACE FUNCTION sys.session_user()
+RETURNS sys.nvarchar(128) AS
+$BODY$
+	SELECT sys.user_name();
 $BODY$
 LANGUAGE SQL;
 
@@ -2440,6 +2447,353 @@ INSERT INTO sys.babelfish_helpcollation VALUES (N'mongolian_cs_as', N'Mongolian,
 INSERT INTO sys.babelfish_helpcollation VALUES (N'sql_latin1_general_cp874_ci_as', N'Virtual, default locale, code page 874, case-insensitive, accent-sensitive, kanatype-insensitive, width-insensitive');
 INSERT INTO sys.babelfish_helpcollation VALUES (N'sql_latin1_general_cp874_cs_as', N'Virtual, default locale, code page 874, case-sensitive, accent-sensitive, kanatype-insensitive, width-insensitive');
 
+CREATE OR REPLACE FUNCTION sys.language()
+RETURNS sys.NVARCHAR(128)  AS 'babelfishpg_tsql' LANGUAGE C;
+
+CREATE OR REPLACE FUNCTION sys.host_name()
+RETURNS sys.NVARCHAR(128)  AS 'babelfishpg_tsql' LANGUAGE C IMMUTABLE PARALLEL SAFE;
+
+ALTER FUNCTION sys.tsql_stat_get_activity(text) RENAME TO tsql_stat_get_activity_deprecated_2_1;
+ALTER VIEW sys.sysprocesses RENAME TO sysprocesses_deprecated_2_1;
+
+-- recreate deprecated objects to use deprecated (C) functions
+CREATE OR REPLACE FUNCTION sys.tsql_stat_get_activity_deprecated_2_1(
+  IN view_name text,
+  OUT procid int,
+  OUT client_version int,
+  OUT library_name VARCHAR(32),
+  OUT language VARCHAR(128),
+  OUT quoted_identifier bool,
+  OUT arithabort bool,
+  OUT ansi_null_dflt_on bool,
+  OUT ansi_defaults bool,
+  OUT ansi_warnings bool,
+  OUT ansi_padding bool,
+  OUT ansi_nulls bool,
+  OUT concat_null_yields_null bool,
+  OUT textsize int,
+  OUT datefirst int,
+  OUT lock_timeout int,
+  OUT transaction_isolation int2,
+  OUT client_pid int,
+  OUT row_count bigint,
+  OUT error int,
+  OUT trancount int,
+  OUT protocol_version int,
+  OUT packet_size int,
+  OUT encrypyt_option VARCHAR(40),
+  OUT database_id int2)
+RETURNS SETOF RECORD
+AS 'babelfishpg_tsql', 'tsql_stat_get_activity_deprecated_2_1'
+LANGUAGE C VOLATILE STRICT;
+
+create or replace view sys.sysprocesses_deprecated_2_1 as
+select
+  a.pid as spid
+  , null::integer as kpid
+  , coalesce(blocking_activity.pid, 0) as blocked
+  , null::bytea as waittype
+  , 0 as waittime
+  , a.wait_event_type as lastwaittype
+  , null::text as waitresource
+  , coalesce(t.database_id, 0)::oid as dbid
+  , a.usesysid as uid
+  , 0 as cpu
+  , 0 as physical_io
+  , 0 as memusage
+  , a.backend_start as login_time
+  , a.query_start as last_batch
+  , 0 as ecid
+  , 0 as open_tran
+  , a.state as status
+  , null::bytea as sid
+  , a.client_hostname as hostname
+  , a.application_name as program_name
+  , null::varchar(10) as hostprocess
+  , a.query as cmd
+  , null::varchar(128) as nt_domain
+  , null::varchar(128) as nt_username
+  , null::varchar(12) as net_address
+  , null::varchar(12) as net_library
+  , a.usename as loginname
+  , null::bytea as context_info
+  , null::bytea as sql_handle
+  , 0 as stmt_start
+  , 0 as stmt_end
+  , 0 as request_id
+from pg_stat_activity a
+left join sys.tsql_stat_get_activity_deprecated_2_1('sessions') as t on a.pid = t.procid
+left join pg_catalog.pg_locks as blocked_locks on a.pid = blocked_locks.pid
+left join pg_catalog.pg_locks         blocking_locks
+        ON blocking_locks.locktype = blocked_locks.locktype
+        AND blocking_locks.DATABASE IS NOT DISTINCT FROM blocked_locks.DATABASE
+        AND blocking_locks.relation IS NOT DISTINCT FROM blocked_locks.relation
+        AND blocking_locks.page IS NOT DISTINCT FROM blocked_locks.page
+        AND blocking_locks.tuple IS NOT DISTINCT FROM blocked_locks.tuple
+        AND blocking_locks.virtualxid IS NOT DISTINCT FROM blocked_locks.virtualxid
+        AND blocking_locks.transactionid IS NOT DISTINCT FROM blocked_locks.transactionid
+        AND blocking_locks.classid IS NOT DISTINCT FROM blocked_locks.classid
+        AND blocking_locks.objid IS NOT DISTINCT FROM blocked_locks.objid
+        AND blocking_locks.objsubid IS NOT DISTINCT FROM blocked_locks.objsubid
+        AND blocking_locks.pid != blocked_locks.pid
+ left join pg_catalog.pg_stat_activity blocking_activity ON blocking_activity.pid = blocking_locks.pid
+ where a.datname = current_database(); /* current physical database will always be babelfish database */
+GRANT SELECT ON sys.sysprocesses_deprecated_2_1 TO PUBLIC;
+
+CREATE OR REPLACE FUNCTION sys.tsql_stat_get_activity(
+  IN view_name text,
+  OUT procid int,
+  OUT client_version int,
+  OUT library_name VARCHAR(32),
+  OUT language VARCHAR(128),
+  OUT quoted_identifier bool,
+  OUT arithabort bool,
+  OUT ansi_null_dflt_on bool,
+  OUT ansi_defaults bool,
+  OUT ansi_warnings bool,
+  OUT ansi_padding bool,
+  OUT ansi_nulls bool,
+  OUT concat_null_yields_null bool,
+  OUT textsize int,
+  OUT datefirst int,
+  OUT lock_timeout int,
+  OUT transaction_isolation int2,
+  OUT client_pid int,
+  OUT row_count bigint,
+  OUT error int,
+  OUT trancount int,
+  OUT protocol_version int,
+  OUT packet_size int,
+  OUT encrypyt_option VARCHAR(40),
+  OUT database_id int2,
+  OUT host_name varchar(128))
+RETURNS SETOF RECORD
+AS 'babelfishpg_tsql', 'tsql_stat_get_activity'
+LANGUAGE C VOLATILE STRICT;
+
+create or replace view sys.sysprocesses as
+select
+  a.pid as spid
+  , null::integer as kpid
+  , coalesce(blocking_activity.pid, 0) as blocked
+  , null::bytea as waittype
+  , 0 as waittime
+  , a.wait_event_type as lastwaittype
+  , null::text as waitresource
+  , coalesce(t.database_id, 0)::oid as dbid
+  , a.usesysid as uid
+  , 0 as cpu
+  , 0 as physical_io
+  , 0 as memusage
+  , a.backend_start as login_time
+  , a.query_start as last_batch
+  , 0 as ecid
+  , 0 as open_tran
+  , a.state as status
+  , null::bytea as sid
+  , CAST(t.host_name AS sys.nchar(128)) as hostname
+  , a.application_name as program_name
+  , null::varchar(10) as hostprocess
+  , a.query as cmd
+  , null::varchar(128) as nt_domain
+  , null::varchar(128) as nt_username
+  , null::varchar(12) as net_address
+  , null::varchar(12) as net_library
+  , a.usename as loginname
+  , null::bytea as context_info
+  , null::bytea as sql_handle
+  , 0 as stmt_start
+  , 0 as stmt_end
+  , 0 as request_id
+from pg_stat_activity a
+left join sys.tsql_stat_get_activity('sessions') as t on a.pid = t.procid
+left join pg_catalog.pg_locks as blocked_locks on a.pid = blocked_locks.pid
+left join pg_catalog.pg_locks         blocking_locks
+        ON blocking_locks.locktype = blocked_locks.locktype
+        AND blocking_locks.DATABASE IS NOT DISTINCT FROM blocked_locks.DATABASE
+        AND blocking_locks.relation IS NOT DISTINCT FROM blocked_locks.relation
+        AND blocking_locks.page IS NOT DISTINCT FROM blocked_locks.page
+        AND blocking_locks.tuple IS NOT DISTINCT FROM blocked_locks.tuple
+        AND blocking_locks.virtualxid IS NOT DISTINCT FROM blocked_locks.virtualxid
+        AND blocking_locks.transactionid IS NOT DISTINCT FROM blocked_locks.transactionid
+        AND blocking_locks.classid IS NOT DISTINCT FROM blocked_locks.classid
+        AND blocking_locks.objid IS NOT DISTINCT FROM blocked_locks.objid
+        AND blocking_locks.objsubid IS NOT DISTINCT FROM blocked_locks.objsubid
+        AND blocking_locks.pid != blocked_locks.pid
+ left join pg_catalog.pg_stat_activity blocking_activity ON blocking_activity.pid = blocking_locks.pid
+ where a.datname = current_database(); /* current physical database will always be babelfish database */
+GRANT SELECT ON sys.sysprocesses TO PUBLIC;
+
+-- recreate views dependent on tsql_stat_get_activity
+create or replace view sys.dm_exec_sessions
+  as
+  select a.pid as session_id
+    , a.backend_start::sys.datetime as login_time
+    , d.host_name::sys.nvarchar(128) as host_name
+    , a.application_name::sys.nvarchar(128) as program_name
+    , d.client_pid as host_process_id
+    , d.client_version as client_version
+    , d.library_name::sys.nvarchar(32) as client_interface_name
+    , null::sys.varbinary(85) as security_id
+    , a.usename::sys.nvarchar(128) as login_name
+    , (select sys.default_domain())::sys.nvarchar(128) as nt_domain
+    , null::sys.nvarchar(128) as nt_user_name
+    , a.state::sys.nvarchar(30) as status
+    , null::sys.nvarchar(128) as context_info
+    , null::integer as cpu_time
+    , null::integer as memory_usage
+    , null::integer as total_scheduled_time
+    , null::integer as total_elapsed_time
+    , a.client_port as endpoint_id
+    , a.query_start::sys.datetime as last_request_start_time
+    , a.state_change::sys.datetime as last_request_end_time
+    , null::bigint as "reads"
+    , null::bigint as "writes"
+    , null::bigint as logical_reads
+    , case when a.client_port > 0 then 1::sys.bit else 0::sys.bit end as is_user_process
+    , d.textsize as text_size
+    , d.language::sys.nvarchar(128) as language
+    , 'ymd'::sys.nvarchar(3) as date_format-- Bld 173 lacks support for SET DATEFORMAT and always expects ymd
+    , d.datefirst::smallint as date_first -- Bld 173 lacks support for SET DATEFIRST and always returns 7
+    , CAST(CAST(d.quoted_identifier as integer) as sys.bit) as quoted_identifier
+    , CAST(CAST(d.arithabort as integer) as sys.bit) as arithabort
+    , CAST(CAST(d.ansi_null_dflt_on as integer) as sys.bit) as ansi_null_dflt_on
+    , CAST(CAST(d.ansi_defaults as integer) as sys.bit) as ansi_defaults
+    , CAST(CAST(d.ansi_warnings as integer) as sys.bit) as ansi_warnings
+    , CAST(CAST(d.ansi_padding as integer) as sys.bit) as ansi_padding
+    , CAST(CAST(d.ansi_nulls as integer) as sys.bit) as ansi_nulls
+    , CAST(CAST(d.concat_null_yields_null as integer) as sys.bit) as concat_null_yields_null
+    , d.transaction_isolation::smallint as transaction_isolation_level
+    , d.lock_timeout as lock_timeout
+    , 0 as deadlock_priority
+    , d.row_count as row_count
+    , d.error as prev_error
+    , null::sys.varbinary(85) as original_security_id
+    , a.usename::sys.nvarchar(128) as original_login_name
+    , null::sys.datetime as last_successful_logon
+    , null::sys.datetime as last_unsuccessful_logon
+    , null::bigint as unsuccessful_logons
+    , null::int as group_id
+    , d.database_id::smallint as database_id
+    , 0 as authenticating_database_id
+    , d.trancount as open_transaction_count
+  from pg_catalog.pg_stat_activity AS a
+  RIGHT JOIN sys.tsql_stat_get_activity('sessions') AS d ON (a.pid = d.procid);
+GRANT SELECT ON sys.dm_exec_sessions TO PUBLIC;
+
+create or replace view sys.dm_exec_connections
+ as
+ select a.pid as session_id
+   , a.pid as most_recent_session_id
+   , a.backend_start::sys.datetime as connect_time
+   , 'TCP'::sys.nvarchar(40) as net_transport
+   , 'TSQL'::sys.nvarchar(40) as protocol_type
+   , d.protocol_version as protocol_version
+   , 4 as endpoint_id
+   , d.encrypyt_option::sys.nvarchar(40) as encrypt_option
+   , null::sys.nvarchar(40) as auth_scheme
+   , null::smallint as node_affinity
+   , null::int as num_reads
+   , null::int as num_writes
+   , null::sys.datetime as last_read
+   , null::sys.datetime as last_write
+   , d.packet_size as net_packet_size
+   , a.client_addr::varchar(48) as client_net_address
+   , a.client_port as client_tcp_port
+   , null::varchar(48) as local_net_address
+   , null::int as local_tcp_port
+   , null::sys.uniqueidentifier as connection_id
+   , null::sys.uniqueidentifier as parent_connection_id
+   , a.pid::sys.varbinary(64) as most_recent_sql_handle
+ from pg_catalog.pg_stat_activity AS a
+ RIGHT JOIN sys.tsql_stat_get_activity('connections') AS d ON (a.pid = d.procid);
+GRANT SELECT ON sys.dm_exec_connections TO PUBLIC;
+
+CALL sys.babelfish_drop_deprecated_function('sys', 'tsql_stat_get_activity_deprecated_2_1');
+CALL sys.babelfish_drop_deprecated_view('sys', 'sysprocesses_deprecated_2_1');
+
+CREATE OR REPLACE FUNCTION sys.datepart(IN datepart TEXT, IN arg TEXT) RETURNS INTEGER
+AS
+$body$
+BEGIN
+    IF pg_typeof(arg) = 'sys.DATETIMEOFFSET'::regtype THEN
+        return sys.datepart_internal(datepart, arg::timestamp,
+                     sys.babelfish_get_datetimeoffset_tzoffset(arg)::integer);
+    ELSIF pg_typeof(arg) = 'pg_catalog.text'::regtype THEN
+        return sys.datepart_internal(datepart, arg::sys.nvarchar::sys.datetime);
+    ELSE
+        return sys.datepart_internal(datepart, arg);
+    END IF;
+END;
+$body$
+LANGUAGE plpgsql IMMUTABLE;
+
+CREATE OR REPLACE FUNCTION sys.INDEXPROPERTY(IN object_id INT, IN index_or_statistics_name sys.nvarchar(128), IN property sys.varchar(128))
+RETURNS INT AS
+$BODY$
+DECLARE
+ret_val INT;
+BEGIN
+	index_or_statistics_name = LOWER(TRIM(index_or_statistics_name));
+	property = LOWER(TRIM(property));
+    SELECT INTO ret_val
+    CASE
+       
+      WHEN (SELECT CAST(type AS int) FROM sys.indexes i WHERE i.object_id = $1 AND i.name = $2 COLLATE sys.database_default) = 3 -- is XML index
+      THEN CAST(NULL AS int)
+    
+      WHEN property = 'indexdepth'
+      THEN CAST(0 AS int)
+
+      WHEN property = 'indexfillfactor'
+      THEN (SELECT CAST(fill_factor AS int) FROM sys.indexes i WHERE i.object_id = $1 AND i.name = $2 COLLATE sys.database_default)
+
+      WHEN property = 'indexid'
+      THEN (SELECT CAST(index_id AS int) FROM sys.indexes i WHERE i.object_id = $1 AND i.name = $2 COLLATE sys.database_default)
+
+      WHEN property = 'isautostatistics'
+      THEN CAST(0 AS int)
+
+      WHEN property = 'isclustered'
+      THEN (SELECT CAST(CASE WHEN type = 1 THEN 1 ELSE 0 END AS int) FROM sys.indexes i WHERE i.object_id = $1 AND i.name = $2 COLLATE sys.database_default)
+      
+      WHEN property = 'isdisabled'
+      THEN (SELECT CAST(is_disabled AS int) FROM sys.indexes i WHERE i.object_id = $1 AND i.name = $2 COLLATE sys.database_default)
+      
+      WHEN property = 'isfulltextkey'
+      THEN CAST(0 AS int)
+      
+      WHEN property = 'ishypothetical'
+      THEN (SELECT CAST(is_hypothetical AS int) FROM sys.indexes i WHERE i.object_id = $1 AND i.name = $2 COLLATE sys.database_default)
+      
+      WHEN property = 'ispadindex'
+      THEN (SELECT CAST(is_padded AS int) FROM sys.indexes i WHERE i.object_id = $1 AND i.name = $2 COLLATE sys.database_default)
+      
+      WHEN property = 'ispagelockdisallowed'
+      THEN (SELECT CAST(CASE WHEN allow_page_locks = 1 THEN 0 ELSE 1 END AS int) FROM sys.indexes i WHERE i.object_id = $1 AND i.name = $2 COLLATE sys.database_default)
+      
+      WHEN property = 'isrowlockdisallowed'
+      THEN (SELECT CAST(CASE WHEN allow_row_locks = 1 THEN 0 ELSE 1 END AS int) FROM sys.indexes i WHERE i.object_id=$1 AND i.name = $2 COLLATE sys.database_default)
+      
+      WHEN property = 'isstatistics'
+      THEN CAST(0 AS int)
+      
+      WHEN property = 'isunique'
+      THEN (SELECT CAST(is_unique AS int) FROM sys.indexes i WHERE i.object_id = $1 AND i.name = $2 COLLATE sys.database_default)
+      
+      WHEN property = 'iscolumnstore'
+      THEN CAST(0 AS int)
+      
+      WHEN property = 'isoptimizedforsequentialkey'
+      THEN CAST(0 AS int)
+    ELSE
+      CAST(NULL AS int)
+    END;
+RETURN ret_val;
+END;
+$BODY$
+LANGUAGE plpgsql;
+GRANT EXECUTE ON FUNCTION sys.INDEXPROPERTY(IN object_id INT, IN index_or_statistics_name sys.nvarchar(128),  IN property sys.varchar(128)) TO PUBLIC;
 
 ALTER VIEW sys.sysobjects RENAME TO sysobjects_deprecated_2_1_0;
 
@@ -2479,6 +2833,118 @@ GRANT SELECT ON sys.sysobjects TO PUBLIC;
 
 CALL sys.babelfish_drop_deprecated_view('sys', 'sysobjects_deprecated_2_1_0');
 
+CREATE OR REPLACE PROCEDURE sys.sp_helpuser("@name_in_db" sys.SYSNAME = NULL) AS
+$$
+BEGIN
+	-- If security account is not specified, return info about all users
+	IF @name_in_db IS NULL
+	BEGIN
+		SELECT CAST(Ext1.orig_username AS SYS.SYSNAME) AS 'UserName',
+			   CAST(CASE WHEN Ext1.orig_username = 'dbo' THEN 'db_owner' 
+					WHEN Ext2.orig_username IS NULL THEN 'public'
+					ELSE Ext2.orig_username END 
+					AS SYS.SYSNAME) AS 'RoleName',
+			   CAST(CASE WHEN Ext1.orig_username = 'dbo' THEN Base4.rolname
+					ELSE Base3.rolname END
+					AS SYS.SYSNAME) AS 'LoginName',
+			   CAST(LogExt.default_database_name AS SYS.SYSNAME) AS 'DefDBName',
+			   CAST(Ext1.default_schema_name AS SYS.SYSNAME) AS 'DefSchemaName',
+			   CAST(Base1.oid AS INT) AS 'UserID',
+			   CAST(CASE WHEN Ext1.orig_username = 'dbo' THEN CAST(Base4.oid AS INT)
+					ELSE CAST(Base3.oid AS INT) END
+					AS SYS.VARBINARY(85)) AS 'SID'
+		FROM sys.babelfish_authid_user_ext AS Ext1
+		INNER JOIN pg_catalog.pg_roles AS Base1 ON Base1.rolname = Ext1.rolname
+		LEFT OUTER JOIN pg_catalog.pg_auth_members AS Authmbr ON Base1.oid = Authmbr.member
+		LEFT OUTER JOIN pg_catalog.pg_roles AS Base2 ON Base2.oid = Authmbr.roleid
+		LEFT OUTER JOIN sys.babelfish_authid_user_ext AS Ext2 ON Base2.rolname = Ext2.rolname
+		LEFT OUTER JOIN sys.babelfish_authid_login_ext As LogExt ON LogExt.rolname = Ext1.login_name
+		LEFT OUTER JOIN pg_catalog.pg_roles AS Base3 ON Base3.rolname = LogExt.rolname
+		LEFT OUTER JOIN sys.babelfish_sysdatabases AS Bsdb ON Bsdb.name = DB_NAME()
+		LEFT OUTER JOIN pg_catalog.pg_roles AS Base4 ON Base4.rolname = Bsdb.owner
+		WHERE Ext1.database_name = DB_NAME()
+		AND Ext1.type = 'S'
+		AND Ext1.orig_username != 'db_owner'
+		ORDER BY UserName, RoleName;
+	END
+	-- If the security account is the db fixed role - db_owner
+    ELSE IF @name_in_db = 'db_owner'
+	BEGIN
+		-- TODO: Need to change after we can add/drop members to/from db_owner
+		SELECT CAST('db_owner' AS SYS.SYSNAME) AS 'Role_name',
+			   ROLE_ID('db_owner') AS 'Role_id',
+			   CAST('dbo' AS SYS.SYSNAME) AS 'Users_in_role',
+			   USER_ID('dbo') AS 'Userid';
+	END
+	-- If the security account is a db role
+	ELSE IF EXISTS (SELECT 1
+					FROM sys.babelfish_authid_user_ext
+					WHERE (orig_username = @name_in_db
+					OR lower(orig_username) = lower(@name_in_db))
+					AND database_name = DB_NAME()
+					AND type = 'R')
+	BEGIN
+		SELECT CAST(Ext1.orig_username AS SYS.SYSNAME) AS 'Role_name',
+			   CAST(Base1.oid AS INT) AS 'Role_id',
+			   CAST(Ext2.orig_username AS SYS.SYSNAME) AS 'Users_in_role',
+			   CAST(Base2.oid AS INT) AS 'Userid'
+		FROM sys.babelfish_authid_user_ext AS Ext2
+		INNER JOIN pg_catalog.pg_roles AS Base2 ON Base2.rolname = Ext2.rolname
+		INNER JOIN pg_catalog.pg_auth_members AS Authmbr ON Base2.oid = Authmbr.member
+		LEFT OUTER JOIN pg_catalog.pg_roles AS Base1 ON Base1.oid = Authmbr.roleid
+		LEFT OUTER JOIN sys.babelfish_authid_user_ext AS Ext1 ON Base1.rolname = Ext1.rolname
+		WHERE Ext1.database_name = DB_NAME()
+		AND Ext2.database_name = DB_NAME()
+		AND Ext1.type = 'R'
+		AND Ext2.orig_username != 'db_owner'
+		AND (Ext1.orig_username = @name_in_db OR lower(Ext1.orig_username) = lower(@name_in_db))
+		ORDER BY Role_name, Users_in_role;
+	END
+	-- If the security account is a user
+	ELSE IF EXISTS (SELECT 1
+					FROM sys.babelfish_authid_user_ext
+					WHERE (orig_username = @name_in_db
+					OR lower(orig_username) = lower(@name_in_db))
+					AND database_name = DB_NAME()
+					AND type = 'S')
+	BEGIN
+		SELECT CAST(Ext1.orig_username AS SYS.SYSNAME) AS 'UserName',
+			   CAST(CASE WHEN Ext1.orig_username = 'dbo' THEN 'db_owner' 
+					WHEN Ext2.orig_username IS NULL THEN 'public' 
+					ELSE Ext2.orig_username END 
+					AS SYS.SYSNAME) AS 'RoleName',
+			   CAST(CASE WHEN Ext1.orig_username = 'dbo' THEN Base4.rolname
+					ELSE Base3.rolname END
+					AS SYS.SYSNAME) AS 'LoginName',
+			   CAST(LogExt.default_database_name AS SYS.SYSNAME) AS 'DefDBName',
+			   CAST(Ext1.default_schema_name AS SYS.SYSNAME) AS 'DefSchemaName',
+			   CAST(Base1.oid AS INT) AS 'UserID',
+			   CAST(CASE WHEN Ext1.orig_username = 'dbo' THEN CAST(Base4.oid AS INT)
+					ELSE CAST(Base3.oid AS INT) END
+					AS SYS.VARBINARY(85)) AS 'SID'
+		FROM sys.babelfish_authid_user_ext AS Ext1
+		INNER JOIN pg_catalog.pg_roles AS Base1 ON Base1.rolname = Ext1.rolname
+		LEFT OUTER JOIN pg_catalog.pg_auth_members AS Authmbr ON Base1.oid = Authmbr.member
+		LEFT OUTER JOIN pg_catalog.pg_roles AS Base2 ON Base2.oid = Authmbr.roleid
+		LEFT OUTER JOIN sys.babelfish_authid_user_ext AS Ext2 ON Base2.rolname = Ext2.rolname
+		LEFT OUTER JOIN sys.babelfish_authid_login_ext As LogExt ON LogExt.rolname = Ext1.login_name
+		LEFT OUTER JOIN pg_catalog.pg_roles AS Base3 ON Base3.rolname = LogExt.rolname
+		LEFT OUTER JOIN sys.babelfish_sysdatabases AS Bsdb ON Bsdb.name = DB_NAME()
+		LEFT OUTER JOIN pg_catalog.pg_roles AS Base4 ON Base4.rolname = Bsdb.owner
+		WHERE Ext1.database_name = DB_NAME()
+		AND Ext1.type = 'S'
+		AND Ext1.orig_username != 'db_owner'
+		AND (Ext1.orig_username = @name_in_db OR lower(Ext1.orig_username) = lower(@name_in_db))
+		ORDER BY UserName, RoleName;
+	END
+	-- If the security account is not valid
+	ELSE 
+		RAISERROR ( 'The name supplied (%s) is not a user, role, or aliased login.', 16, 1, @name_in_db);
+END;
+$$
+LANGUAGE 'pltsql';
+GRANT EXECUTE on PROCEDURE sys.sp_helpuser TO PUBLIC;
+
 -- Drops the temporary procedure used by the upgrade script.
 -- Please have this be one of the last statements executed in this upgrade script.
 DROP PROCEDURE sys.babelfish_drop_deprecated_view(varchar, varchar);
@@ -2488,6 +2954,3 @@ DROP PROCEDURE sys.babelfish_drop_deprecated_table(varchar, varchar);
 
 -- Reset search_path to not affect any subsequent scripts
 SELECT set_config('search_path', trim(leading 'sys, ' from current_setting('search_path')), false);
-
-CREATE OR REPLACE FUNCTION sys.language()
-RETURNS sys.NVARCHAR(128)  AS 'babelfishpg_tsql' LANGUAGE C;
