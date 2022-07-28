@@ -1,0 +1,6 @@
+-- tsql
+drop view indentity_function_tests_view
+GO
+
+drop procedure indentity_function_tests_proc
+GO

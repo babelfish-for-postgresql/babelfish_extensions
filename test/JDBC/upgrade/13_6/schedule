@@ -49,6 +49,7 @@ sys-max_connections
 sys-original_login
 sys-schema-name
 sys-suser_sid
+identity_function
 sys-sysobjects
 sys-trigger_nestlevel
 routines_definition
