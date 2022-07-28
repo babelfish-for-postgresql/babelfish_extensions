@@ -37,6 +37,7 @@ sys-databases
 sys-suser_sid
 sys-suser_sname
 sys-default_constraints
+sys-check_constraints
 BABEL-3166
 BABEL-3192
 BABEL-3221
