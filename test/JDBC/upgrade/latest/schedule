@@ -39,6 +39,8 @@ BABEL-3121
 sys-events
 sys-suser_sid
 sys-trigger_events
+sys-suser_sname
+sys-default_constraints
 BABEL-3166
 BABEL-3192
 BABEL-3221
