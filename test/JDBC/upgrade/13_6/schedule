@@ -54,6 +54,9 @@ sys-trigger_nestlevel
 routines_definition
 constraint_column_usage
 column_domain_usage
+schema_resolution_proc
+datepart
+SYSTEM_USER
 BABEL-1189
 BABEL-1243
 BABEL-1963
@@ -95,5 +98,5 @@ BABEL-1510
 BABEL-3213
 BABEL-RAND
 BABEL-741
-SYSTEM_USER
+Test-sp_helpuser
 TestTableType
