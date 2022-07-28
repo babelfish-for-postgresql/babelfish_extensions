@@ -45,6 +45,7 @@ extern bool is_alter_server_stmt(GrantRoleStmt *stmt);
 extern void check_alter_server_stmt(GrantRoleStmt *stmt);
 extern bool is_alter_role_stmt(GrantRoleStmt *stmt);
 extern void check_alter_role_stmt(GrantRoleStmt *stmt);
+extern bool is_empty_role(Oid roleid);
 extern void create_bbf_authid_login_ext(CreateRoleStmt *stmt);
 extern void alter_bbf_authid_login_ext(AlterRoleStmt *stmt);
 extern void create_bbf_authid_user_ext(CreateRoleStmt *stmt, bool has_schema, bool has_login);
