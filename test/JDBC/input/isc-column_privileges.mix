@@ -1,0 +1,16 @@
+-- tsql
+
+create database simple_test;
+go
+
+use simple_test;
+go
+
+select * from information_schema.column_privileges;
+go
+
+use master;
+go
+
+drop database simple_test;
+go
