@@ -1,11 +1,11 @@
-SELECT * FROM BABEL_2769_vu_verify_Smalldatetime;
+SELECT * FROM BABEL_2769_vu_Smalldatetime;
 go
 
-SELECT * FROM BABEL_2769_vu_verify_Datetime;
+SELECT * FROM BABEL_2769_vu_Datetime;
 go
 
-SELECT * FROM BABEL_2769_vu_verify_Datetime2;
+SELECT * FROM BABEL_2769_vu_Datetime2;
 go
 
-SELECT * FROM BABEL_2769_vu_verify_Datetimeoffset;
+SELECT * FROM BABEL_2769_vu_Datetimeoffset;
 go
