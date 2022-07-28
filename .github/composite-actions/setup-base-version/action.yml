@@ -78,9 +78,10 @@ runs:
       run: |
         cd test/JDBC/
         export isUpgradeTestMode=true
-        export inputFilesPath=upgrade/${{ base_dir }}/preparation
+        base_dir=${{ matrix.upgrade-path.path[0] }}
+        export inputFilesPath=upgrade/$base_dir/preparation
         mvn test
-        for filename in $(grep -v "^ignore.*\|^#.*\|^cmd.*\|^all.*\|^$" upgrade/${{ base_dir }}/schedule); do
+        for filename in $(grep -v "^ignore.*\|^#.*\|^cmd.*\|^all.*\|^$" upgrade/$base_dir/schedule); do
           if [[ ! ($(find input/ -name $filename"-vu-prepare.*") || $(find input/ -name $filename"-vu-verify.*")) ]]; then 
             printf '%s\n' "ERROR: Cannot find Test file "$filename"-vu-prepare or "$filename"-vu-verify in input directory !!" >&2
             exit 1
@@ -88,9 +89,9 @@ runs:
         done
         export isUpgradeTestMode=false
         export inputFilesPath=input
-        for filename in $(grep -v "^ignore.*\|^#.*\|^cmd.*\|^all.*\|^$" upgrade/${{ base_dir }}/schedule); do
-          sed -i "s/$filename[ ]*$/$filename-vu-prepare/g" upgrade/${{ base_dir }}/schedule
+        for filename in $(grep -v "^ignore.*\|^#.*\|^cmd.*\|^all.*\|^$" upgrade/$base_dir/schedule); do
+          sed -i "s/$filename[ ]*$/$filename-vu-prepare/g" upgrade/$base_dir/schedule
         done
-        export scheduleFile=upgrade/${{ base_dir }}/schedule
+        export scheduleFile=upgrade/$base_dir/schedule
         mvn test
       shell: bash
