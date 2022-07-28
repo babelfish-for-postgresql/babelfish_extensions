@@ -2958,7 +2958,7 @@ BEGIN
 	
 	IF v_type = 'sysname' THEN
 		RETURN 256;
-	ELSIF (v_type in ('char', 'bpchar', 'varchar', 'binary', 'varbinary', 'nchar', 'nvarchar', 'sysname'))
+	ELSIF (v_type in ('char', 'bpchar', 'varchar', 'binary', 'varbinary', 'nchar', 'nvarchar'))
 	THEN
 		IF typemod < 0 THEN -- max value. 
 			RETURN -1;
