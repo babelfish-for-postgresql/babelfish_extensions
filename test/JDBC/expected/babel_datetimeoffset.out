@@ -44,14 +44,14 @@ select * from datetimeoffset_testing;
 go
 ~~START~~
 datetimeoffset
-1900-01-01 23:40:29.998000 +00:00
-1900-01-01 00:00:00.000000 +00:00
-0001-01-01 00:00:00.000000 +00:00
-2020-03-15 09:00:00.000000 +08:00
-2020-03-15 09:00:00.000000 +09:00
-1800-03-15 09:00:00.000000 +12:00
-2020-03-15 09:00:00.000000 -08:20
-1992-03-15 09:00:00.000000 +00:00
+1900-01-01 23:40:29.9980000 +00:00
+1900-01-01 00:00:00.0000000 +00:00
+0001-01-01 00:00:00.0000000 +00:00
+2020-03-15 09:00:00.0000000 +08:00
+2020-03-15 09:00:00.0000000 +09:00
+1800-03-15 09:00:00.0000000 +12:00
+2020-03-15 09:00:00.0000000 -08:20
+1992-03-15 09:00:00.0000000 +00:00
 ~~END~~
 
 CREATE INDEX df_hash ON datetimeoffset_testing (df);
@@ -62,16 +62,16 @@ select * from datetimeoffset_testing where df >= '2020-03-15 00:00:00';
 go
 ~~START~~
 datetimeoffset
-2020-03-15 09:00:00.000000 +08:00
-2020-03-15 09:00:00.000000 +09:00
-2020-03-15 09:00:00.000000 -08:20
+2020-03-15 09:00:00.0000000 +08:00
+2020-03-15 09:00:00.0000000 +09:00
+2020-03-15 09:00:00.0000000 -08:20
 ~~END~~
 
 select * from datetimeoffset_testing where df >= '2020-03-15 09:00:00 +7';
 go
 ~~START~~
 datetimeoffset
-2020-03-15 09:00:00.000000 -08:20
+2020-03-15 09:00:00.0000000 -08:20
 ~~END~~
 
 select * from datetimeoffset_testing where df >= '2020-03-15 09:00:00 +8' 
@@ -79,18 +79,18 @@ select * from datetimeoffset_testing where df >= '2020-03-15 09:00:00 +8'
 go
 ~~START~~
 datetimeoffset
-2020-03-15 09:00:00.000000 +08:00
+2020-03-15 09:00:00.0000000 +08:00
 ~~END~~
 
 select * from datetimeoffset_testing where df < '1992-05-24';
 go
 ~~START~~
 datetimeoffset
-1900-01-01 23:40:29.998000 +00:00
-1900-01-01 00:00:00.000000 +00:00
-0001-01-01 00:00:00.000000 +00:00
-1800-03-15 09:00:00.000000 +12:00
-1992-03-15 09:00:00.000000 +00:00
+1900-01-01 23:40:29.9980000 +00:00
+1900-01-01 00:00:00.0000000 +00:00
+0001-01-01 00:00:00.0000000 +00:00
+1800-03-15 09:00:00.0000000 +12:00
+1992-03-15 09:00:00.0000000 +00:00
 ~~END~~
 
 
@@ -114,7 +114,7 @@ select CAST('2079-06-06 23:59:29.123456 -9:30' AS datetimeoffset);
 go
 ~~START~~
 datetimeoffset
-2079-06-06 23:59:29.123456 -09:30
+2079-06-06 23:59:29.1234560 -09:30
 ~~END~~
 
 select CAST('2079-06-06 23:59:29.123456 -9:30' AS datetimeoffset(0));
@@ -336,7 +336,7 @@ select CAST(CAST('2020-03-15 23:59:29.99' AS datetime) AS datetimeoffset);
 go
 ~~START~~
 datetimeoffset
-2020-03-15 23:59:29.990000 +00:00
+2020-03-15 23:59:29.9900000 +00:00
 ~~END~~
 
 select CAST(CAST('2079-06-06 23:59:29.998 +8:00' AS datetimeoffset) AS datetime);
@@ -357,14 +357,14 @@ select CAST(CAST('1920-05-25 00:59:29.99' AS datetime2) AS datetimeoffset);
 go
 ~~START~~
 datetimeoffset
-1920-05-25 00:59:29.989999 +00:00
+1920-05-25 00:59:29.9900000 +00:00
 ~~END~~
 
 select CAST(CAST('1900-05-06 13:59:29.998 -8:00' AS datetimeoffset) AS datetime2);
 go
 ~~START~~
 datetime2
-1900-05-06 21:59:29.998000
+1900-05-06 21:59:29.9980000
 ~~END~~
 
 
@@ -373,14 +373,14 @@ select CAST(CAST('1999-12-31' AS date) AS datetimeoffset);
 go
 ~~START~~
 datetimeoffset
-1999-12-31 00:00:00.000000 +00:00
+1999-12-31 00:00:00.0000000 +00:00
 ~~END~~
 
 select CAST(CAST('0001-12-31' AS date) AS datetimeoffset);
 go
 ~~START~~
 datetimeoffset
-0001-12-31 00:00:00.000000 +00:00
+0001-12-31 00:00:00.0000000 +00:00
 ~~END~~
 
 select CAST(CAST('2000-01-01 23:59:59.999' AS datetimeoffset) AS date);
@@ -417,56 +417,56 @@ select CAST(CAST('23:59:59.999' AS time) AS datetimeoffset);
 go
 ~~START~~
 datetimeoffset
-1900-01-01 23:59:59.999000 +00:00
+1900-01-01 23:59:59.9990000 +00:00
 ~~END~~
 
 select CAST(CAST('00:30:31' AS time) AS datetimeoffset);
 go
 ~~START~~
 datetimeoffset
-1900-01-01 00:30:31.000000 +00:00
+1900-01-01 00:30:31.0000000 +00:00
 ~~END~~
 
 select CAST(CAST('1900-05-06 23:59:29.998+8:00' AS datetimeoffset) AS time);
 go
 ~~START~~
 time
-15:59:29.998000
+15:59:29.9980000
 ~~END~~
 
 select CAST(CAST('1920-05-25 00:59:29.99 +0' AS datetimeoffset) AS time);
 go
 ~~START~~
 time
-00:59:29.989999
+00:59:29.9900000
 ~~END~~
 
 select CAST(CAST('2050-05-06 00:00:00 +0' AS datetimeoffset) AS time);
 go
 ~~START~~
 time
-00:00:00.000000
+00:00:00.0000000
 ~~END~~
 
 select CAST(CAST('2050-05-06 12:00:00 +0' AS datetimeoffset) AS time);
 go
 ~~START~~
 time
-12:00:00.000000
+12:00:00.0000000
 ~~END~~
 
 select CAST(CAST('2050-05-06 15:31:22 +0' AS datetimeoffset) AS time);
 go
 ~~START~~
 time
-15:31:22.000000
+15:31:22.0000000
 ~~END~~
 
 select CAST(CAST('2050-05-06 23:59:29.998+8:00' AS datetimeoffset) AS time);
 go
 ~~START~~
 time
-15:59:29.998000
+15:59:29.9980000
 ~~END~~
 
 
@@ -496,14 +496,14 @@ select CAST(CAST('2020-03-15 23:59:29.99' AS smalldatetime) AS datetimeoffset);
 go
 ~~START~~
 datetimeoffset
-2020-03-15 23:59:00.000000 +00:00
+2020-03-15 23:59:00.0000000 +00:00
 ~~END~~
 
 select CAST(CAST('1920-05-25 00:59:29.99' AS smalldatetime) AS datetimeoffset);
 go
 ~~START~~
 datetimeoffset
-1920-05-25 00:59:00.000000 +00:00
+1920-05-25 00:59:00.0000000 +00:00
 ~~END~~
 
 -- out of range
@@ -519,7 +519,7 @@ select cast('0001-01-01 +0' as datetimeoffset);
 go
 ~~START~~
 datetimeoffset
-0001-01-01 00:00:00.000000 +00:00
+0001-01-01 00:00:00.0000000 +00:00
 ~~END~~
 
 select cast('0001-01-01 -1' as datetimeoffset);
@@ -534,7 +534,7 @@ select cast('9999-12-31 23:59:29.998 +0' as datetimeoffset);
 go
 ~~START~~
 datetimeoffset
-9999-12-31 23:59:29.998000 +00:00
+9999-12-31 23:59:29.9980000 +00:00
 ~~END~~
 
 -- out of range
@@ -579,70 +579,70 @@ select CAST('1900-05-06 13:59:29.998 -8:00' AS datetimeoffset) + make_interval(1
 go
 ~~START~~
 datetimeoffset
-1901-05-06 21:59:29.998000 -08:00
+1901-05-06 21:59:29.9980000 -08:00
 ~~END~~
 
 select CAST('1900-05-06 13:59:29.998 -8:00' AS datetimeoffset) + make_interval(0,1);
 go
 ~~START~~
 datetimeoffset
-1900-06-06 21:59:29.998000 -08:00
+1900-06-06 21:59:29.9980000 -08:00
 ~~END~~
 
 select CAST('1900-01-30 13:59:29.998 -8:00' AS datetimeoffset) + make_interval(0,1);
 go
 ~~START~~
 datetimeoffset
-1900-02-28 21:59:29.998000 -08:00
+1900-02-28 21:59:29.9980000 -08:00
 ~~END~~
 
 select CAST('1900-12-31 13:59:29.998 -8:00' AS datetimeoffset) + make_interval(0,1);
 go
 ~~START~~
 datetimeoffset
-1901-01-31 21:59:29.998000 -08:00
+1901-01-31 21:59:29.9980000 -08:00
 ~~END~~
 
 select CAST('2000-02-29 13:59:29.998 -8:00' AS datetimeoffset) + make_interval(1,0);
 go
 ~~START~~
 datetimeoffset
-2001-02-28 21:59:29.998000 -08:00
+2001-02-28 21:59:29.9980000 -08:00
 ~~END~~
 
 select CAST('2030-05-06 13:59:29.998 -8:00' AS datetimeoffset) + make_interval(0,1,3);
 go
 ~~START~~
 datetimeoffset
-2030-06-27 21:59:29.998000 -08:00
+2030-06-27 21:59:29.9980000 -08:00
 ~~END~~
 
 select CAST('2030-05-06 13:59:29.998 -8:00' AS datetimeoffset) + make_interval(0,0,1);
 go
 ~~START~~
 datetimeoffset
-2030-05-13 21:59:29.998000 -08:00
+2030-05-13 21:59:29.9980000 -08:00
 ~~END~~
 
 select CAST('2030-05-06 13:59:29.998 -8:00' AS datetimeoffset) + make_interval(1,0,3);
 go
 ~~START~~
 datetimeoffset
-2031-05-27 21:59:29.998000 -08:00
+2031-05-27 21:59:29.9980000 -08:00
 ~~END~~
 
 select CAST('1900-05-06 13:59:29.998 -8:00' AS datetimeoffset) + make_interval(1, 2, 3, 4, 5, 6, 7);
 go
 ~~START~~
 datetimeoffset
-1901-08-01 03:05:36.998000 -08:00
+1901-08-01 03:05:36.9980000 -08:00
 ~~END~~
 
 select CAST('2030-05-06 13:59:29.998 -8:00' AS datetimeoffset) + make_interval(1, 2, 3, 4, 5, 6, 7);
 go
 ~~START~~
 datetimeoffset
-2031-08-01 03:05:36.998000 -08:00
+2031-08-01 03:05:36.9980000 -08:00
 ~~END~~
 
 -- SQL Server does not support named parameters in functions, only in prodecures
@@ -650,14 +650,14 @@ select CAST('2030-05-06 13:59:29.998 -8:00' AS datetimeoffset) + make_interval(0
 go
 ~~START~~
 datetimeoffset
-2030-05-06 23:09:29.998000 -08:00
+2030-05-06 23:09:29.9980000 -08:00
 ~~END~~
 
 select CAST('2030-05-06 13:59:29.998 -8:00' AS datetimeoffset) + make_interval(0, 0, 0, 0, 0, -70);
 go
 ~~START~~
 datetimeoffset
-2030-05-06 20:49:29.998000 -08:00
+2030-05-06 20:49:29.9980000 -08:00
 ~~END~~
 
 -- Testing interval adding datetimeoffset
@@ -665,21 +665,21 @@ select make_interval(1) + CAST('1900-05-06 13:59:29.998 -8:00' AS datetimeoffset
 go
 ~~START~~
 datetimeoffset
-1901-05-06 21:59:29.998000 -08:00
+1901-05-06 21:59:29.9980000 -08:00
 ~~END~~
 
 select make_interval(1, 2, 3, 4, 5, 6, 7) + CAST('1900-05-06 13:59:29.998 -8:00' AS datetimeoffset) ;
 go
 ~~START~~
 datetimeoffset
-1901-08-01 03:05:36.998000 -08:00
+1901-08-01 03:05:36.9980000 -08:00
 ~~END~~
 
 select make_interval(0, 0, 0, 0, 0, 70) + CAST('2030-05-06 13:59:29.998 -8:00' AS datetimeoffset);
 go
 ~~START~~
 datetimeoffset
-2030-05-06 23:09:29.998000 -08:00
+2030-05-06 23:09:29.9980000 -08:00
 ~~END~~
 
 -- Testing datetimeoffset subtracting interval
@@ -687,91 +687,91 @@ select CAST('1900-05-06 13:59:29.998 -8:00' AS datetimeoffset) - make_interval(1
 go
 ~~START~~
 datetimeoffset
-1899-05-06 21:59:29.998000 -08:00
+1899-05-06 21:59:29.9980000 -08:00
 ~~END~~
 
 select CAST('1900-05-06 13:59:29.998 -8:00' AS datetimeoffset) - make_interval(0,1);
 go
 ~~START~~
 datetimeoffset
-1900-04-06 21:59:29.998000 -08:00
+1900-04-06 21:59:29.9980000 -08:00
 ~~END~~
 
 select CAST('1900-01-31 13:59:29.998 -8:00' AS datetimeoffset) - make_interval(0,1);
 go
 ~~START~~
 datetimeoffset
-1899-12-31 21:59:29.998000 -08:00
+1899-12-31 21:59:29.9980000 -08:00
 ~~END~~
 
 select CAST('2000-02-29 13:59:29.998 -8:00' AS datetimeoffset) - make_interval(1,0);
 go
 ~~START~~
 datetimeoffset
-1999-02-28 21:59:29.998000 -08:00
+1999-02-28 21:59:29.9980000 -08:00
 ~~END~~
 
 select CAST('2000-03-31 13:59:29.998 -8:00' AS datetimeoffset) - make_interval(1,0);
 go
 ~~START~~
 datetimeoffset
-1999-03-31 21:59:29.998000 -08:00
+1999-03-31 21:59:29.9980000 -08:00
 ~~END~~
 
 select CAST('2050-05-06 13:59:29.998 -8:00' AS datetimeoffset) - make_interval(1);
 go
 ~~START~~
 datetimeoffset
-2049-05-06 21:59:29.998000 -08:00
+2049-05-06 21:59:29.9980000 -08:00
 ~~END~~
 
 select CAST('2030-05-06 13:59:29.998 -8:00' AS datetimeoffset) - make_interval(0,1,3);
 go
 ~~START~~
 datetimeoffset
-2030-03-16 21:59:29.998000 -08:00
+2030-03-16 21:59:29.9980000 -08:00
 ~~END~~
 
 select CAST('2030-05-06 13:59:29.998 -8:00' AS datetimeoffset) - make_interval(0,0,1);
 go
 ~~START~~
 datetimeoffset
-2030-04-29 21:59:29.998000 -08:00
+2030-04-29 21:59:29.9980000 -08:00
 ~~END~~
 
 select CAST('2030-05-06 13:59:29.998 -8:00' AS datetimeoffset) - make_interval(1,0,3);
 go
 ~~START~~
 datetimeoffset
-2029-04-15 21:59:29.998000 -08:00
+2029-04-15 21:59:29.9980000 -08:00
 ~~END~~
 
 select CAST('1900-05-06 13:59:29.998 -8:00' AS datetimeoffset) - make_interval(1, 2, 3, 4, 5, 6, 7);
 go
 ~~START~~
 datetimeoffset
-1899-02-09 16:53:22.998000 -08:00
+1899-02-09 16:53:22.9980000 -08:00
 ~~END~~
 
 select CAST('2030-05-06 13:59:29.998 -8:00' AS datetimeoffset) - make_interval(1, 2, 3, 4, 5, 6, 7);
 go
 ~~START~~
 datetimeoffset
-2029-02-09 16:53:22.998000 -08:00
+2029-02-09 16:53:22.9980000 -08:00
 ~~END~~
 
 select CAST('2030-05-06 13:59:29.998 -8:00' AS datetimeoffset) - make_interval(0, 0, 0, 0, 0, 70);
 go
 ~~START~~
 datetimeoffset
-2030-05-06 20:49:29.998000 -08:00
+2030-05-06 20:49:29.9980000 -08:00
 ~~END~~
 
 select CAST('2030-05-06 13:59:29.998 -8:00' AS datetimeoffset) - make_interval(0, 0, 0, 0, 0, -70);
 go
 ~~START~~
 datetimeoffset
-2030-05-06 23:09:29.998000 -08:00
+2030-05-06 23:09:29.9980000 -08:00
 ~~END~~
 
 -- Testing datetimeoffset subtracting datetimeoffset

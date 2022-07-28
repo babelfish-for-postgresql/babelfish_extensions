@@ -53,4 +53,4 @@ select t from t_japan_ciai where t= 'は' ;
 GO
 
 drop table t_japan_ciai;
-GO 
+GO
