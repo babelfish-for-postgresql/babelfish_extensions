@@ -54,6 +54,7 @@ sys-trigger_nestlevel
 routines_definition
 constraint_column_usage
 column_domain_usage
+schema_resolution_proc
 datepart
 SYSTEM_USER
 BABEL-1189
@@ -104,4 +105,5 @@ table-variable
 TestNotNull
 Test-Default-Columns
 Test-Identity
+Test-sp_helpuser
 TestTableType

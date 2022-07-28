@@ -51,6 +51,7 @@ sys-trigger_nestlevel
 routines_definition
 constraint_column_usage
 column_domain_usage
+schema_resolution_proc
 SYSTEM_USER
 BABEL-1189
 BABEL-1243
