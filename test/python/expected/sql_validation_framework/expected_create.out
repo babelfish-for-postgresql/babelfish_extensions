@@ -61,7 +61,6 @@ Could not find tests for function sys.tsql_type_max_length_helper
 Could not find tests for function sys.tsql_type_precision_helper
 Could not find tests for function sys.tsql_type_radix_for_sp_columns_helper
 Could not find tests for function sys.tsql_type_scale_helper
-Could not find tests for function sys.tsql_typmod_array_max_length_helper
 Could not find tests for procedure babel_catalog_initializer
 Could not find tests for procedure babel_coercion_initializer
 Could not find tests for procedure babel_create_builtin_dbs
@@ -245,7 +244,6 @@ Could not find upgrade tests for function sys.tsql_type_max_length_helper
 Could not find upgrade tests for function sys.tsql_type_precision_helper
 Could not find upgrade tests for function sys.tsql_type_radix_for_sp_columns_helper
 Could not find upgrade tests for function sys.tsql_type_scale_helper
-Could not find upgrade tests for function sys.tsql_typmod_array_max_length_helper
 Could not find upgrade tests for function sys.unicode
 Could not find upgrade tests for function sys.user_id
 Could not find upgrade tests for function sys.version

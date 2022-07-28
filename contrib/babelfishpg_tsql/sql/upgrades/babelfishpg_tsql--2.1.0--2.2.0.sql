@@ -3063,7 +3063,7 @@ SELECT
       CASE
         WHEN st.is_table_type = 1 THEN -1 -- TVP case
         WHEN st.is_user_defined = 1 THEN st.max_length -- UDT case
-        ELSE sys.tsql_typmod_array_max_length_helper(COALESCE(type_name, base_type_name), t.typlen, typmod, true)
+        ELSE sys.tsql_type_max_length_helper(COALESCE(type_name, base_type_name), t.typlen, typmod, true, true)
       END
     AS smallint) AS max_length
   , CAST(
