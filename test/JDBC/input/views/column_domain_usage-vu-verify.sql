@@ -1,10 +1,10 @@
-SELECT * FROM information_schema.COLUMN_DOMAIN_USAGE WHERE TABLE_NAME NOT LIKE 'sys%' ORDER BY COLUMN_NAME;
+SELECT * FROM information_schema.COLUMN_DOMAIN_USAGE WHERE TABLE_NAME LIKE 'column_domain_usage_vu_prepare%' ORDER BY COLUMN_NAME;
 go
 
 USE db_column_domain_usage_vu_prepare;
 go
 
-SELECT * FROM information_schema.COLUMN_DOMAIN_USAGE WHERE TABLE_NAME NOT LIKE 'sys%' ORDER BY COLUMN_NAME;
+SELECT * FROM information_schema.COLUMN_DOMAIN_USAGE WHERE TABLE_NAME LIKE 'column_domain_usage_vu_prepare%' ORDER BY COLUMN_NAME;
 go
 
 use master;
