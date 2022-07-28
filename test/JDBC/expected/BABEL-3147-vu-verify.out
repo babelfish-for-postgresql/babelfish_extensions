@@ -1,4 +1,4 @@
-SELECT c_comp FROM t_3147_1
+SELECT c_comp FROM BABEL_3147_vu_prepare_t_1
 GO
 ~~START~~
 char
@@ -6,7 +6,7 @@ char
 
 
 -- Test ISNULL with numeric columns
-SELECT ISNULL(a, b) FROM t_3147_2
+SELECT ISNULL(a, b) FROM BABEL_3147_vu_prepare_t_2
 GO
 ~~START~~
 numeric
@@ -16,7 +16,7 @@ numeric
 
 
 -- Test ISNULL with decimal columns
-SELECT ISNULL(a, b) FROM t_3147_3
+SELECT ISNULL(a, b) FROM BABEL_3147_vu_prepare_t_3
 GO
 ~~START~~
 numeric
