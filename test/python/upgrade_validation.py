@@ -51,7 +51,7 @@ def get_dependencies(expfile, sumfile, logger):
         curs2.close()
     except Exception as e:
         logger.error(str(e))
-        return -1
+        return False
 
     try: 
         cursor = cnxn.get_cursor()
@@ -251,7 +251,7 @@ def get_dependencies(expfile, sumfile, logger):
 
     except Exception as e:
         logger.info(str(e))    
-    return version
+    return True
 
 
 
@@ -308,19 +308,19 @@ def main():
     # output file
     outfile = outfile.joinpath(file_name + ".out")
 
-    version = get_dependencies(outfile, summaryfile, logger)
+    connect = get_dependencies(outfile, summaryfile, logger)
 
     # exit if can't connect to database
     try:
-        assert version > 0
+        assert connect == True
     except AssertionError as e:
         logger.error("Can't connect to database! Test Failed!")
         close_logger(logger)
 
-    assert version > 0
+    assert connect == True
 
     # get expected file based on engine version
-    expected_file = Path.cwd().joinpath("expected", "upgrade_validation", str(version).replace('.','_'), file_name + ".out")
+    expected_file = Path.cwd().joinpath("expected", "upgrade_validation", file_name + ".out")
 
     result = compare_outfiles(outfile, expected_file, logfname, file_name, logger)
 
