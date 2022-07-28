@@ -41,7 +41,6 @@ sys-original_login
 sys-schema-name
 sys-suser_sid
 sys-suser_sname
-BABEL-3249
 identity_function
 sys-sysobjects
 sys-trigger_nestlevel

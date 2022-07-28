@@ -45,12 +45,6 @@ BABEL-3204
 BABEL-3234
 cast_numeric_types_to_datetime
 routines_definition
-sys-all_views
-sys-assembly_types
-sys-suser_sid
-sys-suser_sname
-identity_function
-sys-sysobjects
 column_domain_usage
 constraint_column_usage
 sys-host_name
