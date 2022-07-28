@@ -52,6 +52,7 @@ constraint_column_usage
 sys-host_name
 SYSTEM_USER
 indexproperty
+msdb-dbo-syspolicy_configuration
 sys-all_views
 datepart
 sys-sysobjects

@@ -1,0 +1,11 @@
+USE master
+GO
+
+DROP VIEW msdb_dbo_syspolicy_configuration_vu_prepare_view
+GO
+
+DROP PROC msdb_dbo_syspolicy_configuration_vu_prepare_proc
+GO
+
+DROP FUNCTION dbo.msdb_dbo_syspolicy_configuration_vu_prepare_func()
+GO
