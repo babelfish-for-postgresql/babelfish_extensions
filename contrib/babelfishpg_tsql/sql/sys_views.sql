@@ -1091,8 +1091,8 @@ select CAST(('DF_' || tab.name || '_' || d.oid) as sys.sysname) as name
   , CAST(0 as sys.bit) as is_published
   , CAST(0 as sys.bit) as is_schema_published
   , CAST(d.adnum as int) as  parent_column_id
-  -- use a simple regex to strip the datatype that pg_get_expr returns after a double-colon that is not expected in SQL Server
-  , CAST(regexp_replace(pg_get_expr(d.adbin, d.adrelid), '::.*$', '') as sys.nvarchar(4000)) as definition
+  -- use a simple regex to strip the datatype and collation that pg_get_expr returns after a double-colon that is not expected in SQL Server
+  , CAST(regexp_replace(pg_get_expr(d.adbin, d.adrelid), '::"?\w+"?| COLLATE "\w+"', '', 'g') as sys.nvarchar(4000)) as definition
   , CAST(1 as sys.bit) as is_system_named
 from pg_catalog.pg_attrdef as d
 inner join pg_attribute a on a.attrelid = d.adrelid and d.adnum = a.attnum
@@ -1119,7 +1119,8 @@ SELECT CAST(c.conname as sys.sysname) as name
   , 0::sys.bit as is_not_for_replication
   , 0::sys.bit as is_not_trusted
   , c.conkey[1]::integer AS parent_column_id
-  , substring(pg_get_constraintdef(c.oid) from 7) AS definition
+  -- use a simple regex to strip the datatype and collation that pg_get_constraintdef returns after a double-colon that is not expected in SQL Server
+  , CAST(regexp_replace(substring(pg_get_constraintdef(c.oid) from 7), '::"?\w+"?| COLLATE "\w+"', '', 'g') as sys.nvarchar(4000)) AS definition
   , 1::sys.bit as uses_database_collation
   , 0::sys.bit as is_system_named
 FROM pg_catalog.pg_constraint as c
