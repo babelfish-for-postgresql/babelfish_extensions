@@ -15,16 +15,20 @@ def get_count(cursor, obj_type, all_query, dependent_query, expected_file, summa
         # get csv writer
         writer = csv.writer(summary_file, delimiter = ",")
 
-        # get all objects of obj_type in sys schema
+        # list all objects of type obj_type in sys schema
         cursor.execute(all_query.format(schema))
         resultset = cursor.fetchall()
         object = [l[0] for l in resultset]  
 
-        # get user defined objects dependent on sys objects
+        # get user defined objects dependent on the objects
         cursor.execute(dependent_query.format(schema))
+
+        # list of objects having dependency
         dep_object = []
         result = cursor.fetchall()
+
         for i in result:
+            # add dependency count to summary file
             writer.writerow([obj_type, i[0], i[1]])
             dep_object.append(i[0])
 
@@ -35,6 +39,7 @@ def get_count(cursor, obj_type, all_query, dependent_query, expected_file, summa
             expected_file.write("{0} {1}\n".format(obj_type, i))
 
 
+# function to pass queries to be executed
 def get_dependencies(expfile, sumfile, logger):
 
     # connect to psql endpoint
@@ -46,7 +51,7 @@ def get_dependencies(expfile, sumfile, logger):
         curs2.close()
     except Exception as e:
         logger.error(str(e))
-        return False
+        return -1
 
     try: 
         cursor = cnxn.get_cursor()
@@ -61,18 +66,19 @@ def get_dependencies(expfile, sumfile, logger):
         else:
             schema=''
 
+        # creating the files
         with open(expfile, "w") as expected_file, open(sumfile, "w") as summary_file:
-
             writer = csv.writer(summary_file, delimiter = ",")
             writer.writerow(["Object_class", "Object_name", "dependency_count"])
             expected_file.write("Could not find dependencies on\n")
 
-
         # get user defined views,tables dependent on sys collations      
         logger.info('Finding dependencies on collations')
 
+        # list all collations in sys schema
         all_query = "SELECT oid::regcollation FROM pg_collation WHERE collnamespace = 'sys'::regnamespace;"
        
+       # get dependency count for sys collations
         dependent_query = """SELECT d.refobjid::regcollation, count(distinct v.oid) AS total_count 
                 FROM pg_depend AS d 
                 JOIN pg_class AS v ON v.oid = d.objid 
@@ -81,15 +87,15 @@ def get_dependencies(expfile, sumfile, logger):
                     AND d.refobjid in (SELECT oid FROM pg_collation WHERE collnamespace = 'sys'::regnamespace)
                     AND v.relnamespace NOT IN ('sys'::regnamespace, 'pg_catalog'::regnamespace, 'information_schema'::regnamespace{0})
                 GROUP BY d.refobjid;"""  
-
         get_count(cursor, "Collation", all_query, dependent_query, expfile, sumfile, schema)
 
 
-        # get user defined objects from pg_class dependent on sys functions 
-        # ignoring the functions used by types and operators internally
-        # get dependencies on cast functions to test cast
+        # get user defined objects from pg_class(views, computed columns) dependent on sys functions 
         logger.info('Finding dependencies on functions')
 
+        # list all functions in sys and information_schema_tsql schema
+        # ignoring the functions used by types and operators internally
+        # included cast functions to track dependency on cast
         all_query = """SELECT oid::regprocedure FROM pg_proc WHERE prokind = 'f' AND pronamespace IN ('sys'::regnamespace{0}) AND proname NOT LIKE '\_%'
                 EXCEPT     
                 (   SELECT typinput::oid FROM pg_type WHERE typnamespace = 'sys'::regnamespace 
@@ -109,6 +115,7 @@ def get_dependencies(expfile, sumfile, logger):
                     SELECT oprcode::oid FROM pg_operator WHERE oid > 16384
                 );"""
 
+       # get dependency count for sys and information_schema_tsql functions
         dependent_query = """SELECT id::regprocedure AS obj_name, sum(total_count) as dep_count 
                 FROM
                 (   (   SELECT d.refobjid AS id, count(distinct v.oid) AS total_count 
@@ -136,16 +143,19 @@ def get_dependencies(expfile, sumfile, logger):
                             AND v.relnamespace not in ('sys'::regnamespace, 'pg_catalog'::regnamespace, 'information_schema'::regnamespace{0})
                         GROUP BY d.refobjid
                     )
-                ) AS temp GROUP BY id;"""       
-
+                ) AS temp GROUP BY id;"""
         get_count(cursor, "Function", all_query, dependent_query, expfile, sumfile, schema)
 
 
-        # get user defined views dependent on sys operators   
+        # get user defined objects from pg_class(views, computed columns) dependent on sys operators   
         logger.info('Finding dependencies on operators')   
 
+        # list all operators for babelfish
+        # not using sys schema as some operators are created in pg_catalog schema
+        # 16384 - oids assigned by postges for normal operations
         all_query = "SELECT oid::regoperator FROM pg_operator WHERE oid > 16384;"
-
+        
+        # get dependency count for operators
         dependent_query = """SELECT id::regoperator AS obj_name, sum(total_count) AS dep_count 
                 FROM
                 (   (   SELECT d.refobjid AS id, count(distinct v.oid) AS total_count 
@@ -169,16 +179,17 @@ def get_dependencies(expfile, sumfile, logger):
                             AND v.relnamespace not in ('sys'::regnamespace, 'pg_catalog'::regnamespace, 'information_schema'::regnamespace{0})
                         GROUP BY d.refobjid
                     )
-                ) AS temp GROUP BY id;"""  
-            
+                ) AS temp GROUP BY id;"""     
         get_count(cursor, "Operator", all_query, dependent_query, expfile, sumfile, schema)
             
             
         # get user defined views & tables, union functions & procedures, union types dependent on sys types
         logger.info('Finding dependencies on types') 
 
+        # list sys types
         all_query = "SELECT oid::regtype FROM pg_type WHERE typnamespace = 'sys'::regnamespace AND typtype in ('b','d') AND typcategory <> 'A' AND typname NOT LIKE '\_%';;"
 
+        # get dependency count for sys types
         dependent_query = """SELECT id::regtype AS obj_name, sum(total_count) AS dep_count 
                 FROM
                 (   (   SELECT d.refobjid AS id, count(distinct v.oid) AS total_count 
@@ -211,17 +222,16 @@ def get_dependencies(expfile, sumfile, logger):
                         GROUP BY d.refobjid
                     )
                 ) AS temp GROUP BY id;"""
-
         get_count(cursor, "Type", all_query, dependent_query, expfile, sumfile, schema)
 
 
-
-        # get user defined objects from pg_class dependent on sys views
+        # get user defined objects from pg_class(views) dependent on sys views
         logger.info('Finding dependencies on views')
 
-            # get names of all babelfish system views
+        # list all babelfish system views from sys and information_schema_tsql views
         all_query = "SELECT oid::regclass FROM pg_class WHERE relkind = 'v' AND relnamespace in ('sys'::regnamespace{0});"
 
+        # get dependency on babelfish system view
         dependent_query = """SELECT d.refobjid::regclass, count(distinct v.oid) AS total_count 
                 FROM pg_depend AS d 
                 JOIN pg_rewrite AS r ON r.oid = d.objid  
@@ -232,7 +242,6 @@ def get_dependencies(expfile, sumfile, logger):
                     AND d.refobjid in (SELECT oid FROM pg_class WHERE relkind = 'v' AND relnamespace in ('sys'::regnamespace{0}))
                     AND v.relnamespace not in('sys'::regnamespace, 'pg_catalog'::regnamespace, 'information_schema'::regnamespace{0})
                 GROUP BY d.refobjid; """
-
         get_count(cursor, "View", all_query, dependent_query, expfile, sumfile, schema)
         
         cursor.close()
@@ -292,11 +301,16 @@ def main():
     # path for output file
     outfile = Path.cwd().joinpath("output", "upgrade_validation")
     Path.mkdir(outfile, parents = True, exist_ok = True)
+
+    #summary file
     summaryfile = outfile.joinpath("dependency_summary" + ".csv")
+
+    # output file
     outfile = outfile.joinpath(file_name + ".out")
 
     version = get_dependencies(outfile, summaryfile, logger)
 
+    # exit if can't connect to database
     try:
         assert version > 0
     except AssertionError as e:

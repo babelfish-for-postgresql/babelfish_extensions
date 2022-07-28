@@ -105,7 +105,6 @@ runs:
       if: always() && steps.install-python.outcome == 'success'
       run: |
         cd ~
-        sudo apt-get install unixodbc-dev
         sudo apt-get install odbc-postgresql
         pip3 install pyodbc pymssql
       shell: bash
