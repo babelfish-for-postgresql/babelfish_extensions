@@ -1,0 +1,13 @@
+-- psql
+CREATE or replace VIEW babel_3402_v2 AS
+SELECT "sys"."suser_sid"(('-10'::integer)::"sys"."sysname") AS "suser_sid";
+go
+
+select * from babel_3402_v2;
+go
+
+select pg_get_viewdef('babel_3402_v2'::regclass);
+go
+
+drop view babel_3402_v2;
+go
