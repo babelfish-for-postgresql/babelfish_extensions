@@ -2,21 +2,10 @@
 SELECT session_user, system_user, current_user, db_name();
 GO
 
-CREATE LOGIN r1 WITH PASSWORD = '123';
-GO
-
-CREATE LOGIN r2 WITH PASSWORD = '123';
-GO
-
--- tsql user=r1 password=123
+-- tsql user=system_user_vu_prepare_r1 password=123
 SELECT session_user, system_user, current_user, db_name();
 GO
 
--- tsql user=r2 password=123
+-- tsql user=system_user_vu_prepare_r2 password=123
 SELECT session_user, system_user, current_user, db_name();
-GO
-
--- tsql
-DROP LOGIN r1;
-DROP LOGIN r2;
 GO

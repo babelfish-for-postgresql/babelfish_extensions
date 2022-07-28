@@ -901,13 +901,15 @@ $body$
 LANGUAGE plpgsql IMMUTABLE;
 
 -- Duplicate function with arg TEXT since ANYELEMENT cannot handle type unknown.
-CREATE OR REPLACE FUNCTION sys.datepart(IN datepart PG_CATALOG.TEXT, IN arg TEXT) RETURNS INTEGER
+CREATE OR REPLACE FUNCTION sys.datepart(IN datepart TEXT, IN arg TEXT) RETURNS INTEGER
 AS
 $body$
 BEGIN
     IF pg_typeof(arg) = 'sys.DATETIMEOFFSET'::regtype THEN
         return sys.datepart_internal(datepart, arg::timestamp,
                      sys.babelfish_get_datetimeoffset_tzoffset(arg)::integer);
+    ELSIF pg_typeof(arg) = 'pg_catalog.text'::regtype THEN
+        return sys.datepart_internal(datepart, arg::sys.nvarchar::sys.datetime);
     ELSE
         return sys.datepart_internal(datepart, arg);
     END IF;
@@ -2502,7 +2504,8 @@ CREATE OR REPLACE FUNCTION sys.tsql_stat_get_activity(
   OUT protocol_version int,
   OUT packet_size int,
   OUT encrypyt_option VARCHAR(40),
-  OUT database_id int2)
+  OUT database_id int2,
+  OUT host_name varchar(128))
 RETURNS SETOF RECORD
 AS 'babelfishpg_tsql', 'tsql_stat_get_activity'
 LANGUAGE C VOLATILE STRICT;
@@ -2839,6 +2842,9 @@ LANGUAGE SQL IMMUTABLE PARALLEL RESTRICTED;
 
 CREATE OR REPLACE FUNCTION sys.language()
 RETURNS sys.NVARCHAR(128)  AS 'babelfishpg_tsql' LANGUAGE C;
+
+CREATE OR REPLACE FUNCTION sys.host_name()
+RETURNS sys.NVARCHAR(128)  AS 'babelfishpg_tsql' LANGUAGE C IMMUTABLE PARALLEL SAFE;
 
 CREATE OR REPLACE FUNCTION sys.INDEXPROPERTY(IN object_id INT, IN index_or_statistics_name sys.nvarchar(128), IN property sys.varchar(128))
 RETURNS INT AS
