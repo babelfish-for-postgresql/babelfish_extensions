@@ -144,3 +144,5 @@ collation_tests
 BABEL-EXTENDEDPROPERTY
 TestErrorHelperFunctionsUpgrade
 tdscollation
+sp_tablecollations
+sys-assemblies
