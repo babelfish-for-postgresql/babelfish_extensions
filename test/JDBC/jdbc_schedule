@@ -16,3 +16,8 @@ ignore#!#BABEL-SQLvariant
 
 # Temporarily ignore due to BABEL-3279
 ignore#!#BABEL-EXTENDEDPROPERTY
+
+# These tests are meant for upgrade scenario prior to (potential) 14_5 release
+ignore#!#BABEL-3147-before-14_5-vu-prepare
+ignore#!#BABEL-3147-before-14_5-vu-verify
+ignore#!#BABEL-3147-before-14_5-vu-cleanup

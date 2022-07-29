@@ -53,7 +53,6 @@ indexproperty
 sys-all_views
 datepart
 sys-sysobjects
-BABEL-3147
 schema_resolution_proc
 SYSTEM_USER_dep
 Test-sp_helpsrvrolemember
@@ -85,3 +84,4 @@ nested_trigger_inside_proc
 nested_trigger_with_dml
 triggers_with_transaction
 TestTableType
+BABEL-3147-before-14_5
