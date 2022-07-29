@@ -1,4 +1,14 @@
+USE sys_trigger_events_vu_prepare_database1
+GO
+
+DROP TRIGGER sys_trigger_events_vu_prepare_trig3
+GO
+DROP TABLE sys_trigger_events_vu_prepare_table1
+GO
+
 USE master
+GO
+DROP DATABASE sys_trigger_events_vu_prepare_database1
 GO
 
 DROP VIEW sys_trigger_events_vu_prepare_view
