@@ -921,10 +921,13 @@ ALTER FUNCTION msdb_dbo.fn_syspolicy_is_automation_enabled() OWNER TO sysadmin;
 
 CREATE OR REPLACE VIEW msdb_dbo.syspolicy_configuration
 AS
-SELECT
-    CAST(NULL AS sys.SYSNAME) AS name,
-    CAST(NULL AS sys.sql_variant) AS current_value
-WHERE FALSE; -- Condition will result in view with an empty result set
+  SELECT CAST(t.name AS sys.sysname), CAST(t.current_value AS sys.sql_variant) FROM
+  (
+    VALUES
+    ('Enabled', CAST(0 AS int)),
+    ('HistoryRetentionInDays', CAST(0 AS int)),
+    ('LogOnSuccess', CAST(0 AS int))
+  )t (name, current_value);
 GRANT SELECT ON msdb_dbo.syspolicy_configuration TO PUBLIC;
 ALTER VIEW msdb_dbo.syspolicy_configuration OWNER TO sysadmin;
 
@@ -3003,6 +3006,15 @@ GRANT SELECT ON sys.default_constraints TO PUBLIC;
 
 CALL sys.babelfish_drop_deprecated_view('sys', 'syscheck_constraints_deprecated_2_1_0');
 CALL sys.babelfish_drop_deprecated_view('sys', 'sysdefault_constraints_deprecated_2_1_0');
+
+CREATE OR REPLACE VIEW sys.numbered_procedures
+AS
+SELECT 
+    CAST(0 as int) AS object_id
+  , CAST(0 as smallint) AS procedure_number
+  , CAST('' as sys.nvarchar(4000)) AS definition
+WHERE FALSE; -- This condition will ensure that the view is empty
+GRANT SELECT ON sys.numbered_procedures TO PUBLIC;
 
 -- Drops the temporary procedure used by the upgrade script.
 -- Please have this be one of the last statements executed in this upgrade script.

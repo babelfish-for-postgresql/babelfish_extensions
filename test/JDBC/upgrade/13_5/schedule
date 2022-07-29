@@ -31,6 +31,7 @@ TestMoney
 TestVarChar
 TestNumeric
 TestXML
+BABEL-2934
 BABEL-3121
 BABEL-3166
 BABEL-3192

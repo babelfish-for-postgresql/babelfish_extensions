@@ -200,3 +200,5 @@ varchar
 ~~END~~
 
 
+drop table t_japan_ciai;
+GO

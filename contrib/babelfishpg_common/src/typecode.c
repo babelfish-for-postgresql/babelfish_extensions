@@ -56,6 +56,7 @@ type_info_t type_infos[TOTAL_TYPECODE_COUNT] =
 
 /* Hash tables to help backward searching (from OID to Persist ID) */
 HTAB *ht_oid2typecode = NULL;
+static bool inited_ht_oid2typecode = false;
 
 /*
  *                  Translation Table Initializers
@@ -103,6 +104,9 @@ init_tcode_trans_tab(PG_FUNCTION_ARGS)
     if (!OidIsValid(sys_nspoid))
 	PG_RETURN_INT32(0);
 
+    /* mark the hash table initialised */
+    inited_ht_oid2typecode = true;
+
     /* retrieve oid and setup hashtable*/
     for (int i=0; i<TOTAL_TYPECODE_COUNT; i++)
     {
@@ -114,9 +118,27 @@ init_tcode_trans_tab(PG_FUNCTION_ARGS)
             entry = hash_search(ht_oid2typecode, &type_infos[i].oid, HASH_ENTER, NULL);
             entry->persist_id = i;
         }
+        else
+        {
+            /* type is not loaded. wait for next scan */
+            inited_ht_oid2typecode = false;
+        }
     }
 
     PG_RETURN_INT32(0);
+}
+
+type_info_t
+get_tsql_type_info(uint8_t type_code)
+{
+    /* Initialise T-SQL type info hash table if not already done */
+	if (!inited_ht_oid2typecode)
+	{
+		FunctionCallInfo fcinfo  = NULL;  /* empty interface */
+		init_tcode_trans_tab(fcinfo);
+	}
+
+    return type_infos[type_code];
 }
 
 PG_FUNCTION_INFO_V1(typecode_list);
