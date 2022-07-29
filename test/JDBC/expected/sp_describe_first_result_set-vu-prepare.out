@@ -1,5 +1,3 @@
--- tsql
-
 CREATE TABLE test_table1(a int, b int);
 GO
 
