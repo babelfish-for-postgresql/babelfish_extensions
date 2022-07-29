@@ -7,7 +7,7 @@ CHECK (column_a = 0)
 GO
 
 CREATE PROC sys_check_definitions_vu_prepare_proc AS
-    SELECT definition FROM sys.check_constraints WHERE name LIKE '%sys_check_definitions%'
+    SELECT definition FROM sys.check_constraints WHERE name LIKE '%sys_check_definitions%' ORDER BY definition
 GO
 
 CREATE FUNCTION sys_check_definitions_vu_prepare_func()
@@ -18,6 +18,6 @@ BEGIN
 END
 GO
 
-CREATE VIEW sys_check_definitions_vu_prepare_view AS
-    SELECT definition FROM sys.check_constraints WHERE name LIKE '%sys_check_definitions%'
+CREATE VIEW sys_check_constraints_vu_prepare_view AS
+    SELECT definition FROM sys.check_constraints WHERE name LIKE '%sys_check_definitions%' ORDER BY definition
 GO

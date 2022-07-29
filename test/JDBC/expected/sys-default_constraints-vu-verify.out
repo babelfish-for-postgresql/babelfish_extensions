@@ -33,10 +33,10 @@ GO
 ~~START~~
 nvarchar
 'ab'
-getdate()
 0
 1
 50
+getdate()
 ~~END~~
 
 
@@ -53,9 +53,9 @@ GO
 ~~START~~
 nvarchar
 'ab'
-getdate()
 0
 1
 50
+getdate()
 ~~END~~
 
