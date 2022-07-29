@@ -82,3 +82,9 @@ triggers_with_transaction
 Test-sp_helpsrvrolemember
 TestTableType
 collation_tests
+collation_tests_arabic
+collation_tests_mongolian
+collation_tests_greek
+collation_tests_polish
+collation_tests_chinese
+collation_tests_korean

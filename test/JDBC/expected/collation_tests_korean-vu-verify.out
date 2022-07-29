@@ -1,0 +1,307 @@
+--varchar
+SELECT * FROM collation_tests_korean_vu_prepare_varchar ORDER BY name;
+GO
+~~START~~
+varchar
+가게
+그곳에
+기차역
+나라
+도시
+여기
+일
+장소
+학교
+화장실
+~~END~~
+
+
+SELECT * FROM collation_tests_korean_vu_prepare_varchar WHERE name LIKE '%장%';
+GO
+~~START~~
+varchar
+장소
+화장실
+~~END~~
+
+
+SELECT * FROM collation_tests_korean_vu_prepare_varchar WHERE name='화장실';
+GO
+~~START~~
+varchar
+화장실
+~~END~~
+
+SELECT * FROM collation_tests_korean_vu_prepare_varchar WHERE name='화장실' COLLATE korean_wansung_cs_as;
+GO
+~~START~~
+varchar
+화장실
+~~END~~
+
+
+--inner join
+SELECT * FROM [INNER JOIN SAME CP KOREAN] WHERE same_name = '가게';
+GO
+~~START~~
+varchar#!#varchar
+가게#!#가게
+~~END~~
+
+
+--computed column
+SELECT substr FROM collation_tests_korean_vu_prepare_varchar_computed_columns;
+GO
+~~START~~
+varchar
+여
+그
+장
+학
+가
+일
+화
+도
+나
+기
+~~END~~
+
+
+SELECT substr FROM collation_tests_korean_vu_prepare_varchar_computed_columns WHERE substr='화';
+GO
+~~START~~
+varchar
+화
+~~END~~
+
+
+SELECT 
+    name, 
+    collation_name 
+FROM sys.columns 
+WHERE name = N'substr';
+GO
+~~START~~
+varchar#!#varchar
+substr#!#korean_wansung_ci_as
+~~END~~
+
+
+--nvarchar
+SELECT * FROM collation_tests_korean_vu_prepare_nvarchar ORDER BY name;
+GO
+~~START~~
+nvarchar
+가게
+그곳에
+기차역
+나라
+도시
+여기
+일
+장소
+학교
+화장실
+~~END~~
+
+
+SELECT * FROM collation_tests_korean_vu_prepare_nvarchar WHERE name LIKE '%장%';
+GO
+~~START~~
+nvarchar
+장소
+화장실
+~~END~~
+
+
+SELECT * FROM collation_tests_korean_vu_prepare_nvarchar WHERE name='화장실';
+GO
+~~START~~
+nvarchar
+화장실
+~~END~~
+
+SELECT * FROM collation_tests_korean_vu_prepare_nvarchar WHERE name='화장실' COLLATE korean_wansung_cs_as;
+GO
+~~START~~
+nvarchar
+화장실
+~~END~~
+
+
+
+--char
+SELECT * FROM collation_tests_korean_vu_prepare_char ORDER BY name;
+GO
+~~START~~
+char
+가게                
+그곳에              
+기차역              
+나라                
+도시                
+여기                
+일                  
+장소                
+학교                
+화장실              
+~~END~~
+
+
+SELECT * FROM collation_tests_korean_vu_prepare_char WHERE name LIKE '%장%';
+GO
+~~START~~
+char
+장소                
+화장실              
+~~END~~
+
+
+SELECT * FROM collation_tests_korean_vu_prepare_char WHERE name='화장실';
+GO
+~~START~~
+char
+화장실              
+~~END~~
+
+SELECT * FROM collation_tests_korean_vu_prepare_char WHERE name='화장실' COLLATE korean_wansung_cs_as;
+GO
+~~START~~
+char
+화장실              
+~~END~~
+
+
+--nchar
+SELECT * FROM collation_tests_korean_vu_prepare_nchar ORDER BY name;
+GO
+~~START~~
+nchar
+가게                  
+그곳에                 
+기차역                 
+나라                  
+도시                  
+여기                  
+일                   
+장소                  
+학교                  
+화장실                 
+~~END~~
+
+
+SELECT * FROM collation_tests_korean_vu_prepare_nchar WHERE name LIKE '%장%';
+GO
+~~START~~
+nchar
+장소                  
+화장실                 
+~~END~~
+
+
+SELECT * FROM collation_tests_korean_vu_prepare_nchar WHERE name='화장실';
+GO
+~~START~~
+nchar
+화장실                 
+~~END~~
+
+SELECT * FROM collation_tests_korean_vu_prepare_nchar WHERE name='화장실' COLLATE korean_wansung_cs_as;
+GO
+~~START~~
+nchar
+화장실                 
+~~END~~
+
+
+--text
+SELECT * FROM collation_tests_korean_vu_prepare_text ORDER BY name;
+GO
+~~START~~
+text
+가게
+그곳에
+기차역
+나라
+도시
+여기
+일
+장소
+학교
+화장실
+~~END~~
+
+
+SELECT * FROM collation_tests_korean_vu_prepare_text WHERE name LIKE '%장%';
+GO
+~~START~~
+text
+장소
+화장실
+~~END~~
+
+
+SELECT * FROM collation_tests_korean_vu_prepare_text WHERE name='화장실';
+GO
+~~START~~
+text
+화장실
+~~END~~
+
+SELECT * FROM collation_tests_korean_vu_prepare_text WHERE name='화장실' COLLATE korean_wansung_cs_as;
+GO
+~~START~~
+text
+화장실
+~~END~~
+
+
+--primary key
+INSERT INTO collation_tests_korean_vu_prepare_primary VALUES ('여기');
+INSERT INTO collation_tests_korean_vu_prepare_primary VALUES ('여기');
+GO
+~~ROW COUNT: 1~~
+
+~~ERROR (Code: 2627)~~
+
+~~ERROR (Message: duplicate key value violates unique constraint "collation_tests_korean_vu_prepare_primary_pkey")~~
+
+
+SELECT * FROM collation_tests_korean_vu_prepare_primary ORDER BY name;
+GO
+~~START~~
+varchar
+여기
+~~END~~
+
+
+SELECT * FROM collation_tests_korean_vu_prepare_primary WHERE name LIKE '%여%';
+GO
+~~START~~
+varchar
+여기
+~~END~~
+
+
+SELECT * FROM collation_tests_korean_vu_prepare_primary WHERE name = '여기';
+GO
+~~START~~
+varchar
+여기
+~~END~~
+
+SELECT * FROM collation_tests_korean_vu_prepare_primary WHERE name='여기' COLLATE korean_wansung_cs_as;
+GO
+~~START~~
+varchar
+여기
+~~END~~
+
+
+--truncation error
+INSERT INTO collation_tests_korean_vu_prepare_truncation VALUES('가게');
+GO
+~~ERROR (Code: 8152)~~
+
+~~ERROR (Message: value too long for type character varying(3))~~
+
