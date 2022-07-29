@@ -19,7 +19,7 @@ GO
 select @@error, @@pgerror;
 GO
 
-select * from fn_mapped_system_error_list() order by error_message;
+select pg_sql_state, sql_error_code from fn_mapped_system_error_list() order by pg_sql_state;
 GO
 
 Drop table testerrorhf
