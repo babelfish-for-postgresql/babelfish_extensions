@@ -43,7 +43,6 @@ CREATE TYPE sys.DATETIME (
 	CATEGORY       = 'D',
 	PREFERRED      = false,
 	COLLATABLE     = false,
-    DEFAULT        = '1900-01-01 00:00:00',
     PASSEDBYVALUE
 );
 

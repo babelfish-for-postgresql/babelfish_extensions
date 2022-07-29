@@ -261,3 +261,11 @@ Insert into testsqlvariant_sourceTable22 values (cast ('2016-10-23 12:45:37.123'
 go
 Insert into testsqlvariant_sourceTable22 values (cast ('2016-10-23 12:45:37.12345' as datetime2(5)), cast ('2016-10-23 12:45:37.123456' as datetime2(6)));
 go
+
+-- Test sql_variant cast (Test for BABEL-3404)
+CREATE VIEW testsqlvariant_vu_prepare_view1 AS SELECT CAST('abc' AS sql_variant) AS col;
+go
+
+-- Test sql_variant comparison function
+CREATE VIEW testsqlvariant_vu_prepare_view2 AS SELECT CASE WHEN a > b THEN a ELSE b END AS val FROM testsqlvariant_sourceTable22;
+go
