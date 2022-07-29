@@ -9,7 +9,3 @@ GO
 
 DROP VIEW sys_check_constraints_vu_prepare_view
 GO
-~~ERROR (Code: 3701)~~
-
-~~ERROR (Message: view "sys_check_constraints_vu_prepare_view" does not exist)~~
-
