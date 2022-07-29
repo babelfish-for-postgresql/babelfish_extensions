@@ -107,7 +107,12 @@ jobs:
           BASE_VERSION=${BASE_VERSION/./_}
           FINAL_VERSION=${{ steps.read-base-and-final-version.outputs.final-version }}
           FINAL_VERSION=${FINAL_VERSION/./_}
-          
+          if [[ "$BASE_VERSION" == *"latest"* ]]; then
+            BASE_VERSION="latest"
+          fi
+          if [[ "$FINAL_VERSION" == *"latest"* ]]; then
+            FINAL_VERSION="latest"
+          fi
           for f in $(grep "[A-Za-z_\-]*:[ ]*Failed" $timestamp"_runSummary.log" | cut -d ":" -f 1); 
           do 
             if [[ -f ../../output/$f".out" ]]; then

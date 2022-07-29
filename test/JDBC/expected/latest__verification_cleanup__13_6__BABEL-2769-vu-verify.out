@@ -1,4 +1,4 @@
-SELECT * FROM BABEL_2769_vu_verify_Smalldatetime;
+SELECT * FROM BABEL_2769_vu_prepare_Smalldatetime;
 go
 ~~START~~
 varchar#!#smalldatetime
@@ -7,7 +7,7 @@ Second#!#1900-01-01 00:00:00.0
 ~~END~~
 
 
-SELECT * FROM BABEL_2769_vu_verify_Datetime;
+SELECT * FROM BABEL_2769_vu_prepare_Datetime;
 go
 ~~START~~
 varchar#!#datetime
@@ -16,7 +16,7 @@ Second#!#1900-01-01 00:00:00.0
 ~~END~~
 
 
-SELECT * FROM BABEL_2769_vu_verify_Datetime2;
+SELECT * FROM BABEL_2769_vu_prepare_Datetime2;
 go
 ~~START~~
 varchar#!#datetime2
@@ -25,7 +25,7 @@ Second#!#1900-01-01 00:00:00.000
 ~~END~~
 
 
-SELECT * FROM BABEL_2769_vu_verify_Datetimeoffset;
+SELECT * FROM BABEL_2769_vu_prepare_Datetimeoffset;
 go
 ~~START~~
 varchar#!#datetimeoffset

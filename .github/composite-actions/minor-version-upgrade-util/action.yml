@@ -55,16 +55,27 @@ runs:
     - name: Run JDBC Verify Tests
       id: jdbc-verify-tests
       if: always() && steps.change-migration-mode.outcome == 'success' && inputs.is_final_ver == 'true'
+      env:
+        base_dir: ${{ matrix.upgrade-path.path[0] }}
+        tar_dir: ${{ matrix.upgrade-path.last_version }}
       run: |
         cd test/JDBC/
         export isUpgradeTestMode=false
-        export inputFilesPath=upgrade/${{ matrix.upgrade-path.last_version }}/verification_cleanup/${{ matrix.upgrade-path.path[0] }}
+        base_dir=${{ matrix.upgrade-path.path[0] }}
+        tar_dir=${{ matrix.upgrade-path.last_version }}
+        if [[ "$base_dir" == *"latest"* ]]; then
+          base_dir="latest"
+        fi
+        if [[ "$tar_dir" == *"latest"* ]]; then
+          tar_dir="latest"
+        fi
+        export inputFilesPath=upgrade/$tar_dir/verification_cleanup/$base_dir
         mvn test
         export inputFilesPath=input
-        for filename in $(grep -v "^ignore.*\|^#.*\|^cmd.*\|^all.*\|^$" upgrade/${{ matrix.upgrade-path.path[0] }}/schedule); do
-          sed -i "s/$filename[ ]*$/$filename-vu-verify\\n$filename-vu-cleanup/g" upgrade/${{ matrix.upgrade-path.path[0] }}/schedule
+        for filename in $(grep -v "^ignore.*\|^#.*\|^cmd.*\|^all.*\|^$" upgrade/$base_dir/schedule); do
+          sed -i "s/$filename[ ]*$/$filename-vu-verify\\n$filename-vu-cleanup/g" upgrade/$base_dir/schedule
         done
-        export scheduleFile=upgrade/${{ matrix.upgrade-path.path[0] }}/schedule
+        export scheduleFile=upgrade/$base_dir/schedule
         mvn test
       shell: bash
 
