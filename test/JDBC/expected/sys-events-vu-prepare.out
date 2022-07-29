@@ -41,3 +41,23 @@ BEGIN
 RETURN (SELECT COUNT(*) FROM sys.events)
 END
 GO
+
+
+CREATE DATABASE sys_events_vu_prepare_database1
+GO
+USE sys_events_vu_prepare_database1
+GO
+
+CREATE TABLE sys_events_vu_prepare_table1(c1 int)
+GO
+
+--create trigger on default schema for db1 database
+CREATE TRIGGER sys_events_vu_prepare_trig3 ON sys_events_vu_prepare_table1 INSTEAD OF UPDATE
+AS
+BEGIN
+  SELECT 'trigger invoked'
+END
+GO
+
+USE master
+GO
