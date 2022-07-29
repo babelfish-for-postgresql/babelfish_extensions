@@ -1,0 +1,40 @@
+USE master
+GO
+
+SELECT * FROM msdb.dbo.syspolicy_configuration
+GO
+~~START~~
+varchar#!#sql_variant
+Enabled#!#0
+HistoryRetentionInDays#!#0
+LogOnSuccess#!#0
+~~END~~
+
+
+SELECT * FROM msdb_dbo_syspolicy_configuration_vu_prepare_view
+GO
+~~START~~
+varchar#!#sql_variant
+Enabled#!#0
+HistoryRetentionInDays#!#0
+LogOnSuccess#!#0
+~~END~~
+
+
+EXEC msdb_dbo_syspolicy_configuration_vu_prepare_proc
+GO
+~~START~~
+varchar#!#sql_variant
+Enabled#!#0
+HistoryRetentionInDays#!#0
+LogOnSuccess#!#0
+~~END~~
+
+
+SELECT dbo.msdb_dbo_syspolicy_configuration_vu_prepare_func()
+GO
+~~START~~
+int
+3
+~~END~~
+
