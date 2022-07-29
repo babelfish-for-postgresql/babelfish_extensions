@@ -2949,7 +2949,7 @@ LANGUAGE 'pltsql';
 GRANT EXECUTE on PROCEDURE sys.sp_helpuser TO PUBLIC;
 
 -- Need to add parameter for tsql_type_max_length_helper 
-ALTER FUNCTION sys.tsql_type_max_length_helper RENAME TO tsql_type_max_length_helper_2_1;
+ALTER FUNCTION sys.tsql_type_max_length_helper RENAME TO tsql_type_max_length_helper_deprecated_in_2_2;
 
 CREATE OR REPLACE FUNCTION sys.tsql_type_max_length_helper(IN type TEXT, IN typelen INT, IN typemod INT, IN for_sys_types boolean DEFAULT false, IN used_typmod_array boolean DEFAULT false)
 RETURNS SMALLINT
@@ -3173,7 +3173,7 @@ and has_column_privilege(quote_ident(s.nspname) ||'.'||quote_ident(c.relname), a
 and a.attnum > 0;
 GRANT SELECT ON sys.all_columns TO PUBLIC;
 
-CALL babelfish_drop_deprecated_function('sys', 'tsql_type_max_length_helper_2_1');
+CALL babelfish_drop_deprecated_function('sys', 'tsql_type_max_length_helper_deprecated_in_2_2');
 
 CREATE OR REPLACE VIEW sys.all_parameters
 AS
