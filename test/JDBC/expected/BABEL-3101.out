@@ -48,13 +48,22 @@ BEGIN
 END
 GO
 
-SELECT ISOWeek_3101(GETDATE())
+SELECT ISOWeek_3101(CAST('25 July 2022 01:23:45' AS datetime))
+GO
+~~START~~
+tinyint
+30
+~~END~~
+
+
+-- should error out as expected
+SELECT ISOWeek_3101('01-01-1790')
 GO
 ~~START~~
 tinyint
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: function date_part(unknown, text) does not exist)~~
+~~ERROR (Message: function master_dbo.isoweek("varchar") does not exist)~~
 
 
 CREATE FUNCTION table_3101_2()

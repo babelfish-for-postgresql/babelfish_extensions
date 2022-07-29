@@ -962,7 +962,7 @@ select
   , 0 as open_tran
   , a.state as status
   , null::bytea as sid
-  , a.client_hostname as hostname
+  , CAST(t.host_name AS sys.nchar(128)) as hostname
   , a.application_name as program_name
   , null::varchar(10) as hostprocess
   , a.query as cmd
@@ -1918,7 +1918,7 @@ create or replace view sys.dm_exec_sessions
   as
   select a.pid as session_id
     , a.backend_start::sys.datetime as login_time
-    , a.client_hostname::sys.nvarchar(128) as host_name
+    , d.host_name::sys.nvarchar(128) as host_name
     , a.application_name::sys.nvarchar(128) as program_name
     , d.client_pid as host_process_id
     , d.client_version as client_version
@@ -2593,3 +2593,12 @@ SELECT
   , CAST(0 as int) as cells_per_object
 WHERE FALSE;
 GRANT SELECT ON sys.spatial_index_tessellations TO PUBLIC;
+
+CREATE OR REPLACE VIEW sys.numbered_procedures
+AS
+SELECT 
+    CAST(0 as int) AS object_id
+  , CAST(0 as smallint) AS procedure_number
+  , CAST('' as sys.nvarchar(4000)) AS definition
+WHERE FALSE; -- This condition will ensure that the view is empty
+GRANT SELECT ON sys.numbered_procedures TO PUBLIC;

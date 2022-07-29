@@ -423,7 +423,9 @@ TdsGetDayTimeFromTimestamp(Timestamp value, uint32 *numDays, uint64 *numSec,
 			((double)fsec/ 1000000));
 	while (scale--)
 		res *= 10;
-
+	/* Round res to the nearest integer */
+	res += 0.5;
+	
 	*numSec = (uint64_t)res;
 }
 

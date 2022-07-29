@@ -1,0 +1,48 @@
+select c, d, convert(varchar(30), c, 109) as c2, convert(varchar(30), d, 109) as d2 from BABEL_2934_vu_1
+go
+~~START~~
+time#!#time#!#varchar#!#varchar
+00:59:59.999912#!#00:59:59.999912#!#12:59:59.9999120AM#!#12:59:59.9999120AM
+00:00:01.000012#!#00:00:01.000012#!#12:00:01.0000120AM#!#12:00:01.0000120AM
+~~END~~
+
+drop table BABEL_2934_vu_1
+go
+select c, d, convert(varchar(30), c, 109) as c2, convert(varchar(30), d, 109) as d2 from BABEL_2934_vu_2
+go
+~~START~~
+datetime2#!#datetime2#!#varchar#!#varchar
+1900-01-01 00:59:59.999912#!#1900-01-01 00:59:59.999912#!#1900-01-01 00:59:59.999912#!#1900-01-01 00:59:59.999912
+1900-01-01 00:00:01.000012#!#1900-01-01 00:00:01.000012#!#1900-01-01 00:00:01.000012#!#1900-01-01 00:00:01.000012
+~~END~~
+
+drop table BABEL_2934_vu_2
+go
+select c, d, convert(varchar(30), c, 109) as c2, convert(varchar(30), d, 109) as d2 from BABEL_2934_vu_3
+go
+~~START~~
+datetimeoffset#!#datetimeoffset#!#varchar#!#varchar
+1900-01-01 00:59:59.999912 +00:00#!#1900-01-01 00:59:59.999912 +00:00#!#1900-01-01 00:59:59.999912 +00#!#1900-01-01 00:59:59.999912 +00
+1900-01-01 00:00:01.000012 +00:00#!#1900-01-01 00:00:01.000012 +00:00#!#1900-01-01 00:00:01.000012 +00#!#1900-01-01 00:00:01.000012 +00
+~~END~~
+
+drop table BABEL_2934_vu_3
+go
+select * from BABEL_2934_vu_v1
+go
+~~START~~
+time
+12:15:04.123457
+~~END~~
+
+drop view BABEL_2934_vu_v1
+go
+select BABEL_2934_vu_f1(cast('12:15:04.1234567' as TIME(7)))
+go
+~~START~~
+time
+12:15:04.1234570
+~~END~~
+
+drop function BABEL_2934_vu_f1
+go
