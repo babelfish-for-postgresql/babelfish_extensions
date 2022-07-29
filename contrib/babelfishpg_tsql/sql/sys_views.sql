@@ -2593,3 +2593,12 @@ SELECT
   , CAST(0 as int) as cells_per_object
 WHERE FALSE;
 GRANT SELECT ON sys.spatial_index_tessellations TO PUBLIC;
+
+CREATE OR REPLACE VIEW sys.numbered_procedures
+AS
+SELECT 
+    CAST(0 as int) AS object_id
+  , CAST(0 as smallint) AS procedure_number
+  , CAST('' as sys.nvarchar(4000)) AS definition
+WHERE FALSE; -- This condition will ensure that the view is empty
+GRANT SELECT ON sys.numbered_procedures TO PUBLIC;

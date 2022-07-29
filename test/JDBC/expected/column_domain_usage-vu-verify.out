@@ -1,4 +1,4 @@
-SELECT * FROM information_schema.COLUMN_DOMAIN_USAGE WHERE TABLE_NAME NOT LIKE 'sys%' ORDER BY COLUMN_NAME;
+SELECT * FROM information_schema.COLUMN_DOMAIN_USAGE WHERE TABLE_NAME LIKE 'column_domain_usage_vu_prepare%' ORDER BY COLUMN_NAME;
 go
 ~~START~~
 nvarchar#!#nvarchar#!#varchar#!#nvarchar#!#nvarchar#!#varchar#!#varchar
@@ -9,7 +9,7 @@ master#!#dbo#!#column_domain_usage_vu_prepare_typ1#!#master#!#dbo#!#column_domai
 USE db_column_domain_usage_vu_prepare;
 go
 
-SELECT * FROM information_schema.COLUMN_DOMAIN_USAGE WHERE TABLE_NAME NOT LIKE 'sys%' ORDER BY COLUMN_NAME;
+SELECT * FROM information_schema.COLUMN_DOMAIN_USAGE WHERE TABLE_NAME LIKE 'column_domain_usage_vu_prepare%' ORDER BY COLUMN_NAME;
 go
 ~~START~~
 nvarchar#!#nvarchar#!#varchar#!#nvarchar#!#nvarchar#!#varchar#!#varchar

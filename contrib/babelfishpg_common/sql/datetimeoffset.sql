@@ -41,8 +41,7 @@ CREATE TYPE sys.DATETIMEOFFSET (
 	ALIGNMENT      = 'double',
 	STORAGE        = 'plain',
 	CATEGORY       = 'D',
-	PREFERRED      = false,
-    DEFAULT        = '1900-01-01 00:00+0'
+	PREFERRED      = false
 );
 
 CREATE FUNCTION sys.datetimeoffseteq(sys.DATETIMEOFFSET, sys.DATETIMEOFFSET)
