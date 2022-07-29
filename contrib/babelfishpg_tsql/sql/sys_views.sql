@@ -248,21 +248,21 @@ BEGIN
 		RETURN CAST(typelen as SMALLINT);
 	END IF;
 
-  -- if using typmod_array from pg_proc.probin
-  IF used_typmod_array THEN
-    IF v_type = 'sysname' THEN
-      RETURN 256;
-    ELSIF (v_type in ('char', 'bpchar', 'varchar', 'binary', 'varbinary', 'nchar', 'nvarchar'))
-    THEN
-      IF typemod < 0 THEN -- max value. 
-        RETURN -1;
-      ELSIF v_type in ('nchar', 'nvarchar') THEN
-        RETURN (2 * typemod);
-      ELSE
-        RETURN typemod;
-      END IF;
-    END IF;
-  END IF;
+	-- if using typmod_array from pg_proc.probin
+	IF used_typmod_array THEN
+		IF v_type = 'sysname' THEN
+			RETURN 256;
+		ELSIF (v_type in ('char', 'bpchar', 'varchar', 'binary', 'varbinary', 'nchar', 'nvarchar'))
+		THEN
+			IF typemod < 0 THEN -- max value. 
+				RETURN -1;
+			ELSIF v_type in ('nchar', 'nvarchar') THEN
+				RETURN (2 * typemod);
+			ELSE
+				RETURN typemod;
+			END IF;
+		END IF;
+	END IF;
 
 	IF typelen != -1 THEN
 		CASE v_type 
