@@ -8,7 +8,7 @@ column_e int
 )
 GO
 
-ALTER TABLE sys_default_definitions_vu_prepare ADD CONSTRAINT default_column_e_int DEFAULT 50 FOR column_e
+ALTER TABLE sys_default_definitions_vu_prepare ADD CONSTRAINT default_column_e_int DEFAULT 50 FOR column_e;
 ALTER TABLE sys_default_definitions_vu_prepare ADD CONSTRAINT default_column_a_weird DEFAULT N'42' FOR column_a;
 GO
 
