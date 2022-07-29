@@ -1,4 +1,4 @@
-SELECT definition FROM sys.check_constraints where name LIKE '%sys_check_definitions%' ORDER BY name;
+SELECT definition FROM sys.check_constraints where name LIKE '%sys_check_constraints%' ORDER BY name;
 GO
 ~~START~~
 nvarchar
@@ -22,7 +22,7 @@ int
 ~~END~~
 
 
-EXEC sys_check_definitions_vu_prepare_proc;
+EXEC sys_check_constraints_vu_prepare_proc;
 GO
 ~~START~~
 nvarchar
@@ -31,7 +31,7 @@ nvarchar
 ~~END~~
 
 
-SELECT * FROM sys_check_definitions_vu_prepare_func();
+SELECT * FROM sys_check_constraints_vu_prepare_func();
 GO
 ~~START~~
 int
@@ -39,11 +39,11 @@ int
 ~~END~~
 
 
-SELECT * FROM sys_check_definitions_vu_prepare_view;
+SELECT * FROM sys_check_constraints_vu_prepare_view;
 GO
 ~~START~~
 nvarchar
-((column_b <> 'wrong'))
 ((column_a = 0))
+((column_b <> 'wrong'))
 ~~END~~
 
