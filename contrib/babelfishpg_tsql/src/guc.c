@@ -55,7 +55,6 @@ bool  pltsql_showplan_xml = false;
 bool    pltsql_fmtonly = false;
 bool 	pltsql_enable_tsql_information_schema = true;
 bool 	pltsql_no_browsetable = false;
-bool    pltsql_parseonly = false;
 
 char*	pltsql_host_destribution = NULL;
 char*	pltsql_host_release = NULL;
@@ -977,15 +976,6 @@ define_custom_variables(void)
 				 PGC_USERSET,
 				 GUC_NOT_IN_SAMPLE | GUC_DISALLOW_IN_FILE | GUC_DISALLOW_IN_AUTO_FILE,
 				 NULL, NULL, NULL);
-
-    DefineCustomBoolVariable("babelfishpg_tsql.parseonly",
-                 gettext_noop("SQL-Server compatibility PARSEONLY option."),
-                 NULL,
-                 &pltsql_parseonly,
-                 false,
-                 PGC_USERSET,
-                 GUC_NOT_IN_SAMPLE | GUC_DISALLOW_IN_FILE | GUC_DISALLOW_IN_AUTO_FILE,
-                 NULL, NULL, NULL);
 
 	DefineCustomEnumVariable("babelfishpg_tsql.explain_format",
 							 "Specify the output format, which can be TEXT, XML, JSON, or YAML",

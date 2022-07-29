@@ -223,6 +223,7 @@ static void add_query_hints(PLtsql_expr* expr);
 static void clear_query_hints();
 static void clear_tables_info();
 
+static bool pltsql_parseonly = false;
 
 static void
 breakHere()
@@ -4046,8 +4047,17 @@ makeSetStatement(TSqlParser::Set_statementContext *ctx, tsqlBuilder &builder)
 				query += getFullText(set_special_ctx->on_off());
 				query += "; ";
 
-				if (option->PARSEONLY() && pg_strcasecmp("off", getFullText(set_special_ctx->on_off()).c_str()) == 0)
-                    pltsql_parseonly = false;
+				if (option->PARSEONLY())
+                {
+                    if (pg_strcasecmp("on", getFullText(set_special_ctx->on_off()).c_str()) == 0)
+                    {
+                        pltsql_parseonly = true;
+                    }
+                    else if (pg_strcasecmp("off", getFullText(set_special_ctx->on_off()).c_str()) == 0)
+                    {
+                        pltsql_parseonly = false;
+                    }
+                }
 			}
 
 			if (query.empty())
@@ -4071,9 +4081,18 @@ makeSetStatement(TSqlParser::Set_statementContext *ctx, tsqlBuilder &builder)
 			auto option = set_special_ctx->set_on_off_option().front();
 			if (option->BABELFISH_SHOWPLAN_ALL())
 				return makeSetExplainModeStatement(ctx, true);
-            // PARSEONLY needs to be able to be turned off once it is on, so it is handled at parse time.
-            if (option->PARSEONLY() && pg_strcasecmp("off", getFullText(set_special_ctx->on_off()).c_str()) == 0)
-                pltsql_parseonly = false;
+            // PARSEONLY is handled at parse time.
+			if (option->PARSEONLY())
+            {
+                if (pg_strcasecmp("on", getFullText(set_special_ctx->on_off()).c_str()) == 0)
+                {
+                    pltsql_parseonly = true;
+                }
+                else if (pg_strcasecmp("off", getFullText(set_special_ctx->on_off()).c_str()) == 0)
+                {
+                    pltsql_parseonly = false;
+                }
+            }
 
 			return makeSQL(ctx);
 		}

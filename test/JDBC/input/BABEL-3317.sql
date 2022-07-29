@@ -29,16 +29,13 @@ GO
 DROP TABLE babel_3317t1
 GO
 
-/* Parseonly can only be set to true during execution time */
+/* Parseonly can be set to true at parse time */
 CREATE TABLE t3317(a int);
 SET PARSEONLY ON;
 GO
 
 SET PARSEONLY OFF;
 SELECT * FROM t3317;
-GO
-
-DROP TABLE t3317;
 GO
 
 /* Test that syntax errors are still thrown with PARSEONLY on. */
@@ -51,3 +48,14 @@ GO
 SET PARSEONLY OFF
 GO
 
+/* Test that we stop after parsing, no checking for existence of objects */
+
+SET PARSEONLY ON
+GO
+
+/* Should not throw an error. */
+SELECT * FROM fake_table_name
+GO
+
+SET PARSEONLY OFF
+go
