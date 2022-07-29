@@ -42,6 +42,8 @@ is_srvrolemember
 msdb-dbo-fn_syspolicy_is_automation_enabled
 objectpropertyex
 sys-column-property
+sys-check_constraints
+sys-default_constraints
 sys-datefirst
 sys-lock_timeout
 sys-max_connections
