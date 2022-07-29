@@ -1,0 +1,19 @@
+SELECT * FROM BABEL_3360_vu_prepare_v1
+GO
+DROP VIEW BABEL_3360_vu_prepare_v1
+GO
+
+SELECT * FROM BABEL_3360_vu_prepare_v2
+GO
+DROP VIEW BABEL_3360_vu_prepare_v2
+GO
+
+SELECT * FROM BABEL_3360_vu_prepare_v3
+GO
+DROP VIEW BABEL_3360_vu_prepare_v3
+GO
+
+SELECT * FROM BABEL_3360_vu_prepare_v4
+GO
+DROP VIEW BABEL_3360_vu_prepare_v4
+GO

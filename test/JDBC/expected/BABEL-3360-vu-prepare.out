@@ -1,0 +1,38 @@
+create view BABEL_3360_vu_prepare_v1 as (select dateadd(millisecond, 56, cast('2016-12-26 23:29:29' as datetime2)));
+go
+select * from BABEL_3360_vu_prepare_v1;
+go
+~~START~~
+datetime2
+2016-12-26 23:29:29.0560000
+~~END~~
+
+
+create view BABEL_3360_vu_prepare_v2 as (select dateadd(microsecond, 56, cast('2016-12-26 23:29:29' as datetime2)));
+go
+select * from BABEL_3360_vu_prepare_v2;
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: The datepart microsecond is not supported by date function dateadd for data type time.)~~
+
+
+create view BABEL_3360_vu_prepare_v3 as (select dateadd(millisecond, 56, null));
+go
+select * from BABEL_3360_vu_prepare_v3;
+go
+~~START~~
+datetime
+<NULL>
+~~END~~
+
+
+create view BABEL_3360_vu_prepare_v4 as (select dateadd(microsecond, 56, null));
+go
+select * from BABEL_3360_vu_prepare_v4;
+go
+~~START~~
+datetime
+<NULL>
+~~END~~
+

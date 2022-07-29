@@ -88,6 +88,7 @@ BABEL-3249
 BABEL-383
 BABEL-405
 BABEL-PROCID
+BABEL-3360
 babel_trigger
 insteadoftriggers_with_transaction
 insteadof_nested_trigger_inside_proc

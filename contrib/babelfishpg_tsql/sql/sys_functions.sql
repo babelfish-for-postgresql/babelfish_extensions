@@ -1099,9 +1099,9 @@ BEGIN
 	WHEN 'second' THEN
 		RETURN startdate OPERATOR(sys.+) make_interval(secs => num);
 	WHEN 'millisecond' THEN
-		RETURN startdate OPERATOR(sys.+) make_interval(secs => num * 0.001);
-	WHEN 'microsecond' THEN
-		RETURN startdate OPERATOR(sys.+) make_interval(secs => num * 0.000001);
+		RETURN startdate OPERATOR(sys.+) make_interval(secs => CAST(num AS DECIMAL(20,10)) * 0.001);
+    WHEN 'microsecond' THEN
+        RAISE EXCEPTION 'The datepart % is not supported by date function dateadd for data type time.', datepart;
 	WHEN 'nanosecond' THEN
 		-- Best we can do - Postgres does not support nanosecond precision
 		RETURN startdate;
@@ -1146,9 +1146,9 @@ BEGIN
 	WHEN 'second' THEN
 		RETURN startdate + make_interval(secs => num);
 	WHEN 'millisecond' THEN
-		RETURN startdate + make_interval(secs => num * 0.001);
+		RETURN startdate + make_interval(secs => CAST(num AS DECIMAL(20,10)) * 0.001);
 	WHEN 'microsecond' THEN
-		RETURN startdate + make_interval(secs => num * 0.000001);
+        RAISE EXCEPTION 'The datepart % is not supported by date function dateadd for data type time.', datepart;
 	WHEN 'nanosecond' THEN
 		-- Best we can do - Postgres does not support nanosecond precision
 		RETURN startdate;
@@ -1159,6 +1159,7 @@ END;
 $$
 STRICT
 LANGUAGE plpgsql IMMUTABLE;
+
 
 CREATE OR REPLACE FUNCTION sys.datediff_internal_df(IN datepart PG_CATALOG.TEXT, IN startdate anyelement, IN enddate anyelement) RETURNS INTEGER AS $$
 DECLARE
