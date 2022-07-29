@@ -28,3 +28,6 @@ GO
 SELECT ao.name FROM sys.all_objects ao
 JOIN sys.events e ON e.object_id = ao.object_id
 GO
+
+USE master
+GO

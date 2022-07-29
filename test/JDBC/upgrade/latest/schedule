@@ -38,7 +38,6 @@ sys-numbered_procedures
 BABEL-3121
 sys-events
 sys-suser_sid
-sys-suser_sname
 sys-trigger_events
 BABEL-3166
 BABEL-3192

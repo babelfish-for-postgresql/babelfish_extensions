@@ -59,3 +59,5 @@ BEGIN
 END
 GO
 
+USE master
+GO

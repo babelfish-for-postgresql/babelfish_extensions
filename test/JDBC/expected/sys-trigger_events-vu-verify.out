@@ -64,3 +64,6 @@ varchar
 sys_trigger_events_vu_prepare_trig3
 ~~END~~
 
+
+USE master
+GO

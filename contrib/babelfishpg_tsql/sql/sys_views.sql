@@ -2742,9 +2742,9 @@ SELECT
   , CAST(null as int) AS event_group_type
   , CAST(null as sys.nvarchar(60)) AS event_group_type_desc
 FROM information_schema.triggers tr
-JOIN pg_catalog.pg_namespace np ON tr.event_object_schema = np.nspname
-JOIN pg_class pc ON pc.relname = tr.event_object_table AND pc.relnamespace = np.oid
-JOIN pg_trigger pt ON pt.tgrelid = pc.oid AND tr.trigger_name = pt.tgname
+JOIN pg_catalog.pg_namespace np ON tr.event_object_schema = np.nspname COLLATE sys.database_default
+JOIN pg_class pc ON pc.relname = tr.event_object_table COLLATE sys.database_default AND pc.relnamespace = np.oid
+JOIN pg_trigger pt ON pt.tgrelid = pc.oid AND tr.trigger_name = pt.tgname COLLATE sys.database_default
 AND has_schema_privilege(pc.relnamespace, 'USAGE')
 AND has_table_privilege(pc.oid, 'SELECT,INSERT,UPDATE,DELETE,TRUNCATE,TRIGGER');
 GRANT SELECT ON sys.events TO PUBLIC;
