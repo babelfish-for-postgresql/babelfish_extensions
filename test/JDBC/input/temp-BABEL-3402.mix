@@ -1,15 +1,15 @@
 -- psql
---set babelfishpg_tsql.dump_restore to ON;
+set babelfishpg_tsql.dump_restore to ON;
+go
+--CREATE or replace VIEW babel_3402_v1 AS
+--SELECT "sys"."suser_sid"(('-10'::integer)::"sys"."sysname"(132)) AS "suser_sid";
 --go
-CREATE or replace VIEW babel_3402_v1 AS
-SELECT "sys"."suser_sid"(('-10'::integer)::"sys"."sysname"(132)) AS "suser_sid";
-go
 
-select * from babel_3402_v1;
-go
+--select * from babel_3402_v1;
+--go
 
-select pg_get_viewdef('babel_3402_v1'::regclass);
-go
+--select pg_get_viewdef('babel_3402_v1'::regclass);
+--go
 
 CREATE or replace VIEW babel_3402_v2 AS
 SELECT "sys"."suser_sid"(('-10'::integer)::"sys"."sysname") AS "suser_sid";
