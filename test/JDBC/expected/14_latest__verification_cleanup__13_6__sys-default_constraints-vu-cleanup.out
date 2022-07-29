@@ -1,0 +1,11 @@
+DROP TABLE sys_default_definitions_vu_prepare
+GO
+
+DROP PROC sys_default_definitions_vu_prepare_proc
+GO
+
+DROP FUNCTION sys_default_definitions_vu_prepare_func
+GO
+
+DROP VIEW sys_default_definitions_vu_prepare_view
+GO
