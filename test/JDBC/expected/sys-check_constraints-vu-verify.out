@@ -26,8 +26,8 @@ EXEC sys_check_definitions_vu_prepare_proc;
 GO
 ~~START~~
 nvarchar
-((column_b <> 'wrong'))
 ((column_a = 0))
+((column_b <> 'wrong'))
 ~~END~~
 
 

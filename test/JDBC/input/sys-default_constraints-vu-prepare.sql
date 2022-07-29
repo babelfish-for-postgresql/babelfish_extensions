@@ -13,7 +13,7 @@ ALTER TABLE sys_default_definitions_vu_prepare ADD CONSTRAINT default_column_a_w
 GO
 
 CREATE PROC sys_default_definitions_vu_prepare_proc AS
-    SELECT definition FROM sys.default_constraints WHERE name LIKE '%sys_default_definitions%'
+    SELECT definition FROM sys.default_constraints WHERE name LIKE '%sys_default_definitions%' ORDER BY definition
 GO
 
 CREATE FUNCTION sys_default_definitions_vu_prepare_func()
@@ -25,5 +25,5 @@ END
 GO
 
 CREATE VIEW sys_default_definitions_vu_prepare_view AS
-    SELECT definition FROM sys.default_constraints WHERE name LIKE '%sys_default_definitions%'
+    SELECT definition FROM sys.default_constraints WHERE name LIKE '%sys_default_definitions%' ORDER BY definition
 GO
