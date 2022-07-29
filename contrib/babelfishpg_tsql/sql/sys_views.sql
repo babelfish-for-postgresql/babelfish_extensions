@@ -853,37 +853,41 @@ GRANT SELECT ON sys.key_constraints TO PUBLIC;
 
 create or replace view sys.procedures as
 select
-  p.proname as name
-  , p.oid as object_id
-  , null::integer as principal_id
-  , sch.schema_id as schema_id
+  cast(p.proname as sys.sysname) as name
+  , cast(p.oid as int) as object_id
+  , cast(null as int) as principal_id
+  , cast(sch.schema_id as int) as schema_id
   , cast (case when tr.tgrelid is not null 
       then tr.tgrelid 
       else 0 end as int) 
     as parent_object_id
-  , case p.prokind
-      when 'p' then 'P'::varchar(2)
-      when 'a' then 'AF'::varchar(2)
+  , cast(case p.prokind
+      when 'p' then 'P'
+      when 'a' then 'AF'
       else
         case format_type(p.prorettype, null) when 'trigger'
-          then 'TR'::varchar(2)
-          else 'FN'::varchar(2)
+          then 'TR'
+          else 'FN'
         end
-    end as type
-  , case p.prokind
-      when 'p' then 'SQL_STORED_PROCEDURE'::varchar(60)
-      when 'a' then 'AGGREGATE_FUNCTION'::varchar(60)
+    end as sys.bpchar(2)) as type
+  , cast(case p.prokind
+      when 'p' then 'SQL_STORED_PROCEDURE'
+      when 'a' then 'AGGREGATE_FUNCTION'
       else
         case format_type(p.prorettype, null) when 'trigger'
-          then 'SQL_TRIGGER'::varchar(60)
-          else 'SQL_SCALAR_FUNCTION'::varchar(60)
+          then 'SQL_TRIGGER'
+          else 'SQL_SCALAR_FUNCTION'
         end
-    end as type_desc
-  , null::timestamp as create_date
-  , null::timestamp as modify_date
-  , 0 as is_ms_shipped
-  , 0 as is_published
-  , 0 as is_schema_published
+    end as sys.nvarchar(60)) as type_desc
+  , cast(null as sys.datetime) as create_date
+  , cast(null as sys.datetime) as modify_date
+  , cast(0 as sys.bit) as is_ms_shipped
+  , cast(0 as sys.bit) as is_published
+  , cast(0 as sys.bit) as is_schema_published
+  , cast(0 as sys.bit) as is_auto_executed
+  , cast(0 as sys.bit) as is_execution_replicated
+  , cast(0 as sys.bit) as is_repl_serializable_only
+  , cast(0 as sys.bit) as skips_repl_constraints
 from pg_proc p
 inner join sys.schemas sch on sch.schema_id = p.pronamespace
 left join pg_trigger tr on tr.tgfoid = p.oid

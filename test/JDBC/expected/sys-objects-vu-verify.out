@@ -1,0 +1,146 @@
+USE sys_objects_vu_prepare_db1
+GO
+
+select count(*) from sys.objects where type = 'P' and name = 'sys_objects_vu_prepare_proc1';
+GO
+~~START~~
+int
+1
+~~END~~
+
+
+select count(*) from sys.all_objects where type = 'P' and name = 'sys_objects_vu_prepare_proc1';
+GO
+~~START~~
+int
+1
+~~END~~
+
+
+select count(*) from sys.sql_modules where object_id = object_id('sys_objects_vu_prepare_proc1');
+GO
+~~START~~
+int
+1
+~~END~~
+
+
+select parent_object_id from sys.objects where type = 'P' and name = 'sys_objects_vu_prepare_proc1';
+GO
+~~START~~
+int
+0
+~~END~~
+
+
+USE master
+GO
+
+select count(*) from sys.objects where type = 'P' and name = 'sys_objects_vu_prepare_proc1';
+GO
+~~START~~
+int
+0
+~~END~~
+
+
+select count(*) from sys.all_objects where type = 'P' and name = 'sys_objects_vu_prepare_proc1';
+GO
+~~START~~
+int
+0
+~~END~~
+
+
+select count(*) from sys.sql_modules where object_id = object_id('sys_objects_vu_prepare_proc1');
+GO
+~~START~~
+int
+0
+~~END~~
+
+
+select parent_object_id from sys.objects where type = 'P' and name = 'sys_objects_vu_prepare_proc1';
+GO
+~~START~~
+int
+~~END~~
+
+
+select count(*) from sys.objects where type = 'P' and name = 'sys_objects_vu_prepare_proc2';
+GO
+~~START~~
+int
+1
+~~END~~
+
+
+select count(*) from sys.all_objects where type = 'P' and name = 'sys_objects_vu_prepare_proc2';
+GO
+~~START~~
+int
+1
+~~END~~
+
+
+select count(*) from sys.sql_modules where object_id = object_id('sys_objects_vu_prepare_proc2');
+GO
+~~START~~
+int
+1
+~~END~~
+
+
+USE sys_objects_vu_prepare_db1
+GO
+
+select count(*) from sys.objects where type = 'P' and name = 'sys_objects_vu_prepare_proc2';
+GO
+~~START~~
+int
+0
+~~END~~
+
+
+select count(*) from sys.all_objects where type = 'P' and name = 'sys_objects_vu_prepare_proc2';
+GO
+~~START~~
+int
+0
+~~END~~
+
+
+select count(*) from sys.sql_modules where object_id = object_id('sys_objects_vu_prepare_proc2');
+GO
+~~START~~
+int
+0
+~~END~~
+
+
+USE master
+GO
+
+SELECT * FROM sys_objects_vu_prepare_view
+GO
+~~START~~
+int
+1
+~~END~~
+
+
+EXEC sys_objects_vu_prepare_proc
+GO
+~~START~~
+int
+1
+~~END~~
+
+
+SELECT dbo.sys_objects_vu_prepare_func()
+GO
+~~START~~
+int
+1
+~~END~~
+

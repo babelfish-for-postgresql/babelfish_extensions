@@ -64,6 +64,8 @@ sys-lock_timeout
 sys-max_connections
 sys-original_login
 sys-schema-name
+sys-objects
+sys-procedures
 sys-sysobjects
 sys-trigger_nestlevel
 schema_resolution_proc

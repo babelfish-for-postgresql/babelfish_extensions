@@ -38,7 +38,9 @@ sys-column-property
 sys-datefirst
 sys-lock_timeout
 sys-max_connections
+sys-objects
 sys-original_login
+sys-procedures
 sys-schema-name
 sys-suser_sid
 sys-suser_sname

@@ -317,7 +317,6 @@ Could not find upgrade tests for view information_schema_tsql.columns
 Could not find upgrade tests for view information_schema_tsql.domains
 Could not find upgrade tests for view information_schema_tsql.table_constraints
 Could not find upgrade tests for view information_schema_tsql.tables
-Could not find upgrade tests for view sys.all_objects
 Could not find upgrade tests for view sys.all_sql_modules
 Could not find upgrade tests for view sys.all_sql_modules_internal
 Could not find upgrade tests for view sys.assembly_modules
@@ -350,10 +349,8 @@ Could not find upgrade tests for view sys.identity_columns
 Could not find upgrade tests for view sys.index_columns
 Could not find upgrade tests for view sys.key_constraints
 Could not find upgrade tests for view sys.master_files
-Could not find upgrade tests for view sys.objects
 Could not find upgrade tests for view sys.pg_namespace_ext
 Could not find upgrade tests for view sys.plan_guides
-Could not find upgrade tests for view sys.procedures
 Could not find upgrade tests for view sys.registered_search_property_lists
 Could not find upgrade tests for view sys.schemas
 Could not find upgrade tests for view sys.selective_xml_index_paths
@@ -373,7 +370,6 @@ Could not find upgrade tests for view sys.spatial_index_tessellations
 Could not find upgrade tests for view sys.spatial_indexes
 Could not find upgrade tests for view sys.spt_columns_view_managed
 Could not find upgrade tests for view sys.spt_tablecollations_view
-Could not find upgrade tests for view sys.sql_modules
 Could not find upgrade tests for view sys.stats
 Could not find upgrade tests for view sys.synonyms
 Could not find upgrade tests for view sys.syscharsets

@@ -31,10 +31,10 @@ GO
 SELECT type, type_desc from sys.procedures  where name like 'babel_2747%' order by type;
 GO
 ~~START~~
-varchar#!#varchar
+char#!#nvarchar
 FN#!#SQL_SCALAR_FUNCTION
-P#!#SQL_STORED_PROCEDURE
-P#!#SQL_STORED_PROCEDURE
+P #!#SQL_STORED_PROCEDURE
+P #!#SQL_STORED_PROCEDURE
 TR#!#SQL_TRIGGER
 ~~END~~
 
