@@ -27,6 +27,26 @@ TCP#!#TSQL#!#1946157060#!#4#!#FALSE
 ~~END~~
 
 
+-- psql
 -- Cleanup
+-- Need to terminate active session before cleaning up the login
+SELECT pg_terminate_backend(pid) FROM pg_stat_get_activity(NULL)
+WHERE sys.suser_name(usesysid) = 'login_2296' AND backend_type = 'client backend' AND usesysid IS NOT NULL;
+GO
+~~START~~
+bool
+t
+~~END~~
+
+-- Wait to sync with another session
+SELECT pg_sleep(1);
+GO
+~~START~~
+void
+
+~~END~~
+
+
+-- tsql
 drop login login_2296
 GO

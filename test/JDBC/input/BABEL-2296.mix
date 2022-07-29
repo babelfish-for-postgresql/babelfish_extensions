@@ -17,5 +17,15 @@ select net_transport, protocol_type, protocol_version, endpoint_id, encrypt_opti
 GO
 
 -- Cleanup
+-- psql
+-- Need to terminate active session before cleaning up the login
+SELECT pg_terminate_backend(pid) FROM pg_stat_get_activity(NULL)
+WHERE sys.suser_name(usesysid) = 'login_2296' AND backend_type = 'client backend' AND usesysid IS NOT NULL;
+GO
+-- Wait to sync with another session
+SELECT pg_sleep(1);
+GO
+
+-- tsql
 drop login login_2296
 GO

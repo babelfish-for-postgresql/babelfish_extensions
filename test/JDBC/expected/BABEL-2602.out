@@ -16,7 +16,27 @@ go
 ~~ERROR (Message: must be owner of database babel_2602_db)~~
 
 
+-- psql
+-- Need to terminate active session before cleaning up the login
+SELECT pg_terminate_backend(pid) FROM pg_stat_get_activity(NULL) 
+WHERE sys.suser_name(usesysid) = 'babel_2602_user' AND backend_type = 'client backend' AND usesysid IS NOT NULL;
+GO
+~~START~~
+bool
+t
+~~END~~
+
+-- Wait to sync with another session
+SELECT pg_sleep(1);
+GO
+~~START~~
+void
+
+~~END~~
+
+
 -- tsql
+
 DROP LOGIN babel_2602_user
 go
 

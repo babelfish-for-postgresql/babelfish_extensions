@@ -1567,3 +1567,16 @@ is_rolemember(PG_FUNCTION_ARGS)
 	else
 		PG_RETURN_INT32(0);
 }
+
+/*
+ * To check if there are any active backends with given login
+ */
+bool
+is_active_login(Oid role_oid)
+{
+	if (CountUserBackends(role_oid) == 0)
+		return false; /* If there are no backends with given role */
+
+	return true;
+}
+

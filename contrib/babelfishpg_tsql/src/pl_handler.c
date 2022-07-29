@@ -2720,9 +2720,19 @@ static void bbf_ProcessUtility(PlannedStmt *pstmt,
 				}
 
 				/* If not user or role, then login */
-				if (!drop_user && get_role_oid(role_name, true) == InvalidOid)
-					  ereport(ERROR, (errcode(ERRCODE_DUPLICATE_OBJECT), 
-								  errmsg("Cannot drop the login '%s', because it does not exist or you do not have permission.", role_name)));
+				if (!drop_user)
+				{
+					int	role_oid = get_role_oid(role_name, true);
+					if (role_oid == InvalidOid)
+						ereport(ERROR, (errcode(ERRCODE_DUPLICATE_OBJECT),
+										errmsg("Cannot drop the login '%s', because it does not exist or you do not have permission.", role_name)));
+
+					/* Prevent if it is active login (begin used by other sessions) */
+					if (is_active_login(role_oid))
+						ereport(ERROR,
+								(errcode(ERRCODE_OBJECT_IN_USE),
+								 errmsg("Could not drop login '%s' as the user is currently logged in.", role_name)));
+				}
 
 				if (all_logins || all_users || all_roles)
 				{
