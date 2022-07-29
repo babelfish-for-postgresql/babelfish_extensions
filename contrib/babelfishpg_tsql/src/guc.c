@@ -1043,6 +1043,24 @@ define_custom_variables(void)
 				 PGC_USERSET,
 				 GUC_NOT_IN_SAMPLE | GUC_DISALLOW_IN_FILE | GUC_DISALLOW_IN_AUTO_FILE,
 				 NULL, NULL, NULL);
+
+	DefineCustomIntVariable("babelfishpg_tsql.insert_bulk_rows_per_batch",
+				gettext_noop("Sets the number of rows per batch to be processed for Insert Bulk"),
+				NULL,
+				&insert_bulk_rows_per_batch,
+				DEFAULT_INSERT_BULK_ROWS_PER_BATCH, 1, INT_MAX,
+				PGC_USERSET,
+				GUC_NOT_IN_SAMPLE,
+				NULL, NULL, NULL);
+
+	DefineCustomIntVariable("babelfishpg_tsql.insert_bulk_kilobytes_per_batch",
+				gettext_noop("Sets the number of bytes per batch to be processed for Insert Bulk"),
+				NULL,
+				&insert_bulk_kilobytes_per_batch,
+				DEFAULT_INSERT_BULK_PACKET_SIZE, 1, INT_MAX,
+				PGC_USERSET,
+				GUC_NOT_IN_SAMPLE,
+				NULL, NULL, NULL);
 }
 
 int escape_hatch_storage_options = EH_IGNORE;
@@ -1074,6 +1092,7 @@ int escape_hatch_session_settings = EH_IGNORE;
 int escape_hatch_unique_constraint = EH_STRICT;
 int escape_hatch_ignore_dup_key = EH_STRICT;
 int escape_hatch_rowversion = EH_STRICT;
+int escape_hatch_showplan_all = EH_STRICT;
 
 void
 define_escape_hatch_variables(void)
@@ -1385,6 +1404,17 @@ define_escape_hatch_variables(void)
 							  gettext_noop("escape hatch for TIMESTAMP/ROWVERSION columns"),
 							  NULL,
 							  &escape_hatch_rowversion,
+							  EH_STRICT,
+							  escape_hatch_options,
+							  PGC_USERSET,
+							  GUC_NOT_IN_SAMPLE | GUC_DISALLOW_IN_FILE | GUC_DISALLOW_IN_AUTO_FILE,
+							  NULL, NULL, NULL);
+
+	/* SHOWPLAN_ALL */
+	DefineCustomEnumVariable("babelfishpg_tsql.escape_hatch_showplan_all",
+							  gettext_noop("escape hatch for SHOWPLAN_ALL and STATISTICS PROFILE"),
+							  NULL,
+							  &escape_hatch_showplan_all,
 							  EH_STRICT,
 							  escape_hatch_options,
 							  PGC_USERSET,

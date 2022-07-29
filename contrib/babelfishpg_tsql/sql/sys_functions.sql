@@ -22,36 +22,96 @@ RETURNS text
 AS 'babelfishpg_tsql', 'tsql_get_constraintdef'
 LANGUAGE C IMMUTABLE PARALLEL SAFE;
 
+CREATE OR REPLACE FUNCTION sys.tsql_get_functiondef(IN function_id OID DEFAULT NULL)
+RETURNS text
+AS 'babelfishpg_tsql', 'tsql_get_functiondef'
+LANGUAGE C IMMUTABLE PARALLEL SAFE;
+
+CREATE OR REPLACE FUNCTION sys.tsql_get_returnTypmodValue(IN function_id OID DEFAULT NULL)
+RETURNS INTEGER
+AS 'babelfishpg_tsql', 'tsql_get_returnTypmodValue'
+LANGUAGE C IMMUTABLE PARALLEL SAFE;
+
 CREATE OR REPLACE FUNCTION sys.user_id(IN user_name TEXT DEFAULT NULL)
 RETURNS OID
 AS 'babelfishpg_tsql', 'user_id'
 LANGUAGE C IMMUTABLE PARALLEL SAFE;
 
-CREATE OR REPLACE FUNCTION sys.suser_name(IN server_user_id OID DEFAULT NULL)
+CREATE OR REPLACE FUNCTION sys.suser_name_internal(IN server_user_id OID)
 RETURNS sys.NVARCHAR(128)
 AS 'babelfishpg_tsql', 'suser_name'
 LANGUAGE C IMMUTABLE PARALLEL RESTRICTED;
 
+CREATE OR REPLACE FUNCTION sys.suser_name(IN server_user_id OID)
+RETURNS sys.NVARCHAR(128) AS $$
+    SELECT CASE 
+        WHEN server_user_id IS NULL THEN NULL
+        ELSE sys.suser_name_internal(server_user_id)
+    END;
+$$
+LANGUAGE SQL IMMUTABLE PARALLEL RESTRICTED;
+
+CREATE OR REPLACE FUNCTION sys.suser_name()
+RETURNS sys.NVARCHAR(128)
+AS $$
+    SELECT sys.suser_name_internal(NULL);
+$$
+LANGUAGE SQL IMMUTABLE PARALLEL RESTRICTED;
+
 -- Since SIDs are currently not supported in Babelfish, this essentially behaves the same as suser_name but 
 -- with a different input data type
-CREATE OR REPLACE FUNCTION sys.suser_sname(IN server_user_sid SYS.VARBINARY(85) DEFAULT NULL)
+CREATE OR REPLACE FUNCTION sys.suser_sname(IN server_user_sid SYS.VARBINARY(85))
 RETURNS SYS.NVARCHAR(128)
 AS $$
     SELECT sys.suser_name(CAST(server_user_sid AS INT)); 
 $$
 LANGUAGE SQL IMMUTABLE PARALLEL RESTRICTED;
 
-CREATE OR REPLACE FUNCTION sys.suser_id(IN login TEXT DEFAULT NULL)
+CREATE OR REPLACE FUNCTION sys.suser_sname()
+RETURNS SYS.NVARCHAR(128)
+AS $$
+    SELECT sys.suser_name();
+$$
+LANGUAGE SQL IMMUTABLE PARALLEL RESTRICTED;
+
+CREATE OR REPLACE FUNCTION sys.suser_id_internal(IN login TEXT)
 RETURNS OID
 AS 'babelfishpg_tsql', 'suser_id'
 LANGUAGE C IMMUTABLE PARALLEL RESTRICTED;
 
+CREATE OR REPLACE FUNCTION sys.suser_id(IN login TEXT)
+RETURNS OID AS $$
+    SELECT CASE
+        WHEN login IS NULL THEN NULL
+        ELSE sys.suser_id_internal(login)
+    END;
+$$
+LANGUAGE SQL IMMUTABLE PARALLEL RESTRICTED;
+
+CREATE OR REPLACE FUNCTION sys.suser_id()
+RETURNS OID
+AS $$
+    SELECT sys.suser_id_internal(NULL);
+$$
+LANGUAGE SQL IMMUTABLE PARALLEL RESTRICTED;
+
 -- Since SIDs are currently not supported in Babelfish, this essentially behaves the same as suser_id but 
 -- with different input/output data types. The second argument will be ignored as its functionality is not supported
-CREATE OR REPLACE FUNCTION sys.suser_sid(IN login SYS.SYSNAME DEFAULT NULL, IN Param2 INT DEFAULT NULL)
-RETURNS SYS.VARBINARY(85) 
+CREATE OR REPLACE FUNCTION sys.suser_sid(IN login SYS.SYSNAME, IN Param2 INT DEFAULT NULL)
+RETURNS SYS.VARBINARY(85) AS $$
+    SELECT CASE
+    WHEN login = '' 
+        THEN CAST(CAST(sys.suser_id() AS INT) AS SYS.VARBINARY(85))
+    ELSE 
+        CAST(CAST(sys.suser_id(login) AS INT) AS SYS.VARBINARY(85))
+    END;
+$$
+LANGUAGE SQL IMMUTABLE PARALLEL RESTRICTED;
+
+CREATE OR REPLACE FUNCTION sys.suser_sid()
+RETURNS SYS.VARBINARY(85)
 AS $$
-    SELECT CAST(CAST(sys.suser_id(login) AS INT) AS SYS.VARBINARY(85)); 
+    SELECT CAST(CAST(sys.suser_id() AS INT) AS SYS.VARBINARY(85));
 $$
 LANGUAGE SQL IMMUTABLE PARALLEL RESTRICTED;
 
@@ -841,13 +901,15 @@ $body$
 LANGUAGE plpgsql IMMUTABLE;
 
 -- Duplicate function with arg TEXT since ANYELEMENT cannot handle type unknown.
-CREATE OR REPLACE FUNCTION sys.datepart(IN datepart PG_CATALOG.TEXT, IN arg TEXT) RETURNS INTEGER
+CREATE OR REPLACE FUNCTION sys.datepart(IN datepart TEXT, IN arg TEXT) RETURNS INTEGER
 AS
 $body$
 BEGIN
     IF pg_typeof(arg) = 'sys.DATETIMEOFFSET'::regtype THEN
         return sys.datepart_internal(datepart, arg::timestamp,
                      sys.babelfish_get_datetimeoffset_tzoffset(arg)::integer);
+    ELSIF pg_typeof(arg) = 'pg_catalog.text'::regtype THEN
+        return sys.datepart_internal(datepart, arg::sys.nvarchar::sys.datetime);
     ELSE
         return sys.datepart_internal(datepart, arg);
     END IF;
@@ -2442,7 +2504,8 @@ CREATE OR REPLACE FUNCTION sys.tsql_stat_get_activity(
   OUT protocol_version int,
   OUT packet_size int,
   OUT encrypyt_option VARCHAR(40),
-  OUT database_id int2)
+  OUT database_id int2,
+  OUT host_name varchar(128))
 RETURNS SETOF RECORD
 AS 'babelfishpg_tsql', 'tsql_stat_get_activity'
 LANGUAGE C VOLATILE STRICT;
@@ -2779,3 +2842,73 @@ LANGUAGE SQL IMMUTABLE PARALLEL RESTRICTED;
 
 CREATE OR REPLACE FUNCTION sys.language()
 RETURNS sys.NVARCHAR(128)  AS 'babelfishpg_tsql' LANGUAGE C;
+
+CREATE OR REPLACE FUNCTION sys.host_name()
+RETURNS sys.NVARCHAR(128)  AS 'babelfishpg_tsql' LANGUAGE C IMMUTABLE PARALLEL SAFE;
+
+CREATE OR REPLACE FUNCTION sys.INDEXPROPERTY(IN object_id INT, IN index_or_statistics_name sys.nvarchar(128), IN property sys.varchar(128))
+RETURNS INT AS
+$BODY$
+DECLARE
+ret_val INT;
+BEGIN
+	index_or_statistics_name = LOWER(TRIM(index_or_statistics_name));
+	property = LOWER(TRIM(property));
+    SELECT INTO ret_val
+    CASE
+       
+        WHEN (SELECT CAST(type AS int) FROM sys.indexes i WHERE i.object_id = $1 AND i.name = $2 COLLATE sys.database_default) = 3 -- is XML index
+        THEN CAST(NULL AS int)
+	    
+        WHEN property = 'indexdepth'
+        THEN CAST(0 AS int)
+
+        WHEN property = 'indexfillfactor'
+        THEN (SELECT CAST(fill_factor AS int) FROM sys.indexes i WHERE i.object_id = $1 AND i.name = $2 COLLATE sys.database_default)
+
+        WHEN property = 'indexid'
+        THEN (SELECT CAST(index_id AS int) FROM sys.indexes i WHERE i.object_id = $1 AND i.name = $2 COLLATE sys.database_default)
+
+        WHEN property = 'isautostatistics'
+        THEN CAST(0 AS int)
+
+        WHEN property = 'isclustered'
+        THEN (SELECT CAST(CASE WHEN type = 1 THEN 1 ELSE 0 END AS int) FROM sys.indexes i WHERE i.object_id = $1 AND i.name = $2 COLLATE sys.database_default)
+        
+        WHEN property = 'isdisabled'
+        THEN (SELECT CAST(is_disabled AS int) FROM sys.indexes i WHERE i.object_id = $1 AND i.name = $2 COLLATE sys.database_default)
+        
+        WHEN property = 'isfulltextkey'
+        THEN CAST(0 AS int)
+        
+        WHEN property = 'ishypothetical'
+        THEN (SELECT CAST(is_hypothetical AS int) FROM sys.indexes i WHERE i.object_id = $1 AND i.name = $2 COLLATE sys.database_default)
+        
+        WHEN property = 'ispadindex'
+        THEN (SELECT CAST(is_padded AS int) FROM sys.indexes i WHERE i.object_id = $1 AND i.name = $2 COLLATE sys.database_default)
+        
+        WHEN property = 'ispagelockdisallowed'
+        THEN (SELECT CAST(CASE WHEN allow_page_locks = 1 THEN 0 ELSE 1 END AS int) FROM sys.indexes i WHERE i.object_id = $1 AND i.name = $2 COLLATE sys.database_default)
+        
+        WHEN property = 'isrowlockdisallowed'
+        THEN (SELECT CAST(CASE WHEN allow_row_locks = 1 THEN 0 ELSE 1 END AS int) FROM sys.indexes i WHERE i.object_id=$1 AND i.name = $2 COLLATE sys.database_default)
+        
+        WHEN property = 'isstatistics'
+        THEN CAST(0 AS int)
+        
+        WHEN property = 'isunique'
+        THEN (SELECT CAST(is_unique AS int) FROM sys.indexes i WHERE i.object_id = $1 AND i.name = $2 COLLATE sys.database_default)
+        
+        WHEN property = 'iscolumnstore'
+        THEN CAST(0 AS int)
+        
+        WHEN property = 'isoptimizedforsequentialkey'
+        THEN CAST(0 AS int)
+    ELSE
+        CAST(NULL AS int)
+    END;
+RETURN ret_val;
+END;
+$BODY$
+LANGUAGE plpgsql;
+GRANT EXECUTE ON FUNCTION sys.INDEXPROPERTY(IN object_id INT, IN index_or_statistics_name sys.nvarchar(128),  IN property sys.varchar(128)) TO PUBLIC;

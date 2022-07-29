@@ -37,6 +37,8 @@ extern "C" {
 #include "catalog/pg_proc.h"
 #include "parser/scansup.h"
 
+#include "guc.h"
+
 #endif
 
 #ifdef LOG // maybe already defined in elog.h, which is conflicted with grammar token LOG
@@ -75,6 +77,8 @@ extern "C"
 	extern size_t get_num_pg_reserved_keywords_to_be_delimited();
 	extern char * construct_unique_index_name(char *index_name, char *relation_name);
 	extern bool enable_hint_mapping;
+
+	extern int escape_hatch_showplan_all;
 }
 
 static void toDotRecursive(ParseTree *t, const std::vector<std::string> &ruleNames, const std::string &sourceText);
@@ -578,9 +582,8 @@ add_query_hints(PLtsql_expr *expr)
 	// If a query has both join hint and query hint which is a join hint, it should have all the join hints as the query hints as well
 	if (isJoinHintInOptionClause && ((join_hints_info[LOOP_JOIN_HINT] && !join_hints_info[LOOP_QUERY_HINT]) || (join_hints_info[HASH_JOIN_HINT] && !join_hints_info[HASH_QUERY_HINT]) || (join_hints_info[MERGE_JOIN_HINT] && !join_hints_info[MERGE_QUERY_HINT])))
 	{
-		isJoinHintInOptionClause = false;
-		for (size_t i=0; i<JOIN_HINTS_INFO_VECTOR_SIZE; i++)
-			join_hints_info[i] = false;
+		clear_query_hints();
+		clear_tables_info();
 		throw PGErrorWrapperException(ERROR, ERRCODE_FEATURE_NOT_SUPPORTED, "Conflicting JOIN optimizer hints specified", getLineAndPos(ctx));
 	}
 	std::string hint =  "/*+ ";
@@ -1401,6 +1404,8 @@ public:
 		// record whether stmt is cross-db
 		if (is_cross_db)
 			stmt->is_cross_db = true;
+		// record that the stmt is dml
+	 	stmt->is_dml = true;
 
 		if (is_compiling_create_function())
 		{
@@ -1435,7 +1440,7 @@ public:
 		add_rewritten_query_fragment_to_mutator(statementMutator.get());
 
 		/* Add query hints */
-		if (query_hints.size())
+		if (query_hints.size() && enable_hint_mapping)
 		{
 			add_query_hints(statementMutator.get()->expr);
 			clear_query_hints();
@@ -1472,6 +1477,8 @@ public:
 	{
 		PLtsql_stmt_execsql *stmt = (PLtsql_stmt_execsql *) getPLtsql_fragment(ctx);
 		Assert(stmt);
+		// record that the stmt is ddl
+	 	stmt->is_ddl = true;
 
 		if (is_compiling_create_function())
 		{
@@ -1654,6 +1661,10 @@ public:
 			/* Re-write system_user to sys.system_user(). */
 			if (bctx->bif_no_brackets && bctx->SYSTEM_USER())
 				rewritten_query_fragment.emplace(std::make_pair(bctx->bif_no_brackets->getStartIndex(), std::make_pair(::getFullText(bctx->SYSTEM_USER()), "sys.system_user()")));
+
+			/* Re-write session_user to sys.session_user(). */
+			if (bctx->bif_no_brackets && bctx->SESSION_USER())
+				rewritten_query_fragment.emplace(std::make_pair(bctx->bif_no_brackets->getStartIndex(), std::make_pair(::getFullText(bctx->SESSION_USER()), "sys.session_user()")));
 		}
 
 		/* analyze scalar function call */
@@ -3204,6 +3215,16 @@ void extractQueryHintsFromOptionClause(TSqlParser::Option_clauseContext *octx)
 				query_hints.push_back("Set(max_parallel_workers_per_gather " + value + ")");
 		}
 	}
+
+	if (isJoinHintInOptionClause)
+	{
+		if (!join_hints_info[LOOP_QUERY_HINT])
+			query_hints.push_back("Set(enable_nestloop off)");
+		if (!join_hints_info[HASH_QUERY_HINT])
+			query_hints.push_back("Set(enable_hashjoin off)");
+		if (!join_hints_info[MERGE_QUERY_HINT])
+			query_hints.push_back("Set(enable_mergejoin off)");
+	}
 }
 
 void extractTableHints(TSqlParser::With_table_hintsContext *tctx, std::string table_name)
@@ -3267,23 +3288,11 @@ void extractJoinHint(TSqlParser::Join_hintContext *join_hint, std::string table_
 void extractJoinHintFromOption(TSqlParser::OptionContext *option) {
 	isJoinHintInOptionClause = true;
 	if (option->LOOP())
-	{
 		join_hints_info[LOOP_QUERY_HINT] = true;
-		query_hints.push_back("Set(enable_hashjoin off)");
-		query_hints.push_back("Set(enable_mergejoin off)");
-	}
 	else if (option->HASH())
-	{
 		join_hints_info[HASH_QUERY_HINT] = true;
-		query_hints.push_back("Set(enable_mergejoin off)");
-		query_hints.push_back("Set(enable_nestloop off)");
-	}
 	else if (option->MERGE())
-	{
 		join_hints_info[MERGE_QUERY_HINT] = true;
-		query_hints.push_back("Set(enable_hashjoin off)");
-		query_hints.push_back("Set(enable_nestloop off)");
-	}
 }
 
 std::string extractIndexValues(std::vector<TSqlParser::Index_valueContext *> index_valuesCtx, std::string table_name)
@@ -4061,7 +4070,7 @@ makeSetStatement(TSqlParser::Set_statementContext *ctx, tsqlBuilder &builder)
 		else if (set_special_ctx->set_on_off_option().size() == 1)
 		{
 			auto option = set_special_ctx->set_on_off_option().front();
-			if (option->BABELFISH_SHOWPLAN_ALL())
+			if (option->BABELFISH_SHOWPLAN_ALL() || (option->SHOWPLAN_ALL() && escape_hatch_showplan_all == EH_IGNORE))
 				return makeSetExplainModeStatement(ctx, true);
 			return makeSQL(ctx);
 		}
@@ -4079,7 +4088,14 @@ makeSetStatement(TSqlParser::Set_statementContext *ctx, tsqlBuilder &builder)
 		else if (set_special_ctx->OFFSETS())
 			return nullptr;
 		else if (set_special_ctx->STATISTICS())
+		{
+			for (auto kw : set_special_ctx->set_statistics_keyword())
+			{
+				if (kw->PROFILE() && escape_hatch_showplan_all == EH_IGNORE)
+					return makeSetExplainModeStatement(ctx, false);
+			}
 			return nullptr;
+		}
 		else if (set_special_ctx->BABELFISH_STATISTICS() && set_special_ctx->PROFILE())
 			return makeSetExplainModeStatement(ctx, false);
 		else
@@ -4136,6 +4152,7 @@ makeInsertBulkStatement(TSqlParser::Dml_statementContext *ctx)
 	PLtsql_stmt_insert_bulk *stmt = (PLtsql_stmt_insert_bulk *) palloc0(sizeof(*stmt));
 	TSqlParser::Bulk_insert_statementContext *bulk_ctx = ctx->bulk_insert_statement();
 	std::vector<TSqlParser::Insert_bulk_column_definitionContext *> column_list = bulk_ctx->insert_bulk_column_definition();
+	std::vector<TSqlParser::Bulk_insert_optionContext *> option_list = bulk_ctx->bulk_insert_option();
 
 	std::string table_name;
 	std::string schema_name;
@@ -4189,6 +4206,48 @@ makeInsertBulkStatement(TSqlParser::Dml_statementContext *ctx)
 
 			stmt->column_refs = pstrdup(column_refs.str().c_str());
 		}
+
+		if (!option_list.empty())
+		{
+			for (size_t i = 0; i < option_list.size(); i++)
+			{
+				if (option_list[i]->ORDER())
+					throw PGErrorWrapperException(ERROR, ERRCODE_FEATURE_NOT_SUPPORTED, "insert bulk option order is not yet supported in babelfish", getLineAndPos(bulk_ctx->WITH()));
+
+				else if (pg_strcasecmp("ROWS_PER_BATCH", ::getFullText(option_list[i]->id()).c_str()) == 0)
+				{
+					if (option_list[i]->expression())
+						stmt->rows_per_batch = pstrdup(::getFullText(option_list[i]->expression()).c_str());
+					else
+						throw PGErrorWrapperException(ERROR, ERRCODE_SYNTAX_ERROR, format_errmsg("incorrect syntax near %s",
+													::getFullText(option_list[i]->id()).c_str()),
+													getLineAndPos(option_list[i]->expression()));
+				}
+				else if (pg_strcasecmp("KILOBYTES_PER_BATCH", ::getFullText(option_list[i]->id()).c_str()) == 0)
+				{
+					if (option_list[i]->expression())
+						stmt->kilobytes_per_batch = pstrdup(::getFullText(option_list[i]->expression()).c_str());
+					else
+						throw PGErrorWrapperException(ERROR, ERRCODE_SYNTAX_ERROR, format_errmsg("incorrect syntax near %s",
+													::getFullText(option_list[i]->id()).c_str()),
+													getLineAndPos(option_list[i]->expression()));
+				}
+				else if (pg_strcasecmp("KEEP_NULLS", ::getFullText(option_list[i]->id()).c_str()) == 0)
+					stmt->keep_nulls = true;
+
+				else if (pg_strcasecmp("CHECK_CONSTRAINTS", ::getFullText(option_list[i]->id()).c_str()) == 0)
+					throw PGErrorWrapperException(ERROR, ERRCODE_FEATURE_NOT_SUPPORTED, "insert bulk option check_constraints is not yet supported in babelfish", getLineAndPos(bulk_ctx->WITH()));
+
+				else if (pg_strcasecmp("FIRE_TRIGGERS", ::getFullText(option_list[i]->id()).c_str()) == 0)
+					throw PGErrorWrapperException(ERROR, ERRCODE_FEATURE_NOT_SUPPORTED, "insert bulk option fire_triggers is not yet supported in babelfish", getLineAndPos(bulk_ctx->WITH()));
+
+				else if (pg_strcasecmp("TABLOCK", ::getFullText(option_list[i]->id()).c_str()) == 0)
+					throw PGErrorWrapperException(ERROR, ERRCODE_FEATURE_NOT_SUPPORTED, "insert bulk option tablock is not yet supported in babelfish", getLineAndPos(bulk_ctx->WITH()));
+
+				else
+					throw PGErrorWrapperException(ERROR, ERRCODE_SYNTAX_ERROR, format_errmsg("invalid insert bulk option %s", ::getFullText(option_list[i]->id()).c_str()), getLineAndPos(bulk_ctx->WITH()));
+			}
+		}
 	}
 
 	attachPLtsql_fragment(ctx, (PLtsql_stmt *) stmt);
@@ -4229,13 +4288,14 @@ makeExecuteStatement(TSqlParser::Execute_statementContext *ctx)
 		bool is_cross_db = false;
 		std::string proc_name;
 		std::string schema_name;
+		std::string db_name;
 
 		if (body->func_proc_name_server_database_schema())
 		{
 			func_proc_name = ::getFullText(body->func_proc_name_server_database_schema());
 			if (body->func_proc_name_server_database_schema()->database)
 			{
-				std::string db_name = stripQuoteFromId(body->func_proc_name_server_database_schema()->database);
+				db_name = stripQuoteFromId(body->func_proc_name_server_database_schema()->database);
 				if (!string_matches(db_name.c_str(), get_cur_db_name()))
 				is_cross_db = true;
 			}
@@ -4281,6 +4341,10 @@ makeExecuteStatement(TSqlParser::Execute_statementContext *ctx)
 		{
 			result->schema_name = pstrdup(downcase_truncate_identifier(schema_name.c_str(), schema_name.length(), true));
 		}
+		if (!db_name.empty())
+	 	{
+			result->db_name = pstrdup(downcase_truncate_identifier(db_name.c_str(), db_name.length(), true));
+	 	}
 
 		if (func_proc_args)
 		{
@@ -4906,7 +4970,7 @@ static void post_process_table_source(TSqlParser::Table_source_itemContext *ctx,
 
 	for (auto wctx : ctx->with_table_hints())
 	{
-		if (enable_hint_mapping && !wctx->sample_clause())
+		if (!wctx->sample_clause())
 			extractTableHints(wctx, table_name);
 		removeCtxStringFromQuery(expr, wctx, baseCtx);
 	}
@@ -4921,7 +4985,7 @@ static void post_process_table_source(TSqlParser::Table_source_itemContext *ctx,
 		}
 		if (actx->table_alias()->with_table_hints())
 		{
-			if (enable_hint_mapping && !actx->table_alias()->with_table_hints()->sample_clause())
+			if (!actx->table_alias()->with_table_hints()->sample_clause())
 				extractTableHints(actx->table_alias()->with_table_hints(), alias_name);
 			removeCtxStringFromQuery(expr, actx->table_alias()->with_table_hints(), baseCtx);
 		}
@@ -4939,7 +5003,7 @@ static void post_process_table_source(TSqlParser::Table_source_itemContext *ctx,
 
 	if (ctx->join_hint())
 	{
-		if (num_of_tables > 1)
+		if (enable_hint_mapping && num_of_tables > 1)
 		{
 			leading_hint = "Leading(" + table_names + ")";
 			extractJoinHint(ctx->join_hint(), table_names);
@@ -5086,6 +5150,18 @@ post_process_column_definition(TSqlParser::Column_definitionContext *ctx, PLtsql
 	if (ctx->TIMESTAMP())
 		rewritten_query_fragment.emplace(std::make_pair(ctx->TIMESTAMP()->getSymbol()->getStartIndex(), std::make_pair(::getFullText(ctx->TIMESTAMP()), "timestamp " + ::getFullText(ctx->TIMESTAMP()))));
 
+ 	/*
+	* PG doesn't allow for TIME/DATETIME2/DATETIMEOFFSET to be declared with precision 7, but this is permitted in TSQL.
+	* In order to get around this, remove the scale factor so that the typmod is set to -1 (default). Luckily,
+	* in TSQL the default scale is also 7, so we can re-add the decimal digits to meet the scale factor on the return side.
+	*/
+	if (pg_strncasecmp(::getFullText(ctx->data_type()).c_str(), "TIME(7)", 7) == 0)
+		rewritten_query_fragment.emplace(std::make_pair(ctx->data_type()->start->getStartIndex(), std::make_pair(::getFullText(ctx->data_type()), "TIME")));
+	if (pg_strncasecmp(::getFullText(ctx->data_type()).c_str(), "DATETIME2(7)", 12) == 0)
+		rewritten_query_fragment.emplace(std::make_pair(ctx->data_type()->start->getStartIndex(), std::make_pair(::getFullText(ctx->data_type()), "DATETIME2")));
+	if (pg_strncasecmp(::getFullText(ctx->data_type()).c_str(), "DATETIMEOFFSET(7)", 17) == 0)
+		rewritten_query_fragment.emplace(std::make_pair(ctx->data_type()->start->getStartIndex(), std::make_pair(::getFullText(ctx->data_type()), "DATETIMEOFFSET")));
+	 
 	if (ctx->column_inline_index())
 		post_process_column_inline_index(ctx->column_inline_index(), stmt, baseCtx);
 
