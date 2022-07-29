@@ -1,10 +1,10 @@
-DROP TABLE sys_check_definitions_vu_prepare
+DROP TABLE sys_check_constraints_vu_prepare
 GO
 
-DROP PROC sys_check_definitions_vu_prepare_proc
+DROP PROC sys_check_constraints_vu_prepare_proc
 GO
 
-DROP FUNCTION sys_check_definitions_vu_prepare_func
+DROP FUNCTION sys_check_constraints_vu_prepare_func
 GO
 
 DROP VIEW sys_check_constraints_vu_prepare_view
