@@ -20,7 +20,7 @@ FROM sys.all_parameters WHERE object_id = OBJECT_ID('sys_all_parameters_vu_prepa
 ORDER BY parameter_id
 GO
 ~~START~~
-varchar#!#int#!#smallint#!#tinyint#!#tinyint#!#bit#!#bit#!#bit#!#bit#!#int#!#bit#!#bit#!#int#!#nvarchar#!#varchar#!#int#!#varchar
+varchar#!#int#!#smallint#!#tinyint#!#tinyint#!#bit#!#bit#!#bit#!#sql_variant#!#int#!#bit#!#bit#!#int#!#nvarchar#!#varchar#!#int#!#varchar
 @num1#!#1#!#4#!#10#!#0#!#0#!#0#!#0#!#<NULL>#!#0#!#0#!#1#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>
 @num2#!#2#!#4#!#10#!#0#!#0#!#0#!#0#!#<NULL>#!#0#!#0#!#1#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>
 ~~END~~
@@ -48,7 +48,7 @@ FROM sys.all_parameters WHERE object_id = OBJECT_ID('sys_all_parameters_vu_prepa
 ORDER BY parameter_id
 GO
 ~~START~~
-varchar#!#int#!#smallint#!#tinyint#!#tinyint#!#bit#!#bit#!#bit#!#bit#!#int#!#bit#!#bit#!#int#!#nvarchar#!#varchar#!#int#!#varchar
+varchar#!#int#!#smallint#!#tinyint#!#tinyint#!#bit#!#bit#!#bit#!#sql_variant#!#int#!#bit#!#bit#!#int#!#nvarchar#!#varchar#!#int#!#varchar
 @dec#!#1#!#13#!#23#!#3#!#0#!#0#!#0#!#<NULL>#!#0#!#0#!#1#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>
 @num#!#2#!#13#!#22#!#8#!#0#!#0#!#0#!#<NULL>#!#0#!#0#!#1#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>
 @var#!#3#!#30#!#0#!#0#!#0#!#0#!#0#!#<NULL>#!#0#!#0#!#1#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>
@@ -80,7 +80,7 @@ FROM sys.all_parameters WHERE object_id = OBJECT_ID('sys.sp_sproc_columns')
 ORDER BY parameter_id
 GO
 ~~START~~
-varchar#!#int#!#smallint#!#tinyint#!#tinyint#!#bit#!#bit#!#bit#!#bit#!#int#!#bit#!#bit#!#int#!#nvarchar#!#varchar#!#int#!#varchar
+varchar#!#int#!#smallint#!#tinyint#!#tinyint#!#bit#!#bit#!#bit#!#sql_variant#!#int#!#bit#!#bit#!#int#!#nvarchar#!#varchar#!#int#!#varchar
 @procedure_name#!#1#!#780#!#0#!#0#!#0#!#0#!#0#!#<NULL>#!#0#!#0#!#1#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>
 @procedure_owner#!#2#!#768#!#0#!#0#!#0#!#0#!#0#!#<NULL>#!#0#!#0#!#1#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>
 @procedure_qualifier#!#3#!#256#!#0#!#0#!#0#!#0#!#0#!#<NULL>#!#0#!#0#!#1#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>
@@ -112,7 +112,7 @@ FROM sys.all_parameters WHERE object_id = OBJECT_ID('sys_all_parameters_vu_prepa
 ORDER BY parameter_id
 GO
 ~~START~~
-varchar#!#int#!#smallint#!#tinyint#!#tinyint#!#bit#!#bit#!#bit#!#bit#!#int#!#bit#!#bit#!#int#!#nvarchar#!#varchar#!#int#!#varchar
+varchar#!#int#!#smallint#!#tinyint#!#tinyint#!#bit#!#bit#!#bit#!#sql_variant#!#int#!#bit#!#bit#!#int#!#nvarchar#!#varchar#!#int#!#varchar
 #!#0#!#4#!#10#!#0#!#1#!#0#!#0#!#<NULL>#!#0#!#0#!#1#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>
 @a#!#1#!#4#!#10#!#0#!#0#!#0#!#0#!#<NULL>#!#0#!#0#!#1#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>
 ~~END~~
@@ -140,7 +140,7 @@ FROM sys.all_parameters WHERE object_id = OBJECT_ID('sys_all_parameters_vu_prepa
 ORDER BY parameter_id
 GO
 ~~START~~
-varchar#!#int#!#smallint#!#tinyint#!#tinyint#!#bit#!#bit#!#bit#!#bit#!#int#!#bit#!#bit#!#int#!#nvarchar#!#varchar#!#int#!#varchar
+varchar#!#int#!#smallint#!#tinyint#!#tinyint#!#bit#!#bit#!#bit#!#sql_variant#!#int#!#bit#!#bit#!#int#!#nvarchar#!#varchar#!#int#!#varchar
 @c1#!#1#!#4#!#10#!#0#!#0#!#0#!#0#!#<NULL>#!#0#!#0#!#1#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>
 @c2#!#2#!#4#!#10#!#0#!#0#!#0#!#0#!#<NULL>#!#0#!#0#!#1#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>
 ~~END~~
@@ -168,7 +168,7 @@ FROM sys.all_parameters WHERE object_id = OBJECT_ID('sys_all_parameters_vu_prepa
 ORDER BY parameter_id
 GO
 ~~START~~
-varchar#!#int#!#smallint#!#tinyint#!#tinyint#!#bit#!#bit#!#bit#!#bit#!#int#!#bit#!#bit#!#int#!#nvarchar#!#varchar#!#int#!#varchar
+varchar#!#int#!#smallint#!#tinyint#!#tinyint#!#bit#!#bit#!#bit#!#sql_variant#!#int#!#bit#!#bit#!#int#!#nvarchar#!#varchar#!#int#!#varchar
 @tvp#!#1#!#-1#!#0#!#0#!#0#!#0#!#0#!#<NULL>#!#0#!#0#!#1#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>
 ~~END~~
 
@@ -195,7 +195,7 @@ FROM sys.all_parameters WHERE object_id = OBJECT_ID('sys_all_parameters_vu_prepa
 ORDER BY parameter_id
 GO
 ~~START~~
-varchar#!#int#!#smallint#!#tinyint#!#tinyint#!#bit#!#bit#!#bit#!#bit#!#int#!#bit#!#bit#!#int#!#nvarchar#!#varchar#!#int#!#varchar
+varchar#!#int#!#smallint#!#tinyint#!#tinyint#!#bit#!#bit#!#bit#!#sql_variant#!#int#!#bit#!#bit#!#int#!#nvarchar#!#varchar#!#int#!#varchar
 #!#0#!#13#!#23#!#5#!#1#!#0#!#0#!#<NULL>#!#0#!#0#!#1#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>
 @a#!#1#!#13#!#23#!#5#!#0#!#0#!#0#!#<NULL>#!#0#!#0#!#1#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>
 ~~END~~
@@ -223,7 +223,7 @@ FROM sys.all_parameters WHERE object_id = OBJECT_ID('sys_all_parameters_vu_prepa
 ORDER BY parameter_id
 GO
 ~~START~~
-varchar#!#int#!#smallint#!#tinyint#!#tinyint#!#bit#!#bit#!#bit#!#bit#!#int#!#bit#!#bit#!#int#!#nvarchar#!#varchar#!#int#!#varchar
+varchar#!#int#!#smallint#!#tinyint#!#tinyint#!#bit#!#bit#!#bit#!#sql_variant#!#int#!#bit#!#bit#!#int#!#nvarchar#!#varchar#!#int#!#varchar
 @var4000#!#1#!#8000#!#0#!#0#!#0#!#0#!#0#!#<NULL>#!#0#!#0#!#1#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>
 @varmax#!#2#!#-1#!#0#!#0#!#0#!#0#!#0#!#<NULL>#!#0#!#0#!#1#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>
 @nvar4000#!#3#!#8000#!#0#!#0#!#0#!#0#!#0#!#<NULL>#!#0#!#0#!#1#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>
@@ -259,7 +259,7 @@ FROM sys.all_parameters WHERE object_id = OBJECT_ID('sys_all_parameters_vu_prepa
 ORDER BY parameter_id
 GO
 ~~START~~
-varchar#!#int#!#smallint#!#tinyint#!#tinyint#!#bit#!#bit#!#bit#!#bit#!#int#!#bit#!#bit#!#int#!#nvarchar#!#varchar#!#int#!#varchar
+varchar#!#int#!#smallint#!#tinyint#!#tinyint#!#bit#!#bit#!#bit#!#sql_variant#!#int#!#bit#!#bit#!#int#!#nvarchar#!#varchar#!#int#!#varchar
 @dt_bigint#!#1#!#8#!#19#!#0#!#0#!#0#!#0#!#<NULL>#!#0#!#0#!#1#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>
 @dt_binary_9#!#2#!#9#!#0#!#0#!#0#!#0#!#0#!#<NULL>#!#0#!#0#!#1#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>
 @dt_bit#!#3#!#1#!#1#!#0#!#0#!#0#!#0#!#<NULL>#!#0#!#0#!#1#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>
@@ -293,7 +293,7 @@ varchar#!#int#!#smallint#!#tinyint#!#tinyint#!#bit#!#bit#!#bit#!#bit#!#int#!#bit
 SELECT * FROM sys_all_parameters_vu_prepare_upgrade_view
 GO
 ~~START~~
-varchar#!#int#!#smallint#!#tinyint#!#tinyint#!#bit#!#bit#!#bit#!#bit#!#int#!#bit#!#bit#!#int#!#nvarchar#!#varchar#!#int#!#varchar
+varchar#!#int#!#smallint#!#tinyint#!#tinyint#!#bit#!#bit#!#bit#!#sql_variant#!#int#!#bit#!#bit#!#int#!#nvarchar#!#varchar#!#int#!#varchar
 @num1#!#1#!#4#!#10#!#0#!#0#!#0#!#0#!#<NULL>#!#0#!#0#!#1#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>
 ~~END~~
 
@@ -301,7 +301,7 @@ varchar#!#int#!#smallint#!#tinyint#!#tinyint#!#bit#!#bit#!#bit#!#bit#!#int#!#bit
 EXEC sys_all_parameters_vu_prepare_upgrade_proc
 GO
 ~~START~~
-varchar#!#int#!#smallint#!#tinyint#!#tinyint#!#bit#!#bit#!#bit#!#bit#!#int#!#bit#!#bit#!#int#!#nvarchar#!#varchar#!#int#!#varchar
+varchar#!#int#!#smallint#!#tinyint#!#tinyint#!#bit#!#bit#!#bit#!#sql_variant#!#int#!#bit#!#bit#!#int#!#nvarchar#!#varchar#!#int#!#varchar
 @num1#!#1#!#4#!#10#!#0#!#0#!#0#!#0#!#<NULL>#!#0#!#0#!#1#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>
 ~~END~~
 
