@@ -36,5 +36,15 @@ select original_login_name, row_count, prev_error, db_name(database_id), open_tr
 GO
 
 -- Cleanup
+-- psql
+-- Need to terminate active session before cleaning up the login
+SELECT pg_terminate_backend(pid) FROM pg_stat_get_activity(NULL) 
+WHERE sys.suser_name(usesysid) = 'login_1887' AND backend_type = 'client backend' AND usesysid IS NOT NULL;
+GO
+-- Wait to sync with another session
+SELECT pg_sleep(1);
+GO
+
+-- tsql
 drop login login_1887
 GO
