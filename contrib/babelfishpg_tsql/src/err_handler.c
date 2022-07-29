@@ -4,6 +4,7 @@
 #include "datatypes.h"
 #include "err_handler.h"
 #include "funcapi.h"
+#include "utils/builtins.h"
 
 PG_FUNCTION_INFO_V1(babel_list_mapped_error);
 
@@ -418,37 +419,53 @@ Datum
 babel_list_mapped_error(PG_FUNCTION_ARGS)
 {
 	/* To hold the list of supported SQL error code */
-	int *list = NULL;
+	error_map_details_t *list = NULL;
 
 	/* SRF related things to keep enough state between calls */
-	FuncCallContext *funcctx;
-	int call_cntr;
-	int max_calls;
+	FuncCallContext	*funcctx;
+	AttInMetadata	*attinmeta;
+	HeapTuple	tuple;
+	Datum		values[4];
+	bool		nulls[4] = {false, false, false, false};
+	Datum		result;
+	int		call_cntr;
 
 	/* stuff done only on the first call of the function */
 	if (SRF_IS_FIRSTCALL())
 	{
-		MemoryContext   oldcontext;
+		TupleDesc	tupdesc;
+		MemoryContext	oldcontext;
+
 		funcctx = SRF_FIRSTCALL_INIT();
 		oldcontext = MemoryContextSwitchTo(funcctx->multi_call_memory_ctx);
 		if (*pltsql_protocol_plugin_ptr && (*pltsql_protocol_plugin_ptr)->get_mapped_error_list)
 			list = (*pltsql_protocol_plugin_ptr)->get_mapped_error_list();
 
+		/* Create tuple descriptor for the result set. */
+		get_call_result_type(fcinfo, NULL, &tupdesc);
+
 		funcctx->user_fctx = (void *) list;
-		funcctx->max_calls = list[0];
+		funcctx->attinmeta = TupleDescGetAttInMetadata(tupdesc);
 		MemoryContextSwitchTo(oldcontext);
 	}
 
 	funcctx = SRF_PERCALL_SETUP();
 	call_cntr = funcctx->call_cntr;
-	max_calls = funcctx->max_calls;
-	list = (int *) funcctx->user_fctx;
+	attinmeta = funcctx->attinmeta;
+	list = (error_map_details_t *) funcctx->user_fctx;
 
-	if (call_cntr < max_calls)
-		/* Actual data starts at index 1. Index 0 is to store length. */
-		SRF_RETURN_NEXT(funcctx, Int32GetDatum(list[call_cntr + 1]));
-	else
+	/* Last record would have error_message = NULL. */
+	if (list[call_cntr].error_message == NULL)
 		SRF_RETURN_DONE(funcctx);
+
+	values[0] = CStringGetTextDatum(list[call_cntr].sql_state);
+	values[1] = CStringGetTextDatum(list[call_cntr].error_message);
+	values[2] = CStringGetTextDatum(list[call_cntr].error_msg_keywords);
+	values[3] = Int32GetDatum(list[call_cntr].tsql_error_code);
+
+	tuple = heap_form_tuple(attinmeta->tupdesc, values, nulls);
+	result = HeapTupleGetDatum(tuple);
+	SRF_RETURN_NEXT(funcctx, result);
 }
 
 /* 

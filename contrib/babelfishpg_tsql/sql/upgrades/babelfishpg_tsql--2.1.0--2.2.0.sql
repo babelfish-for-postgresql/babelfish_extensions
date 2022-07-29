@@ -2957,6 +2957,11 @@ SELECT
 WHERE FALSE; -- This condition will ensure that the view is empty
 GRANT SELECT ON sys.numbered_procedures TO PUBLIC;
 
+CREATE FUNCTION sys.fn_mapped_system_error_list ()
+returns table (pg_sql_state sys.nvarchar(5), error_message sys.nvarchar(4000), error_msg_keywords sys.nvarchar(4000), sql_error_code int)
+AS 'babelfishpg_tsql', 'babel_list_mapped_error'
+LANGUAGE C IMMUTABLE STRICT;
+
 -- Drops the temporary procedure used by the upgrade script.
 -- Please have this be one of the last statements executed in this upgrade script.
 DROP PROCEDURE sys.babelfish_drop_deprecated_view(varchar, varchar);
