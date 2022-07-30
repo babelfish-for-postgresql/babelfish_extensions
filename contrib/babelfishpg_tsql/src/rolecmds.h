@@ -56,5 +56,6 @@ extern void add_to_bbf_authid_user_ext(const char *user_name,
 									   bool is_role);
 extern void drop_related_bbf_users(List *db_users);
 extern void alter_bbf_authid_user_ext(AlterRoleStmt *stmt);
+extern bool is_active_login(Oid role_oid);
 
 #endif
