@@ -27,7 +27,7 @@ SELECT tds72.test_tds_72_date_datatypes(@a);
 GO
 ~~START~~
 datetime2
-2016-10-23 12:45:37.333000
+2016-10-23 12:45:37.3330000
 ~~END~~
 
 
@@ -42,7 +42,7 @@ SELECT tds72.test_tds_72_date_datatypes(@a);
 GO
 ~~START~~
 datetimeoffset
-2025-12-10 12:32:10.000000 +01:00
+2025-12-10 12:32:10.0000000 +01:00
 ~~END~~
 
 
@@ -57,7 +57,7 @@ SELECT tds72.test_tds_72_date_datatypes(@a);
 GO
 ~~START~~
 time
-12:15:04.123699
+12:15:04.1237000
 ~~END~~
 
 
