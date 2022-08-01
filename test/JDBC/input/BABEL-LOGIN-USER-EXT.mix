@@ -110,6 +110,16 @@ go
 DROP USER new_r1;
 go
 
+-- psql
+-- Need to terminate active session before cleaning up the login
+SELECT pg_terminate_backend(pid) FROM pg_stat_get_activity(NULL)
+WHERE sys.suser_name(usesysid) = 'r1' AND backend_type = 'client backend' AND usesysid IS NOT NULL;
+GO
+-- Wait to sync with another session
+SELECT pg_sleep(1);
+GO
+
+-- tsql
 DROP LOGIN r1;
 go
 
@@ -119,6 +129,16 @@ go
 DROP SCHEMA sch2;
 go
 
+-- psql
+-- Need to terminate active session before cleaning up the login
+SELECT pg_terminate_backend(pid) FROM pg_stat_get_activity(NULL)
+WHERE sys.suser_name(usesysid) = 'r2' AND backend_type = 'client backend' AND usesysid IS NOT NULL;
+GO
+-- Wait to sync with another session
+SELECT pg_sleep(1);
+GO
+
+-- tsql
 DROP LOGIN r2;
 go
 
@@ -166,12 +186,33 @@ ALTER LOGIN r2 WITH PASSWORD = '456'
 go
 
 -- Test dropping
+
+-- psql
+-- Need to terminate active session before cleaning up the login
+SELECT pg_terminate_backend(pid) FROM pg_stat_get_activity(NULL)
+WHERE sys.suser_name(usesysid) = 'r1' AND backend_type = 'client backend' AND usesysid IS NOT NULL;
+GO
+-- Wait to sync with another session
+SELECT pg_sleep(1);
+GO
+
+-- tsql
 DROP LOGIN r1;
 go
 
 SELECT COUNT(*) FROM sys.babelfish_authid_login_ext;
 go
 
+-- psql
+-- Need to terminate active session before cleaning up the login
+SELECT pg_terminate_backend(pid) FROM pg_stat_get_activity(NULL)
+WHERE sys.suser_name(usesysid) = 'r2' AND backend_type = 'client backend' AND usesysid IS NOT NULL;
+GO
+-- Wait to sync with another session
+SELECT pg_sleep(1);
+GO
+
+-- tsql
 DROP LOGIN r2;
 go
 
@@ -203,6 +244,16 @@ WHERE roleid = (SELECT oid FROM pg_roles WHERE rolname = 'sysadmin')
 AND "member" = (SELECT oid FROM pg_roles WHERE rolname = 'r3');
 GO
 
+-- psql
+-- Need to terminate active session before cleaning up the login
+SELECT pg_terminate_backend(pid) FROM pg_stat_get_activity(NULL)
+WHERE sys.suser_name(usesysid) = 'r3' AND backend_type = 'client backend' AND usesysid IS NOT NULL;
+GO
+-- Wait to sync with another session
+SELECT pg_sleep(1);
+GO
+
+-- tsql
 DROP LOGIN r3;
 GO
 
@@ -226,6 +277,15 @@ GO
 
 -- Shoud fail, does not have permission to create login
 CREATE LOGIN dummy WITH PASSWORD = '123';
+GO
+
+-- psql
+-- Need to terminate active session before cleaning up the login
+SELECT pg_terminate_backend(pid) FROM pg_stat_get_activity(NULL)
+WHERE sys.suser_name(usesysid) = 'err_user' AND backend_type = 'client backend' AND usesysid IS NOT NULL;
+GO
+-- Wait to sync with another session
+SELECT pg_sleep(1);
 GO
 
 -- tsql
@@ -367,6 +427,16 @@ FROM sys.babelfish_authid_user_ext
 ORDER BY rolname;
 GO
 
+-- psql
+-- Need to terminate active session before cleaning up the login
+SELECT pg_terminate_backend(pid) FROM pg_stat_get_activity(NULL)
+WHERE sys.suser_name(usesysid) = 'login1' AND backend_type = 'client backend' AND usesysid IS NOT NULL;
+GO
+-- Wait to sync with another session
+SELECT pg_sleep(1);
+GO
+
+-- tsql
 DROP LOGIN login1;
 GO
 
@@ -508,6 +578,11 @@ java_auth#!#user|-|lgn_2978#!#password|-|123
 USE master;
 GO
 
+-- psql
+-- Wait to sync with another session
+SELECT pg_sleep(1);
+GO
+
 -- tsql
 DROP LOGIN lgn_2978;
 GO
@@ -554,6 +629,15 @@ GO
 SELECT current_user;
 GO
 
+-- psql
+-- Need to terminate active session before cleaning up the login
+SELECT pg_terminate_backend(pid) FROM pg_stat_get_activity(NULL)
+WHERE sys.suser_name(usesysid) = 'lgn_2978' AND backend_type = 'client backend' AND usesysid IS NOT NULL;
+GO
+-- Wait to sync with another session
+SELECT pg_sleep(1);
+GO
+
 -- tsql
 USE master;
 GO
@@ -565,6 +649,38 @@ DROP DATABASE db1;
 GO
 
 DROP DATABASE db2;
+GO
+
+-- Prevent dropping active login
+CREATE LOGIN lgn_3232 WITH PASSWORD='123';
+GO
+
+CREATE USER lgn_3232; 
+GO
+
+-- Session 1
+-- tsql		user=lgn_3232		password=123
+-- Logged into Session 1 with lgn_3232 login
+
+-- Session 2 - Try to drop lgn_3232 which is active on Session 1
+-- tsql
+DROP LOGIN lgn_3232;
+GO
+
+-- psql
+-- Need to terminate active session before cleaning up the login
+SELECT pg_terminate_backend(pid) FROM pg_stat_get_activity(NULL)
+WHERE sys.suser_name(usesysid) = 'lgn_3232' AND backend_type = 'client backend' AND usesysid IS NOT NULL;
+GO
+-- Wait to sync with another session
+SELECT pg_sleep(1);
+GO
+
+-- tsql
+DROP LOGIN lgn_3232;
+GO
+
+DROP USER lgn_3232;
 GO
 
 -- psql
