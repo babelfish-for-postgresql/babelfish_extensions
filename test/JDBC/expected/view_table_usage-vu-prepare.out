@@ -1,3 +1,5 @@
+drop database if exists db_view_table_usage;
+go
 create database db_view_table_usage;
 go
 
