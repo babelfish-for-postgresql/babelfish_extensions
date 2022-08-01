@@ -190,7 +190,6 @@ Could not find upgrade tests for function sys.patindex
 Could not find upgrade tests for function sys.pgerror
 Could not find upgrade tests for function sys.proc_param_helper
 Could not find upgrade tests for function sys.quotename
-Could not find upgrade tests for function sys.rand
 Could not find upgrade tests for function sys.replace
 Could not find upgrade tests for function sys.replicate
 Could not find upgrade tests for function sys.role_id

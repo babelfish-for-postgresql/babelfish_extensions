@@ -128,14 +128,6 @@ GO
 ~~ERROR (Message: cannot insert a non-DEFAULT value into column "adddate")~~
 
 
---should error out for defining datatype of computed column
-ALTER TABLE computed_column_vu_prepare_t3 ALTER column AddDate VARCHAR
-GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: found unexpected dependency for column: type "varchar")~~
-
-
 ALTER TABLE computed_column_vu_prepare_t3 DROP COLUMN AddDate 
 GO
 

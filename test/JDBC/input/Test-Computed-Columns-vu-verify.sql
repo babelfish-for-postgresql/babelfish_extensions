@@ -62,10 +62,6 @@ GO
 INSERT INTO computed_column_vu_prepare_t3 (DOB,AddDate) values ('01-01-2000','01-01-2000')
 GO
 
---should error out for defining datatype of computed column
-ALTER TABLE computed_column_vu_prepare_t3 ALTER column AddDate VARCHAR
-GO
-
 ALTER TABLE computed_column_vu_prepare_t3 DROP COLUMN AddDate 
 GO
 
