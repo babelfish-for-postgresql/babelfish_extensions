@@ -1,0 +1,36 @@
+CREATE DATABASE sys_objects_vu_prepare_db1;
+GO
+
+USE sys_objects_vu_prepare_db1
+GO
+
+create proc sys_objects_vu_prepare_proc1 as select 1;
+GO
+
+create table sys_objects_vu_prepare_table1(a int, b varchar(10))
+GO
+
+create trigger sys_objects_vu_prepare_trig1 on sys_objects_vu_prepare_table1 for insert as print 'this is trig1'
+GO
+
+USE master
+GO
+
+create proc sys_objects_vu_prepare_proc2 as select 2;
+GO
+
+create view sys_objects_vu_prepare_view as
+select count(*) from sys.objects where name = 'sys_objects_vu_prepare_proc2'
+GO
+
+create proc sys_objects_vu_prepare_proc as
+select count(*) from sys.objects where name = 'sys_objects_vu_prepare_proc2'
+GO
+
+create function dbo.sys_objects_vu_prepare_func()
+returns int
+as
+begin
+return (select count(*) from sys.objects where name = 'sys_objects_vu_prepare_proc2')
+end
+GO

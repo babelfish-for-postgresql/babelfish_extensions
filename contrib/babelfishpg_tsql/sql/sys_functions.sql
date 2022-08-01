@@ -901,13 +901,15 @@ $body$
 LANGUAGE plpgsql IMMUTABLE;
 
 -- Duplicate function with arg TEXT since ANYELEMENT cannot handle type unknown.
-CREATE OR REPLACE FUNCTION sys.datepart(IN datepart PG_CATALOG.TEXT, IN arg TEXT) RETURNS INTEGER
+CREATE OR REPLACE FUNCTION sys.datepart(IN datepart TEXT, IN arg TEXT) RETURNS INTEGER
 AS
 $body$
 BEGIN
     IF pg_typeof(arg) = 'sys.DATETIMEOFFSET'::regtype THEN
         return sys.datepart_internal(datepart, arg::timestamp,
                      sys.babelfish_get_datetimeoffset_tzoffset(arg)::integer);
+    ELSIF pg_typeof(arg) = 'pg_catalog.text'::regtype THEN
+        return sys.datepart_internal(datepart, arg::sys.nvarchar::sys.datetime);
     ELSE
         return sys.datepart_internal(datepart, arg);
     END IF;
@@ -2502,7 +2504,8 @@ CREATE OR REPLACE FUNCTION sys.tsql_stat_get_activity(
   OUT protocol_version int,
   OUT packet_size int,
   OUT encrypyt_option VARCHAR(40),
-  OUT database_id int2)
+  OUT database_id int2,
+  OUT host_name varchar(128))
 RETURNS SETOF RECORD
 AS 'babelfishpg_tsql', 'tsql_stat_get_activity'
 LANGUAGE C VOLATILE STRICT;
@@ -2839,3 +2842,73 @@ LANGUAGE SQL IMMUTABLE PARALLEL RESTRICTED;
 
 CREATE OR REPLACE FUNCTION sys.language()
 RETURNS sys.NVARCHAR(128)  AS 'babelfishpg_tsql' LANGUAGE C;
+
+CREATE OR REPLACE FUNCTION sys.host_name()
+RETURNS sys.NVARCHAR(128)  AS 'babelfishpg_tsql' LANGUAGE C IMMUTABLE PARALLEL SAFE;
+
+CREATE OR REPLACE FUNCTION sys.INDEXPROPERTY(IN object_id INT, IN index_or_statistics_name sys.nvarchar(128), IN property sys.varchar(128))
+RETURNS INT AS
+$BODY$
+DECLARE
+ret_val INT;
+BEGIN
+	index_or_statistics_name = LOWER(TRIM(index_or_statistics_name));
+	property = LOWER(TRIM(property));
+    SELECT INTO ret_val
+    CASE
+       
+        WHEN (SELECT CAST(type AS int) FROM sys.indexes i WHERE i.object_id = $1 AND i.name = $2 COLLATE sys.database_default) = 3 -- is XML index
+        THEN CAST(NULL AS int)
+	    
+        WHEN property = 'indexdepth'
+        THEN CAST(0 AS int)
+
+        WHEN property = 'indexfillfactor'
+        THEN (SELECT CAST(fill_factor AS int) FROM sys.indexes i WHERE i.object_id = $1 AND i.name = $2 COLLATE sys.database_default)
+
+        WHEN property = 'indexid'
+        THEN (SELECT CAST(index_id AS int) FROM sys.indexes i WHERE i.object_id = $1 AND i.name = $2 COLLATE sys.database_default)
+
+        WHEN property = 'isautostatistics'
+        THEN CAST(0 AS int)
+
+        WHEN property = 'isclustered'
+        THEN (SELECT CAST(CASE WHEN type = 1 THEN 1 ELSE 0 END AS int) FROM sys.indexes i WHERE i.object_id = $1 AND i.name = $2 COLLATE sys.database_default)
+        
+        WHEN property = 'isdisabled'
+        THEN (SELECT CAST(is_disabled AS int) FROM sys.indexes i WHERE i.object_id = $1 AND i.name = $2 COLLATE sys.database_default)
+        
+        WHEN property = 'isfulltextkey'
+        THEN CAST(0 AS int)
+        
+        WHEN property = 'ishypothetical'
+        THEN (SELECT CAST(is_hypothetical AS int) FROM sys.indexes i WHERE i.object_id = $1 AND i.name = $2 COLLATE sys.database_default)
+        
+        WHEN property = 'ispadindex'
+        THEN (SELECT CAST(is_padded AS int) FROM sys.indexes i WHERE i.object_id = $1 AND i.name = $2 COLLATE sys.database_default)
+        
+        WHEN property = 'ispagelockdisallowed'
+        THEN (SELECT CAST(CASE WHEN allow_page_locks = 1 THEN 0 ELSE 1 END AS int) FROM sys.indexes i WHERE i.object_id = $1 AND i.name = $2 COLLATE sys.database_default)
+        
+        WHEN property = 'isrowlockdisallowed'
+        THEN (SELECT CAST(CASE WHEN allow_row_locks = 1 THEN 0 ELSE 1 END AS int) FROM sys.indexes i WHERE i.object_id=$1 AND i.name = $2 COLLATE sys.database_default)
+        
+        WHEN property = 'isstatistics'
+        THEN CAST(0 AS int)
+        
+        WHEN property = 'isunique'
+        THEN (SELECT CAST(is_unique AS int) FROM sys.indexes i WHERE i.object_id = $1 AND i.name = $2 COLLATE sys.database_default)
+        
+        WHEN property = 'iscolumnstore'
+        THEN CAST(0 AS int)
+        
+        WHEN property = 'isoptimizedforsequentialkey'
+        THEN CAST(0 AS int)
+    ELSE
+        CAST(NULL AS int)
+    END;
+RETURN ret_val;
+END;
+$BODY$
+LANGUAGE plpgsql;
+GRANT EXECUTE ON FUNCTION sys.INDEXPROPERTY(IN object_id INT, IN index_or_statistics_name sys.nvarchar(128),  IN property sys.varchar(128)) TO PUBLIC;

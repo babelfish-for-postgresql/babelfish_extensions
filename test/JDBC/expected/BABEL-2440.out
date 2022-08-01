@@ -2,8 +2,8 @@
 SELECT session_user, current_user, db_name();
 GO
 ~~START~~
-varchar#!#varchar#!#nvarchar
-jdbc_user#!#dbo#!#master
+nvarchar#!#varchar#!#nvarchar
+dbo#!#dbo#!#master
 ~~END~~
 
 
@@ -14,8 +14,8 @@ GO
 SELECT session_user, current_user, db_name();
 GO
 ~~START~~
-varchar#!#varchar#!#nvarchar
-r1#!#guest#!#master
+nvarchar#!#varchar#!#nvarchar
+guest#!#guest#!#master
 ~~END~~
 
 
@@ -29,8 +29,8 @@ GO
 SELECT session_user, current_user, db_name();
 GO
 ~~START~~
-varchar#!#varchar#!#nvarchar
-r1#!#guest#!#master
+nvarchar#!#varchar#!#nvarchar
+guest#!#guest#!#master
 ~~END~~
 
 
@@ -67,8 +67,8 @@ strict
 SELECT session_user, current_user, db_name();
 GO
 ~~START~~
-varchar#!#varchar#!#nvarchar
-r1#!#guest#!#master
+nvarchar#!#varchar#!#nvarchar
+guest#!#guest#!#master
 ~~END~~
 
 
@@ -76,5 +76,26 @@ r1#!#guest#!#master
 ALTER LOGIN r1 WITH PASSWORD = 'abc';
 GO
 
+-- psql
+
+-- Need to terminate active session before cleaning up the login
+SELECT pg_terminate_backend(pid) FROM pg_stat_get_activity(NULL) 
+WHERE sys.suser_name(usesysid) = 'r1' AND backend_type = 'client backend' AND usesysid IS NOT NULL;
+GO
+~~START~~
+bool
+t
+~~END~~
+
+-- Wait to sync with another session
+SELECT pg_sleep(1);
+GO
+~~START~~
+void
+
+~~END~~
+
+
+-- tsql
 DROP LOGIN r1;
 GO

@@ -1019,6 +1019,8 @@ typedef struct PLtsql_stmt_execsql
 	bool		is_tsql_select_assign_stmt; /* T-SQL SELECT-assign (i.e. SELECT @a=1) */
 	bool 		insert_exec; 	/* INSERT-EXEC stmt? */
 	bool		is_cross_db;	/* cross database reference */
+	bool		is_dml;			/* DML statement? */
+	bool		is_ddl;			/* DDL statement? */
 } PLtsql_stmt_execsql;
 
 /*
@@ -1373,6 +1375,8 @@ typedef struct PLtsql_execstate
 	bool 		insert_exec;
 
 	List 		*explain_infos;
+	char		*schema_name;
+	char		*db_name;
 } PLtsql_execstate;
 
 /*
@@ -1501,6 +1505,7 @@ typedef struct PLtsql_protocol_plugin
 	void		(*set_db_stat_var) (int16 db_id);
 	bool		(*get_stat_values) (Datum *values, bool *nulls, int len, int pid, int curr_backend);
 	void		(*invalidate_stat_view) (void);
+	char*		(*get_host_name) (void);
 
 	/* Function pointers set by PL/tsql itself */
 	Datum		(*sql_batch_callback) (PG_FUNCTION_ARGS);
