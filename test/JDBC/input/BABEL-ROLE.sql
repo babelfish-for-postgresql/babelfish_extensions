@@ -167,11 +167,11 @@ EXEC babel_role_members
 GO
 
 -- Drop role from member
-ALTER ROLE test1 DROP MEMBER test2
+ALTER ROLE test1_new DROP MEMBER test2
 GO
 
 -- Drop user from member
-ALTER ROLE test1 DROP MEMBER test3
+ALTER ROLE test1_new DROP MEMBER test3
 GO
 
 -- Expect to see roles master_test1, db1_test1_new, db1_test2

@@ -293,11 +293,11 @@ test2#!#R#!#test4#!#S
 
 
 -- Drop role from member
-ALTER ROLE test1 DROP MEMBER test2
+ALTER ROLE test1_new DROP MEMBER test2
 GO
 
 -- Drop user from member
-ALTER ROLE test1 DROP MEMBER test3
+ALTER ROLE test1_new DROP MEMBER test3
 GO
 
 -- Expect to see roles master_test1, db1_test1_new, db1_test2
@@ -331,8 +331,6 @@ GO
 ~~START~~
 varchar#!#char#!#varchar#!#char
 db_owner#!#R#!#dbo#!#S
-test1_new#!#R#!#test2#!#R
-test1_new#!#R#!#test3#!#S
 test2#!#R#!#test4#!#S
 ~~END~~
 

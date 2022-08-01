@@ -527,24 +527,40 @@ USE master
 GO
 
 -- tsql
--- Clean up
 USE db1
 GO
+
+-- BABEL-3231, role with members is disallowed to be dropped
+-- should fail
+DROP ROLE test_role1
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: The role has members. It must be empty before it can be dropped.)~~
+
+DROP ROLE test_role3
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: The role has members. It must be empty before it can be dropped.)~~
+
+
+-- Clean up
 DROP USER test_user1
 GO
 DROP USER test_user2
 GO
 DROP USER test_user3
 GO
-DROP ROLE test_role1
-GO
-DROP ROLE test_role2
-GO
-DROP ROLE test_role3
+DROP ROLE test_role5
 GO
 DROP ROLE test_role4
 GO
-DROP ROLE test_role5
+DROP ROLE test_role3
+GO
+DROP ROLE test_role2
+GO
+DROP ROLE test_role1
 GO
 
 -- psql
