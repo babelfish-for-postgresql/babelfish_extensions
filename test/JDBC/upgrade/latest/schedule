@@ -48,7 +48,6 @@ column_domain_usage
 constraint_column_usage
 sys-host_name
 SYSTEM_USER
-Test-Default-Columns
 indexproperty
 msdb-dbo-syspolicy_configuration
 sys-all_views
