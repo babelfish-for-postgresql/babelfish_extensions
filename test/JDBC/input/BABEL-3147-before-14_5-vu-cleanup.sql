@@ -1,0 +1,4 @@
+DROP TABLE BABEL_3147_before_14_5_vu_prepare_t_1
+DROP TABLE BABEL_3147_before_14_5_vu_prepare_t_2
+DROP TABLE BABEL_3147_before_14_5_vu_prepare_t_3
+GO

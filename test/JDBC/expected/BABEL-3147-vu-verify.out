@@ -1,0 +1,26 @@
+SELECT c_comp FROM BABEL_3147_vu_prepare_t_1
+GO
+~~START~~
+char
+~~END~~
+
+
+-- Test ISNULL with numeric columns
+SELECT ISNULL(a, b) FROM BABEL_3147_vu_prepare_t_2
+GO
+~~START~~
+numeric
+10.1234
+101.1230
+~~END~~
+
+
+-- Test ISNULL with decimal columns
+SELECT ISNULL(a, b) FROM BABEL_3147_vu_prepare_t_3
+GO
+~~START~~
+numeric
+10.1234
+101.1230
+~~END~~
+
