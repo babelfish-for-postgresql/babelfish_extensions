@@ -132,6 +132,8 @@ jobs:
           path: |
             ~/upgrade/*.log
             ~/upgrade/*.diff
+            ~/upgrade/*.out
+            ~/upgrade/*.csv
             ~/postgres*/data/logfile
             ~/failed-testscript-outputs
             
