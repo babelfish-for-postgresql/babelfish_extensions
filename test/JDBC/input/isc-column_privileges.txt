@@ -1,0 +1,55 @@
+select * from information_schema.column_privileges;
+
+create database test1;
+
+use test1;
+
+create table tb1(arg1 int, arg2 int);
+
+create table tb2(arg3 int, arg4 int);
+
+drop table tb1
+
+drop table tb2;
+
+use master;
+
+drop database test1;
+
+select * from information_schema.column_privileges;
+
+create database test2;
+
+use test2;
+
+create table tb3(arg5 int, arg6 int);
+
+create table tb4(arg7 int, arg8 int);
+
+drop table tb3;
+
+drop table tb4;
+
+use master;
+
+drop database test2;
+
+select * from information_schema.column_privileges;
+
+create database test3;
+
+use test3;
+
+create schema sc;
+
+create table sc.tb5(arg9 int, arg10 int);
+
+drop table sc.tb5;
+
+drop schema sc;
+
+use master;
+
+drop database test3;
+
+select * from information_schema.column_privileges
