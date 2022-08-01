@@ -25,6 +25,9 @@ GO
 DROP PROCEDURE test_identity_vu_prepare_p4
 GO
 
+DROP PROCEDURE test_identity_vu_prepare_p5
+GO
+
 DROP TABLE test_identity_vu_prepare_t1
 GO
 
@@ -38,4 +41,7 @@ DROP TABLE test_identity_vu_prepare_t4
 GO
 
 DROP TABLE test_identity_vu_prepare_t5
+GO
+
+DROP TABLE test_identity_vu_prepare_t6
 GO

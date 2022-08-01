@@ -2,9 +2,9 @@ EXEC test_identity_vu_prepare_p1
 GO
 
 
-INSERT INTO test_identity_vu_prepare_t1 VALUES ('Shah_Nirmit')
-INSERT INTO test_identity_vu_prepare_t1 VALUES ('Sumit_Jaiswal')
-INSERT INTO test_identity_vu_prepare_t1 VALUES ('Jaiswal_Sumit')
+INSERT INTO test_identity_vu_prepare_t1 VALUES ('Babelfish1')
+INSERT INTO test_identity_vu_prepare_t1 VALUES ('Babelfish2')
+INSERT INTO test_identity_vu_prepare_t1 VALUES ('Babelfish3')
 GO
 
 SELECT MAX(id) as MaximumUsedIdentity FROM test_identity_vu_prepare_t1
@@ -41,7 +41,7 @@ GO
 
 SELECT * FROM test_identity_vu_prepare_t4
 GO
-INSERT test_identity_vu_prepare_t4 values ('Dipesh',23)
+INSERT test_identity_vu_prepare_t4 values ('Babelfish4',23)
 GO
 
 SELECT SCOPE_IDENTITY()
@@ -73,3 +73,10 @@ GO
 SELECT test_identity_vu_prepare_func4()
 GO
 
+INSERT test_identity_vu_prepare_t6 
+OUTPUT INSERTED.ID
+VALUES ('Babelfish5'),('Babelfish6'),('Babelfish7')
+GO
+
+EXEC test_identity_vu_prepare_p5
+GO

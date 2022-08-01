@@ -24,9 +24,9 @@ numeric
 
 
 
-INSERT INTO test_identity_vu_prepare_t1 VALUES ('Shah_Nirmit')
-INSERT INTO test_identity_vu_prepare_t1 VALUES ('Sumit_Jaiswal')
-INSERT INTO test_identity_vu_prepare_t1 VALUES ('Jaiswal_Sumit')
+INSERT INTO test_identity_vu_prepare_t1 VALUES ('Babelfish1')
+INSERT INTO test_identity_vu_prepare_t1 VALUES ('Babelfish2')
+INSERT INTO test_identity_vu_prepare_t1 VALUES ('Babelfish3')
 GO
 ~~ROW COUNT: 1~~
 
@@ -92,9 +92,9 @@ GO
 int#!#nvarchar
 1#!#Nirmit_Shah
 2#!#Nirmit_Shah
-3#!#Shah_Nirmit
-4#!#Sumit_Jaiswal
-5#!#Jaiswal_Sumit
+3#!#Babelfish1
+4#!#Babelfish2
+5#!#Babelfish3
 6#!#Nirmit_Shah
 ~~END~~
 
@@ -155,23 +155,23 @@ SELECT * FROM test_identity_vu_prepare_t2
 GO
 ~~START~~
 smallint#!#nvarchar
-1#!#Nirmit
-2#!#Sumit
-3#!#Sharu
-4#!#Raj
-5#!#Nirmit_Shah
+1#!#Babelfish1
+2#!#Babelfish2
+3#!#Babelfish3
+4#!#Babelfish12
+5#!#Babelfish4
 ~~END~~
 
 SELECT * FROM test_identity_vu_prepare_t3
 GO
 ~~START~~
 int#!#varchar
-100#!#Shah
-105#!#Jaiswal
-110#!#Goel
-115#!#IT
-120#!#IT
-125#!#Nirmit_Shah
+100#!#Babelfish6
+105#!#Babelfish7
+110#!#Babelfish8
+115#!#Babelfish11
+120#!#Babelfish11
+125#!#Babelfish5
 ~~END~~
 
 
@@ -203,12 +203,12 @@ SELECT * FROM test_identity_vu_prepare_t4
 GO
 ~~START~~
 varchar#!#int
-Shah#!#21
-Jaiswal#!#20
-Goel#!#23
+Babelfish13#!#21
+Babelfish14#!#20
+Babelfish15#!#23
 ~~END~~
 
-INSERT test_identity_vu_prepare_t4 values ('Dipesh',23)
+INSERT test_identity_vu_prepare_t4 values ('Babelfish4',23)
 GO
 ~~ROW COUNT: 1~~
 
@@ -240,10 +240,10 @@ SELECT * FROM test_identity_vu_prepare_t4
 GO
 ~~START~~
 varchar#!#int#!#int
-Shah#!#21#!#1
-Jaiswal#!#20#!#2
-Goel#!#23#!#3
-Dipesh#!#23#!#4
+Babelfish13#!#21#!#1
+Babelfish14#!#20#!#2
+Babelfish15#!#23#!#3
+Babelfish4#!#23#!#4
 ~~END~~
 
 
@@ -277,9 +277,9 @@ SELECT * FROM test_identity_vu_prepare_t5
 GO
 ~~START~~
 varchar#!#int
-Shah#!#21
-Jaiswal#!#20
-Goel#!#23
+Babelfish16#!#21
+Babelfish17#!#20
+Babelfish18#!#23
 ~~END~~
 
 
@@ -301,4 +301,23 @@ tinyint
 3
 ~~END~~
 
+
+INSERT test_identity_vu_prepare_t6 
+OUTPUT INSERTED.ID
+VALUES ('Babelfish5'),('Babelfish6'),('Babelfish7')
+GO
+~~START~~
+int
+1
+2
+3
+~~END~~
+
+
+EXEC test_identity_vu_prepare_p5
+GO
+~~START~~
+int
+4
+~~END~~
 
