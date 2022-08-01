@@ -2,7 +2,7 @@
 <<<<<<< HEAD
 use db_view_table_usage;
 =======
-use database db_view_table_usage;
+use db_view_table_usage;
 >>>>>>> f0db34d (implemented main test, prepare and verify tests)
 =======
 use db_view_table_usage;
@@ -30,7 +30,6 @@ drop view if exists view_table_usage_v1;
 go
 create view view_table_usage_v1 as select * from view_table_usage_tb1;
 go
-
 
 select * from information_schema.view_table_usage where table_name not like 'sys%';
 go
