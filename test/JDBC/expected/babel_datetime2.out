@@ -31,15 +31,15 @@ go
 
 ~~START~~
 datetime2
-1753-01-01 00:00:00.000000
-9999-12-31 23:59:59.998000
-1992-05-23 23:40:29.999000
-1992-05-23 23:40:30.000000
-1999-12-31 23:59:59.998000
-1999-12-31 23:59:59.999000
-1900-01-01 23:40:29.999000
-1900-01-01 23:40:30.000000
-2020-03-14 00:00:00.000000
+1753-01-01 00:00:00.0000000
+9999-12-31 23:59:59.9980000
+1992-05-23 23:40:29.9990000
+1992-05-23 23:40:30.0000000
+1999-12-31 23:59:59.9980000
+1999-12-31 23:59:59.9990000
+1900-01-01 23:40:29.9990000
+1900-01-01 23:40:30.0000000
+2020-03-14 00:00:00.0000000
 ~~END~~
 
 
@@ -48,15 +48,15 @@ select * from datetime2_testing where dt > cast('2079-06-06 23:59:12.345678 -9:3
 go
 ~~START~~
 datetime2
-9999-12-31 23:59:59.998000
+9999-12-31 23:59:59.9980000
 ~~END~~
 
 select * from datetime2_testing where dt >= cast('2000-01-01 00:00:59' as smalldatetime);
 go
 ~~START~~
 datetime2
-9999-12-31 23:59:59.998000
-2020-03-14 00:00:00.000000
+9999-12-31 23:59:59.9980000
+2020-03-14 00:00:00.0000000
 ~~END~~
 
 select * from datetime2_testing where dt >= cast('1992-05-23 23:40:00' as datetime) 
@@ -64,26 +64,26 @@ select * from datetime2_testing where dt >= cast('1992-05-23 23:40:00' as dateti
 go
 ~~START~~
 datetime2
-1992-05-23 23:40:29.999000
-1992-05-23 23:40:30.000000
+1992-05-23 23:40:29.9990000
+1992-05-23 23:40:30.0000000
 ~~END~~
 
 select * from datetime2_testing where dt < cast('1992-05-24' as date);
 go
 ~~START~~
 datetime2
-1753-01-01 00:00:00.000000
-1992-05-23 23:40:29.999000
-1992-05-23 23:40:30.000000
-1900-01-01 23:40:29.999000
-1900-01-01 23:40:30.000000
+1753-01-01 00:00:00.0000000
+1992-05-23 23:40:29.9990000
+1992-05-23 23:40:30.0000000
+1900-01-01 23:40:29.9990000
+1900-01-01 23:40:30.0000000
 ~~END~~
 
 select * from datetime2_testing where dt < cast('12:34:56.789' as time);
 go
 ~~START~~
 datetime2
-1753-01-01 00:00:00.000000
+1753-01-01 00:00:00.0000000
 ~~END~~
 
 
@@ -92,7 +92,7 @@ select CAST('2079-06-06 23:59:29.123456' AS datetime2);
 go
 ~~START~~
 datetime2
-2079-06-06 23:59:29.123455
+2079-06-06 23:59:29.1234560
 ~~END~~
 
 select CAST('2079-06-06 23:59:29.123456' AS datetime2(0));
@@ -141,7 +141,7 @@ select CAST('2079-06-06 23:59:29.123456' AS datetime2(6));
 go
 ~~START~~
 datetime2
-2079-06-06 23:59:29.123455
+2079-06-06 23:59:29.123456
 ~~END~~
 
 
@@ -266,7 +266,7 @@ select CAST(CAST('1999-12-31' AS date) AS datetime2);
 go
 ~~START~~
 datetime2
-1999-12-31 00:00:00.000000
+1999-12-31 00:00:00.0000000
 ~~END~~
 
 select CAST(CAST('2000-01-01 23:59:59.99932' AS datetime2) AS date);
@@ -280,7 +280,7 @@ select CAST(CAST('0001-12-31' AS date) AS datetime2);
 go
 ~~START~~
 datetime2
-0001-12-31 00:00:00.000000
+0001-12-31 00:00:00.0000000
 ~~END~~
 
 select CAST(CAST('2000-12-31' AS date) AS datetime2(2));
@@ -296,21 +296,21 @@ select CAST(CAST('00:00:00.000' AS time) AS datetime2);
 go
 ~~START~~
 datetime2
-1900-01-01 00:00:00.000000
+1900-01-01 00:00:00.0000000
 ~~END~~
 
 select CAST(CAST('23:59:59.999' AS time) AS datetime2);
 go
 ~~START~~
 datetime2
-1900-01-01 23:59:59.999000
+1900-01-01 23:59:59.9990000
 ~~END~~
 
 select CAST(CAST('23:59:59.123456' AS time) AS datetime2);
 go
 ~~START~~
 datetime2
-1900-01-01 23:59:59.123455
+1900-01-01 23:59:59.1234560
 ~~END~~
 
 select CAST(CAST('23:59:59.123456' AS time) AS datetime2(1));
@@ -324,21 +324,21 @@ select CAST(CAST('1900-05-06 23:59:29.998123' AS datetime2) AS time);
 go
 ~~START~~
 time
-23:59:29.998123
+23:59:29.9981230
 ~~END~~
 
 select CAST(CAST('2050-05-06 00:00:00' AS datetime2) AS time);
 go
 ~~START~~
 time
-00:00:00.000000
+00:00:00.0000000
 ~~END~~
 
 select CAST(CAST('2050-05-06 23:59:29.998' AS datetime2) AS time);
 go
 ~~START~~
 time
-23:59:29.998000
+23:59:29.9980000
 ~~END~~
 
 
@@ -354,7 +354,7 @@ select CAST(CAST('2020-03-15 23:59:29.99722' AS smalldatetime) AS datetime2);
 go
 ~~START~~
 datetime2
-2020-03-15 23:59:00.000000
+2020-03-15 23:59:00.0000000
 ~~END~~
 
 select CAST(CAST('2020-03-15 23:59:12.99722' AS smalldatetime) AS datetime2(4));
@@ -368,7 +368,7 @@ select CAST(CAST('2020-03-15 23:59:29.999' AS smalldatetime) AS datetime2);
 go
 ~~START~~
 datetime2
-2020-03-16 00:00:00.000000
+2020-03-16 00:00:00.0000000
 ~~END~~
 
 -- out of range
@@ -386,7 +386,7 @@ select CAST(CAST('2020-03-15 23:59:29.99' AS datetime) AS datetime2);
 go
 ~~START~~
 datetime2
-2020-03-15 23:59:29.990000
+2020-03-15 23:59:29.9900000
 ~~END~~
 
 select CAST(CAST('2020-03-15 23:59:29.45' AS datetime) AS datetime2(1));
@@ -416,35 +416,35 @@ select CAST(CAST('2020-03-15 23:59:29.99' AS datetime2) AS datetimeoffset);
 go
 ~~START~~
 datetimeoffset
-2020-03-15 23:59:29.990000 +00:00
+2020-03-15 23:59:29.9900000 +00:00
 ~~END~~
 
 select CAST(CAST('2079-06-06 23:59:29.998 +8:00' AS datetimeoffset) AS datetime2);
 go
 ~~START~~
 datetime2
-2079-06-06 15:59:29.998000
+2079-06-06 15:59:29.9980000
 ~~END~~
 
 select CAST(CAST('2079-06-06 23:59:29.998 -9:30' AS datetimeoffset) AS datetime2);
 go
 ~~START~~
 datetime2
-2079-06-07 09:29:29.998000
+2079-06-07 09:29:29.9980000
 ~~END~~
 
 select CAST(CAST('2079-06-06 23:59:12.345678 -9:30' AS datetimeoffset) AS datetime2);
 go
 ~~START~~
 datetime2
-2079-06-07 09:29:12.345678
+2079-06-07 09:29:12.3456780
 ~~END~~
 
 select CAST(CAST('0001-06-06 23:59:12.345678 -9:30' AS datetimeoffset) AS datetime2);
 go
 ~~START~~
 datetime2
-0001-06-07 09:29:12.345678
+0001-06-07 09:29:12.3456780
 ~~END~~
 
 select CAST(CAST('0001-06-06 23:59:12.345678 -9:30' AS datetimeoffset) AS datetime2(5));
@@ -460,14 +460,14 @@ select cast('9999-12-31' as datetime2);
 go
 ~~START~~
 datetime2
-9999-12-31 00:00:00.000000
+9999-12-31 00:00:00.0000000
 ~~END~~
 
 select cast('9999-12-31 23:59:59.998' as datetime2);
 go
 ~~START~~
 datetime2
-9999-12-31 23:59:59.998000
+9999-12-31 23:59:59.9980000
 ~~END~~
 
 -- out of range
@@ -488,63 +488,63 @@ select cast('0001-01-01 00:00:00.000000' as datetime2);
 go
 ~~START~~
 datetime2
-0001-01-01 00:00:00.000000
+0001-01-01 00:00:00.0000000
 ~~END~~
 
 select cast('9999-12-31 23:59:59.999999' as datetime2);
 go
 ~~START~~
 datetime2
-9999-12-31 23:59:59.999999
+9999-12-31 23:59:59.9999990
 ~~END~~
 
 select cast('2021-12-31 23:59:29.1234567' as datetime2);
 go
 ~~START~~
 datetime2
-2021-12-31 23:59:29.123456
+2021-12-31 23:59:29.1234570
 ~~END~~
 
 select cast('9999-12-31 23:59:59.9999999' as datetime2);
 go
 ~~START~~
 datetime2
-9999-12-31 23:59:59.999999
+9999-12-31 23:59:59.9999990
 ~~END~~
 
 select cast('8888-12-31 23:59:59.9999999' as datetime2);
 go
 ~~START~~
 datetime2
-8889-01-01 00:00:00.000000
+8889-01-01 00:00:00.0000000
 ~~END~~
 
 select cast('9999-12-31 23:59:59.99999999' as datetime2);
 go
 ~~START~~
 datetime2
-9999-12-31 23:59:59.999999
+9999-12-31 23:59:59.9999990
 ~~END~~
 
 select cast('8888-12-31 23:59:59.99999999' as datetime2);
 go
 ~~START~~
 datetime2
-8889-01-01 00:00:00.000000
+8889-01-01 00:00:00.0000000
 ~~END~~
 
 select cast('9999-12-31 23:59:59.999999' as datetime2);
 go
 ~~START~~
 datetime2
-9999-12-31 23:59:59.999999
+9999-12-31 23:59:59.9999990
 ~~END~~
 
 select cast('8888-12-31 23:59:59.999999' as datetime2);
 go
 ~~START~~
 datetime2
-8888-12-31 23:59:59.999999
+8888-12-31 23:59:59.9999990
 ~~END~~
 
 
@@ -638,7 +638,7 @@ select dateadd(second, 56, cast('2016-12-26 23:29:29' as datetime2));
 go
 ~~START~~
 datetime2
-2016-12-26 23:30:25.000000
+2016-12-26 23:30:25.0000000
 ~~END~~
 
 -- TODO Fix BABEL-2822
@@ -652,7 +652,7 @@ select dateadd(minute, 56, cast('2016-12-26 23:29:29' as datetime2));
 go
 ~~START~~
 datetime2
-2016-12-27 00:25:29.000000
+2016-12-27 00:25:29.0000000
 ~~END~~
 
 -- out of range
