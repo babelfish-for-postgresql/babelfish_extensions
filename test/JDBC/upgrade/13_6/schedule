@@ -38,6 +38,7 @@ BABEL-3192
 BABEL-3221
 BABEL-3204
 BABEL-3234
+BABEL-3402
 fulltextserviceproperty
 is_srvrolemember
 msdb-dbo-fn_syspolicy_is_automation_enabled
