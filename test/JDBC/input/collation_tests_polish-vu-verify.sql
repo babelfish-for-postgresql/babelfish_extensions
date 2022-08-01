@@ -15,17 +15,17 @@ SELECT * FROM [INNER JOIN SAME CP POLISH] WHERE same_name = 'wczoraj';
 GO
 
 --computed column
-SELECT substr FROM collation_tests_polish_vu_prepare_varchar_computed_columns;
+SELECT substr_polish FROM collation_tests_polish_vu_prepare_varchar_computed_columns;
 GO
 
-SELECT substr FROM collation_tests_polish_vu_prepare_varchar_computed_columns WHERE substr='dzi';
+SELECT substr_polish FROM collation_tests_polish_vu_prepare_varchar_computed_columns WHERE substr_polish='dzi';
 GO
 
 SELECT 
     name, 
     collation_name 
 FROM sys.columns 
-WHERE name = N'substr';
+WHERE name = N'substr_polish';
 GO
 
 --nvarchar

@@ -50,7 +50,7 @@ varchar#!#varchar
 
 
 --computed column
-SELECT substr FROM collation_tests_korean_vu_prepare_varchar_computed_columns;
+SELECT substr_korean FROM collation_tests_korean_vu_prepare_varchar_computed_columns;
 GO
 ~~START~~
 varchar
@@ -67,7 +67,7 @@ varchar
 ~~END~~
 
 
-SELECT substr FROM collation_tests_korean_vu_prepare_varchar_computed_columns WHERE substr='화';
+SELECT substr_korean FROM collation_tests_korean_vu_prepare_varchar_computed_columns WHERE substr_korean='화';
 GO
 ~~START~~
 varchar
@@ -79,11 +79,11 @@ SELECT
     name, 
     collation_name 
 FROM sys.columns 
-WHERE name = N'substr';
+WHERE name = N'substr_korean';
 GO
 ~~START~~
 varchar#!#varchar
-substr#!#korean_wansung_ci_as
+substr_korean#!#korean_wansung_ci_as
 ~~END~~
 
 

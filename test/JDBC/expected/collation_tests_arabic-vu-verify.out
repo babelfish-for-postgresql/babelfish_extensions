@@ -52,7 +52,7 @@ varchar#!#varchar
 
 
 --computed column
-SELECT substr FROM collation_tests_arabic_vu_prepare_varchar_computed_columns;
+SELECT substr_arabic FROM collation_tests_arabic_vu_prepare_varchar_computed_columns;
 GO
 ~~START~~
 varchar
@@ -69,7 +69,7 @@ varchar
 ~~END~~
 
 
-SELECT substr FROM collation_tests_arabic_vu_prepare_varchar_computed_columns WHERE substr='مرح';
+SELECT substr_arabic FROM collation_tests_arabic_vu_prepare_varchar_computed_columns WHERE substr_arabic='مرح';
 GO
 ~~START~~
 varchar
@@ -81,11 +81,11 @@ SELECT
     name, 
     collation_name 
 FROM sys.columns 
-WHERE name = N'substr';
+WHERE name = N'substr_arabic';
 GO
 ~~START~~
 varchar#!#varchar
-substr#!#arabic_ci_as
+substr_arabic#!#arabic_ci_as
 ~~END~~
 
 

@@ -37,7 +37,7 @@ GO
 -- 1st column is for the actual string
 -- 2nd column is for the substring
 CREATE TABLE collation_tests_korean_vu_prepare_varchar_computed_columns(name_same varchar(20) COLLATE korean_wansung_ci_as, 
-substr AS SUBSTRING (name_same, 1, 1));
+substr_korean AS SUBSTRING (name_same, 1, 1));
 GO
 
 INSERT INTO collation_tests_korean_vu_prepare_varchar_computed_columns VALUES ('여기');

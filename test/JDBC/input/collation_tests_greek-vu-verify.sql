@@ -15,17 +15,17 @@ SELECT * FROM [INNER JOIN SAME CP GREEK] WHERE same_name = 'ψυχή';
 GO
 
 --computed column
-SELECT substr FROM collation_tests_greek_vu_prepare_varchar_computed_columns;
+SELECT substr_greek FROM collation_tests_greek_vu_prepare_varchar_computed_columns;
 GO
 
-SELECT substr FROM collation_tests_greek_vu_prepare_varchar_computed_columns WHERE substr='αγά';
+SELECT substr_greek FROM collation_tests_greek_vu_prepare_varchar_computed_columns WHERE substr_greek='αγά';
 GO
 
 SELECT 
     name, 
     collation_name 
 FROM sys.columns 
-WHERE name = N'substr';
+WHERE name = N'substr_greek';
 GO
 
 --nvarchar

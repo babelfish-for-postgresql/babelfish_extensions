@@ -15,17 +15,17 @@ SELECT * FROM [INNER JOIN SAME CP CHINESE] WHERE same_name = '微笑';
 GO
 
 --computed column
-SELECT substr FROM collation_tests_chinese_vu_prepare_varchar_computed_columns;
+SELECT substr_chinese FROM collation_tests_chinese_vu_prepare_varchar_computed_columns;
 GO
 
-SELECT substr FROM collation_tests_chinese_vu_prepare_varchar_computed_columns WHERE substr='微';
+SELECT substr_chinese FROM collation_tests_chinese_vu_prepare_varchar_computed_columns WHERE substr_chinese='微';
 GO
 
 SELECT 
     name, 
     collation_name 
 FROM sys.columns 
-WHERE name = N'substr';
+WHERE name = N'substr_chinese';
 GO
 
 --nvarchar

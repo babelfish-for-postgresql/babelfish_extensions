@@ -15,17 +15,17 @@ SELECT * FROM [INNER JOIN SAME CP MONGOLIAN] WHERE same_name = 'хувцас';
 GO
 
 --computed column
-SELECT substr FROM collation_tests_mongolian_vu_prepare_varchar_computed_columns;
+SELECT substr_mongolian FROM collation_tests_mongolian_vu_prepare_varchar_computed_columns;
 GO
 
-SELECT substr FROM collation_tests_mongolian_vu_prepare_varchar_computed_columns WHERE substr='хув';
+SELECT substr_mongolian FROM collation_tests_mongolian_vu_prepare_varchar_computed_columns WHERE substr_mongolian='хув';
 GO
 
 SELECT 
     name, 
     collation_name 
 FROM sys.columns 
-WHERE name = N'substr';
+WHERE name = N'substr_mongolian';
 GO
 
 --nvarchar

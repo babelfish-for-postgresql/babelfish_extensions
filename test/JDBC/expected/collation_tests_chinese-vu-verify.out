@@ -49,7 +49,7 @@ varchar#!#varchar
 
 
 --computed column
-SELECT substr FROM collation_tests_chinese_vu_prepare_varchar_computed_columns;
+SELECT substr_chinese FROM collation_tests_chinese_vu_prepare_varchar_computed_columns;
 GO
 ~~START~~
 varchar
@@ -66,7 +66,7 @@ varchar
 ~~END~~
 
 
-SELECT substr FROM collation_tests_chinese_vu_prepare_varchar_computed_columns WHERE substr='微';
+SELECT substr_chinese FROM collation_tests_chinese_vu_prepare_varchar_computed_columns WHERE substr_chinese='微';
 GO
 ~~START~~
 varchar
@@ -78,11 +78,11 @@ SELECT
     name, 
     collation_name 
 FROM sys.columns 
-WHERE name = N'substr';
+WHERE name = N'substr_chinese';
 GO
 ~~START~~
 varchar#!#varchar
-substr#!#chinese_prc_ci_as
+substr_chinese#!#chinese_prc_ci_as
 ~~END~~
 
 

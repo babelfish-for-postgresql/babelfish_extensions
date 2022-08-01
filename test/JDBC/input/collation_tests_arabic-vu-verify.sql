@@ -15,17 +15,17 @@ SELECT * FROM [INNER JOIN SAME CP ARABIC] WHERE same_name = 'كلب';
 GO
 
 --computed column
-SELECT substr FROM collation_tests_arabic_vu_prepare_varchar_computed_columns;
+SELECT substr_arabic FROM collation_tests_arabic_vu_prepare_varchar_computed_columns;
 GO
 
-SELECT substr FROM collation_tests_arabic_vu_prepare_varchar_computed_columns WHERE substr='مرح';
+SELECT substr_arabic FROM collation_tests_arabic_vu_prepare_varchar_computed_columns WHERE substr_arabic='مرح';
 GO
 
 SELECT 
     name, 
     collation_name 
 FROM sys.columns 
-WHERE name = N'substr';
+WHERE name = N'substr_arabic';
 GO
 
 --nvarchar

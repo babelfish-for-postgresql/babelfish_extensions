@@ -69,7 +69,7 @@ GO
 -- 1st column is for the actual string
 -- 2nd column is for the substring
 CREATE TABLE collation_tests_greek_vu_prepare_varchar_computed_columns(name_same varchar(20) COLLATE greek_ci_as, 
-substr AS SUBSTRING (name_same, 1, 3));
+substr_greek AS SUBSTRING (name_same, 1, 3));
 GO
 
 INSERT INTO collation_tests_greek_vu_prepare_varchar_computed_columns VALUES ('ελπίδα');

@@ -15,17 +15,17 @@ SELECT * FROM [INNER JOIN SAME CP KOREAN] WHERE same_name = '가게';
 GO
 
 --computed column
-SELECT substr FROM collation_tests_korean_vu_prepare_varchar_computed_columns;
+SELECT substr_korean FROM collation_tests_korean_vu_prepare_varchar_computed_columns;
 GO
 
-SELECT substr FROM collation_tests_korean_vu_prepare_varchar_computed_columns WHERE substr='화';
+SELECT substr_korean FROM collation_tests_korean_vu_prepare_varchar_computed_columns WHERE substr_korean='화';
 GO
 
 SELECT 
     name, 
     collation_name 
 FROM sys.columns 
-WHERE name = N'substr';
+WHERE name = N'substr_korean';
 GO
 
 --nvarchar
