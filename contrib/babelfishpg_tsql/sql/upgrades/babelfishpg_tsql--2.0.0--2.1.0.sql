@@ -2,8 +2,6 @@
 \echo Use "ALTER EXTENSION ""babelfishpg_tsql"" UPDATE TO '2.1.0'" to load this file. \quit
  
 SELECT set_config('search_path', 'sys, '||current_setting('search_path'), false);
--- enable DDL from pgendpoint
-SELECT set_config('babelfishpg_tsql.enable_ddl_from_pgendpoint', 'true', false);
 
 -- Drops an object (view/function/procedure) if it does not have any dependent objects.
 -- Is a temporary procedure for use by the upgrade script. Will be dropped at the end of the upgrade.
@@ -9448,7 +9446,6 @@ LANGUAGE plpgsql;
 -- Please have this be one of the last statements executed in this upgrade script.
 DROP PROCEDURE sys.babelfish_drop_deprecated_object(varchar, varchar, varchar);
 
-SELECT set_config('babelfishpg_tsql.enable_ddl_from_pgendpoint', 'false', false);
 -- Reset search_path to not affect any subsequent scripts
 SELECT set_config('search_path', trim(leading 'sys, ' from current_setting('search_path')), false);
 

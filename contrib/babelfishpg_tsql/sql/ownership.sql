@@ -183,12 +183,10 @@ BEGIN
 	EXECUTE format('GRANT CREATE, CONNECT, TEMPORARY ON DATABASE %s TO sysadmin WITH GRANT OPTION', CURRENT_DATABASE());
 	EXECUTE format('ALTER DATABASE %s SET babelfishpg_tsql.enable_ownership_structure = true', CURRENT_DATABASE());
 	EXECUTE 'SET babelfishpg_tsql.enable_ownership_structure = true';
-	EXECUTE 'SET babelfishpg_tsql.enable_ddl_from_pgendpoint = true';
 	CALL sys.babel_initialize_logins(sa_name);
 	CALL sys.babel_initialize_logins('sysadmin');
 	CALL sys.babel_create_builtin_dbs(sa_name);
 	CALL sys.initialize_babel_extras();
-	EXECUTE 'SET babelfishpg_tsql.enable_ddl_from_pgendpoint = false';
 END
 $$;
 
