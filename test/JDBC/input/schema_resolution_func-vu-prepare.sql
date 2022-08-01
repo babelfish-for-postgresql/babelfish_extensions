@@ -24,7 +24,7 @@ begin
 end
 go
 
-create function schema_resolution_func_s1.schema_resolution_func_vu_prepare_f1()
+create function schema_resolution_func_vu_prepare_s1.schema_resolution_func_vu_prepare_f1()
 returns int
 as
 begin
@@ -32,7 +32,7 @@ begin
 end
 go
 
-create function schema_resolution_func_s1.schema_resolution_func_vu_prepare_f2()
+create function schema_resolution_func_vu_prepare_s1.schema_resolution_func_vu_prepare_f2()
 returns int
 as
 begin
