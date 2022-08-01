@@ -99,14 +99,15 @@ alter view master_dbo.def_v1 reset (check_option);
 go
 
 -- Allowed in psql dialect
-create or replace view master_dbo.def_v3 as select 3;
+-- There won't be any entries in catalog for views created in psql dialect from pgendpoint
+create or replace view master_dbo.def_v5 as select 5;
 go
 
 set babelfishpg_tsql.sql_dialect = "tsql";
 go
 
 -- Blocked in tsql dialect
-create or replace view master_dbo.def_v4 as select 4;
+create or replace view master_dbo.def_v6 as select 6;
 go
 
 -- tsql
@@ -227,7 +228,7 @@ go
 select sb.name, vd.schema_name, vd.object_name, vd.definition from babelfish_view_def vd left join sys.sysdatabases sb on vd.dbid=sb.dbid order by vd.dbid, vd.schema_name, vd.object_name, vd.definition;
 go
 
-drop view def_v1, def_v2, def_v3;
+drop view def_v1, def_v2, def_v5;
 go
 
 drop table vd_t1;
