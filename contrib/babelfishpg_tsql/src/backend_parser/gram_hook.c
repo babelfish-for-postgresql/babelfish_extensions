@@ -14,12 +14,33 @@ static List *rewrite_typmod_expr(List *expr_list);
 static Node * makeIntConst(int val, int location);
 static void TsqlValidateNumericTypmods(List **typmods, bool isNumeric, void* yyscanner);
 static bool tsql_is_recursive_cte(WithClause *with_clause);
+static void fix_tsql_domain_typmods(TypeName *typname);
 
 void install_backend_gram_hooks()
 {
 	rewrite_typmod_expr_hook = rewrite_typmod_expr;
 	validate_numeric_typmods_hook = TsqlValidateNumericTypmods;
 	check_recursive_cte_hook = tsql_is_recursive_cte;
+	fix_domain_typmods_hook = fix_tsql_domain_typmods;
+}
+
+/*
+ * Some T-SQL domain types, e.g., sys.sysname from PG13, can have wrong typmods
+ * so that it can cause a failure during dump and restore. This function detects
+ * problematic cases and fixes it.
+ */
+static void
+fix_tsql_domain_typmods(TypeName *typname)
+{
+	const char *dump_restore = GetConfigOption("babelfishpg_tsql.dump_restore", true, false);
+	if (!dump_restore || strcmp(dump_restore, "on") != 0)
+		return;
+
+	/* sys.sysname and sys._ci_sysname should not have typmods */
+	if (strcmp(strVal(linitial(typname->names)), "sys") == 0 &&
+		(strcmp(strVal(lsecond(typname->names)), "sysname") == 0 ||
+			strcmp(strVal(lsecond(typname->names)), "_ci_sysname") == 0))
+		typname->typmods = NIL;
 }
 
 static List *
