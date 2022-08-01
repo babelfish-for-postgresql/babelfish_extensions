@@ -1,9 +1,9 @@
 -- tsql
-CREATE TABLE t1 (id INT IDENTITY PRIMARY KEY, mycol VARCHAR(20));
+CREATE TABLE indentity_function_tests_t1 (id INT IDENTITY PRIMARY KEY, mycol VARCHAR(20));
 GO
 
 -- psql
-CREATE INDEX t1_idx_numeric1 ON master_dbo.t1 ((id::numeric));
+CREATE INDEX indentity_function_tests_t1_idx_numeric1 ON master_dbo.indentity_function_tests_t1 ((id::numeric));
 ANALYZE master_dbo.t1;
 GO
 

@@ -1,17 +1,17 @@
 -- tsql
-insert into t1 values ('1')
+insert into indentity_function_tests_t1 values ('1')
 GO
 
-select id from t1 WHERE id = scope_identity();
+select id from indentity_function_tests_t1 WHERE id = scope_identity();
 GO
 
-select id from t1 WHERE id = @@identity;
+select id from indentity_function_tests_t1 WHERE id = @@identity;
 GO
 
-select id from t1 WHERE id = sys.babelfish_get_last_identity_numeric();
+select id from indentity_function_tests_t1 WHERE id = sys.babelfish_get_last_identity_numeric();
 GO
 
-select id from t1 WHERE id = sys.babelfish_get_last_identity();
+select id from indentity_function_tests_t1 WHERE id = sys.babelfish_get_last_identity();
 GO
 
 exec indentity_function_tests_proc
