@@ -203,7 +203,6 @@ Could not find upgrade tests for function sys.replace
 Could not find upgrade tests for function sys.replicate
 Could not find upgrade tests for function sys.role_id
 Could not find upgrade tests for function sys.schema_id
-Could not find upgrade tests for function sys.scope_identity
 Could not find upgrade tests for function sys.servername
 Could not find upgrade tests for function sys.servicename
 Could not find upgrade tests for function sys.sid_binary
