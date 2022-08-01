@@ -1,10 +1,10 @@
-USE db_babel_3190;
+USE babel_3190_vu_prepare_db;
 go
 
-select name,max_length,precision,scale from sys.columns where object_id = OBJECT_ID('babel_3190_t1') order by name;
+select name,max_length,precision,scale from sys.columns where object_id = OBJECT_ID('babel_3190_vu_prepare_t1') order by name;
 GO
 
-drop table babel_3190_t1;
+drop table babel_3190_vu_prepare_t1;
 GO
 
 select * from v1;
@@ -15,5 +15,5 @@ go
 USE master;
 go
 
-DROP DATABASE db_babel_3190;
+DROP DATABASE babel_3190_vu_prepare_db;
 go
