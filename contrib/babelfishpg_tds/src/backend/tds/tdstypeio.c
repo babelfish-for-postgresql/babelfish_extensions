@@ -2436,9 +2436,12 @@ TdsSendTypeChar(FmgrInfo *finfo, Datum value, void *vMetaData)
 	destBuf = TdsEncodingConversion(buf, len, col->encoding, &actualLen);
 	maxLen = col->metaEntry.type2.maxSize;
 
+#if 0
 	if (unlikely(maxLen != actualLen))
 		elog(ERROR, "Number of bytes required for the field of char(n) does not match with max bytes specified of the field");
+#endif
 
+	/* I know this is ugly hack but we don't have any other solution than truncating it (if actualLen > maxLen)*/
 	if ((rc = TdsPutUInt16LE(actualLen)) == 0)
 		rc = TdsPutbytes(destBuf, actualLen);
 
