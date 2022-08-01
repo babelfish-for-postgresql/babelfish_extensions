@@ -31,12 +31,17 @@ go
 exec schema_resolution_func_s2.schema_resolution_func_p1;
 go
 
+--resolves to schema_resolution_func_s1.schema_resolution_func_t1 - gives 1 as an output
+select schema_resolution_func_s1.schema_resolution_func_f4();
+go
+
 drop function schema_resolution_func_s1.schema_resolution_func_f1()
 go
 
 drop function dbo.schema_resolution_func_f1()
 go
 
+drop function schema_resolution_func_s1.schema_resolution_func_f4();
 drop view dbo.schema_resolution_func_v1;
 drop function schema_resolution_func_s1.schema_resolution_func_f3();
 drop table schema_resolution_func_s2.schema_resolution_func_t1;

@@ -48,6 +48,13 @@ begin
 end
 go
 
+create function schema_resolution_func_s1.schema_resolution_func_f4()
+returns table
+as
+return
+	select * from schema_resolution_func_t1;
+go
+
 create view dbo.schema_resolution_func_v1
 as
 select schema_resolution_func_s1.schema_resolution_func_f3()
