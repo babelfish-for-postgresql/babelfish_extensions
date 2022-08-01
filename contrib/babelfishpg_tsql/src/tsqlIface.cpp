@@ -37,6 +37,8 @@ extern "C" {
 #include "catalog/pg_proc.h"
 #include "parser/scansup.h"
 
+#include "guc.h"
+
 #endif
 
 #ifdef LOG // maybe already defined in elog.h, which is conflicted with grammar token LOG
@@ -75,6 +77,8 @@ extern "C"
 	extern size_t get_num_pg_reserved_keywords_to_be_delimited();
 	extern char * construct_unique_index_name(char *index_name, char *relation_name);
 	extern bool enable_hint_mapping;
+
+	extern int escape_hatch_showplan_all;
 }
 
 static void toDotRecursive(ParseTree *t, const std::vector<std::string> &ruleNames, const std::string &sourceText);
@@ -4066,7 +4070,7 @@ makeSetStatement(TSqlParser::Set_statementContext *ctx, tsqlBuilder &builder)
 		else if (set_special_ctx->set_on_off_option().size() == 1)
 		{
 			auto option = set_special_ctx->set_on_off_option().front();
-			if (option->BABELFISH_SHOWPLAN_ALL())
+			if (option->BABELFISH_SHOWPLAN_ALL() || (option->SHOWPLAN_ALL() && escape_hatch_showplan_all == EH_IGNORE))
 				return makeSetExplainModeStatement(ctx, true);
 			return makeSQL(ctx);
 		}
@@ -4084,7 +4088,14 @@ makeSetStatement(TSqlParser::Set_statementContext *ctx, tsqlBuilder &builder)
 		else if (set_special_ctx->OFFSETS())
 			return nullptr;
 		else if (set_special_ctx->STATISTICS())
+		{
+			for (auto kw : set_special_ctx->set_statistics_keyword())
+			{
+				if (kw->PROFILE() && escape_hatch_showplan_all == EH_IGNORE)
+					return makeSetExplainModeStatement(ctx, false);
+			}
 			return nullptr;
+		}
 		else if (set_special_ctx->BABELFISH_STATISTICS() && set_special_ctx->PROFILE())
 			return makeSetExplainModeStatement(ctx, false);
 		else
@@ -5139,6 +5150,18 @@ post_process_column_definition(TSqlParser::Column_definitionContext *ctx, PLtsql
 	if (ctx->TIMESTAMP())
 		rewritten_query_fragment.emplace(std::make_pair(ctx->TIMESTAMP()->getSymbol()->getStartIndex(), std::make_pair(::getFullText(ctx->TIMESTAMP()), "timestamp " + ::getFullText(ctx->TIMESTAMP()))));
 
+ 	/*
+	* PG doesn't allow for TIME/DATETIME2/DATETIMEOFFSET to be declared with precision 7, but this is permitted in TSQL.
+	* In order to get around this, remove the scale factor so that the typmod is set to -1 (default). Luckily,
+	* in TSQL the default scale is also 7, so we can re-add the decimal digits to meet the scale factor on the return side.
+	*/
+	if (pg_strncasecmp(::getFullText(ctx->data_type()).c_str(), "TIME(7)", 7) == 0)
+		rewritten_query_fragment.emplace(std::make_pair(ctx->data_type()->start->getStartIndex(), std::make_pair(::getFullText(ctx->data_type()), "TIME")));
+	if (pg_strncasecmp(::getFullText(ctx->data_type()).c_str(), "DATETIME2(7)", 12) == 0)
+		rewritten_query_fragment.emplace(std::make_pair(ctx->data_type()->start->getStartIndex(), std::make_pair(::getFullText(ctx->data_type()), "DATETIME2")));
+	if (pg_strncasecmp(::getFullText(ctx->data_type()).c_str(), "DATETIMEOFFSET(7)", 17) == 0)
+		rewritten_query_fragment.emplace(std::make_pair(ctx->data_type()->start->getStartIndex(), std::make_pair(::getFullText(ctx->data_type()), "DATETIMEOFFSET")));
+	 
 	if (ctx->column_inline_index())
 		post_process_column_inline_index(ctx->column_inline_index(), stmt, baseCtx);
 
