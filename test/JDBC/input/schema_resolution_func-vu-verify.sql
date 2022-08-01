@@ -10,11 +10,15 @@ go
 select schema_resolution_func_s1.schema_resolution_func_f2()
 go
 
+-- resolve to schema_resolution_func_s1.schema_resolution_func_t1 - gives 1 as an output
+exec schema_resolution_func_s2.schema_resolution_func_p1;
+go
+
 drop table schema_resolution_func_s1.schema_resolution_func_t1;
 go
 
 -- resolve to dbo.schema_resolution_func_t1 - gives 0 as an output
-exec schema_resolution_func_s1.schema_resolution_func_p1;
+exec schema_resolution_func_s2.schema_resolution_func_p1;
 go
 
 drop function schema_resolution_func_s1.schema_resolution_func_f2()
@@ -24,7 +28,7 @@ drop table dbo.schema_resolution_func_t1;
 go
 
 -- fails because dbo.schema_resolution_func_t1 doesn't exist
-exec schema_resolution_func_s1.schema_resolution_func_p1;
+exec schema_resolution_func_s2.schema_resolution_func_p1;
 go
 
 drop function schema_resolution_func_s1.schema_resolution_func_f1()
@@ -33,9 +37,13 @@ go
 drop function dbo.schema_resolution_func_f1()
 go
 
-drop proc schema_resolution_func_s1.schema_resolution_func_p1
+drop view dbo.schema_resolution_func_v1;
+drop function schema_resolution_func_s1.schema_resolution_func_f3();
+drop table schema_resolution_func_s2.schema_resolution_func_t1;
+drop proc schema_resolution_func_s2.schema_resolution_func_p1
 go
 
 drop schema schema_resolution_func_s1;
+drop schema schema_resolution_func_s2;
 go
 
