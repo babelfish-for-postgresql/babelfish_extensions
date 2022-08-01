@@ -14,6 +14,7 @@ CREATE VIEW test_babelfish_authid_user_ext_view
 AS
 SELECT rolname, login_name, type, orig_username, database_name, default_schema_name 
 FROM sys.babelfish_authid_user_ext
+WHERE rolname LIKE '%test_babelfish_authid_user_ext_%'
 ORDER BY rolname
 GO
 
@@ -21,6 +22,7 @@ CREATE PROC test_babelfish_authid_user_ext_proc
 AS
 SELECT rolname, login_name, type, orig_username, database_name, default_schema_name 
 FROM sys.babelfish_authid_user_ext
+WHERE rolname LIKE '%test_babelfish_authid_user_ext_%'
 ORDER BY rolname
 GO
 
@@ -28,6 +30,6 @@ CREATE FUNCTION test_babelfish_authid_user_ext_func()
 RETURNS INT
 AS
 BEGIN
-RETURN (SELECT COUNT(*) FROM sys.babelfish_authid_user_ext)
+RETURN (SELECT COUNT(*) FROM sys.babelfish_authid_user_ext WHERE rolname LIKE '%test_babelfish_authid_user_ext_%')
 END
 GO

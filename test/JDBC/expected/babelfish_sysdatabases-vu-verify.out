@@ -2,9 +2,6 @@ SELECT * FROM test_babelfish_sysdatabases_view
 GO
 ~~START~~
 text#!#varchar#!#varchar
-master#!#jdbc_user#!#bbf_unicode_cp1_ci_as
-msdb#!#jdbc_user#!#bbf_unicode_cp1_ci_as
-tempdb#!#jdbc_user#!#bbf_unicode_cp1_ci_as
 test_babelfish_sysdatabases_db#!#jdbc_user#!#bbf_unicode_cp1_ci_as
 ~~END~~
 
@@ -13,9 +10,6 @@ EXEC test_babelfish_sysdatabases_proc
 GO
 ~~START~~
 text#!#varchar#!#varchar
-master#!#jdbc_user#!#bbf_unicode_cp1_ci_as
-msdb#!#jdbc_user#!#bbf_unicode_cp1_ci_as
-tempdb#!#jdbc_user#!#bbf_unicode_cp1_ci_as
 test_babelfish_sysdatabases_db#!#jdbc_user#!#bbf_unicode_cp1_ci_as
 ~~END~~
 
@@ -24,11 +18,11 @@ SELECT test_babelfish_sysdatabases_func()
 GO
 ~~START~~
 int
-4
+1
 ~~END~~
 
 
-SELECT name FROM sys.babelfish_sysdatabases WHERE name LIKE 'test_babelfish_sysdatabases_db'
+SELECT name FROM sys.babelfish_sysdatabases WHERE name LIKE 'test_babelfish_sysdatabases_db%'
 GO
 ~~START~~
 text

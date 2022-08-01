@@ -7,5 +7,5 @@ GO
 SELECT test_babelfish_namespace_ext_func()
 GO
 
-SELECT nspname FROM sys.babelfish_namespace_ext WHERE nspname LIKE 'test_babelfish_namespace_sch%'
+SELECT nspname FROM sys.babelfish_namespace_ext WHERE nspname LIKE '%test_babelfish_namespace_sch%'
 GO

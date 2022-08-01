@@ -2,11 +2,8 @@ SELECT * FROM test_babelfish_namespace_ext_view
 GO
 ~~START~~
 varchar#!#nvarchar
-master_dbo#!#dbo
 master_test_babelfish_namespace_ext_sch1#!#test_babelfish_namespace_ext_sch1
 master_test_babelfish_namespace_ext_sch2#!#test_babelfish_namespace_ext_sch2
-msdb_dbo#!#dbo
-tempdb_dbo#!#dbo
 ~~END~~
 
 
@@ -14,11 +11,8 @@ EXEC test_babelfish_namespace_ext_proc
 GO
 ~~START~~
 varchar#!#nvarchar
-master_dbo#!#dbo
 master_test_babelfish_namespace_ext_sch1#!#test_babelfish_namespace_ext_sch1
 master_test_babelfish_namespace_ext_sch2#!#test_babelfish_namespace_ext_sch2
-msdb_dbo#!#dbo
-tempdb_dbo#!#dbo
 ~~END~~
 
 
@@ -26,11 +20,11 @@ SELECT test_babelfish_namespace_ext_func()
 GO
 ~~START~~
 int
-5
+2
 ~~END~~
 
 
-SELECT nspname FROM sys.babelfish_namespace_ext WHERE nspname LIKE 'test_babelfish_namespace_sch%'
+SELECT nspname FROM sys.babelfish_namespace_ext WHERE nspname LIKE '%test_babelfish_namespace_sch%'
 GO
 ~~START~~
 varchar
