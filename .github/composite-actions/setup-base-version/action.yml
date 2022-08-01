@@ -98,3 +98,40 @@ runs:
         export scheduleFile=upgrade/$base_dir/schedule
         mvn test
       shell: bash
+
+    - name: Install Python
+      id: install-python
+      if: ${{ matrix.upgrade-path.path[0] == 'source_latest' && steps.jdbc-upgrade-tests.outcome == 'success' }}
+      uses: actions/setup-python@v2
+      with:
+        python-version: 3.7
+
+    - name: Configure Python Environment
+      id: configure-python-environment
+      if: always() && steps.install-python.outcome == 'success'
+      run: |
+        cd ~
+        sudo apt-get install odbc-postgresql
+        pip3 install pyodbc pymssql
+      shell: bash
+
+    - name: Run dependency check
+      id: run-dependency-check
+      if: always() && steps.configure-python-environment.outcome == 'success'
+      run: |
+        cd test/python
+        provider="PostgreSQL Unicode" \
+        fileGenerator_URL=localhost \
+        fileGenerator_port=5432 \
+        fileGenerator_databaseName=jdbc_testdb \
+        fileGenerator_user=jdbc_user \
+        fileGenerator_password=12345678 \
+        python3 upgrade_validation.py
+      shell: bash
+
+    - name: Upload artifacts
+      if: always() && steps.run-dependency-check.outcome == 'failure'
+      run: |
+        mkdir -p ~/upgrade
+        cp test/python/output/upgrade_validation/* ~/upgrade
+      shell: bash
