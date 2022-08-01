@@ -31,6 +31,7 @@ TestMoney
 TestVarChar
 TestNumeric
 TestXML
+BABEL-2934
 BABEL-3121
 BABEL-3166
 BABEL-3192
@@ -44,7 +45,9 @@ sys-column-property
 sys-datefirst
 sys-lock_timeout
 sys-max_connections
+sys-objects
 sys-original_login
+sys-procedures
 sys-schema-name
 sys-sysobjects
 sys-trigger_nestlevel
