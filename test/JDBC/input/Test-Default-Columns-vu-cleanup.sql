@@ -1,0 +1,44 @@
+DROP FUNCTION test_default_columns_vu_prepare_func_1;
+GO
+
+DROP FUNCTION test_default_columns_vu_prepare_func_2;
+GO
+
+DROP FUNCTION test_default_columns_vu_prepare_func_3;
+GO
+
+DROP FUNCTION test_default_columns_vu_prepare_func_4;
+GO
+
+DROP FUNCTION test_default_columns_vu_prepare_func_5;
+GO
+
+DROP PROCEDURE test_default_columns_vu_prepare_p1
+GO
+
+DROP PROCEDURE test_default_columns_vu_prepare_p2
+GO
+
+DROP PROCEDURE test_default_columns_vu_prepare_p3
+GO
+
+DROP PROCEDURE test_default_columns_vu_prepare_p4
+GO
+
+DROP PROCEDURE test_default_columns_vu_prepare_p5
+GO
+
+DROP TABLE test_default_columns_vu_prepare_t1
+GO
+
+DROP TABLE test_default_columns_vu_prepare_t2
+GO
+
+DROP TABLE test_default_columns_vu_prepare_t3
+GO
+
+DROP TABLE test_default_columns_vu_prepare_t4
+GO
+
+DROP TABLE test_default_columns_vu_prepare_t5
+GO

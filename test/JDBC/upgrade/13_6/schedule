@@ -52,6 +52,7 @@ sys-original_login
 sys-procedures
 sys-schema-name
 sys-suser_sid
+sys-suser_sname
 sys-sysobjects
 sys-trigger_nestlevel
 routines_definition
@@ -60,6 +61,7 @@ column_domain_usage
 schema_resolution_proc
 datepart
 SYSTEM_USER
+Test-Default-Columns
 BABEL-1189
 BABEL-1243
 BABEL-1963
