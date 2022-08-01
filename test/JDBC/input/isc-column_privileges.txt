@@ -1,4 +1,4 @@
-select * from information_schema.column_privileges;
+select * from information_schema.column_privileges where table_name not like 'sys%';
 
 create database test1;
 
@@ -16,7 +16,7 @@ use master;
 
 drop database test1;
 
-select * from information_schema.column_privileges;
+select * from information_schema.column_privileges where table_name not like 'sys%';
 
 create database test2;
 
@@ -34,7 +34,7 @@ use master;
 
 drop database test2;
 
-select * from information_schema.column_privileges;
+select * from information_schema.column_privileges where table_name not like 'sys%';
 
 create database test3;
 
@@ -52,4 +52,4 @@ use master;
 
 drop database test3;
 
-select * from information_schema.column_privileges
+select * from information_schema.column_privileges where table_name not like 'sys%';
