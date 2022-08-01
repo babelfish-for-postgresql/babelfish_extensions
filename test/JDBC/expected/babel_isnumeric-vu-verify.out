@@ -1,4 +1,4 @@
-SELECT * FROM babel_isnumeric
+SELECT * FROM babel_isnumeric_vu_prepare_t1
 GO
 ~~START~~
 bigint#!#int#!#smallint#!#tinyint#!#bit#!#numeric#!#numeric#!#float#!#real#!#money#!#money
@@ -7,7 +7,7 @@ bigint#!#int#!#smallint#!#tinyint#!#bit#!#numeric#!#numeric#!#float#!#real#!#mon
 
 -- Test bigint
 SELECT ISNUMERIC(bigint_type)
-FROM babel_isnumeric
+FROM babel_isnumeric_vu_prepare_t1
 GO
 ~~START~~
 int
@@ -16,7 +16,7 @@ int
 
 -- Test int
 SELECT ISNUMERIC(int_type)
-FROM babel_isnumeric
+FROM babel_isnumeric_vu_prepare_t1
 GO
 ~~START~~
 int
@@ -25,7 +25,7 @@ int
 
 -- Test smallint
 SELECT ISNUMERIC(smallint_type)
-FROM babel_isnumeric
+FROM babel_isnumeric_vu_prepare_t1
 GO
 ~~START~~
 int
@@ -34,7 +34,7 @@ int
 
 -- Test tinyint
 SELECT ISNUMERIC(tinyint_type)
-FROM babel_isnumeric
+FROM babel_isnumeric_vu_prepare_t1
 GO
 ~~START~~
 int
@@ -43,7 +43,7 @@ int
 
 -- Test bit
 SELECT ISNUMERIC(bit_type)
-FROM babel_isnumeric
+FROM babel_isnumeric_vu_prepare_t1
 GO
 ~~START~~
 int
@@ -52,7 +52,7 @@ int
 
 -- Test decimal
 SELECT ISNUMERIC(decimal_type)
-FROM babel_isnumeric
+FROM babel_isnumeric_vu_prepare_t1
 GO
 ~~START~~
 int
@@ -61,7 +61,7 @@ int
 
 -- Test numeric
 SELECT ISNUMERIC(numeric_type)
-FROM babel_isnumeric
+FROM babel_isnumeric_vu_prepare_t1
 GO
 ~~START~~
 int
@@ -70,7 +70,7 @@ int
 
 -- Test float
 SELECT ISNUMERIC(float_type)
-FROM babel_isnumeric
+FROM babel_isnumeric_vu_prepare_t1
 GO
 ~~START~~
 int
@@ -79,7 +79,7 @@ int
 
 -- Test real
 SELECT ISNUMERIC(real_type)
-FROM babel_isnumeric
+FROM babel_isnumeric_vu_prepare_t1
 GO
 ~~START~~
 int
@@ -88,7 +88,7 @@ int
 
 -- Test money
 SELECT ISNUMERIC(money_type)
-FROM babel_isnumeric
+FROM babel_isnumeric_vu_prepare_t1
 GO
 ~~START~~
 int
@@ -97,7 +97,7 @@ int
 
 -- Test smallmoney
 SELECT ISNUMERIC(smallmoney_type)
-FROM babel_isnumeric
+FROM babel_isnumeric_vu_prepare_t1
 GO
 ~~START~~
 int

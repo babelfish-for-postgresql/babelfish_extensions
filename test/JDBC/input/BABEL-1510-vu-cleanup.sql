@@ -1,2 +1,2 @@
-DROP TABLE babel_1510_vu_t
+DROP TABLE babel_1510_vu_prepare_t
 go

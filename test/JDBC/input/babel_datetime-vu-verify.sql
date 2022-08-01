@@ -1,18 +1,18 @@
 -- Test datetime default value
-select a from babel_datetime_vu_testing_1 where b = 1
+select a from babel_datetime_vu_prepare_testing_1 where b = 1
 go
 
 -- Testing inserting into the table
-select * from babel_datetime_vu_testing
+select * from babel_datetime_vu_prepare_testing
 go
 
 -- Test comparision with datetime/smalldatetime/date
-select * from babel_datetime_vu_testing where dt >= smalldatetime('2000-01-01 00:00:59')
+select * from babel_datetime_vu_prepare_testing where dt >= smalldatetime('2000-01-01 00:00:59')
 go
-select * from babel_datetime_vu_testing where dt >= datetime('1992-05-23 23:40:00') 
+select * from babel_datetime_vu_prepare_testing where dt >= datetime('1992-05-23 23:40:00') 
                     and dt < datetime('1992-05-23 23:41:00')
 go
-select * from babel_datetime_vu_testing where dt < date('1992-05-24')
+select * from babel_datetime_vu_prepare_testing where dt < date('1992-05-24')
 go
 
 -- Test rounding (datetime rounds milliseconds to 0.000, 0.003, 0.007)

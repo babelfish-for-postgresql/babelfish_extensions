@@ -1,2 +1,2 @@
-DROP TABLE BABEL_SQUARE_vu_cubes;
+DROP TABLE babel_square_vu_prepare_cubes;
 GO

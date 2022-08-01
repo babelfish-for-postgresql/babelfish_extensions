@@ -1,2 +1,2 @@
-drop table babel_2701
+drop table babel_2701_vu_prepare_t1
 GO

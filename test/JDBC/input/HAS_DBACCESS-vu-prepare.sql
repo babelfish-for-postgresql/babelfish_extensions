@@ -1,2 +1,2 @@
-CREATE DATABASE has_dbaccess_db1;
+CREATE DATABASE has_dbaccess_prepare_db1;
 GO

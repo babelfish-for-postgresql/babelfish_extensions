@@ -21,7 +21,7 @@ SELECT square(CAST(12.4 AS numeric));
 GO
 
 -- Test select from table
-SELECT id, square(side_length)*side_length AS volume FROM BABEL_SQUARE_vu_cubes;
+SELECT id, square(side_length)*side_length AS volume FROM babel_square_vu_prepare_cubes;
 GO
 
 -- Float overflow: expect error

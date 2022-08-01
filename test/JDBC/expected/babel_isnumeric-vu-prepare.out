@@ -2,10 +2,10 @@
 --
 -- Tests for ISNUMERIC function
 --
-DROP TABLE IF EXISTS babel_isnumeric
+DROP TABLE IF EXISTS babel_isnumeric_vu_prepare_t1
 GO
 
-CREATE TABLE babel_isnumeric (
+CREATE TABLE babel_isnumeric_vu_prepare_t1 (
     bigint_type bigint,
     int_type int,
     smallint_type smallint,
@@ -20,7 +20,7 @@ CREATE TABLE babel_isnumeric (
 )
 GO
 
-INSERT INTO babel_isnumeric (
+INSERT INTO babel_isnumeric_vu_prepare_t1 (
     bigint_type,
     int_type,
     smallint_type,

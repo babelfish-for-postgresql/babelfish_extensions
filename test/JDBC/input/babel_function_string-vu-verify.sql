@@ -57,13 +57,13 @@ GO
 
 -- additional tests for DATALENGTH (more types, nullvalues)
 SELECT datalength(a), datalength(b),datalength(c),datalength(d),datalength(e),
-       datalength(f),datalength(g),datalength(h),datalength(i) FROM babel_function_string_1
+       datalength(f),datalength(g),datalength(h),datalength(i) FROM babel_function_string_vu_prepare_1
 GO
 
-SELECT datalength(a), datalength(b),datalength(c),datalength(d),datalength(e), datalength(f),datalength(g),datalength(h),datalength(i) FROM babel_function_string_2
+SELECT datalength(a), datalength(b),datalength(c),datalength(d),datalength(e), datalength(f),datalength(g),datalength(h),datalength(i) FROM babel_function_string_vu_prepare_2
 GO
 
-SELECT datalength(a), datalength(b),datalength(c),datalength(d),datalength(e), datalength(f),datalength(g),datalength(h) FROM babel_function_string_3
+SELECT datalength(a), datalength(b),datalength(c),datalength(d),datalength(e), datalength(f),datalength(g),datalength(h) FROM babel_function_string_vu_prepare_3
 GO
 
 -- test quotename function

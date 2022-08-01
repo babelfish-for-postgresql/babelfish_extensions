@@ -107,7 +107,7 @@ int
 
 
 -- Test CHECKSUM works on table column
-select CHECKSUM(a), CHECKSUM(b) from BABEL_1566_vu_1;
+select CHECKSUM(a), CHECKSUM(b) from BABEL_1566_vu_prepare_1;
 go
 ~~START~~
 int#!#int
@@ -117,7 +117,7 @@ int#!#int
 ~~END~~
 
 
-select CHECKSUM(a, b) from BABEL_1566_vu_1;
+select CHECKSUM(a, b) from BABEL_1566_vu_prepare_1;
 go
 ~~START~~
 int
@@ -127,7 +127,7 @@ int
 ~~END~~
 
 
-select CHECKSUM(*) from BABEL_1566_vu_1;
+select CHECKSUM(*) from BABEL_1566_vu_prepare_1;
 go
 ~~START~~
 int
@@ -137,10 +137,10 @@ int
 ~~END~~
 
 
-alter table BABEL_1566_vu_1 drop column a;
+alter table BABEL_1566_vu_prepare_1 drop column a;
 go
 
-select checksum(b) from BABEL_1566_vu_1;
+select checksum(b) from BABEL_1566_vu_prepare_1;
 go
 ~~START~~
 int
@@ -150,7 +150,7 @@ int
 ~~END~~
 
 
-select checksum(*) from BABEL_1566_vu_1;
+select checksum(*) from BABEL_1566_vu_prepare_1;
 go
 ~~START~~
 int
@@ -161,7 +161,7 @@ int
 
 
 -- Test checksum on table with null input and empty string
-select checksum(*) from BABEL_1566_vu_2;
+select checksum(*) from BABEL_1566_vu_prepare_2;
 go
 ~~START~~
 int
@@ -172,7 +172,7 @@ int
 
 
 
-select checksum(user_type_id) from sys.columns where object_id=OBJECT_ID('BABEL_1566_vu_3')
+select checksum(user_type_id) from sys.columns where object_id=OBJECT_ID('BABEL_1566_vu_prepare_3')
 go
 ~~START~~
 int
@@ -183,14 +183,14 @@ int
 EXEC sp_babelfish_configure 'babelfishpg_tsql.escape_hatch_rowversion', 'ignore';
 go
 
-select checksum(*) from BABEL_1566_vu_dates;
+select checksum(*) from BABEL_1566_vu_prepare_dates;
 go
 ~~START~~
 int
 ~~END~~
 
 
-select checksum(*) from BABEL_1566_vu_4;
+select checksum(*) from BABEL_1566_vu_prepare_4;
 go
 ~~START~~
 int

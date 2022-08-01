@@ -1,5 +1,5 @@
 -- Test datetime default value
-select a from babel_datetime_vu_testing_1 where b = 1
+select a from babel_datetime_vu_prepare_testing_1 where b = 1
 go
 ~~START~~
 datetime
@@ -8,7 +8,7 @@ datetime
 
 
 -- Testing inserting into the table
-select * from babel_datetime_vu_testing
+select * from babel_datetime_vu_prepare_testing
 go
 ~~START~~
 datetime
@@ -25,7 +25,7 @@ datetime
 
 
 -- Test comparision with datetime/smalldatetime/date
-select * from babel_datetime_vu_testing where dt >= smalldatetime('2000-01-01 00:00:59')
+select * from babel_datetime_vu_prepare_testing where dt >= smalldatetime('2000-01-01 00:00:59')
 go
 ~~START~~
 datetime
@@ -33,7 +33,7 @@ datetime
 2020-03-14 00:00:00.0
 ~~END~~
 
-select * from babel_datetime_vu_testing where dt >= datetime('1992-05-23 23:40:00') 
+select * from babel_datetime_vu_prepare_testing where dt >= datetime('1992-05-23 23:40:00') 
                     and dt < datetime('1992-05-23 23:41:00')
 go
 ~~START~~
@@ -42,7 +42,7 @@ datetime
 1992-05-23 23:40:30.0
 ~~END~~
 
-select * from babel_datetime_vu_testing where dt < date('1992-05-24')
+select * from babel_datetime_vu_prepare_testing where dt < date('1992-05-24')
 go
 ~~START~~
 datetime
@@ -63,7 +63,7 @@ select CAST(CAST('2020-03-15 23:59:29.99' AS datetime) AS datetime2)
 go
 ~~START~~
 datetime2
-2020-03-15 23:59:29.990000
+2020-03-15 23:59:29.9900000
 ~~END~~
 
 select CAST(CAST('2079-06-06 23:59:29.99' AS datetime2) AS datetime)
@@ -132,21 +132,21 @@ select CAST(CAST('1900-05-06 23:59:29.998' AS datetime) AS time)
 go
 ~~START~~
 time
-23:59:29.998000
+23:59:29.9980000
 ~~END~~
 
 select CAST(CAST('2050-05-06 00:00:00' AS datetime) AS time)
 go
 ~~START~~
 time
-00:00:00.000000
+00:00:00.0000000
 ~~END~~
 
 select CAST(CAST('2050-05-06 23:59:29.998' AS datetime) AS time)
 go
 ~~START~~
 time
-23:59:29.998000
+23:59:29.9980000
 ~~END~~
 
 
@@ -187,7 +187,7 @@ select CAST(CAST('2020-03-15 23:59:29.99' AS datetime) AS datetimeoffset)
 go
 ~~START~~
 datetimeoffset
-2020-03-15 23:59:29.990000 +00:00
+2020-03-15 23:59:29.9900000 +00:00
 ~~END~~
 
 select CAST(CAST('2079-06-06 23:59:29.998 +8:00' AS datetimeoffset) AS datetime)

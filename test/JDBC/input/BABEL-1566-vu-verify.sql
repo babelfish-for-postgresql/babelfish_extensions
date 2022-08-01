@@ -44,39 +44,39 @@ select CHECKSUM('123', '456');
 go
 
 -- Test CHECKSUM works on table column
-select CHECKSUM(a), CHECKSUM(b) from BABEL_1566_vu_1;
+select CHECKSUM(a), CHECKSUM(b) from BABEL_1566_vu_prepare_1;
 go
 
-select CHECKSUM(a, b) from BABEL_1566_vu_1;
+select CHECKSUM(a, b) from BABEL_1566_vu_prepare_1;
 go
 
-select CHECKSUM(*) from BABEL_1566_vu_1;
+select CHECKSUM(*) from BABEL_1566_vu_prepare_1;
 go
 
-alter table BABEL_1566_vu_1 drop column a;
+alter table BABEL_1566_vu_prepare_1 drop column a;
 go
 
-select checksum(b) from BABEL_1566_vu_1;
+select checksum(b) from BABEL_1566_vu_prepare_1;
 go
 
-select checksum(*) from BABEL_1566_vu_1;
+select checksum(*) from BABEL_1566_vu_prepare_1;
 go
 
 -- Test checksum on table with null input and empty string
-select checksum(*) from BABEL_1566_vu_2;
+select checksum(*) from BABEL_1566_vu_prepare_2;
 go
 
 
-select checksum(user_type_id) from sys.columns where object_id=OBJECT_ID('BABEL_1566_vu_3')
+select checksum(user_type_id) from sys.columns where object_id=OBJECT_ID('BABEL_1566_vu_prepare_3')
 go
 
 EXEC sp_babelfish_configure 'babelfishpg_tsql.escape_hatch_rowversion', 'ignore';
 go
 
-select checksum(*) from BABEL_1566_vu_dates;
+select checksum(*) from BABEL_1566_vu_prepare_dates;
 go
 
-select checksum(*) from BABEL_1566_vu_4;
+select checksum(*) from BABEL_1566_vu_prepare_4;
 go
 
 select distinct checksum(create_date) from sys.objects;

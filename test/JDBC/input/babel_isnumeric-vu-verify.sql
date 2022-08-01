@@ -1,48 +1,48 @@
-SELECT * FROM babel_isnumeric
+SELECT * FROM babel_isnumeric_vu_prepare_t1
 GO
 -- Test bigint
 SELECT ISNUMERIC(bigint_type)
-FROM babel_isnumeric
+FROM babel_isnumeric_vu_prepare_t1
 GO
 -- Test int
 SELECT ISNUMERIC(int_type)
-FROM babel_isnumeric
+FROM babel_isnumeric_vu_prepare_t1
 GO
 -- Test smallint
 SELECT ISNUMERIC(smallint_type)
-FROM babel_isnumeric
+FROM babel_isnumeric_vu_prepare_t1
 GO
 -- Test tinyint
 SELECT ISNUMERIC(tinyint_type)
-FROM babel_isnumeric
+FROM babel_isnumeric_vu_prepare_t1
 GO
 -- Test bit
 SELECT ISNUMERIC(bit_type)
-FROM babel_isnumeric
+FROM babel_isnumeric_vu_prepare_t1
 GO
 -- Test decimal
 SELECT ISNUMERIC(decimal_type)
-FROM babel_isnumeric
+FROM babel_isnumeric_vu_prepare_t1
 GO
 -- Test numeric
 SELECT ISNUMERIC(numeric_type)
-FROM babel_isnumeric
+FROM babel_isnumeric_vu_prepare_t1
 GO
 -- Test float
 SELECT ISNUMERIC(float_type)
-FROM babel_isnumeric
+FROM babel_isnumeric_vu_prepare_t1
 GO
 -- Test real
 SELECT ISNUMERIC(real_type)
-FROM babel_isnumeric
+FROM babel_isnumeric_vu_prepare_t1
 GO
 -- Test money
 SELECT ISNUMERIC(money_type)
-FROM babel_isnumeric
+FROM babel_isnumeric_vu_prepare_t1
 GO
 -- Test smallmoney
 SELECT ISNUMERIC(smallmoney_type)
-FROM babel_isnumeric
+FROM babel_isnumeric_vu_prepare_t1
 GO
 
 -- Test valid and invalid operators and literals
