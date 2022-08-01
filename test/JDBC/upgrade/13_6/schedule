@@ -108,5 +108,6 @@ table-variable
 TestNotNull
 Test-Default-Columns
 Test-Identity
+Test-Computed-Columns
 Test-sp_helpuser
 TestTableType

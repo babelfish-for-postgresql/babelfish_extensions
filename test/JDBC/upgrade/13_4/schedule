@@ -90,4 +90,5 @@ table-variable
 TestNotNull
 Test-Default-Columns
 Test-Identity
+Test-Computed-Columns
 TestTableType

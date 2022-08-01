@@ -91,6 +91,7 @@ table-variable
 TestNotNull
 Test-Default-Columns
 Test-Identity
+Test-Computed-Columns
 BABEL-1189
 BABEL-1243
 BABEL-1189
