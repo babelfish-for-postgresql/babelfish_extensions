@@ -1,10 +1,34 @@
+<<<<<<< HEAD
 use db_view_table_usage;
+=======
+use database db_view_table_usage;
+>>>>>>> f0db34d (implemented main test, prepare and verify tests)
 go
 
 select * from information_schema.view_table_usage where table_name not like 'sys%';
 go
 ~~START~~
 nvarchar#!#nvarchar#!#varchar#!#nvarchar#!#nvarchar#!#varchar
+<<<<<<< HEAD
+=======
+~~END~~
+
+
+
+
+create table view_table_usage_tb1(arg1 int, arg2 char, arg3 varchar);
+go
+
+
+create view view_table_usage_v1 as select * from view_table_usage_tb1;
+go
+
+
+select * from information_schema.view_table_usage where table_name not like 'sys%';
+go
+~~START~~
+nvarchar#!#nvarchar#!#varchar#!#nvarchar#!#nvarchar#!#varchar
+>>>>>>> f0db34d (implemented main test, prepare and verify tests)
 db_view_table_usage#!#dbo#!#view_table_usage_v1#!#db_view_table_usage#!#dbo#!#view_table_usage_tb1
 ~~END~~
 
