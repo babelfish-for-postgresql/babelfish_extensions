@@ -1,4 +1,4 @@
-SELECT * FROM testdecimal_table1;
+SELECT * FROM testdecimal_vu_prepare_table1;
 ~~START~~
 numeric
 3.00
@@ -15,7 +15,7 @@ numeric
 ~~END~~
 
 
-SELECT * FROM testdecimal_table2;
+SELECT * FROM testdecimal_vu_prepare_table2;
 ~~START~~
 numeric
 3.000
@@ -39,7 +39,7 @@ numeric
 
 
 # JIRA 507, WORKING FOR BABEL
-SELECT * FROM testdecimal_table3;
+SELECT * FROM testdecimal_vu_prepare_table3;
 ~~START~~
 numeric
 3.00000000000000000000
@@ -57,7 +57,7 @@ numeric
 ~~END~~
 
 
-SELECT * FROM testdecimal_table4;
+SELECT * FROM testdecimal_vu_prepare_table4;
 ~~START~~
 numeric
 3.00000000000000000000
@@ -75,7 +75,7 @@ numeric
 ~~END~~
 
 
-SELECT * FROM testdecimal_table5;
+SELECT * FROM testdecimal_vu_prepare_table5;
 ~~START~~
 numeric
 3.000000000000000000000
@@ -93,7 +93,7 @@ numeric
 ~~END~~
 
 
-SELECT * FROM testdecimal_table6;
+SELECT * FROM testdecimal_vu_prepare_table6;
 ~~START~~
 numeric
 3.0000000000000000000000
@@ -111,7 +111,7 @@ numeric
 ~~END~~
 
 
-SELECT * FROM testdecimal_table7;
+SELECT * FROM testdecimal_vu_prepare_table7;
 ~~START~~
 numeric
 3.00000000000000000000000
@@ -129,7 +129,7 @@ numeric
 ~~END~~
 
 
-SELECT * FROM testdecimal_table8;
+SELECT * FROM testdecimal_vu_prepare_table8;
 ~~START~~
 numeric
 3.0000000000000000000000000
@@ -148,7 +148,7 @@ numeric
 ~~END~~
 
 
-SELECT * FROM testdecimal_table9;
+SELECT * FROM testdecimal_vu_prepare_table9;
 ~~START~~
 numeric
 2147483647.0000000000000000000000000
