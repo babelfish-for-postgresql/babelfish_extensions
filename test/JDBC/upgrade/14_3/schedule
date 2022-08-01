@@ -63,6 +63,7 @@ sp_describe_first_result_set
 schema_resolution_proc
 datepart
 SYSTEM_USER
+Test-Default-Columns
 BABEL-1189
 BABEL-1243
 BABEL-1963
