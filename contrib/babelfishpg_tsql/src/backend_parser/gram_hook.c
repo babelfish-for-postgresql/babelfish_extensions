@@ -33,18 +33,12 @@ void install_backend_gram_hooks()
 static void
 fix_tsql_domain_typmods(TypeName *typname)
 {
-	ereport(LOG, (errmsg("babelfish_dump_restore: \"%s\"", babelfish_dump_restore)));
 	if (!babelfish_dump_restore)
 		return;
 
-	// const char *dump_restore = GetConfigOption("babelfishpg_tsql.dump_restore", true, false);
-	// if (!dump_restore || strcmp(dump_restore, "on") != 0)
-	// 	return;
-
-	ereport(LOG, (errmsg("typname: \"%s\"", typname)));
-
 	/* sys.sysname and sys._ci_sysname should not have typmods */
-	if (strcmp(strVal(linitial(typname->names)), "sys") == 0 &&
+	if (list_length(typname->names) >= 2 &&
+		strcmp(strVal(linitial(typname->names)), "sys") == 0 &&
 		(strcmp(strVal(lsecond(typname->names)), "sysname") == 0 ||
 			strcmp(strVal(lsecond(typname->names)), "_ci_sysname") == 0))
 		typname->typmods = NIL;
