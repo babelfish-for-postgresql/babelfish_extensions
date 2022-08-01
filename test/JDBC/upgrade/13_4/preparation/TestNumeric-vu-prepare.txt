@@ -1,6 +1,6 @@
-CREATE TABLE numeric_table1(num numeric(5, 2));
+CREATE TABLE testnumeric_vu_prepare_table1(num numeric(5, 2));
 
-prepst#!#INSERT INTO numeric_table1(num) VALUES(@a) #!#numeric|-|a|-|3|-|5|-|2
+prepst#!#INSERT INTO testnumeric_vu_prepare_table1(num) VALUES(@a) #!#numeric|-|a|-|3|-|5|-|2
 prepst#!#exec#!#numeric|-|a|-|123.456|-|5|-|2
 prepst#!#exec#!#numeric|-|a|-|123.4|-|5|-|2
 prepst#!#exec#!#numeric|-|a|-|123|-|5|-|2
@@ -13,9 +13,9 @@ prepst#!#exec#!#numeric|-|a|-|-123|-|5|-|2
 prepst#!#exec#!#numeric|-|a|-|-1|-|3|-|2
 prepst#!#exec#!#numeric|-|a|-|-123|-|9|-|2
 
-CREATE TABLE numeric_table2(num numeric(38, 3));
+CREATE TABLE testnumeric_vu_prepare_table2(num numeric(38, 3));
 
-prepst#!#INSERT INTO numeric_table2(num) VALUES(@a1) #!#numeric|-|a1|-|3|-|5|-|2
+prepst#!#INSERT INTO testnumeric_vu_prepare_table2(num) VALUES(@a1) #!#numeric|-|a1|-|3|-|5|-|2
 prepst#!#exec#!#numeric|-|a1|-|123.456|-|5|-|2
 prepst#!#exec#!#numeric|-|a1|-|123.4|-|5|-|2
 prepst#!#exec#!#numeric|-|a1|-|123|-|5|-|2
@@ -36,11 +36,11 @@ prepst#!#exec#!#numeric|-|a1|-|2147483648|-|10|-|0
 prepst#!#exec#!#numeric|-|a1|-|-2147483648|-|10|-|0
 
 # JIRA 507, WORKING FOR BABEL
-#CREATE TABLE numeric_table3(num numeric(39, 20));
+#CREATE TABLE testnumeric_vu_prepare_table3(num numeric(39, 20));
 
-CREATE TABLE numeric_table3(num numeric(38, 20));
+CREATE TABLE testnumeric_vu_prepare_table3(num numeric(38, 20));
 
-prepst#!#INSERT INTO numeric_table3(num) VALUES(@a2) #!#numeric|-|a2|-|3|-|5|-|2
+prepst#!#INSERT INTO testnumeric_vu_prepare_table3(num) VALUES(@a2) #!#numeric|-|a2|-|3|-|5|-|2
 prepst#!#exec#!#numeric|-|a2|-|123.456|-|5|-|2
 prepst#!#exec#!#numeric|-|a2|-|123.4|-|5|-|2
 prepst#!#exec#!#numeric|-|a2|-|123|-|5|-|2
@@ -55,8 +55,8 @@ prepst#!#exec#!#numeric|-|a2|-|-123|-|9|-|2
 prepst#!#exec#!#numeric|-|a2|-|2147483647|-|10|-|0
 
 
-CREATE TABLE numeric_table4(num numeric(38, 20));
-prepst#!#INSERT INTO numeric_table4(num) VALUES(@a3) #!#numeric|-|a3|-|3|-|5|-|2
+CREATE TABLE testnumeric_vu_prepare_table4(num numeric(38, 20));
+prepst#!#INSERT INTO testnumeric_vu_prepare_table4(num) VALUES(@a3) #!#numeric|-|a3|-|3|-|5|-|2
 prepst#!#exec#!#numeric|-|a3|-|123.456|-|5|-|2
 prepst#!#exec#!#numeric|-|a3|-|123.4|-|5|-|2
 prepst#!#exec#!#numeric|-|a3|-|123|-|5|-|2
@@ -70,8 +70,8 @@ prepst#!#exec#!#numeric|-|a3|-|-1|-|3|-|2
 prepst#!#exec#!#numeric|-|a3|-|-123|-|9|-|2
 prepst#!#exec#!#numeric|-|a3|-|2147483647|-|10|-|0
 
-CREATE TABLE numeric_table5(num numeric(38, 21));
-prepst#!#INSERT INTO numeric_table5(num) VALUES(@a4) #!#numeric|-|a4|-|3|-|5|-|2
+CREATE TABLE testnumeric_vu_prepare_table5(num numeric(38, 21));
+prepst#!#INSERT INTO testnumeric_vu_prepare_table5(num) VALUES(@a4) #!#numeric|-|a4|-|3|-|5|-|2
 prepst#!#exec#!#numeric|-|a4|-|123.456|-|5|-|2
 prepst#!#exec#!#numeric|-|a4|-|123.4|-|5|-|2
 prepst#!#exec#!#numeric|-|a4|-|123|-|5|-|2
@@ -85,8 +85,8 @@ prepst#!#exec#!#numeric|-|a4|-|-1|-|3|-|2
 prepst#!#exec#!#numeric|-|a4|-|-123|-|9|-|2
 prepst#!#exec#!#numeric|-|a4|-|2147483647|-|10|-|0
 
-CREATE TABLE numeric_table6(num numeric(38, 22));
-prepst#!#INSERT INTO numeric_table6(num) VALUES(@a5) #!#numeric|-|a5|-|3|-|5|-|2
+CREATE TABLE testnumeric_vu_prepare_table6(num numeric(38, 22));
+prepst#!#INSERT INTO testnumeric_vu_prepare_table6(num) VALUES(@a5) #!#numeric|-|a5|-|3|-|5|-|2
 prepst#!#exec#!#numeric|-|a5|-|123.456|-|5|-|2
 prepst#!#exec#!#numeric|-|a5|-|123.4|-|5|-|2
 prepst#!#exec#!#numeric|-|a5|-|123|-|5|-|2
@@ -100,8 +100,8 @@ prepst#!#exec#!#numeric|-|a5|-|-1|-|3|-|2
 prepst#!#exec#!#numeric|-|a5|-|-123|-|9|-|2
 prepst#!#exec#!#numeric|-|a5|-|2147483647|-|10|-|0
 
-CREATE TABLE numeric_table7(num numeric(38, 23));
-prepst#!#INSERT INTO numeric_table7(num) VALUES(@a6) #!#numeric|-|a6|-|3|-|5|-|2
+CREATE TABLE testnumeric_vu_prepare_table7(num numeric(38, 23));
+prepst#!#INSERT INTO testnumeric_vu_prepare_table7(num) VALUES(@a6) #!#numeric|-|a6|-|3|-|5|-|2
 prepst#!#exec#!#numeric|-|a6|-|123.456|-|5|-|2
 prepst#!#exec#!#numeric|-|a6|-|123.4|-|5|-|2
 prepst#!#exec#!#numeric|-|a6|-|123|-|5|-|2
@@ -115,8 +115,8 @@ prepst#!#exec#!#numeric|-|a6|-|-1|-|3|-|2
 prepst#!#exec#!#numeric|-|a6|-|-123|-|9|-|2
 prepst#!#exec#!#numeric|-|a6|-|2147483647|-|10|-|0
 
-CREATE TABLE numeric_table8(num numeric(38, 25));
-prepst#!#INSERT INTO numeric_table8(num) VALUES(@a7) #!#numeric|-|a7|-|3|-|5|-|2
+CREATE TABLE testnumeric_vu_prepare_table8(num numeric(38, 25));
+prepst#!#INSERT INTO testnumeric_vu_prepare_table8(num) VALUES(@a7) #!#numeric|-|a7|-|3|-|5|-|2
 prepst#!#exec#!#numeric|-|a7|-|123.456|-|5|-|2
 prepst#!#exec#!#numeric|-|a7|-|123.4|-|5|-|2
 prepst#!#exec#!#numeric|-|a7|-|123|-|5|-|2
@@ -131,48 +131,48 @@ prepst#!#exec#!#numeric|-|a7|-|-123|-|9|-|2
 prepst#!#exec#!#numeric|-|a7|-|247483647|-|10|-|0
 prepst#!#exec#!#numeric|-|a7|-|-247483647|-|10|-|0
 
-CREATE TABLE numeric_table9(num numeric(38, 25));
+CREATE TABLE testnumeric_vu_prepare_table9(num numeric(38, 25));
 
-insert into numeric_table9 values (2147483647)
-insert into numeric_table9 values (-2147483647)
+insert into testnumeric_vu_prepare_table9 values (2147483647)
+insert into testnumeric_vu_prepare_table9 values (-2147483647)
 
-insert into numeric_table9 values (2147483646)
-insert into numeric_table9 values (-2147483646)
+insert into testnumeric_vu_prepare_table9 values (2147483646)
+insert into testnumeric_vu_prepare_table9 values (-2147483646)
 
-insert into numeric_table9 values (2147483648)
-insert into numeric_table9 values (-2147483648)
+insert into testnumeric_vu_prepare_table9 values (2147483648)
+insert into testnumeric_vu_prepare_table9 values (-2147483648)
 
-#insert into numeric_table9 values(123456789123456789.1234567891234567891234567);
-#insert into numeric_table9 values(1234567891234567891.1234567891234567891234567);
-#insert into numeric_table9 values(123456789123456789.12345678912345678912345678);
-insert into numeric_table9 values(0.0);
-insert into numeric_table9 values(0.0000000000000000000000000);
-insert into numeric_table9 values(0.00000000000000000000000000);
+#insert into testnumeric_vu_prepare_table9 values(123456789123456789.1234567891234567891234567);
+#insert into testnumeric_vu_prepare_table9 values(1234567891234567891.1234567891234567891234567);
+#insert into testnumeric_vu_prepare_table9 values(123456789123456789.12345678912345678912345678);
+insert into testnumeric_vu_prepare_table9 values(0.0);
+insert into testnumeric_vu_prepare_table9 values(0.0000000000000000000000000);
+insert into testnumeric_vu_prepare_table9 values(0.00000000000000000000000000);
 
 # BABEL-2048
-CREATE TABLE babel_2048_t1(a int, b NUMERIC(19,4), c NUMERIC(20, 9), d FLOAT);
-INSERT INTO babel_2048_t1 VALUES (1, 2.3, 3.123456789, 4.123456789);
+CREATE TABLE testnumeric_vu_prepare_table10(a int, b NUMERIC(19,4), c NUMERIC(20, 9), d FLOAT);
+INSERT INTO testnumeric_vu_prepare_table10 VALUES (1, 2.3, 3.123456789, 4.123456789);
 
 # test Case expression with numeric args
-INSERT INTO babel_2048_t1 VALUES (2, 3.7, 4.123456789, 5.123456789);
+INSERT INTO testnumeric_vu_prepare_table10 VALUES (2, 3.7, 4.123456789, 5.123456789);
 
 # BABEL-3074
-CREATE TABLE testnumeric_overflow_test1 (id integer PRIMARY KEY, amount numeric(6, 2));
-INSERT INTO testnumeric_overflow_test1 VALUES (1, 5000.00);
-INSERT INTO testnumeric_overflow_test1 VALUES (2, 6000.00);
+CREATE TABLE testnumeric_vu_prepare_overflow_test1 (id integer PRIMARY KEY, amount numeric(6, 2));
+INSERT INTO testnumeric_vu_prepare_overflow_test1 VALUES (1, 5000.00);
+INSERT INTO testnumeric_vu_prepare_overflow_test1 VALUES (2, 6000.00);
 
 # BABEL-3157
-CREATE TABLE testnumeric_overflow_test2 (id integer PRIMARY KEY, amount numeric(6, 2));
-INSERT INTO testnumeric_overflow_test2 VALUES (1, 9999.99), (2, 9999.99), (3, 9999.99), (4,9999.99), (5, 9999.99), (6, 9999.99), (7, 9999.99), (8,9999.99), (9, 9999.99), (10,9999.99), (11, 9999.99), (12, 9999.99), (13, 9999.99), (14,9999.99), (15, 9999.99), (16,9999.99);
+CREATE TABLE testnumeric_vu_prepare_overflow_test2 (id integer PRIMARY KEY, amount numeric(6, 2));
+INSERT INTO testnumeric_vu_prepare_overflow_test2 VALUES (1, 9999.99), (2, 9999.99), (3, 9999.99), (4,9999.99), (5, 9999.99), (6, 9999.99), (7, 9999.99), (8,9999.99), (9, 9999.99), (10,9999.99), (11, 9999.99), (12, 9999.99), (13, 9999.99), (14,9999.99), (15, 9999.99), (16,9999.99);
  
 #testing resultant scale when i/p scale > 6
-CREATE TABLE testnumeric_overflow_test3 (amount numeric(10, 8));
-INSERT INTO testnumeric_overflow_test3 VALUES(99.123);
-INSERT INTO testnumeric_overflow_test3 VALUES(1.123);
+CREATE TABLE testnumeric_vu_prepare_overflow_test3 (amount numeric(10, 8));
+INSERT INTO testnumeric_vu_prepare_overflow_test3 VALUES(99.123);
+INSERT INTO testnumeric_vu_prepare_overflow_test3 VALUES(1.123);
  
-CREATE TABLE testnumeric_overflow_test4 (amount numeric(5, 2));
-INSERT INTO testnumeric_overflow_test4 VALUES(999.12);
-INSERT INTO testnumeric_overflow_test4 VALUES(1.12);
+CREATE TABLE testnumeric_vu_prepare_overflow_test4 (amount numeric(5, 2));
+INSERT INTO testnumeric_vu_prepare_overflow_test4 VALUES(999.12);
+INSERT INTO testnumeric_vu_prepare_overflow_test4 VALUES(1.12);
  
-CREATE TABLE testnumeric_overflow_test5 (id integer PRIMARY KEY, amount1 numeric(6, 2), amount2 numeric(6,3), amount3 numeric(11,8));
-INSERT INTO testnumeric_overflow_test5 VALUES (1, 9999.99, 999.999, 999.12345678), (2, 9999.99, 999.999, 999.12345678), (3, 9999.99, 999.999, 999.12345678), (4, 9999.99, 999.999, 999.12345678), (5, 9999.99, 999.999, 999.12345678), (6, 9999.99, 999.999, 999.12345678), (7, 9999.99, 999.999, 999.12345678), (8, 9999.99, 999.999, 999.12345678), (9, 9999.99, 999.999, 999.12345678), (10,9999.99, 999.999, 999.12345678), (11, 9999.99, 999.999, 999.12345678), (12, 9999.9, 999.999, 999.12345678), (13, 9999.99, 999.999, 999.12345678), (14,9999.99, 999.999, 999.12345678), (15, 9999.99, 999.999, 999.12345678), (16, 9999.99, 999.999, 999.12345678), (17, 9999.99, 999.999, 999.12345678), (18, 9999.99, 999.999, 999.12345678), (19, 9999.99, 999.999, 999.12345678), (20,9999.99, 999.999, 999.12345678), (21, 9999.99, 999.999, 999.12345678), (22,9999.99, 999.999, 999.12345678);
+CREATE TABLE testnumeric_vu_prepare_overflow_test5 (id integer PRIMARY KEY, amount1 numeric(6, 2), amount2 numeric(6,3), amount3 numeric(11,8));
+INSERT INTO testnumeric_vu_prepare_overflow_test5 VALUES (1, 9999.99, 999.999, 999.12345678), (2, 9999.99, 999.999, 999.12345678), (3, 9999.99, 999.999, 999.12345678), (4, 9999.99, 999.999, 999.12345678), (5, 9999.99, 999.999, 999.12345678), (6, 9999.99, 999.999, 999.12345678), (7, 9999.99, 999.999, 999.12345678), (8, 9999.99, 999.999, 999.12345678), (9, 9999.99, 999.999, 999.12345678), (10,9999.99, 999.999, 999.12345678), (11, 9999.99, 999.999, 999.12345678), (12, 9999.9, 999.999, 999.12345678), (13, 9999.99, 999.999, 999.12345678), (14,9999.99, 999.999, 999.12345678), (15, 9999.99, 999.999, 999.12345678), (16, 9999.99, 999.999, 999.12345678), (17, 9999.99, 999.999, 999.12345678), (18, 9999.99, 999.999, 999.12345678), (19, 9999.99, 999.999, 999.12345678), (20,9999.99, 999.999, 999.12345678), (21, 9999.99, 999.999, 999.12345678), (22,9999.99, 999.999, 999.12345678);

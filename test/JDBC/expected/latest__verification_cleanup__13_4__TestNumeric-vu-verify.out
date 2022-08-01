@@ -1,4 +1,4 @@
-SELECT * FROM numeric_table1;
+SELECT * FROM testnumeric_vu_prepare_table1;
 ~~START~~
 numeric
 3.00
@@ -15,7 +15,7 @@ numeric
 ~~END~~
 
 
-SELECT * FROM numeric_table2;
+SELECT * FROM testnumeric_vu_prepare_table2;
 ~~START~~
 numeric
 3.000
@@ -39,7 +39,7 @@ numeric
 
 
 # JIRA 507, WORKING FOR BABEL
-SELECT * FROM numeric_table3;
+SELECT * FROM testnumeric_vu_prepare_table3;
 ~~START~~
 numeric
 3.00000000000000000000
@@ -57,7 +57,7 @@ numeric
 ~~END~~
 
 
-SELECT * FROM numeric_table4;
+SELECT * FROM testnumeric_vu_prepare_table4;
 ~~START~~
 numeric
 3.00000000000000000000
@@ -75,7 +75,7 @@ numeric
 ~~END~~
 
 
-SELECT * FROM numeric_table5;
+SELECT * FROM testnumeric_vu_prepare_table5;
 ~~START~~
 numeric
 3.000000000000000000000
@@ -93,7 +93,7 @@ numeric
 ~~END~~
 
 
-SELECT * FROM numeric_table6;
+SELECT * FROM testnumeric_vu_prepare_table6;
 ~~START~~
 numeric
 3.0000000000000000000000
@@ -111,7 +111,7 @@ numeric
 ~~END~~
 
 
-SELECT * FROM numeric_table7;
+SELECT * FROM testnumeric_vu_prepare_table7;
 ~~START~~
 numeric
 3.00000000000000000000000
@@ -129,7 +129,7 @@ numeric
 ~~END~~
 
 
-SELECT * FROM numeric_table8;
+SELECT * FROM testnumeric_vu_prepare_table8;
 ~~START~~
 numeric
 3.0000000000000000000000000
@@ -148,7 +148,7 @@ numeric
 ~~END~~
 
 
-SELECT * FROM numeric_table9;
+SELECT * FROM testnumeric_vu_prepare_table9;
 ~~START~~
 numeric
 2147483647.0000000000000000000000000
@@ -196,91 +196,91 @@ numeric
 
 
 # BABEL-2048
-select b - 1 from babel_2048_t1;
+select b - 1 from testnumeric_vu_prepare_table10;
 ~~START~~
 numeric
 1.3000
 2.7000
 ~~END~~
 
-select b - a from babel_2048_t1;
+select b - a from testnumeric_vu_prepare_table10;
 ~~START~~
 numeric
 1.3000
 1.7000
 ~~END~~
 
-select a - b from babel_2048_t1;
+select a - b from testnumeric_vu_prepare_table10;
 ~~START~~
 numeric
 -1.3000
 -1.7000
 ~~END~~
 
-select a + b from babel_2048_t1;
+select a + b from testnumeric_vu_prepare_table10;
 ~~START~~
 numeric
 3.3000
 5.7000
 ~~END~~
 
-select a * b from babel_2048_t1;
+select a * b from testnumeric_vu_prepare_table10;
 ~~START~~
 numeric
 2.3000000
 7.4000000
 ~~END~~
 
-select a / b from babel_2048_t1;
+select a / b from testnumeric_vu_prepare_table10;
 ~~START~~
 numeric
 0.4347826086956521739
 0.5405405405405405405
 ~~END~~
 
-select b / a from babel_2048_t1;
+select b / a from testnumeric_vu_prepare_table10;
 ~~START~~
 numeric
 2.3000000000000000000
 1.8500000000000000000
 ~~END~~
 
-select b * NULL from babel_2048_t1;
+select b * NULL from testnumeric_vu_prepare_table10;
 ~~START~~
 numeric
 <NULL>
 <NULL>
 ~~END~~
 
-select b / NULL from babel_2048_t1;
+select b / NULL from testnumeric_vu_prepare_table10;
 ~~START~~
 numeric
 <NULL>
 <NULL>
 ~~END~~
 
-select b - NULL from babel_2048_t1;
+select b - NULL from testnumeric_vu_prepare_table10;
 ~~START~~
 numeric
 <NULL>
 <NULL>
 ~~END~~
 
-select b + NULL from babel_2048_t1;
+select b + NULL from testnumeric_vu_prepare_table10;
 ~~START~~
 numeric
 <NULL>
 <NULL>
 ~~END~~
 
-select SQRT(a / b) from babel_2048_t1;
+select SQRT(a / b) from testnumeric_vu_prepare_table10;
 ~~START~~
 numeric
 0.65938047
 0.73521462
 ~~END~~
 
-select ROUND(a / b, 3) from babel_2048_t1;
+select ROUND(a / b, 3) from testnumeric_vu_prepare_table10;
 ~~START~~
 numeric
 0.43500000
@@ -301,7 +301,7 @@ numeric
 
 
 # test operation between int and numeric(20, 9)
-select a+c, a-c, a*c, a/c, a%c, a%NULL from babel_2048_t1;
+select a+c, a-c, a*c, a/c, a%c, a%NULL from testnumeric_vu_prepare_table10;
 ~~START~~
 numeric#!#numeric#!#numeric#!#numeric#!#numeric#!#int
 4.123456789#!#-2.123456789#!#3.123456789000000#!#0.320158102881954100#!#1.000000000#!#<NULL>
@@ -309,7 +309,7 @@ numeric#!#numeric#!#numeric#!#numeric#!#numeric#!#int
 ~~END~~
 
 # test operation between numeric and numeric
-select b+c, b-c, b*c, b/c, b%c, b%NULL from babel_2048_t1;
+select b+c, b-c, b*c, b/c, b%c, b%NULL from testnumeric_vu_prepare_table10;
 ~~START~~
 numeric#!#numeric#!#numeric#!#numeric#!#numeric#!#numeric
 5.423456789#!#-0.823456789#!#7.18395061470#!#0.73636363662849#!#2.300000000#!#<NULL>
@@ -317,7 +317,7 @@ numeric#!#numeric#!#numeric#!#numeric#!#numeric#!#numeric
 ~~END~~
 
 # test operation between numeric and float
-select c+d, c-d, c*d, c/d, c%d, c%NULL from babel_2048_t1;
+select c+d, c-d, c*d, c/d, c%d, c%NULL from testnumeric_vu_prepare_table10;
 ~~START~~
 float#!#float#!#float#!#float#!#numeric#!#numeric
 7.246913577999999#!#-0.9999999999999996#!#12.879439101750188#!#0.7574850298740454#!#3.123456789#!#<NULL>
@@ -326,7 +326,7 @@ float#!#float#!#float#!#float#!#numeric#!#numeric
 
 
 # test NULLIF with numeric args
-select nullif(c, b) from babel_2048_t1;
+select nullif(c, b) from testnumeric_vu_prepare_table10;
 ~~START~~
 numeric
 3.123456789
@@ -335,7 +335,7 @@ numeric
 
 
 # test Coalesce with numeric args
-select coalesce(NULL, NULL, b) from babel_2048_t1;
+select coalesce(NULL, NULL, b) from testnumeric_vu_prepare_table10;
 ~~START~~
 numeric
 2.3000
@@ -344,7 +344,7 @@ numeric
 
 
 # test Case expression with numeric args
-select case when a <= 1 then b - a when a > 1 then c - a end from babel_2048_t1;
+select case when a <= 1 then b - a when a > 1 then c - a end from testnumeric_vu_prepare_table10;
 ~~START~~
 numeric
 1.300000000
@@ -353,7 +353,7 @@ numeric
 
 
 # test Max() and Min() with numeric args
-select Max(c-b), Min(c-b) from babel_2048_t1;
+select Max(c-b), Min(c-b) from testnumeric_vu_prepare_table10;
 ~~START~~
 numeric#!#numeric
 0.823456789#!#0.423456789
