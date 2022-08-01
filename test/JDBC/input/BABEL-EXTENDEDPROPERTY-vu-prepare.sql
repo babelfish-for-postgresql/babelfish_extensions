@@ -11,5 +11,5 @@ go
 
 create proc BABEL_EXTENDEDPROPERTY_vu_p1
 AS
-SELECT * FROM fn_listextendedproperty(NULL, 'schema', N'dbo', 'table', @t, NULL, NULL);
+SELECT * FROM fn_listextendedproperty(NULL, 'schema', N'dbo', 'table', N'BABEL_EXTENDEDPROPERTY_vu_t1', NULL, NULL);
 go
