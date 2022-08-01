@@ -4,7 +4,7 @@ GO
 
 -- psql
 CREATE INDEX indentity_function_tests_t1_idx_numeric1 ON master_dbo.indentity_function_tests_t1 ((id::numeric));
-ANALYZE master_dbo.t1;
+ANALYZE master_dbo.indentity_function_tests_t1;
 GO
 
 -- tsql
