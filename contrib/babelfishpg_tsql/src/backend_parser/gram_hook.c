@@ -8,6 +8,7 @@
 #include "parser/scanner.h"
 #include "src/pltsql.h" /* needed for pltsql_protocol_plugin_ptr */
 
+extern bool babelfish_dump_restore;
 
 void install_backend_gram_hooks(void);
 static List *rewrite_typmod_expr(List *expr_list);
@@ -32,9 +33,15 @@ void install_backend_gram_hooks()
 static void
 fix_tsql_domain_typmods(TypeName *typname)
 {
-	const char *dump_restore = GetConfigOption("babelfishpg_tsql.dump_restore", true, false);
-	if (!dump_restore || strcmp(dump_restore, "on") != 0)
+	ereport(LOG, (errmsg("babelfish_dump_restore: \"%s\"", babelfish_dump_restore)));
+	if (!babelfish_dump_restore)
 		return;
+
+	// const char *dump_restore = GetConfigOption("babelfishpg_tsql.dump_restore", true, false);
+	// if (!dump_restore || strcmp(dump_restore, "on") != 0)
+	// 	return;
+
+	ereport(LOG, (errmsg("typname: \"%s\"", typname)));
 
 	/* sys.sysname and sys._ci_sysname should not have typmods */
 	if (strcmp(strVal(linitial(typname->names)), "sys") == 0 &&
