@@ -10061,7 +10061,9 @@ bool reset_search_path(PLtsql_stmt_execsql *stmt, char *old_search_path)
 					 * Don't change the search path, if the statement inside
 					 * the procedure is schema qualified.
 					 */
-					if(stmt->is_schema_specified != true)
+					if(stmt->is_schema_specified)
+						break;
+					else
 					{
 						physical_schema = get_physical_schema_name(cur_dbname, top_es_entry->estate->schema_name);
 						dbo_schema = get_dbo_schema_name(cur_dbname);
