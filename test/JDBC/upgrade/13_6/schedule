@@ -31,6 +31,7 @@ TestMoney
 TestVarChar
 TestNumeric
 TestXML
+BABEL-2934
 BABEL-3121
 BABEL-3166
 BABEL-3192
@@ -46,7 +47,9 @@ sys-configurations
 sys-datefirst
 sys-lock_timeout
 sys-max_connections
+sys-objects
 sys-original_login
+sys-procedures
 sys-schema-name
 sys-suser_sid
 identity_function
@@ -86,3 +89,4 @@ triggers_with_transaction
 Test-sp_helpsrvrolemember
 Test-sp_helpuser
 TestTableType
+BABEL-3147-before-14_5
