@@ -97,6 +97,16 @@ SELECT IS_ROLEMEMBER('test_role1', 'test_role1')
 GO
 SELECT IS_ROLEMEMBER('test_user1', 'test_user1')
 GO
+SELECT IS_ROLEMEMBER('public', 'public')
+GO
+
+-- Every db principal is member of PUBLIC
+SELECT IS_MEMBER('public')
+GO
+SELECT IS_ROLEMEMBER('public', 'test_role1')
+GO
+SELECT IS_ROLEMEMBER('public', 'test_user1')
+GO
 
 -- Should return 0
 SELECT IS_ROLEMEMBER('db_owner', 'test_role1')
@@ -134,6 +144,14 @@ GO
 SELECT IS_ROLEMEMBER('test_role1', NULL)
 GO
 SELECT IS_ROLEMEMBER(NULL, NULL)
+GO
+
+-- Case insensitive check
+SELECT IS_ROLEMEMBER('PUBLIC', 'Test_User1')
+GO
+SELECT IS_ROLEMEMBER('Test_role1', 'test_ROLE3')
+GO
+SELECT IS_MEMBER('Public')
 GO
 
 -- Connect with different logins to test membership view permission

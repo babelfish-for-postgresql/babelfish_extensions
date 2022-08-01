@@ -173,6 +173,36 @@ int
 1
 ~~END~~
 
+SELECT IS_ROLEMEMBER('public', 'public')
+GO
+~~START~~
+int
+1
+~~END~~
+
+
+-- Every db principal is member of PUBLIC
+SELECT IS_MEMBER('public')
+GO
+~~START~~
+int
+1
+~~END~~
+
+SELECT IS_ROLEMEMBER('public', 'test_role1')
+GO
+~~START~~
+int
+1
+~~END~~
+
+SELECT IS_ROLEMEMBER('public', 'test_user1')
+GO
+~~START~~
+int
+1
+~~END~~
+
 
 -- Should return 0
 SELECT IS_ROLEMEMBER('db_owner', 'test_role1')
@@ -284,6 +314,29 @@ GO
 ~~START~~
 int
 <NULL>
+~~END~~
+
+
+-- Case insensitive check
+SELECT IS_ROLEMEMBER('PUBLIC', 'Test_User1')
+GO
+~~START~~
+int
+1
+~~END~~
+
+SELECT IS_ROLEMEMBER('Test_role1', 'test_ROLE3')
+GO
+~~START~~
+int
+1
+~~END~~
+
+SELECT IS_MEMBER('Public')
+GO
+~~START~~
+int
+1
 ~~END~~
 
 
