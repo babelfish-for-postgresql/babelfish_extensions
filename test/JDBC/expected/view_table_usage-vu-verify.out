@@ -1,8 +1,12 @@
 <<<<<<< HEAD
+<<<<<<< HEAD
 use db_view_table_usage;
 =======
 use database db_view_table_usage;
 >>>>>>> f0db34d (implemented main test, prepare and verify tests)
+=======
+use db_view_table_usage;
+>>>>>>> 3a0738a (modified tests to work better out of order)
 go
 
 select * from information_schema.view_table_usage where table_name not like 'sys%';
@@ -16,10 +20,14 @@ nvarchar#!#nvarchar#!#varchar#!#nvarchar#!#nvarchar#!#varchar
 
 
 
+drop table if exists view_table_usage_tb1;
+go
 create table view_table_usage_tb1(arg1 int, arg2 char, arg3 varchar);
 go
 
 
+drop view if exists view_table_usage_v1;
+go
 create view view_table_usage_v1 as select * from view_table_usage_tb1;
 go
 
