@@ -16,4 +16,4 @@ use master;
 
 drop database prep;
 
-select * from information_schema.column_privileges;
+select * from information_schema.column_privileges where table_name not like 'sys%';
