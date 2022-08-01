@@ -21,6 +21,9 @@ ignore#!#BABEL-2934-vu-verify
 ignore#!#BABEL-1444-vu-prepare
 ignore#!#BABEL-1444-vu-verify
 ignore#!#BABEL-1444-vu-cleanup
+ignore#!#Test-Default-Columns-vu-prepare
+ignore#!#Test-Default-Columns-vu-verify
+ignore#!#Test-Default-Columns-vu-cleanup
 
 # Temporarily ignore due to BABEL-3279
 ignore#!#BABEL-EXTENDEDPROPERTY
