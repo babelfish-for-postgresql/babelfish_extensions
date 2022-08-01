@@ -1,0 +1,20 @@
+DROP VIEW test_babelfish_authid_user_ext_view
+GO
+
+DROP PROC test_babelfish_authid_user_ext_proc
+GO
+
+DROP FUNCTION test_babelfish_authid_user_ext_func
+GO
+
+DROP USER test_babelfish_authid_user_ext_user1
+GO
+
+DROP USER test_babelfish_authid_user_ext_user2
+GO
+
+DROP LOGIN test_babelfish_authid_user_ext_login1
+GO
+
+DROP LOGIN test_babelfish_authid_user_ext_login2
+GO

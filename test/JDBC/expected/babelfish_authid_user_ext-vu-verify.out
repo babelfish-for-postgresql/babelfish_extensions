@@ -1,0 +1,53 @@
+SELECT * FROM test_babelfish_authid_user_ext_view
+GO
+~~START~~
+varchar#!#varchar#!#char#!#nvarchar#!#nvarchar#!#nvarchar
+master_db_owner#!##!#R#!#db_owner#!#master#!#
+master_dbo#!##!#S#!#dbo#!#master#!#dbo
+master_guest#!##!#S#!#guest#!#master#!#
+master_test_babelfish_authid_user_ext_user1#!#test_babelfish_authid_user_ext_login1#!#S#!#test_babelfish_authid_user_ext_user1#!#master#!#dbo
+master_test_babelfish_authid_user_ext_user2#!#test_babelfish_authid_user_ext_login2#!#S#!#test_babelfish_authid_user_ext_user2#!#master#!#dbo
+msdb_db_owner#!##!#R#!#db_owner#!#msdb#!#
+msdb_dbo#!##!#S#!#dbo#!#msdb#!#dbo
+msdb_guest#!##!#S#!#guest#!#msdb#!#
+tempdb_db_owner#!##!#R#!#db_owner#!#tempdb#!#
+tempdb_dbo#!##!#S#!#dbo#!#tempdb#!#dbo
+tempdb_guest#!##!#S#!#guest#!#tempdb#!#
+~~END~~
+
+
+EXEC test_babelfish_authid_user_ext_proc
+GO
+~~START~~
+varchar#!#varchar#!#char#!#nvarchar#!#nvarchar#!#nvarchar
+master_db_owner#!##!#R#!#db_owner#!#master#!#
+master_dbo#!##!#S#!#dbo#!#master#!#dbo
+master_guest#!##!#S#!#guest#!#master#!#
+master_test_babelfish_authid_user_ext_user1#!#test_babelfish_authid_user_ext_login1#!#S#!#test_babelfish_authid_user_ext_user1#!#master#!#dbo
+master_test_babelfish_authid_user_ext_user2#!#test_babelfish_authid_user_ext_login2#!#S#!#test_babelfish_authid_user_ext_user2#!#master#!#dbo
+msdb_db_owner#!##!#R#!#db_owner#!#msdb#!#
+msdb_dbo#!##!#S#!#dbo#!#msdb#!#dbo
+msdb_guest#!##!#S#!#guest#!#msdb#!#
+tempdb_db_owner#!##!#R#!#db_owner#!#tempdb#!#
+tempdb_dbo#!##!#S#!#dbo#!#tempdb#!#dbo
+tempdb_guest#!##!#S#!#guest#!#tempdb#!#
+~~END~~
+
+
+SELECT test_babelfish_authid_user_ext_func()
+GO
+~~START~~
+int
+11
+~~END~~
+
+
+SELECT rolname FROM sys.babelfish_authid_user_ext
+WHERE rolname LIKE '%test_babelfish_authid_user_ext_%'
+GO
+~~START~~
+varchar
+master_test_babelfish_authid_user_ext_user1
+master_test_babelfish_authid_user_ext_user2
+~~END~~
+

@@ -1,0 +1,11 @@
+DROP VIEW test_babelfish_sysdatabases_view
+GO
+
+DROP PROC test_babelfish_sysdatabases_proc
+GO
+
+DROP FUNCTION test_babelfish_sysdatabases_func
+GO
+
+DROP DATABASE test_babelfish_sysdatabases_db
+GO

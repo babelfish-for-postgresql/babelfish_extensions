@@ -86,6 +86,10 @@ nested_trigger_inside_proc
 nested_trigger_with_dml
 triggers_with_transaction
 Test-sp_helpsrvrolemember
-BABEL-ROLE
 Test-sp_helpuser
 TestTableType
+BABEL-ROLE
+babelfish_sysdatabases
+babelfish_namespace_ext
+babelfish_authid_login_ext
+babelfish_authid_user_ext

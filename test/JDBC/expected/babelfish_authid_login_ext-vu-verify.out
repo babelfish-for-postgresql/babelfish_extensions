@@ -1,0 +1,39 @@
+SELECT * FROM test_babelfish_authid_login_ext_view
+GO
+~~START~~
+varchar#!#int#!#char#!#nvarchar
+jdbc_user#!#0#!#S#!#master
+sysadmin#!#0#!#R#!#master
+test_babelfish_authid_login_ext_login1#!#0#!#S#!#master
+test_babelfish_authid_login_ext_login2#!#0#!#S#!#master
+~~END~~
+
+
+EXEC test_babelfish_authid_login_ext_proc
+GO
+~~START~~
+varchar#!#int#!#char#!#nvarchar
+jdbc_user#!#0#!#S#!#master
+sysadmin#!#0#!#R#!#master
+test_babelfish_authid_login_ext_login1#!#0#!#S#!#master
+test_babelfish_authid_login_ext_login2#!#0#!#S#!#master
+~~END~~
+
+
+SELECT test_babelfish_authid_login_ext_func()
+GO
+~~START~~
+int
+4
+~~END~~
+
+
+SELECT rolname FROM sys.babelfish_authid_login_ext 
+WHERE rolname LIKE 'test_babelfish_authid_login_ext_login%'
+GO
+~~START~~
+varchar
+test_babelfish_authid_login_ext_login1
+test_babelfish_authid_login_ext_login2
+~~END~~
+
