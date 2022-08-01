@@ -20,7 +20,10 @@ class Db_Client_pyodbc:
 		self.logger = logger
 		self.cnxn = None
 		try:
-			self.cnxn = pyodbc.connect('DRIVER={};SERVER={},{};DATABASE={};UID={};PWD={}'.format(self.provider,self.server_url, str(self.port), self.db_name, self.db_user, self.db_pass), autocommit = True)
+			if "SQL Server" in self.provider:
+				self.cnxn = pyodbc.connect('DRIVER={};SERVER={},{};DATABASE={};UID={};PWD={}'.format(self.provider,self.server_url, str(self.port), self.db_name, self.db_user, self.db_pass), autocommit = True)
+			if "PostgreSQL"in self.provider:
+				self.cnxn = pyodbc.connect('DRIVER={};SERVER={};PORT={};DATABASE={};UID={};PWD={}'.format(self.provider,self.server_url, str(self.port), self.db_name, self.db_user, self.db_pass), autocommit = True)
 			self.logger.info(line_formatter.format(connect_server_formatter.format(self.server_url)))
 		except Exception as e:
 			
