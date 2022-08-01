@@ -99,7 +99,7 @@ int#!#char
 drop table schema_resolution_proc_sch2.schema_resolution_proc_t1;
 drop schema schema_resolution_proc_sch2;
 go
-	 
+
 drop proc schema_resolution_proc_sch1.schema_resolution_proc_select_tab
 go
 	 
