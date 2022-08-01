@@ -5,6 +5,7 @@
 #include "err_handler.h"
 #include "funcapi.h"
 #include "utils/builtins.h"
+#include "utils/syscache.h"
 
 PG_FUNCTION_INFO_V1(babel_list_mapped_error);
 
@@ -429,6 +430,8 @@ babel_list_mapped_error(PG_FUNCTION_ARGS)
 	bool		nulls[4] = {false, false, false, false};
 	Datum		result;
 	int		call_cntr;
+	Oid		nspoid = get_namespace_oid("sys", false);
+	Oid		sys_varcharoid = GetSysCacheOid2(TYPENAMENSP, Anum_pg_type_oid, CStringGetDatum("nvarchar"), ObjectIdGetDatum(nspoid));
 
 	/* stuff done only on the first call of the function */
 	if (SRF_IS_FIRSTCALL())
@@ -442,10 +445,14 @@ babel_list_mapped_error(PG_FUNCTION_ARGS)
 			list = (*pltsql_protocol_plugin_ptr)->get_mapped_error_list();
 
 		/* Create tuple descriptor for the result set. */
-		get_call_result_type(fcinfo, NULL, &tupdesc);
+		tupdesc = CreateTemplateTupleDesc(4);
+		TupleDescInitEntry(tupdesc, (AttrNumber) 1, "pg_sql_state", sys_varcharoid, 5, 0);
+		TupleDescInitEntry(tupdesc, (AttrNumber) 2, "error_message", sys_varcharoid, 4000, 0);
+		TupleDescInitEntry(tupdesc, (AttrNumber) 3, "error_msg_parameters", sys_varcharoid, 4000, 0);
+		TupleDescInitEntry(tupdesc, (AttrNumber) 4, "sql_error_code", INT4OID, -1, 0);
 
 		funcctx->user_fctx = (void *) list;
-		funcctx->attinmeta = TupleDescGetAttInMetadata(tupdesc);
+		funcctx->attinmeta = TupleDescGetAttInMetadata(BlessTupleDesc(tupdesc));
 		MemoryContextSwitchTo(oldcontext);
 	}
 
