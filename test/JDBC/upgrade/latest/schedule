@@ -89,7 +89,6 @@ BABEL-2955
 temp-tables
 table-variable
 TestNotNull
-Test-Default-Columns
 Test-Identity
 Test-Computed-Columns
 BABEL-1189

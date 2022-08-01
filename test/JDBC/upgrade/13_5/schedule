@@ -86,13 +86,11 @@ BABEL-1466
 BABEL-1475
 BABEL-1715
 BABEL-2086
-BABEL-2765
 BABEL-2917
 BABEL-2955
 temp-tables
 table-variable
 TestNotNull
-Test-Default-Columns
 Test-Identity
 Test-Computed-Columns
 TestTableType

@@ -18,6 +18,9 @@ ignore#!#BABEL-SQLvariant
 # to changing the behavior between pre- and post-commit.
 ignore#!#BABEL-2934-vu-prepare
 ignore#!#BABEL-2934-vu-verify
+ignore#!#BABEL-1444-vu-prepare
+ignore#!#BABEL-1444-vu-verify
+ignore#!#BABEL-1444-vu-cleanup
 
 # Temporarily ignore due to BABEL-3279
 ignore#!#BABEL-EXTENDEDPROPERTY
