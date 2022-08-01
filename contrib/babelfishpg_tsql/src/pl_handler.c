@@ -2058,7 +2058,7 @@ static void bbf_ProcessUtility(PlannedStmt *pstmt,
 		{
 			case T_ViewStmt:
 			{
-				if(!pltsql_enable_ddl_from_pgendpoint)
+				if(!pltsql_enable_ddl_from_pgendpoint && sql_dialect == SQL_DIALECT_TSQL)
 				{
 					ereport(ERROR,
 							(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),

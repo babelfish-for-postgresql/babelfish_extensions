@@ -1548,21 +1548,16 @@ pltsql_store_view_definition(const char *queryString, ObjectAddress address)
 	uint64		flag_values = 0, flag_validity = 0;
 	char		*physical_schemaname, *logical_schemaname;
 
-	if(sql_dialect != SQL_DIALECT_TSQL)
+	if (sql_dialect != SQL_DIALECT_TSQL)
 		return;
 
 	/* Skip if it is for sysdatabases while creating logical database */
-	if(strcmp("(CREATE LOGICAL DATABASE )", queryString) == 0)
+	if (strcmp("(CREATE LOGICAL DATABASE )", queryString) == 0)
 		return;
 
 	/* Fetch the object details from Relation */
 	reltup = SearchSysCache1(RELOID, ObjectIdGetDatum(address.objectId));
 	form_reltup = (Form_pg_class) GETSTRUCT(reltup);
-
-	bbf_view_def_rel = table_open(bbf_view_def_oid, RowExclusiveLock);
-	bbf_view_def_rel_dsc = RelationGetDescr(bbf_view_def_rel);
-
-	MemSet(new_record_nulls, false, sizeof(new_record_nulls));
 
 	physical_schemaname = get_namespace_name(form_reltup->relnamespace);
 	if (physical_schemaname == NULL)
@@ -1592,6 +1587,12 @@ pltsql_store_view_definition(const char *queryString, ObjectAddress address)
 				errmsg("Could not find dbid or logical schema for this physical schema '%s'." \
 				"CREATE VIEW from non-babelfish schema/db is not allowed in TSQL dialect.", physical_schemaname)));
 	}
+
+	bbf_view_def_rel = table_open(bbf_view_def_oid, RowExclusiveLock);
+	bbf_view_def_rel_dsc = RelationGetDescr(bbf_view_def_rel);
+
+	MemSet(new_record_nulls, false, sizeof(new_record_nulls));
+
 	/*
 	 * To use particular flag bit to store certain flag, Set corresponding bit
 	 * in flag_validity which tracks currently supported flag bits and then
