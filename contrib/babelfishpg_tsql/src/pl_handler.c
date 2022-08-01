@@ -3434,6 +3434,7 @@ _PG_init(void)
 
 	prev_get_func_language_oids_hook = get_func_language_oids_hook;
 	get_func_language_oids_hook = get_func_language_oids;
+	coalesce_typmod_hook = coalesce_typmod_hook_impl;
 
 	inited = true;
 }
