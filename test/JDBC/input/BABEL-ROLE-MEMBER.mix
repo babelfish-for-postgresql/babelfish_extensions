@@ -235,25 +235,33 @@ GO
 USE master
 GO
 
--- Clean up
 -- tsql
 USE db1
 GO
+
+-- BABEL-3231, role with members is disallowed to be dropped
+-- should fail
+DROP ROLE test_role1
+GO
+DROP ROLE test_role3
+GO
+
+-- Clean up
 DROP USER test_user1
 GO
 DROP USER test_user2
 GO
 DROP USER test_user3
 GO
-DROP ROLE test_role1
-GO
-DROP ROLE test_role2
-GO
-DROP ROLE test_role3
+DROP ROLE test_role5
 GO
 DROP ROLE test_role4
 GO
-DROP ROLE test_role5
+DROP ROLE test_role3
+GO
+DROP ROLE test_role2
+GO
+DROP ROLE test_role1
 GO
 
 -- psql

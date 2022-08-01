@@ -1479,6 +1479,42 @@ check_alter_role_stmt(GrantRoleStmt *stmt)
 						GetUserNameFromId(GetSessionUserId(), true), granted_name)));
 }
 
+/*
+ * This function checks if the given role has any members.
+ * Note that this will simply return true for InvalidOid.
+ */
+bool
+is_empty_role(Oid roleid)
+{
+	CatCList 	*memlist;
+
+	if (roleid == InvalidOid)
+		return true;
+
+	memlist = SearchSysCacheList1(AUTHMEMROLEMEM,
+								  ObjectIdGetDatum(roleid));
+
+	if (memlist->n_members == 1)
+	{
+		HeapTuple	tup = &memlist->members[0]->tuple;
+		Oid			member = ((Form_pg_auth_members) GETSTRUCT(tup))->member;
+		char		*db_name = get_cur_db_name();
+
+		if (db_name == NULL || strcmp(db_name, "") == 0)
+			return true;
+
+		if (member == get_role_oid(get_db_owner_name(db_name), true))
+		{
+			ReleaseSysCacheList(memlist);
+			return true;
+		}
+	}
+
+	ReleaseSysCacheList(memlist);
+
+	return false;
+}
+
 PG_FUNCTION_INFO_V1(role_id);
 Datum
 role_id(PG_FUNCTION_ARGS)
