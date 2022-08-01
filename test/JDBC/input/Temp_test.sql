@@ -1,0 +1,123 @@
+--varchar
+CREATE TABLE collation_tests_arabic_vu_prepare_varchar (name varchar(20) COLLATE arabic_ci_as);
+GO
+
+INSERT INTO collation_tests_arabic_vu_prepare_varchar VALUES ('مرحبا');
+INSERT INTO collation_tests_arabic_vu_prepare_varchar VALUES ('حب');
+INSERT INTO collation_tests_arabic_vu_prepare_varchar VALUES ('سعادة');
+INSERT INTO collation_tests_arabic_vu_prepare_varchar VALUES ('قط');
+INSERT INTO collation_tests_arabic_vu_prepare_varchar VALUES ('كلب');
+INSERT INTO collation_tests_arabic_vu_prepare_varchar VALUES ('يبتسم');
+INSERT INTO collation_tests_arabic_vu_prepare_varchar VALUES ('سعودي');
+INSERT INTO collation_tests_arabic_vu_prepare_varchar VALUES ('نعم');
+INSERT INTO collation_tests_arabic_vu_prepare_varchar VALUES ('شكرالك');
+INSERT INTO collation_tests_arabic_vu_prepare_varchar VALUES ('مع السلامه');
+GO
+
+
+--inner join
+CREATE TABLE collation_tests_arabic_vu_prepare_varchar_innerjoin (name_same_cp varchar(20) COLLATE arabic_ci_as);
+GO
+
+INSERT INTO collation_tests_arabic_vu_prepare_varchar_innerjoin VALUES ('مرحبا');
+INSERT INTO collation_tests_arabic_vu_prepare_varchar_innerjoin VALUES ('سعادة');
+INSERT INTO collation_tests_arabic_vu_prepare_varchar_innerjoin VALUES ('كلب');
+INSERT INTO collation_tests_arabic_vu_prepare_varchar_innerjoin VALUES ('سعودي');
+INSERT INTO collation_tests_arabic_vu_prepare_varchar_innerjoin VALUES ('شكرالك');
+INSERT INTO collation_tests_arabic_vu_prepare_varchar_innerjoin VALUES ('مع السلامه');
+GO
+
+CREATE VIEW [INNER JOIN SAME CP ARABIC] AS
+SELECT collation_tests_arabic_vu_prepare_varchar.name AS name, collation_tests_arabic_vu_prepare_varchar_innerjoin.name_same_cp AS same_name
+FROM collation_tests_arabic_vu_prepare_varchar
+INNER JOIN collation_tests_arabic_vu_prepare_varchar_innerjoin ON collation_tests_arabic_vu_prepare_varchar.name = collation_tests_arabic_vu_prepare_varchar_innerjoin.name_same_cp;
+GO
+
+--computed column
+-- 1st column is for the actual string
+-- 2nd column is for the substring
+CREATE TABLE collation_tests_arabic_vu_prepare_varchar_computed_columns(name_same varchar(20) COLLATE arabic_ci_as, 
+substr_arabic AS SUBSTRING (name_same, 1, 3));
+GO
+
+INSERT INTO collation_tests_arabic_vu_prepare_varchar_computed_columns VALUES ('مرحبا');
+INSERT INTO collation_tests_arabic_vu_prepare_varchar_computed_columns VALUES ('حب');
+INSERT INTO collation_tests_arabic_vu_prepare_varchar_computed_columns VALUES ('سعادة');
+INSERT INTO collation_tests_arabic_vu_prepare_varchar_computed_columns VALUES ('قط');
+INSERT INTO collation_tests_arabic_vu_prepare_varchar_computed_columns VALUES ('كلب');
+INSERT INTO collation_tests_arabic_vu_prepare_varchar_computed_columns VALUES ('يبتسم');
+INSERT INTO collation_tests_arabic_vu_prepare_varchar_computed_columns VALUES ('سعودي');
+INSERT INTO collation_tests_arabic_vu_prepare_varchar_computed_columns VALUES ('نعم');
+INSERT INTO collation_tests_arabic_vu_prepare_varchar_computed_columns VALUES ('شكرالك');
+INSERT INTO collation_tests_arabic_vu_prepare_varchar_computed_columns VALUES ('مع السلامه');
+GO
+
+
+--nvarchar
+CREATE TABLE collation_tests_arabic_vu_prepare_nvarchar (name nvarchar(20) COLLATE arabic_ci_as);
+GO
+
+INSERT INTO collation_tests_arabic_vu_prepare_nvarchar VALUES ('مرحبا');
+INSERT INTO collation_tests_arabic_vu_prepare_nvarchar VALUES ('حب');
+INSERT INTO collation_tests_arabic_vu_prepare_nvarchar VALUES ('سعادة');
+INSERT INTO collation_tests_arabic_vu_prepare_nvarchar VALUES ('قط');
+INSERT INTO collation_tests_arabic_vu_prepare_nvarchar VALUES ('كلب');
+INSERT INTO collation_tests_arabic_vu_prepare_nvarchar VALUES ('يبتسم');
+INSERT INTO collation_tests_arabic_vu_prepare_nvarchar VALUES ('سعودي');
+INSERT INTO collation_tests_arabic_vu_prepare_nvarchar VALUES ('نعم');
+INSERT INTO collation_tests_arabic_vu_prepare_nvarchar VALUES ('شكرالك');
+INSERT INTO collation_tests_arabic_vu_prepare_nvarchar VALUES ('مع السلامه');
+GO
+
+--char
+CREATE TABLE collation_tests_arabic_vu_prepare_char (name char(20) COLLATE arabic_ci_as);
+GO
+
+INSERT INTO collation_tests_arabic_vu_prepare_char VALUES ('مرحبا');
+INSERT INTO collation_tests_arabic_vu_prepare_char VALUES ('حب');
+INSERT INTO collation_tests_arabic_vu_prepare_char VALUES ('سعادة');
+INSERT INTO collation_tests_arabic_vu_prepare_char VALUES ('قط');
+INSERT INTO collation_tests_arabic_vu_prepare_char VALUES ('كلب');
+INSERT INTO collation_tests_arabic_vu_prepare_char VALUES ('يبتسم');
+INSERT INTO collation_tests_arabic_vu_prepare_char VALUES ('سعودي');
+INSERT INTO collation_tests_arabic_vu_prepare_char VALUES ('نعم');
+INSERT INTO collation_tests_arabic_vu_prepare_char VALUES ('شكرالك');
+INSERT INTO collation_tests_arabic_vu_prepare_char VALUES ('مع السلامه');
+GO
+
+--nchar
+CREATE TABLE collation_tests_arabic_vu_prepare_nchar (name nchar(20) COLLATE arabic_ci_as);
+GO
+
+INSERT INTO collation_tests_arabic_vu_prepare_nchar VALUES ('مرحبا');
+INSERT INTO collation_tests_arabic_vu_prepare_nchar VALUES ('حب');
+INSERT INTO collation_tests_arabic_vu_prepare_nchar VALUES ('سعادة');
+INSERT INTO collation_tests_arabic_vu_prepare_nchar VALUES ('قط');
+INSERT INTO collation_tests_arabic_vu_prepare_nchar VALUES ('كلب');
+INSERT INTO collation_tests_arabic_vu_prepare_nchar VALUES ('يبتسم');
+INSERT INTO collation_tests_arabic_vu_prepare_nchar VALUES ('سعودي');
+INSERT INTO collation_tests_arabic_vu_prepare_nchar VALUES ('نعم');
+INSERT INTO collation_tests_arabic_vu_prepare_nchar VALUES ('شكرالك');
+INSERT INTO collation_tests_arabic_vu_prepare_nchar VALUES ('مع السلامه');
+GO
+
+
+--text
+CREATE TABLE collation_tests_arabic_vu_prepare_text (name text COLLATE arabic_ci_as);
+GO
+
+INSERT INTO collation_tests_arabic_vu_prepare_text VALUES ('مرحبا');
+INSERT INTO collation_tests_arabic_vu_prepare_text VALUES ('حب');
+INSERT INTO collation_tests_arabic_vu_prepare_text VALUES ('سعادة');
+INSERT INTO collation_tests_arabic_vu_prepare_text VALUES ('قط');
+INSERT INTO collation_tests_arabic_vu_prepare_text VALUES ('كلب');
+INSERT INTO collation_tests_arabic_vu_prepare_text VALUES ('يبتسم');
+INSERT INTO collation_tests_arabic_vu_prepare_text VALUES ('سعودي');
+INSERT INTO collation_tests_arabic_vu_prepare_text VALUES ('نعم');
+INSERT INTO collation_tests_arabic_vu_prepare_text VALUES ('شكرالك');
+INSERT INTO collation_tests_arabic_vu_prepare_text VALUES ('مع السلامه');
+GO
+
+--primary key
+CREATE TABLE collation_tests_arabic_vu_prepare_primary(name varchar(20) COLLATE arabic_ci_as NOT NULL PRIMARY KEY);
+GO
