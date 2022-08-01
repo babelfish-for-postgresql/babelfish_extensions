@@ -675,4 +675,37 @@ CREATE OR REPLACE VIEW information_schema_tsql.routines AS
 
 GRANT SELECT ON information_schema_tsql.routines TO PUBLIC;
 
+
+/*
+* VIEW_TABLE_USAGE
+*/
+-- drop view if exists information_schema_tsql.view_table_usage;
+
+CREATE OR REPLACE VIEW information_schema_tsql.view_table_usage
+AS SELECT DISTINCT sys.db_name()::sys.nvarchar(128) AS view_catalog,
+    sys.schema_name(nv."oid")::sys.nvarchar(128) AS view_schema,
+    v.relname::sys.sysname AS view_name,
+    sys.db_name()::sys.nvarchar(128) AS table_catalog,
+    sys.schema_name(nt."oid")::sys.nvarchar(128) AS table_schema,
+    t.relname::sys.sysname AS table_name
+   FROM pg_catalog.pg_namespace nv,
+    pg_catalog.pg_class v,
+    pg_catalog.pg_depend dv,
+    pg_catalog.pg_depend dt,
+    pg_catalog.pg_class t,
+    pg_catalog.pg_namespace nt
+  WHERE nv.oid = v.relnamespace AND v.relkind = 'v'::"char" 
+  AND v.oid = dv.refobjid AND dv.refclassid = 'pg_class'::regclass::oid 
+  AND dv.classid = 'pg_rewrite'::regclass::oid AND dv.deptype = 'i'::"char" 
+  AND dv.objid = dt.objid AND dv.refobjid <> dt.refobjid 
+  AND dt.classid = 'pg_rewrite'::regclass::oid AND dt.refclassid = 'pg_class'::regclass::oid 
+  AND dt.refobjid = t.oid AND t.relnamespace = nt.oid 
+  AND (t.relkind = ANY (ARRAY['r'::"char", 'v'::"char", 'f'::"char", 'p'::"char"])) 
+  AND pg_catalog.pg_has_role(t.relowner, 'USAGE'::text);
+  
+
+GRANT SELECT ON information_schema_tsql.view_table_usage TO PUBLIC;
+
+
+
 SELECT set_config('search_path', 'sys, '||current_setting('search_path'), false);
