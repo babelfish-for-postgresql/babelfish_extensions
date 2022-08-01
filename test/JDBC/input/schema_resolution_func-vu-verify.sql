@@ -14,6 +14,10 @@ go
 exec schema_resolution_func_vu_prepare_s2.schema_resolution_func_vu_prepare_p1;
 go
 
+--resolves to schema_resolution_func_vu_prepare_s1.schema_resolution_func_vu_prepare_t1 - gives 1 as an output
+select schema_resolution_func_vu_prepare_s1.schema_resolution_func_vu_prepare_f4();
+go
+
 drop table schema_resolution_func_vu_prepare_s1.schema_resolution_func_vu_prepare_t1;
 go
 
@@ -29,10 +33,6 @@ go
 
 -- fails because dbo.schema_resolution_func_vu_prepare_t1 doesn't exist
 exec schema_resolution_func_vu_prepare_s2.schema_resolution_func_vu_prepare_p1;
-go
-
---resolves to schema_resolution_func_vu_prepare_s1.schema_resolution_func_vu_prepare_t1 - gives 1 as an output
-select schema_resolution_func_vu_prepare_s1.schema_resolution_func_vu_prepare_f4();
 go
 
 drop function schema_resolution_func_vu_prepare_s1.schema_resolution_func_vu_prepare_f1()
