@@ -2451,8 +2451,8 @@ INSERT INTO sys.babelfish_helpcollation VALUES (N'sql_latin1_general_cp874_ci_as
 INSERT INTO sys.babelfish_helpcollation VALUES (N'sql_latin1_general_cp874_cs_as', N'Virtual, default locale, code page 874, case-sensitive, accent-sensitive, kanatype-insensitive, width-insensitive');
 
 -- Deprecate the function sp_describe_first_result_set_internal and process sp_describe_first_result_set
-ALTER FUNCTION sys.sp_describe_first_result_set_internal RENAME TO sp_describe_first_result_set_internal_deprecated_2_1;
-ALTER PROCEDURE sys.sp_describe_first_result_set RENAME TO sp_describe_first_result_set_deprecated_2_1;
+ALTER FUNCTION sys.sp_describe_first_result_set_internal RENAME TO sp_describe_first_result_set_internal_deprecated_2_2;
+ALTER PROCEDURE sys.sp_describe_first_result_set RENAME TO sp_describe_first_result_set_deprecated_2_2;
 
 -- Recreate the newer sp_describe_first_result_set_internal function
 create or replace function sys.sp_describe_first_result_set_internal(
@@ -2518,8 +2518,8 @@ LANGUAGE 'pltsql';
 GRANT ALL on PROCEDURE sys.sp_describe_first_result_set TO PUBLIC;
 
 -- Drop the deprecated function and procedure
-CALL sys.babelfish_drop_deprecated_function('sys', 'sp_describe_first_result_set_internal_deprecated_2_1');
-CALL sys.babelfish_remove_object_from_extension('procedure','sys.sp_describe_first_result_set_deprecated_2_1(varchar,varchar,sys.tinyint)');
+CALL sys.babelfish_drop_deprecated_function('sys', 'sp_describe_first_result_set_internal_deprecated_2_2');
+CALL sys.babelfish_remove_object_from_extension('procedure','sys.sp_describe_first_result_set_deprecated_2_2(varchar,varchar,sys.tinyint)');
 
 
 CREATE OR REPLACE FUNCTION sys.language()
