@@ -3113,11 +3113,11 @@ value	sys.sql_variant
 as $$
 begin
 -- currently only support COLUMN property
-IF (((SELECT coalesce(property_name COLLATE "C", '')) = '') or
-    ((SELECT UPPER(coalesce(property_name COLLATE "C", ''))) = 'COLUMN' COLLATE "C")) THEN
-	IF (((SELECT LOWER(coalesce(level0_object_type COLLATE "C", ''))) = 'schema' COLLATE "C") and
-	    ((SELECT LOWER(coalesce(level1_object_type COLLATE "C", ''))) = 'table' COLLATE "C") and
-	    ((SELECT LOWER(coalesce(level2_object_type COLLATE "C", ''))) = 'column' COLLATE "C")) THEN
+IF (((coalesce(property_name COLLATE "C", '')) = '') or
+    ((UPPER(coalesce(property_name COLLATE "C", ''))) = 'COLUMN' COLLATE "C")) THEN
+    IF (((LOWER(coalesce(level0_object_type COLLATE "C", ''))) = 'schema' COLLATE "C") and
+	 	    ((LOWER(coalesce(level1_object_type COLLATE "C", ''))) = 'table' COLLATE "C") and
+	 	    ((LOWER(coalesce(level2_object_type COLLATE "C", ''))) = 'column' COLLATE "C")) THEN
 		RETURN query 
 		select CAST('COLUMN' AS sys.sysname) as objtype,
 		       CAST(t3.column_name AS sys.sysname) as objname,
@@ -3126,8 +3126,8 @@ IF (((SELECT coalesce(property_name COLLATE "C", '')) = '') or
 		from sys.extended_properties t1, pg_catalog.pg_class t2, information_schema.columns t3
 		where t1.major_id = t2.oid and 
 			  t2.relname = t3.table_name and 
-		      t2.relname = (SELECT coalesce(level1_object_name COLLATE "C", '')) and 
-			  t3.column_name = (SELECT coalesce(level2_object_name COLLATE "C", ''));
+              t2.relname = (coalesce(level1_object_name COLLATE "C", '')) and 
+              t3.column_name = (coalesce(level2_object_name COLLATE "C", ''));
 	END IF;
 END IF;
 RETURN;
