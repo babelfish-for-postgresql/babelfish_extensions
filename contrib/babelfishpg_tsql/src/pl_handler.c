@@ -2058,7 +2058,7 @@ static void bbf_ProcessUtility(PlannedStmt *pstmt,
 		{
 			case T_ViewStmt:
 			{
-				ViewStmt *vstmt = (ViewStmt *) parseTree->stmt;
+				ViewStmt *vstmt = (ViewStmt *) parsetree;
 				Oid relid = RangeVarGetRelid(vstmt->view, NoLock, true);
 				if (vstmt->replace && check_is_tsql_view(relid))
 				{
