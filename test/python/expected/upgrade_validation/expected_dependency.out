@@ -361,19 +361,14 @@ Function sys.dateadd(text,integer,anyelement)
 Function sys.dateadd(text,integer,text)
 Function sys.dateadd_internal(text,integer,anyelement)
 Function sys.dateadd_internal_df(text,integer,sys.datetimeoffset)
-Function sys.datediff(text,date,date)
 Function sys.datediff(text,sys.datetime,sys.datetime)
-Function sys.datediff(text,sys.datetime2,sys.datetime2)
 Function sys.datediff(text,sys.datetimeoffset,sys.datetimeoffset)
 Function sys.datediff(text,sys.smalldatetime,sys.smalldatetime)
 Function sys.datediff(text,time without time zone,time without time zone)
 Function sys.datediff_internal(text,anyelement,anyelement)
 Function sys.datediff_internal_df(text,anyelement,anyelement)
 Function sys.datefirst()
-Function sys.datefromparts(integer,integer,integer)
-Function sys.datename(text,anyelement)
 Function sys.datename(text,text)
-Function sys.datepart(text,anyelement)
 Function sys.datepart_internal(text,anyelement,integer)
 Function sys.datetime22bpchar(sys.datetime2)
 Function sys.datetime22char(sys.datetime2)
@@ -563,7 +558,6 @@ Function sys.microsoftversion()
 Function sys.money2datetime(sys.fixeddecimal)
 Function sys.money_sqlvariant(sys.fixeddecimal)
 Function sys.money_sqlvariant(sys.money)
-Function sys.month(anyelement)
 Function sys.nchar_larger(sys."nchar",sys."nchar")
 Function sys.nchar_smaller(sys."nchar",sys."nchar")
 Function sys.nchar_sqlvariant(sys."nchar")
@@ -798,7 +792,6 @@ Function sys.varcharvarbinary(sys."varchar",integer,boolean)
 Function sys.version()
 Function sys.xact_state()
 Function sys.xid8rowversion(xid8,integer,boolean)
-Function sys.year(anyelement)
 Operator <(sys."varchar",sys."varchar")
 Operator <=(sys."varchar",sys."varchar")
 Operator <=(sys.bpchar,sys.bpchar)
@@ -1051,11 +1044,9 @@ Type sys."bigint"
 Type sys."float"
 Type sys."int"
 Type sys."real"
-Type sys."timestamp"
 Type sys.bbf_binary
 Type sys.bbf_varbinary
 Type sys.cursor
-Type sys.datetimeoffset
 Type sys.rowversion
 View information_schema_tsql.check_constraints
 View information_schema_tsql.column_domain_usage
