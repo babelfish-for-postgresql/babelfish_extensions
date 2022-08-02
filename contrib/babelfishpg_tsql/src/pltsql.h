@@ -1021,6 +1021,9 @@ typedef struct PLtsql_stmt_execsql
 	bool		is_cross_db;	/* cross database reference */
 	bool		is_dml;			/* DML statement? */
 	bool		is_ddl;			/* DDL statement? */
+	bool		func_call;		/* Function call? */
+	char		*schema_name;	/* Schema specified */
+	bool            is_schema_specified;    /*is schema name specified? */
 } PLtsql_stmt_execsql;
 
 /*
@@ -1848,6 +1851,7 @@ extern const char *pltsql_getdiag_kindname(PLtsql_getdiag_kind kind);
 extern void pltsql_free_function_memory(PLtsql_function *func);
 extern void pltsql_dumptree(PLtsql_function *func);
 extern void pre_function_call_hook_impl(const char *funcName);
+extern int32 coalesce_typmod_hook_impl(CoalesceExpr *cexpr);
 
 /*
  * Scanner functions in pl_scanner.c

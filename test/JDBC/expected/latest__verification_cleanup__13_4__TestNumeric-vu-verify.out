@@ -1,0 +1,361 @@
+SELECT * FROM testnumeric_vu_prepare_table1;
+~~START~~
+numeric
+3.00
+123.46
+123.40
+123.00
+123.45
+<NULL>
+-123.46
+-123.40
+-123.00
+-1.00
+-123.00
+~~END~~
+
+
+SELECT * FROM testnumeric_vu_prepare_table2;
+~~START~~
+numeric
+3.000
+123.456
+123.400
+123.000
+123.450
+<NULL>
+-123.456
+-123.400
+-123.000
+-1.000
+-123.000
+2147483647.000
+-2147483647.000
+2147483646.000
+-2147483646.000
+2147483648.000
+-2147483648.000
+~~END~~
+
+
+# JIRA 507, WORKING FOR BABEL
+SELECT * FROM testnumeric_vu_prepare_table3;
+~~START~~
+numeric
+3.00000000000000000000
+123.45600000000000000000
+123.40000000000000000000
+123.00000000000000000000
+123.45000000000000000000
+<NULL>
+-123.45600000000000000000
+-123.40000000000000000000
+-123.00000000000000000000
+-1.00000000000000000000
+-123.00000000000000000000
+2147483647.00000000000000000000
+~~END~~
+
+
+SELECT * FROM testnumeric_vu_prepare_table4;
+~~START~~
+numeric
+3.00000000000000000000
+123.45600000000000000000
+123.40000000000000000000
+123.00000000000000000000
+123.45000000000000000000
+<NULL>
+-123.45600000000000000000
+-123.40000000000000000000
+-123.00000000000000000000
+-1.00000000000000000000
+-123.00000000000000000000
+2147483647.00000000000000000000
+~~END~~
+
+
+SELECT * FROM testnumeric_vu_prepare_table5;
+~~START~~
+numeric
+3.000000000000000000000
+123.456000000000000000000
+123.400000000000000000000
+123.000000000000000000000
+123.450000000000000000000
+<NULL>
+-123.456000000000000000000
+-123.400000000000000000000
+-123.000000000000000000000
+-1.000000000000000000000
+-123.000000000000000000000
+2147483647.000000000000000000000
+~~END~~
+
+
+SELECT * FROM testnumeric_vu_prepare_table6;
+~~START~~
+numeric
+3.0000000000000000000000
+123.4560000000000000000000
+123.4000000000000000000000
+123.0000000000000000000000
+123.4500000000000000000000
+<NULL>
+-123.4560000000000000000000
+-123.4000000000000000000000
+-123.0000000000000000000000
+-1.0000000000000000000000
+-123.0000000000000000000000
+2147483647.0000000000000000000000
+~~END~~
+
+
+SELECT * FROM testnumeric_vu_prepare_table7;
+~~START~~
+numeric
+3.00000000000000000000000
+123.45600000000000000000000
+123.40000000000000000000000
+123.00000000000000000000000
+123.45000000000000000000000
+<NULL>
+-123.45600000000000000000000
+-123.40000000000000000000000
+-123.00000000000000000000000
+-1.00000000000000000000000
+-123.00000000000000000000000
+2147483647.00000000000000000000000
+~~END~~
+
+
+SELECT * FROM testnumeric_vu_prepare_table8;
+~~START~~
+numeric
+3.0000000000000000000000000
+123.4560000000000000000000000
+123.4000000000000000000000000
+123.0000000000000000000000000
+123.4500000000000000000000000
+<NULL>
+-123.4560000000000000000000000
+-123.4000000000000000000000000
+-123.0000000000000000000000000
+-1.0000000000000000000000000
+-123.0000000000000000000000000
+247483647.0000000000000000000000000
+-247483647.0000000000000000000000000
+~~END~~
+
+
+SELECT * FROM testnumeric_vu_prepare_table9;
+~~START~~
+numeric
+2147483647.0000000000000000000000000
+-2147483647.0000000000000000000000000
+2147483646.0000000000000000000000000
+-2147483646.0000000000000000000000000
+2147483648.0000000000000000000000000
+-2147483648.0000000000000000000000000
+0E-25
+0E-25
+0E-25
+~~END~~
+
+
+# BABEL-1459
+declare @numvar numeric(5,4); set @numvar=-0.010; SELECT @numvar as N'@var';
+~~START~~
+numeric
+-0.0100
+~~END~~
+
+declare @numvar numeric(4,4); set @numvar=-0.010; SELECT @numvar as N'@var';
+~~START~~
+numeric
+-0.0100
+~~END~~
+
+declare @numvar numeric(5,4); set @numvar=1.01; SELECT @numvar as N'@var';
+~~START~~
+numeric
+1.0100
+~~END~~
+
+declare @numvar numeric(4,4); set @numvar=0.01; SELECT @numvar as N'@var';
+~~START~~
+numeric
+0.0100
+~~END~~
+
+declare @numvar numeric(4,4); set @numvar=0; SELECT @numvar as N'@var';
+~~START~~
+numeric
+0.0000
+~~END~~
+
+
+# BABEL-2048
+select b - 1 from testnumeric_vu_prepare_table10;
+~~START~~
+numeric
+1.3000
+2.7000
+~~END~~
+
+select b - a from testnumeric_vu_prepare_table10;
+~~START~~
+numeric
+1.3000
+1.7000
+~~END~~
+
+select a - b from testnumeric_vu_prepare_table10;
+~~START~~
+numeric
+-1.3000
+-1.7000
+~~END~~
+
+select a + b from testnumeric_vu_prepare_table10;
+~~START~~
+numeric
+3.3000
+5.7000
+~~END~~
+
+select a * b from testnumeric_vu_prepare_table10;
+~~START~~
+numeric
+2.3000000
+7.4000000
+~~END~~
+
+select a / b from testnumeric_vu_prepare_table10;
+~~START~~
+numeric
+0.4347826086956521739
+0.5405405405405405405
+~~END~~
+
+select b / a from testnumeric_vu_prepare_table10;
+~~START~~
+numeric
+2.3000000000000000000
+1.8500000000000000000
+~~END~~
+
+select b * NULL from testnumeric_vu_prepare_table10;
+~~START~~
+numeric
+<NULL>
+<NULL>
+~~END~~
+
+select b / NULL from testnumeric_vu_prepare_table10;
+~~START~~
+numeric
+<NULL>
+<NULL>
+~~END~~
+
+select b - NULL from testnumeric_vu_prepare_table10;
+~~START~~
+numeric
+<NULL>
+<NULL>
+~~END~~
+
+select b + NULL from testnumeric_vu_prepare_table10;
+~~START~~
+numeric
+<NULL>
+<NULL>
+~~END~~
+
+select SQRT(a / b) from testnumeric_vu_prepare_table10;
+~~START~~
+numeric
+0.65938047
+0.73521462
+~~END~~
+
+select ROUND(a / b, 3) from testnumeric_vu_prepare_table10;
+~~START~~
+numeric
+0.43500000
+0.54100000
+~~END~~
+
+select SQRT(7);
+~~START~~
+float
+2.6457513110645907
+~~END~~
+
+select ROUND(10.1234567, 5);
+~~START~~
+numeric
+10.12346
+~~END~~
+
+
+# test operation between int and numeric(20, 9)
+select a+c, a-c, a*c, a/c, a%c, a%NULL from testnumeric_vu_prepare_table10;
+~~START~~
+numeric#!#numeric#!#numeric#!#numeric#!#numeric#!#int
+4.123456789#!#-2.123456789#!#3.123456789000000#!#0.320158102881954100#!#1.000000000#!#<NULL>
+6.123456789#!#-2.123456789#!#8.246913578000000#!#0.485029940251909354#!#2.000000000#!#<NULL>
+~~END~~
+
+# test operation between numeric and numeric
+select b+c, b-c, b*c, b/c, b%c, b%NULL from testnumeric_vu_prepare_table10;
+~~START~~
+numeric#!#numeric#!#numeric#!#numeric#!#numeric#!#numeric
+5.423456789#!#-0.823456789#!#7.18395061470#!#0.73636363662849#!#2.300000000#!#<NULL>
+7.823456789#!#-0.423456789#!#15.25679011930#!#0.89730538946603#!#3.700000000#!#<NULL>
+~~END~~
+
+# test operation between numeric and float
+select c+d, c-d, c*d, c/d, c%d, c%NULL from testnumeric_vu_prepare_table10;
+~~START~~
+float#!#float#!#float#!#float#!#numeric#!#numeric
+7.246913577999999#!#-0.9999999999999996#!#12.879439101750188#!#0.7574850298740454#!#3.123456789#!#<NULL>
+9.246913578#!#-1.0#!#21.126352679750187#!#0.804819277065635#!#4.123456789#!#<NULL>
+~~END~~
+
+
+# test NULLIF with numeric args
+select nullif(c, b) from testnumeric_vu_prepare_table10;
+~~START~~
+numeric
+3.123456789
+4.123456789
+~~END~~
+
+
+# test Coalesce with numeric args
+select coalesce(NULL, NULL, b) from testnumeric_vu_prepare_table10;
+~~START~~
+numeric
+2.3000
+3.7000
+~~END~~
+
+
+# test Case expression with numeric args
+select case when a <= 1 then b - a when a > 1 then c - a end from testnumeric_vu_prepare_table10;
+~~START~~
+numeric
+1.300000000
+2.123456789
+~~END~~
+
+
+# test Max() and Min() with numeric args
+select Max(c-b), Min(c-b) from testnumeric_vu_prepare_table10;
+~~START~~
+numeric#!#numeric
+0.823456789#!#0.423456789
+~~END~~
+

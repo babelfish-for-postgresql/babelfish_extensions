@@ -34,6 +34,7 @@
 #include "libpq/crypt.h"
 #include "miscadmin.h"
 #include "parser/parser.h"
+#include "parser/scansup.h"
 #include "storage/lmgr.h"
 #include "tcop/utility.h"
 #include "utils/acl.h"
@@ -1479,6 +1480,42 @@ check_alter_role_stmt(GrantRoleStmt *stmt)
 						GetUserNameFromId(GetSessionUserId(), true), granted_name)));
 }
 
+/*
+ * This function checks if the given role has any members.
+ * Note that this will simply return true for InvalidOid.
+ */
+bool
+is_empty_role(Oid roleid)
+{
+	CatCList 	*memlist;
+
+	if (roleid == InvalidOid)
+		return true;
+
+	memlist = SearchSysCacheList1(AUTHMEMROLEMEM,
+								  ObjectIdGetDatum(roleid));
+
+	if (memlist->n_members == 1)
+	{
+		HeapTuple	tup = &memlist->members[0]->tuple;
+		Oid			member = ((Form_pg_auth_members) GETSTRUCT(tup))->member;
+		char		*db_name = get_cur_db_name();
+
+		if (db_name == NULL || strcmp(db_name, "") == 0)
+			return true;
+
+		if (member == get_role_oid(get_db_owner_name(db_name), true))
+		{
+			ReleaseSysCacheList(memlist);
+			return true;
+		}
+	}
+
+	ReleaseSysCacheList(memlist);
+
+	return false;
+}
+
 PG_FUNCTION_INFO_V1(role_id);
 Datum
 role_id(PG_FUNCTION_ARGS)
@@ -1516,6 +1553,8 @@ is_rolemember(PG_FUNCTION_ARGS)
 	Oid		principal_oid;
 	Oid		cur_user_oid = GetUserId();
 	char	*role;
+	char 	*dc_role;
+	char 	*dc_principal;
 	char	*physical_role_name;
 	char	*physical_principal_name;
 
@@ -1524,7 +1563,8 @@ is_rolemember(PG_FUNCTION_ARGS)
 
 	/* Do role name mapping */
 	role = text_to_cstring(PG_GETARG_TEXT_P(0));
-	physical_role_name = get_physical_user_name(get_cur_db_name(), role);
+	dc_role = downcase_identifier(role, strlen(role), false, false);
+	physical_role_name = get_physical_user_name(get_cur_db_name(), dc_role);
 	role_oid = get_role_oid(physical_role_name, true);
 
 	/* If principal name is NULL, take current user instead */
@@ -1534,9 +1574,15 @@ is_rolemember(PG_FUNCTION_ARGS)
 	{
 		/* Do principal name mapping */
 		char *principal = text_to_cstring(PG_GETARG_TEXT_P(1));
-		physical_principal_name = get_physical_user_name(get_cur_db_name(), principal);
+		dc_principal = downcase_identifier(principal, strlen(principal), false, false);
+		physical_principal_name = get_physical_user_name(get_cur_db_name(), dc_principal);
 		principal_oid = get_role_oid(physical_principal_name, true);
 	}
+
+	/* Return 1 if given role is PUBLIC */
+	if (strcmp(dc_role, "public") == 0 && 
+		(principal_oid != InvalidOid || strcmp(dc_principal, "public") == 0))
+		PG_RETURN_INT32(1);
 
 	/* Return NULL if given role or principal doesn't exist */
 	if (role_oid == InvalidOid || principal_oid == InvalidOid)
