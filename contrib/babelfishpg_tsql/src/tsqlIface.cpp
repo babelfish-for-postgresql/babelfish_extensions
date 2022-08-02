@@ -997,6 +997,7 @@ public:
     MyInputStream &stream;
 
 	bool is_cross_db = false;
+	bool is_schema_specified = false;
 
 	// We keep a stack of the containers that are active during a traversal.
 	// A container will correspond to a block or a batch - these are containers
@@ -1406,6 +1407,9 @@ public:
 			stmt->is_cross_db = true;
 		// record that the stmt is dml
 	 	stmt->is_dml = true;
+		// record if the SQL object is schema qualified
+		if (is_schema_specified)
+			stmt->is_schema_specified = true;
 
 		if (is_compiling_create_function())
 		{
@@ -1607,6 +1611,10 @@ public:
 
 	void exitFull_object_name(TSqlParser::Full_object_nameContext *ctx) override
 	{
+		if (ctx && ctx->schema)
+			is_schema_specified = true;
+		else
+			is_schema_specified = false;
 		tsqlCommonMutator::exitFull_object_name(ctx);
 		if (ctx && ctx->database)
 		{
