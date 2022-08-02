@@ -3355,7 +3355,6 @@ SELECT
   , CAST(NULL AS int) AS column_encryption_key_id
   , CAST(NULL AS sys.sysname) AS column_encryption_key_database_name
 FROM pg_type t
-  INNER JOIN pg_namespace nt ON nt.oid = t.typnamespace
   INNER JOIN sys.types st ON st.user_type_id = t.oid
   INNER JOIN 
   (
@@ -3377,7 +3376,9 @@ FROM pg_type t
       p.pronamespace = s.schema_id
         OR p.pronamespace = CAST((select oid FROM pg_namespace where nspname = 'sys' limit 1) AS INT)
     )
-    WHERE ((pg_has_role(p.proowner, 'USAGE') OR has_function_privilege(p.oid, 'EXECUTE'))
+    WHERE (
+      p.pronamespace in (select schema_id from sys.schemas union all select oid from pg_namespace where nspname = 'sys')
+      AND (pg_has_role(p.proowner, 'USAGE') OR has_function_privilege(p.oid, 'EXECUTE'))
       AND p.probin like '{%typmod_array%}') -- Needs to have a typmod array in JSON format
   ) ss ON t.oid = (ss.x).x,
   sys.translate_pg_type_to_tsql(st.user_type_id) AS type_name,
