@@ -53,12 +53,14 @@ sys-original_login
 sys-procedures
 sys-schema-name
 sys-suser_sid
+identity_function
 sys-suser_sname
 sys-sysobjects
 sys-trigger_nestlevel
 routines_definition
 constraint_column_usage
 column_domain_usage
+sp_describe_first_result_set
 schema_resolution_proc
 datepart
 SYSTEM_USER
@@ -91,4 +93,5 @@ triggers_with_transaction
 Test-sp_helpsrvrolemember
 Test-sp_helpuser
 TestTableType
+schema_resolution_func
 BABEL-3147-before-14_5
