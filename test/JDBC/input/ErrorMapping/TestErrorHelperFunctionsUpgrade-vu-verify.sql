@@ -1,4 +1,3 @@
--- Should throw an error
 SELECT * FROM TestErrorHelperFunctionsUpgrade_VU_PREPARE_VIEW;
 GO
 
