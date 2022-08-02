@@ -87,7 +87,6 @@ Collation sys.modern_spanish_cs_as
 Collation sys.mongolian_ci_ai
 Collation sys.mongolian_cs_as
 Collation sys.polish_ci_ai
-Collation sys.polish_ci_as
 Collation sys.polish_cs_as
 Collation sys.thai_ci_ai
 Collation sys.thai_ci_as
