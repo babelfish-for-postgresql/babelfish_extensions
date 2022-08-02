@@ -6,4 +6,4 @@
 #    input folder
 # 5. To add a test, add test name (without extension, -vu-prepare, -vu-verify and -vu-cleanup. For example if test file name is TestBigInt-vu-prepare.txt write TestBigInt) on a new line
 
-collation_tests_monoglian
+collation_tests_mongolian
