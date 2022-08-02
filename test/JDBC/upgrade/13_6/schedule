@@ -142,3 +142,4 @@ collation_tests
 BABEL-EXTENDEDPROPERTY
 TestErrorHelperFunctionsUpgrade
 tdscollation
+BABEL-LOGIN-USER-EXT
