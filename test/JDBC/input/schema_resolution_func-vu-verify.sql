@@ -60,6 +60,6 @@ go
 
 drop schema schema_resolution_func_vu_prepare_s1;
 drop schema schema_resolution_func_vu_prepare_s2;
-drop procedure schema_resolution_func_vu_prepare_d1;
+drop database schema_resolution_func_vu_prepare_d1;
 go
 
