@@ -733,7 +733,7 @@ Function sys.tsql_query_to_xml(text,integer,text,boolean,text)
 Function sys.tsql_query_to_xml_text(text,integer,text,boolean,text)
 Function sys.tsql_stat_get_activity(text)
 Function sys.tsql_type_length_for_sp_columns_helper(text,integer,integer)
-Function sys.tsql_type_max_length_helper(text,integer,integer,boolean)
+Function sys.tsql_type_max_length_helper(text,integer,integer,boolean,boolean)
 Function sys.tsql_type_precision_helper(text,integer)
 Function sys.tsql_type_radix_for_sp_columns_helper(text)
 Function sys.tsql_type_scale_helper(text,integer,boolean)
@@ -1045,7 +1045,6 @@ Type sys."float"
 Type sys."int"
 Type sys."real"
 Type sys.bbf_binary
-Type sys.bbf_varbinary
 Type sys.cursor
 Type sys.rowversion
 View information_schema_tsql.check_constraints
