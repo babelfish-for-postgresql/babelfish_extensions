@@ -1,0 +1,23 @@
+use master;
+
+create table column_privileges_tb1(arg1 int, arg2 int);
+
+create table column_privileges_tb2(arg3 int, arg4 int);
+
+select * from information_schema.column_privileges where table_name not like 'sys%';
+
+drop table column_privileges_tb1;
+
+drop table column_privileges_tb2;
+
+create table column_privileges_tb3(arg5 int, arg6 int);
+
+select * from information_schema.column_privileges where table_name not like 'sys%';
+
+create table column_privileges_tb4(arg7 int, arg8 int);
+
+drop table column_privileges_tb3;
+
+select * from information_schema.column_privileges where table_name not like 'sys%';
+
+drop table column_privileges_tb4;
