@@ -6,13 +6,13 @@ EXEC BABEL_ROLE_MEMBER_vu_prepare_proc
 GO
 ~~START~~
 varchar#!#char#!#varchar#!#char
-db_owner#!#R#!#dbo#!#S
 BABEL_ROLE_MEMBER_vu_prepare_role1#!#R#!#BABEL_ROLE_MEMBER_vu_prepare_role2#!#R
 BABEL_ROLE_MEMBER_vu_prepare_role1#!#R#!#BABEL_ROLE_MEMBER_vu_prepare_user1#!#S
 BABEL_ROLE_MEMBER_vu_prepare_role2#!#R#!#BABEL_ROLE_MEMBER_vu_prepare_role3#!#R
 BABEL_ROLE_MEMBER_vu_prepare_role2#!#R#!#BABEL_ROLE_MEMBER_vu_prepare_user2#!#S
 BABEL_ROLE_MEMBER_vu_prepare_role3#!#R#!#BABEL_ROLE_MEMBER_vu_prepare_role4#!#R
 BABEL_ROLE_MEMBER_vu_prepare_role3#!#R#!#BABEL_ROLE_MEMBER_vu_prepare_user3#!#S
+db_owner#!#R#!#dbo#!#S
 ~~END~~
 
 
