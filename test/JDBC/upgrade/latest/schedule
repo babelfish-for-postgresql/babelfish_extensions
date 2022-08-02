@@ -98,4 +98,3 @@ Test-sp_helpsrvrolemember
 Test-sp_helpuser
 TestTableType
 BABEL-3147
-TestErrorHelperFunctionsUpgrade
