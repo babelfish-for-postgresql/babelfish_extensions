@@ -28,3 +28,24 @@ GO
 
 ~~ERROR (Message: syntax error near '<EOF>' at line 2 and character position 0)~~
 
+
+CREATE TABLE t3299 (a int);
+GO
+
+/* Should throw a syntax error */
+CREATE TRIGGER t1
+ON t3299
+AFTER UPDATE
+AS
+IF (::UPDATE(a))
+BEGIN
+RAISERROR(0, 0, 0)
+END;
+GO
+~~ERROR (Code: 10727)~~
+
+~~ERROR (Message: syntax error near 'UPDATE' at line 6 and character position 6)~~
+
+
+DROP TABLE t3299;
+GO
