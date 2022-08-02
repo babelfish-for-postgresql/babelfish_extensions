@@ -1,0 +1,17 @@
+use master;
+
+select * from information_schema.column_privileges where table_name not like 'sys%';
+
+drop table column_privileges_prepare_tb1;
+
+drop table column_privileges_prepare_tb2;
+
+select * from information_schema.column_privileges where table_name not like 'sys%';
+
+drop table column_privileges_prepare_tb3;
+
+select * from information_schema.column_privileges where table_name not like 'sys%';
+
+drop table column_privileges_prepare_tb4;
+
+

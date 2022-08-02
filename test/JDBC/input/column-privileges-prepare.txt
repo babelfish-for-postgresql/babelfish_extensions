@@ -1,0 +1,9 @@
+use master;
+
+create table column_privileges_prepare_tb1(arg1 int, arg2 int);
+
+create table column_privileges_prepare_tb2(arg3 int, arg4 int);
+
+create table column_privileges_prepare_tb3(arg5 int, arg6 int);
+
+create table column_privileges_prepare_tb4(arg7 int, arg8 int);
