@@ -1,0 +1,462 @@
+USE BABEL_ROLE_MEMBER_vu_prepare_db
+go
+
+-- Print the current membership status
+EXEC BABEL_ROLE_MEMBER_vu_prepare_proc
+GO
+~~START~~
+varchar#!#char#!#varchar#!#char
+BABEL_ROLE_MEMBER_vu_prepare_role1#!#R#!#BABEL_ROLE_MEMBER_vu_prepare_role2#!#R
+BABEL_ROLE_MEMBER_vu_prepare_role1#!#R#!#BABEL_ROLE_MEMBER_vu_prepare_user1#!#S
+BABEL_ROLE_MEMBER_vu_prepare_role2#!#R#!#BABEL_ROLE_MEMBER_vu_prepare_role3#!#R
+BABEL_ROLE_MEMBER_vu_prepare_role2#!#R#!#BABEL_ROLE_MEMBER_vu_prepare_user2#!#S
+BABEL_ROLE_MEMBER_vu_prepare_role3#!#R#!#BABEL_ROLE_MEMBER_vu_prepare_role4#!#R
+BABEL_ROLE_MEMBER_vu_prepare_role3#!#R#!#BABEL_ROLE_MEMBER_vu_prepare_user3#!#S
+db_owner#!#R#!#dbo#!#S
+~~END~~
+
+
+-- IS_MEMBER and IS_ROLEMEMBER
+-- Basic membership check
+SELECT IS_ROLEMEMBER('BABEL_ROLE_MEMBER_vu_prepare_role1', 'BABEL_ROLE_MEMBER_vu_prepare_role2')
+GO
+~~START~~
+int
+1
+~~END~~
+
+SELECT IS_ROLEMEMBER('BABEL_ROLE_MEMBER_vu_prepare_role2', 'BABEL_ROLE_MEMBER_vu_prepare_role3')
+GO
+~~START~~
+int
+1
+~~END~~
+
+SELECT IS_ROLEMEMBER('BABEL_ROLE_MEMBER_vu_prepare_role3', 'BABEL_ROLE_MEMBER_vu_prepare_role4')
+GO
+~~START~~
+int
+1
+~~END~~
+
+SELECT IS_ROLEMEMBER('BABEL_ROLE_MEMBER_vu_prepare_role1', 'BABEL_ROLE_MEMBER_vu_prepare_user1')
+GO
+~~START~~
+int
+1
+~~END~~
+
+SELECT IS_ROLEMEMBER('BABEL_ROLE_MEMBER_vu_prepare_role2', 'BABEL_ROLE_MEMBER_vu_prepare_user2')
+GO
+~~START~~
+int
+1
+~~END~~
+
+SELECT IS_ROLEMEMBER('BABEL_ROLE_MEMBER_vu_prepare_role3', 'BABEL_ROLE_MEMBER_vu_prepare_user3')
+GO
+~~START~~
+int
+1
+~~END~~
+
+
+-- Not member, should return 0
+SELECT IS_ROLEMEMBER('BABEL_ROLE_MEMBER_vu_prepare_role4', 'BABEL_ROLE_MEMBER_vu_prepare_role1')
+GO
+~~START~~
+int
+0
+~~END~~
+
+SELECT IS_ROLEMEMBER('BABEL_ROLE_MEMBER_vu_prepare_role1', 'BABEL_ROLE_MEMBER_vu_prepare_role5')
+GO
+~~START~~
+int
+0
+~~END~~
+
+
+-- Nested membership check
+SELECT IS_ROLEMEMBER('BABEL_ROLE_MEMBER_vu_prepare_role1', 'BABEL_ROLE_MEMBER_vu_prepare_role3')
+GO
+~~START~~
+int
+1
+~~END~~
+
+SELECT IS_ROLEMEMBER('BABEL_ROLE_MEMBER_vu_prepare_role1', 'BABEL_ROLE_MEMBER_vu_prepare_user3')
+GO
+~~START~~
+int
+1
+~~END~~
+
+
+-- Membership of oneself, should return 1, this also applies to user
+SELECT IS_ROLEMEMBER('BABEL_ROLE_MEMBER_vu_prepare_role1', 'BABEL_ROLE_MEMBER_vu_prepare_role1')
+GO
+~~START~~
+int
+1
+~~END~~
+
+SELECT IS_ROLEMEMBER('BABEL_ROLE_MEMBER_vu_prepare_user1', 'BABEL_ROLE_MEMBER_vu_prepare_user1')
+GO
+~~START~~
+int
+1
+~~END~~
+
+
+-- Should return 0
+SELECT IS_ROLEMEMBER('db_owner', 'BABEL_ROLE_MEMBER_vu_prepare_role1')
+GO
+~~START~~
+int
+0
+~~END~~
+
+SELECT IS_ROLEMEMBER('db_owner', 'BABEL_ROLE_MEMBER_vu_prepare_user1')
+GO
+~~START~~
+int
+0
+~~END~~
+
+
+-- Invalid role/principal name, should return NULL
+SELECT IS_MEMBER('xxx')
+GO
+~~START~~
+int
+<NULL>
+~~END~~
+
+SELECT IS_ROLEMEMBER('xxx')
+GO
+~~START~~
+int
+<NULL>
+~~END~~
+
+SELECT IS_ROLEMEMBER('xxx', 'BABEL_ROLE_MEMBER_vu_prepare_user1')
+GO
+~~START~~
+int
+<NULL>
+~~END~~
+
+SELECT IS_ROLEMEMBER('BABEL_ROLE_MEMBER_vu_prepare_role1', 'xxx')
+GO
+~~START~~
+int
+<NULL>
+~~END~~
+
+SELECT IS_ROLEMEMBER(NULL, 'BABEL_ROLE_MEMBER_vu_prepare_user1')
+GO
+~~START~~
+int
+<NULL>
+~~END~~
+
+SELECT IS_ROLEMEMBER('BABEL_ROLE_MEMBER_vu_prepare_role1', NULL)
+GO
+~~START~~
+int
+<NULL>
+~~END~~
+
+
+-- Given role name is not a real role, should return NULL
+SELECT IS_MEMBER('BABEL_ROLE_MEMBER_vu_prepare_user1')
+GO
+~~START~~
+int
+<NULL>
+~~END~~
+
+SELECT IS_ROLEMEMBER('BABEL_ROLE_MEMBER_vu_prepare_user1')
+GO
+~~START~~
+int
+<NULL>
+~~END~~
+
+SELECT IS_ROLEMEMBER('BABEL_ROLE_MEMBER_vu_prepare_user1', 'BABEL_ROLE_MEMBER_vu_prepare_user2')
+GO
+~~START~~
+int
+<NULL>
+~~END~~
+
+
+-- NULL input, should return NULL
+SELECT IS_MEMBER(NULL)
+GO
+~~START~~
+int
+<NULL>
+~~END~~
+
+SELECT IS_ROLEMEMBER(NULL, 'BABEL_ROLE_MEMBER_vu_prepare_user1')
+GO
+~~START~~
+int
+<NULL>
+~~END~~
+
+SELECT IS_ROLEMEMBER('BABEL_ROLE_MEMBER_vu_prepare_role1', NULL)
+GO
+~~START~~
+int
+<NULL>
+~~END~~
+
+SELECT IS_ROLEMEMBER(NULL, NULL)
+GO
+~~START~~
+int
+<NULL>
+~~END~~
+
+
+-- tsql      user=BABEL_ROLE_MEMBER_vu_prepare_login1      password=123
+-- Connect with different logins to test membership view permission
+-- Test on user1
+USE BABEL_ROLE_MEMBER_vu_prepare_db
+GO
+SELECT USER_NAME()
+GO
+~~START~~
+nvarchar
+BABEL_ROLE_MEMBER_vu_prepare_user1
+~~END~~
+
+
+-- Should return 1
+SELECT IS_MEMBER('BABEL_ROLE_MEMBER_vu_prepare_role1')
+GO
+~~START~~
+int
+1
+~~END~~
+
+SELECT IS_ROLEMEMBER('BABEL_ROLE_MEMBER_vu_prepare_role1')
+GO
+~~START~~
+int
+1
+~~END~~
+
+SELECT IS_MEMBER('BABEL_ROLE_MEMBER_vu_prepare_user1')
+GO
+~~START~~
+int
+1
+~~END~~
+
+
+-- Should return 0
+SELECT IS_MEMBER('BABEL_ROLE_MEMBER_vu_prepare_role2')
+GO
+~~START~~
+int
+0
+~~END~~
+
+SELECT IS_ROLEMEMBER('BABEL_ROLE_MEMBER_vu_prepare_role3')
+GO
+~~START~~
+int
+0
+~~END~~
+
+
+-- Doesn't have permission, should return NULL
+SELECT IS_ROLEMEMBER('BABEL_ROLE_MEMBER_vu_prepare_role2', 'BABEL_ROLE_MEMBER_vu_prepare_user2')
+GO
+~~START~~
+int
+<NULL>
+~~END~~
+
+SELECT IS_ROLEMEMBER('BABEL_ROLE_MEMBER_vu_prepare_role1', 'BABEL_ROLE_MEMBER_vu_prepare_role2')
+GO
+~~START~~
+int
+<NULL>
+~~END~~
+
+
+USE master
+GO
+
+-- tsql      user=BABEL_ROLE_MEMBER_vu_prepare_login2      password=123
+-- Test on user2
+USE BABEL_ROLE_MEMBER_vu_prepare_db
+GO
+SELECT USER_NAME()
+GO
+~~START~~
+nvarchar
+BABEL_ROLE_MEMBER_vu_prepare_user2
+~~END~~
+
+
+-- Should return 1
+SELECT IS_MEMBER('BABEL_ROLE_MEMBER_vu_prepare_role2')
+GO
+~~START~~
+int
+1
+~~END~~
+
+SELECT IS_ROLEMEMBER('BABEL_ROLE_MEMBER_vu_prepare_role1')
+GO
+~~START~~
+int
+1
+~~END~~
+
+SELECT IS_ROLEMEMBER('BABEL_ROLE_MEMBER_vu_prepare_role1', 'BABEL_ROLE_MEMBER_vu_prepare_role2')
+GO
+~~START~~
+int
+1
+~~END~~
+
+SELECT IS_MEMBER('BABEL_ROLE_MEMBER_vu_prepare_user2')
+GO
+~~START~~
+int
+1
+~~END~~
+
+
+-- Should return 0
+SELECT IS_MEMBER('BABEL_ROLE_MEMBER_vu_prepare_role3')
+GO
+~~START~~
+int
+0
+~~END~~
+
+
+-- Doesn't have permission, should return NULL 
+SELECT IS_ROLEMEMBER('BABEL_ROLE_MEMBER_vu_prepare_role1', 'BABEL_ROLE_MEMBER_vu_prepare_role3')
+GO
+~~START~~
+int
+<NULL>
+~~END~~
+
+SELECT IS_ROLEMEMBER('BABEL_ROLE_MEMBER_vu_prepare_role2', 'BABEL_ROLE_MEMBER_vu_prepare_role3')
+GO
+~~START~~
+int
+<NULL>
+~~END~~
+
+SELECT IS_ROLEMEMBER('BABEL_ROLE_MEMBER_vu_prepare_role1', 'BABEL_ROLE_MEMBER_vu_prepare_user1')
+GO
+~~START~~
+int
+<NULL>
+~~END~~
+
+
+USE master
+GO
+
+-- tsql      user=BABEL_ROLE_MEMBER_vu_prepare_login3      password=123
+-- Test on user3
+USE BABEL_ROLE_MEMBER_vu_prepare_db
+GO
+SELECT USER_NAME()
+GO
+~~START~~
+nvarchar
+BABEL_ROLE_MEMBER_vu_prepare_user3
+~~END~~
+
+
+-- Should return 1
+SELECT IS_MEMBER('BABEL_ROLE_MEMBER_vu_prepare_role3')
+GO
+~~START~~
+int
+1
+~~END~~
+
+SELECT IS_ROLEMEMBER('BABEL_ROLE_MEMBER_vu_prepare_role2')
+GO
+~~START~~
+int
+1
+~~END~~
+
+SELECT IS_ROLEMEMBER('BABEL_ROLE_MEMBER_vu_prepare_role1')
+GO
+~~START~~
+int
+1
+~~END~~
+
+SELECT IS_ROLEMEMBER('BABEL_ROLE_MEMBER_vu_prepare_role1', 'BABEL_ROLE_MEMBER_vu_prepare_role2')
+GO
+~~START~~
+int
+1
+~~END~~
+
+SELECT IS_ROLEMEMBER('BABEL_ROLE_MEMBER_vu_prepare_role2', 'BABEL_ROLE_MEMBER_vu_prepare_role3')
+GO
+~~START~~
+int
+1
+~~END~~
+
+SELECT IS_ROLEMEMBER('BABEL_ROLE_MEMBER_vu_prepare_role1', 'BABEL_ROLE_MEMBER_vu_prepare_role3')
+GO
+~~START~~
+int
+1
+~~END~~
+
+SELECT IS_MEMBER('BABEL_ROLE_MEMBER_vu_prepare_user3')
+GO
+~~START~~
+int
+1
+~~END~~
+
+
+-- Should return 0
+SELECT IS_MEMBER('BABEL_ROLE_MEMBER_vu_prepare_role4')
+GO
+~~START~~
+int
+0
+~~END~~
+
+
+-- Doesn't have permission, should return NULL
+SELECT IS_ROLEMEMBER('BABEL_ROLE_MEMBER_vu_prepare_role3', 'BABEL_ROLE_MEMBER_vu_prepare_role4')
+GO
+~~START~~
+int
+<NULL>
+~~END~~
+
+SELECT IS_ROLEMEMBER('BABEL_ROLE_MEMBER_vu_prepare_role2', 'BABEL_ROLE_MEMBER_vu_prepare_user2')
+GO
+~~START~~
+int
+<NULL>
+~~END~~
+
+
+USE master
+GO

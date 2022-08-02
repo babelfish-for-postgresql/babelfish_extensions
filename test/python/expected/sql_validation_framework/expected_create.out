@@ -105,17 +105,14 @@ Could not find tests for view sys.sp_statistics_view
 Could not find tests for view sys.sp_stored_procedures_view
 Could not find tests for view sys.sp_table_privileges_view
 Could not find tests for view sys.spt_columns_view_managed
-Could not find upgrade tests for domain sys.timestamp
 Could not find upgrade tests for function assemblyproperty
 Could not find upgrade tests for function collationproperty
 Could not find upgrade tests for function columns_updated
 Could not find upgrade tests for function connectionproperty
 Could not find upgrade tests for function databasepropertyex
-Could not find upgrade tests for function is_member
 Could not find upgrade tests for function pltsql_call_handler
 Could not find upgrade tests for function pltsql_inline_handler
 Could not find upgrade tests for function pltsql_validator
-Could not find upgrade tests for function schema_id
 Could not find upgrade tests for function serverproperty
 Could not find upgrade tests for function sessionproperty
 Could not find upgrade tests for function sys.applock_mode
@@ -134,14 +131,10 @@ Could not find upgrade tests for function sys.ceiling
 Could not find upgrade tests for function sys.columns_internal
 Could not find upgrade tests for function sys.cursor_rows
 Could not find upgrade tests for function sys.cursor_status
-Could not find upgrade tests for function sys.datalength
 Could not find upgrade tests for function sys.dateadd_internal
 Could not find upgrade tests for function sys.dateadd_internal_df
-Could not find upgrade tests for function sys.datediff
 Could not find upgrade tests for function sys.datediff_internal
 Could not find upgrade tests for function sys.datediff_internal_df
-Could not find upgrade tests for function sys.datefromparts
-Could not find upgrade tests for function sys.datename
 Could not find upgrade tests for function sys.datepart_internal
 Could not find upgrade tests for function sys.datetime2fromparts
 Could not find upgrade tests for function sys.datetimefromparts
@@ -164,8 +157,6 @@ Could not find upgrade tests for function sys.get_current_full_xact_id
 Could not find upgrade tests for function sys.get_host_os
 Could not find upgrade tests for function sys.get_tds_id
 Could not find upgrade tests for function sys.getdate
-Could not find upgrade tests for function sys.getutcdate
-Could not find upgrade tests for function sys.has_dbaccess
 Could not find upgrade tests for function sys.has_perms_by_name
 Could not find upgrade tests for function sys.hashbytes
 Could not find upgrade tests for function sys.ident_current
@@ -173,19 +164,15 @@ Could not find upgrade tests for function sys.ident_incr
 Could not find upgrade tests for function sys.ident_seed
 Could not find upgrade tests for function sys.is_collated_ci_as
 Could not find upgrade tests for function sys.is_collated_ci_as_internal
-Could not find upgrade tests for function sys.is_member
-Could not find upgrade tests for function sys.is_rolemember
 Could not find upgrade tests for function sys.is_rolemember_internal
 Could not find upgrade tests for function sys.is_table_type
 Could not find upgrade tests for function sys.isdate
 Could not find upgrade tests for function sys.isjson
-Could not find upgrade tests for function sys.isnumeric
 Could not find upgrade tests for function sys.json_query
 Could not find upgrade tests for function sys.json_value
 Could not find upgrade tests for function sys.language
 Could not find upgrade tests for function sys.max_precision
 Could not find upgrade tests for function sys.microsoftversion
-Could not find upgrade tests for function sys.month
 Could not find upgrade tests for function sys.nestlevel
 Could not find upgrade tests for function sys.openjson_array
 Could not find upgrade tests for function sys.openjson_object
@@ -196,16 +183,11 @@ Could not find upgrade tests for function sys.parsename
 Could not find upgrade tests for function sys.patindex
 Could not find upgrade tests for function sys.pgerror
 Could not find upgrade tests for function sys.proc_param_helper
-Could not find upgrade tests for function sys.quotename
-Could not find upgrade tests for function sys.rand
 Could not find upgrade tests for function sys.replace
-Could not find upgrade tests for function sys.replicate
 Could not find upgrade tests for function sys.role_id
-Could not find upgrade tests for function sys.schema_id
 Could not find upgrade tests for function sys.servername
 Could not find upgrade tests for function sys.servicename
 Could not find upgrade tests for function sys.sid_binary
-Could not find upgrade tests for function sys.sign
 Could not find upgrade tests for function sys.sp_columns_100_internal
 Could not find upgrade tests for function sys.sp_columns_managed_internal
 Could not find upgrade tests for function sys.sp_datatype_info_helper
@@ -220,15 +202,11 @@ Could not find upgrade tests for function sys.sp_special_columns_scale_helper
 Could not find upgrade tests for function sys.sp_statistics_internal
 Could not find upgrade tests for function sys.sp_tables_internal
 Could not find upgrade tests for function sys.space
-Could not find upgrade tests for function sys.square
-Could not find upgrade tests for function sys.string_escape
-Could not find upgrade tests for function sys.string_split
 Could not find upgrade tests for function sys.stuff
 Could not find upgrade tests for function sys.suser_id_internal
 Could not find upgrade tests for function sys.suser_name_internal
 Could not find upgrade tests for function sys.sysdatetime
 Could not find upgrade tests for function sys.sysdatetimeoffset
-Could not find upgrade tests for function sys.sysutcdatetime
 Could not find upgrade tests for function sys.timefromparts
 Could not find upgrade tests for function sys.tsql_get_constraintdef
 Could not find upgrade tests for function sys.tsql_get_functiondef
@@ -241,10 +219,8 @@ Could not find upgrade tests for function sys.tsql_type_max_length_helper
 Could not find upgrade tests for function sys.tsql_type_precision_helper
 Could not find upgrade tests for function sys.tsql_type_radix_for_sp_columns_helper
 Could not find upgrade tests for function sys.tsql_type_scale_helper
-Could not find upgrade tests for function sys.unicode
 Could not find upgrade tests for function sys.user_id
 Could not find upgrade tests for function sys.version
-Could not find upgrade tests for function sys.year
 Could not find upgrade tests for procedure babel_catalog_initializer
 Could not find upgrade tests for procedure babel_coercion_initializer
 Could not find upgrade tests for procedure babel_create_builtin_dbs
@@ -304,8 +280,6 @@ Could not find upgrade tests for table sys.extended_properties
 Could not find upgrade tests for table sys.service_settings
 Could not find upgrade tests for table sys.spt_datatype_info_table
 Could not find upgrade tests for table sys.versions
-Could not find upgrade tests for type sys.bbf_binary
-Could not find upgrade tests for type sys.bbf_varbinary
 Could not find upgrade tests for type sys.bpchar
 Could not find upgrade tests for view babelfish_has_perms_by_name_permissions
 Could not find upgrade tests for view information_schema_tsql.check_constraints
@@ -324,7 +298,6 @@ Could not find upgrade tests for view sys.data_spaces
 Could not find upgrade tests for view sys.database_files
 Could not find upgrade tests for view sys.database_filestream_options
 Could not find upgrade tests for view sys.database_recovery_status
-Could not find upgrade tests for view sys.database_role_members
 Could not find upgrade tests for view sys.default_constraints
 Could not find upgrade tests for view sys.dm_hadr_cluster
 Could not find upgrade tests for view sys.dm_hadr_database_replica_states

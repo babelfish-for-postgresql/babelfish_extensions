@@ -1,0 +1,255 @@
+SELECT * FROM babel_isnumeric_vu_prepare_t1
+GO
+~~START~~
+bigint#!#int#!#smallint#!#tinyint#!#bit#!#numeric#!#numeric#!#float#!#real#!#money#!#money
+9223372036854775806#!#45000#!#-32767#!#100#!#1#!#123.00#!#12345.12000#!#1.79E30#!#-3.4E38#!#237891.2200#!#77.5800
+~~END~~
+
+-- Test bigint
+SELECT ISNUMERIC(bigint_type)
+FROM babel_isnumeric_vu_prepare_t1
+GO
+~~START~~
+int
+1
+~~END~~
+
+-- Test int
+SELECT ISNUMERIC(int_type)
+FROM babel_isnumeric_vu_prepare_t1
+GO
+~~START~~
+int
+1
+~~END~~
+
+-- Test smallint
+SELECT ISNUMERIC(smallint_type)
+FROM babel_isnumeric_vu_prepare_t1
+GO
+~~START~~
+int
+1
+~~END~~
+
+-- Test tinyint
+SELECT ISNUMERIC(tinyint_type)
+FROM babel_isnumeric_vu_prepare_t1
+GO
+~~START~~
+int
+1
+~~END~~
+
+-- Test bit
+SELECT ISNUMERIC(bit_type)
+FROM babel_isnumeric_vu_prepare_t1
+GO
+~~START~~
+int
+1
+~~END~~
+
+-- Test decimal
+SELECT ISNUMERIC(decimal_type)
+FROM babel_isnumeric_vu_prepare_t1
+GO
+~~START~~
+int
+1
+~~END~~
+
+-- Test numeric
+SELECT ISNUMERIC(numeric_type)
+FROM babel_isnumeric_vu_prepare_t1
+GO
+~~START~~
+int
+1
+~~END~~
+
+-- Test float
+SELECT ISNUMERIC(float_type)
+FROM babel_isnumeric_vu_prepare_t1
+GO
+~~START~~
+int
+1
+~~END~~
+
+-- Test real
+SELECT ISNUMERIC(real_type)
+FROM babel_isnumeric_vu_prepare_t1
+GO
+~~START~~
+int
+1
+~~END~~
+
+-- Test money
+SELECT ISNUMERIC(money_type)
+FROM babel_isnumeric_vu_prepare_t1
+GO
+~~START~~
+int
+1
+~~END~~
+
+-- Test smallmoney
+SELECT ISNUMERIC(smallmoney_type)
+FROM babel_isnumeric_vu_prepare_t1
+GO
+~~START~~
+int
+1
+~~END~~
+
+
+-- Test valid and invalid operators and literals
+select isnumeric(1234567890)
+GO
+~~START~~
+int
+1
+~~END~~
+
+select isnumeric('28903')
+GO
+~~START~~
+int
+1
+~~END~~
+
+select isnumeric('+')
+GO
+~~START~~
+int
+1
+~~END~~
+
+select isnumeric('+ ')
+GO
+~~START~~
+int
+1
+~~END~~
+
+-- Blocked due to BABEL-2853
+--select isnumeric($)
+--GO
+select isnumeric('$24,23.43')
+GO
+~~START~~
+int
+1
+~~END~~
+
+-- Blocked due to BABEL-2853
+--select isnumeric(€)
+--GO
+select isnumeric('+ 1')
+GO
+~~START~~
+int
+1
+~~END~~
+
+select isnumeric('$+1.1234')
+GO
+~~START~~
+int
+1
+~~END~~
+
+select isnumeric('+$1.1234')
+GO
+~~START~~
+int
+1
+~~END~~
+
+select isnumeric(' $ + 1.1234')
+GO
+~~START~~
+int
+1
+~~END~~
+
+select isnumeric(' + $ 1.1234')
+GO
+~~START~~
+int
+1
+~~END~~
+
+
+select isnumeric('abcdefghijklmnop')
+GO
+~~START~~
+int
+0
+~~END~~
+
+select isnumeric('24.89.43')
+GO
+~~START~~
+int
+0
+~~END~~
+
+select isnumeric('€24,2.3.43')
+GO
+~~START~~
+int
+0
+~~END~~
+
+select isnumeric('+-')
+GO
+~~START~~
+int
+0
+~~END~~
+
+select isnumeric('23$')
+GO
+~~START~~
+int
+0
+~~END~~
+
+select isnumeric(null)
+GO
+~~START~~
+int
+0
+~~END~~
+
+select isnumeric(' ')
+GO
+~~START~~
+int
+0
+~~END~~
+
+select isnumeric('1 .1234')
+GO
+~~START~~
+int
+0
+~~END~~
+
+select isnumeric('+1 .1234')
+GO
+~~START~~
+int
+0
+~~END~~
+
+select isnumeric('$1 .1234')
+GO
+~~START~~
+int
+0
+~~END~~
+

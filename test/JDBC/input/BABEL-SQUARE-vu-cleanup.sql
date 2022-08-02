@@ -1,0 +1,2 @@
+DROP TABLE babel_square_vu_prepare_cubes;
+GO

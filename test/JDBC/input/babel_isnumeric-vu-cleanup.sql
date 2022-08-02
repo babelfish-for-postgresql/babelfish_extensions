@@ -1,0 +1,2 @@
+DROP TABLE babel_isnumeric_vu_prepare_t1
+GO
