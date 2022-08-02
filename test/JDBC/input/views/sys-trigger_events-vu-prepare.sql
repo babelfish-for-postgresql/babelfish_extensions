@@ -44,7 +44,9 @@ CREATE FUNCTION dbo.sys_trigger_events_vu_prepare_func()
 RETURNS INT
 AS
 BEGIN
-RETURN (SELECT COUNT(*) FROM sys.trigger_events)
+RETURN (SELECT COUNT(*) FROM sys.trigger_events te
+INNER JOIN sys.triggers t ON t.object_id = te.object_id 
+AND (t.name = 'sys_trigger_events_vu_prepare_trig1' OR t.name = 'sys_trigger_events_vu_prepare_trig2'))
 END
 GO
 
