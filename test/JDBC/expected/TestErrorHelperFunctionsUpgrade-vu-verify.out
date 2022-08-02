@@ -7,6 +7,7 @@ int
 
 ~~ERROR (Message: function return row and query-specified return row do not match)~~
 
+
 DROP VIEW TestErrorHelperFunctionsUpgrade_VU_PREPARE_VIEW
 GO
 
