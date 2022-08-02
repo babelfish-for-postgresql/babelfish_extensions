@@ -269,7 +269,6 @@ Could not find upgrade tests for procedure sys.sp_databases
 Could not find upgrade tests for procedure sys.sp_datatype_info
 Could not find upgrade tests for procedure sys.sp_datatype_info_100
 Could not find upgrade tests for procedure sys.sp_describe_cursor
-Could not find upgrade tests for procedure sys.sp_describe_first_result_set
 Could not find upgrade tests for procedure sys.sp_describe_undeclared_parameters
 Could not find upgrade tests for procedure sys.sp_fkeys
 Could not find upgrade tests for procedure sys.sp_getapplock
