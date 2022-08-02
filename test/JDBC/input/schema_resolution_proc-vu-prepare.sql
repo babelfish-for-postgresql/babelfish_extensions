@@ -35,10 +35,12 @@ create table schema_resolution_proc_t1(dbo_t1 int);
 create table schema_resolution_proc_sch1.schema_resolution_proc_t1(sch1_t1 char, b int);
 insert into schema_resolution_proc_t1 values('a', 1);
 insert into dbo.schema_resolution_proc_t1 values(1);
+insert into schema_resolution_proc_sch2.schema_resolution_proc_t1 values(1, 'a');
 go
 	 
 create proc schema_resolution_proc_sch1.schema_resolution_proc_select_tab
 as 
 select * from dbo.schema_resolution_proc_t1;
 select * from schema_resolution_proc_t1;
+select * from schema_resolution_proc_sch2.schema_resolution_proc_t1;
 go
