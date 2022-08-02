@@ -68,3 +68,15 @@ triggers_with_transaction
 Test-sp_helpsrvrolemember
 TestTableType
 BABEL-3147-before-14_5
+babel_char
+BABEL-SQUARE
+BABEL-728
+babel_function_string
+BABEL-2701
+babel_isnumeric
+HAS_DBACCESS
+BABEL-1475
+BABEL-1510
+BABEL-3213
+BABEL-RAND
+BABEL-741

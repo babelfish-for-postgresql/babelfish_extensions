@@ -75,7 +75,6 @@ nested_trigger_with_dml
 triggers_with_transaction
 Test-sp_helpsrvrolemember
 babel_char
-babel_tds_fault_injection
 BABEL-SQUARE
 BABEL-728
 babel_function_string
