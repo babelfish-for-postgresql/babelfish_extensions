@@ -1,0 +1,19 @@
+use prep;
+
+drop table tprep1;
+
+drop table tprep2;
+
+drop table scprep.tprep3;
+
+use master;
+
+use prep;
+
+drop schema scprep;
+
+use master;
+
+drop database prep;
+
+select * from information_schema.column_privileges where table_name not like 'sys%';
