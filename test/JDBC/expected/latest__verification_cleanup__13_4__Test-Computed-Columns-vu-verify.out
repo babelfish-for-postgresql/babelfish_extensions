@@ -139,23 +139,6 @@ GO
 ~~ERROR (Message: generation expression is not immutable)~~
 
 
-INSERT INTO computed_column_vu_prepare_t4 (EmpNumb,Designation,DOBirth) values (84, 'DBA', '1985-12-13')
-INSERT INTO computed_column_vu_prepare_t4 (EmpNumb,Designation,DOBirth) values (85, 'DBA', '1980-11-18')
-INSERT INTO computed_column_vu_prepare_t4 (EmpNumb,Designation,DOBirth) values (86, 'Manager', '1978-01-19')
-INSERT INTO computed_column_vu_prepare_t4 (EmpNumb,Designation,DOBirth) values (88, 'Manager', '1985-12-13')
-INSERT INTO computed_column_vu_prepare_t4 (EmpNumb,Designation,DOBirth) values (90, 'Developer', '1975-07-23')
-GO
-~~ROW COUNT: 1~~
-
-~~ROW COUNT: 1~~
-
-~~ROW COUNT: 1~~
-
-~~ROW COUNT: 1~~
-
-~~ROW COUNT: 1~~
-
-
 SELECT Designation, DATEDIFF(yy,dobirth,doretirement ) AgeLimit, DOBirth, DORetirement FROM computed_column_vu_prepare_t4
 GO
 ~~START~~
@@ -168,23 +151,6 @@ Developer#!#60#!#1975-07-23 00:00:00.0#!#2035-07-23 00:00:00.0
 ~~END~~
 
 
-INSERT INTO computed_column_vu_prepare_t5 (Numerator, Denominator) VALUES (840, 12)
-INSERT INTO computed_column_vu_prepare_t5 (Numerator, Denominator) VALUES (805, 6)
-INSERT INTO computed_column_vu_prepare_t5 (Numerator, Denominator) VALUES (846, 3)
-INSERT INTO computed_column_vu_prepare_t5 (Numerator, Denominator) VALUES (88, 0)
-INSERT INTO computed_column_vu_prepare_t5 (Numerator, Denominator) VALUES (90, 15)
-GO
-~~ROW COUNT: 1~~
-
-~~ROW COUNT: 1~~
-
-~~ROW COUNT: 1~~
-
-~~ROW COUNT: 1~~
-
-~~ROW COUNT: 1~~
-
-
 SELECT * FROM computed_column_vu_prepare_t5
 GO
 ~~START~~
@@ -195,16 +161,6 @@ int#!#int#!#int
 88#!#0#!#<NULL>
 90#!#15#!#6
 ~~END~~
-
-
-INSERT INTO computed_column_vu_prepare_t6
-SELECT 840, 12 UNION ALL
-SELECT 805, 6 UNION ALL
-SELECT 846, 13 UNION ALL
-SELECT 88, 7 UNION ALL
-SELECT 90, 15
-GO
-~~ROW COUNT: 5~~
 
 
 SELECT * FROM computed_column_vu_prepare_t6
@@ -244,16 +200,6 @@ GO
 ~~ERROR (Code: 33557097)~~
 
 ~~ERROR (Message: generation expression is not immutable)~~
-
-
-INSERT INTO computed_column_vu_prepare_t9 (c)
-SELECT 'Testing1' UNION ALL
-SELECT 'Testing2' UNION ALL
-SELECT 'Testing3' UNION ALL
-SELECT 'Testing4' UNION ALL
-SELECT 'Testing5'
-GO
-~~ROW COUNT: 5~~
 
 
 SELECT * FROM computed_column_vu_prepare_t9

@@ -2,9 +2,7 @@ EXEC test_identity_vu_prepare_p1
 GO
 
 
-INSERT INTO test_identity_vu_prepare_t1 VALUES ('Babelfish1')
-INSERT INTO test_identity_vu_prepare_t1 VALUES ('Babelfish2')
-INSERT INTO test_identity_vu_prepare_t1 VALUES ('Babelfish3')
+INSERT INTO test_identity_vu_prepare_t1 VALUES ('Babelfish1') ,('Babelfish2') ,('Babelfish3')
 GO
 
 SELECT MAX(id) as MaximumUsedIdentity FROM test_identity_vu_prepare_t1

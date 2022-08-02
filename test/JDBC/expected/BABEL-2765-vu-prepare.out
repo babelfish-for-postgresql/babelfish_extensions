@@ -24,19 +24,30 @@ CREATE TABLE babel_2765_vu_prepare_t5 (non_computed5 VARCHAR(200) COLLATE SQL_La
 GO
 
 
+ALTER TABLE babel_2765_vu_prepare_t5 ADD computed5 AS substring(non_computed5, 1, 5) COLLATE SQL_Latin1_General_CP1_CI_AS
+GO
+
+
 -- Adding computed column through ALTER TABLE ... ADD COLUMN
 -- Check column collation when we add explicit COLLATE clause for only the computed column
 CREATE TABLE babel_2765_vu_prepare_t6 (non_computed6 VARCHAR(200))
 GO
 
+ALTER TABLE babel_2765_vu_prepare_t6 ADD computed6 AS substring(non_computed6, 1, 5) COLLATE SQL_Latin1_General_CP1_CI_AI
+GO
 
 -- Adding computed column through ALTER TABLE ... ADD COLUMN
 -- Check column collation when we add explicit COLLATE clause for only the non-computed column
 CREATE TABLE babel_2765_vu_prepare_t7 (non_computed7 VARCHAR(200) COLLATE SQL_Latin1_General_CP1_CI_AI)
 GO
 
+ALTER TABLE babel_2765_vu_prepare_t7 ADD computed7 AS substring(non_computed7, 1, 5)
+GO
 
 -- Adding computed column through ALTER TABLE ... ADD COLUMN
 -- Check column collation when we don't explicit COLLATE clause for any of the columns
 CREATE TABLE babel_2765_vu_prepare_t8 (non_computed8 VARCHAR(200))
+GO
+
+ALTER TABLE babel_2765_vu_prepare_t8 ADD computed8 AS substring(non_computed8, 1, 5)
 GO

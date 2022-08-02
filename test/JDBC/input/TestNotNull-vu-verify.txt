@@ -1,207 +1,129 @@
 #int
-Select * from test_not_null_vu_prepare_t1
-Insert into test_not_null_vu_prepare_t1 values (1, 1);
-Insert into test_not_null_vu_prepare_t1 values (NULL, 1);
 Insert into test_not_null_vu_prepare_t1 values (1, NULL);
 Select * from test_not_null_vu_prepare_t1
 exec test_not_null_vu_prepare_p1
 
 #smallint
-Select * from test_not_null_vu_prepare_t2
-Insert into test_not_null_vu_prepare_t2 values (1, 1);
-Insert into test_not_null_vu_prepare_t2 values (NULL, 1);
 Insert into test_not_null_vu_prepare_t2 values (1, NULL);
 Select * from test_not_null_vu_prepare_t2
 exec test_not_null_vu_prepare_p2
 
 #bigint
-Select * from test_not_null_vu_prepare_t3
-Insert into test_not_null_vu_prepare_t3 values (1, 1);
-Insert into test_not_null_vu_prepare_t3 values (NULL, 1);
 Insert into test_not_null_vu_prepare_t3 values (1, NULL);
 Select * from test_not_null_vu_prepare_t3
 exec test_not_null_vu_prepare_p3
 
 #bit
-Select * from test_not_null_vu_prepare_t4
-Insert into test_not_null_vu_prepare_t4 values (1, 1);
-Insert into test_not_null_vu_prepare_t4 values (NULL, 1);
 Insert into test_not_null_vu_prepare_t4 values (1, NULL);
 Select * from test_not_null_vu_prepare_t4
 exec test_not_null_vu_prepare_p4
 
 #float
-Select * from test_not_null_vu_prepare_t5
-Insert into test_not_null_vu_prepare_t5 values (1.1101, 0.00010);
-Insert into test_not_null_vu_prepare_t5 values (NULL, 1);
 Insert into test_not_null_vu_prepare_t5 values (1, NULL);
 Select * from test_not_null_vu_prepare_t5
 exec test_not_null_vu_prepare_p5
 
 #real
-Select * from test_not_null_vu_prepare_t6
-Insert into test_not_null_vu_prepare_t6 values (1.1101, 0.00010);
-Insert into test_not_null_vu_prepare_t6 values (NULL, 1);
 Insert into test_not_null_vu_prepare_t6 values (1, NULL);
 Select * from test_not_null_vu_prepare_t6
 exec test_not_null_vu_prepare_p6
 
 #char
-Select * from test_not_null_vu_prepare_t7
-Insert into test_not_null_vu_prepare_t7 values ('hello', 'jello');
-Insert into test_not_null_vu_prepare_t7 values (NULL, 'jello');
 Insert into test_not_null_vu_prepare_t7 values ('jello', NULL);
 Select * from test_not_null_vu_prepare_t7
 exec test_not_null_vu_prepare_p7
 
 #nchar
-Select * from test_not_null_vu_prepare_t8
-Insert into test_not_null_vu_prepare_t8 values ('hello', 'jello');
-Insert into test_not_null_vu_prepare_t8 values (NULL, 'jello');
 Insert into test_not_null_vu_prepare_t8 values ('jello', NULL);
 Select * from test_not_null_vu_prepare_t8
 exec test_not_null_vu_prepare_p8
 
 #varchar
-Select * from test_not_null_vu_prepare_t9
-Insert into test_not_null_vu_prepare_t9 values ('hello', 'jello');
-Insert into test_not_null_vu_prepare_t9 values (NULL, 'jello');
 Insert into test_not_null_vu_prepare_t9 values ('jello', NULL);
 Select * from test_not_null_vu_prepare_t9
 exec test_not_null_vu_prepare_p9
 
 #nvarchar
-Select * from test_not_null_vu_prepare_t10
-Insert into test_not_null_vu_prepare_t10 values ('hello', 'jello');
-Insert into test_not_null_vu_prepare_t10 values (NULL, 'jello');
 Insert into test_not_null_vu_prepare_t10 values ('jello', NULL);
 Select * from test_not_null_vu_prepare_t10
 exec test_not_null_vu_prepare_p10
 
 #text
-Select * from test_not_null_vu_prepare_t11
-Insert into test_not_null_vu_prepare_t11 values ('hello', 'jello');
-Insert into test_not_null_vu_prepare_t11 values (NULL, 'jello');
 Insert into test_not_null_vu_prepare_t11 values ('jello', NULL);
 Select * from test_not_null_vu_prepare_t11
 exec test_not_null_vu_prepare_p11
 
 #ntext
-Select * from test_not_null_vu_prepare_t12
-Insert into test_not_null_vu_prepare_t12 values ('hello', 'jello');
-Insert into test_not_null_vu_prepare_t12 values (NULL, 'jello');
 Insert into test_not_null_vu_prepare_t12 values ('jello', NULL);
 Select * from test_not_null_vu_prepare_t12
 exec test_not_null_vu_prepare_p12
 
 #binary
-Select * from test_not_null_vu_prepare_t13
-Insert into test_not_null_vu_prepare_t13 values (0x31323334, 0x9241);
-Insert into test_not_null_vu_prepare_t13 values (NULL, 0x9241);
 Insert into test_not_null_vu_prepare_t13 values (0x9241, NULL);
 Select * from test_not_null_vu_prepare_t13
 exec test_not_null_vu_prepare_p13
 
 #varbinary
-Select * from test_not_null_vu_prepare_t14
-Insert into test_not_null_vu_prepare_t14 values (0x31323334, 0x9241);
-Insert into test_not_null_vu_prepare_t14 values (NULL, 0x9241);
 Insert into test_not_null_vu_prepare_t14 values (0x9241, NULL);
 Select * from test_not_null_vu_prepare_t14
 exec test_not_null_vu_prepare_p14
 
 #numeric
-Select * from test_not_null_vu_prepare_t15
-Insert into test_not_null_vu_prepare_t15 values (1.1101, 0.00010);
-Insert into test_not_null_vu_prepare_t15 values (NULL, 0.00010);
 Insert into test_not_null_vu_prepare_t15 values (0.00010, NULL);
 Select * from test_not_null_vu_prepare_t15
 exec test_not_null_vu_prepare_p15
 
 #decimal
-Select * from test_not_null_vu_prepare_t16
-Insert into test_not_null_vu_prepare_t16 values (1.1101, 0.00010);
-Insert into test_not_null_vu_prepare_t16 values (NULL, 0.00010);
 Insert into test_not_null_vu_prepare_t16 values (0.00010, NULL);
 Select * from test_not_null_vu_prepare_t16
 exec test_not_null_vu_prepare_p16
 
 #money
-Select * from test_not_null_vu_prepare_t17
-Insert into test_not_null_vu_prepare_t17 values (100.11, 0.10);
-Insert into test_not_null_vu_prepare_t17 values (NULL, 0.10);
 Insert into test_not_null_vu_prepare_t17 values (0.10, NULL);
 Select * from test_not_null_vu_prepare_t17
 exec test_not_null_vu_prepare_p17
 
 #smallmoney
-Select * from test_not_null_vu_prepare_t18
-Insert into test_not_null_vu_prepare_t18 values (100.11, 0.10);
-Insert into test_not_null_vu_prepare_t18 values (NULL, 0.10);
 Insert into test_not_null_vu_prepare_t18 values (0.10, NULL);
 Select * from test_not_null_vu_prepare_t18
 exec test_not_null_vu_prepare_p18
 
 #uniqueidentifier
-Select * from test_not_null_vu_prepare_t19
-Insert into test_not_null_vu_prepare_t19 values ('51f178a6-53c7-472c-9be1-1c08942342d7', 'dd8cb046-461d-411e-be40-d219252ce849');
-Insert into test_not_null_vu_prepare_t19 values (NULL, 'dd8cb046-461d-411e-be40-d219252ce849');
 Insert into test_not_null_vu_prepare_t19 values ('dd8cb046-461d-411e-be40-d219252ce849', NULL);
 Select * from test_not_null_vu_prepare_t19
 exec test_not_null_vu_prepare_p19
 
 #date
-Select * from test_not_null_vu_prepare_t20
-Insert into test_not_null_vu_prepare_t20 values ('2000-02-28', '0001-01-01');
-Insert into test_not_null_vu_prepare_t20 values (NULL, '0001-01-01');
 Insert into test_not_null_vu_prepare_t20 values ('0001-01-01', NULL);
 Select * from test_not_null_vu_prepare_t20
 exec test_not_null_vu_prepare_p20
 
 #time
-Select * from test_not_null_vu_prepare_t21
-Insert into test_not_null_vu_prepare_t21 values ('12:45:37.123', '12:45:37.12');
-Insert into test_not_null_vu_prepare_t21 values (NULL, '12:45:37.12');
 Insert into test_not_null_vu_prepare_t21 values ('12:45:37.12', NULL);
 Select * from test_not_null_vu_prepare_t21
 exec test_not_null_vu_prepare_p21
 
 #datetime
-Select * from test_not_null_vu_prepare_t22
-Insert into test_not_null_vu_prepare_t22 values ('2000-12-13 12:58:23.123', '1900-02-28 23:59:59.989');
-Insert into test_not_null_vu_prepare_t22 values (NULL, '1900-02-28 23:59:59.989');
 Insert into test_not_null_vu_prepare_t22 values ('1900-02-28 23:59:59.989', NULL);
 Select * from test_not_null_vu_prepare_t22
 exec test_not_null_vu_prepare_p22
 
 #smalldatetime
-Select * from test_not_null_vu_prepare_t23
-Insert into test_not_null_vu_prepare_t23 values ('2007-05-08 12:35:29', '2000-12-13 12:58:23');
-Insert into test_not_null_vu_prepare_t23 values (NULL, '2000-12-13 12:58:23');
 Insert into test_not_null_vu_prepare_t23 values ('2000-12-13 12:58:23', NULL);
 Select * from test_not_null_vu_prepare_t23
 exec test_not_null_vu_prepare_p23
 
 #datetime2
-Select * from test_not_null_vu_prepare_t24
-Insert into test_not_null_vu_prepare_t24 values ('2016-10-23 12:45:37.123', '2016-10-23 12:45:37.123');
-Insert into test_not_null_vu_prepare_t24 values (NULL, '2016-10-23 12:45:37.123');
 Insert into test_not_null_vu_prepare_t24 values ('2016-10-23 12:45:37.123', NULL);
 Select * from test_not_null_vu_prepare_t24
 exec test_not_null_vu_prepare_p24
 
 #datetimeoffset
-Select * from test_not_null_vu_prepare_t25
-Insert into test_not_null_vu_prepare_t25 values ('2016-10-23 12:24:32 +10:0', '2016-10-23 12:24:32 +10:0');
-Insert into test_not_null_vu_prepare_t25 values (NULL, '2016-10-23 12:24:32 +10:0');
 Insert into test_not_null_vu_prepare_t25 values ('2016-10-23 12:24:32 +10:0', NULL);
 Select * from test_not_null_vu_prepare_t25
 exec test_not_null_vu_prepare_p25
 
 #sql_variant
-Select * from test_not_null_vu_prepare_t26
-Insert into test_not_null_vu_prepare_t26 values (cast (1 as int), cast ('abc' as varchar(10)));
-Insert into test_not_null_vu_prepare_t26 values (NULL, cast ('abc' as varchar(10)));
 Insert into test_not_null_vu_prepare_t26 values (cast ('abc' as varchar(10)), NULL);
 Select * from test_not_null_vu_prepare_t26
 exec test_not_null_vu_prepare_p26

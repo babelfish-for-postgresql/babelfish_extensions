@@ -1,44 +1,41 @@
-drop index idx on babel_621_vu_verify_table_1;
-drop index idx on babel_621_vu_verify_table_2;
-go
+DROP INDEX idx on babel_621_vu_prepare_table_1;
+DROP INDEX idx on babel_621_vu_prepare_table_2;
+GO
 
-drop index uniq on babel_621_vu_verify_table_3;
-go
+DROP INDEX uniq on babel_621_vu_prepare_table_3;
+GO
 
-drop index very_long_index_name_on_a_table_1234567890_1234567890_1234567890_1234567890_1234567890 on babel_621_vu_verify_table_with_long_index_name;
-go
+DROP INDEX very_long_index_name_on_a_table_1234567890_1234567890_1234567890_1234567890_1234567890 on babel_621_vu_prepare_table_with_long_index_name;
+GO
 
-drop index very_long_index_name_on_a_table_1234567890_1234567890_1234567890_1234567890_1234567890 on babel_621_table_with_long_name_1234567890_1234567890_1234567890_1234567890_1234567890;
-go
+DROP INDEX very_long_index_name_on_a_table_1234567890_1234567890_1234567890_1234567890_1234567890 on babel_621_table_with_long_name_1234567890_1234567890_1234567890_1234567890_1234567890;
+GO
 
-drop table babel_621_vu_verify_table_8;
-go
-
-drop table babel_621_vu_verify_table_1;
-go
-drop table babel_621_vu_verify_table_2;
-go
-drop table babel_621_vu_verify_table_3;
-go
-drop table babel_621_vu_verify_table_4;
-go
-drop table babel_621_vu_verify_table_with_long_index_name;
-go
-drop table babel_621_vu_verify_second_table_with_long_index_name;
-go
-drop table babel_621_table_with_long_name_1234567890_1234567890_1234567890_1234567890_1234567890;
-go
-drop table babel_621_second_table_with_long_name_1234567890_1234567890_1234567890_1234567890_1234567890;
-go
-drop table babel_621_vu_verify_table_6;
-go
-drop table table_6;
-go
-drop table table_7;
-go
-drop table babel_621_vu_verify_table_7;
-go
-drop table babel_621_vu_verify_table_8;
-go
-drop table babel_621_vu_verify_table_10;
-go
+DROP TABLE babel_621_vu_prepare_table_1;
+GO
+DROP TABLE babel_621_vu_prepare_table_2;
+GO
+DROP TABLE babel_621_vu_prepare_table_3;
+GO
+DROP TABLE babel_621_vu_prepare_table_4;
+GO
+DROP TABLE babel_621_vu_prepare_table_with_long_index_name;
+GO
+DROP TABLE babel_621_vu_prepare_second_table_with_long_index_name;
+GO
+DROP TABLE babel_621_table_with_long_name_1234567890_1234567890_1234567890_1234567890_1234567890;
+GO
+DROP TABLE babel_621_second_table_with_long_name_1234567890_1234567890_1234567890_1234567890_1234567890;
+GO
+DROP TABLE babel_621_vu_prepare_table_6;
+GO
+DROP TABLE table_6;
+GO
+DROP TABLE table_7;
+GO
+DROP TABLE babel_621_vu_prepare_table_7;
+GO
+DROP TABLE babel_621_vu_prepare_table_8;
+GO
+DROP TABLE babel_621_vu_prepare_table_10;
+GO

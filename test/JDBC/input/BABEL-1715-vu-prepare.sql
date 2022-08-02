@@ -4,8 +4,16 @@ go
 CREATE TABLE babel_1715_vu_prepare_t1 (a int, b int CONSTRAINT uk_a PRIMARY KEY (a));
 go
 
+INSERT INTO babel_1715_vu_prepare_t1 VALUES (1, 1);
+INSERT INTO babel_1715_vu_prepare_t1 VALUES (2, 2);
+GO
+
 CREATE TABLE babel_1715_vu_prepare_t2 (a int, b as a+1 CONSTRAINT uk_a PRIMARY KEY (a));
 go
+
+INSERT INTO babel_1715_vu_prepare_t2 (a) VALUES (1);
+INSERT INTO babel_1715_vu_prepare_t2 (a) VALUES (2);
+GO
 
 CREATE TABLE babel_1715_vu_prepare_invalid1 (a int b int);
 go

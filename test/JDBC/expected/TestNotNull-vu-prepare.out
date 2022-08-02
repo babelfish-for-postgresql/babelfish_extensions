@@ -6,6 +6,12 @@ prepst#!# INSERT INTO test_not_null_vu_prepare_t1(a, b) values(?, ?) #!#int|-|a|
 prepst#!#exec#!#int|-|a|-|<NULL>#!#int|-|b|-|3
 ~~ROW COUNT: 1~~
 
+Insert into test_not_null_vu_prepare_t1 values (1, 1);
+~~ROW COUNT: 1~~
+
+Insert into test_not_null_vu_prepare_t1 values (NULL, 1);
+~~ROW COUNT: 1~~
+
 
 create procedure test_not_null_vu_prepare_p1 as insert into test_not_null_vu_prepare_t1 values(1,NULL)
 
@@ -15,6 +21,12 @@ prepst#!# INSERT INTO test_not_null_vu_prepare_t2(a, b) values(?, ?) #!#smallint
 ~~ROW COUNT: 1~~
 
 prepst#!#exec#!#smallint|-|a|-|<NULL>#!#smallint|-|b|-|3
+~~ROW COUNT: 1~~
+
+Insert into test_not_null_vu_prepare_t2 values (1, 1);
+~~ROW COUNT: 1~~
+
+Insert into test_not_null_vu_prepare_t2 values (NULL, 1);
 ~~ROW COUNT: 1~~
 
 
@@ -28,6 +40,12 @@ prepst#!# INSERT INTO test_not_null_vu_prepare_t3(a, b) values(?, ?) #!#bigint|-
 prepst#!#exec#!#bigint|-|a|-|<NULL>#!#bigint|-|b|-|3
 ~~ROW COUNT: 1~~
 
+Insert into test_not_null_vu_prepare_t3 values (1, 1);
+~~ROW COUNT: 1~~
+
+Insert into test_not_null_vu_prepare_t3 values (NULL, 1);
+~~ROW COUNT: 1~~
+
 
 create procedure test_not_null_vu_prepare_p3 as insert into test_not_null_vu_prepare_t3 values(1,NULL)
 
@@ -37,6 +55,12 @@ prepst#!# INSERT INTO test_not_null_vu_prepare_t4(a, b) values(?, ?) #!#bit|-|a|
 ~~ROW COUNT: 1~~
 
 prepst#!#exec#!#bit|-|a|-|<NULL>#!#bit|-|b|-|true
+~~ROW COUNT: 1~~
+
+Insert into test_not_null_vu_prepare_t4 values (1, 1);
+~~ROW COUNT: 1~~
+
+Insert into test_not_null_vu_prepare_t4 values (NULL, 1);
 ~~ROW COUNT: 1~~
 
 
@@ -50,6 +74,12 @@ prepst#!# INSERT INTO test_not_null_vu_prepare_t5(a, b) values(?, ?) #!#float|-|
 prepst#!#exec#!#float|-|a|-|<NULL>#!#float|-|b|-|2.20
 ~~ROW COUNT: 1~~
 
+Insert into test_not_null_vu_prepare_t5 values (1.1101, 0.00010);
+~~ROW COUNT: 1~~
+
+Insert into test_not_null_vu_prepare_t5 values (NULL, 1);
+~~ROW COUNT: 1~~
+
 
 create procedure test_not_null_vu_prepare_p5 as insert into test_not_null_vu_prepare_t5 values(1,NULL)
 
@@ -59,6 +89,12 @@ prepst#!# INSERT INTO test_not_null_vu_prepare_t6(a, b) values(?, ?) #!#real|-|a
 ~~ROW COUNT: 1~~
 
 prepst#!#exec#!#real|-|a|-|<NULL>#!#real|-|b|-|2.20
+~~ROW COUNT: 1~~
+
+Insert into test_not_null_vu_prepare_t6 values (1.1101, 0.00010);
+~~ROW COUNT: 1~~
+
+Insert into test_not_null_vu_prepare_t6 values (NULL, 1);
 ~~ROW COUNT: 1~~
 
 
@@ -72,6 +108,12 @@ prepst#!# INSERT INTO test_not_null_vu_prepare_t7(a, b) values(?, ?) #!#char|-|a
 prepst#!#exec#!#char|-|a|-|<NULL>#!#char|-|b|-|mellow
 ~~ROW COUNT: 1~~
 
+Insert into test_not_null_vu_prepare_t7 values ('hello', 'jello');
+~~ROW COUNT: 1~~
+
+Insert into test_not_null_vu_prepare_t7 values (NULL, 'jello');
+~~ROW COUNT: 1~~
+
 
 create procedure test_not_null_vu_prepare_p7 as insert into test_not_null_vu_prepare_t7 values('jello',NULL)
 
@@ -81,6 +123,12 @@ prepst#!# INSERT INTO test_not_null_vu_prepare_t8(a, b) values(?, ?) #!#nchar|-|
 ~~ROW COUNT: 1~~
 
 prepst#!#exec#!#nchar|-|a|-|<NULL>#!#nchar|-|b|-|mellow
+~~ROW COUNT: 1~~
+
+Insert into test_not_null_vu_prepare_t8 values ('hello', 'jello');
+~~ROW COUNT: 1~~
+
+Insert into test_not_null_vu_prepare_t8 values (NULL, 'jello');
 ~~ROW COUNT: 1~~
 
 
@@ -94,6 +142,12 @@ prepst#!# INSERT INTO test_not_null_vu_prepare_t9(a, b) values(?, ?) #!#varchar|
 prepst#!#exec#!#varchar|-|a|-|<NULL>#!#varchar|-|b|-|mellow
 ~~ROW COUNT: 1~~
 
+Insert into test_not_null_vu_prepare_t9 values ('hello', 'jello');
+~~ROW COUNT: 1~~
+
+Insert into test_not_null_vu_prepare_t9 values (NULL, 'jello');
+~~ROW COUNT: 1~~
+
 
 create procedure test_not_null_vu_prepare_p9 as insert into test_not_null_vu_prepare_t9 values('jello',NULL)
 
@@ -103,6 +157,12 @@ prepst#!# INSERT INTO test_not_null_vu_prepare_t10(a, b) values(?, ?) #!#nvarcha
 ~~ROW COUNT: 1~~
 
 prepst#!#exec#!#nvarchar|-|a|-|<NULL>#!#nvarchar|-|b|-|mellow
+~~ROW COUNT: 1~~
+
+Insert into test_not_null_vu_prepare_t10 values ('hello', 'jello');
+~~ROW COUNT: 1~~
+
+Insert into test_not_null_vu_prepare_t10 values (NULL, 'jello');
 ~~ROW COUNT: 1~~
 
 
@@ -116,6 +176,12 @@ prepst#!# INSERT INTO test_not_null_vu_prepare_t11(a, b) values(?, ?) #!#text|-|
 prepst#!#exec#!#text|-|a|-|<NULL>#!#text|-|b|-|utils/sample.txt
 ~~ROW COUNT: 1~~
 
+Insert into test_not_null_vu_prepare_t11 values ('hello', 'jello');
+~~ROW COUNT: 1~~
+
+Insert into test_not_null_vu_prepare_t11 values (NULL, 'jello');
+~~ROW COUNT: 1~~
+
 
 create procedure test_not_null_vu_prepare_p11 as insert into test_not_null_vu_prepare_t11 values('jello',NULL)
 
@@ -125,6 +191,12 @@ prepst#!# INSERT INTO test_not_null_vu_prepare_t12(a, b) values(?, ?) #!#ntext|-
 ~~ROW COUNT: 1~~
 
 prepst#!#exec#!#ntext|-|a|-|<NULL>#!#ntext|-|b|-|utils/sample.txt
+~~ROW COUNT: 1~~
+
+Insert into test_not_null_vu_prepare_t12 values ('hello', 'jello');
+~~ROW COUNT: 1~~
+
+Insert into test_not_null_vu_prepare_t12 values (NULL, 'jello');
 ~~ROW COUNT: 1~~
 
 
@@ -138,6 +210,12 @@ prepst#!# INSERT INTO test_not_null_vu_prepare_t13(a, b) values(?, ?) #!#binary|
 prepst#!#exec#!#binary|-|a|-|<NULL>#!#binary|-|b|-|0x9241
 ~~ROW COUNT: 1~~
 
+Insert into test_not_null_vu_prepare_t13 values (0x31323334, 0x9241);
+~~ROW COUNT: 1~~
+
+Insert into test_not_null_vu_prepare_t13 values (NULL, 0x9241);
+~~ROW COUNT: 1~~
+
 
 create procedure test_not_null_vu_prepare_p13 as insert into test_not_null_vu_prepare_t13 values(0x9241,NULL)
 
@@ -147,6 +225,12 @@ prepst#!# INSERT INTO test_not_null_vu_prepare_t14(a, b) values(?, ?) #!#varbina
 ~~ROW COUNT: 1~~
 
 prepst#!#exec#!#varbinary|-|a|-|<NULL>#!#varbinary|-|b|-|0x9241
+~~ROW COUNT: 1~~
+
+Insert into test_not_null_vu_prepare_t14 values (0x31323334, 0x9241);
+~~ROW COUNT: 1~~
+
+Insert into test_not_null_vu_prepare_t14 values (NULL, 0x9241);
 ~~ROW COUNT: 1~~
 
 
@@ -160,6 +244,12 @@ prepst#!# INSERT INTO test_not_null_vu_prepare_t15(a, b) values(?, ?) #!#numeric
 prepst#!#exec#!#numeric|-|a|-|<NULL>#!#numeric|-|b|-|0.00
 ~~ROW COUNT: 1~~
 
+Insert into test_not_null_vu_prepare_t15 values (1.1101, 0.00010);
+~~ROW COUNT: 1~~
+
+Insert into test_not_null_vu_prepare_t15 values (NULL, 0.00010);
+~~ROW COUNT: 1~~
+
 
 create procedure test_not_null_vu_prepare_p15 as insert into test_not_null_vu_prepare_t15 values(0.00010,NULL)
 
@@ -169,6 +259,12 @@ prepst#!# INSERT INTO test_not_null_vu_prepare_t16(a, b) values(?, ?) #!#decimal
 ~~ROW COUNT: 1~~
 
 prepst#!#exec#!#decimal|-|a|-|<NULL>#!#decimal|-|b|-|1.1101
+~~ROW COUNT: 1~~
+
+Insert into test_not_null_vu_prepare_t16 values (1.1101, 0.00010);
+~~ROW COUNT: 1~~
+
+Insert into test_not_null_vu_prepare_t16 values (NULL, 0.00010);
 ~~ROW COUNT: 1~~
 
 
@@ -182,6 +278,12 @@ prepst#!# INSERT INTO test_not_null_vu_prepare_t17(a, b) values(?, ?) #!#money|-
 prepst#!#exec#!#money|-|a|-|<NULL>#!#money|-|b|-|100.11
 ~~ROW COUNT: 1~~
 
+Insert into test_not_null_vu_prepare_t17 values (100.11, 0.10);
+~~ROW COUNT: 1~~
+
+Insert into test_not_null_vu_prepare_t17 values (NULL, 0.10);
+~~ROW COUNT: 1~~
+
 
 create procedure test_not_null_vu_prepare_p17 as insert into test_not_null_vu_prepare_t17 values(0.10,NULL)
 
@@ -191,6 +293,12 @@ prepst#!# INSERT INTO test_not_null_vu_prepare_t18(a, b) values(?, ?) #!#smallmo
 ~~ROW COUNT: 1~~
 
 prepst#!#exec#!#smallmoney|-|a|-|<NULL>#!#smallmoney|-|b|-|0.10
+~~ROW COUNT: 1~~
+
+Insert into test_not_null_vu_prepare_t18 values (100.11, 0.10);
+~~ROW COUNT: 1~~
+
+Insert into test_not_null_vu_prepare_t18 values (NULL, 0.10);
 ~~ROW COUNT: 1~~
 
 
@@ -204,6 +312,12 @@ prepst#!# INSERT INTO test_not_null_vu_prepare_t19(a, b) values(?, ?) #!#uniquei
 prepst#!#exec#!#uniqueidentifier|-|a|-|<NULL>#!#uniqueidentifier|-|b|-|51f178a6-53c7-472c-9be1-1c08942342d7
 ~~ROW COUNT: 1~~
 
+Insert into test_not_null_vu_prepare_t19 values ('51f178a6-53c7-472c-9be1-1c08942342d7', 'dd8cb046-461d-411e-be40-d219252ce849');
+~~ROW COUNT: 1~~
+
+Insert into test_not_null_vu_prepare_t19 values (NULL, 'dd8cb046-461d-411e-be40-d219252ce849');
+~~ROW COUNT: 1~~
+
 
 create procedure test_not_null_vu_prepare_p19 as insert into test_not_null_vu_prepare_t19 values('dd8cb046-461d-411e-be40-d219252ce849',NULL)
 
@@ -213,6 +327,12 @@ prepst#!# INSERT INTO test_not_null_vu_prepare_t20(a, b) values(?, ?) #!#date|-|
 ~~ROW COUNT: 1~~
 
 prepst#!#exec#!#date|-|a|-|<NULL>#!#date|-|b|-|2000-02-28
+~~ROW COUNT: 1~~
+
+Insert into test_not_null_vu_prepare_t20 values ('2000-02-28', '0001-01-01');
+~~ROW COUNT: 1~~
+
+Insert into test_not_null_vu_prepare_t20 values (NULL, '0001-01-01');
 ~~ROW COUNT: 1~~
 
 
@@ -226,6 +346,12 @@ prepst#!# INSERT INTO test_not_null_vu_prepare_t21(a, b) values(?, ?) #!#time|-|
 prepst#!#exec#!#time|-|a|-|<NULL>#!#time|-|b|-|12:45:37.123
 ~~ROW COUNT: 1~~
 
+Insert into test_not_null_vu_prepare_t21 values ('12:45:37.123', '12:45:37.12');
+~~ROW COUNT: 1~~
+
+Insert into test_not_null_vu_prepare_t21 values (NULL, '12:45:37.12');
+~~ROW COUNT: 1~~
+
 
 create procedure test_not_null_vu_prepare_p21 as insert into test_not_null_vu_prepare_t21 values('12:45:37.12',NULL)
 
@@ -235,6 +361,12 @@ prepst#!# INSERT INTO test_not_null_vu_prepare_t22(a, b) values(?, ?) #!#datetim
 ~~ROW COUNT: 1~~
 
 prepst#!#exec#!#datetime|-|a|-|<NULL>#!#datetime|-|b|-|2000-12-13 12:58:23.123
+~~ROW COUNT: 1~~
+
+Insert into test_not_null_vu_prepare_t22 values ('2000-12-13 12:58:23.123', '1900-02-28 23:59:59.989');
+~~ROW COUNT: 1~~
+
+Insert into test_not_null_vu_prepare_t22 values (NULL, '1900-02-28 23:59:59.989');
 ~~ROW COUNT: 1~~
 
 
@@ -248,6 +380,12 @@ prepst#!# INSERT INTO test_not_null_vu_prepare_t23(a, b) values(?, ?) #!#smallda
 prepst#!#exec#!#smalldatetime|-|a|-|<NULL>#!#smalldatetime|-|b|-|2007-05-08 12:35:29
 ~~ROW COUNT: 1~~
 
+Insert into test_not_null_vu_prepare_t23 values ('2007-05-08 12:35:29', '2000-12-13 12:58:23');
+~~ROW COUNT: 1~~
+
+Insert into test_not_null_vu_prepare_t23 values (NULL, '2000-12-13 12:58:23');
+~~ROW COUNT: 1~~
+
 
 create procedure test_not_null_vu_prepare_p23 as insert into test_not_null_vu_prepare_t23 values('2000-12-13 12:58:23',NULL)
 
@@ -257,6 +395,12 @@ prepst#!# INSERT INTO test_not_null_vu_prepare_t24(a, b) values(?, ?) #!#Datetim
 ~~ROW COUNT: 1~~
 
 prepst#!#exec#!#Datetime2|-|a|-|<NULL>#!#Datetime2|-|b|-|2016-10-23 12:45:37.123|-|6
+~~ROW COUNT: 1~~
+
+Insert into test_not_null_vu_prepare_t24 values ('2016-10-23 12:45:37.123', '2016-10-23 12:45:37.123');
+~~ROW COUNT: 1~~
+
+Insert into test_not_null_vu_prepare_t24 values (NULL, '2016-10-23 12:45:37.123');
 ~~ROW COUNT: 1~~
 
 
@@ -270,6 +414,12 @@ prepst#!# INSERT INTO test_not_null_vu_prepare_t25(a, b) values(?, ?) #!#datetim
 prepst#!#exec#!#datetimeoffset|-|a|-|<NULL>#!#datetimeoffset|-|b|-|2016-10-23 12:24:32|-|6
 ~~ROW COUNT: 1~~
 
+Insert into test_not_null_vu_prepare_t25 values ('2016-10-23 12:24:32 +10:0', '2016-10-23 12:24:32 +10:0');
+~~ROW COUNT: 1~~
+
+Insert into test_not_null_vu_prepare_t25 values (NULL, '2016-10-23 12:24:32 +10:0');
+~~ROW COUNT: 1~~
+
 
 create procedure test_not_null_vu_prepare_p25 as insert into test_not_null_vu_prepare_t25 values('2016-10-23 12:24:32 +10:0',NULL)
 
@@ -279,6 +429,12 @@ prepst#!# INSERT INTO test_not_null_vu_prepare_t26(a, b) values(?, ?) #!#bit|-|a
 ~~ROW COUNT: 1~~
 
 prepst#!#exec#!#bit|-|a|-|0#!#bit|-|b|-|1
+~~ROW COUNT: 1~~
+
+Insert into test_not_null_vu_prepare_t26 values (cast (1 as int), cast ('abc' as varchar(10)));
+~~ROW COUNT: 1~~
+
+Insert into test_not_null_vu_prepare_t26 values (NULL, cast ('abc' as varchar(10)));
 ~~ROW COUNT: 1~~
 
 
