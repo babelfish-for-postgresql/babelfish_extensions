@@ -83,7 +83,7 @@ datetime
 2016-12-26 23:29:29.057
 ~~END~~
 
-DROP FUNCTION BABEL_3360_vu_prepare_f1
+DROP FUNCTION BABEL_3360_vu_prepare_f1()
 GO
 
 SELECT BABEL_3360_vu_prepare_f2()
@@ -94,7 +94,7 @@ datetime
 
 ~~ERROR (Message: The datepart microsecond is not supported by date function dateadd for data type time.)~~
 
-DROP FUNCTION BABEL_3360_vu_prepare_f2
+DROP FUNCTION BABEL_3360_vu_prepare_f2()
 GO
 
 SELECT BABEL_3360_vu_prepare_f3()
@@ -104,7 +104,7 @@ datetime
 <NULL>
 ~~END~~
 
-DROP FUNCTION BABEL_3360_vu_prepare_f3
+DROP FUNCTION BABEL_3360_vu_prepare_f3()
 GO
 
 SELECT BABEL_3360_vu_prepare_f4()
@@ -114,5 +114,5 @@ datetime
 <NULL>
 ~~END~~
 
-DROP FUNCTION BABEL_3360_vu_prepare_f4
+DROP FUNCTION BABEL_3360_vu_prepare_f4()
 GO
