@@ -94,5 +94,6 @@ table-variable
 TestNotNull
 Test-Identity
 Test-Computed-Columns
+Test-Prep-Statements
 TestTableType
 BABEL-3147-before-14_5

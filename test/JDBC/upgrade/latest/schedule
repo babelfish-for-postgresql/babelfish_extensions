@@ -91,6 +91,7 @@ table-variable
 TestNotNull
 Test-Identity
 Test-Computed-Columns
+Test-Prep-Statements
 BABEL-1189
 BABEL-1243
 BABEL-1963

@@ -111,6 +111,7 @@ table-variable
 TestNotNull
 Test-Identity
 Test-Computed-Columns
+Test-Prep-Statements
 Test-sp_helpuser
 TestTableType
 BABEL-3147-before-14_5

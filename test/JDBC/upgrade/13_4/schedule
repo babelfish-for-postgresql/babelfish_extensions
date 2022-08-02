@@ -77,7 +77,6 @@ BABEL-1444
 BABEL-1465
 BABEL-1466
 BABEL-1475
-BABEL-1654
 BABEL-1715
 BABEL-2086
 BABEL-2765
@@ -88,5 +87,6 @@ table-variable
 TestNotNull
 Test-Identity
 Test-Computed-Columns
+Test-Prep-Statements
 TestTableType
 BABEL-3147-before-14_5
