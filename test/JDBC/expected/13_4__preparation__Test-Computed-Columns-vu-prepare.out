@@ -1,79 +1,150 @@
--- Add all the datatypes to tables
-CREATE TABLE test_default_columns_vu_prepare_t1(c_int INT DEFAULT 10, c_bigint BIGINT DEFAULT 9223372036854775807,c_tinyint TINYINT DEFAULT 002,c_binary BINARY(8) DEFAULT 0x0102030405060708,c_varbinary VARBINARY(10) DEFAULT 0x010203)
+CREATE TABLE computed_column_vu_prepare_t1 (a NVARCHAR(10), b  AS substring(a,1,3) UNIQUE NOT NULL);
 GO
 
-CREATE TABLE test_default_columns_vu_prepare_t2(c_bit BIT DEFAULT 1,c_smallint SMALLINT DEFAULT -10 ,c_money MONEY DEFAULT '$22337203685477.5807' ,c_numeric NUMERIC(38,25) DEFAULT 2147483648.123,c_decimal DECIMAL(5,2) DEFAULT 6.9)
+-- check PERSISTED keyword
+-- should be able to use columns from left and right in the expression
+CREATE TABLE computed_column_vu_prepare_t2 (a INT, b  AS (a + c) / 4 PERSISTED, c INT);
 GO
 
-CREATE TABLE test_default_columns_vu_prepare_t3(c_float FLOAT DEFAULT -0122455324.5,c_real REAL DEFAULT 3.40E+38,c_char CHAR(24) DEFAULT 'Nirmit' ,c_nchar NCHAR(24) DEFAULT 'Shah' ,c_varchar VARCHAR(20) DEFAULT 'Nirmit',c_nvarchar NVARCHAR(24) DEFAULT '😊😋😎😍😅😆',c_text TEXT DEFAULT 'Nirmit',c_ntext NTEXT DEFAULT 'Shah')
+-- should throw error - order matters
+CREATE TABLE computed_column_vu_prepare_error (a INT, b  AS a/4 NOT NULL PERSISTED);
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: 'PERSISTED' is not currently supported in Babelfish)~~
+
+
+-- should throw error if postgres syntax is used in TSQL dialect
+CREATE TABLE computed_column_vu_prepare_error (a INT, b NUMERIC GENERATED ALWAYS AS (a/4) stored);
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: syntax error near '(' at line 2 and character position 84)~~
+
+-- should throw error if there is any error in computed column expression
+CREATE TABLE computed_column_vu_prepare_error (a NVARCHAR(10), b  AS non_existant_function(a,1,3) UNIQUE NOT NULL);
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: function non_existant_function(nvarchar, integer, integer) does not exist)~~
+
+-- should throw error in case of nested computed columns
+CREATE TABLE computed_column_vu_prepare_error (a INT, b AS c, c AS a);
+CREATE TABLE computed_column_vu_prepare_error (a INT, b AS b + 1);
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: computed column "c" in table "computed_column_vu_prepare_error" is not allowed to be used in another computed-column definition)~~
+
+-- in case of multiple computed column, the entire statement should be rolled
+-- back even when the last one throws error
+CREATE TABLE computed_column_vu_prepare_error (a INT, b AS a, c AS b);
+SELECT * FROM computed_column_vu_prepare_error;
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: computed column "b" in table "computed_column_vu_prepare_error" is not allowed to be used in another computed-column definition)~~
+
+
+CREATE TABLE computed_column_vu_prepare_error(a int, b as rand() PERSISTED)
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: generation expression is not immutable)~~
+
+
+CREATE TABLE computed_column_vu_prepare_t3
+(
+ DOB     DATE NOT NULL, 
+ AddDate AS DATEADD(year,60,DOB), 
+);
 GO
 
-CREATE TABLE test_default_columns_vu_prepare_t4(c_date DATE DEFAULT '2000-12-13',c_datetime DATETIME DEFAULT '2000-12-13 12:58:23.123',c_datetime2 DATETIME2 DEFAULT '2018-06-23 07:30:20',c_time TIME DEFAULT '12:45:37.123',c_datetimeoffset DATETIMEOFFSET DEFAULT '2020-03-15 09:00:00 +8:00', c_smalldatetime SMALLDATETIME DEFAULT '2000-12-13 12:58:23')
-GO
-
-CREATE TABLE test_default_columns_vu_prepare_t5(c_xml XML DEFAULT '<contact><name>Contact Name 2</name><phone>YYY-YYY-YYYY</phone></contact>',c_uuid UNIQUEIDENTIFIER DEFAULT '51f178a6-53c7-472c-9be1-1c08942342d7',c_sqlvar SQL_VARIANT DEFAULT CAST('Delhi' as char(24)))
-GO
-
-CREATE PROCEDURE test_default_columns_vu_prepare_p1 
-AS
-    INSERT INTO test_default_columns_vu_prepare_t1 DEFAULT VALUES
-GO
-
-CREATE PROCEDURE test_default_columns_vu_prepare_p2 
-AS
-    INSERT INTO test_default_columns_vu_prepare_t2 DEFAULT VALUES
-GO
-
-CREATE PROCEDURE test_default_columns_vu_prepare_p3 
-AS
-    INSERT INTO test_default_columns_vu_prepare_t3 DEFAULT VALUES
-GO
-
-CREATE PROCEDURE test_default_columns_vu_prepare_p4 
-AS
-    INSERT INTO test_default_columns_vu_prepare_t4 DEFAULT VALUES
-GO
-
-CREATE PROCEDURE test_default_columns_vu_prepare_p5 
-AS
-    INSERT INTO test_default_columns_vu_prepare_t5 DEFAULT VALUES
-GO
-
-CREATE FUNCTION test_default_columns_vu_prepare_func_1(@number INT)
-RETURNS TABLE
-AS
-RETURN(
-    SELECT * FROM test_default_columns_vu_prepare_t1
+CREATE TABLE computed_column_vu_prepare_t4
+  (
+  EmpNumb INT NOT NULL,
+  Designation VARCHAR(50) NOT NULL,
+  DOBirth DATETIME NOT NULL,
+  DORetirement AS 
+    CASE WHEN Designation = 'Manager' 
+      THEN (DATEADD(YEAR,(65),[DOBirth]))
+      ELSE (DATEADD(YEAR,(60),[DOBirth]))
+    END
+    PERSISTED
 )
-Go
+GO
 
-CREATE FUNCTION test_default_columns_vu_prepare_func_2(@number INT)
-RETURNS TABLE
-AS
-RETURN(
-    SELECT * FROM test_default_columns_vu_prepare_t2
-)
-Go
+CREATE TABLE computed_column_vu_prepare_t5
+  (
+  Numerator INT NOT NULL,
+  Denominator INT NOT NULL,
+  Result AS (Numerator/NULLIF(Denominator,0)) 
+  )
+GO
 
-CREATE FUNCTION test_default_columns_vu_prepare_func_3(@number INT)
-RETURNS TABLE
-AS
-RETURN(
-    SELECT * FROM test_default_columns_vu_prepare_t3
-)
-Go
-CREATE FUNCTION test_default_columns_vu_prepare_func_4(@number INT)
-RETURNS TABLE
-AS
-RETURN(
-    SELECT * FROM test_default_columns_vu_prepare_t4
-)
-Go
+CREATE TABLE computed_column_vu_prepare_t6
+  (
+  EmpNumb INT NOT NULL,
+  LeavesAvailed TINYINT NOT NULL,
+  EmpDep AS EmpNumb%10
+  )
+GO
 
-CREATE FUNCTION test_default_columns_vu_prepare_func_5(@number INT)
-RETURNS TABLE
+CREATE FUNCTION computed_column_vu_prepare_func1 (@EmpNumb int)
+RETURNS TINYINT
+WITH SCHEMABINDING
 AS
-RETURN(
-    SELECT * FROM test_default_columns_vu_prepare_t5
+BEGIN
+  DECLARE @LeaveBalance TINYINT
+  SELECT @LeaveBalance = (20 - LeavesAvailed) 
+  FROM computed_column_vu_prepare_t6
+  WHERE EmpNumb = @empnumb
+  RETURN @LeaveBalance
+END
+GO
+
+--using a UDF as computed column
+--will fail with expression immutabe error
+CREATE TABLE computed_column_vu_prepare_t7
+  (
+  EmpNumb INT NOT NULL,
+  Designation VARCHAR(50) NOT NULL,
+  LeaveBalance AS (computed_column_vu_prepare_func1(EmpNumb))
+  )
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: generation expression is not immutable)~~
+
+
+--immutable expression
+CREATE TABLE computed_column_vu_prepare_t8
+(
+  FirstName VARCHAR(20),
+  LastName VARCHAR(20),
+  FullName AS CONCAT(FirstName,' ',LastName)
 )
-Go
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: generation expression is not immutable)~~
+
+
+CREATE TABLE computed_column_vu_prepare_t9
+(
+    A INT IDENTITY(1,1),
+    B AS CAST(A AS FLOAT),
+    C VARCHAR(20)
+)
+GO
+
+--should error using a computed column to generate computed column
+CREATE PROCEDURE computed_column_vu_prepare_p1
+AS
+ALTER TABLE computed_column_vu_prepare_t9 add D as B/4 PERSISTED
+GO
+
+CREATE PROCEDURE computed_column_vu_prepare_p2
+AS
+ALTER TABLE computed_column_vu_prepare_t9 add D as A/4 PERSISTED
+GO
