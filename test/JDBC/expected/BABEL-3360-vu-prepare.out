@@ -36,3 +36,87 @@ datetime
 <NULL>
 ~~END~~
 
+
+create procedure  BABEL_3360_vu_prepare_p1 as (select dateadd(millisecond, 56, cast('2016-12-26 23:29:29' as datetime2)));
+go
+exec BABEL_3360_vu_prepare_p1;
+go
+~~START~~
+datetime2
+2016-12-26 23:29:29.0560000
+~~END~~
+
+
+create procedure  BABEL_3360_vu_prepare_p2 as (select dateadd(microsecond, 56, cast('2016-12-26 23:29:29' as datetime2)));
+go
+go
+exec BABEL_3360_vu_prepare_p2;
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: The datepart microsecond is not supported by date function dateadd for data type time.)~~
+
+
+create procedure  BABEL_3360_vu_prepare_p3 as (select dateadd(millisecond, 56, null));
+go
+exec BABEL_3360_vu_prepare_p3;
+go
+~~START~~
+datetime
+<NULL>
+~~END~~
+
+
+create procedure  BABEL_3360_vu_prepare_p4 as (select dateadd(microsecond, 56, null));
+go
+exec BABEL_3360_vu_prepare_p4;
+go
+~~START~~
+datetime
+<NULL>
+~~END~~
+
+
+create function BABEL_3360_vu_prepare_f1()
+returns datetime as
+begin
+return (select * from dateadd(millisecond, 56, cast('2016-12-26 23:29:29' as datetime2)));
+end
+go
+~~ERROR (Code: 2714)~~
+
+~~ERROR (Message: function "babel_3360_vu_prepare_f1" already exists with same argument types)~~
+
+
+create function BABEL_3360_vu_prepare_f2()
+returns datetime as
+begin
+return (select * from dateadd(microsecond, 56, cast('2016-12-26 23:29:29' as datetime2)));
+end
+go
+~~ERROR (Code: 2714)~~
+
+~~ERROR (Message: function "babel_3360_vu_prepare_f2" already exists with same argument types)~~
+
+
+create function BABEL_3360_vu_prepare_f3()
+returns datetime as
+begin
+return (select * from dateadd(millisecond, 56, null));
+end
+go
+~~ERROR (Code: 2714)~~
+
+~~ERROR (Message: function "babel_3360_vu_prepare_f3" already exists with same argument types)~~
+
+
+create function BABEL_3360_vu_prepare_f4()
+returns datetime as
+begin
+return (select * from dateadd(microsecond, 56, null));
+end
+go
+~~ERROR (Code: 2714)~~
+
+~~ERROR (Message: function "babel_3360_vu_prepare_f4" already exists with same argument types)~~
+
