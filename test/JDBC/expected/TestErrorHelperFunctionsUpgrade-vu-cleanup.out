@@ -1,2 +1,2 @@
-DROP VIEW TestErrorHelperFunctions_VU_PREPARE_VIEW;
+DROP VIEW TestErrorHelperFunctionsUpgrade_VU_PREPARE_VIEW;
 GO
