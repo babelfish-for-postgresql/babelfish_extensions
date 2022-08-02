@@ -169,7 +169,7 @@ RETURNS numeric(38,0) AS
 $BODY$
 	SELECT sys.babelfish_get_last_identity_numeric()::numeric(38,0);
 $BODY$
-LANGUAGE SQL;
+LANGUAGE SQL STABLE;
 
 CREATE OR REPLACE FUNCTION sys.ident_seed(IN tablename TEXT)
 RETURNS numeric(38,0) AS

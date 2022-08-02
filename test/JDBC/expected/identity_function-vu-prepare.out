@@ -1,0 +1,26 @@
+-- tsql
+CREATE TABLE indentity_function_tests_t1 (id INT IDENTITY PRIMARY KEY, mycol VARCHAR(20));
+GO
+
+-- psql
+CREATE INDEX indentity_function_tests_t1_idx_numeric1 ON master_dbo.indentity_function_tests_t1 ((id::numeric));
+ANALYZE master_dbo.indentity_function_tests_t1;
+GO
+
+-- tsql
+
+Create procedure indentity_function_tests_proc
+AS 
+    SELECT scope_identity(),
+    @@identity,
+    sys.babelfish_get_last_identity_numeric(),
+    sys.babelfish_get_last_identity();
+GO
+
+create view indentity_function_tests_view (a, b, c, d)
+AS
+    SELECT scope_identity(),
+    @@identity,
+    sys.babelfish_get_last_identity_numeric(),
+    sys.babelfish_get_last_identity();
+GO

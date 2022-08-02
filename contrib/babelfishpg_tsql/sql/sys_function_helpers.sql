@@ -4,7 +4,7 @@
 CREATE OR REPLACE FUNCTION sys.babelfish_get_last_identity()
 RETURNS INT8
 AS 'babelfishpg_tsql', 'get_last_identity'
-LANGUAGE C;
+LANGUAGE C STABLE;
 
 CREATE OR REPLACE FUNCTION sys.bbf_get_current_physical_schema_name(IN schemaname TEXT)
 RETURNS TEXT
@@ -21,7 +21,7 @@ RETURNS numeric(38,0) AS
 $BODY$
 	SELECT sys.babelfish_get_last_identity()::numeric(38,0);
 $BODY$
-LANGUAGE SQL;
+LANGUAGE SQL STABLE;
 
 CREATE OR REPLACE FUNCTION sys.get_min_id_from_table(IN id_colname TEXT,
 													 IN schemaname TEXT,

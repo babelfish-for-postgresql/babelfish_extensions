@@ -1,0 +1,14 @@
+-- tsql
+drop view indentity_function_tests_view
+GO
+
+drop procedure indentity_function_tests_proc
+GO
+
+-- psql
+drop index master_dbo.indentity_function_tests_t1_idx_numeric1
+GO
+
+-- tsql
+drop table indentity_function_tests_t1
+GO
