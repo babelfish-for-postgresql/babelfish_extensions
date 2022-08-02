@@ -103,7 +103,6 @@ schema_resolution_func
 BABEL-3147
 babel_datetime
 babel_char
-babel_tds_fault_injection
 BABEL-SQUARE
 BABEL-728
 babel_function_string
