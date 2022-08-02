@@ -30,7 +30,7 @@
 
 static StringInfo SetBulkLoadRowData(TDSRequestBulkLoad request, StringInfo message);
 void ProcessBCPRequest(TDSRequest request);
-static void FetchMoreBcpData(StringInfo *message);
+static void FetchMoreBcpData(StringInfo *message, int dataLenToRead);
 static int ReadBcpPlp(ParameterToken temp, StringInfo *message, TDSRequestBulkLoad request);
 uint64_t offset = 0;
 
@@ -74,11 +74,11 @@ do \
 do \
 { \
 	if ((*message)->len - offset < dataLen) \
-		FetchMoreBcpData(message); \
+		FetchMoreBcpData(message, dataLen); \
 } while(0)
 
 static void
-FetchMoreBcpData(StringInfo *message)
+FetchMoreBcpData(StringInfo *message, int dataLenToRead)
 {
 	StringInfo temp;
 	int ret;
@@ -106,23 +106,30 @@ FetchMoreBcpData(StringInfo *message)
 	pfree((*message));
 
 	/*
-	 * We should hold the interrupts until we read the next
-	 * request frame.
+	 * Keep fetching for additional packets until we have enough
+	 * data to read.
 	 */
-	HOLD_CANCEL_INTERRUPTS();
-	ret = TdsReadNextPendingBcpRequest(temp);
-	RESUME_CANCEL_INTERRUPTS();
-
-	if (ret < 0)
+	while (dataLenToRead > temp->len)
 	{
-		TdsErrorContext->reqType = 0;
-		TdsErrorContext->err_text = "EOF on TDS socket while fetching For Bulk Load Request";
-		pfree(temp->data);
-		pfree(temp);
-		ereport(ERROR,
-				(errcode(ERRCODE_PROTOCOL_VIOLATION),
-					errmsg("EOF on TDS socket while fetching For Bulk Load Request")));
-		return;
+		/*
+		 * We should hold the interrupts until we read the next
+		 * request frame.
+		 */
+		HOLD_CANCEL_INTERRUPTS();
+		ret = TdsReadNextPendingBcpRequest(temp);
+		RESUME_CANCEL_INTERRUPTS();
+
+		if (ret < 0)
+		{
+			TdsErrorContext->reqType = 0;
+			TdsErrorContext->err_text = "EOF on TDS socket while fetching For Bulk Load Request";
+			pfree(temp->data);
+			pfree(temp);
+			ereport(ERROR,
+					(errcode(ERRCODE_PROTOCOL_VIOLATION),
+						errmsg("EOF on TDS socket while fetching For Bulk Load Request")));
+			return;
+		}
 	}
 
 	offset = 0;
@@ -602,7 +609,7 @@ SetBulkLoadRowData(TDSRequestBulkLoad request, StringInfo message)
 				{
 					StringInfo plpStr;
 					ParameterToken temp = palloc0(sizeof(ParameterTokenData));
-					retStatus = ReadBcpPlp(temp, message, request);
+					retStatus = ReadBcpPlp(temp, &message, request);
 					CheckPLPStatusNotOK(request, retStatus, i);
 					if (temp->isNull) /* null */
 					{
@@ -663,8 +670,8 @@ SetBulkLoadRowData(TDSRequestBulkLoad request, StringInfo message)
 		ereport(ERROR,
 				(errcode(ERRCODE_PROTOCOL_VIOLATION),
 					errmsg("The incoming tabular data stream (TDS) Bulk Load Request (BulkLoadBCP) protocol stream is incorrect. "
-						"Row %d, column %d, unexpected token encountered processing the request. %d",
-						request->rowCount, request->colCount, (uint8_t)message->data[offset])));
+						"Row %d, unexpected token encountered processing the request. %d",
+						request->rowCount, (uint8_t)message->data[offset])));
 	return message;
 }
 
@@ -695,8 +702,30 @@ ProcessBCPRequest(TDSRequest request)
 		int count = 0;
 		ListCell 	*lc;
 
-		message = SetBulkLoadRowData(req, message);
+		PG_TRY();
+		{
+			message = SetBulkLoadRowData(req, message);
+		}
+		PG_CATCH();
+		{
+			int ret;
+			HOLD_CANCEL_INTERRUPTS();
+			/*
+			 * Discard remaining TDS_BULK_LOAD packets only if End of Message has not been reached for the
+			 * current request. Otherwise we have no TDS_BULK_LOAD packets left for the current request
+			 * that need to be discarded.
+			 */
+			if (!TdsGetRecvPacketEomStatus())
+				ret = TdsDiscardAllPendingBcpRequest();
 
+			RESUME_CANCEL_INTERRUPTS();
+
+			if (ret < 0)
+				TdsErrorContext->err_text = "EOF on TDS socket while fetching For Bulk Load Request";
+
+			PG_RE_THROW();
+		}
+		PG_END_TRY();
 		/*
 		 * If the row-count is 0 then this no rows are left to be inserted.
 		 * We should begin with cleanup.
