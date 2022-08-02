@@ -1,0 +1,2 @@
+DROP USER WinstonChurchill;
+GO
