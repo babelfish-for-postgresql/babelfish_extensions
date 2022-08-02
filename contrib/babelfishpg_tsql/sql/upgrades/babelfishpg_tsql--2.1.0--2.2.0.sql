@@ -3006,6 +3006,11 @@ GRANT SELECT ON sys.numbered_procedures TO PUBLIC;
 
 ALTER FUNCTION sys.fn_mapped_system_error_list() RENAME TO fn_mapped_system_error_list_deprecated_in_2_2_0;
 
+CREATE OR REPLACE FUNCTION sys.fn_mapped_system_error_list_deprecated_in_2_2_0()
+returns table (sql_error_code int)
+AS 'babelfishpg_tsql', 'babel_list_mapped_error_deprecated_in_2_2_0'
+LANGUAGE C IMMUTABLE STRICT;
+
 CREATE OR REPLACE FUNCTION sys.fn_mapped_system_error_list ()
 returns table (pg_sql_state sys.nvarchar(5), error_message sys.nvarchar(4000), error_msg_parameters sys.nvarchar(4000), sql_error_code int)
 AS 'babelfishpg_tsql', 'babel_list_mapped_error'

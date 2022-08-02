@@ -32,9 +32,44 @@ error_map_details error_list[] = {
  * Returns list of sql error code for which Babel does have support for.
  */
 error_map_details *
-get_mapped_error_code_list()
+get_mapped_error_list()
 {
 	return error_list;
+}
+
+/*
+ * Returns list of sql error code for which Babel does have support for.
+ */
+int *
+get_mapped_tsql_error_code_list()
+{
+	int i;
+	int *list;			/* Temp list to store list of mapped sql error codes and its length. */
+	Bitmapset  *tmp = NULL; 	/* To store the unique sql error codes. */
+	int tmp_len = 0;	/* To store number of unique sql error codes. */
+	int prev_idx = -1;	/* To retrieve all members of set. */
+	int len = sizeof(error_list)/sizeof(error_list[0]);
+	for (i = 0; i < len - 1; i++)
+	{
+		if (!bms_is_member(error_list[i].tsql_error_code, tmp))
+		{
+			/* If given sql error code is not already present in set.*/
+			tmp = bms_add_member(tmp, error_list[i].tsql_error_code);
+			tmp_len += 1;
+		}
+	}
+
+	list = palloc0((tmp_len + 1) * sizeof(int));
+	list[0] = tmp_len;
+	i = 1;
+	while ((prev_idx = bms_next_member(tmp, prev_idx)) >= 0)
+	{
+		list[i] = prev_idx;
+		i += 1;
+	}
+
+	bms_free(tmp);
+	return list;
 }
 
 /*

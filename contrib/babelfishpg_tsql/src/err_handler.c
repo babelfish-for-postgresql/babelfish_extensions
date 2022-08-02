@@ -10,6 +10,7 @@
 
 #define FN_MAPPED_SYSTEM_ERROR_LIST_COLS 4
 PG_FUNCTION_INFO_V1(babel_list_mapped_error);
+PG_FUNCTION_INFO_V1(babel_list_mapped_error_deprecated_in_2_2_0);
 
 /*
  * Certain tsql error code can behave differently depending on when it is
@@ -416,6 +417,43 @@ find_innermost_catch_block(void)
 	}
 
 	return estate;
+}
+
+Datum
+babel_list_mapped_error_deprecated_in_2_2_0(PG_FUNCTION_ARGS)
+{
+	/* To hold the list of supported SQL error code */
+	int *list = NULL;
+
+	/* SRF related things to keep enough state between calls */
+	FuncCallContext *funcctx;
+	int call_cntr;
+	int max_calls;
+
+	/* stuff done only on the first call of the function */
+	if (SRF_IS_FIRSTCALL())
+	{
+		MemoryContext   oldcontext;
+		funcctx = SRF_FIRSTCALL_INIT();
+		oldcontext = MemoryContextSwitchTo(funcctx->multi_call_memory_ctx);
+		if (*pltsql_protocol_plugin_ptr && (*pltsql_protocol_plugin_ptr)->get_mapped_error_list)
+			list = (*pltsql_protocol_plugin_ptr)->get_mapped_tsql_error_list();
+
+		funcctx->user_fctx = (void *) list;
+		funcctx->max_calls = list[0];
+		MemoryContextSwitchTo(oldcontext);
+	}
+
+	funcctx = SRF_PERCALL_SETUP();
+	call_cntr = funcctx->call_cntr;
+	max_calls = funcctx->max_calls;
+	list = (int *) funcctx->user_fctx;
+
+	if (call_cntr < max_calls)
+		/* Actual data starts at index 1. Index 0 is to store length. */
+		SRF_RETURN_NEXT(funcctx, Int32GetDatum(list[call_cntr + 1]));
+	else
+		SRF_RETURN_DONE(funcctx);
 }
 
 Datum
