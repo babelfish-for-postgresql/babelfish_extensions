@@ -644,8 +644,8 @@ END;
 $$ LANGUAGE plpgsql IMMUTABLE STRICT;
 
 create or replace function sys.sp_describe_first_result_set_internal(
-	tsqlquery varchar(384),
-    params varchar(384) = NULL, 
+	tsqlquery sys.nvarchar(8000),
+    params sys.nvarchar(8000) = NULL, 
     browseMode sys.tinyint = 0
 )
 returns table (
@@ -694,8 +694,8 @@ LANGUAGE C;
 GRANT ALL on FUNCTION sys.sp_describe_first_result_set_internal TO PUBLIC;
 
 CREATE OR REPLACE PROCEDURE sys.sp_describe_first_result_set (
-	"@tsql" varchar(384),
-    "@params" varchar(384) = NULL, 
+	"@tsql" sys.nvarchar(8000),
+    "@params" sys.nvarchar(8000) = NULL, 
     "@browse_information_mode" sys.tinyint = 0)
 AS $$
 BEGIN
