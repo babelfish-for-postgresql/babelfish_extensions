@@ -66,7 +66,7 @@ PG_FUNCTION_INFO_V1(options);
 PG_FUNCTION_INFO_V1(default_domain);
 PG_FUNCTION_INFO_V1(tsql_exp);
 PG_FUNCTION_INFO_V1(host_os);
-PG_FUNCTION_INFO_V1(tsql_stat_get_activity_deprecated_2_1);
+PG_FUNCTION_INFO_V1(tsql_stat_get_activity_deprecated_in_2_2_0);
 PG_FUNCTION_INFO_V1(tsql_stat_get_activity);
 PG_FUNCTION_INFO_V1(get_current_full_xact_id);
 PG_FUNCTION_INFO_V1(checksum);
@@ -640,7 +640,7 @@ host_os(PG_FUNCTION_ARGS)
  * Returns activity of TDS backends.
  */
 Datum
-tsql_stat_get_activity_deprecated_2_1(PG_FUNCTION_ARGS)
+tsql_stat_get_activity_deprecated_in_2_2_0(PG_FUNCTION_ARGS)
 {
 	int			num_backends = pgstat_fetch_stat_numbackends();
 	int			curr_backend;

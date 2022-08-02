@@ -1,0 +1,29 @@
+USE master;
+GO
+
+SELECT rand(2147483647)
+GO
+SELECT rand()
+GO
+SELECT rand()
+GO
+SELECT rand()
+GO
+
+SELECT rand(0)
+GO
+SELECT rand()
+GO
+SELECT rand()
+GO
+SELECT rand()
+GO
+
+SELECT rand(-2147483648)
+GO
+SELECT rand()
+GO
+SELECT rand()
+GO
+SELECT rand()
+GO
