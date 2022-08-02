@@ -49,11 +49,13 @@ sys-objects
 sys-original_login
 sys-procedures
 sys-schema-name
+identity_function
 sys-sysobjects
 sys-trigger_nestlevel
 routines_definition
 constraint_column_usage
 column_domain_usage
+sp_describe_first_result_set
 schema_resolution_proc
 SYSTEM_USER
 Test-Default-Columns
@@ -88,4 +90,5 @@ BABEL-3213
 BABEL-RAND
 BABEL-741
 TestTableType
+schema_resolution_func
 BABEL-3147-before-14_5
