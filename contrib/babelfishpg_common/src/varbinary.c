@@ -164,10 +164,12 @@ varbinaryin(PG_FUNCTION_ARGS)
 	int			len;
 	bytea	   *result;
 	int32 typmod = PG_GETARG_INT32(2);
+	const char *dump_restore = GetConfigOption("babelfishpg_tsql.dump_restore", true, false);
 
 	len = strlen(inputText);
 
-	if (typmod == TSQLHexConstTypmod)
+	if (typmod == TSQLHexConstTypmod ||
+		(dump_restore && strcmp(dump_restore, "on") == 0)) /* Treat input string as T-SQL hex constant during restore */
 	{
 		/*
 		 * calculate length of the binary code

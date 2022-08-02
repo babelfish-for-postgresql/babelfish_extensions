@@ -1,0 +1,177 @@
+insert into test_default_columns_vu_prepare_t1 DEFAULT VALUES
+GO
+~~ROW COUNT: 1~~
+
+
+SELECT * FROM test_default_columns_vu_prepare_t1
+GO
+~~START~~
+int#!#bigint#!#tinyint#!#binary#!#varbinary
+10#!#9223372036854775807#!#2#!#0102030405060708#!#010203
+~~END~~
+
+
+insert into test_default_columns_vu_prepare_t2 DEFAULT VALUES
+GO
+~~ROW COUNT: 1~~
+
+
+SELECT * FROM test_default_columns_vu_prepare_t2
+GO
+~~START~~
+bit#!#smallint#!#money#!#numeric#!#numeric
+1#!#-10#!#22337203685477.5807#!#2147483648.1230000000000000000000000#!#6.90
+~~END~~
+
+
+insert into test_default_columns_vu_prepare_t3 DEFAULT VALUES
+GO
+~~ROW COUNT: 1~~
+
+
+SELECT * FROM test_default_columns_vu_prepare_t3
+GO
+~~START~~
+float#!#real#!#char#!#nchar#!#varchar#!#nvarchar#!#text#!#ntext
+-1.224553245E8#!#3.4E38#!#Nirmit                  #!#Shah                    #!#Nirmit#!#😊😋😎😍😅😆#!#Nirmit#!#Shah
+~~END~~
+
+
+insert into test_default_columns_vu_prepare_t4 DEFAULT VALUES
+GO
+~~ROW COUNT: 1~~
+
+
+SELECT * FROM test_default_columns_vu_prepare_t4
+GO
+~~START~~
+date#!#datetime#!#datetime2#!#time#!#datetimeoffset#!#smalldatetime
+2000-12-13#!#2000-12-13 12:58:23.123#!#2018-06-23 07:30:20.000000#!#12:45:37.1230000#!#2020-03-15 09:00:00.0000000 +08:00#!#2000-12-13 12:58:00.0
+~~END~~
+
+
+insert into test_default_columns_vu_prepare_t5 DEFAULT VALUES
+GO
+~~ROW COUNT: 1~~
+
+
+SELECT * FROM test_default_columns_vu_prepare_t5
+GO
+~~START~~
+xml#!#uniqueidentifier#!#sql_variant
+<contact><name>Contact Name 2</name><phone>YYY-YYY-YYYY</phone></contact>#!#51F178A6-53C7-472C-9BE1-1C08942342D7#!#Delhi                   
+~~END~~
+
+
+EXEC test_default_columns_vu_prepare_p1
+GO
+~~ROW COUNT: 1~~
+
+
+SELECT * FROM test_default_columns_vu_prepare_t1
+GO
+~~START~~
+int#!#bigint#!#tinyint#!#binary#!#varbinary
+10#!#9223372036854775807#!#2#!#0102030405060708#!#010203
+10#!#9223372036854775807#!#2#!#0102030405060708#!#010203
+~~END~~
+
+
+EXEC test_default_columns_vu_prepare_p2
+GO
+~~ROW COUNT: 1~~
+
+
+SELECT * FROM test_default_columns_vu_prepare_t2
+GO
+~~START~~
+bit#!#smallint#!#money#!#numeric#!#numeric
+1#!#-10#!#22337203685477.5807#!#2147483648.1230000000000000000000000#!#6.90
+1#!#-10#!#22337203685477.5807#!#2147483648.1230000000000000000000000#!#6.90
+~~END~~
+
+
+EXEC test_default_columns_vu_prepare_p3
+GO
+~~ROW COUNT: 1~~
+
+
+SELECT * FROM test_default_columns_vu_prepare_t3
+GO
+~~START~~
+float#!#real#!#char#!#nchar#!#varchar#!#nvarchar#!#text#!#ntext
+-1.224553245E8#!#3.4E38#!#Nirmit                  #!#Shah                    #!#Nirmit#!#😊😋😎😍😅😆#!#Nirmit#!#Shah
+-1.224553245E8#!#3.4E38#!#Nirmit                  #!#Shah                    #!#Nirmit#!#😊😋😎😍😅😆#!#Nirmit#!#Shah
+~~END~~
+
+
+EXEC test_default_columns_vu_prepare_p4
+GO
+~~ROW COUNT: 1~~
+
+
+SELECT * FROM test_default_columns_vu_prepare_t4
+GO
+~~START~~
+date#!#datetime#!#datetime2#!#time#!#datetimeoffset#!#smalldatetime
+2000-12-13#!#2000-12-13 12:58:23.123#!#2018-06-23 07:30:20.000000#!#12:45:37.1230000#!#2020-03-15 09:00:00.0000000 +08:00#!#2000-12-13 12:58:00.0
+2000-12-13#!#2000-12-13 12:58:23.123#!#2018-06-23 07:30:20.000000#!#12:45:37.1230000#!#2020-03-15 09:00:00.0000000 +08:00#!#2000-12-13 12:58:00.0
+~~END~~
+
+
+EXEC test_default_columns_vu_prepare_p5
+GO
+~~ROW COUNT: 1~~
+
+
+SELECT * FROM test_default_columns_vu_prepare_t5
+GO
+~~START~~
+xml#!#uniqueidentifier#!#sql_variant
+<contact><name>Contact Name 2</name><phone>YYY-YYY-YYYY</phone></contact>#!#51F178A6-53C7-472C-9BE1-1C08942342D7#!#Delhi                   
+<contact><name>Contact Name 2</name><phone>YYY-YYY-YYYY</phone></contact>#!#51F178A6-53C7-472C-9BE1-1C08942342D7#!#Delhi                   
+~~END~~
+
+
+SELECT * from test_default_columns_vu_prepare_func_1(1)
+GO
+~~START~~
+int#!#bigint#!#tinyint#!#binary#!#varbinary
+10#!#9223372036854775807#!#2#!#01#!#010203
+10#!#9223372036854775807#!#2#!#01#!#010203
+~~END~~
+
+
+SELECT * from test_default_columns_vu_prepare_func_2(1)
+GO
+~~START~~
+bit#!#smallint#!#money#!#numeric#!#numeric
+1#!#-10#!#22337203685477.5807#!#2147483648.12300000#!#6.90000000
+1#!#-10#!#22337203685477.5807#!#2147483648.12300000#!#6.90000000
+~~END~~
+
+
+SELECT * from test_default_columns_vu_prepare_func_3(1)
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: The string size for the given CHAR/NCHAR data is not defined. Please use an explicit CAST or CONVERT to CHAR(n)/NCHAR(n))~~
+
+
+SELECT * from test_default_columns_vu_prepare_func_4(1)
+GO
+~~START~~
+date#!#datetime#!#datetime2#!#time#!#datetimeoffset#!#smalldatetime
+2000-12-13#!#2000-12-13 12:58:23.123#!#2018-06-23 07:30:20.0000000#!#12:45:37.1230000#!#2020-03-15 09:00:00.0000000 +08:00#!#2000-12-13 12:58:00.0
+2000-12-13#!#2000-12-13 12:58:23.123#!#2018-06-23 07:30:20.0000000#!#12:45:37.1230000#!#2020-03-15 09:00:00.0000000 +08:00#!#2000-12-13 12:58:00.0
+~~END~~
+
+
+SELECT * from test_default_columns_vu_prepare_func_5(1)
+GO
+~~START~~
+xml#!#uniqueidentifier#!#sql_variant
+<contact><name>Contact Name 2</name><phone>YYY-YYY-YYYY</phone></contact>#!#51F178A6-53C7-472C-9BE1-1C08942342D7#!#Delhi                   
+<contact><name>Contact Name 2</name><phone>YYY-YYY-YYYY</phone></contact>#!#51F178A6-53C7-472C-9BE1-1C08942342D7#!#Delhi                   
+~~END~~
+
