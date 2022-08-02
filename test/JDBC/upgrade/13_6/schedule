@@ -89,4 +89,4 @@ Test-sp_helpsrvrolemember
 Test-sp_helpuser
 TestTableType
 BABEL-3147-before-14_5
-TestErrorHelperFunctions
+TestErrorHelperFunctionsUpgrade
