@@ -437,7 +437,7 @@ babel_list_mapped_error_deprecated_in_2_2_0(PG_FUNCTION_ARGS)
 		funcctx = SRF_FIRSTCALL_INIT();
 		oldcontext = MemoryContextSwitchTo(funcctx->multi_call_memory_ctx);
 		if (*pltsql_protocol_plugin_ptr && (*pltsql_protocol_plugin_ptr)->get_mapped_error_list)
-			list = (*pltsql_protocol_plugin_ptr)->get_mapped_tsql_error_list();
+			list = (*pltsql_protocol_plugin_ptr)->get_mapped_tsql_error_code_list();
 
 		funcctx->user_fctx = (void *) list;
 		funcctx->max_calls = list[0];

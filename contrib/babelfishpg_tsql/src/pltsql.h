@@ -1581,7 +1581,7 @@ typedef struct PLtsql_protocol_plugin
 
 	error_map_details_t * (*get_mapped_error_list) (void);
 
-	int* (*get_mapped_tsql_error_list) (void);
+	int* (*get_mapped_tsql_error_code_list) (void);
 
 	int (*bulk_load_callback) (int ncol, int nrow, Oid *argtypes,
 				Datum *Values, const char *Nulls, bool *Defaults);
