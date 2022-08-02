@@ -16,7 +16,13 @@ GO
 SELECT dbo.sys_events_vu_prepare_func()
 GO
 
+select * from sys.all_objects o inner join sys.events e on o.object_id = e.object_id
+GO
+
 USE sys_events_vu_prepare_database1
+GO
+
+select * from sys.all_objects o inner join sys.events e on o.object_id = e.object_id
 GO
 
 -- should return 1 row: 
