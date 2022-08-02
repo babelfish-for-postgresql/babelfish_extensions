@@ -1,10 +1,10 @@
-SELECT * FROM test_babelfish_namespace_ext_view
+SELECT * FROM babelfish_namespace_ext_vu_prepare_view
 GO
 
-EXEC test_babelfish_namespace_ext_proc
+EXEC babelfish_namespace_ext_vu_prepare_proc
 GO
 
-SELECT test_babelfish_namespace_ext_func()
+SELECT babelfish_namespace_ext_vu_prepare_func()
 GO
 
 SELECT nspname FROM sys.babelfish_namespace_ext WHERE nspname LIKE '%test_babelfish_namespace_sch%'

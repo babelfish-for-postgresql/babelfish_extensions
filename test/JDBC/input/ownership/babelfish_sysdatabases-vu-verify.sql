@@ -1,11 +1,11 @@
-SELECT * FROM test_babelfish_sysdatabases_view
+SELECT * FROM babelfish_sysdatabases_vu_prepare_view
 GO
 
-EXEC test_babelfish_sysdatabases_proc
+EXEC babelfish_sysdatabases_vu_prepare_proc
 GO
 
-SELECT test_babelfish_sysdatabases_func()
+SELECT babelfish_sysdatabases_vu_prepare_func()
 GO
 
-SELECT name FROM sys.babelfish_sysdatabases WHERE name LIKE 'test_babelfish_sysdatabases_db%'
+SELECT name FROM sys.babelfish_sysdatabases WHERE name LIKE 'babelfish_sysdatabases_vu_prepare_db%'
 GO

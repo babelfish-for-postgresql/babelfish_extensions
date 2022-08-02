@@ -1,29 +1,29 @@
-CREATE SCHEMA test_babelfish_namespace_ext_sch1
+CREATE SCHEMA babelfish_namespace_ext_vu_prepare_sch1
 GO
 
-CREATE SCHEMA test_babelfish_namespace_ext_sch2
+CREATE SCHEMA babelfish_namespace_ext_vu_prepare_sch2
 GO
 
-CREATE VIEW test_babelfish_namespace_ext_view
+CREATE VIEW babelfish_namespace_ext_vu_prepare_view
 AS
 SELECT nspname, orig_name 
 FROM sys.babelfish_namespace_ext 
-WHERE nspname LIKE '%test_babelfish_namespace_ext_sch%'
+WHERE nspname LIKE '%babelfish_namespace_ext_vu_prepare_sch%'
 ORDER BY nspname
 GO
 
-CREATE PROC test_babelfish_namespace_ext_proc
+CREATE PROC babelfish_namespace_ext_vu_prepare_proc
 AS
 SELECT nspname, orig_name 
 FROM sys.babelfish_namespace_ext 
-WHERE nspname LIKE '%test_babelfish_namespace_ext_sch%'
+WHERE nspname LIKE '%babelfish_namespace_ext_vu_prepare_sch%'
 ORDER BY nspname
 GO
 
-CREATE FUNCTION test_babelfish_namespace_ext_func()
+CREATE FUNCTION babelfish_namespace_ext_vu_prepare_func()
 RETURNS INT
 AS
 BEGIN
-RETURN (SELECT COUNT(*) FROM sys.babelfish_namespace_ext WHERE nspname LIKE '%test_babelfish_namespace_ext_sch%')
+RETURN (SELECT COUNT(*) FROM sys.babelfish_namespace_ext WHERE nspname LIKE '%babelfish_namespace_ext_vu_prepare_sch%')
 END
 GO

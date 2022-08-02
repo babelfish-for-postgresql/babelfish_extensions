@@ -1,26 +1,26 @@
-CREATE DATABASE test_babelfish_sysdatabases_db
+CREATE DATABASE babelfish_sysdatabases_vu_prepare_db
 GO
 
-CREATE VIEW test_babelfish_sysdatabases_view
+CREATE VIEW babelfish_sysdatabases_vu_prepare_view
 AS
 SELECT name, owner, default_collation 
 FROM sys.babelfish_sysdatabases 
-WHERE name LIKE 'test_babelfish_sysdatabases_db%'
+WHERE name LIKE 'babelfish_sysdatabases_vu_prepare_db%'
 ORDER BY name
 GO
 
-CREATE PROC test_babelfish_sysdatabases_proc
+CREATE PROC babelfish_sysdatabases_vu_prepare_proc
 AS
 SELECT name, owner, default_collation 
 FROM sys.babelfish_sysdatabases 
-WHERE name LIKE 'test_babelfish_sysdatabases_db%'
+WHERE name LIKE 'babelfish_sysdatabases_vu_prepare_db%'
 ORDER BY name
 GO
 
-CREATE FUNCTION test_babelfish_sysdatabases_func()
+CREATE FUNCTION babelfish_sysdatabases_vu_prepare_func()
 RETURNS INT
 AS
 BEGIN
-RETURN (SELECT COUNT(*) FROM sys.babelfish_sysdatabases WHERE name LIKE 'test_babelfish_sysdatabases_db%')
+RETURN (SELECT COUNT(*) FROM sys.babelfish_sysdatabases WHERE name LIKE 'babelfish_sysdatabases_vu_prepare_db%')
 END
 GO

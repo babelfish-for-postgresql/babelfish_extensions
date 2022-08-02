@@ -1,22 +1,22 @@
-SELECT * FROM test_babelfish_authid_user_ext_view
+SELECT * FROM babelfish_authid_user_ext_vu_prepare_view
 GO
 ~~START~~
 varchar#!#varchar#!#char#!#nvarchar#!#nvarchar#!#nvarchar
-master_test_babelfish_authid_user_ext_user1#!#test_babelfish_authid_user_ext_login1#!#S#!#test_babelfish_authid_user_ext_user1#!#master#!#dbo
-master_test_babelfish_authid_user_ext_user2#!#test_babelfish_authid_user_ext_login2#!#S#!#test_babelfish_authid_user_ext_user2#!#master#!#dbo
+master_babelfish_authid_user_ext_vu_prepare_user1#!#babelfish_authid_user_ext_vu_prepare_login1#!#S#!#babelfish_authid_user_ext_vu_prepare_user1#!#master#!#dbo
+master_babelfish_authid_user_ext_vu_prepare_user2#!#babelfish_authid_user_ext_vu_prepare_login2#!#S#!#babelfish_authid_user_ext_vu_prepare_user2#!#master#!#dbo
 ~~END~~
 
 
-EXEC test_babelfish_authid_user_ext_proc
+EXEC babelfish_authid_user_ext_vu_prepare_proc
 GO
 ~~START~~
 varchar#!#varchar#!#char#!#nvarchar#!#nvarchar#!#nvarchar
-master_test_babelfish_authid_user_ext_user1#!#test_babelfish_authid_user_ext_login1#!#S#!#test_babelfish_authid_user_ext_user1#!#master#!#dbo
-master_test_babelfish_authid_user_ext_user2#!#test_babelfish_authid_user_ext_login2#!#S#!#test_babelfish_authid_user_ext_user2#!#master#!#dbo
+master_babelfish_authid_user_ext_vu_prepare_user1#!#babelfish_authid_user_ext_vu_prepare_login1#!#S#!#babelfish_authid_user_ext_vu_prepare_user1#!#master#!#dbo
+master_babelfish_authid_user_ext_vu_prepare_user2#!#babelfish_authid_user_ext_vu_prepare_login2#!#S#!#babelfish_authid_user_ext_vu_prepare_user2#!#master#!#dbo
 ~~END~~
 
 
-SELECT test_babelfish_authid_user_ext_func()
+SELECT babelfish_authid_user_ext_vu_prepare_func()
 GO
 ~~START~~
 int
@@ -25,11 +25,11 @@ int
 
 
 SELECT rolname FROM sys.babelfish_authid_user_ext
-WHERE rolname LIKE '%test_babelfish_authid_user_ext_%'
+WHERE rolname LIKE '%babelfish_authid_user_ext_vu_prepare_%'
 GO
 ~~START~~
 varchar
-master_test_babelfish_authid_user_ext_user1
-master_test_babelfish_authid_user_ext_user2
+master_babelfish_authid_user_ext_vu_prepare_user1
+master_babelfish_authid_user_ext_vu_prepare_user2
 ~~END~~
 

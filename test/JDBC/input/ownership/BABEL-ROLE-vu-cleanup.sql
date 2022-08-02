@@ -1,40 +1,40 @@
-USE test_role_db
+USE babel_role_vu_prepare_db
 GO
 
-DROP PROC test_role_proc_babel_user_ext
+DROP PROC babel_role_vu_prepare_user_ext
 GO
 
-DROP PROC test_role_proc_babel_db_principal
+DROP PROC babel_role_vu_prepare_db_principal
 GO
 
-DROP PROC test_role_proc_babel_role_members
+DROP PROC babel_role_vu_prepare_role_members
 GO
 
 
 USE master
 GO
 
-DROP LOGIN test_role_login1
+DROP LOGIN babel_role_vu_prepare_login1
 GO
 
-DROP LOGIN test_role_login2
+DROP LOGIN babel_role_vu_prepare_login2
 GO
 
-DROP LOGIN test_role_login3
+DROP LOGIN babel_role_vu_prepare_login3
 GO
 
 -- Check if catalog is cleaned up
-EXEC test_role_proc_babel_user_ext_master
+EXEC babel_role_vu_prepare_user_ext_master
 GO
 
-EXEC test_role_proc_babel_db_principal_master
+EXEC babel_role_vu_prepare_db_principal_master
 GO
 
-DROP PROC test_role_proc_babel_user_ext_master
+DROP PROC babel_role_vu_prepare_user_ext_master
 GO
 
-DROP PROC test_role_proc_babel_db_principal_master
+DROP PROC babel_role_vu_prepare_db_principal_master
 GO
 
-DROP DATABASE test_role_db
+DROP DATABASE babel_role_vu_prepare_db
 GO

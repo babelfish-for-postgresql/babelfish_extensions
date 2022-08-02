@@ -1,29 +1,29 @@
-CREATE LOGIN test_babelfish_authid_login_ext_login1 WITH PASSWORD = '123'
+CREATE LOGIN babelfish_authid_login_ext_vu_prepare_login1 WITH PASSWORD = '123'
 GO
 
-CREATE LOGIN test_babelfish_authid_login_ext_login2 WITH PASSWORD = '123'
+CREATE LOGIN babelfish_authid_login_ext_vu_prepare_login2 WITH PASSWORD = '123'
 GO
 
-CREATE VIEW test_babelfish_authid_login_ext_view
+CREATE VIEW babelfish_authid_login_ext_vu_prepare_view
 AS
 SELECT rolname, is_disabled, type, default_database_name 
 FROM sys.babelfish_authid_login_ext 
-WHERE rolname LIKE '%test_babelfish_authid_login_ext%'
+WHERE rolname LIKE '%babelfish_authid_login_ext_vu_prepare%'
 ORDER BY rolname
 GO
 
-CREATE PROC test_babelfish_authid_login_ext_proc
+CREATE PROC babelfish_authid_login_ext_vu_prepare_proc
 AS
 SELECT rolname, is_disabled, type, default_database_name 
 FROM sys.babelfish_authid_login_ext
-WHERE rolname LIKE '%test_babelfish_authid_login_ext%'
+WHERE rolname LIKE '%babelfish_authid_login_ext_vu_prepare%'
 ORDER BY rolname
 GO
 
-CREATE FUNCTION test_babelfish_authid_login_ext_func()
+CREATE FUNCTION babelfish_authid_login_ext_vu_prepare_func()
 RETURNS INT
 AS
 BEGIN
-RETURN (SELECT COUNT(*) FROM sys.babelfish_authid_login_ext WHERE rolname LIKE '%test_babelfish_authid_login_ext%')
+RETURN (SELECT COUNT(*) FROM sys.babelfish_authid_login_ext WHERE rolname LIKE '%babelfish_authid_login_ext_vu_prepare%')
 END
 GO

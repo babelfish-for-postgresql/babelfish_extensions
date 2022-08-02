@@ -1,20 +1,20 @@
-DROP VIEW test_babelfish_authid_user_ext_view
+DROP VIEW babelfish_authid_user_ext_vu_prepare_view
 GO
 
-DROP PROC test_babelfish_authid_user_ext_proc
+DROP PROC babelfish_authid_user_ext_vu_prepare_proc
 GO
 
-DROP FUNCTION test_babelfish_authid_user_ext_func
+DROP FUNCTION babelfish_authid_user_ext_vu_prepare_func
 GO
 
-DROP USER test_babelfish_authid_user_ext_user1
+DROP USER babelfish_authid_user_ext_vu_prepare_user1
 GO
 
-DROP USER test_babelfish_authid_user_ext_user2
+DROP USER babelfish_authid_user_ext_vu_prepare_user2
 GO
 
-DROP LOGIN test_babelfish_authid_user_ext_login1
+DROP LOGIN babelfish_authid_user_ext_vu_prepare_login1
 GO
 
-DROP LOGIN test_babelfish_authid_user_ext_login2
+DROP LOGIN babelfish_authid_user_ext_vu_prepare_login2
 GO

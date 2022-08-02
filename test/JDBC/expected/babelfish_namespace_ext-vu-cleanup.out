@@ -1,14 +1,14 @@
-DROP VIEW test_babelfish_namespace_ext_view
+DROP VIEW babelfish_namespace_ext_vu_prepare_view
 GO
 
-DROP PROC test_babelfish_namespace_ext_proc
+DROP PROC babelfish_namespace_ext_vu_prepare_proc
 GO
 
-DROP FUNCTION test_babelfish_namespace_ext_func
+DROP FUNCTION babelfish_namespace_ext_vu_prepare_func
 GO
 
-DROP SCHEMA test_babelfish_namespace_ext_sch1
+DROP SCHEMA babelfish_namespace_ext_vu_prepare_sch1
 GO
 
-DROP SCHEMA test_babelfish_namespace_ext_sch2
+DROP SCHEMA babelfish_namespace_ext_vu_prepare_sch2
 GO

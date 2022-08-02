@@ -1,35 +1,35 @@
-CREATE LOGIN test_babelfish_authid_user_ext_login1 WITH PASSWORD = '123'
+CREATE LOGIN babelfish_authid_user_ext_vu_prepare_login1 WITH PASSWORD = '123'
 GO
 
-CREATE USER test_babelfish_authid_user_ext_user1 FOR LOGIN test_babelfish_authid_user_ext_login1
+CREATE USER babelfish_authid_user_ext_vu_prepare_user1 FOR LOGIN babelfish_authid_user_ext_vu_prepare_login1
 GO
 
-CREATE LOGIN test_babelfish_authid_user_ext_login2 WITH PASSWORD = '123'
+CREATE LOGIN babelfish_authid_user_ext_vu_prepare_login2 WITH PASSWORD = '123'
 GO
 
-CREATE USER test_babelfish_authid_user_ext_user2 FOR LOGIN test_babelfish_authid_user_ext_login2
+CREATE USER babelfish_authid_user_ext_vu_prepare_user2 FOR LOGIN babelfish_authid_user_ext_vu_prepare_login2
 GO
 
-CREATE VIEW test_babelfish_authid_user_ext_view
+CREATE VIEW babelfish_authid_user_ext_vu_prepare_view
 AS
 SELECT rolname, login_name, type, orig_username, database_name, default_schema_name 
 FROM sys.babelfish_authid_user_ext
-WHERE rolname LIKE '%test_babelfish_authid_user_ext_%'
+WHERE rolname LIKE '%babelfish_authid_user_ext_vu_prepare_%'
 ORDER BY rolname
 GO
 
-CREATE PROC test_babelfish_authid_user_ext_proc
+CREATE PROC babelfish_authid_user_ext_vu_prepare_proc
 AS
 SELECT rolname, login_name, type, orig_username, database_name, default_schema_name 
 FROM sys.babelfish_authid_user_ext
-WHERE rolname LIKE '%test_babelfish_authid_user_ext_%'
+WHERE rolname LIKE '%babelfish_authid_user_ext_vu_prepare_%'
 ORDER BY rolname
 GO
 
-CREATE FUNCTION test_babelfish_authid_user_ext_func()
+CREATE FUNCTION babelfish_authid_user_ext_vu_prepare_func()
 RETURNS INT
 AS
 BEGIN
-RETURN (SELECT COUNT(*) FROM sys.babelfish_authid_user_ext WHERE rolname LIKE '%test_babelfish_authid_user_ext_%')
+RETURN (SELECT COUNT(*) FROM sys.babelfish_authid_user_ext WHERE rolname LIKE '%babelfish_authid_user_ext_vu_prepare_%')
 END
 GO

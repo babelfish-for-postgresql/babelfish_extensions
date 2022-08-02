@@ -1,22 +1,22 @@
-SELECT * FROM test_babelfish_authid_login_ext_view
+SELECT * FROM babelfish_authid_login_ext_vu_prepare_view
 GO
 ~~START~~
 varchar#!#int#!#char#!#nvarchar
-test_babelfish_authid_login_ext_login1#!#0#!#S#!#master
-test_babelfish_authid_login_ext_login2#!#0#!#S#!#master
+babelfish_authid_login_ext_vu_prepare_login1#!#0#!#S#!#master
+babelfish_authid_login_ext_vu_prepare_login2#!#0#!#S#!#master
 ~~END~~
 
 
-EXEC test_babelfish_authid_login_ext_proc
+EXEC babelfish_authid_login_ext_vu_prepare_proc
 GO
 ~~START~~
 varchar#!#int#!#char#!#nvarchar
-test_babelfish_authid_login_ext_login1#!#0#!#S#!#master
-test_babelfish_authid_login_ext_login2#!#0#!#S#!#master
+babelfish_authid_login_ext_vu_prepare_login1#!#0#!#S#!#master
+babelfish_authid_login_ext_vu_prepare_login2#!#0#!#S#!#master
 ~~END~~
 
 
-SELECT test_babelfish_authid_login_ext_func()
+SELECT babelfish_authid_login_ext_vu_prepare_func()
 GO
 ~~START~~
 int
@@ -25,11 +25,11 @@ int
 
 
 SELECT rolname FROM sys.babelfish_authid_login_ext 
-WHERE rolname LIKE 'test_babelfish_authid_login_ext_login%'
+WHERE rolname LIKE 'babelfish_authid_login_ext_vu_prepare_login%'
 GO
 ~~START~~
 varchar
-test_babelfish_authid_login_ext_login1
-test_babelfish_authid_login_ext_login2
+babelfish_authid_login_ext_vu_prepare_login1
+babelfish_authid_login_ext_vu_prepare_login2
 ~~END~~
 

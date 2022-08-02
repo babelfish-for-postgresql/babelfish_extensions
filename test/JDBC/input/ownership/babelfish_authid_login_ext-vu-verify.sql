@@ -1,12 +1,12 @@
-SELECT * FROM test_babelfish_authid_login_ext_view
+SELECT * FROM babelfish_authid_login_ext_vu_prepare_view
 GO
 
-EXEC test_babelfish_authid_login_ext_proc
+EXEC babelfish_authid_login_ext_vu_prepare_proc
 GO
 
-SELECT test_babelfish_authid_login_ext_func()
+SELECT babelfish_authid_login_ext_vu_prepare_func()
 GO
 
 SELECT rolname FROM sys.babelfish_authid_login_ext 
-WHERE rolname LIKE 'test_babelfish_authid_login_ext_login%'
+WHERE rolname LIKE 'babelfish_authid_login_ext_vu_prepare_login%'
 GO

@@ -1,11 +1,11 @@
-DROP VIEW test_babelfish_sysdatabases_view
+DROP VIEW babelfish_sysdatabases_vu_prepare_view
 GO
 
-DROP PROC test_babelfish_sysdatabases_proc
+DROP PROC babelfish_sysdatabases_vu_prepare_proc
 GO
 
-DROP FUNCTION test_babelfish_sysdatabases_func
+DROP FUNCTION babelfish_sysdatabases_vu_prepare_func
 GO
 
-DROP DATABASE test_babelfish_sysdatabases_db
+DROP DATABASE babelfish_sysdatabases_vu_prepare_db
 GO

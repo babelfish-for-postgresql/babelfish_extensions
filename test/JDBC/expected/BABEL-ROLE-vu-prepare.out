@@ -1,55 +1,55 @@
-CREATE PROC test_role_proc_babel_user_ext_master AS
+CREATE PROC babel_role_vu_prepare_user_ext_master AS
 BEGIN 
 	SELECT rolname, type, orig_username, database_name
 	FROM sys.babelfish_authid_user_ext
-	WHERE orig_username LIKE 'test_role%'
+	WHERE orig_username LIKE 'babel_role_vu_prepare%'
 	ORDER BY rolname, orig_username
 END
 GO
 
-CREATE PROC test_role_proc_babel_db_principal_master AS
+CREATE PROC babel_role_vu_prepare_db_principal_master AS
 BEGIN
 	SELECT name, type_desc
 	FROM sys.database_principals
-	WHERE name LIKE 'test_role%'
+	WHERE name LIKE 'babel_role_vu_prepare%'
 	ORDER BY name
 END
 GO
 
-CREATE LOGIN test_role_login1 WITH PASSWORD = 'abc'
+CREATE LOGIN babel_role_vu_prepare_login1 WITH PASSWORD = 'abc'
 GO
 
-CREATE LOGIN test_role_login2 WITH PASSWORD = 'abc'
+CREATE LOGIN babel_role_vu_prepare_login2 WITH PASSWORD = 'abc'
 GO
 
-CREATE LOGIN test_role_login3 WITH PASSWORD = 'abc'
+CREATE LOGIN babel_role_vu_prepare_login3 WITH PASSWORD = 'abc'
 GO
 
-CREATE DATABASE test_role_db
+CREATE DATABASE babel_role_vu_prepare_db
 GO
 
-USE test_role_db
+USE babel_role_vu_prepare_db
 GO
 
-CREATE PROC test_role_proc_babel_user_ext AS
+CREATE PROC babel_role_vu_prepare_user_ext AS
 BEGIN 
 	SELECT rolname, type, orig_username, database_name
 	FROM sys.babelfish_authid_user_ext
-	WHERE orig_username LIKE 'test_role%'
+	WHERE orig_username LIKE 'babel_role_vu_prepare%'
 	ORDER BY rolname, orig_username
 END
 GO
 
-CREATE PROC test_role_proc_babel_db_principal AS
+CREATE PROC babel_role_vu_prepare_db_principal AS
 BEGIN
 	SELECT name, type_desc
 	FROM sys.database_principals
-	WHERE name LIKE 'test_role%'
+	WHERE name LIKE 'babel_role_vu_prepare%'
 	ORDER BY name
 END
 GO
 
-CREATE PROC test_role_proc_babel_role_members AS
+CREATE PROC babel_role_vu_prepare_role_members AS
 BEGIN
 	SELECT dp1.name AS RoleName, dp1.type AS RoleType,
 		   dp2.name AS MemberName, dp2.type AS MemberType
@@ -58,7 +58,7 @@ BEGIN
 	ON drm.role_principal_id = dp1.principal_id
 	INNER JOIN sys.database_principals AS dp2
 	ON drm.member_principal_id = dp2.principal_id
-	WHERE dp1.name != 'db_owner'
+	WHERE dp1.name LIKE 'babel_role_vu_prepare%'
 	ORDER BY dp1.name, dp2.name
 END
 GO
