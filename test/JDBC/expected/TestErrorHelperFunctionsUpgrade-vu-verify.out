@@ -1,4 +1,17 @@
-SELECT * FROM TestErrorHelperFunctions_VU_PREPARE_VIEW;
+-- Should throw an error
+SELECT * FROM TestErrorHelperFunctionsUpgrade_VU_PREPARE_VIEW;
+GO
+~~START~~
+int
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: function return row and query-specified return row do not match)~~
+
+CREATE OR REPLACE VIEW TestErrorHelperFunctionsUpgrade_VU_PREPARE_VIEW AS
+SELECT sql_error_code from sys.fn_mapped_system_error_list();
+GO
+
+SELECT * FROM TestErrorHelperFunctionsUpgrade_VU_PREPARE_VIEW;
 GO
 ~~START~~
 int

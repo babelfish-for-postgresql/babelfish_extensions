@@ -1,0 +1,2 @@
+DROP VIEW TestErrorHelperFunctionsUpgrade_VU_PREPARE_VIEW;
+GO
