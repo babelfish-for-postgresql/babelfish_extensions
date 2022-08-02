@@ -1021,6 +1021,8 @@ typedef struct PLtsql_stmt_execsql
 	bool		is_cross_db;	/* cross database reference */
 	bool		is_dml;			/* DML statement? */
 	bool		is_ddl;			/* DDL statement? */
+	bool		func_call;		/* Function call? */
+	char		*schema_name;	/* Schema specified */
 	bool            is_schema_specified;    /*is schema name specified? */
 } PLtsql_stmt_execsql;
 

@@ -131,7 +131,6 @@ Could not find upgrade tests for function sys.babelfish_try_cast_floor_int
 Could not find upgrade tests for function sys.babelfish_try_cast_floor_smallint
 Could not find upgrade tests for function sys.babelfish_try_cast_to_any
 Could not find upgrade tests for function sys.ceiling
-Could not find upgrade tests for function sys.checksum
 Could not find upgrade tests for function sys.columns_internal
 Could not find upgrade tests for function sys.cursor_rows
 Could not find upgrade tests for function sys.cursor_status

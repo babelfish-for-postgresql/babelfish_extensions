@@ -99,4 +99,5 @@ triggers_with_transaction
 Test-sp_helpsrvrolemember
 Test-sp_helpuser
 TestTableType
+schema_resolution_func
 BABEL-3147
