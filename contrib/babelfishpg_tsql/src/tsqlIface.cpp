@@ -997,6 +997,8 @@ public:
     MyInputStream &stream;
 
 	bool is_cross_db = false;
+	std::string schema_name;
+	bool is_function = false;
 	bool is_schema_specified = false;
 
 	// We keep a stack of the containers that are active during a traversal.
@@ -1407,6 +1409,12 @@ public:
 			stmt->is_cross_db = true;
 		// record that the stmt is dml
 	 	stmt->is_dml = true;
+		// record if a function call
+		if (is_function)
+			stmt->func_call = true;
+
+		if (!schema_name.empty())
+			stmt->schema_name = pstrdup(downcase_truncate_identifier(schema_name.c_str(), schema_name.length(), true));
 		// record if the SQL object is schema qualified
 		if (is_schema_specified)
 			stmt->is_schema_specified = true;
@@ -1643,6 +1651,7 @@ public:
 
 	void exitFunction_call(TSqlParser::Function_callContext *ctx) override
 	{
+		is_function = true;
 		if (ctx->analytic_windowed_function())
 		{
 			auto actx = ctx->analytic_windowed_function();
@@ -1678,6 +1687,9 @@ public:
 		/* analyze scalar function call */
 		if (ctx->func_proc_name_server_database_schema())
 		{
+			if (ctx->func_proc_name_server_database_schema()->schema)
+				schema_name = stripQuoteFromId(ctx->func_proc_name_server_database_schema()->schema);
+
 			auto fpnsds = ctx->func_proc_name_server_database_schema();
 
 			if (fpnsds->DOT().empty() && fpnsds->id().back()->keyword()) /* built-in functions */

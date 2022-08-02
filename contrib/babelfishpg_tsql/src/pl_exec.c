@@ -10045,6 +10045,23 @@ bool reset_search_path(PLtsql_stmt_execsql *stmt, char *old_search_path)
 	const char	*user = NULL;
 	const char	*schema;
 	top_es_entry = exec_state_call_stack->next;
+
+	/*
+	 * When there is a function call:
+	 * search the specified schema for the object. If not found,
+	 * then search the dbo schema. Don't update the path for "sys" schema.
+	 */
+	if (stmt->func_call && stmt->schema_name != NULL && strncmp(stmt->schema_name, "sys", strlen(stmt->schema_name)) != 0)
+	{
+		physical_schema = get_physical_schema_name(cur_dbname, stmt->schema_name);
+		dbo_schema = get_dbo_schema_name(cur_dbname);
+		new_search_path = psprintf("%s, %s, %s", physical_schema, dbo_schema, old_search_path);
+		/* Add the schema where the object is referenced and dbo schema to the new search path */
+		(void) set_config_option("search_path", new_search_path,
+						PGC_USERSET, PGC_S_SESSION,
+						GUC_ACTION_SAVE, true, 0, false);
+		return true;
+	}
 	while(top_es_entry != NULL)
 	{
 		/* traverse through the estate stack. If the occurrence of
