@@ -38,6 +38,7 @@ BABEL-3192
 BABEL-3221
 BABEL-3204
 BABEL-3234
+BABEL-3402
 sys-server_principals
 fulltextserviceproperty
 is_srvrolemember
@@ -56,12 +57,14 @@ sys-suser_sid
 sys-suser_sname
 sys-sysobjects
 sys-trigger_nestlevel
+identity_function
 routines_definition
 constraint_column_usage
 column_domain_usage
 schema_resolution_proc
 datepart
 SYSTEM_USER
+Test-Default-Columns
 BABEL-1189
 BABEL-1243
 BABEL-1963

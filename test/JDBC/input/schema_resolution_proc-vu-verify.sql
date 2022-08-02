@@ -28,6 +28,10 @@ go
 drop table schema_resolution_proc_table1;
 go
 
+create schema schema_resolution_proc_sch2;
+create table schema_resolution_proc_sch2.schema_resolution_proc_t1(a int, b char);
+go
+
 -- Without schema specified, insert takes place in "schema_resolution_proc_sch1" while create takes place in default schema["dbo" in this case] 
 exec schema_resolution_proc_sch1.schema_resolution_proc_create_tab;
 go
@@ -42,7 +46,11 @@ go
 -- searches for t1 in "schema_resolution_proc_sch1" first, if not found then searches in default schema
 exec schema_resolution_proc_sch1.schema_resolution_proc_select_tab
 go
-	 
+
+drop table schema_resolution_proc_sch2.schema_resolution_proc_t1;
+drop schema schema_resolution_proc_sch2;
+go
+
 drop proc schema_resolution_proc_sch1.schema_resolution_proc_select_tab
 go
 	 
