@@ -10101,7 +10101,7 @@ bool reset_search_path(PLtsql_stmt_execsql *stmt, char *old_search_path, bool* r
 				if (stmt->is_schema_specified)
 				{
 					set_session_properties(top_es_entry->estate->db_name);
-					reset_session_properties = true;
+					*reset_session_properties = true;
 					break;
 				}
 				else
