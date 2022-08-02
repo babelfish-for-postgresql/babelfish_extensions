@@ -2641,6 +2641,7 @@ static void bbf_ProcessUtility(PlannedStmt *pstmt,
 				const char      *prev_current_user;
 				DropRoleStmt	*stmt = (DropRoleStmt *) parsetree;
 				bool			drop_user = false;
+				bool			drop_role = false;
 				bool			all_logins = false;
 				bool			all_users = false;
 				bool			all_roles = false;
@@ -2653,12 +2654,15 @@ static void bbf_ProcessUtility(PlannedStmt *pstmt,
 				{
 					RoleSpec		*headrol = linitial(stmt->roles);
 
-					if (strcmp(headrol->rolename, "is_user") == 0 ||
-						strcmp(headrol->rolename, "is_role") == 0)
+					if (strcmp(headrol->rolename, "is_user") == 0)
+						drop_user = true;
+					else if (strcmp(headrol->rolename, "is_role") == 0)
+						drop_role = true;
+
+					if (drop_user || drop_role)
 					{
 						char *db_name = NULL;
 
-						drop_user = true;
 						stmt->roles = list_delete_cell(stmt->roles,
 													   list_head(stmt->roles));
 						pfree(headrol);
@@ -2673,6 +2677,16 @@ static void bbf_ProcessUtility(PlannedStmt *pstmt,
 								char		*user_name;
 
 								user_name = get_physical_user_name(db_name, rolspec->rolename);
+
+								/*
+								 * If a role has members, do not drop it.
+								 * Note that here we don't handle invalid roles.
+								 */
+								if (drop_role && !is_empty_role(get_role_oid(user_name, true)))
+									ereport(ERROR,
+											(errcode(ERRCODE_CHECK_VIOLATION),
+											 errmsg("The role has members. It must be empty before it can be dropped.")));
+
 								pfree(rolspec->rolename);
 								rolspec->rolename = user_name;
 							}
@@ -2720,7 +2734,7 @@ static void bbf_ProcessUtility(PlannedStmt *pstmt,
 				}
 
 				/* If not user or role, then login */
-				if (!drop_user)
+				if (!drop_user && !drop_role)
 				{
 					int	role_oid = get_role_oid(role_name, true);
 					if (role_oid == InvalidOid)
@@ -2740,7 +2754,7 @@ static void bbf_ProcessUtility(PlannedStmt *pstmt,
 					prev_current_user = GetUserNameFromId(GetUserId(), false);
 
 					/* Only use dbo if dropping a user/role in a Babelfish session. */
-					if (drop_user)
+					if (drop_user || drop_role)
 						bbf_set_current_user(get_dbo_role_name(get_cur_db_name()));
 					else
 						bbf_set_current_user("sysadmin");
