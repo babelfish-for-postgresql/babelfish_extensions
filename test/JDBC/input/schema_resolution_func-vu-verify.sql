@@ -14,6 +14,16 @@ go
 exec schema_resolution_func_vu_prepare_s2.schema_resolution_func_vu_prepare_p1;
 go
 
+-- cross-db procedure call with a function
+use schema_resolution_func_vu_prepare_d1;
+go
+
+exec master.schema_resolution_func_vu_prepare_s2.schema_resolution_func_vu_prepare_p1;
+go
+
+use master;
+go
+
 --resolves to schema_resolution_func_vu_prepare_s1.schema_resolution_func_vu_prepare_t1 - gives 1 as an output
 select schema_resolution_func_vu_prepare_s1.schema_resolution_func_vu_prepare_f4();
 go
@@ -50,5 +60,6 @@ go
 
 drop schema schema_resolution_func_vu_prepare_s1;
 drop schema schema_resolution_func_vu_prepare_s2;
+drop database schema_resolution_func_vu_prepare_d1;
 go
 
