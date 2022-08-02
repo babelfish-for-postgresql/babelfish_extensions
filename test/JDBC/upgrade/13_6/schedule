@@ -53,6 +53,7 @@ sys-original_login
 sys-procedures
 sys-schema-name
 sys-suser_sid
+identity_function
 sys-suser_sname
 sys-sysobjects
 sys-trigger_nestlevel

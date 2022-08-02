@@ -2995,6 +2995,25 @@ $$
 LANGUAGE 'pltsql';
 GRANT EXECUTE on PROCEDURE sys.sp_helpuser TO PUBLIC;
 
+CREATE OR REPLACE FUNCTION sys.babelfish_get_last_identity()
+RETURNS INT8
+AS 'babelfishpg_tsql', 'get_last_identity'
+LANGUAGE C STABLE;
+
+CREATE OR REPLACE FUNCTION sys.babelfish_get_last_identity_numeric()
+RETURNS numeric(38,0) AS
+$BODY$
+	SELECT sys.babelfish_get_last_identity()::numeric(38,0);
+$BODY$
+LANGUAGE SQL STABLE;
+
+CREATE OR REPLACE FUNCTION sys.scope_identity()
+RETURNS numeric(38,0) AS
+$BODY$
+	SELECT sys.babelfish_get_last_identity_numeric()::numeric(38,0);
+$BODY$
+LANGUAGE SQL STABLE;
+
 CREATE OR REPLACE VIEW sys.numbered_procedures
 AS
 SELECT 
