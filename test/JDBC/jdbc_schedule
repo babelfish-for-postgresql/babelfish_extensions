@@ -8,21 +8,7 @@
 #    new line
 # 6. If you want the framework to not run certain files, use: ignore#!#<test name>
 
-collation_tests-vu-prepare
-collation_tests-vu-verify
-collation_tests-vu-cleanup
-collation_tests_arabic-vu-prepare
-collation_tests_arabic-vu-verify
-collation_tests_arabic-vu-cleanup
-collation_tests_mongolian-vu-prepare
-collation_tests_mongolian-vu-verify
-collation_tests_mongolian-vu-cleanup
-collation_tests_greek-vu-prepare
-collation_tests_greek-vu-verify
-collation_tests_greek-vu-cleanup
-collation_tests_polish-vu-prepare
-collation_tests_polish-vu-verify
-collation_tests_polish-vu-cleanup
+all
 
 
 # JDBC bulk insert API seems to call SET FMTONLY ON without calling SET FMTONLY OFF, causing some spurious test failures.
