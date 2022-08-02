@@ -10,3 +10,9 @@ GO
 
 SELECT * FROM TestErrorHelperFunctionsUpgrade_VU_PREPARE_VIEW;
 GO
+
+SELECT * FROM TestErrorHelperFunctionsUpgrade_VU_PREPARE_FUNC();
+GO
+
+EXEC TestErrorHelperFunctionsUpgrade_VU_PREPARE_PROC
+GO
