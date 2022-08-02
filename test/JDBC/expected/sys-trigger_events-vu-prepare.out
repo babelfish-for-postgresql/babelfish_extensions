@@ -27,11 +27,17 @@ END
 GO
 
 CREATE VIEW sys_trigger_events_vu_prepare_view AS
-SELECT type, type_desc, is_trigger_event, event_group_type, event_group_type_desc FROM sys.trigger_events ORDER BY type
+SELECT te.type, te.type_desc, te.is_trigger_event, te.event_group_type, te.event_group_type_desc FROM sys.trigger_events te
+INNER JOIN sys.triggers t ON t.object_id = te.object_id 
+AND (t.name = 'sys_trigger_events_vu_prepare_trig1' OR t.name = 'sys_trigger_events_vu_prepare_trig2')
+ORDER BY type
 GO
 
 CREATE PROC sys_trigger_events_vu_prepare_proc AS
-SELECT type, type_desc, is_trigger_event, event_group_type, event_group_type_desc FROM sys.trigger_events ORDER BY type
+SELECT te.type, te.type_desc, te.is_trigger_event, te.event_group_type, te.event_group_type_desc FROM sys.trigger_events te
+INNER JOIN sys.triggers t ON t.object_id = te.object_id 
+AND (t.name = 'sys_trigger_events_vu_prepare_trig1' OR t.name = 'sys_trigger_events_vu_prepare_trig2')
+ORDER BY type
 GO
 
 CREATE FUNCTION dbo.sys_trigger_events_vu_prepare_func()
