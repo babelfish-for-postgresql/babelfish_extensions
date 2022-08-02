@@ -10129,8 +10129,10 @@ bool reset_search_path(PLtsql_stmt_execsql *stmt, char *old_search_path, bool* r
 	 * search the specified schema for the object. If not found,
 	 * then search the dbo schema. Don't update the path for "sys" schema.
 	 */
-	if (stmt->func_call && stmt->schema_name != NULL && strncmp(stmt->schema_name, "sys", strlen(stmt->schema_name)) != 0)
+	if (stmt->func_call && stmt->schema_name != NULL &&
+			strncmp(stmt->schema_name, "sys", strlen(stmt->schema_name)) != 0 && strlen(stmt->schema_name) == 3)
 	{
+		cur_dbname = get_cur_db_name();
 		physical_schema = get_physical_schema_name(cur_dbname, stmt->schema_name);
 		dbo_schema = get_dbo_schema_name(cur_dbname);
 		new_search_path = psprintf("%s, %s, %s", physical_schema, dbo_schema, old_search_path);
