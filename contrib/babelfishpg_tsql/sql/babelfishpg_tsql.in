@@ -4,7 +4,7 @@
 
 SELECT set_config('search_path', 'sys, '||current_setting('search_path'), false);
 -- enable DDL from pgendpoint
-SELECT set_config('babelfishpg_tsql.enable_ddl_from_pgendpoint', 'true', false);
+SELECT set_config('babelfishpg_tsql.enable_create_alter_view_from_pg', 'true', false);
 
 #include "collation.sql"
 #include "datatype.sql"
@@ -24,7 +24,7 @@ SELECT set_config('babelfishpg_tsql.enable_ddl_from_pgendpoint', 'true', false);
 #include "import_export_compatibility.sql"
 #include "babelfishpg_tsql.sql"
 
-SELECT set_config('babelfishpg_tsql.enable_ddl_from_pgendpoint', 'false', false);
+SELECT set_config('babelfishpg_tsql.enable_create_alter_view_from_pg', 'false', false);
 /*
  * Remove schema sys from search_path otherwise it causes BABEL-257 for some reason
  * Notice schema sys will be automatically added to implicitly-searched namespaces by

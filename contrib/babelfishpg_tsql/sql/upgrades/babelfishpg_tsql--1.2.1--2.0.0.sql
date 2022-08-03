@@ -3,7 +3,7 @@
 
 SELECT set_config('search_path', 'sys, '||current_setting('search_path'), false);
 -- enable DDL from pgendpoint
-SELECT set_config('babelfishpg_tsql.enable_ddl_from_pgendpoint', 'true', false);
+SELECT set_config('babelfishpg_tsql.enable_create_alter_view_from_pg', 'true', false);
 
 -- Drops a function if it does not have any dependent objects.
 -- Is a temporary procedure for use by the upgrade script. Will be dropped at the end of the upgrade.
@@ -2438,6 +2438,6 @@ CALL sys.babelfish_drop_deprecated_function('sys', 'sp_datatype_info_helper_depr
 -- Please have this be one of the last statements executed in this upgrade script.
 DROP PROCEDURE sys.babelfish_drop_deprecated_function(varchar, varchar);
 
-SELECT set_config('babelfishpg_tsql.enable_ddl_from_pgendpoint', 'false', false);
+SELECT set_config('babelfishpg_tsql.enable_create_alter_view_from_pg', 'false', false);
 -- Reset search_path to not affect any subsequent scripts
 SELECT set_config('search_path', trim(leading 'sys, ' from current_setting('search_path')), false);

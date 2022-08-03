@@ -3,8 +3,8 @@
 
 SELECT set_config('search_path', 'sys, '||current_setting('search_path'), false);
 -- enable DDL from pgendpoint
-SELECT set_config('babelfishpg_tsql.enable_ddl_from_pgendpoint', 'true', false);
+SELECT set_config('babelfishpg_tsql.enable_create_alter_view_from_pg', 'true', false);
 
-SELECT set_config('babelfishpg_tsql.enable_ddl_from_pgendpoint', 'false', false);
+SELECT set_config('babelfishpg_tsql.enable_create_alter_view_from_pg', 'false', false);
 -- Reset search_path to not affect any subsequent scripts
 SELECT set_config('search_path', trim(leading 'sys, ' from current_setting('search_path')), false);

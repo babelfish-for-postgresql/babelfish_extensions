@@ -4,7 +4,7 @@
 -- add 'sys' to search path for the convenience
 SELECT set_config('search_path', 'sys, '||current_setting('search_path'), false);
 -- enable DDL from pgendpoint
-SELECT set_config('babelfishpg_tsql.enable_ddl_from_pgendpoint', 'true', false);
+SELECT set_config('babelfishpg_tsql.enable_create_alter_view_from_pg', 'true', false);
 
 -- SERVER_PRINCIPALS
 CREATE OR REPLACE VIEW sys.server_principals
@@ -3157,6 +3157,6 @@ DROP PROCEDURE sys.babelfish_remove_object_from_extension(varchar, varchar);
 DROP PROCEDURE sys.babelfish_drop_deprecated_function(varchar, varchar);
 DROP PROCEDURE sys.babelfish_drop_deprecated_table(varchar, varchar);
 
-SELECT set_config('babelfishpg_tsql.enable_ddl_from_pgendpoint', 'false', false);
+SELECT set_config('babelfishpg_tsql.enable_create_alter_view_from_pg', 'false', false);
 -- Reset search_path to not affect any subsequent scripts
 SELECT set_config('search_path', trim(leading 'sys, ' from current_setting('search_path')), false);
