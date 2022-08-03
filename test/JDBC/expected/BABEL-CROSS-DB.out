@@ -72,12 +72,12 @@ int#!#int
 ~~END~~
 
 
--- TODO: BABEL-3403 Expects error due to incorrect schema resolution when the object inside the procedure is schema qualified
 EXEC master.dbo.master_p1
 GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: relation "dbo.master_t1" does not exist)~~
+~~START~~
+int
+10
+~~END~~
 
 
 EXEC master.dbo.master_p2
@@ -207,12 +207,15 @@ GO
 ~~ERROR (Message: cross-database references are not implemented: master.dbo.master_p1)~~
 
 
--- Expect an error
 EXECUTE master.dbo.master_p1;
 GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: relation "dbo.master_t1" does not exist)~~
+~~START~~
+int
+10
+10
+10
+30
+~~END~~
 
 
 SELECT current_user;
