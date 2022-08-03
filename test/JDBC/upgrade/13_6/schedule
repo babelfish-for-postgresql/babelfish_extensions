@@ -108,3 +108,8 @@ Test-sp_helpuser
 TestTableType
 schema_resolution_func
 BABEL-3147-before-14_5
+collation_tests_arabic
+collation_tests_greek
+collation_tests_mongolian
+collation_tests_polish
+collation_tests

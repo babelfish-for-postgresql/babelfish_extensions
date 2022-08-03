@@ -1,0 +1,294 @@
+--varchar
+SELECT * FROM collation_tests_polish_vu_prepare_varchar ORDER BY name;
+GO
+~~START~~
+varchar
+dziś
+godzina
+jutro
+kalendarz
+minuta
+móc
+rok
+sekunda
+tydzień
+wczoraj
+~~END~~
+
+
+SELECT * FROM collation_tests_polish_vu_prepare_varchar WHERE name LIKE '%un%';
+GO
+~~START~~
+varchar
+sekunda
+~~END~~
+
+
+SELECT * FROM collation_tests_polish_vu_prepare_varchar WHERE name='sekunda';
+GO
+~~START~~
+varchar
+sekunda
+~~END~~
+
+SELECT * FROM collation_tests_polish_vu_prepare_varchar WHERE name='sekunda' COLLATE polish_cs_as;
+GO
+~~START~~
+varchar
+sekunda
+~~END~~
+
+
+--inner join
+SELECT * FROM [INNER JOIN SAME CP POLISH] WHERE same_name = 'wczoraj';
+GO
+~~START~~
+varchar#!#varchar
+wczoraj#!#wczoraj
+~~END~~
+
+
+--computed column
+SELECT substr_polish FROM collation_tests_polish_vu_prepare_varchar_computed_columns;
+GO
+~~START~~
+varchar
+tyd
+rok
+dzi
+jut
+wcz
+kal
+sek
+god
+min
+móc
+~~END~~
+
+
+SELECT substr_polish FROM collation_tests_polish_vu_prepare_varchar_computed_columns WHERE substr_polish='dzi';
+GO
+~~START~~
+varchar
+dzi
+~~END~~
+
+
+SELECT 
+    name, 
+    collation_name 
+FROM sys.columns 
+WHERE name = N'substr_polish';
+GO
+~~START~~
+varchar#!#varchar
+substr_polish#!#polish_ci_as
+~~END~~
+
+
+--nvarchar
+SELECT * FROM collation_tests_polish_vu_prepare_nvarchar ORDER BY name;
+GO
+~~START~~
+nvarchar
+dziś
+godzina
+jutro
+kalendarz
+minuta
+móc
+rok
+sekunda
+tydzień
+wczoraj
+~~END~~
+
+
+SELECT * FROM collation_tests_polish_vu_prepare_nvarchar WHERE name LIKE '%un%';
+GO
+~~START~~
+nvarchar
+sekunda
+~~END~~
+
+
+SELECT * FROM collation_tests_polish_vu_prepare_nvarchar WHERE name='sekunda';
+GO
+~~START~~
+nvarchar
+sekunda
+~~END~~
+
+SELECT * FROM collation_tests_polish_vu_prepare_nvarchar WHERE name='sekunda' COLLATE polish_cs_as;
+GO
+~~START~~
+nvarchar
+sekunda
+~~END~~
+
+
+
+--char
+SELECT * FROM collation_tests_polish_vu_prepare_char ORDER BY name;
+GO
+~~START~~
+char
+dziś                
+godzina             
+jutro               
+kalendarz           
+minuta              
+móc                 
+rok                 
+sekunda             
+tydzień             
+wczoraj             
+~~END~~
+
+
+SELECT * FROM collation_tests_polish_vu_prepare_char WHERE name LIKE '%un%';
+GO
+~~START~~
+char
+sekunda             
+~~END~~
+
+
+SELECT * FROM collation_tests_polish_vu_prepare_char WHERE name='sekunda';
+GO
+~~START~~
+char
+sekunda             
+~~END~~
+
+SELECT * FROM collation_tests_polish_vu_prepare_char WHERE name='sekunda' COLLATE polish_cs_as;
+GO
+~~START~~
+char
+sekunda             
+~~END~~
+
+
+--nchar
+SELECT * FROM collation_tests_polish_vu_prepare_nchar ORDER BY name;
+GO
+~~START~~
+nchar
+dziś                
+godzina             
+jutro               
+kalendarz           
+minuta              
+móc                 
+rok                 
+sekunda             
+tydzień             
+wczoraj             
+~~END~~
+
+
+SELECT * FROM collation_tests_polish_vu_prepare_nchar WHERE name LIKE '%un%';
+GO
+~~START~~
+nchar
+sekunda             
+~~END~~
+
+
+SELECT * FROM collation_tests_polish_vu_prepare_nchar WHERE name='sekunda';
+GO
+~~START~~
+nchar
+sekunda             
+~~END~~
+
+SELECT * FROM collation_tests_polish_vu_prepare_nchar WHERE name='sekunda' COLLATE polish_cs_as;
+GO
+~~START~~
+nchar
+sekunda             
+~~END~~
+
+
+--text
+SELECT * FROM collation_tests_polish_vu_prepare_text ORDER BY name;
+GO
+~~START~~
+text
+dziś
+godzina
+jutro
+kalendarz
+minuta
+móc
+rok
+sekunda
+tydzień
+wczoraj
+~~END~~
+
+
+SELECT * FROM collation_tests_polish_vu_prepare_text WHERE name LIKE '%un%';
+GO
+~~START~~
+text
+sekunda
+~~END~~
+
+
+SELECT * FROM collation_tests_polish_vu_prepare_text WHERE name='sekunda';
+GO
+~~START~~
+text
+sekunda
+~~END~~
+
+SELECT * FROM collation_tests_polish_vu_prepare_text WHERE name='sekunda' COLLATE polish_cs_as;
+GO
+~~START~~
+text
+sekunda
+~~END~~
+
+
+--primary key
+INSERT INTO collation_tests_polish_vu_prepare_primary VALUES ('tydzień');
+INSERT INTO collation_tests_polish_vu_prepare_primary VALUES ('tydzień');
+GO
+~~ROW COUNT: 1~~
+
+~~ERROR (Code: 2627)~~
+
+~~ERROR (Message: duplicate key value violates unique constraint "collation_tests_polish_vu_prepare_primary_pkey")~~
+
+
+SELECT * FROM collation_tests_polish_vu_prepare_primary ORDER BY name;
+GO
+~~START~~
+varchar
+tydzień
+~~END~~
+
+
+SELECT * FROM collation_tests_polish_vu_prepare_primary WHERE name LIKE '%dz%';
+GO
+~~START~~
+varchar
+tydzień
+~~END~~
+
+
+SELECT * FROM collation_tests_polish_vu_prepare_primary WHERE name = 'tydzień';
+GO
+~~START~~
+varchar
+tydzień
+~~END~~
+
+SELECT * FROM collation_tests_polish_vu_prepare_primary WHERE name='tydzień' COLLATE polish_cs_as;
+GO
+~~START~~
+varchar
+tydzień
+~~END~~
+

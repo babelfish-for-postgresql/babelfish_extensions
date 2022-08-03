@@ -1,0 +1,309 @@
+--varchar
+SELECT * FROM collation_tests_arabic_vu_prepare_varchar ORDER BY name;
+GO
+~~START~~
+varchar
+حب
+سعادة
+سعودي
+شكرالك
+قط
+كلب
+مرحبا
+مع السلامه
+نعم
+يبتسم
+~~END~~
+
+
+SELECT * FROM collation_tests_arabic_vu_prepare_varchar WHERE name LIKE '%ب%';
+GO
+~~START~~
+varchar
+مرحبا
+حب
+كلب
+يبتسم
+~~END~~
+
+
+SELECT * FROM collation_tests_arabic_vu_prepare_varchar WHERE name='سعودي';
+GO
+~~START~~
+varchar
+سعودي
+~~END~~
+
+SELECT * FROM collation_tests_arabic_vu_prepare_varchar WHERE name='سعودي' COLLATE arabic_cs_as;
+GO
+~~START~~
+varchar
+سعودي
+~~END~~
+
+
+--inner join
+SELECT * FROM [INNER JOIN SAME CP ARABIC] WHERE same_name = 'كلب';
+GO
+~~START~~
+varchar#!#varchar
+كلب#!#كلب
+~~END~~
+
+
+--computed column
+SELECT substr_arabic FROM collation_tests_arabic_vu_prepare_varchar_computed_columns;
+GO
+~~START~~
+varchar
+مرح
+حب
+سعا
+قط
+كلب
+يبت
+سعو
+نعم
+شكر
+مع 
+~~END~~
+
+
+SELECT substr_arabic FROM collation_tests_arabic_vu_prepare_varchar_computed_columns WHERE substr_arabic='مرح';
+GO
+~~START~~
+varchar
+مرح
+~~END~~
+
+
+SELECT 
+    name, 
+    collation_name 
+FROM sys.columns 
+WHERE name = N'substr_arabic';
+GO
+~~START~~
+varchar#!#varchar
+substr_arabic#!#arabic_ci_as
+~~END~~
+
+
+--nvarchar
+SELECT * FROM collation_tests_arabic_vu_prepare_nvarchar ORDER BY name;
+GO
+~~START~~
+nvarchar
+حب
+سعادة
+سعودي
+شكرالك
+قط
+كلب
+مرحبا
+مع السلامه
+نعم
+يبتسم
+~~END~~
+
+
+SELECT * FROM collation_tests_arabic_vu_prepare_nvarchar WHERE name LIKE '%ب%';
+GO
+~~START~~
+nvarchar
+مرحبا
+حب
+كلب
+يبتسم
+~~END~~
+
+
+SELECT * FROM collation_tests_arabic_vu_prepare_nvarchar WHERE name='سعودي';
+GO
+~~START~~
+nvarchar
+سعودي
+~~END~~
+
+SELECT * FROM collation_tests_arabic_vu_prepare_nvarchar WHERE name='سعودي' COLLATE arabic_cs_as;
+GO
+~~START~~
+nvarchar
+سعودي
+~~END~~
+
+
+
+--char
+SELECT * FROM collation_tests_arabic_vu_prepare_char ORDER BY name;
+GO
+~~START~~
+char
+حب                  
+سعادة               
+سعودي               
+شكرالك              
+قط                  
+كلب                 
+مرحبا               
+مع السلامه          
+نعم                 
+يبتسم               
+~~END~~
+
+
+SELECT * FROM collation_tests_arabic_vu_prepare_char WHERE name LIKE '%ب%';
+GO
+~~START~~
+char
+مرحبا               
+حب                  
+كلب                 
+يبتسم               
+~~END~~
+
+
+SELECT * FROM collation_tests_arabic_vu_prepare_char WHERE name='سعودي';
+GO
+~~START~~
+char
+سعودي               
+~~END~~
+
+SELECT * FROM collation_tests_arabic_vu_prepare_char WHERE name='سعودي' COLLATE arabic_cs_as;
+GO
+~~START~~
+char
+سعودي               
+~~END~~
+
+
+--nchar
+SELECT * FROM collation_tests_arabic_vu_prepare_nchar ORDER BY name;
+GO
+~~START~~
+nchar
+حب                  
+سعادة               
+سعودي               
+شكرالك              
+قط                  
+كلب                 
+مرحبا               
+مع السلامه          
+نعم                 
+يبتسم               
+~~END~~
+
+
+SELECT * FROM collation_tests_arabic_vu_prepare_nchar WHERE name LIKE '%ب%';
+GO
+~~START~~
+nchar
+مرحبا               
+حب                  
+كلب                 
+يبتسم               
+~~END~~
+
+
+SELECT * FROM collation_tests_arabic_vu_prepare_nchar WHERE name='سعودي';
+GO
+~~START~~
+nchar
+سعودي               
+~~END~~
+
+SELECT * FROM collation_tests_arabic_vu_prepare_nchar WHERE name='سعودي' COLLATE arabic_cs_as;
+GO
+~~START~~
+nchar
+سعودي               
+~~END~~
+
+
+--text
+SELECT * FROM collation_tests_arabic_vu_prepare_text ORDER BY name;
+GO
+~~START~~
+text
+حب
+سعادة
+سعودي
+شكرالك
+قط
+كلب
+مرحبا
+مع السلامه
+نعم
+يبتسم
+~~END~~
+
+
+SELECT * FROM collation_tests_arabic_vu_prepare_text WHERE name LIKE '%ب%';
+GO
+~~START~~
+text
+مرحبا
+حب
+كلب
+يبتسم
+~~END~~
+
+
+SELECT * FROM collation_tests_arabic_vu_prepare_text WHERE name='سعودي';
+GO
+~~START~~
+text
+سعودي
+~~END~~
+
+SELECT * FROM collation_tests_arabic_vu_prepare_text WHERE name='سعودي' COLLATE arabic_cs_as;
+GO
+~~START~~
+text
+سعودي
+~~END~~
+
+
+--primary key
+INSERT INTO collation_tests_arabic_vu_prepare_primary VALUES ('مرحبا');
+INSERT INTO collation_tests_arabic_vu_prepare_primary VALUES ('مرحبا');
+GO
+~~ROW COUNT: 1~~
+
+~~ERROR (Code: 2627)~~
+
+~~ERROR (Message: duplicate key value violates unique constraint "collation_tests_arabic_vu_prepare_primary_pkey")~~
+
+
+SELECT * FROM collation_tests_arabic_vu_prepare_primary ORDER BY name;
+GO
+~~START~~
+varchar
+مرحبا
+~~END~~
+
+
+SELECT * FROM collation_tests_arabic_vu_prepare_primary WHERE name LIKE '%م%';
+GO
+~~START~~
+varchar
+مرحبا
+~~END~~
+
+
+SELECT * FROM collation_tests_arabic_vu_prepare_primary WHERE name = 'مرحبا';
+GO
+~~START~~
+varchar
+مرحبا
+~~END~~
+
+SELECT * FROM collation_tests_arabic_vu_prepare_primary WHERE name='مرحبا' COLLATE arabic_cs_as;
+GO
+~~START~~
+varchar
+مرحبا
+~~END~~
+

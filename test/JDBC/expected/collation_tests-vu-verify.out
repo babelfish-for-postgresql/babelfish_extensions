@@ -1,0 +1,828 @@
+--varchar
+SELECT * FROM collation_tests_vu_prepare_english_collation_varchar ORDER BY name;
+GO
+~~START~~
+varchar
+new delhi
+new Delhi
+new DELHI
+NEW delhi
+NEW Delhi
+NEW DELHI
+New delhi
+New Delhi
+New DELHI
+~~END~~
+
+
+SELECT * FROM collation_tests_vu_prepare_english_collation_varchar WHERE name LIKE 'n%';
+GO
+~~START~~
+varchar
+new delhi
+new Delhi
+new DELHI
+NEW delhi
+NEW Delhi
+NEW DELHI
+New delhi
+New Delhi
+New DELHI
+~~END~~
+
+SELECT * FROM collation_tests_vu_prepare_english_collation_varchar WHERE name LIKE 'n%i';
+GO
+~~START~~
+varchar
+new delhi
+new Delhi
+new DELHI
+NEW delhi
+NEW Delhi
+NEW DELHI
+New delhi
+New Delhi
+New DELHI
+~~END~~
+
+SELECT * FROM collation_tests_vu_prepare_english_collation_varchar WHERE name LIKE 'n%D%';
+GO
+~~START~~
+varchar
+new delhi
+new Delhi
+new DELHI
+NEW delhi
+NEW Delhi
+NEW DELHI
+New delhi
+New Delhi
+New DELHI
+~~END~~
+
+SELECT * FROM collation_tests_vu_prepare_english_collation_varchar WHERE name LIKE 'N%';
+GO
+~~START~~
+varchar
+new delhi
+new Delhi
+new DELHI
+NEW delhi
+NEW Delhi
+NEW DELHI
+New delhi
+New Delhi
+New DELHI
+~~END~~
+
+SELECT * FROM collation_tests_vu_prepare_english_collation_varchar WHERE name LIKE 'N%i';
+GO
+~~START~~
+varchar
+new delhi
+new Delhi
+new DELHI
+NEW delhi
+NEW Delhi
+NEW DELHI
+New delhi
+New Delhi
+New DELHI
+~~END~~
+
+SELECT * FROM collation_tests_vu_prepare_english_collation_varchar WHERE name LIKE 'N%D%';
+GO
+~~START~~
+varchar
+new delhi
+new Delhi
+new DELHI
+NEW delhi
+NEW Delhi
+NEW DELHI
+New delhi
+New Delhi
+New DELHI
+~~END~~
+
+
+SELECT * FROM collation_tests_vu_prepare_english_collation_varchar WHERE name='NeW deLHi';
+GO
+~~START~~
+varchar
+new delhi
+new Delhi
+new DELHI
+NEW delhi
+NEW Delhi
+NEW DELHI
+New delhi
+New Delhi
+New DELHI
+~~END~~
+
+SELECT * FROM collation_tests_vu_prepare_english_collation_varchar WHERE name='NeW deLHi' COLLATE latin1_general_cs_as;
+GO
+~~START~~
+varchar
+~~END~~
+
+
+--inner join
+SELECT * FROM [INNER JOIN SAME CP] WHERE same_name = 'new DelHI';
+GO
+~~START~~
+varchar#!#varchar
+new delhi#!#new delhi
+new delhi#!#new Delhi
+new delhi#!#new DELHI
+new delhi#!#NEW delhi
+new delhi#!#NEW Delhi
+new delhi#!#NEW DELHI
+new delhi#!#New delhi
+new delhi#!#New Delhi
+new delhi#!#New DELHI
+new Delhi#!#new delhi
+new Delhi#!#new Delhi
+new Delhi#!#new DELHI
+new Delhi#!#NEW delhi
+new Delhi#!#NEW Delhi
+new Delhi#!#NEW DELHI
+new Delhi#!#New delhi
+new Delhi#!#New Delhi
+new Delhi#!#New DELHI
+new DELHI#!#new delhi
+new DELHI#!#new Delhi
+new DELHI#!#new DELHI
+new DELHI#!#NEW delhi
+new DELHI#!#NEW Delhi
+new DELHI#!#NEW DELHI
+new DELHI#!#New delhi
+new DELHI#!#New Delhi
+new DELHI#!#New DELHI
+NEW delhi#!#new delhi
+NEW delhi#!#new Delhi
+NEW delhi#!#new DELHI
+NEW delhi#!#NEW delhi
+NEW delhi#!#NEW Delhi
+NEW delhi#!#NEW DELHI
+NEW delhi#!#New delhi
+NEW delhi#!#New Delhi
+NEW delhi#!#New DELHI
+NEW Delhi#!#new delhi
+NEW Delhi#!#new Delhi
+NEW Delhi#!#new DELHI
+NEW Delhi#!#NEW delhi
+NEW Delhi#!#NEW Delhi
+NEW Delhi#!#NEW DELHI
+NEW Delhi#!#New delhi
+NEW Delhi#!#New Delhi
+NEW Delhi#!#New DELHI
+NEW DELHI#!#new delhi
+NEW DELHI#!#new Delhi
+NEW DELHI#!#new DELHI
+NEW DELHI#!#NEW delhi
+NEW DELHI#!#NEW Delhi
+NEW DELHI#!#NEW DELHI
+NEW DELHI#!#New delhi
+NEW DELHI#!#New Delhi
+NEW DELHI#!#New DELHI
+New delhi#!#new delhi
+New delhi#!#new Delhi
+New delhi#!#new DELHI
+New delhi#!#NEW delhi
+New delhi#!#NEW Delhi
+New delhi#!#NEW DELHI
+New delhi#!#New delhi
+New delhi#!#New Delhi
+New delhi#!#New DELHI
+New Delhi#!#new delhi
+New Delhi#!#new Delhi
+New Delhi#!#new DELHI
+New Delhi#!#NEW delhi
+New Delhi#!#NEW Delhi
+New Delhi#!#NEW DELHI
+New Delhi#!#New delhi
+New Delhi#!#New Delhi
+New Delhi#!#New DELHI
+New DELHI#!#new delhi
+New DELHI#!#new Delhi
+New DELHI#!#new DELHI
+New DELHI#!#NEW delhi
+New DELHI#!#NEW Delhi
+New DELHI#!#NEW DELHI
+New DELHI#!#New delhi
+New DELHI#!#New Delhi
+New DELHI#!#New DELHI
+~~END~~
+
+
+--computed column
+SELECT substr FROM collation_tests_vu_prepare_english_collation_varchar_computed_columns;
+GO
+~~START~~
+varchar
+new d
+new D
+new D
+NEW d
+NEW D
+NEW D
+New d
+New D
+New D
+~~END~~
+
+
+SELECT substr FROM collation_tests_vu_prepare_english_collation_varchar_computed_columns WHERE substr='NEw d';
+GO
+~~START~~
+varchar
+new d
+new D
+new D
+NEW d
+NEW D
+NEW D
+New d
+New D
+New D
+~~END~~
+
+
+SELECT 
+    name, 
+    collation_name 
+FROM sys.columns 
+WHERE name = N'substr';
+GO
+~~START~~
+varchar#!#varchar
+substr#!#bbf_unicode_cp1_ci_as
+~~END~~
+
+
+
+
+--nvarchar
+SELECT * FROM collation_tests_vu_prepare_english_collation_nvarchar ORDER BY name;
+GO
+~~START~~
+nvarchar
+new delhi
+new Delhi
+new DELHI
+NEW delhi
+NEW Delhi
+NEW DELHI
+New delhi
+New Delhi
+New DELHI
+~~END~~
+
+
+SELECT * FROM collation_tests_vu_prepare_english_collation_nvarchar WHERE name LIKE 'n%';
+GO
+~~START~~
+nvarchar
+new delhi
+new Delhi
+new DELHI
+NEW delhi
+NEW Delhi
+NEW DELHI
+New delhi
+New Delhi
+New DELHI
+~~END~~
+
+SELECT * FROM collation_tests_vu_prepare_english_collation_nvarchar WHERE name LIKE 'n%i';
+GO
+~~START~~
+nvarchar
+new delhi
+new Delhi
+new DELHI
+NEW delhi
+NEW Delhi
+NEW DELHI
+New delhi
+New Delhi
+New DELHI
+~~END~~
+
+SELECT * FROM collation_tests_vu_prepare_english_collation_nvarchar WHERE name LIKE 'n%D%';
+GO
+~~START~~
+nvarchar
+new delhi
+new Delhi
+new DELHI
+NEW delhi
+NEW Delhi
+NEW DELHI
+New delhi
+New Delhi
+New DELHI
+~~END~~
+
+SELECT * FROM collation_tests_vu_prepare_english_collation_nvarchar WHERE name LIKE 'N%';
+GO
+~~START~~
+nvarchar
+new delhi
+new Delhi
+new DELHI
+NEW delhi
+NEW Delhi
+NEW DELHI
+New delhi
+New Delhi
+New DELHI
+~~END~~
+
+SELECT * FROM collation_tests_vu_prepare_english_collation_nvarchar WHERE name LIKE 'N%i';
+GO
+~~START~~
+nvarchar
+new delhi
+new Delhi
+new DELHI
+NEW delhi
+NEW Delhi
+NEW DELHI
+New delhi
+New Delhi
+New DELHI
+~~END~~
+
+SELECT * FROM collation_tests_vu_prepare_english_collation_nvarchar WHERE name LIKE 'N%D%';
+GO
+~~START~~
+nvarchar
+new delhi
+new Delhi
+new DELHI
+NEW delhi
+NEW Delhi
+NEW DELHI
+New delhi
+New Delhi
+New DELHI
+~~END~~
+
+
+SELECT * FROM collation_tests_vu_prepare_english_collation_nvarchar WHERE name='NeW deLHi';
+GO
+~~START~~
+nvarchar
+new delhi
+new Delhi
+new DELHI
+NEW delhi
+NEW Delhi
+NEW DELHI
+New delhi
+New Delhi
+New DELHI
+~~END~~
+
+SELECT * FROM collation_tests_vu_prepare_english_collation_nvarchar WHERE name='NeW deLHi' COLLATE latin1_general_cs_as;
+GO
+~~START~~
+nvarchar
+~~END~~
+
+
+--char
+SELECT * FROM collation_tests_vu_prepare_english_collation_char ORDER BY name;
+GO
+~~START~~
+char
+new delhi           
+new Delhi           
+new DELHI           
+NEW delhi           
+NEW Delhi           
+NEW DELHI           
+New delhi           
+New Delhi           
+New DELHI           
+~~END~~
+
+
+SELECT * FROM collation_tests_vu_prepare_english_collation_char WHERE name LIKE 'n%';
+GO
+~~START~~
+char
+new delhi           
+new Delhi           
+new DELHI           
+NEW delhi           
+NEW Delhi           
+NEW DELHI           
+New delhi           
+New Delhi           
+New DELHI           
+~~END~~
+
+SELECT * FROM collation_tests_vu_prepare_english_collation_char WHERE name LIKE 'n%i';
+GO
+~~START~~
+char
+new delhi           
+new Delhi           
+new DELHI           
+NEW delhi           
+NEW Delhi           
+NEW DELHI           
+New delhi           
+New Delhi           
+New DELHI           
+~~END~~
+
+SELECT * FROM collation_tests_vu_prepare_english_collation_char WHERE name LIKE 'n%D%';
+GO
+~~START~~
+char
+new delhi           
+new Delhi           
+new DELHI           
+NEW delhi           
+NEW Delhi           
+NEW DELHI           
+New delhi           
+New Delhi           
+New DELHI           
+~~END~~
+
+SELECT * FROM collation_tests_vu_prepare_english_collation_char WHERE name LIKE 'N%';
+GO
+~~START~~
+char
+new delhi           
+new Delhi           
+new DELHI           
+NEW delhi           
+NEW Delhi           
+NEW DELHI           
+New delhi           
+New Delhi           
+New DELHI           
+~~END~~
+
+SELECT * FROM collation_tests_vu_prepare_english_collation_char WHERE name LIKE 'N%i';
+GO
+~~START~~
+char
+new delhi           
+new Delhi           
+new DELHI           
+NEW delhi           
+NEW Delhi           
+NEW DELHI           
+New delhi           
+New Delhi           
+New DELHI           
+~~END~~
+
+SELECT * FROM collation_tests_vu_prepare_english_collation_char WHERE name LIKE 'N%D%';
+GO
+~~START~~
+char
+new delhi           
+new Delhi           
+new DELHI           
+NEW delhi           
+NEW Delhi           
+NEW DELHI           
+New delhi           
+New Delhi           
+New DELHI           
+~~END~~
+
+
+SELECT * FROM collation_tests_vu_prepare_english_collation_char WHERE name='NeW deLHi';
+GO
+~~START~~
+char
+new delhi           
+new Delhi           
+new DELHI           
+NEW delhi           
+NEW Delhi           
+NEW DELHI           
+New delhi           
+New Delhi           
+New DELHI           
+~~END~~
+
+SELECT * FROM collation_tests_vu_prepare_english_collation_char WHERE name='NeW deLHi' COLLATE latin1_general_cs_as;
+GO
+~~START~~
+char
+~~END~~
+
+
+--nchar
+SELECT * FROM collation_tests_vu_prepare_english_collation_nchar ORDER BY name;
+GO
+~~START~~
+nchar
+new delhi           
+new Delhi           
+new DELHI           
+NEW delhi           
+NEW Delhi           
+NEW DELHI           
+New delhi           
+New Delhi           
+New DELHI           
+~~END~~
+
+
+SELECT * FROM collation_tests_vu_prepare_english_collation_nchar WHERE name LIKE 'n%';
+GO
+~~START~~
+nchar
+new delhi           
+new Delhi           
+new DELHI           
+NEW delhi           
+NEW Delhi           
+NEW DELHI           
+New delhi           
+New Delhi           
+New DELHI           
+~~END~~
+
+SELECT * FROM collation_tests_vu_prepare_english_collation_nchar WHERE name LIKE 'n%i';
+GO
+~~START~~
+nchar
+new delhi           
+new Delhi           
+new DELHI           
+NEW delhi           
+NEW Delhi           
+NEW DELHI           
+New delhi           
+New Delhi           
+New DELHI           
+~~END~~
+
+SELECT * FROM collation_tests_vu_prepare_english_collation_nchar WHERE name LIKE 'n%D%';
+GO
+~~START~~
+nchar
+new delhi           
+new Delhi           
+new DELHI           
+NEW delhi           
+NEW Delhi           
+NEW DELHI           
+New delhi           
+New Delhi           
+New DELHI           
+~~END~~
+
+SELECT * FROM collation_tests_vu_prepare_english_collation_nchar WHERE name LIKE 'N%';
+GO
+~~START~~
+nchar
+new delhi           
+new Delhi           
+new DELHI           
+NEW delhi           
+NEW Delhi           
+NEW DELHI           
+New delhi           
+New Delhi           
+New DELHI           
+~~END~~
+
+SELECT * FROM collation_tests_vu_prepare_english_collation_nchar WHERE name LIKE 'N%i';
+GO
+~~START~~
+nchar
+new delhi           
+new Delhi           
+new DELHI           
+NEW delhi           
+NEW Delhi           
+NEW DELHI           
+New delhi           
+New Delhi           
+New DELHI           
+~~END~~
+
+SELECT * FROM collation_tests_vu_prepare_english_collation_nchar WHERE name LIKE 'N%D%';
+GO
+~~START~~
+nchar
+new delhi           
+new Delhi           
+new DELHI           
+NEW delhi           
+NEW Delhi           
+NEW DELHI           
+New delhi           
+New Delhi           
+New DELHI           
+~~END~~
+
+
+SELECT * FROM collation_tests_vu_prepare_english_collation_nchar WHERE name='NeW deLHi';
+GO
+~~START~~
+nchar
+new delhi           
+new Delhi           
+new DELHI           
+NEW delhi           
+NEW Delhi           
+NEW DELHI           
+New delhi           
+New Delhi           
+New DELHI           
+~~END~~
+
+SELECT * FROM collation_tests_vu_prepare_english_collation_nchar WHERE name='NeW deLHi' COLLATE latin1_general_cs_as;
+GO
+~~START~~
+nchar
+~~END~~
+
+
+--text
+SELECT * FROM collation_tests_vu_prepare_english_collation_text ORDER BY name;
+GO
+~~START~~
+text
+new delhi
+new Delhi
+new DELHI
+NEW delhi
+NEW Delhi
+NEW DELHI
+New delhi
+New Delhi
+New DELHI
+~~END~~
+
+
+SELECT * FROM collation_tests_vu_prepare_english_collation_text WHERE name LIKE 'n%';
+GO
+~~START~~
+text
+new delhi
+new Delhi
+new DELHI
+NEW delhi
+NEW Delhi
+NEW DELHI
+New delhi
+New Delhi
+New DELHI
+~~END~~
+
+SELECT * FROM collation_tests_vu_prepare_english_collation_text WHERE name LIKE 'n%i';
+GO
+~~START~~
+text
+new delhi
+new Delhi
+new DELHI
+NEW delhi
+NEW Delhi
+NEW DELHI
+New delhi
+New Delhi
+New DELHI
+~~END~~
+
+SELECT * FROM collation_tests_vu_prepare_english_collation_text WHERE name LIKE 'n%D%';
+GO
+~~START~~
+text
+new delhi
+new Delhi
+new DELHI
+NEW delhi
+NEW Delhi
+NEW DELHI
+New delhi
+New Delhi
+New DELHI
+~~END~~
+
+SELECT * FROM collation_tests_vu_prepare_english_collation_text WHERE name LIKE 'N%';
+GO
+~~START~~
+text
+new delhi
+new Delhi
+new DELHI
+NEW delhi
+NEW Delhi
+NEW DELHI
+New delhi
+New Delhi
+New DELHI
+~~END~~
+
+SELECT * FROM collation_tests_vu_prepare_english_collation_text WHERE name LIKE 'N%i';
+GO
+~~START~~
+text
+new delhi
+new Delhi
+new DELHI
+NEW delhi
+NEW Delhi
+NEW DELHI
+New delhi
+New Delhi
+New DELHI
+~~END~~
+
+SELECT * FROM collation_tests_vu_prepare_english_collation_text WHERE name LIKE 'N%D%';
+GO
+~~START~~
+text
+new delhi
+new Delhi
+new DELHI
+NEW delhi
+NEW Delhi
+NEW DELHI
+New delhi
+New Delhi
+New DELHI
+~~END~~
+
+
+SELECT * FROM collation_tests_vu_prepare_english_collation_text WHERE name='NeW deLHi';
+GO
+~~START~~
+text
+new delhi
+new Delhi
+new DELHI
+NEW delhi
+NEW Delhi
+NEW DELHI
+New delhi
+New Delhi
+New DELHI
+~~END~~
+
+SELECT * FROM collation_tests_vu_prepare_english_collation_text WHERE name='NeW deLHi' COLLATE latin1_general_cs_as;
+GO
+~~START~~
+text
+~~END~~
+
+
+
+--test for primary key
+INSERT INTO collation_tests_vu_prepare_english_collation_primary_key VALUES ('new Delhi');
+GO
+~~ROW COUNT: 1~~
+
+INSERT INTO collation_tests_vu_prepare_english_collation_primary_key VALUES ('neW DElhi');
+GO
+~~ERROR (Code: 2627)~~
+
+~~ERROR (Message: duplicate key value violates unique constraint "collation_tests_vu_prepare_english_collation_primary_key_pkey")~~
+
+
+SELECT * FROM collation_tests_vu_prepare_english_collation_primary_key ORDER BY name;
+GO
+~~START~~
+varchar
+new Delhi
+~~END~~
+
+
+SELECT * FROM collation_tests_vu_prepare_english_collation_primary_key WHERE name LIKE 'NE%h%';
+GO
+~~START~~
+varchar
+new Delhi
+~~END~~
+
+
+SELECT * FROM collation_tests_vu_prepare_english_collation_primary_key WHERE name = 'NeW deLHi';
+GO
+~~START~~
+varchar
+new Delhi
+~~END~~
+
+SELECT * FROM collation_tests_vu_prepare_english_collation_primary_key WHERE name='NeW deLHi' COLLATE latin1_general_cs_as;
+GO
+~~START~~
+varchar
+~~END~~
+

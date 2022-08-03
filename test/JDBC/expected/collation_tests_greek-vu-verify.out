@@ -1,0 +1,299 @@
+--varchar
+SELECT * FROM collation_tests_greek_vu_prepare_varchar ORDER BY name;
+GO
+~~START~~
+varchar
+αγάπη
+αιώνια
+ελπίδα
+ευτυχία
+ίριδα
+µεράκι
+υγεία
+φιλοξενία
+χαρμολύπη
+ψυχή
+~~END~~
+
+
+SELECT * FROM collation_tests_greek_vu_prepare_varchar WHERE name LIKE '%υχ%';
+GO
+~~START~~
+varchar
+ψυχή
+ευτυχία
+~~END~~
+
+
+SELECT * FROM collation_tests_greek_vu_prepare_varchar WHERE name='ευτυχία';
+GO
+~~START~~
+varchar
+ευτυχία
+~~END~~
+
+SELECT * FROM collation_tests_greek_vu_prepare_varchar WHERE name='ευτυχία' COLLATE greek_cs_as;
+GO
+~~START~~
+varchar
+ευτυχία
+~~END~~
+
+
+--inner join
+SELECT * FROM [INNER JOIN SAME CP GREEK] WHERE same_name = 'ψυχή';
+GO
+~~START~~
+varchar#!#varchar
+ψυχή#!#ψυχή
+~~END~~
+
+
+--computed column
+SELECT substr_greek FROM collation_tests_greek_vu_prepare_varchar_computed_columns;
+GO
+~~START~~
+varchar
+ελπ
+χαρ
+φιλ
+υγε
+ψυχ
+ίρι
+ευτ
+αιώ
+αγά
+µερ
+~~END~~
+
+
+SELECT substr_greek FROM collation_tests_greek_vu_prepare_varchar_computed_columns WHERE substr_greek='αγά';
+GO
+~~START~~
+varchar
+αγά
+~~END~~
+
+
+SELECT 
+    name, 
+    collation_name 
+FROM sys.columns 
+WHERE name = N'substr_greek';
+GO
+~~START~~
+varchar#!#varchar
+substr_greek#!#greek_ci_as
+~~END~~
+
+
+--nvarchar
+SELECT * FROM collation_tests_greek_vu_prepare_nvarchar ORDER BY name;
+GO
+~~START~~
+nvarchar
+αγάπη
+αιώνια
+ελπίδα
+ευτυχία
+ίριδα
+µεράκι
+υγεία
+φιλοξενία
+χαρμολύπη
+ψυχή
+~~END~~
+
+
+SELECT * FROM collation_tests_greek_vu_prepare_nvarchar WHERE name LIKE '%υχ%';
+GO
+~~START~~
+nvarchar
+ψυχή
+ευτυχία
+~~END~~
+
+
+SELECT * FROM collation_tests_greek_vu_prepare_nvarchar WHERE name='ευτυχία';
+GO
+~~START~~
+nvarchar
+ευτυχία
+~~END~~
+
+SELECT * FROM collation_tests_greek_vu_prepare_nvarchar WHERE name='ευτυχία' COLLATE greek_cs_as;
+GO
+~~START~~
+nvarchar
+ευτυχία
+~~END~~
+
+
+
+--char
+SELECT * FROM collation_tests_greek_vu_prepare_char ORDER BY name;
+GO
+~~START~~
+char
+αγάπη               
+αιώνια              
+ελπίδα              
+ευτυχία             
+ίριδα               
+µεράκι              
+υγεία               
+φιλοξενία           
+χαρμολύπη           
+ψυχή                
+~~END~~
+
+
+SELECT * FROM collation_tests_greek_vu_prepare_char WHERE name LIKE '%υχ%';
+GO
+~~START~~
+char
+ψυχή                
+ευτυχία             
+~~END~~
+
+
+SELECT * FROM collation_tests_greek_vu_prepare_char WHERE name='ευτυχία';
+GO
+~~START~~
+char
+ευτυχία             
+~~END~~
+
+SELECT * FROM collation_tests_greek_vu_prepare_char WHERE name='ευτυχία' COLLATE greek_cs_as;
+GO
+~~START~~
+char
+ευτυχία             
+~~END~~
+
+
+--nchar
+SELECT * FROM collation_tests_greek_vu_prepare_nchar ORDER BY name;
+GO
+~~START~~
+nchar
+αγάπη               
+αιώνια              
+ελπίδα              
+ευτυχία             
+ίριδα               
+µεράκι              
+υγεία               
+φιλοξενία           
+χαρμολύπη           
+ψυχή                
+~~END~~
+
+
+SELECT * FROM collation_tests_greek_vu_prepare_nchar WHERE name LIKE '%υχ%';
+GO
+~~START~~
+nchar
+ψυχή                
+ευτυχία             
+~~END~~
+
+
+SELECT * FROM collation_tests_greek_vu_prepare_nchar WHERE name='ευτυχία';
+GO
+~~START~~
+nchar
+ευτυχία             
+~~END~~
+
+SELECT * FROM collation_tests_greek_vu_prepare_nchar WHERE name='ευτυχία' COLLATE greek_cs_as;
+GO
+~~START~~
+nchar
+ευτυχία             
+~~END~~
+
+
+--text
+SELECT * FROM collation_tests_greek_vu_prepare_text ORDER BY name;
+GO
+~~START~~
+text
+αγάπη
+αιώνια
+ελπίδα
+ευτυχία
+ίριδα
+µεράκι
+υγεία
+φιλοξενία
+χαρμολύπη
+ψυχή
+~~END~~
+
+
+SELECT * FROM collation_tests_greek_vu_prepare_text WHERE name LIKE '%υχ%';
+GO
+~~START~~
+text
+ψυχή
+ευτυχία
+~~END~~
+
+
+SELECT * FROM collation_tests_greek_vu_prepare_text WHERE name='ευτυχία';
+GO
+~~START~~
+text
+ευτυχία
+~~END~~
+
+SELECT * FROM collation_tests_greek_vu_prepare_text WHERE name='ευτυχία' COLLATE greek_cs_as;
+GO
+~~START~~
+text
+ευτυχία
+~~END~~
+
+
+--primary key
+INSERT INTO collation_tests_greek_vu_prepare_primary VALUES ('ελπίδα');
+INSERT INTO collation_tests_greek_vu_prepare_primary VALUES ('ελπίδα');
+GO
+~~ROW COUNT: 1~~
+
+~~ERROR (Code: 2627)~~
+
+~~ERROR (Message: duplicate key value violates unique constraint "collation_tests_greek_vu_prepare_primary_pkey")~~
+
+
+SELECT * FROM collation_tests_greek_vu_prepare_primary ORDER BY name;
+GO
+~~START~~
+varchar
+ελπίδα
+~~END~~
+
+
+SELECT * FROM collation_tests_greek_vu_prepare_primary WHERE name LIKE '%πί%';
+GO
+~~START~~
+varchar
+ελπίδα
+~~END~~
+
+
+SELECT * FROM collation_tests_greek_vu_prepare_primary WHERE name = 'ελπίδα';
+GO
+~~START~~
+varchar
+ελπίδα
+~~END~~
+
+SELECT * FROM collation_tests_greek_vu_prepare_primary WHERE name='ελπίδα' COLLATE greek_cs_as;
+GO
+~~START~~
+varchar
+ελπίδα
+~~END~~
+
