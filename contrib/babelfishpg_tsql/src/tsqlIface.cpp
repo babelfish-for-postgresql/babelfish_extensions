@@ -1492,9 +1492,6 @@ public:
 		Assert(stmt);
 		// record that the stmt is ddl
 	 	stmt->is_ddl = true;
-		// record if the schema is specified for the create statement
-		if (is_schema_specified)
-			stmt->is_schema_specified = true;
 
 		if (is_compiling_create_function())
 		{
@@ -1639,10 +1636,6 @@ public:
 
 	void exitTable_name(TSqlParser::Table_nameContext *ctx) override
 	{
-		if (ctx && ctx->schema)
-			is_schema_specified = true;
-		else
-			is_schema_specified = false;
 		tsqlCommonMutator::exitTable_name(ctx);
 		if (ctx && ctx->database)
 		{
