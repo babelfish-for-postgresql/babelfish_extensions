@@ -106,11 +106,14 @@ go
 set babelfishpg_tsql.sql_dialect = "tsql";
 go
 
--- Blocked in tsql dialect
+-- Allowed in tsql dialect but won't get stored in catalog as dbid will be null
 create or replace view master_dbo.def_v6 as select 6;
 go
 
 -- tsql
+
+select * from sys.babelfish_view_def;
+go
 
 -- CASE: create view in different schema and db
 create schema def_sch1;
@@ -211,6 +214,16 @@ go
 select vd.object_name, vd.definition, vd.flag_validity, vd.flag_values from babelfish_view_def vd left join sys.sysdatabases sb on vd.dbid=sb.dbid where vd.object_name like ('vvv%') order by vd.dbid, vd.schema_name, vd.object_name, vd.definition;
 go
 
+-- psql
+drop view vvv1;
+go
+
+drop view sys.vvv2;
+go
+
+drop view information_schema_tsql.vvv3;
+go
+
 -- tsql
 -- CLEANUP
 use master;
@@ -228,7 +241,7 @@ go
 select sb.name, vd.schema_name, vd.object_name, vd.definition from babelfish_view_def vd left join sys.sysdatabases sb on vd.dbid=sb.dbid order by vd.dbid, vd.schema_name, vd.object_name, vd.definition;
 go
 
-drop view def_v1, def_v2, def_v5;
+drop view def_v1, def_v2, def_v5, def_v6;
 go
 
 drop table vd_t1;

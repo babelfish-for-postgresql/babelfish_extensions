@@ -113,7 +113,7 @@ alter view master_dbo.def_v1 alter column a SET DEFAULT 2;
 go
 ~~ERROR (Code: 0)~~
 
-~~ERROR (Message: ERROR: ALTER VIEW is blocked from PG endpoint. Please set babelfishpg_tsql.enable_ddl_from_pgendpoint to true to enable.
+~~ERROR (Message: ERROR: ALTER VIEW is blocked in PG dialect on TSQL view present in babelfish_view_def catalog. Please set babelfishpg_tsql.enable_ddl_from_pgendpoint to true to enable.
     Server SQLState: 0A000)~~
 
 
@@ -121,7 +121,7 @@ alter view master_dbo.def_v1 alter column a DROP DEFAULT;
 go
 ~~ERROR (Code: 0)~~
 
-~~ERROR (Message: ERROR: ALTER VIEW is blocked from PG endpoint. Please set babelfishpg_tsql.enable_ddl_from_pgendpoint to true to enable.
+~~ERROR (Message: ERROR: ALTER VIEW is blocked in PG dialect on TSQL view present in babelfish_view_def catalog. Please set babelfishpg_tsql.enable_ddl_from_pgendpoint to true to enable.
     Server SQLState: 0A000)~~
 
 
@@ -129,7 +129,7 @@ alter view master_dbo.def_v1 owner to CURRENT_ROLE;
 go
 ~~ERROR (Code: 0)~~
 
-~~ERROR (Message: ERROR: ALTER VIEW is blocked from PG endpoint. Please set babelfishpg_tsql.enable_ddl_from_pgendpoint to true to enable.
+~~ERROR (Message: ERROR: ALTER VIEW is blocked in PG dialect on TSQL view present in babelfish_view_def catalog. Please set babelfishpg_tsql.enable_ddl_from_pgendpoint to true to enable.
     Server SQLState: 0A000)~~
 
 
@@ -140,7 +140,7 @@ alter view master_dbo.def_v1 rename to def_v1_renamed;
 go
 ~~ERROR (Code: 0)~~
 
-~~ERROR (Message: ERROR: ALTER VIEW is blocked from PG endpoint. Please set babelfishpg_tsql.enable_ddl_from_pgendpoint to true to enable.
+~~ERROR (Message: ERROR: ALTER VIEW is blocked in PG dialect on TSQL view present in babelfish_view_def catalog. Please set babelfishpg_tsql.enable_ddl_from_pgendpoint to true to enable.
     Server SQLState: 0A000)~~
 
 
@@ -148,7 +148,7 @@ alter view master_dbo.def_v1 set schema tempdb_dbo;
 go
 ~~ERROR (Code: 0)~~
 
-~~ERROR (Message: ERROR: ALTER VIEW is blocked from PG endpoint. Please set babelfishpg_tsql.enable_ddl_from_pgendpoint to true to enable.
+~~ERROR (Message: ERROR: ALTER VIEW is blocked in PG dialect on TSQL view present in babelfish_view_def catalog. Please set babelfishpg_tsql.enable_ddl_from_pgendpoint to true to enable.
     Server SQLState: 0A000)~~
 
 
@@ -156,7 +156,7 @@ alter view master_dbo.def_v1 set (check_option=local);
 go
 ~~ERROR (Code: 0)~~
 
-~~ERROR (Message: ERROR: ALTER VIEW is blocked from PG endpoint. Please set babelfishpg_tsql.enable_ddl_from_pgendpoint to true to enable.
+~~ERROR (Message: ERROR: ALTER VIEW is blocked in PG dialect on TSQL view present in babelfish_view_def catalog. Please set babelfishpg_tsql.enable_ddl_from_pgendpoint to true to enable.
     Server SQLState: 0A000)~~
 
 
@@ -164,7 +164,7 @@ alter view master_dbo.def_v1 reset (check_option);
 go
 ~~ERROR (Code: 0)~~
 
-~~ERROR (Message: ERROR: ALTER VIEW is blocked from PG endpoint. Please set babelfishpg_tsql.enable_ddl_from_pgendpoint to true to enable.
+~~ERROR (Message: ERROR: ALTER VIEW is blocked in PG dialect on TSQL view present in babelfish_view_def catalog. Please set babelfishpg_tsql.enable_ddl_from_pgendpoint to true to enable.
     Server SQLState: 0A000)~~
 
 
@@ -176,16 +176,20 @@ go
 set babelfishpg_tsql.sql_dialect = "tsql";
 go
 
--- Blocked in tsql dialect
+-- Allowed in tsql dialect but won't get stored in catalog as dbid will be null
 create or replace view master_dbo.def_v6 as select 6;
 go
-~~ERROR (Code: 0)~~
-
-~~ERROR (Message: ERROR: CREATE [OR REPLACE] VIEW is blocked from PG endpoint. Please set babelfishpg_tsql.enable_ddl_from_pgendpoint to true to enable.
-    Server SQLState: 0A000)~~
-
 
 -- tsql
+
+select * from sys.babelfish_view_def;
+go
+~~START~~
+smallint#!#varchar#!#varchar#!#ntext#!#bigint#!#bigint
+1#!#dbo#!#def_v1#!#create view def_v1 as select c1 as a from vd_t1;#!#3#!#3
+1#!#dbo#!#def_v2#!#create view  def_v2<newline>as<newline>select 							2 as a;#!#3#!#3
+~~END~~
+
 
 -- CASE: create view in different schema and db
 create schema def_sch1;
@@ -322,27 +326,12 @@ tsql
 
 create view vvv1 as select 1;
 go
-~~ERROR (Code: 0)~~
-
-~~ERROR (Message: ERROR: CREATE [OR REPLACE] VIEW is blocked from PG endpoint. Please set babelfishpg_tsql.enable_ddl_from_pgendpoint to true to enable.
-    Server SQLState: 0A000)~~
-
 
 create view sys.vvv2 as select 2;
 go
-~~ERROR (Code: 0)~~
-
-~~ERROR (Message: ERROR: CREATE [OR REPLACE] VIEW is blocked from PG endpoint. Please set babelfishpg_tsql.enable_ddl_from_pgendpoint to true to enable.
-    Server SQLState: 0A000)~~
-
 
 create view information_schema_tsql.vvv3 as select 3;
 go
-~~ERROR (Code: 0)~~
-
-~~ERROR (Message: ERROR: CREATE [OR REPLACE] VIEW is blocked from PG endpoint. Please set babelfishpg_tsql.enable_ddl_from_pgendpoint to true to enable.
-    Server SQLState: 0A000)~~
-
 
 -- tsql
 select vd.object_name, vd.definition, vd.flag_validity, vd.flag_values from babelfish_view_def vd left join sys.sysdatabases sb on vd.dbid=sb.dbid where vd.object_name like ('vvv%') order by vd.dbid, vd.schema_name, vd.object_name, vd.definition;
@@ -351,6 +340,16 @@ go
 varchar#!#ntext#!#bigint#!#bigint
 ~~END~~
 
+
+-- psql
+drop view vvv1;
+go
+
+drop view sys.vvv2;
+go
+
+drop view information_schema_tsql.vvv3;
+go
 
 -- tsql
 -- CLEANUP
@@ -376,7 +375,7 @@ master#!#def_sch1#!#def_v1#!#create view def_sch1.def_v1 as select 1;
 ~~END~~
 
 
-drop view def_v1, def_v2, def_v5;
+drop view def_v1, def_v2, def_v5, def_v6;
 go
 
 drop table vd_t1;
