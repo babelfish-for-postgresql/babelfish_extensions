@@ -174,6 +174,8 @@ typedef FormData_authid_user_ext *Form_authid_user_ext;
 extern Oid			bbf_view_def_oid;
 extern Oid			bbf_view_def_idx_oid;
 
+extern Oid get_bbf_view_def_oid(void);
+extern Oid get_bbf_view_def_idx_oid(void);
 extern HeapTuple search_bbf_view_def(Relation bbf_view_def_rel, int16 dbid,
 								const char *logical_schema_name, const char *view_name);
 extern bool check_is_tsql_view(Oid relid);

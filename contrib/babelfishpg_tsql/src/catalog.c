@@ -935,6 +935,26 @@ get_user_for_database(const char *db_name)
  *			VIEW_DEF
  *****************************************/
 
+Oid
+get_bbf_view_def_oid()
+{
+	if (!OidIsValid(bbf_view_def_oid))
+		bbf_view_def_oid = get_relname_relid(BBF_VIEW_DEF_TABLE_NAME,
+											 get_namespace_oid("sys", false));
+
+	return bbf_view_def_oid;
+}
+
+Oid
+get_bbf_view_def_idx_oid()
+{
+	if (!OidIsValid(bbf_authid_user_ext_idx_oid))
+		bbf_view_def_idx_oid = get_relname_relid(BBF_VIEW_DEF_IDX_NAME,
+												 get_namespace_oid("sys", false));
+
+	return bbf_view_def_idx_oid;
+}
+
 HeapTuple
 search_bbf_view_def(Relation bbf_view_def_rel, int16 dbid, const char *logical_schema_name, const char *view_name)
 {
@@ -964,7 +984,7 @@ search_bbf_view_def(Relation bbf_view_def_rel, int16 dbid, const char *logical_s
 				CStringGetTextDatum(view_name));
 
 	scan = systable_beginscan(bbf_view_def_rel,
-							  bbf_view_def_idx_oid ,
+							  get_bbf_view_def_idx_oid(),
 							  true, NULL, 3, scanKey);
 
 	scantup = systable_getnext(scan);
@@ -1007,7 +1027,7 @@ check_is_tsql_view(Oid relid)
 		return false;
 	}
 	/* Fetch the relation */
-	bbf_view_def_rel = table_open(bbf_view_def_oid, AccessShareLock);
+	bbf_view_def_rel = table_open(get_bbf_view_def_oid(), AccessShareLock);
 
 	scantup = search_bbf_view_def(bbf_view_def_rel, logical_dbid, logical_schema_name, view_name);
 
@@ -1032,7 +1052,7 @@ clean_up_bbf_view_def(int16 dbid)
 	SysScanDesc		scan;
 
 	/* Fetch the relation */
-	bbf_view_def_rel = table_open(bbf_view_def_oid, RowExclusiveLock);
+	bbf_view_def_rel = table_open(get_bbf_view_def_oid(), RowExclusiveLock);
 
 	/* Search and drop the definition */
 	ScanKeyInit(&scanKey[0],
@@ -1041,7 +1061,7 @@ clean_up_bbf_view_def(int16 dbid)
 				Int16GetDatum(dbid));
 
 	scan = systable_beginscan(bbf_view_def_rel,
-							  bbf_view_def_idx_oid ,
+							  get_bbf_view_def_idx_oid(),
 							  true, NULL, 1, scanKey);
 
 	while ((scantup = systable_getnext(scan)) != NULL)
