@@ -345,7 +345,6 @@ Could not find upgrade tests for view sys.system_objects
 Could not find upgrade tests for view sys.system_sql_modules
 Could not find upgrade tests for view sys.table_types
 Could not find upgrade tests for view sys.tables
-Could not find upgrade tests for view sys.triggers
 Could not find upgrade tests for view sys.types
 Could not find upgrade tests for view sys.views
 Could not find upgrade tests for view sys.xml_indexes
