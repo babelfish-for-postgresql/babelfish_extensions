@@ -1,0 +1,310 @@
+SELECT DB_NAME()
+GO
+~~START~~
+nvarchar
+master
+~~END~~
+
+
+-- Test CREATE ROLE
+CREATE ROLE babel_role_vu_prepare_role1
+GO
+
+EXEC babel_role_vu_prepare_user_ext_master
+GO
+~~START~~
+varchar#!#char#!#nvarchar#!#nvarchar
+master_babel_role_vu_prepare_role1#!#R#!#babel_role_vu_prepare_role1#!#master
+~~END~~
+
+
+EXEC babel_role_vu_prepare_db_principal_master
+GO
+~~START~~
+varchar#!#nvarchar
+babel_role_vu_prepare_role1#!#DATABASE_ROLE
+~~END~~
+
+
+-- Test database principal uniqueness
+-- should fail, duplicate role name
+CREATE ROLE babel_role_vu_prepare_role1
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: role "master_babel_role_vu_prepare_role1" already exists)~~
+
+
+-- Can create a login with same name
+CREATE LOGIN babel_role_vu_prepare_role1 WITH PASSWORD = 'abc';
+GO
+
+-- should fail, cannot create a user with same name in same db
+CREATE USER babel_role_vu_prepare_role1
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: role "master_babel_role_vu_prepare_role1" already exists)~~
+
+
+CREATE USER babel_role_vu_prepare_user1 FOR LOGIN babel_role_vu_prepare_login1
+GO
+
+-- should fail, already have a user with this name in same db
+CREATE ROLE babel_role_vu_prepare_user1
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: role "master_babel_role_vu_prepare_user1" already exists)~~
+
+
+-- Test database principal uniqueness in a new database
+USE babel_role_vu_prepare_db
+GO
+
+SELECT DB_NAME()
+GO
+~~START~~
+nvarchar
+babel_role_vu_prepare_db
+~~END~~
+
+
+-- It's ok to use duplicate role name in a different db
+CREATE ROLE babel_role_vu_prepare_role1
+GO
+
+CREATE ROLE babel_role_vu_prepare_role2
+GO
+
+EXEC babel_role_vu_prepare_user_ext
+GO
+~~START~~
+varchar#!#char#!#nvarchar#!#nvarchar
+babel_role_vu_prepare_db_babel_role_vu_prepare_role1#!#R#!#babel_role_vu_prepare_role1#!#babel_role_vu_prepare_db
+babel_role_vu_prepare_db_babel_role_vu_prepare_role2#!#R#!#babel_role_vu_prepare_role2#!#babel_role_vu_prepare_db
+master_babel_role_vu_prepare_role1#!#R#!#babel_role_vu_prepare_role1#!#master
+master_babel_role_vu_prepare_user1#!#S#!#babel_role_vu_prepare_user1#!#master
+~~END~~
+
+
+EXEC babel_role_vu_prepare_db_principal
+GO
+~~START~~
+varchar#!#nvarchar
+babel_role_vu_prepare_role1#!#DATABASE_ROLE
+babel_role_vu_prepare_role2#!#DATABASE_ROLE
+~~END~~
+
+
+-- Test ALTER ROLE
+-- Add role as member
+ALTER ROLE babel_role_vu_prepare_role1 ADD MEMBER babel_role_vu_prepare_role2
+GO
+
+-- Add user as member
+CREATE USER babel_role_vu_prepare_user2 FOR LOGIN babel_role_vu_prepare_login2
+GO
+
+ALTER ROLE babel_role_vu_prepare_role1 ADD MEMBER babel_role_vu_prepare_user2
+GO
+
+-- Add login as member, should fail
+ALTER ROLE babel_role_vu_prepare_role1 ADD MEMBER babel_role_vu_prepare_login3
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: role "babel_role_vu_prepare_db_babel_role_vu_prepare_login3" does not exist)~~
+
+
+-- Add itself as member, should fail
+ALTER ROLE babel_role_vu_prepare_role1 ADD MEMBER babel_role_vu_prepare_role1
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: role "babel_role_vu_prepare_db_babel_role_vu_prepare_role1" is a member of role "babel_role_vu_prepare_db_babel_role_vu_prepare_role1")~~
+
+
+-- Cross member, should fail
+ALTER ROLE babel_role_vu_prepare_role2 ADD MEMBER babel_role_vu_prepare_role1
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: role "babel_role_vu_prepare_db_babel_role_vu_prepare_role2" is a member of role "babel_role_vu_prepare_db_babel_role_vu_prepare_role1")~~
+
+
+-- Add special principals as member, should fail
+ALTER ROLE babel_role_vu_prepare_role1 ADD MEMBER dbo
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Cannot use the special principal 'dbo')~~
+
+
+ALTER ROLE babel_role_vu_prepare_role1 ADD MEMBER db_owner
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Cannot use the special principal 'db_owner')~~
+
+
+-- Add/drop member to db_owner, should fail before full support
+ALTER ROLE db_owner ADD MEMBER babel_role_vu_prepare_role1
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Adding members to db_owner is not currently supported in Babelfish)~~
+
+
+ALTER ROLE db_owner DROP MEMBER babel_role_vu_prepare_role1
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Dropping members to db_owner is not currently supported in Babelfish)~~
+
+
+CREATE USER babel_role_vu_prepare_user3 FOR LOGIN babel_role_vu_prepare_login3
+GO
+
+ALTER ROLE babel_role_vu_prepare_role2 ADD MEMBER babel_role_vu_prepare_user3
+GO
+
+EXEC babel_role_vu_prepare_user_ext
+GO
+~~START~~
+varchar#!#char#!#nvarchar#!#nvarchar
+babel_role_vu_prepare_db_babel_role_vu_prepare_role1#!#R#!#babel_role_vu_prepare_role1#!#babel_role_vu_prepare_db
+babel_role_vu_prepare_db_babel_role_vu_prepare_role2#!#R#!#babel_role_vu_prepare_role2#!#babel_role_vu_prepare_db
+babel_role_vu_prepare_db_babel_role_vu_prepare_user2#!#S#!#babel_role_vu_prepare_user2#!#babel_role_vu_prepare_db
+babel_role_vu_prepare_db_babel_role_vu_prepare_user3#!#S#!#babel_role_vu_prepare_user3#!#babel_role_vu_prepare_db
+master_babel_role_vu_prepare_role1#!#R#!#babel_role_vu_prepare_role1#!#master
+master_babel_role_vu_prepare_user1#!#S#!#babel_role_vu_prepare_user1#!#master
+~~END~~
+
+
+EXEC babel_role_vu_prepare_db_principal
+GO
+~~START~~
+varchar#!#nvarchar
+babel_role_vu_prepare_role1#!#DATABASE_ROLE
+babel_role_vu_prepare_role2#!#DATABASE_ROLE
+babel_role_vu_prepare_user2#!#SQL_USER
+babel_role_vu_prepare_user3#!#SQL_USER
+~~END~~
+
+
+EXEC babel_role_vu_prepare_role_members
+GO
+~~START~~
+varchar#!#char#!#varchar#!#char
+babel_role_vu_prepare_role1#!#R#!#babel_role_vu_prepare_role2#!#R
+babel_role_vu_prepare_role1#!#R#!#babel_role_vu_prepare_user2#!#S
+babel_role_vu_prepare_role2#!#R#!#babel_role_vu_prepare_user3#!#S
+~~END~~
+
+
+-- Role renaming
+ALTER ROLE babel_role_vu_prepare_role1 WITH NAME = babel_role_vu_prepare_role1_new
+GO
+
+EXEC babel_role_vu_prepare_user_ext
+GO
+~~START~~
+varchar#!#char#!#nvarchar#!#nvarchar
+babel_role_vu_prepare_db_babel_role_vu_prepare_role1_new#!#R#!#babel_role_vu_prepare_role1_new#!#babel_role_vu_prepare_db
+babel_role_vu_prepare_db_babel_role_vu_prepare_role2#!#R#!#babel_role_vu_prepare_role2#!#babel_role_vu_prepare_db
+babel_role_vu_prepare_db_babel_role_vu_prepare_user2#!#S#!#babel_role_vu_prepare_user2#!#babel_role_vu_prepare_db
+babel_role_vu_prepare_db_babel_role_vu_prepare_user3#!#S#!#babel_role_vu_prepare_user3#!#babel_role_vu_prepare_db
+master_babel_role_vu_prepare_role1#!#R#!#babel_role_vu_prepare_role1#!#master
+master_babel_role_vu_prepare_user1#!#S#!#babel_role_vu_prepare_user1#!#master
+~~END~~
+
+
+EXEC babel_role_vu_prepare_db_principal
+GO
+~~START~~
+varchar#!#nvarchar
+babel_role_vu_prepare_role1_new#!#DATABASE_ROLE
+babel_role_vu_prepare_role2#!#DATABASE_ROLE
+babel_role_vu_prepare_user2#!#SQL_USER
+babel_role_vu_prepare_user3#!#SQL_USER
+~~END~~
+
+
+EXEC babel_role_vu_prepare_role_members
+GO
+~~START~~
+varchar#!#char#!#varchar#!#char
+babel_role_vu_prepare_role1_new#!#R#!#babel_role_vu_prepare_role2#!#R
+babel_role_vu_prepare_role1_new#!#R#!#babel_role_vu_prepare_user2#!#S
+babel_role_vu_prepare_role2#!#R#!#babel_role_vu_prepare_user3#!#S
+~~END~~
+
+
+-- Drop role from member
+ALTER ROLE babel_role_vu_prepare_role1_new DROP MEMBER babel_role_vu_prepare_role2
+GO
+
+-- Drop user from member
+ALTER ROLE babel_role_vu_prepare_role1_new DROP MEMBER babel_role_vu_prepare_user2
+GO
+
+EXEC babel_role_vu_prepare_user_ext
+GO
+~~START~~
+varchar#!#char#!#nvarchar#!#nvarchar
+babel_role_vu_prepare_db_babel_role_vu_prepare_role1_new#!#R#!#babel_role_vu_prepare_role1_new#!#babel_role_vu_prepare_db
+babel_role_vu_prepare_db_babel_role_vu_prepare_role2#!#R#!#babel_role_vu_prepare_role2#!#babel_role_vu_prepare_db
+babel_role_vu_prepare_db_babel_role_vu_prepare_user2#!#S#!#babel_role_vu_prepare_user2#!#babel_role_vu_prepare_db
+babel_role_vu_prepare_db_babel_role_vu_prepare_user3#!#S#!#babel_role_vu_prepare_user3#!#babel_role_vu_prepare_db
+master_babel_role_vu_prepare_role1#!#R#!#babel_role_vu_prepare_role1#!#master
+master_babel_role_vu_prepare_user1#!#S#!#babel_role_vu_prepare_user1#!#master
+~~END~~
+
+
+EXEC babel_role_vu_prepare_db_principal
+GO
+~~START~~
+varchar#!#nvarchar
+babel_role_vu_prepare_role1_new#!#DATABASE_ROLE
+babel_role_vu_prepare_role2#!#DATABASE_ROLE
+babel_role_vu_prepare_user2#!#SQL_USER
+babel_role_vu_prepare_user3#!#SQL_USER
+~~END~~
+
+
+EXEC babel_role_vu_prepare_role_members
+GO
+~~START~~
+varchar#!#char#!#varchar#!#char
+babel_role_vu_prepare_role2#!#R#!#babel_role_vu_prepare_user3#!#S
+~~END~~
+
+
+ALTER ROLE babel_role_vu_prepare_role2 DROP MEMBER babel_role_vu_prepare_user3
+GO
+
+-- Test DROP ROLE
+DROP USER babel_role_vu_prepare_user2
+GO
+
+DROP USER babel_role_vu_prepare_user3
+GO
+
+DROP ROLE babel_role_vu_prepare_role1_new
+GO
+
+DROP ROLE babel_role_vu_prepare_role2
+GO
+
+USE master
+GO
+
+DROP USER babel_role_vu_prepare_user1
+GO
+
+DROP ROLE babel_role_vu_prepare_role1
+GO
+
+DROP LOGIN babel_role_vu_prepare_role1
+GO

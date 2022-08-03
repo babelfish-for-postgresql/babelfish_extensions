@@ -1,0 +1,163 @@
+SELECT DB_NAME()
+GO
+
+-- Test CREATE ROLE
+CREATE ROLE babel_role_vu_prepare_role1
+GO
+
+EXEC babel_role_vu_prepare_user_ext_master
+GO
+
+EXEC babel_role_vu_prepare_db_principal_master
+GO
+
+-- Test database principal uniqueness
+-- should fail, duplicate role name
+CREATE ROLE babel_role_vu_prepare_role1
+GO
+
+-- Can create a login with same name
+CREATE LOGIN babel_role_vu_prepare_role1 WITH PASSWORD = 'abc';
+GO
+
+-- should fail, cannot create a user with same name in same db
+CREATE USER babel_role_vu_prepare_role1
+GO
+
+CREATE USER babel_role_vu_prepare_user1 FOR LOGIN babel_role_vu_prepare_login1
+GO
+
+-- should fail, already have a user with this name in same db
+CREATE ROLE babel_role_vu_prepare_user1
+GO
+
+-- Test database principal uniqueness in a new database
+USE babel_role_vu_prepare_db
+GO
+
+SELECT DB_NAME()
+GO
+
+-- It's ok to use duplicate role name in a different db
+CREATE ROLE babel_role_vu_prepare_role1
+GO
+
+CREATE ROLE babel_role_vu_prepare_role2
+GO
+
+EXEC babel_role_vu_prepare_user_ext
+GO
+
+EXEC babel_role_vu_prepare_db_principal
+GO
+
+-- Test ALTER ROLE
+-- Add role as member
+ALTER ROLE babel_role_vu_prepare_role1 ADD MEMBER babel_role_vu_prepare_role2
+GO
+
+-- Add user as member
+CREATE USER babel_role_vu_prepare_user2 FOR LOGIN babel_role_vu_prepare_login2
+GO
+
+ALTER ROLE babel_role_vu_prepare_role1 ADD MEMBER babel_role_vu_prepare_user2
+GO
+
+-- Add login as member, should fail
+ALTER ROLE babel_role_vu_prepare_role1 ADD MEMBER babel_role_vu_prepare_login3
+GO
+
+-- Add itself as member, should fail
+ALTER ROLE babel_role_vu_prepare_role1 ADD MEMBER babel_role_vu_prepare_role1
+GO
+
+-- Cross member, should fail
+ALTER ROLE babel_role_vu_prepare_role2 ADD MEMBER babel_role_vu_prepare_role1
+GO
+
+-- Add special principals as member, should fail
+ALTER ROLE babel_role_vu_prepare_role1 ADD MEMBER dbo
+GO
+
+ALTER ROLE babel_role_vu_prepare_role1 ADD MEMBER db_owner
+GO
+
+-- Add/drop member to db_owner, should fail before full support
+ALTER ROLE db_owner ADD MEMBER babel_role_vu_prepare_role1
+GO
+
+ALTER ROLE db_owner DROP MEMBER babel_role_vu_prepare_role1
+GO
+
+CREATE USER babel_role_vu_prepare_user3 FOR LOGIN babel_role_vu_prepare_login3
+GO
+
+ALTER ROLE babel_role_vu_prepare_role2 ADD MEMBER babel_role_vu_prepare_user3
+GO
+
+EXEC babel_role_vu_prepare_user_ext
+GO
+
+EXEC babel_role_vu_prepare_db_principal
+GO
+
+EXEC babel_role_vu_prepare_role_members
+GO
+
+-- Role renaming
+ALTER ROLE babel_role_vu_prepare_role1 WITH NAME = babel_role_vu_prepare_role1_new
+GO
+
+EXEC babel_role_vu_prepare_user_ext
+GO
+
+EXEC babel_role_vu_prepare_db_principal
+GO
+
+EXEC babel_role_vu_prepare_role_members
+GO
+
+-- Drop role from member
+ALTER ROLE babel_role_vu_prepare_role1_new DROP MEMBER babel_role_vu_prepare_role2
+GO
+
+-- Drop user from member
+ALTER ROLE babel_role_vu_prepare_role1_new DROP MEMBER babel_role_vu_prepare_user2
+GO
+
+EXEC babel_role_vu_prepare_user_ext
+GO
+
+EXEC babel_role_vu_prepare_db_principal
+GO
+
+EXEC babel_role_vu_prepare_role_members
+GO
+
+ALTER ROLE babel_role_vu_prepare_role2 DROP MEMBER babel_role_vu_prepare_user3
+GO
+
+-- Test DROP ROLE
+DROP USER babel_role_vu_prepare_user2
+GO
+
+DROP USER babel_role_vu_prepare_user3
+GO
+
+DROP ROLE babel_role_vu_prepare_role1_new
+GO
+
+DROP ROLE babel_role_vu_prepare_role2
+GO
+
+USE master
+GO
+
+DROP USER babel_role_vu_prepare_user1
+GO
+
+DROP ROLE babel_role_vu_prepare_role1
+GO
+
+DROP LOGIN babel_role_vu_prepare_role1
+GO

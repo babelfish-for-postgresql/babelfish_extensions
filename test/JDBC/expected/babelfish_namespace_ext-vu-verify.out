@@ -1,0 +1,32 @@
+SELECT * FROM babelfish_namespace_ext_vu_prepare_view
+GO
+~~START~~
+varchar#!#nvarchar
+master_babelfish_namespace_ext_vu_prepare_sch1#!#babelfish_namespace_ext_vu_prepare_sch1
+master_babelfish_namespace_ext_vu_prepare_sch2#!#babelfish_namespace_ext_vu_prepare_sch2
+~~END~~
+
+
+EXEC babelfish_namespace_ext_vu_prepare_proc
+GO
+~~START~~
+varchar#!#nvarchar
+master_babelfish_namespace_ext_vu_prepare_sch1#!#babelfish_namespace_ext_vu_prepare_sch1
+master_babelfish_namespace_ext_vu_prepare_sch2#!#babelfish_namespace_ext_vu_prepare_sch2
+~~END~~
+
+
+SELECT babelfish_namespace_ext_vu_prepare_func()
+GO
+~~START~~
+int
+2
+~~END~~
+
+
+SELECT nspname FROM sys.babelfish_namespace_ext WHERE nspname LIKE '%test_babelfish_namespace_sch%'
+GO
+~~START~~
+varchar
+~~END~~
+
