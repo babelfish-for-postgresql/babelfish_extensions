@@ -988,7 +988,7 @@ check_is_tsql_view(Oid relid)
 	view_name = get_rel_name(relid);
 	schema_oid = get_rel_namespace(relid);
 	schema_name = get_namespace_name(schema_oid);
-	if (view_name == NULL || schema_name == NULL)
+	if (view_name == NULL || schema_name == NULL || is_shared_schema(schema_name))
 	{
 		if (view_name)
 			pfree(view_name);
