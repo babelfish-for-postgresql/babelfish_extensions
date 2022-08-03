@@ -2089,7 +2089,9 @@ static void bbf_ProcessUtility(PlannedStmt *pstmt,
 			case T_RenameStmt:
 			{
 				RenameStmt *rnstmt = (RenameStmt *) parsetree;
-				if (rnstmt->renameType == OBJECT_VIEW)
+				if (rnstmt->renameType == OBJECT_VIEW ||
+					(rnstmt->renameType == OBJECT_COLUMN &&
+					 rnstmt->relationType == OBJECT_VIEW))
 				{
 					Oid relid = RangeVarGetRelid(rnstmt->relation, NoLock, true);
 					if(check_is_tsql_view(relid))

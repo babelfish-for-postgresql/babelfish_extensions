@@ -107,6 +107,39 @@ go
 create or replace view master_dbo.def_v1 as select 2;
 go
 
+-- CASE: Test after setting GUC to true
+-- tsql
+create view def_vwalt as select 123 as a;
+go
+
+-- psql
+set babelfishpg_tsql.enable_create_alter_view_from_pg = true;
+go
+
+create or replace view master_dbo.def_vwalt as select 321 as a;
+go
+
+alter view master_dbo.def_vwalt rename column a to b;
+go
+
+select sb.name, vd.schema_name, vd.object_name, vd.definition from sys.babelfish_view_def vd left join sys.sysdatabases sb on vd.dbid=sb.dbid where vd.object_name like ('def_vwalt') order by vd.dbid, vd.schema_name, vd.object_name, vd.definition;
+go
+
+set babelfishpg_tsql.enable_create_alter_view_from_pg = false;
+go
+
+show babelfishpg_tsql.enable_create_alter_view_from_pg;
+go
+
+create or replace view master_dbo.def_vwalt as select 333 as b;
+go
+
+alter view master_dbo.def_vwalt rename column b to c;
+go
+
+drop view master_dbo.def_vwalt;
+go
+
 set babelfishpg_tsql.sql_dialect = "tsql";
 go
 
