@@ -1,10 +1,6 @@
 EXEC test_identity_vu_prepare_p1
 GO
 
-
-INSERT INTO test_identity_vu_prepare_t1 VALUES ('Babelfish1') ,('Babelfish2') ,('Babelfish3')
-GO
-
 SELECT MAX(id) as MaximumUsedIdentity FROM test_identity_vu_prepare_t1
 SELECT SCOPE_IDENTITY()
 SELECT @@IDENTITY
@@ -38,8 +34,6 @@ SELECT test_identity_vu_prepare_func3()
 GO
 
 SELECT * FROM test_identity_vu_prepare_t4
-GO
-INSERT test_identity_vu_prepare_t4 values ('Babelfish4',23)
 GO
 
 SELECT SCOPE_IDENTITY()

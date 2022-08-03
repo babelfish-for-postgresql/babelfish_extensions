@@ -23,12 +23,6 @@ numeric
 ~~END~~
 
 
-
-INSERT INTO test_identity_vu_prepare_t1 VALUES ('Babelfish1') ,('Babelfish2') ,('Babelfish3')
-GO
-~~ROW COUNT: 3~~
-
-
 SELECT MAX(id) as MaximumUsedIdentity FROM test_identity_vu_prepare_t1
 SELECT SCOPE_IDENTITY()
 SELECT @@IDENTITY
@@ -36,22 +30,22 @@ SELECT IDENT_CURRENT('test_identity_vu_prepare_t1')
 GO
 ~~START~~
 int
-5
+2
 ~~END~~
 
 ~~START~~
 numeric
-5
+2
 ~~END~~
 
 ~~START~~
 numeric
-5
+2
 ~~END~~
 
 ~~START~~
 numeric
-5
+2
 ~~END~~
 
 
@@ -61,22 +55,22 @@ GO
 
 ~~START~~
 int
-6
+3
 ~~END~~
 
 ~~START~~
 numeric
-6
+3
 ~~END~~
 
 ~~START~~
 numeric
-6
+3
 ~~END~~
 
 ~~START~~
 numeric
-6
+3
 ~~END~~
 
 
@@ -86,10 +80,7 @@ GO
 int#!#nvarchar
 1#!#Nirmit_Shah
 2#!#Nirmit_Shah
-3#!#Babelfish1
-4#!#Babelfish2
-5#!#Babelfish3
-6#!#Nirmit_Shah
+3#!#Nirmit_Shah
 ~~END~~
 
 
@@ -173,7 +164,7 @@ SELECT test_identity_vu_prepare_func1()
 GO
 ~~START~~
 tinyint
-6
+3
 ~~END~~
 
 
@@ -201,10 +192,6 @@ Babelfish13#!#21
 Babelfish14#!#20
 Babelfish15#!#23
 ~~END~~
-
-INSERT test_identity_vu_prepare_t4 values ('Babelfish4',23)
-GO
-~~ROW COUNT: 1~~
 
 
 SELECT SCOPE_IDENTITY()
@@ -237,7 +224,6 @@ varchar#!#int#!#int
 Babelfish13#!#21#!#1
 Babelfish14#!#20#!#2
 Babelfish15#!#23#!#3
-Babelfish4#!#23#!#4
 ~~END~~
 
 
@@ -248,22 +234,22 @@ SELECT IDENT_CURRENT('test_identity_vu_prepare_t4')
 GO
 ~~START~~
 int
-4
+3
 ~~END~~
 
 ~~START~~
 numeric
-4
+3
 ~~END~~
 
 ~~START~~
 numeric
-4
+3
 ~~END~~
 
 ~~START~~
 numeric
-4
+3
 ~~END~~
 
 

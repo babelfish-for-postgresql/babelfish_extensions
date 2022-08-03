@@ -1,43 +1,15 @@
-create table babel_2955_vu_verify_t1 (a int not null)
-go
-
-create unique index ix1 on babel_2955_vu_verify_t1(a) with pad_index
-go
-
-create unique index ix2 on babel_2955_vu_verify_t1(a) with pad_index=on
-go
-
-create unique index ix3 on babel_2955_vu_verify_t1(a) with pad_index=off
-go
-
-SELECT set_config('babelfishpg_tsql.escape_hatch_storage_options', 'strict', 'false')
-go
+SELECT * FROM babel_2955_vu_prepare_t1
+GO
 ~~START~~
-text
-strict
+int
+1
 ~~END~~
 
 
-create table babel_2955_vu_verify_t2 (a int not null)
-go
-
-create unique index ix1 on babel_2955_vu_verify_t2(a) with pad_index
-go
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: 'PAD_INDEX' is not currently supported in Babelfish. please use babelfishpg_tsql.escape_hatch_storage_options to ignore)~~
-
-
-create unique index ix2 on babel_2955_vu_verify_t2(a) with pad_index=on
-go
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: 'PAD_INDEX' is not currently supported in Babelfish. please use babelfishpg_tsql.escape_hatch_storage_options to ignore)~~
-
-
-create unique index ix3 on babel_2955_vu_verify_t2(a) with pad_index=off
-go
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: 'PAD_INDEX' is not currently supported in Babelfish. please use babelfishpg_tsql.escape_hatch_storage_options to ignore)~~
+SELECT * FROM babel_2955_vu_prepare_t2
+GO
+~~START~~
+int
+1
+~~END~~
 

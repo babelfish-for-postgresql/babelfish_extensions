@@ -1,19 +1,19 @@
-drop index ix3 on babel_2917_vu_verify_t1
+drop index ix3 on babel_2917_vu_prepare_t1
 go
 
-drop table babel_2917_vu_verify_t1
+drop table babel_2917_vu_prepare_t1
 go
 
-drop index ix1 on babel_2917_vu_verify_t2
+drop index ix1 on babel_2917_vu_prepare_t2
 go
 
-drop index ix2 on babel_2917_vu_verify_t2
+drop index ix2 on babel_2917_vu_prepare_t2
 go
 
-drop index ix3 on babel_2917_vu_verify_t2
+drop index ix3 on babel_2917_vu_prepare_t2
 go
 
-drop table babel_2917_vu_verify_t2
+drop table babel_2917_vu_prepare_t2
 go
 
 sp_babelfish_configure 'babelfishpg_tsql.escape_hatch_ignore_dup_key', 'strict'
