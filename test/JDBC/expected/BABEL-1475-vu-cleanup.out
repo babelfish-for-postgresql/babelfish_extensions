@@ -1,18 +1,26 @@
-DROP TABLE babel_1475_vu_prepare_t1
+DROP TABLE BABEL_1475_vu_prepare_day;
 GO
-DROP TABLE babel_1475_vu_prepare_t2
+
+DROP TABLE BABEL_1475_vu_prepare_month;
 GO
-DROP TABLE babel_1475_vu_prepare_t3
+
+DROP TABLE BABEL_1475_vu_prepare_year;
 GO
-DROP TABLE babel_1475_vu_prepare_t4
+
+DROP TABLE BABEL_1475_vu_prepare_datediff_1;
 GO
-DROP TABLE babel_1475_vu_prepare_t5
+
+DROP TABLE BABEL_1475_vu_prepare_datediff_2;
 GO
-DROP TABLE babel_1475_vu_prepare_t6
+
+DROP TABLE BABEL_1475_vu_prepare_datefromparts;
 GO
-DROP TABLE babel_1475_vu_prepare_t7
+
+DROP TABLE BABEL_1475_vu_prepare_datename;
 GO
-DROP TABLE babel_1475_vu_prepare_t8
+
+DROP TABLE BABEL_1475_vu_prepare_datepart_1;
 GO
-DROP TABLE babel_1475_vu_prepare_t9
+
+DROP TABLE BABEL_1475_vu_prepare_datepart_2;
 GO

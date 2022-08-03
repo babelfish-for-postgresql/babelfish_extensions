@@ -1,0 +1,30 @@
+-- tsql
+insert into indentity_function_tests_t1 values ('1')
+GO
+
+select id from indentity_function_tests_t1 WHERE id = scope_identity();
+GO
+
+select id from indentity_function_tests_t1 WHERE id = @@identity;
+GO
+
+select id from indentity_function_tests_t1 WHERE id = sys.babelfish_get_last_identity_numeric();
+GO
+
+select id from indentity_function_tests_t1 WHERE id = sys.babelfish_get_last_identity();
+GO
+
+exec indentity_function_tests_proc
+GO
+
+select * from indentity_function_tests_view
+GO
+
+select provolatile from pg_proc where proname = 'scope_identity';
+GO
+
+select provolatile from pg_proc where proname = 'babelfish_get_last_identity_numeric';
+GO
+
+select provolatile from pg_proc where proname = 'babelfish_get_last_identity';
+GO

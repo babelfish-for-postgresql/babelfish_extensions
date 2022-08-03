@@ -1,0 +1,67 @@
+-- tsql
+CREATE DATABASE BABEL_ROLE_MEMBER_vu_prepare_db
+go
+
+USE BABEL_ROLE_MEMBER_vu_prepare_db
+go
+
+SELECT DB_NAME()
+GO
+~~START~~
+nvarchar
+babel_role_member_vu_prepare_db
+~~END~~
+
+
+CREATE PROC BABEL_ROLE_MEMBER_vu_prepare_proc AS
+BEGIN
+	SELECT dp1.name AS RoleName, dp1.type AS RoleType,
+		   dp2.name AS MemberName, dp2.type AS MemberType
+	FROM sys.database_role_members AS drm
+	INNER JOIN sys.database_principals AS dp1
+	ON drm.role_principal_id = dp1.principal_id
+	INNER JOIN sys.database_principals AS dp2
+	ON drm.member_principal_id = dp2.principal_id
+	ORDER BY dp1.name, dp2.name
+END
+GO
+
+CREATE ROLE BABEL_ROLE_MEMBER_vu_prepare_role1
+GO
+CREATE ROLE BABEL_ROLE_MEMBER_vu_prepare_role2
+GO
+CREATE ROLE BABEL_ROLE_MEMBER_vu_prepare_role3
+GO
+CREATE ROLE BABEL_ROLE_MEMBER_vu_prepare_role4 
+GO
+CREATE ROLE BABEL_ROLE_MEMBER_vu_prepare_role5
+GO
+CREATE LOGIN BABEL_ROLE_MEMBER_vu_prepare_login1 WITH PASSWORD = '123'
+GO
+CREATE LOGIN BABEL_ROLE_MEMBER_vu_prepare_login2 WITH PASSWORD = '123'
+GO
+CREATE LOGIN BABEL_ROLE_MEMBER_vu_prepare_login3 WITH PASSWORD = '123'
+GO
+CREATE USER BABEL_ROLE_MEMBER_vu_prepare_user1 FOR LOGIN BABEL_ROLE_MEMBER_vu_prepare_login1
+GO
+CREATE USER BABEL_ROLE_MEMBER_vu_prepare_user2 FOR LOGIN BABEL_ROLE_MEMBER_vu_prepare_login2
+GO
+CREATE USER BABEL_ROLE_MEMBER_vu_prepare_user3 FOR LOGIN BABEL_ROLE_MEMBER_vu_prepare_login3
+GO
+
+-- role1 -> role2 -> role3 -> role4
+ALTER ROLE BABEL_ROLE_MEMBER_vu_prepare_role1 ADD MEMBER BABEL_ROLE_MEMBER_vu_prepare_role2
+GO
+ALTER ROLE BABEL_ROLE_MEMBER_vu_prepare_role2 ADD MEMBER BABEL_ROLE_MEMBER_vu_prepare_role3
+GO
+ALTER ROLE BABEL_ROLE_MEMBER_vu_prepare_role3 ADD MEMBER BABEL_ROLE_MEMBER_vu_prepare_role4
+GO
+-- role1 -> user1
+ALTER ROLE BABEL_ROLE_MEMBER_vu_prepare_role1 ADD MEMBER BABEL_ROLE_MEMBER_vu_prepare_user1
+GO
+-- role2 -> user2
+ALTER ROLE BABEL_ROLE_MEMBER_vu_prepare_role2 ADD MEMBER BABEL_ROLE_MEMBER_vu_prepare_user2
+GO
+-- role3 -> user3
+ALTER ROLE BABEL_ROLE_MEMBER_vu_prepare_role3 ADD MEMBER BABEL_ROLE_MEMBER_vu_prepare_user3
+GO
