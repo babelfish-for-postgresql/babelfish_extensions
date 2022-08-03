@@ -3334,11 +3334,7 @@ SELECT
   , CAST(
       CASE
         WHEN is_out_scalar = 1 THEN 1 -- Output of a scalar function
-        WHEN ss.proargmodes[(ss.x).n] = 'i' THEN 0
-        WHEN ss.proargmodes[(ss.x).n] = 'o' THEN 1
-        WHEN ss.proargmodes[(ss.x).n] = 'b' THEN 1
-        WHEN ss.proargmodes[(ss.x).n] = 'v' THEN 0
-        WHEN ss.proargmodes[(ss.x).n] = 't' THEN 1
+        WHEN ss.proargmodes[(ss.x).n] in ('o', 'b', 't') THEN 1
         ELSE 0
       END 
     AS sys.bit) AS is_output

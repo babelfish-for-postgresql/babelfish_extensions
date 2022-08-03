@@ -14,6 +14,20 @@ AS
 SELECT 1
 GO
 
+CREATE SCHEMA sys_all_parameters_schema_vu_prepare
+GO
+
+CREATE PROCEDURE sys_all_parameters_schema_vu_prepare.sys_all_parameters_vu_prepare_complexProc
+@dec_schema decimal(23,3), 
+@num_schema numeric(22, 8), 
+@var_schema varchar(30), 
+@nvar_schema nvarchar(5),
+@varmax_schema varchar(max),
+@nvarmax_schema nvarchar(max)
+AS
+SELECT 1
+GO
+
 CREATE FUNCTION sys_all_parameters_vu_prepare_scalFunc(@a int)
 RETURNS INT
 AS

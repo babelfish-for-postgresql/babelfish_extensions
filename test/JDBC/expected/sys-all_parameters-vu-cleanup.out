@@ -4,6 +4,12 @@ GO
 DROP PROCEDURE sys_all_parameters_vu_prepare_complexProc
 GO
 
+DROP PROCEDURE sys_all_parameters_schema_vu_prepare.sys_all_parameters_vu_prepare_complexProc
+GO
+
+DROP SCHEMA sys_all_parameters_schema_vu_prepare
+GO
+
 DROP FUNCTION sys_all_parameters_vu_prepare_scalFunc
 GO
 
