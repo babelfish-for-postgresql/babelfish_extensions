@@ -1590,7 +1590,7 @@ pltsql_store_view_definition(const char *queryString, ObjectAddress address)
 				"CREATE VIEW from non-babelfish schema/db is not allowed in TSQL dialect.", physical_schemaname)));
 	}
 
-	bbf_view_def_rel = table_open(bbf_view_def_oid, RowExclusiveLock);
+	bbf_view_def_rel = table_open(get_bbf_view_def_oid(), RowExclusiveLock);
 	bbf_view_def_rel_dsc = RelationGetDescr(bbf_view_def_rel);
 
 	MemSet(new_record_nulls, false, sizeof(new_record_nulls));
@@ -1677,7 +1677,7 @@ pltsql_drop_view_definition(Oid objectId)
 	}
 
 	/* Fetch the relation */
-	bbf_view_def_rel = table_open(bbf_view_def_oid, RowExclusiveLock);
+	bbf_view_def_rel = table_open(get_bbf_view_def_oid(), RowExclusiveLock);
 
 	scantup = search_bbf_view_def(bbf_view_def_rel, dbid, logical_schemaname, objectname);
 
