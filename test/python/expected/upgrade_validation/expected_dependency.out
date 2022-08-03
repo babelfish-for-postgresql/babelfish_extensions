@@ -1122,7 +1122,6 @@ View sys.system_objects
 View sys.system_sql_modules
 View sys.table_types
 View sys.tables
-View sys.triggers
 View sys.types
 View sys.views
 View sys.xml_indexes
