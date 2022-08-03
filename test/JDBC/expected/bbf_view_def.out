@@ -98,7 +98,7 @@ master#!#dbo#!#def_v2#!#create view  def_v2<newline>as<newline>select 							2 a
 
 
 -- psql
--- CASE: Alter/Replace from psql endpoint should be blocked for views
+-- CASE: Alter/Replace from psql dialect should be blocked for views
 -- following statements should be blocked:
 -- ALTER VIEW [ IF EXISTS ] name ALTER [ COLUMN ] column_name SET DEFAULT expression  					- AlterTableStmt
 -- ALTER VIEW [ IF EXISTS ] name ALTER [ COLUMN ] column_name DROP DEFAULT								- AlterTableStmt
@@ -168,10 +168,19 @@ go
     Server SQLState: 0A000)~~
 
 
--- Allowed in psql dialect
+-- Creating a new view is allowed in psql dialect although replacing/altering a TSQL view
+-- which has entry in babelfish_view_def catalog is not allowed.
 -- There won't be any entries in catalog for views created in psql dialect from pgendpoint
 create or replace view master_dbo.def_v5 as select 5;
 go
+
+create or replace view master_dbo.def_v1 as select 2;
+go
+~~ERROR (Code: 0)~~
+
+~~ERROR (Message: ERROR: REPLACE VIEW is blocked in PG dialect on TSQL view present in babelfish_view_def catalog. Please set babelfishpg_tsql.enable_ddl_from_pgendpoint to true to enable.
+    Server SQLState: XX000)~~
+
 
 set babelfishpg_tsql.sql_dialect = "tsql";
 go
@@ -180,14 +189,16 @@ go
 create or replace view master_dbo.def_v6 as select 6;
 go
 
--- tsql
+alter view master_dbo.def_v1 rename to def_v1_renamed;
+go
 
-select * from sys.babelfish_view_def;
+-- tsql
+select sb.name, vd.schema_name, vd.object_name, vd.definition from babelfish_view_def vd left join sys.sysdatabases sb on vd.dbid=sb.dbid order by vd.dbid, vd.schema_name, vd.object_name, vd.definition;
 go
 ~~START~~
-smallint#!#varchar#!#varchar#!#ntext#!#bigint#!#bigint
-1#!#dbo#!#def_v1#!#create view def_v1 as select c1 as a from vd_t1;#!#3#!#3
-1#!#dbo#!#def_v2#!#create view  def_v2<newline>as<newline>select 							2 as a;#!#3#!#3
+text#!#varchar#!#varchar#!#ntext
+master#!#dbo#!#def_v1#!#create view def_v1 as select c1 as a from vd_t1;
+master#!#dbo#!#def_v2#!#create view  def_v2<newline>as<newline>select 							2 as a;
 ~~END~~
 
 
@@ -314,7 +325,6 @@ go
 
 -- psql
 -- CASE : When user tries to create view from non-babelfish(like public) or internal-only(like sys or information_schema_tsql)
--- Should be blocked
 -- Currenting dialect should be tsql
 SHOW babelfishpg_tsql.sql_dialect;
 go
@@ -375,7 +385,7 @@ master#!#def_sch1#!#def_v1#!#create view def_sch1.def_v1 as select 1;
 ~~END~~
 
 
-drop view def_v1, def_v2, def_v5, def_v6;
+drop view def_v1_renamed, def_v2, def_v5, def_v6;
 go
 
 drop table vd_t1;
