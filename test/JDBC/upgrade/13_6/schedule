@@ -112,7 +112,6 @@ table-variable
 TestNotNull
 Test-Identity
 Test-Computed-Columns
-Test-Prep-Statements
 babel_char
 BABEL-SQUARE
 BABEL-728

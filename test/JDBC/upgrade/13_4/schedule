@@ -82,7 +82,6 @@ BABEL-2086
 temp-tables
 TestNotNull
 Test-Identity
-Test-Prep-Statements
 TestTableType
 schema_resolution_func
 BABEL-3147-before-14_5
