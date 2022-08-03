@@ -2049,8 +2049,11 @@ static void bbf_ProcessUtility(PlannedStmt *pstmt,
 		return; /* Don't execute anything */
 
 	/*
-	 * Block ALTER VIEW and CREATE OR REPLACE VIEW statements from PG client
+	 * Block ALTER VIEW and CREATE OR REPLACE VIEW statements from PG dialect
 	 * executed on TSQL views which has entries in view_def catalog
+	 * Note: Changes made by ALTER VIEW or CREATE [OR REPLACE] VIEW statements
+	 * in TSQL dialect from PG client won't be reflected in babelfish_view_def
+	 * catalog.
 	 */
 	if (sql_dialect == SQL_DIALECT_PG && !babelfish_dump_restore && !pltsql_enable_ddl_from_pgendpoint)
 	{

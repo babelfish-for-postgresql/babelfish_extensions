@@ -1533,6 +1533,8 @@ modify_insert_stmt(InsertStmt *stmt, Oid relid)
 
 /*
  * Stores view object's TSQL definition to bbf_view_def catalog
+ * Note: It won't store view info if view is created in TSQL dialect from PG
+ * endpoint as dbid will be NULL in that case.
  */
 static void
 pltsql_store_view_definition(const char *queryString, ObjectAddress address)
