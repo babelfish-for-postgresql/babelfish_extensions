@@ -1,5 +1,4 @@
 Could not find dependencies on
-Collation sys.arabic_ci_ai
 Collation sys.arabic_cs_as
 Collation sys.bbf_unicode_cp1250_ci_ai
 Collation sys.bbf_unicode_cp1250_cs_ai
@@ -49,7 +48,6 @@ Collation sys.finnish_swedish_cs_as
 Collation sys.french_ci_ai
 Collation sys.french_ci_as
 Collation sys.greek_ci_ai
-Collation sys.greek_cs_as
 Collation sys.hebrew_ci_ai
 Collation sys.hebrew_ci_as
 Collation sys.japanese_ci_ai
