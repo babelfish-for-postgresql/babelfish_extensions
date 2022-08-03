@@ -1,0 +1,14 @@
+DROP VIEW babelfish_authid_login_ext_vu_prepare_view
+GO
+
+DROP PROC babelfish_authid_login_ext_vu_prepare_proc
+GO
+
+DROP FUNCTION babelfish_authid_login_ext_vu_prepare_func
+GO
+
+DROP LOGIN babelfish_authid_login_ext_vu_prepare_login1
+GO
+
+DROP LOGIN babelfish_authid_login_ext_vu_prepare_login2
+GO
