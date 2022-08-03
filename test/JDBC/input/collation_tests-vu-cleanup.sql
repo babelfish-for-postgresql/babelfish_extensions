@@ -1,0 +1,32 @@
+--varchar, innerjoin & computed columns
+DROP VIEW [INNER JOIN SAME CP];
+GO
+
+DROP TABLE collation_tests_vu_prepare_english_collation_varchar_innerjoin;
+GO
+
+DROP TABLE collation_tests_vu_prepare_english_collation_varchar;
+GO
+
+DROP TABLE collation_tests_vu_prepare_english_collation_varchar_computed_columns;
+GO
+
+--nvarchar
+DROP TABLE collation_tests_vu_prepare_english_collation_nvarchar;
+GO
+
+--char
+DROP TABLE collation_tests_vu_prepare_english_collation_char;
+GO
+
+--nchar
+DROP TABLE collation_tests_vu_prepare_english_collation_nchar;
+GO
+
+--text
+DROP TABLE collation_tests_vu_prepare_english_collation_text;
+GO
+
+--test for primary key
+DROP TABLE collation_tests_vu_prepare_english_collation_primary_key;
+GO
