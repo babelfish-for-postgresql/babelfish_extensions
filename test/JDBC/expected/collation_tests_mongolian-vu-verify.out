@@ -1,0 +1,304 @@
+--varchar
+SELECT * FROM collation_tests_mongolian_vu_prepare_varchar ORDER BY name;
+GO
+~~START~~
+varchar
+Баяртай
+гл
+зэг
+орой
+сургууль
+хоол
+хувцас
+цнх
+эгч
+эмч
+~~END~~
+
+
+SELECT * FROM collation_tests_mongolian_vu_prepare_varchar WHERE name LIKE '%л%';
+GO
+~~START~~
+varchar
+гл
+хоол
+сургууль
+~~END~~
+
+
+SELECT * FROM collation_tests_mongolian_vu_prepare_varchar WHERE name='цнх';
+GO
+~~START~~
+varchar
+цнх
+~~END~~
+
+SELECT * FROM collation_tests_mongolian_vu_prepare_varchar WHERE name='цнх' COLLATE mongolian_cs_as;
+GO
+~~START~~
+varchar
+цнх
+~~END~~
+
+
+--inner join
+SELECT * FROM [INNER JOIN SAME CP MONGOLIAN] WHERE same_name = 'хувцас';
+GO
+~~START~~
+varchar#!#varchar
+хувцас#!#хувцас
+~~END~~
+
+
+--computed column
+SELECT substr_mongolian FROM collation_tests_mongolian_vu_prepare_varchar_computed_columns;
+GO
+~~START~~
+varchar
+гл
+оро
+Бая
+хоо
+хув
+зэг
+цнх
+эгч
+эмч
+сур
+~~END~~
+
+
+SELECT substr_mongolian FROM collation_tests_mongolian_vu_prepare_varchar_computed_columns WHERE substr_mongolian='хув';
+GO
+~~START~~
+varchar
+хув
+~~END~~
+
+
+SELECT 
+    name, 
+    collation_name 
+FROM sys.columns 
+WHERE name = N'substr_mongolian';
+GO
+~~START~~
+varchar#!#varchar
+substr_mongolian#!#mongolian_ci_as
+~~END~~
+
+
+--nvarchar
+SELECT * FROM collation_tests_mongolian_vu_prepare_nvarchar ORDER BY name;
+GO
+~~START~~
+nvarchar
+Баяртай
+гл
+зэг
+орой
+сургууль
+хоол
+хувцас
+цнх
+эгч
+эмч
+~~END~~
+
+
+SELECT * FROM collation_tests_mongolian_vu_prepare_nvarchar WHERE name LIKE '%л%';
+GO
+~~START~~
+nvarchar
+гл
+хоол
+сургууль
+~~END~~
+
+
+SELECT * FROM collation_tests_mongolian_vu_prepare_nvarchar WHERE name='цнх';
+GO
+~~START~~
+nvarchar
+цнх
+~~END~~
+
+SELECT * FROM collation_tests_mongolian_vu_prepare_nvarchar WHERE name='цнх' COLLATE mongolian_cs_as;
+GO
+~~START~~
+nvarchar
+цнх
+~~END~~
+
+
+
+--char
+SELECT * FROM collation_tests_mongolian_vu_prepare_char ORDER BY name;
+GO
+~~START~~
+char
+Баяртай             
+гл                  
+зэг                 
+орой                
+сургууль            
+хоол                
+хувцас              
+цнх                 
+эгч                 
+эмч                 
+~~END~~
+
+
+SELECT * FROM collation_tests_mongolian_vu_prepare_char WHERE name LIKE '%л%';
+GO
+~~START~~
+char
+гл                  
+хоол                
+сургууль            
+~~END~~
+
+
+SELECT * FROM collation_tests_mongolian_vu_prepare_char WHERE name='цнх';
+GO
+~~START~~
+char
+цнх                 
+~~END~~
+
+SELECT * FROM collation_tests_mongolian_vu_prepare_char WHERE name='цнх' COLLATE mongolian_cs_as;
+GO
+~~START~~
+char
+цнх                 
+~~END~~
+
+
+--nchar
+SELECT * FROM collation_tests_mongolian_vu_prepare_nchar ORDER BY name;
+GO
+~~START~~
+nchar
+Баяртай             
+гл                  
+зэг                 
+орой                
+сургууль            
+хоол                
+хувцас              
+цнх                 
+эгч                 
+эмч                 
+~~END~~
+
+
+SELECT * FROM collation_tests_mongolian_vu_prepare_nchar WHERE name LIKE '%л%';
+GO
+~~START~~
+nchar
+гл                  
+хоол                
+сургууль            
+~~END~~
+
+
+SELECT * FROM collation_tests_mongolian_vu_prepare_nchar WHERE name='цнх';
+GO
+~~START~~
+nchar
+цнх                 
+~~END~~
+
+SELECT * FROM collation_tests_mongolian_vu_prepare_nchar WHERE name='цнх' COLLATE mongolian_cs_as;
+GO
+~~START~~
+nchar
+цнх                 
+~~END~~
+
+
+--text
+SELECT * FROM collation_tests_mongolian_vu_prepare_text ORDER BY name;
+GO
+~~START~~
+text
+Баяртай
+гл
+зэг
+орой
+сургууль
+хоол
+хувцас
+цнх
+эгч
+эмч
+~~END~~
+
+
+SELECT * FROM collation_tests_mongolian_vu_prepare_text WHERE name LIKE '%л%';
+GO
+~~START~~
+text
+гл
+хоол
+сургууль
+~~END~~
+
+
+SELECT * FROM collation_tests_mongolian_vu_prepare_text WHERE name='цнх';
+GO
+~~START~~
+text
+цнх
+~~END~~
+
+SELECT * FROM collation_tests_mongolian_vu_prepare_text WHERE name='цнх' COLLATE mongolian_cs_as;
+GO
+~~START~~
+text
+цнх
+~~END~~
+
+
+--primary key
+INSERT INTO collation_tests_mongolian_vu_prepare_primary VALUES ('гл');
+INSERT INTO collation_tests_mongolian_vu_prepare_primary VALUES ('гл');
+GO
+~~ROW COUNT: 1~~
+
+~~ERROR (Code: 2627)~~
+
+~~ERROR (Message: duplicate key value violates unique constraint "collation_tests_mongolian_vu_prepare_primary_pkey")~~
+
+
+SELECT * FROM collation_tests_mongolian_vu_prepare_primary ORDER BY name;
+GO
+~~START~~
+varchar
+гл
+~~END~~
+
+
+SELECT * FROM collation_tests_mongolian_vu_prepare_primary WHERE name LIKE '%г%';
+GO
+~~START~~
+varchar
+гл
+~~END~~
+
+
+SELECT * FROM collation_tests_mongolian_vu_prepare_primary WHERE name = 'гл';
+GO
+~~START~~
+varchar
+гл
+~~END~~
+
+SELECT * FROM collation_tests_mongolian_vu_prepare_primary WHERE name='гл' COLLATE mongolian_cs_as;
+GO
+~~START~~
+varchar
+гл
+~~END~~
+
