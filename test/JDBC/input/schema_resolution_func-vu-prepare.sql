@@ -66,6 +66,3 @@ select schema_resolution_func_vu_prepare_s1.schema_resolution_func_vu_prepare_f1
 select * from dbo.schema_resolution_func_vu_prepare_v1;
 go
 
-create database schema_resolution_func_vu_prepare_d1;
-go
-
