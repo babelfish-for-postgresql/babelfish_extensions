@@ -559,6 +559,72 @@ int#!#numeric
 2#!#11000.00
 ~~END~~
 
+SELECT count(*), sum(amount) + 100 FROM overflow_test;
+~~START~~
+int#!#numeric
+2#!#11100.00
+~~END~~
+
+SELECT count(*), sum(amount) - 100 FROM overflow_test;
+~~START~~
+int#!#numeric
+2#!#10900.00
+~~END~~
+
+SELECT count(*), sum(amount) * 100 FROM overflow_test;
+~~START~~
+int#!#numeric
+2#!#1100000.00
+~~END~~
+
+SELECT count(*), sum(amount) / 100 FROM overflow_test;
+~~START~~
+int#!#numeric
+2#!#110.00
+~~END~~
+
+SELECT count(*), sum(amount) % 100 FROM overflow_test;
+~~START~~
+int#!#numeric
+2#!#0.00
+~~END~~
+
+SELECT count(*), avg(amount) + 100 FROM overflow_test;
+~~START~~
+int#!#numeric
+2#!#5600.000000
+~~END~~
+
+SELECT count(*), avg(amount) - 100 FROM overflow_test;
+~~START~~
+int#!#numeric
+2#!#5400.000000
+~~END~~
+
+SELECT count(*), avg(amount) * 100 FROM overflow_test;
+~~START~~
+int#!#numeric
+2#!#550000.000000
+~~END~~
+
+SELECT count(*), avg(amount) / 100 FROM overflow_test;
+~~START~~
+int#!#numeric
+2#!#55.000000
+~~END~~
+
+SELECT count(*), avg(amount) % 100 FROM overflow_test;
+~~START~~
+int#!#numeric
+2#!#0.000000
+~~END~~
+
+SELECT (100 / SUM((((amount) * 8.00) / 1024))) FROM overflow_test;
+~~START~~
+numeric
+1.16363636363636360000000000
+~~END~~
+
 DROP TABLE overflow_test;
 
 # BABEL-3157
@@ -648,6 +714,78 @@ With Top11 as (select top (11) * from overflow_test) select sum(amount1), sum(am
 ~~START~~
 numeric#!#numeric#!#numeric#!#numeric#!#numeric#!#numeric
 109999.89#!#10999.989#!#10990.35802458#!#9999.990000#!#999.999000#!#999.12345678
+~~END~~
+
+DROP TABLE overflow_test;
+
+#BABEL-3180
+CREATE TABLE overflow_test (id integer PRIMARY KEY, amount decimal(38, 2));
+INSERT INTO overflow_test VALUES (1, 555555555555555555555555555555555555.23);
+~~ROW COUNT: 1~~
+
+SELECT amount + 100 FROM overflow_test where id = 1;
+~~START~~
+numeric
+555555555555555555555555555555555655.23
+~~END~~
+
+SELECT amount - 100 FROM overflow_test where id = 1;
+~~START~~
+numeric
+555555555555555555555555555555555455.23
+~~END~~
+
+SELECT amount * 100 FROM overflow_test where id = 1;
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Arithmetic overflow error for data type numeric.)~~
+
+SELECT amount / 100 FROM overflow_test where id = 1;
+~~START~~
+numeric
+5555555555555555555555555555555555.55
+~~END~~
+
+SELECT amount % 100 FROM overflow_test where id = 1;
+~~START~~
+numeric
+55.23
+~~END~~
+
+DROP TABLE overflow_test;
+
+CREATE TABLE overflow_test (num1 decimal(38,0), num2 decimal(38, 0));
+INSERT INTO overflow_test VALUES (55555555555555555555555555555555555, 55555555555555555555555555555555555);
+~~ROW COUNT: 1~~
+
+SELECT num1 + num2 from overflow_test;
+~~START~~
+numeric
+111111111111111111111111111111111110
+~~END~~
+
+SELECT num1 - num2 from overflow_test;
+~~START~~
+numeric
+0
+~~END~~
+
+DROP TABLE overflow_test;
+
+CREATE TABLE overflow_test (num1 decimal(38,0), num2 int);
+INSERT INTO overflow_test VALUES (55555555555555555555555555555555555, 555555555);
+~~ROW COUNT: 1~~
+
+SELECT num1 + num2 from overflow_test;
+~~START~~
+numeric
+55555555555555555555555556111111110
+~~END~~
+
+SELECT num1 - num2 from overflow_test;
+~~START~~
+numeric
+55555555555555555555555555000000000
 ~~END~~
 
 DROP TABLE overflow_test;

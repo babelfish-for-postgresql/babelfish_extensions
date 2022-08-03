@@ -184,6 +184,17 @@ CREATE TABLE overflow_test (id integer PRIMARY KEY, amount decimal(6, 2));
 INSERT INTO overflow_test VALUES (1, 5000.00);
 INSERT INTO overflow_test VALUES (2, 6000.00);
 SELECT count(*), sum(amount) FROM overflow_test;
+SELECT count(*), sum(amount) + 100 FROM overflow_test;
+SELECT count(*), sum(amount) - 100 FROM overflow_test;
+SELECT count(*), sum(amount) * 100 FROM overflow_test;
+SELECT count(*), sum(amount) / 100 FROM overflow_test;
+SELECT count(*), sum(amount) % 100 FROM overflow_test;
+SELECT count(*), avg(amount) + 100 FROM overflow_test;
+SELECT count(*), avg(amount) - 100 FROM overflow_test;
+SELECT count(*), avg(amount) * 100 FROM overflow_test;
+SELECT count(*), avg(amount) / 100 FROM overflow_test;
+SELECT count(*), avg(amount) % 100 FROM overflow_test;
+SELECT (100 / SUM((((amount) * 8.00) / 1024))) FROM overflow_test;
 DROP TABLE overflow_test;
 
 # BABEL-3157
@@ -218,4 +229,26 @@ INSERT INTO overflow_test VALUES (1, 9999.99, 999.999, 999.12345678), (2, 9999.9
 select sum(amount1), sum(amount2), sum(amount3), avg(amount1), avg(amount2), avg(amount3) from overflow_test;
 With Top10 as (select top (10) * from overflow_test) select sum(amount1), sum(amount2), sum(amount3), avg(amount1), avg(amount2), avg(amount3) from Top10;
 With Top11 as (select top (11) * from overflow_test) select sum(amount1), sum(amount2), sum(amount3), avg(amount1), avg(amount2), avg(amount3) from Top11;
+DROP TABLE overflow_test;
+
+#BABEL-3180
+CREATE TABLE overflow_test (id integer PRIMARY KEY, amount decimal(38, 2));
+INSERT INTO overflow_test VALUES (1, 555555555555555555555555555555555555.23);
+SELECT amount + 100 FROM overflow_test where id = 1;
+SELECT amount - 100 FROM overflow_test where id = 1;
+SELECT amount * 100 FROM overflow_test where id = 1;
+SELECT amount / 100 FROM overflow_test where id = 1;
+SELECT amount % 100 FROM overflow_test where id = 1;
+DROP TABLE overflow_test;
+
+CREATE TABLE overflow_test (num1 decimal(38,0), num2 decimal(38, 0));
+INSERT INTO overflow_test VALUES (55555555555555555555555555555555555, 55555555555555555555555555555555555);
+SELECT num1 + num2 from overflow_test;
+SELECT num1 - num2 from overflow_test;
+DROP TABLE overflow_test;
+
+CREATE TABLE overflow_test (num1 decimal(38,0), num2 int);
+INSERT INTO overflow_test VALUES (55555555555555555555555555555555555, 555555555);
+SELECT num1 + num2 from overflow_test;
+SELECT num1 - num2 from overflow_test;
 DROP TABLE overflow_test;
