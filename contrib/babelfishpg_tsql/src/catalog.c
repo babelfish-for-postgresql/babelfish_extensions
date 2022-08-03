@@ -990,12 +990,20 @@ check_is_tsql_view(Oid relid)
 	schema_name = get_namespace_name(schema_oid);
 	if (view_name == NULL || schema_name == NULL)
 	{
+		if (view_name)
+			pfree(view_name);
+		if (schema_name)
+			pfree(schema_name);
 		return false;
 	}
 	logical_schema_name = get_logical_schema_name(schema_name, true);
 	logical_dbid = get_dbid_from_physical_schema_name(schema_name, true);
 	if (logical_schema_name == NULL || !DbidIsValid(logical_dbid))
 	{
+		pfree(view_name);
+		pfree(schema_name);
+		if (logical_schema_name)
+			pfree(logical_schema_name);
 		return false;
 	}
 	/* Fetch the relation */
@@ -1009,6 +1017,9 @@ check_is_tsql_view(Oid relid)
 		heap_freetuple(scantup);
 	}
 	table_close(bbf_view_def_rel, AccessShareLock);
+	pfree(view_name);
+	pfree(schema_name);
+	pfree(logical_schema_name);
 	return is_tsql_view;
 }
 
