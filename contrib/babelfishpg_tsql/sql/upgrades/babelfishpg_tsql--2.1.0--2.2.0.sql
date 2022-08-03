@@ -2209,6 +2209,7 @@ SELECT
     , CAST(0 as int) as cells_per_object
 WHERE FALSE;
 GRANT SELECT ON sys.spatial_index_tessellations TO PUBLIC;
+
 create or replace view sys.all_objects as
 select 
     cast (name as sys.sysname) 
@@ -2323,8 +2324,15 @@ select
       when 'p' then 'P'::varchar(2)
       when 'a' then 'AF'::varchar(2)
       else
-        case format_type(p.prorettype, null) when 'trigger'
-          then 'TR'::varchar(2)
+        case 
+          when format_rettype = 'trigger'
+            then 'TR'::varchar(2)
+          when func_results LIKE 'TABLE(%' then
+            case 
+              when format_rettype = 'record'
+                then 'IF'::varchar(2)
+              else 'TF'::varchar(2)
+            end
           else 'FN'::varchar(2)
         end
     end as type
@@ -2332,8 +2340,15 @@ select
       when 'p' then 'SQL_STORED_PROCEDURE'::varchar(60)
       when 'a' then 'AGGREGATE_FUNCTION'::varchar(60)
       else
-        case format_type(p.prorettype, null) when 'trigger'
-          then 'SQL_TRIGGER'::varchar(60)
+        case 
+          when format_rettype = 'trigger'
+            then 'SQL_TRIGGER'::varchar(60)
+          when func_results LIKE 'TABLE(%' then
+            case 
+              when format_rettype = 'record'
+                then 'SQL_INLINE_TABLE_VALUED_FUNCTION'::varchar(60)
+              else 'SQL_TABLE_VALUED_FUNCTION'::varchar(60)
+            end
           else 'SQL_SCALAR_FUNCTION'::varchar(60)
         end
     end as type_desc
@@ -2344,7 +2359,9 @@ select
   , 0 as is_schema_published
 from pg_proc p
 inner join pg_namespace s on s.oid = p.pronamespace
-left join pg_trigger tr on tr.tgfoid = p.oid
+left join pg_trigger tr on tr.tgfoid = p.oid,
+format_type(p.prorettype, null) format_rettype,
+pg_get_function_result(p.oid) func_results
 where (s.oid in (select schema_id from sys.schemas) or s.nspname = 'sys')
 and has_schema_privilege(s.oid, 'USAGE')
 and has_function_privilege(p.oid, 'EXECUTE')
