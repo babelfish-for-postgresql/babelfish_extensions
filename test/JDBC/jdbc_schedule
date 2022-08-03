@@ -30,3 +30,6 @@ ignore#!#BABEL-EXTENDEDPROPERTY
 ignore#!#BABEL-3147-before-14_5-vu-prepare
 ignore#!#BABEL-3147-before-14_5-vu-verify
 ignore#!#BABEL-3147-before-14_5-vu-cleanup
+ignore#!#TestErrorHelperFunctionsUpgrade-vu-prepare
+ignore#!#TestErrorHelperFunctionsUpgrade-vu-verify
+ignore#!#TestErrorHelperFunctionsUpgrade-vu-cleanup

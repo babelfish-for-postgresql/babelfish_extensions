@@ -3135,6 +3135,20 @@ FROM sys.events e
 WHERE e.is_trigger_event = 1;
 GRANT SELECT ON sys.trigger_events TO PUBLIC;
 
+ALTER FUNCTION sys.fn_mapped_system_error_list() RENAME TO fn_mapped_system_error_list_deprecated_in_2_2_0;
+
+CREATE OR REPLACE FUNCTION sys.fn_mapped_system_error_list_deprecated_in_2_2_0()
+returns table (sql_error_code int)
+AS 'babelfishpg_tsql', 'babel_list_mapped_error_deprecated_in_2_2_0'
+LANGUAGE C IMMUTABLE STRICT;
+
+CREATE OR REPLACE FUNCTION sys.fn_mapped_system_error_list ()
+returns table (pg_sql_state sys.nvarchar(5), error_message sys.nvarchar(4000), error_msg_parameters sys.nvarchar(4000), sql_error_code int)
+AS 'babelfishpg_tsql', 'babel_list_mapped_error'
+LANGUAGE C IMMUTABLE STRICT;
+
+CALL sys.babelfish_drop_deprecated_function('sys', 'fn_mapped_system_error_list_deprecated_in_2_2_0');
+
 -- Drops the temporary procedure used by the upgrade script.
 -- Please have this be one of the last statements executed in this upgrade script.
 DROP PROCEDURE sys.babelfish_drop_deprecated_view(varchar, varchar);
