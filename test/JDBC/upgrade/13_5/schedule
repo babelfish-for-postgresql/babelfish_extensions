@@ -31,6 +31,7 @@ TestMoney
 TestVarChar
 TestNumeric
 TestXML
+BABEL-2747
 BABEL-2934
 BABEL-3121
 BABEL-3166
@@ -40,6 +41,7 @@ BABEL-3204
 fulltextserviceproperty
 is_srvrolemember
 msdb-dbo-fn_syspolicy_is_automation_enabled
+objectproperty
 objectpropertyex
 sys-column-property
 sys-datefirst
