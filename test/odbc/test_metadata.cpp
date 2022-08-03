@@ -460,8 +460,7 @@ TEST_F(Metadata, DISABLED_SQLColumns) {
 }
 
 // Tests SQLProcedures for success
-// DISABLED: PLEASE SEE BABELFISH-119
-TEST_F(Metadata, DISABLED_SQLProcedures) {
+TEST_F(Metadata, SQLProcedures) {
 
   OdbcHandler odbcHandler;
   RETCODE rcode;
@@ -534,8 +533,7 @@ TEST_F(Metadata, DISABLED_SQLProcedures) {
 }
 
 // Tests SQLProcedureColumns for success
-// DISABLED: PLEASE SEE BABELFISH-120
-TEST_F(Metadata, DISABLED_SQLProcedureColumns) {
+TEST_F(Metadata, SQLProcedureColumns) {
 
   OdbcHandler odbcHandler;
   RETCODE rcode;
@@ -812,8 +810,7 @@ TEST_F(Metadata, SQLGetTypeInfo) {
 }
 
 // Test SQLTables to retrieve catalogs
-// DISABLED: PLEASE SEE BABELFISH-132
-TEST_F(Metadata, DISABLED_SQLTables_Catalogs) {
+TEST_F(Metadata, SQLTables_Catalogs) {
 	 
 	OdbcHandler odbcHandler;
 	RETCODE rcode = -1;
@@ -836,8 +833,7 @@ TEST_F(Metadata, DISABLED_SQLTables_Catalogs) {
 }
 
 // Test SQLTables to retrieve tables
-// DISABLED: PLEASE SEE BABELFISH-132
-TEST_F(Metadata, DISABLED_SQLTables_Tables) {
+TEST_F(Metadata, SQLTables_Tables) {
 	 
 	OdbcHandler odbcHandler;
 	RETCODE rcode = -1;
@@ -883,8 +879,7 @@ TEST_F(Metadata, DISABLED_SQLTables_Tables) {
 }
 
 // Test SQLTables to retrieve views
-// DISABLED: PLEASE SEE BABELFISH-132
-TEST_F(Metadata, DISABLED_SQLTables_Views) {
+TEST_F(Metadata, SQLTables_Views) {
 	 
 	OdbcHandler odbcHandler;
 	RETCODE rcode = -1;
