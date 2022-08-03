@@ -260,6 +260,11 @@ master#!#dbo#!#def_v2#!#create view  def_v2<newline>as<newline>select 							2 a
 ~~END~~
 
 
+-- psql
+alter view master_dbo.def_v1_renamed rename to def_v1;
+go
+
+-- tsql
 -- CASE: create view in different schema and db
 create schema def_sch1;
 go
@@ -443,7 +448,7 @@ master#!#def_sch1#!#def_v1#!#create view def_sch1.def_v1 as select 1;
 ~~END~~
 
 
-drop view def_v1_renamed, def_v2, def_v5, def_v6;
+drop view def_v1, def_v2, def_v5, def_v6;
 go
 
 drop table vd_t1;

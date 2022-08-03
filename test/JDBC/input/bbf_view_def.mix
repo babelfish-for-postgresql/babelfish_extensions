@@ -154,6 +154,11 @@ go
 select sb.name, vd.schema_name, vd.object_name, vd.definition from babelfish_view_def vd left join sys.sysdatabases sb on vd.dbid=sb.dbid order by vd.dbid, vd.schema_name, vd.object_name, vd.definition;
 go
 
+-- psql
+alter view master_dbo.def_v1_renamed rename to def_v1;
+go
+
+-- tsql
 -- CASE: create view in different schema and db
 create schema def_sch1;
 go
@@ -279,7 +284,7 @@ go
 select sb.name, vd.schema_name, vd.object_name, vd.definition from babelfish_view_def vd left join sys.sysdatabases sb on vd.dbid=sb.dbid order by vd.dbid, vd.schema_name, vd.object_name, vd.definition;
 go
 
-drop view def_v1_renamed, def_v2, def_v5, def_v6;
+drop view def_v1, def_v2, def_v5, def_v6;
 go
 
 drop table vd_t1;
