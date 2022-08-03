@@ -1,12 +1,10 @@
 Could not find dependencies on
 Collation sys.arabic_ci_ai
-Collation sys.arabic_ci_as
 Collation sys.arabic_cs_as
 Collation sys.bbf_unicode_bin2
 Collation sys.bbf_unicode_cp1250_ci_ai
 Collation sys.bbf_unicode_cp1250_ci_as
 Collation sys.bbf_unicode_cp1250_cs_ai
-Collation sys.bbf_unicode_cp1250_cs_as
 Collation sys.bbf_unicode_cp1251_ci_ai
 Collation sys.bbf_unicode_cp1251_ci_as
 Collation sys.bbf_unicode_cp1251_cs_ai
@@ -73,7 +71,6 @@ Collation sys.french_ci_ai
 Collation sys.french_ci_as
 Collation sys.french_cs_as
 Collation sys.greek_ci_ai
-Collation sys.greek_ci_as
 Collation sys.greek_cs_as
 Collation sys.hebrew_ci_ai
 Collation sys.hebrew_ci_as
@@ -88,10 +85,8 @@ Collation sys.modern_spanish_ci_ai
 Collation sys.modern_spanish_ci_as
 Collation sys.modern_spanish_cs_as
 Collation sys.mongolian_ci_ai
-Collation sys.mongolian_ci_as
 Collation sys.mongolian_cs_as
 Collation sys.polish_ci_ai
-Collation sys.polish_ci_as
 Collation sys.polish_cs_as
 Collation sys.thai_ci_ai
 Collation sys.thai_ci_as
@@ -127,7 +122,6 @@ Function sys."nchar"(sys."nchar",integer,boolean)
 Function sys."nchar"(sys.varbinary)
 Function sys."session_user"()
 Function sys."substring"(sys."nchar",integer,integer)
-Function sys."substring"(sys."varchar",integer,integer)
 Function sys."substring"(sys.nvarchar,integer,integer)
 Function sys."substring"(text,integer,integer)
 Function sys.abs(sys.fixeddecimal)
