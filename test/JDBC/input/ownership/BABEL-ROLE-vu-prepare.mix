@@ -1,3 +1,4 @@
+-- tsql
 CREATE PROC babel_role_vu_prepare_user_ext_master AS
 BEGIN 
 	SELECT rolname, type, orig_username, database_name
