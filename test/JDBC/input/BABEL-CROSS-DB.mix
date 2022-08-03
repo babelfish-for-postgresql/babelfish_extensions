@@ -55,7 +55,6 @@ GO
 SELECT * FROM master..master_t1 ORDER BY id;
 GO
 
--- TODO: BABEL-3403 Expects error due to incorrect schema resolution when the object inside the procedure is schema qualified
 EXEC master.dbo.master_p1
 GO
 
@@ -129,7 +128,6 @@ INSERT INTO dbo.db1_t1 (a)
 EXECUTE master.dbo.master_p1;
 GO
 
--- Expect an error
 EXECUTE master.dbo.master_p1;
 GO
 

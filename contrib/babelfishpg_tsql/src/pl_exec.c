@@ -460,7 +460,7 @@ static void pltsql_clean_table_variables(PLtsql_execstate *estate, PLtsql_functi
 static void pltsql_init_exec_error_data(PLtsqlErrorData *error_data);
 static void pltsql_copy_exec_error_data(PLtsqlErrorData *src, PLtsqlErrorData *dst, MemoryContext dstCxt);
 PLtsql_estate_err *pltsql_clone_estate_err(PLtsql_estate_err *err);
-bool reset_search_path(PLtsql_stmt_execsql *stmt, char *old_search_path);
+bool reset_search_path(PLtsql_stmt_execsql *stmt, char *old_search_path, bool* reset_session_properties);
 
 extern void pltsql_init_anonymous_cursors(PLtsql_execstate *estate);
 extern void pltsql_cleanup_local_cursors(PLtsql_execstate *estate);
@@ -4601,6 +4601,7 @@ exec_stmt_execsql(PLtsql_execstate *estate,
 	Oid			current_user_id = GetUserId();
 	bool		need_path_reset = false;
 	char		*cur_dbname = get_cur_db_name();
+	bool            reset_session_properties = false;
 	/* fetch current search_path */
 	List 		*path_oids = fetch_search_path(false);
 	char 		*old_search_path = flatten_search_path(path_oids);
@@ -4609,7 +4610,7 @@ exec_stmt_execsql(PLtsql_execstate *estate,
 		SetCurrentRoleId(GetSessionUserId(), false);
 	
 	if(stmt->is_dml || stmt->is_ddl)
-		need_path_reset = reset_search_path(stmt, old_search_path);
+		need_path_reset = reset_search_path(stmt, old_search_path, &reset_session_properties);
 
 	PG_TRY();
 	{
@@ -4987,6 +4988,8 @@ exec_stmt_execsql(PLtsql_execstate *estate,
 	 		(void) set_config_option("search_path", old_search_path,
 	 					PGC_USERSET, PGC_S_SESSION,
 	 					GUC_ACTION_SAVE, true, 0, false);
+		if(reset_session_properties)
+			set_session_properties(cur_dbname);
 		if (stmt->is_cross_db)
 			SetCurrentRoleId(current_user_id, false);
 		list_free(path_oids);
@@ -4998,6 +5001,8 @@ exec_stmt_execsql(PLtsql_execstate *estate,
 	 	(void) set_config_option("search_path", old_search_path,
 	 				PGC_USERSET, PGC_S_SESSION,
 	 				GUC_ACTION_SAVE, true, 0, false);
+	if(reset_session_properties)
+		set_session_properties(cur_dbname);
 	if (stmt->is_cross_db)
 		SetCurrentRoleId(current_user_id, false);
 	list_free(path_oids);
@@ -10035,7 +10040,7 @@ pltsql_clone_estate_err(PLtsql_estate_err *err)
 	return clone;
 }
 
-bool reset_search_path(PLtsql_stmt_execsql *stmt, char *old_search_path)
+bool reset_search_path(PLtsql_stmt_execsql *stmt, char *old_search_path, bool* reset_session_properties)
 {
 	PLExecStateCallStack *top_es_entry;
 	char		*cur_dbname = get_cur_db_name();
@@ -10046,22 +10051,6 @@ bool reset_search_path(PLtsql_stmt_execsql *stmt, char *old_search_path)
 	const char	*schema;
 	top_es_entry = exec_state_call_stack->next;
 
-	/*
-	 * When there is a function call:
-	 * search the specified schema for the object. If not found,
-	 * then search the dbo schema. Don't update the path for "sys" schema.
-	 */
-	if (stmt->func_call && stmt->schema_name != NULL && strncmp(stmt->schema_name, "sys", strlen(stmt->schema_name)) != 0)
-	{
-		physical_schema = get_physical_schema_name(cur_dbname, stmt->schema_name);
-		dbo_schema = get_dbo_schema_name(cur_dbname);
-		new_search_path = psprintf("%s, %s, %s", physical_schema, dbo_schema, old_search_path);
-		/* Add the schema where the object is referenced and dbo schema to the new search path */
-		(void) set_config_option("search_path", new_search_path,
-						PGC_USERSET, PGC_S_SESSION,
-						GUC_ACTION_SAVE, true, 0, false);
-		return true;
-	}
 	while(top_es_entry != NULL)
 	{
 		/* traverse through the estate stack. If the occurrence of
@@ -10076,9 +10065,9 @@ bool reset_search_path(PLtsql_stmt_execsql *stmt, char *old_search_path)
 				{
 					/*
 					 * Don't change the search path, if the statement inside
-					 * the procedure is schema qualified.
+					 * the procedure is a function or schema qualified.
 					 */
-					if(stmt->is_schema_specified)
+					if(stmt->func_call || stmt->is_schema_specified)
 						break;
 					else
 					{
@@ -10088,8 +10077,17 @@ bool reset_search_path(PLtsql_stmt_execsql *stmt, char *old_search_path)
 				}
 				else
 				{
-					physical_schema = get_physical_schema_name(top_es_entry->estate->db_name, top_es_entry->estate->schema_name);
-					dbo_schema = get_dbo_schema_name(top_es_entry->estate->db_name);
+					if (stmt->func_call || stmt->is_schema_specified)
+					{
+						set_session_properties(top_es_entry->estate->db_name);
+						*reset_session_properties = true;
+						break;
+					}
+					else
+					{
+						physical_schema = get_physical_schema_name(top_es_entry->estate->db_name, top_es_entry->estate->schema_name);
+						dbo_schema = get_dbo_schema_name(top_es_entry->estate->db_name);
+					}
 				}
 				new_search_path = psprintf("%s, %s, %s", physical_schema, dbo_schema, old_search_path);
 				/* Add the schema where the object is referenced and dbo schema to the new search path */
@@ -10100,14 +10098,23 @@ bool reset_search_path(PLtsql_stmt_execsql *stmt, char *old_search_path)
 			}
 			else if(top_es_entry->estate->db_name != NULL && stmt->is_ddl)
 			{
-				user = get_user_for_database(top_es_entry->estate->db_name);
-				schema = get_authid_user_ext_schema_name(top_es_entry->estate->db_name, user);
-				physical_schema = get_physical_schema_name(top_es_entry->estate->db_name, schema);
-				new_search_path = psprintf("%s, %s", physical_schema, old_search_path);
-				/* Add default schema to the new search path */
-				(void) set_config_option("search_path", new_search_path,
-								PGC_USERSET, PGC_S_SESSION,
-								GUC_ACTION_SAVE, true, 0, false);
+				if (stmt->is_schema_specified)
+				{
+					set_session_properties(top_es_entry->estate->db_name);
+					*reset_session_properties = true;
+					break;
+				}
+				else
+				{
+					user = get_user_for_database(top_es_entry->estate->db_name);
+					schema = get_authid_user_ext_schema_name(top_es_entry->estate->db_name, user);
+					physical_schema = get_physical_schema_name(top_es_entry->estate->db_name, schema);
+					new_search_path = psprintf("%s, %s", physical_schema, old_search_path);
+					/* Add default schema to the new search path */
+					(void) set_config_option("search_path", new_search_path,
+									PGC_USERSET, PGC_S_SESSION,
+									GUC_ACTION_SAVE, true, 0, false);
+				}
 				return true;
 			}
 		}
@@ -10116,6 +10123,25 @@ bool reset_search_path(PLtsql_stmt_execsql *stmt, char *old_search_path)
 				top_es_entry->estate->err_stmt->cmd_type == PLTSQL_STMT_EXEC_BATCH)
 			return false;
 		top_es_entry = top_es_entry->next;
+	}
+	/*
+	 * When there is a function call:
+	 * search the specified schema for the object. If not found,
+	 * then search the dbo schema. Don't update the path for "sys" schema.
+	 */
+	if (stmt->func_call && stmt->schema_name != NULL &&
+			((strncmp(stmt->schema_name, "sys", strlen(stmt->schema_name)) != 0 && strlen(stmt->schema_name) == 3)
+			|| strlen(stmt->schema_name) != 3))
+	{
+		cur_dbname = get_cur_db_name();
+		physical_schema = get_physical_schema_name(cur_dbname, stmt->schema_name);
+		dbo_schema = get_dbo_schema_name(cur_dbname);
+		new_search_path = psprintf("%s, %s, %s", physical_schema, dbo_schema, old_search_path);
+		/* Add the schema where the object is referenced and dbo schema to the new search path */
+		(void) set_config_option("search_path", new_search_path,
+						PGC_USERSET, PGC_S_SESSION,
+						GUC_ACTION_SAVE, true, 0, false);
+		return true;
 	}
 	return false;
 }
