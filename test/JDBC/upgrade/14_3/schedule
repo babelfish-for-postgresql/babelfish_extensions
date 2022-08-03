@@ -120,3 +120,4 @@ collation_tests_greek
 collation_tests_mongolian
 collation_tests_polish
 collation_tests
+TestErrorHelperFunctionsUpgrade

@@ -1445,6 +1445,14 @@ typedef struct PLtsql_instr_plugin
 	bool (*pltsql_instr_increment_func_metric) (const char *funcName);
 } PLtsql_instr_plugin;
 
+typedef struct error_map_details_t{
+	char sql_state[5];
+	const char *error_message;
+	int tsql_error_code;
+	int tsql_error_severity;
+	char *error_msg_keywords;
+}error_map_details_t;
+
 /*
  * A PLtsql_protocol_plugin structure represents a protocol plugin that can be
  * used with this extension.
@@ -1571,7 +1579,9 @@ typedef struct PLtsql_protocol_plugin
 
 	char* (*pltsql_get_login_default_db) (char *login_name);
 
-	int* (*get_mapped_error_list) (void);
+	error_map_details_t * (*get_mapped_error_list) (void);
+
+	int* (*get_mapped_tsql_error_code_list) (void);
 
 	int (*bulk_load_callback) (int ncol, int nrow, Oid *argtypes,
 				Datum *Values, const char *Nulls, bool *Defaults);

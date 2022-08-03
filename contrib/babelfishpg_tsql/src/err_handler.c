@@ -4,8 +4,13 @@
 #include "datatypes.h"
 #include "err_handler.h"
 #include "funcapi.h"
+#include "miscadmin.h"
+#include "utils/builtins.h"
+#include "utils/syscache.h"
 
+#define FN_MAPPED_SYSTEM_ERROR_LIST_COLS 4
 PG_FUNCTION_INFO_V1(babel_list_mapped_error);
+PG_FUNCTION_INFO_V1(babel_list_mapped_error_deprecated_in_2_2_0);
 
 /*
  * Certain tsql error code can behave differently depending on when it is
@@ -415,7 +420,7 @@ find_innermost_catch_block(void)
 }
 
 Datum
-babel_list_mapped_error(PG_FUNCTION_ARGS)
+babel_list_mapped_error_deprecated_in_2_2_0(PG_FUNCTION_ARGS)
 {
 	/* To hold the list of supported SQL error code */
 	int *list = NULL;
@@ -432,7 +437,7 @@ babel_list_mapped_error(PG_FUNCTION_ARGS)
 		funcctx = SRF_FIRSTCALL_INIT();
 		oldcontext = MemoryContextSwitchTo(funcctx->multi_call_memory_ctx);
 		if (*pltsql_protocol_plugin_ptr && (*pltsql_protocol_plugin_ptr)->get_mapped_error_list)
-			list = (*pltsql_protocol_plugin_ptr)->get_mapped_error_list();
+			list = (*pltsql_protocol_plugin_ptr)->get_mapped_tsql_error_code_list();
 
 		funcctx->user_fctx = (void *) list;
 		funcctx->max_calls = list[0];
@@ -449,6 +454,80 @@ babel_list_mapped_error(PG_FUNCTION_ARGS)
 		SRF_RETURN_NEXT(funcctx, Int32GetDatum(list[call_cntr + 1]));
 	else
 		SRF_RETURN_DONE(funcctx);
+}
+
+Datum
+babel_list_mapped_error(PG_FUNCTION_ARGS)
+{
+	/* To hold the list of supported SQL error code */
+	error_map_details_t *list = NULL;
+
+	/* SRF related things to keep enough state between calls */
+	ReturnSetInfo *rsinfo = (ReturnSetInfo *) fcinfo->resultinfo;
+	Tuplestorestate *tupstore;
+	TupleDesc	tupdesc;
+	int		call_cntr = 0;
+	MemoryContext	oldcontext;
+	MemoryContext	per_query_ctx;
+	Oid		nspoid = get_namespace_oid("sys", false);
+	Oid		sys_varcharoid = GetSysCacheOid2(TYPENAMENSP, Anum_pg_type_oid, CStringGetDatum("nvarchar"), ObjectIdGetDatum(nspoid));
+
+	/* check to see if caller supports us returning a tuplestore */
+	if (rsinfo == NULL || !IsA(rsinfo, ReturnSetInfo))
+		ereport(ERROR,
+				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+				 errmsg("set-valued function called in context that cannot accept a set")));
+
+	if (!(rsinfo->allowedModes & SFRM_Materialize))
+		ereport(ERROR,
+				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+				 errmsg("materialize mode required, but it is not allowed in this context")));
+
+	/* Create tuple descriptor for the result set. */
+	tupdesc = CreateTemplateTupleDesc(FN_MAPPED_SYSTEM_ERROR_LIST_COLS);
+	TupleDescInitEntry(tupdesc, (AttrNumber) 1, "pg_sql_state", sys_varcharoid, 5, 0);
+	TupleDescInitEntry(tupdesc, (AttrNumber) 2, "error_message", sys_varcharoid, 4000, 0);
+	TupleDescInitEntry(tupdesc, (AttrNumber) 3, "error_msg_parameters", sys_varcharoid, 4000, 0);
+	TupleDescInitEntry(tupdesc, (AttrNumber) 4, "sql_error_code", INT4OID, -1, 0);
+	tupdesc = BlessTupleDesc(tupdesc);
+
+	per_query_ctx = rsinfo->econtext->ecxt_per_query_memory;
+	oldcontext = MemoryContextSwitchTo(per_query_ctx);
+
+	tupstore = tuplestore_begin_heap(true, false, work_mem);
+	rsinfo->returnMode = SFRM_Materialize;
+	rsinfo->setResult = tupstore;
+	rsinfo->setDesc = tupdesc;
+
+	MemoryContextSwitchTo(oldcontext);
+
+	if (*pltsql_protocol_plugin_ptr && (*pltsql_protocol_plugin_ptr)->get_mapped_error_list)
+		list = (*pltsql_protocol_plugin_ptr)->get_mapped_error_list();
+
+	if (list == NULL)
+		return (Datum) 0;
+
+	while (1)
+	{
+		Datum		values[4];
+		bool		nulls[4] = {false, false, false, false};
+
+		/* Last record would have error_message = NULL. */
+		if (list[call_cntr].error_message == NULL)
+			break;
+
+		values[0] = CStringGetTextDatum(list[call_cntr].sql_state);
+		values[1] = CStringGetTextDatum(list[call_cntr].error_message);
+		values[2] = CStringGetTextDatum(list[call_cntr].error_msg_keywords);
+		values[3] = Int32GetDatum(list[call_cntr].tsql_error_code);
+
+		tuplestore_putvalues(tupstore, tupdesc, values, nulls);
+		call_cntr += 1;
+	}
+	/* clean up and return the tuplestore */
+	tuplestore_donestoring(tupstore);
+
+	return (Datum) 0;
 }
 
 /* 
