@@ -44,3 +44,18 @@ select * from dbo.schema_resolution_proc_t1;
 select * from schema_resolution_proc_t1;
 select * from schema_resolution_proc_sch2.schema_resolution_proc_t1;
 go
+
+create proc schema_resolution_proc_sch1.schema_resolution_proc_create_insert
+as
+create table schema_resolution_proc_table1(a int);
+create table schema_resolution_proc_sch1.schema_resolution_proc_table1(a int);
+insert into schema_resolution_proc_table1 values(1);
+insert into schema_resolution_proc_sch1.schema_resolution_proc_table1 values(2);
+insert into dbo.schema_resolution_proc_table1 values(3);
+select * from schema_resolution_proc_table1;
+select * from dbo.schema_resolution_proc_table1;
+select * from schema_resolution_proc_sch1.schema_resolution_proc_table1;
+go
+
+create database schema_resolution_proc_d1;
+go

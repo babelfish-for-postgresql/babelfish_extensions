@@ -4989,7 +4989,10 @@ exec_stmt_execsql(PLtsql_execstate *estate,
 	 					PGC_USERSET, PGC_S_SESSION,
 	 					GUC_ACTION_SAVE, true, 0, false);
 		if(reset_session_properties)
+		{
 			set_session_properties(cur_dbname);
+			SetCurrentRoleId(current_user_id, false);
+		}
 		if (stmt->is_cross_db)
 			SetCurrentRoleId(current_user_id, false);
 		list_free(path_oids);
@@ -5002,7 +5005,10 @@ exec_stmt_execsql(PLtsql_execstate *estate,
 	 				PGC_USERSET, PGC_S_SESSION,
 	 				GUC_ACTION_SAVE, true, 0, false);
 	if(reset_session_properties)
+	{
 		set_session_properties(cur_dbname);
+		SetCurrentRoleId(current_user_id, false);
+	}
 	if (stmt->is_cross_db)
 		SetCurrentRoleId(current_user_id, false);
 	list_free(path_oids);
@@ -10047,8 +10053,6 @@ bool reset_search_path(PLtsql_stmt_execsql *stmt, char *old_search_path, bool* r
 	char 		*new_search_path;
 	char 		*physical_schema;
 	char		*dbo_schema;
-	const char	*user = NULL;
-	const char	*schema;
 	top_es_entry = exec_state_call_stack->next;
 
 	while(top_es_entry != NULL)
@@ -10098,24 +10102,9 @@ bool reset_search_path(PLtsql_stmt_execsql *stmt, char *old_search_path, bool* r
 			}
 			else if(top_es_entry->estate->db_name != NULL && stmt->is_ddl)
 			{
-				if (stmt->is_schema_specified)
-				{
-					set_session_properties(top_es_entry->estate->db_name);
-					*reset_session_properties = true;
-					break;
-				}
-				else
-				{
-					user = get_user_for_database(top_es_entry->estate->db_name);
-					schema = get_authid_user_ext_schema_name(top_es_entry->estate->db_name, user);
-					physical_schema = get_physical_schema_name(top_es_entry->estate->db_name, schema);
-					new_search_path = psprintf("%s, %s", physical_schema, old_search_path);
-					/* Add default schema to the new search path */
-					(void) set_config_option("search_path", new_search_path,
-									PGC_USERSET, PGC_S_SESSION,
-									GUC_ACTION_SAVE, true, 0, false);
-				}
-				return true;
+				set_session_properties(top_es_entry->estate->db_name);
+				*reset_session_properties = true;
+				break;
 			}
 		}
 		/* if the stmt is inside an exec_batch, return false */
