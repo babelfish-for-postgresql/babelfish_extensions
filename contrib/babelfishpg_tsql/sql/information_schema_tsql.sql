@@ -721,12 +721,12 @@ SELECT set_config('search_path', 'sys, '||current_setting('search_path'), false)
 * CONSTRAINT TABLE USAGE
 */
 CREATE OR REPLACE VIEW information_schema_tsql.constraint_table_usage
-AS SELECT sys.db_name()::sys.nvarchar(128) AS table_catalog,
-    sys.schema_name(nr.oid)::sys.nvarchar(128) AS table_schema,
-    r.relname::sys.sysname AS table_name,
-    sys.db_name()::sys.nvarchar(128) AS constraint_catalog,
-    sys.schema_name(nc.oid)::sys.nvarchar(128) AS constraint_schema,
-    c.conname::sys.sysname AS constraint_name
+AS SELECT sys.db_name()::sys.nvarchar(128) AS TABLE_CATALOG,
+    sys.schema_name(nr.oid)::sys.nvarchar(128) AS TABLE_SCHEMA,
+    r.relname::sys.sysname AS TABLE_NAME,
+    sys.db_name()::sys.nvarchar(128) AS CONSTRAINT_CATALOG,
+    sys.schema_name(nc.oid)::sys.nvarchar(128) AS CONSTRAINT_SCHEMA,
+    c.conname::sys.sysname AS CONSTRAINT_NAME
    FROM pg_constraint c,
     pg_namespace nc,
     pg_class r,
