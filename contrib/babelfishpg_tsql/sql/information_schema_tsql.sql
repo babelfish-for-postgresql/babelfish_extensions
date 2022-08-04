@@ -625,7 +625,7 @@ CREATE OR REPLACE VIEW information_schema_tsql.routines AS
            CAST(NULL AS sys.nvarchar(128)) AS "UDT_CATALOG",
            CAST(NULL AS sys.nvarchar(128)) AS "UDT_SCHEMA",
            CAST(NULL AS sys.nvarchar(128)) AS "UDT_NAME",
-	   CAST(case when is_tbl_type THEN 'table' when p.prokind = 'p' THEN 'NULL' ELSE tsql_type_name END AS sys.nvarchar(128)) AS "DATA_TYPE",
+	   CAST(case when is_tbl_type THEN 'table' when p.prokind = 'p' THEN NULL ELSE tsql_type_name END AS sys.nvarchar(128)) AS "DATA_TYPE",
            CAST(information_schema_tsql._pgtsql_char_max_length_for_routines(tsql_type_name, true_typmod)
                  AS int)
            AS "CHARACTER_MAXIMUM_LENGTH",
@@ -646,7 +646,7 @@ CREATE OR REPLACE VIEW information_schema_tsql.routines AS
                  * TODO: We need to first create mapping of collation name to char-set name;
                  * Until then return null.
             */
-	    CAST(case when tsql_type_name IN ('nchar','nvarchar') THEN 'UNICODE' when tsql_type_name IN ('char','varchar') THEN 'iso_1' ELSE 'NULL' END AS sys.nvarchar(128)) AS "CHARACTER_SET_NAME",
+	    CAST(case when tsql_type_name IN ('nchar','nvarchar') THEN 'UNICODE' when tsql_type_name IN ('char','varchar') THEN 'iso_1' ELSE NULL END AS sys.nvarchar(128)) AS "CHARACTER_SET_NAME",
 	    CAST(information_schema_tsql._pgtsql_numeric_precision(tsql_type_name, t.oid, true_typmod)
                         AS smallint)
             AS "NUMERIC_PRECISION",
@@ -680,7 +680,7 @@ CREATE OR REPLACE VIEW information_schema_tsql.routines AS
               CASE WHEN p.proisstrict THEN 'YES' ELSE 'NO' END END AS sys.nvarchar(10)) AS "IS_NULL_CALL",
             CAST(NULL AS sys.nvarchar(128)) AS "SQL_PATH",
             CAST('YES' AS sys.nvarchar(10)) AS "SCHEMA_LEVEL_ROUTINE",
-            CAST(0 AS smallint) AS "MAX_DYNAMIC_RESULT_SETS",
+            CAST(CASE p.prokind WHEN 'f' THEN 0 WHEN 'p' THEN -1 END AS smallint) AS "MAX_DYNAMIC_RESULT_SETS",
             CAST('NO' AS sys.nvarchar(10)) AS "IS_USER_DEFINED_CAST",
             CAST('NO' AS sys.nvarchar(10)) AS "IS_IMPLICITLY_INVOCABLE",
             CAST(NULL AS sys.datetime) AS "CREATED",
