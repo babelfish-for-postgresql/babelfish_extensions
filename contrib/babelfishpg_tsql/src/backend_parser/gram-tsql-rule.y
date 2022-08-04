@@ -3275,10 +3275,12 @@ datediff_arg:
 			| DAY_P									{ $$ = "day"; }
 			| TSQL_DD								{ $$ = "day"; }
 			| TSQL_D								{ $$ = "day"; }
+			| TSQL_WEEKDAY							{ $$ = "day"; }
+			| TSQL_W								{ $$ = "day"; }
+			| TSQL_DW								{ $$ = "day"; }
 			| TSQL_WEEK								{ $$ = "week"; }
 			| TSQL_WK								{ $$ = "week"; }
 			| TSQL_WW								{ $$ = "week"; }
-			| TSQL_W								{ $$ = "weekday"; }
 			| HOUR_P								{ $$ = "hour"; }
 			| TSQL_HH								{ $$ = "hour"; }
 			| MINUTE_P								{ $$ = "minute"; }
@@ -3316,6 +3318,7 @@ dateadd_arg:
 			| TSQL_WEEK								{ $$ = "week"; }
 			| TSQL_WK								{ $$ = "week"; }
 			| TSQL_WW								{ $$ = "week"; }
+			| TSQL_W								{ $$ = "weekday"; }
 			| TSQL_WEEKDAY							{ $$ = "weekday"; }
 			| TSQL_DW								{ $$ = "weekday"; }
 			| HOUR_P								{ $$ = "hour"; }
