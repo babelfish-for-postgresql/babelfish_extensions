@@ -152,9 +152,10 @@ The following build instructions comply with Ubuntu 20.04 and Amazon Linux 2 env
 
 1. Install the SQL server command line tools by following steps 1 - 3 under [Install the SQL Server command-line tools](https://docs.microsoft.com/en-us/sql/linux/quickstart-install-connect-red-hat?view=sql-server-ver15#tools). Use the RHEL7 URL in step 1.
 
-    - For convenience, add `/opt/mssql-tools/bin/` to your PATH environment variable. This enables you to run the tools without specifying the full path. For Z shell (the default shell for Cloud Desktop), add the following line to your `~/.zshrc` file: 
+    - For convenience, add `/opt/mssql-tools/bin/` and `~/postgres/bin` to your PATH environment variable. This enables you to run the tools without specifying the full path. For Z shell (the default shell for Cloud Desktop), add the following lines to your `~/.zshrc` file: 
     ```
     export PATH=/opt/mssql-tools/bin:$PATH
+    export PATH=~/postgres/bin:$PATH
     ```
 
 
