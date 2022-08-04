@@ -1070,8 +1070,8 @@ $$
 LANGUAGE 'pltsql';
 GRANT EXECUTE ON PROCEDURE sys.sp_tables TO PUBLIC;
 
-CREATE FUNCTION sys.fn_mapped_system_error_list ()
-returns table (sql_error_code int)
+CREATE OR REPLACE FUNCTION sys.fn_mapped_system_error_list ()
+returns table (pg_sql_state sys.nvarchar(5), error_message sys.nvarchar(4000), error_msg_parameters sys.nvarchar(4000), sql_error_code int)
 AS 'babelfishpg_tsql', 'babel_list_mapped_error'
 LANGUAGE C IMMUTABLE STRICT;
 GRANT ALL on FUNCTION sys.fn_mapped_system_error_list TO PUBLIC;

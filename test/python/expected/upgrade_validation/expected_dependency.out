@@ -1,12 +1,10 @@
 Could not find dependencies on
 Collation sys.arabic_ci_ai
-Collation sys.arabic_ci_as
 Collation sys.arabic_cs_as
 Collation sys.bbf_unicode_bin2
 Collation sys.bbf_unicode_cp1250_ci_ai
 Collation sys.bbf_unicode_cp1250_ci_as
 Collation sys.bbf_unicode_cp1250_cs_ai
-Collation sys.bbf_unicode_cp1250_cs_as
 Collation sys.bbf_unicode_cp1251_ci_ai
 Collation sys.bbf_unicode_cp1251_ci_as
 Collation sys.bbf_unicode_cp1251_cs_ai
@@ -73,7 +71,6 @@ Collation sys.french_ci_ai
 Collation sys.french_ci_as
 Collation sys.french_cs_as
 Collation sys.greek_ci_ai
-Collation sys.greek_ci_as
 Collation sys.greek_cs_as
 Collation sys.hebrew_ci_ai
 Collation sys.hebrew_ci_as
@@ -88,10 +85,8 @@ Collation sys.modern_spanish_ci_ai
 Collation sys.modern_spanish_ci_as
 Collation sys.modern_spanish_cs_as
 Collation sys.mongolian_ci_ai
-Collation sys.mongolian_ci_as
 Collation sys.mongolian_cs_as
 Collation sys.polish_ci_ai
-Collation sys.polish_ci_as
 Collation sys.polish_cs_as
 Collation sys.thai_ci_ai
 Collation sys.thai_ci_as
@@ -127,7 +122,6 @@ Function sys."nchar"(sys."nchar",integer,boolean)
 Function sys."nchar"(sys.varbinary)
 Function sys."session_user"()
 Function sys."substring"(sys."nchar",integer,integer)
-Function sys."substring"(sys."varchar",integer,integer)
 Function sys."substring"(sys.nvarchar,integer,integer)
 Function sys."substring"(text,integer,integer)
 Function sys.abs(sys.fixeddecimal)
@@ -361,19 +355,14 @@ Function sys.dateadd(text,integer,anyelement)
 Function sys.dateadd(text,integer,text)
 Function sys.dateadd_internal(text,integer,anyelement)
 Function sys.dateadd_internal_df(text,integer,sys.datetimeoffset)
-Function sys.datediff(text,date,date)
 Function sys.datediff(text,sys.datetime,sys.datetime)
-Function sys.datediff(text,sys.datetime2,sys.datetime2)
 Function sys.datediff(text,sys.datetimeoffset,sys.datetimeoffset)
 Function sys.datediff(text,sys.smalldatetime,sys.smalldatetime)
 Function sys.datediff(text,time without time zone,time without time zone)
 Function sys.datediff_internal(text,anyelement,anyelement)
 Function sys.datediff_internal_df(text,anyelement,anyelement)
 Function sys.datefirst()
-Function sys.datefromparts(integer,integer,integer)
-Function sys.datename(text,anyelement)
 Function sys.datename(text,text)
-Function sys.datepart(text,anyelement)
 Function sys.datepart_internal(text,anyelement,integer)
 Function sys.datetime22bpchar(sys.datetime2)
 Function sys.datetime22char(sys.datetime2)
@@ -563,7 +552,6 @@ Function sys.microsoftversion()
 Function sys.money2datetime(sys.fixeddecimal)
 Function sys.money_sqlvariant(sys.fixeddecimal)
 Function sys.money_sqlvariant(sys.money)
-Function sys.month(anyelement)
 Function sys.nchar_larger(sys."nchar",sys."nchar")
 Function sys.nchar_smaller(sys."nchar",sys."nchar")
 Function sys.nchar_sqlvariant(sys."nchar")
@@ -798,7 +786,6 @@ Function sys.varcharvarbinary(sys."varchar",integer,boolean)
 Function sys.version()
 Function sys.xact_state()
 Function sys.xid8rowversion(xid8,integer,boolean)
-Function sys.year(anyelement)
 Operator <(sys."varchar",sys."varchar")
 Operator <=(sys."varchar",sys."varchar")
 Operator <=(sys.bpchar,sys.bpchar)
@@ -1051,11 +1038,9 @@ Type sys."bigint"
 Type sys."float"
 Type sys."int"
 Type sys."real"
-Type sys."timestamp"
 Type sys.bbf_binary
 Type sys.bbf_varbinary
 Type sys.cursor
-Type sys.datetimeoffset
 Type sys.rowversion
 View information_schema_tsql.check_constraints
 View information_schema_tsql.column_domain_usage
@@ -1138,7 +1123,6 @@ View sys.system_objects
 View sys.system_sql_modules
 View sys.table_types
 View sys.tables
-View sys.triggers
 View sys.types
 View sys.views
 View sys.xml_indexes

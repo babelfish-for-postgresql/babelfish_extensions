@@ -1,0 +1,35 @@
+SELECT * FROM babelfish_authid_login_ext_vu_prepare_view
+GO
+~~START~~
+varchar#!#int#!#char#!#nvarchar
+babelfish_authid_login_ext_vu_prepare_login1#!#0#!#S#!#master
+babelfish_authid_login_ext_vu_prepare_login2#!#0#!#S#!#master
+~~END~~
+
+
+EXEC babelfish_authid_login_ext_vu_prepare_proc
+GO
+~~START~~
+varchar#!#int#!#char#!#nvarchar
+babelfish_authid_login_ext_vu_prepare_login1#!#0#!#S#!#master
+babelfish_authid_login_ext_vu_prepare_login2#!#0#!#S#!#master
+~~END~~
+
+
+SELECT babelfish_authid_login_ext_vu_prepare_func()
+GO
+~~START~~
+int
+2
+~~END~~
+
+
+SELECT rolname FROM sys.babelfish_authid_login_ext 
+WHERE rolname LIKE 'babelfish_authid_login_ext_vu_prepare_login%'
+GO
+~~START~~
+varchar
+babelfish_authid_login_ext_vu_prepare_login1
+babelfish_authid_login_ext_vu_prepare_login2
+~~END~~
+
