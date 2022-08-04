@@ -3227,9 +3227,6 @@ datepart_arg:
 			| DAY_P									{ $$ = "day"; }
 			| TSQL_DD								{ $$ = "day"; }
 			| TSQL_D								{ $$ = "day"; }
-			| TSQL_WEEKDAY							{ $$ = "day"; }
-			| TSQL_W								{ $$ = "day"; }
-			| TSQL_DW								{ $$ = "day"; }
 			| TSQL_WEEK								{ $$ = "tsql_week"; }
 			| TSQL_WK								{ $$ = "tsql_week"; }
 			| TSQL_WW								{ $$ = "tsql_week"; }
