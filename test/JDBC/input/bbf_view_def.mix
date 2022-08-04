@@ -58,7 +58,7 @@ go
 drop view vwmax;
 go
 
-select sb.name, vd.schema_name, vd.object_name, vd.definition from babelfish_view_def vd left join sys.sysdatabases sb on vd.dbid=sb.dbid order by vd.dbid, vd.schema_name, vd.object_name, vd.definition;
+select sb.name, vd.schema_name, vd.object_name, vd.definition from babelfish_view_def vd left join sys.sysdatabases sb on vd.dbid=sb.dbid where vd.object_name like '%def_%' order by vd.dbid, vd.schema_name, vd.object_name, vd.definition;
 go
 
 -- CASE: Alter/Replace from psql dialect should be blocked for views
@@ -151,7 +151,7 @@ alter view master_dbo.def_v1 rename to def_v1_renamed;
 go
 
 -- tsql
-select sb.name, vd.schema_name, vd.object_name, vd.definition from babelfish_view_def vd left join sys.sysdatabases sb on vd.dbid=sb.dbid order by vd.dbid, vd.schema_name, vd.object_name, vd.definition;
+select sb.name, vd.schema_name, vd.object_name, vd.definition from babelfish_view_def vd left join sys.sysdatabases sb on vd.dbid=sb.dbid where vd.object_name like ('%def_v%') order by vd.dbid, vd.schema_name, vd.object_name, vd.definition;
 go
 
 -- psql
@@ -166,7 +166,7 @@ go
 create view def_sch1.def_v1 as select 1;
 go
 
-select sb.name, vd.schema_name, vd.object_name, vd.definition from babelfish_view_def vd left join sys.sysdatabases sb on vd.dbid=sb.dbid order by vd.dbid, vd.schema_name, vd.object_name, vd.definition;
+select sb.name, vd.schema_name, vd.object_name, vd.definition from babelfish_view_def vd left join sys.sysdatabases sb on vd.dbid=sb.dbid where vd.object_name like ('%def_v%') order by vd.dbid, vd.schema_name, vd.object_name, vd.definition;
 go
 
 create database db1;
@@ -184,7 +184,7 @@ go
 create view db1_sch1.db1_v2 as select 2;
 go
 
-select sb.name, vd.schema_name, vd.object_name, vd.definition from babelfish_view_def vd left join sys.sysdatabases sb on vd.dbid=sb.dbid order by vd.dbid, vd.schema_name, vd.object_name, vd.definition;
+select sb.name, vd.schema_name, vd.object_name, vd.definition from babelfish_view_def vd left join sys.sysdatabases sb on vd.dbid=sb.dbid where vd.object_name like ('%db1_v%') order by vd.dbid, vd.schema_name, vd.object_name, vd.definition;
 go
 
 -- CASE: drop schema and database which contains the view
@@ -198,7 +198,7 @@ go
 drop database db1;
 go
 
-select sb.name, vd.schema_name, vd.object_name, vd.definition from babelfish_view_def vd left join sys.sysdatabases sb on vd.dbid=sb.dbid order by vd.dbid, vd.schema_name, vd.object_name, vd.definition;
+select sb.name, vd.schema_name, vd.object_name, vd.definition from babelfish_view_def vd left join sys.sysdatabases sb on vd.dbid=sb.dbid where vd.object_name like ('%db1_v%') order by vd.dbid, vd.schema_name, vd.object_name, vd.definition;
 go
 
 -- CASE: Check for session properties like ANSI_NULLS and QUOTED_IDENTIFIER
@@ -279,9 +279,6 @@ drop view view_ansinulloff_qidon;
 go
 
 drop view view_ansinulloff_qidoff;
-go
-
-select sb.name, vd.schema_name, vd.object_name, vd.definition from babelfish_view_def vd left join sys.sysdatabases sb on vd.dbid=sb.dbid order by vd.dbid, vd.schema_name, vd.object_name, vd.definition;
 go
 
 drop view def_v1, def_v2, def_v5, def_v6;
