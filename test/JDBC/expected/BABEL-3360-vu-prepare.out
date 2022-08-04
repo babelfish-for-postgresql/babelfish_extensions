@@ -104,4 +104,3 @@ begin
 return (select * from dateadd(microsecond, 56, null));
 end
 go
-
