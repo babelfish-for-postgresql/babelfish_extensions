@@ -89,6 +89,7 @@ extern const char *get_one_user_db_name(void);
 #define NAMESPACE_EXT_TABLE_NAME "babelfish_namespace_ext"
 #define NAMESAPCE_EXT_PK_NAME "babelfish_namespace_ext_pkey"
 #define Anum_namespace_ext_namespace 1
+#define Anum_namespace_ext_dbid 2
 #define Anum_namespace_ext_orig_name 3
 #define NAMESPACE_EXT_NUM_COLS 4
 
@@ -97,6 +98,7 @@ extern Oid namespace_ext_idx_oid_oid;
 extern int namespace_ext_num_cols;
 
 extern const char *get_logical_schema_name(const char *physical_schema_name, bool missingOk);
+extern int16 get_dbid_from_physical_schema_name(const char *physical_schema_name, bool missingOk);
 
 /*****************************************
  *			LOGIN EXT
@@ -156,6 +158,40 @@ typedef struct FormData_authid_user_ext
 } FormData_authid_user_ext;
 
 typedef FormData_authid_user_ext *Form_authid_user_ext;
+
+/*****************************************
+ *			VIEW_DEF
+ *****************************************/
+#define BBF_VIEW_DEF_TABLE_NAME "babelfish_view_def"
+#define BBF_VIEW_DEF_IDX_NAME "babelfish_view_def_pkey"
+#define Anum_bbf_view_def_dbid 1
+#define Anum_bbf_view_def_schema_name 2
+#define Anum_bbf_view_def_object_name 3
+#define Anum_bbf_view_def_definition 4
+#define BBF_VIEW_DEF_NUM_COLS 6
+#define BBF_VIEW_DEF_FLAG_IS_ANSI_NULLS_ON (1<<0)
+#define BBF_VIEW_DEF_FLAG_USES_QUOTED_IDENTIFIER (1<<1)
+extern Oid			bbf_view_def_oid;
+extern Oid			bbf_view_def_idx_oid;
+
+extern Oid get_bbf_view_def_oid(void);
+extern Oid get_bbf_view_def_idx_oid(void);
+extern HeapTuple search_bbf_view_def(Relation bbf_view_def_rel, int16 dbid,
+								const char *logical_schema_name, const char *view_name);
+extern bool check_is_tsql_view(Oid relid);
+extern void clean_up_bbf_view_def(int16 dbid);
+
+typedef struct FormData_bbf_view_def
+{
+	int16		dbid;
+	VarChar		schema;
+	VarChar		object_name;
+	text		definition;
+	uint64		flag_validity;
+	uint64		flag_values;
+} FormData_bbf_view_def;
+
+typedef FormData_bbf_view_def *Form_bbf_view_def;
 
 /*****************************************
  *			Metadata Check Rule

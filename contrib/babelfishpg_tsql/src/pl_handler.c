@@ -2048,6 +2048,81 @@ static void bbf_ProcessUtility(PlannedStmt *pstmt,
 	if (process_utility_stmt_explain_only_mode(queryString, parsetree))
 		return; /* Don't execute anything */
 
+	/*
+	 * Block ALTER VIEW and CREATE OR REPLACE VIEW statements from PG dialect
+	 * executed on TSQL views which has entries in view_def catalog
+	 * Note: Changes made by ALTER VIEW or CREATE [OR REPLACE] VIEW statements
+	 * in TSQL dialect from PG client won't be reflected in babelfish_view_def
+	 * catalog.
+	 */
+	if (sql_dialect == SQL_DIALECT_PG && !babelfish_dump_restore && !pltsql_enable_create_alter_view_from_pg)
+	{
+		switch (nodeTag(parsetree))
+		{
+			case T_ViewStmt:
+			{
+				ViewStmt *vstmt = (ViewStmt *) parsetree;
+				Oid relid = RangeVarGetRelid(vstmt->view, NoLock, true);
+				if (vstmt->replace && check_is_tsql_view(relid))
+				{
+					ereport(ERROR,
+							(errcode(ERRCODE_INTERNAL_ERROR),
+							 errmsg("REPLACE VIEW is blocked in PG dialect on TSQL view present in babelfish_view_def catalog. Please set babelfishpg_tsql.enable_create_alter_view_from_pg to true to enable.")));
+				}
+				break;
+			}
+			case T_AlterTableStmt:
+			{
+				AlterTableStmt	*atstmt = (AlterTableStmt *) parsetree;
+				if (atstmt->objtype == OBJECT_VIEW)
+				{
+					Oid relid = RangeVarGetRelid(atstmt->relation, NoLock, true);
+					if(check_is_tsql_view(relid))
+					{
+						ereport(ERROR,
+								(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+								 errmsg("ALTER VIEW is blocked in PG dialect on TSQL view present in babelfish_view_def catalog. Please set babelfishpg_tsql.enable_create_alter_view_from_pg to true to enable.")));
+					}
+				}
+				break;
+			}
+			case T_RenameStmt:
+			{
+				RenameStmt *rnstmt = (RenameStmt *) parsetree;
+				if (rnstmt->renameType == OBJECT_VIEW ||
+					(rnstmt->renameType == OBJECT_COLUMN &&
+					 rnstmt->relationType == OBJECT_VIEW))
+				{
+					Oid relid = RangeVarGetRelid(rnstmt->relation, NoLock, true);
+					if(check_is_tsql_view(relid))
+					{
+						ereport(ERROR,
+								(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+								 errmsg("ALTER VIEW is blocked in PG dialect on TSQL view present in babelfish_view_def catalog. Please set babelfishpg_tsql.enable_create_alter_view_from_pg to true to enable.")));
+					}
+				}
+				break;
+			}
+			case T_AlterObjectSchemaStmt:
+			{
+				AlterObjectSchemaStmt *altschstmt = (AlterObjectSchemaStmt *) parsetree;
+				if (altschstmt->objectType == OBJECT_VIEW)
+				{
+					Oid relid = RangeVarGetRelid(altschstmt->relation, NoLock, true);
+					if(check_is_tsql_view(relid))
+					{
+						ereport(ERROR,
+								(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+								 errmsg("ALTER VIEW is blocked in PG dialect on TSQL view present in babelfish_view_def catalog. Please set babelfishpg_tsql.enable_create_alter_view_from_pg to true to enable.")));
+					}
+				}
+				break;
+			}
+			default:
+				break;
+		}
+	}
+
 	switch (nodeTag(parsetree))
 	{
 		case T_CreateFunctionStmt:
