@@ -1,0 +1,45 @@
+use constraint_table_usage_prepare_db;
+go
+
+select * from information_schema.constraint_table_usage where table_name like 'constraint_table_usage_tb%';
+go
+~~START~~
+nvarchar#!#nvarchar#!#varchar#!#nvarchar#!#nvarchar#!#varchar
+~~END~~
+
+
+
+drop table constraint_table_usage_prepare_tb4;
+select * from information_schema.constraint_table_usage where table_name like 'constraint_table_usage_tb%';
+go
+~~START~~
+nvarchar#!#nvarchar#!#varchar#!#nvarchar#!#nvarchar#!#varchar
+~~END~~
+
+
+drop table constraint_table_usage_prepare_tb3;
+go
+
+select * from information_schema.constraint_table_usage where table_name like 'constraint_table_usage_tb%';
+go
+~~START~~
+nvarchar#!#nvarchar#!#varchar#!#nvarchar#!#nvarchar#!#varchar
+~~END~~
+
+
+
+drop table constraint_table_usage_prepare_tb2;
+select * from information_schema.constraint_table_usage where table_name like 'constraint_table_usage_tb%';
+go
+~~START~~
+nvarchar#!#nvarchar#!#varchar#!#nvarchar#!#nvarchar#!#varchar
+~~END~~
+
+
+
+drop table constraint_table_usage_prepare_tb1;
+use master;
+go
+
+drop database constraint_table_usage_prepare_db;
+go
