@@ -60,6 +60,8 @@ char*	pltsql_host_destribution = NULL;
 char*	pltsql_host_release = NULL;
 char*	pltsql_host_service_pack_level = NULL;
 
+bool	pltsql_enable_create_alter_view_from_pg = false;
+
 static const struct config_enum_entry explain_format_options[] = {
 	{"text", EXPLAIN_FORMAT_TEXT, false},
 	{"xml", EXPLAIN_FORMAT_XML, false},
@@ -1013,6 +1015,19 @@ define_custom_variables(void)
 				 "",
 				 PGC_SIGHUP,
 				 GUC_NOT_IN_SAMPLE,
+				 NULL, NULL, NULL);
+
+	/*
+	 * Block DDL from PG endpoint
+	 * Currently only blocks DDLs for View object
+	 */
+	DefineCustomBoolVariable("babelfishpg_tsql.enable_create_alter_view_from_pg",
+				 gettext_noop("Enables blocked DDL statements from PG endpoint"),
+				 NULL,
+				 &pltsql_enable_create_alter_view_from_pg,
+				 false,
+				 PGC_USERSET,
+				 GUC_NOT_IN_SAMPLE | GUC_DISALLOW_IN_FILE | GUC_DISALLOW_IN_AUTO_FILE,
 				 NULL, NULL, NULL);
 
 	/* Dump and Restore */
