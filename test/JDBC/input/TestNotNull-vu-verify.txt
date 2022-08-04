@@ -1,0 +1,129 @@
+#int
+Insert into test_not_null_vu_prepare_t1 values (1, NULL);
+Select * from test_not_null_vu_prepare_t1
+exec test_not_null_vu_prepare_p1
+
+#smallint
+Insert into test_not_null_vu_prepare_t2 values (1, NULL);
+Select * from test_not_null_vu_prepare_t2
+exec test_not_null_vu_prepare_p2
+
+#bigint
+Insert into test_not_null_vu_prepare_t3 values (1, NULL);
+Select * from test_not_null_vu_prepare_t3
+exec test_not_null_vu_prepare_p3
+
+#bit
+Insert into test_not_null_vu_prepare_t4 values (1, NULL);
+Select * from test_not_null_vu_prepare_t4
+exec test_not_null_vu_prepare_p4
+
+#float
+Insert into test_not_null_vu_prepare_t5 values (1, NULL);
+Select * from test_not_null_vu_prepare_t5
+exec test_not_null_vu_prepare_p5
+
+#real
+Insert into test_not_null_vu_prepare_t6 values (1, NULL);
+Select * from test_not_null_vu_prepare_t6
+exec test_not_null_vu_prepare_p6
+
+#char
+Insert into test_not_null_vu_prepare_t7 values ('jello', NULL);
+Select * from test_not_null_vu_prepare_t7
+exec test_not_null_vu_prepare_p7
+
+#nchar
+Insert into test_not_null_vu_prepare_t8 values ('jello', NULL);
+Select * from test_not_null_vu_prepare_t8
+exec test_not_null_vu_prepare_p8
+
+#varchar
+Insert into test_not_null_vu_prepare_t9 values ('jello', NULL);
+Select * from test_not_null_vu_prepare_t9
+exec test_not_null_vu_prepare_p9
+
+#nvarchar
+Insert into test_not_null_vu_prepare_t10 values ('jello', NULL);
+Select * from test_not_null_vu_prepare_t10
+exec test_not_null_vu_prepare_p10
+
+#text
+Insert into test_not_null_vu_prepare_t11 values ('jello', NULL);
+Select * from test_not_null_vu_prepare_t11
+exec test_not_null_vu_prepare_p11
+
+#ntext
+Insert into test_not_null_vu_prepare_t12 values ('jello', NULL);
+Select * from test_not_null_vu_prepare_t12
+exec test_not_null_vu_prepare_p12
+
+#binary
+Insert into test_not_null_vu_prepare_t13 values (0x9241, NULL);
+Select * from test_not_null_vu_prepare_t13
+exec test_not_null_vu_prepare_p13
+
+#varbinary
+Insert into test_not_null_vu_prepare_t14 values (0x9241, NULL);
+Select * from test_not_null_vu_prepare_t14
+exec test_not_null_vu_prepare_p14
+
+#numeric
+Insert into test_not_null_vu_prepare_t15 values (0.00010, NULL);
+Select * from test_not_null_vu_prepare_t15
+exec test_not_null_vu_prepare_p15
+
+#decimal
+Insert into test_not_null_vu_prepare_t16 values (0.00010, NULL);
+Select * from test_not_null_vu_prepare_t16
+exec test_not_null_vu_prepare_p16
+
+#money
+Insert into test_not_null_vu_prepare_t17 values (0.10, NULL);
+Select * from test_not_null_vu_prepare_t17
+exec test_not_null_vu_prepare_p17
+
+#smallmoney
+Insert into test_not_null_vu_prepare_t18 values (0.10, NULL);
+Select * from test_not_null_vu_prepare_t18
+exec test_not_null_vu_prepare_p18
+
+#uniqueidentifier
+Insert into test_not_null_vu_prepare_t19 values ('dd8cb046-461d-411e-be40-d219252ce849', NULL);
+Select * from test_not_null_vu_prepare_t19
+exec test_not_null_vu_prepare_p19
+
+#date
+Insert into test_not_null_vu_prepare_t20 values ('0001-01-01', NULL);
+Select * from test_not_null_vu_prepare_t20
+exec test_not_null_vu_prepare_p20
+
+#time
+Insert into test_not_null_vu_prepare_t21 values ('12:45:37.12', NULL);
+Select * from test_not_null_vu_prepare_t21
+exec test_not_null_vu_prepare_p21
+
+#datetime
+Insert into test_not_null_vu_prepare_t22 values ('1900-02-28 23:59:59.989', NULL);
+Select * from test_not_null_vu_prepare_t22
+exec test_not_null_vu_prepare_p22
+
+#smalldatetime
+Insert into test_not_null_vu_prepare_t23 values ('2000-12-13 12:58:23', NULL);
+Select * from test_not_null_vu_prepare_t23
+exec test_not_null_vu_prepare_p23
+
+#datetime2
+Insert into test_not_null_vu_prepare_t24 values ('2016-10-23 12:45:37.123', NULL);
+Select * from test_not_null_vu_prepare_t24
+exec test_not_null_vu_prepare_p24
+
+#datetimeoffset
+Insert into test_not_null_vu_prepare_t25 values ('2016-10-23 12:24:32 +10:0', NULL);
+Select * from test_not_null_vu_prepare_t25
+exec test_not_null_vu_prepare_p25
+
+#sql_variant
+Insert into test_not_null_vu_prepare_t26 values (cast ('abc' as varchar(10)), NULL);
+Select * from test_not_null_vu_prepare_t26
+exec test_not_null_vu_prepare_p26
