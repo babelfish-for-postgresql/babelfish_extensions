@@ -1,0 +1,15 @@
+SELECT * FROM babel_2955_vu_prepare_t1
+GO
+~~START~~
+int
+1
+~~END~~
+
+
+SELECT * FROM babel_2955_vu_prepare_t2
+GO
+~~START~~
+int
+1
+~~END~~
+

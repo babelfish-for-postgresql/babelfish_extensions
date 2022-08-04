@@ -1,0 +1,90 @@
+insert into babel_1654_vu_prepare_employeeData values ('d','b',123, 'a','a','a','a','a','a');
+go
+~~START~~
+varbinary
+7F03
+~~END~~
+
+~~START~~
+varbinary
+06
+~~END~~
+
+~~START~~
+varbinary
+7F03
+~~END~~
+
+~~ROW COUNT: 1~~
+
+
+insert into babel_1654_vu_prepare_t values ('a','b');
+go
+~~ROW COUNT: 1~~
+
+
+update babel_1654_vu_prepare_employeeData set Emp_Last_name = 'sss', f = 'ddd' where id = 1;
+go
+~~START~~
+varbinary
+0402
+~~END~~
+
+~~START~~
+varbinary
+06
+~~END~~
+
+~~ROW COUNT: 1~~
+
+~~START~~
+varbinary
+0402
+~~END~~
+
+~~ROW COUNT: 1~~
+
+
+update babel_1654_vu_prepare_employeeData set Emp_First_name = 'sss' where id = 1;
+go
+~~START~~
+varbinary
+0200
+~~END~~
+
+~~START~~
+varbinary
+06
+~~END~~
+
+~~ROW COUNT: 1~~
+
+~~START~~
+varbinary
+0200
+~~END~~
+
+~~ROW COUNT: 1~~
+
+
+update babel_1654_vu_prepare_employeeData set f= 'ddd' where id = 1;
+go
+~~START~~
+varbinary
+0002
+~~END~~
+
+~~START~~
+varbinary
+06
+~~END~~
+
+~~ROW COUNT: 1~~
+
+~~START~~
+varbinary
+0002
+~~END~~
+
+~~ROW COUNT: 1~~
+

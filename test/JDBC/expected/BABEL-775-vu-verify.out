@@ -1,0 +1,18 @@
+USE master
+GO
+
+SELECT * FROM [babel_775_vu_prepare_logging].[EFMIntegrationMessage]
+GO
+~~START~~
+int
+1
+~~END~~
+
+
+SELECT * FROM [babel_775_vu_prepare_efm].[FilingCompletion]
+GO
+~~START~~
+int#!#int
+1#!#<NULL>
+~~END~~
+

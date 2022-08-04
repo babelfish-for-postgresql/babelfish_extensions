@@ -1,0 +1,573 @@
+-- CAST from char to varchar is immutable/deterministic and can be used to generate computed column
+alter table babel_1465_vu_prepare_t1 add b as cast(cast('01-01-2012' as char(10)) as varchar(10)) persisted;
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: column "b" of relation "babel_1465_vu_prepare_t1" already exists)~~
+
+
+-- CAST from sql_variant to other type is VOLATILE and is not allowed to generate computed column
+alter table babel_1465_vu_prepare_t1 add c as cast(cast('01-01-2012' as sql_variant) as varchar(10)) persisted;
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: generation expression is not immutable)~~
+
+
+-- CAST to sql_variant from VOLATILE source type is also VOLATILE
+alter table babel_1465_vu_prepare_t1 add c as cast(GETDATE() as sql_variant) persisted;
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: generation expression is not immutable)~~
+
+
+-- CAST to sql_variant from datetime is VOLATILE
+alter table babel_1465_vu_prepare_t1 add c as cast(cast('01-01-2012' as datetime) as sql_variant) persisted;
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: generation expression is not immutable)~~
+
+
+-- CAST to sql_variant from smalldatetime is VOLATILE
+alter table babel_1465_vu_prepare_t1 add c as cast(cast('01-01-2012' as smalldatetime) as sql_variant) persisted;
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: generation expression is not immutable)~~
+
+
+-- CAST from datetime/datetime2/smalldatetime to character string type/other datetime typee is VOLATILE
+alter table babel_1465_vu_prepare_t1 add c as cast(cast('01-01-2012' as datetime) as varchar(10)) persisted;
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: generation expression is not immutable)~~
+
+
+alter table babel_1465_vu_prepare_t1 add c as cast(cast('01-01-2012' as datetime) as nvarchar(10)) persisted;
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: generation expression is not immutable)~~
+
+
+alter table babel_1465_vu_prepare_t1 add c as cast(cast('01-01-2012' as datetime) as char(10)) persisted;
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: generation expression is not immutable)~~
+
+
+alter table babel_1465_vu_prepare_t1 add c as cast(cast('01-01-2012' as datetime) as nchar(10)) persisted;
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: generation expression is not immutable)~~
+
+
+alter table babel_1465_vu_prepare_t1 add c as cast(cast('01-01-2012' as datetime) as date) persisted;
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: generation expression is not immutable)~~
+
+
+alter table babel_1465_vu_prepare_t1 add c as cast(cast('01:01' as datetime) as time) persisted;
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: generation expression is not immutable)~~
+
+
+alter table babel_1465_vu_prepare_t1 add c as cast(cast('01-01-2012' as datetime2) as varchar(10)) persisted;
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: generation expression is not immutable)~~
+
+
+alter table babel_1465_vu_prepare_t1 add c as cast(cast('01-01-2012' as datetime2) as nvarchar(10)) persisted;
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: generation expression is not immutable)~~
+
+
+alter table babel_1465_vu_prepare_t1 add c as cast(cast('01-01-2012' as datetime2) as char(10)) persisted;
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: generation expression is not immutable)~~
+
+
+alter table babel_1465_vu_prepare_t1 add c as cast(cast('01-01-2012' as datetime2) as nchar(10)) persisted;
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: generation expression is not immutable)~~
+
+
+alter table babel_1465_vu_prepare_t1 add c as cast(cast('01-01-2012' as datetime2) as date) persisted;
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: generation expression is not immutable)~~
+
+
+alter table babel_1465_vu_prepare_t1 add c as cast(cast('01:01' as datetime2) as time) persisted;
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: generation expression is not immutable)~~
+
+
+alter table babel_1465_vu_prepare_t1 add c as cast(cast('01-01-2012' as smalldatetime) as varchar(10)) persisted;
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: generation expression is not immutable)~~
+
+
+alter table babel_1465_vu_prepare_t1 add c as cast(cast('01-01-2012' as smalldatetime) as nvarchar(10)) persisted;
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: generation expression is not immutable)~~
+
+
+alter table babel_1465_vu_prepare_t1 add c as cast(cast('01-01-2012' as smalldatetime) as char(10)) persisted;
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: generation expression is not immutable)~~
+
+
+alter table babel_1465_vu_prepare_t1 add c as cast(cast('01-01-2012' as smalldatetime) as nchar(10)) persisted;
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: generation expression is not immutable)~~
+
+
+alter table babel_1465_vu_prepare_t1 add c as cast(cast('01-01-2012' as smalldatetime) as date) persisted;
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: generation expression is not immutable)~~
+
+
+alter table babel_1465_vu_prepare_t1 add c as cast(cast('01:01' as smalldatetime) as time) persisted;
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: generation expression is not immutable)~~
+
+
+-- CAST to datetime/datetime2/smalldatetime from character string type/datetime type is VOLATILE
+alter table babel_1465_vu_prepare_t1 add c as cast(cast('01-01-2012' as varchar(10)) as datetime) persisted;
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: generation expression is not immutable)~~
+
+
+alter table babel_1465_vu_prepare_t1 add c as cast(cast('01-01-2012' as nvarchar(10)) as datetime) persisted;
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: generation expression is not immutable)~~
+
+
+alter table babel_1465_vu_prepare_t1 add c as cast(cast('01-01-2012' as char(10)) as datetime) persisted;
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: generation expression is not immutable)~~
+
+
+alter table babel_1465_vu_prepare_t1 add c as cast(cast('01-01-2012' as nchar(10)) as datetime) persisted;
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: generation expression is not immutable)~~
+
+
+alter table babel_1465_vu_prepare_t1 add c as cast(cast('01-01-2012' as date) as datetime) persisted;
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: generation expression is not immutable)~~
+
+
+alter table babel_1465_vu_prepare_t1 add c as cast(cast('01:01' as time) as datetime) persisted;
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: generation expression is not immutable)~~
+
+
+alter table babel_1465_vu_prepare_t1 add c as cast(cast('01-01-2012' as varchar(10)) as datetime2) persisted;
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: generation expression is not immutable)~~
+
+
+alter table babel_1465_vu_prepare_t1 add c as cast(cast('01-01-2012' as nvarchar(10)) as datetime2) persisted;
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: generation expression is not immutable)~~
+
+
+alter table babel_1465_vu_prepare_t1 add c as cast(cast('01-01-2012' as char(10)) as datetime2) persisted;
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: generation expression is not immutable)~~
+
+
+alter table babel_1465_vu_prepare_t1 add c as cast(cast('01-01-2012' as nchar(10)) as datetime2) persisted;
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: generation expression is not immutable)~~
+
+
+alter table babel_1465_vu_prepare_t1 add c as cast(cast('01-01-2012' as date) as datetime2) persisted;
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: generation expression is not immutable)~~
+
+
+alter table babel_1465_vu_prepare_t1 add c as cast(cast('01:01' as time) as datetime2) persisted;
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: generation expression is not immutable)~~
+
+
+alter table babel_1465_vu_prepare_t1 add c as cast(cast('01-01-2012' as varchar(10)) as smalldatetime) persisted;
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: generation expression is not immutable)~~
+
+
+alter table babel_1465_vu_prepare_t1 add c as cast(cast('01-01-2012' as nvarchar(10)) as smalldatetime) persisted;
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: generation expression is not immutable)~~
+
+
+alter table babel_1465_vu_prepare_t1 add c as cast(cast('01-01-2012' as char(10)) as smalldatetime) persisted;
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: generation expression is not immutable)~~
+
+
+alter table babel_1465_vu_prepare_t1 add c as cast(cast('01-01-2012' as nchar(10)) as smalldatetime) persisted;
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: generation expression is not immutable)~~
+
+
+alter table babel_1465_vu_prepare_t1 add c as cast(cast('01-01-2012' as date) as smalldatetime) persisted;
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: generation expression is not immutable)~~
+
+
+alter table babel_1465_vu_prepare_t1 add c as cast(cast('01:01' as time) as smalldatetime) persisted;
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: generation expression is not immutable)~~
+
+
+-- Test cast between datetime/smalldatetime and varchar/nvarchar/char/nchar since we
+-- added the cast functions in this patch
+select cast(cast('01-01-2012' as datetime) as varchar(10));
+GO
+~~START~~
+varchar
+2012-01-01
+~~END~~
+
+select cast(cast('01-01-2012' as datetime) as varchar(5));
+GO
+~~START~~
+varchar
+2012-
+~~END~~
+
+
+select cast(cast('01-01-2012' as datetime) as nvarchar(10));
+GO
+~~START~~
+nvarchar
+2012-01-01
+~~END~~
+
+select cast(cast('01-01-2012' as datetime) as nvarchar(5));
+GO
+~~START~~
+nvarchar
+2012-
+~~END~~
+
+
+select cast(cast('01-01-2012' as datetime) as char(10));
+GO
+~~START~~
+char
+2012-01-01
+~~END~~
+
+select cast(cast('01-01-2012' as datetime) as char(5));
+GO
+~~START~~
+char
+2012-
+~~END~~
+
+
+select cast(cast('01-01-2012' as datetime) as nchar(10));
+GO
+~~START~~
+nchar
+2012-01-01
+~~END~~
+
+select cast(cast('01-01-2012' as datetime) as nchar(5));
+GO
+~~START~~
+nchar
+2012-
+~~END~~
+
+
+select cast(cast('01-01-2012' as varchar(10)) as datetime);
+GO
+~~START~~
+datetime
+2012-01-01 00:00:00.0
+~~END~~
+
+
+select cast(cast('01-01-2012' as nvarchar(10)) as datetime);
+GO
+~~START~~
+datetime
+2012-01-01 00:00:00.0
+~~END~~
+
+
+select cast(cast('01-01-2012' as char(10)) as datetime);
+GO
+~~START~~
+datetime
+2012-01-01 00:00:00.0
+~~END~~
+
+
+select cast(cast('01-01-2012' as nchar(10)) as datetime);
+GO
+~~START~~
+datetime
+2012-01-01 00:00:00.0
+~~END~~
+
+
+-- test cast between datetime2 and varchar/char...
+select cast(cast('01-01-2012' as datetime2) as varchar(10));
+GO
+~~START~~
+varchar
+2012-01-01
+~~END~~
+
+select cast(cast('01-01-2012' as datetime2) as varchar(5));
+GO
+~~START~~
+varchar
+2012-
+~~END~~
+
+
+select cast(cast('01-01-2012' as datetime2) as nvarchar(10));
+GO
+~~START~~
+nvarchar
+2012-01-01
+~~END~~
+
+select cast(cast('01-01-2012' as datetime2) as nvarchar(5));
+GO
+~~START~~
+nvarchar
+2012-
+~~END~~
+
+
+select cast(cast('01-01-2012' as datetime2) as char(10));
+GO
+~~START~~
+char
+2012-01-01
+~~END~~
+
+select cast(cast('01-01-2012' as datetime2) as char(5));
+GO
+~~START~~
+char
+2012-
+~~END~~
+
+
+select cast(cast('01-01-2012' as datetime2) as nchar(10));
+GO
+~~START~~
+nchar
+2012-01-01
+~~END~~
+
+select cast(cast('01-01-2012' as datetime2) as nchar(5));
+GO
+~~START~~
+nchar
+2012-
+~~END~~
+
+
+select cast(cast('01-01-2012' as varchar(10)) as datetime2);
+GO
+~~START~~
+datetime2
+2012-01-01 00:00:00.0000000
+~~END~~
+
+
+select cast(cast('01-01-2012' as nvarchar(10)) as datetime2);
+GO
+~~START~~
+datetime2
+2012-01-01 00:00:00.0000000
+~~END~~
+
+
+select cast(cast('01-01-2012' as char(10)) as datetime2);
+GO
+~~START~~
+datetime2
+2012-01-01 00:00:00.0000000
+~~END~~
+
+
+select cast(cast('01-01-2012' as nchar(10)) as datetime2);
+GO
+~~START~~
+datetime2
+2012-01-01 00:00:00.0000000
+~~END~~
+
+
+-- test cast between smalldatetime and varchar/char...
+select cast(cast('01-01-2012' as smalldatetime) as varchar(10));
+GO
+~~START~~
+varchar
+2012-01-01
+~~END~~
+
+select cast(cast('01-01-2012' as smalldatetime) as varchar(5));
+GO
+~~START~~
+varchar
+2012-
+~~END~~
+
+
+select cast(cast('01-01-2012' as smalldatetime) as nvarchar(10));
+GO
+~~START~~
+nvarchar
+2012-01-01
+~~END~~
+
+select cast(cast('01-01-2012' as smalldatetime) as nvarchar(5));
+GO
+~~START~~
+nvarchar
+2012-
+~~END~~
+
+
+select cast(cast('01-01-2012' as smalldatetime) as char(10));
+GO
+~~START~~
+char
+2012-01-01
+~~END~~
+
+select cast(cast('01-01-2012' as smalldatetime) as char(5));
+GO
+~~START~~
+char
+2012-
+~~END~~
+
+
+select cast(cast('01-01-2012' as smalldatetime) as nchar(10));
+GO
+~~START~~
+nchar
+2012-01-01
+~~END~~
+
+select cast(cast('01-01-2012' as smalldatetime) as nchar(5));
+GO
+~~START~~
+nchar
+2012-
+~~END~~
+
+
+select cast(cast('01-01-2012' as varchar(10)) as smalldatetime);
+GO
+~~START~~
+smalldatetime
+2012-01-01 00:00:00.0
+~~END~~
+
+
+select cast(cast('01-01-2012' as nvarchar(10)) as smalldatetime);
+GO
+~~START~~
+smalldatetime
+2012-01-01 00:00:00.0
+~~END~~
+
+
+select cast(cast('01-01-2012' as char(10)) as smalldatetime);
+GO
+~~START~~
+smalldatetime
+2012-01-01 00:00:00.0
+~~END~~
+
+
+select cast(cast('01-01-2012' as nchar(10)) as smalldatetime);
+GO
+~~START~~
+smalldatetime
+2012-01-01 00:00:00.0
+~~END~~
+

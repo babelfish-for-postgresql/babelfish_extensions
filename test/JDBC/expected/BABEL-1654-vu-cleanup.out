@@ -1,0 +1,11 @@
+drop trigger babel_1654_vu_prepare_updEmployeeDatas;
+go
+
+drop trigger babel_1654_vu_prepare_trig_t;
+go
+
+drop table babel_1654_vu_prepare_t;
+go
+
+drop table babel_1654_vu_prepare_employeeData;
+go

@@ -1,0 +1,545 @@
+#int
+Insert into test_not_null_vu_prepare_t1 values (1, NULL);
+~~ERROR (Code: 515)~~
+
+~~ERROR (Message: null value in column "b" of relation "test_not_null_vu_prepare_t1" violates not-null constraint)~~
+
+Select * from test_not_null_vu_prepare_t1
+~~START~~
+int#!#int
+2#!#2
+<NULL>#!#3
+1#!#1
+<NULL>#!#1
+~~END~~
+
+exec test_not_null_vu_prepare_p1
+~~ERROR (Code: 515)~~
+
+~~ERROR (Message: null value in column "b" of relation "test_not_null_vu_prepare_t1" violates not-null constraint)~~
+
+
+#smallint
+Insert into test_not_null_vu_prepare_t2 values (1, NULL);
+~~ERROR (Code: 515)~~
+
+~~ERROR (Message: null value in column "b" of relation "test_not_null_vu_prepare_t2" violates not-null constraint)~~
+
+Select * from test_not_null_vu_prepare_t2
+~~START~~
+smallint#!#smallint
+2#!#2
+<NULL>#!#3
+1#!#1
+<NULL>#!#1
+~~END~~
+
+exec test_not_null_vu_prepare_p2
+~~ERROR (Code: 515)~~
+
+~~ERROR (Message: null value in column "b" of relation "test_not_null_vu_prepare_t2" violates not-null constraint)~~
+
+
+#bigint
+Insert into test_not_null_vu_prepare_t3 values (1, NULL);
+~~ERROR (Code: 515)~~
+
+~~ERROR (Message: null value in column "b" of relation "test_not_null_vu_prepare_t3" violates not-null constraint)~~
+
+Select * from test_not_null_vu_prepare_t3
+~~START~~
+bigint#!#bigint
+2#!#2
+<NULL>#!#3
+1#!#1
+<NULL>#!#1
+~~END~~
+
+exec test_not_null_vu_prepare_p3
+~~ERROR (Code: 515)~~
+
+~~ERROR (Message: null value in column "b" of relation "test_not_null_vu_prepare_t3" violates not-null constraint)~~
+
+
+#bit
+Insert into test_not_null_vu_prepare_t4 values (1, NULL);
+~~ERROR (Code: 515)~~
+
+~~ERROR (Message: null value in column "b" of relation "test_not_null_vu_prepare_t4" violates not-null constraint)~~
+
+Select * from test_not_null_vu_prepare_t4
+~~START~~
+bit#!#bit
+1#!#0
+<NULL>#!#1
+1#!#1
+<NULL>#!#1
+~~END~~
+
+exec test_not_null_vu_prepare_p4
+~~ERROR (Code: 515)~~
+
+~~ERROR (Message: null value in column "b" of relation "test_not_null_vu_prepare_t4" violates not-null constraint)~~
+
+
+#float
+Insert into test_not_null_vu_prepare_t5 values (1, NULL);
+~~ERROR (Code: 515)~~
+
+~~ERROR (Message: null value in column "b" of relation "test_not_null_vu_prepare_t5" violates not-null constraint)~~
+
+Select * from test_not_null_vu_prepare_t5
+~~START~~
+float#!#float
+2.0#!#2.01
+<NULL>#!#2.2
+1.1101#!#1.0E-4
+<NULL>#!#1.0
+~~END~~
+
+exec test_not_null_vu_prepare_p5
+~~ERROR (Code: 515)~~
+
+~~ERROR (Message: null value in column "b" of relation "test_not_null_vu_prepare_t5" violates not-null constraint)~~
+
+
+#real
+Insert into test_not_null_vu_prepare_t6 values (1, NULL);
+~~ERROR (Code: 515)~~
+
+~~ERROR (Message: null value in column "b" of relation "test_not_null_vu_prepare_t6" violates not-null constraint)~~
+
+Select * from test_not_null_vu_prepare_t6
+~~START~~
+real#!#real
+2.0#!#2.01
+<NULL>#!#2.2
+1.1101#!#1.0E-4
+<NULL>#!#1.0
+~~END~~
+
+exec test_not_null_vu_prepare_p6
+~~ERROR (Code: 515)~~
+
+~~ERROR (Message: null value in column "b" of relation "test_not_null_vu_prepare_t6" violates not-null constraint)~~
+
+
+#char
+Insert into test_not_null_vu_prepare_t7 values ('jello', NULL);
+~~ERROR (Code: 515)~~
+
+~~ERROR (Message: null value in column "b" of relation "test_not_null_vu_prepare_t7" violates not-null constraint)~~
+
+Select * from test_not_null_vu_prepare_t7
+~~START~~
+char#!#char
+hello     #!#jello     
+<NULL>#!#mellow    
+hello     #!#jello     
+<NULL>#!#jello     
+~~END~~
+
+exec test_not_null_vu_prepare_p7
+~~ERROR (Code: 515)~~
+
+~~ERROR (Message: null value in column "b" of relation "test_not_null_vu_prepare_t7" violates not-null constraint)~~
+
+
+#nchar
+Insert into test_not_null_vu_prepare_t8 values ('jello', NULL);
+~~ERROR (Code: 515)~~
+
+~~ERROR (Message: null value in column "b" of relation "test_not_null_vu_prepare_t8" violates not-null constraint)~~
+
+Select * from test_not_null_vu_prepare_t8
+~~START~~
+nchar#!#nchar
+hello     #!#jello     
+<NULL>#!#mellow    
+hello     #!#jello     
+<NULL>#!#jello     
+~~END~~
+
+exec test_not_null_vu_prepare_p8
+~~ERROR (Code: 515)~~
+
+~~ERROR (Message: null value in column "b" of relation "test_not_null_vu_prepare_t8" violates not-null constraint)~~
+
+
+#varchar
+Insert into test_not_null_vu_prepare_t9 values ('jello', NULL);
+~~ERROR (Code: 515)~~
+
+~~ERROR (Message: null value in column "b" of relation "test_not_null_vu_prepare_t9" violates not-null constraint)~~
+
+Select * from test_not_null_vu_prepare_t9
+~~START~~
+varchar#!#varchar
+hello#!#jello
+<NULL>#!#mellow
+hello#!#jello
+<NULL>#!#jello
+~~END~~
+
+exec test_not_null_vu_prepare_p9
+~~ERROR (Code: 515)~~
+
+~~ERROR (Message: null value in column "b" of relation "test_not_null_vu_prepare_t9" violates not-null constraint)~~
+
+
+#nvarchar
+Insert into test_not_null_vu_prepare_t10 values ('jello', NULL);
+~~ERROR (Code: 515)~~
+
+~~ERROR (Message: null value in column "b" of relation "test_not_null_vu_prepare_t10" violates not-null constraint)~~
+
+Select * from test_not_null_vu_prepare_t10
+~~START~~
+nvarchar#!#nvarchar
+hello#!#jello
+<NULL>#!#mellow
+hello#!#jello
+<NULL>#!#jello
+~~END~~
+
+exec test_not_null_vu_prepare_p10
+~~ERROR (Code: 515)~~
+
+~~ERROR (Message: null value in column "b" of relation "test_not_null_vu_prepare_t10" violates not-null constraint)~~
+
+
+#text
+Insert into test_not_null_vu_prepare_t11 values ('jello', NULL);
+~~ERROR (Code: 515)~~
+
+~~ERROR (Message: null value in column "b" of relation "test_not_null_vu_prepare_t11" violates not-null constraint)~~
+
+Select * from test_not_null_vu_prepare_t11
+~~START~~
+text#!#text
+AAAAAAAAAAAAAAAAAAAA<newline>BBBBBBBBBB<newline>CCCCC<newline>badksjvbajsdcbvjads<newline>sejvhsdbfjhcgvasdhgcvsj<newline>21639812365091264#!#AAAAAAAAAAAAAAAAAAAA<newline>BBBBBBBBBB<newline>CCCCC<newline>badksjvbajsdcbvjads<newline>sejvhsdbfjhcgvasdhgcvsj<newline>21639812365091264
+<NULL>#!#AAAAAAAAAAAAAAAAAAAA<newline>BBBBBBBBBB<newline>CCCCC<newline>badksjvbajsdcbvjads<newline>sejvhsdbfjhcgvasdhgcvsj<newline>21639812365091264
+hello#!#jello
+<NULL>#!#jello
+~~END~~
+
+exec test_not_null_vu_prepare_p11
+~~ERROR (Code: 515)~~
+
+~~ERROR (Message: null value in column "b" of relation "test_not_null_vu_prepare_t11" violates not-null constraint)~~
+
+
+#ntext
+Insert into test_not_null_vu_prepare_t12 values ('jello', NULL);
+~~ERROR (Code: 515)~~
+
+~~ERROR (Message: null value in column "b" of relation "test_not_null_vu_prepare_t12" violates not-null constraint)~~
+
+Select * from test_not_null_vu_prepare_t12
+~~START~~
+ntext#!#ntext
+AAAAAAAAAAAAAAAAAAAA<newline>BBBBBBBBBB<newline>CCCCC<newline>badksjvbajsdcbvjads<newline>sejvhsdbfjhcgvasdhgcvsj<newline>21639812365091264#!#AAAAAAAAAAAAAAAAAAAA<newline>BBBBBBBBBB<newline>CCCCC<newline>badksjvbajsdcbvjads<newline>sejvhsdbfjhcgvasdhgcvsj<newline>21639812365091264
+<NULL>#!#AAAAAAAAAAAAAAAAAAAA<newline>BBBBBBBBBB<newline>CCCCC<newline>badksjvbajsdcbvjads<newline>sejvhsdbfjhcgvasdhgcvsj<newline>21639812365091264
+hello#!#jello
+<NULL>#!#jello
+~~END~~
+
+exec test_not_null_vu_prepare_p12
+~~ERROR (Code: 515)~~
+
+~~ERROR (Message: null value in column "b" of relation "test_not_null_vu_prepare_t12" violates not-null constraint)~~
+
+
+#binary
+Insert into test_not_null_vu_prepare_t13 values (0x9241, NULL);
+~~ERROR (Code: 515)~~
+
+~~ERROR (Message: null value in column "b" of relation "test_not_null_vu_prepare_t13" violates not-null constraint)~~
+
+Select * from test_not_null_vu_prepare_t13
+~~START~~
+binary#!#binary
+30783331333233333334#!#30783932343100000000
+<NULL>#!#30783932343100000000
+31323334000000000000#!#92410000000000000000
+<NULL>#!#92410000000000000000
+~~END~~
+
+exec test_not_null_vu_prepare_p13
+~~ERROR (Code: 515)~~
+
+~~ERROR (Message: null value in column "b" of relation "test_not_null_vu_prepare_t13" violates not-null constraint)~~
+
+
+#varbinary
+Insert into test_not_null_vu_prepare_t14 values (0x9241, NULL);
+~~ERROR (Code: 515)~~
+
+~~ERROR (Message: null value in column "b" of relation "test_not_null_vu_prepare_t14" violates not-null constraint)~~
+
+Select * from test_not_null_vu_prepare_t14
+~~START~~
+varbinary#!#varbinary
+30783331333233333334#!#307839323431
+<NULL>#!#307839323431
+31323334#!#9241
+<NULL>#!#9241
+~~END~~
+
+exec test_not_null_vu_prepare_p14
+~~ERROR (Code: 515)~~
+
+~~ERROR (Message: null value in column "b" of relation "test_not_null_vu_prepare_t14" violates not-null constraint)~~
+
+
+#numeric
+Insert into test_not_null_vu_prepare_t15 values (0.00010, NULL);
+~~ERROR (Code: 515)~~
+
+~~ERROR (Message: null value in column "b" of relation "test_not_null_vu_prepare_t15" violates not-null constraint)~~
+
+Select * from test_not_null_vu_prepare_t15
+~~START~~
+numeric#!#numeric
+1.1101000000000000000000#!#1.1101000000000000000000
+<NULL>#!#0E-22
+1.1101000000000000000000#!#0.0001000000000000000000
+<NULL>#!#0.0001000000000000000000
+~~END~~
+
+exec test_not_null_vu_prepare_p15
+~~ERROR (Code: 515)~~
+
+~~ERROR (Message: null value in column "b" of relation "test_not_null_vu_prepare_t15" violates not-null constraint)~~
+
+
+#decimal
+Insert into test_not_null_vu_prepare_t16 values (0.00010, NULL);
+~~ERROR (Code: 515)~~
+
+~~ERROR (Message: null value in column "b" of relation "test_not_null_vu_prepare_t16" violates not-null constraint)~~
+
+Select * from test_not_null_vu_prepare_t16
+~~START~~
+numeric#!#numeric
+1.1101000000000000000000#!#1.1101000000000000000000
+<NULL>#!#1.1101000000000000000000
+1.1101000000000000000000#!#0.0001000000000000000000
+<NULL>#!#0.0001000000000000000000
+~~END~~
+
+exec test_not_null_vu_prepare_p16
+~~ERROR (Code: 515)~~
+
+~~ERROR (Message: null value in column "b" of relation "test_not_null_vu_prepare_t16" violates not-null constraint)~~
+
+
+#money
+Insert into test_not_null_vu_prepare_t17 values (0.10, NULL);
+~~ERROR (Code: 515)~~
+
+~~ERROR (Message: null value in column "b" of relation "test_not_null_vu_prepare_t17" violates not-null constraint)~~
+
+Select * from test_not_null_vu_prepare_t17
+~~START~~
+money#!#money
+100.1100#!#100.1100
+<NULL>#!#100.1100
+100.1100#!#0.1000
+<NULL>#!#0.1000
+~~END~~
+
+exec test_not_null_vu_prepare_p17
+~~ERROR (Code: 515)~~
+
+~~ERROR (Message: null value in column "b" of relation "test_not_null_vu_prepare_t17" violates not-null constraint)~~
+
+
+#smallmoney
+Insert into test_not_null_vu_prepare_t18 values (0.10, NULL);
+~~ERROR (Code: 515)~~
+
+~~ERROR (Message: null value in column "b" of relation "test_not_null_vu_prepare_t18" violates not-null constraint)~~
+
+Select * from test_not_null_vu_prepare_t18
+~~START~~
+smallmoney#!#smallmoney
+0.1000#!#0.1000
+<NULL>#!#0.1000
+100.1100#!#0.1000
+<NULL>#!#0.1000
+~~END~~
+
+exec test_not_null_vu_prepare_p18
+~~ERROR (Code: 515)~~
+
+~~ERROR (Message: null value in column "b" of relation "test_not_null_vu_prepare_t18" violates not-null constraint)~~
+
+
+#uniqueidentifier
+Insert into test_not_null_vu_prepare_t19 values ('dd8cb046-461d-411e-be40-d219252ce849', NULL);
+~~ERROR (Code: 515)~~
+
+~~ERROR (Message: null value in column "b" of relation "test_not_null_vu_prepare_t19" violates not-null constraint)~~
+
+Select * from test_not_null_vu_prepare_t19
+~~START~~
+uniqueidentifier#!#uniqueidentifier
+51F178A6-53C7-472C-9BE1-1C08942342D7#!#51F178A6-53C7-472C-9BE1-1C08942342D7
+<NULL>#!#51F178A6-53C7-472C-9BE1-1C08942342D7
+51F178A6-53C7-472C-9BE1-1C08942342D7#!#DD8CB046-461D-411E-BE40-D219252CE849
+<NULL>#!#DD8CB046-461D-411E-BE40-D219252CE849
+~~END~~
+
+exec test_not_null_vu_prepare_p19
+~~ERROR (Code: 515)~~
+
+~~ERROR (Message: null value in column "b" of relation "test_not_null_vu_prepare_t19" violates not-null constraint)~~
+
+
+#date
+Insert into test_not_null_vu_prepare_t20 values ('0001-01-01', NULL);
+~~ERROR (Code: 515)~~
+
+~~ERROR (Message: null value in column "b" of relation "test_not_null_vu_prepare_t20" violates not-null constraint)~~
+
+Select * from test_not_null_vu_prepare_t20
+~~START~~
+date#!#date
+2000-02-28#!#2000-02-28
+<NULL>#!#2000-02-28
+2000-02-28#!#0001-01-01
+<NULL>#!#0001-01-01
+~~END~~
+
+exec test_not_null_vu_prepare_p20
+~~ERROR (Code: 515)~~
+
+~~ERROR (Message: null value in column "b" of relation "test_not_null_vu_prepare_t20" violates not-null constraint)~~
+
+
+#time
+Insert into test_not_null_vu_prepare_t21 values ('12:45:37.12', NULL);
+~~ERROR (Code: 515)~~
+
+~~ERROR (Message: null value in column "b" of relation "test_not_null_vu_prepare_t21" violates not-null constraint)~~
+
+Select * from test_not_null_vu_prepare_t21
+~~START~~
+time#!#time
+12:45:37.000000#!#12:45:37.000000
+<NULL>#!#12:45:37.000000
+12:45:37.123000#!#12:45:37.120000
+<NULL>#!#12:45:37.120000
+~~END~~
+
+exec test_not_null_vu_prepare_p21
+~~ERROR (Code: 515)~~
+
+~~ERROR (Message: null value in column "b" of relation "test_not_null_vu_prepare_t21" violates not-null constraint)~~
+
+
+#datetime
+Insert into test_not_null_vu_prepare_t22 values ('1900-02-28 23:59:59.989', NULL);
+~~ERROR (Code: 515)~~
+
+~~ERROR (Message: null value in column "b" of relation "test_not_null_vu_prepare_t22" violates not-null constraint)~~
+
+Select * from test_not_null_vu_prepare_t22
+~~START~~
+datetime#!#datetime
+2000-12-13 12:58:23.123#!#2000-12-13 12:58:23.123
+<NULL>#!#2000-12-13 12:58:23.123
+2000-12-13 12:58:23.123#!#1900-02-28 23:59:59.99
+<NULL>#!#1900-02-28 23:59:59.99
+~~END~~
+
+exec test_not_null_vu_prepare_p22
+~~ERROR (Code: 515)~~
+
+~~ERROR (Message: null value in column "b" of relation "test_not_null_vu_prepare_t22" violates not-null constraint)~~
+
+
+#smalldatetime
+Insert into test_not_null_vu_prepare_t23 values ('2000-12-13 12:58:23', NULL);
+~~ERROR (Code: 515)~~
+
+~~ERROR (Message: null value in column "b" of relation "test_not_null_vu_prepare_t23" violates not-null constraint)~~
+
+Select * from test_not_null_vu_prepare_t23
+~~START~~
+smalldatetime#!#smalldatetime
+2007-05-08 12:35:00.0#!#2007-05-08 12:35:00.0
+<NULL>#!#2007-05-08 12:35:00.0
+2007-05-08 12:35:00.0#!#2000-12-13 12:58:00.0
+<NULL>#!#2000-12-13 12:58:00.0
+~~END~~
+
+exec test_not_null_vu_prepare_p23
+~~ERROR (Code: 515)~~
+
+~~ERROR (Message: null value in column "b" of relation "test_not_null_vu_prepare_t23" violates not-null constraint)~~
+
+
+#datetime2
+Insert into test_not_null_vu_prepare_t24 values ('2016-10-23 12:45:37.123', NULL);
+~~ERROR (Code: 515)~~
+
+~~ERROR (Message: null value in column "b" of relation "test_not_null_vu_prepare_t24" violates not-null constraint)~~
+
+Select * from test_not_null_vu_prepare_t24
+~~START~~
+datetime2#!#datetime2
+2016-10-23 12:45:37.123000#!#2016-10-23 12:45:37.123000
+<NULL>#!#2016-10-23 12:45:37.123000
+2016-10-23 12:45:37.123000#!#2016-10-23 12:45:37.123000
+<NULL>#!#2016-10-23 12:45:37.123000
+~~END~~
+
+exec test_not_null_vu_prepare_p24
+~~ERROR (Code: 515)~~
+
+~~ERROR (Message: null value in column "b" of relation "test_not_null_vu_prepare_t24" violates not-null constraint)~~
+
+
+#datetimeoffset
+Insert into test_not_null_vu_prepare_t25 values ('2016-10-23 12:24:32 +10:0', NULL);
+~~ERROR (Code: 515)~~
+
+~~ERROR (Message: null value in column "b" of relation "test_not_null_vu_prepare_t25" violates not-null constraint)~~
+
+Select * from test_not_null_vu_prepare_t25
+~~START~~
+datetimeoffset#!#datetimeoffset
+2016-10-23 12:24:32.000000 +00:00#!#2016-10-23 12:24:32.000000 +00:00
+<NULL>#!#2016-10-23 12:24:32.000000 +00:00
+2016-10-23 12:24:32.000000 +10:00#!#2016-10-23 12:24:32.000000 +10:00
+<NULL>#!#2016-10-23 12:24:32.000000 +10:00
+~~END~~
+
+exec test_not_null_vu_prepare_p25
+~~ERROR (Code: 515)~~
+
+~~ERROR (Message: null value in column "b" of relation "test_not_null_vu_prepare_t25" violates not-null constraint)~~
+
+
+#sql_variant
+Insert into test_not_null_vu_prepare_t26 values (cast ('abc' as varchar(10)), NULL);
+~~ERROR (Code: 515)~~
+
+~~ERROR (Message: null value in column "b" of relation "test_not_null_vu_prepare_t26" violates not-null constraint)~~
+
+Select * from test_not_null_vu_prepare_t26
+~~START~~
+sql_variant#!#sql_variant
+<NULL>#!#2
+false#!#false
+1#!#abc
+<NULL>#!#abc
+~~END~~
+
+exec test_not_null_vu_prepare_p26
+~~ERROR (Code: 515)~~
+
+~~ERROR (Message: null value in column "b" of relation "test_not_null_vu_prepare_t26" violates not-null constraint)~~
+

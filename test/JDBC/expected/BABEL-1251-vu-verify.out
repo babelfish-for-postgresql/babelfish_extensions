@@ -1,0 +1,139 @@
+SET IDENTITY_INSERT babel_1251_vu_prepare.t1 ON;
+go
+INSERT INTO babel_1251_vu_prepare.t1(col1, id) VALUES (1, 10);
+go
+~~ROW COUNT: 1~~
+
+SELECT @@IDENTITY;
+go
+~~START~~
+numeric
+10
+~~END~~
+
+SET IDENTITY_INSERT babel_1251_vu_prepare.t1 OFF;
+go
+INSERT INTO babel_1251_vu_prepare.t1(col1) VALUES (1);
+go
+~~ROW COUNT: 1~~
+
+SELECT * FROM babel_1251_vu_prepare.t1;
+go
+~~START~~
+int#!#int
+1#!#10
+1#!#11
+~~END~~
+
+SELECT @@IDENTITY;
+go
+~~START~~
+numeric
+11
+~~END~~
+
+
+SET IDENTITY_INSERT babel_1251_vu_prepare.t2 ON;
+go
+INSERT INTO babel_1251_vu_prepare.t2(col1, id, col2) VALUES ('hello', -10, 1);
+go
+~~ROW COUNT: 1~~
+
+SELECT @@IDENTITY;
+go
+~~START~~
+numeric
+-10
+~~END~~
+
+SET IDENTITY_INSERT babel_1251_vu_prepare.t2 OFF;
+go
+INSERT INTO babel_1251_vu_prepare.t2(col1, col2) VALUES ('world', 1);
+go
+~~ROW COUNT: 1~~
+
+SELECT @@IDENTITY;
+go
+~~START~~
+numeric
+-11
+~~END~~
+
+SELECT * FROM babel_1251_vu_prepare.t2;
+go
+~~START~~
+varchar#!#int#!#int
+hello#!#-10#!#1
+world#!#-11#!#1
+~~END~~
+
+
+INSERT INTO babel_1251_vu_prepare.t3(col1, col2) VALUES ('hello', 1);
+go
+~~ROW COUNT: 1~~
+
+SELECT @@IDENTITY;
+go
+~~START~~
+numeric
+1
+~~END~~
+
+SET IDENTITY_INSERT babel_1251_vu_prepare.t3 ON;
+go
+INSERT INTO babel_1251_vu_prepare.t3(col1, col2, id) VALUES ('hello', 1, 20);
+go
+~~ROW COUNT: 1~~
+
+SET IDENTITY_INSERT babel_1251_vu_prepare.t3 OFF;
+go
+SELECT @@IDENTITY;
+go
+~~START~~
+numeric
+20
+~~END~~
+
+INSERT INTO babel_1251_vu_prepare.t3(col1, col2) VALUES ('hello', 1);
+go
+~~ROW COUNT: 1~~
+
+SELECT @@IDENTITY;
+go
+~~START~~
+numeric
+21
+~~END~~
+
+SET IDENTITY_INSERT babel_1251_vu_prepare.t3 ON;
+go
+INSERT INTO babel_1251_vu_prepare.t3(col1, col2, id) VALUES ('hello', 1, 30);
+go
+~~ROW COUNT: 1~~
+
+SELECT @@IDENTITY;
+go
+~~START~~
+numeric
+30
+~~END~~
+
+SET IDENTITY_INSERT babel_1251_vu_prepare.t3 OFF;
+go
+SELECT * FROM babel_1251_vu_prepare.t3;
+go
+~~START~~
+varchar#!#int#!#int
+hello#!#1#!#1
+hello#!#1#!#20
+hello#!#1#!#21
+hello#!#1#!#30
+~~END~~
+
+SELECT @@IDENTITY;
+go
+~~START~~
+numeric
+30
+~~END~~
+

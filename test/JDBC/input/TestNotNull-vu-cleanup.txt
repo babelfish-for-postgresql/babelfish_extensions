@@ -1,0 +1,104 @@
+drop procedure test_not_null_vu_prepare_p1
+
+drop procedure test_not_null_vu_prepare_p2
+
+drop procedure test_not_null_vu_prepare_p3
+
+drop procedure test_not_null_vu_prepare_p4
+
+drop procedure test_not_null_vu_prepare_p5
+
+drop procedure test_not_null_vu_prepare_p6
+
+drop procedure test_not_null_vu_prepare_p7
+
+drop procedure test_not_null_vu_prepare_p8
+
+drop procedure test_not_null_vu_prepare_p9
+
+drop procedure test_not_null_vu_prepare_p10
+
+drop procedure test_not_null_vu_prepare_p11
+
+drop procedure test_not_null_vu_prepare_p12
+
+drop procedure test_not_null_vu_prepare_p13
+
+drop procedure test_not_null_vu_prepare_p14
+
+drop procedure test_not_null_vu_prepare_p15
+
+drop procedure test_not_null_vu_prepare_p16
+
+drop procedure test_not_null_vu_prepare_p17
+
+drop procedure test_not_null_vu_prepare_p18
+
+drop procedure test_not_null_vu_prepare_p19
+
+drop procedure test_not_null_vu_prepare_p20
+
+drop procedure test_not_null_vu_prepare_p21
+
+drop procedure test_not_null_vu_prepare_p22
+
+drop procedure test_not_null_vu_prepare_p23
+
+drop procedure test_not_null_vu_prepare_p24
+
+drop procedure test_not_null_vu_prepare_p25
+
+drop procedure test_not_null_vu_prepare_p26
+
+drop table test_not_null_vu_prepare_t1
+
+drop table test_not_null_vu_prepare_t2
+
+drop table test_not_null_vu_prepare_t3
+
+drop table test_not_null_vu_prepare_t4
+
+drop table test_not_null_vu_prepare_t5
+
+drop table test_not_null_vu_prepare_t6
+
+drop table test_not_null_vu_prepare_t7
+
+drop table test_not_null_vu_prepare_t8
+
+drop table test_not_null_vu_prepare_t9
+
+drop table test_not_null_vu_prepare_t10
+
+drop table test_not_null_vu_prepare_t11
+
+drop table test_not_null_vu_prepare_t12
+
+drop table test_not_null_vu_prepare_t13
+
+drop table test_not_null_vu_prepare_t14
+
+drop table test_not_null_vu_prepare_t15
+
+drop table test_not_null_vu_prepare_t16
+
+drop table test_not_null_vu_prepare_t17
+
+drop table test_not_null_vu_prepare_t18
+
+drop table test_not_null_vu_prepare_t19
+
+drop table test_not_null_vu_prepare_t20
+
+drop table test_not_null_vu_prepare_t21
+
+drop table test_not_null_vu_prepare_t22
+
+drop table test_not_null_vu_prepare_t23
+
+drop table test_not_null_vu_prepare_t24
+
+drop table test_not_null_vu_prepare_t25
+
+drop table test_not_null_vu_prepare_t26
+

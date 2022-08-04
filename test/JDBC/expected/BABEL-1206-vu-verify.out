@@ -1,0 +1,35 @@
+select (case when a<b then 1 else 0 end) r from babel_1206_vu_prepare_t1;
+go
+~~START~~
+int
+1
+~~END~~
+
+select (case when a<=b then 1 else 0 end) r from babel_1206_vu_prepare_t1;
+go
+~~START~~
+int
+1
+~~END~~
+
+select (case when a=b then 1 else 0 end) r from babel_1206_vu_prepare_t1;
+go
+~~START~~
+int
+0
+~~END~~
+
+select (case when a>b then 1 else 0 end) r from babel_1206_vu_prepare_t1;
+go
+~~START~~
+int
+0
+~~END~~
+
+select (case when a>=b then 1 else 0 end) r from babel_1206_vu_prepare_t1;
+go
+~~START~~
+int
+0
+~~END~~
+
