@@ -357,6 +357,7 @@ datetime
 2016-12-26 23:30:25.0
 ~~END~~
 
+-- TODO Fix BABEL-2822
 select dateadd(millisecond, 56, cast('2016-12-26 23:29:29' as datetime))
 go
 ~~START~~
