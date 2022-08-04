@@ -1636,10 +1636,6 @@ public:
 
 	void exitTable_name(TSqlParser::Table_nameContext *ctx) override
 	{
-		if (ctx && ctx->schema)
-			is_schema_specified = true;
-		else
-			is_schema_specified = false;
 		tsqlCommonMutator::exitTable_name(ctx);
 		if (ctx && ctx->database)
 		{
