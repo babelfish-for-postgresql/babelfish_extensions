@@ -161,6 +161,26 @@ CREATE OR REPLACE VIEW information_schema_tsql.COLUMN_DOMAIN_USAGE AS
 
 GRANT SELECT ON information_schema_tsql.COLUMN_DOMAIN_USAGE TO PUBLIC;
 
+/*
+* CONSTRAINT TABLE USAGE
+*/
+CREATE OR REPLACE VIEW information_schema_tsql.constraint_table_usage
+AS SELECT sys.db_name()::sys.nvarchar(128) AS table_catalog,
+    sys.schema_name(nr.oid)::sys.nvarchar(128) AS table_schema,
+    r.relname::sys.sysname AS table_name,
+    sys.db_name()::sys.nvarchar(128) AS constraint_catalog,
+    sys.schema_name(nc.oid)::sys.nvarchar(128) AS constraint_schema,
+    c.conname::sys.sysname AS constraint_name
+   FROM pg_constraint c,
+    pg_namespace nc,
+    pg_class r,
+    pg_namespace nr
+WHERE c.connamespace = nc.oid AND r.relnamespace = nr.oid 
+AND (c.contype = 'f'::"char" AND c.confrelid = r.oid OR (c.contype = ANY (ARRAY['p'::"char", 'u'::"char"])) AND c.conrelid = r.oid) 
+AND (r.relkind = ANY (ARRAY['r'::"char", 'p'::"char"])) AND pg_has_role(r.relowner, 'USAGE'::text);
+
+GRANT SELECT ON information_schema_tsql.constraint_table_usage TO PUBLIC;
+
 CREATE OR replace view sys.foreign_keys AS
 SELECT
   CAST(c.conname AS sys.SYSNAME) AS name

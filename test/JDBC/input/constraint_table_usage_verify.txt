@@ -1,0 +1,21 @@
+use constraint_table_usage_prepare_db;
+
+select * from information_schema.constraint_table_usage where table_name like 'constraint_table_usage_tb%';
+
+drop table constraint_table_usage_prepare_tb1;
+
+select * from information_schema.constraint_table_usage where table_name like 'constraint_table_usage_tb%';
+
+drop table constraint_table_usage_prepare_tb2;
+
+select * from information_schema.constraint_table_usage where table_name like 'constraint_table_usage_tb%';
+
+drop table constraint_table_usage_prepare_tb3;
+
+select * from information_schema.constraint_table_usage where table_name like 'constraint_table_usage_tb%';
+
+drop table constraint_table_usage_prepare_tb4;
+
+use master;
+
+drop constraint_table_usage_prepare_db;
