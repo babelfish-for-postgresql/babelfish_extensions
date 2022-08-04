@@ -1,0 +1,35 @@
+USE MASTER
+GO
+
+INSERT INTO babel_1715_vu_prepare_t1 VALUES (2, 3);
+GO
+~~ERROR (Code: 2627)~~
+
+~~ERROR (Message: duplicate key value violates unique constraint "uk_ababel_1715_vu_prepare_t1309394cc13ed0160c093d0a0f82cb1c0")~~
+
+
+INSERT INTO babel_1715_vu_prepare_t2 (a) VALUES (2);
+GO
+~~ERROR (Code: 2627)~~
+
+~~ERROR (Message: duplicate key value violates unique constraint "uk_ababel_1715_vu_prepare_t2309394cc13ed0160c093d0a0f82cb1c0")~~
+
+
+CREATE TABLE babel_1715_vu_prepare_invalid1 (a int b int);
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: syntax error at or near "b")~~
+
+CREATE TABLE babel_1715_vu_prepare_invalid2 (a int CONSTRAINT uk_a PRIMARY KEY (a) b int);
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: syntax error at or near "b")~~
+
+CREATE TABLE babel_1715_vu_prepare_invalid3 (a int CONSTRAINT uk_a PRIMARY KEY (a) CONSTRAINT uk_b UNIQUE (b));
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: syntax error at or near "CONSTRAINT")~~
+

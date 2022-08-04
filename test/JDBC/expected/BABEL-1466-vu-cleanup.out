@@ -1,0 +1,2 @@
+drop table babel_1466_vu_prepare_t1;
+GO
