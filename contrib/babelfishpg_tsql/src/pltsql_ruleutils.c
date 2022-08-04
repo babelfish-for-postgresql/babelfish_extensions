@@ -424,9 +424,11 @@ tsql_get_functiondef(PG_FUNCTION_ARGS)
 	 */
 	nsp = get_namespace_name(proc->pronamespace);
 	nnsp = get_logical_schema_name(nsp,true);
-	appendStringInfo(&buf, "CREATE %s %s(",
+	appendStringInfo(&buf, "CREATE %s %s",
 					 isfunction ? "FUNCTION" : "PROCEDURE",
 					 tsql_quote_qualified_identifier(nnsp, name));
+	if(isfunction || proc->pronargs > 0)
+		appendStringInfoString(&buf, "(");
 	
 	/* we will not pfree name because as we can see name = NameStr(proc->proname) 
          * here we are not allocating extra space for name, we’re just using proc-> proname.
@@ -440,7 +442,8 @@ tsql_get_functiondef(PG_FUNCTION_ARGS)
         if(isfunction) number_args++;
        	probin_json_reader(tmp, &typmod_arr, number_args);
 	(void) print_function_arguments(&buf, proctup, false, true, &typmod_arr);
-	appendStringInfoString(&buf, ")");
+	if(isfunction || proc->pronargs > 0)
+		appendStringInfoString(&buf, ")");
 	if (isfunction)
 	{
 		appendStringInfoString(&buf, " RETURNS ");
