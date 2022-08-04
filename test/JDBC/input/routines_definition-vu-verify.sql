@@ -33,6 +33,3 @@ go
 
 drop database db_routines_vu_prepare;
 go
-
-
-
