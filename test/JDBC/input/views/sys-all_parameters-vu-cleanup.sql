@@ -16,6 +16,15 @@ GO
 DROP FUNCTION sys_all_parameters_vu_prepare_tableFunc
 GO
 
+DROP FUNCTION sys_all_parameters_vu_prepare_InlineTableFunc
+GO
+
+DROP FUNCTION sys_all_parameters_vu_prepare_tableFunc2
+GO
+
+DROP FUNCTION sys_all_parameters_vu_prepare_InlineTableFunc2
+GO
+
 DROP PROCEDURE sys_all_parameters_vu_prepare_tvpProc
 GO
 

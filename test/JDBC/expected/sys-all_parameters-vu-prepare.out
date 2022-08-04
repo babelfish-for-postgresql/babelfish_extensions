@@ -49,10 +49,43 @@ BEGIN
 END
 GO
 
+CREATE FUNCTION sys_all_parameters_vu_prepare_InlineTableFunc(@t1 int, @t2 int)
+RETURNS TABLE
+AS
+RETURN
+(
+  SELECT 1 AS c1, 2 AS c2
+)
+GO
+
 CREATE TYPE sys_all_parameters_vu_prepare_myTableParam
     AS TABLE
         ( a int,
           b int)
+GO
+
+CREATE FUNCTION sys_all_parameters_vu_prepare_tableFunc2(@c1 sys_all_parameters_vu_prepare_myTableParam READONLY,
+    @c2 sys_all_parameters_vu_prepare_myTableParam READONLY)
+RETURNS @t TABLE (
+    c1 int,
+    c2 int
+)
+AS
+BEGIN
+    INSERT INTO @t
+    SELECT @c1 as c1, @c2 as c2;
+    RETURN;
+END
+GO
+
+CREATE FUNCTION sys_all_parameters_vu_prepare_InlineTableFunc2(@t1 sys_all_parameters_vu_prepare_myTableParam READONLY, 
+    @t2 sys_all_parameters_vu_prepare_myTableParam READONLY)
+RETURNS TABLE
+AS
+RETURN
+(
+  SELECT 1 AS c1, 2 AS c2
+)
 GO
 
 CREATE PROCEDURE sys_all_parameters_vu_prepare_tvpProc @tvp sys_all_parameters_vu_prepare_myTableParam READONLY

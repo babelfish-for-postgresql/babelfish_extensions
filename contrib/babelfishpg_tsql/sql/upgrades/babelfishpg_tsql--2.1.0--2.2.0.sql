@@ -3421,10 +3421,6 @@ FROM pg_type t
         END
       )) AS x
     FROM pg_proc p
-    INNER JOIN sys.schemas s ON (
-      p.pronamespace = s.schema_id
-        OR p.pronamespace = CAST((select oid FROM pg_namespace where nspname = 'sys' limit 1) AS INT)
-    )
     WHERE (
       p.pronamespace in (select schema_id from sys.schemas union all select oid from pg_namespace where nspname = 'sys')
       AND (pg_has_role(p.proowner, 'USAGE') OR has_function_privilege(p.oid, 'EXECUTE'))
@@ -3444,6 +3440,7 @@ WHERE ( -- If it's a Table function, we only want the inputs
       return_type NOT LIKE 'TABLE(%' OR 
       (return_type LIKE 'TABLE(%' AND ss.proargmodes[(ss.x).n] = 'i'));
 GRANT SELECT ON sys.all_parameters TO PUBLIC;
+
 
 CREATE OR REPLACE FUNCTION sys.babelfish_get_last_identity()
 RETURNS INT8
