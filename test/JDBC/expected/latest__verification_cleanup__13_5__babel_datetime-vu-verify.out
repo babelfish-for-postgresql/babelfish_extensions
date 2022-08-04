@@ -357,12 +357,12 @@ datetime
 2016-12-26 23:30:25.0
 ~~END~~
 
--- TODO Fix BABEL-2822
 select dateadd(millisecond, 56, cast('2016-12-26 23:29:29' as datetime))
 go
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: operator is not unique: integer * numeric)~~
+~~START~~
+datetime
+2016-12-26 23:29:29.057
+~~END~~
 
 select dateadd(minute, 56, cast('2016-12-26 23:29:29' as datetime))
 go
