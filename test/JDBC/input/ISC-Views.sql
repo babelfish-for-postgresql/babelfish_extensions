@@ -191,11 +191,11 @@ go
 select object_name,length(definition) from sys.babelfish_view_def where object_name in ('lview','nlview') order by object_name;
 go
 
--- This should be NULL
-select view_definition from information_schema.views where TABLE_NAME = 'lview';
+-- This should be truncated
+select length(view_definition) from information_schema.views where TABLE_NAME = 'lview';
 go
 
--- This should not be NULL and also shouldn't be truncated
+-- This shouldn't be truncated
 select length(view_definition) from information_schema.views where TABLE_NAME = 'nlview';
 go
 

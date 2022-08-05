@@ -473,12 +473,7 @@ CREATE OR REPLACE VIEW information_schema_tsql.views AS
 	SELECT CAST(nc.dbname AS sys.nvarchar(128)) AS "TABLE_CATALOG",
 			CAST(ext.orig_name AS sys.nvarchar(128)) AS  "TABLE_SCHEMA",
 			CAST(c.relname AS sys.nvarchar(128)) AS "TABLE_NAME",
-
-			CAST(
-				CASE WHEN LENGTH(vd.definition) <= 4000
-					THEN vd.definition
-					ELSE NULL END
-				AS sys.nvarchar(4000)) AS "VIEW_DEFINITION",
+			CAST(vd.definition AS sys.nvarchar(4000)) AS "VIEW_DEFINITION",
 
 			CAST(
 				CASE WHEN 'check_option=cascaded' = ANY (c.reloptions)
