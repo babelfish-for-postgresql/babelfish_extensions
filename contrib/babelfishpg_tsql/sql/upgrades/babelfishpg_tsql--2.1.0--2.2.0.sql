@@ -3147,6 +3147,49 @@ SELECT
 WHERE FALSE; -- This condition will ensure that the view is empty
 GRANT SELECT ON sys.numbered_procedures TO PUBLIC;
 
+CREATE OR REPLACE FUNCTION sys.fn_listextendedproperty (
+property_name varchar(128),
+level0_object_type varchar(128),
+level0_object_name varchar(128),
+level1_object_type varchar(128),
+level1_object_name varchar(128),
+level2_object_type varchar(128),
+level2_object_name varchar(128)
+)
+returns table (
+objtype	sys.sysname,
+objname	sys.sysname,
+name	sys.sysname,
+value	sys.sql_variant
+) 
+as $$
+begin
+-- currently only support COLUMN property
+IF (((coalesce(property_name COLLATE "C", '')) = '') or
+    ((UPPER(coalesce(property_name COLLATE "C", ''))) = 'COLUMN' COLLATE "C")) THEN
+    IF (((LOWER(coalesce(level0_object_type COLLATE "C", ''))) = 'schema' COLLATE "C") and
+	 	    ((LOWER(coalesce(level1_object_type COLLATE "C", ''))) = 'table' COLLATE "C") and
+	 	    ((LOWER(coalesce(level2_object_type COLLATE "C", ''))) = 'column' COLLATE "C")) THEN
+		RETURN query 
+		select CAST('COLUMN' AS sys.sysname) as objtype,
+		       CAST(t3.column_name AS sys.sysname) as objname,
+		       t1.name as name,
+		       t1.value as value
+		from sys.extended_properties t1, pg_catalog.pg_class t2, information_schema.columns t3
+		where t1.major_id = t2.oid and 
+			  t2.relname = t3.table_name and 
+              t2.relname = (coalesce(level1_object_name COLLATE "C", '')) and 
+              t3.column_name = (coalesce(level2_object_name COLLATE "C", ''));
+	END IF;
+END IF;
+RETURN;
+end;
+$$
+LANGUAGE plpgsql;
+GRANT EXECUTE ON FUNCTION sys.fn_listextendedproperty(
+	varchar(128), varchar(128), varchar(128), varchar(128), varchar(128), varchar(128), varchar(128)
+) TO PUBLIC;
+
 -- BABEL-3325: Revisit once DDL and/or CREATE EVENT NOTIFICATION is supported
 CREATE OR REPLACE VIEW sys.events 
 AS
