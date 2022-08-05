@@ -123,6 +123,8 @@ PG_FUNCTION_INFO_V1(sqlvariantsend);
 
 bytea *convertVarcharToSQLVariantByteA(VarChar *vch, Oid coll);
 bytea *convertIntToSQLVariantByteA(int ret);
+bytea *convertBinaryToSQLVariantByteA(int64_t ret);
+
 
 /* extract coll related info*/
 extern HTAB *ht_oid2collid;
@@ -2304,6 +2306,27 @@ bytea *convertIntToSQLVariantByteA(int ret) {
     SV_SET_METADATA(svhdr, INT_T, HDR_VER);
 
 	return result;
+}
+
+bytea *convertBinaryToSQLVariantByteA(int64_t ret)
+{
+    int maxlen = 5;
+    bytea *bytea_data = (bytea *) palloc(maxlen + VARHDRSZ);
+    SET_VARSIZE(bytea_data, maxlen + VARHDRSZ);
+    char *rp = VARDATA(bytea_data);
+    bytea        *result;
+    svhdr_3B_t   *svhdr;
+
+    memcpy(rp, (char *) &ret , maxlen);
+
+    result = gen_sqlvariant_bytea_from_type_datum(BINARY_T, PointerGetDatum(bytea_data));
+
+    /* Type Specific Header */
+    svhdr = SV_HDR_3B(result);
+    SV_SET_METADATA(svhdr, BINARY_T, HDR_VER);
+    svhdr->typmod = VARSIZE_ANY_EXHDR(bytea_data);
+
+    return result;
 }
 
 bytea *convertVarcharToSQLVariantByteA(VarChar *vch, Oid coll) {

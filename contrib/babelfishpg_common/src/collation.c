@@ -1167,6 +1167,24 @@ int get_persist_collation_id(Oid coll_oid)
 	return collidx;
 }
 
+int64_t
+tdscollationproperty_helper(const char *collationname, const char *property)
+{
+	int collidx = find_any_collation(collationname, false);
+	if (collidx >= 0)
+	{
+		coll_info coll = coll_infos[collidx];
+
+		if (strcasecmp(property, "tdscollation") == 0)
+		{
+			int64_t result = ((int64_t)((int64_t)coll.lcid | ((int64_t)coll.collateflags << 20) | ((int64_t)coll.sortid << 32)));
+			return result;
+		}
+	}
+
+	return -1; /* Invalid collation. */
+}
+
 int
 collationproperty_helper(const char *collationname, const char *property)
 {
@@ -1277,6 +1295,7 @@ get_collation_callbacks(void)
 		collation_callbacks_var.collation_list_internal = &collation_list_internal;
 		collation_callbacks_var.is_collated_ci_as_internal = &is_collated_ci_as_internal;
 		collation_callbacks_var.collationproperty_helper = &collationproperty_helper;
+		collation_callbacks_var.tdscollationproperty_helper = &tdscollationproperty_helper;
 		collation_callbacks_var.lookup_collation_table_callback = &lookup_collation_table;
 		collation_callbacks_var.lookup_like_ilike_table = &lookup_like_ilike_table;
 		collation_callbacks_var.is_server_collation_CI_AS = &is_server_collation_CI_AS;
