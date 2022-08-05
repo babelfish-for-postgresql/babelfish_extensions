@@ -113,7 +113,6 @@ sys-lock_timeout
 sys-max_connections
 sys-objects
 sys-original_login
-sys-procedures
 sys-schema-name
 identity_function
 sys-sysobjects
@@ -178,8 +177,6 @@ babelfish_authid_login_ext
 schema_resolution_func
 BABEL-3147-before-14_5
 TestErrorHelperFunctionsUpgrade
-sys-suser_sid
-sys-suser_sname
 BABEL-1249
 BABEL-1291
 BABEL-1994-CHAR
