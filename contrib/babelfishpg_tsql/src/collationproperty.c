@@ -19,7 +19,6 @@
 PG_FUNCTION_INFO_V1(collationproperty);
 
 extern bytea *convertIntToSQLVariantByteA(int ret);
-
 extern  coll_info_t coll_infos[];
 
 Datum collationproperty(PG_FUNCTION_ARGS)
@@ -29,12 +28,14 @@ Datum collationproperty(PG_FUNCTION_ARGS)
 	bytea *result64 = NULL;
 	int result32 = -1;
 
-	if (strcasecmp(property, "tdscollation") == 0){
+	if (strcasecmp(property, "tdscollation") == 0)
+	{
 		result64 = tsql_tdscollationproperty_helper(collationname, property);
 		if(result64 != NULL) 
 			PG_RETURN_BYTEA_P(result64);
 	}
-  	else{
+  	else
+	{
   		result32 = tsql_collationproperty_helper(collationname, property);
 		if (result32 != -1)
 			PG_RETURN_BYTEA_P(convertIntToSQLVariantByteA(result32));

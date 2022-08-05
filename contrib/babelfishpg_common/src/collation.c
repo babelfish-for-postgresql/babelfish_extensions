@@ -1181,10 +1181,10 @@ tdscollationproperty_helper(const char *collationname, const char *property)
 			int64_t ret = ((int64_t)((int64_t)coll.lcid | ((int64_t)coll.collateflags << 20) | ((int64_t)coll.sortid << 32)));
 
 			/*
-				ret here is of 8bytes
-				tdscollation should return 5bytes
-				Below code converts ret into 5bytes
-			*/
+			 *	ret here is of 8 bytes
+			 *	tdscollation should return 5 bytes
+			 *	Below code converts ret into 5 bytes
+			 */
 			int maxlen = 5;
 			bytea *bytea_data = (bytea *) palloc(maxlen + VARHDRSZ);
 			SET_VARSIZE(bytea_data, maxlen + VARHDRSZ);
