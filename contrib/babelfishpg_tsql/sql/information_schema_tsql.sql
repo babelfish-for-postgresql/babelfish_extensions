@@ -721,12 +721,12 @@ GRANT SELECT ON information_schema_tsql.routines TO PUBLIC;
 -- drop view if exists information_schema_tsql.view_table_usage;
 
 CREATE OR REPLACE VIEW information_schema_tsql.view_table_usage
-AS SELECT DISTINCT sys.db_name()::sys.nvarchar(128) AS view_catalog,
-    sys.schema_name(nv."oid")::sys.nvarchar(128) AS view_schema,
-    v.relname::sys.sysname AS view_name,
-    sys.db_name()::sys.nvarchar(128) AS table_catalog,
-    sys.schema_name(nt."oid")::sys.nvarchar(128) AS table_schema,
-    t.relname::sys.sysname AS table_name
+AS SELECT DISTINCT CAST(sys.db_name() AS sys.nvarchar(128)) AS "VIEW_CATALOG",
+    CAST(sys.schema_name(nv."oid") AS sys.nvarchar(128)) AS "VIEW_SCHEMA",
+    CAST(v.relname AS sys.sysname) AS "VIEW_NAME",
+    CAST(sys.db_name() AS sys.nvarchar(128)) AS "TABLE_CATALOG",
+    CAST(sys.schema_name(nt."oid") AS sys.nvarchar(128)) AS "TABLE_SCHEMA",
+    CAST(t.relname AS sys.sysname) AS "TABLE_NAME"
    FROM pg_catalog.pg_namespace nv,
     pg_catalog.pg_class v,
     pg_catalog.pg_depend dv,
