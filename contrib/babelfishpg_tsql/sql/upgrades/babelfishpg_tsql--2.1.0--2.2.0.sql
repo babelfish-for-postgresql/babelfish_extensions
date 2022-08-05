@@ -652,12 +652,7 @@ CREATE OR REPLACE VIEW information_schema_tsql.views AS
 	SELECT CAST(nc.dbname AS sys.nvarchar(128)) AS "TABLE_CATALOG",
 			CAST(ext.orig_name AS sys.nvarchar(128)) AS  "TABLE_SCHEMA",
 			CAST(c.relname AS sys.nvarchar(128)) AS "TABLE_NAME",
-
-			CAST(
-				CASE WHEN LENGTH(vd.definition) <= 4000
-					THEN vd.definition
-					ELSE NULL END
-				AS sys.nvarchar(4000)) AS "VIEW_DEFINITION",
+			CAST(vd.definition AS sys.nvarchar(4000)) AS "VIEW_DEFINITION",
 
 			CAST(
 				CASE WHEN 'check_option=cascaded' = ANY (c.reloptions)
@@ -1298,6 +1293,9 @@ FROM (
           AND c.contype = 'c'
           AND r.relkind IN ('r', 'p')
           AND NOT a.attisdropped
+	  AND (pg_has_role(r.relowner, 'USAGE')
+		OR has_table_privilege(r.oid, 'SELECT, INSERT, UPDATE, DELETE, TRUNCATE, REFERENCES, TRIGGER')
+		OR has_any_column_privilege(r.oid, 'SELECT, INSERT, UPDATE, REFERENCES'))
 
        UNION ALL
 
@@ -1316,10 +1314,11 @@ FROM (
           AND NOT a.attisdropped
           AND c.contype IN ('p', 'u', 'f')
           AND r.relkind IN ('r', 'p')
+	  AND (pg_has_role(r.relowner, 'USAGE')
+		OR has_table_privilege(r.oid, 'SELECT, INSERT, UPDATE, DELETE, TRUNCATE, REFERENCES, TRIGGER')
+		OR has_any_column_privilege(r.oid, 'SELECT, INSERT, UPDATE, REFERENCES'))
 
-      ) AS x (tblschema, tblname, tblowner, colname, cstrschema, cstrname, tblcat, cstrcat)
-
-WHERE pg_has_role(x.tblowner, 'USAGE');
+      ) AS x (tblschema, tblname, tblowner, colname, cstrschema, cstrname, tblcat, cstrcat);
 
 GRANT SELECT ON information_schema_tsql.CONSTRAINT_COLUMN_USAGE TO PUBLIC;
 
