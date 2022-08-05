@@ -39,6 +39,7 @@
 #include "src/include/tds_int.h"
 #include "src/include/tds_protocol.h"
 #include "src/include/tds_response.h"
+#include "src/include/tds_timestamp.h"
 #include "src/include/guc.h"
 
 #define SP_FLAGS_WITHRECOMP			0x01
@@ -436,6 +437,13 @@ resolve_numeric_typmod_from_exp(Node *expr)
 			int32 typmod1 = -1, typmod2 = -1;
 			uint8_t scale1, scale2, precision1, precision2;
 			uint8_t scale, precision;
+			uint8_t integralDigitCount = 0;
+			/*
+			 * If one of the operands is part of aggregate function SUM() or AVG(),
+			 * set has_aggregate_operand to true; in those cases
+			 * resultant precision and scale calculation would be a bit different
+			 */
+			bool has_aggregate_operand = false;
 
 			Assert(list_length(op->args) == 2 ||  list_length(op->args) == 1);
 			if (list_length(op->args) == 2)
@@ -499,16 +507,39 @@ resolve_numeric_typmod_from_exp(Node *expr)
 			 * Refer to details of precision and scale calculation in the following link:
 			 * https://github.com/MicrosoftDocs/sql-docs/blob/live/docs/t-sql/data-types/precision-scale-and-length-transact-sql.md
 			 */
+			has_aggregate_operand = arg1->type == T_Aggref ||
+						(list_length(op->args) == 2 && arg2->type == T_Aggref);
+
 			switch (op->opfuncid)
 			{
 				case NUMERIC_ADD_OID:
 				case NUMERIC_SUB_OID:
+					integralDigitCount = Max(precision1 - scale1, precision2 - scale2);
 					scale = Max(scale1, scale2);
-					precision = Max(precision1 - scale1, precision2 - scale2) + 1 + scale;
+					precision = integralDigitCount + 1 + scale;
+					/*
+					 * For addition and subtraction, skip scale adjustment when none of the
+					 * operands is part of any aggregate function
+					 */
+					if (has_aggregate_operand &&
+					    integralDigitCount < (Min(TDS_MAX_NUM_PRECISION, precision) - scale))
+						scale = Min(precision, TDS_MAX_NUM_PRECISION) - integralDigitCount;
+
+					/*
+					 * precisionn adjustment to TDS_MAX_NUM_PRECISION
+					 */
+					if (precision > TDS_MAX_NUM_PRECISION)
+						precision = TDS_MAX_NUM_PRECISION;
 					break;
 				case NUMERIC_MUL_OID:
 					scale = scale1 + scale2;
 					precision = precision1 + precision2 + 1;
+					/*
+					 * For multiplication, skip scale adjustment when atleast one of the
+					 * operands is part of aggregate function
+					 */
+					if (has_aggregate_operand && precision > TDS_MAX_NUM_PRECISION)
+						precision = TDS_MAX_NUM_PRECISION;
 					break;
 				case NUMERIC_DIV_OID:
 					scale = Max(6, scale1 + precision2 + 1);
@@ -536,6 +567,10 @@ resolve_numeric_typmod_from_exp(Node *expr)
 			if (precision > TDS_MAX_NUM_PRECISION &&
 			    precision - scale <= TDS_MAX_NUM_PRECISION)
 			{
+			    /*
+			     * scale adjustment by delta is only applicable for division
+			     * and (multiplcation having no aggregate operand)
+			     */
 			    int delta = precision - TDS_MAX_NUM_PRECISION;
 			    precision = TDS_MAX_NUM_PRECISION;
 			    scale = Max(scale - delta, 0);
@@ -911,7 +946,7 @@ MakeEmptyParameterToken(char *name, int atttypid, int32 atttypmod, int attcollat
 				 * postgres supports upto 6 digits after decimal point
 				 */
 				if (atttypmod == -1)
-					atttypmod = 6;
+					atttypmod = DATETIMEOFFSETMAXSCALE;
 				SetColMetadataForTimeType(col, TDS_TYPE_TIME, atttypmod);
 				temp->maxLen = 5;
 			}
@@ -933,7 +968,7 @@ MakeEmptyParameterToken(char *name, int atttypid, int32 atttypmod, int attcollat
 				 * postgres supports upto 6 digits after decimal point
 				 */
 				if (atttypmod == -1)
-					atttypmod = 6;
+					atttypmod = DATETIMEOFFSETMAXSCALE;
 				SetColMetadataForTimeType(col, TDS_TYPE_DATETIME2, atttypmod);
 				temp->maxLen = 8;
 			}
@@ -964,7 +999,7 @@ MakeEmptyParameterToken(char *name, int atttypid, int32 atttypmod, int attcollat
 			else
 			{
 				if (atttypmod == -1)
-					atttypmod = 6;
+					atttypmod = DATETIMEOFFSETMAXSCALE;
 				SetColMetadataForTimeType(col, TDS_TYPE_DATETIMEOFFSET, atttypmod);
 				temp->maxLen = 10;
 			}
@@ -1611,7 +1646,7 @@ PrepareRowDescription(TupleDesc typeinfo, List *targetlist, int16 *formats,
 					* postgres supports upto 6 digits after decimal point
 					*/
 					if (atttypmod == -1)
-						atttypmod = 6;
+						atttypmod = DATETIMEOFFSETMAXSCALE;
 					SetColMetadataForTimeType(col, TDS_TYPE_TIME, atttypmod);
 				}
 				break;
@@ -1632,7 +1667,7 @@ PrepareRowDescription(TupleDesc typeinfo, List *targetlist, int16 *formats,
 					* postgres supports upto 6 digits after decimal point
 					*/
 					if (atttypmod == -1)
-						atttypmod = 6;
+						atttypmod = DATETIMEOFFSETMAXSCALE;
 					SetColMetadataForTimeType(col, TDS_TYPE_DATETIME2, atttypmod);
 				}
 				break;
@@ -1665,7 +1700,7 @@ PrepareRowDescription(TupleDesc typeinfo, List *targetlist, int16 *formats,
 				else
 				{
 					if (atttypmod == -1)
-						atttypmod = 6;
+						atttypmod = DATETIMEOFFSETMAXSCALE;
 					SetColMetadataForTimeType(col, TDS_TYPE_DATETIMEOFFSET, atttypmod);
 				}
 				break;

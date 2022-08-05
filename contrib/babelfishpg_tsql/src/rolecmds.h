@@ -45,6 +45,7 @@ extern bool is_alter_server_stmt(GrantRoleStmt *stmt);
 extern void check_alter_server_stmt(GrantRoleStmt *stmt);
 extern bool is_alter_role_stmt(GrantRoleStmt *stmt);
 extern void check_alter_role_stmt(GrantRoleStmt *stmt);
+extern bool is_empty_role(Oid roleid);
 extern void create_bbf_authid_login_ext(CreateRoleStmt *stmt);
 extern void alter_bbf_authid_login_ext(AlterRoleStmt *stmt);
 extern void create_bbf_authid_user_ext(CreateRoleStmt *stmt, bool has_schema, bool has_login);
@@ -56,5 +57,6 @@ extern void add_to_bbf_authid_user_ext(const char *user_name,
 									   bool is_role);
 extern void drop_related_bbf_users(List *db_users);
 extern void alter_bbf_authid_user_ext(AlterRoleStmt *stmt);
+extern bool is_active_login(Oid role_oid);
 
 #endif

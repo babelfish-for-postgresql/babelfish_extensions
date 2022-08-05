@@ -55,7 +55,6 @@ GO
 SELECT * FROM master..master_t1 ORDER BY id;
 GO
 
--- TODO: BABEL-3403 Expects error due to incorrect schema resolution when the object inside the procedure is schema qualified
 EXEC master.dbo.master_p1
 GO
 
@@ -129,7 +128,6 @@ INSERT INTO dbo.db1_t1 (a)
 EXECUTE master.dbo.master_p1;
 GO
 
--- Expect an error
 EXECUTE master.dbo.master_p1;
 GO
 
@@ -259,6 +257,17 @@ GO
 DROP USER master_janedoe;
 GO
 
+-- psql
+
+-- Need to terminate active session before cleaning up the login
+SELECT pg_terminate_backend(pid) FROM pg_stat_get_activity(NULL) 
+WHERE sys.suser_name(usesysid) = 'johndoe' AND backend_type = 'client backend' AND usesysid IS NOT NULL;
+GO
+-- Wait to sync with another session
+SELECT pg_sleep(1);
+GO
+
+-- tsql
 DROP LOGIN johndoe;
 GO
 

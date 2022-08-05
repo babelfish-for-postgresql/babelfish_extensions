@@ -644,8 +644,8 @@ END;
 $$ LANGUAGE plpgsql IMMUTABLE STRICT;
 
 create or replace function sys.sp_describe_first_result_set_internal(
-	tsqlquery varchar(384),
-    params varchar(384) = NULL, 
+	tsqlquery sys.nvarchar(8000),
+    params sys.nvarchar(8000) = NULL, 
     browseMode sys.tinyint = 0
 )
 returns table (
@@ -694,8 +694,8 @@ LANGUAGE C;
 GRANT ALL on FUNCTION sys.sp_describe_first_result_set_internal TO PUBLIC;
 
 CREATE OR REPLACE PROCEDURE sys.sp_describe_first_result_set (
-	"@tsql" varchar(384),
-    "@params" varchar(384) = NULL, 
+	"@tsql" sys.nvarchar(8000),
+    "@params" sys.nvarchar(8000) = NULL, 
     "@browse_information_mode" sys.tinyint = 0)
 AS $$
 BEGIN
@@ -1070,8 +1070,8 @@ $$
 LANGUAGE 'pltsql';
 GRANT EXECUTE ON PROCEDURE sys.sp_tables TO PUBLIC;
 
-CREATE FUNCTION sys.fn_mapped_system_error_list ()
-returns table (sql_error_code int)
+CREATE OR REPLACE FUNCTION sys.fn_mapped_system_error_list ()
+returns table (pg_sql_state sys.nvarchar(5), error_message sys.nvarchar(4000), error_msg_parameters sys.nvarchar(4000), sql_error_code int)
 AS 'babelfishpg_tsql', 'babel_list_mapped_error'
 LANGUAGE C IMMUTABLE STRICT;
 GRANT ALL on FUNCTION sys.fn_mapped_system_error_list TO PUBLIC;

@@ -97,6 +97,16 @@ SELECT IS_ROLEMEMBER('test_role1', 'test_role1')
 GO
 SELECT IS_ROLEMEMBER('test_user1', 'test_user1')
 GO
+SELECT IS_ROLEMEMBER('public', 'public')
+GO
+
+-- Every db principal is member of PUBLIC
+SELECT IS_MEMBER('public')
+GO
+SELECT IS_ROLEMEMBER('public', 'test_role1')
+GO
+SELECT IS_ROLEMEMBER('public', 'test_user1')
+GO
 
 -- Should return 0
 SELECT IS_ROLEMEMBER('db_owner', 'test_role1')
@@ -134,6 +144,14 @@ GO
 SELECT IS_ROLEMEMBER('test_role1', NULL)
 GO
 SELECT IS_ROLEMEMBER(NULL, NULL)
+GO
+
+-- Case insensitive check
+SELECT IS_ROLEMEMBER('PUBLIC', 'Test_User1')
+GO
+SELECT IS_ROLEMEMBER('Test_role1', 'test_ROLE3')
+GO
+SELECT IS_MEMBER('Public')
 GO
 
 -- Connect with different logins to test membership view permission
@@ -235,30 +253,72 @@ GO
 USE master
 GO
 
--- Clean up
 -- tsql
 USE db1
 GO
+
+-- BABEL-3231, role with members is disallowed to be dropped
+-- should fail
+DROP ROLE test_role1
+GO
+DROP ROLE test_role3
+GO
+
+-- Clean up
 DROP USER test_user1
 GO
 DROP USER test_user2
 GO
 DROP USER test_user3
 GO
-DROP ROLE test_role1
-GO
-DROP ROLE test_role2
-GO
-DROP ROLE test_role3
+DROP ROLE test_role5
 GO
 DROP ROLE test_role4
 GO
-DROP ROLE test_role5
+DROP ROLE test_role3
 GO
+DROP ROLE test_role2
+GO
+DROP ROLE test_role1
+GO
+
+-- psql
+-- Need to terminate active session before cleaning up the login
+SELECT pg_terminate_backend(pid) FROM pg_stat_get_activity(NULL) 
+WHERE sys.suser_name(usesysid) = 'test_login1' AND backend_type = 'client backend' AND usesysid IS NOT NULL;
+GO
+-- Wait to sync with another session
+SELECT pg_sleep(1);
+GO
+
+-- tsql
+
 DROP LOGIN test_login1
 GO
+
+-- psql
+-- Need to terminate active session before cleaning up the login
+SELECT pg_terminate_backend(pid) FROM pg_stat_get_activity(NULL) 
+WHERE sys.suser_name(usesysid) = 'test_login2' AND backend_type = 'client backend' AND usesysid IS NOT NULL;
+GO
+-- Wait to sync with another session
+SELECT pg_sleep(1);
+GO
+
+-- tsql
 DROP LOGIN test_login2
 GO
+
+-- psql
+-- Need to terminate active session before cleaning up the login
+SELECT pg_terminate_backend(pid) FROM pg_stat_get_activity(NULL) 
+WHERE sys.suser_name(usesysid) = 'test_login3' AND backend_type = 'client backend' AND usesysid IS NOT NULL;
+GO
+-- Wait to sync with another session
+SELECT pg_sleep(1);
+GO
+
+-- tsql
 DROP LOGIN test_login3
 GO
 USE master

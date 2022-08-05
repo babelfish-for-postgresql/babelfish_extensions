@@ -37,6 +37,8 @@ extern "C" {
 #include "catalog/pg_proc.h"
 #include "parser/scansup.h"
 
+#include "guc.h"
+
 #endif
 
 #ifdef LOG // maybe already defined in elog.h, which is conflicted with grammar token LOG
@@ -75,6 +77,8 @@ extern "C"
 	extern size_t get_num_pg_reserved_keywords_to_be_delimited();
 	extern char * construct_unique_index_name(char *index_name, char *relation_name);
 	extern bool enable_hint_mapping;
+
+	extern int escape_hatch_showplan_all;
 }
 
 static void toDotRecursive(ParseTree *t, const std::vector<std::string> &ruleNames, const std::string &sourceText);
@@ -223,6 +227,7 @@ static void add_query_hints(PLtsql_expr* expr);
 static void clear_query_hints();
 static void clear_tables_info();
 
+static bool pltsql_parseonly = false;
 
 static void
 breakHere()
@@ -993,6 +998,9 @@ public:
     MyInputStream &stream;
 
 	bool is_cross_db = false;
+	std::string schema_name;
+	bool is_function = false;
+	bool is_schema_specified = false;
 
 	// We keep a stack of the containers that are active during a traversal.
 	// A container will correspond to a block or a batch - these are containers
@@ -1402,6 +1410,15 @@ public:
 			stmt->is_cross_db = true;
 		// record that the stmt is dml
 	 	stmt->is_dml = true;
+		// record if a function call
+		if (is_function)
+			stmt->func_call = true;
+
+		if (!schema_name.empty())
+			stmt->schema_name = pstrdup(downcase_truncate_identifier(schema_name.c_str(), schema_name.length(), true));
+		// record if the SQL object is schema qualified
+		if (is_schema_specified)
+			stmt->is_schema_specified = true;
 
 		if (is_compiling_create_function())
 		{
@@ -1603,6 +1620,10 @@ public:
 
 	void exitFull_object_name(TSqlParser::Full_object_nameContext *ctx) override
 	{
+		if (ctx && ctx->schema)
+			is_schema_specified = true;
+		else
+			is_schema_specified = false;
 		tsqlCommonMutator::exitFull_object_name(ctx);
 		if (ctx && ctx->database)
 		{
@@ -1631,6 +1652,7 @@ public:
 
 	void exitFunction_call(TSqlParser::Function_callContext *ctx) override
 	{
+		is_function = true;
 		if (ctx->analytic_windowed_function())
 		{
 			auto actx = ctx->analytic_windowed_function();
@@ -1666,6 +1688,9 @@ public:
 		/* analyze scalar function call */
 		if (ctx->func_proc_name_server_database_schema())
 		{
+			if (ctx->func_proc_name_server_database_schema()->schema)
+				schema_name = stripQuoteFromId(ctx->func_proc_name_server_database_schema()->schema);
+
 			auto fpnsds = ctx->func_proc_name_server_database_schema();
 
 			if (fpnsds->DOT().empty() && fpnsds->id().back()->keyword()) /* built-in functions */
@@ -2310,6 +2335,11 @@ antlr_parser_cpp(const char *sourceText)
 			 */
 			auto ssm = std::make_unique<tsqlSelectStatementMutator>();
 			handleBatchLevelStatement(tsql_file->batch_level_statement(), ssm.get());
+
+			/* If PARSEONLY is enabled, replace with empty statement */
+			if (pltsql_parseonly)
+				pltsql_parse_result = makeEmptyBlockStmt(0);
+
 			result.success = true;
 			return result;
 		}
@@ -2328,6 +2358,9 @@ antlr_parser_cpp(const char *sourceText)
 
 		if (pltsql_dump_antlr_query_graph)
 			toDotRecursive(tree, parser.getRuleNames(), sourceText);
+
+		if (pltsql_parseonly)
+			pltsql_parse_result = makeEmptyBlockStmt(0);
 
 		result.success = true;
 		return result;
@@ -4045,6 +4078,18 @@ makeSetStatement(TSqlParser::Set_statementContext *ctx, tsqlBuilder &builder)
 				query += " ";
 				query += getFullText(set_special_ctx->on_off());
 				query += "; ";
+
+				if (option->PARSEONLY())
+				{
+					if (pg_strcasecmp("on", getFullText(set_special_ctx->on_off()).c_str()) == 0)
+					{
+						pltsql_parseonly = true;
+					}
+					else if (pg_strcasecmp("off", getFullText(set_special_ctx->on_off()).c_str()) == 0)
+					{
+						pltsql_parseonly = false;
+					}
+				}
 			}
 
 			if (query.empty())
@@ -4066,8 +4111,21 @@ makeSetStatement(TSqlParser::Set_statementContext *ctx, tsqlBuilder &builder)
 		else if (set_special_ctx->set_on_off_option().size() == 1)
 		{
 			auto option = set_special_ctx->set_on_off_option().front();
-			if (option->BABELFISH_SHOWPLAN_ALL())
+			if (option->BABELFISH_SHOWPLAN_ALL() || (option->SHOWPLAN_ALL() && escape_hatch_showplan_all == EH_IGNORE))
 				return makeSetExplainModeStatement(ctx, true);
+			// PARSEONLY is handled at parse time.
+			if (option->PARSEONLY())
+			{
+				if (pg_strcasecmp("on", getFullText(set_special_ctx->on_off()).c_str()) == 0)
+				{
+					pltsql_parseonly = true;
+				}
+				else if (pg_strcasecmp("off", getFullText(set_special_ctx->on_off()).c_str()) == 0)
+				{
+					pltsql_parseonly = false;
+				}
+			}
+
 			return makeSQL(ctx);
 		}
 		else if (!set_special_ctx->id().empty())
@@ -4084,7 +4142,14 @@ makeSetStatement(TSqlParser::Set_statementContext *ctx, tsqlBuilder &builder)
 		else if (set_special_ctx->OFFSETS())
 			return nullptr;
 		else if (set_special_ctx->STATISTICS())
+		{
+			for (auto kw : set_special_ctx->set_statistics_keyword())
+			{
+				if (kw->PROFILE() && escape_hatch_showplan_all == EH_IGNORE)
+					return makeSetExplainModeStatement(ctx, false);
+			}
 			return nullptr;
+		}
 		else if (set_special_ctx->BABELFISH_STATISTICS() && set_special_ctx->PROFILE())
 			return makeSetExplainModeStatement(ctx, false);
 		else
@@ -5139,6 +5204,18 @@ post_process_column_definition(TSqlParser::Column_definitionContext *ctx, PLtsql
 	if (ctx->TIMESTAMP())
 		rewritten_query_fragment.emplace(std::make_pair(ctx->TIMESTAMP()->getSymbol()->getStartIndex(), std::make_pair(::getFullText(ctx->TIMESTAMP()), "timestamp " + ::getFullText(ctx->TIMESTAMP()))));
 
+ 	/*
+	* PG doesn't allow for TIME/DATETIME2/DATETIMEOFFSET to be declared with precision 7, but this is permitted in TSQL.
+	* In order to get around this, remove the scale factor so that the typmod is set to -1 (default). Luckily,
+	* in TSQL the default scale is also 7, so we can re-add the decimal digits to meet the scale factor on the return side.
+	*/
+	if (pg_strncasecmp(::getFullText(ctx->data_type()).c_str(), "TIME(7)", 7) == 0)
+		rewritten_query_fragment.emplace(std::make_pair(ctx->data_type()->start->getStartIndex(), std::make_pair(::getFullText(ctx->data_type()), "TIME")));
+	if (pg_strncasecmp(::getFullText(ctx->data_type()).c_str(), "DATETIME2(7)", 12) == 0)
+		rewritten_query_fragment.emplace(std::make_pair(ctx->data_type()->start->getStartIndex(), std::make_pair(::getFullText(ctx->data_type()), "DATETIME2")));
+	if (pg_strncasecmp(::getFullText(ctx->data_type()).c_str(), "DATETIMEOFFSET(7)", 17) == 0)
+		rewritten_query_fragment.emplace(std::make_pair(ctx->data_type()->start->getStartIndex(), std::make_pair(::getFullText(ctx->data_type()), "DATETIMEOFFSET")));
+	 
 	if (ctx->column_inline_index())
 		post_process_column_inline_index(ctx->column_inline_index(), stmt, baseCtx);
 

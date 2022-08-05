@@ -853,37 +853,41 @@ GRANT SELECT ON sys.key_constraints TO PUBLIC;
 
 create or replace view sys.procedures as
 select
-  p.proname as name
-  , p.oid as object_id
-  , null::integer as principal_id
-  , sch.schema_id as schema_id
+  cast(p.proname as sys.sysname) as name
+  , cast(p.oid as int) as object_id
+  , cast(null as int) as principal_id
+  , cast(sch.schema_id as int) as schema_id
   , cast (case when tr.tgrelid is not null 
       then tr.tgrelid 
       else 0 end as int) 
     as parent_object_id
-  , case p.prokind
-      when 'p' then 'P'::varchar(2)
-      when 'a' then 'AF'::varchar(2)
+  , cast(case p.prokind
+      when 'p' then 'P'
+      when 'a' then 'AF'
       else
         case format_type(p.prorettype, null) when 'trigger'
-          then 'TR'::varchar(2)
-          else 'FN'::varchar(2)
+          then 'TR'
+          else 'FN'
         end
-    end as type
-  , case p.prokind
-      when 'p' then 'SQL_STORED_PROCEDURE'::varchar(60)
-      when 'a' then 'AGGREGATE_FUNCTION'::varchar(60)
+    end as sys.bpchar(2)) as type
+  , cast(case p.prokind
+      when 'p' then 'SQL_STORED_PROCEDURE'
+      when 'a' then 'AGGREGATE_FUNCTION'
       else
         case format_type(p.prorettype, null) when 'trigger'
-          then 'SQL_TRIGGER'::varchar(60)
-          else 'SQL_SCALAR_FUNCTION'::varchar(60)
+          then 'SQL_TRIGGER'
+          else 'SQL_SCALAR_FUNCTION'
         end
-    end as type_desc
-  , null::timestamp as create_date
-  , null::timestamp as modify_date
-  , 0 as is_ms_shipped
-  , 0 as is_published
-  , 0 as is_schema_published
+    end as sys.nvarchar(60)) as type_desc
+  , cast(null as sys.datetime) as create_date
+  , cast(null as sys.datetime) as modify_date
+  , cast(0 as sys.bit) as is_ms_shipped
+  , cast(0 as sys.bit) as is_published
+  , cast(0 as sys.bit) as is_schema_published
+  , cast(0 as sys.bit) as is_auto_executed
+  , cast(0 as sys.bit) as is_execution_replicated
+  , cast(0 as sys.bit) as is_repl_serializable_only
+  , cast(0 as sys.bit) as skips_repl_constraints
 from pg_proc p
 inner join sys.schemas sch on sch.schema_id = p.pronamespace
 left join pg_trigger tr on tr.tgfoid = p.oid
@@ -2593,3 +2597,52 @@ SELECT
   , CAST(0 as int) as cells_per_object
 WHERE FALSE;
 GRANT SELECT ON sys.spatial_index_tessellations TO PUBLIC;
+
+CREATE OR REPLACE VIEW sys.numbered_procedures
+AS
+SELECT 
+    CAST(0 as int) AS object_id
+  , CAST(0 as smallint) AS procedure_number
+  , CAST('' as sys.nvarchar(4000)) AS definition
+WHERE FALSE; -- This condition will ensure that the view is empty
+GRANT SELECT ON sys.numbered_procedures TO PUBLIC;
+
+-- BABEL-3325: Revisit once DDL and/or CREATE EVENT NOTIFICATION is supported
+CREATE OR REPLACE VIEW sys.events 
+AS
+SELECT 
+  CAST(pt.tgfoid as int) AS object_id
+  , CAST(
+      CASE 
+        WHEN tr.event_manipulation='INSERT' THEN 1
+        WHEN tr.event_manipulation='UPDATE' THEN 2
+        WHEN tr.event_manipulation='DELETE' THEN 3
+        ELSE 1
+      END as int
+  ) AS type
+  , CAST(tr.event_manipulation as sys.nvarchar(60)) AS type_desc
+  , CAST(1 as sys.bit) AS  is_trigger_event
+  , CAST(null as int) AS event_group_type
+  , CAST(null as sys.nvarchar(60)) AS event_group_type_desc
+FROM information_schema.triggers tr
+JOIN pg_catalog.pg_namespace np ON tr.event_object_schema = np.nspname COLLATE sys.database_default
+JOIN pg_class pc ON pc.relname = tr.event_object_table COLLATE sys.database_default AND pc.relnamespace = np.oid
+JOIN pg_trigger pt ON pt.tgrelid = pc.oid AND tr.trigger_name = pt.tgname COLLATE sys.database_default
+AND has_schema_privilege(pc.relnamespace, 'USAGE')
+AND has_table_privilege(pc.oid, 'SELECT,INSERT,UPDATE,DELETE,TRUNCATE,TRIGGER');
+GRANT SELECT ON sys.events TO PUBLIC;
+
+CREATE OR REPLACE VIEW sys.trigger_events
+AS
+SELECT
+  CAST(e.object_id as int) AS object_id,
+  CAST(e.type as int) AS type,
+  CAST(e.type_desc as sys.nvarchar(60)) AS type_desc,
+  CAST(0 as sys.bit) AS is_first,
+  CAST(0 as sys.bit) AS is_last,
+  CAST(null as int) AS event_group_type,
+  CAST(null as sys.nvarchar(60)) AS event_group_type_desc,
+  CAST(e.is_trigger_event as sys.bit) AS is_trigger_event
+FROM sys.events e
+WHERE e.is_trigger_event = 1;
+GRANT SELECT ON sys.trigger_events TO PUBLIC;

@@ -1021,6 +1021,9 @@ typedef struct PLtsql_stmt_execsql
 	bool		is_cross_db;	/* cross database reference */
 	bool		is_dml;			/* DML statement? */
 	bool		is_ddl;			/* DDL statement? */
+	bool		func_call;		/* Function call? */
+	char		*schema_name;	/* Schema specified */
+	bool            is_schema_specified;    /*is schema name specified? */
 } PLtsql_stmt_execsql;
 
 /*
@@ -1442,6 +1445,14 @@ typedef struct PLtsql_instr_plugin
 	bool (*pltsql_instr_increment_func_metric) (const char *funcName);
 } PLtsql_instr_plugin;
 
+typedef struct error_map_details_t{
+	char sql_state[5];
+	const char *error_message;
+	int tsql_error_code;
+	int tsql_error_severity;
+	char *error_msg_keywords;
+}error_map_details_t;
+
 /*
  * A PLtsql_protocol_plugin structure represents a protocol plugin that can be
  * used with this extension.
@@ -1568,7 +1579,9 @@ typedef struct PLtsql_protocol_plugin
 
 	char* (*pltsql_get_login_default_db) (char *login_name);
 
-	int* (*get_mapped_error_list) (void);
+	error_map_details_t * (*get_mapped_error_list) (void);
+
+	int* (*get_mapped_tsql_error_code_list) (void);
 
 	int (*bulk_load_callback) (int ncol, int nrow, Oid *argtypes,
 				Datum *Values, const char *Nulls, bool *Defaults);
@@ -1848,6 +1861,7 @@ extern const char *pltsql_getdiag_kindname(PLtsql_getdiag_kind kind);
 extern void pltsql_free_function_memory(PLtsql_function *func);
 extern void pltsql_dumptree(PLtsql_function *func);
 extern void pre_function_call_hook_impl(const char *funcName);
+extern int32 coalesce_typmod_hook_impl(CoalesceExpr *cexpr);
 
 /*
  * Scanner functions in pl_scanner.c
