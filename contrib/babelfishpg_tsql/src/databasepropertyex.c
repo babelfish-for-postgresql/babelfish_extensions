@@ -21,8 +21,6 @@ PG_FUNCTION_INFO_V1(databasepropertyex);
 
 extern bytea *convertVarcharToSQLVariantByteA(VarChar *vch, Oid coll);
 extern bytea *convertIntToSQLVariantByteA(int ret);
-extern bytea *convertBinaryToSQLVariantByteA(int64_t ret);
-
 
 Datum databasepropertyex(PG_FUNCTION_ARGS) {
 	VarChar *vch = NULL;

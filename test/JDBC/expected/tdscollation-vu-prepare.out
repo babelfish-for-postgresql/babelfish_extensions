@@ -1,5 +1,6 @@
 CREATE PROCEDURE tdscollation_proc1
 AS
+    select convert(binary(5),CollationProperty('false_check', 'tdscollation'));
     select convert(binary(5),CollationProperty('arabic_ci_ai', 'tdscollation'));
     select convert(binary(5),CollationProperty('arabic_ci_as', 'tdscollation'));
     select convert(binary(5),CollationProperty('arabic_cs_as', 'tdscollation'));

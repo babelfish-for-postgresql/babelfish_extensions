@@ -17,6 +17,7 @@
 #include "collation.h"
 #include "encoding/encoding.h"
 #include "typecode.h"
+#include "sqlvariant.h"
 
 #define NOT_FOUND -1
 
@@ -1167,7 +1168,7 @@ int get_persist_collation_id(Oid coll_oid)
 	return collidx;
 }
 
-int64_t
+bytea*
 tdscollationproperty_helper(const char *collationname, const char *property)
 {
 	int collidx = find_any_collation(collationname, false);
@@ -1177,12 +1178,34 @@ tdscollationproperty_helper(const char *collationname, const char *property)
 
 		if (strcasecmp(property, "tdscollation") == 0)
 		{
-			int64_t result = ((int64_t)((int64_t)coll.lcid | ((int64_t)coll.collateflags << 20) | ((int64_t)coll.sortid << 32)));
+			int64_t ret = ((int64_t)((int64_t)coll.lcid | ((int64_t)coll.collateflags << 20) | ((int64_t)coll.sortid << 32)));
+
+			/*
+				ret here is of 8bytes
+				tdscollation should return 5bytes
+				Below code converts ret into 5bytes
+			*/
+			int maxlen = 5;
+			bytea *bytea_data = (bytea *) palloc(maxlen + VARHDRSZ);
+			SET_VARSIZE(bytea_data, maxlen + VARHDRSZ);
+			char *rp = VARDATA(bytea_data);
+			bytea        *result;
+			svhdr_3B_t   *svhdr;
+
+			memcpy(rp, (char *) &ret , maxlen);
+
+			result = gen_sqlvariant_bytea_from_type_datum(BINARY_T, PointerGetDatum(bytea_data));
+
+			/* Type Specific Header */
+			svhdr = SV_HDR_3B(result);
+			SV_SET_METADATA(svhdr, BINARY_T, HDR_VER);
+			svhdr->typmod = VARSIZE_ANY_EXHDR(bytea_data);
+
 			return result;
 		}
 	}
 
-	return -1; /* Invalid collation. */
+	return NULL; /* Invalid collation. */
 }
 
 int

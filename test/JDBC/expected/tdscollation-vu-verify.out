@@ -2,6 +2,11 @@ EXEC tdscollation_proc1;
 GO
 ~~START~~
 binary
+<NULL>
+~~END~~
+
+~~START~~
+binary
 0104F00000
 ~~END~~
 
