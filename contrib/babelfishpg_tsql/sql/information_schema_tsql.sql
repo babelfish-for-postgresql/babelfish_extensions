@@ -718,7 +718,6 @@ GRANT SELECT ON information_schema_tsql.routines TO PUBLIC;
 /*
 * VIEW_TABLE_USAGE
 */
--- drop view if exists information_schema_tsql.view_table_usage;
 
 CREATE OR REPLACE VIEW information_schema_tsql.view_table_usage
 AS SELECT DISTINCT CAST(sys.db_name() AS sys.nvarchar(128)) AS "VIEW_CATALOG",
