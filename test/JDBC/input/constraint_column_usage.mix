@@ -1,3 +1,4 @@
+-- tsql
 create database db_constraint_column_usage;
 go
 
@@ -28,6 +29,9 @@ go
 Use master;
 go
 
+create login user_const_col_usage with password='123456789';
+go
+
 SELECT * FROM information_schema.CONSTRAINT_COLUMN_USAGE WHERE TABLE_NAME NOT LIKE 'sys%' ORDER BY COLUMN_NAME;
 go
 
@@ -40,6 +44,48 @@ go
 drop table constraint_column_usage_tbl6;
 go
 
+use db_constraint_column_usage;
+go
+
+create user user_const_col_usage for login user_const_col_usage;
+go
+
+use master;
+go
+
+-- tsql user=user_const_col_usage password=123456789
+-- should return 0 since user_const_col_usage doesn't have any privileges
+use db_constraint_column_usage;
+go
+
+select count(*) from information_schema.constraint_column_usage where table_name='constraint_column_usage_tbl2';
+go
+
+use master
+go
+
+-- tsql
+use db_constraint_column_usage;
+go
+
+grant select on constraint_column_usage_tbl2 to user_const_col_usage;
+go
+
+use master;
+go
+
+-- tsql user=user_const_col_usage password=123456789
+-- should return 2 since user_const_col_usage has select privileges
+use db_constraint_column_usage;
+go
+
+select count(*) from information_schema.constraint_column_usage where table_name='constraint_column_usage_tbl2';
+go
+
+use master
+go
+
+-- tsql
 use db_constraint_column_usage;
 go
 
@@ -61,3 +107,18 @@ go
 
 drop database db_constraint_column_usage;
 go
+
+-- psql
+-- Need to terminate active session before cleaning up the login
+SELECT pg_terminate_backend(pid) FROM pg_stat_get_activity(NULL)
+WHERE sys.suser_name(usesysid) = 'user_const_col_usage' AND backend_type = 'client backend' AND usesysid IS NOT NULL;
+GO
+
+-- Wait to sync with another session
+SELECT pg_sleep(1);
+GO
+
+-- tsql
+drop login user_const_col_usage;
+go
+

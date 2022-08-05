@@ -1293,6 +1293,9 @@ FROM (
           AND c.contype = 'c'
           AND r.relkind IN ('r', 'p')
           AND NOT a.attisdropped
+	  AND (pg_has_role(r.relowner, 'USAGE')
+		OR has_table_privilege(r.oid, 'SELECT, INSERT, UPDATE, DELETE, TRUNCATE, REFERENCES, TRIGGER')
+		OR has_any_column_privilege(r.oid, 'SELECT, INSERT, UPDATE, REFERENCES'))
 
        UNION ALL
 
@@ -1311,10 +1314,11 @@ FROM (
           AND NOT a.attisdropped
           AND c.contype IN ('p', 'u', 'f')
           AND r.relkind IN ('r', 'p')
+	  AND (pg_has_role(r.relowner, 'USAGE')
+		OR has_table_privilege(r.oid, 'SELECT, INSERT, UPDATE, DELETE, TRUNCATE, REFERENCES, TRIGGER')
+		OR has_any_column_privilege(r.oid, 'SELECT, INSERT, UPDATE, REFERENCES'))
 
-      ) AS x (tblschema, tblname, tblowner, colname, cstrschema, cstrname, tblcat, cstrcat)
-
-WHERE pg_has_role(x.tblowner, 'USAGE');
+      ) AS x (tblschema, tblname, tblowner, colname, cstrschema, cstrname, tblcat, cstrcat);
 
 GRANT SELECT ON information_schema_tsql.CONSTRAINT_COLUMN_USAGE TO PUBLIC;
 
