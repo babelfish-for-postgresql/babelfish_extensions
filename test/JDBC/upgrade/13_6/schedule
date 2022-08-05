@@ -140,3 +140,4 @@ collation_tests_mongolian
 collation_tests_polish
 collation_tests
 TestErrorHelperFunctionsUpgrade
+constraint_table_usage
