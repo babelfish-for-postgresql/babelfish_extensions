@@ -349,6 +349,7 @@ go
 ~~START~~
 datetime
 1900-01-04 03:23:53.6
+~~END~~
 
 -- int to datetime2
 select cast(cast(cast(123 as int) as sql_variant) as datetime2);
