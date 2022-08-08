@@ -12,7 +12,6 @@ TestChar
 TestDate
 TestDatetime
 TestDatetime2
-TestDatetimeoffset
 TestFloat
 TestImage
 TestInt
@@ -35,7 +34,6 @@ BABEL-3166
 BABEL-3192
 sys-check_constraints
 sys-computed_columns
-sys-databases
 sys-dm_exec_connections
 sys-dm_os_host_info
 sys-endpoints
@@ -120,7 +118,6 @@ BABEL-3213
 BABEL-RAND
 BABEL-741
 TestErrorHelperFunctionsUpgrade
-ISC-Domains
 BABEL-1249
 BABEL-1291
 BABEL-1994-CHAR
