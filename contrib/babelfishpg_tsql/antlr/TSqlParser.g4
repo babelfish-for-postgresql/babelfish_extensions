@@ -5028,6 +5028,7 @@ func_proc_name_database_schema
 func_proc_name_server_database_schema
     : (server=id? DOT)? database=id? DOT schema=id? DOT procedure=id
     | (schema=id? DOT)? procedure=id
+    | colon_colon procedure=id
     ;
 
 ddl_object

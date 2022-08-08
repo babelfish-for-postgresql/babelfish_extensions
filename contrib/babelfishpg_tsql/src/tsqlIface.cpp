@@ -2020,6 +2020,13 @@ public:
 
 	TSqlParser::IdContext *proc = ctx->procedure;
 
+	// if the func name contains colon_colon, it must begin with it. see grammar
+    if (ctx->colon_colon())
+    {
+        // Treat ::func() as func()
+        stream.setText(ctx->start->getStartIndex(), "  ");
+    }
+
 	// See the commment in enterFunc_proc_name_schema() for an explanation of this code
 	
 	if (proc->keyword() || proc->colon_colon())
