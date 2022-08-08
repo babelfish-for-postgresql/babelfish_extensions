@@ -50,7 +50,6 @@ sys-computed_columns
 sys-data_spaces
 sys-database_files
 sys-database_filestream_options
-sys-database_mirroring
 sys-database_recovery_status
 sys-databases
 sys-default_constraints

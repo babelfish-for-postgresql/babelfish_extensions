@@ -16,7 +16,7 @@ select cast(cast(cast('2020-10-20 09:00:00' as datetime2) as sql_variant) as dat
 go
 ~~START~~
 datetime2
-2020-10-20 09:00:00.000000
+2020-10-20 09:00:00.0000000
 ~~END~~
 
 -- datetimeoffset
@@ -24,7 +24,7 @@ select cast(cast(cast('2020-10-05 09:00:00-9:00' as datetimeoffset) as sql_varia
 go
 ~~START~~
 datetimeoffset
-2020-10-05 09:00:00.000000 -09:00
+2020-10-05 09:00:00.0000000 -09:00
 ~~END~~
 
 -- datetime
@@ -56,7 +56,7 @@ select cast(cast(cast('09:00:00' as time) as sql_variant) as time);
 go
 ~~START~~
 time
-09:00:00.000000
+09:00:00.0000000
 ~~END~~
 
 -- float
@@ -241,7 +241,7 @@ select cast(cast(cast('2020-10-20' as date) as sql_variant) as datetime2);
 go
 ~~START~~
 datetime2
-2020-10-20 00:00:00.000000
+2020-10-20 00:00:00.0000000
 ~~END~~
 
 -- datetimeoffset 2 datetime2
@@ -249,7 +249,7 @@ select cast(cast(cast('2020-10-05 09:00:00-9:00' as datetimeoffset) as sql_varia
 go
 ~~START~~
 datetime2
-2020-10-05 18:00:00.000000
+2020-10-05 18:00:00.0000000
 ~~END~~
 
 -- datetime2 2 datetimeoffset
@@ -257,7 +257,7 @@ select cast(cast(cast('2020-10-20 09:00:00' as datetime2) as sql_variant) as dat
 go
 ~~START~~
 datetimeoffset
-2020-10-20 09:00:00.000000 +00:00
+2020-10-20 09:00:00.0000000 +00:00
 ~~END~~
 
 -- float to numeric
@@ -348,9 +348,7 @@ select cast(cast(cast(3.1415926 as float) as sql_variant) as datetime);
 go
 ~~START~~
 datetime
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: unable to cast from internal type double precision to datetime)~~
+1900-01-04 03:23:53.6
 
 -- int to datetime2
 select cast(cast(cast(123 as int) as sql_variant) as datetime2);
