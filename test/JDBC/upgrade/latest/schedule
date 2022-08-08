@@ -70,6 +70,7 @@ sys-original_login
 sys-schema-name
 sys-objects
 sys-procedures
+sys-sysdatabases
 sys-sysobjects
 sys-trigger_nestlevel
 schema_resolution_proc
@@ -156,3 +157,4 @@ sys-filetables
 sys-fulltext_indexes
 sys-hash_indexes
 sys-plan_guides
+BABEL-LOGIN-USER-EXT

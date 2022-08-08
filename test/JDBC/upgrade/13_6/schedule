@@ -55,6 +55,7 @@ sys-schema-name
 sys-suser_sid
 identity_function
 sys-suser_sname
+sys-sysdatabases
 sys-sysobjects
 sys-trigger_nestlevel
 routines_definition
@@ -142,3 +143,4 @@ collation_tests
 BABEL-EXTENDEDPROPERTY
 TestErrorHelperFunctionsUpgrade
 tdscollation
+BABEL-LOGIN-USER-EXT
