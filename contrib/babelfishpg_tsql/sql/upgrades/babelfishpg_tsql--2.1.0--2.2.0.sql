@@ -2022,61 +2022,6 @@ FROM sys.objects obj
 WHERE type='SN';
 GRANT SELECT ON sys.synonyms TO PUBLIC;
 
-CREATE OR REPLACE VIEW sys.plan_guides
-AS
-SELECT 
-    CAST(0 as int) AS plan_guide_id
-    , CAST(NULL as sys.sysname) AS name
-    , CAST(NULL as sys.datetime) as create_date
-    , CAST(NULL as sys.datetime) as modify_date
-    , CAST(0 as sys.bit) as is_disabled
-    , CAST('' as sys.nvarchar(4000)) AS query_text
-    , CAST(0 as sys.tinyint) AS scope_type
-    , CAST('' as sys.nvarchar(60)) AS scope_type_desc
-    , CAST(0 as int) AS scope_type_id
-    , CAST('' as sys.nvarchar(4000)) AS scope_batch
-    , CAST('' as sys.nvarchar(4000)) AS parameters
-    , CAST('' as sys.nvarchar(4000)) AS hints
-WHERE FALSE;
-GRANT SELECT ON sys.plan_guides TO PUBLIC;
-
-ALTER FUNCTION OBJECTPROPERTYEX(INT, SYS.VARCHAR) RENAME TO objectpropertyex_deprecated_in_2_2_0;
-
-CREATE OR REPLACE FUNCTION OBJECTPROPERTYEX(
-    id INT,
-    property SYS.VARCHAR
-)
-RETURNS SYS.SQL_VARIANT
-AS $$
-BEGIN
-	property := RTRIM(LOWER(COALESCE(property, '')));
-	
-	IF NOT EXISTS(SELECT ao.object_id FROM sys.all_objects ao WHERE object_id = id)
-	THEN
-		RETURN NULL;
-	END IF;
-
-	IF property = 'basetype' -- BaseType
-	THEN
-		RETURN (SELECT CAST(ao.type AS SYS.SQL_VARIANT) 
-                FROM sys.all_objects ao
-                WHERE ao.object_id = id
-                LIMIT 1
-                );
-    END IF;
-
-    RETURN CAST(OBJECTPROPERTY(id, property) AS SYS.SQL_VARIANT);
-END
-$$
-LANGUAGE plpgsql;
-
-CALL sys.babelfish_drop_deprecated_function('sys', 'objectpropertyex_deprecated_in_2_2_0');
-
-ALTER FUNCTION sys.suser_name RENAME TO suser_name_deprecated_in_2_2_0;
-ALTER FUNCTION sys.suser_sname RENAME TO suser_sname_deprecated_in_2_2_0;
-ALTER FUNCTION sys.suser_id RENAME TO suser_id_deprecated_in_2_2_0;
-ALTER FUNCTION sys.suser_sid RENAME TO suser_sid_deprecated_in_2_2_0;
-
 CREATE OR REPLACE FUNCTION sys.dateadd_internal_df(IN datepart PG_CATALOG.TEXT, IN num INTEGER, IN startdate datetimeoffset) RETURNS datetimeoffset AS $$
 BEGIN
 	CASE datepart
@@ -2161,6 +2106,61 @@ END;
 $$
 STRICT
 LANGUAGE plpgsql IMMUTABLE;
+
+CREATE OR REPLACE VIEW sys.plan_guides
+AS
+SELECT 
+    CAST(0 as int) AS plan_guide_id
+    , CAST(NULL as sys.sysname) AS name
+    , CAST(NULL as sys.datetime) as create_date
+    , CAST(NULL as sys.datetime) as modify_date
+    , CAST(0 as sys.bit) as is_disabled
+    , CAST('' as sys.nvarchar(4000)) AS query_text
+    , CAST(0 as sys.tinyint) AS scope_type
+    , CAST('' as sys.nvarchar(60)) AS scope_type_desc
+    , CAST(0 as int) AS scope_type_id
+    , CAST('' as sys.nvarchar(4000)) AS scope_batch
+    , CAST('' as sys.nvarchar(4000)) AS parameters
+    , CAST('' as sys.nvarchar(4000)) AS hints
+WHERE FALSE;
+GRANT SELECT ON sys.plan_guides TO PUBLIC;
+
+ALTER FUNCTION OBJECTPROPERTYEX(INT, SYS.VARCHAR) RENAME TO objectpropertyex_deprecated_in_2_2_0;
+
+CREATE OR REPLACE FUNCTION OBJECTPROPERTYEX(
+    id INT,
+    property SYS.VARCHAR
+)
+RETURNS SYS.SQL_VARIANT
+AS $$
+BEGIN
+	property := RTRIM(LOWER(COALESCE(property, '')));
+	
+	IF NOT EXISTS(SELECT ao.object_id FROM sys.all_objects ao WHERE object_id = id)
+	THEN
+		RETURN NULL;
+	END IF;
+
+	IF property = 'basetype' -- BaseType
+	THEN
+		RETURN (SELECT CAST(ao.type AS SYS.SQL_VARIANT) 
+                FROM sys.all_objects ao
+                WHERE ao.object_id = id
+                LIMIT 1
+                );
+    END IF;
+
+    RETURN CAST(OBJECTPROPERTY(id, property) AS SYS.SQL_VARIANT);
+END
+$$
+LANGUAGE plpgsql;
+
+CALL sys.babelfish_drop_deprecated_function('sys', 'objectpropertyex_deprecated_in_2_2_0');
+
+ALTER FUNCTION sys.suser_name RENAME TO suser_name_deprecated_in_2_2_0;
+ALTER FUNCTION sys.suser_sname RENAME TO suser_sname_deprecated_in_2_2_0;
+ALTER FUNCTION sys.suser_id RENAME TO suser_id_deprecated_in_2_2_0;
+ALTER FUNCTION sys.suser_sid RENAME TO suser_sid_deprecated_in_2_2_0;
 
 CREATE OR REPLACE FUNCTION sys.suser_name_internal(IN server_user_id OID)
 RETURNS sys.NVARCHAR(128)
