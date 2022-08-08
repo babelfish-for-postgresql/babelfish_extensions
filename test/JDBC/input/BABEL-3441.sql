@@ -10,4 +10,3 @@ GO
 
 SELECT cmptlevel FROM master.dbo.sysdatabases WHERE name = 'master'
 GO
-
