@@ -22,10 +22,7 @@ int
 ~~END~~
 
 
--- Ensure that sys.databases.compatibilty_level and sysdatabases.cmptlevel is equal
-USE master
-GO
-
+-- BABEL-3441: Ensure that sys.databases.compatibilty_level and sysdatabases.cmptlevel is equal 
 SELECT compatibility_level FROM sys.databases WHERE name = 'master'
 GO
 ~~START~~
