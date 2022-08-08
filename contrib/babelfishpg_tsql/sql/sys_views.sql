@@ -2562,7 +2562,7 @@ CREATE OR REPLACE VIEW sys.plan_guides
 AS
 SELECT 
     CAST(0 as int) AS plan_guide_id
-  , CAST(NULL as sys.sysname) AS name
+  , CAST('' as sys.sysname) AS name
   , CAST(NULL as sys.datetime) as create_date
   , CAST(NULL as sys.datetime) as modify_date
   , CAST(0 as sys.bit) as is_disabled
