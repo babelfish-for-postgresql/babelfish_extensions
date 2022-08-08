@@ -1,0 +1,76 @@
+use column_privileges_vu_prepare_db;
+go
+
+select * from information_schema.column_privileges where table_name like 'column_privileges_vu_prepare_tb%' and is_grantable='NO' order by table_name,column_name,privilege_type;
+go
+~~START~~
+nvarchar#!#nvarchar#!#nvarchar#!#nvarchar#!#varchar#!#varchar#!#varchar#!#varchar
+dbo#!#column_privileges_vu_prepare_db194c07eed72a57fea7ea9473e84dbe96#!#column_privileges_vu_prepare_db#!#dbo#!#column_privileges_vu_prepare_tb1#!#arg1#!#SELECT#!#NO
+dbo#!#column_privileges_vu_prepare_db194c07eed72a57fea7ea9473e84dbe96#!#column_privileges_vu_prepare_db#!#dbo#!#column_privileges_vu_prepare_tb1#!#arg2#!#UPDATE#!#NO
+dbo#!#column_privileges_vu_prepare_db194c07eed72a57fea7ea9473e84dbe96#!#column_privileges_vu_prepare_db#!#dbo#!#column_privileges_vu_prepare_tb2#!#arg3#!#REFERENCES#!#NO
+dbo#!#column_privileges_vu_prepare_db194c07eed72a57fea7ea9473e84dbe96#!#column_privileges_vu_prepare_db#!#dbo#!#column_privileges_vu_prepare_tb2#!#arg4#!#INSERT#!#NO
+~~END~~
+
+
+revoke REFERENCES on column_privileges_vu_prepare_tb2(arg3) from column_privileges_vu_prepare_user;
+go
+
+revoke INSERT on column_privileges_vu_prepare_tb2(arg4) from column_privileges_vu_prepare_user;
+go
+
+select * from information_schema.column_privileges where table_name like 'column_privileges_vu_prepare_tb%' and is_grantable='NO' order by table_name,column_name,privilege_type;
+go
+~~START~~
+nvarchar#!#nvarchar#!#nvarchar#!#nvarchar#!#varchar#!#varchar#!#varchar#!#varchar
+dbo#!#column_privileges_vu_prepare_db194c07eed72a57fea7ea9473e84dbe96#!#column_privileges_vu_prepare_db#!#dbo#!#column_privileges_vu_prepare_tb1#!#arg1#!#SELECT#!#NO
+dbo#!#column_privileges_vu_prepare_db194c07eed72a57fea7ea9473e84dbe96#!#column_privileges_vu_prepare_db#!#dbo#!#column_privileges_vu_prepare_tb1#!#arg2#!#UPDATE#!#NO
+~~END~~
+
+
+revoke SELECT on column_privileges_vu_prepare_tb1(arg1) from column_privileges_vu_prepare_user;
+go
+
+revoke UPDATE on column_privileges_vu_prepare_tb1(arg2) from column_privileges_vu_prepare_user;
+go
+
+select * from information_schema.column_privileges where table_name like 'column_privileges_vu_prepare_tb%' order by table_name,column_name,privilege_type;
+go
+~~START~~
+nvarchar#!#nvarchar#!#nvarchar#!#nvarchar#!#varchar#!#varchar#!#varchar#!#varchar
+dbo#!#dbo#!#column_privileges_vu_prepare_db#!#dbo#!#column_privileges_vu_prepare_tb1#!#arg1#!#INSERT#!#YES
+dbo#!#dbo#!#column_privileges_vu_prepare_db#!#dbo#!#column_privileges_vu_prepare_tb1#!#arg1#!#REFERENCES#!#YES
+dbo#!#dbo#!#column_privileges_vu_prepare_db#!#dbo#!#column_privileges_vu_prepare_tb1#!#arg1#!#SELECT#!#YES
+dbo#!#dbo#!#column_privileges_vu_prepare_db#!#dbo#!#column_privileges_vu_prepare_tb1#!#arg1#!#UPDATE#!#YES
+dbo#!#dbo#!#column_privileges_vu_prepare_db#!#dbo#!#column_privileges_vu_prepare_tb1#!#arg2#!#INSERT#!#YES
+dbo#!#dbo#!#column_privileges_vu_prepare_db#!#dbo#!#column_privileges_vu_prepare_tb1#!#arg2#!#REFERENCES#!#YES
+dbo#!#dbo#!#column_privileges_vu_prepare_db#!#dbo#!#column_privileges_vu_prepare_tb1#!#arg2#!#SELECT#!#YES
+dbo#!#dbo#!#column_privileges_vu_prepare_db#!#dbo#!#column_privileges_vu_prepare_tb1#!#arg2#!#UPDATE#!#YES
+dbo#!#dbo#!#column_privileges_vu_prepare_db#!#dbo#!#column_privileges_vu_prepare_tb2#!#arg3#!#INSERT#!#YES
+dbo#!#dbo#!#column_privileges_vu_prepare_db#!#dbo#!#column_privileges_vu_prepare_tb2#!#arg3#!#REFERENCES#!#YES
+dbo#!#dbo#!#column_privileges_vu_prepare_db#!#dbo#!#column_privileges_vu_prepare_tb2#!#arg3#!#SELECT#!#YES
+dbo#!#dbo#!#column_privileges_vu_prepare_db#!#dbo#!#column_privileges_vu_prepare_tb2#!#arg3#!#UPDATE#!#YES
+dbo#!#dbo#!#column_privileges_vu_prepare_db#!#dbo#!#column_privileges_vu_prepare_tb2#!#arg4#!#INSERT#!#YES
+dbo#!#dbo#!#column_privileges_vu_prepare_db#!#dbo#!#column_privileges_vu_prepare_tb2#!#arg4#!#REFERENCES#!#YES
+dbo#!#dbo#!#column_privileges_vu_prepare_db#!#dbo#!#column_privileges_vu_prepare_tb2#!#arg4#!#SELECT#!#YES
+dbo#!#dbo#!#column_privileges_vu_prepare_db#!#dbo#!#column_privileges_vu_prepare_tb2#!#arg4#!#UPDATE#!#YES
+~~END~~
+
+
+drop table column_privileges_vu_prepare_tb1;
+go
+
+drop table column_privileges_vu_prepare_tb2;
+go
+
+drop user column_privileges_vu_prepare_user;
+go
+
+drop login column_privileges_vu_prepare_log;
+go
+
+use master;
+go
+
+drop database column_privileges_vu_prepare_db;
+go
+

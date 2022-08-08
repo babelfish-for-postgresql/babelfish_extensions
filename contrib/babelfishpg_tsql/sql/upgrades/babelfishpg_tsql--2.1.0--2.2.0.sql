@@ -161,6 +161,76 @@ CREATE OR REPLACE VIEW information_schema_tsql.COLUMN_DOMAIN_USAGE AS
 
 GRANT SELECT ON information_schema_tsql.COLUMN_DOMAIN_USAGE TO PUBLIC;
 
+/*
+* COLUMN PRIVILEGES
+*/
+
+CREATE OR REPLACE VIEW information_schema_tsql.column_privileges
+AS SELECT CAST(u_grantor.rolname AS sys.nvarchar(128)) AS "GRANTOR",
+    CAST(grantee.rolname AS sys.nvarchar(128)) AS "GRANTEE",
+    CAST(sys.db_name() AS sys.nvarchar(128)) AS "TABLE_CATALOG",
+    CAST(nc.nspname AS sys.nvarchar(128)) AS "TABLE_SCHEMA",
+    CAST(x.relname AS sys.sysname) AS "TABLE_NAME",
+    CAST(x.attname AS sys.sysname) AS "COLUMN_NAME",
+    CAST(x.prtype AS sys."varchar"(10)) AS "PRIVILEGE_TYPE",
+        CASE
+            WHEN pg_has_role(x.grantee, x.relowner, 'USAGE'::text) OR x.grantable THEN 'YES'::text
+            ELSE 'NO'::text
+        END::sys."varchar"(3) AS "IS_GRANTABLE"
+   FROM ( SELECT pr_c.grantor,
+            pr_c.grantee,
+            a.attname,
+            pr_c.relname,
+            pr_c.relnamespace,
+            pr_c.prtype,
+            pr_c.grantable,
+            pr_c.relowner
+           FROM ( SELECT pg_class.oid,
+                    pg_class.relname,
+                    pg_class.relnamespace,
+                    pg_class.relowner,
+                    (aclexplode(COALESCE(pg_class.relacl, acldefault('r'::"char", pg_class.relowner)))).grantor AS grantor,
+                    (aclexplode(COALESCE(pg_class.relacl, acldefault('r'::"char", pg_class.relowner)))).grantee AS grantee,
+                    (aclexplode(COALESCE(pg_class.relacl, acldefault('r'::"char", pg_class.relowner)))).privilege_type AS privilege_type,
+                    (aclexplode(COALESCE(pg_class.relacl, acldefault('r'::"char", pg_class.relowner)))).is_grantable AS is_grantable
+                   FROM pg_class
+                  WHERE pg_class.relkind = ANY (ARRAY['r'::"char", 'v'::"char", 'f'::"char", 'p'::"char"])) pr_c(oid, relname, relnamespace, relowner, grantor, grantee, prtype, grantable),
+            pg_attribute a
+          WHERE a.attrelid = pr_c.oid AND a.attnum > 0 AND NOT a.attisdropped
+        UNION
+         SELECT pr_a.grantor,
+            pr_a.grantee,
+            pr_a.attname,
+            c.relname,
+            c.relnamespace,
+            pr_a.prtype,
+            pr_a.grantable,
+            c.relowner
+           FROM ( SELECT a.attrelid,
+                    a.attname,
+                    (aclexplode(COALESCE(a.attacl, acldefault('c'::"char", cc.relowner)))).grantor AS grantor,
+                    (aclexplode(COALESCE(a.attacl, acldefault('c'::"char", cc.relowner)))).grantee AS grantee,
+                    (aclexplode(COALESCE(a.attacl, acldefault('c'::"char", cc.relowner)))).privilege_type AS privilege_type,
+                    (aclexplode(COALESCE(a.attacl, acldefault('c'::"char", cc.relowner)))).is_grantable AS is_grantable
+                   FROM pg_attribute a
+                     JOIN pg_class cc ON a.attrelid = cc.oid
+                  WHERE a.attnum > 0 AND NOT a.attisdropped) pr_a(attrelid, attname, grantor, grantee, prtype, grantable),
+            pg_class c
+          WHERE pr_a.attrelid = c.oid AND (c.relkind = ANY (ARRAY['r'::"char", 'v'::"char", 'f'::"char", 'p'::"char"]))) x,
+    pg_namespace nc,
+    pg_roles u_grantor,
+    ( SELECT pg_roles.oid,
+            pg_roles.rolname
+           FROM pg_roles
+        UNION ALL
+         SELECT 0::oid AS oid,
+            'PUBLIC'::name AS name) grantee(oid, rolname)
+WHERE x.relnamespace = nc.oid AND x.grantee = grantee.oid AND x.grantor = u_grantor.oid 
+AND (x.prtype = ANY (ARRAY['INSERT'::text, 'SELECT'::text, 'UPDATE'::text, 'REFERENCES'::text])) 
+AND (pg_has_role(u_grantor.oid, 'USAGE'::text) OR pg_has_role(grantee.oid, 'USAGE'::text) OR grantee.rolname = 'PUBLIC'::name);
+
+GRANT SELECT ON information_schema_tsql.column_privileges TO PUBLIC;
+
 CREATE OR replace view sys.foreign_keys AS
 SELECT
   CAST(c.conname AS sys.SYSNAME) AS name

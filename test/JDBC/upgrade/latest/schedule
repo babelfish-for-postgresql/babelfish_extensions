@@ -167,4 +167,5 @@ sp_tablecollations
 sys-assemblies
 BABEL-LOGIN-USER-EXT
 bitwise_not-operator
+column_privileges
 BABEL-1683

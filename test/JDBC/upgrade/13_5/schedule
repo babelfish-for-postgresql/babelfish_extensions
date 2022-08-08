@@ -119,4 +119,5 @@ BABEL-3147-before-14_5
 BABEL-EXTENDEDPROPERTY
 TestErrorHelperFunctionsUpgrade
 tdscollation
+column_privileges
 BABEL-1683
