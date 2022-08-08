@@ -105,7 +105,6 @@ Could not find tests for view sys.sp_stored_procedures_view
 Could not find tests for view sys.sp_table_privileges_view
 Could not find tests for view sys.spt_columns_view_managed
 Could not find upgrade tests for function assemblyproperty
-Could not find upgrade tests for function collationproperty
 Could not find upgrade tests for function connectionproperty
 Could not find upgrade tests for function databasepropertyex
 Could not find upgrade tests for function pltsql_call_handler
