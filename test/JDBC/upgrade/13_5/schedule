@@ -50,6 +50,7 @@ sys-original_login
 sys-procedures
 sys-schema-name
 identity_function
+sys-sysdatabases
 sys-sysobjects
 sys-trigger_nestlevel
 routines_definition
