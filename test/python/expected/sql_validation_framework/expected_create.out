@@ -331,7 +331,6 @@ Could not find upgrade tests for view sys.stats
 Could not find upgrade tests for view sys.synonyms
 Could not find upgrade tests for view sys.syscharsets
 Could not find upgrade tests for view sys.syscolumns
-Could not find upgrade tests for view sys.sysdatabases
 Could not find upgrade tests for view sys.sysforeignkeys
 Could not find upgrade tests for view sys.sysindexes
 Could not find upgrade tests for view sys.syslanguages

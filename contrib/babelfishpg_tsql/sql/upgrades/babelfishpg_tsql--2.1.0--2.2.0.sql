@@ -3230,6 +3230,25 @@ FROM sys.events e
 WHERE e.is_trigger_event = 1;
 GRANT SELECT ON sys.trigger_events TO PUBLIC;
 
+CREATE OR REPLACE VIEW sys.sysdatabases AS
+SELECT
+t.name,
+sys.db_id(t.name) AS dbid,
+CAST(CAST(r.oid AS int) AS SYS.VARBINARY(85)) AS sid,
+CAST(0 AS SMALLINT) AS mode,
+t.status,
+t.status2,
+CAST(t.crdate AS SYS.DATETIME) AS crdate,
+CAST('1900-01-01 00:00:00.000' AS SYS.DATETIME) AS reserved,
+CAST(0 AS INT) AS category,
+CAST(120 AS SYS.TINYINT) AS cmptlevel,
+CAST(NULL AS SYS.NVARCHAR(260)) AS filename,
+CAST(NULL AS SMALLINT) AS version
+FROM sys.babelfish_sysdatabases AS t
+LEFT OUTER JOIN pg_catalog.pg_roles r on r.rolname = t.owner;
+
+GRANT SELECT ON sys.sysdatabases TO PUBLIC;
+
 ALTER FUNCTION sys.fn_mapped_system_error_list() RENAME TO fn_mapped_system_error_list_deprecated_in_2_2_0;
 
 CREATE OR REPLACE FUNCTION sys.fn_mapped_system_error_list_deprecated_in_2_2_0()

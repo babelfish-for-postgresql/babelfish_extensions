@@ -36,7 +36,7 @@ t.status2,
 CAST(t.crdate AS SYS.DATETIME) AS crdate,
 CAST('1900-01-01 00:00:00.000' AS SYS.DATETIME) AS reserved,
 CAST(0 AS INT) AS category,
-CAST(NULL AS SYS.TINYINT) AS cmptlevel,
+CAST(120 AS SYS.TINYINT) AS cmptlevel,
 CAST(NULL AS SYS.NVARCHAR(260)) AS filename,
 CAST(NULL AS SMALLINT) AS version
 FROM sys.babelfish_sysdatabases AS t
