@@ -141,3 +141,4 @@ collation_tests_polish
 collation_tests
 BABEL-EXTENDEDPROPERTY
 TestErrorHelperFunctionsUpgrade
+tdscollation
