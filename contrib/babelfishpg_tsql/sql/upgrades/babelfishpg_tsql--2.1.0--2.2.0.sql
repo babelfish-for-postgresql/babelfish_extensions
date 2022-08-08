@@ -717,26 +717,26 @@ CALL sys.babelfish_drop_deprecated_table('sys', 'assembly_types_deprecated_in_2_
 CREATE OR REPLACE VIEW sys.hash_indexes
 AS
 SELECT 
-  CAST(si.object_id AS INT),
-  CAST(si.name AS sys.SYSNAME),
-  CAST(si.index_id AS INT),
-  CAST(si.type AS sys.TINYINT),
-  CAST(si.type_desc AS sys.NVARCHAR(60)),
-  CAST(si.is_unique AS sys.BIT),
-  CAST(si.data_space_id AS INT),
-  CAST(si.ignore_dup_key AS sys.BIT),
-  CAST(si.is_primary_key AS sys.BIT),
-  CAST(si.is_unique_constraint AS sys.BIT),
-  CAST(si.fill_factor AS sys.TINYINT),
-  CAST(si.is_padded AS sys.BIT),
-  CAST(si.is_disabled AS sys.BIT),
-  CAST(si.is_hypothetical AS sys.BIT),
-  CAST(si.allow_row_locks AS sys.BIT),
-  CAST(si.allow_page_locks AS sys.BIT),
-  CAST(si.has_filter AS sys.BIT),
-  CAST(si.filter_definition AS sys.NVARCHAR(4000)),
+  si.object_id,
+  si.name,
+  si.index_id,
+  si.type,
+  si.type_desc,
+  si.is_unique,
+  si.data_space_id,
+  si.ignore_dup_key,
+  si.is_primary_key,
+  si.is_unique_constraint,
+  si.fill_factor,
+  si.is_padded,
+  si.is_disabled,
+  si.is_hypothetical,
+  si.allow_row_locks,
+  si.allow_page_locks,
+  si.has_filter,
+  si.filter_definition,
   CAST(0 as INT) AS bucket_count,
-  CAST(si.auto_created AS sys.BIT)
+  si.auto_created
 FROM sys.indexes si
 WHERE FALSE;
 GRANT SELECT ON sys.hash_indexes TO PUBLIC;
