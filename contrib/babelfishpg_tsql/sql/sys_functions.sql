@@ -909,7 +909,7 @@ BEGIN
         return sys.datepart_internal(datepart, arg::timestamp,
                      sys.babelfish_get_datetimeoffset_tzoffset(arg)::integer);
     ELSIF pg_typeof(arg) = 'pg_catalog.text'::regtype THEN
-        return sys.datepart_internal(datepart, arg::sys.nvarchar::sys.datetime);
+        return sys.datepart_internal(datepart, arg::sys.datetimeoffset::timestamp, sys.babelfish_get_datetimeoffset_tzoffset(arg::sys.datetimeoffset)::integer);
     ELSE
         return sys.datepart_internal(datepart, arg);
     END IF;
