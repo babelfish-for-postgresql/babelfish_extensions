@@ -1,7 +1,0 @@
-SELECT * FROM sys.data_spaces;
-GO
-~~START~~
-varchar#!#int#!#char#!#nvarchar#!#bit#!#bit
-PRIMARY#!#1#!#FG#!#ROWS_FILEGROUP#!#1#!#0
-~~END~~
-

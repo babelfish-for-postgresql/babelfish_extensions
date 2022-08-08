@@ -1,7 +1,7 @@
 USE master
 GO
 
-SELECT COUNT(*) FROM sys.filetables
+SELECT * FROM sys.filetables
 GO
 
 SELECT * FROM sys_filetables_vu_prepare_view

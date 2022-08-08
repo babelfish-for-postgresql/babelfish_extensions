@@ -1,27 +1,24 @@
 USE master
 GO
 
-SELECT COUNT(*) FROM sys.filetables
+SELECT * FROM sys.filetables
 GO
 ~~START~~
-int
-0
+int#!#bit#!#varchar#!#int#!#varchar
 ~~END~~
 
 
 SELECT * FROM sys_filetables_vu_prepare_view
 GO
 ~~START~~
-int
-0
+int#!#bit#!#varchar#!#int#!#varchar
 ~~END~~
 
 
 EXEC sys_filetables_vu_prepare_proc
 GO
 ~~START~~
-int
-0
+int#!#bit#!#varchar#!#int#!#varchar
 ~~END~~
 
 

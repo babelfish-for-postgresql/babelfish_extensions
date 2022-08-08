@@ -2118,12 +2118,12 @@ GRANT SELECT ON sys.dm_hadr_database_replica_states TO PUBLIC;
 CREATE OR REPLACE VIEW sys.data_spaces
 AS
 SELECT 
-  CAST('PRIMARY' AS sys.SYSNAME) AS name,
-  CAST(1 AS INT) AS data_space_id,
-  CAST('FG' AS sys.BPCHAR(2)) AS type,
-  CAST('ROWS_FILEGROUP' AS sys.NVARCHAR(60)) AS type_desc,
-  CAST(1 AS sys.BIT) AS is_default,
-  CAST(0 AS sys.BIT) AS is_system;
+  CAST('PRIMARY' as SYSNAME) AS name,
+  CAST(1 as INT) AS data_space_id,
+  CAST('FG' as CHAR(2)) AS type,
+  CAST('ROWS_FILEGROUP' as NVARCHAR(60)) AS type_desc,
+  CAST(1 as sys.BIT) AS is_default,
+  CAST(0 as sys.BIT) AS is_system;
 GRANT SELECT ON sys.data_spaces TO PUBLIC;
 
 CREATE OR REPLACE VIEW sys.database_mirroring
@@ -2191,26 +2191,26 @@ GRANT SELECT ON sys.database_files TO PUBLIC;
 CREATE OR REPLACE VIEW sys.hash_indexes
 AS
 SELECT 
-  si.object_id,
-  si.name,
-  si.index_id,
-  si.type,
-  si.type_desc,
-  si.is_unique,
-  si.data_space_id,
-  si.ignore_dup_key,
-  si.is_primary_key,
-  si.is_unique_constraint,
-  si.fill_factor,
-  si.is_padded,
-  si.is_disabled,
-  si.is_hypothetical,
-  si.allow_row_locks,
-  si.allow_page_locks,
-  si.has_filter,
-  si.filter_definition,
+  CAST(si.object_id AS INT),
+  CAST(si.name AS sys.SYSNAME),
+  CAST(si.index_id AS INT),
+  CAST(si.type AS sys.TINYINT),
+  CAST(si.type_desc AS sys.NVARCHAR(60)),
+  CAST(si.is_unique AS sys.BIT),
+  CAST(si.data_space_id AS INT),
+  CAST(si.ignore_dup_key AS sys.BIT),
+  CAST(si.is_primary_key AS sys.BIT),
+  CAST(si.is_unique_constraint AS sys.BIT),
+  CAST(si.fill_factor AS sys.TINYINT),
+  CAST(si.is_padded AS sys.BIT),
+  CAST(si.is_disabled AS sys.BIT),
+  CAST(si.is_hypothetical AS sys.BIT),
+  CAST(si.allow_row_locks AS sys.BIT),
+  CAST(si.allow_page_locks AS sys.BIT),
+  CAST(si.has_filter AS sys.BIT),
+  CAST(si.filter_definition AS sys.NVARCHAR(4000)),
   CAST(0 as INT) AS bucket_count,
-  si.auto_created
+  CAST(si.auto_created AS sys.BIT)
 FROM sys.indexes si
 WHERE FALSE;
 GRANT SELECT ON sys.hash_indexes TO PUBLIC;

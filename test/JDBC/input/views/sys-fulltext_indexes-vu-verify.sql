@@ -1,7 +1,7 @@
 USE master
 GO
 
-SELECT COUNT(*) FROM sys.fulltext_indexes
+SELECT * FROM sys.fulltext_indexes
 GO
 
 SELECT * FROM sys_fulltext_indexes_vu_prepare_view
