@@ -10,6 +10,7 @@
 #include "postgres.h"
 #include "miscadmin.h"
 
+#include <ctype.h>
 #include "access/genam.h"
 #include "access/heapam.h"
 #include "access/htup_details.h"
@@ -684,6 +685,10 @@ user_id(PG_FUNCTION_ARGS)
 
 	if (!user_name)
 		PG_RETURN_NULL();
+
+	if (pltsql_case_insensitive_identifiers)
+		// Lowercase the entry, if needed
+		for (char *p = user_name ; *p; ++p) *p = tolower(*p);
 
 	auth_tuple = SearchSysCache1(AUTHNAME, CStringGetDatum(user_name));
 	if (!HeapTupleIsValid(auth_tuple))
