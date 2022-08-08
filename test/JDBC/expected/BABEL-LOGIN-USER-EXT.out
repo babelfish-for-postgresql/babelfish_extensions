@@ -752,6 +752,14 @@ login1
 ~~END~~
 
 
+SELECT name FROM sys.server_principals WHERE principal_id = suser_id('LOGIN1');
+GO
+~~START~~
+varchar
+login1
+~~END~~
+
+
 -- Expect NULL
 SELECT suser_id(' login1');
 GO
@@ -788,6 +796,14 @@ int
 
 
 SELECT name FROM sys.server_principals WHERE name = suser_name(suser_id('login1'));
+GO
+~~START~~
+varchar
+login1
+~~END~~
+
+
+SELECT name FROM sys.server_principals WHERE name = suser_name(suser_id('LOGIN1'));
 GO
 ~~START~~
 varchar
@@ -992,7 +1008,23 @@ dbo
 ~~END~~
 
 
+SELECT user_name(user_id('DBO'));
+GO
+~~START~~
+nvarchar
+dbo
+~~END~~
+
+
 SELECT user_name(user_id('guest'));
+GO
+~~START~~
+nvarchar
+dbo
+~~END~~
+
+
+SELECT user_name(user_id('GUEST'));
 GO
 ~~START~~
 nvarchar
