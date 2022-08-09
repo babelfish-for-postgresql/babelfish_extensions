@@ -5312,32 +5312,12 @@ post_process_create_table(TSqlParser::Create_tableContext *ctx, PLtsql_stmt_exec
 	// viist options in index specification
 	for (auto ictx : ctx->inline_index())
 	{
-		if (ictx->ON())
-		{
-			Assert(ictx->storage_partition_clause().size() > 0);
-			removeTokenStringFromQuery(stmt->sqlstmt, ictx->ON(), baseCtx);
-			removeCtxStringFromQuery(stmt->sqlstmt, ictx->storage_partition_clause()[0], baseCtx);
-		}
-
-		if (ictx->clustered() && ictx->clustered()->CLUSTERED())
-			removeTokenStringFromQuery(stmt->sqlstmt, ictx->clustered()->CLUSTERED(), baseCtx);
-		if (ictx->clustered() && ictx->clustered()->NONCLUSTERED())
-			removeTokenStringFromQuery(stmt->sqlstmt, ictx->clustered()->NONCLUSTERED(), baseCtx);
+		post_process_inline_index(ictx, stmt, baseCtx);
 	}
 
 	for (auto ictx : ctx->table_constraint())
 	{
-		if (ictx->ON())
-		{
-			Assert(ictx->storage_partition_clause());
-			removeTokenStringFromQuery(stmt->sqlstmt, ictx->ON(), baseCtx);
-			removeCtxStringFromQuery(stmt->sqlstmt, ictx->storage_partition_clause(), baseCtx);
-		}
-
-		if (ictx->clustered() && ictx->clustered()->CLUSTERED())
-			removeTokenStringFromQuery(stmt->sqlstmt, ictx->clustered()->CLUSTERED(), baseCtx);
-		if (ictx->clustered() && ictx->clustered()->NONCLUSTERED())
-			removeTokenStringFromQuery(stmt->sqlstmt, ictx->clustered()->NONCLUSTERED(), baseCtx);
+		post_process_table_constraint(ictx, stmt, baseCtx);
 	}
 	return false;
 }
