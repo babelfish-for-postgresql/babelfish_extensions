@@ -480,7 +480,6 @@ BEGIN
 		INNER JOIN pg_type t ON t.oid = a.atttypid
 		INNER JOIN sys.schemas sch on c.relnamespace = sch.schema_id 
 		INNER JOIN sys.pg_namespace_ext ext on sch.schema_id = ext.oid 
-		INNER JOIN information_schema.columns isc ON c.relname = isc.table_name AND ext.nspname = isc.table_schema AND a.attname = isc.column_name
 		LEFT JOIN pg_attrdef d ON c.oid = d.adrelid AND a.attnum = d.adnum
 		LEFT JOIN pg_collation coll ON coll.oid = a.attcollation
 		, sys.translate_pg_type_to_tsql(a.atttypid) AS tsql_type_name
@@ -557,7 +556,6 @@ BEGIN
 		INNER JOIN pg_class c ON c.oid = a.attrelid
 		INNER JOIN pg_type t ON t.oid = a.atttypid
 		INNER JOIN pg_namespace nsp ON (nsp.oid = c.relnamespace and nsp.nspname = 'sys')
-		INNER JOIN information_schema.columns isc ON c.relname = isc.table_name AND nsp.nspname = isc.table_schema AND a.attname = isc.column_name
 		LEFT JOIN pg_attrdef d ON c.oid = d.adrelid AND a.attnum = d.adnum
 		LEFT JOIN pg_collation coll ON coll.oid = a.attcollation
 		, sys.translate_pg_type_to_tsql(a.atttypid) AS tsql_type_name
