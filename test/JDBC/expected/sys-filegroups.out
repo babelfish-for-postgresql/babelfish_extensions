@@ -1,7 +1,0 @@
-SELECT * FROM sys.filegroups;
-GO
-~~START~~
-varchar#!#int#!#char#!#nvarchar#!#bit#!#bit#!#uniqueidentifier#!#int#!#bit#!#bit
-PRIMARY#!#1#!#FG#!#ROWS_FILEGROUP#!#1#!#0#!#<NULL>#!#0#!#0#!#0
-~~END~~
-

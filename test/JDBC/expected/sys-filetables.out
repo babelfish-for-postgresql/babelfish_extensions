@@ -1,6 +1,0 @@
-SELECT * FROM sys.filetables;
-GO
-~~START~~
-int#!#bit#!#varchar#!#int#!#varchar
-~~END~~
-

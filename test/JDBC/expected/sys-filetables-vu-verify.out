@@ -1,0 +1,31 @@
+USE master
+GO
+
+SELECT * FROM sys.filetables
+GO
+~~START~~
+int#!#bit#!#varchar#!#int#!#varchar
+~~END~~
+
+
+SELECT * FROM sys_filetables_vu_prepare_view
+GO
+~~START~~
+int#!#bit#!#varchar#!#int#!#varchar
+~~END~~
+
+
+EXEC sys_filetables_vu_prepare_proc
+GO
+~~START~~
+int#!#bit#!#varchar#!#int#!#varchar
+~~END~~
+
+
+SELECT dbo.sys_filetables_vu_prepare_func()
+GO
+~~START~~
+int
+0
+~~END~~
+

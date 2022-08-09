@@ -1,6 +1,0 @@
-SELECT * FROM sys.fulltext_indexes;
-GO
-~~START~~
-int#!#int#!#int#!#bit#!#char#!#nvarchar#!#bit#!#char#!#nvarchar#!#datetime#!#datetime#!#binary#!#int#!#int#!#int
-~~END~~
-

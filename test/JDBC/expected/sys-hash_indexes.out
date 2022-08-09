@@ -1,6 +1,0 @@
-SELECT * FROM sys.hash_indexes;
-GO
-~~START~~
-int#!#varchar#!#int#!#tinyint#!#nvarchar#!#bit#!#int#!#bit#!#bit#!#bit#!#tinyint#!#bit#!#bit#!#bit#!#bit#!#bit#!#bit#!#nvarchar#!#int#!#bit
-~~END~~
-
