@@ -2,9 +2,6 @@ select SPECIFIC_CATALOG, SPECIFIC_SCHEMA, SPECIFIC_NAME, ROUTINE_CATALOG, ROUTIN
 go
 ~~START~~
 nvarchar#!#nvarchar#!#nvarchar#!#nvarchar#!#nvarchar#!#nvarchar#!#nvarchar
-master#!#dbo#!#xp_instance_regread#!#master#!#dbo#!#xp_instance_regread#!#<NULL>
-master#!#dbo#!#xp_instance_regread#!#master#!#dbo#!#xp_instance_regread#!#<NULL>
-master#!#dbo#!#xp_qv#!#master#!#dbo#!#xp_qv#!#<NULL>
 ~~END~~
 
 
