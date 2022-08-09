@@ -794,8 +794,7 @@ print_function_arguments(StringInfo buf, HeapTuple proctup,
 	       	        (*typmod_arr_arg)[i] += adjustTypmod(argtype, (*typmod_arr_arg)[i]);
 		appendStringInfoString(buf, tsql_format_type_extended(argtype, (*typmod_arr_arg)[i], FORMAT_TYPE_TYPEMOD_GIVEN));
 
-
-		if(modename != "")
+		if (modename && strcmp(modename, "") != 0)
 		       	appendStringInfo(buf," %s", modename);
 
 		if (print_defaults && isinput && inputargno > nlackdefaults)
