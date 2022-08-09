@@ -435,7 +435,8 @@ tsql_get_functiondef(PG_FUNCTION_ARGS)
          * also at the end, we’re releasing proctup (that will free proc->proname).  
          */
 	pfree(nsp);
-	pfree(nnsp);
+	if (nnsp)
+		pfree(nnsp);
         
 	tmp = SysCacheGetAttr(PROCOID, proctup, Anum_pg_proc_probin, &isnull);
         number_args = proc->pronargs;
