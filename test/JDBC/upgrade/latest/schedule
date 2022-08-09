@@ -157,4 +157,6 @@ sys-filetables
 sys-fulltext_indexes
 sys-hash_indexes
 sys-plan_guides
+sp_tablecollations
+sys-assemblies
 BABEL-LOGIN-USER-EXT
