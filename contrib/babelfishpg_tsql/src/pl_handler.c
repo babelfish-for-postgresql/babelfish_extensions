@@ -2056,6 +2056,7 @@ static void bbf_ProcessUtility(PlannedStmt *pstmt,
 	 * catalog.
 	 */
 	if ((sql_dialect == SQL_DIALECT_PG || (sql_dialect == SQL_DIALECT_TSQL && !IS_TDS_CLIENT()))
+			&& !(queryString && strcmp(queryString, "(CREATE LOGICAL DATABASE )") == 0)
 			&& !babelfish_dump_restore
 			&& !pltsql_enable_create_alter_view_from_pg)
 	{
