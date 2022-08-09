@@ -1,10 +1,16 @@
+-- sys.assemblies should be a view, but the underlying system catalogs haven't
+-- been implemented in Babelfish yet (sys.sysclsobjs, etc)
 CREATE TABLE sys.assemblies(
-	name VARCHAR(255),
-	principal_id int,
-	assembly_id int,
-	is_nullable int,
-	is_fixed_length int,
-	max_length int
+        name sys.sysname,
+        principal_id int,
+        assembly_id int,
+		clr_name nvarchar(4000),
+        permission_set  tinyint,
+        permission_set_desc     nvarchar(60),
+        is_visible      bit,
+        create_date     datetime,
+        modify_date     datetime,
+        is_user_defined bit
 );
 GRANT SELECT ON sys.assemblies TO PUBLIC;
 

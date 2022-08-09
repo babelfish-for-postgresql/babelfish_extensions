@@ -3265,6 +3265,240 @@ LANGUAGE C IMMUTABLE STRICT;
 
 CALL sys.babelfish_drop_deprecated_function('sys', 'fn_mapped_system_error_list_deprecated_in_2_2_0');
 
+CREATE OR REPLACE FUNCTION sys.columns_internal()
+RETURNS TABLE (
+    out_object_id int,
+    out_name sys.sysname,
+    out_column_id int,
+    out_system_type_id int,
+    out_user_type_id int,
+    out_max_length smallint,
+    out_precision sys.tinyint,
+    out_scale sys.tinyint,
+    out_collation_name sys.sysname,
+    out_collation_id int,
+    out_offset smallint,
+    out_is_nullable sys.bit,
+    out_is_ansi_padded sys.bit,
+    out_is_rowguidcol sys.bit,
+    out_is_identity sys.bit,
+    out_is_computed sys.bit,
+    out_is_filestream sys.bit,
+    out_is_replicated sys.bit,
+    out_is_non_sql_subscribed sys.bit,
+    out_is_merge_published sys.bit,
+    out_is_dts_replicated sys.bit,
+    out_is_xml_document sys.bit,
+    out_xml_collection_id int,
+    out_default_object_id int,
+    out_rule_object_id int,
+    out_is_sparse sys.bit,
+    out_is_column_set sys.bit,
+    out_generated_always_type sys.tinyint,
+    out_generated_always_type_desc sys.nvarchar(60),
+    out_encryption_type int,
+    out_encryption_type_desc sys.nvarchar(64),
+    out_encryption_algorithm_name sys.sysname,
+    out_column_encryption_key_id int,
+    out_column_encryption_key_database_name sys.sysname,
+    out_is_hidden sys.bit,
+    out_is_masked sys.bit,
+    out_graph_type int,
+    out_graph_type_desc sys.nvarchar(60)
+)
+AS
+$$
+BEGIN
+	RETURN QUERY
+		SELECT CAST(c.oid AS int),
+			CAST(a.attname AS sys.sysname),
+			CAST(a.attnum AS int),
+			CASE 
+			WHEN tsql_type_name IS NOT NULL OR t.typbasetype = 0 THEN
+				-- either tsql or PG base type 
+				CAST(a.atttypid AS int)
+			ELSE 
+				CAST(t.typbasetype AS int)
+			END,
+			CAST(a.atttypid AS int),
+			CASE
+			WHEN a.atttypmod != -1 THEN 
+				sys.tsql_type_max_length_helper(coalesce(tsql_type_name, tsql_base_type_name), a.attlen, a.atttypmod)
+			ELSE 
+				sys.tsql_type_max_length_helper(coalesce(tsql_type_name, tsql_base_type_name), a.attlen, t.typtypmod)
+			END,
+			CASE
+			WHEN a.atttypmod != -1 THEN 
+				sys.tsql_type_precision_helper(coalesce(tsql_type_name, tsql_base_type_name), a.atttypmod)
+			ELSE 
+				sys.tsql_type_precision_helper(coalesce(tsql_type_name, tsql_base_type_name), t.typtypmod)
+			END,
+			CASE
+			WHEN a.atttypmod != -1 THEN 
+				sys.tsql_type_scale_helper(coalesce(tsql_type_name, tsql_base_type_name), a.atttypmod, false)
+			ELSE 
+				sys.tsql_type_scale_helper(coalesce(tsql_type_name, tsql_base_type_name), t.typtypmod, false)
+			END,
+			CAST(coll.collname AS sys.sysname),
+			CAST(a.attcollation AS int),
+			CAST(a.attnum AS smallint),
+			CAST(case when a.attnotnull then 0 else 1 end AS sys.bit),
+			CAST(case when t.typname in ('bpchar', 'nchar', 'binary') then 1 else 0 end AS sys.bit),
+			CAST(0 AS sys.bit),
+			CAST(case when a.attidentity <> ''::"char" then 1 else 0 end AS sys.bit),
+			CAST(case when a.attgenerated <> ''::"char" then 1 else 0 end AS sys.bit),
+			CAST(0 AS sys.bit),
+			CAST(0 AS sys.bit),
+			CAST(0 AS sys.bit),
+			CAST(0 AS sys.bit),
+			CAST(0 AS sys.bit),
+			CAST(0 AS sys.bit),
+			CAST(0 AS int),
+			CAST(coalesce(d.oid, 0) AS int),
+			CAST(coalesce((select oid from pg_constraint where conrelid = t.oid
+						and contype = 'c' and a.attnum = any(conkey) limit 1), 0) AS int),
+			CAST(0 AS sys.bit),
+			CAST(0 AS sys.bit),
+			CAST(0 AS sys.tinyint),
+			CAST('NOT_APPLICABLE' AS sys.nvarchar(60)),
+			CAST(null AS int),
+			CAST(null AS sys.nvarchar(64)),
+			CAST(null AS sys.sysname),
+			CAST(null AS int),
+			CAST(null AS sys.sysname),
+			CAST(0 AS sys.bit),
+			CAST(0 AS sys.bit),
+			CAST(null AS int),
+			CAST(null AS sys.nvarchar(60))
+		FROM pg_attribute a
+		INNER JOIN pg_class c ON c.oid = a.attrelid
+		INNER JOIN pg_type t ON t.oid = a.atttypid
+		INNER JOIN sys.schemas sch on c.relnamespace = sch.schema_id 
+		INNER JOIN sys.pg_namespace_ext ext on sch.schema_id = ext.oid 
+		LEFT JOIN pg_attrdef d ON c.oid = d.adrelid AND a.attnum = d.adnum
+		LEFT JOIN pg_collation coll ON coll.oid = a.attcollation
+		, sys.translate_pg_type_to_tsql(a.atttypid) AS tsql_type_name
+		, sys.translate_pg_type_to_tsql(t.typbasetype) AS tsql_base_type_name
+		WHERE NOT a.attisdropped
+		AND a.attnum > 0
+		-- r = ordinary table, i = index, S = sequence, t = TOAST table, v = view, m = materialized view, c = composite type, f = foreign table, p = partitioned table
+		AND c.relkind IN ('r', 'v', 'm', 'f', 'p')
+		AND has_schema_privilege(sch.schema_id, 'USAGE')
+		AND has_column_privilege(a.attrelid, a.attname, 'SELECT,INSERT,UPDATE,REFERENCES')
+		union all
+		-- system tables information
+		SELECT CAST(c.oid AS int),
+			CAST(a.attname AS sys.sysname),
+			CAST(a.attnum AS int),
+			CASE 
+			WHEN tsql_type_name IS NOT NULL OR t.typbasetype = 0 THEN
+				-- either tsql or PG base type 
+				CAST(a.atttypid AS int)
+			ELSE 
+				CAST(t.typbasetype AS int)
+			END,
+			CAST(a.atttypid AS int),
+			CASE
+			WHEN a.atttypmod != -1 THEN 
+				sys.tsql_type_max_length_helper(coalesce(tsql_type_name, tsql_base_type_name), a.attlen, a.atttypmod)
+			ELSE 
+				sys.tsql_type_max_length_helper(coalesce(tsql_type_name, tsql_base_type_name), a.attlen, t.typtypmod)
+			END,
+			CASE
+			WHEN a.atttypmod != -1 THEN 
+				sys.tsql_type_precision_helper(coalesce(tsql_type_name, tsql_base_type_name), a.atttypmod)
+			ELSE 
+				sys.tsql_type_precision_helper(coalesce(tsql_type_name, tsql_base_type_name), t.typtypmod)
+			END,
+			CASE
+			WHEN a.atttypmod != -1 THEN 
+				sys.tsql_type_scale_helper(coalesce(tsql_type_name, tsql_base_type_name), a.atttypmod, false)
+			ELSE 
+				sys.tsql_type_scale_helper(coalesce(tsql_type_name, tsql_base_type_name), t.typtypmod, false)
+			END,
+			CAST(coll.collname AS sys.sysname),
+			CAST(a.attcollation AS int),
+			CAST(a.attnum AS smallint),
+			CAST(case when a.attnotnull then 0 else 1 end AS sys.bit),
+			CAST(case when t.typname in ('bpchar', 'nchar', 'binary') then 1 else 0 end AS sys.bit),
+			CAST(0 AS sys.bit),
+			CAST(case when a.attidentity <> ''::"char" then 1 else 0 end AS sys.bit),
+			CAST(case when a.attgenerated <> ''::"char" then 1 else 0 end AS sys.bit),
+			CAST(0 AS sys.bit),
+			CAST(0 AS sys.bit),
+			CAST(0 AS sys.bit),
+			CAST(0 AS sys.bit),
+			CAST(0 AS sys.bit),
+			CAST(0 AS sys.bit),
+			CAST(0 AS int),
+			CAST(coalesce(d.oid, 0) AS int),
+			CAST(coalesce((select oid from pg_constraint where conrelid = t.oid
+						and contype = 'c' and a.attnum = any(conkey) limit 1), 0) AS int),
+			CAST(0 AS sys.bit),
+			CAST(0 AS sys.bit),
+			CAST(0 AS sys.tinyint),
+			CAST('NOT_APPLICABLE' AS sys.nvarchar(60)),
+			CAST(null AS int),
+			CAST(null AS sys.nvarchar(64)),
+			CAST(null AS sys.sysname),
+			CAST(null AS int),
+			CAST(null AS sys.sysname),
+			CAST(0 AS sys.bit),
+			CAST(0 AS sys.bit),
+			CAST(null AS int),
+			CAST(null AS sys.nvarchar(60))
+		FROM pg_attribute a
+		INNER JOIN pg_class c ON c.oid = a.attrelid
+		INNER JOIN pg_type t ON t.oid = a.atttypid
+		INNER JOIN pg_namespace nsp ON (nsp.oid = c.relnamespace and nsp.nspname = 'sys')
+		LEFT JOIN pg_attrdef d ON c.oid = d.adrelid AND a.attnum = d.adnum
+		LEFT JOIN pg_collation coll ON coll.oid = a.attcollation
+		, sys.translate_pg_type_to_tsql(a.atttypid) AS tsql_type_name
+		, sys.translate_pg_type_to_tsql(t.typbasetype) AS tsql_base_type_name
+		WHERE NOT a.attisdropped
+		AND a.attnum > 0
+		AND c.relkind = 'r'
+		AND has_schema_privilege(nsp.oid, 'USAGE')
+		AND has_column_privilege(a.attrelid, a.attname, 'SELECT,INSERT,UPDATE,REFERENCES');
+END;
+$$
+language plpgsql;
+
+ALTER TABLE sys.assemblies RENAME TO assemblies_deprecated_2_1;
+CREATE TABLE sys.assemblies(
+        name sys.sysname,
+        principal_id int,
+        assembly_id int,
+        clr_name nvarchar(4000),
+        permission_set  tinyint,
+        permission_set_desc     nvarchar(60),
+        is_visible      bit,
+        create_date     datetime,
+        modify_date     datetime,
+        is_user_defined bit
+);
+GRANT SELECT ON sys.assemblies TO PUBLIC;
+
+CREATE OR REPLACE PROCEDURE sys.sp_tablecollations_100
+(
+    IN "@object" nvarchar(4000)
+)
+AS $$
+BEGIN
+    select
+        s_tcv.colid         AS colid,
+        s_tcv.name          AS name,
+        s_tcv.tds_collation_100 AS tds_collation,
+        s_tcv.collation_100 AS collation
+    from
+        sys.spt_tablecollations_view s_tcv
+    where
+        s_tcv.object_id = (SELECT sys.object_id(@object))
+    order by colid;
+END;
+$$
+LANGUAGE 'pltsql';
+
 -- Drops the temporary procedure used by the upgrade script.
 -- Please have this be one of the last statements executed in this upgrade script.
 DROP PROCEDURE sys.babelfish_drop_deprecated_view(varchar, varchar);
