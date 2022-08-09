@@ -440,6 +440,9 @@ tsql_get_functiondef(PG_FUNCTION_ARGS)
 	tmp = SysCacheGetAttr(PROCOID, proctup, Anum_pg_proc_probin, &isnull);
         number_args = proc->pronargs;
         if(isfunction) number_args++;
+	/* Return NULL for the definition if procedure language is not pltsql. */
+	if(strcmp(get_language_name(proc->prolang, false), "pltsql") != 0)
+		PG_RETURN_NULL();
        	probin_json_reader(tmp, &typmod_arr, number_args);
 	(void) print_function_arguments(&buf, proctup, false, true, &typmod_arr);
 	if(isfunction || proc->pronargs > 0)
