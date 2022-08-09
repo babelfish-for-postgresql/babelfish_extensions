@@ -950,7 +950,8 @@ CREATE OR REPLACE VIEW information_schema_tsql.routines AS
             CAST(NULL AS sys.datetime) AS "LAST_ALTERED"
 
        FROM sys.pg_namespace_ext nc LEFT JOIN sys.babelfish_namespace_ext ext ON nc.nspname = ext.nspname,
-            pg_proc p inner join sys.schemas sch on sch.schema_id = p.pronamespace,
+            pg_proc p inner join sys.schemas sch on sch.schema_id = p.pronamespace
+	    inner join sys.all_objects ao on ao.object_id = CAST(p.oid AS INT),
             pg_language l,
             pg_type t LEFT JOIN pg_collation co ON t.typcollation = co.oid,
             sys.translate_pg_type_to_tsql(t.oid) AS tsql_type_name,
@@ -974,7 +975,8 @@ CREATE OR REPLACE VIEW information_schema_tsql.routines AS
             AND ext.dbid = cast(sys.db_id() as oid)
             AND p.prolang = l.oid
             AND p.prorettype = t.oid
-            AND p.pronamespace = nc.oid;      
+            AND p.pronamespace = nc.oid
+	    AND CAST(ao.is_ms_shipped as INT) = 0;      
 
 GRANT SELECT ON information_schema_tsql.routines TO PUBLIC;
 	

@@ -435,11 +435,15 @@ tsql_get_functiondef(PG_FUNCTION_ARGS)
          * also at the end, we’re releasing proctup (that will free proc->proname).  
          */
 	pfree(nsp);
-	pfree(nnsp);
+	if (nnsp)
+		pfree(nnsp);
         
 	tmp = SysCacheGetAttr(PROCOID, proctup, Anum_pg_proc_probin, &isnull);
         number_args = proc->pronargs;
         if(isfunction) number_args++;
+	/* Return NULL for the definition if procedure language is not pltsql. */
+	if(strcmp(get_language_name(proc->prolang, false), "pltsql") != 0)
+		PG_RETURN_NULL();
        	probin_json_reader(tmp, &typmod_arr, number_args);
 	(void) print_function_arguments(&buf, proctup, false, true, &typmod_arr);
 	if(isfunction || proc->pronargs > 0)
@@ -790,8 +794,7 @@ print_function_arguments(StringInfo buf, HeapTuple proctup,
 	       	        (*typmod_arr_arg)[i] += adjustTypmod(argtype, (*typmod_arr_arg)[i]);
 		appendStringInfoString(buf, tsql_format_type_extended(argtype, (*typmod_arr_arg)[i], FORMAT_TYPE_TYPEMOD_GIVEN));
 
-
-		if(modename != "")
+		if (modename && strcmp(modename, "") != 0)
 		       	appendStringInfo(buf," %s", modename);
 
 		if (print_defaults && isinput && inputargno > nlackdefaults)
