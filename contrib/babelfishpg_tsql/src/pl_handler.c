@@ -2051,9 +2051,10 @@ static void bbf_ProcessUtility(PlannedStmt *pstmt,
 	/*
 	 * Block ALTER VIEW and CREATE OR REPLACE VIEW statements from PG dialect
 	 * executed on TSQL views which has entries in view_def catalog
-	 * Note: Changes made by ALTER VIEW or CREATE [OR REPLACE] VIEW statements
-	 * in TSQL dialect from PG client won't be reflected in babelfish_view_def
-	 * catalog.
+	 * It also blocks CREATE[OR REPLACE] VIEW and ALTER VIEW
+	 * (specifically on TSQL created views which has entry in catalog)
+	 * statements in TSQL dialect from PG client to maintain consistent data in
+	 * babelfish_view_def catalog.
 	 */
 	if ((sql_dialect == SQL_DIALECT_PG || (sql_dialect == SQL_DIALECT_TSQL && !IS_TDS_CLIENT()))
 			&& !(queryString && strcmp(queryString, "(CREATE LOGICAL DATABASE )") == 0)
@@ -2070,7 +2071,7 @@ static void bbf_ProcessUtility(PlannedStmt *pstmt,
 				{
 					ereport(ERROR,
 							(errcode(ERRCODE_INTERNAL_ERROR),
-							 errmsg("CREATE [OR REPLACE] VIEW is blocked in PG dialect on TSQL view present in babelfish_view_def catalog. Please set babelfishpg_tsql.enable_create_alter_view_from_pg to true to enable.")));
+							 errmsg("CREATE [OR REPLACE] VIEW is blocked in TSQL dialect from PG client on TSQL view present in babelfish_view_def catalog. Please set babelfishpg_tsql.enable_create_alter_view_from_pg to true to enable.")));
 				}
 				if (vstmt->replace && check_is_tsql_view(relid))
 				{
@@ -2090,7 +2091,7 @@ static void bbf_ProcessUtility(PlannedStmt *pstmt,
 					{
 						ereport(ERROR,
 								(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-								 errmsg("ALTER VIEW is blocked in PG dialect on TSQL view present in babelfish_view_def catalog. Please set babelfishpg_tsql.enable_create_alter_view_from_pg to true to enable.")));
+								 errmsg("ALTER VIEW is blocked from PG client on TSQL view present in babelfish_view_def catalog. Please set babelfishpg_tsql.enable_create_alter_view_from_pg to true to enable.")));
 					}
 				}
 				break;
@@ -2107,7 +2108,7 @@ static void bbf_ProcessUtility(PlannedStmt *pstmt,
 					{
 						ereport(ERROR,
 								(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-								 errmsg("ALTER VIEW is blocked in PG dialect on TSQL view present in babelfish_view_def catalog. Please set babelfishpg_tsql.enable_create_alter_view_from_pg to true to enable.")));
+								 errmsg("ALTER VIEW is blocked from PG client on TSQL view present in babelfish_view_def catalog. Please set babelfishpg_tsql.enable_create_alter_view_from_pg to true to enable.")));
 					}
 				}
 				break;
@@ -2122,7 +2123,7 @@ static void bbf_ProcessUtility(PlannedStmt *pstmt,
 					{
 						ereport(ERROR,
 								(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-								 errmsg("ALTER VIEW is blocked in PG dialect on TSQL view present in babelfish_view_def catalog. Please set babelfishpg_tsql.enable_create_alter_view_from_pg to true to enable.")));
+								 errmsg("ALTER VIEW is blocked from PG client on TSQL view present in babelfish_view_def catalog. Please set babelfishpg_tsql.enable_create_alter_view_from_pg to true to enable.")));
 					}
 				}
 				break;

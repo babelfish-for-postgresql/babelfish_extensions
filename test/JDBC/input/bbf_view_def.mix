@@ -143,19 +143,16 @@ go
 set babelfishpg_tsql.sql_dialect = "tsql";
 go
 
--- Allowed in tsql dialect but won't get stored in catalog as dbid will be null
+-- Blocked in TSQL dialect from PG client
 create or replace view master_dbo.def_v6 as select 6;
 go
 
+-- Blocked in TSQL dialect from PG client
 alter view master_dbo.def_v1 rename to def_v1_renamed;
 go
 
 -- tsql
 select sb.name, vd.schema_name, vd.object_name, vd.definition from babelfish_view_def vd left join sys.sysdatabases sb on vd.dbid=sb.dbid where vd.object_name like ('%def_v%') order by vd.dbid, vd.schema_name, vd.object_name, vd.definition;
-go
-
--- psql
-alter view master_dbo.def_v1_renamed rename to def_v1;
 go
 
 -- tsql
@@ -240,7 +237,7 @@ go
 
 -- CASE : When user tries to create view from non-babelfish(like public) or internal-only(like sys or information_schema_tsql)
 -- psql
--- Currenting dialect should be tsql
+-- Current dialect should be tsql
 SHOW babelfishpg_tsql.sql_dialect;
 go
 
@@ -257,16 +254,6 @@ go
 select vd.object_name, vd.definition, vd.flag_validity, vd.flag_values from babelfish_view_def vd left join sys.sysdatabases sb on vd.dbid=sb.dbid where vd.object_name like ('vvv%') order by vd.dbid, vd.schema_name, vd.object_name, vd.definition;
 go
 
--- psql
-drop view vvv1;
-go
-
-drop view sys.vvv2;
-go
-
-drop view information_schema_tsql.vvv3;
-go
-
 -- tsql
 -- CLEANUP
 use master;
@@ -281,7 +268,7 @@ go
 drop view view_ansinulloff_qidoff;
 go
 
-drop view def_v1, def_v2, def_v5, def_v6;
+drop view def_v1, def_v2, def_v5;
 go
 
 drop table vd_t1;
