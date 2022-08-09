@@ -1329,9 +1329,9 @@ AS
 SELECT 
    CAST(0 AS INT) AS object_id,
    CAST(0 AS sys.BIT) AS is_enabled,
-   CAST('' AS VARCHAR(255)) AS directory_name,
+   CAST('' AS sys.VARCHAR(255)) AS directory_name,
    CAST(0 AS INT) AS filename_collation_id,
-   CAST('' AS VARCHAR) AS filename_collation_name
+   CAST('' AS sys.VARCHAR) AS filename_collation_name
    WHERE FALSE;
 GRANT SELECT ON sys.filetables TO PUBLIC;
 
@@ -1403,13 +1403,13 @@ CALL sys.babelfish_drop_deprecated_view('sys', 'identity_columns_deprecated_in_2
 CREATE OR REPLACE VIEW sys.filegroups
 AS
 SELECT 
-   ds.name,
-   ds.data_space_id,
-   ds.type,
-   ds.type_desc,
-   ds.is_default,
-   ds.is_system,
-   CAST(NULL as UNIQUEIDENTIFIER) AS filegroup_guid,
+   CAST(ds.name AS sys.SYSNAME),
+   CAST(ds.data_space_id AS INT),
+   CAST(ds.type AS sys.BPCHAR(2)),
+   CAST(ds.type_desc AS sys.NVARCHAR(60)),
+   CAST(ds.is_default AS sys.BIT),
+   CAST(ds.is_system AS sys.BIT),
+   CAST(NULL as sys.UNIQUEIDENTIFIER) AS filegroup_guid,
    CAST(0 as INT) AS log_filegroup_id,
    CAST(0 as sys.BIT) AS is_read_only,
    CAST(0 as sys.BIT) AS is_autogrow_all_files
@@ -1989,13 +1989,13 @@ SELECT
    CAST(0 as INT) AS unique_index_id,
    CAST(0 as INT) AS fulltext_catalog_id,
    CAST(0 as sys.BIT) AS is_enabled,
-   CAST('O' as CHAR(1)) AS change_tracking_state,
-   CAST('' as NVARCHAR(60)) AS change_tracking_state_desc,
+   CAST('O' as sys.BPCHAR(1)) AS change_tracking_state,
+   CAST('' as sys.NVARCHAR(60)) AS change_tracking_state_desc,
    CAST(0 as sys.BIT) AS has_crawl_completed,
-   CAST('' as CHAR(1)) AS crawl_type,
-   CAST('' as NVARCHAR(60)) AS crawl_type_desc,
-   CAST(NULL as DATETIME) AS crawl_start_date,
-   CAST(NULL as DATETIME) AS crawl_end_date,
+   CAST('' as sys.BPCHAR(1)) AS crawl_type,
+   CAST('' as sys.NVARCHAR(60)) AS crawl_type_desc,
+   CAST(NULL as sys.DATETIME) AS crawl_start_date,
+   CAST(NULL as sys.DATETIME) AS crawl_end_date,
    CAST(NULL as BINARY(8)) AS incremental_timestamp,
    CAST(0 as INT) AS stoplist_id,
    CAST(0 as INT) AS data_space_id,
@@ -2027,7 +2027,7 @@ CREATE OR REPLACE VIEW sys.plan_guides
 AS
 SELECT 
     CAST(0 as int) AS plan_guide_id
-    , CAST(NULL as sys.sysname) AS name
+    , CAST('' as sys.sysname) AS name
     , CAST(NULL as sys.datetime) as create_date
     , CAST(NULL as sys.datetime) as modify_date
     , CAST(0 as sys.bit) as is_disabled
