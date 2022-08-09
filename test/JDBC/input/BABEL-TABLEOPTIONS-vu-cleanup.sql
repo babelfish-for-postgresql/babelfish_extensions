@@ -4,8 +4,8 @@ GO
 DROP TABLE babel_tableoptions_vu_prepare_t2;
 GO
 
-DROP TABLE babel_tableoptions_vu_prepare_t4;
+DROP TABLE babel_tableoptions_vu_prepare_t3;
 GO
 
-DROP TABLE babel_tableoptions_vu_prepare_t5;
+DROP TABLE babel_tableoptions_vu_prepare_t4;
 GO
