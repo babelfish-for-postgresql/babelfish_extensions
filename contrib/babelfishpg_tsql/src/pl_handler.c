@@ -2055,7 +2055,9 @@ static void bbf_ProcessUtility(PlannedStmt *pstmt,
 	 * in TSQL dialect from PG client won't be reflected in babelfish_view_def
 	 * catalog.
 	 */
-	if (sql_dialect == SQL_DIALECT_PG && !babelfish_dump_restore && !pltsql_enable_create_alter_view_from_pg)
+	if ((sql_dialect == SQL_DIALECT_PG || (sql_dialect == SQL_DIALECT_TSQL && !IS_TDS_CLIENT()))
+			&& !babelfish_dump_restore
+			&& !pltsql_enable_create_alter_view_from_pg)
 	{
 		switch (nodeTag(parsetree))
 		{
@@ -2063,6 +2065,12 @@ static void bbf_ProcessUtility(PlannedStmt *pstmt,
 			{
 				ViewStmt *vstmt = (ViewStmt *) parsetree;
 				Oid relid = RangeVarGetRelid(vstmt->view, NoLock, true);
+				if (sql_dialect == SQL_DIALECT_TSQL && !IS_TDS_CLIENT())
+				{
+					ereport(ERROR,
+							(errcode(ERRCODE_INTERNAL_ERROR),
+							 errmsg("CREATE [OR REPLACE] VIEW is blocked in PG dialect on TSQL view present in babelfish_view_def catalog. Please set babelfishpg_tsql.enable_create_alter_view_from_pg to true to enable.")));
+				}
 				if (vstmt->replace && check_is_tsql_view(relid))
 				{
 					ereport(ERROR,
