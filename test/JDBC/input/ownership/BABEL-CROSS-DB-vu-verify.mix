@@ -131,9 +131,6 @@ GO
 USE babel_cross_db_vu_prepare_db1;
 GO
 
-EXEC master.dbo.babel_cross_db_vu_prepare_master_p2
-GO
-
 SELECT current_user;
 GO
 

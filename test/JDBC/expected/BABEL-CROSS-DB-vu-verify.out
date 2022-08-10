@@ -245,13 +245,6 @@ GO
 USE babel_cross_db_vu_prepare_db1;
 GO
 
-EXEC master.dbo.babel_cross_db_vu_prepare_master_p2
-GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: permission denied for procedure babel_cross_db_vu_prepare_master_p2)~~
-
-
 SELECT current_user;
 GO
 ~~START~~
