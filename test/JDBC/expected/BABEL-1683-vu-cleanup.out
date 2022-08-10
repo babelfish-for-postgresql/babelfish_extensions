@@ -1,0 +1,17 @@
+DROP TABLE babel_1683_vu_prepare_table_nvarchar1
+go
+
+DROP TABLE babel_1683_vu_prepare_table_sysname1
+go
+
+DROP TABLE babel_1683_vu_prepare_table_sysname2
+go
+
+DROP TABLE babel_1683_vu_prepare_table_nvarchar2
+go
+
+DROP TABLE babel_1683_vu_prepare_table_sysname3
+go
+
+DROP TABLE babel_1683_vu_prepare_table_sysname4
+go
