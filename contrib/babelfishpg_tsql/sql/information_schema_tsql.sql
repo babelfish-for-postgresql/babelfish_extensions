@@ -716,4 +716,32 @@ CREATE OR REPLACE VIEW information_schema_tsql.routines AS
 
 GRANT SELECT ON information_schema_tsql.routines TO PUBLIC;
 
+CREATE OR REPLACE VIEW information_schema_tsql.view_column_usage
+AS SELECT DISTINCT CAST(sys.db_name() AS sys.nvarchar(128)) AS "VIEW_CATALOG",
+    CAST(sys.schema_name(nv."oid") AS sys.nvarchar(128)) AS "VIEW_SCHEMA",
+    CAST(v.relname AS sys.sysname) AS "VIEW_NAME",
+    CAST(sys.db_name() AS sys.nvarchar(128)) AS "TABLE_CATALOG",
+    CAST(sys.schema_name(nt."oid") AS sys.nvarchar(128)) AS "TABLE_SCHEMA",
+    CAST(t.relname AS sys.sysname) AS "TABLE_NAME",
+    CAST(a.attname AS sys.sysname) AS "COLUMN_NAME"
+   FROM pg_namespace nv,
+    pg_class v,
+    pg_depend dv,
+    pg_depend dt,
+    pg_class t,
+    pg_namespace nt,
+    pg_attribute a
+  WHERE nv.oid = v.relnamespace AND v.relkind = 'v'::"char" 
+  AND v.oid = dv.refobjid AND dv.refclassid = 'pg_class'::regclass::oid 
+  AND dv.classid = 'pg_rewrite'::regclass::oid AND dv.deptype = 'i'::"char" 
+  AND dv.objid = dt.objid AND dv.refobjid <> dt.refobjid 
+  AND dt.classid = 'pg_rewrite'::regclass::oid 
+  AND dt.refclassid = 'pg_class'::regclass::oid AND dt.refobjid = t.oid 
+  AND t.relnamespace = nt.oid 
+  AND (t.relkind = ANY (ARRAY['r'::"char", 'v'::"char", 'f'::"char", 'p'::"char"])) 
+  AND t.oid = a.attrelid AND dt.refobjsubid = a.attnum 
+  AND pg_has_role(t.relowner, 'USAGE'::text);
+  
+GRANT SELECT ON information_schema_tsql.view_column_usage TO PUBLIC;
+
 SELECT set_config('search_path', 'sys, '||current_setting('search_path'), false);

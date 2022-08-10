@@ -2912,3 +2912,7 @@ END;
 $BODY$
 LANGUAGE plpgsql;
 GRANT EXECUTE ON FUNCTION sys.INDEXPROPERTY(IN object_id INT, IN index_or_statistics_name sys.nvarchar(128),  IN property sys.varchar(128)) TO PUBLIC;
+
+CREATE OR REPLACE FUNCTION schema_name(IN id oid) RETURNS VARCHAR
+AS 'babelfishpg_tsql', 'schema_name' LANGUAGE C IMMUTABLE STRICT PARALLEL SAFE;
+GRANT EXECUTE ON FUNCTION schema_name(IN oid) TO PUBLIC;
