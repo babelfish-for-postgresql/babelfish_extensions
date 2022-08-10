@@ -1,0 +1,29 @@
+use db_view_column_usage;
+go
+
+select * from information_schema.view_column_usage where table_name not like 'sys%';
+go
+~~START~~
+nvarchar#!#nvarchar#!#varchar#!#nvarchar#!#nvarchar#!#varchar#!#varchar
+db_view_column_usage#!#dbo#!#view_column_usage_v1#!#db_view_column_usage#!#dbo#!#view_column_usage_tb1#!#view_column_usage_c1
+db_view_column_usage#!#dbo#!#view_column_usage_v1#!#db_view_column_usage#!#dbo#!#view_column_usage_tb1#!#view_column_usage_c2
+db_view_column_usage#!#dbo#!#view_column_usage_v1#!#db_view_column_usage#!#dbo#!#view_column_usage_tb1#!#view_column_usage_c3
+~~END~~
+
+
+drop view view_column_usage_v1
+go
+
+drop table view_column_usage_tb1
+go
+
+select * from information_schema.view_column_usage where table_name not like 'sys%';
+go
+~~START~~
+nvarchar#!#nvarchar#!#varchar#!#nvarchar#!#nvarchar#!#varchar#!#varchar
+~~END~~
+
+
+use master;
+go
+
