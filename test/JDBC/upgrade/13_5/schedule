@@ -89,6 +89,7 @@ BABEL-1465
 BABEL-1466
 BABEL-1715
 BABEL-2086
+BABEL-TABLEOPTIONS
 temp-tables
 table-variable
 TestNotNull
