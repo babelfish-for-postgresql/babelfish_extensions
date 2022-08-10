@@ -52,3 +52,22 @@ go
 
 select cast(a as numeric) from num_t1;
 go
+
+drop table num_t1;
+go
+
+-- BABEL-3450 (Zero produced as result of numeric operation is causing crash)
+create table num_zero(a numeric(5, 2));
+go
+
+insert into num_zero values(123.45);
+go
+
+insert into num_zero values(-123.45);
+go
+
+select sum(a) from num_zero;
+go
+
+drop table num_zero;
+go
