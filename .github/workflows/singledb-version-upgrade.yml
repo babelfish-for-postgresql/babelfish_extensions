@@ -155,7 +155,7 @@ jobs:
         uses: actions/upload-artifact@v2
         with:
          name: postgres-log
-         path: ~/${{env.OLD_INSTALL_DIR}}/data/logfile14
+         path: ~/${{env.OLD_INSTALL_DIR}}/data/logfile13
 
       - name: Upload upgrade Log
         if: always() && steps.run-pg_upgrade.outcome == 'failure'
