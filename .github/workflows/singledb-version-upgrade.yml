@@ -94,6 +94,7 @@ jobs:
             sed -i "s/$filename[ ]*$/$filename-vu-prepare/g" upgrade/singledb/schedule
           done
           export scheduleFile=upgrade/singledb/schedule
+          cat upgrade/singledb/schedule
           mvn test
         shell: bash
 
@@ -132,6 +133,8 @@ jobs:
         if: always() && steps.setup-new-datadir.outcome == 'success'
         uses: ./.github/composite-actions/run-pg-upgrade
 
+      - uses: actions/checkout@v2
+
       - name: Run JDBC Upgrade Tests (Verify-Cleanup)
         id: jdbc-upgrade-tests-verify
         if: always() && steps.run-pg_upgrade.outcome == 'success'
@@ -143,8 +146,49 @@ jobs:
             sed -i "s/$filename[ ]*$/$filename-vu-verify\\n$filename-vu-cleanup/g" upgrade/singledb/schedule
           done
           export scheduleFile=upgrade/singledb/schedule
+          cat upgrade/singledb/schedule
           mvn test
         shell: bash
+
+      - name: Upload Postgres log
+        if: always() && steps.jdbc.outcome == 'failure'
+        uses: actions/upload-artifact@v2
+        with:
+         name: postgres-log
+         path: ~/${{env.OLD_INSTALL_DIR}}/data/logfile14
+
+      - name: Upload upgrade Log
+        if: always() && steps.run-pg_upgrade.outcome == 'failure'
+        uses: actions/upload-artifact@v2
+        with:
+          name: upgrade-logs
+          path: ~/upgrade/*.log
+
+      - name: Rename Test Summary Files
+        id: test-file-rename
+        if: always() && steps.jdbc.outcome == 'failure'
+        run: |
+          cd test/JDBC/Info
+          timestamp=`ls -Art | tail -n 1`
+          cd $timestamp
+          mv $timestamp.diff ../output-diff.diff
+          mv "$timestamp"_runSummary.log ../run-summary.log
+
+      - name: Upload Run Summary
+        if: always() && steps.test-file-rename.outcome == 'success'
+        uses: actions/upload-artifact@v2
+        with:
+          name: run-summary.log
+          path: test/JDBC/Info/run-summary.log
+
+      - name: Upload Output Diff
+        if: always() && steps.test-file-rename.outcome == 'success'
+        uses: actions/upload-artifact@v2
+        with:
+          name: output-diff.diff
+          path: test/JDBC/Info/output-diff.diff
+
+      
       
 
 
