@@ -150,12 +150,19 @@ jobs:
           mvn test
         shell: bash
 
-      - name: Upload Postgres log
+      - name: Upload Old Postgres log
+        if: always() && steps.jdbc-upgrade-tests-prepare.outcome == 'failure'
+        uses: actions/upload-artifact@v2
+        with:
+         name: postgres-log-old
+         path: ~/${{env.OLD_INSTALL_DIR}}/data/logfile13
+      
+      - name: Upload New Postgres log
         if: always() && steps.jdbc-upgrade-tests-verify.outcome == 'failure'
         uses: actions/upload-artifact@v2
         with:
-         name: postgres-log
-         path: ~/${{env.OLD_INSTALL_DIR}}/data/logfile13
+         name: postgres-log-new
+         path: ~/${{env.NEW_INSTALL_DIR}}/data/logfile14
 
       - name: Upload upgrade Log
         if: always() && steps.run-pg_upgrade.outcome == 'failure'
