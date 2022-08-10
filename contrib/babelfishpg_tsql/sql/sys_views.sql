@@ -1643,9 +1643,9 @@ SELECT
   ao.object_id AS object_id
   , CAST(
       CASE WHEN ao.type in ('P', 'FN', 'IN', 'TF', 'RF') THEN pg_get_functiondef(ao.object_id)
-      WHEN ao.type = 'V' THEN NULL
-      WHEN ao.type = 'TR' THEN NULL
-      ELSE NULL
+      WHEN ao.type = 'V' THEN COALESCE(bvd.definition, '')
+      WHEN ao.type = 'TR' THEN ''
+      ELSE ''
       END
     AS sys.nvarchar(4000)) AS definition  -- Object definition work in progress, will update definition with BABEL-3127 Jira.
   , CAST(1 as sys.bit)  AS uses_ansi_nulls
@@ -1666,6 +1666,9 @@ SELECT
   , CAST(ao.is_ms_shipped as INT) as is_ms_shipped
 FROM sys.all_objects ao
 LEFT JOIN pg_proc p ON ao.object_id = CAST(p.oid AS INT)
+LEFT JOIN babelfish_view_def bvd ON (ao.name = bvd.object_name 
+  AND ao.schema_id = schema_id(bvd.schema_name)
+  AND bvd.dbid = DB_ID())
 WHERE ao.type in ('P', 'RF', 'V', 'TR', 'FN', 'IF', 'TF', 'R');
 GRANT SELECT ON sys.all_sql_modules_internal TO PUBLIC;
 
