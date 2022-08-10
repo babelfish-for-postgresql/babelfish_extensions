@@ -360,16 +360,6 @@ void
 DROP LOGIN babel_cross_db_vu_prepare_johndoe;
 GO
 
--- psql
-ALTER SYSTEM SET babelfishpg_tsql.migration_mode = 'multi-db';
-SELECT pg_reload_conf();
-GO
-~~START~~
-bool
-t
-~~END~~
-
-
 -- tsql
 USE master
 GO
