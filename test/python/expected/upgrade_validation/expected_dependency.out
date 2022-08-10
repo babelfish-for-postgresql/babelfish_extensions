@@ -1017,7 +1017,6 @@ View information_schema_tsql.tables
 View information_schema_tsql.views
 View sys.all_columns
 View sys.all_objects
-View sys.all_sql_modules
 View sys.all_sql_modules_internal
 View sys.assembly_modules
 View sys.babelfish_has_perms_by_name_permissions
@@ -1070,7 +1069,6 @@ View sys.spatial_index_tessellations
 View sys.spatial_indexes
 View sys.spt_columns_view_managed
 View sys.spt_tablecollations_view
-View sys.sql_modules
 View sys.stats
 View sys.synonyms
 View sys.syscharsets
@@ -1079,7 +1077,6 @@ View sys.sysforeignkeys
 View sys.sysindexes
 View sys.syslanguages
 View sys.system_objects
-View sys.system_sql_modules
 View sys.table_types
 View sys.tables
 View sys.types
