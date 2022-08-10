@@ -133,6 +133,8 @@ jobs:
         if: always() && steps.setup-new-datadir.outcome == 'success'
         uses: ./.github/composite-actions/run-pg-upgrade
 
+      - uses: actions/checkout@v2
+      
       - name: Run JDBC Upgrade Tests (Verify-Cleanup)
         id: jdbc-upgrade-tests-verify
         if: always() && steps.run-pg_upgrade.outcome == 'success'
