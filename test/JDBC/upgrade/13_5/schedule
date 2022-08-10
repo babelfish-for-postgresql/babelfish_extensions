@@ -50,9 +50,6 @@ sys-original_login
 sys-procedures
 sys-schema-name
 identity_function
-sys-all_sql_modules
-sys-sql_modules
-sys-system_sql_modules
 sys-sysdatabases
 sys-sysobjects
 sys-trigger_nestlevel

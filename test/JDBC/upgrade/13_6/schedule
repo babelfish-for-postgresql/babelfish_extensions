@@ -52,9 +52,6 @@ sys-objects
 sys-original_login
 sys-procedures
 sys-schema-name
-sys-all_sql_modules
-sys-sql_modules
-sys-system_sql_modules
 sys-suser_sid
 identity_function
 sys-suser_sname
