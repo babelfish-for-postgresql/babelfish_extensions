@@ -133,8 +133,6 @@ jobs:
         if: always() && steps.setup-new-datadir.outcome == 'success'
         uses: ./.github/composite-actions/run-pg-upgrade
 
-      - uses: actions/checkout@v2
-
       - name: Run JDBC Upgrade Tests (Verify-Cleanup)
         id: jdbc-upgrade-tests-verify
         if: always() && steps.run-pg_upgrade.outcome == 'success'
@@ -148,10 +146,11 @@ jobs:
           export scheduleFile=upgrade/singledb/schedule
           cat upgrade/singledb/schedule
           mvn test
+          find ./Info -type f -exec cat {} \;
         shell: bash
 
       - name: Upload Postgres log
-        if: always() && steps.jdbc.outcome == 'failure'
+        if: always() && steps.jdbc-upgrade-tests-verify.outcome == 'failure'
         uses: actions/upload-artifact@v2
         with:
          name: postgres-log
@@ -166,7 +165,7 @@ jobs:
 
       - name: Rename Test Summary Files
         id: test-file-rename
-        if: always() && steps.jdbc.outcome == 'failure'
+        if: always() && steps.jdbc-upgrade-tests-verify.outcome == 'failure'
         run: |
           cd test/JDBC/Info
           timestamp=`ls -Art | tail -n 1`
