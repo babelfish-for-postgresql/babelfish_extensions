@@ -107,6 +107,7 @@ BABEL-3213
 BABEL-RAND
 BABEL-741
 TestTableType
+BABEL-CROSS-DB
 BABEL-ROLE
 babelfish_sysdatabases
 babelfish_namespace_ext
