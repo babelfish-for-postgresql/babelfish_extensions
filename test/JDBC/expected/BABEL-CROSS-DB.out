@@ -74,10 +74,9 @@ int#!#int
 
 EXEC master.dbo.master_p1
 GO
-~~START~~
-int
-10
-~~END~~
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: relation "dbo.master_t1" does not exist)~~
 
 
 EXEC master.dbo.master_p2
@@ -91,12 +90,9 @@ int
 -- tab1 resolves to master.myschema.tab1
 EXEC master.myschema.proc1
 GO
-~~ROW COUNT: 1~~
+~~ERROR (Code: 33557097)~~
 
-~~START~~
-int
-1
-~~END~~
+~~ERROR (Message: relation "tab1" does not exist)~~
 
 
 -- tab1 resolves to master.dbo.tab1
@@ -105,9 +101,9 @@ GO
 
 SELECT * from master.dbo.tab1;
 GO
-~~START~~
-int#!#int
-~~END~~
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: relation "master_dbo.tab1" does not exist)~~
 
 
 -- runtime error
@@ -209,13 +205,9 @@ GO
 
 EXECUTE master.dbo.master_p1;
 GO
-~~START~~
-int
-10
-10
-10
-30
-~~END~~
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: relation "dbo.master_t1" does not exist)~~
 
 
 SELECT current_user;
@@ -388,6 +380,10 @@ go
 
 DROP TABLE tab1;
 go
+~~ERROR (Code: 3701)~~
+
+~~ERROR (Message: table "tab1" does not exist)~~
+
 
 DROP TABLE myschema.tab1;
 GO

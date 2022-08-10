@@ -1,0 +1,52 @@
+-- psql
+ALTER SYSTEM SET babelfishpg_tsql.migration_mode = 'single-db';
+SELECT pg_reload_conf();
+GO
+
+-- tsql
+SELECT * FROM babelfish_inconsistent_metadata_vu_prepare_view
+GO
+
+EXEC babelfish_inconsistent_metadata_vu_prepare_proc
+GO
+
+SELECT babelfish_inconsistent_metadata_vu_prepare_func()
+GO
+
+-- psql
+-- Output inconsistency, should be empty
+SELECT * FROM sys.babelfish_inconsistent_metadata();
+GO
+
+-- Output passed rules
+SELECT DISTINCT object_type, schema_name, object_name, detail 
+FROM sys.babelfish_inconsistent_metadata(true);
+GO
+
+ALTER SYSTEM SET babelfishpg_tsql.migration_mode = 'multi-db';
+SELECT pg_reload_conf();
+GO
+
+-- tsql
+SELECT * FROM babelfish_inconsistent_metadata_vu_prepare_view
+GO
+
+EXEC babelfish_inconsistent_metadata_vu_prepare_proc
+GO
+
+SELECT babelfish_inconsistent_metadata_vu_prepare_func()
+GO
+
+-- psql
+-- Output inconsistency, should be empty
+SELECT * FROM sys.babelfish_inconsistent_metadata();
+GO
+
+-- Output passed rules
+SELECT DISTINCT object_type, schema_name, object_name, detail 
+FROM sys.babelfish_inconsistent_metadata(true);
+GO
+
+-- tsql
+SELECT 1
+GO
