@@ -1,0 +1,87 @@
+SELECT count(*) from babel_493_vu_prepare_t1 where b = 0;
+GO
+~~START~~
+int
+4091
+~~END~~
+
+
+SELECT count(*) from babel_493_vu_prepare_t1 where b = 1;
+GO
+~~START~~
+int
+3
+~~END~~
+
+
+DROP INDEX babel_493_vu_prepare_t1_full_idx_b ON babel_493_vu_prepare_t1;
+GO
+
+CREATE INDEX babel_493_vu_prepare_t1_partial_idx_b on babel_493_vu_prepare_t1(b) where b = 1;
+GO
+
+SELECT count(*) from babel_493_vu_prepare_t1 where b = 1;
+GO
+~~START~~
+int
+3
+~~END~~
+
+
+SELECT count(*) from babel_493_vu_prepare_t1 where b = 1 and i = 4093;
+GO
+~~START~~
+int
+1
+~~END~~
+
+
+DROP INDEX babel_493_vu_prepare_t1_partial_idx_b ON babel_493_vu_prepare_t1;
+GO
+
+CREATE INDEX babel_493_composite_idx_a_b on babel_493_vu_prepare_t1(b,i);
+GO
+
+select top(10) * from babel_493_vu_prepare_t1 order by b, i;
+GO
+~~START~~
+int#!#bit
+7#!#<NULL>
+2222#!#<NULL>
+1#!#0
+2#!#0
+4#!#0
+5#!#0
+6#!#0
+8#!#0
+9#!#0
+10#!#0
+~~END~~
+
+
+select top(10) * from babel_493_vu_prepare_t1 where b = 1 order by i;
+GO
+~~START~~
+int#!#bit
+3#!#1
+1111#!#1
+4093#!#1
+~~END~~
+
+
+select top(10) * from babel_493_vu_prepare_t1 where not (b = 1) order by i;
+GO
+~~START~~
+int#!#bit
+1#!#0
+2#!#0
+4#!#0
+5#!#0
+6#!#0
+8#!#0
+9#!#0
+10#!#0
+11#!#0
+12#!#0
+~~END~~
+

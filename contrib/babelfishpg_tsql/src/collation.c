@@ -585,6 +585,15 @@ tsql_is_collated_ci_as_internal(PG_FUNCTION_ARGS)
 	return (*collation_callbacks_ptr->is_collated_ci_as_internal)(fcinfo);
 }
 
+bytea*
+tsql_tdscollationproperty_helper(const char *collationaname, const char *property)
+{
+	/* Initialise collation callbacks */
+	init_and_check_collation_callbacks();
+
+	return (*collation_callbacks_ptr->tdscollationproperty_helper)(collationaname, property);
+}
+
 int
 tsql_collationproperty_helper(const char *collationaname, const char *property)
 {

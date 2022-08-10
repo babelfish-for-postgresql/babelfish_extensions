@@ -644,8 +644,8 @@ END;
 $$ LANGUAGE plpgsql IMMUTABLE STRICT;
 
 create or replace function sys.sp_describe_first_result_set_internal(
-	tsqlquery varchar(384),
-    params varchar(384) = NULL, 
+	tsqlquery sys.nvarchar(8000),
+    params sys.nvarchar(8000) = NULL, 
     browseMode sys.tinyint = 0
 )
 returns table (
@@ -694,8 +694,8 @@ LANGUAGE C;
 GRANT ALL on FUNCTION sys.sp_describe_first_result_set_internal TO PUBLIC;
 
 CREATE OR REPLACE PROCEDURE sys.sp_describe_first_result_set (
-	"@tsql" varchar(384),
-    "@params" varchar(384) = NULL, 
+	"@tsql" sys.nvarchar(8000),
+    "@params" sys.nvarchar(8000) = NULL, 
     "@browse_information_mode" sys.tinyint = 0)
 AS $$
 BEGIN
@@ -742,7 +742,7 @@ BEGIN
     from
         sys.spt_tablecollations_view s_tcv
     where
-        s_tcv.object_id = sys.object_id(@object)
+        s_tcv.object_id = (SELECT sys.object_id(@object))
     order by colid;
 END;
 $$
@@ -1070,8 +1070,8 @@ $$
 LANGUAGE 'pltsql';
 GRANT EXECUTE ON PROCEDURE sys.sp_tables TO PUBLIC;
 
-CREATE FUNCTION sys.fn_mapped_system_error_list ()
-returns table (sql_error_code int)
+CREATE OR REPLACE FUNCTION sys.fn_mapped_system_error_list ()
+returns table (pg_sql_state sys.nvarchar(5), error_message sys.nvarchar(4000), error_msg_parameters sys.nvarchar(4000), sql_error_code int)
 AS 'babelfishpg_tsql', 'babel_list_mapped_error'
 LANGUAGE C IMMUTABLE STRICT;
 GRANT ALL on FUNCTION sys.fn_mapped_system_error_list TO PUBLIC;
@@ -2271,19 +2271,27 @@ BEGIN
 					WHEN Ext2.orig_username IS NULL THEN 'public'
 					ELSE Ext2.orig_username END 
 					AS SYS.SYSNAME) AS 'RoleName',
-			   CAST(Ext1.login_name AS SYS.SYSNAME) AS 'LoginName',
+			   CAST(CASE WHEN Ext1.orig_username = 'dbo' THEN Base4.rolname
+					ELSE Base3.rolname END
+					AS SYS.SYSNAME) AS 'LoginName',
 			   CAST(LogExt.default_database_name AS SYS.SYSNAME) AS 'DefDBName',
 			   CAST(Ext1.default_schema_name AS SYS.SYSNAME) AS 'DefSchemaName',
 			   CAST(Base1.oid AS INT) AS 'UserID',
-			   CAST(CAST(Base1.oid AS INT) AS SYS.VARBINARY(85)) AS 'SID'
+			   CAST(CASE WHEN Ext1.orig_username = 'dbo' THEN CAST(Base4.oid AS INT)
+					ELSE CAST(Base3.oid AS INT) END
+					AS SYS.VARBINARY(85)) AS 'SID'
 		FROM sys.babelfish_authid_user_ext AS Ext1
 		INNER JOIN pg_catalog.pg_roles AS Base1 ON Base1.rolname = Ext1.rolname
 		LEFT OUTER JOIN pg_catalog.pg_auth_members AS Authmbr ON Base1.oid = Authmbr.member
 		LEFT OUTER JOIN pg_catalog.pg_roles AS Base2 ON Base2.oid = Authmbr.roleid
 		LEFT OUTER JOIN sys.babelfish_authid_user_ext AS Ext2 ON Base2.rolname = Ext2.rolname
 		LEFT OUTER JOIN sys.babelfish_authid_login_ext As LogExt ON LogExt.rolname = Ext1.login_name
+		LEFT OUTER JOIN pg_catalog.pg_roles AS Base3 ON Base3.rolname = LogExt.rolname
+		LEFT OUTER JOIN sys.babelfish_sysdatabases AS Bsdb ON Bsdb.name = DB_NAME()
+		LEFT OUTER JOIN pg_catalog.pg_roles AS Base4 ON Base4.rolname = Bsdb.owner
 		WHERE Ext1.database_name = DB_NAME()
 		AND Ext1.type = 'S'
+		AND Ext1.orig_username != 'db_owner'
 		ORDER BY UserName, RoleName;
 	END
 	-- If the security account is the db fixed role - db_owner
@@ -2332,19 +2340,27 @@ BEGIN
 					WHEN Ext2.orig_username IS NULL THEN 'public' 
 					ELSE Ext2.orig_username END 
 					AS SYS.SYSNAME) AS 'RoleName',
-			   CAST(Ext1.login_name AS SYS.SYSNAME) AS 'LoginName',
+			   CAST(CASE WHEN Ext1.orig_username = 'dbo' THEN Base4.rolname
+					ELSE Base3.rolname END
+					AS SYS.SYSNAME) AS 'LoginName',
 			   CAST(LogExt.default_database_name AS SYS.SYSNAME) AS 'DefDBName',
 			   CAST(Ext1.default_schema_name AS SYS.SYSNAME) AS 'DefSchemaName',
 			   CAST(Base1.oid AS INT) AS 'UserID',
-			   CAST(CAST(Base1.oid AS INT) AS SYS.VARBINARY(85)) AS 'SID'
+			   CAST(CASE WHEN Ext1.orig_username = 'dbo' THEN CAST(Base4.oid AS INT)
+					ELSE CAST(Base3.oid AS INT) END
+					AS SYS.VARBINARY(85)) AS 'SID'
 		FROM sys.babelfish_authid_user_ext AS Ext1
 		INNER JOIN pg_catalog.pg_roles AS Base1 ON Base1.rolname = Ext1.rolname
 		LEFT OUTER JOIN pg_catalog.pg_auth_members AS Authmbr ON Base1.oid = Authmbr.member
 		LEFT OUTER JOIN pg_catalog.pg_roles AS Base2 ON Base2.oid = Authmbr.roleid
 		LEFT OUTER JOIN sys.babelfish_authid_user_ext AS Ext2 ON Base2.rolname = Ext2.rolname
 		LEFT OUTER JOIN sys.babelfish_authid_login_ext As LogExt ON LogExt.rolname = Ext1.login_name
+		LEFT OUTER JOIN pg_catalog.pg_roles AS Base3 ON Base3.rolname = LogExt.rolname
+		LEFT OUTER JOIN sys.babelfish_sysdatabases AS Bsdb ON Bsdb.name = DB_NAME()
+		LEFT OUTER JOIN pg_catalog.pg_roles AS Base4 ON Base4.rolname = Bsdb.owner
 		WHERE Ext1.database_name = DB_NAME()
 		AND Ext1.type = 'S'
+		AND Ext1.orig_username != 'db_owner'
 		AND (Ext1.orig_username = @name_in_db OR lower(Ext1.orig_username) = lower(@name_in_db))
 		ORDER BY UserName, RoleName;
 	END
@@ -2450,6 +2466,50 @@ END;
 $$
 LANGUAGE 'pltsql';
 GRANT EXECUTE ON PROCEDURE sys.sp_helprolemember TO PUBLIC;
+
+CREATE OR REPLACE PROCEDURE sys.sp_helpsrvrolemember("@srvrolename" sys.SYSNAME = NULL) AS
+$$
+BEGIN
+	-- If server role is not specified, return info for all server roles
+	IF @srvrolename IS NULL
+	BEGIN
+		SELECT CAST(Ext1.rolname AS sys.SYSNAME) AS 'ServerRole',
+			   CAST(Ext2.rolname AS sys.SYSNAME) AS 'MemberName',
+			   CAST(CAST(Base2.oid AS INT) AS sys.VARBINARY(85)) AS 'MemberSID'
+		FROM pg_catalog.pg_auth_members AS Authmbr
+		INNER JOIN pg_catalog.pg_roles AS Base1 ON Base1.oid = Authmbr.roleid
+		INNER JOIN pg_catalog.pg_roles AS Base2 ON Base2.oid = Authmbr.member
+		INNER JOIN sys.babelfish_authid_login_ext AS Ext1 ON Base1.rolname = Ext1.rolname
+		INNER JOIN sys.babelfish_authid_login_ext AS Ext2 ON Base2.rolname = Ext2.rolname
+		WHERE Ext1.type = 'R'
+		ORDER BY ServerRole, MemberName;
+	END
+	-- If a valid server role is specified, return its member info
+	ELSE IF EXISTS (SELECT 1
+					FROM sys.babelfish_authid_login_ext
+					WHERE (rolname = @srvrolename
+					OR lower(rolname) = lower(@srvrolename))
+					AND type = 'R')
+	BEGIN
+		SELECT CAST(Ext1.rolname AS sys.SYSNAME) AS 'ServerRole',
+			   CAST(Ext2.rolname AS sys.SYSNAME) AS 'MemberName',
+			   CAST(CAST(Base2.oid AS INT) AS sys.VARBINARY(85)) AS 'MemberSID'
+		FROM pg_catalog.pg_auth_members AS Authmbr
+		INNER JOIN pg_catalog.pg_roles AS Base1 ON Base1.oid = Authmbr.roleid
+		INNER JOIN pg_catalog.pg_roles AS Base2 ON Base2.oid = Authmbr.member
+		INNER JOIN sys.babelfish_authid_login_ext AS Ext1 ON Base1.rolname = Ext1.rolname
+		INNER JOIN sys.babelfish_authid_login_ext AS Ext2 ON Base2.rolname = Ext2.rolname
+		WHERE Ext1.type = 'R'
+		AND (Ext1.rolname = @srvrolename OR lower(Ext1.rolname) = lower(@srvrolename))
+		ORDER BY ServerRole, MemberName;
+	END
+	-- If the specified server role is not valid
+	ELSE
+		RAISERROR('%s is not a known fixed role.', 16, 1, @srvrolename);
+END;
+$$
+LANGUAGE 'pltsql';
+GRANT EXECUTE ON PROCEDURE sys.sp_helpsrvrolemember TO PUBLIC;
 
 CREATE OR REPLACE VIEW sys.sp_sproc_columns_view AS
 -- Get parameters (if any) for a user-defined stored procedure/function

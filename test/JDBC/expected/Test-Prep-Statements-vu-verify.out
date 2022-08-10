@@ -1,0 +1,494 @@
+EXEC test_prep_statements_vu_prepare_p1
+GO
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~START~~
+int#!#int
+1#!#2
+3#!#4
+3#!#4
+5#!#6
+~~END~~
+
+
+EXEC test_prep_statements_vu_prepare_p2
+GO
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~START~~
+bigint#!#bigint
+9223372036#!#9223372036
+9223372036#!#9223372036
+9223372036#!#9223372036
+9223372036#!#9223372036
+~~END~~
+
+
+EXEC test_prep_statements_vu_prepare_p3
+GO
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~START~~
+tinyint#!#tinyint
+21#!#22
+23#!#24
+25#!#26
+27#!#28
+~~END~~
+
+
+EXEC test_prep_statements_vu_prepare_p4
+GO
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~START~~
+binary#!#binary
+0102030405060708#!#0102030405060708
+0102030405060708#!#0102030405060708
+0102030405060708#!#0102030405060708
+0102030405060708#!#0102030405060708
+~~END~~
+
+
+EXEC test_prep_statements_vu_prepare_p5
+GO
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~START~~
+varbinary#!#varbinary
+010203#!#010203
+010203#!#010203
+010203#!#010203
+010203#!#010203
+~~END~~
+
+
+EXEC test_prep_statements_vu_prepare_p6
+GO
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~START~~
+bit#!#bit
+1#!#0
+1#!#0
+1#!#0
+1#!#0
+~~END~~
+
+
+EXEC test_prep_statements_vu_prepare_p7
+GO
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~START~~
+smallint#!#smallint
+12#!#-10
+19#!#20
+12#!#-10
+19#!#20
+~~END~~
+
+
+EXEC test_prep_statements_vu_prepare_p8
+GO
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~START~~
+money#!#money
+22337203685477.5807#!#22337203685477.5807
+22337203685477.5807#!#22337203685477.5807
+22337203685477.5807#!#22337203685477.5807
+22337203685477.5807#!#22337203685477.5807
+~~END~~
+
+
+EXEC test_prep_statements_vu_prepare_p9
+GO
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~START~~
+numeric#!#numeric
+2147483648.1230000000000000000000000#!#2147483648.1230000000000000000000000
+2147483648.1230000000000000000000000#!#2147483648.1230000000000000000000000
+2147483648.1230000000000000000000000#!#2147483648.1230000000000000000000000
+2147483648.1230000000000000000000000#!#2147483648.1230000000000000000000000
+~~END~~
+
+
+EXEC test_prep_statements_vu_prepare_p10
+GO
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~START~~
+numeric#!#numeric
+6.90#!#4.20
+6.90#!#4.20
+6.90#!#4.20
+6.90#!#4.20
+~~END~~
+
+
+EXEC test_prep_statements_vu_prepare_p11
+GO
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~START~~
+float#!#float
+-1.224553245E8#!#-1.224553245E8
+-1.224553245E8#!#-1.224553245E8
+-1.224553245E8#!#-1.224553245E8
+-1.224553245E8#!#-1.224553245E8
+~~END~~
+
+
+EXEC test_prep_statements_vu_prepare_p12
+GO
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~START~~
+real#!#real
+3.4E38#!#3.4E38
+3.4E38#!#3.4E38
+3.4E38#!#3.4E38
+3.4E38#!#3.4E38
+~~END~~
+
+
+EXEC test_prep_statements_vu_prepare_p13
+GO
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~START~~
+char#!#char
+Babel                   #!#Fish                    
+Postgres                #!#SQL                     
+Babel                   #!#Fish                    
+Postgres                #!#SQL                     
+~~END~~
+
+
+EXEC test_prep_statements_vu_prepare_p14
+GO
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~START~~
+nchar#!#nchar
+Babel                   #!#Fish                    
+Postgres                #!#SQL                     
+Babel                   #!#Fish                    
+Postgres                #!#SQL                     
+~~END~~
+
+
+EXEC test_prep_statements_vu_prepare_p15
+GO
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~START~~
+varchar#!#varchar
+Babel#!#Fish
+Postgres#!#SQL
+Babel#!#Fish
+Postgres#!#SQL
+~~END~~
+
+
+EXEC test_prep_statements_vu_prepare_p16
+GO
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~START~~
+nvarchar#!#nvarchar
+😊😋😎😍😅😆#!#Babel
+Fish#!#PostgreSQL
+😊😋😎😍😅😆#!#Babel
+Fish#!#PostgreSQL
+~~END~~
+
+
+EXEC test_prep_statements_vu_prepare_p17
+GO
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~START~~
+text#!#text
+Babel#!#Fish
+Postgres#!#SQL
+Babel#!#Fish
+Postgres#!#SQL
+~~END~~
+
+
+EXEC test_prep_statements_vu_prepare_p18
+GO
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~START~~
+ntext#!#ntext
+Babel#!#Fish
+Postgres#!#SQL
+Babel#!#Fish
+Postgres#!#SQL
+~~END~~
+
+
+EXEC test_prep_statements_vu_prepare_p19
+GO
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~START~~
+date#!#date
+2000-12-13#!#2000-12-13
+2000-12-13#!#2000-12-13
+2000-12-13#!#2000-12-13
+2000-12-13#!#2000-12-13
+~~END~~
+
+
+EXEC test_prep_statements_vu_prepare_p20
+GO
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~START~~
+datetime#!#datetime
+2000-12-13 12:58:23.123#!#2000-12-13 12:58:23.123
+2000-12-13 12:58:23.123#!#2000-12-13 12:58:23.123
+2000-12-13 12:58:23.123#!#2000-12-13 12:58:23.123
+2000-12-13 12:58:23.123#!#2000-12-13 12:58:23.123
+~~END~~
+
+
+EXEC test_prep_statements_vu_prepare_p21
+GO
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~START~~
+datetime2#!#datetime2
+2018-06-23 07:30:20.000000#!#2018-06-23 07:30:20.000000
+2018-06-23 07:30:20.000000#!#2018-06-23 07:30:20.000000
+2018-06-23 07:30:20.000000#!#2018-06-23 07:30:20.000000
+2018-06-23 07:30:20.000000#!#2018-06-23 07:30:20.000000
+~~END~~
+
+
+EXEC test_prep_statements_vu_prepare_p22
+GO
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~START~~
+time#!#time
+12:45:37.1230000#!#12:45:37.1230000
+12:45:37.1230000#!#12:45:37.1230000
+12:45:37.1230000#!#12:45:37.1230000
+12:45:37.1230000#!#12:45:37.1230000
+~~END~~
+
+
+EXEC test_prep_statements_vu_prepare_p23
+GO
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~START~~
+datetimeoffset#!#datetimeoffset
+2020-03-15 09:00:00.0000000 +08:00#!#2020-03-15 09:00:00.0000000 +08:00
+2020-03-15 09:00:00.0000000 +08:00#!#2020-03-15 09:00:00.0000000 +08:00
+2020-03-15 09:00:00.0000000 +08:00#!#2020-03-15 09:00:00.0000000 +08:00
+2020-03-15 09:00:00.0000000 +08:00#!#2020-03-15 09:00:00.0000000 +08:00
+~~END~~
+
+
+EXEC test_prep_statements_vu_prepare_p24
+GO
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~START~~
+smalldatetime#!#smalldatetime
+2000-12-13 12:58:00.0#!#2000-12-13 12:58:00.0
+2000-12-13 12:58:00.0#!#2000-12-13 12:58:00.0
+2000-12-13 12:58:00.0#!#2000-12-13 12:58:00.0
+2000-12-13 12:58:00.0#!#2000-12-13 12:58:00.0
+~~END~~
+
+
+EXEC test_prep_statements_vu_prepare_p25
+GO
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~START~~
+xml#!#xml
+<contact><name>Contact Name 2</name></contact>#!#<contact><name>Contact Name 3</name></contact>
+<contact><name>Contact Name 4</name></contact>#!#<contact><name>Contact Name 5</name></contact>
+<contact><name>Contact Name 6</name></contact>#!#<contact><name>Contact Name 7</name></contact>
+<contact><name>Contact Name 8</name></contact>#!#<contact><name>Contact Name 9</name></contact>
+~~END~~
+
+
+EXEC test_prep_statements_vu_prepare_p26
+GO
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+~~START~~
+uniqueidentifier#!#uniqueidentifier
+51F178A6-53C7-472C-9BE1-1C08942342D7#!#51F178A6-53C7-472C-9BE1-1C08942342D7
+51F178A6-53C7-472C-9BE1-1C08942342D7#!#51F178A6-53C7-472C-9BE1-1C08942342D7
+51F178A6-53C7-472C-9BE1-1C08942342D7#!#51F178A6-53C7-472C-9BE1-1C08942342D7
+51F178A6-53C7-472C-9BE1-1C08942342D7#!#51F178A6-53C7-472C-9BE1-1C08942342D7
+~~END~~
+
+

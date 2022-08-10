@@ -187,7 +187,8 @@ pe_tds_init(void)
 	pltsql_plugin_handler_ptr->stmt_end = TDSStatementEndCallback;
 	pltsql_plugin_handler_ptr->stmt_exception = TDSStatementExceptionCallback;
 	pltsql_plugin_handler_ptr->send_column_metadata = SendColumnMetadata;
-	pltsql_plugin_handler_ptr->get_mapped_error_list = &get_mapped_error_code_list;
+	pltsql_plugin_handler_ptr->get_mapped_error_list = &get_mapped_error_list;
+	pltsql_plugin_handler_ptr->get_mapped_tsql_error_code_list = &get_mapped_tsql_error_code_list;
 
 	pltsql_plugin_handler_ptr->get_login_domainname = &get_tds_login_domainname;
 	pltsql_plugin_handler_ptr->set_guc_stat_var = &TdsSetGucStatVariable;
@@ -196,6 +197,7 @@ pe_tds_init(void)
 	pltsql_plugin_handler_ptr->get_stat_values = &tds_stat_get_activity;
 	pltsql_plugin_handler_ptr->invalidate_stat_view = &invalidate_stat_table;
 	pltsql_plugin_handler_ptr->TdsGetEncodingFromLcid = &TdsLookupEncodingByLCID;
+	pltsql_plugin_handler_ptr->get_host_name = &get_tds_host_name;
 
 	invalidate_stat_table_hook = invalidate_stat_table;
 	guc_newval_hook = TdsSetGucStatVariable;

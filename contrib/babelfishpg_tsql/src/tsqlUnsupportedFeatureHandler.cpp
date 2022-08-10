@@ -1091,8 +1091,6 @@ antlrcpp::Any TsqlUnsupportedFeatureHandlerImpl::visitSet_statement(TSqlParser::
 				handle(INSTR_UNSUPPORTED_TSQL_OPTION_FIPS_FLAGGER, option->FIPS_FLAGGER(), &st_escape_hatch_session_settings);
 			if (option->FORCEPLAN())
 				handle(INSTR_UNSUPPORTED_TSQL_OPTION_FORCEPLAN, option->FORCEPLAN(), &st_escape_hatch_session_settings);
-			if (option->PARSEONLY())
-				handle(INSTR_UNSUPPORTED_TSQL_OPTION_PARSEONLY, option->PARSEONLY(), &st_escape_hatch_session_settings);
 			if (option->REMOTE_PROC_TRANSACTIONS())
 				handle(INSTR_UNSUPPORTED_TSQL_OPTION_REMOTE_PROC_TRANSACTIONS, option->REMOTE_PROC_TRANSACTIONS(), &st_escape_hatch_session_settings);
 			if (option->SHOWPLAN_ALL())
@@ -1544,7 +1542,6 @@ const char *unsupported_sp_procedures[] = {
 	"sp_helpremotelogin",
 	"sp_helprotect",
 	"sp_helpsrvrole",
-	"sp_helpsrvrolemember",
 	"sp_migrate_user_to_contained",
 	"sp_MShasdbaccess",
 	"sp_password",

@@ -916,6 +916,11 @@ typedef struct PLtsql_stmt_insert_bulk
     char  *schema_name;
     char  *db_name;
     char  *column_refs;
+
+    /* Insert Bulk Options. */
+    char *kilobytes_per_batch;
+    char *rows_per_batch;
+    bool keep_nulls;
 } PLtsql_stmt_insert_bulk;
 
 /*
@@ -1014,6 +1019,11 @@ typedef struct PLtsql_stmt_execsql
 	bool		is_tsql_select_assign_stmt; /* T-SQL SELECT-assign (i.e. SELECT @a=1) */
 	bool 		insert_exec; 	/* INSERT-EXEC stmt? */
 	bool		is_cross_db;	/* cross database reference */
+	bool		is_dml;			/* DML statement? */
+	bool		is_ddl;			/* DDL statement? */
+	bool		func_call;		/* Function call? */
+	char		*schema_name;	/* Schema specified */
+	bool            is_schema_specified;    /*is schema name specified? */
 } PLtsql_stmt_execsql;
 
 /*
@@ -1368,6 +1378,8 @@ typedef struct PLtsql_execstate
 	bool 		insert_exec;
 
 	List 		*explain_infos;
+	char		*schema_name;
+	char		*db_name;
 } PLtsql_execstate;
 
 /*
@@ -1433,6 +1445,14 @@ typedef struct PLtsql_instr_plugin
 	bool (*pltsql_instr_increment_func_metric) (const char *funcName);
 } PLtsql_instr_plugin;
 
+typedef struct error_map_details_t{
+	char sql_state[5];
+	const char *error_message;
+	int tsql_error_code;
+	int tsql_error_severity;
+	char *error_msg_keywords;
+}error_map_details_t;
+
 /*
  * A PLtsql_protocol_plugin structure represents a protocol plugin that can be
  * used with this extension.
@@ -1496,6 +1516,7 @@ typedef struct PLtsql_protocol_plugin
 	void		(*set_db_stat_var) (int16 db_id);
 	bool		(*get_stat_values) (Datum *values, bool *nulls, int len, int pid, int curr_backend);
 	void		(*invalidate_stat_view) (void);
+	char*		(*get_host_name) (void);
 
 	/* Function pointers set by PL/tsql itself */
 	Datum		(*sql_batch_callback) (PG_FUNCTION_ARGS);
@@ -1558,10 +1579,12 @@ typedef struct PLtsql_protocol_plugin
 
 	char* (*pltsql_get_login_default_db) (char *login_name);
 
-	int* (*get_mapped_error_list) (void);
+	error_map_details_t * (*get_mapped_error_list) (void);
+
+	int* (*get_mapped_tsql_error_code_list) (void);
 
 	int (*bulk_load_callback) (int ncol, int nrow, Oid *argtypes,
-									Datum *Values, const char *Nulls);
+				Datum *Values, const char *Nulls, bool *Defaults);
 
 	int (*pltsql_get_generic_typmod) (Oid funcid, int nargs, Oid declared_oid);
 
@@ -1574,6 +1597,12 @@ typedef struct PLtsql_protocol_plugin
 	char* (*TsqlEncodingConversion)(const char *s, int len, int encoding, int *encodedByteLen);
 
 	int (*TdsGetEncodingFromLcid)(int32_t lcid);
+
+	bool (*get_insert_bulk_keep_nulls) ();
+
+	int (*get_insert_bulk_rows_per_batch) ();
+
+	int (*get_insert_bulk_kilobytes_per_batch) ();
 
 } PLtsql_protocol_plugin;
 
@@ -1721,6 +1750,14 @@ extern int pltsql_sys_func_entry_count;
 
 extern char *bulk_load_table_name;
 
+/* Insert Bulk Options */
+#define DEFAULT_INSERT_BULK_ROWS_PER_BATCH 1000
+#define DEFAULT_INSERT_BULK_PACKET_SIZE 8
+
+extern int insert_bulk_rows_per_batch;
+extern int insert_bulk_kilobytes_per_batch;
+extern bool insert_bulk_keep_nulls;
+
 /**********************************************************************
  * Function declarations
  **********************************************************************/
@@ -1775,7 +1812,7 @@ extern Datum sp_unprepare(PG_FUNCTION_ARGS);
 extern bool pltsql_support_tsql_transactions(void);
 extern bool pltsql_sys_function_pop(void);
 extern int execute_bulk_load_insert(int ncol, int nrow, Oid *argtypes,
-									Datum *Values, const char *Nulls);
+				Datum *Values, const char *Nulls, bool *Defaults);
 /*
  * Functions in pl_exec.c
  */
@@ -1795,6 +1832,10 @@ extern Oid pltsql_exec_get_datum_type(PLtsql_execstate *estate,
 extern void pltsql_exec_get_datum_type_info(PLtsql_execstate *estate,
 								 PLtsql_datum *datum,
 								 Oid *typeId, int32 *typMod, Oid *collation);
+
+extern bool get_insert_bulk_keep_nulls();
+extern int get_insert_bulk_rows_per_batch();
+extern int get_insert_bulk_kilobytes_per_batch();
 
 /*
  * Functions for namespace handling in pl_funcs.c
@@ -1820,6 +1861,7 @@ extern const char *pltsql_getdiag_kindname(PLtsql_getdiag_kind kind);
 extern void pltsql_free_function_memory(PLtsql_function *func);
 extern void pltsql_dumptree(PLtsql_function *func);
 extern void pre_function_call_hook_impl(const char *funcName);
+extern int32 coalesce_typmod_hook_impl(CoalesceExpr *cexpr);
 
 /*
  * Scanner functions in pl_scanner.c

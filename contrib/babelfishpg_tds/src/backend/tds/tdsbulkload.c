@@ -30,7 +30,7 @@
 
 static StringInfo SetBulkLoadRowData(TDSRequestBulkLoad request, StringInfo message);
 void ProcessBCPRequest(TDSRequest request);
-static void FetchMoreBcpData(StringInfo *message);
+static void FetchMoreBcpData(StringInfo *message, int dataLenToRead);
 static int ReadBcpPlp(ParameterToken temp, StringInfo *message, TDSRequestBulkLoad request);
 uint64_t offset = 0;
 
@@ -74,11 +74,11 @@ do \
 do \
 { \
 	if ((*message)->len - offset < dataLen) \
-		FetchMoreBcpData(message); \
+		FetchMoreBcpData(message, dataLen); \
 } while(0)
 
 static void
-FetchMoreBcpData(StringInfo *message)
+FetchMoreBcpData(StringInfo *message, int dataLenToRead)
 {
 	StringInfo temp;
 	int ret;
@@ -106,23 +106,30 @@ FetchMoreBcpData(StringInfo *message)
 	pfree((*message));
 
 	/*
-	 * We should hold the interrupts until we read the next
-	 * request frame.
+	 * Keep fetching for additional packets until we have enough
+	 * data to read.
 	 */
-	HOLD_CANCEL_INTERRUPTS();
-	ret = TdsReadNextPendingBcpRequest(temp);
-	RESUME_CANCEL_INTERRUPTS();
-
-	if (ret < 0)
+	while (dataLenToRead > temp->len)
 	{
-		TdsErrorContext->reqType = 0;
-		TdsErrorContext->err_text = "EOF on TDS socket while fetching For Bulk Load Request";
-		pfree(temp->data);
-		pfree(temp);
-		ereport(ERROR,
-				(errcode(ERRCODE_PROTOCOL_VIOLATION),
-					errmsg("EOF on TDS socket while fetching For Bulk Load Request")));
-		return;
+		/*
+		 * We should hold the interrupts until we read the next
+		 * request frame.
+		 */
+		HOLD_CANCEL_INTERRUPTS();
+		ret = TdsReadNextPendingBcpRequest(temp);
+		RESUME_CANCEL_INTERRUPTS();
+
+		if (ret < 0)
+		{
+			TdsErrorContext->reqType = 0;
+			TdsErrorContext->err_text = "EOF on TDS socket while fetching For Bulk Load Request";
+			pfree(temp->data);
+			pfree(temp);
+			ereport(ERROR,
+					(errcode(ERRCODE_PROTOCOL_VIOLATION),
+						errmsg("EOF on TDS socket while fetching For Bulk Load Request")));
+			return;
+		}
 	}
 
 	offset = 0;
@@ -407,8 +414,8 @@ SetBulkLoadRowData(TDSRequestBulkLoad request, StringInfo message)
 
 	/* Loop over each row. */
 	while((uint8_t)message->data[offset] == TDS_TOKEN_ROW
-			&& request->currentBatchSize < insert_bulk_kilobytes_per_batch * 1024
-			&& request->rowCount < insert_bulk_rows_per_batch)
+			&& request->currentBatchSize < pltsql_plugin_handler_ptr->get_insert_bulk_kilobytes_per_batch() * 1024
+			&& request->rowCount < pltsql_plugin_handler_ptr->get_insert_bulk_rows_per_batch())
 	{
 		int i = 0; /* Current Column Number. */
 		BulkLoadRowData *rowData = palloc0(sizeof(BulkLoadRowData));
@@ -602,7 +609,7 @@ SetBulkLoadRowData(TDSRequestBulkLoad request, StringInfo message)
 				{
 					StringInfo plpStr;
 					ParameterToken temp = palloc0(sizeof(ParameterTokenData));
-					retStatus = ReadBcpPlp(temp, message, request);
+					retStatus = ReadBcpPlp(temp, &message, request);
 					CheckPLPStatusNotOK(request, retStatus, i);
 					if (temp->isNull) /* null */
 					{
@@ -656,14 +663,15 @@ SetBulkLoadRowData(TDSRequestBulkLoad request, StringInfo message)
 	 * the next byte should be the done token.
 	 */
 	CheckMessageHasEnoughBytesToRead(&message, 1);
-	if (request->rowCount < insert_bulk_rows_per_batch
-			&& request->currentBatchSize < insert_bulk_kilobytes_per_batch * 1024
+
+	if (request->rowCount < pltsql_plugin_handler_ptr->get_insert_bulk_rows_per_batch()
+			&& request->currentBatchSize < pltsql_plugin_handler_ptr->get_insert_bulk_kilobytes_per_batch() * 1024
 			&& (uint8_t)message->data[offset] != TDS_TOKEN_DONE)
 		ereport(ERROR,
 				(errcode(ERRCODE_PROTOCOL_VIOLATION),
 					errmsg("The incoming tabular data stream (TDS) Bulk Load Request (BulkLoadBCP) protocol stream is incorrect. "
-						"Row %d, column %d, unexpected token encountered processing the request. %d",
-						request->rowCount, request->colCount, (uint8_t)message->data[offset])));
+						"Row %d, unexpected token encountered processing the request. %d",
+						request->rowCount, (uint8_t)message->data[offset])));
 	return message;
 }
 
@@ -690,11 +698,34 @@ ProcessBCPRequest(TDSRequest request)
 		Datum *values = NULL;
 		char *nulls = NULL;
 		Oid *argtypes = NULL;
+		bool *defaults = NULL;
 		int count = 0;
 		ListCell 	*lc;
 
-		message = SetBulkLoadRowData(req, message);
+		PG_TRY();
+		{
+			message = SetBulkLoadRowData(req, message);
+		}
+		PG_CATCH();
+		{
+			int ret;
+			HOLD_CANCEL_INTERRUPTS();
+			/*
+			 * Discard remaining TDS_BULK_LOAD packets only if End of Message has not been reached for the
+			 * current request. Otherwise we have no TDS_BULK_LOAD packets left for the current request
+			 * that need to be discarded.
+			 */
+			if (!TdsGetRecvPacketEomStatus())
+				ret = TdsDiscardAllPendingBcpRequest();
 
+			RESUME_CANCEL_INTERRUPTS();
+
+			if (ret < 0)
+				TdsErrorContext->err_text = "EOF on TDS socket while fetching For Bulk Load Request";
+
+			PG_RE_THROW();
+		}
+		PG_END_TRY();
 		/*
 		 * If the row-count is 0 then this no rows are left to be inserted.
 		 * We should begin with cleanup.
@@ -702,13 +733,22 @@ ProcessBCPRequest(TDSRequest request)
 		if (req->rowCount == 0)
 		{
 			/* Using Same callback function to fo the clean-up. */
-			pltsql_plugin_handler_ptr->bulk_load_callback(0, 0, NULL, NULL, NULL);
+			pltsql_plugin_handler_ptr->bulk_load_callback(0, 0, NULL, NULL, NULL, NULL);
 			break;
 		}
+
+		/*
+		 * defaults array will always contain nargs length of data, where as
+		 * values and nulls array can be less than nargs length. The length of
+		 * values and nulls array will be the number of bind params in
+		 * bulk_load_callback function.
+		 */
 		nargs = req->colCount * req->rowCount;
 		values = palloc0(nargs * sizeof(Datum));
 		nulls = palloc0(nargs * sizeof(char));
 		argtypes= palloc0(nargs * sizeof(Oid));
+		defaults = palloc0(nargs * sizeof(bool));
+		nargs = 0;
 
 		foreach (lc, req->rowData) /* build an array of Value Datums */
 		{
@@ -722,8 +762,12 @@ ProcessBCPRequest(TDSRequest request)
 				tempFuncInfo = TdsLookupTypeFunctionsByTdsId(colMetaData[currentColumn].columnTdsType, colMetaData[currentColumn].maxLen);
 				GetPgOid(argtypes[count], tempFuncInfo);
 				if (row->isNull[currentColumn] == 'n') /* null */
-					nulls[count] = row->isNull[currentColumn];
+					if (pltsql_plugin_handler_ptr->get_insert_bulk_keep_nulls())
+						nulls[count++] = row->isNull[currentColumn];
+					else
+						defaults[nargs] = true;
 				else
+				{
 					switch(colMetaData[currentColumn].columnTdsType)
 					{
 						case TDS_TYPE_CHAR:
@@ -787,7 +831,9 @@ ProcessBCPRequest(TDSRequest request)
 							values[count] = TdsTypeSqlVariantToDatum(temp);
 						break;
 					}
-				count++;
+					count++;
+				}
+				nargs++;
 				currentColumn++;
 			}
 		}
@@ -798,13 +844,21 @@ ProcessBCPRequest(TDSRequest request)
 			{
 				retValue += pltsql_plugin_handler_ptr->bulk_load_callback(req->colCount,
 											req->rowCount, argtypes,
-											values, nulls);
+											values, nulls, defaults);
 			}
 			PG_CATCH();
 			{
 				int ret;
 				HOLD_CANCEL_INTERRUPTS();
-				ret = TdsDiscardAllPendingBcpRequest();
+
+				/*
+				 * Discard remaining TDS_BULK_LOAD packets only if End of Message has not been reached for the
+				 * current request. Otherwise we have no TDS_BULK_LOAD packets left for the current request
+				 * that need to be discarded.
+				 */
+				if (!TdsGetRecvPacketEomStatus())
+					ret = TdsDiscardAllPendingBcpRequest();
+
 				RESUME_CANCEL_INTERRUPTS();
 
 				if (ret < 0)

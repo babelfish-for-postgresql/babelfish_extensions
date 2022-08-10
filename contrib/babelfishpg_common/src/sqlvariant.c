@@ -44,50 +44,7 @@
 #include "datetimeoffset.h"
 #include "typecode.h"
 #include "numeric.h"
-
-/*
- * macros for supporting sqlvariant datatype on TDS side
- */
-
-#define VARIANT_TYPE_TINYINT        48
-#define VARIANT_TYPE_BIT        50
-#define VARIANT_TYPE_SMALLINT       52
-#define VARIANT_TYPE_INT        56
-#define VARIANT_TYPE_BIGINT     127
-#define VARIANT_TYPE_REAL       59
-#define VARIANT_TYPE_FLOAT      62
-#define VARIANT_TYPE_NUMERIC        108
-#define VARIANT_TYPE_DECIMAL 	106
-#define VARIANT_TYPE_MONEY      60
-#define VARIANT_TYPE_SMALLMONEY     122
-#define VARIANT_TYPE_DATE       40
-#define VARIANT_TYPE_CHAR       175
-#define VARIANT_TYPE_VARCHAR        167
-#define VARIANT_TYPE_NCHAR      239
-#define VARIANT_TYPE_NVARCHAR       231
-#define VARIANT_TYPE_BINARY     173
-#define VARIANT_TYPE_VARBINARY      165
-#define VARIANT_TYPE_UNIQUEIDENTIFIER   36
-#define VARIANT_TYPE_TIME       41
-#define VARIANT_TYPE_SMALLDATETIME  58
-#define VARIANT_TYPE_DATETIME       61
-#define VARIANT_TYPE_DATETIME2      42
-#define VARIANT_TYPE_DATETIMEOFFSET 43
-
-/*
- * macros to store length of metadata (including metadata for base type) for sqlvariant datatypes.
- */
-#define VARIANT_TYPE_METALEN_FOR_NUM_DATATYPES 	2	/* for BIT, TINYINT, SMALLINT, INT, BIGINT, REAL, FLOAT, [SMALL]MONEY and UID */
-#define VARIANT_TYPE_METALEN_FOR_CHAR_DATATYPES	9	/* for [N][VAR]CHAR */
-#define VARIANT_TYPE_METALEN_FOR_BIN_DATATYPES 	4	/* for [VAR]BINARY */
-#define VARIANT_TYPE_METALEN_FOR_NUMERIC_DATATYPES	5	/* for NUMERIC */
-#define VARIANT_TYPE_METALEN_FOR_DATE 			2	/* for DATE */
-#define VARIANT_TYPE_METALEN_FOR_SMALLDATETIME 	2	/* for SMALLDATETIME */
-#define VARIANT_TYPE_METALEN_FOR_DATETIME 		2	/* for DATETIME */
-#define VARIANT_TYPE_METALEN_FOR_TIME 			3	/* for TIME */
-#define VARIANT_TYPE_METALEN_FOR_DATETIME2 		3	/* for DATETIME2 */
-#define VARIANT_TYPE_METALEN_FOR_DATETIMEOFFSET	3	/* for DATETIMEOFFSET */
-
+#include "sqlvariant.h"
 
 /*  Function Registeration  */
 PG_FUNCTION_INFO_V1(sqlvariantin);
@@ -95,78 +52,11 @@ PG_FUNCTION_INFO_V1(sqlvariantout);
 PG_FUNCTION_INFO_V1(sqlvariantrecv);
 PG_FUNCTION_INFO_V1(sqlvariantsend);
 
-
-/*  Header version
- *  For now, we assume that headers of all types use Header Version 1.
- *  However, in future we may want to define header versions for each types,
- *  for example we may want to store addional data for a type.
- *  As of now there's no use cases where we could use that.
- */
-#define HDR_VER 1
-
-/*  Header related macros  */
-#define SV_HDR_1B(PTR) ((svhdr_1B_t *) (VARDATA_ANY(PTR)))
-#define SV_HDR_2B(PTR) ((svhdr_2B_t *) (VARDATA_ANY(PTR)))
-#define SV_HDR_3B(PTR) ((svhdr_3B_t *) (VARDATA_ANY(PTR)))
-#define SV_HDR_5B(PTR) ((svhdr_5B_t *) (VARDATA_ANY(PTR)))
-
-#define SV_GET_TYPCODE(HEADER) (HEADER->metadata >> 3)
-#define SV_GET_TYPCODE_PTR(PTR) (SV_HDR_1B(PTR)->metadata >> 3)
-#define SV_GET_MDVER(HEADER) (HEADER->metadata & 0x07)
-#define SV_SET_METADATA(HEADER, TYPCODE, MDVER) (HEADER->metadata = TYPCODE << 3 | MDVER)
-
-#define SV_DATA(PTR, SVHDR) (VARDATA_ANY(PTR) + SVHDR)
-#define SV_DATUM(PTR, SVHDR) ((Datum) (VARDATA_ANY(PTR) + SVHDR))
-#define SV_DATUM_PTR(PTR, SVHDR) ((Datum *) (VARDATA_ANY(PTR) + SVHDR))
-
-#define SV_CAN_USE_SHORT_VALENA(DATALEN, SVHDR) (DATALEN + SVHDR + VARHDRSZ_SHORT <= VARATT_SHORT_MAX)
-
 bytea *convertVarcharToSQLVariantByteA(VarChar *vch, Oid coll);
 bytea *convertIntToSQLVariantByteA(int ret);
 
-/* extract type and coll related info*/
-extern type_info_t type_infos[];
+/* extract coll related info*/
 extern HTAB *ht_oid2collid;
-
-
-/*
- *              Storage Layout of SQL_VARIANT Header
- *  Total length 2-9 bytes : varlena header (1-4B) + sv header (1-5B)
- *  Bytes are interpreted differently for different types
- *  WARNING: Modification on storage layout need backward compatibility support
- *  Place holders MUST filled with 0 to avoid ambiguity in the future
- */
-
-/* HDR: Basic format
- * following custom of PG, typmod is stored
- * It could be interpreted differently for difffernt types
- * e.g
- * for decimal types, precision and scale are encoded
- * for datetime2, datetimeoffset it is scale
- */
-typedef struct __attribute__((packed)) svhdr_1B
-{
-    uint8_t metadata;
-} svhdr_1B_t;
-
-typedef struct __attribute__((packed)) svhdr_2B
-{
-    uint8_t metadata;
-    int8_t typmod;
-} svhdr_2B_t;
-
-typedef struct __attribute__((packed)) svhdr_3B
-{
-    uint8_t metadata;
-    int16_t typmod;
-} svhdr_3B_t;
-
-typedef struct __attribute__((packed)) svhdr_5B
-{
-    uint8_t  metadata;
-    int16_t  typmod;
-    uint16_t collid;
-} svhdr_5B_t;
 
 /*
  * SQL_VARINT does not have its own textual representation
@@ -184,8 +74,9 @@ sqlvariantin(PG_FUNCTION_ARGS)
     text            *data_val;
     size_t          data_size;
     size_t          total_size;
-    Oid             type = type_infos[VARCHAR_T].oid;  /* hardcoded varchar */
-    uint8_t         svhdr_size = type_infos[VARCHAR_T].svhdr_size;
+    type_info_t     type_info = get_tsql_type_info(VARCHAR_T);
+    Oid             type = type_info.oid;  /* hardcoded varchar */
+    uint8_t         svhdr_size = type_info.svhdr_size;
     Oid             input_func;
     Oid             typIOParam;
     svhdr_5B_t      *svhdr;
@@ -233,8 +124,9 @@ sqlvariantout(PG_FUNCTION_ARGS)
     char         *result = NULL;
     bytea        *vlena = PG_GETARG_BYTEA_PP(0);
     uint8_t      type_code = SV_GET_TYPCODE_PTR(vlena);
-    Oid          type = (Oid) type_infos[type_code].oid;
-    uint8_t      svhdr_size = type_infos[type_code].svhdr_size;
+    type_info_t  type_info = get_tsql_type_info(type_code);
+    Oid          type = (Oid) type_info.oid;
+    uint8_t      svhdr_size = type_info.svhdr_size;
     Oid          output_func;
     bool         typIsVarlena;
     size_t       data_len = VARSIZE_ANY_EXHDR(vlena) - svhdr_size;
@@ -305,7 +197,7 @@ get_varchar128_sv_datum(const char *value)
     bytea           *result;
     svhdr_5B_t      *svhdr;
     size_t          sv_size;
-    uint8_t         svhdr_size = type_infos[VARCHAR_T].svhdr_size;
+    uint8_t         svhdr_size = get_tsql_type_info(VARCHAR_T).svhdr_size;
 
     /* return varchar(128) */
     sv_size = VARHDRSZ + svhdr_size + VARHDRSZ + len;
@@ -328,7 +220,7 @@ get_int_sv_datum(int32_t value)
 {
     bytea         *result;
     svhdr_1B_t    *svhdr;
-    uint8_t       svhdr_size = type_infos[INT_T].svhdr_size;
+    uint8_t       svhdr_size = get_tsql_type_info(INT_T).svhdr_size;
 
     result = palloc(VARHDRSZ_SHORT + svhdr_size + sizeof(int32_t));
     SET_VARSIZE_SHORT(result, VARHDRSZ_SHORT + svhdr_size + sizeof(int32_t));
@@ -345,8 +237,6 @@ static Datum  do_cast(Oid source_type, Oid target_type, Datum value, int32_t typ
                       CoercionContext cc, bool *cast_by_relabel);
 
 static Datum compare_value(char *oprname, Oid type, Datum d1, Datum d2, Oid coll);
-
-static bytea* gen_sqlvariant_bytea_from_type_datum(size_t typcode, Datum data);
 
 static Datum  gen_type_datum_from_sqlvariant_bytea(bytea *sv, uint8_t target_typcode, int32_t typmod, Oid coll);
 
@@ -414,8 +304,9 @@ do_cast(Oid source_type, Oid target_type, Datum value, int32_t typmod, Oid coll,
 bytea *
 gen_sqlvariant_bytea_from_type_datum(size_t typcode, Datum data)
 {
-    Oid     typoid = type_infos[typcode].oid;
-    int8_t  svhdr_size = type_infos[typcode].svhdr_size;
+    type_info_t type_info = get_tsql_type_info(typcode);
+    Oid     typoid = type_info.oid;
+    int8_t  svhdr_size = type_info.svhdr_size;
     int16_t typlen = get_typlen(typoid);
     size_t  data_len;
 
@@ -459,9 +350,10 @@ Datum
 gen_type_datum_from_sqlvariant_bytea(bytea *sv, uint8_t target_typcode, int32_t typmod, Oid coll)
 {
     uint8_t      typcode       = SV_GET_TYPCODE_PTR(sv);
-    Oid          type_oid      = (Oid) type_infos[typcode].oid;
-    uint8_t      svhdr_size    = type_infos[typcode].svhdr_size;
-    Oid          target_oid    = (Oid) type_infos[target_typcode].oid;
+    type_info_t  type_info = get_tsql_type_info(typcode);
+    Oid          type_oid      = (Oid) type_info.oid;
+    uint8_t      svhdr_size    = type_info.svhdr_size;
+    Oid          target_oid    = (Oid) get_tsql_type_info(target_typcode).oid;
     Datum        *target_datum = palloc0(SIZEOF_DATUM);
     size_t       data_len      = VARSIZE_ANY_EXHDR(sv) - svhdr_size;
     bool         cast_by_relabel;
@@ -511,10 +403,12 @@ do_compare(char *oprname, bytea *arg1, bytea *arg2, Oid fncollation)
 {
     uint8_t         type_code1 = SV_GET_TYPCODE_PTR(arg1);
     uint8_t         type_code2 = SV_GET_TYPCODE_PTR(arg2);
-    Oid             type_oid1 = (Oid) type_infos[type_code1].oid;
-    Oid             type_oid2 = (Oid) type_infos[type_code2].oid;
-    uint8_t         svhdr_size1 = type_infos[type_code1].svhdr_size;
-    uint8_t         svhdr_size2 = type_infos[type_code2].svhdr_size;
+    type_info_t     type_info1 = get_tsql_type_info(type_code1);
+    type_info_t     type_info2 = get_tsql_type_info(type_code2);
+    Oid             type_oid1 = (Oid) type_info1.oid;
+    Oid             type_oid2 = (Oid) type_info2.oid;
+    uint8_t         svhdr_size1 = type_info1.svhdr_size;
+    uint8_t         svhdr_size2 = type_info2.svhdr_size;
     bool            d1_pass_by_ref = get_typbyval(type_oid1) == false;
     bool            d2_pass_by_ref = get_typbyval(type_oid2) == false;
     size_t          data_len1 = VARSIZE_ANY_EXHDR(arg1) - svhdr_size1;
@@ -1283,7 +1177,7 @@ Datum
 get_base_type(bytea *sv_value)
 {
     uint8_t         type_code = SV_GET_TYPCODE_PTR(sv_value);
-    const char      *type_name = type_infos[type_code].tsql_typname;
+    const char      *type_name = get_tsql_type_info(type_code).tsql_typname;
 
     return get_varchar128_sv_datum(type_name);
 }
@@ -1292,7 +1186,7 @@ Datum
 get_precision(bytea *sv_value)
 {
     uint8_t         type_code = SV_GET_TYPCODE_PTR(sv_value);
-    uint8_t          svhdr_size = type_infos[type_code].svhdr_size;
+    uint8_t          svhdr_size = get_tsql_type_info(type_code).svhdr_size;
     int16_t         typmod;
     int             precision;
     svhdr_2B_t      *svhdr_2b;
@@ -1409,7 +1303,7 @@ Datum
 get_scale(bytea *sv_value)
 {
     uint8_t         type_code = SV_GET_TYPCODE_PTR(sv_value);
-    uint8_t         svhdr_size = type_infos[type_code].svhdr_size;
+    uint8_t         svhdr_size = get_tsql_type_info(type_code).svhdr_size;
     int16_t         typmod;
     int             scale;
     svhdr_2B_t      *svhdr_2b;
@@ -1655,8 +1549,8 @@ sqlvariantlt(PG_FUNCTION_ARGS)
     bytea           *arg2 = PG_GETARG_BYTEA_PP(1);
     uint8_t         type_code1 = SV_GET_TYPCODE_PTR(arg1);
     uint8_t         type_code2 = SV_GET_TYPCODE_PTR(arg2);
-    uint8_t         type_family1 = type_infos[type_code1].family_prio;
-    uint8_t         type_family2 = type_infos[type_code2].family_prio;
+    uint8_t         type_family1 = get_tsql_type_info(type_code1).family_prio;
+    uint8_t         type_family2 = get_tsql_type_info(type_code2).family_prio;
     char            *oprname = "<";
     Datum           result;
 
@@ -1679,8 +1573,8 @@ sqlvariantle(PG_FUNCTION_ARGS)
     bytea           *arg2 = PG_GETARG_BYTEA_PP(1);
     uint8_t         type_code1 = SV_GET_TYPCODE_PTR(arg1);
     uint8_t         type_code2 = SV_GET_TYPCODE_PTR(arg2);
-    uint8_t         type_family1 = type_infos[type_code1].family_prio;
-    uint8_t         type_family2 = type_infos[type_code2].family_prio;
+    uint8_t         type_family1 = get_tsql_type_info(type_code1).family_prio;
+    uint8_t         type_family2 = get_tsql_type_info(type_code2).family_prio;
     char            *oprname = "<=";
     Datum           result;
 
@@ -1703,8 +1597,8 @@ sqlvarianteq(PG_FUNCTION_ARGS)
     bytea           *arg2 = PG_GETARG_BYTEA_PP(1);
     uint8_t         type_code1 = SV_GET_TYPCODE_PTR(arg1);
     uint8_t         type_code2 = SV_GET_TYPCODE_PTR(arg2);
-    uint8_t         type_family1 = type_infos[type_code1].family_prio;
-    uint8_t         type_family2 = type_infos[type_code2].family_prio;
+    uint8_t         type_family1 = get_tsql_type_info(type_code1).family_prio;
+    uint8_t         type_family2 = get_tsql_type_info(type_code2).family_prio;
     char            *oprname = "=";
     Datum           result;
 
@@ -1727,8 +1621,8 @@ sqlvariantge(PG_FUNCTION_ARGS)
     bytea           *arg2 = PG_GETARG_BYTEA_PP(1);
     uint8_t         type_code1 = SV_GET_TYPCODE_PTR(arg1);
     uint8_t         type_code2 = SV_GET_TYPCODE_PTR(arg2);
-    uint8_t         type_family1 = type_infos[type_code1].family_prio;
-    uint8_t         type_family2 = type_infos[type_code2].family_prio;
+    uint8_t         type_family1 = get_tsql_type_info(type_code1).family_prio;
+    uint8_t         type_family2 = get_tsql_type_info(type_code2).family_prio;
     char            *oprname = ">=";
     Datum           result;
 
@@ -1751,8 +1645,8 @@ sqlvariantgt(PG_FUNCTION_ARGS)
     bytea           *arg2 = PG_GETARG_BYTEA_PP(1);
     uint8_t         type_code1 = SV_GET_TYPCODE_PTR(arg1);
     uint8_t         type_code2 = SV_GET_TYPCODE_PTR(arg2);
-    uint8_t         type_family1 = type_infos[type_code1].family_prio;
-    uint8_t         type_family2 = type_infos[type_code2].family_prio;
+    uint8_t         type_family1 = get_tsql_type_info(type_code1).family_prio;
+    uint8_t         type_family2 = get_tsql_type_info(type_code2).family_prio;
     char            *oprname = ">";
     Datum           result;
 
@@ -1775,8 +1669,8 @@ sqlvariantne(PG_FUNCTION_ARGS)
     bytea           *arg2 = PG_GETARG_BYTEA_PP(1);
     uint8_t         type_code1 = SV_GET_TYPCODE_PTR(arg1);
     uint8_t         type_code2 = SV_GET_TYPCODE_PTR(arg2);
-    uint8_t         type_family1 = type_infos[type_code1].family_prio;
-    uint8_t         type_family2 = type_infos[type_code2].family_prio;
+    uint8_t         type_family1 = get_tsql_type_info(type_code1).family_prio;
+    uint8_t         type_family2 = get_tsql_type_info(type_code2).family_prio;
     char            *oprname = "<>";
     Datum           result;
 
@@ -1806,8 +1700,8 @@ sqlvariant_cmp(PG_FUNCTION_ARGS)
     bytea *arg2 = PG_GETARG_BYTEA_PP(1);
     uint8_t type_code1 = SV_GET_TYPCODE_PTR(arg1);
     uint8_t type_code2 = SV_GET_TYPCODE_PTR(arg2);
-    uint8_t type_family1 = type_infos[type_code1].family_prio;
-    uint8_t type_family2 = type_infos[type_code2].family_prio;
+    uint8_t type_family1 = get_tsql_type_info(type_code1).family_prio;
+    uint8_t type_family2 = get_tsql_type_info(type_code2).family_prio;
     Datum result;
 
     if (type_family1 == type_family2)
@@ -1868,7 +1762,7 @@ datalength_sqlvariant(PG_FUNCTION_ARGS)
 {
     bytea        *sv        = PG_GETARG_BYTEA_PP(0);
     uint8_t      type_code  = SV_GET_TYPCODE_PTR(sv);
-    uint8_t      svhdr_size = type_infos[type_code].svhdr_size;
+    uint8_t      svhdr_size = get_tsql_type_info(type_code).svhdr_size;
     int32        octet_len  = VARSIZE_ANY_EXHDR(sv) - svhdr_size;
 
     /* For varlen types, exclude the original varlena header */
@@ -2086,7 +1980,7 @@ TdsGetPGbaseType(uint8 variantBaseType, int *pgBaseType, int tempLen,
 			break;
 	}
 
-	*variantHeaderLen = type_infos[*pgBaseType].svhdr_size;
+	*variantHeaderLen = get_tsql_type_info(*pgBaseType).svhdr_size;
 }
 
 
@@ -2284,7 +2178,7 @@ TdsGetVariantBaseType(int pgBaseType, int *variantBaseType,
             break;
     }
 
-    *variantHeaderLen = type_infos[pgBaseType].svhdr_size;
+    *variantHeaderLen = get_tsql_type_info(pgBaseType).svhdr_size;
 }
 
 bytea *convertIntToSQLVariantByteA(int ret) {

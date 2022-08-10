@@ -22,7 +22,6 @@ static void rewrite_objectwithargs(ObjectWithArgs *obj);
 void rewrite_plain_name(List *name);  /* Value Strings */
 static void rewrite_schema_name(Value *schema);
 static void rewrite_role_name(RoleSpec *role);
-static bool is_shared_schema(const char *name);
 
 static void rewrite_rangevar_list(List *rvs);  /* list of RangeVars */
 static void rewrite_objectwithargs_list(List *objs);  /* list of ObjectWithArgs */
@@ -807,7 +806,7 @@ rewrite_role_name(RoleSpec *role)
 	role->rolename = get_physical_user_name(cur_db, role->rolename);
 }
 
-static bool
+bool
 is_shared_schema(const char *name)
 {
 	if ((strcmp("sys", name ) == 0)

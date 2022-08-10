@@ -1745,7 +1745,7 @@ insert_bulk_option
 
 bulk_insert_statement
     : BULK INSERT ddl_object FROM char_string ( WITH LR_BRACKET bulk_insert_option (COMMA? bulk_insert_option)* RR_BRACKET )? SEMI?
-    | INSERT BULK ddl_object (LR_BRACKET (insert_bulk_column_definition (COMMA insert_bulk_column_definition)*)? column_constraint* COMMA? RR_BRACKET)
+    | INSERT BULK ddl_object (LR_BRACKET (insert_bulk_column_definition (COMMA insert_bulk_column_definition)*)? column_constraint* COMMA? RR_BRACKET) ( WITH LR_BRACKET bulk_insert_option (COMMA? bulk_insert_option)* RR_BRACKET )?
     ;
 
 bulk_insert_option
@@ -5028,6 +5028,7 @@ func_proc_name_database_schema
 func_proc_name_server_database_schema
     : (server=id? DOT)? database=id? DOT schema=id? DOT procedure=id
     | (schema=id? DOT)? procedure=id
+    | colon_colon procedure=id
     ;
 
 ddl_object

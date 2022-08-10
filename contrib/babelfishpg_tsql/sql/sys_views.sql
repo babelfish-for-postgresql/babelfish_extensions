@@ -480,7 +480,6 @@ BEGIN
 		INNER JOIN pg_type t ON t.oid = a.atttypid
 		INNER JOIN sys.schemas sch on c.relnamespace = sch.schema_id 
 		INNER JOIN sys.pg_namespace_ext ext on sch.schema_id = ext.oid 
-		INNER JOIN information_schema.columns isc ON c.relname = isc.table_name AND ext.nspname = isc.table_schema AND a.attname = isc.column_name
 		LEFT JOIN pg_attrdef d ON c.oid = d.adrelid AND a.attnum = d.adnum
 		LEFT JOIN pg_collation coll ON coll.oid = a.attcollation
 		, sys.translate_pg_type_to_tsql(a.atttypid) AS tsql_type_name
@@ -557,7 +556,6 @@ BEGIN
 		INNER JOIN pg_class c ON c.oid = a.attrelid
 		INNER JOIN pg_type t ON t.oid = a.atttypid
 		INNER JOIN pg_namespace nsp ON (nsp.oid = c.relnamespace and nsp.nspname = 'sys')
-		INNER JOIN information_schema.columns isc ON c.relname = isc.table_name AND nsp.nspname = isc.table_schema AND a.attname = isc.column_name
 		LEFT JOIN pg_attrdef d ON c.oid = d.adrelid AND a.attnum = d.adnum
 		LEFT JOIN pg_collation coll ON coll.oid = a.attcollation
 		, sys.translate_pg_type_to_tsql(a.atttypid) AS tsql_type_name
@@ -853,37 +851,41 @@ GRANT SELECT ON sys.key_constraints TO PUBLIC;
 
 create or replace view sys.procedures as
 select
-  p.proname as name
-  , p.oid as object_id
-  , null::integer as principal_id
-  , sch.schema_id as schema_id
+  cast(p.proname as sys.sysname) as name
+  , cast(p.oid as int) as object_id
+  , cast(null as int) as principal_id
+  , cast(sch.schema_id as int) as schema_id
   , cast (case when tr.tgrelid is not null 
       then tr.tgrelid 
       else 0 end as int) 
     as parent_object_id
-  , case p.prokind
-      when 'p' then 'P'::varchar(2)
-      when 'a' then 'AF'::varchar(2)
+  , cast(case p.prokind
+      when 'p' then 'P'
+      when 'a' then 'AF'
       else
         case format_type(p.prorettype, null) when 'trigger'
-          then 'TR'::varchar(2)
-          else 'FN'::varchar(2)
+          then 'TR'
+          else 'FN'
         end
-    end as type
-  , case p.prokind
-      when 'p' then 'SQL_STORED_PROCEDURE'::varchar(60)
-      when 'a' then 'AGGREGATE_FUNCTION'::varchar(60)
+    end as sys.bpchar(2)) as type
+  , cast(case p.prokind
+      when 'p' then 'SQL_STORED_PROCEDURE'
+      when 'a' then 'AGGREGATE_FUNCTION'
       else
         case format_type(p.prorettype, null) when 'trigger'
-          then 'SQL_TRIGGER'::varchar(60)
-          else 'SQL_SCALAR_FUNCTION'::varchar(60)
+          then 'SQL_TRIGGER'
+          else 'SQL_SCALAR_FUNCTION'
         end
-    end as type_desc
-  , null::timestamp as create_date
-  , null::timestamp as modify_date
-  , 0 as is_ms_shipped
-  , 0 as is_published
-  , 0 as is_schema_published
+    end as sys.nvarchar(60)) as type_desc
+  , cast(null as sys.datetime) as create_date
+  , cast(null as sys.datetime) as modify_date
+  , cast(0 as sys.bit) as is_ms_shipped
+  , cast(0 as sys.bit) as is_published
+  , cast(0 as sys.bit) as is_schema_published
+  , cast(0 as sys.bit) as is_auto_executed
+  , cast(0 as sys.bit) as is_execution_replicated
+  , cast(0 as sys.bit) as is_repl_serializable_only
+  , cast(0 as sys.bit) as skips_repl_constraints
 from pg_proc p
 inner join sys.schemas sch on sch.schema_id = p.pronamespace
 left join pg_trigger tr on tr.tgfoid = p.oid
@@ -962,7 +964,7 @@ select
   , 0 as open_tran
   , a.state as status
   , null::bytea as sid
-  , a.client_hostname as hostname
+  , CAST(t.host_name AS sys.nchar(128)) as hostname
   , a.application_name as program_name
   , null::varchar(10) as hostprocess
   , a.query as cmd
@@ -1382,23 +1384,33 @@ GRANT SELECT ON sys.system_objects TO PUBLIC;
 
 create or replace view sys.all_views as
 select
-    t.name
-  , t.object_id
-  , t.principal_id
-  , t.schema_id
-  , t.parent_object_id
-  , t.type
-  , t.type_desc
-  , t.create_date
-  , t.modify_date
-  , t.is_ms_shipped
-  , t.is_published
-  , t.is_schema_published
-  -- check columns, they don't seem to match SQL Server
-  , 0 as with_check_option
-  , 0 as is_date_correlation_view
-  , 0 as is_tracked_by_cdc
+    CAST(t.name as sys.SYSNAME) AS name
+  , CAST(t.object_id as int) AS object_id
+  , CAST(t.principal_id as int) AS principal_id
+  , CAST(t.schema_id as int) AS schema_id
+  , CAST(t.parent_object_id as int) AS parent_object_id
+  , CAST(t.type as sys.bpchar(2)) AS type
+  , CAST(t.type_desc as sys.nvarchar(60)) AS type_desc
+  , CAST(t.create_date as sys.datetime) AS create_date
+  , CAST(t.modify_date as sys.datetime) AS modify_date
+  , CAST(t.is_ms_shipped as sys.BIT) AS is_ms_shipped
+  , CAST(t.is_published as sys.BIT) AS is_published
+  , CAST(t.is_schema_published as sys.BIT) AS is_schema_published 
+  , CAST(0 as sys.BIT) AS is_replicated
+  , CAST(0 as sys.BIT) AS has_replication_filter
+  , CAST(0 as sys.BIT) AS has_opaque_metadata
+  , CAST(0 as sys.BIT) AS has_unchecked_assembly_data
+  , CAST(
+      CASE 
+        WHEN (v.check_option = 'NONE') 
+          THEN 0
+        ELSE 1
+      END
+    AS sys.BIT) AS with_check_option
+  , CAST(0 as sys.BIT) AS is_date_correlation_view
 from sys.all_objects t
+INNER JOIN pg_namespace ns ON t.schema_id = ns.oid
+INNER JOIN information_schema.views v ON t.name = v.table_name AND ns.nspname = v.table_schema
 where t.type = 'V';
 GRANT SELECT ON sys.all_views TO PUBLIC;
 
@@ -1593,30 +1605,34 @@ GRANT SELECT ON sys.objects TO PUBLIC;
 
 create or replace view sys.sysobjects as
 select
-  s.name
-  , s.object_id as id
-  , s.type as xtype
-  , CAST(s.schema_id as smallint) as uid
+  CAST(s.name as sys._ci_sysname)
+  , CAST(s.object_id as int) as id
+  , CAST(s.type as sys.bpchar(2)) as xtype
+
+  -- 'uid' is specified as type INT here, and not SMALLINT per SQL Server documentation.
+  -- This is because if you routinely drop and recreate databases, it is possible for the
+  -- dbo schema which relies on pg_catalog oid values to exceed the size of a smallint. 
+  , CAST(s.schema_id as int) as uid
   , CAST(0 as smallint) as info
-  , 0 as status
-  , 0 as base_schema_ver
-  , 0 as replinfo
-  , s.parent_object_id as parent_obj
-  , s.create_date as crdate
+  , CAST(0 as int) as status
+  , CAST(0 as int) as base_schema_ver
+  , CAST(0 as int) as replinfo
+  , CAST(s.parent_object_id as int) as parent_obj
+  , CAST(s.create_date as sys.datetime) as crdate
   , CAST(0 as smallint) as ftcatid
-  , 0 as schema_ver
-  , 0 as stats_schema_ver
-  , s.type
+  , CAST(0 as int) as schema_ver
+  , CAST(0 as int) as stats_schema_ver
+  , CAST(s.type as sys.bpchar(2)) as type
   , CAST(0 as smallint) as userstat
   , CAST(0 as smallint) as sysstat
   , CAST(0 as smallint) as indexdel
   , CAST(s.modify_date as sys.datetime) as refdate
-  , 0 as version
-  , 0 as deltrig
-  , 0 as instrig
-  , 0 as updtrig
-  , 0 as seltrig
-  , 0 as category
+  , CAST(0 as int) as version
+  , CAST(0 as int) as deltrig
+  , CAST(0 as int) as instrig
+  , CAST(0 as int) as updtrig
+  , CAST(0 as int) as seltrig
+  , CAST(0 as int) as category
   , CAST(0 as smallint) as cache
 from sys.objects s;
 GRANT SELECT ON sys.sysobjects TO PUBLIC;
@@ -1904,7 +1920,7 @@ create or replace view sys.dm_exec_sessions
   as
   select a.pid as session_id
     , a.backend_start::sys.datetime as login_time
-    , a.client_hostname::sys.nvarchar(128) as host_name
+    , d.host_name::sys.nvarchar(128) as host_name
     , a.application_name::sys.nvarchar(128) as program_name
     , d.client_pid as host_process_id
     , d.client_version as client_version
@@ -2110,7 +2126,8 @@ GRANT SELECT ON sys.data_spaces TO PUBLIC;
 
 CREATE OR REPLACE VIEW sys.database_mirroring
 AS
-SELECT database_id,
+SELECT 
+  CAST(database_id AS int) AS database_id,
 	CAST(NULL AS sys.uniqueidentifier) AS mirroring_guid,
 	CAST(NULL AS sys.tinyint) AS mirroring_state,
 	CAST(NULL AS sys.nvarchar(60)) AS mirroring_state_desc,
@@ -2370,9 +2387,9 @@ AS
 SELECT 
    CAST(0 AS INT) AS object_id,
    CAST(0 AS sys.BIT) AS is_enabled,
-   CAST('' AS VARCHAR(255)) AS directory_name,
+   CAST('' AS sys.VARCHAR(255)) AS directory_name,
    CAST(0 AS INT) AS filename_collation_id,
-   CAST('' AS VARCHAR) AS filename_collation_name
+   CAST('' AS sys.VARCHAR) AS filename_collation_name
    WHERE FALSE;
 GRANT SELECT ON sys.filetables TO PUBLIC;
 
@@ -2390,13 +2407,13 @@ GRANT SELECT ON sys.registered_search_property_lists TO PUBLIC;
 CREATE OR REPLACE VIEW sys.filegroups
 AS
 SELECT 
-   ds.name,
-   ds.data_space_id,
-   ds.type,
-   ds.type_desc,
-   ds.is_default,
-   ds.is_system,
-   CAST(NULL as UNIQUEIDENTIFIER) AS filegroup_guid,
+   CAST(ds.name AS sys.SYSNAME),
+   CAST(ds.data_space_id AS INT),
+   CAST(ds.type AS sys.BPCHAR(2)),
+   CAST(ds.type_desc AS sys.NVARCHAR(60)),
+   CAST(ds.is_default AS sys.BIT),
+   CAST(ds.is_system AS sys.BIT),
+   CAST(NULL as sys.UNIQUEIDENTIFIER) AS filegroup_guid,
    CAST(0 as INT) AS log_filegroup_id,
    CAST(0 as sys.BIT) AS is_read_only,
    CAST(0 as sys.BIT) AS is_autogrow_all_files
@@ -2505,13 +2522,13 @@ SELECT
    CAST(0 as INT) AS unique_index_id,
    CAST(0 as INT) AS fulltext_catalog_id,
    CAST(0 as sys.BIT) AS is_enabled,
-   CAST('O' as CHAR(1)) AS change_tracking_state,
-   CAST('' as NVARCHAR(60)) AS change_tracking_state_desc,
+   CAST('O' as sys.BPCHAR(1)) AS change_tracking_state,
+   CAST('' as sys.NVARCHAR(60)) AS change_tracking_state_desc,
    CAST(0 as sys.BIT) AS has_crawl_completed,
-   CAST('' as CHAR(1)) AS crawl_type,
-   CAST('' as NVARCHAR(60)) AS crawl_type_desc,
-   CAST(NULL as DATETIME) AS crawl_start_date,
-   CAST(NULL as DATETIME) AS crawl_end_date,
+   CAST('' as sys.BPCHAR(1)) AS crawl_type,
+   CAST('' as sys.NVARCHAR(60)) AS crawl_type_desc,
+   CAST(NULL as sys.DATETIME) AS crawl_start_date,
+   CAST(NULL as sys.DATETIME) AS crawl_end_date,
    CAST(NULL as BINARY(8)) AS incremental_timestamp,
    CAST(0 as INT) AS stoplist_id,
    CAST(0 as INT) AS data_space_id,
@@ -2543,7 +2560,7 @@ CREATE OR REPLACE VIEW sys.plan_guides
 AS
 SELECT 
     CAST(0 as int) AS plan_guide_id
-  , CAST(NULL as sys.sysname) AS name
+  , CAST('' as sys.sysname) AS name
   , CAST(NULL as sys.datetime) as create_date
   , CAST(NULL as sys.datetime) as modify_date
   , CAST(0 as sys.bit) as is_disabled
@@ -2578,3 +2595,52 @@ SELECT
   , CAST(0 as int) as cells_per_object
 WHERE FALSE;
 GRANT SELECT ON sys.spatial_index_tessellations TO PUBLIC;
+
+CREATE OR REPLACE VIEW sys.numbered_procedures
+AS
+SELECT 
+    CAST(0 as int) AS object_id
+  , CAST(0 as smallint) AS procedure_number
+  , CAST('' as sys.nvarchar(4000)) AS definition
+WHERE FALSE; -- This condition will ensure that the view is empty
+GRANT SELECT ON sys.numbered_procedures TO PUBLIC;
+
+-- BABEL-3325: Revisit once DDL and/or CREATE EVENT NOTIFICATION is supported
+CREATE OR REPLACE VIEW sys.events 
+AS
+SELECT 
+  CAST(pt.tgfoid as int) AS object_id
+  , CAST(
+      CASE 
+        WHEN tr.event_manipulation='INSERT' THEN 1
+        WHEN tr.event_manipulation='UPDATE' THEN 2
+        WHEN tr.event_manipulation='DELETE' THEN 3
+        ELSE 1
+      END as int
+  ) AS type
+  , CAST(tr.event_manipulation as sys.nvarchar(60)) AS type_desc
+  , CAST(1 as sys.bit) AS  is_trigger_event
+  , CAST(null as int) AS event_group_type
+  , CAST(null as sys.nvarchar(60)) AS event_group_type_desc
+FROM information_schema.triggers tr
+JOIN pg_catalog.pg_namespace np ON tr.event_object_schema = np.nspname COLLATE sys.database_default
+JOIN pg_class pc ON pc.relname = tr.event_object_table COLLATE sys.database_default AND pc.relnamespace = np.oid
+JOIN pg_trigger pt ON pt.tgrelid = pc.oid AND tr.trigger_name = pt.tgname COLLATE sys.database_default
+AND has_schema_privilege(pc.relnamespace, 'USAGE')
+AND has_table_privilege(pc.oid, 'SELECT,INSERT,UPDATE,DELETE,TRUNCATE,TRIGGER');
+GRANT SELECT ON sys.events TO PUBLIC;
+
+CREATE OR REPLACE VIEW sys.trigger_events
+AS
+SELECT
+  CAST(e.object_id as int) AS object_id,
+  CAST(e.type as int) AS type,
+  CAST(e.type_desc as sys.nvarchar(60)) AS type_desc,
+  CAST(0 as sys.bit) AS is_first,
+  CAST(0 as sys.bit) AS is_last,
+  CAST(null as int) AS event_group_type,
+  CAST(null as sys.nvarchar(60)) AS event_group_type_desc,
+  CAST(e.is_trigger_event as sys.bit) AS is_trigger_event
+FROM sys.events e
+WHERE e.is_trigger_event = 1;
+GRANT SELECT ON sys.trigger_events TO PUBLIC;

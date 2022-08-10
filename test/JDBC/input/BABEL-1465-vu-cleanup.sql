@@ -1,0 +1,2 @@
+DROP TABLE babel_1465_vu_prepare_t1
+GO

@@ -1,0 +1,103 @@
+-- Test all numeric datatypes
+SELECT square(CAST(12 AS int));
+GO
+~~START~~
+float
+144.0
+~~END~~
+
+SELECT square(CAST(12.4 AS float));
+GO
+~~START~~
+float
+153.76000000000002
+~~END~~
+
+SELECT square(CAST(12.4 AS real));
+GO
+~~START~~
+float
+153.75999053955093
+~~END~~
+
+SELECT square(CAST(12.4 AS bigint));
+GO
+~~START~~
+float
+144.0
+~~END~~
+
+SELECT square(CAST(12.4 AS smallint));
+GO
+~~START~~
+float
+144.0
+~~END~~
+
+SELECT square(CAST(12.4 AS tinyint));
+GO
+~~START~~
+float
+144.0
+~~END~~
+
+SELECT square(CAST('$12.4' AS money));
+GO
+~~START~~
+float
+153.76000000000002
+~~END~~
+
+SELECT square(CAST('$12.4' AS smallmoney));
+GO
+~~START~~
+float
+153.76000000000002
+~~END~~
+
+SELECT square(CAST(12.4 AS decimal));
+GO
+~~START~~
+float
+144.0
+~~END~~
+
+SELECT square(CAST(12.4 AS numeric));
+GO
+~~START~~
+float
+144.0
+~~END~~
+
+
+-- Test select from table
+SELECT id, square(side_length)*side_length AS volume FROM babel_square_vu_prepare_cubes;
+GO
+~~START~~
+int#!#float
+1#!#14207.654239623966
+1#!#3096813.3448530915
+~~END~~
+
+
+-- Float overflow: expect error
+SELECT square(CAST('-1.79E+308' AS float));
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: value out of range: overflow)~~
+
+SELECT square(CAST('-1.79E+153' AS float));
+GO
+~~START~~
+float
+3.204100000000001E306
+~~END~~
+
+SELECT square(NULL);
+GO
+~~START~~
+float
+<NULL>
+~~END~~
+

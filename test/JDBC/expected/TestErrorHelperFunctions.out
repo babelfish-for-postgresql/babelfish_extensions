@@ -42,136 +42,162 @@ int#!#varchar
 select * from fn_mapped_system_error_list();
 GO
 ~~START~~
-int
-102
-132
-133
-134
-135
-136
-141
-142
-153
-155
-180
-201
-206
-213
-217
-219
-220
-232
-266
-289
-293
-306
-346
-352
-477
-487
-506
-512
-515
-517
-545
-547
-550
-556
-574
-628
-911
-1034
-1049
-1051
-1205
-1505
-1715
-1752
-1765
-1768
-1776
-1778
-1801
-1946
-2627
-2714
-2732
-2733
-2747
-2787
-3609
-3616
-3623
-3701
-3723
-3726
-3728
-3729
-3732
-3902
-3903
-3914
-3930
-4514
-4708
-4712
-4901
-4920
-6401
-8003
-8004
-8007
-8009
-8011
-8016
-8018
-8023
-8028
-8029
-8031
-8032
-8037
-8043
-8047
-8050
-8057
-8058
-8106
-8107
-8115
-8134
-8143
-8144
-8145
-8146
-8152
-8159
-8179
-9441
-9451
-9809
-10610
-10727
-10733
-10793
-11555
-11700
-11701
-11702
-11703
-11705
-11706
-11708
-11709
-11717
-16901
-16902
-16903
-16915
-16916
-16948
-16950
-18456
+nvarchar#!#nvarchar#!#nvarchar#!#int
+0A000#!#mixture of ISO syntax and T-SQL extended syntax#!##!#1049
+42601#!#syntax error near %s at line %lu and character position %lu#!#VARYING#!#1051
+42601#!#syntax error near %s at line %lu and character position %lu#!#REFERENCES#!#142
+42601#!#syntax error near %s at line %lu and character position %lu#!#INSERT#!#10727
+42601#!#syntax error near %s at line %lu and character position %lu#!#DELETE#!#10727
+42601#!#syntax error near %s at line %lu and character position %lu#!#UPDATE#!#10727
+42601#!#syntax error near %s at line %lu and character position %lu#!#MERGE#!#10733
+42601#!#syntax error near %s at line %lu and character position %lu#!#OVER#!#11717
+42601#!#syntax error near %s at line %lu and character position %lu#!#BEGIN#!#487
+42601#!#syntax error near %s at line %lu and character position %lu#!#WITH#!#11709
+42601#!#syntax error near %s at line %lu and character position %lu#!#FILEGROWTH#!#153
+42601#!#Too many substitution parameters for RAISERROR. Cannot exceed 20 substitution parameters.#!##!#2747
+P0001#!#%s#!#Cannot construct data type datetime, some of the arguments have values which are not valid.#!#289
+42601#!#A SELECT statement that assigns a value to a variable must not be combined with data-retrieval operations#!##!#141
+09000#!#An error was raised during trigger execution. The batch has been aborted and the user transaction, if any, has been rolled back.#!##!#3616
+42601#!#duplicate declaration#!##!#134
+42804#!#variable "%s" must be of type cursor or refcursor#!##!#16948
+2200N#!#%s#!#invalid XML content#!#9451
+2200N#!#%s#!#invalid XML content#invalid XML declaration#!#9441
+P0001#!#%s#!#is not supported for conversions from#!#9809
+22003#!#"%s" is out of range for type real#!##!#232
+42809#!#"%s" is not a table#!##!#4708
+42601#!#%s at or near "%s"#!#VARYING#!#1051
+42601#!#%s at or near "%s"#!#SAVE#!#3914
+42601#!#%s at or near "%s"#!#duplicate trigger events specified#!#1034
+42601#!#%s at or near "%s"#!#INDEX#!#10793
+42601#!#%s at or near "%s"#!#NOT#!#11555
+25P01#!#%s can only be used in transaction blocks#!#COMMIT#!#3902
+25P01#!#%s can only be used in transaction blocks#!#ROLLBACK#!#3903
+25P01#!#%s can only be used in transaction blocks#!#SAVEPOINT#!#628
+25P01#!#%s can only be used in transaction blocks#!#ROLLBACK TO SAVEPOINT#!#3903
+25001#!#%s cannot run inside a transaction block#!##!#574
+42809#!#"%s" is not a table or materialized view#!##!#10610
+42809#!#%s parameter should be of %s type#!##!#16902
+22004#!#%s parameter should not be null#!##!#16902
+42601#!#argument name "%s" used more than once#!##!#8143
+22003#!#bigint out of range#!##!#8115
+55006#!#cannot %s "%s" because it is being used by active queries in this session#!##!#556
+2BP01#!#cannot drop %s because %s requires it#!##!#3723
+2BP01#!#cannot drop %s because other objects depend on it#!#type#!#3732
+2BP01#!#cannot drop %s because other objects depend on it#!#function#!#3729
+2BP01#!#cannot drop %s because other objects depend on it#!#table#!#3726
+2201E#!#cannot take logarithm of a negative number#!##!#3623
+2201F#!#cannot take square root of a negative number#!##!#3623
+0A000#!#cannot truncate a table referenced in a foreign key constraint#!##!#4712
+22023#!#CACHE (%s) must be greater than zero#!##!#11706
+23514#!#check constraint "%s" of relation "%s" is violated by some row#!##!#547
+2F005#!#The transaction ended in the trigger. The batch has been aborted.#!##!#3609
+23502#!#column "%s" of relation "%s" contains null values#!##!#4901
+42601#!#column "%s" of relation "%s" is a generated column#!##!#1752
+XX000#!#CREATE FUNCTION failed because a column name is not specified for column %d#!##!#4514
+42601#!#CREATE VIEW specifies more column names than columns#!##!#8159
+42704#!#constraint "%s" of relation "%s" does not exist#!##!#3728
+23505#!#could not create unique index "%s"#!##!#1505
+42883#!#could not find a function named "%s"#!##!#3701
+42883#!#could not find a procedure named "%s"#!##!#3701
+42883#!#could not identify an equality operator for type %s#!##!#306
+42883#!#could not identify an ordering operator for type %s#!##!#306
+42883#!#%s %s expects parameter "%s", which was not supplied.#!##!#201
+42883#!#%s %s has no parameters and arguments were supplied.#!##!#8146
+42883#!#%s %s has too many arguments specified.#!##!#8144
+42883#!#"%s" is not an parameter for %s %s.#!##!#8145
+42883#!#The %s %s is found but cannot be used. Possibly due to datatype mismatch and implicit casting is not allowed.#!##!#206
+42P03#!#cursor "%s" already exists#!##!#16915
+42704#!#cursor %d doesn't exist#!##!#16916
+22004#!#cursor variable "%s" is null#!##!#16950
+42P04#!#database "%s" already exists#!##!#1801
+3D000#!#database "%s" does not exist#!##!#911
+22008#!#data out of range for datetime#!##!#517
+40P01#!#deadlock detected#!##!#1205
+22012#!#division by zero#!##!#8134
+0A000#!#Do not support BREAK outside of a WHILE loop, line %d#!##!#135
+0A000#!#Do not support CONTINUE outside of a WHILE loop, line %d#!##!#136
+23505#!#duplicate key value violates unique constraint "%s"#!##!#2627
+42703#!#Explicit value must be specified for identity column in table '%s' when IDENTITY_INSERT is set to ON#!##!#545
+42804#!#foreign key constraint "%s" cannot be implemented#!##!#1778
+22013#!#frame ending offset must not be negative#!##!#102
+22013#!#frame starting offset must not be negative#!##!#102
+42723#!#function "%s" already exists with same argument types#!##!#2714
+54023#!#functions cannot have more than %d argument#!##!#180
+0A000#!#GOTO target Label %s not defined#!##!#133
+23001#!#IDENTITY_INSERT is already ON for table '%s.%s.%s'#!##!#8107
+22023#!#INCREMENT must not be zero#!##!#11700
+22003#!#input is out of range#!##!#3623
+54000#!#index row size %zu exceeds btree version %u maximum %zu for index "%s"#!##!#1946
+23503#!#insert or update on table "%s" violates foreign key constraint "%s"#!##!#547
+22003#!#integer out of range#!##!#8115
+42601#!#invalid %s action for foreign key constraint containing generated column#!#ON UPDATE#!#1715
+42601#!#invalid %s action for foreign key constraint containing generated column#!#ON DELETE#!#1765
+22003#!#invalid characters found: cannot cast value "%s" to money#!##!#293
+22023#!#invalid cursor fetch type %X#!##!#155
+22023#!#Invalid format specification: %s#!##!#2787
+22023#!#invalid nrow value 0 for cursor type %X#!##!#16902
+08P01#!#Invalid parameter %d ("%s"): Data type 0x%02X is a deprecated large object, or LOB, but is marked as output parameter. Deprecated types are not supported as output parameters. Use current large object types instead.#!##!#8018
+22025#!#invalid escape string#!##!#506
+0A000#!#Label %s not unique wihtin one procedure in line %d, previous defined in line %d#!##!#132
+08004#!#Login failed for user "%s"#!##!#18456
+22023#!#MAXVALUE (%s) is out of range for sequence data type tinyint#!##!#11708
+22023#!#MAXVALUE (%s) is out of range for sequence data type %s#!##!#11708
+22023#!#MINVALUE (%s) must be less than MAXVALUE (%s)#!##!#11705
+21000#!#more than one row returned by a subquery used as an expression#!##!#512
+23514#!#new row for relation "%s" violates check constraint "%s"#!##!#547
+XX000#!#no owned sequence found#!##!#550
+44000#!#new row violates check option for view "%s"#!##!#550
+23502#!#null value in column "%s" of relation "%s" violates not-null constraint#!##!#515
+22023#!#msg_id argument of RAISERROR should be no less than 50000#!##!#2732
+42704#!#Prepared statement not found: %d#!##!#8179
+22004#!#Prepared statement not found: %d#!##!#8179
+42809#!#referenced relation "%s" is not a table#!##!#1768
+42P07#!#relation "%s" already exists#!##!#2714
+3B001#!#savepoint "%s" does not exist#!##!#6401
+22023#!#sequence type must be smallint, integer, or bigint#!##!#11702
+22003#!#smallint out of range#!##!#220
+54001#!#stack depth limit exceeded#!##!#217
+0A000#!#SP_PREPEXECRPC not supported yet#!##!#16901
+22023#!#START value (%s) cannot be greater than MAXVALUE (%s)#!##!#11703
+22023#!#START value (%s) cannot be less than MINVALUE (%s)#!##!#11703
+42703#!#Table '%s.%s' does not have the identity property. Cannot perform SET operation.#!##!#8106
+08P01#!#Table-valued parameter %d ("%s"), row %d, column %d: Data type 0x%02X (user-defined table type). The specified column is computed or default and has ordering or uniqueness set. Ordering and uniqueness can only be set on columns that have client supplied data.#!##!#8057
+2202H#!#TABLESAMPLE parameter cannot be null#!##!#477
+2202G#!#TABLESAMPLE REPEATABLE parameter cannot be null#!##!#477
+22023#!#The absolute value of the increment must be less than or equal to the difference between the minimum and maximum value of the sequence object.#!##!#11701
+40000#!#The current transaction cannot be committed and cannot support operations that write to the log file. Roll back the transaction.#!##!#3930
+XX000#!#The parameter "%s" can not be declared READONLY since it is not a table-valued parameter.#!##!#346
+XX000#!#The table-valued parameter "%s" must be declared with the READONLY option.#!##!#352
+08P01#!#The incoming tabular data stream (TDS) remote procedure call (RPC) protocol stream is incorrect. Parameter %d ("%s"): Data type 0x%02X has an invalid data length or metadata length.#!##!#8016
+08P01#!#The incoming tabular data stream (TDS) remote procedure call (RPC) protocol stream is incorrect. Parameter %d ("%s"): Data type 0x%02X (sql_variant) has an invalid length for type-specific metadata.#!##!#8011
+08P01#!#The incoming tabular data stream (TDS) remote procedure call (RPC) protocol stream is incorrect. Parameter %d ("%s"): Data type 0x%02X is unknown.#!##!#8009
+08P01#!#The incoming tabular data stream (TDS) remote procedure call (RPC) protocol stream is incorrect. Parameter %d ("%s"): The chunking format is incorrect for a large object parameter of type 0x%02X.#!##!#8007
+08P01#!#The incoming tabular data stream (TDS) remote procedure call (RPC) protocol stream is incorrect. Parameter %d ("%s"): The supplied length is not valid for data type CHAR/NCHAR/VARCHAR/NVARCHAR. Check the source data for invalid lengths. An example of an invalid length is data of nchar type with an odd length in bytes.#!##!#8028
+08P01#!#The incoming tabular data stream (TDS) remote procedure call (RPC) protocol stream is incorrect. Parameter %d ("%s"): The supplied value is not a valid instance of data type Numeric/Decimal. Check the source data for invalid values. An example of an invalid value is data of numeric type with scale greater than precision#!##!#8023
+08P01#!#The incoming tabular data stream (TDS) remote procedure call (RPC) protocol stream is incorrect. The RPC name is invalid.#!##!#8004
+08P01#!#The incoming tabular data stream (TDS) remote procedure call (RPC) protocol stream is incorrect. Too many parameters were provided in this RPC request. The maximum is %d#!##!#8003
+08P01#!#The incoming tabular data stream (TDS) remote procedure call (RPC) protocol stream is incorrect. Table-valued parameter %d ("%s"), row %d, column %d: Data type 0x%02X (user-defined table type) has a non-zero length database name specified. Database name is not allowed with a table-valued parameter, only schema name and type name are valid.#!##!#8047
+08P01#!#The incoming tabular data stream (TDS) remote procedure call (RPC) protocol stream is incorrect. Table-valued parameter %d ("%s"), row %d, column %d: Data type 0x%02X (user-defined table type) has an invalid column count specified.#!##!#8050
+08P01#!#The incoming tabular data stream (TDS) remote procedure call (RPC) protocol stream is incorrect. Table-valued parameter %d ("%s"), row %d, column %d: Data type 0x%02X (user-defined table type) unexpected token encountered processing a table-valued parameter.#!##!#8029
+08P01#!#The incoming tabular data stream (TDS) remote procedure call (RPC) protocol stream is incorrect. Table-valued parameter %d ("%s"), row %d, column %d: Data type 0x%02X has an invalid data length or metadata length.#!##!#8037
+08P01#!#The incoming tabular data stream (TDS) remote procedure call (RPC) protocol stream is incorrect. Table-valued parameter %d ("%s"), row %d, column %d: Data type 0x%02X is unknown.#!##!#8032
+08P01#!#The incoming tabular data stream (TDS) remote procedure call (RPC) protocol stream is incorrect. Table-valued parameter %d ("%s"), row %d, column %d: The chunking format is incorrect for a large object parameter of data type 0x%02X.#!##!#8031
+08P01#!#The incoming tabular data stream (TDS) remote procedure call (RPC) protocol stream is incorrect. Table-valued parameter %d ("%s"), row %d, column %d: The supplied value is not a valid instance of data type Numeric/Decimal. Check the source data for invalid values. An example of an invalid value is data of numeric type with scale greater than precision.#!##!#8043
+08P01#!#The incoming tabular data stream (TDS) remote procedure call (RPC) protocol stream is incorrect. Table-valued parameter %d, to a parameterized string has no table type defined.#!##!#8058
+08P01#!#The minimum number of parameters should be %d#!##!#16903
+42830#!#there is no unique constraint matching given keys for referenced table "%s"#!##!#1776
+40002#!#Transaction count after execution indicates a mismatch number of BEGIN and COMMIT statements. Previous count %u current count %u#!##!#266
+42704#!#trigger "%s" does not exist#!##!#3701
+42704#!#trigger "%s" for table "%s" does not exist#!##!#4920
+42710#!#type "%s" already exists#!##!#219
+23503#!#update or delete on table "%s" violates foreign key constraint "%s" on table "%s"#!##!#547
+22001#!#value too long for type character(%d)#!##!#8152
+22001#!#value too long for type character varying(%d)#!##!#8152
+23514#!#value for domain %s violates check constraint "%s"#!##!#220
+42P01#!#view "%s" does not exist#!##!#3701
+42P01#!#table "%s" does not exist#!##!#3701
+42P13#!#PL/tsql functions cannot return type %s#!##!#2733
+0A000#!#Column name or number of supplied values does not match table definition.#!##!#213
 ~~END~~
 
 

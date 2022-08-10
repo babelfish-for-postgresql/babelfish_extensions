@@ -1,0 +1,8 @@
+DROP VIEW TestErrorHelperFunctionsUpgrade_VU_PREPARE_VIEW;
+GO
+
+DROP FUNCTION TestErrorHelperFunctionsUpgrade_VU_PREPARE_FUNC;
+GO
+
+DROP PROCEDURE TestErrorHelperFunctionsUpgrade_VU_PREPARE_PROC;
+GO

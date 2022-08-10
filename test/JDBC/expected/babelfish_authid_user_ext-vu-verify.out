@@ -1,0 +1,35 @@
+SELECT * FROM babelfish_authid_user_ext_vu_prepare_view
+GO
+~~START~~
+varchar#!#varchar#!#char#!#nvarchar#!#nvarchar#!#nvarchar
+master_babelfish_authid_user_ext_vu_prepare_user1#!#babelfish_authid_user_ext_vu_prepare_login1#!#S#!#babelfish_authid_user_ext_vu_prepare_user1#!#master#!#dbo
+master_babelfish_authid_user_ext_vu_prepare_user2#!#babelfish_authid_user_ext_vu_prepare_login2#!#S#!#babelfish_authid_user_ext_vu_prepare_user2#!#master#!#dbo
+~~END~~
+
+
+EXEC babelfish_authid_user_ext_vu_prepare_proc
+GO
+~~START~~
+varchar#!#varchar#!#char#!#nvarchar#!#nvarchar#!#nvarchar
+master_babelfish_authid_user_ext_vu_prepare_user1#!#babelfish_authid_user_ext_vu_prepare_login1#!#S#!#babelfish_authid_user_ext_vu_prepare_user1#!#master#!#dbo
+master_babelfish_authid_user_ext_vu_prepare_user2#!#babelfish_authid_user_ext_vu_prepare_login2#!#S#!#babelfish_authid_user_ext_vu_prepare_user2#!#master#!#dbo
+~~END~~
+
+
+SELECT babelfish_authid_user_ext_vu_prepare_func()
+GO
+~~START~~
+int
+2
+~~END~~
+
+
+SELECT rolname FROM sys.babelfish_authid_user_ext
+WHERE rolname LIKE '%babelfish_authid_user_ext_vu_prepare_%'
+GO
+~~START~~
+varchar
+master_babelfish_authid_user_ext_vu_prepare_user1
+master_babelfish_authid_user_ext_vu_prepare_user2
+~~END~~
+
