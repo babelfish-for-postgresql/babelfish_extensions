@@ -25,6 +25,9 @@ bcp -b 1024#!#in#!#bcp_source#!#destinationTable
 1#!#1
 #!#2
 #Q#Select * from destinationTable
+#D#int#!#int
+1#!#1
+#!#2
 #Q#drop table sourceTable
 #Q#drop table destinationTable
 #Q#Create table sourceTable(a int, b int not null)
@@ -110,6 +113,9 @@ bcp -k#!#in#!#bcp_source#!#destinationTable
 1#!#1
 #!#2
 #Q#Select * from destinationTable
+#D#smallint#!#smallint
+1#!#1
+#!#2
 #Q#drop table sourceTable
 #Q#drop table destinationTable
 #Q#Create table sourceTable(a int, b int not null)

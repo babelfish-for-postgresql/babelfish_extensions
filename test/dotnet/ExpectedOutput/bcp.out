@@ -396,7 +396,7 @@ bcp#!#in#!#bcp_source#!#destinationTable
 #!#14:37:45.1234600
 #Q#Select * from destinationTable
 #D#sql_variant#!#sql_variant
-#!#14:37:45.123460
+#!#14:37:45.1234600
 #Q#drop table sourceTable
 #Q#drop table destinationTable
 #Q#Create table sourceTable(a image, b image not null)
