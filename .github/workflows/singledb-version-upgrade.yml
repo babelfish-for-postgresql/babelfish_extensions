@@ -134,7 +134,7 @@ jobs:
         uses: ./.github/composite-actions/run-pg-upgrade
 
       - uses: actions/checkout@v2
-      
+
       - name: Run JDBC Upgrade Tests (Verify-Cleanup)
         id: jdbc-upgrade-tests-verify
         if: always() && steps.run-pg_upgrade.outcome == 'success'
@@ -148,7 +148,6 @@ jobs:
           export scheduleFile=upgrade/singledb/schedule
           cat upgrade/singledb/schedule
           mvn test
-          find ./Info -type f -exec cat {} \;
         shell: bash
 
       - name: Upload Postgres log
@@ -169,6 +168,7 @@ jobs:
         id: test-file-rename
         if: always() && steps.jdbc-upgrade-tests-verify.outcome == 'failure'
         run: |
+          find ~ -type f
           cd test/JDBC/Info
           timestamp=`ls -Art | tail -n 1`
           cd $timestamp
