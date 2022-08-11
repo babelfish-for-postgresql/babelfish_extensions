@@ -85,6 +85,7 @@ temp-tables
 TestNotNull
 Test-Identity
 TestTableType
+BABEL-CROSS-DB
 BABEL-ROLE
 babelfish_sysdatabases
 babelfish_namespace_ext
