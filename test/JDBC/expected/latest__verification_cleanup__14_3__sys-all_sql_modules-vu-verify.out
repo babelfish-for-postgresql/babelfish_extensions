@@ -34,7 +34,7 @@ WHERE object_id = OBJECT_ID('sys_all_sql_modules_vu_view')
 GO
 ~~START~~
 nvarchar#!#bit#!#bit#!#bit#!#bit#!#bit#!#bit#!#int#!#bit
-CREATE VIEW sys_all_sql_modules_vu_view AS<newline>SELECT 1 as c#!#1#!#1#!#0#!#0#!#0#!#0#!#<NULL>#!#0
+#!#1#!#1#!#0#!#0#!#0#!#0#!#<NULL>#!#0
 ~~END~~
 
 
@@ -217,7 +217,7 @@ SELECT * FROM sys_all_sql_modules_vu_dep_view
 GO
 ~~START~~
 nvarchar#!#bit#!#bit#!#bit#!#bit#!#bit#!#bit#!#int#!#bit
-CREATE VIEW sys_all_sql_modules_vu_view AS<newline>SELECT 1 as c#!#1#!#1#!#0#!#0#!#0#!#0#!#<NULL>#!#0
+#!#1#!#1#!#0#!#0#!#0#!#0#!#<NULL>#!#0
 ~~END~~
 
 
@@ -225,7 +225,7 @@ EXEC sys_all_sql_modules_vu_dep_proc
 GO
 ~~START~~
 nvarchar#!#bit#!#bit#!#bit#!#bit#!#bit#!#bit#!#int#!#bit
-CREATE VIEW sys_all_sql_modules_vu_view AS<newline>SELECT 1 as c#!#1#!#1#!#0#!#0#!#0#!#0#!#<NULL>#!#0
+#!#1#!#1#!#0#!#0#!#0#!#0#!#<NULL>#!#0
 ~~END~~
 
 
