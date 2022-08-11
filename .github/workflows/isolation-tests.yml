@@ -1,9 +1,6 @@
 name: Babelfish Smoke Tests
 on:
-  push:
-    branches:
-  pull_request:
-    branches:
+  workflow_call:
 
 jobs:
   isolation-tests:
@@ -12,30 +9,26 @@ jobs:
     steps:
       - uses: actions/checkout@v2
         id: checkout
+      - name: Download binaries
+        id: download-binaries
+        # See https://github.com/marketplace/actions/download-workflow-artifact
+        uses: dawidd6/action-download-artifact@v2
+        with:
+          workflow: base.yml
+          name: binaries
+          path: binaries
 
-      - name: Install Dependencies
-        id: install-dependencies
-        if: always()
-        uses: ./.github/composite-actions/install-dependencies
-
-      - name: Build Modified Postgres
-        id: build-modified-postgres
-        if: always() && steps.install-dependencies.outcome == 'success'
-        uses: ./.github/composite-actions/build-modified-postgres
-      
-      - name: Compile ANTLR
-        id: compile-antlr
-        if: always() && steps.build-modified-postgres.outcome == 'success'
-        uses: ./.github/composite-actions/compile-antlr
-      
-      - name: Build Extensions
-        id: build-extensions
-        if: always() && steps.compile-antlr.outcome == 'success'
-        uses: ./.github/composite-actions/build-extensions
-      
+      - name: Unzip bins
+        id: unzip-bins
+        run: |
+          unzip -d ./temp/ binaries/binaries.zip 
+          mv ./temp/home/runner/postgres /home/runner/postgres 
+          rm -rf /home/runner/postgres/data
+          chown -R runner /home/runner/postgres
+                
       - name: Install Extensions
         id: install-extensions
-        if: always() && steps.build-extensions.outcome == 'success'
+        if: always() && steps.download-binaries.outcome == 'success'
         uses: ./.github/composite-actions/install-extensions
       
       - name: Install Python
