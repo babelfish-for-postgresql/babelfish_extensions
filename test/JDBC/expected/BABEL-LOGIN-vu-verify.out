@@ -175,90 +175,54 @@ babel_login_vu_prepare_r3#!#S
 
 
 -- Test altering the login ability
-SELECT rolname, rolcanlogin FROM pg_catalog.pg_roles WHERE rolname LIKE 'babel_login_vu_prepare%'
-ORDER BY rolname;
+SELECT rolname, rolcanlogin FROM pg_catalog.pg_roles WHERE rolname = 'babel_login_vu_prepare_r1'
 go
 ~~START~~
 varchar#!#bit
-babel_login_vu_prepare_db1_db_owner#!#0
-babel_login_vu_prepare_db1_dbo#!#0
-babel_login_vu_prepare_err_user#!#1
-babel_login_vu_prepare_foo#!#1
 babel_login_vu_prepare_r1#!#1
-babel_login_vu_prepare_r2#!#1
-babel_login_vu_prepare_r3#!#1
-babel_login_vu_prepare_su_user#!#1
 ~~END~~
 
-SELECT name, is_disabled FROM sys.server_principals WHERE name LIKE 'babel_login_vu_prepare%'
-ORDER BY name;
+SELECT name, is_disabled FROM sys.server_principals WHERE name = 'babel_login_vu_prepare_r1'
 go
 ~~START~~
 varchar#!#int
-babel_login_vu_prepare_err_user#!#0
 babel_login_vu_prepare_r1#!#0
-babel_login_vu_prepare_r2#!#0
-babel_login_vu_prepare_r3#!#0
 ~~END~~
 
 
 ALTER LOGIN babel_login_vu_prepare_r1 disable;
 go
 
-SELECT rolname, rolcanlogin FROM pg_catalog.pg_roles WHERE rolname LIKE 'babel_login_vu_prepare%'
-ORDER BY rolname;
+SELECT rolname, rolcanlogin FROM pg_catalog.pg_roles WHERE rolname = 'babel_login_vu_prepare_r1'
 go
 ~~START~~
 varchar#!#bit
-babel_login_vu_prepare_db1_db_owner#!#0
-babel_login_vu_prepare_db1_dbo#!#0
-babel_login_vu_prepare_err_user#!#1
-babel_login_vu_prepare_foo#!#1
 babel_login_vu_prepare_r1#!#0
-babel_login_vu_prepare_r2#!#1
-babel_login_vu_prepare_r3#!#1
-babel_login_vu_prepare_su_user#!#1
 ~~END~~
 
-SELECT name, is_disabled FROM sys.server_principals WHERE name LIKE 'babel_login_vu_prepare%'
-ORDER BY name;
+SELECT name, is_disabled FROM sys.server_principals WHERE name = 'babel_login_vu_prepare_r1'
 go
 ~~START~~
 varchar#!#int
-babel_login_vu_prepare_err_user#!#0
 babel_login_vu_prepare_r1#!#1
-babel_login_vu_prepare_r2#!#0
-babel_login_vu_prepare_r3#!#0
 ~~END~~
 
 
 ALTER LOGIN babel_login_vu_prepare_r1 enable;
 go
 
-SELECT rolname, rolcanlogin FROM pg_catalog.pg_roles WHERE rolname LIKE 'babel_login_vu_prepare%'
-ORDER BY rolname;
+SELECT rolname, rolcanlogin FROM pg_catalog.pg_roles WHERE rolname = 'babel_login_vu_prepare_r1'
 go
 ~~START~~
 varchar#!#bit
-babel_login_vu_prepare_db1_db_owner#!#0
-babel_login_vu_prepare_db1_dbo#!#0
-babel_login_vu_prepare_err_user#!#1
-babel_login_vu_prepare_foo#!#1
 babel_login_vu_prepare_r1#!#1
-babel_login_vu_prepare_r2#!#1
-babel_login_vu_prepare_r3#!#1
-babel_login_vu_prepare_su_user#!#1
 ~~END~~
 
-SELECT name, is_disabled FROM sys.server_principals WHERE name LIKE 'babel_login_vu_prepare%'
-ORDER BY name;
+SELECT name, is_disabled FROM sys.server_principals WHERE name = 'babel_login_vu_prepare_r1'
 go
 ~~START~~
 varchar#!#int
-babel_login_vu_prepare_err_user#!#0
 babel_login_vu_prepare_r1#!#0
-babel_login_vu_prepare_r2#!#0
-babel_login_vu_prepare_r3#!#0
 ~~END~~
 
 
@@ -353,6 +317,12 @@ go
 DROP USER babel_login_vu_prepare_err_user;
 go
 
+DROP USER babel_login_vu_prepare_r1_new
+go
+
+DROP USER babel_login_vu_prepare_r2
+go
+
 -- Prevent login from accessing database without creating DB user after DROP/CREATE login
 CREATE LOGIN babel_login_vu_prepare_r4 WITH PASSWORD = '123';
 go
@@ -374,8 +344,6 @@ go
 ~~START~~
 varchar#!#nvarchar#!#varchar#!#nvarchar#!#nvarchar
 babel_login_vu_prepare_db1_babel_login_vu_prepare_r4#!#babel_login_vu_prepare_r4#!#babel_login_vu_prepare_r4#!#babel_login_vu_prepare_db1#!#dbo
-master_babel_login_vu_prepare_r1_new#!#babel_login_vu_prepare_r1_new#!#babel_login_vu_prepare_r1#!#master#!#babel_login_vu_prepare_sch
-master_babel_login_vu_prepare_r2#!#babel_login_vu_prepare_r2#!#babel_login_vu_prepare_r2#!#master#!#babel_login_vu_prepare_sch
 ~~END~~
 
 
@@ -513,5 +481,7 @@ void
 
 
 -- tsql
+DROP USER babel_login_vu_prepare_r4
+go
 DROP LOGIN babel_login_vu_prepare_r4;
 go

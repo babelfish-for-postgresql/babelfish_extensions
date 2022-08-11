@@ -124,7 +124,14 @@ USE babelfish_migration_mode_db2
 GO
 
 -- should fail
+BEGIN
+BEGIN TRY
 CREATE DATABASE babelfish_migration_mode_db3
+END TRY
+BEGIN CATCH
+RAISERROR('Failed to create babelfish_migration_mode_db3', 16, 1)
+END CATCH
+END
 GO
 
 SELECT set_config('role', 'jdbc_user', false)
@@ -187,10 +194,7 @@ GO
 -- Reset migration mode to default
 DECLARE @mig_mode VARCHAR(10)
 SET @mig_mode = (SELECT mig_mode FROM babelfish_migration_mode_tbl WHERE id_num = 1)
-SELECT set_config('babelfishpg_tsql.migration_mode', @mig_mode, false)
-GO
-
-SELECT current_setting('babelfishpg_tsql.migration_mode')
+SELECT CASE WHEN (SELECT set_config('babelfishpg_tsql.migration_mode', @mig_mode, false)) IS NOT NULL THEN 1 ELSE 0 END
 GO
 
 INSERT INTO babelfish_migration_mode_catalog_status2 

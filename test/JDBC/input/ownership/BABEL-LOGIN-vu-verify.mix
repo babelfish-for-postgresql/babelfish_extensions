@@ -82,31 +82,25 @@ EXEC babel_login_vu_prepare_proc
 go
 
 -- Test altering the login ability
-SELECT rolname, rolcanlogin FROM pg_catalog.pg_roles WHERE rolname LIKE 'babel_login_vu_prepare%'
-ORDER BY rolname;
+SELECT rolname, rolcanlogin FROM pg_catalog.pg_roles WHERE rolname = 'babel_login_vu_prepare_r1'
 go
-SELECT name, is_disabled FROM sys.server_principals WHERE name LIKE 'babel_login_vu_prepare%'
-ORDER BY name;
+SELECT name, is_disabled FROM sys.server_principals WHERE name = 'babel_login_vu_prepare_r1'
 go
 
 ALTER LOGIN babel_login_vu_prepare_r1 disable;
 go
 
-SELECT rolname, rolcanlogin FROM pg_catalog.pg_roles WHERE rolname LIKE 'babel_login_vu_prepare%'
-ORDER BY rolname;
+SELECT rolname, rolcanlogin FROM pg_catalog.pg_roles WHERE rolname = 'babel_login_vu_prepare_r1'
 go
-SELECT name, is_disabled FROM sys.server_principals WHERE name LIKE 'babel_login_vu_prepare%'
-ORDER BY name;
+SELECT name, is_disabled FROM sys.server_principals WHERE name = 'babel_login_vu_prepare_r1'
 go
 
 ALTER LOGIN babel_login_vu_prepare_r1 enable;
 go
 
-SELECT rolname, rolcanlogin FROM pg_catalog.pg_roles WHERE rolname LIKE 'babel_login_vu_prepare%'
-ORDER BY rolname;
+SELECT rolname, rolcanlogin FROM pg_catalog.pg_roles WHERE rolname = 'babel_login_vu_prepare_r1'
 go
-SELECT name, is_disabled FROM sys.server_principals WHERE name LIKE 'babel_login_vu_prepare%'
-ORDER BY name;
+SELECT name, is_disabled FROM sys.server_principals WHERE name = 'babel_login_vu_prepare_r1'
 go
 
 -- Test altering the password
@@ -162,6 +156,12 @@ go
 
 -- tsql
 DROP USER babel_login_vu_prepare_err_user;
+go
+
+DROP USER babel_login_vu_prepare_r1_new
+go
+
+DROP USER babel_login_vu_prepare_r2
 go
 
 -- Prevent login from accessing database without creating DB user after DROP/CREATE login
@@ -269,5 +269,7 @@ SELECT pg_sleep(1);
 go
 
 -- tsql
+DROP USER babel_login_vu_prepare_r4
+go
 DROP LOGIN babel_login_vu_prepare_r4;
 go
