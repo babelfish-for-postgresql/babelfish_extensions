@@ -730,10 +730,10 @@ AS SELECT CAST(u_grantor.rolname AS sys.nvarchar(128)) AS "GRANTOR",
     CAST(x.relname AS sys.sysname) AS "TABLE_NAME",
     CAST(x.attname AS sys.sysname) AS "COLUMN_NAME",
     CAST(x.prtype AS sys."varchar"(10)) AS "PRIVILEGE_TYPE",
-        CASE
-            WHEN pg_has_role(x.grantee, x.relowner, 'USAGE'::text) OR x.grantable THEN 'YES'::text
-            ELSE 'NO'::text
-        END::sys."varchar"(3) AS "IS_GRANTABLE"
+        CAST(CASE
+            WHEN pg_has_role(x.grantee, x.relowner, CAST('USAGE' AS text)) OR x.grantable THEN CAST('YES' AS text)
+            ELSE CAST('NO' AS text)
+        END AS sys.varchar(3)) AS "IS_GRANTABLE"
    FROM ( SELECT pr_c.grantor,
             pr_c.grantee,
             a.attname,
@@ -746,12 +746,12 @@ AS SELECT CAST(u_grantor.rolname AS sys.nvarchar(128)) AS "GRANTOR",
                     pg_class.relname,
                     pg_class.relnamespace,
                     pg_class.relowner,
-                    (aclexplode(COALESCE(pg_class.relacl, acldefault('r'::"char", pg_class.relowner)))).grantor AS grantor,
-                    (aclexplode(COALESCE(pg_class.relacl, acldefault('r'::"char", pg_class.relowner)))).grantee AS grantee,
-                    (aclexplode(COALESCE(pg_class.relacl, acldefault('r'::"char", pg_class.relowner)))).privilege_type AS privilege_type,
-                    (aclexplode(COALESCE(pg_class.relacl, acldefault('r'::"char", pg_class.relowner)))).is_grantable AS is_grantable
+                    (aclexplode(COALESCE(pg_class.relacl, acldefault(CAST('r' AS "char"), pg_class.relowner)))).grantor AS grantor,
+                    (aclexplode(COALESCE(pg_class.relacl, acldefault(CAST('r' AS "char"), pg_class.relowner)))).grantee AS grantee,
+                    (aclexplode(COALESCE(pg_class.relacl, acldefault(CAST('r' AS "char"), pg_class.relowner)))).privilege_type AS privilege_type,
+                    (aclexplode(COALESCE(pg_class.relacl, acldefault(CAST('r' AS "char"), pg_class.relowner)))).is_grantable AS is_grantable
                    FROM pg_class
-                  WHERE pg_class.relkind = ANY (ARRAY['r'::"char", 'v'::"char", 'f'::"char", 'p'::"char"])) pr_c(oid, relname, relnamespace, relowner, grantor, grantee, prtype, grantable),
+                  WHERE pg_class.relkind = ANY (ARRAY[CAST('r' AS "char"), CAST('v' AS "char"), CAST('f' AS "char"), CAST('p' AS "char")])) pr_c(oid, relname, relnamespace, relowner, grantor, grantee, prtype, grantable),
             pg_attribute a
           WHERE a.attrelid = pr_c.oid AND a.attnum > 0 AND NOT a.attisdropped
         UNION
@@ -765,15 +765,15 @@ AS SELECT CAST(u_grantor.rolname AS sys.nvarchar(128)) AS "GRANTOR",
             c.relowner
            FROM ( SELECT a.attrelid,
                     a.attname,
-                    (aclexplode(COALESCE(a.attacl, acldefault('c'::"char", cc.relowner)))).grantor AS grantor,
-                    (aclexplode(COALESCE(a.attacl, acldefault('c'::"char", cc.relowner)))).grantee AS grantee,
-                    (aclexplode(COALESCE(a.attacl, acldefault('c'::"char", cc.relowner)))).privilege_type AS privilege_type,
-                    (aclexplode(COALESCE(a.attacl, acldefault('c'::"char", cc.relowner)))).is_grantable AS is_grantable
+                    (aclexplode(COALESCE(a.attacl, acldefault(CAST('c' AS "char"), cc.relowner)))).grantor AS grantor,
+                    (aclexplode(COALESCE(a.attacl, acldefault(CAST('c' AS "char"), cc.relowner)))).grantee AS grantee,
+                    (aclexplode(COALESCE(a.attacl, acldefault(CAST('c' AS "char"), cc.relowner)))).privilege_type AS privilege_type,
+                    (aclexplode(COALESCE(a.attacl, acldefault(CAST('c' AS "char"), cc.relowner)))).is_grantable AS is_grantable
                    FROM pg_attribute a
                      JOIN pg_class cc ON a.attrelid = cc.oid
                   WHERE a.attnum > 0 AND NOT a.attisdropped) pr_a(attrelid, attname, grantor, grantee, prtype, grantable),
             pg_class c
-          WHERE pr_a.attrelid = c.oid AND (c.relkind = ANY (ARRAY['r'::"char", 'v'::"char", 'f'::"char", 'p'::"char"]))) x,
+          WHERE pr_a.attrelid = c.oid AND (c.relkind = ANY (ARRAY[CAST('r' AS "char"), CAST('v' AS "char"), CAST('f' AS "char"), CAST('p' AS "char")]))) x,
     pg_namespace nc,
     pg_roles u_grantor,
     ( SELECT pg_roles.oid,
@@ -781,9 +781,9 @@ AS SELECT CAST(u_grantor.rolname AS sys.nvarchar(128)) AS "GRANTOR",
            FROM pg_roles
         UNION ALL
          SELECT 0::oid AS oid,
-            'PUBLIC'::name AS name) grantee(oid, rolname)
+            CAST('PUBLIC' AS name) AS name) grantee(oid, rolname)
 WHERE x.relnamespace = nc.oid AND x.grantee = grantee.oid AND x.grantor = u_grantor.oid 
-AND (x.prtype = ANY (ARRAY['INSERT'::text, 'SELECT'::text, 'UPDATE'::text, 'REFERENCES'::text])) 
-AND (pg_has_role(u_grantor.oid, 'USAGE'::text) OR pg_has_role(grantee.oid, 'USAGE'::text) OR grantee.rolname = 'PUBLIC'::name);
+AND (x.prtype = ANY (ARRAY[CAST('INSERT' AS text), CAST('SELECT' AS text), CAST('UPDATE' AS text), CAST('REFERENCES' AS text)])) 
+AND (pg_has_role(u_grantor.oid, CAST('USAGE' AS text)) OR pg_has_role(grantee.oid, CAST('USAGE' AS text)) OR grantee.rolname = CAST('PUBLIC' AS name));
 
 GRANT SELECT ON information_schema_tsql.column_privileges TO PUBLIC;
