@@ -1,0 +1,17 @@
+-- tsql
+CREATE TABLE babelfish_migration_mode_tbl (id_num INT IDENTITY(1,1), mig_mode VARCHAR(10))
+GO
+
+CREATE TABLE babelfish_migration_mode_catalog_status (catalog_name VARCHAR(50), num INT)
+GO
+
+CREATE TABLE babelfish_migration_mode_catalog_status2 (catalog_name VARCHAR(50), num INT)
+GO
+
+CREATE PROC babelfish_migration_mode_compare AS
+BEGIN
+SELECT * FROM babelfish_migration_mode_catalog_status
+EXCEPT
+SELECT * FROM babelfish_migration_mode_catalog_status2
+END
+GO
