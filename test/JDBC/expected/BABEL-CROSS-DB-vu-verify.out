@@ -1,0 +1,413 @@
+-- tsql
+USE babel_cross_db_vu_prepare_db1;
+GO
+
+SELECT current_user;
+GO
+~~START~~
+varchar
+dbo
+~~END~~
+
+
+INSERT INTO master.dbo.babel_cross_db_vu_prepare_master_t1 VALUES (10);
+GO
+~~ROW COUNT: 1~~
+
+
+SELECT * FROM master.dbo.babel_cross_db_vu_prepare_master_t1 ORDER BY id;
+GO
+~~START~~
+int#!#int
+1#!#10
+~~END~~
+
+
+SELECT * FROM master..babel_cross_db_vu_prepare_master_t1 ORDER BY id;
+GO
+~~START~~
+int#!#int
+1#!#10
+~~END~~
+
+
+EXEC master.dbo.babel_cross_db_vu_prepare_master_p1
+GO
+~~START~~
+int
+10
+~~END~~
+
+
+EXEC master.dbo.babel_cross_db_vu_prepare_master_p2
+GO
+~~START~~
+int
+1
+~~END~~
+
+
+-- tab1 resolves to master.babel_cross_db_vu_prepare_myschema.babel_cross_db_vu_prepare_tab1
+EXEC master.babel_cross_db_vu_prepare_myschema.babel_cross_db_vu_prepare_proc1
+GO
+~~ROW COUNT: 1~~
+
+~~START~~
+int
+1
+~~END~~
+
+
+-- tab1 resolves to master.dbo.babel_cross_db_vu_prepare_tab1
+EXEC master.babel_cross_db_vu_prepare_myschema.babel_cross_db_vu_prepare_proc2
+GO
+
+SELECT * from master.dbo.babel_cross_db_vu_prepare_tab1;
+GO
+~~START~~
+int#!#int
+~~END~~
+
+
+USE babel_cross_db_vu_prepare_db1
+GO
+
+-- runtime error
+EXEC master.dbo.babel_cross_db_vu_prepare_master_p3
+GO
+~~ERROR (Code: 8134)~~
+
+~~ERROR (Message: division by zero)~~
+
+
+EXEC master..babel_cross_db_vu_prepare_master_p2
+GO
+~~START~~
+int
+1
+~~END~~
+
+
+UPDATE master.dbo.babel_cross_db_vu_prepare_master_t1
+SET a = 11
+WHERE id = 1;
+GO
+~~ROW COUNT: 1~~
+
+
+SELECT * FROM master.dbo.babel_cross_db_vu_prepare_master_t1 ORDER BY id;
+GO
+~~START~~
+int#!#int
+1#!#11
+~~END~~
+
+
+DELETE FROM master.dbo.babel_cross_db_vu_prepare_master_t1
+WHERE id = 1;
+GO
+~~ROW COUNT: 1~~
+
+
+SELECT * FROM master.dbo.babel_cross_db_vu_prepare_master_t1 ORDER BY id;
+GO
+~~START~~
+int#!#int
+~~END~~
+
+
+SELECT current_user;
+GO
+~~START~~
+varchar
+dbo
+~~END~~
+
+
+CREATE PROCEDURE babel_cross_db_vu_prepare_db1_p2
+AS
+INSERT INTO master.dbo.babel_cross_db_vu_prepare_master_t1 VALUES (10);
+GO
+
+EXEC babel_cross_db_vu_prepare_db1_p2;
+GO
+~~ROW COUNT: 1~~
+
+
+EXEC babel_cross_db_vu_prepare_db1_p2;
+GO
+~~ROW COUNT: 1~~
+
+
+EXEC babel_cross_db_vu_prepare_db1_p2;
+GO
+~~ROW COUNT: 1~~
+
+
+INSERT INTO dbo.babel_cross_db_vu_prepare_db1_t1 (a)
+SELECT (a) FROM master.dbo.babel_cross_db_vu_prepare_master_t1;
+GO
+~~ROW COUNT: 3~~
+
+
+INSERT INTO dbo.babel_cross_db_vu_prepare_db1_t1 (a)
+OUTPUT inserted.a INTO master.dbo.babel_cross_db_vu_prepare_master_t1 (a)
+VALUES (30);
+GO
+~~ROW COUNT: 1~~
+
+
+-- Expect an error
+INSERT INTO dbo.babel_cross_db_vu_prepare_db1_t1 (a)
+EXECUTE master.dbo.babel_cross_db_vu_prepare_master_p1;
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: cross-database references are not implemented: master.dbo.babel_cross_db_vu_prepare_master_p1)~~
+
+
+EXECUTE master.dbo.babel_cross_db_vu_prepare_master_p1;
+GO
+~~START~~
+int
+10
+10
+10
+30
+~~END~~
+
+
+SELECT current_user;
+GO
+~~START~~
+varchar
+dbo
+~~END~~
+
+
+INSERT INTO dbo.babel_cross_db_vu_prepare_db1_t2 VALUES (20);
+GO
+~~ROW COUNT: 1~~
+
+
+INSERT INTO master.dbo.babel_cross_db_vu_prepare_master_t1 (a)
+SELECT (a) FROM babel_cross_db_vu_prepare_db1_t2;
+GO
+~~ROW COUNT: 1~~
+
+
+SELECT * FROM master.dbo.babel_cross_db_vu_prepare_master_t1 ORDER BY id;
+GO
+~~START~~
+int#!#int
+2#!#10
+3#!#10
+4#!#10
+5#!#30
+6#!#20
+~~END~~
+
+
+USE master
+GO
+
+CREATE LOGIN babel_cross_db_vu_prepare_johndoe WITH PASSWORD = '12345678';
+GO
+
+CREATE USER babel_cross_db_vu_prepare_master_janedoe FOR LOGIN babel_cross_db_vu_prepare_johndoe;
+GO
+
+USE babel_cross_db_vu_prepare_db1;
+GO
+
+CREATE USER babel_cross_db_vu_prepare_db1_janedoe FOR LOGIN babel_cross_db_vu_prepare_johndoe;
+GO
+
+-- tsql 	user=babel_cross_db_vu_prepare_johndoe 		password=12345678
+USE master
+GO
+
+SELECT current_user;
+GO
+~~START~~
+varchar
+babel_cross_db_vu_prepare_master_janedoe
+~~END~~
+
+
+SELECT * FROM babel_cross_db_vu_prepare_db1.dbo.babel_cross_db_vu_prepare_db1_t1 ORDER BY a;
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: permission denied for table babel_cross_db_vu_prepare_db1_t1)~~
+
+
+USE babel_cross_db_vu_prepare_db1;
+GO
+
+SELECT current_user;
+GO
+~~START~~
+varchar
+babel_cross_db_vu_prepare_db1_janedoe
+~~END~~
+
+
+SELECT * FROM master.dbo.babel_cross_db_vu_prepare_master_t1 ORDER BY id;
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: permission denied for table babel_cross_db_vu_prepare_master_t1)~~
+
+
+-- tsql
+USE master
+GO
+
+GRANT SELECT ON dbo.babel_cross_db_vu_prepare_master_t1 TO babel_cross_db_vu_prepare_master_janedoe;
+GO
+
+GRANT EXECUTE ON dbo.babel_cross_db_vu_prepare_master_p2 TO babel_cross_db_vu_prepare_master_janedoe;
+GO
+
+USE babel_cross_db_vu_prepare_db1;
+GO
+
+GRANT SELECT ON dbo.babel_cross_db_vu_prepare_db1_t1 TO babel_cross_db_vu_prepare_db1_janedoe;
+GO
+
+-- tsql 	user=babel_cross_db_vu_prepare_johndoe 		password=12345678
+USE master
+GO
+
+USE babel_cross_db_vu_prepare_db1;
+GO
+
+EXEC master.dbo.babel_cross_db_vu_prepare_master_p2
+GO
+~~START~~
+int
+1
+~~END~~
+
+
+SELECT * FROM master.dbo.babel_cross_db_vu_prepare_master_t1 ORDER BY id;
+GO
+~~START~~
+int#!#int
+2#!#10
+3#!#10
+4#!#10
+5#!#30
+6#!#20
+~~END~~
+
+
+USE master;
+GO
+
+-- tsql
+USE babel_cross_db_vu_prepare_db1
+GO
+
+REVOKE SELECT ON dbo.babel_cross_db_vu_prepare_db1_t1 FROM babel_cross_db_vu_prepare_db1_janedoe
+GO
+
+DROP USER babel_cross_db_vu_prepare_db1_janedoe
+GO
+
+USE master
+GO
+
+REVOKE SELECT ON dbo.babel_cross_db_vu_prepare_master_t1 FROM babel_cross_db_vu_prepare_master_janedoe
+GO
+
+REVOKE EXECUTE ON dbo.babel_cross_db_vu_prepare_master_p2 FROM babel_cross_db_vu_prepare_master_janedoe
+GO
+
+DROP USER babel_cross_db_vu_prepare_master_janedoe;
+GO
+
+-- psql
+
+-- Need to terminate active session before cleaning up the login
+SELECT pg_terminate_backend(pid) FROM pg_stat_get_activity(NULL)
+WHERE sys.suser_name(usesysid) = 'babel_cross_db_vu_prepare_johndoe'
+AND backend_type = 'client backend' AND usesysid IS NOT NULL;
+GO
+~~START~~
+bool
+t
+~~END~~
+
+-- Wait to sync with another session
+SELECT pg_sleep(1);
+GO
+~~START~~
+void
+
+~~END~~
+
+
+-- tsql
+DROP LOGIN babel_cross_db_vu_prepare_johndoe;
+GO
+
+-- tsql
+USE master
+GO
+
+INSERT INTO babel_cross_db_vu_prepare_db1.dbo.babel_cross_db_vu_prepare_db1_t3 (a) VALUES (10);
+GO
+~~ROW COUNT: 1~~
+
+
+CREATE PROCEDURE babel_cross_db_vu_prepare_master_p4
+AS
+INSERT INTO babel_cross_db_vu_prepare_db1.dbo.babel_cross_db_vu_prepare_db1_t3 VALUES (1);
+GO
+
+EXEC babel_cross_db_vu_prepare_master_p4;
+GO
+~~ROW COUNT: 1~~
+
+
+EXEC babel_cross_db_vu_prepare_master_p4;
+GO
+~~ROW COUNT: 1~~
+
+
+INSERT INTO dbo.babel_cross_db_vu_prepare_master_t2 (b)
+SELECT a FROM babel_cross_db_vu_prepare_db1.dbo.babel_cross_db_vu_prepare_db1_t3
+WHERE id = 1;
+GO
+~~ROW COUNT: 1~~
+
+
+SELECT * FROM dbo.babel_cross_db_vu_prepare_master_t2 ORDER BY b;
+GO
+~~START~~
+int
+10
+~~END~~
+
+
+EXEC babel_cross_db_vu_prepare_db1.dbo.babel_cross_db_vu_prepare_db1_p1;
+GO
+~~START~~
+int
+10
+~~END~~
+
+
+DROP PROCEDURE babel_cross_db_vu_prepare_master_p4
+GO
+
+USE babel_cross_db_vu_prepare_db1
+GO
+
+USE master;
+GO
+
+DROP TABLE babel_cross_db_vu_prepare_tab1;
+GO

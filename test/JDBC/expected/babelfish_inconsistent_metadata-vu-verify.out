@@ -1,0 +1,21 @@
+SELECT * FROM babelfish_inconsistent_metadata_vu_prepare_view
+GO
+~~START~~
+varchar#!#varchar#!#varchar
+~~END~~
+
+
+EXEC babelfish_inconsistent_metadata_vu_prepare_proc
+GO
+~~START~~
+varchar#!#varchar#!#varchar
+~~END~~
+
+
+SELECT babelfish_inconsistent_metadata_vu_prepare_func()
+GO
+~~START~~
+int
+0
+~~END~~
+

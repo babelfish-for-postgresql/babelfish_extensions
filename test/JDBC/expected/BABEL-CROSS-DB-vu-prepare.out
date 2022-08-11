@@ -1,0 +1,65 @@
+-- tsql
+USE master
+GO
+
+CREATE SCHEMA babel_cross_db_vu_prepare_myschema
+GO
+
+CREATE TABLE dbo.babel_cross_db_vu_prepare_master_t1 (id int identity, a int);
+GO
+
+CREATE TABLE dbo.babel_cross_db_vu_prepare_master_t2 (b int);
+GO
+
+CREATE PROCEDURE dbo.babel_cross_db_vu_prepare_master_p1
+AS
+SELECT a FROM dbo.babel_cross_db_vu_prepare_master_t1;
+GO
+
+CREATE TABLE babel_cross_db_vu_prepare_myschema.babel_cross_db_vu_prepare_tab1( a int);
+GO
+
+CREATE PROCEDURE babel_cross_db_vu_prepare_myschema.babel_cross_db_vu_prepare_proc1
+AS
+INSERT INTO babel_cross_db_vu_prepare_tab1 values(1);
+SELECT * from babel_cross_db_vu_prepare_tab1;
+GO
+
+CREATE PROCEDURE babel_cross_db_vu_prepare_myschema.babel_cross_db_vu_prepare_proc2
+AS
+CREATE TABLE babel_cross_db_vu_prepare_tab1(a int, b int);
+GO
+
+CREATE PROCEDURE dbo.babel_cross_db_vu_prepare_master_p2
+AS
+SELECT 1;
+GO
+
+CREATE PROCEDURE dbo.babel_cross_db_vu_prepare_master_p3
+AS
+SELECT 1/0;
+GO
+
+CREATE DATABASE babel_cross_db_vu_prepare_db1;
+GO
+
+USE babel_cross_db_vu_prepare_db1;
+GO
+
+CREATE TABLE dbo.babel_cross_db_vu_prepare_db1_t1 (a int);
+GO
+
+CREATE TABLE dbo.babel_cross_db_vu_prepare_db1_t2 (a int);
+GO
+
+CREATE PROCEDURE babel_cross_db_vu_prepare_db1_p1
+AS
+EXEC('USE babel_cross_db_vu_prepare_db1');
+SELECT 10;
+GO
+
+CREATE TABLE dbo.babel_cross_db_vu_prepare_db1_t3 (id int identity, a int);
+GO
+
+USE master;
+GO

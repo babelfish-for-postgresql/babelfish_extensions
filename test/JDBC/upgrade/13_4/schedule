@@ -85,10 +85,13 @@ temp-tables
 TestNotNull
 Test-Identity
 TestTableType
+BABEL-CROSS-DB
+BABEL-LOGIN
 BABEL-ROLE
 babelfish_sysdatabases
 babelfish_namespace_ext
 babelfish_authid_login_ext
+babelfish_migration_mode
 schema_resolution_func
 BABEL-3147-before-14_5
 babel_char

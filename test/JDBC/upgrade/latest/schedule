@@ -124,11 +124,16 @@ triggers_with_transaction
 Test-sp_helpsrvrolemember
 Test-sp_helpuser
 TestTableType
+BABEL-CROSS-DB
+BABEL-LOGIN
+BABEL-USER
 BABEL-ROLE
 babelfish_sysdatabases
 babelfish_namespace_ext
 babelfish_authid_login_ext
 babelfish_authid_user_ext
+babelfish_inconsistent_metadata
+babelfish_migration_mode
 schema_resolution_func
 BABEL-3147
 collation_tests_arabic
