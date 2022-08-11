@@ -153,4 +153,5 @@ tdscollation
 sp_tablecollations
 sys-assemblies
 BABEL-LOGIN-USER-EXT
+key_column_usage
 BABEL-1683
