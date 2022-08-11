@@ -1,0 +1,26 @@
+-- psql
+DROP USER IF EXISTS babel_login_vu_prepare_foo;
+DROP USER IF EXISTS babel_login_vu_prepare_su_user;
+go
+
+-- tsql
+DROP PROC babel_login_vu_prepare_proc
+go
+
+DROP SCHEMA babel_login_vu_prepare_sch
+go
+
+DROP LOGIN babel_login_vu_prepare_r1
+go
+
+DROP LOGIN babel_login_vu_prepare_r2
+go
+
+DROP LOGIN babel_login_vu_prepare_r3
+go
+
+DROP LOGIN babel_login_vu_prepare_err_user
+go
+
+DROP DATABASE babel_login_vu_prepare_db1
+go

@@ -1,0 +1,429 @@
+-- tsql
+-- Test initial databases
+SELECT COUNT(*) FROM pg_roles where rolname = 'sysadmin';
+GO
+~~START~~
+int
+1
+~~END~~
+
+
+SELECT COUNT(*) FROM pg_roles where rolname = 'master_dbo';
+SELECT COUNT(*) FROM pg_roles where rolname = 'master_db_owner';
+SELECT COUNT(*) FROM pg_namespace where nspname = 'master_dbo';
+GO
+~~START~~
+int
+1
+~~END~~
+
+~~START~~
+int
+1
+~~END~~
+
+~~START~~
+int
+1
+~~END~~
+
+
+SELECT COUNT(*) FROM pg_roles where rolname = 'tempdb_dbo';
+SELECT COUNT(*) FROM pg_roles where rolname = 'tempdb_db_owner';
+SELECT COUNT(*) FROM pg_namespace where nspname = 'tempdb_dbo';
+GO
+~~START~~
+int
+1
+~~END~~
+
+~~START~~
+int
+1
+~~END~~
+
+~~START~~
+int
+1
+~~END~~
+
+
+SELECT COUNT(*) FROM pg_roles where rolname = 'msdb_dbo';
+SELECT COUNT(*) FROM pg_roles where rolname = 'msdb_db_owner';
+SELECT COUNT(*) FROM pg_namespace where nspname = 'msdb_dbo';
+GO
+~~START~~
+int
+1
+~~END~~
+
+~~START~~
+int
+1
+~~END~~
+
+~~START~~
+int
+1
+~~END~~
+
+
+-- Store default migration mode in table
+INSERT INTO babelfish_migration_mode_tbl SELECT current_setting('babelfishpg_tsql.migration_mode')
+GO
+~~ROW COUNT: 1~~
+
+
+-- Store current catalog snapshot in table
+INSERT INTO babelfish_migration_mode_catalog_status 
+SELECT 'sys.babelfish_sysdatabases', COUNT(*) FROM sys.babelfish_sysdatabases
+GO
+~~ROW COUNT: 1~~
+
+INSERT INTO babelfish_migration_mode_catalog_status
+SELECT 'sys.babelfish_namespace_ext', COUNT(*) FROM sys.babelfish_namespace_ext
+GO
+~~ROW COUNT: 1~~
+
+INSERT INTO babelfish_migration_mode_catalog_status
+SELECT 'sys.babelfish_authid_login_ext', COUNT(*) FROM sys.babelfish_authid_login_ext
+GO
+~~ROW COUNT: 1~~
+
+INSERT INTO babelfish_migration_mode_catalog_status
+SELECT 'sys.babelfish_authid_user_ext', COUNT(*) FROM sys.babelfish_authid_user_ext
+GO
+~~ROW COUNT: 1~~
+
+
+SELECT set_config('role', 'jdbc_user', false)
+GO
+~~START~~
+text
+jdbc_user
+~~END~~
+
+
+SELECT set_config('babelfishpg_tsql.migration_mode', 'multi-db', false)
+GO
+~~START~~
+text
+multi-db
+~~END~~
+
+
+SELECT current_setting('babelfishpg_tsql.migration_mode')
+GO
+~~START~~
+text
+multi-db
+~~END~~
+
+
+INSERT INTO babelfish_migration_mode_catalog_status2 
+SELECT 'sys.babelfish_sysdatabases', COUNT(*) FROM sys.babelfish_sysdatabases
+GO
+~~ROW COUNT: 1~~
+
+INSERT INTO babelfish_migration_mode_catalog_status2
+SELECT 'sys.babelfish_namespace_ext', COUNT(*) FROM sys.babelfish_namespace_ext
+GO
+~~ROW COUNT: 1~~
+
+INSERT INTO babelfish_migration_mode_catalog_status2
+SELECT 'sys.babelfish_authid_login_ext', COUNT(*) FROM sys.babelfish_authid_login_ext
+GO
+~~ROW COUNT: 1~~
+
+INSERT INTO babelfish_migration_mode_catalog_status2
+SELECT 'sys.babelfish_authid_user_ext', COUNT(*) FROM sys.babelfish_authid_user_ext
+GO
+~~ROW COUNT: 1~~
+
+
+-- Check catalog status
+EXEC babelfish_migration_mode_compare
+GO
+~~START~~
+varchar#!#int
+~~END~~
+
+
+TRUNCATE TABLE babelfish_migration_mode_catalog_status2
+GO
+
+-- Test create user database
+CREATE DATABASE babelfish_migration_mode_db1
+GO
+
+-- should fail
+CREATE DATABASE babelfish_migration_mode_db1
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Database 'babelfish_migration_mode_db1' already exists. Choose a different database name.)~~
+
+
+CREATE DATABASE babelfish_migration_mode_db2
+GO
+
+SELECT name FROM sys.sysdatabases 
+WHERE name LIKE 'babelfish_migration_mode%'
+ORDER BY name
+GO
+~~START~~
+text
+babelfish_migration_mode_db1
+babelfish_migration_mode_db2
+~~END~~
+
+
+SELECT COUNT(*) FROM pg_roles WHERE rolname = 'babelfish_migration_mode_db1_dbo'
+GO
+~~START~~
+int
+1
+~~END~~
+
+SELECT COUNT(*) FROM pg_roles WHERE rolname = 'babelfish_migration_mode_db1_db_owner'
+GO
+~~START~~
+int
+1
+~~END~~
+
+SELECT COUNT(*) FROM pg_namespace WHERE nspname = 'babelfish_migration_mode_db1_dbo'
+GO
+~~START~~
+int
+1
+~~END~~
+
+
+SELECT COUNT(*) FROM pg_roles WHERE rolname = 'babelfish_migration_mode_db2_dbo'
+GO
+~~START~~
+int
+1
+~~END~~
+
+SELECT COUNT(*) FROM pg_roles WHERE rolname = 'babelfish_migration_mode_db2_db_owner'
+GO
+~~START~~
+int
+1
+~~END~~
+
+SELECT COUNT(*) FROM pg_namespace WHERE nspname = 'babelfish_migration_mode_db2_dbo'
+GO
+~~START~~
+int
+1
+~~END~~
+
+
+USE babelfish_migration_mode_db1
+GO
+
+SELECT 1
+GO
+~~START~~
+int
+1
+~~END~~
+
+
+USE babelfish_migration_mode_db2
+GO
+
+SELECT 1
+GO
+~~START~~
+int
+1
+~~END~~
+
+
+USE master
+GO
+
+SELECT set_config('role', 'jdbc_user', false)
+GO
+~~START~~
+text
+jdbc_user
+~~END~~
+
+
+SELECT set_config('babelfishpg_tsql.migration_mode', 'single-db', false)
+GO
+~~START~~
+text
+single-db
+~~END~~
+
+
+SELECT current_setting('babelfishpg_tsql.migration_mode')
+GO
+~~START~~
+text
+single-db
+~~END~~
+
+
+-- should fail
+USE babelfish_migration_mode_db2
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: role "dbo" does not exist)~~
+
+
+SELECT set_config('role', 'jdbc_user', false)
+GO
+~~START~~
+text
+jdbc_user
+~~END~~
+
+
+SELECT set_config('babelfishpg_tsql.migration_mode', 'multi-db', false)
+GO
+~~START~~
+text
+multi-db
+~~END~~
+
+
+SELECT current_setting('babelfishpg_tsql.migration_mode')
+GO
+~~START~~
+text
+multi-db
+~~END~~
+
+
+-- should success
+USE babelfish_migration_mode_db2
+GO
+
+SELECT 1
+GO
+~~START~~
+int
+1
+~~END~~
+
+
+USE master
+GO
+
+DROP DATABASE babelfish_migration_mode_db1
+GO
+
+DROP DATABASE babelfish_migration_mode_db2
+GO
+
+SELECT set_config('role', 'jdbc_user', false)
+GO
+~~START~~
+text
+jdbc_user
+~~END~~
+
+
+SELECT set_config('babelfishpg_tsql.migration_mode', 'single-db', false)
+GO
+~~START~~
+text
+single-db
+~~END~~
+
+
+SELECT current_setting('babelfishpg_tsql.migration_mode')
+GO
+~~START~~
+text
+single-db
+~~END~~
+
+
+INSERT INTO babelfish_migration_mode_catalog_status2 
+SELECT 'sys.babelfish_sysdatabases', COUNT(*) FROM sys.babelfish_sysdatabases
+GO
+~~ROW COUNT: 1~~
+
+INSERT INTO babelfish_migration_mode_catalog_status2
+SELECT 'sys.babelfish_namespace_ext', COUNT(*) FROM sys.babelfish_namespace_ext
+GO
+~~ROW COUNT: 1~~
+
+INSERT INTO babelfish_migration_mode_catalog_status2
+SELECT 'sys.babelfish_authid_login_ext', COUNT(*) FROM sys.babelfish_authid_login_ext
+GO
+~~ROW COUNT: 1~~
+
+INSERT INTO babelfish_migration_mode_catalog_status2
+SELECT 'sys.babelfish_authid_user_ext', COUNT(*) FROM sys.babelfish_authid_user_ext
+GO
+~~ROW COUNT: 1~~
+
+
+-- Check catalog status
+EXEC babelfish_migration_mode_compare
+GO
+~~START~~
+varchar#!#int
+~~END~~
+
+
+TRUNCATE TABLE babelfish_migration_mode_catalog_status2
+GO
+
+SELECT set_config('role', 'jdbc_user', false)
+GO
+~~START~~
+text
+jdbc_user
+~~END~~
+
+
+-- Reset migration mode to default
+DECLARE @mig_mode VARCHAR(10)
+SET @mig_mode = (SELECT mig_mode FROM babelfish_migration_mode_tbl WHERE id_num = 1)
+SELECT CASE WHEN (SELECT set_config('babelfishpg_tsql.migration_mode', @mig_mode, false)) IS NOT NULL THEN 1 ELSE 0 END
+GO
+~~START~~
+int
+1
+~~END~~
+
+
+INSERT INTO babelfish_migration_mode_catalog_status2 
+SELECT 'sys.babelfish_sysdatabases', COUNT(*) FROM sys.babelfish_sysdatabases
+GO
+~~ROW COUNT: 1~~
+
+INSERT INTO babelfish_migration_mode_catalog_status2
+SELECT 'sys.babelfish_namespace_ext', COUNT(*) FROM sys.babelfish_namespace_ext
+GO
+~~ROW COUNT: 1~~
+
+INSERT INTO babelfish_migration_mode_catalog_status2
+SELECT 'sys.babelfish_authid_login_ext', COUNT(*) FROM sys.babelfish_authid_login_ext
+GO
+~~ROW COUNT: 1~~
+
+INSERT INTO babelfish_migration_mode_catalog_status2
+SELECT 'sys.babelfish_authid_user_ext', COUNT(*) FROM sys.babelfish_authid_user_ext
+GO
+~~ROW COUNT: 1~~
+
+
+-- Check catalog status
+EXEC babelfish_migration_mode_compare
+GO
+~~START~~
+varchar#!#int
+~~END~~
+

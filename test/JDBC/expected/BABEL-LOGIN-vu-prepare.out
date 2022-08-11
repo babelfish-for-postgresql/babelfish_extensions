@@ -1,0 +1,33 @@
+-- psql
+CREATE USER babel_login_vu_prepare_foo WITH LOGIN PASSWORD 'abc';
+CREATE USER babel_login_vu_prepare_su_user WITH SUPERUSER LOGIN PASSWORD 'abc';
+go
+
+-- tsql
+-- Create Login through tsql
+CREATE LOGIN babel_login_vu_prepare_r1 WITH PASSWORD = 'abc';
+go
+
+CREATE LOGIN babel_login_vu_prepare_r2 WITH password = 'abc';
+go
+
+CREATE LOGIN babel_login_vu_prepare_r3 WITH PASSWORD = 'abc';
+go
+
+CREATE LOGIN babel_login_vu_prepare_err_user WITH PASSWORD = '123';
+go
+
+CREATE DATABASE babel_login_vu_prepare_db1;
+go
+
+CREATE SCHEMA babel_login_vu_prepare_sch;
+go
+
+CREATE PROC babel_login_vu_prepare_proc AS
+BEGIN
+SELECT rolname, type
+FROM sys.babelfish_authid_login_ext
+WHERE rolname LIKE 'babel_login_vu_prepare%'
+ORDER BY rolname
+END
+go
