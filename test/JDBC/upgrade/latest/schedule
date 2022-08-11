@@ -166,3 +166,4 @@ sys-plan_guides
 sp_tablecollations
 sys-assemblies
 BABEL-LOGIN-USER-EXT
+view_column_usage
