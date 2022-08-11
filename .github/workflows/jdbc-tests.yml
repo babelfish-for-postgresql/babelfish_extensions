@@ -1,5 +1,6 @@
 name: JDBC Tests
-on: [push, pull_request]
+on:
+  workflow_call:
 
 jobs:
   run-babelfish-jdbc-tests:
@@ -7,30 +8,18 @@ jobs:
     steps:
       - uses: actions/checkout@v2
         id: checkout
+      - name: Download binaries
+        id: download-binaries
+        # See https://github.com/marketplace/actions/download-workflow-artifact
+        uses: dawidd6/action-download-artifact@v2
+        with:
+          workflow: base.yml
+          name: binaries
+          path: ~/postgres
 
-      - name: Install Dependencies
-        id: install-dependencies
-        if: always()
-        uses: ./.github/composite-actions/install-dependencies
-
-      - name: Build Modified Postgres
-        id: build-modified-postgres
-        if: always() && steps.install-dependencies.outcome == 'success'
-        uses: ./.github/composite-actions/build-modified-postgres
-      
-      - name: Compile ANTLR
-        id: compile-antlr
-        if: always() && steps.build-modified-postgres.outcome == 'success'
-        uses: ./.github/composite-actions/compile-antlr
-      
-      - name: Build Extensions
-        id: build-extensions
-        if: always() && steps.compile-antlr.outcome == 'success'
-        uses: ./.github/composite-actions/build-extensions
-      
       - name: Install Extensions
         id: install-extensions
-        if: always() && steps.build-extensions.outcome == 'success'
+        if: always() && steps.download-binaries.outcome == 'success'
         uses: ./.github/composite-actions/install-extensions
 
       - name: Run JDBC Tests
