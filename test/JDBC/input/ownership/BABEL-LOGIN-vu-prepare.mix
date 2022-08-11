@@ -1,8 +1,3 @@
--- psql
-CREATE USER babel_login_vu_prepare_foo WITH LOGIN PASSWORD 'abc';
-CREATE USER babel_login_vu_prepare_su_user WITH SUPERUSER LOGIN PASSWORD 'abc';
-go
-
 -- Create Login through tsql
 -- tsql
 CREATE LOGIN babel_login_vu_prepare_r1 WITH PASSWORD = 'abc';
