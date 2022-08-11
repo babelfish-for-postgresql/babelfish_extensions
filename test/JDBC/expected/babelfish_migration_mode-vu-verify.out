@@ -279,21 +279,6 @@ GO
 ~~ERROR (Message: role "dbo" does not exist)~~
 
 
--- should fail
-BEGIN
-BEGIN TRY
-CREATE DATABASE babelfish_migration_mode_db3
-END TRY
-BEGIN CATCH
-RAISERROR('Failed to create babelfish_migration_mode_db3', 16, 1)
-END CATCH
-END
-GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: Only one user database allowed under single-db mode. User database "babelfish_migration_mode_db1" already exists)~~
-
-
 SELECT set_config('role', 'jdbc_user', false)
 GO
 ~~START~~

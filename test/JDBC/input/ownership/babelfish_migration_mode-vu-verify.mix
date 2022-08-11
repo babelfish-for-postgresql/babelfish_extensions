@@ -123,17 +123,6 @@ GO
 USE babelfish_migration_mode_db2
 GO
 
--- should fail
-BEGIN
-BEGIN TRY
-CREATE DATABASE babelfish_migration_mode_db3
-END TRY
-BEGIN CATCH
-RAISERROR('Failed to create babelfish_migration_mode_db3', 16, 1)
-END CATCH
-END
-GO
-
 SELECT set_config('role', 'jdbc_user', false)
 GO
 
