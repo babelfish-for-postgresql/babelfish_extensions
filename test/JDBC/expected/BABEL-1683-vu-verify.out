@@ -1,14 +1,4 @@
 -- NVARCHAR(128)
-INSERT INTO babel_1683_vu_prepare_table_nvarchar1 VALUES (1, NULL)
-go
-~~ROW COUNT: 1~~
-
-
-INSERT INTO babel_1683_vu_prepare_table_nvarchar1(a) VALUES (2)
-go
-~~ROW COUNT: 1~~
-
-
 SELECT * FROM babel_1683_vu_prepare_table_nvarchar1
 go
 ~~START~~
@@ -19,20 +9,6 @@ int#!#nvarchar
 
 
 -- SYSNAME not explicitly defined as NULL
-INSERT INTO babel_1683_vu_prepare_table_sysname1 VALUES (1, NULL)
-go
-~~ERROR (Code: 515)~~
-
-~~ERROR (Message: null value in column "b" of relation "babel_1683_vu_prepare_table_sysname1" violates not-null constraint)~~
-
-
-INSERT INTO babel_1683_vu_prepare_table_sysname1(a) VALUES (2)
-go
-~~ERROR (Code: 515)~~
-
-~~ERROR (Message: null value in column "b" of relation "babel_1683_vu_prepare_table_sysname1" violates not-null constraint)~~
-
-
 SELECT * FROM babel_1683_vu_prepare_table_sysname1
 go
 ~~START~~
@@ -41,16 +17,6 @@ int#!#varchar
 
 
 -- SYSNAME explicitly defined as NULL
-INSERT INTO babel_1683_vu_prepare_table_sysname2 VALUES (1, NULL)
-go
-~~ROW COUNT: 1~~
-
-
-INSERT INTO babel_1683_vu_prepare_table_sysname2(a) VALUES (2)
-go
-~~ROW COUNT: 1~~
-
-
 SELECT * FROM babel_1683_vu_prepare_table_sysname2
 go
 ~~START~~
@@ -62,19 +28,6 @@ int#!#varchar
 
 -- ALTER TABLE ADD <column> stmt
 -- NVARCHAR(128)
-ALTER TABLE babel_1683_vu_prepare_table_nvarchar2 ADD b NVARCHAR(128)
-go
-
-INSERT INTO babel_1683_vu_prepare_table_nvarchar2 VALUES (1, NULL)
-go
-~~ROW COUNT: 1~~
-
-
-INSERT INTO babel_1683_vu_prepare_table_nvarchar2(a) VALUES (2)
-go
-~~ROW COUNT: 1~~
-
-
 SELECT * FROM babel_1683_vu_prepare_table_nvarchar2
 go
 ~~START~~
@@ -85,23 +38,6 @@ int#!#nvarchar
 
 
 -- SYSNAME not explicitly defined as NULL
-ALTER TABLE babel_1683_vu_prepare_table_sysname3 ADD b SYSNAME
-go
-
-INSERT INTO babel_1683_vu_prepare_table_sysname3 VALUES (1, NULL)
-go
-~~ERROR (Code: 515)~~
-
-~~ERROR (Message: null value in column "b" of relation "babel_1683_vu_prepare_table_sysname3" violates not-null constraint)~~
-
-
-INSERT INTO babel_1683_vu_prepare_table_sysname3(a) VALUES (2)
-go
-~~ERROR (Code: 515)~~
-
-~~ERROR (Message: null value in column "b" of relation "babel_1683_vu_prepare_table_sysname3" violates not-null constraint)~~
-
-
 SELECT * FROM babel_1683_vu_prepare_table_sysname3
 go
 ~~START~~
@@ -110,19 +46,6 @@ int#!#varchar
 
 
 -- SYSNAME explicitly defined as NULL
-ALTER TABLE babel_1683_vu_prepare_table_sysname4 ADD b SYSNAME NULL
-go
-
-INSERT INTO babel_1683_vu_prepare_table_sysname4 VALUES (1, NULL)
-go
-~~ROW COUNT: 1~~
-
-
-INSERT INTO babel_1683_vu_prepare_table_sysname4(a) VALUES (2)
-go
-~~ROW COUNT: 1~~
-
-
 SELECT * FROM babel_1683_vu_prepare_table_sysname4
 go
 ~~START~~
