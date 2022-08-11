@@ -5,9 +5,9 @@ select * from information_schema.constraint_table_usage where table_name like 'c
 go
 ~~START~~
 nvarchar#!#nvarchar#!#varchar#!#nvarchar#!#nvarchar#!#varchar
+constraint_table_usage_vu_prepare_db#!#dbo#!#constraint_table_usage_vu_prepare_tb1#!#constraint_table_usage_vu_prepare_db#!#dbo#!#constraint_table_usage_vu_prepare_tb1_name_id_key
 constraint_table_usage_vu_prepare_db#!#dbo#!#constraint_table_usage_vu_prepare_tb2#!#constraint_table_usage_vu_prepare_db#!#dbo#!#test_const
 constraint_table_usage_vu_prepare_db#!#dbo#!#constraint_table_usage_vu_prepare_tb3#!#constraint_table_usage_vu_prepare_db#!#dbo#!#constraint_table_usage_vu_prepare_tb3_pkey
-constraint_table_usage_vu_prepare_db#!#dbo#!#constraint_table_usage_vu_prepare_tb1#!#constraint_table_usage_vu_prepare_db#!#dbo#!#constraint_table_usage_vu_prepare_tb1_name_id_key
 ~~END~~
 
 
@@ -18,9 +18,9 @@ select * from information_schema.constraint_table_usage where table_name like 'c
 go
 ~~START~~
 nvarchar#!#nvarchar#!#varchar#!#nvarchar#!#nvarchar#!#varchar
+constraint_table_usage_vu_prepare_db#!#dbo#!#constraint_table_usage_vu_prepare_tb1#!#constraint_table_usage_vu_prepare_db#!#dbo#!#constraint_table_usage_vu_prepare_tb1_name_id_key
 constraint_table_usage_vu_prepare_db#!#dbo#!#constraint_table_usage_vu_prepare_tb2#!#constraint_table_usage_vu_prepare_db#!#dbo#!#test_const
 constraint_table_usage_vu_prepare_db#!#dbo#!#constraint_table_usage_vu_prepare_tb3#!#constraint_table_usage_vu_prepare_db#!#dbo#!#constraint_table_usage_vu_prepare_tb3_pkey
-constraint_table_usage_vu_prepare_db#!#dbo#!#constraint_table_usage_vu_prepare_tb1#!#constraint_table_usage_vu_prepare_db#!#dbo#!#constraint_table_usage_vu_prepare_tb1_name_id_key
 ~~END~~
 
 
@@ -31,8 +31,8 @@ select * from information_schema.constraint_table_usage where table_name like 'c
 go
 ~~START~~
 nvarchar#!#nvarchar#!#varchar#!#nvarchar#!#nvarchar#!#varchar
-constraint_table_usage_vu_prepare_db#!#dbo#!#constraint_table_usage_vu_prepare_tb2#!#constraint_table_usage_vu_prepare_db#!#dbo#!#test_const
 constraint_table_usage_vu_prepare_db#!#dbo#!#constraint_table_usage_vu_prepare_tb1#!#constraint_table_usage_vu_prepare_db#!#dbo#!#constraint_table_usage_vu_prepare_tb1_name_id_key
+constraint_table_usage_vu_prepare_db#!#dbo#!#constraint_table_usage_vu_prepare_tb2#!#constraint_table_usage_vu_prepare_db#!#dbo#!#test_const
 ~~END~~
 
 

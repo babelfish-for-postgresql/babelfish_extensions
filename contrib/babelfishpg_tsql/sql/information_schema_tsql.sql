@@ -733,7 +733,7 @@ AS SELECT CAST(sys.db_name() AS sys.nvarchar(128)) AS "TABLE_CATALOG",
     pg_class r,
     pg_namespace nr
 WHERE c.connamespace = nc.oid AND r.relnamespace = nr.oid 
-AND (c.contype = 'f'::"char" AND c.confrelid = r.oid OR (c.contype = ANY (ARRAY['p'::"char", 'u'::"char"])) AND c.conrelid = r.oid) 
-AND (r.relkind = ANY (ARRAY['r'::"char", 'p'::"char"])) AND pg_has_role(r.relowner, 'USAGE'::text);
+AND (c.contype = CAST('f' AS "char") AND c.confrelid = r.oid OR (c.contype = ANY (ARRAY[CAST('p' AS "char"), CAST('u' AS "char")])) AND c.conrelid = r.oid) 
+AND (r.relkind = ANY (ARRAY[CAST('r' AS "char"), CAST('p' AS "char")])) AND pg_has_role(r.relowner, CAST('USAGE' AS text));
 
 GRANT SELECT ON information_schema_tsql.constraint_table_usage TO PUBLIC;
