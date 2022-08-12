@@ -5,7 +5,7 @@ varchar#!#varchar#!#ntext
 ~~END~~
 
 
-SELECT * FROM bbf_view_def_upgrade_vu_prepare_dep_view WHERE "TABLE_NAME" LIKE '%bbf_view_def_upgrade_vu_prepare%';
+SELECT * FROM bbf_view_def_upgrade_vu_prepare_dep_view WHERE "TABLE_NAME" LIKE '%bbf_view_def_upgrade_vu_prepare%' ORDER BY "TABLE_NAME";
 GO
 ~~START~~
 varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar#!#varchar
