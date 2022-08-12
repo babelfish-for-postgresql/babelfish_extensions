@@ -81,11 +81,11 @@ sys-spatial_index_tessellations
 sys-spatial_indexes
 sys-stats
 sys-synonyms
-sys-syscharsets
+sys-system_sql_modules
 sys-syscolumns
+sys-syscharsets
 sys-sysforeignkeys
 sys-syslanguages
-sys-system_sql_modules
 sys-table_types
 sys-tables
 sys-types
