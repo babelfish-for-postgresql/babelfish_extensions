@@ -1,6 +1,3 @@
-use column_privileges_vu_prepare_db;
-go
-
 create login column_privileges_vu_prepare_log WITH PASSWORD = 'YourSecretPassword1234#';
 GO
 
@@ -68,11 +65,5 @@ drop user column_privileges_vu_prepare_user;
 go
 
 drop login column_privileges_vu_prepare_log;
-go
-
-use master;
-go
-
-drop database column_privileges_vu_prepare_db;
 go
 

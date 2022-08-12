@@ -1,6 +1,3 @@
-use column_privileges_vu_prepare_db;
-go
-
 create login column_privileges_vu_prepare_log WITH PASSWORD = 'YourSecretPassword1234#';
 GO
 
@@ -23,10 +20,10 @@ select * from information_schema.column_privileges where table_name like 'column
 go
 ~~START~~
 nvarchar#!#nvarchar#!#nvarchar#!#nvarchar#!#varchar#!#varchar#!#varchar#!#varchar
-dbo#!#column_privileges_vu_prepare_db194c07eed72a57fea7ea9473e84dbe96#!#column_privileges_vu_prepare_db#!#dbo#!#column_privileges_vu_prepare_tb1#!#arg1#!#SELECT#!#NO
-dbo#!#column_privileges_vu_prepare_db194c07eed72a57fea7ea9473e84dbe96#!#column_privileges_vu_prepare_db#!#dbo#!#column_privileges_vu_prepare_tb1#!#arg2#!#UPDATE#!#NO
-dbo#!#column_privileges_vu_prepare_db194c07eed72a57fea7ea9473e84dbe96#!#column_privileges_vu_prepare_db#!#dbo#!#column_privileges_vu_prepare_tb2#!#arg3#!#INSERT#!#NO
-dbo#!#column_privileges_vu_prepare_db194c07eed72a57fea7ea9473e84dbe96#!#column_privileges_vu_prepare_db#!#dbo#!#column_privileges_vu_prepare_tb2#!#arg4#!#REFERENCES#!#NO
+master_dbo#!#master_column_privileges_vu_prepare_user#!#master#!#master_dbo#!#column_privileges_vu_prepare_tb1#!#arg1#!#SELECT#!#NO
+master_dbo#!#master_column_privileges_vu_prepare_user#!#master#!#master_dbo#!#column_privileges_vu_prepare_tb1#!#arg2#!#UPDATE#!#NO
+master_dbo#!#master_column_privileges_vu_prepare_user#!#master#!#master_dbo#!#column_privileges_vu_prepare_tb2#!#arg3#!#INSERT#!#NO
+master_dbo#!#master_column_privileges_vu_prepare_user#!#master#!#master_dbo#!#column_privileges_vu_prepare_tb2#!#arg4#!#REFERENCES#!#NO
 ~~END~~
 
 
@@ -43,10 +40,10 @@ select * from information_schema.column_privileges where table_name like 'column
 go
 ~~START~~
 nvarchar#!#nvarchar#!#nvarchar#!#nvarchar#!#varchar#!#varchar#!#varchar#!#varchar
-dbo#!#column_privileges_vu_prepare_db194c07eed72a57fea7ea9473e84dbe96#!#column_privileges_vu_prepare_db#!#dbo#!#column_privileges_vu_prepare_tb1#!#arg1#!#SELECT#!#NO
-dbo#!#column_privileges_vu_prepare_db194c07eed72a57fea7ea9473e84dbe96#!#column_privileges_vu_prepare_db#!#dbo#!#column_privileges_vu_prepare_tb1#!#arg2#!#UPDATE#!#NO
-dbo#!#column_privileges_vu_prepare_db194c07eed72a57fea7ea9473e84dbe96#!#column_privileges_vu_prepare_db#!#dbo#!#column_privileges_vu_prepare_tb2#!#arg3#!#INSERT#!#NO
-dbo#!#column_privileges_vu_prepare_db194c07eed72a57fea7ea9473e84dbe96#!#column_privileges_vu_prepare_db#!#dbo#!#column_privileges_vu_prepare_tb2#!#arg4#!#REFERENCES#!#NO
+master_dbo#!#master_column_privileges_vu_prepare_user#!#master#!#master_dbo#!#column_privileges_vu_prepare_tb1#!#arg1#!#SELECT#!#NO
+master_dbo#!#master_column_privileges_vu_prepare_user#!#master#!#master_dbo#!#column_privileges_vu_prepare_tb1#!#arg2#!#UPDATE#!#NO
+master_dbo#!#master_column_privileges_vu_prepare_user#!#master#!#master_dbo#!#column_privileges_vu_prepare_tb2#!#arg3#!#INSERT#!#NO
+master_dbo#!#master_column_privileges_vu_prepare_user#!#master#!#master_dbo#!#column_privileges_vu_prepare_tb2#!#arg4#!#REFERENCES#!#NO
 ~~END~~
 
 
@@ -66,22 +63,22 @@ select * from information_schema.column_privileges where table_name like 'column
 go
 ~~START~~
 nvarchar#!#nvarchar#!#nvarchar#!#nvarchar#!#varchar#!#varchar#!#varchar#!#varchar
-dbo#!#dbo#!#column_privileges_vu_prepare_db#!#dbo#!#column_privileges_vu_prepare_tb1#!#arg1#!#INSERT#!#YES
-dbo#!#dbo#!#column_privileges_vu_prepare_db#!#dbo#!#column_privileges_vu_prepare_tb1#!#arg1#!#REFERENCES#!#YES
-dbo#!#dbo#!#column_privileges_vu_prepare_db#!#dbo#!#column_privileges_vu_prepare_tb1#!#arg1#!#SELECT#!#YES
-dbo#!#dbo#!#column_privileges_vu_prepare_db#!#dbo#!#column_privileges_vu_prepare_tb1#!#arg1#!#UPDATE#!#YES
-dbo#!#dbo#!#column_privileges_vu_prepare_db#!#dbo#!#column_privileges_vu_prepare_tb1#!#arg2#!#INSERT#!#YES
-dbo#!#dbo#!#column_privileges_vu_prepare_db#!#dbo#!#column_privileges_vu_prepare_tb1#!#arg2#!#REFERENCES#!#YES
-dbo#!#dbo#!#column_privileges_vu_prepare_db#!#dbo#!#column_privileges_vu_prepare_tb1#!#arg2#!#SELECT#!#YES
-dbo#!#dbo#!#column_privileges_vu_prepare_db#!#dbo#!#column_privileges_vu_prepare_tb1#!#arg2#!#UPDATE#!#YES
-dbo#!#dbo#!#column_privileges_vu_prepare_db#!#dbo#!#column_privileges_vu_prepare_tb2#!#arg3#!#INSERT#!#YES
-dbo#!#dbo#!#column_privileges_vu_prepare_db#!#dbo#!#column_privileges_vu_prepare_tb2#!#arg3#!#REFERENCES#!#YES
-dbo#!#dbo#!#column_privileges_vu_prepare_db#!#dbo#!#column_privileges_vu_prepare_tb2#!#arg3#!#SELECT#!#YES
-dbo#!#dbo#!#column_privileges_vu_prepare_db#!#dbo#!#column_privileges_vu_prepare_tb2#!#arg3#!#UPDATE#!#YES
-dbo#!#dbo#!#column_privileges_vu_prepare_db#!#dbo#!#column_privileges_vu_prepare_tb2#!#arg4#!#INSERT#!#YES
-dbo#!#dbo#!#column_privileges_vu_prepare_db#!#dbo#!#column_privileges_vu_prepare_tb2#!#arg4#!#REFERENCES#!#YES
-dbo#!#dbo#!#column_privileges_vu_prepare_db#!#dbo#!#column_privileges_vu_prepare_tb2#!#arg4#!#SELECT#!#YES
-dbo#!#dbo#!#column_privileges_vu_prepare_db#!#dbo#!#column_privileges_vu_prepare_tb2#!#arg4#!#UPDATE#!#YES
+master_dbo#!#master_dbo#!#master#!#master_dbo#!#column_privileges_vu_prepare_tb1#!#arg1#!#INSERT#!#YES
+master_dbo#!#master_dbo#!#master#!#master_dbo#!#column_privileges_vu_prepare_tb1#!#arg1#!#REFERENCES#!#YES
+master_dbo#!#master_dbo#!#master#!#master_dbo#!#column_privileges_vu_prepare_tb1#!#arg1#!#SELECT#!#YES
+master_dbo#!#master_dbo#!#master#!#master_dbo#!#column_privileges_vu_prepare_tb1#!#arg1#!#UPDATE#!#YES
+master_dbo#!#master_dbo#!#master#!#master_dbo#!#column_privileges_vu_prepare_tb1#!#arg2#!#INSERT#!#YES
+master_dbo#!#master_dbo#!#master#!#master_dbo#!#column_privileges_vu_prepare_tb1#!#arg2#!#REFERENCES#!#YES
+master_dbo#!#master_dbo#!#master#!#master_dbo#!#column_privileges_vu_prepare_tb1#!#arg2#!#SELECT#!#YES
+master_dbo#!#master_dbo#!#master#!#master_dbo#!#column_privileges_vu_prepare_tb1#!#arg2#!#UPDATE#!#YES
+master_dbo#!#master_dbo#!#master#!#master_dbo#!#column_privileges_vu_prepare_tb2#!#arg3#!#INSERT#!#YES
+master_dbo#!#master_dbo#!#master#!#master_dbo#!#column_privileges_vu_prepare_tb2#!#arg3#!#REFERENCES#!#YES
+master_dbo#!#master_dbo#!#master#!#master_dbo#!#column_privileges_vu_prepare_tb2#!#arg3#!#SELECT#!#YES
+master_dbo#!#master_dbo#!#master#!#master_dbo#!#column_privileges_vu_prepare_tb2#!#arg3#!#UPDATE#!#YES
+master_dbo#!#master_dbo#!#master#!#master_dbo#!#column_privileges_vu_prepare_tb2#!#arg4#!#INSERT#!#YES
+master_dbo#!#master_dbo#!#master#!#master_dbo#!#column_privileges_vu_prepare_tb2#!#arg4#!#REFERENCES#!#YES
+master_dbo#!#master_dbo#!#master#!#master_dbo#!#column_privileges_vu_prepare_tb2#!#arg4#!#SELECT#!#YES
+master_dbo#!#master_dbo#!#master#!#master_dbo#!#column_privileges_vu_prepare_tb2#!#arg4#!#UPDATE#!#YES
 ~~END~~
 
 
@@ -104,11 +101,5 @@ drop user column_privileges_vu_prepare_user;
 go
 
 drop login column_privileges_vu_prepare_log;
-go
-
-use master;
-go
-
-drop database column_privileges_vu_prepare_db;
 go
 
