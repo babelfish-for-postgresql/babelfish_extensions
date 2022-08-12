@@ -5,24 +5,42 @@ select * from information_schema.constraint_table_usage where table_name like 'c
 go
 ~~START~~
 nvarchar#!#nvarchar#!#varchar#!#nvarchar#!#nvarchar#!#varchar
-constraint_table_usage_vu_prepare_db#!#dbo#!#constraint_table_usage_vu_prepare_tb1#!#constraint_table_usage_vu_prepare_db#!#dbo#!#constraint_table_usage_vu_prepare_tb1_name_id_key
-constraint_table_usage_vu_prepare_db#!#dbo#!#constraint_table_usage_vu_prepare_tb2#!#constraint_table_usage_vu_prepare_db#!#dbo#!#test_const
-constraint_table_usage_vu_prepare_db#!#dbo#!#constraint_table_usage_vu_prepare_tb3#!#constraint_table_usage_vu_prepare_db#!#dbo#!#constraint_table_usage_vu_prepare_tb3_pkey
+constraint_table_usage_vu_prepare_db#!#dbo#!#constraint_table_usage_vu_prepare_tb1#!#constraint_table_usage_vu_prepare_db#!#dbo#!#constraint_table_usage_vu_prepare_tb1_arg1_arg2_key
+constraint_table_usage_vu_prepare_db#!#dbo#!#constraint_table_usage_vu_prepare_tb2#!#constraint_table_usage_vu_prepare_db#!#dbo#!#constraint_table_usage_vu_prepare_tb2_pkey
+constraint_table_usage_vu_prepare_db#!#dbo#!#constraint_table_usage_vu_prepare_tb2#!#constraint_table_usage_vu_prepare_db#!#dbo#!#fk_redconstraint_table_usage_vu5c9039a3fc5324c27cc0d4025b46a025
 ~~END~~
 
 
-drop table constraint_table_usage_vu_prepare_tb4;
+create view constraint_table_usage_vu_prepare_view as select * from information_schema.constraint_table_usage where table_name like 'constraint_table_usage_vu_prepare_tb%';
+go
+
+create procedure constraint_table_usage_vu_prepare_proc as select * from information_schema.constraint_table_usage where table_name like 'constraint_table_usage_vu_prepare_tb%';
+go
+
+create function constraint_table_usage_vu_prepare_func() returns table as return(select * from information_schema.constraint_table_usage where table_name like 'constraint_table_usage_vu_prepare_tb%');
 go
 
 select * from information_schema.constraint_table_usage where table_name like 'constraint_table_usage_vu_prepare_tb%';
 go
 ~~START~~
 nvarchar#!#nvarchar#!#varchar#!#nvarchar#!#nvarchar#!#varchar
-constraint_table_usage_vu_prepare_db#!#dbo#!#constraint_table_usage_vu_prepare_tb1#!#constraint_table_usage_vu_prepare_db#!#dbo#!#constraint_table_usage_vu_prepare_tb1_name_id_key
-constraint_table_usage_vu_prepare_db#!#dbo#!#constraint_table_usage_vu_prepare_tb2#!#constraint_table_usage_vu_prepare_db#!#dbo#!#test_const
-constraint_table_usage_vu_prepare_db#!#dbo#!#constraint_table_usage_vu_prepare_tb3#!#constraint_table_usage_vu_prepare_db#!#dbo#!#constraint_table_usage_vu_prepare_tb3_pkey
+constraint_table_usage_vu_prepare_db#!#dbo#!#constraint_table_usage_vu_prepare_tb1#!#constraint_table_usage_vu_prepare_db#!#dbo#!#constraint_table_usage_vu_prepare_tb1_arg1_arg2_key
+constraint_table_usage_vu_prepare_db#!#dbo#!#constraint_table_usage_vu_prepare_tb2#!#constraint_table_usage_vu_prepare_db#!#dbo#!#constraint_table_usage_vu_prepare_tb2_pkey
+constraint_table_usage_vu_prepare_db#!#dbo#!#constraint_table_usage_vu_prepare_tb2#!#constraint_table_usage_vu_prepare_db#!#dbo#!#fk_redconstraint_table_usage_vu5c9039a3fc5324c27cc0d4025b46a025
 ~~END~~
 
+
+drop function constraint_table_usage_vu_prepare_func;
+go
+
+drop procedure constraint_table_usage_vu_prepare_proc;
+go
+
+drop view constraint_table_usage_vu_prepare_view;
+go
+
+drop table constraint_table_usage_vu_prepare_tb4;
+go
 
 drop table constraint_table_usage_vu_prepare_tb3;
 go
@@ -31,21 +49,13 @@ select * from information_schema.constraint_table_usage where table_name like 'c
 go
 ~~START~~
 nvarchar#!#nvarchar#!#varchar#!#nvarchar#!#nvarchar#!#varchar
-constraint_table_usage_vu_prepare_db#!#dbo#!#constraint_table_usage_vu_prepare_tb1#!#constraint_table_usage_vu_prepare_db#!#dbo#!#constraint_table_usage_vu_prepare_tb1_name_id_key
-constraint_table_usage_vu_prepare_db#!#dbo#!#constraint_table_usage_vu_prepare_tb2#!#constraint_table_usage_vu_prepare_db#!#dbo#!#test_const
+constraint_table_usage_vu_prepare_db#!#dbo#!#constraint_table_usage_vu_prepare_tb1#!#constraint_table_usage_vu_prepare_db#!#dbo#!#constraint_table_usage_vu_prepare_tb1_arg1_arg2_key
+constraint_table_usage_vu_prepare_db#!#dbo#!#constraint_table_usage_vu_prepare_tb2#!#constraint_table_usage_vu_prepare_db#!#dbo#!#constraint_table_usage_vu_prepare_tb2_pkey
 ~~END~~
 
 
 drop table constraint_table_usage_vu_prepare_tb2;
 go
-
-select * from information_schema.constraint_table_usage where table_name like 'constraint_table_usage_vu_prepare_tb%';
-go
-~~START~~
-nvarchar#!#nvarchar#!#varchar#!#nvarchar#!#nvarchar#!#varchar
-constraint_table_usage_vu_prepare_db#!#dbo#!#constraint_table_usage_vu_prepare_tb1#!#constraint_table_usage_vu_prepare_db#!#dbo#!#constraint_table_usage_vu_prepare_tb1_name_id_key
-~~END~~
-
 
 drop table constraint_table_usage_vu_prepare_tb1;
 go

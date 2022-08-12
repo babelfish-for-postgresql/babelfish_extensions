@@ -7,16 +7,16 @@ go
 use constraint_table_usage_vu_prepare_db;
 go
 
-create table constraint_table_usage_vu_prepare_tb1(name char(10) NOT NULL, id char(10) NOT NULL, UNIQUE(name,id));
+create table constraint_table_usage_vu_prepare_tb1(arg1 char(10) NOT NULL, arg2 char(10), UNIQUE(arg1,arg2));
 go
 
-create table constraint_table_usage_vu_prepare_tb2(book char(10), subject char(10) NOT NULL CONSTRAINT TEST_CONST PRIMARY KEY);
+create table constraint_table_usage_vu_prepare_tb2(redID INT PRIMARY KEY);
 go
 
-create table constraint_table_usage_vu_prepare_tb3(name char(10) NOT NULL, id char(10) NOT NULL, PRIMARY KEY(name, id));
+CREATE TABLE constraint_table_usage_vu_prepare_tb3(redID INT NOT NULL, CONSTRAINT FK_RED FOREIGN KEY (redID) REFERENCES constraint_table_usage_vu_prepare_tb2 (redID));
 go
 
-create table constraint_table_usage_vu_prepare_tb4(movie char(10), description char(1000));
+create table constraint_table_usage_vu_prepare_tb4(arg3 int CHECK (arg3 > 10), arg4 int DEFAULT 100.00);
 go
 
 use master;
