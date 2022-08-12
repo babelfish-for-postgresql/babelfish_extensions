@@ -168,6 +168,11 @@ CREATE OPERATOR sys.- (
     PROCEDURE  = sys.bitneg
 );
 
+CREATE OPERATOR sys.~ (
+    RIGHTARG   = sys.BIT,
+    PROCEDURE  = sys.bitneg
+);
+
 CREATE OPERATOR sys.= (
     LEFTARG    = sys.BIT,
     RIGHTARG   = sys.BIT,

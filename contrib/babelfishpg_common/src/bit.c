@@ -320,7 +320,7 @@ bitneg(PG_FUNCTION_ARGS)
 {
 	bool arg = PG_GETARG_BOOL(0);
 
-	PG_RETURN_BOOL(arg);
+	PG_RETURN_BOOL(!arg);
 }
 
 Datum
