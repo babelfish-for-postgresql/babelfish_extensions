@@ -93,6 +93,10 @@ jobs:
           for filename in $(grep -v "^ignore.*\|^#.*\|^cmd.*\|^all.*\|^$" upgrade/singledb/schedule); do
             sed -i "s/$filename[ ]*$/$filename-vu-prepare/g" upgrade/singledb/schedule
           done
+          for filename in $(grep -v "^ignore.*\|^#.*\|^cmd.*\|^all.*\|^$" upgrade/singledb/schedule); do
+            mv input/$filename input/$filename-singledb
+            sed -i "s/$filename[ ]*$/$filename-singledb/g" upgrade/singledb/schedule
+          done
           export scheduleFile=upgrade/singledb/schedule
           cat upgrade/singledb/schedule
           mvn test
@@ -144,6 +148,10 @@ jobs:
           export inputFilesPath=input
           for filename in $(grep -v "^ignore.*\|^#.*\|^cmd.*\|^all.*\|^$" upgrade/singledb/schedule); do
             sed -i "s/$filename[ ]*$/$filename-vu-verify\\n$filename-vu-cleanup/g" upgrade/singledb/schedule
+          done
+          for filename in $(grep -v "^ignore.*\|^#.*\|^cmd.*\|^all.*\|^$" upgrade/singledb/schedule); do
+            mv input/$filename input/$filename-singledb
+            sed -i "s/$filename[ ]*$/$filename-singledb/g" upgrade/singledb/schedule
           done
           export scheduleFile=upgrade/singledb/schedule
           cat upgrade/singledb/schedule
