@@ -166,10 +166,10 @@ GRANT SELECT ON information_schema_tsql.COLUMN_DOMAIN_USAGE TO PUBLIC;
 */
 
 CREATE OR REPLACE VIEW information_schema_tsql.column_privileges
-AS SELECT CAST(u_grantor.rolname AS sys.nvarchar(128)) AS "GRANTOR",
-    CAST(grantee.rolname AS sys.nvarchar(128)) AS "GRANTEE",
+AS SELECT CAST((select orig_username from sys.babelfish_authid_user_ext where u_grantor.rolname = rolname) AS sys.nvarchar(128)) AS "GRANTOR",
+    CAST((select orig_username from sys.babelfish_authid_user_ext where grantee.rolname = rolname) AS sys.nvarchar(128)) AS "GRANTEE",
     CAST(sys.db_name() AS sys.nvarchar(128)) AS "TABLE_CATALOG",
-    CAST(nc.nspname AS sys.nvarchar(128)) AS "TABLE_SCHEMA",
+    CAST((select orig_name from sys.babelfish_namespace_ext where nc.nspname = nspname) AS sys.nvarchar(128)) AS "TABLE_SCHEMA",
     CAST(x.relname AS sys.sysname) AS "TABLE_NAME",
     CAST(x.attname AS sys.sysname) AS "COLUMN_NAME",
     CAST(x.prtype AS sys."varchar"(10)) AS "PRIVILEGE_TYPE",
@@ -223,7 +223,7 @@ AS SELECT CAST(u_grantor.rolname AS sys.nvarchar(128)) AS "GRANTOR",
             pg_roles.rolname
            FROM pg_roles
         UNION ALL
-         SELECT 0::oid AS oid,
+         SELECT CAST(0 AS oid) AS oid,
             CAST('PUBLIC' AS name) AS name) grantee(oid, rolname)
 WHERE x.relnamespace = nc.oid AND x.grantee = grantee.oid AND x.grantor = u_grantor.oid 
 AND (x.prtype = ANY (ARRAY[CAST('INSERT' AS text), CAST('SELECT' AS text), CAST('UPDATE' AS text), CAST('REFERENCES' AS text)])) 
