@@ -1,0 +1,51 @@
+SELECT COUNT(*) FROM ::fn_helpcollations() where [Name] = DATABASEPROPERTYEX(DB_NAME(), 'Collation')
+GO
+~~START~~
+int
+1
+~~END~~
+
+
+SELECT * FROM ::isnull(NULL, 0)
+GO
+~~START~~
+int
+0
+~~END~~
+
+
+SELECT * FROM isnull(NULL, 0)
+GO
+~~START~~
+int
+0
+~~END~~
+
+
+SELECT * FROM ::
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: syntax error near '<EOF>' at line 2 and character position 0)~~
+
+
+CREATE TABLE t3299 (a int);
+GO
+
+/* Should throw a syntax error */
+CREATE TRIGGER t1
+ON t3299
+AFTER UPDATE
+AS
+IF (::UPDATE(a))
+BEGIN
+RAISERROR(0, 0, 0)
+END;
+GO
+~~ERROR (Code: 10727)~~
+
+~~ERROR (Message: syntax error near 'UPDATE' at line 6 and character position 6)~~
+
+
+DROP TABLE t3299;
+GO

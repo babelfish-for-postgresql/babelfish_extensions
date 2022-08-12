@@ -17,6 +17,7 @@
 #include "collation.h"
 #include "encoding/encoding.h"
 #include "typecode.h"
+#include "sqlvariant.h"
 
 #define NOT_FOUND -1
 
@@ -1167,6 +1168,46 @@ int get_persist_collation_id(Oid coll_oid)
 	return collidx;
 }
 
+bytea*
+tdscollationproperty_helper(const char *collationname, const char *property)
+{
+	int collidx = find_any_collation(collationname, false);
+	if (collidx >= 0)
+	{
+		coll_info coll = coll_infos[collidx];
+
+		if (strcasecmp(property, "tdscollation") == 0)
+		{
+			int64_t ret = ((int64_t)((int64_t)coll.lcid | ((int64_t)coll.collateflags << 20) | ((int64_t)coll.sortid << 32)));
+
+			/*
+			 *	ret here is of 8 bytes
+			 *	tdscollation should return 5 bytes
+			 *	Below code converts ret into 5 bytes
+			 */
+			int maxlen = 5;
+			bytea *bytea_data = (bytea *) palloc(maxlen + VARHDRSZ);
+			SET_VARSIZE(bytea_data, maxlen + VARHDRSZ);
+			char *rp = VARDATA(bytea_data);
+			bytea        *result;
+			svhdr_3B_t   *svhdr;
+
+			memcpy(rp, (char *) &ret , maxlen);
+
+			result = gen_sqlvariant_bytea_from_type_datum(BINARY_T, PointerGetDatum(bytea_data));
+
+			/* Type Specific Header */
+			svhdr = SV_HDR_3B(result);
+			SV_SET_METADATA(svhdr, BINARY_T, HDR_VER);
+			svhdr->typmod = VARSIZE_ANY_EXHDR(bytea_data);
+
+			return result;
+		}
+	}
+
+	return NULL; /* Invalid collation. */
+}
+
 int
 collationproperty_helper(const char *collationname, const char *property)
 {
@@ -1277,6 +1318,7 @@ get_collation_callbacks(void)
 		collation_callbacks_var.collation_list_internal = &collation_list_internal;
 		collation_callbacks_var.is_collated_ci_as_internal = &is_collated_ci_as_internal;
 		collation_callbacks_var.collationproperty_helper = &collationproperty_helper;
+		collation_callbacks_var.tdscollationproperty_helper = &tdscollationproperty_helper;
 		collation_callbacks_var.lookup_collation_table_callback = &lookup_collation_table;
 		collation_callbacks_var.lookup_like_ilike_table = &lookup_like_ilike_table;
 		collation_callbacks_var.is_server_collation_CI_AS = &is_server_collation_CI_AS;

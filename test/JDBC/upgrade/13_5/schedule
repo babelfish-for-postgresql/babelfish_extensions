@@ -111,6 +111,7 @@ sys-objects
 sys-original_login
 sys-schema-name
 identity_function
+sys-sysdatabases
 sys-sysobjects
 sys-trigger_nestlevel
 routines_definition
@@ -149,6 +150,7 @@ BABEL-1465
 BABEL-1466
 BABEL-1715
 BABEL-2086
+BABEL-TABLEOPTIONS
 temp-tables
 table-variable
 TestNotNull
@@ -166,12 +168,16 @@ BABEL-3213
 BABEL-RAND
 BABEL-741
 TestTableType
+BABEL-CROSS-DB
+BABEL-LOGIN
 BABEL-ROLE
 babelfish_sysdatabases
 babelfish_namespace_ext
 babelfish_authid_login_ext
+babelfish_migration_mode
 schema_resolution_func
 BABEL-3147-before-14_5
+BABEL-EXTENDEDPROPERTY
 TestErrorHelperFunctionsUpgrade
 BABEL-1249
 BABEL-1291
@@ -181,3 +187,4 @@ BABEL-889
 babel_417
 babel_datatype_sqlvariant
 babel_sqlvariant_cast_compare
+tdscollation

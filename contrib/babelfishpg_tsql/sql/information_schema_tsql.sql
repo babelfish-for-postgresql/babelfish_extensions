@@ -473,12 +473,7 @@ CREATE OR REPLACE VIEW information_schema_tsql.views AS
 	SELECT CAST(nc.dbname AS sys.nvarchar(128)) AS "TABLE_CATALOG",
 			CAST(ext.orig_name AS sys.nvarchar(128)) AS  "TABLE_SCHEMA",
 			CAST(c.relname AS sys.nvarchar(128)) AS "TABLE_NAME",
-
-			CAST(
-				CASE WHEN LENGTH(vd.definition) <= 4000
-					THEN vd.definition
-					ELSE NULL END
-				AS sys.nvarchar(4000)) AS "VIEW_DEFINITION",
+			CAST(vd.definition AS sys.nvarchar(4000)) AS "VIEW_DEFINITION",
 
 			CAST(
 				CASE WHEN 'check_option=cascaded' = ANY (c.reloptions)
@@ -564,6 +559,9 @@ FROM (
           AND c.contype = 'c'
           AND r.relkind IN ('r', 'p')
           AND NOT a.attisdropped
+	  AND (pg_has_role(r.relowner, 'USAGE')
+		OR has_table_privilege(r.oid, 'SELECT, INSERT, UPDATE, DELETE, TRUNCATE, REFERENCES, TRIGGER')
+		OR has_any_column_privilege(r.oid, 'SELECT, INSERT, UPDATE, REFERENCES'))
 
        UNION ALL
 
@@ -582,10 +580,11 @@ FROM (
           AND NOT a.attisdropped
           AND c.contype IN ('p', 'u', 'f')
           AND r.relkind IN ('r', 'p')
+	  AND (pg_has_role(r.relowner, 'USAGE')
+		OR has_table_privilege(r.oid, 'SELECT, INSERT, UPDATE, DELETE, TRUNCATE, REFERENCES, TRIGGER')
+		OR has_any_column_privilege(r.oid, 'SELECT, INSERT, UPDATE, REFERENCES'))
 
-      ) AS x (tblschema, tblname, tblowner, colname, cstrschema, cstrname, tblcat, cstrcat)
-
-WHERE pg_has_role(x.tblowner, 'USAGE');
+      ) AS x (tblschema, tblname, tblowner, colname, cstrschema, cstrname, tblcat, cstrcat);
 
 GRANT SELECT ON information_schema_tsql.CONSTRAINT_COLUMN_USAGE TO PUBLIC;
 
@@ -687,7 +686,8 @@ CREATE OR REPLACE VIEW information_schema_tsql.routines AS
             CAST(NULL AS sys.datetime) AS "LAST_ALTERED"
 
        FROM sys.pg_namespace_ext nc LEFT JOIN sys.babelfish_namespace_ext ext ON nc.nspname = ext.nspname,
-            pg_proc p inner join sys.schemas sch on sch.schema_id = p.pronamespace,
+            pg_proc p inner join sys.schemas sch on sch.schema_id = p.pronamespace
+	    inner join sys.all_objects ao on ao.object_id = CAST(p.oid AS INT),
             pg_language l,
             pg_type t LEFT JOIN pg_collation co ON t.typcollation = co.oid,
             sys.translate_pg_type_to_tsql(t.oid) AS tsql_type_name,
@@ -711,7 +711,8 @@ CREATE OR REPLACE VIEW information_schema_tsql.routines AS
             AND ext.dbid = cast(sys.db_id() as oid)
 	    AND p.prolang = l.oid
             AND p.prorettype = t.oid
-            AND p.pronamespace = nc.oid;
+            AND p.pronamespace = nc.oid
+	    AND CAST(ao.is_ms_shipped as INT) = 0;
 
 GRANT SELECT ON information_schema_tsql.routines TO PUBLIC;
 

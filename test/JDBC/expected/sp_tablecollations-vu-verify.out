@@ -1,0 +1,8 @@
+exec sp_tablecollations_100 'foo'
+GO
+~~START~~
+int#!#varchar#!#binary#!#nvarchar
+1#!#test_collation#!#<NULL>#!#default
+~~END~~
+
+

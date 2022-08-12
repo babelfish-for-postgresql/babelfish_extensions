@@ -152,7 +152,6 @@ Function sys.babelfish_get_weekdaynum_by_name(text,jsonb)
 Function sys.babelfish_has_any_privilege(text,text,text)
 Function sys.babelfish_helpdb()
 Function sys.babelfish_helpdb(character varying)
-Function sys.babelfish_inconsistent_metadata(boolean)
 Function sys.babelfish_is_ossp_present()
 Function sys.babelfish_is_spatial_present()
 Function sys.babelfish_istime(text)
@@ -433,7 +432,6 @@ Function sys.floor(smallint)
 Function sys.floor(sys."bit")
 Function sys.floor(sys.tinyint)
 Function sys.fn_helpcollations()
-Function sys.fn_listextendedproperty(character varying,character varying,character varying,character varying,character varying,character varying,character varying)
 Function sys.fn_mapped_system_error_list()
 Function sys.formatmessage(character varying)
 Function sys.formatmessage(character varying,"any")
@@ -1038,24 +1036,19 @@ View sys.dm_hadr_cluster
 View sys.dm_hadr_database_replica_states
 View sys.dm_os_host_info
 View sys.endpoints
-View sys.filegroups
 View sys.filetable_system_defined_objects
-View sys.filetables
 View sys.foreign_key_columns
 View sys.foreign_keys
 View sys.fulltext_catalogs
 View sys.fulltext_index_columns
-View sys.fulltext_indexes
 View sys.fulltext_languages
 View sys.fulltext_stoplists
-View sys.hash_indexes
 View sys.identity_columns
 View sys.index_columns
 View sys.indexes
 View sys.key_constraints
 View sys.master_files
 View sys.pg_namespace_ext
-View sys.plan_guides
 View sys.registered_search_property_lists
 View sys.schemas
 View sys.selective_xml_index_paths
