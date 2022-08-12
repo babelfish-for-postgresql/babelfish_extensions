@@ -1,5 +1,5 @@
 -- tsql
-drop type tt_type;
+drop type sys_table_types_vu_prepare_tt;
 GO
 
 -- psql

@@ -1,18 +1,18 @@
 -- Tests for sys.columns catalog view
 -- Test precision and scale for all numeric datatypes
-create table t1_sys_columns(a int, b float, c bigint, d numeric, e smallint, f tinyint, g decimal, h money, i smallmoney);
+create table sys_columns_vu_prepare_t1(a int, b float, c bigint, d numeric, e smallint, f tinyint, g decimal, h money, i smallmoney);
 go
 
 -- Test identity and computed columns
-create table t2_sys_columns(a int, b int IDENTITY(1,1), c as a * b);
+create table sys_columns_vu_prepare_t2(a int, b int IDENTITY(1,1), c as a * b);
 GO
 
 -- Test ansi padded columns
-create table t3_sys_columns(a char(10), b nchar(10), c binary(10));
+create table sys_columns_vu_prepare_t3(a char(10), b nchar(10), c binary(10));
 go
 
 -- Test collation name
-create table t4_sys_columns(
+create table sys_columns_vu_prepare_t4(
         c1 char(10) COLLATE SQL_LATIN1_GENERAL_CP1_CI_AI,
         c2 char(10) COLLATE SQL_LATIN1_GENERAL_CP1_CI_AS,
         c3 char(10) COLLATE SQL_LATIN1_GENERAL_CP1_CS_AI,
@@ -24,7 +24,7 @@ go
 EXEC sp_babelfish_configure 'babelfishpg_tsql.escape_hatch_rowversion', 'ignore';
 go
 
-CREATE TABLE test_columns_sys_columns (
+CREATE TABLE sys_columns_vu_prepare_test_columns (
     c1  bigint  NOT NULL
     , c2    binary(123) NOT NULL
     , c3    bit NOT NULL
@@ -63,30 +63,30 @@ EXEC sp_babelfish_configure 'babelfishpg_tsql.escape_hatch_rowversion', 'strict'
 go
 
 
-CREATE TABLE t5_sys_columns(c1 datetime2(0)
+CREATE TABLE sys_columns_vu_prepare_t5(c1 datetime2(0)
                 , c2 datetime2(7)
                 , c3 datetimeoffset(0)
                 , c4 datetimeoffset(7)
                 , c5 time(0)
                 , c6 time(7))
-CREATE TYPE type1_sys_columns FROM INT NOT NULL
+CREATE TYPE sys_columns_vu_prepare_type1 FROM INT NOT NULL
 GO
 
-CREATE TABLE t6_sys_columns( c1 type1_sys_columns, c2 int)
+CREATE TABLE sys_columns_vu_prepare_t6( c1 sys_columns_vu_prepare_type1, c2 int)
 GO
 
-create type varchar_max_sys_columns from varchar(max)
-create type nvarchar_max_sys_columns from nvarchar(max)
-create type varbinary_max_sys_columns from varbinary(max)
+create type sys_columns_vu_prepare_varchar_max from varchar(max)
+create type sys_columns_vu_prepare_nvarchar_max from nvarchar(max)
+create type sys_columns_vu_prepare_varbinary_max from varbinary(max)
 GO
 
-create table babel_2947_sys_columns (a varchar_max_sys_columns
+create table sys_columns_vu_prepare_babel_2947 (a sys_columns_vu_prepare_varchar_max
                         , b varchar(max)
                         , c varchar(10)
-                        , d nvarchar_max_sys_columns
+                        , d sys_columns_vu_prepare_nvarchar_max
                         , e nvarchar(max)
                         , f nvarchar(10)
-                        , g varbinary_max_sys_columns
+                        , g sys_columns_vu_prepare_varbinary_max
                         , h varbinary(max)
                         , i varbinary(10))
 GO

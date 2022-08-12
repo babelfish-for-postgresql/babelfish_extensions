@@ -1,26 +1,26 @@
 -- Cleanup
-drop table t1_sys_columns;
-drop table t2_sys_columns;
-drop table t3_sys_columns;
-drop table t4_sys_columns;
+drop table sys_columns_vu_prepare_t1;
+drop table sys_columns_vu_prepare_t2;
+drop table sys_columns_vu_prepare_t3;
+drop table sys_columns_vu_prepare_t4;
 go
 
-drop table test_columns_sys_columns;
+drop table sys_columns_vu_prepare_test_columns;
 GO
 
-drop table t5_sys_columns;
+drop table sys_columns_vu_prepare_t5;
 GO
 
-drop table t6_sys_columns;
+drop table sys_columns_vu_prepare_t6;
 GO
 
-drop type type1_sys_columns
+drop type sys_columns_vu_prepare_type1
 GO
 
-drop table babel_2947_sys_columns
+drop table sys_columns_vu_prepare_babel_2947
 GO
 
-drop type varchar_max_sys_columns
-drop type nvarchar_max_sys_columns
-drop type varbinary_max_sys_columns
+drop type sys_columns_vu_prepare_varchar_max
+drop type sys_columns_vu_prepare_nvarchar_max
+drop type sys_columns_vu_prepare_varbinary_max
 GO

@@ -15,11 +15,11 @@ select name
       , is_table_type
       , is_memory_optimized
 from sys.table_types
-where name = 'tt_type';
+where name = 'sys_table_types_vu_prepare_tt';
 GO
 ~~START~~
 text#!#int#!#int#!#smallint#!#int#!#int#!#varchar#!#int#!#int#!#int#!#int#!#int#!#int#!#bit
-tt_type#!#0#!#<NULL>#!#-1#!#0#!#0#!#<NULL>#!#0#!#1#!#0#!#0#!#0#!#1#!#0
+sys_table_types_vu_prepare_tt#!#0#!#<NULL>#!#-1#!#0#!#0#!#<NULL>#!#0#!#1#!#0#!#0#!#0#!#1#!#0
 ~~END~~
 
 
@@ -33,7 +33,7 @@ select principal_id
       , is_published
       , is_schema_published
 from sys.objects
-where name like 'TT_tt_type%';
+where name like 'TT_sys_table_types_vu_prepare_tt%';
 GO
 ~~START~~
 int#!#int#!#char#!#nvarchar#!#datetime#!#datetime#!#bit#!#bit#!#bit
@@ -51,7 +51,7 @@ select principal_id
       , is_published
       , is_schema_published
 from sys.all_objects
-where name like 'TT_tt_type%';
+where name like 'TT_sys_table_types_vu_prepare_tt%';
 GO
 ~~START~~
 int#!#int#!#char#!#nvarchar#!#datetime#!#datetime#!#bit#!#bit#!#bit

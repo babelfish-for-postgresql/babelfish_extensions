@@ -1,15 +1,15 @@
-select * from datetimeoffset_testing;
+select * from TestDatetimeoffset_vu_prepare_testing;
 go
 
 -- Test comparision with datetime/smalldatetime/date
-select * from datetimeoffset_testing where df >= '2020-03-15 00:00:00';
+select * from TestDatetimeoffset_vu_prepare_testing where df >= '2020-03-15 00:00:00';
 go
-select * from datetimeoffset_testing where df >= '2020-03-15 09:00:00 +7';
+select * from TestDatetimeoffset_vu_prepare_testing where df >= '2020-03-15 09:00:00 +7';
 go
-select * from datetimeoffset_testing where df >= '2020-03-15 09:00:00 +8' 
+select * from TestDatetimeoffset_vu_prepare_testing where df >= '2020-03-15 09:00:00 +8' 
                     and df < '2020-03-15 09:00:00';
 go
-select * from datetimeoffset_testing where df < '1992-05-24';
+select * from TestDatetimeoffset_vu_prepare_testing where df < '1992-05-24';
 go
 
 -- Test datetimeoffset default value

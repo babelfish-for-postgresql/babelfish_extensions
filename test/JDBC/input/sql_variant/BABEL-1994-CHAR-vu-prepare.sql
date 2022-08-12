@@ -1,20 +1,20 @@
-drop table if exists pad;
+drop table if exists babel_1994_vu_prepare_t1;
 go
 
-create table pad(
+create table babel_1994_vu_prepare_t1(
     c5nn char(5) not null,
     c5n character(5) null
 );
 go
 
-insert into pad values('ab ', 'ab ');
-create index pad_c5nn_idx on pad(c5nn);
+insert into babel_1994_vu_prepare_t1 values('ab ', 'ab ');
+create index babel_1994_vu_prepare_idx on babel_1994_vu_prepare_t1(c5nn);
 go
 
 -- default length of CHAR should be 1. Otherwise, it will crash on the below select statement.
-drop table if exists t1_babel_1994_char;
+drop table if exists babel_1994_vu_prepare_t2;
 go
 
-CREATE TABLE t1_babel_1994_char (c1 CHAR);
-INSERT INTO t1_babel_1994_char VALUES ('A');
+CREATE TABLE babel_1994_vu_prepare_t2 (c1 CHAR);
+INSERT INTO babel_1994_vu_prepare_t2 VALUES ('A');
 GO

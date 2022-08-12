@@ -1,20 +1,20 @@
-CREATE DATABASE db1_sys_sysforeignkeys;
+CREATE DATABASE sys_sysforeignkeys_vu_prepare_db1;
 GO
 
-USE db1_sys_sysforeignkeys
+USE sys_sysforeignkeys_vu_prepare_db1
 GO
 
-create table fk_1_sys_sysforeignkeys (a int, primary key (a))
+create table sys_sysforeignkeys_vu_prepare_fk1 (a int, primary key (a))
 GO
 
-create table fk_2_sys_sysforeignkeys (a int, b int, primary key (a), foreign key (b) references fk_1_sys_sysforeignkeys(a))
+create table sys_sysforeignkeys_vu_prepare_fk2 (a int, b int, primary key (a), foreign key (b) references sys_sysforeignkeys_vu_prepare_fk1(a))
 GO
 
 USE master
 GO
 
-create table fk_3_sys_sysforeignkeys (a int, primary key (a))
+create table sys_sysforeignkeys_vu_prepare_fk3 (a int, primary key (a))
 GO
 
-create table fk_4_sys_sysforeignkeys (a int, b int, primary key (a), foreign key (b) references fk_3_sys_sysforeignkeys(a))
+create table sys_sysforeignkeys_vu_prepare_fk4 (a int, b int, primary key (a), foreign key (b) references sys_sysforeignkeys_vu_prepare_fk3(a))
 GO

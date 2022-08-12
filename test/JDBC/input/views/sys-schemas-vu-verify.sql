@@ -6,5 +6,5 @@ WHERE name = 'dbo';
 GO
 
 SELECT name FROM sys.schemas 
-WHERE name in ('dbo', 'sys_schema_test1', 'sys_schema_test2') ORDER BY name;
+WHERE name in ('dbo', 'sys_schemas_vu_prepare_test1', 'sys_schemas_vu_prepare_test2') ORDER BY name;
 GO

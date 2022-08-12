@@ -1,14 +1,14 @@
-USE db1_sys_sp_tables_view
+USE sys_sp_tables_view_vu_prepare_db1
 GO
 
-drop table tbl_1;
+drop table sys_sp_tables_view_vu_prepare_t1;
 GO
 
 USE master
 GO
 
-drop table tbl_2;
+drop table sys_sp_tables_view_vu_prepare_t2;
 GO
 
-DROP DATABASE db1_sys_sp_tables_view
+DROP DATABASE sys_sp_tables_view_vu_prepare_db1
 GO

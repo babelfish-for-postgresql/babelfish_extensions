@@ -1,37 +1,37 @@
-USE db1_sys_foreign_key_columns;
+USE sys_foreign_key_columns_vu_prepare_db1;
 GO
 
-select count(*) from sys.foreign_key_columns where parent_object_id = object_id('fk_2_sys_foreign_key_columns');
+select count(*) from sys.foreign_key_columns where parent_object_id = object_id('sys_foreign_key_columns_vu_prepare_fk_2');
 GO
 
-select count(*) from sys.foreign_keys where parent_object_id = object_id('fk_2_sys_foreign_key_columns');
+select count(*) from sys.foreign_keys where parent_object_id = object_id('sys_foreign_key_columns_vu_prepare_fk_2');
 GO
 
 USE master;
 GO
 
-select count(*) from sys.foreign_key_columns where parent_object_id = object_id('fk_2_sys_foreign_key_columns');
+select count(*) from sys.foreign_key_columns where parent_object_id = object_id('sys_foreign_key_columns_vu_prepare_fk_2');
 GO
 
-select count(*) from sys.foreign_keys where parent_object_id = object_id('fk_2_sys_foreign_key_columns');
+select count(*) from sys.foreign_keys where parent_object_id = object_id('sys_foreign_key_columns_vu_prepare_fk_2');
 GO
 
-select count(*) from sys.foreign_key_columns where parent_object_id = object_id('fk_4_sys_foreign_key_columns');
+select count(*) from sys.foreign_key_columns where parent_object_id = object_id('sys_foreign_key_columns_vu_prepare_fk_4');
 GO
 
-select count(*) from sys.foreign_keys where parent_object_id = object_id('fk_4_sys_foreign_key_columns');
+select count(*) from sys.foreign_keys where parent_object_id = object_id('sys_foreign_key_columns_vu_prepare_fk_4');
 GO
 
-USE db1_sys_foreign_key_columns;
+USE sys_foreign_key_columns_vu_prepare_db1;
 GO
 
-select count(*) from sys.foreign_key_columns where parent_object_id = object_id('fk_4_sys_foreign_key_columns');
+select count(*) from sys.foreign_key_columns where parent_object_id = object_id('sys_foreign_key_columns_vu_prepare_fk_4');
 GO
 
-select count(*) from sys.foreign_keys where parent_object_id = object_id('fk_4_sys_foreign_key_columns');
+select count(*) from sys.foreign_keys where parent_object_id = object_id('sys_foreign_key_columns_vu_prepare_fk_4');
 GO
 
-USE db1_sys_foreign_key_columns;
+USE sys_foreign_key_columns_vu_prepare_db1;
 GO
 
 SELECT COUNT(*) FROM sys.foreign_key_columns;

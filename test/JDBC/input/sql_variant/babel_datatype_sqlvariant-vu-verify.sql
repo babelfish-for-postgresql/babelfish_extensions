@@ -1,5 +1,5 @@
 -- DATETIMEOFFSETN error expected using JDBC - see https://github.com/microsoft/mssql-jdbc/issues/1670
-select a from t1_babel_datatype_sqlvariant order by id;
+select a from babel_datatype_sqlvariant_vu_prepare_t1 order by id;
 go
 
 -- Test CAST from SQL_VARIANT
@@ -159,11 +159,11 @@ select cast(cast(cast('0E984725-C51C-4BF4-9960-E1C80E27ABA0' as uniqueidentifier
 go
 
 -- Test DATALENGTH for SQL_VARIANT TODO: DATETIMEOFFSETN error expected using JDBC - see https://github.com/microsoft/mssql-jdbc/issues/1670
-select datalength(a), a from t1_babel_datatype_sqlvariant;
+select datalength(a), a from babel_datatype_sqlvariant_vu_prepare_t1;
 go
 
 -- no such property
-select sql_variant_property(v, 'nothing') from t2_babel_datatype_sqlvariant;
+select sql_variant_property(v, 'nothing') from babel_datatype_sqlvariant_vu_prepare_t2;
 go
 
 select sql_variant_property(a, 'basetype') as 'basetype',
@@ -171,66 +171,66 @@ select sql_variant_property(a, 'basetype') as 'basetype',
        sql_variant_property(a, 'scale') as 'scale',
        sql_variant_property(a, 'collation') as 'collation',
        sql_variant_property(a, 'totalbytes') as 'totalbytes',
-       sql_variant_property(a, 'maxlength') as 'maxlength' from t3_babel_datatype_sqlvariant;
+       sql_variant_property(a, 'maxlength') as 'maxlength' from babel_datatype_sqlvariant_vu_prepare_t3;
 go
 
 -- TODO: DATETIMEOFFSETN error expected using JDBC - see https://github.com/microsoft/mssql-jdbc/issues/1670
-select * from t4_babel_datatype_sqlvariant where a = b order by id;
+select * from babel_datatype_sqlvariant_vu_prepare_t4 where a = b order by id;
 go
 -- TODO: DATETIMEOFFSETN error expected using JDBC - see https://github.com/microsoft/mssql-jdbc/issues/1670
-select * from t4_babel_datatype_sqlvariant where a <> b order by id;
+select * from babel_datatype_sqlvariant_vu_prepare_t4 where a <> b order by id;
 go
 -- TODO: DATETIMEOFFSETN error expected using JDBC - see https://github.com/microsoft/mssql-jdbc/issues/1670
-select * from t4_babel_datatype_sqlvariant where a > b order by id;
+select * from babel_datatype_sqlvariant_vu_prepare_t4 where a > b order by id;
 go
 -- TODO: DATETIMEOFFSETN error expected using JDBC - see https://github.com/microsoft/mssql-jdbc/issues/1670
-select * from t4_babel_datatype_sqlvariant where a < b order by id;
+select * from babel_datatype_sqlvariant_vu_prepare_t4 where a < b order by id;
 go
 -- TODO: DATETIMEOFFSETN error expected using JDBC - see https://github.com/microsoft/mssql-jdbc/issues/1670
-select * from t4_babel_datatype_sqlvariant where a >= b order by id;
+select * from babel_datatype_sqlvariant_vu_prepare_t4 where a >= b order by id;
 go
 -- TODO: DATETIMEOFFSETN error expected using JDBC - see https://github.com/microsoft/mssql-jdbc/issues/1670
-select * from t4_babel_datatype_sqlvariant where a <= b order by id;
+select * from babel_datatype_sqlvariant_vu_prepare_t4 where a <= b order by id;
 go
 
-select * from t5_babel_datatype_sqlvariant where a = b order by id;
+select * from babel_datatype_sqlvariant_vu_prepare_t5 where a = b order by id;
 go
-select * from t5_babel_datatype_sqlvariant where a <> b order by id;
+select * from babel_datatype_sqlvariant_vu_prepare_t5 where a <> b order by id;
 go
-select * from t5_babel_datatype_sqlvariant where a > b order by id;
+select * from babel_datatype_sqlvariant_vu_prepare_t5 where a > b order by id;
 go
-select * from t5_babel_datatype_sqlvariant where a < b order by id;
+select * from babel_datatype_sqlvariant_vu_prepare_t5 where a < b order by id;
 go
-select * from t5_babel_datatype_sqlvariant where a >= b order by id;
+select * from babel_datatype_sqlvariant_vu_prepare_t5 where a >= b order by id;
 go
-select * from t5_babel_datatype_sqlvariant where a <= b order by id;
-go
-
-select count(*) from t7_babel_datatype_sqlvariant where a > b;
+select * from babel_datatype_sqlvariant_vu_prepare_t5 where a <= b order by id;
 go
 
-select * from t8_babel_datatype_sqlvariant where a = b order by 1,2;
-go
-select * from t8_babel_datatype_sqlvariant where a > b order by 1,2;
-go
-select * from t8_babel_datatype_sqlvariant where a < b order by 1,2;
-go
-select * from t8_babel_datatype_sqlvariant where a <> b order by 1,2;
-go
-select * from t8_babel_datatype_sqlvariant where a >= b order by 1,2;
-go
-select * from t8_babel_datatype_sqlvariant where a <= b order by 1,2;
+select count(*) from babel_datatype_sqlvariant_vu_prepare_t7 where a > b;
 go
 
-select * from t9_babel_datatype_sqlvariant where a = b order by 1,2;
+select * from babel_datatype_sqlvariant_vu_prepare_t8 where a = b order by 1,2;
 go
-select * from t9_babel_datatype_sqlvariant where a > b order by 1,2;
+select * from babel_datatype_sqlvariant_vu_prepare_t8 where a > b order by 1,2;
 go
-select * from t9_babel_datatype_sqlvariant where a < b order by 1,2;
+select * from babel_datatype_sqlvariant_vu_prepare_t8 where a < b order by 1,2;
 go
-select * from t9_babel_datatype_sqlvariant where a <> b order by 1,2;
+select * from babel_datatype_sqlvariant_vu_prepare_t8 where a <> b order by 1,2;
 go
-select * from t9_babel_datatype_sqlvariant where a >= b order by 1,2;
+select * from babel_datatype_sqlvariant_vu_prepare_t8 where a >= b order by 1,2;
 go
-select * from t9_babel_datatype_sqlvariant where a <= b order by 1,2;
+select * from babel_datatype_sqlvariant_vu_prepare_t8 where a <= b order by 1,2;
+go
+
+select * from babel_datatype_sqlvariant_vu_prepare_t9 where a = b order by 1,2;
+go
+select * from babel_datatype_sqlvariant_vu_prepare_t9 where a > b order by 1,2;
+go
+select * from babel_datatype_sqlvariant_vu_prepare_t9 where a < b order by 1,2;
+go
+select * from babel_datatype_sqlvariant_vu_prepare_t9 where a <> b order by 1,2;
+go
+select * from babel_datatype_sqlvariant_vu_prepare_t9 where a >= b order by 1,2;
+go
+select * from babel_datatype_sqlvariant_vu_prepare_t9 where a <= b order by 1,2;
 go

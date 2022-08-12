@@ -1,15 +1,7 @@
-USE db1_sys_views
+USE sys_views_vu_prepare_db1
 GO
 
-SELECT COUNT(*) FROM sys.views WHERE name = 'rand_name1_sys_views';
-GO
-~~START~~
-int
-1
-~~END~~
-
-
-SELECT COUNT(*) FROM sys.objects WHERE type='V' and name = 'rand_name1_sys_views';
+SELECT COUNT(*) FROM sys.views WHERE name = 'sys_views_vu_prepare_t1';
 GO
 ~~START~~
 int
@@ -17,7 +9,15 @@ int
 ~~END~~
 
 
-SELECT COUNT(*) FROM sys.all_objects WHERE type='V' and name = 'rand_name1_sys_views';
+SELECT COUNT(*) FROM sys.objects WHERE type='V' and name = 'sys_views_vu_prepare_t1';
+GO
+~~START~~
+int
+1
+~~END~~
+
+
+SELECT COUNT(*) FROM sys.all_objects WHERE type='V' and name = 'sys_views_vu_prepare_t1';
 GO
 ~~START~~
 int
@@ -28,8 +28,8 @@ int
 USE master;
 GO
 
-#view rand_name1_sys_views should not be visible in master database.
-SELECT COUNT(*) FROM sys.views WHERE name = 'rand_name1_sys_views';
+#view sys_views_vu_prepare_t1 should not be visible in master database.
+SELECT COUNT(*) FROM sys.views WHERE name = 'sys_views_vu_prepare_t1';
 GO
 ~~START~~
 int
@@ -37,7 +37,7 @@ int
 ~~END~~
 
 
-SELECT COUNT(*) FROM sys.objects WHERE type='V' and name = 'rand_name1_sys_views';
+SELECT COUNT(*) FROM sys.objects WHERE type='V' and name = 'sys_views_vu_prepare_t1';
 GO
 ~~START~~
 int
@@ -45,7 +45,7 @@ int
 ~~END~~
 
 
-SELECT COUNT(*) FROM sys.all_objects WHERE type='V' and name = 'rand_name1_sys_views';
+SELECT COUNT(*) FROM sys.all_objects WHERE type='V' and name = 'sys_views_vu_prepare_t1';
 GO
 ~~START~~
 int
@@ -53,7 +53,7 @@ int
 ~~END~~
 
 
-SELECT COUNT(*) FROM sys.views WHERE name = 'rand_name2_sys_views';
+SELECT COUNT(*) FROM sys.views WHERE name = 'sys_views_vu_prepare_t2';
 GO
 ~~START~~
 int
@@ -61,7 +61,7 @@ int
 ~~END~~
 
 
-SELECT COUNT(*) FROM sys.objects WHERE type='V' and name = 'rand_name2_sys_views';
+SELECT COUNT(*) FROM sys.objects WHERE type='V' and name = 'sys_views_vu_prepare_t2';
 GO
 ~~START~~
 int
@@ -69,7 +69,7 @@ int
 ~~END~~
 
 
-SELECT COUNT(*) FROM sys.all_objects WHERE type='V' and name = 'rand_name2_sys_views';
+SELECT COUNT(*) FROM sys.all_objects WHERE type='V' and name = 'sys_views_vu_prepare_t2';
 GO
 ~~START~~
 int
@@ -77,19 +77,11 @@ int
 ~~END~~
 
 
-USE db1_sys_views
+USE sys_views_vu_prepare_db1
 GO
 
-#view rand_name2_sys_views should not be visible in db1_sys_views database.
-SELECT COUNT(*) FROM sys.views WHERE name = 'rand_name2_sys_views';
-GO
-~~START~~
-int
-0
-~~END~~
-
-
-SELECT COUNT(*) FROM sys.objects WHERE type='V' and name = 'rand_name2_sys_views';
+#view sys_views_vu_prepare_t2 should not be visible in sys_views_vu_prepare_db1 database.
+SELECT COUNT(*) FROM sys.views WHERE name = 'sys_views_vu_prepare_t2';
 GO
 ~~START~~
 int
@@ -97,7 +89,15 @@ int
 ~~END~~
 
 
-SELECT COUNT(*) FROM sys.all_objects WHERE type='V' and name = 'rand_name2_sys_views';
+SELECT COUNT(*) FROM sys.objects WHERE type='V' and name = 'sys_views_vu_prepare_t2';
+GO
+~~START~~
+int
+0
+~~END~~
+
+
+SELECT COUNT(*) FROM sys.all_objects WHERE type='V' and name = 'sys_views_vu_prepare_t2';
 GO
 ~~START~~
 int

@@ -1,14 +1,14 @@
-USE db1_sys_views
+USE sys_views_vu_prepare_db1
 GO
 
-DROP VIEW rand_name1_sys_views;
+DROP VIEW sys_views_vu_prepare_t1;
 GO
 
 USE master;
 GO
 
-DROP DATABASE db1_sys_views;
+DROP DATABASE sys_views_vu_prepare_db1;
 GO
 
-DROP VIEW rand_name2_sys_views;
+DROP VIEW sys_views_vu_prepare_t2;
 GO

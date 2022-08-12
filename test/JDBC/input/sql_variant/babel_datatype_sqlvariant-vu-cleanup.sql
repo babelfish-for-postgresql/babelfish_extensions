@@ -1,25 +1,25 @@
 -- Clean up
-drop table t1_babel_datatype_sqlvariant;
+drop table babel_datatype_sqlvariant_vu_prepare_t1;
 go
-drop table t2_babel_datatype_sqlvariant;
+drop table babel_datatype_sqlvariant_vu_prepare_t2;
 go
-drop table t3_babel_datatype_sqlvariant;
+drop table babel_datatype_sqlvariant_vu_prepare_t3;
 go
-drop table t5_babel_datatype_sqlvariant;
+drop table babel_datatype_sqlvariant_vu_prepare_t5;
 go
-drop table t6_babel_datatype_sqlvariant;
+drop table babel_datatype_sqlvariant_vu_prepare_t6;
 go
-drop table t7_babel_datatype_sqlvariant;
+drop table babel_datatype_sqlvariant_vu_prepare_t7;
 go
-drop table t8_babel_datatype_sqlvariant;
+drop table babel_datatype_sqlvariant_vu_prepare_t8;
 go
-drop table t9_babel_datatype_sqlvariant;
+drop table babel_datatype_sqlvariant_vu_prepare_t9;
 go
-drop sequence t1_babel_datatype_sqlvariant_sec;
+drop sequence babel_datatype_sqlvariant_vu_prepare_t1_sec;
 go
-drop sequence t2_babel_datatype_sqlvariant_sec;
+drop sequence babel_datatype_sqlvariant_vu_prepare_t2_sec;
 go
-drop sequence t4_babel_datatype_sqlvariant_sec;
+drop sequence babel_datatype_sqlvariant_vu_prepare_t4_sec;
 go
-drop sequence t5_babel_datatype_sqlvariant_sec;
+drop sequence babel_datatype_sqlvariant_vu_prepare_t5_sec;
 go

@@ -1,27 +1,27 @@
 -- Testing inserting into the table
-create table datetimeoffset_testing (df datetimeoffset);
+create table TestDatetimeoffset_vu_prepare_testing (df datetimeoffset);
 go
-INSERT INTO datetimeoffset_testing VALUES('23:40:29.998');
+INSERT INTO TestDatetimeoffset_vu_prepare_testing VALUES('23:40:29.998');
 go
-INSERT INTO datetimeoffset_testing VALUES('1900-01-01 00:00+0:00');
+INSERT INTO TestDatetimeoffset_vu_prepare_testing VALUES('1900-01-01 00:00+0:00');
 go
-INSERT INTO datetimeoffset_testing VALUES('0001-01-01 00:00:00 +0:00');
+INSERT INTO TestDatetimeoffset_vu_prepare_testing VALUES('0001-01-01 00:00:00 +0:00');
 go
-INSERT INTO datetimeoffset_testing VALUES('2020-03-15 09:00:00 +8:00');
+INSERT INTO TestDatetimeoffset_vu_prepare_testing VALUES('2020-03-15 09:00:00 +8:00');
 go
-INSERT INTO datetimeoffset_testing VALUES('2020-03-15 09:00:00 +9:00');
+INSERT INTO TestDatetimeoffset_vu_prepare_testing VALUES('2020-03-15 09:00:00 +9:00');
 go
-INSERT INTO datetimeoffset_testing VALUES('1800-03-15 09:00:00 +12:00');
+INSERT INTO TestDatetimeoffset_vu_prepare_testing VALUES('1800-03-15 09:00:00 +12:00');
 go
-INSERT INTO datetimeoffset_testing VALUES('2020-03-15 09:00:00 -8:20');
+INSERT INTO TestDatetimeoffset_vu_prepare_testing VALUES('2020-03-15 09:00:00 -8:20');
 go
-INSERT INTO datetimeoffset_testing VALUES('1992-03-15 09:00:00');
+INSERT INTO TestDatetimeoffset_vu_prepare_testing VALUES('1992-03-15 09:00:00');
 go
 -- out of range
-INSERT INTO datetimeoffset_testing VALUES('10000-01-01 00:00:00 +0:00');
+INSERT INTO TestDatetimeoffset_vu_prepare_testing VALUES('10000-01-01 00:00:00 +0:00');
 go
 
-CREATE INDEX df_hash ON datetimeoffset_testing (df);
+CREATE INDEX df_hash ON TestDatetimeoffset_vu_prepare_testing (df);
 go
 
 -- Test datetimeoffset default value

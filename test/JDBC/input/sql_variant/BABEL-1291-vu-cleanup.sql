@@ -1,2 +1,2 @@
-DROP TABLE sql_variant_test;
+DROP TABLE babel_1291_vu_prepare_t1;
 GO

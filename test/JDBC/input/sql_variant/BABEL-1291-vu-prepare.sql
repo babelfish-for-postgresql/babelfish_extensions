@@ -1,5 +1,5 @@
-CREATE TABLE sql_variant_test(a sql_variant, b sql_variant);
+CREATE TABLE babel_1291_vu_prepare_t1(a sql_variant, b sql_variant);
 GO
 
-INSERT INTO sql_variant_test VALUES (NULL,NULL);
+INSERT INTO babel_1291_vu_prepare_t1 VALUES (NULL,NULL);
 GO

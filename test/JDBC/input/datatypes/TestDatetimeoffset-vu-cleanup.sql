@@ -1,5 +1,5 @@
 -- Clean up
-drop table datetimeoffset_testing;
+drop table TestDatetimeoffset_vu_prepare_testing;
 go
 drop table t1;
 go

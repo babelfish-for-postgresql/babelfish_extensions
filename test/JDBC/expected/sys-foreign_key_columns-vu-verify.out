@@ -1,7 +1,7 @@
-USE db1_sys_foreign_key_columns;
+USE sys_foreign_key_columns_vu_prepare_db1;
 GO
 
-select count(*) from sys.foreign_key_columns where parent_object_id = object_id('fk_2_sys_foreign_key_columns');
+select count(*) from sys.foreign_key_columns where parent_object_id = object_id('sys_foreign_key_columns_vu_prepare_fk_2');
 GO
 ~~START~~
 int
@@ -9,7 +9,7 @@ int
 ~~END~~
 
 
-select count(*) from sys.foreign_keys where parent_object_id = object_id('fk_2_sys_foreign_key_columns');
+select count(*) from sys.foreign_keys where parent_object_id = object_id('sys_foreign_key_columns_vu_prepare_fk_2');
 GO
 ~~START~~
 int
@@ -20,7 +20,7 @@ int
 USE master;
 GO
 
-select count(*) from sys.foreign_key_columns where parent_object_id = object_id('fk_2_sys_foreign_key_columns');
+select count(*) from sys.foreign_key_columns where parent_object_id = object_id('sys_foreign_key_columns_vu_prepare_fk_2');
 GO
 ~~START~~
 int
@@ -28,7 +28,7 @@ int
 ~~END~~
 
 
-select count(*) from sys.foreign_keys where parent_object_id = object_id('fk_2_sys_foreign_key_columns');
+select count(*) from sys.foreign_keys where parent_object_id = object_id('sys_foreign_key_columns_vu_prepare_fk_2');
 GO
 ~~START~~
 int
@@ -36,7 +36,7 @@ int
 ~~END~~
 
 
-select count(*) from sys.foreign_key_columns where parent_object_id = object_id('fk_4_sys_foreign_key_columns');
+select count(*) from sys.foreign_key_columns where parent_object_id = object_id('sys_foreign_key_columns_vu_prepare_fk_4');
 GO
 ~~START~~
 int
@@ -44,7 +44,7 @@ int
 ~~END~~
 
 
-select count(*) from sys.foreign_keys where parent_object_id = object_id('fk_4_sys_foreign_key_columns');
+select count(*) from sys.foreign_keys where parent_object_id = object_id('sys_foreign_key_columns_vu_prepare_fk_4');
 GO
 ~~START~~
 int
@@ -52,18 +52,10 @@ int
 ~~END~~
 
 
-USE db1_sys_foreign_key_columns;
+USE sys_foreign_key_columns_vu_prepare_db1;
 GO
 
-select count(*) from sys.foreign_key_columns where parent_object_id = object_id('fk_4_sys_foreign_key_columns');
-GO
-~~START~~
-int
-0
-~~END~~
-
-
-select count(*) from sys.foreign_keys where parent_object_id = object_id('fk_4_sys_foreign_key_columns');
+select count(*) from sys.foreign_key_columns where parent_object_id = object_id('sys_foreign_key_columns_vu_prepare_fk_4');
 GO
 ~~START~~
 int
@@ -71,7 +63,15 @@ int
 ~~END~~
 
 
-USE db1_sys_foreign_key_columns;
+select count(*) from sys.foreign_keys where parent_object_id = object_id('sys_foreign_key_columns_vu_prepare_fk_4');
+GO
+~~START~~
+int
+0
+~~END~~
+
+
+USE sys_foreign_key_columns_vu_prepare_db1;
 GO
 
 SELECT COUNT(*) FROM sys.foreign_key_columns;

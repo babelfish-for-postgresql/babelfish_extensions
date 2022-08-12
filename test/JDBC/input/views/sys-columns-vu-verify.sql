@@ -18,7 +18,7 @@ go
 EXEC sp_babelfish_configure 'babelfishpg_tsql.escape_hatch_rowversion', 'ignore';
 go
 
-select name,max_length,precision,scale from sys.columns where object_id = OBJECT_ID('test_columns_sys_columns') order by name;
+select name,max_length,precision,scale from sys.columns where object_id = OBJECT_ID('sys_columns_vu_prepare_test_columns') order by name;
 GO
 
 EXEC sp_babelfish_configure 'babelfishpg_tsql.escape_hatch_rowversion', 'strict';
@@ -33,5 +33,5 @@ GO
 select object_name(system_type_id), object_name(user_type_id) from sys.columns where object_id = OBJECT_ID('t6_sys_syscolumns') order by object_name(user_type_id);
 GO
 
-select name, max_length from sys.columns where object_id = OBJECT_ID('babel_2947_sys_columns') order by name;
+select name, max_length from sys.columns where object_id = OBJECT_ID('sys_columns_vu_prepare_babel_2947') order by name;
 GO

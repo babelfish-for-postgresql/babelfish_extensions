@@ -1,15 +1,15 @@
-CREATE DATABASE db1_sys_sp_tables_view;
+CREATE DATABASE sys_sp_tables_view_vu_prepare_db1;
 GO
 
-USE db1_sys_sp_tables_view
+USE sys_sp_tables_view_vu_prepare_db1
 GO
 
-create table tbl_1 (a int)
+create table sys_sp_tables_view_vu_prepare_t1 (a int)
 GO
 
 USE master
 GO
 
-create table tbl_2 (a int)
+create table sys_sp_tables_view_vu_prepare_t2 (a int)
 GO
 

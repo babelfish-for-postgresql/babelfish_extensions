@@ -1,5 +1,5 @@
-drop table pad;
+drop table babel_1994_vu_prepare_t1;
 go
 
-drop table t1_babel_1994_char;
+drop table babel_1994_vu_prepare_t2;
 go

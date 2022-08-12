@@ -1,13 +1,13 @@
 
-select count(*) from person where name_vcnn = 'smith  ';
+select count(*) from babel_1994_varchar_vu_prepare_t1 where name_vcnn = 'smith  ';
 go
-select count(*) from person where name_vcn = 'smith    ';
+select count(*) from babel_1994_varchar_vu_prepare_t1 where name_vcn = 'smith    ';
 go
-select count(*) from person where name_vcnn = 'jones   ';
+select count(*) from babel_1994_varchar_vu_prepare_t1 where name_vcnn = 'jones   ';
 go
-select count(*) from person where name_vcn = 'jones   ';
+select count(*) from babel_1994_varchar_vu_prepare_t1 where name_vcn = 'jones   ';
 go
-select count(*) from person where name_vcn = 'jones    ';
+select count(*) from babel_1994_varchar_vu_prepare_t1 where name_vcn = 'jones    ';
 go
 
 

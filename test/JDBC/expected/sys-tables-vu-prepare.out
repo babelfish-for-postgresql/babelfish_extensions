@@ -1,14 +1,14 @@
-CREATE DATABASE db1_sys_tables;
+CREATE DATABASE sys_tables_vu_prepare_db1;
 GO
 
-USE db1_sys_tables
+USE sys_tables_vu_prepare_db1
 GO
 
-CREATE TABLE rand_name1_sys_tables(rand_col1 int DEFAULT 1, CHECK (rand_col1 > 0));
+CREATE TABLE sys_tables_vu_prepare_t1(rand_col1 int DEFAULT 1, CHECK (rand_col1 > 0));
 GO
 
 USE master;
 GO
 
-CREATE TABLE rand_name2_sys_tables(rand_col2 int DEFAULT 2, CHECK (rand_col2 > 0));
+CREATE TABLE sys_tables_vu_prepare_t2(rand_col2 int DEFAULT 2, CHECK (rand_col2 > 0));
 GO

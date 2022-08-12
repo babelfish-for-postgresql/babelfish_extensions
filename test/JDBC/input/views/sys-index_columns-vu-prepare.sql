@@ -1,33 +1,33 @@
-DROP TABLE IF EXISTS sys_index_columns
+DROP TABLE IF EXISTS sys_index_columns_vu_prepare_t1
 GO
 
-CREATE TABLE sys_index_columns (
+CREATE TABLE sys_index_columns_vu_prepare_t1 (
 	sic_name VARCHAR (50),
 	sic_surname VARCHAR (50)
 )
 GO
 
-CREATE INDEX sic_test_index
-ON sys_index_columns (sic_name)
+CREATE INDEX sys_index_columns_vu_prepare_i1
+ON sys_index_columns_vu_prepare_t1 (sic_name)
 GO
 
-CREATE DATABASE db1_sys_index_columns;
+CREATE DATABASE sys_index_columns_vu_prepare_db1;
 GO
 
-USE db1_sys_index_columns
+USE sys_index_columns_vu_prepare_db1
 GO
 
-CREATE TABLE rand_name1_sys_index_columns(rand_col1 int DEFAULT 1);
+CREATE TABLE sys_index_columns_vu_prepare_t2(rand_col1 int DEFAULT 1);
 GO
 
-CREATE INDEX idx_rand_name1_sys_index_columns ON rand_name1_sys_index_columns(rand_col1);
+CREATE INDEX sys_index_columns_vu_prepare_i2 ON sys_index_columns_vu_prepare_t2(rand_col1);
 GO
 
 USE master;
 GO
 
-CREATE TABLE rand_name2_sys_index_columns(rand_col2 int DEFAULT 1);
+CREATE TABLE sys_index_columns_vu_prepare_t3(rand_col2 int DEFAULT 1);
 GO
 
-CREATE INDEX idx_rand_name2_sys_index_columns ON rand_name2_sys_index_columns(rand_col2);
+CREATE INDEX sys_index_columns_vu_prepare_i3 ON sys_index_columns_vu_prepare_t3(rand_col2);
 GO

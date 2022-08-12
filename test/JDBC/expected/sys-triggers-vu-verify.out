@@ -1,4 +1,4 @@
-USE sys_triggers_db1
+USE sys_triggers_vu_prepare_db1
 GO
 
 -- test instead of insert trigger
@@ -15,11 +15,11 @@ SELECT
     is_not_for_replication,
     is_instead_of_trigger
 FROM sys.triggers
-WHERE name = 'sys_triggers_trig1'
+WHERE name = 'sys_triggers_vu_prepare_trig1'
 GO
 ~~START~~
 varchar#!#tinyint#!#nvarchar#!#char#!#nvarchar#!#datetime#!#datetime#!#bit#!#bit#!#bit#!#bit
-sys_triggers_trig1#!#1#!#OBJECT_OR_COLUMN#!#TR#!#SQL_TRIGGER#!#<NULL>#!#<NULL>#!#0#!#0#!#0#!#1
+sys_triggers_vu_prepare_trig1#!#1#!#OBJECT_OR_COLUMN#!#TR#!#SQL_TRIGGER#!#<NULL>#!#<NULL>#!#0#!#0#!#0#!#1
 ~~END~~
 
 
@@ -37,11 +37,11 @@ SELECT
     is_not_for_replication,
     is_instead_of_trigger
 FROM sys.triggers
-WHERE name = 'sys_triggers_trig2'
+WHERE name = 'sys_triggers_vu_prepare_trig2'
 GO
 ~~START~~
 varchar#!#tinyint#!#nvarchar#!#char#!#nvarchar#!#datetime#!#datetime#!#bit#!#bit#!#bit#!#bit
-sys_triggers_trig2#!#1#!#OBJECT_OR_COLUMN#!#TR#!#SQL_TRIGGER#!#<NULL>#!#<NULL>#!#0#!#0#!#0#!#0
+sys_triggers_vu_prepare_trig2#!#1#!#OBJECT_OR_COLUMN#!#TR#!#SQL_TRIGGER#!#<NULL>#!#<NULL>#!#0#!#0#!#0#!#0
 ~~END~~
 
 
@@ -59,7 +59,7 @@ SELECT
     is_not_for_replication,
     is_instead_of_trigger
 FROM sys.triggers
-WHERE name = 'sys_triggers_master_trig'
+WHERE name = 'sys_triggers_vu_prepare_master_trig'
 GO
 ~~START~~
 varchar#!#tinyint#!#nvarchar#!#char#!#nvarchar#!#datetime#!#datetime#!#bit#!#bit#!#bit#!#bit

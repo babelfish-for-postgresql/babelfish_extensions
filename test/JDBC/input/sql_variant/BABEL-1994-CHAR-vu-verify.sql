@@ -6,10 +6,10 @@ select
     '[' + c5n + ']' as c5n_to_text_concat,
     concat('[', cast(c5n as varchar), ']') as c5n_to_varchar_concat,
     concat('[', cast(c5n as pg_catalog.name), ']') as c5n_to_name_concat
-from pad;
+from babel_1994_vu_prepare_t1;
 go
 
-SELECT c1 from t1_babel_1994_char;
+SELECT c1 from babel_1994_vu_prepare_t2;
 go
 
 -- In case of CAST, the default length of CHAR should be 30.

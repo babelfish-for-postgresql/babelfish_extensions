@@ -1,4 +1,4 @@
-USE sys_triggers_db1
+USE sys_triggers_vu_prepare_db1
 GO
 
 -- test instead of insert trigger
@@ -15,7 +15,7 @@ SELECT
     is_not_for_replication,
     is_instead_of_trigger
 FROM sys.triggers
-WHERE name = 'sys_triggers_trig1'
+WHERE name = 'sys_triggers_vu_prepare_trig1'
 GO
 
 -- test after insert trigger
@@ -32,7 +32,7 @@ SELECT
     is_not_for_replication,
     is_instead_of_trigger
 FROM sys.triggers
-WHERE name = 'sys_triggers_trig2'
+WHERE name = 'sys_triggers_vu_prepare_trig2'
 GO
 
 -- test schema-scoped visibility of view
@@ -49,5 +49,5 @@ SELECT
     is_not_for_replication,
     is_instead_of_trigger
 FROM sys.triggers
-WHERE name = 'sys_triggers_master_trig'
+WHERE name = 'sys_triggers_vu_prepare_master_trig'
 GO

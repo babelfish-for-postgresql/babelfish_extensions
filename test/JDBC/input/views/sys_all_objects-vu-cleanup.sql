@@ -1,11 +1,11 @@
-DROP PROCEDURE sysall_objects
+DROP PROCEDURE sys_all_objects_vu_prepare_1
 GO
 
-DROP PROCEDURE sysall_objects_2
+DROP PROCEDURE sys_all_objects_vu_prepare_1_2
 GO
 
-DROP FUNCTION sysall_objects_3
+DROP FUNCTION sys_all_objects_vu_prepare_1_3
 GO
 
-DROP TABLE t1_sysall_objects
+DROP TABLE sys_all_objects_vu_prepare_t1
 GO

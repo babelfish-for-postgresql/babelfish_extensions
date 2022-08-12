@@ -1,30 +1,30 @@
-USE db1_sys_indexes
+USE sys_indexes_vu_prepare_db1
 GO
 
 USE master
 GO
 
-DROP INDEX i_sys_index_test1 ON t_sys_index_test1;
-DROP INDEX i_sys_index_test1a ON t_sys_index_test1;
+DROP INDEX sys_indexes_vu_prepare_i1 ON sys_indexes_vu_prepare_t1;
+DROP INDEX sys_indexes_vu_prepare_i1a ON sys_indexes_vu_prepare_t1;
 GO
 
-DROP TABLE IF EXISTS t_unique_index
+DROP TABLE IF EXISTS sys_indexes_vu_prepare_t_unique
 GO
 
-DROP TABLE IF EXISTS t_sys_index_test1
+DROP TABLE IF EXISTS sys_indexes_vu_prepare_t1
 GO
 
-DROP TABLE IF EXISTS t_sys_no_index
+DROP TABLE IF EXISTS sys_indexes_vu_prepare_t2
 GO
 
-DROP TABLE IF EXISTS t_fkey_table
+DROP TABLE IF EXISTS sys_indexes_vu_prepare_t_fkey
 GO
 
-DROP TABLE IF EXISTS t_pkey_table
+DROP TABLE IF EXISTS sys_indexes_vu_prepare_t_pkey
 GO
 
-DROP TABLE IF EXISTS t_unique_index
+DROP TABLE IF EXISTS sys_indexes_vu_prepare_t_unique
 GO
 
-DROP DATABASE db1_sys_indexes
+DROP DATABASE sys_indexes_vu_prepare_db1
 GO

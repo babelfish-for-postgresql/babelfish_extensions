@@ -1,14 +1,14 @@
-USE db1_sys_tables
+USE sys_tables_vu_prepare_db1
 GO
 
-DROP TABLE rand_name1_sys_tables;
+DROP TABLE sys_tables_vu_prepare_t1;
 GO
 
 USE master;
 GO
 
-DROP DATABASE db1_sys_tables;
+DROP DATABASE sys_tables_vu_prepare_db1;
 GO
 
-DROP TABLE rand_name2_sys_tables;
+DROP TABLE sys_tables_vu_prepare_t2;
 GO

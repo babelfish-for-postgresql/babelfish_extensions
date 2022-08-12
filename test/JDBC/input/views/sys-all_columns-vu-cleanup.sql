@@ -1,3 +1,3 @@
-DROP TABLE IF EXISTS sys_all_columns_table
-DROP TABLE IF EXISTS columns_scale_precision_length_test
+DROP TABLE IF EXISTS sys_all_columns_vu_prepare_table
+DROP TABLE IF EXISTS sys_all_columns_vu_prepare_t1
 GO
