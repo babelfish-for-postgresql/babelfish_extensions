@@ -6,64 +6,77 @@ go
 ~~START~~
 nvarchar#!#nvarchar#!#nvarchar#!#nvarchar#!#nvarchar#!#nvarchar#!#nvarchar#!#int#!#int
 key_column_usage_vu_prepare_db#!#dbo#!#key_column_usage_vu_prepare_tb1_pkey#!#key_column_usage_vu_prepare_db#!#dbo#!#key_column_usage_vu_prepare_tb1#!#redid#!#1#!#<NULL>
+key_column_usage_vu_prepare_db#!#dbo#!#key_column_usage_vu_prepare_tb1_greenid_blueid_key#!#key_column_usage_vu_prepare_db#!#dbo#!#key_column_usage_vu_prepare_tb1#!#greenid#!#1#!#<NULL>
+key_column_usage_vu_prepare_db#!#dbo#!#key_column_usage_vu_prepare_tb1_greenid_key#!#key_column_usage_vu_prepare_db#!#dbo#!#key_column_usage_vu_prepare_tb1#!#greenid#!#1#!#<NULL>
+key_column_usage_vu_prepare_db#!#dbo#!#key_column_usage_vu_prepare_tb1_greenid_blueid_key#!#key_column_usage_vu_prepare_db#!#dbo#!#key_column_usage_vu_prepare_tb1#!#blueid#!#2#!#<NULL>
 key_column_usage_vu_prepare_db#!#dbo#!#key_column_usage_vu_prepare_tb2_pkey#!#key_column_usage_vu_prepare_db#!#dbo#!#key_column_usage_vu_prepare_tb2#!#greenid#!#1#!#<NULL>
 key_column_usage_vu_prepare_db#!#dbo#!#fk_redkey_column_usage_vu_prepaa2e9818e50b326a6a0caaaa032d9113a#!#key_column_usage_vu_prepare_db#!#dbo#!#key_column_usage_vu_prepare_tb2#!#redid#!#1#!#1
 key_column_usage_vu_prepare_db#!#dbo#!#key_column_usage_vu_prepare_tb3_pkey#!#key_column_usage_vu_prepare_db#!#dbo#!#key_column_usage_vu_prepare_tb3#!#blueid#!#1#!#<NULL>
 key_column_usage_vu_prepare_db#!#dbo#!#fk_greenkey_column_usage_vu_pre415cd39ed98d3c509fdac88a28e495eb#!#key_column_usage_vu_prepare_db#!#dbo#!#key_column_usage_vu_prepare_tb3#!#greenid#!#1#!#1
 key_column_usage_vu_prepare_db#!#dbo#!#key_column_usage_vu_prepare_tb4_pkey#!#key_column_usage_vu_prepare_db#!#dbo#!#key_column_usage_vu_prepare_tb4#!#purpleid#!#1#!#<NULL>
 key_column_usage_vu_prepare_db#!#dbo#!#fk_greenkey_column_usage_vu_prea1fe8f8a2bc0c23700cc98cd215b1249#!#key_column_usage_vu_prepare_db#!#dbo#!#key_column_usage_vu_prepare_tb4#!#blueid#!#1#!#1
+key_column_usage_vu_prepare_db#!#dbo#!#key_column_usage_vu_prepare_tb5_pkey#!#key_column_usage_vu_prepare_db#!#dbo#!#key_column_usage_vu_prepare_tb5#!#arg1#!#1#!#<NULL>
+key_column_usage_vu_prepare_db#!#dbo#!#key_column_usage_vu_prepare_tb5_pkey#!#key_column_usage_vu_prepare_db#!#dbo#!#key_column_usage_vu_prepare_tb5#!#arg2#!#2#!#<NULL>
 ~~END~~
 
+
+create view key_column_usage_vu_verify_view as select * from information_schema.key_column_usage where table_name like 'key_column_usage_vu_prepare_tb%';
+go
+
+create procedure key_column_usage_vu_verify_proc as select * from information_schema.key_column_usage where table_name like 'key_column_usage_vu_prepare_tb%';
+go
+
+create function key_column_usage_vu_verify_func() returns table as return(select * from information_schema.key_column_usage where table_name like 'key_column_usage_vu_prepare_tb%');
+go
+
+select * from information_schema.key_column_usage where table_name like 'key_column_usage_vu_prepare_tb%';
+go
+~~START~~
+nvarchar#!#nvarchar#!#nvarchar#!#nvarchar#!#nvarchar#!#nvarchar#!#nvarchar#!#int#!#int
+key_column_usage_vu_prepare_db#!#dbo#!#key_column_usage_vu_prepare_tb1_pkey#!#key_column_usage_vu_prepare_db#!#dbo#!#key_column_usage_vu_prepare_tb1#!#redid#!#1#!#<NULL>
+key_column_usage_vu_prepare_db#!#dbo#!#key_column_usage_vu_prepare_tb1_greenid_blueid_key#!#key_column_usage_vu_prepare_db#!#dbo#!#key_column_usage_vu_prepare_tb1#!#greenid#!#1#!#<NULL>
+key_column_usage_vu_prepare_db#!#dbo#!#key_column_usage_vu_prepare_tb1_greenid_key#!#key_column_usage_vu_prepare_db#!#dbo#!#key_column_usage_vu_prepare_tb1#!#greenid#!#1#!#<NULL>
+key_column_usage_vu_prepare_db#!#dbo#!#key_column_usage_vu_prepare_tb1_greenid_blueid_key#!#key_column_usage_vu_prepare_db#!#dbo#!#key_column_usage_vu_prepare_tb1#!#blueid#!#2#!#<NULL>
+key_column_usage_vu_prepare_db#!#dbo#!#key_column_usage_vu_prepare_tb2_pkey#!#key_column_usage_vu_prepare_db#!#dbo#!#key_column_usage_vu_prepare_tb2#!#greenid#!#1#!#<NULL>
+key_column_usage_vu_prepare_db#!#dbo#!#fk_redkey_column_usage_vu_prepaa2e9818e50b326a6a0caaaa032d9113a#!#key_column_usage_vu_prepare_db#!#dbo#!#key_column_usage_vu_prepare_tb2#!#redid#!#1#!#1
+key_column_usage_vu_prepare_db#!#dbo#!#key_column_usage_vu_prepare_tb3_pkey#!#key_column_usage_vu_prepare_db#!#dbo#!#key_column_usage_vu_prepare_tb3#!#blueid#!#1#!#<NULL>
+key_column_usage_vu_prepare_db#!#dbo#!#fk_greenkey_column_usage_vu_pre415cd39ed98d3c509fdac88a28e495eb#!#key_column_usage_vu_prepare_db#!#dbo#!#key_column_usage_vu_prepare_tb3#!#greenid#!#1#!#1
+key_column_usage_vu_prepare_db#!#dbo#!#key_column_usage_vu_prepare_tb4_pkey#!#key_column_usage_vu_prepare_db#!#dbo#!#key_column_usage_vu_prepare_tb4#!#purpleid#!#1#!#<NULL>
+key_column_usage_vu_prepare_db#!#dbo#!#fk_greenkey_column_usage_vu_prea1fe8f8a2bc0c23700cc98cd215b1249#!#key_column_usage_vu_prepare_db#!#dbo#!#key_column_usage_vu_prepare_tb4#!#blueid#!#1#!#1
+key_column_usage_vu_prepare_db#!#dbo#!#key_column_usage_vu_prepare_tb5_pkey#!#key_column_usage_vu_prepare_db#!#dbo#!#key_column_usage_vu_prepare_tb5#!#arg1#!#1#!#<NULL>
+key_column_usage_vu_prepare_db#!#dbo#!#key_column_usage_vu_prepare_tb5_pkey#!#key_column_usage_vu_prepare_db#!#dbo#!#key_column_usage_vu_prepare_tb5#!#arg2#!#2#!#<NULL>
+~~END~~
+
+
+drop function key_column_usage_vu_verify_func;
+go
+
+drop procedure key_column_usage_vu_verify_proc;
+go
+
+drop view key_column_usage_vu_verify_view;
+go
+
+drop table key_column_usage_vu_prepare_tb5;
+go
 
 drop table key_column_usage_vu_prepare_tb4;
 go
 
-select * from information_schema.key_column_usage where table_name like 'key_column_usage_vu_prepare_tb%';
-go
-~~START~~
-nvarchar#!#nvarchar#!#nvarchar#!#nvarchar#!#nvarchar#!#nvarchar#!#nvarchar#!#int#!#int
-key_column_usage_vu_prepare_db#!#dbo#!#key_column_usage_vu_prepare_tb1_pkey#!#key_column_usage_vu_prepare_db#!#dbo#!#key_column_usage_vu_prepare_tb1#!#redid#!#1#!#<NULL>
-key_column_usage_vu_prepare_db#!#dbo#!#key_column_usage_vu_prepare_tb2_pkey#!#key_column_usage_vu_prepare_db#!#dbo#!#key_column_usage_vu_prepare_tb2#!#greenid#!#1#!#<NULL>
-key_column_usage_vu_prepare_db#!#dbo#!#fk_redkey_column_usage_vu_prepaa2e9818e50b326a6a0caaaa032d9113a#!#key_column_usage_vu_prepare_db#!#dbo#!#key_column_usage_vu_prepare_tb2#!#redid#!#1#!#1
-key_column_usage_vu_prepare_db#!#dbo#!#key_column_usage_vu_prepare_tb3_pkey#!#key_column_usage_vu_prepare_db#!#dbo#!#key_column_usage_vu_prepare_tb3#!#blueid#!#1#!#<NULL>
-key_column_usage_vu_prepare_db#!#dbo#!#fk_greenkey_column_usage_vu_pre415cd39ed98d3c509fdac88a28e495eb#!#key_column_usage_vu_prepare_db#!#dbo#!#key_column_usage_vu_prepare_tb3#!#greenid#!#1#!#1
-~~END~~
-
-
-
 drop table key_column_usage_vu_prepare_tb3;
-go 
-select * from information_schema.key_column_usage where table_name like 'key_column_usage_vu_prepare_tb%';
 go
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: syntax error near 'select' at line 3 and character position 0)~~
-
 
 drop table key_column_usage_vu_prepare_tb2;
 go
-~~ERROR (Code: 3726)~~
 
-~~ERROR (Message: cannot drop table key_column_usage_vu_prepare_tb2 because other objects depend on it)~~
-
+drop table key_column_usage_vu_prepare_tb1;
+go
 
 select * from information_schema.key_column_usage where table_name like 'key_column_usage_vu_prepare_tb%';
 go
 ~~START~~
 nvarchar#!#nvarchar#!#nvarchar#!#nvarchar#!#nvarchar#!#nvarchar#!#nvarchar#!#int#!#int
-key_column_usage_vu_prepare_db#!#dbo#!#key_column_usage_vu_prepare_tb1_pkey#!#key_column_usage_vu_prepare_db#!#dbo#!#key_column_usage_vu_prepare_tb1#!#redid#!#1#!#<NULL>
-key_column_usage_vu_prepare_db#!#dbo#!#key_column_usage_vu_prepare_tb2_pkey#!#key_column_usage_vu_prepare_db#!#dbo#!#key_column_usage_vu_prepare_tb2#!#greenid#!#1#!#<NULL>
-key_column_usage_vu_prepare_db#!#dbo#!#fk_redkey_column_usage_vu_prepaa2e9818e50b326a6a0caaaa032d9113a#!#key_column_usage_vu_prepare_db#!#dbo#!#key_column_usage_vu_prepare_tb2#!#redid#!#1#!#1
-key_column_usage_vu_prepare_db#!#dbo#!#key_column_usage_vu_prepare_tb3_pkey#!#key_column_usage_vu_prepare_db#!#dbo#!#key_column_usage_vu_prepare_tb3#!#blueid#!#1#!#<NULL>
-key_column_usage_vu_prepare_db#!#dbo#!#fk_greenkey_column_usage_vu_pre415cd39ed98d3c509fdac88a28e495eb#!#key_column_usage_vu_prepare_db#!#dbo#!#key_column_usage_vu_prepare_tb3#!#greenid#!#1#!#1
 ~~END~~
-
-
-drop table key_column_usage_vu_prepare_tb1;
-go
-~~ERROR (Code: 3726)~~
-
-~~ERROR (Message: cannot drop table key_column_usage_vu_prepare_tb1 because other objects depend on it)~~
 
 
 use master;
