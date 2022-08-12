@@ -94,7 +94,7 @@ jobs:
             sed -i "s/$filename[ ]*$/$filename-vu-prepare/g" upgrade/singledb/schedule
           done
           for filename in $(grep -v "^ignore.*\|^#.*\|^cmd.*\|^all.*\|^$" upgrade/singledb/schedule); do
-            mv input/$filename input/$filename-singledb
+            mv input/$filename.sql input/$filename-singledb.sql
             sed -i "s/$filename[ ]*$/$filename-singledb/g" upgrade/singledb/schedule
           done
           export scheduleFile=upgrade/singledb/schedule
@@ -150,7 +150,7 @@ jobs:
             sed -i "s/$filename[ ]*$/$filename-vu-verify\\n$filename-vu-cleanup/g" upgrade/singledb/schedule
           done
           for filename in $(grep -v "^ignore.*\|^#.*\|^cmd.*\|^all.*\|^$" upgrade/singledb/schedule); do
-            mv input/$filename input/$filename-singledb
+            mv input/$filename.sql input/$filename-singledb.sql
             sed -i "s/$filename[ ]*$/$filename-singledb/g" upgrade/singledb/schedule
           done
           export scheduleFile=upgrade/singledb/schedule
