@@ -732,7 +732,7 @@ AS SELECT CAST(sys.db_name() AS sys.nvarchar(128)) AS "CONSTRAINT_CATALOG",
     CAST(a.attname AS sys.nvarchar(128)) AS "COLUMN_NAME",
     CAST((ss.x).n AS sys."int") AS "ORDINAL_POSITION",
         CAST(CASE
-            WHEN ss.contype = CAST('f' AS "char") THEN information_schema._pg_index_position(ss.conindid, ss.confkey[(ss.x).n])
+            WHEN ss.contype = CAST('f' AS sys.bpchar) THEN information_schema._pg_index_position(ss.conindid, ss.confkey[(ss.x).n])
             ELSE CAST(NULL AS integer)
         END AS information_schema.cardinal_number) AS "POSITION_IN_UNIQUE_CONSTRAINT"
    FROM pg_attribute a,
