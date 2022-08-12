@@ -1,12 +1,3 @@
--- tsql      user=babel_login_vu_prepare_foo      password=abc
--- Login with non babelfish user should fail
-go
-
--- Login with a superuser should succeed
--- tsql      user=babel_login_vu_prepare_su_user      password=abc
-SELECT 1;
-go
-
 -- tsql
 CREATE USER babel_login_vu_prepare_r1;
 go
