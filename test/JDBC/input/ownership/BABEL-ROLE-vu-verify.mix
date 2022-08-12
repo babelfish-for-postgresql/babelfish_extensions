@@ -119,7 +119,7 @@ EXEC babel_role_vu_prepare_role_members
 GO
 
 -- DB user is disallowed to add/drop itself to/from a role
--- tsql		user=babel_role_vu_prepare_login2		password=123
+-- tsql		user=babel_role_vu_prepare_login2		password=abc
 USE babel_role_vu_prepare_db
 GO
 SELECT USER_NAME()
