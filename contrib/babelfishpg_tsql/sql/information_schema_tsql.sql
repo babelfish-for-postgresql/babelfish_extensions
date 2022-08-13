@@ -723,10 +723,10 @@ SELECT set_config('search_path', 'sys, '||current_setting('search_path'), false)
 */
 CREATE OR REPLACE VIEW information_schema_tsql.constraint_table_usage
 AS SELECT CAST(sys.db_name() AS sys.nvarchar(128)) AS "TABLE_CATALOG",
-    CAST(nr.nspname AS sys.nvarchar(128)) AS "TABLE_SCHEMA",
+    CAST((select orig_name from sys.babelfish_namespace_ext where nr.nspname = nspname) AS sys.nvarchar(128)) AS "TABLE_SCHEMA",
     CAST(r.relname AS sys.sysname) AS "TABLE_NAME",
     CAST(sys.db_name() AS sys.nvarchar(128)) AS "CONSTRAINT_CATALOG",
-    CAST(nc.nspname AS sys.nvarchar(128)) AS "CONSTRAINT_SCHEMA",
+    CAST((select orig_name from sys.babelfish_namespace_ext where nc.nspname = nspname) AS sys.nvarchar(128)) AS "CONSTRAINT_SCHEMA",
     CAST(c.conname AS sys.sysname) AS "CONSTRAINT_NAME"
    FROM pg_constraint c,
     pg_namespace nc,
