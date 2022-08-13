@@ -1008,6 +1008,7 @@ Type sys.cursor
 Type sys.rowversion
 View information_schema_tsql.check_constraints
 View information_schema_tsql.column_domain_usage
+View information_schema_tsql.column_privileges
 View information_schema_tsql.columns
 View information_schema_tsql.constraint_column_usage
 View information_schema_tsql.domains
