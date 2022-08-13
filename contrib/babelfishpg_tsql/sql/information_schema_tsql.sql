@@ -724,10 +724,10 @@ SELECT set_config('search_path', 'sys, '||current_setting('search_path'), false)
 
 CREATE OR REPLACE VIEW information_schema_tsql.key_column_usage
 AS SELECT CAST(sys.db_name() AS sys.nvarchar(128)) AS "CONSTRAINT_CATALOG",
-    CAST(ss.nc_nspname AS sys.nvarchar(128)) AS "CONSTRAINT_SCHEMA",
+    CAST((select orig_name from sys.babelfish_namespace_ext where ss.nc_nspname = nspname) AS sys.nvarchar(128)) AS "CONSTRAINT_SCHEMA",
     CAST(ss.conname AS sys.nvarchar(128)) AS "CONSTRAINT_NAME",
     CAST(sys.db_name() AS sys.nvarchar(128)) AS "TABLE_CATALOG",
-    CAST(ss.nr_nspname  AS sys.nvarchar(128)) AS "TABLE_SCHEMA",
+    CAST((select orig_name from sys.babelfish_namespace_ext where ss.nr_nspname = nspname)  AS sys.nvarchar(128)) AS "TABLE_SCHEMA",
     CAST(ss.relname AS sys.nvarchar(128)) AS "TABLE_NAME",
     CAST(a.attname AS sys.nvarchar(128)) AS "COLUMN_NAME",
     CAST((ss.x).n AS sys."int") AS "ORDINAL_POSITION",
