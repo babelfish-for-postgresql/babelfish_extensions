@@ -1,20 +1,20 @@
-use sys_syscolumns_vu_prepare_db1;
+use db1_sys_syscolumns;
 go
 
 -- Cleanup
-DROP FUNCTION sys_syscolumns_vu_prepare_OidToDataType
-DROP FUNCTION sys_syscolumns_vu_prepare_OidToObject
-DROP FUNCTION sys_syscolumns_vu_prepare_OidToCollation
-DROP PROCEDURE sys_syscolumns_vu_prepare_proc1
-DROP PROCEDURE sys_syscolumns_vu_prepare_proc2
-DROP TABLE sys_syscolumns_vu_prepare_table
+DROP FUNCTION OidToDataType
+DROP FUNCTION OidToObject
+DROP FUNCTION OidToCollation
+DROP PROCEDURE syscolumns_demo_proc1
+DROP PROCEDURE syscolumns_demo_proc2
+DROP TABLE syscolumns_demo_table
 GO
 
 use master;
 go
 
-drop database sys_syscolumns_vu_prepare_db1;
+drop database db1_sys_syscolumns;
 go
 
-DROP PROCEDURE sys_syscolumns_vu_prepare_proc3
+DROP PROCEDURE syscolumns_demo_proc3
 go

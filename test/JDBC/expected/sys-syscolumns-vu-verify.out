@@ -1,21 +1,21 @@
-use sys_syscolumns_vu_prepare_db1;
+use db1_sys_syscolumns;
 go
 
-select name, sys_syscolumns_vu_prepare_OidToObject(id), sys_syscolumns_vu_prepare_OidToDataType(xtype), typestat, length from sys.syscolumns where name = '@firstparam' or name = '@secondparam' or name = 'col_a' or name = 'col_b' or name = 'col_c' or name = 'col_d' order by sys_syscolumns_vu_prepare_OidToObject(id) asc, name
+select name, OidToObject(id), OidToDataType(xtype), typestat, length from sys.syscolumns where name = '@firstparam' or name = '@secondparam' or name = 'col_a' or name = 'col_b' or name = 'col_c' or name = 'col_d' order by OidToObject(id) asc, name
 GO
 ~~START~~
 varchar#!#varchar#!#varchar#!#tinyint#!#smallint
-@firstparam#!#sys_syscolumns_vu_prepare_proc1#!#nvarchar#!#0#!#<NULL>
-@firstparam#!#sys_syscolumns_vu_prepare_proc2#!#nvarchar#!#0#!#<NULL>
-@secondparam#!#sys_syscolumns_vu_prepare_proc2#!#varchar#!#0#!#<NULL>
-col_a#!#sys_syscolumns_vu_prepare_table#!#int4#!#0#!#4
-col_b#!#sys_syscolumns_vu_prepare_table#!#int8#!#0#!#8
-col_c#!#sys_syscolumns_vu_prepare_table#!#bpchar#!#0#!#10
-col_d#!#sys_syscolumns_vu_prepare_table#!#numeric#!#0#!#5
+@firstparam#!#syscolumns_demo_proc1#!#nvarchar#!#0#!#<NULL>
+@firstparam#!#syscolumns_demo_proc2#!#nvarchar#!#0#!#<NULL>
+@secondparam#!#syscolumns_demo_proc2#!#varchar#!#0#!#<NULL>
+col_a#!#syscolumns_demo_table#!#int4#!#0#!#4
+col_b#!#syscolumns_demo_table#!#int8#!#0#!#8
+col_c#!#syscolumns_demo_table#!#bpchar#!#0#!#10
+col_d#!#syscolumns_demo_table#!#numeric#!#0#!#5
 ~~END~~
 
 
-select colid, cdefault, domain, number from sys.syscolumns where name = '@firstparam' or name = '@secondparam' or name = 'col_a' or name = 'col_b' or name = 'col_c' or name = 'col_d' order by sys_syscolumns_vu_prepare_OidToObject(id) asc, name
+select colid, cdefault, domain, number from sys.syscolumns where name = '@firstparam' or name = '@secondparam' or name = 'col_a' or name = 'col_b' or name = 'col_c' or name = 'col_d' order by OidToObject(id) asc, name
 GO
 ~~START~~
 smallint#!#int#!#int#!#smallint
@@ -29,7 +29,7 @@ smallint#!#int#!#int#!#smallint
 ~~END~~
 
 
-select sys_syscolumns_vu_prepare_OidToCollation(collationid), status, sys_syscolumns_vu_prepare_OidToDataType(type), prec, scale from sys.syscolumns where name = '@firstparam' or name = '@secondparam' or name = 'col_a' or name = 'col_b' or name = 'col_c' or name = 'col_d' order by sys_syscolumns_vu_prepare_OidToObject(id) asc, name
+select OidToCollation(collationid), status, OidToDataType(type), prec, scale from sys.syscolumns where name = '@firstparam' or name = '@secondparam' or name = 'col_a' or name = 'col_b' or name = 'col_c' or name = 'col_d' order by OidToObject(id) asc, name
 GO
 ~~START~~
 varchar#!#tinyint#!#varchar#!#smallint#!#int
@@ -43,7 +43,7 @@ bbf_unicode_cp1_ci_as#!#8#!#bpchar#!#0#!#0
 ~~END~~
 
 
-select iscomputed, isoutparam, isnullable, collation from sys.syscolumns where name = '@firstparam' or name = '@secondparam' or name = 'col_a' or name = 'col_b' or name = 'col_c' or name = 'col_d' order by sys_syscolumns_vu_prepare_OidToObject(id) asc, name
+select iscomputed, isoutparam, isnullable, collation from sys.syscolumns where name = '@firstparam' or name = '@secondparam' or name = 'col_a' or name = 'col_b' or name = 'col_c' or name = 'col_d' order by OidToObject(id) asc, name
 GO
 ~~START~~
 int#!#int#!#int#!#varchar
@@ -85,7 +85,7 @@ int
 ~~END~~
 
 
-use sys_syscolumns_vu_prepare_db1;
+use db1_sys_syscolumns;
 go
 
 SELECT COUNT(*) FROM sys.syscolumns where name = '@firstparam' or name = '@secondparam' or name = 'col_a' or name = 'col_b' or name = 'col_c'
