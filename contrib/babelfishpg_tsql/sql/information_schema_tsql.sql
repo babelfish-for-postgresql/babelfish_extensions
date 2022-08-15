@@ -723,14 +723,14 @@ AS SELECT CAST((select orig_username from sys.babelfish_authid_user_ext where u_
     CAST((select orig_name from sys.babelfish_namespace_ext where nc.nspname = nspname) AS sys.nvarchar(128)) AS "TABLE_SCHEMA",
     CAST(c.relname AS sys.sysname) AS "TABLE_NAME",
     CAST(c.prtype AS sys."varchar"(10)) AS "PRIVILEGE_TYPE",
-        CASE
-            WHEN pg_has_role(grantee.oid, c.relowner, 'USAGE'::text) OR c.grantable THEN 'YES'::text
-            ELSE 'NO'::text
-        END::sys."varchar"(3) AS is_grantable,
-        CASE
-            WHEN c.prtype = 'SELECT'::text THEN 'YES'::text
-            ELSE 'NO'::text
-        END::information_schema.yes_or_no AS with_hierarchy
+        CAST(CASE
+            WHEN pg_has_role(grantee.oid, c.relowner, CAST('USAGE' AS text)) OR c.grantable THEN CAST('YES' AS text)
+            ELSE CAST('NO' AS text)
+        END AS sys."varchar"(3)) AS "IS_GRANTABLE",
+        CAST(CASE
+            WHEN c.prtype = CAST('SELECT' AS text) THEN CAST('YES' AS text)
+            ELSE CAST('NO' AS text)
+        END AS sys."varchar"(3)) AS "WITH_HIERARCHY"
    FROM ( SELECT pg_class.oid,
             pg_class.relname,
             pg_class.relnamespace,
@@ -755,7 +755,7 @@ AND c.grantee = grantee.oid AND c.grantor = u_grantor.oid
 AND (c.prtype = ANY (ARRAY['INSERT'::text, 'SELECT'::text, 'UPDATE'::text, 'DELETE'::text, 'TRUNCATE'::text, 'REFERENCES'::text, 'TRIGGER'::text])) 
 AND (pg_has_role(u_grantor.oid, 'USAGE'::text) OR pg_has_role(grantee.oid, 'USAGE'::text) OR grantee.rolname = 'PUBLIC'::name);
   
-  
+   
 GRANT SELECT ON information_schema_tsql.table_privileges TO PUBLIC;
 
 SELECT set_config('search_path', 'sys, '||current_setting('search_path'), false);
