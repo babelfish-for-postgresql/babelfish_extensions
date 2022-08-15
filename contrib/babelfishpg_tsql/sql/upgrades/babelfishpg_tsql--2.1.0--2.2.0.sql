@@ -175,9 +175,15 @@ AS SELECT CAST(sys.db_name() AS sys.nvarchar(128)) AS "TABLE_CATALOG",
     pg_namespace nc,
     pg_class r,
     pg_namespace nr
-WHERE c.connamespace = nc.oid AND r.relnamespace = nr.oid 
-AND (c.contype = CAST('f' AS "char") AND c.confrelid = r.oid OR (c.contype = ANY (ARRAY[CAST('p' AS "char"), CAST('u' AS "char")])) AND c.conrelid = r.oid) 
-AND (r.relkind = ANY (ARRAY[CAST('r' AS "char"), CAST('p' AS "char")])) AND pg_has_role(r.relowner, CAST('USAGE' AS text));
+WHERE c.connamespace = nc.oid 
+AND r.relnamespace = nr.oid 
+AND (c.contype = CAST('f' AS "char") 
+AND c.confrelid = r.oid OR (c.contype = ANY (ARRAY[CAST('p' AS "char"), CAST('u' AS "char")])) 
+AND c.conrelid = r.oid) 
+AND (r.relkind = ANY (ARRAY[CAST('r' AS "char"), CAST('p' AS "char")])) 
+AND (pg_has_role(r.relowner, CAST('USAGE' AS text))
+	OR has_table_privilege(r.oid, 'SELECT, INSERT, UPDATE, DELETE, TRUNCATE, REFERENCES, TRIGGER')
+	OR has_any_column_privilege(r.oid, 'SELECT, INSERT, UPDATE, REFERENCES'));
 
 GRANT SELECT ON information_schema_tsql.constraint_table_usage TO PUBLIC;
 
