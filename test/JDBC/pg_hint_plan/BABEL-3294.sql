@@ -26,6 +26,25 @@ go
 set babelfish_showplan_all on
 go
 
+/*
+ * Run a SELECT query without any hints to ensure that un-hinted queries still work
+ * It uses 2 workers as it is the deault value for the GUC max_parallel_workers_per_gather
+ */
+select * from babel_3294_t1 t1 where a1 = 1
+go
+
+/*
+ * The MAXDOP hint should be handled specially the hint value is 0
+ * This is because in T-SQL, setting MAXDOP to 0 allows SQL Server to use all the available processors up to 64 processors
+ * However, if we set the GUC max_parallel_workers_per_gather to 0, it disables parallelism in P-SQL
+ * Thus, we need to set the GUC value to 64 instead. The planner however will use 16 workers as we only have 16 workers available
+ */
+select * from babel_3294_t1 t1 where a1 = 1 option(maxdop 0)
+go
+
+/*
+ * Run SELECT queries and give the MAXDOP hint with different values to verify the hint is actually getting mapped
+ */
 select * from babel_3294_t1 t1 where a1 = 1 option(maxdop 1)
 go
 
