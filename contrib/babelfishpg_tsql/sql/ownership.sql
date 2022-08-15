@@ -9,6 +9,7 @@ CREATE TABLE sys.babelfish_sysdatabases (
 	name TEXT NOT NULL COLLATE "C",
 	crdate timestamptz NOT NULL,
 	properties TEXT NOT NULL COLLATE "C",
+  cmptlevel SMALLINT NOT NULL DEFAULT 120,
 	PRIMARY KEY (name)
 );
 
@@ -36,7 +37,7 @@ t.status2,
 CAST(t.crdate AS SYS.DATETIME) AS crdate,
 CAST('1900-01-01 00:00:00.000' AS SYS.DATETIME) AS reserved,
 CAST(0 AS INT) AS category,
-CAST(120 AS SYS.TINYINT) AS cmptlevel,
+CAST(t.cmptlevel AS SYS.TINYINT) AS cmptlevel,
 CAST(NULL AS SYS.NVARCHAR(260)) AS filename,
 CAST(NULL AS SMALLINT) AS version
 FROM sys.babelfish_sysdatabases AS t
@@ -346,7 +347,7 @@ select
   , CAST(NULL as INT) as source_database_id
   , cast(cast(r.oid as INT) as SYS.VARBINARY(85)) as owner_sid
   , CAST(d.crdate AS SYS.DATETIME) as create_date
-  , CAST(120 AS SYS.TINYINT) as compatibility_level
+  , CAST(d.cmptlevel AS SYS.TINYINT) as compatibility_level
   , CAST(c.collname as SYS.SYSNAME) as collation_name
   , CAST(0 AS SYS.TINYINT)  as user_access
   , CAST('MULTI_USER' AS SYS.NVARCHAR(60)) as user_access_desc

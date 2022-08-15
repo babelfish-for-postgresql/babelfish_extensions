@@ -401,6 +401,7 @@ create_bbf_db_internal(const char *dbname, List *options, const char *owner, int
 	new_record[5] = CStringGetTextDatum(dbname);
 	new_record[6] = TimestampGetDatum(GetSQLLocalTimestamp(0));
 	new_record[7] = CStringGetTextDatum("{}");
+	new_record[8] = Int16GetDatum(DEFAULT_DATABASE_COMPATIBILITY_LEVEL);
 
 	tuple = heap_form_tuple(RelationGetDescr(sysdatabase_rel),
 							new_record, new_record_nulls);

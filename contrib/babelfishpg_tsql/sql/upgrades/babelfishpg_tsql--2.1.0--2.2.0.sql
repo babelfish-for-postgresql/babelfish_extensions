@@ -3499,6 +3499,8 @@ END;
 $$
 LANGUAGE 'pltsql';
 
+ALTER TABLE sys.babelfish_sysdatabases ADD COLUMN c INT DEFAULT 120;
+
 -- Drops the temporary procedure used by the upgrade script.
 -- Please have this be one of the last statements executed in this upgrade script.
 DROP PROCEDURE sys.babelfish_drop_deprecated_view(varchar, varchar);
