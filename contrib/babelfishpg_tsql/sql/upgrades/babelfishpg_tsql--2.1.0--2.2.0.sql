@@ -3499,7 +3499,11 @@ END;
 $$
 LANGUAGE 'pltsql';
 
+SET allow_system_table_mods TO on;
+
 ALTER TABLE sys.babelfish_sysdatabases ADD COLUMN c INT DEFAULT 120;
+
+SET allow_system_table_mods TO off;
 
 -- Drops the temporary procedure used by the upgrade script.
 -- Please have this be one of the last statements executed in this upgrade script.
