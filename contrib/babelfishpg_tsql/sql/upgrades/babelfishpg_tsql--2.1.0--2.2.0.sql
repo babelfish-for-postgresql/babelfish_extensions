@@ -983,19 +983,26 @@ GRANT SELECT ON information_schema_tsql.routines TO PUBLIC;
 */
 
 CREATE OR REPLACE VIEW information_schema_tsql.view_table_usage
-AS SELECT DISTINCT sys.db_name()::sys.nvarchar(128) AS view_catalog,
-    sys.schema_name(nv."oid")::sys.nvarchar(128) AS view_schema,
-    v.relname::sys.sysname AS view_name,
-    sys.db_name()::sys.nvarchar(128) AS table_catalog,
-    sys.schema_name(nt."oid")::sys.nvarchar(128) AS table_schema,
-    t.relname::sys.sysname AS table_name
-   FROM pg_namespace nv,
-    pg_class v,
-    pg_depend dv,
-    pg_depend dt,
-    pg_class t,
-    pg_namespace nt
-  WHERE nv.oid = v.relnamespace AND v.relkind = 'v'::"char" AND v.oid = dv.refobjid AND dv.refclassid = 'pg_class'::regclass::oid AND dv.classid = 'pg_rewrite'::regclass::oid AND dv.deptype = 'i'::"char" AND dv.objid = dt.objid AND dv.refobjid <> dt.refobjid AND dt.classid = 'pg_rewrite'::regclass::oid AND dt.refclassid = 'pg_class'::regclass::oid AND dt.refobjid = t.oid AND t.relnamespace = nt.oid AND (t.relkind = ANY (ARRAY['r'::"char", 'v'::"char", 'f'::"char", 'p'::"char"])) AND pg_has_role(t.relowner, 'USAGE'::text);
+AS SELECT DISTINCT CAST(sys.db_name() AS sys.nvarchar(128)) AS "VIEW_CATALOG",
+    CAST(sys.schema_name(nv."oid") AS sys.nvarchar(128)) AS "VIEW_SCHEMA",
+    CAST(v.relname AS sys.sysname) AS "VIEW_NAME",
+    CAST(sys.db_name() AS sys.nvarchar(128)) AS "TABLE_CATALOG",
+    CAST(sys.schema_name(nt."oid") AS sys.nvarchar(128)) AS "TABLE_SCHEMA",
+    CAST(t.relname AS sys.sysname) AS "TABLE_NAME"
+   FROM pg_catalog.pg_namespace nv,
+    pg_catalog.pg_class v,
+    pg_catalog.pg_depend dv,
+    pg_catalog.pg_depend dt,
+    pg_catalog.pg_class t,
+    pg_catalog.pg_namespace nt
+  WHERE nv.oid = v.relnamespace AND v.relkind = 'v'::"char" 
+  AND v.oid = dv.refobjid AND dv.refclassid = 'pg_class'::regclass::oid 
+  AND dv.classid = 'pg_rewrite'::regclass::oid AND dv.deptype = 'i'::"char" 
+  AND dv.objid = dt.objid AND dv.refobjid <> dt.refobjid 
+  AND dt.classid = 'pg_rewrite'::regclass::oid AND dt.refclassid = 'pg_class'::regclass::oid 
+  AND dt.refobjid = t.oid AND t.relnamespace = nt.oid 
+  AND (t.relkind = ANY (ARRAY['r'::"char", 'v'::"char", 'f'::"char", 'p'::"char"])) 
+  AND pg_catalog.pg_has_role(t.relowner, 'USAGE'::text);
   
 
 GRANT SELECT ON information_schema_tsql.view_table_usage TO PUBLIC;
@@ -1346,6 +1353,8 @@ FROM (
       ) AS x (tblschema, tblname, tblowner, colname, cstrschema, cstrname, tblcat, cstrcat);
 
 GRANT SELECT ON information_schema_tsql.CONSTRAINT_COLUMN_USAGE TO PUBLIC;
+
+
 
 CREATE OR REPLACE VIEW sys.filetables
 AS
