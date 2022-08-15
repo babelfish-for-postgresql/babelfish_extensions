@@ -1,43 +1,44 @@
-drop database if exists db_view_column_usage;
-go
-create database db_view_column_usage;
+select * from information_schema.view_column_usage where view_name like 'view_column_usage_v%' order by view_name;
 go
 
-use db_view_column_usage;
-go
-
-
-
-select * from information_schema.view_column_usage where table_name not like 'sys%';
-go
-
-
-drop table if exists view_column_usage_tb1;
-go
 create table view_column_usage_tb1(view_column_usage_c1 int, 
 view_column_usage_c2 char, view_column_usage_c3 varchar);
 go
 
-drop view if exists view_column_usage_v1;
+create table view_column_usage_tb2(view_column_usage_c4 char, 
+view_column_usage_c5 char, view_column_usage_c6 int);
 go
+
 create view view_column_usage_v1 as select * from view_column_usage_tb1;
 go
 
-
-select * from information_schema.view_column_usage where table_name not like 'sys%';
+create view view_column_usage_v2 as select * from view_column_usage_tb2;
 go
 
+select * from information_schema.view_column_usage where view_name like 'view_column_usage_v%' order by view_name;
+go
 
+create procedure view_column_usag_proc as select * from information_schema.view_column_usage where view_name like 'view_column_usage_v%' order by view_name;
+go
 
+create function view_column_usag_func() returns table as return(select * from information_schema.view_column_usage where view_name like 'view_column_usage_v%' order by view_name);
+go
+
+select * from information_schema.view_column_usage where view_name like 'view_column_usage_v%' order by view_name;
+go
+
+drop function view_column_usag_func
+
+drop procedure view_column_usag_proc
+
+drop view view_column_usage_v2
+go
 
 drop view view_column_usage_v1
 go
 
+drop table view_column_usage_tb2
+go
+
 drop table view_column_usage_tb1
-go
-
-use master;
-go
-
-drop database db_view_column_usage;
 go
