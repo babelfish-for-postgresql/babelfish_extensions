@@ -69,7 +69,7 @@ runs:
 
     - name: Change migration mode to multi-db
       id: change-migration-mode
-      if: ${{ inputs.migration_mode }} == 'multi-db'
+      if: ${{ inputs.migration_mode == 'multi-db' }}
       run: |
         sudo ~/${{ inputs.install_dir}}/bin/psql -d jdbc_testdb -U runner -c "ALTER SYSTEM SET babelfishpg_tsql.migration_mode = 'multi-db';"
         sudo ~/${{ inputs.install_dir}}/bin/psql -d jdbc_testdb -U runner -c "SELECT pg_reload_conf();"
@@ -77,7 +77,7 @@ runs:
 
     - name: Run JDBC Upgrade Tests
       id: jdbc-upgrade-tests
-      if: ${{ inputs.migration_mode }} == 'multi-db'
+      if: ${{ inputs.migration_mode == 'multi-db' }}
       env:
         base_dir: ${{ matrix.upgrade-path.path[0] }}
       run: |
@@ -106,7 +106,7 @@ runs:
 
     - name: Run JDBC Upgrade Tests (Prepare) in single-db mode
       id: jdbc-upgrade-tests-singledb
-      if: ${{ inputs.migration_mode }} == 'single-db'
+      if: ${{ inputs.migration_mode == 'single-db' }}
       run: |
         cd test/JDBC/
         export isUpgradeTestMode=false
