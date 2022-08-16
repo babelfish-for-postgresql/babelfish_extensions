@@ -1,10 +1,10 @@
-SELECT * FROM sys_sysdatabases_vu_prepare_view
+SELECT * FROM sys_babelfish_sysdatabases_vu_prepare_view
 GO
 
-EXEC sys_sysdatabases_vu_prepare_proc
+EXEC sys_babelfish_sysdatabases_vu_prepare_proc
 GO
 
-SELECT sys_sysdatabases_vu_prepare_func()
+SELECT sys_babelfish_sysdatabases_vu_prepare_func()
 GO
 
 SELECT dbid, status, status2, default_collation, name, properties, cmptlevel FROM sys.babelfish_sysdatabases WHERE name = 'master'

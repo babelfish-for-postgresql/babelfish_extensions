@@ -1,20 +1,20 @@
-SELECT * FROM sys_sysdatabases_vu_prepare_view
+SELECT * FROM sys_babelfish_sysdatabases_vu_prepare_view
 GO
 ~~START~~
-text#!#smallint
-sys_babelfish_sysdatabases_vu_prepare_db#!#120
+text
+sys_babelfish_sysdatabases_vu_prepare_db
 ~~END~~
 
 
-EXEC sys_sysdatabases_vu_prepare_proc
+EXEC sys_babelfish_sysdatabases_vu_prepare_proc
 GO
 ~~START~~
-text#!#smallint
-sys_babelfish_sysdatabases_vu_prepare_db#!#120
+text
+sys_babelfish_sysdatabases_vu_prepare_db
 ~~END~~
 
 
-SELECT sys_sysdatabases_vu_prepare_func()
+SELECT sys_babelfish_sysdatabases_vu_prepare_func()
 GO
 ~~START~~
 int
