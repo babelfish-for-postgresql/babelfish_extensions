@@ -121,7 +121,7 @@ jobs:
           do 
             if [[ -f ../../output/$f".out" ]]; then
               cp ../../output/$f".out" ~/failed-testscript-outputs/$f".out"
-            elif [[ -f ../../output/$BASE_VERSION"__preparation__"$f".out" ]]; then
+            elif [[ -f ../../output/"singledb__preparation__"$f".out" ]]; then
               cp ../../output/"singledb__preparation__"$f".out" ~/failed-testscript-outputs/"singledb__preparation__"$f".out"
             else
               cp ../../output/"singledb__verification_cleanup__"$f".out" ~/failed-testscript-outputs/"singledb__verification_cleanup__"$f".out"
@@ -132,8 +132,8 @@ jobs:
         if: always() && steps.test-file-rename.outcome == 'success'
         uses: actions/upload-artifact@v2
         with:
-          name: run-summary.log
+          name: Test Run Artificats
           path: |
             test/JDBC/Info/run-summary.log
             test/JDBC/Info/output-diff.diff
-            ~/failed-testscript-outputs
+            ~/failed-testscript-outputs/*
