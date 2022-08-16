@@ -38,16 +38,10 @@ sys-numbered_procedures
 BABEL-3121
 sys-events
 sys-suser_sid
-<<<<<<< HEAD
 sys-trigger_events
 sys-suser_sname
 sys-default_constraints
 sys-check_constraints
-=======
-sys-default_constraints
-sys-check_constraints
-BABEL-3121
->>>>>>> a396397 (Update flaky tests)
 BABEL-3166
 BABEL-3192
 BABEL-3221
