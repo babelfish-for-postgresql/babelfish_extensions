@@ -1,5 +1,5 @@
 -- tsql
-create type tt_type as table(tt_type_a int, tt_type_b char);
+create type sys_table_types_vu_prepare_tt as table(sys_table_types_vu_prepare_tt_a int, sys_table_types_vu_prepare_tt_b char);
 GO
 -- psql
 CREATE TYPE master_dbo.comp_type AS (name text,sid integer);
