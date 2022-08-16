@@ -37,6 +37,8 @@ jobs:
           find ./ -type f -exec cat {} \;
           cd ../output
           find ./ -type f -exec cat {} \;
+          cd ../expected
+          find . |grep BABEL-1444
 
       - name: Build Modified Postgres using latest version
         id: build-modified-postgres-new
@@ -115,7 +117,7 @@ jobs:
 
       - name: Rename Test Summary Files
         id: test-file-rename
-        if: steps.jdbc-upgrade-tests-verify.outcome == 'failure' || steps.setup-base-version.outcome == 'failure'
+        if: always() && (steps.jdbc-upgrade-tests-verify.outcome == 'failure' || steps.setup-base-version.outcome == 'failure')
         run: |
           cd test/JDBC/Info
           timestamp=`ls -Art | tail -n 1`
