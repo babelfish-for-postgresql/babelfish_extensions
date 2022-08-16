@@ -1,4 +1,4 @@
-select * from datetimeoffset_testing;
+select * from testdatetimeoffset_vu_prepare_t1;
 go
 ~~START~~
 datetimeoffset
@@ -14,7 +14,7 @@ datetimeoffset
 
 
 -- Test comparision with datetime/smalldatetime/date
-select * from datetimeoffset_testing where df >= '2020-03-15 00:00:00';
+select * from testdatetimeoffset_vu_prepare_t1 where df >= '2020-03-15 00:00:00';
 go
 ~~START~~
 datetimeoffset
@@ -23,14 +23,14 @@ datetimeoffset
 2020-03-15 09:00:00.0000000 -08:20
 ~~END~~
 
-select * from datetimeoffset_testing where df >= '2020-03-15 09:00:00 +7';
+select * from testdatetimeoffset_vu_prepare_t1 where df >= '2020-03-15 09:00:00 +7';
 go
 ~~START~~
 datetimeoffset
 2020-03-15 09:00:00.0000000 -08:20
 ~~END~~
 
-select * from datetimeoffset_testing where df >= '2020-03-15 09:00:00 +8' 
+select * from testdatetimeoffset_vu_prepare_t1 where df >= '2020-03-15 09:00:00 +8' 
                     and df < '2020-03-15 09:00:00';
 go
 ~~START~~
@@ -38,7 +38,7 @@ datetimeoffset
 2020-03-15 09:00:00.0000000 +08:00
 ~~END~~
 
-select * from datetimeoffset_testing where df < '1992-05-24';
+select * from testdatetimeoffset_vu_prepare_t1 where df < '1992-05-24';
 go
 ~~START~~
 datetimeoffset
@@ -51,7 +51,7 @@ datetimeoffset
 
 
 -- Test datetimeoffset default value
-select a from t1 where b = 1;
+select a from testdatetimeoffset_vu_prepare_t2 where b = 1;
 go
 ~~START~~
 datetimeoffset
@@ -842,14 +842,14 @@ go
 -- test casting datetimeoffset inside procedure
 -- NOTE: This is not supported behavior in tsql and will fail
 DECLARE @dto datetimeoffset = CAST('2030-05-06 13:39:29.123456 +0:00' AS datetimeoffset);
-exec cast_datetimeoffset @dto;
+exec testdatetimeoffset_vu_prepare_cast @dto;
 go
 DECLARE @dto datetimeoffset = CAST('1920-05-06 13:39:29.123456 +0:00' AS datetimeoffset);
-exec cast_datetimeoffset @dto;
+exec testdatetimeoffset_vu_prepare_cast @dto;
 go
 -- expect error
 DECLARE @dto datetimeoffset = CAST('19200-05-06 13:39:29.123456 +0:00' AS datetimeoffset);
-exec cast_datetimeoffset @dto;
+exec testdatetimeoffset_vu_prepare_cast @dto;
 go
 ~~ERROR (Code: 33557097)~~
 
@@ -858,8 +858,8 @@ go
 
 -- test comparing datetimeoffset inside procedure
 DECLARE @dto datetimeoffset = CAST('2030-05-06 13:39:29.123456 +0:00' AS datetimeoffset);
-exec cmp_datetimeoffset @dto;
+exec testdatetimeoffset_vu_prepare_cmp @dto;
 go
 DECLARE @dto datetimeoffset = CAST('1930-05-06 13:39:29.123456 +0:00' AS datetimeoffset);
-exec cmp_datetimeoffset @dto;
+exec testdatetimeoffset_vu_prepare_cmp @dto;
 go

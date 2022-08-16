@@ -1,9 +1,9 @@
 -- Clean up
-drop table datetimeoffset_testing;
+drop table testdatetimeoffset_vu_prepare_t1;
 go
-drop table t1;
+drop table testdatetimeoffset_vu_prepare_t2;
 go
-drop procedure cast_datetimeoffset;
+drop procedure testdatetimeoffset_vu_prepare_cast;
 go
-drop procedure cmp_datetimeoffset;
+drop procedure testdatetimeoffset_vu_prepare_cmp;
 go

@@ -1,4 +1,4 @@
-USE db1_sys_sql_modules
+USE sys_sql_modules_vu_prepare_db1
 GO
 
 -- Test for function
@@ -13,11 +13,11 @@ SELECT
     execute_as_principal_id,
     uses_native_compilation
 FROM sys.sql_modules
-WHERE object_id = OBJECT_ID('sql_modules_function')
+WHERE object_id = OBJECT_ID('sys_sql_modules_vu_prepare_function')
 GO
 ~~START~~
 nvarchar#!#bit#!#bit#!#bit#!#bit#!#bit#!#bit#!#int#!#bit
-CREATE OR REPLACE FUNCTION db1_sys_sql_modules_dbo.sql_modules_function()<newline> RETURNS integer<newline> LANGUAGE pltsql<newline>AS '{"version_num": "1", "typmod_array": ["-1"], "original_probin": ""}', $function$BEGIN<newline>    RETURN 1;<newline>END$function$<newline>#!#1#!#1#!#0#!#0#!#0#!#0#!#<NULL>#!#0
+CREATE OR REPLACE FUNCTION sys_sql_modules_vu_prepare_db1_dbo.sys_sql_modules_vu_prepare_function()<newline> RETURNS integer<newline> LANGUAGE pltsql<newline>AS '{"version_num": "1", "typmod_array": ["-1"], "original_probin": ""}', $function$BEGIN<newline>    RETURN 1;<newline>END$function$<newline>#!#1#!#1#!#0#!#0#!#0#!#0#!#<NULL>#!#0
 ~~END~~
 
 
@@ -33,7 +33,7 @@ SELECT
     execute_as_principal_id,
     uses_native_compilation
 FROM sys.sql_modules
-WHERE object_id = OBJECT_ID('sql_modules_view')
+WHERE object_id = OBJECT_ID('sys_sql_modules_vu_prepare_view')
 GO
 ~~START~~
 nvarchar#!#bit#!#bit#!#bit#!#bit#!#bit#!#bit#!#int#!#bit
@@ -53,7 +53,7 @@ SELECT
     execute_as_principal_id,
     uses_native_compilation
 FROM sys.sql_modules
-WHERE object_id = (SELECT TOP(1) object_id FROM sys.all_objects WHERE name = 'sql_mod_trig')
+WHERE object_id = (SELECT TOP(1) object_id FROM sys.all_objects WHERE name = 'sys_sql_modules_vu_prepare_tr1')
 GO
 ~~START~~
 nvarchar#!#bit#!#bit#!#bit#!#bit#!#bit#!#bit#!#int#!#bit
@@ -73,11 +73,11 @@ SELECT
     execute_as_principal_id,
     uses_native_compilation
 FROM sys.sql_modules
-WHERE object_id = OBJECT_ID('sql_modules_proc')
+WHERE object_id = OBJECT_ID('sys_sql_modules_vu_prepare_proc')
 GO
 ~~START~~
 nvarchar#!#bit#!#bit#!#bit#!#bit#!#bit#!#bit#!#int#!#bit
-CREATE OR REPLACE PROCEDURE db1_sys_sql_modules_dbo.sql_modules_proc()<newline> LANGUAGE pltsql<newline>AS '{"version_num": "1", "typmod_array": [], "original_probin": ""}', $procedure$SELECT 1$procedure$<newline>#!#1#!#1#!#0#!#0#!#0#!#0#!#<NULL>#!#0
+CREATE OR REPLACE PROCEDURE sys_sql_modules_vu_prepare_db1_dbo.sys_sql_modules_vu_prepare_proc()<newline> LANGUAGE pltsql<newline>AS '{"version_num": "1", "typmod_array": [], "original_probin": ""}', $procedure$SELECT 1$procedure$<newline>#!#1#!#1#!#0#!#0#!#0#!#0#!#<NULL>#!#0
 ~~END~~
 
 
@@ -93,7 +93,7 @@ SELECT
     execute_as_principal_id,
     uses_native_compilation
 FROM sys.sql_modules
-WHERE object_id = OBJECT_ID('my_master_view_sys_sql_modules')
+WHERE object_id = OBJECT_ID('sys_sql_modules_vu_prepare_master_view')
 GO
 ~~START~~
 nvarchar#!#bit#!#bit#!#bit#!#bit#!#bit#!#bit#!#int#!#bit
@@ -103,9 +103,9 @@ nvarchar#!#bit#!#bit#!#bit#!#bit#!#bit#!#bit#!#int#!#bit
 USE master
 GO
 
--- tsql user=sql_modules_user password=test
+-- tsql user=sys_sql_modules_vu_prepare_user password=test
 
-USE db1_sys_sql_modules
+USE sys_sql_modules_vu_prepare_db1
 GO
 
 SELECT
@@ -119,7 +119,7 @@ SELECT
     execute_as_principal_id,
     uses_native_compilation
 FROM sys.sql_modules
-WHERE object_id = OBJECT_ID('sql_modules_proc')
+WHERE object_id = OBJECT_ID('sys_sql_modules_vu_prepare_proc')
 GO
 ~~START~~
 nvarchar#!#bit#!#bit#!#bit#!#bit#!#bit#!#bit#!#int#!#bit
