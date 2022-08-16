@@ -426,7 +426,11 @@ static void
 init_default_locale(void)
 {
 	if (!default_locale)
-		default_locale = GetConfigOption("babelfishpg_tsql.default_locale", true, false);
+		default_locale = strdup(GetConfigOption("babelfishpg_tsql.default_locale", true, false));
+
+	/* babelfishpg_tsql.default_locale should not be changed once babelfish db is initialised. */
+	Assert(strcmp(default_locale, GetConfigOption("babelfishpg_tsql.default_locale", true, false)) == 0);
+
 	return;
 }
 
@@ -434,7 +438,11 @@ static void
 init_server_collation_name(void)
 {
 	if (!server_collation_name)
-		server_collation_name = GetConfigOption("babelfishpg_tsql.server_collation_name", true, false);
+		server_collation_name = strdup(GetConfigOption("babelfishpg_tsql.server_collation_name", true, false));
+
+	/* babelfishpg_tsql.server_collation_name should not be changed once babelfish db is initialised. */
+	Assert(strcmp(server_collation_name, GetConfigOption("babelfishpg_tsql.server_collation_name", true, false)) == 0);
+
 	return;
 }
 
