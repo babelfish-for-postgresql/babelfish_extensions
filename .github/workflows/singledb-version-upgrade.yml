@@ -14,6 +14,11 @@ jobs:
     steps:
       - uses: actions/checkout@v2
       
+      - name: Install Dependencies
+        id: install-dependencies
+        if: always()
+        uses: ./.github/composite-actions/install-dependencies
+
       - name: Setup Base version ${{ env.ENGINE_BRANCH_FROM }} and run prepare tests
         id: setup-base-version
         if: always()
