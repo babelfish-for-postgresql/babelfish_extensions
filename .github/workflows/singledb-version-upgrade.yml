@@ -29,18 +29,6 @@ jobs:
           install_dir: ${{ env.OLD_INSTALL_DIR }}
           migration_mode: 'single-db'
 
-      - name: Debug Test failures
-        id: debug-fails
-        if: always() && steps.setup-base-version.outcome == 'failure'
-        run: |
-          cd test/JDBC/Info
-          find ./ -type f -exec cat {} \;
-          cd ../output
-          find ./ -type f -exec cat {} \;
-          find .
-          cd ../expected
-          find . |grep BABEL-1444
-
       - name: Build Modified Postgres using latest version
         id: build-modified-postgres-new
         if: always() && steps.setup-base-version.outcome == 'success'
@@ -83,6 +71,9 @@ jobs:
         if: always() && steps.run-pg_upgrade.outcome == 'success'
         run: |
           cd test/JDBC/
+          touch dummy_schedule
+          echo "all" > dummy_schedule
+          export scheduleFile=dummy_schedule
           export isUpgradeTestMode=false
           export inputFilesPath=upgrade/singledb/verification_cleanup
           mvn test

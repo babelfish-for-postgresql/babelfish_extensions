@@ -109,6 +109,9 @@ runs:
       if: ${{ inputs.migration_mode == 'single-db' }}
       run: |
         cd test/JDBC/
+        touch dummy_schedule
+        echo "all" > dummy_schedule
+        export scheduleFile=dummy_schedule
         export isUpgradeTestMode=false
         export inputFilesPath=upgrade/singledb/preparation
         mvn test
