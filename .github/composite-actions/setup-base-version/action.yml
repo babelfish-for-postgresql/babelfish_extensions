@@ -111,7 +111,6 @@ runs:
         cd test/JDBC/
         export isUpgradeTestMode=false
         export inputFilesPath=upgrade/singledb/preparation
-        for file in ./upgrade/singledb/preparation/*; do mv "$file" "${file%.*}-singledb.sql"; done;
         mvn test
         for filename in $(grep -v "^ignore.*\|^#.*\|^cmd.*\|^all.*\|^$" upgrade/singledb/schedule); do
           if [[ ! ($(find input/ -name $filename"-vu-prepare.*") || $(find input/ -name $filename"-vu-verify.*")) ]]; then 

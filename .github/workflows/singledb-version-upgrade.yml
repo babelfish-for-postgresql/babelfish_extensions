@@ -85,7 +85,6 @@ jobs:
           cd test/JDBC/
           export isUpgradeTestMode=false
           export inputFilesPath=upgrade/singledb/verification_cleanup
-          for file in ./upgrade/singledb/verification_cleanup/*; do mv "$file" "${file%.*}-singledb.sql"; done;
           mvn test
 
           for filename in $(grep -v "^ignore.*\|^#.*\|^cmd.*\|^all.*\|^$" upgrade/singledb/schedule); do
@@ -125,6 +124,18 @@ jobs:
           cd $timestamp
           mv $timestamp.diff ../output-diff.diff
           mv "$timestamp"_runSummary.log ../run-summary.log
+          mkdir -p ~/failed-testscript-outputs
+
+          for f in $(grep "[A-Za-z_\-]*:[ ]*Failed" $timestamp"_runSummary.log" | cut -d ":" -f 1); 
+          do 
+            if [[ -f ../../output/$f".out" ]]; then
+              cp ../../output/$f".out" ~/failed-testscript-outputs/$f".out"
+            elif [[ -f ../../output/$BASE_VERSION"__preparation__"$f".out" ]]; then
+              cp ../../output/"singledb__preparation__"$f".out" ~/failed-testscript-outputs/"singledb__preparation__"$f".out"
+            else
+              cp ../../output/"singledb__verification_cleanup__"$f".out" ~/failed-testscript-outputs/"singledb__verification_cleanup__"$f".out"
+            fi
+          done
 
       - name: Upload Run Summary
         if: always() && steps.test-file-rename.outcome == 'success'
@@ -134,3 +145,4 @@ jobs:
           path: |
             test/JDBC/Info/run-summary.log
             test/JDBC/Info/output-diff.diff
+            ~/failed-testscript-outputs

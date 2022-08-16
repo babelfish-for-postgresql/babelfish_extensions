@@ -33,10 +33,6 @@ int#!#varchar#!#varchar#!#varchar
 
 CREATE DATABASE babel_1444_db1;
 GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: Only one user database allowed under single-db mode. User database "babel_3190_vu_prepare_db" already exists)~~
-
 
 SELECT current_setting('role');
 GO
@@ -69,23 +65,19 @@ dbo
 
 USE babel_1444_db1;
 GO
-~~ERROR (Code: 911)~~
-
-~~ERROR (Message: database "babel_1444_db1" does not exist)~~
-
 
 SELECT current_setting('role');
 GO
 ~~START~~
 text
-master_dbo
+dbo
 ~~END~~
 
 SELECT current_setting('search_path');
 GO
 ~~START~~
 text
-master_dbo, "$user", sys, pg_catalog
+dbo, "$user", sys, pg_catalog
 ~~END~~
 
 SELECT session_user, current_user, user;
@@ -106,23 +98,23 @@ dbo
 -- Error: Test DROP
 DROP DATABASE babel_1444_db1;
 GO
-~~ERROR (Code: 911)~~
+~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: database "babel_1444_db1" does not exist)~~
+~~ERROR (Message: Cannot drop database "babel_1444_db1" because it is currently in use)~~
 
 
 SELECT current_setting('role');
 GO
 ~~START~~
 text
-master_dbo
+dbo
 ~~END~~
 
 SELECT current_setting('search_path');
 GO
 ~~START~~
 text
-master_dbo, "$user", sys, pg_catalog
+dbo, "$user", sys, pg_catalog
 ~~END~~
 
 SELECT session_user, current_user, user;
@@ -175,10 +167,6 @@ dbo
 
 DROP DATABASE babel_1444_db1;
 GO
-~~ERROR (Code: 911)~~
-
-~~ERROR (Message: database "babel_1444_db1" does not exist)~~
-
 
 SELECT current_setting('role');
 GO
@@ -212,10 +200,6 @@ dbo
 -- Test CREATE
 CREATE DATABASE babel_1444_db1;
 GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: Only one user database allowed under single-db mode. User database "babel_3190_vu_prepare_db" already exists)~~
-
 
 SELECT current_setting('role');
 GO
