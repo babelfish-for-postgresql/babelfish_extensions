@@ -28,11 +28,30 @@ int#!#varchar#!#varchar#!#varchar
 102#!#Green#!#Bob#!#dbo
 103#!#Purple#!#dbo#!#Alice
 104#!#Red#!#Mike#!#Dave
+105#!#Orange#!#dbo#!#dbo
+106#!#Blue#!#dbo#!#dbo
+107#!#Green#!#Bob#!#dbo
+108#!#Purple#!#dbo#!#Alice
+109#!#Red#!#Mike#!#Dave
+110#!#Orange#!#dbo#!#dbo
+111#!#Blue#!#dbo#!#dbo
+112#!#Green#!#Bob#!#dbo
+113#!#Purple#!#dbo#!#Alice
+114#!#Red#!#Mike#!#Dave
+115#!#Orange#!#dbo#!#dbo
+116#!#Blue#!#dbo#!#dbo
+117#!#Green#!#Bob#!#dbo
+118#!#Purple#!#dbo#!#Alice
+119#!#Red#!#Mike#!#Dave
 ~~END~~
 
 
 CREATE DATABASE babel_1444_db1;
 GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Only one user database allowed under single-db mode. User database "babel_3190_vu_prepare_db" already exists)~~
+
 
 SELECT current_setting('role');
 GO
@@ -65,19 +84,23 @@ dbo
 
 USE babel_1444_db1;
 GO
+~~ERROR (Code: 911)~~
+
+~~ERROR (Message: database "babel_1444_db1" does not exist)~~
+
 
 SELECT current_setting('role');
 GO
 ~~START~~
 text
-dbo
+master_dbo
 ~~END~~
 
 SELECT current_setting('search_path');
 GO
 ~~START~~
 text
-dbo, "$user", sys, pg_catalog
+master_dbo, "$user", sys, pg_catalog
 ~~END~~
 
 SELECT session_user, current_user, user;
@@ -98,23 +121,23 @@ dbo
 -- Error: Test DROP
 DROP DATABASE babel_1444_db1;
 GO
-~~ERROR (Code: 33557097)~~
+~~ERROR (Code: 911)~~
 
-~~ERROR (Message: Cannot drop database "babel_1444_db1" because it is currently in use)~~
+~~ERROR (Message: database "babel_1444_db1" does not exist)~~
 
 
 SELECT current_setting('role');
 GO
 ~~START~~
 text
-dbo
+master_dbo
 ~~END~~
 
 SELECT current_setting('search_path');
 GO
 ~~START~~
 text
-dbo, "$user", sys, pg_catalog
+master_dbo, "$user", sys, pg_catalog
 ~~END~~
 
 SELECT session_user, current_user, user;
@@ -167,6 +190,10 @@ dbo
 
 DROP DATABASE babel_1444_db1;
 GO
+~~ERROR (Code: 911)~~
+
+~~ERROR (Message: database "babel_1444_db1" does not exist)~~
+
 
 SELECT current_setting('role');
 GO
@@ -200,6 +227,10 @@ dbo
 -- Test CREATE
 CREATE DATABASE babel_1444_db1;
 GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Only one user database allowed under single-db mode. User database "babel_3190_vu_prepare_db" already exists)~~
+
 
 SELECT current_setting('role');
 GO

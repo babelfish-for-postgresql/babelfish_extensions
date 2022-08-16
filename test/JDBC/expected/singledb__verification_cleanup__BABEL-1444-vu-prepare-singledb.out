@@ -7,6 +7,10 @@ CREATE TABLE dbo.babel_1444_vu_prepare_t1
  usr VARCHAR(30) NOT NULL DEFAULT USER,
  cur_usr VARCHAR(30) NOT NULL DEFAULT CURRENT_USER);
 GO
+~~ERROR (Code: 2714)~~
+
+~~ERROR (Message: relation "babel_1444_vu_prepare_t1" already exists)~~
+
 
 INSERT INTO dbo.babel_1444_vu_prepare_t1 (description) VALUES ('Orange');
 INSERT INTO dbo.babel_1444_vu_prepare_t1 (description) VALUES ('Blue');
