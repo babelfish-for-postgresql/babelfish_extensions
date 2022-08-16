@@ -1099,9 +1099,9 @@ BEGIN
 	WHEN 'second' THEN
 		RETURN startdate OPERATOR(sys.+) make_interval(secs => num);
 	WHEN 'millisecond' THEN
-		RETURN startdate OPERATOR(sys.+) make_interval(secs => num * 0.001);
-	WHEN 'microsecond' THEN
-		RETURN startdate OPERATOR(sys.+) make_interval(secs => num * 0.000001);
+		RETURN startdate OPERATOR(sys.+) make_interval(secs => (num::numeric) * 0.001);
+    WHEN 'microsecond' THEN
+        RAISE EXCEPTION 'The datepart % is not supported by date function dateadd for data type time.', datepart;
 	WHEN 'nanosecond' THEN
 		-- Best we can do - Postgres does not support nanosecond precision
 		RETURN startdate;
@@ -1146,9 +1146,9 @@ BEGIN
 	WHEN 'second' THEN
 		RETURN startdate + make_interval(secs => num);
 	WHEN 'millisecond' THEN
-		RETURN startdate + make_interval(secs => num * 0.001);
-	WHEN 'microsecond' THEN
-		RETURN startdate + make_interval(secs => num * 0.000001);
+		RETURN startdate OPERATOR(sys.+) make_interval(secs => (num::numeric) * 0.001);
+    WHEN 'microsecond' THEN
+        RAISE EXCEPTION 'The datepart % is not supported by date function dateadd for data type time.', datepart;
 	WHEN 'nanosecond' THEN
 		-- Best we can do - Postgres does not support nanosecond precision
 		RETURN startdate;

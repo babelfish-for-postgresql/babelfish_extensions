@@ -1498,6 +1498,91 @@ SELECT
 WHERE FALSE;
 GRANT SELECT ON sys.fulltext_catalogs TO PUBLIC;
 
+CREATE OR REPLACE FUNCTION sys.dateadd_internal_df(IN datepart PG_CATALOG.TEXT, IN num INTEGER, IN startdate datetimeoffset) RETURNS datetimeoffset AS $$
+BEGIN
+	CASE datepart
+	WHEN 'year' THEN
+		RETURN startdate OPERATOR(sys.+) make_interval(years => num);
+	WHEN 'quarter' THEN
+		RETURN startdate OPERATOR(sys.+) make_interval(months => num * 3);
+	WHEN 'month' THEN
+		RETURN startdate OPERATOR(sys.+) make_interval(months => num);
+	WHEN 'dayofyear', 'y' THEN
+		RETURN startdate OPERATOR(sys.+) make_interval(days => num);
+	WHEN 'day' THEN
+		RETURN startdate OPERATOR(sys.+) make_interval(days => num);
+	WHEN 'week' THEN
+		RETURN startdate OPERATOR(sys.+) make_interval(weeks => num);
+	WHEN 'weekday' THEN
+		RETURN startdate OPERATOR(sys.+) make_interval(days => num);
+	WHEN 'hour' THEN
+		RETURN startdate OPERATOR(sys.+) make_interval(hours => num);
+	WHEN 'minute' THEN
+		RETURN startdate OPERATOR(sys.+) make_interval(mins => num);
+	WHEN 'second' THEN
+		RETURN startdate OPERATOR(sys.+) make_interval(secs => num);
+	WHEN 'millisecond' THEN
+		RETURN startdate OPERATOR(sys.+) make_interval(secs => (num::numeric) * 0.001);
+  WHEN 'microsecond' THEN
+    RAISE EXCEPTION 'The datepart % is not supported by date function dateadd for data type time.', datepart;
+	WHEN 'nanosecond' THEN
+		-- Best we can do - Postgres does not support nanosecond precision
+		RETURN startdate;
+	ELSE
+		RAISE EXCEPTION '"%" is not a recognized dateadd option.', datepart;
+	END CASE;
+END;
+$$
+STRICT
+LANGUAGE plpgsql IMMUTABLE;
+
+CREATE OR REPLACE FUNCTION sys.dateadd_internal(IN datepart PG_CATALOG.TEXT, IN num INTEGER, IN startdate ANYELEMENT) RETURNS ANYELEMENT AS $$
+BEGIN
+    IF pg_typeof(startdate) = 'date'::regtype AND
+		datepart IN ('hour', 'minute', 'second', 'millisecond', 'microsecond', 'nanosecond') THEN
+		RAISE EXCEPTION 'The datepart % is not supported by date function dateadd for data type date.', datepart;
+	END IF;
+    IF pg_typeof(startdate) = 'time'::regtype AND
+		datepart IN ('year', 'quarter', 'month', 'doy', 'day', 'week', 'weekday') THEN
+		RAISE EXCEPTION 'The datepart % is not supported by date function dateadd for data type time.', datepart;
+	END IF;
+
+	CASE datepart
+	WHEN 'year' THEN
+		RETURN startdate + make_interval(years => num);
+	WHEN 'quarter' THEN
+		RETURN startdate + make_interval(months => num * 3);
+	WHEN 'month' THEN
+		RETURN startdate + make_interval(months => num);
+	WHEN 'dayofyear', 'y' THEN
+		RETURN startdate + make_interval(days => num);
+	WHEN 'day' THEN
+		RETURN startdate + make_interval(days => num);
+	WHEN 'week' THEN
+		RETURN startdate + make_interval(weeks => num);
+	WHEN 'weekday' THEN
+		RETURN startdate + make_interval(days => num);
+	WHEN 'hour' THEN
+		RETURN startdate + make_interval(hours => num);
+	WHEN 'minute' THEN
+		RETURN startdate + make_interval(mins => num);
+	WHEN 'second' THEN
+		RETURN startdate + make_interval(secs => num);
+	WHEN 'millisecond' THEN
+		RETURN startdate + make_interval(secs => (num::numeric) * 0.001);
+	WHEN 'microsecond' THEN
+    RAISE EXCEPTION 'The datepart % is not supported by date function dateadd for data type time.', datepart;
+	WHEN 'nanosecond' THEN
+		-- Best we can do - Postgres does not support nanosecond precision
+		RETURN startdate;
+	ELSE
+		RAISE EXCEPTION '"%" is not a recognized dateadd option.', datepart;
+	END CASE;
+END;
+$$
+STRICT
+LANGUAGE plpgsql IMMUTABLE;
+
 CREATE OR REPLACE VIEW sys.fulltext_stoplists
 AS
 SELECT 

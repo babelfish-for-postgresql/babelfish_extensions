@@ -1567,11 +1567,9 @@ select dateadd(millisecond, 123, '20060830'::datetime);
 (1 row)
 
 select dateadd(microsecond, 123456, '20060830'::datetime);
-           dateadd            
-------------------------------
- Wed Aug 30 00:00:00.123 2006
-(1 row)
-
+ERROR:  The datepart microsecond is not supported by date function dateadd for data type time.
+CONTEXT:  PL/pgSQL function sys.dateadd_internal(text,integer,anyelement) line 36 at RAISE
+PL/pgSQL function sys.dateadd(text,integer,anyelement) line 7 at RETURN
 select dateadd(nanosecond, 123456, '20060830'::datetime);
          dateadd          
 --------------------------
