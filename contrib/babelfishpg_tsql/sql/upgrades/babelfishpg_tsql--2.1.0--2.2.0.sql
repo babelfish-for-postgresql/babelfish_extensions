@@ -3508,3 +3508,5 @@ DROP PROCEDURE sys.babelfish_drop_deprecated_table(varchar, varchar);
 
 -- Reset search_path to not affect any subsequent scripts
 SELECT set_config('search_path', trim(leading 'sys, ' from current_setting('search_path')), false);
+<<<<<<< HEAD
+=======

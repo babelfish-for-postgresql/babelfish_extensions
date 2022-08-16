@@ -717,3 +717,5 @@ CREATE OR REPLACE VIEW information_schema_tsql.routines AS
 GRANT SELECT ON information_schema_tsql.routines TO PUBLIC;
 
 SELECT set_config('search_path', 'sys, '||current_setting('search_path'), false);
+<<<<<<< HEAD
+=======
