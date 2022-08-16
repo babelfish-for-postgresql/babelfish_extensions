@@ -22,11 +22,11 @@ int
 ~~END~~
 
 
-SELECT * FROM sys.babelfish_sysdatabases WHERE name = 'master'
+SELECT dbid, status, status2, default_collation, name, properties, cmptlevel FROM sys.babelfish_sysdatabases WHERE name = 'master'
 GO
 ~~START~~
-smallint#!#int#!#int#!#varchar#!#varchar#!#text#!#varchar#!#text#!#smallint
-1#!#0#!#0#!#jdbc_user#!#bbf_unicode_cp1_ci_as#!#master#!#2022-08-15 19:06:35+00#!#{}#!#120
+smallint#!#int#!#int#!#varchar#!#text#!#text#!#smallint
+1#!#0#!#0#!#bbf_unicode_cp1_ci_as#!#master#!#{}#!#120
 ~~END~~
 
 

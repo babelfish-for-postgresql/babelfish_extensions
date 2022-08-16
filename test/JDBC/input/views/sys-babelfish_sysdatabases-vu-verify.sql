@@ -7,7 +7,7 @@ GO
 SELECT sys_sysdatabases_vu_prepare_func()
 GO
 
-SELECT * FROM sys.babelfish_sysdatabases WHERE name = 'master'
+SELECT dbid, status, status2, default_collation, name, properties, cmptlevel FROM sys.babelfish_sysdatabases WHERE name = 'master'
 GO
 
 -- BABEL-3441: Ensure that sys.databases.compatibilty_level and sysdatabases.cmptlevel is equal 
