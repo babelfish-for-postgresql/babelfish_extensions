@@ -251,11 +251,6 @@ Could not find upgrade tests for procedure sys.sp_statistics
 Could not find upgrade tests for procedure sys.sp_statistics_100
 Could not find upgrade tests for procedure sys.sp_stored_procedures
 Could not find upgrade tests for procedure sys.sp_table_privileges
-<<<<<<< HEAD
-Could not find upgrade tests for procedure sys.sp_tablecollations_100
-=======
-Could not find upgrade tests for procedure sys.sp_tables
->>>>>>> BABEL_2_X_DEV
 Could not find upgrade tests for procedure sys.sp_unprepare
 Could not find upgrade tests for procedure sys.sp_updatestats
 Could not find upgrade tests for procedure xp_instance_regread
