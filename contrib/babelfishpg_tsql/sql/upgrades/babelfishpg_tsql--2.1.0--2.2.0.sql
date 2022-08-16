@@ -145,7 +145,7 @@ CREATE OR REPLACE VIEW information_schema_tsql.check_constraints AS
 
 GRANT SELECT ON information_schema_tsql.check_constraints TO PUBLIC;
 
-ALTER VIEW sys.foreign_keys RENAME TO foreign_keys_deprecated;
+ALTER VIEW sys.foreign_keys RENAME TO foreign_keys_deprecated_in_2_2_0;
 
 CREATE OR REPLACE VIEW information_schema_tsql.COLUMN_DOMAIN_USAGE AS
     SELECT isc_col."DOMAIN_CATALOG",
@@ -254,7 +254,7 @@ and p.prokind = 'f'
 and format_type(p.prorettype, null) = 'trigger';
 GRANT SELECT ON sys.triggers TO PUBLIC;
 
-ALTER VIEW sys.key_constraints RENAME TO key_constraints_deprecated;
+ALTER VIEW sys.key_constraints RENAME TO key_constraints_deprecated_in_2_2_0;
 
 CREATE OR replace view sys.key_constraints AS
 SELECT
@@ -287,6 +287,52 @@ INNER JOIN sys.schemas sch ON sch.schema_id = c.connamespace
 WHERE has_schema_privilege(sch.schema_id, 'USAGE')
 AND c.contype IN ('p', 'u');
 GRANT SELECT ON sys.key_constraints TO PUBLIC;
+
+ALTER VIEW sys.procedures RENAME TO procedures_deprecated_in_2_2_0;
+
+create or replace view sys.procedures as
+select
+  cast(p.proname as sys.sysname) as name
+  , cast(p.oid as int) as object_id
+  , cast(null as int) as principal_id
+  , cast(sch.schema_id as int) as schema_id
+  , cast (case when tr.tgrelid is not null 
+      then tr.tgrelid 
+      else 0 end as int) 
+    as parent_object_id
+  , cast(case p.prokind
+      when 'p' then 'P'
+      when 'a' then 'AF'
+      else
+        case format_type(p.prorettype, null) when 'trigger'
+          then 'TR'
+          else 'FN'
+        end
+    end as sys.bpchar(2)) as type
+  , cast(case p.prokind
+      when 'p' then 'SQL_STORED_PROCEDURE'
+      when 'a' then 'AGGREGATE_FUNCTION'
+      else
+        case format_type(p.prorettype, null) when 'trigger'
+          then 'SQL_TRIGGER'
+          else 'SQL_SCALAR_FUNCTION'
+        end
+    end as sys.nvarchar(60)) as type_desc
+  , cast(null as sys.datetime) as create_date
+  , cast(null as sys.datetime) as modify_date
+  , cast(0 as sys.bit) as is_ms_shipped
+  , cast(0 as sys.bit) as is_published
+  , cast(0 as sys.bit) as is_schema_published
+  , cast(0 as sys.bit) as is_auto_executed
+  , cast(0 as sys.bit) as is_execution_replicated
+  , cast(0 as sys.bit) as is_repl_serializable_only
+  , cast(0 as sys.bit) as skips_repl_constraints
+from pg_proc p
+inner join sys.schemas sch on sch.schema_id = p.pronamespace
+left join pg_trigger tr on tr.tgfoid = p.oid
+where has_schema_privilege(sch.schema_id, 'USAGE')
+and has_function_privilege(p.oid, 'EXECUTE');
+GRANT SELECT ON sys.procedures TO PUBLIC;
 
 create or replace view sys.objects as
 select
@@ -445,10 +491,11 @@ select
 from sys.table_types tt;
 GRANT SELECT ON sys.objects TO PUBLIC;
 
-CALL sys.babelfish_drop_deprecated_view('sys', 'key_constraints_deprecated');
-CALL sys.babelfish_drop_deprecated_view('sys', 'foreign_keys_deprecated');
+CALL sys.babelfish_drop_deprecated_view('sys', 'key_constraints_deprecated_in_2_2_0');
+CALL sys.babelfish_drop_deprecated_view('sys', 'foreign_keys_deprecated_in_2_2_0');
+CALL sys.babelfish_drop_deprecated_view('sys', 'procedures_deprecated_in_2_2_0');
 
-ALTER FUNCTION OBJECTPROPERTY(INT, SYS.VARCHAR) RENAME TO objectproperty_deprecated_2_1_0;
+ALTER FUNCTION OBJECTPROPERTY(INT, SYS.VARCHAR) RENAME TO objectproperty_deprecated_in_2_2_0;
 
 CREATE OR REPLACE FUNCTION objectproperty(
     id INT,
@@ -565,7 +612,7 @@ END;
 $$
 LANGUAGE plpgsql;
 
-CALL sys.babelfish_drop_deprecated_function('sys', 'objectproperty_deprecated_2_1_0');
+CALL sys.babelfish_drop_deprecated_function('sys', 'objectproperty_deprecated_in_2_2_0');
 
 CREATE OR REPLACE FUNCTION sys.DBTS()
 RETURNS sys.ROWVERSION AS
@@ -584,7 +631,55 @@ $$
 STRICT
 LANGUAGE plpgsql;
 
-ALTER TABLE sys.assembly_types RENAME TO assembly_types_deprecated_2_1_0;
+CREATE TABLE sys.babelfish_view_def (
+	dbid SMALLINT NOT NULL,
+	schema_name sys.SYSNAME NOT NULL,
+	object_name sys.SYSNAME NOT NULL,
+	definition sys.NTEXT,
+	flag_validity BIGINT,
+	flag_values BIGINT,
+	PRIMARY KEY(dbid, schema_name, object_name)
+);
+GRANT SELECT ON sys.babelfish_view_def TO PUBLIC;
+
+SELECT pg_catalog.pg_extension_config_dump('sys.babelfish_view_def', '');
+
+/*
+ * VIEWS view
+ */
+
+CREATE OR REPLACE VIEW information_schema_tsql.views AS
+	SELECT CAST(nc.dbname AS sys.nvarchar(128)) AS "TABLE_CATALOG",
+			CAST(ext.orig_name AS sys.nvarchar(128)) AS  "TABLE_SCHEMA",
+			CAST(c.relname AS sys.nvarchar(128)) AS "TABLE_NAME",
+			CAST(vd.definition AS sys.nvarchar(4000)) AS "VIEW_DEFINITION",
+
+			CAST(
+				CASE WHEN 'check_option=cascaded' = ANY (c.reloptions)
+					THEN 'CASCADE'
+					ELSE 'NONE' END
+				AS sys.varchar(7)) AS "CHECK_OPTION",
+
+			CAST('NO' AS sys.varchar(2)) AS "IS_UPDATABLE"
+
+	FROM sys.pg_namespace_ext nc JOIN pg_class c ON (nc.oid = c.relnamespace)
+		LEFT OUTER JOIN sys.babelfish_namespace_ext ext
+			ON (nc.nspname = ext.nspname COLLATE sys.database_default)
+		LEFT OUTER JOIN sys.babelfish_view_def vd
+			ON ext.dbid = vd.dbid
+				AND (ext.orig_name = vd.schema_name COLLATE sys.database_default)
+				AND (CAST(c.relname AS sys.nvarchar(128)) = vd.object_name COLLATE sys.database_default)
+
+	WHERE c.relkind = 'v'
+		AND (NOT pg_is_other_temp_schema(nc.oid))
+		AND (pg_has_role(c.relowner, 'USAGE')
+			OR has_table_privilege(c.oid, 'SELECT, INSERT, UPDATE, DELETE, TRUNCATE, REFERENCES, TRIGGER')
+			OR has_any_column_privilege(c.oid, 'SELECT, INSERT, UPDATE, REFERENCES') )
+		AND ext.dbid = cast(sys.db_id() as oid);
+
+GRANT SELECT ON information_schema_tsql.views TO PUBLIC;
+
+ALTER TABLE sys.assembly_types RENAME TO assembly_types_deprecated_in_2_2_0;
 
 CREATE OR REPLACE VIEW sys.assembly_types
 AS
@@ -617,7 +712,7 @@ FROM sys.types t
 WHERE t.is_assembly_type = 1;
 GRANT SELECT ON sys.assembly_types TO PUBLIC;
 
-CALL sys.babelfish_drop_deprecated_table('sys', 'assembly_types_deprecated_2_1_0');
+CALL sys.babelfish_drop_deprecated_table('sys', 'assembly_types_deprecated_in_2_2_0');
 
 CREATE OR REPLACE VIEW sys.hash_indexes
 AS
@@ -793,7 +888,7 @@ CREATE OR REPLACE VIEW information_schema_tsql.routines AS
            CAST(NULL AS sys.nvarchar(128)) AS "UDT_CATALOG",
            CAST(NULL AS sys.nvarchar(128)) AS "UDT_SCHEMA",
            CAST(NULL AS sys.nvarchar(128)) AS "UDT_NAME",
-           CAST(case when is_tbl_type THEN 'table' when p.prokind = 'p' THEN 'NULL' ELSE tsql_type_name END AS sys.nvarchar(128)) AS "DATA_TYPE",
+           CAST(case when is_tbl_type THEN 'table' when p.prokind = 'p' THEN NULL ELSE tsql_type_name END AS sys.nvarchar(128)) AS "DATA_TYPE",
            CAST(information_schema_tsql._pgtsql_char_max_length_for_routines(tsql_type_name, true_typmod)
                  AS int)
            AS "CHARACTER_MAXIMUM_LENGTH",
@@ -814,7 +909,7 @@ CREATE OR REPLACE VIEW information_schema_tsql.routines AS
                  * TODO: We need to first create mapping of collation name to char-set name;
                  * Until then return null.
             */
-	    CAST(case when tsql_type_name IN ('nchar','nvarchar') THEN 'UNICODE' when tsql_type_name IN ('char','varchar') THEN 'iso_1' ELSE 'NULL' END AS sys.nvarchar(128)) AS "CHARACTER_SET_NAME",
+	    CAST(case when tsql_type_name IN ('nchar','nvarchar') THEN 'UNICODE' when tsql_type_name IN ('char','varchar') THEN 'iso_1' ELSE NULL END AS sys.nvarchar(128)) AS "CHARACTER_SET_NAME",
             CAST(information_schema_tsql._pgtsql_numeric_precision(tsql_type_name, t.oid, true_typmod)
                         AS smallint)
             AS "NUMERIC_PRECISION",
@@ -848,14 +943,15 @@ CREATE OR REPLACE VIEW information_schema_tsql.routines AS
               CASE WHEN p.proisstrict THEN 'YES' ELSE 'NO' END END AS sys.nvarchar(10)) AS "IS_NULL_CALL",
             CAST(NULL AS sys.nvarchar(128)) AS "SQL_PATH",
             CAST('YES' AS sys.nvarchar(10)) AS "SCHEMA_LEVEL_ROUTINE",
-            CAST(0 AS smallint) AS "MAX_DYNAMIC_RESULT_SETS",
+            CAST(CASE p.prokind WHEN 'f' THEN 0 WHEN 'p' THEN -1 END AS smallint) AS "MAX_DYNAMIC_RESULT_SETS",
             CAST('NO' AS sys.nvarchar(10)) AS "IS_USER_DEFINED_CAST",
             CAST('NO' AS sys.nvarchar(10)) AS "IS_IMPLICITLY_INVOCABLE",
             CAST(NULL AS sys.datetime) AS "CREATED",
             CAST(NULL AS sys.datetime) AS "LAST_ALTERED"
 
        FROM sys.pg_namespace_ext nc LEFT JOIN sys.babelfish_namespace_ext ext ON nc.nspname = ext.nspname,
-            pg_proc p inner join sys.schemas sch on sch.schema_id = p.pronamespace,
+            pg_proc p inner join sys.schemas sch on sch.schema_id = p.pronamespace
+	    inner join sys.all_objects ao on ao.object_id = CAST(p.oid AS INT),
             pg_language l,
             pg_type t LEFT JOIN pg_collation co ON t.typcollation = co.oid,
             sys.translate_pg_type_to_tsql(t.oid) AS tsql_type_name,
@@ -879,7 +975,8 @@ CREATE OR REPLACE VIEW information_schema_tsql.routines AS
             AND ext.dbid = cast(sys.db_id() as oid)
             AND p.prolang = l.oid
             AND p.prorettype = t.oid
-            AND p.pronamespace = nc.oid;      
+            AND p.pronamespace = nc.oid
+	    AND CAST(ao.is_ms_shipped as INT) = 0;      
 
 GRANT SELECT ON information_schema_tsql.routines TO PUBLIC;
 	
@@ -1024,7 +1121,7 @@ $$
 	END
 $$;
 
-ALTER VIEW sys.all_views RENAME TO all_views_deprecated_2_1_0;
+ALTER VIEW sys.all_views RENAME TO all_views_deprecated_in_2_2_0;
 
 create or replace view sys.all_views as
 select
@@ -1058,7 +1155,7 @@ INNER JOIN information_schema.views v ON t.name = v.table_name AND ns.nspname = 
 where t.type = 'V';
 GRANT SELECT ON sys.all_views TO PUBLIC;
 
-CALL sys.babelfish_drop_deprecated_view('sys', 'all_views_deprecated_2_1_0');
+CALL sys.babelfish_drop_deprecated_view('sys', 'all_views_deprecated_in_2_2_0');
 
 CREATE OR REPLACE VIEW sys.assembly_modules
 AS
@@ -1198,6 +1295,9 @@ FROM (
           AND c.contype = 'c'
           AND r.relkind IN ('r', 'p')
           AND NOT a.attisdropped
+	  AND (pg_has_role(r.relowner, 'USAGE')
+		OR has_table_privilege(r.oid, 'SELECT, INSERT, UPDATE, DELETE, TRUNCATE, REFERENCES, TRIGGER')
+		OR has_any_column_privilege(r.oid, 'SELECT, INSERT, UPDATE, REFERENCES'))
 
        UNION ALL
 
@@ -1216,10 +1316,11 @@ FROM (
           AND NOT a.attisdropped
           AND c.contype IN ('p', 'u', 'f')
           AND r.relkind IN ('r', 'p')
+	  AND (pg_has_role(r.relowner, 'USAGE')
+		OR has_table_privilege(r.oid, 'SELECT, INSERT, UPDATE, DELETE, TRUNCATE, REFERENCES, TRIGGER')
+		OR has_any_column_privilege(r.oid, 'SELECT, INSERT, UPDATE, REFERENCES'))
 
-      ) AS x (tblschema, tblname, tblowner, colname, cstrschema, cstrname, tblcat, cstrcat)
-
-WHERE pg_has_role(x.tblowner, 'USAGE');
+      ) AS x (tblschema, tblname, tblowner, colname, cstrschema, cstrname, tblcat, cstrcat);
 
 GRANT SELECT ON information_schema_tsql.CONSTRAINT_COLUMN_USAGE TO PUBLIC;
 
@@ -1228,9 +1329,9 @@ AS
 SELECT 
    CAST(0 AS INT) AS object_id,
    CAST(0 AS sys.BIT) AS is_enabled,
-   CAST('' AS VARCHAR(255)) AS directory_name,
+   CAST('' AS sys.VARCHAR(255)) AS directory_name,
    CAST(0 AS INT) AS filename_collation_id,
-   CAST('' AS VARCHAR) AS filename_collation_name
+   CAST('' AS sys.VARCHAR) AS filename_collation_name
    WHERE FALSE;
 GRANT SELECT ON sys.filetables TO PUBLIC;
 
@@ -1245,7 +1346,7 @@ SELECT
 WHERE FALSE;
 GRANT SELECT ON sys.registered_search_property_lists TO PUBLIC;
 
-ALTER VIEW sys.identity_columns RENAME TO identity_columns_deprecated;
+ALTER VIEW sys.identity_columns RENAME TO identity_columns_deprecated_in_2_2_0;
 
 CREATE OR replace view sys.identity_columns AS
 SELECT 
@@ -1297,18 +1398,18 @@ AND pg_get_serial_sequence(quote_ident(ext.nspname)||'.'||quote_ident(c.relname)
 AND has_sequence_privilege(pg_get_serial_sequence(quote_ident(ext.nspname)||'.'||quote_ident(c.relname), a.attname), 'USAGE,SELECT,UPDATE');
 GRANT SELECT ON sys.identity_columns TO PUBLIC;
 
-CALL sys.babelfish_drop_deprecated_view('sys', 'identity_columns_deprecated');
+CALL sys.babelfish_drop_deprecated_view('sys', 'identity_columns_deprecated_in_2_2_0');
 
 CREATE OR REPLACE VIEW sys.filegroups
 AS
 SELECT 
-   ds.name,
-   ds.data_space_id,
-   ds.type,
-   ds.type_desc,
-   ds.is_default,
-   ds.is_system,
-   CAST(NULL as UNIQUEIDENTIFIER) AS filegroup_guid,
+   CAST(ds.name AS sys.SYSNAME),
+   CAST(ds.data_space_id AS INT),
+   CAST(ds.type AS sys.BPCHAR(2)),
+   CAST(ds.type_desc AS sys.NVARCHAR(60)),
+   CAST(ds.is_default AS sys.BIT),
+   CAST(ds.is_system AS sys.BIT),
+   CAST(NULL as sys.UNIQUEIDENTIFIER) AS filegroup_guid,
    CAST(0 as INT) AS log_filegroup_id,
    CAST(0 as sys.BIT) AS is_read_only,
    CAST(0 as sys.BIT) AS is_autogrow_all_files
@@ -1408,7 +1509,7 @@ SELECT
 WHERE FALSE;
 GRANT SELECT ON sys.fulltext_stoplists TO PUBLIC;
 
-alter view sys.databases rename to databases_deprecated_2_1_0;
+alter view sys.databases rename to databases_deprecated_in_2_2_0;
 
 create or replace view sys.databases as
 select
@@ -1849,7 +1950,7 @@ SELECT
 	);	
 GRANT SELECT ON sys.sp_sproc_columns_view TO PUBLIC;
 
-alter view sys.database_mirroring rename to database_mirroring_deprecated_2_1_0;
+alter view sys.database_mirroring rename to database_mirroring_deprecated_in_2_2_0;
 
 CREATE OR REPLACE VIEW sys.database_mirroring
 AS
@@ -1878,8 +1979,8 @@ SELECT
 FROM sys.databases;
 GRANT SELECT ON sys.database_mirroring TO PUBLIC;
 
-call babelfish_drop_deprecated_view('sys', 'databases_deprecated_2_1_0');
-call babelfish_drop_deprecated_view('sys', 'database_mirroring_deprecated_2_1_0');
+call babelfish_drop_deprecated_view('sys', 'databases_deprecated_in_2_2_0');
+call babelfish_drop_deprecated_view('sys', 'database_mirroring_deprecated_in_2_2_0');
 
 CREATE OR REPLACE VIEW sys.fulltext_indexes
 AS
@@ -1888,13 +1989,13 @@ SELECT
    CAST(0 as INT) AS unique_index_id,
    CAST(0 as INT) AS fulltext_catalog_id,
    CAST(0 as sys.BIT) AS is_enabled,
-   CAST('O' as CHAR(1)) AS change_tracking_state,
-   CAST('' as NVARCHAR(60)) AS change_tracking_state_desc,
+   CAST('O' as sys.BPCHAR(1)) AS change_tracking_state,
+   CAST('' as sys.NVARCHAR(60)) AS change_tracking_state_desc,
    CAST(0 as sys.BIT) AS has_crawl_completed,
-   CAST('' as CHAR(1)) AS crawl_type,
-   CAST('' as NVARCHAR(60)) AS crawl_type_desc,
-   CAST(NULL as DATETIME) AS crawl_start_date,
-   CAST(NULL as DATETIME) AS crawl_end_date,
+   CAST('' as sys.BPCHAR(1)) AS crawl_type,
+   CAST('' as sys.NVARCHAR(60)) AS crawl_type_desc,
+   CAST(NULL as sys.DATETIME) AS crawl_start_date,
+   CAST(NULL as sys.DATETIME) AS crawl_end_date,
    CAST(NULL as BINARY(8)) AS incremental_timestamp,
    CAST(0 as INT) AS stoplist_id,
    CAST(0 as INT) AS data_space_id,
@@ -1926,7 +2027,7 @@ CREATE OR REPLACE VIEW sys.plan_guides
 AS
 SELECT 
     CAST(0 as int) AS plan_guide_id
-    , CAST(NULL as sys.sysname) AS name
+    , CAST('' as sys.sysname) AS name
     , CAST(NULL as sys.datetime) as create_date
     , CAST(NULL as sys.datetime) as modify_date
     , CAST(0 as sys.bit) as is_disabled
@@ -1940,7 +2041,7 @@ SELECT
 WHERE FALSE;
 GRANT SELECT ON sys.plan_guides TO PUBLIC;
 
-ALTER FUNCTION OBJECTPROPERTYEX(INT, SYS.VARCHAR) RENAME TO objectpropertyex_deprecated_2_1_0;
+ALTER FUNCTION OBJECTPROPERTYEX(INT, SYS.VARCHAR) RENAME TO objectpropertyex_deprecated_in_2_2_0;
 
 CREATE OR REPLACE FUNCTION OBJECTPROPERTYEX(
     id INT,
@@ -1970,12 +2071,12 @@ END
 $$
 LANGUAGE plpgsql;
 
-CALL sys.babelfish_drop_deprecated_function('sys', 'objectpropertyex_deprecated_2_1_0');
+CALL sys.babelfish_drop_deprecated_function('sys', 'objectpropertyex_deprecated_in_2_2_0');
 
-ALTER FUNCTION sys.suser_name RENAME TO suser_name_deprecated_2_1_0;
-ALTER FUNCTION sys.suser_sname RENAME TO suser_sname_deprecated_2_1_0;
-ALTER FUNCTION sys.suser_id RENAME TO suser_id_deprecated_2_1_0;
-ALTER FUNCTION sys.suser_sid RENAME TO suser_sid_deprecated_2_1_0;
+ALTER FUNCTION sys.suser_name RENAME TO suser_name_deprecated_in_2_2_0;
+ALTER FUNCTION sys.suser_sname RENAME TO suser_sname_deprecated_in_2_2_0;
+ALTER FUNCTION sys.suser_id RENAME TO suser_id_deprecated_in_2_2_0;
+ALTER FUNCTION sys.suser_sid RENAME TO suser_sid_deprecated_in_2_2_0;
 
 CREATE OR REPLACE FUNCTION sys.suser_name_internal(IN server_user_id OID)
 RETURNS sys.NVARCHAR(128)
@@ -2055,10 +2156,10 @@ AS $$
 $$
 LANGUAGE SQL IMMUTABLE PARALLEL RESTRICTED;
 
-CALL sys.babelfish_drop_deprecated_function('sys', 'suser_name_deprecated_2_1_0');
-CALL sys.babelfish_drop_deprecated_function('sys', 'suser_sname_deprecated_2_1_0');
-CALL sys.babelfish_drop_deprecated_function('sys', 'suser_id_deprecated_2_1_0');
-CALL sys.babelfish_drop_deprecated_function('sys', 'suser_sid_deprecated_2_1_0');
+CALL sys.babelfish_drop_deprecated_function('sys', 'suser_name_deprecated_in_2_2_0');
+CALL sys.babelfish_drop_deprecated_function('sys', 'suser_sname_deprecated_in_2_2_0');
+CALL sys.babelfish_drop_deprecated_function('sys', 'suser_id_deprecated_in_2_2_0');
+CALL sys.babelfish_drop_deprecated_function('sys', 'suser_sid_deprecated_in_2_2_0');
 	  
 INSERT INTO sys.babelfish_configurations
 VALUES
@@ -2450,17 +2551,89 @@ INSERT INTO sys.babelfish_helpcollation VALUES (N'mongolian_cs_as', N'Mongolian,
 INSERT INTO sys.babelfish_helpcollation VALUES (N'sql_latin1_general_cp874_ci_as', N'Virtual, default locale, code page 874, case-insensitive, accent-sensitive, kanatype-insensitive, width-insensitive');
 INSERT INTO sys.babelfish_helpcollation VALUES (N'sql_latin1_general_cp874_cs_as', N'Virtual, default locale, code page 874, case-sensitive, accent-sensitive, kanatype-insensitive, width-insensitive');
 
+-- Deprecate the function sp_describe_first_result_set_internal and process sp_describe_first_result_set
+ALTER FUNCTION sys.sp_describe_first_result_set_internal RENAME TO sp_describe_first_result_set_internal_deprecated_2_2;
+ALTER PROCEDURE sys.sp_describe_first_result_set RENAME TO sp_describe_first_result_set_deprecated_2_2;
+
+-- Recreate the newer sp_describe_first_result_set_internal function
+create or replace function sys.sp_describe_first_result_set_internal(
+	tsqlquery sys.nvarchar(8000),
+  params sys.nvarchar(8000) = NULL, 
+  browseMode sys.tinyint = 0
+)
+returns table (
+	is_hidden sys.bit,
+	column_ordinal int,
+	name sys.sysname,
+	is_nullable sys.bit,
+	system_type_id int,
+	system_type_name sys.nvarchar(256),
+	max_length smallint,
+	"precision" sys.tinyint,
+	scale sys.tinyint,
+	collation_name sys.sysname,
+	user_type_id int,
+	user_type_database sys.sysname,
+	user_type_schema sys.sysname,
+	user_type_name sys.sysname,
+	assembly_qualified_type_name sys.nvarchar(4000),
+	xml_collection_id int,
+	xml_collection_database sys.sysname,
+	xml_collection_schema sys.sysname,
+	xml_collection_name sys.sysname,
+	is_xml_document sys.bit,
+	is_case_sensitive sys.bit,
+	is_fixed_length_clr_type sys.bit,
+	source_server sys.sysname,
+	source_database sys.sysname,
+	source_schema sys.sysname,
+	source_table sys.sysname,
+	source_column sys.sysname,
+	is_identity_column sys.bit,
+	is_part_of_unique_key sys.bit,
+	is_updateable sys.bit,
+	is_computed_column sys.bit,
+	is_sparse_column_set sys.bit,
+	ordinal_in_order_by_list smallint,
+	order_by_list_length smallint,
+	order_by_is_descending smallint,
+	tds_type_id int,
+	tds_length int,
+	tds_collation_id int,
+	ss_data_type sys.tinyint
+)
+AS 'babelfishpg_tsql', 'sp_describe_first_result_set_internal'
+LANGUAGE C;
+GRANT ALL on FUNCTION sys.sp_describe_first_result_set_internal TO PUBLIC;
+
+CREATE OR REPLACE PROCEDURE sys.sp_describe_first_result_set (
+	"@tsql" sys.nvarchar(8000),
+  "@params" sys.nvarchar(8000) = NULL, 
+  "@browse_information_mode" sys.tinyint = 0)
+AS $$
+BEGIN
+	select * from sys.sp_describe_first_result_set_internal(@tsql, @params,  @browse_information_mode);
+END;
+$$
+LANGUAGE 'pltsql';
+GRANT ALL on PROCEDURE sys.sp_describe_first_result_set TO PUBLIC;
+
+-- Drop the deprecated function and procedure
+CALL sys.babelfish_drop_deprecated_function('sys', 'sp_describe_first_result_set_internal_deprecated_2_2');
+CALL sys.babelfish_remove_object_from_extension('procedure','sys.sp_describe_first_result_set_deprecated_2_2(varchar,varchar,sys.tinyint)');
+
+
 CREATE OR REPLACE FUNCTION sys.language()
 RETURNS sys.NVARCHAR(128)  AS 'babelfishpg_tsql' LANGUAGE C;
 
 CREATE OR REPLACE FUNCTION sys.host_name()
 RETURNS sys.NVARCHAR(128)  AS 'babelfishpg_tsql' LANGUAGE C IMMUTABLE PARALLEL SAFE;
 
-ALTER FUNCTION sys.tsql_stat_get_activity(text) RENAME TO tsql_stat_get_activity_deprecated_2_1;
-ALTER VIEW sys.sysprocesses RENAME TO sysprocesses_deprecated_2_1;
+ALTER FUNCTION sys.tsql_stat_get_activity(text) RENAME TO tsql_stat_get_activity_deprecated_in_2_2_0;
+ALTER VIEW sys.sysprocesses RENAME TO sysprocesses_deprecated_in_2_2_0;
 
 -- recreate deprecated objects to use deprecated (C) functions
-CREATE OR REPLACE FUNCTION sys.tsql_stat_get_activity_deprecated_2_1(
+CREATE OR REPLACE FUNCTION sys.tsql_stat_get_activity_deprecated_in_2_2_0(
   IN view_name text,
   OUT procid int,
   OUT client_version int,
@@ -2487,10 +2660,10 @@ CREATE OR REPLACE FUNCTION sys.tsql_stat_get_activity_deprecated_2_1(
   OUT encrypyt_option VARCHAR(40),
   OUT database_id int2)
 RETURNS SETOF RECORD
-AS 'babelfishpg_tsql', 'tsql_stat_get_activity_deprecated_2_1'
+AS 'babelfishpg_tsql', 'tsql_stat_get_activity_deprecated_in_2_2_0'
 LANGUAGE C VOLATILE STRICT;
 
-create or replace view sys.sysprocesses_deprecated_2_1 as
+create or replace view sys.sysprocesses_deprecated_in_2_2_0 as
 select
   a.pid as spid
   , null::integer as kpid
@@ -2525,7 +2698,7 @@ select
   , 0 as stmt_end
   , 0 as request_id
 from pg_stat_activity a
-left join sys.tsql_stat_get_activity_deprecated_2_1('sessions') as t on a.pid = t.procid
+left join sys.tsql_stat_get_activity_deprecated_in_2_2_0('sessions') as t on a.pid = t.procid
 left join pg_catalog.pg_locks as blocked_locks on a.pid = blocked_locks.pid
 left join pg_catalog.pg_locks         blocking_locks
         ON blocking_locks.locktype = blocked_locks.locktype
@@ -2541,7 +2714,7 @@ left join pg_catalog.pg_locks         blocking_locks
         AND blocking_locks.pid != blocked_locks.pid
  left join pg_catalog.pg_stat_activity blocking_activity ON blocking_activity.pid = blocking_locks.pid
  where a.datname = current_database(); /* current physical database will always be babelfish database */
-GRANT SELECT ON sys.sysprocesses_deprecated_2_1 TO PUBLIC;
+GRANT SELECT ON sys.sysprocesses_deprecated_in_2_2_0 TO PUBLIC;
 
 CREATE OR REPLACE FUNCTION sys.tsql_stat_get_activity(
   IN view_name text,
@@ -2712,8 +2885,8 @@ create or replace view sys.dm_exec_connections
  RIGHT JOIN sys.tsql_stat_get_activity('connections') AS d ON (a.pid = d.procid);
 GRANT SELECT ON sys.dm_exec_connections TO PUBLIC;
 
-CALL sys.babelfish_drop_deprecated_function('sys', 'tsql_stat_get_activity_deprecated_2_1');
-CALL sys.babelfish_drop_deprecated_view('sys', 'sysprocesses_deprecated_2_1');
+CALL sys.babelfish_drop_deprecated_function('sys', 'tsql_stat_get_activity_deprecated_in_2_2_0');
+CALL sys.babelfish_drop_deprecated_view('sys', 'sysprocesses_deprecated_in_2_2_0');
 
 CREATE OR REPLACE FUNCTION sys.datepart(IN datepart TEXT, IN arg TEXT) RETURNS INTEGER
 AS
@@ -2723,7 +2896,7 @@ BEGIN
         return sys.datepart_internal(datepart, arg::timestamp,
                      sys.babelfish_get_datetimeoffset_tzoffset(arg)::integer);
     ELSIF pg_typeof(arg) = 'pg_catalog.text'::regtype THEN
-        return sys.datepart_internal(datepart, arg::sys.nvarchar::sys.datetime);
+        return sys.datepart_internal(datepart, arg::sys.datetimeoffset::timestamp, sys.babelfish_get_datetimeoffset_tzoffset(arg::sys.datetimeoffset)::integer);
     ELSE
         return sys.datepart_internal(datepart, arg);
     END IF;
@@ -2798,7 +2971,7 @@ $BODY$
 LANGUAGE plpgsql;
 GRANT EXECUTE ON FUNCTION sys.INDEXPROPERTY(IN object_id INT, IN index_or_statistics_name sys.nvarchar(128),  IN property sys.varchar(128)) TO PUBLIC;
 
-ALTER VIEW sys.sysobjects RENAME TO sysobjects_deprecated_2_1_0;
+ALTER VIEW sys.sysobjects RENAME TO sysobjects_deprecated_in_2_2_0;
 
 create or replace view sys.sysobjects as
 select
@@ -2834,7 +3007,7 @@ select
 from sys.objects s;
 GRANT SELECT ON sys.sysobjects TO PUBLIC;
 
-CALL sys.babelfish_drop_deprecated_view('sys', 'sysobjects_deprecated_2_1_0');
+CALL sys.babelfish_drop_deprecated_view('sys', 'sysobjects_deprecated_in_2_2_0');
 
 CREATE OR REPLACE PROCEDURE sys.sp_helpuser("@name_in_db" sys.SYSNAME = NULL) AS
 $$
@@ -2948,6 +3121,25 @@ $$
 LANGUAGE 'pltsql';
 GRANT EXECUTE on PROCEDURE sys.sp_helpuser TO PUBLIC;
 
+CREATE OR REPLACE FUNCTION sys.babelfish_get_last_identity()
+RETURNS INT8
+AS 'babelfishpg_tsql', 'get_last_identity'
+LANGUAGE C STABLE;
+
+CREATE OR REPLACE FUNCTION sys.babelfish_get_last_identity_numeric()
+RETURNS numeric(38,0) AS
+$BODY$
+	SELECT sys.babelfish_get_last_identity()::numeric(38,0);
+$BODY$
+LANGUAGE SQL STABLE;
+
+CREATE OR REPLACE FUNCTION sys.scope_identity()
+RETURNS numeric(38,0) AS
+$BODY$
+	SELECT sys.babelfish_get_last_identity_numeric()::numeric(38,0);
+$BODY$
+LANGUAGE SQL STABLE;
+
 CREATE OR REPLACE VIEW sys.numbered_procedures
 AS
 SELECT 
@@ -2956,6 +3148,356 @@ SELECT
   , CAST('' as sys.nvarchar(4000)) AS definition
 WHERE FALSE; -- This condition will ensure that the view is empty
 GRANT SELECT ON sys.numbered_procedures TO PUBLIC;
+
+CREATE OR REPLACE FUNCTION sys.fn_listextendedproperty (
+property_name varchar(128),
+level0_object_type varchar(128),
+level0_object_name varchar(128),
+level1_object_type varchar(128),
+level1_object_name varchar(128),
+level2_object_type varchar(128),
+level2_object_name varchar(128)
+)
+returns table (
+objtype	sys.sysname,
+objname	sys.sysname,
+name	sys.sysname,
+value	sys.sql_variant
+) 
+as $$
+begin
+-- currently only support COLUMN property
+IF (((coalesce(property_name COLLATE "C", '')) = '') or
+    ((UPPER(coalesce(property_name COLLATE "C", ''))) = 'COLUMN' COLLATE "C")) THEN
+    IF (((LOWER(coalesce(level0_object_type COLLATE "C", ''))) = 'schema' COLLATE "C") and
+	 	    ((LOWER(coalesce(level1_object_type COLLATE "C", ''))) = 'table' COLLATE "C") and
+	 	    ((LOWER(coalesce(level2_object_type COLLATE "C", ''))) = 'column' COLLATE "C")) THEN
+		RETURN query 
+		select CAST('COLUMN' AS sys.sysname) as objtype,
+		       CAST(t3.column_name AS sys.sysname) as objname,
+		       t1.name as name,
+		       t1.value as value
+		from sys.extended_properties t1, pg_catalog.pg_class t2, information_schema.columns t3
+		where t1.major_id = t2.oid and 
+			  t2.relname = t3.table_name and 
+              t2.relname = (coalesce(level1_object_name COLLATE "C", '')) and 
+              t3.column_name = (coalesce(level2_object_name COLLATE "C", ''));
+	END IF;
+END IF;
+RETURN;
+end;
+$$
+LANGUAGE plpgsql;
+GRANT EXECUTE ON FUNCTION sys.fn_listextendedproperty(
+	varchar(128), varchar(128), varchar(128), varchar(128), varchar(128), varchar(128), varchar(128)
+) TO PUBLIC;
+
+-- BABEL-3325: Revisit once DDL and/or CREATE EVENT NOTIFICATION is supported
+CREATE OR REPLACE VIEW sys.events 
+AS
+SELECT 
+  CAST(pt.tgfoid as int) AS object_id
+  , CAST(
+      CASE 
+        WHEN tr.event_manipulation='INSERT' THEN 1
+        WHEN tr.event_manipulation='UPDATE' THEN 2
+        WHEN tr.event_manipulation='DELETE' THEN 3
+        ELSE 1
+      END as int
+  ) AS type
+  , CAST(tr.event_manipulation as sys.nvarchar(60)) AS type_desc
+  , CAST(1 as sys.bit) AS  is_trigger_event
+  , CAST(null as int) AS event_group_type
+  , CAST(null as sys.nvarchar(60)) AS event_group_type_desc
+FROM information_schema.triggers tr
+JOIN pg_catalog.pg_namespace np ON tr.event_object_schema = np.nspname COLLATE sys.database_default
+JOIN pg_class pc ON pc.relname = tr.event_object_table COLLATE sys.database_default AND pc.relnamespace = np.oid
+JOIN pg_trigger pt ON pt.tgrelid = pc.oid AND tr.trigger_name = pt.tgname COLLATE sys.database_default
+AND has_schema_privilege(pc.relnamespace, 'USAGE')
+AND has_table_privilege(pc.oid, 'SELECT,INSERT,UPDATE,DELETE,TRUNCATE,TRIGGER');
+GRANT SELECT ON sys.events TO PUBLIC;
+
+CREATE OR REPLACE VIEW sys.trigger_events
+AS
+SELECT
+  CAST(e.object_id as int) AS object_id,
+  CAST(e.type as int) AS type,
+  CAST(e.type_desc as sys.nvarchar(60)) AS type_desc,
+  CAST(0 as sys.bit) AS is_first,
+  CAST(0 as sys.bit) AS is_last,
+  CAST(null as int) AS event_group_type,
+  CAST(null as sys.nvarchar(60)) AS event_group_type_desc,
+  CAST(e.is_trigger_event as sys.bit) AS is_trigger_event
+FROM sys.events e
+WHERE e.is_trigger_event = 1;
+GRANT SELECT ON sys.trigger_events TO PUBLIC;
+
+CREATE OR REPLACE VIEW sys.sysdatabases AS
+SELECT
+t.name,
+sys.db_id(t.name) AS dbid,
+CAST(CAST(r.oid AS int) AS SYS.VARBINARY(85)) AS sid,
+CAST(0 AS SMALLINT) AS mode,
+t.status,
+t.status2,
+CAST(t.crdate AS SYS.DATETIME) AS crdate,
+CAST('1900-01-01 00:00:00.000' AS SYS.DATETIME) AS reserved,
+CAST(0 AS INT) AS category,
+CAST(120 AS SYS.TINYINT) AS cmptlevel,
+CAST(NULL AS SYS.NVARCHAR(260)) AS filename,
+CAST(NULL AS SMALLINT) AS version
+FROM sys.babelfish_sysdatabases AS t
+LEFT OUTER JOIN pg_catalog.pg_roles r on r.rolname = t.owner;
+
+GRANT SELECT ON sys.sysdatabases TO PUBLIC;
+
+ALTER FUNCTION sys.fn_mapped_system_error_list() RENAME TO fn_mapped_system_error_list_deprecated_in_2_2_0;
+
+CREATE OR REPLACE FUNCTION sys.fn_mapped_system_error_list_deprecated_in_2_2_0()
+returns table (sql_error_code int)
+AS 'babelfishpg_tsql', 'babel_list_mapped_error_deprecated_in_2_2_0'
+LANGUAGE C IMMUTABLE STRICT;
+
+CREATE OR REPLACE FUNCTION sys.fn_mapped_system_error_list ()
+returns table (pg_sql_state sys.nvarchar(5), error_message sys.nvarchar(4000), error_msg_parameters sys.nvarchar(4000), sql_error_code int)
+AS 'babelfishpg_tsql', 'babel_list_mapped_error'
+LANGUAGE C IMMUTABLE STRICT;
+
+CALL sys.babelfish_drop_deprecated_function('sys', 'fn_mapped_system_error_list_deprecated_in_2_2_0');
+
+CREATE OR REPLACE FUNCTION sys.columns_internal()
+RETURNS TABLE (
+    out_object_id int,
+    out_name sys.sysname,
+    out_column_id int,
+    out_system_type_id int,
+    out_user_type_id int,
+    out_max_length smallint,
+    out_precision sys.tinyint,
+    out_scale sys.tinyint,
+    out_collation_name sys.sysname,
+    out_collation_id int,
+    out_offset smallint,
+    out_is_nullable sys.bit,
+    out_is_ansi_padded sys.bit,
+    out_is_rowguidcol sys.bit,
+    out_is_identity sys.bit,
+    out_is_computed sys.bit,
+    out_is_filestream sys.bit,
+    out_is_replicated sys.bit,
+    out_is_non_sql_subscribed sys.bit,
+    out_is_merge_published sys.bit,
+    out_is_dts_replicated sys.bit,
+    out_is_xml_document sys.bit,
+    out_xml_collection_id int,
+    out_default_object_id int,
+    out_rule_object_id int,
+    out_is_sparse sys.bit,
+    out_is_column_set sys.bit,
+    out_generated_always_type sys.tinyint,
+    out_generated_always_type_desc sys.nvarchar(60),
+    out_encryption_type int,
+    out_encryption_type_desc sys.nvarchar(64),
+    out_encryption_algorithm_name sys.sysname,
+    out_column_encryption_key_id int,
+    out_column_encryption_key_database_name sys.sysname,
+    out_is_hidden sys.bit,
+    out_is_masked sys.bit,
+    out_graph_type int,
+    out_graph_type_desc sys.nvarchar(60)
+)
+AS
+$$
+BEGIN
+	RETURN QUERY
+		SELECT CAST(c.oid AS int),
+			CAST(a.attname AS sys.sysname),
+			CAST(a.attnum AS int),
+			CASE 
+			WHEN tsql_type_name IS NOT NULL OR t.typbasetype = 0 THEN
+				-- either tsql or PG base type 
+				CAST(a.atttypid AS int)
+			ELSE 
+				CAST(t.typbasetype AS int)
+			END,
+			CAST(a.atttypid AS int),
+			CASE
+			WHEN a.atttypmod != -1 THEN 
+				sys.tsql_type_max_length_helper(coalesce(tsql_type_name, tsql_base_type_name), a.attlen, a.atttypmod)
+			ELSE 
+				sys.tsql_type_max_length_helper(coalesce(tsql_type_name, tsql_base_type_name), a.attlen, t.typtypmod)
+			END,
+			CASE
+			WHEN a.atttypmod != -1 THEN 
+				sys.tsql_type_precision_helper(coalesce(tsql_type_name, tsql_base_type_name), a.atttypmod)
+			ELSE 
+				sys.tsql_type_precision_helper(coalesce(tsql_type_name, tsql_base_type_name), t.typtypmod)
+			END,
+			CASE
+			WHEN a.atttypmod != -1 THEN 
+				sys.tsql_type_scale_helper(coalesce(tsql_type_name, tsql_base_type_name), a.atttypmod, false)
+			ELSE 
+				sys.tsql_type_scale_helper(coalesce(tsql_type_name, tsql_base_type_name), t.typtypmod, false)
+			END,
+			CAST(coll.collname AS sys.sysname),
+			CAST(a.attcollation AS int),
+			CAST(a.attnum AS smallint),
+			CAST(case when a.attnotnull then 0 else 1 end AS sys.bit),
+			CAST(case when t.typname in ('bpchar', 'nchar', 'binary') then 1 else 0 end AS sys.bit),
+			CAST(0 AS sys.bit),
+			CAST(case when a.attidentity <> ''::"char" then 1 else 0 end AS sys.bit),
+			CAST(case when a.attgenerated <> ''::"char" then 1 else 0 end AS sys.bit),
+			CAST(0 AS sys.bit),
+			CAST(0 AS sys.bit),
+			CAST(0 AS sys.bit),
+			CAST(0 AS sys.bit),
+			CAST(0 AS sys.bit),
+			CAST(0 AS sys.bit),
+			CAST(0 AS int),
+			CAST(coalesce(d.oid, 0) AS int),
+			CAST(coalesce((select oid from pg_constraint where conrelid = t.oid
+						and contype = 'c' and a.attnum = any(conkey) limit 1), 0) AS int),
+			CAST(0 AS sys.bit),
+			CAST(0 AS sys.bit),
+			CAST(0 AS sys.tinyint),
+			CAST('NOT_APPLICABLE' AS sys.nvarchar(60)),
+			CAST(null AS int),
+			CAST(null AS sys.nvarchar(64)),
+			CAST(null AS sys.sysname),
+			CAST(null AS int),
+			CAST(null AS sys.sysname),
+			CAST(0 AS sys.bit),
+			CAST(0 AS sys.bit),
+			CAST(null AS int),
+			CAST(null AS sys.nvarchar(60))
+		FROM pg_attribute a
+		INNER JOIN pg_class c ON c.oid = a.attrelid
+		INNER JOIN pg_type t ON t.oid = a.atttypid
+		INNER JOIN sys.schemas sch on c.relnamespace = sch.schema_id 
+		INNER JOIN sys.pg_namespace_ext ext on sch.schema_id = ext.oid 
+		LEFT JOIN pg_attrdef d ON c.oid = d.adrelid AND a.attnum = d.adnum
+		LEFT JOIN pg_collation coll ON coll.oid = a.attcollation
+		, sys.translate_pg_type_to_tsql(a.atttypid) AS tsql_type_name
+		, sys.translate_pg_type_to_tsql(t.typbasetype) AS tsql_base_type_name
+		WHERE NOT a.attisdropped
+		AND a.attnum > 0
+		-- r = ordinary table, i = index, S = sequence, t = TOAST table, v = view, m = materialized view, c = composite type, f = foreign table, p = partitioned table
+		AND c.relkind IN ('r', 'v', 'm', 'f', 'p')
+		AND has_schema_privilege(sch.schema_id, 'USAGE')
+		AND has_column_privilege(a.attrelid, a.attname, 'SELECT,INSERT,UPDATE,REFERENCES')
+		union all
+		-- system tables information
+		SELECT CAST(c.oid AS int),
+			CAST(a.attname AS sys.sysname),
+			CAST(a.attnum AS int),
+			CASE 
+			WHEN tsql_type_name IS NOT NULL OR t.typbasetype = 0 THEN
+				-- either tsql or PG base type 
+				CAST(a.atttypid AS int)
+			ELSE 
+				CAST(t.typbasetype AS int)
+			END,
+			CAST(a.atttypid AS int),
+			CASE
+			WHEN a.atttypmod != -1 THEN 
+				sys.tsql_type_max_length_helper(coalesce(tsql_type_name, tsql_base_type_name), a.attlen, a.atttypmod)
+			ELSE 
+				sys.tsql_type_max_length_helper(coalesce(tsql_type_name, tsql_base_type_name), a.attlen, t.typtypmod)
+			END,
+			CASE
+			WHEN a.atttypmod != -1 THEN 
+				sys.tsql_type_precision_helper(coalesce(tsql_type_name, tsql_base_type_name), a.atttypmod)
+			ELSE 
+				sys.tsql_type_precision_helper(coalesce(tsql_type_name, tsql_base_type_name), t.typtypmod)
+			END,
+			CASE
+			WHEN a.atttypmod != -1 THEN 
+				sys.tsql_type_scale_helper(coalesce(tsql_type_name, tsql_base_type_name), a.atttypmod, false)
+			ELSE 
+				sys.tsql_type_scale_helper(coalesce(tsql_type_name, tsql_base_type_name), t.typtypmod, false)
+			END,
+			CAST(coll.collname AS sys.sysname),
+			CAST(a.attcollation AS int),
+			CAST(a.attnum AS smallint),
+			CAST(case when a.attnotnull then 0 else 1 end AS sys.bit),
+			CAST(case when t.typname in ('bpchar', 'nchar', 'binary') then 1 else 0 end AS sys.bit),
+			CAST(0 AS sys.bit),
+			CAST(case when a.attidentity <> ''::"char" then 1 else 0 end AS sys.bit),
+			CAST(case when a.attgenerated <> ''::"char" then 1 else 0 end AS sys.bit),
+			CAST(0 AS sys.bit),
+			CAST(0 AS sys.bit),
+			CAST(0 AS sys.bit),
+			CAST(0 AS sys.bit),
+			CAST(0 AS sys.bit),
+			CAST(0 AS sys.bit),
+			CAST(0 AS int),
+			CAST(coalesce(d.oid, 0) AS int),
+			CAST(coalesce((select oid from pg_constraint where conrelid = t.oid
+						and contype = 'c' and a.attnum = any(conkey) limit 1), 0) AS int),
+			CAST(0 AS sys.bit),
+			CAST(0 AS sys.bit),
+			CAST(0 AS sys.tinyint),
+			CAST('NOT_APPLICABLE' AS sys.nvarchar(60)),
+			CAST(null AS int),
+			CAST(null AS sys.nvarchar(64)),
+			CAST(null AS sys.sysname),
+			CAST(null AS int),
+			CAST(null AS sys.sysname),
+			CAST(0 AS sys.bit),
+			CAST(0 AS sys.bit),
+			CAST(null AS int),
+			CAST(null AS sys.nvarchar(60))
+		FROM pg_attribute a
+		INNER JOIN pg_class c ON c.oid = a.attrelid
+		INNER JOIN pg_type t ON t.oid = a.atttypid
+		INNER JOIN pg_namespace nsp ON (nsp.oid = c.relnamespace and nsp.nspname = 'sys')
+		LEFT JOIN pg_attrdef d ON c.oid = d.adrelid AND a.attnum = d.adnum
+		LEFT JOIN pg_collation coll ON coll.oid = a.attcollation
+		, sys.translate_pg_type_to_tsql(a.atttypid) AS tsql_type_name
+		, sys.translate_pg_type_to_tsql(t.typbasetype) AS tsql_base_type_name
+		WHERE NOT a.attisdropped
+		AND a.attnum > 0
+		AND c.relkind = 'r'
+		AND has_schema_privilege(nsp.oid, 'USAGE')
+		AND has_column_privilege(a.attrelid, a.attname, 'SELECT,INSERT,UPDATE,REFERENCES');
+END;
+$$
+language plpgsql;
+
+ALTER TABLE sys.assemblies RENAME TO assemblies_deprecated_2_1;
+CREATE TABLE sys.assemblies(
+        name sys.sysname,
+        principal_id int,
+        assembly_id int,
+        clr_name nvarchar(4000),
+        permission_set  tinyint,
+        permission_set_desc     nvarchar(60),
+        is_visible      bit,
+        create_date     datetime,
+        modify_date     datetime,
+        is_user_defined bit
+);
+GRANT SELECT ON sys.assemblies TO PUBLIC;
+
+CREATE OR REPLACE PROCEDURE sys.sp_tablecollations_100
+(
+    IN "@object" nvarchar(4000)
+)
+AS $$
+BEGIN
+    select
+        s_tcv.colid         AS colid,
+        s_tcv.name          AS name,
+        s_tcv.tds_collation_100 AS tds_collation,
+        s_tcv.collation_100 AS collation
+    from
+        sys.spt_tablecollations_view s_tcv
+    where
+        s_tcv.object_id = (SELECT sys.object_id(@object))
+    order by colid;
+END;
+$$
+LANGUAGE 'pltsql';
 
 -- Drops the temporary procedure used by the upgrade script.
 -- Please have this be one of the last statements executed in this upgrade script.

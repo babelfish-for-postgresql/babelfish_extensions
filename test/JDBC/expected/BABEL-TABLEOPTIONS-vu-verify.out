@@ -1,0 +1,31 @@
+SELECT relname, reloptions FROM pg_class WHERE relname = 'babel_tableoptions_vu_prepare_t1';
+GO
+~~START~~
+varchar#!#varchar
+babel_tableoptions_vu_prepare_t1#!#{pad_index=off,statistics_norecompute=off,ignore_dup_key=off,allow_row_locks=on,allow_page_locks=on,data_compression=none}
+~~END~~
+
+
+SELECT relname, reloptions FROM pg_class WHERE relname = 'babel_tableoptions_vu_prepare_t2';
+GO
+~~START~~
+varchar#!#varchar
+babel_tableoptions_vu_prepare_t2#!#{lock_escalation=disable,remote_data_archive=on,system_versioning=off,data_deletion=on,xml_compression=off}
+~~END~~
+
+
+SELECT relname, reloptions FROM pg_class WHERE relname = 'babel_tableoptions_vu_prepare_t3';
+GO
+~~START~~
+varchar#!#varchar
+babel_tableoptions_vu_prepare_t3#!#<NULL>
+~~END~~
+
+
+SELECT relname, reloptions FROM pg_class WHERE relname = 'babel_tableoptions_vu_prepare_t4';
+GO
+~~START~~
+varchar#!#varchar
+babel_tableoptions_vu_prepare_t4#!#<NULL>
+~~END~~
+

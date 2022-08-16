@@ -121,3 +121,388 @@ int
 18
 ~~END~~
 
+
+
+-- time
+-- min
+SELECT DATEPART(dd, '00:00:00.0000000')
+GO
+~~START~~
+int
+1
+~~END~~
+
+
+-- max
+SELECT DATEPART(wk, '23:59:59.9999999')
+GO
+~~START~~
+int
+1
+~~END~~
+
+
+-- invalid
+SELECT DATEPART(wk, '23:59:66')
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: date/time field value out of range: "23:59:66")~~
+
+
+SELECT DATEPART(hh, '01:01:01.1234567 AM')
+GO
+~~START~~
+int
+1
+~~END~~
+
+
+SELECT DATEPART(mm, '01:01:01.1234567 PM')
+GO
+~~START~~
+int
+1
+~~END~~
+
+
+SELECT DATEPART(ss, '01:01:01.1234567PM')
+GO
+~~START~~
+int
+1
+~~END~~
+
+
+SELECT DATEPART(wk, '01:01:01.1234567')
+GO
+~~START~~
+int
+1
+~~END~~
+
+
+SELECT DATEPART(hh, '01:01:01.1234567 +01:01')
+GO
+~~START~~
+int
+0
+~~END~~
+
+
+
+-- date
+-- min
+SELECT DATEPART(mm, '0001-01-01')
+GO
+~~START~~
+int
+1
+~~END~~
+
+
+-- max
+SELECT DATEPART(ss, '9999-12-31')
+GO
+~~START~~
+int
+0
+~~END~~
+
+
+-- invalid
+SELECT DATEPART(ss, '99999-12-31')
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: data out of range for datetimeoffset)~~
+
+
+SELECT DATEPART(dd, '07-18-2022')
+GO
+~~START~~
+int
+18
+~~END~~
+
+
+SELECT DATEPART(wk, '07/18/2022')
+GO
+~~START~~
+int
+30
+~~END~~
+
+
+SELECT DATEPART(hh, 'Jul 18, 22')
+GO
+~~START~~
+int
+0
+~~END~~
+
+
+SELECT DATEPART(mm, '18 July 2022')
+GO
+~~START~~
+int
+7
+~~END~~
+
+
+SELECT DATEPART(yy, '220101')
+GO
+~~START~~
+int
+2022
+~~END~~
+
+
+
+-- datetime
+-- min
+SELECT DATEPART(mm, '01-01-1753 00:00:00.000')
+GO
+~~START~~
+int
+1
+~~END~~
+
+
+-- max
+SELECT DATEPART(ss, '12-31-9999 23:59:59.997')
+GO
+~~START~~
+int
+59
+~~END~~
+
+
+-- invalid
+SELECT DATEPART(dd, '01-01-00000 12:44:45.034')
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: date/time field value out of range: "01-01-00000 12:44:45.034")~~
+
+
+SELECT DATEPART(ss, 'Nov 1999 01 AM')
+GO
+~~START~~
+int
+0
+~~END~~
+
+
+SELECT DATEPART(yy, '220101 14:30')
+GO
+~~START~~
+int
+2022
+~~END~~
+
+
+
+-- smalldatetime
+-- min
+SELECT DATEPART(mm, '01-01-1900 00:00:00')
+GO
+~~START~~
+int
+1
+~~END~~
+
+
+-- max
+SELECT DATEPART(ss, '06-06-2079 23:59:59')
+GO
+~~START~~
+int
+59
+~~END~~
+
+
+-- invalid
+SELECT DATEPART(dd, '01-01-1900 12:44:63')
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: date/time field value out of range: "01-01-1900 12:44:63")~~
+
+
+SELECT DATEPART(wk, '07/18/2022 12:35:00')
+GO
+~~START~~
+int
+30
+~~END~~
+
+
+SELECT DATEPART(hh, 'Jul 18, 22 01:01:00')
+GO
+~~START~~
+int
+1
+~~END~~
+
+
+SELECT DATEPART(yy, '18 July 2022 01:02:00')
+GO
+~~START~~
+int
+2022
+~~END~~
+
+
+SELECT DATEPART(ss, 'Nov 1999 01:02:00')
+GO
+~~START~~
+int
+0
+~~END~~
+
+
+SELECT DATEPART(yy, '220101 14:30:00')
+GO
+~~START~~
+int
+2022
+~~END~~
+
+
+
+-- datetime2
+-- min
+SELECT DATEPART(mm, '01-01-0001 00:00:00.0000000')
+GO
+~~START~~
+int
+1
+~~END~~
+
+
+-- max
+SELECT DATEPART(ss, '12-31-9999 23:59:59.999999')
+GO
+~~START~~
+int
+59
+~~END~~
+
+
+-- invalid
+SELECT DATEPART(dd, '01-01-00091 12:44:33.1234567')
+GO
+~~START~~
+int
+1
+~~END~~
+
+
+SELECT DATEPART(wk, '07/18/2022 12:35:00.0000001')
+GO
+~~START~~
+int
+30
+~~END~~
+
+
+SELECT DATEPART(hh, 'Jul 18, 22 01:01:00.1234567')
+GO
+~~START~~
+int
+1
+~~END~~
+
+
+SELECT DATEPART(yy, '18 July 2022 01:02:00.9876543')
+GO
+~~START~~
+int
+2022
+~~END~~
+
+
+SELECT DATEPART(ss, 'Nov 1999 01:02:00.7651112')
+GO
+~~START~~
+int
+0
+~~END~~
+
+
+SELECT DATEPART(yy, '220101 14:30:00.97531086')
+GO
+~~START~~
+int
+2022
+~~END~~
+
+
+
+-- datetimeoffset
+-- min
+SELECT DATEPART(mm, '01-01-0001 00:00:00.0000000 -14:00')
+GO
+~~START~~
+int
+1
+~~END~~
+
+
+-- max
+SELECT DATEPART(ss, '12-31-9999 23:59:59.9999999 +14:00')
+GO
+~~START~~
+int
+0
+~~END~~
+
+
+-- invalid
+SELECT DATEPART(dd, '01-01-12345 12:44:33.1234567 -14:01')
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: data out of range for datetimeoffset)~~
+
+
+SELECT DATEPART(wk, '07/18/2022 12:35:00.0000001 +4:56')
+GO
+~~START~~
+int
+30
+~~END~~
+
+
+SELECT DATEPART(hh, 'Jul 18, 22 01:01:00.1234567 -7:8')
+GO
+~~START~~
+int
+8
+~~END~~
+
+
+SELECT DATEPART(yy, '18 July 2022 01:02:00.9876543 +9:10')
+GO
+~~START~~
+int
+2022
+~~END~~
+
+
+SELECT DATEPART(ss, 'Nov 1999 01:02:00.7651112 -11:12')
+GO
+~~START~~
+int
+0
+~~END~~
+
+
+SELECT DATEPART(yy, '220101 14:30:00.97531086 +13:14')
+GO
+~~START~~
+int
+2022
+~~END~~
+

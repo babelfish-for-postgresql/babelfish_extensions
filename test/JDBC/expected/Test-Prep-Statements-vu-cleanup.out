@@ -1,0 +1,155 @@
+DROP PROCEDURE test_prep_statements_vu_prepare_p1
+GO
+
+DROP PROCEDURE test_prep_statements_vu_prepare_p2
+GO
+
+DROP PROCEDURE test_prep_statements_vu_prepare_p3
+GO
+
+DROP PROCEDURE test_prep_statements_vu_prepare_p4
+GO
+
+DROP PROCEDURE test_prep_statements_vu_prepare_p5
+GO
+
+DROP PROCEDURE test_prep_statements_vu_prepare_p6
+GO
+
+DROP PROCEDURE test_prep_statements_vu_prepare_p7
+GO
+
+DROP PROCEDURE test_prep_statements_vu_prepare_p8
+GO
+
+DROP PROCEDURE test_prep_statements_vu_prepare_p9
+GO
+
+DROP PROCEDURE test_prep_statements_vu_prepare_p10
+GO
+
+DROP PROCEDURE test_prep_statements_vu_prepare_p11
+GO
+
+DROP PROCEDURE test_prep_statements_vu_prepare_p12
+GO
+
+DROP PROCEDURE test_prep_statements_vu_prepare_p13
+GO
+
+DROP PROCEDURE test_prep_statements_vu_prepare_p14
+GO
+
+DROP PROCEDURE test_prep_statements_vu_prepare_p15
+GO
+
+DROP PROCEDURE test_prep_statements_vu_prepare_p16
+GO
+
+DROP PROCEDURE test_prep_statements_vu_prepare_p17
+GO
+
+DROP PROCEDURE test_prep_statements_vu_prepare_p18
+GO
+
+DROP PROCEDURE test_prep_statements_vu_prepare_p19
+GO
+
+DROP PROCEDURE test_prep_statements_vu_prepare_p20
+GO
+
+DROP PROCEDURE test_prep_statements_vu_prepare_p21
+GO
+
+DROP PROCEDURE test_prep_statements_vu_prepare_p22
+GO
+
+DROP PROCEDURE test_prep_statements_vu_prepare_p23
+GO
+
+DROP PROCEDURE test_prep_statements_vu_prepare_p24
+GO
+
+DROP PROCEDURE test_prep_statements_vu_prepare_p25
+GO
+
+DROP PROCEDURE test_prep_statements_vu_prepare_p26
+GO
+
+DROP TABLE test_prep_statements_vu_prepare_t1
+GO
+
+DROP TABLE test_prep_statements_vu_prepare_t2
+GO
+
+DROP TABLE test_prep_statements_vu_prepare_t3
+GO
+
+DROP TABLE test_prep_statements_vu_prepare_t4
+GO
+
+DROP TABLE test_prep_statements_vu_prepare_t5
+GO
+
+DROP TABLE test_prep_statements_vu_prepare_t6
+GO
+
+DROP TABLE test_prep_statements_vu_prepare_t7
+GO
+
+DROP TABLE test_prep_statements_vu_prepare_t8
+GO
+
+DROP TABLE test_prep_statements_vu_prepare_t9
+GO
+
+DROP TABLE test_prep_statements_vu_prepare_t10
+GO
+
+DROP TABLE test_prep_statements_vu_prepare_t11
+GO
+
+DROP TABLE test_prep_statements_vu_prepare_t12
+GO
+
+DROP TABLE test_prep_statements_vu_prepare_t13
+GO
+
+DROP TABLE test_prep_statements_vu_prepare_t14
+GO
+
+DROP TABLE test_prep_statements_vu_prepare_t15
+GO
+
+DROP TABLE test_prep_statements_vu_prepare_t16
+GO
+
+DROP TABLE test_prep_statements_vu_prepare_t17
+GO
+
+DROP TABLE test_prep_statements_vu_prepare_t18
+GO
+
+DROP TABLE test_prep_statements_vu_prepare_t19
+GO
+
+DROP TABLE test_prep_statements_vu_prepare_t20
+GO
+
+DROP TABLE test_prep_statements_vu_prepare_t21
+GO
+
+DROP TABLE test_prep_statements_vu_prepare_t22
+GO
+
+DROP TABLE test_prep_statements_vu_prepare_t23
+GO
+
+DROP TABLE test_prep_statements_vu_prepare_t24
+GO
+
+DROP TABLE test_prep_statements_vu_prepare_t25
+GO
+
+DROP TABLE test_prep_statements_vu_prepare_t26
+GO

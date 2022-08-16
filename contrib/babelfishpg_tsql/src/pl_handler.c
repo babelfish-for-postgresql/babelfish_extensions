@@ -2048,6 +2048,81 @@ static void bbf_ProcessUtility(PlannedStmt *pstmt,
 	if (process_utility_stmt_explain_only_mode(queryString, parsetree))
 		return; /* Don't execute anything */
 
+	/*
+	 * Block ALTER VIEW and CREATE OR REPLACE VIEW statements from PG dialect
+	 * executed on TSQL views which has entries in view_def catalog
+	 * Note: Changes made by ALTER VIEW or CREATE [OR REPLACE] VIEW statements
+	 * in TSQL dialect from PG client won't be reflected in babelfish_view_def
+	 * catalog.
+	 */
+	if (sql_dialect == SQL_DIALECT_PG && !babelfish_dump_restore && !pltsql_enable_create_alter_view_from_pg)
+	{
+		switch (nodeTag(parsetree))
+		{
+			case T_ViewStmt:
+			{
+				ViewStmt *vstmt = (ViewStmt *) parsetree;
+				Oid relid = RangeVarGetRelid(vstmt->view, NoLock, true);
+				if (vstmt->replace && check_is_tsql_view(relid))
+				{
+					ereport(ERROR,
+							(errcode(ERRCODE_INTERNAL_ERROR),
+							 errmsg("REPLACE VIEW is blocked in PG dialect on TSQL view present in babelfish_view_def catalog. Please set babelfishpg_tsql.enable_create_alter_view_from_pg to true to enable.")));
+				}
+				break;
+			}
+			case T_AlterTableStmt:
+			{
+				AlterTableStmt	*atstmt = (AlterTableStmt *) parsetree;
+				if (atstmt->objtype == OBJECT_VIEW)
+				{
+					Oid relid = RangeVarGetRelid(atstmt->relation, NoLock, true);
+					if(check_is_tsql_view(relid))
+					{
+						ereport(ERROR,
+								(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+								 errmsg("ALTER VIEW is blocked in PG dialect on TSQL view present in babelfish_view_def catalog. Please set babelfishpg_tsql.enable_create_alter_view_from_pg to true to enable.")));
+					}
+				}
+				break;
+			}
+			case T_RenameStmt:
+			{
+				RenameStmt *rnstmt = (RenameStmt *) parsetree;
+				if (rnstmt->renameType == OBJECT_VIEW ||
+					(rnstmt->renameType == OBJECT_COLUMN &&
+					 rnstmt->relationType == OBJECT_VIEW))
+				{
+					Oid relid = RangeVarGetRelid(rnstmt->relation, NoLock, true);
+					if(check_is_tsql_view(relid))
+					{
+						ereport(ERROR,
+								(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+								 errmsg("ALTER VIEW is blocked in PG dialect on TSQL view present in babelfish_view_def catalog. Please set babelfishpg_tsql.enable_create_alter_view_from_pg to true to enable.")));
+					}
+				}
+				break;
+			}
+			case T_AlterObjectSchemaStmt:
+			{
+				AlterObjectSchemaStmt *altschstmt = (AlterObjectSchemaStmt *) parsetree;
+				if (altschstmt->objectType == OBJECT_VIEW)
+				{
+					Oid relid = RangeVarGetRelid(altschstmt->relation, NoLock, true);
+					if(check_is_tsql_view(relid))
+					{
+						ereport(ERROR,
+								(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+								 errmsg("ALTER VIEW is blocked in PG dialect on TSQL view present in babelfish_view_def catalog. Please set babelfishpg_tsql.enable_create_alter_view_from_pg to true to enable.")));
+					}
+				}
+				break;
+			}
+			default:
+				break;
+		}
+	}
+
 	switch (nodeTag(parsetree))
 	{
 		case T_CreateFunctionStmt:
@@ -2641,6 +2716,7 @@ static void bbf_ProcessUtility(PlannedStmt *pstmt,
 				const char      *prev_current_user;
 				DropRoleStmt	*stmt = (DropRoleStmt *) parsetree;
 				bool			drop_user = false;
+				bool			drop_role = false;
 				bool			all_logins = false;
 				bool			all_users = false;
 				bool			all_roles = false;
@@ -2653,12 +2729,15 @@ static void bbf_ProcessUtility(PlannedStmt *pstmt,
 				{
 					RoleSpec		*headrol = linitial(stmt->roles);
 
-					if (strcmp(headrol->rolename, "is_user") == 0 ||
-						strcmp(headrol->rolename, "is_role") == 0)
+					if (strcmp(headrol->rolename, "is_user") == 0)
+						drop_user = true;
+					else if (strcmp(headrol->rolename, "is_role") == 0)
+						drop_role = true;
+
+					if (drop_user || drop_role)
 					{
 						char *db_name = NULL;
 
-						drop_user = true;
 						stmt->roles = list_delete_cell(stmt->roles,
 													   list_head(stmt->roles));
 						pfree(headrol);
@@ -2673,6 +2752,16 @@ static void bbf_ProcessUtility(PlannedStmt *pstmt,
 								char		*user_name;
 
 								user_name = get_physical_user_name(db_name, rolspec->rolename);
+
+								/*
+								 * If a role has members, do not drop it.
+								 * Note that here we don't handle invalid roles.
+								 */
+								if (drop_role && !is_empty_role(get_role_oid(user_name, true)))
+									ereport(ERROR,
+											(errcode(ERRCODE_CHECK_VIOLATION),
+											 errmsg("The role has members. It must be empty before it can be dropped.")));
+
 								pfree(rolspec->rolename);
 								rolspec->rolename = user_name;
 							}
@@ -2720,9 +2809,19 @@ static void bbf_ProcessUtility(PlannedStmt *pstmt,
 				}
 
 				/* If not user or role, then login */
-				if (!drop_user && get_role_oid(role_name, true) == InvalidOid)
-					  ereport(ERROR, (errcode(ERRCODE_DUPLICATE_OBJECT), 
-								  errmsg("Cannot drop the login '%s', because it does not exist or you do not have permission.", role_name)));
+				if (!drop_user && !drop_role)
+				{
+					int	role_oid = get_role_oid(role_name, true);
+					if (role_oid == InvalidOid)
+						ereport(ERROR, (errcode(ERRCODE_DUPLICATE_OBJECT),
+										errmsg("Cannot drop the login '%s', because it does not exist or you do not have permission.", role_name)));
+
+					/* Prevent if it is active login (begin used by other sessions) */
+					if (is_active_login(role_oid))
+						ereport(ERROR,
+								(errcode(ERRCODE_OBJECT_IN_USE),
+								 errmsg("Could not drop login '%s' as the user is currently logged in.", role_name)));
+				}
 
 				if (all_logins || all_users || all_roles)
 				{
@@ -2730,7 +2829,7 @@ static void bbf_ProcessUtility(PlannedStmt *pstmt,
 					prev_current_user = GetUserNameFromId(GetUserId(), false);
 
 					/* Only use dbo if dropping a user/role in a Babelfish session. */
-					if (drop_user)
+					if (drop_user || drop_role)
 						bbf_set_current_user(get_dbo_role_name(get_cur_db_name()));
 					else
 						bbf_set_current_user("sysadmin");
@@ -3424,6 +3523,7 @@ _PG_init(void)
 
 	prev_get_func_language_oids_hook = get_func_language_oids_hook;
 	get_func_language_oids_hook = get_func_language_oids;
+	coalesce_typmod_hook = coalesce_typmod_hook_impl;
 
 	inited = true;
 }

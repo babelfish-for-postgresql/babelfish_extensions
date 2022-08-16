@@ -18,6 +18,20 @@ ignore#!#BABEL-SQLvariant
 # to changing the behavior between pre- and post-commit.
 ignore#!#BABEL-2934-vu-prepare
 ignore#!#BABEL-2934-vu-verify
+ignore#!#BABEL-1444-vu-prepare
+ignore#!#BABEL-1444-vu-verify
+ignore#!#BABEL-1444-vu-cleanup
+ignore#!#Test-Default-Columns-vu-prepare
+ignore#!#Test-Default-Columns-vu-verify
+ignore#!#Test-Default-Columns-vu-cleanup
+ignore#!#Test-Prep-Statements-vu-prepare
+ignore#!#Test-Prep-Statements-vu-verify
+ignore#!#Test-Prep-Statements-vu-cleanup
 
-# Temporarily ignore due to BABEL-3279
-ignore#!#BABEL-EXTENDEDPROPERTY
+# These tests are meant for upgrade scenario prior to (potential) 14_5 release
+ignore#!#BABEL-3147-before-14_5-vu-prepare
+ignore#!#BABEL-3147-before-14_5-vu-verify
+ignore#!#BABEL-3147-before-14_5-vu-cleanup
+ignore#!#TestErrorHelperFunctionsUpgrade-vu-prepare
+ignore#!#TestErrorHelperFunctionsUpgrade-vu-verify
+ignore#!#TestErrorHelperFunctionsUpgrade-vu-cleanup
