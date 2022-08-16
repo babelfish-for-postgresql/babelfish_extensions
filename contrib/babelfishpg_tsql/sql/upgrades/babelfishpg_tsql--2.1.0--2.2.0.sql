@@ -984,10 +984,10 @@ GRANT SELECT ON information_schema_tsql.routines TO PUBLIC;
 
 CREATE OR REPLACE VIEW information_schema_tsql.view_table_usage
 AS SELECT DISTINCT CAST(sys.db_name() AS sys.nvarchar(128)) AS "VIEW_CATALOG",
-    CAST(sys.schema_name(nv."oid") AS sys.nvarchar(128)) AS "VIEW_SCHEMA",
+    CAST((select orig_name from sys.babelfish_namespace_ext where nv.nspname = nspname) AS sys.nvarchar(128)) AS "VIEW_SCHEMA",
     CAST(v.relname AS sys.sysname) AS "VIEW_NAME",
     CAST(sys.db_name() AS sys.nvarchar(128)) AS "TABLE_CATALOG",
-    CAST(sys.schema_name(nt."oid") AS sys.nvarchar(128)) AS "TABLE_SCHEMA",
+    CAST((select orig_name from sys.babelfish_namespace_ext where nt.nspname = nspname) AS sys.nvarchar(128)) AS "TABLE_SCHEMA",
     CAST(t.relname AS sys.sysname) AS "TABLE_NAME"
    FROM pg_catalog.pg_namespace nv,
     pg_catalog.pg_class v,
