@@ -466,6 +466,41 @@ CREATE VIEW information_schema_tsql.table_constraints AS
 GRANT SELECT ON information_schema_tsql.table_constraints TO PUBLIC;
 
 /*
+ * VIEWS view
+ */
+
+CREATE OR REPLACE VIEW information_schema_tsql.views AS
+	SELECT CAST(nc.dbname AS sys.nvarchar(128)) AS "TABLE_CATALOG",
+			CAST(ext.orig_name AS sys.nvarchar(128)) AS  "TABLE_SCHEMA",
+			CAST(c.relname AS sys.nvarchar(128)) AS "TABLE_NAME",
+			CAST(vd.definition AS sys.nvarchar(4000)) AS "VIEW_DEFINITION",
+
+			CAST(
+				CASE WHEN 'check_option=cascaded' = ANY (c.reloptions)
+					THEN 'CASCADE'
+					ELSE 'NONE' END
+				AS sys.varchar(7)) AS "CHECK_OPTION",
+
+			CAST('NO' AS sys.varchar(2)) AS "IS_UPDATABLE"
+
+	FROM sys.pg_namespace_ext nc JOIN pg_class c ON (nc.oid = c.relnamespace)
+		LEFT OUTER JOIN sys.babelfish_namespace_ext ext
+			ON (nc.nspname = ext.nspname COLLATE sys.database_default)
+		LEFT OUTER JOIN sys.babelfish_view_def vd
+			ON ext.dbid = vd.dbid
+				AND (ext.orig_name = vd.schema_name COLLATE sys.database_default)
+				AND (CAST(c.relname AS sys.nvarchar(128)) = vd.object_name COLLATE sys.database_default)
+
+	WHERE c.relkind = 'v'
+		AND (NOT pg_is_other_temp_schema(nc.oid))
+		AND (pg_has_role(c.relowner, 'USAGE')
+			OR has_table_privilege(c.oid, 'SELECT, INSERT, UPDATE, DELETE, TRUNCATE, REFERENCES, TRIGGER')
+			OR has_any_column_privilege(c.oid, 'SELECT, INSERT, UPDATE, REFERENCES') )
+		AND ext.dbid = cast(sys.db_id() as oid);
+
+GRANT SELECT ON information_schema_tsql.views TO PUBLIC;
+
+/*
  * CHECK_CONSTRAINTS view
  */
 
@@ -524,6 +559,9 @@ FROM (
           AND c.contype = 'c'
           AND r.relkind IN ('r', 'p')
           AND NOT a.attisdropped
+	  AND (pg_has_role(r.relowner, 'USAGE')
+		OR has_table_privilege(r.oid, 'SELECT, INSERT, UPDATE, DELETE, TRUNCATE, REFERENCES, TRIGGER')
+		OR has_any_column_privilege(r.oid, 'SELECT, INSERT, UPDATE, REFERENCES'))
 
        UNION ALL
 
@@ -542,10 +580,11 @@ FROM (
           AND NOT a.attisdropped
           AND c.contype IN ('p', 'u', 'f')
           AND r.relkind IN ('r', 'p')
+	  AND (pg_has_role(r.relowner, 'USAGE')
+		OR has_table_privilege(r.oid, 'SELECT, INSERT, UPDATE, DELETE, TRUNCATE, REFERENCES, TRIGGER')
+		OR has_any_column_privilege(r.oid, 'SELECT, INSERT, UPDATE, REFERENCES'))
 
-      ) AS x (tblschema, tblname, tblowner, colname, cstrschema, cstrname, tblcat, cstrcat)
-
-WHERE pg_has_role(x.tblowner, 'USAGE');
+      ) AS x (tblschema, tblname, tblowner, colname, cstrschema, cstrname, tblcat, cstrcat);
 
 GRANT SELECT ON information_schema_tsql.CONSTRAINT_COLUMN_USAGE TO PUBLIC;
 
@@ -585,7 +624,7 @@ CREATE OR REPLACE VIEW information_schema_tsql.routines AS
            CAST(NULL AS sys.nvarchar(128)) AS "UDT_CATALOG",
            CAST(NULL AS sys.nvarchar(128)) AS "UDT_SCHEMA",
            CAST(NULL AS sys.nvarchar(128)) AS "UDT_NAME",
-	   CAST(case when is_tbl_type THEN 'table' when p.prokind = 'p' THEN 'NULL' ELSE tsql_type_name END AS sys.nvarchar(128)) AS "DATA_TYPE",
+	   CAST(case when is_tbl_type THEN 'table' when p.prokind = 'p' THEN NULL ELSE tsql_type_name END AS sys.nvarchar(128)) AS "DATA_TYPE",
            CAST(information_schema_tsql._pgtsql_char_max_length_for_routines(tsql_type_name, true_typmod)
                  AS int)
            AS "CHARACTER_MAXIMUM_LENGTH",
@@ -606,7 +645,7 @@ CREATE OR REPLACE VIEW information_schema_tsql.routines AS
                  * TODO: We need to first create mapping of collation name to char-set name;
                  * Until then return null.
             */
-	    CAST(case when tsql_type_name IN ('nchar','nvarchar') THEN 'UNICODE' when tsql_type_name IN ('char','varchar') THEN 'iso_1' ELSE 'NULL' END AS sys.nvarchar(128)) AS "CHARACTER_SET_NAME",
+	    CAST(case when tsql_type_name IN ('nchar','nvarchar') THEN 'UNICODE' when tsql_type_name IN ('char','varchar') THEN 'iso_1' ELSE NULL END AS sys.nvarchar(128)) AS "CHARACTER_SET_NAME",
 	    CAST(information_schema_tsql._pgtsql_numeric_precision(tsql_type_name, t.oid, true_typmod)
                         AS smallint)
             AS "NUMERIC_PRECISION",
@@ -640,14 +679,15 @@ CREATE OR REPLACE VIEW information_schema_tsql.routines AS
               CASE WHEN p.proisstrict THEN 'YES' ELSE 'NO' END END AS sys.nvarchar(10)) AS "IS_NULL_CALL",
             CAST(NULL AS sys.nvarchar(128)) AS "SQL_PATH",
             CAST('YES' AS sys.nvarchar(10)) AS "SCHEMA_LEVEL_ROUTINE",
-            CAST(0 AS smallint) AS "MAX_DYNAMIC_RESULT_SETS",
+            CAST(CASE p.prokind WHEN 'f' THEN 0 WHEN 'p' THEN -1 END AS smallint) AS "MAX_DYNAMIC_RESULT_SETS",
             CAST('NO' AS sys.nvarchar(10)) AS "IS_USER_DEFINED_CAST",
             CAST('NO' AS sys.nvarchar(10)) AS "IS_IMPLICITLY_INVOCABLE",
             CAST(NULL AS sys.datetime) AS "CREATED",
             CAST(NULL AS sys.datetime) AS "LAST_ALTERED"
 
        FROM sys.pg_namespace_ext nc LEFT JOIN sys.babelfish_namespace_ext ext ON nc.nspname = ext.nspname,
-            pg_proc p inner join sys.schemas sch on sch.schema_id = p.pronamespace,
+            pg_proc p inner join sys.schemas sch on sch.schema_id = p.pronamespace
+	    inner join sys.all_objects ao on ao.object_id = CAST(p.oid AS INT),
             pg_language l,
             pg_type t LEFT JOIN pg_collation co ON t.typcollation = co.oid,
             sys.translate_pg_type_to_tsql(t.oid) AS tsql_type_name,
@@ -671,7 +711,8 @@ CREATE OR REPLACE VIEW information_schema_tsql.routines AS
             AND ext.dbid = cast(sys.db_id() as oid)
 	    AND p.prolang = l.oid
             AND p.prorettype = t.oid
-            AND p.pronamespace = nc.oid;
+            AND p.pronamespace = nc.oid
+	    AND CAST(ao.is_ms_shipped as INT) = 0;
 
 GRANT SELECT ON information_schema_tsql.routines TO PUBLIC;
 

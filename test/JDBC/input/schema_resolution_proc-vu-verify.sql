@@ -59,6 +59,25 @@ go
 	 
 drop table schema_resolution_proc_t1
 go
+
+use schema_resolution_proc_d1;
+go
+
+exec master.schema_resolution_proc_sch1.schema_resolution_proc_create_insert
+go
+
+use master;
+go
+
+select * from schema_resolution_proc_sch1.schema_resolution_proc_table1;
+select * from schema_resolution_proc_table1;
+go
 	 
+drop table schema_resolution_proc_sch1.schema_resolution_proc_table1;
+drop table schema_resolution_proc_table1;
+go
+
+drop procedure schema_resolution_proc_sch1.schema_resolution_proc_create_insert
 drop schema schema_resolution_proc_sch1
+drop database schema_resolution_proc_d1
 go

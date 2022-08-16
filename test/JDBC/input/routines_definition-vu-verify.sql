@@ -1,3 +1,6 @@
+select SPECIFIC_CATALOG, SPECIFIC_SCHEMA, SPECIFIC_NAME, ROUTINE_CATALOG, ROUTINE_SCHEMA, ROUTINE_NAME, ROUTINE_DEFINITION from information_schema.routines where SPECIFIC_NAME LIKE 'xp_%' ORDER BY ROUTINE_NAME;
+go
+
 use db_routines_vu_prepare;
 go
 
@@ -33,6 +36,3 @@ go
 
 drop database db_routines_vu_prepare;
 go
-
-
-

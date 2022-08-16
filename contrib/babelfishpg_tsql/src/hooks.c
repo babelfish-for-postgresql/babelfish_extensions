@@ -5,6 +5,7 @@
 #include "access/table.h"
 #include "catalog/heap.h"
 #include "access/xact.h"
+#include "access/relation.h"
 #include "catalog/namespace.h"
 #include "catalog/objectaccess.h"
 #include "catalog/pg_attrdef_d.h"
@@ -39,6 +40,8 @@
 #include "utils/rel.h"
 #include "utils/relcache.h"
 #include "utils/syscache.h"
+#include "utils/numeric.h"
+#include <math.h>
 
 #include "pltsql.h"
 #include "backend_parser/scanner.h"
@@ -47,7 +50,11 @@
 #include "pl_explain.h"
 #include "catalog.h"
 #include "rolecmds.h"
+#include "session.h"
 
+#define TDS_NUMERIC_MAX_PRECISION	38
+
+extern bool pltsql_quoted_identifier;
 extern bool is_tsql_rowversion_or_timestamp_datatype(Oid oid);
 
 /*****************************************
@@ -82,8 +89,10 @@ static int find_attr_by_name_from_column_def_list(const char *attributeName, Lis
  *****************************************/
 static void pltsql_report_proc_not_found_error(List *names, List *argnames, int nargs, ParseState *pstate, int location, bool proc_call);
 extern PLtsql_execstate *get_outermost_tsql_estate(int *nestlevel);
+static void pltsql_store_view_definition(const char *queryString, ObjectAddress address);
+static void pltsql_drop_view_definition(Oid objectId);
 static void preserve_view_constraints_from_base_table(ColumnDef  *col, Oid tableOid, AttrNumber colId);
-
+static bool pltsql_detect_numeric_overflow(int weight, int dscale, int first_block, int numeric_base);
 /*****************************************
  * 			Executor Hooks
  *****************************************/
@@ -118,6 +127,7 @@ static resolve_target_list_unknowns_hook_type prev_resolve_target_list_unknowns_
 static find_attr_by_name_from_column_def_list_hook_type prev_find_attr_by_name_from_column_def_list_hook = NULL;
 static find_attr_by_name_from_relation_hook_type prev_find_attr_by_name_from_relation_hook = NULL;
 static report_proc_not_found_error_hook_type prev_report_proc_not_found_error_hook = NULL;
+static store_view_definition_hook_type prev_store_view_definition_hook = NULL;
 static logicalrep_modify_slot_hook_type prev_logicalrep_modify_slot_hook = NULL;
 static is_tsql_rowversion_or_timestamp_datatype_hook_type prev_is_tsql_rowversion_or_timestamp_datatype_hook = NULL;
 static ExecutorStart_hook_type prev_ExecutorStart = NULL;
@@ -125,7 +135,7 @@ static ExecutorRun_hook_type prev_ExecutorRun = NULL;
 static ExecutorFinish_hook_type prev_ExecutorFinish = NULL;
 static ExecutorEnd_hook_type prev_ExecutorEnd = NULL;
 static inherit_view_constraints_from_table_hook_type prev_inherit_view_constraints_from_table = NULL;
-
+static detect_numeric_overflow_hook_type prev_detect_numeric_overflow_hook = NULL;
 /*****************************************
  * 			Install / Uninstall
  *****************************************/
@@ -176,6 +186,9 @@ InstallExtendedHooks(void)
 	prev_report_proc_not_found_error_hook = report_proc_not_found_error_hook;
 	report_proc_not_found_error_hook = pltsql_report_proc_not_found_error;
 
+	prev_store_view_definition_hook = store_view_definition_hook;
+	store_view_definition_hook = pltsql_store_view_definition;
+
 	prev_logicalrep_modify_slot_hook = logicalrep_modify_slot_hook;
 	logicalrep_modify_slot_hook = logicalrep_modify_slot;
 
@@ -197,6 +210,9 @@ InstallExtendedHooks(void)
 	prev_inherit_view_constraints_from_table = inherit_view_constraints_from_table_hook;
 	inherit_view_constraints_from_table_hook = preserve_view_constraints_from_base_table;
 	TriggerRecuresiveCheck_hook = plsql_TriggerRecursiveCheck;
+
+	prev_detect_numeric_overflow_hook = detect_numeric_overflow_hook;
+	detect_numeric_overflow_hook = pltsql_detect_numeric_overflow;
 }
 
 void
@@ -220,6 +236,7 @@ UninstallExtendedHooks(void)
 	find_attr_by_name_from_column_def_list_hook = prev_find_attr_by_name_from_column_def_list_hook;
 	find_attr_by_name_from_relation_hook = prev_find_attr_by_name_from_relation_hook;
 	report_proc_not_found_error_hook = prev_report_proc_not_found_error_hook;
+	store_view_definition_hook = prev_store_view_definition_hook;
 	logicalrep_modify_slot_hook = prev_logicalrep_modify_slot_hook;
 	is_tsql_rowversion_or_timestamp_datatype_hook = prev_is_tsql_rowversion_or_timestamp_datatype_hook;
 	ExecutorStart_hook = prev_ExecutorStart;
@@ -227,6 +244,7 @@ UninstallExtendedHooks(void)
 	ExecutorFinish_hook = prev_ExecutorFinish;
 	ExecutorEnd_hook = prev_ExecutorEnd;
 	inherit_view_constraints_from_table_hook = prev_inherit_view_constraints_from_table;
+	detect_numeric_overflow_hook = prev_detect_numeric_overflow_hook;
 }
 
 /*****************************************
@@ -1353,6 +1371,9 @@ bbf_object_access_hook(ObjectAccessType access, Oid classId, Oid objectId, int s
 	if (prev_object_access_hook)
 		(*prev_object_access_hook) (access, classId, objectId, subId, arg);
 
+	if (access == OAT_DROP && classId == RelationRelationId)
+		pltsql_drop_view_definition(objectId);
+
 	if (sql_dialect != SQL_DIALECT_TSQL)
 		return;
 
@@ -1518,6 +1539,169 @@ modify_insert_stmt(InsertStmt *stmt, Oid relid)
 
 }
 
+/*
+ * Stores view object's TSQL definition to bbf_view_def catalog
+ * Note: It won't store view info if view is created in TSQL dialect from PG
+ * endpoint as dbid will be NULL in that case.
+ */
+static void
+pltsql_store_view_definition(const char *queryString, ObjectAddress address)
+{
+	/* Store TSQL definition */
+	Relation	bbf_view_def_rel;
+	TupleDesc	bbf_view_def_rel_dsc;
+	Datum		new_record[BBF_VIEW_DEF_NUM_COLS];
+	bool		new_record_nulls[BBF_VIEW_DEF_NUM_COLS];
+	HeapTuple	tuple, reltup;
+	Form_pg_class	form_reltup;
+	int16		dbid;
+	uint64		flag_values = 0, flag_validity = 0;
+	char		*physical_schemaname, *logical_schemaname;
+
+	if (sql_dialect != SQL_DIALECT_TSQL)
+		return;
+
+	/* Skip if it is for sysdatabases while creating logical database */
+	if (strcmp("(CREATE LOGICAL DATABASE )", queryString) == 0)
+		return;
+
+	/* Fetch the object details from Relation */
+	reltup = SearchSysCache1(RELOID, ObjectIdGetDatum(address.objectId));
+	form_reltup = (Form_pg_class) GETSTRUCT(reltup);
+
+	physical_schemaname = get_namespace_name(form_reltup->relnamespace);
+	if (physical_schemaname == NULL)
+	{
+		elog(ERROR,
+				"Could not find physical schemaname for %u",
+				 form_reltup->relnamespace);
+	}
+
+	/*
+	 * Do not store definition/data in case of sys, information_schema_tsql and
+	 * other shared schemas.
+	 */
+	if (is_shared_schema(physical_schemaname))
+	{
+		pfree(physical_schemaname);
+		ReleaseSysCache(reltup);
+		return;
+	}
+
+	dbid = get_dbid_from_physical_schema_name(physical_schemaname, true);
+	logical_schemaname = get_logical_schema_name(physical_schemaname, true);
+	if(!DbidIsValid(dbid) || logical_schemaname == NULL)
+	{
+		ereport(ERROR,
+				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+				errmsg("Could not find dbid or logical schema for this physical schema '%s'." \
+				"CREATE VIEW from non-babelfish schema/db is not allowed in TSQL dialect.", physical_schemaname)));
+	}
+
+	bbf_view_def_rel = table_open(get_bbf_view_def_oid(), RowExclusiveLock);
+	bbf_view_def_rel_dsc = RelationGetDescr(bbf_view_def_rel);
+
+	MemSet(new_record_nulls, false, sizeof(new_record_nulls));
+
+	/*
+	 * To use particular flag bit to store certain flag, Set corresponding bit
+	 * in flag_validity which tracks currently supported flag bits and then
+	 * set/unset flag_values bit according to flag settings.
+	 * Used !Transform_null_equals instead of pltsql_ansi_nulls because NULL is
+	 * being inserted in catalog if it is used.
+	 * Currently, Only two flags are supported.
+	 */
+	flag_validity |= BBF_VIEW_DEF_FLAG_IS_ANSI_NULLS_ON;
+	if (!Transform_null_equals)
+		flag_values |= BBF_VIEW_DEF_FLAG_IS_ANSI_NULLS_ON;
+	flag_validity |= BBF_VIEW_DEF_FLAG_USES_QUOTED_IDENTIFIER;
+	if (pltsql_quoted_identifier)
+		flag_values |= BBF_VIEW_DEF_FLAG_USES_QUOTED_IDENTIFIER;
+
+	new_record[0] = Int16GetDatum(dbid);
+	new_record[1] = CStringGetTextDatum(logical_schemaname);
+	new_record[2] = CStringGetTextDatum(NameStr(form_reltup->relname));
+	new_record[3] = CStringGetTextDatum(queryString);
+	new_record[4] = UInt64GetDatum(flag_validity);
+	new_record[5] = UInt64GetDatum(flag_values);
+
+	tuple = heap_form_tuple(bbf_view_def_rel_dsc,
+							new_record, new_record_nulls);
+
+	CatalogTupleInsert(bbf_view_def_rel, tuple);
+
+	pfree(physical_schemaname);
+	pfree(logical_schemaname);
+	ReleaseSysCache(reltup);
+	heap_freetuple(tuple);
+	table_close(bbf_view_def_rel, RowExclusiveLock);
+}
+
+/*
+ * Drops view object's TSQL definition from bbf_view_def catalog
+ */
+static void
+pltsql_drop_view_definition(Oid objectId)
+{
+	Relation	bbf_view_def_rel;
+	HeapTuple	reltuple, scantup;
+	Form_pg_class	form;
+	int16		dbid;
+	char		*physical_schemaname, *logical_schemaname, *objectname;
+
+	/* return if it is not a view */
+	reltuple = SearchSysCache1(RELOID, ObjectIdGetDatum(objectId));
+	if (!HeapTupleIsValid(reltuple))
+		return;					/* concurrently dropped */
+	form = (Form_pg_class) GETSTRUCT(reltuple);
+	if (form->relkind != RELKIND_VIEW)
+	{
+		ReleaseSysCache(reltuple);
+		return;
+	}
+
+	physical_schemaname = get_namespace_name(form->relnamespace);
+	if (physical_schemaname == NULL)
+	{
+		elog(ERROR,
+				"Could not find physical schemaname for %u",
+				 form->relnamespace);
+	}
+	dbid = get_dbid_from_physical_schema_name(physical_schemaname, true);
+	logical_schemaname = get_logical_schema_name(physical_schemaname, true);
+	objectname = NameStr(form->relname);
+
+	/*
+	 * If any of these entries are NULL then there
+	 * must not be any entry in catalog
+	 */
+	if (!DbidIsValid(dbid) || logical_schemaname == NULL || objectname == NULL)
+	{
+		pfree(physical_schemaname);
+		if (logical_schemaname)
+			pfree(logical_schemaname);
+		ReleaseSysCache(reltuple);
+		return;
+	}
+
+	/* Fetch the relation */
+	bbf_view_def_rel = table_open(get_bbf_view_def_oid(), RowExclusiveLock);
+
+	scantup = search_bbf_view_def(bbf_view_def_rel, dbid, logical_schemaname, objectname);
+
+	if (HeapTupleIsValid(scantup))
+	{
+		CatalogTupleDelete(bbf_view_def_rel,
+						   &scantup->t_self);
+		heap_freetuple(scantup);
+	}
+
+	pfree(physical_schemaname);
+	pfree(logical_schemaname);
+	ReleaseSysCache(reltuple);
+	table_close(bbf_view_def_rel, RowExclusiveLock);
+}
+
 static void
 preserve_view_constraints_from_base_table(ColumnDef  *col, Oid tableOid, AttrNumber colId)
 {
@@ -1543,4 +1727,49 @@ preserve_view_constraints_from_base_table(ColumnDef  *col, Oid tableOid, AttrNum
 			ReleaseSysCache(tp);
 		}
 	}
+}
+
+/*
+ * detect_numeric_overflow() -
+ * 	Calculate exact number of digits of any numeric data and report if numeric overflow occurs
+ */
+bool
+pltsql_detect_numeric_overflow(int weight, int dscale, int first_block, int numeric_base)
+{
+	if (sql_dialect != SQL_DIALECT_TSQL)
+		return false;
+
+	int partially_filled_numeric_block = 0;
+	int total_digit_count = 0;
+
+	total_digit_count = (dscale == 0) ? (weight * numeric_base) :
+					    ((weight + 1) * numeric_base);
+	/*
+	 * calculating exact #digits in the first partially filled numeric block, if any)
+	 * Ex. - in 12345.12345 var is of type struct NumericVar; first_block = var->digits[0]= 1,
+	 * var->digits[1] = 2345, var->digits[2] = 1234,
+	 * var->digits[3] = 5000; numeric_base = 4, var->ndigits = #numeric blocks i.e., 4,
+	 * var->weight = 1, var->dscale = 5
+	 */
+	partially_filled_numeric_block = first_block;
+
+	/*
+	 * check if the first numeric block is partially filled
+	 * If yes, add those digit count
+	 * Else if fully filled, Ignore as those digits are already added to total_digit_count
+	 */
+	if (partially_filled_numeric_block < pow(10, numeric_base - 1))
+		total_digit_count += (partially_filled_numeric_block > 0) ?
+				     log10(partially_filled_numeric_block) + 1 : 1;
+
+	/*
+	 * calculating exact #digits in last block if decimal point exists
+	 * If dscale is an exact multiple of numeric_base, last block is not partially filled,
+	 * then, ignore as those digits are already added to total_digit_count
+	 * Else, add the remainder digits
+	 */
+	if (dscale > 0)
+		total_digit_count += (dscale % numeric_base);
+
+	return (total_digit_count > TDS_NUMERIC_MAX_PRECISION);
 }

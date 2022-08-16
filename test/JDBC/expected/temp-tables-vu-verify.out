@@ -1,0 +1,17 @@
+use master
+GO
+
+EXEC temp_table_vu_prepare_sp;
+GO
+~~ROW COUNT: 1~~
+
+
+EXEC temp_table_vu_prepare_sp_drop;
+GO
+
+EXEC temp_table_vu_prepare_sp_exception;
+GO
+~~ERROR (Code: 2714)~~
+
+~~ERROR (Message: relation "#tt" already exists)~~
+

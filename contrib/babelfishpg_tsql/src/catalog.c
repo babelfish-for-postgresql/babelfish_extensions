@@ -59,6 +59,12 @@ Oid			bbf_authid_user_ext_oid;
 Oid			bbf_authid_user_ext_idx_oid;
 
 /*****************************************
+ *			VIEW_DEF
+ *****************************************/
+Oid			bbf_view_def_oid;
+Oid			bbf_view_def_idx_oid;
+
+/*****************************************
  * 			Catalog General
  *****************************************/
 
@@ -123,6 +129,10 @@ Datum init_catalog(PG_FUNCTION_ARGS)
 												sys_schema_oid);
 	bbf_authid_user_ext_idx_oid = get_relname_relid(BBF_AUTHID_USER_EXT_IDX_NAME,
 													sys_schema_oid);
+
+	/* bbf_view_def */
+	bbf_view_def_oid = get_relname_relid(BBF_VIEW_DEF_TABLE_NAME, sys_schema_oid);
+	bbf_view_def_idx_oid = get_relname_relid(BBF_VIEW_DEF_IDX_NAME, sys_schema_oid);
 
 	if (sysdatabases_oid != InvalidOid)
 		initTsqlSyscache();
@@ -377,6 +387,7 @@ babelfish_helpdb(PG_FUNCTION_ARGS)
 /*****************************************
  *			NAMESPACE_EXT
  *****************************************/
+
 const char *
 get_logical_schema_name(const char *physical_schema_name, bool missingOk)
 {
@@ -420,6 +431,51 @@ get_logical_schema_name(const char *physical_schema_name, bool missingOk)
 	systable_endscan(scan);
 	table_close(rel, AccessShareLock);
 	return logical_name;
+}
+
+int16
+get_dbid_from_physical_schema_name(const char *physical_schema_name, bool missingOk)
+{
+	Relation 	rel;
+	HeapTuple	tuple;
+	ScanKeyData	scanKey;
+	SysScanDesc	scan;
+	Datum		datum;
+	int16		dbid;
+	TupleDesc	dsc;
+	bool		isnull;
+
+	if (get_namespace_oid(physical_schema_name, false) == InvalidOid)
+		return InvalidDbid;
+
+	rel = table_open(namespace_ext_oid, AccessShareLock);
+	dsc = RelationGetDescr(rel);
+
+	ScanKeyInit(&scanKey,
+				Anum_namespace_ext_namespace,
+				BTEqualStrategyNumber, F_NAMEEQ,
+				CStringGetDatum(physical_schema_name));
+
+	scan = systable_beginscan(rel, namespace_ext_idx_oid_oid, true,
+							  NULL, 1, &scanKey);
+
+	tuple = systable_getnext(scan);
+	if (!HeapTupleIsValid(tuple))
+	{
+		systable_endscan(scan);
+		table_close(rel, AccessShareLock);
+		if (!missingOk)
+			ereport(ERROR,
+				(errcode(ERRCODE_INTERNAL_ERROR),
+				 errmsg("Could not find db id for: \"%s\"", physical_schema_name)));
+		return InvalidDbid;
+	}
+	datum = heap_getattr(tuple, Anum_namespace_ext_dbid, dsc, &isnull);
+	dbid = DatumGetInt16(datum);
+
+	systable_endscan(scan);
+	table_close(rel, AccessShareLock);
+	return dbid;
 }
 
 /*****************************************
@@ -873,6 +929,150 @@ get_user_for_database(const char *db_name)
 		user = NULL;
 
 	return user;
+}
+
+/*****************************************
+ *			VIEW_DEF
+ *****************************************/
+
+Oid
+get_bbf_view_def_oid()
+{
+	if (!OidIsValid(bbf_view_def_oid))
+		bbf_view_def_oid = get_relname_relid(BBF_VIEW_DEF_TABLE_NAME,
+											 get_namespace_oid("sys", false));
+
+	return bbf_view_def_oid;
+}
+
+Oid
+get_bbf_view_def_idx_oid()
+{
+	if (!OidIsValid(bbf_authid_user_ext_idx_oid))
+		bbf_view_def_idx_oid = get_relname_relid(BBF_VIEW_DEF_IDX_NAME,
+												 get_namespace_oid("sys", false));
+
+	return bbf_view_def_idx_oid;
+}
+
+HeapTuple
+search_bbf_view_def(Relation bbf_view_def_rel, int16 dbid, const char *logical_schema_name, const char *view_name)
+{
+
+	ScanKeyData	scanKey[3];
+	SysScanDesc	scan;
+	HeapTuple	scantup, oldtup;
+
+	if(!DbidIsValid(dbid) || logical_schema_name == NULL || view_name == NULL)
+		return NULL;
+
+
+	/* Search and drop the definition */
+	ScanKeyInit(&scanKey[0],
+				Anum_bbf_view_def_dbid,
+				BTEqualStrategyNumber, F_INT2EQ,
+				Int16GetDatum(dbid));
+
+	ScanKeyInit(&scanKey[1],
+				Anum_bbf_view_def_schema_name,
+				BTEqualStrategyNumber, F_TEXTEQ,
+				CStringGetTextDatum(logical_schema_name));
+
+	ScanKeyInit(&scanKey[2],
+				Anum_bbf_view_def_object_name,
+				BTEqualStrategyNumber, F_TEXTEQ,
+				CStringGetTextDatum(view_name));
+
+	scan = systable_beginscan(bbf_view_def_rel,
+							  get_bbf_view_def_idx_oid(),
+							  true, NULL, 3, scanKey);
+
+	scantup = systable_getnext(scan);
+	oldtup = heap_copytuple(scantup);
+	systable_endscan(scan);
+	return oldtup;
+}
+
+/* Checks if it is view created during v2.2.0 or after that */
+bool
+check_is_tsql_view(Oid relid)
+{
+	Oid		schema_oid;
+	Relation	bbf_view_def_rel;
+	HeapTuple	scantup;
+	char		*view_name, *schema_name;
+	int16		logical_dbid;
+	const char	*logical_schema_name;
+	bool		is_tsql_view = false;
+
+	view_name = get_rel_name(relid);
+	schema_oid = get_rel_namespace(relid);
+	schema_name = get_namespace_name(schema_oid);
+	if (view_name == NULL || schema_name == NULL || is_shared_schema(schema_name))
+	{
+		if (view_name)
+			pfree(view_name);
+		if (schema_name)
+			pfree(schema_name);
+		return false;
+	}
+	logical_schema_name = get_logical_schema_name(schema_name, true);
+	logical_dbid = get_dbid_from_physical_schema_name(schema_name, true);
+	if (logical_schema_name == NULL || !DbidIsValid(logical_dbid))
+	{
+		pfree(view_name);
+		pfree(schema_name);
+		if (logical_schema_name)
+			pfree(logical_schema_name);
+		return false;
+	}
+	/* Fetch the relation */
+	bbf_view_def_rel = table_open(get_bbf_view_def_oid(), AccessShareLock);
+
+	scantup = search_bbf_view_def(bbf_view_def_rel, logical_dbid, logical_schema_name, view_name);
+
+	if (HeapTupleIsValid(scantup))
+	{
+		is_tsql_view = true;
+		heap_freetuple(scantup);
+	}
+	table_close(bbf_view_def_rel, AccessShareLock);
+	pfree(view_name);
+	pfree(schema_name);
+	pfree(logical_schema_name);
+	return is_tsql_view;
+}
+
+void
+clean_up_bbf_view_def(int16 dbid)
+{
+	Relation		bbf_view_def_rel;
+	HeapTuple		scantup;
+	ScanKeyData		scanKey[1];
+	SysScanDesc		scan;
+
+	/* Fetch the relation */
+	bbf_view_def_rel = table_open(get_bbf_view_def_oid(), RowExclusiveLock);
+
+	/* Search and drop the definition */
+	ScanKeyInit(&scanKey[0],
+				Anum_bbf_view_def_dbid,
+				BTEqualStrategyNumber, F_INT2EQ,
+				Int16GetDatum(dbid));
+
+	scan = systable_beginscan(bbf_view_def_rel,
+							  get_bbf_view_def_idx_oid(),
+							  true, NULL, 1, scanKey);
+
+	while ((scantup = systable_getnext(scan)) != NULL)
+	{
+		if (HeapTupleIsValid(scantup))
+			CatalogTupleDelete(bbf_view_def_rel,
+							&scantup->t_self);
+	}
+
+	systable_endscan(scan);
+	table_close(bbf_view_def_rel, RowExclusiveLock);
 }
 
 /*****************************************

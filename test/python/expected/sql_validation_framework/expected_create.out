@@ -82,7 +82,6 @@ Could not find tests for procedure sys.sp_helprolemember
 Could not find tests for procedure sys.sp_oledb_ro_usrname
 Could not find tests for procedure sys.sp_special_columns_100
 Could not find tests for procedure sys.sp_sproc_columns_100
-Could not find tests for table sys.assemblies
 Could not find tests for table sys.babelfish_helpcollation
 Could not find tests for table sys.babelfish_syslanguages
 Could not find tests for table sys.service_settings
@@ -105,8 +104,6 @@ Could not find tests for view sys.sp_stored_procedures_view
 Could not find tests for view sys.sp_table_privileges_view
 Could not find tests for view sys.spt_columns_view_managed
 Could not find upgrade tests for function assemblyproperty
-Could not find upgrade tests for function collationproperty
-Could not find upgrade tests for function columns_updated
 Could not find upgrade tests for function connectionproperty
 Could not find upgrade tests for function databasepropertyex
 Could not find upgrade tests for function pltsql_call_handler
@@ -120,7 +117,6 @@ Could not find upgrade tests for function sys.babelfish_cast_floor_bigint
 Could not find upgrade tests for function sys.babelfish_cast_floor_int
 Could not find upgrade tests for function sys.babelfish_cast_floor_smallint
 Could not find upgrade tests for function sys.babelfish_helpdb
-Could not find upgrade tests for function sys.babelfish_inconsistent_metadata
 Could not find upgrade tests for function sys.babelfish_runtime_error
 Could not find upgrade tests for function sys.babelfish_try_cast_floor_bigint
 Could not find upgrade tests for function sys.babelfish_try_cast_floor_int
@@ -148,15 +144,12 @@ Could not find upgrade tests for function sys.exp
 Could not find upgrade tests for function sys.fetch_status
 Could not find upgrade tests for function sys.floor
 Could not find upgrade tests for function sys.fn_helpcollations
-Could not find upgrade tests for function sys.fn_listextendedproperty
 Could not find upgrade tests for function sys.formatmessage
 Could not find upgrade tests for function sys.get_babel_server_collation_oid
 Could not find upgrade tests for function sys.get_current_full_xact_id
 Could not find upgrade tests for function sys.get_host_os
 Could not find upgrade tests for function sys.get_tds_id
 Could not find upgrade tests for function sys.has_perms_by_name
-Could not find upgrade tests for function sys.hashbytes
-Could not find upgrade tests for function sys.ident_current
 Could not find upgrade tests for function sys.ident_incr
 Could not find upgrade tests for function sys.ident_seed
 Could not find upgrade tests for function sys.is_collated_ci_as
@@ -216,7 +209,6 @@ Could not find upgrade tests for function sys.tsql_type_max_length_helper
 Could not find upgrade tests for function sys.tsql_type_precision_helper
 Could not find upgrade tests for function sys.tsql_type_radix_for_sp_columns_helper
 Could not find upgrade tests for function sys.tsql_type_scale_helper
-Could not find upgrade tests for function sys.user_id
 Could not find upgrade tests for function sys.version
 Could not find upgrade tests for procedure babel_catalog_initializer
 Could not find upgrade tests for procedure babel_coercion_initializer
@@ -259,12 +251,15 @@ Could not find upgrade tests for procedure sys.sp_statistics
 Could not find upgrade tests for procedure sys.sp_statistics_100
 Could not find upgrade tests for procedure sys.sp_stored_procedures
 Could not find upgrade tests for procedure sys.sp_table_privileges
+<<<<<<< HEAD
 Could not find upgrade tests for procedure sys.sp_tablecollations_100
+=======
+Could not find upgrade tests for procedure sys.sp_tables
+>>>>>>> BABEL_2_X_DEV
 Could not find upgrade tests for procedure sys.sp_unprepare
 Could not find upgrade tests for procedure sys.sp_updatestats
 Could not find upgrade tests for procedure xp_instance_regread
 Could not find upgrade tests for procedure xp_qv
-Could not find upgrade tests for table sys.assemblies
 Could not find upgrade tests for table sys.babelfish_configurations
 Could not find upgrade tests for table sys.babelfish_helpcollation
 Could not find upgrade tests for table sys.babelfish_syslanguages
@@ -294,23 +289,18 @@ Could not find upgrade tests for view sys.dm_hadr_cluster
 Could not find upgrade tests for view sys.dm_hadr_database_replica_states
 Could not find upgrade tests for view sys.dm_os_host_info
 Could not find upgrade tests for view sys.endpoints
-Could not find upgrade tests for view sys.filegroups
 Could not find upgrade tests for view sys.filetable_system_defined_objects
-Could not find upgrade tests for view sys.filetables
 Could not find upgrade tests for view sys.foreign_key_columns
 Could not find upgrade tests for view sys.foreign_keys
 Could not find upgrade tests for view sys.fulltext_catalogs
 Could not find upgrade tests for view sys.fulltext_index_columns
-Could not find upgrade tests for view sys.fulltext_indexes
 Could not find upgrade tests for view sys.fulltext_languages
 Could not find upgrade tests for view sys.fulltext_stoplists
-Could not find upgrade tests for view sys.hash_indexes
 Could not find upgrade tests for view sys.identity_columns
 Could not find upgrade tests for view sys.index_columns
 Could not find upgrade tests for view sys.key_constraints
 Could not find upgrade tests for view sys.master_files
 Could not find upgrade tests for view sys.pg_namespace_ext
-Could not find upgrade tests for view sys.plan_guides
 Could not find upgrade tests for view sys.registered_search_property_lists
 Could not find upgrade tests for view sys.schemas
 Could not find upgrade tests for view sys.selective_xml_index_paths
@@ -334,7 +324,6 @@ Could not find upgrade tests for view sys.stats
 Could not find upgrade tests for view sys.synonyms
 Could not find upgrade tests for view sys.syscharsets
 Could not find upgrade tests for view sys.syscolumns
-Could not find upgrade tests for view sys.sysdatabases
 Could not find upgrade tests for view sys.sysforeignkeys
 Could not find upgrade tests for view sys.sysindexes
 Could not find upgrade tests for view sys.syslanguages
@@ -342,7 +331,6 @@ Could not find upgrade tests for view sys.system_objects
 Could not find upgrade tests for view sys.system_sql_modules
 Could not find upgrade tests for view sys.table_types
 Could not find upgrade tests for view sys.tables
-Could not find upgrade tests for view sys.triggers
 Could not find upgrade tests for view sys.types
 Could not find upgrade tests for view sys.views
 Could not find upgrade tests for view sys.xml_indexes
