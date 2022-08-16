@@ -29,16 +29,6 @@ jobs:
           install_dir: ${{ env.OLD_INSTALL_DIR }}
           migration_mode: 'single-db'
 
-      - name: Upload Prepare Test Failures
-        if: always() && steps.setup-base-version.outcome == 'failure'
-        uses: actions/upload-artifact@v2
-        with:
-         name: Prepare Test Failures
-         path: |
-          ~/${{env.OLD_INSTALL_DIR}}/data/logfile13
-          test/JDBC/Info/*
-
-
       - name: Build Modified Postgres using latest version
         id: build-modified-postgres-new
         if: always() && steps.setup-base-version.outcome == 'success'
@@ -116,7 +106,7 @@ jobs:
 
       - name: Rename Test Summary Files
         id: test-file-rename
-        if: always() && steps.jdbc-upgrade-tests-verify.outcome == 'failure'
+        if: always() && ( steps.jdbc-upgrade-tests-verify.outcome == 'failure' || steps.setup-base-version == 'failure' )
         run: |
           cd test/JDBC/Info
           timestamp=`ls -Art | tail -n 1`
