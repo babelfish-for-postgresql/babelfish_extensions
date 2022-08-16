@@ -4,6 +4,10 @@ ifdef USE_PGXS
 PG_CONFIG = pg_config
 PGXS := $(shell $(PG_CONFIG) --pgxs)
 include $(PGXS)
+else
+subdir = babelfish_extensions/contrib
+top_builddir = ../..
+include $(top_builddir)/src/Makefile.global
 endif
 
 SUBDIRS = \

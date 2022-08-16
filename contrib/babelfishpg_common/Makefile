@@ -37,8 +37,18 @@ OBJS += src/datetimeoffset.o
 OBJS += src/sqlvariant.o
 OBJS += src/coerce.o
 
+ifdef USE_PGXS
 PGXS := $(shell $(PG_CONFIG) --pgxs)
 include $(PGXS)
+VERSION = $(shell $(PG_CONFIG) --version | awk '{print $$2}' | sed -e 's/devel$$//')
+CFLAGS = `$(PG_CONFIG) --includedir-server`
+else
+subdir = babelfish_extensions/contrib/babelfishpg_common
+top_builddir = ../../..
+include $(top_builddir)/src/Makefile.global
+include $(top_srcdir)/contrib/contrib-global.mk
+PG_SRC=$(top_srcdir)
+endif
 
 MODULEPATH = $$libdir/$(EXTENSION)-$(BBFPGCMN_MAJOR_VERSION)
 
@@ -54,17 +64,13 @@ DATA_built = \
 
 #include ../Makefile.common
 
-# Get Postgres version, as well as major (9.4, etc) version. Remove '.' from MAJORVER.
-VERSION 	 = $(shell $(PG_CONFIG) --version | awk '{print $$2}' | sed -e 's/devel$$//')
+# Get Postgres major (9.4, etc) version. Remove '.' from MAJORVER.
 MAJORVER 	 = $(shell echo $(VERSION) | cut -d . -f1,2 | tr -d .)
 
 # Function for testing a condition
 test		 = $(shell test $(1) $(2) $(3) && echo yes || echo no)
 
 GE91		 = $(call test, $(MAJORVER), -ge, 91)
-
-PGXS := $(shell $(PG_CONFIG) --pgxs)
-include $(PGXS)
 
 ifeq ($(GE91),yes)
 all: sql/$(EXTENSION)--$(EXTVERSION).sql $(UPGRADES)
@@ -82,8 +88,5 @@ sql/$(EXTENSION)--$(EXTVERSION).sql: sql/$(EXTENSION).in
 
 sql/%.sql: sql/upgrades/%.sql
 	cp $< $@
-
-
-CFLAGS = `$(PG_CONFIG) --includedir-server`
 
 $(recurse)
