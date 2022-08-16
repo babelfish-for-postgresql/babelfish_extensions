@@ -658,6 +658,9 @@ user_name(PG_FUNCTION_ARGS)
 						 &is_null);
 	user = pstrdup(TextDatumGetCString(datum));
 
+	systable_endscan(scan);
+	table_close(bbf_authid_user_ext_rel, RowExclusiveLock);
+
 	PG_RETURN_TEXT_P(CStringGetTextDatum(user));
 }
 
