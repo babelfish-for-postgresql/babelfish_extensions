@@ -62,7 +62,7 @@ string SqlGetInfoSupportError(string sqlgetinfo_option, string supported_feature
 }
 
 // Tests if SQLGetInfo retrieves the correct server name with SQL_SERVER_NAME option
-TEST_F(SQLGetInfoTest, SQLGetInfo_SQL_SERVER_NAME) {
+TEST_F(SQLGetInfoTest, DISABLED_SQLGetInfo_SQL_SERVER_NAME) {
 
   OdbcHandler odbcHandler;
   char output[BUFFER];
