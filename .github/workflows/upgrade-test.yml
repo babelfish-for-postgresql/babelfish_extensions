@@ -70,6 +70,7 @@ jobs:
           engine_branch: ${{ steps.find-branch.outputs.base-engine-branch }}
           extension_branch: ${{ steps.find-branch.outputs.base-extension-branch }}
           install_dir: ${{ steps.find-branch.outputs.base-dir }}
+          migration_mode: 'multi-db'
 
       - name: Setup Upgrade Version Composite Action
         id: setup-upgrade-ver-ca

@@ -9,6 +9,9 @@ inputs:
   install_dir:
     description: "Install base version in this directory"
     required: true
+  migration_mode:
+    description: "Database migration mode for Babelfish"
+    required: true
 
 runs:
   using: "composite"
@@ -66,6 +69,7 @@ runs:
 
     - name: Change migration mode to multi-db
       id: change-migration-mode
+      if: ${{ inputs.migration_mode }} == 'multi-db'
       run: |
         sudo ~/${{ inputs.install_dir}}/bin/psql -d jdbc_testdb -U runner -c "ALTER SYSTEM SET babelfishpg_tsql.migration_mode = 'multi-db';"
         sudo ~/${{ inputs.install_dir}}/bin/psql -d jdbc_testdb -U runner -c "SELECT pg_reload_conf();"
