@@ -3501,7 +3501,7 @@ LANGUAGE 'pltsql';
 
 SET allow_system_table_mods TO ON;
 
-ALTER TABLE sys.babelfish_sysdatabases ADD COLUMN cmptlevel INT DEFAULT 120;
+ALTER TABLE sys.babelfish_sysdatabases ADD COLUMN cmptlevel SMALLINT DEFAULT 120;
 
 SET allow_system_table_mods TO OFF;
 
