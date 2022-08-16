@@ -113,8 +113,8 @@ jobs:
           cd test/JDBC/Info
           timestamp=`ls -Art | tail -n 1`
           cd $timestamp
-          mv $timestamp.diff ../output-diff.diff
-          mv "$timestamp"_runSummary.log ../run-summary.log
+          cp $timestamp.diff ~/upgrade/output-diff.diff
+          cp "$timestamp"_runSummary.log ~/upgrade/run-summary.log
           mkdir -p ~/failed-testscript-outputs
 
           for f in $(grep "[A-Za-z_\-]*:[ ]*Failed" $timestamp"_runSummary.log" | cut -d ":" -f 1); 
@@ -134,6 +134,7 @@ jobs:
         with:
           name: Test Run Artificats
           path: |
-            test/JDBC/Info/run-summary.log
-            test/JDBC/Info/output-diff.diff
-            ~/failed-testscript-outputs/*
+            ~/upgrade/*.log
+            ~/upgrade/*.diff
+            test/JDBC/output/*.out
+            ~/failed-testscript-outputs
