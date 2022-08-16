@@ -136,5 +136,4 @@ jobs:
           path: |
             ~/upgrade/*.log
             ~/upgrade/*.diff
-            test/JDBC/output/*.out
             ~/failed-testscript-outputs
