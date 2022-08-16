@@ -1521,7 +1521,7 @@ BEGIN
 	WHEN 'second' THEN
 		RETURN startdate OPERATOR(sys.+) make_interval(secs => num);
 	WHEN 'millisecond' THEN
-		RETURN startdate OPERATOR(sys.+) make_interval(secs => CAST(num AS DECIMAL(20,10)) * 0.001);
+		RETURN startdate OPERATOR(sys.+) make_interval(secs => (num::numeric) * 0.001);
   WHEN 'microsecond' THEN
     RAISE EXCEPTION 'The datepart % is not supported by date function dateadd for data type time.', datepart;
 	WHEN 'nanosecond' THEN
@@ -1568,7 +1568,7 @@ BEGIN
 	WHEN 'second' THEN
 		RETURN startdate + make_interval(secs => num);
 	WHEN 'millisecond' THEN
-		RETURN startdate + make_interval(secs => CAST(num AS DECIMAL(20,10)) * 0.001);
+		RETURN startdate + make_interval(secs => (num::numeric) * 0.001);
 	WHEN 'microsecond' THEN
     RAISE EXCEPTION 'The datepart % is not supported by date function dateadd for data type time.', datepart;
 	WHEN 'nanosecond' THEN
