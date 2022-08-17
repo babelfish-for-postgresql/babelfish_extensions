@@ -1,4 +1,4 @@
-use db1_sys_syscolumns;
+use sys_syscolumns_vu_prepare_db1;
 go
 
 select name, OidToObject(id), OidToDataType(xtype), typestat, length from sys.syscolumns where name = '@firstparam' or name = '@secondparam' or name = 'col_a' or name = 'col_b' or name = 'col_c' or name = 'col_d' order by OidToObject(id) asc, name
@@ -26,7 +26,7 @@ go
 SELECT COUNT(*) FROM sys.syscolumns where name = '@firstparam' or name = '@secondparam' or name = 'col_a' or name = 'col_b' or name = 'col_c'
 go
 
-use db1_sys_syscolumns;
+use sys_syscolumns_vu_prepare_db1;
 go
 
 SELECT COUNT(*) FROM sys.syscolumns where name = '@firstparam' or name = '@secondparam' or name = 'col_a' or name = 'col_b' or name = 'col_c'

@@ -1,2 +1,0 @@
-DROP TABLE IF EXISTS sys_default_constraints_vu_prepare_t
-GO

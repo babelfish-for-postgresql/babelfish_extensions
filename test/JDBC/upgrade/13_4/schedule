@@ -132,3 +132,12 @@ BABEL-889
 babel_417
 babel_sqlvariant_cast_compare
 tdscollation
+babel_datatype_sqlvariant
+sys-all_columns
+sys-default_constraints
+sys-dm_exec_sessions
+sys-foreign_key_columns
+sys-identity_columns
+sys-indexes
+sys-table_types
+sys_all_objects

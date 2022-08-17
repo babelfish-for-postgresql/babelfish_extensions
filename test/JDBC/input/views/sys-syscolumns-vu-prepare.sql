@@ -1,7 +1,7 @@
-create database db1_sys_syscolumns;
+create database sys_syscolumns_vu_prepare_db1;
 go
 
-use db1_sys_syscolumns;
+use sys_syscolumns_vu_prepare_db1;
 go
 
 -- create helper function to get datatype name given oid
@@ -51,7 +51,7 @@ GO
 create procedure syscolumns_demo_proc2 @firstparam NVARCHAR(50), @secondparam VARCHAR(50) OUT as select 2
 GO
 
-create table syscolumns_demo_table (col_a int, col_b bigint, col_c char(10), col_d numeric(5,4))
+create table sys_syscolumns_vu_prepare_t1 (col_a int, col_b bigint, col_c char(10), col_d numeric(5,4))
 GO
 
 use master;
