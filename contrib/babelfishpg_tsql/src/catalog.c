@@ -948,7 +948,7 @@ get_bbf_view_def_oid()
 Oid
 get_bbf_view_def_idx_oid()
 {
-	if (!OidIsValid(bbf_authid_user_ext_idx_oid))
+	if (!OidIsValid(bbf_view_def_idx_oid))
 		bbf_view_def_idx_oid = get_relname_relid(BBF_VIEW_DEF_IDX_NAME,
 												 get_namespace_oid("sys", false));
 
