@@ -183,6 +183,7 @@ BABEL-1510
 BABEL-3213
 BABEL-RAND
 BABEL-741
+BABEL-3360
 BABEL-ROLE-MEMBER
 Test-sp_helpuser
 TestTableType
@@ -217,3 +218,4 @@ tdscollation
 sp_tablecollations
 sys-assemblies
 BABEL-LOGIN-USER-EXT
+BABEL-1683
