@@ -184,10 +184,12 @@ bcp -t ','#!#in#!#bcp_source#!#destinationTable
 #Q#drop table destinationTable
 #Q#Create table sourceTable(a bigint, b bigint not null)
 #Q#Create table destinationTable(a bigint, b bigint not null)
+#Q#Create table destinationTable2(a bigint, b bigint not null)
 #Q#Insert into sourceTable values (1, 1);
 #Q#Insert into sourceTable values (NULL, 2);
 bcp -h "bb 24"#!#out#!#bcp_source#!#sourceTable
 bcp #!#in#!#bcp_source#!#destinationTable
+bcp -h "bb 24"#!#in#!#bcp_source#!#destinationTable2
 #Q#Select * from sourceTable
 #D#bigint#!#bigint
 1#!#1
@@ -196,14 +198,98 @@ bcp #!#in#!#bcp_source#!#destinationTable
 #D#bigint#!#bigint
 1#!#1
 #!#2
+#Q#Select * from destinationTable2
 #Q#drop table sourceTable
 #Q#drop table destinationTable
+#Q#drop table destinationTable2
 #Q#Create table sourceTable(a bigint, b bigint not null)
 #Q#Create table destinationTable(a bigint, b bigint not null)
+#Q#Create table destinationTable2(a bigint, b bigint not null)
+#Q#Insert into sourceTable values (1, 1);
+#Q#Insert into sourceTable values (2, 2);
+bcp -h "cc 24"#!#out#!#bcp_source#!#sourceTable
+bcp #!#in#!#bcp_source#!#destinationTable
+bcp -h "cc 24"#!#in#!#bcp_source#!#destinationTable2
+#Q#Select * from sourceTable
+#D#bigint#!#bigint
+1#!#1
+2#!#2
+#Q#Select * from destinationTable
+#D#bigint#!#bigint
+1#!#1
+2#!#2
+#Q#Select * from destinationTable2
+#Q#drop table sourceTable
+#Q#drop table destinationTable
+#Q#drop table destinationTable2
+#Q#Create table sourceTable(a bigint, b bigint not null)
+#Q#Create table destinationTable(a bigint, b bigint not null)
+#Q#Create table destinationTable2(a bigint, b bigint not null)
+#Q#Insert into sourceTable values (1, 1);
+#Q#Insert into sourceTable values (2, 2);
+bcp -h "CHECK_CONSTRAINTS"#!#out#!#bcp_source#!#sourceTable
+bcp #!#in#!#bcp_source#!#destinationTable
+bcp -h "CHECK_CONSTRAINTS"#!#in#!#bcp_source#!#destinationTable2
+#Q#Select * from sourceTable
+#D#bigint#!#bigint
+1#!#1
+2#!#2
+#Q#Select * from destinationTable
+#D#bigint#!#bigint
+1#!#1
+2#!#2
+#Q#Select * from destinationTable2
+#Q#drop table sourceTable
+#Q#drop table destinationTable
+#Q#drop table destinationTable2
+#Q#Create table sourceTable(a bigint, b bigint not null)
+#Q#Create table destinationTable(a bigint, b bigint not null)
+#Q#Create table destinationTable2(a bigint, b bigint not null)
+#Q#Insert into sourceTable values (1, 1);
+#Q#Insert into sourceTable values (2, 2);
+bcp -h "FIRE_TRIGGERS"#!#out#!#bcp_source#!#sourceTable
+bcp #!#in#!#bcp_source#!#destinationTable
+bcp -h "FIRE_TRIGGERS"#!#in#!#bcp_source#!#destinationTable2
+#Q#Select * from sourceTable
+#D#bigint#!#bigint
+1#!#1
+2#!#2
+#Q#Select * from destinationTable
+#D#bigint#!#bigint
+1#!#1
+2#!#2
+#Q#Select * from destinationTable2
+#Q#drop table sourceTable
+#Q#drop table destinationTable
+#Q#drop table destinationTable2
+#Q#Create table sourceTable(a bigint, b bigint not null)
+#Q#Create table destinationTable(a bigint, b bigint not null)
+#Q#Create table destinationTable2(a bigint, b bigint not null)
+#Q#Insert into sourceTable values (1, 1);
+#Q#Insert into sourceTable values (2, 2);
+bcp -h "ORDER(a DESC)"#!#out#!#bcp_source#!#sourceTable
+bcp #!#in#!#bcp_source#!#destinationTable
+bcp -h "ORDER(a DESC)"#!#in#!#bcp_source#!#destinationTable2
+#Q#Select * from sourceTable
+#D#bigint#!#bigint
+1#!#1
+2#!#2
+#Q#Select * from destinationTable
+#D#bigint#!#bigint
+1#!#1
+2#!#2
+#Q#Select * from destinationTable2
+#Q#drop table sourceTable
+#Q#drop table destinationTable
+#Q#drop table destinationTable2
+#Q#Create table sourceTable(a bigint, b bigint not null)
+#Q#Create table destinationTable(a bigint, b bigint not null)
+#Q#Create table destinationTable2(a bigint, b bigint not null)
 #Q#Insert into sourceTable values (1, 1);
 #Q#Insert into sourceTable values (NULL, 2);
 bcp -h "TABLOCK"#!#out#!#bcp_source#!#sourceTable
 bcp #!#in#!#bcp_source#!#destinationTable
+bcp -h "TABLOCK"#!#in#!#bcp_source#!#destinationTable2
 #Q#Select * from sourceTable
 #D#bigint#!#bigint
 1#!#1
@@ -212,8 +298,10 @@ bcp #!#in#!#bcp_source#!#destinationTable
 #D#bigint#!#bigint
 1#!#1
 #!#2
+#Q#Select * from destinationTable2
 #Q#drop table sourceTable
 #Q#drop table destinationTable
+#Q#drop table destinationTable2
 #Q#Create table sourceTable(a bigint, b bigint not null)
 #Q#Create table destinationTable(a bigint, b bigint not null)
 #Q#Insert into sourceTable values (1, 1);
@@ -276,67 +364,5 @@ bcp -w#!#in#!#bcp_source#!#destinationTable
 #D#bigint#!#bigint
 1#!#1
 #!#2
-#Q#drop table sourceTable
-#Q#drop table destinationTable
-#Q#Create table sourceTable(a int, b int not null)
-#Q#Create table destinationTable(a int, b int not null)
-#Q#Insert into sourceTable values (1, 1);
-#Q#Insert into sourceTable values (NULL, 2);
-#Q#Insert into sourceTable values (3, 1);
-#Q#Insert into sourceTable values (2, 2);
-bcp -F 2 -L 4 -c -a 1024#!#out#!#bcp_source#!#sourceTable
-bcp -F 1 -L 2 -c -a 2048#!#in#!#bcp_source#!#destinationTable
-#Q#Select * from sourceTable
-#D#int#!#int
-1#!#1
-#!#2
-3#!#1
-2#!#2
-#Q#Select * from destinationTable
-#D#int#!#int
-#!#2
-3#!#1
-#Q#drop table sourceTable
-#Q#drop table destinationTable
-#Q#Create table sourceTable(a int, b int not null)
-#Q#Create table destinationTable(a int, b int not null)
-#Q#Insert into sourceTable values (1, 1);
-#Q#Insert into sourceTable values (NULL, 2);
-#Q#Insert into sourceTable values (3, 1);
-#Q#Insert into sourceTable values (2, 2);
-bcp -k -b 1024 -n -r '\t' -t ',' -m 1#!#out#!#bcp_source#!#sourceTable
-bcp -n -r '\t' -t ',' -m 1#!#in#!#bcp_source#!#destinationTable
-#Q#Select * from sourceTable
-#D#int#!#int
-1#!#1
-#!#2
-3#!#1
-2#!#2
-#Q#Select * from destinationTable
-#D#int#!#int
-1#!#1
-#!#2
-3#!#1
-2#!#2
-#Q#drop table sourceTable
-#Q#drop table destinationTable
-#Q#Create table sourceTable(a int, b int not null)
-#Q#Create table destinationTable(a int, b int not null)
-#Q#Insert into sourceTable values (1, 1);
-#Q#Insert into sourceTable values (NULL, 2);
-#Q#Insert into sourceTable values (3, 1);
-#Q#Insert into sourceTable values (2, 2);
-bcp -F 2 -L 4 -r '\t' -t ',' -c#!#out#!#bcp_source#!#sourceTable
-bcp -F 1 -L 2 -r '\t' -t ',' -c#!#in#!#bcp_source#!#destinationTable
-#Q#Select * from sourceTable
-#D#int#!#int
-1#!#1
-#!#2
-3#!#1
-2#!#2
-#Q#Select * from destinationTable
-#D#int#!#int
-#!#2
-3#!#1
 #Q#drop table sourceTable
 #Q#drop table destinationTable
