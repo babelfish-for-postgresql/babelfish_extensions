@@ -14,6 +14,18 @@ CREATE TABLE sys.babelfish_sysdatabases (
 
 GRANT SELECT on sys.babelfish_sysdatabases TO PUBLIC;
 
+-- BABELFISH_FUNC_DEFAULT
+CREATE TABLE sys.babelfish_function_ext (
+	dbid SMALLINT NOT NULL,
+	schema_name sys.SYSNAME NOT NULL,
+	function_signature sys.SYSNAME NOT NULL,
+	default_positions sys.SYSNAME,
+	PRIMARY KEY(dbid, schema_name, function_signature)
+);
+GRANT SELECT ON sys.babelfish_function_ext TO PUBLIC;
+
+SELECT pg_catalog.pg_extension_config_dump('sys.babelfish_function_ext', '');
+
 -- BABELFISH_NAMESPACE_EXT
 CREATE TABLE sys.babelfish_namespace_ext (
     nspname NAME NOT NULL,

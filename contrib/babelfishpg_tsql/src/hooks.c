@@ -83,6 +83,8 @@ static void modify_insert_stmt(InsertStmt *stmt, Oid relid);
  * 			Commands Hooks
  *****************************************/
 static int find_attr_by_name_from_column_def_list(const char *attributeName, List *schema);
+static void pltsql_store_func_default_positions(ObjectAddress address, List *parameters);
+static void pltsql_drop_func_default_positions(Oid objectId);
 
 /*****************************************
  * 			Utility Hooks
@@ -136,6 +138,7 @@ static ExecutorFinish_hook_type prev_ExecutorFinish = NULL;
 static ExecutorEnd_hook_type prev_ExecutorEnd = NULL;
 static inherit_view_constraints_from_table_hook_type prev_inherit_view_constraints_from_table = NULL;
 static detect_numeric_overflow_hook_type prev_detect_numeric_overflow_hook = NULL;
+static store_func_default_positions_hook_type prev_store_func_default_positions_hook = NULL;
 /*****************************************
  * 			Install / Uninstall
  *****************************************/
@@ -213,6 +216,9 @@ InstallExtendedHooks(void)
 
 	prev_detect_numeric_overflow_hook = detect_numeric_overflow_hook;
 	detect_numeric_overflow_hook = pltsql_detect_numeric_overflow;
+
+	prev_store_func_default_positions_hook = store_func_default_positions_hook;
+	store_func_default_positions_hook = pltsql_store_func_default_positions;
 }
 
 void
@@ -245,6 +251,7 @@ UninstallExtendedHooks(void)
 	ExecutorEnd_hook = prev_ExecutorEnd;
 	inherit_view_constraints_from_table_hook = prev_inherit_view_constraints_from_table;
 	detect_numeric_overflow_hook = prev_detect_numeric_overflow_hook;
+	store_func_default_positions_hook = prev_store_func_default_positions_hook;
 }
 
 /*****************************************
@@ -1374,6 +1381,9 @@ bbf_object_access_hook(ObjectAccessType access, Oid classId, Oid objectId, int s
 	if (access == OAT_DROP && classId == RelationRelationId)
 		pltsql_drop_view_definition(objectId);
 
+	if (access == OAT_DROP && classId == ProcedureRelationId)
+		pltsql_drop_func_default_positions(objectId);
+
 	if (sql_dialect != SQL_DIALECT_TSQL)
 		return;
 
@@ -1772,4 +1782,179 @@ pltsql_detect_numeric_overflow(int weight, int dscale, int first_block, int nume
 		total_digit_count += (dscale % numeric_base);
 
 	return (total_digit_count > TDS_NUMERIC_MAX_PRECISION);
+}
+
+/*
+ * Stores argument positions of default values of a PL/tsql function to bbf_function_ext catalog
+ */
+static void
+pltsql_store_func_default_positions(ObjectAddress address, List *parameters)
+{
+	Relation	bbf_function_ext_rel;
+	TupleDesc	bbf_function_ext_rel_dsc;
+	Datum		new_record[BBF_FUNCTION_EXT_NUM_COLS];
+	bool		new_record_nulls[BBF_FUNCTION_EXT_NUM_COLS];
+	HeapTuple	tuple, proctup;
+	Form_pg_proc	form_proctup;
+	int16		dbid;
+	char		*physical_schemaname,
+				*logical_schemaname,
+				*func_signature;
+	List		*default_positions = NIL;
+	char		*langname;
+	ListCell	*x;
+	int			idx;
+
+	if (sql_dialect != SQL_DIALECT_TSQL)
+		return;
+
+	/* Fetch the object details from function */
+	proctup = SearchSysCache1(PROCOID, ObjectIdGetDatum(address.objectId));
+	if (!HeapTupleIsValid(proctup))
+		return;
+	form_proctup = (Form_pg_proc) GETSTRUCT(proctup);
+
+	langname = get_language_name(form_proctup->prolang, true);
+	if (!langname || pg_strcasecmp("pltsql", langname) != 0)
+	{
+		pfree(langname);
+		return;
+	}
+
+	physical_schemaname = get_namespace_name(form_proctup->pronamespace);
+	if (physical_schemaname == NULL)
+	{
+		elog(ERROR,
+				"Could not find physical schemaname for %u",
+				 form_proctup->pronamespace);
+	}
+
+	dbid = get_dbid_from_physical_schema_name(physical_schemaname, true);
+	logical_schemaname = get_logical_schema_name(physical_schemaname, true);
+	if(!DbidIsValid(dbid) || logical_schemaname == NULL)
+	{
+		ereport(ERROR,
+				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+				errmsg("Could not find dbid or logical schema for this physical schema '%s'." \
+				"CREATE FUNCTION from non-babelfish schema/db is not allowed in TSQL dialect.", physical_schemaname)));
+	}
+
+	func_signature = funcname_signature_string(NameStr(form_proctup->proname),
+													   form_proctup->pronargs,
+													   NIL,
+													   form_proctup->proargtypes.values);
+	
+	idx = 0;
+	foreach(x, parameters)
+	{
+		FunctionParameter *fp = (FunctionParameter *) lfirst(x);
+
+		if (fp->defexpr)
+		{
+			default_positions = lappend(default_positions, (Node *) makeInteger(idx));
+		}
+		idx++;
+	}
+
+	bbf_function_ext_rel = table_open(get_bbf_function_ext_oid(), RowExclusiveLock);
+	bbf_function_ext_rel_dsc = RelationGetDescr(bbf_function_ext_rel);
+
+	MemSet(new_record_nulls, false, sizeof(new_record_nulls));
+
+	new_record[Anum_bbf_function_ext_dbid -1] = Int16GetDatum(dbid);
+	new_record[Anum_bbf_function_ext_schema_name -1] = CStringGetTextDatum(logical_schemaname);
+	new_record[Anum_bbf_function_ext_function_signature - 1] = CStringGetTextDatum(func_signature);
+	if (default_positions != NIL)
+		new_record[Anum_bbf_function_ext_default_positions - 1] = CStringGetTextDatum(nodeToString(default_positions));
+	else
+		new_record_nulls[Anum_bbf_function_ext_default_positions - 1] = true;
+
+	tuple = heap_form_tuple(bbf_function_ext_rel_dsc,
+							new_record, new_record_nulls);
+
+	CatalogTupleInsert(bbf_function_ext_rel, tuple);
+
+	pfree(physical_schemaname);
+	pfree(logical_schemaname);
+	pfree(func_signature);
+	pfree(langname);
+	ReleaseSysCache(proctup);
+	heap_freetuple(tuple);
+	table_close(bbf_function_ext_rel, RowExclusiveLock);
+}
+
+/*
+ * Drops argument positions of default values of a PL/tsql function from bbf_function_ext catalog
+ */
+static void
+pltsql_drop_func_default_positions(Oid objectId)
+{
+	Relation	bbf_function_ext_rel;
+	HeapTuple	proctuple, scantup;
+	Form_pg_proc	form;
+	int16		dbid;
+	char		*physical_schemaname,
+				*logical_schemaname,
+				*func_signature,
+				*langname;
+
+	/* return if it is not a PL/tsql function */
+	proctuple = SearchSysCache1(PROCOID, ObjectIdGetDatum(objectId));
+	if (!HeapTupleIsValid(proctuple))
+		return;					/* concurrently dropped */
+	form = (Form_pg_proc) GETSTRUCT(proctuple);
+	langname = get_language_name(form->prolang, true);
+	if (!langname || pg_strcasecmp("pltsql", langname) != 0)
+	{
+		pfree(langname);
+		ReleaseSysCache(proctuple);
+		return;
+	}
+
+	physical_schemaname = get_namespace_name(form->pronamespace);
+	if (physical_schemaname == NULL)
+	{
+		elog(ERROR,
+				"Could not find physical schemaname for %u",
+				 form->pronamespace);
+	}
+	dbid = get_dbid_from_physical_schema_name(physical_schemaname, true);
+	logical_schemaname = get_logical_schema_name(physical_schemaname, true);
+	func_signature = funcname_signature_string(NameStr(form->proname),
+													   form->pronargs,
+													   NIL,
+													   form->proargtypes.values);
+
+	/*
+	 * If any of these entries are NULL then there
+	 * must not be any entry in catalog
+	 */
+	if (!DbidIsValid(dbid) || logical_schemaname == NULL || func_signature == NULL)
+	{
+		pfree(physical_schemaname);
+		if (logical_schemaname)
+			pfree(logical_schemaname);
+		pfree(func_signature);
+		ReleaseSysCache(proctuple);
+		return;
+	}
+
+	/* Fetch the relation */
+	bbf_function_ext_rel = table_open(get_bbf_function_ext_oid(), RowExclusiveLock);
+
+	scantup = search_bbf_function_ext(bbf_function_ext_rel, dbid, logical_schemaname, func_signature);
+
+	if (HeapTupleIsValid(scantup))
+	{
+		CatalogTupleDelete(bbf_function_ext_rel,
+						   &scantup->t_self);
+		heap_freetuple(scantup);
+	}
+
+	pfree(physical_schemaname);
+	pfree(logical_schemaname);
+	pfree(func_signature);
+	pfree(langname);
+	ReleaseSysCache(proctuple);
+	table_close(bbf_function_ext_rel, RowExclusiveLock);
 }
