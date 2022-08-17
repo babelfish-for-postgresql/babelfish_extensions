@@ -16,7 +16,7 @@ jobs:
 
       - name: Setup Base version ${{ env.ENGINE_BRANCH_FROM }} and run prepare tests
         id: setup-base-version
-        if: always() && steps.install-dependencies.outcome =='success'
+        if: always()
         uses: ./.github/composite-actions/setup-base-version
         with:
           engine_branch: ${{ env.ENGINE_BRANCH_FROM }}
