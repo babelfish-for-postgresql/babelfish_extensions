@@ -1,0 +1,12 @@
+-- tsql
+DROP PROC babelfish_migration_mode_compare
+GO
+
+DROP TABLE babelfish_migration_mode_tbl
+GO
+
+DROP TABLE babelfish_migration_mode_catalog_status
+GO
+
+DROP TABLE babelfish_migration_mode_catalog_status2
+GO

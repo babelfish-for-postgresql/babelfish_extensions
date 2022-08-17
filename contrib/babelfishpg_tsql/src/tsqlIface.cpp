@@ -3248,7 +3248,17 @@ void extractQueryHintsFromOptionClause(TSqlParser::Option_clauseContext *octx)
 		{
 			std::string value = ::getFullText(option->DECIMAL());
 			if (!value.empty())
+			{
+				/* 
+				 * The MAXDOP hint should be handled specially the hint value is 0
+				 * This is because in T-SQL, setting MAXDOP to 0 allows SQL Server to use all the available processors up to 64 processors
+ 				 * However, if we set the GUC max_parallel_workers_per_gather to 0, it disables parallelism in P-SQL
+ 				 * Thus, we need to set the GUC value to 64 instead.
+ 				 */
+				if (stoi(value) == 0)
+					value = "64";
 				query_hints.push_back("Set(max_parallel_workers_per_gather " + value + ")");
+			}
 		}
 	}
 
