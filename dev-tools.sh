@@ -117,7 +117,7 @@ init_db() {
 
 init_pg() {
     cd $1/postgresql_modified_for_babelfish
-    ./configure --prefix=$2/postgres/ --without-readline --without-zlib --enable-debug CFLAGS="-ggdb" --with-libxml --with-uuid=ossp --with-icu
+    ./configure --prefix=$2/postgres/ --without-readline --without-zlib --enable-debug --enable-cassert CFLAGS="-ggdb" --with-libxml --with-uuid=ossp --with-icu
     make -j 4
     make install
     cd contrib && make && sudo make install

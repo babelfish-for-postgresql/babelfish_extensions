@@ -66,11 +66,3 @@ go
 
 ~~ERROR (Message: param definition mismatches with inputs)~~
 
-
--- HResult 0x1FD2
-exec sp_executesql N'SELECT 1', N'', N''
-go
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: unexpected parameter mode )~~
-

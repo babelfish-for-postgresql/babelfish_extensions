@@ -33,7 +33,3 @@ go
 -- error code 8178
 exec sp_executesql N'', N'@var1 varchar(20)'
 go
-
--- HResult 0x1FD2
-exec sp_executesql N'SELECT 1', N'', N''
-go
