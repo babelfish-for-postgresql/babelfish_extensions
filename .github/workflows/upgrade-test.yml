@@ -29,11 +29,6 @@ jobs:
     steps:
       - uses: actions/checkout@v2
       
-      - name: Install Dependencies
-        id: install-dependencies
-        if: always()
-        uses: ./.github/composite-actions/install-dependencies
-
       - name: Install yq - yaml parser
         id: install-yq
         if: always()

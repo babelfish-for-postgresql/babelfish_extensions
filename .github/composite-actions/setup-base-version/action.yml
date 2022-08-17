@@ -16,9 +16,15 @@ inputs:
 runs:
   using: "composite"
   steps:
+    - name: Install Dependencies
+      id: install-dependencies
+      if: always()
+      uses: ./.github/composite-actions/install-dependencies
+
     - name: Clone, build, and run tests for Postgres engine using ${{ inputs.engine_branch }}
       id: build-modified-postgres
       uses: ./.github/composite-actions/build-modified-postgres
+      if: always() && steps.install-dependencies.outcome == 'success'
       with:
         engine_branch: ${{ inputs.engine_branch }}
         install_dir: ${{ inputs.install_dir }}
