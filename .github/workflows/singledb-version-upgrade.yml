@@ -26,7 +26,7 @@ jobs:
 
       - name: Upgrade to latest version and run verify-cleanup tests
         id: upgrade-and-verify
-        if: always() && setup-base-version.outcome == 'success'
+        if: always() && steps.setup-base-version.outcome == 'success'
         uses: ./.github/composite-actions/major-version-upgrade-util
         with:
           engine_branch: latest
