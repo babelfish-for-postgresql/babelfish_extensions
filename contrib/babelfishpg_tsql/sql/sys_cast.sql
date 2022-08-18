@@ -123,7 +123,7 @@ LANGUAGE plpgsql;
 CREATE OR REPLACE FUNCTION sys.babelfish_try_cast_to_any(IN arg TEXT, INOUT output ANYELEMENT, IN typmod INT)
 RETURNS ANYELEMENT
 AS $BODY$ BEGIN
-    EXECUTE format('SELECT CAST(%L AS %s)', arg, format_type(pg_typeof(output), typmod)) INTO output;
+    EXECUTE pg_catalog.format('SELECT CAST(%L AS %s)', arg, format_type(pg_typeof(output), typmod)) INTO output;
     EXCEPTION
         WHEN OTHERS THEN
             -- Do nothing. Output carries NULL.
