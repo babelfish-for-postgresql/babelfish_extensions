@@ -24,78 +24,28 @@ jobs:
           install_dir: ${{ env.OLD_INSTALL_DIR }}
           migration_mode: 'single-db'
 
-      - name: Build Modified Postgres using latest version
-        id: build-modified-postgres-new
-        if: always() && steps.setup-base-version.outcome == 'success'
-        uses: ./.github/composite-actions/build-modified-postgres
+      - name: Upgrade to latest version and run verify-cleanup tests
+        id: upgrade-and-verify
+        if: always() && setup-base-version.outcome == 'success'
+        uses: ./.github/composite-actions/major-version-upgrade-util
         with:
-          install_dir: ${{env.NEW_INSTALL_DIR}}
+          engine_branch: latest
+          extension_branch: latest
+          is_final_ver: true
+          pg_old_dir: ${{ env.OLD_INSTALL_DIR }}
+          pg_new_dir: ${{ env.NEW_INSTALL_DIR }}
+          migration_mode: "single-db"
 
-      - name: Copy ANTLR
-        run: cp "/usr/local/lib/libantlr4-runtime.so.4.9.3" ~/${{env.NEW_INSTALL_DIR}}/lib/
-
-      - name: Build Extensions using latest version
-        id: build-extensions-new
-        if: always() && steps.build-modified-postgres-new.outcome == 'success'
-        uses: ./.github/composite-actions/build-extensions
-        with:
-          install_dir: ${{env.NEW_INSTALL_DIR}}
-
-      - name: Setup new data directory
-        id: setup-new-datadir
-        if: always() && steps.build-extensions-new.outcome == 'success'
-        run: |
-          cd ~
-          ~/${{env.NEW_INSTALL_DIR}}/bin/initdb -D ~/${{env.NEW_INSTALL_DIR}}/data
-          cd ~/${{env.NEW_INSTALL_DIR}}/data
-          sudo sed -i "s/#listen_addresses = 'localhost'/listen_addresses = '*'/g" postgresql.conf
-          sudo sed -i "s/#shared_preload_libraries = ''/shared_preload_libraries = 'babelfishpg_tds'/g" postgresql.conf
-          ipaddress=$(ifconfig eth0 | grep 'inet ' | cut -d: -f2 | awk '{ print $2}')
-          sudo echo "host    all             all             $ipaddress/32            trust" >> pg_hba.conf
-        shell: bash
-      
-      - name: Run pg_upgrade
-        id: run-pg_upgrade
-        if: always() && steps.setup-new-datadir.outcome == 'success'
-        uses: ./.github/composite-actions/run-pg-upgrade
-
-      - uses: actions/checkout@v2
-
-      - name: Run JDBC Upgrade Tests (Verify-Cleanup)
-        id: jdbc-upgrade-tests-verify
-        if: always() && steps.run-pg_upgrade.outcome == 'success'
-        run: |
-          cd test/JDBC/
-          touch dummy_schedule
-          echo "all" > dummy_schedule
-          export scheduleFile=dummy_schedule
-          export isUpgradeTestMode=false
-          export inputFilesPath=upgrade/singledb/verification_cleanup
-          mvn test
-
-          for filename in $(grep -v "^ignore.*\|^#.*\|^cmd.*\|^all.*\|^$" upgrade/singledb/schedule); do
-            if [[ ! ($(find input/ -name $filename"-vu-prepare.*") || $(find input/ -name $filename"-vu-verify.*")) ]]; then 
-              printf '%s\n' "ERROR: Cannot find Test file "$filename"-vu-prepare or "$filename"-vu-verify in input directory !!" >&2
-              exit 1
-            fi
-          done
-          export inputFilesPath=input
-          for filename in $(grep -v "^ignore.*\|^#.*\|^cmd.*\|^all.*\|^$" upgrade/singledb/schedule); do
-            sed -i "s/$filename[ ]*$/$filename-vu-verify\\n$filename-vu-cleanup/g" upgrade/singledb/schedule
-          done
-          export scheduleFile=upgrade/singledb/schedule
-          mvn test
-        shell: bash
       
       - name: Upload New Postgres log
-        if: always() && steps.jdbc-upgrade-tests-verify.outcome == 'failure'
+        if: always() && steps.upgrade-and-verify.outcome == 'failure'
         uses: actions/upload-artifact@v2
         with:
          name: postgres-log-new
          path: ~/${{env.NEW_INSTALL_DIR}}/data/logfile14
 
       - name: Upload upgrade Log
-        if: always() && steps.run-pg_upgrade.outcome == 'failure'
+        if: always() && steps.upgrade-and-verify.outcome == 'failure'
         uses: actions/upload-artifact@v2
         with:
           name: upgrade-logs
@@ -103,7 +53,7 @@ jobs:
 
       - name: Rename Test Summary Files
         id: test-file-rename
-        if: always() && ( steps.jdbc-upgrade-tests-verify.outcome == 'failure' || steps.setup-base-version.outcome == 'failure' )
+        if: always() && ( steps.upgrade-and-verify.outcome == 'failure' || steps.setup-base-version.outcome == 'failure' )
         run: |
           cd test/JDBC/Info
           timestamp=`ls -Art | tail -n 1`
