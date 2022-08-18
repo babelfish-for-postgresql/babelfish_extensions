@@ -92,12 +92,12 @@ runs:
         export scheduleFile=dummy_schedule
         if [[ "$migr_mode" == "multi-db" ]];then
           export isUpgradeTestMode=true
-          base_dir = ${{ matrix.upgrade-path.path[0] }}
+          base_dir=${{ matrix.upgrade-path.path[0] }}
           if [[ "$base_dir" == *"latest"* ]]; then
-            base_dir = "latest"
+            base_dir="latest"
           fi
         else
-          base_dir = "singledb"
+          base_dir="singledb"
         fi
         export inputFilesPath=upgrade/$base_dir/preparation
         mvn test
