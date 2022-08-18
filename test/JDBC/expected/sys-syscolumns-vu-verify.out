@@ -5,9 +5,9 @@ select name, OidToObject(id), OidToDataType(xtype), typestat, length from sys.sy
 GO
 ~~START~~
 varchar#!#varchar#!#varchar#!#tinyint#!#smallint
-@firstparam#!#syscolumns_demo_proc1#!#nvarchar#!#0#!#<NULL>
-@firstparam#!#syscolumns_demo_proc2#!#nvarchar#!#0#!#<NULL>
-@secondparam#!#syscolumns_demo_proc2#!#varchar#!#0#!#<NULL>
+@firstparam#!#sys_syscolumns_vu_prepare_proc1#!#nvarchar#!#0#!#<NULL>
+@firstparam#!#sys_syscolumns_vu_prepare_proc2#!#nvarchar#!#0#!#<NULL>
+@secondparam#!#sys_syscolumns_vu_prepare_proc2#!#varchar#!#0#!#<NULL>
 col_a#!#sys_syscolumns_vu_prepare_t1#!#int4#!#0#!#4
 col_b#!#sys_syscolumns_vu_prepare_t1#!#int8#!#0#!#8
 col_c#!#sys_syscolumns_vu_prepare_t1#!#bpchar#!#0#!#10

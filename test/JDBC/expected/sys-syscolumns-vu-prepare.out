@@ -45,10 +45,10 @@ END;
 GO
 
 -- Setup some procedures and tables
-create procedure syscolumns_demo_proc1 @firstparam NVARCHAR(50) as select 1
+create procedure sys_syscolumns_vu_prepare_proc1 @firstparam NVARCHAR(50) as select 1
 GO
 
-create procedure syscolumns_demo_proc2 @firstparam NVARCHAR(50), @secondparam VARCHAR(50) OUT as select 2
+create procedure sys_syscolumns_vu_prepare_proc2 @firstparam NVARCHAR(50), @secondparam VARCHAR(50) OUT as select 2
 GO
 
 create table sys_syscolumns_vu_prepare_t1 (col_a int, col_b bigint, col_c char(10), col_d numeric(5,4))
@@ -57,6 +57,6 @@ GO
 use master;
 go
 
-create procedure syscolumns_demo_proc3 @thirdparam NVARCHAR(50) as select 3;
+create procedure sys_syscolumns_vu_prepare_proc3 @thirdparam NVARCHAR(50) as select 3;
 go
 
