@@ -85,11 +85,11 @@ runs:
       id: jdbc-upgrade-tests
       env:
         base_dir: ${{ matrix.upgrade-path.path[0] }}
+        migr_mode: ${{ inputs.migration_mode }}
       run: |
         cd test/JDBC/
         echo "all" > dummy_schedule
         export scheduleFile=dummy_schedule
-        migr_mode = ${{inputs.migration_mode}}        
         if [[ "$migr_mode" == "multi-db" ]];then
           export isUpgradeTestMode=true
           base_dir = ${{ matrix.upgrade-path.path[0] }}
