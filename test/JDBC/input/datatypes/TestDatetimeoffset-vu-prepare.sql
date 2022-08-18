@@ -21,18 +21,18 @@ go
 INSERT INTO TestDatetimeoffset_vu_prepare_testing VALUES('10000-01-01 00:00:00 +0:00');
 go
 
-CREATE INDEX df_hash ON TestDatetimeoffset_vu_prepare_testing (df);
+CREATE INDEX TestDatetimeoffset_vu_prepare_idx ON TestDatetimeoffset_vu_prepare_testing (df);
 go
 
 -- Test datetimeoffset default value
-create table t1 (a datetimeoffset, b int);
+create table TestDatetimeoffset_vu_prepare_t1 (a datetimeoffset, b int);
 go
-insert into t1 (b) values (1);
+insert into TestDatetimeoffset_vu_prepare_t1 (b) values (1);
 go
 
 -- test casting datetimeoffset inside procedure
 -- NOTE: This is not supported behavior in tsql and will fail
-CREATE PROCEDURE cast_datetimeoffset (@val datetimeoffset) AS
+CREATE PROCEDURE TestDatetimeoffset_vu_prepare_cast (@val datetimeoffset) AS
 BEGIN
     DECLARE @DF datetimeoffset = @val
     PRINT @DF
@@ -41,7 +41,7 @@ END;
 go
 
 -- test comparing datetimeoffset inside procedure
-CREATE PROCEDURE cmp_datetimeoffset (@val datetimeoffset) AS
+CREATE PROCEDURE TestDatetimeoffset_vu_prepare_cmp (@val datetimeoffset) AS
 BEGIN
     IF @val > CAST('2000-01-01 13:39:29.123456 +0:00' AS datetimeoffset)
         PRINT @val - make_interval(1)

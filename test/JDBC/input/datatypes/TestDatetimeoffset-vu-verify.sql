@@ -13,7 +13,7 @@ select * from TestDatetimeoffset_vu_prepare_testing where df < '1992-05-24';
 go
 
 -- Test datetimeoffset default value
-select a from t1 where b = 1;
+select a from TestDatetimeoffset_vu_prepare_t1 where b = 1;
 go
 
 -- Testing rounding for different typmod
@@ -273,20 +273,20 @@ go
 -- test casting datetimeoffset inside procedure
 -- NOTE: This is not supported behavior in tsql and will fail
 DECLARE @dto datetimeoffset = CAST('2030-05-06 13:39:29.123456 +0:00' AS datetimeoffset);
-exec cast_datetimeoffset @dto;
+exec TestDatetimeoffset_vu_prepare_cast @dto;
 go
 DECLARE @dto datetimeoffset = CAST('1920-05-06 13:39:29.123456 +0:00' AS datetimeoffset);
-exec cast_datetimeoffset @dto;
+exec TestDatetimeoffset_vu_prepare_cast @dto;
 go
 -- expect error
 DECLARE @dto datetimeoffset = CAST('19200-05-06 13:39:29.123456 +0:00' AS datetimeoffset);
-exec cast_datetimeoffset @dto;
+exec TestDatetimeoffset_vu_prepare_cast @dto;
 go
 
 -- test comparing datetimeoffset inside procedure
 DECLARE @dto datetimeoffset = CAST('2030-05-06 13:39:29.123456 +0:00' AS datetimeoffset);
-exec cmp_datetimeoffset @dto;
+exec TestDatetimeoffset_vu_prepare_cmp @dto;
 go
 DECLARE @dto datetimeoffset = CAST('1930-05-06 13:39:29.123456 +0:00' AS datetimeoffset);
-exec cmp_datetimeoffset @dto;
+exec TestDatetimeoffset_vu_prepare_cmp @dto;
 go
