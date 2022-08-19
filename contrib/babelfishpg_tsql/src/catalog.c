@@ -10,6 +10,7 @@
 #include "catalog/indexing.h"
 #include "catalog/pg_namespace.h"
 #include "catalog/pg_authid.h"
+#include "catalog/pg_proc.h"
 #include "catalog/namespace.h"
 #include "parser/scansup.h"
 #include "utils/builtins.h"
@@ -1120,7 +1121,6 @@ search_bbf_function_ext(Relation bbf_function_ext_rel, int16 dbid, const char *l
 	if(!DbidIsValid(dbid) || logical_schema_name == NULL || function_signature == NULL)
 		return NULL;
 
-
 	/* Search and drop the definition */
 	ScanKeyInit(&scanKey[0],
 				Anum_bbf_function_ext_dbid,
@@ -1145,6 +1145,66 @@ search_bbf_function_ext(Relation bbf_function_ext_rel, int16 dbid, const char *l
 	oldtup = heap_copytuple(scantup);
 	systable_endscan(scan);
 	return oldtup;
+}
+
+HeapTuple
+search_bbf_function_ext_with_proctuple(Relation bbf_function_ext_rel, HeapTuple proctuple)
+{
+	HeapTuple	 scantup;
+	Form_pg_proc form;
+	int16		 dbid;
+	char		 *physical_schemaname,
+				 *logical_schemaname,
+				 *func_signature,
+				 *langname;
+
+	if (!HeapTupleIsValid(proctuple))
+		return NULL;					/* concurrently dropped */
+	form = (Form_pg_proc) GETSTRUCT(proctuple);
+	langname = get_language_name(form->prolang, true);
+	if (!langname || pg_strcasecmp("pltsql", langname) != 0)
+	{
+		pfree(langname);
+		ReleaseSysCache(proctuple);
+		return;
+	}
+
+	physical_schemaname = get_namespace_name(form->pronamespace);
+	if (physical_schemaname == NULL)
+	{
+		elog(ERROR,
+				"Could not find physical schemaname for %u",
+				 form->pronamespace);
+	}
+	dbid = get_dbid_from_physical_schema_name(physical_schemaname, true);
+	logical_schemaname = get_logical_schema_name(physical_schemaname, true);
+	func_signature = funcname_signature_string(NameStr(form->proname),
+													   form->pronargs,
+													   NIL,
+													   form->proargtypes.values);
+
+	/*
+	 * If any of these entries are NULL then there
+	 * must not be any entry in catalog
+	 */
+	if (!DbidIsValid(dbid) || logical_schemaname == NULL || func_signature == NULL)
+	{
+		pfree(physical_schemaname);
+		if (logical_schemaname)
+			pfree(logical_schemaname);
+		pfree(func_signature);
+		ReleaseSysCache(proctuple);
+		return;
+	}
+
+	scantup = search_bbf_function_ext(bbf_function_ext_rel, dbid, logical_schemaname, func_signature);
+
+	pfree(physical_schemaname);
+	pfree(logical_schemaname);
+	pfree(func_signature);
+	pfree(langname);
+
+	return scantup;
 }
 
 void

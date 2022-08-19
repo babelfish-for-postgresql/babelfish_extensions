@@ -19,6 +19,7 @@
 #include "funcapi.h"
 #include "nodes/makefuncs.h"
 #include "nodes/nodeFuncs.h"
+#include "optimizer/clauses.h"
 #include "optimizer/optimizer.h"
 #include "parser/analyze.h"
 #include "parser/parse_clause.h"
@@ -61,6 +62,10 @@ extern bool is_tsql_rowversion_or_timestamp_datatype(Oid oid);
  * 			Catalog Hooks
  *****************************************/
 IsExtendedCatalogHookType PrevIsExtendedCatalogHook = NULL;
+static bool PlTsqlMatchNamedCall(HeapTuple proctup, int nargs, List *argnames,
+							   bool include_out_arguments, int pronargs,
+							   int **argnumbers, List **defaults);
+static bool PlTsqlMatchUnNamedCall(HeapTuple proctup, int nargs, int pronargs);
 
 /*****************************************
  * 			Analyzer Hooks
@@ -95,6 +100,7 @@ static void pltsql_store_view_definition(const char *queryString, ObjectAddress 
 static void pltsql_drop_view_definition(Oid objectId);
 static void preserve_view_constraints_from_base_table(ColumnDef  *col, Oid tableOid, AttrNumber colId);
 static bool pltsql_detect_numeric_overflow(int weight, int dscale, int first_block, int numeric_base);
+static void insert_pltsql_function_defaults(HeapTuple func_tuple, List *defaults, Node **argarray);
 /*****************************************
  * 			Executor Hooks
  *****************************************/
@@ -139,6 +145,9 @@ static ExecutorEnd_hook_type prev_ExecutorEnd = NULL;
 static inherit_view_constraints_from_table_hook_type prev_inherit_view_constraints_from_table = NULL;
 static detect_numeric_overflow_hook_type prev_detect_numeric_overflow_hook = NULL;
 static store_func_default_positions_hook_type prev_store_func_default_positions_hook = NULL;
+static MatchNamedCallHookType PrevMatchNamedCallHook = NULL;
+static MatchUnNamedCallHookType PrevMatchUnNamedCallHook = NULL;
+static insert_pltsql_function_defaults_hook_type prev_insert_pltsql_function_defaults_hook = NULL;
 /*****************************************
  * 			Install / Uninstall
  *****************************************/
@@ -219,6 +228,15 @@ InstallExtendedHooks(void)
 
 	prev_store_func_default_positions_hook = store_func_default_positions_hook;
 	store_func_default_positions_hook = pltsql_store_func_default_positions;
+
+	PrevMatchNamedCallHook = MatchNamedCallHook;
+	MatchNamedCallHook = PlTsqlMatchNamedCall;
+
+	PrevMatchUnNamedCallHook = MatchUnNamedCallHook;
+	MatchUnNamedCallHook = PlTsqlMatchUnNamedCall;
+
+	prev_insert_pltsql_function_defaults_hook = insert_pltsql_function_defaults_hook;
+	insert_pltsql_function_defaults_hook = insert_pltsql_function_defaults;
 }
 
 void
@@ -252,6 +270,9 @@ UninstallExtendedHooks(void)
 	inherit_view_constraints_from_table_hook = prev_inherit_view_constraints_from_table;
 	detect_numeric_overflow_hook = prev_detect_numeric_overflow_hook;
 	store_func_default_positions_hook = prev_store_func_default_positions_hook;
+	MatchNamedCallHook = PrevMatchNamedCallHook;
+	MatchUnNamedCallHook = PrevMatchUnNamedCallHook;
+	insert_pltsql_function_defaults_hook = prev_insert_pltsql_function_defaults_hook;
 }
 
 /*****************************************
@@ -1957,4 +1978,281 @@ pltsql_drop_func_default_positions(Oid objectId)
 	pfree(langname);
 	ReleaseSysCache(proctuple);
 	table_close(bbf_function_ext_rel, RowExclusiveLock);
+}
+
+static bool
+PlTsqlMatchNamedCall(HeapTuple proctup, int nargs, List *argnames,
+					 bool include_out_arguments, int pronargs,
+					 int **argnumbers, List **defaults)
+{
+	Form_pg_proc procform = (Form_pg_proc) GETSTRUCT(proctup);
+	int			numposargs = nargs - list_length(argnames);
+	int			pronallargs;
+	Oid		   *p_argtypes;
+	char	  **p_argnames;
+	char	   *p_argmodes;
+	bool		arggiven[FUNC_MAX_ARGS];
+	bool		isnull;
+	int			ap;				/* call args position */
+	int			pp;				/* proargs position */
+	ListCell   *lc;
+
+	Assert(argnames != NIL);
+	Assert(numposargs >= 0);
+	Assert(nargs <= pronargs);
+
+	/* Ignore this function if its proargnames is null */
+	(void) SysCacheGetAttr(PROCOID, proctup, Anum_pg_proc_proargnames,
+						   &isnull);
+	if (isnull)
+		return false;
+
+	/* OK, let's extract the argument names and types */
+	pronallargs = get_func_arg_info(proctup,
+									&p_argtypes, &p_argnames, &p_argmodes);
+	Assert(p_argnames != NULL);
+
+	Assert(include_out_arguments ? (pronargs == pronallargs) : (pronargs <= pronallargs));
+
+	/* initialize state for matching */
+	*argnumbers = (int *) palloc(pronargs * sizeof(int));
+	memset(arggiven, false, pronargs * sizeof(bool));
+
+	/* there are numposargs positional args before the named args */
+	for (ap = 0; ap < numposargs; ap++)
+	{
+		(*argnumbers)[ap] = ap;
+		arggiven[ap] = true;
+	}
+
+	/* now examine the named args */
+	foreach(lc, argnames)
+	{
+		char	   *argname = (char *) lfirst(lc);
+		bool		found;
+		int			i;
+
+		pp = 0;
+		found = false;
+		for (i = 0; i < pronallargs; i++)
+		{
+			/* consider only input params, except with include_out_arguments */
+			if (!include_out_arguments &&
+				p_argmodes &&
+				(p_argmodes[i] != FUNC_PARAM_IN &&
+				 p_argmodes[i] != FUNC_PARAM_INOUT &&
+				 p_argmodes[i] != FUNC_PARAM_VARIADIC))
+				continue;
+			if (p_argnames[i] && strcmp(p_argnames[i], argname) == 0)
+			{
+				/* fail if argname matches a positional argument */
+				if (arggiven[pp])
+					return false;
+				arggiven[pp] = true;
+				(*argnumbers)[ap] = pp;
+				found = true;
+				break;
+			}
+			/* increase pp only for considered parameters */
+			pp++;
+		}
+		/* if name isn't in proargnames, fail */
+		if (!found)
+			return false;
+		ap++;
+	}
+
+	Assert(ap == nargs);		/* processed all actual parameters */
+
+	/* Check for default arguments */
+	*defaults = NIL;
+	if (nargs < pronargs)
+	{
+		int			first_arg_with_default = pronargs - procform->pronargdefaults;
+		Relation	bbf_function_ext_rel;
+		Datum		proargdefaults;
+		HeapTuple	bbffunctuple;
+		List		*argdefaults = NIL,
+					*default_positions = NIL;
+		bool		default_idx_available = false;
+		ListCell	*def_item = NULL,
+					*def_idx = NULL;
+		bool		match_found = true;
+
+		/* Fetch argument defaults */
+		proargdefaults = SysCacheGetAttr(PROCOID, proctup,
+										 Anum_pg_proc_proargdefaults,
+										 &isnull);
+
+		if (!isnull)
+		{
+			char *str;
+
+			str = TextDatumGetCString(proargdefaults);
+			argdefaults = castNode(List, stringToNode(str));
+			def_item = list_head(argdefaults);
+			pfree(str);
+		}
+
+		/* Fetch the relation */
+		bbf_function_ext_rel = table_open(get_bbf_function_ext_oid(), AccessShareLock);
+		bbffunctuple = search_bbf_function_ext_with_proctuple(bbf_function_ext_rel, proctup);
+
+		if (HeapTupleIsValid(bbffunctuple))
+		{
+			char				  *str;
+
+			str = TextDatumGetCString(heap_getattr(bbffunctuple, Anum_bbf_function_ext_default_positions,
+						RelationGetDescr(bbf_function_ext_rel), &isnull));
+			default_positions = castNode(List, stringToNode(str));
+			def_idx = list_head(default_positions);
+			default_idx_available = true;
+			pfree(str);
+		}
+		for (pp = numposargs; pp < pronargs; pp++)
+		{
+			if (arggiven[pp])
+				continue;
+
+			/*
+			 * If the indexes of default arguments are available then we need
+			 * special handling. Look into default_positions list to find out
+			 * the default expression for pp'th argument.
+			 */
+			if (default_idx_available)
+			{
+				bool has_default = false;
+
+				/*
+				 * Iterate over argdefaults list to find out the default expression
+				 * for current argument.
+				 */
+				while (def_item != NULL && def_idx != NULL)
+				{
+					int position = intVal((Node *) lfirst(def_idx));
+
+					if (position == pp)
+					{
+						has_default = true;
+						*defaults = lappend(*defaults, lfirst(def_item));
+						def_item = lnext(argdefaults, def_item);
+						def_idx = lnext(default_positions, def_idx);
+						break;
+					}
+					else if (position > pp)
+						break;
+					def_item = lnext(argdefaults, def_item);
+					def_idx = lnext(default_positions, def_idx);
+				}
+
+				if (!has_default)
+				{
+					match_found = false;
+					break;
+				}
+				(*argnumbers)[ap++] = pp;
+				continue;
+			} 
+			/* fail if arg not given and no default available */
+			if (pp < first_arg_with_default)
+			{
+				match_found = false;
+				break;
+			}
+			(*argnumbers)[ap++] = pp;
+		}
+
+		if(default_idx_available)
+			heap_freetuple(bbffunctuple);
+		table_close(bbf_function_ext_rel, AccessShareLock);
+
+		if (!match_found)
+			return false;
+	}
+
+	Assert(ap == pronargs);		/* processed all function parameters */
+
+	return true;
+}
+
+static bool
+PlTsqlMatchUnNamedCall(HeapTuple proctup, int nargs, int pronargs)
+{
+	Relation	bbf_function_ext_rel;
+	HeapTuple	bbffunctuple;
+
+	/* Fetch the relation */
+	bbf_function_ext_rel = table_open(get_bbf_function_ext_oid(), AccessShareLock);
+	bbffunctuple = search_bbf_function_ext_with_proctuple(bbf_function_ext_rel, proctup);
+
+	if (HeapTupleIsValid(bbffunctuple))
+	{
+		bool				  isnull;
+		int					  idx = pronargs - nargs;
+		char				  *str;
+		List				  *default_positions = NIL;
+		ListCell			  *def_idx = NULL;
+
+		str = TextDatumGetCString(heap_getattr(bbffunctuple, Anum_bbf_function_ext_default_positions,
+						RelationGetDescr(bbf_function_ext_rel), &isnull));
+		default_positions = castNode(List, stringToNode(str));
+		pfree(str);
+
+		foreach(def_idx, default_positions)
+		{
+			int position = intVal((Node *) lfirst(def_idx));
+
+			if (position == idx)
+				idx++;
+		}
+
+		heap_freetuple(bbffunctuple);
+
+		/* we could not find defaults for some arguments. */
+		if (idx < pronargs)
+		{
+			table_close(bbf_function_ext_rel, AccessShareLock);
+			return false;
+		}
+	}
+
+	table_close(bbf_function_ext_rel, AccessShareLock);
+	return true;
+}
+
+static void
+insert_pltsql_function_defaults(HeapTuple func_tuple, List *defaults, Node **argarray)
+{
+	Relation	bbf_function_ext_rel;
+	HeapTuple	bbffunctuple;
+
+	/* Fetch the relation */
+	bbf_function_ext_rel = table_open(get_bbf_function_ext_oid(), AccessShareLock);
+	bbffunctuple = search_bbf_function_ext_with_proctuple(bbf_function_ext_rel, func_tuple);
+
+	if (HeapTupleIsValid(bbffunctuple))
+	{
+		bool				  isnull;
+		char				  *str;
+		List				  *default_positions = NIL;
+		ListCell			  *def_idx = NULL,
+							  *def_item = NULL;
+
+		str = TextDatumGetCString(heap_getattr(bbffunctuple, Anum_bbf_function_ext_default_positions,
+						RelationGetDescr(bbf_function_ext_rel), &isnull));
+		default_positions = castNode(List, stringToNode(str));
+		pfree(str);
+
+		forboth(def_idx, default_positions, def_item, defaults)
+		{
+			int position = intVal((Node *) lfirst(def_idx));
+
+			if (argarray[position] == NULL)
+				argarray[position] = (Node *) lfirst(def_item);
+		}
+
+		heap_freetuple(bbffunctuple);
+	}
+
+	table_close(bbf_function_ext_rel, AccessShareLock);
 }

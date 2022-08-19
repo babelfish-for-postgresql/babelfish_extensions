@@ -210,15 +210,16 @@ extern Oid get_bbf_function_ext_oid(void);
 extern Oid get_bbf_function_ext_idx_oid(void);
 extern HeapTuple search_bbf_function_ext(Relation bbf_function_ext_rel, int16 dbid,
 								const char *logical_schema_name, const char *function_signature);
+extern HeapTuple search_bbf_function_ext_with_proctuple(Relation bbf_function_ext_rel, HeapTuple proctupl);
 //extern bool check_is_tsql_function(Oid relid);
 extern void clean_up_bbf_function_ext(int16 dbid);
 
 typedef struct FormData_bbf_function_ext
 {
 	int16		dbid;
-	VarChar		schema;
-	VarChar		function_signature;
-	VarChar		default_positions;
+	text		schema;
+	text		function_signature;
+	text		default_positions;
 } FormData_bbf_function_ext;
 
 typedef FormData_bbf_function_ext *Form_bbf_function_ext;

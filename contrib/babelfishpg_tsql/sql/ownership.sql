@@ -17,9 +17,9 @@ GRANT SELECT on sys.babelfish_sysdatabases TO PUBLIC;
 -- BABELFISH_FUNC_DEFAULT
 CREATE TABLE sys.babelfish_function_ext (
 	dbid SMALLINT NOT NULL,
-	schema_name sys.SYSNAME NOT NULL,
-	function_signature sys.SYSNAME NOT NULL,
-	default_positions sys.SYSNAME,
+	schema_name TEXT NOT NULL COLLATE "C",
+	function_signature TEXT NOT NULL COLLATE "C",
+	default_positions TEXT COLLATE "C",
 	PRIMARY KEY(dbid, schema_name, function_signature)
 );
 GRANT SELECT ON sys.babelfish_function_ext TO PUBLIC;
