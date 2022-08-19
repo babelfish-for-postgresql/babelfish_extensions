@@ -5,7 +5,7 @@ use sys_syscolumns_vu_prepare_db1;
 go
 
 -- create helper function to get datatype name given oid
-CREATE FUNCTION OidToDataType(@Oid integer)
+CREATE FUNCTION sys_syscolumns_vu_prepare_OidToDataType(@Oid integer)
 RETURNS VARCHAR(50)
 AS
 BEGIN
@@ -16,7 +16,7 @@ END;
 GO
 
 -- create helper function to get procedure/table name given oid
-CREATE FUNCTION OidToObject(@Oid integer)
+CREATE FUNCTION sys_syscolumns_vu_prepare_OidToObject(@Oid integer)
 RETURNS VARCHAR(50)
 AS
 BEGIN
@@ -34,7 +34,7 @@ END;
 GO
 
 -- create helper function to get collation name given oid
-CREATE FUNCTION OidToCollation(@Oid integer)
+CREATE FUNCTION sys_syscolumns_vu_prepare_OidToCollation(@Oid integer)
 RETURNS VARCHAR(50)
 AS
 BEGIN

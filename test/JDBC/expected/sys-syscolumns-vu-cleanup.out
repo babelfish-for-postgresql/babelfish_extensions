@@ -2,9 +2,9 @@ use sys_syscolumns_vu_prepare_db1;
 go
 
 -- Cleanup
-DROP FUNCTION OidToDataType
-DROP FUNCTION OidToObject
-DROP FUNCTION OidToCollation
+DROP FUNCTION sys_syscolumns_vu_prepare_OidToDataType
+DROP FUNCTION sys_syscolumns_vu_prepare_OidToObject
+DROP FUNCTION sys_syscolumns_vu_prepare_OidToCollation
 DROP PROCEDURE sys_syscolumns_vu_prepare_proc1
 DROP PROCEDURE sys_syscolumns_vu_prepare_proc2
 DROP TABLE sys_syscolumns_vu_prepare_t1
