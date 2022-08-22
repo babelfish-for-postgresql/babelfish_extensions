@@ -4762,7 +4762,13 @@ makeAnother(TSqlParser::Another_statementContext *ctx, tsqlBuilder &builder)
 PLtsql_stmt *
 makeExecBodyBatch(TSqlParser::Execute_body_batchContext *ctx)
 {
+	std::string schema_name;
+	std::string proc_name;
 	std::string func_proc_name = ::getFullText(ctx->func_proc_name_server_database_schema());
+	if (ctx->func_proc_name_server_database_schema()->schema)
+		schema_name = stripQuoteFromId(ctx->func_proc_name_server_database_schema()->schema);
+	if (ctx->func_proc_name_server_database_schema()->procedure)
+		proc_name = stripQuoteFromId(ctx->func_proc_name_server_database_schema()->procedure);
 	Assert(!func_proc_name.empty());
 	TSqlParser::Execute_statement_argContext *func_proc_args = ctx->execute_statement_arg();
 
@@ -4780,6 +4786,11 @@ makeExecBodyBatch(TSqlParser::Execute_body_batchContext *ctx)
 	result->paramno = 0;
 	result->params = NIL;
 
+	if (!proc_name.empty())
+		result->proc_name = pstrdup(downcase_truncate_identifier(proc_name.c_str(), proc_name.length(), true));
+	if (!schema_name.empty())
+		result->schema_name = pstrdup(downcase_truncate_identifier(schema_name.c_str(), schema_name.length(), true));
+
 	if (func_proc_args)
 	{
 		std::vector<tsql_exec_param *> params;
@@ -4793,6 +4804,9 @@ makeExecBodyBatch(TSqlParser::Execute_body_batchContext *ctx)
 	}
 
 	std::stringstream ss;
+	// Rewrite proc name to sp_* if the schema is "dbo" and proc name starts with "sp_"
+	if (pg_strncasecmp(func_proc_name.c_str(), "dbo.sp_", 6) == 0)
+		func_proc_name.erase(func_proc_name.begin() + 0, func_proc_name.begin() + 4);
 	ss << "EXEC " << func_proc_name;
 	if (func_proc_args)
 		ss << " " << ::getFullText(func_proc_args);
