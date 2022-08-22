@@ -4764,7 +4764,15 @@ makeExecBodyBatch(TSqlParser::Execute_body_batchContext *ctx)
 {
 	std::string schema_name;
 	std::string proc_name;
+	bool is_cross_db = false;
+	std::string db_name;
 	std::string func_proc_name = ::getFullText(ctx->func_proc_name_server_database_schema());
+	if (ctx->func_proc_name_server_database_schema()->database)
+	{
+		db_name = stripQuoteFromId(ctx->func_proc_name_server_database_schema()->database);
+		if (!string_matches(db_name.c_str(), get_cur_db_name()))
+			is_cross_db = true;
+	}
 	if (ctx->func_proc_name_server_database_schema()->schema)
 		schema_name = stripQuoteFromId(ctx->func_proc_name_server_database_schema()->schema);
 	if (ctx->func_proc_name_server_database_schema()->procedure)
@@ -4785,11 +4793,16 @@ makeExecBodyBatch(TSqlParser::Execute_body_batchContext *ctx)
 	result->return_code_dno = return_code_dno;
 	result->paramno = 0;
 	result->params = NIL;
+	// record whether stmt is cross-db
+	if (is_cross_db)
+		result->is_cross_db = true;
 
 	if (!proc_name.empty())
 		result->proc_name = pstrdup(downcase_truncate_identifier(proc_name.c_str(), proc_name.length(), true));
 	if (!schema_name.empty())
 		result->schema_name = pstrdup(downcase_truncate_identifier(schema_name.c_str(), schema_name.length(), true));
+	if (!db_name.empty())
+		result->db_name = pstrdup(downcase_truncate_identifier(db_name.c_str(), db_name.length(), true));
 
 	if (func_proc_args)
 	{
