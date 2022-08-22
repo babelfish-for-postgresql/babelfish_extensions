@@ -4609,13 +4609,17 @@ exec_stmt_execsql(PLtsql_execstate *estate,
 
 	if (stmt->is_cross_db)
 		SetCurrentRoleId(GetSessionUserId(), false);
-	if (stmt->is_schema_specified)
-		estate->schema_name = stmt->schema_name;
-	if (estate->trigdata)
-		inside_trigger = true;
 	
 	if(stmt->is_dml || stmt->is_ddl)
+	{
+		if (stmt->is_schema_specified)
+			estate->schema_name = stmt->schema_name;
+		else
+			estate->schema_name = NULL;
+		if (estate->trigdata)
+			inside_trigger = true;
 		need_path_reset = reset_search_path(stmt, old_search_path, &reset_session_properties, inside_trigger);
+	}
 
 	PG_TRY();
 	{
