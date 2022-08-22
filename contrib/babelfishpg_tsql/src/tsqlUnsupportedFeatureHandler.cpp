@@ -114,6 +114,7 @@ protected:
 		antlrcpp::Any visitCreate_type(TSqlParser::Create_typeContext *ctx) override;
 		antlrcpp::Any visitCreate_login(TSqlParser::Create_loginContext *ctx) override;
 		antlrcpp::Any visitAlter_login(TSqlParser::Alter_loginContext *ctx) override;
+		antlrcpp::Any visitCreate_user(TSqlParser::Create_userContext *ctx) override;
 
 		// for unsupported DDLs. we'll manage whitelist
 		antlrcpp::Any visitDdl_statement(TSqlParser::Ddl_statementContext *ctx) override;
@@ -956,6 +957,13 @@ antlrcpp::Any TsqlUnsupportedFeatureHandlerImpl::visitAlter_login(TSqlParser::Al
 	return visitChildren(ctx);
 }
 
+antlrcpp::Any TsqlUnsupportedFeatureHandlerImpl::visitCreate_user(TSqlParser::Create_userContext *ctx)
+{
+	if(ctx->WITHOUT())
+			handle(INSTR_UNSUPPORTED_TSQL_UNKNOWN_DDL, "CREATE USER WITHOUT LOGIN",  getLineAndPos(ctx));
+	return visitChildren(ctx);
+}
+
 antlrcpp::Any TsqlUnsupportedFeatureHandlerImpl::visitDdl_statement(TSqlParser::Ddl_statementContext *ctx)
 {
 	if (ctx->alter_user())
@@ -963,6 +971,11 @@ antlrcpp::Any TsqlUnsupportedFeatureHandlerImpl::visitDdl_statement(TSqlParser::
 		auto alter_user = ctx->alter_user();
 		if (alter_user->loginame)
 			handle(INSTR_UNSUPPORTED_TSQL_UNKNOWN_DDL, "ALTER USER WITH LOGIN",  getLineAndPos(ctx));
+	}
+	if(ctx->create_user_azure_sql_dw()){
+		auto create_user = ctx->create_user_azure_sql_dw();
+        if (create_user->WITHOUT())
+			handle(INSTR_UNSUPPORTED_TSQL_UNKNOWN_DDL, "CREATE USER WITHOUT LOGIN",  getLineAndPos(ctx));
 	}
 	/*
 	 * We have more than 100 DDLs but support a few of them.
