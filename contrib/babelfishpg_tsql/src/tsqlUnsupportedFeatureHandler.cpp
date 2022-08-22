@@ -965,14 +965,15 @@ antlrcpp::Any TsqlUnsupportedFeatureHandlerImpl::visitDdl_statement(TSqlParser::
 			handle(INSTR_UNSUPPORTED_TSQL_UNKNOWN_DDL, "ALTER USER WITH LOGIN",  getLineAndPos(ctx));
 	}
 	if (ctx->create_user())
-    {
-        auto create_user = ctx->create_user();
-    	if (create_user->WITHOUT())
-            handle(INSTR_UNSUPPORTED_TSQL_UNKNOWN_DDL, "CREATE USER WITHOUT LOGIN",  getLineAndPos(ctx));
-    } 
-	if(ctx->create_user_azure_sql_dw()){
+	{
+		auto create_user = ctx->create_user();
+		if (create_user->WITHOUT())
+			handle(INSTR_UNSUPPORTED_TSQL_UNKNOWN_DDL, "CREATE USER WITHOUT LOGIN",  getLineAndPos(ctx));
+	}
+	if(ctx->create_user_azure_sql_dw())
+	{
 		auto create_user = ctx->create_user_azure_sql_dw();
-        if (create_user->WITHOUT())
+		if (create_user->WITHOUT())
 			handle(INSTR_UNSUPPORTED_TSQL_UNKNOWN_DDL, "CREATE USER WITHOUT LOGIN",  getLineAndPos(ctx));
 	}
 	/*
