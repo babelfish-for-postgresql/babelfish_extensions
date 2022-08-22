@@ -4,7 +4,7 @@ go
 create table t1(dbo_t1 int)
 go
 
-create table s1.t1(s1_t1 int)
+create table s1.t1(s1_t1 int, s1_t2 int)
 go
 
 create table mytab(dbo_mytab int)
@@ -30,7 +30,7 @@ go
 drop trigger tr1
 go
 
-drop trigger tr2
+drop trigger s1.tr2
 go
 
 drop table t1
