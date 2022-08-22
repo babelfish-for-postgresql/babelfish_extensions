@@ -1165,8 +1165,7 @@ search_bbf_function_ext_with_proctuple(Relation bbf_function_ext_rel, HeapTuple 
 	if (!langname || pg_strcasecmp("pltsql", langname) != 0)
 	{
 		pfree(langname);
-		ReleaseSysCache(proctuple);
-		return;
+		return NULL;
 	}
 
 	physical_schemaname = get_namespace_name(form->pronamespace);
@@ -1193,8 +1192,7 @@ search_bbf_function_ext_with_proctuple(Relation bbf_function_ext_rel, HeapTuple 
 		if (logical_schemaname)
 			pfree(logical_schemaname);
 		pfree(func_signature);
-		ReleaseSysCache(proctuple);
-		return;
+		return NULL;
 	}
 
 	scantup = search_bbf_function_ext(bbf_function_ext_rel, dbid, logical_schemaname, func_signature);

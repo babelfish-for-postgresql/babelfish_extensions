@@ -2253,6 +2253,20 @@ insert_pltsql_function_defaults(HeapTuple func_tuple, List *defaults, Node **arg
 
 		heap_freetuple(bbffunctuple);
 	}
+	else
+	{
+		Form_pg_proc funcform = (Form_pg_proc) GETSTRUCT(func_tuple);
+		int			 i;
+		ListCell	*lc = NIL;
+
+		i = funcform->pronargs - funcform->pronargdefaults;
+		foreach(lc, defaults)
+		{
+			if (argarray[i] == NULL)
+				argarray[i] = (Node *) lfirst(lc);
+			i++;
+		}
+	}
 
 	table_close(bbf_function_ext_rel, AccessShareLock);
 }
