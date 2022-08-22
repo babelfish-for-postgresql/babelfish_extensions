@@ -1621,7 +1621,10 @@ public:
 	void exitFull_object_name(TSqlParser::Full_object_nameContext *ctx) override
 	{
 		if (ctx && ctx->schema)
+		{
+			schema_name = stripQuoteFromId(ctx->schema);
 			is_schema_specified = true;
+		}
 		else
 			is_schema_specified = false;
 		tsqlCommonMutator::exitFull_object_name(ctx);
