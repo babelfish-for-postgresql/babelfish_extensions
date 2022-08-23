@@ -10129,14 +10129,19 @@ bool reset_search_path(PLtsql_stmt_execsql *stmt, char *old_search_path, bool* r
 		{
 			if(inside_trigger && top_es_entry->estate->schema_name)
 			{
-				physical_schema = get_physical_schema_name(cur_dbname, top_es_entry->estate->schema_name);
-				dbo_schema = get_dbo_schema_name(cur_dbname);
-				new_search_path = psprintf("%s, %s, %s", physical_schema, dbo_schema, old_search_path);
-				/* Add the schema where the object is referenced and dbo schema to the new search path */
-				(void) set_config_option("search_path", new_search_path,
-						PGC_USERSET, PGC_S_SESSION,
-						GUC_ACTION_SAVE, true, 0, false);
-				return true;
+				if (stmt->is_schema_specified || stmt->is_ddl)
+					return false;
+				else
+				{
+					physical_schema = get_physical_schema_name(cur_dbname, top_es_entry->estate->schema_name);
+					dbo_schema = get_dbo_schema_name(cur_dbname);
+					new_search_path = psprintf("%s, %s, %s", physical_schema, dbo_schema, old_search_path);
+					/* Add the schema where the object is referenced and dbo schema to the new search path */
+					(void) set_config_option("search_path", new_search_path,
+							PGC_USERSET, PGC_S_SESSION,
+							GUC_ACTION_SAVE, true, 0, false);
+					return true;
+				}
 			}
 		}
 		top_es_entry = top_es_entry->next;
