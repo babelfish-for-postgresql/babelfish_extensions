@@ -1,0 +1,66 @@
+SELECT pg_get_functiondef(cast('babel_2877_vu_prepare_func1' as regproc));
+GO
+~~START~~
+text
+CREATE OR REPLACE FUNCTION master_dbo.babel_2877_vu_prepare_func1("@a" integer, "@b" integer DEFAULT 20, "@c" integer, "@d" integer DEFAULT 40)<newline> RETURNS integer<newline> LANGUAGE pltsql<newline>AS '{"version_num": "1", "typmod_array": ["-1", "-1", "-1", "-1", "-1"], "original_probin": ""}', $function$BEGIN<newline>	RETURN @a + @b + @c + @d;<newline>END$function$<newline>
+~~END~~
+
+
+SELECT pg_get_functiondef(cast('babel_2877_vu_prepare_proc1' as regproc));
+GO
+~~START~~
+text
+CREATE OR REPLACE PROCEDURE master_dbo.babel_2877_vu_prepare_proc1(IN "@a" integer, IN "@b" integer DEFAULT 20, IN "@c" integer DEFAULT 30, IN "@d" integer)<newline> LANGUAGE pltsql<newline>AS '{"version_num": "1", "typmod_array": ["-1", "-1", "-1", "-1"], "original_probin": ""}', $procedure$BEGIN<newline>	SELECT @a + @b + @c + @d;<newline>END$procedure$<newline>
+~~END~~
+
+
+SELECT * FROM babel_2877_vu_prepare_func1(10); -- should fail, required argument @c not supplied
+GO
+~~ERROR (Code: 201)~~
+
+~~ERROR (Message: function babel_2877_vu_prepare_func1 expects parameter "@c", which was not supplied.)~~
+
+
+SELECT * FROM babel_2877_vu_prepare_func1(10, 20, 30, 40);
+GO
+~~START~~
+int
+100
+~~END~~
+
+
+EXEC babel_2877_vu_prepare_proc1; -- should fail, required arguments @a and @d not supplied
+GO
+~~ERROR (Code: 201)~~
+
+~~ERROR (Message: procedure babel_2877_vu_prepare_proc1 expects parameter "@a", which was not supplied.)~~
+
+
+EXEC babel_2877_vu_prepare_proc1 10; -- should fail, required argument @d not supplied
+GO
+~~ERROR (Code: 201)~~
+
+~~ERROR (Message: procedure babel_2877_vu_prepare_proc1 expects parameter "@d", which was not supplied.)~~
+
+
+EXEC babel_2877_vu_prepare_proc1 @d=40; -- should fail, required argument @a not supplied
+GO
+~~ERROR (Code: 201)~~
+
+~~ERROR (Message: procedure babel_2877_vu_prepare_proc1 expects parameter "@a", which was not supplied.)~~
+
+
+EXEC babel_2877_vu_prepare_proc1 @a = 10, @d = 40;
+GO
+~~START~~
+int
+100
+~~END~~
+
+
+EXEC babel_2877_vu_prepare_proc1 @a = 10, @b = 20, @c = 30, @d = 40;
+GO
+~~START~~
+int
+100
+~~END~~

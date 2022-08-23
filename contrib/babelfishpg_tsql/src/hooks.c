@@ -1826,6 +1826,7 @@ pltsql_store_func_default_positions(ObjectAddress address, List *parameters)
 	ListCell	*x;
 	int			idx;
 
+	/* Only store defaults in T-SQL dialect */
 	if (sql_dialect != SQL_DIALECT_TSQL)
 		return;
 
@@ -1910,10 +1911,10 @@ pltsql_store_func_default_positions(ObjectAddress address, List *parameters)
 static void
 pltsql_drop_func_default_positions(Oid objectId)
 {
-	Relation	bbf_function_ext_rel;
-	HeapTuple	proctuple, scantup;
-	Form_pg_proc	form;
-	int16		dbid;
+	Relation	 bbf_function_ext_rel;
+	HeapTuple	 proctuple, scantup;
+	Form_pg_proc form;
+	int16		 dbid;
 	char		*physical_schemaname,
 				*logical_schemaname,
 				*func_signature,
@@ -1980,22 +1981,44 @@ pltsql_drop_func_default_positions(Oid objectId)
 	table_close(bbf_function_ext_rel, RowExclusiveLock);
 }
 
+/*
+ * PlTsqlMatchNamedCall
+ *		Given a pg_proc heap tuple of a PL/tsql function and a call's list of
+ *		argument names, check whether the function could match the call.
+ *
+ * The call could match if all supplied argument names are accepted by
+ * the function, in positions after the last positional argument, and there
+ * are defaults for all unsupplied arguments.
+ *
+ * Most of the implementation of this function has been taken from backend's
+ * MatchNamedCall function (see catalog/namespace.c) but it has been modified
+ * to use babelfish_function_ext catalog to get the default positions, if
+ * available.
+ *
+ * On match, return true and fill *argnumbers with a palloc'd array showing
+ * the mapping from call argument positions to actual function argument
+ * numbers. Defaulted arguments are included in this map, at positions
+ * after the last supplied argument.
+ * Additionally if default positions are available in babelfish_function_ext
+ * catalog then fill *defaults with list of default expression nodes for
+ * unsupplied arguments.
+ */
 static bool
 PlTsqlMatchNamedCall(HeapTuple proctup, int nargs, List *argnames,
 					 bool include_out_arguments, int pronargs,
 					 int **argnumbers, List **defaults)
 {
 	Form_pg_proc procform = (Form_pg_proc) GETSTRUCT(proctup);
-	int			numposargs = nargs - list_length(argnames);
-	int			pronallargs;
-	Oid		   *p_argtypes;
-	char	  **p_argnames;
-	char	   *p_argmodes;
-	bool		arggiven[FUNC_MAX_ARGS];
-	bool		isnull;
-	int			ap;				/* call args position */
-	int			pp;				/* proargs position */
-	ListCell   *lc;
+	int			 numposargs = nargs - list_length(argnames);
+	int			 pronallargs;
+	Oid		    *p_argtypes;
+	char	   **p_argnames;
+	char	    *p_argmodes;
+	bool		 arggiven[FUNC_MAX_ARGS];
+	bool		 isnull;
+	int			 ap;				/* call args position */
+	int			 pp;				/* proargs position */
+	ListCell    *lc;
 
 	Assert(argnames != NIL);
 	Assert(numposargs >= 0);
@@ -2074,7 +2097,7 @@ PlTsqlMatchNamedCall(HeapTuple proctup, int nargs, List *argnames,
 		HeapTuple	bbffunctuple;
 		List		*argdefaults = NIL,
 					*default_positions = NIL;
-		bool		default_idx_available = false;
+		bool		default_positions_available = false;
 		ListCell	*def_item = NULL,
 					*def_idx = NULL;
 		bool		match_found = true;
@@ -2106,7 +2129,7 @@ PlTsqlMatchNamedCall(HeapTuple proctup, int nargs, List *argnames,
 						RelationGetDescr(bbf_function_ext_rel), &isnull));
 			default_positions = castNode(List, stringToNode(str));
 			def_idx = list_head(default_positions);
-			default_idx_available = true;
+			default_positions_available = true;
 			pfree(str);
 		}
 		for (pp = numposargs; pp < pronargs; pp++)
@@ -2115,11 +2138,11 @@ PlTsqlMatchNamedCall(HeapTuple proctup, int nargs, List *argnames,
 				continue;
 
 			/*
-			 * If the indexes of default arguments are available then we need
+			 * If the positions of default arguments are available then we need
 			 * special handling. Look into default_positions list to find out
 			 * the default expression for pp'th argument.
 			 */
-			if (default_idx_available)
+			if (default_positions_available)
 			{
 				bool has_default = false;
 
@@ -2162,7 +2185,7 @@ PlTsqlMatchNamedCall(HeapTuple proctup, int nargs, List *argnames,
 			(*argnumbers)[ap++] = pp;
 		}
 
-		if(default_idx_available)
+		if(default_positions_available)
 			heap_freetuple(bbffunctuple);
 		table_close(bbf_function_ext_rel, AccessShareLock);
 
@@ -2175,6 +2198,21 @@ PlTsqlMatchNamedCall(HeapTuple proctup, int nargs, List *argnames,
 	return true;
 }
 
+/*
+ * PlTsqlMatchUnNamedCall
+ *		Given a pg_proc heap tuple of a PL/tsql function and number of
+ *		positional arguments supplied, check whether the function could
+ *		match the call.
+ *
+ * The call could match if all the remaining arguments after given
+ * positional arguments have defaults.
+ *
+ * We will look for defaults only if the given PL/tsql function has entry
+ * in babelfish_function_ext catalog.
+ *
+ * Return true if there is a match or function has no entry in babelfish_function_ext
+ * catalog, false otherwise.
+ */
 static bool
 PlTsqlMatchUnNamedCall(HeapTuple proctup, int nargs, int pronargs)
 {
@@ -2220,6 +2258,15 @@ PlTsqlMatchUnNamedCall(HeapTuple proctup, int nargs, int pronargs)
 	return true;
 }
 
+/*
+ * insert_pltsql_function_defaults
+ *		Given a pg_proc heap tuple of a PL/tsql function and list of defaults,
+ *		fill missing arguments in *argarray with default expressions.
+ *
+ * If given PL/tsql function has default positions available from babelfish_function_ext
+ * catalog then use them to fill *argarray, otherwise fallback to PG's way to
+ * fill only last few arguments with defaults.
+ */
 static void
 insert_pltsql_function_defaults(HeapTuple func_tuple, List *defaults, Node **argarray)
 {
