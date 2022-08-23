@@ -1329,14 +1329,22 @@ pltsql_report_proc_not_found_error(List *names, List *given_argnames, int nargs,
 
 					if (HeapTupleIsValid(bbffunctuple))
 					{
-						char				  *str;
+						Datum	arg_default_positions;
+						char	*str;
 
-						str = TextDatumGetCString(heap_getattr(bbffunctuple, Anum_bbf_function_ext_default_positions,
-									RelationGetDescr(bbf_function_ext_rel), &isnull));
-						default_positions = castNode(List, stringToNode(str));
-						lc = list_head(default_positions);
-						default_positions_available = true;
-						pfree(str);
+						arg_default_positions = heap_getattr(bbffunctuple, Anum_bbf_function_ext_default_positions,
+															 RelationGetDescr(bbf_function_ext_rel), &isnull);
+
+						if (!isnull)
+						{
+							str = TextDatumGetCString(arg_default_positions);
+							default_positions = castNode(List, stringToNode(str));
+							lc = list_head(default_positions);
+							default_positions_available = true;
+							pfree(str);
+						}
+						else
+							table_close(bbf_function_ext_rel, AccessShareLock);
 					}
 					else
 						table_close(bbf_function_ext_rel, AccessShareLock);
@@ -2203,14 +2211,22 @@ PlTsqlMatchNamedCall(HeapTuple proctup, int nargs, List *argnames,
 
 			if (HeapTupleIsValid(bbffunctuple))
 			{
-				char				  *str;
+				Datum	arg_default_positions;
+				char	*str;
 
-				str = TextDatumGetCString(heap_getattr(bbffunctuple, Anum_bbf_function_ext_default_positions,
-							RelationGetDescr(bbf_function_ext_rel), &isnull));
-				default_positions = castNode(List, stringToNode(str));
-				def_idx = list_head(default_positions);
-				default_positions_available = true;
-				pfree(str);
+				arg_default_positions = heap_getattr(bbffunctuple, Anum_bbf_function_ext_default_positions,
+													 RelationGetDescr(bbf_function_ext_rel), &isnull);
+
+				if (!isnull)
+				{
+					str = TextDatumGetCString(arg_default_positions);
+					default_positions = castNode(List, stringToNode(str));
+					def_idx = list_head(default_positions);
+					default_positions_available = true;
+					pfree(str);
+				}
+				else
+					table_close(bbf_function_ext_rel, AccessShareLock);
 			}
 			else
 				table_close(bbf_function_ext_rel, AccessShareLock);
@@ -2314,33 +2330,42 @@ PlTsqlMatchUnNamedCall(HeapTuple proctup, int nargs, int pronargs)
 
 	if (HeapTupleIsValid(bbffunctuple))
 	{
+		Datum	 arg_default_positions;
 		bool	 isnull;
-		int		 idx = pronargs - nargs;
-		char	 *str;
-		List	 *default_positions = NIL;
-		ListCell *def_idx = NULL;
 
-		str = TextDatumGetCString(heap_getattr(bbffunctuple, Anum_bbf_function_ext_default_positions,
-						RelationGetDescr(bbf_function_ext_rel), &isnull));
-		default_positions = castNode(List, stringToNode(str));
-		pfree(str);
+		arg_default_positions = heap_getattr(bbffunctuple, Anum_bbf_function_ext_default_positions,
+											 RelationGetDescr(bbf_function_ext_rel), &isnull);
 
-		foreach(def_idx, default_positions)
+		if (!isnull)
 		{
-			int position = intVal((Node *) lfirst(def_idx));
+			char	 *str;
+			List	 *default_positions = NIL;
+			ListCell *def_idx = NULL;
+			int		 idx = pronargs - nargs;
 
-			if (position == idx)
-				idx++;
+			str = TextDatumGetCString(arg_default_positions);
+			default_positions = castNode(List, stringToNode(str));
+			pfree(str);
+
+			foreach(def_idx, default_positions)
+			{
+				int position = intVal((Node *) lfirst(def_idx));
+
+				if (position == idx)
+					idx++;
+			}
+
+			/* we could not find defaults for some arguments. */
+			if (idx < pronargs)
+			{
+				heap_freetuple(bbffunctuple);
+				table_close(bbf_function_ext_rel, AccessShareLock);
+				return false;
+			}
 		}
 
 		heap_freetuple(bbffunctuple);
-
-		/* we could not find defaults for some arguments. */
-		if (idx < pronargs)
-		{
-			table_close(bbf_function_ext_rel, AccessShareLock);
-			return false;
-		}
+		table_close(bbf_function_ext_rel, AccessShareLock);
 	}
 
 	table_close(bbf_function_ext_rel, AccessShareLock);
@@ -2371,23 +2396,30 @@ insert_pltsql_function_defaults(HeapTuple func_tuple, List *defaults, Node **arg
 
 	if (HeapTupleIsValid(bbffunctuple))
 	{
+		Datum				  arg_default_positions;
 		bool				  isnull;
-		char				  *str;
-		List				  *default_positions = NIL;
-		ListCell			  *def_idx = NULL,
-							  *def_item = NULL;
 
-		str = TextDatumGetCString(heap_getattr(bbffunctuple, Anum_bbf_function_ext_default_positions,
-						RelationGetDescr(bbf_function_ext_rel), &isnull));
-		default_positions = castNode(List, stringToNode(str));
-		pfree(str);
+		arg_default_positions = heap_getattr(bbffunctuple, Anum_bbf_function_ext_default_positions,
+											 RelationGetDescr(bbf_function_ext_rel), &isnull);
 
-		forboth(def_idx, default_positions, def_item, defaults)
+		if (!isnull)
 		{
-			int position = intVal((Node *) lfirst(def_idx));
+			char				  *str;
+			List				  *default_positions = NIL;
+			ListCell			  *def_idx = NULL,
+								  *def_item = NULL;
 
-			if (argarray[position] == NULL)
-				argarray[position] = (Node *) lfirst(def_item);
+			str = TextDatumGetCString(arg_default_positions);
+			default_positions = castNode(List, stringToNode(str));
+			pfree(str);
+
+			forboth(def_idx, default_positions, def_item, defaults)
+			{
+				int position = intVal((Node *) lfirst(def_idx));
+
+				if (argarray[position] == NULL)
+					argarray[position] = (Node *) lfirst(def_item);
+			}
 		}
 
 		heap_freetuple(bbffunctuple);
@@ -2462,14 +2494,22 @@ print_pltsql_function_arguments(StringInfo buf, HeapTuple proctup, bool print_ta
 
 	if (HeapTupleIsValid(bbffunctuple))
 	{
+		Datum		arg_default_positions;
 		char	   *str;
 
-		str = TextDatumGetCString(heap_getattr(bbffunctuple, Anum_bbf_function_ext_default_positions,
-					RelationGetDescr(bbf_function_ext_rel), &isnull));
-		defaultpositions = castNode(List, stringToNode(str));
-		nextdefaultposition = list_head(defaultpositions);
-		default_positions_available = true;
-		pfree(str);
+		arg_default_positions = heap_getattr(bbffunctuple, Anum_bbf_function_ext_default_positions,
+											 RelationGetDescr(bbf_function_ext_rel), &isnull);
+
+		if (!isnull)
+		{
+			str = TextDatumGetCString(arg_default_positions);
+			defaultpositions = castNode(List, stringToNode(str));
+			nextdefaultposition = list_head(defaultpositions);
+			default_positions_available = true;
+			pfree(str);
+		}
+		else
+			table_close(bbf_function_ext_rel, AccessShareLock);
 	}
 	else
 		table_close(bbf_function_ext_rel, AccessShareLock);
