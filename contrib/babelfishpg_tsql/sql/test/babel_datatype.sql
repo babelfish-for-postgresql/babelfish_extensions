@@ -48,7 +48,6 @@ select mon+smon as total from testing1;
 insert into testing1 (mon, smon) values ($100,123.4567, $123.9999);
 
 -- Test other allowed currency symbols with/without quote
--- TODO: fix BABEL-2636 "Money datatype doesn't support any currency symbol other than Dollar"
 select CAST(€100.123 AS money);
 select CAST('€100.123' AS money);
 select CAST(¢100.123 AS money);

@@ -94,7 +94,7 @@ UPGRADES = $(patsubst sql/upgrades/%.sql,sql/%.sql,$(wildcard sql/upgrades/*.sql
 REGRESS = test/babel_like
 REGRESS += test/babel_219
 REGRESS += test/babel_init
-REGRESS += test/babel_select_distinct_top
+# REGRESS += test/babel_select_distinct_top
 REGRESS += test/babel_transaction
 REGRESS += test/babel_typecode
 REGRESS += test/babel_uniqueidentifier
@@ -102,7 +102,7 @@ REGRESS += test/babel_collation
 REGRESS += test/babel_ddl
 REGRESS += test/babel_delete
 REGRESS += test/babel_set_command
-# REGRESS += test/babel_datatype TODO: fix BABEL-2636 "Money datatype doesn't support any currency symbol other than Dollar" before enabling this test
+REGRESS += test/babel_datatype
 REGRESS += test/babel_function
 REGRESS += test/babel_table_type
 

@@ -1,0 +1,747 @@
+
+-- Supported currency symbol by SQL it should also work with BABEL
+-- dollar
+select CAST($100.123 AS money);
+GO
+~~START~~
+money
+100.1230
+~~END~~
+
+-- cent
+select CAST(¢100.123 AS money);
+GO
+~~START~~
+money
+100.1230
+~~END~~
+
+-- currency
+select CAST(¤100.123 AS money);
+GO
+~~START~~
+money
+100.1230
+~~END~~
+
+-- pound
+select CAST(£100.123 AS money);
+GO
+~~START~~
+money
+100.1230
+~~END~~
+
+-- yen
+select CAST(¥100.123 AS money);
+GO
+~~START~~
+money
+100.1230
+~~END~~
+
+-- bengali rupee mark
+select CAST(৲100.123 AS money);
+GO
+~~START~~
+money
+100.1230
+~~END~~
+
+-- bengali rupee sign
+select CAST(৳100.123 AS money);
+GO
+~~START~~
+money
+100.1230
+~~END~~
+
+-- thai baht
+select CAST(฿100.123 AS money);
+GO
+~~START~~
+money
+100.1230
+~~END~~
+
+-- khmer riel 
+select CAST(៛100.123 AS money);
+GO
+~~START~~
+money
+100.1230
+~~END~~
+
+-- euro currency
+select CAST(₠100.123 AS money);
+GO
+~~START~~
+money
+100.1230
+~~END~~
+
+-- colon sign 
+select CAST(₡100.123 AS money);
+GO
+~~START~~
+money
+100.1230
+~~END~~
+
+-- cruzeiro 
+select CAST(₢100.123 AS money);
+GO
+~~START~~
+money
+100.1230
+~~END~~
+
+-- french franc
+select CAST(₣100.123 AS money);
+GO
+~~START~~
+money
+100.1230
+~~END~~
+
+-- lira 
+select CAST(₤100.123 AS money);
+GO
+~~START~~
+money
+100.1230
+~~END~~
+
+-- mill
+select CAST(₥100.123 AS money);
+GO
+~~START~~
+money
+100.1230
+~~END~~
+
+-- naira
+select CAST(₦100.123 AS money);
+GO
+~~START~~
+money
+100.1230
+~~END~~
+
+-- peseta 
+select CAST(₧100.123 AS money);
+GO
+~~START~~
+money
+100.1230
+~~END~~
+
+-- rupee
+select CAST(₨100.123 AS money);
+GO
+~~START~~
+money
+100.1230
+~~END~~
+
+-- won
+select CAST(₩100.123 AS money);
+GO
+~~START~~
+money
+100.1230
+~~END~~
+
+-- new sheqel
+select CAST(₪100.123 AS money);
+GO
+~~START~~
+money
+100.1230
+~~END~~
+
+-- dong
+select CAST(₫100.123 AS money);
+GO
+~~START~~
+money
+100.1230
+~~END~~
+
+-- euro
+select CAST(€100.123 AS money);
+GO
+~~START~~
+money
+100.1230
+~~END~~
+
+-- kip
+select CAST(₭100.123 AS money);
+GO
+~~START~~
+money
+100.1230
+~~END~~
+
+-- tugrik
+select CAST(₮100.123 AS money);
+GO
+~~START~~
+money
+100.1230
+~~END~~
+
+-- drachma
+select CAST(₯100.123 AS money);
+GO
+~~START~~
+money
+100.1230
+~~END~~
+
+-- german penny
+select CAST(₰100.123 AS money);
+GO
+~~START~~
+money
+100.1230
+~~END~~
+
+-- peso 
+select CAST(₱100.123 AS money);
+GO
+~~START~~
+money
+100.1230
+~~END~~
+
+-- rial
+select CAST(﷼100.123 AS money);
+GO
+~~START~~
+money
+100.1230
+~~END~~
+
+-- small dollar 
+select CAST(﹩100.123 AS money);
+GO
+~~START~~
+money
+100.1230
+~~END~~
+
+-- fullwidth cent
+select CAST(￠100.123 AS money);
+GO
+~~START~~
+money
+100.1230
+~~END~~
+
+-- fullwidth dollar
+select CAST(＄100.123 AS money);
+GO
+~~START~~
+money
+100.1230
+~~END~~
+
+-- fullwidth pound
+select CAST(￡100.123 AS money);
+GO
+~~START~~
+money
+100.1230
+~~END~~
+
+-- fullwidth yen
+select CAST(￥100.123 AS money);
+GO
+~~START~~
+money
+100.1230
+~~END~~
+
+-- fullwidth won 
+select CAST(￦100.123 AS money);
+GO
+~~START~~
+money
+100.1230
+~~END~~
+
+
+
+
+-- Unsupported currency symbol by SQL it should throw error with BABEL
+-- Indian Rupee
+select CAST(₹100.123 AS money);
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: syntax error near '₹' at line 3 and character position 12)~~
+
+-- Bitcoin
+select CAST(₿100.123 AS money);
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: syntax error near '₿' at line 2 and character position 12)~~
+
+-- gujarati rupee
+select CAST(૱100.123 AS money);
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: syntax error near '૱' at line 2 and character position 12)~~
+
+-- tamil rupee
+select CAST(௹100.123 AS money);
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: syntax error near '௹' at line 2 and character position 12)~~
+
+-- Azerbaijani manat
+select CAST(₼100.123 AS money);
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: syntax error near '₼' at line 2 and character position 12)~~
+
+-- SPESMILO
+select CAST(₷100.123 AS money);
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: syntax error near '₷' at line 2 and character position 12)~~
+
+-- AUSTRAL
+select CAST(₳100.123 AS money);
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: syntax error near '₳' at line 2 and character position 12)~~
+
+-- GUARANI
+select CAST(₲100.123 AS money);
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: syntax error near '₲' at line 2 and character position 12)~~
+
+-- Lari
+select CAST(₾100.123 AS money);
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: syntax error near '₾' at line 2 and character position 12)~~
+
+
+
+-- Currency symbol with qoute
+select CAST('$100.123' AS money);
+GO
+~~START~~
+money
+100.1230
+~~END~~
+
+-- cent
+select CAST('¢100.123' AS money);
+GO
+~~START~~
+money
+100.1230
+~~END~~
+
+-- currency
+select CAST('¤100.123' AS money);
+GO
+~~START~~
+money
+100.1230
+~~END~~
+
+-- pound
+select CAST('£100.123' AS money);
+GO
+~~START~~
+money
+100.1230
+~~END~~
+
+-- yen
+select CAST('¥100.123' AS money);
+GO
+~~START~~
+money
+100.1230
+~~END~~
+
+-- bengali rupee mark
+select CAST('৲100.123' AS money);
+GO
+~~START~~
+money
+100.1230
+~~END~~
+
+-- bengali rupee sign
+select CAST('৳100.123' AS money);
+GO
+~~START~~
+money
+100.1230
+~~END~~
+
+-- thai baht
+select CAST('฿100.123' AS money);
+GO
+~~START~~
+money
+100.1230
+~~END~~
+
+-- khmer riel 
+select CAST('៛100.123' AS money);
+GO
+~~START~~
+money
+100.1230
+~~END~~
+
+-- euro currency
+select CAST('₠100.123' AS money);
+GO
+~~START~~
+money
+100.1230
+~~END~~
+
+-- colon sign 
+select CAST('₡100.123' AS money);
+GO
+~~START~~
+money
+100.1230
+~~END~~
+
+-- cruzeiro 
+select CAST('₢100.123' AS money);
+GO
+~~START~~
+money
+100.1230
+~~END~~
+
+-- french franc
+select CAST('₣100.123' AS money);
+GO
+~~START~~
+money
+100.1230
+~~END~~
+
+-- lira 
+select CAST('₤100.123' AS money);
+GO
+~~START~~
+money
+100.1230
+~~END~~
+
+-- mill
+select CAST('₥100.123' AS money);
+GO
+~~START~~
+money
+100.1230
+~~END~~
+
+-- naira
+select CAST('₦100.123' AS money);
+GO
+~~START~~
+money
+100.1230
+~~END~~
+
+-- peseta 
+select CAST('₧100.123' AS money);
+GO
+~~START~~
+money
+100.1230
+~~END~~
+
+-- rupee
+select CAST('₨100.123' AS money);
+GO
+~~START~~
+money
+100.1230
+~~END~~
+
+-- won
+select CAST('₩100.123' AS money);
+GO
+~~START~~
+money
+100.1230
+~~END~~
+
+-- new sheqel
+select CAST('₪100.123' AS money);
+GO
+~~START~~
+money
+100.1230
+~~END~~
+
+-- dong
+select CAST('₫100.123' AS money);
+GO
+~~START~~
+money
+100.1230
+~~END~~
+
+-- euro
+select CAST('€100.123' AS money);
+GO
+~~START~~
+money
+100.1230
+~~END~~
+
+-- kip
+select CAST('₭100.123' AS money);
+GO
+~~START~~
+money
+100.1230
+~~END~~
+
+-- tugrik
+select CAST('₮100.123' AS money);
+GO
+~~START~~
+money
+100.1230
+~~END~~
+
+-- drachma
+select CAST('₯100.123' AS money);
+GO
+~~START~~
+money
+100.1230
+~~END~~
+
+-- german penny
+select CAST('₰100.123' AS money);
+GO
+~~START~~
+money
+100.1230
+~~END~~
+
+-- peso 
+select CAST('₱100.123' AS money);
+GO
+~~START~~
+money
+100.1230
+~~END~~
+
+-- rial
+select CAST('﷼100.123' AS money);
+GO
+~~START~~
+money
+100.1230
+~~END~~
+
+-- small dollar 
+select CAST('﹩100.123' AS money);
+GO
+~~START~~
+money
+100.1230
+~~END~~
+
+-- fullwidth cent
+select CAST('￠100.123' AS money);
+GO
+~~START~~
+money
+100.1230
+~~END~~
+
+-- fullwidth dollar
+select CAST('＄100.123' AS money);
+GO
+~~START~~
+money
+100.1230
+~~END~~
+
+-- fullwidth pound
+select CAST('￡100.123' AS money);
+GO
+~~START~~
+money
+100.1230
+~~END~~
+
+-- fullwidth yen
+select CAST('￥100.123' AS money);
+GO
+~~START~~
+money
+100.1230
+~~END~~
+
+-- fullwidth won 
+select CAST('￦100.123' AS money);
+GO
+~~START~~
+money
+100.1230
+~~END~~
+
+
+-- TODO: fix BABEL-704
+-- Note: inside qoute it will treat any character as a currency symbol
+-- if character is not a letter, digit and not equal to '+', '-', '.', '\0' 
+-- Unsupported currency symbol by SQL it should throw error with BABEL
+-- Indian Rupee
+select CAST('₹100.123' AS money);
+GO
+~~START~~
+money
+100.1230
+~~END~~
+
+-- Bitcoin
+select CAST('₿100.123' AS money);
+GO
+~~START~~
+money
+100.1230
+~~END~~
+
+-- gujarati rupee
+select CAST('૱100.123' AS money);
+GO
+~~START~~
+money
+100.1230
+~~END~~
+
+-- tamil rupee
+select CAST('௹100.123' AS money);
+GO
+~~START~~
+money
+100.1230
+~~END~~
+
+-- Azerbaijani manat
+select CAST('₼100.123' AS money);
+GO
+~~START~~
+money
+100.1230
+~~END~~
+
+-- SPESMILO
+select CAST('₷100.123' AS money);
+GO
+~~START~~
+money
+100.1230
+~~END~~
+
+-- AUSTRAL
+select CAST('₳100.123' AS money);
+GO
+~~START~~
+money
+100.1230
+~~END~~
+
+-- GUARANI
+select CAST('₲100.123' AS money);
+GO
+~~START~~
+money
+100.1230
+~~END~~
+
+-- Lari
+select CAST('₾100.123' AS money);
+GO
+~~START~~
+money
+100.1230
+~~END~~
+
+
+-- Currency Symbols as a datatype 
+CREATE TABLE currency_symbol_t1(a money);
+GO
+
+INSERT INTO currency_symbol_t1 VALUES($111.123);
+GO
+~~ROW COUNT: 1~~
+
+INSERT INTO currency_symbol_t1 VALUES(¢112.123);
+GO
+~~ROW COUNT: 1~~
+
+INSERT INTO currency_symbol_t1 VALUES(¤113.123);
+GO
+~~ROW COUNT: 1~~
+
+INSERT INTO currency_symbol_t1 VALUES(฿114.123);
+GO
+~~ROW COUNT: 1~~
+
+INSERT INTO currency_symbol_t1 VALUES(₠115.123);
+GO
+~~ROW COUNT: 1~~
+
+INSERT INTO currency_symbol_t1 VALUES(₨116.123);
+GO
+~~ROW COUNT: 1~~
+
+
+SELECT * FROM currency_symbol_t1;
+GO
+~~START~~
+money
+111.1230
+112.1230
+113.1230
+114.1230
+115.1230
+116.1230
+~~END~~
+
+
+-- following insert should throw error
+INSERT INTO currency_symbol_t1 VALUES(₿118.123);
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: syntax error near '₿' at line 2 and character position 38)~~
+
+
+DROP TABLE currency_symbol_t1;
+GO
+
+
