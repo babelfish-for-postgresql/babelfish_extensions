@@ -3290,10 +3290,14 @@ SELECT
   , CAST(0 as sys.bit) as uses_native_compilation
   , CAST(ao.is_ms_shipped as INT) as is_ms_shipped
 FROM sys.all_objects ao
+LEFT OUTER JOIN sys.pg_namespace_ext nmext on ao.schema_id = nmext.oid
+LEFT OUTER JOIN sys.babelfish_namespace_ext ext ON nmext.nspname = ext.nspname
+LEFT OUTER JOIN sys.babelfish_view_def bvd 
+ on (ext.orig_name = bvd.schema_name AND 
+     ext.dbid = bvd.dbid AND
+   ao.name = bvd.object_name 
+   )
 LEFT JOIN pg_proc p ON ao.object_id = CAST(p.oid AS INT)
-LEFT JOIN babelfish_view_def bvd ON (ao.name = bvd.object_name 
-  AND ao.schema_id = schema_id(bvd.schema_name)
-  AND bvd.dbid = DB_ID())
 WHERE ao.type in ('P', 'RF', 'V', 'TR', 'FN', 'IF', 'TF', 'R');
 GRANT SELECT ON sys.all_sql_modules_internal TO PUBLIC;
 
