@@ -2365,7 +2365,6 @@ PlTsqlMatchUnNamedCall(HeapTuple proctup, int nargs, int pronargs)
 		}
 
 		heap_freetuple(bbffunctuple);
-		table_close(bbf_function_ext_rel, AccessShareLock);
 	}
 
 	table_close(bbf_function_ext_rel, AccessShareLock);
