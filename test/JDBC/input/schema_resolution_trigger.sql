@@ -1,49 +1,80 @@
-create schema s1
+create schema schema_resolution_trigger_s1
 go
 
-create table t1(dbo_t1 int)
+create table schema_resolution_trigger_t1(dbo_t1 int)
 go
 
-create table s1.t1(s1_t1 int, s1_t2 int)
+create table schema_resolution_trigger_s1.schema_resolution_trigger_t1(s1_t1 int, s1_t2 int)
 go
 
-create table mytab(dbo_mytab int)
+create table schema_resolution_trigger_mytab(dbo_mytab int)
 go
 
-create table s1.mytab(s1_mytab int)
+create table schema_resolution_trigger_s1.schema_resolution_trigger_mytab(s1_mytab int)
 go
 
-create trigger tr1 on dbo.mytab for insert as
-select * from t1
+create trigger schema_resolution_trigger_tr1 on dbo.schema_resolution_trigger_mytab for insert as
+select * from schema_resolution_trigger_t1
 go
 
-create trigger tr2 on s1.mytab for insert as
-select * from t1
+create trigger schema_resolution_trigger_tr2 on schema_resolution_trigger_s1.schema_resolution_trigger_mytab for insert as
+select * from schema_resolution_trigger_t1
 go
 
-insert into dbo.mytab values(1)
+-- Resolves to dbo.schema_resolution_trigger_t1
+insert into dbo.schema_resolution_trigger_mytab values(1)
 go
 
-insert into s1.mytab values(1)
+-- Resolves to schema_resolution_trigger_s1.schema_resolution_trigger_t1
+insert into schema_resolution_trigger_s1.schema_resolution_trigger_mytab values(1)
 go
 
-drop trigger tr1
+drop trigger schema_resolution_trigger_tr1
 go
 
-drop trigger s1.tr2
+drop table schema_resolution_trigger_s1.schema_resolution_trigger_t1
 go
 
-drop table t1
+-- Resolves to dbo.schema_resolution_trigger_t1
+insert into schema_resolution_trigger_s1.schema_resolution_trigger_mytab values(1)
 go
 
-drop table s1.t1
+drop trigger schema_resolution_trigger_s1.schema_resolution_trigger_tr2
 go
 
-drop table mytab
+drop table schema_resolution_trigger_t1
 go
 
-drop table s1.mytab
+create trigger schema_resolution_trigger_s1.schema_resolution_trigger_tr1 on schema_resolution_trigger_s1.schema_resolution_trigger_mytab for insert as
+create table schema_resolution_trigger_t1(dbo_t1 char);
 go
 
-drop schema s1
+-- Creates a table in "dbo" schema
+insert into schema_resolution_trigger_s1.schema_resolution_trigger_mytab values(1)
+go
+
+select * from schema_resolution_trigger_t1
+go
+
+drop trigger schema_resolution_trigger_s1.schema_resolution_trigger_tr1
+go
+
+create trigger schema_resolution_trigger_s1.schema_resolution_trigger_tr1 on schema_resolution_trigger_s1.schema_resolution_trigger_mytab for insert as
+select * from dbo.schema_resolution_trigger_t1;
+go
+
+-- Resolves to dbo.schema_resolution_trigger_t1
+insert into schema_resolution_trigger_s1.schema_resolution_trigger_mytab values(1)
+go
+
+drop table schema_resolution_trigger_t1;
+go
+
+drop table schema_resolution_trigger_mytab
+go
+
+drop table schema_resolution_trigger_s1.schema_resolution_trigger_mytab
+go
+
+drop schema schema_resolution_trigger_s1
 go
