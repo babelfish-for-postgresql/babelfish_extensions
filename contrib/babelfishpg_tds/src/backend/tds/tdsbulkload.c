@@ -192,6 +192,56 @@ FetchMoreBcpPlpData(StringInfo *message, int dataLenToRead)
 }
 
 /*
+ * Incase of PLP data we should not discard the previous packet since we
+ * first store the offset of the PLP Chunks first and then read the data later.
+ */
+static void
+FetchMoreBcpPlpData(StringInfo *message, int dataLenToRead)
+{
+	int ret;
+
+	/* Unlikely that message will be NULL. */
+	if ((*message) == NULL)
+		ereport(ERROR,
+				(errcode(ERRCODE_PROTOCOL_VIOLATION),
+					errmsg("Protocol violation: Message data is NULL")));
+
+	/*
+	 * If previous return value was 1 then that means that we have reached the EOM.
+	 * No data left to read, we shall throw an error if we reach here.
+	 */
+	if (TdsGetRecvPacketEomStatus())
+		ereport(ERROR,
+				(errcode(ERRCODE_PROTOCOL_VIOLATION),
+					errmsg("Trying to read more data than available in BCP request.")));
+
+	/*
+	 * Keep fetching for additional packets until we have enough
+	 * data to read.
+	 */
+	while (dataLenToRead + offset > (*message)->len)
+	{
+		/*
+		 * We should hold the interrupts until we read the next
+		 * request frame.
+		 */
+		HOLD_CANCEL_INTERRUPTS();
+		ret = TdsReadNextPendingBcpRequest(*message);
+		RESUME_CANCEL_INTERRUPTS();
+
+		if (ret < 0)
+		{
+			TdsErrorContext->reqType = 0;
+			TdsErrorContext->err_text = "EOF on TDS socket while fetching For Bulk Load Request";
+			ereport(ERROR,
+					(errcode(ERRCODE_PROTOCOL_VIOLATION),
+						errmsg("EOF on TDS socket while fetching For Bulk Load Request")));
+			return;
+		}
+	}
+}
+
+/*
  * GetBulkLoadRequest - Builds the request structure associated
  * with Bulk Load.
  * TODO: Reuse for TVP.
