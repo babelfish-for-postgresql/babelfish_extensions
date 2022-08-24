@@ -70,7 +70,6 @@ go
 -- Creates a table in "dbo" schema
 insert into schema_resolution_trigger_s1.schema_resolution_trigger_mytab values(1)
 go
-
 ~~ROW COUNT: 1~~
 
 
