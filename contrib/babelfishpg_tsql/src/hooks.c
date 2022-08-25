@@ -1918,6 +1918,7 @@ pltsql_store_func_default_positions(ObjectAddress address, List *parameters)
 	{
 		if (langname)
 			pfree(langname);
+		ReleaseSysCache(proctup);
 		return;
 	}
 	pfree(langname);
