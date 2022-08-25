@@ -1,45 +1,10 @@
-create schema schema_resolution_trigger_s1
-go
-
-create table schema_resolution_trigger_t1(dbo_t1 int)
-go
-
-create table schema_resolution_trigger_s1.schema_resolution_trigger_t1(s1_t1 int, s1_t2 int)
-go
-
-create table schema_resolution_trigger_mytab(dbo_mytab int)
-go
-
-create table schema_resolution_trigger_s1.schema_resolution_trigger_mytab(s1_mytab int)
-go
-
-create trigger schema_resolution_trigger_tr1 on dbo.schema_resolution_trigger_mytab for insert as
-select * from schema_resolution_trigger_t1
-go
-
-create trigger schema_resolution_trigger_tr2 on schema_resolution_trigger_s1.schema_resolution_trigger_mytab for insert as
-select * from schema_resolution_trigger_t1
-go
-
 -- Resolves to dbo.schema_resolution_trigger_t1
 insert into dbo.schema_resolution_trigger_mytab values(1)
 go
-~~START~~
-int
-~~END~~
-
-~~ROW COUNT: 1~~
-
 
 -- Resolves to schema_resolution_trigger_s1.schema_resolution_trigger_t1
 insert into schema_resolution_trigger_s1.schema_resolution_trigger_mytab values(1)
 go
-~~START~~
-int#!#int
-~~END~~
-
-~~ROW COUNT: 1~~
-
 
 drop trigger schema_resolution_trigger_tr1
 go
@@ -50,12 +15,6 @@ go
 -- Resolves to dbo.schema_resolution_trigger_t1
 insert into schema_resolution_trigger_s1.schema_resolution_trigger_mytab values(1)
 go
-~~START~~
-int
-~~END~~
-
-~~ROW COUNT: 1~~
-
 
 drop trigger schema_resolution_trigger_s1.schema_resolution_trigger_tr2
 go
@@ -70,15 +29,9 @@ go
 -- Creates a table in "dbo" schema
 insert into schema_resolution_trigger_s1.schema_resolution_trigger_mytab values(1)
 go
-~~ROW COUNT: 1~~
-
 
 select * from schema_resolution_trigger_t1
 go
-~~START~~
-char
-~~END~~
-
 
 drop trigger schema_resolution_trigger_s1.schema_resolution_trigger_tr1
 go
@@ -90,12 +43,6 @@ go
 -- Resolves to dbo.schema_resolution_trigger_t1
 insert into schema_resolution_trigger_s1.schema_resolution_trigger_mytab values(1)
 go
-~~START~~
-char
-~~END~~
-
-~~ROW COUNT: 1~~
-
 
 drop table schema_resolution_trigger_t1;
 go
