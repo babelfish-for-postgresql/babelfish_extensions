@@ -1,0 +1,67 @@
+use master;
+go
+
+create table key_column_usage_db_test_tb1(redID INT PRIMARY KEY, greenID INT NOT NULL UNIQUE, blueID INT NOT NULL, UNIQUE(greenID,blueID));
+go
+
+create table key_column_usage_db_test_tb2( greenID char(10) PRIMARY KEY, redID INT NOT NULL, CONSTRAINT FK_RED FOREIGN KEY (redID) REFERENCES key_column_usage_db_test_tb1 (redID));
+go
+
+create database key_column_usage_db_test_db;
+go
+
+use key_column_usage_db_test_db;
+go
+
+create table key_column_usage_db_test_tb3(blueID INT PRIMARY KEY, greenID char(10));
+go
+
+create table key_column_usage_db_test_tb4(purpleID INT PRIMARY KEY, blueID INT NOT NULL, CONSTRAINT FK_GREEN FOREIGN KEY (blueID) REFERENCES key_column_usage_db_test_tb3(blueID));
+go
+
+use master;
+go
+
+select * from information_schema.key_column_usage where table_name like 'key_column_usage_db_test_tb%' order by table_name,constraint_name,ordinal_position;
+go
+~~START~~
+nvarchar#!#nvarchar#!#nvarchar#!#nvarchar#!#nvarchar#!#nvarchar#!#nvarchar#!#int
+master#!#dbo#!#key_column_usage_db_test_tb1_greenid_blueid_key#!#master#!#dbo#!#key_column_usage_db_test_tb1#!#greenid#!#1
+master#!#dbo#!#key_column_usage_db_test_tb1_greenid_blueid_key#!#master#!#dbo#!#key_column_usage_db_test_tb1#!#blueid#!#2
+master#!#dbo#!#key_column_usage_db_test_tb1_greenid_key#!#master#!#dbo#!#key_column_usage_db_test_tb1#!#greenid#!#1
+master#!#dbo#!#key_column_usage_db_test_tb1_pkey#!#master#!#dbo#!#key_column_usage_db_test_tb1#!#redid#!#1
+master#!#dbo#!#fk_redkey_column_usage_db_test_f4b37021aac7f0f215124b050a9b536a#!#master#!#dbo#!#key_column_usage_db_test_tb2#!#redid#!#1
+master#!#dbo#!#key_column_usage_db_test_tb2_pkey#!#master#!#dbo#!#key_column_usage_db_test_tb2#!#greenid#!#1
+~~END~~
+
+
+use key_column_usage_db_test_db;
+go
+
+select * from information_schema.key_column_usage where table_name like 'key_column_usage_db_test_tb%' order by table_name,constraint_name,ordinal_position;
+go
+~~START~~
+nvarchar#!#nvarchar#!#nvarchar#!#nvarchar#!#nvarchar#!#nvarchar#!#nvarchar#!#int
+key_column_usage_db_test_db#!#dbo#!#key_column_usage_db_test_tb3_pkey#!#key_column_usage_db_test_db#!#dbo#!#key_column_usage_db_test_tb3#!#blueid#!#1
+key_column_usage_db_test_db#!#dbo#!#fk_greenkey_column_usage_db_tesae34995aa55534a3484caa64de5eb291#!#key_column_usage_db_test_db#!#dbo#!#key_column_usage_db_test_tb4#!#blueid#!#1
+key_column_usage_db_test_db#!#dbo#!#key_column_usage_db_test_tb4_pkey#!#key_column_usage_db_test_db#!#dbo#!#key_column_usage_db_test_tb4#!#purpleid#!#1
+~~END~~
+
+
+drop table key_column_usage_db_test_tb4;
+go
+
+drop table key_column_usage_db_test_tb3;
+go
+
+use master;
+go
+
+drop table key_column_usage_db_test_tb2;
+go
+
+drop table key_column_usage_db_test_tb1;
+go
+
+drop database key_column_usage_db_test_db;
+go
