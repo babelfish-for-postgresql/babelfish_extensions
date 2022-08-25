@@ -966,7 +966,7 @@ ProcessBCPRequest(TDSRequest request)
 	}
 	offset = 0;
 }
-/* define another function to fetch the data for plp, because first we just take the offset of the data and then finally we read the whole data. */
+
 static int
 ReadBcpPlp(ParameterToken temp, StringInfo *message, TDSRequestBulkLoad request)
 {
