@@ -57,6 +57,7 @@
 
 #define TDS_NUMERIC_MAX_PRECISION	38
 
+extern bool babelfish_dump_restore;
 extern bool pltsql_quoted_identifier;
 extern bool is_tsql_rowversion_or_timestamp_datatype(Oid oid);
 
@@ -1933,9 +1934,9 @@ pltsql_store_func_default_positions(ObjectAddress address, List *parameters)
 
 	/*
 	 * Do not store definition/data in case of sys, information_schema_tsql and
-	 * other shared schemas.
+	 * other shared schemas or during upgrade.
 	 */
-	if (is_shared_schema(physical_schemaname))
+	if (is_shared_schema(physical_schemaname) || babelfish_dump_restore)
 	{
 		pfree(physical_schemaname);
 		ReleaseSysCache(proctup);

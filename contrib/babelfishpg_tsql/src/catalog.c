@@ -66,7 +66,7 @@ Oid			bbf_view_def_oid;
 Oid			bbf_view_def_idx_oid;
 
 /*****************************************
- *			VIEW_DEF
+ *			FUNCTION_EXT
  *****************************************/
 Oid			bbf_function_ext_oid;
 Oid			bbf_function_ext_idx_oid;
@@ -76,6 +76,7 @@ Oid			bbf_function_ext_idx_oid;
  *****************************************/
 
 static bool tsql_syscache_inited = false;
+extern bool babelfish_dump_restore;
 
 static struct cachedesc my_cacheinfo[] = {
      {-1,       /* SYSDATABASEOID */ 
@@ -1154,7 +1155,8 @@ get_bbf_function_tuple_from_proctuple(HeapTuple proctuple)
 				 form->pronamespace);
 	}
 
-	if (is_shared_schema(physical_schemaname))
+	/* skip for shared schemas and upgrade */
+	if (is_shared_schema(physical_schemaname) || babelfish_dump_restore)
 	{
 		pfree(physical_schemaname);
 		return NULL;
