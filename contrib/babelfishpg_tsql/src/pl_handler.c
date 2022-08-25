@@ -1753,6 +1753,7 @@ pltsql_sequence_datatype_map(ParseState *pstate,
 	typ = typenameType(pstate, type_def, &typmod_p);
 	typname = typeTypeName(typ);
 	tsqlSeqTypOid = pltsql_seq_type_map(*newtypid);
+	AclResult aclresult = pg_type_aclcheck(newtypid, GetUserId(), ACL_USAGE);
 
 	if (type_def->typemod != -1)
 		typmod_p = type_def->typemod;
@@ -1820,6 +1821,9 @@ pltsql_sequence_datatype_map(ParseState *pstate,
 		 */
 		if (!for_identity || typmod_p != -1)
 		{
+			if (typmod_p == -1)
+                typmod_p = 1179652;
+
 			uint8_t scale = (typmod_p - VARHDRSZ) & 0xffff;
 			uint8_t precision = ((typmod_p - VARHDRSZ) >> 16) & 0xffff;
 
@@ -1838,6 +1842,12 @@ pltsql_sequence_datatype_map(ParseState *pstate,
 		ereport(WARNING,
 				(errmsg("NUMERIC or DECIMAL type is cast to BIGINT")));
 	}
+
+	if (aclresult != ACLCHECK_OK)
+		aclcheck_error_type(aclresult, newtypid);
+
+	if(getBaseType(newtypid)!=INT2OID || getBaseType(newtypid)!=INT4OID || getBaseType(newtypid)!=INT8OID) newtypid = getBaseType(newtypid);
+
 }
 
 static Oid
