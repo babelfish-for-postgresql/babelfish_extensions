@@ -99,44 +99,75 @@ static int exec_stmt_raiserror(PLtsql_execstate *estate, PLtsql_stmt_raiserror *
 	int		severity = -1;
 	int		state = -1;
 
-	/* Read parameters of RAISERROR statements */
-	read_raiserror_params(estate, stmt->params, stmt->paramno, &msg, &msg_id, &severity, &state);
-	msg = pstrdup(msg);
+	PLtsql_expr *temp_expr;
+	int stmt_len = -1;
+	char *param_text = NULL;
+	char *query_text = NULL;
+	char *explain_text = NULL;
 
-	exec_eval_cleanup(estate);
+	if (pltsql_explain_only) {
+		/* calculate stmt length */
+		stmt_len = 0;
+		for (int i = 0; i < stmt->paramno; i++)
+		{
+			temp_expr = (PLtsql_expr *) list_nth(stmt->params, i);
+			/* minus 6 is stripping 'SELECT ' and adding one space for a comma */
+			stmt_len += strlen(temp_expr->query) - 6;
+		}
+		char *query_text = (char *) palloc0(sizeof(char) * stmt_len);
 
-	if (severity < 0 || severity > 24)
-		ereport(ERROR, (errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-				errmsg("severity argument of RAISERROR should be in the range of 0 - 24")));
-
-	if (stmt->seterror) 
-		exec_set_error(estate, msg_id, 0, false /* error_mapping_failed */);
-
-	/* Simply print out the error message if severity <= 10 */
-	if (severity <= 10)
-		elevel = INFO;
-	/* Severity > 18 need sysadmin role using WITH LOG option */
-	else if (severity > 18 && !stmt->log)
-		ereport(ERROR, (errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-				errmsg("error severity levels greater than 18 require WITH LOG option.")));
-	/* Otherwise, report error */
-	else
-	{
-		elevel = ERROR;
-		proc_name = get_proc_name(estate);
-		/* Update error data info in exec_state_call_stack */
-		set_exec_error_data(proc_name, msg_id, severity, state, false /* rethrow */);
+		for (int i = 0; i < stmt->paramno; i++)
+		{
+			temp_expr = (PLtsql_expr *) list_nth(stmt->params, i);
+			if (i == stmt->paramno-1)
+				/* no comma on final item */
+				param_text = psprintf("%s", &temp_expr->query[7]);
+			else
+				param_text = psprintf("%s,", &temp_expr->query[7]);
+			strncat(query_text, param_text, TSQL_MAX_MESSAGE_LEN);
+		}
+		explain_text = psprintf("RAISERROR (%s)", query_text);
+		append_explain_info(NULL, explain_text);
 	}
-	ereport(elevel, (errcode(ERRCODE_PLTSQL_RAISERROR), 
-			errmsg_internal("%s", msg)));
+	else {
+		/* Read parameters of RAISERROR statements */
+		read_raiserror_params(estate, stmt->params, stmt->paramno, &msg, &msg_id, &severity, &state);
+		msg = pstrdup(msg);
 
-	if (elevel == INFO && *pltsql_protocol_plugin_ptr && (*pltsql_protocol_plugin_ptr)->send_info)
-		((*pltsql_protocol_plugin_ptr)->send_info) (0,
-													1,
-													0,
-													msg,
-													0);
+		exec_eval_cleanup(estate);
 
+		if (severity < 0 || severity > 24)
+			ereport(ERROR, (errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+					errmsg("severity argument of RAISERROR should be in the range of 0 - 24")));
+
+		if (stmt->seterror) 
+			exec_set_error(estate, msg_id, 0, false /* error_mapping_failed */);
+
+		/* Simply print out the error message if severity <= 10 */
+		if (severity <= 10)
+			elevel = INFO;
+		/* Severity > 18 need sysadmin role using WITH LOG option */
+		else if (severity > 18 && !stmt->log)
+			ereport(ERROR, (errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+					errmsg("error severity levels greater than 18 require WITH LOG option.")));
+		/* Otherwise, report error */
+		else
+		{
+			elevel = ERROR;
+			proc_name = get_proc_name(estate);
+			/* Update error data info in exec_state_call_stack */
+			set_exec_error_data(proc_name, msg_id, severity, state, false /* rethrow */);
+		}
+		ereport(elevel, (errcode(ERRCODE_PLTSQL_RAISERROR), 
+				errmsg_internal("%s", msg)));
+
+		if (elevel == INFO && *pltsql_protocol_plugin_ptr && (*pltsql_protocol_plugin_ptr)->send_info)
+			((*pltsql_protocol_plugin_ptr)->send_info) (0,
+														1,
+														0,
+														msg,
+														0);
+	}
 	return PLTSQL_RC_OK;
 }
 
@@ -147,6 +178,13 @@ static int exec_stmt_throw(PLtsql_execstate *estate, PLtsql_stmt_throw *stmt)
 	int		err_no = -1;
 	int		state = -1;
 
+	/* Explain variables */
+	PLtsql_expr  *exprTemp;
+	char *msg_explain = NULL;
+	char *err_no_explain = NULL;
+	char *state_explain = NULL;
+	char *query_text = NULL;
+
 	/* THROW without params is to re-throw */
 	if (stmt->params == NIL)
 	{
@@ -154,7 +192,12 @@ static int exec_stmt_throw(PLtsql_execstate *estate, PLtsql_stmt_throw *stmt)
 		if (estate->cur_error == NULL || estate->cur_error->error == NULL)
 			ereport(ERROR, (errcode(ERRCODE_INTERNAL_ERROR),
 					errmsg("THROW without parameters should be executed inside a CATCH block")));
-
+		/* If only explaining, don't actually perform the throw, just append query text */
+		if (pltsql_explain_only)
+		{
+			append_explain_info(NULL, "THROW");
+		}
+		else {
 		/* Update error data info in exec_state_call_stack */
 		set_exec_error_data(estate->cur_error->procedure,
 							estate->cur_error->number,
@@ -162,20 +205,39 @@ static int exec_stmt_throw(PLtsql_execstate *estate, PLtsql_stmt_throw *stmt)
 							estate->cur_error->state,
 							true /* rethrow */);
 		ReThrowError(estate->cur_error->error);
+		}
 	}
 	else
 	{
 		/* Read parameters of THROW statement */
-		read_throw_params(estate, stmt->params, &msg, &err_no, &state);
-		msg = pstrdup(msg);
-		proc_name = get_proc_name(estate);
+		if (pltsql_explain_only)
+		{
 
-		exec_eval_cleanup(estate);
+			PLtsql_expr  *exprTemp = (PLtsql_expr *) list_nth(stmt->params, 0);
+			err_no_explain = psprintf("%s", &exprTemp->query[7]);
 
-		/* Update error data info in exec_state_call_stack */
-		set_exec_error_data(proc_name, err_no, 16, state, false /* rethrow */);
-		ereport(ERROR, (errcode(ERRCODE_PLTSQL_THROW), 
-				errmsg_internal("%s", msg)));
+			exprTemp = (PLtsql_expr *) list_nth(stmt->params, 1);
+			msg_explain = psprintf("%s", &exprTemp->query[7]);
+
+			exprTemp = (PLtsql_expr *) list_nth(stmt->params, 2);
+			state_explain = psprintf("%s", &exprTemp->query[7]);
+
+			query_text = psprintf("THROW %s, %s, %s", err_no_explain, msg_explain, state_explain);
+			append_explain_info(NULL, query_text);
+		}
+		else
+		{
+			read_throw_params(estate, stmt->params, &msg, &err_no, &state);
+			msg = pstrdup(msg);
+			proc_name = get_proc_name(estate);
+
+			exec_eval_cleanup(estate);
+
+			/* Update error data info in exec_state_call_stack */
+			set_exec_error_data(proc_name, err_no, 16, state, false /* rethrow */);
+			ereport(ERROR, (errcode(ERRCODE_PLTSQL_THROW), 
+					errmsg_internal("%s", msg)));
+		}
 	}
 
 	return PLTSQL_RC_OK;
@@ -635,21 +697,9 @@ static inline int dispatch_stmt(PLtsql_execstate *estate, PLtsql_stmt *stmt)
 			exec_stmt_close(estate, (PLtsql_stmt_close *) stmt);
 			break;
 		case PLTSQL_STMT_COMMIT:
-			if (pltsql_explain_only)
-			{
-				ereport(ERROR,
-						(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-						errmsg("Showing Estimated Execution Plan for COMMIT statment is not yet supported")));
-			}
 			exec_stmt_commit(estate, (PLtsql_stmt_commit *) stmt);
 			break;
 		case PLTSQL_STMT_ROLLBACK:
-			if (pltsql_explain_only)
-			{
-				ereport(ERROR,
-						(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-						errmsg("Showing Estimated Execution Plan for ROLLBACK statment is not yet supported")));
-			}
 			exec_stmt_rollback(estate, (PLtsql_stmt_rollback *) stmt);
 			break;
 	    /* TSQL-only statement types follow */
@@ -660,12 +710,6 @@ static inline int dispatch_stmt(PLtsql_execstate *estate, PLtsql_stmt *stmt)
 			exec_stmt_set_explain_mode(estate, (PLtsql_stmt_set_explain_mode *) stmt);
 			break;
         case PLTSQL_STMT_PRINT:
-			if (pltsql_explain_only)
-			{
-				ereport(ERROR,
-						(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-						errmsg("Showing Estimated Execution Plan for PRINT statment is not yet supported")));
-			}
             exec_stmt_print(estate, (PLtsql_stmt_print *)stmt);
             break;
 		case PLTSQL_STMT_QUERY_SET:
@@ -738,31 +782,16 @@ static inline int dispatch_stmt(PLtsql_execstate *estate, PLtsql_stmt *stmt)
             exec_stmt_decl_cursor(estate, (PLtsql_stmt_decl_cursor *) stmt);
             break;
 		case PLTSQL_STMT_RAISERROR:
-			if (pltsql_explain_only)
-			{
-				ereport(ERROR,
-						(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-						errmsg("Showing Estimated Execution Plan for RAISE ERROR statment is not yet supported")));
-			}
 			exec_stmt_raiserror(estate, (PLtsql_stmt_raiserror *) stmt);
 			break;
 		case PLTSQL_STMT_THROW:
-			if (pltsql_explain_only)
-			{
-				ereport(ERROR,
-						(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-						errmsg("Showing Estimated Execution Plan for THROW statment is not yet supported")));
-			}
 			exec_stmt_throw(estate, (PLtsql_stmt_throw *) stmt);
 			break;
 		case PLTSQL_STMT_USEDB:
 			if (pltsql_explain_only)
-			{
-				ereport(ERROR,
-						(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-						errmsg("Showing Estimated Execution Plan for USE DB statment is not yet supported")));
-			}
-			exec_stmt_usedb(estate, (PLtsql_stmt_usedb *) stmt);
+				exec_stmt_usedb_explain(estate, (PLtsql_stmt_usedb *) stmt, false);
+			else
+				exec_stmt_usedb(estate, (PLtsql_stmt_usedb *) stmt);
 			break;
         case PLTSQL_STMT_INSERT_BULK:
 			if (pltsql_explain_only)
@@ -795,7 +824,7 @@ static inline int dispatch_stmt(PLtsql_execstate *estate, PLtsql_stmt *stmt)
         default:
             ereport(ERROR,
                     (errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-                     errmsg("Unsupported statment type %d in executor", stmt->cmd_type)));
+                     errmsg("Unsupported statement type %d in executor", stmt->cmd_type)));
     }
 
     return rc;
@@ -1542,6 +1571,17 @@ void process_explain(PLtsql_execstate *estate)
 	if (*pltsql_protocol_plugin_ptr && (*pltsql_protocol_plugin_ptr)->stmt_beg)
 		((*pltsql_protocol_plugin_ptr)->stmt_beg) (estate, NULL);
 
+	/* If use_db changed db during the query, return it back to the starting database */
+	if (estate->explain_infos)
+	{
+		einfo = (ExplainInfo *) linitial(estate->explain_infos);
+		if (einfo->initial_schema)
+		{
+			PLtsql_stmt_usedb *initial_db = palloc0(sizeof(PLtsql_stmt_usedb));
+			initial_db->db_name = einfo->initial_schema;
+			exec_stmt_usedb_explain(estate, (PLtsql_stmt_usedb *) initial_db, true);
+		}
+	}
 	/* Concat all explain_infos */
 	initStringInfo(&planstr);
 	foreach(lc, estate->explain_infos)

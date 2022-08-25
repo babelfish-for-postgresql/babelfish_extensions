@@ -18,5 +18,7 @@ extern bool is_explain_analyze_mode(void);
 extern void increment_explain_indent(void);
 extern void decrement_explain_indent(void);
 extern void append_explain_info(QueryDesc *queryDesc, const char *queryString);
+extern void set_explain_schema(char *db_name);
+extern char *get_explain_schema(void);
 
 #endif  /* PL_EXPLAIN_H */

@@ -171,3 +171,18 @@ void append_explain_info(QueryDesc *queryDesc, const char *queryString)
 	/* Recover the memory context */
 	MemoryContextSwitchTo(oldcxt);
 }
+
+void set_explain_schema(char *db_name)
+{
+       ExplainInfo *einfo = get_last_explain_info();
+       einfo->initial_schema = db_name;
+}
+
+char *get_explain_schema(void)
+{
+       ExplainInfo *einfo = get_last_explain_info();
+       if (einfo != NULL && einfo->initial_schema)
+               return einfo->initial_schema;
+
+       return NULL;
+}

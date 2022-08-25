@@ -42,6 +42,7 @@ static int exec_stmt_decl_cursor(PLtsql_execstate *estate, PLtsql_stmt_decl_curs
 static int exec_run_dml_with_output(PLtsql_execstate *estate, PLtsql_stmt_push_result *stmt, 
 									Portal portal, PLtsql_expr *expr, CmdType cmd, ParamListInfo paramLI);
 static int exec_stmt_usedb(PLtsql_execstate *estate, PLtsql_stmt_usedb *stmt);
+static int exec_stmt_usedb_explain(PLtsql_execstate *estate, PLtsql_stmt_usedb *stmt, bool shouldRestoreDb);
 static int exec_stmt_insert_execute_select(PLtsql_execstate *estate, PLtsql_expr *expr);
 static int exec_stmt_insert_bulk(PLtsql_execstate *estate, PLtsql_stmt_insert_bulk *expr);
 extern Datum pltsql_inline_handler(PG_FUNCTION_ARGS);
@@ -213,9 +214,9 @@ exec_tsql_stmt(PLtsql_execstate *estate, PLtsql_stmt *stmt, PLtsql_stmt *save_es
 			rc = exec_stmt_return_table(estate, (PLtsql_stmt_return_query *) stmt);
 			break;
 
-        case PLTSQL_STMT_INSERT_BULK:
-            rc = exec_stmt_insert_bulk(estate, (PLtsql_stmt_insert_bulk *) stmt);
-	        break;
+		case PLTSQL_STMT_INSERT_BULK:
+			rc = exec_stmt_insert_bulk(estate, (PLtsql_stmt_insert_bulk *) stmt);
+			break;
 
 		default:
 			estate->err_stmt = save_estmt;
@@ -233,29 +234,37 @@ exec_stmt_print(PLtsql_execstate *estate, PLtsql_stmt_print *stmt)
 	Oid		formattypeid;
 	int32	formattypmod;
 	char   *extval;
-	formatdatum = exec_eval_expr(estate,
-								 (PLtsql_expr *) linitial(stmt->exprs),
-								 &formatisnull,
-								 &formattypeid,
-								 &formattypmod);
 
-	if (formatisnull)
-		extval = "<NULL>";
+	 if (pltsql_explain_only) {
+		PLtsql_expr  *exprTemp = (PLtsql_expr *) linitial(stmt->exprs);
+		char * queryText = psprintf("PRINT %s", &exprTemp->query[7]);
+		append_explain_info(NULL, queryText);
+	}
 	else
-		extval = convert_value_to_string(estate,
-										 formatdatum,
-										 formattypeid);
+	{
+		formatdatum = exec_eval_expr(estate,
+									(PLtsql_expr *) linitial(stmt->exprs),
+									&formatisnull,
+									&formattypeid,
+									&formattypmod);
+		if (formatisnull)
+			extval = "<NULL>";
+		else
+			extval = convert_value_to_string(estate,
+											formatdatum,
+											formattypeid);
 
-	ereport(INFO, errmsg_internal("%s", extval));
+		ereport(INFO, errmsg_internal("%s", extval));
 
-    exec_set_rowcount(0);
+		exec_set_rowcount(0);
 
-	if (*pltsql_protocol_plugin_ptr && (*pltsql_protocol_plugin_ptr)->send_info)
-		((*pltsql_protocol_plugin_ptr)->send_info) (0,
-													1,
-													0,
-													extval,
-													0);
+		if (*pltsql_protocol_plugin_ptr && (*pltsql_protocol_plugin_ptr)->send_info)
+			((*pltsql_protocol_plugin_ptr)->send_info) (0,
+														1,
+														0,
+														extval,
+														0);
+	}
 	return PLTSQL_RC_OK;
 }
 
@@ -308,12 +317,12 @@ exec_stmt_query_set(PLtsql_execstate *estate,
 			exec_set_found(estate, (SPI_processed != 0));
 			exec_set_found(estate, (SPI_processed == 0 ? 1 : 0));
 			exec_set_rowcount(SPI_processed);
-                        break;
+			break;
 		case SPI_OK_UPDATE_RETURNING:
 			exec_set_found(estate, (SPI_processed != 0));
 			exec_set_found(estate, (SPI_processed == 0 ? 1 : 0));
 			exec_set_rowcount(SPI_processed);
-                        break;
+			break;
 		case SPI_ERROR_TRANSACTION:
 			ereport(ERROR,
 					(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
@@ -558,7 +567,7 @@ exec_stmt_push_result(PLtsql_execstate *estate,
 					 receiver,
 					 receiver,
 					 &qc))
-                processed = portal->portalPos;
+				processed = portal->portalPos;
 	
 	receiver->rDestroy(receiver);
 	
@@ -569,7 +578,7 @@ exec_stmt_push_result(PLtsql_execstate *estate,
 
 	estate->eval_processed = processed;
 	exec_set_rowcount(processed);
-        exec_set_found(estate, processed != 0);
+	exec_set_found(estate, processed != 0);
 
 	return PLTSQL_RC_OK;
 }
@@ -2124,7 +2133,7 @@ transform_tsql_temp_tables(char * dynstmt)
 
 			/* CREATE TABLE #<ident> -> CREATE TEMPORARY TABLE #<ident> */
 			if ((prev_word && (pg_strcasecmp(prev_word, "CREATE") == 0)) &&
-			    (pg_strcasecmp(word, "TABLE") == 0) &&
+				(pg_strcasecmp(word, "TABLE") == 0) &&
 				is_next_temptbl(cp))
 			{
 				appendStringInfo(&ds, "TEMPORARY %s", word);
@@ -2166,15 +2175,15 @@ is_char_identstart(char c)
 {
 	return ((c == '_')             ||
 			(c >= 'A' && c <= 'Z') ||
-	        (c >= 'a' && c <= 'z') ||
-	        (c >= '\200' && c <= '\377'));
+			(c >= 'a' && c <= 'z') ||
+			(c >= '\200' && c <= '\377'));
 }
 
 static bool
 is_char_identpart(char c)
 {
 	return ((is_char_identstart(c)) ||
-	        (c >= '0' && c <= '9'));
+			(c >= '0' && c <= '9'));
 }
 
 /*
@@ -2536,27 +2545,88 @@ exec_stmt_usedb(PLtsql_execstate *estate, PLtsql_stmt_usedb *stmt)
 						stmt->db_name, stmt->db_name)));
 
 	set_session_properties(stmt->db_name);
-        top_es_entry = exec_state_call_stack->next;
-        while(top_es_entry != NULL)
-        {
-                /*traverse through the estate stack. If the occurrence of
-                * execute() is found in the stack, suppress the database context
-                * message and avoid sending env token and message to user.
-                */
-                if(top_es_entry->estate && top_es_entry->estate->err_stmt &&
-                       (top_es_entry->estate->err_stmt->cmd_type == PLTSQL_STMT_EXEC_BATCH))
-                       return PLTSQL_RC_OK;
-                else
-                       top_es_entry = top_es_entry->next;
-        }
+    top_es_entry = exec_state_call_stack->next;
+    while(top_es_entry != NULL)
+	{
+			/*traverse through the estate stack. If the occurrence of
+			* execute() is found in the stack, suppress the database context
+			* message and avoid sending env token and message to user.
+			*/
+			if(top_es_entry->estate && top_es_entry->estate->err_stmt &&
+					(top_es_entry->estate->err_stmt->cmd_type == PLTSQL_STMT_EXEC_BATCH))
+					return PLTSQL_RC_OK;
+			else
+					top_es_entry = top_es_entry->next;
+	}
 
-        snprintf(message, sizeof(message), "Changed database context to '%s'.", stmt->db_name);
+	snprintf(message, sizeof(message), "Changed database context to '%s'.", stmt->db_name);
 	/* send env change token to user */
 	if (*pltsql_protocol_plugin_ptr && (*pltsql_protocol_plugin_ptr)->send_env_change)
 		((*pltsql_protocol_plugin_ptr)->send_env_change) (1, stmt->db_name, old_db_name);
 	/* send message to user */
 	if (*pltsql_protocol_plugin_ptr && (*pltsql_protocol_plugin_ptr)->send_info)
 		((*pltsql_protocol_plugin_ptr)->send_info) (0, 1, 0, message, 0);
+	
+	return PLTSQL_RC_OK;
+}
+
+static int
+exec_stmt_usedb_explain(PLtsql_execstate *estate, PLtsql_stmt_usedb *stmt, bool shouldRestoreDb)
+{
+	/* This function will change databases to a given target database for use in explain functions
+	 * It will maintain the lock on the initial database and supress any log messages to the user
+	 * otherwise this function will be functionally the same as exec_stmt_usedb
+	 */
+	if (!pltsql_explain_only)
+		return PLTSQL_RC_OK;
+
+	char *old_db_name;
+	char *initial_schema_name;
+	char message[128];
+	int16 old_db_id;
+	int16 new_db_id;
+	int16 initial_schema_id;
+
+	old_db_name = get_cur_db_name();
+	old_db_id = get_cur_db_id();
+	new_db_id = get_db_id(stmt->db_name);
+
+	/* append query information */
+	if (!shouldRestoreDb) {
+		char * queryText = psprintf("USE DATABASE %s", stmt->db_name);
+		append_explain_info(NULL, queryText);
+	}
+	
+	/* Gather name and id of the original database the user was connected to */
+	initial_schema_name = get_explain_schema();
+	if (initial_schema_name == NULL) {
+		set_explain_schema(old_db_name);
+		initial_schema_name = old_db_name;
+	}
+	initial_schema_id = get_db_id(initial_schema_name);
+
+	/* error if new db is not valid and restore original db */
+	if (!DbidIsValid(new_db_id)) {
+		set_session_properties(initial_schema_name);
+		ereport(ERROR,
+				(errcode(ERRCODE_UNDEFINED_DATABASE),
+				 errmsg("database \"%s\" does not exist", stmt->db_name)));
+		
+	}
+	/* Release the session-level shared lock on the old logical db if its not the user's original database */
+	if (old_db_id != initial_schema_id)
+		UnlockLogicalDatabaseForSession(old_db_id, ShareLock, false);
+
+	/* Get a session-level shared lock on the new logical db we are about to use. If initial db then no need to relock since we still have one */
+	if (!TryLockLogicalDatabaseForSession(new_db_id, ShareLock) && !shouldRestoreDb)
+		ereport(ERROR,
+				(errcode(ERRCODE_INTERNAL_ERROR),
+				 errmsg("Cannot use database \"%s\", failed to obtain lock. "
+						"\"%s\" is probably undergoing DDL statements in another session.", 
+						stmt->db_name, stmt->db_name)));
+
+	set_session_properties(stmt->db_name);
+	
 	return PLTSQL_RC_OK;
 }
 
