@@ -1253,7 +1253,6 @@ pltsql_report_proc_not_found_error(List *names, List *given_argnames, int nargs,
 			if(!isnull)
 			{
 				Form_pg_proc procform = (Form_pg_proc) GETSTRUCT(tup);
-				Relation bbf_function_ext_rel;
 				HeapTuple bbffunctuple;
 				int pronargs = procform->pronargs;
 				int first_arg_with_default = pronargs - procform->pronargdefaults;
@@ -1323,17 +1322,18 @@ pltsql_report_proc_not_found_error(List *names, List *given_argnames, int nargs,
 					langname && pg_strcasecmp("pltsql", langname) == 0 &&
 					nargs < pronargs)
 				{
-					/* Fetch the relation */
-					bbf_function_ext_rel = table_open(get_bbf_function_ext_oid(), AccessShareLock);
-					bbffunctuple = search_bbf_function_ext_with_proctuple(bbf_function_ext_rel, tup);
+					bbffunctuple = get_bbf_function_tuple_from_proctuple(tup);
 
 					if (HeapTupleIsValid(bbffunctuple))
 					{
 						Datum	arg_default_positions;
 						char	*str;
 
-						arg_default_positions = heap_getattr(bbffunctuple, Anum_bbf_function_ext_default_positions,
-															 RelationGetDescr(bbf_function_ext_rel), &isnull);
+						/* Fetch default positions */
+						arg_default_positions = SysCacheGetAttr(SYSDATABASEOIDNSPPROCSIGNATURE,
+																bbffunctuple,
+																Anum_bbf_function_ext_default_positions,
+																&isnull);
 
 						if (!isnull)
 						{
@@ -1344,10 +1344,8 @@ pltsql_report_proc_not_found_error(List *names, List *given_argnames, int nargs,
 							pfree(str);
 						}
 						else
-							table_close(bbf_function_ext_rel, AccessShareLock);
+							ReleaseSysCache(bbffunctuple);
 					}
-					else
-						table_close(bbf_function_ext_rel, AccessShareLock);
 				}
 
 				/* Traverse arggiven list to check if a non-default parameter is not supplied. */
@@ -1414,8 +1412,7 @@ pltsql_report_proc_not_found_error(List *names, List *given_argnames, int nargs,
 				
 				if (default_positions_available)
 				{
-					heap_freetuple(bbffunctuple);
-					table_close(bbf_function_ext_rel, AccessShareLock);
+					ReleaseSysCache(bbffunctuple);
 				}
 				pfree(langname);
 			}
@@ -1925,9 +1922,11 @@ pltsql_store_func_default_positions(ObjectAddress address, List *parameters)
 	langname = get_language_name(form_proctup->prolang, true);
 	if (!langname || pg_strcasecmp("pltsql", langname) != 0)
 	{
-		pfree(langname);
+		if (langname)
+			pfree(langname);
 		return;
 	}
+	pfree(langname);
 
 	physical_schemaname = get_namespace_name(form_proctup->pronamespace);
 	if (physical_schemaname == NULL)
@@ -1935,6 +1934,17 @@ pltsql_store_func_default_positions(ObjectAddress address, List *parameters)
 		elog(ERROR,
 				"Could not find physical schemaname for %u",
 				 form_proctup->pronamespace);
+	}
+
+	/*
+	 * Do not store definition/data in case of sys, information_schema_tsql and
+	 * other shared schemas.
+	 */
+	if (is_shared_schema(physical_schemaname))
+	{
+		pfree(physical_schemaname);
+		ReleaseSysCache(proctup);
+		return;
 	}
 
 	dbid = get_dbid_from_physical_schema_name(physical_schemaname, true);
@@ -1985,7 +1995,6 @@ pltsql_store_func_default_positions(ObjectAddress address, List *parameters)
 	pfree(physical_schemaname);
 	pfree(logical_schemaname);
 	pfree(func_signature);
-	pfree(langname);
 	ReleaseSysCache(proctup);
 	heap_freetuple(tuple);
 	table_close(bbf_function_ext_rel, RowExclusiveLock);
@@ -1997,74 +2006,29 @@ pltsql_store_func_default_positions(ObjectAddress address, List *parameters)
 static void
 pltsql_drop_func_default_positions(Oid objectId)
 {
-	Relation	 bbf_function_ext_rel;
-	HeapTuple	 proctuple, scantup;
-	Form_pg_proc form;
-	int16		 dbid;
-	char		*physical_schemaname,
-				*logical_schemaname,
-				*func_signature,
-				*langname;
+	HeapTuple	 proctuple, bbffunctuple;
 
 	/* return if it is not a PL/tsql function */
 	proctuple = SearchSysCache1(PROCOID, ObjectIdGetDatum(objectId));
 	if (!HeapTupleIsValid(proctuple))
 		return;					/* concurrently dropped */
-	form = (Form_pg_proc) GETSTRUCT(proctuple);
-	langname = get_language_name(form->prolang, true);
-	if (!langname || pg_strcasecmp("pltsql", langname) != 0)
+
+	bbffunctuple = get_bbf_function_tuple_from_proctuple(proctuple);
+
+	if (HeapTupleIsValid(bbffunctuple))
 	{
-		pfree(langname);
-		ReleaseSysCache(proctuple);
-		return;
-	}
+		Relation	 bbf_function_ext_rel;
 
-	physical_schemaname = get_namespace_name(form->pronamespace);
-	if (physical_schemaname == NULL)
-	{
-		elog(ERROR,
-				"Could not find physical schemaname for %u",
-				 form->pronamespace);
-	}
-	dbid = get_dbid_from_physical_schema_name(physical_schemaname, true);
-	logical_schemaname = get_logical_schema_name(physical_schemaname, true);
-	func_signature = funcname_signature_string(NameStr(form->proname),
-													   form->pronargs,
-													   NIL,
-													   form->proargtypes.values);
+		/* Fetch the relation */
+		bbf_function_ext_rel = table_open(get_bbf_function_ext_oid(), RowExclusiveLock);
 
-	/*
-	 * If any of these entries are NULL then there
-	 * must not be any entry in catalog
-	 */
-	if (!DbidIsValid(dbid) || logical_schemaname == NULL || func_signature == NULL)
-	{
-		pfree(physical_schemaname);
-		if (logical_schemaname)
-			pfree(logical_schemaname);
-		pfree(func_signature);
-		ReleaseSysCache(proctuple);
-		return;
-	}
-
-	/* Fetch the relation */
-	bbf_function_ext_rel = table_open(get_bbf_function_ext_oid(), RowExclusiveLock);
-
-	scantup = search_bbf_function_ext(bbf_function_ext_rel, dbid, logical_schemaname, func_signature);
-
-	if (HeapTupleIsValid(scantup))
-	{
 		CatalogTupleDelete(bbf_function_ext_rel,
-						   &scantup->t_self);
-		heap_freetuple(scantup);
+						   &bbffunctuple->t_self);
+		table_close(bbf_function_ext_rel, RowExclusiveLock);
+		ReleaseSysCache(bbffunctuple);
 	}
 
-	pfree(physical_schemaname);
-	pfree(logical_schemaname);
-	pfree(func_signature);
-	pfree(langname);
 	ReleaseSysCache(proctuple);
-	table_close(bbf_function_ext_rel, RowExclusiveLock);
 }
 
 /*
@@ -2178,9 +2142,7 @@ PlTsqlMatchNamedCall(HeapTuple proctup, int nargs, List *argnames,
 	if (nargs < pronargs)
 	{
 		int			first_arg_with_default = pronargs - procform->pronargdefaults;
-		Relation	bbf_function_ext_rel;
-		Datum		proargdefaults;
-		HeapTuple	bbffunctuple;
+		HeapTuple	bbffunctuple = get_bbf_function_tuple_from_proctuple(proctup);
 		List		*argdefaults = NIL,
 					*default_positions = NIL;
 		bool		default_positions_available = false;
@@ -2188,8 +2150,11 @@ PlTsqlMatchNamedCall(HeapTuple proctup, int nargs, List *argnames,
 					*def_idx = NULL;
 		bool		match_found = true;
 
-		if (sql_dialect == SQL_DIALECT_TSQL)
+		if (sql_dialect == SQL_DIALECT_TSQL && HeapTupleIsValid(bbffunctuple))
 		{
+			Datum		proargdefaults;
+			Datum		arg_default_positions;
+
 			/* Fetch argument defaults */
 			proargdefaults = SysCacheGetAttr(PROCOID, proctup,
 											Anum_pg_proc_proargdefaults,
@@ -2205,31 +2170,24 @@ PlTsqlMatchNamedCall(HeapTuple proctup, int nargs, List *argnames,
 				pfree(str);
 			}
 
-			/* Fetch the relation */
-			bbf_function_ext_rel = table_open(get_bbf_function_ext_oid(), AccessShareLock);
-			bbffunctuple = search_bbf_function_ext_with_proctuple(bbf_function_ext_rel, proctup);
+			/* Fetch default positions */
+			arg_default_positions = SysCacheGetAttr(SYSDATABASEOIDNSPPROCSIGNATURE,
+													bbffunctuple,
+													Anum_bbf_function_ext_default_positions,
+													&isnull);
 
-			if (HeapTupleIsValid(bbffunctuple))
+			if (!isnull)
 			{
-				Datum	arg_default_positions;
-				char	*str;
+				char *str;
 
-				arg_default_positions = heap_getattr(bbffunctuple, Anum_bbf_function_ext_default_positions,
-													 RelationGetDescr(bbf_function_ext_rel), &isnull);
-
-				if (!isnull)
-				{
-					str = TextDatumGetCString(arg_default_positions);
-					default_positions = castNode(List, stringToNode(str));
-					def_idx = list_head(default_positions);
-					default_positions_available = true;
-					pfree(str);
-				}
-				else
-					table_close(bbf_function_ext_rel, AccessShareLock);
+				str = TextDatumGetCString(arg_default_positions);
+				default_positions = castNode(List, stringToNode(str));
+				def_idx = list_head(default_positions);
+				default_positions_available = true;
+				pfree(str);
 			}
 			else
-				table_close(bbf_function_ext_rel, AccessShareLock);
+				ReleaseSysCache(bbffunctuple);
 		}
 
 		for (pp = numposargs; pp < pronargs; pp++)
@@ -2285,11 +2243,8 @@ PlTsqlMatchNamedCall(HeapTuple proctup, int nargs, List *argnames,
 			(*argnumbers)[ap++] = pp;
 		}
 
-		if(default_positions_available)
-		{
-			heap_freetuple(bbffunctuple);
-			table_close(bbf_function_ext_rel, AccessShareLock);
-		}
+		if (default_positions_available)
+			ReleaseSysCache(bbffunctuple);
 
 		if (!match_found)
 			return false;
@@ -2318,23 +2273,23 @@ PlTsqlMatchNamedCall(HeapTuple proctup, int nargs, List *argnames,
 static bool
 PlTsqlMatchUnNamedCall(HeapTuple proctup, int nargs, int pronargs)
 {
-	Relation	bbf_function_ext_rel;
 	HeapTuple	bbffunctuple;
 
 	if (sql_dialect != SQL_DIALECT_TSQL)
 		return true;
 
-	/* Fetch the relation */
-	bbf_function_ext_rel = table_open(get_bbf_function_ext_oid(), AccessShareLock);
-	bbffunctuple = search_bbf_function_ext_with_proctuple(bbf_function_ext_rel, proctup);
+	bbffunctuple = get_bbf_function_tuple_from_proctuple(proctup);
 
 	if (HeapTupleIsValid(bbffunctuple))
 	{
 		Datum	 arg_default_positions;
 		bool	 isnull;
 
-		arg_default_positions = heap_getattr(bbffunctuple, Anum_bbf_function_ext_default_positions,
-											 RelationGetDescr(bbf_function_ext_rel), &isnull);
+		/* Fetch default positions */
+		arg_default_positions = SysCacheGetAttr(SYSDATABASEOIDNSPPROCSIGNATURE,
+												bbffunctuple,
+												Anum_bbf_function_ext_default_positions,
+												&isnull);
 
 		if (!isnull)
 		{
@@ -2358,16 +2313,14 @@ PlTsqlMatchUnNamedCall(HeapTuple proctup, int nargs, int pronargs)
 			/* we could not find defaults for some arguments. */
 			if (idx < pronargs)
 			{
-				heap_freetuple(bbffunctuple);
-				table_close(bbf_function_ext_rel, AccessShareLock);
+				ReleaseSysCache(bbffunctuple);
 				return false;
 			}
 		}
 
-		heap_freetuple(bbffunctuple);
+		ReleaseSysCache(bbffunctuple);
 	}
 
-	table_close(bbf_function_ext_rel, AccessShareLock);
 	return true;
 }
 
@@ -2383,23 +2336,23 @@ PlTsqlMatchUnNamedCall(HeapTuple proctup, int nargs, int pronargs)
 static void
 insert_pltsql_function_defaults(HeapTuple func_tuple, List *defaults, Node **argarray)
 {
-	Relation	bbf_function_ext_rel;
 	HeapTuple	bbffunctuple;
 
 	if (sql_dialect != SQL_DIALECT_TSQL)
 		return;
 
-	/* Fetch the relation */
-	bbf_function_ext_rel = table_open(get_bbf_function_ext_oid(), AccessShareLock);
-	bbffunctuple = search_bbf_function_ext_with_proctuple(bbf_function_ext_rel, func_tuple);
+	bbffunctuple = get_bbf_function_tuple_from_proctuple(func_tuple);
 
 	if (HeapTupleIsValid(bbffunctuple))
 	{
 		Datum				  arg_default_positions;
 		bool				  isnull;
 
-		arg_default_positions = heap_getattr(bbffunctuple, Anum_bbf_function_ext_default_positions,
-											 RelationGetDescr(bbf_function_ext_rel), &isnull);
+		/* Fetch default positions */
+		arg_default_positions = SysCacheGetAttr(SYSDATABASEOIDNSPPROCSIGNATURE,
+												bbffunctuple,
+												Anum_bbf_function_ext_default_positions,
+												&isnull);
 
 		if (!isnull)
 		{
@@ -2421,7 +2374,7 @@ insert_pltsql_function_defaults(HeapTuple func_tuple, List *defaults, Node **arg
 			}
 		}
 
-		heap_freetuple(bbffunctuple);
+		ReleaseSysCache(bbffunctuple);
 	}
 	else
 	{
@@ -2437,8 +2390,6 @@ insert_pltsql_function_defaults(HeapTuple func_tuple, List *defaults, Node **arg
 			i++;
 		}
 	}
-
-	table_close(bbf_function_ext_rel, AccessShareLock);
 }
 
 /*
@@ -2451,7 +2402,6 @@ static int
 print_pltsql_function_arguments(StringInfo buf, HeapTuple proctup, bool print_table_args)
 {
 	Form_pg_proc proc = (Form_pg_proc) GETSTRUCT(proctup);
-	Relation	bbf_function_ext_rel;
 	HeapTuple	bbffunctuple;
 	int			numargs;
 	Oid		   *argtypes;
@@ -2487,17 +2437,18 @@ print_pltsql_function_arguments(StringInfo buf, HeapTuple proctup, bool print_ta
 		nlackdefaults = proc->pronargs - list_length(argdefaults);
 	}
 
-	/* Fetch the relation */
-	bbf_function_ext_rel = table_open(get_bbf_function_ext_oid(), AccessShareLock);
-	bbffunctuple = search_bbf_function_ext_with_proctuple(bbf_function_ext_rel, proctup);
+	bbffunctuple = get_bbf_function_tuple_from_proctuple(proctup);
 
 	if (HeapTupleIsValid(bbffunctuple))
 	{
 		Datum		arg_default_positions;
 		char	   *str;
 
-		arg_default_positions = heap_getattr(bbffunctuple, Anum_bbf_function_ext_default_positions,
-											 RelationGetDescr(bbf_function_ext_rel), &isnull);
+		/* Fetch default positions */
+		arg_default_positions = SysCacheGetAttr(SYSDATABASEOIDNSPPROCSIGNATURE,
+												bbffunctuple,
+												Anum_bbf_function_ext_default_positions,
+												&isnull);
 
 		if (!isnull)
 		{
@@ -2508,10 +2459,8 @@ print_pltsql_function_arguments(StringInfo buf, HeapTuple proctup, bool print_ta
 			pfree(str);
 		}
 		else
-			table_close(bbf_function_ext_rel, AccessShareLock);
+			ReleaseSysCache(bbffunctuple);
 	}
-	else
-		table_close(bbf_function_ext_rel, AccessShareLock);
 
 	/* Check for special treatment of ordered-set aggregates */
 	if (proc->prokind == PROKIND_AGGREGATE)
@@ -2632,6 +2581,9 @@ print_pltsql_function_arguments(StringInfo buf, HeapTuple proctup, bool print_ta
 			i--;
 		}
 	}
+
+	if (default_positions_available)
+		ReleaseSysCache(bbffunctuple);
 
 	return argsprinted;
 }
