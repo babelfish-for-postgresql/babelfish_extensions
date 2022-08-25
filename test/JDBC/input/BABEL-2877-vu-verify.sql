@@ -10,6 +10,9 @@ GO
 SELECT * FROM babel_2877_vu_prepare_func1(10, 20, 30, 40);
 GO
 
+SELECT * FROM babel_2877_vu_prepare_view1;
+GO
+
 EXEC babel_2877_vu_prepare_proc1; -- should fail, required arguments @a and @d not supplied
 GO
 

@@ -29,6 +29,14 @@ int
 ~~END~~
 
 
+SELECT * FROM babel_2877_vu_prepare_view1;
+GO
+~~START~~
+int
+100
+~~END~~
+
+
 EXEC babel_2877_vu_prepare_proc1; -- should fail, required arguments @a and @d not supplied
 GO
 ~~ERROR (Code: 201)~~

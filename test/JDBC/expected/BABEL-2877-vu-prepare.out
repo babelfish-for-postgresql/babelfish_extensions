@@ -17,3 +17,6 @@ BEGIN
 	SELECT @a + @b + @c + @d;
 END
 GO
+
+CREATE VIEW babel_2877_vu_prepare_view1 AS SELECT babel_2877_vu_prepare_func1(10, 20, 30);
+GO

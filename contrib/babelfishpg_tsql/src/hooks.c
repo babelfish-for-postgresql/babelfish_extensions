@@ -2296,7 +2296,7 @@ PlTsqlMatchUnNamedCall(HeapTuple proctup, int nargs, int pronargs)
 			char	 *str;
 			List	 *default_positions = NIL;
 			ListCell *def_idx = NULL;
-			int		 idx = pronargs - nargs;
+			int		 idx = nargs;
 
 			str = TextDatumGetCString(arg_default_positions);
 			default_positions = castNode(List, stringToNode(str));
