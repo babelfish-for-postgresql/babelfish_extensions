@@ -1,0 +1,279 @@
+# -a packet_size
+Create table sourceTable(a int, b int not null)
+Create table destinationTable(a int, b int not null)
+Insert into sourceTable values (1, 1);
+Insert into sourceTable values (NULL, 2);
+bcp -a 1024#!#out#!#bcp_source#!#sourceTable
+bcp -a 1024#!#in#!#bcp_source#!#destinationTable
+Select * from sourceTable
+Select * from destinationTable
+drop table sourceTable
+drop table destinationTable
+
+# -b batch_size
+Create table sourceTable(a int, b int not null)
+Create table destinationTable(a int, b int not null)
+Insert into sourceTable values (1, 1);
+Insert into sourceTable values (NULL, 2);
+bcp -b 1024#!#out#!#bcp_source#!#sourceTable
+bcp -b 1024#!#in#!#bcp_source#!#destinationTable
+Select * from sourceTable
+Select * from destinationTable
+drop table sourceTable
+drop table destinationTable
+
+# -c character_data_type
+Create table sourceTable(a int, b int not null)
+Create table destinationTable(a int, b int not null)
+Insert into sourceTable values (1, 1);
+Insert into sourceTable values (NULL, 2);
+bcp -c#!#out#!#bcp_source#!#sourceTable
+bcp -c#!#in#!#bcp_source#!#destinationTable
+Select * from sourceTable
+Select * from destinationTable
+drop table sourceTable
+drop table destinationTable
+
+# -F first row
+Create table sourceTable(a int, b int not null)
+Create table destinationTable(a int, b int not null)
+Insert into sourceTable values (1, 1);
+Insert into sourceTable values (NULL, 2);
+Insert into sourceTable values (3, 1);
+Insert into sourceTable values (2, 2);
+bcp -F 2#!#out#!#bcp_source#!#sourceTable
+bcp -F 2#!#in#!#bcp_source#!#destinationTable
+Select * from sourceTable
+Select * from destinationTable
+drop table sourceTable
+drop table destinationTable
+
+# -L last row
+Create table sourceTable(a int, b int not null)
+Create table destinationTable(a int, b int not null)
+Insert into sourceTable values (1, 1);
+Insert into sourceTable values (NULL, 2);
+Insert into sourceTable values (3, 1);
+Insert into sourceTable values (2, 2);
+bcp -L 3#!#out#!#bcp_source#!#sourceTable
+bcp -L 2#!#in#!#bcp_source#!#destinationTable
+Select * from sourceTable
+Select * from destinationTable
+drop table sourceTable
+drop table destinationTable
+
+# -m max_errors
+Create table sourceTable(a int, b int not null)
+Create table destinationTable(a int, b int not null)
+Insert into sourceTable values (1, 1);
+Insert into sourceTable values (NULL, 2);
+bcp -m 1#!#out#!#bcp_source#!#sourceTable
+bcp -m 1#!#in#!#bcp_source#!#destinationTable
+Select * from sourceTable
+Select * from destinationTable
+drop table sourceTable
+drop table destinationTable
+
+# -k keep_nulls
+Create table sourceTable(a smallint, b smallint not null)
+Create table destinationTable(a smallint, b smallint not null)
+Insert into sourceTable values (1, 1);
+Insert into sourceTable values (NULL, 2);
+bcp -k#!#out#!#bcp_source#!#sourceTable
+bcp -k#!#in#!#bcp_source#!#destinationTable
+Select * from sourceTable
+Select * from destinationTable
+drop table sourceTable
+drop table destinationTable
+
+# -n native datatype
+Create table sourceTable(a int, b int not null)
+Create table destinationTable(a int, b int not null)
+Insert into sourceTable values (1, 1);
+Insert into sourceTable values (NULL, 2);
+bcp -n#!#out#!#bcp_source#!#sourceTable
+bcp -n#!#in#!#bcp_source#!#destinationTable
+Select * from sourceTable
+Select * from destinationTable
+drop table sourceTable
+drop table destinationTable
+
+# -N 
+Create table sourceTable(a int, b int not null)
+Create table destinationTable(a int, b int not null)
+Insert into sourceTable values (1, 1);
+Insert into sourceTable values (NULL, 2);
+bcp -N#!#out#!#bcp_source#!#sourceTable
+bcp -N#!#in#!#bcp_source#!#destinationTable
+Select * from sourceTable
+Select * from destinationTable
+drop table sourceTable
+drop table destinationTable
+
+# -r row terminator
+Create table sourceTable(a int, b int not null)
+Create table destinationTable(a int, b int not null)
+Insert into sourceTable values (1, 1);
+Insert into sourceTable values (NULL, 2);
+bcp -r ','#!#out#!#bcp_source#!#sourceTable
+bcp -r ','#!#in#!#bcp_source#!#destinationTable
+Select * from sourceTable
+Select * from destinationTable
+drop table sourceTable
+drop table destinationTable
+
+# -t field terminator
+Create table sourceTable(a int, b int not null)
+Create table destinationTable(a int, b int not null)
+Insert into sourceTable values (1, 1);
+Insert into sourceTable values (NULL, 2);
+bcp -t ','#!#out#!#bcp_source#!#sourceTable
+bcp -t ','#!#in#!#bcp_source#!#destinationTable
+Select * from sourceTable
+Select * from destinationTable
+drop table sourceTable
+drop table destinationTable
+
+# -h "bb " ROWS_PER_BATCH
+Create table sourceTable(a bigint, b bigint not null)
+Create table destinationTable(a bigint, b bigint not null)
+Create table destinationTable2(a bigint, b bigint not null)
+Insert into sourceTable values (1, 1);
+Insert into sourceTable values (NULL, 2);
+bcp -h "bb 24"#!#out#!#bcp_source#!#sourceTable
+bcp #!#in#!#bcp_source#!#destinationTable
+bcp -h "bb 24"#!#in#!#bcp_source#!#destinationTable2
+Select * from sourceTable
+Select * from destinationTable
+Select * from destinationTable2
+drop table sourceTable
+drop table destinationTable
+drop table destinationTable2
+
+# -h "cc " KILOBYTES_PER_BATCH
+Create table sourceTable(a bigint, b bigint not null)
+Create table destinationTable(a bigint, b bigint not null)
+Create table destinationTable2(a bigint, b bigint not null)
+Insert into sourceTable values (1, 1);
+Insert into sourceTable values (2, 2);
+bcp -h "cc 24"#!#out#!#bcp_source#!#sourceTable
+bcp #!#in#!#bcp_source#!#destinationTable
+bcp -h "cc 24"#!#in#!#bcp_source#!#destinationTable2
+Select * from sourceTable
+Select * from destinationTable
+Select * from destinationTable2
+drop table sourceTable
+drop table destinationTable
+drop table destinationTable2
+
+# -h "CHECK_CONSTRAINTS"
+Create table sourceTable(a bigint, b bigint not null)
+Create table destinationTable(a bigint, b bigint not null)
+Create table destinationTable2(a bigint, b bigint not null)
+Insert into sourceTable values (1, 1);
+Insert into sourceTable values (2, 2);
+bcp -h "CHECK_CONSTRAINTS"#!#out#!#bcp_source#!#sourceTable
+bcp #!#in#!#bcp_source#!#destinationTable
+bcp -h "CHECK_CONSTRAINTS"#!#in#!#bcp_source#!#destinationTable2
+Select * from sourceTable
+Select * from destinationTable
+Select * from destinationTable2
+drop table sourceTable
+drop table destinationTable
+drop table destinationTable2
+
+# -h "FIRE_TRIGGERS"
+Create table sourceTable(a bigint, b bigint not null)
+Create table destinationTable(a bigint, b bigint not null)
+Create table destinationTable2(a bigint, b bigint not null)
+Insert into sourceTable values (1, 1);
+Insert into sourceTable values (2, 2);
+bcp -h "FIRE_TRIGGERS"#!#out#!#bcp_source#!#sourceTable
+bcp #!#in#!#bcp_source#!#destinationTable
+bcp -h "FIRE_TRIGGERS"#!#in#!#bcp_source#!#destinationTable2
+Select * from sourceTable
+Select * from destinationTable
+Select * from destinationTable2
+drop table sourceTable
+drop table destinationTable
+drop table destinationTable2
+
+# -h "ORDER"
+Create table sourceTable(a bigint, b bigint not null)
+Create table destinationTable(a bigint, b bigint not null)
+Create table destinationTable2(a bigint, b bigint not null)
+Insert into sourceTable values (1, 1);
+Insert into sourceTable values (2, 2);
+bcp -h "ORDER(a DESC)"#!#out#!#bcp_source#!#sourceTable
+bcp #!#in#!#bcp_source#!#destinationTable
+bcp -h "ORDER(a DESC)"#!#in#!#bcp_source#!#destinationTable2
+Select * from sourceTable
+Select * from destinationTable
+Select * from destinationTable2
+drop table sourceTable
+drop table destinationTable
+drop table destinationTable2
+
+# -h "TABLOCK"
+Create table sourceTable(a bigint, b bigint not null)
+Create table destinationTable(a bigint, b bigint not null)
+Create table destinationTable2(a bigint, b bigint not null)
+Insert into sourceTable values (1, 1);
+Insert into sourceTable values (NULL, 2);
+bcp -h "TABLOCK"#!#out#!#bcp_source#!#sourceTable
+bcp #!#in#!#bcp_source#!#destinationTable
+bcp -h "TABLOCK"#!#in#!#bcp_source#!#destinationTable2
+Select * from sourceTable
+Select * from destinationTable
+Select * from destinationTable2
+drop table sourceTable
+drop table destinationTable
+drop table destinationTable2
+
+# -E 
+Create table sourceTable(a bigint, b bigint not null)
+Create table destinationTable(a bigint, b bigint not null)
+Insert into sourceTable values (1, 1);
+Insert into sourceTable values (NULL, 2);
+bcp -E#!#out#!#bcp_source#!#sourceTable
+bcp -E#!#in#!#bcp_source#!#destinationTable
+Select * from sourceTable
+Select * from destinationTable
+drop table sourceTable
+drop table destinationTable
+
+# -R 
+Create table sourceTable(a bigint, b bigint not null)
+Create table destinationTable(a bigint, b bigint not null)
+Insert into sourceTable values (1, 1);
+Insert into sourceTable values (NULL, 2);
+bcp -R#!#out#!#bcp_source#!#sourceTable
+bcp -R#!#in#!#bcp_source#!#destinationTable
+Select * from sourceTable
+Select * from destinationTable
+drop table sourceTable
+drop table destinationTable
+
+# -l login_timeout
+Create table sourceTable(a bigint, b bigint not null)
+Create table destinationTable(a bigint, b bigint not null)
+Insert into sourceTable values (1, 1);
+Insert into sourceTable values (NULL, 2);
+bcp -l 100#!#out#!#bcp_source#!#sourceTable
+bcp -l 100#!#in#!#bcp_source#!#destinationTable
+Select * from sourceTable
+Select * from destinationTable
+drop table sourceTable
+drop table destinationTable
+
+# -w 
+Create table sourceTable(a bigint, b bigint not null)
+Create table destinationTable(a bigint, b bigint not null)
+Insert into sourceTable values (1, 1);
+Insert into sourceTable values (NULL, 2);
+bcp -w#!#out#!#bcp_source#!#sourceTable
+bcp -w#!#in#!#bcp_source#!#destinationTable
+Select * from sourceTable
+Select * from destinationTable
+drop table sourceTable
+drop table destinationTable

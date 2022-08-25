@@ -264,6 +264,37 @@ namespace BabelfishDotnetFramework
 			}
 			return type;
 		}
+
+		public void bcp(string mode, string fileName, string tableName, string options, Logger log)
+		{
+			PrintToLogsOrConsole($"###################### EXECUTING BCP {mode} {tableName} ####################\n",log, "error");
+			Dictionary<string, string> dictionary = ConfigSetup.LoadConfig();
+			System.Diagnostics.Process p = new System.Diagnostics.Process();
+
+			string datafile = $@"./../../../Output/{fileName}.txt";
+			string bcpoptions = options.Length > 3 ? options.Substring(4): ""; 
+
+			p.StartInfo.FileName = $@"{dictionary["bcpPath"]}";
+			p.StartInfo.Arguments =
+				$"\"{tableName}\" {mode} {datafile} " +
+				$"-S {dictionary["babel_URL"]},{dictionary["babel_port"]} -U {dictionary["babel_user"]} " +
+				$"-P {dictionary["babel_password"]} -d {dictionary["babel_databaseName"]} -w {bcpoptions}";
+			p.StartInfo.UseShellExecute = false;
+			p.StartInfo.CreateNoWindow = false;
+			p.StartInfo.RedirectStandardOutput = true;
+			p.StartInfo.RedirectStandardError = true;
+			p.Start();
+			p.WaitForExit();
+			
+			PrintToLogsOrConsole(p.ExitCode.ToString(), log, "information");
+			if (p.ExitCode != 0)
+			    PrintToLogsOrConsole($"###################### ERROR IN EXECUTING BCP  ####################\n" +
+						 $"{p.StandardOutput.ReadToEnd()}", log, "error");
+			else
+			    PrintToLogsOrConsole($"###################### BCP {mode} {tableName} RAN SUCCESSFULLY ####################\n",
+				log, "information");
+		}
+
 		static List<List<string>> FetchTvpTableFromFile(string file)
 		{
 			var rows = new List<List<string>>();
