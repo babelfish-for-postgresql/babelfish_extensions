@@ -10066,8 +10066,9 @@ bool reset_search_path(PLtsql_stmt_execsql *stmt, char *old_search_path, bool* r
 
 	while(top_es_entry != NULL)
 	{
-		/* traverse through the estate stack. If the occurrence of
-		 * exec in the call stack, update the search path.
+		/*
+		 * Traverse through the estate stack. If the occurrence of
+		 * exec in the call stack, update the search path accordingly.
 		 */
 		if(top_es_entry->estate && top_es_entry->estate->err_stmt &&
 			top_es_entry->estate->err_stmt->cmd_type == PLTSQL_STMT_EXEC)
@@ -10121,14 +10122,19 @@ bool reset_search_path(PLtsql_stmt_execsql *stmt, char *old_search_path, bool* r
 				top_es_entry->estate->err_stmt->cmd_type == PLTSQL_STMT_EXEC_BATCH)
 			return false;
 
-		/* Traverse through the estate stack, if the stmt is inside trigger
-		 * we set the search path
+		/*
+		 * Traverse through the estate stack, if the stmt is inside trigger
+		 * we set the search path accordingly.
 		 */
-		if(top_es_entry->estate && top_es_entry->estate->err_stmt &&
+		else if(top_es_entry->estate && top_es_entry->estate->err_stmt &&
 				top_es_entry->estate->err_stmt->cmd_type == PLTSQL_STMT_EXECSQL)
 		{
 			if(inside_trigger && top_es_entry->estate->schema_name)
 			{
+				/*
+				 * If the object in the stmt is schema qualified or it's a ddl
+				 * we don't need to update the searh path.
+				 */
 				if (stmt->is_schema_specified || stmt->is_ddl)
 					return false;
 				else
