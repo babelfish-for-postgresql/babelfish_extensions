@@ -49,6 +49,24 @@ go
 use master;
 go
 
+create schema column_privileges_db_test_sc;
+go
+
+create table column_privileges_db_test_sc.column_privileges_db_test_tb3(arg1 int, arg2 int);
+go
+
+grant SELECT on column_privileges_db_test_sc.column_privileges_db_test_tb3(arg2) to column_privileges_db_test_u1;
+go
+
+select * from information_schema.column_privileges where table_name like 'column_privileges_db_test_tb%' and is_grantable='NO' order by table_name,column_name,privilege_type;
+go
+
+drop table column_privileges_db_test_sc.column_privileges_db_test_tb3;
+go
+
+drop schema column_privileges_db_test_sc;
+go
+
 drop table column_privileges_db_test_tb1;
 go
 
