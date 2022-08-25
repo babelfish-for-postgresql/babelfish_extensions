@@ -1318,9 +1318,7 @@ pltsql_report_proc_not_found_error(List *names, List *given_argnames, int nargs,
 						first_unknown_argname = argname;
 				}
 				
-				if (sql_dialect == SQL_DIALECT_TSQL &&
-					langname && pg_strcasecmp("pltsql", langname) == 0 &&
-					nargs < pronargs)
+				if (langname && pg_strcasecmp("pltsql", langname) == 0 && nargs < pronargs)
 				{
 					bbffunctuple = get_bbf_function_tuple_from_proctuple(tup);
 
@@ -1909,10 +1907,6 @@ pltsql_store_func_default_positions(ObjectAddress address, List *parameters)
 	ListCell	*x;
 	int			idx;
 
-	/* Only store defaults in T-SQL dialect */
-	if (sql_dialect != SQL_DIALECT_TSQL)
-		return;
-
 	/* Fetch the object details from function */
 	proctup = SearchSysCache1(PROCOID, ObjectIdGetDatum(address.objectId));
 	if (!HeapTupleIsValid(proctup))
@@ -2150,7 +2144,7 @@ PlTsqlMatchNamedCall(HeapTuple proctup, int nargs, List *argnames,
 					*def_idx = NULL;
 		bool		match_found = true;
 
-		if (sql_dialect == SQL_DIALECT_TSQL && HeapTupleIsValid(bbffunctuple))
+		if (HeapTupleIsValid(bbffunctuple))
 		{
 			Datum		proargdefaults;
 			Datum		arg_default_positions;
@@ -2275,9 +2269,6 @@ PlTsqlMatchUnNamedCall(HeapTuple proctup, int nargs, int pronargs)
 {
 	HeapTuple	bbffunctuple;
 
-	if (sql_dialect != SQL_DIALECT_TSQL)
-		return true;
-
 	bbffunctuple = get_bbf_function_tuple_from_proctuple(proctup);
 
 	if (HeapTupleIsValid(bbffunctuple))
@@ -2337,9 +2328,6 @@ static void
 insert_pltsql_function_defaults(HeapTuple func_tuple, List *defaults, Node **argarray)
 {
 	HeapTuple	bbffunctuple;
-
-	if (sql_dialect != SQL_DIALECT_TSQL)
-		return;
 
 	bbffunctuple = get_bbf_function_tuple_from_proctuple(func_tuple);
 
