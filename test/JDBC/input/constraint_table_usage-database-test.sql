@@ -31,6 +31,21 @@ go
 use master;
 go
 
+create schema constraint_table_usage_db_test_sc;
+go
+
+create table constraint_table_usage_db_test_sc.constraint_table_usage_db_test_tb3(arg3 char(10) NOT NULL, arg4 char(10), UNIQUE(arg3,arg4));
+go
+
+select * from information_schema.constraint_table_usage where table_name like 'constraint_table_usage_db_test_tb%' order by table_name,constraint_name,table_schema;
+go
+
+drop table constraint_table_usage_db_test_sc.constraint_table_usage_db_test_tb3;
+go
+
+drop schema constraint_table_usage_db_test_sc;
+go
+
 drop table constraint_table_usage_db_test_tb1;
 go
 
