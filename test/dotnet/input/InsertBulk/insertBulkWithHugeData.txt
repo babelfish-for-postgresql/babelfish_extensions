@@ -9,3 +9,8 @@ Select * from sourceTable
 Select * from destinationTable
 drop table sourceTable
 drop table destinationTable
+
+Create table destinationTable(ProductID int PRIMARY KEY NOT NULL, ProductName varchar(25) NOT NULL, Price money NULL, ProductDescription varchar(25) NULL)
+bcp#!#in#!#10kdata#!#destinationTable
+Select count(*) from destinationTable
+drop table destinationTable
