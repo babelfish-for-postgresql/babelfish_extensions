@@ -1157,8 +1157,7 @@ get_bbf_function_tuple_from_proctuple(HeapTuple proctuple)
 	if (is_shared_schema(physical_schemaname))
 	{
 		pfree(physical_schemaname);
-		ReleaseSysCache(proctuple);
-		return;
+		return NULL;
 	}
 
 	dbid = get_dbid_from_physical_schema_name(physical_schemaname, true);
