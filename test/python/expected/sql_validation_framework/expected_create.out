@@ -268,7 +268,6 @@ Could not find upgrade tests for view babelfish_has_perms_by_name_permissions
 Could not find upgrade tests for view information_schema_tsql.check_constraints
 Could not find upgrade tests for view information_schema_tsql.columns
 Could not find upgrade tests for view information_schema_tsql.domains
-Could not find upgrade tests for view information_schema_tsql.key_column_usage
 Could not find upgrade tests for view information_schema_tsql.table_constraints
 Could not find upgrade tests for view information_schema_tsql.tables
 Could not find upgrade tests for view sys.all_sql_modules
