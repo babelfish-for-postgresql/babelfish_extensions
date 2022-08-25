@@ -40,6 +40,21 @@ go
 use master;
 go
 
+create schema key_column_usage_db_test_sc;
+go
+
+create table key_column_usage_db_test_sc.key_column_usage_db_test_tb5(blueID INT PRIMARY KEY, greenID char(10));
+go
+
+select * from information_schema.key_column_usage where table_name like 'key_column_usage_db_test_tb%' order by table_name,constraint_name,ordinal_position;
+go
+
+drop table key_column_usage_db_test_sc.key_column_usage_db_test_tb5;
+go
+
+drop schema key_column_usage_db_test_sc;
+go
+
 drop table key_column_usage_db_test_tb2;
 go
 
