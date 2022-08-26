@@ -348,6 +348,17 @@ typedef struct NumericSumAccum
 	int32	   *neg_digits;
 } NumericSumAccum;
 
+/*
+	Struct referenced from utils/adt/numeric.c
+	It is needed to get the state returned by SUM(bigint) transition function
+*/
+typedef struct Int128AggState
+{
+	bool		calcSumX2;		/* if true, calculate sumX2 */
+	int64		N;				/* count of processed numbers */
+	int128		sumX;			/* sum of processed numbers */
+	int128		sumX2;			/* sum of squares of processed numbers */
+} Int128AggState;
 
 /*
  * We define our own macros for packing and unpacking abbreviated-key
@@ -406,6 +417,8 @@ static const int round_powers[4] = {0, 1000, 100, 10};
 
 PG_FUNCTION_INFO_V1(tsql_numeric_round);
 PG_FUNCTION_INFO_V1(tsql_numeric_trunc);
+PG_FUNCTION_INFO_V1(bigint_sum);
+PG_FUNCTION_INFO_V1(int_smallint_sum);
 
 static void alloc_var(NumericVar *var, int ndigits);
 static void free_var(NumericVar *var);
@@ -1028,4 +1041,49 @@ tsql_numeric_get_typmod(Numeric num)
 		precision = 1 + scale;
 
 	return (((precision & 0xFFFF) << 16 ) | (scale & 0xFFFF)) + VARHDRSZ;
+}
+
+Datum
+bigint_sum(PG_FUNCTION_ARGS)
+{
+	Int128AggState 	*state;
+	int64			res;
+	int128 			arg;
+
+	state = PG_ARGISNULL(0) ? NULL : (Int128AggState *) PG_GETARG_POINTER(0);
+
+	/* If there were no non-null inputs, return NULL */
+	if (state == NULL || state->N == 0)
+		PG_RETURN_NULL();
+
+	arg = state->sumX;
+
+	if (unlikely(arg < PG_INT64_MIN) || unlikely(arg > PG_INT64_MAX))
+		ereport(ERROR,
+				(errcode(ERRCODE_NUMERIC_VALUE_OUT_OF_RANGE),
+				 errmsg("Arithmetic overflow error converting expression to data type bigint.")));
+
+	PG_RETURN_INT64((int64) arg);
+}
+
+Datum
+int_smallint_sum(PG_FUNCTION_ARGS)
+{
+
+	int64 arg;
+	if (PG_ARGISNULL(0))
+	{
+		PG_RETURN_NULL();
+	}
+	else
+	{
+		arg = PG_GETARG_INT64(0);
+
+		if (unlikely(arg < PG_INT32_MIN) || unlikely(arg > PG_INT32_MAX))
+		ereport(ERROR,
+				(errcode(ERRCODE_NUMERIC_VALUE_OUT_OF_RANGE),
+				 errmsg("Arithmetic overflow error converting expression to data type int.")));
+
+		PG_RETURN_INT32((int32) arg);
+	}
 }
