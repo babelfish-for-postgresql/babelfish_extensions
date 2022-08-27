@@ -6089,18 +6089,13 @@ exec_stmt_close(PLtsql_execstate *estate, PLtsql_stmt_close *stmt)
 static int
 exec_stmt_commit(PLtsql_execstate *estate, PLtsql_stmt_commit *stmt)
 {
-	if (pltsql_explain_only) {
-		append_explain_info(NULL, "COMMIT");
-	}
-	else {
-		SPI_commit();
-		SPI_start_transaction();
+	SPI_commit();
+	SPI_start_transaction();
 
-		estate->simple_eval_estate = NULL;
-		pltsql_create_econtext(estate);
+	estate->simple_eval_estate = NULL;
+	pltsql_create_econtext(estate);
 
-		return PLTSQL_RC_OK;
-	}
+	return PLTSQL_RC_OK;
 }
 
 /*
@@ -7538,14 +7533,9 @@ exec_eval_simple_expr(PLtsql_execstate *estate,
 	 */
 	expr->expr_simple_in_use = true;
 
-	/*
-	 * Finally we can call the executor to evaluate the expression
-	 *  if not in explain only mode
-	 */
-	if (!pltsql_explain_only)
-		*result = ExecEvalExpr(expr->expr_simple_state,
-							econtext,
-							isNull);
+	*result = ExecEvalExpr(expr->expr_simple_state,
+						econtext,
+						isNull);
 
 	/* Assorted cleanup */
 	expr->expr_simple_in_use = false;

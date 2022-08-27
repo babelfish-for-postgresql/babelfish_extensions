@@ -1283,7 +1283,7 @@ typedef struct ExplainInfo
 	size_t next_indent;
 
 	/* used to restore session to original schema if "use db" is invoked */
-    char *initial_schema;
+    char *initial_database;
 } ExplainInfo;
 
 typedef struct PLtsql_execstate

@@ -60,6 +60,7 @@ void append_explain_info(QueryDesc *queryDesc, const char *queryString)
 	MemoryContext oldcxt;
 	ExplainState *es;
 	ExplainInfo *einfo;
+	char *initial_database;
 	size_t indent;
 	int nestlevel;
 
@@ -104,10 +105,12 @@ void append_explain_info(QueryDesc *queryDesc, const char *queryString)
 	{
 		ExplainInfo *last_einfo = (ExplainInfo *) llast(pltsql_estate->explain_infos);
 		indent = last_einfo->next_indent;
+		initial_database = last_einfo->initial_database;
 	}
 	else
 	{
 		indent = 0;
+		initial_database = NULL;
 	}
 
 	es = NewExplainState();
@@ -165,6 +168,7 @@ void append_explain_info(QueryDesc *queryDesc, const char *queryString)
 
 	einfo = (ExplainInfo *) palloc0(sizeof(ExplainInfo));
 	einfo->data = pstrdup(es->str->data);
+	einfo->initial_database = initial_database;
 	einfo->next_indent = indent;
 	pltsql_estate->explain_infos = lappend(pltsql_estate->explain_infos, einfo);
 
@@ -172,17 +176,17 @@ void append_explain_info(QueryDesc *queryDesc, const char *queryString)
 	MemoryContextSwitchTo(oldcxt);
 }
 
-void set_explain_schema(char *db_name)
+void set_explain_database(const char *db_name)
 {
        ExplainInfo *einfo = get_last_explain_info();
-       einfo->initial_schema = db_name;
+       einfo->initial_database = db_name;
 }
 
-char *get_explain_schema(void)
+char *get_explain_database(void)
 {
        ExplainInfo *einfo = get_last_explain_info();
-       if (einfo != NULL && einfo->initial_schema)
-               return einfo->initial_schema;
+       if (einfo != NULL && einfo->initial_database)
+               return einfo->initial_database;
 
        return NULL;
 }
