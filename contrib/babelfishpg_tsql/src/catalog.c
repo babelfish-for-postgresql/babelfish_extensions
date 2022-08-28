@@ -176,7 +176,6 @@ void initTsqlSyscache() {
 	if (!tsql_syscache_inited) {
 		InitExtensionCatalogCache(my_cacheinfo, SYSDATABASEOID, 2);
 		tsql_syscache_inited = true;
-		bbf_function_ext_syscache_inited = true;
 	}
 
 	if (OidIsValid(bbf_function_ext_oid) && OidIsValid(bbf_function_ext_idx_oid))
@@ -1147,7 +1146,7 @@ get_bbf_function_ext_idx_oid()
 		bbf_function_ext_idx_oid = get_relname_relid(BBF_FUNCTION_EXT_IDX_NAME,
 												 get_namespace_oid("sys", false));
 
-	if (OidIsValid(bbf_function_ext_oid))
+	if (OidIsValid(bbf_function_ext_idx_oid))
 		initBbfFunctionExtSyscache();
 
 	return bbf_function_ext_idx_oid;
@@ -1235,47 +1234,44 @@ clean_up_bbf_function_ext(int16 dbid)
 				BTEqualStrategyNumber, F_INT2EQ,
 				Int16GetDatum(dbid));
 
-	scan = systable_beginscan(namespace_rel,
-							  namespace_ext_idx_oid_oid,
-							  true, NULL, 1, scanKey);
+	scan = table_beginscan_catalog(namespace_rel, 1, scanKey);
+	scantup = heap_getnext(scan, ForwardScanDirection);
 
-	while ((scantup = systable_getnext(scan)) != NULL)
+	while (HeapTupleIsValid(scantup))
 	{
-		if (HeapTupleIsValid(scantup))
+		bool		isNull;
+		Datum		nspname;
+		HeapTuple	functup;
+		SysScanDesc	funcscan;
+
+		nspname = heap_getattr(scantup,
+							   Anum_namespace_ext_namespace,
+							   RelationGetDescr(namespace_rel),
+							   &isNull);
+
+		/* Search and drop the entry */
+		ScanKeyInit(&scanKey[0],
+					Anum_bbf_function_ext_nspname,
+					BTEqualStrategyNumber, F_TEXTEQ,
+					nspname);
+
+		funcscan = systable_beginscan(bbf_function_ext_rel,
+									  get_bbf_function_ext_idx_oid(),
+									  true, NULL, 1, scanKey);
+
+		while ((functup = systable_getnext(funcscan)) != NULL)
 		{
-			bool		isNull;
-			Datum		nspname;
-			HeapTuple	functup;
-			SysScanDesc	funcscan;
-
-			nspname = heap_getattr(scantup,
-								   Anum_namespace_ext_namespace,
-								   RelationGetDescr(namespace_rel),
-								   &isNull);
-
-			/* Search and drop the entry */
-			ScanKeyInit(&scanKey[0],
-						Anum_bbf_function_ext_nspname,
-						BTEqualStrategyNumber, F_TEXTEQ,
-						nspname);
-
-			funcscan = systable_beginscan(bbf_function_ext_rel,
-										  get_bbf_function_ext_idx_oid(),
-										  true, NULL, 1, scanKey);
-
-			while ((functup = systable_getnext(funcscan)) != NULL)
-			{
-				if (HeapTupleIsValid(functup))
-					CatalogTupleDelete(bbf_function_ext_rel,
-									&functup->t_self);
-			}
-
-			systable_endscan(funcscan);
+			if (HeapTupleIsValid(functup))
+				CatalogTupleDelete(bbf_function_ext_rel,
+								&functup->t_self);
 		}
+
+		systable_endscan(funcscan);
+		scantup = heap_getnext(scan, ForwardScanDirection);
 	}
 
-	systable_endscan(scan);
-	table_close(namespace_ext_oid, AccessShareLock);
+	table_endscan(scan);
+	table_close(namespace_rel, AccessShareLock);
 	table_close(bbf_function_ext_rel, RowExclusiveLock);
 }
 
