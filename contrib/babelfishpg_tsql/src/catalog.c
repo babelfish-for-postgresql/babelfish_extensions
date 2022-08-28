@@ -12,6 +12,7 @@
 #include "catalog/pg_authid.h"
 #include "catalog/pg_proc.h"
 #include "catalog/namespace.h"
+#include "parser/parse_relation.h"
 #include "parser/scansup.h"
 #include "utils/builtins.h"
 #include "utils/fmgroids.h"
@@ -76,6 +77,7 @@ Oid			bbf_function_ext_idx_oid;
  *****************************************/
 
 static bool tsql_syscache_inited = false;
+static bool bbf_function_ext_syscache_inited = false;
 extern bool babelfish_dump_restore;
 
 static struct cachedesc my_cacheinfo[] = {
@@ -100,18 +102,21 @@ static struct cachedesc my_cacheinfo[] = {
               0
           },
           16
-      },
-	  {-1,       /* SYSDATABASEOIDNSPPROCSIGNATURE */ 
+      }
+};
+
+static struct cachedesc bbf_function_ext_cacheinfo[] = {
+	 {-1,       /* PROCNSPSIGNATURE */ 
           -1,
-          3,
+          2,
           {
-              Anum_bbf_function_ext_dbid,
-              Anum_bbf_function_ext_schema_name,
-              Anum_bbf_function_ext_function_signature,
+              Anum_bbf_function_ext_nspname,
+              Anum_bbf_function_ext_funcsignature,
+              0,
               0
           },
           16
-      }
+     }
 };
 
 PG_FUNCTION_INFO_V1(init_catalog);
@@ -141,8 +146,8 @@ Datum init_catalog(PG_FUNCTION_ARGS)
 	my_cacheinfo[0].indoid = sysdatabaese_idx_oid_oid;
 	my_cacheinfo[1].reloid = sysdatabases_oid;
 	my_cacheinfo[1].indoid = sysdatabaese_idx_name_oid;
-	my_cacheinfo[2].reloid = bbf_function_ext_oid;
-	my_cacheinfo[2].indoid = bbf_function_ext_idx_oid;
+	bbf_function_ext_cacheinfo[0].reloid = bbf_function_ext_oid;
+	bbf_function_ext_cacheinfo[0].indoid = bbf_function_ext_idx_oid;
 
 	/* login ext */
 	bbf_authid_login_ext_oid = get_relname_relid(BBF_AUTHID_LOGIN_EXT_TABLE_NAME,
@@ -169,8 +174,26 @@ void initTsqlSyscache() {
 	Assert(my_cacheinfo[0].reloid != -1);
 	/* Initialize info for catcache */
 	if (!tsql_syscache_inited) {
-		InitExtensionCatalogCache(my_cacheinfo, SYSDATABASEOID, 3);
+		InitExtensionCatalogCache(my_cacheinfo, SYSDATABASEOID, 2);
 		tsql_syscache_inited = true;
+		bbf_function_ext_syscache_inited = true;
+	}
+
+	if (OidIsValid(bbf_function_ext_oid) && OidIsValid(bbf_function_ext_idx_oid))
+		initBbfFunctionExtSyscache();
+}
+
+void initBbfFunctionExtSyscache()
+{
+	Assert(OidIsValid(bbf_function_ext_oid));
+	Assert(OidIsValid(bbf_function_ext_idx_oid));
+
+	if (!bbf_function_ext_syscache_inited)
+	{
+		bbf_function_ext_cacheinfo[0].reloid = bbf_function_ext_oid;
+		bbf_function_ext_cacheinfo[0].indoid = bbf_function_ext_idx_oid;
+		InitExtensionCatalogCache(bbf_function_ext_cacheinfo, PROCNSPSIGNATURE, 1);
+		bbf_function_ext_syscache_inited = true;
 	}
 }
 
@@ -1111,6 +1134,9 @@ get_bbf_function_ext_oid()
 		bbf_function_ext_oid = get_relname_relid(BBF_FUNCTION_EXT_TABLE_NAME,
 											 get_namespace_oid("sys", false));
 
+	if (OidIsValid(bbf_function_ext_oid))
+		initBbfFunctionExtSyscache();
+
 	return bbf_function_ext_oid;
 }
 
@@ -1121,6 +1147,9 @@ get_bbf_function_ext_idx_oid()
 		bbf_function_ext_idx_oid = get_relname_relid(BBF_FUNCTION_EXT_IDX_NAME,
 												 get_namespace_oid("sys", false));
 
+	if (OidIsValid(bbf_function_ext_oid))
+		initBbfFunctionExtSyscache();
+
 	return bbf_function_ext_idx_oid;
 }
 
@@ -1129,13 +1158,11 @@ get_bbf_function_tuple_from_proctuple(HeapTuple proctuple)
 {
 	HeapTuple	 bbffunctuple;
 	Form_pg_proc form;
-	int16		 dbid;
 	char		 *physical_schemaname,
-				 *logical_schemaname,
 				 *func_signature,
 				 *langname;
 
-	if (!HeapTupleIsValid(proctuple))
+	if (!HeapTupleIsValid(proctuple) || !OidIsValid(get_bbf_function_ext_idx_oid()))
 		return NULL;					/* concurrently dropped */
 	form = (Form_pg_proc) GETSTRUCT(proctuple);
 	langname = get_language_name(form->prolang, true);
@@ -1155,40 +1182,29 @@ get_bbf_function_tuple_from_proctuple(HeapTuple proctuple)
 				 form->pronamespace);
 	}
 
-	/* skip for shared schemas and upgrade */
-	if (is_shared_schema(physical_schemaname) || babelfish_dump_restore)
+	/* skip for shared schemas */
+	if (is_shared_schema(physical_schemaname))
 	{
 		pfree(physical_schemaname);
 		return NULL;
 	}
 
-	dbid = get_dbid_from_physical_schema_name(physical_schemaname, true);
-	logical_schemaname = get_logical_schema_name(physical_schemaname, true);
 	func_signature = funcname_signature_string(NameStr(form->proname),
-													   form->pronargs,
-													   NIL,
-													   form->proargtypes.values);
+											   form->pronargs,
+											   NIL,
+											   form->proargtypes.values);
 
-	/*
-	 * If any of these entries are NULL then there
-	 * must not be any entry in catalog
-	 */
-	if (!DbidIsValid(dbid) || logical_schemaname == NULL || func_signature == NULL)
+	if (func_signature == NULL)
 	{
 		pfree(physical_schemaname);
-		if (logical_schemaname)
-			pfree(logical_schemaname);
-		pfree(func_signature);
 		return NULL;
 	}
 
-	bbffunctuple = SearchSysCache3(SYSDATABASEOIDNSPPROCSIGNATURE,
-									Int16GetDatum(dbid),
-									CStringGetTextDatum(logical_schemaname),
+	bbffunctuple = SearchSysCache2(PROCNSPSIGNATURE,
+									CStringGetDatum(physical_schemaname),
 									CStringGetTextDatum(func_signature));
 
 	pfree(physical_schemaname);
-	pfree(logical_schemaname);
 	pfree(func_signature);
 
 	return bbffunctuple;
@@ -1197,32 +1213,69 @@ get_bbf_function_tuple_from_proctuple(HeapTuple proctuple)
 void
 clean_up_bbf_function_ext(int16 dbid)
 {
-	Relation		bbf_function_ext_rel;
+	Relation		bbf_function_ext_rel, namespace_rel;
+	AttrNumber		attnum;
 	HeapTuple		scantup;
 	ScanKeyData		scanKey[1];
 	SysScanDesc		scan;
 
-	/* Fetch the relation */
+	/* Fetch the relations */
+	namespace_rel = table_open(namespace_ext_oid, AccessShareLock);
 	bbf_function_ext_rel = table_open(get_bbf_function_ext_oid(), RowExclusiveLock);
 
-	/* Search and drop the definition */
-	ScanKeyInit(&scanKey[0],
-				Anum_bbf_function_ext_dbid,
+	attnum = (AttrNumber) attnameAttNum(namespace_rel, "dbid", false);
+	if (attnum == InvalidAttrNumber)
+		ereport(ERROR, 
+				(errcode(ERRCODE_UNDEFINED_COLUMN),
+				 errmsg("column \"dbid\" of relation \"%s\" does not exist",
+						RelationGetRelationName(namespace_rel))));
+
+	ScanKeyInit(&scanKey[0], 
+				attnum,
 				BTEqualStrategyNumber, F_INT2EQ,
 				Int16GetDatum(dbid));
 
-	scan = systable_beginscan(bbf_function_ext_rel,
-							  get_bbf_function_ext_idx_oid(),
+	scan = systable_beginscan(namespace_rel,
+							  namespace_ext_idx_oid_oid,
 							  true, NULL, 1, scanKey);
 
 	while ((scantup = systable_getnext(scan)) != NULL)
 	{
 		if (HeapTupleIsValid(scantup))
-			CatalogTupleDelete(bbf_function_ext_rel,
-							&scantup->t_self);
+		{
+			bool		isNull;
+			Datum		nspname;
+			HeapTuple	functup;
+			SysScanDesc	funcscan;
+
+			nspname = heap_getattr(scantup,
+								   Anum_namespace_ext_namespace,
+								   RelationGetDescr(namespace_rel),
+								   &isNull);
+
+			/* Search and drop the entry */
+			ScanKeyInit(&scanKey[0],
+						Anum_bbf_function_ext_nspname,
+						BTEqualStrategyNumber, F_TEXTEQ,
+						nspname);
+
+			funcscan = systable_beginscan(bbf_function_ext_rel,
+										  get_bbf_function_ext_idx_oid(),
+										  true, NULL, 1, scanKey);
+
+			while ((functup = systable_getnext(funcscan)) != NULL)
+			{
+				if (HeapTupleIsValid(functup))
+					CatalogTupleDelete(bbf_function_ext_rel,
+									&functup->t_self);
+			}
+
+			systable_endscan(funcscan);
+		}
 	}
 
 	systable_endscan(scan);
+	table_close(namespace_ext_oid, AccessShareLock);
 	table_close(bbf_function_ext_rel, RowExclusiveLock);
 }
 

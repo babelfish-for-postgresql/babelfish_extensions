@@ -1329,7 +1329,7 @@ pltsql_report_proc_not_found_error(List *names, List *given_argnames, int nargs,
 						char	*str;
 
 						/* Fetch default positions */
-						arg_default_positions = SysCacheGetAttr(SYSDATABASEOIDNSPPROCSIGNATURE,
+						arg_default_positions = SysCacheGetAttr(PROCNSPSIGNATURE,
 																bbffunctuple,
 																Anum_bbf_function_ext_default_positions,
 																&isnull);
@@ -1897,11 +1897,10 @@ pltsql_store_func_default_positions(ObjectAddress address, List *parameters)
 	TupleDesc	bbf_function_ext_rel_dsc;
 	Datum		new_record[BBF_FUNCTION_EXT_NUM_COLS];
 	bool		new_record_nulls[BBF_FUNCTION_EXT_NUM_COLS];
-	HeapTuple	tuple, proctup;
+	bool		new_record_replaces[BBF_FUNCTION_EXT_NUM_COLS];
+	HeapTuple	tuple, proctup, oldtup;
 	Form_pg_proc	form_proctup;
-	int16		dbid;
 	char		*physical_schemaname,
-				*logical_schemaname,
 				*func_signature;
 	List		*default_positions = NIL;
 	char		*langname;
@@ -1933,31 +1932,21 @@ pltsql_store_func_default_positions(ObjectAddress address, List *parameters)
 	}
 
 	/*
-	 * Do not store definition/data in case of sys, information_schema_tsql and
-	 * other shared schemas or during upgrade.
+	 * Do not store data in case of sys, information_schema_tsql and
+	 * other shared schemas.
 	 */
-	if (is_shared_schema(physical_schemaname) || babelfish_dump_restore)
+	if (is_shared_schema(physical_schemaname))
 	{
 		pfree(physical_schemaname);
 		ReleaseSysCache(proctup);
 		return;
 	}
 
-	dbid = get_dbid_from_physical_schema_name(physical_schemaname, true);
-	logical_schemaname = get_logical_schema_name(physical_schemaname, true);
-	if(!DbidIsValid(dbid) || logical_schemaname == NULL)
-	{
-		ereport(ERROR,
-				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-				errmsg("Could not find dbid or logical schema for this physical schema '%s'." \
-				"CREATE FUNCTION from non-babelfish schema/db is not allowed in TSQL dialect.", physical_schemaname)));
-	}
-
 	func_signature = funcname_signature_string(NameStr(form_proctup->proname),
 													   form_proctup->pronargs,
 													   NIL,
 													   form_proctup->proargtypes.values);
-	
+
 	idx = 0;
 	foreach(x, parameters)
 	{
@@ -1970,26 +1959,54 @@ pltsql_store_func_default_positions(ObjectAddress address, List *parameters)
 		idx++;
 	}
 
+	if (!OidIsValid(get_bbf_function_ext_idx_oid()))
+		return;
+
 	bbf_function_ext_rel = table_open(get_bbf_function_ext_oid(), RowExclusiveLock);
 	bbf_function_ext_rel_dsc = RelationGetDescr(bbf_function_ext_rel);
 
 	MemSet(new_record_nulls, false, sizeof(new_record_nulls));
+	MemSet(new_record_replaces, false, sizeof(new_record_replaces));
 
-	new_record[Anum_bbf_function_ext_dbid -1] = Int16GetDatum(dbid);
-	new_record[Anum_bbf_function_ext_schema_name -1] = CStringGetTextDatum(logical_schemaname);
-	new_record[Anum_bbf_function_ext_function_signature - 1] = CStringGetTextDatum(func_signature);
+	new_record[Anum_bbf_function_ext_nspname -1] = CStringGetDatum(physical_schemaname);
+	new_record[Anum_bbf_function_ext_funcname -1] = NameGetDatum(&form_proctup->proname);
+	new_record[Anum_bbf_function_ext_funcsignature - 1] = CStringGetTextDatum(func_signature);
 	if (default_positions != NIL)
 		new_record[Anum_bbf_function_ext_default_positions - 1] = CStringGetTextDatum(nodeToString(default_positions));
 	else
 		new_record_nulls[Anum_bbf_function_ext_default_positions - 1] = true;
+	new_record_replaces[Anum_bbf_function_ext_default_positions - 1] = true;
 
-	tuple = heap_form_tuple(bbf_function_ext_rel_dsc,
-							new_record, new_record_nulls);
+	oldtup = get_bbf_function_tuple_from_proctuple(proctup);
 
-	CatalogTupleInsert(bbf_function_ext_rel, tuple);
+	if (HeapTupleIsValid(oldtup))
+	{
+		tuple = heap_modify_tuple(oldtup, bbf_function_ext_rel_dsc,
+								  new_record, new_record_nulls,
+								  new_record_replaces);
+		CatalogTupleUpdate(bbf_function_ext_rel, &tuple->t_self, tuple);
+
+		ReleaseSysCache(oldtup);
+	}
+	else
+	{
+		ObjectAddress index;
+		tuple = heap_form_tuple(bbf_function_ext_rel_dsc,
+								new_record, new_record_nulls);
+
+		CatalogTupleInsert(bbf_function_ext_rel, tuple);
+
+		/*
+		 * Add function's dependency on catalog table's index so
+		 * that table gets restored before function during MVU.
+		 */
+		index.classId = IndexRelationId;
+		index.objectId = get_bbf_function_ext_idx_oid();
+		index.objectSubId = 0;
+		recordDependencyOn(&address, &index, DEPENDENCY_NORMAL);
+	}
 
 	pfree(physical_schemaname);
-	pfree(logical_schemaname);
 	pfree(func_signature);
 	ReleaseSysCache(proctup);
 	heap_freetuple(tuple);
@@ -2167,7 +2184,7 @@ PlTsqlMatchNamedCall(HeapTuple proctup, int nargs, List *argnames,
 			}
 
 			/* Fetch default positions */
-			arg_default_positions = SysCacheGetAttr(SYSDATABASEOIDNSPPROCSIGNATURE,
+			arg_default_positions = SysCacheGetAttr(PROCNSPSIGNATURE,
 													bbffunctuple,
 													Anum_bbf_function_ext_default_positions,
 													&isnull);
@@ -2279,7 +2296,7 @@ PlTsqlMatchUnNamedCall(HeapTuple proctup, int nargs, int pronargs)
 		bool	 isnull;
 
 		/* Fetch default positions */
-		arg_default_positions = SysCacheGetAttr(SYSDATABASEOIDNSPPROCSIGNATURE,
+		arg_default_positions = SysCacheGetAttr(PROCNSPSIGNATURE,
 												bbffunctuple,
 												Anum_bbf_function_ext_default_positions,
 												&isnull);
@@ -2339,7 +2356,7 @@ insert_pltsql_function_defaults(HeapTuple func_tuple, List *defaults, Node **arg
 		bool				  isnull;
 
 		/* Fetch default positions */
-		arg_default_positions = SysCacheGetAttr(SYSDATABASEOIDNSPPROCSIGNATURE,
+		arg_default_positions = SysCacheGetAttr(PROCNSPSIGNATURE,
 												bbffunctuple,
 												Anum_bbf_function_ext_default_positions,
 												&isnull);
@@ -2435,7 +2452,7 @@ print_pltsql_function_arguments(StringInfo buf, HeapTuple proctup, bool print_ta
 		char	   *str;
 
 		/* Fetch default positions */
-		arg_default_positions = SysCacheGetAttr(SYSDATABASEOIDNSPPROCSIGNATURE,
+		arg_default_positions = SysCacheGetAttr(PROCNSPSIGNATURE,
 												bbffunctuple,
 												Anum_bbf_function_ext_default_positions,
 												&isnull);

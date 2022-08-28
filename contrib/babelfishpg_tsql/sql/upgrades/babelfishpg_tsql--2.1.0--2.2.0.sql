@@ -3586,11 +3586,11 @@ LANGUAGE 'pltsql';
 
 -- BABELFISH_FUNC_DEFAULT
 CREATE TABLE sys.babelfish_function_ext (
-	dbid SMALLINT NOT NULL,
-	schema_name TEXT NOT NULL COLLATE "C",
-	function_signature TEXT NOT NULL COLLATE "C",
+	nspname NAME NOT NULL,
+  funcname NAME NOT NULL,
+	funcsignature TEXT NOT NULL COLLATE "C",
 	default_positions TEXT COLLATE "C",
-	PRIMARY KEY(dbid, schema_name, function_signature)
+	PRIMARY KEY(nspname, funcsignature)
 );
 GRANT SELECT ON sys.babelfish_function_ext TO PUBLIC;
 
