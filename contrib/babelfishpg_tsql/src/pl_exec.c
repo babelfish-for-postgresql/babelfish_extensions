@@ -4609,7 +4609,7 @@ exec_stmt_execsql(PLtsql_execstate *estate,
 	if (stmt->is_cross_db)
 		SetCurrentRoleId(GetSessionUserId(), false);
 	
-	if(stmt->is_dml || stmt->is_ddl)
+	if(stmt->is_dml || stmt->is_ddl || stmt->is_create_view)
 		need_path_reset = reset_search_path(stmt, old_search_path, &reset_session_properties);
 
 	PG_TRY();
@@ -10118,7 +10118,7 @@ bool reset_search_path(PLtsql_stmt_execsql *stmt, char *old_search_path, bool* r
 	 * search the specified schema for the object. If not found,
 	 * then search the dbo schema. Don't update the path for "sys" schema.
 	 */
-	if (stmt->func_call && stmt->schema_name != NULL &&
+	if ((stmt->func_call || stmt->is_create_view) && stmt->schema_name != NULL &&
 			((strncmp(stmt->schema_name, "sys", strlen(stmt->schema_name)) != 0 && strlen(stmt->schema_name) == 3)
 			|| strlen(stmt->schema_name) != 3))
 	{
