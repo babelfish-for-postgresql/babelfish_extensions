@@ -2711,7 +2711,8 @@ handleBatchLevelStatement(TSqlParser::Batch_level_statementContext *ctx, tsqlSel
 	// check if it is a CREATE VIEW statement
 	if (ctx->create_or_alter_view())
 		execsql->is_create_view = true;
-	if (ctx->create_or_alter_view()->simple_name()->schema)
+	if (ctx->create_or_alter_view() && ctx->create_or_alter_view()->simple_name() &&
+			ctx->create_or_alter_view()->simple_name()->schema)
 	{
 		std::string schema_name = stripQuoteFromId(ctx->create_or_alter_view()->simple_name()->schema);
 		if (!schema_name.empty())
