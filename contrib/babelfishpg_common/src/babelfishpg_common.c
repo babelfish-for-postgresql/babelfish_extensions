@@ -85,7 +85,7 @@ _PG_init(void)
 				   NULL,
 				   &pltsql_default_locale,
 				   "en_US",
-				   PGC_RDSSUSET,  /* only superuser can set */
+				   PGC_SUSET,  /* only superuser can set */
 				   0,
 				   check_default_locale, NULL, NULL);
 
