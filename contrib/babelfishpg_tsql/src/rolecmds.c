@@ -10,6 +10,7 @@
 #include "postgres.h"
 #include "miscadmin.h"
 
+#include <ctype.h>
 #include "access/genam.h"
 #include "access/heapam.h"
 #include "access/htup_details.h"
@@ -684,6 +685,10 @@ user_id(PG_FUNCTION_ARGS)
 
 	if (!user_name)
 		PG_RETURN_NULL();
+
+	if (pltsql_case_insensitive_identifiers)
+		// Lowercase the entry, if needed
+		for (char *p = user_name ; *p; ++p) *p = tolower(*p);
 
 	auth_tuple = SearchSysCache1(AUTHNAME, CStringGetDatum(user_name));
 	if (!HeapTupleIsValid(auth_tuple))
@@ -1462,6 +1467,7 @@ check_alter_role_stmt(GrantRoleStmt *stmt)
 	grantee_name = grantee_spec->rolename;
 	grantee = get_role_oid(grantee_name, false);
 
+	/* Disallow ALTER ROLE if the grantee is not a db principal */
 	if (!is_user(grantee) && !is_role(grantee))
 		ereport(ERROR,
 				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
@@ -1473,7 +1479,13 @@ check_alter_role_stmt(GrantRoleStmt *stmt)
 	granted_name = granted_spec->rolename;
 	granted = get_role_oid(granted_name, false);
 
-	if (!has_privs_of_role(GetSessionUserId(), granted))
+	/*
+	 * Disallow ALTER ROLE if
+	 * 1. Current login doesn't have permission on the granted role, or
+	 * 2. The current user is trying to add/drop itself from the granted role
+	 */
+	if (!has_privs_of_role(GetSessionUserId(), granted) ||
+		grantee == GetUserId())
 		ereport(ERROR,
 				(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
 				 errmsg("Current login %s does not have permission to alter role %s", 

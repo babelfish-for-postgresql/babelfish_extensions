@@ -40,6 +40,8 @@
 #include "utils/rel.h"
 #include "utils/relcache.h"
 #include "utils/syscache.h"
+#include "utils/numeric.h"
+#include <math.h>
 
 #include "pltsql.h"
 #include "backend_parser/scanner.h"
@@ -49,6 +51,8 @@
 #include "catalog.h"
 #include "rolecmds.h"
 #include "session.h"
+
+#define TDS_NUMERIC_MAX_PRECISION	38
 
 extern bool pltsql_quoted_identifier;
 extern bool is_tsql_rowversion_or_timestamp_datatype(Oid oid);
@@ -88,7 +92,7 @@ extern PLtsql_execstate *get_outermost_tsql_estate(int *nestlevel);
 static void pltsql_store_view_definition(const char *queryString, ObjectAddress address);
 static void pltsql_drop_view_definition(Oid objectId);
 static void preserve_view_constraints_from_base_table(ColumnDef  *col, Oid tableOid, AttrNumber colId);
-
+static bool pltsql_detect_numeric_overflow(int weight, int dscale, int first_block, int numeric_base);
 /*****************************************
  * 			Executor Hooks
  *****************************************/
@@ -131,7 +135,7 @@ static ExecutorRun_hook_type prev_ExecutorRun = NULL;
 static ExecutorFinish_hook_type prev_ExecutorFinish = NULL;
 static ExecutorEnd_hook_type prev_ExecutorEnd = NULL;
 static inherit_view_constraints_from_table_hook_type prev_inherit_view_constraints_from_table = NULL;
-
+static detect_numeric_overflow_hook_type prev_detect_numeric_overflow_hook = NULL;
 /*****************************************
  * 			Install / Uninstall
  *****************************************/
@@ -206,6 +210,9 @@ InstallExtendedHooks(void)
 	prev_inherit_view_constraints_from_table = inherit_view_constraints_from_table_hook;
 	inherit_view_constraints_from_table_hook = preserve_view_constraints_from_base_table;
 	TriggerRecuresiveCheck_hook = plsql_TriggerRecursiveCheck;
+
+	prev_detect_numeric_overflow_hook = detect_numeric_overflow_hook;
+	detect_numeric_overflow_hook = pltsql_detect_numeric_overflow;
 }
 
 void
@@ -237,6 +244,7 @@ UninstallExtendedHooks(void)
 	ExecutorFinish_hook = prev_ExecutorFinish;
 	ExecutorEnd_hook = prev_ExecutorEnd;
 	inherit_view_constraints_from_table_hook = prev_inherit_view_constraints_from_table;
+	detect_numeric_overflow_hook = prev_detect_numeric_overflow_hook;
 }
 
 /*****************************************
@@ -1719,4 +1727,49 @@ preserve_view_constraints_from_base_table(ColumnDef  *col, Oid tableOid, AttrNum
 			ReleaseSysCache(tp);
 		}
 	}
+}
+
+/*
+ * detect_numeric_overflow() -
+ * 	Calculate exact number of digits of any numeric data and report if numeric overflow occurs
+ */
+bool
+pltsql_detect_numeric_overflow(int weight, int dscale, int first_block, int numeric_base)
+{
+	if (sql_dialect != SQL_DIALECT_TSQL)
+		return false;
+
+	int partially_filled_numeric_block = 0;
+	int total_digit_count = 0;
+
+	total_digit_count = (dscale == 0) ? (weight * numeric_base) :
+					    ((weight + 1) * numeric_base);
+	/*
+	 * calculating exact #digits in the first partially filled numeric block, if any)
+	 * Ex. - in 12345.12345 var is of type struct NumericVar; first_block = var->digits[0]= 1,
+	 * var->digits[1] = 2345, var->digits[2] = 1234,
+	 * var->digits[3] = 5000; numeric_base = 4, var->ndigits = #numeric blocks i.e., 4,
+	 * var->weight = 1, var->dscale = 5
+	 */
+	partially_filled_numeric_block = first_block;
+
+	/*
+	 * check if the first numeric block is partially filled
+	 * If yes, add those digit count
+	 * Else if fully filled, Ignore as those digits are already added to total_digit_count
+	 */
+	if (partially_filled_numeric_block < pow(10, numeric_base - 1))
+		total_digit_count += (partially_filled_numeric_block > 0) ?
+				     log10(partially_filled_numeric_block) + 1 : 1;
+
+	/*
+	 * calculating exact #digits in last block if decimal point exists
+	 * If dscale is an exact multiple of numeric_base, last block is not partially filled,
+	 * then, ignore as those digits are already added to total_digit_count
+	 * Else, add the remainder digits
+	 */
+	if (dscale > 0)
+		total_digit_count += (dscale % numeric_base);
+
+	return (total_digit_count > TDS_NUMERIC_MAX_PRECISION);
 }

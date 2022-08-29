@@ -1,0 +1,31 @@
+USE master
+GO
+
+SELECT * FROM sys.fulltext_indexes
+GO
+~~START~~
+int#!#int#!#int#!#bit#!#char#!#nvarchar#!#bit#!#char#!#nvarchar#!#datetime#!#datetime#!#binary#!#int#!#int#!#int
+~~END~~
+
+
+SELECT * FROM sys_fulltext_indexes_vu_prepare_view
+GO
+~~START~~
+int#!#int#!#int#!#bit#!#char#!#nvarchar#!#bit#!#char#!#nvarchar#!#datetime#!#datetime#!#binary#!#int#!#int#!#int
+~~END~~
+
+
+EXEC sys_fulltext_indexes_vu_prepare_proc
+GO
+~~START~~
+int#!#int#!#int#!#bit#!#char#!#nvarchar#!#bit#!#char#!#nvarchar#!#datetime#!#datetime#!#binary#!#int#!#int#!#int
+~~END~~
+
+
+SELECT dbo.sys_fulltext_indexes_vu_prepare_func()
+GO
+~~START~~
+int
+0
+~~END~~
+

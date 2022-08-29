@@ -652,12 +652,7 @@ CREATE OR REPLACE VIEW information_schema_tsql.views AS
 	SELECT CAST(nc.dbname AS sys.nvarchar(128)) AS "TABLE_CATALOG",
 			CAST(ext.orig_name AS sys.nvarchar(128)) AS  "TABLE_SCHEMA",
 			CAST(c.relname AS sys.nvarchar(128)) AS "TABLE_NAME",
-
-			CAST(
-				CASE WHEN LENGTH(vd.definition) <= 4000
-					THEN vd.definition
-					ELSE NULL END
-				AS sys.nvarchar(4000)) AS "VIEW_DEFINITION",
+			CAST(vd.definition AS sys.nvarchar(4000)) AS "VIEW_DEFINITION",
 
 			CAST(
 				CASE WHEN 'check_option=cascaded' = ANY (c.reloptions)
@@ -955,7 +950,8 @@ CREATE OR REPLACE VIEW information_schema_tsql.routines AS
             CAST(NULL AS sys.datetime) AS "LAST_ALTERED"
 
        FROM sys.pg_namespace_ext nc LEFT JOIN sys.babelfish_namespace_ext ext ON nc.nspname = ext.nspname,
-            pg_proc p inner join sys.schemas sch on sch.schema_id = p.pronamespace,
+            pg_proc p inner join sys.schemas sch on sch.schema_id = p.pronamespace
+	    inner join sys.all_objects ao on ao.object_id = CAST(p.oid AS INT),
             pg_language l,
             pg_type t LEFT JOIN pg_collation co ON t.typcollation = co.oid,
             sys.translate_pg_type_to_tsql(t.oid) AS tsql_type_name,
@@ -979,7 +975,8 @@ CREATE OR REPLACE VIEW information_schema_tsql.routines AS
             AND ext.dbid = cast(sys.db_id() as oid)
             AND p.prolang = l.oid
             AND p.prorettype = t.oid
-            AND p.pronamespace = nc.oid;      
+            AND p.pronamespace = nc.oid
+	    AND CAST(ao.is_ms_shipped as INT) = 0;      
 
 GRANT SELECT ON information_schema_tsql.routines TO PUBLIC;
 	
@@ -1298,6 +1295,9 @@ FROM (
           AND c.contype = 'c'
           AND r.relkind IN ('r', 'p')
           AND NOT a.attisdropped
+	  AND (pg_has_role(r.relowner, 'USAGE')
+		OR has_table_privilege(r.oid, 'SELECT, INSERT, UPDATE, DELETE, TRUNCATE, REFERENCES, TRIGGER')
+		OR has_any_column_privilege(r.oid, 'SELECT, INSERT, UPDATE, REFERENCES'))
 
        UNION ALL
 
@@ -1316,10 +1316,11 @@ FROM (
           AND NOT a.attisdropped
           AND c.contype IN ('p', 'u', 'f')
           AND r.relkind IN ('r', 'p')
+	  AND (pg_has_role(r.relowner, 'USAGE')
+		OR has_table_privilege(r.oid, 'SELECT, INSERT, UPDATE, DELETE, TRUNCATE, REFERENCES, TRIGGER')
+		OR has_any_column_privilege(r.oid, 'SELECT, INSERT, UPDATE, REFERENCES'))
 
-      ) AS x (tblschema, tblname, tblowner, colname, cstrschema, cstrname, tblcat, cstrcat)
-
-WHERE pg_has_role(x.tblowner, 'USAGE');
+      ) AS x (tblschema, tblname, tblowner, colname, cstrschema, cstrname, tblcat, cstrcat);
 
 GRANT SELECT ON information_schema_tsql.CONSTRAINT_COLUMN_USAGE TO PUBLIC;
 
@@ -1328,9 +1329,9 @@ AS
 SELECT 
    CAST(0 AS INT) AS object_id,
    CAST(0 AS sys.BIT) AS is_enabled,
-   CAST('' AS VARCHAR(255)) AS directory_name,
+   CAST('' AS sys.VARCHAR(255)) AS directory_name,
    CAST(0 AS INT) AS filename_collation_id,
-   CAST('' AS VARCHAR) AS filename_collation_name
+   CAST('' AS sys.VARCHAR) AS filename_collation_name
    WHERE FALSE;
 GRANT SELECT ON sys.filetables TO PUBLIC;
 
@@ -1402,13 +1403,13 @@ CALL sys.babelfish_drop_deprecated_view('sys', 'identity_columns_deprecated_in_2
 CREATE OR REPLACE VIEW sys.filegroups
 AS
 SELECT 
-   ds.name,
-   ds.data_space_id,
-   ds.type,
-   ds.type_desc,
-   ds.is_default,
-   ds.is_system,
-   CAST(NULL as UNIQUEIDENTIFIER) AS filegroup_guid,
+   CAST(ds.name AS sys.SYSNAME),
+   CAST(ds.data_space_id AS INT),
+   CAST(ds.type AS sys.BPCHAR(2)),
+   CAST(ds.type_desc AS sys.NVARCHAR(60)),
+   CAST(ds.is_default AS sys.BIT),
+   CAST(ds.is_system AS sys.BIT),
+   CAST(NULL as sys.UNIQUEIDENTIFIER) AS filegroup_guid,
    CAST(0 as INT) AS log_filegroup_id,
    CAST(0 as sys.BIT) AS is_read_only,
    CAST(0 as sys.BIT) AS is_autogrow_all_files
@@ -1496,6 +1497,91 @@ SELECT
    CAST(2 as sys.BIT) AS is_importing
 WHERE FALSE;
 GRANT SELECT ON sys.fulltext_catalogs TO PUBLIC;
+
+CREATE OR REPLACE FUNCTION sys.dateadd_internal_df(IN datepart PG_CATALOG.TEXT, IN num INTEGER, IN startdate datetimeoffset) RETURNS datetimeoffset AS $$
+BEGIN
+	CASE datepart
+	WHEN 'year' THEN
+		RETURN startdate OPERATOR(sys.+) make_interval(years => num);
+	WHEN 'quarter' THEN
+		RETURN startdate OPERATOR(sys.+) make_interval(months => num * 3);
+	WHEN 'month' THEN
+		RETURN startdate OPERATOR(sys.+) make_interval(months => num);
+	WHEN 'dayofyear', 'y' THEN
+		RETURN startdate OPERATOR(sys.+) make_interval(days => num);
+	WHEN 'day' THEN
+		RETURN startdate OPERATOR(sys.+) make_interval(days => num);
+	WHEN 'week' THEN
+		RETURN startdate OPERATOR(sys.+) make_interval(weeks => num);
+	WHEN 'weekday' THEN
+		RETURN startdate OPERATOR(sys.+) make_interval(days => num);
+	WHEN 'hour' THEN
+		RETURN startdate OPERATOR(sys.+) make_interval(hours => num);
+	WHEN 'minute' THEN
+		RETURN startdate OPERATOR(sys.+) make_interval(mins => num);
+	WHEN 'second' THEN
+		RETURN startdate OPERATOR(sys.+) make_interval(secs => num);
+	WHEN 'millisecond' THEN
+		RETURN startdate OPERATOR(sys.+) make_interval(secs => (num::numeric) * 0.001);
+  WHEN 'microsecond' THEN
+    RAISE EXCEPTION 'The datepart % is not supported by date function dateadd for data type time.', datepart;
+	WHEN 'nanosecond' THEN
+		-- Best we can do - Postgres does not support nanosecond precision
+		RETURN startdate;
+	ELSE
+		RAISE EXCEPTION '"%" is not a recognized dateadd option.', datepart;
+	END CASE;
+END;
+$$
+STRICT
+LANGUAGE plpgsql IMMUTABLE;
+
+CREATE OR REPLACE FUNCTION sys.dateadd_internal(IN datepart PG_CATALOG.TEXT, IN num INTEGER, IN startdate ANYELEMENT) RETURNS ANYELEMENT AS $$
+BEGIN
+    IF pg_typeof(startdate) = 'date'::regtype AND
+		datepart IN ('hour', 'minute', 'second', 'millisecond', 'microsecond', 'nanosecond') THEN
+		RAISE EXCEPTION 'The datepart % is not supported by date function dateadd for data type date.', datepart;
+	END IF;
+    IF pg_typeof(startdate) = 'time'::regtype AND
+		datepart IN ('year', 'quarter', 'month', 'doy', 'day', 'week', 'weekday') THEN
+		RAISE EXCEPTION 'The datepart % is not supported by date function dateadd for data type time.', datepart;
+	END IF;
+
+	CASE datepart
+	WHEN 'year' THEN
+		RETURN startdate + make_interval(years => num);
+	WHEN 'quarter' THEN
+		RETURN startdate + make_interval(months => num * 3);
+	WHEN 'month' THEN
+		RETURN startdate + make_interval(months => num);
+	WHEN 'dayofyear', 'y' THEN
+		RETURN startdate + make_interval(days => num);
+	WHEN 'day' THEN
+		RETURN startdate + make_interval(days => num);
+	WHEN 'week' THEN
+		RETURN startdate + make_interval(weeks => num);
+	WHEN 'weekday' THEN
+		RETURN startdate + make_interval(days => num);
+	WHEN 'hour' THEN
+		RETURN startdate + make_interval(hours => num);
+	WHEN 'minute' THEN
+		RETURN startdate + make_interval(mins => num);
+	WHEN 'second' THEN
+		RETURN startdate + make_interval(secs => num);
+	WHEN 'millisecond' THEN
+		RETURN startdate + make_interval(secs => (num::numeric) * 0.001);
+	WHEN 'microsecond' THEN
+    RAISE EXCEPTION 'The datepart % is not supported by date function dateadd for data type time.', datepart;
+	WHEN 'nanosecond' THEN
+		-- Best we can do - Postgres does not support nanosecond precision
+		RETURN startdate;
+	ELSE
+		RAISE EXCEPTION '"%" is not a recognized dateadd option.', datepart;
+	END CASE;
+END;
+$$
+STRICT
+LANGUAGE plpgsql IMMUTABLE;
 
 CREATE OR REPLACE VIEW sys.fulltext_stoplists
 AS
@@ -1988,13 +2074,13 @@ SELECT
    CAST(0 as INT) AS unique_index_id,
    CAST(0 as INT) AS fulltext_catalog_id,
    CAST(0 as sys.BIT) AS is_enabled,
-   CAST('O' as CHAR(1)) AS change_tracking_state,
-   CAST('' as NVARCHAR(60)) AS change_tracking_state_desc,
+   CAST('O' as sys.BPCHAR(1)) AS change_tracking_state,
+   CAST('' as sys.NVARCHAR(60)) AS change_tracking_state_desc,
    CAST(0 as sys.BIT) AS has_crawl_completed,
-   CAST('' as CHAR(1)) AS crawl_type,
-   CAST('' as NVARCHAR(60)) AS crawl_type_desc,
-   CAST(NULL as DATETIME) AS crawl_start_date,
-   CAST(NULL as DATETIME) AS crawl_end_date,
+   CAST('' as sys.BPCHAR(1)) AS crawl_type,
+   CAST('' as sys.NVARCHAR(60)) AS crawl_type_desc,
+   CAST(NULL as sys.DATETIME) AS crawl_start_date,
+   CAST(NULL as sys.DATETIME) AS crawl_end_date,
    CAST(NULL as BINARY(8)) AS incremental_timestamp,
    CAST(0 as INT) AS stoplist_id,
    CAST(0 as INT) AS data_space_id,
@@ -2026,7 +2112,7 @@ CREATE OR REPLACE VIEW sys.plan_guides
 AS
 SELECT 
     CAST(0 as int) AS plan_guide_id
-    , CAST(NULL as sys.sysname) AS name
+    , CAST('' as sys.sysname) AS name
     , CAST(NULL as sys.datetime) as create_date
     , CAST(NULL as sys.datetime) as modify_date
     , CAST(0 as sys.bit) as is_disabled
@@ -2895,7 +2981,7 @@ BEGIN
         return sys.datepart_internal(datepart, arg::timestamp,
                      sys.babelfish_get_datetimeoffset_tzoffset(arg)::integer);
     ELSIF pg_typeof(arg) = 'pg_catalog.text'::regtype THEN
-        return sys.datepart_internal(datepart, arg::sys.nvarchar::sys.datetime);
+        return sys.datepart_internal(datepart, arg::sys.datetimeoffset::timestamp, sys.babelfish_get_datetimeoffset_tzoffset(arg::sys.datetimeoffset)::integer);
     ELSE
         return sys.datepart_internal(datepart, arg);
     END IF;
@@ -3468,6 +3554,49 @@ SELECT
 WHERE FALSE; -- This condition will ensure that the view is empty
 GRANT SELECT ON sys.numbered_procedures TO PUBLIC;
 
+CREATE OR REPLACE FUNCTION sys.fn_listextendedproperty (
+property_name varchar(128),
+level0_object_type varchar(128),
+level0_object_name varchar(128),
+level1_object_type varchar(128),
+level1_object_name varchar(128),
+level2_object_type varchar(128),
+level2_object_name varchar(128)
+)
+returns table (
+objtype	sys.sysname,
+objname	sys.sysname,
+name	sys.sysname,
+value	sys.sql_variant
+) 
+as $$
+begin
+-- currently only support COLUMN property
+IF (((coalesce(property_name COLLATE "C", '')) = '') or
+    ((UPPER(coalesce(property_name COLLATE "C", ''))) = 'COLUMN' COLLATE "C")) THEN
+    IF (((LOWER(coalesce(level0_object_type COLLATE "C", ''))) = 'schema' COLLATE "C") and
+	 	    ((LOWER(coalesce(level1_object_type COLLATE "C", ''))) = 'table' COLLATE "C") and
+	 	    ((LOWER(coalesce(level2_object_type COLLATE "C", ''))) = 'column' COLLATE "C")) THEN
+		RETURN query 
+		select CAST('COLUMN' AS sys.sysname) as objtype,
+		       CAST(t3.column_name AS sys.sysname) as objname,
+		       t1.name as name,
+		       t1.value as value
+		from sys.extended_properties t1, pg_catalog.pg_class t2, information_schema.columns t3
+		where t1.major_id = t2.oid and 
+			  t2.relname = t3.table_name and 
+              t2.relname = (coalesce(level1_object_name COLLATE "C", '')) and 
+              t3.column_name = (coalesce(level2_object_name COLLATE "C", ''));
+	END IF;
+END IF;
+RETURN;
+end;
+$$
+LANGUAGE plpgsql;
+GRANT EXECUTE ON FUNCTION sys.fn_listextendedproperty(
+	varchar(128), varchar(128), varchar(128), varchar(128), varchar(128), varchar(128), varchar(128)
+) TO PUBLIC;
+
 -- BABEL-3325: Revisit once DDL and/or CREATE EVENT NOTIFICATION is supported
 CREATE OR REPLACE VIEW sys.events 
 AS
@@ -3508,6 +3637,25 @@ FROM sys.events e
 WHERE e.is_trigger_event = 1;
 GRANT SELECT ON sys.trigger_events TO PUBLIC;
 
+CREATE OR REPLACE VIEW sys.sysdatabases AS
+SELECT
+t.name,
+sys.db_id(t.name) AS dbid,
+CAST(CAST(r.oid AS int) AS SYS.VARBINARY(85)) AS sid,
+CAST(0 AS SMALLINT) AS mode,
+t.status,
+t.status2,
+CAST(t.crdate AS SYS.DATETIME) AS crdate,
+CAST('1900-01-01 00:00:00.000' AS SYS.DATETIME) AS reserved,
+CAST(0 AS INT) AS category,
+CAST(120 AS SYS.TINYINT) AS cmptlevel,
+CAST(NULL AS SYS.NVARCHAR(260)) AS filename,
+CAST(NULL AS SMALLINT) AS version
+FROM sys.babelfish_sysdatabases AS t
+LEFT OUTER JOIN pg_catalog.pg_roles r on r.rolname = t.owner;
+
+GRANT SELECT ON sys.sysdatabases TO PUBLIC;
+
 ALTER FUNCTION sys.fn_mapped_system_error_list() RENAME TO fn_mapped_system_error_list_deprecated_in_2_2_0;
 
 CREATE OR REPLACE FUNCTION sys.fn_mapped_system_error_list_deprecated_in_2_2_0()
@@ -3521,6 +3669,240 @@ AS 'babelfishpg_tsql', 'babel_list_mapped_error'
 LANGUAGE C IMMUTABLE STRICT;
 
 CALL sys.babelfish_drop_deprecated_function('sys', 'fn_mapped_system_error_list_deprecated_in_2_2_0');
+
+CREATE OR REPLACE FUNCTION sys.columns_internal()
+RETURNS TABLE (
+    out_object_id int,
+    out_name sys.sysname,
+    out_column_id int,
+    out_system_type_id int,
+    out_user_type_id int,
+    out_max_length smallint,
+    out_precision sys.tinyint,
+    out_scale sys.tinyint,
+    out_collation_name sys.sysname,
+    out_collation_id int,
+    out_offset smallint,
+    out_is_nullable sys.bit,
+    out_is_ansi_padded sys.bit,
+    out_is_rowguidcol sys.bit,
+    out_is_identity sys.bit,
+    out_is_computed sys.bit,
+    out_is_filestream sys.bit,
+    out_is_replicated sys.bit,
+    out_is_non_sql_subscribed sys.bit,
+    out_is_merge_published sys.bit,
+    out_is_dts_replicated sys.bit,
+    out_is_xml_document sys.bit,
+    out_xml_collection_id int,
+    out_default_object_id int,
+    out_rule_object_id int,
+    out_is_sparse sys.bit,
+    out_is_column_set sys.bit,
+    out_generated_always_type sys.tinyint,
+    out_generated_always_type_desc sys.nvarchar(60),
+    out_encryption_type int,
+    out_encryption_type_desc sys.nvarchar(64),
+    out_encryption_algorithm_name sys.sysname,
+    out_column_encryption_key_id int,
+    out_column_encryption_key_database_name sys.sysname,
+    out_is_hidden sys.bit,
+    out_is_masked sys.bit,
+    out_graph_type int,
+    out_graph_type_desc sys.nvarchar(60)
+)
+AS
+$$
+BEGIN
+	RETURN QUERY
+		SELECT CAST(c.oid AS int),
+			CAST(a.attname AS sys.sysname),
+			CAST(a.attnum AS int),
+			CASE 
+			WHEN tsql_type_name IS NOT NULL OR t.typbasetype = 0 THEN
+				-- either tsql or PG base type 
+				CAST(a.atttypid AS int)
+			ELSE 
+				CAST(t.typbasetype AS int)
+			END,
+			CAST(a.atttypid AS int),
+			CASE
+			WHEN a.atttypmod != -1 THEN 
+				sys.tsql_type_max_length_helper(coalesce(tsql_type_name, tsql_base_type_name), a.attlen, a.atttypmod)
+			ELSE 
+				sys.tsql_type_max_length_helper(coalesce(tsql_type_name, tsql_base_type_name), a.attlen, t.typtypmod)
+			END,
+			CASE
+			WHEN a.atttypmod != -1 THEN 
+				sys.tsql_type_precision_helper(coalesce(tsql_type_name, tsql_base_type_name), a.atttypmod)
+			ELSE 
+				sys.tsql_type_precision_helper(coalesce(tsql_type_name, tsql_base_type_name), t.typtypmod)
+			END,
+			CASE
+			WHEN a.atttypmod != -1 THEN 
+				sys.tsql_type_scale_helper(coalesce(tsql_type_name, tsql_base_type_name), a.atttypmod, false)
+			ELSE 
+				sys.tsql_type_scale_helper(coalesce(tsql_type_name, tsql_base_type_name), t.typtypmod, false)
+			END,
+			CAST(coll.collname AS sys.sysname),
+			CAST(a.attcollation AS int),
+			CAST(a.attnum AS smallint),
+			CAST(case when a.attnotnull then 0 else 1 end AS sys.bit),
+			CAST(case when t.typname in ('bpchar', 'nchar', 'binary') then 1 else 0 end AS sys.bit),
+			CAST(0 AS sys.bit),
+			CAST(case when a.attidentity <> ''::"char" then 1 else 0 end AS sys.bit),
+			CAST(case when a.attgenerated <> ''::"char" then 1 else 0 end AS sys.bit),
+			CAST(0 AS sys.bit),
+			CAST(0 AS sys.bit),
+			CAST(0 AS sys.bit),
+			CAST(0 AS sys.bit),
+			CAST(0 AS sys.bit),
+			CAST(0 AS sys.bit),
+			CAST(0 AS int),
+			CAST(coalesce(d.oid, 0) AS int),
+			CAST(coalesce((select oid from pg_constraint where conrelid = t.oid
+						and contype = 'c' and a.attnum = any(conkey) limit 1), 0) AS int),
+			CAST(0 AS sys.bit),
+			CAST(0 AS sys.bit),
+			CAST(0 AS sys.tinyint),
+			CAST('NOT_APPLICABLE' AS sys.nvarchar(60)),
+			CAST(null AS int),
+			CAST(null AS sys.nvarchar(64)),
+			CAST(null AS sys.sysname),
+			CAST(null AS int),
+			CAST(null AS sys.sysname),
+			CAST(0 AS sys.bit),
+			CAST(0 AS sys.bit),
+			CAST(null AS int),
+			CAST(null AS sys.nvarchar(60))
+		FROM pg_attribute a
+		INNER JOIN pg_class c ON c.oid = a.attrelid
+		INNER JOIN pg_type t ON t.oid = a.atttypid
+		INNER JOIN sys.schemas sch on c.relnamespace = sch.schema_id 
+		INNER JOIN sys.pg_namespace_ext ext on sch.schema_id = ext.oid 
+		LEFT JOIN pg_attrdef d ON c.oid = d.adrelid AND a.attnum = d.adnum
+		LEFT JOIN pg_collation coll ON coll.oid = a.attcollation
+		, sys.translate_pg_type_to_tsql(a.atttypid) AS tsql_type_name
+		, sys.translate_pg_type_to_tsql(t.typbasetype) AS tsql_base_type_name
+		WHERE NOT a.attisdropped
+		AND a.attnum > 0
+		-- r = ordinary table, i = index, S = sequence, t = TOAST table, v = view, m = materialized view, c = composite type, f = foreign table, p = partitioned table
+		AND c.relkind IN ('r', 'v', 'm', 'f', 'p')
+		AND has_schema_privilege(sch.schema_id, 'USAGE')
+		AND has_column_privilege(a.attrelid, a.attname, 'SELECT,INSERT,UPDATE,REFERENCES')
+		union all
+		-- system tables information
+		SELECT CAST(c.oid AS int),
+			CAST(a.attname AS sys.sysname),
+			CAST(a.attnum AS int),
+			CASE 
+			WHEN tsql_type_name IS NOT NULL OR t.typbasetype = 0 THEN
+				-- either tsql or PG base type 
+				CAST(a.atttypid AS int)
+			ELSE 
+				CAST(t.typbasetype AS int)
+			END,
+			CAST(a.atttypid AS int),
+			CASE
+			WHEN a.atttypmod != -1 THEN 
+				sys.tsql_type_max_length_helper(coalesce(tsql_type_name, tsql_base_type_name), a.attlen, a.atttypmod)
+			ELSE 
+				sys.tsql_type_max_length_helper(coalesce(tsql_type_name, tsql_base_type_name), a.attlen, t.typtypmod)
+			END,
+			CASE
+			WHEN a.atttypmod != -1 THEN 
+				sys.tsql_type_precision_helper(coalesce(tsql_type_name, tsql_base_type_name), a.atttypmod)
+			ELSE 
+				sys.tsql_type_precision_helper(coalesce(tsql_type_name, tsql_base_type_name), t.typtypmod)
+			END,
+			CASE
+			WHEN a.atttypmod != -1 THEN 
+				sys.tsql_type_scale_helper(coalesce(tsql_type_name, tsql_base_type_name), a.atttypmod, false)
+			ELSE 
+				sys.tsql_type_scale_helper(coalesce(tsql_type_name, tsql_base_type_name), t.typtypmod, false)
+			END,
+			CAST(coll.collname AS sys.sysname),
+			CAST(a.attcollation AS int),
+			CAST(a.attnum AS smallint),
+			CAST(case when a.attnotnull then 0 else 1 end AS sys.bit),
+			CAST(case when t.typname in ('bpchar', 'nchar', 'binary') then 1 else 0 end AS sys.bit),
+			CAST(0 AS sys.bit),
+			CAST(case when a.attidentity <> ''::"char" then 1 else 0 end AS sys.bit),
+			CAST(case when a.attgenerated <> ''::"char" then 1 else 0 end AS sys.bit),
+			CAST(0 AS sys.bit),
+			CAST(0 AS sys.bit),
+			CAST(0 AS sys.bit),
+			CAST(0 AS sys.bit),
+			CAST(0 AS sys.bit),
+			CAST(0 AS sys.bit),
+			CAST(0 AS int),
+			CAST(coalesce(d.oid, 0) AS int),
+			CAST(coalesce((select oid from pg_constraint where conrelid = t.oid
+						and contype = 'c' and a.attnum = any(conkey) limit 1), 0) AS int),
+			CAST(0 AS sys.bit),
+			CAST(0 AS sys.bit),
+			CAST(0 AS sys.tinyint),
+			CAST('NOT_APPLICABLE' AS sys.nvarchar(60)),
+			CAST(null AS int),
+			CAST(null AS sys.nvarchar(64)),
+			CAST(null AS sys.sysname),
+			CAST(null AS int),
+			CAST(null AS sys.sysname),
+			CAST(0 AS sys.bit),
+			CAST(0 AS sys.bit),
+			CAST(null AS int),
+			CAST(null AS sys.nvarchar(60))
+		FROM pg_attribute a
+		INNER JOIN pg_class c ON c.oid = a.attrelid
+		INNER JOIN pg_type t ON t.oid = a.atttypid
+		INNER JOIN pg_namespace nsp ON (nsp.oid = c.relnamespace and nsp.nspname = 'sys')
+		LEFT JOIN pg_attrdef d ON c.oid = d.adrelid AND a.attnum = d.adnum
+		LEFT JOIN pg_collation coll ON coll.oid = a.attcollation
+		, sys.translate_pg_type_to_tsql(a.atttypid) AS tsql_type_name
+		, sys.translate_pg_type_to_tsql(t.typbasetype) AS tsql_base_type_name
+		WHERE NOT a.attisdropped
+		AND a.attnum > 0
+		AND c.relkind = 'r'
+		AND has_schema_privilege(nsp.oid, 'USAGE')
+		AND has_column_privilege(a.attrelid, a.attname, 'SELECT,INSERT,UPDATE,REFERENCES');
+END;
+$$
+language plpgsql;
+
+ALTER TABLE sys.assemblies RENAME TO assemblies_deprecated_2_1;
+CREATE TABLE sys.assemblies(
+        name sys.sysname,
+        principal_id int,
+        assembly_id int,
+        clr_name nvarchar(4000),
+        permission_set  tinyint,
+        permission_set_desc     nvarchar(60),
+        is_visible      bit,
+        create_date     datetime,
+        modify_date     datetime,
+        is_user_defined bit
+);
+GRANT SELECT ON sys.assemblies TO PUBLIC;
+
+CREATE OR REPLACE PROCEDURE sys.sp_tablecollations_100
+(
+    IN "@object" nvarchar(4000)
+)
+AS $$
+BEGIN
+    select
+        s_tcv.colid         AS colid,
+        s_tcv.name          AS name,
+        s_tcv.tds_collation_100 AS tds_collation,
+        s_tcv.collation_100 AS collation
+    from
+        sys.spt_tablecollations_view s_tcv
+    where
+        s_tcv.object_id = (SELECT sys.object_id(@object))
+    order by colid;
+END;
+$$
+LANGUAGE 'pltsql';
 
 -- Drops the temporary procedure used by the upgrade script.
 -- Please have this be one of the last statements executed in this upgrade script.
