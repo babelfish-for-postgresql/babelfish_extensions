@@ -2710,13 +2710,14 @@ handleBatchLevelStatement(TSqlParser::Batch_level_statementContext *ctx, tsqlSel
 
 	// check if it is a CREATE VIEW statement
 	if (ctx->create_or_alter_view())
-		execsql->is_create_view = true;
-	if (ctx->create_or_alter_view() && ctx->create_or_alter_view()->simple_name() &&
-			ctx->create_or_alter_view()->simple_name()->schema)
 	{
-		std::string schema_name = stripQuoteFromId(ctx->create_or_alter_view()->simple_name()->schema);
-		if (!schema_name.empty())
-			execsql->schema_name = pstrdup(downcase_truncate_identifier(schema_name.c_str(), schema_name.length(), true));
+		execsql->is_create_view = true;
+		if (ctx->create_or_alter_view()->simple_name() && ctx->create_or_alter_view()->simple_name()->schema)
+		{
+			std::string schema_name = stripQuoteFromId(ctx->create_or_alter_view()->simple_name()->schema);
+			if (!schema_name.empty())
+				execsql->schema_name = pstrdup(downcase_truncate_identifier(schema_name.c_str(), schema_name.length(), true));
+		}
 	}
 
 	Token* start_body_token = get_start_token_of_batch_level_stmt_body(ctx);

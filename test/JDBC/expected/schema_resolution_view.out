@@ -1,7 +1,7 @@
 create schema schema_resolution_view_s1
 go
 
-create table schema_resolution_view_1(a int, b int)
+create table schema_resolution_view_t1(a int, b int)
 go
 
 create table schema_resolution_view_s1.schema_resolution_view_t1(c int)
