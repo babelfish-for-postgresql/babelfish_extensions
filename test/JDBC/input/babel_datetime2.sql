@@ -205,7 +205,6 @@ select datename(month, cast('2002-05-23 23:41:29.998' as datetime2));
 go
 select dateadd(second, 56, cast('2016-12-26 23:29:29' as datetime2));
 go
--- TODO Fix BABEL-2822
 select dateadd(millisecond, 56, cast('2016-12-26 23:29:29' as datetime2));
 go
 select dateadd(minute, 56, cast('2016-12-26 23:29:29' as datetime2));
