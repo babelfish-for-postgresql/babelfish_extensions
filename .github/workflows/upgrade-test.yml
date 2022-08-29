@@ -28,11 +28,6 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
-      
-      - name: Install Dependencies
-        id: install-dependencies
-        if: always()
-        uses: ./.github/composite-actions/install-dependencies
 
       - name: Install yq - yaml parser
         id: install-yq
@@ -64,12 +59,13 @@ jobs:
 
       - name: Setup Base Version ${{ steps.read-base-and-final-version.outputs.base-version }} and Run Preparation Tests
         id: setup-base-version
-        if: always() && steps.install-dependencies.outcome == 'success' && steps.find-branch.outcome == 'success'
+        if: always() && steps.find-branch.outcome == 'success'
         uses: ./.github/composite-actions/setup-base-version
         with:
           engine_branch: ${{ steps.find-branch.outputs.base-engine-branch }}
           extension_branch: ${{ steps.find-branch.outputs.base-extension-branch }}
           install_dir: ${{ steps.find-branch.outputs.base-dir }}
+          migration_mode: 'multi-db'
 
       - name: Setup Upgrade Version Composite Action
         id: setup-upgrade-ver-ca
