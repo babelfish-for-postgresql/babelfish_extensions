@@ -1133,9 +1133,6 @@ get_bbf_function_ext_oid()
 		bbf_function_ext_oid = get_relname_relid(BBF_FUNCTION_EXT_TABLE_NAME,
 											 get_namespace_oid("sys", false));
 
-	if (OidIsValid(bbf_function_ext_oid))
-		initBbfFunctionExtSyscache();
-
 	return bbf_function_ext_oid;
 }
 
@@ -1143,10 +1140,15 @@ Oid
 get_bbf_function_ext_idx_oid()
 {
 	if (!OidIsValid(bbf_function_ext_idx_oid))
+	{
+		bbf_function_ext_oid = get_relname_relid(BBF_FUNCTION_EXT_TABLE_NAME,
+											 get_namespace_oid("sys", false));
+
 		bbf_function_ext_idx_oid = get_relname_relid(BBF_FUNCTION_EXT_IDX_NAME,
 												 get_namespace_oid("sys", false));
+	}
 
-	if (OidIsValid(bbf_function_ext_idx_oid))
+	if (OidIsValid(bbf_function_ext_oid) && OidIsValid(bbf_function_ext_idx_oid))
 		initBbfFunctionExtSyscache();
 
 	return bbf_function_ext_idx_oid;
