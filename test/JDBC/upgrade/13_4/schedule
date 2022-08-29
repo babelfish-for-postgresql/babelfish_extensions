@@ -34,7 +34,6 @@ BABEL-3166
 BABEL-3192
 fulltextserviceproperty
 is_srvrolemember
-sys-babelfish_sysdatabases
 sys-column-property
 sys-datefirst
 sys-lock_timeout

@@ -44,7 +44,6 @@ fulltextserviceproperty
 is_srvrolemember
 msdb-dbo-fn_syspolicy_is_automation_enabled
 objectpropertyex
-sys-babelfish_sysdatabases
 sys-column-property
 sys-configurations
 sys-datefirst

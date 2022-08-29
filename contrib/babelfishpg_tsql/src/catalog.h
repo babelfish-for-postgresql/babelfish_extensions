@@ -35,7 +35,7 @@ extern Oid sysdatabaese_idx_oid_oid;
 extern Oid sysdatabaese_idx_name_oid;
 
 /* MUST comply with babelfish_sysdatabases table */
-#define SYSDATABASES_NUM_COLS 9
+#define SYSDATABASES_NUM_COLS 8
 #define Anum_sysdatabaese_oid 1
 #define Anum_sysdatabaese_name 6
 #define Anum_sysdatabaese_crdate 7
@@ -51,7 +51,6 @@ typedef struct FormData_sysdatabases
 	text		name;
 	TimestampTz crdate;
 	text		properties;
-	int16		cmptlevel
 } FormData_sysdatabases;
 
 typedef FormData_sysdatabases *Form_sysdatabases;
@@ -82,7 +81,7 @@ extern char *get_db_name(int16 dbid);
 extern void initTsqlSyscache(void);
 extern const char *get_one_user_db_name(void);
 
-#define DEFAULT_DATABASE_COMPATIBILITY_LEVEL 120
+#define DEFAULT_DATABASE_COMPATIBILITY_LEVEL 80
 
 /*****************************************
  *			NAMESPACE_EXT

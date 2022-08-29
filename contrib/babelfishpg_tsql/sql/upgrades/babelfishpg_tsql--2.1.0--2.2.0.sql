@@ -3549,55 +3549,14 @@ END;
 $$
 language plpgsql;
 
-ALTER TABLE sys.assemblies RENAME TO assemblies_deprecated_2_1;
-CREATE TABLE sys.assemblies(
-        name sys.sysname,
-        principal_id int,
-        assembly_id int,
-        clr_name nvarchar(4000),
-        permission_set  tinyint,
-        permission_set_desc     nvarchar(60),
-        is_visible      bit,
-        create_date     datetime,
-        modify_date     datetime,
-        is_user_defined bit
-);
-GRANT SELECT ON sys.assemblies TO PUBLIC;
-
-CREATE OR REPLACE PROCEDURE sys.sp_tablecollations_100
-(
-    IN "@object" nvarchar(4000)
-)
-AS $$
-BEGIN
-    select
-        s_tcv.colid         AS colid,
-        s_tcv.name          AS name,
-        s_tcv.tds_collation_100 AS tds_collation,
-        s_tcv.collation_100 AS collation
-    from
-        sys.spt_tablecollations_view s_tcv
-    where
-        s_tcv.object_id = (SELECT sys.object_id(@object))
-    order by colid;
-END;
-$$
-LANGUAGE 'pltsql';
-
-SET allow_system_table_mods TO ON;
-
-ALTER TABLE sys.babelfish_sysdatabases ADD COLUMN cmptlevel SMALLINT DEFAULT 120;
-
-SET allow_system_table_mods TO OFF;
-
 create or replace view sys.databases as
 select
   CAST(d.name as SYS.SYSNAME) as name
   , CAST(sys.db_id(d.name) as INT) as database_id
   , CAST(NULL as INT) as source_database_id
-  , cast(cast(r.oid as INT) as SYS.VARBINARY(85)) as owner_sid
+  , cast(s.sid as SYS.VARBINARY(85)) as owner_sid
   , CAST(d.crdate AS SYS.DATETIME) as create_date
-  , CAST(d.cmptlevel AS SYS.TINYINT) as compatibility_level
+  , CAST(s.cmptlevel AS SYS.TINYINT) as compatibility_level
   , CAST(c.collname as SYS.SYSNAME) as collation_name
   , CAST(0 AS SYS.TINYINT)  as user_access
   , CAST('MULTI_USER' AS SYS.NVARCHAR(60)) as user_access_desc
@@ -3684,29 +3643,45 @@ select
   , CAST(0 AS SYS.BIT) as is_stale_page_detection_on
   , CAST(0 AS SYS.BIT) as is_memory_optimized_enabled
   , CAST(0 AS SYS.BIT) as is_ledger_on
- from sys.babelfish_sysdatabases d LEFT OUTER JOIN pg_catalog.pg_collation c ON d.default_collation = c.collname
- LEFT OUTER JOIN pg_catalog.pg_roles r on r.rolname = d.owner;
-
+ from sys.babelfish_sysdatabases d 
+ INNER JOIN sys.sysdatabases s on d.dbid = s.dbid
+ LEFT OUTER JOIN pg_catalog.pg_collation c ON d.default_collation = c.collname;
 GRANT SELECT ON sys.databases TO PUBLIC;
 
-CREATE OR REPLACE VIEW sys.sysdatabases AS
-SELECT
-t.name,
-sys.db_id(t.name) AS dbid,
-CAST(CAST(r.oid AS int) AS SYS.VARBINARY(85)) AS sid,
-CAST(0 AS SMALLINT) AS mode,
-t.status,
-t.status2,
-CAST(t.crdate AS SYS.DATETIME) AS crdate,
-CAST('1900-01-01 00:00:00.000' AS SYS.DATETIME) AS reserved,
-CAST(0 AS INT) AS category,
-CAST(t.cmptlevel AS SYS.TINYINT) AS cmptlevel,
-CAST(NULL AS SYS.NVARCHAR(260)) AS filename,
-CAST(NULL AS SMALLINT) AS version
-FROM sys.babelfish_sysdatabases AS t
-LEFT OUTER JOIN pg_catalog.pg_roles r on r.rolname = t.owner;
+ALTER TABLE sys.assemblies RENAME TO assemblies_deprecated_2_1;
+CREATE TABLE sys.assemblies(
+        name sys.sysname,
+        principal_id int,
+        assembly_id int,
+        clr_name nvarchar(4000),
+        permission_set  tinyint,
+        permission_set_desc     nvarchar(60),
+        is_visible      bit,
+        create_date     datetime,
+        modify_date     datetime,
+        is_user_defined bit
+);
+GRANT SELECT ON sys.assemblies TO PUBLIC;
 
-GRANT SELECT ON sys.sysdatabases TO PUBLIC;
+CREATE OR REPLACE PROCEDURE sys.sp_tablecollations_100
+(
+    IN "@object" nvarchar(4000)
+)
+AS $$
+BEGIN
+    select
+        s_tcv.colid         AS colid,
+        s_tcv.name          AS name,
+        s_tcv.tds_collation_100 AS tds_collation,
+        s_tcv.collation_100 AS collation
+    from
+        sys.spt_tablecollations_view s_tcv
+    where
+        s_tcv.object_id = (SELECT sys.object_id(@object))
+    order by colid;
+END;
+$$
+LANGUAGE 'pltsql';
 
 -- Drops the temporary procedure used by the upgrade script.
 -- Please have this be one of the last statements executed in this upgrade script.
