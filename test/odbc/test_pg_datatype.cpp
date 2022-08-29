@@ -1,14 +1,9 @@
-#include "odbc_handler.h"
 #include <gtest/gtest.h>
-#include <sql.h>
 #include <sqlext.h>
+#include "odbc_handler.h"
 #include "query_generator.h"
 
-
-using std::unique_ptr;
-using std::vector;
 using std::pair;
-using std::string;
 
 class PSQL_DataTypes : public testing::Test{
 
@@ -16,7 +11,7 @@ class PSQL_DataTypes : public testing::Test{
 
 TEST_F(PSQL_DataTypes, Datatypes_bigint) {
 
-  const string TABLE_NAME = "bigint_table";
+  const string TABLE_NAME = "master_dbo.bigint_table";
   const string COL1_NAME = "pk"; // primary key
   const string COL2_NAME = "data";
   const string DATATYPE_NAME = "sys.bigint";
