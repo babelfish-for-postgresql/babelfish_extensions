@@ -8,8 +8,6 @@
 #    new line
 # 6. If you want the framework to not run certain files, use: ignore#!#<test name>
 
-# check babelfish version first
-cmd#!#postgresql#!#select cast(case when cast(sys.SERVERPROPERTY('BabelfishVersion') as varchar(20)) LIKE '_._._' THEN 'valid' else 'invalid' end as sys.varchar(20));
 all
 
 # JDBC bulk insert API seems to call SET FMTONLY ON without calling SET FMTONLY OFF, causing some spurious test failures.
