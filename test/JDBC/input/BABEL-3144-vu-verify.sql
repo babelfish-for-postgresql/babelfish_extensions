@@ -1,6 +1,6 @@
 -- throws an error
--- SELECT SUM( sumbigint ) AS sum_bigint FROM babel_3144_vu_prepare_t1
--- GO
+SELECT SUM( sumbigint ) AS sum_bigint FROM babel_3144_vu_prepare_t1
+GO
 
 SELECT SUM( sumint ) AS sum_int FROM babel_3144_vu_prepare_t1
 GO
@@ -18,9 +18,9 @@ GO
 SELECT SUM( sumtinyint ) AS sum_tinyint FROM babel_3144_vu_prepare_t2
 GO
 
--- throws an error
--- SELECT SUM( sumbigint ) AS sum_bigint FROM babel_3144_vu_prepare_t3
--- GO
+
+SELECT SUM( sumbigint ) AS sum_bigint FROM babel_3144_vu_prepare_t3
+GO
 
 SELECT SUM( sumint ) AS sum_int FROM babel_3144_vu_prepare_t3
 GO
@@ -39,10 +39,6 @@ SELECT
 FROM babel_3144_vu_prepare_t3
 GO
 
-SELECT * FROM babel_3144_vu_prepare_v1
-GO
-
-
 SELECT babel_3144_vu_prepare_f1()
 GO
 
@@ -50,9 +46,6 @@ SELECT babel_3144_vu_prepare_f2()
 GO
 
 EXEC babel_3144_vu_prepare_p1
-GO
-
-DROP VIEW babel_3144_vu_prepare_v1
 GO
 
 DROP FUNCTION babel_3144_vu_prepare_f1

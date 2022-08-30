@@ -1,20 +1,27 @@
-
 -- throws an error
--- SELECT SUM( sumbigint ) AS sum_bigint FROM babel_3144_vu_prepare_t1
--- GO
-SELECT SUM( sumint ) AS sum_int FROM babel_3144_vu_prepare_t1
+SELECT SUM( sumbigint ) AS sum_bigint FROM babel_3144_vu_prepare_t1
 GO
 ~~START~~
 bigint
-4294967294
-~~END~~
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Arithmetic overflow error converting expression to data type bigint.)~~
+
+
+SELECT SUM( sumint ) AS sum_int FROM babel_3144_vu_prepare_t1
+GO
+~~START~~
+int
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Arithmetic overflow error converting expression to data type int.)~~
 
 
 -- empty table return value should be NULL
 SELECT SUM( sumbigint ) AS sum_bigint FROM babel_3144_vu_prepare_t2
 GO
 ~~START~~
-numeric
+bigint
 <NULL>
 ~~END~~
 
@@ -22,7 +29,7 @@ numeric
 SELECT SUM( sumint ) AS sum_int FROM babel_3144_vu_prepare_t2
 GO
 ~~START~~
-bigint
+int
 <NULL>
 ~~END~~
 
@@ -30,7 +37,7 @@ bigint
 SELECT SUM( sumsmallint ) AS sum_smallintint FROM babel_3144_vu_prepare_t2
 GO
 ~~START~~
-bigint
+int
 <NULL>
 ~~END~~
 
@@ -38,19 +45,24 @@ bigint
 SELECT SUM( sumtinyint ) AS sum_tinyint FROM babel_3144_vu_prepare_t2
 GO
 ~~START~~
-bigint
+int
 <NULL>
 ~~END~~
 
 
 
--- throws an error
--- SELECT SUM( sumbigint ) AS sum_bigint FROM babel_3144_vu_prepare_t3
--- GO
-SELECT SUM( sumint ) AS sum_int FROM babel_3144_vu_prepare_t3
+SELECT SUM( sumbigint ) AS sum_bigint FROM babel_3144_vu_prepare_t3
 GO
 ~~START~~
 bigint
+18
+~~END~~
+
+
+SELECT SUM( sumint ) AS sum_int FROM babel_3144_vu_prepare_t3
+GO
+~~START~~
+int
 12
 ~~END~~
 
@@ -58,7 +70,7 @@ bigint
 SELECT SUM( sumsmallint ) AS sum_smallintint FROM babel_3144_vu_prepare_t3
 GO
 ~~START~~
-bigint
+int
 12
 ~~END~~
 
@@ -66,7 +78,7 @@ bigint
 SELECT SUM( sumtinyint ) AS sum_tinyint FROM babel_3144_vu_prepare_t3
 GO
 ~~START~~
-bigint
+int
 18
 ~~END~~
 
@@ -80,17 +92,8 @@ FROM babel_3144_vu_prepare_t3
 GO
 ~~START~~
 varchar#!#varchar#!#varchar#!#varchar
-numeric#!#bigint#!#bigint#!#bigint
+bigint#!#integer#!#integer#!#integer
 ~~END~~
-
-
-SELECT * FROM babel_3144_vu_prepare_v1
-GO
-~~START~~
-bigint#!#bigint#!#bigint
-1#!#1#!#1
-~~END~~
-
 
 
 SELECT babel_3144_vu_prepare_f1()
@@ -112,13 +115,10 @@ numeric
 EXEC babel_3144_vu_prepare_p1
 GO
 ~~START~~
-bigint#!#bigint#!#bigint
+int#!#int#!#int
 1#!#1#!#1
 ~~END~~
 
-
-DROP VIEW babel_3144_vu_prepare_v1
-GO
 
 DROP FUNCTION babel_3144_vu_prepare_f1
 DROP FUNCTION babel_3144_vu_prepare_f2

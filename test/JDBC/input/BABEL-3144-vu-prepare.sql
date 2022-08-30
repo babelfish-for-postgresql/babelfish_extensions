@@ -31,8 +31,6 @@ GO
 INSERT INTO babel_3144_vu_prepare_t4 VALUES(1,1,1,1)
 GO
 
-CREATE VIEW babel_3144_vu_prepare_v1 AS SELECT SUM(sumint)as sum_int,SUM(sumsmallint) as sum_smallint ,SUM(sumtinyint) as sum_tinyint FROM babel_3144_vu_prepare_t4
-GO
 
 CREATE FUNCTION babel_3144_vu_prepare_f1()
 RETURNS BIGINT AS
