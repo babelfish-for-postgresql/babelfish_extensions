@@ -13,6 +13,7 @@ t
 -- tsql
 USE master
 GO
+
 -- Drop tables and databases if exist
 DROP TABLE IF EXISTS babel_2902_ma1
 DROP DATABASE IF EXISTS babel_2902_testdb_1
@@ -41,12 +42,21 @@ GO
 
 CREATE DATABASE babel_2902_testdb_3
 GO
+
 USE babel_2902_testdb_3
 CREATE TABLE babel_2902_t3 (z int)
 GO
 
 USE master
 GO
+
+SELECT set_config('babelfishpg_tsql.explain_costs', 'off', false);
+GO
+~~START~~
+text
+off
+~~END~~
+
 
 SET babelfish_showplan_all on
 GO
@@ -102,7 +112,7 @@ GO
 text
 Query Text: ASSIGN @a = SELECT 100
   Query Text: SELECT 100
-  ->  Result  (cost=0.00..0.01 rows=1 width=4)
+  ->  Result
 Query Text: PRINT @a
 ~~END~~
 
@@ -129,14 +139,14 @@ GO
 text
 Query Text: ASSIGN @a = SELECT 0
   Query Text: SELECT 0
-  ->  Result  (cost=0.00..0.01 rows=1 width=4)
+  ->  Result
 Query Text: SELECT COUNT(*) FROM babel_2902_ma1
-Aggregate  (cost=41.88..41.89 rows=1 width=4)
-  ->  Seq Scan on babel_2902_ma1  (cost=0.00..35.50 rows=2550 width=0)
+Aggregate
+  ->  Seq Scan on babel_2902_ma1
 Query Text: PRINT 'The value of a is ' + CONVERT(VARCHAR, @a)
 Query Text: ASSIGN @a = SELECT @a + 1
   Query Text: SELECT @a + 1
-  ->  Result  (cost=0.00..0.01 rows=1 width=4)
+  ->  Result
 ~~END~~
 
 
@@ -157,10 +167,10 @@ GO
 ~~START~~
 text
 Query Text: SELECT * FROM babel_2902_ma1
-Seq Scan on babel_2902_ma1  (cost=0.00..35.50 rows=2550 width=4)
+Seq Scan on babel_2902_ma1
 Query Text: USE DATABASE babel_2902_testdb_1
 Query Text: SELECT * FROM babel_2902_t1
-Seq Scan on babel_2902_t1  (cost=0.00..35.50 rows=2550 width=4)
+Seq Scan on babel_2902_t1
 ~~END~~
 
 SET babelfish_showplan_all off
@@ -184,11 +194,11 @@ GO
 text
 Query Text: PRINT 'testing'
 Query Text: SELECT COUNT(*) FROM babel_2902_ma1
-Aggregate  (cost=41.88..41.89 rows=1 width=4)
-  ->  Seq Scan on babel_2902_ma1  (cost=0.00..35.50 rows=2550 width=0)
+Aggregate
+  ->  Seq Scan on babel_2902_ma1
 Query Text: USE DATABASE babel_2902_testdb_3
 Query Text: SELECT * FROM babel_2902_t3
-Seq Scan on babel_2902_t3  (cost=0.00..35.50 rows=2550 width=4)
+Seq Scan on babel_2902_t3
 ~~END~~
 
 SET babelfish_showplan_all off
@@ -219,19 +229,19 @@ GO
 text
 Query Text: USE DATABASE babel_2902_testdb_1
 Query Text: SELECT * FROM babel_2902_t1
-Seq Scan on babel_2902_t1  (cost=0.00..35.50 rows=2550 width=4)
+Seq Scan on babel_2902_t1
 Query Text: SELECT * FROM babel_2902_t1
-Seq Scan on babel_2902_t1  (cost=0.00..35.50 rows=2550 width=4)
+Seq Scan on babel_2902_t1
 Query Text: SELECT * FROM babel_2902_t1
-Seq Scan on babel_2902_t1  (cost=0.00..35.50 rows=2550 width=4)
+Seq Scan on babel_2902_t1
 Query Text: USE DATABASE babel_2902_testdb_2
 Query Text: SELECT * FROM babel_2902_t2
-Seq Scan on babel_2902_t2  (cost=0.00..35.50 rows=2550 width=4)
+Seq Scan on babel_2902_t2
 Query Text: SELECT * FROM babel_2902_t2
-Seq Scan on babel_2902_t2  (cost=0.00..35.50 rows=2550 width=4)
+Seq Scan on babel_2902_t2
 Query Text: USE DATABASE babel_2902_testdb_3
 Query Text: SELECT * FROM babel_2902_t3
-Seq Scan on babel_2902_t3  (cost=0.00..35.50 rows=2550 width=4)
+Seq Scan on babel_2902_t3
 Query Text: USE DATABASE babel_2902_testdb_2
 ~~END~~
 
@@ -464,7 +474,7 @@ GO
 text
 Query Text: ASSIGN @testmsg = SELECT 'a: %s b: %s c :%s'
   Query Text: SELECT 'a: %s b: %s c :%s'
-  ->  Result  (cost=0.00..0.01 rows=1 width=32)
+  ->  Result
 Query Text: RAISERROR (@testMsg,1,1,'a','b','c')
 ~~END~~
 
@@ -500,6 +510,7 @@ GO
 
 ~~ERROR (Message: procedure throw(integer, integer, unknown) does not exist)~~
 
+
 -- try catch --
 THROW
 GO
@@ -509,14 +520,19 @@ GO
 
 
 -- Unable to test until explain for RESTORE CTX PARTIAL is implemented
--- BEGIN TRY
---     SELECT 1/0
--- END TRY
--- BEGIN CATCH
---     PRINT 'test'
---     THROW
--- END CATCH
--- GO
+BEGIN TRY
+    SELECT 1/0
+END TRY
+BEGIN CATCH
+    PRINT 'test'
+    THROW
+END CATCH
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Showing Estimated Execution Plan for RESTORE CTX PARTIAL statment is not yet supported)~~
+
+
 -- Clean up --
 SET babelfish_showplan_all OFF
 GO

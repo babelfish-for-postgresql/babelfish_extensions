@@ -24,10 +24,10 @@ static void reset_exec_error_data(PLtsql_execstate *estate);
 static void assert_equal_estate_err(PLtsql_estate_err *err1, PLtsql_estate_err *err2);
 static void read_raiserror_params(PLtsql_execstate *estate, List *params, int paramno,
 								  char **msg, int *msg_id, int *severity, int *state);
-static void read_raiserror_params_explain(List *params, int paramno);
+static int read_raiserror_params_explain(List *params, int paramno);
 static void read_throw_params(PLtsql_execstate *estate, List *params, 
 							  char **msg, int *err_no, int *state);
-static void read_throw_params_explain(List *params);
+static int read_throw_params_explain(List *params);
 static char *get_proc_name(PLtsql_execstate *estate);
 static bool is_seterror_on(PLtsql_stmt *stmt);
 
@@ -101,11 +101,9 @@ static int exec_stmt_raiserror(PLtsql_execstate *estate, PLtsql_stmt_raiserror *
 	int		severity = -1;
 	int		state = -1;
 
-	if (pltsql_explain_only) {
+	if (pltsql_explain_only)
+		return read_raiserror_params_explain(stmt->params, stmt->paramno);
 
-		read_raiserror_params_explain(stmt->params, stmt->paramno);
-		return PLTSQL_RC_OK;
-	}
 	/* Read parameters of RAISERROR statements */
 	read_raiserror_params(estate, stmt->params, stmt->paramno, &msg, &msg_id, &severity, &state);
 	msg = pstrdup(msg);
@@ -167,21 +165,19 @@ static int exec_stmt_throw(PLtsql_execstate *estate, PLtsql_stmt_throw *stmt)
 			return PLTSQL_RC_OK;
 		}
 		/* Update error data info in exec_state_call_stack */
-	set_exec_error_data(estate->cur_error->procedure,
-						estate->cur_error->number,
-						estate->cur_error->severity,
-						estate->cur_error->state,
-						true /* rethrow */);
-	ReThrowError(estate->cur_error->error);
+		set_exec_error_data(estate->cur_error->procedure,
+							estate->cur_error->number,
+							estate->cur_error->severity,
+							estate->cur_error->state,
+							true /* rethrow */);
+		ReThrowError(estate->cur_error->error);
 	}
 	else
 	{
 		/* Read parameters of THROW statement */
 		if (pltsql_explain_only)
-		{
-			read_throw_params_explain(stmt->params);
-			return PLTSQL_RC_OK;
-		}
+			return read_throw_params_explain(stmt->params);
+
 		read_throw_params(estate, stmt->params, &msg, &err_no, &state);
 		msg = pstrdup(msg);
 		proc_name = get_proc_name(estate);
@@ -651,7 +647,7 @@ static inline int dispatch_stmt(PLtsql_execstate *estate, PLtsql_stmt *stmt)
 			exec_stmt_close(estate, (PLtsql_stmt_close *) stmt);
 			break;
 		case PLTSQL_STMT_COMMIT:
- 			if (pltsql_explain_only)
+			if (pltsql_explain_only)
 			{
 				ereport(ERROR,
 						(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
@@ -1542,7 +1538,7 @@ void process_explain(PLtsql_execstate *estate)
 		{
 			PLtsql_stmt_usedb *initial_db = palloc0(sizeof(PLtsql_stmt_usedb));
 			initial_db->db_name = einfo->initial_database;
-			exec_stmt_usedb_explain(estate, (PLtsql_stmt_usedb *) initial_db, true);
+			exec_stmt_usedb_explain(estate, initial_db, true);
 		}
 	}
 	/* Concat all explain_infos */
@@ -1688,19 +1684,27 @@ void assert_equal_estate_err(PLtsql_estate_err *err1, PLtsql_estate_err *err2)
 		   err1->severity == err2->severity &&
 		   err1->state == err2->state);
 }
-static void read_raiserror_params_explain(List *params, int paramno) 
+static
+int read_raiserror_params_explain(List *params, int paramno)
 {
 	PLtsql_expr *exprTemp;
 	StringInfoData query_string;
 	
 	if (!pltsql_explain_only)
-		return;
+		return PLTSQL_RC_OK;
 
 	initStringInfo(&query_string);
 	appendStringInfo(&query_string, "RAISERROR (");
 	for (int i = 0; i < paramno; i++)
 	{
 		exprTemp = (PLtsql_expr *) list_nth(params, i);
+		if (exprTemp == NULL)
+		ereport(ERROR, (errcode(ERRCODE_NULL_VALUE_NOT_ALLOWED),
+				errmsg("parameter of RAISERROR is null")));
+		if (strlen(exprTemp->query) <= 7)
+		ereport(ERROR, (errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+				errmsg("invalid expression for RAISERROR paramter %s", exprTemp->query)));
+		/* Starting from position 7 strips the "SELECT " from the query text*/
 		appendStringInfoString(&query_string, &exprTemp->query[7]);
 
 		/* no comma on final item */
@@ -1785,25 +1789,51 @@ static void read_raiserror_params(PLtsql_execstate *estate, List *params, int pa
 	*msg = buf.data;
 }
 
-static void read_throw_params_explain(List *params)
+static int read_throw_params_explain(List *params)
 {
+	if (!pltsql_explain_only)
+		return PLTSQL_RC_OK;
+
 	PLtsql_expr  *exprTemp;
 	StringInfoData query_text;
 	initStringInfo(&query_text);
 	appendStringInfo(&query_text, "THROW ");
 
 	exprTemp = (PLtsql_expr *) list_nth(params, 0);
+	if (exprTemp == NULL)
+		ereport(ERROR, (errcode(ERRCODE_NULL_VALUE_NOT_ALLOWED),
+				errmsg("err_no argument of THROW is null")));
+	if (strlen(exprTemp->query) <= 7)
+		ereport(ERROR, (errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+				errmsg("invalid expression for err_no %s", exprTemp->query)));
+
+	/* Starting from position 7 strips the "SELECT " from the query text */
 	appendStringInfoString(&query_text, &exprTemp->query[7]);
 	appendStringInfoString(&query_text, ", ");
 
 	exprTemp = (PLtsql_expr *) list_nth(params, 1);
+	if (exprTemp == NULL)
+		ereport(ERROR, (errcode(ERRCODE_NULL_VALUE_NOT_ALLOWED),
+				errmsg("message argument of THROW is null")));
+	if (strlen(exprTemp->query) <= 7)
+		ereport(ERROR, (errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+				errmsg("invalid expression for message %s", exprTemp->query)));
+
 	appendStringInfoString(&query_text, &exprTemp->query[7]);
 	appendStringInfoString(&query_text, ", ");
 
 	exprTemp = (PLtsql_expr *) list_nth(params, 2);
+	if (exprTemp == NULL)
+		ereport(ERROR, (errcode(ERRCODE_NULL_VALUE_NOT_ALLOWED),
+				errmsg("state argument of THROW is null")));
+	if (strlen(exprTemp->query) <= 7)
+		ereport(ERROR, (errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+				errmsg("invalid expression for state %s", exprTemp->query)));
+
 	appendStringInfoString(&query_text, &exprTemp->query[7]);
 
 	append_explain_info(NULL, query_text.data);
+	return PLTSQL_RC_OK;
 }
 
 static void read_throw_params(PLtsql_execstate *estate, List *params,

@@ -2523,7 +2523,7 @@ static int
 exec_stmt_usedb(PLtsql_execstate *estate, PLtsql_stmt_usedb *stmt)
 {
 	if (pltsql_explain_only) {
-		return exec_stmt_usedb_explain(estate, stmt, false);
+		return exec_stmt_usedb_explain(estate, stmt, false  /* shouldRestoreDb */);
 	}
 	char * old_db_name = get_cur_db_name();
 	char message[128];
@@ -2573,22 +2573,22 @@ exec_stmt_usedb(PLtsql_execstate *estate, PLtsql_stmt_usedb *stmt)
 	return PLTSQL_RC_OK;
 }
 
+/* This function will change databases to a given target database for use in explain functions
+* It will maintain the lock on the initial database and supress any log messages to the user
+* otherwise this function will be functionally the same as exec_stmt_usedb
+*/
 static int
 exec_stmt_usedb_explain(PLtsql_execstate *estate, PLtsql_stmt_usedb *stmt, bool shouldRestoreDb)
 {
-	/* This function will change databases to a given target database for use in explain functions
-	 * It will maintain the lock on the initial database and supress any log messages to the user
-	 * otherwise this function will be functionally the same as exec_stmt_usedb
-	 */
-	if (!pltsql_explain_only)
-		return PLTSQL_RC_OK;
-
-	char *old_db_name;
-	char *initial_database_name;
-	char message[128];
+	const char *old_db_name;
+	const char *initial_database_name;
+	const char *queryText;
 	int16 old_db_id;
 	int16 new_db_id;
 	int16 initial_database_id;
+
+	if (!pltsql_explain_only)
+		return PLTSQL_RC_OK;
 
 	old_db_name = get_cur_db_name();
 	old_db_id = get_cur_db_id();
@@ -2596,7 +2596,7 @@ exec_stmt_usedb_explain(PLtsql_execstate *estate, PLtsql_stmt_usedb *stmt, bool 
 
 	/* append query information */
 	if (!shouldRestoreDb) {
-		char * queryText = psprintf("USE DATABASE %s", stmt->db_name);
+		queryText = psprintf("USE DATABASE %s", stmt->db_name);
 		append_explain_info(NULL, queryText);
 	}
 	
@@ -2620,7 +2620,9 @@ exec_stmt_usedb_explain(PLtsql_execstate *estate, PLtsql_stmt_usedb *stmt, bool 
 	if (old_db_id != initial_database_id)
 		UnlockLogicalDatabaseForSession(old_db_id, ShareLock, false);
 
-	/* Get a session-level shared lock on the new logical db we are about to use. If initial db then no need to relock since we still have one */
+	/* Get a session-level shared lock on the new logical db we are about to use.  If Restoring the original DB, its
+	   There is no need to reacquire a lock since we never released the lock in the the initial db
+	*/
 	if (!TryLockLogicalDatabaseForSession(new_db_id, ShareLock) && !shouldRestoreDb)
 		ereport(ERROR,
 				(errcode(ERRCODE_INTERNAL_ERROR),

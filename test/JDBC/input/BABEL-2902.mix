@@ -8,6 +8,7 @@ GO
 -- tsql
 USE master
 GO
+
 -- Drop tables and databases if exist
 DROP TABLE IF EXISTS babel_2902_ma1
 DROP DATABASE IF EXISTS babel_2902_testdb_1
@@ -36,11 +37,15 @@ GO
 
 CREATE DATABASE babel_2902_testdb_3
 GO
+
 USE babel_2902_testdb_3
 CREATE TABLE babel_2902_t3 (z int)
 GO
 
 USE master
+GO
+
+SELECT set_config('babelfishpg_tsql.explain_costs', 'off', false);
 GO
 
 SET babelfish_showplan_all on
@@ -266,18 +271,20 @@ THROW 51000, 1, 1
 GO
 THROW 51000, 1, 'test'
 GO
+
 -- try catch --
 THROW
 GO
+
 -- Unable to test until explain for RESTORE CTX PARTIAL is implemented
--- BEGIN TRY
---     SELECT 1/0
--- END TRY
--- BEGIN CATCH
---     PRINT 'test'
---     THROW
--- END CATCH
--- GO
+BEGIN TRY
+    SELECT 1/0
+END TRY
+BEGIN CATCH
+    PRINT 'test'
+    THROW
+END CATCH
+GO
 
 -- Clean up --
 SET babelfish_showplan_all OFF

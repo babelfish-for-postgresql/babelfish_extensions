@@ -60,7 +60,7 @@ void append_explain_info(QueryDesc *queryDesc, const char *queryString)
 	MemoryContext oldcxt;
 	ExplainState *es;
 	ExplainInfo *einfo;
-	char *initial_database;
+	const char *initial_database;
 	size_t indent;
 	int nestlevel;
 
@@ -182,11 +182,10 @@ void set_explain_database(const char *db_name)
        einfo->initial_database = db_name;
 }
 
-char *get_explain_database(void)
+const char *get_explain_database(void)
 {
        ExplainInfo *einfo = get_last_explain_info();
-       if (einfo != NULL && einfo->initial_database)
+       if (einfo != NULL)
                return einfo->initial_database;
-
        return NULL;
 }
