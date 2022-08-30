@@ -1,3 +1,6 @@
+use master;
+go
+
 create table table_privileges_vu_prepare_tb1(arg1 int, arg2 int);
 go
 
@@ -6,6 +9,9 @@ go
 
 create login table_privileges_vu_prepare_log WITH PASSWORD = 'YourSecretPassword1234#';
 GO
+
+create database table_privileges_test_db;
+go
 
 create user table_privileges_vu_prepare_user FOR LOGIN table_privileges_vu_prepare_log;
 GO
@@ -47,6 +53,24 @@ go
 select * from information_schema.table_privileges where table_name like 'table_privileges_vu_prepare_tb%' order by table_name,privilege_type;
 go
 
+create schema table_privileges_test_sc;
+go
+
+create table table_privileges_test_sc.table_privileges_tb3(arg1 int, arg2 int);
+go
+
+grant SELECT on table_privileges_test_sc.table_privileges_tb3 to table_privileges_vu_prepare_user;
+go
+
+select * from information_schema.table_privileges where table_name like 'table_privileges_tb%' and is_grantable='NO' order by table_name,privilege_type;
+go
+
+drop table table_privileges_test_sc.table_privileges_tb3;
+go
+
+drop schema table_privileges_test_sc;
+go
+
 drop function table_privileges_vu_verify_func;
 go
 
@@ -66,4 +90,7 @@ drop user table_privileges_vu_prepare_user;
 go
 
 drop login table_privileges_vu_prepare_log;
+go
+
+drop database table_privileges_test_db;
 go
