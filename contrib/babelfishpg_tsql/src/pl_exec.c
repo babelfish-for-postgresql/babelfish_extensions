@@ -7539,6 +7539,7 @@ exec_eval_simple_expr(PLtsql_execstate *estate,
 	*result = ExecEvalExpr(expr->expr_simple_state,
 						   econtext,
 						   isNull);
+
 	/* Assorted cleanup */
 	expr->expr_simple_in_use = false;
 
