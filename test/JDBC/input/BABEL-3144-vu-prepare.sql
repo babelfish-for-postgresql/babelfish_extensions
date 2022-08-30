@@ -23,3 +23,12 @@ GO
 
 INSERT INTO babel_3144_vu_preppare_t3 VALUES(2,4,8,16)
 GO
+
+CREATE TABLE  babel_3144_vu_preppare_t4(sumbigint BIGINT)
+GO
+
+INSERT INTO babel_3144_vu_preppare_t4 VALUES(1)
+GO
+
+CREATE VIEW babel_3144_vu_prepare_v1 AS SELECT SUM(sumbigint) FROM babel_3144_vu_preppare_t4
+GO

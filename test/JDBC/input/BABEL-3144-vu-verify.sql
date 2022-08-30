@@ -38,7 +38,14 @@ SELECT
 FROM babel_3144_vu_preppare_t3
 GO
 
+SELECT * FROM babel_3144_vu_prepare_v1
+GO
+
+DROP VIEW babel_3144_vu_prepare_v1
+GO
+
 DROP TABLE babel_3144_vu_preppare_t1
 DROP TABLE babel_3144_vu_preppare_t2
 DROP TABLE babel_3144_vu_preppare_t3
+DROP TABLE babel_3144_vu_preppare_t4
 GO
