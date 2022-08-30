@@ -31,6 +31,7 @@
 static StringInfo SetBulkLoadRowData(TDSRequestBulkLoad request, StringInfo message);
 void ProcessBCPRequest(TDSRequest request);
 static void FetchMoreBcpData(StringInfo *message, int dataLenToRead);
+static void FetchMoreBcpPlpData(StringInfo *message, int dataLenToRead);
 static int ReadBcpPlp(ParameterToken temp, StringInfo *message, TDSRequestBulkLoad request);
 uint64_t offset = 0;
 
@@ -75,6 +76,14 @@ do \
 { \
 	if ((*message)->len - offset < dataLen) \
 		FetchMoreBcpData(message, dataLen); \
+} while(0)
+
+/* Check if Message has enough data to read, if not then fetch more. */
+#define CheckPlpMessageHasEnoughBytesToRead(message, dataLen) \
+do \
+{ \
+	if ((*message)->len - offset < dataLen) \
+		FetchMoreBcpPlpData(message, dataLen); \
 } while(0)
 
 static void
@@ -134,6 +143,56 @@ FetchMoreBcpData(StringInfo *message, int dataLenToRead)
 
 	offset = 0;
 	(*message) = temp;
+}
+
+/*
+ * Incase of PLP data we should not discard the previous packet since we
+ * first store the offset of the PLP Chunks first and then read the data later.
+ */
+static void
+FetchMoreBcpPlpData(StringInfo *message, int dataLenToRead)
+{
+	int ret;
+
+	/* Unlikely that message will be NULL. */
+	if ((*message) == NULL)
+		ereport(ERROR,
+				(errcode(ERRCODE_PROTOCOL_VIOLATION),
+					errmsg("Protocol violation: Message data is NULL")));
+
+	/*
+	 * If previous return value was 1 then that means that we have reached the EOM.
+	 * No data left to read, we shall throw an error if we reach here.
+	 */
+	if (TdsGetRecvPacketEomStatus())
+		ereport(ERROR,
+				(errcode(ERRCODE_PROTOCOL_VIOLATION),
+					errmsg("Trying to read more data than available in BCP request.")));
+
+	/*
+	 * Keep fetching for additional packets until we have enough
+	 * data to read.
+	 */
+	while (dataLenToRead + offset > (*message)->len)
+	{
+		/*
+		 * We should hold the interrupts until we read the next
+		 * request frame.
+		 */
+		HOLD_CANCEL_INTERRUPTS();
+		ret = TdsReadNextPendingBcpRequest(*message);
+		RESUME_CANCEL_INTERRUPTS();
+
+		if (ret < 0)
+		{
+			TdsErrorContext->reqType = 0;
+			TdsErrorContext->err_text = "EOF on TDS socket while fetching For Bulk Load Request";
+			ereport(ERROR,
+					(errcode(ERRCODE_PROTOCOL_VIOLATION),
+						errmsg("EOF on TDS socket while fetching For Bulk Load Request")));
+			return;
+		}
+	}
 }
 
 /*
@@ -915,7 +974,7 @@ ReadBcpPlp(ParameterToken temp, StringInfo *message, TDSRequestBulkLoad request)
 	Plp plpTemp, plpPrev = NULL;
 	unsigned long lenCheck = 0;
 
-	CheckMessageHasEnoughBytesToRead(message, sizeof(plpTok));
+	CheckPlpMessageHasEnoughBytesToRead(message, sizeof(plpTok));
 	memcpy(&plpTok , &(*message)->data[offset], sizeof(plpTok));
 	offset += sizeof(plpTok);
 	request->currentBatchSize += sizeof(plpTok);
@@ -932,10 +991,10 @@ ReadBcpPlp(ParameterToken temp, StringInfo *message, TDSRequestBulkLoad request)
 	{
 		uint32_t tempLen;
 
+		CheckPlpMessageHasEnoughBytesToRead(message, sizeof(tempLen));
 		if (offset + sizeof(tempLen) > (*message)->len)
 			return STATUS_ERROR;
 
-		CheckMessageHasEnoughBytesToRead(message, sizeof(tempLen));
 		memcpy(&tempLen , &(*message)->data[offset], sizeof(tempLen));
 		offset += sizeof(tempLen);
 		request->currentBatchSize += sizeof(tempLen);
@@ -943,6 +1002,7 @@ ReadBcpPlp(ParameterToken temp, StringInfo *message, TDSRequestBulkLoad request)
 		/* PLP Terminator */
 		if (tempLen == PLP_TERMINATOR)
 			break;
+
 		plpTemp = palloc0(sizeof(PlpData));
 		plpTemp->next = NULL;
 		plpTemp->offset = offset;
@@ -958,7 +1018,7 @@ ReadBcpPlp(ParameterToken temp, StringInfo *message, TDSRequestBulkLoad request)
 			plpPrev = plpPrev->next;
 		}
 
-		CheckMessageHasEnoughBytesToRead(message, plpTemp->len);
+		CheckPlpMessageHasEnoughBytesToRead(message, plpTemp->len);
 		if (offset + plpTemp->len > (*message)->len)
 			return STATUS_ERROR;
 
