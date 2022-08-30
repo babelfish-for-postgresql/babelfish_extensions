@@ -141,6 +141,7 @@ static int exec_stmt_raiserror(PLtsql_execstate *estate, PLtsql_stmt_raiserror *
 													0,
 													msg,
 													0);
+
 	return PLTSQL_RC_OK;
 }
 

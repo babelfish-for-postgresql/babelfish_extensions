@@ -7533,10 +7533,12 @@ exec_eval_simple_expr(PLtsql_execstate *estate,
 	 */
 	expr->expr_simple_in_use = true;
 
+	/*
+	 * Finally we can call the executor to evaluate the expression
+	 */
 	*result = ExecEvalExpr(expr->expr_simple_state,
-						econtext,
-						isNull);
-
+						   econtext,
+						   isNull);
 	/* Assorted cleanup */
 	expr->expr_simple_in_use = false;
 

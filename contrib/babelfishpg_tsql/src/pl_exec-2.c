@@ -245,18 +245,19 @@ exec_stmt_print(PLtsql_execstate *estate, PLtsql_stmt_print *stmt)
 		return PLTSQL_RC_OK;
 	}
 	formatdatum = exec_eval_expr(estate,
-								(PLtsql_expr *) linitial(stmt->exprs),
-								&formatisnull,
-								&formattypeid,
-								&formattypmod);
+								 (PLtsql_expr *) linitial(stmt->exprs),
+								 &formatisnull,
+								 &formattypeid,
+								 &formattypmod);
+
 	if (formatisnull)
 		extval = "<NULL>";
 	else
 		extval = convert_value_to_string(estate,
-										formatdatum,
-										formattypeid);
+										 formatdatum,
+										 formattypeid);
 
- 	ereport(INFO, errmsg_internal("%s", extval));
+	ereport(INFO, errmsg_internal("%s", extval));
 
     exec_set_rowcount(0);
 
@@ -323,7 +324,7 @@ exec_stmt_query_set(PLtsql_execstate *estate,
 			exec_set_found(estate, (SPI_processed != 0));
 			exec_set_found(estate, (SPI_processed == 0 ? 1 : 0));
 			exec_set_rowcount(SPI_processed);
-                         break;
+                        break;
 		case SPI_ERROR_TRANSACTION:
 			ereport(ERROR,
 					(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
@@ -579,7 +580,7 @@ exec_stmt_push_result(PLtsql_execstate *estate,
 
 	estate->eval_processed = processed;
 	exec_set_rowcount(processed);
-	exec_set_found(estate, processed != 0);
+        exec_set_found(estate, processed != 0);
 
 	return PLTSQL_RC_OK;
 }
@@ -2184,7 +2185,8 @@ static bool
 is_char_identpart(char c)
 {
 	return ((is_char_identstart(c)) ||
- 	        (c >= '0' && c <= '9'));}
+	        (c >= '0' && c <= '9'));
+}
 
 /*
  * Read parameter definitions
@@ -2950,7 +2952,7 @@ execute_plan_and_push_result(PLtsql_execstate *estate, PLtsql_expr *expr, ParamL
 		processed = portal->portalPos;
 		estate->eval_processed = processed;
 		exec_set_rowcount(processed);
-         exec_set_found(estate, processed != 0);
+		exec_set_found(estate, processed != 0);
 	}
 
 	receiver->rDestroy(receiver);
