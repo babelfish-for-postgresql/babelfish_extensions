@@ -3587,7 +3587,7 @@ LANGUAGE 'pltsql';
 -- BABELFISH_FUNC_DEFAULT
 CREATE TABLE sys.babelfish_function_ext (
 	nspname NAME NOT NULL,
-  funcname NAME NOT NULL,
+	funcname NAME NOT NULL,
 	funcsignature TEXT NOT NULL COLLATE "C",
 	default_positions TEXT COLLATE "C",
 	PRIMARY KEY(nspname, funcsignature)

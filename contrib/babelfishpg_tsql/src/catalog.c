@@ -102,11 +102,8 @@ static struct cachedesc my_cacheinfo[] = {
               0
           },
           16
-      }
-};
-
-static struct cachedesc bbf_function_ext_cacheinfo[] = {
-	 {-1,       /* PROCNSPSIGNATURE */ 
+      },
+	  {-1,       /* PROCNSPSIGNATURE */ 
           -1,
           2,
           {
@@ -146,8 +143,8 @@ Datum init_catalog(PG_FUNCTION_ARGS)
 	my_cacheinfo[0].indoid = sysdatabaese_idx_oid_oid;
 	my_cacheinfo[1].reloid = sysdatabases_oid;
 	my_cacheinfo[1].indoid = sysdatabaese_idx_name_oid;
-	bbf_function_ext_cacheinfo[0].reloid = bbf_function_ext_oid;
-	bbf_function_ext_cacheinfo[0].indoid = bbf_function_ext_idx_oid;
+	my_cacheinfo[2].reloid = bbf_function_ext_oid;
+	my_cacheinfo[2].indoid = bbf_function_ext_idx_oid;
 
 	/* login ext */
 	bbf_authid_login_ext_oid = get_relname_relid(BBF_AUTHID_LOGIN_EXT_TABLE_NAME,
@@ -174,25 +171,8 @@ void initTsqlSyscache() {
 	Assert(my_cacheinfo[0].reloid != -1);
 	/* Initialize info for catcache */
 	if (!tsql_syscache_inited) {
-		InitExtensionCatalogCache(my_cacheinfo, SYSDATABASEOID, 2);
+		InitExtensionCatalogCache(my_cacheinfo, SYSDATABASEOID, 3);
 		tsql_syscache_inited = true;
-	}
-
-	if (OidIsValid(bbf_function_ext_oid) && OidIsValid(bbf_function_ext_idx_oid))
-		initBbfFunctionExtSyscache();
-}
-
-void initBbfFunctionExtSyscache()
-{
-	Assert(OidIsValid(bbf_function_ext_oid));
-	Assert(OidIsValid(bbf_function_ext_idx_oid));
-
-	if (!bbf_function_ext_syscache_inited)
-	{
-		bbf_function_ext_cacheinfo[0].reloid = bbf_function_ext_oid;
-		bbf_function_ext_cacheinfo[0].indoid = bbf_function_ext_idx_oid;
-		InitExtensionCatalogCache(bbf_function_ext_cacheinfo, PROCNSPSIGNATURE, 1);
-		bbf_function_ext_syscache_inited = true;
 	}
 }
 
@@ -1140,16 +1120,8 @@ Oid
 get_bbf_function_ext_idx_oid()
 {
 	if (!OidIsValid(bbf_function_ext_idx_oid))
-	{
-		bbf_function_ext_oid = get_relname_relid(BBF_FUNCTION_EXT_TABLE_NAME,
-											 get_namespace_oid("sys", false));
-
 		bbf_function_ext_idx_oid = get_relname_relid(BBF_FUNCTION_EXT_IDX_NAME,
 												 get_namespace_oid("sys", false));
-	}
-
-	if (OidIsValid(bbf_function_ext_oid) && OidIsValid(bbf_function_ext_idx_oid))
-		initBbfFunctionExtSyscache();
 
 	return bbf_function_ext_idx_oid;
 }
@@ -1163,7 +1135,8 @@ get_bbf_function_tuple_from_proctuple(HeapTuple proctuple)
 				 *func_signature,
 				 *langname;
 
-	if (!HeapTupleIsValid(proctuple) || !OidIsValid(get_bbf_function_ext_idx_oid()))
+	/* Disallow extended catalog lookup during restore */
+	if (!HeapTupleIsValid(proctuple) || babelfish_dump_restore)
 		return NULL;					/* concurrently dropped */
 	form = (Form_pg_proc) GETSTRUCT(proctuple);
 	langname = get_language_name(form->prolang, true);
@@ -1202,8 +1175,8 @@ get_bbf_function_tuple_from_proctuple(HeapTuple proctuple)
 	}
 
 	bbffunctuple = SearchSysCache2(PROCNSPSIGNATURE,
-									CStringGetDatum(physical_schemaname),
-									CStringGetTextDatum(func_signature));
+								   CStringGetDatum(physical_schemaname),
+								   CStringGetTextDatum(func_signature));
 
 	pfree(physical_schemaname);
 	pfree(func_signature);

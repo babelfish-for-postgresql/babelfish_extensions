@@ -1909,7 +1909,8 @@ pltsql_store_func_default_positions(ObjectAddress address, List *parameters)
 
 	/* Fetch the object details from function */
 	proctup = SearchSysCache1(PROCOID, ObjectIdGetDatum(address.objectId));
-	if (!HeapTupleIsValid(proctup))
+	/* Disallow extended catalog lookup during restore */
+	if (!HeapTupleIsValid(proctup) || babelfish_dump_restore)
 		return;
 	form_proctup = (Form_pg_proc) GETSTRUCT(proctup);
 

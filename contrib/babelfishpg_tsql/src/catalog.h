@@ -210,7 +210,6 @@ extern Oid get_bbf_function_ext_oid(void);
 extern Oid get_bbf_function_ext_idx_oid(void);
 extern HeapTuple get_bbf_function_tuple_from_proctuple(HeapTuple proctuple);
 extern void clean_up_bbf_function_ext(int16 dbid);
-extern void initBbfFunctionExtSyscache(void);
 
 typedef struct FormData_bbf_function_ext
 {
