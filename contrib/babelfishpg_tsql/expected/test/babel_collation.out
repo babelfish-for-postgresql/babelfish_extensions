@@ -6,6 +6,18 @@ LINE 1: create table testing1(col nvarchar(60));
 CREATE EXTENSION IF NOT EXISTS "babelfishpg_tsql" CASCADE;
 NOTICE:  extension "babelfishpg_tsql" already exists, skipping
 set babelfishpg_tsql.sql_dialect = "tsql";
+-- check the babelfish version
+select cast(
+    case
+        when cast(sys.SERVERPROPERTY('BabelfishVersion') as varchar(20)) LIKE '_._._'
+             THEN 'valid'
+    else 'invalid'
+    end as sys.varchar(20));
+ varchar 
+---------
+ valid
+(1 row)
+
 -- nvarchar is supported in tsql dialect
 create table testing1(col nvarchar(60));
 insert into testing1 (col) select N'Muffler';

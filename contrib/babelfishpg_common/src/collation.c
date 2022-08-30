@@ -1180,6 +1180,9 @@ int get_persist_collation_id(Oid coll_oid)
 	bool found_coll;
 	int collidx;
 
+	if (ht_oid2collid == NULL)
+		init_collid_trans_tab_internal();
+
 	entry = hash_search(ht_oid2collid, &coll_oid, HASH_FIND, &found_coll);
 
 	if (found_coll)
