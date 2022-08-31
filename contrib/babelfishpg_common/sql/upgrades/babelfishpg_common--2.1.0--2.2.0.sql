@@ -151,13 +151,15 @@ end
 $$
 LANGUAGE plpgsql;
 
-ALTER FUNCTION get_babel_server_collation_oid() RENAME TO get_babel_server_collation_oid_deprecated_in_2_3_0;
+ALTER FUNCTION sys.get_babel_server_collation_oid() RENAME TO get_babel_server_collation_oid_deprecated_in_2_3_0;
 
 CREATE OR REPLACE FUNCTION sys.get_babel_server_collation_oid() RETURNS OID
 LANGUAGE C
 AS 'babelfishpg_common', 'get_server_collation_oid';
 
 CALL sys.babelfish_drop_deprecated_function('sys', 'get_babel_server_collation_oid_deprecated_in_2_3_0');
+
+ALTER FUNCTION sys.init_server_collation_oid() RENAME TO init_server_collation_oid_deprecated_in_2_3_0;
 
 CREATE OR REPLACE PROCEDURE sys.init_server_collation_oid()
 AS $$
@@ -172,6 +174,8 @@ $$
 LANGUAGE plpgsql;
 
 CALL sys.init_server_collation_oid();
+
+CALL sys.babelfish_drop_deprecated_function('sys', 'init_server_collation_oid_deprecated_in_2_3_0');
 
 -- Fill in the oids in coll_infos
 -- CREATE OR REPLACE PROCEDURE sys.babel_collation_initializer()
