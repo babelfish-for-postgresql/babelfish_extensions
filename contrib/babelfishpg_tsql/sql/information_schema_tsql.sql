@@ -739,10 +739,11 @@ AS SELECT DISTINCT CAST(nv.dbname AS sys.nvarchar(128)) AS "VIEW_CATALOG",
   AND dt.classid = 'pg_rewrite'::regclass::oid AND dt.refclassid = 'pg_class'::regclass::oid 
   AND dt.refobjid = t.oid AND t.relnamespace = nt.oid 
   AND (t.relkind = ANY (ARRAY['r'::"char", 'v'::"char", 'f'::"char", 'p'::"char"])) 
-  AND pg_catalog.pg_has_role(t.relowner, 'USAGE'::text)
+  AND (pg_catalog.pg_has_role(t.relowner, 'USAGE'::text)
+	OR has_table_privilege(t.oid, 'SELECT, INSERT, UPDATE, DELETE, TRUNCATE, REFERENCES, TRIGGER')
+	OR has_any_column_privilege(t.oid, 'SELECT, INSERT, UPDATE, REFERENCES'))
   AND extv.dbid = CAST(sys.db_id() AS oid);
   
-
 GRANT SELECT ON information_schema_tsql.view_table_usage TO PUBLIC;
 
 
