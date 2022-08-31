@@ -125,6 +125,7 @@ CREATE OPERATOR sys.~ (
 );
 
 -- Any sql script from here should go in 2.2.0--2.3.0.sql
+DROP FUNCTION IF EXISTS sys.get_babel_server_collation_oid;
 CREATE OR REPLACE FUNCTION sys.get_babel_server_collation_oid() RETURNS OID
 LANGUAGE C
 AS 'babelfishpg_common', 'get_server_collation_oid';
@@ -145,18 +146,18 @@ LANGUAGE plpgsql;
 CALL sys.init_server_collation_oid();
 
 -- Fill in the oids in coll_infos
-CREATE OR REPLACE PROCEDURE sys.babel_collation_initializer()
-LANGUAGE C
-AS 'babelfishpg_common', 'init_collid_trans_tab_common';
-CALL sys.babel_collation_initializer();
-DROP PROCEDURE sys.babel_collation_initializer;
+-- CREATE OR REPLACE PROCEDURE sys.babel_collation_initializer()
+-- LANGUAGE C
+-- AS 'babelfishpg_common', 'init_collid_trans_tab_common';
+-- CALL sys.babel_collation_initializer();
+-- DROP PROCEDURE sys.babel_collation_initializer;
 
--- Manually initialize like mapping table
-CREATE OR REPLACE PROCEDURE sys.babel_like_ilike_info_initializer()
-LANGUAGE C
-AS 'babelfishpg_common', 'init_like_ilike_table_common';
-CALL sys.babel_like_ilike_info_initializer();
-DROP PROCEDURE sys.babel_like_ilike_info_initializer;
+-- -- Manually initialize like mapping table
+-- CREATE OR REPLACE PROCEDURE sys.babel_like_ilike_info_initializer()
+-- LANGUAGE C
+-- AS 'babelfishpg_common', 'init_like_ilike_table_common';
+-- CALL sys.babel_like_ilike_info_initializer();
+-- DROP PROCEDURE sys.babel_like_ilike_info_initializer;
 
 update pg_catalog.pg_type set typcollation = sys.get_babel_server_collation_oid()
 where typname in ('varchar', 'bpchar', 'nvarchar', 'nchar', 'sql_variant', '_ci_sysname', 'sysname') and typnamespace = (select oid from pg_namespace where nspname = 'sys');
