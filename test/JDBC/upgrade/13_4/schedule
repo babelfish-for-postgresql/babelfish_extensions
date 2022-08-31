@@ -108,4 +108,5 @@ BABEL-741
 BABEL-EXTENDEDPROPERTY
 TestErrorHelperFunctionsUpgrade
 tdscollation
+constraint_table_usage
 BABEL-1683

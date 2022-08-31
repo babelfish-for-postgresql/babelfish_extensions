@@ -1,0 +1,104 @@
+-- tsql
+
+use master;
+go
+
+create login constraint_table_usage_privilege_test_user with password='';
+go
+
+create database constraint_table_usage_privilege_test_db;
+go
+
+use constraint_table_usage_privilege_test_db;
+go
+
+create table constraint_table_usage_privilege_test_tb(arg1 int, arg2 int, primary key(arg1));
+go
+
+create user constraint_table_usage_privilege_test_user for login constraint_table_usage_privilege_test_user;
+go
+
+use master;
+go
+
+-- tsql user=constraint_table_usage_privilege_test_user password=''
+
+use constraint_table_usage_privilege_test_db;
+go
+
+select * from information_schema.constraint_column_usage where table_name='constraint_table_usage_privilege_test_tb';
+go
+~~START~~
+nvarchar#!#nvarchar#!#nvarchar#!#nvarchar#!#nvarchar#!#nvarchar#!#nvarchar
+~~END~~
+
+
+use master;
+go
+
+-- tsql
+
+use constraint_table_usage_privilege_test_db;
+go
+
+grant select on constraint_table_usage_privilege_test_tb to constraint_table_usage_privilege_test_user;
+go
+
+use master;
+go
+
+-- tsql user=constraint_table_usage_privilege_test_user password=''
+
+use constraint_table_usage_privilege_test_db;
+go
+
+select * from information_schema.constraint_column_usage where table_name='constraint_table_usage_privilege_test_tb';
+go
+~~START~~
+nvarchar#!#nvarchar#!#nvarchar#!#nvarchar#!#nvarchar#!#nvarchar#!#nvarchar
+constraint_table_usage_privilege_test_db#!#dbo#!#constraint_table_usage_privilege_test_tb#!#arg1#!#constraint_table_usage_privilege_test_db#!#dbo#!#constraint_table_usage_privilege_test_tb_pkey
+~~END~~
+
+
+use master;
+go
+
+-- tsql
+
+use constraint_table_usage_privilege_test_db;
+go
+
+drop table constraint_table_usage_privilege_test_tb;
+go
+
+use master;
+go
+
+drop database constraint_table_usage_privilege_test_db;
+go
+
+-- psql
+
+-- Need to terminate active session before cleaning up the login
+SELECT pg_terminate_backend(pid) FROM pg_stat_get_activity(NULL)
+WHERE sys.suser_name(usesysid) = 'constraint_table_usage_privilege_test_user' AND backend_type = 'client backend' AND usesysid IS NOT NULL;
+GO
+~~START~~
+bool
+t
+~~END~~
+
+
+-- Wait to sync with another session
+SELECT pg_sleep(1);
+GO
+~~START~~
+void
+
+~~END~~
+
+
+-- tsql
+drop login constraint_table_usage_privilege_test_user;
+go
+

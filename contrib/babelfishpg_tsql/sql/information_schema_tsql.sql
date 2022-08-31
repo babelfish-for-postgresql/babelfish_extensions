@@ -717,3 +717,30 @@ CREATE OR REPLACE VIEW information_schema_tsql.routines AS
 GRANT SELECT ON information_schema_tsql.routines TO PUBLIC;
 
 SELECT set_config('search_path', 'sys, '||current_setting('search_path'), false);
+
+/*
+* CONSTRAINT TABLE USAGE
+*/
+CREATE OR REPLACE VIEW information_schema_tsql.constraint_table_usage
+AS SELECT CAST(nc.dbname AS sys.nvarchar(128)) AS "TABLE_CATALOG",
+    CAST(extc.orig_name AS sys.nvarchar(128)) AS "TABLE_SCHEMA",
+    CAST(r.relname AS sys.sysname) AS "TABLE_NAME",
+    CAST(nr.dbname AS sys.nvarchar(128)) AS "CONSTRAINT_CATALOG",
+    CAST(extr.orig_name  AS sys.nvarchar(128)) AS "CONSTRAINT_SCHEMA",
+    CAST(c.conname AS sys.sysname) AS "CONSTRAINT_NAME"
+   FROM sys.pg_namespace_ext nr LEFT OUTER JOIN sys.babelfish_namespace_ext extr ON nr.nspname = extr.nspname,
+    sys.pg_namespace_ext nc LEFT OUTER JOIN sys.babelfish_namespace_ext extc ON nc.nspname = extc.nspname,
+    pg_constraint c,
+    pg_class r
+WHERE c.connamespace = nc.oid 
+AND r.relnamespace = nr.oid 
+AND (c.contype = CAST('f' AS "char") 
+AND c.confrelid = r.oid OR (c.contype = ANY (ARRAY[CAST('p' AS "char"), CAST('u' AS "char")])) 
+AND c.conrelid = r.oid) 
+AND (r.relkind = ANY (ARRAY[CAST('r' AS "char"), CAST('p' AS "char")])) 
+AND (pg_has_role(r.relowner, 'USAGE')
+	OR has_table_privilege(r.oid, 'SELECT, INSERT, UPDATE, DELETE, TRUNCATE, REFERENCES, TRIGGER')
+	OR has_any_column_privilege(r.oid, 'SELECT, INSERT, UPDATE, REFERENCES'))
+AND extc.dbid = CAST(sys.db_id() AS oid);
+
+GRANT SELECT ON information_schema_tsql.constraint_table_usage TO PUBLIC;

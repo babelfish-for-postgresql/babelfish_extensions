@@ -1,0 +1,58 @@
+select * from information_schema.constraint_table_usage where table_name like 'constraint_table_usage_vu_prepare_tb%' order by table_name,constraint_name,table_schema;
+go
+~~START~~
+nvarchar#!#nvarchar#!#varchar#!#nvarchar#!#nvarchar#!#varchar
+master#!#dbo#!#constraint_table_usage_vu_prepare_tb1#!#master#!#dbo#!#constraint_table_usage_vu_prepare_tb1_arg1_arg2_key
+master#!#dbo#!#constraint_table_usage_vu_prepare_tb2#!#master#!#dbo#!#constraint_table_usage_vu_prepare_tb2_pkey
+master#!#dbo#!#constraint_table_usage_vu_prepare_tb2#!#master#!#dbo#!#fk_redconstraint_table_usage_vu5c9039a3fc5324c27cc0d4025b46a025
+~~END~~
+
+
+create view constraint_table_usage_vu_verify_view as select * from information_schema.constraint_table_usage where table_name like 'constraint_table_usage_vu_prepare_tb%' order by table_name,constraint_name,table_schema;
+go
+
+create procedure constraint_table_usage_vu_verify_proc as select * from information_schema.constraint_table_usage where table_name like 'constraint_table_usage_vu_prepare_tb%' order by table_name,constraint_name,table_schema;
+go
+
+create function constraint_table_usage_vu_verify_func() returns table as return(select * from information_schema.constraint_table_usage where table_name like 'constraint_table_usage_vu_prepare_tb%' order by table_name,constraint_name,table_schema);
+go
+
+select * from information_schema.constraint_table_usage where table_name like 'constraint_table_usage_vu_prepare_tb%' order by table_name,constraint_name,table_schema;
+go
+~~START~~
+nvarchar#!#nvarchar#!#varchar#!#nvarchar#!#nvarchar#!#varchar
+master#!#dbo#!#constraint_table_usage_vu_prepare_tb1#!#master#!#dbo#!#constraint_table_usage_vu_prepare_tb1_arg1_arg2_key
+master#!#dbo#!#constraint_table_usage_vu_prepare_tb2#!#master#!#dbo#!#constraint_table_usage_vu_prepare_tb2_pkey
+master#!#dbo#!#constraint_table_usage_vu_prepare_tb2#!#master#!#dbo#!#fk_redconstraint_table_usage_vu5c9039a3fc5324c27cc0d4025b46a025
+~~END~~
+
+
+drop function constraint_table_usage_vu_verify_func;
+go
+
+drop procedure constraint_table_usage_vu_verify_proc;
+go
+
+drop view constraint_table_usage_vu_verify_view;
+go
+
+drop table constraint_table_usage_vu_prepare_tb4;
+go
+
+drop table constraint_table_usage_vu_prepare_tb3;
+go
+
+select * from information_schema.constraint_table_usage where table_name like 'constraint_table_usage_vu_prepare_tb%' order by table_name,constraint_name,table_schema;
+go
+~~START~~
+nvarchar#!#nvarchar#!#varchar#!#nvarchar#!#nvarchar#!#varchar
+master#!#dbo#!#constraint_table_usage_vu_prepare_tb1#!#master#!#dbo#!#constraint_table_usage_vu_prepare_tb1_arg1_arg2_key
+master#!#dbo#!#constraint_table_usage_vu_prepare_tb2#!#master#!#dbo#!#constraint_table_usage_vu_prepare_tb2_pkey
+~~END~~
+
+
+drop table constraint_table_usage_vu_prepare_tb2;
+go
+
+drop table constraint_table_usage_vu_prepare_tb1;
+go

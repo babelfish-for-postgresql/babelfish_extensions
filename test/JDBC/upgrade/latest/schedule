@@ -168,4 +168,5 @@ sp_tablecollations
 sys-assemblies
 BABEL-LOGIN-USER-EXT
 bitwise_not-operator
+constraint_table_usage
 BABEL-1683
