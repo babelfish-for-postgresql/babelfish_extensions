@@ -40,7 +40,7 @@ BEGIN
     is_date = sys.isdate(startdate);
     IF (is_date = 1) THEN 
         RETURN sys.dateadd_internal(datepart,num,startdate::datetime);
-    ELSEIF (is_date = 0) THEN
+    ELSEIF (is_date is NULL) THEN
         RETURN NULL;
     ELSE
         RAISE EXCEPTION 'Conversion failed when converting date and/or time from character string.';
