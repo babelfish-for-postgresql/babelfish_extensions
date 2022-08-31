@@ -129,7 +129,7 @@ CREATE OPERATOR sys.~ (
 -- Drops a function if it does not have any dependent objects.
 -- Is a temporary procedure for use by the upgrade script. Will be dropped at the end of the upgrade.
 -- Please have this be one of the first statements executed in this upgrade script. 
-CREATE OR REPLACE PROCEDURE babelfish_drop_deprecated_function(schema_name varchar, func_name varchar) AS
+CREATE OR REPLACE PROCEDURE babelfish_drop_deprecated_function_common(schema_name varchar, func_name varchar) AS
 $$
 DECLARE
     error_msg text;
@@ -157,7 +157,7 @@ CREATE OR REPLACE FUNCTION sys.get_babel_server_collation_oid() RETURNS OID
 LANGUAGE C
 AS 'babelfishpg_common', 'get_server_collation_oid';
 
-CALL sys.babelfish_drop_deprecated_function('sys', 'get_babel_server_collation_oid_deprecated_in_2_3_0');
+CALL sys.babelfish_drop_deprecated_function_common('sys', 'get_babel_server_collation_oid_deprecated_in_2_3_0');
 
 CREATE OR REPLACE PROCEDURE sys.init_server_collation_oid_common()
 AS $$
