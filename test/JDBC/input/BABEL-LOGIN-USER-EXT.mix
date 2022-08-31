@@ -387,6 +387,9 @@ GO
 SELECT name FROM sys.server_principals WHERE principal_id = suser_id('login1    ');
 GO
 
+SELECT name FROM sys.server_principals WHERE principal_id = suser_id('LOGIN1');
+GO
+
 -- Expect NULL
 SELECT suser_id(' login1');
 GO
@@ -403,6 +406,9 @@ SELECT suser_id(NULL);
 GO
 
 SELECT name FROM sys.server_principals WHERE name = suser_name(suser_id('login1'));
+GO
+
+SELECT name FROM sys.server_principals WHERE name = suser_name(suser_id('LOGIN1'));
 GO
 
 SELECT name FROM sys.server_principals WHERE name = suser_name();
@@ -497,7 +503,13 @@ GO
 SELECT user_name(user_id('dbo'));
 GO
 
+SELECT user_name(user_id('DBO'));
+GO
+
 SELECT user_name(user_id('guest'));
+GO
+
+SELECT user_name(user_id('GUEST'));
 GO
 
 SELECT rolname FROM pg_roles WHERE oid = user_id('dbo');

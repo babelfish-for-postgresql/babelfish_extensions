@@ -909,7 +909,7 @@ BEGIN
         return sys.datepart_internal(datepart, arg::timestamp,
                      sys.babelfish_get_datetimeoffset_tzoffset(arg)::integer);
     ELSIF pg_typeof(arg) = 'pg_catalog.text'::regtype THEN
-        return sys.datepart_internal(datepart, arg::sys.nvarchar::sys.datetime);
+        return sys.datepart_internal(datepart, arg::sys.datetimeoffset::timestamp, sys.babelfish_get_datetimeoffset_tzoffset(arg::sys.datetimeoffset)::integer);
     ELSE
         return sys.datepart_internal(datepart, arg);
     END IF;
@@ -1099,9 +1099,9 @@ BEGIN
 	WHEN 'second' THEN
 		RETURN startdate OPERATOR(sys.+) make_interval(secs => num);
 	WHEN 'millisecond' THEN
-		RETURN startdate OPERATOR(sys.+) make_interval(secs => num * 0.001);
-	WHEN 'microsecond' THEN
-		RETURN startdate OPERATOR(sys.+) make_interval(secs => num * 0.000001);
+		RETURN startdate OPERATOR(sys.+) make_interval(secs => (num::numeric) * 0.001);
+    WHEN 'microsecond' THEN
+        RAISE EXCEPTION 'The datepart % is not supported by date function dateadd for data type time.', datepart;
 	WHEN 'nanosecond' THEN
 		-- Best we can do - Postgres does not support nanosecond precision
 		RETURN startdate;
@@ -1146,9 +1146,9 @@ BEGIN
 	WHEN 'second' THEN
 		RETURN startdate + make_interval(secs => num);
 	WHEN 'millisecond' THEN
-		RETURN startdate + make_interval(secs => num * 0.001);
-	WHEN 'microsecond' THEN
-		RETURN startdate + make_interval(secs => num * 0.000001);
+		RETURN startdate OPERATOR(sys.+) make_interval(secs => (num::numeric) * 0.001);
+    WHEN 'microsecond' THEN
+        RAISE EXCEPTION 'The datepart % is not supported by date function dateadd for data type time.', datepart;
 	WHEN 'nanosecond' THEN
 		-- Best we can do - Postgres does not support nanosecond precision
 		RETURN startdate;

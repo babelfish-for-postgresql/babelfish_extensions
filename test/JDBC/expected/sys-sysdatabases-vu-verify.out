@@ -1,0 +1,64 @@
+SELECT * FROM sys_sysdatabases_vu_prepare_view
+GO
+~~START~~
+text#!#tinyint
+sys_sysdatabases_vu_prepare_db#!#120
+~~END~~
+
+
+EXEC sys_sysdatabases_vu_prepare_proc
+GO
+~~START~~
+text#!#tinyint
+sys_sysdatabases_vu_prepare_db#!#120
+~~END~~
+
+
+SELECT sys_sysdatabases_vu_prepare_func()
+GO
+~~START~~
+int
+1
+~~END~~
+
+
+-- BABEL-3441: Ensure that sys.databases.compatibilty_level and sysdatabases.cmptlevel is equal 
+SELECT compatibility_level FROM sys.databases WHERE name = 'master'
+GO
+~~START~~
+tinyint
+120
+~~END~~
+
+
+SELECT cmptlevel FROM sys.sysdatabases WHERE name = 'master'
+GO
+~~START~~
+tinyint
+120
+~~END~~
+
+
+SELECT cmptlevel FROM master.dbo.sysdatabases WHERE name = 'master'
+GO
+~~START~~
+tinyint
+120
+~~END~~
+
+
+SELECT cmptlevel FROM msdb.dbo.sysdatabases WHERE name = 'master'
+GO
+~~START~~
+tinyint
+120
+~~END~~
+
+
+SELECT cmptlevel FROM tempdb.dbo.sysdatabases WHERE name = 'master'
+GO
+~~START~~
+tinyint
+120
+~~END~~
+
