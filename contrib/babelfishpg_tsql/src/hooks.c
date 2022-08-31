@@ -2418,12 +2418,14 @@ print_pltsql_function_arguments(StringInfo buf, HeapTuple proctup, bool print_ta
 	int			insertorderbyat = -1;
 	int			argsprinted;
 	int			inputargno;
-	bool		isnull,
-				default_positions_available = false;
+	bool		isnull;
+	bool		default_positions_available = false;
 	Datum		proargdefaults;
 	int			nlackdefaults;
-	List	   *argdefaults = NIL, *defaultpositions = NIL;
-	ListCell   *nextargdefault = NULL, *nextdefaultposition = NULL;
+	List	   *argdefaults = NIL;
+	List	   *defaultpositions = NIL;
+	ListCell   *nextargdefault = NULL;
+	ListCell   *nextdefaultposition = NULL;
 	int			i;
 
 	numargs = get_func_arg_info(proctup,
