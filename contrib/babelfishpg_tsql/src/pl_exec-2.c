@@ -235,12 +235,15 @@ exec_stmt_print(PLtsql_execstate *estate, PLtsql_stmt_print *stmt)
 	int32	formattypmod;
 	char   *extval;
 	StringInfoData query;
+	const char *print_text;
 
-	 if (pltsql_explain_only) {
-		PLtsql_expr  *exprTemp = (PLtsql_expr *) linitial(stmt->exprs);
+	if (pltsql_explain_only)
+	{
+		PLtsql_expr  *expr_temp = (PLtsql_expr *) linitial(stmt->exprs);
 		initStringInfo(&query);
 		appendStringInfo(&query, "PRINT ");
-		appendStringInfoString(&query, &exprTemp->query[7]);
+		print_text = strip_select_from_expr(expr_temp);
+		appendStringInfoString(&query, print_text);
 		append_explain_info(NULL, query.data);
 		return PLTSQL_RC_OK;
 	}
@@ -2524,7 +2527,8 @@ static Node *get_underlying_node_from_implicit_casting(Node *n, NodeTag underlyi
 static int
 exec_stmt_usedb(PLtsql_execstate *estate, PLtsql_stmt_usedb *stmt)
 {
-	if (pltsql_explain_only) {
+	if (pltsql_explain_only)
+	{
 		return exec_stmt_usedb_explain(estate, stmt, false  /* shouldRestoreDb */);
 	}
 	char * old_db_name = get_cur_db_name();
@@ -2597,21 +2601,24 @@ exec_stmt_usedb_explain(PLtsql_execstate *estate, PLtsql_stmt_usedb *stmt, bool 
 	new_db_id = get_db_id(stmt->db_name);
 
 	/* append query information */
-	if (!shouldRestoreDb) {
+	if (!shouldRestoreDb)
+	{
 		queryText = psprintf("USE DATABASE %s", stmt->db_name);
 		append_explain_info(NULL, queryText);
 	}
 	
 	/* Gather name and id of the original database the user was connected to */
 	initial_database_name = get_explain_database();
-	if (initial_database_name == NULL) {
+	if (initial_database_name == NULL)
+	{
 		set_explain_database(old_db_name);
 		initial_database_name = old_db_name;
 	}
 	initial_database_id = get_db_id(initial_database_name);
 
 	/* error if new db is not valid and restore original db */
-	if (!DbidIsValid(new_db_id)) {
+	if (!DbidIsValid(new_db_id))
+	{
 		set_session_properties(initial_database_name);
 		ereport(ERROR,
 				(errcode(ERRCODE_UNDEFINED_DATABASE),

@@ -442,7 +442,7 @@ babel_2902_testdb_1
 
 
 ---- TEST RAISEERROR ----
--- note that during explain SQL Server does very limited no validation on inputs to raiserror 
+-- note that during explain TSQL does very limited no validation on inputs to raiserror 
 -- This means that normally invalid cases such as using error code that are too low, too high
 -- or are non existant do not result in an error. Similarly, things like argument counts are 
 -- not validated, nor are variables checked for existance, so long as it is syntactically correct

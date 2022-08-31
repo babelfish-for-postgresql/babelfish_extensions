@@ -1688,8 +1688,9 @@ void assert_equal_estate_err(PLtsql_estate_err *err1, PLtsql_estate_err *err2)
 static
 int read_raiserror_params_explain(List *params, int paramno)
 {
-	PLtsql_expr *exprTemp;
+	PLtsql_expr *expr_temp;
 	StringInfoData query_string;
+	const char * param_text;
 	
 	if (!pltsql_explain_only)
 		return PLTSQL_RC_OK;
@@ -1698,15 +1699,9 @@ int read_raiserror_params_explain(List *params, int paramno)
 	appendStringInfo(&query_string, "RAISERROR (");
 	for (int i = 0; i < paramno; i++)
 	{
-		exprTemp = (PLtsql_expr *) list_nth(params, i);
-		if (exprTemp == NULL)
-		ereport(ERROR, (errcode(ERRCODE_NULL_VALUE_NOT_ALLOWED),
-				errmsg("parameter of RAISERROR is null")));
-		if (strlen(exprTemp->query) <= 7)
-		ereport(ERROR, (errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-				errmsg("invalid expression for RAISERROR paramter %s", exprTemp->query)));
-		/* Starting from position 7 strips the "SELECT " from the query text*/
-		appendStringInfoString(&query_string, &exprTemp->query[7]);
+		expr_temp = (PLtsql_expr *) list_nth(params, i);
+		param_text = strip_select_from_expr(expr_temp);
+		appendStringInfoString(&query_string, param_text);
 
 		/* no comma on final item */
 		if (i < paramno-1)
@@ -1792,47 +1787,24 @@ static void read_raiserror_params(PLtsql_execstate *estate, List *params, int pa
 
 static int read_throw_params_explain(List *params)
 {
+	PLtsql_expr  *expr_temp;
+	StringInfoData query_text;
+	const char *param_text;
+
 	if (!pltsql_explain_only)
 		return PLTSQL_RC_OK;
 
-	PLtsql_expr  *exprTemp;
-	StringInfoData query_text;
 	initStringInfo(&query_text);
 	appendStringInfo(&query_text, "THROW ");
 
-	exprTemp = (PLtsql_expr *) list_nth(params, 0);
-	if (exprTemp == NULL)
-		ereport(ERROR, (errcode(ERRCODE_NULL_VALUE_NOT_ALLOWED),
-				errmsg("err_no argument of THROW is null")));
-	if (strlen(exprTemp->query) <= 7)
-		ereport(ERROR, (errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-				errmsg("invalid expression for err_no %s", exprTemp->query)));
-
-	/* Starting from position 7 strips the "SELECT " from the query text */
-	appendStringInfoString(&query_text, &exprTemp->query[7]);
-	appendStringInfoString(&query_text, ", ");
-
-	exprTemp = (PLtsql_expr *) list_nth(params, 1);
-	if (exprTemp == NULL)
-		ereport(ERROR, (errcode(ERRCODE_NULL_VALUE_NOT_ALLOWED),
-				errmsg("message argument of THROW is null")));
-	if (strlen(exprTemp->query) <= 7)
-		ereport(ERROR, (errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-				errmsg("invalid expression for message %s", exprTemp->query)));
-
-	appendStringInfoString(&query_text, &exprTemp->query[7]);
-	appendStringInfoString(&query_text, ", ");
-
-	exprTemp = (PLtsql_expr *) list_nth(params, 2);
-	if (exprTemp == NULL)
-		ereport(ERROR, (errcode(ERRCODE_NULL_VALUE_NOT_ALLOWED),
-				errmsg("state argument of THROW is null")));
-	if (strlen(exprTemp->query) <= 7)
-		ereport(ERROR, (errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-				errmsg("invalid expression for state %s", exprTemp->query)));
-
-	appendStringInfoString(&query_text, &exprTemp->query[7]);
-
+	for (int i = 0; i < 3; ++i)
+	{
+		expr_temp = (PLtsql_expr *) list_nth(params, i);
+		param_text = strip_select_from_expr(expr_temp);
+		appendStringInfoString(&query_text, param_text);
+		if (i < 2)
+			appendStringInfoString(&query_text, ", ");
+	}
 	append_explain_info(NULL, query_text.data);
 	return PLTSQL_RC_OK;
 }

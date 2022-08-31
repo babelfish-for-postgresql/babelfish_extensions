@@ -5,7 +5,9 @@
 #include "pl_explain.h"
 #include "pltsql.h"
 
+
 extern PLtsql_execstate *get_outermost_tsql_estate(int *nestlevel);
+extern const char *strip_select_from_expr(PLtsql_expr * expr);
 
 bool pltsql_explain_only = false;
 bool pltsql_explain_analyze = false;
@@ -188,4 +190,19 @@ const char *get_explain_database(void)
        if (einfo != NULL)
                return einfo->initial_database;
        return NULL;
+}
+/*
+ * This functions validates that the expression object exists and returns
+ * a pointer to which represents the query text of the expression minus the "SELECT "
+ * which was added by babelfish for compatibility between TSQL and PostgresQL
+*/
+const char *strip_select_from_expr(PLtsql_expr * expr)
+{
+	if (expr == NULL && expr->query == NULL && strlen(expr->query) <= 7)
+	{
+		ereport(ERROR, (errcode(ERRCODE_INTERNAL_ERROR),
+					errmsg("invalid expression %s", expr)));
+	}
+
+	return &expr->query[7];
 }
