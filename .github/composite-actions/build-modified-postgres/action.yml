@@ -3,7 +3,7 @@ inputs:
   engine_branch:
     description: 'Engine Branch'
     required: no
-    default: 'latest'
+    default: 'jira-babel-3315'
   install_dir:
     description: 'Engine install directory'
     required: no
