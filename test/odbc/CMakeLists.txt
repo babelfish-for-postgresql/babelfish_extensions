@@ -35,7 +35,7 @@ add_executable(
   # test_metadata.cpp
   # test_prepared_statements.cpp
   # test_sqlgetinfo.cpp
-  test_pg_datatype.cpp
+  test_pg_datatype_bigint.cpp
   main.cpp
 )
 
