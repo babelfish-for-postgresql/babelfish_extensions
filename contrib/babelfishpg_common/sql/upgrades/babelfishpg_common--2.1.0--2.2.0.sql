@@ -125,12 +125,40 @@ CREATE OPERATOR sys.~ (
 );
 
 -- Any sql script from here should go in 2.2.0--2.3.0.sql
-DROP FUNCTION IF EXISTS sys.get_babel_server_collation_oid;
+
+-- Drops a function if it does not have any dependent objects.
+-- Is a temporary procedure for use by the upgrade script. Will be dropped at the end of the upgrade.
+-- Please have this be one of the first statements executed in this upgrade script. 
+CREATE OR REPLACE PROCEDURE babelfish_drop_deprecated_function(schema_name varchar, func_name varchar) AS
+$$
+DECLARE
+    error_msg text;
+    query1 text;
+    query2 text;
+BEGIN
+    query1 := format('alter extension babelfishpg_tsql drop function %s.%s', schema_name, func_name);
+    query2 := format('drop function %s.%s', schema_name, func_name);
+    execute query1;
+    execute query2;
+EXCEPTION
+    when object_not_in_prerequisite_state then --if 'alter extension' statement fails
+        GET STACKED DIAGNOSTICS error_msg = MESSAGE_TEXT;
+        raise warning '%', error_msg;
+    when dependent_objects_still_exist then --if 'drop function' statement fails
+        GET STACKED DIAGNOSTICS error_msg = MESSAGE_TEXT;
+        raise warning '%', error_msg;
+end
+$$
+LANGUAGE plpgsql;
+
+ALTER FUNCTION get_babel_server_collation_oid() RENAME TO get_babel_server_collation_oid_deprecated_in_2_3_0;
+
 CREATE OR REPLACE FUNCTION sys.get_babel_server_collation_oid() RETURNS OID
 LANGUAGE C
 AS 'babelfishpg_common', 'get_server_collation_oid';
 
-DROP PROCEDURE IF EXISTS sys.init_database_collation_oid;
+CALL sys.babelfish_drop_deprecated_function('sys', 'get_babel_server_collation_oid_deprecated_in_2_3_0');
+
 CREATE OR REPLACE PROCEDURE sys.init_server_collation_oid()
 AS $$
 DECLARE
