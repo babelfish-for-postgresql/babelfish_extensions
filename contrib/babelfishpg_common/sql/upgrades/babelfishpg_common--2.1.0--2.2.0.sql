@@ -151,6 +151,28 @@ end
 $$
 LANGUAGE plpgsql;
 
+CREATE OR REPLACE PROCEDURE babelfish_drop_deprecated_procedure(schema_name varchar, proc_name varchar) AS
+$$
+DECLARE
+    error_msg text;
+    query1 text;
+    query2 text;
+BEGIN
+    query1 := format('alter extension babelfishpg_tsql drop procedure %s.%s', schema_name, proc_name);
+    query2 := format('drop procedure %s.%s', schema_name, proc_name);
+    execute query1;
+    execute query2;
+EXCEPTION
+    when object_not_in_prerequisite_state then --if 'alter extension' statement fails
+        GET STACKED DIAGNOSTICS error_msg = MESSAGE_TEXT;
+        raise warning '%', error_msg;
+    when dependent_objects_still_exist then --if 'drop function' statement fails
+        GET STACKED DIAGNOSTICS error_msg = MESSAGE_TEXT;
+        raise warning '%', error_msg;
+end
+$$
+LANGUAGE plpgsql;
+
 ALTER FUNCTION sys.get_babel_server_collation_oid() RENAME TO get_babel_server_collation_oid_deprecated_in_2_3_0;
 
 CREATE OR REPLACE FUNCTION sys.get_babel_server_collation_oid() RETURNS OID
@@ -159,7 +181,7 @@ AS 'babelfishpg_common', 'get_server_collation_oid';
 
 CALL sys.babelfish_drop_deprecated_function('sys', 'get_babel_server_collation_oid_deprecated_in_2_3_0');
 
-ALTER FUNCTION sys.init_server_collation_oid() RENAME TO init_server_collation_oid_deprecated_in_2_3_0;
+ALTER PROCEDURE sys.init_server_collation_oid() RENAME TO init_server_collation_oid_deprecated_in_2_3_0;
 
 CREATE OR REPLACE PROCEDURE sys.init_server_collation_oid()
 AS $$
@@ -175,7 +197,7 @@ LANGUAGE plpgsql;
 
 CALL sys.init_server_collation_oid();
 
-CALL sys.babelfish_drop_deprecated_function('sys', 'init_server_collation_oid_deprecated_in_2_3_0');
+CALL sys.babelfish_drop_deprecated_procedure('sys', 'init_server_collation_oid_deprecated_in_2_3_0');
 
 -- Fill in the oids in coll_infos
 -- CREATE OR REPLACE PROCEDURE sys.babel_collation_initializer()
