@@ -1,18 +1,35 @@
 SELECT a, b FROM (VALUES (1, 2), (3, 4), (5, 6), (7, 8), (9, 10) ) AS MyTable(a, b);  
 GO
 
-select t.* from sys.dm_os_host_info
-CROSS APPLY 
+create table t1 (col1 nvarchar(20), col2 nvarchar(20))
+go
+
+insert into t1 values ('name', '42')
+go
+
+select t.* from t1
+CROSS APPLY
 (
-    VALUES
-          (1001, 'host_platform', 0, host_platform),
-          (1002, 'host_distribution', 0, host_distribution),
-          (1003, 'host_release', 0, host_release),
-          (1004, 'host_service_pack_level', 0, host_service_pack_level),
-          (1005, 'host_sku', host_sku, ''),
-          (1006, 'HardwareGeneration', '', ''),
-          (1007, 'ServiceTier', '', ''),
-          (1008, 'ReservedStorageSizeMB', '0', '0'),
-          (1009, 'UsedStorageSizeMB', '0', '0')
-) t(id, [name], internal_value, [value])
+	VALUES
+		(1, 'col1', col1),
+		(2, 'col2', col2)
+) t(id, [name], [value])
+go
+
+drop table t1
+go
+
+CREATE TABLE t1(  
+    SalesReasonID int IDENTITY(1,1) NOT NULL,  
+    Name varchar(max) NULL ,  
+    ReasonType varchar(max) NOT NULL DEFAULT 'Not Applicable' );  
+GO
+
+INSERT INTO t1   
+VALUES ('Recommendation','Other'), ('Advertisement', DEFAULT), (NULL, 'Promotion');  
+
+SELECT * FROM t1;  
+GO
+
+DROP TABLE t1;
 GO
