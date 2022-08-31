@@ -192,13 +192,20 @@ const char *get_explain_database(void)
        return NULL;
 }
 /*
- * This functions validates that the expression object exists and returns
- * a pointer to which represents the query text of the expression minus the "SELECT "
- * which was added by babelfish for compatibility between TSQL and PostgresQL
+ * The main purpose of this function is for displaying TSQL statements such as PRINT
+ * and THROW during explain.  Since babelfish represents most expressions internally
+ * as SELECT statements including scalars, this function allows us to translate to more
+ * native looking TSQL by removing the redundant SELECT statements.
+ *
+ * This functions validates that the expression object exists, has a query text,
+ * and returns a pointer into the query text of the expression minus the "SELECT "
+ * A pointer into the original query text is preferred over pstrdup for minor performance
+ * gains and since in most cases the strings are immediately consumed by a larger StringInfo
+ * representing the final display string used in explain 
 */
 const char *strip_select_from_expr(PLtsql_expr * expr)
 {
-	if (expr == NULL && expr->query == NULL && strlen(expr->query) <= 7)
+	if (expr == NULL || expr->query == NULL || strlen(expr->query) <= 7)
 	{
 		ereport(ERROR, (errcode(ERRCODE_INTERNAL_ERROR),
 					errmsg("invalid expression %s", expr)));
