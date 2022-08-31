@@ -1,3 +1,6 @@
+use master;
+go
+
 select * from information_schema.view_table_usage where view_name like 'view_table_usage_v%' order by view_name;
 go
 
@@ -15,6 +18,9 @@ go
 create view view_table_usage_v2 as select * from view_table_usage_tb2;
 go
 
+create database view_table_usage_test_db;
+go
+
 select * from information_schema.view_table_usage where view_name like 'view_table_usage_v%' order by view_name;
 go
 
@@ -27,18 +33,44 @@ go
 select * from information_schema.view_table_usage where view_name like 'view_table_usage_v%' order by view_name;
 go
 
-drop function view_table_usag_func
-
-drop procedure view_table_usag_proc
-
-drop view view_table_usage_v2
+create schema view_table_usage_test_sc;
 go
 
-drop view view_table_usage_v1
+create table view_table_usage_test_sc.view_table_usage_sc_tb(arg3 char(10));
 go
 
-drop table view_table_usage_tb2
+create view view_table_usage_sc_v as select * from view_table_usage_test_sc.view_table_usage_sc_tb;
 go
 
-drop table view_table_usage_tb1
-go 
+select * from information_schema.view_table_usage where view_name like 'view_table_usage_sc%' order by view_name;
+go
+
+drop view view_table_usage_sc_v;
+go
+
+drop table view_table_usage_test_sc.view_table_usage_sc_tb;
+go
+
+drop schema view_table_usage_test_sc;
+go
+
+drop function view_table_usag_func;
+go
+
+drop procedure view_table_usag_proc;
+go
+
+drop view view_table_usage_v2;
+go
+
+drop view view_table_usage_v1;
+go
+
+drop table view_table_usage_tb2;
+go
+
+drop table view_table_usage_tb1;
+go
+
+drop database view_table_usage_test_db;
+go
