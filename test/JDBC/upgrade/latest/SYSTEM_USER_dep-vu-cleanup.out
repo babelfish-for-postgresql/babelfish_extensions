@@ -1,5 +1,0 @@
--- tsql
-DROP PROCEDURE system_user_dep_vu_prepare_procedure;
-DROP FUNCTION dbo.system_user_dep_vu_prepare_function()
-DROP FUNCTION dbo.session_user_dep_vu_prepare_function()
-GO

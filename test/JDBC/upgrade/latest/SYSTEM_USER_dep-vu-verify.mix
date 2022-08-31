@@ -1,9 +1,0 @@
--- tsql
-EXEC system_user_dep_vu_prepare_procedure;
-GO
-
-SELECT dbo.system_user_dep_vu_prepare_function()
-GO
-
-SELECT dbo.session_user_dep_vu_prepare_function()
-GO
