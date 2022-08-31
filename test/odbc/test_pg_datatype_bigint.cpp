@@ -5,7 +5,7 @@
 
 using std::pair;
 
-const string TABLE_NAME = "master_dbo.bigint_table";
+const string TABLE_NAME = "master_dbo.bigint_table_odbc_test";
 const string COL1_NAME = "pk";
 const string COL2_NAME = "data";
 const string DATATYPE_NAME = "sys.bigint";
@@ -18,12 +18,14 @@ vector<pair<string, string>> TABLE_COLUMNS = {
 class PSQL_DataTypes_Bigint : public testing::Test{
 
   void SetUp() override {
+    OdbcHandler test_setup;
+    test_setup.ConnectAndExecQuery(DropObjectStatement("TABLE", TABLE_NAME));
   }
 
   void TearDown() override {
 
-    OdbcHandler test_setup;
-    test_setup.ConnectAndExecQuery(DropObjectStatement("TABLE", TABLE_NAME));
+    OdbcHandler test_teardown;
+    test_teardown.ConnectAndExecQuery(DropObjectStatement("TABLE", TABLE_NAME));
   }
 };
 
@@ -53,7 +55,7 @@ TEST_F(PSQL_DataTypes_Bigint, ColAttributes) {
   odbcHandler.CloseStmt();
 
   // Select * From Table to ensure that it exists
-  odbcHandler.ExecQuery(SelectStatement(TABLE_NAME, {"*"}, vector<string> {"pk"}));
+  odbcHandler.ExecQuery(SelectStatement(TABLE_NAME, {"*"}, vector<string> {COL1_NAME}));
 
   // Make sure column attributes are correct
   rcode = SQLColAttribute(odbcHandler.GetStatementHandle(),
@@ -98,6 +100,8 @@ TEST_F(PSQL_DataTypes_Bigint, ColAttributes) {
   rcode = SQLFetch(odbcHandler.GetStatementHandle());
   ASSERT_EQ(rcode, SQL_NO_DATA);
 
+  odbcHandler.CloseStmt();
+  odbcHandler.ExecQuery(DropObjectStatement("TABLE", TABLE_NAME));
 }
 
 TEST_F(PSQL_DataTypes_Bigint, Insertion_Success) {
@@ -146,7 +150,7 @@ TEST_F(PSQL_DataTypes_Bigint, Insertion_Success) {
   odbcHandler.CloseStmt();
 
   // Select all from the tables and assert that the following attributes of the type is correct:
-  odbcHandler.ExecQuery(SelectStatement(TABLE_NAME, {"*"}, vector<string> {"pk"}));
+  odbcHandler.ExecQuery(SelectStatement(TABLE_NAME, {"*"}, vector<string> {COL1_NAME}));
 
   // Make sure inserted values are correct
   ASSERT_NO_FATAL_FAILURE(odbcHandler.BindColumns(bind_columns));
@@ -170,8 +174,9 @@ TEST_F(PSQL_DataTypes_Bigint, Insertion_Success) {
   // Assert that there is no more data
   rcode = SQLFetch(odbcHandler.GetStatementHandle());
   ASSERT_EQ(rcode, SQL_NO_DATA);
-  odbcHandler.CloseStmt();
 
+  odbcHandler.CloseStmt();
+  odbcHandler.ExecQuery(DropObjectStatement("TABLE", TABLE_NAME));
 }
 
 TEST_F(PSQL_DataTypes_Bigint, Insertion_Fail) {
@@ -209,16 +214,24 @@ TEST_F(PSQL_DataTypes_Bigint, Insertion_Fail) {
   }
 
   // Select all from the tables and assert that nothing was inserted
-  odbcHandler.ExecQuery(SelectStatement(TABLE_NAME, {"*"}, vector<string> {"pk"}));
+  odbcHandler.ExecQuery(SelectStatement(TABLE_NAME, {"*"}, vector<string> {COL1_NAME}));
   rcode = SQLFetch(odbcHandler.GetStatementHandle());
   ASSERT_EQ(rcode, SQL_NO_DATA);
+
+  odbcHandler.ExecQuery(DropObjectStatement("TABLE", TABLE_NAME));
 }
 
 TEST_F(PSQL_DataTypes_Bigint, Update_Success) {
 
   const string PK_INSERTED = "1";
   const string DATA_INSERTED = "1";
-  const string DATA_UPDATED_VALUE = "5";
+  const int NUM_UPDATES = 3;
+
+  const string DATA_UPDATED_VALUES[NUM_UPDATES] = {
+    "5",
+    "-9223372036854775808",
+    "9223372036854775807"
+  };
 
   const string INSERT_STRING = "(" + PK_INSERTED + "," + DATA_INSERTED + ")";
   const string UPDATE_WHERE_CLAUSE = COL1_NAME + " = " + PK_INSERTED;
@@ -240,9 +253,11 @@ TEST_F(PSQL_DataTypes_Bigint, Update_Success) {
     {2, SQL_C_SBIGINT, &data, 0,  &data_len}
   };
   
-  vector<pair<string, string>> update_col = {
-    {COL2_NAME, DATA_UPDATED_VALUE}
-  };
+  vector<pair<string, string>> update_col{};
+
+  for (int i = 0; i < NUM_UPDATES; i++) {
+    update_col.push_back(pair<string, string>(COL2_NAME, DATA_UPDATED_VALUES[i]));
+  }
 
   odbcHandler.ConnectAndExecQuery(CreateTableStatement(TABLE_NAME, TABLE_COLUMNS));
   odbcHandler.CloseStmt();
@@ -255,7 +270,7 @@ TEST_F(PSQL_DataTypes_Bigint, Update_Success) {
   ASSERT_NO_FATAL_FAILURE(odbcHandler.BindColumns(bind_columns));
 
   // Assert that value is inserted properly
-  odbcHandler.ExecQuery(SelectStatement(TABLE_NAME, {"*"}, vector<string> {"pk"}));
+  odbcHandler.ExecQuery(SelectStatement(TABLE_NAME, {"*"}, vector<string> {COL1_NAME}));
   rcode = SQLFetch(odbcHandler.GetStatementHandle());
   ASSERT_EQ(rcode, SQL_SUCCESS);
   ASSERT_EQ(pk_len, BYTES_EXPECTED);
@@ -267,27 +282,33 @@ TEST_F(PSQL_DataTypes_Bigint, Update_Success) {
   ASSERT_EQ(rcode, SQL_NO_DATA);
   odbcHandler.CloseStmt();
 
-  // Update value
-  odbcHandler.ExecQuery(UpdateTableStatement(TABLE_NAME, update_col, UPDATE_WHERE_CLAUSE));
+  // Update value multiple times
+  for (int i = 0; i < NUM_UPDATES; i++) {
 
-  rcode = SQLRowCount(odbcHandler.GetStatementHandle(), &affected_rows);
-  ASSERT_EQ(rcode, SQL_SUCCESS);
-  ASSERT_EQ(affected_rows, AFFECTED_ROWS_EXPECTED);
+    odbcHandler.ExecQuery(UpdateTableStatement(TABLE_NAME, vector<pair<string,string>>{update_col[i]}, UPDATE_WHERE_CLAUSE));
 
-  odbcHandler.CloseStmt();
+    rcode = SQLRowCount(odbcHandler.GetStatementHandle(), &affected_rows);
+    ASSERT_EQ(rcode, SQL_SUCCESS);
+    ASSERT_EQ(affected_rows, AFFECTED_ROWS_EXPECTED);
 
-  // Assert that updated value is present
-  odbcHandler.ExecQuery(SelectStatement(TABLE_NAME, {"*"}, vector<string> {"pk"}));
-  rcode = SQLFetch(odbcHandler.GetStatementHandle());
+    odbcHandler.CloseStmt();
 
-  ASSERT_EQ(rcode, SQL_SUCCESS);
-  ASSERT_EQ(pk_len, BYTES_EXPECTED);
-  ASSERT_EQ(pk, StringToBigInt(PK_INSERTED));
-  ASSERT_EQ(data_len, BYTES_EXPECTED);
-  ASSERT_EQ(data, StringToBigInt(DATA_UPDATED_VALUE));
+    // Assert that updated value is present
+    odbcHandler.ExecQuery(SelectStatement(TABLE_NAME, {"*"}, vector<string> {COL1_NAME}));
+    rcode = SQLFetch(odbcHandler.GetStatementHandle());
 
-  rcode = SQLFetch(odbcHandler.GetStatementHandle());
-  ASSERT_EQ(rcode, SQL_NO_DATA);
+    ASSERT_EQ(rcode, SQL_SUCCESS);
+    ASSERT_EQ(pk_len, BYTES_EXPECTED);
+    ASSERT_EQ(pk, StringToBigInt(PK_INSERTED));
+    ASSERT_EQ(data_len, BYTES_EXPECTED);
+    ASSERT_EQ(data, StringToBigInt(DATA_UPDATED_VALUES[i]));
+
+    rcode = SQLFetch(odbcHandler.GetStatementHandle());
+    ASSERT_EQ(rcode, SQL_NO_DATA);
+    odbcHandler.CloseStmt();
+  }
+
+  odbcHandler.ExecQuery(DropObjectStatement("TABLE", TABLE_NAME));
 }
 
 TEST_F(PSQL_DataTypes_Bigint, Update_Fail) {
@@ -329,7 +350,7 @@ TEST_F(PSQL_DataTypes_Bigint, Update_Fail) {
   ASSERT_NO_FATAL_FAILURE(odbcHandler.BindColumns(bind_columns));
 
   // Assert that value is inserted properly
-  odbcHandler.ExecQuery(SelectStatement(TABLE_NAME, {"*"}, vector<string> {"pk"}));
+  odbcHandler.ExecQuery(SelectStatement(TABLE_NAME, {"*"}, vector<string> {COL1_NAME}));
   rcode = SQLFetch(odbcHandler.GetStatementHandle());
   ASSERT_EQ(rcode, SQL_SUCCESS);
   ASSERT_EQ(pk_len, BYTES_EXPECTED);
@@ -347,7 +368,7 @@ TEST_F(PSQL_DataTypes_Bigint, Update_Fail) {
   odbcHandler.CloseStmt();
 
   // Assert that no values changed
-  odbcHandler.ExecQuery(SelectStatement(TABLE_NAME, {"*"}, vector<string> {"pk"}));
+  odbcHandler.ExecQuery(SelectStatement(TABLE_NAME, {"*"}, vector<string> {COL1_NAME}));
   rcode = SQLFetch(odbcHandler.GetStatementHandle());
 
   ASSERT_EQ(rcode, SQL_SUCCESS);
@@ -358,4 +379,8 @@ TEST_F(PSQL_DataTypes_Bigint, Update_Fail) {
 
   rcode = SQLFetch(odbcHandler.GetStatementHandle());
   ASSERT_EQ(rcode, SQL_NO_DATA);
+
+  odbcHandler.CloseStmt();
+  odbcHandler.ExecQuery(DropObjectStatement("TABLE", TABLE_NAME));
 }
+

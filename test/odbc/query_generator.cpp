@@ -112,10 +112,11 @@ string UpdateTableStatement(const string &table_name, const vector<pair<string, 
     comma = ",";
   }
 
-  result += " WHERE " + where_clause;
+  if (where_clause != "") {
+    result += "\nWHERE " + where_clause;
+  }
 
   return result;
-
 }
 
 string DropObjectStatement(const string &object_kind, const string &object_name, bool check_exists) {

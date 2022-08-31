@@ -24,7 +24,7 @@ std::string CreateProcedureStatement(const std::string &procedure_name, const st
 
 // new_values contain a pair of column names : new values 
 // where_clause is a list of valid conditions to update
-std::string UpdateTableStatement(const std::string &table_name, const std::vector<std::pair<std::string, std::string>> &new_values, const std::string where_clause);
+std::string UpdateTableStatement(const std::string &table_name, const std::vector<std::pair<std::string, std::string>> &new_values, const std::string where_clause = "");
 
 // function_name may include database and/or schema name, e.g. schema_name.function_name
 std::string CreateFunctionStatement(const std::string &function_name, const std::string &function_definition);
