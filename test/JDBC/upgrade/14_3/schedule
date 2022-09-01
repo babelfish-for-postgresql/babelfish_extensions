@@ -55,6 +55,7 @@ sys-procedures
 sys-schema-name
 sys-suser_sid
 sys-suser_sname
+sys-sysdatabases
 sys-sysobjects
 sys-trigger_nestlevel
 identity_function
@@ -105,6 +106,7 @@ BABEL-1466
 BABEL-1654
 BABEL-1715
 BABEL-2086
+BABEL-TABLEOPTIONS
 BABEL-2765
 BABEL-2917
 BABEL-2955
@@ -126,14 +128,20 @@ BABEL-1510
 BABEL-3213
 BABEL-RAND
 BABEL-741
+BABEL-3360
 BABEL-ROLE-MEMBER
 Test-sp_helpuser
 TestTableType
+BABEL-CROSS-DB
+BABEL-LOGIN
+BABEL-USER
 BABEL-ROLE
 babelfish_sysdatabases
 babelfish_namespace_ext
 babelfish_authid_login_ext
 babelfish_authid_user_ext
+babelfish_inconsistent_metadata
+babelfish_migration_mode
 schema_resolution_func
 BABEL-3147-before-14_5
 collation_tests_arabic
@@ -141,6 +149,7 @@ collation_tests_greek
 collation_tests_mongolian
 collation_tests_polish
 collation_tests
+BABEL-EXTENDEDPROPERTY
 TestErrorHelperFunctionsUpgrade
 sys-all_objects-dep
 sys-columns-dep
@@ -166,3 +175,8 @@ sys-dm_exec_connections-dep
 sys-dm_exec_sessions-dep
 sys-table_types-dep
 sys-all_sql_modules-dep
+tdscollation
+sp_tablecollations
+sys-assemblies
+BABEL-LOGIN-USER-EXT
+BABEL-1683

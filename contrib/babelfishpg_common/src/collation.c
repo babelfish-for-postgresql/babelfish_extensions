@@ -17,6 +17,7 @@
 #include "collation.h"
 #include "encoding/encoding.h"
 #include "typecode.h"
+#include "sqlvariant.h"
 
 #define NOT_FOUND -1
 
@@ -425,7 +426,19 @@ static void
 init_default_locale(void)
 {
 	if (!default_locale)
-		default_locale = GetConfigOption("babelfishpg_tsql.default_locale", true, false);
+	{
+		const char *val = GetConfigOption("babelfishpg_tsql.default_locale", true, false);
+		if (val)
+		{
+			MemoryContext oldContext = MemoryContextSwitchTo(TopMemoryContext);
+			default_locale = pstrdup(val);
+			MemoryContextSwitchTo(oldContext);
+		}
+	}
+
+	/* babelfishpg_tsql.default_locale should not be changed once babelfish db is initialised. */
+	Assert(!default_locale || strcmp(default_locale, GetConfigOption("babelfishpg_tsql.default_locale", true, false)) == 0);
+
 	return;
 }
 
@@ -433,7 +446,19 @@ static void
 init_server_collation_name(void)
 {
 	if (!server_collation_name)
-		server_collation_name = GetConfigOption("babelfishpg_tsql.server_collation_name", true, false);
+	{
+		const char *val = GetConfigOption("babelfishpg_tsql.server_collation_name", true, false);
+		if (val)
+		{
+			MemoryContext oldContext = MemoryContextSwitchTo(TopMemoryContext);
+			server_collation_name = pstrdup(val);
+			MemoryContextSwitchTo(oldContext);
+		}
+	}
+
+	/* babelfishpg_tsql.server_collation_name should not be changed once babelfish db is initialised. */
+	Assert(!server_collation_name || strcmp(server_collation_name, GetConfigOption("babelfishpg_tsql.server_collation_name", true, false)) == 0);
+
 	return;
 }
 
@@ -1155,6 +1180,9 @@ int get_persist_collation_id(Oid coll_oid)
 	bool found_coll;
 	int collidx;
 
+	if (ht_oid2collid == NULL)
+		init_collid_trans_tab_internal();
+
 	entry = hash_search(ht_oid2collid, &coll_oid, HASH_FIND, &found_coll);
 
 	if (found_coll)
@@ -1165,6 +1193,46 @@ int get_persist_collation_id(Oid coll_oid)
 	collidx = get_server_collation_collidx();
 	Assert(collidx >= 0);
 	return collidx;
+}
+
+bytea*
+tdscollationproperty_helper(const char *collationname, const char *property)
+{
+	int collidx = find_any_collation(collationname, false);
+	if (collidx >= 0)
+	{
+		coll_info coll = coll_infos[collidx];
+
+		if (strcasecmp(property, "tdscollation") == 0)
+		{
+			int64_t ret = ((int64_t)((int64_t)coll.lcid | ((int64_t)coll.collateflags << 20) | ((int64_t)coll.sortid << 32)));
+
+			/*
+			 *	ret here is of 8 bytes
+			 *	tdscollation should return 5 bytes
+			 *	Below code converts ret into 5 bytes
+			 */
+			int maxlen = 5;
+			bytea *bytea_data = (bytea *) palloc(maxlen + VARHDRSZ);
+			SET_VARSIZE(bytea_data, maxlen + VARHDRSZ);
+			char *rp = VARDATA(bytea_data);
+			bytea        *result;
+			svhdr_3B_t   *svhdr;
+
+			memcpy(rp, (char *) &ret , maxlen);
+
+			result = gen_sqlvariant_bytea_from_type_datum(BINARY_T, PointerGetDatum(bytea_data));
+
+			/* Type Specific Header */
+			svhdr = SV_HDR_3B(result);
+			SV_SET_METADATA(svhdr, BINARY_T, HDR_VER);
+			svhdr->typmod = VARSIZE_ANY_EXHDR(bytea_data);
+
+			return result;
+		}
+	}
+
+	return NULL; /* Invalid collation. */
 }
 
 int
@@ -1277,6 +1345,7 @@ get_collation_callbacks(void)
 		collation_callbacks_var.collation_list_internal = &collation_list_internal;
 		collation_callbacks_var.is_collated_ci_as_internal = &is_collated_ci_as_internal;
 		collation_callbacks_var.collationproperty_helper = &collationproperty_helper;
+		collation_callbacks_var.tdscollationproperty_helper = &tdscollationproperty_helper;
 		collation_callbacks_var.lookup_collation_table_callback = &lookup_collation_table;
 		collation_callbacks_var.lookup_like_ilike_table = &lookup_like_ilike_table;
 		collation_callbacks_var.is_server_collation_CI_AS = &is_server_collation_CI_AS;

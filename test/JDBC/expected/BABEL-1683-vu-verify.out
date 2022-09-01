@@ -1,0 +1,57 @@
+-- NVARCHAR(128)
+SELECT * FROM babel_1683_vu_prepare_table_nvarchar1
+go
+~~START~~
+int#!#nvarchar
+1#!#<NULL>
+2#!#<NULL>
+~~END~~
+
+
+-- SYSNAME not explicitly defined as NULL
+SELECT * FROM babel_1683_vu_prepare_table_sysname1
+go
+~~START~~
+int#!#varchar
+~~END~~
+
+
+-- SYSNAME explicitly defined as NULL
+SELECT * FROM babel_1683_vu_prepare_table_sysname2
+go
+~~START~~
+int#!#varchar
+1#!#<NULL>
+2#!#<NULL>
+~~END~~
+
+
+-- ALTER TABLE ADD <column> stmt
+-- NVARCHAR(128)
+SELECT * FROM babel_1683_vu_prepare_table_nvarchar2
+go
+~~START~~
+int#!#nvarchar
+1#!#<NULL>
+2#!#<NULL>
+~~END~~
+
+
+-- SYSNAME not explicitly defined as NULL
+SELECT * FROM babel_1683_vu_prepare_table_sysname3
+go
+~~START~~
+int#!#varchar
+~~END~~
+
+
+-- SYSNAME explicitly defined as NULL
+SELECT * FROM babel_1683_vu_prepare_table_sysname4
+go
+~~START~~
+int#!#varchar
+1#!#<NULL>
+2#!#<NULL>
+~~END~~
+
+

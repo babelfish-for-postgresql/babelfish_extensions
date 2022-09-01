@@ -1,0 +1,11 @@
+-- psql
+select 
+    cast(case when cast(sys.SERVERPROPERTY('BabelfishVersion') as varchar(20)) LIKE '_._._' 
+        THEN 'valid babelfish version' 
+    else 'invalid babelfish version' end as text);
+GO
+~~START~~
+text
+valid babelfish version
+~~END~~
+

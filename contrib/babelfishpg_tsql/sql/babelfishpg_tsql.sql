@@ -742,7 +742,7 @@ BEGIN
     from
         sys.spt_tablecollations_view s_tcv
     where
-        s_tcv.object_id = sys.object_id(@object)
+        s_tcv.object_id = (SELECT sys.object_id(@object))
     order by colid;
 END;
 $$

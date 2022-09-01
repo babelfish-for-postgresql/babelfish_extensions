@@ -387,6 +387,9 @@ GO
 SELECT name FROM sys.server_principals WHERE principal_id = suser_id('login1    ');
 GO
 
+SELECT name FROM sys.server_principals WHERE principal_id = suser_id('LOGIN1');
+GO
+
 -- Expect NULL
 SELECT suser_id(' login1');
 GO
@@ -403,6 +406,9 @@ SELECT suser_id(NULL);
 GO
 
 SELECT name FROM sys.server_principals WHERE name = suser_name(suser_id('login1'));
+GO
+
+SELECT name FROM sys.server_principals WHERE name = suser_name(suser_id('LOGIN1'));
 GO
 
 SELECT name FROM sys.server_principals WHERE name = suser_name();
@@ -497,7 +503,13 @@ GO
 SELECT user_name(user_id('dbo'));
 GO
 
+SELECT user_name(user_id('DBO'));
+GO
+
 SELECT user_name(user_id('guest'));
+GO
+
+SELECT user_name(user_id('GUEST'));
 GO
 
 SELECT rolname FROM pg_roles WHERE oid = user_id('dbo');
@@ -593,11 +605,6 @@ FROM sys.babelfish_authid_user_ext
 WHERE login_name LIKE 'lgn_2978%' OR rolname LIKE '%lgn_2978%'
 ORDER BY rolname;
 GO
-
--- It should be failed since there is no relevant login
-
-java_auth#!#database|-|db1#!#user|-|lgn_2978#!#password|-|123
-java_auth#!#database|-|db2#!#user|-|lgn_2978#!#password|-|123
 
 -- tsql
 -- recreate the login with same name
