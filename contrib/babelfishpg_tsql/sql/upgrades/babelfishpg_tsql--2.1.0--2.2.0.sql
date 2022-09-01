@@ -1330,19 +1330,19 @@ GRANT SELECT ON information_schema_tsql.CONSTRAINT_COLUMN_USAGE TO PUBLIC;
 */
 
 CREATE OR REPLACE VIEW information_schema_tsql.view_column_usage
-AS SELECT DISTINCT CAST(sys.db_name() AS sys.nvarchar(128)) AS "VIEW_CATALOG",
-    CAST((select orig_name from sys.babelfish_namespace_ext where nv.nspname = nspname) AS sys.nvarchar(128)) AS "VIEW_SCHEMA",
+AS SELECT DISTINCT CAST(nv.dbname AS sys.nvarchar(128)) AS "VIEW_CATALOG",
+    CAST(extv.orig_name AS sys.nvarchar(128)) AS "VIEW_SCHEMA",
     CAST(v.relname AS sys.sysname) AS "VIEW_NAME",
-    CAST(sys.db_name() AS sys.nvarchar(128)) AS "TABLE_CATALOG",
-    CAST((select orig_name from sys.babelfish_namespace_ext where nt.nspname = nspname) AS sys.nvarchar(128)) AS "TABLE_SCHEMA",
+    CAST(nt.dbname AS sys.nvarchar(128)) AS "TABLE_CATALOG",
+    CAST(extt.orig_name AS sys.nvarchar(128)) AS "TABLE_SCHEMA",
     CAST(t.relname AS sys.sysname) AS "TABLE_NAME",
     CAST(a.attname AS sys.sysname) AS "COLUMN_NAME"
-   FROM pg_namespace nv,
+   FROM sys.pg_namespace_ext nv LEFT OUTER JOIN sys.babelfish_namespace_ext extv ON nv.nspname = extv.nspname,
     pg_class v,
     pg_depend dv,
     pg_depend dt,
     pg_class t,
-    pg_namespace nt,
+    sys.pg_namespace_ext nt LEFT OUTER JOIN sys.babelfish_namespace_ext extt ON nt.nspname = extt.nspname,
     pg_attribute a
   WHERE nv.oid = v.relnamespace AND v.relkind = 'v'::"char" 
   AND v.oid = dv.refobjid AND dv.refclassid = 'pg_class'::regclass::oid 
@@ -1353,7 +1353,10 @@ AS SELECT DISTINCT CAST(sys.db_name() AS sys.nvarchar(128)) AS "VIEW_CATALOG",
   AND t.relnamespace = nt.oid 
   AND (t.relkind = ANY (ARRAY['r'::"char", 'v'::"char", 'f'::"char", 'p'::"char"])) 
   AND t.oid = a.attrelid AND dt.refobjsubid = a.attnum 
-  AND pg_has_role(t.relowner, 'USAGE'::text);
+  AND (pg_has_role(t.relowner, 'USAGE'::text)
+		OR has_table_privilege(t.oid, 'SELECT, INSERT, UPDATE, DELETE, TRUNCATE, REFERENCES, TRIGGER')
+		OR has_any_column_privilege(t.oid, 'SELECT, INSERT, UPDATE, REFERENCES'))
+  AND extv.dbid = CAST(sys.db_id() AS oid);
   
 GRANT SELECT ON information_schema_tsql.view_column_usage TO PUBLIC;
 

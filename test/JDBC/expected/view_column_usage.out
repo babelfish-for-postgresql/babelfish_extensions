@@ -1,3 +1,6 @@
+use master;
+go
+
 select * from information_schema.view_column_usage where view_name like 'view_column_usage_v%' order by view_name;
 go
 ~~START~~
@@ -17,6 +20,9 @@ create view view_column_usage_v1 as select * from view_column_usage_tb1;
 go
 
 create view view_column_usage_v2 as select * from view_column_usage_tb2;
+go
+
+create database view_column_usage_test_db;
 go
 
 select * from information_schema.view_column_usage where view_name like 'view_column_usage_v%' order by view_name;
@@ -51,18 +57,46 @@ master#!#dbo#!#view_column_usage_v2#!#master#!#dbo#!#view_column_usage_tb2#!#vie
 ~~END~~
 
 
-
-
-drop function view_column_usag_func
-drop procedure view_column_usag_proc
-drop view view_column_usage_v2
+create schema view_column_usage_test_sc;
 go
 
-drop view view_column_usage_v1
+create table view_column_usage_test_sc.view_column_usage_sc_tb(arg3 char(10));
 go
 
-drop table view_column_usage_tb2
+create view view_column_usage_sc_v as select * from view_column_usage_test_sc.view_column_usage_sc_tb;
 go
 
-drop table view_column_usage_tb1
+select * from information_schema.view_column_usage where view_name like 'view_column_usage_sc%' order by view_name;
+go
+~~START~~
+nvarchar#!#nvarchar#!#varchar#!#nvarchar#!#nvarchar#!#varchar#!#varchar
+master#!#dbo#!#view_column_usage_sc_v#!#master#!#view_column_usage_test_sc#!#view_column_usage_sc_tb#!#arg3
+~~END~~
+
+
+drop view view_column_usage_sc_v;
+go
+
+drop table view_column_usage_test_sc.view_column_usage_sc_tb;
+go
+
+drop schema view_column_usage_test_sc;
+go
+
+drop function view_column_usag_func;
+go
+
+drop procedure view_column_usag_proc;
+go
+
+drop view view_column_usage_v2;
+go
+
+drop view view_column_usage_v1;
+go
+
+drop table view_column_usage_tb2;
+go
+
+drop table view_column_usage_tb1;
 go
