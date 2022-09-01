@@ -120,6 +120,25 @@ int#!#int#!#int
 ~~END~~
 
 
+-- throws an error
+SELECT SUM( sumbigint ) AS sum_bigint FROM babel_3144_vu_prepare_t5
+GO
+~~START~~
+bigint
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Arithmetic overflow error converting expression to data type bigint.)~~
+
+
+SELECT SUM( sumint ) AS sum_int FROM babel_3144_vu_prepare_t5
+GO
+~~START~~
+int
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Arithmetic overflow error converting expression to data type int.)~~
+
+
 DROP FUNCTION babel_3144_vu_prepare_f1
 DROP FUNCTION babel_3144_vu_prepare_f2
 GO
@@ -131,4 +150,5 @@ DROP TABLE babel_3144_vu_prepare_t1
 DROP TABLE babel_3144_vu_prepare_t2
 DROP TABLE babel_3144_vu_prepare_t3
 DROP TABLE babel_3144_vu_prepare_t4
+DROP TABLE babel_3144_vu_prepare_t5
 GO

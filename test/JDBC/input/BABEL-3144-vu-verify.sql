@@ -48,6 +48,13 @@ GO
 EXEC babel_3144_vu_prepare_p1
 GO
 
+-- throws an error
+SELECT SUM( sumbigint ) AS sum_bigint FROM babel_3144_vu_prepare_t5
+GO
+
+SELECT SUM( sumint ) AS sum_int FROM babel_3144_vu_prepare_t5
+GO
+
 DROP FUNCTION babel_3144_vu_prepare_f1
 DROP FUNCTION babel_3144_vu_prepare_f2
 GO
@@ -59,4 +66,5 @@ DROP TABLE babel_3144_vu_prepare_t1
 DROP TABLE babel_3144_vu_prepare_t2
 DROP TABLE babel_3144_vu_prepare_t3
 DROP TABLE babel_3144_vu_prepare_t4
+DROP TABLE babel_3144_vu_prepare_t5
 GO

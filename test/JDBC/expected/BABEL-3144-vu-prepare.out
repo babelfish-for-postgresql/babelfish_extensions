@@ -1,15 +1,13 @@
+-- max values causing overflow in sum (BIGINT,INT) 
 CREATE TABLE babel_3144_vu_prepare_t1(
 sumbigint BIGINT, sumint INT , sumsmallint SMALLINT , sumtinyint TINYINT )
 GO
 
--- values causing overflow in sum (BIGINT,INT)
+INSERT INTO babel_3144_vu_prepare_t1 VALUES (9223372036854775807,2147483647,32767,255)
 INSERT INTO babel_3144_vu_prepare_t1 VALUES (9223372036854775807,2147483647,32767,255)
 GO
 ~~ROW COUNT: 1~~
 
-
-INSERT INTO babel_3144_vu_prepare_t1 VALUES (9223372036854775807,2147483647,32767,255)
-GO
 ~~ROW COUNT: 1~~
 
 
@@ -23,12 +21,10 @@ sumbigint BIGINT, sumint INT , sumsmallint SMALLINT , sumtinyint TINYINT )
 GO
 
 INSERT INTO babel_3144_vu_prepare_t3 VALUES(16,8,4,2)
+INSERT INTO babel_3144_vu_prepare_t3 VALUES(2,4,8,16)
 GO
 ~~ROW COUNT: 1~~
 
-
-INSERT INTO babel_3144_vu_prepare_t3 VALUES(2,4,8,16)
-GO
 ~~ROW COUNT: 1~~
 
 
@@ -64,3 +60,19 @@ CREATE PROCEDURE babel_3144_vu_prepare_p1
 AS
 SELECT SUM(sumint)as sum_int,SUM(sumsmallint) as sum_smallint ,SUM(sumtinyint) as sum_tinyint FROM babel_3144_vu_prepare_t4
 GO
+
+-- min values causing overflow in sum (BIGINT,INT)
+CREATE TABLE babel_3144_vu_prepare_t5(
+sumbigint BIGINT, sumint INT , sumsmallint SMALLINT , sumtinyint TINYINT )
+GO
+
+
+INSERT INTO babel_3144_vu_prepare_t5 VALUES (-9223372036854775808,-2147483648,-32768,0)
+INSERT INTO babel_3144_vu_prepare_t5 VALUES (-9223372036854775808,-2147483648,-32768,0)
+GO
+~~ROW COUNT: 1~~
+
+~~ROW COUNT: 1~~
+
+
+
