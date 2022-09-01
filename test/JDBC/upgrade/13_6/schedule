@@ -140,14 +140,13 @@ collation_tests_mongolian
 collation_tests_polish
 collation_tests
 TestErrorHelperFunctionsUpgrade
-sys-all_objects-dep
+sys_all_objects-dep
 sys-columns-dep
 sys-foreign_key_columns-dep
 sys-foreign_keys-dep
 sys-identity_columns-dep
 sys-indexes-dep
 sys-key_constraints-dep
-sys-procedures-dep
 sys-schemas-dep
 sys-sp_tables_view-dep
 sys-sysforeignkeys-dep

@@ -112,14 +112,13 @@ babelfish_authid_login_ext
 schema_resolution_func
 BABEL-3147-before-14_5
 TestErrorHelperFunctionsUpgrade
-sys-all_objects-dep
+sys_all_objects-dep
 sys-columns-dep
 sys-foreign_key_columns-dep
 sys-foreign_keys-dep
 sys-identity_columns-dep
 sys-indexes-dep
 sys-key_constraints-dep
-sys-procedures-dep
 sys-schemas-dep
 sys-sp_tables_view-dep
 sys-sysforeignkeys-dep
