@@ -148,6 +148,7 @@ BABEL-728
 babel_function_string
 BABEL-2701
 BABEL-1566
+BABEL-3360
 babel_isnumeric
 HAS_DBACCESS
 BABEL-1475
@@ -167,3 +168,5 @@ sp_tablecollations
 sys-assemblies
 BABEL-LOGIN-USER-EXT
 view_column_usage
+bitwise_not-operator
+BABEL-1683

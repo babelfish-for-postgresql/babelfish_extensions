@@ -4,6 +4,14 @@ create table testing1(col nvarchar(60)); -- expect this to fail in the Postgres 
 CREATE EXTENSION IF NOT EXISTS "babelfishpg_tsql" CASCADE;
 set babelfishpg_tsql.sql_dialect = "tsql";
 
+-- check the babelfish version
+select cast(
+    case
+        when cast(sys.SERVERPROPERTY('BabelfishVersion') as varchar(20)) LIKE '_._._'
+             THEN 'valid'
+    else 'invalid'
+    end as sys.varchar(20));
+
 -- nvarchar is supported in tsql dialect
 create table testing1(col nvarchar(60));
 insert into testing1 (col) select N'Muffler';

@@ -39,7 +39,7 @@ The following build instructions comply with Ubuntu 20.04 and Amazon Linux 2 env
 
 2. Now it's time to build the Postgres engine. In the Postgres engine directory, run these sequence of commands to build the PG engine modified for Babelfish (Github repo: https://github.com/babelfish-for-postgresql/postgresql_modified_for_babelfish):
     ```
-    ./configure --prefix=$HOME/postgres/ --without-readline --without-zlib --enable-debug CFLAGS="-ggdb" --with-libxml --with-uuid=ossp --with-icu
+    ./configure --prefix=$HOME/postgres/ --without-readline --without-zlib --enable-debug --enable-cassert CFLAGS="-ggdb" --with-libxml --with-uuid=ossp --with-icu
     make -j 4 2>error.txt
     make install
     make check

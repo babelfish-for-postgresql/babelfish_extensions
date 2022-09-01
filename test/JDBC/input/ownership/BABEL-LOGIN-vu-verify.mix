@@ -1,12 +1,3 @@
--- tsql      user=babel_login_vu_prepare_foo      password=abc
--- Login with non babelfish user should fail
-go
-
--- Login with a superuser should succeed
--- tsql      user=babel_login_vu_prepare_su_user      password=abc
-SELECT 1;
-go
-
 -- tsql
 CREATE USER babel_login_vu_prepare_r1;
 go
@@ -207,9 +198,6 @@ FROM sys.babelfish_authid_user_ext
 WHERE login_name LIKE 'babel_login_vu_prepare_r4%' OR rolname LIKE '%babel_login_vu_prepare_r4%'
 ORDER BY rolname;
 go
-
--- It should be failed since there is no relevant login
-java_auth#!#database|-|babel_login_vu_prepare_db1#!#user|-|babel_login_vu_prepare_r4#!#password|-|123
 
 -- tsql
 -- recreate the login with same name
