@@ -37,6 +37,16 @@ SELECT IS_ROLEMEMBER('BABEL_ROLE_MEMBER_vu_prepare_role1', 'BABEL_ROLE_MEMBER_vu
 GO
 SELECT IS_ROLEMEMBER('BABEL_ROLE_MEMBER_vu_prepare_user1', 'BABEL_ROLE_MEMBER_vu_prepare_user1')
 GO
+SELECT IS_ROLEMEMBER('public', 'public')
+GO
+
+-- Every db principal is member of PUBLIC
+SELECT IS_MEMBER('public')
+GO
+SELECT IS_ROLEMEMBER('public', 'BABEL_ROLE_MEMBER_vu_prepare_role1')
+GO
+SELECT IS_ROLEMEMBER('public', 'BABEL_ROLE_MEMBER_vu_prepare_user1')
+GO
 
 -- Should return 0
 SELECT IS_ROLEMEMBER('db_owner', 'BABEL_ROLE_MEMBER_vu_prepare_role1')
@@ -74,6 +84,14 @@ GO
 SELECT IS_ROLEMEMBER('BABEL_ROLE_MEMBER_vu_prepare_role1', NULL)
 GO
 SELECT IS_ROLEMEMBER(NULL, NULL)
+GO
+
+-- Case insensitive check
+SELECT IS_ROLEMEMBER('PUBLIC', 'Babel_role_member_vu_prepare_User1')
+GO
+SELECT IS_ROLEMEMBER('Babel_role_member_vu_prepare_role1', 'babel_role_member_vu_prepare_ROLE3')
+GO
+SELECT IS_MEMBER('Public')
 GO
 
 -- Connect with different logins to test membership view permission
@@ -172,5 +190,6 @@ GO
 SELECT IS_ROLEMEMBER('BABEL_ROLE_MEMBER_vu_prepare_role2', 'BABEL_ROLE_MEMBER_vu_prepare_user2')
 GO
 
+-- tsql
 USE master
 GO

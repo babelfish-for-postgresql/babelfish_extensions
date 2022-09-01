@@ -174,15 +174,23 @@ public class TestQueryFile {
         // if this is a normal JDBC test run, we need to run the prepare, verify
         // and cleanup scripts for one use-case, one after the other
         if (!isUpgradeTestMode) {
+            // first sort all files based only on file prefix
             Collections.sort(fileList, new Comparator<String>() {
-                // sort in such a way that filenames that have same prefix should run
-                // prepare file first, verify file next and cleanup file at the end
+                @Override
+                public int compare (String file1, String file2) {
+                    return getFileNamePrefix(file1).compareTo(getFileNamePrefix(file2));
+                }
+            });
+
+            // next sort in such a way that filenames that have same prefix should
+            // run prepare file first, verify file next and cleanup file at the end
+            Collections.sort(fileList, new Comparator<String>() {
                 @Override
                 public int compare (String file1, String file2) {
                     if (getFileNamePrefix(file1).equals(getFileNamePrefix(file2))) {
                         return getFileOrderUtil(file1) - getFileOrderUtil(file2);
                     } else {
-                        return file1.compareTo(file2);
+                        return 0;
                     }
                 }
             });

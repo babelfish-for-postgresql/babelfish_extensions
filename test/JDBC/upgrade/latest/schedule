@@ -70,6 +70,7 @@ sys-original_login
 sys-schema-name
 sys-objects
 sys-procedures
+sys-sysdatabases
 sys-sysobjects
 sys-trigger_nestlevel
 schema_resolution_proc
@@ -86,6 +87,7 @@ BABEL-1466
 BABEL-1654
 BABEL-1715
 BABEL-2086
+BABEL-TABLEOPTIONS
 BABEL-2765
 BABEL-2917
 BABEL-2955
@@ -122,11 +124,16 @@ triggers_with_transaction
 Test-sp_helpsrvrolemember
 Test-sp_helpuser
 TestTableType
+BABEL-CROSS-DB
+BABEL-LOGIN
+BABEL-USER
 BABEL-ROLE
 babelfish_sysdatabases
 babelfish_namespace_ext
 babelfish_authid_login_ext
 babelfish_authid_user_ext
+babelfish_inconsistent_metadata
+babelfish_migration_mode
 schema_resolution_func
 BABEL-3147
 collation_tests_arabic
@@ -141,6 +148,7 @@ BABEL-728
 babel_function_string
 BABEL-2701
 BABEL-1566
+BABEL-3360
 babel_isnumeric
 HAS_DBACCESS
 BABEL-1475
@@ -173,3 +181,15 @@ sys-dm_exec_sessions-dep
 sys-table_types-dep
 sys-all_sql_modules-dep
 sys-triggers
+tdscollation
+BABEL-EXTENDEDPROPERTY
+sys-filegroups
+sys-filetables
+sys-fulltext_indexes
+sys-hash_indexes
+sys-plan_guides
+sp_tablecollations
+sys-assemblies
+BABEL-LOGIN-USER-EXT
+bitwise_not-operator
+BABEL-1683

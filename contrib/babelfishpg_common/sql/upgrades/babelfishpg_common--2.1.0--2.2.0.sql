@@ -119,5 +119,10 @@ UPDATE pg_type SET typdefault = null WHERE typname = 'datetime2' AND typname IN 
 
 UPDATE pg_type SET typdefault = null WHERE typname = 'datetimeoffset' AND typname IN (SELECT name FROM sys.types);
 
+CREATE OPERATOR sys.~ (
+    RIGHTARG   = sys.BIT,
+    PROCEDURE  = sys.bitneg
+);
+
 -- Reset search_path to not affect any subsequent scripts
 SELECT set_config('search_path', trim(leading 'sys, ' from current_setting('search_path')), false);
