@@ -1,0 +1,27 @@
+-- tsql user=sys_dm_exec_sessions_dep_vu_prepare_login password=password
+-- if we query the view not as sysadmin, we will only see info of this session only
+exec sys_dm_exec_sessions_dep_vu_prepare_p1
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: permission denied for procedure sys_dm_exec_sessions_dep_vu_prepare_p1)~~
+
+
+-- tsql
+-- if we query the view as sysadmin, we will see info of all sessions
+select * from sys_dm_exec_sessions_dep_vu_prepare_f1()
+GO
+~~START~~
+nvarchar#!#int
+jdbc_user#!#0
+~~END~~
+
+
+select * from sys_dm_exec_sessions_dep_vu_prepare_v1
+GO
+~~START~~
+nvarchar#!#int#!#bit#!#bit
+jdbc_user#!#-1#!#1#!#1
+sys_dm_exec_sessions_dep_vu_prepare_login#!#-1#!#1#!#1
+~~END~~
+
