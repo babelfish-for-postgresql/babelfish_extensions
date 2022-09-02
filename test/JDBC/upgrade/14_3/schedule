@@ -155,4 +155,5 @@ tdscollation
 sp_tablecollations
 sys-assemblies
 BABEL-LOGIN-USER-EXT
+column_privileges
 BABEL-1683

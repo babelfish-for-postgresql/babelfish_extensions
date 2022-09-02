@@ -1,0 +1,103 @@
+-- tsql
+
+use master;
+go
+
+create login column_privileges_privilege_test_user with password='';
+go
+
+create database column_privileges_privilege_test_db;
+go
+
+use column_privileges_privilege_test_db;
+go
+
+create table column_privileges_privilege_test_tb(arg1 int, arg2 int);
+go
+
+create user column_privileges_privilege_test_user for login column_privileges_privilege_test_user;
+go
+
+use master;
+go
+
+-- tsql user=column_privileges_privilege_test_user password=''
+
+use column_privileges_privilege_test_db;
+go
+
+select * from information_schema.column_privileges where table_name='column_privileges_privilege_test_tb';
+go
+~~START~~
+nvarchar#!#nvarchar#!#nvarchar#!#nvarchar#!#varchar#!#varchar#!#varchar#!#varchar
+~~END~~
+
+
+use master;
+go
+
+-- tsql
+
+use column_privileges_privilege_test_db;
+go
+
+grant select on column_privileges_privilege_test_tb(arg1) to column_privileges_privilege_test_user;
+go
+
+use master;
+go
+
+-- tsql user=column_privileges_privilege_test_user password=''
+
+use column_privileges_privilege_test_db;
+go
+
+select * from information_schema.column_privileges where table_name='column_privileges_privilege_test_tb';
+go
+~~START~~
+nvarchar#!#nvarchar#!#nvarchar#!#nvarchar#!#varchar#!#varchar#!#varchar#!#varchar
+dbo#!#column_privileges_privilege_test_user#!#column_privileges_privilege_test_db#!#dbo#!#column_privileges_privilege_test_tb#!#arg1#!#SELECT#!#NO
+~~END~~
+
+
+use master;
+go
+
+-- tsql
+
+use column_privileges_privilege_test_db;
+go
+
+drop table column_privileges_privilege_test_tb;
+go
+
+use master;
+go
+
+drop database column_privileges_privilege_test_db;
+go
+
+-- psql
+
+-- Need to terminate active session before cleaning up the login
+SELECT pg_terminate_backend(pid) FROM pg_stat_get_activity(NULL)
+WHERE sys.suser_name(usesysid) = 'column_privileges_privilege_test_user' AND backend_type = 'client backend' AND usesysid IS NOT NULL;
+GO
+~~START~~
+bool
+t
+~~END~~
+
+
+-- Wait to sync with another session
+SELECT pg_sleep(1);
+GO
+~~START~~
+void
+
+~~END~~
+
+
+-- tsql
+drop login column_privileges_privilege_test_user;
+go
