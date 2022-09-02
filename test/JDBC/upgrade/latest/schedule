@@ -196,3 +196,16 @@ sys-dm_exec_sessions-dep
 sys-table_types-dep
 sys-all_sql_modules-dep
 sys-triggers
+sys-triggers-dep
+tdscollation
+BABEL-EXTENDEDPROPERTY
+sys-filegroups
+sys-filetables
+sys-fulltext_indexes
+sys-hash_indexes
+sys-plan_guides
+sp_tablecollations
+sys-assemblies
+BABEL-LOGIN-USER-EXT
+bitwise_not-operator
+BABEL-1683
