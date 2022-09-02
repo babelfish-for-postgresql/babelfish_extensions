@@ -44,7 +44,8 @@ TEST_F(PSQL_DataTypes_int, Table_Creation) {
   const int PRECISION_EXPECTED = 0;
   const int SCALE_EXPECTED = 0;
   const string NAME_EXPECTED = "int4";
-  
+  const int BYTES_EXPECTED = 4;
+
   const int BUFFER_SIZE = 256;
   char name[BUFFER_SIZE];
   SQLLEN length;
@@ -71,7 +72,17 @@ TEST_F(PSQL_DataTypes_int, Table_Creation) {
                           (SQLLEN*) &length);
   ASSERT_EQ(rcode, SQL_SUCCESS);
   ASSERT_EQ(length, LENGTH_EXPECTED);
-  
+
+  rcode = SQLColAttribute(odbcHandler.GetStatementHandle(),
+                            2,
+                            SQL_DESC_LENGTH, // Get the Bytes of the column 
+                            NULL,
+                            0,
+                            NULL,
+                            (SQLLEN*) &length);
+  ASSERT_EQ(rcode, SQL_SUCCESS);
+  ASSERT_EQ(length, BYTES_EXPECTED);
+
   rcode = SQLColAttribute(odbcHandler.GetStatementHandle(),
                           2,
                           SQL_DESC_PRECISION, // Get the precision of the column
