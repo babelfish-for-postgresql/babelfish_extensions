@@ -2,7 +2,6 @@
 #include <sqlext.h>
 #include "odbc_handler.h"
 #include "query_generator.h"
-#include <iostream>
 
 using std::pair;
 
@@ -110,9 +109,29 @@ class PSQL_DataTypes_Varchar : public testing::Test{
   }
 };
 
-// helper function to convert string to equivalent C version of big int (long long int)
-long long int StringToBigInt(const string &value) {
-  return strtoll(value.c_str(), NULL, 10);
+// helper function to initialize insert string (1, "", "", ""), etc.
+string InitializeInsertString(const vector<vector<string>> &inserted_values) {
+
+  string insert_string{};
+  string comma{};
+
+  for (int i = 0; i< inserted_values.size(); ++i) {
+
+    insert_string += comma + "(";
+    string comma2{};
+
+    for (int j = 0; j < NUM_COLS; j++) {
+      if (inserted_values[i][j] != "NULL")
+        insert_string += comma2 + "'" + inserted_values[i][j] + "'";
+      else
+        insert_string += comma2 + inserted_values[i][j];
+      comma2 = ",";
+    }
+
+    insert_string += ")";
+    comma = ",";
+  }
+  return insert_string;
 }
 
 TEST_F(PSQL_DataTypes_Varchar, ColAttributes) {
@@ -198,7 +217,7 @@ TEST_F(PSQL_DataTypes_Varchar, ColAttributes) {
 
     rcode = SQLColAttribute(odbcHandler.GetStatementHandle(),
                             i,
-                            SQL_DESC_LITERAL_PREFIX, // Get the type name of the column
+                            SQL_DESC_LITERAL_PREFIX, // Get the prefix of the column
                             name,
                             BUFFER_SIZE,
                             NULL,
@@ -208,7 +227,7 @@ TEST_F(PSQL_DataTypes_Varchar, ColAttributes) {
 
     rcode = SQLColAttribute(odbcHandler.GetStatementHandle(),
                             i,
-                            SQL_DESC_LITERAL_SUFFIX, // Get the type name of the column
+                            SQL_DESC_LITERAL_SUFFIX, // Get the suffix character of the column
                             name,
                             BUFFER_SIZE,
                             NULL,
@@ -220,14 +239,42 @@ TEST_F(PSQL_DataTypes_Varchar, ColAttributes) {
   rcode = SQLFetch(odbcHandler.GetStatementHandle());
   ASSERT_EQ(rcode, SQL_NO_DATA);
 
+  odbcHandler.CloseStmt();
+  odbcHandler.ExecQuery(DropObjectStatement("TABLE", TABLE_NAME));
+}
+
+TEST_F(PSQL_DataTypes_Varchar, Table_Create_Fail) {
+
+  vector<vector<pair<string, string>>> invalid_columns{
+    {{"invalid1", DATATYPE + "(-1)"}},
+    {{"invalid2", DATATYPE + "(0)"}},
+    // {{"invalid3", DATATYPE + "(8001)"}}, -- This works on the postgres endpoint?
+    {{"invalid4", DATATYPE + "(NULL)"}}
+  };
+
+  RETCODE rcode;
+  OdbcHandler odbcHandler;
+
+  // Create a table with columns defined with the specific datatype being tested. 
+  odbcHandler.Connect();
+  odbcHandler.AllocateStmtHandle();
+
+  // Assert that table creation will always fail with invalid column definitions
+  for (int i = 0; i < invalid_columns.size(); i++) {
+    rcode = SQLExecDirect(odbcHandler.GetStatementHandle(),
+                        (SQLCHAR*) CreateTableStatement(TABLE_NAME, invalid_columns[i]).c_str(),
+                        SQL_NTS);
+
+    ASSERT_EQ(rcode, SQL_ERROR);
+  }
+
+  odbcHandler.CloseStmt();
+  odbcHandler.ExecQuery(DropObjectStatement("TABLE", TABLE_NAME));
 }
 
 TEST_F(PSQL_DataTypes_Varchar, Insertion_Success) {
 
   const int BUFFER_LENGTH = 8192;
-  
-  long long int pk;
-  long long int data;
 
   char col_results[NUM_COLS][BUFFER_LENGTH];
   SQLLEN col_len[NUM_COLS];
@@ -251,25 +298,7 @@ TEST_F(PSQL_DataTypes_Varchar, Insertion_Success) {
     bind_columns.push_back(tuple_to_insert);
   }
 
-  string insert_string{}; 
-  string comma{};
-  
-  for (int i = 0; i< inserted_values.size(); ++i) {
-
-    insert_string += comma + "(";
-
-    string comma2{};
-    for (int j = 0; j < NUM_COLS; j++) {
-      if (inserted_values[i][j] != "NULL")
-        insert_string += comma2 + "'" + inserted_values[i][j] + "'";
-      else
-        insert_string += comma2 + inserted_values[i][j];
-      comma2 = ",";
-    }
-
-    insert_string += ")";
-    comma = ",";
-  }
+  string insert_string = InitializeInsertString(inserted_values);
 
   // Create table
   odbcHandler.ConnectAndExecQuery(CreateTableStatement(TABLE_NAME, TABLE_COLUMNS));
@@ -296,15 +325,13 @@ TEST_F(PSQL_DataTypes_Varchar, Insertion_Success) {
     ASSERT_EQ(rcode, SQL_SUCCESS);
 
     for (int j = 0; j < NUM_COLS; j++) {
-      
-      if (inserted_values[i][j] != "NULL") {
 
+      if (inserted_values[i][j] != "NULL") {
         ASSERT_EQ(string(col_results[j]), inserted_values[i][j]);
         ASSERT_EQ(col_len[j], inserted_values[i][j].size());
       } 
-      else {
+      else 
         ASSERT_EQ(col_len[j], SQL_NULL_DATA);
-      }
     }
   }
 
@@ -319,9 +346,6 @@ TEST_F(PSQL_DataTypes_Varchar, Insertion_Success) {
 TEST_F(PSQL_DataTypes_Varchar, Insertion_Failure) {
 
   const int BUFFER_LENGTH = 8192;
-  
-  long long int pk;
-  long long int data;
 
   char col_results[NUM_COLS][BUFFER_LENGTH];
   SQLLEN col_len[NUM_COLS];
@@ -345,6 +369,7 @@ TEST_F(PSQL_DataTypes_Varchar, Insertion_Failure) {
     string insert_string = "(";
     string comma{};
 
+    // create insert_string (1, ..., ..., ...)
     for (int j = 0; j < NUM_COLS; j++) {
       insert_string += comma + "'" + inserted_values[i][j] + "'";
       comma = ",";
@@ -396,25 +421,8 @@ TEST_F(PSQL_DataTypes_Varchar, Update_Success) {
     bind_columns.push_back(tuple_to_insert);
   }
 
-  string insert_string{}; 
-  string comma{};
-  
-  for (int i = 0; i< inserted_values.size(); ++i) {
+  string insert_string = InitializeInsertString(inserted_values);
 
-    insert_string += comma + "(";
-    string comma2{};
-
-    for (int j = 0; j < NUM_COLS; j++) {
-      if (inserted_values[i][j] != "NULL")
-        insert_string += comma2 + "'" + inserted_values[i][j] + "'";
-      else
-        insert_string += comma2 + inserted_values[i][j];
-      comma2 = ",";
-    }
-
-    insert_string += ")";
-    comma = ",";
-  }
 
   // Create table
   odbcHandler.ConnectAndExecQuery(CreateTableStatement(TABLE_NAME, TABLE_COLUMNS));
@@ -512,26 +520,7 @@ TEST_F(PSQL_DataTypes_Varchar, Update_Fail) {
     bind_columns.push_back(tuple_to_insert);
   }
 
-  string insert_string{}; 
-  string comma{};
-  
-  // initialize insert string
-  for (int i = 0; i< inserted_values.size(); ++i) {
-
-    insert_string += comma + "(";
-    string comma2{};
-
-    for (int j = 0; j < NUM_COLS; j++) {
-      if (inserted_values[i][j] != "NULL")
-        insert_string += comma2 + "'" + inserted_values[i][j] + "'";
-      else
-        insert_string += comma2 + inserted_values[i][j];
-      comma2 = ",";
-    }
-
-    insert_string += ")";
-    comma = ",";
-  }
+  string insert_string = InitializeInsertString(inserted_values);
 
   // Create table
   odbcHandler.ConnectAndExecQuery(CreateTableStatement(TABLE_NAME, TABLE_COLUMNS));
@@ -627,25 +616,7 @@ TEST_F(PSQL_DataTypes_Varchar, View_creation) {
     bind_columns.push_back(tuple_to_insert);
   }
 
-  string insert_string{}; 
-  string comma{};
-  
-  for (int i = 0; i< inserted_values.size(); ++i) {
-
-    insert_string += comma + "(";
-
-    string comma2{};
-    for (int j = 0; j < NUM_COLS; j++) {
-      if (inserted_values[i][j] != "NULL")
-        insert_string += comma2 + "'" + inserted_values[i][j] + "'";
-      else
-        insert_string += comma2 + inserted_values[i][j];
-      comma2 = ",";
-    }
-
-    insert_string += ")";
-    comma = ",";
-  }
+  string insert_string = InitializeInsertString(inserted_values);
 
   // Create table
   odbcHandler.ConnectAndExecQuery(CreateTableStatement(TABLE_NAME, TABLE_COLUMNS));
