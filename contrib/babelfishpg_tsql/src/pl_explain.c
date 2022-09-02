@@ -7,7 +7,6 @@
 
 
 extern PLtsql_execstate *get_outermost_tsql_estate(int *nestlevel);
-extern const char *strip_select_from_expr(PLtsql_expr * expr);
 
 bool pltsql_explain_only = false;
 bool pltsql_explain_analyze = false;
@@ -200,8 +199,10 @@ const char *get_explain_database(void)
  * This functions validates that the expression object exists, has a query text,
  * and returns a pointer into the query text of the expression minus the "SELECT "
 */
-const char *strip_select_from_expr(PLtsql_expr * expr)
+const char *strip_select_from_expr(void * pltsql_expr)
 {
+	PLtsql_expr * expr;
+	expr = (PLtsql_expr *) pltsql_expr;
 	if (expr == NULL || expr->query == NULL || strlen(expr->query) <= 7)
 	{
 		ereport(ERROR, (errcode(ERRCODE_INTERNAL_ERROR),
