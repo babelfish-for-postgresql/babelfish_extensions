@@ -199,17 +199,14 @@ const char *get_explain_database(void)
  *
  * This functions validates that the expression object exists, has a query text,
  * and returns a pointer into the query text of the expression minus the "SELECT "
- * A pointer into the original query text is preferred over pstrdup for minor performance
- * gains and since in most cases the strings are immediately consumed by a larger StringInfo
- * representing the final display string used in explain 
 */
 const char *strip_select_from_expr(PLtsql_expr * expr)
 {
 	if (expr == NULL || expr->query == NULL || strlen(expr->query) <= 7)
 	{
 		ereport(ERROR, (errcode(ERRCODE_INTERNAL_ERROR),
-					errmsg("invalid expression %s", expr)));
+					errmsg("invalid expression %p", (void *) expr)));
 	}
 
-	return &expr->query[7];
+	return pstrdup(&expr->query[7]);
 }
