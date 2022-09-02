@@ -119,8 +119,6 @@ schema_resolution_func
 BABEL-3147-before-14_5
 BABEL-EXTENDEDPROPERTY
 TestErrorHelperFunctionsUpgrade
-sys_all_objects-dep
-sys-columns-dep
 sys-foreign_key_columns-dep
 sys-foreign_keys-dep
 sys-identity_columns-dep
@@ -134,7 +132,6 @@ sys-types-dep
 sys-views-dep
 sys-check_constraints-dep
 sys-computed_columns-dep
-sys-default_constraints-dep
 sys-index_columns-dep
 sys-sp_databases-dep
 sys-syscolumns-dep

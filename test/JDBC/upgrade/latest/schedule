@@ -180,7 +180,7 @@ sys-dm_exec_connections-dep
 sys-dm_exec_sessions-dep
 sys-table_types-dep
 sys-all_sql_modules-dep
-sys-triggers
+sys-triggers-dep
 tdscollation
 BABEL-EXTENDEDPROPERTY
 sys-filegroups
