@@ -7,7 +7,7 @@
 
 
 extern PLtsql_execstate *get_outermost_tsql_estate(int *nestlevel);
-const char *strip_select_from_expr(PLtsql_expr * expr);
+extern const char *strip_select_from_expr(PLtsql_expr * expr);
 
 bool pltsql_explain_only = false;
 bool pltsql_explain_analyze = false;
