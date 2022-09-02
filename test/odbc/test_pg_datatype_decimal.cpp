@@ -35,6 +35,11 @@ const string MAX_DEC_38_38 = "0.99999999999999999999999999999999999999";
 const string MAX_DEC_38_0 = "99999999999999999999999999999999999999";
 const string MAX_DEC_4_2 = "99.99";
 
+// const string MIN_DEC_5_5 = "0.00000";
+// const string MIN_DEC_38_38 = "0.00000000000000000000000000000000000000";
+// const string MIN_DEC_38_0 = "0";
+// const string MIN_DEC_4_2 = "0.00";
+
 class PSQL_DataTypes_Decimal : public testing::Test{
 
   void SetUp() override {
@@ -63,6 +68,55 @@ int GetExpectedLengthFromPrecision(const int &precision) {
   return 17;
 }
 
+// pads 0 at the end of the results depending on the scale number
+// TODO: Format
+string FormatDecWithScale(string decimal, const int &scale) {
+
+  size_t dec_pos = decimal.find('.');
+
+  if (dec_pos == std::string::npos) {
+    if (scale == 0) {
+      return decimal;
+    }
+
+    dec_pos = decimal.size();
+    decimal += ".";
+  }
+
+  int zeros_needed = scale - (decimal.size() - dec_pos - 1);
+
+  for (int i = 0; i < zeros_needed; i++) {
+    decimal += "0";
+  }
+
+  return decimal;
+
+}
+
+// helper function to initialize insert string (1, "", "", ""), etc.
+string InitializeInsertString(const vector<vector<string>> &inserted_values) {
+
+  string insert_string{};
+  string comma{};
+
+  for (int i = 0; i< inserted_values.size(); ++i) {
+
+    insert_string += comma + "(";
+    string comma2{};
+
+    for (int j = 0; j < NUM_COLS; j++) {
+      if (inserted_values[i][j] != "NULL")
+        insert_string += comma2 + "'" + inserted_values[i][j] + "'";
+      else
+        insert_string += comma2 + inserted_values[i][j];
+      comma2 = ",";
+    }
+
+    insert_string += ")";
+    comma = ",";
+  }
+  return insert_string;
+}
 
 TEST_F(PSQL_DataTypes_Decimal, ColAttributes) {
 
@@ -158,7 +212,6 @@ TEST_F(PSQL_DataTypes_Decimal, ColAttributes) {
 
   rcode = SQLFetch(odbcHandler.GetStatementHandle());
   ASSERT_EQ(rcode, SQL_NO_DATA);
-
 }
 
 TEST_F(PSQL_DataTypes_Decimal, Insertion_Success) {
@@ -187,25 +240,7 @@ TEST_F(PSQL_DataTypes_Decimal, Insertion_Success) {
     bind_columns.push_back(tuple_to_insert);
   }
 
-  string insert_string{}; 
-  string comma{};
-  
-  for (int i = 0; i< inserted_values.size(); ++i) {
-
-    insert_string += comma + "(";
-
-    string comma2{};
-    for (int j = 0; j < NUM_COLS; j++) {
-      if (inserted_values[i][j] != "NULL")
-        insert_string += comma2 + "'" + inserted_values[i][j] + "'";
-      else
-        insert_string += comma2 + inserted_values[i][j];
-      comma2 = ",";
-    }
-
-    insert_string += ")";
-    comma = ",";
-  }
+  string insert_string = InitializeInsertString(inserted_values);
 
   // Create table
   odbcHandler.ConnectAndExecQuery(CreateTableStatement(TABLE_NAME, TABLE_COLUMNS));
@@ -232,15 +267,13 @@ TEST_F(PSQL_DataTypes_Decimal, Insertion_Success) {
     ASSERT_EQ(rcode, SQL_SUCCESS);
 
     for (int j = 0; j < NUM_COLS; j++) {
-      
-      if (inserted_values[i][j] != "NULL") {
 
-        ASSERT_EQ(string(col_results[j]), inserted_values[i][j]);
-        ASSERT_EQ(col_len[j], inserted_values[i][j].size());
+      if (inserted_values[i][j] != "NULL") {
+        ASSERT_EQ(string(col_results[j]), FormatDecWithScale(inserted_values[i][j], COL_SCALE[j]));
+        // ASSERT_EQ(col_len[j], inserted_values[i][j].size()); TO DO: Figure out how many bytes for decimal
       } 
-      else {
+      else 
         ASSERT_EQ(col_len[j], SQL_NULL_DATA);
-      }
     }
   }
 
@@ -255,9 +288,6 @@ TEST_F(PSQL_DataTypes_Decimal, Insertion_Success) {
 // TEST_F(PSQL_DataTypes_Decimal, Insertion_Failure) {
 
 //   const int BUFFER_LENGTH = 8192;
-  
-//   long long int pk;
-//   long long int data;
 
 //   char col_results[NUM_COLS][BUFFER_LENGTH];
 //   SQLLEN col_len[NUM_COLS];
@@ -281,6 +311,7 @@ TEST_F(PSQL_DataTypes_Decimal, Insertion_Success) {
 //     string insert_string = "(";
 //     string comma{};
 
+//     // create insert_string (1, ..., ..., ...)
 //     for (int j = 0; j < NUM_COLS; j++) {
 //       insert_string += comma + "'" + inserted_values[i][j] + "'";
 //       comma = ",";
@@ -332,25 +363,8 @@ TEST_F(PSQL_DataTypes_Decimal, Insertion_Success) {
 //     bind_columns.push_back(tuple_to_insert);
 //   }
 
-//   string insert_string{}; 
-//   string comma{};
-  
-//   for (int i = 0; i< inserted_values.size(); ++i) {
+//   string insert_string = InitializeInsertString(inserted_values);
 
-//     insert_string += comma + "(";
-//     string comma2{};
-
-//     for (int j = 0; j < NUM_COLS; j++) {
-//       if (inserted_values[i][j] != "NULL")
-//         insert_string += comma2 + "'" + inserted_values[i][j] + "'";
-//       else
-//         insert_string += comma2 + inserted_values[i][j];
-//       comma2 = ",";
-//     }
-
-//     insert_string += ")";
-//     comma = ",";
-//   }
 
 //   // Create table
 //   odbcHandler.ConnectAndExecQuery(CreateTableStatement(TABLE_NAME, TABLE_COLUMNS));
@@ -448,26 +462,7 @@ TEST_F(PSQL_DataTypes_Decimal, Insertion_Success) {
 //     bind_columns.push_back(tuple_to_insert);
 //   }
 
-//   string insert_string{}; 
-//   string comma{};
-  
-//   // initialize insert string
-//   for (int i = 0; i< inserted_values.size(); ++i) {
-
-//     insert_string += comma + "(";
-//     string comma2{};
-
-//     for (int j = 0; j < NUM_COLS; j++) {
-//       if (inserted_values[i][j] != "NULL")
-//         insert_string += comma2 + "'" + inserted_values[i][j] + "'";
-//       else
-//         insert_string += comma2 + inserted_values[i][j];
-//       comma2 = ",";
-//     }
-
-//     insert_string += ")";
-//     comma = ",";
-//   }
+//   string insert_string = InitializeInsertString(inserted_values);
 
 //   // Create table
 //   odbcHandler.ConnectAndExecQuery(CreateTableStatement(TABLE_NAME, TABLE_COLUMNS));
@@ -563,25 +558,7 @@ TEST_F(PSQL_DataTypes_Decimal, Insertion_Success) {
 //     bind_columns.push_back(tuple_to_insert);
 //   }
 
-//   string insert_string{}; 
-//   string comma{};
-  
-//   for (int i = 0; i< inserted_values.size(); ++i) {
-
-//     insert_string += comma + "(";
-
-//     string comma2{};
-//     for (int j = 0; j < NUM_COLS; j++) {
-//       if (inserted_values[i][j] != "NULL")
-//         insert_string += comma2 + "'" + inserted_values[i][j] + "'";
-//       else
-//         insert_string += comma2 + inserted_values[i][j];
-//       comma2 = ",";
-//     }
-
-//     insert_string += ")";
-//     comma = ",";
-//   }
+//   string insert_string = InitializeInsertString(inserted_values);
 
 //   // Create table
 //   odbcHandler.ConnectAndExecQuery(CreateTableStatement(TABLE_NAME, TABLE_COLUMNS));
