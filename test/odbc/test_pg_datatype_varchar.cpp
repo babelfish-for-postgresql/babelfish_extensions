@@ -160,7 +160,7 @@ TEST_F(PSQL_DataTypes_Varchar, ColAttributes) {
   odbcHandler.CloseStmt();
 
   // Select * From Table to ensure that it exists
-  odbcHandler.ExecQuery(SelectStatement(TABLE_NAME, {"*"}, vector<string> {"pk"}));
+  odbcHandler.ExecQuery(SelectStatement(TABLE_NAME, {"*"}, vector<string> {COL_NAMES[0]}));
 
   for (int i = 1; i <= NUM_COLS; i++) {
 
