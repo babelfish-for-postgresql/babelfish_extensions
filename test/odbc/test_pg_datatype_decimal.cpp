@@ -104,11 +104,10 @@ TEST_F(PSQL_DataTypes_Decimal, ColAttributes) {
   
   const int BUFFER_SIZE = 256;
   char name[BUFFER_SIZE];
-  char display_size[BUFFER_SIZE];
   SQLLEN length;
   SQLLEN precision;
   SQLLEN scale;
-  SQLLEN is_case_sensitive;
+  SQLLEN display_size;
 
   RETCODE rcode;
   OdbcHandler odbcHandler;
@@ -138,9 +137,9 @@ TEST_F(PSQL_DataTypes_Decimal, ColAttributes) {
                             NULL,
                             0,
                             NULL,
-                            (SQLLEN*) &length);
+                            (SQLLEN*) &display_size);
     ASSERT_EQ(rcode, SQL_SUCCESS);
-    ASSERT_EQ(length, COL_PRECISION[i-1] + 2); // add 2 since we also add the decimal and negative characters
+    ASSERT_EQ(display_size, COL_PRECISION[i-1] + 2); // add 2 since we also add the decimal and negative characters
     
     rcode = SQLColAttribute(odbcHandler.GetStatementHandle(),
                             i,
@@ -171,16 +170,6 @@ TEST_F(PSQL_DataTypes_Decimal, ColAttributes) {
                             NULL);
     ASSERT_EQ(rcode, SQL_SUCCESS);
     ASSERT_EQ(string(name), NAME_EXPECTED);
-
-    rcode = SQLColAttribute(odbcHandler.GetStatementHandle(),
-                            i,
-                            SQL_DESC_CASE_SENSITIVE, // Get the case sensitivity of the column
-                            NULL,
-                            0,
-                            NULL,
-                            (SQLLEN*) &is_case_sensitive); 
-    ASSERT_EQ(rcode, SQL_SUCCESS);
-    ASSERT_EQ(is_case_sensitive, SQL_FALSE);
 
   }
 
@@ -508,31 +497,34 @@ TEST_F(PSQL_DataTypes_Decimal, Update_Fail) {
   ASSERT_EQ(rcode, SQL_NO_DATA);
   odbcHandler.CloseStmt();
 
-  vector<pair<string,string>> update_col;
 
-  // setup update column
-  for (int j = 0; j <NUM_COLS; j++) {
-    update_col.push_back(pair<string,string>(COL_NAMES[j], updated_values[0][j]));
-  }
+  for (int i = 0; i < inserted_values.size(); i++) 
+  {
+    vector<pair<string,string>> update_col;
 
-  // Update value and assert an error is present
-  rcode = SQLExecDirect(odbcHandler.GetStatementHandle(),
-                        (SQLCHAR*) UpdateTableStatement(TABLE_NAME, update_col, COL_NAMES[0] + "='" + PK_VAL + "'").c_str(), 
-                        SQL_NTS);
+    // setup update column
+    for (int j = 0; j <NUM_COLS; j++) {
+      update_col.push_back(pair<string,string>(COL_NAMES[j], updated_values[i][j]));
+    }
 
-  ASSERT_EQ(rcode, SQL_ERROR);
+    // Update value and assert an error is present
+    rcode = SQLExecDirect(odbcHandler.GetStatementHandle(),
+                          (SQLCHAR*) UpdateTableStatement(TABLE_NAME, update_col, COL_NAMES[0] + "='" + PK_VAL + "'").c_str(), 
+                          SQL_NTS);
+    ASSERT_EQ(rcode, SQL_ERROR);
 
-  odbcHandler.CloseStmt();
+    odbcHandler.CloseStmt();
 
-  odbcHandler.ExecQuery(SelectStatement(TABLE_NAME, {"*"}, vector<string> {COL_NAMES[0]}));
-  rcode = SQLFetch(odbcHandler.GetStatementHandle());
-  ASSERT_EQ(rcode, SQL_SUCCESS);
+    odbcHandler.ExecQuery(SelectStatement(TABLE_NAME, {"*"}, vector<string> {COL_NAMES[0]}));
+    rcode = SQLFetch(odbcHandler.GetStatementHandle());
+    ASSERT_EQ(rcode, SQL_SUCCESS);
 
-  // Assert that the results did not change
-  for (int i = 0; i < NUM_COLS; i++) {
-    string expected = FormatDecWithScale(inserted_values[0][i], COL_SCALE[i]);
-    ASSERT_EQ(string(col_results[i]), expected);
-    ASSERT_EQ(col_len[i], expected.size());;
+    // Assert that the results did not change
+    for (int j = 0; j < NUM_COLS; j++) {
+      string expected = FormatDecWithScale(inserted_values[i][j], COL_SCALE[j]);
+      ASSERT_EQ(string(col_results[j]), expected);
+      ASSERT_EQ(col_len[j], expected.size());;
+    }
   }
 
   rcode = SQLFetch(odbcHandler.GetStatementHandle());
