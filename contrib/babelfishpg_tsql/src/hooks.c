@@ -66,9 +66,13 @@ extern bool is_tsql_rowversion_or_timestamp_datatype(Oid oid);
  *****************************************/
 IsExtendedCatalogHookType PrevIsExtendedCatalogHook = NULL;
 static bool PlTsqlMatchNamedCall(HeapTuple proctup, int nargs, List *argnames,
-							   bool include_out_arguments, int pronargs,
-							   int **argnumbers, List **defaults);
-static bool PlTsqlMatchUnNamedCall(HeapTuple proctup, int nargs, int pronargs);
+							     bool include_out_arguments, int pronargs,
+							     int **argnumbers, List **defaults);
+static bool match_pltsql_func_call(HeapTuple proctup, int nargs, List *argnames,
+								   bool include_out_arguments, int **argnumbers,
+								   List **defaults, bool expand_defaults, bool expand_variadic,
+								   bool *use_defaults, bool *any_special,
+								   bool *variadic, Oid *va_elem_type);
 
 /*****************************************
  * 			Analyzer Hooks
@@ -91,7 +95,6 @@ static void modify_insert_stmt(InsertStmt *stmt, Oid relid);
  * 			Commands Hooks
  *****************************************/
 static int find_attr_by_name_from_column_def_list(const char *attributeName, List *schema);
-static void pltsql_store_func_default_positions(ObjectAddress address, List *parameters);
 static void pltsql_drop_func_default_positions(Oid objectId);
 
 /*****************************************
@@ -104,7 +107,7 @@ static void pltsql_drop_view_definition(Oid objectId);
 static void preserve_view_constraints_from_base_table(ColumnDef  *col, Oid tableOid, AttrNumber colId);
 static bool pltsql_detect_numeric_overflow(int weight, int dscale, int first_block, int numeric_base);
 static void insert_pltsql_function_defaults(HeapTuple func_tuple, List *defaults, Node **argarray);
-static int print_pltsql_function_arguments(StringInfo buf, HeapTuple proctup, bool print_table_args);
+static int print_pltsql_function_arguments(StringInfo buf, HeapTuple proctup, bool print_table_args, bool print_defaults);
 /*****************************************
  * 			Executor Hooks
  *****************************************/
@@ -148,9 +151,7 @@ static ExecutorFinish_hook_type prev_ExecutorFinish = NULL;
 static ExecutorEnd_hook_type prev_ExecutorEnd = NULL;
 static inherit_view_constraints_from_table_hook_type prev_inherit_view_constraints_from_table = NULL;
 static detect_numeric_overflow_hook_type prev_detect_numeric_overflow_hook = NULL;
-static store_func_default_positions_hook_type prev_store_func_default_positions_hook = NULL;
-static MatchNamedCallHookType PrevMatchNamedCallHook = NULL;
-static MatchUnNamedCallHookType PrevMatchUnNamedCallHook = NULL;
+static match_pltsql_func_call_hook_type prev_match_pltsql_func_call_hook = NULL;
 static insert_pltsql_function_defaults_hook_type prev_insert_pltsql_function_defaults_hook = NULL;
 static print_pltsql_function_arguments_hook_type prev_print_pltsql_function_arguments_hook = NULL;
 /*****************************************
@@ -231,14 +232,8 @@ InstallExtendedHooks(void)
 	prev_detect_numeric_overflow_hook = detect_numeric_overflow_hook;
 	detect_numeric_overflow_hook = pltsql_detect_numeric_overflow;
 
-	prev_store_func_default_positions_hook = store_func_default_positions_hook;
-	store_func_default_positions_hook = pltsql_store_func_default_positions;
-
-	PrevMatchNamedCallHook = MatchNamedCallHook;
-	MatchNamedCallHook = PlTsqlMatchNamedCall;
-
-	PrevMatchUnNamedCallHook = MatchUnNamedCallHook;
-	MatchUnNamedCallHook = PlTsqlMatchUnNamedCall;
+	prev_match_pltsql_func_call_hook = match_pltsql_func_call_hook;
+	match_pltsql_func_call_hook = match_pltsql_func_call;
 
 	prev_insert_pltsql_function_defaults_hook = insert_pltsql_function_defaults_hook;
 	insert_pltsql_function_defaults_hook = insert_pltsql_function_defaults;
@@ -277,9 +272,7 @@ UninstallExtendedHooks(void)
 	ExecutorEnd_hook = prev_ExecutorEnd;
 	inherit_view_constraints_from_table_hook = prev_inherit_view_constraints_from_table;
 	detect_numeric_overflow_hook = prev_detect_numeric_overflow_hook;
-	store_func_default_positions_hook = prev_store_func_default_positions_hook;
-	MatchNamedCallHook = PrevMatchNamedCallHook;
-	MatchUnNamedCallHook = PrevMatchUnNamedCallHook;
+	match_pltsql_func_call_hook = prev_match_pltsql_func_call_hook;
 	insert_pltsql_function_defaults_hook = prev_insert_pltsql_function_defaults_hook;
 	print_pltsql_function_arguments_hook = prev_print_pltsql_function_arguments_hook;
 }
@@ -1890,7 +1883,7 @@ pltsql_detect_numeric_overflow(int weight, int dscale, int first_block, int nume
 /*
  * Stores argument positions of default values of a PL/tsql function to bbf_function_ext catalog
  */
-static void
+void
 pltsql_store_func_default_positions(ObjectAddress address, List *parameters)
 {
 	Relation	bbf_function_ext_rel;
@@ -2043,6 +2036,150 @@ pltsql_drop_func_default_positions(Oid objectId)
 	}
 
 	ReleaseSysCache(proctuple);
+}
+
+static bool
+match_pltsql_func_call(HeapTuple proctup, int nargs, List *argnames,
+					   bool include_out_arguments, int **argnumbers,
+					   List **defaults, bool expand_defaults, bool expand_variadic,
+					   bool *use_defaults, bool *any_special,
+					   bool *variadic, Oid *va_elem_type)
+{
+	Form_pg_proc procform = (Form_pg_proc) GETSTRUCT(proctup);
+	int			pronargs = procform->pronargs;
+
+	if (argnames != NIL)
+	{
+		/*
+		 * Call uses named or mixed notation
+		 *
+		 * Named or mixed notation can match a variadic function only if
+		 * expand_variadic is off; otherwise there is no way to match the
+		 * presumed-nameless parameters expanded from the variadic array.
+		 */
+		if (OidIsValid(procform->provariadic) && expand_variadic)
+			return false;
+		*va_elem_type = InvalidOid;
+		*variadic = false;
+
+		/*
+		 * Check argument count.
+		 */
+		Assert(nargs >= 0); /* -1 not supported with argnames */
+
+		if (pronargs > nargs && expand_defaults)
+		{
+			/* Ignore if not enough default expressions */
+			if (nargs + procform->pronargdefaults < pronargs)
+				return false;
+			*use_defaults = true;
+		}
+		else
+			*use_defaults = false;
+
+		/* Ignore if it doesn't match requested argument count */
+		if (pronargs != nargs && !(*use_defaults))
+			return false;
+
+		if (!PlTsqlMatchNamedCall(proctup, nargs, argnames,
+								  include_out_arguments, pronargs,
+								  argnumbers, defaults))
+			return false;
+
+		/* Named argument matching is always "special" */
+		*any_special = true;
+	}
+	else
+	{
+		/*
+		 * Call uses positional notation
+		 *
+		 * Check if function is variadic, and get variadic element type if
+		 * so.  If expand_variadic is false, we should just ignore
+		 * variadic-ness.
+		 */
+		if (pronargs <= nargs && expand_variadic)
+		{
+			*va_elem_type = procform->provariadic;
+			*variadic = OidIsValid(*va_elem_type);
+			*any_special |= *variadic;
+		}
+		else
+		{
+			*va_elem_type = InvalidOid;
+			*variadic = false;
+		}
+
+		/*
+		 * Check if function can match by using parameter defaults.
+		 */
+		if (pronargs > nargs && expand_defaults)
+		{
+			/* Ignore if not enough default expressions */
+			if (nargs + procform->pronargdefaults < pronargs)
+				return false;
+			*use_defaults = true;
+			*any_special = true;
+		}
+		else
+			*use_defaults = false;
+
+		/* Ignore if it doesn't match requested argument count */
+		if (nargs >= 0 && pronargs != nargs && !(*variadic) && !(*use_defaults))
+			return false;
+
+		/*
+		 * If call uses all positional arguments, then validate if all
+		 * the remaining arguments have defaults.
+		 */
+		if (*use_defaults)
+		{
+			HeapTuple	bbffunctuple = get_bbf_function_tuple_from_proctuple(proctup);
+
+			if (HeapTupleIsValid(bbffunctuple))
+			{
+				Datum	 arg_default_positions;
+				bool	 isnull;
+
+				/* Fetch default positions */
+				arg_default_positions = SysCacheGetAttr(PROCNSPSIGNATURE,
+														bbffunctuple,
+														Anum_bbf_function_ext_default_positions,
+														&isnull);
+
+				if (!isnull)
+				{
+					char	 *str;
+					List	 *default_positions = NIL;
+					ListCell *def_idx = NULL;
+					int		 idx = nargs;
+
+					str = TextDatumGetCString(arg_default_positions);
+					default_positions = castNode(List, stringToNode(str));
+					pfree(str);
+
+					foreach(def_idx, default_positions)
+					{
+						int position = intVal((Node *) lfirst(def_idx));
+
+						if (position == idx)
+							idx++;
+					}
+
+					/* we could not find defaults for some arguments. */
+					if (idx < pronargs)
+					{
+						ReleaseSysCache(bbffunctuple);
+						return false;
+					}
+				}
+
+				ReleaseSysCache(bbffunctuple);
+			}
+		}
+	}
+
+	return true;
 }
 
 /*
@@ -2270,72 +2407,6 @@ PlTsqlMatchNamedCall(HeapTuple proctup, int nargs, List *argnames,
 }
 
 /*
- * PlTsqlMatchUnNamedCall
- *		Given a pg_proc heap tuple of a PL/tsql function and number of
- *		positional arguments supplied, check whether the function could
- *		match the call.
- *
- * The call could match if all the remaining arguments after given
- * positional arguments have defaults.
- *
- * We will look for defaults only if the given PL/tsql function has entry
- * in babelfish_function_ext catalog.
- *
- * Return true if there is a match or function has no entry in babelfish_function_ext
- * catalog, false otherwise.
- */
-static bool
-PlTsqlMatchUnNamedCall(HeapTuple proctup, int nargs, int pronargs)
-{
-	HeapTuple	bbffunctuple;
-
-	bbffunctuple = get_bbf_function_tuple_from_proctuple(proctup);
-
-	if (HeapTupleIsValid(bbffunctuple))
-	{
-		Datum	 arg_default_positions;
-		bool	 isnull;
-
-		/* Fetch default positions */
-		arg_default_positions = SysCacheGetAttr(PROCNSPSIGNATURE,
-												bbffunctuple,
-												Anum_bbf_function_ext_default_positions,
-												&isnull);
-
-		if (!isnull)
-		{
-			char	 *str;
-			List	 *default_positions = NIL;
-			ListCell *def_idx = NULL;
-			int		 idx = nargs;
-
-			str = TextDatumGetCString(arg_default_positions);
-			default_positions = castNode(List, stringToNode(str));
-			pfree(str);
-
-			foreach(def_idx, default_positions)
-			{
-				int position = intVal((Node *) lfirst(def_idx));
-
-				if (position == idx)
-					idx++;
-			}
-
-			/* we could not find defaults for some arguments. */
-			if (idx < pronargs)
-			{
-				ReleaseSysCache(bbffunctuple);
-				return false;
-			}
-		}
-
-		ReleaseSysCache(bbffunctuple);
-	}
-
-	return true;
-}
-
-/*
  * insert_pltsql_function_defaults
  *		Given a pg_proc heap tuple of a PL/tsql function and list of defaults,
  *		fill missing arguments in *argarray with default expressions.
@@ -2407,7 +2478,8 @@ insert_pltsql_function_defaults(HeapTuple func_tuple, List *defaults, Node **arg
  * them to print default arguments.
  */
 static int
-print_pltsql_function_arguments(StringInfo buf, HeapTuple proctup, bool print_table_args)
+print_pltsql_function_arguments(StringInfo buf, HeapTuple proctup,
+								bool print_table_args, bool print_defaults)
 {
 	Form_pg_proc proc = (Form_pg_proc) GETSTRUCT(proctup);
 	HeapTuple	bbffunctuple;
@@ -2420,7 +2492,6 @@ print_pltsql_function_arguments(StringInfo buf, HeapTuple proctup, bool print_ta
 	int			inputargno;
 	bool		isnull;
 	bool		default_positions_available = false;
-	Datum		proargdefaults;
 	int			nlackdefaults;
 	List	   *argdefaults = NIL;
 	List	   *defaultpositions = NIL;
@@ -2432,19 +2503,24 @@ print_pltsql_function_arguments(StringInfo buf, HeapTuple proctup, bool print_ta
 								&argtypes, &argnames, &argmodes);
 
 	nlackdefaults = numargs;
-	proargdefaults = SysCacheGetAttr(PROCOID, proctup,
-									 Anum_pg_proc_proargdefaults,
-									 &isnull);
-	if (!isnull)
+	if (print_defaults && proc->pronargdefaults > 0)
 	{
-		char	   *str;
+		Datum		proargdefaults;
 
-		str = TextDatumGetCString(proargdefaults);
-		argdefaults = castNode(List, stringToNode(str));
-		pfree(str);
-		nextargdefault = list_head(argdefaults);
-		/* nlackdefaults counts only *input* arguments lacking defaults */
-		nlackdefaults = proc->pronargs - list_length(argdefaults);
+		proargdefaults = SysCacheGetAttr(PROCOID, proctup,
+										 Anum_pg_proc_proargdefaults,
+										 &isnull);
+		if (!isnull)
+		{
+			char	   *str;
+
+			str = TextDatumGetCString(proargdefaults);
+			argdefaults = castNode(List, stringToNode(str));
+			pfree(str);
+			nextargdefault = list_head(argdefaults);
+			/* nlackdefaults counts only *input* arguments lacking defaults */
+			nlackdefaults = proc->pronargs - list_length(argdefaults);
+		}
 	}
 
 	bbffunctuple = get_bbf_function_tuple_from_proctuple(proctup);
@@ -2553,7 +2629,7 @@ print_pltsql_function_arguments(StringInfo buf, HeapTuple proctup, bool print_ta
 		if (argname && argname[0])
 			appendStringInfo(buf, "%s ", quote_identifier(argname));
 		appendStringInfoString(buf, format_type_be(argtype));
-		if (isinput && default_positions_available)
+		if (print_defaults && isinput && default_positions_available)
 		{
 			if (nextdefaultposition != NULL)
 			{
@@ -2572,7 +2648,7 @@ print_pltsql_function_arguments(StringInfo buf, HeapTuple proctup, bool print_ta
 				}
 			}
 		}
-		else if (isinput && inputargno > nlackdefaults)
+		else if (print_defaults && isinput && inputargno > nlackdefaults)
 		{
 			Node	   *expr;
 
@@ -2589,6 +2665,8 @@ print_pltsql_function_arguments(StringInfo buf, HeapTuple proctup, bool print_ta
 		if (argsprinted == insertorderbyat && i == numargs - 1)
 		{
 			i--;
+			/* aggs shouldn't have defaults anyway, but just to be sure ... */
+			print_defaults = false;
 		}
 	}
 
