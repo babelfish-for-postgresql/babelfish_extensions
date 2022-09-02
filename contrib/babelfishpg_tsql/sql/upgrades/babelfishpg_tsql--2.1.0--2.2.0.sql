@@ -4,7 +4,6 @@
 -- add 'sys' to search path for the convenience
 SELECT set_config('search_path', 'sys, '||current_setting('search_path'), false);
 
-/* --temp disabling until we create 2.2.0--2.3.0
 -- SERVER_PRINCIPALS
 CREATE OR REPLACE VIEW sys.server_principals
 AS SELECT
@@ -24,7 +23,6 @@ AS SELECT
   CAST(CASE WHEN Ext.type = 'R' THEN 1 ELSE Ext.owning_principal_id END AS INT) AS owning_principal_id,
   CAST(CASE WHEN Ext.type = 'R' THEN 1 ELSE Ext.is_fixed_role END AS sys.BIT) AS is_fixed_role
 FROM pg_catalog.pg_authid AS Base INNER JOIN sys.babelfish_authid_login_ext AS Ext ON Base.rolname = Ext.rolname;
-*/
 
 -- Drops a view if it does not have any dependent objects.
 -- Is a temporary procedure for use by the upgrade script. Will be dropped at the end of the upgrade.
@@ -125,7 +123,6 @@ RETURNS text
 AS 'babelfishpg_tsql', 'tsql_get_constraintdef'
 LANGUAGE C IMMUTABLE PARALLEL SAFE;
 
-/* --temp disabling until we create 2.2.0--2.3.0
 CREATE OR REPLACE VIEW information_schema_tsql.check_constraints AS
     SELECT CAST(nc.dbname AS sys.nvarchar(128)) AS "CONSTRAINT_CATALOG",
 	    CAST(extc.orig_name AS sys.nvarchar(128)) AS "CONSTRAINT_SCHEMA",
@@ -147,11 +144,9 @@ CREATE OR REPLACE VIEW information_schema_tsql.check_constraints AS
 		  AND  extc.dbid = cast(sys.db_id() as oid);
 
 GRANT SELECT ON information_schema_tsql.check_constraints TO PUBLIC;
-*/
 
 ALTER VIEW sys.foreign_keys RENAME TO foreign_keys_deprecated_in_2_2_0;
 
-/* --temp disabling until we create 2.2.0--2.3.0
 CREATE OR REPLACE VIEW information_schema_tsql.COLUMN_DOMAIN_USAGE AS
     SELECT isc_col."DOMAIN_CATALOG",
            isc_col."DOMAIN_SCHEMA" ,
@@ -258,11 +253,9 @@ and has_function_privilege(p.oid, 'EXECUTE')
 and p.prokind = 'f'
 and format_type(p.prorettype, null) = 'trigger';
 GRANT SELECT ON sys.triggers TO PUBLIC;
-*/
 
 ALTER VIEW sys.key_constraints RENAME TO key_constraints_deprecated_in_2_2_0;
 
-/* --temp disabling until we create 2.2.0--2.3.0
 CREATE OR replace view sys.key_constraints AS
 SELECT
     CAST(c.conname AS SYSNAME) AS name
@@ -294,11 +287,9 @@ INNER JOIN sys.schemas sch ON sch.schema_id = c.connamespace
 WHERE has_schema_privilege(sch.schema_id, 'USAGE')
 AND c.contype IN ('p', 'u');
 GRANT SELECT ON sys.key_constraints TO PUBLIC;
-*/
 
 ALTER VIEW sys.procedures RENAME TO procedures_deprecated_in_2_2_0;
 
-/* --temp disabling until we create 2.2.0--2.3.0
 create or replace view sys.procedures as
 select
   cast(p.proname as sys.sysname) as name
@@ -499,11 +490,10 @@ select
   , CAST(0 as sys.bit) as is_schema_published
 from sys.table_types tt;
 GRANT SELECT ON sys.objects TO PUBLIC;
-*/
 
--- CALL sys.babelfish_drop_deprecated_view('sys', 'key_constraints_deprecated_in_2_2_0');
--- CALL sys.babelfish_drop_deprecated_view('sys', 'foreign_keys_deprecated_in_2_2_0');
--- CALL sys.babelfish_drop_deprecated_view('sys', 'procedures_deprecated_in_2_2_0');
+CALL sys.babelfish_drop_deprecated_view('sys', 'key_constraints_deprecated_in_2_2_0');
+CALL sys.babelfish_drop_deprecated_view('sys', 'foreign_keys_deprecated_in_2_2_0');
+CALL sys.babelfish_drop_deprecated_view('sys', 'procedures_deprecated_in_2_2_0');
 
 ALTER FUNCTION OBJECTPROPERTY(INT, SYS.VARCHAR) RENAME TO objectproperty_deprecated_in_2_2_0;
 
@@ -658,7 +648,6 @@ SELECT pg_catalog.pg_extension_config_dump('sys.babelfish_view_def', '');
  * VIEWS view
  */
 
-/* --temp disabling until we create 2.2.0--2.3.0
 CREATE OR REPLACE VIEW information_schema_tsql.views AS
 	SELECT CAST(nc.dbname AS sys.nvarchar(128)) AS "TABLE_CATALOG",
 			CAST(ext.orig_name AS sys.nvarchar(128)) AS  "TABLE_SCHEMA",
@@ -811,7 +800,6 @@ SELECT
   CAST('' as NVARCHAR(60)) AS non_transacted_access_desc
 WHERE FALSE;
 GRANT SELECT ON sys.database_filestream_options TO PUBLIC;
-*/
 
 CREATE OR REPLACE FUNCTION sys.sid_binary(IN login sys.nvarchar)
 RETURNS SYS.VARBINARY
@@ -885,113 +873,113 @@ $$SELECT
            ELSE null
   END$$;	
 
--- CREATE OR REPLACE VIEW information_schema_tsql.routines AS
---     SELECT CAST(nc.dbname AS sys.nvarchar(128)) AS "SPECIFIC_CATALOG",
---            CAST(ext.orig_name AS sys.nvarchar(128)) AS "SPECIFIC_SCHEMA",
---            CAST(p.proname AS sys.nvarchar(128)) AS "SPECIFIC_NAME",
---            CAST(nc.dbname AS sys.nvarchar(128)) AS "ROUTINE_CATALOG",
---            CAST(ext.orig_name AS sys.nvarchar(128)) AS "ROUTINE_SCHEMA",
---            CAST(p.proname AS sys.nvarchar(128)) AS "ROUTINE_NAME",
---            CAST(CASE p.prokind WHEN 'f' THEN 'FUNCTION' WHEN 'p' THEN 'PROCEDURE' END
---            	 AS sys.nvarchar(20)) AS "ROUTINE_TYPE",
---            CAST(NULL AS sys.nvarchar(128)) AS "MODULE_CATALOG",
---            CAST(NULL AS sys.nvarchar(128)) AS "MODULE_SCHEMA",
---            CAST(NULL AS sys.nvarchar(128)) AS "MODULE_NAME",
---            CAST(NULL AS sys.nvarchar(128)) AS "UDT_CATALOG",
---            CAST(NULL AS sys.nvarchar(128)) AS "UDT_SCHEMA",
---            CAST(NULL AS sys.nvarchar(128)) AS "UDT_NAME",
---            CAST(case when is_tbl_type THEN 'table' when p.prokind = 'p' THEN NULL ELSE tsql_type_name END AS sys.nvarchar(128)) AS "DATA_TYPE",
---            CAST(information_schema_tsql._pgtsql_char_max_length_for_routines(tsql_type_name, true_typmod)
---                  AS int)
---            AS "CHARACTER_MAXIMUM_LENGTH",
---            CAST(information_schema_tsql._pgtsql_char_octet_length_for_routines(tsql_type_name, true_typmod)
---                  AS int)
---            AS "CHARACTER_OCTET_LENGTH",
---            CAST(NULL AS sys.nvarchar(128)) AS "COLLATION_CATALOG",
---            CAST(NULL AS sys.nvarchar(128)) AS "COLLATION_SCHEMA",
---            CAST(
---                  CASE co.collname
---                        WHEN 'default' THEN current_setting('babelfishpg_tsql.server_collation_name')
---                        ELSE co.collname
---                  END
---             AS sys.nvarchar(128)) AS "COLLATION_NAME",
---             CAST(NULL AS sys.nvarchar(128)) AS "CHARACTER_SET_CATALOG",
---             CAST(NULL AS sys.nvarchar(128)) AS "CHARACTER_SET_SCHEMA",
--- 	    /*
---                  * TODO: We need to first create mapping of collation name to char-set name;
---                  * Until then return null.
---             */
--- 	    CAST(case when tsql_type_name IN ('nchar','nvarchar') THEN 'UNICODE' when tsql_type_name IN ('char','varchar') THEN 'iso_1' ELSE NULL END AS sys.nvarchar(128)) AS "CHARACTER_SET_NAME",
---             CAST(information_schema_tsql._pgtsql_numeric_precision(tsql_type_name, t.oid, true_typmod)
---                         AS smallint)
---             AS "NUMERIC_PRECISION",
---             CAST(information_schema_tsql._pgtsql_numeric_precision_radix(tsql_type_name, case when t.typtype = 'd' THEN t.typbasetype ELSE t.oid END, true_typmod)
---                         AS smallint)
---             AS "NUMERIC_PRECISION_RADIX",
---             CAST(information_schema_tsql._pgtsql_numeric_scale(tsql_type_name, t.oid, true_typmod)
---                         AS smallint)
---             AS "NUMERIC_SCALE",
---             CAST(information_schema_tsql._pgtsql_datetime_precision(tsql_type_name, true_typmod)
---                         AS smallint)
---             AS "DATETIME_PRECISION",
---             CAST(NULL AS sys.nvarchar(30)) AS "INTERVAL_TYPE",
---             CAST(NULL AS smallint) AS "INTERVAL_PRECISION",
---             CAST(NULL AS sys.nvarchar(128)) AS "TYPE_UDT_CATALOG",
---             CAST(NULL AS sys.nvarchar(128)) AS "TYPE_UDT_SCHEMA",
---             CAST(NULL AS sys.nvarchar(128)) AS "TYPE_UDT_NAME",
---             CAST(NULL AS sys.nvarchar(128)) AS "SCOPE_CATALOG",
---             CAST(NULL AS sys.nvarchar(128)) AS "SCOPE_SCHEMA",
---             CAST(NULL AS sys.nvarchar(128)) AS "SCOPE_NAME",
---             CAST(NULL AS bigint) AS "MAXIMUM_CARDINALITY",
---             CAST(NULL AS sys.nvarchar(128)) AS "DTD_IDENTIFIER",
---             CAST(CASE WHEN l.lanname = 'sql' THEN 'SQL' WHEN l.lanname = 'pltsql' THEN 'SQL' ELSE 'EXTERNAL' END AS sys.nvarchar(30)) AS "ROUTINE_BODY",
---             CAST(sys.tsql_get_functiondef(p.oid) AS sys.nvarchar(4000)) AS "ROUTINE_DEFINITION",
---             CAST(NULL AS sys.nvarchar(128)) AS "EXTERNAL_NAME",
---             CAST(NULL AS sys.nvarchar(30)) AS "EXTERNAL_LANGUAGE",
---             CAST(NULL AS sys.nvarchar(30)) AS "PARAMETER_STYLE",
---             CAST(CASE WHEN p.provolatile = 'i' THEN 'YES' ELSE 'NO' END AS sys.nvarchar(10)) AS "IS_DETERMINISTIC",
--- 	    CAST(CASE p.prokind WHEN 'p' THEN 'MODIFIES' ELSE 'READS' END AS sys.nvarchar(30)) AS "SQL_DATA_ACCESS",
---             CAST(CASE WHEN p.prokind <> 'p' THEN
---               CASE WHEN p.proisstrict THEN 'YES' ELSE 'NO' END END AS sys.nvarchar(10)) AS "IS_NULL_CALL",
---             CAST(NULL AS sys.nvarchar(128)) AS "SQL_PATH",
---             CAST('YES' AS sys.nvarchar(10)) AS "SCHEMA_LEVEL_ROUTINE",
---             CAST(CASE p.prokind WHEN 'f' THEN 0 WHEN 'p' THEN -1 END AS smallint) AS "MAX_DYNAMIC_RESULT_SETS",
---             CAST('NO' AS sys.nvarchar(10)) AS "IS_USER_DEFINED_CAST",
---             CAST('NO' AS sys.nvarchar(10)) AS "IS_IMPLICITLY_INVOCABLE",
---             CAST(NULL AS sys.datetime) AS "CREATED",
---             CAST(NULL AS sys.datetime) AS "LAST_ALTERED"
+CREATE OR REPLACE VIEW information_schema_tsql.routines AS
+    SELECT CAST(nc.dbname AS sys.nvarchar(128)) AS "SPECIFIC_CATALOG",
+           CAST(ext.orig_name AS sys.nvarchar(128)) AS "SPECIFIC_SCHEMA",
+           CAST(p.proname AS sys.nvarchar(128)) AS "SPECIFIC_NAME",
+           CAST(nc.dbname AS sys.nvarchar(128)) AS "ROUTINE_CATALOG",
+           CAST(ext.orig_name AS sys.nvarchar(128)) AS "ROUTINE_SCHEMA",
+           CAST(p.proname AS sys.nvarchar(128)) AS "ROUTINE_NAME",
+           CAST(CASE p.prokind WHEN 'f' THEN 'FUNCTION' WHEN 'p' THEN 'PROCEDURE' END
+           	 AS sys.nvarchar(20)) AS "ROUTINE_TYPE",
+           CAST(NULL AS sys.nvarchar(128)) AS "MODULE_CATALOG",
+           CAST(NULL AS sys.nvarchar(128)) AS "MODULE_SCHEMA",
+           CAST(NULL AS sys.nvarchar(128)) AS "MODULE_NAME",
+           CAST(NULL AS sys.nvarchar(128)) AS "UDT_CATALOG",
+           CAST(NULL AS sys.nvarchar(128)) AS "UDT_SCHEMA",
+           CAST(NULL AS sys.nvarchar(128)) AS "UDT_NAME",
+           CAST(case when is_tbl_type THEN 'table' when p.prokind = 'p' THEN NULL ELSE tsql_type_name END AS sys.nvarchar(128)) AS "DATA_TYPE",
+           CAST(information_schema_tsql._pgtsql_char_max_length_for_routines(tsql_type_name, true_typmod)
+                 AS int)
+           AS "CHARACTER_MAXIMUM_LENGTH",
+           CAST(information_schema_tsql._pgtsql_char_octet_length_for_routines(tsql_type_name, true_typmod)
+                 AS int)
+           AS "CHARACTER_OCTET_LENGTH",
+           CAST(NULL AS sys.nvarchar(128)) AS "COLLATION_CATALOG",
+           CAST(NULL AS sys.nvarchar(128)) AS "COLLATION_SCHEMA",
+           CAST(
+                 CASE co.collname
+                       WHEN 'default' THEN current_setting('babelfishpg_tsql.server_collation_name')
+                       ELSE co.collname
+                 END
+            AS sys.nvarchar(128)) AS "COLLATION_NAME",
+            CAST(NULL AS sys.nvarchar(128)) AS "CHARACTER_SET_CATALOG",
+            CAST(NULL AS sys.nvarchar(128)) AS "CHARACTER_SET_SCHEMA",
+	    /*
+                 * TODO: We need to first create mapping of collation name to char-set name;
+                 * Until then return null.
+            */
+	    CAST(case when tsql_type_name IN ('nchar','nvarchar') THEN 'UNICODE' when tsql_type_name IN ('char','varchar') THEN 'iso_1' ELSE NULL END AS sys.nvarchar(128)) AS "CHARACTER_SET_NAME",
+            CAST(information_schema_tsql._pgtsql_numeric_precision(tsql_type_name, t.oid, true_typmod)
+                        AS smallint)
+            AS "NUMERIC_PRECISION",
+            CAST(information_schema_tsql._pgtsql_numeric_precision_radix(tsql_type_name, case when t.typtype = 'd' THEN t.typbasetype ELSE t.oid END, true_typmod)
+                        AS smallint)
+            AS "NUMERIC_PRECISION_RADIX",
+            CAST(information_schema_tsql._pgtsql_numeric_scale(tsql_type_name, t.oid, true_typmod)
+                        AS smallint)
+            AS "NUMERIC_SCALE",
+            CAST(information_schema_tsql._pgtsql_datetime_precision(tsql_type_name, true_typmod)
+                        AS smallint)
+            AS "DATETIME_PRECISION",
+            CAST(NULL AS sys.nvarchar(30)) AS "INTERVAL_TYPE",
+            CAST(NULL AS smallint) AS "INTERVAL_PRECISION",
+            CAST(NULL AS sys.nvarchar(128)) AS "TYPE_UDT_CATALOG",
+            CAST(NULL AS sys.nvarchar(128)) AS "TYPE_UDT_SCHEMA",
+            CAST(NULL AS sys.nvarchar(128)) AS "TYPE_UDT_NAME",
+            CAST(NULL AS sys.nvarchar(128)) AS "SCOPE_CATALOG",
+            CAST(NULL AS sys.nvarchar(128)) AS "SCOPE_SCHEMA",
+            CAST(NULL AS sys.nvarchar(128)) AS "SCOPE_NAME",
+            CAST(NULL AS bigint) AS "MAXIMUM_CARDINALITY",
+            CAST(NULL AS sys.nvarchar(128)) AS "DTD_IDENTIFIER",
+            CAST(CASE WHEN l.lanname = 'sql' THEN 'SQL' WHEN l.lanname = 'pltsql' THEN 'SQL' ELSE 'EXTERNAL' END AS sys.nvarchar(30)) AS "ROUTINE_BODY",
+            CAST(sys.tsql_get_functiondef(p.oid) AS sys.nvarchar(4000)) AS "ROUTINE_DEFINITION",
+            CAST(NULL AS sys.nvarchar(128)) AS "EXTERNAL_NAME",
+            CAST(NULL AS sys.nvarchar(30)) AS "EXTERNAL_LANGUAGE",
+            CAST(NULL AS sys.nvarchar(30)) AS "PARAMETER_STYLE",
+            CAST(CASE WHEN p.provolatile = 'i' THEN 'YES' ELSE 'NO' END AS sys.nvarchar(10)) AS "IS_DETERMINISTIC",
+	    CAST(CASE p.prokind WHEN 'p' THEN 'MODIFIES' ELSE 'READS' END AS sys.nvarchar(30)) AS "SQL_DATA_ACCESS",
+            CAST(CASE WHEN p.prokind <> 'p' THEN
+              CASE WHEN p.proisstrict THEN 'YES' ELSE 'NO' END END AS sys.nvarchar(10)) AS "IS_NULL_CALL",
+            CAST(NULL AS sys.nvarchar(128)) AS "SQL_PATH",
+            CAST('YES' AS sys.nvarchar(10)) AS "SCHEMA_LEVEL_ROUTINE",
+            CAST(CASE p.prokind WHEN 'f' THEN 0 WHEN 'p' THEN -1 END AS smallint) AS "MAX_DYNAMIC_RESULT_SETS",
+            CAST('NO' AS sys.nvarchar(10)) AS "IS_USER_DEFINED_CAST",
+            CAST('NO' AS sys.nvarchar(10)) AS "IS_IMPLICITLY_INVOCABLE",
+            CAST(NULL AS sys.datetime) AS "CREATED",
+            CAST(NULL AS sys.datetime) AS "LAST_ALTERED"
 
---        FROM sys.pg_namespace_ext nc LEFT JOIN sys.babelfish_namespace_ext ext ON nc.nspname = ext.nspname,
---             pg_proc p inner join sys.schemas sch on sch.schema_id = p.pronamespace
--- 	    inner join sys.all_objects ao on ao.object_id = CAST(p.oid AS INT),
---             pg_language l,
---             pg_type t LEFT JOIN pg_collation co ON t.typcollation = co.oid,
---             sys.translate_pg_type_to_tsql(t.oid) AS tsql_type_name,
--- 	    tsql_get_returnTypmodValue(p.oid) AS true_typmod,
---             sys.is_table_type(t.typrelid) as is_tbl_type
+       FROM sys.pg_namespace_ext nc LEFT JOIN sys.babelfish_namespace_ext ext ON nc.nspname = ext.nspname,
+            pg_proc p inner join sys.schemas sch on sch.schema_id = p.pronamespace
+	    inner join sys.all_objects ao on ao.object_id = CAST(p.oid AS INT),
+            pg_language l,
+            pg_type t LEFT JOIN pg_collation co ON t.typcollation = co.oid,
+            sys.translate_pg_type_to_tsql(t.oid) AS tsql_type_name,
+	    tsql_get_returnTypmodValue(p.oid) AS true_typmod,
+            sys.is_table_type(t.typrelid) as is_tbl_type
 
---        WHERE 
---             (case p.prokind
---               when 'p' then true
---               when 'a' then false
---                else
---                   (case format_type(p.prorettype, null)
---                      when 'trigger' then false
---                      else true
---                    end)
---             end)
---             AND (NOT pg_is_other_temp_schema(nc.oid))
---             AND has_function_privilege(p.oid, 'EXECUTE')
---             AND (pg_has_role(t.typowner, 'USAGE')
---             OR has_type_privilege(t.oid, 'USAGE'))
---             AND ext.dbid = cast(sys.db_id() as oid)
---             AND p.prolang = l.oid
---             AND p.prorettype = t.oid
---             AND p.pronamespace = nc.oid
--- 	    AND CAST(ao.is_ms_shipped as INT) = 0;      
+       WHERE 
+            (case p.prokind
+              when 'p' then true
+              when 'a' then false
+               else
+                  (case format_type(p.prorettype, null)
+                     when 'trigger' then false
+                     else true
+                   end)
+            end)
+            AND (NOT pg_is_other_temp_schema(nc.oid))
+            AND has_function_privilege(p.oid, 'EXECUTE')
+            AND (pg_has_role(t.typowner, 'USAGE')
+            OR has_type_privilege(t.oid, 'USAGE'))
+            AND ext.dbid = cast(sys.db_id() as oid)
+            AND p.prolang = l.oid
+            AND p.prorettype = t.oid
+            AND p.pronamespace = nc.oid
+	    AND CAST(ao.is_ms_shipped as INT) = 0;      
 
--- GRANT SELECT ON information_schema_tsql.routines TO PUBLIC;
-
+GRANT SELECT ON information_schema_tsql.routines TO PUBLIC;
+	
 CREATE OR REPLACE FUNCTION sys.system_user()
 RETURNS sys.nvarchar(128) AS
 $BODY$
@@ -1006,7 +994,6 @@ $BODY$
 $BODY$
 LANGUAGE SQL;
 
-/* --temp disabling until we create 2.2.0--2.3.0
 CREATE OR REPLACE VIEW msdb_dbo.syspolicy_system_health_state
 AS
 SELECT 
@@ -1019,7 +1006,6 @@ SELECT
 WHERE FALSE;
 GRANT SELECT ON msdb_dbo.syspolicy_system_health_state TO PUBLIC;
 ALTER VIEW msdb_dbo.syspolicy_system_health_state OWNER TO sysadmin;
-*/
 
 CREATE OR REPLACE FUNCTION msdb_dbo.fn_syspolicy_is_automation_enabled()
 RETURNS INTEGER
@@ -1042,7 +1028,6 @@ AS
 GRANT SELECT ON msdb_dbo.syspolicy_configuration TO PUBLIC;
 ALTER VIEW msdb_dbo.syspolicy_configuration OWNER TO sysadmin;
 
-/* --temp disabling until we create 2.2.0--2.3.0
 create or replace view sys.shipped_objects_not_in_sys AS
 -- This portion of view retrieves information on objects that reside in a schema in one specfic database.
 -- For example, 'master_dbo' schema can only exist in the 'master' database.
@@ -1070,7 +1055,6 @@ select t.name,t.type, ns.oid  as schemaid from
 inner join sys.babelfish_namespace_ext b on t.schema_name=b.orig_name
 inner join pg_catalog.pg_namespace ns on b.nspname = ns.nspname;
 GRANT SELECT ON sys.shipped_objects_not_in_sys TO PUBLIC;
-*/
 
 -- Disassociate msdb objects from the extension
 CALL sys.babelfish_remove_object_from_extension('view', 'msdb_dbo.sysdatabases');
@@ -1139,7 +1123,6 @@ $$;
 
 ALTER VIEW sys.all_views RENAME TO all_views_deprecated_in_2_2_0;
 
-/* --temp disabling until we create 2.2.0--2.3.0
 create or replace view sys.all_views as
 select
     CAST(t.name as sys.SYSNAME) AS name
@@ -1171,11 +1154,9 @@ INNER JOIN pg_namespace ns ON t.schema_id = ns.oid
 INNER JOIN information_schema.views v ON t.name = v.table_name AND ns.nspname = v.table_schema
 where t.type = 'V';
 GRANT SELECT ON sys.all_views TO PUBLIC;
-*/
 
 CALL sys.babelfish_drop_deprecated_view('sys', 'all_views_deprecated_in_2_2_0');
 
-/* --temp disabling until we create 2.2.0--2.3.0
 CREATE OR REPLACE VIEW sys.assembly_modules
 AS
 SELECT 
@@ -1284,67 +1265,65 @@ SELECT
    auto_created
 FROM sys.indexes WHERE FALSE;
 GRANT SELECT ON sys.spatial_indexes TO PUBLIC;
-*/
 
--- CREATE OR REPLACE VIEW information_schema_tsql.CONSTRAINT_COLUMN_USAGE AS
--- SELECT    CAST(tblcat AS sys.nvarchar(128)) AS "TABLE_CATALOG",
---           CAST(tblschema AS sys.nvarchar(128)) AS "TABLE_SCHEMA",
---           CAST(tblname AS sys.nvarchar(128)) AS "TABLE_NAME" ,
---           CAST(colname AS sys.nvarchar(128)) AS "COLUMN_NAME",
---           CAST(cstrcat AS sys.nvarchar(128)) AS "CONSTRAINT_CATALOG",
---           CAST(cstrschema AS sys.nvarchar(128)) AS "CONSTRAINT_SCHEMA",
---           CAST(cstrname AS sys.nvarchar(128)) AS "CONSTRAINT_NAME"
+CREATE OR REPLACE VIEW information_schema_tsql.CONSTRAINT_COLUMN_USAGE AS
+SELECT    CAST(tblcat AS sys.nvarchar(128)) AS "TABLE_CATALOG",
+          CAST(tblschema AS sys.nvarchar(128)) AS "TABLE_SCHEMA",
+          CAST(tblname AS sys.nvarchar(128)) AS "TABLE_NAME" ,
+          CAST(colname AS sys.nvarchar(128)) AS "COLUMN_NAME",
+          CAST(cstrcat AS sys.nvarchar(128)) AS "CONSTRAINT_CATALOG",
+          CAST(cstrschema AS sys.nvarchar(128)) AS "CONSTRAINT_SCHEMA",
+          CAST(cstrname AS sys.nvarchar(128)) AS "CONSTRAINT_NAME"
 
--- FROM (
---         /* check constraints */
---    SELECT DISTINCT extr.orig_name, r.relname, r.relowner, a.attname, extc.orig_name, c.conname, nr.dbname, nc.dbname
---      FROM sys.pg_namespace_ext nc LEFT OUTER JOIN sys.babelfish_namespace_ext extc ON nc.nspname = extc.nspname,
---           sys.pg_namespace_ext nr LEFT OUTER JOIN sys.babelfish_namespace_ext extr ON nr.nspname = extr.nspname,
---           pg_attribute a,
---           pg_constraint c,
---           pg_class r, pg_depend d
+FROM (
+        /* check constraints */
+   SELECT DISTINCT extr.orig_name, r.relname, r.relowner, a.attname, extc.orig_name, c.conname, nr.dbname, nc.dbname
+     FROM sys.pg_namespace_ext nc LEFT OUTER JOIN sys.babelfish_namespace_ext extc ON nc.nspname = extc.nspname,
+          sys.pg_namespace_ext nr LEFT OUTER JOIN sys.babelfish_namespace_ext extr ON nr.nspname = extr.nspname,
+          pg_attribute a,
+          pg_constraint c,
+          pg_class r, pg_depend d
 
---      WHERE nr.oid = r.relnamespace
---           AND r.oid = a.attrelid
---           AND d.refclassid = 'pg_catalog.pg_class'::regclass
---           AND d.refobjid = r.oid
---           AND d.refobjsubid = a.attnum
---           AND d.classid = 'pg_catalog.pg_constraint'::regclass
---           AND d.objid = c.oid
---           AND c.connamespace = nc.oid
---           AND c.contype = 'c'
---           AND r.relkind IN ('r', 'p')
---           AND NOT a.attisdropped
--- 	  AND (pg_has_role(r.relowner, 'USAGE')
--- 		OR has_table_privilege(r.oid, 'SELECT, INSERT, UPDATE, DELETE, TRUNCATE, REFERENCES, TRIGGER')
--- 		OR has_any_column_privilege(r.oid, 'SELECT, INSERT, UPDATE, REFERENCES'))
+     WHERE nr.oid = r.relnamespace
+          AND r.oid = a.attrelid
+          AND d.refclassid = 'pg_catalog.pg_class'::regclass
+          AND d.refobjid = r.oid
+          AND d.refobjsubid = a.attnum
+          AND d.classid = 'pg_catalog.pg_constraint'::regclass
+          AND d.objid = c.oid
+          AND c.connamespace = nc.oid
+          AND c.contype = 'c'
+          AND r.relkind IN ('r', 'p')
+          AND NOT a.attisdropped
+	  AND (pg_has_role(r.relowner, 'USAGE')
+		OR has_table_privilege(r.oid, 'SELECT, INSERT, UPDATE, DELETE, TRUNCATE, REFERENCES, TRIGGER')
+		OR has_any_column_privilege(r.oid, 'SELECT, INSERT, UPDATE, REFERENCES'))
 
---        UNION ALL
+       UNION ALL
 
---         /* unique/primary key/foreign key constraints */
---    SELECT extr.orig_name, r.relname, r.relowner, a.attname, extc.orig_name, c.conname, nr.dbname, nc.dbname
---      FROM sys.pg_namespace_ext nc LEFT OUTER JOIN sys.babelfish_namespace_ext extc ON nc.nspname = extc.nspname,
---           sys.pg_namespace_ext nr LEFT OUTER JOIN sys.babelfish_namespace_ext extr ON nr.nspname = extr.nspname,
---           pg_attribute a,
---           pg_constraint c,
---           pg_class r
---      WHERE nr.oid = r.relnamespace
---           AND r.oid = a.attrelid
---           AND nc.oid = c.connamespace
---           AND r.oid = c.conrelid
---           AND a.attnum = ANY (c.conkey)
---           AND NOT a.attisdropped
---           AND c.contype IN ('p', 'u', 'f')
---           AND r.relkind IN ('r', 'p')
--- 	  AND (pg_has_role(r.relowner, 'USAGE')
--- 		OR has_table_privilege(r.oid, 'SELECT, INSERT, UPDATE, DELETE, TRUNCATE, REFERENCES, TRIGGER')
--- 		OR has_any_column_privilege(r.oid, 'SELECT, INSERT, UPDATE, REFERENCES'))
+        /* unique/primary key/foreign key constraints */
+   SELECT extr.orig_name, r.relname, r.relowner, a.attname, extc.orig_name, c.conname, nr.dbname, nc.dbname
+     FROM sys.pg_namespace_ext nc LEFT OUTER JOIN sys.babelfish_namespace_ext extc ON nc.nspname = extc.nspname,
+          sys.pg_namespace_ext nr LEFT OUTER JOIN sys.babelfish_namespace_ext extr ON nr.nspname = extr.nspname,
+          pg_attribute a,
+          pg_constraint c,
+          pg_class r
+     WHERE nr.oid = r.relnamespace
+          AND r.oid = a.attrelid
+          AND nc.oid = c.connamespace
+          AND r.oid = c.conrelid
+          AND a.attnum = ANY (c.conkey)
+          AND NOT a.attisdropped
+          AND c.contype IN ('p', 'u', 'f')
+          AND r.relkind IN ('r', 'p')
+	  AND (pg_has_role(r.relowner, 'USAGE')
+		OR has_table_privilege(r.oid, 'SELECT, INSERT, UPDATE, DELETE, TRUNCATE, REFERENCES, TRIGGER')
+		OR has_any_column_privilege(r.oid, 'SELECT, INSERT, UPDATE, REFERENCES'))
 
---       ) AS x (tblschema, tblname, tblowner, colname, cstrschema, cstrname, tblcat, cstrcat);
+      ) AS x (tblschema, tblname, tblowner, colname, cstrschema, cstrname, tblcat, cstrcat);
 
--- GRANT SELECT ON information_schema_tsql.CONSTRAINT_COLUMN_USAGE TO PUBLIC;
+GRANT SELECT ON information_schema_tsql.CONSTRAINT_COLUMN_USAGE TO PUBLIC;
 
-/* --temp disabling until we create 2.2.0--2.3.0
 CREATE OR REPLACE VIEW sys.filetables
 AS
 SELECT 
@@ -1366,11 +1345,9 @@ SELECT
    CAST(0 AS INT) AS principal_id
 WHERE FALSE;
 GRANT SELECT ON sys.registered_search_property_lists TO PUBLIC;
-*/
 
 ALTER VIEW sys.identity_columns RENAME TO identity_columns_deprecated_in_2_2_0;
 
-/* --temp disabling until we create 2.2.0--2.3.0
 CREATE OR replace view sys.identity_columns AS
 SELECT 
   CAST(out_object_id AS INT) AS object_id
@@ -1520,7 +1497,6 @@ SELECT
    CAST(2 as sys.BIT) AS is_importing
 WHERE FALSE;
 GRANT SELECT ON sys.fulltext_catalogs TO PUBLIC;
-*/
 
 CREATE OR REPLACE FUNCTION sys.dateadd_internal_df(IN datepart PG_CATALOG.TEXT, IN num INTEGER, IN startdate datetimeoffset) RETURNS datetimeoffset AS $$
 BEGIN
@@ -1607,7 +1583,6 @@ $$
 STRICT
 LANGUAGE plpgsql IMMUTABLE;
 
-/* --temp disabling until we create 2.2.0--2.3.0
 CREATE OR REPLACE VIEW sys.fulltext_stoplists
 AS
 SELECT 
@@ -1618,11 +1593,9 @@ SELECT
    CAST(0 as INT) AS Principal_id
 WHERE FALSE;
 GRANT SELECT ON sys.fulltext_stoplists TO PUBLIC;
-*/
 
 alter view sys.databases rename to databases_deprecated_in_2_2_0;
 
-/*
 create or replace view sys.databases as
 select
   CAST(d.name as SYS.SYSNAME) as name
@@ -2152,7 +2125,6 @@ SELECT
     , CAST('' as sys.nvarchar(4000)) AS hints
 WHERE FALSE;
 GRANT SELECT ON sys.plan_guides TO PUBLIC;
-*/
 
 ALTER FUNCTION OBJECTPROPERTYEX(INT, SYS.VARCHAR) RENAME TO objectpropertyex_deprecated_in_2_2_0;
 
@@ -2355,7 +2327,6 @@ VALUES
     'Transform noise words for full-text query'
   );
 
-/* --temp disabling until we create 2.2.0--2.3.0
 CREATE OR REPLACE VIEW sys.spatial_index_tessellations 
 AS
 SELECT 
@@ -2597,7 +2568,6 @@ select
 from sys.table_types tt
 ) ot;
 GRANT SELECT ON sys.all_objects TO PUBLIC;
-*/
 
 CREATE OR REPLACE PROCEDURE sys.sp_helpsrvrolemember("@srvrolename" sys.SYSNAME = NULL) AS
 $$
@@ -2862,7 +2832,6 @@ RETURNS SETOF RECORD
 AS 'babelfishpg_tsql', 'tsql_stat_get_activity'
 LANGUAGE C VOLATILE STRICT;
 
-/* --temp disabling until we create 2.2.0--2.3.0
 create or replace view sys.sysprocesses as
 select
   a.pid as spid
@@ -2916,7 +2885,6 @@ left join pg_catalog.pg_locks         blocking_locks
  where a.datname = current_database(); /* current physical database will always be babelfish database */
 GRANT SELECT ON sys.sysprocesses TO PUBLIC;
 
-/* --temp disabling until we create 2.2.0--2.3.0
 -- recreate views dependent on tsql_stat_get_activity
 create or replace view sys.dm_exec_sessions
   as
@@ -3004,7 +2972,6 @@ GRANT SELECT ON sys.dm_exec_connections TO PUBLIC;
 
 CALL sys.babelfish_drop_deprecated_function('sys', 'tsql_stat_get_activity_deprecated_in_2_2_0');
 CALL sys.babelfish_drop_deprecated_view('sys', 'sysprocesses_deprecated_in_2_2_0');
-*/
 
 CREATE OR REPLACE FUNCTION sys.datepart(IN datepart TEXT, IN arg TEXT) RETURNS INTEGER
 AS
@@ -3091,7 +3058,6 @@ GRANT EXECUTE ON FUNCTION sys.INDEXPROPERTY(IN object_id INT, IN index_or_statis
 
 ALTER VIEW sys.sysobjects RENAME TO sysobjects_deprecated_in_2_2_0;
 
-/* --temp disabling until we create 2.2.0--2.3.0
 create or replace view sys.sysobjects as
 select
   CAST(s.name as sys._ci_sysname)
@@ -3127,7 +3093,6 @@ from sys.objects s;
 GRANT SELECT ON sys.sysobjects TO PUBLIC;
 
 CALL sys.babelfish_drop_deprecated_view('sys', 'sysobjects_deprecated_in_2_2_0');
-*/
 
 CREATE OR REPLACE PROCEDURE sys.sp_helpuser("@name_in_db" sys.SYSNAME = NULL) AS
 $$
@@ -3260,7 +3225,6 @@ $BODY$
 $BODY$
 LANGUAGE SQL STABLE;
 
-/* --temp disabling until we create 2.2.0--2.3.0
 CREATE OR REPLACE VIEW sys.numbered_procedures
 AS
 SELECT 
@@ -3269,6 +3233,20 @@ SELECT
   , CAST('' as sys.nvarchar(4000)) AS definition
 WHERE FALSE; -- This condition will ensure that the view is empty
 GRANT SELECT ON sys.numbered_procedures TO PUBLIC;
+
+ALTER TABLE sys.extended_properties RENAME TO extended_properties_deprecated_in_2_3_0;
+
+create table if not exists sys.extended_properties (
+class sys.tinyint,
+class_desc sys.nvarchar(60),
+major_id int,
+minor_id int,
+name sys.sysname,
+value sys.sql_variant
+);
+GRANT SELECT ON sys.extended_properties TO PUBLIC;
+
+INSERT INTO sys.extended_properties SELECT * FROM sys.extended_properties_deprecated_in_2_3_0;
 
 CREATE OR REPLACE FUNCTION sys.fn_listextendedproperty (
 property_name varchar(128),
@@ -3371,7 +3349,6 @@ FROM sys.babelfish_sysdatabases AS t
 LEFT OUTER JOIN pg_catalog.pg_roles r on r.rolname = t.owner;
 
 GRANT SELECT ON sys.sysdatabases TO PUBLIC;
-*/
 
 ALTER FUNCTION sys.fn_mapped_system_error_list() RENAME TO fn_mapped_system_error_list_deprecated_in_2_2_0;
 
@@ -3622,15 +3599,24 @@ $$
 LANGUAGE 'pltsql';
 
 -- everything below should go to 2.2.0--2.3.0.sql
-ALTER TABLE sys.babelfish_configurations 
-  ALTER COLUMN name TYPE sys.nvarchar(35),
-  ALTER COLUMN value TYPE sys.sql_variant,
-  ALTER COLUMN minimum TYPE sys.sql_variant,
-  ALTER COLUMN maximum TYPE sys.sql_variant,
-  ALTER COLUMN value_in_use TYPE sys.sql_variant,
-  ALTER COLUMN description TYPE sys.nvarchar(255),
-  ALTER COLUMN comment_syscurconfigs TYPE sys.nvarchar(255),
-  ALTER COLUMN comment_sysconfigures TYPE sys.nvarchar(255);
+ALTER TABLE sys.babelfish_configurations RENAME TO babelfish_configurations_depcreated_in_2_3_0;
+
+CREATE TABLE sys.babelfish_configurations (
+    configuration_id INT,
+    name sys.nvarchar(35),
+    value sys.sql_variant,
+    minimum sys.sql_variant,
+    maximum sys.sql_variant,
+    value_in_use sys.sql_variant,
+    description sys.nvarchar(255),
+    is_dynamic sys.BIT,
+    is_advanced sys.BIT,
+    comment_syscurconfigs sys.nvarchar(255),
+    comment_sysconfigures sys.nvarchar(255)
+) WITH (OIDS = FALSE);
+
+INSERT INTO sys.babelfish_configurations SELECT * FROM sys.babelfish_configurations_depcreated_in_2_3_0;
+SELECT pg_catalog.pg_extension_config_dump('sys.babelfish_configurations', '');
 
 CREATE OR REPLACE FUNCTION sys.babelfish_conv_date_to_string(IN p_datatype TEXT,
                                                                  IN p_dateval DATE,
@@ -5855,11 +5841,20 @@ END;
 $$;
 GRANT EXECUTE ON FUNCTION sys.columnproperty(object_id oid, property name, property_name text) TO PUBLIC;
 
-ALTER TABLE sys.babelfish_view_def 
-  ALTER COLUMN schema_name TYPE sys.SYSNAME,
-  ALTER COLUMN object_name TYPE sys.SYSNAME;
+ALTER TABLE sys.babelfish_namespace_ext RENAME TO babelfish_namespace_ext_deprecated_in_2_3_0;
 
-ALTER TABLE sys.babelfish_namespace_ext ALTER COLUMN orig_name TYPE sys.NVARCHAR(128);
+-- BABELFISH_NAMESPACE_EXT
+CREATE TABLE sys.babelfish_namespace_ext (
+    nspname NAME NOT NULL,
+    dbid SMALLINT NOT NULL,
+    orig_name sys.NVARCHAR(128) NOT NULL,
+ properties TEXT NOT NULL COLLATE "C",
+    PRIMARY KEY (nspname)
+);
+GRANT SELECT ON sys.babelfish_namespace_ext TO PUBLIC;
+
+INSERT INTO sys.babelfish_namespace_ext SELECT * FROM babelfish_namespace_ext_deprecated_in_2_3_0;
+SELECT pg_catalog.pg_extension_config_dump('sys.babelfish_namespace_ext', '');
 
 -- SYSDATABASES
 CREATE OR REPLACE VIEW sys.sysdatabases AS
@@ -5908,6 +5903,27 @@ AS
     CAST(1 as sys.BIT) AS result
   WHERE FALSE;
 
+ALTER TABLE sys.babelfish_authid_login_ext RENAME TO babelfish_authid_login_ext_deprecated_in_2_3_0;
+
+-- LOGIN EXT
+-- Note: change here requires change in FormData_authid_login_ext too
+CREATE TABLE sys.babelfish_authid_login_ext (
+rolname NAME NOT NULL, -- pg_authid.rolname
+is_disabled INT NOT NULL DEFAULT 0, -- to support enable/disable login
+type CHAR(1) NOT NULL DEFAULT 'S',
+credential_id INT NOT NULL,
+owning_principal_id INT NOT NULL,
+is_fixed_role INT NOT NULL DEFAULT 0,
+create_date timestamptz NOT NULL,
+modify_date timestamptz NOT NULL,
+default_database_name SYS.NVARCHAR(128) NOT NULL,
+default_language_name SYS.NVARCHAR(128) NOT NULL,
+properties JSONB,
+PRIMARY KEY (rolname));
+GRANT SELECT ON sys.babelfish_authid_login_ext TO PUBLIC;
+
+INSERT INTO sys.babelfish_authid_login_ext SELECT * FROM sys.babelfish_authid_login_ext_deprecated_in_2_3_0;
+SELECT pg_catalog.pg_extension_config_dump('sys.babelfish_authid_login_ext', '');
 
 -- SERVER_PRINCIPALS
 CREATE OR REPLACE VIEW sys.server_principals
@@ -5929,15 +5945,32 @@ CAST(CASE WHEN Ext.type = 'R' THEN 1 ELSE Ext.owning_principal_id END AS INT) AS
 CAST(CASE WHEN Ext.type = 'R' THEN 1 ELSE Ext.is_fixed_role END AS sys.BIT) AS is_fixed_role
 FROM pg_catalog.pg_authid AS Base INNER JOIN sys.babelfish_authid_login_ext AS Ext ON Base.rolname = Ext.rolname;
 
--- USER extension
-ALTER TABLE sys.babelfish_authid_user_ext
-ALTER COLUMN orig_username TYPE SYS.NVARCHAR(128) NOT NULL,
-ALTER COLUMN database_name TYPE SYS.NVARCHAR(128) NOT NULL,
-ALTER COLUMN default_schema_name TYPE SYS.NVARCHAR(128) NOT NULL,
-ALTER COLUMN default_language_name TYPE SYS.NVARCHAR(128),
-ALTER COLUMN authentication_type_desc TYPE SYS.NVARCHAR(60);
+ALTER TABLE sys.babelfish_authid_user_ext RENAME TO babelfish_authid_user_ext_deprecated_in_2_3_0;
 
-REINDEX INDEX babelfish_authid_user_ext_login_db_idx;
+-- USER extension
+CREATE TABLE sys.babelfish_authid_user_ext (
+rolname NAME NOT NULL,
+login_name NAME NOT NULL,
+type CHAR(1) NOT NULL DEFAULT 'S',
+owning_principal_id INT,
+is_fixed_role INT NOT NULL DEFAULT 0,
+authentication_type INT,
+default_language_lcid INT,
+allow_encrypted_value_modifications INT NOT NULL DEFAULT 0,
+create_date timestamptz NOT NULL,
+modify_date timestamptz NOT NULL,
+orig_username SYS.NVARCHAR(128) NOT NULL,
+database_name SYS.NVARCHAR(128) NOT NULL,
+default_schema_name SYS.NVARCHAR(128) NOT NULL,
+default_language_name SYS.NVARCHAR(128),
+authentication_type_desc SYS.NVARCHAR(60),
+PRIMARY KEY (rolname));
+
+ALTER INDEX babelfish_authid_user_ext_login_db_idx RENAME TO babelfish_authid_user_ext_login_db_idx_deprecated_in_2_3_0;
+
+CREATE INDEX babelfish_authid_user_ext_login_db_idx ON sys.babelfish_authid_user_ext (login_name, database_name);
+
+INSERT INTO sys.babelfish_authid_user_ext SELECT * FROM sys.babelfish_authid_user_ext_deprecated_in_2_3_0;
 
 -- DATABASE_PRINCIPALS
 CREATE OR REPLACE VIEW sys.database_principals AS SELECT
@@ -6542,7 +6575,7 @@ from
 ) as indexes_select order by object_id, type_desc;
 GRANT SELECT ON sys.indexes TO PUBLIC;
 
- create or replace view sys.tables as
+create or replace view sys.tables as
 select
   CAST(t.relname as sys._ci_sysname) as name -- should we change datatype to sys.sysname which might fix BABEL-3110.sql test
   , CAST(t.oid as int) as object_id
@@ -7020,7 +7053,7 @@ and has_table_privilege(quote_ident(s.nspname) ||'.'||quote_ident(t.relname), 'S
 union all
 -- details of user defined and system foreign key constraints
 select
-    c.conname collate database_default as name
+    c.conname collate sys.database_default as name
   , c.oid as object_id
   , null::integer as principal_id
   , s.oid as schema_id
@@ -7513,7 +7546,7 @@ FROM sys.all_sql_modules_internal t1
 WHERE t1.is_ms_shipped = 0;
 GRANT SELECT ON sys.sql_modules TO PUBLIC;
 
-CREATE VIEW sys.syscharsets
+CREATE OR REPLACE VIEW sys.syscharsets
 AS
 SELECT 1001 as type,
   1 as id,
@@ -8507,7 +8540,7 @@ GRANT SELECT ON information_schema_tsql.domains TO PUBLIC;
 
 
 
-CREATE VIEW information_schema_tsql.tables AS
+CREATE OR REPLACE VIEW information_schema_tsql.tables AS
  SELECT CAST(nc.dbname AS sys.nvarchar(128)) AS "TABLE_CATALOG",
      CAST(ext.orig_name AS sys.nvarchar(128)) AS "TABLE_SCHEMA",
      CAST(
@@ -8537,7 +8570,7 @@ GRANT SELECT ON information_schema_tsql.tables TO PUBLIC;
 
 
 
-CREATE VIEW information_schema_tsql.table_constraints AS
+CREATE OR REPLACE VIEW information_schema_tsql.table_constraints AS
     SELECT CAST(nc.dbname AS sys.nvarchar(128)) AS "CONSTRAINT_CATALOG",
            CAST(extc.orig_name AS sys.nvarchar(128)) AS "CONSTRAINT_SCHEMA",
            CAST(c.conname AS sys.sysname) AS "CONSTRAINT_NAME",
@@ -8650,46 +8683,7 @@ CREATE OR REPLACE VIEW information_schema_tsql.COLUMN_DOMAIN_USAGE AS
 
 GRANT SELECT ON information_schema_tsql.COLUMN_DOMAIN_USAGE TO PUBLIC;
 
-
-
-
-
-CREATE OR REPLACE VIEW information_schema_tsql.views AS
- SELECT CAST(nc.dbname AS sys.nvarchar(128)) AS "TABLE_CATALOG",
-   CAST(ext.orig_name AS sys.nvarchar(128)) AS "TABLE_SCHEMA",
-   CAST(c.relname AS sys.nvarchar(128)) AS "TABLE_NAME",
-   CAST(vd.definition AS sys.nvarchar(4000)) AS "VIEW_DEFINITION",
-
-   CAST(
-    CASE WHEN 'check_option=cascaded' = ANY (c.reloptions)
-     THEN 'CASCADE'
-     ELSE 'NONE' END
-    AS sys.varchar(7)) AS "CHECK_OPTION",
-
-   CAST('NO' AS sys.varchar(2)) AS "IS_UPDATABLE"
-
- FROM sys.pg_namespace_ext nc JOIN pg_class c ON (nc.oid = c.relnamespace)
-  LEFT OUTER JOIN sys.babelfish_namespace_ext ext
-   ON (nc.nspname = ext.nspname COLLATE sys.database_default)
-  LEFT OUTER JOIN sys.babelfish_view_def vd
-   ON ext.dbid = vd.dbid
-    AND (ext.orig_name = vd.schema_name COLLATE sys.database_default)
-    AND (CAST(c.relname AS sys.nvarchar(128)) = vd.object_name COLLATE sys.database_default)
-
- WHERE c.relkind = 'v'
-  AND (NOT pg_is_other_temp_schema(nc.oid))
-  AND (pg_has_role(c.relowner, 'USAGE')
-   OR has_table_privilege(c.oid, 'SELECT, INSERT, UPDATE, DELETE, TRUNCATE, REFERENCES, TRIGGER')
-   OR has_any_column_privilege(c.oid, 'SELECT, INSERT, UPDATE, REFERENCES') )
-  AND ext.dbid = cast(sys.db_id() as oid);
-
-GRANT SELECT ON information_schema_tsql.views TO PUBLIC;
-
-
-
-
-
-CREATE VIEW information_schema_tsql.check_constraints AS
+CREATE OR REPLACE VIEW information_schema_tsql.check_constraints AS
     SELECT CAST(nc.dbname AS sys.nvarchar(128)) AS "CONSTRAINT_CATALOG",
      CAST(extc.orig_name AS sys.nvarchar(128)) AS "CONSTRAINT_SCHEMA",
            CAST(c.conname AS sys.sysname) AS "CONSTRAINT_NAME",
@@ -9032,6 +9026,55 @@ CREATE OR REPLACE VIEW sys.spt_tablecollations_view AS
     WHERE
         c.is_sparse = 0 AND p.attnum >= 0;
 
+ALTER TABLE sys.assemblies RENAME TO assemblies_deprecated_in_2_3_0;
+
+CREATE TABLE sys.assemblies(
+ name sys.sysname,
+ principal_id int,
+ assembly_id int,
+ clr_name nvarchar(4000),
+ permission_set tinyint,
+ permission_set_desc nvarchar(60),
+ is_visible bit,
+ create_date datetime,
+ modify_date datetime,
+ is_user_defined bit
+);
+GRANT SELECT ON sys.assemblies TO PUBLIC;
+
+INSERT INTO sys.assemblies SELECT * FROM sys.assemblies_deprecated_in_2_3_0;
+
+CREATE OR REPLACE VIEW sys.assembly_types
+AS
+SELECT
+   CAST(t.name as sys.sysname) AS name,
+   -- 'system_type_id' is specified as type INT here, and not TINYINT per SQL Server documentation.
+   -- This is because the IDs of generated SQL Server system type values generated by B
+   -- Babelfish installation will exceed the size of TINYINT.
+   CAST(t.system_type_id as int) AS system_type_id,
+   CAST(t.user_type_id as int) AS user_type_id,
+   CAST(t.schema_id as int) AS schema_id,
+   CAST(t.principal_id as int) AS principal_id,
+   CAST(t.max_length as smallint) AS max_length,
+   CAST(t.precision as sys.tinyint) AS precision,
+   CAST(t.scale as sys.tinyint) AS scale,
+   CAST(t.collation_name as sys.sysname) AS collation_name,
+   CAST(t.is_nullable as sys.bit) AS is_nullable,
+   CAST(t.is_user_defined as sys.bit) AS is_user_defined,
+   CAST(t.is_assembly_type as sys.bit) AS is_assembly_type,
+   CAST(t.default_object_id as int) AS default_object_id,
+   CAST(t.rule_object_id as int) AS rule_object_id,
+   CAST(NULL as int) AS assembly_id,
+   CAST(NULL as sys.sysname) AS assembly_class,
+   CAST(NULL as sys.bit) AS is_binary_ordered,
+   CAST(NULL as sys.bit) AS is_fixed_length,
+   CAST(NULL as sys.nvarchar(40)) AS prog_id,
+   CAST(NULL as sys.nvarchar(4000)) AS assembly_qualified_name,
+   CAST(t.is_table_type as sys.bit) AS is_table_type
+FROM sys.types t
+WHERE t.is_assembly_type = 1;
+GRANT SELECT ON sys.assembly_types TO PUBLIC;
+
 CREATE OR REPLACE VIEW sys.sp_databases_view AS
  SELECT CAST(database_name AS sys.SYSNAME),
  -- DATABASE_SIZE returns a NULL value for databases larger than 2.15 TB
@@ -9133,7 +9176,7 @@ FROM pg_catalog.pg_class t1
 WHERE CAST(t4."ORDINAL_POSITION" AS smallint) = ANY (t5.indkey)
     AND CAST(t4."ORDINAL_POSITION" AS smallint) = t5.indkey[seq];
 
-create function sys.sp_statistics_internal(
+create or replace function sys.sp_statistics_internal(
     in_table_name sys.sysname,
     in_table_owner sys.sysname = '',
     in_table_qualifier sys.sysname = '',
@@ -9190,9 +9233,9 @@ SELECT
 CREATE OR REPLACE VIEW sys.sp_table_privileges_view AS
 -- Will use sp_column_priivleges_view to get information from SELECT, INSERT and REFERENCES (only need permission from 1 column in table)
 SELECT DISTINCT
-CAST(TABLE_QUALIFIER AS sys.sysname) AS TABLE_QUALIFIER,
+CAST(TABLE_QUALIFIER AS sys.sysname) COLLATE sys.database_default AS TABLE_QUALIFIER,
 CAST(TABLE_OWNER AS sys.sysname) AS TABLE_OWNER,
-CAST(TABLE_NAME AS sys.sysname) AS TABLE_NAME,
+CAST(TABLE_NAME AS sys.sysname) COLLATE sys.database_default AS TABLE_NAME,
 CAST(GRANTOR AS sys.sysname) AS GRANTOR,
 CAST(GRANTEE AS sys.sysname) AS GRANTEE,
 CAST(PRIVILEGE AS sys.sysname) AS PRIVILEGE,
@@ -9202,9 +9245,9 @@ FROM sys.sp_column_privileges_view
 UNION
 -- We need these set of joins only for the DELETE privilege
 SELECT
-CAST(t2.dbname AS sys.sysname) AS TABLE_QUALIFIER,
+CAST(t2.dbname AS sys.sysname) COLLATE sys.database_default AS TABLE_QUALIFIER,
 CAST(s1.name AS sys.sysname) AS TABLE_OWNER,
-CAST(t1.relname AS sys.sysname) AS TABLE_NAME,
+CAST(t1.relname AS sys.sysname) COLLATE sys.database_default AS TABLE_NAME,
 CAST((select orig_username from sys.babelfish_authid_user_ext where rolname = t4.grantor) AS sys.sysname) AS GRANTOR,
 CAST((select orig_username from sys.babelfish_authid_user_ext where rolname = t4.grantee) AS sys.sysname) AS GRANTEE,
 CAST(t4.privilege_type AS sys.sysname) AS PRIVILEGE,
@@ -9752,7 +9795,53 @@ SELECT
   AND has_schema_privilege(proc.specific_schema, 'USAGE')
  );
 
+ALTER TABLE sys.babelfish_view_def RENAME TO babelfish_view_def_deprecated_in_2_3_0;
 
+CREATE TABLE sys.babelfish_view_def (
+	dbid SMALLINT NOT NULL,
+	schema_name sys.SYSNAME NOT NULL,
+	object_name sys.SYSNAME NOT NULL,
+	definition sys.NTEXT,
+	flag_validity BIGINT,
+	flag_values BIGINT,
+	PRIMARY KEY(dbid, schema_name, object_name)
+);
+
+GRANT SELECT ON sys.babelfish_view_def TO PUBLIC;
+
+INSERT INTO sys.babelfish_view_def SELECT * FROM sys.babelfish_view_def_deprecated_in_2_3_0;
+SELECT pg_catalog.pg_extension_config_dump('sys.babelfish_view_def', '');
+
+CREATE OR REPLACE VIEW information_schema_tsql.views AS
+ SELECT CAST(nc.dbname AS sys.nvarchar(128)) AS "TABLE_CATALOG",
+   CAST(ext.orig_name AS sys.nvarchar(128)) AS "TABLE_SCHEMA",
+   CAST(c.relname AS sys.nvarchar(128)) AS "TABLE_NAME",
+   CAST(vd.definition AS sys.nvarchar(4000)) AS "VIEW_DEFINITION",
+
+   CAST(
+    CASE WHEN 'check_option=cascaded' = ANY (c.reloptions)
+     THEN 'CASCADE'
+     ELSE 'NONE' END
+    AS sys.varchar(7)) AS "CHECK_OPTION",
+
+   CAST('NO' AS sys.varchar(2)) AS "IS_UPDATABLE"
+
+ FROM sys.pg_namespace_ext nc JOIN pg_class c ON (nc.oid = c.relnamespace)
+  LEFT OUTER JOIN sys.babelfish_namespace_ext ext
+   ON (nc.nspname = ext.nspname COLLATE sys.database_default)
+  LEFT OUTER JOIN sys.babelfish_view_def vd
+   ON ext.dbid = vd.dbid
+    AND (ext.orig_name = vd.schema_name COLLATE sys.database_default)
+    AND (CAST(c.relname AS sys.nvarchar(128)) = vd.object_name COLLATE sys.database_default)
+
+ WHERE c.relkind = 'v'
+  AND (NOT pg_is_other_temp_schema(nc.oid))
+  AND (pg_has_role(c.relowner, 'USAGE')
+   OR has_table_privilege(c.oid, 'SELECT, INSERT, UPDATE, DELETE, TRUNCATE, REFERENCES, TRIGGER')
+   OR has_any_column_privilege(c.oid, 'SELECT, INSERT, UPDATE, REFERENCES') )
+  AND ext.dbid = cast(sys.db_id() as oid);
+
+GRANT SELECT ON information_schema_tsql.views TO PUBLIC;
 
 -- Drops the temporary procedure used by the upgrade script.
 -- Please have this be one of the last statements executed in this upgrade script.
