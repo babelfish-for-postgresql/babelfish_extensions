@@ -717,3 +717,45 @@ CREATE OR REPLACE VIEW information_schema_tsql.routines AS
 GRANT SELECT ON information_schema_tsql.routines TO PUBLIC;
 
 SELECT set_config('search_path', 'sys, '||current_setting('search_path'), false);
+
+/*
+* KEY COLUMN USAGE
+*/
+
+CREATE OR REPLACE VIEW information_schema_tsql.key_column_usage
+AS SELECT CAST(ss.nc_dbname AS sys.nvarchar(128)) AS "CONSTRAINT_CATALOG",
+    CAST(ss.nc_nspname AS sys.nvarchar(128)) AS "CONSTRAINT_SCHEMA",
+    CAST(ss.conname AS sys.nvarchar(128)) AS "CONSTRAINT_NAME",
+    CAST(ss.nc_dbname AS sys.nvarchar(128)) AS "TABLE_CATALOG",
+    CAST(ss.nr_nspname  AS sys.nvarchar(128)) AS "TABLE_SCHEMA",
+    CAST(ss.relname AS sys.nvarchar(128)) AS "TABLE_NAME",
+    CAST(a.attname AS sys.nvarchar(128)) AS "COLUMN_NAME",
+    CAST((ss.x).n AS sys."int") AS "ORDINAL_POSITION"
+   FROM pg_attribute a,
+    ( SELECT r.oid AS roid,
+            r.relname,
+            r.relowner,
+            extc.orig_name AS nc_nspname,
+            extr.orig_name AS nr_nspname,
+            nc.dbname as nc_dbname,
+            extc.dbid as extc_dbid,
+            c.oid AS coid,
+            c.conname,
+            c.contype,
+            c.confrelid,
+            information_schema._pg_expandarray(c.conkey) AS x
+           FROM sys.pg_namespace_ext nc LEFT OUTER JOIN sys.babelfish_namespace_ext extc ON nc.nspname = extc.nspname,
+            sys.pg_namespace_ext nr LEFT OUTER JOIN sys.babelfish_namespace_ext extr ON nr.nspname = extr.nspname,
+            pg_class r,
+            pg_constraint c
+          WHERE nr.oid = r.relnamespace AND r.oid = c.conrelid 
+		  AND nc.oid = c.connamespace AND (c.contype = ANY (ARRAY[CAST('p' AS "char"), CAST('u' AS "char"), CAST('f' AS "char")])) 
+		  AND (r.relkind = ANY (ARRAY[CAST('r' AS "char"), CAST('p' AS "char")])) AND NOT pg_is_other_temp_schema(nr.oid)) ss
+WHERE ss.roid = a.attrelid AND a.attnum = (ss.x).x 
+AND NOT a.attisdropped 
+AND (pg_has_role(ss.roid, 'USAGE')
+     OR has_table_privilege(ss.roid, 'SELECT, INSERT, UPDATE, DELETE, TRUNCATE, REFERENCES, TRIGGER')
+     OR has_any_column_privilege(ss.roid, 'SELECT, INSERT, UPDATE, REFERENCES'))
+AND  ss.extc_dbid = cast(sys.db_id() as oid);
+
+GRANT SELECT ON information_schema_tsql.key_column_usage TO PUBLIC;
