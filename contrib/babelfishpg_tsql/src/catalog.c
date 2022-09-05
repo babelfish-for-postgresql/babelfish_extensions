@@ -1131,22 +1131,15 @@ get_bbf_function_tuple_from_proctuple(HeapTuple proctuple)
 {
 	HeapTuple	 bbffunctuple;
 	Form_pg_proc form;
-	char		 *physical_schemaname,
-				 *func_signature,
-				 *langname;
+	char		 *physical_schemaname;
+	char		 *func_signature;
 
 	/* Disallow extended catalog lookup during restore */
 	if (!HeapTupleIsValid(proctuple) || babelfish_dump_restore)
 		return NULL;					/* concurrently dropped */
 	form = (Form_pg_proc) GETSTRUCT(proctuple);
-	langname = get_language_name(form->prolang, true);
-	if (!langname || pg_strcasecmp("pltsql", langname) != 0)
-	{
-		if (langname)
-			pfree(langname);
+	if (!is_pltsql_language_oid(form->prolang))
 		return NULL;
-	}
-	pfree(langname);
 
 	physical_schemaname = get_namespace_name(form->pronamespace);
 	if (physical_schemaname == NULL)

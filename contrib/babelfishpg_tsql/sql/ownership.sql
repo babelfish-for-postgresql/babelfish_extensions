@@ -14,10 +14,11 @@ CREATE TABLE sys.babelfish_sysdatabases (
 
 GRANT SELECT on sys.babelfish_sysdatabases TO PUBLIC;
 
--- BABELFISH_FUNC_DEFAULT
+-- BABELFISH_FUNCTION_EXT
 CREATE TABLE sys.babelfish_function_ext (
 	nspname NAME NOT NULL,
 	funcname NAME NOT NULL,
+  orig_name sys.NVARCHAR(128), -- users' original input name
 	funcsignature TEXT NOT NULL COLLATE "C",
 	default_positions TEXT COLLATE "C",
 	PRIMARY KEY(nspname, funcsignature)

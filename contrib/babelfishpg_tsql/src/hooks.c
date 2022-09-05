@@ -1893,10 +1893,9 @@ pltsql_store_func_default_positions(ObjectAddress address, List *parameters)
 	bool		new_record_replaces[BBF_FUNCTION_EXT_NUM_COLS];
 	HeapTuple	tuple, proctup, oldtup;
 	Form_pg_proc	form_proctup;
-	char		*physical_schemaname,
-				*func_signature;
+	char		*physical_schemaname;
+	char		*func_signature;
 	List		*default_positions = NIL;
-	char		*langname;
 	ListCell	*x;
 	int			idx;
 
@@ -1907,15 +1906,11 @@ pltsql_store_func_default_positions(ObjectAddress address, List *parameters)
 		return;
 	form_proctup = (Form_pg_proc) GETSTRUCT(proctup);
 
-	langname = get_language_name(form_proctup->prolang, true);
-	if (!langname || pg_strcasecmp("pltsql", langname) != 0)
+	if (!is_pltsql_language_oid(form_proctup->prolang))
 	{
-		if (langname)
-			pfree(langname);
 		ReleaseSysCache(proctup);
 		return;
 	}
-	pfree(langname);
 
 	physical_schemaname = get_namespace_name(form_proctup->pronamespace);
 	if (physical_schemaname == NULL)
@@ -1964,6 +1959,7 @@ pltsql_store_func_default_positions(ObjectAddress address, List *parameters)
 
 	new_record[Anum_bbf_function_ext_nspname -1] = CStringGetDatum(physical_schemaname);
 	new_record[Anum_bbf_function_ext_funcname -1] = NameGetDatum(&form_proctup->proname);
+	new_record_nulls[Anum_bbf_function_ext_orig_name -1] = true; /* TODO: Fill users' original input name */
 	new_record[Anum_bbf_function_ext_funcsignature - 1] = CStringGetTextDatum(func_signature);
 	if (default_positions != NIL)
 		new_record[Anum_bbf_function_ext_default_positions - 1] = CStringGetTextDatum(nodeToString(default_positions));

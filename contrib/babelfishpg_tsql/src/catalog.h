@@ -200,9 +200,10 @@ typedef FormData_bbf_view_def *Form_bbf_view_def;
 #define BBF_FUNCTION_EXT_IDX_NAME "babelfish_function_ext_pkey"
 #define Anum_bbf_function_ext_nspname 1
 #define Anum_bbf_function_ext_funcname 2
-#define Anum_bbf_function_ext_funcsignature 3
-#define Anum_bbf_function_ext_default_positions 4
-#define BBF_FUNCTION_EXT_NUM_COLS 4
+#define Anum_bbf_function_ext_orig_name 3
+#define Anum_bbf_function_ext_funcsignature 4
+#define Anum_bbf_function_ext_default_positions 5
+#define BBF_FUNCTION_EXT_NUM_COLS 5
 extern Oid			bbf_function_ext_oid;
 extern Oid			bbf_function_ext_idx_oid;
 
@@ -215,6 +216,7 @@ typedef struct FormData_bbf_function_ext
 {
 	NameData	schema;
 	NameData	funcname;
+	VarChar		orig_name;
 	text		function_signature;
 	text		default_positions;
 } FormData_bbf_function_ext;
