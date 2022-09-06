@@ -181,11 +181,11 @@ SELECT * FROM sys.babelfish_function_ext WHERE funcname LIKE 'babel_2877_vu_prep
 GO
 ~~START~~
 varchar#!#varchar#!#nvarchar#!#text#!#text
-master_dbo#!#babel_2877_vu_prepare_func1#!#<NULL>#!#babel_2877_vu_prepare_func1(integer, "varchar", money, double precision)#!#(1 3)
-master_dbo#!#babel_2877_vu_prepare_func2#!#<NULL>#!#babel_2877_vu_prepare_func2(integer, "varchar", money, double precision)#!#(0 1 2 3)
-master_dbo#!#babel_2877_vu_prepare_func3#!#<NULL>#!#babel_2877_vu_prepare_func3(integer, "varchar", money, double precision)#!#<NULL>
-master_dbo#!#babel_2877_vu_prepare_proc1#!#<NULL>#!#babel_2877_vu_prepare_proc1(integer, "varchar", money, double precision)#!#(1 2)
-master_dbo#!#babel_2877_vu_prepare_proc2#!#<NULL>#!#babel_2877_vu_prepare_proc2(integer, "varchar", money, double precision)#!#(0 1 2 3)
-master_dbo#!#babel_2877_vu_prepare_proc3#!#<NULL>#!#babel_2877_vu_prepare_proc3(integer, "varchar", money, double precision)#!#<NULL>
+master_dbo#!#babel_2877_vu_prepare_func1#!#<NULL>#!#babel_2877_vu_prepare_func1(integer, "sys"."varchar", "sys"."money", double precision)#!#(1 3)
+master_dbo#!#babel_2877_vu_prepare_func2#!#<NULL>#!#babel_2877_vu_prepare_func2(integer, "sys"."varchar", "sys"."money", double precision)#!#(0 1 2 3)
+master_dbo#!#babel_2877_vu_prepare_func3#!#<NULL>#!#babel_2877_vu_prepare_func3(integer, "sys"."varchar", "sys"."money", double precision)#!#<NULL>
+master_dbo#!#babel_2877_vu_prepare_proc1#!#<NULL>#!#babel_2877_vu_prepare_proc1(integer, "sys"."varchar", "sys"."money", double precision)#!#(1 2)
+master_dbo#!#babel_2877_vu_prepare_proc2#!#<NULL>#!#babel_2877_vu_prepare_proc2(integer, "sys"."varchar", "sys"."money", double precision)#!#(0 1 2 3)
+master_dbo#!#babel_2877_vu_prepare_proc3#!#<NULL>#!#babel_2877_vu_prepare_proc3(integer, "sys"."varchar", "sys"."money", double precision)#!#<NULL>
 ~~END~~
 

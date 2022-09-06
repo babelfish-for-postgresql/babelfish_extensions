@@ -1931,10 +1931,9 @@ pltsql_store_func_default_positions(ObjectAddress address, List *parameters)
 		return;
 	}
 
-	func_signature = funcname_signature_string(NameStr(form_proctup->proname),
-													   form_proctup->pronargs,
-													   NIL,
-													   form_proctup->proargtypes.values);
+	func_signature = get_pltsql_function_signature(NameStr(form_proctup->proname),
+												   form_proctup->pronargs,
+												   form_proctup->proargtypes.values);
 
 	idx = 0;
 	foreach(x, parameters)
