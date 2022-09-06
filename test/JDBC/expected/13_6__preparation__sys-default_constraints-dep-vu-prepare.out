@@ -8,7 +8,7 @@ ALTER TABLE sys_default_constraints_dep_vu_prepare_t1 ADD CONSTRAINT DF_sdd_colu
 GO
 
 CREATE PROCEDURE sys_default_constraints_dep_vu_prepare_p1 AS 
-    SELECT definition FROM sys.default_constraints where name LIKE '%sys_default_constraints_dep_vu_prepare_t1%'
+    SELECT COUNT(*) FROM sys.all_columns WHERE object_id = object_id('sys.default_constraints')
 GO
 
 CREATE FUNCTION sys_default_constraints_dep_vu_prepare_f1()
@@ -20,5 +20,5 @@ END
 GO
 
 CREATE VIEW sys_default_constraints_dep_vu_prepare_v1 AS
-    SELECT definition FROM sys.default_constraints where name LIKE '%sys_default_constraints_dep_vu_prepare_t1%'
+    SELECT COUNT(*) FROM sys.all_columns WHERE object_id = object_id('sys.default_constraints')
 GO
