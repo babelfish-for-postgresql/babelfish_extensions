@@ -197,7 +197,7 @@ const char *get_explain_database(void)
  * native looking TSQL by removing the redundant SELECT statements.
  *
  * This functions validates that the expression object exists, has a query text,
- * and returns a pointer into the query text of the expression minus the "SELECT "
+ * and returns a pointer to a new string representing the expression minus the "SELECT "
 */
 const char *strip_select_from_expr(void * pltsql_expr)
 {
