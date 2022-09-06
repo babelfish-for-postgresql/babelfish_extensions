@@ -2076,6 +2076,7 @@ match_pltsql_func_call(HeapTuple proctup, int nargs, List *argnames,
 		if (pronargs != nargs && !(*use_defaults))
 			return false;
 
+		/* Check for argument name match, generate positional mapping */
 		if (!PlTsqlMatchNamedCall(proctup, nargs, argnames,
 								  include_out_arguments, pronargs,
 								  argnumbers, defaults))
