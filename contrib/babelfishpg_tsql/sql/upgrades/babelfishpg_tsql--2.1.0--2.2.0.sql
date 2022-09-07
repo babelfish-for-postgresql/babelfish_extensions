@@ -5843,6 +5843,9 @@ GRANT EXECUTE ON FUNCTION sys.columnproperty(object_id oid, property name, prope
 
 ALTER TABLE sys.babelfish_namespace_ext RENAME TO babelfish_namespace_ext_deprecated_in_2_3_0;
 
+-- we need to drop primary key constraint also because babelfish_namespace_ext_pkey is being used from C code to perform some lokkup
+ALTER TABLE sys.babelfish_namespace_ext_deprecated_in_2_3_0 DROP CONSTRAINT babelfish_namespace_ext_pkey;
+
 -- BABELFISH_NAMESPACE_EXT
 CREATE TABLE sys.babelfish_namespace_ext (
     nspname NAME NOT NULL,
@@ -5855,6 +5858,8 @@ GRANT SELECT ON sys.babelfish_namespace_ext TO PUBLIC;
 
 INSERT INTO sys.babelfish_namespace_ext SELECT * FROM babelfish_namespace_ext_deprecated_in_2_3_0;
 SELECT pg_catalog.pg_extension_config_dump('sys.babelfish_namespace_ext', '');
+
+CALL babel_catalog_initializer();
 
 -- SYSDATABASES
 CREATE OR REPLACE VIEW sys.sysdatabases AS
@@ -5905,6 +5910,9 @@ AS
 
 ALTER TABLE sys.babelfish_authid_login_ext RENAME TO babelfish_authid_login_ext_deprecated_in_2_3_0;
 
+-- we need to drop primary key constraint also because babelfish_authid_login_ext_pkey is being used from C code to perform some lokkup
+ALTER TABLE sys.babelfish_authid_login_ext_deprecated_in_2_3_0 DROP CONSTRAINT babelfish_authid_login_ext_pkey;
+
 -- LOGIN EXT
 -- Note: change here requires change in FormData_authid_login_ext too
 CREATE TABLE sys.babelfish_authid_login_ext (
@@ -5924,6 +5932,8 @@ GRANT SELECT ON sys.babelfish_authid_login_ext TO PUBLIC;
 
 INSERT INTO sys.babelfish_authid_login_ext SELECT * FROM sys.babelfish_authid_login_ext_deprecated_in_2_3_0;
 SELECT pg_catalog.pg_extension_config_dump('sys.babelfish_authid_login_ext', '');
+
+CALL babel_catalog_initializer();
 
 -- SERVER_PRINCIPALS
 CREATE OR REPLACE VIEW sys.server_principals
@@ -5947,6 +5957,11 @@ FROM pg_catalog.pg_authid AS Base INNER JOIN sys.babelfish_authid_login_ext AS E
 
 ALTER TABLE sys.babelfish_authid_user_ext RENAME TO babelfish_authid_user_ext_deprecated_in_2_3_0;
 
+-- we need to drop primary key constraint also because babelfish_authid_user_ext_pkey is being used from C code to perform some lokkup
+ALTER TABLE sys.babelfish_authid_user_ext_deprecated_in_2_3_0 DROP CONSTRAINT babelfish_authid_user_ext_pkey;
+
+ALTER INDEX babelfish_authid_user_ext_login_db_idx RENAME TO babelfish_authid_user_ext_login_db_idx_deprecated_in_2_3_0;
+
 -- USER extension
 CREATE TABLE sys.babelfish_authid_user_ext (
 rolname NAME NOT NULL,
@@ -5966,11 +5981,12 @@ default_language_name SYS.NVARCHAR(128),
 authentication_type_desc SYS.NVARCHAR(60),
 PRIMARY KEY (rolname));
 
-ALTER INDEX babelfish_authid_user_ext_login_db_idx RENAME TO babelfish_authid_user_ext_login_db_idx_deprecated_in_2_3_0;
-
 CREATE INDEX babelfish_authid_user_ext_login_db_idx ON sys.babelfish_authid_user_ext (login_name, database_name);
+GRANT SELECT ON sys.babelfish_authid_user_ext TO PUBLIC;
 
 INSERT INTO sys.babelfish_authid_user_ext SELECT * FROM sys.babelfish_authid_user_ext_deprecated_in_2_3_0;
+
+CALL babel_catalog_initializer();
 
 -- DATABASE_PRINCIPALS
 CREATE OR REPLACE VIEW sys.database_principals AS SELECT
@@ -5996,6 +6012,23 @@ ON Base.rolname = Ext.rolname
 LEFT OUTER JOIN pg_catalog.pg_roles Base2
 ON Ext.login_name = Base2.rolname
 WHERE Ext.database_name = DB_NAME();
+
+-- DATABASE_ROLE_MEMBERS
+CREATE OR REPLACE VIEW sys.database_role_members AS
+SELECT
+CAST(Auth1.oid AS INT) AS role_principal_id,
+CAST(Auth2.oid AS INT) AS member_principal_id
+FROM pg_catalog.pg_auth_members AS Authmbr
+INNER JOIN pg_catalog.pg_authid AS Auth1 ON Auth1.oid = Authmbr.roleid
+INNER JOIN pg_catalog.pg_authid AS Auth2 ON Auth2.oid = Authmbr.member
+INNER JOIN sys.babelfish_authid_user_ext AS Ext1 ON Auth1.rolname = Ext1.rolname
+INNER JOIN sys.babelfish_authid_user_ext AS Ext2 ON Auth2.rolname = Ext2.rolname
+WHERE Ext1.database_name = DB_NAME()
+AND Ext2.database_name = DB_NAME()
+AND Ext1.type = 'R'
+AND Ext2.orig_username != 'db_owner';
+
+GRANT SELECT ON sys.database_role_members TO PUBLIC;
 
 create or replace view sys.databases as
 select
@@ -9230,6 +9263,23 @@ SELECT
   , cast( sys.collationproperty( (select setting FROM pg_settings WHERE name = 'babelfishpg_tsql.server_collation_name') , 'lcid') as int )
     as "os_language_version";
 
+CREATE OR REPLACE VIEW sys.sp_column_privileges_view AS
+SELECT
+CAST(t2.dbname AS sys.sysname) AS TABLE_QUALIFIER,
+CAST(s1.name AS sys.sysname) AS TABLE_OWNER,
+CAST(t1.relname AS sys.sysname) AS TABLE_NAME,
+CAST(COALESCE(SPLIT_PART(t6.attoptions[1] collate "C", '=', 2), t5.column_name collate "C") AS sys.sysname) AS COLUMN_NAME,
+CAST((select orig_username from sys.babelfish_authid_user_ext where rolname = t5.grantor::name) AS sys.sysname) AS GRANTOR,
+CAST((select orig_username from sys.babelfish_authid_user_ext where rolname = t5.grantee::name) AS sys.sysname) AS GRANTEE,
+CAST(t5.privilege_type AS sys.varchar(32)) AS PRIVILEGE,
+CAST(t5.is_grantable AS sys.varchar(3)) AS IS_GRANTABLE
+FROM pg_catalog.pg_class t1 
+	JOIN sys.pg_namespace_ext t2 ON t1.relnamespace = t2.oid
+	JOIN sys.schemas s1 ON s1.schema_id = t1.relnamespace
+	JOIN information_schema.column_privileges t5 ON t1.relname = t5.table_name AND t2.nspname = t5.table_schema
+	JOIN pg_attribute t6 ON t6.attrelid = t1.oid AND t6.attname = t5.column_name;
+GRANT SELECT ON sys.sp_column_privileges_view TO PUBLIC;
+
 CREATE OR REPLACE VIEW sys.sp_table_privileges_view AS
 -- Will use sp_column_priivleges_view to get information from SELECT, INSERT and REFERENCES (only need permission from 1 column in table)
 SELECT DISTINCT
@@ -9499,6 +9549,164 @@ FROM pg_catalog.pg_namespace n
 JOIN pg_catalog.pg_proc p
 ON pronamespace = n.oid
 WHERE nspname = 'sys' AND (proname LIKE 'sp\_%' OR proname LIKE 'xp\_%' OR proname LIKE 'dm\_%' OR proname LIKE 'fn\_%');
+
+CREATE OR REPLACE PROCEDURE sys.sp_stored_procedures(
+    "@sp_name" sys.nvarchar(390) = '',
+    "@sp_owner" sys.nvarchar(384) = '',
+    "@sp_qualifier" sys.sysname = '',
+    "@fusepattern" sys.bit = '1'
+)
+AS $$
+BEGIN
+ IF (@sp_qualifier != '') AND LOWER(sys.db_name()) != LOWER(@sp_qualifier)
+ BEGIN
+  THROW 33557097, N'The database name component of the object qualifier must be the name of the current database.', 1;
+ END
+
+ -- If @sp_name or @sp_owner = '%', it gets converted to NULL or '' regardless of @fusepattern
+ IF @sp_name = '%'
+ BEGIN
+  SELECT @sp_name = ''
+ END
+
+ IF @sp_owner = '%'
+ BEGIN
+  SELECT @sp_owner = ''
+ END
+
+ -- Changes fusepattern to 0 if no wildcards are used. NOTE: Need to add [] wildcard pattern when it is implemented. Wait for BABEL-2452
+ IF @fusepattern = 1
+ BEGIN
+  IF (CHARINDEX('%', @sp_name) != 0 AND CHARINDEX('_', @sp_name) != 0 AND CHARINDEX('%', @sp_owner) != 0 AND CHARINDEX('_', @sp_owner) != 0 )
+  BEGIN
+   SELECT @fusepattern = 0;
+  END
+ END
+
+ -- Condition for when sp_name argument is not given or is null, or is just a wildcard (same order)
+ IF COALESCE(@sp_name, '') = ''
+ BEGIN
+  IF @fusepattern=1
+  BEGIN
+   SELECT
+   PROCEDURE_QUALIFIER,
+   PROCEDURE_OWNER,
+   PROCEDURE_NAME,
+   NUM_INPUT_PARAMS,
+   NUM_OUTPUT_PARAMS,
+   NUM_RESULT_SETS,
+   REMARKS,
+   PROCEDURE_TYPE FROM sys.sp_stored_procedures_view
+   WHERE ((SELECT COALESCE(@sp_owner,'')) = '' OR LOWER(procedure_owner) LIKE LOWER(@sp_owner))
+   ORDER BY procedure_qualifier, procedure_owner, procedure_name;
+  END
+  ELSE
+  BEGIN
+   SELECT
+   PROCEDURE_QUALIFIER,
+   PROCEDURE_OWNER,
+   PROCEDURE_NAME,
+   NUM_INPUT_PARAMS,
+   NUM_OUTPUT_PARAMS,
+   NUM_RESULT_SETS,
+   REMARKS,
+   PROCEDURE_TYPE FROM sys.sp_stored_procedures_view
+   WHERE ((SELECT COALESCE(@sp_owner,'')) = '' OR LOWER(procedure_owner) LIKE LOWER(@sp_owner))
+   ORDER BY procedure_qualifier, procedure_owner, procedure_name;
+  END
+ END
+ -- When @sp_name is not null
+ ELSE
+ BEGIN
+  -- When sp_owner is null and fusepattern = 0
+  IF (@fusepattern = 0 AND COALESCE(@sp_owner,'') = '')
+  BEGIN
+   IF EXISTS ( -- Search in the sys schema
+     SELECT * FROM sys.sp_stored_procedures_view
+     WHERE (LOWER(LEFT(procedure_name, -2)) = LOWER(@sp_name))
+      AND (LOWER(procedure_owner) = 'sys'))
+   BEGIN
+    SELECT PROCEDURE_QUALIFIER,
+    PROCEDURE_OWNER,
+    PROCEDURE_NAME,
+    NUM_INPUT_PARAMS,
+    NUM_OUTPUT_PARAMS,
+    NUM_RESULT_SETS,
+    REMARKS,
+    PROCEDURE_TYPE FROM sys.sp_stored_procedures_view
+    WHERE (LOWER(LEFT(procedure_name, -2)) = LOWER(@sp_name))
+     AND (LOWER(procedure_owner) = 'sys')
+    ORDER BY procedure_qualifier, procedure_owner, procedure_name;
+   END
+   ELSE IF EXISTS (
+    SELECT * FROM sys.sp_stored_procedures_view
+    WHERE (LOWER(LEFT(procedure_name, -2)) = LOWER(@sp_name))
+     AND (LOWER(procedure_owner) = LOWER(SCHEMA_NAME()))
+     )
+   BEGIN
+    SELECT PROCEDURE_QUALIFIER,
+    PROCEDURE_OWNER,
+    PROCEDURE_NAME,
+    NUM_INPUT_PARAMS,
+    NUM_OUTPUT_PARAMS,
+    NUM_RESULT_SETS,
+    REMARKS,
+    PROCEDURE_TYPE FROM sys.sp_stored_procedures_view
+    WHERE (LOWER(LEFT(procedure_name, -2)) = LOWER(@sp_name))
+     AND (LOWER(procedure_owner) = LOWER(SCHEMA_NAME()))
+    ORDER BY procedure_qualifier, procedure_owner, procedure_name;
+   END
+   ELSE -- Search in the dbo schema (if nothing exists it should just return nothing).
+   BEGIN
+    SELECT PROCEDURE_QUALIFIER,
+    PROCEDURE_OWNER,
+    PROCEDURE_NAME,
+    NUM_INPUT_PARAMS,
+    NUM_OUTPUT_PARAMS,
+    NUM_RESULT_SETS,
+    REMARKS,
+    PROCEDURE_TYPE FROM sys.sp_stored_procedures_view
+    WHERE (LOWER(LEFT(procedure_name, -2)) = LOWER(@sp_name))
+     AND (LOWER(procedure_owner) = 'dbo')
+    ORDER BY procedure_qualifier, procedure_owner, procedure_name;
+   END
+
+  END
+  ELSE IF (@fusepattern = 0 AND COALESCE(@sp_owner,'') != '')
+  BEGIN
+   SELECT
+   PROCEDURE_QUALIFIER,
+   PROCEDURE_OWNER,
+   PROCEDURE_NAME,
+   NUM_INPUT_PARAMS,
+   NUM_OUTPUT_PARAMS,
+   NUM_RESULT_SETS,
+   REMARKS,
+   PROCEDURE_TYPE FROM sys.sp_stored_procedures_view
+   WHERE (LOWER(LEFT(procedure_name, -2)) = LOWER(@sp_name))
+    AND (LOWER(procedure_owner) = LOWER(@sp_owner))
+   ORDER BY procedure_qualifier, procedure_owner, procedure_name;
+  END
+  ELSE -- fusepattern = 1
+  BEGIN
+   SELECT
+   PROCEDURE_QUALIFIER,
+   PROCEDURE_OWNER,
+   PROCEDURE_NAME,
+   NUM_INPUT_PARAMS,
+   NUM_OUTPUT_PARAMS,
+   NUM_RESULT_SETS,
+   REMARKS,
+   PROCEDURE_TYPE FROM sys.sp_stored_procedures_view
+   WHERE ((SELECT COALESCE(@sp_name,'')) = '' OR LOWER(LEFT(procedure_name, -2)) LIKE LOWER(@sp_name))
+    AND ((SELECT COALESCE(@sp_owner,'')) = '' OR LOWER(procedure_owner) LIKE LOWER(@sp_owner))
+   ORDER BY procedure_qualifier, procedure_owner, procedure_name;
+  END
+ END
+END;
+$$
+LANGUAGE 'pltsql';
+GRANT EXECUTE on PROCEDURE sys.sp_stored_procedures TO PUBLIC;
 
 CREATE OR REPLACE VIEW sys.sp_sproc_columns_view AS
 -- Get parameters (if any) for a user-defined stored procedure/function
@@ -9795,7 +10003,91 @@ SELECT
   AND has_schema_privilege(proc.specific_schema, 'USAGE')
  );
 
+CREATE OR REPLACE PROCEDURE sys.sp_sproc_columns(
+	"@procedure_name" sys.nvarchar(390) = '%',
+	"@procedure_owner" sys.nvarchar(384) = NULL,
+	"@procedure_qualifier" sys.sysname = NULL,
+	"@column_name" sys.nvarchar(384) = NULL,
+	"@odbcver" int = 2,
+	"@fusepattern" sys.bit = '1'
+)	
+AS $$
+	SELECT @procedure_name = LOWER(COALESCE(@procedure_name, ''))
+	SELECT @procedure_owner = LOWER(COALESCE(@procedure_owner, ''))
+	SELECT @procedure_qualifier = LOWER(COALESCE(@procedure_qualifier, ''))
+	SELECT @column_name = LOWER(COALESCE(@column_Name, ''))
+BEGIN 
+	IF (@procedure_qualifier != '' AND (SELECT LOWER(sys.db_name())) != @procedure_qualifier)
+		BEGIN
+			THROW 33557097, N'The database name component of the object qualifier must be the name of the current database.', 1;
+ 	   	END
+	IF @fusepattern = '1'
+		BEGIN
+			SELECT PROCEDURE_QUALIFIER,
+					PROCEDURE_OWNER,
+					PROCEDURE_NAME,
+					COLUMN_NAME,
+					COLUMN_TYPE,
+					DATA_TYPE,
+					TYPE_NAME,
+					PRECISION,
+					LENGTH,
+					SCALE,
+					RADIX,
+					NULLABLE,
+					REMARKS,
+					COLUMN_DEF,
+					SQL_DATA_TYPE,
+					SQL_DATETIME_SUB,
+					CHAR_OCTET_LENGTH,
+					ORDINAL_POSITION,
+					IS_NULLABLE,
+					SS_DATA_TYPE
+			FROM sys.sp_sproc_columns_view
+			WHERE (@procedure_name = '' OR original_procedure_name LIKE @procedure_name COLLATE database_default )
+				AND (@procedure_owner = '' OR procedure_owner LIKE @procedure_owner COLLATE database_default )
+				AND (@column_name = '' OR column_name LIKE @column_name COLLATE database_default )
+				AND (@procedure_qualifier = '' OR procedure_qualifier = @procedure_qualifier COLLATE database_default )
+			ORDER BY procedure_qualifier, procedure_owner, procedure_name, ordinal_position;
+		END
+	ELSE
+		BEGIN
+			SELECT PROCEDURE_QUALIFIER,
+					PROCEDURE_OWNER,
+					PROCEDURE_NAME,
+					COLUMN_NAME,
+					COLUMN_TYPE,
+					DATA_TYPE,
+					TYPE_NAME,
+					PRECISION,
+					LENGTH,
+					SCALE,
+					RADIX,
+					NULLABLE,
+					REMARKS,
+					COLUMN_DEF,
+					SQL_DATA_TYPE,
+					SQL_DATETIME_SUB,
+					CHAR_OCTET_LENGTH,
+					ORDINAL_POSITION,
+					IS_NULLABLE,
+					SS_DATA_TYPE
+			FROM sys.sp_sproc_columns_view
+			WHERE (@procedure_name = '' OR original_procedure_name = @procedure_name)
+				AND (@procedure_owner = '' OR procedure_owner = @procedure_owner)
+				AND (@column_name = '' OR column_name = @column_name)
+				AND (@procedure_qualifier = '' OR procedure_qualifier = @procedure_qualifier)
+			ORDER BY procedure_qualifier, procedure_owner, procedure_name, ordinal_position;
+		END
+END; 
+$$
+LANGUAGE 'pltsql';
+GRANT ALL ON PROCEDURE sys.sp_sproc_columns TO PUBLIC;
+
 ALTER TABLE sys.babelfish_view_def RENAME TO babelfish_view_def_deprecated_in_2_3_0;
+
+-- we need to drop primary key constraint also because babelfish_view_def_pkey is being used from C code to perform some lokkup
+ALTER TABLE sys.babelfish_view_def_deprecated_in_2_3_0 DROP CONSTRAINT babelfish_view_def_pkey;
 
 CREATE TABLE sys.babelfish_view_def (
 	dbid SMALLINT NOT NULL,
@@ -9811,6 +10103,8 @@ GRANT SELECT ON sys.babelfish_view_def TO PUBLIC;
 
 INSERT INTO sys.babelfish_view_def SELECT * FROM sys.babelfish_view_def_deprecated_in_2_3_0;
 SELECT pg_catalog.pg_extension_config_dump('sys.babelfish_view_def', '');
+
+CALL babel_catalog_initializer();
 
 CREATE OR REPLACE VIEW information_schema_tsql.views AS
  SELECT CAST(nc.dbname AS sys.nvarchar(128)) AS "TABLE_CATALOG",

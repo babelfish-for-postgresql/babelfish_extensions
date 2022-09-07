@@ -1415,8 +1415,8 @@ CAST(t2.dbname AS sys.sysname) AS TABLE_QUALIFIER,
 CAST(s1.name AS sys.sysname) AS TABLE_OWNER,
 CAST(t1.relname AS sys.sysname) AS TABLE_NAME,
 CAST(COALESCE(SPLIT_PART(t6.attoptions[1] collate "C", '=', 2), t5.column_name collate "C") AS sys.sysname) AS COLUMN_NAME,
-CAST((select orig_username from sys.babelfish_authid_user_ext where rolname = t5.grantor) AS sys.sysname) AS GRANTOR,
-CAST((select orig_username from sys.babelfish_authid_user_ext where rolname = t5.grantee) AS sys.sysname) AS GRANTEE,
+CAST((select orig_username from sys.babelfish_authid_user_ext where rolname = t5.grantor::name) AS sys.sysname) AS GRANTOR,
+CAST((select orig_username from sys.babelfish_authid_user_ext where rolname = t5.grantee::name) AS sys.sysname) AS GRANTEE,
 CAST(t5.privilege_type AS sys.varchar(32)) AS PRIVILEGE,
 CAST(t5.is_grantable AS sys.varchar(3)) AS IS_GRANTABLE
 FROM pg_catalog.pg_class t1 
@@ -2848,9 +2848,9 @@ BEGIN
 					IS_NULLABLE,
 					SS_DATA_TYPE
 			FROM sys.sp_sproc_columns_view
-			WHERE (@procedure_name = '' OR original_procedure_name ILIKE @procedure_name COLLATE database_default )
-				AND (@procedure_owner = '' OR procedure_owner ILIKE @procedure_owner COLLATE database_default )
-				AND (@column_name = '' OR column_name ILIKE @column_name COLLATE database_default )
+			WHERE (@procedure_name = '' OR original_procedure_name LIKE @procedure_name COLLATE database_default )
+				AND (@procedure_owner = '' OR procedure_owner LIKE @procedure_owner COLLATE database_default )
+				AND (@column_name = '' OR column_name LIKE @column_name COLLATE database_default )
 				AND (@procedure_qualifier = '' OR procedure_qualifier = @procedure_qualifier COLLATE database_default )
 			ORDER BY procedure_qualifier, procedure_owner, procedure_name, ordinal_position;
 		END
