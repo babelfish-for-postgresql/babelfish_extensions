@@ -2280,7 +2280,7 @@ BEGIN
                 THEN CASE 
                     WHEN (SELECT count(name) 
                         FROM sys.all_columns 
-                        WHERE name = cs_as_sub_securable
+                        WHERE name = cs_as_sub_securable COLLATE sys.database_default
                             -- Use V as the object type to specify that the securable is table-like.
                             -- We don't know that the securable is a view, but object_id behaves the 
                             -- same for differint table-like types, so V can be arbitrarily chosen.
