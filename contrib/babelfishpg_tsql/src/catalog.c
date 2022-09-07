@@ -1287,6 +1287,8 @@ static Datum get_login_rolname(HeapTuple tuple, TupleDesc dsc);
 static Datum get_default_database_name(HeapTuple tuple, TupleDesc dsc);
 static Datum get_user_rolname(HeapTuple tuple, TupleDesc dsc);
 static Datum get_database_name(HeapTuple tuple, TupleDesc dsc);
+static Datum get_function_nspname(HeapTuple tuple, TupleDesc dsc);
+static Datum get_function_name(HeapTuple tuple, TupleDesc dsc);
 /* Condition function declaration */
 static bool is_multidb(void);
 static bool is_singledb_exists_userdb(void);
@@ -1309,12 +1311,13 @@ static void get_catalog_info(Rule *rule);
  *****************************************/
 RelData catalog_data[] = 
 {
-	{"babelfish_sysdatabases", InvalidOid, InvalidOid, InvalidOid, Anum_sysdatabaese_name, F_TEXTEQ},
-	{"babelfish_namespace_ext", InvalidOid, InvalidOid, InvalidOid, Anum_namespace_ext_namespace, F_NAMEEQ},
-	{"babelfish_authid_login_ext", InvalidOid, InvalidOid, InvalidOid, Anum_bbf_authid_login_ext_rolname, F_NAMEEQ},
-	{"babelfish_authid_user_ext", InvalidOid, InvalidOid, InvalidOid, Anum_bbf_authid_user_ext_rolname, F_NAMEEQ},
-	{"pg_namespace", InvalidOid, InvalidOid, InvalidOid, Anum_pg_namespace_nspname, F_NAMEEQ},
-	{"pg_authid", InvalidOid, InvalidOid, InvalidOid, Anum_pg_authid_rolname, F_NAMEEQ}
+	{"babelfish_sysdatabases", InvalidOid, InvalidOid, true, InvalidOid, Anum_sysdatabaese_name, F_TEXTEQ},
+	{"babelfish_namespace_ext", InvalidOid, InvalidOid, true, InvalidOid, Anum_namespace_ext_namespace, F_NAMEEQ},
+	{"babelfish_authid_login_ext", InvalidOid, InvalidOid, true, InvalidOid, Anum_bbf_authid_login_ext_rolname, F_NAMEEQ},
+	{"babelfish_authid_user_ext", InvalidOid, InvalidOid, true, InvalidOid, Anum_bbf_authid_user_ext_rolname, F_NAMEEQ},
+	{"pg_namespace", InvalidOid, InvalidOid, true, InvalidOid, Anum_pg_namespace_nspname, F_NAMEEQ},
+	{"pg_authid", InvalidOid, InvalidOid, true, InvalidOid, Anum_pg_authid_rolname, F_NAMEEQ},
+	{"pg_proc", InvalidOid, InvalidOid, false, InvalidOid, Anum_pg_proc_proname, F_NAMEEQ}
 };
 	
 /*****************************************
@@ -1408,6 +1411,15 @@ Rule must_match_rules_user[] =
 	{"<database_name> in babelfish_authid_user_ext must also exist in babelfish_sysdatabases",
 	 "babelfish_sysdatabases", "name", NULL, get_database_name, NULL, check_exist, NULL}
 };
+
+/* babelfish_function_ext */
+Rule must_match_rules_function[] = 
+{
+	{"<nspname> in babelfish_function_ext must also exist in babelfish_namespace_ext",
+	 "babelfish_namespace_ext", "nspname", NULL, get_function_nspname, NULL, check_exist, NULL},
+	{"<funcname> in babelfish_function_ext must also exist in pg_proc",
+	 "pg_proc", "proname", NULL, get_function_name, NULL, check_exist, NULL}
+};
 	
 /*****************************************
  * 			Core function
@@ -1495,6 +1507,7 @@ metadata_inconsistency_check(Tuplestorestate *res_tupstore, TupleDesc res_tupdes
 	size_t num_must_match_rules_nsp = sizeof(must_match_rules_nsp) / sizeof(must_match_rules_nsp[0]);
 	size_t num_must_match_rules_login = sizeof(must_match_rules_login) / sizeof(must_match_rules_login[0]);
 	size_t num_must_match_rules_user = sizeof(must_match_rules_user) / sizeof(must_match_rules_user[0]);
+	size_t num_must_match_rules_function = sizeof(must_match_rules_function) / sizeof(must_match_rules_function[0]);
 
 	/* Initialize the catalog_data array to fetch catalog info */
 	init_catalog_data();
@@ -1520,6 +1533,9 @@ metadata_inconsistency_check(Tuplestorestate *res_tupstore, TupleDesc res_tupdes
 		||
 		!(check_must_match_rules(must_match_rules_user, num_must_match_rules_user,
 								 bbf_authid_user_ext_oid, res_tupstore, res_tupdesc))
+		||
+		!(check_must_match_rules(must_match_rules_function, num_must_match_rules_function,
+								 bbf_function_ext_oid, res_tupstore, res_tupdesc))
 	)
 		return;
 }
@@ -1786,6 +1802,20 @@ get_database_name(HeapTuple tuple, TupleDesc dsc)
 	return dbname;
 }
 
+static Datum
+get_function_nspname(HeapTuple tuple, TupleDesc dsc)
+{
+	Form_bbf_function_ext func = ((Form_bbf_function_ext) GETSTRUCT(tuple));
+	return NameGetDatum(&(func->schema));
+}
+
+static Datum
+get_function_name(HeapTuple tuple, TupleDesc dsc)
+{
+	Form_bbf_function_ext func = ((Form_bbf_function_ext) GETSTRUCT(tuple));
+	return NameGetDatum(&(func->funcname));
+}
+
 /*****************************************
  * 			Condition check funcs
  *****************************************/
@@ -1834,7 +1864,7 @@ check_exist(void *arg, HeapTuple tuple)
 				rule->tbldata->regproc, 
 				datum);
 
-	scan = systable_beginscan(rel, rule->tbldata->idx_oid, true, NULL, 1, &scanKey);
+	scan = systable_beginscan(rel, rule->tbldata->idx_oid, rule->tbldata->index_ok, NULL, 1, &scanKey);
 
 	/* The rule passes if we found the wanted datum in the catalog */
 	found = (HeapTupleIsValid(systable_getnext(scan)));
@@ -1928,6 +1958,12 @@ init_catalog_data(void)
 			catalog_data[i].tbl_oid = AuthIdRelationId;
 			catalog_data[i].idx_oid = AuthIdRolnameIndexId;
 			catalog_data[i].atttype = get_atttype(AuthIdRelationId, Anum_pg_authid_rolname);
+		}
+		else if (strcmp(catalog_data[i].tblname, "pg_proc") == 0)
+		{
+			catalog_data[i].tbl_oid = ProcedureRelationId;
+			catalog_data[i].idx_oid = InvalidOid;
+			catalog_data[i].atttype = get_atttype(ProcedureRelationId, Anum_pg_proc_proname);
 		}
 		else
 			ereport(ERROR,

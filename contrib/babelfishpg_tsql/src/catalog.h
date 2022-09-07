@@ -244,6 +244,7 @@ typedef struct RelData
 	const char		*tblname;	/* table name */
 	Oid				tbl_oid;	/* table oid */
 	Oid				idx_oid;	/* index oid */
+	bool			index_ok;	/* if false, forces a heap scan */
 	Oid				atttype;	/* index column's type oid */
 	AttrNumber		attnum;		/* index column's attribute num */
 	RegProcedure	regproc;	/* regproc used to scan through the index */
