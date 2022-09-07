@@ -48,8 +48,8 @@ ORDER BY default_schema_name DESC, name;
 GO
 ~~START~~
 varchar#!#varchar
-db_owner#!#
 dbo#!#dbo
+db_owner#!#
 guest#!#
 ~~END~~
 
