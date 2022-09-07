@@ -77,7 +77,6 @@ Oid			bbf_function_ext_idx_oid;
  *****************************************/
 
 static bool tsql_syscache_inited = false;
-static bool bbf_function_ext_syscache_inited = false;
 extern bool babelfish_dump_restore;
 
 static struct cachedesc my_cacheinfo[] = {
@@ -1183,7 +1182,7 @@ clean_up_bbf_function_ext(int16 dbid)
 	AttrNumber		attnum;
 	HeapTuple		scantup;
 	ScanKeyData		scanKey[1];
-	SysScanDesc		scan;
+	TableScanDesc	scan;
 
 	/* Fetch the relations */
 	namespace_rel = table_open(namespace_ext_oid, AccessShareLock);
