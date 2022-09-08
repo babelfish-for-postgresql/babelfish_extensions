@@ -208,6 +208,9 @@ The following build instructions comply with Ubuntu 20.04 and Amazon Linux 2 env
       ```
 # How to run the JDBC regression tests?
 1. Install Maven: https://maven.apache.org/install.html
+    - Navigate to the Downloads section of the website and copy either the tar.gz or zip binary archive from the link column and run `wget paste_link_here`
+    - Return to the original page by clicking Use > Install and follow the provided installation instructions
+    - Note: make sure `apache-maven-{version}` is in the same location as is specified in the PATH variable
 2. cd to test/JDBC
       ```
       cd test/JDBC
