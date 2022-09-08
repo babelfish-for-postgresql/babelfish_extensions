@@ -5173,7 +5173,7 @@ post_process_column_constraint(TSqlParser::Column_constraintContext *ctx, PLtsql
 }
 
 static void
-post_process_column_inline_index(TSqlParser::Column_inline_indexContext *ctx, PLtsql_stmt_execsql *stmt, TSqlParser::Ddl_statementContext *baseCtx)
+post_process_inline_index(TSqlParser::Inline_indexContext *ctx, PLtsql_stmt_execsql *stmt, TSqlParser::Ddl_statementContext *baseCtx)
 {
 	if (ctx->ON())
 	{
@@ -5233,8 +5233,8 @@ post_process_column_definition(TSqlParser::Column_definitionContext *ctx, PLtsql
 	if (pg_strncasecmp(::getFullText(ctx->data_type()).c_str(), "DATETIMEOFFSET(7)", 17) == 0)
 		rewritten_query_fragment.emplace(std::make_pair(ctx->data_type()->start->getStartIndex(), std::make_pair(::getFullText(ctx->data_type()), "DATETIMEOFFSET")));
 	 
-	if (ctx->column_inline_index())
-		post_process_column_inline_index(ctx->column_inline_index(), stmt, baseCtx);
+	if (ctx->inline_index())
+		post_process_inline_index(ctx->inline_index(), stmt, baseCtx);
 
 	for (auto cctx : ctx->column_constraint())
 		post_process_column_constraint(cctx, stmt, baseCtx);
@@ -5320,19 +5320,14 @@ post_process_create_table(TSqlParser::Create_tableContext *ctx, PLtsql_stmt_exec
 		post_process_column_definition(cdctx, stmt, baseCtx);
 
 	// viist options in index specification
-	for (auto ictx : ctx->table_indices())
+	for (auto ictx : ctx->inline_index())
 	{
-		if (ictx->ON())
-		{
-			Assert(ictx->storage_partition_clause());
-			removeTokenStringFromQuery(stmt->sqlstmt, ictx->ON(), baseCtx);
-			removeCtxStringFromQuery(stmt->sqlstmt, ictx->storage_partition_clause(), baseCtx);
-		}
+		post_process_inline_index(ictx, stmt, baseCtx);
+	}
 
-		if (ictx->clustered() && ictx->clustered()->CLUSTERED())
-			removeTokenStringFromQuery(stmt->sqlstmt, ictx->clustered()->CLUSTERED(), baseCtx);
-		if (ictx->clustered() && ictx->clustered()->NONCLUSTERED())
-			removeTokenStringFromQuery(stmt->sqlstmt, ictx->clustered()->NONCLUSTERED(), baseCtx);
+	for (auto ictx : ctx->table_constraint())
+	{
+		post_process_table_constraint(ictx, stmt, baseCtx);
 	}
 	return false;
 }

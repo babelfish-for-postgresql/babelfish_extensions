@@ -155,7 +155,7 @@ protected:
 
 		// common clauses used in CREATE/ALTER TABLE/INDEX
 		antlrcpp::Any visitColumn_constraint(TSqlParser::Column_constraintContext *ctx) override;
-		antlrcpp::Any visitColumn_inline_index(TSqlParser::Column_inline_indexContext *ctx) override;
+		antlrcpp::Any visitInline_index(TSqlParser::Inline_indexContext *ctx) override;
 		antlrcpp::Any visitSpecial_column_option(TSqlParser::Special_column_optionContext *ctx) override;
 		antlrcpp::Any visitColumn_definition(TSqlParser::Column_definitionContext *ctx) override;
 		antlrcpp::Any visitIndex_option(TSqlParser::Index_optionContext *ctx) override;
@@ -515,7 +515,7 @@ antlrcpp::Any TsqlUnsupportedFeatureHandlerImpl::visitColumn_constraint(TSqlPars
 	return visitChildren(ctx);
 }
 
-antlrcpp::Any TsqlUnsupportedFeatureHandlerImpl::visitColumn_inline_index(TSqlParser::Column_inline_indexContext *ctx)
+antlrcpp::Any TsqlUnsupportedFeatureHandlerImpl::visitInline_index(TSqlParser::Inline_indexContext *ctx)
 {
 	if (ctx->ON())
 		handle_storage_partition(ctx->storage_partition_clause()[0]);
@@ -557,7 +557,7 @@ antlrcpp::Any TsqlUnsupportedFeatureHandlerImpl::visitSpecial_column_option(TSql
 
 antlrcpp::Any TsqlUnsupportedFeatureHandlerImpl::visitColumn_definition(TSqlParser::Column_definitionContext *ctx)
 {
-	// ctx->column_inline_index() will be handled by visitColumn_inline_index(). do nothing here.
+	// ctx->inline_index() will be handled by visitInline_index(). do nothing here.
 
 	// ctx->column_constraint() will be handled by visitColumn_constraint(). do nothing here.
 
@@ -678,7 +678,16 @@ antlrcpp::Any TsqlUnsupportedFeatureHandlerImpl::visitCreate_table(TSqlParser::C
 
 	// ctx->column_definition() will be handled by visitColumn_definition(). do nothing here.
 
-	for (auto ictx : ctx->table_indices())
+	for (auto ictx : ctx->inline_index())
+	{
+		if (ictx->ON())
+			if (ictx->storage_partition_clause().size() > 0)
+			    handle_storage_partition(ictx->storage_partition_clause()[0]);
+
+		if (ictx->clustered() && ictx->clustered()->CLUSTERED())
+			handle(INSTR_UNSUPPORTED_TSQL_COLUMN_OPTION_CLUSTERED, ictx->clustered()->CLUSTERED(), &st_escape_hatch_index_clustering);
+	}
+	for (auto ictx : ctx->table_constraint())
 	{
 		if (ictx->ON())
 			handle_storage_partition(ictx->storage_partition_clause());
