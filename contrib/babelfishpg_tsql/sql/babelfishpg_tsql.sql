@@ -2487,8 +2487,8 @@ BEGIN
 	-- If a valid server role is specified, return its member info
 	ELSE IF EXISTS (SELECT 1
 					FROM sys.babelfish_authid_login_ext
-					WHERE (rolname = @srvrolename
-					OR lower(rolname) = lower(@srvrolename))
+					WHERE (rolname = RTRIM(@srvrolename)
+					OR lower(rolname) = lower(RTRIM(@srvrolename)))
 					AND type = 'R')
 	BEGIN
 		SELECT CAST(Ext1.rolname AS sys.SYSNAME) AS 'ServerRole',
