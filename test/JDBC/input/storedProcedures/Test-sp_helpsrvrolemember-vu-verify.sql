@@ -28,5 +28,19 @@ GO
 SELECT ServerRole, MemberName, (CASE WHEN MemberSID IS NULL THEN 0 ELSE 1 END) FROM test_sp_helpsrvrolemember_tbl
 GO
 
+Insert into table () exec sp_helpsrvrolemember 'sysadmin    '
+GO
+
+SELECT from table ..
+GO
+
+truncate 
+
+ Insert into table () exec sp_helpsrvrolemember 'securityadmin'
+GO
+
+Select from
+go
+
 EXEC sp_helpsrvrolemember 'error'
 GO

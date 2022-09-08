@@ -2505,7 +2505,7 @@ BEGIN
 	END
 	-- If the specified server role is not valid
 	ELSE
-		RAISERROR('%s is not a known fixed role.', 16, 1, @srvrolename);
+		RAISERROR('%s dummy change.', 16, 1, @srvrolename);
 END;
 $$
 LANGUAGE 'pltsql';

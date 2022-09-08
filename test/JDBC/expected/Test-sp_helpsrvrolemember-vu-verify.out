@@ -54,5 +54,5 @@ EXEC sp_helpsrvrolemember 'error'
 GO
 ~~ERROR (Code: 50000)~~
 
-~~ERROR (Message: error is not a known fixed role.)~~
+~~ERROR (Message: error dummy change.)~~
 
