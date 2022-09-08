@@ -352,6 +352,8 @@ typedef struct NumericSumAccum
 	Struct referenced from utils/adt/numeric.c
 	It is needed to get the state returned by SUM(bigint) transition function
 */
+
+#ifdef HAVE_INT128
 typedef struct Int128AggState
 {
 	bool		calcSumX2;		/* if true, calculate sumX2 */
@@ -359,6 +361,24 @@ typedef struct Int128AggState
 	int128		sumX;			/* sum of processed numbers */
 	int128		sumX2;			/* sum of squares of processed numbers */
 } Int128AggState;
+typedef Int128AggState PolyNumAggState;
+#else
+typedef struct NumericAggState
+{
+	bool		calcSumX2;		/* if true, calculate sumX2 */
+	MemoryContext agg_context;	/* context we're calculating in */
+	int64		N;				/* count of processed numbers */
+	NumericSumAccum sumX;		/* sum of processed numbers */
+	NumericSumAccum sumX2;		/* sum of squares of processed numbers */
+	int			maxScale;		/* maximum scale seen so far */
+	int64		maxScaleCount;	/* number of values seen with maximum scale */
+	/* These counts are *not* included in N!  Use NA_TOTAL_COUNT() as needed */
+	int64		NaNcount;		/* count of NaN values */
+	int64		pInfcount;		/* count of +Inf values */
+	int64		nInfcount;		/* count of -Inf values */
+} NumericAggState;
+typedef NumericAggState PolyNumAggState;
+#endif
 
 /*
  * We define our own macros for packing and unpacking abbreviated-key
@@ -417,8 +437,8 @@ static const int round_powers[4] = {0, 1000, 100, 10};
 
 PG_FUNCTION_INFO_V1(tsql_numeric_round);
 PG_FUNCTION_INFO_V1(tsql_numeric_trunc);
-PG_FUNCTION_INFO_V1(bigint_sum);
-PG_FUNCTION_INFO_V1(int_smallint_sum);
+PG_FUNCTION_INFO_V1(bigint_poly_sum);
+PG_FUNCTION_INFO_V1(int4int2_sum);
 
 static void alloc_var(NumericVar *var, int ndigits);
 static void free_var(NumericVar *var);
@@ -426,7 +446,9 @@ static const char *set_var_from_str(const char *str, const char *cp,
 				 NumericVar *dest);
 static Numeric make_result(const NumericVar *var);
 static void strip_var(NumericVar *var);
-
+static void set_var_from_var(const NumericVar *value, NumericVar *dest);
+static bool numericvar_to_int64(const NumericVar *var, int64 *result);
+static void round_var(NumericVar *var, int rscale);
 /* ----------------------------------------------------------------------
  *
  * Local functions follow
@@ -1044,18 +1066,18 @@ tsql_numeric_get_typmod(Numeric num)
 }
 
 Datum
-bigint_sum(PG_FUNCTION_ARGS)
+bigint_poly_sum(PG_FUNCTION_ARGS)
 {
-	Int128AggState 	*state;
-	int64			res;
-	int128 			arg;
-
-	state = PG_ARGISNULL(0) ? NULL : (Int128AggState *) PG_GETARG_POINTER(0);
-
+	
+	PolyNumAggState *state;
+	
+	state = PG_ARGISNULL(0) ? NULL : (PolyNumAggState *) PG_GETARG_POINTER(0);
 	/* If there were no non-null inputs, return NULL */
 	if (state == NULL || state->N == 0)
 		PG_RETURN_NULL();
 
+	#ifdef HAVE_INT128
+	int128 			arg;
 	arg = state->sumX;
 
 	if (unlikely(arg < PG_INT64_MIN) || unlikely(arg > PG_INT64_MAX))
@@ -1064,26 +1086,231 @@ bigint_sum(PG_FUNCTION_ARGS)
 				 errmsg("Arithmetic overflow error converting expression to data type bigint.")));
 
 	PG_RETURN_INT64((int64) arg);
+	#else
+
+	Datum temp;
+	bool flag;
+	int64 result;
+	NumericVar nvar;
+
+	temp = DirectFunctionCall1(numeric_sum, PG_GETARG_DATUM(0));
+	init_var(&nvar);
+	set_var_from_num( DatumGetNumeric(temp), &nvar);
+	flag = numericvar_to_int64( &nvar, &result);
+	free_var(&nvar);
+
+	if (!flag)
+		ereport(ERROR,
+				(errcode(ERRCODE_NUMERIC_VALUE_OUT_OF_RANGE),
+				 errmsg("Arithmetic overflow error converting expression to data type bigint.")));
+	else
+	PG_RETURN_INT64(result);
+	#endif
 }
 
 Datum
-int_smallint_sum(PG_FUNCTION_ARGS)
+int4int2_sum(PG_FUNCTION_ARGS)
 {
 
-	int64 arg;
-	if (PG_ARGISNULL(0))
+	int64 result;
+ 	if (PG_ARGISNULL(0))
 	{
 		PG_RETURN_NULL();
 	}
 	else
 	{
-		arg = PG_GETARG_INT64(0);
+		result  = PG_GETARG_INT64(0);
 
-		if (unlikely(arg < PG_INT32_MIN) || unlikely(arg > PG_INT32_MAX))
+		if (unlikely(result < PG_INT32_MIN) || unlikely(result > PG_INT32_MAX))
 		ereport(ERROR,
 				(errcode(ERRCODE_NUMERIC_VALUE_OUT_OF_RANGE),
 				 errmsg("Arithmetic overflow error converting expression to data type int.")));
 
-		PG_RETURN_INT32((int32) arg);
+		PG_RETURN_INT32((int32) result);
+	}
+}
+
+static bool
+numericvar_to_int64(const NumericVar *var, int64 *result)
+{
+	NumericDigit *digits;
+	int			ndigits;
+	int			weight;
+	int			i;
+	int64		val;
+	bool		neg;
+	NumericVar	rounded;
+
+	/* Round to nearest integer */
+	init_var(&rounded);
+	set_var_from_var(var, &rounded);
+	round_var(&rounded, 0);
+
+	/* Check for zero input */
+	strip_var(&rounded);
+	ndigits = rounded.ndigits;
+	if (ndigits == 0)
+	{
+		*result = 0;
+		free_var(&rounded);
+		return true;
+	}
+
+	/*
+	 * For input like 10000000000, we must treat stripped digits as real. So
+	 * the loop assumes there are weight+1 digits before the decimal point.
+	 */
+	weight = rounded.weight;
+	Assert(weight >= 0 && ndigits <= weight + 1);
+
+	/*
+	 * Construct the result. To avoid issues with converting a value
+	 * corresponding to INT64_MIN (which can't be represented as a positive 64
+	 * bit two's complement integer), accumulate value as a negative number.
+	 */
+	digits = rounded.digits;
+	neg = (rounded.sign == NUMERIC_NEG);
+	val = -digits[0];
+	for (i = 1; i <= weight; i++)
+	{
+		if (unlikely(pg_mul_s64_overflow(val, NBASE, &val)))
+		{
+			free_var(&rounded);
+			return false;
+		}
+
+		if (i < ndigits)
+		{
+			if (unlikely(pg_sub_s64_overflow(val, digits[i], &val)))
+			{
+				free_var(&rounded);
+				return false;
+			}
+		}
+	}
+
+	free_var(&rounded);
+
+	if (!neg)
+	{
+		if (unlikely(val == PG_INT64_MIN))
+			return false;
+		val = -val;
+	}
+	*result = val;
+
+	return true;
+}
+static void
+set_var_from_var(const NumericVar *value, NumericVar *dest)
+{
+	NumericDigit *newbuf;
+
+	newbuf = digitbuf_alloc(value->ndigits + 1);
+	newbuf[0] = 0;				/* spare digit for rounding */
+	if (value->ndigits > 0)		/* else value->digits might be null */
+		memcpy(newbuf + 1, value->digits,
+			   value->ndigits * sizeof(NumericDigit));
+
+	digitbuf_free(dest->buf);
+
+	memmove(dest, value, sizeof(NumericVar));
+	dest->buf = newbuf;
+	dest->digits = newbuf + 1;
+}
+
+static void
+round_var(NumericVar *var, int rscale)
+{
+	NumericDigit *digits = var->digits;
+	int			di;
+	int			ndigits;
+	int			carry;
+
+	var->dscale = rscale;
+
+	/* decimal digits wanted */
+	di = (var->weight + 1) * DEC_DIGITS + rscale;
+
+	/*
+	 * If di = 0, the value loses all digits, but could round up to 1 if its
+	 * first extra digit is >= 5.  If di < 0 the result must be 0.
+	 */
+	if (di < 0)
+	{
+		var->ndigits = 0;
+		var->weight = 0;
+		var->sign = NUMERIC_POS;
+	}
+	else
+	{
+		/* NBASE digits wanted */
+		ndigits = (di + DEC_DIGITS - 1) / DEC_DIGITS;
+
+		/* 0, or number of decimal digits to keep in last NBASE digit */
+		di %= DEC_DIGITS;
+		if (ndigits < var->ndigits ||
+			(ndigits == var->ndigits && di > 0))
+		{
+			var->ndigits = ndigits;
+
+#if DEC_DIGITS == 1
+			/* di must be zero */
+			carry = (digits[ndigits] >= HALF_NBASE) ? 1 : 0;
+#else
+			if (di == 0)
+				carry = (digits[ndigits] >= HALF_NBASE) ? 1 : 0;
+			else
+			{
+				/* Must round within last NBASE digit */
+				int			extra,
+							pow10;
+
+#if DEC_DIGITS == 4
+				pow10 = round_powers[di];
+#elif DEC_DIGITS == 2
+				pow10 = 10;
+#else
+#error unsupported NBASE
+#endif
+				extra = digits[--ndigits] % pow10;
+				digits[ndigits] -= extra;
+				carry = 0;
+				if (extra >= pow10 / 2)
+				{
+					pow10 += digits[ndigits];
+					if (pow10 >= NBASE)
+					{
+						pow10 -= NBASE;
+						carry = 1;
+					}
+					digits[ndigits] = pow10;
+				}
+			}
+#endif
+			/* Propagate carry if needed */
+			while (carry)
+			{
+				carry += digits[--ndigits];
+				if (carry >= NBASE)
+				{
+					digits[ndigits] = carry - NBASE;
+					carry = 1;
+				}
+				else
+				{
+					digits[ndigits] = carry;
+					carry = 0;
+				}
+			}
+			if (ndigits < 0)
+			{
+				Assert(ndigits == -1);	/* better not have added > 1 digit */
+				Assert(var->digits > var->buf);
+				var->digits--;
+				var->ndigits++;
+				var->weight++;
+			}
+		}
 	}
 }

@@ -56,9 +56,6 @@ CREATE TABLE babel_3144_vu_prepare_t5(
 sumbigint BIGINT, sumint INT , sumsmallint SMALLINT , sumtinyint TINYINT )
 GO
 
-
 INSERT INTO babel_3144_vu_prepare_t5 VALUES (-9223372036854775808,-2147483648,-32768,0)
 INSERT INTO babel_3144_vu_prepare_t5 VALUES (-9223372036854775808,-2147483648,-32768,0)
 GO
-
-

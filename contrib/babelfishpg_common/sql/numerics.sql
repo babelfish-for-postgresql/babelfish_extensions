@@ -308,19 +308,19 @@ CREATE OR REPLACE AGGREGATE sys.min(sys.REAL)
     parallel = safe
 );
 
-CREATE OR REPLACE FUNCTION sys.bigint_sum(INTERNAL)
+CREATE OR REPLACE FUNCTION sys.bigint_poly_sum(INTERNAL)
 RETURNS BIGINT
-AS 'babelfishpg_common', 'bigint_sum'
+AS 'babelfishpg_common', 'bigint_poly_sum'
 LANGUAGE C IMMUTABLE PARALLEL SAFE;
 
-CREATE OR REPLACE FUNCTION sys.int_smallint_sum(BIGINT)
+CREATE OR REPLACE FUNCTION sys.int4int2_sum(BIGINT)
 RETURNS INT
-AS 'babelfishpg_common' , 'int_smallint_sum'
+AS 'babelfishpg_common' , 'int4int2_sum'
 LANGUAGE C IMMUTABLE PARALLEL SAFE;
 
 CREATE OR REPLACE AGGREGATE sys.sum(BIGINT) (
 SFUNC = int8_avg_accum,
-FINALFUNC = bigint_sum,
+FINALFUNC = bigint_poly_sum,
 STYPE = INTERNAL,
 COMBINEFUNC = int8_avg_combine,
 SERIALFUNC = int8_avg_serialize,
@@ -331,7 +331,7 @@ PARALLEL = SAFE
 
 CREATE OR REPLACE AGGREGATE sys.sum(INT)(
 SFUNC = int4_sum,
-FINALFUNC = int_smallint_sum,
+FINALFUNC = int4int2_sum,
 STYPE = int8,
 COMBINEFUNC = int8pl,
 PARALLEL = SAFE
@@ -339,7 +339,7 @@ PARALLEL = SAFE
 
 CREATE OR REPLACE AGGREGATE sys.sum(SMALLINT)(
 SFUNC = int2_sum,
-FINALFUNC = int_smallint_sum,
+FINALFUNC = int4int2_sum,
 STYPE = int8,
 COMBINEFUNC = int8pl,
 PARALLEL = SAFE
@@ -347,7 +347,7 @@ PARALLEL = SAFE
 
 CREATE OR REPLACE AGGREGATE sys.sum(TINYINT)(
 SFUNC = int2_sum,
-FINALFUNC = int_smallint_sum,
+FINALFUNC = int4int2_sum,
 STYPE = int8,
 COMBINEFUNC = int8pl,
 PARALLEL = SAFE
