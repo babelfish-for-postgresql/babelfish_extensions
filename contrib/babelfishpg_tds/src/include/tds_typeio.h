@@ -257,7 +257,7 @@ typedef struct BulkLoadRowData
 	/* Array of length col count, holds value of each column in that row. */
 	StringInfo columnValues;
 
-	char *isNull;
+	bool *isNull;
 } BulkLoadRowData;
 
 /* Map TVP to its underlying table, either by relid or by table name. */

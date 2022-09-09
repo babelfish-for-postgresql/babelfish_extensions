@@ -915,7 +915,7 @@ typedef struct PLtsql_stmt_insert_bulk
     char  *table_name;
     char  *schema_name;
     char  *db_name;
-    char  *column_refs;
+	List *column_refs;
 
     /* Insert Bulk Options. */
     char *kilobytes_per_batch;
@@ -1587,8 +1587,8 @@ typedef struct PLtsql_protocol_plugin
 
 	int* (*get_mapped_tsql_error_code_list) (void);
 
-	int (*bulk_load_callback) (int ncol, int nrow, Oid *argtypes,
-				Datum *Values, const char *Nulls, bool *Defaults);
+	uint64 (*bulk_load_callback) (int ncol, int nrow,
+				Datum *Values, bool *Nulls);
 
 	int (*pltsql_get_generic_typmod) (Oid funcid, int nargs, Oid declared_oid);
 
@@ -1815,8 +1815,8 @@ extern Datum sp_prepare(PG_FUNCTION_ARGS);
 extern Datum sp_unprepare(PG_FUNCTION_ARGS);
 extern bool pltsql_support_tsql_transactions(void);
 extern bool pltsql_sys_function_pop(void);
-extern int execute_bulk_load_insert(int ncol, int nrow, Oid *argtypes,
-				Datum *Values, const char *Nulls, bool *Defaults);
+extern uint64 execute_bulk_load_insert(int ncol, int nrow,
+				Datum *Values, bool *Nulls);
 /*
  * Functions in pl_exec.c
  */
@@ -2017,6 +2017,5 @@ extern void pltsql_update_last_identity(Oid seqid, int64 val);
 extern int64 last_identity_value(void);
 extern void pltsql_nextval_identity(Oid seqid, int64 val);
 extern void pltsql_resetcache_identity(void);
-
 
 #endif							/* PLTSQL_H */
