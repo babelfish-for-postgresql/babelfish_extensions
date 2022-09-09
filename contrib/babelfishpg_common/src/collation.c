@@ -1365,19 +1365,3 @@ get_server_collation_oid(PG_FUNCTION_ARGS)
 {
 	PG_RETURN_OID(get_server_collation_oid_internal(false));
 }
-
-PG_FUNCTION_INFO_V1(init_collid_trans_tab_common);
-
-Datum
-init_collid_trans_tab_common(PG_FUNCTION_ARGS)
-{
-	PG_RETURN_INT32(init_collid_trans_tab_internal());
-}
-
-PG_FUNCTION_INFO_V1(init_like_ilike_table_common);
-
-Datum
-init_like_ilike_table_common(PG_FUNCTION_ARGS)
-{
-	PG_RETURN_INT32(init_like_ilike_table_internal());
-}
