@@ -55,8 +55,48 @@ GO
 SELECT SUM( sumint ) AS sum_int FROM babel_3144_vu_prepare_t5
 GO
 
+--GROUP BY CLAUSE
+SELECT col1int,SUM(col2int) FROM babel_3144_vu_prepare_t6 GROUP BY col1int
+GO
+
+SELECT col1int,SUM(col3bigint) FROM babel_3144_vu_prepare_t6 GROUP BY col1int
+GO
+
+-- DISTINCT CLAUSE
+SELECT SUM(DISTINCT col1int),SUM(DISTINCT col3bigint) FROM babel_3144_vu_prepare_t6
+GO
+
+--OVER,PARTITION CLAUSE
+SELECT dt, priceint ,SUM(priceint) OVER (
+ORDER BY dt
+ROWS BETWEEN 2 PRECEDING AND 2 FOLLOWING
+) FiveDayMovSum
+FROM babel_3144_vu_prepare_t7
+GO
+
+SELECT dt, pricebigint ,SUM(pricebigint) OVER (
+ORDER BY dt
+ROWS BETWEEN 2 PRECEDING AND 2 FOLLOWING
+) FiveDayMovSum
+FROM babel_3144_vu_prepare_t7
+GO
+
+SELECT priceint,SUM(priceint) OVER(ORDER BY priceint) FROM babel_3144_vu_prepare_t7
+GO
+
+SELECT pricebigint,SUM(pricebigint) OVER(ORDER BY pricebigint) FROM babel_3144_vu_prepare_t7
+GO
+
+SELECT dept,SUM(priceint) OVER(PARTITION BY dept) FROM babel_3144_vu_prepare_t7
+GO
+
+SELECT dept,SUM(pricebigint) OVER(PARTITION BY dept) FROM babel_3144_vu_prepare_t7
+GO
+
 DROP FUNCTION babel_3144_vu_prepare_f1
 DROP FUNCTION babel_3144_vu_prepare_f2
+DROP FUNCTION babel_3144_vu_prepare_f3
+DROP FUNCTION babel_3144_vu_prepare_f4
 GO
 
 DROP PROCEDURE babel_3144_vu_prepare_p1
@@ -67,4 +107,6 @@ DROP TABLE babel_3144_vu_prepare_t2
 DROP TABLE babel_3144_vu_prepare_t3
 DROP TABLE babel_3144_vu_prepare_t4
 DROP TABLE babel_3144_vu_prepare_t5
+DROP TABLE babel_3144_vu_prepare_t6
+DROP TABLE babel_3144_vu_prepare_t7
 GO
