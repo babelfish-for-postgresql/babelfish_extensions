@@ -2602,6 +2602,11 @@ where base.nspname not in ('information_schema', 'pg_catalog', 'pg_toast', 'sys'
 and ext.dbid = cast(sys.db_id() as oid);
 GRANT SELECT ON sys.schemas TO PUBLIC;
 
+/* -- need further discuss on this one 
+babelfish_db=> ALTER EXTENSION babelfishpg_tsql UPDATE to '2.3.0';
+ERROR:  view msdb_dbo.syspolicy_system_health_state is not a member of extension "babelfishpg_tsql"
+DETAIL:  An extension is not allowed to replace an object that it does not own.
+
 CREATE OR REPLACE VIEW msdb_dbo.syspolicy_system_health_state
 AS
   SELECT
@@ -2612,6 +2617,7 @@ AS
     CAST('' AS sys.NVARCHAR) AS target_query_expression,
     CAST(1 as sys.BIT) AS result
   WHERE FALSE;
+  */
 
 ALTER TABLE sys.babelfish_authid_login_ext RENAME TO babelfish_authid_login_ext_deprecated_in_2_3_0;
 
