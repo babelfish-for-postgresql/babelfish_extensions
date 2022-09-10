@@ -1,23 +1,18 @@
-SELECT definition FROM sys.default_constraints where name LIKE '%sys_default_definitions%' ORDER BY name;
+SELECT definition FROM sys.default_constraints where name LIKE '%sys_default_definitions%' ORDER BY definition;
 GO
 ~~START~~
 nvarchar
-getdate()
+('42')
 0
 1
 50
-('42')
+getdate()
 ~~END~~
 
 
 
-SELECT COUNT(*) FROM sys.default_constraints;
-ALTER TABLE sys_default_definitions_vu_prepare ADD CONSTRAINT default_column_a_varchar DEFAULT 'ab' FOR column_a
+ALTER TABLE sys_default_definitions_vu_prepare ADD CONSTRAINT default_column_a_varchar DEFAULT 'ab' FOR column_a;
 GO
-~~START~~
-int
-5
-~~END~~
 
 
 SELECT COUNT(*) FROM sys.all_columns WHERE object_id = object_id('sys.default_constraints');

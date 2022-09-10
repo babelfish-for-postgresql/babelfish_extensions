@@ -5,7 +5,6 @@ column_b datetime NOT NULL DEFAULT getdate(),
 column_c int NOT NULL DEFAULT 0,
 column_d bit DEFAULT 1,
 column_e int,
-column_f nvarchar(7) DEFAULT 'DEFAULT'
 )
 GO
 

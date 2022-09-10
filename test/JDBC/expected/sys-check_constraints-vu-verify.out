@@ -1,4 +1,4 @@
-SELECT definition FROM sys.check_constraints where name LIKE '%sys_check_constraints%' ORDER BY name;
+SELECT definition FROM sys.check_constraints where name LIKE '%sys_check_constraints%' ORDER BY definition;
 GO
 ~~START~~
 nvarchar
@@ -7,15 +7,8 @@ nvarchar
 ~~END~~
 
 
-
-SELECT COUNT(*) FROM sys.check_constraints;
 SELECT COUNT(*) FROM sys.all_columns WHERE object_id = object_id('sys.check_constraints');
 GO
-~~START~~
-int
-2
-~~END~~
-
 ~~START~~
 int
 19
