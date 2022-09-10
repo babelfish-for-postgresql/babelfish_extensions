@@ -358,8 +358,8 @@ END;
 $$
 LANGUAGE plpgsql;
 
-CALL sys.babelfish_drop_deprecated_view('sys', 'check_constraints_in_2_3_0');
-CALL sys.babelfish_drop_deprecated_view('sys', 'default_constraints_in_2_3_0');
+CALL sys.babelfish_drop_deprecated_view('sys', 'check_constraints_deprecated_in_2_3_0');
+CALL sys.babelfish_drop_deprecated_view('sys', 'default_constraints_deprecated_in_2_3_0');
 
 -- please add your SQL here
 
