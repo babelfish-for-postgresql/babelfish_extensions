@@ -6219,13 +6219,13 @@ AND CAST(t4.dtd_identifier AS smallint) = ANY (t5.conkey)
 AND CAST(t4.dtd_identifier AS smallint) = t5.conkey[seq];
 
 CREATE OR REPLACE VIEW sys.sp_stored_procedures_view AS
-SELECT
-CAST(d.name AS sys.sysname) AS PROCEDURE_QUALIFIER,
-CAST(s1.name AS sys.sysname) AS PROCEDURE_OWNER,
+SELECT 
+CAST(d.name AS sys.sysname) COLLATE sys.database_default AS PROCEDURE_QUALIFIER,
+CAST(s1.name AS sys.sysname) AS PROCEDURE_OWNER, 
 
-CASE
- WHEN p.prokind = 'p' THEN CAST(concat(p.proname, ';1') AS sys.nvarchar(134))
- ELSE CAST(concat(p.proname, ';0') AS sys.nvarchar(134))
+CASE 
+	WHEN p.prokind = 'p' THEN CAST(concat(p.proname, ';1') AS sys.nvarchar(134))
+	ELSE CAST(concat(p.proname, ';0') AS sys.nvarchar(134))
 END AS PROCEDURE_NAME,
 
 -1 AS NUM_INPUT_PARAMS,
@@ -6234,20 +6234,20 @@ END AS PROCEDURE_NAME,
 CAST(NULL AS varchar(254)) AS REMARKS,
 cast(2 AS smallint) AS PROCEDURE_TYPE
 
-FROM pg_catalog.pg_proc p
+FROM pg_catalog.pg_proc p 
 
-INNER JOIN sys.schemas s1 ON p.pronamespace = s1.schema_id
+INNER JOIN sys.schemas s1 ON p.pronamespace = s1.schema_id 
 INNER JOIN sys.databases d ON d.database_id = sys.db_id()
 WHERE has_schema_privilege(s1.schema_id, 'USAGE')
 
-UNION
+UNION 
 
-SELECT CAST((SELECT sys.db_name()) AS sys.sysname) AS PROCEDURE_QUALIFIER,
+SELECT CAST((SELECT sys.db_name()) AS sys.sysname) COLLATE sys.database_default AS PROCEDURE_QUALIFIER,
 CAST(nspname AS sys.sysname) AS PROCEDURE_OWNER,
 
-CASE
- WHEN prokind = 'p' THEN cast(concat(proname, ';1') AS sys.nvarchar(134))
- ELSE cast(concat(proname, ';0') AS sys.nvarchar(134))
+CASE 
+	WHEN prokind = 'p' THEN cast(concat(proname, ';1') AS sys.nvarchar(134))
+	ELSE cast(concat(proname, ';0') AS sys.nvarchar(134))
 END AS PROCEDURE_NAME,
 
 -1 AS NUM_INPUT_PARAMS,
@@ -6256,9 +6256,9 @@ END AS PROCEDURE_NAME,
 CAST(NULL AS varchar(254)) AS REMARKS,
 cast(2 AS smallint) AS PROCEDURE_TYPE
 
-FROM pg_catalog.pg_namespace n
-JOIN pg_catalog.pg_proc p
-ON pronamespace = n.oid
+FROM    pg_catalog.pg_namespace n 
+JOIN    pg_catalog.pg_proc p 
+ON      pronamespace = n.oid   
 WHERE nspname = 'sys' AND (proname LIKE 'sp\_%' OR proname LIKE 'xp\_%' OR proname LIKE 'dm\_%' OR proname LIKE 'fn\_%');
 
 CREATE OR REPLACE PROCEDURE sys.sp_stored_procedures(
@@ -6422,7 +6422,7 @@ GRANT EXECUTE on PROCEDURE sys.sp_stored_procedures TO PUBLIC;
 CREATE OR REPLACE VIEW sys.sp_sproc_columns_view AS
 -- Get parameters (if any) for a user-defined stored procedure/function
 (SELECT
- CAST(d.name AS sys.sysname) AS PROCEDURE_QUALIFIER,
+ CAST(d.name AS sys.sysname) COLLATE sys.database_default AS PROCEDURE_QUALIFIER,
  CAST(ext.orig_name AS sys.sysname) AS PROCEDURE_OWNER,
  CASE
   WHEN proc.routine_type='PROCEDURE' COLLATE sys.database_default THEN CAST(CONCAT(proc.routine_name, ';1') AS sys.nvarchar(134))
@@ -6467,7 +6467,7 @@ UNION ALL
 
 -- Create row describing return type for a user-defined stored procedure/function
 SELECT
- CAST(d.name AS sys.sysname) AS PROCEDURE_QUALIFIER,
+ CAST(d.name AS sys.sysname) COLLATE sys.database_default AS PROCEDURE_QUALIFIER,
  CAST(ext.orig_name AS sys.sysname) AS PROCEDURE_OWNER,
  CASE
   WHEN proc.routine_type='PROCEDURE' COLLATE sys.database_default THEN CAST(CONCAT(proc.routine_name, ';1') AS sys.nvarchar(134))
@@ -6570,7 +6570,7 @@ UNION ALL
 
 -- Get parameters (if any) for a system stored procedure/function
 (SELECT
- CAST((SELECT sys.db_name()) AS sys.sysname) AS PROCEDURE_QUALIFIER,
+ CAST((SELECT sys.db_name()) AS sys.sysname) COLLATE sys.database_default AS PROCEDURE_QUALIFIER,
  CAST(args.specific_schema AS sys.sysname) AS PROCEDURE_OWNER,
  CASE
   WHEN proc.routine_type='PROCEDURE' COLLATE sys.database_default then CAST(CONCAT(proc.routine_name, ';1') AS sys.nvarchar(134))
@@ -6615,7 +6615,7 @@ UNION ALL
 
 -- Create row describing return type for a system stored procedure/function
 SELECT
- CAST((SELECT sys.db_name()) AS sys.sysname) AS PROCEDURE_QUALIFIER,
+ CAST((SELECT sys.db_name()) AS sys.sysname) COLLATE sys.database_default AS PROCEDURE_QUALIFIER,
  CAST(proc.specific_schema AS sys.sysname) AS PROCEDURE_OWNER,
  CASE
   WHEN proc.routine_type='PROCEDURE' COLLATE sys.database_default then CAST(CONCAT(proc.routine_name, ';1') AS sys.nvarchar(134))
