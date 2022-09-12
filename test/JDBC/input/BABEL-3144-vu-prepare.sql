@@ -67,7 +67,7 @@ GO
 
 CREATE PROCEDURE babel_3144_vu_prepare_p1
 AS
-SELECT SUM(sumbigint) as sum_bigint, SUM(sumint)as sum_int,SUM(sumsmallint) as sum_smallint ,SUM(sumtinyint) as sum_tinyint FROM babel_3144_vu_prepare_t4
+SELECT SUM(sumint)as sum_int,SUM(sumsmallint) as sum_smallint ,SUM(sumtinyint) as sum_tinyint FROM babel_3144_vu_prepare_t4
 GO
 
 -- min values causing overflow in sum (BIGINT,INT)

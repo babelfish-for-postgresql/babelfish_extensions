@@ -115,8 +115,8 @@ numeric
 EXEC babel_3144_vu_prepare_p1
 GO
 ~~START~~
-bigint#!#int#!#int#!#int
-1#!#1#!#1#!#1
+int#!#int#!#int
+1#!#1#!#1
 ~~END~~
 
 
