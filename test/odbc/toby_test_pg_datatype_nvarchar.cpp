@@ -7,9 +7,9 @@ using std::pair;
 
 const string TABLE_NAME = "master_dbo.nvarchar_table_odbc_test";
 const string VIEW_NAME = "master_dbo.nvarchar_view_odbc_test";
-const string DATATYPE = "sys.nvarchar";
+const string DATATYPE = "sys.NVARCHAR";
 const int NUM_COLS = 4;
-const string COL_NAMES[NUM_COLS] = {"pk", "varchar_1", "nvarchar_4000", "varchar_20"};
+const string COL_NAMES[NUM_COLS] = {"pk", "nvarchar_1", "nvarchar_4000", "nvarchar_20"};
 const int COL_LENGTH[NUM_COLS] = {10, 1, 4000, 20};
 
 const string COL_TYPES[NUM_COLS] = {
@@ -19,7 +19,7 @@ const string COL_TYPES[NUM_COLS] = {
   DATATYPE + "(" + std::to_string(COL_LENGTH[3]) + ")"
 };
 
-vector<pair<string, string>> TABLE_COLUMNS = {
+vector<pair<string, string>> TABLE_COLUMNS_NVARCHAR = {
   {COL_NAMES[0], COL_TYPES[0] + " PRIMARY KEY"},
   {COL_NAMES[1], COL_TYPES[1]},
   {COL_NAMES[2], COL_TYPES[2]},
@@ -111,7 +111,8 @@ TEST_F(PSQL_DataTypes_Nvarchar, ColAttributes) {
   const string NAME_EXPECTED = "unknown";
   const string PREFIX_EXPECTED = "'";
   const string SUFFIX_EXPECTED = "'";
-  
+  const int BYTES_EXPECTED = 2;
+
   const int BUFFER_SIZE = 256;
   char name[BUFFER_SIZE];
   char suffix[BUFFER_SIZE];
@@ -119,20 +120,21 @@ TEST_F(PSQL_DataTypes_Nvarchar, ColAttributes) {
   SQLLEN length;
   SQLLEN precision;
   SQLLEN scale;
+  SQLLEN size;
   SQLLEN is_case_sensitive;
 
   RETCODE rcode;
   OdbcHandler odbcHandler;
 
   // Create a table with columns defined with the specific datatype being tested. 
-  odbcHandler.ConnectAndExecQuery(CreateTableStatement(TABLE_NAME, TABLE_COLUMNS));
+  odbcHandler.ConnectAndExecQuery(CreateTableStatement(TABLE_NAME, TABLE_COLUMNS_NVARCHAR));
   odbcHandler.CloseStmt();
 
   // Select * From Table to ensure that it exists
   odbcHandler.ExecQuery(SelectStatement(TABLE_NAME, {"*"}, vector<string> {COL_NAMES[0]}));
 
   for (int i = 1; i <= NUM_COLS; i++) {
-
+    std::cout<<"The current string is: "<<i<<"\n";
     // Make sure column attributes are correct
     rcode = SQLColAttribute(odbcHandler.GetStatementHandle(),
                             i,
@@ -270,7 +272,7 @@ TEST_F(PSQL_DataTypes_Nvarchar, Insertion_Success) {
   string insert_string = InitializeInsertString(inserted_values);
 
   // Create table
-  odbcHandler.ConnectAndExecQuery(CreateTableStatement(TABLE_NAME, TABLE_COLUMNS));
+  odbcHandler.ConnectAndExecQuery(CreateTableStatement(TABLE_NAME, TABLE_COLUMNS_NVARCHAR));
   odbcHandler.CloseStmt();
 
   // Insert valid values into the table and assert affected rows
@@ -329,7 +331,7 @@ TEST_F(PSQL_DataTypes_Nvarchar, Insertion_Failure) {
   };
 
   // Create table
-  odbcHandler.ConnectAndExecQuery(CreateTableStatement(TABLE_NAME, TABLE_COLUMNS));
+  odbcHandler.ConnectAndExecQuery(CreateTableStatement(TABLE_NAME, TABLE_COLUMNS_NVARCHAR));
   odbcHandler.CloseStmt();
 
   // Insert invalid values in table and assert error
@@ -394,7 +396,7 @@ TEST_F(PSQL_DataTypes_Nvarchar, Update_Success) {
 
 
   // Create table
-  odbcHandler.ConnectAndExecQuery(CreateTableStatement(TABLE_NAME, TABLE_COLUMNS));
+  odbcHandler.ConnectAndExecQuery(CreateTableStatement(TABLE_NAME, TABLE_COLUMNS_NVARCHAR));
   odbcHandler.CloseStmt();
 
   // Insert valid values into the table and assert affected rows
@@ -492,7 +494,7 @@ TEST_F(PSQL_DataTypes_Nvarchar, Update_Fail) {
   string insert_string = InitializeInsertString(inserted_values);
 
   // Create table
-  odbcHandler.ConnectAndExecQuery(CreateTableStatement(TABLE_NAME, TABLE_COLUMNS));
+  odbcHandler.ConnectAndExecQuery(CreateTableStatement(TABLE_NAME, TABLE_COLUMNS_NVARCHAR));
   odbcHandler.CloseStmt();
 
   // Insert valid values into the table and assert affected rows
@@ -588,7 +590,7 @@ TEST_F(PSQL_DataTypes_Nvarchar, View_creation) {
   string insert_string = InitializeInsertString(inserted_values);
 
   // Create table
-  odbcHandler.ConnectAndExecQuery(CreateTableStatement(TABLE_NAME, TABLE_COLUMNS));
+  odbcHandler.ConnectAndExecQuery(CreateTableStatement(TABLE_NAME, TABLE_COLUMNS_NVARCHAR));
   odbcHandler.CloseStmt();
 
   // Insert valid values into the table and assert affected rows
