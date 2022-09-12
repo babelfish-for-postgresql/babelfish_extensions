@@ -606,11 +606,6 @@ WHERE login_name LIKE 'lgn_2978%' OR rolname LIKE '%lgn_2978%'
 ORDER BY rolname;
 GO
 
--- It should be failed since there is no relevant login
-
-java_auth#!#database|-|db1#!#user|-|lgn_2978#!#password|-|123
-java_auth#!#database|-|db2#!#user|-|lgn_2978#!#password|-|123
-
 -- tsql
 -- recreate the login with same name
 CREATE LOGIN lgn_2978 WITH PASSWORD='123';
