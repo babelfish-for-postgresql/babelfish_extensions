@@ -885,6 +885,15 @@ GO
 
 -- psql
 ALTER SYSTEM SET babelfishpg_tsql.migration_mode = 'multi-db';
+GO
+-- Wait to sync with another session
+SELECT pg_sleep(1);
+GO
+~~START~~
+void
+
+~~END~~
+
 SELECT pg_reload_conf();
 GO
 ~~START~~
@@ -1339,6 +1348,15 @@ GO
 
 -- psql
 ALTER SYSTEM SET babelfishpg_tsql.migration_mode = 'single-db';
+GO
+-- Wait to sync with another session
+SELECT pg_sleep(1);
+GO
+~~START~~
+void
+
+~~END~~
+
 ALTER SYSTEM SET babelfishpg_tsql.allow_antlr_to_unsupported_grammar_for_testing = false;
 SELECT pg_reload_conf();
 GO

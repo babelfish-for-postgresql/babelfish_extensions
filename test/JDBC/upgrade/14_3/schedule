@@ -156,3 +156,4 @@ sp_tablecollations
 sys-assemblies
 BABEL-LOGIN-USER-EXT
 BABEL-1683
+schema_resolution_trigger
