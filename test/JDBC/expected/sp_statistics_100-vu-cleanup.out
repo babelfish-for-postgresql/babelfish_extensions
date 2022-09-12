@@ -1,0 +1,18 @@
+--cleanup
+drop index sp_statistics_100_vu_prepare_i1 on sp_statistics_100_vu_prepare_t1
+go
+
+drop index sp_statistics_100_vu_prepare_i2 on sp_statistics_100_vu_prepare_t2
+go
+
+drop table sp_statistics_100_vu_prepare_t1
+go
+
+drop table sp_statistics_100_vu_prepare_t2
+go
+
+drop table sp_statistics_100_vu_prepare_t3
+go
+
+drop database sp_statistics_100_vu_prepare_db1
+go
