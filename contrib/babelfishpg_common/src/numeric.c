@@ -461,6 +461,8 @@ static const char *set_var_from_str(const char *str, const char *cp,
 				 NumericVar *dest);
 static Numeric make_result(const NumericVar *var);
 static void strip_var(NumericVar *var);
+
+#ifndef HAVE_INT128
 static void set_var_from_var(const NumericVar *value, NumericVar *dest);
 static bool numericvar_to_int64(const NumericVar *var, int64 *result);
 static void round_var(NumericVar *var, int rscale);
@@ -474,7 +476,7 @@ static int cmp_abs(const NumericVar *var1, const NumericVar *var2);
 static int cmp_abs_common(const NumericDigit *var1digits, int var1ndigits, int var1weight,
 				 const NumericDigit *var2digits, int var2ndigits, int var2weight);
 static void zero_var(NumericVar *var);
-
+#endif
 /* ----------------------------------------------------------------------
  *
  * Local functions follow
@@ -1124,6 +1126,7 @@ bigint_poly_sum(PG_FUNCTION_ARGS)
 	#endif
 }
 
+#ifndef HAVE_INT128
 /*
  * In case of platform not supporting int128 type 
  * 
@@ -1679,31 +1682,6 @@ zero_var(NumericVar *var)
 	var->sign = NUMERIC_POS;	/* anything but NAN... */
 }
 
-/* 
- * Final function to be used by SUM(INT,SMALLINT,TINYINT) aggregate
- */
-Datum
-int4int2_sum(PG_FUNCTION_ARGS)
-{
-
-	int64 result;
- 	if (PG_ARGISNULL(0))
-	{
-		PG_RETURN_NULL();
-	}
-	else
-	{
-		result  = PG_GETARG_INT64(0);
-
-		if (unlikely(result < PG_INT32_MIN) || unlikely(result > PG_INT32_MAX))
-		ereport(ERROR,
-				(errcode(ERRCODE_NUMERIC_VALUE_OUT_OF_RANGE),
-				 errmsg("Arithmetic overflow error converting expression to data type int.")));
-
-		PG_RETURN_INT32((int32) result);
-	}
-}
-
 /*
  * Function referenced from utils/adt/numeric.c
  * Convert numeric to int8, rounding if needed.
@@ -1909,3 +1887,30 @@ round_var(NumericVar *var, int rscale)
 		}
 	}
 }
+
+#endif
+/* 
+ * Final function to be used by SUM(INT,SMALLINT,TINYINT) aggregate
+ */
+Datum
+int4int2_sum(PG_FUNCTION_ARGS)
+{
+
+	int64 result;
+ 	if (PG_ARGISNULL(0))
+	{
+		PG_RETURN_NULL();
+	}
+	else
+	{
+		result  = PG_GETARG_INT64(0);
+
+		if (unlikely(result < PG_INT32_MIN) || unlikely(result > PG_INT32_MAX))
+		ereport(ERROR,
+				(errcode(ERRCODE_NUMERIC_VALUE_OUT_OF_RANGE),
+				 errmsg("Arithmetic overflow error converting expression to data type int.")));
+
+		PG_RETURN_INT32((int32) result);
+	}
+}
+
