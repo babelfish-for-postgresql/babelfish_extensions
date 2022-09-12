@@ -5,7 +5,6 @@ nvarchar
 getdate()
 0
 1
-'DEFAULT'
 50
 ('42')
 ~~END~~
@@ -27,7 +26,6 @@ EXEC sys_default_definitions_vu_prepare_proc;
 GO
 ~~START~~
 nvarchar
-'DEFAULT'
 'ab'
 0
 1
@@ -48,8 +46,7 @@ SELECT * FROM sys_default_definitions_vu_prepare_view;
 GO
 ~~START~~
 varchar
-'DEFAULT'
-'ab'
+'ab'::"varchar" COLLATE "default"
 0
 1
 50

@@ -2,11 +2,6 @@ SELECT definition FROM sys.default_constraints where name LIKE '%sys_default_def
 GO
 ~~START~~
 nvarchar
-('42')
-getdate()
-0
-1
-50
 ~~END~~
 
 
@@ -26,11 +21,6 @@ EXEC sys_default_definitions_vu_prepare_proc;
 GO
 ~~START~~
 nvarchar
-'ab'
-0
-1
-50
-getdate()
 ~~END~~
 
 
@@ -38,7 +28,7 @@ SELECT * FROM sys_default_definitions_vu_prepare_func();
 GO
 ~~START~~
 int
-5
+0
 ~~END~~
 
 
@@ -46,11 +36,5 @@ SELECT * FROM sys_default_definitions_vu_prepare_view;
 GO
 ~~START~~
 text
-'DEFAULT'::nvarchar
-'ab'::"varchar" COLLATE "default"
-0
-1
-50
-getdate()
 ~~END~~
 

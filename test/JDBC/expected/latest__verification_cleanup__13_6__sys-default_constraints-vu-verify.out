@@ -46,7 +46,6 @@ SELECT * FROM sys_default_definitions_vu_prepare_view;
 GO
 ~~START~~
 text
-'DEFAULT'::nvarchar
 'ab'::"varchar" COLLATE "default"
 0
 1
