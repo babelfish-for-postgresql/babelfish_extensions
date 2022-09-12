@@ -93,6 +93,9 @@ GO
 SELECT dept,SUM(pricebigint) OVER(PARTITION BY dept) FROM babel_3144_vu_prepare_t7
 GO
 
+SELECT * FROM babel_3144_vu_prepare_v1
+GO
+
 DROP FUNCTION babel_3144_vu_prepare_f1
 DROP FUNCTION babel_3144_vu_prepare_f2
 DROP FUNCTION babel_3144_vu_prepare_f3
@@ -100,6 +103,9 @@ DROP FUNCTION babel_3144_vu_prepare_f4
 GO
 
 DROP PROCEDURE babel_3144_vu_prepare_p1
+GO
+
+DROP VIEW babel_3144_vu_prepare_v1
 GO
 
 DROP TABLE babel_3144_vu_prepare_t1

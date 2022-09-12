@@ -169,6 +169,8 @@ struct NumericData
 #define NUMERIC_NEG			0x4000
 #define NUMERIC_SHORT		0x8000
 #define NUMERIC_NAN			0xC000
+#define NUMERIC_PINF		0xD000
+#define NUMERIC_NINF		0xF000
 
 #define NUMERIC_FLAGBITS(n) ((n)->choice.n_header & NUMERIC_SIGN_MASK)
 #define NUMERIC_IS_NAN(n)		(NUMERIC_FLAGBITS(n) == NUMERIC_NAN)
@@ -349,10 +351,12 @@ typedef struct NumericSumAccum
 } NumericSumAccum;
 
 /*
-	Struct referenced from utils/adt/numeric.c
-	It is needed to get the state returned by SUM(bigint) transition function
-*/
-
+ * Structs referenced from utils/adt/numeric.c
+ *
+ * Since the support for int128 is platform dependant,
+ * Different states definition are maintained for SUM(BIGINT)
+ * to speed up computation.
+ */
 #ifdef HAVE_INT128
 typedef struct Int128AggState
 {
@@ -431,6 +435,17 @@ static void dump_var(const char *str, NumericVar *var);
 
 static const NumericVar const_nan =
 {0, 0, NUMERIC_NAN, 0, NULL, NULL};
+
+static const NumericVar const_pinf =
+{0, 0, NUMERIC_PINF, 0, NULL, NULL};
+
+static const NumericVar const_ninf =
+{0, 0, NUMERIC_NINF, 0, NULL, NULL};
+
+static const NumericDigit const_zero_data[1] = {0};
+static const NumericVar const_zero =
+{0, 0, NUMERIC_POS, 0, NULL, (NumericDigit *) const_zero_data};
+
 #if DEC_DIGITS == 4
 static const int round_powers[4] = {0, 1000, 100, 10};
 #endif
@@ -449,6 +464,17 @@ static void strip_var(NumericVar *var);
 static void set_var_from_var(const NumericVar *value, NumericVar *dest);
 static bool numericvar_to_int64(const NumericVar *var, int64 *result);
 static void round_var(NumericVar *var, int rscale);
+static int64 numeric_sum_tsql(PolyNumAggState *state);
+static void accum_sum_final(NumericSumAccum *accum, NumericVar *result);
+static void accum_sum_carry(NumericSumAccum *accum);
+static void add_var(const NumericVar *var1, const NumericVar *var2, NumericVar *result);
+static void add_abs(const NumericVar *var1, const NumericVar *var2, NumericVar *result);
+static void sub_abs(const NumericVar *var1, const NumericVar *var2, NumericVar *result);
+static int cmp_abs(const NumericVar *var1, const NumericVar *var2);
+static int cmp_abs_common(const NumericDigit *var1digits, int var1ndigits, int var1weight,
+				 const NumericDigit *var2digits, int var2ndigits, int var2weight);
+static void zero_var(NumericVar *var);
+
 /* ----------------------------------------------------------------------
  *
  * Local functions follow
@@ -1065,11 +1091,14 @@ tsql_numeric_get_typmod(Numeric num)
 	return (((precision & 0xFFFF) << 16 ) | (scale & 0xFFFF)) + VARHDRSZ;
 }
 
+/* 
+ * Final function to be used by SUM(BIGINT) aggregate
+ */
 Datum
 bigint_poly_sum(PG_FUNCTION_ARGS)
 {
 	
-	PolyNumAggState *state;
+	PolyNumAggState		*state;
 	
 	state = PG_ARGISNULL(0) ? NULL : (PolyNumAggState *) PG_GETARG_POINTER(0);
 	/* If there were no non-null inputs, return NULL */
@@ -1077,37 +1106,582 @@ bigint_poly_sum(PG_FUNCTION_ARGS)
 		PG_RETURN_NULL();
 
 	#ifdef HAVE_INT128
-	int128 			arg;
+	int128		arg;
 	arg = state->sumX;
 
 	if (unlikely(arg < PG_INT64_MIN) || unlikely(arg > PG_INT64_MAX))
+	{
 		ereport(ERROR,
 				(errcode(ERRCODE_NUMERIC_VALUE_OUT_OF_RANGE),
 				 errmsg("Arithmetic overflow error converting expression to data type bigint.")));
-
-	PG_RETURN_INT64((int64) arg);
+	}
+	else
+		PG_RETURN_INT64((int64) arg);
 	#else
 
-	Datum temp;
-	bool flag;
-	int64 result;
-	NumericVar nvar;
+	PG_RETURN_INT64(numeric_sum_tsql(state));
 
-	temp = DirectFunctionCall1(numeric_sum, PG_GETARG_DATUM(0));
-	init_var(&nvar);
-	set_var_from_num( DatumGetNumeric(temp), &nvar);
-	flag = numericvar_to_int64( &nvar, &result);
-	free_var(&nvar);
-
-	if (!flag)
-		ereport(ERROR,
-				(errcode(ERRCODE_NUMERIC_VALUE_OUT_OF_RANGE),
-				 errmsg("Arithmetic overflow error converting expression to data type bigint.")));
-	else
-	PG_RETURN_INT64(result);
 	#endif
 }
 
+/*
+ * In case of platform not supporting int128 type 
+ * 
+ * Utility Function used by bigint_poly_sum() to handle the numeric data 
+ * returned by int8_avg_accum() transition function and convert it to 
+ * required return type
+ */
+static int64
+numeric_sum_tsql(PolyNumAggState *state)
+{	
+	NumericVar sumX_var;
+	int64 result;
+	bool overflow_flag;
+
+	if (state->NaNcount > 0)	/* there was at least one NaN input */
+		sumX_var = const_nan;
+	/* adding plus and minus infinities gives NaN */
+	if (state->pInfcount > 0 && state->nInfcount > 0)
+		sumX_var = const_nan;
+	if (state->pInfcount > 0)
+		sumX_var = const_pinf;
+	if (state->nInfcount > 0)
+		sumX_var = const_ninf;
+
+	if (!(state->NaNcount > 0) && !(state->pInfcount > 0) && !(state->nInfcount > 0))
+	{
+	init_var(&sumX_var);
+	accum_sum_final(&state->sumX, &sumX_var);
+
+	if (detect_numeric_overflow_hook && sumX_var.digits &&
+	    (*detect_numeric_overflow_hook)(sumX_var.weight, sumX_var.dscale, sumX_var.digits[0], DEC_DIGITS))
+		ereport(ERROR,
+				(errcode(ERRCODE_NUMERIC_VALUE_OUT_OF_RANGE),
+				errmsg("Arithmetic overflow error for data type numeric.")));
+	}
+
+	overflow_flag = numericvar_to_int64( &sumX_var, &result);
+	free_var(&sumX_var);
+
+	if (!overflow_flag){
+		ereport(ERROR,
+				(errcode(ERRCODE_NUMERIC_VALUE_OUT_OF_RANGE),
+				 errmsg("Arithmetic overflow error converting expression to data type bigint.")));
+	
+	}
+	else
+		return result;
+}
+
+/*
+ * Function referenced from utils/adt/numeric.c
+ * Return the current value of the accumulator.  This perform final carry
+ * propagation, and adds together the positive and negative sums.
+ *
+ * Unlike all the other routines, the caller is not required to switch to
+ * the memory context that holds the accumulator.
+ */
+static void
+accum_sum_final(NumericSumAccum *accum, NumericVar *result)
+{
+	int			i;
+	NumericVar	pos_var;
+	NumericVar	neg_var;
+
+	if (accum->ndigits == 0)
+	{
+		set_var_from_var(&const_zero, result);
+		return;
+	}
+
+	/* Perform final carry */
+	accum_sum_carry(accum);
+
+	/* Create NumericVars representing the positive and negative sums */
+	init_var(&pos_var);
+	init_var(&neg_var);
+
+	pos_var.ndigits = neg_var.ndigits = accum->ndigits;
+	pos_var.weight = neg_var.weight = accum->weight;
+	pos_var.dscale = neg_var.dscale = accum->dscale;
+	pos_var.sign = NUMERIC_POS;
+	neg_var.sign = NUMERIC_NEG;
+
+	pos_var.buf = pos_var.digits = digitbuf_alloc(accum->ndigits);
+	neg_var.buf = neg_var.digits = digitbuf_alloc(accum->ndigits);
+
+	for (i = 0; i < accum->ndigits; i++)
+	{
+		Assert(accum->pos_digits[i] < NBASE);
+		pos_var.digits[i] = (int16) accum->pos_digits[i];
+
+		Assert(accum->neg_digits[i] < NBASE);
+		neg_var.digits[i] = (int16) accum->neg_digits[i];
+	}
+
+	/* And add them together */
+	add_var(&pos_var, &neg_var, result);
+
+	/* Remove leading/trailing zeroes */
+	strip_var(result);
+}
+
+/*
+ * Function referenced from utils/adt/numeric.c
+ * Propagate carries.
+ */
+static void
+accum_sum_carry(NumericSumAccum *accum)
+{
+	int			i;
+	int			ndigits;
+	int32	   *dig;
+	int32		carry;
+	int32		newdig = 0;
+
+	/*
+	 * If no new values have been added since last carry propagation, nothing
+	 * to do.
+	 */
+	if (accum->num_uncarried == 0)
+		return;
+
+	/*
+	 * We maintain that the weight of the accumulator is always one larger
+	 * than needed to hold the current value, before carrying, to make sure
+	 * there is enough space for the possible extra digit when carry is
+	 * propagated.  We cannot expand the buffer here, unless we require
+	 * callers of accum_sum_final() to switch to the right memory context.
+	 */
+	Assert(accum->pos_digits[0] == 0 && accum->neg_digits[0] == 0);
+
+	ndigits = accum->ndigits;
+
+	/* Propagate carry in the positive sum */
+	dig = accum->pos_digits;
+	carry = 0;
+	for (i = ndigits - 1; i >= 0; i--)
+	{
+		newdig = dig[i] + carry;
+		if (newdig >= NBASE)
+		{
+			carry = newdig / NBASE;
+			newdig -= carry * NBASE;
+		}
+		else
+			carry = 0;
+		dig[i] = newdig;
+	}
+	/* Did we use up the digit reserved for carry propagation? */
+	if (newdig > 0)
+		accum->have_carry_space = false;
+
+	/* And the same for the negative sum */
+	dig = accum->neg_digits;
+	carry = 0;
+	for (i = ndigits - 1; i >= 0; i--)
+	{
+		newdig = dig[i] + carry;
+		if (newdig >= NBASE)
+		{
+			carry = newdig / NBASE;
+			newdig -= carry * NBASE;
+		}
+		else
+			carry = 0;
+		dig[i] = newdig;
+	}
+	if (newdig > 0)
+		accum->have_carry_space = false;
+
+	accum->num_uncarried = 0;
+}
+
+/*
+ * Function referenced from utils/adt/numeric.c
+ * add_var() -
+ *
+ *	Full version of add functionality on variable level (handling signs).
+ *	result might point to one of the operands too without danger.
+ */
+static void
+add_var(const NumericVar *var1, const NumericVar *var2, NumericVar *result)
+{
+	/*
+	 * Decide on the signs of the two variables what to do
+	 */
+	if (var1->sign == NUMERIC_POS)
+	{
+		if (var2->sign == NUMERIC_POS)
+		{
+			/*
+			 * Both are positive result = +(ABS(var1) + ABS(var2))
+			 */
+			add_abs(var1, var2, result);
+			result->sign = NUMERIC_POS;
+		}
+		else
+		{
+			/*
+			 * var1 is positive, var2 is negative Must compare absolute values
+			 */
+			switch (cmp_abs(var1, var2))
+			{
+				case 0:
+					/* ----------
+					 * ABS(var1) == ABS(var2)
+					 * result = ZERO
+					 * ----------
+					 */
+					zero_var(result);
+					result->dscale = Max(var1->dscale, var2->dscale);
+					break;
+
+				case 1:
+					/* ----------
+					 * ABS(var1) > ABS(var2)
+					 * result = +(ABS(var1) - ABS(var2))
+					 * ----------
+					 */
+					sub_abs(var1, var2, result);
+					result->sign = NUMERIC_POS;
+					break;
+
+				case -1:
+					/* ----------
+					 * ABS(var1) < ABS(var2)
+					 * result = -(ABS(var2) - ABS(var1))
+					 * ----------
+					 */
+					sub_abs(var2, var1, result);
+					result->sign = NUMERIC_NEG;
+					break;
+			}
+		}
+	}
+	else
+	{
+		if (var2->sign == NUMERIC_POS)
+		{
+			/* ----------
+			 * var1 is negative, var2 is positive
+			 * Must compare absolute values
+			 * ----------
+			 */
+			switch (cmp_abs(var1, var2))
+			{
+				case 0:
+					/* ----------
+					 * ABS(var1) == ABS(var2)
+					 * result = ZERO
+					 * ----------
+					 */
+					zero_var(result);
+					result->dscale = Max(var1->dscale, var2->dscale);
+					break;
+
+				case 1:
+					/* ----------
+					 * ABS(var1) > ABS(var2)
+					 * result = -(ABS(var1) - ABS(var2))
+					 * ----------
+					 */
+					sub_abs(var1, var2, result);
+					result->sign = NUMERIC_NEG;
+					break;
+
+				case -1:
+					/* ----------
+					 * ABS(var1) < ABS(var2)
+					 * result = +(ABS(var2) - ABS(var1))
+					 * ----------
+					 */
+					sub_abs(var2, var1, result);
+					result->sign = NUMERIC_POS;
+					break;
+			}
+		}
+		else
+		{
+			/* ----------
+			 * Both are negative
+			 * result = -(ABS(var1) + ABS(var2))
+			 * ----------
+			 */
+			add_abs(var1, var2, result);
+			result->sign = NUMERIC_NEG;
+		}
+	}
+}
+
+/*
+ * Function referenced from utils/adt/numeric.c
+ * sub_abs()
+ *
+ *	Subtract the absolute value of var2 from the absolute value of var1
+ *	and store in result. result might point to one of the operands
+ *	without danger.
+ *
+ *	ABS(var1) MUST BE GREATER OR EQUAL ABS(var2) !!!
+ */
+static void
+sub_abs(const NumericVar *var1, const NumericVar *var2, NumericVar *result)
+{
+	NumericDigit *res_buf;
+	NumericDigit *res_digits;
+	int			res_ndigits;
+	int			res_weight;
+	int			res_rscale,
+				rscale1,
+				rscale2;
+	int			res_dscale;
+	int			i,
+				i1,
+				i2;
+	int			borrow = 0;
+
+	/* copy these values into local vars for speed in inner loop */
+	int			var1ndigits = var1->ndigits;
+	int			var2ndigits = var2->ndigits;
+	NumericDigit *var1digits = var1->digits;
+	NumericDigit *var2digits = var2->digits;
+
+	res_weight = var1->weight;
+
+	res_dscale = Max(var1->dscale, var2->dscale);
+
+	/* Note: here we are figuring rscale in base-NBASE digits */
+	rscale1 = var1->ndigits - var1->weight - 1;
+	rscale2 = var2->ndigits - var2->weight - 1;
+	res_rscale = Max(rscale1, rscale2);
+
+	res_ndigits = res_rscale + res_weight + 1;
+	if (res_ndigits <= 0)
+		res_ndigits = 1;
+
+	res_buf = digitbuf_alloc(res_ndigits + 1);
+	res_buf[0] = 0;				/* spare digit for later rounding */
+	res_digits = res_buf + 1;
+
+	i1 = res_rscale + var1->weight + 1;
+	i2 = res_rscale + var2->weight + 1;
+	for (i = res_ndigits - 1; i >= 0; i--)
+	{
+		i1--;
+		i2--;
+		if (i1 >= 0 && i1 < var1ndigits)
+			borrow += var1digits[i1];
+		if (i2 >= 0 && i2 < var2ndigits)
+			borrow -= var2digits[i2];
+
+		if (borrow < 0)
+		{
+			res_digits[i] = borrow + NBASE;
+			borrow = -1;
+		}
+		else
+		{
+			res_digits[i] = borrow;
+			borrow = 0;
+		}
+	}
+
+	Assert(borrow == 0);		/* else caller gave us var1 < var2 */
+
+	digitbuf_free(result->buf);
+	result->ndigits = res_ndigits;
+	result->buf = res_buf;
+	result->digits = res_digits;
+	result->weight = res_weight;
+	result->dscale = res_dscale;
+
+	/* Remove leading/trailing zeroes */
+	strip_var(result);
+}
+
+/*
+ * Function referenced from utils/adt/numeric.c
+ * add_abs() -
+ *
+ *	Add the absolute values of two variables into result.
+ *	result might point to one of the operands without danger.
+ */
+static void
+add_abs(const NumericVar *var1, const NumericVar *var2, NumericVar *result)
+{
+	NumericDigit *res_buf;
+	NumericDigit *res_digits;
+	int			res_ndigits;
+	int			res_weight;
+	int			res_rscale,
+				rscale1,
+				rscale2;
+	int			res_dscale;
+	int			i,
+				i1,
+				i2;
+	int			carry = 0;
+
+	/* copy these values into local vars for speed in inner loop */
+	int			var1ndigits = var1->ndigits;
+	int			var2ndigits = var2->ndigits;
+	NumericDigit *var1digits = var1->digits;
+	NumericDigit *var2digits = var2->digits;
+
+	res_weight = Max(var1->weight, var2->weight) + 1;
+
+	res_dscale = Max(var1->dscale, var2->dscale);
+
+	/* Note: here we are figuring rscale in base-NBASE digits */
+	rscale1 = var1->ndigits - var1->weight - 1;
+	rscale2 = var2->ndigits - var2->weight - 1;
+	res_rscale = Max(rscale1, rscale2);
+
+	res_ndigits = res_rscale + res_weight + 1;
+	if (res_ndigits <= 0)
+		res_ndigits = 1;
+
+	res_buf = digitbuf_alloc(res_ndigits + 1);
+	res_buf[0] = 0;				/* spare digit for later rounding */
+	res_digits = res_buf + 1;
+
+	i1 = res_rscale + var1->weight + 1;
+	i2 = res_rscale + var2->weight + 1;
+	for (i = res_ndigits - 1; i >= 0; i--)
+	{
+		i1--;
+		i2--;
+		if (i1 >= 0 && i1 < var1ndigits)
+			carry += var1digits[i1];
+		if (i2 >= 0 && i2 < var2ndigits)
+			carry += var2digits[i2];
+
+		if (carry >= NBASE)
+		{
+			res_digits[i] = carry - NBASE;
+			carry = 1;
+		}
+		else
+		{
+			res_digits[i] = carry;
+			carry = 0;
+		}
+	}
+
+	Assert(carry == 0);			/* else we failed to allow for carry out */
+
+	digitbuf_free(result->buf);
+	result->ndigits = res_ndigits;
+	result->buf = res_buf;
+	result->digits = res_digits;
+	result->weight = res_weight;
+	result->dscale = res_dscale;
+
+	/* Remove leading/trailing zeroes */
+	strip_var(result);
+}
+
+/* 
+ * Function referenced from utils/adt/numeric.c
+ * cmp_abs() -
+ *
+ *	Compare the absolute values of var1 and var2
+ *	Returns:	-1 for ABS(var1) < ABS(var2)
+ *				0  for ABS(var1) == ABS(var2)
+ *				1  for ABS(var1) > ABS(var2)
+ */
+static int
+cmp_abs(const NumericVar *var1, const NumericVar *var2)
+{
+	return cmp_abs_common(var1->digits, var1->ndigits, var1->weight,
+						  var2->digits, var2->ndigits, var2->weight);
+}
+
+/* 
+ * Function referenced from utils/adt/numeric.c
+ * cmp_abs_common() -
+ *
+ *	Main routine of cmp_abs(). This function can be used by both
+ *	NumericVar and Numeric.
+ */
+static int
+cmp_abs_common(const NumericDigit *var1digits, int var1ndigits, int var1weight,
+			   const NumericDigit *var2digits, int var2ndigits, int var2weight)
+{
+	int			i1 = 0;
+	int			i2 = 0;
+
+	/* Check any digits before the first common digit */
+
+	while (var1weight > var2weight && i1 < var1ndigits)
+	{
+		if (var1digits[i1++] != 0)
+			return 1;
+		var1weight--;
+	}
+	while (var2weight > var1weight && i2 < var2ndigits)
+	{
+		if (var2digits[i2++] != 0)
+			return -1;
+		var2weight--;
+	}
+
+	/* At this point, either w1 == w2 or we've run out of digits */
+
+	if (var1weight == var2weight)
+	{
+		while (i1 < var1ndigits && i2 < var2ndigits)
+		{
+			int			stat = var1digits[i1++] - var2digits[i2++];
+
+			if (stat)
+			{
+				if (stat > 0)
+					return 1;
+				return -1;
+			}
+		}
+	}
+
+	/*
+	 * At this point, we've run out of digits on one side or the other; so any
+	 * remaining nonzero digits imply that side is larger
+	 */
+	while (i1 < var1ndigits)
+	{
+		if (var1digits[i1++] != 0)
+			return 1;
+	}
+	while (i2 < var2ndigits)
+	{
+		if (var2digits[i2++] != 0)
+			return -1;
+	}
+
+	return 0;
+}
+
+/*
+ * Function referenced from utils/adt/numeric.c
+ * zero_var() -
+ *
+ *	Set a variable to ZERO.
+ *	Note: its dscale is not touched.
+ */
+static void
+zero_var(NumericVar *var)
+{
+	digitbuf_free(var->buf);
+	var->buf = NULL;
+	var->digits = NULL;
+	var->ndigits = 0;
+	var->weight = 0;			/* by convention; doesn't really matter */
+	var->sign = NUMERIC_POS;	/* anything but NAN... */
+}
+
+/* 
+ * Final function to be used by SUM(INT,SMALLINT,TINYINT) aggregate
+ */
 Datum
 int4int2_sum(PG_FUNCTION_ARGS)
 {
@@ -1130,6 +1704,12 @@ int4int2_sum(PG_FUNCTION_ARGS)
 	}
 }
 
+/*
+ * Function referenced from utils/adt/numeric.c
+ * Convert numeric to int8, rounding if needed.
+ *
+ * If overflow, return false (no error is raised).  Return true if okay.
+ */
 static bool
 numericvar_to_int64(const NumericVar *var, int64 *result)
 {
@@ -1201,6 +1781,13 @@ numericvar_to_int64(const NumericVar *var, int64 *result)
 
 	return true;
 }
+
+/*
+ * Function referenced from utils/adt/numeric.c
+ * set_var_from_var() -
+ *
+ *	Copy one variable into another
+ */
 static void
 set_var_from_var(const NumericVar *value, NumericVar *dest)
 {
@@ -1219,9 +1806,17 @@ set_var_from_var(const NumericVar *value, NumericVar *dest)
 	dest->digits = newbuf + 1;
 }
 
+/*
+ * Function referenced from utils/adt/numeric.c
+ * round_var
+ *
+ * Round the value of a variable to no more than rscale decimal digits
+ * after the decimal point.  NOTE: we allow rscale < 0 here, implying
+ * rounding before the decimal point.
+ */
 static void
 round_var(NumericVar *var, int rscale)
-{
+{	
 	NumericDigit *digits = var->digits;
 	int			di;
 	int			ndigits;

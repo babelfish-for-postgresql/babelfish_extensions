@@ -100,3 +100,11 @@ INSERT INTO babel_3144_vu_prepare_t7 VALUES ('B','2022-01-03',34,2000)
 INSERT INTO babel_3144_vu_prepare_t7 VALUES ('B','2022-01-04',33,3000)
 INSERT INTO babel_3144_vu_prepare_t7 VALUES ('B','2022-01-05',32,4000)
 GO
+
+CREATE VIEW babel_3144_vu_prepare_v1 as SELECT 
+cast(pg_typeof( SUM( sumbigint ) ) as varchar(48) )  as sum_bigint , 
+cast(pg_typeof( SUM( sumint ) ) as varchar(48) )  as sum_int , 
+cast(pg_typeof( SUM( sumsmallint ) ) as varchar(48) )  as sum_smallint ,
+cast(pg_typeof( SUM( sumtinyint ) ) as varchar(48) )  as sum_tinyint 
+FROM babel_3144_vu_prepare_t3
+GO
