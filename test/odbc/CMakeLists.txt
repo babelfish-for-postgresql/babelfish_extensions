@@ -35,8 +35,8 @@ add_executable(
   # test_metadata.cpp
   # test_prepared_statements.cpp
   # test_sqlgetinfo.cpp
-  toby_test_pg_datatype_nvarchar.cpp
-  # toby_test_pg_datatype_sysname.cpp
+  # toby_test_pg_datatype_nvarchar.cpp
+  toby_test_pg_datatype_sysname.cpp
   main.cpp
 )
 
