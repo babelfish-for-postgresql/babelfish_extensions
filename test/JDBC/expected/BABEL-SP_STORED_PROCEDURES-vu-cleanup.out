@@ -1,0 +1,40 @@
+DROP FUNCTION babel_sp_stored_procedures_vu_prepare_s1.positive_or_negative
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: schema "master_babel_sp_stored_procedures_vu_prepare_s1" does not exist)~~
+
+DROP PROCEDURE babel_sp_stored_procedures_vu_prepare_select_all
+GO
+~~ERROR (Code: 3701)~~
+
+~~ERROR (Message: could not find a procedure named "babel_sp_stored_procedures_vu_prepare_select_all")~~
+
+DROP PROCEDURE babel_sp_stored_procedures_vu_prepare_seluct_all
+GO
+~~ERROR (Code: 3701)~~
+
+~~ERROR (Message: could not find a procedure named "babel_sp_stored_procedures_vu_prepare_seluct_all")~~
+
+DROP PROCEDURE babel_sp_stored_procedures_vu_prepare_select_all_Mixed
+GO
+~~ERROR (Code: 3701)~~
+
+~~ERROR (Message: could not find a procedure named "babel_sp_stored_procedures_vu_prepare_select_all_mixed")~~
+
+DROP TABLE babel_sp_stored_procedures_vu_prepare_t1
+GO
+~~ERROR (Code: 3701)~~
+
+~~ERROR (Message: table "babel_sp_stored_procedures_vu_prepare_t1" does not exist)~~
+
+DROP SCHEMA babel_sp_stored_procedures_vu_prepare_s1
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: schema "master_babel_sp_stored_procedures_vu_prepare_s1" does not exist)~~
+
+USE master
+GO
+DROP DATABASE babel_sp_stored_procedures_vu_prepare_db1
+GO
