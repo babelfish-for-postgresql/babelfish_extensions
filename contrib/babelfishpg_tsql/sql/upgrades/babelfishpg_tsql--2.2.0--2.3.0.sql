@@ -54,6 +54,9 @@ BEGIN
 					WHERE (rolname = RTRIM(@srvrolename)
 					OR lower(rolname) = lower(RTRIM(@srvrolename)))
 					AND type = 'R')
+					OR lower(RTRIM(@srvrolename)) IN (
+					'serveradmin', 'setupadmin', 'securityadmin', 'processadmin',
+					'dbcreator', 'diskadmin', 'bulkadmin')
 	BEGIN
 		SELECT CAST(Ext1.rolname AS sys.SYSNAME) AS 'ServerRole',
 			   CAST(Ext2.rolname AS sys.SYSNAME) AS 'MemberName',

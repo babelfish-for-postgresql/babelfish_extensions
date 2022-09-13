@@ -1,0 +1,7 @@
+select * from sys.dm_os_host_info;
+go
+~~START~~
+nvarchar#!#nvarchar#!#nvarchar#!#nvarchar#!#int#!#int
+Linux#!##!##!##!#<NULL>#!#1033
+~~END~~
+

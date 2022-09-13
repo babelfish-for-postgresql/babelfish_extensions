@@ -1,0 +1,9 @@
+-- tsql user=sys_dm_exec_connections_vu_prepare_login_2296 password=password_2296
+-- if we query the view not as sysadmin, then we will get an error
+select * from sys.dm_exec_connections
+GO
+
+-- tsql
+-- if we query the view as sysadmin, we can get info for all the connection to server
+select net_transport, protocol_type, protocol_version, endpoint_id, encrypt_option from sys.dm_exec_connections where session_id = @@SPID
+GO
