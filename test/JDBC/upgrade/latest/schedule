@@ -101,6 +101,7 @@ Test-Identity
 Test-Computed-Columns
 BABEL-1189
 BABEL-1243
+BABEL-1493
 BABEL-1963
 BABEL-2203
 BABEL-2208
@@ -172,3 +173,4 @@ sys-assemblies
 BABEL-LOGIN-USER-EXT
 bitwise_not-operator
 BABEL-1683
+schema_resolution_trigger

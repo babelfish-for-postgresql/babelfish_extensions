@@ -39,6 +39,14 @@ int
 ~~END~~
 
 
+sp_hello
+go
+~~START~~
+int
+1
+~~END~~
+
+
 exec .sp_hello
 go
 ~~START~~
@@ -56,6 +64,14 @@ int
 
 
 exec dbo.sp_hello
+go
+~~START~~
+int
+1
+~~END~~
+
+
+dbo.sp_hello
 go
 ~~START~~
 int

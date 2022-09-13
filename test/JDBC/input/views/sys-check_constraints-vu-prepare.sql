@@ -21,3 +21,8 @@ GO
 CREATE VIEW sys_check_constraints_vu_prepare_view AS
     SELECT definition FROM sys.check_constraints WHERE name LIKE '%sys_check_constraints%' ORDER BY definition
 GO
+
+CREATE TABLE sys_check_constraints_vu_prepare_t1 (
+	sck_date_col DATETIME CHECK (sck_date_col IS NOT NULL)
+)
+GO

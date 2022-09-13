@@ -9,3 +9,6 @@ GO
 
 DROP VIEW sys_default_definitions_vu_prepare_view
 GO
+
+DROP TABLE IF EXISTS sys_default_constraints_vu_prepare_t1
+GO
