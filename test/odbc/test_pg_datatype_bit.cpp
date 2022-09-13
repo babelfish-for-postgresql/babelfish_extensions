@@ -126,6 +126,7 @@ TEST_F(PSQL_DataTypes_Bit, Insertion_Success) {
   vector <string> valid_inserted_values = {
     "0",
     "1",
+    "-0",
     "-1",
     "2",
     "NULL"
@@ -402,15 +403,16 @@ TEST_F(PSQL_DataTypes_Bit, Arithmetic_Bitwise_Operators) {
     COL1_NAME + "|" + COL2_NAME,
     // COL1_NAME + "^" + COL2_NAME, // Has error when querying
     "~" + COL1_NAME, // TODO - Needs double checking
+
     // COL1_NAME + "||" + COL2_NAME, // Has error when querying
     COL1_NAME + "<<" + COL2_NAME,
     COL1_NAME + ">>" + COL2_NAME,
-
-    // Below supported in PSQL but not TSQL
-    // COL1_NAME + "+" + COL2_NAME,
-    // COL1_NAME + "-" + COL2_NAME,
-    // COL1_NAME + "*" + COL2_NAME,
-    // COL1_NAME + "/" + COL2_NAME
+    
+    // COL1_NAME + "=" + COL2_NAME, // Has error when querying
+    // COL1_NAME + "<" + COL2_NAME, // Has error when querying
+    // COL1_NAME + "<=" + COL2_NAME, // Has error when querying
+    // COL1_NAME + ">" + COL2_NAME, // Has error when querying
+    // COL1_NAME + ">=" + COL2_NAME, // Has error when querying
   };
 
   vector<vector<unsigned char>>expected_results = {};
@@ -418,19 +420,21 @@ TEST_F(PSQL_DataTypes_Bit, Arithmetic_Bitwise_Operators) {
   // initialization of expected_results
   for (int i = 0; i < inserted_data.size(); i++) {
     expected_results.push_back({});
+
     expected_results[i].push_back(StringToBit(inserted_pk[i]) & StringToBit(inserted_data[i]));
     expected_results[i].push_back(StringToBit(inserted_pk[i]) | StringToBit(inserted_data[i]));
-    // expected_results[i].push_back(StringToBit(inserted_pk[i]) ^ StringToBit(inserted_data[i])); // Has Error when querying
+    // expected_results[i].push_back(StringToBit(inserted_pk[i]) ^ StringToBit(inserted_data[i]));
     expected_results[i].push_back(~(1 & StringToBit(inserted_pk[i]))); // TODO - Needs double checking
-    // expected_results[i].push_back(StringToBit(inserted_pk[i]) || StringToBit(inserted_data[i])); // Has error when querying
+
+    // expected_results[i].push_back(StringToBit(inserted_pk[i]) || StringToBit(inserted_data[i]));
     expected_results[i].push_back(StringToBit(inserted_pk[i]) << StringToBit(inserted_data[i]));
     expected_results[i].push_back(StringToBit(inserted_pk[i]) >> StringToBit(inserted_data[i]));
 
-    // Below supported in PSQL but not TSQL
-    // expected_results[i].push_back(StringToBit(inserted_pk[i]) + StringToBit(inserted_data[i]));
-    // expected_results[i].push_back(StringToBit(inserted_pk[i]) - StringToBit(inserted_data[i]));
-    // expected_results[i].push_back(StringToBit(inserted_pk[i]) * StringToBit(inserted_data[i]));
-    // expected_results[i].push_back(StringToBit(inserted_pk[i]) / StringToBit(inserted_data[i]));
+    // expected_results[i].push_back(StringToBit(inserted_pk[i]) == StringToBit(inserted_data[i]) ? 1 : 0);
+    // expected_results[i].push_back(StringToBit(inserted_pk[i]) < StringToBit(inserted_data[i]) ? 1 : 0);
+    // expected_results[i].push_back(StringToBit(inserted_pk[i]) <= StringToBit(inserted_data[i]) ? 1 : 0);
+    // expected_results[i].push_back(StringToBit(inserted_pk[i]) > StringToBit(inserted_data[i]) ? 1 : 0);
+    // expected_results[i].push_back(StringToBit(inserted_pk[i]) >= StringToBit(inserted_data[i]) ? 1 : 0);
   }
 
   unsigned char col_results[operations_query.size()];
