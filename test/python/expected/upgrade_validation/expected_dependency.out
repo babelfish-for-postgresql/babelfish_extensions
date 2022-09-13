@@ -651,11 +651,9 @@ Function sys.stuff(text,integer,integer,text)
 Function sys.suser_id()
 Function sys.suser_id_internal(text)
 Function sys.suser_name()
-Function sys.suser_name(oid)
 Function sys.suser_name_internal(oid)
 Function sys.suser_sid()
 Function sys.suser_sname()
-Function sys.suser_sname(sys.varbinary)
 Function sys.sysdatetime()
 Function sys.sysdatetimeoffset()
 Function sys.system_user()
@@ -748,7 +746,6 @@ Function sys.varcharvarbinary(sys."varchar",integer,boolean)
 Function sys.version()
 Function sys.xact_state()
 Function sys.xid8rowversion(xid8,integer,boolean)
-Operator <(sys."varchar",sys."varchar")
 Operator <=(sys."varchar",sys."varchar")
 Operator <=(sys.bpchar,sys.bpchar)
 Operator <>(sys."varchar",sys."varchar")
@@ -1005,7 +1002,6 @@ Type sys.bbf_binary
 Type sys.bbf_varbinary
 Type sys.cursor
 Type sys.rowversion
-View information_schema_tsql.check_constraints
 View information_schema_tsql.column_domain_usage
 View information_schema_tsql.columns
 View information_schema_tsql.constraint_column_usage
@@ -1031,7 +1027,6 @@ View sys.database_filestream_options
 View sys.database_principals
 View sys.database_recovery_status
 View sys.database_role_members
-View sys.default_constraints
 View sys.dm_hadr_cluster
 View sys.dm_hadr_database_replica_states
 View sys.dm_os_host_info
