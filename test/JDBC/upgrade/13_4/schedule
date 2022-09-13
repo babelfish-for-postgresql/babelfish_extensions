@@ -3,35 +3,52 @@
 # 2. To run a postgres command:	cmd#!#postgresql#!#<enter postgres command>
 # 3. To run a T-SQL command: cmd#!#sqlserver#!#<enter T-SQL command>
 # 4. Keyword "all" is equivalent to running all test files in input folder
-# 5. To add a test, add test name (without extension, -vu-prepare, -vu-verify and -vu-cleanup. For example if test file name is TestBigInt-vu-prepare.txt write TestBigInt) on a new line
+# 5. To add a test, add test name (without extension, ,  and . For example if test file name is TestBigInt.txt write TestBigInt) on a new line
 
 TestBigInt
-TestReal
 TestBinary
 TestBIT
-TestSmallDatetime
 TestChar
-TestSmallInt
-TestDatetime2
-TestSmallMoney
-TestDatetime
-TestSQLVariant
 TestDate
+TestDatetime
+TestDatetime2
+TestFloat
+TestImage
+TestInt
+TestMoney
+TestReal
+TestSmallDatetime
+TestSmallInt
+TestSmallMoney
+TestSQLVariant
 TestText
 TestTime
-TestFloat
 TestTinyInt
-TestImage
 TestUDD
-TestInt
 TestUniqueIdentifier
-TestMoney
 TestVarChar
 TestXML
 BABEL-2934
 BABEL-3121
 BABEL-3166
 BABEL-3192
+sys-check_constraints
+sys-computed_columns
+sys-dm_exec_connections
+sys-dm_os_host_info
+sys-endpoints
+sys-extended_properties
+sys-index_columns
+sys-key_constraints
+sys-schemas
+sys-sp_databases
+sys-sp_tables_view
+sys-syscharsets
+sys-syscolumns
+sys-sysforeignkeys
+sys-tables
+sys-types
+sys-views
 fulltextserviceproperty
 is_srvrolemember
 sys-column-property
@@ -107,6 +124,22 @@ BABEL-RAND
 BABEL-741
 BABEL-EXTENDEDPROPERTY
 TestErrorHelperFunctionsUpgrade
+BABEL-1249
+BABEL-1291
+BABEL-1994-CHAR
+BABEL-1994-VARCHAR
+BABEL-889
+babel_417
+babel_sqlvariant_cast_compare
 tdscollation
+babel_datatype_sqlvariant
+sys-all_columns
+sys-default_constraints
+sys-dm_exec_sessions
+sys-foreign_key_columns
+sys-identity_columns
+sys-indexes
+sys-table_types
+sys_all_objects
 BABEL-1683
 schema_resolution_trigger

@@ -2485,11 +2485,16 @@ BEGIN
 		ORDER BY ServerRole, MemberName;
 	END
 	-- If a valid server role is specified, return its member info
+	-- If the role is a SQL server predefined role (i.e. serveradmin), 
+	-- do not raise an error even if it does not exist
 	ELSE IF EXISTS (SELECT 1
 					FROM sys.babelfish_authid_login_ext
 					WHERE (rolname = RTRIM(@srvrolename)
 					OR lower(rolname) = lower(RTRIM(@srvrolename)))
 					AND type = 'R')
+					OR lower(RTRIM(@srvrolename)) IN (
+					'serveradmin', 'setupadmin', 'securityadmin', 'processadmin',
+					'dbcreator', 'diskadmin', 'bulkadmin')
 	BEGIN
 		SELECT CAST(Ext1.rolname AS sys.SYSNAME) AS 'ServerRole',
 			   CAST(Ext2.rolname AS sys.SYSNAME) AS 'MemberName',
