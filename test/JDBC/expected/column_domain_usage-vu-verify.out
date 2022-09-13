@@ -6,14 +6,14 @@ master#!#dbo#!#column_domain_usage_vu_prepare_typ1#!#master#!#dbo#!#column_domai
 ~~END~~
 
 
-USE db_column_domain_usage_vu_prepare;
+USE column_domain_usage_vu_prepare_db;
 go
 
 SELECT * FROM information_schema.COLUMN_DOMAIN_USAGE WHERE TABLE_NAME LIKE 'column_domain_usage_vu_prepare%' ORDER BY COLUMN_NAME;
 go
 ~~START~~
 nvarchar#!#nvarchar#!#varchar#!#nvarchar#!#nvarchar#!#varchar#!#varchar
-db_column_domain_usage_vu_prepare#!#dbo#!#column_domain_usage_vu_prepare_ntyp#!#db_column_domain_usage_vu_prepare#!#dbo#!#column_domain_usage_vu_prepare_col_test#!#arg7
+column_domain_usage_vu_prepare_db#!#dbo#!#column_domain_usage_vu_prepare_ntyp#!#column_domain_usage_vu_prepare_db#!#dbo#!#column_domain_usage_vu_prepare_col_test#!#arg7
 ~~END~~
 
 
@@ -26,7 +26,7 @@ go
 drop type column_domain_usage_vu_prepare_typ1;
 go
 
-use db_column_domain_usage_vu_prepare;
+use column_domain_usage_vu_prepare_db;
 go
 
 drop table column_domain_usage_vu_prepare_col_test;
@@ -38,5 +38,5 @@ go
 use master;
 go
 
-drop database db_column_domain_usage_vu_prepare;
+drop database column_domain_usage_vu_prepare_db;
 go

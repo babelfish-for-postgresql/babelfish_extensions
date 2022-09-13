@@ -1,0 +1,6 @@
+SELECT * FROM sys.change_tracking_tables;
+GO
+~~START~~
+int#!#bit#!#bigint#!#bigint#!#bigint
+~~END~~
+

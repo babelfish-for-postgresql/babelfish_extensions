@@ -1,0 +1,7 @@
+-- Some columns have not been queried from the view because either they are not implemented
+-- yet as part of the sys.dm_exec_connections view (adding tests for them here is a TODO)
+-- or their value changes backend to backend
+
+-- Creating a simple login which has lesser privilege than sysadmin role
+create login sys_dm_exec_connections_vu_prepare_login_2296 with password = 'password_2296'
+GO
