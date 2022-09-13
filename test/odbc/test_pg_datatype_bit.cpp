@@ -108,6 +108,11 @@ TEST_F(PSQL_DataTypes_Bit, Table_Creation) {
 
 // Any non-zero values are converted to 1
 TEST_F(PSQL_DataTypes_Bit, Insertion_Success) {
+  vector<pair<string, string>> TABLE_COLUMNS = {
+    {COL1_NAME, DATATYPE_NAME + " PRIMARY KEY"},
+    {COL2_NAME, DATATYPE_NAME}
+  };
+  
   // TODO - Fix or Verify expected
   const int PK_BYTES_EXPECTED = 4;
   const int DATA_BYTES_EXPECTED = 1;
@@ -376,6 +381,11 @@ TEST_F(PSQL_DataTypes_Bit, Update_Fail) {
 }
 
 TEST_F(PSQL_DataTypes_Bit, Arithmetic_Bitwise_Operators) {
+  vector<pair<string, string>> TABLE_COLUMNS = {
+    {COL1_NAME, DATATYPE_NAME + " PRIMARY KEY"},
+    {COL2_NAME, DATATYPE_NAME}
+  };
+
   const int PK_BYTES_EXPECTED = 1;
   const int DATA_BYTES_EXPECTED = 1;
 
@@ -389,8 +399,8 @@ TEST_F(PSQL_DataTypes_Bit, Arithmetic_Bitwise_Operators) {
   OdbcHandler odbcHandler;
 
   vector <string> inserted_pk = {
-    "0",
-    "1"
+    "1",
+    "0"
   };
 
   vector <string> inserted_data = {
@@ -399,20 +409,21 @@ TEST_F(PSQL_DataTypes_Bit, Arithmetic_Bitwise_Operators) {
   };
 
   vector <string> operations_query = {
-    COL1_NAME + "&" + COL2_NAME,
-    COL1_NAME + "|" + COL2_NAME,
-    // COL1_NAME + "^" + COL2_NAME, // Has error when querying
-    "~" + COL1_NAME, // TODO - Needs double checking
+    COL1_NAME + "&" + COL2_NAME, // AND
+    // COL2 + "|" + COL3, // OR
+    // COL2 + "#" + COL3, // XOR
+    // "~" + COL3,             // NOT
+    // "-" + COL3,             // NOT
 
-    // COL1_NAME + "||" + COL2_NAME, // Has error when querying
-    COL1_NAME + "<<" + COL2_NAME,
-    COL1_NAME + ">>" + COL2_NAME,
+    // COL2 + "||" + COL3, // Has error when querying
+    // COL2 + "<<" + COL3,
+    // COL2 + ">>" + COL3,
     
-    // COL1_NAME + "=" + COL2_NAME, // Has error when querying
-    // COL1_NAME + "<" + COL2_NAME, // Has error when querying
-    // COL1_NAME + "<=" + COL2_NAME, // Has error when querying
-    // COL1_NAME + ">" + COL2_NAME, // Has error when querying
-    // COL1_NAME + ">=" + COL2_NAME, // Has error when querying
+    // COL2 + "=" + COL3, // Has error when querying
+    // COL2 + "<" + COL3, // Has error when querying
+    // COL2 + "<=" + COL3, // Has error when querying
+    // COL2 + ">" + COL3, // Has error when querying
+    // COL2 + ">=" + COL3, // Has error when querying
   };
 
   vector<vector<unsigned char>>expected_results = {};
@@ -422,13 +433,14 @@ TEST_F(PSQL_DataTypes_Bit, Arithmetic_Bitwise_Operators) {
     expected_results.push_back({});
 
     expected_results[i].push_back(StringToBit(inserted_pk[i]) & StringToBit(inserted_data[i]));
-    expected_results[i].push_back(StringToBit(inserted_pk[i]) | StringToBit(inserted_data[i]));
+    // expected_results[i].push_back(StringToBit(inserted_pk[i]) | StringToBit(inserted_data[i]));
     // expected_results[i].push_back(StringToBit(inserted_pk[i]) ^ StringToBit(inserted_data[i]));
-    expected_results[i].push_back(~(1 & StringToBit(inserted_pk[i]))); // TODO - Needs double checking
+    // expected_results[i].push_back(1 & ~StringToBit(inserted_data[i])); // TODO - Needs double checking
+    // expected_results[i].push_back(1 & ~StringToBit(inserted_data[i])); // TODO - Needs double checking
 
     // expected_results[i].push_back(StringToBit(inserted_pk[i]) || StringToBit(inserted_data[i]));
-    expected_results[i].push_back(StringToBit(inserted_pk[i]) << StringToBit(inserted_data[i]));
-    expected_results[i].push_back(StringToBit(inserted_pk[i]) >> StringToBit(inserted_data[i]));
+    // expected_results[i].push_back(StringToBit(inserted_pk[i]) << StringToBit(inserted_data[i]));
+    // expected_results[i].push_back(StringToBit(inserted_pk[i]) >> StringToBit(inserted_data[i]));
 
     // expected_results[i].push_back(StringToBit(inserted_pk[i]) == StringToBit(inserted_data[i]) ? 1 : 0);
     // expected_results[i].push_back(StringToBit(inserted_pk[i]) < StringToBit(inserted_data[i]) ? 1 : 0);
@@ -436,6 +448,8 @@ TEST_F(PSQL_DataTypes_Bit, Arithmetic_Bitwise_Operators) {
     // expected_results[i].push_back(StringToBit(inserted_pk[i]) > StringToBit(inserted_data[i]) ? 1 : 0);
     // expected_results[i].push_back(StringToBit(inserted_pk[i]) >= StringToBit(inserted_data[i]) ? 1 : 0);
   }
+
+  // std::cout << ((StringToBit(inserted_pk[0]) << 1) | StringToBit(inserted_data[0])) << std::endl;
 
   unsigned char col_results[operations_query.size()];
   SQLLEN col_len[operations_query.size()];
