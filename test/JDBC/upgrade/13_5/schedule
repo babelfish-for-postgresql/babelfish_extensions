@@ -184,4 +184,5 @@ babel_417
 babel_datatype_sqlvariant
 babel_sqlvariant_cast_compare
 tdscollation
-BABEL-1683 
+BABEL-1683
+schema_resolution_trigger

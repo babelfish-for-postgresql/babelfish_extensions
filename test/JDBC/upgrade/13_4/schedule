@@ -142,3 +142,4 @@ sys-indexes
 sys-table_types
 sys_all_objects
 BABEL-1683
+schema_resolution_trigger
