@@ -1,0 +1,46 @@
+-- Setup
+CREATE DATABASE db1_sys_sql_modules
+GO
+
+CREATE VIEW my_master_view_sys_sql_modules AS -- This view should not be seen as we will be using a different database for the test
+SELECT 1
+GO
+
+USE db1_sys_sql_modules
+GO
+
+CREATE TABLE sql_modules_table1(a int)
+GO
+
+CREATE TABLE sql_modules_table2(a int)
+GO
+
+CREATE TRIGGER sql_mod_trig ON sql_modules_table2 INSTEAD OF INSERT
+AS
+BEGIN
+SELECT * FROM sql_modules_table1;
+END
+GO
+
+CREATE VIEW sql_modules_view AS
+SELECT 1
+GO
+
+CREATE FUNCTION sql_modules_function() 
+RETURNS INT
+AS 
+BEGIN
+    RETURN 1;
+END
+GO
+
+CREATE PROC sql_modules_proc AS
+SELECT 1
+GO
+
+-- Test permission for sql_modules (query should not have any results)
+CREATE LOGIN sql_modules_user WITH PASSWORD='test'
+GO
+
+CREATE USER sql_modules_user FOR LOGIN sql_modules_user
+GO

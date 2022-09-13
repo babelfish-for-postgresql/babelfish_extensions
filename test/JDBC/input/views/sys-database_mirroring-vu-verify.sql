@@ -1,10 +1,10 @@
-SELECT * FROM sys_database_mirroring_view_vu_prepare
+SELECT * FROM sys_database_mirroring_vu_prepare_view
 GO
 
-EXEC sys_database_mirroring_proc_vu_prepare
+EXEC sys_database_mirroring_vu_prepare_proc
 GO
 
-SELECT * FROM sys_database_mirroring_func_vu_prepare()
+SELECT * FROM sys_database_mirroring_vu_prepare_func()
 GO
 
 SELECT * FROM sys.database_mirroring WHERE database_id IN (1,2,4);

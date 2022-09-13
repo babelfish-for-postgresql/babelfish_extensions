@@ -1,0 +1,114 @@
+-- Tests for sys.columns catalog view
+-- Test precision and scale for all numeric datatypes
+select name, column_id, precision, scale from sys.columns where object_id=OBJECT_ID('t1_sys_syscolumns') order by name;
+go
+~~START~~
+varchar#!#int#!#tinyint#!#tinyint
+~~END~~
+
+
+-- Test identity and computed columns
+select name, column_id, is_identity, is_computed from sys.columns where object_id=OBJECT_ID('t2_sys_syscolumns') order by name;
+go
+~~START~~
+varchar#!#int#!#bit#!#bit
+~~END~~
+
+
+-- Test ansi padded columns
+select name, column_id, is_ansi_padded from sys.columns where object_id=OBJECT_ID('t3_sys_syscolumns') order by name;
+go
+~~START~~
+varchar#!#int#!#bit
+~~END~~
+
+
+-- Test collation name
+select name, column_id, collation_name from sys.columns where object_id=OBJECT_ID('t4_sys_syscolumns') order by name;
+go
+~~START~~
+varchar#!#int#!#varchar
+~~END~~
+
+
+EXEC sp_babelfish_configure 'babelfishpg_tsql.escape_hatch_rowversion', 'ignore';
+go
+
+select name,max_length,precision,scale from sys.columns where object_id = OBJECT_ID('sys_columns_vu_prepare_test_columns') order by name;
+GO
+~~START~~
+varchar#!#smallint#!#tinyint#!#tinyint
+c1#!#8#!#19#!#0
+c10#!#8#!#53#!#0
+c11#!#16#!#0#!#0
+c12#!#4#!#10#!#0
+c13#!#8#!#19#!#4
+c14#!#246#!#0#!#0
+c15#!#16#!#0#!#0
+c16#!#5#!#8#!#4
+c17#!#246#!#0#!#0
+c18#!#4#!#24#!#0
+c19#!#4#!#16#!#0
+c2#!#123#!#0#!#0
+c20#!#2#!#5#!#0
+c21#!#4#!#10#!#4
+c22#!#8016#!#0#!#0
+c23#!#256#!#0#!#0
+c24#!#16#!#0#!#0
+c25#!#5#!#15#!#6
+c27#!#1#!#3#!#0
+c28#!#16#!#0#!#0
+c29#!#123#!#0#!#0
+c3#!#1#!#1#!#0
+c30#!#123#!#0#!#0
+c31#!#-1#!#0#!#0
+c32#!#8#!#0#!#0
+c4#!#123#!#0#!#0
+c5#!#3#!#10#!#0
+c6#!#8#!#23#!#3
+c7#!#8#!#26#!#6
+c8#!#10#!#33#!#6
+c9#!#5#!#8#!#4
+~~END~~
+
+
+EXEC sp_babelfish_configure 'babelfishpg_tsql.escape_hatch_rowversion', 'strict';
+go
+
+select name,max_length,precision,scale from sys.columns where object_id = OBJECT_ID('t5_sys_syscolumns') order by name;
+GO
+~~START~~
+varchar#!#smallint#!#tinyint#!#tinyint
+~~END~~
+
+
+select count(*) from sys.columns where object_id = OBJECT_ID('t6_sys_syscolumns') and system_type_id <> user_type_id
+GO
+~~START~~
+int
+0
+~~END~~
+
+
+select object_name(system_type_id), object_name(user_type_id) from sys.columns where object_id = OBJECT_ID('t6_sys_syscolumns') order by object_name(user_type_id);
+GO
+~~START~~
+varchar#!#varchar
+~~END~~
+
+
+select name, max_length from sys.columns where object_id = OBJECT_ID('sys_columns_vu_prepare_babel_2947') order by name;
+GO
+~~START~~
+varchar#!#smallint
+a#!#-1
+b#!#-1
+c#!#10
+d#!#-1
+e#!#-1
+f#!#20
+g#!#-1
+h#!#-1
+i#!#10
+~~END~~
+

@@ -1,0 +1,25 @@
+-- Clean up
+drop table babel_datatype_sqlvariant_vu_prepare_t1;
+go
+drop table babel_datatype_sqlvariant_vu_prepare_t2;
+go
+drop table babel_datatype_sqlvariant_vu_prepare_t3;
+go
+drop table babel_datatype_sqlvariant_vu_prepare_t5;
+go
+drop table babel_datatype_sqlvariant_vu_prepare_t6;
+go
+drop table babel_datatype_sqlvariant_vu_prepare_t7;
+go
+drop table babel_datatype_sqlvariant_vu_prepare_t8;
+go
+drop table babel_datatype_sqlvariant_vu_prepare_t9;
+go
+drop sequence babel_datatype_sqlvariant_vu_prepare_t1_sec;
+go
+drop sequence babel_datatype_sqlvariant_vu_prepare_t2_sec;
+go
+drop sequence babel_datatype_sqlvariant_vu_prepare_t4_sec;
+go
+drop sequence babel_datatype_sqlvariant_vu_prepare_t5_sec;
+go

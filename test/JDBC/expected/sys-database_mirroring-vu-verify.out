@@ -1,4 +1,4 @@
-SELECT * FROM sys_database_mirroring_view_vu_prepare
+SELECT * FROM sys_database_mirroring_vu_prepare_view
 GO
 ~~START~~
 int#!#uniqueidentifier#!#tinyint#!#nvarchar#!#tinyint#!#nvarchar#!#int#!#tinyint#!#nvarchar#!#int#!#nvarchar#!#nvarchar#!#nvarchar#!#tinyint#!#nvarchar#!#numeric#!#int#!#int#!#nvarchar#!#numeric#!#numeric
@@ -6,7 +6,7 @@ int#!#uniqueidentifier#!#tinyint#!#nvarchar#!#tinyint#!#nvarchar#!#int#!#tinyint
 ~~END~~
 
 
-EXEC sys_database_mirroring_proc_vu_prepare
+EXEC sys_database_mirroring_vu_prepare_proc
 GO
 ~~START~~
 int#!#uniqueidentifier#!#tinyint#!#nvarchar#!#tinyint#!#nvarchar#!#int#!#tinyint#!#nvarchar#!#int#!#nvarchar#!#nvarchar#!#nvarchar#!#tinyint#!#nvarchar#!#numeric#!#int#!#int#!#nvarchar#!#numeric#!#numeric
@@ -14,7 +14,7 @@ int#!#uniqueidentifier#!#tinyint#!#nvarchar#!#tinyint#!#nvarchar#!#int#!#tinyint
 ~~END~~
 
 
-SELECT * FROM sys_database_mirroring_func_vu_prepare()
+SELECT * FROM sys_database_mirroring_vu_prepare_func()
 GO
 ~~START~~
 int

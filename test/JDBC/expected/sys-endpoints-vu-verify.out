@@ -1,0 +1,7 @@
+SELECT * FROM sys.endpoints
+GO
+~~START~~
+varchar#!#int#!#int#!#tinyint#!#nvarchar#!#tinyint#!#nvarchar#!#tinyint#!#nvarchar#!#bit
+TSQL Default TCP#!#4#!#1#!#2#!#TCP#!#2#!#TSQL#!#0#!#STARTED#!#0
+~~END~~
+

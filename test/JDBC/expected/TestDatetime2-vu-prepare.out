@@ -1,6 +1,6 @@
-Create table TestDatetime2(a Datetime2(6)) 
+Create table TestDatetime2_vu_prepare_t(a Datetime2(6)) 
 
-prepst#!# Insert into TestDatetime2 Values(?) #!#Datetime2|-|a|-|2016-10-23 12:45:37.123|-|0
+prepst#!# Insert into TestDatetime2_vu_prepare_t Values(?) #!#Datetime2|-|a|-|2016-10-23 12:45:37.123|-|0
 ~~ROW COUNT: 1~~
 
 prepst#!#exec#!#Datetime2|-|a|-|2016-10-23 12:45:37.123|-|3

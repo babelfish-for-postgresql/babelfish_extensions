@@ -1,0 +1,50 @@
+DROP TABLE IF EXISTS sys_indexes_vu_prepare_t1
+GO
+
+DROP TABLE IF EXISTS sys_indexes_vu_prepare_t2
+GO
+
+CREATE TABLE sys_indexes_vu_prepare_t1 (
+	c1 INT, 
+	c2 VARCHAR(128)
+);
+GO
+
+CREATE TABLE sys_indexes_vu_prepare_t2 (
+	c1 INT, 
+	c2 VARCHAR(128)
+);
+GO
+
+INSERT INTO sys_indexes_vu_prepare_t1 (c1, c2) VALUES
+(100, 'abc'),
+(200, 'bcd'),
+(300, 'cde'),
+(1400, 'def')
+GO
+~~ROW COUNT: 4~~
+
+
+-- two NONCLUSTERED indexes created
+CREATE INDEX sys_indexes_vu_prepare_i1 ON sys_indexes_vu_prepare_t1 (c1);
+CREATE INDEX sys_indexes_vu_prepare_i1a ON sys_indexes_vu_prepare_t1 (c2);
+GO
+
+CREATE DATABASE sys_indexes_vu_prepare_db1
+GO
+
+USE sys_indexes_vu_prepare_db1
+GO
+
+USE master
+GO
+
+CREATE TABLE sys_indexes_vu_prepare_t_pkey(c1 int PRIMARY KEY)
+GO
+CREATE TABLE sys_indexes_vu_prepare_t_fkey(c2 int)
+GO
+ALTER TABLE sys_indexes_vu_prepare_t_fkey ADD FOREIGN KEY(c2) REFERENCES sys_indexes_vu_prepare_t_pkey (c1);
+GO
+
+CREATE TABLE sys_indexes_vu_prepare_t_unique(c1 int UNIQUE NOT NULL)
+GO

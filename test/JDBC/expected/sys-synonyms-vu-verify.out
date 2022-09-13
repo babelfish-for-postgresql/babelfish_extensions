@@ -1,0 +1,6 @@
+SELECT * FROM sys.synonyms
+GO
+~~START~~
+varchar#!#int#!#int#!#int#!#int#!#char#!#nvarchar#!#datetime#!#datetime#!#bit#!#bit#!#bit#!#nvarchar
+~~END~~
+

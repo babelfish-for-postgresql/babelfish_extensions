@@ -1,0 +1,6 @@
+SELECT * FROM sys.fulltext_catalogs;
+GO
+~~START~~
+int#!#varchar#!#nvarchar#!#bit#!#bit#!#int#!#int#!#int#!#bit
+~~END~~
+

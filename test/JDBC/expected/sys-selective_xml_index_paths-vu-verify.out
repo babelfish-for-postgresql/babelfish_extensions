@@ -1,0 +1,6 @@
+SELECT * FROM sys.selective_xml_index_paths;
+GO
+~~START~~
+int#!#int#!#int#!#nvarchar#!#varchar#!#tinyint#!#varchar#!#int#!#nvarchar#!#bit#!#smallint#!#bit#!#bit#!#tinyint#!#tinyint#!#smallint#!#tinyint#!#tinyint#!#varchar#!#bit
+~~END~~
+

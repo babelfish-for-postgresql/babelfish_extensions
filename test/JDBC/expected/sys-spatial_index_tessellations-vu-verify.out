@@ -1,0 +1,6 @@
+select * from sys.spatial_index_tessellations
+go
+~~START~~
+int#!#int#!#varchar#!#float#!#float#!#float#!#float#!#smallint#!#nvarchar#!#smallint#!#nvarchar#!#smallint#!#nvarchar#!#smallint#!#nvarchar#!#int
+~~END~~
+

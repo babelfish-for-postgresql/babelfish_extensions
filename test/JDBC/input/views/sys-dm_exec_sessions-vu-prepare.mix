@@ -1,0 +1,3 @@
+-- Creating a simple login which has lesser privilege than sysadmin role
+create login sys_dm_exec_sessions_vu_prepare_login_1887 with password = 'password_1887'
+GO

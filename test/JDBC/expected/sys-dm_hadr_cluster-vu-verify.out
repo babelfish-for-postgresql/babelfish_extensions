@@ -1,0 +1,7 @@
+SELECT * FROM sys.dm_hadr_cluster
+GO
+~~START~~
+nvarchar#!#tinyint#!#nvarchar#!#tinyint#!#nvarchar
+#!#0#!#NODE_MAJORITY#!#0#!#NORMAL_QUORUM
+~~END~~
+

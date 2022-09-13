@@ -1,0 +1,10 @@
+SELECT type, type_desc from sys.all_objects  where name like 'sys_all_objects_vu_prepare_1%' order by type;
+GO
+~~START~~
+char#!#nvarchar
+FN#!#SQL_SCALAR_FUNCTION
+P #!#SQL_STORED_PROCEDURE
+P #!#SQL_STORED_PROCEDURE
+TR#!#SQL_TRIGGER
+~~END~~
+

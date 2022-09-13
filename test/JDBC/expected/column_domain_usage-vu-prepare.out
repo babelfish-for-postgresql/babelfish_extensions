@@ -4,10 +4,10 @@ go
 CREATE TABLE column_domain_usage_vu_prepare_tb1(arg1 int, arg2 char, arg3 varchar, arg4 column_domain_usage_vu_prepare_typ1);
 go
 
-CREATE DATABASE db_column_domain_usage_vu_prepare;
+CREATE DATABASE column_domain_usage_vu_prepare_db;
 go
 
-USE db_column_domain_usage_vu_prepare;
+USE column_domain_usage_vu_prepare_db;
 go
 
 CREATE TYPE column_domain_usage_vu_prepare_NTYP FROM varchar(11) NOT NULL;

@@ -1,0 +1,70 @@
+USE sys_sp_tables_view_vu_prepare_db1
+GO
+
+select count(*) from sys.sp_tables_view where TABLE_NAME = 'sys_sp_tables_view_vu_prepare_t1';
+GO
+~~START~~
+int
+1
+~~END~~
+
+
+exec sys.sp_tables @table_name = 'sys_sp_tables_view_vu_prepare_t1';
+GO
+~~START~~
+varchar#!#varchar#!#varchar#!#varchar#!#varchar
+sys_sp_tables_view_vu_prepare_db1#!#dbo#!#sys_sp_tables_view_vu_prepare_t1#!#TABLE#!#<NULL>
+~~END~~
+
+
+USE master
+GO
+
+select count(*) from sys.sp_tables_view where TABLE_NAME = 'sys_sp_tables_view_vu_prepare_t1';
+GO
+~~START~~
+int
+0
+~~END~~
+
+
+exec sys.sp_tables @table_name = 'sys_sp_tables_view_vu_prepare_t1';
+GO
+~~START~~
+varchar#!#varchar#!#varchar#!#varchar#!#varchar
+~~END~~
+
+
+select count(*) from sys.sp_tables_view where TABLE_NAME = 'sys_sp_tables_view_vu_prepare_t2';
+GO
+~~START~~
+int
+1
+~~END~~
+
+
+exec sys.sp_tables @table_name = 'sys_sp_tables_view_vu_prepare_t2';
+GO
+~~START~~
+varchar#!#varchar#!#varchar#!#varchar#!#varchar
+master#!#dbo#!#sys_sp_tables_view_vu_prepare_t2#!#TABLE#!#<NULL>
+~~END~~
+
+
+USE sys_sp_tables_view_vu_prepare_db1
+GO
+
+select count(*) from sys.sp_tables_view where TABLE_NAME = 'sys_sp_tables_view_vu_prepare_t2';
+GO
+~~START~~
+int
+0
+~~END~~
+
+
+exec sys.sp_tables @table_name = 'sys_sp_tables_view_vu_prepare_t2';
+GO
+~~START~~
+varchar#!#varchar#!#varchar#!#varchar#!#varchar
+~~END~~
+
