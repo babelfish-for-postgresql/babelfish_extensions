@@ -109,3 +109,4 @@ BABEL-EXTENDEDPROPERTY
 TestErrorHelperFunctionsUpgrade
 tdscollation
 BABEL-1683
+schema_resolution_trigger
