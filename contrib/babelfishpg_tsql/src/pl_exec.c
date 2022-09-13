@@ -4609,8 +4609,7 @@ exec_stmt_execsql(PLtsql_execstate *estate,
 
 	if (stmt->is_cross_db)
 		SetCurrentRoleId(GetSessionUserId(), false);
-	
-	if(stmt->is_dml || stmt->is_ddl)
+	if(stmt->is_dml || stmt->is_ddl || stmt->is_create_view)
 	{
 		if (stmt->is_schema_specified)
 			estate->schema_name = stmt->schema_name;
@@ -10157,7 +10156,7 @@ bool reset_search_path(PLtsql_stmt_execsql *stmt, char *old_search_path, bool* r
 	 * search the specified schema for the object. If not found,
 	 * then search the dbo schema. Don't update the path for "sys" schema.
 	 */
-	if (stmt->func_call && stmt->schema_name != NULL &&
+	if ((stmt->func_call || stmt->is_create_view) && stmt->schema_name != NULL &&
 			(strcmp(stmt->schema_name, "sys") != 0 && strcmp(stmt->schema_name, "pg_catalog") != 0))
 	{
 		cur_dbname = get_cur_db_name();

@@ -1024,6 +1024,7 @@ typedef struct PLtsql_stmt_execsql
 	bool		func_call;		/* Function call? */
 	char		*schema_name;	/* Schema specified */
 	bool            is_schema_specified;    /*is schema name specified? */
+	bool		is_create_view;		/* CREATE VIEW? */
 } PLtsql_stmt_execsql;
 
 /*
