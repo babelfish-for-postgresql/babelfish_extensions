@@ -1,0 +1,148 @@
+SELECT * FROM BABEL_1493_vu_prepare_v1
+GO
+~~START~~
+datetime
+2021-02-01 00:00:00.0
+~~END~~
+
+DROP VIEW BABEL_1493_vu_prepare_v1
+GO
+
+SELECT * FROM BABEL_1493_vu_prepare_v2
+GO
+~~START~~
+datetime
+2021-02-01 00:00:00.0
+~~END~~
+
+DROP VIEW BABEL_1493_vu_prepare_v2
+GO
+
+SELECT * FROM BABEL_1493_vu_prepare_v3
+GO
+~~START~~
+datetime
+2021-02-01 00:00:00.0
+~~END~~
+
+DROP VIEW BABEL_1493_vu_prepare_v3
+GO
+
+SELECT * FROM BABEL_1493_vu_prepare_v4
+GO
+~~START~~
+datetime
+2021-02-01 00:00:00.0
+~~END~~
+
+DROP VIEW BABEL_1493_vu_prepare_v4
+GO
+
+SELECT * FROM BABEL_1493_vu_prepare_v5
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Conversion failed when converting date and/or time from character string.)~~
+
+DROP VIEW BABEL_1493_vu_prepare_v5
+GO
+
+EXEC BABEL_1493_vu_prepare_p1
+GO
+~~START~~
+datetime
+2021-02-01 00:00:00.0
+~~END~~
+
+DROP procedure  BABEL_1493_vu_prepare_p1
+GO
+
+EXEC BABEL_1493_vu_prepare_p2
+GO
+~~START~~
+datetime
+2021-02-01 00:00:00.0
+~~END~~
+
+DROP procedure  BABEL_1493_vu_prepare_p2
+GO
+
+EXEC BABEL_1493_vu_prepare_p3
+GO
+~~START~~
+datetime
+2021-02-01 00:00:00.0
+~~END~~
+
+DROP procedure  BABEL_1493_vu_prepare_p3
+GO
+
+EXEC BABEL_1493_vu_prepare_p4
+GO
+~~START~~
+datetime
+2021-02-01 00:00:00.0
+~~END~~
+
+DROP procedure  BABEL_1493_vu_prepare_p4
+GO
+
+EXEC BABEL_1493_vu_prepare_p5
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Conversion failed when converting date and/or time from character string.)~~
+
+DROP procedure  BABEL_1493_vu_prepare_p5
+GO
+
+SELECT BABEL_1493_vu_prepare_f1()
+GO
+~~START~~
+datetime
+2021-02-01 00:00:00.0
+~~END~~
+
+DROP FUNCTION BABEL_1493_vu_prepare_f1()
+GO
+
+SELECT BABEL_1493_vu_prepare_f2()
+GO
+~~START~~
+datetime
+2021-02-01 00:00:00.0
+~~END~~
+
+DROP FUNCTION BABEL_1493_vu_prepare_f2()
+GO
+
+SELECT BABEL_1493_vu_prepare_f3()
+GO
+~~START~~
+datetime
+2021-02-01 00:00:00.0
+~~END~~
+
+DROP FUNCTION BABEL_1493_vu_prepare_f3()
+GO
+
+SELECT BABEL_1493_vu_prepare_f4()
+GO
+~~START~~
+datetime
+2021-02-01 00:00:00.0
+~~END~~
+
+DROP FUNCTION BABEL_1493_vu_prepare_f4()
+GO
+
+SELECT BABEL_1493_vu_prepare_f5()
+GO
+~~START~~
+datetime
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Conversion failed when converting date and/or time from character string.)~~
+
+DROP FUNCTION BABEL_1493_vu_prepare_f5()
+GO
