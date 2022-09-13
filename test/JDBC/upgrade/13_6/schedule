@@ -175,7 +175,6 @@ BABEL-LOGIN-USER-EXT
 BABEL-1683
 sys-sp_pkeys
 sys-sp_statistics
-sp_statistics_100
 BABEL-1756
 BABEL-1309
 BABEL-APPLOCK
