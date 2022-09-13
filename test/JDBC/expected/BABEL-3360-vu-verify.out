@@ -10,9 +10,10 @@ GO
 
 SELECT * FROM BABEL_3360_vu_prepare_v2
 GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: The datepart microsecond is not supported by date function dateadd for data type time.)~~
+~~START~~
+datetime2
+2016-12-26 23:29:29.0005600
+~~END~~
 
 DROP VIEW BABEL_3360_vu_prepare_v2
 GO
@@ -49,9 +50,10 @@ GO
 
 EXEC BABEL_3360_vu_prepare_p2
 GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: The datepart microsecond is not supported by date function dateadd for data type time.)~~
+~~START~~
+datetime2
+2016-12-26 23:29:29.0005600
+~~END~~
 
 DROP procedure  BABEL_3360_vu_prepare_p2
 GO
@@ -90,9 +92,8 @@ SELECT BABEL_3360_vu_prepare_f2()
 GO
 ~~START~~
 datetime
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: The datepart microsecond is not supported by date function dateadd for data type time.)~~
+2016-12-26 23:29:29.0
+~~END~~
 
 DROP FUNCTION BABEL_3360_vu_prepare_f2()
 GO
