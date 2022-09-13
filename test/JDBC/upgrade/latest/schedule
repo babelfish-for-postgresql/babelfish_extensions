@@ -177,7 +177,6 @@ sys-sp_pkeys
 sys-sp_statistics
 sp_statistics_100
 BABEL-1756
-BABEL-1309
 BABEL-APPLOCK
 BABEL-1438
 BABEL-SP_DATATYPE_INFO
