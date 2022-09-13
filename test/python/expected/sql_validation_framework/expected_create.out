@@ -246,6 +246,7 @@ Could not find upgrade tests for view information_schema_tsql.columns
 Could not find upgrade tests for view information_schema_tsql.table_constraints
 Could not find upgrade tests for view information_schema_tsql.tables
 Could not find upgrade tests for view sys.all_sql_modules_internal
+Could not find upgrade tests for view sys.pg_namespace_ext
 Could not find upgrade tests for view sys.shipped_objects_not_in_sys
 Could not find upgrade tests for view sys.sp_column_privileges_view
 Could not find upgrade tests for view sys.sp_columns_100_view
@@ -256,5 +257,6 @@ Could not find upgrade tests for view sys.sp_sproc_columns_view
 Could not find upgrade tests for view sys.sp_statistics_view
 Could not find upgrade tests for view sys.sp_stored_procedures_view
 Could not find upgrade tests for view sys.sp_table_privileges_view
+Could not find upgrade tests for view sys.spt_columns_view_managed
 Could not find upgrade tests for view sys.sysindexes
 Could not find upgrade tests for view sys.system_objects
