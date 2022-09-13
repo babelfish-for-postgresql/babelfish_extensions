@@ -2,7 +2,7 @@ EXEC sys_computed_columns_dep_vu_prepare_p1
 GO
 ~~START~~
 varchar
-scc_multiplied
+scc_multiplied1
 ~~END~~
 
 
@@ -18,7 +18,7 @@ SELECT * FROM sys_computed_columns_dep_vu_prepare_v1
 GO
 ~~START~~
 varchar
-scc_multiplied
+scc_multiplied1
 ~~END~~
 
 
