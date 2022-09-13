@@ -714,6 +714,128 @@ $BODY$
 STRICT
 LANGUAGE SQL IMMUTABLE;
 
+CREATE OR REPLACE FUNCTION sys.DATETIMEOFFSETFROMPARTS(IN p_year NUMERIC,
+                                                               IN p_month NUMERIC,
+                                                               IN p_day NUMERIC,
+                                                               IN p_hour NUMERIC,
+                                                               IN p_minute NUMERIC,
+                                                               IN p_seconds NUMERIC,
+                                                               IN p_fractions NUMERIC,
+                                                               IN p_hour_offset NUMERIC,
+                                                               IN p_minute_offset NUMERIC,
+                                                               IN p_precision NUMERIC)
+RETURNS sys.DATETIMEOFFSET
+AS
+$BODY$
+DECLARE
+    v_err_message VARCHAR;
+    v_fractions VARCHAR;
+    v_precision SMALLINT;
+    v_calc_seconds NUMERIC; 
+    v_resdatetime TIMESTAMP WITHOUT TIME ZONE;
+    v_string TEXT;
+    v_sign TEXT;
+BEGIN
+    v_fractions := floor(p_fractions)::INTEGER::VARCHAR;
+    v_precision := p_precision::SMALLINT;
+
+    IF (scale(p_precision) > 0) THEN
+        RAISE most_specific_type_mismatch;
+
+    -- Check if arguments are out of range
+    ELSIF ((floor(p_year)::SMALLINT NOT BETWEEN 1753 AND 9999) OR
+        (floor(p_month)::SMALLINT NOT BETWEEN 1 AND 12) OR
+        (floor(p_day)::SMALLINT NOT BETWEEN 1 AND 31) OR
+        (floor(p_hour)::SMALLINT NOT BETWEEN 0 AND 23) OR
+        (floor(p_minute)::SMALLINT NOT BETWEEN 0 AND 59) OR
+        (floor(p_seconds)::SMALLINT NOT BETWEEN 0 AND 59) OR
+        (floor(p_hour_offset)::SMALLINT NOT BETWEEN -14 AND 14) OR
+        (floor(p_minute_offset)::SMALLINT NOT BETWEEN -59 AND 59) OR
+        (floor(p_hour_offset)::SMALLINT < 0 AND floor(p_minute_offset)::SMALLINT > 0) OR
+        (floor(p_minute_offset)::SMALLINT < 0 AND floor(p_hour_offset)::SMALLINT > 0) OR
+        (floor(p_hour_offset)::SMALLINT = 14 AND floor(p_minute_offset)::SMALLINT != 0) OR
+        (floor(p_hour_offset)::SMALLINT = -14 AND floor(p_minute_offset)::SMALLINT != 0) OR
+        (p_fractions::SMALLINT != 0 AND char_length(v_fractions) > p_precision::SMALLINT))
+    THEN
+        RAISE invalid_datetime_format;
+    ELSIF (v_precision NOT BETWEEN 0 AND 7) THEN
+        RAISE numeric_value_out_of_range;
+    END IF;
+    v_calc_seconds := format('%s.%s',
+                             floor(p_seconds)::SMALLINT,
+                             substring(rpad(lpad(v_fractions, v_precision, '0'), 7, '0'), 1, 6))::NUMERIC;
+
+    v_resdatetime := make_timestamp(floor(p_year)::SMALLINT,
+                                    floor(p_month)::SMALLINT,
+                                    floor(p_day)::SMALLINT,
+                                    floor(p_hour)::SMALLINT,
+                                    floor(p_minute)::SMALLINT,
+                                    v_calc_seconds);
+    v_sign := (
+        SELECT CASE
+            WHEN (floor(p_hour_offset)::SMALLINT) > 0
+                THEN '+'
+            WHEN ((floor(p_hour_offset)::SMALLINT) = 0 AND (floor(p_minute_offset)::SMALLINT) >= 0)
+                THEN '+'    
+            ELSE '-'
+        END
+    );
+    v_string := CONCAT(v_resdatetime::pg_catalog.text,v_sign,abs(floor(p_hour_offset))::SMALLINT::text,':',
+                                                          abs(floor(p_minute_offset))::SMALLINT::text);
+    RETURN CAST(v_string AS sys.DATETIMEOFFSET);
+EXCEPTION
+    WHEN most_specific_type_mismatch THEN
+        RAISE USING MESSAGE := 'Scale argument is not valid. Valid expressions for data type datetimeoffset scale argument are integer constants and integer constant expressions',
+                    DETAIL := 'Use of incorrect "precision" parameter value during conversion process.',
+                    HINT := 'Change "precision" parameter to the proper value and try again.';    
+    WHEN invalid_datetime_format THEN
+        RAISE USING MESSAGE := 'Cannot construct data type datetimeoffset, some of the arguments have values which are not valid.',
+                    DETAIL := 'Possible use of incorrect value of date or time part (which lies outside of valid range).',
+                    HINT := 'Check each input argument belongs to the valid range and try again.';
+
+    WHEN numeric_value_out_of_range THEN
+        RAISE USING MESSAGE := format('Specified scale % is invalid.', p_fractions),
+                    DETAIL := format('Source value is out of %s data type range.', v_err_message),
+                    HINT := format('Correct the source value you are trying to cast to %s data type and try again.',
+                                   v_err_message);
+END;
+$BODY$
+LANGUAGE plpgsql
+IMMUTABLE
+RETURNS NULL ON NULL INPUT;
+
+CREATE OR REPLACE FUNCTION sys.DATETIMEOFFSETFROMPARTS(IN p_year TEXT,
+                                                               IN p_month TEXT,
+                                                               IN p_day TEXT,
+                                                               IN p_hour TEXT,
+                                                               IN p_minute TEXT,
+                                                               IN p_seconds TEXT,
+                                                               IN p_fractions TEXT,
+                                                               IN p_hour_offset TEXT,
+                                                               IN p_minute_offset TEXT,
+                                                               IN p_precision TEXT)
+RETURNS sys.DATETIMEOFFSET
+AS
+$BODY$
+DECLARE
+    v_err_message VARCHAR;
+BEGIN
+    RETURN sys.DATETIMEOFFSETFROMPARTS(IN p_year NUMERIC,IN p_month NUMERIC,IN p_day NUMERIC,IN p_hour NUMERIC,IN p_minute NUMERIC,
+                                        IN p_seconds NUMERIC,IN p_fractions NUMERIC,IN p_hour_offset NUMERIC,IN p_minute_offset NUMERIC,
+                                        IN p_precision NUMERIC);
+EXCEPTION
+    WHEN invalid_text_representation THEN
+        GET STACKED DIAGNOSTICS v_err_message = MESSAGE_TEXT;
+        v_err_message := substring(lower(v_err_message), 'numeric\:\s\"(.*)\"');
+
+        RAISE USING MESSAGE := format('Error while trying to convert "%s" value to NUMERIC data type.', v_err_message),
+                    DETAIL := 'Supplied string value contains illegal characters.',
+                    HINT := 'Correct supplied value, remove all illegal characters and try again.';
+END;
+$BODY$
+LANGUAGE plpgsql
+IMMUTABLE
+RETURNS NULL ON NULL INPUT;
 
 -- Duplicate functions with arg TEXT since ANYELEMNT cannot handle type unknown.
 CREATE OR REPLACE FUNCTION sys.stuff(expr TEXT, start INTEGER, length INTEGER, replace_expr TEXT)
