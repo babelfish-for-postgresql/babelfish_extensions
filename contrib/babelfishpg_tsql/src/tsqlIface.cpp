@@ -2711,6 +2711,18 @@ handleBatchLevelStatement(TSqlParser::Batch_level_statementContext *ctx, tsqlSel
 	rewriteBatchLevelStatement(ctx, ssm, execsql->sqlstmt);
 	result->body = lappend(result->body, execsql);
 
+	// check if it is a CREATE VIEW statement
+	if (ctx->create_or_alter_view())
+	{
+		execsql->is_create_view = true;
+		if (ctx->create_or_alter_view()->simple_name() && ctx->create_or_alter_view()->simple_name()->schema)
+		{
+			std::string schema_name = stripQuoteFromId(ctx->create_or_alter_view()->simple_name()->schema);
+			if (!schema_name.empty())
+				execsql->schema_name = pstrdup(downcase_truncate_identifier(schema_name.c_str(), schema_name.length(), true));
+		}
+	}
+
 	Token* start_body_token = get_start_token_of_batch_level_stmt_body(ctx);
 
 	pltsql_curr_compile_body_position = (start_body_token ? start_body_token->getStartIndex() : 0);
