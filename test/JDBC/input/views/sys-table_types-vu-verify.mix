@@ -1,0 +1,53 @@
+-- tsql
+-- Note : table types's database visibility has been already tested in sys-types.sql
+select name
+      , system_type_id
+      , principal_id
+      , max_length
+      , precision
+      , scale
+      , collation_name
+      , is_nullable
+      , is_user_defined
+      , is_assembly_type
+      , default_object_id
+      , rule_object_id
+      , is_table_type
+      , is_memory_optimized
+from sys.table_types
+where name = 'sys_table_types_vu_prepare_tt';
+GO
+
+select principal_id
+      , parent_object_id
+      , type
+      , type_desc
+      , create_date
+      , modify_date
+      , is_ms_shipped
+      , is_published
+      , is_schema_published
+from sys.objects
+where name like 'TT_sys_table_types_vu_prepare_tt%';
+GO
+
+select principal_id
+      , parent_object_id
+      , type
+      , type_desc
+      , create_date
+      , modify_date
+      , is_ms_shipped
+      , is_published
+      , is_schema_published
+from sys.all_objects
+where name like 'TT_sys_table_types_vu_prepare_tt%';
+GO
+
+-- above composite type should not be visible in sys.table_types and it should return is_table_type(oid) as false
+-- tsql
+select count(*) from sys.table_types where name='comp_type';
+GO
+
+select sys.is_table_type(typrelid) from pg_type where typname='comp_type';
+GO

@@ -1,0 +1,29 @@
+CREATE PROCEDURE sys_all_objects_vu_prepare_1 (@arg1 VARCHAR(MAX) OUTPUT)
+AS
+BEGIN
+    print 'body removed'
+END;
+GO
+
+CREATE PROCEDURE sys_all_objects_vu_prepare_1_2 (@arg1 VARCHAR(MAX))
+AS
+BEGIN
+    print 'body removed'
+END;
+GO
+
+CREATE FUNCTION sys_all_objects_vu_prepare_1_3 (@arg1 varchar(5), @arg2 varchar(10))
+RETURNS TABLE AS RETURN
+(SELECT @arg1 as a, @arg2 as b)
+GO
+
+CREATE TABLE sys_all_objects_vu_prepare_t1(c1 int);
+GO
+
+CREATE TRIGGER sys_all_objects_vu_prepare_1_4 ON sys_all_objects_vu_prepare_t1
+AFTER INSERT
+AS
+BEGIN
+    INSERT INTO sys_all_objects_vu_prepare_t1(c1) VALUES (1);
+END;
+GO
