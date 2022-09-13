@@ -19,6 +19,9 @@ go
 exec sp_hello
 go
 
+sp_hello
+go
+
 exec .sp_hello
 go
 
@@ -26,6 +29,9 @@ exec ..sp_hello
 go
 
 exec dbo.sp_hello
+go
+
+dbo.sp_hello
 go
 
 create proc call_sp_helllo as exec sp_hello

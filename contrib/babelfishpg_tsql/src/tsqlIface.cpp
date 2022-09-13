@@ -4777,7 +4777,21 @@ makeAnother(TSqlParser::Another_statementContext *ctx, tsqlBuilder &builder)
 PLtsql_stmt *
 makeExecBodyBatch(TSqlParser::Execute_body_batchContext *ctx)
 {
+	std::string schema_name;
+	std::string proc_name;
+	bool is_cross_db = false;
+	std::string db_name;
 	std::string func_proc_name = ::getFullText(ctx->func_proc_name_server_database_schema());
+	if (ctx->func_proc_name_server_database_schema()->database)
+	{
+		db_name = stripQuoteFromId(ctx->func_proc_name_server_database_schema()->database);
+		if (!string_matches(db_name.c_str(), get_cur_db_name()))
+			is_cross_db = true;
+	}
+	if (ctx->func_proc_name_server_database_schema()->schema)
+		schema_name = stripQuoteFromId(ctx->func_proc_name_server_database_schema()->schema);
+	if (ctx->func_proc_name_server_database_schema()->procedure)
+		proc_name = stripQuoteFromId(ctx->func_proc_name_server_database_schema()->procedure);
 	Assert(!func_proc_name.empty());
 	TSqlParser::Execute_statement_argContext *func_proc_args = ctx->execute_statement_arg();
 
@@ -4794,6 +4808,16 @@ makeExecBodyBatch(TSqlParser::Execute_body_batchContext *ctx)
 	result->return_code_dno = return_code_dno;
 	result->paramno = 0;
 	result->params = NIL;
+	// record whether stmt is cross-db
+	if (is_cross_db)
+		result->is_cross_db = true;
+
+	if (!proc_name.empty())
+		result->proc_name = pstrdup(downcase_truncate_identifier(proc_name.c_str(), proc_name.length(), true));
+	if (!schema_name.empty())
+		result->schema_name = pstrdup(downcase_truncate_identifier(schema_name.c_str(), schema_name.length(), true));
+	if (!db_name.empty())
+		result->db_name = pstrdup(downcase_truncate_identifier(db_name.c_str(), db_name.length(), true));
 
 	if (func_proc_args)
 	{
@@ -4808,6 +4832,9 @@ makeExecBodyBatch(TSqlParser::Execute_body_batchContext *ctx)
 	}
 
 	std::stringstream ss;
+	// Rewrite proc name to sp_* if the schema is "dbo" and proc name starts with "sp_"
+	if (pg_strncasecmp(func_proc_name.c_str(), "dbo.sp_", 6) == 0)
+		func_proc_name.erase(func_proc_name.begin() + 0, func_proc_name.begin() + 4);
 	ss << "EXEC " << func_proc_name;
 	if (func_proc_args)
 		ss << " " << ::getFullText(func_proc_args);

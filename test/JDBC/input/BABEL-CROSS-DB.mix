@@ -58,6 +58,9 @@ GO
 EXEC master.dbo.master_p1
 GO
 
+master.dbo.master_p1
+GO
+
 EXEC master.dbo.master_p2
 GO
 
