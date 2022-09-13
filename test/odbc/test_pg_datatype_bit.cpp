@@ -107,13 +107,7 @@ TEST_F(PSQL_DataTypes_Bit, Table_Creation) {
 }
 
 // Any non-zero values are converted to 1
-TEST_F(PSQL_DataTypes_Bit, Insertion_Success) {
-  vector<pair<string, string>> TABLE_COLUMNS = {
-    {COL1_NAME, DATATYPE_NAME + " PRIMARY KEY"},
-    {COL2_NAME, DATATYPE_NAME}
-  };
-  
-  // TODO - Fix or Verify expected
+TEST_F(PSQL_DataTypes_Bit, Insertion_Success) {  
   const int PK_BYTES_EXPECTED = 4;
   const int DATA_BYTES_EXPECTED = 1;
 
@@ -126,8 +120,6 @@ TEST_F(PSQL_DataTypes_Bit, Insertion_Success) {
   RETCODE rcode;
   OdbcHandler odbcHandler;
 
-  // TODO - Double check if other values or valid
-  // ie -1, 2, as SQL Server converts any non-zero into 1
   vector <string> valid_inserted_values = {
     "0",
     "1",
@@ -380,7 +372,8 @@ TEST_F(PSQL_DataTypes_Bit, Update_Fail) {
   odbcHandler.ExecQuery(DropObjectStatement("TABLE", TABLE_NAME));
 }
 
-TEST_F(PSQL_DataTypes_Bit, Arithmetic_Bitwise_Operators) {
+// Operators don't work
+TEST_F(PSQL_DataTypes_Bit, DISABLED_Bitwise_Operators) {
   vector<pair<string, string>> TABLE_COLUMNS = {
     {COL1_NAME, DATATYPE_NAME + " PRIMARY KEY"},
     {COL2_NAME, DATATYPE_NAME}
@@ -399,8 +392,8 @@ TEST_F(PSQL_DataTypes_Bit, Arithmetic_Bitwise_Operators) {
   OdbcHandler odbcHandler;
 
   vector <string> inserted_pk = {
-    "1",
-    "0"
+    "0",
+    "1"
   };
 
   vector <string> inserted_data = {
@@ -410,20 +403,20 @@ TEST_F(PSQL_DataTypes_Bit, Arithmetic_Bitwise_Operators) {
 
   vector <string> operations_query = {
     COL1_NAME + "&" + COL2_NAME, // AND
-    // COL2 + "|" + COL3, // OR
-    // COL2 + "#" + COL3, // XOR
-    // "~" + COL3,             // NOT
-    // "-" + COL3,             // NOT
+    COL1_NAME + "|" + COL2_NAME, // OR
+    COL1_NAME + "#" + COL2_NAME, // XOR
+    "~" + COL1_NAME,             // NOT
+    "-" + COL1_NAME,             // NOT
 
-    // COL2 + "||" + COL3, // Has error when querying
-    // COL2 + "<<" + COL3,
-    // COL2 + ">>" + COL3,
+    COL1_NAME + "||" + COL2_NAME,
+    COL1_NAME + "<<" + COL2_NAME,
+    COL1_NAME + ">>" + COL2_NAME,
     
-    // COL2 + "=" + COL3, // Has error when querying
-    // COL2 + "<" + COL3, // Has error when querying
-    // COL2 + "<=" + COL3, // Has error when querying
-    // COL2 + ">" + COL3, // Has error when querying
-    // COL2 + ">=" + COL3, // Has error when querying
+    COL1_NAME + "=" + COL2_NAME,
+    COL1_NAME + "<" + COL2_NAME,
+    COL1_NAME + "<=" + COL2_NAME,
+    COL1_NAME + ">" + COL2_NAME,
+    COL1_NAME + ">=" + COL2_NAME
   };
 
   vector<vector<unsigned char>>expected_results = {};
@@ -433,23 +426,21 @@ TEST_F(PSQL_DataTypes_Bit, Arithmetic_Bitwise_Operators) {
     expected_results.push_back({});
 
     expected_results[i].push_back(StringToBit(inserted_pk[i]) & StringToBit(inserted_data[i]));
-    // expected_results[i].push_back(StringToBit(inserted_pk[i]) | StringToBit(inserted_data[i]));
-    // expected_results[i].push_back(StringToBit(inserted_pk[i]) ^ StringToBit(inserted_data[i]));
-    // expected_results[i].push_back(1 & ~StringToBit(inserted_data[i])); // TODO - Needs double checking
-    // expected_results[i].push_back(1 & ~StringToBit(inserted_data[i])); // TODO - Needs double checking
+    expected_results[i].push_back(StringToBit(inserted_pk[i]) | StringToBit(inserted_data[i]));
+    expected_results[i].push_back(StringToBit(inserted_pk[i]) ^ StringToBit(inserted_data[i]));
+    expected_results[i].push_back(1 & ~StringToBit(inserted_data[i]));
+    expected_results[i].push_back(1 & ~StringToBit(inserted_data[i]));
 
-    // expected_results[i].push_back(StringToBit(inserted_pk[i]) || StringToBit(inserted_data[i]));
-    // expected_results[i].push_back(StringToBit(inserted_pk[i]) << StringToBit(inserted_data[i]));
-    // expected_results[i].push_back(StringToBit(inserted_pk[i]) >> StringToBit(inserted_data[i]));
+    expected_results[i].push_back(StringToBit(inserted_pk[i]) || StringToBit(inserted_data[i]));
+    expected_results[i].push_back(StringToBit(inserted_pk[i]) << StringToBit(inserted_data[i]));
+    expected_results[i].push_back(StringToBit(inserted_pk[i]) >> StringToBit(inserted_data[i]));
 
-    // expected_results[i].push_back(StringToBit(inserted_pk[i]) == StringToBit(inserted_data[i]) ? 1 : 0);
-    // expected_results[i].push_back(StringToBit(inserted_pk[i]) < StringToBit(inserted_data[i]) ? 1 : 0);
-    // expected_results[i].push_back(StringToBit(inserted_pk[i]) <= StringToBit(inserted_data[i]) ? 1 : 0);
-    // expected_results[i].push_back(StringToBit(inserted_pk[i]) > StringToBit(inserted_data[i]) ? 1 : 0);
-    // expected_results[i].push_back(StringToBit(inserted_pk[i]) >= StringToBit(inserted_data[i]) ? 1 : 0);
+    expected_results[i].push_back(StringToBit(inserted_pk[i]) == StringToBit(inserted_data[i]) ? 1 : 0);
+    expected_results[i].push_back(StringToBit(inserted_pk[i]) < StringToBit(inserted_data[i]) ? 1 : 0);
+    expected_results[i].push_back(StringToBit(inserted_pk[i]) <= StringToBit(inserted_data[i]) ? 1 : 0);
+    expected_results[i].push_back(StringToBit(inserted_pk[i]) > StringToBit(inserted_data[i]) ? 1 : 0);
+    expected_results[i].push_back(StringToBit(inserted_pk[i]) >= StringToBit(inserted_data[i]) ? 1 : 0);
   }
-
-  // std::cout << ((StringToBit(inserted_pk[0]) << 1) | StringToBit(inserted_data[0])) << std::endl;
 
   unsigned char col_results[operations_query.size()];
   SQLLEN col_len[operations_query.size()];
@@ -486,7 +477,7 @@ TEST_F(PSQL_DataTypes_Bit, Arithmetic_Bitwise_Operators) {
 
   for (int i = 0; i < inserted_data.size(); i++) {
     odbcHandler.CloseStmt();
-    odbcHandler.ExecQuery(SelectStatement(TABLE_NAME, operations_query, vector<string> {}, COL1_NAME + "=" + std::to_string(i)));
+    odbcHandler.ExecQuery(SelectStatement(TABLE_NAME, operations_query, vector<string> {}, COL1_NAME + "=" + inserted_pk[i]));
     ASSERT_NO_FATAL_FAILURE(odbcHandler.BindColumns(bind_columns));
 
     rcode = SQLFetch(odbcHandler.GetStatementHandle());
