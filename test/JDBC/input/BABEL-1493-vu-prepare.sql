@@ -1,0 +1,64 @@
+CREATE VIEW BABEL_1493_vu_prepare_v1 AS (SELECT dateadd(month, 1, '2021-Jan-01'));
+GO
+
+CREATE VIEW BABEL_1493_vu_prepare_v2 AS (SELECT dateadd(month, 1, '2021/Jan/01'));
+GO
+
+CREATE VIEW BABEL_1493_vu_prepare_v3 AS (SELECT dateadd(month, 1, '2021-1-1'));
+GO
+
+CREATE VIEW BABEL_1493_vu_prepare_v4 AS (SELECT dateadd(month, 1, '20210101'));
+GO
+
+CREATE VIEW BABEL_1493_vu_prepare_v5 AS (SELECT dateadd(month, 1, '2021-1'));
+GO
+
+CREATE PROCEDURE BABEL_1493_vu_prepare_p1 AS (SELECT dateadd(month, 1, '2021-Jan-01'));
+GO
+
+CREATE PROCEDURE BABEL_1493_vu_prepare_p2 AS (SELECT dateadd(month, 1, '2021/Jan/01'));
+GO
+
+CREATE PROCEDURE BABEL_1493_vu_prepare_p3 AS (SELECT dateadd(month, 1, '2021-1-1'));
+GO
+
+CREATE PROCEDURE BABEL_1493_vu_prepare_p4 AS (SELECT dateadd(month, 1, '20210101'));
+GO
+
+CREATE PROCEDURE BABEL_1493_vu_prepare_p5 AS (SELECT dateadd(month, 1, '2021-1'));
+GO
+
+CREATE FUNCTION BABEL_1493_vu_prepare_f1()
+RETURNS DATETIME AS
+BEGIN
+RETURN (SELECT * FROM dateadd(month, 1, '2021-Jan-01'));
+END
+GO
+
+CREATE FUNCTION BABEL_1493_vu_prepare_f2()
+RETURNS DATETIME AS
+BEGIN
+RETURN (SELECT * FROM dateadd(month, 1, '2021/Jan/01'));
+END
+GO
+
+CREATE FUNCTION BABEL_1493_vu_prepare_f3()
+RETURNS DATETIME AS
+BEGIN
+RETURN (SELECT * FROM dateadd(month, 1, '2021-1-1'));
+END
+GO
+
+CREATE FUNCTION BABEL_1493_vu_prepare_f4()
+RETURNS DATETIME AS
+BEGIN
+RETURN (SELECT * FROM dateadd(month, 1, '20210101'));
+END
+GO
+
+CREATE FUNCTION BABEL_1493_vu_prepare_f5()
+RETURNS DATETIME AS
+BEGIN
+RETURN (SELECT * FROM dateadd(month, 1, '2021-1'));
+END
+GO
