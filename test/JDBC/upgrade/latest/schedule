@@ -178,7 +178,6 @@ sys-foreign_keys-dep
 sys-identity_columns-dep
 sys-indexes-dep
 sys-key_constraints-dep
-sys-procedures-dep
 sys-schemas-dep
 sys-sp_tables_view-dep
 sys-sysforeignkeys-dep
