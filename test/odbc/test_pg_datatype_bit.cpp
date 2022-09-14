@@ -215,12 +215,13 @@ TEST_F(PSQL_DataTypes_Bit, Insertion_Fail) {
 TEST_F(PSQL_DataTypes_Bit, Update_Success) {
   const string PK_INSERTED = "1";
   const string DATA_INSERTED = "1";
-  const int NUM_UPDATES = 3;
+  const int NUM_UPDATES = 4;
 
   const string DATA_UPDATED_VALUES[NUM_UPDATES] = {
     "1",
     "0",
-    "1"
+    "-100",
+    "1000"
   };
 
   const string INSERT_STRING = "(" + PK_INSERTED + "," + DATA_INSERTED + ")";
@@ -579,5 +580,97 @@ TEST_F(PSQL_DataTypes_Bit, View_Creation) {
   odbcHandler.ExecQuery(DropObjectStatement("VIEW", VIEW_NAME));
 
   odbcHandler.CloseStmt();
+  odbcHandler.ExecQuery(DropObjectStatement("TABLE", TABLE_NAME));
+}
+
+TEST_F(PSQL_DataTypes_Bit, Table_Constraints) {
+  vector<pair<string, string>> TABLE_COLUMNS = {
+    {COL1_NAME, DATATYPE_NAME + " PRIMARY KEY"},
+    {COL2_NAME, DATATYPE_NAME + " UNIQUE"}
+  };
+
+  const int PK_BYTES_EXPECTED = 4;
+  const int DATA_BYTES_EXPECTED = 1;
+
+  int pk;
+  unsigned char data;
+  SQLLEN pk_len;
+  SQLLEN data_len;
+  SQLLEN affected_rows;
+
+  RETCODE rcode;
+  OdbcHandler odbcHandler;
+
+  vector <string> valid_inserted_values = {
+    "0",
+    "1"
+  };
+
+  vector<tuple<int, int, SQLPOINTER, int, SQLLEN*>> bind_columns = {
+    {1, SQL_C_LONG, &pk, 0, &pk_len},
+    {2, SQL_C_BIT, &data, 0, &data_len}
+  };
+
+  string insert_string{}; 
+  string comma{};
+
+  for (int i = 0; i < valid_inserted_values.size(); i++) {
+    insert_string += comma + "(" + std::to_string(i) + "," + valid_inserted_values[i] + ")";
+    comma = ",";
+  }
+
+  odbcHandler.ConnectAndExecQuery(CreateTableStatement(TABLE_NAME, TABLE_COLUMNS));
+  odbcHandler.CloseStmt();
+
+  // Insert valid values into the table and assert affected rows
+  odbcHandler.ExecQuery(InsertStatement(TABLE_NAME, insert_string));
+ 
+  rcode = SQLRowCount(odbcHandler.GetStatementHandle(), &affected_rows);
+  ASSERT_EQ(rcode, SQL_SUCCESS);
+  ASSERT_EQ(affected_rows, valid_inserted_values.size());
+
+  odbcHandler.CloseStmt();
+
+  // Select all from the tables and assert that the following attributes of the type is correct:
+  odbcHandler.ExecQuery(SelectStatement(TABLE_NAME, {"*"}, vector<string> {COL1_NAME}));
+
+  // Make sure inserted values are correct
+  ASSERT_NO_FATAL_FAILURE(odbcHandler.BindColumns(bind_columns));
+
+  for (int i = 0; i < valid_inserted_values.size(); i++) {
+    rcode = SQLFetch(odbcHandler.GetStatementHandle()); // retrieve row-by-row
+    ASSERT_EQ(rcode, SQL_SUCCESS);
+    ASSERT_EQ(pk_len, PK_BYTES_EXPECTED);
+    ASSERT_EQ(pk, i);
+    if (valid_inserted_values[i] != "NULL") {
+      ASSERT_EQ(data_len, DATA_BYTES_EXPECTED);
+      ASSERT_EQ(data, StringToBit(valid_inserted_values[i]));
+    }
+    else {
+      ASSERT_EQ(data_len, SQL_NULL_DATA);
+    }
+  }
+
+  // Assert that there is no more data
+  rcode = SQLFetch(odbcHandler.GetStatementHandle());
+  ASSERT_EQ(rcode, SQL_NO_DATA);
+
+  odbcHandler.CloseStmt();
+
+  // Attempt to insert
+  vector <string> invalid_inserted_values = {
+    "0",
+    "1"
+  };
+  int invalid_size = invalid_inserted_values.size();
+
+  // Attempt to insert values that violates unique constraint and assert that they all fail
+  for (int i = invalid_size; i < 2 * invalid_size; i++) {
+    string insert_string = "(" + std::to_string(i) + "," + invalid_inserted_values[i - invalid_size] + ")";
+
+    rcode = SQLExecDirect(odbcHandler.GetStatementHandle(), (SQLCHAR*) InsertStatement(TABLE_NAME, insert_string).c_str(), SQL_NTS);
+    ASSERT_EQ(rcode, SQL_ERROR);
+  }
+
   odbcHandler.ExecQuery(DropObjectStatement("TABLE", TABLE_NAME));
 }
