@@ -84,7 +84,6 @@ sys-spatial_indexes
 sys-stats
 sys-synonyms
 sys-syscharsets
-sys-syscolumns
 sys-sysforeignkeys
 sys-syslanguages
 sys-system_sql_modules

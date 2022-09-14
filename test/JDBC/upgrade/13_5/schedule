@@ -31,6 +31,7 @@ TestUDD
 TestUniqueIdentifier
 TestVarChar
 TestXML
+BABEL-1493
 BABEL-2934
 BABEL-3121
 BABEL-3166
@@ -82,7 +83,6 @@ sys-spatial_indexes
 sys-stats
 sys-synonyms
 sys-system_sql_modules
-sys-syscolumns
 sys-syscharsets
 sys-sysforeignkeys
 sys-syslanguages
