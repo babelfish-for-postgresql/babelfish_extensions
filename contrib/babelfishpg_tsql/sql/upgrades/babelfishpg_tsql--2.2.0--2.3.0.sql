@@ -49,6 +49,8 @@ BEGIN
 		ORDER BY ServerRole, MemberName;
 	END
 	-- If a valid server role is specified, return its member info
+	-- If the role is a SQL server predefined role (i.e. serveradmin), 
+	-- do not raise an error even if it does not exist
 	ELSE IF EXISTS (SELECT 1
 					FROM sys.babelfish_authid_login_ext
 					WHERE (rolname = RTRIM(@srvrolename)
