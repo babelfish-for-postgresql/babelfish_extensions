@@ -118,6 +118,21 @@ string CreateFunctionStatement(const string &function_name, const string &functi
   return string {"CREATE FUNCTION " + function_name + " \n" + function_definition + ";"};
 }
 
+string UpdateTableStatement(const string &table_name, const vector<pair<string, string>> &new_values, const string where_clause) {
+  string result{"UPDATE " + table_name + " SET "};
+  string comma{};
+
+  for (auto p : new_values) {
+    result += comma + p.first + " = " + p.second;
+    comma = ",";
+  }
+
+  if (where_clause != "") {
+    result += "\nWHERE " + where_clause;
+  }
+
+  return result;
+}
 
 string DropObjectStatement(const string &object_kind, const string &object_name, bool check_exists) {
 
