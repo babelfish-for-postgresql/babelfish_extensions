@@ -802,24 +802,24 @@ tsql_update_delete_stmt_from_clause_alias(RangeVar *relation, List *from_clause)
 			if(IsA(jexpr->larg, RangeVar))
 			{
 				larg = (RangeVar*)(jexpr->larg);
+				if(larg->alias && larg->alias->aliasname && 
+					strcmp(larg->alias->aliasname, relation->relname) == 0)
+				{
+					tsql_update_delete_stmt_from_clause_alias_helper(relation,larg);
+				}
 			} 
 			else if(IsA(jexpr->rarg, RangeVar))
 			{
 				rarg = (RangeVar*)(jexpr->rarg);
-			}
-			if(larg->alias && larg->alias->aliasname && 
-				strcmp(larg->alias->aliasname, relation->relname) == 0)
-			{
-				tsql_update_delete_stmt_from_clause_alias_helper(relation,larg);
-			}
-			else if(rarg->alias && rarg->alias->aliasname && 
-				strcmp(rarg->alias->aliasname, relation->relname) == 0)
-			{
-				tsql_update_delete_stmt_from_clause_alias_helper(relation,rarg);
-			}
-			larg = NULL;
-			rarg = NULL;	
+				if(rarg->alias && rarg->alias->aliasname && 
+					strcmp(rarg->alias->aliasname, relation->relname) == 0)
+				{
+					tsql_update_delete_stmt_from_clause_alias_helper(relation,rarg);
+				}
+			}	
 		}
+		larg = NULL;
+		rarg = NULL;
 	}
 }
 
