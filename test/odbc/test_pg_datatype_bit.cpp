@@ -585,7 +585,7 @@ TEST_F(PSQL_DataTypes_Bit, View_Creation) {
 
 TEST_F(PSQL_DataTypes_Bit, Table_Constraints) {
   vector<pair<string, string>> TABLE_COLUMNS = {
-    {COL1_NAME, DATATYPE_NAME + " PRIMARY KEY"},
+    {COL1_NAME, "INT PRIMARY KEY"},
     {COL2_NAME, DATATYPE_NAME + " UNIQUE"}
   };
 
