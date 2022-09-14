@@ -677,7 +677,7 @@ TEST_F(PSQL_DataTypes_Bit, Table_Unique_Constraints) {
 
 TEST_F(PSQL_DataTypes_Bit, Table_Composite_Keys) {
   const vector<pair<string, string>> TABLE_COLUMNS = {
-    {COL1_NAME, "INT"},
+    {COL1_NAME, DATATYPE_NAME},
     {COL2_NAME, DATATYPE_NAME}
   };
 
