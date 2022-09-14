@@ -187,7 +187,7 @@ babel_sqlvariant_cast_compare
 tdscollation
 BABEL-1683
 schema_resolution_trigger
-sys-all_objects-dep
+sys_all_objects-dep
 sys-columns-dep
 sys-foreign_key_columns-dep
 sys-foreign_keys-dep
@@ -205,5 +205,5 @@ sys-check_constraints-dep
 sys-computed_columns-dep
 sys-default_constraints-dep
 sys-index_columns-dep
-sys-sp_databases_view-dep
+sys-sp_databases-dep
 sys-syscolumns-dep

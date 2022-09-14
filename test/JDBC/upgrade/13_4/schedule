@@ -143,7 +143,7 @@ sys-table_types
 sys_all_objects
 BABEL-1683
 schema_resolution_trigger
-sys-all_objects-dep
+sys_all_objects-dep
 sys-columns-dep
 sys-foreign_key_columns-dep
 sys-foreign_keys-dep
