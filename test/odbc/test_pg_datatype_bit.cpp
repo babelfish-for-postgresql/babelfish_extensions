@@ -126,6 +126,8 @@ TEST_F(PSQL_DataTypes_Bit, Insertion_Success) {
     "-0",
     "-1",
     "2",
+    "99999999",
+    "-9999999",
     "NULL"
   };
 
