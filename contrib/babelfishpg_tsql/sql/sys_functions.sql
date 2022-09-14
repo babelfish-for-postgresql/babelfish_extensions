@@ -975,16 +975,13 @@ LANGUAGE plpgsql IMMUTABLE;
 CREATE OR REPLACE FUNCTION sys.dateadd(IN datepart PG_CATALOG.TEXT, IN num INTEGER, IN startdate TEXT) RETURNS DATETIME
 AS
 $body$
-DECLARE
-    is_date INT;
 BEGIN
-    is_date = sys.isdate(startdate);
-    IF (is_date = 1) THEN 
-        RETURN sys.dateadd_internal(datepart,num,startdate::datetime);
-    ELSEIF (startdate is NULL) THEN
-        RETURN NULL;
+    IF pg_typeof(startdate) = 'sys.DATETIMEOFFSET'::regtype THEN
+        return sys.dateadd_internal_df(datepart, num,
+                     startdate);
     ELSE
-        RAISE EXCEPTION 'Conversion failed when converting date and/or time from character string.';
+        return sys.dateadd_internal(datepart, num,
+                     startdate);
     END IF;
 END;
 $body$
