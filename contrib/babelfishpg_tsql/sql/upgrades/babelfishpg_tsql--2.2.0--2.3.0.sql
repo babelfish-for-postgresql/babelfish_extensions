@@ -152,6 +152,23 @@ END;
 $body$
 LANGUAGE plpgsql IMMUTABLE;
 
+CREATE OR REPLACE FUNCTION sys.babelfish_conv_helper_to_datetime(IN arg anyelement,
+                                                            IN try BOOL,
+													        IN p_style NUMERIC DEFAULT 0)
+RETURNS TIMESTAMP
+AS
+$BODY$
+BEGIN
+    IF try THEN
+        RETURN sys.babelfish_try_conv_to_datetime(arg);
+    ELSE
+        RETURN CAST(arg AS DATETIME);
+    END IF;
+END;
+$BODY$
+LANGUAGE plpgsql
+VOLATILE;
+
 -- BABELFISH_FUNCTION_EXT
 CREATE TABLE sys.babelfish_function_ext (
 	nspname NAME NOT NULL,
