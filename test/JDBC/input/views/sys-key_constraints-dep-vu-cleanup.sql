@@ -1,0 +1,3 @@
+drop DATABASE sys_key_constraints_dep_vu_prepare_db1
+drop view sys_key_constraints_dep_vu_prepare_v1
+GO

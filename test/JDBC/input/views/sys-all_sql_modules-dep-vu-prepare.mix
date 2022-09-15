@@ -1,0 +1,31 @@
+CREATE FUNCTION sys_all_sql_modules_dep_vu_prepare_f1() 
+RETURNS INT
+AS 
+BEGIN
+    RETURN 1;
+END
+GO
+
+CREATE PROC sys_all_sql_modules_dep_vu_prepare_p1 AS
+SELECT
+    uses_ansi_nulls,
+    uses_quoted_identifier
+FROM sys.all_sql_modules
+WHERE object_id = OBJECT_ID('sys_all_sql_modules_dep_vu_prepare_f1')
+GO
+
+CREATE VIEW sys_all_sql_modules_dep_vu_prepare_v1 AS
+SELECT
+    execute_as_principal_id,
+    uses_native_compilation
+FROM sys.all_sql_modules
+WHERE object_id = OBJECT_ID('sys_all_sql_modules_dep_vu_prepare_f1')
+GO
+
+CREATE FUNCTION sys_all_sql_modules_dep_vu_prepare_f2()
+RETURNS INT
+AS
+BEGIN
+    RETURN (SELECT COUNT(*) FROM sys.all_sql_modules WHERE object_id = OBJECT_ID('sys_all_sql_modules_dep_vu_prepare_f1'))
+END
+GO

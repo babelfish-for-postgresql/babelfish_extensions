@@ -1,0 +1,14 @@
+USE sys_foreign_key_columns_dep_vu_prepare_db1
+GO
+
+drop procedure if exists sys_foreign_key_columns_dep_vu_prepare_p1
+drop function if exists sys_foreign_key_columns_dep_vu_prepare_f1
+drop view if exists sys_foreign_key_columns_dep_vu_prepare_v1
+drop table sys_foreign_key_columns_dep_vu_prepare_fk_2
+drop table sys_foreign_key_columns_dep_vu_prepare_fk_1
+
+USE master
+GO
+
+drop DATABASE sys_foreign_key_columns_dep_vu_prepare_db1
+GO

@@ -1,0 +1,11 @@
+DROP PROCEDURE sys_indexes_dep_vu_prepare_p1
+DROP FUNCTION sys_indexes_dep_vu_prepare_f1
+DROP VIEW sys_indexes_dep_vu_prepare_v1
+GO
+
+DROP INDEX sys_indexes_dep_vu_prepare_i1 ON sys_indexes_dep_vu_prepare_t1;
+DROP INDEX sys_indexes_dep_vu_prepare_i1a ON sys_indexes_dep_vu_prepare_t1;
+GO
+
+DROP TABLE sys_indexes_dep_vu_prepare_t1
+GO

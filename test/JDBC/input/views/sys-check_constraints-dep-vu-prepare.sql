@@ -1,0 +1,22 @@
+CREATE TABLE sys_check_constraints_dep_vu_prepare_t1 (
+	sck_date_col DATETIME CHECK (sck_date_col IS NOT NULL)
+)
+GO
+
+CREATE FUNCTION sys_check_constraints_dep_vu_prepare_func1()
+RETURNS INT
+AS
+BEGIN
+    RETURN (SELECT COUNT(*) FROM sys.check_constraints WHERE NAME IN ('sys_check_constraints_dep_vu_prepare_t1_sck_date_col_check'))
+END
+GO
+
+CREATE PROCEDURE sys_check_constraints_dep_vu_prepare_proc1
+AS
+    SELECT name FROM sys.check_constraints WHERE NAME IN ('sys_check_constraints_dep_vu_prepare_t1_sck_date_col_check')
+GO
+
+CREATE VIEW sys_check_constraints_dep_vu_prepare_view1
+AS
+    SELECT name FROM sys.check_constraints WHERE NAME IN ('sys_check_constraints_dep_vu_prepare_t1_sck_date_col_check')
+GO

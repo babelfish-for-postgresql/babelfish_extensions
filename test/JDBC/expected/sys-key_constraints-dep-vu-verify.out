@@ -1,0 +1,29 @@
+use sys_key_constraints_dep_vu_prepare_db1
+GO
+
+exec sys_key_constraints_dep_vu_prepare_p1
+GO
+~~START~~
+int
+1
+~~END~~
+
+
+select * from sys_key_constraints_dep_vu_prepare_f1()
+GO
+~~START~~
+int
+1
+~~END~~
+
+
+use master
+GO
+
+select * from sys_key_constraints_dep_vu_prepare_v1
+GO
+~~START~~
+int
+0
+~~END~~
+

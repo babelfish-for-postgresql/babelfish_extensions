@@ -1,0 +1,25 @@
+CREATE DATABASE sys_types_dep_vu_prepare_db1;
+GO
+
+USE sys_types_dep_vu_prepare_db1
+GO
+
+CREATE TYPE sys_types_dep_vu_prepare_ty1 FROM int
+GO
+
+CREATE PROCEDURE sys_types_dep_vu_prepare_p1 AS
+    SELECT count(*) FROM sys.types WHERE name = 'sys_types_dep_vu_prepare_ty1'
+GO
+
+CREATE FUNCTION sys_types_dep_vu_prepare_f1()
+RETURNS INT
+AS
+BEGIN
+    RETURN (SELECT count(*) FROM sys.types WHERE name = 'sys_types_dep_vu_prepare_ty1')
+END
+GO
+
+CREATE VIEW sys_types_dep_vu_prepare_v1 AS
+    SELECT count(*) FROM sys.types WHERE name = 'sys_types_dep_vu_prepare_ty1'
+GO
+

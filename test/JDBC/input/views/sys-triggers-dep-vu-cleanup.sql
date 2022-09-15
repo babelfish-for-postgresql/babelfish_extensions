@@ -1,0 +1,6 @@
+DROP PROCEDURE sys_triggers_dep_vu_prepare_p1
+DROP FUNCTION sys_triggers_dep_vu_prepare_f1
+DROP VIEW sys_triggers_dep_vu_prepare_v1
+DROP TRIGGER sys_triggers_dep_vu_prepare_trig
+DROP TABLE sys_triggers_dep_vu_prepare_table
+GO

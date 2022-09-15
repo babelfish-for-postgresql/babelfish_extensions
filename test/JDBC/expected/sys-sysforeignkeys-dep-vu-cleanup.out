@@ -1,0 +1,6 @@
+drop procedure sys_sysforeignkeys_dep_vu_prepare_p1
+drop function sys_sysforeignkeys_dep_vu_prepare_f1
+drop view sys_sysforeignkeys_dep_vu_prepare_v1
+drop table sys_sysforeignkeys_dep_vu_prepare_fk2
+drop table sys_sysforeignkeys_dep_vu_prepare_fk1
+GO

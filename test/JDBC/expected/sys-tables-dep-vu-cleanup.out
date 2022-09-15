@@ -1,0 +1,2 @@
+DROP DATABASE sys_tables_dep_vu_prepare_db1
+GO
