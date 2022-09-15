@@ -9642,7 +9642,7 @@ BEGIN
     IF try THEN
         RETURN sys.babelfish_try_conv_to_datetime(arg);
     ELSE
-        RETURN CAST(arg AS TIMESTAMP);
+        RETURN CAST(arg AS DATETIME);
     END IF;
 END;
 $BODY$

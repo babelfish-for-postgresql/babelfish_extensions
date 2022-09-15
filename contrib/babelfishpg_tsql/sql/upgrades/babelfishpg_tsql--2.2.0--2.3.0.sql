@@ -80,6 +80,78 @@ $$
 LANGUAGE 'pltsql';
 GRANT EXECUTE ON PROCEDURE sys.sp_helpsrvrolemember TO PUBLIC;
 
+CREATE OR REPLACE FUNCTION sys.dateadd(IN datepart PG_CATALOG.TEXT, IN num INTEGER, IN startdate INT) RETURNS DATETIME
+AS
+$body$
+BEGIN
+    return sys.dateadd_internal(datepart, num, startdate::datetime);
+END;
+$body$
+LANGUAGE plpgsql IMMUTABLE;
+
+CREATE OR REPLACE FUNCTION sys.dateadd(IN datepart PG_CATALOG.TEXT, IN num INTEGER, IN startdate BIT) RETURNS DATETIME
+AS
+$body$
+BEGIN
+    return sys.dateadd_internal(datepart, num, startdate::datetime);
+END;
+$body$
+LANGUAGE plpgsql IMMUTABLE;
+
+CREATE OR REPLACE FUNCTION sys.dateadd(IN datepart PG_CATALOG.TEXT, IN num INTEGER, IN startdate NUMERIC) RETURNS DATETIME
+AS
+$body$
+BEGIN
+    return sys.dateadd_internal(datepart, num, startdate::datetime);
+END;
+$body$
+LANGUAGE plpgsql IMMUTABLE;
+
+CREATE OR REPLACE FUNCTION sys.dateadd(IN datepart PG_CATALOG.TEXT, IN num INTEGER, IN startdate FLOAT) RETURNS DATETIME
+AS
+$body$
+BEGIN
+    return sys.dateadd_internal(datepart, num, startdate::datetime);
+END;
+$body$
+LANGUAGE plpgsql IMMUTABLE;
+
+CREATE OR REPLACE FUNCTION sys.dateadd(IN datepart PG_CATALOG.TEXT, IN num INTEGER, IN startdate REAL) RETURNS DATETIME
+AS
+$body$
+BEGIN
+    return sys.dateadd_internal(datepart, num, startdate::datetime);
+END;
+$body$
+LANGUAGE plpgsql IMMUTABLE;
+
+CREATE OR REPLACE FUNCTION sys.dateadd(IN datepart PG_CATALOG.TEXT, IN num INTEGER, IN startdate BIGINT) RETURNS DATETIME
+AS
+$body$
+BEGIN
+    return sys.dateadd_internal(datepart, num, startdate::datetime);
+END;
+$body$
+LANGUAGE plpgsql IMMUTABLE;
+
+CREATE OR REPLACE FUNCTION sys.dateadd(IN datepart PG_CATALOG.TEXT, IN num INTEGER, IN startdate SMALLINT) RETURNS DATETIME
+AS
+$body$
+BEGIN
+    return sys.dateadd_internal(datepart, num, startdate::datetime);
+END;
+$body$
+LANGUAGE plpgsql IMMUTABLE;
+
+CREATE OR REPLACE FUNCTION sys.dateadd(IN datepart PG_CATALOG.TEXT, IN num INTEGER, IN startdate TINYINT) RETURNS DATETIME
+AS
+$body$
+BEGIN
+    return sys.dateadd_internal(datepart, num, startdate::datetime);
+END;
+$body$
+LANGUAGE plpgsql IMMUTABLE;
+
 -- BABELFISH_FUNCTION_EXT
 CREATE TABLE sys.babelfish_function_ext (
 	nspname NAME NOT NULL,

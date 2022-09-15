@@ -74,6 +74,7 @@ sys-sysdatabases
 sys-sysobjects
 sys-trigger_nestlevel
 schema_resolution_proc
+BABEL-323
 BABEL-404
 BABEL-493
 BABEL-621
