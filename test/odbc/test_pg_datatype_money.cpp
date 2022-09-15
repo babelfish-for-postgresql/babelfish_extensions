@@ -5,6 +5,7 @@
 #include <cmath>
 #include <iostream>
 using std::pair;
+
 const string TABLE_NAME = "master_dbo.money_table_odbc_test";
 const string COL1_NAME = "pk";
 const string COL2_NAME = "data";
@@ -504,12 +505,12 @@ TEST_F(PSQL_DataTypes_Money, Arithmetic_Functions) {
 
   // initialization of expected_results
   vector<double>expected_results = {};
-  double min_expected, max_expected, sum_expected, avg_expected = 0;
+  double min_expected = 0, max_expected = 0, sum_expected = 0, avg_expected = 0;
   for (int i = 0; i < inserted_pk.size(); i++) {
-    double curr = StringToDouble(inserted_pk[i]);
+    const double curr = StringToDouble(inserted_pk[i]);
+    sum_expected += curr;
     min_expected = std::min(min_expected, curr);
     max_expected = std::max(max_expected, curr);
-    sum_expected += curr;
   }
   avg_expected = sum_expected / inserted_pk.size();
   expected_results.push_back(min_expected);
@@ -556,7 +557,7 @@ TEST_F(PSQL_DataTypes_Money, Arithmetic_Functions) {
 
   rcode = SQLFetch(odbcHandler.GetStatementHandle());
   ASSERT_EQ(rcode, SQL_SUCCESS);
-  for (int i = 0; i < operations_query.size(); i++) {    
+  for (int i = 0; i < operations_query.size(); i++) {  
     ASSERT_EQ(col_len[i], BYTES_EXPECTED);
     ASSERT_EQ(col_results[i], expected_results[i]);
   }
