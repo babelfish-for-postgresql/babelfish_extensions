@@ -1,0 +1,5 @@
+drop procedure if exists sys_dm_exec_sessions_dep_vu_prepare_p1
+drop function if exists sys_dm_exec_sessions_dep_vu_prepare_f1
+drop view if exists sys_dm_exec_sessions_dep_vu_prepare_v1
+drop login sys_dm_exec_sessions_dep_vu_prepare_login
+GO
