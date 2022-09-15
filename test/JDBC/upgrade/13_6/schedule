@@ -223,7 +223,6 @@ BABEL-1683
 schema_resolution_trigger
 sys-sp_pkeys
 sys-sp_statistics
-BABEL-1756
 BABEL-APPLOCK
 BABEL-1438
 BABEL-SP_DATATYPE_INFO
