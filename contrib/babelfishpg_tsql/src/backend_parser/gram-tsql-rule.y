@@ -1486,6 +1486,7 @@ simple_select:
 					n->windowClause = $10;
 					$$ = (Node *)n;
 				}
+			| tsql_values_clause							{ $$ = $1; }
 			;
 
 table_ref:	relation_expr tsql_table_hint_expr
