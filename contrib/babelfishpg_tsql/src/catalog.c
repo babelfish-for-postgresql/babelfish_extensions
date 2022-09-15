@@ -10,7 +10,9 @@
 #include "catalog/indexing.h"
 #include "catalog/pg_namespace.h"
 #include "catalog/pg_authid.h"
+#include "catalog/pg_proc.h"
 #include "catalog/namespace.h"
+#include "parser/parse_relation.h"
 #include "parser/scansup.h"
 #include "utils/builtins.h"
 #include "utils/fmgroids.h"
@@ -65,10 +67,17 @@ Oid			bbf_view_def_oid;
 Oid			bbf_view_def_idx_oid;
 
 /*****************************************
+ *			FUNCTION_EXT
+ *****************************************/
+Oid			bbf_function_ext_oid;
+Oid			bbf_function_ext_idx_oid;
+
+/*****************************************
  * 			Catalog General
  *****************************************/
 
 static bool tsql_syscache_inited = false;
+extern bool babelfish_dump_restore;
 
 static struct cachedesc my_cacheinfo[] = {
      {-1,       /* SYSDATABASEOID */ 
@@ -92,7 +101,18 @@ static struct cachedesc my_cacheinfo[] = {
               0
           },
           16
-      }
+      },
+	  {-1,       /* PROCNSPSIGNATURE */ 
+          -1,
+          2,
+          {
+              Anum_bbf_function_ext_nspname,
+              Anum_bbf_function_ext_funcsignature,
+              0,
+              0
+          },
+          16
+     }
 };
 
 PG_FUNCTION_INFO_V1(init_catalog);
@@ -113,11 +133,17 @@ Datum init_catalog(PG_FUNCTION_ARGS)
 	namespace_ext_oid = get_relname_relid(NAMESPACE_EXT_TABLE_NAME, sys_schema_oid);
 	namespace_ext_idx_oid_oid = get_relname_relid(NAMESAPCE_EXT_PK_NAME, sys_schema_oid);
 
+	/* bbf_function_ext */
+	bbf_function_ext_oid = get_relname_relid(BBF_FUNCTION_EXT_TABLE_NAME, sys_schema_oid);
+	bbf_function_ext_idx_oid = get_relname_relid(BBF_FUNCTION_EXT_IDX_NAME, sys_schema_oid);
+
 	/* syscache info */
 	my_cacheinfo[0].reloid = sysdatabases_oid;
 	my_cacheinfo[0].indoid = sysdatabaese_idx_oid_oid;
 	my_cacheinfo[1].reloid = sysdatabases_oid;
 	my_cacheinfo[1].indoid = sysdatabaese_idx_name_oid;
+	my_cacheinfo[2].reloid = bbf_function_ext_oid;
+	my_cacheinfo[2].indoid = bbf_function_ext_idx_oid;
 
 	/* login ext */
 	bbf_authid_login_ext_oid = get_relname_relid(BBF_AUTHID_LOGIN_EXT_TABLE_NAME,
@@ -144,7 +170,7 @@ void initTsqlSyscache() {
 	Assert(my_cacheinfo[0].reloid != -1);
 	/* Initialize info for catcache */
 	if (!tsql_syscache_inited) {
-		InitExtensionCatalogCache(my_cacheinfo, SYSDATABASEOID, 2);
+		InitExtensionCatalogCache(my_cacheinfo, SYSDATABASEOID, 3);
 		tsql_syscache_inited = true;
 	}
 }
@@ -156,7 +182,7 @@ void initTsqlSyscache() {
 bool 
 IsPLtsqlExtendedCatalog(Oid relationId)
 {
-	if (relationId == sysdatabases_oid)
+	if (relationId == sysdatabases_oid || relationId == bbf_function_ext_oid)
 		return true;
 	if (PrevIsExtendedCatalogHook)
 		return (*PrevIsExtendedCatalogHook)(relationId);
@@ -1076,6 +1102,146 @@ clean_up_bbf_view_def(int16 dbid)
 }
 
 /*****************************************
+ *			FUNCTION_EXT
+ *****************************************/
+
+Oid
+get_bbf_function_ext_oid()
+{
+	if (!OidIsValid(bbf_function_ext_oid))
+		bbf_function_ext_oid = get_relname_relid(BBF_FUNCTION_EXT_TABLE_NAME,
+											 get_namespace_oid("sys", false));
+
+	return bbf_function_ext_oid;
+}
+
+Oid
+get_bbf_function_ext_idx_oid()
+{
+	if (!OidIsValid(bbf_function_ext_idx_oid))
+		bbf_function_ext_idx_oid = get_relname_relid(BBF_FUNCTION_EXT_IDX_NAME,
+												 get_namespace_oid("sys", false));
+
+	return bbf_function_ext_idx_oid;
+}
+
+HeapTuple
+get_bbf_function_tuple_from_proctuple(HeapTuple proctuple)
+{
+	HeapTuple	 bbffunctuple;
+	Form_pg_proc form;
+	char		 *physical_schemaname;
+	char		 *func_signature;
+
+	/* Disallow extended catalog lookup during restore */
+	if (!HeapTupleIsValid(proctuple) || babelfish_dump_restore)
+		return NULL;					/* concurrently dropped */
+	form = (Form_pg_proc) GETSTRUCT(proctuple);
+	if (!is_pltsql_language_oid(form->prolang))
+		return NULL;
+
+	physical_schemaname = get_namespace_name(form->pronamespace);
+	if (physical_schemaname == NULL)
+	{
+		elog(ERROR,
+				"Could not find physical schemaname for %u",
+				 form->pronamespace);
+	}
+
+	/* skip for shared schemas */
+	if (is_shared_schema(physical_schemaname))
+	{
+		pfree(physical_schemaname);
+		return NULL;
+	}
+
+	func_signature = get_pltsql_function_signature(NameStr(form->proname),
+												   form->pronargs,
+												   form->proargtypes.values);
+
+	if (func_signature == NULL)
+	{
+		pfree(physical_schemaname);
+		return NULL;
+	}
+
+	bbffunctuple = SearchSysCache2(PROCNSPSIGNATURE,
+								   CStringGetDatum(physical_schemaname),
+								   CStringGetTextDatum(func_signature));
+
+	pfree(physical_schemaname);
+	pfree(func_signature);
+
+	return bbffunctuple;
+}
+
+void
+clean_up_bbf_function_ext(int16 dbid)
+{
+	Relation		bbf_function_ext_rel, namespace_rel;
+	AttrNumber		attnum;
+	HeapTuple		scantup;
+	ScanKeyData		scanKey[1];
+	TableScanDesc	scan;
+
+	/* Fetch the relations */
+	namespace_rel = table_open(namespace_ext_oid, AccessShareLock);
+	bbf_function_ext_rel = table_open(get_bbf_function_ext_oid(), RowExclusiveLock);
+
+	attnum = (AttrNumber) attnameAttNum(namespace_rel, "dbid", false);
+	if (attnum == InvalidAttrNumber)
+		ereport(ERROR, 
+				(errcode(ERRCODE_UNDEFINED_COLUMN),
+				 errmsg("column \"dbid\" of relation \"%s\" does not exist",
+						RelationGetRelationName(namespace_rel))));
+
+	ScanKeyInit(&scanKey[0], 
+				attnum,
+				BTEqualStrategyNumber, F_INT2EQ,
+				Int16GetDatum(dbid));
+
+	scan = table_beginscan_catalog(namespace_rel, 1, scanKey);
+	scantup = heap_getnext(scan, ForwardScanDirection);
+
+	while (HeapTupleIsValid(scantup))
+	{
+		bool		isNull;
+		Datum		nspname;
+		HeapTuple	functup;
+		SysScanDesc	funcscan;
+
+		nspname = heap_getattr(scantup,
+							   Anum_namespace_ext_namespace,
+							   RelationGetDescr(namespace_rel),
+							   &isNull);
+
+		/* Search and drop the entry */
+		ScanKeyInit(&scanKey[0],
+					Anum_bbf_function_ext_nspname,
+					BTEqualStrategyNumber, F_TEXTEQ,
+					nspname);
+
+		funcscan = systable_beginscan(bbf_function_ext_rel,
+									  get_bbf_function_ext_idx_oid(),
+									  true, NULL, 1, scanKey);
+
+		while ((functup = systable_getnext(funcscan)) != NULL)
+		{
+			if (HeapTupleIsValid(functup))
+				CatalogTupleDelete(bbf_function_ext_rel,
+								&functup->t_self);
+		}
+
+		systable_endscan(funcscan);
+		scantup = heap_getnext(scan, ForwardScanDirection);
+	}
+
+	table_endscan(scan);
+	table_close(namespace_rel, AccessShareLock);
+	table_close(bbf_function_ext_rel, RowExclusiveLock);
+}
+
+/*****************************************
  * 			Metadata Check
  * ---------------------------------------
  * Babelfish catalogs should comply with
@@ -1120,6 +1286,8 @@ static Datum get_login_rolname(HeapTuple tuple, TupleDesc dsc);
 static Datum get_default_database_name(HeapTuple tuple, TupleDesc dsc);
 static Datum get_user_rolname(HeapTuple tuple, TupleDesc dsc);
 static Datum get_database_name(HeapTuple tuple, TupleDesc dsc);
+static Datum get_function_nspname(HeapTuple tuple, TupleDesc dsc);
+static Datum get_function_name(HeapTuple tuple, TupleDesc dsc);
 /* Condition function declaration */
 static bool is_multidb(void);
 static bool is_singledb_exists_userdb(void);
@@ -1142,12 +1310,13 @@ static void get_catalog_info(Rule *rule);
  *****************************************/
 RelData catalog_data[] = 
 {
-	{"babelfish_sysdatabases", InvalidOid, InvalidOid, InvalidOid, Anum_sysdatabaese_name, F_TEXTEQ},
-	{"babelfish_namespace_ext", InvalidOid, InvalidOid, InvalidOid, Anum_namespace_ext_namespace, F_NAMEEQ},
-	{"babelfish_authid_login_ext", InvalidOid, InvalidOid, InvalidOid, Anum_bbf_authid_login_ext_rolname, F_NAMEEQ},
-	{"babelfish_authid_user_ext", InvalidOid, InvalidOid, InvalidOid, Anum_bbf_authid_user_ext_rolname, F_NAMEEQ},
-	{"pg_namespace", InvalidOid, InvalidOid, InvalidOid, Anum_pg_namespace_nspname, F_NAMEEQ},
-	{"pg_authid", InvalidOid, InvalidOid, InvalidOid, Anum_pg_authid_rolname, F_NAMEEQ}
+	{"babelfish_sysdatabases", InvalidOid, InvalidOid, true, InvalidOid, Anum_sysdatabaese_name, F_TEXTEQ},
+	{"babelfish_namespace_ext", InvalidOid, InvalidOid, true, InvalidOid, Anum_namespace_ext_namespace, F_NAMEEQ},
+	{"babelfish_authid_login_ext", InvalidOid, InvalidOid, true, InvalidOid, Anum_bbf_authid_login_ext_rolname, F_NAMEEQ},
+	{"babelfish_authid_user_ext", InvalidOid, InvalidOid, true, InvalidOid, Anum_bbf_authid_user_ext_rolname, F_NAMEEQ},
+	{"pg_namespace", InvalidOid, InvalidOid, true, InvalidOid, Anum_pg_namespace_nspname, F_NAMEEQ},
+	{"pg_authid", InvalidOid, InvalidOid, true, InvalidOid, Anum_pg_authid_rolname, F_NAMEEQ},
+	{"pg_proc", InvalidOid, InvalidOid, false, InvalidOid, Anum_pg_proc_proname, F_NAMEEQ}
 };
 	
 /*****************************************
@@ -1241,6 +1410,15 @@ Rule must_match_rules_user[] =
 	{"<database_name> in babelfish_authid_user_ext must also exist in babelfish_sysdatabases",
 	 "babelfish_sysdatabases", "name", NULL, get_database_name, NULL, check_exist, NULL}
 };
+
+/* babelfish_function_ext */
+Rule must_match_rules_function[] = 
+{
+	{"<nspname> in babelfish_function_ext must also exist in babelfish_namespace_ext",
+	 "babelfish_namespace_ext", "nspname", NULL, get_function_nspname, NULL, check_exist, NULL},
+	{"<funcname> in babelfish_function_ext must also exist in pg_proc",
+	 "pg_proc", "proname", NULL, get_function_name, NULL, check_exist, NULL}
+};
 	
 /*****************************************
  * 			Core function
@@ -1328,6 +1506,7 @@ metadata_inconsistency_check(Tuplestorestate *res_tupstore, TupleDesc res_tupdes
 	size_t num_must_match_rules_nsp = sizeof(must_match_rules_nsp) / sizeof(must_match_rules_nsp[0]);
 	size_t num_must_match_rules_login = sizeof(must_match_rules_login) / sizeof(must_match_rules_login[0]);
 	size_t num_must_match_rules_user = sizeof(must_match_rules_user) / sizeof(must_match_rules_user[0]);
+	size_t num_must_match_rules_function = sizeof(must_match_rules_function) / sizeof(must_match_rules_function[0]);
 
 	/* Initialize the catalog_data array to fetch catalog info */
 	init_catalog_data();
@@ -1353,6 +1532,9 @@ metadata_inconsistency_check(Tuplestorestate *res_tupstore, TupleDesc res_tupdes
 		||
 		!(check_must_match_rules(must_match_rules_user, num_must_match_rules_user,
 								 bbf_authid_user_ext_oid, res_tupstore, res_tupdesc))
+		||
+		!(check_must_match_rules(must_match_rules_function, num_must_match_rules_function,
+								 bbf_function_ext_oid, res_tupstore, res_tupdesc))
 	)
 		return;
 }
@@ -1619,6 +1801,20 @@ get_database_name(HeapTuple tuple, TupleDesc dsc)
 	return dbname;
 }
 
+static Datum
+get_function_nspname(HeapTuple tuple, TupleDesc dsc)
+{
+	Form_bbf_function_ext func = ((Form_bbf_function_ext) GETSTRUCT(tuple));
+	return NameGetDatum(&(func->schema));
+}
+
+static Datum
+get_function_name(HeapTuple tuple, TupleDesc dsc)
+{
+	Form_bbf_function_ext func = ((Form_bbf_function_ext) GETSTRUCT(tuple));
+	return NameGetDatum(&(func->funcname));
+}
+
 /*****************************************
  * 			Condition check funcs
  *****************************************/
@@ -1667,7 +1863,7 @@ check_exist(void *arg, HeapTuple tuple)
 				rule->tbldata->regproc, 
 				datum);
 
-	scan = systable_beginscan(rel, rule->tbldata->idx_oid, true, NULL, 1, &scanKey);
+	scan = systable_beginscan(rel, rule->tbldata->idx_oid, rule->tbldata->index_ok, NULL, 1, &scanKey);
 
 	/* The rule passes if we found the wanted datum in the catalog */
 	found = (HeapTupleIsValid(systable_getnext(scan)));
@@ -1761,6 +1957,12 @@ init_catalog_data(void)
 			catalog_data[i].tbl_oid = AuthIdRelationId;
 			catalog_data[i].idx_oid = AuthIdRolnameIndexId;
 			catalog_data[i].atttype = get_atttype(AuthIdRelationId, Anum_pg_authid_rolname);
+		}
+		else if (strcmp(catalog_data[i].tblname, "pg_proc") == 0)
+		{
+			catalog_data[i].tbl_oid = ProcedureRelationId;
+			catalog_data[i].idx_oid = InvalidOid;
+			catalog_data[i].atttype = get_atttype(ProcedureRelationId, Anum_pg_proc_proname);
 		}
 		else
 			ereport(ERROR,

@@ -2202,6 +2202,9 @@ static void bbf_ProcessUtility(PlannedStmt *pstmt,
 
 					address = CreateFunction(pstate, (CreateFunctionStmt *) parsetree);
 
+					/* Store function default positions in babelfish catalog */
+					pltsql_store_func_default_positions(address, castNode(CreateFunctionStmt, parsetree)->parameters);
+
 					if (tbltypStmt || restore_tsql_tabletype)
 					{
 						/*

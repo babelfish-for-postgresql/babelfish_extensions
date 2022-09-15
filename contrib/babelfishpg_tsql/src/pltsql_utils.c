@@ -11,6 +11,7 @@
 #include "storage/lock.h"
 #include "utils/builtins.h"
 #include "utils/elog.h"
+#include "utils/guc.h"
 #include "utils/lsyscache.h"
 #include "utils/syscache.h"
 #include "datatypes.h"
@@ -827,4 +828,42 @@ flatten_search_path(List *oid_list)
 	}
 	pathbuf.data[strlen(pathbuf.data) - 1] = '\0';
 	return pathbuf.data;
+}
+
+const char *
+get_pltsql_function_signature(const char *funcname,
+							  int nargs, const Oid *argtypes)
+{
+	StringInfoData argbuf;
+	ListCell   *lc;
+	int			i;
+	const char *prev_quote_ident = GetConfigOption("quote_all_identifiers", true, true);
+
+	initStringInfo(&argbuf);
+
+	PG_TRY();
+	{
+		/* Temporarily set quote_all_identifiers to TRUE to generate quoted string */
+		set_config_option("quote_all_identifiers", "true",
+								(superuser() ? PGC_SUSET : PGC_USERSET),
+								PGC_S_SESSION, GUC_ACTION_SAVE, true, 0, false);
+
+		appendStringInfo(&argbuf, "%s(", funcname);
+		for (i = 0; i < nargs; i++)
+		{
+			if (i)
+				appendStringInfoString(&argbuf, ", ");
+			appendStringInfoString(&argbuf, format_type_be_qualified(argtypes[i]));
+		}
+		appendStringInfoChar(&argbuf, ')');
+	}
+	PG_FINALLY();
+	{
+		set_config_option("quote_all_identifiers", prev_quote_ident,
+								(superuser() ? PGC_SUSET : PGC_USERSET),
+								PGC_S_SESSION, GUC_ACTION_SAVE, true, 0, false);
+	}
+	PG_END_TRY();
+
+	return argbuf.data;			/* return palloc'd string buffer */
 }

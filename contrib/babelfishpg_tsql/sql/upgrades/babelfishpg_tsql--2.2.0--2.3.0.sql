@@ -80,6 +80,19 @@ $$
 LANGUAGE 'pltsql';
 GRANT EXECUTE ON PROCEDURE sys.sp_helpsrvrolemember TO PUBLIC;
 
+-- BABELFISH_FUNCTION_EXT
+CREATE TABLE sys.babelfish_function_ext (
+	nspname NAME NOT NULL,
+	funcname NAME NOT NULL,
+	orig_name sys.NVARCHAR(128), -- users' original input name
+	funcsignature TEXT NOT NULL COLLATE "C",
+	default_positions TEXT COLLATE "C",
+	PRIMARY KEY(nspname, funcsignature)
+);
+GRANT SELECT ON sys.babelfish_function_ext TO PUBLIC;
+
+SELECT pg_catalog.pg_extension_config_dump('sys.babelfish_function_ext', '');
+
 -- Drops the temporary procedure used by the upgrade script.
 -- Please have this be one of the last statements executed in this upgrade script.
 DROP PROCEDURE sys.babelfish_drop_deprecated_view(varchar, varchar);

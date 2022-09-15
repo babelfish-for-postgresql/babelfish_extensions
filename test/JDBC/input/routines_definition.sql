@@ -244,6 +244,18 @@ go
 select tsql_get_functiondef(oid) from pg_proc where proname='routines_cur_var';
 go
 
+-- Test with defaults at different argument positions
+CREATE PROCEDURE routines_test_def(@test_def_a int = 2, @test_def_b char(255) OUTPUT, @test_def_c varchar(20) = 'abc', @test_def_d varbinary(8))
+AS
+BEGIN
+        SET @test_def_b = 'a';
+        SELECT @test_def_a, @test_def_b, @test_def_c, @test_def_d;
+END;
+go
+
+select tsql_get_functiondef(oid) from pg_proc where proname='routines_test_def';
+go
+
 drop procedure routines_test_nvar;
 go
 
@@ -296,6 +308,9 @@ drop procedure routines_test_t;
 go
 
 drop procedure routines_cur_var;
+go
+
+drop procedure routines_test_def;
 go
 
 drop function routines_fc1;

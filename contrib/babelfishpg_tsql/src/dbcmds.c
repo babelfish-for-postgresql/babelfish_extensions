@@ -599,6 +599,8 @@ drop_bbf_db(const char *dbname, bool missing_ok, bool force_drop)
 		}
 		/* clean up bbf view def catalog */
 		clean_up_bbf_view_def(dbid);
+		/* clean up bbf function catalog */
+		clean_up_bbf_function_ext(dbid);
 		/* clean up bbf namespace catalog accordingly */
 		drop_related_bbf_namespace_entries(dbid);
 		/* clean up corresponding db users */
