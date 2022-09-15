@@ -1,3 +1,5 @@
+USE babel_sp_stored_procedures_vu_prepare_db1
+GO
 DROP FUNCTION babel_sp_stored_procedures_vu_prepare_s1.positive_or_negative
 GO
 DROP PROCEDURE babel_sp_stored_procedures_vu_prepare_select_all
