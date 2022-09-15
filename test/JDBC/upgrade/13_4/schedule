@@ -155,3 +155,14 @@ BABEL-SP_FKEYS
 BABEL-SP_STORED_PROCEDURES
 BABEL-SP_SPROC_COLUMNS
 BABEL-3000
+sys-foreign_key_columns-dep
+sys-foreign_keys-dep
+sys-identity_columns-dep
+sys-indexes-dep
+sys-key_constraints-dep
+sys-schemas-dep
+sys-sp_tables_view-dep
+sys-sysforeignkeys-dep
+sys-tables-dep
+sys-types-dep
+sys-views-dep
