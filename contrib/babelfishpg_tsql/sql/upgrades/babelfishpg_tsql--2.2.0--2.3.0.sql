@@ -52,14 +52,14 @@ BEGIN
 	-- If the role is a SQL server predefined role (i.e. serveradmin), 
 	-- do not raise an error even if it does not exist
 	ELSE IF EXISTS (SELECT 1
-				FROM sys.babelfish_authid_login_ext
-				WHERE (rolname = @srvrolename
-				OR lower(rolname) = lower(@srvrolename))
-				AND type = 'R') 
-			OR lower(@srvrolename) IN (
-				'serveradmin', 'setupadmin', 'securityadmin', 'processadmin',
-				'dbcreator', 'diskadmin', 'bulkadmin')
-		BEGIN
+					FROM sys.babelfish_authid_login_ext
+					WHERE (rolname = RTRIM(@srvrolename)
+					OR lower(rolname) = lower(RTRIM(@srvrolename)))
+					AND type = 'R')
+					OR lower(RTRIM(@srvrolename)) IN (
+					'serveradmin', 'setupadmin', 'securityadmin', 'processadmin',
+					'dbcreator', 'diskadmin', 'bulkadmin')
+	BEGIN
 		SELECT CAST(Ext1.rolname AS sys.SYSNAME) AS 'ServerRole',
 			   CAST(Ext2.rolname AS sys.SYSNAME) AS 'MemberName',
 			   CAST(CAST(Base2.oid AS INT) AS sys.VARBINARY(85)) AS 'MemberSID'
@@ -69,7 +69,7 @@ BEGIN
 		INNER JOIN sys.babelfish_authid_login_ext AS Ext1 ON Base1.rolname = Ext1.rolname
 		INNER JOIN sys.babelfish_authid_login_ext AS Ext2 ON Base2.rolname = Ext2.rolname
 		WHERE Ext1.type = 'R'
-		AND (Ext1.rolname = @srvrolename OR lower(Ext1.rolname) = lower(@srvrolename))
+		AND (Ext1.rolname = RTRIM(@srvrolename) OR lower(Ext1.rolname) = lower(RTRIM(@srvrolename)))
 		ORDER BY ServerRole, MemberName;
 	END
 	-- If the specified server role is not valid

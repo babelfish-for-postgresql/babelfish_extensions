@@ -53,6 +53,59 @@ sysadmin#!#jdbc_user#!#1
 TRUNCATE TABLE test_sp_helpsrvrolemember_tbl
 GO
 
+INSERT INTO test_sp_helpsrvrolemember_tbl (ServerRole, MemberName, MemberSID) EXEC sp_helpsrvrolemember '     sysadmin'
+GO
+~~ERROR (Code: 50000)~~
+
+~~ERROR (Message:      sysadmin is not a known fixed role.)~~
+
+INSERT INTO test_sp_helpsrvrolemember_tbl (ServerRole, MemberName, MemberSID) EXEC sp_helpsrvrolemember '     sysadmin    '
+GO
+~~ERROR (Code: 50000)~~
+
+~~ERROR (Message:      sysadmin     is not a known fixed role.)~~
+
+INSERT INTO test_sp_helpsrvrolemember_tbl (ServerRole, MemberName, MemberSID) EXEC sp_helpsrvrolemember 'sysadmin    '
+GO
+~~ROW COUNT: 1~~
+
+
+SELECT ServerRole, MemberName, (CASE WHEN MemberSID IS NULL THEN 0 ELSE 1 END) FROM test_sp_helpsrvrolemember_tbl
+GO
+~~START~~
+varchar#!#varchar#!#int
+sysadmin#!#jdbc_user#!#1
+~~END~~
+
+
+TRUNCATE TABLE test_sp_helpsrvrolemember_tbl
+GO
+
+INSERT INTO test_sp_helpsrvrolemember_tbl (ServerRole, MemberName, MemberSID) EXEC sp_helpsrvrolemember '     serveradmin'
+GO
+~~ERROR (Code: 50000)~~
+
+~~ERROR (Message:      serveradmin is not a known fixed role.)~~
+
+INSERT INTO test_sp_helpsrvrolemember_tbl (ServerRole, MemberName, MemberSID) EXEC sp_helpsrvrolemember '     serveradmin    '
+GO
+~~ERROR (Code: 50000)~~
+
+~~ERROR (Message:      serveradmin     is not a known fixed role.)~~
+
+INSERT INTO test_sp_helpsrvrolemember_tbl (ServerRole, MemberName, MemberSID) EXEC sp_helpsrvrolemember 'serveradmin    '
+GO
+
+SELECT ServerRole, MemberName, (CASE WHEN MemberSID IS NULL THEN 0 ELSE 1 END) FROM test_sp_helpsrvrolemember_tbl
+GO
+~~START~~
+varchar#!#varchar#!#int
+~~END~~
+
+
+TRUNCATE TABLE test_sp_helpsrvrolemember_tbl
+GO
+
 INSERT INTO test_sp_helpsrvrolemember_tbl (ServerRole, MemberName, MemberSID) EXEC sp_helpsrvrolemember 'serveradmin'
 GO
 INSERT INTO test_sp_helpsrvrolemember_tbl (ServerRole, MemberName, MemberSID) EXEC sp_helpsrvrolemember 'SetupAdmin'
