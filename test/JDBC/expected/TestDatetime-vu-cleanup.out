@@ -1,1 +1,1 @@
-DROP TABLE DATETIME_dt;
+DROP TABLE TestDatetime_vu_prepare_dt;

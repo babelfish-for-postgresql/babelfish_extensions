@@ -1,26 +1,26 @@
-DROP VIEW sys_configurations_view
+DROP VIEW sys_configurations_vu_prepare_v1
 GO
 
-DROP PROC sys_configurations_proc
+DROP PROC sys_configurations_vu_prepare_p1
 GO
 
-DROP FUNCTION sys_configurations_func
+DROP FUNCTION sys_configurations_vu_prepare_f1
 GO
 
-DROP VIEW sys_sysconfigures_view
+DROP VIEW sys_configurations_vu_prepare_v3
 GO
 
-DROP PROC sys_sysconfigures_proc
+DROP PROC sys_configurations_vu_prepare_p3
 GO
 
-DROP FUNCTION sys_sysconfigures_func
+DROP FUNCTION sys_configurations_vu_prepare_f3
 GO
 
-DROP VIEW sys_syscurconfigs_view
+DROP VIEW sys_configurations_vu_prepare_v2
 GO
 
-DROP PROC sys_syscurconfigs_proc
+DROP PROC sys_configurations_vu_prepare_p2
 GO
 
-DROP FUNCTION sys_syscurconfigs_func
+DROP FUNCTION sys_configurations_vu_prepare_f2
 GO
