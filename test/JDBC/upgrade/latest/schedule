@@ -175,7 +175,6 @@ schema_resolution_trigger
 BABEL-2877
 sys-sp_pkeys
 sys-sp_statistics
-sp_statistics_100
 BABEL-1756
 BABEL-APPLOCK
 BABEL-1438

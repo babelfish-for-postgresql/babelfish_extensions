@@ -171,7 +171,6 @@ bitwise_not-operator
 BABEL-1683
 sys-sp_pkeys
 sys-sp_statistics
-sp_statistics_100
 BABEL-1756
 BABEL-APPLOCK
 BABEL-1438
