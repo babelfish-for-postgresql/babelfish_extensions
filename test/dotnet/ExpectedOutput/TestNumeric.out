@@ -194,3 +194,6 @@
 #Q#INSERT INTO numeric_table(num) VALUES(@a7) 
 #Q#INSERT INTO numeric_table(num) VALUES(@a7) 
 #Q#DROP TABLE numeric_table;
+#Q#SELECT CASE WHEN 1=1 THEN 0 ELSE cast(98.7627 AS numeric(24,6)) END
+#D#decimal
+0.00000000

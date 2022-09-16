@@ -758,7 +758,17 @@ numeric_get_typmod(Numeric num)
 	int32_t weight = NUMERIC_WEIGHT(num);
 	int32_t precision;
 
-	if (weight >= 0)
+	/*
+	 * We can identify a zero by the fact that there are no digits at all.
+	 * In case of zero both precision and scale will be evaluated to zero,
+	 * so we will set them to tds_default_numeric_precision/scale.
+	 */
+	if (NUMERIC_NDIGITS(num) == 0)
+	{
+		precision = tds_default_numeric_precision;
+		scale = tds_default_numeric_scale;
+	}
+	else if (weight >= 0)
 	{
 		static const int32 timescales[DEC_DIGITS] = {
 			1000,
