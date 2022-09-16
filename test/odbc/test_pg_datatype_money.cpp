@@ -657,6 +657,7 @@ TEST_F(PSQL_DataTypes_Money, Table_Unique_Constraints) {
     {COL1_NAME, "INT PRIMARY KEY"},
     {COL2_NAME, DATATYPE_NAME + " UNIQUE"}
   };
+  const string UNIQUE_COLUMN_NAME = COL2_NAME;
 
   const int PK_BYTES_EXPECTED = 4;
   const int DATA_BYTES_EXPECTED = 8;
@@ -689,6 +690,34 @@ TEST_F(PSQL_DataTypes_Money, Table_Unique_Constraints) {
   }
 
   odbcHandler.ConnectAndExecQuery(CreateTableStatement(TABLE_NAME, TABLE_COLUMNS));
+  odbcHandler.CloseStmt();
+
+  // Check if unique constraint still matches after creation
+  const int CHARSIZE = 255;
+  char column_name[CHARSIZE];
+  char type_name[CHARSIZE];
+
+  vector<tuple<int, int, SQLPOINTER, int>> table_bind_columns = {
+    {1, SQL_C_CHAR, column_name, CHARSIZE},
+  };
+  ASSERT_NO_FATAL_FAILURE(odbcHandler.BindColumns(table_bind_columns));
+
+  string pk_query = 
+    "select C.COLUMN_NAME FROM "
+    "INFORMATION_SCHEMA.TABLE_CONSTRAINTS T "
+    "JOIN INFORMATION_SCHEMA.CONSTRAINT_COLUMN_USAGE C "
+    "ON C.CONSTRAINT_NAME=T.CONSTRAINT_NAME "
+    "WHERE "
+    "C.TABLE_NAME='" + TABLE_NAME.substr(TABLE_NAME.find('.') + 1, TABLE_NAME.length()) + "' "
+    "and T.CONSTRAINT_TYPE='UNIQUE'";
+  odbcHandler.ExecQuery(pk_query);
+  rcode = SQLFetch(odbcHandler.GetStatementHandle());
+  ASSERT_EQ(rcode, SQL_SUCCESS);
+  ASSERT_EQ(string(column_name), UNIQUE_COLUMN_NAME);
+
+  rcode = SQLFetch(odbcHandler.GetStatementHandle());
+  EXPECT_EQ(rcode, SQL_NO_DATA);
+
   odbcHandler.CloseStmt();
 
   // Insert valid values into the table and assert affected rows
@@ -750,7 +779,18 @@ TEST_F(PSQL_DataTypes_Money, Table_Composite_Keys) {
     {COL2_NAME, DATATYPE_NAME}
   };
 
-  const string TABLE_CONSTRAINTS = "PRIMARY KEY (" + COL1_NAME + ", " + COL2_NAME + ")";
+  const vector<string> pk_columns = {
+    COL1_NAME, 
+    COL2_NAME
+  };
+
+  string table_constraints{"PRIMARY KEY ("};
+  string comma{};
+  for (int i = 0; i < pk_columns.size(); i++) {
+    table_constraints += comma + pk_columns[i];
+    comma = ",";
+  }
+  table_constraints += ")";
 
   const int BYTES_EXPECTED = 8;
 
@@ -774,14 +814,44 @@ TEST_F(PSQL_DataTypes_Money, Table_Composite_Keys) {
   };
 
   string insert_string{}; 
-  string comma{};
+  comma = "";
 
   for (int i = 0; i < valid_inserted_values.size(); i++) {
     insert_string += comma + "(" + std::to_string(i) + "," + valid_inserted_values[i] + ")";
     comma = ",";
   }
 
-  odbcHandler.ConnectAndExecQuery(CreateTableStatement(TABLE_NAME, TABLE_COLUMNS, TABLE_CONSTRAINTS));
+  odbcHandler.ConnectAndExecQuery(CreateTableStatement(TABLE_NAME, TABLE_COLUMNS, table_constraints));
+  odbcHandler.CloseStmt();
+
+  // Check if composite key still matches after creation
+  const int CHARSIZE = 255;
+  char column_name[CHARSIZE];
+  char type_name[CHARSIZE];
+
+  vector<tuple<int, int, SQLPOINTER, int>> table_bind_columns = {
+    {1, SQL_C_CHAR, column_name, CHARSIZE},
+  };
+  ASSERT_NO_FATAL_FAILURE(odbcHandler.BindColumns(table_bind_columns));
+
+  string pk_query = 
+    "select C.COLUMN_NAME FROM "
+    "INFORMATION_SCHEMA.TABLE_CONSTRAINTS T "
+    "JOIN INFORMATION_SCHEMA.CONSTRAINT_COLUMN_USAGE C "
+    "ON C.CONSTRAINT_NAME=T.CONSTRAINT_NAME "
+    "WHERE "
+    "C.TABLE_NAME='" + TABLE_NAME.substr(TABLE_NAME.find('.') + 1, TABLE_NAME.length()) + "' "
+    "and T.CONSTRAINT_TYPE='PRIMARY KEY'";
+  odbcHandler.ExecQuery(pk_query);
+
+  for (auto columnName : pk_columns) {
+    rcode = SQLFetch(odbcHandler.GetStatementHandle());
+    ASSERT_EQ(rcode, SQL_SUCCESS);
+    ASSERT_EQ(string(column_name), columnName);
+  }
+  rcode = SQLFetch(odbcHandler.GetStatementHandle());
+  EXPECT_EQ(rcode, SQL_NO_DATA);
+
   odbcHandler.CloseStmt();
 
   // Insert valid values into the table and assert affected rows
