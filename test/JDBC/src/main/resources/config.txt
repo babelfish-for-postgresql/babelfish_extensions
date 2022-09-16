@@ -1,11 +1,11 @@
 # SET THIS CONNECTION STRING TO GENERATE THE EXPECTED OUTPUT FILE
-URL = localhost
+URL = errormapping.cuveklqamsdc.us-east-2.rds.amazonaws.com
 tsql_port = 1433
 psql_port = 5432
-databaseName = master
+databaseName = compare_testing
 physicalDatabaseName = jdbc_testdb
-user = jdbc_user
-password = 12345678
+user = admin
+password = 123456789
 
 # PATH TO INPUT TEST FILES FOLDER
 inputFilesPath = input
