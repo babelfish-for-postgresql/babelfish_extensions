@@ -17,6 +17,25 @@ int
 ~~END~~
 
 
+-- create some functions so that consistency check runs on babelfish_function_ext catalog
+CREATE FUNCTION babel_2403_func1(@a int, @b varchar = 'abc', @c binary(8))
+RETURNS INT
+AS
+BEGIN
+	RETURN 1;
+END;
+GO
+
+CREATE SCHEMA babel_2403_schema1;
+GO
+
+CREATE PROCEDURE babel_2403_schema1.babel_2403_proc1 @a int = 1, @b varchar
+AS
+BEGIN
+	SELECT @a, @b;
+END;
+GO
+
 -- psql
 -- Output inconsistency, should be empty
 SELECT * FROM sys.babelfish_inconsistent_metadata();
@@ -53,6 +72,7 @@ name#!#sys#!#rolname#!#{"Rule": "<owner> in babelfish_sysdatabases must also exi
 name#!#pg_catalog#!#nspname#!#{"Rule": "<nspname> in babelfish_namespace_ext must also exist in pg_namespace"}
 name#!#pg_catalog#!#nspname#!#{"Rule": "<nspname> in babelfish_namespace_ext must also exist in pg_namespace"}
 name#!#pg_catalog#!#nspname#!#{"Rule": "<nspname> in babelfish_namespace_ext must also exist in pg_namespace"}
+name#!#pg_catalog#!#nspname#!#{"Rule": "<nspname> in babelfish_namespace_ext must also exist in pg_namespace"}
 name#!#pg_catalog#!#rolname#!#{"Rule": "<rolname> in babelfish_authid_login_ext must also exist in pg_authid"}
 text#!#sys#!#name#!#{"Rule": "<default_database_name> in babelfish_authid_login_ext must also exist in babelfish_sysdatabases"}
 name#!#pg_catalog#!#rolname#!#{"Rule": "<rolname> in babelfish_authid_login_ext must also exist in pg_authid"}
@@ -75,6 +95,10 @@ name#!#pg_catalog#!#rolname#!#{"Rule": "<rolname> in babelfish_authid_user_ext m
 text#!#sys#!#name#!#{"Rule": "<database_name> in babelfish_authid_user_ext must also exist in babelfish_sysdatabases"}
 name#!#pg_catalog#!#rolname#!#{"Rule": "<rolname> in babelfish_authid_user_ext must also exist in pg_authid"}
 text#!#sys#!#name#!#{"Rule": "<database_name> in babelfish_authid_user_ext must also exist in babelfish_sysdatabases"}
+name#!#sys#!#nspname#!#{"Rule": "<nspname> in babelfish_function_ext must also exist in babelfish_namespace_ext"}
+name#!#pg_catalog#!#proname#!#{"Rule": "<funcname> in babelfish_function_ext must also exist in pg_proc"}
+name#!#sys#!#nspname#!#{"Rule": "<nspname> in babelfish_function_ext must also exist in babelfish_namespace_ext"}
+name#!#pg_catalog#!#proname#!#{"Rule": "<funcname> in babelfish_function_ext must also exist in pg_proc"}
 ~~END~~
 
 
@@ -142,6 +166,7 @@ name#!#sys#!#nspname#!#{"Rule": "In multi-db mode, for each <name> in babelfish_
 name#!#pg_catalog#!#nspname#!#{"Rule": "<nspname> in babelfish_namespace_ext must also exist in pg_namespace"}
 name#!#pg_catalog#!#nspname#!#{"Rule": "<nspname> in babelfish_namespace_ext must also exist in pg_namespace"}
 name#!#pg_catalog#!#nspname#!#{"Rule": "<nspname> in babelfish_namespace_ext must also exist in pg_namespace"}
+name#!#pg_catalog#!#nspname#!#{"Rule": "<nspname> in babelfish_namespace_ext must also exist in pg_namespace"}
 name#!#pg_catalog#!#rolname#!#{"Rule": "<rolname> in babelfish_authid_login_ext must also exist in pg_authid"}
 text#!#sys#!#name#!#{"Rule": "<default_database_name> in babelfish_authid_login_ext must also exist in babelfish_sysdatabases"}
 name#!#pg_catalog#!#rolname#!#{"Rule": "<rolname> in babelfish_authid_login_ext must also exist in pg_authid"}
@@ -164,6 +189,10 @@ name#!#pg_catalog#!#rolname#!#{"Rule": "<rolname> in babelfish_authid_user_ext m
 text#!#sys#!#name#!#{"Rule": "<database_name> in babelfish_authid_user_ext must also exist in babelfish_sysdatabases"}
 name#!#pg_catalog#!#rolname#!#{"Rule": "<rolname> in babelfish_authid_user_ext must also exist in pg_authid"}
 text#!#sys#!#name#!#{"Rule": "<database_name> in babelfish_authid_user_ext must also exist in babelfish_sysdatabases"}
+name#!#sys#!#nspname#!#{"Rule": "<nspname> in babelfish_function_ext must also exist in babelfish_namespace_ext"}
+name#!#pg_catalog#!#proname#!#{"Rule": "<funcname> in babelfish_function_ext must also exist in pg_proc"}
+name#!#sys#!#nspname#!#{"Rule": "<nspname> in babelfish_function_ext must also exist in babelfish_namespace_ext"}
+name#!#pg_catalog#!#proname#!#{"Rule": "<funcname> in babelfish_function_ext must also exist in pg_proc"}
 ~~END~~
 
 
@@ -185,3 +214,12 @@ int
 1
 ~~END~~
 
+
+DROP FUNCTION babel_2403_func1;
+GO
+
+DROP PROCEDURE babel_2403_schema1.babel_2403_proc1;
+GO
+
+DROP SCHEMA babel_2403_schema1;
+GO

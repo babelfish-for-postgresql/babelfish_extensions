@@ -1,0 +1,7 @@
+-- tsql
+drop type sys_table_types_vu_prepare_tt;
+GO
+
+-- psql
+DROP TYPE master_dbo.comp_type
+GO
