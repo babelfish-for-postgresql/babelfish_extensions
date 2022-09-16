@@ -633,15 +633,15 @@ TEST_F(PSQL_DataTypes_Bit, Table_Unique_Constraints) {
   };
   ASSERT_NO_FATAL_FAILURE(odbcHandler.BindColumns(table_bind_columns));
 
-  string pk_query = 
-    "select C.COLUMN_NAME FROM "
+  const string PK_QUERY = 
+    "SELECT C.COLUMN_NAME FROM "
     "INFORMATION_SCHEMA.TABLE_CONSTRAINTS T "
     "JOIN INFORMATION_SCHEMA.CONSTRAINT_COLUMN_USAGE C "
     "ON C.CONSTRAINT_NAME=T.CONSTRAINT_NAME "
     "WHERE "
     "C.TABLE_NAME='" + TABLE_NAME.substr(TABLE_NAME.find('.') + 1, TABLE_NAME.length()) + "' "
-    "and T.CONSTRAINT_TYPE='UNIQUE'";
-  odbcHandler.ExecQuery(pk_query);
+    "AND T.CONSTRAINT_TYPE='UNIQUE'";
+  odbcHandler.ExecQuery(PK_QUERY);
   rcode = SQLFetch(odbcHandler.GetStatementHandle());
   ASSERT_EQ(rcode, SQL_SUCCESS);
   ASSERT_EQ(string(column_name), UNIQUE_COLUMN_NAME);
@@ -709,16 +709,18 @@ TEST_F(PSQL_DataTypes_Bit, Table_Composite_Keys) {
     {COL1_NAME, DATATYPE_NAME},
     {COL2_NAME, DATATYPE_NAME}
   };
+  const string PKTABLE_NAME = TABLE_NAME.substr(TABLE_NAME.find('.') + 1, TABLE_NAME.length());
+  const string SCHEMA_NAME = TABLE_NAME.substr(0, TABLE_NAME.find('.'));
 
-  const vector<string> pk_columns = {
+  const vector<string> PK_COLUMNS = {
     COL1_NAME, 
     COL2_NAME
   };
 
   string table_constraints{"PRIMARY KEY ("};
   string comma{};
-  for (int i = 0; i < pk_columns.size(); i++) {
-    table_constraints += comma + pk_columns[i];
+  for (int i = 0; i < PK_COLUMNS.size(); i++) {
+    table_constraints += comma + PK_COLUMNS[i];
     comma = ",";
   }
   table_constraints += ")";
@@ -758,32 +760,34 @@ TEST_F(PSQL_DataTypes_Bit, Table_Composite_Keys) {
 
   // Check if composite key still matches after creation
   const int CHARSIZE = 255;
+  char table_name[CHARSIZE];
   char column_name[CHARSIZE];
-  char type_name[CHARSIZE];
+  int key_sq{};
+  char pk_name[CHARSIZE];
 
-  vector<tuple<int, int, SQLPOINTER, int>> table_bind_columns = {
-    {1, SQL_C_CHAR, column_name, CHARSIZE},
+  vector<tuple<int, int, SQLPOINTER, int>> constraints_bind_columns = {
+    {3, SQL_C_CHAR, table_name, CHARSIZE},
+    {4, SQL_C_CHAR, column_name, CHARSIZE},
+    {5, SQL_C_ULONG, &key_sq, CHARSIZE},
+    {6, SQL_C_CHAR, pk_name, CHARSIZE}
   };
-  ASSERT_NO_FATAL_FAILURE(odbcHandler.BindColumns(table_bind_columns));
+  ASSERT_NO_FATAL_FAILURE(odbcHandler.BindColumns(constraints_bind_columns));
 
-  string pk_query = 
-    "select C.COLUMN_NAME FROM "
-    "INFORMATION_SCHEMA.TABLE_CONSTRAINTS T "
-    "JOIN INFORMATION_SCHEMA.CONSTRAINT_COLUMN_USAGE C "
-    "ON C.CONSTRAINT_NAME=T.CONSTRAINT_NAME "
-    "WHERE "
-    "C.TABLE_NAME='" + TABLE_NAME.substr(TABLE_NAME.find('.') + 1, TABLE_NAME.length()) + "' "
-    "and T.CONSTRAINT_TYPE='PRIMARY KEY'";
-  odbcHandler.ExecQuery(pk_query);
+  rcode = SQLPrimaryKeys(odbcHandler.GetStatementHandle(), NULL, 0, (SQLCHAR*) SCHEMA_NAME.c_str(), SQL_NTS, (SQLCHAR*) PKTABLE_NAME.c_str(), SQL_NTS);
+  ASSERT_EQ(rcode, SQL_SUCCESS);
 
-  for (auto columnName : pk_columns) {
+  int curr_sq {0};
+  for (auto columnName : PK_COLUMNS) {
+    ++curr_sq;
     rcode = SQLFetch(odbcHandler.GetStatementHandle());
     ASSERT_EQ(rcode, SQL_SUCCESS);
+
+    ASSERT_EQ(string(table_name), PKTABLE_NAME);
     ASSERT_EQ(string(column_name), columnName);
+    ASSERT_EQ(key_sq, curr_sq);
   }
   rcode = SQLFetch(odbcHandler.GetStatementHandle());
-  EXPECT_EQ(rcode, SQL_NO_DATA);
-
+  ASSERT_EQ(rcode, SQL_NO_DATA);
   odbcHandler.CloseStmt();
 
   // Insert valid values into the table and assert affected rows
