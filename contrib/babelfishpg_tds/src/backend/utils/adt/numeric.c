@@ -761,12 +761,12 @@ numeric_get_typmod(Numeric num)
 	/*
 	 * We can identify a zero by the fact that there are no digits at all.
 	 * In case of zero both precision and scale will be evaluated to zero,
-	 * so we will set them to tds_default_numeric_precision/scale.
+	 * so we will set (precision,scale) to T-SQL default (18,0).
 	 */
 	if (NUMERIC_NDIGITS(num) == 0)
 	{
-		precision = tds_default_numeric_precision;
-		scale = tds_default_numeric_scale;
+		precision = 18;
+		scale = 0;
 	}
 	else if (weight >= 0)
 	{
