@@ -1058,9 +1058,9 @@ int4int2_sum(PG_FUNCTION_ARGS)
 		result  = PG_GETARG_INT64(0);
 
 		if (unlikely(result < PG_INT32_MIN) || unlikely(result > PG_INT32_MAX))
-		ereport(ERROR,
-				(errcode(ERRCODE_NUMERIC_VALUE_OUT_OF_RANGE),
-				 errmsg("Arithmetic overflow error converting expression to data type int.")));
+			ereport(ERROR,
+					(errcode(ERRCODE_NUMERIC_VALUE_OUT_OF_RANGE),
+					errmsg("Arithmetic overflow error converting expression to data type int.")));
 
 		PG_RETURN_INT32((int32) result);
 	}
