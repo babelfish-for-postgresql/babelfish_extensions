@@ -3,7 +3,7 @@ inputs:
   engine_branch:
     description: 'Engine Branch'
     required: no
-    default: 'babel-3144'
+    default: 'jira-babel-3144'
   install_dir:
     description: 'Engine install directory'
     required: no
