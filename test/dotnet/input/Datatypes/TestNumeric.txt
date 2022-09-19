@@ -178,4 +178,4 @@ prepst#!#exec#!#numeric|-|a7|-|-123|-|9|-|2
 DROP TABLE numeric_table;
 
 # Test BABEL-3344
-SELECT CASE WHEN 1=1 THEN 0 ELSE cast(98.7627 AS numeric(24,6)) END
+SELECT CASE WHEN 1=1 THEN 0 ELSE cast(98.7627 AS numeric(24,6)) + coalesce(cast(91128.7627 AS numeric(24,6)),0) END
