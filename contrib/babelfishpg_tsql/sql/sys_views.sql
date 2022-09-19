@@ -8,7 +8,13 @@ select
   , 0 as parent_object_id
   , CAST('U' as CHAR(2)) as type
   , CAST('USER_TABLE' as sys.nvarchar(60)) as type_desc
-  , CAST(NULL as sys.datetime) as create_date
+  , CAST((select string_agg(
+                  case
+                  when option like 'bbf_rel_create_date=%%' then substring(option, 21)
+                  else NULL
+                  end, ',')
+          from unnest(t.reloptions) as option)
+        as sys.datetime) as create_date
   , CAST(NULL as sys.datetime) as modify_date
   , CAST(0 as sys.bit) as is_ms_shipped
   , CAST(0 as sys.bit) as is_published
@@ -54,7 +60,7 @@ select
   , 0 as parent_object_id
   , 'V'::varchar(2) as type 
   , 'VIEW'::varchar(60) as type_desc
-  , null::timestamp as create_date
+  , vd.create_date::timestamp as create_date
   , null::timestamp as modify_date
   , 0 as is_ms_shipped 
   , 0 as is_published 
@@ -63,6 +69,7 @@ select
   , 0 as is_date_correlation_view 
   , 0 as is_tracked_by_cdc 
 from pg_class t inner join sys.schemas sch on t.relnamespace = sch.schema_id 
+left outer join sys.babelfish_view_def vd on t.relname = vd.object_name and sch.name = vd.schema_name and vd.dbid = sys.db_id() 
 where t.relkind = 'v'
 and has_schema_privilege(sch.schema_id, 'USAGE')
 and has_table_privilege(t.oid, 'SELECT,INSERT,UPDATE,DELETE,TRUNCATE,TRIGGER');
@@ -877,7 +884,7 @@ select
           else 'SQL_SCALAR_FUNCTION'
         end
     end as sys.nvarchar(60)) as type_desc
-  , cast(null as sys.datetime) as create_date
+  , cast(f.create_date as sys.datetime) as create_date
   , cast(null as sys.datetime) as modify_date
   , cast(0 as sys.bit) as is_ms_shipped
   , cast(0 as sys.bit) as is_published
@@ -889,6 +896,7 @@ select
 from pg_proc p
 inner join sys.schemas sch on sch.schema_id = p.pronamespace
 left join pg_trigger tr on tr.tgfoid = p.oid
+left join sys.babelfish_function_ext f on p.proname = f.funcname and sch.schema_id::regnamespace::name = f.nspname
 where has_schema_privilege(sch.schema_id, 'USAGE')
 and has_function_privilege(p.oid, 'EXECUTE');
 GRANT SELECT ON sys.procedures TO PUBLIC;
@@ -1425,7 +1433,7 @@ SELECT
   CAST(tr.tgrelid as int) AS parent_id,
   CAST('TR' as sys.bpchar(2)) AS type,
   CAST('SQL_TRIGGER' as sys.nvarchar(60)) AS type_desc,
-  CAST(NULL as sys.datetime) AS create_date,
+  CAST(f.create_date as sys.datetime) AS create_date,
   CAST(NULL as sys.datetime) AS modify_date,
   CAST(0 as sys.bit) AS is_ms_shipped,
   CAST(
@@ -1440,6 +1448,7 @@ SELECT
 FROM pg_proc p
 inner join sys.schemas sch on sch.schema_id = p.pronamespace
 left join pg_trigger tr on tr.tgfoid = p.oid
+left join sys.babelfish_function_ext f on p.proname = f.funcname and sch.schema_id::regnamespace::name = f.nspname
 where has_schema_privilege(sch.schema_id, 'USAGE')
 and has_function_privilege(p.oid, 'EXECUTE')
 and p.prokind = 'f'
