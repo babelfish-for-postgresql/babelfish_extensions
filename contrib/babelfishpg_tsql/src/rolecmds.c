@@ -650,13 +650,20 @@ user_name(PG_FUNCTION_ARGS)
 
 	tuple = systable_getnext(scan);
 	if (!HeapTupleIsValid(tuple))
+	{	
+		systable_endscan(scan);
+		table_close(bbf_authid_user_ext_rel, RowExclusiveLock);
 		PG_RETURN_NULL();
+	}
 
 	datum = heap_getattr(tuple,
 						 Anum_bbf_authid_user_ext_orig_username,
 						 bbf_authid_user_ext_rel->rd_att,
 						 &is_null);
 	user = pstrdup(TextDatumGetCString(datum));
+
+	systable_endscan(scan);
+	table_close(bbf_authid_user_ext_rel, RowExclusiveLock);
 
 	PG_RETURN_TEXT_P(CStringGetTextDatum(user));
 }

@@ -1,0 +1,7 @@
+BEGIN TRANSACTION;
+select user_name();
+select relname from pg_locks l, pg_class c
+where l.relation = c.oid 
+and relname like 'babelfish_authid_user_%';
+commit;
+go
