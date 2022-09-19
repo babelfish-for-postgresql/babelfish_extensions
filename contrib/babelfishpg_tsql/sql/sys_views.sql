@@ -15,7 +15,13 @@ select
                   end, ',')
           from unnest(t.reloptions) as option)
         as sys.datetime) as create_date
-  , CAST(NULL as sys.datetime) as modify_date
+  , CAST((select string_agg(
+                  case
+                  when option like 'bbf_rel_create_date=%%' then substring(option, 21)
+                  else NULL
+                  end, ',')
+          from unnest(t.reloptions) as option)
+        as sys.datetime) as modify_date
   , CAST(0 as sys.bit) as is_ms_shipped
   , CAST(0 as sys.bit) as is_published
   , CAST(0 as sys.bit) as is_schema_published
@@ -61,7 +67,7 @@ select
   , 'V'::varchar(2) as type 
   , 'VIEW'::varchar(60) as type_desc
   , vd.create_date::timestamp as create_date
-  , null::timestamp as modify_date
+  , vd.create_date::timestamp as modify_date
   , 0 as is_ms_shipped 
   , 0 as is_published 
   , 0 as is_schema_published 
@@ -885,7 +891,7 @@ select
         end
     end as sys.nvarchar(60)) as type_desc
   , cast(f.create_date as sys.datetime) as create_date
-  , cast(null as sys.datetime) as modify_date
+  , cast(f.create_date as sys.datetime) as modify_date
   , cast(0 as sys.bit) as is_ms_shipped
   , cast(0 as sys.bit) as is_published
   , cast(0 as sys.bit) as is_schema_published
@@ -1434,7 +1440,7 @@ SELECT
   CAST('TR' as sys.bpchar(2)) AS type,
   CAST('SQL_TRIGGER' as sys.nvarchar(60)) AS type_desc,
   CAST(f.create_date as sys.datetime) AS create_date,
-  CAST(NULL as sys.datetime) AS modify_date,
+  CAST(f.create_date as sys.datetime) AS modify_date,
   CAST(0 as sys.bit) AS is_ms_shipped,
   CAST(
       CASE WHEN tr.tgenabled = 'D'
@@ -1604,12 +1610,25 @@ select
   , CAST(0 as int) as parent_object_id
   , CAST('TT' as char(2)) as type
   , CAST('TABLE_TYPE' as sys.nvarchar(60)) as type_desc
-  , CAST(null as sys.datetime) as create_date
-  , CAST(null as sys.datetime) as modify_date
+  , CAST((select string_agg(
+                    case
+                    when option like 'bbf_rel_create_date=%%' then substring(option, 21)
+                    else NULL
+                    end, ',')
+          from unnest(c.reloptions) as option)
+     as sys.datetime) as create_date
+  , CAST((select string_agg(
+                    case
+                    when option like 'bbf_rel_create_date=%%' then substring(option, 21)
+                    else NULL
+                    end, ',')
+          from unnest(c.reloptions) as option)
+     as sys.datetime) as modify_date
   , CAST(1 as sys.bit) as is_ms_shipped
   , CAST(0 as sys.bit) as is_published
   , CAST(0 as sys.bit) as is_schema_published
-from sys.table_types tt;
+from sys.table_types tt
+left join pg_class c on tt.type_table_object_id = c.oid;
 GRANT SELECT ON sys.objects TO PUBLIC;
 
 create or replace view sys.sysobjects as

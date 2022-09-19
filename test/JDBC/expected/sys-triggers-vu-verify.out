@@ -8,7 +8,6 @@ SELECT
     parent_class_desc,
     type,
     type_desc,
-    modify_date,
     is_ms_shipped,
     is_disabled,
     is_not_for_replication,
@@ -17,8 +16,8 @@ FROM sys.triggers
 WHERE name = 'sys_triggers_vu_prepare_trig1'
 GO
 ~~START~~
-varchar#!#tinyint#!#nvarchar#!#char#!#nvarchar#!#datetime#!#bit#!#bit#!#bit#!#bit
-sys_triggers_vu_prepare_trig1#!#1#!#OBJECT_OR_COLUMN#!#TR#!#SQL_TRIGGER#!#<NULL>#!#0#!#0#!#0#!#1
+varchar#!#tinyint#!#nvarchar#!#char#!#nvarchar#!#bit#!#bit#!#bit#!#bit
+sys_triggers_vu_prepare_trig1#!#1#!#OBJECT_OR_COLUMN#!#TR#!#SQL_TRIGGER#!#0#!#0#!#0#!#1
 ~~END~~
 
 
@@ -29,7 +28,6 @@ SELECT
     parent_class_desc,
     type,
     type_desc,
-    modify_date,
     is_ms_shipped,
     is_disabled,
     is_not_for_replication,
@@ -38,8 +36,8 @@ FROM sys.triggers
 WHERE name = 'sys_triggers_vu_prepare_trig2'
 GO
 ~~START~~
-varchar#!#tinyint#!#nvarchar#!#char#!#nvarchar#!#datetime#!#bit#!#bit#!#bit#!#bit
-sys_triggers_vu_prepare_trig2#!#1#!#OBJECT_OR_COLUMN#!#TR#!#SQL_TRIGGER#!#<NULL>#!#0#!#0#!#0#!#0
+varchar#!#tinyint#!#nvarchar#!#char#!#nvarchar#!#bit#!#bit#!#bit#!#bit
+sys_triggers_vu_prepare_trig2#!#1#!#OBJECT_OR_COLUMN#!#TR#!#SQL_TRIGGER#!#0#!#0#!#0#!#0
 ~~END~~
 
 
@@ -50,7 +48,6 @@ SELECT
     parent_class_desc,
     type,
     type_desc,
-    modify_date,
     is_ms_shipped,
     is_disabled,
     is_not_for_replication,
@@ -59,6 +56,6 @@ FROM sys.triggers
 WHERE name = 'sys_triggers_vu_prepare_master_trig'
 GO
 ~~START~~
-varchar#!#tinyint#!#nvarchar#!#char#!#nvarchar#!#datetime#!#bit#!#bit#!#bit#!#bit
+varchar#!#tinyint#!#nvarchar#!#char#!#nvarchar#!#bit#!#bit#!#bit#!#bit
 ~~END~~
 

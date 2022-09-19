@@ -14,3 +14,6 @@ CREATE TRIGGER babel_3010_vu_prepare_trig1 ON babel_3010_vu_prepare_t1
 AFTER DELETE AS
 	SELECT @@ROWCOUNT;
 GO
+
+CREATE TYPE babel_3010_vu_prepare_typ1 AS TABLE (a int);
+GO

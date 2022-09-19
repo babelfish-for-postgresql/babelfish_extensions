@@ -1741,6 +1741,7 @@ pltsql_store_view_definition(const char *queryString, ObjectAddress address)
 	new_record[4] = UInt64GetDatum(flag_validity);
 	new_record[5] = UInt64GetDatum(flag_values);
 	new_record[6] = TimestampGetDatum(GetSQLLocalTimestamp(3));
+	new_record[7] = TimestampGetDatum(GetSQLLocalTimestamp(3));
 
 	tuple = heap_form_tuple(bbf_view_def_rel_dsc,
 							new_record, new_record_nulls);
@@ -1976,6 +1977,7 @@ pltsql_store_func_default_positions(ObjectAddress address, List *parameters)
 	else
 		new_record_nulls[Anum_bbf_function_ext_default_positions - 1] = true;
 	new_record[Anum_bbf_function_ext_create_date - 1] = TimestampGetDatum(GetSQLLocalTimestamp(3));
+	new_record[Anum_bbf_function_ext_modify_date - 1] = TimestampGetDatum(GetSQLLocalTimestamp(3));
 	new_record_replaces[Anum_bbf_function_ext_default_positions - 1] = true;
 
 	oldtup = get_bbf_function_tuple_from_proctuple(proctup);

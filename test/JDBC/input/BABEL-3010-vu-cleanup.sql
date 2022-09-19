@@ -12,3 +12,6 @@ GO
 
 DROP TABLE babel_3010_vu_prepare_t1;
 GO
+
+DROP TYPE babel_3010_vu_prepare_typ1;
+GO
