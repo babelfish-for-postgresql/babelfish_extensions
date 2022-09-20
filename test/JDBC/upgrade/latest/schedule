@@ -215,7 +215,6 @@ BABEL-3000
 sys-sp_pkeys-dep
 sys-sp_statistics-dep
 BABEL-1756-dep
-BABEL-1309-dep
 BABEL-SPCOLUMNS-dep
 BABEL-SP_SPECIAL_COLUMNS-dep
 BABEL-SP_FKEYS-dep
