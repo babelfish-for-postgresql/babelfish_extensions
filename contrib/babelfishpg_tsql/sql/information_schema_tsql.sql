@@ -722,7 +722,7 @@ CREATE OR REPLACE VIEW information_schema_tsql.SEQUENCES AS
             CAST(extc.orig_name AS sys.nvarchar(128)) AS "SEQUENCE_SCHEMA",
             CAST(r.relname AS sys.nvarchar(128)) AS "SEQUENCE_NAME",
             CAST(CASE WHEN tsql_type_name = 'sysname' THEN sys.translate_pg_type_to_tsql(t.typbasetype) ELSE tsql_type_name END
-                    AS sys.nvarchar(128))AS "DATA_TYPE",
+                    AS sys.nvarchar(128))AS "DATA_TYPE",  -- numeric and decimal data types are converted into bigint which is due to Postgres' inherent implementation
             CAST(information_schema_tsql._pgtsql_numeric_precision(tsql_type_name, t.oid, -1)
                         AS smallint) AS "NUMERIC_PRECISION",
             CAST(information_schema_tsql._pgtsql_numeric_precision_radix(tsql_type_name, case when t.typtype = 'd' THEN t.typbasetype ELSE t.oid END, -1)
@@ -741,6 +741,7 @@ CREATE OR REPLACE VIEW information_schema_tsql.SEQUENCES AS
             pg_sequence s join pg_class r on s.seqrelid = r.oid join pg_type t on s.seqtypid=t.oid,
             sys.translate_pg_type_to_tsql(s.seqtypid) AS tsql_type_name
         WHERE nc.oid = r.relnamespace
+		AND extc.dbid = cast(sys.db_id() as oid)
             AND r.relkind = 'S'
             AND (NOT pg_is_other_temp_schema(nc.oid))
             AND (pg_has_role(r.relowner, 'USAGE')
