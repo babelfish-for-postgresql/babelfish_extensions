@@ -1,41 +1,12 @@
 -- tsql
-create database isc_sequences_dbone;
+
+use isc_sequences_dbone;
 go
 
-create sequence isc_sequences_master_seq1 start with 1 minvalue 1 maxvalue 5 cycle;
+create view isc_sequences_view1 as select * from information_schema.SEQUENCES;
 go
 
-Use isc_sequences_dbone;
-go
-
-create schema isc_sequences_sc1;
-go
-
-create schema isc_sequences_sc2;
-go
-
-create sequence isc_sequences_sc1.isc_sequences_seq1 start with 1 minvalue 1 maxvalue 5 cycle;
-go
-
-create sequence isc_sequences_sc1.isc_sequences_seq2 as tinyint start with 2 minvalue 1 maxvalue 5 cycle;
-go
-
-create sequence isc_sequences_sc1.isc_sequences_seq3 as smallint start with 3 increment by 3 minvalue 3 maxvalue 10;
-go
-
-create sequence isc_sequences_sc1.isc_sequences_seq4 as int start with 4 increment by 2 minvalue 2 maxvalue 10;
-go
-
-create sequence isc_sequences_sc2.isc_sequences_seq1 as bigint start with 1 minvalue 1 maxvalue 5 cycle;
-go
-
-create sequence isc_sequences_sc2.isc_sequences_seq2 as decimal start with 2 increment by 2 minvalue 2 maxvalue 10;
-go
-
-create sequence isc_sequences_sc2.isc_sequences_seq3 as numeric start with 3 increment by 3 minvalue 3 maxvalue 12 cycle;
-go
-
-select * from information_schema.SEQUENCES;
+select * from isc_sequences_view1;
 go
 ~~START~~
 nvarchar#!#nvarchar#!#nvarchar#!#nvarchar#!#smallint#!#smallint#!#int#!#int#!#int#!#int#!#int#!#int#!#nvarchar#!#int#!#int
@@ -84,7 +55,7 @@ nvarchar#!#nvarchar#!#nvarchar#!#nvarchar#!#smallint#!#smallint#!#int#!#int#!#in
 
 -- tsql
 
-use isc_sequences_dbone; 
+use isc_sequences_dbone;
 go
 
 grant select on isc_sequences_sc1.isc_sequences_seq1 to isc_sequences_usr1;
@@ -102,73 +73,3 @@ nvarchar#!#nvarchar#!#nvarchar#!#nvarchar#!#smallint#!#smallint#!#int#!#int#!#in
 isc_sequences_dbone#!#isc_sequences_sc1#!#isc_sequences_seq1#!#bigint#!#19#!#10#!#0#!#1#!#1#!#5#!#1#!#1#!#<NULL>#!#<NULL>#!#<NULL>
 ~~END~~
 
-
--- tsql
-
-use isc_sequences_dbone; 
-go
-
-drop sequence isc_sequences_sc1.isc_sequences_seq1;
-go
-
-drop sequence isc_sequences_sc1.isc_sequences_seq2;
-go
-
-drop sequence isc_sequences_sc1.isc_sequences_seq3;
-go
-
-drop sequence isc_sequences_sc1.isc_sequences_seq4;
-go
-
-drop sequence isc_sequences_sc2.isc_sequences_seq1;
-go
-
-drop sequence isc_sequences_sc2.isc_sequences_seq2;
-go
-
-drop sequence isc_sequences_sc2.isc_sequences_seq3;
-go
-
-drop schema isc_sequences_sc1;
-go
-
-drop schema isc_sequences_sc2;
-go
-
--- psql
--- Need to terminate active session before cleaning up the login
-SELECT pg_terminate_backend(pid) FROM pg_stat_get_activity(NULL) 
-WHERE sys.suser_name(usesysid) = 'isc_sequences_log1' AND backend_type = 'client backend' AND usesysid IS NOT NULL;
-GO
-~~START~~
-bool
-t
-~~END~~
-
--- Wait to sync with another session
-SELECT pg_sleep(1);
-GO
-~~START~~
-void
-
-~~END~~
-
-
--- tsql 
-use isc_sequences_dbone;
-go
-
-drop user isc_sequences_usr1; 
-go
-
-drop login isc_sequences_log1;
-go
-
-use master;
-go
-
-drop sequence isc_sequences_master_seq1;
-go
-
-drop database isc_sequences_dbone;
-go

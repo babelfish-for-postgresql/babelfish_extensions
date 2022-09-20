@@ -1,0 +1,70 @@
+-- tsql
+
+use isc_sequences_dbone;
+go
+
+create view isc_sequences_view1 as select * from information_schema.SEQUENCES;
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: relation "information_schema_tsql.sequences" does not exist)~~
+
+
+select * from isc_sequences_view1;
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: relation "isc_sequences_view1" does not exist)~~
+
+
+use master;
+go
+
+select * from information_schema.SEQUENCES;
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: relation "information_schema_tsql.sequences" does not exist)~~
+
+
+use isc_sequences_dbone;
+go
+
+--privilege testing
+create login isc_sequences_log1 with password='123456789';
+go
+
+create user isc_sequences_usr1 for login isc_sequences_log1;
+go
+
+-- tsql user=isc_sequences_log1 password=123456789
+
+use isc_sequences_dbone;
+go
+
+select * from information_schema.SEQUENCES;
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: relation "information_schema_tsql.sequences" does not exist)~~
+
+
+-- tsql
+
+use isc_sequences_dbone;
+go
+
+grant select on isc_sequences_sc1.isc_sequences_seq1 to isc_sequences_usr1;
+go
+
+-- tsql user=isc_sequences_log1 password=123456789
+
+use isc_sequences_dbone; 
+go
+
+select * from information_schema.SEQUENCES;
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: relation "information_schema_tsql.sequences" does not exist)~~
+
