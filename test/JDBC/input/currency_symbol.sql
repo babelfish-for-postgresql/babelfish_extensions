@@ -104,6 +104,7 @@ select CAST(￦100.123 AS money);
 GO
 
 
+-- Negative Test
 -- Unsupported currency symbol by SQL it should throw error with BABEL
 
 -- Indian Rupee
@@ -134,7 +135,7 @@ GO
 select CAST(₾100.123 AS money);
 GO
 
-
+-- positive test
 -- Currency symbol with qoute
 select CAST('$100.123' AS money);
 GO
@@ -241,6 +242,7 @@ GO
 -- TODO: fix BABEL-704
 -- Note: inside qoute it will treat any character as a currency symbol
 -- if character is not a letter, digit and not equal to '+', '-', '.', '\0' 
+
 -- Unsupported currency symbol by SQL it should throw error with BABEL
 -- Indian Rupee
 select CAST('₹100.123' AS money);
@@ -290,6 +292,195 @@ GO
 SELECT * FROM currency_symbol_t1;
 GO
 
+
+
+-- Single digit with currency symbol
+select CAST($1 AS money);
+GO
+select CAST(¢2 AS money);
+GO
+select CAST(¤3 AS money);
+GO
+select CAST(฿4 AS money);
+GO
+select CAST(₠5 AS money);
+GO
+select CAST(₨6 AS money);
+GO
+
+-- zero value with currency symbol
+select CAST($0 AS money);
+GO
+select CAST(¢0 AS money);
+GO
+select CAST(¤0 AS money);
+GO
+select CAST(฿0 AS money);
+GO
+select CAST(₠0 AS money);
+GO
+select CAST(₨0 AS money);
+GO
+
+-- max value with currency symbol
+select CAST($922337203685477.5807 AS money);
+GO
+select CAST(¢922337203685477.5807 AS money);
+GO
+select CAST(¤922337203685477.5807 AS money);
+GO
+select CAST(฿922337203685477.5807 AS money);
+GO
+select CAST(₠922337203685477.5807 AS money);
+GO
+select CAST(₨922337203685477.5807 AS money);
+GO
+
+-- negative test (exceding max value)
+select CAST($932337203685477.01 AS money);
+GO
+select CAST(¢932337203685477.01 AS money);
+GO
+select CAST(¤932337203685477.01 AS money);
+GO
+select CAST(฿932337203685477.01 AS money);
+GO
+select CAST(₠932337203685477.01 AS money);
+GO
+select CAST(₨932337203685477.01 AS money);
+GO
+
+-- min value with currency symbol
+select CAST($-922337203685477.5808 AS money);
+GO
+select CAST(¢-922337203685477.5808 AS money);
+GO
+select CAST(¤-922337203685477.5808 AS money);
+GO
+select CAST(฿-922337203685477.5808 AS money);
+GO
+select CAST(₠-922337203685477.5808 AS money);
+GO
+select CAST(₨-922337203685477.5808 AS money);
+GO
+
+--negative test (value lesser than min value)
+select CAST($-932337203685477.01 AS money);
+GO
+select CAST(¢-932337203685477.01 AS money);
+GO
+select CAST(¤-932337203685477.01 AS money);
+GO
+select CAST(฿-932337203685477.01 AS money);
+GO
+select CAST(₠-932337203685477.01 AS money);
+GO
+select CAST(₨-932337203685477.01 AS money);
+GO
+
+
+
+-- Currency Symbols with small money
+
+-- decimal with currency symbol
+select CAST($123.456 AS smallmoney);
+GO
+select CAST(¢123.456 AS smallmoney);
+GO
+select CAST(¤123.456 AS smallmoney);
+GO
+select CAST(฿123.456 AS smallmoney);
+GO
+select CAST(₠123.456 AS smallmoney);
+GO
+select CAST(₨123.456 AS smallmoney);
+GO
+
+-- Single digit with currency symbol
+select CAST($1 AS smallmoney);
+GO
+select CAST(¢2 AS smallmoney);
+GO
+select CAST(¤3 AS smallmoney);
+GO
+select CAST(฿4 AS smallmoney);
+GO
+select CAST(₠5 AS smallmoney);
+GO
+select CAST(₨6 AS smallmoney);
+GO
+
+-- zero value with currency symbol
+select CAST($0 AS smallmoney);
+GO
+select CAST(¢0 AS smallmoney);
+GO
+select CAST(¤0 AS smallmoney);
+GO
+select CAST(฿0 AS smallmoney);
+GO
+select CAST(₠0 AS smallmoney);
+GO
+select CAST(₨0 AS smallmoney);
+GO
+
+-- max value with currency symbol
+select CAST($214748.3647 AS smallmoney);
+GO
+select CAST(¢214748.3647 AS smallmoney);
+GO
+select CAST(¤214748.3647 AS smallmoney);
+GO
+select CAST(฿214748.3647 AS smallmoney);
+GO
+select CAST(₠214748.3647 AS smallmoney);
+GO
+select CAST(₨214748.3647 AS smallmoney);
+GO
+
+-- negative test (exceding max value)
+select CAST($314748.3647 AS smallmoney);
+GO
+select CAST(¢314748.3647 AS smallmoney);
+GO
+select CAST(¤314748.3647 AS smallmoney);
+GO
+select CAST(฿314748.3647 AS smallmoney);
+GO
+select CAST(₠314748.3647 AS smallmoney);
+GO
+select CAST(₨314748.3647 AS smallmoney);
+GO
+
+-- min value with currency symbol
+select CAST($-214748.3648 AS smallmoney);
+GO
+select CAST(¢-214748.3648 AS smallmoney);
+GO
+select CAST(¤-214748.3648 AS smallmoney);
+GO
+select CAST(฿-214748.3648 AS smallmoney);
+GO
+select CAST(₠-214748.3648 AS smallmoney);
+GO
+select CAST(₨-214748.3648 AS smallmoney);
+GO
+
+--negative test (value lesser than min value)
+select CAST($-224748.3648 AS smallmoney);
+GO
+select CAST(¢-224748.3648 AS smallmoney);
+GO
+select CAST(¤-224748.3648 AS smallmoney);
+GO
+select CAST(฿-224748.3648 AS smallmoney);
+GO
+select CAST(₠-224748.3648 AS smallmoney);
+GO
+select CAST(₨-224748.3648 AS smallmoney);
+GO
+
+-- negative test
 -- following insert should throw error
 INSERT INTO currency_symbol_t1 VALUES(₿118.123);
 GO

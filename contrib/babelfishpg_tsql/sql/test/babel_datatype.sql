@@ -275,10 +275,6 @@ select CAST('£' AS char(1));			-- allowed
 select CAST('£' AS sys.nchar(1));		-- allowed
 select CAST('£' AS sys.nvarchar(1));	-- allowed
 select CAST('£' AS sys.varchar(1));		-- allowed
-select CAST('😀' AS char(1));			-- not allowed
-select CAST('😀' AS sys.nchar(1));		-- not allowed
-select CAST('😀' AS sys.nvarchar(1));	-- not allowed
-select CAST('😀' AS sys.varchar(1));	-- not allowed
 
 -- Check that things work the same in postgres dialect
 reset babelfishpg_tsql.sql_dialect;
@@ -286,10 +282,6 @@ select CAST('£' AS char(1));
 select CAST('£' AS sys.nchar(1));
 select CAST('£' AS sys.nvarchar(1));
 select CAST('£' AS sys.varchar(1));
-select CAST('😀' AS char(1));
-select CAST('😀' AS sys.nchar(1)); -- this should not be allowed as nchar is T-SQL type
-select CAST('😀' AS sys.nvarchar(1)); -- this should not be allowed as nvarchar is T-SQL type
-select CAST('😀' AS sys.varchar(1)); -- this should not be allowed as sys.varchar is T-SQL type
 set babelfishpg_tsql.sql_dialect = 'tsql';
 
 -- truncate input on explicit cast
@@ -298,11 +290,6 @@ select CAST('ab' AS nchar(1));
 select CAST('ab' AS nvarchar(1));
 select CAST('ab' AS sys.varchar(1));
 
--- But still don't allow surrogate pairs to exceed max length
-select CAST('😀b' AS char(1));
-select CAST('😀b' AS nchar(1));
-select CAST('😀b' AS nvarchar(1));
-select CAST('😀b' AS sys.varchar(1));
 
 -- default length of nchar/char is 1 in tsql (and pg)
 create table testing1(col nchar);
@@ -311,7 +298,6 @@ create table testing1(col nchar);
 -- check length at insert
 insert into testing1 (col) select 'a';
 insert into testing1 (col) select '£';
-insert into testing1 (col) select '😀';
 insert into testing1 (col) select 'ab';
 -- space is automatically truncated
 insert into testing1 (col) select 'c ';
@@ -322,7 +308,6 @@ create table testing2(col nvarchar);
 
 insert into testing2 (col) select 'a';
 insert into testing2 (col) select '£';
-insert into testing2 (col) select '😀';
 insert into testing2 (col) select 'ab';
 -- space is automatically truncated
 insert into testing2 (col) select 'c ';
@@ -333,12 +318,10 @@ create table testing4(col sys.varchar);
 
 insert into testing4 (col) select 'a';
 insert into testing4 (col) select '£';
-insert into testing4 (col) select '😀';
 insert into testing4 (col) select 'ab';
 -- space is automatically truncated
 insert into testing4 (col) select 'c ';
 insert into testing2 (col) select '£ ';
-insert into testing2 (col) select '😀 ';
 select * from testing4;
 
 -- test sys.varchar(max) and sys.nvarchar(max) syntax is allowed in tsql dialect
@@ -416,7 +399,6 @@ set apg_enable_domain_typmod true;
 create domain varchar3 as varchar(3);
 select CAST('abc' AS varchar3);
 select CAST('ab£' AS varchar3);
-select CAST('ab😀' AS varchar3);
 select CAST('abcd' AS varchar3);
 reset apg_enable_domain_typmod;
 

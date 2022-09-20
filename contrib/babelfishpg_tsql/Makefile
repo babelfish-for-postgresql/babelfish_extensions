@@ -105,6 +105,7 @@ REGRESS += test/babel_set_command
 REGRESS += test/babel_datatype
 REGRESS += test/babel_function
 REGRESS += test/babel_table_type
+# REGRESS += test/babel_emoji          TODO: fix BABEL-3543
 
 # We need the previous version to test extension upgrade scripts
 ifdef PREV_EXTVERSION
