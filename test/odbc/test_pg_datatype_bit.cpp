@@ -627,23 +627,22 @@ TEST_F(PSQL_DataTypes_Bit, Table_Unique_Constraints) {
   odbcHandler.CloseStmt();
 
   // Check if unique constraint still matches after creation
-  const int CHARSIZE = 255;
-  char column_name[CHARSIZE];
-  char type_name[CHARSIZE];
+  char column_name[BUFFER_SIZE];
+  char type_name[BUFFER_SIZE];
 
   vector<tuple<int, int, SQLPOINTER, int>> table_BIND_COLUMNS = {
-    {1, SQL_C_CHAR, column_name, CHARSIZE},
+    {1, SQL_C_CHAR, column_name, BUFFER_SIZE},
   };
   ASSERT_NO_FATAL_FAILURE(odbcHandler.BindColumns(table_BIND_COLUMNS));
 
   const string PK_QUERY =
-      "SELECT C.COLUMN_NAME FROM "
-      "INFORMATION_SCHEMA.TABLE_CONSTRAINTS T "
-      "JOIN INFORMATION_SCHEMA.CONSTRAINT_COLUMN_USAGE C "
-      "ON C.CONSTRAINT_NAME=T.CONSTRAINT_NAME "
-      "WHERE "
-      "C.TABLE_NAME='" + TABLE_NAME.substr(TABLE_NAME.find('.') + 1, TABLE_NAME.length()) + "' "
-      "AND T.CONSTRAINT_TYPE='UNIQUE'";
+    "SELECT C.COLUMN_NAME FROM "
+    "INFORMATION_SCHEMA.TABLE_CONSTRAINTS T "
+    "JOIN INFORMATION_SCHEMA.CONSTRAINT_COLUMN_USAGE C "
+    "ON C.CONSTRAINT_NAME=T.CONSTRAINT_NAME "
+    "WHERE "
+    "C.TABLE_NAME='" + TABLE_NAME.substr(TABLE_NAME.find('.') + 1, TABLE_NAME.length()) + "' "
+    "AND T.CONSTRAINT_TYPE='UNIQUE'";
   odbcHandler.ExecQuery(PK_QUERY);
   rcode = SQLFetch(odbcHandler.GetStatementHandle());
   ASSERT_EQ(rcode, SQL_SUCCESS);
