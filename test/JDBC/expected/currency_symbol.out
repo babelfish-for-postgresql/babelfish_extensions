@@ -616,6 +616,95 @@ money
 
 
 
+-- negative value inside qoute
+select CAST('$-214.3648' AS money);
+GO
+~~START~~
+money
+-214.3648
+~~END~~
+
+select CAST('¢-214.3648' AS money);
+GO
+~~START~~
+money
+-214.3648
+~~END~~
+
+select CAST('¤-214.3648' AS money);
+GO
+~~START~~
+money
+-214.3648
+~~END~~
+
+select CAST('฿-214.3648' AS money);
+GO
+~~START~~
+money
+-214.3648
+~~END~~
+
+select CAST('₠-214.3648' AS money);
+GO
+~~START~~
+money
+-214.3648
+~~END~~
+
+select CAST('₨-214.3648' AS money);
+GO
+~~START~~
+money
+-214.3648
+~~END~~
+
+
+-- zero value inside qoute
+select CAST('$0' AS money);
+GO
+~~START~~
+money
+0.0000
+~~END~~
+
+select CAST('¢0' AS money);
+GO
+~~START~~
+money
+0.0000
+~~END~~
+
+select CAST('¤0' AS money);
+GO
+~~START~~
+money
+0.0000
+~~END~~
+
+select CAST('฿0' AS money);
+GO
+~~START~~
+money
+0.0000
+~~END~~
+
+select CAST('₠0' AS money);
+GO
+~~START~~
+money
+0.0000
+~~END~~
+
+select CAST('₨0' AS money);
+GO
+~~START~~
+money
+0.0000
+~~END~~
+
+
+
 -- TODO: fix BABEL-704
 -- Note: inside qoute it will treat any character as a currency symbol
 -- if character is not a letter, digit and not equal to '+', '-', '.', '\0' 
