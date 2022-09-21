@@ -1108,11 +1108,11 @@ BEGIN
 		RETURN startdate + make_interval(secs => (num::numeric) * 0.001);
 	WHEN 'microsecond' THEN
         IF pg_typeof(startdate) = 'sys.datetimeoffset'::regtype THEN
-            RETURN startdate + make_interval(secs => (num::numeric) * 0.00001);
+            RETURN startdate + make_interval(secs => (num::numeric) * 0.000001);
         ELSIF pg_typeof(startdate) = 'time'::regtype THEN
             RETURN startdate + make_interval(secs => (num::numeric) * 0.000001);
         ELSIF pg_typeof(startdate) = 'sys.datetime2'::regtype THEN
-            RETURN startdate + make_interval(secs => (num::numeric) * 0.00001);
+            RETURN startdate + make_interval(secs => (num::numeric) * 0.000001);
         ELSIF pg_typeof(startdate) = 'sys.smalldatetime'::regtype THEN
             RAISE EXCEPTION 'The datepart % is not supported by date function dateadd for data type smalldatetime.', datepart;
         ELSE

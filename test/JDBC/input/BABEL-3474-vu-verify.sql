@@ -80,7 +80,7 @@ GO
 
 EXEC BABEL_3474_vu_prepare_p5
 GO
-DROP procedure BABEL_3474_vu_prepare_p
+DROP procedure BABEL_3474_vu_prepare_p5
 GO
 
 EXEC BABEL_3474_vu_prepare_p6
@@ -120,60 +120,60 @@ GO
 
 SELECT BABEL_3474_vu_prepare_f1()
 GO
-DROP FUNCTION BABEL_3474_vu_prepare_f1()
+DROP FUNCTION BABEL_3474_vu_prepare_f1
 GO
 
 SELECT BABEL_3474_vu_prepare_f2()
 GO
-DROP FUNCTION BABEL_3474_vu_prepare_f2()
+DROP FUNCTION BABEL_3474_vu_prepare_f2
 GO
 
 SELECT BABEL_3474_vu_prepare_f3()
 GO
-DROP FUNCTION BABEL_3474_vu_prepare_f3()
+DROP FUNCTION BABEL_3474_vu_prepare_f3
 GO
 
 SELECT BABEL_3474_vu_prepare_f4()
 GO
-DROP FUNCTION BABEL_3474_vu_prepare_f4()
+DROP FUNCTION BABEL_3474_vu_prepare_f4
 GO
 
 SELECT BABEL_3474_vu_prepare_f5()
 GO
-DROP FUNCTION BABEL_3474_vu_prepare_f5()
+DROP FUNCTION BABEL_3474_vu_prepare_f5
 GO
 
 SELECT BABEL_3474_vu_prepare_f6()
 GO
-DROP FUNCTION BABEL_3474_vu_prepare_f6()
+DROP FUNCTION BABEL_3474_vu_prepare_f6
 GO
 
 SELECT BABEL_3474_vu_prepare_f7()
 GO
-DROP FUNCTION BABEL_3474_vu_prepare_f7()
+DROP FUNCTION BABEL_3474_vu_prepare_f7
 GO
 
 SELECT BABEL_3474_vu_prepare_f8()
 GO
-DROP FUNCTION BABEL_3474_vu_prepare_f8()
+DROP FUNCTION BABEL_3474_vu_prepare_f8
 GO
 
 SELECT BABEL_3474_vu_prepare_f9()
 GO
-DROP FUNCTION BABEL_3474_vu_prepare_f9()
+DROP FUNCTION BABEL_3474_vu_prepare_f9
 GO
 
 SELECT BABEL_3474_vu_prepare_f10()
 GO
-DROP FUNCTION BABEL_3474_vu_prepare_f10()
+DROP FUNCTION BABEL_3474_vu_prepare_f10
 GO
 
 SELECT BABEL_3474_vu_prepare_f11()
 GO
-DROP FUNCTION BABEL_3474_vu_prepare_f11()
+DROP FUNCTION BABEL_3474_vu_prepare_f11
 GO
 
 SELECT BABEL_3474_vu_prepare_f12()
 GO
-DROP FUNCTION BABEL_3474_vu_prepare_f12()
+DROP FUNCTION BABEL_3474_vu_prepare_f12
 GO
