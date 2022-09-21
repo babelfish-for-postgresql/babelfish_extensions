@@ -90,6 +90,8 @@ Tds_be_tls_init(bool isServerStart)
 {
 	STACK_OF(X509_NAME) *root_cert_list = NULL;
 	SSL_CTX    *context;
+	int			ssl_ver_min = -1;
+	int			ssl_ver_max = -1;
 
 	/* This stuff need be done only once. */
 	if (!SSL_initialized)
@@ -198,12 +200,20 @@ Tds_be_tls_init(bool isServerStart)
 
 	if (tds_ssl_min_protocol_version)
 	{
-		int ssl_ver = ssl_protocol_version_to_openssl(tds_ssl_min_protocol_version,
+		int ssl_ver_min = ssl_protocol_version_to_openssl(tds_ssl_min_protocol_version,
 													  "ssl_min_protocol_version",
 													  isServerStart ? FATAL : LOG);
-		if (ssl_ver == -1)
+		if (ssl_ver_min == -1)
+		{
+			ereport(isServerStart ? FATAL : LOG,
+			/*- translator: first %s is a GUC option name, second %s is its value */
+				(errmsg("\"%s\" setting \"%s\" not supported by this build",
+						"tds_ssl_min_protocol_version",
+						GetConfigOption("babelfishpg_tds.tds_ssl_min_protocol_version",
+										false, false))));
 			goto error;
-		if (!SSL_CTX_set_min_proto_version(context, ssl_ver))
+		}
+		if (!SSL_CTX_set_min_proto_version(context, ssl_ver_min))
 		{
 			ereport(isServerStart ? FATAL : LOG,
 					(errmsg("could not set minimum SSL protocol version")));
@@ -213,15 +223,42 @@ Tds_be_tls_init(bool isServerStart)
 
 	if (tds_ssl_max_protocol_version)
 	{
-		int ssl_ver = ssl_protocol_version_to_openssl(tds_ssl_max_protocol_version,
+		int ssl_ver_max = ssl_protocol_version_to_openssl(tds_ssl_max_protocol_version,
 													  "tds_ssl_max_protocol_version",
 													  isServerStart ? FATAL : LOG);
-		if (ssl_ver == -1)
+		if (ssl_ver_max == -1)
+		{
+			ereport(isServerStart ? FATAL : LOG,
+			/*- translator: first %s is a GUC option name, second %s is its value */
+				(errmsg("\"%s\" setting \"%s\" not supported by this build",
+						"tds_ssl_max_protocol_version",
+						GetConfigOption("babelfishpg_tds.tds_ssl_max_protocol_version",
+										false, false))));
 			goto error;
-		if (!SSL_CTX_set_max_proto_version(context, ssl_ver))
+		}
+		if (!SSL_CTX_set_max_proto_version(context, ssl_ver_max))
 		{
 			ereport(isServerStart ? FATAL : LOG,
 					(errmsg("could not set maximum SSL protocol version")));
+			goto error;
+		}
+	}
+
+	/* Check compatibility of min/max protocols */
+	if (tds_ssl_min_protocol_version &&
+		tds_ssl_max_protocol_version)
+	{
+		/*
+		 * No need to check for invalid values (-1) for each protocol number
+		 * as the code above would have already generated an error.
+		 */
+		if (ssl_ver_min > ssl_ver_max)
+		{
+			ereport(isServerStart ? FATAL : LOG,
+					(errmsg("could not set SSL protocol version range"),
+					 errdetail("\"%s\" cannot be higher than \"%s\"",
+							   "tds_ssl_min_protocol_version",
+							   "tds_ssl_max_protocol_version")));
 			goto error;
 		}
 	}
@@ -231,6 +268,16 @@ Tds_be_tls_init(bool isServerStart)
 
 	/* disallow SSL session caching, too */
 	SSL_CTX_set_session_cache_mode(context, SSL_SESS_CACHE_OFF);
+
+#ifdef SSL_OP_NO_RENEGOTIATION
+
+	/*
+	 * Disallow SSL renegotiation, option available since 1.1.0h.  This
+	 * concerns only TLSv1.2 and older protocol versions, as TLSv1.3 has no
+	 * support for renegotiation.
+	 */
+	SSL_CTX_set_options(context, SSL_OP_NO_RENEGOTIATION);
+#endif
 
 	/* set up ephemeral DH and ECDH keys */
 	if (!initialize_dh(context, isServerStart))
@@ -378,6 +425,9 @@ Tds_be_tls_open_server(Port *port)
 				 errmsg("could not initialize SSL connection: SSL context not set up")));
 		return -1;
 	}
+
+	/* set up debugging/info callback */
+	SSL_CTX_set_info_callback(SSL_context, info_cb);
 
 	if (!(port->ssl = SSL_new(SSL_context)))
 	{
@@ -527,9 +577,6 @@ aloop:
 		}
 		port->peer_cert_valid = true;
 	}
-
-	/* set up debugging/info callback */
-	SSL_CTX_set_info_callback(SSL_context, info_cb);
 
 	return 0;
 }
@@ -969,39 +1016,44 @@ verify_cb(int ok, X509_STORE_CTX *ctx)
 static void
 info_cb(const SSL *ssl, int type, int args)
 {
+
+	const char *desc;
+
+	desc = SSL_state_string_long(ssl);
+
 	switch (type)
 	{
 		case SSL_CB_HANDSHAKE_START:
 			ereport(DEBUG4,
-					(errmsg_internal("SSL: handshake start")));
+					(errmsg_internal("SSL: handshake start: \"%s\"", desc)));
 			break;
 		case SSL_CB_HANDSHAKE_DONE:
 			ereport(DEBUG4,
-					(errmsg_internal("SSL: handshake done")));
+					(errmsg_internal("SSL: handshake done: \"%s\"", desc)));
 			break;
 		case SSL_CB_ACCEPT_LOOP:
 			ereport(DEBUG4,
-					(errmsg_internal("SSL: accept loop")));
+					(errmsg_internal("SSL: accept loop: \"%s\"", desc)));
 			break;
 		case SSL_CB_ACCEPT_EXIT:
 			ereport(DEBUG4,
-					(errmsg_internal("SSL: accept exit (%d)", args)));
+					(errmsg_internal("SSL: accept exit (%d): \"%s\"", args, desc)));
 			break;
 		case SSL_CB_CONNECT_LOOP:
 			ereport(DEBUG4,
-					(errmsg_internal("SSL: connect loop")));
+					(errmsg_internal("SSL: connect loop: \"%s\"", desc)));
 			break;
 		case SSL_CB_CONNECT_EXIT:
 			ereport(DEBUG4,
-					(errmsg_internal("SSL: connect exit (%d)", args)));
+					(errmsg_internal("SSL: connect exit (%d): \"%s\"", args, desc)));
 			break;
 		case SSL_CB_READ_ALERT:
 			ereport(DEBUG4,
-					(errmsg_internal("SSL: read alert (0x%04x)", args)));
+					(errmsg_internal("SSL: read alert (0x%04x): \"%s\"", args, desc)));
 			break;
 		case SSL_CB_WRITE_ALERT:
 			ereport(DEBUG4,
-					(errmsg_internal("SSL: write alert (0x%04x)", args)));
+					(errmsg_internal("SSL: write alert (0x%04x): \"%s\"", args, desc)));
 			break;
 	}
 }
