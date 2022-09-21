@@ -1,0 +1,49 @@
+exec sp_datatype_info_100 @data_type = 1
+go
+~~START~~
+varchar#!#int#!#bigint#!#varchar#!#varchar#!#char#!#int#!#int#!#int#!#int#!#int#!#int#!#varchar#!#int#!#int#!#int#!#int#!#int#!#int#!#int
+char#!#1#!#8000#!#'#!#'#!#length              #!#1#!#1#!#3#!#<NULL>#!#0#!#<NULL>#!#char#!#<NULL>#!#<NULL>#!#1#!#<NULL>#!#<NULL>#!#<NULL>#!#1
+~~END~~
+
+
+exec sp_datatype_info @data_type = 2
+go
+~~START~~
+varchar#!#int#!#bigint#!#varchar#!#varchar#!#char#!#int#!#int#!#int#!#int#!#int#!#int#!#varchar#!#int#!#int#!#int#!#int#!#int#!#int#!#int
+numeric#!#2#!#38#!#<NULL>#!#<NULL>#!#precision,scale     #!#1#!#0#!#2#!#0#!#0#!#0#!#numeric#!#0#!#38#!#2#!#<NULL>#!#10#!#<NULL>#!#10
+numeric() identity#!#2#!#38#!#<NULL>#!#<NULL>#!#precision           #!#0#!#0#!#2#!#0#!#0#!#1#!#numeric() identity#!#0#!#0#!#2#!#<NULL>#!#10#!#<NULL>#!#10
+~~END~~
+
+
+-- Failed query in BABEL-2448
+EXEC sys.sp_datatype_info_100 1, @odbcver = 2
+go
+~~START~~
+varchar#!#int#!#bigint#!#varchar#!#varchar#!#char#!#int#!#int#!#int#!#int#!#int#!#int#!#varchar#!#int#!#int#!#int#!#int#!#int#!#int#!#int
+char#!#1#!#8000#!#'#!#'#!#length              #!#1#!#1#!#3#!#<NULL>#!#0#!#<NULL>#!#char#!#<NULL>#!#<NULL>#!#1#!#<NULL>#!#<NULL>#!#<NULL>#!#1
+~~END~~
+
+
+-- Should show date data type
+EXEC sp_datatype_info @data_type = -9
+go
+~~START~~
+varchar#!#int#!#bigint#!#varchar#!#varchar#!#char#!#int#!#int#!#int#!#int#!#int#!#int#!#varchar#!#int#!#int#!#int#!#int#!#int#!#int#!#int
+datetimeoffset#!#-9#!#34#!#'#!#'#!#scale               #!#1#!#0#!#3#!#<NULL>#!#0#!#<NULL>#!#datetimeoffset#!#0#!#7#!#-155#!#0#!#<NULL>#!#<NULL>#!#0
+time#!#-9#!#16#!#'#!#'#!#scale               #!#1#!#0#!#3#!#<NULL>#!#0#!#<NULL>#!#time#!#0#!#7#!#-154#!#0#!#<NULL>#!#<NULL>#!#0
+nvarchar#!#-9#!#4000#!#N'#!#'#!#max length          #!#1#!#1#!#3#!#<NULL>#!#0#!#<NULL>#!#nvarchar#!#<NULL>#!#<NULL>#!#-9#!#<NULL>#!#<NULL>#!#<NULL>#!#0
+date#!#-9#!#10#!#'#!#'#!#<NULL>#!#1#!#0#!#3#!#<NULL>#!#0#!#<NULL>#!#date#!#<NULL>#!#0#!#9#!#1#!#<NULL>#!#<NULL>#!#0
+datetime2#!#-9#!#27#!#'#!#'#!#scale               #!#1#!#0#!#3#!#<NULL>#!#0#!#<NULL>#!#datetime2#!#0#!#7#!#9#!#3#!#<NULL>#!#<NULL>#!#0
+sysname#!#-9#!#128#!#N'#!#'#!#<NULL>#!#0#!#1#!#3#!#<NULL>#!#0#!#<NULL>#!#sysname#!#<NULL>#!#<NULL>#!#-9#!#<NULL>#!#<NULL>#!#<NULL>#!#18
+~~END~~
+
+
+-- Should show datetime data type
+EXEC sp_datatype_info @data_type = 11
+go
+~~START~~
+varchar#!#int#!#bigint#!#varchar#!#varchar#!#char#!#int#!#int#!#int#!#int#!#int#!#int#!#varchar#!#int#!#int#!#int#!#int#!#int#!#int#!#int
+datetime#!#11#!#23#!#'#!#'#!#<NULL>#!#1#!#0#!#3#!#<NULL>#!#0#!#<NULL>#!#datetime#!#3#!#3#!#9#!#3#!#<NULL>#!#<NULL>#!#12
+smalldatetime#!#11#!#16#!#'#!#'#!#<NULL>#!#1#!#0#!#3#!#<NULL>#!#0#!#<NULL>#!#smalldatetime#!#0#!#0#!#9#!#3#!#<NULL>#!#<NULL>#!#22
+~~END~~
+
