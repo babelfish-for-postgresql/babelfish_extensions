@@ -12,7 +12,7 @@ SELECT * FROM BABEL_3360_vu_prepare_v2
 GO
 ~~START~~
 datetime2
-2016-12-26 23:29:29.0005600
+2016-12-26 23:29:29.0000560
 ~~END~~
 
 DROP VIEW BABEL_3360_vu_prepare_v2
@@ -52,7 +52,7 @@ EXEC BABEL_3360_vu_prepare_p2
 GO
 ~~START~~
 datetime2
-2016-12-26 23:29:29.0005600
+2016-12-26 23:29:29.0000560
 ~~END~~
 
 DROP procedure  BABEL_3360_vu_prepare_p2
@@ -81,8 +81,8 @@ GO
 SELECT BABEL_3360_vu_prepare_f1()
 GO
 ~~START~~
-datetime
-2016-12-26 23:29:29.057
+datetime2
+2016-12-26 23:29:29.0560000
 ~~END~~
 
 DROP FUNCTION BABEL_3360_vu_prepare_f1()
@@ -91,8 +91,8 @@ GO
 SELECT BABEL_3360_vu_prepare_f2()
 GO
 ~~START~~
-datetime
-2016-12-26 23:29:29.0
+datetime2
+2016-12-26 23:29:29.0000560
 ~~END~~
 
 DROP FUNCTION BABEL_3360_vu_prepare_f2()
