@@ -1,0 +1,3 @@
+DROP PROCEDURE babel_1756_dep_vu_prepare_p1
+DROP TABLE babel_1756_dep_vu_prepare_t1
+GO
