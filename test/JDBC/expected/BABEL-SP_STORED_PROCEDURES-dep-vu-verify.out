@@ -1,0 +1,7 @@
+exec babel_sp_stored_procedures_dep_vu_prepare_p2
+go
+~~START~~
+varchar#!#varchar#!#nvarchar#!#int#!#int#!#int#!#varchar#!#smallint
+master#!#dbo#!#babel_sp_stored_procedures_dep_vu_prepare_p1;1#!#-1#!#-1#!#-1#!#<NULL>#!#2
+~~END~~
+

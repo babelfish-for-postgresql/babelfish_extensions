@@ -1,0 +1,17 @@
+-- Creating a simple login which has lesser privilege than sysadmin role
+create login sys_dm_exec_connections_dep_vu_prepare_login with password = 'password'
+GO
+
+create procedure sys_dm_exec_connections_dep_vu_prepare_p1 as
+    select * from sys.dm_exec_connections
+GO
+
+create function sys_dm_exec_connections_dep_vu_prepare_f1()
+returns TABLE
+as
+    return (select net_transport, protocol_type, protocol_version, endpoint_id, encrypt_option from sys.dm_exec_connections where session_id = @@SPID);
+GO
+
+create view sys_dm_exec_connections_dep_vu_prepare_v1 as
+    select net_transport, protocol_type, protocol_version, endpoint_id, encrypt_option from sys.dm_exec_connections where session_id = @@SPID
+GO

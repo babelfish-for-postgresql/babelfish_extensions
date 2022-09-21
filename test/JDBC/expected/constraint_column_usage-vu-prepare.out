@@ -1,7 +1,7 @@
-create database db_constraint_column_usage_vu_prepare;
+create database constraint_column_usage_vu_prepare_db;
 go
 
-Use db_constraint_column_usage_vu_prepare;
+Use constraint_column_usage_vu_prepare_db;
 go
 
 create table constraint_column_usage_vu_prepare_tbl1(arg1 int, arg2 int, primary key(arg1));
