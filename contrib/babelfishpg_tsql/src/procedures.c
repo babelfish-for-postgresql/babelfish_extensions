@@ -2278,7 +2278,6 @@ create_linked_server_procs_in_master_dbo_internal(PG_FUNCTION_ARGS)
 						"IN \"@rmtpassword\" sys.sysname DEFAULT NULL)"
 						"AS \'babelfishpg_tsql\', \'sp_addlinkedsrvlogin_internal\'"
 					"LANGUAGE C";
-
 	char *tempq3 = "CREATE OR REPLACE PROCEDURE %s.sp_dropserver( IN \"@server\" sys.sysname,"
 						"IN \"@droplogins\" char(10) DEFAULT NULL)"
 						"AS \'babelfishpg_tsql\', \'sp_dropserver_internal\'"

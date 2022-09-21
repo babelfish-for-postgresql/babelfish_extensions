@@ -13,6 +13,7 @@
 #include "catalog/pg_type.h"
 #include "commands/dbcommands.h"
 #include "common/md5.h"
+#include "foreign/foreign.h"
 #include "miscadmin.h"
 #include "parser/scansup.h"
 #include "tsearch/ts_locale.h"
@@ -41,8 +42,21 @@
 #include "../src/collation.h"
 #include "../src/rolecmds.h"
 
+#include "sybdb.h"
+
 #define TSQL_STAT_GET_ACTIVITY_COLS 25
 #define SP_DATATYPE_INFO_HELPER_COLS 23
+#define SQL_RETURN_CODE_LEN 1000
+
+#define MAX_COLS_SELECT 4096
+
+#define	XSYBCHAR 175		/* 0xAF */
+#define	XSYBVARCHAR 167	/* 0xA7 */
+#define	XSYBNVARCHAR 231	/* 0xE7 */
+#define	XSYBNCHAR 239	/* 0xEF */
+#define	XSYBVARBINARY 165	/* 0xA5 */
+#define	XSYBBINARY 173	/* 0xAD */
+#define	SYBMSXML 241		/* 0xF1 */
 
 PG_FUNCTION_INFO_V1(trancount);
 PG_FUNCTION_INFO_V1(version);
@@ -74,6 +88,10 @@ PG_FUNCTION_INFO_V1(has_dbaccess);
 PG_FUNCTION_INFO_V1(sp_datatype_info_helper);
 PG_FUNCTION_INFO_V1(language);
 PG_FUNCTION_INFO_V1(host_name);
+PG_FUNCTION_INFO_V1(openquery_imp);
+PG_FUNCTION_INFO_V1(sp_testlinkedserver_internal);
+
+/* Not supported -- only syntax support */
 PG_FUNCTION_INFO_V1(procid);
 PG_FUNCTION_INFO_V1(babelfish_integrity_checker);
 
@@ -106,6 +124,8 @@ char *bbf_servername = "BABELFISH";
 const char *bbf_servicename = "MSSQLSERVER";
 char *bbf_language = "us_english";
 #define MD5_HASH_LEN 32
+
+static TupleDesc *curr_openquery_tupdesc = NULL;
 
 Datum
 trancount(PG_FUNCTION_ARGS)
@@ -1172,6 +1192,821 @@ host_name(PG_FUNCTION_ARGS)
 		PG_RETURN_VARCHAR_P(string_to_tsql_varchar((*pltsql_protocol_plugin_ptr)->get_host_name()));
 	else
 		PG_RETURN_NULL();
+}
+
+char*
+tds_err_msg(int severity, int dberr, int oserr, char *dberrstr, char *oserrstr)
+{
+	StringInfoData buf;
+
+	initStringInfo(&buf);
+	appendStringInfo(
+			&buf,
+			"FreeTDS Error: DB #: %i, DB Msg: %s, OS #: %i, OS Msg: %s, Level: %i",
+			dberr,
+			dberrstr ? dberrstr : "",
+			oserr,
+			oserrstr ? oserrstr : "",
+			severity
+	);
+
+	return buf.data;
+}
+
+int
+tds_err_handler(DBPROCESS *dbproc, int severity, int dberr, int oserr, char *dberrstr, char *oserrstr)
+{
+	ereport(ERROR,
+		(errcode(ERRCODE_FDW_UNABLE_TO_CREATE_EXECUTION),
+		errmsg("%s", tds_err_msg(severity, dberr, oserr, dberrstr, oserrstr))
+		));
+
+	return INT_CANCEL;
+}
+
+int
+tds_notice_msg_handler(DBPROCESS *dbproc, DBINT msgno, int msgstate, int severity, char *msgtext, char *svr_name, char *proc_name, int line)
+{
+	if (severity > 10)
+		ereport(ERROR,
+			(errmsg("DB-Library notice: Msg #: %ld, Msg state: %i, Msg: %s, Server: %s, Process: %s, Line: %i, Level: %i",
+				(long)msgno, msgstate, msgtext, svr_name, proc_name, line, severity)
+			));
+	return 0;
+}
+
+Datum
+getDatumFromBytePtr(DBPROCESS *dbproc, BYTE *val, int datatype, int len)
+{
+	bytea *bytes;
+
+	switch (datatype)
+	{
+		case SYBIMAGE:
+		case SYBVARBINARY:
+		case SYBBINARY:
+		case XSYBBINARY:
+		case XSYBVARBINARY:
+			bytes = palloc(len + VARHDRSZ);
+			SET_VARSIZE(bytes, len + VARHDRSZ);
+			memcpy(VARDATA(bytes), val, len);
+			return PointerGetDatum(bytes);
+		case SYBBIT:
+		case SYBBITN:
+			return BoolGetDatum(*(bool *)val);
+		case SYBTEXT:
+		case SYBVARCHAR:
+		case SYBCHAR:
+		case XSYBVARCHAR:
+		case XSYBCHAR:
+		case SYBMSXML:
+			return PointerGetDatum(cstring_to_text_with_len((char *)val, len));
+		case XSYBNVARCHAR:
+		case XSYBNCHAR:
+		case SYBNTEXT:
+			if (*pltsql_protocol_plugin_ptr && (*pltsql_protocol_plugin_ptr)->get_datum_from_byte_ptr)
+			{
+				StringInfo pbuf;
+
+				pbuf = palloc(sizeof(StringInfoData));
+				/*
+				 * Rather than copying data around, we just set up a phony
+				 * StringInfo pointing to the correct portion of the TDS message
+				 * buffer. 
+				 */
+				pbuf->data = val;
+				pbuf->maxlen = len;
+				pbuf->len = len;
+				pbuf->cursor = 0;
+
+				return (*pltsql_protocol_plugin_ptr)->get_datum_from_byte_ptr(pbuf, XSYBNCHAR);
+			}
+		case SYBDATETIME:
+		case SYBDATETIMN:
+			if (*pltsql_protocol_plugin_ptr && (*pltsql_protocol_plugin_ptr)->get_datum_from_byte_ptr)
+			{
+				StringInfo pbuf;
+
+				pbuf = palloc(sizeof(StringInfoData));
+				/*
+				 * Rather than copying data around, we just set up a phony
+				 * StringInfo pointing to the correct portion of the TDS message
+				 * buffer. 
+				 */
+				pbuf->data = val;
+				pbuf->maxlen = 8;
+				pbuf->len = 8;
+				pbuf->cursor = 0;
+
+				return (*pltsql_protocol_plugin_ptr)->get_datum_from_byte_ptr(pbuf, SYBDATETIMN);
+			}
+		case SYBMSDATE:
+			if (*pltsql_protocol_plugin_ptr && (*pltsql_protocol_plugin_ptr)->get_datum_from_byte_ptr)
+			{
+				DBDATETIME date;
+				StringInfo pbuf;
+
+				memcpy(&date, (DBDATETIME *) val, sizeof(DBDATETIME));
+				pbuf = palloc(sizeof(StringInfoData));
+				/*
+				 * Rather than copying data around, we just set up a phony
+				 * StringInfo pointing to the correct portion of the TDS message
+				 * buffer. 
+				 */
+				pbuf->data = (BYTE *)&(date.dtdays);
+				pbuf->maxlen = 3;
+				pbuf->len = 3;
+				pbuf->cursor = 0;
+
+				return (*pltsql_protocol_plugin_ptr)->get_datum_from_byte_ptr(pbuf, SYBMSDATE);
+			}
+		case SYBTIME:
+		case SYBMSTIME:
+			break;
+		case SYBDECIMAL:
+		case SYBNUMERIC:
+			return NumericGetDatum(val);
+			break;
+		case SYBFLTN:
+		case SYBFLT8:
+			return Float8GetDatum(*(float8 *)val);
+		case SYBREAL:
+			return Float4GetDatum(*(float4 *)val);
+		case SYBINT1:
+			return UInt8GetDatum(*(DBSMALLINT *)val);
+		case SYBINT2:
+			return Int16GetDatum(*(DBSMALLINT *)val);
+		case SYBINT4:
+		case SYBINTN:
+			return Int32GetDatum(*(DBINT *)val);
+		case SYBINT8:
+			return Int64GetDatum(*(DBBIGINT *)val);
+		case SYBMONEY:
+		case SYBMONEYN:
+		case SYBMONEY4:
+			return Float4GetDatum(*(DBREAL *)val);
+		case SYBMSDATETIME2:
+		case SYBMSDATETIMEOFFSET:
+			return (Datum) 0;
+		default:
+			return (Datum) 0;
+	}
+
+	return 0;
+}
+
+int
+tdsTypeStrToTypeId(char* datatype)
+{
+	if (strcmp(datatype, "image") == 0)
+		return SYBIMAGE;
+	else if (strcmp(datatype, "varbinary") == 0)
+		return XSYBVARBINARY;
+	else if (strcmp(datatype, "binary") == 0)
+		return XSYBBINARY;
+	else if (strcmp(datatype, "bit") == 0)
+		return SYBBIT;
+	else if (strcmp(datatype, "text") == 0)
+		return SYBTEXT;
+	else if (strcmp(datatype, "nvarchar") == 0)
+		return XSYBNVARCHAR;
+	else if (strcmp(datatype, "varchar") == 0)
+		return XSYBVARCHAR;
+	else if (strcmp(datatype, "nchar") == 0)
+		return XSYBNCHAR;
+	else if (strcmp(datatype, "char") == 0)
+		return XSYBCHAR;
+	else if (strcmp(datatype, "datetime") == 0)
+		return SYBDATETIME;
+	else if (strcmp(datatype, "datetime2") == 0)
+		return SYBMSDATETIME2;
+	else if (strcmp(datatype, "datetimeoffset") == 0)
+		return SYBMSDATETIMEOFFSET;
+	else if (strcmp(datatype, "date") == 0)
+		return SYBMSDATE;
+	else if (strcmp(datatype, "time") == 0)
+		return SYBMSTIME;
+	else if (strcmp(datatype, "decimal") == 0)
+		return SYBDECIMAL;
+	else if (strcmp(datatype, "numeric") == 0)
+		return SYBNUMERIC;
+	else if (strcmp(datatype, "float") == 0)
+		return SYBFLT8;
+	else if (strcmp(datatype, "tinyint") == 0)
+		return SYBINT1;
+	else if (strcmp(datatype, "smallint") == 0)
+		return SYBINT2;
+	else if (strcmp(datatype, "int") == 0)
+		return SYBINTN;
+	else if (strcmp(datatype, "bigint") == 0)
+		return SYBINT8;
+	else if (strcmp(datatype, "money") == 0)
+		return SYBMONEYN;
+	else if (strcmp(datatype, "smallmoney") == 0)
+		return SYBMONEYN;
+	else
+		ereport(ERROR,
+				(errcode(ERRCODE_FDW_UNABLE_TO_CREATE_EXECUTION),
+					errmsg("Unable to find type id for datatype %s", datatype)
+				));
+
+
+	return 0;
+}
+
+Oid
+tdsTypeToOid(int datatype)
+{
+	switch (datatype)
+	{
+		case SYBIMAGE:
+		case SYBVARBINARY:
+		case SYBBINARY:
+		case XSYBBINARY:
+		case XSYBVARBINARY:
+			return BYTEAOID;
+		case SYBBIT:
+		case SYBBITN:
+			return BOOLOID;
+		case SYBTEXT:
+			return TEXTOID;
+		case SYBVARCHAR:
+		case SYBCHAR:
+		case XSYBNVARCHAR:
+		case XSYBVARCHAR:
+		case XSYBNCHAR:
+		case XSYBCHAR:
+		case SYBMSXML:
+			return VARCHAROID;
+		case SYBDATETIME:
+		case SYBDATETIMN:
+		case SYBDATETIME4:
+		case SYBMSDATETIME2:
+		case SYBMSDATETIMEOFFSET:
+			return TIMESTAMPOID;
+		case SYBDATE:
+		case SYBMSDATE:
+			return DATEOID;
+		case SYBTIME:
+		case SYBMSTIME:
+			return TIMEOID;
+		case SYBDECIMAL:
+		case SYBNUMERIC:
+			return NUMERICOID;
+		case SYBFLT8:
+			return FLOAT8OID;
+		case SYBREAL:
+			return FLOAT4OID;
+		case SYBINT1:
+			return INT2OID;
+		case SYBINT2:
+			return INT2OID;
+		case SYBINT4:
+		case SYBINTN:
+			return INT4OID;
+		case SYBINT8:
+			return INT8OID;
+		case SYBMONEY:
+		case SYBMONEYN:
+		case SYBMONEY4:
+			return FLOAT4OID;;
+		default:
+			ereport(ERROR,
+				(errcode(ERRCODE_FDW_UNABLE_TO_CREATE_EXECUTION),
+					errmsg("Unable to find OID for datatype %d", datatype)
+				));
+	}
+
+	return 0;
+}
+
+int
+tdsTypeLen(int datatype, int datalen, bool is_metadata)
+{
+	switch (datatype)
+	{
+		case SYBIMAGE:
+		case SYBVARBINARY:
+		case SYBBINARY:
+		case XSYBBINARY:
+		case XSYBVARBINARY:
+			return datalen;
+		case SYBBIT:
+		case SYBBITN:
+			return -1;
+		case SYBTEXT:
+			return -1;
+		case SYBVARCHAR:
+		case SYBCHAR:
+		case XSYBNVARCHAR:
+		case XSYBNCHAR:
+		case XSYBVARCHAR:
+		case XSYBCHAR:
+		case SYBMSXML:
+			{
+				if (is_metadata)
+					return datalen;
+				else
+					return datalen/4;
+			}
+		case SYBDATETIME:
+		case SYBDATETIMN:
+		case SYBDATETIME4:
+		case SYBMSDATETIME2:
+		case SYBMSDATETIMEOFFSET:
+			return -1;
+		case SYBDATE:
+		case SYBMSDATE:
+			return -1;
+		case SYBTIME:
+		case SYBMSTIME:
+			return -1;
+		case SYBDECIMAL:
+		case SYBNUMERIC:
+			return -1;
+		case SYBFLT8:
+			return -1;
+		case SYBREAL:
+			return -1;
+		case SYBINT1:
+			return -1;
+		case SYBINT2:
+			return -1;
+		case SYBINT4:
+		case SYBINTN:
+			return -1;
+		case SYBINT8:
+			return -1;
+		case SYBMONEY:
+		case SYBMONEYN:
+		case SYBMONEY4:
+			return -1;
+		default:
+			ereport(ERROR,
+				(errcode(ERRCODE_FDW_UNABLE_TO_CREATE_EXECUTION),
+					errmsg("Unable to find len for datatype %d", datatype)
+				));
+	}
+
+	return 0;
+}
+
+Datum
+openquery_imp(PG_FUNCTION_ARGS)
+{
+	LOGINREC *login;
+	DBPROCESS *dbproc;
+	int i;
+	DBINT erc;
+
+	RETCODE results_retcode;
+	int colcount;
+	int row_retcode;
+	DefElem *element;
+	char* query = text_to_cstring(PG_GETARG_TEXT_PP(1));
+
+	ReturnSetInfo *rsinfo = (ReturnSetInfo *) fcinfo->resultinfo;
+	TupleDesc	tupdesc;
+	Tuplestorestate *tupstore;
+	MemoryContext per_query_ctx;
+	MemoryContext oldcontext;
+
+	/* Get the foreign server and user mapping */
+	ForeignServer *server = GetForeignServerByName(text_to_cstring(PG_GETARG_TEXT_PP(0)), false);
+	UserMapping *mapping = GetUserMapping(GetUserId(), server->serverid);
+
+	dbinit();
+
+	dberrhandle(tds_err_handler);
+	dbmsghandle(tds_notice_msg_handler);
+
+	login = dblogin();
+
+	/* first option in user mapping should be the username */
+	element = linitial_node(DefElem, mapping->options);
+	if (strcmp(element->defname, "username") == 0)
+		DBSETLUSER(login, defGetString(element));
+	else
+		ereport(ERROR,
+				(errcode(ERRCODE_FDW_UNABLE_TO_CREATE_EXECUTION),
+					errmsg("Incorrect option. Expected \"username\" but got \"%s\"", element->defname)
+				));
+
+	/* second option in user mapping should be the password */
+	element = lsecond_node(DefElem, mapping->options);
+	if (strcmp(element->defname, "password") == 0)
+		DBSETLPWD(login, defGetString(element));
+	else
+		ereport(ERROR,
+				(errcode(ERRCODE_FDW_UNABLE_TO_CREATE_EXECUTION),
+					errmsg("Incorrect option. Expected \"password\" but got \"%s\"", element->defname)
+				));
+
+	DBSETLAPP(login, "wf_dbresults");
+	DBSETLVERSION(login, DBVERSION_74);
+
+	/* first option in foreign server should be servername */
+	element = linitial_node(DefElem, server->options);
+	if (strcmp(element->defname, "servername") == 0){
+		dbproc = dbopen(login, defGetString(element));
+		if (!dbproc)
+			ereport(ERROR,
+				(errcode(ERRCODE_FDW_UNABLE_TO_CREATE_EXECUTION),
+					errmsg("Unable to connect to %s", defGetString(element))
+				));
+	}
+	else
+		ereport(ERROR,
+				(errcode(ERRCODE_FDW_UNABLE_TO_CREATE_EXECUTION),
+					errmsg("Incorrect option. Expected \"servername\" but got \"%s\"", element->defname)
+				));
+	dbloginfree(login);
+
+	/* second option in foreign server should be database name */
+	element = lsecond_node(DefElem, server->options);
+	if (strcmp(element->defname, "database") == 0)
+	{
+		if (strlen(defGetString(element))) {
+			erc = dbuse(dbproc, defGetString(element));
+			Assert(erc == SUCCEED);
+		}
+	}
+	else
+		ereport(ERROR,
+				(errcode(ERRCODE_FDW_UNABLE_TO_CREATE_EXECUTION),
+					errmsg("Incorrect option. Expected \"database\" but got \"%s\"", element->defname)
+				));
+
+	/* populate query in DBPROCESS */
+	if ((erc = dbcmd(dbproc, query)) != SUCCEED) {
+		ereport(ERROR,
+				(errcode(ERRCODE_FDW_UNABLE_TO_CREATE_EXECUTION),
+					errmsg("error writing query to dbproc struct")
+				));
+	}
+
+	/* Execute the query on remote server */
+	dbsqlexec(dbproc);
+
+	while (erc = dbresults(dbproc) != NO_MORE_RESULTS)
+	{
+		int i;
+		int coltype[MAX_COLS_SELECT];
+		char *colname[MAX_COLS_SELECT];
+		DBINT collen[MAX_COLS_SELECT];
+
+		BYTE *val[MAX_COLS_SELECT];
+
+		if (erc == FAIL)
+		{
+			ereport(ERROR,
+				(errcode(ERRCODE_FDW_UNABLE_TO_CREATE_EXECUTION),
+					errmsg("Failed to get results from query %s", query)
+				));
+		}
+
+		/* store the column metadata if present */
+		colcount = dbnumcols(dbproc);
+
+		for(i = 0; i < colcount; i++)
+		{
+			/* Let us process column metadata first */
+			coltype[i] = dbcoltype(dbproc, i + 1);
+			colname[i] = dbcolname(dbproc, i + 1);
+			collen[i] = dbcollen(dbproc, i + 1);
+		}
+
+		if(colcount > 0)
+		{
+			/* check to see if caller supports us returning a tuplestore */
+			if (rsinfo == NULL || !IsA(rsinfo, ReturnSetInfo))
+				ereport(ERROR,
+						(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+						errmsg("set-valued function called in context that cannot accept a set")));
+
+			if (!(rsinfo->allowedModes & SFRM_Materialize))
+				ereport(ERROR,
+						(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+						errmsg("materialize mode required, but it is not allowed in this context")));
+
+			/* Build tupdesc for result tuples. */
+			tupdesc = CreateTemplateTupleDesc(colcount);
+
+			for(i = 0; i < colcount; i++)
+				TupleDescInitEntry(tupdesc, (AttrNumber) (i + 1), colname[i], tdsTypeToOid(coltype[i]), tdsTypeLen(coltype[i], collen[i], false), 0);
+
+			tupdesc = BlessTupleDesc(tupdesc);
+
+			per_query_ctx = rsinfo->econtext->ecxt_per_query_memory;
+			oldcontext = MemoryContextSwitchTo(per_query_ctx);
+
+			tupstore = tuplestore_begin_heap(true, false, work_mem);
+			rsinfo->returnMode = SFRM_Materialize;
+			rsinfo->setResult = tupstore;
+			rsinfo->setDesc = tupdesc;
+
+
+			/* fetch the rows */
+			while ((erc = dbnextrow(dbproc)) != NO_MORE_ROWS)
+			{
+				/* for each row */
+				Datum	*values = palloc0(sizeof(SIZEOF_DATUM) * colcount);
+				bool	*nulls = palloc0(sizeof(bool) * colcount);
+
+				MemSet(nulls, false, sizeof(nulls));
+
+				for (i = 0; i < colcount; i++)
+				{
+					DBINT datalen = dbdatlen(dbproc, i + 1);
+					val[i] = dbdata(dbproc, i + 1);
+
+					// TDS_DATETIMEALL* tds_date = (TDS_DATETIMEALL *) val[i];
+					if (val[i] == NULL && datalen == 0)
+						nulls[i] = true;
+					else
+						values[i] = getDatumFromBytePtr(dbproc, val[i], coltype[i], datalen);
+				}
+
+				tuplestore_putvalues(tupstore, tupdesc, values, nulls);
+			}
+
+			tuplestore_donestoring(tupstore);
+		}
+	}
+
+	return (Datum)0;
+}
+
+void
+getOpenqueryTupdesc(char* linked_server, char* query, TupleDesc *tupdesc)
+{
+	/* fetch the column medata for the expected result set from remote server */
+	LOGINREC *login;
+	DBPROCESS *dbproc;
+	int i;
+	RETCODE erc;
+
+	int colcount;
+	DefElem *element;
+
+	MemoryContext per_query_ctx;
+	MemoryContext oldcontext;
+	StringInfoData buf;
+
+	/* Get the foreign server and user mapping */
+	ForeignServer *server = GetForeignServerByName(linked_server, false);
+	UserMapping *mapping = GetUserMapping(GetUserId(), server->serverid);
+
+	dbinit();
+
+	dberrhandle(tds_err_handler);
+	dbmsghandle(tds_notice_msg_handler);
+
+	login = dblogin();
+
+	/* first option in user mapping should be the username */
+	element = linitial_node(DefElem, mapping->options);
+	if (strcmp(element->defname, "username") == 0)
+		DBSETLUSER(login, defGetString(element));
+	else
+		ereport(ERROR,
+				(errcode(ERRCODE_FDW_UNABLE_TO_CREATE_EXECUTION),
+					errmsg("Incorrect option. Expected \"username\" but got \"%s\"", element->defname)
+				));
+
+	/* second option in user mapping should be the password */
+	element = lsecond_node(DefElem, mapping->options);
+	if (strcmp(element->defname, "password") == 0)
+		DBSETLPWD(login, defGetString(element));
+	else
+		ereport(ERROR,
+				(errcode(ERRCODE_FDW_UNABLE_TO_CREATE_EXECUTION),
+					errmsg("Incorrect option. Expected \"password\" but got \"%s\"", element->defname)
+				));
+
+	DBSETLAPP(login, "wf_dbresults");
+	DBSETLVERSION(login, DBVERSION_74);
+
+	/* first option in foreign server should be servername */
+	element = linitial_node(DefElem, server->options);
+	if (strcmp(element->defname, "servername") == 0){
+		dbproc = dbopen(login, defGetString(element));
+		if (!dbproc)
+			ereport(ERROR,
+				(errcode(ERRCODE_FDW_UNABLE_TO_CREATE_EXECUTION),
+					errmsg("Unable to connect to %s", defGetString(element))
+				));
+	}
+	else
+		ereport(ERROR,
+				(errcode(ERRCODE_FDW_UNABLE_TO_CREATE_EXECUTION),
+					errmsg("Incorrect option. Expected \"servername\" but got \"%s\"", element->defname)
+				));
+	dbloginfree(login);
+
+	/* second option in foreign server should be database name */
+	element = lsecond_node(DefElem, server->options);
+	if (strcmp(element->defname, "database") == 0)
+	{
+		if (strlen(defGetString(element))) {
+			erc = dbuse(dbproc, defGetString(element));
+			Assert(erc == SUCCEED);
+		}
+	}
+	else
+		ereport(ERROR,
+				(errcode(ERRCODE_FDW_UNABLE_TO_CREATE_EXECUTION),
+					errmsg("Incorrect option. Expected \"database\" but got \"%s\"", element->defname)
+				));
+
+	initStringInfo(&buf);
+	appendStringInfoString(&buf, "SELECT * FROM sys.dm_exec_describe_first_result_set('");
+	appendStringInfoString(&buf, query);
+	appendStringInfoString(&buf, "', NULL, 0)");
+	// appendStringInfoString(&buf, "EXEC sp_describe_first_result_set N'");
+	// appendStringInfoString(&buf, query);
+	// appendStringInfoString(&buf, "', NULL, 0");
+	
+	/* populate query in DBPROCESS */
+	if ((erc = dbcmd(dbproc, buf.data)) != SUCCEED) {
+		ereport(ERROR,
+				(errcode(ERRCODE_FDW_UNABLE_TO_CREATE_EXECUTION),
+					errmsg("error writing query to dbproc struct")
+				));
+	}
+
+	/* Execute the query on remote server */
+	dbsqlexec(dbproc);
+
+	while ((erc = dbresults(dbproc)) != NO_MORE_RESULTS)
+	{
+		if (erc == FAIL)
+		{
+			ereport(ERROR,
+				(errcode(ERRCODE_FDW_UNABLE_TO_CREATE_EXECUTION),
+					errmsg("Failed to get results from query %s", buf.data)
+				));
+		}
+
+		/* We have some results to process */
+		colcount = dbnumcols(dbproc);
+
+		if(colcount > 0)
+		{
+			int numrows = 0;
+			int i = 0;
+
+			/* Build tupdesc for result tuples. */
+
+			//for(i = 0; i < colcount; i++)
+			int collen[MAX_COLS_SELECT];
+			char **colname = (char **) palloc0(MAX_COLS_SELECT * sizeof(char*));
+			char **typename = (char **) palloc0(MAX_COLS_SELECT * sizeof(char*));
+			int tdsTypeId[MAX_COLS_SELECT];
+
+			/* bound variables */
+			int bind_collen;
+			char bind_colname[256];
+			char bind_typename[256];
+			int bind_tdsTypeId;
+			int bind_errornumber;
+
+			for (i = 0; i < MAX_COLS_SELECT; i++)
+				colname[i] = (char *) palloc0(256 * sizeof(char));
+
+			if ((erc = dbbind(dbproc, 3, NTBSTRINGBIND, sizeof(bind_colname), (BYTE *)bind_colname)) != SUCCEED)
+				ereport(ERROR,
+					(errcode(ERRCODE_FDW_UNABLE_TO_CREATE_EXECUTION),
+					errmsg("Failed to bind results for column \"name\" to a variable.")
+				));
+
+			if ((erc = dbbind(dbproc, 5, INTBIND, sizeof(int), (BYTE *)&bind_tdsTypeId)) != SUCCEED)
+				ereport(ERROR,
+					(errcode(ERRCODE_FDW_UNABLE_TO_CREATE_EXECUTION),
+					errmsg("Failed to bind results for column \"system_type_id\" to a variable.")
+				));
+			
+			if ((erc = dbbind(dbproc, 6, NTBSTRINGBIND, sizeof(bind_typename), (BYTE *)&bind_typename)) != SUCCEED)
+				ereport(ERROR,
+					(errcode(ERRCODE_FDW_UNABLE_TO_CREATE_EXECUTION),
+					errmsg("Failed to bind results for column \"system_type_name\" to a variable.")
+				));
+
+			if ((erc = dbbind(dbproc, 7, INTBIND, sizeof(int), (BYTE *)&bind_collen)) != SUCCEED)
+				ereport(ERROR,
+					(errcode(ERRCODE_FDW_UNABLE_TO_CREATE_EXECUTION),
+					errmsg("Failed to bind results for column \"max_length\" to a variable.")
+				));
+			
+			if ((erc = dbbind(dbproc, 36, INTBIND, sizeof(int), (BYTE *)&bind_errornumber)) != SUCCEED)
+				ereport(ERROR,
+					(errcode(ERRCODE_FDW_UNABLE_TO_CREATE_EXECUTION),
+					errmsg("Failed to bind results for column \"error_number\" to a variable.")
+				));
+
+			/* fetch the rows */
+			while ((erc = dbnextrow(dbproc)) != NO_MORE_ROWS)
+			{
+				/* We encountered an error, we shouldn't return any results */
+				/* We return here, when we will again execute the query we will error out from there */
+				if (bind_errornumber != NULL)
+					return;
+				collen[numrows] = bind_collen;
+				strlcpy(colname[numrows], bind_colname, strlen(bind_colname) + 1);
+				//tdsTypeId[numrows] = tdsTypeStrToTypeId(bind_tdsTypeId);
+				tdsTypeId[numrows] = bind_tdsTypeId;
+				++numrows;
+			}
+
+			if (numrows > 0)
+			{
+				*tupdesc = CreateTemplateTupleDesc(numrows);
+
+				for (i = 0; i < numrows; i++)
+					TupleDescInitEntry(*tupdesc, (AttrNumber) (i + 1), colname[i], tdsTypeToOid(tdsTypeId[i]), tdsTypeLen(tdsTypeId[i], collen[i], true), 0);
+
+				*tupdesc = BlessTupleDesc(*tupdesc);
+			}
+		}
+	}
+}
+
+Datum
+sp_testlinkedserver_internal(PG_FUNCTION_ARGS)
+{
+	LOGINREC *login;
+	DBPROCESS *dbproc;
+	DBINT erc;
+
+	DefElem *element;
+
+	/* Get the foreign server and user mapping */
+	ForeignServer *server = GetForeignServerByName(text_to_cstring(PG_GETARG_TEXT_PP(0)), false);
+	UserMapping *mapping = GetUserMapping(GetUserId(), server->serverid);
+
+	dbinit();
+
+	dberrhandle(tds_err_handler);
+	dbmsghandle(tds_notice_msg_handler);
+
+	login = dblogin();
+
+	/* first option in user mapping should be the username */
+	element = linitial_node(DefElem, mapping->options);
+	if (strcmp(element->defname, "username") == 0)
+		DBSETLUSER(login, defGetString(element));
+	else
+		ereport(ERROR,
+				(errcode(ERRCODE_FDW_UNABLE_TO_CREATE_EXECUTION),
+					errmsg("Incorrect option. Expected \"username\" but got \"%s\"", element->defname)
+				));
+
+	/* second option in user mapping should be the password */
+	element = lsecond_node(DefElem, mapping->options);
+	if (strcmp(element->defname, "password") == 0)
+		DBSETLPWD(login, defGetString(element));
+	else
+		ereport(ERROR,
+				(errcode(ERRCODE_FDW_UNABLE_TO_CREATE_EXECUTION),
+					errmsg("Incorrect option. Expected \"password\" but got \"%s\"", element->defname)
+				));
+
+	DBSETLAPP(login, "wf_dbresults");
+	DBSETLVERSION(login, DBVERSION_74);
+
+	/* first option in foreign server should be servername */
+	element = linitial_node(DefElem, server->options);
+	if (strcmp(element->defname, "servername") == 0){
+		dbproc = dbopen(login, defGetString(element));
+		if (!dbproc)
+			ereport(ERROR,
+				(errcode(ERRCODE_FDW_UNABLE_TO_CREATE_EXECUTION),
+					errmsg("Unable to connect to %s", defGetString(element))
+				));
+	}
+	else
+		ereport(ERROR,
+				(errcode(ERRCODE_FDW_UNABLE_TO_CREATE_EXECUTION),
+					errmsg("Incorrect option. Expected \"servername\" but got \"%s\"", element->defname)
+				));
+	dbloginfree(login);
+
+	/* second option in foreign server should be database name */
+	element = lsecond_node(DefElem, server->options);
+	if (strcmp(element->defname, "database") == 0)
+	{
+		if (strlen(defGetString(element))) {
+			erc = dbuse(dbproc, defGetString(element));
+			Assert(erc == SUCCEED);
+		}
+	}
+	else
+		ereport(ERROR,
+				(errcode(ERRCODE_FDW_UNABLE_TO_CREATE_EXECUTION),
+					errmsg("Incorrect option. Expected \"database\" but got \"%s\"", element->defname)
+				));
+
+	return (Datum) 0;
 }
 
 /*

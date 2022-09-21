@@ -3297,3 +3297,12 @@ END;
 $BODY$
 LANGUAGE plpgsql;
 GRANT EXECUTE ON FUNCTION sys.INDEXPROPERTY(IN object_id INT, IN index_or_statistics_name sys.nvarchar(128),  IN property sys.varchar(128)) TO PUBLIC;
+
+CREATE OR REPLACE FUNCTION sys.openquery(
+IN linked_server text,
+IN query text,
+OUT arg1 text,
+OUT arg2 INT)
+RETURNS SETOF RECORD
+AS 'babelfishpg_tsql', 'openquery_imp'
+LANGUAGE C VOLATILE STRICT;

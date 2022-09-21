@@ -72,6 +72,11 @@ export ANTLR4_JAVA_BIN=java
 export ANTLR4_RUNTIME_LIB=-lantlr4-runtime
 export ANTLR4_RUNTIME_INCLUDE_DIR=/usr/local/include/antlr4-runtime
 export ANTLR4_RUNTIME_LIB_DIR=/usr/local/lib
+
+export FREE_TDS_INCLUDE_DIR=/usr/include
+export FREE_TDS_LIB_DIR=/usr/lib64
+export FREE_TDS_LIB="-lsybdb"
+
 OBJS += src/pltsql_bulkcopy.o
 
 PG_CXXFLAGS += -g -Werror
@@ -80,9 +85,9 @@ PG_CXXFLAGS += -Wno-undef -Wall -Wcpp
 PG_CXXFLAGS += -Wno-register # otherwise C++17 gags on PostgreSQL headers
 PG_CXXFLAGS += -I$(ANTLR4_RUNTIME_INCLUDE_DIR)
 PG_CFLAGS += -g -Werror
-PG_CPPFLAGS += -I$(TSQLSRC) -I$(PG_SRC) -DFAULT_INJECTOR
+PG_CPPFLAGS += -I$(TSQLSRC) -I$(PG_SRC) -I$(FREE_TDS_INCLUDE_DIR) -DFAULT_INJECTOR
 
-SHLIB_LINK += -L$(ANTLR4_RUNTIME_LIB_DIR) $(ANTLR4_RUNTIME_LIB) -lcrypto -L$(pkglibdir) -l:babelfishpg_common.so
+SHLIB_LINK += -L$(ANTLR4_RUNTIME_LIB_DIR) $(ANTLR4_RUNTIME_LIB) -lcrypto -L$(pkglibdir) -l:babelfishpg_common.so $(FREE_TDS_LIB) -L$(FREE_TDS_LIB_DIR)
 
 UPGRADES = $(patsubst sql/upgrades/%.sql,sql/%.sql,$(wildcard sql/upgrades/*.sql))
 

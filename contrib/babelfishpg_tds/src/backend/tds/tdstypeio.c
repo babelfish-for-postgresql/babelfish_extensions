@@ -3768,3 +3768,33 @@ TdsSendTypeDatetimeoffset(FmgrInfo *finfo, Datum value, void *vMetaData)
 
 	return rc;
 }
+
+Datum TdsBytePtrToDatum(StringInfo buf, int datatype)
+{
+	if (datatype == TDS_TYPE_FLOAT)
+	{
+		return TdsTypeFloatToDatum(buf, sizeof(float8));
+	}
+	
+	switch ((uint8_t)datatype)
+	{
+		case TDS_TYPE_DATE:
+			return TdsTypeDateToDatum(buf);
+			break;
+		case TDS_TYPE_DATETIMEN:
+			return TdsTypeDatetimeToDatum(buf);
+			break;
+		case TDS_TYPE_NCHAR:
+			return TdsTypeNCharToDatum(buf);
+			break;
+		case 59:
+			return TdsTypeFloatToDatum(buf, sizeof(float4));
+			break;
+		case TDS_TYPE_FLOAT:
+		case 62:
+			return TdsTypeFloatToDatum(buf, sizeof(float8));
+			break;
+		default:
+			return (Datum) 0;
+	}
+}

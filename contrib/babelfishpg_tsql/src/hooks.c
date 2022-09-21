@@ -51,6 +51,7 @@
 #include "utils/syscache.h"
 #include "utils/numeric.h"
 #include <math.h>
+#include "executor/nodeFunctionscan.h"
 
 #include "backend_parser/scanner.h"
 #include "hooks.h"
@@ -101,6 +102,7 @@ static void resolve_target_list_unknowns(ParseState *pstate, List *targetlist);
 static inline bool is_identifier_char(char c);
 static int find_attr_by_name_from_relation(Relation rd, const char *attname, bool sysColOK);
 static void modify_insert_stmt(InsertStmt *stmt, Oid relid);
+static void modify_RangeTblFunction_tupdesc(Node *expr, TupleDesc *tupdesc);
 
 /*****************************************
  * 			Commands Hooks
@@ -178,6 +180,7 @@ static print_pltsql_function_arguments_hook_type prev_print_pltsql_function_argu
 static planner_hook_type prev_planner_hook = NULL;
 static transform_check_constraint_expr_hook_type prev_transform_check_constraint_expr_hook = NULL;
 static validate_var_datatype_scale_hook_type prev_validate_var_datatype_scale_hook = NULL;
+static modify_RangeTblFunction_tupdesc_hook_type prev_modify_RangeTblFunction_tupdesc_hook = NULL;
 
 /*****************************************
  * 			Install / Uninstall
@@ -279,6 +282,9 @@ InstallExtendedHooks(void)
 
 	prev_validate_var_datatype_scale_hook = validate_var_datatype_scale_hook;
 	validate_var_datatype_scale_hook = pltsql_validate_var_datatype_scale;
+	
+	prev_modify_RangeTblFunction_tupdesc_hook = modify_RangeTblFunction_tupdesc_hook;
+	modify_RangeTblFunction_tupdesc_hook = modify_RangeTblFunction_tupdesc;
 }
 
 void
@@ -319,6 +325,7 @@ UninstallExtendedHooks(void)
 	planner_hook = prev_planner_hook;
 	transform_check_constraint_expr_hook = prev_transform_check_constraint_expr_hook;
 	validate_var_datatype_scale_hook = prev_validate_var_datatype_scale_hook;
+	modify_RangeTblFunction_tupdesc_hook = prev_modify_RangeTblFunction_tupdesc_hook;
 }
 
 /*****************************************
@@ -3062,4 +3069,28 @@ void pltsql_validate_var_datatype_scale(const TypeName *typeName, Type typ)
 					 errmsg("The scale %d for \'%s\' datatype must be within the range 0 to precision %d",
 						 scale[1], dataTypeName, scale[0])));
 	}
+}
+
+static void 
+modify_RangeTblFunction_tupdesc(Node *expr, TupleDesc *tupdesc)
+{
+	char* linked_server;
+	char* query;
+	ListCell* lc;
+
+	FuncExpr *funcexpr = (FuncExpr*) expr;
+	List* arg_list = funcexpr->args;
+
+	Assert(list_length(funcexpr->args) == 2);
+
+	foreach(lc, arg_list)
+	{
+		Node *arg = lfirst(lc);
+		NodeTag type = nodeTag(arg);
+	}
+
+	linked_server = TextDatumGetCString(((Const*)linitial(arg_list))->constvalue);
+	query = TextDatumGetCString(((Const*)lsecond(arg_list))->constvalue);
+
+	getOpenqueryTupdesc(linked_server, query, tupdesc);
 }

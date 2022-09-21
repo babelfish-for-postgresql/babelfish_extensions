@@ -1538,6 +1538,7 @@ typedef struct PLtsql_protocol_plugin
 	bool		(*get_stat_values) (Datum *values, bool *nulls, int len, int pid, int curr_backend);
 	void		(*invalidate_stat_view) (void);
 	char*		(*get_host_name) (void);
+	Datum		(*get_datum_from_byte_ptr) (StringInfo buf, int datatype);
 
 	/* Function pointers set by PL/tsql itself */
 	Datum		(*sql_batch_callback) (PG_FUNCTION_ARGS);
@@ -1886,6 +1887,7 @@ extern void pltsql_free_function_memory(PLtsql_function *func);
 extern void pltsql_dumptree(PLtsql_function *func);
 extern void pre_function_call_hook_impl(const char *funcName);
 extern int32 coalesce_typmod_hook_impl(const CoalesceExpr *cexpr);
+extern void modify_create_func_stmt_params(CreateFunctionStmt *stmt);
 
 /*
  * Scanner functions in pl_scanner.c
@@ -2047,5 +2049,7 @@ extern int64 last_identity_value(void);
 extern void pltsql_nextval_identity(Oid seqid, int64 val);
 extern void pltsql_resetcache_identity(void);
 extern int64 pltsql_setval_identity(Oid seqid, int64 val, int64 last_val);
+
+void getOpenqueryTupdesc(char* linked_server, char* query, TupleDesc *tupdesc);
 
 #endif							/* PLTSQL_H */
