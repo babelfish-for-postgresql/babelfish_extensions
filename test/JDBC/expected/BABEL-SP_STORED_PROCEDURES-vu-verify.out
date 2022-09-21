@@ -1,0 +1,143 @@
+USE babel_sp_stored_procedures_vu_prepare_db1
+GO
+-- error: provided name of database we are not currently in
+EXEC sp_stored_procedures @sp_qualifier = 'master'
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: The database name component of the object qualifier must be the name of the current database.)~~
+
+
+EXEC sp_stored_procedures @sp_name = 'babel_sp_stored_procedures_vu_prepare_select_all'
+GO
+~~START~~
+varchar#!#varchar#!#nvarchar#!#int#!#int#!#int#!#varchar#!#smallint
+babel_sp_stored_procedures_vu_prepare_db1#!#dbo#!#babel_sp_stored_procedures_vu_prepare_select_all;1#!#-1#!#-1#!#-1#!#<NULL>#!#2
+~~END~~
+
+
+EXEC sp_stored_procedures @sp_name = 'positive_or_negative', @sp_owner = 'babel_sp_stored_procedures_vu_prepare_s1'
+GO
+~~START~~
+varchar#!#varchar#!#nvarchar#!#int#!#int#!#int#!#varchar#!#smallint
+babel_sp_stored_procedures_vu_prepare_db1#!#babel_sp_stored_procedures_vu_prepare_s1#!#positive_or_negative;0#!#-1#!#-1#!#-1#!#<NULL>#!#2
+~~END~~
+
+
+-- unnamed invocation
+EXEC sp_stored_procedures 'babel_sp_stored_procedures_vu_prepare_select_all', 'dbo', 'babel_sp_stored_procedures_vu_prepare_db1'
+GO
+~~START~~
+varchar#!#varchar#!#nvarchar#!#int#!#int#!#int#!#varchar#!#smallint
+babel_sp_stored_procedures_vu_prepare_db1#!#dbo#!#babel_sp_stored_procedures_vu_prepare_select_all;1#!#-1#!#-1#!#-1#!#<NULL>#!#2
+~~END~~
+
+
+-- [] delimiter invocation
+EXEC [sys].[sp_stored_procedures] 'babel_sp_stored_procedures_vu_prepare_select_all', 'dbo', 'babel_sp_stored_procedures_vu_prepare_db1'
+GO
+~~START~~
+varchar#!#varchar#!#nvarchar#!#int#!#int#!#int#!#varchar#!#smallint
+babel_sp_stored_procedures_vu_prepare_db1#!#dbo#!#babel_sp_stored_procedures_vu_prepare_select_all;1#!#-1#!#-1#!#-1#!#<NULL>#!#2
+~~END~~
+
+
+EXEC [sp_stored_procedures] 'babel_sp_stored_procedures_vu_prepare_select_all', 'dbo', 'babel_sp_stored_procedures_vu_prepare_db1'
+GO
+~~START~~
+varchar#!#varchar#!#nvarchar#!#int#!#int#!#int#!#varchar#!#smallint
+babel_sp_stored_procedures_vu_prepare_db1#!#dbo#!#babel_sp_stored_procedures_vu_prepare_select_all;1#!#-1#!#-1#!#-1#!#<NULL>#!#2
+~~END~~
+
+
+-- case-insensitive invocation
+EXEC SP_STORED_PROCEDURES @SP_NAME = 'positive_or_negative', @SP_OWNER = 'babel_sp_stored_procedures_vu_prepare_s1', @SP_QUALIFIER = 'babel_sp_stored_procedures_vu_prepare_db1'
+GO
+~~START~~
+varchar#!#varchar#!#nvarchar#!#int#!#int#!#int#!#varchar#!#smallint
+babel_sp_stored_procedures_vu_prepare_db1#!#babel_sp_stored_procedures_vu_prepare_s1#!#positive_or_negative;0#!#-1#!#-1#!#-1#!#<NULL>#!#2
+~~END~~
+
+
+-- case-insensitive parameters
+EXEC sp_stored_procedures 'babel_sp_stored_procedures_vu_prepare_select_all', 'DBO', 'babel_sp_stored_procedures_vu_prepare_DB1'
+GO
+~~START~~
+varchar#!#varchar#!#nvarchar#!#int#!#int#!#int#!#varchar#!#smallint
+babel_sp_stored_procedures_vu_prepare_db1#!#dbo#!#babel_sp_stored_procedures_vu_prepare_select_all;1#!#-1#!#-1#!#-1#!#<NULL>#!#2
+~~END~~
+
+
+-- Mixed-case procedure
+EXEC sp_stored_procedures 'babel_sp_stored_procedures_vu_prepare_select_all_MIXED'
+GO
+~~START~~
+varchar#!#varchar#!#nvarchar#!#int#!#int#!#int#!#varchar#!#smallint
+babel_sp_stored_procedures_vu_prepare_db1#!#dbo#!#babel_sp_stored_procedures_vu_prepare_select_all_mixed;1#!#-1#!#-1#!#-1#!#<NULL>#!#2
+~~END~~
+
+
+EXEC sp_stored_procedures 'babel_sp_stored_procedures_vu_prepare_select_all_mixed'
+GO
+~~START~~
+varchar#!#varchar#!#nvarchar#!#int#!#int#!#int#!#varchar#!#smallint
+babel_sp_stored_procedures_vu_prepare_db1#!#dbo#!#babel_sp_stored_procedures_vu_prepare_select_all_mixed;1#!#-1#!#-1#!#-1#!#<NULL>#!#2
+~~END~~
+
+
+EXEC sp_stored_procedures 'babel_sp_stored_procedures_vu_prepare_select_all_miXed'
+GO
+~~START~~
+varchar#!#varchar#!#nvarchar#!#int#!#int#!#int#!#varchar#!#smallint
+babel_sp_stored_procedures_vu_prepare_db1#!#dbo#!#babel_sp_stored_procedures_vu_prepare_select_all_mixed;1#!#-1#!#-1#!#-1#!#<NULL>#!#2
+~~END~~
+
+
+-- tests fUsePattern = 0
+EXEC sp_stored_procedures @sp_name='babel_sp_stored_procedures_vu_prepare_select_a%', @fusepattern=0
+GO
+~~START~~
+varchar#!#varchar#!#nvarchar#!#int#!#int#!#int#!#varchar#!#smallint
+~~END~~
+
+
+-- tests wildcard patterns
+EXEC sp_stored_procedures @sp_name='babel_sp_stored_procedures_vu_prepare_select_a%', @fusepattern=1 
+GO
+~~START~~
+varchar#!#varchar#!#nvarchar#!#int#!#int#!#int#!#varchar#!#smallint
+babel_sp_stored_procedures_vu_prepare_db1#!#dbo#!#babel_sp_stored_procedures_vu_prepare_select_all;1#!#-1#!#-1#!#-1#!#<NULL>#!#2
+babel_sp_stored_procedures_vu_prepare_db1#!#dbo#!#babel_sp_stored_procedures_vu_prepare_select_all_mixed;1#!#-1#!#-1#!#-1#!#<NULL>#!#2
+~~END~~
+
+
+EXEC sp_stored_procedures @sp_name='babel_sp_stored_procedures_vu_prepare_sel_ct_all'
+GO
+~~START~~
+varchar#!#varchar#!#nvarchar#!#int#!#int#!#int#!#varchar#!#smallint
+babel_sp_stored_procedures_vu_prepare_db1#!#dbo#!#babel_sp_stored_procedures_vu_prepare_select_all;1#!#-1#!#-1#!#-1#!#<NULL>#!#2
+babel_sp_stored_procedures_vu_prepare_db1#!#dbo#!#babel_sp_stored_procedures_vu_prepare_seluct_all;1#!#-1#!#-1#!#-1#!#<NULL>#!#2
+~~END~~
+
+
+-- NOTE: Incorrect output with [] wildcards, see BABEL-2452
+EXEC sp_stored_procedures @sp_name='babel_sp_stored_procedures_vu_prepare_sel[eu]ct_all'
+GO
+~~START~~
+varchar#!#varchar#!#nvarchar#!#int#!#int#!#int#!#varchar#!#smallint
+~~END~~
+
+
+EXEC sp_stored_procedures @sp_name='babel_sp_stored_procedures_vu_prepare_sel[^u]ct_all'
+GO
+~~START~~
+varchar#!#varchar#!#nvarchar#!#int#!#int#!#int#!#varchar#!#smallint
+~~END~~
+
+
+EXEC sp_stored_procedures @sp_name='babel_sp_stored_procedures_vu_prepare_sel[a-u]ct_all'
+GO
+~~START~~
+varchar#!#varchar#!#nvarchar#!#int#!#int#!#int#!#varchar#!#smallint
+~~END~~
+

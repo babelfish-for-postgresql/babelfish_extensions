@@ -1,0 +1,3 @@
+DROP PROCEDURE babel_sp_columns_dep_vu_prepare_p1
+DROP TABLE babel_sp_columns_dep_vu_prepare_t_time
+GO

@@ -1,0 +1,3 @@
+drop procedure babel_3000_dep_vu_prepare_p1
+drop table babel_3000_dep_vu_prepare_t1
+go

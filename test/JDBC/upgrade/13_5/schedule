@@ -81,7 +81,6 @@ sys-spatial_index_tessellations
 sys-spatial_indexes
 sys-stats
 sys-synonyms
-sys-system_sql_modules
 sys-syscolumns
 sys-syscharsets
 sys-sysforeignkeys
@@ -186,6 +185,19 @@ babel_sqlvariant_cast_compare
 tdscollation
 BABEL-1683
 schema_resolution_trigger
+sys-sp_pkeys
+sys-sp_statistics
+BABEL-APPLOCK
+BABEL-1438
+BABEL-SP_DATATYPE_INFO
+BABEL-SPCOLUMNS
+BABEL-SP_TABLES
+BABEL-SP_SPECIAL_COLUMNS
+BABEL-SP_TABLE_PRIVILIGES
+BABEL-SP_FKEYS
+BABEL-SP_STORED_PROCEDURES
+BABEL-SP_SPROC_COLUMNS
+BABEL-3000
 sys-foreign_key_columns-dep
 sys-foreign_keys-dep
 sys-identity_columns-dep
@@ -202,3 +214,7 @@ sys-computed_columns-dep
 sys-index_columns-dep
 sys-sp_databases-dep
 sys-syscolumns-dep
+sys-sp_pkeys-dep
+sys-sp_statistics-dep
+BABEL-SPCOLUMNS-dep
+BABEL-3000-dep

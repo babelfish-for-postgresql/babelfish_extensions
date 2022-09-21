@@ -1,0 +1,9 @@
+create table babel_sp_fkeys_dep_vu_prepare_t1(a int, primary key(a))
+go
+
+create table babel_sp_fkeys_dep_vu_prepare_t2(a int, b int, c int, foreign key(b) references babel_sp_fkeys_dep_vu_prepare_t1(a))
+go
+
+create procedure babel_sp_fkeys_dep_vu_prepare_p1 as
+    exec sp_fkeys @pktable_name = 'babel_sp_fkeys_dep_vu_prepare_t1'
+go

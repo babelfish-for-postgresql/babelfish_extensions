@@ -1,0 +1,21 @@
+use babel_sp_tables_vu_prepare_db1
+go
+
+drop view babel_sp_tables_vu_prepare_t_sptables5
+go
+drop table babel_sp_tables_vu_prepare_t_sptables
+go
+drop table babel_sp_tables_vu_prepare_MyTable1
+go
+drop table [babel_sp_tables_vu_prepare_MyTable2]
+go
+drop table babel_sp_tables_vu_prepare_t_sptables2
+go
+drop table babel_sp_tables_vu_prepare_t_sotables2
+go
+use master
+go
+drop table babel_sp_tables_vu_prepare_t_sptables
+go
+drop database babel_sp_tables_vu_prepare_db1
+go

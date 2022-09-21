@@ -1,0 +1,493 @@
+use babel_sp_special_columns_vu_prepare_db1
+go
+
+-- syntax error: @table_name is required
+exec sp_special_columns
+go
+~~ERROR (Code: 201)~~
+
+~~ERROR (Message: procedure sp_special_columns expects parameter "@table_name", which was not supplied.)~~
+
+
+exec sp_special_columns @table_name = 'babel_sp_special_columns_vu_prepare_t1'
+go
+~~START~~
+smallint#!#varchar#!#smallint#!#varchar#!#int#!#int#!#smallint#!#smallint
+1#!#a#!#4#!#int#!#10#!#4#!#0#!#1
+~~END~~
+
+
+exec sp_special_columns @table_name = 'babel_sp_special_columns_vu_prepare_t2', @qualifier = 'db1', @scope = 'C'
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: The database name component of the object qualifier must be the name of the current database.)~~
+
+
+exec sp_special_columns @table_name = 'babel_sp_special_columns_vu_prepare_t3', @table_owner = 'dbo', @col_type = 'R'
+go
+~~START~~
+smallint#!#varchar#!#smallint#!#varchar#!#int#!#int#!#smallint#!#smallint
+1#!#b#!#4#!#int#!#10#!#4#!#0#!#1
+1#!#c#!#4#!#int#!#10#!#4#!#0#!#1
+~~END~~
+
+
+exec sp_special_columns @table_name = 'babel_sp_special_columns_vu_prepare_t4', @nullable = 'O'
+go
+~~START~~
+smallint#!#varchar#!#smallint#!#varchar#!#int#!#int#!#smallint#!#smallint
+1#!#a#!#4#!#int#!#10#!#4#!#0#!#1
+~~END~~
+
+
+-- Test table with user-defined type
+exec sp_special_columns @table_name = 'babel_sp_special_columns_vu_prepare_t5'
+go
+~~START~~
+smallint#!#varchar#!#smallint#!#varchar#!#int#!#int#!#smallint#!#smallint
+1#!#Cellphone#!#12#!#babel_sp_special_columns_vu_prepare_phone_num#!#11#!#11#!#<NULL>#!#1
+1#!#Id#!#4#!#babel_sp_special_columns_vu_prepare_eyedees#!#10#!#4#!#0#!#1
+~~END~~
+
+
+-- Mix-cased table tests
+exec sp_special_columns @table_name = 'babel_sp_special_columns_vu_prepare_mytable1'
+go
+~~START~~
+smallint#!#varchar#!#smallint#!#varchar#!#int#!#int#!#smallint#!#smallint
+1#!#ColA#!#4#!#babel_sp_special_columns_vu_prepare_eyedees#!#10#!#4#!#0#!#1
+1#!#ColB#!#12#!#babel_sp_special_columns_vu_prepare_phone_num#!#11#!#11#!#<NULL>#!#1
+~~END~~
+
+
+exec sp_special_columns @table_name = 'babel_sp_special_columns_vu_prepare_MYTABLE1'
+go
+~~START~~
+smallint#!#varchar#!#smallint#!#varchar#!#int#!#int#!#smallint#!#smallint
+1#!#ColA#!#4#!#babel_sp_special_columns_vu_prepare_eyedees#!#10#!#4#!#0#!#1
+1#!#ColB#!#12#!#babel_sp_special_columns_vu_prepare_phone_num#!#11#!#11#!#<NULL>#!#1
+~~END~~
+
+
+exec sp_special_columns @table_name = 'babel_sp_special_columns_vu_prepare_mytable2'
+go
+~~START~~
+smallint#!#varchar#!#smallint#!#varchar#!#int#!#int#!#smallint#!#smallint
+1#!#ColA#!#12#!#babel_sp_special_columns_vu_prepare_phone_num#!#11#!#11#!#<NULL>#!#1
+1#!#ColB#!#4#!#babel_sp_special_columns_vu_prepare_eyedees#!#10#!#4#!#0#!#1
+~~END~~
+
+
+exec sp_special_columns @table_name = 'babel_sp_special_columns_vu_prepare_MYTABLE2'
+go
+~~START~~
+smallint#!#varchar#!#smallint#!#varchar#!#int#!#int#!#smallint#!#smallint
+1#!#ColA#!#12#!#babel_sp_special_columns_vu_prepare_phone_num#!#11#!#11#!#<NULL>#!#1
+1#!#ColB#!#4#!#babel_sp_special_columns_vu_prepare_eyedees#!#10#!#4#!#0#!#1
+~~END~~
+
+
+-- Delimiter table tests NOTE: These to do not produce correct output due to BABEL-2883
+exec sp_special_columns @table_name = [babel_sp_special_columns_vu_prepare_mytable1]
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: column "babel_sp_special_columns_vu_prepare_mytable1" does not exist)~~
+
+
+exec sp_special_columns @table_name = [babel_sp_special_columns_vu_prepare_MYTABLE1]
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: column "babel_sp_special_columns_vu_prepare_mytable1" does not exist)~~
+
+
+exec sp_special_columns @table_name = [babel_sp_special_columns_vu_prepare_mytable2]
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: column "babel_sp_special_columns_vu_prepare_mytable2" does not exist)~~
+
+
+exec sp_special_columns @table_name = [babel_sp_special_columns_vu_prepare_MYTABLE2]
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: column "babel_sp_special_columns_vu_prepare_mytable2" does not exist)~~
+
+
+-- unnamed invocation
+exec sp_special_columns 'babel_sp_special_columns_vu_prepare_t1', 'dbo', 'babel_sp_special_columns_vu_prepare_db1'
+go
+~~START~~
+smallint#!#varchar#!#smallint#!#varchar#!#int#!#int#!#smallint#!#smallint
+1#!#a#!#4#!#int#!#10#!#4#!#0#!#1
+~~END~~
+
+
+-- case-insensitive invocation
+EXEC SP_SPECIAL_COLUMNS @TABLE_NAME = 'babel_sp_special_columns_vu_prepare_t2', @TABLE_OWNER = 'dbo', @QUALIFIER = 'babel_sp_special_columns_vu_prepare_db1'
+GO
+~~START~~
+smallint#!#varchar#!#smallint#!#varchar#!#int#!#int#!#smallint#!#smallint
+1#!#b#!#4#!#int#!#10#!#4#!#0#!#1
+1#!#c#!#4#!#int#!#10#!#4#!#0#!#1
+~~END~~
+
+
+-- square-delimiter invocation
+EXEC [sys].[sp_special_columns] @table_name = 'babel_sp_special_columns_vu_prepare_t2', @table_owner = 'dbo', @qualifier = 'babel_sp_special_columns_vu_prepare_db1'
+GO
+~~START~~
+smallint#!#varchar#!#smallint#!#varchar#!#int#!#int#!#smallint#!#smallint
+1#!#b#!#4#!#int#!#10#!#4#!#0#!#1
+1#!#c#!#4#!#int#!#10#!#4#!#0#!#1
+~~END~~
+
+
+
+-- Testing datatypes
+-- NOTE: Currently, these values do not produce accurate results for some datatypes such as tinyint/decimal/numeric identity, time/datetime2/datetimeoffset with default typemode 7.
+EXEC sp_special_columns 'babel_sp_special_columns_vu_prepare_type_bigint'
+go
+~~START~~
+smallint#!#varchar#!#smallint#!#varchar#!#int#!#int#!#smallint#!#smallint
+1#!#a_bigint#!#-5#!#bigint#!#19#!#8#!#0#!#1
+~~END~~
+
+EXEC sp_special_columns 'babel_sp_special_columns_vu_prepare_type_binary'
+go
+~~START~~
+smallint#!#varchar#!#smallint#!#varchar#!#int#!#int#!#smallint#!#smallint
+1#!#a_binary#!#-2#!#binary#!#1#!#1#!#<NULL>#!#1
+~~END~~
+
+EXEC sp_special_columns 'babel_sp_special_columns_vu_prepare_type_bit'
+go
+~~START~~
+smallint#!#varchar#!#smallint#!#varchar#!#int#!#int#!#smallint#!#smallint
+1#!#a_bit#!#-7#!#bit#!#1#!#1#!#<NULL>#!#1
+~~END~~
+
+EXEC sp_special_columns 'babel_sp_special_columns_vu_prepare_type_char'
+go
+~~START~~
+smallint#!#varchar#!#smallint#!#varchar#!#int#!#int#!#smallint#!#smallint
+1#!#a_char#!#1#!#char#!#1#!#1#!#<NULL>#!#1
+~~END~~
+
+EXEC sp_special_columns 'babel_sp_special_columns_vu_prepare_type_date'
+go
+~~START~~
+smallint#!#varchar#!#smallint#!#varchar#!#int#!#int#!#smallint#!#smallint
+1#!#a_date#!#-9#!#date#!#10#!#20#!#<NULL>#!#1
+~~END~~
+
+EXEC sp_special_columns 'babel_sp_special_columns_vu_prepare_type_datetime'
+go
+~~START~~
+smallint#!#varchar#!#smallint#!#varchar#!#int#!#int#!#smallint#!#smallint
+1#!#a_datetime#!#11#!#datetime#!#23#!#16#!#3#!#1
+~~END~~
+
+EXEC sp_special_columns 'babel_sp_special_columns_vu_prepare_type_datetime2'
+go
+~~START~~
+smallint#!#varchar#!#smallint#!#varchar#!#int#!#int#!#smallint#!#smallint
+1#!#a_datetime2#!#-9#!#datetime2#!#26#!#52#!#<NULL>#!#1
+~~END~~
+
+EXEC sp_special_columns 'babel_sp_special_columns_vu_prepare_type_datetimeoffset'
+go
+~~START~~
+smallint#!#varchar#!#smallint#!#varchar#!#int#!#int#!#smallint#!#smallint
+1#!#a_datetimeoffset#!#-9#!#datetimeoffset#!#33#!#66#!#<NULL>#!#1
+~~END~~
+
+EXEC sp_special_columns 'babel_sp_special_columns_vu_prepare_type_decimal'
+go
+~~START~~
+smallint#!#varchar#!#smallint#!#varchar#!#int#!#int#!#smallint#!#smallint
+1#!#a_decimal#!#3#!#decimal#!#18#!#20#!#0#!#1
+~~END~~
+
+EXEC sp_special_columns 'babel_sp_special_columns_vu_prepare_type_float'
+go
+~~START~~
+smallint#!#varchar#!#smallint#!#varchar#!#int#!#int#!#smallint#!#smallint
+1#!#a_float#!#6#!#float#!#15#!#8#!#<NULL>#!#1
+~~END~~
+
+EXEC sp_special_columns 'babel_sp_special_columns_vu_prepare_type_int'
+go
+~~START~~
+smallint#!#varchar#!#smallint#!#varchar#!#int#!#int#!#smallint#!#smallint
+1#!#a_int#!#4#!#int#!#10#!#4#!#0#!#1
+~~END~~
+
+EXEC sp_special_columns 'babel_sp_special_columns_vu_prepare_type_money'
+go
+~~START~~
+smallint#!#varchar#!#smallint#!#varchar#!#int#!#int#!#smallint#!#smallint
+1#!#a_money#!#3#!#money#!#19#!#21#!#4#!#1
+~~END~~
+
+EXEC sp_special_columns 'babel_sp_special_columns_vu_prepare_type_nchar'
+go
+~~START~~
+smallint#!#varchar#!#smallint#!#varchar#!#int#!#int#!#smallint#!#smallint
+1#!#a_nchar#!#-8#!#nchar#!#1#!#2#!#<NULL>#!#1
+~~END~~
+
+EXEC sp_special_columns 'babel_sp_special_columns_vu_prepare_type_numeric'
+go
+~~START~~
+smallint#!#varchar#!#smallint#!#varchar#!#int#!#int#!#smallint#!#smallint
+1#!#a_numeric#!#2#!#numeric#!#18#!#20#!#0#!#1
+~~END~~
+
+EXEC sp_special_columns 'babel_sp_special_columns_vu_prepare_type_nvarchar'
+go
+~~START~~
+smallint#!#varchar#!#smallint#!#varchar#!#int#!#int#!#smallint#!#smallint
+1#!#a_nvarchar#!#-9#!#nvarchar#!#1#!#2#!#<NULL>#!#1
+~~END~~
+
+EXEC sp_special_columns 'babel_sp_special_columns_vu_prepare_type_real'
+go
+~~START~~
+smallint#!#varchar#!#smallint#!#varchar#!#int#!#int#!#smallint#!#smallint
+1#!#a_real#!#7#!#real#!#7#!#4#!#<NULL>#!#1
+~~END~~
+
+EXEC sp_special_columns 'babel_sp_special_columns_vu_prepare_type_smalldatetime'
+go
+~~START~~
+smallint#!#varchar#!#smallint#!#varchar#!#int#!#int#!#smallint#!#smallint
+1#!#a_smalldatetime#!#11#!#smalldatetime#!#16#!#16#!#0#!#1
+~~END~~
+
+EXEC sp_special_columns 'babel_sp_special_columns_vu_prepare_type_smallint'
+go
+~~START~~
+smallint#!#varchar#!#smallint#!#varchar#!#int#!#int#!#smallint#!#smallint
+1#!#a_smallint#!#5#!#smallint#!#5#!#2#!#0#!#1
+~~END~~
+
+EXEC sp_special_columns 'babel_sp_special_columns_vu_prepare_type_smallmoney'
+go
+~~START~~
+smallint#!#varchar#!#smallint#!#varchar#!#int#!#int#!#smallint#!#smallint
+1#!#a_smallmoney#!#3#!#smallmoney#!#10#!#12#!#4#!#1
+~~END~~
+
+EXEC sp_special_columns 'babel_sp_special_columns_vu_prepare_type_sql_variant'
+go
+~~START~~
+smallint#!#varchar#!#smallint#!#varchar#!#int#!#int#!#smallint#!#smallint
+1#!#a_sql_variant#!#-150#!#sql_variant#!#0#!#8000#!#<NULL>#!#1
+~~END~~
+
+EXEC sp_special_columns 'babel_sp_special_columns_vu_prepare_type_sysname'
+go
+~~START~~
+smallint#!#varchar#!#smallint#!#varchar#!#int#!#int#!#smallint#!#smallint
+1#!#a_sysname#!#-9#!#sysname#!#128#!#256#!#<NULL>#!#1
+~~END~~
+
+EXEC sp_special_columns 'babel_sp_special_columns_vu_prepare_type_time'
+go
+~~START~~
+smallint#!#varchar#!#smallint#!#varchar#!#int#!#int#!#smallint#!#smallint
+1#!#a_time#!#-9#!#time#!#15#!#30#!#<NULL>#!#1
+~~END~~
+
+EXEC sp_special_columns 'babel_sp_special_columns_vu_prepare_type_tinyint'
+go
+~~START~~
+smallint#!#varchar#!#smallint#!#varchar#!#int#!#int#!#smallint#!#smallint
+1#!#a_tinyint#!#-6#!#tinyint#!#3#!#1#!#0#!#1
+~~END~~
+
+EXEC sp_special_columns 'babel_sp_special_columns_vu_prepare_type_uniqueidentifier'
+go
+~~START~~
+smallint#!#varchar#!#smallint#!#varchar#!#int#!#int#!#smallint#!#smallint
+1#!#a_uniqueidentifier#!#-11#!#uniqueidentifier#!#36#!#16#!#<NULL>#!#1
+~~END~~
+
+EXEC sp_special_columns 'babel_sp_special_columns_vu_prepare_type_varbinary'
+go
+~~START~~
+smallint#!#varchar#!#smallint#!#varchar#!#int#!#int#!#smallint#!#smallint
+1#!#a_varbinary#!#-3#!#varbinary#!#1#!#1#!#<NULL>#!#1
+~~END~~
+
+EXEC sp_special_columns 'babel_sp_special_columns_vu_prepare_type_varchar'
+go
+~~START~~
+smallint#!#varchar#!#smallint#!#varchar#!#int#!#int#!#smallint#!#smallint
+1#!#a_varchar#!#12#!#varchar#!#1#!#1#!#<NULL>#!#1
+~~END~~
+
+EXEC sp_special_columns 'babel_sp_special_columns_vu_prepare_type_int_identity'
+go
+~~START~~
+smallint#!#varchar#!#smallint#!#varchar#!#int#!#int#!#smallint#!#smallint
+1#!#a_int_identity#!#4#!#int identity#!#10#!#4#!#0#!#1
+~~END~~
+
+EXEC sp_special_columns 'babel_sp_special_columns_vu_prepare_type_bigint_identity'
+go
+~~START~~
+smallint#!#varchar#!#smallint#!#varchar#!#int#!#int#!#smallint#!#smallint
+1#!#a_bigint_identity#!#-5#!#bigint identity#!#19#!#8#!#0#!#1
+~~END~~
+
+EXEC sp_special_columns 'babel_sp_special_columns_vu_prepare_type_smallint_identity'
+go
+~~START~~
+smallint#!#varchar#!#smallint#!#varchar#!#int#!#int#!#smallint#!#smallint
+1#!#a_smallint_identity#!#5#!#smallint identity#!#5#!#2#!#0#!#1
+~~END~~
+
+EXEC sp_special_columns 'babel_sp_special_columns_vu_prepare_type_tinyint_identity'
+go
+~~START~~
+smallint#!#varchar#!#smallint#!#varchar#!#int#!#int#!#smallint#!#smallint
+1#!#a_tinyint_identity#!#5#!#smallint identity#!#5#!#2#!#0#!#1
+~~END~~
+
+EXEC sp_special_columns 'babel_sp_special_columns_vu_prepare_type_decimal_identity'
+go
+~~START~~
+smallint#!#varchar#!#smallint#!#varchar#!#int#!#int#!#smallint#!#smallint
+1#!#a_decimal_identity#!#-5#!#bigint identity#!#19#!#8#!#0#!#1
+~~END~~
+
+EXEC sp_special_columns 'babel_sp_special_columns_vu_prepare_type_numeric_identity'
+go
+~~START~~
+smallint#!#varchar#!#smallint#!#varchar#!#int#!#int#!#smallint#!#smallint
+1#!#a_numeric_identity#!#-5#!#bigint identity#!#19#!#8#!#0#!#1
+~~END~~
+
+EXEC sp_special_columns 'babel_sp_special_columns_vu_prepare_type_decimal_5_2'
+go
+~~START~~
+smallint#!#varchar#!#smallint#!#varchar#!#int#!#int#!#smallint#!#smallint
+1#!#a_decimal_5_2#!#3#!#decimal#!#5#!#7#!#2#!#1
+~~END~~
+
+EXEC sp_special_columns 'babel_sp_special_columns_vu_prepare_type_decimal_5_3'
+go
+~~START~~
+smallint#!#varchar#!#smallint#!#varchar#!#int#!#int#!#smallint#!#smallint
+1#!#a_decimal_5_2#!#3#!#decimal#!#5#!#7#!#3#!#1
+~~END~~
+
+EXEC sp_special_columns 'babel_sp_special_columns_vu_prepare_type_float_7'
+go
+~~START~~
+smallint#!#varchar#!#smallint#!#varchar#!#int#!#int#!#smallint#!#smallint
+1#!#a_float_7#!#7#!#real#!#7#!#4#!#<NULL>#!#1
+~~END~~
+
+EXEC sp_special_columns 'babel_sp_special_columns_vu_prepare_type_char_7'
+go
+~~START~~
+smallint#!#varchar#!#smallint#!#varchar#!#int#!#int#!#smallint#!#smallint
+1#!#a_char_7#!#1#!#char#!#7#!#7#!#<NULL>#!#1
+~~END~~
+
+EXEC sp_special_columns 'babel_sp_special_columns_vu_prepare_type_varchar_7'
+go
+~~START~~
+smallint#!#varchar#!#smallint#!#varchar#!#int#!#int#!#smallint#!#smallint
+1#!#a_varchar_7#!#12#!#varchar#!#7#!#7#!#<NULL>#!#1
+~~END~~
+
+EXEC sp_special_columns 'babel_sp_special_columns_vu_prepare_type_nchar_7'
+go
+~~START~~
+smallint#!#varchar#!#smallint#!#varchar#!#int#!#int#!#smallint#!#smallint
+1#!#a_nchar_7#!#-8#!#nchar#!#7#!#14#!#<NULL>#!#1
+~~END~~
+
+EXEC sp_special_columns 'babel_sp_special_columns_vu_prepare_type_nvarchar_7'
+go
+~~START~~
+smallint#!#varchar#!#smallint#!#varchar#!#int#!#int#!#smallint#!#smallint
+1#!#a_nvarchar_7#!#-9#!#nvarchar#!#7#!#14#!#<NULL>#!#1
+~~END~~
+
+EXEC sp_special_columns 'babel_sp_special_columns_vu_prepare_type_time_6'
+go
+~~START~~
+smallint#!#varchar#!#smallint#!#varchar#!#int#!#int#!#smallint#!#smallint
+1#!#a_time_6#!#-9#!#time#!#15#!#30#!#<NULL>#!#1
+~~END~~
+
+EXEC sp_special_columns 'babel_sp_special_columns_vu_prepare_type_datetime2_6'
+go
+~~START~~
+smallint#!#varchar#!#smallint#!#varchar#!#int#!#int#!#smallint#!#smallint
+1#!#a_datetime2_6#!#-9#!#datetime2#!#26#!#52#!#<NULL>#!#1
+~~END~~
+
+EXEC sp_special_columns 'babel_sp_special_columns_vu_prepare_type_datetimeoffset_6'
+go
+~~START~~
+smallint#!#varchar#!#smallint#!#varchar#!#int#!#int#!#smallint#!#smallint
+1#!#a_datetimeoffset_6#!#-9#!#datetimeoffset#!#33#!#66#!#<NULL>#!#1
+~~END~~
+
+EXEC sp_special_columns 'babel_sp_special_columns_vu_prepare_type_binary_7'
+go
+~~START~~
+smallint#!#varchar#!#smallint#!#varchar#!#int#!#int#!#smallint#!#smallint
+1#!#a_binary_7#!#-2#!#binary#!#7#!#7#!#<NULL>#!#1
+~~END~~
+
+EXEC sp_special_columns 'babel_sp_special_columns_vu_prepare_type_varbinary_7'
+go
+~~START~~
+smallint#!#varchar#!#smallint#!#varchar#!#int#!#int#!#smallint#!#smallint
+1#!#a_varbinary_7#!#-3#!#varbinary#!#7#!#7#!#<NULL>#!#1
+~~END~~
+
+
+-- Test unique indexes created after table creation
+exec sp_special_columns 'babel_sp_special_columns_vu_prepare_unique_idx_table1'
+go
+~~START~~
+smallint#!#varchar#!#smallint#!#varchar#!#int#!#int#!#smallint#!#smallint
+1#!#a#!#4#!#int#!#10#!#4#!#0#!#1
+~~END~~
+
+exec sp_special_columns 'babel_sp_special_columns_vu_prepare_unique_idx_table2' -- only primary key should be shown
+go
+~~START~~
+smallint#!#varchar#!#smallint#!#varchar#!#int#!#int#!#smallint#!#smallint
+1#!#b#!#4#!#int#!#10#!#4#!#0#!#1
+~~END~~
+
+
+EXEC sp_special_columns @table_name = 'tidentityintbig', @table_owner = 'dbo' , @col_type = 'R', @nullable = 'U', @ODBCVer = 3
+GO
+~~START~~
+smallint#!#varchar#!#smallint#!#varchar#!#int#!#int#!#smallint#!#smallint
+1#!#value_test#!#-5#!#bigint identity#!#19#!#8#!#0#!#1
+~~END~~
+
+
+EXEC sp_special_columns @table_name = 'tidentityintbigmulti', @table_owner = 'dbo' , @col_type = 'R', @nullable = 'U', @ODBCVer = 3
+GO
+~~START~~
+smallint#!#varchar#!#smallint#!#varchar#!#int#!#int#!#smallint#!#smallint
+1#!#test_scenario#!#1#!#char#!#60#!#60#!#<NULL>#!#1
+1#!#user_login#!#1#!#char#!#255#!#255#!#<NULL>#!#1
+1#!#value_test#!#-5#!#bigint identity#!#19#!#8#!#0#!#1
+~~END~~
+

@@ -1,0 +1,2 @@
+exec sys_sp_statistics_100_dep_vu_prepare_p1
+go

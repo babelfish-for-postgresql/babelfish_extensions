@@ -1,0 +1,3 @@
+--tsql
+exec babel_1309_dep_vu_prepare_p1
+go

@@ -1,0 +1,13 @@
+-- tsql
+create login user1 with password = 'abc';
+go
+
+create database db1;
+go
+
+use db1;
+go
+
+create user user1 for login user1;
+go
+

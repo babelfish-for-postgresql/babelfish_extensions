@@ -1,0 +1,6 @@
+create table babel_3000_dep_vu_prepare_t1(a text, b xml)
+go
+
+create procedure babel_3000_dep_vu_prepare_p1 as
+    exec sp_describe_first_result_set N'select * from babel_3000_dep_vu_prepare_t1'
+go

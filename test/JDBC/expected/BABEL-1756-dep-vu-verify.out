@@ -1,0 +1,7 @@
+exec babel_1756_dep_vu_prepare_p1
+GO
+~~START~~
+int#!#varchar#!#binary#!#nvarchar
+1#!#test_collation#!#<NULL>#!#default
+~~END~~
+
