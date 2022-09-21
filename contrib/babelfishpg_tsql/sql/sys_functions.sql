@@ -2522,6 +2522,70 @@ CREATE OR REPLACE FUNCTION sys.json_query(json_string text, path text default '$
 RETURNS sys.NVARCHAR
 AS 'babelfishpg_tsql', 'tsql_json_query' LANGUAGE C IMMUTABLE PARALLEL SAFE;
 
+--JSON_MODIFY
+CREATE OR REPLACE FUNCTION sys.json_modify(in json_string text,in json_path text, in new_value text)
+returns TEXT
+AS
+$BODY$
+DECLARE
+    new_path TEXT;
+    word_count INTEGER;
+    create_if_missing BOOL:='TRUE';
+    mode TEXT;
+    modifier TEXT;
+    append_modifier BOOL:='FALSE';
+BEGIN
+    -- Regular Expression to change the path format into expected jsonb_set path format--
+    
+    SELECT regexp_replace(json_path, '^.* ', '','ig') INTO new_path; -- To select the last word of the json_path string. \\\\\\Instead of this one can use split_part if regexp is slow
+    SELECT regexp_replace(new_path, '\$\.|]|\$\[' , '' , 'ig') INTO new_path; -- To remove the "$." and "]" sign from the string 
+    SELECT regexp_replace(new_path, '\.|\[' , ',' , 'ig') INTO new_path; -- To replace the "." and "[" with the "," to change into required format
+    SELECT CONCAT('{',new_path,'}') INTO new_path; -- Final required format of path by jsonb_set
+
+    --To calculate the word count in the json_path
+
+    SELECT LENGTH(json_path) - LENGTH(REPLACE(json_path, ' ', '')) + 1 INTO word_count;
+
+    -- This if else block is added to set the create_if_missing and append_modifier flags
+    if word_count=1 then --The json_path has only 1 word
+        create_if_missing='TRUE';
+        append_modifier='FALSE';
+    elsif word_count=2 then --The json_path has 2 words
+        SELECT SPLIT_PART(json_path COLLATE sql_latin1_general_cp1_cs_as, ' ',1) INTO mode;
+        if mode='append' then
+            append_modifier:='TRUE';
+        elsif mode='strict' then
+            create_if_missing:='FALSE';
+        end if;
+    elsif word_count=3 then --The json_path has 3 words
+        SELECT SPLIT_PART(json_path COLLATE sql_latin1_general_cp1_cs_as, ' ',1) INTO modifier;
+        SELECT SPLIT_PART(json_path COLLATE sql_latin1_general_cp1_cs_as, ' ',2) INTO mode;
+        if modifier='append' then
+            append_modifier:='TRUE';
+        end if;
+        if mode='strict' then
+            create_if_missing:='FALSE';
+        end if;
+    end if;    
+    
+    -- This if else bloack is to call the jsonb_set function based on the create_if_missing and append_modifier flags
+    -- if append_modifier then
+    --     -- to call jsonb_insert in order to perform the append function
+    --     return create_if_missing;
+    -- else
+    --     if new_value='null' then
+    --         --call jsonb_set_lax()
+    --     else
+    --         --call jsonb_set()
+    --     return append_modifier;
+    -- end if;
+
+    return jsonb_set(json_string,new_path,new_value);
+
+END
+$BODY$
+LANGUAGE plpgsql;
+
 CREATE OR REPLACE FUNCTION sys.openjson_object(json_string text)
 RETURNS TABLE
 (
