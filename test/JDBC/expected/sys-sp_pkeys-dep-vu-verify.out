@@ -1,0 +1,8 @@
+exec sys_sp_pkeys_dep_vu_prepare_p1
+go
+~~START~~
+varchar#!#varchar#!#varchar#!#varchar#!#smallint#!#varchar
+master#!#dbo#!#sys_sp_pkeys_dep_vu_prepare_t1#!#a#!#1#!#sys_sp_pkeys_dep_vu_prepare_t1_pkey
+~~END~~
+
+

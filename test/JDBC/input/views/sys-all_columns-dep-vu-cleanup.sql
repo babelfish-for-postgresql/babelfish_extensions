@@ -1,0 +1,5 @@
+DROP TABLE IF EXISTS sys_all_columns_dep_vu_prepare_table
+DROP PROCEDURE IF EXISTS sys_all_columns_dep_vu_prepare_proc1;
+DROP FUNCTION IF EXISTS sys_all_columns_dep_vu_prepare_func1;
+DROP VIEW IF EXISTS sys_all_columns_dep_vu_prepare_view1;
+GO

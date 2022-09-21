@@ -22,26 +22,6 @@ makeTSQLHexStringConst(char *str, int location)
 	return (Node *)n;
 }
 
-/* tsql_completeDefaultValues
- * fill NULL as default value for any trailing params
- * following the first param with default value
- */
-static void
-tsql_completeDefaultValues(List *parameters)
-{
-	ListCell   *i;
-	bool fill = false;
-	foreach(i, parameters)
-	{
-		FunctionParameter *p = (FunctionParameter *) lfirst(i);
-		if (p->defexpr)
-			fill = true;
-
-		if (fill && !p->defexpr)
-			p->defexpr = makeNullAConst(0);  /* no location available */
-	}
-}
-
 /* TsqlSystemFuncName()
  * Build a properly-qualified reference to a tsql built-in function.
  */
