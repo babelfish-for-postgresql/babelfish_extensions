@@ -7,6 +7,25 @@ GO
 SELECT 1;
 GO
 
+-- create some functions so that consistency check runs on babelfish_function_ext catalog
+CREATE FUNCTION babel_2403_func1(@a int, @b varchar = 'abc', @c binary(8))
+RETURNS INT
+AS
+BEGIN
+	RETURN 1;
+END;
+GO
+
+CREATE SCHEMA babel_2403_schema1;
+GO
+
+CREATE PROCEDURE babel_2403_schema1.babel_2403_proc1 @a int = 1, @b varchar
+AS
+BEGIN
+	SELECT @a, @b;
+END;
+GO
+
 -- psql
 -- Output inconsistency, should be empty
 SELECT * FROM sys.babelfish_inconsistent_metadata();
@@ -41,4 +60,13 @@ GO
 
 -- tsql
 SELECT 1;
+GO
+
+DROP FUNCTION babel_2403_func1;
+GO
+
+DROP PROCEDURE babel_2403_schema1.babel_2403_proc1;
+GO
+
+DROP SCHEMA babel_2403_schema1;
 GO

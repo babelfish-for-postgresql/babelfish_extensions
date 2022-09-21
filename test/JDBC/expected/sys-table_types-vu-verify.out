@@ -1,0 +1,78 @@
+-- tsql
+-- Note : table types's database visibility has been already tested in sys-types.sql
+select name
+      , system_type_id
+      , principal_id
+      , max_length
+      , precision
+      , scale
+      , collation_name
+      , is_nullable
+      , is_user_defined
+      , is_assembly_type
+      , default_object_id
+      , rule_object_id
+      , is_table_type
+      , is_memory_optimized
+from sys.table_types
+where name = 'sys_table_types_vu_prepare_tt';
+GO
+~~START~~
+text#!#int#!#int#!#smallint#!#int#!#int#!#varchar#!#int#!#int#!#int#!#int#!#int#!#int#!#bit
+sys_table_types_vu_prepare_tt#!#0#!#<NULL>#!#-1#!#0#!#0#!#<NULL>#!#0#!#1#!#0#!#0#!#0#!#1#!#0
+~~END~~
+
+
+select principal_id
+      , parent_object_id
+      , type
+      , type_desc
+      , create_date
+      , modify_date
+      , is_ms_shipped
+      , is_published
+      , is_schema_published
+from sys.objects
+where name like 'TT_sys_table_types_vu_prepare_tt%';
+GO
+~~START~~
+int#!#int#!#char#!#nvarchar#!#datetime#!#datetime#!#bit#!#bit#!#bit
+<NULL>#!#0#!#TT#!#TABLE_TYPE#!#<NULL>#!#<NULL>#!#1#!#0#!#0
+~~END~~
+
+
+select principal_id
+      , parent_object_id
+      , type
+      , type_desc
+      , create_date
+      , modify_date
+      , is_ms_shipped
+      , is_published
+      , is_schema_published
+from sys.all_objects
+where name like 'TT_sys_table_types_vu_prepare_tt%';
+GO
+~~START~~
+int#!#int#!#char#!#nvarchar#!#datetime#!#datetime#!#bit#!#bit#!#bit
+<NULL>#!#0#!#TT#!#TABLE_TYPE#!#<NULL>#!#<NULL>#!#0#!#0#!#0
+~~END~~
+
+
+-- tsql
+-- above composite type should not be visible in sys.table_types and it should return is_table_type(oid) as false
+select count(*) from sys.table_types where name='comp_type';
+GO
+~~START~~
+int
+0
+~~END~~
+
+
+select sys.is_table_type(typrelid) from pg_type where typname='comp_type';
+GO
+~~START~~
+bit
+0
+~~END~~
+

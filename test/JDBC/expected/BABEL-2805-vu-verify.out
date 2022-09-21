@@ -1,0 +1,11 @@
+select * from babel_2805_vu_v1
+go
+~~START~~
+int#!#int
+1#!#2
+3#!#4
+5#!#6
+7#!#8
+9#!#10
+~~END~~
+

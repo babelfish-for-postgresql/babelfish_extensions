@@ -1,0 +1,7 @@
+exec sys_sp_statistics_dep_vu_prepare_p1
+go
+~~START~~
+varchar#!#varchar#!#varchar#!#smallint#!#varchar#!#varchar#!#smallint#!#smallint#!#varchar#!#varchar#!#int#!#int#!#varchar
+master#!#dbo#!#sys_sp_statistics_dep_vu_prepare_t1#!#<NULL>#!#<NULL>#!#<NULL>#!#0#!#<NULL>#!#<NULL>#!#<NULL>#!#-1#!#0#!#<NULL>
+~~END~~
+

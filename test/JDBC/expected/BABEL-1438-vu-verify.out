@@ -1,0 +1,9 @@
+-- Test with unexist db as param
+EXEC sp_helpdb 'hello'
+GO
+~~START~~
+nvarchar#!#nvarchar#!#nvarchar#!#int#!#nvarchar#!#nvarchar#!#tinyint
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: The database 'hello' does not exist. Supply a valid database name. To see available databases, use sys.databases.)~~
+
