@@ -246,6 +246,20 @@ char * TdsEncodingConversion(const char *s, int len, int encoding, int *encodedB
 				 errmsg("Could not encode the string to the client encoding")));
 }
 
+char * TdsEncodingConversionRecv(const char *s, int len, int encoding, int *encodedByteLen)
+{
+	if (!collation_callbacks_ptr)
+		init_collation_callbacks();
+
+	if (collation_callbacks_ptr && collation_callbacks_ptr->EncodingConversionRecv)
+		return (*collation_callbacks_ptr->EncodingConversionRecv)(s, len, encoding, encodedByteLen);
+	else
+		/* unlikely */
+		ereport(ERROR, 
+				(errcode(ERRCODE_INTERNAL_ERROR),
+				 errmsg("Could not encode the string to the server encoding")));
+}
+
 coll_info_t TdsLookupCollationTableCallback(Oid oid)
 {
 	if (!collation_callbacks_ptr)
@@ -315,9 +329,10 @@ TdsAnyToServerEncodingConversion(Oid oid, pg_enc enc, char *str, int len)
 	Oid 		typioparam;
 	char 		*pstring;
 	Datum 		pval;
+	int			actualLen;
 
 	getTypeInputInfo(oid, &typinput, &typioparam);
-	pstring = pg_any_to_server(str, len, enc);
+	pstring = TdsEncodingConversionRecv(str, len, enc, &actualLen);
 	pval = OidInputFunctionCall(typinput, pstring, typioparam, -1);
 
 	/* Free result of encoding conversion, if any */

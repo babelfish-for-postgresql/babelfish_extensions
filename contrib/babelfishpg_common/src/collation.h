@@ -71,6 +71,8 @@ typedef struct collation_callbacks
 	/* Function pointers set up by the plugin */
 	char* (*EncodingConversion)(const char *s, int len, int encoding, int *encodedByteLen);
 
+	char* (*EncodingConversionRecv)(const char *s, int len, int encoding, int *encodedByteLen);
+
 	Oid (*get_server_collation_oid_internal)(bool missingOk);
 
 	coll_info (*lookup_collation_table_callback) (Oid oid);
