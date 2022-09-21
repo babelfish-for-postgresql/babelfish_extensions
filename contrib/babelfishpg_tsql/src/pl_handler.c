@@ -78,7 +78,6 @@
 #include "pltsql.h"
 #include "pl_explain.h"
 #include "datatypes.h"
-#include "src/encoding/encoding.h"
 
 #include "access/xact.h"
 
