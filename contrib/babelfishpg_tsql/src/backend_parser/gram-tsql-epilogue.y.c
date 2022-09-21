@@ -740,17 +740,18 @@ tsql_update_delete_stmt_with_top(Node *top_clause, RangeVar *relation, Node
  */
 static void
 tsql_update_delete_stmt_from_clause_alias_helper(RangeVar *relation,RangeVar *rv)
-{
-	if (relation->schemaname)
+{	
+	if (rv->alias && rv->alias->aliasname &&
+				strcmp(rv->alias->aliasname, relation->relname) == 0)
 	{
-		ereport(ERROR,
-				(errcode(ERRCODE_SYNTAX_ERROR),
-					errmsg("The correlation name \'%s\' has the same exposed name as table \'%s.%s\'.",
-						rv->alias->aliasname, relation->schemaname,
-						relation->relname)));
-	}
-	else
-	{
+		if (relation->schemaname)
+		{
+			ereport(ERROR,
+					(errcode(ERRCODE_SYNTAX_ERROR),
+						errmsg("The correlation name \'%s\' has the same exposed name as table \'%s.%s\'.",
+							rv->alias->aliasname, relation->schemaname,
+							relation->relname)));
+		}
 		/*
 			* Save the original alias name so that "inserted" and
 			* "deleted" tables in OUTPUT clause can be linked to it
@@ -774,7 +775,6 @@ tsql_update_delete_stmt_from_clause_alias_helper(RangeVar *relation,RangeVar *rv
 			* of the target relation
 			*/
 		rv->alias = NULL;
-		return;
 	}
 }
 
@@ -790,11 +790,7 @@ tsql_update_delete_stmt_from_clause_alias(RangeVar *relation, List *from_clause)
 		if (IsA(n, RangeVar))
 		{
 			RangeVar *rv = (RangeVar *) n;
-			if (rv->alias && rv->alias->aliasname &&
-				strcmp(rv->alias->aliasname, relation->relname) == 0)
-			{
-				tsql_update_delete_stmt_from_clause_alias_helper(relation,rv);
-			}
+			tsql_update_delete_stmt_from_clause_alias_helper(relation,rv);
 		}
 		else if (IsA(n, JoinExpr))
 		{
@@ -802,20 +798,12 @@ tsql_update_delete_stmt_from_clause_alias(RangeVar *relation, List *from_clause)
 			if(IsA(jexpr->larg, RangeVar))
 			{
 				larg = (RangeVar*)(jexpr->larg);
-				if(larg->alias && larg->alias->aliasname && 
-					strcmp(larg->alias->aliasname, relation->relname) == 0)
-				{
-					tsql_update_delete_stmt_from_clause_alias_helper(relation,larg);
-				}
-			} 
-			else if(IsA(jexpr->rarg, RangeVar))
+				tsql_update_delete_stmt_from_clause_alias_helper(relation,larg);
+			}
+			if(IsA(jexpr->rarg, RangeVar))
 			{
 				rarg = (RangeVar*)(jexpr->rarg);
-				if(rarg->alias && rarg->alias->aliasname && 
-					strcmp(rarg->alias->aliasname, relation->relname) == 0)
-				{
-					tsql_update_delete_stmt_from_clause_alias_helper(relation,rarg);
-				}
+				tsql_update_delete_stmt_from_clause_alias_helper(relation,rarg);
 			}	
 		}
 		larg = NULL;

@@ -61,7 +61,7 @@ CREATE TABLE BABEL_3380_vu_prepare_temp7 (id int)
 CREATE TABLE BABEL_3380_vu_prepare_temp8 (id int)
 INSERT INTO BABEL_3380_vu_prepare_temp7 VALUES(1)
 INSERT INTO BABEL_3380_vu_prepare_temp8 VALUES(1)
-UPDATE t8
+UPDATE t7
 SET id = 50
 FROM BABEL_3380_vu_prepare_temp8 t8
 INNER JOIN BABEL_3380_vu_prepare_temp7 t7

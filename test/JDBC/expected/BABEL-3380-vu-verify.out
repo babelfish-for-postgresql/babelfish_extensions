@@ -58,12 +58,12 @@ SELECT * FROM BABEL_3380_vu_prepare_temp8
 GO
 ~~START~~
 int
-1
+50
 ~~END~~
 
 ~~START~~
 int
-50
+1
 ~~END~~
 
 
