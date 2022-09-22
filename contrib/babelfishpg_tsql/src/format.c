@@ -1895,7 +1895,7 @@ format_exponential(Numeric numeric_val, StringInfo format_res, char pattern, cha
 	len = format_res->len;
 
 	// The last 4 characters are EEEE, appended in numeric_to_string
-	if (len >= 5 && format_res->data[len - 5] != 'E' && format_res->data[len - 5] != 'e')
+	if (len >= 5 && buf[len - 5] != 'E' && buf->data[len - 5] != 'e')
 	{
 		temp = len - 2;
 		// Copy the last 3 characters over one.
