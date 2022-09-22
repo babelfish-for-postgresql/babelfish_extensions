@@ -1,1 +1,2 @@
--- No Cleanup Needed --
+DROP TABLE test_sp_helpdbfixedrole_tbl
+GO

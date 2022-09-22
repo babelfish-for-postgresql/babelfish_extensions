@@ -1,4 +1,9 @@
-EXEC sp_helpdbfixedrole
+INSERT INTO test_sp_helpdbfixedrole_tbl (DbFixedRole, Description) EXEC sp_helpdbfixedrole
+GO
+~~ROW COUNT: 1~~
+
+
+SELECT DbFixedRole, Description FROM test_sp_helpdbfixedrole_tbl
 GO
 ~~START~~
 varchar#!#nvarchar
@@ -6,7 +11,15 @@ db_owner#!#DB Owners
 ~~END~~
 
 
-EXEC sp_helpdbfixedrole 'db_owner'
+TRUNCATE TABLE test_sp_helpdbfixedrole_tbl
+GO
+
+INSERT INTO test_sp_helpdbfixedrole_tbl (DbFixedRole, Description) EXEC sp_helpdbfixedrole 'db_owner'
+GO
+~~ROW COUNT: 1~~
+
+
+SELECT DbFixedRole, Description FROM test_sp_helpdbfixedrole_tbl
 GO
 ~~START~~
 varchar#!#nvarchar
@@ -14,7 +27,15 @@ db_owner#!#DB Owners
 ~~END~~
 
 
-EXEC sp_helpdbfixedrole 'DB_OWNER    '
+TRUNCATE TABLE test_sp_helpdbfixedrole_tbl
+GO
+
+INSERT INTO test_sp_helpdbfixedrole_tbl (DbFixedRole, Description) EXEC sp_helpdbfixedrole 'DB_OWNER    '
+GO
+~~ROW COUNT: 1~~
+
+
+SELECT DbFixedRole, Description FROM test_sp_helpdbfixedrole_tbl
 GO
 ~~START~~
 varchar#!#nvarchar
@@ -22,49 +43,27 @@ db_owner#!#DB Owners
 ~~END~~
 
 
-EXEC sp_helpdbfixedrole 'db_accessadmin'
+TRUNCATE TABLE test_sp_helpdbfixedrole_tbl
 GO
-~~START~~
-varchar#!#nvarchar
-~~END~~
 
-EXEC sp_helpdbfixedrole 'DB_securityadmin'
+INSERT INTO test_sp_helpdbfixedrole_tbl (DbFixedRole, Description) EXEC sp_helpdbfixedrole 'db_accessadmin'
 GO
-~~START~~
-varchar#!#nvarchar
-~~END~~
-
-EXEC sp_helpdbfixedrole 'db_ddladmin   '
+INSERT INTO test_sp_helpdbfixedrole_tbl (DbFixedRole, Description) EXEC sp_helpdbfixedrole 'DB_securityadmin'
 GO
-~~START~~
-varchar#!#nvarchar
-~~END~~
-
-EXEC sp_helpdbfixedrole 'DB_backupoperator     '
+INSERT INTO test_sp_helpdbfixedrole_tbl (DbFixedRole, Description) EXEC sp_helpdbfixedrole 'db_ddladmin   '
 GO
-~~START~~
-varchar#!#nvarchar
-~~END~~
-
-EXEC sp_helpdbfixedrole 'db_datareader'
+INSERT INTO test_sp_helpdbfixedrole_tbl (DbFixedRole, Description) EXEC sp_helpdbfixedrole 'DB_backupoperator     '
 GO
-~~START~~
-varchar#!#nvarchar
-~~END~~
-
-EXEC sp_helpdbfixedrole 'db_datawriter'
+INSERT INTO test_sp_helpdbfixedrole_tbl (DbFixedRole, Description) EXEC sp_helpdbfixedrole 'db_datareader'
 GO
-~~START~~
-varchar#!#nvarchar
-~~END~~
-
-EXEC sp_helpdbfixedrole 'db_denydatareader'
+INSERT INTO test_sp_helpdbfixedrole_tbl (DbFixedRole, Description) EXEC sp_helpdbfixedrole 'db_datawriter'
 GO
-~~START~~
-varchar#!#nvarchar
-~~END~~
+INSERT INTO test_sp_helpdbfixedrole_tbl (DbFixedRole, Description) EXEC sp_helpdbfixedrole 'db_denydatareader'
+GO
+INSERT INTO test_sp_helpdbfixedrole_tbl (DbFixedRole, Description) EXEC sp_helpdbfixedrole 'db_denydatawriter'
+GO
 
-EXEC sp_helpdbfixedrole 'db_denydatawriter'
+SELECT DbFixedRole, Description FROM test_sp_helpdbfixedrole_tbl
 GO
 ~~START~~
 varchar#!#nvarchar
