@@ -6,22 +6,22 @@ SELECT DISTINCT
        xtype,
        CASE WHEN crdate IS NOT NULL
             THEN 'Valid create date!'
-            ELSE 'Invalid create date!'
+            ELSE 'Create date found NULL!'
        END,
        CASE WHEN refdate IS NOT NULL
-            THEN 'Valid create date!'
-            ELSE 'Invalid create date!'
+            THEN 'Valid ref date!'
+            ELSE 'ref date found NULL!'
        END
 FROM sys.sysobjects
        WHERE name LIKE '%%babel_3010_vu_prepare%%' ORDER BY name;
 GO
 ~~START~~
 varchar#!#char#!#text#!#text
-babel_3010_vu_prepare_f1#!#FN#!#Valid create date!#!#Valid create date!
-babel_3010_vu_prepare_p1#!#P #!#Valid create date!#!#Valid create date!
-babel_3010_vu_prepare_t1#!#U #!#Valid create date!#!#Valid create date!
-babel_3010_vu_prepare_trig1#!#TR#!#Valid create date!#!#Valid create date!
-babel_3010_vu_prepare_typ1#!#TT#!#Valid create date!#!#Valid create date!
-babel_3010_vu_prepare_v1#!#V #!#Valid create date!#!#Valid create date!
+babel_3010_vu_prepare_f1#!#FN#!#Valid create date!#!#Valid ref date!
+babel_3010_vu_prepare_p1#!#P #!#Valid create date!#!#Valid ref date!
+babel_3010_vu_prepare_t1#!#U #!#Valid create date!#!#Valid ref date!
+babel_3010_vu_prepare_trig1#!#TR#!#Valid create date!#!#Valid ref date!
+babel_3010_vu_prepare_typ1#!#TT#!#Valid create date!#!#Valid ref date!
+babel_3010_vu_prepare_v1#!#V #!#Valid create date!#!#Valid ref date!
 ~~END~~
 

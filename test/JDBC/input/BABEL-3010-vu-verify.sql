@@ -6,11 +6,11 @@ SELECT DISTINCT
        xtype,
        CASE WHEN crdate IS NOT NULL
             THEN 'Valid create date!'
-            ELSE 'Invalid create date!'
+            ELSE 'Create date found NULL!'
        END,
        CASE WHEN refdate IS NOT NULL
-            THEN 'Valid create date!'
-            ELSE 'Invalid create date!'
+            THEN 'Valid ref date!'
+            ELSE 'ref date found NULL!'
        END
 FROM sys.sysobjects
        WHERE name LIKE '%%babel_3010_vu_prepare%%' ORDER BY name;
