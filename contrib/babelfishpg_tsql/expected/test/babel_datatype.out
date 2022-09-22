@@ -106,11 +106,12 @@ ERROR:  INSERT has more expressions than target columns
 LINE 1: ... into testing1 (mon, smon) values ($100,123.4567, $123.9999)...
                                                              ^
 -- Test other allowed currency symbols with/without quote
--- TODO: fix BABEL-2636 "Money datatype doesn't support any currency symbol other than Dollar"
 select CAST(€100.123 AS money);
-ERROR:  invalid input syntax for type numeric: "��100.123"
-LINE 1: select CAST(€100.123 AS money);
-                    ^
+  money   
+----------
+ 100.1230
+(1 row)
+
 select CAST('€100.123' AS money);
   money   
 ----------
@@ -118,13 +119,17 @@ select CAST('€100.123' AS money);
 (1 row)
 
 select CAST(¢100.123 AS money);
-ERROR:  invalid input syntax for type numeric: "�100.123"
-LINE 1: select CAST(¢100.123 AS money);
-                    ^
+  money   
+----------
+ 100.1230
+(1 row)
+
 select CAST(£100.123 AS money);
-ERROR:  invalid input syntax for type numeric: "�100.123"
-LINE 1: select CAST(£100.123 AS money);
-                    ^
+  money   
+----------
+ 100.1230
+(1 row)
+
 select CAST('£100.123' AS money);
   money   
 ----------
@@ -132,121 +137,179 @@ select CAST('£100.123' AS money);
 (1 row)
 
 select CAST(¤100.123 AS money);
-ERROR:  invalid input syntax for type numeric: "�100.123"
-LINE 1: select CAST(¤100.123 AS money);
-                    ^
+  money   
+----------
+ 100.1230
+(1 row)
+
 select CAST(¥100.123 AS money);
-ERROR:  invalid input syntax for type numeric: "�100.123"
-LINE 1: select CAST(¥100.123 AS money);
-                    ^
+  money   
+----------
+ 100.1230
+(1 row)
+
 select CAST(৲100.123 AS money);
-ERROR:  invalid input syntax for type numeric: "��100.123"
-LINE 1: select CAST(৲100.123 AS money);
-                    ^
+  money   
+----------
+ 100.1230
+(1 row)
+
 select CAST(৳100.123 AS money);
-ERROR:  invalid input syntax for type numeric: "��100.123"
-LINE 1: select CAST(৳100.123 AS money);
-                    ^
+  money   
+----------
+ 100.1230
+(1 row)
+
 select CAST(฿100.123 AS money);
-ERROR:  invalid input syntax for type numeric: "��100.123"
-LINE 1: select CAST(฿100.123 AS money);
-                    ^
+  money   
+----------
+ 100.1230
+(1 row)
+
 select CAST(៛100.123 AS money);
-ERROR:  invalid input syntax for type numeric: "��100.123"
-LINE 1: select CAST(៛100.123 AS money);
-                    ^
+  money   
+----------
+ 100.1230
+(1 row)
+
 select CAST(₠100.123 AS money);
-ERROR:  invalid input syntax for type numeric: "��100.123"
-LINE 1: select CAST(₠100.123 AS money);
-                    ^
+  money   
+----------
+ 100.1230
+(1 row)
+
 select CAST(₡100.123 AS money);
-ERROR:  invalid input syntax for type numeric: "��100.123"
-LINE 1: select CAST(₡100.123 AS money);
-                    ^
+  money   
+----------
+ 100.1230
+(1 row)
+
 select CAST(₢100.123 AS money);
-ERROR:  invalid input syntax for type numeric: "��100.123"
-LINE 1: select CAST(₢100.123 AS money);
-                    ^
+  money   
+----------
+ 100.1230
+(1 row)
+
 select CAST(₣100.123 AS money);
-ERROR:  invalid input syntax for type numeric: "��100.123"
-LINE 1: select CAST(₣100.123 AS money);
-                    ^
+  money   
+----------
+ 100.1230
+(1 row)
+
 select CAST(₤100.123 AS money);
-ERROR:  invalid input syntax for type numeric: "��100.123"
-LINE 1: select CAST(₤100.123 AS money);
-                    ^
+  money   
+----------
+ 100.1230
+(1 row)
+
 select CAST(₥100.123 AS money);
-ERROR:  invalid input syntax for type numeric: "��100.123"
-LINE 1: select CAST(₥100.123 AS money);
-                    ^
+  money   
+----------
+ 100.1230
+(1 row)
+
 select CAST(₦100.123 AS money);
-ERROR:  invalid input syntax for type numeric: "��100.123"
-LINE 1: select CAST(₦100.123 AS money);
-                    ^
+  money   
+----------
+ 100.1230
+(1 row)
+
 select CAST(₧100.123 AS money);
-ERROR:  invalid input syntax for type numeric: "��100.123"
-LINE 1: select CAST(₧100.123 AS money);
-                    ^
+  money   
+----------
+ 100.1230
+(1 row)
+
 select CAST(₨100.123 AS money);
-ERROR:  invalid input syntax for type numeric: "��100.123"
-LINE 1: select CAST(₨100.123 AS money);
-                    ^
+  money   
+----------
+ 100.1230
+(1 row)
+
 select CAST(₩100.123 AS money);
-ERROR:  invalid input syntax for type numeric: "��100.123"
-LINE 1: select CAST(₩100.123 AS money);
-                    ^
+  money   
+----------
+ 100.1230
+(1 row)
+
 select CAST(₪100.123 AS money);
-ERROR:  invalid input syntax for type numeric: "��100.123"
-LINE 1: select CAST(₪100.123 AS money);
-                    ^
+  money   
+----------
+ 100.1230
+(1 row)
+
 select CAST(₫100.123 AS money);
-ERROR:  invalid input syntax for type numeric: "��100.123"
-LINE 1: select CAST(₫100.123 AS money);
-                    ^
+  money   
+----------
+ 100.1230
+(1 row)
+
 select CAST(₭100.123 AS money);
-ERROR:  invalid input syntax for type numeric: "��100.123"
-LINE 1: select CAST(₭100.123 AS money);
-                    ^
+  money   
+----------
+ 100.1230
+(1 row)
+
 select CAST(₮100.123 AS money);
-ERROR:  invalid input syntax for type numeric: "��100.123"
-LINE 1: select CAST(₮100.123 AS money);
-                    ^
+  money   
+----------
+ 100.1230
+(1 row)
+
 select CAST(₯100.123 AS money);
-ERROR:  invalid input syntax for type numeric: "��100.123"
-LINE 1: select CAST(₯100.123 AS money);
-                    ^
+  money   
+----------
+ 100.1230
+(1 row)
+
 select CAST(₰100.123 AS money);
-ERROR:  invalid input syntax for type numeric: "��100.123"
-LINE 1: select CAST(₰100.123 AS money);
-                    ^
+  money   
+----------
+ 100.1230
+(1 row)
+
 select CAST(₱100.123 AS money);
-ERROR:  invalid input syntax for type numeric: "��100.123"
-LINE 1: select CAST(₱100.123 AS money);
-                    ^
+  money   
+----------
+ 100.1230
+(1 row)
+
 select CAST(﷼100.123 AS money);
-ERROR:  invalid input syntax for type numeric: "��100.123"
-LINE 1: select CAST(﷼100.123 AS money);
-                    ^
+  money   
+----------
+ 100.1230
+(1 row)
+
 select CAST(﹩100.123 AS money);
-ERROR:  invalid input syntax for type numeric: "��100.123"
-LINE 1: select CAST(﹩100.123 AS money);
-                    ^
+  money   
+----------
+ 100.1230
+(1 row)
+
 select CAST(＄100.123 AS money);
-ERROR:  invalid input syntax for type numeric: "��100.123"
-LINE 1: select CAST(＄100.123 AS money);
-                    ^
+  money   
+----------
+ 100.1230
+(1 row)
+
 select CAST(￠100.123 AS money);
-ERROR:  invalid input syntax for type numeric: "��100.123"
-LINE 1: select CAST(￠100.123 AS money);
-                    ^
+  money   
+----------
+ 100.1230
+(1 row)
+
 select CAST(￡100.123 AS money);
-ERROR:  invalid input syntax for type numeric: "��100.123"
-LINE 1: select CAST(￡100.123 AS money);
-                    ^
+  money   
+----------
+ 100.1230
+(1 row)
+
 select CAST(￥100.123 AS money);
-ERROR:  invalid input syntax for type numeric: "��100.123"
-LINE 1: select CAST(￥100.123 AS money);
-                    ^
+  money   
+----------
+ 100.1230
+(1 row)
+
 select CAST('￥100.123' AS money);
   money   
 ----------
@@ -254,9 +317,11 @@ select CAST('￥100.123' AS money);
 (1 row)
 
 select CAST(￦100.123 AS money);
-ERROR:  invalid input syntax for type numeric: "��100.123"
-LINE 1: select CAST(￦100.123 AS money);
-                    ^
+  money   
+----------
+ 100.1230
+(1 row)
+
 -- Test unsupoorted currency symbol
 select CAST(￩100.123 AS money);
 ERROR:  syntax error at or near ".123"
@@ -727,6 +792,9 @@ WARNING:  TIMESTAMP(7) WITH TIME ZONE precision reduced to maximum allowed, 6
 LINE 1: create table testing1(ts DATETIME, tstz DATETIMEOFFSET(7));
                                                 ^
 WARNING:  TIMESTAMP(7) WITH TIME ZONE precision reduced to maximum allowed, 6
+LINE 1: create table testing1(ts DATETIME, tstz DATETIMEOFFSET(7));
+                                                ^
+WARNING:  TIMESTAMP(7) WITH TIME ZONE precision reduced to maximum allowed, 6
 insert into testing1 (ts, tstz) values ('2020-03-15 09:00:00', '2020-03-15 09:00:00+8');
 select * from testing1;
             ts            |              tstz               
@@ -761,6 +829,9 @@ ERROR:  TIMESTAMP(-1) precision must not be negative
 LINE 1: select CAST('2020-03-15 09:00:00.123456' AS datetime2(-1));
                                                     ^
 create table testing1(ts DATETIME, tstz DATETIME2(7));
+WARNING:  TIMESTAMP(7) precision reduced to maximum allowed, 6
+LINE 1: create table testing1(ts DATETIME, tstz DATETIME2(7));
+                                                ^
 WARNING:  TIMESTAMP(7) precision reduced to maximum allowed, 6
 LINE 1: create table testing1(ts DATETIME, tstz DATETIME2(7));
                                                 ^
@@ -931,14 +1002,6 @@ select CAST('£' AS sys.varchar(1));		-- allowed
  £
 (1 row)
 
-select CAST('😀' AS char(1));			-- not allowed
-ERROR:  value too long for type character(1) as UTF16 output
-select CAST('😀' AS sys.nchar(1));		-- not allowed
-ERROR:  value too long for type character(1) as UTF16 output
-select CAST('😀' AS sys.nvarchar(1));	-- not allowed
-ERROR:  value too long for type character varying(1) as UTF16 output
-select CAST('😀' AS sys.varchar(1));	-- not allowed
-ERROR:  value too long for type character varying(1) as UTF16 output
 -- Check that things work the same in postgres dialect
 reset babelfishpg_tsql.sql_dialect;
 select CAST('£' AS char(1));
@@ -965,18 +1028,6 @@ select CAST('£' AS sys.varchar(1));
  £
 (1 row)
 
-select CAST('😀' AS char(1));
- bpchar 
---------
- 😀
-(1 row)
-
-select CAST('😀' AS sys.nchar(1)); -- this should not be allowed as nchar is T-SQL type
-ERROR:  value too long for type character(1) as UTF16 output
-select CAST('😀' AS sys.nvarchar(1)); -- this should not be allowed as nvarchar is T-SQL type
-ERROR:  value too long for type character varying(1) as UTF16 output
-select CAST('😀' AS sys.varchar(1)); -- this should not be allowed as sys.varchar is T-SQL type
-ERROR:  value too long for type character varying(1) as UTF16 output
 set babelfishpg_tsql.sql_dialect = 'tsql';
 -- truncate input on explicit cast
 select CAST('ab' AS char(1));
@@ -1003,15 +1054,6 @@ select CAST('ab' AS sys.varchar(1));
  a
 (1 row)
 
--- But still don't allow surrogate pairs to exceed max length
-select CAST('😀b' AS char(1));
-ERROR:  value too long for type character(1) as UTF16 output
-select CAST('😀b' AS nchar(1));
-ERROR:  value too long for type character(1) as UTF16 output
-select CAST('😀b' AS nvarchar(1));
-ERROR:  value too long for type character varying(1) as UTF16 output
-select CAST('😀b' AS sys.varchar(1));
-ERROR:  value too long for type character varying(1) as UTF16 output
 -- default length of nchar/char is 1 in tsql (and pg)
 create table testing1(col nchar);
 \d testing1;
@@ -1023,8 +1065,6 @@ create table testing1(col nchar);
 -- check length at insert
 insert into testing1 (col) select 'a';
 insert into testing1 (col) select '£';
-insert into testing1 (col) select '😀';
-ERROR:  value too long for type character(1) as UTF16 output
 insert into testing1 (col) select 'ab';
 ERROR:  value too long for type character(1)
 -- space is automatically truncated
@@ -1041,8 +1081,6 @@ select * from testing1;
 create table testing2(col nvarchar);
 insert into testing2 (col) select 'a';
 insert into testing2 (col) select '£';
-insert into testing2 (col) select '😀';
-ERROR:  value too long for type character varying(1) as UTF16 output
 insert into testing2 (col) select 'ab';
 ERROR:  value too long for type character varying(1)
 -- space is automatically truncated
@@ -1059,15 +1097,11 @@ select * from testing2;
 create table testing4(col sys.varchar);
 insert into testing4 (col) select 'a';
 insert into testing4 (col) select '£';
-insert into testing4 (col) select '😀';
-ERROR:  value too long for type character varying(1) as UTF16 output
 insert into testing4 (col) select 'ab';
 ERROR:  value too long for type character varying(1)
 -- space is automatically truncated
 insert into testing4 (col) select 'c ';
 insert into testing2 (col) select '£ ';
-insert into testing2 (col) select '😀 ';
-ERROR:  value too long for type character varying(1) as UTF16 output
 select * from testing4;
  col 
 -----
@@ -1230,8 +1264,6 @@ select CAST('ab£' AS varchar3);
  ab£
 (1 row)
 
-select CAST('ab😀' AS varchar3);
-ERROR:  value too long for type character varying(3) as UTF16 output
 select CAST('abcd' AS varchar3);
  varchar3 
 ----------
@@ -1436,4 +1468,4 @@ SELECT set_config('babelfishpg_tsql.sql_dialect', 'postgres', false);
 (1 row)
 
 \c regression
-\connect: FATAL:  database "regression" does not exist
+\connect: connection to server on socket "/tmp/.s.PGSQL.5432" failed: FATAL:  database "regression" does not exist

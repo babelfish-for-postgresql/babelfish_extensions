@@ -1,0 +1,1417 @@
+
+-- Supported currency symbol by SQL it should also work with BABEL
+-- dollar
+select CAST($100.123 AS money);
+GO
+~~START~~
+money
+100.1230
+~~END~~
+
+-- cent
+select CAST(¢100.123 AS money);
+GO
+~~START~~
+money
+100.1230
+~~END~~
+
+-- currency
+select CAST(¤100.123 AS money);
+GO
+~~START~~
+money
+100.1230
+~~END~~
+
+-- pound
+select CAST(£100.123 AS money);
+GO
+~~START~~
+money
+100.1230
+~~END~~
+
+-- yen
+select CAST(¥100.123 AS money);
+GO
+~~START~~
+money
+100.1230
+~~END~~
+
+-- bengali rupee mark
+select CAST(৲100.123 AS money);
+GO
+~~START~~
+money
+100.1230
+~~END~~
+
+-- bengali rupee sign
+select CAST(৳100.123 AS money);
+GO
+~~START~~
+money
+100.1230
+~~END~~
+
+-- thai baht
+select CAST(฿100.123 AS money);
+GO
+~~START~~
+money
+100.1230
+~~END~~
+
+-- khmer riel 
+select CAST(៛100.123 AS money);
+GO
+~~START~~
+money
+100.1230
+~~END~~
+
+-- euro currency
+select CAST(₠100.123 AS money);
+GO
+~~START~~
+money
+100.1230
+~~END~~
+
+-- colon sign 
+select CAST(₡100.123 AS money);
+GO
+~~START~~
+money
+100.1230
+~~END~~
+
+-- cruzeiro 
+select CAST(₢100.123 AS money);
+GO
+~~START~~
+money
+100.1230
+~~END~~
+
+-- french franc
+select CAST(₣100.123 AS money);
+GO
+~~START~~
+money
+100.1230
+~~END~~
+
+-- lira 
+select CAST(₤100.123 AS money);
+GO
+~~START~~
+money
+100.1230
+~~END~~
+
+-- mill
+select CAST(₥100.123 AS money);
+GO
+~~START~~
+money
+100.1230
+~~END~~
+
+-- naira
+select CAST(₦100.123 AS money);
+GO
+~~START~~
+money
+100.1230
+~~END~~
+
+-- peseta 
+select CAST(₧100.123 AS money);
+GO
+~~START~~
+money
+100.1230
+~~END~~
+
+-- rupee
+select CAST(₨100.123 AS money);
+GO
+~~START~~
+money
+100.1230
+~~END~~
+
+-- won
+select CAST(₩100.123 AS money);
+GO
+~~START~~
+money
+100.1230
+~~END~~
+
+-- new sheqel
+select CAST(₪100.123 AS money);
+GO
+~~START~~
+money
+100.1230
+~~END~~
+
+-- dong
+select CAST(₫100.123 AS money);
+GO
+~~START~~
+money
+100.1230
+~~END~~
+
+-- euro
+select CAST(€100.123 AS money);
+GO
+~~START~~
+money
+100.1230
+~~END~~
+
+-- kip
+select CAST(₭100.123 AS money);
+GO
+~~START~~
+money
+100.1230
+~~END~~
+
+-- tugrik
+select CAST(₮100.123 AS money);
+GO
+~~START~~
+money
+100.1230
+~~END~~
+
+-- drachma
+select CAST(₯100.123 AS money);
+GO
+~~START~~
+money
+100.1230
+~~END~~
+
+-- german penny
+select CAST(₰100.123 AS money);
+GO
+~~START~~
+money
+100.1230
+~~END~~
+
+-- peso 
+select CAST(₱100.123 AS money);
+GO
+~~START~~
+money
+100.1230
+~~END~~
+
+-- rial
+select CAST(﷼100.123 AS money);
+GO
+~~START~~
+money
+100.1230
+~~END~~
+
+-- small dollar 
+select CAST(﹩100.123 AS money);
+GO
+~~START~~
+money
+100.1230
+~~END~~
+
+-- fullwidth cent
+select CAST(￠100.123 AS money);
+GO
+~~START~~
+money
+100.1230
+~~END~~
+
+-- fullwidth dollar
+select CAST(＄100.123 AS money);
+GO
+~~START~~
+money
+100.1230
+~~END~~
+
+-- fullwidth pound
+select CAST(￡100.123 AS money);
+GO
+~~START~~
+money
+100.1230
+~~END~~
+
+-- fullwidth yen
+select CAST(￥100.123 AS money);
+GO
+~~START~~
+money
+100.1230
+~~END~~
+
+-- fullwidth won 
+select CAST(￦100.123 AS money);
+GO
+~~START~~
+money
+100.1230
+~~END~~
+
+
+
+
+-- Negative Test
+-- Unsupported currency symbol by SQL it should throw error with BABEL
+-- Indian Rupee
+select CAST(₹100.123 AS money);
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: syntax error near '₹' at line 4 and character position 12)~~
+
+-- Bitcoin
+select CAST(₿100.123 AS money);
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: syntax error near '₿' at line 2 and character position 12)~~
+
+-- gujarati rupee
+select CAST(૱100.123 AS money);
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: syntax error near '૱' at line 2 and character position 12)~~
+
+-- tamil rupee
+select CAST(௹100.123 AS money);
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: syntax error near '௹' at line 2 and character position 12)~~
+
+-- Azerbaijani manat
+select CAST(₼100.123 AS money);
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: syntax error near '₼' at line 2 and character position 12)~~
+
+-- SPESMILO
+select CAST(₷100.123 AS money);
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: syntax error near '₷' at line 2 and character position 12)~~
+
+-- AUSTRAL
+select CAST(₳100.123 AS money);
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: syntax error near '₳' at line 2 and character position 12)~~
+
+-- GUARANI
+select CAST(₲100.123 AS money);
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: syntax error near '₲' at line 2 and character position 12)~~
+
+-- Lari
+select CAST(₾100.123 AS money);
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: syntax error near '₾' at line 2 and character position 12)~~
+
+
+-- positive test
+-- Currency symbol with qoute
+select CAST('$100.123' AS money);
+GO
+~~START~~
+money
+100.1230
+~~END~~
+
+-- cent
+select CAST('¢100.123' AS money);
+GO
+~~START~~
+money
+100.1230
+~~END~~
+
+-- currency
+select CAST('¤100.123' AS money);
+GO
+~~START~~
+money
+100.1230
+~~END~~
+
+-- pound
+select CAST('£100.123' AS money);
+GO
+~~START~~
+money
+100.1230
+~~END~~
+
+-- yen
+select CAST('¥100.123' AS money);
+GO
+~~START~~
+money
+100.1230
+~~END~~
+
+-- bengali rupee mark
+select CAST('৲100.123' AS money);
+GO
+~~START~~
+money
+100.1230
+~~END~~
+
+-- bengali rupee sign
+select CAST('৳100.123' AS money);
+GO
+~~START~~
+money
+100.1230
+~~END~~
+
+-- thai baht
+select CAST('฿100.123' AS money);
+GO
+~~START~~
+money
+100.1230
+~~END~~
+
+-- khmer riel 
+select CAST('៛100.123' AS money);
+GO
+~~START~~
+money
+100.1230
+~~END~~
+
+-- euro currency
+select CAST('₠100.123' AS money);
+GO
+~~START~~
+money
+100.1230
+~~END~~
+
+-- colon sign 
+select CAST('₡100.123' AS money);
+GO
+~~START~~
+money
+100.1230
+~~END~~
+
+-- cruzeiro 
+select CAST('₢100.123' AS money);
+GO
+~~START~~
+money
+100.1230
+~~END~~
+
+-- french franc
+select CAST('₣100.123' AS money);
+GO
+~~START~~
+money
+100.1230
+~~END~~
+
+-- lira 
+select CAST('₤100.123' AS money);
+GO
+~~START~~
+money
+100.1230
+~~END~~
+
+-- mill
+select CAST('₥100.123' AS money);
+GO
+~~START~~
+money
+100.1230
+~~END~~
+
+-- naira
+select CAST('₦100.123' AS money);
+GO
+~~START~~
+money
+100.1230
+~~END~~
+
+-- peseta 
+select CAST('₧100.123' AS money);
+GO
+~~START~~
+money
+100.1230
+~~END~~
+
+-- rupee
+select CAST('₨100.123' AS money);
+GO
+~~START~~
+money
+100.1230
+~~END~~
+
+-- won
+select CAST('₩100.123' AS money);
+GO
+~~START~~
+money
+100.1230
+~~END~~
+
+-- new sheqel
+select CAST('₪100.123' AS money);
+GO
+~~START~~
+money
+100.1230
+~~END~~
+
+-- dong
+select CAST('₫100.123' AS money);
+GO
+~~START~~
+money
+100.1230
+~~END~~
+
+-- euro
+select CAST('€100.123' AS money);
+GO
+~~START~~
+money
+100.1230
+~~END~~
+
+-- kip
+select CAST('₭100.123' AS money);
+GO
+~~START~~
+money
+100.1230
+~~END~~
+
+-- tugrik
+select CAST('₮100.123' AS money);
+GO
+~~START~~
+money
+100.1230
+~~END~~
+
+-- drachma
+select CAST('₯100.123' AS money);
+GO
+~~START~~
+money
+100.1230
+~~END~~
+
+-- german penny
+select CAST('₰100.123' AS money);
+GO
+~~START~~
+money
+100.1230
+~~END~~
+
+-- peso 
+select CAST('₱100.123' AS money);
+GO
+~~START~~
+money
+100.1230
+~~END~~
+
+-- rial
+select CAST('﷼100.123' AS money);
+GO
+~~START~~
+money
+100.1230
+~~END~~
+
+-- small dollar 
+select CAST('﹩100.123' AS money);
+GO
+~~START~~
+money
+100.1230
+~~END~~
+
+-- fullwidth cent
+select CAST('￠100.123' AS money);
+GO
+~~START~~
+money
+100.1230
+~~END~~
+
+-- fullwidth dollar
+select CAST('＄100.123' AS money);
+GO
+~~START~~
+money
+100.1230
+~~END~~
+
+-- fullwidth pound
+select CAST('￡100.123' AS money);
+GO
+~~START~~
+money
+100.1230
+~~END~~
+
+-- fullwidth yen
+select CAST('￥100.123' AS money);
+GO
+~~START~~
+money
+100.1230
+~~END~~
+
+-- fullwidth won 
+select CAST('￦100.123' AS money);
+GO
+~~START~~
+money
+100.1230
+~~END~~
+
+
+
+-- negative value inside qoute
+select CAST('$-214.3648' AS money);
+GO
+~~START~~
+money
+-214.3648
+~~END~~
+
+select CAST('¢-214.3648' AS money);
+GO
+~~START~~
+money
+-214.3648
+~~END~~
+
+select CAST('¤-214.3648' AS money);
+GO
+~~START~~
+money
+-214.3648
+~~END~~
+
+select CAST('฿-214.3648' AS money);
+GO
+~~START~~
+money
+-214.3648
+~~END~~
+
+select CAST('₠-214.3648' AS money);
+GO
+~~START~~
+money
+-214.3648
+~~END~~
+
+select CAST('₨-214.3648' AS money);
+GO
+~~START~~
+money
+-214.3648
+~~END~~
+
+
+-- zero value inside qoute
+select CAST('$0' AS money);
+GO
+~~START~~
+money
+0.0000
+~~END~~
+
+select CAST('¢0' AS money);
+GO
+~~START~~
+money
+0.0000
+~~END~~
+
+select CAST('¤0' AS money);
+GO
+~~START~~
+money
+0.0000
+~~END~~
+
+select CAST('฿0' AS money);
+GO
+~~START~~
+money
+0.0000
+~~END~~
+
+select CAST('₠0' AS money);
+GO
+~~START~~
+money
+0.0000
+~~END~~
+
+select CAST('₨0' AS money);
+GO
+~~START~~
+money
+0.0000
+~~END~~
+
+
+
+-- TODO: fix BABEL-704
+-- Note: inside qoute it will treat any character as a currency symbol
+-- if character is not a letter, digit and not equal to '+', '-', '.', '\0' 
+-- Unsupported currency symbol by SQL it should throw error with BABEL
+-- Indian Rupee
+select CAST('₹100.123' AS money);
+GO
+~~START~~
+money
+100.1230
+~~END~~
+
+-- Bitcoin
+select CAST('₿100.123' AS money);
+GO
+~~START~~
+money
+100.1230
+~~END~~
+
+-- gujarati rupee
+select CAST('૱100.123' AS money);
+GO
+~~START~~
+money
+100.1230
+~~END~~
+
+-- tamil rupee
+select CAST('௹100.123' AS money);
+GO
+~~START~~
+money
+100.1230
+~~END~~
+
+-- Azerbaijani manat
+select CAST('₼100.123' AS money);
+GO
+~~START~~
+money
+100.1230
+~~END~~
+
+-- SPESMILO
+select CAST('₷100.123' AS money);
+GO
+~~START~~
+money
+100.1230
+~~END~~
+
+-- AUSTRAL
+select CAST('₳100.123' AS money);
+GO
+~~START~~
+money
+100.1230
+~~END~~
+
+-- GUARANI
+select CAST('₲100.123' AS money);
+GO
+~~START~~
+money
+100.1230
+~~END~~
+
+-- Lari
+select CAST('₾100.123' AS money);
+GO
+~~START~~
+money
+100.1230
+~~END~~
+
+
+-- Currency Symbols as a datatype 
+CREATE TABLE currency_symbol_t1(a money);
+GO
+
+INSERT INTO currency_symbol_t1 VALUES($111.123);
+GO
+~~ROW COUNT: 1~~
+
+INSERT INTO currency_symbol_t1 VALUES(¢112.123);
+GO
+~~ROW COUNT: 1~~
+
+INSERT INTO currency_symbol_t1 VALUES(¤113.123);
+GO
+~~ROW COUNT: 1~~
+
+INSERT INTO currency_symbol_t1 VALUES(฿114.123);
+GO
+~~ROW COUNT: 1~~
+
+INSERT INTO currency_symbol_t1 VALUES(₠115.123);
+GO
+~~ROW COUNT: 1~~
+
+INSERT INTO currency_symbol_t1 VALUES(₨116.123);
+GO
+~~ROW COUNT: 1~~
+
+
+SELECT * FROM currency_symbol_t1;
+GO
+~~START~~
+money
+111.1230
+112.1230
+113.1230
+114.1230
+115.1230
+116.1230
+~~END~~
+
+
+
+
+-- Single digit with currency symbol
+select CAST($1 AS money);
+GO
+~~START~~
+money
+1.0000
+~~END~~
+
+select CAST(¢2 AS money);
+GO
+~~START~~
+money
+2.0000
+~~END~~
+
+select CAST(¤3 AS money);
+GO
+~~START~~
+money
+3.0000
+~~END~~
+
+select CAST(฿4 AS money);
+GO
+~~START~~
+money
+4.0000
+~~END~~
+
+select CAST(₠5 AS money);
+GO
+~~START~~
+money
+5.0000
+~~END~~
+
+select CAST(₨6 AS money);
+GO
+~~START~~
+money
+6.0000
+~~END~~
+
+
+-- zero value with currency symbol
+select CAST($0 AS money);
+GO
+~~START~~
+money
+0.0000
+~~END~~
+
+select CAST(¢0 AS money);
+GO
+~~START~~
+money
+0.0000
+~~END~~
+
+select CAST(¤0 AS money);
+GO
+~~START~~
+money
+0.0000
+~~END~~
+
+select CAST(฿0 AS money);
+GO
+~~START~~
+money
+0.0000
+~~END~~
+
+select CAST(₠0 AS money);
+GO
+~~START~~
+money
+0.0000
+~~END~~
+
+select CAST(₨0 AS money);
+GO
+~~START~~
+money
+0.0000
+~~END~~
+
+
+-- max value with currency symbol
+select CAST($922337203685477.5807 AS money);
+GO
+~~START~~
+money
+922337203685477.5807
+~~END~~
+
+select CAST(¢922337203685477.5807 AS money);
+GO
+~~START~~
+money
+922337203685477.5807
+~~END~~
+
+select CAST(¤922337203685477.5807 AS money);
+GO
+~~START~~
+money
+922337203685477.5807
+~~END~~
+
+select CAST(฿922337203685477.5807 AS money);
+GO
+~~START~~
+money
+922337203685477.5807
+~~END~~
+
+select CAST(₠922337203685477.5807 AS money);
+GO
+~~START~~
+money
+922337203685477.5807
+~~END~~
+
+select CAST(₨922337203685477.5807 AS money);
+GO
+~~START~~
+money
+922337203685477.5807
+~~END~~
+
+
+-- negative test (exceding max value)
+select CAST($932337203685477.01 AS money);
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: value "932337203685477.01" is out of range for type fixeddecimal)~~
+
+select CAST(¢932337203685477.01 AS money);
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: value "932337203685477.01" is out of range for type fixeddecimal)~~
+
+select CAST(¤932337203685477.01 AS money);
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: value "932337203685477.01" is out of range for type fixeddecimal)~~
+
+select CAST(฿932337203685477.01 AS money);
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: value "932337203685477.01" is out of range for type fixeddecimal)~~
+
+select CAST(₠932337203685477.01 AS money);
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: value "932337203685477.01" is out of range for type fixeddecimal)~~
+
+select CAST(₨932337203685477.01 AS money);
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: value "932337203685477.01" is out of range for type fixeddecimal)~~
+
+
+-- min value with currency symbol
+select CAST($-922337203685477.5808 AS money);
+GO
+~~START~~
+money
+-922337203685477.5808
+~~END~~
+
+select CAST(¢-922337203685477.5808 AS money);
+GO
+~~START~~
+money
+-922337203685477.5808
+~~END~~
+
+select CAST(¤-922337203685477.5808 AS money);
+GO
+~~START~~
+money
+-922337203685477.5808
+~~END~~
+
+select CAST(฿-922337203685477.5808 AS money);
+GO
+~~START~~
+money
+-922337203685477.5808
+~~END~~
+
+select CAST(₠-922337203685477.5808 AS money);
+GO
+~~START~~
+money
+-922337203685477.5808
+~~END~~
+
+select CAST(₨-922337203685477.5808 AS money);
+GO
+~~START~~
+money
+-922337203685477.5808
+~~END~~
+
+
+--negative test (value lesser than min value)
+select CAST($-932337203685477.01 AS money);
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: value "-932337203685477.01" is out of range for type fixeddecimal)~~
+
+select CAST(¢-932337203685477.01 AS money);
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: value "-932337203685477.01" is out of range for type fixeddecimal)~~
+
+select CAST(¤-932337203685477.01 AS money);
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: value "-932337203685477.01" is out of range for type fixeddecimal)~~
+
+select CAST(฿-932337203685477.01 AS money);
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: value "-932337203685477.01" is out of range for type fixeddecimal)~~
+
+select CAST(₠-932337203685477.01 AS money);
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: value "-932337203685477.01" is out of range for type fixeddecimal)~~
+
+select CAST(₨-932337203685477.01 AS money);
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: value "-932337203685477.01" is out of range for type fixeddecimal)~~
+
+
+
+
+
+-- Currency Symbols with small money
+-- decimal with currency symbol
+select CAST($123.456 AS smallmoney);
+GO
+~~START~~
+smallmoney
+123.4560
+~~END~~
+
+select CAST(¢123.456 AS smallmoney);
+GO
+~~START~~
+smallmoney
+123.4560
+~~END~~
+
+select CAST(¤123.456 AS smallmoney);
+GO
+~~START~~
+smallmoney
+123.4560
+~~END~~
+
+select CAST(฿123.456 AS smallmoney);
+GO
+~~START~~
+smallmoney
+123.4560
+~~END~~
+
+select CAST(₠123.456 AS smallmoney);
+GO
+~~START~~
+smallmoney
+123.4560
+~~END~~
+
+select CAST(₨123.456 AS smallmoney);
+GO
+~~START~~
+smallmoney
+123.4560
+~~END~~
+
+
+-- Single digit with currency symbol
+select CAST($1 AS smallmoney);
+GO
+~~START~~
+smallmoney
+1.0000
+~~END~~
+
+select CAST(¢2 AS smallmoney);
+GO
+~~START~~
+smallmoney
+2.0000
+~~END~~
+
+select CAST(¤3 AS smallmoney);
+GO
+~~START~~
+smallmoney
+3.0000
+~~END~~
+
+select CAST(฿4 AS smallmoney);
+GO
+~~START~~
+smallmoney
+4.0000
+~~END~~
+
+select CAST(₠5 AS smallmoney);
+GO
+~~START~~
+smallmoney
+5.0000
+~~END~~
+
+select CAST(₨6 AS smallmoney);
+GO
+~~START~~
+smallmoney
+6.0000
+~~END~~
+
+
+-- zero value with currency symbol
+select CAST($0 AS smallmoney);
+GO
+~~START~~
+smallmoney
+0.0000
+~~END~~
+
+select CAST(¢0 AS smallmoney);
+GO
+~~START~~
+smallmoney
+0.0000
+~~END~~
+
+select CAST(¤0 AS smallmoney);
+GO
+~~START~~
+smallmoney
+0.0000
+~~END~~
+
+select CAST(฿0 AS smallmoney);
+GO
+~~START~~
+smallmoney
+0.0000
+~~END~~
+
+select CAST(₠0 AS smallmoney);
+GO
+~~START~~
+smallmoney
+0.0000
+~~END~~
+
+select CAST(₨0 AS smallmoney);
+GO
+~~START~~
+smallmoney
+0.0000
+~~END~~
+
+
+-- max value with currency symbol
+select CAST($214748.3647 AS smallmoney);
+GO
+~~START~~
+smallmoney
+214748.3647
+~~END~~
+
+select CAST(¢214748.3647 AS smallmoney);
+GO
+~~START~~
+smallmoney
+214748.3647
+~~END~~
+
+select CAST(¤214748.3647 AS smallmoney);
+GO
+~~START~~
+smallmoney
+214748.3647
+~~END~~
+
+select CAST(฿214748.3647 AS smallmoney);
+GO
+~~START~~
+smallmoney
+214748.3647
+~~END~~
+
+select CAST(₠214748.3647 AS smallmoney);
+GO
+~~START~~
+smallmoney
+214748.3647
+~~END~~
+
+select CAST(₨214748.3647 AS smallmoney);
+GO
+~~START~~
+smallmoney
+214748.3647
+~~END~~
+
+
+-- negative test (exceding max value)
+select CAST($314748.3647 AS smallmoney);
+GO
+~~START~~
+smallmoney
+~~ERROR (Code: 220)~~
+
+~~ERROR (Message: value for domain smallmoney violates check constraint "smallmoney_check")~~
+
+select CAST(¢314748.3647 AS smallmoney);
+GO
+~~START~~
+smallmoney
+~~ERROR (Code: 220)~~
+
+~~ERROR (Message: value for domain smallmoney violates check constraint "smallmoney_check")~~
+
+select CAST(¤314748.3647 AS smallmoney);
+GO
+~~START~~
+smallmoney
+~~ERROR (Code: 220)~~
+
+~~ERROR (Message: value for domain smallmoney violates check constraint "smallmoney_check")~~
+
+select CAST(฿314748.3647 AS smallmoney);
+GO
+~~START~~
+smallmoney
+~~ERROR (Code: 220)~~
+
+~~ERROR (Message: value for domain smallmoney violates check constraint "smallmoney_check")~~
+
+select CAST(₠314748.3647 AS smallmoney);
+GO
+~~START~~
+smallmoney
+~~ERROR (Code: 220)~~
+
+~~ERROR (Message: value for domain smallmoney violates check constraint "smallmoney_check")~~
+
+select CAST(₨314748.3647 AS smallmoney);
+GO
+~~START~~
+smallmoney
+~~ERROR (Code: 220)~~
+
+~~ERROR (Message: value for domain smallmoney violates check constraint "smallmoney_check")~~
+
+
+-- min value with currency symbol
+select CAST($-214748.3648 AS smallmoney);
+GO
+~~START~~
+smallmoney
+-214748.3648
+~~END~~
+
+select CAST(¢-214748.3648 AS smallmoney);
+GO
+~~START~~
+smallmoney
+-214748.3648
+~~END~~
+
+select CAST(¤-214748.3648 AS smallmoney);
+GO
+~~START~~
+smallmoney
+-214748.3648
+~~END~~
+
+select CAST(฿-214748.3648 AS smallmoney);
+GO
+~~START~~
+smallmoney
+-214748.3648
+~~END~~
+
+select CAST(₠-214748.3648 AS smallmoney);
+GO
+~~START~~
+smallmoney
+-214748.3648
+~~END~~
+
+select CAST(₨-214748.3648 AS smallmoney);
+GO
+~~START~~
+smallmoney
+-214748.3648
+~~END~~
+
+
+--negative test (value lesser than min value)
+select CAST($-224748.3648 AS smallmoney);
+GO
+~~START~~
+smallmoney
+~~ERROR (Code: 220)~~
+
+~~ERROR (Message: value for domain smallmoney violates check constraint "smallmoney_check")~~
+
+select CAST(¢-224748.3648 AS smallmoney);
+GO
+~~START~~
+smallmoney
+~~ERROR (Code: 220)~~
+
+~~ERROR (Message: value for domain smallmoney violates check constraint "smallmoney_check")~~
+
+select CAST(¤-224748.3648 AS smallmoney);
+GO
+~~START~~
+smallmoney
+~~ERROR (Code: 220)~~
+
+~~ERROR (Message: value for domain smallmoney violates check constraint "smallmoney_check")~~
+
+select CAST(฿-224748.3648 AS smallmoney);
+GO
+~~START~~
+smallmoney
+~~ERROR (Code: 220)~~
+
+~~ERROR (Message: value for domain smallmoney violates check constraint "smallmoney_check")~~
+
+select CAST(₠-224748.3648 AS smallmoney);
+GO
+~~START~~
+smallmoney
+~~ERROR (Code: 220)~~
+
+~~ERROR (Message: value for domain smallmoney violates check constraint "smallmoney_check")~~
+
+select CAST(₨-224748.3648 AS smallmoney);
+GO
+~~START~~
+smallmoney
+~~ERROR (Code: 220)~~
+
+~~ERROR (Message: value for domain smallmoney violates check constraint "smallmoney_check")~~
+
+
+-- negative test
+-- following insert should throw error
+INSERT INTO currency_symbol_t1 VALUES(₿118.123);
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: syntax error near '₿' at line 3 and character position 38)~~
+
+
+DROP TABLE currency_symbol_t1;
+GO
+
+

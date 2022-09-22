@@ -7,6 +7,7 @@ xbrstop          \]
 xbrinside        [^\]]+
 
 /* Currency symbols supported by TSQL */
+dollar                  \$
 cent                    \xC2\xA2
 currency                \xC2\xA4
 pound                   \xC2\xA3
@@ -40,7 +41,14 @@ fullwidth_cent          \xEF\xBF\xA0
 fullwidth_pound         \xEF\xBF\xA1
 fullwidth_yen           \xEF\xBF\xA5
 fullwidth_won           \xEF\xBF\xA6
-currency_symbol         \$|{cent}|{currency}|{pound}|{yen}|{bengali_rupee_mark}|{bengali_rupee_sign}|{thai_baht}|{khmer_riel}|{euro_currency}|{colon_sign}|{cruzeiro}|{franc}|{lira}|{mill}|{naira}|{peseta}|{rupee}|{won}|{new_sheqel}|{dong}|{euro}|{kip}|{tugrik}|{drachma}|{german_penny}|{peso}|{rial}|{small_dollar}|{fullwidth_dollar}|{fullwidth_cent}|{fullwidth_pound}|{fullwidth_yen}|{fullwidth_won}
+/*
+ * We are clubbing currency symbols together according to number
+ * of byte they takes in order to support the currency symbol 
+ * which takes more than one byte
+ */
+currency_symbol_with_one_byte           {dollar}
+currency_symbol_with_two_byte           {cent}|{currency}|{pound}|{yen}
+currency_symbol_with_three_byte         {bengali_rupee_mark}|{bengali_rupee_sign}|{thai_baht}|{khmer_riel}|{euro_currency}|{colon_sign}|{cruzeiro}|{franc}|{lira}|{mill}|{naira}|{peseta}|{rupee}|{won}|{new_sheqel}|{dong}|{euro}|{kip}|{tugrik}|{drachma}|{german_penny}|{peso}|{rial}|{small_dollar}|{fullwidth_dollar}|{fullwidth_cent}|{fullwidth_pound}|{fullwidth_yen}|{fullwidth_won}
 
 hex_cont [0-9A-Za-z]
 
@@ -53,7 +61,9 @@ hex_cont [0-9A-Za-z]
  */
 %s		tsql
 tsql_ident		@{ident_cont}*
-tsql_money		{currency_symbol}{space}*[-+]?{digit}*\.?{digit}*
+tsql_money_with_one_byte		{currency_symbol_with_one_byte}{space}*[-+]?{digit}*\.?{digit}*
+tsql_money_with_two_byte		{currency_symbol_with_two_byte}{space}*[-+]?{digit}*\.?{digit}*
+tsql_money_with_three_byte		{currency_symbol_with_three_byte}{space}*[-+]?{digit}*\.?{digit}*
 tsql_atat		"@@"
 tsql_hex		0[xX]{hex_cont}*
 tsql_ttname		\#?\#{ident_cont}*

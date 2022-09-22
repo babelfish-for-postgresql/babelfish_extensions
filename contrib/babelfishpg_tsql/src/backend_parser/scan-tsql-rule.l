@@ -101,12 +101,24 @@
 					return TSQL_ATAT;
 				}
 
-<tsql>{tsql_money}	{
+<tsql>{tsql_money_with_one_byte} {
 					SET_YYLLOC();
-					yylval->str = pstrdup(yytext+1); /* stripping currency symbol */
+					yylval->str = pstrdup(yytext+1); /* stripping currency symbol with one byte */
 					return FCONST;
 				}
 
+<tsql>{tsql_money_with_two_byte} {
+					SET_YYLLOC();
+					yylval->str = pstrdup(yytext+2); /* stripping currency symbol with two byte */
+					return FCONST;
+				}
+
+<tsql>{tsql_money_with_three_byte}	{
+					SET_YYLLOC();
+					yylval->str = pstrdup(yytext+3); /* stripping currency symbol with three byte */
+					return FCONST;
+				}
+				
 <tsql>{tsql_hex}	{
 					SET_YYLLOC();
 					yylval->str = pstrdup(yytext);
