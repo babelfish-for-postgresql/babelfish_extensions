@@ -130,6 +130,8 @@ public class CompareResults {
                     exceptionOccurred = false;
                     updateCount = stmt.getUpdateCount();
                 } catch (SQLException e) {
+                    if (e.getMessage().equals("The connection is closed."))
+                        return;
                     handleSQLExceptionWithFile(e, bw, logger);
                 }
                 resultsProcessed++;
