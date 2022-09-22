@@ -82,26 +82,20 @@ GRANT EXECUTE ON PROCEDURE sys.sp_helpsrvrolemember TO PUBLIC;
 
 CREATE OR REPLACE PROCEDURE sys.sp_helpdbfixedrole("@rolename" sys.SYSNAME = NULL) AS
 $$
-DECLARE
-	@trimmedrole sys.SYSNAME = LOWER(RTRIM(@rolename));
 BEGIN
 	-- Returns a list of the fixed database roles. 
 	-- Only fixed role present in babelfish is db_owner.
-	IF @trimmedrole IS NULL OR @trimmedrole = 'db_owner'
+	IF LOWER(RTRIM(@rolename)) IS NULL OR LOWER(RTRIM(@rolename)) = 'db_owner'
 	BEGIN
-		SELECT * 
-		FROM (VALUES (CAST('db_owner' AS sys.SYSNAME), CAST('DB Owners' AS sys.nvarchar(70))))
-			AS t (DbFixedRole, Description)
+		SELECT CAST('db_owner' AS sys.SYSNAME) AS DbFixedRole, CAST('DB Owners' AS sys.nvarchar(70)) AS Description;
 	END
-	ELSE IF @trimmedrole IN (
+	ELSE IF LOWER(RTRIM(@rolename)) IN (
 			'db_accessadmin','db_securityadmin','db_ddladmin', 'db_backupoperator', 
 			'db_datareader', 'db_datawriter', 'db_denydatareader', 'db_denydatawriter')
 	BEGIN
 		-- Return an empty result set instead of raising an error
-		SELECT * 
-		FROM (VALUES (CAST(NULL AS sys.SYSNAME), CAST(NULL AS sys.nvarchar(70))))
-			AS t (DbFixedRole, Description) 
-		WHERE 1=0	
+		SELECT CAST(NULL AS sys.SYSNAME) AS DbFixedRole, CAST(NULL AS sys.nvarchar(70)) AS Description
+		WHERE 1=0;	
 	END
 	ELSE
 		RAISERROR('''%s'' is not a known fixed role.', 16, 1, @rolename);
