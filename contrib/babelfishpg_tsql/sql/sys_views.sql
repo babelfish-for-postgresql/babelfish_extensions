@@ -1644,8 +1644,8 @@ SELECT
   , CAST(
       CASE WHEN ao.type in ('P', 'FN', 'IN', 'TF', 'RF') THEN pg_get_functiondef(ao.object_id)
       WHEN ao.type = 'V' THEN COALESCE(bvd.definition, '')
-      WHEN ao.type = 'TR' THEN ''
-      ELSE ''
+      WHEN ao.type = 'TR' THEN NULL
+      ELSE NULL
       END
     AS sys.nvarchar(4000)) AS definition  -- Object definition work in progress, will update definition with BABEL-3127 Jira.
   , CAST(1 as sys.bit)  AS uses_ansi_nulls

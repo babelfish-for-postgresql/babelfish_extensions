@@ -37,7 +37,7 @@ WHERE object_id = OBJECT_ID('sql_modules_view')
 GO
 ~~START~~
 nvarchar#!#bit#!#bit#!#bit#!#bit#!#bit#!#bit#!#int#!#bit
-<NULL>#!#1#!#1#!#0#!#0#!#0#!#0#!#<NULL>#!#0
+CREATE VIEW sql_modules_view AS<newline>SELECT 1#!#1#!#1#!#0#!#0#!#0#!#0#!#<NULL>#!#0
 ~~END~~
 
 
