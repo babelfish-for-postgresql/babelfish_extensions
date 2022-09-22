@@ -134,7 +134,7 @@ int
 SELECT sum(db1.babel1454.t1.a)  FROM babel1454.t1 GROUP BY babel1454.t1.b ORDER BY 1;
 GO
 ~~START~~
-bigint
+int
 1
 2
 ~~END~~
