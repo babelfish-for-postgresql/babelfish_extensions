@@ -15,6 +15,9 @@ inputs:
   pg_new_dir:
     description: "Install new version in this directory"
     required: true
+  migration_mode:
+    description: "Database migration mode for Babelfish"
+    required: true
 
 runs:
   using: "composite"
@@ -61,25 +64,36 @@ runs:
       if: always() && steps.setup-new-datadir.outcome == 'success'
       uses: ./.github/composite-actions/run-pg-upgrade
       with: 
-        migration_mode: 'multi-db'
+        migration_mode: ${{ inputs.migration_mode }}
         pg_old_dir: ${{ inputs.pg_old_dir }}
         pg_new_dir: ${{ inputs.pg_new_dir }}
 
     - name: Run JDBC Verify Tests
       if: always() && inputs.is_final_ver == 'true'
       id: jdbc-verify-tests
+      env:
+        migr_mode: ${{ inputs.migration_mode }}
       run: |
         cd test/JDBC/
+        touch dummy_schedule
+        echo "all" > dummy_schedule
+        export scheduleFile=dummy_schedule
         export isUpgradeTestMode=false
-        base_dir=${{ matrix.upgrade-path.path[0] }}
-        tar_dir=${{ matrix.upgrade-path.last_version }}
-        if [[ "$base_dir" == *"latest"* ]]; then
-          base_dir="latest"
+
+        if [[ "$migr_mode" == "multi-db" ]];then
+          base_dir=${{ matrix.upgrade-path.path[0] }}
+          tar_dir=${{ matrix.upgrade-path.last_version }}
+          if [[ "$base_dir" == *"latest"* ]]; then
+            base_dir="latest"
+          fi
+          if [[ "$tar_dir" == *"latest"* ]]; then
+            tar_dir="latest"
+          fi
+          export inputFilesPath=upgrade/$tar_dir/verification_cleanup/$base_dir
+        else
+          base_dir="singledb"
+          export inputFilesPath=upgrade/singledb/verification_cleanup
         fi
-        if [[ "$tar_dir" == *"latest"* ]]; then
-          tar_dir="latest"
-        fi
-        export inputFilesPath=upgrade/$tar_dir/verification_cleanup/$base_dir
         mvn test
         export inputFilesPath=input
         for filename in $(grep -v "^ignore.*\|^#.*\|^cmd.*\|^all.*\|^$" upgrade/$base_dir/schedule); do

@@ -344,7 +344,7 @@ static char *tsql_get_constraintdef_worker(Oid constraintId, bool fullCommand,
 static char *tsql_printTypmod(const char *typname, int32 typmod, Oid typmodout);
 extern Datum translate_pg_type_to_tsql(PG_FUNCTION_ARGS);
 static char *tsql_format_type_extended(Oid type_oid, int32 typemod, bits16 flags);
-int print_function_arguments(StringInfo buf, HeapTuple proctup,
+int tsql_print_function_arguments(StringInfo buf, HeapTuple proctup,
 		bool print_table_args, bool print_defaults, int** typmod_arr_arg);
 char *tsql_quote_qualified_identifier(const char *qualifier, const char *ident);
 const char *tsql_quote_identifier(const char *ident);
@@ -445,13 +445,13 @@ tsql_get_functiondef(PG_FUNCTION_ARGS)
 	if(strcmp(get_language_name(proc->prolang, false), "pltsql") != 0)
 		PG_RETURN_NULL();
        	probin_json_reader(tmp, &typmod_arr, number_args);
-	(void) print_function_arguments(&buf, proctup, false, true, &typmod_arr);
+	(void) tsql_print_function_arguments(&buf, proctup, false, true, &typmod_arr);
 	if(isfunction || proc->pronargs > 0)
 		appendStringInfoString(&buf, ")");
 	if (isfunction)
 	{
 		appendStringInfoString(&buf, " RETURNS ");
-		print_function_rettype(&buf, proctup, &typmod_arr, number_args);
+		tsql_print_function_rettype(&buf, proctup, &typmod_arr, number_args);
 	}
         if(typmod_arr)
 		pfree(typmod_arr);
@@ -662,7 +662,7 @@ tsql_get_constraintdef_worker(Oid constraintId, bool fullCommand,
  * to the specified buffer.
  */
 void
-print_function_rettype(StringInfo buf, HeapTuple proctup, int** typmod_arr_ret, int number_args) 
+tsql_print_function_rettype(StringInfo buf, HeapTuple proctup, int** typmod_arr_ret, int number_args)
 {
 	Form_pg_proc proc = (Form_pg_proc) GETSTRUCT(proctup);
 	int			ntabargs = 0;
@@ -674,7 +674,7 @@ print_function_rettype(StringInfo buf, HeapTuple proctup, int** typmod_arr_ret, 
 	{
 		/* It might be a table function; try to print the arguments */
 		appendStringInfoString(&rbuf, "TABLE(");
-		ntabargs = print_function_arguments(&rbuf, proctup, true, false, NULL);
+		ntabargs = tsql_print_function_arguments(&rbuf, proctup, true, false, NULL);
 		if (ntabargs > 0)
 			appendStringInfoChar(&rbuf, ')');
 		else
@@ -702,10 +702,11 @@ print_function_rettype(StringInfo buf, HeapTuple proctup, int** typmod_arr_ret, 
  * Function return value is the number of arguments printed.
  */
 int
-print_function_arguments(StringInfo buf, HeapTuple proctup,
+tsql_print_function_arguments(StringInfo buf, HeapTuple proctup,
 						 bool print_table_args, bool print_defaults, int** typmod_arr_arg)
 {
 	Form_pg_proc proc = (Form_pg_proc) GETSTRUCT(proctup);
+	HeapTuple	bbffunctuple;
 	int			numargs;
 	Oid		   *argtypes;
 	char	  **argnames;
@@ -713,9 +714,12 @@ print_function_arguments(StringInfo buf, HeapTuple proctup,
 	int			insertorderbyat = -1;
 	int			argsprinted;
 	int			inputargno;
+	bool		default_positions_available = false;
 	int			nlackdefaults;
 	List	   *argdefaults = NIL;
+	List	   *defaultpositions = NIL;
 	ListCell   *nextargdefault = NULL;
+	ListCell   *nextdefaultposition = NULL;
 	int			i;
 
 	numargs = get_func_arg_info(proctup,
@@ -740,6 +744,31 @@ print_function_arguments(StringInfo buf, HeapTuple proctup,
 			nextargdefault = list_head(argdefaults);
 			/* nlackdefaults counts only *input* arguments lacking defaults */
 			nlackdefaults = proc->pronargs - list_length(argdefaults);
+		}
+
+		bbffunctuple = get_bbf_function_tuple_from_proctuple(proctup);
+
+		if (HeapTupleIsValid(bbffunctuple))
+		{
+			Datum		arg_default_positions;
+			char	   *str;
+
+			/* Fetch default positions */
+			arg_default_positions = SysCacheGetAttr(PROCNSPSIGNATURE,
+													bbffunctuple,
+													Anum_bbf_function_ext_default_positions,
+													&isnull);
+
+			if (!isnull)
+			{
+				str = TextDatumGetCString(arg_default_positions);
+				defaultpositions = castNode(List, stringToNode(str));
+				nextdefaultposition = list_head(defaultpositions);
+				default_positions_available = true;
+				pfree(str);
+			}
+			else
+				ReleaseSysCache(bbffunctuple);
 		}
 	}
 
@@ -797,7 +826,26 @@ print_function_arguments(StringInfo buf, HeapTuple proctup,
 		if (modename && strcmp(modename, "") != 0)
 		       	appendStringInfo(buf," %s", modename);
 
-		if (print_defaults && isinput && inputargno > nlackdefaults)
+		if (print_defaults && isinput && default_positions_available)
+		{
+			if (nextdefaultposition != NULL)
+			{
+				int position = intVal((Node *) lfirst(nextdefaultposition));
+				Node *expr;
+
+				Assert(nextargdefault != NULL);
+				expr = (Node *) lfirst(nextargdefault);
+
+				if (position == (inputargno - 1))
+				{
+					appendStringInfo(buf, "= %s",
+									 deparse_expression(expr, NIL, false, false));
+					nextdefaultposition = lnext(defaultpositions, nextdefaultposition);
+					nextargdefault = lnext(argdefaults, nextargdefault);
+				}
+			}
+		}
+		else if (print_defaults && isinput && inputargno > nlackdefaults)
 		{
 			Node	   *expr;
 
@@ -818,6 +866,9 @@ print_function_arguments(StringInfo buf, HeapTuple proctup,
 			print_defaults = false;
 		}
 	}
+
+	if (default_positions_available)
+		ReleaseSysCache(bbffunctuple);
 
 	return argsprinted;
 }

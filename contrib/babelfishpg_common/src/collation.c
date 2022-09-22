@@ -426,7 +426,19 @@ static void
 init_default_locale(void)
 {
 	if (!default_locale)
-		default_locale = GetConfigOption("babelfishpg_tsql.default_locale", true, false);
+	{
+		const char *val = GetConfigOption("babelfishpg_tsql.default_locale", true, false);
+		if (val)
+		{
+			MemoryContext oldContext = MemoryContextSwitchTo(TopMemoryContext);
+			default_locale = pstrdup(val);
+			MemoryContextSwitchTo(oldContext);
+		}
+	}
+
+	/* babelfishpg_tsql.default_locale should not be changed once babelfish db is initialised. */
+	Assert(!default_locale || strcmp(default_locale, GetConfigOption("babelfishpg_tsql.default_locale", true, false)) == 0);
+
 	return;
 }
 
@@ -434,7 +446,19 @@ static void
 init_server_collation_name(void)
 {
 	if (!server_collation_name)
-		server_collation_name = GetConfigOption("babelfishpg_tsql.server_collation_name", true, false);
+	{
+		const char *val = GetConfigOption("babelfishpg_tsql.server_collation_name", true, false);
+		if (val)
+		{
+			MemoryContext oldContext = MemoryContextSwitchTo(TopMemoryContext);
+			server_collation_name = pstrdup(val);
+			MemoryContextSwitchTo(oldContext);
+		}
+	}
+
+	/* babelfishpg_tsql.server_collation_name should not be changed once babelfish db is initialised. */
+	Assert(!server_collation_name || strcmp(server_collation_name, GetConfigOption("babelfishpg_tsql.server_collation_name", true, false)) == 0);
+
 	return;
 }
 
@@ -1155,6 +1179,9 @@ int get_persist_collation_id(Oid coll_oid)
 	ht_oid2collid_entry *entry;
 	bool found_coll;
 	int collidx;
+
+	if (ht_oid2collid == NULL)
+		init_collid_trans_tab_internal();
 
 	entry = hash_search(ht_oid2collid, &coll_oid, HASH_FIND, &found_coll);
 

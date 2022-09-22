@@ -319,7 +319,7 @@ ERROR:                                           E R R O R;
 ERROR_BROKER_CONVERSATIONS:                      E R R O R  UNDERLINE  B R O K E R  UNDERLINE  C O N V E R S A T I O N S;
 ESCAPE:                                          E S C A P E;
 EVENT:                                           E V E N T;
-EVENTDATA:                                       E V E N T D A T A '(' ')';
+EVENTDATA:                                       E V E N T D A T A;
 EVENT_RETENTION_MODE:                            E V E N T  UNDERLINE  R E T E N T I O N  UNDERLINE  M O D E;
 EXCEPT:                                          E X C E P T;
 EXCLUSIVE:                                       E X C L U S I V E;
@@ -626,6 +626,7 @@ OFF:                                             O F F;
 OFFLINE:                                         O F F L I N E;
 OFFSET:                                          O F F S E T;
 OFFSETS:                                         O F F S E T S;
+OJ:												 O J;
 OLD_ACCOUNT:                                     O L D  UNDERLINE  A C C O U N T;
 OLD_PASSWORD:                                    O L D  UNDERLINE  P A S S W O R D;
 ON:                                              O N;
@@ -1064,10 +1065,14 @@ CHAR_X0C_FF:        '\u000c'      -> skip;   // form feed
 
 // https://en.wikipedia.org/wiki/Whitespace_character
 CHAR_ZWSP:          '\u200b'      -> skip;   // zero width space
+CHAR_NNNBSP:        '\u202f'      -> skip;   // narrow no-break space
+CHAR_IDGSP:         '\u3000'      -> skip;   // ideographic space
 
 // https://docs.microsoft.com/en-us/sql/t-sql/language-elements/slash-star-comment-transact-sql
 COMMENT:            '/*' (COMMENT | .)*? '*/' -> skip;
 LINE_COMMENT:       '--' ~[\r\n]* -> skip;
+
+//LINE_CONTINUATION:  '\\' \r? \n;
 
 // The next two rules are mutually exclusive - which rule we choose depends on the
 // value of QUOTED_IDENTIFIER guc, which reflects the SET QUOTED_IDENTFIER statements encountered.
@@ -1083,7 +1088,7 @@ LOCAL_ID:           '@' ([_$@#0-9] | LETTER )*;
 
 DECIMAL:             DEC_DIGIT+;
 ID:                  ( [_#] | LETTER) ( [_#$@0-9] | LETTER)*;
-BINARY:              '0' [Xx] HEX_DIGIT*;
+BINARY:              '0' [Xx] ( HEX_DIGIT | '\\' [\r]? [\n] )*;
 FLOAT:               DEC_DOT_DEC;
 REAL:                (DECIMAL | DEC_DOT_DEC) ([Ee] ([+-]? DEC_DIGIT+)?);
 
@@ -1100,6 +1105,7 @@ EXCLAMATION:         '!';
 PLUS_ASSIGN:         '+=';
 MINUS_ASSIGN:        '-=';
 MULT_ASSIGN:         '*=';
+EQUAL_STAR_OJ:       '=*';
 DIV_ASSIGN:          '/=';
 MOD_ASSIGN:          '%=';
 AND_ASSIGN:          '&=';

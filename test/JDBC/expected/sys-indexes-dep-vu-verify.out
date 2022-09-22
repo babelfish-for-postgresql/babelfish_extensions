@@ -1,0 +1,23 @@
+EXEC sys_indexes_dep_vu_prepare_p1
+GO
+~~START~~
+int
+19
+~~END~~
+
+
+SELECT * FROM sys_indexes_dep_vu_prepare_f1()
+GO
+~~START~~
+int
+3
+~~END~~
+
+
+SELECT * FROM sys_indexes_dep_vu_prepare_v1
+GO
+~~START~~
+int
+2
+~~END~~
+

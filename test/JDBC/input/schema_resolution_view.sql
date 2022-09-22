@@ -1,0 +1,47 @@
+create schema schema_resolution_view_s1
+go
+
+create table schema_resolution_view_t1(a int, b int)
+go
+
+create table schema_resolution_view_s1.schema_resolution_view_t1(c int)
+go
+
+create view schema_resolution_view_s1.schema_resolution_view_v1 as select * from schema_resolution_view_t1
+go
+
+create view dbo.schema_resolution_view_v1 as select * from schema_resolution_view_t1
+go
+
+create view schema_resolution_view_s1.schema_resolution_view_v2 as select * from dbo.schema_resolution_view_t1
+go
+
+-- resolves to dbo.schema_resolution_view_t1
+select * from dbo.schema_resolution_view_v1
+go
+
+-- resolves to schema_resolution_view_s1.schema_resolution_view_t1
+select * from schema_resolution_view_s1.schema_resolution_view_v1
+go
+
+-- resolves to dbo.schema_resolution_view_t1
+select * from schema_resolution_view_s1.schema_resolution_view_v2
+go
+
+drop view dbo.schema_resolution_view_v1
+go
+
+drop view schema_resolution_view_s1.schema_resolution_view_v1
+go
+
+drop view schema_resolution_view_s1.schema_resolution_view_v2
+go
+
+drop table schema_resolution_view_t1
+go
+
+drop table schema_resolution_view_s1.schema_resolution_view_t1
+go
+
+drop schema schema_resolution_view_s1
+go

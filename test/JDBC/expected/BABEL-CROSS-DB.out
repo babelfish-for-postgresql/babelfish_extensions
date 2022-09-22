@@ -80,6 +80,14 @@ int
 ~~END~~
 
 
+master.dbo.master_p1
+GO
+~~START~~
+int
+10
+~~END~~
+
+
 EXEC master.dbo.master_p2
 GO
 ~~START~~

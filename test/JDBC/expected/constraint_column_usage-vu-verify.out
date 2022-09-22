@@ -1,19 +1,19 @@
-Use db_constraint_column_usage_vu_prepare;
+Use constraint_column_usage_vu_prepare_db;
 go
 
-SELECT * FROM information_schema.CONSTRAINT_COLUMN_USAGE WHERE TABLE_NAME NOT LIKE 'sys%' ORDER BY COLUMN_NAME;
+SELECT * FROM information_schema.CONSTRAINT_COLUMN_USAGE WHERE TABLE_NAME LIKE 'constraint_column_usage_vu_prepare%' ORDER BY COLUMN_NAME;
 go
 ~~START~~
 nvarchar#!#nvarchar#!#nvarchar#!#nvarchar#!#nvarchar#!#nvarchar#!#nvarchar
-db_constraint_column_usage_vu_prepare#!#dbo#!#constraint_column_usage_vu_prepare_tbl1#!#arg1#!#db_constraint_column_usage_vu_prepare#!#dbo#!#constraint_column_usage_vu_prepare_tbl1_pkey
-db_constraint_column_usage_vu_prepare#!#dbo#!#constraint_column_usage_vu_prepare_tbl5#!#arg10#!#db_constraint_column_usage_vu_prepare#!#dbo#!#constraint_column_usage_vu_prepare_tbl5_arg10_arg11_fkey
-db_constraint_column_usage_vu_prepare#!#dbo#!#constraint_column_usage_vu_prepare_tbl5#!#arg11#!#db_constraint_column_usage_vu_prepare#!#dbo#!#constraint_column_usage_vu_prepare_tbl5_arg10_arg11_fkey
-db_constraint_column_usage_vu_prepare#!#dbo#!#constraint_column_usage_vu_prepare_tbl2#!#arg3#!#db_constraint_column_usage_vu_prepare#!#dbo#!#constraint_column_usage_vu_prepare_tbl2_pkey
-db_constraint_column_usage_vu_prepare#!#dbo#!#constraint_column_usage_vu_prepare_tbl2#!#arg4#!#db_constraint_column_usage_vu_prepare#!#dbo#!#constraint_column_usage_vu_prepare_tbl2_arg4_fkey
-db_constraint_column_usage_vu_prepare#!#dbo#!#constraint_column_usage_vu_prepare_tbl3#!#arg5#!#db_constraint_column_usage_vu_prepare#!#dbo#!#constraint_column_usage_vu_prepare_tbl3_pkey
-db_constraint_column_usage_vu_prepare#!#dbo#!#constraint_column_usage_vu_prepare_tbl3#!#arg6#!#db_constraint_column_usage_vu_prepare#!#dbo#!#constraint_column_usage_vu_prepare_tbl3_pkey
-db_constraint_column_usage_vu_prepare#!#constraint_column_usage_vu_prepare_sc1#!#constraint_column_usage_vu_prepare_tbl4#!#arg7#!#db_constraint_column_usage_vu_prepare#!#constraint_column_usage_vu_prepare_sc1#!#constraint_column_usage_vu_prepare_tbl4_check
-db_constraint_column_usage_vu_prepare#!#constraint_column_usage_vu_prepare_sc1#!#constraint_column_usage_vu_prepare_tbl4#!#arg8#!#db_constraint_column_usage_vu_prepare#!#constraint_column_usage_vu_prepare_sc1#!#constraint_column_usage_vu_prepare_tbl4_check
+constraint_column_usage_vu_prepare_db#!#dbo#!#constraint_column_usage_vu_prepare_tbl1#!#arg1#!#constraint_column_usage_vu_prepare_db#!#dbo#!#constraint_column_usage_vu_prepare_tbl1_pkey
+constraint_column_usage_vu_prepare_db#!#dbo#!#constraint_column_usage_vu_prepare_tbl5#!#arg10#!#constraint_column_usage_vu_prepare_db#!#dbo#!#constraint_column_usage_vu_prepare_tbl5_arg10_arg11_fkey
+constraint_column_usage_vu_prepare_db#!#dbo#!#constraint_column_usage_vu_prepare_tbl5#!#arg11#!#constraint_column_usage_vu_prepare_db#!#dbo#!#constraint_column_usage_vu_prepare_tbl5_arg10_arg11_fkey
+constraint_column_usage_vu_prepare_db#!#dbo#!#constraint_column_usage_vu_prepare_tbl2#!#arg3#!#constraint_column_usage_vu_prepare_db#!#dbo#!#constraint_column_usage_vu_prepare_tbl2_pkey
+constraint_column_usage_vu_prepare_db#!#dbo#!#constraint_column_usage_vu_prepare_tbl2#!#arg4#!#constraint_column_usage_vu_prepare_db#!#dbo#!#constraint_column_usage_vu_prepare_tbl2_arg4_fkey
+constraint_column_usage_vu_prepare_db#!#dbo#!#constraint_column_usage_vu_prepare_tbl3#!#arg5#!#constraint_column_usage_vu_prepare_db#!#dbo#!#constraint_column_usage_vu_prepare_tbl3_pkey
+constraint_column_usage_vu_prepare_db#!#dbo#!#constraint_column_usage_vu_prepare_tbl3#!#arg6#!#constraint_column_usage_vu_prepare_db#!#dbo#!#constraint_column_usage_vu_prepare_tbl3_pkey
+constraint_column_usage_vu_prepare_db#!#constraint_column_usage_vu_prepare_sc1#!#constraint_column_usage_vu_prepare_tbl4#!#arg7#!#constraint_column_usage_vu_prepare_db#!#constraint_column_usage_vu_prepare_sc1#!#constraint_column_usage_vu_prepare_tbl4_check
+constraint_column_usage_vu_prepare_db#!#constraint_column_usage_vu_prepare_sc1#!#constraint_column_usage_vu_prepare_tbl4#!#arg8#!#constraint_column_usage_vu_prepare_db#!#constraint_column_usage_vu_prepare_sc1#!#constraint_column_usage_vu_prepare_tbl4_check
 ~~END~~
 
 
@@ -27,7 +27,7 @@ nvarchar#!#nvarchar#!#nvarchar#!#nvarchar#!#nvarchar#!#nvarchar#!#nvarchar
 ~~END~~
 
 
-use db_constraint_column_usage_vu_prepare;
+use constraint_column_usage_vu_prepare_db;
 go
 
 drop table constraint_column_usage_vu_prepare_tbl2;
@@ -46,5 +46,5 @@ go
 use master
 go
 
-drop database db_constraint_column_usage_vu_prepare;
+drop database constraint_column_usage_vu_prepare_db;
 go

@@ -885,6 +885,15 @@ GO
 
 -- psql
 ALTER SYSTEM SET babelfishpg_tsql.migration_mode = 'multi-db';
+GO
+-- Wait to sync with another session
+SELECT pg_sleep(1);
+GO
+~~START~~
+void
+
+~~END~~
+
 SELECT pg_reload_conf();
 GO
 ~~START~~
@@ -1204,20 +1213,7 @@ db2_lgn_2978_2#!#lgn_2978_2#!##!#db2#!#dbo
 ~~END~~
 
 
-
-java_auth#!#database|-|db1#!#user|-|lgn_2978#!#password|-|123
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: role "lgn_2978" does not exist )~~
-
-java_auth#!#database|-|db2#!#user|-|lgn_2978#!#password|-|123
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: role "lgn_2978" does not exist )~~
-
-
 -- tsql
--- It should be failed since there is no relevant login
 -- recreate the login with same name
 CREATE LOGIN lgn_2978 WITH PASSWORD='123';
 GO
@@ -1352,6 +1348,15 @@ GO
 
 -- psql
 ALTER SYSTEM SET babelfishpg_tsql.migration_mode = 'single-db';
+GO
+-- Wait to sync with another session
+SELECT pg_sleep(1);
+GO
+~~START~~
+void
+
+~~END~~
+
 ALTER SYSTEM SET babelfishpg_tsql.allow_antlr_to_unsupported_grammar_for_testing = false;
 SELECT pg_reload_conf();
 GO

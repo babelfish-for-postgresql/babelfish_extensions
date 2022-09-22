@@ -1621,7 +1621,10 @@ public:
 	void exitFull_object_name(TSqlParser::Full_object_nameContext *ctx) override
 	{
 		if (ctx && ctx->schema)
+		{
+			schema_name = stripQuoteFromId(ctx->schema);
 			is_schema_specified = true;
+		}
 		else
 			is_schema_specified = false;
 		tsqlCommonMutator::exitFull_object_name(ctx);
@@ -2708,6 +2711,18 @@ handleBatchLevelStatement(TSqlParser::Batch_level_statementContext *ctx, tsqlSel
 	rewriteBatchLevelStatement(ctx, ssm, execsql->sqlstmt);
 	result->body = lappend(result->body, execsql);
 
+	// check if it is a CREATE VIEW statement
+	if (ctx->create_or_alter_view())
+	{
+		execsql->is_create_view = true;
+		if (ctx->create_or_alter_view()->simple_name() && ctx->create_or_alter_view()->simple_name()->schema)
+		{
+			std::string schema_name = stripQuoteFromId(ctx->create_or_alter_view()->simple_name()->schema);
+			if (!schema_name.empty())
+				execsql->schema_name = pstrdup(downcase_truncate_identifier(schema_name.c_str(), schema_name.length(), true));
+		}
+	}
+
 	Token* start_body_token = get_start_token_of_batch_level_stmt_body(ctx);
 
 	pltsql_curr_compile_body_position = (start_body_token ? start_body_token->getStartIndex() : 0);
@@ -3248,7 +3263,17 @@ void extractQueryHintsFromOptionClause(TSqlParser::Option_clauseContext *octx)
 		{
 			std::string value = ::getFullText(option->DECIMAL());
 			if (!value.empty())
+			{
+				/* 
+				 * The MAXDOP hint should be handled specially the hint value is 0
+				 * This is because in T-SQL, setting MAXDOP to 0 allows SQL Server to use all the available processors up to 64 processors
+ 				 * However, if we set the GUC max_parallel_workers_per_gather to 0, it disables parallelism in P-SQL
+ 				 * Thus, we need to set the GUC value to 64 instead.
+ 				 */
+				if (stoi(value) == 0)
+					value = "64";
 				query_hints.push_back("Set(max_parallel_workers_per_gather " + value + ")");
+			}
 		}
 	}
 
@@ -4752,7 +4777,21 @@ makeAnother(TSqlParser::Another_statementContext *ctx, tsqlBuilder &builder)
 PLtsql_stmt *
 makeExecBodyBatch(TSqlParser::Execute_body_batchContext *ctx)
 {
+	std::string schema_name;
+	std::string proc_name;
+	bool is_cross_db = false;
+	std::string db_name;
 	std::string func_proc_name = ::getFullText(ctx->func_proc_name_server_database_schema());
+	if (ctx->func_proc_name_server_database_schema()->database)
+	{
+		db_name = stripQuoteFromId(ctx->func_proc_name_server_database_schema()->database);
+		if (!string_matches(db_name.c_str(), get_cur_db_name()))
+			is_cross_db = true;
+	}
+	if (ctx->func_proc_name_server_database_schema()->schema)
+		schema_name = stripQuoteFromId(ctx->func_proc_name_server_database_schema()->schema);
+	if (ctx->func_proc_name_server_database_schema()->procedure)
+		proc_name = stripQuoteFromId(ctx->func_proc_name_server_database_schema()->procedure);
 	Assert(!func_proc_name.empty());
 	TSqlParser::Execute_statement_argContext *func_proc_args = ctx->execute_statement_arg();
 
@@ -4769,6 +4808,16 @@ makeExecBodyBatch(TSqlParser::Execute_body_batchContext *ctx)
 	result->return_code_dno = return_code_dno;
 	result->paramno = 0;
 	result->params = NIL;
+	// record whether stmt is cross-db
+	if (is_cross_db)
+		result->is_cross_db = true;
+
+	if (!proc_name.empty())
+		result->proc_name = pstrdup(downcase_truncate_identifier(proc_name.c_str(), proc_name.length(), true));
+	if (!schema_name.empty())
+		result->schema_name = pstrdup(downcase_truncate_identifier(schema_name.c_str(), schema_name.length(), true));
+	if (!db_name.empty())
+		result->db_name = pstrdup(downcase_truncate_identifier(db_name.c_str(), db_name.length(), true));
 
 	if (func_proc_args)
 	{
@@ -4783,6 +4832,9 @@ makeExecBodyBatch(TSqlParser::Execute_body_batchContext *ctx)
 	}
 
 	std::stringstream ss;
+	// Rewrite proc name to sp_* if the schema is "dbo" and proc name starts with "sp_"
+	if (pg_strncasecmp(func_proc_name.c_str(), "dbo.sp_", 6) == 0)
+		func_proc_name.erase(func_proc_name.begin() + 0, func_proc_name.begin() + 4);
 	ss << "EXEC " << func_proc_name;
 	if (func_proc_args)
 		ss << " " << ::getFullText(func_proc_args);
@@ -5163,7 +5215,7 @@ post_process_column_constraint(TSqlParser::Column_constraintContext *ctx, PLtsql
 }
 
 static void
-post_process_column_inline_index(TSqlParser::Column_inline_indexContext *ctx, PLtsql_stmt_execsql *stmt, TSqlParser::Ddl_statementContext *baseCtx)
+post_process_inline_index(TSqlParser::Inline_indexContext *ctx, PLtsql_stmt_execsql *stmt, TSqlParser::Ddl_statementContext *baseCtx)
 {
 	if (ctx->ON())
 	{
@@ -5223,8 +5275,8 @@ post_process_column_definition(TSqlParser::Column_definitionContext *ctx, PLtsql
 	if (pg_strncasecmp(::getFullText(ctx->data_type()).c_str(), "DATETIMEOFFSET(7)", 17) == 0)
 		rewritten_query_fragment.emplace(std::make_pair(ctx->data_type()->start->getStartIndex(), std::make_pair(::getFullText(ctx->data_type()), "DATETIMEOFFSET")));
 	 
-	if (ctx->column_inline_index())
-		post_process_column_inline_index(ctx->column_inline_index(), stmt, baseCtx);
+	if (ctx->inline_index())
+		post_process_inline_index(ctx->inline_index(), stmt, baseCtx);
 
 	for (auto cctx : ctx->column_constraint())
 		post_process_column_constraint(cctx, stmt, baseCtx);
@@ -5310,19 +5362,14 @@ post_process_create_table(TSqlParser::Create_tableContext *ctx, PLtsql_stmt_exec
 		post_process_column_definition(cdctx, stmt, baseCtx);
 
 	// viist options in index specification
-	for (auto ictx : ctx->table_indices())
+	for (auto ictx : ctx->inline_index())
 	{
-		if (ictx->ON())
-		{
-			Assert(ictx->storage_partition_clause());
-			removeTokenStringFromQuery(stmt->sqlstmt, ictx->ON(), baseCtx);
-			removeCtxStringFromQuery(stmt->sqlstmt, ictx->storage_partition_clause(), baseCtx);
-		}
+		post_process_inline_index(ictx, stmt, baseCtx);
+	}
 
-		if (ictx->clustered() && ictx->clustered()->CLUSTERED())
-			removeTokenStringFromQuery(stmt->sqlstmt, ictx->clustered()->CLUSTERED(), baseCtx);
-		if (ictx->clustered() && ictx->clustered()->NONCLUSTERED())
-			removeTokenStringFromQuery(stmt->sqlstmt, ictx->clustered()->NONCLUSTERED(), baseCtx);
+	for (auto ictx : ctx->table_constraint())
+	{
+		post_process_table_constraint(ictx, stmt, baseCtx);
 	}
 	return false;
 }

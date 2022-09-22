@@ -196,7 +196,6 @@ pe_tds_init(void)
 	pltsql_plugin_handler_ptr->set_db_stat_var = &TdsSetDatabaseStatVariable;
 	pltsql_plugin_handler_ptr->get_stat_values = &tds_stat_get_activity;
 	pltsql_plugin_handler_ptr->invalidate_stat_view = &invalidate_stat_table;
-	pltsql_plugin_handler_ptr->TdsGetEncodingFromLcid = &TdsLookupEncodingByLCID;
 	pltsql_plugin_handler_ptr->get_host_name = &get_tds_host_name;
 
 	invalidate_stat_table_hook = invalidate_stat_table;
@@ -242,7 +241,10 @@ pe_start(Port *port)
 	tdserrcontext.previous = error_context_stack;
 	error_context_stack = &tdserrcontext;
 
-	rc = TdsProcessLogin(port, LoadedSSL);
+	if ((rc = TdsProcessLogin(port, LoadedSSL)) == -1)
+	{
+		return STATUS_ERROR;
+	}
 
 	/* Pop the error context stack */
 	error_context_stack = tdserrcontext.previous;

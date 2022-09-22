@@ -1,0 +1,6 @@
+SELECT * FROM sys.fulltext_languages;
+GO
+~~START~~
+int#!#varchar
+~~END~~
+

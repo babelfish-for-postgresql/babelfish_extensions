@@ -1,4 +1,4 @@
-SELECT * FROM DATETIME_dt;
+SELECT * FROM TestDatetime_vu_prepare_dt;
 ~~START~~
 datetime
 2000-12-13 12:58:23.123
