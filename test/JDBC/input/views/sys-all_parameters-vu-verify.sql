@@ -283,15 +283,3 @@ column_encryption_key_database_name
 FROM sys.all_parameters WHERE object_id = OBJECT_ID('sys_all_parameters_vu_prepare_DataTypeExamples')
 ORDER BY parameter_id
 GO
-
--- dependant objects for upgrade tests
-
-SELECT * FROM sys_all_parameters_vu_prepare_upgrade_view
-GO
-
-EXEC sys_all_parameters_vu_prepare_upgrade_proc
-GO
-
-SELECT sys_all_parameters_vu_prepare_upgrade_func()
-GO
-
