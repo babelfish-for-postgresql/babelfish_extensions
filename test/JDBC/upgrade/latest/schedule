@@ -148,7 +148,6 @@ babel_char
 BABEL-SQUARE
 BABEL-728
 babel_function_string
-BABEL-2701
 BABEL-1566
 BABEL-3360
 babel_isnumeric
@@ -199,7 +198,6 @@ sys-triggers-dep
 BABEL-2877
 sys-sp_pkeys
 sys-sp_statistics
-BABEL-1756
 BABEL-APPLOCK
 BABEL-1438
 BABEL-SP_DATATYPE_INFO
@@ -213,7 +211,6 @@ BABEL-SP_SPROC_COLUMNS
 BABEL-3000
 sys-sp_pkeys-dep
 sys-sp_statistics-dep
-BABEL-1756-dep
 BABEL-SPCOLUMNS-dep
 BABEL-SP_SPECIAL_COLUMNS-dep
 BABEL-SP_FKEYS-dep
