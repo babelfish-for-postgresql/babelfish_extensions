@@ -70,9 +70,6 @@ sys-original_login
 sys-schema-name
 sys-objects
 sys-procedures
-sys-all_sql_modules
-sys-sql_modules
-sys-system_sql_modules
 sys-sysdatabases
 sys-sysobjects
 sys-trigger_nestlevel

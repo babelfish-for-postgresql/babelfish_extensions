@@ -55,7 +55,6 @@ sys-procedures
 sys-schema-name
 sys-suser_sid
 sys-suser_sname
-sys-system_sql_modules
 sys-sysdatabases
 sys-sysobjects
 sys-trigger_nestlevel
