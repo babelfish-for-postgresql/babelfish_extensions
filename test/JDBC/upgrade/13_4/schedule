@@ -44,7 +44,6 @@ sys-schemas
 sys-sp_databases
 sys-sp_tables_view
 sys-syscharsets
-sys-syscolumns
 sys-sysforeignkeys
 sys-tables
 sys-types
@@ -143,6 +142,18 @@ sys-table_types
 sys_all_objects
 BABEL-1683
 schema_resolution_trigger
+sys-sp_pkeys
+sys-sp_statistics
+BABEL-APPLOCK
+BABEL-1438
+BABEL-SP_DATATYPE_INFO
+BABEL-SPCOLUMNS
+BABEL-SP_TABLES
+BABEL-SP_TABLE_PRIVILIGES
+BABEL-SP_FKEYS
+BABEL-SP_STORED_PROCEDURES
+BABEL-SP_SPROC_COLUMNS
+BABEL-3000
 sys-foreign_key_columns-dep
 sys-foreign_keys-dep
 sys-identity_columns-dep
@@ -154,3 +165,5 @@ sys-sysforeignkeys-dep
 sys-tables-dep
 sys-types-dep
 sys-views-dep
+BABEL-SPCOLUMNS-dep
+BABEL-3000-dep
