@@ -728,15 +728,22 @@ RETURNS sys.DATETIMEOFFSET
 AS
 $BODY$
 DECLARE
-    v_err_message VARCHAR;
-    v_fractions VARCHAR;
+    v_err_message SYS.VARCHAR;
+    v_fractions SYS.VARCHAR;
     v_precision SMALLINT;
     v_calc_seconds NUMERIC; 
     v_resdatetime TIMESTAMP WITHOUT TIME ZONE;
-    v_string TEXT;
-    v_sign TEXT;
+    v_string pg_catalog.text;
+    v_sign pg_catalog.text;
 BEGIN
-    v_fractions := floor(p_fractions)::INTEGER::VARCHAR;
+    v_fractions := floor(p_fractions)::INTEGER::SYS.VARCHAR;
+    IF p_precision IS NULL THEN
+        RAISE EXCEPTION 'Scale argument is not valid. Valid expressions for data type datetimeoffset scale argument are integer constants and integer constant expressions.';
+    END IF;
+    IF p_year IS NULL OR p_month is NULL OR p_day IS NULL OR p_hour IS NULL OR p_minute IS NULL OR p_seconds IS NULL OR p_fractions IS NULL
+            OR p_hour_offset IS NULL OR p_minute_offset is NULL THEN
+        RETURN NULL;
+    END IF;
     v_precision := p_precision::SMALLINT;
 
     IF (scale(p_precision) > 0) THEN
@@ -751,8 +758,7 @@ BEGIN
         (floor(p_seconds)::SMALLINT NOT BETWEEN 0 AND 59) OR
         (floor(p_hour_offset)::SMALLINT NOT BETWEEN -14 AND 14) OR
         (floor(p_minute_offset)::SMALLINT NOT BETWEEN -59 AND 59) OR
-        (floor(p_hour_offset)::SMALLINT < 0 AND floor(p_minute_offset)::SMALLINT > 0) OR
-        (floor(p_minute_offset)::SMALLINT < 0 AND floor(p_hour_offset)::SMALLINT > 0) OR
+        (p_hour_offset * p_minute_offset < 0::NUMERIC) OR
         (floor(p_hour_offset)::SMALLINT = 14 AND floor(p_minute_offset)::SMALLINT != 0) OR
         (floor(p_hour_offset)::SMALLINT = -14 AND floor(p_minute_offset)::SMALLINT != 0) OR
         (p_fractions::SMALLINT != 0 AND char_length(v_fractions) > p_precision::SMALLINT))
@@ -801,8 +807,7 @@ EXCEPTION
 END;
 $BODY$
 LANGUAGE plpgsql
-IMMUTABLE
-RETURNS NULL ON NULL INPUT;
+IMMUTABLE;
 
 CREATE OR REPLACE FUNCTION sys.DATETIMEOFFSETFROMPARTS(IN p_year TEXT,
                                                                IN p_month TEXT,
@@ -818,7 +823,7 @@ RETURNS sys.DATETIMEOFFSET
 AS
 $BODY$
 DECLARE
-    v_err_message VARCHAR;
+    v_err_message SYS.VARCHAR;
 BEGIN
     RETURN sys.DATETIMEOFFSETFROMPARTS(IN p_year NUMERIC,IN p_month NUMERIC,IN p_day NUMERIC,IN p_hour NUMERIC,IN p_minute NUMERIC,
                                         IN p_seconds NUMERIC,IN p_fractions NUMERIC,IN p_hour_offset NUMERIC,IN p_minute_offset NUMERIC,
@@ -834,8 +839,7 @@ EXCEPTION
 END;
 $BODY$
 LANGUAGE plpgsql
-IMMUTABLE
-RETURNS NULL ON NULL INPUT;
+IMMUTABLE;
 
 -- Duplicate functions with arg TEXT since ANYELEMNT cannot handle type unknown.
 CREATE OR REPLACE FUNCTION sys.stuff(expr TEXT, start INTEGER, length INTEGER, replace_expr TEXT)

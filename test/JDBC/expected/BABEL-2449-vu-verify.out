@@ -55,6 +55,34 @@ GO
 DROP VIEW BABEL_2449_vu_prepare_v6
 GO
 
+SELECT * FROM BABEL_2449_vu_prepare_v7
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Scale argument is not valid. Valid expressions for data type datetimeoffset scale argument are integer constants and integer constant expressions.)~~
+
+DROP VIEW BABEL_2449_vu_prepare_v7
+GO
+
+SELECT * FROM BABEL_2449_vu_prepare_v8
+GO
+~~START~~
+datetimeoffset
+2011-08-15 14:30:00.5000000 +12:30
+~~END~~
+
+DROP VIEW BABEL_2449_vu_prepare_v8
+GO
+
+SELECT * FROM BABEL_2449_vu_prepare_v9
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Scale argument is not valid. Valid expressions for data type datetimeoffset scale argument are integer constants and integer constant expressions.)~~
+
+DROP VIEW BABEL_2449_vu_prepare_v9
+GO
+
 EXEC BABEL_2449_vu_prepare_p1
 GO
 ~~START~~
@@ -121,6 +149,34 @@ GO
 DROP procedure  BABEL_2449_vu_prepare_p7
 GO
 
+EXEC BABEL_2449_vu_prepare_p8
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Scale argument is not valid. Valid expressions for data type datetimeoffset scale argument are integer constants and integer constant expressions.)~~
+
+DROP procedure  BABEL_2449_vu_prepare_p8
+GO
+
+EXEC BABEL_2449_vu_prepare_p9
+GO
+~~START~~
+datetimeoffset
+2011-08-15 14:30:00.5000000 +12:30
+~~END~~
+
+DROP procedure  BABEL_2449_vu_prepare_p9
+GO
+
+EXEC BABEL_2449_vu_prepare_p10
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Scale argument is not valid. Valid expressions for data type datetimeoffset scale argument are integer constants and integer constant expressions.)~~
+
+DROP procedure  BABEL_2449_vu_prepare_p10
+GO
+
 SELECT BABEL_2449_vu_prepare_f1()
 GO
 ~~START~~
@@ -128,7 +184,7 @@ datetimeoffset
 2011-08-15 14:30:00.5000000 +12:30
 ~~END~~
 
-DROP FUNCTION BABEL_2449_vu_prepare_f1()
+DROP FUNCTION BABEL_2449_vu_prepare_f1
 GO
 
 SELECT BABEL_2449_vu_prepare_f2()
@@ -138,7 +194,7 @@ datetimeoffset
 <NULL>
 ~~END~~
 
-DROP FUNCTION BABEL_2449_vu_prepare_f2()
+DROP FUNCTION BABEL_2449_vu_prepare_f2
 GO
 
 SELECT BABEL_2449_vu_prepare_f3()
@@ -149,7 +205,7 @@ datetimeoffset
 
 ~~ERROR (Message: Cannot construct data type datetimeoffset, some of the arguments have values which are not valid.)~~
 
-DROP FUNCTION BABEL_2449_vu_prepare_f3()
+DROP FUNCTION BABEL_2449_vu_prepare_f3
 GO
 
 SELECT BABEL_2449_vu_prepare_f4()
@@ -160,7 +216,7 @@ datetimeoffset
 
 ~~ERROR (Message: Cannot construct data type datetimeoffset, some of the arguments have values which are not valid.)~~
 
-DROP FUNCTION BABEL_2449_vu_prepare_f4()
+DROP FUNCTION BABEL_2449_vu_prepare_f4
 GO
 
 SELECT BABEL_2449_vu_prepare_f5()
@@ -170,7 +226,7 @@ datetimeoffset
 2011-08-15 14:30:00.0005000 +12:00
 ~~END~~
 
-DROP FUNCTION BABEL_2449_vu_prepare_f5()
+DROP FUNCTION BABEL_2449_vu_prepare_f5
 GO
 
 SELECT BABEL_2449_vu_prepare_f6()
@@ -181,7 +237,7 @@ datetimeoffset
 
 ~~ERROR (Message: Cannot construct data type datetimeoffset, some of the arguments have values which are not valid.)~~
 
-DROP FUNCTION BABEL_2449_vu_prepare_f6()
+DROP FUNCTION BABEL_2449_vu_prepare_f6
 GO
 
 SELECT BABEL_2449_vu_prepare_f7()
@@ -192,5 +248,37 @@ datetimeoffset
 
 ~~ERROR (Message: The datetimeoffsetfromparts function requires 10 arguments)~~
 
-DROP FUNCTION BABEL_2449_vu_prepare_f7()
+DROP FUNCTION BABEL_2449_vu_prepare_f7
+GO
+
+SELECT BABEL_2449_vu_prepare_f8()
+GO
+~~START~~
+datetimeoffset
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Scale argument is not valid. Valid expressions for data type datetimeoffset scale argument are integer constants and integer constant expressions.)~~
+
+DROP FUNCTION BABEL_2449_vu_prepare_f8
+GO
+
+SELECT BABEL_2449_vu_prepare_f9()
+GO
+~~START~~
+datetimeoffset
+2011-08-15 14:30:00.5000000 +12:30
+~~END~~
+
+DROP FUNCTION BABEL_2449_vu_prepare_f9
+GO
+
+SELECT BABEL_2449_vu_prepare_f10()
+GO
+~~START~~
+datetimeoffset
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Scale argument is not valid. Valid expressions for data type datetimeoffset scale argument are integer constants and integer constant expressions.)~~
+
+DROP FUNCTION BABEL_2449_vu_prepare_f10
 GO
