@@ -1,48 +1,27 @@
-INSERT INTO test_sp_helpdbfixedrole_tbl (DbFixedRole, Description) EXEC sp_helpdbfixedrole
+EXEC sp_helpdbfixedrole
 GO
 
-SELECT DbFixedRole, Description FROM test_sp_helpdbfixedrole_tbl
+EXEC sp_helpdbfixedrole 'db_owner'
 GO
 
-TRUNCATE TABLE test_sp_helpdbfixedrole_tbl
+EXEC sp_helpdbfixedrole 'DB_OWNER    '
 GO
 
-INSERT INTO test_sp_helpdbfixedrole_tbl (DbFixedRole, Description) EXEC sp_helpdbfixedrole 'db_owner'
+EXEC sp_helpdbfixedrole 'db_accessadmin'
 GO
-
-SELECT DbFixedRole, Description FROM test_sp_helpdbfixedrole_tbl
+EXEC sp_helpdbfixedrole 'DB_securityadmin'
 GO
-
-TRUNCATE TABLE test_sp_helpdbfixedrole_tbl
+EXEC sp_helpdbfixedrole 'db_ddladmin   '
 GO
-
-INSERT INTO test_sp_helpdbfixedrole_tbl (DbFixedRole, Description) EXEC sp_helpdbfixedrole 'DB_OWNER    '
+EXEC sp_helpdbfixedrole 'DB_backupoperator     '
 GO
-
-SELECT DbFixedRole, Description FROM test_sp_helpdbfixedrole_tbl
+EXEC sp_helpdbfixedrole 'db_datareader'
 GO
-
-TRUNCATE TABLE test_sp_helpdbfixedrole_tbl
+EXEC sp_helpdbfixedrole 'db_datawriter'
 GO
-
-INSERT INTO test_sp_helpdbfixedrole_tbl (DbFixedRole, Description) EXEC sp_helpdbfixedrole 'db_accessadmin'
+EXEC sp_helpdbfixedrole 'db_denydatareader'
 GO
-INSERT INTO test_sp_helpdbfixedrole_tbl (DbFixedRole, Description) EXEC sp_helpdbfixedrole 'DB_securityadmin'
-GO
-INSERT INTO test_sp_helpdbfixedrole_tbl (DbFixedRole, Description) EXEC sp_helpdbfixedrole 'db_ddladmin   '
-GO
-INSERT INTO test_sp_helpdbfixedrole_tbl (DbFixedRole, Description) EXEC sp_helpdbfixedrole 'DB_backupoperator     '
-GO
-INSERT INTO test_sp_helpdbfixedrole_tbl (DbFixedRole, Description) EXEC sp_helpdbfixedrole 'db_datareader'
-GO
-INSERT INTO test_sp_helpdbfixedrole_tbl (DbFixedRole, Description) EXEC sp_helpdbfixedrole 'db_datawriter'
-GO
-INSERT INTO test_sp_helpdbfixedrole_tbl (DbFixedRole, Description) EXEC sp_helpdbfixedrole 'db_denydatareader'
-GO
-INSERT INTO test_sp_helpdbfixedrole_tbl (DbFixedRole, Description) EXEC sp_helpdbfixedrole 'db_denydatawriter'
-GO
-
-SELECT DbFixedRole, Description FROM test_sp_helpdbfixedrole_tbl
+EXEC sp_helpdbfixedrole 'db_denydatawriter'
 GO
 
 EXEC sp_helpdbfixedrole ''
