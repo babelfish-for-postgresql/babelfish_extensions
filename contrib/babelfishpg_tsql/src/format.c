@@ -318,6 +318,7 @@ format_numeric_handler(Datum value, Numeric numeric_val, StringInfo format_res, 
 					 Oid arg_type_oid, char *culture, char *valid_culture, char *data_type)
 {
 	char upper_pattern = toupper(pattern);
+	resetStringInfo(format_res);
 
 	switch (upper_pattern)
 	{
@@ -1998,7 +1999,7 @@ format_roundtrip(Datum value, Numeric numeric_val, StringInfo format_res, char p
 			}
 
 			float4_data_to_char(format_res, value);
-			numeric_val = cstring_to_numeric(format_res);
+			numeric_val = cstring_to_numeric(format_res->data);
 			numeric_val = trim_scale_numeric(round_num(numeric_val, precision));
 
 			numeric_abs_val = get_numeric_abs(numeric_val);
