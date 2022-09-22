@@ -231,6 +231,7 @@ format_numeric(PG_FUNCTION_ARGS)
 					temp_pattern = "9D999999EEEE";
 				}
 
+				resetStringInfo(format_res);
 				appendStringInfoString(format_res, temp_pattern);
 
 				float4_data_to_char(format_res, datum_val);

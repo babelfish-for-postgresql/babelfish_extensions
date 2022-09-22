@@ -1324,28 +1324,28 @@ SELECT FORMAT(rt, 'D', 'en-us') from real_testing;
 GO
 ~~START~~
 nvarchar
--3.400000e+38
--3.312346e+38
--3.312341e+38
--2.212340e+01
- 2.212340e+01
- 2.212341e+01
- 3.312346e+38
- 3.400000e+38
+<NULL>
+<NULL>
+<NULL>
+<NULL>
+<NULL>
+<NULL>
+<NULL>
+<NULL>
 ~~END~~
 
 SELECT FORMAT(rt, 'D9', 'en-us') from real_testing;
 GO
 ~~START~~
 nvarchar
--3.400000e+38
--3.312346e+38
--3.312341e+38
--2.212340e+01
- 2.212340e+01
- 2.212341e+01
- 3.312346e+38
- 3.400000e+38
+<NULL>
+<NULL>
+<NULL>
+<NULL>
+<NULL>
+<NULL>
+<NULL>
+<NULL>
 ~~END~~
 
 
@@ -2190,26 +2190,26 @@ SELECT FORMAT(rt, 'D', 'en-us') from real_testing2;
 GO
 ~~START~~
 nvarchar
--3.400000e+01
--3.400000e+01
--3.312347e+38
- 2.212346e+04
- 2.212341e+01
- 3.312346e+38
- 3.400000e+38
+<NULL>
+<NULL>
+<NULL>
+<NULL>
+<NULL>
+<NULL>
+<NULL>
 ~~END~~
 
 SELECT FORMAT(rt, 'D9', 'en-us') from real_testing2;
 GO
 ~~START~~
 nvarchar
--3.400000e+01
--3.400000e+01
--3.312347e+38
- 2.212346e+04
- 2.212341e+01
- 3.312346e+38
- 3.400000e+38
+<NULL>
+<NULL>
+<NULL>
+<NULL>
+<NULL>
+<NULL>
+<NULL>
 ~~END~~
 
 
@@ -2529,7 +2529,9 @@ SELECT FORMAT(ft, 'R', 'en-us') from float_testing2;
 GO
 ~~START~~
 nvarchar
-~~END~~
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Format "R" is currently not supported for FLOAT datatype)~~
 
 
 drop table real_testing2;
