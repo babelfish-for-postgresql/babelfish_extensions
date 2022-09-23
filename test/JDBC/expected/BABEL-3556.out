@@ -1,0 +1,534 @@
+
+-- Test valid maximum/minimum/zero values for fixeddecimal
+-- without qoute
+-- decimal
+SELECT CAST(922337203685477.5807 AS fixeddecimal);
+GO
+~~START~~
+money
+922337203685477.5807
+~~END~~
+
+
+SELECT CAST(-922337203685477.5808 AS fixeddecimal);
+GO
+~~START~~
+money
+-922337203685477.5808
+~~END~~
+
+
+SELECT CAST(0 AS fixeddecimal);
+GO
+~~START~~
+money
+0.0000
+~~END~~
+
+
+-- integral
+SELECT CAST(922337203685477 AS fixeddecimal);
+GO
+~~START~~
+money
+922337203685477.0000
+~~END~~
+
+
+SELECT CAST(-922337203685477 AS fixeddecimal);
+GO
+~~START~~
+money
+-922337203685477.0000
+~~END~~
+
+
+-- inside qoute
+-- decimal
+SELECT CAST('922337203685477.5807' AS fixeddecimal);
+GO
+~~START~~
+money
+922337203685477.5807
+~~END~~
+
+
+SELECT CAST('-922337203685477.5808' AS fixeddecimal);
+GO
+~~START~~
+money
+-922337203685477.5808
+~~END~~
+
+
+SELECT CAST('0' AS fixeddecimal);
+GO
+~~START~~
+money
+0.0000
+~~END~~
+
+
+-- integral
+SELECT CAST('922337203685477' AS fixeddecimal);
+GO
+~~START~~
+money
+922337203685477.0000
+~~END~~
+
+
+SELECT CAST('-922337203685477' AS fixeddecimal);
+GO
+~~START~~
+money
+-922337203685477.0000
+~~END~~
+
+
+
+-- Negative test
+-- Test out of range value for fixeddecimal
+-- without qoute
+-- decimal
+SELECT CAST(922337203685478.5807 AS fixeddecimal);
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: value "922337203685478.5807" is out of range for type fixeddecimal)~~
+
+
+SELECT CAST(-922337203685478.5808 AS fixeddecimal);
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: value "-922337203685478.5808" is out of range for type fixeddecimal)~~
+
+
+-- integral
+SELECT CAST(922337203685478 AS fixeddecimal);
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: value "922337203685478" is out of range for type fixeddecimal)~~
+
+
+SELECT CAST(-922337203685478 AS fixeddecimal);
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: value "-922337203685478" is out of range for type fixeddecimal)~~
+
+
+SELECT CAST(1232422322334223423121 AS fixeddecimal);
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: value "1232422322334223423121" is out of range for type fixeddecimal)~~
+
+
+
+-- inside qoute
+-- decimal
+SELECT CAST(922337203685478.5807 AS fixeddecimal);
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: value "922337203685478.5807" is out of range for type fixeddecimal)~~
+
+
+SELECT CAST(-922337203685478.5808 AS fixeddecimal);
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: value "-922337203685478.5808" is out of range for type fixeddecimal)~~
+
+
+-- integral
+SELECT CAST(922337203685478 AS fixeddecimal);
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: value "922337203685478" is out of range for type fixeddecimal)~~
+
+
+SELECT CAST(-922337203685478 AS fixeddecimal);
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: value "-922337203685478" is out of range for type fixeddecimal)~~
+
+
+SELECT CAST(1232422322334223423121 AS fixeddecimal);
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: value "1232422322334223423121" is out of range for type fixeddecimal)~~
+
+
+
+-- Test valid maximum/minimum/zero values for money
+-- without qoute
+-- decimal
+SELECT CAST($922337203685477.5807 AS money);
+GO
+~~START~~
+money
+922337203685477.5807
+~~END~~
+
+
+SELECT CAST(₧-922337203685477.5808 AS money);
+GO
+~~START~~
+money
+-922337203685477.5808
+~~END~~
+
+
+SELECT CAST($0 AS money);
+GO
+~~START~~
+money
+0.0000
+~~END~~
+
+
+-- integral
+SELECT CAST($922337203685477 AS money);
+GO
+~~START~~
+money
+922337203685477.0000
+~~END~~
+
+
+SELECT CAST(₧-922337203685477 AS money);
+GO
+~~START~~
+money
+-922337203685477.0000
+~~END~~
+
+
+
+-- with qoute
+-- decimal
+SELECT CAST('$922337203685477.5807' AS money);
+GO
+~~START~~
+money
+922337203685477.5807
+~~END~~
+
+
+SELECT CAST('₧-922337203685477.5808' AS money);
+GO
+~~START~~
+money
+-922337203685477.5808
+~~END~~
+
+
+SELECT CAST('$0' AS money);
+GO
+~~START~~
+money
+0.0000
+~~END~~
+
+
+-- integral
+SELECT CAST('$922337203685477' AS money);
+GO
+~~START~~
+money
+922337203685477.0000
+~~END~~
+
+
+SELECT CAST('₧-922337203685477' AS money);
+GO
+~~START~~
+money
+-922337203685477.0000
+~~END~~
+
+
+
+-- Negative test
+-- Test out of range value for money
+-- without qoute
+-- decimal
+SELECT CAST($922337203685478.5807 AS money);
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: value "922337203685478.5807" is out of range for type fixeddecimal)~~
+
+
+SELECT CAST(₧-922337203685478.5808 AS money);
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: value "-922337203685478.5808" is out of range for type fixeddecimal)~~
+
+
+-- integer
+SELECT CAST($922337203685478 AS money);
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: value "922337203685478" is out of range for type fixeddecimal)~~
+
+
+SELECT CAST(₧-922337203685478 AS money);
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: value "-922337203685478" is out of range for type fixeddecimal)~~
+
+
+SELECT CAST($1232422322334223423121 AS money);
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: value "1232422322334223423121" is out of range for type fixeddecimal)~~
+
+
+-- with qoute
+-- decimal
+SELECT CAST('$922337203685478.5807' AS money);
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: value "$922337203685478.5807" is out of range for type fixeddecimal)~~
+
+
+SELECT CAST('₧-922337203685478.5808' AS money);
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: value "₧-922337203685478.5808" is out of range for type fixeddecimal)~~
+
+
+-- integer
+SELECT CAST('$922337203685478' AS money);
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: value "$922337203685478" is out of range for type fixeddecimal)~~
+
+
+SELECT CAST('₧-922337203685478' AS money);
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: value "₧-922337203685478" is out of range for type fixeddecimal)~~
+
+
+SELECT CAST('$1232422322334223423121' AS money);
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: value "$1232422322334223423121" is out of range for type fixeddecimal)~~
+
+
+
+-- Test valid maximum/minimum/zero values for smallmoney
+-- without qoute
+-- decimal
+SELECT CAST($214748.3647 AS smallmoney);
+GO
+~~START~~
+smallmoney
+214748.3647
+~~END~~
+
+
+SELECT CAST(₧-214748.3648 AS smallmoney);
+GO
+~~START~~
+smallmoney
+-214748.3648
+~~END~~
+
+
+SELECT CAST($0 AS smallmoney);
+GO
+~~START~~
+smallmoney
+0.0000
+~~END~~
+
+
+-- integer
+SELECT CAST($214748 AS smallmoney);
+GO
+~~START~~
+smallmoney
+214748.0000
+~~END~~
+
+
+SELECT CAST(₧-214748 AS smallmoney);
+GO
+~~START~~
+smallmoney
+-214748.0000
+~~END~~
+
+
+
+-- inside qoute
+-- decimal
+SELECT CAST('$214748.3647' AS smallmoney);
+GO
+~~START~~
+smallmoney
+214748.3647
+~~END~~
+
+
+SELECT CAST('₧-214748.3648' AS smallmoney);
+GO
+~~START~~
+smallmoney
+-214748.3648
+~~END~~
+
+
+SELECT CAST('$0' AS smallmoney);
+GO
+~~START~~
+smallmoney
+0.0000
+~~END~~
+
+
+-- integer
+SELECT CAST('$214748' AS smallmoney);
+GO
+~~START~~
+smallmoney
+214748.0000
+~~END~~
+
+
+SELECT CAST('₧-214748' AS smallmoney);
+GO
+~~START~~
+smallmoney
+-214748.0000
+~~END~~
+
+
+
+
+-- Negative test
+-- Test out of range value for smallmoney
+-- without qoute
+-- decimal
+SELECT CAST($214748.3648 AS smallmoney);
+GO
+~~START~~
+smallmoney
+~~ERROR (Code: 220)~~
+
+~~ERROR (Message: value for domain smallmoney violates check constraint "smallmoney_check")~~
+
+
+SELECT CAST(₧-214748.3649 AS smallmoney);
+GO
+~~START~~
+smallmoney
+~~ERROR (Code: 220)~~
+
+~~ERROR (Message: value for domain smallmoney violates check constraint "smallmoney_check")~~
+
+
+-- integer
+SELECT CAST($214749 AS smallmoney);
+GO
+~~START~~
+smallmoney
+~~ERROR (Code: 220)~~
+
+~~ERROR (Message: value for domain smallmoney violates check constraint "smallmoney_check")~~
+
+
+SELECT CAST(₧-214749 AS smallmoney);
+GO
+~~START~~
+smallmoney
+~~ERROR (Code: 220)~~
+
+~~ERROR (Message: value for domain smallmoney violates check constraint "smallmoney_check")~~
+
+
+SELECT CAST($1232422322334223423121 AS smallmoney);
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: value "1232422322334223423121" is out of range for type fixeddecimal)~~
+
+
+SELECT CAST(₧-1232422322334223423121 AS smallmoney);
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: value "-1232422322334223423121" is out of range for type fixeddecimal)~~
+
+
+-- Inside qoute
+-- decimal
+SELECT CAST('$214748.3648' AS smallmoney);
+GO
+~~START~~
+smallmoney
+~~ERROR (Code: 220)~~
+
+~~ERROR (Message: value for domain smallmoney violates check constraint "smallmoney_check")~~
+
+
+SELECT CAST('₧-214748.3649' AS smallmoney);
+GO
+~~START~~
+smallmoney
+~~ERROR (Code: 220)~~
+
+~~ERROR (Message: value for domain smallmoney violates check constraint "smallmoney_check")~~
+
+
+-- integer
+SELECT CAST('$214749' AS smallmoney);
+GO
+~~START~~
+smallmoney
+~~ERROR (Code: 220)~~
+
+~~ERROR (Message: value for domain smallmoney violates check constraint "smallmoney_check")~~
+
+
+SELECT CAST('₧-214749' AS smallmoney);
+GO
+~~START~~
+smallmoney
+~~ERROR (Code: 220)~~
+
+~~ERROR (Message: value for domain smallmoney violates check constraint "smallmoney_check")~~
+
+
+SELECT CAST('$1232422322334223423121' AS smallmoney);
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: value "$1232422322334223423121" is out of range for type fixeddecimal)~~
+
+
+SELECT CAST('₧-1232422322334223423121' AS smallmoney);
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: value "₧-1232422322334223423121" is out of range for type fixeddecimal)~~
+
