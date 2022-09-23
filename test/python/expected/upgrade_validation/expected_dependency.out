@@ -1003,7 +1003,6 @@ Type sys."real"
 Type sys.bbf_binary
 Type sys.bbf_varbinary
 Type sys.cursor
-Type sys.rowversion
 View information_schema_tsql.check_constraints
 View information_schema_tsql.column_domain_usage
 View information_schema_tsql.columns
