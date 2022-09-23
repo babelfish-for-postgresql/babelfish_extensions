@@ -4,6 +4,7 @@ GO
 nvarchar
 ((column_a = 0))
 ((column_b <> 'wrong'))
+((sck_date_col IS NOT NULL))
 ~~END~~
 
 
@@ -21,6 +22,7 @@ GO
 nvarchar
 ((column_a = 0))
 ((column_b <> 'wrong'))
+((sck_date_col IS NOT NULL))
 ~~END~~
 
 
@@ -28,7 +30,7 @@ SELECT * FROM sys_check_constraints_vu_prepare_func();
 GO
 ~~START~~
 int
-2
+3
 ~~END~~
 
 
@@ -38,6 +40,7 @@ GO
 nvarchar
 ((column_a = 0))
 ((column_b <> 'wrong'))
+((sck_date_col IS NOT NULL))
 ~~END~~
 
 
