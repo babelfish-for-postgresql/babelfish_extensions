@@ -135,7 +135,7 @@ BEGIN
 			END IF;
 		END IF;
 	END IF;
-
+ 
 	IF typelen != -1 THEN
 		CASE v_type 
 		WHEN 'tinyint' THEN max_length = 1;
