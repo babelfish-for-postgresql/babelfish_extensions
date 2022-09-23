@@ -171,6 +171,7 @@ sys-assemblies
 BABEL-LOGIN-USER-EXT
 bitwise_not-operator
 BABEL-1683
+BABEL-1953
 schema_resolution_trigger
 sys_all_objects-dep
 sys-columns-dep
