@@ -584,13 +584,13 @@ varchar(PG_FUNCTION_ARGS)
 	}
 
 	/* Encode the input string back to UTF8 */
-	resStr = pg_any_to_server(tmp, maxmblen, collInfo.enc);
+	resStr = any_to_server(tmp, maxmblen, collInfo.enc, &encodedByteLen);
 
 	if (tmp && s_data != tmp)
 		pfree(tmp);
 
 	/* Output of pg_any_to_server would always be NULL terminated So we can use cstring_to_text directly. */
-	PG_RETURN_VARCHAR_P((VarChar *) cstring_to_text_with_len(resStr, strlen(resStr)));
+	PG_RETURN_VARCHAR_P((VarChar *) cstring_to_text_with_len(resStr, encodedByteLen));
 }
 
 /*
@@ -1123,18 +1123,18 @@ bpchar(PG_FUNCTION_ARGS)
 		}
 
 		/* Encode the input string back to UTF8 */
-		resStr = pg_any_to_server(tmp, maxmblen, collInfo.enc);
-		byteLen = strlen(resStr);
+		resStr = any_to_server(tmp, maxmblen, collInfo.enc,&encodedByteLen);
+		byteLen = encodedByteLen;
 	}
 	else
 	{
 		blankSpace = maxByteLen - byteLen;
 		/* Encode the input string back to UTF8 */
-		resStr = pg_any_to_server(tmp, byteLen, collInfo.enc);
+		resStr = any_to_server(tmp, byteLen, collInfo.enc, &encodedByteLen);
 
 		/* And override the len with actual length of string (encoded in UTF-8) */
 		if (resStr != tmp)
-			byteLen = strlen(resStr);
+			byteLen = encodedByteLen;
 	}
 
 	result = palloc(byteLen + blankSpace + VARHDRSZ);
