@@ -1,0 +1,45 @@
+EXEC test_sp_helpdbfixedrole_proc
+GO
+~~START~~
+varchar#!#nvarchar
+db_owner#!#DB Owners
+~~END~~
+
+
+EXEC test_sp_helpdbfixedrole_proc 'db_owner'
+GO
+~~START~~
+varchar#!#nvarchar
+db_owner#!#DB Owners
+~~END~~
+
+
+SELECT dbo.test_sp_helpdbfixedrole_func()
+GO
+~~START~~
+int
+1
+~~END~~
+
+
+SELECT * FROM test_sp_helpdbfixedrole_view
+GO
+~~START~~
+int
+1
+~~END~~
+
+
+EXEC test_sp_helpdbfixedrole_proc 'DB_securityadmin'
+GO
+~~START~~
+varchar#!#nvarchar
+~~END~~
+
+
+EXEC test_sp_helpdbfixedrole_proc 'error'
+GO
+~~ERROR (Code: 50000)~~
+
+~~ERROR (Message: 'error' is not a known fixed role.)~~
+
