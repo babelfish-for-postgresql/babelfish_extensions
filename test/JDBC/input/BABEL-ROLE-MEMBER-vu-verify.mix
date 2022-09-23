@@ -86,6 +86,42 @@ GO
 SELECT IS_ROLEMEMBER(NULL, NULL)
 GO
 
+-- IS_ROLEMEMBER: Each Input with Trailing Spaces
+SELECT IS_ROLEMEMBER('BABEL_ROLE_MEMBER_vu_prepare_role1     ', 'BABEL_ROLE_MEMBER_vu_prepare_role2')
+GO
+SELECT IS_ROLEMEMBER('BABEL_ROLE_MEMBER_vu_prepare_role2', 'BABEL_ROLE_MEMBER_vu_prepare_role3     ')
+GO
+SELECT IS_ROLEMEMBER('BABEL_ROLE_MEMBER_vu_prepare_role3     ', 'BABEL_ROLE_MEMBER_vu_prepare_role4    ')
+GO
+
+-- IS_ROLEMEMBER: Each Input with Trailing Spaces - Should return 0
+SELECT IS_ROLEMEMBER('db_owner', 'BABEL_ROLE_MEMBER_vu_prepare_role1')
+GO
+SELECT IS_ROLEMEMBER('db_owner', 'BABEL_ROLE_MEMBER_vu_prepare_user1')
+GO
+
+-- IS_ROLEMEMBER: Each Input with Trailing Spaces - Should return NULL
+SELECT IS_ROLEMEMBER('xxx    ')
+GO
+SELECT IS_ROLEMEMBER('xxx    ', 'BABEL_ROLE_MEMBER_vu_prepare_user1    ')
+GO
+SELECT IS_ROLEMEMBER('BABEL_ROLE_MEMBER_vu_prepare_role1   ', 'xxx    ')
+GO
+
+-- IS_MEMBER: Each Input with Trailing Spaces
+SELECT IS_MEMBER('public     ')
+GO
+SELECT IS_MEMBER('xxx    ')
+GO
+
+-- IS_ROLEMEMBER, IS_MEMBER: Input with Leading Spaces - should not trim and return NULL
+SELECT IS_ROLEMEMBER('    BABEL_ROLE_MEMBER_vu_prepare_role1', '   BABEL_ROLE_MEMBER_vu_prepare_role2')
+GO
+SELECT IS_ROLEMEMBER('BABEL_ROLE_MEMBER_vu_prepare_role2    ', '   BABEL_ROLE_MEMBER_vu_prepare_role3     ')
+GO
+SELECT IS_MEMBER('    public')
+GO
+
 -- Case insensitive check
 SELECT IS_ROLEMEMBER('PUBLIC', 'Babel_role_member_vu_prepare_User1')
 GO
