@@ -1,0 +1,92 @@
+INSERT INTO test_sp_helpdbfixedrole_tbl (DbFixedRole, Description) EXEC sp_helpdbfixedrole
+GO
+~~ROW COUNT: 1~~
+
+
+SELECT DbFixedRole, Description FROM test_sp_helpdbfixedrole_tbl
+GO
+~~START~~
+varchar#!#nvarchar
+db_owner#!#DB Owners
+~~END~~
+
+
+TRUNCATE TABLE test_sp_helpdbfixedrole_tbl
+GO
+
+INSERT INTO test_sp_helpdbfixedrole_tbl (DbFixedRole, Description) EXEC sp_helpdbfixedrole 'db_owner'
+GO
+~~ROW COUNT: 1~~
+
+
+SELECT DbFixedRole, Description FROM test_sp_helpdbfixedrole_tbl
+GO
+~~START~~
+varchar#!#nvarchar
+db_owner#!#DB Owners
+~~END~~
+
+
+TRUNCATE TABLE test_sp_helpdbfixedrole_tbl
+GO
+
+INSERT INTO test_sp_helpdbfixedrole_tbl (DbFixedRole, Description) EXEC sp_helpdbfixedrole 'DB_OWNER    '
+GO
+~~ROW COUNT: 1~~
+
+
+SELECT DbFixedRole, Description FROM test_sp_helpdbfixedrole_tbl
+GO
+~~START~~
+varchar#!#nvarchar
+db_owner#!#DB Owners
+~~END~~
+
+
+TRUNCATE TABLE test_sp_helpdbfixedrole_tbl
+GO
+
+INSERT INTO test_sp_helpdbfixedrole_tbl (DbFixedRole, Description) EXEC sp_helpdbfixedrole 'db_accessadmin'
+GO
+INSERT INTO test_sp_helpdbfixedrole_tbl (DbFixedRole, Description) EXEC sp_helpdbfixedrole 'DB_securityadmin'
+GO
+INSERT INTO test_sp_helpdbfixedrole_tbl (DbFixedRole, Description) EXEC sp_helpdbfixedrole 'db_ddladmin   '
+GO
+INSERT INTO test_sp_helpdbfixedrole_tbl (DbFixedRole, Description) EXEC sp_helpdbfixedrole 'DB_backupoperator     '
+GO
+INSERT INTO test_sp_helpdbfixedrole_tbl (DbFixedRole, Description) EXEC sp_helpdbfixedrole 'db_datareader'
+GO
+INSERT INTO test_sp_helpdbfixedrole_tbl (DbFixedRole, Description) EXEC sp_helpdbfixedrole 'db_datawriter'
+GO
+INSERT INTO test_sp_helpdbfixedrole_tbl (DbFixedRole, Description) EXEC sp_helpdbfixedrole 'db_denydatareader'
+GO
+INSERT INTO test_sp_helpdbfixedrole_tbl (DbFixedRole, Description) EXEC sp_helpdbfixedrole 'db_denydatawriter'
+GO
+
+SELECT DbFixedRole, Description FROM test_sp_helpdbfixedrole_tbl
+GO
+~~START~~
+varchar#!#nvarchar
+~~END~~
+
+
+EXEC sp_helpdbfixedrole ''
+GO
+~~ERROR (Code: 50000)~~
+
+~~ERROR (Message: '' is not a known fixed role.)~~
+
+
+EXEC sp_helpdbfixedrole '   Db_owner    '
+GO
+~~ERROR (Code: 50000)~~
+
+~~ERROR (Message: '   Db_owner    ' is not a known fixed role.)~~
+
+
+EXEC sp_helpdbfixedrole 'error'
+GO
+~~ERROR (Code: 50000)~~
+
+~~ERROR (Message: 'error' is not a known fixed role.)~~
+
