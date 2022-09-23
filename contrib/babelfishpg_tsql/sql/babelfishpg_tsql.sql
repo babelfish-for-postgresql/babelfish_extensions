@@ -2516,6 +2516,30 @@ $$
 LANGUAGE 'pltsql';
 GRANT EXECUTE ON PROCEDURE sys.sp_helpsrvrolemember TO PUBLIC;
 
+CREATE OR REPLACE PROCEDURE sys.sp_helpdbfixedrole("@rolename" sys.SYSNAME = NULL) AS
+$$
+BEGIN
+	-- Returns a list of the fixed database roles. 
+	-- Only fixed role present in babelfish is db_owner.
+	IF LOWER(RTRIM(@rolename)) IS NULL OR LOWER(RTRIM(@rolename)) = 'db_owner'
+	BEGIN
+		SELECT CAST('db_owner' AS sys.SYSNAME) AS DbFixedRole, CAST('DB Owners' AS sys.nvarchar(70)) AS Description;
+	END
+	ELSE IF LOWER(RTRIM(@rolename)) IN (
+			'db_accessadmin','db_securityadmin','db_ddladmin', 'db_backupoperator', 
+			'db_datareader', 'db_datawriter', 'db_denydatareader', 'db_denydatawriter')
+	BEGIN
+		-- Return an empty result set instead of raising an error
+		SELECT CAST(NULL AS sys.SYSNAME) AS DbFixedRole, CAST(NULL AS sys.nvarchar(70)) AS Description
+		WHERE 1=0;	
+	END
+	ELSE
+		RAISERROR('''%s'' is not a known fixed role.', 16, 1, @rolename);
+END
+$$
+LANGUAGE 'pltsql';
+GRANT EXECUTE ON PROCEDURE sys.sp_helpdbfixedrole TO PUBLIC;
+
 CREATE OR REPLACE VIEW sys.sp_sproc_columns_view AS
 -- Get parameters (if any) for a user-defined stored procedure/function
 (SELECT 
