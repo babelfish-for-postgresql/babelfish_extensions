@@ -383,14 +383,14 @@ BEGIN
 	-- If the role is a SQL server predefined role (i.e. serveradmin), 
 	-- do not raise an error even if it does not exist
 	ELSE IF EXISTS (SELECT 1
-				FROM sys.babelfish_authid_login_ext
-				WHERE (rolname = @srvrolename
-				OR lower(rolname) = lower(@srvrolename))
-				AND type = 'R') 
-			OR lower(@srvrolename) IN (
-				'serveradmin', 'setupadmin', 'securityadmin', 'processadmin',
-				'dbcreator', 'diskadmin', 'bulkadmin')
-		BEGIN
+					FROM sys.babelfish_authid_login_ext
+					WHERE (rolname = RTRIM(@srvrolename)
+					OR lower(rolname) = lower(RTRIM(@srvrolename)))
+					AND type = 'R')
+					OR lower(RTRIM(@srvrolename)) IN (
+					'serveradmin', 'setupadmin', 'securityadmin', 'processadmin',
+					'dbcreator', 'diskadmin', 'bulkadmin')
+	BEGIN
 		SELECT CAST(Ext1.rolname AS sys.SYSNAME) AS 'ServerRole',
 			   CAST(Ext2.rolname AS sys.SYSNAME) AS 'MemberName',
 			   CAST(CAST(Base2.oid AS INT) AS sys.VARBINARY(85)) AS 'MemberSID'
@@ -400,7 +400,7 @@ BEGIN
 		INNER JOIN sys.babelfish_authid_login_ext AS Ext1 ON Base1.rolname = Ext1.rolname
 		INNER JOIN sys.babelfish_authid_login_ext AS Ext2 ON Base2.rolname = Ext2.rolname
 		WHERE Ext1.type = 'R'
-		AND (Ext1.rolname = @srvrolename OR lower(Ext1.rolname) = lower(@srvrolename))
+		AND (Ext1.rolname = RTRIM(@srvrolename) OR lower(Ext1.rolname) = lower(RTRIM(@srvrolename)))
 		ORDER BY ServerRole, MemberName;
 	END
 	-- If the specified server role is not valid
@@ -410,6 +410,43 @@ END;
 $$
 LANGUAGE 'pltsql';
 GRANT EXECUTE ON PROCEDURE sys.sp_helpsrvrolemember TO PUBLIC;
+
+CREATE OR REPLACE PROCEDURE sys.sp_helpdbfixedrole("@rolename" sys.SYSNAME = NULL) AS
+$$
+BEGIN
+	-- Returns a list of the fixed database roles. 
+	-- Only fixed role present in babelfish is db_owner.
+	IF LOWER(RTRIM(@rolename)) IS NULL OR LOWER(RTRIM(@rolename)) = 'db_owner'
+	BEGIN
+		SELECT CAST('db_owner' AS sys.SYSNAME) AS DbFixedRole, CAST('DB Owners' AS sys.nvarchar(70)) AS Description;
+	END
+	ELSE IF LOWER(RTRIM(@rolename)) IN (
+			'db_accessadmin','db_securityadmin','db_ddladmin', 'db_backupoperator', 
+			'db_datareader', 'db_datawriter', 'db_denydatareader', 'db_denydatawriter')
+	BEGIN
+		-- Return an empty result set instead of raising an error
+		SELECT CAST(NULL AS sys.SYSNAME) AS DbFixedRole, CAST(NULL AS sys.nvarchar(70)) AS Description
+		WHERE 1=0;	
+	END
+	ELSE
+		RAISERROR('''%s'' is not a known fixed role.', 16, 1, @rolename);
+END
+$$
+LANGUAGE 'pltsql';
+GRANT EXECUTE ON PROCEDURE sys.sp_helpdbfixedrole TO PUBLIC;
+
+-- BABELFISH_FUNCTION_EXT
+CREATE TABLE sys.babelfish_function_ext (
+	nspname NAME NOT NULL,
+	funcname NAME NOT NULL,
+	orig_name sys.NVARCHAR(128), -- users' original input name
+	funcsignature TEXT NOT NULL COLLATE "C",
+	default_positions TEXT COLLATE "C",
+	PRIMARY KEY(nspname, funcsignature)
+);
+GRANT SELECT ON sys.babelfish_function_ext TO PUBLIC;
+
+SELECT pg_catalog.pg_extension_config_dump('sys.babelfish_function_ext', '');
 
 -- Drops the temporary procedure used by the upgrade script.
 -- Please have this be one of the last statements executed in this upgrade script.

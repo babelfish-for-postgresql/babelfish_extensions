@@ -1,0 +1,18 @@
+-- Creating a simple login which has lesser privilege than sysadmin role
+create login sys_dm_exec_sessions_dep_vu_prepare_login with password = 'password'
+GO
+
+create procedure sys_dm_exec_sessions_dep_vu_prepare_p1 as
+    select login_name, text_size, quoted_identifier, arithabort from sys.dm_exec_sessions order by login_name
+GO
+
+create function sys_dm_exec_sessions_dep_vu_prepare_f1()
+returns TABLE
+as
+    return (select original_login_name, prev_error from sys.dm_exec_sessions where session_id = @@SPID order by login_name)
+GO
+
+create view sys_dm_exec_sessions_dep_vu_prepare_v1 as
+    select login_name, text_size, quoted_identifier, arithabort from sys.dm_exec_sessions where session_id = @@SPID or login_name = 'sys_dm_exec_sessions_dep_vu_prepare_login' order by login_name
+GO
+

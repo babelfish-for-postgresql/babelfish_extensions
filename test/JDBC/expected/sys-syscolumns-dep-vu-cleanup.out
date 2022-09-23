@@ -1,0 +1,5 @@
+drop procedure sys_syscolumns_dep_vu_prepare_p1
+drop function sys_syscolumns_dep_vu_prepare_f1
+drop view sys_syscolumns_dep_vu_prepare_v1
+drop table sys_syscolumns_dep_vu_prepare_t1
+GO
