@@ -30,7 +30,7 @@ int
 uhc_to_utf8(int src_encoding, int dest_encoding, const unsigned char *src, unsigned char *dest, int len)
 {
 	return TsqlLocalToUtf(src, len, dest,
-			   &uhc_from_unicode_tree,
+			   &uhc_to_unicode_tree,
 			   NULL, 0,
 			   NULL,
 			   PG_UHC);

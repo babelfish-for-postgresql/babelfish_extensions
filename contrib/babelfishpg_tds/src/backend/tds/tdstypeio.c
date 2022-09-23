@@ -333,7 +333,16 @@ TdsAnyToServerEncodingConversion(Oid oid, pg_enc enc, char *str, int len)
 
 	getTypeInputInfo(oid, &typinput, &typioparam);
 	pstring = TdsEncodingConversionRecv(str, len, enc, &actualLen);
-	pval = OidInputFunctionCall(typinput, pstring, typioparam, -1);
+
+	if (pltsql_plugin_handler_ptr->tsql_check_varchar(oid))
+		pval = PointerGetDatum(pltsql_plugin_handler_ptr->tsql_varchar_in_handler(pstring, actualLen, -1));
+	else if (pltsql_plugin_handler_ptr->tsql_check_char(oid))
+		pval = PointerGetDatum(pltsql_plugin_handler_ptr->tsql_char_in_handler(pstring, actualLen, -1));
+	else if (pltsql_plugin_handler_ptr->tsql_check_text(oid))
+		pval = PointerGetDatum(cstring_to_text(pstring));
+	else
+		pval = OidInputFunctionCall(typinput, pstring, typioparam, -1);
+ 
 
 	/* Free result of encoding conversion, if any */
 	if (pstring && pstring != str)

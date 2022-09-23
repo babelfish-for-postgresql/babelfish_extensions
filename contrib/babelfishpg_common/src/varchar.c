@@ -48,6 +48,7 @@ void TsqlCheckUTF16Length_bpchar(const char *s, int32 len, int32 maxlen, int cha
 void TsqlCheckUTF16Length_bpchar_input(const char *s, int32 len, int32 maxlen, int charlen);
 void TsqlCheckUTF16Length_varchar_input(const char *s, int32 len, int32 maxlen);
 void *tsql_varchar_input(const char *s, size_t len, int32 atttypmod);
+void *tsql_bpchar_input(const char *s, size_t len, int32 atttypmod);
 static inline int varcharTruelen(VarChar *arg);
 
 #define DEFAULT_LCID 1033
@@ -987,6 +988,12 @@ bpchar_input(const char *s, size_t len, int32 atttypmod)
 		memset(r + len, ' ', maxlen - len);
 
 	return result;
+}
+
+void *
+tsql_bpchar_input(const char *s, size_t len, int32 atttypmod)
+{
+	return bpchar_input(s, len, atttypmod);
 }
 
 /*
