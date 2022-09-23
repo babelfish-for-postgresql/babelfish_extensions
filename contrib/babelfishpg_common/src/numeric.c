@@ -406,6 +406,8 @@ static const int round_powers[4] = {0, 1000, 100, 10};
 
 PG_FUNCTION_INFO_V1(tsql_numeric_round);
 PG_FUNCTION_INFO_V1(tsql_numeric_trunc);
+PG_FUNCTION_INFO_V1(bigint_sum);
+PG_FUNCTION_INFO_V1(int4int2_sum);
 
 static void alloc_var(NumericVar *var, int ndigits);
 static void free_var(NumericVar *var);
@@ -1029,3 +1031,38 @@ tsql_numeric_get_typmod(Numeric num)
 
 	return (((precision & 0xFFFF) << 16 ) | (scale & 0xFFFF)) + VARHDRSZ;
 }
+
+/* 
+ * Final function to be used by SUM(BIGINT) aggregate
+ */
+Datum
+bigint_sum(PG_FUNCTION_ARGS)
+{
+	return bigint_poly_sum(fcinfo);
+}
+
+/* 
+ * Final function to be used by SUM(INT),SUM(SMALLINT),SUM(TINYINT) aggregates
+ */
+Datum
+int4int2_sum(PG_FUNCTION_ARGS)
+{
+
+	int64 result;
+ 	if (PG_ARGISNULL(0))
+	{
+		PG_RETURN_NULL();
+	}
+	else
+	{
+		result  = PG_GETARG_INT64(0);
+
+		if (unlikely(result < PG_INT32_MIN) || unlikely(result > PG_INT32_MAX))
+			ereport(ERROR,
+					(errcode(ERRCODE_NUMERIC_VALUE_OUT_OF_RANGE),
+					errmsg("Arithmetic overflow error converting expression to data type int.")));
+
+		PG_RETURN_INT32((int32) result);
+	}
+}
+
