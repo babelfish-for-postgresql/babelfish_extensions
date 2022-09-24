@@ -54,5 +54,6 @@ GO
 
 --ALTER table multiple defaults NOTE: will raise an error because of an unrelated bug BABEL-3524
 ALTER TABLE babel_3268_t7 ADD CONSTRAINT babel_3268_fn_2_constraint DEFAULT dbo.babel_3268_fn_2(90) FOR b, CONSTRAINT babel_3268_fn_3_constraint DEFAULT dbo.babel_3268_fn_3() FOR c;
+GO
 ALTER TABLE babel_3268_t8 ADD DEFAULT dbo.babel_3268_fn_2(90) FOR b, DEFAULT dbo.babel_3268_fn_3() FOR c;
 GO
