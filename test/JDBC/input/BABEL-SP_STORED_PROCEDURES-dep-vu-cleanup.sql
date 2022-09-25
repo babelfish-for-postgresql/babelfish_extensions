@@ -1,0 +1,3 @@
+drop procedure babel_sp_stored_procedures_dep_vu_prepare_p2
+drop procedure babel_sp_stored_procedures_dep_vu_prepare_p1
+go
