@@ -753,9 +753,9 @@ tsql_update_delete_stmt_from_clause_alias_helper(RangeVar *relation,RangeVar *rv
 							relation->relname)));
 		}
 		/*
-			* Save the original alias name so that "inserted" and
-			* "deleted" tables in OUTPUT clause can be linked to it
-			*/
+		* Save the original alias name so that "inserted" and
+		* "deleted" tables in OUTPUT clause can be linked to it
+		*/
 		update_delete_target_alias = relation->relname;
 
 		/*
@@ -806,8 +806,6 @@ tsql_update_delete_stmt_from_clause_alias(RangeVar *relation, List *from_clause)
 				tsql_update_delete_stmt_from_clause_alias_helper(relation,rarg);
 			}	
 		}
-		larg = NULL;
-		rarg = NULL;
 	}
 }
 
