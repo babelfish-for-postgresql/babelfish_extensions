@@ -2185,7 +2185,7 @@ BEGIN
 
             v_full_year = v_base_century + v_short_year;
             v_full_year = CASE
-                             WHEN (v_short_year > p_year_cutoff) THEN v_full_year - 100
+                             WHEN (v_short_year::NUMERIC > p_year_cutoff) THEN v_full_year - 100
                              ELSE v_full_year
                           END;
         ELSE v_full_year := v_short_year;

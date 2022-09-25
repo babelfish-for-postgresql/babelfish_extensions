@@ -1,0 +1,59 @@
+SELECT * FROM BABEL_3314_vu_prepare_v1
+GO
+~~START~~
+datetime
+2022-10-01 00:00:00.0
+~~END~~
+
+DROP VIEW BABEL_3314_vu_prepare_v1
+GO
+
+SELECT * FROM BABEL_3314_vu_prepare_v2
+GO
+~~START~~
+date
+2022-10-01
+~~END~~
+
+DROP VIEW BABEL_3314_vu_prepare_v2
+GO
+
+EXEC BABEL_3314_vu_prepare_p1
+GO
+~~START~~
+datetime
+2022-10-01 00:00:00.0
+~~END~~
+
+DROP procedure  BABEL_3314_vu_prepare_p1
+GO
+
+EXEC BABEL_3314_vu_prepare_p2
+GO
+~~START~~
+date
+2022-10-01
+~~END~~
+
+DROP procedure  BABEL_3314_vu_prepare_p2
+GO
+
+SELECT BABEL_3314_vu_prepare_f1()
+GO
+~~START~~
+datetime
+2022-10-01 00:00:00.0
+~~END~~
+
+DROP FUNCTION BABEL_3314_vu_prepare_f1
+GO
+
+SELECT BABEL_3314_vu_prepare_f2()
+GO
+~~START~~
+date
+2022-10-01
+~~END~~
+
+DROP FUNCTION BABEL_3314_vu_prepare_f2
+GO

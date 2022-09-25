@@ -80,6 +80,86 @@ $$
 LANGUAGE 'pltsql';
 GRANT EXECUTE ON PROCEDURE sys.sp_helpsrvrolemember TO PUBLIC;
 
+CREATE OR REPLACE FUNCTION sys.babelfish_get_full_year(IN p_short_year TEXT,
+                                                           IN p_base_century TEXT DEFAULT '',
+                                                           IN p_year_cutoff NUMERIC DEFAULT 49)
+RETURNS VARCHAR
+AS
+$BODY$
+DECLARE
+    v_err_message VARCHAR;
+    v_full_year SMALLINT;
+    v_short_year SMALLINT;
+    v_base_century SMALLINT;
+    v_result_param_set JSONB;
+    v_full_year_res_jsonb JSONB;
+BEGIN
+    v_short_year := p_short_year::SMALLINT;
+
+    BEGIN
+        v_full_year_res_jsonb := nullif(current_setting('sys.full_year_res_json'), '')::JSONB;
+    EXCEPTION
+        WHEN undefined_object THEN
+        v_full_year_res_jsonb := NULL;
+    END;
+
+    SELECT result
+      INTO v_full_year
+      FROM jsonb_to_recordset(v_full_year_res_jsonb) AS result_set (param1 SMALLINT,
+                                                                    param2 TEXT,
+                                                                    param3 NUMERIC,
+                                                                    result VARCHAR)
+     WHERE param1 = v_short_year
+       AND param2 = p_base_century
+       AND param3 = p_year_cutoff;
+
+    IF (v_full_year IS NULL)
+    THEN
+        IF (v_short_year <= 99)
+        THEN
+            v_base_century := CASE
+                                 WHEN (p_base_century ~ '^\s*([1-9]{1,2})\s*$') THEN concat(trim(p_base_century), '00')::SMALLINT
+                                 ELSE trunc(extract(year from current_date)::NUMERIC, -2)
+                              END;
+
+            v_full_year = v_base_century + v_short_year;
+            v_full_year = CASE
+                             WHEN (v_short_year::NUMERIC > p_year_cutoff) THEN v_full_year - 100
+                             ELSE v_full_year
+                          END;
+        ELSE v_full_year := v_short_year;
+        END IF;
+
+        v_result_param_set := jsonb_build_object('param1', v_short_year,
+                                                 'param2', p_base_century,
+                                                 'param3', p_year_cutoff,
+                                                 'result', v_full_year);
+        v_full_year_res_jsonb := CASE
+                                    WHEN (v_full_year_res_jsonb IS NULL) THEN jsonb_build_array(v_result_param_set)
+                                    ELSE v_full_year_res_jsonb || v_result_param_set
+                                 END;
+
+        PERFORM set_config('sys.full_year_res_json',
+                           v_full_year_res_jsonb::TEXT,
+                           FALSE);
+    END IF;
+
+    RETURN v_full_year;
+EXCEPTION
+    WHEN invalid_text_representation THEN
+        GET STACKED DIAGNOSTICS v_err_message = MESSAGE_TEXT;
+        v_err_message := substring(lower(v_err_message), 'integer\:\s\"(.*)\"');
+
+        RAISE USING MESSAGE := format('Error while trying to convert "%s" value to SMALLINT data type.',
+                                      v_err_message),
+                    DETAIL := 'Supplied value contains illegal characters.',
+                    HINT := 'Correct supplied value, remove all illegal characters.';
+END;
+$BODY$
+LANGUAGE plpgsql
+STABLE
+RETURNS NULL ON NULL INPUT;
+
 CREATE OR REPLACE PROCEDURE sys.sp_helpdbfixedrole("@rolename" sys.SYSNAME = NULL) AS
 $$
 BEGIN
