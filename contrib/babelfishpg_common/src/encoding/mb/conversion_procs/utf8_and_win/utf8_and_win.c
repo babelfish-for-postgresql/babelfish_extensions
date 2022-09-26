@@ -95,14 +95,14 @@ win_to_utf8(int src_encoding, int dest_encoding, const unsigned char *src,unsign
 					   maps[i].map1,
 					   NULL, 0,
 					   NULL,
-					   dest_encoding);
+					   src_encoding);
 		}
 	}
 
 	ereport(ERROR,
 			(errcode(ERRCODE_INTERNAL_ERROR),
 			 errmsg("unexpected encoding ID %d for WIN character sets",
-					dest_encoding)));
+					src_encoding)));
 
 	return -1;
 }
