@@ -377,8 +377,8 @@ TEST_F(PSQL_DataTypes_Bit, Update_Fail) {
   odbcHandler.ExecQuery(DropObjectStatement("TABLE", TABLE_NAME));
 }
 
-// Operators don't work
-TEST_F(PSQL_DataTypes_Bit, DISABLED_Bitwise_Operators) {
+// Uses explicit casting, ie OPERATOR(sys.=)
+TEST_F(PSQL_DataTypes_Bit, Bitwise_Operators) {
   const vector<pair<string, string>> TABLE_COLUMNS = {
     {COL1_NAME, DATATYPE_NAME + " PRIMARY KEY"},
     {COL2_NAME, DATATYPE_NAME}
@@ -407,21 +407,21 @@ TEST_F(PSQL_DataTypes_Bit, DISABLED_Bitwise_Operators) {
   };
 
   vector<string> operations_query = {
-    COL1_NAME + "&" + COL2_NAME, // AND
-    COL1_NAME + "|" + COL2_NAME, // OR
-    COL1_NAME + "#" + COL2_NAME, // XOR
-    "~" + COL1_NAME,             // NOT
-    "-" + COL1_NAME,             // NOT
+    // COL1_NAME + " OPERATOR(sys.&) " + COL2_NAME, // AND
+    // COL1_NAME + " OPERATOR(sys.|) " + COL2_NAME, // OR
+    // COL1_NAME + " OPERATOR(sys.#) " + COL2_NAME, // XOR
+    "OPERATOR(sys.~)" + COL1_NAME,                      // NOT
+    "OPERATOR(sys.-)" + COL1_NAME,                      // NOT
 
-    COL1_NAME + "||" + COL2_NAME,
-    COL1_NAME + "<<" + COL2_NAME,
-    COL1_NAME + ">>" + COL2_NAME,
+    // COL1_NAME + " OPERATOR(sys.||) " + COL2_NAME,
+    // COL1_NAME + " OPERATOR(sys.<<) " + COL2_NAME,
+    // COL1_NAME + " OPERATOR(sys.>>) " + COL2_NAME,
 
-    COL1_NAME + "=" + COL2_NAME,
-    COL1_NAME + "<" + COL2_NAME,
-    COL1_NAME + "<=" + COL2_NAME,
-    COL1_NAME + ">" + COL2_NAME,
-    COL1_NAME + ">=" + COL2_NAME
+    COL1_NAME + " OPERATOR(sys.=) " + COL2_NAME,
+    COL1_NAME + " OPERATOR(sys.<) " + COL2_NAME,
+    COL1_NAME + " OPERATOR(sys.<=) " + COL2_NAME,
+    COL1_NAME + " OPERATOR(sys.>) " + COL2_NAME,
+    COL1_NAME + " OPERATOR(sys.>=) " + COL2_NAME
   };
 
   vector<vector<unsigned char>> expected_results = {};
@@ -430,15 +430,15 @@ TEST_F(PSQL_DataTypes_Bit, DISABLED_Bitwise_Operators) {
   for (int i = 0; i < inserted_data.size(); i++) {
     expected_results.push_back({});
 
-    expected_results[i].push_back(StringToBit(inserted_pk[i]) & StringToBit(inserted_data[i]));
-    expected_results[i].push_back(StringToBit(inserted_pk[i]) | StringToBit(inserted_data[i]));
-    expected_results[i].push_back(StringToBit(inserted_pk[i]) ^ StringToBit(inserted_data[i]));
-    expected_results[i].push_back(1 & ~StringToBit(inserted_data[i]));
-    expected_results[i].push_back(1 & ~StringToBit(inserted_data[i]));
+    // expected_results[i].push_back(StringToBit(inserted_pk[i]) & StringToBit(inserted_data[i]));
+    // expected_results[i].push_back(StringToBit(inserted_pk[i]) | StringToBit(inserted_data[i]));
+    // expected_results[i].push_back(StringToBit(inserted_pk[i]) ^ StringToBit(inserted_data[i]));
+    expected_results[i].push_back(1 & ~StringToBit(inserted_pk[i]));
+    expected_results[i].push_back(1 & ~StringToBit(inserted_pk[i]));
 
-    expected_results[i].push_back(StringToBit(inserted_pk[i]) << 1 & StringToBit(inserted_data[i])); 
-    expected_results[i].push_back(StringToBit(inserted_pk[i]) << StringToBit(inserted_data[i]));
-    expected_results[i].push_back(StringToBit(inserted_pk[i]) >> StringToBit(inserted_data[i]));
+    // expected_results[i].push_back(StringToBit(inserted_pk[i]) << 1 & StringToBit(inserted_data[i])); 
+    // expected_results[i].push_back(StringToBit(inserted_pk[i]) << StringToBit(inserted_data[i]));
+    // expected_results[i].push_back(StringToBit(inserted_pk[i]) >> StringToBit(inserted_data[i]));
 
     expected_results[i].push_back(StringToBit(inserted_pk[i]) == StringToBit(inserted_data[i]) ? 1 : 0);
     expected_results[i].push_back(StringToBit(inserted_pk[i]) < StringToBit(inserted_data[i]) ? 1 : 0);
@@ -482,12 +482,11 @@ TEST_F(PSQL_DataTypes_Bit, DISABLED_Bitwise_Operators) {
 
   for (int i = 0; i < inserted_data.size(); i++) {
     odbcHandler.CloseStmt();
-    odbcHandler.ExecQuery(SelectStatement(TABLE_NAME, operations_query, vector<string>{}, COL1_NAME + "=" + inserted_pk[i]));
+    odbcHandler.ExecQuery(SelectStatement(TABLE_NAME, operations_query, vector<string>{}, COL1_NAME + " OPERATOR(sys.=) " + inserted_pk[i]));
     ASSERT_NO_FATAL_FAILURE(odbcHandler.BindColumns(BIND_COLUMNS));
 
     rcode = SQLFetch(odbcHandler.GetStatementHandle());
     ASSERT_EQ(rcode, SQL_SUCCESS);
-
     for (int j = 0; j < operations_query.size(); j++) {
       ASSERT_EQ(col_len[j], DATA_BYTES_EXPECTED);
       ASSERT_EQ(col_results[j], expected_results[i][j]);
