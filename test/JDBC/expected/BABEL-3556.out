@@ -279,14 +279,14 @@ SELECT CAST($922337203685478 AS money);
 GO
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: value "922337203685478" is out of range for type fixeddecimal)~~
+~~ERROR (Message: value "922337203685478" is out of range for type money)~~
 
 
 SELECT CAST(₧-922337203685478 AS money);
 GO
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: value "-922337203685478" is out of range for type fixeddecimal)~~
+~~ERROR (Message: value "-922337203685478" is out of range for type money)~~
 
 
 SELECT CAST($1232422322334223423121 AS money);

@@ -143,3 +143,9 @@ CREATE FUNCTION sys.varchar_to_name(pg_catalog.varchar)
 RETURNS pg_catalog.name
 AS 'babelfishpg_common', 'pltsql_text_name'
 LANGUAGE C IMMUTABLE STRICT PARALLEL SAFE;
+
+-- int8 -> money
+CREATE FUNCTION sys.int8_to_money(pg_catalog.INT8)
+RETURNS sys.MONEY
+AS 'babelfishpg_money', 'int8_to_money'
+LANGUAGE C IMMUTABLE STRICT PARALLEL SAFE;

@@ -216,6 +216,7 @@ PG_FUNCTION_INFO_V1(fixeddecimalaggstatesend);
 PG_FUNCTION_INFO_V1(fixeddecimalaggstaterecv);
 
 PG_FUNCTION_INFO_V1(char_to_fixeddecimal);
+PG_FUNCTION_INFO_V1(int8_to_money);
 
 /* Aggregate Internal State */
 typedef struct FixedDecimalAggState
@@ -2572,6 +2573,23 @@ fixeddecimal(PG_FUNCTION_ARGS)
 }
 
 Datum
+int8_to_money(PG_FUNCTION_ARGS)
+{
+	int64		arg = PG_GETARG_INT64(0);
+	int64		result;
+	
+	/* check for INT64 overflow on multiplication */
+	if(unlikely(pg_mul_s64_overflow(arg, FIXEDDECIMAL_MULTIPLIER, &result)))
+		ereport(ERROR,
+				(errcode(ERRCODE_NUMERIC_VALUE_OUT_OF_RANGE),
+				 errmsg("value \"%ld\" is out of range for type money", arg)));
+
+	PG_RETURN_INT64(result);
+}
+
+
+
+Datum
 int8fixeddecimal(PG_FUNCTION_ARGS)
 {
 	int64		arg = PG_GETARG_INT64(0);
@@ -2581,7 +2599,7 @@ int8fixeddecimal(PG_FUNCTION_ARGS)
 	if(unlikely(pg_mul_s64_overflow(arg, FIXEDDECIMAL_MULTIPLIER, &result)))
 		ereport(ERROR,
 				(errcode(ERRCODE_NUMERIC_VALUE_OUT_OF_RANGE),
-				 errmsg("value \"%lld\" is out of range for type fixeddecimal", arg)));
+				 errmsg("value \"%ld\" is out of range for type fixeddecimal", arg)));
 
 	PG_RETURN_INT64(result);
 }
