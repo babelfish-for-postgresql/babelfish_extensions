@@ -286,3 +286,4 @@ babel_datatype_sqlvariant
 babel_sqlvariant_cast_compare
 BABEL-3144
 ISC-sequences
+jira_BABEL_3504

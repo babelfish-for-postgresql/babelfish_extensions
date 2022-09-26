@@ -212,7 +212,6 @@ BABEL-SP_SPECIAL_COLUMNS-dep
 BABEL-SP_STORED_PROCEDURES-dep
 BABEL-SP_SPROC_COLUMNS-dep
 BABEL-3000-dep
-<<<<<<< HEAD
 msdb-dbo-syspolicy_system_health_state
 sys-all_columns
 sys-all_sql_modules
@@ -277,6 +276,5 @@ BABEL-889
 babel_417
 babel_datatype_sqlvariant
 babel_sqlvariant_cast_compare
-=======
 ISC-sequences
->>>>>>> abb11ba4 (BABEL-3452: Support T-SQL INFORMATION_SCHEMA.SEQUENCES View)
+jira_BABEL_3504
