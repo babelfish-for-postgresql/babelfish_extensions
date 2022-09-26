@@ -714,16 +714,16 @@ $BODY$
 STRICT
 LANGUAGE SQL IMMUTABLE;
 
-CREATE OR REPLACE FUNCTION sys.DATETIMEOFFSETFROMPARTS(IN p_year NUMERIC,
-                                                               IN p_month NUMERIC,
-                                                               IN p_day NUMERIC,
-                                                               IN p_hour NUMERIC,
-                                                               IN p_minute NUMERIC,
-                                                               IN p_seconds NUMERIC,
-                                                               IN p_fractions NUMERIC,
-                                                               IN p_hour_offset NUMERIC,
-                                                               IN p_minute_offset NUMERIC,
-                                                               IN p_precision NUMERIC)
+CREATE OR REPLACE FUNCTION sys.DATETIMEOFFSETFROMPARTS(IN p_year INTEGER,
+                                                               IN p_month INTEGER,
+                                                               IN p_day INTEGER,
+                                                               IN p_hour INTEGER,
+                                                               IN p_minute INTEGER,
+                                                               IN p_seconds INTEGER,
+                                                               IN p_fractions INTEGER,
+                                                               IN p_hour_offset INTEGER,
+                                                               IN p_minute_offset INTEGER,
+                                                               IN p_precision INTEGER)
 RETURNS sys.DATETIMEOFFSET
 AS
 $BODY$
@@ -758,7 +758,7 @@ BEGIN
         (floor(p_seconds)::SMALLINT NOT BETWEEN 0 AND 59) OR
         (floor(p_hour_offset)::SMALLINT NOT BETWEEN -14 AND 14) OR
         (floor(p_minute_offset)::SMALLINT NOT BETWEEN -59 AND 59) OR
-        (p_hour_offset * p_minute_offset < 0::NUMERIC) OR
+        (p_hour_offset * p_minute_offset < 0) OR
         (floor(p_hour_offset)::SMALLINT = 14 AND floor(p_minute_offset)::SMALLINT != 0) OR
         (floor(p_hour_offset)::SMALLINT = -14 AND floor(p_minute_offset)::SMALLINT != 0) OR
         (p_fractions::SMALLINT != 0 AND char_length(v_fractions) > p_precision::SMALLINT))
@@ -825,9 +825,9 @@ $BODY$
 DECLARE
     v_err_message SYS.VARCHAR;
 BEGIN
-    RETURN sys.DATETIMEOFFSETFROMPARTS(IN p_year NUMERIC,IN p_month NUMERIC,IN p_day NUMERIC,IN p_hour NUMERIC,IN p_minute NUMERIC,
-                                        IN p_seconds NUMERIC,IN p_fractions NUMERIC,IN p_hour_offset NUMERIC,IN p_minute_offset NUMERIC,
-                                        IN p_precision NUMERIC);
+    RETURN sys.DATETIMEOFFSETFROMPARTS(IN p_year INTEGER,IN p_month INTEGER,IN p_day INTEGER,IN p_hour INTEGER,IN p_minute INTEGER,
+                                        IN p_seconds INTEGER,IN p_fractions INTEGER,IN p_hour_offset INTEGER,IN p_minute_offset INTEGER,
+                                        IN p_precision INTEGER);
 EXCEPTION
     WHEN invalid_text_representation THEN
         GET STACKED DIAGNOSTICS v_err_message = MESSAGE_TEXT;
