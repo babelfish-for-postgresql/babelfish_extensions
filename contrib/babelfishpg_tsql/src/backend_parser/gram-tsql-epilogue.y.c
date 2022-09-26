@@ -782,8 +782,6 @@ static void
 tsql_update_delete_stmt_from_clause_alias(RangeVar *relation, List *from_clause)
 {
 	ListCell *lc;
-	RangeVar* larg = NULL;
-	RangeVar* rarg = NULL;
 	foreach(lc, from_clause)
 	{
 		Node *n = lfirst(lc);
@@ -797,13 +795,11 @@ tsql_update_delete_stmt_from_clause_alias(RangeVar *relation, List *from_clause)
 			JoinExpr *jexpr = (JoinExpr *) n;	
 			if(IsA(jexpr->larg, RangeVar))
 			{
-				larg = (RangeVar*)(jexpr->larg);
-				tsql_update_delete_stmt_from_clause_alias_helper(relation,larg);
+				tsql_update_delete_stmt_from_clause_alias_helper(relation,(RangeVar*)(jexpr->larg));
 			}
 			if(IsA(jexpr->rarg, RangeVar))
 			{
-				rarg = (RangeVar*)(jexpr->rarg);
-				tsql_update_delete_stmt_from_clause_alias_helper(relation,rarg);
+				tsql_update_delete_stmt_from_clause_alias_helper(relation,(jexpr->rarg));
 			}	
 		}
 	}
