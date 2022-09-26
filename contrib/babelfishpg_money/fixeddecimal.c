@@ -2574,15 +2574,14 @@ fixeddecimal(PG_FUNCTION_ARGS)
 Datum
 int8fixeddecimal(PG_FUNCTION_ARGS)
 {
-	int64		arg1 = PG_GETARG_INT64(0);
-	int64		arg2 = FIXEDDECIMAL_MULTIPLIER;
+	int64		arg = PG_GETARG_INT64(0);
 	int64		result;
 	
 	/* check for INT64 overflow on multiplication */
-	if(unlikely(pg_mul_s64_overflow(arg1, arg2, &result)))
+	if(unlikely(pg_mul_s64_overflow(arg, FIXEDDECIMAL_MULTIPLIER, &result)))
 		ereport(ERROR,
 				(errcode(ERRCODE_NUMERIC_VALUE_OUT_OF_RANGE),
-				 errmsg("value \"%lld\" is out of range for type fixeddecimal",arg1)));
+				 errmsg("value \"%lld\" is out of range for type fixeddecimal", arg)));
 
 	PG_RETURN_INT64(result);
 }
