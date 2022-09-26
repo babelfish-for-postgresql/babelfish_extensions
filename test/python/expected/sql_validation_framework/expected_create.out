@@ -228,11 +228,6 @@ Could not find upgrade tests for procedure sys.sp_helprolemember
 Could not find upgrade tests for procedure sys.sp_oledb_ro_usrname
 Could not find upgrade tests for procedure sys.sp_prepare
 Could not find upgrade tests for procedure sys.sp_special_columns_100
-Could not find upgrade tests for procedure sys.sp_sproc_columns_100
-Could not find upgrade tests for procedure sys.sp_statistics
-Could not find upgrade tests for procedure sys.sp_statistics_100
-Could not find upgrade tests for procedure sys.sp_stored_procedures
-Could not find upgrade tests for procedure sys.sp_table_privileges
 Could not find upgrade tests for procedure sys.sp_unprepare
 Could not find upgrade tests for procedure sys.sp_updatestats
 Could not find upgrade tests for procedure xp_instance_regread
@@ -264,8 +259,3 @@ Could not find upgrade tests for view sys.sp_table_privileges_view
 Could not find upgrade tests for view sys.spt_columns_view_managed
 Could not find upgrade tests for view sys.sysindexes
 Could not find upgrade tests for view sys.system_objects
-Could not find upgrade tests for view sys.table_types
-Could not find upgrade tests for view sys.types
-Could not find upgrade tests for view sys.views
-Could not find upgrade tests for view sys.xml_indexes
-Could not find upgrade tests for view sys.xml_schema_collections
