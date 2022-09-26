@@ -331,7 +331,6 @@ TdsAnyToServerEncodingConversion(Oid oid, pg_enc enc, char *str, int len)
 	Datum 		pval;
 	int			actualLen;
 
-	getTypeInputInfo(oid, &typinput, &typioparam);
 	pstring = TdsEncodingConversionRecv(str, len, enc, &actualLen);
 
 	if (pltsql_plugin_handler_ptr->tsql_check_varchar(oid))
@@ -341,7 +340,9 @@ TdsAnyToServerEncodingConversion(Oid oid, pg_enc enc, char *str, int len)
 	else if (pltsql_plugin_handler_ptr->tsql_check_text(oid))
 		pval = PointerGetDatum(cstring_to_text(pstring));
 	else
-		pval = OidInputFunctionCall(typinput, pstring, typioparam, -1);
+		ereport(ERROR,
+				(errcode(ERRCODE_INTERNAL_ERROR),
+				 errmsg("TdsAnyToServerEncodingConversion is not supported for Oid: %s", format_type_be(oid))));
  
 
 	/* Free result of encoding conversion, if any */
