@@ -24,4 +24,4 @@ go
 INSERT INTO babel_datetime_vu_prepare_testing VALUES('23:40:30.000')
 go
 INSERT INTO babel_datetime_vu_prepare_testing VALUES('2020-03-14')
-go 
+go
