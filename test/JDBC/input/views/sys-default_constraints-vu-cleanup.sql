@@ -1,5 +1,5 @@
 DROP TABLE IF EXISTS sys_default_constraints_vu_prepare_t1
 GO
 
-DROP TABLE sys_default_definitions_vu_prepare
+DROP TABLE IF EXISTS sys_default_definitions_vu_prepare
 GO
