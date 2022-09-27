@@ -85,6 +85,7 @@ sys-syscolumns
 sys-syscharsets
 sys-sysforeignkeys
 sys-syslanguages
+sys-system_sql_modules
 sys-table_types
 sys-tables
 sys-types

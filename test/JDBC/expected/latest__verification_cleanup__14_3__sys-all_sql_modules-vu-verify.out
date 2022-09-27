@@ -37,7 +37,7 @@ WHERE object_id = OBJECT_ID('sys_all_sql_modules_vu_prepare_v2')
 GO
 ~~START~~
 nvarchar#!#bit#!#bit#!#bit#!#bit#!#bit#!#bit#!#int#!#bit
-CREATE VIEW sys_all_sql_modules_vu_prepare_v2 AS<newline>SELECT 1#!#1#!#1#!#0#!#0#!#0#!#0#!#<NULL>#!#0
+#!#1#!#1#!#0#!#0#!#0#!#0#!#<NULL>#!#0
 ~~END~~
 
 
