@@ -1,0 +1,185 @@
+-- Not Append
+--NOT NULL, LAX, KP  
+SELECT JSON_MODIFY('{"name":"John","skills":["C#","SQL"]}','$.name','Mike');
+GO
+~~START~~
+nvarchar
+{"name": "Mike", "skills": ["C#", "SQL"]}
+~~END~~
+
+
+--NOT NULL, STRICT, KP
+SELECT JSON_MODIFY('{"name":"John","skills":["C#","SQL"]}','strict $.name','Mike');
+GO
+~~START~~
+nvarchar
+{"name": "Mike", "skills": ["C#", "SQL"]}
+~~END~~
+
+
+--NOT NULL, LAX, KNP  
+SELECT JSON_MODIFY('{"name":"Mike","skills":["C#","SQL"]}','$.surname','Smith');
+GO
+~~START~~
+nvarchar
+{"name": "Mike", "skills": ["C#", "SQL"], "surname": "Smith"}
+~~END~~
+
+--NOT NULL, STRICT, KNP
+SELECT JSON_MODIFY('{"name":"Mike","skills":["C#","SQL"]}','strict $.surname','Smith');
+GO
+~~START~~
+nvarchar
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Property cannot be found on the specified JSON path.)~~
+
+--NULL, LAX, KP
+SELECT JSON_MODIFY('{"name":"Mike","skills":["C#","SQL"],"surname":"Smith"}','$.skills',NULL);
+GO
+~~START~~
+nvarchar
+{"name": "Mike", "surname": "Smith"}
+~~END~~
+
+--NULL, STRICT, KP
+SELECT JSON_MODIFY('{"name":"Mike","skills":["C#","SQL"],"surname":"Smith"}','strict $.name',NULL);
+GO
+~~START~~
+nvarchar
+{"name": null, "skills": ["C#", "SQL"], "surname": "Smith"}
+~~END~~
+
+--NULL, LAX, KNP
+SELECT JSON_MODIFY('{"name":"Mike","skills":["C#","SQL"],"surname":"Smith"}','$.k',NULL);
+GO
+~~START~~
+nvarchar
+{"name": "Mike", "skills": ["C#", "SQL"], "surname": "Smith"}
+~~END~~
+
+--NULL, STRICT, KNP
+SELECT JSON_MODIFY('{"name":"Mike","skills":["C#","SQL"],"surname":"Smith"}','strict $.k',NULL);
+GO
+~~START~~
+nvarchar
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Property cannot be found on the specified JSON path.)~~
+
+
+--Append
+--NOT NULL, LAX, KP  
+SELECT JSON_MODIFY('{"name":"John","skills":["C#","SQL"]}','append $.name','Mike');
+GO
+~~START~~
+nvarchar
+{"name": "John", "skills": ["C#", "SQL"]}
+~~END~~
+
+--NOT NULL, STRICT, KP
+SELECT JSON_MODIFY('{"name":"John","skills":["C#","SQL"]}','append strict $.name','Mike');
+GO
+~~START~~
+nvarchar
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Array cannot be found in the specified JSON path.)~~
+
+--NOT NULL, LAX, KNP  
+SELECT JSON_MODIFY('{"name":"Mike","skills":["C#","SQL"]}','append $.surname','Smith');
+GO
+~~START~~
+nvarchar
+{"name": "Mike", "skills": ["C#", "SQL"], "surname": ["Smith"]}
+~~END~~
+
+--NOT NULL, STRICT, KNP
+SELECT JSON_MODIFY('{"name":"Mike","skills":["C#","SQL"]}','append strict $.surname','Smith');
+GO
+~~START~~
+nvarchar
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Property cannot be found on the specified JSON path.)~~
+
+
+--NOT NULL, LAX, KP, ARRAY 
+SELECT JSON_MODIFY('{"name":"John","skills":["C#","SQL"]}','append $.skills','Azure');
+GO
+~~START~~
+nvarchar
+{"name": "John", "skills": ["C#", "SQL", "Azure"]}
+~~END~~
+
+
+--NOT NULL, STRICT, KP, ARRAY 
+SELECT JSON_MODIFY('{"name":"John","skills":["C#","SQL"]}','append strict $.skills','Azure');
+GO
+~~START~~
+nvarchar
+{"name": "John", "skills": ["C#", "SQL", "Azure"]}
+~~END~~
+
+
+--NULL, LAX, KP
+SELECT JSON_MODIFY('{"name":"Mike","skills":["C#","SQL"],"surname":"Smith"}','append $.skills',NULL);
+GO
+~~START~~
+nvarchar
+{"name": "Mike", "skills": ["C#", "SQL", null], "surname": "Smith"}
+~~END~~
+
+--NULL, STRICT, KP
+SELECT JSON_MODIFY('{"name":"Mike","skills":["C#","SQL"],"surname":"Smith"}','append strict $.skills',NULL);
+GO
+~~START~~
+nvarchar
+{"name": "Mike", "skills": ["C#", "SQL", null], "surname": "Smith"}
+~~END~~
+
+--NULL, LAX, KNP
+SELECT JSON_MODIFY('{"name":"Mike","skills":["C#","SQL"],"surname":"Smith"}','append $.k',NULL);
+GO
+~~START~~
+nvarchar
+{"k": [null], "name": "Mike", "skills": ["C#", "SQL"], "surname": "Smith"}
+~~END~~
+
+--NULL, STRICT, KNP
+SELECT JSON_MODIFY('{"name":"Mike","skills":["C#","SQL"],"surname":"Smith"}','append strict $.k',NULL);
+GO
+~~START~~
+nvarchar
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Property cannot be found on the specified JSON path.)~~
+
+
+--NULL, LAX, KP, NOT ARRAY 
+SELECT JSON_MODIFY('{"name":"John","skills":["C#","SQL"]}','append $.name',NULL);
+GO
+~~START~~
+nvarchar
+{"name": "John", "skills": ["C#", "SQL"]}
+~~END~~
+
+
+--NULL, STRICT, KP, NOT ARRAY 
+SELECT JSON_MODIFY('{"name":"John","skills":["C#","SQL"]}','append strict $.name',NULL);
+GO
+~~START~~
+nvarchar
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Array cannot be found in the specified JSON path.)~~
+
+
+
+
+
+
+
+
+
+
