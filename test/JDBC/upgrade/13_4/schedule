@@ -34,6 +34,7 @@ BABEL-3166
 BABEL-3192
 sys-check_constraints
 sys-computed_columns
+sys-databases
 sys-dm_exec_connections
 sys-dm_os_host_info
 sys-endpoints
@@ -155,6 +156,7 @@ BABEL-SP_FKEYS
 BABEL-SP_STORED_PROCEDURES
 BABEL-SP_SPROC_COLUMNS
 BABEL-3000
+sys-databases-dep
 sys-foreign_key_columns-dep
 sys-foreign_keys-dep
 sys-identity_columns-dep
