@@ -3,21 +3,16 @@ INSERT INTO t_2317 DEFAULT VALUES;
 INSERT t_2317 DEFAULT VALUES;
 INSERT INTO t_2317 with (dummy_hint) DEFAULT VALUES;
 GO
-~~ROW COUNT: 1~~
+~~ERROR (Code: 33557097)~~
 
-~~ROW COUNT: 1~~
-
-~~ROW COUNT: 1~~
+~~ERROR (Message: syntax error near 'dummy_hint' at line 4 and character position 25)~~
 
 
 SELECT * FROM t_2317;
 GO
-~~START~~
-int#!#int
-1#!#42
-2#!#42
-3#!#42
-~~END~~
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: relation "t_2317" does not exist)~~
 
 
 -- not yet supported since conflict at backend parser
@@ -45,3 +40,7 @@ GO
 DROP TABLE t_2317;
 DROP TABLE t_2317_2;
 GO
+~~ERROR (Code: 3701)~~
+
+~~ERROR (Message: table "t_2317" does not exist)~~
+
