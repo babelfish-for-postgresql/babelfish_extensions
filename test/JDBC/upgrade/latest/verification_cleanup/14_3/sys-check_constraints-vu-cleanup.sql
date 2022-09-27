@@ -1,0 +1,2 @@
+DROP TABLE sys_check_constraints_vu_prepare
+GO

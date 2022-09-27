@@ -650,11 +650,9 @@ Function sys.stuff(text,integer,integer,text)
 Function sys.suser_id()
 Function sys.suser_id_internal(text)
 Function sys.suser_name()
-Function sys.suser_name(oid)
 Function sys.suser_name_internal(oid)
 Function sys.suser_sid()
 Function sys.suser_sname()
-Function sys.suser_sname(sys.varbinary)
 Function sys.sysdatetime()
 Function sys.sysdatetimeoffset()
 Function sys.system_user()
@@ -1001,6 +999,7 @@ Type sys."real"
 Type sys.bbf_binary
 Type sys.bbf_varbinary
 Type sys.cursor
+Type sys.rowversion
 View information_schema_tsql.check_constraints
 View information_schema_tsql.column_domain_usage
 View information_schema_tsql.columns
