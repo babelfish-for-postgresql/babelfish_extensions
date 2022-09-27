@@ -95,9 +95,7 @@ tsql_cast_raw_info_t tsql_cast_raw_infos[] =
 // int8
     {PG_CAST_ENTRY, "pg_catalog", "int8", "pg_catalog", "int4", NULL, 'i', 'f'},
     {PG_CAST_ENTRY, "pg_catalog", "int8", "pg_catalog", "int2", NULL, 'i', 'f'},
-	{TSQL_CAST_ENTRY, "pg_catalog", "int8", "sys", "money", "int8_to_money", 'e', 'f'},
 	{TSQL_CAST_ENTRY, "pg_catalog", "int8", "sys", "money", "int8_to_money", 'i', 'f'},
-	{TSQL_CAST_ENTRY, "pg_catalog", "int8", "sys", "smallmoney", "int8_to_smallmoney", 'e', 'f'},
 	{TSQL_CAST_ENTRY, "pg_catalog", "int8", "sys", "smallmoney", "int8_to_smallmoney", 'i', 'f'},
 // int4
     {PG_CAST_ENTRY, "pg_catalog", "int4", "pg_catalog", "int2", NULL, 'i', 'f'},
