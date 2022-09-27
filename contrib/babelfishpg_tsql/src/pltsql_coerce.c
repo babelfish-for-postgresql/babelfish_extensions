@@ -96,6 +96,9 @@ tsql_cast_raw_info_t tsql_cast_raw_infos[] =
     {PG_CAST_ENTRY, "pg_catalog", "int8", "pg_catalog", "int4", NULL, 'i', 'f'},
     {PG_CAST_ENTRY, "pg_catalog", "int8", "pg_catalog", "int2", NULL, 'i', 'f'},
 	{TSQL_CAST_ENTRY, "pg_catalog", "int8", "sys", "money", "int8_to_money", 'e', 'f'},
+	{TSQL_CAST_ENTRY, "pg_catalog", "int8", "sys", "money", "int8_to_money", 'i', 'f'},
+	{TSQL_CAST_ENTRY, "pg_catalog", "int8", "sys", "smallmoney", "int8_to_smallmoney", 'e', 'f'},
+	{TSQL_CAST_ENTRY, "pg_catalog", "int8", "sys", "smallmoney", "int8_to_smallmoney", 'i', 'f'},
 // int4
     {PG_CAST_ENTRY, "pg_catalog", "int4", "pg_catalog", "int2", NULL, 'i', 'f'},
 // varbinary     {only allow to cast to integral data type)
@@ -380,7 +383,7 @@ static CoercionPathType tsql_find_coercion_pathway(Oid sourceTypeId, Oid targetT
 	/* check if any of source/target type is sql variant */
 	HeapTuple	tuple;
 	bool isSqlVariantCast = false;
-	char *targetTypeName;
+	bool isInt8ToMoney = false;
 	
 	Oid typeIds[2] = {sourceTypeId, targetTypeId};
 	for (int i=0; i<2; i++)
@@ -396,7 +399,26 @@ static CoercionPathType tsql_find_coercion_pathway(Oid sourceTypeId, Oid targetT
 			type_nsoid = typtup->typnamespace;
 			type_nsname = get_namespace_name(type_nsoid);
 			type_name = NameStr(typtup->typname);
-			if(i == 1) targetTypeName = pstrdup(type_name);
+
+			// Check if we are casting from INT8 to MONEY or SMALLMONEY
+			if(i == 1)
+			{	
+				// Check if targetType is money or smallmoney
+				if(strcmp(type_nsname, "sys") == 0 && ((strcmp(type_name, "money") == 0) || (strcmp(type_name, "smallmoney") == 0)))
+				{
+					isInt8ToMoney = isInt8ToMoney & 1;
+				}
+				else
+				{
+					isInt8ToMoney = false;
+				}
+			}
+			else
+			{	
+				// Check if sourceType is int8
+				if(strcmp(type_name, "int8") == 0) isInt8ToMoney = true;
+			}
+
 			// We've found a SQL Variant Casting
 			if (strcmp(type_nsname, "sys") == 0 && strcmp(type_name, "sql_variant") == 0)
 			{
@@ -413,7 +435,8 @@ static CoercionPathType tsql_find_coercion_pathway(Oid sourceTypeId, Oid targetT
 	{
 		if (OidIsValid(sourceTypeId))
 			sourceTypeId = getBaseType(sourceTypeId);
-		if (OidIsValid(targetTypeId) && strcmp(targetTypeName, "money") != 0)
+		// if we are casting from INT8 to MONEY , don't look for base type
+		if (OidIsValid(targetTypeId) && !isInt8ToMoney)
 			targetTypeId = getBaseType(targetTypeId);
 	}
 

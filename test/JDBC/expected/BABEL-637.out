@@ -853,7 +853,7 @@ SELECT babel_637_add_one_money(cast(9223372036854775806 as bigint));
 GO
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: value "9223372036854775806" is out of range for type fixeddecimal)~~
+~~ERROR (Message: value "9223372036854775806" is out of range for type money)~~
 
 
 SELECT babel_637_add_one_money(cast(41 as int));
@@ -1026,7 +1026,7 @@ SELECT babel_637_add_one_smallmoney(cast(9223372036854775806 as bigint));
 GO
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: value "9223372036854775806" is out of range for type fixeddecimal)~~
+~~ERROR (Message: value "9223372036854775806" is out of range for type smallmoney)~~
 
 
 SELECT babel_637_add_one_smallmoney(cast(41 as int));

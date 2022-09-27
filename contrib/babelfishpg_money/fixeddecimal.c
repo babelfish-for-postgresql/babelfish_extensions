@@ -217,6 +217,8 @@ PG_FUNCTION_INFO_V1(fixeddecimalaggstaterecv);
 
 PG_FUNCTION_INFO_V1(char_to_fixeddecimal);
 PG_FUNCTION_INFO_V1(int8_to_money);
+PG_FUNCTION_INFO_V1(int8_to_smallmoney);
+
 
 /* Aggregate Internal State */
 typedef struct FixedDecimalAggState
@@ -2587,7 +2589,20 @@ int8_to_money(PG_FUNCTION_ARGS)
 	PG_RETURN_INT64(result);
 }
 
+Datum
+int8_to_smallmoney(PG_FUNCTION_ARGS)
+{
+	int64		arg = PG_GETARG_INT64(0);
+	int64		result;
+	
+	/* check for INT64 overflow on multiplication */
+	if(unlikely(pg_mul_s64_overflow(arg, FIXEDDECIMAL_MULTIPLIER, &result)))
+		ereport(ERROR,
+				(errcode(ERRCODE_NUMERIC_VALUE_OUT_OF_RANGE),
+				 errmsg("value \"%ld\" is out of range for type smallmoney", arg)));
 
+	PG_RETURN_INT64(result);
+}
 
 Datum
 int8fixeddecimal(PG_FUNCTION_ARGS)
