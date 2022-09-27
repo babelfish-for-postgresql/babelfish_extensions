@@ -50,6 +50,7 @@ sys-columns
 sys-computed_columns
 sys-data_spaces
 sys-database_files
+sys-databases
 sys-database_filestream_options
 sys-database_recovery_status
 sys-default_constraints
@@ -235,7 +236,6 @@ BABEL-SP_FKEYS
 BABEL-SP_STORED_PROCEDURES
 BABEL-SP_SPROC_COLUMNS
 BABEL-3000
-sys-databases-dep
 sys-foreign_key_columns-dep
 sys-foreign_keys-dep
 sys-identity_columns-dep
