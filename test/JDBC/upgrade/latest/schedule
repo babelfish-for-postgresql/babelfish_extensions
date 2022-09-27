@@ -54,7 +54,6 @@ sys-host_name
 SYSTEM_USER
 indexproperty
 sys-all_parameters
-sys-all_parameters-dep
 msdb-dbo-syspolicy_configuration
 sys-all_views
 datepart
@@ -177,6 +176,7 @@ BABEL-1683
 BABEL-1953
 schema_resolution_trigger
 sys_all_objects-dep
+sys-all_parameters-dep
 sys-columns-dep
 sys-foreign_key_columns-dep
 sys-foreign_keys-dep

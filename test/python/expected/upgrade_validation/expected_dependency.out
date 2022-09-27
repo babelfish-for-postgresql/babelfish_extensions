@@ -1011,7 +1011,6 @@ View information_schema_tsql.table_constraints
 View information_schema_tsql.tables
 View information_schema_tsql.views
 View sys.all_columns
-View sys.all_parameters
 View sys.all_sql_modules_internal
 View sys.assembly_modules
 View sys.babelfish_has_perms_by_name_permissions
