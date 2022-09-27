@@ -80,6 +80,7 @@ extern int16 get_db_id(const char *dbname);
 extern char *get_db_name(int16 dbid);
 extern void initTsqlSyscache(void);
 extern const char *get_one_user_db_name(void);
+extern char *get_owner_of_db(const char *dbname);
 
 #define DEFAULT_DATABASE_COMPATIBILITY_LEVEL 80
 
