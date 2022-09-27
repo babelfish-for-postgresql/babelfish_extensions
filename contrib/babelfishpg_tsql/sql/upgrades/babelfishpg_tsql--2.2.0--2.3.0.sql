@@ -4,18 +4,18 @@
 -- add 'sys' to search path for the convenience
 SELECT set_config('search_path', 'sys, '||current_setting('search_path'), false);
 
--- Drops a view if it does not have any dependent objects.
+-- Drops an object if it does not have any dependent objects.
 -- Is a temporary procedure for use by the upgrade script. Will be dropped at the end of the upgrade.
 -- Please have this be one of the first statements executed in this upgrade script. 
-CREATE OR REPLACE PROCEDURE babelfish_drop_deprecated_view(schema_name varchar, view_name varchar) AS
+CREATE OR REPLACE PROCEDURE babelfish_drop_deprecated_object(object_type varchar, schema_name varchar, object_name varchar) AS
 $$
 DECLARE
     error_msg text;
     query1 text;
     query2 text;
 BEGIN
-    query1 := format('alter extension babelfishpg_tsql drop view %s.%s', schema_name, view_name);
-    query2 := format('drop view %s.%s', schema_name, view_name);
+    query1 := format('alter extension babelfishpg_tsql drop %s %s.%s', object_type, schema_name, object_name);
+    query2 := format('drop %s %s.%s', object_type, schema_name, object_name);
     execute query1;
     execute query2;
 EXCEPTION
@@ -23,31 +23,6 @@ EXCEPTION
         GET STACKED DIAGNOSTICS error_msg = MESSAGE_TEXT;
         raise warning '%', error_msg;
     when dependent_objects_still_exist then --if 'drop view' statement fails
-        GET STACKED DIAGNOSTICS error_msg = MESSAGE_TEXT;
-        raise warning '%', error_msg;
-end
-$$
-LANGUAGE plpgsql;
-
--- Drops a function if it does not have any dependent objects.
--- Is a temporary procedure for use by the upgrade script. Will be dropped at the end of the upgrade.
--- Please have this be one of the first statements executed in this upgrade script. 
-CREATE OR REPLACE PROCEDURE babelfish_drop_deprecated_function(schema_name varchar, func_name varchar) AS
-$$
-DECLARE
-    error_msg text;
-    query1 text;
-    query2 text;
-BEGIN
-    query1 := format('alter extension babelfishpg_tsql drop function %s.%s', schema_name, func_name);
-    query2 := format('drop function %s.%s', schema_name, func_name);
-    execute query1;
-    execute query2;
-EXCEPTION
-    when object_not_in_prerequisite_state then --if 'alter extension' statement fails
-        GET STACKED DIAGNOSTICS error_msg = MESSAGE_TEXT;
-        raise warning '%', error_msg;
-    when dependent_objects_still_exist then --if 'drop function' statement fails
         GET STACKED DIAGNOSTICS error_msg = MESSAGE_TEXT;
         raise warning '%', error_msg;
 end
@@ -105,7 +80,7 @@ LANGUAGE 'pltsql';
 GRANT EXECUTE ON PROCEDURE sys.sp_helpsrvrolemember TO PUBLIC;
 
 -- Need to add parameter for tsql_type_max_length_helper 
-ALTER FUNCTION sys.tsql_type_max_length_helper RENAME TO tsql_type_max_length_helper_deprecated_in_2_2;
+ALTER FUNCTION sys.tsql_type_max_length_helper RENAME TO tsql_type_max_length_helper_deprecated_in_2_3;
 
 CREATE OR REPLACE FUNCTION sys.tsql_type_max_length_helper(IN type TEXT, IN typelen INT, IN typemod INT, IN for_sys_types boolean DEFAULT false, IN used_typmod_array boolean DEFAULT false)
 RETURNS SMALLINT
@@ -329,7 +304,7 @@ and has_column_privilege(quote_ident(s.nspname) ||'.'||quote_ident(c.relname), a
 and a.attnum > 0;
 GRANT SELECT ON sys.all_columns TO PUBLIC;
 
-CALL babelfish_drop_deprecated_function('sys', 'tsql_type_max_length_helper_deprecated_in_2_2');
+CALL babelfish_drop_deprecated_object('function', 'sys', 'tsql_type_max_length_helper_deprecated_in_2_3');
 
 CREATE OR REPLACE VIEW sys.all_parameters
 AS
@@ -543,8 +518,7 @@ SELECT pg_catalog.pg_extension_config_dump('sys.babelfish_function_ext', '');
 
 -- Drops the temporary procedure used by the upgrade script.
 -- Please have this be one of the last statements executed in this upgrade script.
-DROP PROCEDURE sys.babelfish_drop_deprecated_view(varchar, varchar);
-DROP PROCEDURE sys.babelfish_drop_deprecated_function(varchar, varchar);
+DROP PROCEDURE sys.babelfish_drop_deprecated_object(varchar, varchar, varchar);
 
 -- Reset search_path to not affect any subsequent scripts
 SELECT set_config('search_path', trim(leading 'sys, ' from current_setting('search_path')), false);
