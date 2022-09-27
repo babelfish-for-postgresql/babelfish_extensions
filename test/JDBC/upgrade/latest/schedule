@@ -176,7 +176,6 @@ BABEL-1683
 BABEL-1953
 schema_resolution_trigger
 sys_all_objects-dep
-sys-all_parameters-dep
 sys-columns-dep
 sys-foreign_key_columns-dep
 sys-foreign_keys-dep
