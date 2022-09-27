@@ -45,7 +45,6 @@ sys-sp_databases
 sys-sp_tables_view
 sys-syscharsets
 sys-sysforeignkeys
-sys-system_sql_modules
 sys-tables
 sys-types
 sys-views
