@@ -1,20 +1,20 @@
-SELECT name, compatibility_level, collation_name FROM sys_databases_view_vu_prepare
+SELECT name, compatibility_level, collation_name FROM sys_databases_view_dep_vu_prepare
 GO
 ~~START~~
 varchar#!#tinyint#!#varchar
-db_sys_databases_vu_prepare#!#120#!#bbf_unicode_cp1_ci_as
+db_sys_databases_dep_vu_prepare#!#120#!#bbf_unicode_cp1_ci_as
 ~~END~~
 
 
-EXEC sys_databases_proc_vu_prepare
+EXEC sys_databases_proc_dep_vu_prepare
 GO
 ~~START~~
 varchar#!#tinyint#!#varchar
-db_sys_databases_vu_prepare#!#120#!#bbf_unicode_cp1_ci_as
+db_sys_databases_dep_vu_prepare#!#120#!#bbf_unicode_cp1_ci_as
 ~~END~~
 
 
-SELECT sys_databases_func_vu_prepare()
+SELECT sys_databases_func_dep_vu_prepare()
 GO
 ~~START~~
 tinyint
@@ -30,10 +30,10 @@ int
 ~~END~~
 
 
-SELECT name FROM sys.databases where name = 'db_sys_databases_vu_prepare';
+SELECT name FROM sys.databases where name = 'db_sys_databases_dep_vu_prepare';
 GO
 ~~START~~
 varchar
-db_sys_databases_vu_prepare
+db_sys_databases_dep_vu_prepare
 ~~END~~
 
