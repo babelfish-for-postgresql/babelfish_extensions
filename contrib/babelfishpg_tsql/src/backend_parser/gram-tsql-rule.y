@@ -3231,6 +3231,7 @@ datepart_arg:
 			| TSQL_WEEK								{ $$ = "tsql_week"; }
 			| TSQL_WK								{ $$ = "tsql_week"; }
 			| TSQL_WW								{ $$ = "tsql_week"; }
+			| TSQL_W								{ $$ = "dow"; }
 			| TSQL_WEEKDAY							{ $$ = "dow"; }
 			| TSQL_DW								{ $$ = "dow"; }
 			| HOUR_P								{ $$ = "hour"; }
@@ -3272,6 +3273,7 @@ datediff_arg:
 			| DAY_P									{ $$ = "day"; }
 			| TSQL_DD								{ $$ = "day"; }
 			| TSQL_D								{ $$ = "day"; }
+			| TSQL_W								{ $$ = "day"; }
 			| TSQL_WEEK								{ $$ = "week"; }
 			| TSQL_WK								{ $$ = "week"; }
 			| TSQL_WW								{ $$ = "week"; }
@@ -3312,6 +3314,7 @@ dateadd_arg:
 			| TSQL_WEEK								{ $$ = "week"; }
 			| TSQL_WK								{ $$ = "week"; }
 			| TSQL_WW								{ $$ = "week"; }
+			| TSQL_W								{ $$ = "weekday"; }
 			| TSQL_WEEKDAY							{ $$ = "weekday"; }
 			| TSQL_DW								{ $$ = "weekday"; }
 			| HOUR_P								{ $$ = "hour"; }
@@ -4115,6 +4118,7 @@ unreserved_keyword:
 			| TSQL_TZOFFSET
 			| TSQL_UNLOCK
 			| TSQL_UPDLOCK
+			| TSQL_W
 			| TSQL_WEEK
 			| TSQL_WEEKDAY
 			| TSQL_WINDOWS

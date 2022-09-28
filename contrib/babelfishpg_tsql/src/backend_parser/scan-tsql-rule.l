@@ -257,6 +257,7 @@
 							case TSQL_TZ:
 							case TSQL_TEXTIMAGE_ON:
 							case TSQL_TZOFFSET:
+							case TSQL_W:
 							case TSQL_WEEK:
 							case TSQL_WEEKDAY:
 							case TSQL_WK:
