@@ -39,7 +39,7 @@
 
 const char* ATTOPTION_BBF_ORIGINAL_NAME = "bbf_original_name";
 const char* ATTOPTION_BBF_ORIGINAL_TABLE_NAME = "bbf_original_rel_name";
-const char* BBF_TABLE_CREATE_DATE = "bbf_rel_create_date";
+const char* ATTOPTION_BBF_TABLE_CREATE_DATE = "bbf_rel_create_date";
 
 typedef struct ComputedColumnContextData
 {
@@ -540,7 +540,7 @@ static bool checkAllowedTsqlAttoptions(Node *options)
 		return true;
 
 	if (strcmp(((DefElem *) linitial(castNode(List, options)))->defname,
-				BBF_TABLE_CREATE_DATE) == 0)
+				ATTOPTION_BBF_TABLE_CREATE_DATE) == 0)
 		return true;
 
 	return false;

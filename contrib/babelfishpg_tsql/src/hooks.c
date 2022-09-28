@@ -835,7 +835,7 @@ pltsql_post_transform_column_definition(ParseState *pstate, RangeVar* relation, 
 }
 
 extern const char *ATTOPTION_BBF_ORIGINAL_TABLE_NAME;
-extern const char *BBF_TABLE_CREATE_DATE;
+extern const char *ATTOPTION_BBF_TABLE_CREATE_DATE;
 
 static void
 pltsql_post_transform_table_definition(ParseState *pstate, RangeVar* relation, char *relname, List **alist)
@@ -884,7 +884,7 @@ pltsql_post_transform_table_definition(ParseState *pstate, RangeVar* relation, c
 	curr_datetime = DatumGetCString(DirectFunctionCall1(timestamp_out, TimestampGetDatum(GetSQLLocalTimestamp(3))));
 	cmd_crdate = makeNode(AlterTableCmd);
 	cmd_crdate->subtype = AT_SetRelOptions;
-	cmd_crdate->def = (Node *) list_make1(makeDefElem(pstrdup(BBF_TABLE_CREATE_DATE), (Node *) makeString(pstrdup(curr_datetime)), -1));
+	cmd_crdate->def = (Node *) list_make1(makeDefElem(pstrdup(ATTOPTION_BBF_TABLE_CREATE_DATE), (Node *) makeString(pstrdup(curr_datetime)), -1));
 	cmd_crdate->behavior = DROP_RESTRICT;
 	cmd_crdate->missing_ok = false;
 
