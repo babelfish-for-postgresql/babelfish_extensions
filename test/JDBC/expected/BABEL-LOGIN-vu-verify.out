@@ -367,14 +367,7 @@ babel_login_vu_prepare_db1_babel_login_vu_prepare_r4#!#babel_login_vu_prepare_r4
 ~~END~~
 
 
-java_auth#!#database|-|babel_login_vu_prepare_db1#!#user|-|babel_login_vu_prepare_r4#!#password|-|123
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: role "babel_login_vu_prepare_r4" does not exist )~~
-
-
 -- tsql
--- It should be failed since there is no relevant login
 -- recreate the login with same name
 CREATE LOGIN babel_login_vu_prepare_r4 WITH PASSWORD='123';
 go

@@ -302,3 +302,20 @@ int#!#varchar#!#varchar#!#nvarchar
 3#!#Scratch#!#Male#!#{"id": 3, "sex": "Male", "name": "Scratch"}
 ~~END~~
 
+
+
+DECLARE @json NVARCHAR(MAX);
+SET @json = N'[
+  {"id": 2, "info": {"name": "John", "surname": "Smith"}, "age": 25},
+  {"id": 5, "info": {"name": "Jane", "surname": "Smith"}, "dob": "2005-11-04T12:00:00"}
+]';
+SELECT *
+FROM OPENJSON(@json)
+  WITH ( id INT 'strict $.id', firstName NVARCHAR(50) '$.info.name', lastName NVARCHAR(50) '$.info.surname', age INT, dateOfBirth DATETIME2 '$.dob' );
+go
+~~START~~
+int#!#nvarchar#!#nvarchar#!#int#!#datetime2
+2#!#John#!#Smith#!#25#!#<NULL>
+5#!#Jane#!#Smith#!#<NULL>#!#2005-11-04 12:00:00.0000000
+~~END~~
+

@@ -199,9 +199,6 @@ WHERE login_name LIKE 'babel_login_vu_prepare_r4%' OR rolname LIKE '%babel_login
 ORDER BY rolname;
 go
 
--- It should be failed since there is no relevant login
-java_auth#!#database|-|babel_login_vu_prepare_db1#!#user|-|babel_login_vu_prepare_r4#!#password|-|123
-
 -- tsql
 -- recreate the login with same name
 CREATE LOGIN babel_login_vu_prepare_r4 WITH PASSWORD='123';

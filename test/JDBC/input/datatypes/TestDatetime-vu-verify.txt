@@ -1,1 +1,1 @@
-SELECT * FROM DATETIME_dt;
+SELECT * FROM TestDatetime_vu_prepare_dt;

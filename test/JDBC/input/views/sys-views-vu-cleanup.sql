@@ -1,0 +1,14 @@
+USE sys_views_vu_prepare_db1
+GO
+
+DROP VIEW sys_views_vu_prepare_t1;
+GO
+
+USE master;
+GO
+
+DROP DATABASE sys_views_vu_prepare_db1;
+GO
+
+DROP VIEW sys_views_vu_prepare_t2;
+GO

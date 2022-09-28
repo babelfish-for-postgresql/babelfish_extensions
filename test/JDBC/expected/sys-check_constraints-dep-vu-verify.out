@@ -1,0 +1,23 @@
+EXEC sys_check_constraints_dep_vu_prepare_proc1
+GO
+~~START~~
+varchar
+sys_check_constraints_dep_vu_prepare_t1_sck_date_col_check
+~~END~~
+
+
+SELECT * FROM sys_check_constraints_dep_vu_prepare_func1()
+GO
+~~START~~
+int
+1
+~~END~~
+
+
+SELECT * FROM sys_check_constraints_dep_vu_prepare_view1
+GO
+~~START~~
+varchar
+sys_check_constraints_dep_vu_prepare_t1_sck_date_col_check
+~~END~~
+

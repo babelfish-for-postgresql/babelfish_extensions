@@ -155,7 +155,7 @@ protected:
 
 		// common clauses used in CREATE/ALTER TABLE/INDEX
 		antlrcpp::Any visitColumn_constraint(TSqlParser::Column_constraintContext *ctx) override;
-		antlrcpp::Any visitColumn_inline_index(TSqlParser::Column_inline_indexContext *ctx) override;
+		antlrcpp::Any visitInline_index(TSqlParser::Inline_indexContext *ctx) override;
 		antlrcpp::Any visitSpecial_column_option(TSqlParser::Special_column_optionContext *ctx) override;
 		antlrcpp::Any visitColumn_definition(TSqlParser::Column_definitionContext *ctx) override;
 		antlrcpp::Any visitIndex_option(TSqlParser::Index_optionContext *ctx) override;
@@ -515,7 +515,7 @@ antlrcpp::Any TsqlUnsupportedFeatureHandlerImpl::visitColumn_constraint(TSqlPars
 	return visitChildren(ctx);
 }
 
-antlrcpp::Any TsqlUnsupportedFeatureHandlerImpl::visitColumn_inline_index(TSqlParser::Column_inline_indexContext *ctx)
+antlrcpp::Any TsqlUnsupportedFeatureHandlerImpl::visitInline_index(TSqlParser::Inline_indexContext *ctx)
 {
 	if (ctx->ON())
 		handle_storage_partition(ctx->storage_partition_clause()[0]);
@@ -557,7 +557,7 @@ antlrcpp::Any TsqlUnsupportedFeatureHandlerImpl::visitSpecial_column_option(TSql
 
 antlrcpp::Any TsqlUnsupportedFeatureHandlerImpl::visitColumn_definition(TSqlParser::Column_definitionContext *ctx)
 {
-	// ctx->column_inline_index() will be handled by visitColumn_inline_index(). do nothing here.
+	// ctx->inline_index() will be handled by visitInline_index(). do nothing here.
 
 	// ctx->column_constraint() will be handled by visitColumn_constraint(). do nothing here.
 
@@ -678,7 +678,16 @@ antlrcpp::Any TsqlUnsupportedFeatureHandlerImpl::visitCreate_table(TSqlParser::C
 
 	// ctx->column_definition() will be handled by visitColumn_definition(). do nothing here.
 
-	for (auto ictx : ctx->table_indices())
+	for (auto ictx : ctx->inline_index())
+	{
+		if (ictx->ON())
+			if (ictx->storage_partition_clause().size() > 0)
+			    handle_storage_partition(ictx->storage_partition_clause()[0]);
+
+		if (ictx->clustered() && ictx->clustered()->CLUSTERED())
+			handle(INSTR_UNSUPPORTED_TSQL_COLUMN_OPTION_CLUSTERED, ictx->clustered()->CLUSTERED(), &st_escape_hatch_index_clustering);
+	}
+	for (auto ictx : ctx->table_constraint())
 	{
 		if (ictx->ON())
 			handle_storage_partition(ictx->storage_partition_clause());
@@ -963,6 +972,18 @@ antlrcpp::Any TsqlUnsupportedFeatureHandlerImpl::visitDdl_statement(TSqlParser::
 		auto alter_user = ctx->alter_user();
 		if (alter_user->loginame)
 			handle(INSTR_UNSUPPORTED_TSQL_UNKNOWN_DDL, "ALTER USER WITH LOGIN",  getLineAndPos(ctx));
+	}
+	if (ctx->create_user())
+	{
+		auto create_user = ctx->create_user();
+		if (create_user->WITHOUT())
+			handle(INSTR_UNSUPPORTED_TSQL_UNKNOWN_DDL, "CREATE USER WITHOUT LOGIN",  getLineAndPos(ctx));
+	}
+	if(ctx->create_user_azure_sql_dw())
+	{
+		auto create_user = ctx->create_user_azure_sql_dw();
+		if (create_user->WITHOUT())
+			handle(INSTR_UNSUPPORTED_TSQL_UNKNOWN_DDL, "CREATE USER WITHOUT LOGIN",  getLineAndPos(ctx));
 	}
 	/*
 	 * We have more than 100 DDLs but support a few of them.
@@ -1535,7 +1556,6 @@ const char *unsupported_sp_procedures[] = {
 	"sp_generate_database_ledger_digest",
 	"sp_grantdbaccess",
 	"sp_grantlogin",
-	"sp_helpdbfixedrole",
 	"sp_helplinkedsrvlogin",
 	"sp_helplogins",
 	"sp_helpntgroup",
