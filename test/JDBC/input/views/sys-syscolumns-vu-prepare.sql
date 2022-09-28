@@ -60,3 +60,5 @@ go
 create procedure sys_syscolumns_vu_prepare_proc3 @thirdparam NVARCHAR(50) as select 3;
 go
 
+SELECT * FROM sys.syscolumns
+go
