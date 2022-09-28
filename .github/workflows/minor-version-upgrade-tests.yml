@@ -12,8 +12,8 @@ jobs:
     env:
       ENGINE_VER_FROM: BABEL_1_0_0__PG_13_4
       EXTENSION_VER_FROM: BABEL_1_0_0
-      ENGINE_VER_TO: BABEL_1_2_STABLE__PG_13_6
-      EXTENSION_VER_TO: BABEL_1_2_STABLE
+      ENGINE_VER_TO: BABEL_1_X_DEV__PG_13_8
+      EXTENSION_VER_TO: BABEL_1_X_DEV
       scheduleFile: ./jdbc_upgrade_schedule
 
     name: Build and test
@@ -99,9 +99,6 @@ jobs:
           cd contrib && make && sudo make install
 
       - uses: actions/checkout@v2
-        with:
-          repository: babelfish-for-postgresql/babelfish_extensions
-          ref: ${{env.EXTENSION_VER_TO}}
 
       - name: Set env variables and build extensions using ${{env.EXTENSION_VER_TO}}
         id: build-extensions-newer
