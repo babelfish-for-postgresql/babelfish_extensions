@@ -17,7 +17,7 @@ int
 SELECT * FROM sys_default_constraints_dep_vu_prepare_v1
 GO
 ~~START~~
-nvarchar
+varchar
 50
 ~~END~~
 

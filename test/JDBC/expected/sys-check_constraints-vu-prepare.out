@@ -3,7 +3,7 @@ CREATE TABLE sys_check_constraints_vu_prepare_t1 (
 )
 GO
 
-CREATE TABLE sys_check_constraints_vu_prepare
+CREATE TABLE sys_check_constraints_vu_prepare_t2
 (
 column_a bit default 0,
 column_b varchar(5) CHECK (column_b <> 'wrong'),
