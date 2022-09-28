@@ -1,5 +1,8 @@
 name: JDBC Tests
 on: [push, pull_request]
+concurrency: # Cancel previous runs in the same branch
+  group: environment-${{ github.ref }}
+  cancel-in-progress: true
 
 jobs:
   run-babelfish-jdbc-tests:
