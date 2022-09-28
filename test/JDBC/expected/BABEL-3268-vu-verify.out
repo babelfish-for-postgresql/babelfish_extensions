@@ -18,12 +18,13 @@ int#!#int
 ~~END~~
 
 
---CREATE table multiple defaults NOTE this will be raise an error because of an unrelated bug BABEL-3524
+--CREATE table multiple defaults
 SELECT * FROM babel_3268_t6
 GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: relation "babel_3268_t6" does not exist)~~
+~~START~~
+int#!#int#!#text
+10#!#1#!#<NULL>
+~~END~~
 
 
 

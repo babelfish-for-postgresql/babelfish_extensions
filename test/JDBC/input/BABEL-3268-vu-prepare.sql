@@ -34,8 +34,9 @@ CREATE TABLE babel_3268_t4 (a INT DEFAULT dbo.babel_3268_fn_2(-2), b int)
 INSERT INTO babel_3268_t4 (b) VALUES (1)
 GO
 
---CREATE table multiple defaults will fail because of an unrelated bug BABEL-3524
-CREATE TABLE babel_3268_t6 (a INT ADD DEFAULT dbo.babel_3268_fn_1(), b INT DEFAULT dbo.babel_3268_fn_1(), c TEXT )
+--CREATE table multiple defaults
+CREATE TABLE babel_3268_t6 (a INT CONSTRAINT babel_3268_constraint DEFAULT dbo.babel_3268_fn_1(), b INT DEFAULT dbo.babel_3268_fn_1(), c TEXT )
+INSERT INTO babel_3268_t6 (b) VALUES (1)
 GO
 
 ---- Alter table test cases ----

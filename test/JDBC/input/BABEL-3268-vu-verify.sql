@@ -8,7 +8,7 @@ GO
 SELECT * FROM babel_3268_t4
 GO
 
---CREATE table multiple defaults NOTE this will be raise an error because of an unrelated bug BABEL-3524
+--CREATE table multiple defaults
 SELECT * FROM babel_3268_t6
 GO
 
