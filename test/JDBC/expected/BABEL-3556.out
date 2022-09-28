@@ -663,11 +663,11 @@ smallmoney
 ~~ERROR (Message: value for domain smallmoney violates check constraint "smallmoney_check")~~
 
 
-SELECT CAST($1232422322334223423121 AS smallmoney);
+SELECT CAST($922337203685478 AS smallmoney);
 GO
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: value "1232422322334223423121" is out of range for type fixeddecimal)~~
+~~ERROR (Message: value "922337203685478" is out of range for type smallmoney)~~
 
 
 SELECT CAST(₧-1232422322334223423121 AS smallmoney);
@@ -691,11 +691,11 @@ GO
 ~~ERROR (Message: value for domain smallmoney violates check constraint "smallmoney_check")~~
 
 
-INSERT INTO babel_3556_t3 VALUES($1232422322334223423121);
+INSERT INTO babel_3556_t3 VALUES($922337203685478);
 GO
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: value "1232422322334223423121" is out of range for type fixeddecimal)~~
+~~ERROR (Message: value "922337203685478" is out of range for type smallmoney)~~
 
 
 INSERT INTO babel_3556_t3 VALUES(₧-1232422322334223423121);
