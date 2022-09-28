@@ -194,3 +194,15 @@
 #Q#INSERT INTO numeric_table(num) VALUES(@a7) 
 #Q#INSERT INTO numeric_table(num) VALUES(@a7) 
 #Q#DROP TABLE numeric_table;
+#Q#SELECT CASE WHEN 1=1 THEN 0 ELSE cast(98.7627 AS numeric(24,6)) + coalesce(cast(91128.7627 AS numeric(24,6)),0) END
+#D#decimal
+0
+#Q#SELECT CAST(0 AS NUMERIC)
+#D#decimal
+0
+#Q#SELECT CASE WHEN 1=1 THEN 5 ELSE cast(98.7627 AS numeric(24,6)) + coalesce(cast(91128.7627 AS numeric(24,6)),0) END
+#D#decimal
+5
+#Q#SELECT CAST(5 AS NUMERIC)
+#D#decimal
+5
