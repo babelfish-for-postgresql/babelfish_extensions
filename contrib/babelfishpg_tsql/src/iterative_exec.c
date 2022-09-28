@@ -24,8 +24,10 @@ static void reset_exec_error_data(PLtsql_execstate *estate);
 static void assert_equal_estate_err(PLtsql_estate_err *err1, PLtsql_estate_err *err2);
 static void read_raiserror_params(PLtsql_execstate *estate, List *params, int paramno,
 								  char **msg, int *msg_id, int *severity, int *state);
+static int read_raiserror_params_explain(List *params, int paramno);
 static void read_throw_params(PLtsql_execstate *estate, List *params, 
 							  char **msg, int *err_no, int *state);
+static int read_throw_params_explain(List *params);
 static char *get_proc_name(PLtsql_execstate *estate);
 static bool is_seterror_on(PLtsql_stmt *stmt);
 
@@ -99,6 +101,9 @@ static int exec_stmt_raiserror(PLtsql_execstate *estate, PLtsql_stmt_raiserror *
 	int		severity = -1;
 	int		state = -1;
 
+	if (pltsql_explain_only)
+		return read_raiserror_params_explain(stmt->params, stmt->paramno);
+
 	/* Read parameters of RAISERROR statements */
 	read_raiserror_params(estate, stmt->params, stmt->paramno, &msg, &msg_id, &severity, &state);
 	msg = pstrdup(msg);
@@ -154,7 +159,12 @@ static int exec_stmt_throw(PLtsql_execstate *estate, PLtsql_stmt_throw *stmt)
 		if (estate->cur_error == NULL || estate->cur_error->error == NULL)
 			ereport(ERROR, (errcode(ERRCODE_INTERNAL_ERROR),
 					errmsg("THROW without parameters should be executed inside a CATCH block")));
-
+		/* If only explaining, don't actually perform the throw, just append query text */
+		if (pltsql_explain_only)
+		{
+			append_explain_info(NULL, "THROW");
+			return PLTSQL_RC_OK;
+		}
 		/* Update error data info in exec_state_call_stack */
 		set_exec_error_data(estate->cur_error->procedure,
 							estate->cur_error->number,
@@ -166,6 +176,9 @@ static int exec_stmt_throw(PLtsql_execstate *estate, PLtsql_stmt_throw *stmt)
 	else
 	{
 		/* Read parameters of THROW statement */
+		if (pltsql_explain_only)
+			return read_throw_params_explain(stmt->params);
+
 		read_throw_params(estate, stmt->params, &msg, &err_no, &state);
 		msg = pstrdup(msg);
 		proc_name = get_proc_name(estate);
@@ -660,12 +673,6 @@ static inline int dispatch_stmt(PLtsql_execstate *estate, PLtsql_stmt *stmt)
 			exec_stmt_set_explain_mode(estate, (PLtsql_stmt_set_explain_mode *) stmt);
 			break;
         case PLTSQL_STMT_PRINT:
-			if (pltsql_explain_only)
-			{
-				ereport(ERROR,
-						(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-						errmsg("Showing Estimated Execution Plan for PRINT statment is not yet supported")));
-			}
             exec_stmt_print(estate, (PLtsql_stmt_print *)stmt);
             break;
 		case PLTSQL_STMT_QUERY_SET:
@@ -738,30 +745,12 @@ static inline int dispatch_stmt(PLtsql_execstate *estate, PLtsql_stmt *stmt)
             exec_stmt_decl_cursor(estate, (PLtsql_stmt_decl_cursor *) stmt);
             break;
 		case PLTSQL_STMT_RAISERROR:
-			if (pltsql_explain_only)
-			{
-				ereport(ERROR,
-						(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-						errmsg("Showing Estimated Execution Plan for RAISE ERROR statment is not yet supported")));
-			}
 			exec_stmt_raiserror(estate, (PLtsql_stmt_raiserror *) stmt);
 			break;
 		case PLTSQL_STMT_THROW:
-			if (pltsql_explain_only)
-			{
-				ereport(ERROR,
-						(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-						errmsg("Showing Estimated Execution Plan for THROW statment is not yet supported")));
-			}
 			exec_stmt_throw(estate, (PLtsql_stmt_throw *) stmt);
 			break;
 		case PLTSQL_STMT_USEDB:
-			if (pltsql_explain_only)
-			{
-				ereport(ERROR,
-						(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-						errmsg("Showing Estimated Execution Plan for USE DB statment is not yet supported")));
-			}
 			exec_stmt_usedb(estate, (PLtsql_stmt_usedb *) stmt);
 			break;
         case PLTSQL_STMT_INSERT_BULK:
@@ -795,7 +784,7 @@ static inline int dispatch_stmt(PLtsql_execstate *estate, PLtsql_stmt *stmt)
         default:
             ereport(ERROR,
                     (errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-                     errmsg("Unsupported statment type %d in executor", stmt->cmd_type)));
+                     errmsg("Unsupported statement type %d in executor", stmt->cmd_type)));
     }
 
     return rc;
@@ -1542,6 +1531,17 @@ void process_explain(PLtsql_execstate *estate)
 	if (*pltsql_protocol_plugin_ptr && (*pltsql_protocol_plugin_ptr)->stmt_beg)
 		((*pltsql_protocol_plugin_ptr)->stmt_beg) (estate, NULL);
 
+	/* If use_db changed db during the query, return it back to the starting database */
+	if (estate->explain_infos)
+	{
+		einfo = (ExplainInfo *) llast(estate->explain_infos);
+		if (einfo->initial_database)
+		{
+			PLtsql_stmt_usedb *initial_db = palloc0(sizeof(PLtsql_stmt_usedb));
+			initial_db->db_name = einfo->initial_database;
+			exec_stmt_usedb_explain(estate, initial_db, true);
+		}
+	}
 	/* Concat all explain_infos */
 	initStringInfo(&planstr);
 	foreach(lc, estate->explain_infos)
@@ -1685,7 +1685,32 @@ void assert_equal_estate_err(PLtsql_estate_err *err1, PLtsql_estate_err *err2)
 		   err1->severity == err2->severity &&
 		   err1->state == err2->state);
 }
+static
+int read_raiserror_params_explain(List *params, int paramno)
+{
+	PLtsql_expr *expr_temp;
+	StringInfoData query_string;
+	const char * param_text;
+	
+	if (!pltsql_explain_only)
+		return PLTSQL_RC_OK;
 
+	initStringInfo(&query_string);
+	appendStringInfo(&query_string, "RAISERROR (");
+	for (int i = 0; i < paramno; i++)
+	{
+		expr_temp = (PLtsql_expr *) list_nth(params, i);
+		param_text = strip_select_from_expr(expr_temp);
+		appendStringInfoString(&query_string, param_text);
+
+		/* no comma on final item */
+		if (i < paramno-1)
+			appendStringInfo(&query_string, ",");
+	}
+	appendStringInfo(&query_string, ")");
+	append_explain_info(NULL, query_string.data);
+	return PLTSQL_RC_OK;
+}
 static void read_raiserror_params(PLtsql_execstate *estate, List *params, int paramno,
 								  char **msg, int *msg_id, int *severity, int *state)
 {
@@ -1758,6 +1783,30 @@ static void read_raiserror_params(PLtsql_execstate *estate, List *params, int pa
 	initStringInfo(&buf);
 	prepare_format_string(&buf, *msg, paramno - 3, args, argtypes, argisnull);
 	*msg = buf.data;
+}
+
+static int read_throw_params_explain(List *params)
+{
+	PLtsql_expr  *expr_temp;
+	StringInfoData query_text;
+	const char *param_text;
+
+	if (!pltsql_explain_only)
+		return PLTSQL_RC_OK;
+
+	initStringInfo(&query_text);
+	appendStringInfo(&query_text, "THROW ");
+
+	for (int i = 0; i < 3; ++i)
+	{
+		expr_temp = (PLtsql_expr *) list_nth(params, i);
+		param_text = strip_select_from_expr(expr_temp);
+		appendStringInfoString(&query_text, param_text);
+		if (i < 2)
+			appendStringInfoString(&query_text, ", ");
+	}
+	append_explain_info(NULL, query_text.data);
+	return PLTSQL_RC_OK;
 }
 
 static void read_throw_params(PLtsql_execstate *estate, List *params,

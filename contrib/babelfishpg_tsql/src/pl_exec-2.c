@@ -42,6 +42,7 @@ static int exec_stmt_decl_cursor(PLtsql_execstate *estate, PLtsql_stmt_decl_curs
 static int exec_run_dml_with_output(PLtsql_execstate *estate, PLtsql_stmt_push_result *stmt, 
 									Portal portal, PLtsql_expr *expr, CmdType cmd, ParamListInfo paramLI);
 static int exec_stmt_usedb(PLtsql_execstate *estate, PLtsql_stmt_usedb *stmt);
+static int exec_stmt_usedb_explain(PLtsql_execstate *estate, PLtsql_stmt_usedb *stmt, bool shouldRestoreDb);
 static int exec_stmt_insert_execute_select(PLtsql_execstate *estate, PLtsql_expr *expr);
 static int exec_stmt_insert_bulk(PLtsql_execstate *estate, PLtsql_stmt_insert_bulk *expr);
 extern Datum pltsql_inline_handler(PG_FUNCTION_ARGS);
@@ -233,6 +234,19 @@ exec_stmt_print(PLtsql_execstate *estate, PLtsql_stmt_print *stmt)
 	Oid		formattypeid;
 	int32	formattypmod;
 	char   *extval;
+	StringInfoData query;
+	const char *print_text;
+
+	if (pltsql_explain_only)
+	{
+		PLtsql_expr  *expr_temp = (PLtsql_expr *) linitial(stmt->exprs);
+		initStringInfo(&query);
+		appendStringInfo(&query, "PRINT ");
+		print_text = strip_select_from_expr(expr_temp);
+		appendStringInfoString(&query, print_text);
+		append_explain_info(NULL, query.data);
+		return PLTSQL_RC_OK;
+	}
 	formatdatum = exec_eval_expr(estate,
 								 (PLtsql_expr *) linitial(stmt->exprs),
 								 &formatisnull,
@@ -2513,6 +2527,10 @@ static Node *get_underlying_node_from_implicit_casting(Node *n, NodeTag underlyi
 static int
 exec_stmt_usedb(PLtsql_execstate *estate, PLtsql_stmt_usedb *stmt)
 {
+	if (pltsql_explain_only)
+	{
+		return exec_stmt_usedb_explain(estate, stmt, false  /* shouldRestoreDb */);
+	}
 	char * old_db_name = get_cur_db_name();
 	char message[128];
 	int16 old_db_id = get_cur_db_id();
@@ -2557,6 +2575,72 @@ exec_stmt_usedb(PLtsql_execstate *estate, PLtsql_stmt_usedb *stmt)
 	/* send message to user */
 	if (*pltsql_protocol_plugin_ptr && (*pltsql_protocol_plugin_ptr)->send_info)
 		((*pltsql_protocol_plugin_ptr)->send_info) (0, 1, 0, message, 0);
+	
+	return PLTSQL_RC_OK;
+}
+
+/* This function will change databases to a given target database for use in explain functions
+* It will maintain the lock on the initial database and supress any log messages to the user
+* otherwise this function will be functionally the same as exec_stmt_usedb
+*/
+static int
+exec_stmt_usedb_explain(PLtsql_execstate *estate, PLtsql_stmt_usedb *stmt, bool shouldRestoreDb)
+{
+	const char *old_db_name;
+	const char *initial_database_name;
+	const char *queryText;
+	int16 old_db_id;
+	int16 new_db_id;
+	int16 initial_database_id;
+
+	if (!pltsql_explain_only)
+		return PLTSQL_RC_OK;
+
+	old_db_name = get_cur_db_name();
+	old_db_id = get_cur_db_id();
+	new_db_id = get_db_id(stmt->db_name);
+
+	/* append query information */
+	if (!shouldRestoreDb)
+	{
+		queryText = psprintf("USE DATABASE %s", stmt->db_name);
+		append_explain_info(NULL, queryText);
+	}
+	
+	/* Gather name and id of the original database the user was connected to */
+	initial_database_name = get_explain_database();
+	if (initial_database_name == NULL)
+	{
+		set_explain_database(old_db_name);
+		initial_database_name = old_db_name;
+	}
+	initial_database_id = get_db_id(initial_database_name);
+
+	/* error if new db is not valid and restore original db */
+	if (!DbidIsValid(new_db_id))
+	{
+		set_session_properties(initial_database_name);
+		ereport(ERROR,
+				(errcode(ERRCODE_UNDEFINED_DATABASE),
+				 errmsg("database \"%s\" does not exist", stmt->db_name)));
+		
+	}
+	/* Release the session-level shared lock on the old logical db if its not the user's original database */
+	if (old_db_id != initial_database_id)
+		UnlockLogicalDatabaseForSession(old_db_id, ShareLock, false);
+
+	/* Get a session-level shared lock on the new logical db we are about to use.  If Restoring the original DB, its
+	   There is no need to reacquire a lock since we never released the lock in the the initial db
+	*/
+	if (!TryLockLogicalDatabaseForSession(new_db_id, ShareLock) && !shouldRestoreDb)
+		ereport(ERROR,
+				(errcode(ERRCODE_INTERNAL_ERROR),
+				 errmsg("Cannot use database \"%s\", failed to obtain lock. "
+						"\"%s\" is probably undergoing DDL statements in another session.", 
+						stmt->db_name, stmt->db_name)));
+
+	set_session_properties(stmt->db_name);
+	
 	return PLTSQL_RC_OK;
 }
 
