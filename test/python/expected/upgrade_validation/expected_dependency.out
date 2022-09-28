@@ -110,9 +110,7 @@ Function sys.babelfish_conv_greg_to_hijri(numeric,numeric,numeric)
 Function sys.babelfish_conv_greg_to_hijri(text,text,text)
 Function sys.babelfish_conv_greg_to_hijri(timestamp without time zone)
 Function sys.babelfish_conv_helper_to_date(anyelement,boolean,numeric)
-Function sys.babelfish_conv_helper_to_date(text,boolean,numeric)
 Function sys.babelfish_conv_helper_to_datetime(anyelement,boolean,numeric)
-Function sys.babelfish_conv_helper_to_datetime(text,boolean,numeric)
 Function sys.babelfish_conv_helper_to_time(anyelement,boolean,numeric)
 Function sys.babelfish_conv_helper_to_time(text,boolean,numeric)
 Function sys.babelfish_conv_helper_to_varchar(text,anyelement,boolean,numeric)
@@ -241,6 +239,7 @@ Function sys.bbfvarbinary(sys.bbf_varbinary,integer,boolean)
 Function sys.bbfvarbinary_sqlvariant(sys.bbf_varbinary)
 Function sys.bigint2datetime(bigint)
 Function sys.bigint_sqlvariant(bigint)
+Function sys.bigint_sum(internal)
 Function sys.binary2uniqueidentifier(sys.bbf_binary,integer,boolean)
 Function sys.binaryfloat4(sys.bbf_binary)
 Function sys.binaryfloat8(sys.bbf_binary)
@@ -478,6 +477,7 @@ Function sys.int4_fixeddecimal_cmp(integer,sys.fixeddecimal)
 Function sys.int4binary(integer,integer,boolean)
 Function sys.int4fixeddecimaldiv(integer,sys.fixeddecimal)
 Function sys.int4fixeddecimaldiv(integer,sys.smallmoney)
+Function sys.int4int2_sum(bigint)
 Function sys.int4rowversion(integer,integer,boolean)
 Function sys.int4varbinary(integer,integer,boolean)
 Function sys.int8_fixeddecimal_cmp(bigint,sys.fixeddecimal)
@@ -1001,7 +1001,6 @@ Type sys."real"
 Type sys.bbf_binary
 Type sys.bbf_varbinary
 Type sys.cursor
-Type sys.rowversion
 View information_schema_tsql.check_constraints
 View information_schema_tsql.column_domain_usage
 View information_schema_tsql.columns
