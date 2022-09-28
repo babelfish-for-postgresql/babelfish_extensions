@@ -69,24 +69,16 @@ GO
 SELECT JSON_MODIFY('{"name":"John","skills":["C#","SQL"]}','append strict $.name',NULL);
 GO
 
+--Case to test Multi-function call query
+SELECT JSON_MODIFY(JSON_MODIFY(JSON_MODIFY('{"name":"John","skills":["C#","SQL"]}','$.name','Mike'),'$.surname','Smith'),'append $.skills','Azure');
+GO
 
--- Temporary
+SELECT JSON_MODIFY(JSON_MODIFY('{"price":49.99}','$.Price',CAST(JSON_VALUE('{"price":49.99}','$.price') AS NUMERIC(4,2))),'$.price',NULL);
+GO
 
--- select JSON_MODIFY('{"name":"John","skills":["C#","SQL"]}','$.name','Smith');
--- go
+--Case to test on array
+SELECT JSON_MODIFY('[{"name":"John","skills":["C#","SQL"]},"b","temp"]','strict $[0].skills[1]',NULL);
+GO
 
--- select JSON_MODIFY('{"name":"John","skills":["C#","SQL"]}','$.skills[0]','Azure');
--- go
-
--- select JSON_MODIFY('{"name":"John","skills":["C#","SQL"]}','strict $.name','Smith');
--- go
-
--- select JSON_MODIFY('{"name":"John","skills":["C#","SQL"]}','append strict $.skills','Azure');
--- go
-
--- select JSON_MODIFY('{"name":"John","skills":["C#","SQL"]}','append $.skills','Azure');
--- go
-
--- select JSON_MODIFY('{"name":"John","skills":["C#","SQL"]}','$.skills[0]',NULL);
--- go
-
+SELECT JSON_MODIFY('{"name":"John","skills":["C#","SQL"]}','$.skills[0]','Azure');
+GO

@@ -74,7 +74,7 @@ SELECT JSON_MODIFY('{"name":"John","skills":["C#","SQL"]}','append $.name','Mike
 GO
 ~~START~~
 nvarchar
-{"name": "John", "skills": ["C#", "SQL"]}
+{"name":"John","skills":["C#","SQL"]}
 ~~END~~
 
 --NOT NULL, STRICT, KP
@@ -161,7 +161,7 @@ SELECT JSON_MODIFY('{"name":"John","skills":["C#","SQL"]}','append $.name',NULL)
 GO
 ~~START~~
 nvarchar
-{"name": "John", "skills": ["C#", "SQL"]}
+{"name":"John","skills":["C#","SQL"]}
 ~~END~~
 
 
@@ -175,11 +175,36 @@ nvarchar
 ~~ERROR (Message: Array cannot be found in the specified JSON path.)~~
 
 
+--Case to test Multi-function call query
+SELECT JSON_MODIFY(JSON_MODIFY(JSON_MODIFY('{"name":"John","skills":["C#","SQL"]}','$.name','Mike'),'$.surname','Smith'),'append $.skills','Azure');
+GO
+~~START~~
+nvarchar
+{"name": "Mike", "skills": ["C#", "SQL", "Azure"], "surname": "Smith"}
+~~END~~
 
 
+SELECT JSON_MODIFY(JSON_MODIFY('{"price":49.99}','$.Price',CAST(JSON_VALUE('{"price":49.99}','$.price') AS NUMERIC(4,2))),'$.price',NULL);
+GO
+~~START~~
+nvarchar
+{"Price": "49.99"}
+~~END~~
 
 
+--Case to test on array
+SELECT JSON_MODIFY('[{"name":"John","skills":["C#","SQL"]},"b","temp"]','strict $[0].skills[1]',NULL);
+GO
+~~START~~
+nvarchar
+[{"name": "John", "skills": ["C#", null]}, "b", "temp"]
+~~END~~
 
 
-
+SELECT JSON_MODIFY('{"name":"John","skills":["C#","SQL"]}','$.skills[0]','Azure');
+GO
+~~START~~
+nvarchar
+{"name": "John", "skills": ["Azure", "SQL"]}
+~~END~~
 
