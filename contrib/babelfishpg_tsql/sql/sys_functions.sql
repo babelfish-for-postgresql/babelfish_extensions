@@ -2583,73 +2583,74 @@ LANGUAGE plpgsql;
 
 
 --JSON_MODIFY
-CREATE OR REPLACE FUNCTION sys.json_modify(in json_string NVARCHAR,in path_json TEXT, in new_value TEXT)
+CREATE OR REPLACE FUNCTION sys.json_modify(in expression NVARCHAR,in path_json TEXT, in new_value TEXT)
 RETURNS sys.NVARCHAR
 AS
 $BODY$
 DECLARE
     json_path TEXT;
     mode_flags json_modify_flags;
-    new_jsonb_path TEXT;
+    new_jsonb_path TEXT[];
     len_array INTEGER;
     type_key_value TEXT;
     key_exist BOOL;
-    key_value NVARCHAR;
+    key_value JSONB;
+    json_expression JSONB;
 BEGIN
+    json_expression = to_jsonb(expression::JSONB);
     json_path = regexp_replace(path_json, '^.* ', '','ig'); -- To select the last word of the json_path string. \\\\\\Instead of this one can use split_part if regexp is slow
     new_jsonb_path = sys.convert_jsonpath_to_jsonb_path(json_path); --calling function to convert the path format
-    key_exist = jsonb_path_exists(json_string::JSONB,json_path::jsonpath); -- TO check if key exist in the given path
+    key_exist = jsonb_path_exists(json_expression,json_path::jsonpath); -- TO check if key exist in the given path
 
     mode_flags = sys.set_json_modify_flags(path_json); --Calling a function to set the flags
-    
     
     --This if else block is to call the jsonb_set function based on the create_if_missing and append_modifier flags
     
     IF mode_flags.append_modifier THEN --When append modifier is present
         IF key_exist THEN
-            key_value = jsonb_path_query_first(json_string::JSONB,json_path::jsonpath); -- To get the value of the key
-            type_key_value = jsonb_typeof(key_value::JSONB);
+            key_value = jsonb_path_query_first(json_expression,json_path::jsonpath); -- To get the value of the key
+            type_key_value = jsonb_typeof(key_value);
             IF type_key_value='array' THEN
-                len_array = jsonb_array_length(key_value::JSONB);
-                new_jsonb_path = CONCAT(TRIM('}' FROM new_jsonb_path),',',CAST(len_array AS TEXT),'}'); -- To change the path format into the required jsonb_insert path format
+                len_array = jsonb_array_length(key_value);
+                new_jsonb_path = CONCAT(TRIM('}' FROM new_jsonb_path::TEXT),',',CAST(len_array AS TEXT),'}'); -- To change the path format into the required jsonb_insert path format
                 IF new_value IS NULL THEN
-                    RETURN jsonb_insert(json_string::JSONB,new_jsonb_path::TEXT[],'null');
+                    RETURN jsonb_insert(json_expression,new_jsonb_path,'null');
                 ELSE
-                    RETURN jsonb_insert(json_string::JSONB,new_jsonb_path::TEXT[],to_jsonb(new_value));
+                    RETURN jsonb_insert(json_expression,new_jsonb_path,to_jsonb(new_value));
                 END IF;
             ELSE
                 IF mode_flags.create_if_missing='FALSE' THEN
                     RAISE EXCEPTION 'Array cannot be found in the specified JSON path.';
                 ELSE
-                    RETURN json_string;
+                    RETURN json_expression;
                 END IF;
             END IF;
         ELSE
             IF mode_flags.create_if_missing='FALSE' THEN
                 RAISE EXCEPTION 'Property cannot be found on the specified JSON path.';
             ELSE
-                RETURN jsonb_insert(json_string::JSONB,new_jsonb_path::TEXT[],to_jsonb(array_agg(new_value))); -- array_agg is used to convert the new_value text into array format as we append functionality is being used
+                RETURN jsonb_insert(json_expression,new_jsonb_path,to_jsonb(array_agg(new_value))); -- array_agg is used to convert the new_value text into array format as we append functionality is being used
             END IF;
         END IF;
     ELSE --When no append modifier is present
         IF new_value IS NOT NULL THEN
             IF key_exist OR mode_flags.create_if_missing='TRUE' THEN
-                RETURN jsonb_set_lax(json_string::JSONB,new_jsonb_path::TEXT[],to_jsonb(new_value),mode_flags.create_if_missing);
+                RETURN jsonb_set_lax(json_expression,new_jsonb_path,to_jsonb(new_value),mode_flags.create_if_missing);
             ELSE
                 RAISE EXCEPTION 'Property cannot be found on the specified JSON path.';
             END IF;
         ELSE
             IF key_exist THEN
                 IF mode_flags.create_if_missing='FALSE' THEN
-                    RETURN jsonb_set_lax(json_string::JSONB,new_jsonb_path::TEXT[],to_jsonb(new_value));
+                    RETURN jsonb_set_lax(json_expression,new_jsonb_path,to_jsonb(new_value));
                 ELSE
-                    RETURN jsonb_set_lax(json_string::JSONB,new_jsonb_path::TEXT[],to_jsonb(new_value),mode_flags.create_if_missing,'delete_key');
+                    RETURN jsonb_set_lax(json_expression,new_jsonb_path,to_jsonb(new_value),mode_flags.create_if_missing,'delete_key');
                 END IF;
             ELSE
                 IF mode_flags.create_if_missing='FALSE' THEN
                     RAISE EXCEPTION 'Property cannot be found on the specified JSON path.';
                 ELSE
-                    RETURN jsonb_set_lax(json_string::JSONB,new_jsonb_path::TEXT[],to_jsonb(new_value),FALSE);
+                    RETURN jsonb_set_lax(json_expression,new_jsonb_path,to_jsonb(new_value),FALSE);
                 END IF;
             END IF;
         END IF;

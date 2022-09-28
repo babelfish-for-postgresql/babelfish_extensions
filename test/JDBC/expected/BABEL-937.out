@@ -74,7 +74,7 @@ SELECT JSON_MODIFY('{"name":"John","skills":["C#","SQL"]}','append $.name','Mike
 GO
 ~~START~~
 nvarchar
-{"name":"John","skills":["C#","SQL"]}
+{"name": "John", "skills": ["C#", "SQL"]}
 ~~END~~
 
 --NOT NULL, STRICT, KP
@@ -161,7 +161,7 @@ SELECT JSON_MODIFY('{"name":"John","skills":["C#","SQL"]}','append $.name',NULL)
 GO
 ~~START~~
 nvarchar
-{"name":"John","skills":["C#","SQL"]}
+{"name": "John", "skills": ["C#", "SQL"]}
 ~~END~~
 
 
