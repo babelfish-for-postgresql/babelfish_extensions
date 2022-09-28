@@ -369,4 +369,16 @@ go
 select * from babel_2089_OpsDbView
 go
 
+drop view babel_2089_opsdbview
+drop view babel_2089_teammember
+drop table babel_2089_rpd
+drop table babel_2089_rpdtoopsdbinstance
+drop table babel_2089_rpdmetadataitem
+drop table babel_2089_rpdnextsopstep
+drop table babel_2089_rpdassignee
+drop table babel_2089_companylocation
+drop table babel_2089_individual
+drop table babel_2089_rpdclientsaffected
+drop table babel_2089_employee
+drop table babel_2089_department
 go
