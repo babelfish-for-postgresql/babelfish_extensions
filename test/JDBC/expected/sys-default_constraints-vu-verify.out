@@ -13,6 +13,7 @@ int
 15
 ~~END~~
 
+
 SELECT definition FROM sys.default_constraints where name LIKE '%sys_default_definitions%' ORDER BY definition;
 GO
 ~~START~~

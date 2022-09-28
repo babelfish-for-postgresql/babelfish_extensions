@@ -13,7 +13,6 @@ nvarchar
 ((column_a = 0))
 ((column_b <> 'wrong'))
 ((sck_date_col IS NOT NULL))
-((sck_date_col IS NOT NULL))
 ~~END~~
 
 
@@ -23,3 +22,4 @@ GO
 int
 19
 ~~END~~
+
