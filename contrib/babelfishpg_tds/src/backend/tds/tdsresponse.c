@@ -890,7 +890,7 @@ MakeEmptyParameterToken(char *name, int atttypid, int32 atttypmod, int attcollat
 				 * Get the precision and scale out of the typmod value if typmod is valid
 				 * Otherwise tds_default_numeric_precision/scale will be used.
 				 */
-				if (atttypmod >= VARHDRSZ)
+				if (atttypmod > VARHDRSZ)
 				{
 					scale = (atttypmod - VARHDRSZ) & 0xffff;
 					precision = ((atttypmod - VARHDRSZ) >> 16) & 0xffff;
@@ -1576,7 +1576,7 @@ PrepareRowDescription(TupleDesc typeinfo, List *targetlist, int16 *formats,
 					 * Get the precision and scale out of the typmod value if typmod is valid
 					 * Otherwise tds_default_numeric_precision/scale will be used.
 					 */
-					if (atttypmod >= VARHDRSZ)
+					if (atttypmod > VARHDRSZ)
 					{
 						scale = (atttypmod - VARHDRSZ) & 0xffff;
 						precision = ((atttypmod - VARHDRSZ) >> 16) & 0xffff;
