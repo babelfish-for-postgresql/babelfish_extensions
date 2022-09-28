@@ -3904,7 +3904,7 @@ table_hint
     | INDEX  EQUAL  index_value
     | NOEXPAND
     | FORCESEEK ( LR_BRACKET index_value LR_BRACKET ID  (COMMA ID)* RR_BRACKET RR_BRACKET )?
-	| FORCESCAN
+    | FORCESCAN
     | FORCESEEK
     | HOLDLOCK
     | NOLOCK

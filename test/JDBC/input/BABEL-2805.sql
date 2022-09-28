@@ -33,35 +33,3 @@ GO
 
 DROP TABLE t1;
 GO
-
-CREATE FUNCTION fn_GetMaxDate
-(
-	@Date1					datetime2(6),
-	@Date2					datetime2(6),
-	@Date3					datetime2(6),
-	@Date4					datetime2(6),
-	@Date5					datetime2(6)
-)
-RETURNS TABLE
-AS
-RETURN
-(
-	SELECT
-		MAX(d.MaxDate)		AS MaxDate
-	FROM
-		(
-			VALUES
-				(ISNULL(@Date1, '1900/01/01')),
-				(ISNULL(@Date2, '1900/01/01')),
-				(ISNULL(@Date3, '1900/01/01')),
-				(ISNULL(@Date4, '1900/01/01')),
-				(ISNULL(@Date5, '1900/01/01'))
-		) AS d (MaxDate)
-);
-GO
-
-select * from fn_GetMaxDate('2021-12-31','2001-09-11',NULL,NULL,NULL)
-GO
-
-DROP FUNCTION fn_GetMaxDate
-GO
