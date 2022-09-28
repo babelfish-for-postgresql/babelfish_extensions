@@ -848,6 +848,10 @@ pltsql_post_transform_table_definition(ParseState *pstate, RangeVar* relation, c
 	/* To get original column name, utilize location of relation and query string. */
 	char *table_name_start, *original_name, *temp;
 
+	/* Skip during restore since reloptions are also dumped using separate ALTER command */
+	if (babelfish_dump_restore)
+		return;
+
 	table_name_start = pstate->p_sourcetext + relation->location;
 
 	/*
