@@ -49,7 +49,7 @@ server_to_any(const char *s, int len, int encoding, int *encodedByteLen)
 	{
 		/* No conversion is possible, but we must validate the result */
 		(void) pg_verify_mbstr(encoding, s, len, false);
-		encodedByteLen = len;
+		*encodedByteLen = len;
 		return (char *) s;
 	}
 	return (char *) do_encoding_conversion((unsigned char *) s,
