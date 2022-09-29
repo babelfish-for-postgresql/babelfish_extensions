@@ -279,6 +279,29 @@ smallmoney
 ~~END~~
 
 
+-- cast inside view
+SELECT * FROM babel_3556_vu_prepare_v1;
+GO
+~~START~~
+money
+1234.0000
+~~END~~
+
+
+SELECT * FROM babel_3556_vu_prepare_v2;
+GO
+~~START~~
+smallmoney
+1234.0000
+~~END~~
+
+
+DROP VIEW babel_3556_vu_prepare_v1;
+GO
+
+DROP VIEW babel_3556_vu_prepare_v2;
+GO
+
 DROP TABLE babel_3556_vu_prepare_t1;
 GO
 

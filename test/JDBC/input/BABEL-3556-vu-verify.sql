@@ -119,6 +119,19 @@ GO
 SELECT * FROM babel_3556_vu_prepare_t6;
 GO
 
+-- cast inside view
+SELECT * FROM babel_3556_vu_prepare_v1;
+GO
+
+SELECT * FROM babel_3556_vu_prepare_v2;
+GO
+
+DROP VIEW babel_3556_vu_prepare_v1;
+GO
+
+DROP VIEW babel_3556_vu_prepare_v2;
+GO
+
 DROP TABLE babel_3556_vu_prepare_t1;
 GO
 

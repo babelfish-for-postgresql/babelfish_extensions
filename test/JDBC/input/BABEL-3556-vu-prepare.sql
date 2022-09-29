@@ -119,3 +119,12 @@ GO
 
 INSERT INTO babel_3556_vu_prepare_t5 VALUES(₧-1232422322334223423121);
 GO
+
+-- cast inside view
+CREATE VIEW babel_3556_vu_prepare_v1 AS
+    SELECT CAST(CAST(1234 as bigint) as money);
+GO
+
+CREATE VIEW babel_3556_vu_prepare_v2 AS
+    SELECT CAST(CAST(1234 as bigint) as smallmoney);
+GO
