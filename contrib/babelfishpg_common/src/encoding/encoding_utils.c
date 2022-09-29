@@ -9,8 +9,7 @@
 
 #include "src/encoding/encoding.h"
 
-static unsigned char *do_encoding_conversion(unsigned char *src, int len, int src_encoding, int dest_encoding, int *encodedByteLen);
-static unsigned char *do_encoding_conversion_copy(unsigned char *src, int len, int src_encoding, int dest_encoding, int *encodedByteLen);
+static unsigned char *do_encoding_conversion(unsigned char *src, int len, int src_encoding, int dest_encoding, int *encodedByteLen,bool is_sender);
 
 /*
  * Convert server encoding to any encoding.
@@ -20,6 +19,16 @@ static unsigned char *do_encoding_conversion_copy(unsigned char *src, int len, i
  * encoding: desired encoding in which input string should be encoded to
  * encodedByteLen: byte length of output string encoded in desired encoding
  */
+
+char *
+encoding_conv_util(const char *s, int len, int encoding, int *encodedByteLen, bool is_sender)
+{
+	if (is_sender)
+		server_to_any(s, len, encoding, encodedByteLen);
+	else
+		any_to_server(s, len, encoding, encodedByteLen);
+}
+
 char *
 server_to_any(const char *s, int len, int encoding, int *encodedByteLen)
 {
@@ -47,7 +56,8 @@ server_to_any(const char *s, int len, int encoding, int *encodedByteLen)
 											  len,
 											  GetDatabaseEncoding(),
 											  encoding,
-											  encodedByteLen);
+											  encodedByteLen,
+											  true);
 }
 
 char *
@@ -93,11 +103,12 @@ any_to_server(const char *s, int len, int encoding, int *encodedByteLen)
 		return (char *) s;
 	}
 
-	return (char *) do_encoding_conversion_copy((unsigned char *) s,
+	return (char *) do_encoding_conversion((unsigned char *) s,
 											  len,
 											  encoding,
 											  GetDatabaseEncoding(),
-											  encodedByteLen);
+											  encodedByteLen,
+											  false);
 
 }
 
@@ -107,7 +118,7 @@ any_to_server(const char *s, int len, int encoding, int *encodedByteLen)
  */
 static unsigned char *
 do_encoding_conversion(unsigned char *src, int len,
-						  int src_encoding, int dest_encoding, int *encodedByteLen)
+						  int src_encoding, int dest_encoding, int *encodedByteLen, bool is_sender)
 {
 	unsigned char *result;
 
@@ -159,7 +170,9 @@ do_encoding_conversion(unsigned char *src, int len,
 		MemoryContextAllocHuge(CurrentMemoryContext,
 							   (Size) len * MAX_CONVERSION_GROWTH + 1);
 
-        if (dest_encoding == PG_BIG5)
+    if(is_sender)
+	{
+	    if (dest_encoding == PG_BIG5)
                 *encodedByteLen = utf8_to_big5(src_encoding, dest_encoding, src, result, len);
         else if (dest_encoding == PG_GBK)
                 *encodedByteLen = utf8_to_gbk(src_encoding, dest_encoding, src, result, len);
@@ -169,84 +182,9 @@ do_encoding_conversion(unsigned char *src, int len,
                 *encodedByteLen = utf8_to_sjis(src_encoding, dest_encoding, src, result, len);
         else
 	        *encodedByteLen = utf8_to_win(src_encoding, dest_encoding, src, result, len);
-
-	/*
-	 * If the result is large, it's worth repalloc'ing to release any extra
-	 * space we asked for.  The cutoff here is somewhat arbitrary, but we
-	 * *must* check when len * MAX_CONVERSION_GROWTH exceeds MaxAllocSize.
-	 */
-	if (len > 1000000)
-	{
-		Size		resultlen = strlen((char *) result);
-
-		if (resultlen >= MaxAllocSize)
-			ereport(ERROR,
-					(errcode(ERRCODE_PROGRAM_LIMIT_EXCEEDED),
-					 errmsg("out of memory"),
-					 errdetail("String of %d bytes is too long for encoding conversion.",
-							   len)));
-
-		result = (unsigned char *) repalloc(result, resultlen + 1);
 	}
-
-	return result;
-}
-
-
-static unsigned char *
-do_encoding_conversion_copy(unsigned char *src, int len,
-						  int src_encoding, int dest_encoding, int *encodedByteLen)
-{
-	unsigned char *result;
-
-	if (len <= 0)
+	else
 	{
-		*encodedByteLen = len;
-		return src;				/* empty string is always valid */
-	}
-
-	if (src_encoding == dest_encoding)
-	{
-		*encodedByteLen = len;
-		return src;				/* no conversion required, assume valid */
-	}
-
-	if (dest_encoding == PG_SQL_ASCII)
-	{
-		*encodedByteLen = len;
-		return src;				/* any string is valid in SQL_ASCII */
-	}
-
-	if (src_encoding == PG_SQL_ASCII)
-	{
-		/* No conversion is possible, but we must validate the result */
-		(void) pg_verify_mbstr(dest_encoding, (const char *) src, len, false);
-		*encodedByteLen = len;
-		return src;
-	}
-
-	if (!IsTransactionState())	/* shouldn't happen */
-		elog(ERROR, "cannot perform encoding conversion outside a transaction");
-	/*
-	 * Allocate space for conversion result, being wary of integer overflow.
-	 *
-	 * len * MAX_CONVERSION_GROWTH is typically a vast overestimate of the
-	 * required space, so it might exceed MaxAllocSize even though the result
-	 * would actually fit.  We do not want to hand back a result string that
-	 * exceeds MaxAllocSize, because callers might not cope gracefully --- but
-	 * if we just allocate more than that, and don't use it, that's fine.
-	 */
-	if ((Size) len >= (MaxAllocHugeSize / (Size) MAX_CONVERSION_GROWTH))
-		ereport(ERROR,
-				(errcode(ERRCODE_PROGRAM_LIMIT_EXCEEDED),
-				 errmsg("out of memory"),
-				 errdetail("String of %d bytes is too long for encoding conversion.",
-						   len)));
-
-	result = (unsigned char *)
-		MemoryContextAllocHuge(CurrentMemoryContext,
-							   (Size) len * MAX_CONVERSION_GROWTH + 1);
-
 		if (src_encoding == PG_BIG5)
                 *encodedByteLen = big5_to_utf8(src_encoding, dest_encoding, src, result, len);
         else if (src_encoding == PG_GBK)
@@ -257,6 +195,7 @@ do_encoding_conversion_copy(unsigned char *src, int len,
                 *encodedByteLen = sjis_to_utf8(src_encoding, dest_encoding, src, result, len);
         else
 	        *encodedByteLen = win_to_utf8(src_encoding, dest_encoding, src, result, len);
+	}
 	/*
 	 * If the result is large, it's worth repalloc'ing to release any extra
 	 * space we asked for.  The cutoff here is somewhat arbitrary, but we

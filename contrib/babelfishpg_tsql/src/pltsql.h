@@ -1611,13 +1611,7 @@ typedef struct PLtsql_protocol_plugin
 	void* (*tsql_varchar_in_handler) (const char *s, size_t len, int32 atttypmod);
 
 	void* (*tsql_char_in_handler) (const char *s, size_t len, int32 atttypmod);
-
-	bool (*tsql_check_varchar) (Oid oid);
-
-	bool (*tsql_check_char) (Oid oid);
-
-	bool (*tsql_check_text) (Oid oid);
-
+	
 } PLtsql_protocol_plugin;
 
 /*

@@ -484,12 +484,9 @@ TsqlLocalToUtf(const unsigned char *iso, int len,
 			}
 		}
 
-		// TODO
-
-		/* failed to translate this character */
+		/* If there doesnt exisiting any conversion scheme for any character in string
+		raise an error stating failed to translate this character */
 		iso -= l;
-		// if (noError)
-		// 	break;
 		report_untranslatable_char(encoding, PG_UTF8,
 								   (const char *) iso, len);
 	}

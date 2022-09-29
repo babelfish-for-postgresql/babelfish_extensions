@@ -41,9 +41,7 @@ typedef struct like_ilike_info
 typedef struct collation_callbacks
 {
 	/* Function pointers set up by the plugin */
-	char* (*EncodingConversion)(const char *s, int len, int encoding, int *encodedByteLen);
-	
-	char* (*EncodingConversionRecv)(const char *s, int len, int encoding, int *encodedByteLen);
+	char* (*EncodingConversion)(const char *s, int len, int encoding, int *encodedByteLen, bool is_sender);
 
 	Oid (*get_server_collation_oid_internal)(bool missingOk);
 

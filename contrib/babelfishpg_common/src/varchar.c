@@ -583,7 +583,7 @@ varchar(PG_FUNCTION_ARGS)
 								maxByteLen)));
 	}
 
-	/* Encode the input string back to UTF8 */
+	/* Encode the input string encoding to UTF8(server) encoding */
 	resStr = any_to_server(tmp, maxmblen, collInfo.enc, &encodedByteLen);
 
 	if (tmp && s_data != tmp)

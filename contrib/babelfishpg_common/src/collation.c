@@ -24,7 +24,7 @@
 #define DATABASE_DEFAULT "database_default"
 #define CATALOG_DEFAULT "catalog_default"
 
-collation_callbacks collation_callbacks_var = {NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL};
+collation_callbacks collation_callbacks_var = {NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL};
 
 /* Cached values derived from server_collation_name */
 static int server_collation_collidx = NOT_FOUND;
@@ -1351,8 +1351,7 @@ get_collation_callbacks(void)
 		collation_callbacks_var.is_server_collation_CI_AS = &is_server_collation_CI_AS;
 		collation_callbacks_var.is_valid_server_collation_name = &is_valid_server_collation_name;
 		collation_callbacks_var.find_locale = &find_locale;
-		collation_callbacks_var.EncodingConversion = &server_to_any;
-		collation_callbacks_var.EncodingConversionRecv = &any_to_server;
+		collation_callbacks_var.EncodingConversion = &encoding_conv_util;
 		collation_callbacks_var.get_oid_from_collidx_internal = &get_oid_from_collidx;
 		collation_callbacks_var.find_cs_as_collation_internal = &find_cs_as_collation;
 		collation_callbacks_var.find_collation_internal = &find_collation;
