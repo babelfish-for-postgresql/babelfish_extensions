@@ -10,6 +10,9 @@ GO
 DROP PROCEDURE babel_3010_vu_prepare_p1;
 GO
 
+DROP PROCEDURE babel_3010_vu_prepare_p2;
+GO
+
 DROP TABLE babel_3010_vu_prepare_t1;
 GO
 

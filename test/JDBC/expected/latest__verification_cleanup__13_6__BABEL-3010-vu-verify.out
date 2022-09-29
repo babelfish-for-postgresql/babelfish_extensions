@@ -19,6 +19,7 @@ GO
 varchar#!#char#!#text#!#text
 babel_3010_vu_prepare_f1#!#FN#!#Create date found NULL!#!#ref date found NULL!
 babel_3010_vu_prepare_p1#!#P #!#Create date found NULL!#!#ref date found NULL!
+babel_3010_vu_prepare_p2#!#P #!#Create date found NULL!#!#ref date found NULL!
 babel_3010_vu_prepare_t1#!#U #!#Create date found NULL!#!#ref date found NULL!
 babel_3010_vu_prepare_trig1#!#TR#!#Create date found NULL!#!#ref date found NULL!
 babel_3010_vu_prepare_typ1#!#TT#!#Create date found NULL!#!#ref date found NULL!
