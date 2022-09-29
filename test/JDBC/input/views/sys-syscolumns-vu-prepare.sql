@@ -22,11 +22,12 @@ AS
 BEGIN
         DECLARE @object_name VARCHAR(50);
 
-        SET @object_name = (SELECT relname from pg_class where oid = @Oid);
+        SET @object_name = (SELECT proname from pg_proc where oid = @Oid);
+
 
         IF (@object_name is null)
         BEGIN
-                SET @object_name = (SELECT proname from pg_proc where oid = @Oid);
+                SET @object_name = (SELECT relname from pg_class where oid = @Oid);
         END
 
         RETURN @object_name
