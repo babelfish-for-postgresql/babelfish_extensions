@@ -49,13 +49,13 @@ PARALLEL = SAFE
 );
 
 -- int8 -> money
-CREATE FUNCTION sys.int8_to_money(pg_catalog.INT8)
+CREATE FUNCTION sys.int8_to_money(INT8)
 RETURNS sys.MONEY
 AS 'babelfishpg_money', 'int8_to_money'
 LANGUAGE C IMMUTABLE STRICT PARALLEL SAFE;
 
 -- int8 -> smallmoney
-CREATE FUNCTION sys.int8_to_smallmoney(pg_catalog.INT8)
+CREATE FUNCTION sys.int8_to_smallmoney(INT8)
 RETURNS sys.SMALLMONEY
 AS 'babelfishpg_money', 'int8_to_smallmoney'
 LANGUAGE C IMMUTABLE STRICT PARALLEL SAFE;
