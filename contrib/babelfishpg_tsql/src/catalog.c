@@ -23,6 +23,7 @@
 #include "utils/timestamp.h"
 #include "nodes/execnodes.h"
 #include "catalog.h"
+#include "dbcmds.h"
 #include "guc.h"
 #include "hooks.h"
 #include "multidb.h"
@@ -227,24 +228,6 @@ char *get_db_name(int16 dbid)
       ReleaseSysCache(tuple);
 
 	return name;
-}
-
-char *get_owner_of_db(const char *dbname)
-{
-	char				*owner = NULL;
-	HeapTuple 			tuple;
-	Form_sysdatabases 	sysdb;
-
-	  tuple = SearchSysCache1(SYSDATABASENAME, CStringGetTextDatum(dbname));
-
-	  if (!HeapTupleIsValid(tuple))
-		  return InvalidDbid;
-
-	  sysdb = ((Form_sysdatabases) GETSTRUCT(tuple));
-	  owner = NameStr(sysdb->owner);
-	  ReleaseSysCache(tuple);
-
-	return owner;
 }
 
 const char *get_one_user_db_name(void)

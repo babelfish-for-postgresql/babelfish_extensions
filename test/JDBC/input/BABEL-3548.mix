@@ -27,16 +27,23 @@ go
 select CURRENT_USER;
 go
 
--- tsql
 drop database login1_db;
 go
 
+-- tsql
 create database sysadmin_only_db;
 go
 
 -- tsql      user=test_login1      password=123
 -- Should fail
 use sysadmin_only_db;
+go
+
+use master;
+go
+
+-- Should fail
+drop database sysadmin_only_db;
 go
 
 -- psql
