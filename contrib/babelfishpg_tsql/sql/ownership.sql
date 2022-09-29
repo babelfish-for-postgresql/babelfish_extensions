@@ -449,7 +449,7 @@ select
  from sys.babelfish_sysdatabases d 
  INNER JOIN sys.sysdatabases s on d.dbid = s.dbid
  LEFT OUTER JOIN pg_catalog.pg_collation c ON d.default_collation = c.collname;
-GRANT SELECT ON sys.databases TO PUBLIC;
+GRANT SELECT ON sys.databases TO PUBLIC; 
 
 CREATE OR REPLACE FUNCTION sys.babelfish_inconsistent_metadata(return_consistency boolean default false)
 RETURNS table (
