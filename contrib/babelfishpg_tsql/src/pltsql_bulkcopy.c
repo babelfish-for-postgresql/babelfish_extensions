@@ -855,8 +855,8 @@ BeginBulkCopy(Relation rel,
 	 * We allocate everything used by a cstate in a new memory context. This
 	 * avoids memory leaks during repeated use of COPY in a query.
 	 */
-	cstate->copycontext = AllocSetContextCreateById(CurrentMemoryContext,
-												MC_COPY,
+	cstate->copycontext = AllocSetContextCreate(CurrentMemoryContext,
+												"BULK COPY",
 												ALLOCSET_DEFAULT_SIZES);
 
 	oldcontext = MemoryContextSwitchTo(cstate->copycontext);
