@@ -5,6 +5,7 @@
 #include "pl_explain.h"
 #include "pltsql.h"
 
+
 extern PLtsql_execstate *get_outermost_tsql_estate(int *nestlevel);
 
 bool pltsql_explain_only = false;
@@ -60,6 +61,7 @@ void append_explain_info(QueryDesc *queryDesc, const char *queryString)
 	MemoryContext oldcxt;
 	ExplainState *es;
 	ExplainInfo *einfo;
+	const char *initial_database;
 	size_t indent;
 	int nestlevel;
 
@@ -104,10 +106,12 @@ void append_explain_info(QueryDesc *queryDesc, const char *queryString)
 	{
 		ExplainInfo *last_einfo = (ExplainInfo *) llast(pltsql_estate->explain_infos);
 		indent = last_einfo->next_indent;
+		initial_database = last_einfo->initial_database;
 	}
 	else
 	{
 		indent = 0;
+		initial_database = NULL;
 	}
 
 	es = NewExplainState();
@@ -165,9 +169,45 @@ void append_explain_info(QueryDesc *queryDesc, const char *queryString)
 
 	einfo = (ExplainInfo *) palloc0(sizeof(ExplainInfo));
 	einfo->data = pstrdup(es->str->data);
+	einfo->initial_database = initial_database;
 	einfo->next_indent = indent;
 	pltsql_estate->explain_infos = lappend(pltsql_estate->explain_infos, einfo);
 
 	/* Recover the memory context */
 	MemoryContextSwitchTo(oldcxt);
+}
+
+void set_explain_database(const char *db_name)
+{
+       ExplainInfo *einfo = get_last_explain_info();
+       einfo->initial_database = db_name;
+}
+
+const char *get_explain_database(void)
+{
+       ExplainInfo *einfo = get_last_explain_info();
+       if (einfo != NULL)
+               return einfo->initial_database;
+       return NULL;
+}
+/*
+ * The main purpose of this function is for displaying TSQL statements such as PRINT
+ * and THROW during explain.  Since babelfish represents most expressions internally
+ * as SELECT statements including scalars, this function allows us to translate to more
+ * native looking TSQL by removing the redundant SELECT statements.
+ *
+ * This functions validates that the expression object exists, has a query text,
+ * and returns a pointer to a new string representing the expression minus the "SELECT "
+*/
+const char *strip_select_from_expr(void * pltsql_expr)
+{
+	PLtsql_expr * expr;
+	expr = (PLtsql_expr *) pltsql_expr;
+	if (expr == NULL || expr->query == NULL || strlen(expr->query) <= 7)
+	{
+		ereport(ERROR, (errcode(ERRCODE_INTERNAL_ERROR),
+					errmsg("invalid expression %p", (void *) expr)));
+	}
+
+	return pstrdup(&expr->query[7]);
 }
