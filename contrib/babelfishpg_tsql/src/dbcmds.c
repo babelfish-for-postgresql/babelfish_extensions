@@ -842,14 +842,14 @@ get_owner_of_db(const char *dbname)
 	HeapTuple 			tuple;
 	Form_sysdatabases 	sysdb;
 
-	  tuple = SearchSysCache1(SYSDATABASENAME, CStringGetTextDatum(dbname));
+	tuple = SearchSysCache1(SYSDATABASENAME, CStringGetTextDatum(dbname));
 
-	  if (!HeapTupleIsValid(tuple))
-		  return InvalidDbid;
+	if (!HeapTupleIsValid(tuple))
+		return InvalidDbid;
 
-	  sysdb = ((Form_sysdatabases) GETSTRUCT(tuple));
-	  owner = NameStr(sysdb->owner);
-	  ReleaseSysCache(tuple);
+	sysdb = ((Form_sysdatabases) GETSTRUCT(tuple));
+	owner = NameStr(sysdb->owner);
+	ReleaseSysCache(tuple);
 
 	return owner;
 }
