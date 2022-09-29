@@ -108,6 +108,8 @@ class OdbcHandler {
 
     void BindColumns(vector<tuple<int, int, SQLPOINTER, int>> columns);
 
+    void BindColumns(vector<tuple<int, int, SQLPOINTER, int, SQLLEN*>> columns);
+
   private:
     // ODBC-defined SQL variables
     SQLHENV henv_{};

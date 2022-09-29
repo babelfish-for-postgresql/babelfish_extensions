@@ -248,3 +248,13 @@ void OdbcHandler::BindColumns(vector<tuple<int, int, SQLPOINTER, int>> columns) 
     ASSERT_EQ(rcode, SQL_SUCCESS) << GetErrorMessage(SQL_HANDLE_STMT, rcode);
   }
 }
+
+void OdbcHandler::BindColumns(vector<tuple<int, int, SQLPOINTER, int, SQLLEN*>> columns) {
+  RETCODE rcode;
+
+  for (auto column : columns) {
+    auto& [col_num, c_type, target, target_size, ind] = column;
+    rcode = SQLBindCol(GetStatementHandle(), col_num, c_type, target, target_size, ind);
+    ASSERT_EQ(rcode, SQL_SUCCESS) << GetErrorMessage(SQL_HANDLE_STMT, rcode);
+  }
+}
