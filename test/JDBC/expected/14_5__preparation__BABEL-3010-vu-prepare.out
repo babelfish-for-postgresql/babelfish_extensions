@@ -4,6 +4,9 @@ GO
 CREATE PROCEDURE babel_3010_vu_prepare_p1 @a INT AS SELECT @a;
 GO
 
+CREATE PROCEDURE babel_3010_vu_prepare_p2 @a INT = 1, @b CHAR(2) AS SELECT @a, @b;
+GO
+
 CREATE FUNCTION babel_3010_vu_prepare_f1(@a INT) RETURNS INT AS BEGIN RETURN @a END;
 GO
 
