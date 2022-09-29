@@ -1,19 +1,13 @@
 name: Minor Version Upgrade Tests
-on:
-  push:
-    branches:
-      - BABEL_1_X_DEV
-  pull_request:
-    branches:
-      - BABEL_1_X_DEV
+on: [push, pull_request]
 
 jobs:
   extension-tests:
     env:
       ENGINE_VER_FROM: BABEL_1_0_0__PG_13_4
       EXTENSION_VER_FROM: BABEL_1_0_0
-      ENGINE_VER_TO: BABEL_1_X_DEV__PG_13_6
-      EXTENSION_VER_TO: BABEL_1_X_DEV
+      ENGINE_VER_TO: BABEL_1_4_STABLE__PG_13_8
+      EXTENSION_VER_TO: BABEL_1_4_STABLE
       scheduleFile: ./jdbc_upgrade_schedule
 
     name: Build and test
