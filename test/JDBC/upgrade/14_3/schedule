@@ -249,7 +249,6 @@ sys-types-dep
 sys-views-dep
 sys-check_constraints-dep
 sys-computed_columns-dep
-sys-default_constraints-dep
 sys-index_columns-dep
 sys-sp_databases-dep
 sys-syscolumns-dep
