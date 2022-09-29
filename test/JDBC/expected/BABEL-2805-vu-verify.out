@@ -9,3 +9,11 @@ int#!#int
 9#!#10
 ~~END~~
 
+
+select * from babel_2805_vu_f1('2021-12-31','2001-09-11',NULL,NULL,NULL)
+GO
+~~START~~
+datetime2
+2021-12-31 00:00:00.0000000
+~~END~~
+

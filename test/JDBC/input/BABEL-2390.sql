@@ -13,7 +13,7 @@ GO
 
 -- table hint shoudl be ignored
 DECLARE @a int
-DECLARE c_byname CURSOR STATIC LOCAL FOR select a from t_2390 with (dummy_hint) order by a
+DECLARE c_byname CURSOR STATIC LOCAL FOR select a from t_2390 with (TABLOCK) order by a
 open c_byname
 fetch c_byname into @a
 select @a
