@@ -58,26 +58,23 @@ int
 
 EXEC my_proc1 @a = 10;
 GO
-~~START~~
-int
-<NULL>
-~~END~~
+~~ERROR (Code: 201)~~
+
+~~ERROR (Message: procedure my_proc1 expects parameter "@d", which was not supplied.)~~
 
 
 SELECT * FROM my_func2(1);
 GO
-~~START~~
-int#!#int#!#int#!#int
-1#!#20#!#30#!#<NULL>
-~~END~~
+~~ERROR (Code: 201)~~
+
+~~ERROR (Message: function my_func2 expects parameter "@d", which was not supplied.)~~
 
 
 SELECT * FROM my_func3(2);
 GO
-~~START~~
-int#!#int#!#int#!#int
-2#!#20#!#<NULL>#!#40
-~~END~~
+~~ERROR (Code: 201)~~
+
+~~ERROR (Message: function my_func3 expects parameter "@c", which was not supplied.)~~
 
  
 DROP FUNCTION IF EXISTS my_func1;

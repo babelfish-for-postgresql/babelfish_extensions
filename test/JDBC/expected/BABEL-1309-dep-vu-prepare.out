@@ -1,0 +1,4 @@
+--tsql
+create procedure babel_1309_dep_vu_prepare_p1 as
+    exec sp_updatestats
+go

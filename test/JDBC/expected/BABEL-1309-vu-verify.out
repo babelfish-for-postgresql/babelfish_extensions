@@ -1,0 +1,70 @@
+-- tsql
+exec sp_updatestats;
+go
+
+exec sp_updatestats 'no';
+go
+
+exec sp_updatestats 'resample';
+go
+
+exec sp_updatestats @resample='resample';
+go
+
+exec sp_updatestats resample;
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: column "resample" does not exist)~~
+
+
+exec sp_updatestats @resample;
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: column "@resample" does not exist)~~
+
+
+exec sp_updatestats @resample='sdlfkjsdf';
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Invalid option name sdlfkjsdf)~~
+
+
+exec sp_updatestats 'resdflskjf';
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Invalid option name resdflskjf)~~
+
+
+exec sp_updatestats @random_option='resample';
+go
+~~ERROR (Code: 8145)~~
+
+~~ERROR (Message: "@random_option" is not an parameter for procedure sp_updatestats.)~~
+
+
+-- tsql user=user1 password=abc
+-- Case when user other than database owner executes, it should throw error
+use db1;
+go
+
+exec sys.sp_updatestats;
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: user does not have permission)~~
+
+
+use master;
+go
+
+exec sys.sp_updatestats;
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: user does not have permission)~~
+
+

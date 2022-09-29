@@ -1,15 +1,15 @@
 USE master;
 GO
 
-CREATE VIEW sys_configurations_view AS
+CREATE VIEW sys_configurations_vu_prepare_v1 AS
 SELECT * FROM sys.configurations
 GO
 
-CREATE PROC sys_configurations_proc AS
+CREATE PROC sys_configurations_vu_prepare_p1 AS
 SELECT * FROM sys.configurations
 GO
 
-CREATE FUNCTION sys_configurations_func()
+CREATE FUNCTION sys_configurations_vu_prepare_f1()
 RETURNS INT
 AS
 BEGIN
@@ -17,15 +17,15 @@ BEGIN
 END
 GO
 
-CREATE VIEW sys_syscurconfigs_view AS
+CREATE VIEW sys_configurations_vu_prepare_v2 AS
 SELECT * FROM sys.syscurconfigs
 GO
 
-CREATE PROC sys_syscurconfigs_proc AS
+CREATE PROC sys_configurations_vu_prepare_p2 AS
 SELECT * FROM sys.syscurconfigs
 GO
 
-CREATE FUNCTION sys_syscurconfigs_func()
+CREATE FUNCTION sys_configurations_vu_prepare_f2()
 RETURNS INT
 AS
 BEGIN
@@ -33,15 +33,15 @@ BEGIN
 END
 GO
 
-CREATE VIEW sys_sysconfigures_view AS
+CREATE VIEW sys_configurations_vu_prepare_v3 AS
 SELECT * FROM sys.sysconfigures
 GO
 
-CREATE PROC sys_sysconfigures_proc AS
+CREATE PROC sys_configurations_vu_prepare_p3 AS
 SELECT * FROM sys.sysconfigures
 GO
 
-CREATE FUNCTION sys_sysconfigures_func()
+CREATE FUNCTION sys_configurations_vu_prepare_f3()
 RETURNS INT
 AS
 BEGIN

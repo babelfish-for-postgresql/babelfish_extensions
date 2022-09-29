@@ -650,13 +650,20 @@ user_name(PG_FUNCTION_ARGS)
 
 	tuple = systable_getnext(scan);
 	if (!HeapTupleIsValid(tuple))
+	{	
+		systable_endscan(scan);
+		table_close(bbf_authid_user_ext_rel, RowExclusiveLock);
 		PG_RETURN_NULL();
+	}
 
 	datum = heap_getattr(tuple,
 						 Anum_bbf_authid_user_ext_orig_username,
 						 bbf_authid_user_ext_rel->rd_att,
 						 &is_null);
 	user = pstrdup(TextDatumGetCString(datum));
+
+	systable_endscan(scan);
+	table_close(bbf_authid_user_ext_rel, RowExclusiveLock);
 
 	PG_RETURN_TEXT_P(CStringGetTextDatum(user));
 }
@@ -1569,12 +1576,16 @@ is_rolemember(PG_FUNCTION_ARGS)
 	char 	*dc_principal;
 	char	*physical_role_name;
 	char	*physical_principal_name;
+	int idx;
 
 	if (PG_ARGISNULL(0))
 		PG_RETURN_NULL();
 
 	/* Do role name mapping */
 	role = text_to_cstring(PG_GETARG_TEXT_P(0));
+	idx = strlen(role);
+	while (idx > 0 && isspace((unsigned char) role[idx - 1]))
+		role[--idx] = '\0';
 	dc_role = downcase_identifier(role, strlen(role), false, false);
 	physical_role_name = get_physical_user_name(get_cur_db_name(), dc_role);
 	role_oid = get_role_oid(physical_role_name, true);
@@ -1586,6 +1597,9 @@ is_rolemember(PG_FUNCTION_ARGS)
 	{
 		/* Do principal name mapping */
 		char *principal = text_to_cstring(PG_GETARG_TEXT_P(1));
+		idx = strlen(principal);
+		while (idx > 0 && isspace((unsigned char) principal[idx - 1]))
+			principal[--idx] = '\0';
 		dc_principal = downcase_identifier(principal, strlen(principal), false, false);
 		physical_principal_name = get_physical_user_name(get_cur_db_name(), dc_principal);
 		principal_oid = get_role_oid(physical_principal_name, true);

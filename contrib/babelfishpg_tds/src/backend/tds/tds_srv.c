@@ -241,7 +241,10 @@ pe_start(Port *port)
 	tdserrcontext.previous = error_context_stack;
 	error_context_stack = &tdserrcontext;
 
-	rc = TdsProcessLogin(port, LoadedSSL);
+	if ((rc = TdsProcessLogin(port, LoadedSSL)) == -1)
+	{
+		return STATUS_ERROR;
+	}
 
 	/* Pop the error context stack */
 	error_context_stack = tdserrcontext.previous;

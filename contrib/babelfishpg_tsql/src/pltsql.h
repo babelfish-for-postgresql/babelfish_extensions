@@ -1024,6 +1024,7 @@ typedef struct PLtsql_stmt_execsql
 	bool		func_call;		/* Function call? */
 	char		*schema_name;	/* Schema specified */
 	bool            is_schema_specified;    /*is schema name specified? */
+	bool		is_create_view;		/* CREATE VIEW? */
 } PLtsql_stmt_execsql;
 
 /*
@@ -1280,6 +1281,9 @@ typedef struct ExplainInfo
 
 	/* indent for the next ExplainInfo */
 	size_t next_indent;
+
+	/* used to restore session to original schema if "use db" is invoked */
+	const char *initial_database;
 } ExplainInfo;
 
 typedef struct PLtsql_execstate
@@ -1379,7 +1383,7 @@ typedef struct PLtsql_execstate
 
 	List 		*explain_infos;
 	char		*schema_name;
-	char		*db_name;
+	const char		*db_name;
 } PLtsql_execstate;
 
 /*
@@ -1934,6 +1938,7 @@ extern void UnlockLogicalDatabaseForSession(int16 dbid, LOCKMODE lockmode, bool 
 extern char *bpchar_to_cstring(const BpChar *bpchar);
 extern char *varchar_to_cstring(const VarChar *varchar);
 extern char *flatten_search_path(List *oid_list);
+extern const char *get_pltsql_function_signature(const char *funcname, int nargs, const Oid *argtypes);
 
 typedef struct
 {
