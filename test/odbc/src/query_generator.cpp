@@ -91,6 +91,7 @@ string CreateViewStatement(const string &view_name, const string &select_stateme
   return string {"CREATE VIEW " + view_name + " AS \n " + select_statement + ";"};
 }
 
+
 string CreateProcedureStatement(const string &procedure_name, const string &procedure_definition, const string &parameters) {
 
   return string {"CREATE PROCEDURE  " + procedure_name + " " + parameters + " AS \n " + procedure_definition + ";"};
@@ -116,6 +117,7 @@ string CreateFunctionStatement(const string &function_name, const string &functi
 
   return string {"CREATE FUNCTION " + function_name + " \n" + function_definition + ";"};
 }
+
 
 string DropObjectStatement(const string &object_kind, const string &object_name, bool check_exists) {
 
