@@ -5,11 +5,17 @@ go
 
 -- Only checking the syntax. 
 -- INSERT
+insert into t1 with(invalid_hint) (a) values (1); -- syntax error
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: syntax error near 'invalid_hint' at line 3 and character position 20)~~
+
 insert into t1 with() (a) values (1);             -- syntax error
 go
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: syntax error near ')' at line 3 and character position 20)~~
+~~ERROR (Message: syntax error near ')' at line 1 and character position 20)~~
 
 insert into t1 with((nowait)) (a) values (2);      -- syntax error
 go
@@ -200,7 +206,7 @@ select * from t1 (tablock, index(i1)) order by id; -- syntax error
 go
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: syntax error near 'index' at line 1 and character position 27)~~
+~~ERROR (Message: syntax error near ',' at line 1 and character position 25)~~
 
 -- BABEL-1263: syntax "FROM [table] ([table_hint]) [alias]" should be supported
 Select * FROM t1 n1 (Nolock) WHERE (Select Count(*) FROM t1 (Nolock) n2) <= 0;
