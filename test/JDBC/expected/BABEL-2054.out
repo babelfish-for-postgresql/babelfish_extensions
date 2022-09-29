@@ -1,0 +1,23 @@
+select convert(datetime, '2021-12-30')
+go
+~~START~~
+datetime
+2021-12-30 00:00:00.0
+~~END~~
+
+
+select convert(datetime, '2021.12.30')
+go
+~~START~~
+datetime
+2021-12-30 00:00:00.0
+~~END~~
+
+
+select convert(datetime, '2021/12/30')
+go
+~~START~~
+datetime
+2021-12-30 00:00:00.0
+~~END~~
+
