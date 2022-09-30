@@ -664,7 +664,7 @@ ExecuteBulkCopy(BulkCopyState cstate, int rowCount, int colCount,
 			MemSet(myslot->tts_isnull, false, myslot->tts_tupleDescriptor->natts * sizeof(bool));
 
 			/* colCount could be less than natts if user wants to insert only in a subset of columns. */
-			for (int i = 0, j = 0; i < myslot->tts_tupleDescriptor->natts && j < colCount; i++)
+			for (int i = 0, j = 0; i < myslot->tts_tupleDescriptor->natts && j <= colCount; i++)
 			{
 				if (!list_member_int(cstate->attnumlist, i + 1))
 				{
@@ -682,6 +682,7 @@ ExecuteBulkCopy(BulkCopyState cstate, int rowCount, int colCount,
 				}
 				else
 				{
+					/* j will never be >= colCount since that is handled by protocol. */
 					if (Nulls[cur_row_in_batch * colCount + j])
 						myslot->tts_isnull[i] = Nulls[cur_row_in_batch * colCount + j];
 					else
