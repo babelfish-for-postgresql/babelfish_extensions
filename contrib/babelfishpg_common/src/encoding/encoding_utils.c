@@ -12,11 +12,12 @@
 static unsigned char *do_encoding_conversion(unsigned char *src, int len, int src_encoding, int dest_encoding, int *encodedByteLen);
 
 /*
- * Convert server encoding to any encoding.
+ * Convert server encoding to any encoding or vice-versa.
  * 
  * s: input string encoded in server's encoding
  * len: byte length of input string s
- * encoding: desired encoding in which input string should be encoded to
+ * src_encoding: encoding from which input string should be encoded to dest_encoding
+ * dest_encoding: desired encoding to which input string should be encoded to
  * encodedByteLen: byte length of output string encoded in desired encoding
  */
 
@@ -35,41 +36,6 @@ encoding_conv_util(const char *s, int len, int src_encoding, int dest_encoding, 
 											  dest_encoding,
 											  encodedByteLen);
 }
-// char *
-// server_to_any(const char *s, int len, int encoding, int *encodedByteLen)
-// {
-// 	if (len <= 0)
-// 	{
-// 		*encodedByteLen = len;
-// 		return (char *) s;		/* empty string is always valid */
-// 	}
-
-	
-// 	return (char *) do_encoding_conversion((unsigned char *) s,
-// 											  len,
-// 											  GetDatabaseEncoding(),
-// 											  encoding,
-// 											  encodedByteLen,
-// 											  true);
-// }
-
-// char *
-// any_to_server(const char *s, int len, int encoding, int *encodedByteLen)
-// {
-// 	if (len <= 0)
-// 	{
-// 		*encodedByteLen = len;
-// 		return (char *) s;		/* empty string is always valid */
-// 	}
-
-// 	return (char *) do_encoding_conversion((unsigned char *) s,
-// 											  len,
-// 											  encoding,
-// 											  GetDatabaseEncoding(),
-// 											  encodedByteLen,
-// 											  false);
-
-// }
 
 /*
  * Convert src string to another encoding (general case).
@@ -145,7 +111,7 @@ do_encoding_conversion(unsigned char *src, int len,
 		case PG_SJIS:
 				*encodedByteLen = utf8_to_sjis(src_encoding, dest_encoding, src, result, len);
 				break;
-        default:
+		default:
 				*encodedByteLen = utf8_to_win(src_encoding, dest_encoding, src, result, len);
 				break;
 		}

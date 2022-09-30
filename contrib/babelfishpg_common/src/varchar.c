@@ -589,7 +589,7 @@ varchar(PG_FUNCTION_ARGS)
 	if (tmp && s_data != tmp)
 		pfree(tmp);
 
-	/* Output of pg_any_to_server would always be NULL terminated So we can use cstring_to_text directly. */
+	/* Output of encoding_conv_util() would always be NULL terminated So we can use cstring_to_text directly. */
 	PG_RETURN_VARCHAR_P((VarChar *) cstring_to_text_with_len(resStr, encodedByteLen));
 }
 
