@@ -1850,7 +1850,11 @@ pltsql_sequence_datatype_map(ParseState *pstate,
 		 */
 		if (typmod_p == -1)
 			typmod_p = 1179652;
+<<<<<<< HEAD
 
+=======
+		
+>>>>>>> 95154800 (BABEL-3504,3452:Support UDTS for sequences and ISC-sequences view)
 		if (!for_identity || typmod_p != -1)
 		{
 			uint8_t scale = (typmod_p - VARHDRSZ) & 0xffff;
@@ -2421,7 +2425,6 @@ static void bbf_ProcessUtility(PlannedStmt *pstmt,
 					else if (strcmp(headel->defname, "isrole") == 0)
 					{
 						int location = -1;
-						bool orig_username_exists = false;
 
 						isrole = true;
 						stmt->options = list_delete_cell(stmt->options,
@@ -2438,6 +2441,7 @@ static void bbf_ProcessUtility(PlannedStmt *pstmt,
 								location = defel->location;
 								user_options = lappend(user_options, defel);
 							}
+<<<<<<< HEAD
 							/*
 							 * This condition is to handle create role when using sp_addrole procedure
 							 * because there we add original_user_name before hand
@@ -2450,6 +2454,9 @@ static void bbf_ProcessUtility(PlannedStmt *pstmt,
 
 						}
 
+=======
+						}
+>>>>>>> 95154800 (BABEL-3504,3452:Support UDTS for sequences and ISC-sequences view)
 
 						foreach(option, user_options)
 						{
@@ -2457,7 +2464,7 @@ static void bbf_ProcessUtility(PlannedStmt *pstmt,
 															lfirst(option));
 						}
 
-						if (location >= 0 && !orig_username_exists)
+						if (location >= 0)
 						{
 							char        *orig_user_name;
 
