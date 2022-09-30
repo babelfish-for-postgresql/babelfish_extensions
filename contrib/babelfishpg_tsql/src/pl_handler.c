@@ -1741,7 +1741,9 @@ pltsql_sequence_datatype_map(ParseState *pstate,
 	char *typname;
 	Oid tsqlSeqTypOid;
 	TypeName *type_def;
-
+	List* type_names;
+	AclResult aclresult;
+	Oid base_type;
 	if (prev_pltsql_sequence_datatype_hook)
 		prev_pltsql_sequence_datatype_hook(pstate,
 										   newtypid,
@@ -1754,8 +1756,24 @@ pltsql_sequence_datatype_map(ParseState *pstate,
 		return;
 
 	type_def = defGetTypeName(as_type);
+	type_names = type_def->names;
+	switch (list_length(type_def->names))
+	{
+		case 2:
+			strVal(linitial(type_names)) = get_physical_schema_name(get_cur_db_name(),strVal(linitial(type_names)));
+			break;
+		case 3:
+			strVal(lsecond(type_names)) = get_physical_schema_name(strVal(linitial(type_names)),strVal(lsecond(type_names)));
+			break;
+	}
+	*newtypid = typenameTypeId(pstate, type_def);
 	typ = typenameType(pstate, type_def, &typmod_p);
 	typname = typeTypeName(typ);
+
+	aclresult = pg_type_aclcheck(*newtypid, GetUserId(), ACL_USAGE);
+	if (aclresult != ACLCHECK_OK)
+		aclcheck_error_type(aclresult, *newtypid);
+	
 	tsqlSeqTypOid = pltsql_seq_type_map(*newtypid);
 
 	if (type_def->typemod != -1)
@@ -1822,6 +1840,14 @@ pltsql_sequence_datatype_map(ParseState *pstate,
 		 * Identity column drops the typmod upon sequence creation
 		 * so it gets its own check
 		 */
+
+		/* When sequence is created using user-defined data type, !for_identity == true and
+		 * typmod_p == -1, which results in calculating incorrect scale and precision
+		 * therefore we update typmod_p to that of numeric(18,0)
+		 */
+		if (typmod_p == -1)
+			typmod_p = 1179652;
+		
 		if (!for_identity || typmod_p != -1)
 		{
 			uint8_t scale = (typmod_p - VARHDRSZ) & 0xffff;
@@ -1842,6 +1868,12 @@ pltsql_sequence_datatype_map(ParseState *pstate,
 		ereport(WARNING,
 				(errmsg("NUMERIC or DECIMAL type is cast to BIGINT")));
 	}
+
+	base_type = getBaseType(*newtypid);
+	if( base_type!=INT2OID ||
+		base_type!=INT4OID ||
+		base_type!=INT8OID) *newtypid = base_type;
+
 }
 
 static Oid
@@ -2386,7 +2418,6 @@ static void bbf_ProcessUtility(PlannedStmt *pstmt,
 					else if (strcmp(headel->defname, "isrole") == 0)
 					{
 						int location = -1;
-						bool orig_username_exists = false;
 
 						isrole = true;
 						stmt->options = list_delete_cell(stmt->options,
@@ -2403,18 +2434,7 @@ static void bbf_ProcessUtility(PlannedStmt *pstmt,
 								location = defel->location;
 								user_options = lappend(user_options, defel);
 							}
-							/*
-							 * This condition is to handle create role when using sp_addrole procedure
-							 * because there we add original_user_name before hand
-							 */
-							if(strcmp(defel->defname, "original_user_name") == 0)
-							{
-								user_options = lappend(user_options, defel);
-								orig_username_exists = true;
-							}
-							
 						}
-						
 
 						foreach(option, user_options)
 						{
@@ -2422,7 +2442,7 @@ static void bbf_ProcessUtility(PlannedStmt *pstmt,
 															lfirst(option));
 						}
 
-						if (location >= 0 && !orig_username_exists)
+						if (location >= 0)
 						{
 							char        *orig_user_name;
 

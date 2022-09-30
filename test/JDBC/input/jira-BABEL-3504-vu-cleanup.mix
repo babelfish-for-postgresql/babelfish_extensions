@@ -1,0 +1,113 @@
+-- tsql user=jira_babel_3504_log1 password=123456789
+
+use jira_babel_3504_dbone;
+go
+
+drop sequence jira_babel_3504_seq1;
+go
+
+-- psql 
+revoke create on schema dbo from jira_babel_3504_dbone_jira_babel_3504_usr1;
+go
+
+revoke usage on type dbo.jira_babel_3504_bigint2 from jira_babel_3504_dbone_jira_babel_3504_usr1;
+go
+
+-- tsql
+
+--cleanup
+use jira_babel_3504_dbone;
+go
+
+drop sequence jira_babel_3504_sch1.jira_babel_3504_seq1;
+go
+
+drop sequence jira_babel_3504_sch1.jira_babel_3504_seq2;
+go
+
+drop sequence jira_babel_3504_sch1.jira_babel_3504_seq3;
+go
+
+drop sequence jira_babel_3504_sch1.jira_babel_3504_seq4;
+go
+
+drop sequence jira_babel_3504_sch1.jira_babel_3504_seq5;
+go
+
+drop sequence jira_babel_3504_sch1.jira_babel_3504_seq6;
+go
+
+drop sequence jira_babel_3504_sch1.jira_babel_3504_seq7;
+go
+
+drop sequence jira_babel_3504_sch2.jira_babel_3504_udtseq1;
+go
+
+drop sequence jira_babel_3504_sch2.jira_babel_3504_udtseq2;
+go
+
+drop sequence jira_babel_3504_sch2.jira_babel_3504_udtseq3;
+go
+
+drop sequence jira_babel_3504_sch2.jira_babel_3504_udtseq4;
+go
+
+drop sequence jira_babel_3504_sch2.jira_babel_3504_udtseq5;
+go
+
+drop sequence jira_babel_3504_sch2.jira_babel_3504_udtseq6;
+go
+
+drop type jira_babel_3504_tinyint;
+go
+
+drop type jira_babel_3504_smallint;
+go
+
+drop type jira_babel_3504_int;
+go
+
+drop type jira_babel_3504_bigint;
+go
+
+drop type jira_babel_3504_decimal;
+go
+
+drop type jira_babel_3504_numeric;
+go
+
+drop type jira_babel_3504_bigint2;
+go
+
+drop schema jira_babel_3504_sch1;
+go
+
+drop schema jira_babel_3504_sch2;
+go
+
+-- psql
+-- Need to terminate active session before cleaning up the login
+SELECT pg_terminate_backend(pid) FROM pg_stat_get_activity(NULL)
+WHERE sys.suser_name(usesysid) = 'jira_babel_3504_log1' AND backend_type = 'client backend' AND usesysid IS NOT NULL;
+GO
+
+
+-- Wait to sync with another session
+SELECT pg_sleep(1);
+GO
+
+-- tsql 
+use jira_babel_3504_dbone;
+go
+
+drop login jira_babel_3504_log1;
+go
+
+drop user jira_babel_3504_usr1;
+go
+
+use master;
+go
+
+drop database jira_babel_3504_dbone;
+go
