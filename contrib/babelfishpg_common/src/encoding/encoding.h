@@ -1,9 +1,8 @@
 #include "mb/pg_wchar.h"
 
 /* Functions in src/encoding/encoding_utils.c */
-extern char *encoding_conv_util(const char *s, int len, int encoding, int *encodedByteLen, bool is_sender);
-extern char *server_to_any(const char *s, int len, int encoding, int *encodedByteLen);
-extern char *any_to_server(const char *s, int len, int encoding, int *encodedByteLen);
+extern char *encoding_conv_util(const char *s, int len, int src_encoding, int dest_encoding, int *encodedByteLen);
+
 
 /* Functions in src/encoding/mb/conv.c */
 extern int TsqlUtfToLocal(const unsigned char *utf, int len,

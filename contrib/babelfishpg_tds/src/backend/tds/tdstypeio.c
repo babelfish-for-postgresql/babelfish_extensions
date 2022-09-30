@@ -98,7 +98,7 @@ uint128 GetMsgUInt128(StringInfo msg);
 float4 GetMsgFloat4(StringInfo msg);
 float8 GetMsgFloat8(StringInfo msg);
 static void SwapData(StringInfo buf, int st, int end);
-static Datum TdsAnyToServerEncodingConversion(Oid oid, pg_enc enc, char *str, int len, uint8_t tdsColDataType);
+static Datum TdsAnyToServerEncodingConversion(Oid oid, pg_enc encoding, char *str, int len, uint8_t tdsColDataType);
 int TdsUTF16toUTF8XmlResult(StringInfo buf, void **resultPtr);
 
 Datum TdsTypeBitToDatum(StringInfo buf);
@@ -232,13 +232,13 @@ init_collation_callbacks(void)
 	collation_callbacks_ptr = *callbacks_ptr;
 }
 
-char * TdsEncodingConversion(const char *s, int len, pg_enc encoding, int *encodedByteLen, bool is_sender)
+char * TdsEncodingConversion(const char *s, int len, pg_enc src_encoding, pg_enc dest_encoding, int *encodedByteLen)
 {
 	if (!collation_callbacks_ptr)
 		init_collation_callbacks();
 
 	if (collation_callbacks_ptr && collation_callbacks_ptr->EncodingConversion)
-		return (*collation_callbacks_ptr->EncodingConversion)(s, len, encoding, encodedByteLen, is_sender);
+		return (*collation_callbacks_ptr->EncodingConversion)(s, len, src_encoding, dest_encoding, encodedByteLen);
 	else
 		/* unlikely */
 		ereport(ERROR, 
@@ -309,7 +309,7 @@ int TdsUTF16toUTF8XmlResult(StringInfo buf, void **resultPtr)
  * and convert the encoding of input str
  */
 static Datum
-TdsAnyToServerEncodingConversion(Oid oid, pg_enc enc, char *str, int len, uint8_t tdsColDataType)
+TdsAnyToServerEncodingConversion(Oid oid, pg_enc encoding, char *str, int len, uint8_t tdsColDataType)
 {
 	Oid 		typinput;
 	Oid 		typioparam;
@@ -317,7 +317,8 @@ TdsAnyToServerEncodingConversion(Oid oid, pg_enc enc, char *str, int len, uint8_
 	Datum 		pval;
 	int			actualLen;
 
-	pstring = TdsEncodingConversion(str, len, enc, &actualLen, false);
+	/* The dest_encoding will always be UTF8 for Babelfish */
+	pstring = TdsEncodingConversion(str, len, encoding, PG_UTF8, &actualLen);
 
 	switch (tdsColDataType)
 	{
@@ -336,19 +337,6 @@ TdsAnyToServerEncodingConversion(Oid oid, pg_enc enc, char *str, int len, uint8_
 					errmsg("TdsAnyToServerEncodingConversion is not supported for Oid: %s", format_type_be(oid))));
 			break;
 	}
-	
-	
-	// if (pltsql_plugin_handler_ptr->tsql_check_varchar(oid))
-	// 	pval = PointerGetDatum(pltsql_plugin_handler_ptr->tsql_varchar_in_handler(pstring, actualLen, -1));
-	// else if (pltsql_plugin_handler_ptr->tsql_check_char(oid))
-	// 	pval = PointerGetDatum(pltsql_plugin_handler_ptr->tsql_char_in_handler(pstring, actualLen, -1));
-	// else if (pltsql_plugin_handler_ptr->tsql_check_text(oid))
-	// 	pval = PointerGetDatum(cstring_to_text(pstring));
-	// else
-	// 	ereport(ERROR,
-	// 			(errcode(ERRCODE_INTERNAL_ERROR),
-	// 			 errmsg("TdsAnyToServerEncodingConversion is not supported for Oid: %s", format_type_be(oid))));
- 
 
 	/* Free result of encoding conversion, if any */
 	if (pstring && pstring != str)
@@ -2428,7 +2416,7 @@ TdsSendTypeVarchar(FmgrInfo *finfo, Datum value, void *vMetaData)
 
 	len = strlen(buf);
 
-	destBuf = TdsEncodingConversion(buf, len, col->encoding, &actualLen, true);
+	destBuf = TdsEncodingConversion(buf, len, PG_UTF8, col->encoding, &actualLen);
 	maxLen = col->metaEntry.type2.maxSize;
 
 	if (maxLen != 0xffff)
@@ -2465,7 +2453,7 @@ TdsSendTypeChar(FmgrInfo *finfo, Datum value, void *vMetaData)
 
 	len = strlen(buf);
 
-	destBuf = TdsEncodingConversion(buf, len, col->encoding, &actualLen, true);
+	destBuf = TdsEncodingConversion(buf, len, PG_UTF8, col->encoding, &actualLen);
 	maxLen = col->metaEntry.type2.maxSize;
 
 	if (unlikely(maxLen != actualLen))
@@ -2534,7 +2522,7 @@ TdsSendTypeText(FmgrInfo *finfo, Datum value, void *vMetaData)
 	SendTextPtrInfo();
 
 	len = strlen(buf);
-	destBuf = TdsEncodingConversion(buf, len, col->encoding, &encodedByteLen, true);
+	destBuf = TdsEncodingConversion(buf, len, PG_UTF8, col->encoding, &encodedByteLen);
 
 	if ((rc = TdsPutUInt32LE(encodedByteLen)) == 0)
 		rc = TdsPutbytes(destBuf, encodedByteLen);
@@ -3466,7 +3454,7 @@ TdsSendTypeSqlvariant(FmgrInfo *finfo, Datum value, void *vMetaData)
 			 * from sql_variant sender for char class basetypes
 			 */
 			if (dataLen > 0)
-				destBuf = TdsEncodingConversion(buf + VARHDRSZ, dataLen, PG_WIN1252, &actualDataLen, true);
+				destBuf = TdsEncodingConversion(buf + VARHDRSZ, dataLen, PG_UTF8 ,PG_WIN1252, &actualDataLen);
 			else
 				/* We can not assume that buf would be NULL terminated. */
 				actualDataLen = 0;

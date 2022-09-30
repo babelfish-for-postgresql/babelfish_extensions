@@ -550,7 +550,7 @@ varchar(PG_FUNCTION_ARGS)
 		PG_RETURN_VARCHAR_P(source);
 
 	/*  And encode the input string (usually in UTF8 encoding) in desired encoding. */
-	tmp = server_to_any(s_data, byteLen, collInfo.enc, &encodedByteLen);
+	tmp = encoding_conv_util(s_data, byteLen, PG_UTF8, collInfo.enc, &encodedByteLen);
 	byteLen = encodedByteLen;
 
 	/* 
@@ -584,7 +584,7 @@ varchar(PG_FUNCTION_ARGS)
 	}
 
 	/* Encode the input string encoding to UTF8(server) encoding */
-	resStr = any_to_server(tmp, maxmblen, collInfo.enc, &encodedByteLen);
+	resStr = encoding_conv_util(tmp, maxmblen, collInfo.enc, PG_UTF8, &encodedByteLen);
 
 	if (tmp && s_data != tmp)
 		pfree(tmp);
@@ -1095,7 +1095,7 @@ bpchar(PG_FUNCTION_ARGS)
 	}
 
 	/* And encode the input string (usually in UTF8 encoding) in desired encoding. */
-	tmp = server_to_any(s_data, byteLen, collInfo.enc, &encodedByteLen);
+	tmp = encoding_conv_util(s_data, byteLen, PG_UTF8, collInfo.enc, &encodedByteLen);
 	byteLen = encodedByteLen;
 
 	if (byteLen == maxByteLen)
@@ -1123,14 +1123,14 @@ bpchar(PG_FUNCTION_ARGS)
 		}
 
 		/* Encode the input string back to UTF8 */
-		resStr = any_to_server(tmp, maxmblen, collInfo.enc,&encodedByteLen);
+		resStr = encoding_conv_util(tmp, maxmblen, collInfo.enc, PG_UTF8, &encodedByteLen);
 		byteLen = encodedByteLen;
 	}
 	else
 	{
 		blankSpace = maxByteLen - byteLen;
 		/* Encode the input string back to UTF8 */
-		resStr = any_to_server(tmp, byteLen, collInfo.enc, &encodedByteLen);
+		resStr = encoding_conv_util(tmp, byteLen, collInfo.enc, PG_UTF8, &encodedByteLen);
 
 		/* And override the len with actual length of string (encoded in UTF-8) */
 		if (resStr != tmp)
