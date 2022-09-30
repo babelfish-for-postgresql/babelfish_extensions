@@ -423,9 +423,9 @@ bcp#!#out#!#bcp_source#!#sourceTable
 bcp#!#in#!#bcp_source#!#destinationTable
 #Q#Select * from sourceTable
 #D#date#!#date
-1/1/2000 12:00:00 AM#!#1/1/2060 12:00:00 AM
+01/01/2000 00:00:00#!#01/01/2060 00:00:00
 #Q#Select * from destinationTable
 #D#date#!#date
-1/1/2000 12:00:00 AM#!#1/1/2060 12:00:00 AM
+01/01/2000 00:00:00#!#01/01/2060 00:00:00
 #Q#drop table sourceTable
 #Q#drop table destinationTable
