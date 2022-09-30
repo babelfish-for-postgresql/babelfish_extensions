@@ -58,22 +58,25 @@ go
 drop sequence jira_babel_3504_sch2.jira_babel_3504_udtseq6;
 go
 
-drop type jira_babel_3504_tinyint;
+drop type jira_babel_3504_sch2.jira_babel_3504_tinyint;
 go
 
-drop type jira_babel_3504_smallint;
+drop type jira_babel_3504_sch2.jira_babel_3504_smallint;
 go
 
-drop type jira_babel_3504_int;
+drop type jira_babel_3504_sch2.jira_babel_3504_int;
 go
 
-drop type jira_babel_3504_bigint;
+drop type jira_babel_3504_sch2.jira_babel_3504_bigint;
 go
 
-drop type jira_babel_3504_decimal;
+drop type jira_babel_3504_sch2.jira_babel_3504_decimal;
 go
 
-drop type jira_babel_3504_numeric;
+drop type jira_babel_3504_sch2.jira_babel_3504_numeric;
+go
+
+drop type jira_babel_3504_varchar;
 go
 
 drop type jira_babel_3504_bigint2;

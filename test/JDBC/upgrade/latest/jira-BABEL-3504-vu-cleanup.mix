@@ -7,10 +7,10 @@ drop sequence jira_babel_3504_seq1;
 go
 
 -- psql 
-revoke create on schema dbo from jira_babel_3504_dbone_jira_babel_3504_usr1;
+revoke create on schema jira_babel_3504_dbone_dbo from jira_babel_3504_dbone_jira_babel_3504_usr1;
 go
 
-revoke usage on type dbo.jira_babel_3504_bigint2 from jira_babel_3504_dbone_jira_babel_3504_usr1;
+revoke usage on type jira_babel_3504_dbone_dbo.jira_babel_3504_bigint2 from jira_babel_3504_dbone_jira_babel_3504_usr1;
 go
 
 -- tsql
@@ -93,21 +93,11 @@ go
 SELECT pg_terminate_backend(pid) FROM pg_stat_get_activity(NULL)
 WHERE sys.suser_name(usesysid) = 'jira_babel_3504_log1' AND backend_type = 'client backend' AND usesysid IS NOT NULL;
 GO
-~~START~~
-bool
-t
-~~END~~
-
 
 
 -- Wait to sync with another session
 SELECT pg_sleep(1);
 GO
-~~START~~
-void
-
-~~END~~
-
 
 -- tsql 
 use jira_babel_3504_dbone;
