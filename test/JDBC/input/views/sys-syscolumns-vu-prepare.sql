@@ -16,19 +16,22 @@ END;
 GO
 
 -- create helper function to get procedure/table name given oid
-CREATE FUNCTION sys_syscolumns_vu_prepare_OidToObject(@Oid integer)
+CREATE FUNCTION sys_syscolumns_vu_prepare_OidToObject_pg_class(@Oid integer)
 RETURNS VARCHAR(50)
 AS
 BEGIN
         DECLARE @object_name VARCHAR(50);
-
         SET @object_name = (SELECT relname from pg_class where oid = @Oid);
+        RETURN @object_name
+END;
+GO
 
-        IF (@object_name is null)
-        BEGIN
-                SET @object_name = (SELECT proname from pg_proc where oid = @Oid);
-        END
-
+CREATE FUNCTION sys_syscolumns_vu_prepare_OidToObject_pg_proc(@Oid integer)
+RETURNS VARCHAR(50)
+AS
+BEGIN
+        DECLARE @object_name VARCHAR(50);
+        SET @object_name = (SELECT proname from pg_proc where oid = @Oid);
         RETURN @object_name
 END;
 GO
@@ -59,4 +62,3 @@ go
 
 create procedure sys_syscolumns_vu_prepare_proc3 @thirdparam NVARCHAR(50) as select 3;
 go
-
