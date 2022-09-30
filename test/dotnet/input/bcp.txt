@@ -323,6 +323,17 @@ Select * from destinationTable
 drop table sourceTable
 drop table destinationTable
 
+Create table sourceTable(a int, b int identity)
+Create table destinationTable(a int, b int identity)
+insert into sourceTable values (1)
+insert into sourceTable values (2)
+bcp#!#out#!#bcp_source#!#sourceTable
+bcp#!#in#!#bcp_source#!#destinationTable
+Select * from sourceTable
+Select * from destinationTable
+drop table sourceTable
+drop table destinationTable
+
 # trigger
 create table t_rcv (a int)
 create table t_rcv2 (b int)
