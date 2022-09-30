@@ -68,8 +68,12 @@ upgrade-version: [[
 ],
 [
   {
-    version: 13.7,
+    version: 13.4,
     upgrade-type: null
+  },
+  {
+    version: 13.7,
+    upgrade-type: minor
   },
   { 
     version: target.latest,
@@ -77,6 +81,10 @@ upgrade-version: [[
   }
 ],
 [
+  {
+    version: 13.4,
+    upgrade-type: null
+  },
   {
     version: 13.8,
     upgrade-type: null
