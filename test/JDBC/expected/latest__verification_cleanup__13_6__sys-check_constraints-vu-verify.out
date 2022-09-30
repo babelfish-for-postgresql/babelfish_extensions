@@ -1,7 +1,8 @@
-SELECT definition FROM sys.check_constraints where name LIKE '%sys_check_constraints_t2%' ORDER BY name;
+SELECT definition FROM sys.check_constraints where name LIKE '%sys_check_constraints%' ORDER BY name;
 GO
 ~~START~~
 nvarchar
+((sck_date_col IS NOT NULL))
 ((column_a = 0))
 ((column_b <> 'wrong'))
 ~~END~~

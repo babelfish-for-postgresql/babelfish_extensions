@@ -1,2 +1,2 @@
-DROP TABLE sys_default_definitions_vu_prepare
+DROP TABLE IF EXISTS sys_default_definitions_vu_prepare
 GO
