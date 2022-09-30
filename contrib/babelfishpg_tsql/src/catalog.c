@@ -23,6 +23,7 @@
 #include "utils/timestamp.h"
 #include "nodes/execnodes.h"
 #include "catalog.h"
+#include "dbcmds.h"
 #include "guc.h"
 #include "hooks.h"
 #include "multidb.h"
@@ -936,22 +937,25 @@ get_user_for_database(const char *db_name)
 {
 	const char		*user = NULL;
 	const char		*login;
+	bool			login_is_db_owner;
 
 	login = GetUserNameFromId(GetSessionUserId(), false);
 	user = get_authid_user_ext_physical_name(db_name, login);
+	login_is_db_owner = 0 == strncmp(login, get_owner_of_db(db_name), NAMEDATALEN);
 
 	if (!user)
 	{
 		Oid				datdba;
 
 		datdba = get_role_oid("sysadmin", false);
-		if (is_member_of_role(GetSessionUserId(), datdba))
+		if (is_member_of_role(GetSessionUserId(), datdba) || login_is_db_owner)
 			user = get_dbo_role_name(db_name);
 		else
 			user = get_guest_role_name(db_name);
 	}
 
-	if (user && !is_member_of_role(GetSessionUserId(), get_role_oid(user, false)))
+	if (user && !(is_member_of_role(GetSessionUserId(), get_role_oid(user, false)) 
+					|| login_is_db_owner))
 		user = NULL;
 
 	return user;
