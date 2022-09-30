@@ -2523,6 +2523,15 @@ RETURNS sys.NVARCHAR
 AS 'babelfishpg_tsql', 'tsql_json_query' LANGUAGE C IMMUTABLE PARALLEL SAFE;
 
 --JSON_MODIFY
+/*
+This function is used to update the value of a property in a JSON string and returns the updated JSON string.
+
+It has been implemented in three parts:
+1) Set the append and create_if_missing flag as postgres functions do not directly take append and lax/strict mode in the jsonb_path.
+2) To convert the input path into the expected jsonb_path.
+3) To implement the main logic of the JSON_MODIFY function by dividing it into 8 different cases.
+
+*/
 CREATE OR REPLACE FUNCTION sys.json_modify(in expression NVARCHAR,in path_json TEXT, in new_value TEXT)
 RETURNS sys.NVARCHAR
 AS
@@ -2531,76 +2540,94 @@ DECLARE
     json_path TEXT;
     json_path_convert TEXT;
     new_jsonb_path TEXT[];
-    type_key_value TEXT;
-    mode TEXT;
-    modifier TEXT;
+    key_value_type TEXT;
+    path_split_array TEXT[];
+    comparison_string TEXT COLLATE "C";
     len_array INTEGER;
     word_count INTEGER;
-    create_if_missing BOOL:='TRUE';
-    append_modifier BOOL:='FALSE';
-    key_exist BOOL;
+    create_if_missing BOOL:=TRUE;
+    append_modifier BOOL:=FALSE;
+    key_exists BOOL;
     key_value JSONB;
-    json_expression JSONB;
+    json_expression JSONB = expression::JSONB;
     result_json NVARCHAR;
 BEGIN
-    json_expression = to_jsonb(expression::JSONB);
+    path_split_array = regexp_split_to_array(TRIM(path_json) COLLATE "C",'\s+');
+    word_count = array_length(path_split_array,1);
+    /* 
+    This if else block is added to set the create_if_missing and append_modifier flags.
+    These flags will be used to know the mode and if the optional modifier append is present in the input path_json.
+    It is necessary as postgres functions do not directly take append and lax/strict mode in the jsonb_path.    
+    */
+    IF word_count=1 THEN
+        json_path = path_split_array[1];
+        create_if_missing=TRUE;
+        append_modifier=FALSE;
+    ELSIF word_count=2 THEN 
+        json_path = path_split_array[2];
+        comparison_string = path_split_array[1]; -- append or lax/strict mode
+        IF comparison_string = 'append' THEN
+            append_modifier:=TRUE;
+        ELSIF comparison_string = 'strict' THEN
+            create_if_missing:=FALSE;
+        ELSIF comparison_string = 'lax' THEN
+            create_if_missing:=TRUE;
+        ELSE
+            RAISE EXCEPTION 'JSON path is not properly formatted.';
+        END IF;
+    ELSIF word_count=3 THEN
+        json_path = path_split_array[3];
+        comparison_string = path_split_array[1]; -- append mode 
+        IF comparison_string = 'append' THEN
+            append_modifier:=TRUE;
+        ELSE
+            RAISE EXCEPTION 'JSON path is not properly formatted.';
+        END IF;
+        comparison_string = path_split_array[2]; -- lax/strict mode
+        IF comparison_string = 'strict' THEN
+            create_if_missing:=FALSE;
+        ELSIF comparison_string = 'lax' THEN
+            create_if_missing:=TRUE;
+        ELSE
+            RAISE EXCEPTION 'JSON path is not properly formatted.';
+        END IF;
+    ELSE
+        RAISE EXCEPTION 'JSON path is not properly formatted.';
+    END IF;
 
-    json_path = regexp_replace(path_json, '^.* ', '','ig'); -- To select the last word of the json_path string. \\\\\\Instead of this one can use split_part if regexp is slow
+    -- To convert input jsonpath to the required jsonb_path format
     json_path_convert = regexp_replace(json_path, '\$\.|]|\$\[' , '' , 'ig'); -- To remove the "$." and "]" sign from the string 
     json_path_convert = regexp_replace(json_path_convert, '\.|\[' , ',' , 'ig'); -- To replace the "." and "[" with the "," to change into required format
     new_jsonb_path = CONCAT('{',json_path_convert,'}'); -- Final required format of path by jsonb_set
-    
-    
-    key_exist = jsonb_path_exists(json_expression,json_path::jsonpath); -- TO check if key exist in the given path
-    word_count = LENGTH(path_json) - LENGTH(REPLACE(path_json, ' ', '')) + 1; --To calculate the number of words in the path_json
-    
 
-    -- This if else block is added to set the create_if_missing and append_modifier flags
-    IF word_count=1 THEN --The path_json has only 1 word
-        create_if_missing='TRUE';
-        append_modifier='FALSE';
-    ELSIF word_count=2 THEN --The path_json has 2 words
-        mode = SPLIT_PART(path_json COLLATE sql_latin1_general_cp1_cs_as, ' ',1);
-        IF mode='append' THEN
-            append_modifier:='TRUE';
-        ELSIF mode='strict' THEN
-            create_if_missing:='FALSE';
-        END IF;
-    ELSIF word_count=3 THEN --The path_json has 3 words
-        modifier = SPLIT_PART(path_json COLLATE sql_latin1_general_cp1_cs_as, ' ',1);
-        mode = SPLIT_PART(path_json COLLATE sql_latin1_general_cp1_cs_as, ' ',2);
-        IF modifier='append' THEN
-            append_modifier:='TRUE';
-        END IF;
-        IF mode='strict' THEN
-            create_if_missing:='FALSE';
-        END IF;
-    END IF;
-
-
+    key_exists = jsonb_path_exists(json_expression,json_path::jsonpath); -- To check if key exist in the given path
+    
     --This if else block is to call the jsonb_set function based on the create_if_missing and append_modifier flags
-    
-    IF append_modifier THEN --When append modifier is present
-        IF key_exist THEN
+    IF append_modifier THEN 
+        IF key_exists THEN
             key_value = jsonb_path_query_first(json_expression,json_path::jsonpath); -- To get the value of the key
-            type_key_value = jsonb_typeof(key_value);
-            IF type_key_value='array' THEN
+            key_value_type = jsonb_typeof(key_value);
+            IF key_value_type='array' THEN
                 len_array = jsonb_array_length(key_value);
-                new_jsonb_path = CONCAT(TRIM('}' FROM new_jsonb_path::TEXT),',',CAST(len_array AS TEXT),'}'); -- To change the path format into the required jsonb_insert path format
+                /*
+                As jsonb_insert requires the index of the value to be inserted, so the below FORMAT function changes the path format into the required jsonb_insert path format.
+                Eg: JSON_MODIFY('{"name":"John","skills":["C#","SQL"]}','append $.skills','Azure'); -> converts the path from '$.skills' to '{skills,2}' instead of '{skills}'
+                */
+                new_jsonb_path = FORMAT('%s,%s}',TRIM('}' FROM new_jsonb_path::TEXT),len_array);
                 IF new_value IS NULL THEN
-                    result_json = jsonb_insert(json_expression,new_jsonb_path,'null');
+                    result_json = jsonb_insert(json_expression,new_jsonb_path,'null'); -- This needs to be done because "to_jsonb(coalesce(new_value, 'null'))" does not result in a JSON NULL
                 ELSE
                     result_json = jsonb_insert(json_expression,new_jsonb_path,to_jsonb(new_value));
                 END IF;
             ELSE
-                IF create_if_missing='FALSE' THEN
+                IF NOT create_if_missing THEN
                     RAISE EXCEPTION 'Array cannot be found in the specified JSON path.';
                 ELSE
                     result_json = json_expression;
                 END IF;
             END IF;
         ELSE
-            IF create_if_missing='FALSE' THEN
+            IF NOT create_if_missing THEN
                 RAISE EXCEPTION 'Property cannot be found on the specified JSON path.';
             ELSE
                 result_json = jsonb_insert(json_expression,new_jsonb_path,to_jsonb(array_agg(new_value))); -- array_agg is used to convert the new_value text into array format as we append functionality is being used
@@ -2608,27 +2635,27 @@ BEGIN
         END IF;
     ELSE --When no append modifier is present
         IF new_value IS NOT NULL THEN
-            IF key_exist OR create_if_missing='TRUE' THEN
+            IF key_exists OR create_if_missing THEN
                 result_json = jsonb_set_lax(json_expression,new_jsonb_path,to_jsonb(new_value),create_if_missing);
             ELSE
                 RAISE EXCEPTION 'Property cannot be found on the specified JSON path.';
             END IF;
         ELSE
-            IF key_exist THEN
-                IF create_if_missing='FALSE' THEN
+            IF key_exists THEN
+                IF NOT create_if_missing THEN
                     result_json = jsonb_set_lax(json_expression,new_jsonb_path,to_jsonb(new_value));
                 ELSE
                     result_json = jsonb_set_lax(json_expression,new_jsonb_path,to_jsonb(new_value),create_if_missing,'delete_key');
                 END IF;
             ELSE
-                IF create_if_missing='FALSE' THEN
+                IF NOT create_if_missing THEN
                     RAISE EXCEPTION 'Property cannot be found on the specified JSON path.';
                 ELSE
                     result_json = jsonb_set_lax(json_expression,new_jsonb_path,to_jsonb(new_value),FALSE);
                 END IF;
             END IF;
         END IF;
-    END IF;
+    END IF;  -- If append_modifier block ends here
     RETURN result_json;
 END;
 $BODY$

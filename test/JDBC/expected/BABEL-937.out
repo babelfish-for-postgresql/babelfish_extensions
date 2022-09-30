@@ -1,4 +1,4 @@
--- Not Append
+-- NOT APPEND
 --NOT NULL, LAX, KP  
 SELECT JSON_MODIFY('{"name":"John","skills":["C#","SQL"]}','$.name','Mike');
 GO
@@ -9,7 +9,7 @@ nvarchar
 
 
 --NOT NULL, STRICT, KP
-SELECT JSON_MODIFY('{"name":"John","skills":["C#","SQL"]}','strict $.name','Mike');
+SELECT JSON_MODIFY('{"name":"John","skills":["C#","SQL"]}','strict       $.name     ','Mike');
 GO
 ~~START~~
 nvarchar
@@ -68,7 +68,7 @@ nvarchar
 ~~ERROR (Message: Property cannot be found on the specified JSON path.)~~
 
 
---Append
+--APPEND
 --NOT NULL, LAX, KP  
 SELECT JSON_MODIFY('{"name":"John","skills":["C#","SQL"]}','append $.name','Mike');
 GO
@@ -175,7 +175,70 @@ nvarchar
 ~~ERROR (Message: Array cannot be found in the specified JSON path.)~~
 
 
---Case to test Multi-function call query
+
+
+--Cases to test Case-sensitive and extra spaces
+-- Leading and trailing spaces
+SELECT JSON_MODIFY('{"id": 1,"tags": [
+      "sint",
+      "sit",
+      "nisi",
+      "ullamco",
+      "consectetur",
+      "eu",
+      "voluptate"
+    ],
+    "friends": [
+      {
+        "id": 0,
+        "name": "Kasey Oneil"
+      },
+      {
+        "id": 1,
+        "name": "Guerrero Leon"
+      },
+      {
+        "id": 2,
+        "name": "Meadows Schneider"
+      }
+    ]}','    append     strict     $.friends    ',NULL);
+GO
+~~START~~
+nvarchar
+{"id": 1, "tags": ["sint", "sit", "nisi", "ullamco", "consectetur", "eu", "voluptate"], "friends": [{"id": 0, "name": "Kasey Oneil"}, {"id": 1, "name": "Guerrero Leon"}, {"id": 2, "name": "Meadows Schneider"}, null]}
+~~END~~
+
+
+-- Case-sensitive 
+SELECT JSON_MODIFY('{"name":"John","skills":["C#","SQL"]}','strIct $.name','James');
+GO
+~~START~~
+nvarchar
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: JSON path is not properly formatted.)~~
+
+
+SELECT JSON_MODIFY('{"name":"John","skills":["C#","SQL"]}','  aPpend    Strict    $.skills   ',NULL);
+GO
+~~START~~
+nvarchar
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: JSON path is not properly formatted.)~~
+
+
+SELECT JSON_MODIFY('{"name":"John","skills":["C#","SQL"]}','  and    strict    $.skills   ',NULL);
+GO
+~~START~~
+nvarchar
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: JSON path is not properly formatted.)~~
+
+
+
+--To test Multi-function call query
 SELECT JSON_MODIFY(JSON_MODIFY(JSON_MODIFY('{"name":"John","skills":["C#","SQL"]}','$.name','Mike'),'$.surname','Smith'),'append $.skills','Azure');
 GO
 ~~START~~
@@ -192,7 +255,7 @@ nvarchar
 ~~END~~
 
 
---Case to test on array
+--To test on array
 SELECT JSON_MODIFY('[{"name":"John","skills":["C#","SQL"]},"b","temp"]','strict $[0].skills[1]',NULL);
 GO
 ~~START~~

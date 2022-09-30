@@ -1,10 +1,10 @@
--- Not Append
+-- NOT APPEND
 --NOT NULL, LAX, KP  
 SELECT JSON_MODIFY('{"name":"John","skills":["C#","SQL"]}','$.name','Mike');
 GO
 
 --NOT NULL, STRICT, KP
-SELECT JSON_MODIFY('{"name":"John","skills":["C#","SQL"]}','strict $.name','Mike');
+SELECT JSON_MODIFY('{"name":"John","skills":["C#","SQL"]}','strict       $.name     ','Mike');
 GO
 
 --NOT NULL, LAX, KNP  
@@ -26,7 +26,7 @@ GO
 SELECT JSON_MODIFY('{"name":"Mike","skills":["C#","SQL"],"surname":"Smith"}','strict $.k',NULL);
 GO
 
---Append
+--APPEND
 --NOT NULL, LAX, KP  
 SELECT JSON_MODIFY('{"name":"John","skills":["C#","SQL"]}','append $.name','Mike');
 GO
@@ -69,14 +69,54 @@ GO
 SELECT JSON_MODIFY('{"name":"John","skills":["C#","SQL"]}','append strict $.name',NULL);
 GO
 
---Case to test Multi-function call query
+
+--Cases to test Case-sensitive and extra spaces
+
+-- Leading and trailing spaces
+SELECT JSON_MODIFY('{"id": 1,"tags": [
+      "sint",
+      "sit",
+      "nisi",
+      "ullamco",
+      "consectetur",
+      "eu",
+      "voluptate"
+    ],
+    "friends": [
+      {
+        "id": 0,
+        "name": "Kasey Oneil"
+      },
+      {
+        "id": 1,
+        "name": "Guerrero Leon"
+      },
+      {
+        "id": 2,
+        "name": "Meadows Schneider"
+      }
+    ]}','    append     strict     $.friends    ',NULL);
+GO
+
+-- Case-sensitive 
+SELECT JSON_MODIFY('{"name":"John","skills":["C#","SQL"]}','strIct $.name','James');
+GO
+
+SELECT JSON_MODIFY('{"name":"John","skills":["C#","SQL"]}','  aPpend    Strict    $.skills   ',NULL);
+GO
+
+SELECT JSON_MODIFY('{"name":"John","skills":["C#","SQL"]}','  and    strict    $.skills   ',NULL);
+GO
+
+
+--To test Multi-function call query
 SELECT JSON_MODIFY(JSON_MODIFY(JSON_MODIFY('{"name":"John","skills":["C#","SQL"]}','$.name','Mike'),'$.surname','Smith'),'append $.skills','Azure');
 GO
 
 SELECT JSON_MODIFY(JSON_MODIFY('{"price":49.99}','$.Price',CAST(JSON_VALUE('{"price":49.99}','$.price') AS NUMERIC(4,2))),'$.price',NULL);
 GO
 
---Case to test on array
+--To test on array
 SELECT JSON_MODIFY('[{"name":"John","skills":["C#","SQL"]},"b","temp"]','strict $[0].skills[1]',NULL);
 GO
 
