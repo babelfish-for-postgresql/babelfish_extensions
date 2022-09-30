@@ -1,0 +1,62 @@
+-- tsql
+create login babel_3548_l1 with password='123';
+go
+
+alter server role sysadmin add member babel_3548_l1;
+go
+
+-- tsql      user=babel_3548_l1      password=123
+create database babel_3548_db;
+go
+
+-- tsql
+alter server role sysadmin drop member babel_3548_l1;
+go
+
+-- tsql      user=babel_3548_l1      password=123
+-- Shouldn't cause error as login is the db owner
+use babel_3548_db;
+go
+
+select CURRENT_USER;
+go
+
+use master;
+go
+
+select CURRENT_USER;
+go
+
+drop database babel_3548_db;
+go
+
+-- tsql
+create database babel_3548_sysadm_db;
+go
+
+-- tsql      user=babel_3548_l1      password=123
+-- Should fail
+use babel_3548_sysadm_db;
+go
+
+use master;
+go
+
+-- Should fail
+drop database babel_3548_sysadm_db;
+go
+
+-- psql
+-- Need to terminate active session before cleaning up the login
+SELECT pg_terminate_backend(pid) FROM pg_stat_get_activity(NULL) 
+WHERE sys.suser_name(usesysid) = 'babel_3548_l1' AND backend_type = 'client backend' AND usesysid IS NOT NULL;
+GO
+-- Wait to sync with another session
+SELECT pg_sleep(1);
+GO
+
+-- tsql
+drop database babel_3548_sysadm_db;
+drop login babel_3548_l1;
+go
+
