@@ -1,11 +1,5 @@
 name: JDBC Unit Tests
-on:
-  push:
-    branches:
-      - BABEL_1_X_DEV
-  pull_request:
-    branches:
-      - BABEL_1_X_DEV
+on: [push, pull_request]
 
 jobs:
   extension-tests:
@@ -35,6 +29,7 @@ jobs:
           wget http://www.antlr.org/download/antlr4-cpp-runtime-4.9.2-source.zip
           unzip -d antlr4 antlr4-cpp-runtime-4.9.2-source.zip 
           cd antlr4
+          sed -i "s/git:/https:/g" runtime/CMakeLists.txt
           mkdir build && cd build 
           cmake .. -D ANTLR_JAR_LOCATION=/usr/local/lib/antlr-4.9.2-complete.jar -DCMAKE_INSTALL_PREFIX=/usr/local -DWITH_DEMO=True
           make
