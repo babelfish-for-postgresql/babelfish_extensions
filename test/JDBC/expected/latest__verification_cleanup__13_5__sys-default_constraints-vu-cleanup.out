@@ -1,0 +1,2 @@
+DROP TABLE sys_default_definitions_vu_prepare
+GO
