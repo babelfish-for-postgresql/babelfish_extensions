@@ -227,6 +227,10 @@ static void add_query_hints(PLtsql_expr* expr);
 static void clear_query_hints();
 static void clear_tables_info();
 
+static std::string validate_and_stringify_hints();
+static int find_hint_offset(char * queryTxt);
+static char *format_query_with_hints(char *query, std::string);
+
 static bool pltsql_parseonly = false;
 
 static void
@@ -579,6 +583,13 @@ add_rewritten_query_fragment_to_mutator(PLtsql_expr_query_mutator *mutator)
 static void
 add_query_hints(PLtsql_expr *expr)
 {
+	std::string hint = validate_and_stringify_hints();
+	expr->query = format_query_with_hints(expr->query, hint);
+}
+
+static std::string
+validate_and_stringify_hints()
+{
 	ParserRuleContext* ctx = nullptr;
 	// If a query has both join hint and query hint which is a join hint, it should have all the join hints as the query hints as well
 	if (isJoinHintInOptionClause && ((join_hints_info[LOOP_JOIN_HINT] && !join_hints_info[LOOP_QUERY_HINT]) || (join_hints_info[HASH_JOIN_HINT] && !join_hints_info[HASH_QUERY_HINT]) || (join_hints_info[MERGE_JOIN_HINT] && !join_hints_info[MERGE_QUERY_HINT])))
@@ -596,10 +607,42 @@ add_query_hints(PLtsql_expr *expr)
 	if (!leading_hint.empty())
 		hint += leading_hint;
 	hint += "*/";
+	return hint;
+}
+
+static char *
+format_query_with_hints(char *query, std::string hints)
+{
 	StringInfoData new_query;
 	initStringInfo(&new_query);
-	appendStringInfo(&new_query, "%s %s", const_cast <char *>(hint.c_str()), expr->query);
-	expr->query = new_query.data;
+	int initialTokenEnd = find_hint_offset(query);
+
+	appendStringInfo(&new_query, "%s", psprintf("%.*s", initialTokenEnd, query));
+	appendStringInfo(&new_query, " %s", const_cast <char *>(hints.c_str()));
+	appendStringInfo(&new_query, " %s", &query[initialTokenEnd]);
+	return new_query.data;
+}
+
+static int
+find_hint_offset(char *query)
+{
+	std::string queryString(query);
+	size_t spaceIdx = queryString.find_first_of(" \t\r\n");
+	size_t commentStartIdx = queryString.find("/*");
+
+	//if there is no space and no comment default to beginning of statement
+	if (commentStartIdx == std::string::npos && spaceIdx == std::string::npos)
+		return 0;
+
+	//if both comments and space return the index of the smaller.
+	if (commentStartIdx != std::string::npos && spaceIdx != std::string::npos)
+		return min(static_cast<int>(spaceIdx), static_cast<int>(commentStartIdx));
+
+	//if no comment return spaceIdx
+	if (commentStartIdx == std::string::npos)
+		return static_cast<int>(spaceIdx);
+
+	return 0;
 }
 
 static void
@@ -972,6 +1015,27 @@ public:
 	{
 		if (mutator)
 			process_query_specification(ctx, mutator);
+	}
+
+	void
+	add_query_hints_mutator(TSqlParser::Dml_statementContext *ctx, PLtsql_expr_query_mutator *mutator)
+	{
+		std::string hint = validate_and_stringify_hints();
+		size_t baseOffset = mutator->ctx->start->getStartIndex();
+		size_t contextOffset = ctx->start->getStartIndex();
+		size_t queryOffset = contextOffset - baseOffset;
+		size_t initialTokenOffset = find_hint_offset(&mutator->expr->query[queryOffset]);
+		mutator->add(contextOffset + initialTokenOffset, "", hint);
+	}
+
+	void exitDml_statement(TSqlParser::Dml_statementContext *ctx) override
+	{
+		if (mutator && query_hints.size() && enable_hint_mapping)
+		{
+			add_query_hints_mutator(ctx, mutator);
+			clear_query_hints();
+			clear_tables_info();
+		}
 	}
 };
 
@@ -2639,6 +2703,11 @@ rewriteBatchLevelStatement(
 	walker.walk(ssm, ctx);
 
 	mutator.run();
+	if (query_hints.size() && enable_hint_mapping)
+	{
+		add_query_hints(ssm->mutator->expr);
+		clear_query_hints();
+	}
 	ssm->mutator = nullptr;
 	clear_rewritten_query_fragment();
 }
@@ -5103,7 +5172,7 @@ static void post_process_table_source(TSqlParser::Table_source_itemContext *ctx,
 			removeCtxStringFromQuery(expr, actx->table_alias()->with_table_hints(), baseCtx);
 		}
 	}
-	
+
 	if (!table_name.empty())
 	{
 		if (table_to_alias_mapping.find(table_name) != table_to_alias_mapping.end())
