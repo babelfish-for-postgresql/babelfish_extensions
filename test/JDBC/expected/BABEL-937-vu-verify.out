@@ -1,0 +1,7 @@
+select * from babel_937_vu_v1
+go
+~~START~~
+nvarchar
+{"name": "James", "skills": ["C#", "SQL"]}
+~~END~~
+

@@ -1,2 +1,2 @@
-select * from babel_937_vu_prepare_v1
+select * from babel_937_vu_v1
 go
