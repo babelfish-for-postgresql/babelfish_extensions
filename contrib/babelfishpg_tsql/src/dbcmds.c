@@ -540,7 +540,7 @@ drop_bbf_db(const char *dbname, bool missing_ok, bool force_drop)
 	{
 		Oid roleid = GetSessionUserId();
 		const char *login = GetUserNameFromId(roleid, false);
-		bool login_is_db_owner = 0 == strcmp(login, get_owner_of_db(dbname));
+		bool login_is_db_owner = 0 == strncmp(login, get_owner_of_db(dbname), NAMEDATALEN);
 		
 		if (!(has_privs_of_role(roleid, get_role_oid("sysadmin", false)) || login_is_db_owner))
 			aclcheck_error(ACLCHECK_NOT_OWNER, OBJECT_DATABASE,
@@ -835,6 +835,10 @@ drop_related_bbf_namespace_entries(int16 dbid)
 	table_close(namespace_rel, RowExclusiveLock);
 }
 
+/* 
+ * Helper function to get the owner from a given database name
+ * Caller is responsible for validating that the given database exists
+ */
 const char *
 get_owner_of_db(const char *dbname)
 {
@@ -845,7 +849,9 @@ get_owner_of_db(const char *dbname)
 	tuple = SearchSysCache1(SYSDATABASENAME, CStringGetTextDatum(dbname));
 
 	if (!HeapTupleIsValid(tuple))
-		return InvalidDbid;
+		ereport(ERROR, 
+				(errcode(ERRCODE_UNDEFINED_DATABASE),
+				errmsg("database \"%s\" does not exist", dbname)));
 
 	sysdb = ((Form_sysdatabases) GETSTRUCT(tuple));
 	owner = NameStr(sysdb->owner);

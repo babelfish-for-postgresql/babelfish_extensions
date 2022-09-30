@@ -941,7 +941,7 @@ get_user_for_database(const char *db_name)
 
 	login = GetUserNameFromId(GetSessionUserId(), false);
 	user = get_authid_user_ext_physical_name(db_name, login);
-	login_is_db_owner = 0 == strcmp(login, get_owner_of_db(db_name));
+	login_is_db_owner = 0 == strncmp(login, get_owner_of_db(db_name), NAMEDATALEN);
 
 	if (!user)
 	{
@@ -954,7 +954,8 @@ get_user_for_database(const char *db_name)
 			user = get_guest_role_name(db_name);
 	}
 
-	if (user && !(is_member_of_role(GetSessionUserId(), get_role_oid(user, false)) || login_is_db_owner))
+	if (user && !(is_member_of_role(GetSessionUserId(), get_role_oid(user, false)) 
+					|| login_is_db_owner))
 		user = NULL;
 
 	return user;
