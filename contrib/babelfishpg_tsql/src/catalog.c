@@ -798,7 +798,7 @@ get_authid_user_ext_physical_name(const char *db_name, const char *login)
 {
 	Relation		bbf_authid_user_ext_rel;
 	HeapTuple		tuple_user_ext;
-	ScanKeyData		key[2];
+	ScanKeyData		key[3];
 	TableScanDesc	scan;
 	char			*user_name = NULL;
 	NameData		*login_name;
@@ -819,8 +819,12 @@ get_authid_user_ext_physical_name(const char *db_name, const char *login)
 				Anum_bbf_authid_user_ext_database_name,
 				BTEqualStrategyNumber, F_TEXTEQ,
 				CStringGetTextDatum(db_name));
+	ScanKeyInit(&key[2],
+				Anum_bbf_authid_user_ext_user_can_connect,
+				BTEqualStrategyNumber, F_INT4EQ,
+				Int32GetDatum(1));
 
-	scan = table_beginscan_catalog(bbf_authid_user_ext_rel, 2, key);
+	scan = table_beginscan_catalog(bbf_authid_user_ext_rel, 3, key);
 
 	tuple_user_ext = heap_getnext(scan, ForwardScanDirection);
 	if (HeapTupleIsValid(tuple_user_ext))
@@ -948,7 +952,12 @@ get_user_for_database(const char *db_name)
 		if (is_member_of_role(GetSessionUserId(), datdba))
 			user = get_dbo_role_name(db_name);
 		else
-			user = get_guest_role_name(db_name);
+		{
+			if (guest_has_dbaccess(db_name))
+				user = get_guest_role_name(db_name);
+			else
+				user = NULL;
+		}
 	}
 
 	if (user && !is_member_of_role(GetSessionUserId(), get_role_oid(user, false)))
@@ -1990,4 +1999,129 @@ get_catalog_info(Rule *rule)
 				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
 				 errmsg("Failed to find \"%s\" in the pre-defined catalog data array", 
 						rule->tblname)));
+}
+
+char *get_database_owner(const char *db_name)
+{
+    HeapTuple			tuple;
+    Form_sysdatabases	sysdb;
+	char				*name = NULL;
+
+    tuple = SearchSysCache1(SYSDATABASENAME, CStringGetTextDatum(db_name));
+
+    if (!HeapTupleIsValid(tuple))
+        return NULL;
+
+    sysdb = ((Form_sysdatabases) GETSTRUCT(tuple));
+    name = pstrdup(NameStr(sysdb->owner));
+    ReleaseSysCache(tuple);
+
+    return name;
+}
+
+void
+alter_user_can_connect(bool is_grant, char *user_name, char *db_name)
+{
+	Relation		bbf_authid_user_ext_rel;
+	TupleDesc		bbf_authid_user_ext_dsc;
+	ScanKeyData		key[2];
+	HeapTuple		usertuple;
+	HeapTuple		new_tuple;
+	TableScanDesc	tblscan;
+	Datum			new_record_user_ext[BBF_AUTHID_USER_EXT_NUM_COLS];
+	bool			new_record_nulls_user_ext[BBF_AUTHID_USER_EXT_NUM_COLS];
+	bool			new_record_repl_user_ext[BBF_AUTHID_USER_EXT_NUM_COLS];
+
+	bbf_authid_user_ext_rel = table_open(get_authid_user_ext_oid(),
+										 RowExclusiveLock);
+	bbf_authid_user_ext_dsc = RelationGetDescr(bbf_authid_user_ext_rel);
+
+	/* Search and obtain the tuple based on the user name and db name */	
+	ScanKeyInit(&key[0],
+				Anum_bbf_authid_user_ext_orig_username,
+				BTEqualStrategyNumber, F_TEXTEQ,
+				CStringGetTextDatum(user_name));
+	ScanKeyInit(&key[1],
+				Anum_bbf_authid_user_ext_database_name,
+				BTEqualStrategyNumber, F_TEXTEQ,
+				CStringGetTextDatum(db_name));
+
+	tblscan = table_beginscan_catalog(bbf_authid_user_ext_rel, 2, key);
+
+	/* Build a tuple to insert */
+	MemSet(new_record_user_ext, 0, sizeof(new_record_user_ext));
+	MemSet(new_record_nulls_user_ext, false, sizeof(new_record_nulls_user_ext));
+	MemSet(new_record_repl_user_ext, false, sizeof(new_record_repl_user_ext));
+
+	usertuple = heap_getnext(tblscan, ForwardScanDirection);
+
+	if (!HeapTupleIsValid(usertuple))
+		ereport(ERROR,
+				(errcode(ERRCODE_UNDEFINED_OBJECT),
+				errmsg("Cannot find the user \"%s\", because it does not exist or you do not have permission.", user_name)));
+
+	/* Update the column user_can_connect to 1 in case of GRANT and to 0 in case of REVOKE */
+	if (is_grant)
+		new_record_user_ext[USER_EXT_USER_CAN_CONNECT] = Int32GetDatum(1);
+	else
+		new_record_user_ext[USER_EXT_USER_CAN_CONNECT] = Int32GetDatum(0);
+
+	new_record_repl_user_ext[USER_EXT_USER_CAN_CONNECT] = true;
+
+	new_tuple = heap_modify_tuple(usertuple,
+								  bbf_authid_user_ext_dsc,
+								  new_record_user_ext,
+								  new_record_nulls_user_ext,
+								  new_record_repl_user_ext);
+
+	CatalogTupleUpdate(bbf_authid_user_ext_rel, &new_tuple->t_self, new_tuple);
+
+	heap_freetuple(new_tuple);
+
+	table_endscan(tblscan);
+	table_close(bbf_authid_user_ext_rel, RowExclusiveLock);
+}
+
+bool
+guest_has_dbaccess(char *db_name)
+{
+	Relation		bbf_authid_user_ext_rel;
+	HeapTuple		tuple_user_ext;
+	ScanKeyData		key[3];
+	TableScanDesc	scan;
+	int32			has_access = 0;
+
+	bbf_authid_user_ext_rel = table_open(get_authid_user_ext_oid(),
+										 RowExclusiveLock);
+	ScanKeyInit(&key[0],
+				Anum_bbf_authid_user_ext_orig_username,
+				BTEqualStrategyNumber, F_TEXTEQ,
+				CStringGetTextDatum("guest"));
+	ScanKeyInit(&key[1],
+				Anum_bbf_authid_user_ext_database_name,
+				BTEqualStrategyNumber, F_TEXTEQ,
+				CStringGetTextDatum(db_name));
+	ScanKeyInit(&key[2],
+				Anum_bbf_authid_user_ext_user_can_connect,
+				BTEqualStrategyNumber, F_INT4EQ,
+				Int32GetDatum(1));
+
+	scan = table_beginscan_catalog(bbf_authid_user_ext_rel, 3, key);
+
+	tuple_user_ext = heap_getnext(scan, ForwardScanDirection);
+	if (HeapTupleIsValid(tuple_user_ext))
+	{
+		Form_authid_user_ext userform;
+
+		userform = (Form_authid_user_ext) GETSTRUCT(tuple_user_ext);
+		has_access = userform->user_can_connect;
+	}
+
+	table_endscan(scan);
+	table_close(bbf_authid_user_ext_rel, RowExclusiveLock);
+
+	if (has_access == 0)
+		return false;
+	else
+		return true;
 }
