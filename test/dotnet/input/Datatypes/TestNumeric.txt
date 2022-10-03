@@ -176,3 +176,14 @@ prepst#!#exec#!#numeric|-|a7|-|-123|-|9|-|2
 #SELECT * FROM numeric_table;
 
 DROP TABLE numeric_table;
+
+# Test BABEL-3344
+# Numeric 0
+SELECT CASE WHEN 1=1 THEN 0 ELSE cast(98.7627 AS numeric(24,6)) + coalesce(cast(91128.7627 AS numeric(24,6)),0) END
+
+SELECT CAST(0 AS NUMERIC)
+
+# Numeric other than 0
+SELECT CASE WHEN 1=1 THEN 5 ELSE cast(98.7627 AS numeric(24,6)) + coalesce(cast(91128.7627 AS numeric(24,6)),0) END
+
+SELECT CAST(5 AS NUMERIC)
