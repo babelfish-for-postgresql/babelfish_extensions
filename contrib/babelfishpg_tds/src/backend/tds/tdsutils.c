@@ -17,8 +17,6 @@
 #include "postgres.h"
 
 #include "access/genam.h"
-#include "access/htup_details.h"
-#include "access/table.h"
 #include "catalog/pg_authid.h"
 #include "catalog/pg_db_role_setting.h"
 #include "commands/dbcommands.h"
@@ -27,7 +25,6 @@
 #include "nodes/parsenodes.h"
 #include "parser/parser.h"
 #include "parser/parse_node.h"
-#include "utils/acl.h"
 #include "utils/elog.h"
 #include "utils/fmgroids.h"
 #include "utils/rel.h"
@@ -63,6 +60,7 @@ static bool handle_dropdb(DropdbStmt *dropdb_stmt);
 
 static char *get_role_name(RoleSpec *role);
 static bool have_createdb_privilege(void);
+char * get_rolespec_name_internal(const RoleSpec *role, bool missing_ok);
 
 /*
  * GetUTF8CodePoint - extract the next Unicode code point from 1..4
@@ -792,18 +790,76 @@ get_role_name(RoleSpec *role)
     Assert(NULL != role);
 
     /*
-     * get_rolespec_name will return NULL if called for ROLESPEC_PUBLIC.
+     * get_rolespec_name_internal will return NULL if called for ROLESPEC_PUBLIC.
      * Postgres will return a different error if the user tries to modify the public role.
-     * It will be a better user experience to return that instead of rdsutils returning an error
-     * here by calling get_rolespec_name. So return the public role name from here
-     * instead of calling get_rolespec_name.
+     * It will be a better user experience to return that instead of tdsutils returning an error
+     * here by calling get_rolespec_name_internal. So return the public role name from here
+     * instead of calling get_rolespec_name_internal.
      */
     if(ROLESPEC_PUBLIC == role->roletype)
     {
         /* Callers are expecting the return value to be palloc'd */
         return pstrdup(PUBLIC_ROLE_NAME);
     }
-    return (char *) get_rolespec_name(role);
+    return (char *) get_rolespec_name_internal(role, true);
+}
+
+/*
+ * Given a RoleSpec, returns a palloc'ed copy of the corresponding role's name.
+ * If missing_ok is true and the role does not exist, NULL is returned.  If
+ * missing_ok if false and the role does not exists, this function errors out.
+ */
+char *
+get_rolespec_name_internal(const RoleSpec *role, bool missing_ok)
+{
+	HeapTuple	tp;
+	Form_pg_authid authForm;
+	char	   *rolename;
+
+	switch (role->roletype)
+	{
+		case ROLESPEC_CSTRING:
+			Assert(role->rolename);
+			tp = SearchSysCache1(AUTHNAME, CStringGetDatum(role->rolename));
+			if (!HeapTupleIsValid(tp) && !missing_ok)
+				ereport(ERROR,
+						(errcode(ERRCODE_UNDEFINED_OBJECT),
+						 errmsg("role \"%s\" does not exist", role->rolename)));
+			break;
+
+		case ROLESPEC_CURRENT_ROLE:
+		case ROLESPEC_CURRENT_USER:
+			tp = SearchSysCache1(AUTHOID, GetUserId());
+			if (!HeapTupleIsValid(tp))
+				elog(ERROR, "cache lookup failed for role %u", GetUserId());
+			break;
+
+		case ROLESPEC_SESSION_USER:
+			tp = SearchSysCache1(AUTHOID, GetSessionUserId());
+			if (!HeapTupleIsValid(tp))
+				elog(ERROR, "cache lookup failed for role %u", GetSessionUserId());
+			break;
+
+		case ROLESPEC_PUBLIC:
+			if (!missing_ok)
+				ereport(ERROR,
+						(errcode(ERRCODE_UNDEFINED_OBJECT),
+						 errmsg("role \"%s\" does not exist", "public")));
+			tp = NULL;
+			break;
+
+		default:
+			elog(ERROR, "unexpected role type %d", role->roletype);
+	}
+
+	if (!HeapTupleIsValid(tp))
+		return NULL;
+
+	authForm = (Form_pg_authid) GETSTRUCT(tp);
+	rolename = pstrdup(NameStr(authForm->rolname));
+	ReleaseSysCache(tp);
+
+	return rolename;
 }
 
 /*
