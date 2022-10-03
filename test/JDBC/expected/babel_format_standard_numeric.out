@@ -2178,6 +2178,7 @@ nvarchar
 <NULL>
 ~~END~~
 
+
 SELECT FORMAT(rt, 'D', 'en-us') from real_testing2;
 GO
 ~~START~~
