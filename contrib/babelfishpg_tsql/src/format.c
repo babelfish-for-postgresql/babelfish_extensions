@@ -104,6 +104,7 @@ format_datetime(PG_FUNCTION_ARGS)
 	if (fmt_res <= 0)
 	{
 		pfree(buf->data);
+		pfree(buf);
 
 		if (fmt_res == 0)
 		{
@@ -146,6 +147,7 @@ format_datetime(PG_FUNCTION_ARGS)
 
 	result = tsql_varchar_input(buf->data, buf->len, -1);
 	pfree(buf->data);
+	pfree(buf);
 
 	PG_RETURN_VARCHAR_P(result);
 }
@@ -245,9 +247,11 @@ format_numeric(PG_FUNCTION_ARGS)
 
 					result = tsql_varchar_input(format_res->data, format_res->len, -1);
 					pfree(format_res->data);
+					pfree(format_res);
 					PG_RETURN_VARCHAR_P(result);
 				}
 				pfree(format_res->data);
+				pfree(format_res);
 				PG_RETURN_NULL();
 			}
 		}
@@ -275,6 +279,7 @@ format_numeric(PG_FUNCTION_ARGS)
 		if (upper_pattern == 'R')
 		{
 			pfree(format_res->data);
+			pfree(format_res);
 
 			ereport(ERROR,
 					(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
@@ -293,6 +298,7 @@ format_numeric(PG_FUNCTION_ARGS)
 		break;
 	default:
 		pfree(format_res->data);
+		pfree(format_res);
 		ereport(ERROR,
 				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
 				 errmsg("The data type of the first argument is invalid."),
@@ -307,10 +313,12 @@ format_numeric(PG_FUNCTION_ARGS)
 	{
 		result = tsql_varchar_input(format_res->data, format_res->len, -1);
 		pfree(format_res->data);
+		pfree(format_res);
 		PG_RETURN_VARCHAR_P(result);
 	}
 
 	pfree(format_res->data);
+	pfree(format_res);
 	PG_RETURN_NULL();
 }
 
@@ -1888,6 +1896,7 @@ format_exponential(Numeric numeric_val, StringInfo format_res, char pattern, cha
 	numeric_to_string(format_res, numeric_val);
 
 	char *buf = palloc(sizeof(char) * (format_res->len + 3));
+	memset(buf, 0, format_res->len + 3);
 	strncpy(buf, format_res->data, format_res->len);
 
 	if (isupper(pattern))
