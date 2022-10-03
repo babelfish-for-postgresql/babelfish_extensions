@@ -3898,20 +3898,31 @@ sample_clause
     : TABLESAMPLE SYSTEM? LR_BRACKET expression (PERCENT|ROWS) RR_BRACKET (REPEATABLE LR_BRACKET PLUS? DECIMAL RR_BRACKET)?
     ;
   
-// Id runtime check. Id can be (FORCESCAN, HOLDLOCK, NOLOCK, NOWAIT, PAGLOCK, READCOMMITTED,
-// READCOMMITTEDLOCK, READPAST, READUNCOMMITTED, REPEATABLEREAD, ROWLOCK, TABLOCK, TABLOCKX
-// UPDLOCK, XLOCK)
+// https://github.com/MicrosoftDocs/sql-docs/blob/live/docs/t-sql/queries/hints-transact-sql-table.md
 table_hint
     : NOEXPAND? ( INDEX (LR_BRACKET index_value (COMMA index_value)* RR_BRACKET | index_value (COMMA index_value)*) )
     | INDEX  EQUAL  index_value
     | NOEXPAND
     | FORCESEEK ( LR_BRACKET index_value LR_BRACKET ID  (COMMA ID)* RR_BRACKET RR_BRACKET )?
+    | FORCESCAN
+    | FORCESEEK
+    | HOLDLOCK
+    | NOLOCK
+    | NOWAIT
+    | PAGLOCK
+    | READCOMMITTED
+    | READCOMMITTEDLOCK
+    | READPAST
+    | READUNCOMMITTED
+    | REPEATABLEREAD
+    | ROWLOCK
     | SERIALIZABLE
     | SNAPSHOT
     | SPATIAL_WINDOW_MAX_CELLS  EQUAL  DECIMAL
-    | NOWAIT
-    | HOLDLOCK
-	| ID
+    | TABLOCK
+    | TABLOCKX
+    | UPDLOCK
+    | XLOCK
     ;
 
 index_value
