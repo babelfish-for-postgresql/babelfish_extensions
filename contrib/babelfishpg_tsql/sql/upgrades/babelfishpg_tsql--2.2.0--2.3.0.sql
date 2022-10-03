@@ -2060,7 +2060,17 @@ DROP PROCEDURE sys.babelfish_drop_deprecated_view(varchar, varchar);
 -- Reset search_path to not affect any subsequent scripts
 SELECT set_config('search_path', trim(leading 'sys, ' from current_setting('search_path')), false);
 
-CREATE OR REPLACE FUNCTION sys.json_modify(in expression NVARCHAR,in path_json TEXT, in new_value TEXT)
+--JSON_MODIFY
+/*
+This function is used to update the value of a property in a JSON string and returns the updated JSON string.
+
+It has been implemented in three parts:
+1) Set the append and create_if_missing flag as postgres functions do not directly take append and lax/strict mode in the jsonb_path.
+2) To convert the input path into the expected jsonb_path.
+3) To implement the main logic of the JSON_MODIFY function by dividing it into 8 different cases.
+
+*/
+CREATE OR REPLACE FUNCTION sys.json_modify(in expression sys.NVARCHAR,in path_json TEXT, in new_value TEXT)
 RETURNS sys.NVARCHAR
 AS
 $BODY$
@@ -2078,7 +2088,7 @@ DECLARE
     key_exists BOOL;
     key_value JSONB;
     json_expression JSONB = expression::JSONB;
-    result_json NVARCHAR;
+    result_json sys.NVARCHAR;
 BEGIN
     path_split_array = regexp_split_to_array(TRIM(path_json) COLLATE "C",'\s+');
     word_count = array_length(path_split_array,1);

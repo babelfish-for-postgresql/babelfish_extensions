@@ -2532,7 +2532,7 @@ It has been implemented in three parts:
 3) To implement the main logic of the JSON_MODIFY function by dividing it into 8 different cases.
 
 */
-CREATE OR REPLACE FUNCTION sys.json_modify(in expression NVARCHAR,in path_json TEXT, in new_value TEXT)
+CREATE OR REPLACE FUNCTION sys.json_modify(in expression sys.NVARCHAR,in path_json TEXT, in new_value TEXT)
 RETURNS sys.NVARCHAR
 AS
 $BODY$
@@ -2550,7 +2550,7 @@ DECLARE
     key_exists BOOL;
     key_value JSONB;
     json_expression JSONB = expression::JSONB;
-    result_json NVARCHAR;
+    result_json sys.NVARCHAR;
 BEGIN
     path_split_array = regexp_split_to_array(TRIM(path_json) COLLATE "C",'\s+');
     word_count = array_length(path_split_array,1);
