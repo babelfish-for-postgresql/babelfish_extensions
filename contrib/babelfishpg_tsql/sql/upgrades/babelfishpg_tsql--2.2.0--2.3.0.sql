@@ -1359,7 +1359,17 @@ BEGIN
 
     RETURN v_full_year;
 EXCEPTION
+	WHEN invalid_text_representation THEN
+        GET STACKED DIAGNOSTICS v_err_message = MESSAGE_TEXT;
+        v_err_message := substring(lower(v_err_message), 'integer\:\s\"(.*)\"');
+
         RAISE USING MESSAGE := pg_catalog.format('Error while trying to convert "%s" value to SMALLINT data type.',
+                                      v_err_message),
+                    DETAIL := 'Supplied value contains illegal characters.',
+                    HINT := 'Correct supplied value, remove all illegal characters.';
+END;
+$BODY$
+LANGUAGE plpgsql
 STABLE
 RETURNS NULL ON NULL INPUT;
 

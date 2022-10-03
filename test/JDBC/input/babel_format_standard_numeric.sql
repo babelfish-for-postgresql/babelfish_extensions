@@ -595,9 +595,6 @@ GO
 SELECT FORMAT(rt, 'X9', 'en-us') from real_testing2;
 GO
 
-SELECT FORMAT(rt, 'R', 'en-us') from real_testing2;
-GO
-
 SELECT FORMAT(rt, 'D', 'en-us') from real_testing2;
 GO
 SELECT FORMAT(rt, 'D9', 'en-us') from real_testing2;
