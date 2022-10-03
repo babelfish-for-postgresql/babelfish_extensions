@@ -3,7 +3,8 @@ go
 
 -- Cleanup
 DROP FUNCTION sys_syscolumns_vu_prepare_OidToDataType
-DROP FUNCTION sys_syscolumns_vu_prepare_OidToObject
+DROP FUNCTION sys_syscolumns_vu_prepare_OidToObject_pg_class
+DROP FUNCTION sys_syscolumns_vu_prepare_OidToObject_pg_proc
 DROP FUNCTION sys_syscolumns_vu_prepare_OidToCollation
 DROP PROCEDURE sys_syscolumns_vu_prepare_proc1
 DROP PROCEDURE sys_syscolumns_vu_prepare_proc2

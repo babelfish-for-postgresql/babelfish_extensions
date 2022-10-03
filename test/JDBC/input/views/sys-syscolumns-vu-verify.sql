@@ -1,37 +1,94 @@
-use sys_syscolumns_vu_prepare_db1;
-go
-
-select name, sys_syscolumns_vu_prepare_OidToObject(id), sys_syscolumns_vu_prepare_OidToDataType(xtype), typestat, length from sys.syscolumns where name = '@firstparam' or name = '@secondparam' or name = 'col_a' or name = 'col_b' or name = 'col_c' or name = 'col_d' order by sys_syscolumns_vu_prepare_OidToObject(id) asc, name
+USE sys_syscolumns_vu_prepare_db1;
 GO
 
-select colid, cdefault, domain, number from sys.syscolumns where name = '@firstparam' or name = '@secondparam' or name = 'col_a' or name = 'col_b' or name = 'col_c' or name = 'col_d' order by sys_syscolumns_vu_prepare_OidToObject(id) asc, name
+SELECT name, sys_syscolumns_vu_prepare_OidToObject_pg_proc(id), sys_syscolumns_vu_prepare_OidToDataType(xtype), typestat, length
+FROM sys.syscolumns
+WHERE name = '@syscolumns_proc1_firstparam' or name = '@syscolumns_proc2_firstparam' or name = '@syscolumns_proc2_secondparam'
+ORDER BY sys_syscolumns_vu_prepare_OidToObject_pg_proc(id) asc, name
 GO
 
-select sys_syscolumns_vu_prepare_OidToCollation(collationid), status, sys_syscolumns_vu_prepare_OidToDataType(type), prec, scale from sys.syscolumns where name = '@firstparam' or name = '@secondparam' or name = 'col_a' or name = 'col_b' or name = 'col_c' or name = 'col_d' order by sys_syscolumns_vu_prepare_OidToObject(id) asc, name
+SELECT name, sys_syscolumns_vu_prepare_OidToObject_pg_class(id), sys_syscolumns_vu_prepare_OidToDataType(xtype), typestat, length
+FROM sys.syscolumns
+WHERE name = 'syscolumns_t1_col_a' or name = 'syscolumns_t1_col_b' or name = 'syscolumns_t1_col_c' or name = 'syscolumns_t1_col_d'
+ORDER BY sys_syscolumns_vu_prepare_OidToObject_pg_class(id) asc, name
 GO
 
-select iscomputed, isoutparam, isnullable, collation from sys.syscolumns where name = '@firstparam' or name = '@secondparam' or name = 'col_a' or name = 'col_b' or name = 'col_c' or name = 'col_d' order by sys_syscolumns_vu_prepare_OidToObject(id) asc, name
+SELECT colid, cdefault, domain, number
+FROM sys.syscolumns
+WHERE name = '@syscolumns_proc1_firstparam'
+   or name = '@syscolumns_proc2_firstparam'
+   or name = '@syscolumns_proc2_secondparam'
+   or name = 'syscolumns_t1_col_a'
+   or name = 'syscolumns_t1_col_b'
+   or name = 'syscolumns_t1_col_c'
+   or name = 'syscolumns_t1_col_d'
+ORDER BY name
 GO
 
-SELECT COUNT(*) FROM sys.syscolumns where name = '@firstparam' or name = '@secondparam' or name = 'col_a' or name = 'col_b' or name = 'col_c'
-go
+SELECT sys_syscolumns_vu_prepare_OidToCollation(collationid), status, sys_syscolumns_vu_prepare_OidToDataType(type), prec, scale
+FROM sys.syscolumns
+WHERE name = '@syscolumns_proc1_firstparam'
+   or name = '@syscolumns_proc2_firstparam'
+   or name = '@syscolumns_proc2_secondparam'
+   or name = 'syscolumns_t1_col_a'
+   or name = 'syscolumns_t1_col_b'
+   or name = 'syscolumns_t1_col_c'
+   or name = 'syscolumns_t1_col_d'
+ORDER BY name
+GO
 
-use master;
-go
+SELECT iscomputed, isoutparam, isnullable, collation
+FROM sys.syscolumns
+WHERE name = '@syscolumns_proc1_firstparam'
+   or name = '@syscolumns_proc2_firstparam'
+   or name = '@syscolumns_proc2_secondparam'
+   or name = 'syscolumns_t1_col_a'
+   or name = 'syscolumns_t1_col_b'
+   or name = 'syscolumns_t1_col_c'
+   or name = 'syscolumns_t1_col_d'
+ORDER BY name, id asc
+GO
 
-SELECT COUNT(*) FROM sys.syscolumns where name = '@thirdparam'
-go
+SELECT COUNT(*)
+FROM sys.syscolumns
+WHERE name = '@syscolumns_proc1_firstparam'
+   or name = '@syscolumns_proc2_firstparam'
+   or name = '@syscolumns_proc2_secondparam'
+   or name = 'syscolumns_t1_col_a'
+   or name = 'syscolumns_t1_col_b'
+   or name = 'syscolumns_t1_col_c'
+GO
+
+USE master;
+GO
+
+SELECT COUNT(*) FROM sys.syscolumns WHERE name = '@syscolumns_proc3_thirdparam'
+GO
 
 -- should not be visible here
-SELECT COUNT(*) FROM sys.syscolumns where name = '@firstparam' or name = '@secondparam' or name = 'col_a' or name = 'col_b' or name = 'col_c'
-go
+SELECT COUNT(*)
+FROM sys.syscolumns
+WHERE name = '@syscolumns_proc1_firstparam'
+   or name = '@syscolumns_proc2_firstparam'
+   or name = '@syscolumns_proc2_secondparam'
+   or name = 'syscolumns_t1_col_a'
+   or name = 'syscolumns_t1_col_b'
+   or name = 'syscolumns_t1_col_c'
+GO
 
-use sys_syscolumns_vu_prepare_db1;
-go
+USE sys_syscolumns_vu_prepare_db1;
+GO
 
-SELECT COUNT(*) FROM sys.syscolumns where name = '@firstparam' or name = '@secondparam' or name = 'col_a' or name = 'col_b' or name = 'col_c'
-go
+SELECT COUNT(*) 
+FROM sys.syscolumns 
+WHERE name = '@syscolumns_proc1_firstparam'
+   or name = '@syscolumns_proc2_firstparam'
+   or name = '@syscolumns_proc2_secondparam'
+   or name = 'syscolumns_t1_col_a'
+   or name = 'syscolumns_t1_col_b'
+   or name = 'syscolumns_t1_col_c'
+GO
 
 -- should not be visible here
-SELECT COUNT(*) FROM sys.syscolumns where name = '@thirdparam'
-go
+SELECT COUNT(*) FROM sys.syscolumns WHERE name = '@syscolumns_proc3_thirdparam'
+GO
