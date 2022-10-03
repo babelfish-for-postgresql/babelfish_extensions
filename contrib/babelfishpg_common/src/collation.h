@@ -69,7 +69,7 @@ typedef struct ht_like2ilike_entry{
 typedef struct collation_callbacks
 {
 	/* Function pointers set up by the plugin */
-	char* (*EncodingConversion)(const char *s, int len, int encoding, int *encodedByteLen);
+	char* (*EncodingConversion)(const char *s, int len, int src_encoding, int dest_encoding, int *encodedByteLen);
 
 	Oid (*get_server_collation_oid_internal)(bool missingOk);
 

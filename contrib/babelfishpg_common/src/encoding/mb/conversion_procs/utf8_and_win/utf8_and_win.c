@@ -81,3 +81,28 @@ utf8_to_win(int src_encoding, int dest_encoding, const unsigned char *src,unsign
 
 	return -1;
 }
+
+int
+win_to_utf8(int src_encoding, int dest_encoding, const unsigned char *src,unsigned char *dest, int len)
+{
+	int			i;
+
+	for (i = 0; i < lengthof(maps); i++)
+	{
+		if (src_encoding == maps[i].encoding)
+		{
+			return TsqlLocalToUtf(src, len, dest,
+					   maps[i].map1,
+					   NULL, 0,
+					   NULL,
+					   src_encoding);
+		}
+	}
+
+	ereport(ERROR,
+			(errcode(ERRCODE_INTERNAL_ERROR),
+			 errmsg("unexpected encoding ID %d for WIN character sets",
+					src_encoding)));
+
+	return -1;
+}

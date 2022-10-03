@@ -347,7 +347,7 @@ extern int tds_parse_xml_decl(const xmlChar *str, size_t *lenp,
 								 xmlChar **version, xmlChar **encoding, int *standalone);
 
 /* Functions in tdstypeio.c */
-extern char * TdsEncodingConversion(const char *s, int len, int encoding, int *encodedByteLen);
+extern char * TdsEncodingConversion(const char *s, int len, pg_enc src_encoding, pg_enc dest_encoding, int *encodedByteLen);
 extern coll_info_t TdsLookupCollationTableCallback(Oid oid);
 
 #endif	/* TDS_INT_H */

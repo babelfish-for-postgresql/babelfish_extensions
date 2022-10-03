@@ -832,7 +832,7 @@ ProcessBCPRequest(TDSRequest request)
 						case TDS_TYPE_CHAR:
 						case TDS_TYPE_VARCHAR:
 						case TDS_TYPE_TEXT:
-							values[count] = TdsTypeVarcharToDatum(temp, argtypes[count], colMetaData[currentColumn].collation);
+							values[count] = TdsTypeVarcharToDatum(temp, argtypes[count], colMetaData[currentColumn].collation, colMetaData[currentColumn].columnTdsType);
 						break;
 						case TDS_TYPE_NCHAR:
 						case TDS_TYPE_NVARCHAR:

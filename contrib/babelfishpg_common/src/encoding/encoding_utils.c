@@ -12,40 +12,28 @@
 static unsigned char *do_encoding_conversion(unsigned char *src, int len, int src_encoding, int dest_encoding, int *encodedByteLen);
 
 /*
- * Convert server encoding to any encoding.
+ * Convert server encoding to any encoding or vice-versa.
  * 
  * s: input string encoded in server's encoding
  * len: byte length of input string s
- * encoding: desired encoding in which input string should be encoded to
+ * src_encoding: encoding from which input string should be encoded to dest_encoding
+ * dest_encoding: desired encoding to which input string should be encoded to
  * encodedByteLen: byte length of output string encoded in desired encoding
  */
+
 char *
-server_to_any(const char *s, int len, int encoding, int *encodedByteLen)
+encoding_conv_util(const char *s, int len, int src_encoding, int dest_encoding, int *encodedByteLen)
 {
 	if (len <= 0)
 	{
 		*encodedByteLen = len;
 		return (char *) s;		/* empty string is always valid */
 	}
-
-	if (encoding == GetDatabaseEncoding() ||
-		encoding == PG_SQL_ASCII)
-	{
-		*encodedByteLen = len;
-		return (char *) s;		/* assume data is valid */
-	}
-
-	if (GetDatabaseEncoding() == PG_SQL_ASCII)
-	{
-		/* No conversion is possible, but we must validate the result */
-		(void) pg_verify_mbstr(encoding, s, len, false);
-		encodedByteLen = len;
-		return (char *) s;
-	}
+	
 	return (char *) do_encoding_conversion((unsigned char *) s,
 											  len,
-											  GetDatabaseEncoding(),
-											  encoding,
+											  src_encoding,
+											  dest_encoding,
 											  encodedByteLen);
 }
 
@@ -107,17 +95,48 @@ do_encoding_conversion(unsigned char *src, int len,
 		MemoryContextAllocHuge(CurrentMemoryContext,
 							   (Size) len * MAX_CONVERSION_GROWTH + 1);
 
-        if (dest_encoding == PG_BIG5)
-                *encodedByteLen = utf8_to_big5(src_encoding, dest_encoding, src, result, len);
-        else if (dest_encoding == PG_GBK)
-                *encodedByteLen = utf8_to_gbk(src_encoding, dest_encoding, src, result, len);
-        else if (dest_encoding == PG_UHC)
-                *encodedByteLen = utf8_to_uhc(src_encoding, dest_encoding, src, result, len);
-        else if (dest_encoding == PG_SJIS)
-                *encodedByteLen = utf8_to_sjis(src_encoding, dest_encoding, src, result, len);
-        else
-	        *encodedByteLen = utf8_to_win(src_encoding, dest_encoding, src, result, len);
-
+	if (src_encoding == PG_UTF8)
+	{
+		switch (dest_encoding)
+		{
+		case PG_BIG5:
+				*encodedByteLen = utf8_to_big5(src_encoding, dest_encoding, src, result, len);
+				break;
+		case PG_GBK:
+				*encodedByteLen = utf8_to_gbk(src_encoding, dest_encoding, src, result, len);
+				break;
+		case PG_UHC:
+				*encodedByteLen = utf8_to_uhc(src_encoding, dest_encoding, src, result, len);
+				break;
+		case PG_SJIS:
+				*encodedByteLen = utf8_to_sjis(src_encoding, dest_encoding, src, result, len);
+				break;
+		default:
+				*encodedByteLen = utf8_to_win(src_encoding, dest_encoding, src, result, len);
+				break;
+		}
+	}
+	else
+	{
+		switch (src_encoding)
+		{
+			case PG_BIG5:
+				*encodedByteLen = big5_to_utf8(src_encoding, dest_encoding, src, result, len);
+				break;
+			case PG_GBK:
+				*encodedByteLen = gbk_to_utf8(src_encoding, dest_encoding, src, result, len);
+				break;
+			case PG_UHC:
+				*encodedByteLen = uhc_to_utf8(src_encoding, dest_encoding, src, result, len);
+				break;
+			case PG_SJIS:
+				*encodedByteLen = sjis_to_utf8(src_encoding, dest_encoding, src, result, len);
+				break;
+			default:
+				*encodedByteLen = win_to_utf8(src_encoding, dest_encoding, src, result, len);
+				break;
+		}
+	}
 	/*
 	 * If the result is large, it's worth repalloc'ing to release any extra
 	 * space we asked for.  The cutoff here is somewhat arbitrary, but we

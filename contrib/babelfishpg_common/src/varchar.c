@@ -48,6 +48,7 @@ void TsqlCheckUTF16Length_bpchar(const char *s, int32 len, int32 maxlen, int cha
 void TsqlCheckUTF16Length_bpchar_input(const char *s, int32 len, int32 maxlen, int charlen);
 void TsqlCheckUTF16Length_varchar_input(const char *s, int32 len, int32 maxlen);
 void *tsql_varchar_input(const char *s, size_t len, int32 atttypmod);
+void *tsql_bpchar_input(const char *s, size_t len, int32 atttypmod);
 static inline int varcharTruelen(VarChar *arg);
 
 #define DEFAULT_LCID 1033
@@ -549,7 +550,7 @@ varchar(PG_FUNCTION_ARGS)
 		PG_RETURN_VARCHAR_P(source);
 
 	/*  And encode the input string (usually in UTF8 encoding) in desired encoding. */
-	tmp = server_to_any(s_data, byteLen, collInfo.enc, &encodedByteLen);
+	tmp = encoding_conv_util(s_data, byteLen, PG_UTF8, collInfo.enc, &encodedByteLen);
 	byteLen = encodedByteLen;
 
 	/* 
@@ -582,14 +583,14 @@ varchar(PG_FUNCTION_ARGS)
 								maxByteLen)));
 	}
 
-	/* Encode the input string back to UTF8 */
-	resStr = pg_any_to_server(tmp, maxmblen, collInfo.enc);
+	/* Encode the input string encoding to UTF8(server) encoding */
+	resStr = encoding_conv_util(tmp, maxmblen, collInfo.enc, PG_UTF8, &encodedByteLen);
 
 	if (tmp && s_data != tmp)
 		pfree(tmp);
 
-	/* Output of pg_any_to_server would always be NULL terminated So we can use cstring_to_text directly. */
-	PG_RETURN_VARCHAR_P((VarChar *) cstring_to_text_with_len(resStr, strlen(resStr)));
+	/* Output of encoding_conv_util() would always be NULL terminated So we can use cstring_to_text directly. */
+	PG_RETURN_VARCHAR_P((VarChar *) cstring_to_text_with_len(resStr, encodedByteLen));
 }
 
 /*
@@ -989,6 +990,12 @@ bpchar_input(const char *s, size_t len, int32 atttypmod)
 	return result;
 }
 
+void *
+tsql_bpchar_input(const char *s, size_t len, int32 atttypmod)
+{
+	return bpchar_input(s, len, atttypmod);
+}
+
 /*
  * Convert a C string to CHARACTER internal representation.  atttypmod
  * is the declared length of the type plus VARHDRSZ.
@@ -1088,7 +1095,7 @@ bpchar(PG_FUNCTION_ARGS)
 	}
 
 	/* And encode the input string (usually in UTF8 encoding) in desired encoding. */
-	tmp = server_to_any(s_data, byteLen, collInfo.enc, &encodedByteLen);
+	tmp = encoding_conv_util(s_data, byteLen, PG_UTF8, collInfo.enc, &encodedByteLen);
 	byteLen = encodedByteLen;
 
 	if (byteLen == maxByteLen)
@@ -1116,18 +1123,18 @@ bpchar(PG_FUNCTION_ARGS)
 		}
 
 		/* Encode the input string back to UTF8 */
-		resStr = pg_any_to_server(tmp, maxmblen, collInfo.enc);
-		byteLen = strlen(resStr);
+		resStr = encoding_conv_util(tmp, maxmblen, collInfo.enc, PG_UTF8, &encodedByteLen);
+		byteLen = encodedByteLen;
 	}
 	else
 	{
 		blankSpace = maxByteLen - byteLen;
 		/* Encode the input string back to UTF8 */
-		resStr = pg_any_to_server(tmp, byteLen, collInfo.enc);
+		resStr = encoding_conv_util(tmp, byteLen, collInfo.enc, PG_UTF8, &encodedByteLen);
 
 		/* And override the len with actual length of string (encoded in UTF-8) */
 		if (resStr != tmp)
-			byteLen = strlen(resStr);
+			byteLen = encodedByteLen;
 	}
 
 	result = palloc(byteLen + blankSpace + VARHDRSZ);

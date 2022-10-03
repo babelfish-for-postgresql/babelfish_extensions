@@ -1608,6 +1608,10 @@ typedef struct PLtsql_protocol_plugin
 
 	int (*get_insert_bulk_kilobytes_per_batch) ();
 
+	void* (*tsql_varchar_input) (const char *s, size_t len, int32 atttypmod);
+
+	void* (*tsql_char_input) (const char *s, size_t len, int32 atttypmod);
+	
 } PLtsql_protocol_plugin;
 
 /*

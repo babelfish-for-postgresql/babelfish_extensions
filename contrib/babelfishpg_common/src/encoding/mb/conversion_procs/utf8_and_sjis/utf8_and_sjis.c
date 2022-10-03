@@ -25,3 +25,13 @@ utf8_to_sjis(int src_encoding, int dest_encoding, const unsigned char *src, unsi
 			   NULL,
 			   PG_SJIS);
 }
+
+int
+sjis_to_utf8(int src_encoding, int dest_encoding, const unsigned char *src, unsigned char *dest, int len)
+{
+	return TsqlLocalToUtf(src, len, dest,
+			   &sjis_to_unicode_tree,
+			   NULL, 0,
+			   NULL,
+			   PG_SJIS);
+}

@@ -22,6 +22,17 @@ compare3(const void *p1, const void *p2)
 	return (s1 > d1 || (s1 == d1 && s2 > d2)) ? 1 : ((s1 == d1 && s2 == d2) ? 0 : -1);
 }
 
+static int
+compare4(const void *p1, const void *p2)
+{
+	uint32		v1,
+				v2;
+
+	v1 = *(const uint32 *) p1;
+	v2 = ((const pg_local_to_utf_combined *) p2)->code;
+	return (v1 > v2) ? 1 : ((v1 == v2) ? 0 : -1);
+}
+
 /*
  * store 32bit character representation into multibyte stream
  */
@@ -362,5 +373,129 @@ TsqlUtfToLocal(const unsigned char *utf, int len,
 		report_invalid_encoding(PG_UTF8, (const char *) utf, len);
 
 	*iso = '\0';
+	return encodedByteLen;
+}
+
+int
+TsqlLocalToUtf(const unsigned char *iso, int len,
+		   unsigned char *utf,
+		   const pg_mb_radix_tree *map,
+		   const pg_local_to_utf_combined *cmap, int cmapsize,
+		   utf_local_conversion_func conv_func,
+		   int encoding)
+{
+	uint32		iiso;
+	int			l;
+	const pg_local_to_utf_combined *cp;
+	const unsigned char *start = iso;
+	int		encodedByteLen = 0;
+
+	if (!PG_VALID_ENCODING(encoding))
+		ereport(ERROR,
+				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+				 errmsg("invalid encoding number: %d", encoding)));
+
+	for (; len > 0; len -= l)
+	{
+		unsigned char b1 = 0;
+		unsigned char b2 = 0;
+		unsigned char b3 = 0;
+		unsigned char b4 = 0;
+
+		/* "break" cases all represent errors */
+		if (*iso == '\0')
+			break;
+
+		if (!IS_HIGHBIT_SET(*iso))
+		{
+			/* ASCII case is easy, assume it's one-to-one conversion */
+			*utf++ = *iso++;
+			encodedByteLen += 1;
+			l = 1;
+			continue;
+		}
+
+		l = pg_encoding_verifymbchar(encoding, (const char *) iso, len);
+		if (l < 0)
+			break;
+
+		/* collect coded char of length l */
+		if (l == 1)
+			b4 = *iso++;
+		else if (l == 2)
+		{
+			b3 = *iso++;
+			b4 = *iso++;
+		}
+		else if (l == 3)
+		{
+			b2 = *iso++;
+			b3 = *iso++;
+			b4 = *iso++;
+		}
+		else if (l == 4)
+		{
+			b1 = *iso++;
+			b2 = *iso++;
+			b3 = *iso++;
+			b4 = *iso++;
+		}
+		else
+		{
+			elog(ERROR, "unsupported character length %d", l);
+			iiso = 0;			/* keep compiler quiet */
+		}
+		iiso = (b1 << 24 | b2 << 16 | b3 << 8 | b4);
+
+		if (map)
+		{
+			uint32		converted = pg_mb_radix_conv(map, l, b1, b2, b3, b4);
+
+			if (converted)
+			{
+				utf = store_coded_char(utf, converted, &encodedByteLen);
+				continue;
+			}
+
+			/* If there's a combined character map, try that */
+			if (cmap)
+			{
+				cp = bsearch(&iiso, cmap, cmapsize,
+							 sizeof(pg_local_to_utf_combined), compare4);
+
+				if (cp)
+				{
+					utf = store_coded_char(utf, cp->utf1, &encodedByteLen);
+					utf = store_coded_char(utf, cp->utf2, &encodedByteLen);
+					continue;
+				}
+			}
+		}
+
+		/* if there's a conversion function, try that */
+		if (conv_func)
+		{
+			uint32		converted = (*conv_func) (iiso);
+
+			if (converted)
+			{
+				utf = store_coded_char(utf, converted, &encodedByteLen);
+				continue;
+			}
+		}
+
+		/* If there doesnt exisiting any conversion scheme for any character in string
+		raise an error stating failed to translate this character */
+		iso -= l;
+		report_untranslatable_char(encoding, PG_UTF8,
+								   (const char *) iso, len);
+	}
+
+	/* if we broke out of loop early, must be invalid input */
+	if (len > 0)
+		report_invalid_encoding(encoding, (const char *) iso, len);
+
+	*utf = '\0';
+
 	return encodedByteLen;
 }
