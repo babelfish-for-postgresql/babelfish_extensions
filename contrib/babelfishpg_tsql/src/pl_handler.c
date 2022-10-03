@@ -3459,8 +3459,8 @@ _PG_init(void)
 		(*pltsql_protocol_plugin_ptr)->get_insert_bulk_keep_nulls = get_insert_bulk_keep_nulls;
 		(*pltsql_protocol_plugin_ptr)->get_insert_bulk_rows_per_batch = &get_insert_bulk_rows_per_batch;
 		(*pltsql_protocol_plugin_ptr)->get_insert_bulk_kilobytes_per_batch = &get_insert_bulk_kilobytes_per_batch;
-		(*pltsql_protocol_plugin_ptr)->tsql_varchar_in_handler = &tsql_varchar_input;
-		(*pltsql_protocol_plugin_ptr)->tsql_char_in_handler = &tsql_bpchar_input;
+		(*pltsql_protocol_plugin_ptr)->tsql_varchar_input = &tsql_varchar_input;
+		(*pltsql_protocol_plugin_ptr)->tsql_char_input = &tsql_bpchar_input;
 	}
 
 	get_language_procs("pltsql", &lang_handler_oid, &lang_validator_oid);

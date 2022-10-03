@@ -323,10 +323,10 @@ TdsAnyToServerEncodingConversion(Oid oid, pg_enc encoding, char *str, int len, u
 	switch (tdsColDataType)
 	{
 		case TDS_TYPE_VARCHAR:
-			pval = PointerGetDatum(pltsql_plugin_handler_ptr->tsql_varchar_in_handler(pstring, actualLen, -1));
+			pval = PointerGetDatum(pltsql_plugin_handler_ptr->tsql_varchar_input(pstring, actualLen, -1));
 			break;
 		case TDS_TYPE_CHAR:
-			pval = PointerGetDatum(pltsql_plugin_handler_ptr->tsql_char_in_handler(pstring, actualLen, -1));
+			pval = PointerGetDatum(pltsql_plugin_handler_ptr->tsql_char_input(pstring, actualLen, -1));
 			break;
 		case TDS_TYPE_TEXT:
 			pval = PointerGetDatum(cstring_to_text(pstring));
