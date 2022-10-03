@@ -539,8 +539,10 @@ drop_bbf_db(const char *dbname, bool missing_ok, bool force_drop)
 	PG_TRY();
 	{
 		Oid roleid = GetSessionUserId();
-
-		if (!has_privs_of_role(roleid, get_role_oid("sysadmin", false)))
+		const char *login = GetUserNameFromId(roleid, false);
+		bool login_is_db_owner = 0 == strncmp(login, get_owner_of_db(dbname), NAMEDATALEN);
+		
+		if (!(has_privs_of_role(roleid, get_role_oid("sysadmin", false)) || login_is_db_owner))
 			aclcheck_error(ACLCHECK_NOT_OWNER, OBJECT_DATABASE,
 						   dbname);
 
@@ -599,6 +601,8 @@ drop_bbf_db(const char *dbname, bool missing_ok, bool force_drop)
 		}
 		/* clean up bbf view def catalog */
 		clean_up_bbf_view_def(dbid);
+		/* clean up bbf function catalog */
+		clean_up_bbf_function_ext(dbid);
 		/* clean up bbf namespace catalog accordingly */
 		drop_related_bbf_namespace_entries(dbid);
 		/* clean up corresponding db users */
@@ -829,4 +833,29 @@ drop_related_bbf_namespace_entries(int16 dbid)
 	}
 	table_endscan(scan);
 	table_close(namespace_rel, RowExclusiveLock);
+}
+
+/* 
+ * Helper function to get the owner from a given database name
+ * Caller is responsible for validating that the given database exists
+ */
+const char *
+get_owner_of_db(const char *dbname)
+{
+	char				*owner = NULL;
+	HeapTuple 			tuple;
+	Form_sysdatabases 	sysdb;
+
+	tuple = SearchSysCache1(SYSDATABASENAME, CStringGetTextDatum(dbname));
+
+	if (!HeapTupleIsValid(tuple))
+		ereport(ERROR, 
+				(errcode(ERRCODE_UNDEFINED_DATABASE),
+				errmsg("database \"%s\" does not exist", dbname)));
+
+	sysdb = ((Form_sysdatabases) GETSTRUCT(tuple));
+	owner = NameStr(sysdb->owner);
+	ReleaseSysCache(tuple);
+
+	return owner;
 }

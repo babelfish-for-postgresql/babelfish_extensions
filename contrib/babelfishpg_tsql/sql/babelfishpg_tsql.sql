@@ -2485,11 +2485,16 @@ BEGIN
 		ORDER BY ServerRole, MemberName;
 	END
 	-- If a valid server role is specified, return its member info
+	-- If the role is a SQL server predefined role (i.e. serveradmin), 
+	-- do not raise an error even if it does not exist
 	ELSE IF EXISTS (SELECT 1
 					FROM sys.babelfish_authid_login_ext
-					WHERE (rolname = @srvrolename
-					OR lower(rolname) = lower(@srvrolename))
+					WHERE (rolname = RTRIM(@srvrolename)
+					OR lower(rolname) = lower(RTRIM(@srvrolename)))
 					AND type = 'R')
+					OR lower(RTRIM(@srvrolename)) IN (
+					'serveradmin', 'setupadmin', 'securityadmin', 'processadmin',
+					'dbcreator', 'diskadmin', 'bulkadmin')
 	BEGIN
 		SELECT CAST(Ext1.rolname AS sys.SYSNAME) AS 'ServerRole',
 			   CAST(Ext2.rolname AS sys.SYSNAME) AS 'MemberName',
@@ -2500,7 +2505,7 @@ BEGIN
 		INNER JOIN sys.babelfish_authid_login_ext AS Ext1 ON Base1.rolname = Ext1.rolname
 		INNER JOIN sys.babelfish_authid_login_ext AS Ext2 ON Base2.rolname = Ext2.rolname
 		WHERE Ext1.type = 'R'
-		AND (Ext1.rolname = @srvrolename OR lower(Ext1.rolname) = lower(@srvrolename))
+		AND (Ext1.rolname = RTRIM(@srvrolename) OR lower(Ext1.rolname) = lower(RTRIM(@srvrolename)))
 		ORDER BY ServerRole, MemberName;
 	END
 	-- If the specified server role is not valid
@@ -2510,6 +2515,30 @@ END;
 $$
 LANGUAGE 'pltsql';
 GRANT EXECUTE ON PROCEDURE sys.sp_helpsrvrolemember TO PUBLIC;
+
+CREATE OR REPLACE PROCEDURE sys.sp_helpdbfixedrole("@rolename" sys.SYSNAME = NULL) AS
+$$
+BEGIN
+	-- Returns a list of the fixed database roles. 
+	-- Only fixed role present in babelfish is db_owner.
+	IF LOWER(RTRIM(@rolename)) IS NULL OR LOWER(RTRIM(@rolename)) = 'db_owner'
+	BEGIN
+		SELECT CAST('db_owner' AS sys.SYSNAME) AS DbFixedRole, CAST('DB Owners' AS sys.nvarchar(70)) AS Description;
+	END
+	ELSE IF LOWER(RTRIM(@rolename)) IN (
+			'db_accessadmin','db_securityadmin','db_ddladmin', 'db_backupoperator', 
+			'db_datareader', 'db_datawriter', 'db_denydatareader', 'db_denydatawriter')
+	BEGIN
+		-- Return an empty result set instead of raising an error
+		SELECT CAST(NULL AS sys.SYSNAME) AS DbFixedRole, CAST(NULL AS sys.nvarchar(70)) AS Description
+		WHERE 1=0;	
+	END
+	ELSE
+		RAISERROR('''%s'' is not a known fixed role.', 16, 1, @rolename);
+END
+$$
+LANGUAGE 'pltsql';
+GRANT EXECUTE ON PROCEDURE sys.sp_helpdbfixedrole TO PUBLIC;
 
 CREATE OR REPLACE VIEW sys.sp_sproc_columns_view AS
 -- Get parameters (if any) for a user-defined stored procedure/function

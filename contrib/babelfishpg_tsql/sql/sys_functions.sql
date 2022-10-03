@@ -975,13 +975,16 @@ LANGUAGE plpgsql IMMUTABLE;
 CREATE OR REPLACE FUNCTION sys.dateadd(IN datepart PG_CATALOG.TEXT, IN num INTEGER, IN startdate TEXT) RETURNS DATETIME
 AS
 $body$
+DECLARE
+    is_date INT;
 BEGIN
-    IF pg_typeof(startdate) = 'sys.DATETIMEOFFSET'::regtype THEN
-        return sys.dateadd_internal_df(datepart, num,
-                     startdate);
+    is_date = sys.isdate(startdate);
+    IF (is_date = 1) THEN 
+        RETURN sys.dateadd_internal(datepart,num,startdate::datetime);
+    ELSEIF (startdate is NULL) THEN
+        RETURN NULL;
     ELSE
-        return sys.dateadd_internal(datepart, num,
-                     startdate);
+        RAISE EXCEPTION 'Conversion failed when converting date and/or time from character string.';
     END IF;
 END;
 $body$
@@ -1099,9 +1102,9 @@ BEGIN
 	WHEN 'second' THEN
 		RETURN startdate OPERATOR(sys.+) make_interval(secs => num);
 	WHEN 'millisecond' THEN
-		RETURN startdate OPERATOR(sys.+) make_interval(secs => num * 0.001);
-	WHEN 'microsecond' THEN
-		RETURN startdate OPERATOR(sys.+) make_interval(secs => num * 0.000001);
+		RETURN startdate OPERATOR(sys.+) make_interval(secs => (num::numeric) * 0.001);
+    WHEN 'microsecond' THEN
+        RAISE EXCEPTION 'The datepart % is not supported by date function dateadd for data type time.', datepart;
 	WHEN 'nanosecond' THEN
 		-- Best we can do - Postgres does not support nanosecond precision
 		RETURN startdate;
@@ -1146,9 +1149,9 @@ BEGIN
 	WHEN 'second' THEN
 		RETURN startdate + make_interval(secs => num);
 	WHEN 'millisecond' THEN
-		RETURN startdate + make_interval(secs => num * 0.001);
-	WHEN 'microsecond' THEN
-		RETURN startdate + make_interval(secs => num * 0.000001);
+		RETURN startdate OPERATOR(sys.+) make_interval(secs => (num::numeric) * 0.001);
+    WHEN 'microsecond' THEN
+        RAISE EXCEPTION 'The datepart % is not supported by date function dateadd for data type time.', datepart;
 	WHEN 'nanosecond' THEN
 		-- Best we can do - Postgres does not support nanosecond precision
 		RETURN startdate;

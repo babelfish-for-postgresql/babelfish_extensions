@@ -1,0 +1,3 @@
+drop procedure sys_sp_statistics_dep_vu_prepare_p1
+drop table sys_sp_statistics_dep_vu_prepare_t1
+go

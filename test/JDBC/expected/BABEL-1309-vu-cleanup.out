@@ -1,0 +1,6 @@
+-- tsql
+drop database db1;
+go
+
+drop login user1;
+go

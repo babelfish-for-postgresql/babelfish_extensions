@@ -1,0 +1,22 @@
+create table t07y (y int, b int)
+go
+insert into t07y values (10, 1), (20, 1), (30,2), (40,2)
+go
+~~ROW COUNT: 4~~
+
+SELECT y FROM t07y FOR XML PATH ('')
+go
+~~START~~
+ntext
+<y>10</y><y>20</y><y>30</y><y>40</y>
+~~END~~
+
+SELECT y FROM t07y FOR XML PATH ('row')
+go
+~~START~~
+ntext
+<row><y>10</y></row><row><y>20</y></row><row><y>30</y></row><row><y>40</y></row>
+~~END~~
+
+drop table t07y
+go

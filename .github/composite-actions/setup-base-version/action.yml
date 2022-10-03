@@ -9,13 +9,22 @@ inputs:
   install_dir:
     description: "Install base version in this directory"
     required: true
+  migration_mode:
+    description: "Database migration mode for Babelfish"
+    required: true
 
 runs:
   using: "composite"
   steps:
+    - name: Install Dependencies
+      id: install-dependencies
+      if: always()
+      uses: ./.github/composite-actions/install-dependencies
+
     - name: Clone, build, and run tests for Postgres engine using ${{ inputs.engine_branch }}
       id: build-modified-postgres
       uses: ./.github/composite-actions/build-modified-postgres
+      if: always() && steps.install-dependencies.outcome == 'success'
       with:
         engine_branch: ${{ inputs.engine_branch }}
         install_dir: ${{ inputs.install_dir }}
@@ -66,6 +75,7 @@ runs:
 
     - name: Change migration mode to multi-db
       id: change-migration-mode
+      if: ${{ inputs.migration_mode == 'multi-db' }} && always()
       run: |
         sudo ~/${{ inputs.install_dir}}/bin/psql -d jdbc_testdb -U runner -c "ALTER SYSTEM SET babelfishpg_tsql.migration_mode = 'multi-db';"
         sudo ~/${{ inputs.install_dir}}/bin/psql -d jdbc_testdb -U runner -c "SELECT pg_reload_conf();"
@@ -75,12 +85,19 @@ runs:
       id: jdbc-upgrade-tests
       env:
         base_dir: ${{ matrix.upgrade-path.path[0] }}
+        migr_mode: ${{ inputs.migration_mode }}
       run: |
         cd test/JDBC/
-        export isUpgradeTestMode=true
-        base_dir=${{ matrix.upgrade-path.path[0] }}
-        if [[ "$base_dir" == *"latest"* ]]; then
-          base_dir="latest"
+        echo "all" > dummy_schedule
+        export scheduleFile=dummy_schedule
+        if [[ "$migr_mode" == "multi-db" ]];then
+          export isUpgradeTestMode=true
+          base_dir=${{ matrix.upgrade-path.path[0] }}
+          if [[ "$base_dir" == *"latest"* ]]; then
+            base_dir="latest"
+          fi
+        else
+          base_dir="singledb"
         fi
         export inputFilesPath=upgrade/$base_dir/preparation
         mvn test
