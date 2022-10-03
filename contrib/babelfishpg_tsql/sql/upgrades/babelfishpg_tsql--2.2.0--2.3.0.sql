@@ -200,7 +200,6 @@ SELECT pg_catalog.pg_extension_config_dump('sys.babelfish_function_ext', '');
 -- USER extension
 ALTER TABLE sys.babelfish_authid_user_ext add COLUMN user_can_connect INT NOT NULL DEFAULT 1;
 
-CREATE INDEX babelfish_authid_user_ext_login_db_idx ON sys.babelfish_authid_user_ext (login_name, database_name);
 GRANT SELECT ON sys.babelfish_authid_user_ext TO PUBLIC;
 
 CREATE OR REPLACE PROCEDURE sys.babel_update_guest_catalog()
