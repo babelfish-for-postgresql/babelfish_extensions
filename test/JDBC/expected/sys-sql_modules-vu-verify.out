@@ -3,6 +3,7 @@ GO
 
 -- Test for function
 SELECT
+    definition,
     uses_ansi_nulls,
     uses_quoted_identifier,
     is_schema_bound,
@@ -15,8 +16,8 @@ FROM sys.sql_modules
 WHERE object_id = OBJECT_ID('sys_sql_modules_vu_prepare_f1')
 GO
 ~~START~~
-bit#!#bit#!#bit#!#bit#!#bit#!#bit#!#int#!#bit
-1#!#1#!#0#!#0#!#0#!#0#!#<NULL>#!#0
+nvarchar#!#bit#!#bit#!#bit#!#bit#!#bit#!#bit#!#int#!#bit
+CREATE FUNCTION dbo.sys_sql_modules_vu_prepare_f1() RETURNS int AS BEGIN<newline>    RETURN 1;<newline>END#!#1#!#1#!#0#!#0#!#0#!#0#!#<NULL>#!#0
 ~~END~~
 
 
@@ -62,6 +63,7 @@ nvarchar#!#bit#!#bit#!#bit#!#bit#!#bit#!#bit#!#int#!#bit
 
 -- Test for proc
 SELECT
+    definition,
     uses_ansi_nulls,
     uses_quoted_identifier,
     is_schema_bound,
@@ -74,8 +76,8 @@ FROM sys.sql_modules
 WHERE object_id = OBJECT_ID('sys_sql_modules_vu_prepare_p1')
 GO
 ~~START~~
-bit#!#bit#!#bit#!#bit#!#bit#!#bit#!#int#!#bit
-1#!#1#!#0#!#0#!#0#!#0#!#<NULL>#!#0
+nvarchar#!#bit#!#bit#!#bit#!#bit#!#bit#!#bit#!#int#!#bit
+CREATE PROCEDURE dbo.sys_sql_modules_vu_prepare_p1 AS SELECT 1#!#1#!#1#!#0#!#0#!#0#!#0#!#<NULL>#!#0
 ~~END~~
 
 
