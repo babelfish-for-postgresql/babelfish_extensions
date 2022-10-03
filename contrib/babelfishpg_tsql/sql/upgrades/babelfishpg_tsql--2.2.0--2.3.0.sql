@@ -195,6 +195,30 @@ CREATE TABLE sys.babelfish_function_ext (
 );
 GRANT SELECT ON sys.babelfish_function_ext TO PUBLIC;
 
+-- USER extension
+CREATE TABLE sys.babelfish_authid_user_ext (
+rolname NAME NOT NULL,
+login_name NAME NOT NULL,
+type CHAR(1) NOT NULL DEFAULT 'S',
+owning_principal_id INT,
+is_fixed_role INT NOT NULL DEFAULT 0,
+authentication_type INT,
+default_language_lcid INT,
+allow_encrypted_value_modifications INT NOT NULL DEFAULT 0,
+create_date timestamptz NOT NULL,
+modify_date timestamptz NOT NULL,
+orig_username SYS.NVARCHAR(128) NOT NULL,
+database_name SYS.NVARCHAR(128) NOT NULL,
+default_schema_name SYS.NVARCHAR(128) NOT NULL,
+default_language_name SYS.NVARCHAR(128),
+authentication_type_desc SYS.NVARCHAR(60),
+user_can_connect INT NOT NULL DEFAULT 1,
+PRIMARY KEY (rolname));
+
+CREATE INDEX babelfish_authid_user_ext_login_db_idx ON sys.babelfish_authid_user_ext (login_name, database_name);
+
+GRANT SELECT ON sys.babelfish_authid_user_ext TO PUBLIC;
+
 SELECT pg_catalog.pg_extension_config_dump('sys.babelfish_function_ext', '');
 
 -- Drops the temporary procedure used by the upgrade script.

@@ -2,6 +2,9 @@
 grant connect to guest;
 go
 
+select rolname,orig_username, database_name, user_can_connect from babelfish_authid_user_ext;
+go
+
 -- Throws error
 revoke connect from guest;
 go
