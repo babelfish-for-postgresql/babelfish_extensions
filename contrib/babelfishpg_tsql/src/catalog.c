@@ -2125,3 +2125,42 @@ guest_has_dbaccess(char *db_name)
 	else
 		return true;
 }
+
+PG_FUNCTION_INFO_V1(update_guest_catalog);
+Datum update_guest_catalog(PG_FUNCTION_ARGS)
+{
+	Relation        db_rel;
+	TableScanDesc   scan;
+	HeapTuple       tuple;
+	bool            is_null;
+
+	db_rel = table_open(sysdatabases_oid, AccessShareLock);
+	scan = table_beginscan_catalog(db_rel, 0, NULL);
+	tuple = heap_getnext(scan, ForwardScanDirection);
+
+	while (HeapTupleIsValid(tuple))
+	{
+		Datum           db_name_datum;
+		const char      *db_name;
+		const char      *guest;
+
+		db_name_datum = heap_getattr(tuple,
+		Anum_sysdatabaese_name,
+		db_rel->rd_att,
+		&is_null);
+
+		db_name = TextDatumGetCString(db_name_datum);
+		if (strcmp(db_name, "master") == 0 || strcmp(db_name, "tempdb") == 0 || strcmp(db_name, "msdb") == 0)
+			PG_RETURN_INT32(0);
+		guest = get_guest_role_name(db_name);
+
+		if (guest)
+			add_to_bbf_authid_user_ext(guest, "guest", db_name, NULL, NULL, false, false);
+
+		tuple = heap_getnext(scan, ForwardScanDirection);
+	}
+	table_endscan(scan);
+	table_close(db_rel, AccessShareLock);
+	PG_RETURN_INT32(0);
+}
+
