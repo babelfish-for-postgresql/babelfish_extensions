@@ -9,7 +9,7 @@ jobs:
       # TODO: hard-coding this means that we're not actually testing mVU for
       # any PR that makes engine changes. This needs to be changed use
       # something similar to .github/scripts/clone_engine_repo.
-      ENGINE_VER_TO: BABEL_2_X_DEV__PG_14_5
+      ENGINE_VER_TO: BABEL_2_X_DEV__PG_14_X
       # We don't allow setting EXTENSION_VER_TO because it doesn't make sense
       # to do so. We always want this test to run against *this* checkout of
       # the extension code, because that's what we're actually testing.
