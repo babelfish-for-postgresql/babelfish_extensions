@@ -148,6 +148,7 @@ insteadof_nested_trigger_with_dml
 nested_trigger_inside_proc
 nested_trigger_with_dml
 triggers_with_transaction
+Test-sp_helpdbfixedrole
 Test-sp_helpsrvrolemember
 BABEL-404
 BABEL-493
@@ -162,6 +163,7 @@ BABEL-1466
 BABEL-1654
 BABEL-1715
 BABEL-2086
+BABEL-3314
 BABEL-TABLEOPTIONS
 BABEL-2765
 BABEL-2917
@@ -229,7 +231,6 @@ BABEL-1438
 BABEL-SP_TABLES
 BABEL-SP_SPECIAL_COLUMNS
 BABEL-SP_TABLE_PRIVILIGES
-BABEL-SP_FKEYS
 BABEL-SP_STORED_PROCEDURES
 BABEL-SP_SPROC_COLUMNS
 BABEL-3000
@@ -260,7 +261,6 @@ sys-sp_pkeys-dep
 sys-sp_statistics-dep
 BABEL-1756-dep
 BABEL-SP_SPECIAL_COLUMNS-dep
-BABEL-SP_FKEYS-dep
 BABEL-SP_STORED_PROCEDURES-dep
 BABEL-SP_SPROC_COLUMNS-dep
 BABEL-3000-dep

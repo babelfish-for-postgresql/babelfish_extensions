@@ -84,6 +84,7 @@ babel_trigger
 nested_trigger_inside_proc
 nested_trigger_with_dml
 triggers_with_transaction
+Test-sp_helpdbfixedrole
 Test-sp_helpsrvrolemember
 BABEL-404
 BABEL-493
@@ -96,6 +97,7 @@ BABEL-1444
 BABEL-1465
 BABEL-1466
 BABEL-2086
+BABEL-3314
 BABEL-TABLEOPTIONS
 temp-tables
 TestNotNull
