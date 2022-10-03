@@ -35,6 +35,3 @@ go
 -- should not be visible here
 SELECT COUNT(*) FROM sys.syscolumns where name = '@thirdparam'
 go
-
-SELECT * FROM sys.syscolumns
-go
