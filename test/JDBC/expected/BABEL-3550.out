@@ -7,7 +7,7 @@ GO
 ALTER SERVER ROLE sysadmin ADD MEMBER babel_3550_login1;
 GO
 
--- tsql  user=babel_3550_login1  password='12345678'
+-- tsql  user=babel_3550_login1  password=12345678
 SELECT SUSER_NAME();
 GO
 ~~START~~
