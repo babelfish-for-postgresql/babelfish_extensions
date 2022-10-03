@@ -401,10 +401,10 @@ static CoercionPathType tsql_find_coercion_pathway(Oid sourceTypeId, Oid targetT
 
 			/* We've found INT8 to MONEY casting */
 			if(isInt8Type && strcmp(type_nsname, "sys") == 0 && ((strcmp(type_name, "money") == 0) || (strcmp(type_name, "smallmoney") == 0)))
-     			isInt8ToMoney = true;
+				isInt8ToMoney = true;
 
-			/* Check if sourceType is INT8 */
-			if(strcmp(type_name, "int8") == 0)
+			/* Check if type is INT8 */
+			if(strcmp(type_nsname, "pg_catalog") == 0 && strcmp(type_name, "int8") == 0)
 				isInt8Type = true;
 
 			// We've found a SQL Variant Casting
