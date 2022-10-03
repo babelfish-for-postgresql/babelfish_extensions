@@ -3,6 +3,7 @@ GO
 
 -- Test for function
 SELECT
+    definition,
     uses_ansi_nulls,
     uses_quoted_identifier,
     is_schema_bound,

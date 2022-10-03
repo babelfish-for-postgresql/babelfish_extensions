@@ -1642,7 +1642,7 @@ CREATE OR REPLACE VIEW sys.all_sql_modules_internal AS
 SELECT
   ao.object_id AS object_id
   , CAST(
-      CASE WHEN ao.type in ('P', 'FN', 'IN', 'TF', 'RF') THEN pg_get_functiondef(ao.object_id)
+      CASE WHEN ao.type in ('P', 'FN', 'IN', 'TF', 'RF') THEN tsql_get_functiondef(ao.object_id)
       WHEN ao.type = 'V' THEN COALESCE(bvd.definition, '')
       WHEN ao.type = 'TR' THEN NULL
       ELSE NULL
@@ -1668,9 +1668,10 @@ FROM sys.all_objects ao
 LEFT OUTER JOIN sys.pg_namespace_ext nmext on ao.schema_id = nmext.oid
 LEFT OUTER JOIN sys.babelfish_namespace_ext ext ON nmext.nspname = ext.nspname
 LEFT OUTER JOIN sys.babelfish_view_def bvd 
- on (ext.orig_name = bvd.schema_name AND 
-     ext.dbid = bvd.dbid AND
-   ao.name = bvd.object_name 
+ on (
+      ext.orig_name = bvd.schema_name AND 
+      ext.dbid = bvd.dbid AND
+      ao.name = bvd.object_name 
    )
 LEFT JOIN pg_proc p ON ao.object_id = CAST(p.oid AS INT)
 WHERE ao.type in ('P', 'RF', 'V', 'TR', 'FN', 'IF', 'TF', 'R');
