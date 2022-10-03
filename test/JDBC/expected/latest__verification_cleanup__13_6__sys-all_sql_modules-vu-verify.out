@@ -17,7 +17,7 @@ WHERE object_id = OBJECT_ID('sys_all_sql_modules_vu_prepare_f1')
 GO
 ~~START~~
 nvarchar#!#bit#!#bit#!#bit#!#bit#!#bit#!#bit#!#int#!#bit
-CREATE OR REPLACE FUNCTION sys_all_sql_modules_vu_prepare_db_dbo.sys_all_sql_modules_vu_prepare_f1()<newline> RETURNS integer<newline> LANGUAGE pltsql<newline>AS '{"version_num": "1", "typmod_array": ["-1"], "original_probin": ""}', $function$BEGIN<newline>    RETURN 1;<newline>END$function$<newline>#!#1#!#1#!#0#!#0#!#0#!#0#!#<NULL>#!#0
+CREATE FUNCTION dbo.sys_all_sql_modules_vu_prepare_f1() RETURNS int AS BEGIN<newline>    RETURN 1;<newline>END#!#1#!#1#!#0#!#0#!#0#!#0#!#<NULL>#!#0
 ~~END~~
 
 
@@ -77,7 +77,7 @@ WHERE object_id = OBJECT_ID('sys_all_sql_modules_vu_prepare_p1')
 GO
 ~~START~~
 nvarchar#!#bit#!#bit#!#bit#!#bit#!#bit#!#bit#!#int#!#bit
-CREATE OR REPLACE PROCEDURE sys_all_sql_modules_vu_prepare_db_dbo.sys_all_sql_modules_vu_prepare_p1()<newline> LANGUAGE pltsql<newline>AS '{"version_num": "1", "typmod_array": [], "original_probin": ""}', $procedure$SELECT 1$procedure$<newline>#!#1#!#1#!#0#!#0#!#0#!#0#!#<NULL>#!#0
+CREATE PROCEDURE dbo.sys_all_sql_modules_vu_prepare_p1 AS SELECT 1#!#1#!#1#!#0#!#0#!#0#!#0#!#<NULL>#!#0
 ~~END~~
 
 
@@ -154,7 +154,7 @@ WHERE object_id = OBJECT_ID('sys.user_name')
 GO
 ~~START~~
 nvarchar#!#bit#!#bit#!#bit#!#bit#!#bit#!#bit#!#int#!#bit
-CREATE OR REPLACE FUNCTION sys.user_name(id oid DEFAULT NULL::oid)<newline> RETURNS nvarchar<newline> LANGUAGE c<newline> IMMUTABLE PARALLEL SAFE<newline>AS 'babelfishpg_tsql', $function$user_name$function$<newline>#!#1#!#1#!#0#!#0#!#0#!#0#!#<NULL>#!#0
+<NULL>#!#1#!#1#!#0#!#0#!#0#!#0#!#<NULL>#!#0
 ~~END~~
 
 
