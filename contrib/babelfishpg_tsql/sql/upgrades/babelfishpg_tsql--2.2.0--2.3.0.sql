@@ -220,6 +220,7 @@ CREATE INDEX babelfish_authid_user_ext_login_db_idx ON sys.babelfish_authid_user
 GRANT SELECT ON sys.babelfish_authid_user_ext TO PUBLIC;
 
 SELECT pg_catalog.pg_extension_config_dump('sys.babelfish_function_ext', '');
+SELECT pg_catalog.pg_extension_config_dump('sys.babelfish_authid_user_ext', '');
 
 -- Drops the temporary procedure used by the upgrade script.
 -- Please have this be one of the last statements executed in this upgrade script.

@@ -284,6 +284,7 @@ PRIMARY KEY (rolname));
 CREATE INDEX babelfish_authid_user_ext_login_db_idx ON sys.babelfish_authid_user_ext (login_name, database_name);
 
 GRANT SELECT ON sys.babelfish_authid_user_ext TO PUBLIC;
+SELECT pg_catalog.pg_extension_config_dump('sys.babelfish_authid_user_ext', '');
 
 -- DATABASE_PRINCIPALS
 CREATE VIEW sys.database_principals AS SELECT
