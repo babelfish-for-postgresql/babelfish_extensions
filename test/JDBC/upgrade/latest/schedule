@@ -91,6 +91,7 @@ BABEL-2086
 BABEL-3314
 BABEL-TABLEOPTIONS
 BABEL-2765
+BABEL-2819
 BABEL-2917
 BABEL-2955
 BABEL-3358
@@ -288,3 +289,4 @@ babel_datatype_sqlvariant
 babel_sqlvariant_cast_compare
 BABEL-3144
 sys-all_parameters-dep
+BABEL-3556
