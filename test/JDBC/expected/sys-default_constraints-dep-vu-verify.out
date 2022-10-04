@@ -1,7 +1,7 @@
 EXEC sys_default_constraints_dep_vu_prepare_p1
 GO
 ~~START~~
-varchar
+nvarchar
 50
 ~~END~~
 
@@ -17,7 +17,7 @@ int
 SELECT * FROM sys_default_constraints_dep_vu_prepare_v1
 GO
 ~~START~~
-varchar
+nvarchar
 50
 ~~END~~
 

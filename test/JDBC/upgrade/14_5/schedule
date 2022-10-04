@@ -197,7 +197,6 @@ sys-types-dep
 sys-views-dep
 sys-check_constraints-dep
 sys-computed_columns-dep
-sys-default_constraints-dep
 sys-index_columns-dep
 sys-sp_databases-dep
 sys-syscolumns-dep
@@ -218,14 +217,12 @@ sys-all_sql_modules
 sys-assembly_modules
 sys-change_tracking_databases
 sys-change_tracking_tables
-sys-check_constraints
 sys-columns
 sys-computed_columns
 sys-data_spaces
 sys-database_files
 sys-database_filestream_options
 sys-database_recovery_status
-sys-default_constraints
 sys-dm_exec_connections
 sys-dm_exec_sessions
 sys-dm_hadr_cluster
