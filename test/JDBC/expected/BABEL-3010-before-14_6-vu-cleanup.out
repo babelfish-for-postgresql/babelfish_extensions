@@ -13,7 +13,10 @@ GO
 DROP VIEW babel_3010_vu_prepare_v1;
 GO
 
-DROP FUNCTION babel_3010_vu_prepare_f1;
+DROP FUNCTION babel_3010_vu_prepare_f1(int);
+GO
+
+DROP FUNCTION babel_3010_vu_prepare_f1(int, varchar);
 GO
 
 DROP FUNCTION babel_3010_vu_prepare_f2;

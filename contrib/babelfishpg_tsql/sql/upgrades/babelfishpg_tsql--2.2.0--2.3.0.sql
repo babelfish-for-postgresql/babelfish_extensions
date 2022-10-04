@@ -201,6 +201,10 @@ SELECT pg_catalog.pg_extension_config_dump('sys.babelfish_function_ext', '');
 
 ALTER TABLE sys.babelfish_view_def ADD COLUMN create_date TIMESTAMP, add COLUMN modify_date TIMESTAMP;
 
+CREATE OR REPLACE FUNCTION sys.babelfish_get_pltsql_function_signature(IN funcoid OID)
+RETURNS text
+AS 'babelfishpg_tsql', 'get_pltsql_function_signature' LANGUAGE C;
+
 create or replace view sys.tables as
 select
   CAST(t.relname as sys._ci_sysname) as name
@@ -289,10 +293,7 @@ select
   , cast(p.oid as int) as object_id
   , cast(null as int) as principal_id
   , cast(sch.schema_id as int) as schema_id
-  , cast (case when tr.tgrelid is not null 
-      then tr.tgrelid 
-      else 0 end as int) 
-    as parent_object_id
+  , cast (0 as int) as parent_object_id
   , cast(case p.prokind
       when 'p' then 'P'
       when 'a' then 'AF'
@@ -322,9 +323,10 @@ select
   , cast(0 as sys.bit) as skips_repl_constraints
 from pg_proc p
 inner join sys.schemas sch on sch.schema_id = p.pronamespace
-left join pg_trigger tr on tr.tgfoid = p.oid
 left join sys.babelfish_function_ext f on p.proname = f.funcname and sch.schema_id::regnamespace::name = f.nspname
+and sys.babelfish_get_pltsql_function_signature(p.oid) = f.funcsignature collate "C"
 where has_schema_privilege(sch.schema_id, 'USAGE')
+and format_type(p.prorettype, null) <> 'trigger'
 and has_function_privilege(p.oid, 'EXECUTE');
 GRANT SELECT ON sys.procedures TO PUBLIC;
 
@@ -354,6 +356,7 @@ FROM pg_proc p
 inner join sys.schemas sch on sch.schema_id = p.pronamespace
 left join pg_trigger tr on tr.tgfoid = p.oid
 left join sys.babelfish_function_ext f on p.proname = f.funcname and sch.schema_id::regnamespace::name = f.nspname
+and sys.babelfish_get_pltsql_function_signature(p.oid) = f.funcsignature collate "C"
 where has_schema_privilege(sch.schema_id, 'USAGE')
 and has_function_privilege(p.oid, 'EXECUTE')
 and p.prokind = 'f'

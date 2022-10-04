@@ -1,4 +1,4 @@
-SELECT DISTINCT
+SELECT
        CASE WHEN xtype LIKE 'TT'
             THEN substring(name, 4, 26)
             ELSE name
