@@ -50,7 +50,6 @@ static List *gen_dropdb_subcmds(const char *schema,
 								List *db_users);
 static Oid do_create_bbf_db(const char *dbname, List *options, const char *owner);
 static void create_bbf_db_internal(const char *dbname, List *options, const char *owner, int16 dbid);
-List *grant_guest_to_logins(StringInfoData *query);
 static void drop_related_bbf_namespace_entries(int16 dbid);
 
 static bool
