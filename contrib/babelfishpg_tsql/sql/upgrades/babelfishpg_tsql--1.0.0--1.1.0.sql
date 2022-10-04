@@ -1297,5 +1297,9 @@ SELECT p.name
 FROM sys.proc_param_helper() as p;
 GRANT SELECT ON sys.syscolumns TO PUBLIC;
 
+-- Drops the temporary procedure used by the upgrade script.
+-- Please have this be one of the last statements executed in this upgrade script.
+DROP PROCEDURE sys.babelfish_drop_deprecated_view(varchar, varchar);
+
 -- Reset search_path to not affect any subsequent scripts
 SELECT set_config('search_path', trim(leading 'sys, ' from current_setting('search_path')), false);
