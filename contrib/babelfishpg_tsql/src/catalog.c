@@ -29,7 +29,7 @@
 #include "hooks.h"
 #include "multidb.h"
 #include "rolecmds.h"
-#include "dbcmds.h"
+#include "session.h"
 #include "pltsql.h"
 
 /*****************************************
@@ -2138,6 +2138,9 @@ Datum update_guest_catalog(PG_FUNCTION_ARGS)
 		Node			*stmt;
 		ListCell   		*res_item;
 		int				i = 0;
+		const char	*prev_current_user;
+		int16 		old_dbid;
+		char		*old_dbname;
 
 		db_name_datum = heap_getattr(tuple,
 		Anum_sysdatabaese_name,
@@ -2171,34 +2174,57 @@ Datum update_guest_catalog(PG_FUNCTION_ARGS)
 				update_GrantRoleStmt(stmt, list_make1(tmp), logins);
 			}
 
-			/* Run all subcommands */
-			foreach(res_item, res)
+			/* Set current user to session user for create permissions */
+			prev_current_user = GetUserNameFromId(GetUserId(), false);
+
+			bbf_set_current_user("sysadmin");
+
+			old_dbid = get_cur_db_id();
+			old_dbname = get_cur_db_name();
+			set_cur_db(dbid, dbname);  /* temporarily set current dbid as the new id */
+
+			PG_TRY();
 			{
-				Node	   *res_stmt = ((RawStmt *) lfirst(res_item))->stmt;
-				PlannedStmt *wrapper;
+				/* Run all subcommands */
+				foreach(res_item, res)
+				{
+					Node	   *res_stmt = ((RawStmt *) lfirst(res_item))->stmt;
+					PlannedStmt *wrapper;
 
-				/* need to make a wrapper PlannedStmt */
-				wrapper = makeNode(PlannedStmt);
-				wrapper->commandType = CMD_UTILITY;
-				wrapper->canSetTag = false;
-				wrapper->utilityStmt = res_stmt;
-				wrapper->stmt_location = 0;
-				wrapper->stmt_len = 18;
+					/* need to make a wrapper PlannedStmt */
+					wrapper = makeNode(PlannedStmt);
+					wrapper->commandType = CMD_UTILITY;
+					wrapper->canSetTag = false;
+					wrapper->utilityStmt = res_stmt;
+					wrapper->stmt_location = 0;
+					wrapper->stmt_len = 18;
 
-				/* do this step */
-				ProcessUtility(wrapper,
-							   "(CREATE LOGICAL DATABASE )",
-							   false,
-							   PROCESS_UTILITY_SUBCOMMAND,
-								NULL,
-						   		NULL,
-						   		None_Receiver,
-						   		NULL);
+					/* do this step */
+					ProcessUtility(wrapper,
+								   "(CREATE LOGICAL DATABASE )",
+								   false,
+								   PROCESS_UTILITY_SUBCOMMAND,
+									NULL,
+							   		NULL,
+							   		None_Receiver,
+						 	  		NULL);
 
-				/* make sure later steps can see the object created here */
-				CommandCounterIncrement();
+					/* make sure later steps can see the object created here */
+					CommandCounterIncrement();
+				}
+				add_to_bbf_authid_user_ext(guest, "guest", db_name, NULL, NULL, false, false);
 			}
-			add_to_bbf_authid_user_ext(guest, "guest", db_name, NULL, NULL, false, false);
+			PG_CATCH();
+			{
+				/* Clean up. Restore previous state. */
+				bbf_set_current_user(prev_current_user);
+				set_cur_db(old_dbid, old_dbname);
+				PG_RE_THROW();
+			}
+			PG_END_TRY();
+
+			/* Set current user back to previous user */
+			bbf_set_current_user(prev_current_user);
 		}
 		tuple = heap_getnext(scan, ForwardScanDirection);
 	}
