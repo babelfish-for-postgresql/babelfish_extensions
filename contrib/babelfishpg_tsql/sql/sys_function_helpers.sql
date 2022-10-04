@@ -218,8 +218,8 @@ BEGIN
                     WHEN (v_style = 112) THEN 'YYYYMMDD'
                     WHEN (v_style IN (20, 21, 23, 25, 120, 121, 126, 127)) THEN 'YYYY-MM-DD'
                     WHEN (v_style = 130) THEN 'DD $mnme$ YYYY'
-                    WHEN (v_style = 131) THEN format('%s/MM/YYYY', lpad(v_day, 2, ' '))
-                    WHEN (v_style IN (0, 9, 100, 109)) THEN format('$mnme$ %s YYYY', lpad(v_day, 2, ' '))
+                    WHEN (v_style = 131) THEN pg_catalog.format('%s/MM/YYYY', lpad(v_day, 2, ' '))
+                    WHEN (v_style IN (0, 9, 100, 109)) THEN pg_catalog.format('$mnme$ %s YYYY', lpad(v_day, 2, ' '))
                  END;
 
     v_resstring := to_char(v_dateval, v_resmask);
@@ -241,17 +241,17 @@ EXCEPTION
                     HINT := 'Change "style" parameter to the proper value and try again.';
 
     WHEN invalid_parameter_value THEN
-        RAISE USING MESSAGE := format('%s is not a valid style number when converting from DATE to a character string.', v_style),
+        RAISE USING MESSAGE := pg_catalog.format('%s is not a valid style number when converting from DATE to a character string.', v_style),
                     DETAIL := 'Use of incorrect "style" parameter value during conversion process.',
                     HINT := 'Change "style" parameter to the proper value and try again.';
 
     WHEN invalid_datetime_format THEN
-        RAISE USING MESSAGE := format('Error converting data type DATE to %s.', trim(p_datatype)),
+        RAISE USING MESSAGE := pg_catalog.format('Error converting data type DATE to %s.', trim(p_datatype)),
                     DETAIL := 'Incorrect using of pair of input parameters values during conversion process.',
                     HINT := 'Check the input parameters values, correct them if needed, and try again.';
 
    WHEN interval_field_overflow THEN
-       RAISE USING MESSAGE := format('The size (%s) given to the convert specification ''%s'' exceeds the maximum allowed for any data type (%s).',
+       RAISE USING MESSAGE := pg_catalog.format('The size (%s) given to the convert specification ''%s'' exceeds the maximum allowed for any data type (%s).',
                                      v_lengthexpr,
                                      lower(v_res_datatype),
                                      v_maxlength),
@@ -264,7 +264,7 @@ EXCEPTION
                     HINT := 'Change "datatype" parameter to the proper value and try again.';
 
     WHEN invalid_character_value_for_cast THEN
-        RAISE USING MESSAGE := format('Invalid CONVERSION_LANG constant value - ''%s''. Allowed values are: ''English'', ''Deutsch'', etc.',
+        RAISE USING MESSAGE := pg_catalog.format('Invalid CONVERSION_LANG constant value - ''%s''. Allowed values are: ''English'', ''Deutsch'', etc.',
                                       CONVERSION_LANG),
                     DETAIL := 'Compiled incorrect CONVERSION_LANG constant value in function''s body.',
                     HINT := 'Correct CONVERSION_LANG constant value in function''s body, recompile it and try again.';
@@ -273,7 +273,7 @@ EXCEPTION
         GET STACKED DIAGNOSTICS v_err_message = MESSAGE_TEXT;
         v_err_message := substring(lower(v_err_message), 'integer\:\s\"(.*)\"');
 
-        RAISE USING MESSAGE := format('Error while trying to convert "%s" value to SMALLINT (or INTEGER) data type.',
+        RAISE USING MESSAGE := pg_catalog.format('Error while trying to convert "%s" value to SMALLINT (or INTEGER) data type.',
                                       v_err_message),
                     DETAIL := 'Supplied value contains illegal characters.',
                     HINT := 'Correct supplied value, remove all illegal characters.';
@@ -421,12 +421,12 @@ BEGIN
     IF ((v_style = -1 AND v_src_datatype <> 'DATETIME2') OR
         v_style IN (0, 9, 100, 109))
     THEN
-        v_resmask := format('$mnme$ %s YYYY %s:MI%s',
+        v_resmask := pg_catalog.format('$mnme$ %s YYYY %s:MI%s',
                             lpad(v_day, 2, ' '),
                             lpad(v_hour, 2, ' '),
                             CASE
                                WHEN (v_style IN (-1, 0, 100)) THEN 'AM'
-                               ELSE format(':SS:%sAM', v_fseconds)
+                               ELSE pg_catalog.format(':SS:%sAM', v_fseconds)
                             END);
     ELSIF (v_style = 1) THEN
         v_resmask := 'MM/DD/YY';
@@ -471,30 +471,30 @@ BEGIN
     ELSIF (v_style = 112) THEN
         v_resmask := 'YYYYMMDD';
     ELSIF (v_style IN (13, 113)) THEN
-        v_resmask := format('DD $mnme$ YYYY HH24:MI:SS%s%s', v_fractsep, v_fseconds);
+        v_resmask := pg_catalog.format('DD $mnme$ YYYY HH24:MI:SS%s%s', v_fractsep, v_fseconds);
     ELSIF (v_style IN (14, 114)) THEN
-        v_resmask := format('HH24:MI:SS%s%s', v_fractsep, v_fseconds);
+        v_resmask := pg_catalog.format('HH24:MI:SS%s%s', v_fractsep, v_fseconds);
     ELSIF (v_style IN (20, 120)) THEN
         v_resmask := 'YYYY-MM-DD HH24:MI:SS';
     ELSIF ((v_style = -1 AND v_src_datatype = 'DATETIME2') OR
            v_style IN (21, 25, 121))
     THEN
-        v_resmask := format('YYYY-MM-DD HH24:MI:SS.%s', v_fseconds);
+        v_resmask := pg_catalog.format('YYYY-MM-DD HH24:MI:SS.%s', v_fseconds);
     ELSIF (v_style = 22) THEN
-        v_resmask := format('MM/DD/YY %s:MI:SS AM', lpad(v_hour, 2, ' '));
+        v_resmask := pg_catalog.format('MM/DD/YY %s:MI:SS AM', lpad(v_hour, 2, ' '));
     ELSIF (v_style = 23) THEN
         v_resmask := 'YYYY-MM-DD';
     ELSIF (v_style IN (126, 127)) THEN
         v_resmask := CASE v_src_datatype
                         WHEN 'SMALLDATETIME' THEN 'YYYY-MM-DDT$rem$HH24:MI:SS'
-                        ELSE format('YYYY-MM-DDT$rem$HH24:MI:SS.%s', v_fseconds)
+                        ELSE pg_catalog.format('YYYY-MM-DDT$rem$HH24:MI:SS.%s', v_fseconds)
                      END;
     ELSIF (v_style IN (130, 131)) THEN
         v_resmask := concat(CASE p_style
-                               WHEN 131 THEN format('%s/MM/YYYY ', lpad(v_day, 2, ' '))
-                               ELSE format('%s $mnme$ YYYY ', lpad(v_day, 2, ' '))
+                               WHEN 131 THEN pg_catalog.format('%s/MM/YYYY ', lpad(v_day, 2, ' '))
+                               ELSE pg_catalog.format('%s $mnme$ YYYY ', lpad(v_day, 2, ' '))
                             END,
-                            format('%s:MI:SS%s%sAM', lpad(v_hour, 2, ' '), v_fractsep, v_fseconds));
+                            pg_catalog.format('%s:MI:SS%s%sAM', lpad(v_hour, 2, ' '), v_fractsep, v_fseconds));
     END IF;
 
     v_resstring := to_char(v_datetimeval, v_resmask);
@@ -518,13 +518,13 @@ EXCEPTION
                     HINT := 'Change "srcdatatype" parameter to the proper value and try again.';
 
    WHEN invalid_regular_expression THEN
-       RAISE USING MESSAGE := format('The source data type scale (%s) given to the convert specification exceeds the maximum allowable value (7).',
+       RAISE USING MESSAGE := pg_catalog.format('The source data type scale (%s) given to the convert specification exceeds the maximum allowable value (7).',
                                      v_scale),
                    DETAIL := 'Use of incorrect scale value of source data type parameter during conversion process.',
                    HINT := 'Change scale component of source data type parameter to the allowable value and try again.';
 
     WHEN invalid_indicator_parameter_value THEN
-        RAISE USING MESSAGE := format('Invalid attributes specified for data type %s.', v_src_datatype),
+        RAISE USING MESSAGE := pg_catalog.format('Invalid attributes specified for data type %s.', v_src_datatype),
                     DETAIL := 'Use of incorrect scale value, which is not corresponding to specified data type.',
                     HINT := 'Change data type scale component or select different data type and try again.';
 
@@ -534,13 +534,13 @@ EXCEPTION
                     HINT := 'Change "style" parameter to the proper value and try again.';
 
     WHEN invalid_parameter_value THEN
-        RAISE USING MESSAGE := format('%s is not a valid style number when converting from %s to a character string.',
+        RAISE USING MESSAGE := pg_catalog.format('%s is not a valid style number when converting from %s to a character string.',
                                       v_style, v_src_datatype),
                     DETAIL := 'Use of incorrect "style" parameter value during conversion process.',
                     HINT := 'Change "style" parameter to the proper value and try again.';
 
     WHEN interval_field_overflow THEN
-        RAISE USING MESSAGE := format('The size (%s) given to the convert specification ''%s'' exceeds the maximum allowed for any data type (%s).',
+        RAISE USING MESSAGE := pg_catalog.format('The size (%s) given to the convert specification ''%s'' exceeds the maximum allowed for any data type (%s).',
                                       v_lengthexpr, lower(v_res_datatype), v_maxlength),
                     DETAIL := 'Use of incorrect size value of data type parameter during conversion process.',
                     HINT := 'Change size component of data type parameter to the allowable value and try again.';
@@ -551,7 +551,7 @@ EXCEPTION
                     HINT := 'Change "datatype" parameter to the proper value and try again.';
 
     WHEN invalid_character_value_for_cast THEN
-        RAISE USING MESSAGE := format('Invalid CONVERSION_LANG constant value - ''%s''. Allowed values are: ''English'', ''Deutsch'', etc.',
+        RAISE USING MESSAGE := pg_catalog.format('Invalid CONVERSION_LANG constant value - ''%s''. Allowed values are: ''English'', ''Deutsch'', etc.',
                                       CONVERSION_LANG),
                     DETAIL := 'Compiled incorrect CONVERSION_LANG constant value in function''s body.',
                     HINT := 'Correct CONVERSION_LANG constant value in function''s body, recompile it and try again.';
@@ -560,7 +560,7 @@ EXCEPTION
         GET STACKED DIAGNOSTICS v_err_message = MESSAGE_TEXT;
         v_err_message := substring(lower(v_err_message), 'integer\:\s\"(.*)\"');
 
-        RAISE USING MESSAGE := format('Error while trying to convert "%s" value to SMALLINT data type.',
+        RAISE USING MESSAGE := pg_catalog.format('Error while trying to convert "%s" value to SMALLINT data type.',
                                       v_err_message),
                     DETAIL := 'Supplied value contains illegal characters.',
                     HINT := 'Correct supplied value, remove all illegal characters.';
@@ -679,7 +679,7 @@ BEGIN
                                                          extract(month from p_datetimeval)::SMALLINT,
                                                          extract(year from p_datetimeval)::INTEGER);
 
-    RETURN to_timestamp(format('%s %s', to_char(v_hijri_date, 'DD.MM.YYYY'),
+    RETURN to_timestamp(pg_catalog.format('%s %s', to_char(v_hijri_date, 'DD.MM.YYYY'),
                                         to_char(p_datetimeval, ' HH24:MI:SS.US')),
                         'DD.MM.YYYY HH24:MI:SS.US');
 END;
@@ -775,7 +775,7 @@ EXCEPTION
         GET STACKED DIAGNOSTICS v_err_message = MESSAGE_TEXT;
         v_err_message := substring(lower(v_err_message), 'integer\:\s\"(.*)\"');
 
-        RAISE USING MESSAGE := format('Error while trying to convert "%s" value to SMALLINT data type.', v_err_message),
+        RAISE USING MESSAGE := pg_catalog.format('Error while trying to convert "%s" value to SMALLINT data type.', v_err_message),
                     DETAIL := 'Supplied value contains illegal characters.',
                     HINT := 'Correct supplied value, remove all illegal characters.';
 END;
@@ -811,7 +811,7 @@ BEGIN
                                                          extract(month from p_dateval)::NUMERIC,
                                                          extract(year from p_dateval)::NUMERIC);
 
-    RETURN to_timestamp(format('%s %s', to_char(v_hijri_date, 'DD.MM.YYYY'),
+    RETURN to_timestamp(pg_catalog.format('%s %s', to_char(v_hijri_date, 'DD.MM.YYYY'),
                                         to_char(p_datetimeval, ' HH24:MI:SS.US')),
                         'DD.MM.YYYY HH24:MI:SS.US');
 END;
@@ -1170,12 +1170,12 @@ EXCEPTION
                     HINT := 'Change "style" parameter to the proper value and try again.';
 
     WHEN invalid_parameter_value THEN
-        RAISE USING MESSAGE := format('The style %s is not supported for conversions from VARCHAR to DATE.', v_style),
+        RAISE USING MESSAGE := pg_catalog.format('The style %s is not supported for conversions from VARCHAR to DATE.', v_style),
                     DETAIL := 'Use of incorrect "style" parameter value during conversion process.',
                     HINT := 'Change "style" parameter to the proper value and try again.';
 
     WHEN invalid_regular_expression THEN
-        RAISE USING MESSAGE := format('The input character string doesn''t follow style %s.', v_style),
+        RAISE USING MESSAGE := pg_catalog.format('The input character string doesn''t follow style %s.', v_style),
                     DETAIL := 'Selected "style" param value isn''t valid for conversion of passed character string.',
                     HINT := 'Either change the input character string or use a different style.';
 
@@ -1190,7 +1190,7 @@ EXCEPTION
                     HINT := 'Change DATE_FORMAT constant to one of these values: MDY|DMY|DYM, recompile function and try again.';
 
     WHEN invalid_character_value_for_cast THEN
-        RAISE USING MESSAGE := format('Invalid CONVERSION_LANG constant value - ''%s''. Allowed values are: ''English'', ''Deutsch'', etc.',
+        RAISE USING MESSAGE := pg_catalog.format('Invalid CONVERSION_LANG constant value - ''%s''. Allowed values are: ''English'', ''Deutsch'', etc.',
                                       CONVERSION_LANG),
                     DETAIL := 'Compiled incorrect CONVERSION_LANG constant value in function''s body.',
                     HINT := 'Correct CONVERSION_LANG constant value in function''s body, recompile it and try again.';
@@ -1199,7 +1199,7 @@ EXCEPTION
         GET STACKED DIAGNOSTICS v_err_message = MESSAGE_TEXT;
         v_err_message := substring(lower(v_err_message), 'integer\:\s\"(.*)\"');
 
-        RAISE USING MESSAGE := format('Error while trying to convert "%s" value to SMALLINT data type.',
+        RAISE USING MESSAGE := pg_catalog.format('Error while trying to convert "%s" value to SMALLINT data type.',
                                       v_err_message),
                     DETAIL := 'Passed argument value contains illegal characters.',
                     HINT := 'Correct passed argument value, remove all illegal characters.';
@@ -1738,12 +1738,12 @@ EXCEPTION
                     HINT := 'Change "style" parameter to the proper value and try again.';
 
     WHEN invalid_parameter_value THEN
-        RAISE USING MESSAGE := format('The style %s is not supported for conversions from VARCHAR to %s.', v_style, v_res_datatype),
+        RAISE USING MESSAGE := pg_catalog.format('The style %s is not supported for conversions from VARCHAR to %s.', v_style, v_res_datatype),
                     DETAIL := 'Use of incorrect "style" parameter value during conversion process.',
                     HINT := 'Change "style" parameter to the proper value and try again.';
 
     WHEN invalid_regular_expression THEN
-        RAISE USING MESSAGE := format('The input character string doesn''t follow style %s.', v_style),
+        RAISE USING MESSAGE := pg_catalog.format('The input character string doesn''t follow style %s.', v_style),
                     DETAIL := 'Selected "style" param value isn''t valid for conversion of passed character string.',
                     HINT := 'Either change the input character string or use a different style.';
 
@@ -1753,12 +1753,12 @@ EXCEPTION
                     HINT := 'Change "datatype" parameter to the proper value and try again.';
 
     WHEN invalid_indicator_parameter_value THEN
-        RAISE USING MESSAGE := format('Invalid attributes specified for data type %s.', v_res_datatype),
+        RAISE USING MESSAGE := pg_catalog.format('Invalid attributes specified for data type %s.', v_res_datatype),
                     DETAIL := 'Use of incorrect scale value, which is not corresponding to specified data type.',
                     HINT := 'Change data type scale component or select different data type and try again.';
 
     WHEN interval_field_overflow THEN
-        RAISE USING MESSAGE := format('Specified scale %s is invalid.', v_scale),
+        RAISE USING MESSAGE := pg_catalog.format('Specified scale %s is invalid.', v_scale),
                     DETAIL := 'Use of incorrect data type scale value during conversion process.',
                     HINT := 'Change scale component of data type parameter to be in range [0..7] and try again.';
 
@@ -1781,7 +1781,7 @@ EXCEPTION
                     HINT := 'Change DATE_FORMAT constant to one of these values: MDY|DMY|DYM, recompile function and try again.';
 
     WHEN invalid_escape_sequence THEN
-        RAISE USING MESSAGE := format('Invalid CONVERSION_LANG constant value - ''%s''. Allowed values are: ''English'', ''Deutsch'', etc.',
+        RAISE USING MESSAGE := pg_catalog.format('Invalid CONVERSION_LANG constant value - ''%s''. Allowed values are: ''English'', ''Deutsch'', etc.',
                                       CONVERSION_LANG),
                     DETAIL := 'Compiled incorrect CONVERSION_LANG constant value in function''s body.',
                     HINT := 'Correct CONVERSION_LANG constant value in function''s body, recompile it and try again.';
@@ -1790,7 +1790,7 @@ EXCEPTION
         GET STACKED DIAGNOSTICS v_err_message = MESSAGE_TEXT;
         v_err_message := substring(lower(v_err_message), 'integer\:\s\"(.*)\"');
 
-        RAISE USING MESSAGE := format('Error while trying to convert "%s" value to SMALLINT data type.',
+        RAISE USING MESSAGE := pg_catalog.format('Error while trying to convert "%s" value to SMALLINT data type.',
                                       v_err_message),
                     DETAIL := 'Passed argument value contains illegal characters.',
                     HINT := 'Correct passed argument value, remove all illegal characters.';
@@ -1913,7 +1913,7 @@ EXCEPTION
                     HINT := 'Change "style" parameter to the proper value and try again.';
 
     WHEN invalid_parameter_value THEN
-        RAISE USING MESSAGE := format('The style %s is not supported for conversions from VARCHAR to TIME.', v_style),
+        RAISE USING MESSAGE := pg_catalog.format('The style %s is not supported for conversions from VARCHAR to TIME.', v_style),
                     DETAIL := 'Use of incorrect "style" parameter value during conversion process.',
                     HINT := 'Change "style" parameter to the proper value and try again.';
 
@@ -1923,7 +1923,7 @@ EXCEPTION
                     HINT := 'Change "datatype" parameter to the proper value and try again.';
 
     WHEN interval_field_overflow THEN
-        RAISE USING MESSAGE := format('Specified scale %s is invalid.', v_scale),
+        RAISE USING MESSAGE := pg_catalog.format('Specified scale %s is invalid.', v_scale),
                     DETAIL := 'Use of incorrect data type scale value during conversion process.',
                     HINT := 'Change scale component of data type parameter to be in range [0..7] and try again.';
 
@@ -1941,7 +1941,7 @@ EXCEPTION
         GET STACKED DIAGNOSTICS v_err_message = MESSAGE_TEXT;
         v_err_message := substring(lower(v_err_message), 'integer\:\s\"(.*)\"');
 
-        RAISE USING MESSAGE := format('Error while trying to convert "%s" value to SMALLINT data type.',
+        RAISE USING MESSAGE := pg_catalog.format('Error while trying to convert "%s" value to SMALLINT data type.',
                                       v_err_message),
                     DETAIL := 'Supplied value contains illegal characters.',
                     HINT := 'Correct supplied value, remove all illegal characters.';
@@ -2054,7 +2054,7 @@ BEGIN
     THEN
         v_resmask := CASE
                         WHEN (char_length(v_fseconds) = 0) THEN concat(v_hours, ':MI:SSAM')
-                        ELSE format('%s:MI:SS.%sAM', v_hours, v_fseconds)
+                        ELSE pg_catalog.format('%s:MI:SS.%sAM', v_hours, v_fseconds)
                      END;
     ELSIF (v_style IN (13, 14, 21, 25, 113, 114, 121, 126, 127))
     THEN
@@ -2064,12 +2064,12 @@ BEGIN
                      END;
     ELSIF (v_style = 22)
     THEN
-        v_resmask := format('%s:MI:SS AM', lpad(v_hours, 2, ' '));
+        v_resmask := pg_catalog.format('%s:MI:SS AM', lpad(v_hours, 2, ' '));
     ELSIF (v_style IN (130, 131))
     THEN
         v_resmask := CASE
                         WHEN (char_length(v_fseconds) = 0) THEN concat(lpad(v_hours, 2, ' '), ':MI:SSAM')
-                        ELSE format('%s:MI:SS.%sAM', lpad(v_hours, 2, ' '), v_fseconds)
+                        ELSE pg_catalog.format('%s:MI:SS.%sAM', lpad(v_hours, 2, ' '), v_fseconds)
                      END;
     END IF;
 
@@ -2092,13 +2092,13 @@ EXCEPTION
                     HINT := 'Change "src_datatype" parameter to the proper value and try again.';
 
    WHEN invalid_regular_expression THEN
-       RAISE USING MESSAGE := format('The source data type scale (%s) given to the convert specification exceeds the maximum allowable value (7).',
+       RAISE USING MESSAGE := pg_catalog.format('The source data type scale (%s) given to the convert specification exceeds the maximum allowable value (7).',
                                      v_scale),
                    DETAIL := 'Use of incorrect scale value of source data type parameter during conversion process.',
                    HINT := 'Change scale component of source data type parameter to the allowable value and try again.';
 
    WHEN interval_field_overflow THEN
-       RAISE USING MESSAGE := format('The size (%s) given to the convert specification ''%s'' exceeds the maximum allowed for any data type (%s).',
+       RAISE USING MESSAGE := pg_catalog.format('The size (%s) given to the convert specification ''%s'' exceeds the maximum allowed for any data type (%s).',
                                      v_lengthexpr, lower(v_res_datatype), v_res_maxlength),
                    DETAIL := 'Use of incorrect size value of target data type parameter during conversion process.',
                    HINT := 'Change size component of data type parameter to the allowable value and try again.';
@@ -2109,7 +2109,7 @@ EXCEPTION
                     HINT := 'Change "style" parameter to the proper value and try again.';
 
     WHEN invalid_parameter_value THEN
-        RAISE USING MESSAGE := format('%s is not a valid style number when converting from TIME to a character string.', v_style),
+        RAISE USING MESSAGE := pg_catalog.format('%s is not a valid style number when converting from TIME to a character string.', v_style),
                     DETAIL := 'Use of incorrect "style" parameter value during conversion process.',
                     HINT := 'Change "style" parameter to the proper value and try again.';
 
@@ -2119,7 +2119,7 @@ EXCEPTION
                     HINT := 'Change "datatype" parameter to the proper value and try again.';
 
     WHEN invalid_datetime_format THEN
-        RAISE USING MESSAGE := format('Error converting data type TIME to %s.',
+        RAISE USING MESSAGE := pg_catalog.format('Error converting data type TIME to %s.',
                                       rtrim(split_part(trim(p_datatype), '(', 1))),
                     DETAIL := 'Incorrect using of pair of input parameters values during conversion process.',
                     HINT := 'Check the input parameters values, correct them if needed, and try again.';
@@ -2211,7 +2211,7 @@ EXCEPTION
         GET STACKED DIAGNOSTICS v_err_message = MESSAGE_TEXT;
         v_err_message := substring(lower(v_err_message), 'integer\:\s\"(.*)\"');
 
-        RAISE USING MESSAGE := format('Error while trying to convert "%s" value to SMALLINT data type.',
+        RAISE USING MESSAGE := pg_catalog.format('Error while trying to convert "%s" value to SMALLINT data type.',
                                       v_err_message),
                     DETAIL := 'Supplied value contains illegal characters.',
                     HINT := 'Correct supplied value, remove all illegal characters.';
@@ -2367,12 +2367,12 @@ BEGIN
     RETURN v_lang_data_jsonb;
 EXCEPTION
     WHEN invalid_text_representation THEN
-        RAISE USING MESSAGE := format('The language metadata JSON value extracted from chache is not a valid JSON object.',
+        RAISE USING MESSAGE := pg_catalog.format('The language metadata JSON value extracted from chache is not a valid JSON object.',
                                       p_lang_spec_culture),
                     HINT := 'Drop the current session, fix the appropriate record in "sys.babelfish_syslanguages" table, and try again after reconnection.';
 
     WHEN OTHERS THEN
-        RAISE USING MESSAGE := format('"%s" is not a valid special culture or language name parameter.',
+        RAISE USING MESSAGE := pg_catalog.format('"%s" is not a valid special culture or language name parameter.',
                                       p_lang_spec_culture),
                     DETAIL := 'Use of incorrect "lang_spec_culture" parameter value during conversion process.',
                     HINT := 'Change "lang_spec_culture" parameter to the proper value and try again.';
@@ -2423,7 +2423,7 @@ EXCEPTION
         GET STACKED DIAGNOSTICS v_err_message = MESSAGE_TEXT;
         v_err_message := substring(lower(v_err_message), 'integer\:\s\"(.*)\"');
 
-        RAISE USING MESSAGE := format('Error while trying to convert "%s" value to SMALLINT data type.', v_err_message),
+        RAISE USING MESSAGE := pg_catalog.format('Error while trying to convert "%s" value to SMALLINT data type.', v_err_message),
                     DETAIL := 'Supplied value contains illegal characters.',
                     HINT := 'Correct supplied value, remove all illegal characters.';
 END;
@@ -2461,7 +2461,7 @@ BEGIN
     RETURN v_monthnum;
 EXCEPTION
     WHEN datetime_field_overflow THEN
-        RAISE USING MESSAGE := format('Can not convert value "%s" to a correct month number.',
+        RAISE USING MESSAGE := pg_catalog.format('Can not convert value "%s" to a correct month number.',
                                       trim(p_monthname)),
                     DETAIL := 'Supplied month name is not valid.',
                     HINT := 'Correct supplied month name value and try again.';
@@ -2576,7 +2576,7 @@ EXCEPTION
         GET STACKED DIAGNOSTICS v_err_message = MESSAGE_TEXT;
         v_err_message := substring(lower(v_err_message), 'integer\:\s\"(.*)\"');
 
-        RAISE USING MESSAGE := format('Error while trying to convert "%s" value to SMALLINT data type.', v_err_message),
+        RAISE USING MESSAGE := pg_catalog.format('Error while trying to convert "%s" value to SMALLINT data type.', v_err_message),
                     DETAIL := 'Supplied value contains illegal characters.',
                     HINT := 'Correct supplied value, remove all illegal characters.';
 END;
@@ -2627,7 +2627,7 @@ BEGIN
     RETURN v_weekdaynum;
 EXCEPTION
     WHEN datetime_field_overflow THEN
-        RAISE USING MESSAGE := format('Can not convert value "%s" to a correct weekday number.',
+        RAISE USING MESSAGE := pg_catalog.format('Can not convert value "%s" to a correct weekday number.',
                                       trim(p_weekdayname)),
                     DETAIL := 'Supplied weekday name is not valid.',
                     HINT := 'Correct supplied weekday name value and try again.';
@@ -3700,16 +3700,16 @@ BEGIN
     RETURN v_res_date;
 EXCEPTION
     WHEN invalid_datetime_format OR datetime_field_overflow THEN
-        RAISE USING MESSAGE := format('Error converting string value ''%s'' into data type DATE using culture ''%s''.',
+        RAISE USING MESSAGE := pg_catalog.format('Error converting string value ''%s'' into data type DATE using culture ''%s''.',
                                       p_datestring, p_culture),
                     DETAIL := 'Incorrect using of pair of input parameters values during conversion process.',
                     HINT := 'Check the input parameters values, correct them if needed, and try again.';
 
     WHEN invalid_parameter_value THEN
         RAISE USING MESSAGE := CASE char_length(coalesce(CONVERSION_LANG, ''))
-                                  WHEN 0 THEN format('The culture parameter ''%s'' provided in the function call is not supported.',
+                                  WHEN 0 THEN pg_catalog.format('The culture parameter ''%s'' provided in the function call is not supported.',
                                                      p_culture)
-                                  ELSE format('Invalid CONVERSION_LANG constant value - ''%s''. Allowed values are: ''English'', ''Deutsch'', etc.',
+                                  ELSE pg_catalog.format('Invalid CONVERSION_LANG constant value - ''%s''. Allowed values are: ''English'', ''Deutsch'', etc.',
                                               CONVERSION_LANG)
                                END,
                     DETAIL := 'Passed incorrect value for "p_culture" parameter or compiled incorrect CONVERSION_LANG constant value in function''s body.',
@@ -3719,7 +3719,7 @@ EXCEPTION
         GET STACKED DIAGNOSTICS v_err_message = MESSAGE_TEXT;
         v_err_message := substring(lower(v_err_message), 'integer\:\s\"(.*)\"');
 
-        RAISE USING MESSAGE := format('Error while trying to convert "%s" value to SMALLINT data type.',
+        RAISE USING MESSAGE := pg_catalog.format('Error while trying to convert "%s" value to SMALLINT data type.',
                                       v_err_message),
                     DETAIL := 'Supplied value contains illegal characters.',
                     HINT := 'Correct supplied value, remove all illegal characters.';
@@ -4743,7 +4743,7 @@ BEGIN
     RETURN v_res_datetime;
 EXCEPTION
     WHEN invalid_datetime_format OR datetime_field_overflow THEN
-        RAISE USING MESSAGE := format('Error converting string value ''%s'' into data type %s using culture ''%s''.',
+        RAISE USING MESSAGE := pg_catalog.format('Error converting string value ''%s'' into data type %s using culture ''%s''.',
                                       p_datetimestring, v_res_datatype, p_culture),
                     DETAIL := 'Incorrect using of pair of input parameters values during conversion process.',
                     HINT := 'Check the input parameters values, correct them if needed, and try again.';
@@ -4754,20 +4754,20 @@ EXCEPTION
                     HINT := 'Change "datatype" parameter to the proper value and try again.';
 
     WHEN invalid_indicator_parameter_value THEN
-        RAISE USING MESSAGE := format('Invalid attributes specified for data type %s.', v_res_datatype),
+        RAISE USING MESSAGE := pg_catalog.format('Invalid attributes specified for data type %s.', v_res_datatype),
                     DETAIL := 'Use of incorrect scale value, which is not corresponding to specified data type.',
                     HINT := 'Change data type scale component or select different data type and try again.';
 
     WHEN interval_field_overflow THEN
-        RAISE USING MESSAGE := format('Specified scale %s is invalid.', v_scale),
+        RAISE USING MESSAGE := pg_catalog.format('Specified scale %s is invalid.', v_scale),
                     DETAIL := 'Use of incorrect data type scale value during conversion process.',
                     HINT := 'Change scale component of data type parameter to be in range [0..7] and try again.';
 
     WHEN invalid_parameter_value THEN
         RAISE USING MESSAGE := CASE char_length(coalesce(CONVERSION_LANG, ''))
-                                  WHEN 0 THEN format('The culture parameter ''%s'' provided in the function call is not supported.',
+                                  WHEN 0 THEN pg_catalog.format('The culture parameter ''%s'' provided in the function call is not supported.',
                                                      p_culture)
-                                  ELSE format('Invalid CONVERSION_LANG constant value - ''%s''. Allowed values are: ''English'', ''Deutsch'', etc.',
+                                  ELSE pg_catalog.format('Invalid CONVERSION_LANG constant value - ''%s''. Allowed values are: ''English'', ''Deutsch'', etc.',
                                               CONVERSION_LANG)
                                END,
                     DETAIL := 'Passed incorrect value for "p_culture" parameter or compiled incorrect CONVERSION_LANG constant value in function''s body.',
@@ -4777,7 +4777,7 @@ EXCEPTION
         GET STACKED DIAGNOSTICS v_err_message = MESSAGE_TEXT;
         v_err_message := substring(lower(v_err_message), 'integer\:\s\"(.*)\"');
 
-        RAISE USING MESSAGE := format('Error while trying to convert "%s" value to SMALLINT data type.',
+        RAISE USING MESSAGE := pg_catalog.format('Error while trying to convert "%s" value to SMALLINT data type.',
                                       v_err_message),
                     DETAIL := 'Supplied value contains illegal characters.',
                     HINT := 'Correct supplied value, remove all illegal characters.';
@@ -5771,7 +5771,7 @@ BEGIN
     RETURN v_res_time;
 EXCEPTION
     WHEN invalid_datetime_format OR datetime_field_overflow THEN
-        RAISE USING MESSAGE := format('Error converting string value ''%s'' into data type %s using culture ''%s''.',
+        RAISE USING MESSAGE := pg_catalog.format('Error converting string value ''%s'' into data type %s using culture ''%s''.',
                                       p_srctimestring, v_res_datatype, p_culture),
                     DETAIL := 'Incorrect using of pair of input parameters values during conversion process.',
                     HINT := 'Check the input parameters values, correct them if needed, and try again.';
@@ -5782,20 +5782,20 @@ EXCEPTION
                     HINT := 'Change "datatype" parameter to the proper value and try again.';
 
     WHEN invalid_indicator_parameter_value THEN
-        RAISE USING MESSAGE := format('Invalid attributes specified for data type %s.', v_res_datatype),
+        RAISE USING MESSAGE := pg_catalog.format('Invalid attributes specified for data type %s.', v_res_datatype),
                     DETAIL := 'Use of incorrect scale value, which is not corresponding to specified data type.',
                     HINT := 'Change data type scale component or select different data type and try again.';
 
     WHEN interval_field_overflow THEN
-        RAISE USING MESSAGE := format('Specified scale %s is invalid.', v_scale),
+        RAISE USING MESSAGE := pg_catalog.format('Specified scale %s is invalid.', v_scale),
                     DETAIL := 'Use of incorrect data type scale value during conversion process.',
                     HINT := 'Change scale component of data type parameter to be in range [0..7] and try again.';
 
     WHEN invalid_parameter_value THEN
         RAISE USING MESSAGE := CASE char_length(coalesce(CONVERSION_LANG, ''))
-                                  WHEN 0 THEN format('The culture parameter ''%s'' provided in the function call is not supported.',
+                                  WHEN 0 THEN pg_catalog.format('The culture parameter ''%s'' provided in the function call is not supported.',
                                                      p_culture)
-                                  ELSE format('Invalid CONVERSION_LANG constant value - ''%s''. Allowed values are: ''English'', ''Deutsch'', etc.',
+                                  ELSE pg_catalog.format('Invalid CONVERSION_LANG constant value - ''%s''. Allowed values are: ''English'', ''Deutsch'', etc.',
                                               CONVERSION_LANG)
                                END,
                     DETAIL := 'Passed incorrect value for "p_culture" parameter or compiled incorrect CONVERSION_LANG constant value in function''s body.',
@@ -5805,7 +5805,7 @@ EXCEPTION
         GET STACKED DIAGNOSTICS v_err_message = MESSAGE_TEXT;
         v_err_message := substring(lower(v_err_message), 'integer\:\s\"(.*)\"');
 
-        RAISE USING MESSAGE := format('Error while trying to convert "%s" value to SMALLINT data type.',
+        RAISE USING MESSAGE := pg_catalog.format('Error while trying to convert "%s" value to SMALLINT data type.',
                                       v_err_message),
                     DETAIL := 'Supplied value contains illegal characters.',
                     HINT := 'Correct supplied value, remove all illegal characters.';
@@ -5868,7 +5868,7 @@ BEGIN
     RETURN sys.babelfish_round_fractseconds(p_fractseconds::NUMERIC);
 EXCEPTION
     WHEN invalid_text_representation THEN
-        RAISE USING MESSAGE := format('Error while trying to convert "%s" value to NUMERIC data type.', trim(p_fractseconds)),
+        RAISE USING MESSAGE := pg_catalog.format('Error while trying to convert "%s" value to NUMERIC data type.', trim(p_fractseconds)),
                     DETAIL := 'Passed argument value contains illegal characters.',
                     HINT := 'Correct passed argument value, remove all illegal characters.';
 
@@ -6677,7 +6677,7 @@ BEGIN
          , var_delete_level;
 
     proc_name_mask := 'sys_data.sql_agent$job_%s_step_%s';
-    var_job_cmd := format(proc_name_mask, par_job_id, '1');
+    var_job_cmd := pg_catalog.format(proc_name_mask, par_job_id, '1');
     notify_email_sender := 'aws_test_email_sender@dbbest.com';
 
 
@@ -7391,8 +7391,8 @@ BEGIN
         CASE
           /* WHEN var_freq_subday_type = 1 THEN var_freq_subday_interval::character varying || ' At the specified time'  -- start time */
           /* WHEN var_freq_subday_type = 2 THEN var_freq_subday_interval::character varying || ' second'  -- ADD var_freq_subday_interval SECOND */
-          WHEN var_freq_subday_type = 4 THEN format('cron(*/%s * * * ? *)', var_freq_subday_interval::character varying) /* ADD var_freq_subday_interval MINUTE */
-          WHEN var_freq_subday_type = 8 THEN format('cron(0 */%s * * ? *)', var_freq_subday_interval::character varying) /* ADD var_freq_subday_interval HOUR */
+          WHEN var_freq_subday_type = 4 THEN pg_catalog.format('cron(*/%s * * * ? *)', var_freq_subday_interval::character varying) /* ADD var_freq_subday_interval MINUTE */
+          WHEN var_freq_subday_type = 8 THEN pg_catalog.format('cron(0 */%s * * ? *)', var_freq_subday_interval::character varying) /* ADD var_freq_subday_interval HOUR */
           ELSE ''
         END;
     END;
@@ -9867,7 +9867,7 @@ BEGIN
 	END IF;
 EXCEPTION
 	WHEN invalid_parameter_value THEN
-		RAISE USING MESSAGE := format('%s is not a valid style number when converting from MONEY to a character string.', v_style),
+		RAISE USING MESSAGE := pg_catalog.format('%s is not a valid style number when converting from MONEY to a character string.', v_style),
 					DETAIL := 'Use of incorrect "style" parameter value during conversion process.',
 					HINT := 'Change "style" parameter to the proper value and try again.';
 END;
@@ -9938,7 +9938,7 @@ BEGIN
 	END IF;
 EXCEPTION
 	WHEN invalid_parameter_value THEN
-		RAISE USING MESSAGE := format('%s is not a valid style number when converting from FLOAT to a character string.', v_style),
+		RAISE USING MESSAGE := pg_catalog.format('%s is not a valid style number when converting from FLOAT to a character string.', v_style),
 					DETAIL := 'Use of incorrect "style" parameter value during conversion process.',
 					HINT := 'Change "style" parameter to the proper value and try again.';
 END;
