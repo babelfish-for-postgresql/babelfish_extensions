@@ -15,20 +15,23 @@ BEGIN
 END;
 GO
 
-
-
-
 -- create helper function to get procedure/table name given oid
-CREATE FUNCTION sys_syscolumns_vu_prepare_OidToObject(@Oid integer)
+CREATE FUNCTION sys_syscolumns_vu_prepare_OidToObject_pg_class(@Oid integer)
 RETURNS VARCHAR(50)
 AS
 BEGIN
         DECLARE @object_name VARCHAR(50);
         SET @object_name = (SELECT relname from pg_class where oid = @Oid);
-        IF (@object_name is null)
-        BEGIN
-                SET @object_name = (SELECT proname from pg_proc where oid = @Oid);
-        END
+        RETURN @object_name
+END;
+GO
+
+CREATE FUNCTION sys_syscolumns_vu_prepare_OidToObject_pg_proc(@Oid integer)
+RETURNS VARCHAR(50)
+AS
+BEGIN
+        DECLARE @object_name VARCHAR(50);
+        SET @object_name = (SELECT proname from pg_proc where oid = @Oid);
         RETURN @object_name
 END;
 GO
@@ -45,18 +48,17 @@ END;
 GO
 
 -- Setup some procedures and tables
-create procedure sys_syscolumns_vu_prepare_proc1 @firstparam NVARCHAR(50) as select 1
+create procedure sys_syscolumns_vu_prepare_proc1 @syscolumns_proc1_firstparam NVARCHAR(50) as select 1
 GO
 
-create procedure sys_syscolumns_vu_prepare_proc2 @firstparam NVARCHAR(50), @secondparam VARCHAR(50) OUT as select 2
+create procedure sys_syscolumns_vu_prepare_proc2 @syscolumns_proc2_firstparam NVARCHAR(50), @syscolumns_proc2_secondparam VARCHAR(50) OUT as select 2
 GO
 
-create table sys_syscolumns_vu_prepare_t1 (col_a int, col_b bigint, col_c char(10), col_d numeric(5,4))
+create table sys_syscolumns_vu_prepare_t1 (syscolumns_t1_col_a int, syscolumns_t1_col_b bigint, syscolumns_t1_col_c char(10), syscolumns_t1_col_d numeric(5,4))
 GO
 
 use master;
 go
 
-create procedure sys_syscolumns_vu_prepare_proc3 @thirdparam NVARCHAR(50) as select 3;
+create procedure sys_syscolumns_vu_prepare_proc3 @syscolumns_proc3_thirdparam NVARCHAR(50) as select 3;
 go
-
