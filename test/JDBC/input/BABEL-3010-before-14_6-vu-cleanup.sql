@@ -1,10 +1,28 @@
 DROP TRIGGER babel_3010_vu_prepare_trig1;
 GO
 
+DROP TRIGGER babel_3010_vu_prepare_trig2;
+GO
+
+DROP TRIGGER babel_3010_vu_prepare_trig3;
+GO
+
+DROP TRIGGER babel_3010_vu_prepare_trig4;
+GO
+
+DROP TRIGGER babel_3010_vu_prepare_trig5;
+GO
+
 DROP VIEW babel_3010_vu_prepare_v1;
 GO
 
 DROP FUNCTION babel_3010_vu_prepare_f1;
+GO
+
+DROP FUNCTION babel_3010_vu_prepare_f2;
+GO
+
+DROP FUNCTION babel_3010_vu_prepare_f3;
 GO
 
 DROP PROCEDURE babel_3010_vu_prepare_p1;

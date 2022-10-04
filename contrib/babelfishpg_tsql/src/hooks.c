@@ -877,12 +877,22 @@ pltsql_post_transform_table_definition(ParseState *pstate, RangeVar* relation, c
 				(errcode(ERRCODE_INTERNAL_ERROR),
 				 errmsg("can't extract original table name")));
 
-	/* add "ALTER TABLE SET (bbf_original_table_name=<original_name>)" to alist so that original_name will be stored in pg_class.reloptions */
-	cmd_orig_name = makeNode(AlterTableCmd);
-	cmd_orig_name->subtype = AT_SetRelOptions;
-	cmd_orig_name->def = (Node *) list_make1(makeDefElem(pstrdup(ATTOPTION_BBF_ORIGINAL_TABLE_NAME), (Node *) makeString(pstrdup(original_name)), -1));
-	cmd_orig_name->behavior = DROP_RESTRICT;
-	cmd_orig_name->missing_ok = false;
+	stmt = makeNode(AlterTableStmt);
+	stmt->relation = relation;
+	stmt->cmds = NIL;
+	stmt->objtype = OBJECT_TABLE;
+
+	/* Only store original_name if there's a difference, and if the difference is only in capitalization */
+	if (strncmp(relname, original_name, strlen(relname)) != 0 && strncasecmp(relname, original_name, strlen(relname)) == 0)
+	{
+		/* add "ALTER TABLE SET (bbf_original_table_name=<original_name>)" to alist so that original_name will be stored in pg_class.reloptions */
+		cmd_orig_name = makeNode(AlterTableCmd);
+		cmd_orig_name->subtype = AT_SetRelOptions;
+		cmd_orig_name->def = (Node *) list_make1(makeDefElem(pstrdup(ATTOPTION_BBF_ORIGINAL_TABLE_NAME), (Node *) makeString(pstrdup(original_name)), -1));
+		cmd_orig_name->behavior = DROP_RESTRICT;
+		cmd_orig_name->missing_ok = false;
+		stmt->cmds = lappend(stmt->cmds, cmd_orig_name);
+	}
 
 	/* add "ALTER TABLE SET (bbf_rel_create_date=<datetime>)" to alist so that create_date will be stored in pg_class.reloptions */
 	curr_datetime = DatumGetCString(DirectFunctionCall1(timestamp_out, TimestampGetDatum(GetSQLLocalTimestamp(3))));
@@ -891,16 +901,6 @@ pltsql_post_transform_table_definition(ParseState *pstate, RangeVar* relation, c
 	cmd_crdate->def = (Node *) list_make1(makeDefElem(pstrdup(ATTOPTION_BBF_TABLE_CREATE_DATE), (Node *) makeString(pstrdup(curr_datetime)), -1));
 	cmd_crdate->behavior = DROP_RESTRICT;
 	cmd_crdate->missing_ok = false;
-
-	stmt = makeNode(AlterTableStmt);
-	stmt->relation = relation;
-	stmt->cmds = NIL;
-	stmt->objtype = OBJECT_TABLE;
-
-	/* Only store original_name if there's a difference, and if the difference is only in capitalization */
-	if (strncmp(relname, original_name, strlen(relname)) != 0 && strncasecmp(relname, original_name, strlen(relname)) == 0)
-		stmt->cmds = lappend(stmt->cmds, cmd_orig_name);
-
 	stmt->cmds = lappend(stmt->cmds, cmd_crdate);
 
 	(*alist) = lappend(*alist, stmt);

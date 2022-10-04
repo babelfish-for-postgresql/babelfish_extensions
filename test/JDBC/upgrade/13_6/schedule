@@ -236,6 +236,7 @@ BABEL-SP_FKEYS
 BABEL-SP_STORED_PROCEDURES
 BABEL-SP_SPROC_COLUMNS
 BABEL-3000
+BABEL-3010-before-14_6
 sys-foreign_key_columns-dep
 sys-foreign_keys-dep
 sys-identity_columns-dep
