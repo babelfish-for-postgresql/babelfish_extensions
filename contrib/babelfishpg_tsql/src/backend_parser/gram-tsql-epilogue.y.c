@@ -759,9 +759,9 @@ tsql_update_delete_stmt_from_clause_alias_helper(RangeVar *relation,RangeVar *rv
 		update_delete_target_alias = relation->relname;
 
 		/*
-			* Update the relation to have the real table name as
-			* relname, and the original alias name as an alias
-			*/
+		* Update the relation to have the real table name as
+		* relname, and the original alias name as an alias
+		*/
 		relation->catalogname = rv->catalogname;
 		relation->schemaname = rv->schemaname;
 		relation->relname = rv->relname;
@@ -770,10 +770,10 @@ tsql_update_delete_stmt_from_clause_alias_helper(RangeVar *relation,RangeVar *rv
 		relation->alias = rv->alias;
 
 		/*
-			* To avoid alias collision, remove the alias of the table
-			* in the FROM clause, because it will already be an alias
-			* of the target relation
-			*/
+		* To avoid alias collision, remove the alias of the table
+		* in the FROM clause, because it will already be an alias
+		* of the target relation
+		*/
 		rv->alias = NULL;
 	}
 }
