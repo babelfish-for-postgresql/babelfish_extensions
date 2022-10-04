@@ -14,8 +14,8 @@ DECLARE
     query1 text;
     query2 text;
 BEGIN
-    query1 := format('alter extension babelfishpg_tsql drop view %s.%s', schema_name, view_name);
-    query2 := format('drop view %s.%s', schema_name, view_name);
+    query1 := pg_catalog.format('alter extension babelfishpg_tsql drop view %s.%s', schema_name, view_name);
+    query2 := pg_catalog.format('drop view %s.%s', schema_name, view_name);
     execute query1;
     execute query2;
 EXCEPTION
