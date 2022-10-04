@@ -44,7 +44,7 @@ upgrade-version: [[
     upgrade-type: null
   },
   { 
-    version: 13.6,
+    version: 13.8,
     upgrade-type: minor 
   },
   { 
@@ -58,7 +58,7 @@ upgrade-version: [[
     upgrade-type: null
   },
   { 
-    version: 13.6,
+    version: 13.8,
     upgrade-type: minor 
   },
   { 
@@ -68,12 +68,8 @@ upgrade-version: [[
 ],
 [
   {
-    version: 13.4,
-    upgrade-type: null
-  },
-  {
     version: 13.7,
-    upgrade-type: minor
+    upgrade-type: null
   },
   { 
     version: target.latest,
@@ -82,12 +78,8 @@ upgrade-version: [[
 ],
 [
   {
-    version: 13.4,
-    upgrade-type: null
-  },
-  {
     version: 13.8,
-    upgrade-type: minor
+    upgrade-type: null
   },
   { 
     version: target.latest,
