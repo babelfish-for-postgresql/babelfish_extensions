@@ -827,7 +827,7 @@ DECLARE
 BEGIN
     RETURN sys.DATETIMEOFFSETFROMPARTS(IN p_year INTEGER,IN p_month INTEGER,IN p_day INTEGER,IN p_hour INTEGER,IN p_minute INTEGER,
                                         IN p_seconds INTEGER,IN p_fractions INTEGER,IN p_hour_offset INTEGER,IN p_minute_offset INTEGER,
-                                        IN p_precision INTEGER);
+                                        IN p_precision NUMERIC);
 EXCEPTION
     WHEN invalid_text_representation THEN
         GET STACKED DIAGNOSTICS v_err_message = MESSAGE_TEXT;
