@@ -115,6 +115,7 @@ SYSTEM_USER
 Test-Default-Columns
 BABEL-1189
 BABEL-1243
+BABEL-1493
 BABEL-1963
 BABEL-2203
 BABEL-2208
@@ -218,3 +219,4 @@ sys-sp_pkeys-dep
 sys-sp_statistics-dep
 BABEL-SPCOLUMNS-dep
 BABEL-3000-dep
+BABEL-3556-before-14_6
