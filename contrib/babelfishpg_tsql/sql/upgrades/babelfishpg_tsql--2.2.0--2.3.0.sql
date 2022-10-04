@@ -80,6 +80,1219 @@ $$
 LANGUAGE 'pltsql';
 GRANT EXECUTE ON PROCEDURE sys.sp_helpsrvrolemember TO PUBLIC;
 
+CREATE OR REPLACE FUNCTION sys.format_datetime(IN value anyelement, IN format_pattern NVARCHAR,IN culture VARCHAR,  IN data_type VARCHAR DEFAULT '') RETURNS sys.nvarchar
+AS 'babelfishpg_tsql', 'format_datetime' LANGUAGE C IMMUTABLE PARALLEL SAFE;
+GRANT EXECUTE ON FUNCTION sys.format_datetime(IN anyelement, IN NVARCHAR, IN VARCHAR, IN VARCHAR) TO PUBLIC;
+
+CREATE OR REPLACE FUNCTION sys.format_numeric(IN value anyelement, IN format_pattern NVARCHAR,IN culture VARCHAR,  IN data_type VARCHAR DEFAULT '', IN e_position INT DEFAULT -1) RETURNS sys.nvarchar
+AS 'babelfishpg_tsql', 'format_numeric' LANGUAGE C IMMUTABLE PARALLEL SAFE;
+GRANT EXECUTE ON FUNCTION sys.format_numeric(IN anyelement, IN NVARCHAR, IN VARCHAR, IN VARCHAR, IN INT) TO PUBLIC;
+
+CREATE OR REPLACE FUNCTION sys.FORMAT(IN arg anyelement, IN p_format_pattern NVARCHAR, IN p_culture VARCHAR default 'en-us')
+RETURNS sys.NVARCHAR
+AS
+$BODY$
+DECLARE
+    arg_type regtype;
+    v_temp_integer INTEGER;
+BEGIN
+    arg_type := pg_typeof(arg);
+
+    CASE
+        WHEN arg_type IN ('time'::regtype ) THEN
+            RETURN sys.format_datetime(arg, p_format_pattern, p_culture, 'time');
+
+        WHEN arg_type IN ('date'::regtype, 'sys.datetime'::regtype, 'sys.smalldatetime'::regtype, 'sys.datetime2'::regtype ) THEN
+            RETURN sys.format_datetime(arg::timestamp, p_format_pattern, p_culture);
+
+        WHEN arg_type IN ('sys.tinyint'::regtype) THEN
+            RETURN sys.format_numeric(arg::SMALLINT, p_format_pattern, p_culture, 'tinyint');
+
+        WHEN arg_type IN ('smallint'::regtype) THEN
+            RETURN sys.format_numeric(arg::SMALLINT, p_format_pattern, p_culture, 'smallint');
+
+        WHEN arg_type IN ('integer'::regtype) THEN
+            RETURN sys.format_numeric(arg, p_format_pattern, p_culture, 'integer');
+
+         WHEN arg_type IN ('bigint'::regtype) THEN
+            RETURN sys.format_numeric(arg, p_format_pattern, p_culture, 'bigint');
+
+        WHEN arg_type IN ('numeric'::regtype) THEN
+            RETURN sys.format_numeric(arg, p_format_pattern, p_culture, 'numeric');
+
+        WHEN arg_type IN ('sys.decimal'::regtype) THEN
+            RETURN sys.format_numeric(arg::numeric, p_format_pattern, p_culture, 'numeric');
+
+        WHEN arg_type IN ('real'::regtype) THEN
+            IF(p_format_pattern LIKE 'R%') THEN
+                v_temp_integer := length(nullif((regexp_matches(arg::real::text, '(?<=\d*\.).*(?=[eE].*)')::text[])[1], ''));
+            ELSE v_temp_integer:= -1;
+            END IF;
+
+            RETURN sys.format_numeric(arg, p_format_pattern, p_culture, 'real', v_temp_integer);
+
+        WHEN arg_type IN ('float'::regtype) THEN
+            RETURN sys.format_numeric(arg, p_format_pattern, p_culture, 'float');
+
+        WHEN pg_typeof(arg) IN ('sys.smallmoney'::regtype, 'sys.money'::regtype) THEN
+            RETURN sys.format_numeric(arg::numeric, p_format_pattern, p_culture, 'numeric');
+        ELSE
+            RAISE datatype_mismatch;
+        END CASE;
+EXCEPTION
+	WHEN datatype_mismatch THEN
+		RAISE USING MESSAGE := format('Argument data type % is invalid for argument 1 of format function.', pg_typeof(arg)),
+					DETAIL := 'Invalid datatype.',
+					HINT := 'Convert it to valid datatype and try again.';
+END;
+$BODY$
+LANGUAGE plpgsql IMMUTABLE PARALLEL SAFE;
+GRANT EXECUTE ON FUNCTION sys.FORMAT(IN anyelement, IN NVARCHAR, IN VARCHAR) TO PUBLIC;
+
+CREATE OR REPLACE FUNCTION sys.babelfish_try_cast_to_any(IN arg TEXT, INOUT output ANYELEMENT, IN typmod INT)
+RETURNS ANYELEMENT
+AS $BODY$ BEGIN
+    EXECUTE pg_catalog.format('SELECT CAST(%L AS %s)', arg, format_type(pg_typeof(output), typmod)) INTO output;
+    EXCEPTION
+        WHEN OTHERS THEN
+            -- Do nothing. Output carries NULL.
+END; $BODY$
+LANGUAGE plpgsql;
+
+CREATE OR REPLACE FUNCTION sys.babelfish_conv_date_to_string(IN p_datatype TEXT,
+                                                                 IN p_dateval DATE,
+                                                                 IN p_style NUMERIC DEFAULT 20)
+RETURNS TEXT
+AS
+$BODY$
+DECLARE
+    v_day VARCHAR COLLATE "C";
+    v_dateval DATE;
+    v_style SMALLINT;
+    v_month SMALLINT;
+    v_resmask VARCHAR COLLATE "C";
+    v_datatype VARCHAR COLLATE "C";
+    v_language VARCHAR COLLATE "C";
+    v_monthname VARCHAR COLLATE "C";
+    v_resstring VARCHAR COLLATE "C";
+    v_lengthexpr VARCHAR COLLATE "C";
+    v_maxlength SMALLINT;
+    v_res_length SMALLINT;
+    v_err_message VARCHAR COLLATE "C";
+    v_res_datatype VARCHAR COLLATE "C";
+    v_lang_metadata_json JSONB;
+    VARCHAR_MAX CONSTANT SMALLINT := 8000;
+    NVARCHAR_MAX CONSTANT SMALLINT := 4000;
+    CONVERSION_LANG CONSTANT VARCHAR COLLATE "C" := '';
+    DATATYPE_REGEXP CONSTANT VARCHAR COLLATE "C" := '^\s*(CHAR|NCHAR|VARCHAR|NVARCHAR|CHARACTER VARYING)\s*$';
+    DATATYPE_MASK_REGEXP CONSTANT VARCHAR COLLATE "C" := '^\s*(?:CHAR|NCHAR|VARCHAR|NVARCHAR|CHARACTER VARYING)\s*\(\s*(\d+|MAX)\s*\)\s*$';
+BEGIN
+    v_datatype := upper(trim(p_datatype));
+    v_style := floor(p_style)::SMALLINT;
+    IF (scale(p_style) > 0) THEN
+        RAISE most_specific_type_mismatch;
+    ELSIF (NOT ((v_style BETWEEN 0 AND 13) OR
+                (v_style BETWEEN 20 AND 25) OR
+                (v_style BETWEEN 100 AND 113) OR
+                v_style IN (120, 121, 126, 127, 130, 131)))
+    THEN
+        RAISE invalid_parameter_value;
+    ELSIF (v_style IN (8, 24, 108)) THEN
+        RAISE invalid_datetime_format;
+    END IF;
+    IF (v_datatype ~* DATATYPE_MASK_REGEXP) THEN
+        v_res_datatype := rtrim(split_part(v_datatype, '(', 1));
+        v_maxlength := CASE
+                          WHEN (v_res_datatype IN ('CHAR', 'VARCHAR')) THEN VARCHAR_MAX
+                          ELSE NVARCHAR_MAX
+                       END;
+        v_lengthexpr := substring(v_datatype, DATATYPE_MASK_REGEXP);
+        IF (v_lengthexpr <> 'MAX' AND char_length(v_lengthexpr) > 4) THEN
+            RAISE interval_field_overflow;
+        END IF;
+        v_res_length := CASE v_lengthexpr
+                           WHEN 'MAX' THEN v_maxlength
+                           ELSE v_lengthexpr::SMALLINT
+                        END;
+    ELSIF (v_datatype ~* DATATYPE_REGEXP) THEN
+        v_res_datatype := v_datatype;
+    ELSE
+        RAISE datatype_mismatch;
+    END IF;
+    v_dateval := CASE
+                    WHEN (v_style NOT IN (130, 131)) THEN p_dateval
+                    ELSE sys.babelfish_conv_greg_to_hijri(p_dateval) + 1
+                 END;
+    v_day := ltrim(to_char(v_dateval, 'DD'), '0');
+    v_month := to_char(v_dateval, 'MM')::SMALLINT;
+    v_language := CASE
+                     WHEN (v_style IN (130, 131)) THEN 'HIJRI'
+                     ELSE CONVERSION_LANG
+                  END;
+ RAISE NOTICE 'v_language=[%]', v_language;		  
+    BEGIN
+        v_lang_metadata_json := sys.babelfish_get_lang_metadata_json(v_language);
+    EXCEPTION
+        WHEN OTHERS THEN
+        RAISE invalid_character_value_for_cast;
+    END;
+    v_monthname := (v_lang_metadata_json -> 'months_shortnames') ->> v_month - 1;
+    v_resmask := CASE
+                    WHEN (v_style IN (1, 22)) THEN 'MM/DD/YY'
+                    WHEN (v_style = 101) THEN 'MM/DD/YYYY'
+                    WHEN (v_style = 2) THEN 'YY.MM.DD'
+                    WHEN (v_style = 102) THEN 'YYYY.MM.DD'
+                    WHEN (v_style = 3) THEN 'DD/MM/YY'
+                    WHEN (v_style = 103) THEN 'DD/MM/YYYY'
+                    WHEN (v_style = 4) THEN 'DD.MM.YY'
+                    WHEN (v_style = 104) THEN 'DD.MM.YYYY'
+                    WHEN (v_style = 5) THEN 'DD-MM-YY'
+                    WHEN (v_style = 105) THEN 'DD-MM-YYYY'
+                    WHEN (v_style = 6) THEN 'DD $mnme$ YY'
+                    WHEN (v_style IN (13, 106, 113)) THEN 'DD $mnme$ YYYY'
+                    WHEN (v_style = 7) THEN '$mnme$ DD, YY'
+                    WHEN (v_style = 107) THEN '$mnme$ DD, YYYY'
+                    WHEN (v_style = 10) THEN 'MM-DD-YY'
+                    WHEN (v_style = 110) THEN 'MM-DD-YYYY'
+                    WHEN (v_style = 11) THEN 'YY/MM/DD'
+                    WHEN (v_style = 111) THEN 'YYYY/MM/DD'
+                    WHEN (v_style = 12) THEN 'YYMMDD'
+                    WHEN (v_style = 112) THEN 'YYYYMMDD'
+                    WHEN (v_style IN (20, 21, 23, 25, 120, 121, 126, 127)) THEN 'YYYY-MM-DD'
+                    WHEN (v_style = 130) THEN 'DD $mnme$ YYYY'
+                    WHEN (v_style = 131) THEN pg_catalog.format('%s/MM/YYYY', lpad(v_day, 2, ' '))
+                    WHEN (v_style IN (0, 9, 100, 109)) THEN pg_catalog.format('$mnme$ %s YYYY', lpad(v_day, 2, ' '))
+                 END;
+
+    v_resstring := to_char(v_dateval, v_resmask);
+    v_resstring := pg_catalog.replace(v_resstring, '$mnme$', v_monthname);
+    v_resstring := substring(v_resstring, 1, coalesce(v_res_length, char_length(v_resstring)));
+    v_res_length := coalesce(v_res_length,
+                             CASE v_res_datatype
+                                WHEN 'CHAR' THEN 30
+                                ELSE 60
+                             END);
+    RETURN CASE
+              WHEN (v_res_datatype NOT IN ('CHAR', 'NCHAR')) THEN v_resstring
+              ELSE rpad(v_resstring, v_res_length, ' ')
+           END;
+EXCEPTION
+    WHEN most_specific_type_mismatch THEN
+        RAISE USING MESSAGE := 'Argument data type NUMERIC is invalid for argument 3 of convert function.',
+                    DETAIL := 'Use of incorrect "style" parameter value during conversion process.',
+                    HINT := 'Change "style" parameter to the proper value and try again.';
+
+    WHEN invalid_parameter_value THEN
+    RAISE USING MESSAGE := pg_catalog.format('%s is not a valid style number when converting from DATE to a character string.', v_style),
+                    DETAIL := 'Use of incorrect "style" parameter value during conversion process.',
+                    HINT := 'Change "style" parameter to the proper value and try again.';
+
+    WHEN invalid_datetime_format THEN
+    RAISE USING MESSAGE := pg_catalog.format('Error converting data type DATE to %s.', trim(p_datatype)),
+                    DETAIL := 'Incorrect using of pair of input parameters values during conversion process.',
+                    HINT := 'Check the input parameters values, correct them if needed, and try again.';
+
+   WHEN interval_field_overflow THEN
+   RAISE USING MESSAGE := pg_catalog.format('The size (%s) given to the convert specification ''%s'' exceeds the maximum allowed for any data type (%s).',
+                                     v_lengthexpr,
+                                     lower(v_res_datatype),
+                                     v_maxlength),
+                   DETAIL := 'Use of incorrect size value of data type parameter during conversion process.',
+                   HINT := 'Change size component of data type parameter to the allowable value and try again.';
+    WHEN datatype_mismatch THEN
+        RAISE USING MESSAGE := 'Data type should be one of these values: ''CHAR(n|MAX)'', ''NCHAR(n|MAX)'', ''VARCHAR(n|MAX)'', ''NVARCHAR(n|MAX)''.',
+                    DETAIL := 'Use of incorrect "datatype" parameter value during conversion process.',
+                    HINT := 'Change "datatype" parameter to the proper value and try again.';
+
+    WHEN invalid_character_value_for_cast THEN
+    RAISE USING MESSAGE := pg_catalog.format('Invalid CONVERSION_LANG constant value - ''%s''. Allowed values are: ''English'', ''Deutsch'', etc.',
+                                      CONVERSION_LANG),
+                    DETAIL := 'Compiled incorrect CONVERSION_LANG constant value in function''s body.',
+                    HINT := 'Correct CONVERSION_LANG constant value in function''s body, recompile it and try again.';
+    WHEN invalid_text_representation THEN
+        GET STACKED DIAGNOSTICS v_err_message = MESSAGE_TEXT;
+        v_err_message := substring(lower(v_err_message), 'integer\:\s\"(.*)\"');
+
+		RAISE USING MESSAGE := pg_catalog.format('Error while trying to convert "%s" value to SMALLINT (or INTEGER) data type.',
+                                      v_err_message),
+                    DETAIL := 'Supplied value contains illegal characters.',
+                    HINT := 'Correct supplied value, remove all illegal characters.';
+END;
+$BODY$
+LANGUAGE plpgsql
+VOLATILE
+RETURNS NULL ON NULL INPUT;
+
+CREATE OR REPLACE FUNCTION sys.babelfish_conv_datetime_to_string(IN p_datatype TEXT,
+                                                                     IN p_src_datatype TEXT,
+                                                                     IN p_datetimeval TIMESTAMP(6) WITHOUT TIME ZONE,
+                                                                     IN p_style NUMERIC DEFAULT -1)
+RETURNS TEXT
+AS
+$BODY$
+DECLARE
+    v_day VARCHAR COLLATE "C";
+    v_hour VARCHAR COLLATE "C";
+    v_month SMALLINT;
+    v_style SMALLINT;
+    v_scale SMALLINT;
+    v_resmask VARCHAR COLLATE "C";
+    v_language VARCHAR COLLATE "C";
+    v_datatype VARCHAR COLLATE "C";
+    v_fseconds VARCHAR COLLATE "C";
+    v_fractsep VARCHAR COLLATE "C";
+    v_monthname VARCHAR COLLATE "C";
+    v_resstring VARCHAR COLLATE "C";
+    v_lengthexpr VARCHAR COLLATE "C";
+    v_maxlength SMALLINT;
+    v_res_length SMALLINT;
+    v_err_message VARCHAR COLLATE "C";
+    v_src_datatype VARCHAR COLLATE "C";
+    v_res_datatype VARCHAR COLLATE "C";
+    v_lang_metadata_json JSONB;
+    VARCHAR_MAX CONSTANT SMALLINT := 8000;
+    NVARCHAR_MAX CONSTANT SMALLINT := 4000;
+    CONVERSION_LANG CONSTANT VARCHAR COLLATE "C" := '';
+    DATATYPE_REGEXP CONSTANT VARCHAR COLLATE "C" := '^\s*(CHAR|NCHAR|VARCHAR|NVARCHAR|CHARACTER VARYING)\s*$';
+    SRCDATATYPE_MASK_REGEXP VARCHAR COLLATE "C" := '^(?:DATETIME|SMALLDATETIME|DATETIME2)\s*(?:\s*\(\s*(\d+)\s*\)\s*)?$';
+    DATATYPE_MASK_REGEXP CONSTANT VARCHAR COLLATE "C" := '^\s*(?:CHAR|NCHAR|VARCHAR|NVARCHAR|CHARACTER VARYING)\s*\(\s*(\d+|MAX)\s*\)\s*$';
+    v_datetimeval TIMESTAMP(6) WITHOUT TIME ZONE;
+BEGIN
+    v_datatype := upper(trim(p_datatype));
+    v_src_datatype := upper(trim(p_src_datatype));
+    v_style := floor(p_style)::SMALLINT;
+    IF (v_src_datatype ~* SRCDATATYPE_MASK_REGEXP)
+    THEN
+        v_scale := substring(v_src_datatype, SRCDATATYPE_MASK_REGEXP)::SMALLINT;
+        v_src_datatype := rtrim(split_part(v_src_datatype, '(', 1));
+        IF (v_src_datatype <> 'DATETIME2' AND v_scale IS NOT NULL) THEN
+            RAISE invalid_indicator_parameter_value;
+        ELSIF (v_scale NOT BETWEEN 0 AND 7) THEN
+            RAISE invalid_regular_expression;
+        END IF;
+        v_scale := coalesce(v_scale, 7);
+    ELSE
+        RAISE most_specific_type_mismatch;
+    END IF;
+    IF (scale(p_style) > 0) THEN
+        RAISE escape_character_conflict;
+    ELSIF (NOT ((v_style BETWEEN 0 AND 14) OR
+                (v_style BETWEEN 20 AND 25) OR
+                (v_style BETWEEN 100 AND 114) OR
+                v_style IN (-1, 120, 121, 126, 127, 130, 131)))
+    THEN
+        RAISE invalid_parameter_value;
+    END IF;
+    IF (v_datatype ~* DATATYPE_MASK_REGEXP) THEN
+        v_res_datatype := rtrim(split_part(v_datatype, '(', 1));
+        v_maxlength := CASE
+                          WHEN (v_res_datatype IN ('CHAR', 'VARCHAR')) THEN VARCHAR_MAX
+                          ELSE NVARCHAR_MAX
+                       END;
+        v_lengthexpr := substring(v_datatype, DATATYPE_MASK_REGEXP);
+        IF (v_lengthexpr <> 'MAX' AND char_length(v_lengthexpr) > 4)
+        THEN
+            RAISE interval_field_overflow;
+        END IF;
+        v_res_length := CASE v_lengthexpr
+                           WHEN 'MAX' THEN v_maxlength
+                           ELSE v_lengthexpr::SMALLINT
+                        END;
+    ELSIF (v_datatype ~* DATATYPE_REGEXP) THEN
+        v_res_datatype := v_datatype;
+    ELSE
+        RAISE datatype_mismatch;
+    END IF;
+    v_datetimeval := CASE
+                        WHEN (v_style NOT IN (130, 131)) THEN p_datetimeval
+                        ELSE sys.babelfish_conv_greg_to_hijri(p_datetimeval) + INTERVAL '1 day'
+                     END;
+    v_day := ltrim(to_char(v_datetimeval, 'DD'), '0');
+    v_hour := ltrim(to_char(v_datetimeval, 'HH12'), '0');
+    v_month := to_char(v_datetimeval, 'MM')::SMALLINT;
+    v_language := CASE
+                     WHEN (v_style IN (130, 131)) THEN 'HIJRI'
+                     ELSE CONVERSION_LANG
+                  END;
+    BEGIN
+        v_lang_metadata_json := sys.babelfish_get_lang_metadata_json(v_language);
+    EXCEPTION
+        WHEN OTHERS THEN
+        RAISE invalid_character_value_for_cast;
+    END;
+    v_monthname := (v_lang_metadata_json -> 'months_shortnames') ->> v_month - 1;
+    IF (v_src_datatype IN ('DATETIME', 'SMALLDATETIME')) THEN
+        v_fseconds := sys.babelfish_round_fractseconds(to_char(v_datetimeval, 'MS'));
+        IF (v_fseconds::INTEGER = 1000) THEN
+            v_fseconds := '000';
+            v_datetimeval := v_datetimeval + INTERVAL '1 second';
+        ELSE
+            v_fseconds := lpad(v_fseconds, 3, '0');
+        END IF;
+    ELSE
+        v_fseconds := sys.babelfish_get_microsecs_from_fractsecs(to_char(v_datetimeval, 'US'), v_scale);
+        IF (v_scale = 7) THEN
+            v_fseconds := concat(v_fseconds, '0');
+        END IF;
+    END IF;
+    v_fractsep := CASE v_src_datatype
+                     WHEN 'DATETIME2' THEN '.'
+                     ELSE ':'
+                  END;
+    IF ((v_style = -1 AND v_src_datatype <> 'DATETIME2') OR
+        v_style IN (0, 9, 100, 109))
+    THEN
+    	v_resmask := pg_catalog.format('$mnme$ %s YYYY %s:MI%s',
+                            lpad(v_day, 2, ' '),
+                            lpad(v_hour, 2, ' '),
+                            CASE
+                               WHEN (v_style IN (-1, 0, 100)) THEN 'AM'
+                               ELSE pg_catalog.format(':SS:%sAM', v_fseconds)
+                            END);
+                            ELSIF (v_style = 1) THEN
+        v_resmask := 'MM/DD/YY';
+    ELSIF (v_style = 101) THEN
+        v_resmask := 'MM/DD/YYYY';
+    ELSIF (v_style = 2) THEN
+        v_resmask := 'YY.MM.DD';
+    ELSIF (v_style = 102) THEN
+        v_resmask := 'YYYY.MM.DD';
+    ELSIF (v_style = 3) THEN
+        v_resmask := 'DD/MM/YY';
+    ELSIF (v_style = 103) THEN
+        v_resmask := 'DD/MM/YYYY';
+    ELSIF (v_style = 4) THEN
+        v_resmask := 'DD.MM.YY';
+    ELSIF (v_style = 104) THEN
+        v_resmask := 'DD.MM.YYYY';
+    ELSIF (v_style = 5) THEN
+        v_resmask := 'DD-MM-YY';
+    ELSIF (v_style = 105) THEN
+        v_resmask := 'DD-MM-YYYY';
+    ELSIF (v_style = 6) THEN
+        v_resmask := 'DD $mnme$ YY';
+    ELSIF (v_style = 106) THEN
+        v_resmask := 'DD $mnme$ YYYY';
+    ELSIF (v_style = 7) THEN
+        v_resmask := '$mnme$ DD, YY';
+    ELSIF (v_style = 107) THEN
+        v_resmask := '$mnme$ DD, YYYY';
+    ELSIF (v_style IN (8, 24, 108)) THEN
+        v_resmask := 'HH24:MI:SS';
+    ELSIF (v_style = 10) THEN
+        v_resmask := 'MM-DD-YY';
+    ELSIF (v_style = 110) THEN
+        v_resmask := 'MM-DD-YYYY';
+    ELSIF (v_style = 11) THEN
+        v_resmask := 'YY/MM/DD';
+    ELSIF (v_style = 111) THEN
+        v_resmask := 'YYYY/MM/DD';
+    ELSIF (v_style = 12) THEN
+        v_resmask := 'YYMMDD';
+    ELSIF (v_style = 112) THEN
+        v_resmask := 'YYYYMMDD';
+    ELSIF (v_style IN (13, 113)) THEN
+	    v_resmask := pg_catalog.format('DD $mnme$ YYYY HH24:MI:SS%s%s', v_fractsep, v_fseconds);
+    ELSIF (v_style IN (14, 114)) THEN
+    	v_resmask := pg_catalog.format('HH24:MI:SS%s%s', v_fractsep, v_fseconds);
+    ELSIF (v_style IN (20, 120)) THEN
+        v_resmask := 'YYYY-MM-DD HH24:MI:SS';
+    ELSIF ((v_style = -1 AND v_src_datatype = 'DATETIME2') OR
+           v_style IN (21, 25, 121))
+    THEN
+    	v_resmask := pg_catalog.format('YYYY-MM-DD HH24:MI:SS.%s', v_fseconds);
+    ELSIF (v_style = 22) THEN
+    	v_resmask := pg_catalog.format('MM/DD/YY %s:MI:SS AM', lpad(v_hour, 2, ' '));
+    ELSIF (v_style = 23) THEN
+        v_resmask := 'YYYY-MM-DD';
+    ELSIF (v_style IN (126, 127)) THEN
+        v_resmask := CASE v_src_datatype
+                        WHEN 'SMALLDATETIME' THEN 'YYYY-MM-DDT$rem$HH24:MI:SS'
+    					ELSE pg_catalog.format('YYYY-MM-DDT$rem$HH24:MI:SS.%s', v_fseconds)
+    				END;
+    ELSIF (v_style IN (130, 131)) THEN
+        v_resmask := concat(CASE p_style
+				        		WHEN 131 THEN pg_catalog.format('%s/MM/YYYY ', lpad(v_day, 2, ' '))
+                                ELSE pg_catalog.format('%s $mnme$ YYYY ', lpad(v_day, 2, ' '))
+                            END,
+                            pg_catalog.format('%s:MI:SS%s%sAM', lpad(v_hour, 2, ' '), v_fractsep, v_fseconds));
+    END IF;
+
+    v_resstring := to_char(v_datetimeval, v_resmask);
+    v_resstring := pg_catalog.replace(v_resstring, '$mnme$', v_monthname);
+    v_resstring := pg_catalog.replace(v_resstring, '$rem$', '');
+    v_resstring := substring(v_resstring, 1, coalesce(v_res_length, char_length(v_resstring)));
+    v_res_length := coalesce(v_res_length,
+                             CASE v_res_datatype
+                                WHEN 'CHAR' THEN 30
+                                ELSE 60
+                             END);
+    RETURN CASE
+              WHEN (v_res_datatype NOT IN ('CHAR', 'NCHAR')) THEN v_resstring
+              ELSE rpad(v_resstring, v_res_length, ' ')
+           END;
+EXCEPTION
+	WHEN most_specific_type_mismatch THEN
+        RAISE USING MESSAGE := 'Source data type should be one of these values: ''DATETIME'', ''SMALLDATETIME'', ''DATETIME2'' or ''DATETIME2(n)''.',
+                    DETAIL := 'Use of incorrect "src_datatype" parameter value during conversion process.',
+                    HINT := 'Change "srcdatatype" parameter to the proper value and try again.';
+
+	WHEN invalid_regular_expression THEN
+		RAISE USING MESSAGE := pg_catalog.format('The source data type scale (%s) given to the convert specification exceeds the maximum allowable value (7).',
+										v_scale),
+                   DETAIL := 'Use of incorrect scale value of source data type parameter during conversion process.',
+                   HINT := 'Change scale component of source data type parameter to the allowable value and try again.';
+
+	WHEN invalid_indicator_parameter_value THEN
+        RAISE USING MESSAGE := pg_catalog.format('Invalid attributes specified for data type %s.', v_src_datatype),
+                    DETAIL := 'Use of incorrect scale value, which is not corresponding to specified data type.',
+                    HINT := 'Change data type scale component or select different data type and try again.';
+
+    WHEN escape_character_conflict THEN
+        RAISE USING MESSAGE := 'Argument data type NUMERIC is invalid for argument 4 of convert function.',
+                    DETAIL := 'Use of incorrect "style" parameter value during conversion process.',
+                    HINT := 'Change "style" parameter to the proper value and try again.';
+
+    WHEN invalid_parameter_value THEN
+        RAISE USING MESSAGE := pg_catalog.format('%s is not a valid style number when converting from %s to a character string.',
+                                      v_style, v_src_datatype),
+                    DETAIL := 'Use of incorrect "style" parameter value during conversion process.',
+                    HINT := 'Change "style" parameter to the proper value and try again.';
+
+    WHEN interval_field_overflow THEN
+            RAISE USING MESSAGE := pg_catalog.format('The size (%s) given to the convert specification ''%s'' exceeds the maximum allowed for any data type (%s).',
+                                      v_lengthexpr, lower(v_res_datatype), v_maxlength),
+                    DETAIL := 'Use of incorrect size value of data type parameter during conversion process.',
+                    HINT := 'Change size component of data type parameter to the allowable value and try again.';
+    WHEN datatype_mismatch THEN
+        RAISE USING MESSAGE := 'Data type should be one of these values: ''CHAR(n|MAX)'', ''NCHAR(n|MAX)'', ''VARCHAR(n|MAX)'', ''NVARCHAR(n|MAX)''.',
+                    DETAIL := 'Use of incorrect "datatype" parameter value during conversion process.',
+                    HINT := 'Change "datatype" parameter to the proper value and try again.';
+
+    WHEN invalid_character_value_for_cast THEN
+        RAISE USING MESSAGE := pg_catalog.format('Invalid CONVERSION_LANG constant value - ''%s''. Allowed values are: ''English'', ''Deutsch'', etc.',
+                                      CONVERSION_LANG),
+                    DETAIL := 'Compiled incorrect CONVERSION_LANG constant value in function''s body.',
+                    HINT := 'Correct CONVERSION_LANG constant value in function''s body, recompile it and try again.';
+
+    WHEN invalid_text_representation THEN
+        GET STACKED DIAGNOSTICS v_err_message = MESSAGE_TEXT;
+        v_err_message := substring(lower(v_err_message), 'integer\:\s\"(.*)\"');
+
+        RAISE USING MESSAGE := pg_catalog.format('Error while trying to convert "%s" value to SMALLINT data type.',
+
+                                      v_err_message),
+                    DETAIL := 'Supplied value contains illegal characters.',
+                    HINT := 'Correct supplied value, remove all illegal characters.';
+END;
+$BODY$
+LANGUAGE plpgsql
+VOLATILE
+RETURNS NULL ON NULL INPUT;
+
+CREATE OR REPLACE FUNCTION sys.babelfish_conv_greg_to_hijri(IN p_datetimeval TIMESTAMP WITHOUT TIME ZONE)
+RETURNS TIMESTAMP WITHOUT TIME ZONE
+AS
+$BODY$
+DECLARE
+    v_hijri_date DATE;
+BEGIN
+    v_hijri_date := sys.babelfish_conv_greg_to_hijri(extract(day from p_datetimeval)::SMALLINT,
+                                                         extract(month from p_datetimeval)::SMALLINT,
+                                                         extract(year from p_datetimeval)::INTEGER);
+
+    RETURN to_timestamp(pg_catalog.format('%s %s', to_char(v_hijri_date, 'DD.MM.YYYY'),
+                                        to_char(p_datetimeval, ' HH24:MI:SS.US')),
+                        'DD.MM.YYYY HH24:MI:SS.US');
+END;
+$BODY$
+LANGUAGE plpgsql
+VOLATILE
+RETURNS NULL ON NULL INPUT;
+
+CREATE OR REPLACE FUNCTION sys.babelfish_conv_hijri_to_greg(IN p_datetimeval TIMESTAMP WITHOUT TIME ZONE)
+RETURNS TIMESTAMP WITHOUT TIME ZONE
+AS
+$BODY$
+DECLARE
+    v_hijri_date DATE;
+BEGIN
+    v_hijri_date := sys.babelfish_conv_hijri_to_greg(extract(day from p_dateval)::NUMERIC,
+                                                         extract(month from p_dateval)::NUMERIC,
+                                                         extract(year from p_dateval)::NUMERIC);
+
+    RETURN to_timestamp(pg_catalog.format('%s %s', to_char(v_hijri_date, 'DD.MM.YYYY'),
+                                        to_char(p_datetimeval, ' HH24:MI:SS.US')),
+                        'DD.MM.YYYY HH24:MI:SS.US');
+END;
+$BODY$
+LANGUAGE plpgsql
+VOLATILE
+RETURNS NULL ON NULL INPUT;
+
+CREATE OR REPLACE FUNCTION sys.babelfish_conv_time_to_string(IN p_datatype TEXT,
+                                                                 IN p_src_datatype TEXT,
+                                                                 IN p_timeval TIME(6) WITHOUT TIME ZONE,
+                                                                 IN p_style NUMERIC DEFAULT 25)
+RETURNS TEXT
+AS
+$BODY$
+DECLARE
+    v_hours VARCHAR COLLATE "C";
+    v_style SMALLINT;
+    v_scale SMALLINT;
+    v_resmask VARCHAR COLLATE "C";
+    v_fseconds VARCHAR COLLATE "C";
+    v_datatype VARCHAR COLLATE "C";
+    v_resstring VARCHAR COLLATE "C";
+    v_lengthexpr VARCHAR COLLATE "C";
+    v_res_length SMALLINT;
+    v_res_datatype VARCHAR COLLATE "C";
+    v_src_datatype VARCHAR COLLATE "C";
+    v_res_maxlength SMALLINT;
+    VARCHAR_MAX CONSTANT SMALLINT := 8000;
+    NVARCHAR_MAX CONSTANT SMALLINT := 4000;
+    -- We use the regex below to make sure input p_datatype is one of them
+    DATATYPE_REGEXP CONSTANT VARCHAR COLLATE "C" := '^\s*(CHAR|NCHAR|VARCHAR|NVARCHAR|CHARACTER VARYING)\s*$';
+    -- We use the regex below to get the length of the datatype, if specified
+    -- For example, to get the '10' out of 'varchar(10)'
+    DATATYPE_MASK_REGEXP CONSTANT VARCHAR COLLATE "C" := '^\s*(?:CHAR|NCHAR|VARCHAR|NVARCHAR|CHARACTER VARYING)\s*\(\s*(\d+|MAX)\s*\)\s*$';
+    SRCDATATYPE_MASK_REGEXP VARCHAR COLLATE "C" := '^\s*(?:TIME)\s*(?:\s*\(\s*(\d+)\s*\)\s*)?\s*$';
+BEGIN
+    v_datatype := upper(trim(p_datatype));
+    v_src_datatype := upper(trim(p_src_datatype));
+    v_style := floor(p_style)::SMALLINT;
+    IF (v_src_datatype ~* SRCDATATYPE_MASK_REGEXP)
+    THEN
+        v_scale := coalesce(substring(v_src_datatype, SRCDATATYPE_MASK_REGEXP)::SMALLINT, 7);
+        IF (v_scale NOT BETWEEN 0 AND 7) THEN
+            RAISE invalid_regular_expression;
+        END IF;
+    ELSE
+        RAISE most_specific_type_mismatch;
+    END IF;
+    IF (v_datatype ~* DATATYPE_MASK_REGEXP)
+    THEN
+        v_res_datatype := rtrim(split_part(v_datatype, '(', 1));
+        v_res_maxlength := CASE
+                              WHEN (v_res_datatype IN ('CHAR', 'VARCHAR')) THEN VARCHAR_MAX
+                              ELSE NVARCHAR_MAX
+                           END;
+        v_lengthexpr := substring(v_datatype, DATATYPE_MASK_REGEXP);
+        IF (v_lengthexpr <> 'MAX' AND char_length(v_lengthexpr) > 4) THEN
+            RAISE interval_field_overflow;
+        END IF;
+        v_res_length := CASE v_lengthexpr
+                           WHEN 'MAX' THEN v_res_maxlength
+                           ELSE v_lengthexpr::SMALLINT
+                        END;
+    ELSIF (v_datatype ~* DATATYPE_REGEXP) THEN
+        v_res_datatype := v_datatype;
+    ELSE
+        RAISE datatype_mismatch;
+    END IF;
+    IF (scale(p_style) > 0) THEN
+        RAISE escape_character_conflict;
+    ELSIF (NOT ((v_style BETWEEN 0 AND 14) OR
+                (v_style BETWEEN 20 AND 25) OR
+                (v_style BETWEEN 100 AND 114) OR
+                v_style IN (120, 121, 126, 127, 130, 131)))
+    THEN
+        RAISE invalid_parameter_value;
+    ELSIF ((v_style BETWEEN 1 AND 7) OR
+           (v_style BETWEEN 10 AND 12) OR
+           (v_style BETWEEN 101 AND 107) OR
+           (v_style BETWEEN 110 AND 112) OR
+           v_style = 23)
+    THEN
+        RAISE invalid_datetime_format;
+    END IF;
+    v_hours := ltrim(to_char(p_timeval, 'HH12'), '0');
+    v_fseconds := sys.babelfish_get_microsecs_from_fractsecs(to_char(p_timeval, 'US'), v_scale);
+    IF (v_scale = 7) THEN
+        v_fseconds := concat(v_fseconds, '0');
+    END IF;
+    IF (v_style IN (0, 100))
+    THEN
+        v_resmask := concat(v_hours, ':MIAM');
+    ELSIF (v_style IN (8, 20, 24, 108, 120))
+    THEN
+        v_resmask := 'HH24:MI:SS';
+    ELSIF (v_style IN (9, 109))
+    THEN
+        v_resmask := CASE
+                        WHEN (char_length(v_fseconds) = 0) THEN concat(v_hours, ':MI:SSAM')
+                        ELSE pg_catalog.format('%s:MI:SS.%sAM', v_hours, v_fseconds)
+                     END;
+    ELSIF (v_style IN (13, 14, 21, 25, 113, 114, 121, 126, 127))
+    THEN
+        v_resmask := CASE
+                        WHEN (char_length(v_fseconds) = 0) THEN 'HH24:MI:SS'
+                        ELSE concat('HH24:MI:SS.', v_fseconds)
+                     END;
+    ELSIF (v_style = 22)
+    THEN
+    	v_resmask := pg_catalog.format('%s:MI:SS AM', lpad(v_hours, 2, ' '));
+    ELSIF (v_style IN (130, 131))
+    THEN
+        v_resmask := CASE
+                        WHEN (char_length(v_fseconds) = 0) THEN concat(lpad(v_hours, 2, ' '), ':MI:SSAM')
+                        ELSE pg_catalog.format('%s:MI:SS.%sAM', lpad(v_hours, 2, ' '), v_fseconds)
+                     END;
+    END IF;
+
+    v_resstring := to_char(p_timeval, v_resmask);
+    v_resstring := substring(v_resstring, 1, coalesce(v_res_length, char_length(v_resstring)));
+    v_res_length := coalesce(v_res_length,
+                             CASE v_res_datatype
+                                WHEN 'CHAR' THEN 30
+                                ELSE 60
+                             END);
+    RETURN CASE
+              WHEN (v_res_datatype NOT IN ('CHAR', 'NCHAR')) THEN v_resstring
+              ELSE rpad(v_resstring, v_res_length, ' ')
+           END;
+EXCEPTION
+    WHEN most_specific_type_mismatch THEN
+        RAISE USING MESSAGE := 'Source data type should be ''TIME'' or ''TIME(n)''.',
+                    DETAIL := 'Use of incorrect "src_datatype" parameter value during conversion process.',
+                    HINT := 'Change "src_datatype" parameter to the proper value and try again.';
+
+   WHEN invalid_regular_expression THEN
+       RAISE USING MESSAGE := pg_catalog.format('The source data type scale (%s) given to the convert specification exceeds the maximum allowable value (7).',
+                                     v_scale),
+                   DETAIL := 'Use of incorrect scale value of source data type parameter during conversion process.',
+                   HINT := 'Change scale component of source data type parameter to the allowable value and try again.';
+
+   WHEN interval_field_overflow THEN
+       RAISE USING MESSAGE := pg_catalog.format('The size (%s) given to the convert specification ''%s'' exceeds the maximum allowed for any data type (%s).',
+                                     v_lengthexpr, lower(v_res_datatype), v_res_maxlength),
+                   DETAIL := 'Use of incorrect size value of target data type parameter during conversion process.',
+                   HINT := 'Change size component of data type parameter to the allowable value and try again.';
+    WHEN escape_character_conflict THEN
+        RAISE USING MESSAGE := 'Argument data type NUMERIC is invalid for argument 4 of convert function.',
+                    DETAIL := 'Use of incorrect "style" parameter value during conversion process.',
+                    HINT := 'Change "style" parameter to the proper value and try again.';
+
+    WHEN invalid_parameter_value THEN
+        RAISE USING MESSAGE := pg_catalog.format('%s is not a valid style number when converting from TIME to a character string.', v_style),
+                    DETAIL := 'Use of incorrect "style" parameter value during conversion process.',
+                    HINT := 'Change "style" parameter to the proper value and try again.';
+
+    WHEN datatype_mismatch THEN
+        RAISE USING MESSAGE := 'Data type should be one of these values: ''CHAR(n|MAX)'', ''NCHAR(n|MAX)'', ''VARCHAR(n|MAX)'', ''NVARCHAR(n|MAX)''.',
+                    DETAIL := 'Use of incorrect "datatype" parameter value during conversion process.',
+                    HINT := 'Change "datatype" parameter to the proper value and try again.';
+
+    WHEN invalid_datetime_format THEN
+        RAISE USING MESSAGE := pg_catalog.format('Error converting data type TIME to %s.',
+                                      rtrim(split_part(trim(p_datatype), '(', 1))),
+                    DETAIL := 'Incorrect using of pair of input parameters values during conversion process.',
+                    HINT := 'Check the input parameters values, correct them if needed, and try again.';
+END;
+$BODY$
+LANGUAGE plpgsql
+VOLATILE
+RETURNS NULL ON NULL INPUT;
+
+CREATE OR REPLACE FUNCTION sys.babelfish_sp_aws_add_jobschedule (
+  par_job_id integer = NULL::integer,
+  par_schedule_id integer = NULL::integer,
+  out returncode integer
+)
+AS
+$body$
+DECLARE
+  var_retval INT;
+  proc_name_mask VARCHAR(100);
+  var_owner_login_name VARCHAR(128);
+  var_xml TEXT DEFAULT '';
+  var_cron_expression VARCHAR(50);
+  var_job_cmd VARCHAR(255);
+  lambda_arn VARCHAR(255);
+  return_message text;
+  var_schedule_name VARCHAR(255);
+  var_job_name VARCHAR(128);
+  var_start_step_id INTEGER;
+  var_notify_level_email INTEGER;
+  var_notify_email_operator_id INTEGER;
+  var_notify_email_operator_name VARCHAR(128);
+  notify_email_sender VARCHAR(128);
+  var_delete_level INTEGER;
+BEGIN
+  IF (EXISTS (
+      SELECT 1
+        FROM sys.sysjobschedules
+       WHERE (schedule_id = par_schedule_id)
+         AND (job_id = par_job_id)))
+  THEN
+    SELECT cron_expression
+      FROM sys.babelfish_sp_schedule_to_cron (par_job_id, par_schedule_id)
+      INTO var_cron_expression;
+    SELECT name
+      FROM sys.sysschedules
+     WHERE schedule_id = par_schedule_id
+      INTO var_schedule_name;
+    SELECT name
+         , start_step_id
+         , COALESCE(notify_level_email,0)
+         , COALESCE(notify_email_operator_id,0)
+         , COALESCE(notify_email_operator_name,'')
+         , COALESCE(delete_level,0)
+      FROM sys.sysjobs
+     WHERE job_id = par_job_id
+      INTO var_job_name
+         , var_start_step_id
+         , var_notify_level_email
+         , var_notify_email_operator_id
+         , var_notify_email_operator_name
+         , var_delete_level;
+
+    proc_name_mask := 'sys_data.sql_agent$job_%s_step_%s';
+    var_job_cmd := pg_catalog.format(proc_name_mask, par_job_id, '1');
+    notify_email_sender := 'aws_test_email_sender@dbbest.com';
+
+
+    var_xml := CONCAT(var_xml, '{');
+    var_xml := CONCAT(var_xml, '"mode": "add_job",');
+    var_xml := CONCAT(var_xml, '"parameters": {');
+    var_xml := CONCAT(var_xml, '"vendor": "postgresql",');
+    var_xml := CONCAT(var_xml, '"job_name": "',var_schedule_name,'",');
+    var_xml := CONCAT(var_xml, '"job_frequency": "',var_cron_expression,'",');
+    var_xml := CONCAT(var_xml, '"job_cmd": "',var_job_cmd,'",');
+    var_xml := CONCAT(var_xml, '"notify_level_email": ',var_notify_level_email,',');
+    var_xml := CONCAT(var_xml, '"delete_level": ',var_delete_level,',');
+    var_xml := CONCAT(var_xml, '"uid": "',par_job_id,'",');
+    var_xml := CONCAT(var_xml, '"callback": "sys.babelfish_sp_job_log",');
+    var_xml := CONCAT(var_xml, '"notification": {');
+    var_xml := CONCAT(var_xml, '"notify_email_sender": "',notify_email_sender,'",');
+    var_xml := CONCAT(var_xml, '"notify_email_recipient": "',var_notify_email_operator_name,'"');
+    var_xml := CONCAT(var_xml, '}');
+    var_xml := CONCAT(var_xml, '}');
+    var_xml := CONCAT(var_xml, '}');
+    -- RAISE NOTICE '%', var_xml;
+    SELECT sys.babelfish_get_service_setting ('JOB', 'LAMBDA_ARN')
+      INTO lambda_arn;
+    SELECT sys.awslambda_fn (lambda_arn, var_xml) INTO return_message;
+    returncode := 0;
+  ELSE
+    returncode := 1;
+    RAISE 'Job not fount' USING ERRCODE := '50000';
+  END IF;
+END;
+$body$
+LANGUAGE 'plpgsql';
+
+CREATE OR REPLACE FUNCTION sys.babelfish_sp_aws_add_jobschedule (
+  par_job_id integer = NULL::integer,
+  par_schedule_id integer = NULL::integer,
+  out returncode integer
+)
+AS
+$body$
+DECLARE
+  var_retval INT;
+  proc_name_mask VARCHAR(100);
+  var_owner_login_name VARCHAR(128);
+  var_xml TEXT DEFAULT '';
+  var_cron_expression VARCHAR(50);
+  var_job_cmd VARCHAR(255);
+  lambda_arn VARCHAR(255);
+  return_message text;
+  var_schedule_name VARCHAR(255);
+  var_job_name VARCHAR(128);
+  var_start_step_id INTEGER;
+  var_notify_level_email INTEGER;
+  var_notify_email_operator_id INTEGER;
+  var_notify_email_operator_name VARCHAR(128);
+  notify_email_sender VARCHAR(128);
+  var_delete_level INTEGER;
+BEGIN
+  IF (EXISTS (
+      SELECT 1
+        FROM sys.sysjobschedules
+       WHERE (schedule_id = par_schedule_id)
+         AND (job_id = par_job_id)))
+  THEN
+    SELECT cron_expression
+      FROM sys.babelfish_sp_schedule_to_cron (par_job_id, par_schedule_id)
+      INTO var_cron_expression;
+    SELECT name
+      FROM sys.sysschedules
+     WHERE schedule_id = par_schedule_id
+      INTO var_schedule_name;
+    SELECT name
+         , start_step_id
+         , COALESCE(notify_level_email,0)
+         , COALESCE(notify_email_operator_id,0)
+         , COALESCE(notify_email_operator_name,'')
+         , COALESCE(delete_level,0)
+      FROM sys.sysjobs
+     WHERE job_id = par_job_id
+      INTO var_job_name
+         , var_start_step_id
+         , var_notify_level_email
+         , var_notify_email_operator_id
+         , var_notify_email_operator_name
+         , var_delete_level;
+
+    proc_name_mask := 'sys_data.sql_agent$job_%s_step_%s';
+    var_job_cmd := pg_catalog.format(proc_name_mask, par_job_id, '1');
+    notify_email_sender := 'aws_test_email_sender@dbbest.com';
+
+
+    var_xml := CONCAT(var_xml, '{');
+    var_xml := CONCAT(var_xml, '"mode": "add_job",');
+    var_xml := CONCAT(var_xml, '"parameters": {');
+    var_xml := CONCAT(var_xml, '"vendor": "postgresql",');
+    var_xml := CONCAT(var_xml, '"job_name": "',var_schedule_name,'",');
+    var_xml := CONCAT(var_xml, '"job_frequency": "',var_cron_expression,'",');
+    var_xml := CONCAT(var_xml, '"job_cmd": "',var_job_cmd,'",');
+    var_xml := CONCAT(var_xml, '"notify_level_email": ',var_notify_level_email,',');
+    var_xml := CONCAT(var_xml, '"delete_level": ',var_delete_level,',');
+    var_xml := CONCAT(var_xml, '"uid": "',par_job_id,'",');
+    var_xml := CONCAT(var_xml, '"callback": "sys.babelfish_sp_job_log",');
+    var_xml := CONCAT(var_xml, '"notification": {');
+    var_xml := CONCAT(var_xml, '"notify_email_sender": "',notify_email_sender,'",');
+    var_xml := CONCAT(var_xml, '"notify_email_recipient": "',var_notify_email_operator_name,'"');
+    var_xml := CONCAT(var_xml, '}');
+    var_xml := CONCAT(var_xml, '}');
+    var_xml := CONCAT(var_xml, '}');
+    -- RAISE NOTICE '%', var_xml;
+    SELECT sys.babelfish_get_service_setting ('JOB', 'LAMBDA_ARN')
+      INTO lambda_arn;
+    SELECT sys.awslambda_fn (lambda_arn, var_xml) INTO return_message;
+    returncode := 0;
+  ELSE
+    returncode := 1;
+    RAISE 'Job not fount' USING ERRCODE := '50000';
+  END IF;
+END;
+$body$
+LANGUAGE 'plpgsql';
+
+CREATE OR REPLACE FUNCTION sys.babelfish_sp_schedule_to_cron (
+  par_job_id integer,
+  par_schedule_id integer,
+  out cron_expression varchar
+)
+RETURNS VARCHAR AS
+$body$
+DECLARE
+  var_enabled INTEGER;
+  var_freq_type INTEGER;
+  var_freq_interval INTEGER;
+  var_freq_subday_type INTEGER;
+  var_freq_subday_interval INTEGER;
+  var_freq_relative_interval INTEGER;
+  var_freq_recurrence_factor INTEGER;
+  var_active_start_date INTEGER;
+  var_active_end_date INTEGER;
+  var_active_start_time INTEGER;
+  var_active_end_time INTEGER;
+  var_next_run_date date;
+  var_next_run_time time;
+  var_next_run_dt timestamp;
+  var_tmp_interval varchar(50);
+  var_current_dt timestamp;
+  var_next_dt timestamp;
+BEGIN
+  SELECT enabled
+       , freq_type
+       , freq_interval
+       , freq_subday_type
+       , freq_subday_interval
+       , freq_relative_interval
+       , freq_recurrence_factor
+       , active_start_date
+       , active_end_date
+       , active_start_time
+       , active_end_time
+    FROM sys.sysschedules
+    INTO var_enabled
+       , var_freq_type
+       , var_freq_interval
+       , var_freq_subday_type
+       , var_freq_subday_interval
+       , var_freq_relative_interval
+       , var_freq_recurrence_factor
+       , var_active_start_date
+       , var_active_end_date
+       , var_active_start_time
+       , var_active_end_time
+   WHERE schedule_id = par_schedule_id;
+  /* if enabled = 0 return */
+  CASE var_freq_type
+    WHEN 1 THEN
+      NULL;
+    WHEN 4 THEN
+    BEGIN
+        cron_expression :=
+        CASE
+          /* WHEN var_freq_subday_type = 1 THEN var_freq_subday_interval::character varying || ' At the specified time'  -- start time */
+          /* WHEN var_freq_subday_type = 2 THEN var_freq_subday_interval::character varying || ' second'  -- ADD var_freq_subday_interval SECOND */
+          WHEN var_freq_subday_type = 4 THEN pg_catalog.format('cron(*/%s * * * ? *)', var_freq_subday_interval::character varying) /* ADD var_freq_subday_interval MINUTE */
+          WHEN var_freq_subday_type = 8 THEN pg_catalog.format('cron(0 */%s * * ? *)', var_freq_subday_interval::character varying) /* ADD var_freq_subday_interval HOUR */
+          ELSE ''
+        END;
+    END;
+    WHEN 8 THEN
+      NULL;
+    WHEN 16 THEN
+      NULL;
+    WHEN 32 THEN
+      NULL;
+    WHEN 64 THEN
+      NULL;
+    WHEN 128 THEN
+     NULL;
+  END CASE;
+ -- return cron_expression;
+END;
+$body$
+LANGUAGE 'plpgsql';
+
+CREATE OR REPLACE FUNCTION sys.datetime2fromparts(IN p_year NUMERIC,
+                                                                IN p_month NUMERIC,
+                                                                IN p_day NUMERIC,
+                                                                IN p_hour NUMERIC,
+                                                                IN p_minute NUMERIC,
+                                                                IN p_seconds NUMERIC,
+                                                                IN p_fractions NUMERIC,
+                                                                IN p_precision NUMERIC)
+RETURNS TIMESTAMP WITHOUT TIME ZONE
+AS
+$BODY$
+DECLARE
+   v_fractions VARCHAR;
+   v_precision SMALLINT;
+   v_err_message VARCHAR;
+   v_calc_seconds NUMERIC;
+BEGIN
+   v_fractions := floor(p_fractions)::INTEGER::VARCHAR;
+   v_precision := p_precision::SMALLINT;
+   IF (scale(p_precision) > 0) THEN
+      RAISE most_specific_type_mismatch;
+   ELSIF ((p_year::SMALLINT NOT BETWEEN 1 AND 9999) OR
+       (p_month::SMALLINT NOT BETWEEN 1 AND 12) OR
+       (p_day::SMALLINT NOT BETWEEN 1 AND 31) OR
+       (p_hour::SMALLINT NOT BETWEEN 0 AND 23) OR
+       (p_minute::SMALLINT NOT BETWEEN 0 AND 59) OR
+       (p_seconds::SMALLINT NOT BETWEEN 0 AND 59) OR
+       (p_fractions::SMALLINT NOT BETWEEN 0 AND 9999999) OR
+       (p_fractions::SMALLINT != 0 AND char_length(v_fractions) > p_precision))
+   THEN
+      RAISE invalid_datetime_format;
+   ELSIF (v_precision NOT BETWEEN 0 AND 7) THEN
+      RAISE invalid_parameter_value;
+   END IF;
+
+   v_calc_seconds := pg_catalog.format('%s.%s',
+                            floor(p_seconds)::SMALLINT,
+                            substring(rpad(lpad(v_fractions, v_precision, '0'), 7, '0'), 1, 6))::NUMERIC;
+
+   RETURN make_timestamp(floor(p_year)::SMALLINT,
+                         floor(p_month)::SMALLINT,
+                         floor(p_day)::SMALLINT,
+                         floor(p_hour)::SMALLINT,
+                         floor(p_minute)::SMALLINT,
+                         v_calc_seconds);
+EXCEPTION
+   WHEN most_specific_type_mismatch THEN
+      RAISE USING MESSAGE := 'Scale argument is not valid. Valid expressions for data type DATETIME2 scale argument are integer constants and integer constant expressions.',
+                  DETAIL := 'Use of incorrect "precision" parameter value during conversion process.',
+                  HINT := 'Change "precision" parameter to the proper value and try again.';
+
+   WHEN invalid_parameter_value THEN
+      RAISE USING MESSAGE := pg_catalog.format('Specified scale %s is invalid.', v_precision),
+                  DETAIL := 'Use of incorrect "precision" parameter value during conversion process.',
+                  HINT := 'Change "precision" parameter to the proper value and try again.';
+
+   WHEN invalid_datetime_format THEN
+      RAISE USING MESSAGE := 'Cannot construct data type DATETIME2, some of the arguments have values which are not valid.',
+                  DETAIL := 'Possible use of incorrect value of date or time part (which lies outside of valid range).',
+                  HINT := 'Check each input argument belongs to the valid range and try again.';
+   WHEN numeric_value_out_of_range THEN
+      GET STACKED DIAGNOSTICS v_err_message = MESSAGE_TEXT;
+      v_err_message := upper(split_part(v_err_message, ' ', 1));
+
+      RAISE USING MESSAGE := pg_catalog.format('Error while trying to cast to %s data type.', v_err_message),
+                  DETAIL := pg_catalog.format('Source value is out of %s data type range.', v_err_message),
+                  HINT := pg_catalog.format('Correct the source value you are trying to cast to %s data type and try again.',
+                                 v_err_message);
+END;
+$BODY$
+LANGUAGE plpgsql
+IMMUTABLE
+RETURNS NULL ON NULL INPUT;
+
+CREATE OR REPLACE FUNCTION sys.datetimefromparts(IN p_year NUMERIC,
+                                                               IN p_month NUMERIC,
+                                                               IN p_day NUMERIC,
+                                                               IN p_hour NUMERIC,
+                                                               IN p_minute NUMERIC,
+                                                               IN p_seconds NUMERIC,
+                                                               IN p_milliseconds NUMERIC)
+RETURNS TIMESTAMP WITHOUT TIME ZONE
+AS
+$BODY$
+DECLARE
+    v_err_message VARCHAR;
+    v_calc_seconds NUMERIC;
+    v_milliseconds SMALLINT;
+    v_resdatetime TIMESTAMP WITHOUT TIME ZONE;
+BEGIN
+    -- Check if arguments are out of range
+    IF ((floor(p_year)::SMALLINT NOT BETWEEN 1753 AND 9999) OR
+        (floor(p_month)::SMALLINT NOT BETWEEN 1 AND 12) OR
+        (floor(p_day)::SMALLINT NOT BETWEEN 1 AND 31) OR
+        (floor(p_hour)::SMALLINT NOT BETWEEN 0 AND 23) OR
+        (floor(p_minute)::SMALLINT NOT BETWEEN 0 AND 59) OR
+        (floor(p_seconds)::SMALLINT NOT BETWEEN 0 AND 59) OR
+        (floor(p_milliseconds)::SMALLINT NOT BETWEEN 0 AND 999))
+    THEN
+        RAISE invalid_datetime_format;
+    END IF;
+
+    v_milliseconds := sys.babelfish_round_fractseconds(p_milliseconds::INTEGER);
+
+    v_calc_seconds := pg_catalog.format('%s.%s',
+                             floor(p_seconds)::SMALLINT,
+                             CASE v_milliseconds
+                                WHEN 1000 THEN '0'
+                                ELSE lpad(v_milliseconds::VARCHAR, 3, '0')
+                             END)::NUMERIC;
+    v_resdatetime := make_timestamp(floor(p_year)::SMALLINT,
+                                    floor(p_month)::SMALLINT,
+                                    floor(p_day)::SMALLINT,
+                                    floor(p_hour)::SMALLINT,
+                                    floor(p_minute)::SMALLINT,
+                                    v_calc_seconds);
+    RETURN CASE
+              WHEN (v_milliseconds != 1000) THEN v_resdatetime
+              ELSE v_resdatetime + INTERVAL '1 second'
+           END;
+EXCEPTION
+    WHEN invalid_datetime_format THEN
+        RAISE USING MESSAGE := 'Cannot construct data type datetime, some of the arguments have values which are not valid.',
+                    DETAIL := 'Possible use of incorrect value of date or time part (which lies outside of valid range).',
+                    HINT := 'Check each input argument belongs to the valid range and try again.';
+    WHEN numeric_value_out_of_range THEN
+        GET STACKED DIAGNOSTICS v_err_message = MESSAGE_TEXT;
+        v_err_message := upper(split_part(v_err_message, ' ', 1));
+
+        RAISE USING MESSAGE := pg_catalog.format('Error while trying to cast to %s data type.', v_err_message),
+                    DETAIL := pg_catalog.format('Source value is out of %s data type range.', v_err_message),
+                    HINT := pg_catalog.format('Correct the source value you are trying to cast to %s data type and try again.',
+                                   v_err_message);
+END;
+$BODY$
+LANGUAGE plpgsql
+IMMUTABLE
+RETURNS NULL ON NULL INPUT;
+
+CREATE OR REPLACE FUNCTION sys.timefromparts(IN p_hour NUMERIC,
+                                                           IN p_minute NUMERIC,
+                                                           IN p_seconds NUMERIC,
+                                                           IN p_fractions NUMERIC,
+                                                           IN p_precision NUMERIC)
+RETURNS TIME WITHOUT TIME ZONE
+AS
+$BODY$
+DECLARE
+    v_fractions VARCHAR;
+    v_precision SMALLINT;
+    v_err_message VARCHAR;
+    v_calc_seconds NUMERIC;
+BEGIN
+    v_fractions := floor(p_fractions)::INTEGER::VARCHAR;
+    v_precision := p_precision::SMALLINT;
+    IF (scale(p_precision) > 0) THEN
+        RAISE most_specific_type_mismatch;
+    ELSIF ((p_hour::SMALLINT NOT BETWEEN 0 AND 23) OR
+           (p_minute::SMALLINT NOT BETWEEN 0 AND 59) OR
+           (p_seconds::SMALLINT NOT BETWEEN 0 AND 59) OR
+           (p_fractions::SMALLINT NOT BETWEEN 0 AND 9999999) OR
+           (p_fractions::SMALLINT != 0 AND char_length(v_fractions) > p_precision))
+    THEN
+        RAISE invalid_datetime_format;
+    ELSIF (v_precision NOT BETWEEN 0 AND 7) THEN
+        RAISE numeric_value_out_of_range;
+    END IF;
+
+    v_calc_seconds := pg_catalog.format('%s.%s',
+                             floor(p_seconds)::SMALLINT,
+                             substring(rpad(lpad(v_fractions, v_precision, '0'), 7, '0'), 1, 6))::NUMERIC;
+
+    RETURN make_time(floor(p_hour)::SMALLINT,
+                     floor(p_minute)::SMALLINT,
+                     v_calc_seconds);
+EXCEPTION
+    WHEN most_specific_type_mismatch THEN
+        RAISE USING MESSAGE := 'Scale argument is not valid. Valid expressions for data type DATETIME2 scale argument are integer constants and integer constant expressions.',
+                    DETAIL := 'Use of incorrect "precision" parameter value during conversion process.',
+                    HINT := 'Change "precision" parameter to the proper value and try again.';
+
+    WHEN invalid_parameter_value THEN
+        RAISE USING MESSAGE := pg_catalog.format('Specified scale %s is invalid.', v_precision),
+                    DETAIL := 'Use of incorrect "precision" parameter value during conversion process.',
+                    HINT := 'Change "precision" parameter to the proper value and try again.';
+
+    WHEN invalid_datetime_format THEN
+        RAISE USING MESSAGE := 'Cannot construct data type time, some of the arguments have values which are not valid.',
+                    DETAIL := 'Possible use of incorrect value of time part (which lies outside of valid range).',
+                    HINT := 'Check each input argument belongs to the valid range and try again.';
+    WHEN numeric_value_out_of_range THEN
+        GET STACKED DIAGNOSTICS v_err_message = MESSAGE_TEXT;
+        v_err_message := upper(split_part(v_err_message, ' ', 1));
+
+        RAISE USING MESSAGE := pg_catalog.format('Error while trying to cast to %s data type.', v_err_message),
+                    DETAIL := pg_catalog.format('Source value is out of %s data type range.', v_err_message),
+                    HINT := pg_catalog.format('Correct the source value you are trying to cast to %s data type and try again.',
+                                   v_err_message);
+END;
+$BODY$
+LANGUAGE plpgsql
+VOLATILE
+RETURNS NULL ON NULL INPUT;
+CREATE OR REPLACE FUNCTION sys.timefromparts(IN p_hour TEXT,
+                                                           IN p_minute TEXT,
+                                                           IN p_seconds TEXT,
+                                                           IN p_fractions TEXT,
+                                                           IN p_precision TEXT)
+RETURNS TIME WITHOUT TIME ZONE
+AS
+$BODY$
+DECLARE
+    v_err_message VARCHAR;
+BEGIN
+    RETURN sys.timefromparts(p_hour::NUMERIC, p_minute::NUMERIC,
+                                           p_seconds::NUMERIC, p_fractions::NUMERIC,
+                                           p_precision::NUMERIC);
+EXCEPTION
+    WHEN invalid_text_representation THEN
+        GET STACKED DIAGNOSTICS v_err_message = MESSAGE_TEXT;
+        v_err_message := substring(lower(v_err_message), 'numeric\:\s\"(.*)\"');
+
+        RAISE USING MESSAGE := pg_catalog.format('Error while trying to convert "%s" value to NUMERIC data type.', v_err_message),
+                    DETAIL := 'Supplied string value contains illegal characters.',
+                    HINT := 'Correct supplied value, remove all illegal characters and try again.';
+END;
+$BODY$
+LANGUAGE plpgsql
+VOLATILE
+RETURNS NULL ON NULL INPUT;
+
+CREATE OR REPLACE FUNCTION sys.space(IN number INTEGER, OUT result SYS.VARCHAR) AS $$
+-- sys.varchar has default length of 1, so we have to pass in 'number' to be the
+-- type modifier.
+BEGIN
+	EXECUTE pg_catalog.format(E'SELECT repeat(\' \', %s)::SYS.VARCHAR(%s)', number, number) INTO result;
+END;
+$$
+STRICT
+LANGUAGE plpgsql;
+
 CREATE OR REPLACE FUNCTION sys.babelfish_get_full_year(IN p_short_year TEXT,
                                                            IN p_base_century TEXT DEFAULT '',
                                                            IN p_year_cutoff NUMERIC DEFAULT 49)
@@ -146,11 +1359,11 @@ BEGIN
 
     RETURN v_full_year;
 EXCEPTION
-    WHEN invalid_text_representation THEN
+	WHEN invalid_text_representation THEN
         GET STACKED DIAGNOSTICS v_err_message = MESSAGE_TEXT;
         v_err_message := substring(lower(v_err_message), 'integer\:\s\"(.*)\"');
 
-        RAISE USING MESSAGE := format('Error while trying to convert "%s" value to SMALLINT data type.',
+        RAISE USING MESSAGE := pg_catalog.format('Error while trying to convert "%s" value to SMALLINT data type.',
                                       v_err_message),
                     DETAIL := 'Supplied value contains illegal characters.',
                     HINT := 'Correct supplied value, remove all illegal characters.';
