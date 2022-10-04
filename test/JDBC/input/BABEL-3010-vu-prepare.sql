@@ -32,7 +32,9 @@ RETURNS @tab TABLE (a int, b varchar(10))
 	END;
 GO
 
-CREATE VIEW babel_3010_vu_prepare_v1 AS SELECT * FROM babel_3010_vu_prepare_t1;
+CREATE VIEW babel_3010_vu_prepare_v1
+AS SELECT sys.babelfish_get_pltsql_function_signature(oid)
+FROM pg_catalog.pg_proc WHERE proname = 'babel_3010_vu_prepare_f1' ORDER BY proname;
 GO
 
 CREATE TRIGGER babel_3010_vu_prepare_trig1 ON babel_3010_vu_prepare_t1
