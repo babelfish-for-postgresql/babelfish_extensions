@@ -2139,8 +2139,8 @@ Datum update_guest_catalog(PG_FUNCTION_ARGS)
 		ListCell   		*res_item;
 		int				i = 0;
 		const char	*prev_current_user;
-		int16 		old_dbid;
-		char		*old_dbname;
+		//int16 		old_dbid;
+		//char		*old_dbname;
 
 		db_name_datum = heap_getattr(tuple,
 		Anum_sysdatabaese_name,
@@ -2179,9 +2179,9 @@ Datum update_guest_catalog(PG_FUNCTION_ARGS)
 
 			bbf_set_current_user("sysadmin");
 
-			old_dbid = get_cur_db_id();
-			old_dbname = get_cur_db_name();
-			set_cur_db(dbid, dbname);  /* temporarily set current dbid as the new id */
+			//old_dbid = get_cur_db_id();
+			//old_dbname = get_cur_db_name();
+			//set_cur_db(dbid, dbname);  /* temporarily set current dbid as the new id */
 
 			PG_TRY();
 			{
@@ -2218,7 +2218,7 @@ Datum update_guest_catalog(PG_FUNCTION_ARGS)
 			{
 				/* Clean up. Restore previous state. */
 				bbf_set_current_user(prev_current_user);
-				set_cur_db(old_dbid, old_dbname);
+				//set_cur_db(old_dbid, old_dbname);
 				PG_RE_THROW();
 			}
 			PG_END_TRY();
