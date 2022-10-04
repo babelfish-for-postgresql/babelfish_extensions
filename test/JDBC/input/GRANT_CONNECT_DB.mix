@@ -2,9 +2,6 @@
 grant connect to guest;
 go
 
-select rolname,orig_username, database_name, user_can_connect from babelfish_authid_user_ext;
-go
-
 -- Throws error
 revoke connect from guest;
 go
@@ -32,6 +29,9 @@ go
 create database db1;
 go
 
+select rolname,orig_username, database_name, user_can_connect from babelfish_authid_user_ext;
+go
+
 create login abc with password = 'Babel123'
 go
 
@@ -45,6 +45,9 @@ use db1
 go
 
 grant connect to guest
+go
+
+select rolname,orig_username, database_name, user_can_connect from babelfish_authid_user_ext;
 go
 
 -- tsql  user=abc password=Babel123

@@ -27,6 +27,7 @@
 #include "hooks.h"
 #include "multidb.h"
 #include "rolecmds.h"
+#include "dbcmds.h"
 #include "pltsql.h"
 
 /*****************************************
@@ -2143,6 +2144,12 @@ Datum update_guest_catalog(PG_FUNCTION_ARGS)
 		Datum           db_name_datum;
 		const char      *db_name;
 		const char      *guest;
+		const char  	*db_owner_role;
+		List			*logins = NIL;
+		List			*res;
+		StringInfoData	query;
+		Node			*stmt;
+		ListCell   		*res_item;
 
 		db_name_datum = heap_getattr(tuple,
 		Anum_sysdatabaese_name,
@@ -2153,10 +2160,55 @@ Datum update_guest_catalog(PG_FUNCTION_ARGS)
 		if (strcmp(db_name, "master") == 0 || strcmp(db_name, "tempdb") == 0 || strcmp(db_name, "msdb") == 0)
 			PG_RETURN_INT32(0);
 		guest = get_guest_role_name(db_name);
+		db_owner_role = get_db_owner_name(db_name);
 
 		if (guest)
-			add_to_bbf_authid_user_ext(guest, "guest", db_name, NULL, NULL, false, false);
+		{
+			initStringInfo(&query);
+			appendStringInfo(&query, "CREATE ROLE dummy INHERIT ROLE dummy; ");
+			logins = grant_guest_to_logins(&query);
+			stmt = parsetree_nth_stmt(res, i++);
+			update_CreateRoleStmt(stmt, guest, db_owner_role, NULL);
 
+			if (list_length(logins) > 0)
+			{
+				AccessPriv *tmp = makeNode(AccessPriv);
+				tmp->priv_name = pstrdup(guest);
+				tmp->cols = NIL;
+
+				stmt = parsetree_nth_stmt(res, i++);
+				update_GrantRoleStmt(stmt, list_make1(tmp), logins);
+			}
+
+			/* Run all subcommands */
+			foreach(res_item, res)
+			{
+				Node	   *res_stmt = ((RawStmt *) lfirst(res_item))->stmt;
+				PlannedStmt *wrapper;
+
+				/* need to make a wrapper PlannedStmt */
+				wrapper = makeNode(PlannedStmt);
+				wrapper->commandType = CMD_UTILITY;
+				wrapper->canSetTag = false;
+				wrapper->utilityStmt = res_stmt;
+				wrapper->stmt_location = 0;
+				wrapper->stmt_len = 18;
+
+				/* do this step */
+				ProcessUtility(wrapper,
+							   "(CREATE LOGICAL DATABASE )",
+							   false,
+							   PROCESS_UTILITY_SUBCOMMAND,
+								NULL,
+						   		NULL,
+						   		None_Receiver,
+						   		NULL);
+
+				/* make sure later steps can see the object created here */
+				CommandCounterIncrement();
+			}
+			add_to_bbf_authid_user_ext(guest, "guest", db_name, NULL, NULL, false, false);
+		}
 		tuple = heap_getnext(scan, ForwardScanDirection);
 	}
 	table_endscan(scan);

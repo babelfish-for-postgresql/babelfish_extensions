@@ -50,7 +50,7 @@ static List *gen_dropdb_subcmds(const char *schema,
 								List *db_users);
 static Oid do_create_bbf_db(const char *dbname, List *options, const char *owner);
 static void create_bbf_db_internal(const char *dbname, List *options, const char *owner, int16 dbid);
-static List *grant_guest_to_logins(StringInfoData *query);
+List *grant_guest_to_logins(StringInfoData *query);
 static void drop_related_bbf_namespace_entries(int16 dbid);
 
 static bool
@@ -764,7 +764,7 @@ Datum drop_all_dbs(PG_FUNCTION_ARGS)
 	PG_RETURN_INT32(0);
 }
 
-static List *
+List *
 grant_guest_to_logins(StringInfoData *query)
 {
 	Relation		login_rel;
