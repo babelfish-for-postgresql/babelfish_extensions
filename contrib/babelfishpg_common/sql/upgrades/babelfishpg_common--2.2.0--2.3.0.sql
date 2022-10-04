@@ -48,5 +48,17 @@ COMBINEFUNC = int8pl,
 PARALLEL = SAFE
 );
 
+-- int8 -> money
+CREATE FUNCTION sys.int8_to_money(INT8)
+RETURNS sys.MONEY
+AS 'babelfishpg_money', 'int8_to_money'
+LANGUAGE C IMMUTABLE STRICT PARALLEL SAFE;
+
+-- int8 -> smallmoney
+CREATE FUNCTION sys.int8_to_smallmoney(INT8)
+RETURNS sys.SMALLMONEY
+AS 'babelfishpg_money', 'int8_to_smallmoney'
+LANGUAGE C IMMUTABLE STRICT PARALLEL SAFE;
+
 -- Reset search_path to not affect any subsequent scripts
 SELECT set_config('search_path', trim(leading 'sys, ' from current_setting('search_path')), false);

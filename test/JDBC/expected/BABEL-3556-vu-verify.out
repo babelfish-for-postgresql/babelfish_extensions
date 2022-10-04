@@ -1,0 +1,626 @@
+-- To test out of range values for fixeddecimal
+SELECT * FROM babel_3556_vu_prepare_t1;
+GO
+~~START~~
+money
+~~END~~
+
+
+-- decimal
+SELECT * FROM babel_3556_vu_prepare_v1;
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: value "922337203685478.5807" is out of range for type fixeddecimal)~~
+
+
+SELECT * FROM babel_3556_vu_prepare_v2;
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: value "-922337203685478.5808" is out of range for type fixeddecimal)~~
+
+
+INSERT INTO babel_3556_vu_prepare_t2 VALUES(922337203685478.5807);
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: value "922337203685478.5807" is out of range for type fixeddecimal)~~
+
+
+INSERT INTO babel_3556_vu_prepare_t2 VALUES(-922337203685478.5808);
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: value "-922337203685478.5808" is out of range for type fixeddecimal)~~
+
+-- integral
+SELECT * FROM babel_3556_vu_prepare_v3;
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: value "922337203685478" is out of range for type fixeddecimal)~~
+
+
+SELECT * FROM babel_3556_vu_prepare_v4;
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: value "-922337203685478" is out of range for type fixeddecimal)~~
+
+
+SELECT * FROM babel_3556_vu_prepare_v5;
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: value "1232422322334223423121" is out of range for type fixeddecimal)~~
+
+
+INSERT INTO babel_3556_vu_prepare_t2 VALUES(922337203685478);
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: value "922337203685478" is out of range for type fixeddecimal)~~
+
+
+INSERT INTO babel_3556_vu_prepare_t2 VALUES(-922337203685478);
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: value "-922337203685478" is out of range for type fixeddecimal)~~
+
+
+INSERT INTO babel_3556_vu_prepare_t2 VALUES(1232422322334223423121);
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: value "1232422322334223423121" is out of range for type fixeddecimal)~~
+
+
+SELECT * FROM babel_3556_vu_prepare_t1;
+GO
+~~START~~
+money
+~~END~~
+
+
+-- procedure
+DECLARE @in bigint = 922337203685478;
+exec babel_3556_vu_prepare_p1 @in;
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: value "922337203685478" is out of range for type fixeddecimal)~~
+
+
+DECLARE @in bigint = -922337203685478;
+exec babel_3556_vu_prepare_p1 @in;
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: value "-922337203685478" is out of range for type fixeddecimal)~~
+
+
+DECLARE @in bigint = 922337203685478;
+DECLARE @out fixeddecimal;
+exec babel_3556_vu_prepare_p4 @in, @out;
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: value "922337203685478" is out of range for type fixeddecimal)~~
+
+
+DECLARE @in bigint = -922337203685478;
+DECLARE @out fixeddecimal;
+exec babel_3556_vu_prepare_p4 @in, @out;
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: value "-922337203685478" is out of range for type fixeddecimal)~~
+
+
+-- function
+DECLARE @in bigint = 922337203685478;
+SELECT * FROM babel_3556_vu_prepare_f1(@in);
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: value "922337203685478" is out of range for type fixeddecimal)~~
+
+
+DECLARE @in bigint = -922337203685478;
+SELECT * FROM babel_3556_vu_prepare_f1(@in);
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: value "-922337203685478" is out of range for type fixeddecimal)~~
+
+
+DECLARE @in bigint = 922337203685478;
+SELECT * FROM babel_3556_vu_prepare_f4(@in);
+GO
+~~START~~
+money
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: value "922337203685478" is out of range for type fixeddecimal)~~
+
+
+DECLARE @in bigint = -922337203685478;
+SELECT * FROM babel_3556_vu_prepare_f4(@in);
+GO
+~~START~~
+money
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: value "-922337203685478" is out of range for type fixeddecimal)~~
+
+
+-- To test out of range values for money
+SELECT * FROM babel_3556_vu_prepare_t3;
+GO
+~~START~~
+money
+~~END~~
+
+
+-- decimal
+SELECT * FROM babel_3556_vu_prepare_v6;
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: value "922337203685478.5807" is out of range for type fixeddecimal)~~
+
+
+SELECT * FROM babel_3556_vu_prepare_v7;
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: value "-922337203685478.5808" is out of range for type fixeddecimal)~~
+
+
+INSERT INTO babel_3556_vu_prepare_t4 VALUES(922337203685478.5807);
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: value "922337203685478.5807" is out of range for type fixeddecimal)~~
+
+
+INSERT INTO babel_3556_vu_prepare_t4 VALUES(-922337203685478.5808);
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: value "-922337203685478.5808" is out of range for type fixeddecimal)~~
+
+-- integral
+SELECT * FROM babel_3556_vu_prepare_v8;
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: value "922337203685478" is out of range for type money)~~
+
+
+SELECT * FROM babel_3556_vu_prepare_v9;
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: value "-922337203685478" is out of range for type money)~~
+
+
+SELECT * FROM babel_3556_vu_prepare_v10;
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: value "1232422322334223423121" is out of range for type fixeddecimal)~~
+
+
+INSERT INTO babel_3556_vu_prepare_t4 VALUES(922337203685478);
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: value "922337203685478" is out of range for type money)~~
+
+
+INSERT INTO babel_3556_vu_prepare_t4 VALUES(-922337203685478);
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: value "-922337203685478" is out of range for type money)~~
+
+
+INSERT INTO babel_3556_vu_prepare_t4 VALUES(1232422322334223423121);
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: value "1232422322334223423121" is out of range for type fixeddecimal)~~
+
+
+SELECT * FROM babel_3556_vu_prepare_t4;
+GO
+~~START~~
+money
+~~END~~
+
+
+-- procedure
+DECLARE @in bigint = 922337203685478;
+exec babel_3556_vu_prepare_p2 @in;
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: value "922337203685478" is out of range for type money)~~
+
+
+DECLARE @in bigint = -922337203685478;
+exec babel_3556_vu_prepare_p2 @in;
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: value "-922337203685478" is out of range for type money)~~
+
+
+DECLARE @in bigint = 922337203685478;
+DECLARE @out fixeddecimal;
+exec babel_3556_vu_prepare_p5 @in, @out;
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: value "922337203685478" is out of range for type smallmoney)~~
+
+
+DECLARE @in bigint = -922337203685478;
+DECLARE @out fixeddecimal;
+exec babel_3556_vu_prepare_p5 @in, @out;
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: value "-922337203685478" is out of range for type smallmoney)~~
+
+
+-- function
+DECLARE @in bigint = 922337203685478;
+SELECT * FROM babel_3556_vu_prepare_f2(@in);
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: value "922337203685478" is out of range for type money)~~
+
+
+DECLARE @in bigint = -922337203685478;
+SELECT * FROM babel_3556_vu_prepare_f2(@in);
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: value "-922337203685478" is out of range for type money)~~
+
+
+DECLARE @in bigint = 922337203685478;
+SELECT * FROM babel_3556_vu_prepare_f5(@in);
+GO
+~~START~~
+money
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: value "922337203685478" is out of range for type money)~~
+
+
+DECLARE @in bigint = -922337203685478;
+SELECT * FROM babel_3556_vu_prepare_f5(@in);
+GO
+~~START~~
+money
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: value "-922337203685478" is out of range for type money)~~
+
+
+
+-- To test out of range values for smallmoney
+SELECT * FROM babel_3556_vu_prepare_t5;
+GO
+~~START~~
+smallmoney
+~~END~~
+
+
+-- decimal
+SELECT * FROM babel_3556_vu_prepare_v11;
+GO
+~~START~~
+smallmoney
+~~ERROR (Code: 220)~~
+
+~~ERROR (Message: value for domain smallmoney violates check constraint "smallmoney_check")~~
+
+
+SELECT * FROM babel_3556_vu_prepare_v12;
+GO
+~~START~~
+smallmoney
+~~ERROR (Code: 220)~~
+
+~~ERROR (Message: value for domain smallmoney violates check constraint "smallmoney_check")~~
+
+
+INSERT INTO babel_3556_vu_prepare_t6 VALUES($214748.3648);
+GO
+~~ERROR (Code: 220)~~
+
+~~ERROR (Message: value for domain smallmoney violates check constraint "smallmoney_check")~~
+
+
+INSERT INTO babel_3556_vu_prepare_t6 VALUES($-214748.3649);
+GO
+~~ERROR (Code: 220)~~
+
+~~ERROR (Message: value for domain smallmoney violates check constraint "smallmoney_check")~~
+
+
+-- integer
+SELECT * FROM babel_3556_vu_prepare_v13;
+GO
+~~START~~
+smallmoney
+~~ERROR (Code: 220)~~
+
+~~ERROR (Message: value for domain smallmoney violates check constraint "smallmoney_check")~~
+
+
+SELECT * FROM babel_3556_vu_prepare_v14;
+GO
+~~START~~
+smallmoney
+~~ERROR (Code: 220)~~
+
+~~ERROR (Message: value for domain smallmoney violates check constraint "smallmoney_check")~~
+
+
+SELECT * FROM babel_3556_vu_prepare_v15;
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: value "1232422322334223423121" is out of range for type fixeddecimal)~~
+
+
+SELECT * FROM babel_3556_vu_prepare_v16;
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: value "-1232422322334223423121" is out of range for type fixeddecimal)~~
+
+
+INSERT INTO babel_3556_vu_prepare_t6 VALUES($214749);
+GO
+~~ERROR (Code: 220)~~
+
+~~ERROR (Message: value for domain smallmoney violates check constraint "smallmoney_check")~~
+
+
+INSERT INTO babel_3556_vu_prepare_t6 VALUES($-214749 );
+GO
+~~ERROR (Code: 220)~~
+
+~~ERROR (Message: value for domain smallmoney violates check constraint "smallmoney_check")~~
+
+
+INSERT INTO babel_3556_vu_prepare_t6 VALUES($922337203685478);
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: value "922337203685478" is out of range for type smallmoney)~~
+
+
+INSERT INTO babel_3556_vu_prepare_t6 VALUES($-1232422322334223423121);
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: value "-1232422322334223423121" is out of range for type fixeddecimal)~~
+
+
+SELECT * FROM babel_3556_vu_prepare_t6;
+GO
+~~START~~
+smallmoney
+~~END~~
+
+
+-- procedure
+DECLARE @in bigint = 922337203685478;
+exec babel_3556_vu_prepare_p3 @in;
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: value "922337203685478" is out of range for type smallmoney)~~
+
+
+DECLARE @in bigint = -922337203685478;
+exec babel_3556_vu_prepare_p3 @in;
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: value "-922337203685478" is out of range for type smallmoney)~~
+
+
+DECLARE @in bigint = 922337203685478;
+DECLARE @out fixeddecimal;
+exec babel_3556_vu_prepare_p6 @in, @out;
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: value "922337203685478" is out of range for type money)~~
+
+
+DECLARE @in bigint = -922337203685478;
+DECLARE @out fixeddecimal;
+exec babel_3556_vu_prepare_p6 @in, @out;
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: value "-922337203685478" is out of range for type money)~~
+
+
+-- function
+DECLARE @in bigint = 922337203685478;
+SELECT * FROM babel_3556_vu_prepare_f3(@in);
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: value "922337203685478" is out of range for type smallmoney)~~
+
+
+DECLARE @in bigint = -922337203685478;
+SELECT * FROM babel_3556_vu_prepare_f3(@in);
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: value "-922337203685478" is out of range for type smallmoney)~~
+
+
+DECLARE @in bigint = 922337203685478;
+SELECT * FROM babel_3556_vu_prepare_f6(@in);
+GO
+~~START~~
+smallmoney
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: value "922337203685478" is out of range for type smallmoney)~~
+
+
+DECLARE @in bigint = -922337203685478;
+SELECT * FROM babel_3556_vu_prepare_f6(@in);
+GO
+~~START~~
+smallmoney
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: value "-922337203685478" is out of range for type smallmoney)~~
+
+
+
+
+-- cast inside view
+SELECT * FROM babel_3556_vu_prepare_v17;
+GO
+~~START~~
+money
+1234.0000
+~~END~~
+
+
+SELECT * FROM babel_3556_vu_prepare_v18;
+GO
+~~START~~
+smallmoney
+1234.0000
+~~END~~
+
+
+
+
+-- clear 
+DROP PROCEDURE babel_3556_vu_prepare_p1;
+GO
+
+DROP PROCEDURE babel_3556_vu_prepare_p2;
+GO
+
+DROP PROCEDURE babel_3556_vu_prepare_p3;
+GO
+
+DROP PROCEDURE babel_3556_vu_prepare_p4;
+GO
+
+DROP PROCEDURE babel_3556_vu_prepare_p5;
+GO
+
+DROP PROCEDURE babel_3556_vu_prepare_p6;
+GO
+
+DROP FUNCTION babel_3556_vu_prepare_f1;
+GO
+
+DROP FUNCTION babel_3556_vu_prepare_f2;
+GO
+
+DROP FUNCTION babel_3556_vu_prepare_f3;
+GO
+
+DROP FUNCTION babel_3556_vu_prepare_f4;
+GO
+
+DROP FUNCTION babel_3556_vu_prepare_f5;
+GO
+
+DROP FUNCTION babel_3556_vu_prepare_f6;
+GO
+
+DROP VIEW babel_3556_vu_prepare_v1;
+GO
+DROP VIEW babel_3556_vu_prepare_v2;
+GO
+
+DROP VIEW babel_3556_vu_prepare_v3;
+GO
+
+DROP VIEW babel_3556_vu_prepare_v4;
+GO
+
+DROP VIEW babel_3556_vu_prepare_v5;
+GO
+
+DROP VIEW babel_3556_vu_prepare_v6;
+GO
+
+DROP VIEW babel_3556_vu_prepare_v7;
+GO
+
+DROP VIEW babel_3556_vu_prepare_v8;
+GO
+
+DROP VIEW babel_3556_vu_prepare_v9;
+GO
+
+DROP VIEW babel_3556_vu_prepare_v10;
+GO
+
+DROP VIEW babel_3556_vu_prepare_v11;
+GO
+
+DROP VIEW babel_3556_vu_prepare_v12;
+GO
+
+DROP VIEW babel_3556_vu_prepare_v13;
+GO
+
+DROP VIEW babel_3556_vu_prepare_v14;
+GO
+
+DROP VIEW babel_3556_vu_prepare_v15;
+GO
+
+DROP VIEW babel_3556_vu_prepare_v16;
+GO
+
+DROP VIEW babel_3556_vu_prepare_v17;
+GO
+
+DROP VIEW babel_3556_vu_prepare_v18;
+GO
+
+DROP TABLE babel_3556_vu_prepare_t1;
+GO
+
+DROP TABLE babel_3556_vu_prepare_t2;
+GO
+
+DROP TABLE babel_3556_vu_prepare_t3;
+GO
+
+DROP TABLE babel_3556_vu_prepare_t4;
+GO
+
+DROP TABLE babel_3556_vu_prepare_t5;
+GO
+
+DROP TABLE babel_3556_vu_prepare_t6;
+GO

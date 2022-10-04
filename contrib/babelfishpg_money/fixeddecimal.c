@@ -22,6 +22,7 @@
 #include "funcapi.h"
 #include "libpq/pqformat.h"
 #include "access/hash.h"
+#include "common/int.h"
 #include "utils/array.h"
 #include "utils/builtins.h"
 
@@ -215,6 +216,9 @@ PG_FUNCTION_INFO_V1(fixeddecimalaggstatesend);
 PG_FUNCTION_INFO_V1(fixeddecimalaggstaterecv);
 
 PG_FUNCTION_INFO_V1(char_to_fixeddecimal);
+PG_FUNCTION_INFO_V1(int8_to_money);
+PG_FUNCTION_INFO_V1(int8_to_smallmoney);
+
 
 /* Aggregate Internal State */
 typedef struct FixedDecimalAggState
@@ -230,6 +234,7 @@ static void apply_typmod(int64 value, int32 typmod, int precision, int scale);
 static int64 scanfixeddecimal(const char *str, int *precision, int *scale);
 static FixedDecimalAggState *makeFixedDecimalAggState(FunctionCallInfo fcinfo);
 static void fixeddecimal_accum(FixedDecimalAggState *state, int64 newval);
+static int64 int8fixeddecimal_internal(int64 arg, const char *typename);
 
 /***********************************************************************
  **
@@ -2571,11 +2576,41 @@ fixeddecimal(PG_FUNCTION_ARGS)
 }
 
 Datum
+int8_to_money(PG_FUNCTION_ARGS)
+{
+	int64		arg = PG_GETARG_INT64(0);
+	int64		result = int8fixeddecimal_internal(arg, "money");
+	PG_RETURN_INT64(result);
+}
+
+Datum
+int8_to_smallmoney(PG_FUNCTION_ARGS)
+{
+	int64		arg = PG_GETARG_INT64(0);
+	int64		result = int8fixeddecimal_internal(arg, "smallmoney");
+	PG_RETURN_INT64(result);
+}
+
+Datum
 int8fixeddecimal(PG_FUNCTION_ARGS)
 {
 	int64		arg = PG_GETARG_INT64(0);
+	int64		result = int8fixeddecimal_internal(arg, "fixeddecimal");
+	PG_RETURN_INT64(result);
+}
 
-	PG_RETURN_INT64(arg * FIXEDDECIMAL_MULTIPLIER);
+static int64
+int8fixeddecimal_internal(int64 arg, const char *typename)
+{
+	int64		result;
+	
+	/* check for INT64 overflow on multiplication */
+	if(unlikely(pg_mul_s64_overflow(arg, FIXEDDECIMAL_MULTIPLIER, &result)))
+		ereport(ERROR,
+				(errcode(ERRCODE_NUMERIC_VALUE_OUT_OF_RANGE),
+				 errmsg("value \"%ld\" is out of range for type %s", arg, typename)));
+
+	return result;
 }
 
 Datum
