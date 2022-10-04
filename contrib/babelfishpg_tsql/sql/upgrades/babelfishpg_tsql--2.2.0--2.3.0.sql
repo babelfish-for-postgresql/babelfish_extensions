@@ -526,7 +526,7 @@ END;
 $$
 LANGUAGE plpgsql;
 
-CALL sys.babelfish_drop_deprecated_view(CAST('sys' AS varchar), CAST('check_constraints_deprecated_in_2_3_0' AS varchar);
+CALL sys.babelfish_drop_deprecated_view(CAST('sys' AS varchar), CAST('check_constraints_deprecated_in_2_3_0' AS varchar));
 CALL sys.babelfish_drop_deprecated_view(CAST('sys' AS varchar), CAST('default_constraints_deprecated_in_2_3_0' AS varchar));
 
 -- Drops the temporary procedure used by the upgrade script.
