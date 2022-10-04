@@ -15,3 +15,6 @@ SELECT
 FROM sys.sysobjects
        WHERE name LIKE '%%babel_3010_vu_prepare%%' ORDER BY name;
 GO
+
+SELECT sys.babelfish_get_pltsql_function_signature(oid) FROM pg_catalog.pg_proc WHERE proname = 'babel_3010_vu_prepare_f1' ORDER BY proname;
+GO
