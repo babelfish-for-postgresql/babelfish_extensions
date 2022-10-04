@@ -3225,6 +3225,7 @@ datepart_arg:
 			| TSQL_M								{ $$ = "month"; }
 			| TSQL_DAYOFYEAR						{ $$ = "doy"; }
 			| TSQL_DY								{ $$ = "doy"; }
+			| TSQL_Y								{ $$ = "doy"; }
 			| DAY_P									{ $$ = "day"; }
 			| TSQL_DD								{ $$ = "day"; }
 			| TSQL_D								{ $$ = "day"; }
@@ -3270,6 +3271,7 @@ datediff_arg:
 			| TSQL_M								{ $$ = "month"; }
 			| TSQL_DAYOFYEAR						{ $$ = "doy"; }
 			| TSQL_DY								{ $$ = "doy"; }
+			| TSQL_Y								{ $$ = "doy"; }
 			| DAY_P									{ $$ = "day"; }
 			| TSQL_DD								{ $$ = "day"; }
 			| TSQL_D								{ $$ = "day"; }
@@ -3308,6 +3310,7 @@ dateadd_arg:
 			| TSQL_M								{ $$ = "month"; }
 			| TSQL_DAYOFYEAR						{ $$ = "dayofyear"; }
 			| TSQL_DY								{ $$ = "dayofyear"; }
+			| TSQL_Y								{ $$ = "dayofyear"; }
 			| DAY_P									{ $$ = "day"; }
 			| TSQL_DD								{ $$ = "day"; }
 			| TSQL_D								{ $$ = "day"; }
@@ -4125,6 +4128,7 @@ unreserved_keyword:
 			| TSQL_WK
 			| TSQL_WW
 			| TSQL_XLOCK
+			| TSQL_Y
 			| TSQL_YY
 			| TSQL_YYYY
 		;

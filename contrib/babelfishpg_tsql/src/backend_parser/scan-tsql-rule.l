@@ -262,6 +262,7 @@
 							case TSQL_WEEKDAY:
 							case TSQL_WK:
 							case TSQL_WW:
+							case TSQL_Y:
 							case TSQL_YY:
 							case TSQL_YYYY:
 							case TSQL_TRY_CAST:
