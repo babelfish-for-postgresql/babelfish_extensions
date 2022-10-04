@@ -13,11 +13,13 @@ const string COL2_NAME = "data";
 const string DATATYPE_NAME = "sys.money";
 const string VIEW_NAME = "master_dbo.money_view_odbc_test";
 vector<pair<string, string>> TABLE_COLUMNS = {
-  {COL1_NAME, DATATYPE_NAME + " PRIMARY KEY"},
+  {COL1_NAME, "INT PRIMARY KEY"},
   {COL2_NAME, DATATYPE_NAME}
 };
 const int DATA_COLUMN = 2;
 const int BUFFER_SIZE = 256;
+const int INT_BYTES_EXPECTED = 4;
+const int DOUBLE_BYTES_EXPECTED = 8;
 
 class PSQL_DataTypes_Money : public testing::Test {
   void SetUp() override {
@@ -44,10 +46,10 @@ double StringToDouble(const string &value) {
 
 TEST_F(PSQL_DataTypes_Money, Table_Creation) {
   // TODO - Expected needs to be fixed.
-  const int LENGTH_EXPECTED = 255;        // Double check, Expect 8?
-  const int PRECISION_EXPECTED = 0;       // Double check, Expect 2/4?
+  const int LENGTH_EXPECTED = 255;
+  const int PRECISION_EXPECTED = 0;
   const int SCALE_EXPECTED = 0;
-  const string NAME_EXPECTED = "unknown"; // Double check, Expected "fixed_decimal"/"money"?
+  const string NAME_EXPECTED = "unknown";
 
   char name[BUFFER_SIZE];
   SQLLEN length;
@@ -112,9 +114,7 @@ TEST_F(PSQL_DataTypes_Money, Table_Creation) {
 }
 
 TEST_F(PSQL_DataTypes_Money, Insertion_Success) {
-  const int BYTES_EXPECTED = 8;
-
-  double pk;
+  int pk;
   double data;
   SQLLEN pk_len;
   SQLLEN data_len;
@@ -123,7 +123,7 @@ TEST_F(PSQL_DataTypes_Money, Insertion_Success) {
   RETCODE rcode;
   OdbcHandler odbcHandler(Drivers::GetDriver(ServerType::PSQL));
 
-  vector<string> VALID_INSERTED_VALUES = {
+  const vector<string> INSERTED_DATA = {
     "-922337203685477.5808",
     "922337203685477.5807",
     "0",
@@ -131,10 +131,10 @@ TEST_F(PSQL_DataTypes_Money, Insertion_Success) {
     "-100000000.01",
     "NULL"
   };
-  const int NUM_OF_INSERTS = VALID_INSERTED_VALUES.size();
+  const int NUM_OF_INSERTS = INSERTED_DATA.size();
 
   const vector<tuple<int, int, SQLPOINTER, int, SQLLEN *>> BIND_COLUMNS = {
-    {1, SQL_C_DOUBLE, &pk, 0, &pk_len},
+    {1, SQL_C_LONG, &pk, 0, &pk_len},
     {2, SQL_C_DOUBLE, &data, 0, &data_len}
   };
 
@@ -142,7 +142,7 @@ TEST_F(PSQL_DataTypes_Money, Insertion_Success) {
   string comma{};
 
   for (int i = 0; i < NUM_OF_INSERTS; i++) {
-    insert_string += comma + "(" + std::to_string(i) + "," + VALID_INSERTED_VALUES[i] + ")";
+    insert_string += comma + "(" + std::to_string(i) + "," + INSERTED_DATA[i] + ")";
     comma = ",";
   }
 
@@ -167,11 +167,11 @@ TEST_F(PSQL_DataTypes_Money, Insertion_Success) {
   for (int i = 0; i < NUM_OF_INSERTS; i++) {
     rcode = SQLFetch(odbcHandler.GetStatementHandle()); // retrieve row-by-row
     ASSERT_EQ(rcode, SQL_SUCCESS);
-    ASSERT_EQ(pk_len, BYTES_EXPECTED);
+    ASSERT_EQ(pk_len, INT_BYTES_EXPECTED);
     ASSERT_EQ(pk, i);
-    if (VALID_INSERTED_VALUES[i] != "NULL") {
-      ASSERT_EQ(data_len, BYTES_EXPECTED);
-      ASSERT_EQ(data, StringToDouble(VALID_INSERTED_VALUES[i]));
+    if (INSERTED_DATA[i] != "NULL") {
+      ASSERT_EQ(data_len, DOUBLE_BYTES_EXPECTED);
+      ASSERT_EQ(data, StringToDouble(INSERTED_DATA[i]));
     }
     else {
       ASSERT_EQ(data_len, SQL_NULL_DATA);
@@ -231,10 +231,9 @@ TEST_F(PSQL_DataTypes_Money, Update_Success) {
   const string INSERT_STRING = "(" + PK_INSERTED + "," + DATA_INSERTED + ")";
   const string UPDATE_WHERE_CLAUSE = COL1_NAME + " = " + PK_INSERTED;
 
-  const int BYTES_EXPECTED = 8;
   const int AFFECTED_ROWS_EXPECTED = 1;
 
-  double pk;
+  int pk;
   double data;
   SQLLEN pk_len;
   SQLLEN data_len;
@@ -244,7 +243,7 @@ TEST_F(PSQL_DataTypes_Money, Update_Success) {
   OdbcHandler odbcHandler(Drivers::GetDriver(ServerType::PSQL));
 
   const vector<tuple<int, int, SQLPOINTER, int, SQLLEN *>> BIND_COLUMNS = {
-    {1, SQL_C_DOUBLE, &pk, 0, &pk_len},
+    {1, SQL_C_LONG, &pk, 0, &pk_len},
     {2, SQL_C_DOUBLE, &data, 0, &data_len}
   };
 
@@ -268,9 +267,9 @@ TEST_F(PSQL_DataTypes_Money, Update_Success) {
   odbcHandler.ExecQuery(SelectStatement(TABLE_NAME, {"*"}, vector<string>{COL1_NAME}));
   rcode = SQLFetch(odbcHandler.GetStatementHandle());
   ASSERT_EQ(rcode, SQL_SUCCESS);
-  ASSERT_EQ(pk_len, BYTES_EXPECTED);
+  ASSERT_EQ(pk_len, INT_BYTES_EXPECTED);
   ASSERT_EQ(pk, atoi(PK_INSERTED.c_str()));
-  ASSERT_EQ(data_len, BYTES_EXPECTED);
+  ASSERT_EQ(data_len, DOUBLE_BYTES_EXPECTED);
   ASSERT_EQ(data, StringToDouble(DATA_INSERTED));
 
   rcode = SQLFetch(odbcHandler.GetStatementHandle());
@@ -292,9 +291,9 @@ TEST_F(PSQL_DataTypes_Money, Update_Success) {
     rcode = SQLFetch(odbcHandler.GetStatementHandle());
 
     ASSERT_EQ(rcode, SQL_SUCCESS);
-    ASSERT_EQ(pk_len, BYTES_EXPECTED);
+    ASSERT_EQ(pk_len, INT_BYTES_EXPECTED);
     ASSERT_EQ(pk, atoi(PK_INSERTED.c_str()));
-    ASSERT_EQ(data_len, BYTES_EXPECTED);
+    ASSERT_EQ(data_len, DOUBLE_BYTES_EXPECTED);
     ASSERT_EQ(data, StringToDouble(DATA_UPDATED_VALUES[i]));
 
     rcode = SQLFetch(odbcHandler.GetStatementHandle());
@@ -313,10 +312,9 @@ TEST_F(PSQL_DataTypes_Money, Update_Fail) {
   const string INSERT_STRING = "(" + PK_INSERTED + "," + DATA_INSERTED + ")";
   const string UPDATE_WHERE_CLAUSE = COL1_NAME + " = " + PK_INSERTED;
 
-  const int BYTES_EXPECTED = 8;
   const int AFFECTED_ROWS_EXPECTED = 1;
 
-  double pk;
+  int pk;
   double data;
   SQLLEN pk_len;
   SQLLEN data_len;
@@ -325,7 +323,7 @@ TEST_F(PSQL_DataTypes_Money, Update_Fail) {
   OdbcHandler odbcHandler(Drivers::GetDriver(ServerType::PSQL));
 
   const vector<tuple<int, int, SQLPOINTER, int, SQLLEN *>> BIND_COLUMNS = {
-    {1, SQL_C_DOUBLE, &pk, 0, &pk_len},
+    {1, SQL_C_LONG, &pk, 0, &pk_len},
     {2, SQL_C_DOUBLE, &data, 0, &data_len}
   };
 
@@ -347,9 +345,9 @@ TEST_F(PSQL_DataTypes_Money, Update_Fail) {
   odbcHandler.ExecQuery(SelectStatement(TABLE_NAME, {"*"}, vector<string>{COL1_NAME}));
   rcode = SQLFetch(odbcHandler.GetStatementHandle());
   ASSERT_EQ(rcode, SQL_SUCCESS);
-  ASSERT_EQ(pk_len, BYTES_EXPECTED);
+  ASSERT_EQ(pk_len, INT_BYTES_EXPECTED);
   ASSERT_EQ(pk, atoi(PK_INSERTED.c_str()));
-  ASSERT_EQ(data_len, BYTES_EXPECTED);
+  ASSERT_EQ(data_len, DOUBLE_BYTES_EXPECTED);
   ASSERT_EQ(data, StringToDouble(DATA_INSERTED));
 
   rcode = SQLFetch(odbcHandler.GetStatementHandle());
@@ -366,9 +364,9 @@ TEST_F(PSQL_DataTypes_Money, Update_Fail) {
   rcode = SQLFetch(odbcHandler.GetStatementHandle());
 
   ASSERT_EQ(rcode, SQL_SUCCESS);
-  ASSERT_EQ(pk_len, BYTES_EXPECTED);
+  ASSERT_EQ(pk_len, INT_BYTES_EXPECTED);
   ASSERT_EQ(pk, atoi(PK_INSERTED.c_str()));
-  ASSERT_EQ(data_len, BYTES_EXPECTED);
+  ASSERT_EQ(data_len, DOUBLE_BYTES_EXPECTED);
   ASSERT_EQ(data, StringToDouble(DATA_INSERTED));
 
   rcode = SQLFetch(odbcHandler.GetStatementHandle());
@@ -379,7 +377,10 @@ TEST_F(PSQL_DataTypes_Money, Update_Fail) {
 }
 
 TEST_F(PSQL_DataTypes_Money, Arithmetic_Operators) {
-  const int BYTES_EXPECTED = 8;
+  const vector<pair<string, string>> TABLE_COLUMNS = {
+    {COL1_NAME, DATATYPE_NAME + " PRIMARY KEY"},
+    {COL2_NAME, DATATYPE_NAME}
+  };
 
   double pk;
   double data;
@@ -416,11 +417,13 @@ TEST_F(PSQL_DataTypes_Money, Arithmetic_Operators) {
   // initialization of expected_results
   for (int i = 0; i < INSERTED_DATA.size(); i++) {
     expected_results.push_back({});
+    const double data_1 = StringToDouble(INSERTED_PK[i]);
+    const double data_2 = StringToDouble(INSERTED_DATA[i]);
 
-    expected_results[i].push_back(StringToDouble(INSERTED_PK[i]) + StringToDouble(INSERTED_DATA[i]));
-    expected_results[i].push_back(StringToDouble(INSERTED_PK[i]) - StringToDouble(INSERTED_DATA[i]));
-    expected_results[i].push_back(StringToDouble(INSERTED_PK[i]) / StringToDouble(INSERTED_DATA[i]));
-    expected_results[i].push_back(StringToDouble(INSERTED_PK[i]) * StringToDouble(INSERTED_DATA[i]));
+    expected_results[i].push_back(data_1 + data_2);
+    expected_results[i].push_back(data_1 - data_2);
+    expected_results[i].push_back(data_1 / data_2);
+    expected_results[i].push_back(data_1 * data_2);
   }
 
   double col_results[NUM_OF_OPERATIONS];
@@ -465,7 +468,7 @@ TEST_F(PSQL_DataTypes_Money, Arithmetic_Operators) {
     ASSERT_EQ(rcode, SQL_SUCCESS);
 
     for (int j = 0; j < NUM_OF_OPERATIONS; j++) {
-      ASSERT_EQ(col_len[j], BYTES_EXPECTED);
+      ASSERT_EQ(col_len[j], DOUBLE_BYTES_EXPECTED);
       ASSERT_EQ(col_results[j], expected_results[i][j]);
     }
   }
@@ -479,7 +482,10 @@ TEST_F(PSQL_DataTypes_Money, Arithmetic_Operators) {
 }
 
 TEST_F(PSQL_DataTypes_Money, Arithmetic_Functions) {
-  const int BYTES_EXPECTED = 8;
+  const vector<pair<string, string>> TABLE_COLUMNS = {
+    {COL1_NAME, DATATYPE_NAME + " PRIMARY KEY"},
+    {COL2_NAME, DATATYPE_NAME}
+  };
 
   double pk;
   double data;
@@ -565,7 +571,7 @@ TEST_F(PSQL_DataTypes_Money, Arithmetic_Functions) {
   rcode = SQLFetch(odbcHandler.GetStatementHandle());
   ASSERT_EQ(rcode, SQL_SUCCESS);
   for (int i = 0; i < NUM_OF_OPERATIONS; i++) {
-    ASSERT_EQ(col_len[i], BYTES_EXPECTED);
+    ASSERT_EQ(col_len[i], DOUBLE_BYTES_EXPECTED);
     ASSERT_EQ(col_results[i], expected_results[i]);
   }
 
@@ -579,9 +585,8 @@ TEST_F(PSQL_DataTypes_Money, Arithmetic_Functions) {
 
 TEST_F(PSQL_DataTypes_Money, View_Creation) {
   const string VIEW_QUERY = "SELECT * FROM " + TABLE_NAME;
-  const int BYTES_EXPECTED = 8;
 
-  double pk;
+  int pk;
   double data;
   SQLLEN pk_len;
   SQLLEN data_len;
@@ -590,15 +595,15 @@ TEST_F(PSQL_DataTypes_Money, View_Creation) {
   RETCODE rcode;
   OdbcHandler odbcHandler(Drivers::GetDriver(ServerType::PSQL));
 
-  const vector<string> VALID_INSERTED_VALUES = {
+  const vector<string> INSERTED_DATA = {
     "123456789.0001",
     "1",
     "NULL"
   };
-  const int NUM_OF_INSERTS = VALID_INSERTED_VALUES.size();
+  const int NUM_OF_INSERTS = INSERTED_DATA.size();
 
   const vector<tuple<int, int, SQLPOINTER, int, SQLLEN *>> BIND_COLUMNS = {
-    {1, SQL_C_DOUBLE, &pk, 0, &pk_len},
+    {1, SQL_C_LONG, &pk, 0, &pk_len},
     {2, SQL_C_DOUBLE, &data, 0, &data_len}
   };
 
@@ -606,7 +611,7 @@ TEST_F(PSQL_DataTypes_Money, View_Creation) {
   string comma{};
 
   for (int i = 0; i < NUM_OF_INSERTS; i++) {
-    insert_string += comma + "(" + std::to_string(i) + "," + VALID_INSERTED_VALUES[i] + ")";
+    insert_string += comma + "(" + std::to_string(i) + "," + INSERTED_DATA[i] + ")";
     comma = ",";
   }
 
@@ -636,12 +641,12 @@ TEST_F(PSQL_DataTypes_Money, View_Creation) {
   for (int i = 0; i < NUM_OF_INSERTS; i++) {
     rcode = SQLFetch(odbcHandler.GetStatementHandle()); // retrieve row-by-row
     ASSERT_EQ(rcode, SQL_SUCCESS);
-    ASSERT_EQ(pk_len, BYTES_EXPECTED);
+    ASSERT_EQ(pk_len, INT_BYTES_EXPECTED);
     ASSERT_EQ(pk, i);
 
-    if (VALID_INSERTED_VALUES[i] != "NULL") {
-      ASSERT_EQ(data_len, BYTES_EXPECTED);
-      ASSERT_EQ(data, StringToDouble(VALID_INSERTED_VALUES[i]));
+    if (INSERTED_DATA[i] != "NULL") {
+      ASSERT_EQ(data_len, DOUBLE_BYTES_EXPECTED);
+      ASSERT_EQ(data, StringToDouble(INSERTED_DATA[i]));
     }
     else {
       ASSERT_EQ(data_len, SQL_NULL_DATA);
@@ -666,9 +671,6 @@ TEST_F(PSQL_DataTypes_Money, Table_Unique_Constraints) {
   };
   const string UNIQUE_COLUMN_NAME = COL2_NAME;
 
-  const int PK_BYTES_EXPECTED = 4;
-  const int DATA_BYTES_EXPECTED = 8;
-
   int pk;
   double data;
   SQLLEN pk_len;
@@ -678,17 +680,17 @@ TEST_F(PSQL_DataTypes_Money, Table_Unique_Constraints) {
   RETCODE rcode;
   OdbcHandler odbcHandler(Drivers::GetDriver(ServerType::PSQL));
 
-  const vector<string> VALID_INSERTED_VALUES = {
+  const vector<string> INSERTED_DATA = {
     "1000.0001",
     "-1000.0001"
   };
-  const int NUM_OF_INSERTS = VALID_INSERTED_VALUES.size();
+  const int NUM_OF_INSERTS = INSERTED_DATA.size();
 
   string insert_string{};
   string comma{};
 
   for (int i = 0; i < NUM_OF_INSERTS; i++) {
-    insert_string += comma + "(" + std::to_string(i) + "," + VALID_INSERTED_VALUES[i] + ")";
+    insert_string += comma + "(" + std::to_string(i) + "," + INSERTED_DATA[i] + ")";
     comma = ",";
   }
 
@@ -704,7 +706,7 @@ TEST_F(PSQL_DataTypes_Money, Table_Unique_Constraints) {
   };
   ASSERT_NO_FATAL_FAILURE(odbcHandler.BindColumns(TABLE_BIND_COLUMNS));
 
-  const string PK_QUERY =
+  const string UNIQUE_KEY_QUERY =
     "SELECT C.COLUMN_NAME FROM "
     "INFORMATION_SCHEMA.TABLE_CONSTRAINTS T "
     "JOIN INFORMATION_SCHEMA.CONSTRAINT_COLUMN_USAGE C "
@@ -713,7 +715,7 @@ TEST_F(PSQL_DataTypes_Money, Table_Unique_Constraints) {
     "C.TABLE_NAME='" +
     TABLE_NAME.substr(TABLE_NAME.find('.') + 1, TABLE_NAME.length()) + "' "
     "AND T.CONSTRAINT_TYPE='UNIQUE'";
-  odbcHandler.ExecQuery(PK_QUERY);
+  odbcHandler.ExecQuery(UNIQUE_KEY_QUERY);
   rcode = SQLFetch(odbcHandler.GetStatementHandle());
   ASSERT_EQ(rcode, SQL_SUCCESS);
   ASSERT_EQ(string(column_name), UNIQUE_COLUMN_NAME);
@@ -745,11 +747,11 @@ TEST_F(PSQL_DataTypes_Money, Table_Unique_Constraints) {
   for (int i = 0; i < NUM_OF_INSERTS; i++) {
     rcode = SQLFetch(odbcHandler.GetStatementHandle()); // retrieve row-by-row
     ASSERT_EQ(rcode, SQL_SUCCESS);
-    ASSERT_EQ(pk_len, PK_BYTES_EXPECTED);
+    ASSERT_EQ(pk_len, INT_BYTES_EXPECTED);
     ASSERT_EQ(pk, i);
-    if (VALID_INSERTED_VALUES[i] != "NULL") {
-      ASSERT_EQ(data_len, DATA_BYTES_EXPECTED);
-      ASSERT_EQ(data, StringToDouble(VALID_INSERTED_VALUES[i]));
+    if (INSERTED_DATA[i] != "NULL") {
+      ASSERT_EQ(data_len, DOUBLE_BYTES_EXPECTED);
+      ASSERT_EQ(data, StringToDouble(INSERTED_DATA[i]));
     }
     else {
       ASSERT_EQ(data_len, SQL_NULL_DATA);
@@ -763,7 +765,7 @@ TEST_F(PSQL_DataTypes_Money, Table_Unique_Constraints) {
   odbcHandler.CloseStmt();
 
   // Attempt to insert
-  vector<string> INVALID_INSERTED_VALUES = {
+  const vector<string> INVALID_INSERTED_VALUES = {
     "1000.0001",
     "-1000.0001"
   };
@@ -782,7 +784,7 @@ TEST_F(PSQL_DataTypes_Money, Table_Unique_Constraints) {
 
 TEST_F(PSQL_DataTypes_Money, Table_Composite_Keys) {
   const vector<pair<string, string>> TABLE_COLUMNS = {
-    {COL1_NAME, DATATYPE_NAME},
+    {COL1_NAME, "INT"},
     {COL2_NAME, DATATYPE_NAME}
   };
   const string PKTABLE_NAME = TABLE_NAME.substr(TABLE_NAME.find('.') + 1, TABLE_NAME.length());
@@ -801,9 +803,7 @@ TEST_F(PSQL_DataTypes_Money, Table_Composite_Keys) {
   }
   table_constraints += ")";
 
-  const int BYTES_EXPECTED = 8;
-
-  double pk;
+  int pk;
   double data;
   SQLLEN pk_len;
   SQLLEN data_len;
@@ -812,14 +812,14 @@ TEST_F(PSQL_DataTypes_Money, Table_Composite_Keys) {
   RETCODE rcode;
   OdbcHandler odbcHandler(Drivers::GetDriver(ServerType::PSQL));
 
-  const vector<string> VALID_INSERTED_VALUES = {
+  const vector<string> INSERTED_DATA = {
     "1000.01",
     "-100.0001"
   };
-  const int NUM_OF_INSERTS = VALID_INSERTED_VALUES.size();
+  const int NUM_OF_INSERTS = INSERTED_DATA.size();
 
   const vector<tuple<int, int, SQLPOINTER, int, SQLLEN *>> BIND_COLUMNS = {
-    {1, SQL_C_DOUBLE, &pk, 0, &pk_len},
+    {1, SQL_C_LONG, &pk, 0, &pk_len},
     {2, SQL_C_DOUBLE, &data, 0, &data_len}
   };
 
@@ -827,7 +827,7 @@ TEST_F(PSQL_DataTypes_Money, Table_Composite_Keys) {
   comma = "";
 
   for (int i = 0; i < NUM_OF_INSERTS; i++) {
-    insert_string += comma + "(" + std::to_string(i) + "," + VALID_INSERTED_VALUES[i] + ")";
+    insert_string += comma + "(" + std::to_string(i) + "," + INSERTED_DATA[i] + ")";
     comma = ",";
   }
 
@@ -883,11 +883,11 @@ TEST_F(PSQL_DataTypes_Money, Table_Composite_Keys) {
   for (int i = 0; i < NUM_OF_INSERTS; i++) {
     rcode = SQLFetch(odbcHandler.GetStatementHandle()); // retrieve row-by-row
     ASSERT_EQ(rcode, SQL_SUCCESS);
-    ASSERT_EQ(pk_len, BYTES_EXPECTED);
+    ASSERT_EQ(pk_len, INT_BYTES_EXPECTED);
     ASSERT_EQ(pk, i);
-    if (VALID_INSERTED_VALUES[i] != "NULL") {
-      ASSERT_EQ(data_len, BYTES_EXPECTED);
-      ASSERT_EQ(data, StringToDouble(VALID_INSERTED_VALUES[i]));
+    if (INSERTED_DATA[i] != "NULL") {
+      ASSERT_EQ(data_len, DOUBLE_BYTES_EXPECTED);
+      ASSERT_EQ(data, StringToDouble(INSERTED_DATA[i]));
     }
     else {
       ASSERT_EQ(data_len, SQL_NULL_DATA);
@@ -902,7 +902,7 @@ TEST_F(PSQL_DataTypes_Money, Table_Composite_Keys) {
 
   // Attempt to insert values that violates composite constraint and assert that they all fail
   for (int i = 0; i < NUM_OF_INSERTS; i++) {
-    insert_string += comma + "(" + std::to_string(i) + "," + VALID_INSERTED_VALUES[i] + ")";
+    insert_string += comma + "(" + std::to_string(i) + "," + INSERTED_DATA[i] + ")";
     comma = ",";
   }
 
