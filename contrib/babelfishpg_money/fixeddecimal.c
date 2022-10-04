@@ -234,7 +234,7 @@ static void apply_typmod(int64 value, int32 typmod, int precision, int scale);
 static int64 scanfixeddecimal(const char *str, int *precision, int *scale);
 static FixedDecimalAggState *makeFixedDecimalAggState(FunctionCallInfo fcinfo);
 static void fixeddecimal_accum(FixedDecimalAggState *state, int64 newval);
-static int64 int8fixeddecimal_internal(int64 arg, char *typename);
+static int64 int8fixeddecimal_internal(int64 arg, const char *typename);
 
 /***********************************************************************
  **
@@ -2600,7 +2600,7 @@ int8fixeddecimal(PG_FUNCTION_ARGS)
 }
 
 static int64
-int8fixeddecimal_internal(int64 arg, char *typename)
+int8fixeddecimal_internal(int64 arg, const char *typename)
 {
 	int64		result;
 	
