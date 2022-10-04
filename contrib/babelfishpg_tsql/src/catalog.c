@@ -14,6 +14,7 @@
 #include "catalog/namespace.h"
 #include "parser/parse_relation.h"
 #include "parser/scansup.h"
+#include "tcop/utility.h"
 #include "utils/builtins.h"
 #include "utils/fmgroids.h"
 #include "utils/lsyscache.h"
@@ -2006,24 +2007,6 @@ get_catalog_info(Rule *rule)
 						rule->tblname)));
 }
 
-char *get_database_owner(const char *db_name)
-{
-    HeapTuple			tuple;
-    Form_sysdatabases	sysdb;
-	char				*name = NULL;
-
-    tuple = SearchSysCache1(SYSDATABASENAME, CStringGetTextDatum(db_name));
-
-    if (!HeapTupleIsValid(tuple))
-        return NULL;
-
-    sysdb = ((Form_sysdatabases) GETSTRUCT(tuple));
-    name = pstrdup(NameStr(sysdb->owner));
-    ReleaseSysCache(tuple);
-
-    return name;
-}
-
 void
 alter_user_can_connect(bool is_grant, char *user_name, char *db_name)
 {
@@ -2154,6 +2137,7 @@ Datum update_guest_catalog(PG_FUNCTION_ARGS)
 		StringInfoData	query;
 		Node			*stmt;
 		ListCell   		*res_item;
+		int				i = 0;
 
 		db_name_datum = heap_getattr(tuple,
 		Anum_sysdatabaese_name,

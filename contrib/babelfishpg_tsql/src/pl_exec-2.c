@@ -11,6 +11,7 @@
 #include "nodes/parsenodes.h"
 
 #include "catalog.h"
+#include "dbcmds.h"
 #include "pl_explain.h"
 #include "session.h"
 
@@ -2659,7 +2660,7 @@ static int
 exec_stmt_grantdb(PLtsql_execstate *estate, PLtsql_stmt_grantdb *stmt)
 {
 	char 	*dbname = get_cur_db_name();
-	char	*dbowner = get_database_owner(dbname);
+	char	*dbowner = get_owner_of_db(dbname);
 	char	*login = GetUserNameFromId(GetSessionUserId(), false);	
 	ListCell *lc;
 	if (strcmp(login, dbowner) != 0)
