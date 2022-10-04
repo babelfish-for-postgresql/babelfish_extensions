@@ -17,6 +17,8 @@ vector<pair<string, string>> TABLE_COLUMNS = {
 };
 const int DATA_COLUMN = 2;
 const int BUFFER_SIZE = 256;
+const int INT_BYTES_EXPECTED = 4;
+const int BIT_BYTES_EXPECTED = 1;
 
 class PSQL_DataTypes_Bit : public testing::Test {
   void SetUp() override {
@@ -44,10 +46,10 @@ unsigned char StringToBit(const string &value) {
 
 TEST_F(PSQL_DataTypes_Bit, Table_Creation) {
   // TODO - Expected needs to be fixed.
-  const int LENGTH_EXPECTED = 255;        // Actual 255, Expected 9 (int + bit? Needs verifiying)
+  const int LENGTH_EXPECTED = 255;
   const int PRECISION_EXPECTED = 0;
   const int SCALE_EXPECTED = 0;
-  const string NAME_EXPECTED = "unknown"; // Actual "unknown", Expected "bit"
+  const string NAME_EXPECTED = "unknown";
 
   char name[BUFFER_SIZE];
   SQLLEN length;
@@ -113,9 +115,6 @@ TEST_F(PSQL_DataTypes_Bit, Table_Creation) {
 
 // Any non-zero values are converted to 1
 TEST_F(PSQL_DataTypes_Bit, Insertion_Success) {
-  const int PK_BYTES_EXPECTED = 4;
-  const int DATA_BYTES_EXPECTED = 1;
-
   int pk;
   unsigned char data;
   SQLLEN pk_len;
@@ -171,10 +170,10 @@ TEST_F(PSQL_DataTypes_Bit, Insertion_Success) {
   for (int i = 0; i < NUM_OF_INSERTS; i++) {
     rcode = SQLFetch(odbcHandler.GetStatementHandle()); // retrieve row-by-row
     ASSERT_EQ(rcode, SQL_SUCCESS);
-    ASSERT_EQ(pk_len, PK_BYTES_EXPECTED);
+    ASSERT_EQ(pk_len, INT_BYTES_EXPECTED);
     ASSERT_EQ(pk, i);
     if (VALID_INSERTED_VALUES[i] != "NULL") {
-      ASSERT_EQ(data_len, DATA_BYTES_EXPECTED);
+      ASSERT_EQ(data_len, BIT_BYTES_EXPECTED);
       ASSERT_EQ(data, StringToBit(VALID_INSERTED_VALUES[i]));
     }
     else {
@@ -234,8 +233,6 @@ TEST_F(PSQL_DataTypes_Bit, Update_Success) {
   const string INSERT_STRING = "(" + PK_INSERTED + "," + DATA_INSERTED + ")";
   const string UPDATE_WHERE_CLAUSE = COL1_NAME + " = " + PK_INSERTED;
 
-  const int PK_BYTES_EXPECTED = 4;
-  const int DATA_BYTES_EXPECTED = 1;
   const int AFFECTED_ROWS_EXPECTED = 1;
 
   int pk;
@@ -272,9 +269,9 @@ TEST_F(PSQL_DataTypes_Bit, Update_Success) {
   odbcHandler.ExecQuery(SelectStatement(TABLE_NAME, {"*"}, vector<string>{COL1_NAME}));
   rcode = SQLFetch(odbcHandler.GetStatementHandle());
   ASSERT_EQ(rcode, SQL_SUCCESS);
-  ASSERT_EQ(pk_len, PK_BYTES_EXPECTED);
-  ASSERT_EQ(pk, StringToBit(PK_INSERTED));
-  ASSERT_EQ(data_len, DATA_BYTES_EXPECTED);
+  ASSERT_EQ(pk_len, INT_BYTES_EXPECTED);
+  ASSERT_EQ(pk, atoi(PK_INSERTED.c_str()));
+  ASSERT_EQ(data_len, BIT_BYTES_EXPECTED);
   ASSERT_EQ(data, StringToBit(DATA_INSERTED));
 
   rcode = SQLFetch(odbcHandler.GetStatementHandle());
@@ -296,9 +293,9 @@ TEST_F(PSQL_DataTypes_Bit, Update_Success) {
     rcode = SQLFetch(odbcHandler.GetStatementHandle());
 
     ASSERT_EQ(rcode, SQL_SUCCESS);
-    ASSERT_EQ(pk_len, PK_BYTES_EXPECTED);
-    ASSERT_EQ(pk, StringToBit(PK_INSERTED));
-    ASSERT_EQ(data_len, DATA_BYTES_EXPECTED);
+    ASSERT_EQ(pk_len, INT_BYTES_EXPECTED);
+    ASSERT_EQ(pk, atoi(PK_INSERTED.c_str()));
+    ASSERT_EQ(data_len, BIT_BYTES_EXPECTED);
     ASSERT_EQ(data, StringToBit(DATA_UPDATED_VALUES[i]));
 
     rcode = SQLFetch(odbcHandler.GetStatementHandle());
@@ -316,9 +313,6 @@ TEST_F(PSQL_DataTypes_Bit, Update_Fail) {
 
   const string INSERT_STRING = "(" + PK_INSERTED + "," + DATA_INSERTED + ")";
   const string UPDATE_WHERE_CLAUSE = COL1_NAME + " = " + PK_INSERTED;
-
-  const int PK_BYTES_EXPECTED = 4;
-  const int DATA_BYTES_EXPECTED = 1;
 
   int pk;
   unsigned char data;
@@ -351,9 +345,9 @@ TEST_F(PSQL_DataTypes_Bit, Update_Fail) {
   odbcHandler.ExecQuery(SelectStatement(TABLE_NAME, {"*"}, vector<string>{COL1_NAME}));
   rcode = SQLFetch(odbcHandler.GetStatementHandle());
   ASSERT_EQ(rcode, SQL_SUCCESS);
-  ASSERT_EQ(pk_len, PK_BYTES_EXPECTED);
-  ASSERT_EQ(pk, strtol(PK_INSERTED.c_str(), NULL, 10));
-  ASSERT_EQ(data_len, DATA_BYTES_EXPECTED);
+  ASSERT_EQ(pk_len, INT_BYTES_EXPECTED);
+  ASSERT_EQ(pk, atoi(PK_INSERTED.c_str()));
+  ASSERT_EQ(data_len, BIT_BYTES_EXPECTED);
   ASSERT_EQ(data, StringToBit(DATA_INSERTED));
 
   rcode = SQLFetch(odbcHandler.GetStatementHandle());
@@ -370,9 +364,9 @@ TEST_F(PSQL_DataTypes_Bit, Update_Fail) {
   rcode = SQLFetch(odbcHandler.GetStatementHandle());
 
   ASSERT_EQ(rcode, SQL_SUCCESS);
-  ASSERT_EQ(pk_len, PK_BYTES_EXPECTED);
-  ASSERT_EQ(pk, strtol(PK_INSERTED.c_str(), NULL, 10));
-  ASSERT_EQ(data_len, DATA_BYTES_EXPECTED);
+  ASSERT_EQ(pk_len, INT_BYTES_EXPECTED);
+  ASSERT_EQ(pk, atoi(PK_INSERTED.c_str()));
+  ASSERT_EQ(data_len, BIT_BYTES_EXPECTED);
   ASSERT_EQ(data, StringToBit(DATA_INSERTED));
 
   rcode = SQLFetch(odbcHandler.GetStatementHandle());
@@ -389,9 +383,6 @@ TEST_F(PSQL_DataTypes_Bit, Bitwise_Operators) {
     {COL2_NAME, DATATYPE_NAME}
   };
 
-  const int PK_BYTES_EXPECTED = 1;
-  const int DATA_BYTES_EXPECTED = 1;
-
   unsigned char pk;
   unsigned char data;
   SQLLEN pk_len;
@@ -401,17 +392,18 @@ TEST_F(PSQL_DataTypes_Bit, Bitwise_Operators) {
   RETCODE rcode;
   OdbcHandler odbcHandler(Drivers::GetDriver(ServerType::PSQL));
 
-  vector<string> inserted_pk = {
+  const vector<string> INSERTED_PK = {
     "0",
     "1"
   };
 
-  vector<string> inserted_data = {
+  const vector<string> INSERTED_DATA = {
     "1",
     "1"
   };
+  const int NUM_OF_DATA = INSERTED_DATA.size();
 
-  vector<string> operations_query = {
+  const vector<string> OPERATIONS_QUERY = {
     // COL1_NAME + " OPERATOR(sys.&) " + COL2_NAME, // AND
     // COL1_NAME + " OPERATOR(sys.|) " + COL2_NAME, // OR
     // COL1_NAME + " OPERATOR(sys.#) " + COL2_NAME, // XOR
@@ -428,36 +420,39 @@ TEST_F(PSQL_DataTypes_Bit, Bitwise_Operators) {
     COL1_NAME + " OPERATOR(sys.>) " + COL2_NAME,
     COL1_NAME + " OPERATOR(sys.>=) " + COL2_NAME
   };
+  const int NUM_OF_OPERATIONS = OPERATIONS_QUERY.size();
 
   vector<vector<unsigned char>> expected_results = {};
 
   // initialization of expected_results
-  for (int i = 0; i < inserted_data.size(); i++) {
+  for (int i = 0; i < NUM_OF_DATA; i++) {
     expected_results.push_back({});
+    unsigned char data_1 = StringToBit(INSERTED_PK[i]);
+    unsigned char data_2 = StringToBit(INSERTED_DATA[i]);
 
-    // expected_results[i].push_back(StringToBit(inserted_pk[i]) & StringToBit(inserted_data[i]));
-    // expected_results[i].push_back(StringToBit(inserted_pk[i]) | StringToBit(inserted_data[i]));
-    // expected_results[i].push_back(StringToBit(inserted_pk[i]) ^ StringToBit(inserted_data[i]));
-    expected_results[i].push_back(1 & ~StringToBit(inserted_pk[i]));
-    expected_results[i].push_back(1 & ~StringToBit(inserted_pk[i]));
+    // expected_results[i].push_back(data_1 & data_2);
+    // expected_results[i].push_back(data_1 | data_2);
+    // expected_results[i].push_back(data_1 ^ data_2);
+    expected_results[i].push_back(1 & ~data_1);
+    expected_results[i].push_back(1 & ~data_1);
 
-    // expected_results[i].push_back(StringToBit(inserted_pk[i]) << 1 & StringToBit(inserted_data[i])); 
-    // expected_results[i].push_back(StringToBit(inserted_pk[i]) << StringToBit(inserted_data[i]));
-    // expected_results[i].push_back(StringToBit(inserted_pk[i]) >> StringToBit(inserted_data[i]));
+    // expected_results[i].push_back(data_1 << 1 & data_2); 
+    // expected_results[i].push_back(data_1 << data_2);
+    // expected_results[i].push_back(data_1 >> data_2);
 
-    expected_results[i].push_back(StringToBit(inserted_pk[i]) == StringToBit(inserted_data[i]) ? 1 : 0);
-    expected_results[i].push_back(StringToBit(inserted_pk[i]) < StringToBit(inserted_data[i]) ? 1 : 0);
-    expected_results[i].push_back(StringToBit(inserted_pk[i]) <= StringToBit(inserted_data[i]) ? 1 : 0);
-    expected_results[i].push_back(StringToBit(inserted_pk[i]) > StringToBit(inserted_data[i]) ? 1 : 0);
-    expected_results[i].push_back(StringToBit(inserted_pk[i]) >= StringToBit(inserted_data[i]) ? 1 : 0);
+    expected_results[i].push_back(data_1 == data_2 ? 1 : 0);
+    expected_results[i].push_back(data_1 < data_2 ? 1 : 0);
+    expected_results[i].push_back(data_1 <= data_2 ? 1 : 0);
+    expected_results[i].push_back(data_1 > data_2 ? 1 : 0);
+    expected_results[i].push_back(data_1 >= data_2 ? 1 : 0);
   }
 
-  unsigned char col_results[operations_query.size()];
-  SQLLEN col_len[operations_query.size()];
+  unsigned char col_results[NUM_OF_OPERATIONS];
+  SQLLEN col_len[NUM_OF_OPERATIONS];
   vector<tuple<int, int, SQLPOINTER, int, SQLLEN *>> BIND_COLUMNS = {};
 
   // initialization for BIND_COLUMNS
-  for (int i = 0; i < operations_query.size(); i++) {
+  for (int i = 0; i < NUM_OF_OPERATIONS; i++) {
     tuple<int, int, SQLPOINTER, int, SQLLEN *> tuple_to_insert(i + 1, SQL_C_BIT, (SQLPOINTER)&col_results[i], 0, &col_len[i]);
     BIND_COLUMNS.push_back(tuple_to_insert);
   }
@@ -466,8 +461,8 @@ TEST_F(PSQL_DataTypes_Bit, Bitwise_Operators) {
   string comma{};
 
   // insert_string initialization
-  for (int i = 0; i < inserted_data.size(); i++) {
-    insert_string += comma + "(" + std::to_string(StringToBit(inserted_pk[i])) + "," + inserted_data[i] + ")";
+  for (int i = 0; i < NUM_OF_DATA; i++) {
+    insert_string += comma + "(" + std::to_string(StringToBit(INSERTED_PK[i])) + "," + INSERTED_DATA[i] + ")";
     comma = ",";
   }
 
@@ -480,20 +475,20 @@ TEST_F(PSQL_DataTypes_Bit, Bitwise_Operators) {
 
   rcode = SQLRowCount(odbcHandler.GetStatementHandle(), &affected_rows);
   ASSERT_EQ(rcode, SQL_SUCCESS);
-  ASSERT_EQ(affected_rows, inserted_data.size());
+  ASSERT_EQ(affected_rows, NUM_OF_DATA);
 
   // Make sure inserted values are correct and operations
   ASSERT_NO_FATAL_FAILURE(odbcHandler.BindColumns(BIND_COLUMNS));
 
-  for (int i = 0; i < inserted_data.size(); i++) {
+  for (int i = 0; i < NUM_OF_DATA; i++) {
     odbcHandler.CloseStmt();
-    odbcHandler.ExecQuery(SelectStatement(TABLE_NAME, operations_query, vector<string>{}, COL1_NAME + " OPERATOR(sys.=) " + inserted_pk[i]));
+    odbcHandler.ExecQuery(SelectStatement(TABLE_NAME, OPERATIONS_QUERY, vector<string>{}, COL1_NAME + " OPERATOR(sys.=) " + INSERTED_PK[i]));
     ASSERT_NO_FATAL_FAILURE(odbcHandler.BindColumns(BIND_COLUMNS));
 
     rcode = SQLFetch(odbcHandler.GetStatementHandle());
     ASSERT_EQ(rcode, SQL_SUCCESS);
-    for (int j = 0; j < operations_query.size(); j++) {
-      ASSERT_EQ(col_len[j], DATA_BYTES_EXPECTED);
+    for (int j = 0; j < NUM_OF_OPERATIONS; j++) {
+      ASSERT_EQ(col_len[j], BIT_BYTES_EXPECTED);
       ASSERT_EQ(col_results[j], expected_results[i][j]);
     }
   }
@@ -508,8 +503,6 @@ TEST_F(PSQL_DataTypes_Bit, Bitwise_Operators) {
 
 TEST_F(PSQL_DataTypes_Bit, View_Creation) {
   const string VIEW_QUERY = "SELECT * FROM " + TABLE_NAME;
-  const int PK_BYTES_EXPECTED = 4;
-  const int DATA_BYTES_EXPECTED = 1;
 
   int pk;
   unsigned char data;
@@ -566,11 +559,11 @@ TEST_F(PSQL_DataTypes_Bit, View_Creation) {
   for (int i = 0; i < NUM_OF_INSERTS; i++) {
     rcode = SQLFetch(odbcHandler.GetStatementHandle()); // retrieve row-by-row
     ASSERT_EQ(rcode, SQL_SUCCESS);
-    ASSERT_EQ(pk_len, PK_BYTES_EXPECTED);
+    ASSERT_EQ(pk_len, INT_BYTES_EXPECTED);
     ASSERT_EQ(pk, i);
 
     if (VALID_INSERTED_VALUES[i] != "NULL") {
-      ASSERT_EQ(data_len, DATA_BYTES_EXPECTED);
+      ASSERT_EQ(data_len, BIT_BYTES_EXPECTED);
       ASSERT_EQ(data, StringToBit(VALID_INSERTED_VALUES[i]));
     }
     else {
@@ -595,9 +588,6 @@ TEST_F(PSQL_DataTypes_Bit, Table_Unique_Constraints) {
     {COL2_NAME, DATATYPE_NAME + " UNIQUE"}
   };
   const string UNIQUE_COLUMN_NAME = COL2_NAME;
-
-  const int PK_BYTES_EXPECTED = 4;
-  const int DATA_BYTES_EXPECTED = 1;
 
   int pk;
   unsigned char data;
@@ -639,7 +629,7 @@ TEST_F(PSQL_DataTypes_Bit, Table_Unique_Constraints) {
   };
   ASSERT_NO_FATAL_FAILURE(odbcHandler.BindColumns(table_BIND_COLUMNS));
 
-  const string PK_QUERY =
+  const string UNIQUE_KEY_QUERY =
     "SELECT C.COLUMN_NAME FROM "
     "INFORMATION_SCHEMA.TABLE_CONSTRAINTS T "
     "JOIN INFORMATION_SCHEMA.CONSTRAINT_COLUMN_USAGE C "
@@ -647,7 +637,7 @@ TEST_F(PSQL_DataTypes_Bit, Table_Unique_Constraints) {
     "WHERE "
     "C.TABLE_NAME='" + TABLE_NAME.substr(TABLE_NAME.find('.') + 1, TABLE_NAME.length()) + "' "
     "AND T.CONSTRAINT_TYPE='UNIQUE'";
-  odbcHandler.ExecQuery(PK_QUERY);
+  odbcHandler.ExecQuery(UNIQUE_KEY_QUERY);
   rcode = SQLFetch(odbcHandler.GetStatementHandle());
   ASSERT_EQ(rcode, SQL_SUCCESS);
   ASSERT_EQ(string(column_name), UNIQUE_COLUMN_NAME);
@@ -675,10 +665,10 @@ TEST_F(PSQL_DataTypes_Bit, Table_Unique_Constraints) {
   for (int i = 0; i < NUM_OF_INSERTS; i++) {
     rcode = SQLFetch(odbcHandler.GetStatementHandle()); // retrieve row-by-row
     ASSERT_EQ(rcode, SQL_SUCCESS);
-    ASSERT_EQ(pk_len, PK_BYTES_EXPECTED);
+    ASSERT_EQ(pk_len, INT_BYTES_EXPECTED);
     ASSERT_EQ(pk, i);
     if (VALID_INSERTED_VALUES[i] != "NULL") {
-      ASSERT_EQ(data_len, DATA_BYTES_EXPECTED);
+      ASSERT_EQ(data_len, BIT_BYTES_EXPECTED);
       ASSERT_EQ(data, StringToBit(VALID_INSERTED_VALUES[i]));
     }
     else {
@@ -712,7 +702,7 @@ TEST_F(PSQL_DataTypes_Bit, Table_Unique_Constraints) {
 
 TEST_F(PSQL_DataTypes_Bit, Table_Composite_Keys) {
   const vector<pair<string, string>> TABLE_COLUMNS = {
-    {COL1_NAME, DATATYPE_NAME},
+    {COL1_NAME, "INT"},
     {COL2_NAME, DATATYPE_NAME}
   };
   const string PKTABLE_NAME = TABLE_NAME.substr(TABLE_NAME.find('.') + 1, TABLE_NAME.length());
@@ -730,9 +720,6 @@ TEST_F(PSQL_DataTypes_Bit, Table_Composite_Keys) {
     comma = ",";
   }
   table_constraints += ")";
-
-  const int PK_BYTES_EXPECTED = 4;
-  const int DATA_BYTES_EXPECTED = 1;
 
   int pk;
   unsigned char data;
@@ -814,10 +801,10 @@ TEST_F(PSQL_DataTypes_Bit, Table_Composite_Keys) {
   for (int i = 0; i < NUM_OF_INSERTS; i++) {
     rcode = SQLFetch(odbcHandler.GetStatementHandle()); // retrieve row-by-row
     ASSERT_EQ(rcode, SQL_SUCCESS);
-    ASSERT_EQ(pk_len, PK_BYTES_EXPECTED);
+    ASSERT_EQ(pk_len, INT_BYTES_EXPECTED);
     ASSERT_EQ(pk, i);
     if (VALID_INSERTED_VALUES[i] != "NULL") {
-      ASSERT_EQ(data_len, DATA_BYTES_EXPECTED);
+      ASSERT_EQ(data_len, BIT_BYTES_EXPECTED);
       ASSERT_EQ(data, StringToBit(VALID_INSERTED_VALUES[i]));
     }
     else {
