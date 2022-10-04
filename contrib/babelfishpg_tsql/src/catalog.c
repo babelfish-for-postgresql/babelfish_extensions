@@ -2139,8 +2139,6 @@ Datum update_guest_catalog(PG_FUNCTION_ARGS)
 		ListCell   		*res_item;
 		int				i = 0;
 		const char	*prev_current_user;
-		//int16 		old_dbid;
-		//char		*old_dbname;
 
 		db_name_datum = heap_getattr(tuple,
 		Anum_sysdatabaese_name,

@@ -1739,6 +1739,9 @@ END;
 $$
 LANGUAGE plpgsql;
 
+CALL sys.babelfish_drop_deprecated_view('sys', 'check_constraints_deprecated_in_2_3_0');
+CALL sys.babelfish_drop_deprecated_view('sys', 'default_constraints_deprecated_in_2_3_0');
+
 -- USER extension
 ALTER TABLE sys.babelfish_authid_user_ext add COLUMN user_can_connect INT NOT NULL DEFAULT 1;
 
@@ -1749,9 +1752,6 @@ LANGUAGE C
 AS 'babelfishpg_tsql', 'update_guest_catalog';
  
 CALL sys.babel_update_guest_catalog();
-
-CALL sys.babelfish_drop_deprecated_view('sys', 'check_constraints_deprecated_in_2_3_0');
-CALL sys.babelfish_drop_deprecated_view('sys', 'default_constraints_deprecated_in_2_3_0');
 
 -- Drops the temporary procedure used by the upgrade script.
 -- Please have this be one of the last statements executed in this upgrade script.
