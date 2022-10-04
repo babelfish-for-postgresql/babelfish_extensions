@@ -723,7 +723,7 @@ CREATE OR REPLACE FUNCTION sys.DATETIMEOFFSETFROMPARTS(IN p_year INTEGER,
                                                                IN p_fractions INTEGER,
                                                                IN p_hour_offset INTEGER,
                                                                IN p_minute_offset INTEGER,
-                                                               IN p_precision INTEGER)
+                                                               IN p_precision NUMERIC)
 RETURNS sys.DATETIMEOFFSET
 AS
 $BODY$
@@ -736,7 +736,7 @@ DECLARE
     v_string pg_catalog.text;
     v_sign pg_catalog.text;
 BEGIN
-    v_fractions := floor(p_fractions)::INTEGER::SYS.VARCHAR;
+    v_fractions := p_fractions::SYS.VARCHAR;
     IF p_precision IS NULL THEN
         RAISE EXCEPTION 'Scale argument is not valid. Valid expressions for data type datetimeoffset scale argument are integer constants and integer constant expressions.';
     END IF;
@@ -750,44 +750,44 @@ BEGIN
         RAISE most_specific_type_mismatch;
 
     -- Check if arguments are out of range
-    ELSIF ((floor(p_year)::SMALLINT NOT BETWEEN 1753 AND 9999) OR
-        (floor(p_month)::SMALLINT NOT BETWEEN 1 AND 12) OR
-        (floor(p_day)::SMALLINT NOT BETWEEN 1 AND 31) OR
-        (floor(p_hour)::SMALLINT NOT BETWEEN 0 AND 23) OR
-        (floor(p_minute)::SMALLINT NOT BETWEEN 0 AND 59) OR
-        (floor(p_seconds)::SMALLINT NOT BETWEEN 0 AND 59) OR
-        (floor(p_hour_offset)::SMALLINT NOT BETWEEN -14 AND 14) OR
-        (floor(p_minute_offset)::SMALLINT NOT BETWEEN -59 AND 59) OR
+    ELSIF ((p_year NOT BETWEEN 1753 AND 9999) OR
+        (p_month NOT BETWEEN 1 AND 12) OR
+        (p_day NOT BETWEEN 1 AND 31) OR
+        (p_hour NOT BETWEEN 0 AND 23) OR
+        (p_minute NOT BETWEEN 0 AND 59) OR
+        (p_seconds NOT BETWEEN 0 AND 59) OR
+        (p_hour_offset NOT BETWEEN -14 AND 14) OR
+        (p_minute_offset NOT BETWEEN -59 AND 59) OR
         (p_hour_offset * p_minute_offset < 0) OR
-        (floor(p_hour_offset)::SMALLINT = 14 AND floor(p_minute_offset)::SMALLINT != 0) OR
-        (floor(p_hour_offset)::SMALLINT = -14 AND floor(p_minute_offset)::SMALLINT != 0) OR
-        (p_fractions::SMALLINT != 0 AND char_length(v_fractions) > p_precision::SMALLINT))
+        (p_hour_offset = 14 AND p_minute_offset != 0) OR
+        (p_hour_offset = -14 AND p_minute_offset != 0) OR
+        (p_fractions != 0 AND char_length(v_fractions) > p_precision::SMALLINT))
     THEN
         RAISE invalid_datetime_format;
     ELSIF (v_precision NOT BETWEEN 0 AND 7) THEN
         RAISE numeric_value_out_of_range;
     END IF;
     v_calc_seconds := format('%s.%s',
-                             floor(p_seconds)::SMALLINT,
+                             p_seconds,
                              substring(rpad(lpad(v_fractions, v_precision, '0'), 7, '0'), 1, 6))::NUMERIC;
 
-    v_resdatetime := make_timestamp(floor(p_year)::SMALLINT,
-                                    floor(p_month)::SMALLINT,
-                                    floor(p_day)::SMALLINT,
-                                    floor(p_hour)::SMALLINT,
-                                    floor(p_minute)::SMALLINT,
+    v_resdatetime := make_timestamp(p_year,
+                                    p_month,
+                                    p_day,
+                                    p_hour,
+                                    p_minute,
                                     v_calc_seconds);
     v_sign := (
         SELECT CASE
-            WHEN (floor(p_hour_offset)::SMALLINT) > 0
+            WHEN (p_hour_offset) > 0
                 THEN '+'
-            WHEN ((floor(p_hour_offset)::SMALLINT) = 0 AND (floor(p_minute_offset)::SMALLINT) >= 0)
+            WHEN (p_hour_offset) = 0 AND (p_minute_offset) >= 0
                 THEN '+'    
             ELSE '-'
         END
     );
-    v_string := CONCAT(v_resdatetime::pg_catalog.text,v_sign,abs(floor(p_hour_offset))::SMALLINT::text,':',
-                                                          abs(floor(p_minute_offset))::SMALLINT::text);
+    v_string := CONCAT(v_resdatetime::pg_catalog.text,v_sign,abs(p_hour_offset)::SMALLINT::text,':',
+                                                          abs(p_minute_offset)::SMALLINT::text);
     RETURN CAST(v_string AS sys.DATETIMEOFFSET);
 EXCEPTION
     WHEN most_specific_type_mismatch THEN

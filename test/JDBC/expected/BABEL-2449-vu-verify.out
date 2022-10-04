@@ -83,6 +83,35 @@ GO
 DROP VIEW BABEL_2449_vu_prepare_v9
 GO
 
+SELECT * FROM BABEL_2449_vu_prepare_v10
+GO
+~~START~~
+datetimeoffset
+2011-08-15 14:30:00.5000000 +12:30
+~~END~~
+
+DROP VIEW BABEL_2449_vu_prepare_v10
+GO
+
+SELECT * FROM BABEL_2449_vu_prepare_v11
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Scale argument is not valid. Valid expressions for data type datetimeoffset scale argument are integer constants and integer constant expressions)~~
+
+DROP VIEW BABEL_2449_vu_prepare_v11
+GO
+
+SELECT * FROM BABEL_2449_vu_prepare_v12
+GO
+~~START~~
+datetimeoffset
+2011-08-15 14:30:00.5000000 +12:30
+~~END~~
+
+DROP VIEW BABEL_2449_vu_prepare_v12
+GO
+
 EXEC BABEL_2449_vu_prepare_p1
 GO
 ~~START~~
@@ -175,6 +204,35 @@ GO
 ~~ERROR (Message: Scale argument is not valid. Valid expressions for data type datetimeoffset scale argument are integer constants and integer constant expressions.)~~
 
 DROP procedure  BABEL_2449_vu_prepare_p10
+GO
+
+EXEC BABEL_2449_vu_prepare_p11
+GO
+~~START~~
+datetimeoffset
+2011-08-15 14:30:00.5000000 +12:30
+~~END~~
+
+DROP procedure  BABEL_2449_vu_prepare_p11
+GO
+
+EXEC BABEL_2449_vu_prepare_p12
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Scale argument is not valid. Valid expressions for data type datetimeoffset scale argument are integer constants and integer constant expressions)~~
+
+DROP procedure  BABEL_2449_vu_prepare_p12
+GO
+
+EXEC BABEL_2449_vu_prepare_p13
+GO
+~~START~~
+datetimeoffset
+2011-08-15 14:30:00.5000000 +12:30
+~~END~~
+
+DROP procedure  BABEL_2449_vu_prepare_p13
 GO
 
 SELECT BABEL_2449_vu_prepare_f1()
@@ -281,4 +339,35 @@ datetimeoffset
 ~~ERROR (Message: Scale argument is not valid. Valid expressions for data type datetimeoffset scale argument are integer constants and integer constant expressions.)~~
 
 DROP FUNCTION BABEL_2449_vu_prepare_f10
+GO
+
+SELECT BABEL_2449_vu_prepare_f11()
+GO
+~~START~~
+datetimeoffset
+2011-08-15 14:30:00.5000000 +12:30
+~~END~~
+
+DROP FUNCTION BABEL_2449_vu_prepare_f11
+GO
+
+SELECT BABEL_2449_vu_prepare_f12()
+GO
+~~START~~
+datetimeoffset
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Scale argument is not valid. Valid expressions for data type datetimeoffset scale argument are integer constants and integer constant expressions)~~
+
+DROP FUNCTION BABEL_2449_vu_prepare_f12
+GO
+
+SELECT BABEL_2449_vu_prepare_f13()
+GO
+~~START~~
+datetimeoffset
+2011-08-15 14:30:00.5000000 +12:30
+~~END~~
+
+DROP FUNCTION BABEL_2449_vu_prepare_f13
 GO

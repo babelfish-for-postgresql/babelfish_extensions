@@ -43,6 +43,21 @@ GO
 DROP VIEW BABEL_2449_vu_prepare_v9
 GO
 
+SELECT * FROM BABEL_2449_vu_prepare_v10
+GO
+DROP VIEW BABEL_2449_vu_prepare_v10
+GO
+
+SELECT * FROM BABEL_2449_vu_prepare_v11
+GO
+DROP VIEW BABEL_2449_vu_prepare_v11
+GO
+
+SELECT * FROM BABEL_2449_vu_prepare_v12
+GO
+DROP VIEW BABEL_2449_vu_prepare_v12
+GO
+
 EXEC BABEL_2449_vu_prepare_p1
 GO
 DROP procedure  BABEL_2449_vu_prepare_p1
@@ -93,6 +108,21 @@ GO
 DROP procedure  BABEL_2449_vu_prepare_p10
 GO
 
+EXEC BABEL_2449_vu_prepare_p11
+GO
+DROP procedure  BABEL_2449_vu_prepare_p11
+GO
+
+EXEC BABEL_2449_vu_prepare_p12
+GO
+DROP procedure  BABEL_2449_vu_prepare_p12
+GO
+
+EXEC BABEL_2449_vu_prepare_p13
+GO
+DROP procedure  BABEL_2449_vu_prepare_p13
+GO
+
 SELECT BABEL_2449_vu_prepare_f1()
 GO
 DROP FUNCTION BABEL_2449_vu_prepare_f1
@@ -141,4 +171,19 @@ GO
 SELECT BABEL_2449_vu_prepare_f10()
 GO
 DROP FUNCTION BABEL_2449_vu_prepare_f10
+GO
+
+SELECT BABEL_2449_vu_prepare_f11()
+GO
+DROP FUNCTION BABEL_2449_vu_prepare_f11
+GO
+
+SELECT BABEL_2449_vu_prepare_f12()
+GO
+DROP FUNCTION BABEL_2449_vu_prepare_f12
+GO
+
+SELECT BABEL_2449_vu_prepare_f13()
+GO
+DROP FUNCTION BABEL_2449_vu_prepare_f13
 GO
