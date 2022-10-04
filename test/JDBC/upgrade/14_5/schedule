@@ -182,7 +182,6 @@ BABEL-SP_TABLE_PRIVILIGES
 BABEL-SP_STORED_PROCEDURES
 BABEL-SP_SPROC_COLUMNS
 BABEL-3000
-BABEL-3010-before-14_6
 sys_all_objects-dep
 sys-columns-dep
 sys-foreign_key_columns-dep
@@ -277,3 +276,5 @@ BABEL-889
 babel_417
 babel_datatype_sqlvariant
 babel_sqlvariant_cast_compare
+BABEL-3556-before-14_6
+BABEL-3010-before-14_6
