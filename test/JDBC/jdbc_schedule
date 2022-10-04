@@ -35,3 +35,5 @@ ignore#!#BABEL-3147-before-14_5-vu-cleanup
 ignore#!#TestErrorHelperFunctionsUpgrade-vu-prepare
 ignore#!#TestErrorHelperFunctionsUpgrade-vu-verify
 ignore#!#TestErrorHelperFunctionsUpgrade-vu-cleanup
+ignore#!#BABEL-3556-before-14_6-vu-prepare
+ignore#!#BABEL-3556-before-14_6-vu-verify
