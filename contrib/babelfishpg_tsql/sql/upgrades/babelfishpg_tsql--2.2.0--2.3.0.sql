@@ -191,15 +191,15 @@ CREATE TABLE sys.babelfish_function_ext (
 	orig_name sys.NVARCHAR(128), -- users' original input name
 	funcsignature TEXT NOT NULL COLLATE "C",
 	default_positions TEXT COLLATE "C",
-	create_date timestamp NOT NULL,
-	modify_date timestamp NOT NULL,
+	create_date SYS.DATETIME NOT NULL,
+	modify_date SYS.DATETIME NOT NULL,
 	PRIMARY KEY(nspname, funcsignature)
 );
 GRANT SELECT ON sys.babelfish_function_ext TO PUBLIC;
 
 SELECT pg_catalog.pg_extension_config_dump('sys.babelfish_function_ext', '');
 
-ALTER TABLE sys.babelfish_view_def ADD COLUMN create_date TIMESTAMP, add COLUMN modify_date TIMESTAMP;
+ALTER TABLE sys.babelfish_view_def ADD COLUMN create_date SYS.DATETIME, add COLUMN modify_date SYS.DATETIME;
 
 CREATE OR REPLACE FUNCTION sys.babelfish_get_pltsql_function_signature(IN funcoid OID)
 RETURNS text
@@ -530,7 +530,7 @@ select
   , CAST(0 as sys.bit) as is_published
   , CAST(0 as sys.bit) as is_schema_published
 from sys.table_types tt
-left join pg_class c on tt.type_table_object_id = c.oid;
+inner join pg_class c on tt.type_table_object_id = c.oid;
 GRANT SELECT ON sys.objects TO PUBLIC;
 
 -- Drops the temporary procedure used by the upgrade script.

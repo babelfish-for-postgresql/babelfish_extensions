@@ -5,8 +5,8 @@ CREATE TABLE sys.babelfish_view_def (
 	definition sys.NTEXT,
 	flag_validity BIGINT,
 	flag_values BIGINT,
-	create_date TIMESTAMP,
-	modify_date TIMESTAMP,
+	create_date SYS.DATETIME,
+	modify_date SYS.DATETIME,
 	PRIMARY KEY(dbid, schema_name, object_name)
 );
 GRANT SELECT ON sys.babelfish_view_def TO PUBLIC;

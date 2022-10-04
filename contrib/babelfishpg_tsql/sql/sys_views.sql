@@ -1627,7 +1627,7 @@ select
   , CAST(0 as sys.bit) as is_published
   , CAST(0 as sys.bit) as is_schema_published
 from sys.table_types tt
-left join pg_class c on tt.type_table_object_id = c.oid;
+inner join pg_class c on tt.type_table_object_id = c.oid;
 GRANT SELECT ON sys.objects TO PUBLIC;
 
 create or replace view sys.sysobjects as
