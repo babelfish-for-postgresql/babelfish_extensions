@@ -51,12 +51,5 @@ FOR INSERT AS
 	SELECT @@ROWCOUNT;
 GO
 
-CREATE TRIGGER babel_3010_vu_prepare_trig5 ON babel_3010_vu_prepare_t1
-INSTEAD OF INSERT AS
-	BEGIN
-		SELECT * FROM babel_3010_vu_prepare_t1;
-	END;
-GO
-
 CREATE TYPE babel_3010_vu_prepare_typ1 AS TABLE (a int);
 GO

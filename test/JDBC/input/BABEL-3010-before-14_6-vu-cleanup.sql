@@ -10,9 +10,6 @@ GO
 DROP TRIGGER babel_3010_vu_prepare_trig4;
 GO
 
-DROP TRIGGER babel_3010_vu_prepare_trig5;
-GO
-
 DROP VIEW babel_3010_vu_prepare_v1;
 GO
 
