@@ -2009,7 +2009,7 @@ GRANT EXECUTE ON PROCEDURE sys.sp_fkeys TO PUBLIC;
 
 CREATE OR REPLACE VIEW sys.sp_stored_procedures_view AS
 SELECT 
-CAST(d.name AS sys.sysname) COLLATE sys.database_default AS PROCEDURE_QUALIFIER,
+CAST(d.name AS sys.sysname) AS PROCEDURE_QUALIFIER,
 CAST(s1.name AS sys.sysname) AS PROCEDURE_OWNER, 
 
 CASE 
@@ -2031,7 +2031,7 @@ WHERE has_schema_privilege(s1.schema_id, 'USAGE')
 
 UNION 
 
-SELECT CAST((SELECT sys.db_name()) AS sys.sysname) COLLATE sys.database_default AS PROCEDURE_QUALIFIER,
+SELECT CAST((SELECT sys.db_name()) AS sys.sysname) AS PROCEDURE_QUALIFIER,
 CAST(nspname AS sys.sysname) AS PROCEDURE_OWNER,
 
 CASE 
@@ -2877,10 +2877,10 @@ BEGIN
 					IS_NULLABLE,
 					SS_DATA_TYPE
 			FROM sys.sp_sproc_columns_view
-			WHERE (@procedure_name = '' OR original_procedure_name LIKE @procedure_name COLLATE database_default )
-				AND (@procedure_owner = '' OR procedure_owner LIKE @procedure_owner COLLATE database_default )
-				AND (@column_name = '' OR column_name LIKE @column_name COLLATE database_default )
-				AND (@procedure_qualifier = '' OR procedure_qualifier = @procedure_qualifier COLLATE database_default )
+			WHERE (@procedure_name = '' OR original_procedure_name LIKE @procedure_name)
+				AND (@procedure_owner = '' OR procedure_owner LIKE @procedure_owner)
+				AND (@column_name = '' OR column_name LIKE @column_name)
+				AND (@procedure_qualifier = '' OR procedure_qualifier = @procedure_qualifier)
 			ORDER BY procedure_qualifier, procedure_owner, procedure_name, ordinal_position;
 		END
 	ELSE

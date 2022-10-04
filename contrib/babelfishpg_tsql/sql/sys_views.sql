@@ -867,7 +867,7 @@ select
           then 'TR'
           else 'FN'
         end
-    end as sys.bpchar(2)) as type
+    end as sys.bpchar(2)) COLLATE sys.database_default as type
   , cast(case p.prokind
       when 'p' then 'SQL_STORED_PROCEDURE'
       when 'a' then 'AGGREGATE_FUNCTION'
@@ -1091,7 +1091,7 @@ select CAST(('DF_' || tab.name collate "C" || '_' || d.oid) as sys.sysname) as n
   , CAST(0 as sys.bit) as is_published
   , CAST(0 as sys.bit) as is_schema_published
   , CAST(d.adnum as int) as  parent_column_id
-  , CAST(pg_get_expr(d.adbin, d.adrelid) as sys.varchar) as definition
+  , CAST(pg_get_expr(d.adbin, d.adrelid) COLLATE sys.database_default as sys.varchar) as definition
   , CAST(1 as sys.bit) as is_system_named
 from pg_catalog.pg_attrdef as d
 inner join pg_attribute a on a.attrelid = d.adrelid and d.adnum = a.attnum
