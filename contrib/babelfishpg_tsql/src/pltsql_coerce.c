@@ -95,6 +95,8 @@ tsql_cast_raw_info_t tsql_cast_raw_infos[] =
 // int8
     {PG_CAST_ENTRY, "pg_catalog", "int8", "pg_catalog", "int4", NULL, 'i', 'f'},
     {PG_CAST_ENTRY, "pg_catalog", "int8", "pg_catalog", "int2", NULL, 'i', 'f'},
+    {TSQL_CAST_ENTRY, "pg_catalog", "int8", "sys", "money", "int8_to_money", 'i', 'f'},
+    {TSQL_CAST_ENTRY, "pg_catalog", "int8", "sys", "smallmoney", "int8_to_smallmoney", 'i', 'f'},
 // int4
     {PG_CAST_ENTRY, "pg_catalog", "int4", "pg_catalog", "int2", NULL, 'i', 'f'},
 // varbinary     {only allow to cast to integral data type)
@@ -379,6 +381,8 @@ static CoercionPathType tsql_find_coercion_pathway(Oid sourceTypeId, Oid targetT
 	/* check if any of source/target type is sql variant */
 	HeapTuple	tuple;
 	bool isSqlVariantCast = false;
+	bool isInt8Type = false;
+	bool isInt8ToMoney = false;
 	
 	Oid typeIds[2] = {sourceTypeId, targetTypeId};
 	for (int i=0; i<2; i++)
@@ -394,7 +398,15 @@ static CoercionPathType tsql_find_coercion_pathway(Oid sourceTypeId, Oid targetT
 			type_nsoid = typtup->typnamespace;
 			type_nsname = get_namespace_name(type_nsoid);
 			type_name = NameStr(typtup->typname);
-			
+
+			/* We've found INT8 to MONEY casting */
+			if(isInt8Type && strcmp(type_nsname, "sys") == 0 && ((strcmp(type_name, "money") == 0) || (strcmp(type_name, "smallmoney") == 0)))
+				isInt8ToMoney = true;
+
+			/* Check if type is INT8 */
+			if(strcmp(type_nsname, "pg_catalog") == 0 && strcmp(type_name, "int8") == 0)
+				isInt8Type = true;
+
 			// We've found a SQL Variant Casting
 			if (strcmp(type_nsname, "sys") == 0 && strcmp(type_name, "sql_variant") == 0)
 			{
@@ -411,7 +423,11 @@ static CoercionPathType tsql_find_coercion_pathway(Oid sourceTypeId, Oid targetT
 	{
 		if (OidIsValid(sourceTypeId))
 			sourceTypeId = getBaseType(sourceTypeId);
-		if (OidIsValid(targetTypeId))
+		/*
+		 * if we are casting from INT8 to MONEY, don't look for base type of target
+		 * so that it can call the cast function which matches with the exact types
+		 */
+		if (OidIsValid(targetTypeId) && !isInt8ToMoney)
 			targetTypeId = getBaseType(targetTypeId);
 	}
 
