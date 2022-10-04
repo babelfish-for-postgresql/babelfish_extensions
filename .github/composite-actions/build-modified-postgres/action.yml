@@ -19,7 +19,7 @@ runs:
         
         if [[ $GITHUB_EVENT_NAME == "pull_request" ]]; then
           if [[ ${{inputs.engine_branch}} == "latest" ]]; then
-            ENGINE_BRANCH='jira-babel-3144'
+            ENGINE_BRANCH='jira-babel-3315'
           else
             ENGINE_BRANCH=${{inputs.engine_branch}}
           fi            
