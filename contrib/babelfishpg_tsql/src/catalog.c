@@ -2088,13 +2088,14 @@ guest_has_dbaccess(char *db_name)
 	scan = table_beginscan_catalog(bbf_authid_user_ext_rel, 2, key);
 
 	tuple_user_ext = heap_getnext(scan, ForwardScanDirection);
-	if (HeapTupleIsValid(tuple_user_ext))
+	if (!HeapTupleIsValid(tuple_user_ext))
 	{
-		Form_authid_user_ext userform;
-
-		userform = (Form_authid_user_ext) GETSTRUCT(tuple_user_ext);
-		has_access = userform->user_can_connect;
+		table_endscan(scan);
+		table_close(bbf_authid_user_ext_rel, RowExclusiveLock);
+		return false;
 	}
+	Form_authid_user_ext userform = (Form_authid_user_ext) GETSTRUCT(tuple_user_ext);
+	has_access = userform->user_can_connect;
 
 	table_endscan(scan);
 	table_close(bbf_authid_user_ext_rel, RowExclusiveLock);
