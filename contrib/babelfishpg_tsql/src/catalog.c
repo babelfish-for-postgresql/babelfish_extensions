@@ -2153,7 +2153,7 @@ Datum update_guest_catalog(PG_FUNCTION_ARGS)
 			tuple = heap_getnext(scan, ForwardScanDirection);
 			continue;
 		}
-		
+
 		db_owner_role = get_db_owner_name(db_name);
 		guest = get_guest_role_name(db_name);
 		dbid = get_db_id(db_name);
@@ -2162,14 +2162,14 @@ Datum update_guest_catalog(PG_FUNCTION_ARGS)
 		{
 			initStringInfo(&query);
 			appendStringInfo(&query, "CREATE ROLE dummy INHERIT ROLE dummy; ");
-			//logins = grant_guest_to_logins(&query);
+			logins = grant_guest_to_logins(&query);
 			res = raw_parser(query.data, RAW_PARSE_DEFAULT);
 
 			/* Replace dummy elements in parsetree with real values */
 			stmt = parsetree_nth_stmt(res, i++);
 			update_CreateRoleStmt(stmt, guest, db_owner_role, NULL);
 
-			/*if (list_length(logins) > 0)
+			if (list_length(logins) > 0)
 			{
 				AccessPriv *tmp = makeNode(AccessPriv);
 				tmp->priv_name = pstrdup(guest);
@@ -2177,7 +2177,7 @@ Datum update_guest_catalog(PG_FUNCTION_ARGS)
 
 				stmt = parsetree_nth_stmt(res, i++);
 				update_GrantRoleStmt(stmt, list_make1(tmp), logins);
-			}*/
+			}
 
 			/* Set current user to session user for create permissions */
 			prev_current_user = GetUserNameFromId(GetUserId(), false);
@@ -2191,22 +2191,22 @@ Datum update_guest_catalog(PG_FUNCTION_ARGS)
 			PG_TRY();
 			{
 				/* Run all subcommands */
-				//foreach(res_item, res)
-				//{
-				//	Node	   *res_stmt = ((RawStmt *) lfirst(res_item))->stmt;
+				foreach(res_item, res)
+				{
+					Node	   *res_stmt = ((RawStmt *) lfirst(res_item))->stmt;
 					PlannedStmt *wrapper;
 
 					/* need to make a wrapper PlannedStmt */
 					wrapper = makeNode(PlannedStmt);
 					wrapper->commandType = CMD_UTILITY;
 					wrapper->canSetTag = false;
-					wrapper->utilityStmt = stmt;
+					wrapper->utilityStmt = res_stmt;
 					wrapper->stmt_location = 0;
-					wrapper->stmt_len = 14;
+					wrapper->stmt_len = 18;
 
 					/* do this step */
 					ProcessUtility(wrapper,
-								   "(CREATE ROLE )",
+								   "(CREATE LOGICAL DATABASE )",
 								   false,
 								   PROCESS_UTILITY_SUBCOMMAND,
 									NULL,
@@ -2216,9 +2216,9 @@ Datum update_guest_catalog(PG_FUNCTION_ARGS)
 
 					/* make sure later steps can see the object created here */
 					CommandCounterIncrement();
-				//}
+				}
 				set_cur_db(old_dbid, old_dbname);
-				//add_to_bbf_authid_user_ext(guest, "guest", db_name, NULL, NULL, false, false);
+				add_to_bbf_authid_user_ext(guest, "guest", db_name, NULL, NULL, false, false);
 			}
 			PG_CATCH();
 			{
