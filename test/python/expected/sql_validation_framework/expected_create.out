@@ -12,7 +12,6 @@ Could not find tests for function sys.babelfish_try_cast_floor_smallint
 Could not find tests for function sys.babelfish_try_cast_to_any
 Could not find tests for function sys.columns_internal
 Could not find tests for function sys.dateadd_internal
-Could not find tests for function sys.dateadd_internal_df
 Could not find tests for function sys.datediff_internal
 Could not find tests for function sys.datediff_internal_df
 Could not find tests for function sys.datepart_internal
@@ -127,7 +126,6 @@ Could not find upgrade tests for function sys.columns_internal
 Could not find upgrade tests for function sys.cursor_rows
 Could not find upgrade tests for function sys.cursor_status
 Could not find upgrade tests for function sys.dateadd_internal
-Could not find upgrade tests for function sys.dateadd_internal_df
 Could not find upgrade tests for function sys.datediff_internal
 Could not find upgrade tests for function sys.datediff_internal_df
 Could not find upgrade tests for function sys.datepart_internal
