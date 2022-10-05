@@ -1,0 +1,11 @@
+DROP VIEW objectproperty_vu_prepare_dep_view
+GO
+
+DROP PROC objectproperty_vu_prepare_dep_proc
+GO
+
+DROP FUNCTION objectproperty_vu_prepare_dep_func
+GO
+
+DROP TABLE objectproperty_vu_prepare_t1
+GO
