@@ -957,12 +957,7 @@ get_user_for_database(const char *db_name)
 		if (is_member_of_role(GetSessionUserId(), datdba) || login_is_db_owner)
 			user = get_dbo_role_name(db_name);
 		else
-		{
-			if (guest_has_dbaccess(db_name))
-				user = get_guest_role_name(db_name);
-			else
-				user = NULL;
-		}
+			user = get_guest_role_name(db_name);
 	}
 
 	if (user && !(is_member_of_role(GetSessionUserId(), get_role_oid(user, false)) 
@@ -2075,7 +2070,7 @@ guest_has_dbaccess(char *db_name)
 {
 	Relation		bbf_authid_user_ext_rel;
 	HeapTuple		tuple_user_ext;
-	ScanKeyData		key[3];
+	ScanKeyData		key[2];
 	TableScanDesc	scan;
 	int32			has_access = 0;
 
@@ -2089,12 +2084,8 @@ guest_has_dbaccess(char *db_name)
 				Anum_bbf_authid_user_ext_database_name,
 				BTEqualStrategyNumber, F_TEXTEQ,
 				CStringGetTextDatum(db_name));
-	ScanKeyInit(&key[2],
-				Anum_bbf_authid_user_ext_user_can_connect,
-				BTEqualStrategyNumber, F_INT4EQ,
-				Int32GetDatum(1));
 
-	scan = table_beginscan_catalog(bbf_authid_user_ext_rel, 3, key);
+	scan = table_beginscan_catalog(bbf_authid_user_ext_rel, 2, key);
 
 	tuple_user_ext = heap_getnext(scan, ForwardScanDirection);
 	if (HeapTupleIsValid(tuple_user_ext))

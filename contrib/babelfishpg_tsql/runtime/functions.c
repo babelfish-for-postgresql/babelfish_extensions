@@ -953,12 +953,7 @@ has_dbaccess(PG_FUNCTION_ARGS)
 		if (is_member_of_role(GetSessionUserId(), datdba))
 			user = get_dbo_role_name(lowercase_db_name);
 		else
-		{
-			if (guest_has_dbaccess(lowercase_db_name))
-				user = get_guest_role_name(lowercase_db_name);
-			else
-				user = NULL;
-		}
+			user = get_guest_role_name(lowercase_db_name);
 	}
 
 	if (!user)
