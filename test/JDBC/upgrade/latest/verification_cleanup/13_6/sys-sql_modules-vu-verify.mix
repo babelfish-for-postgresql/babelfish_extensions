@@ -1,4 +1,4 @@
-USE sys_sql_modules_vu_prepare_db
+USE sys_sql_modules_vu_prepare_db1
 GO
 
 -- Test for function
@@ -13,7 +13,7 @@ SELECT
     execute_as_principal_id,
     uses_native_compilation
 FROM sys.sql_modules
-WHERE object_id = OBJECT_ID('sys_sql_modules_vu_prepare_f1')
+WHERE object_id = OBJECT_ID('sys_sql_modules_vu_prepare_function')
 GO
 
 -- Test for views
@@ -28,7 +28,7 @@ SELECT
     execute_as_principal_id,
     uses_native_compilation
 FROM sys.sql_modules
-WHERE object_id = OBJECT_ID('sys_sql_modules_vu_prepare_v2')
+WHERE object_id = OBJECT_ID('sys_sql_modules_vu_prepare_view')
 GO
 
 -- Test for triggers
@@ -43,7 +43,7 @@ SELECT
     execute_as_principal_id,
     uses_native_compilation
 FROM sys.sql_modules
-WHERE object_id = (SELECT TOP(1) object_id FROM sys.objects WHERE name = 'sys_sql_modules_vu_prepare_tr1')
+WHERE object_id = (SELECT TOP(1) object_id FROM sys.all_objects WHERE name = 'sys_sql_modules_vu_prepare_tr1')
 GO
 
 -- Test for proc
@@ -58,49 +58,7 @@ SELECT
     execute_as_principal_id,
     uses_native_compilation
 FROM sys.sql_modules
-WHERE object_id = OBJECT_ID('sys_sql_modules_vu_prepare_p1')
-GO
-
--- Test for system function
-SELECT
-    uses_ansi_nulls,
-    uses_quoted_identifier,
-    is_schema_bound,
-    uses_database_collation,
-    is_recompiled,
-    null_on_null_input,
-    execute_as_principal_id,
-    uses_native_compilation
-FROM sys.sql_modules
-WHERE object_id = OBJECT_ID('sys.fn_listextendedproperty')
-GO
-
--- Test for system views
-SELECT
-    uses_ansi_nulls,
-    uses_quoted_identifier,
-    is_schema_bound,
-    uses_database_collation,
-    is_recompiled,
-    null_on_null_input,
-    execute_as_principal_id,
-    uses_native_compilation
-FROM sys.sql_modules
-WHERE object_id = OBJECT_ID('sys.tables')
-GO
-
--- Test for system proc
-SELECT
-    uses_ansi_nulls,
-    uses_quoted_identifier,
-    is_schema_bound,
-    uses_database_collation,
-    is_recompiled,
-    null_on_null_input,
-    execute_as_principal_id,
-    uses_native_compilation
-FROM sys.sql_modules
-WHERE object_id = OBJECT_ID('sys.sp_tables')
+WHERE object_id = OBJECT_ID('sys_sql_modules_vu_prepare_proc')
 GO
 
 -- Test that sys.sql_modules is database-scoped
@@ -115,7 +73,7 @@ SELECT
     execute_as_principal_id,
     uses_native_compilation
 FROM sys.sql_modules
-WHERE object_id = OBJECT_ID('sys_sql_modules_vu_prepare_v1')
+WHERE object_id = OBJECT_ID('sys_sql_modules_vu_prepare_master_view')
 GO
 
 USE master
@@ -123,7 +81,7 @@ GO
 
 -- tsql user=sys_sql_modules_vu_prepare_user password=test
 
-USE sys_sql_modules_vu_prepare_db
+USE sys_sql_modules_vu_prepare_db1
 GO
 
 SELECT
@@ -137,9 +95,5 @@ SELECT
     execute_as_principal_id,
     uses_native_compilation
 FROM sys.sql_modules
-WHERE object_id = OBJECT_ID('sys_sql_modules_vu_prepare_p1')
+WHERE object_id = OBJECT_ID('sys_sql_modules_vu_prepare_proc')
 GO
-
-USE master
-GO
-

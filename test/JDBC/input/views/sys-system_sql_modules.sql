@@ -1,3 +1,7 @@
+-- Setup
+CREATE DATABASE db1
+GO
+
 -- Test for system function
 SELECT
     uses_ansi_nulls,
@@ -38,4 +42,11 @@ SELECT
     uses_native_compilation
 FROM sys.system_sql_modules
 WHERE object_id = OBJECT_ID('sys.sp_tables')
+GO
+
+-- Cleanup
+USE master
+GO
+
+DROP DATABASE db1
 GO

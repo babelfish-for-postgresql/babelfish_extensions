@@ -1,4 +1,41 @@
-USE db1_sys_sql_modules
+-- Setup
+CREATE DATABASE db1
+GO
+
+CREATE VIEW my_master_view AS -- This view should not be seen as we will be using a different database for the test
+SELECT 1
+GO
+
+USE db1
+GO
+
+CREATE TABLE sql_modules_table1(a int)
+GO
+
+CREATE TABLE sql_modules_table2(a int)
+GO
+
+CREATE TRIGGER sql_mod_trig ON sql_modules_table2 INSTEAD OF INSERT
+AS
+BEGIN
+SELECT * FROM sql_modules_table1;
+END
+GO
+
+CREATE VIEW sql_modules_view AS
+SELECT 1
+GO
+
+CREATE FUNCTION sql_modules_function() 
+RETURNS INT
+AS 
+BEGIN
+    RETURN 1;
+END
+GO
+
+CREATE PROC sql_modules_proc AS
+SELECT 1
 GO
 
 -- Test for function
@@ -73,7 +110,14 @@ SELECT
     execute_as_principal_id,
     uses_native_compilation
 FROM sys.sql_modules
-WHERE object_id = OBJECT_ID('my_master_view_sys_sql_modules')
+WHERE object_id = OBJECT_ID('my_master_view')
+GO
+
+-- Test permission for sql_modules (query should not have any results)
+CREATE LOGIN sql_modules_user WITH PASSWORD='test'
+GO
+
+CREATE USER sql_modules_user FOR LOGIN sql_modules_user
 GO
 
 USE master
@@ -81,7 +125,7 @@ GO
 
 -- tsql user=sql_modules_user password=test
 
-USE db1_sys_sql_modules
+USE db1
 GO
 
 SELECT
@@ -96,4 +140,51 @@ SELECT
     uses_native_compilation
 FROM sys.sql_modules
 WHERE object_id = OBJECT_ID('sql_modules_proc')
+GO
+
+USE master
+GO
+
+-- psql
+-- Need to terminate active session before cleaning up the login
+SELECT pg_terminate_backend(pid) FROM pg_stat_get_activity(NULL) 
+WHERE sys.suser_name(usesysid) = 'sql_modules_user' AND backend_type = 'client backend' AND usesysid IS NOT NULL;
+GO
+-- Wait to sync with another session
+SELECT pg_sleep(1);
+GO
+
+-- tsql
+USE db1
+GO
+
+DROP LOGIN sql_modules_user
+GO
+
+-- Cleanup
+DROP PROC sql_modules_proc
+GO
+
+DROP TRIGGER sql_mod_trig
+GO
+
+DROP TABLE sql_modules_table1
+GO
+
+DROP TABLE sql_modules_table2
+GO
+
+DROP VIEW sql_modules_view
+GO
+
+DROP FUNCTION sql_modules_function
+GO
+
+USE master
+GO
+
+DROP VIEW my_master_view
+GO
+
+DROP DATABASE db1
 GO

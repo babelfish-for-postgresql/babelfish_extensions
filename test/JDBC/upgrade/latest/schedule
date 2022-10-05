@@ -201,8 +201,6 @@ sys-dm_exec_connections-dep
 sys-dm_exec_sessions-dep
 sys-table_types-dep
 sys-all_sql_modules-dep
-sys-sql_modules-dep
-sys-system_sql_modules-dep
 sys-triggers-dep
 BABEL-2877
 sys-sp_pkeys
@@ -275,7 +273,6 @@ sys-syscolumns
 sys-sysforeignkeys
 sys-syslanguages
 sys-system_sql_modules
-sys-sql_modules
 sys-table_types
 sys-tables
 sys-triggers

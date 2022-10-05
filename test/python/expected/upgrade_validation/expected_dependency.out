@@ -1048,11 +1048,13 @@ View sys.spatial_index_tessellations
 View sys.spatial_indexes
 View sys.spt_columns_view_managed
 View sys.spt_tablecollations_view
+View sys.sql_modules
 View sys.stats
 View sys.synonyms
 View sys.syscharsets
 View sys.sysindexes
 View sys.syslanguages
 View sys.system_objects
+View sys.system_sql_modules
 View sys.xml_indexes
 View sys.xml_schema_collections

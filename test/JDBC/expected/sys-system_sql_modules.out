@@ -1,3 +1,7 @@
+-- Setup
+CREATE DATABASE db1
+GO
+
 -- Test for system function
 SELECT
     uses_ansi_nulls,
@@ -11,6 +15,11 @@ SELECT
 FROM sys.system_sql_modules
 WHERE object_id = OBJECT_ID('sys.fn_listextendedproperty')
 GO
+~~START~~
+bit#!#bit#!#bit#!#bit#!#bit#!#bit#!#int#!#bit
+1#!#1#!#0#!#0#!#0#!#0#!#<NULL>#!#0
+~~END~~
+
 
 -- Test for system views
 SELECT
@@ -25,6 +34,11 @@ SELECT
 FROM sys.system_sql_modules
 WHERE object_id = OBJECT_ID('sys.tables')
 GO
+~~START~~
+bit#!#bit#!#bit#!#bit#!#bit#!#bit#!#int#!#bit
+1#!#1#!#0#!#0#!#0#!#0#!#<NULL>#!#0
+~~END~~
+
 
 -- Test for system proc
 SELECT
@@ -38,4 +52,16 @@ SELECT
     uses_native_compilation
 FROM sys.system_sql_modules
 WHERE object_id = OBJECT_ID('sys.sp_tables')
+GO
+~~START~~
+bit#!#bit#!#bit#!#bit#!#bit#!#bit#!#int#!#bit
+1#!#1#!#0#!#0#!#0#!#0#!#<NULL>#!#0
+~~END~~
+
+
+-- Cleanup
+USE master
+GO
+
+DROP DATABASE db1
 GO
