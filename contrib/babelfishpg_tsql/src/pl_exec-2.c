@@ -2542,6 +2542,9 @@ exec_stmt_usedb(PLtsql_execstate *estate, PLtsql_stmt_usedb *stmt)
 				(errcode(ERRCODE_UNDEFINED_DATABASE),
 				 errmsg("database \"%s\" does not exist", stmt->db_name)));
 
+	/* Raise an error if the login does not have access to the database */
+	check_session_db_access(stmt->db_name);
+
 	/* Release the session-level shared lock on the old logical db */
 	UnlockLogicalDatabaseForSession(old_db_id, ShareLock, false);
 
@@ -2553,7 +2556,9 @@ exec_stmt_usedb(PLtsql_execstate *estate, PLtsql_stmt_usedb *stmt)
 						"\"%s\" is probably undergoing DDL statements in another session.", 
 						stmt->db_name, stmt->db_name)));
 
-	set_session_properties(stmt->db_name);
+	/* Same as set_session_properties() but skips checks as they were done before locking */
+	set_cur_user_db_and_path(stmt->db_name);
+
         top_es_entry = exec_state_call_stack->next;
         while(top_es_entry != NULL)
         {
@@ -2625,6 +2630,8 @@ exec_stmt_usedb_explain(PLtsql_execstate *estate, PLtsql_stmt_usedb *stmt, bool 
 				 errmsg("database \"%s\" does not exist", stmt->db_name)));
 		
 	}
+	check_session_db_access(stmt->db_name);
+
 	/* Release the session-level shared lock on the old logical db if its not the user's original database */
 	if (old_db_id != initial_database_id)
 		UnlockLogicalDatabaseForSession(old_db_id, ShareLock, false);
@@ -2639,7 +2646,7 @@ exec_stmt_usedb_explain(PLtsql_execstate *estate, PLtsql_stmt_usedb *stmt, bool 
 						"\"%s\" is probably undergoing DDL statements in another session.", 
 						stmt->db_name, stmt->db_name)));
 
-	set_session_properties(stmt->db_name);
+	set_cur_user_db_and_path(stmt->db_name);
 	
 	return PLTSQL_RC_OK;
 }

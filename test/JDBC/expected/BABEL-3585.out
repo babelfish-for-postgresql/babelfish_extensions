@@ -1,0 +1,82 @@
+-- tsql
+create login babel_3585_l1 with password='123';
+go
+
+create database babel_3585_sysadm_db;
+go
+
+-- tsql      user=babel_3585_l1      password=123
+use babel_3585_sysadm_db;
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: The server principal "babel_3585_l1" is not able to access the database "babel_3585_sysadm_db" under the current security context)~~
+
+
+-- Should still be master as login should not have access to babel_3585_sysadm_db
+select DB_NAME();
+go
+~~START~~
+nvarchar
+master
+~~END~~
+
+
+-- tsql
+-- Should work as login is not using the db, they were denied access
+drop database babel_3585_sysadm_db;
+go
+
+create database babel_3585_sysadm_db;
+go
+
+-- tsql      user=babel_3585_l1      password=123
+-- Test with babelfish_showplan_all
+set babelfish_showplan_all on;
+go
+
+use babel_3585_sysadm_db;
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: The server principal "babel_3585_l1" is not able to access the database "babel_3585_sysadm_db" under the current security context)~~
+
+
+set babelfish_showplan_all off;
+go
+
+select DB_NAME();
+go
+~~START~~
+nvarchar
+master
+~~END~~
+
+
+-- tsql
+drop database babel_3585_sysadm_db;
+go
+
+-- psql
+-- Need to terminate active session before cleaning up the login
+SELECT pg_terminate_backend(pid) FROM pg_stat_get_activity(NULL) 
+WHERE sys.suser_name(usesysid) = 'babel_3585_l1' AND backend_type = 'client backend' AND usesysid IS NOT NULL;
+GO
+~~START~~
+bool
+t
+~~END~~
+
+-- Wait to sync with another session
+SELECT pg_sleep(1);
+GO
+~~START~~
+void
+
+~~END~~
+
+
+-- tsql
+drop login babel_3585_l1;
+go
+
