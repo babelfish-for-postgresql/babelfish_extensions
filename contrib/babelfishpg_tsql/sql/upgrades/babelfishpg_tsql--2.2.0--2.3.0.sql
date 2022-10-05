@@ -80,6 +80,122 @@ $$
 LANGUAGE 'pltsql';
 GRANT EXECUTE ON PROCEDURE sys.sp_helpsrvrolemember TO PUBLIC;
 
+-- TODO: BABEL-3127
+CREATE OR REPLACE VIEW sys.all_sql_modules_internal AS
+SELECT
+  ao.object_id AS object_id
+  , CAST(
+      CASE WHEN ao.type in ('P', 'FN', 'IN', 'TF', 'RF') THEN tsql_get_functiondef(ao.object_id)
+      WHEN ao.type = 'V' THEN COALESCE(bvd.definition, '')
+      WHEN ao.type = 'TR' THEN NULL
+      ELSE NULL
+      END
+    AS sys.nvarchar(4000)) AS definition  -- Object definition work in progress, will update definition with BABEL-3127 Jira.
+  , CAST(1 as sys.bit)  AS uses_ansi_nulls
+  , CAST(1 as sys.bit)  AS uses_quoted_identifier
+  , CAST(0 as sys.bit)  AS is_schema_bound
+  , CAST(0 as sys.bit)  AS uses_database_collation
+  , CAST(0 as sys.bit)  AS is_recompiled
+  , CAST(
+      CASE WHEN ao.type IN ('P', 'FN', 'IN', 'TF', 'RF') THEN
+        CASE WHEN p.proisstrict THEN 1
+        ELSE 0 
+        END
+      ELSE 0
+      END
+    AS sys.bit) as null_on_null_input
+  , null::integer as execute_as_principal_id
+  , CAST(0 as sys.bit) as uses_native_compilation
+  , CAST(ao.is_ms_shipped as INT) as is_ms_shipped
+FROM sys.all_objects ao
+LEFT OUTER JOIN sys.pg_namespace_ext nmext on ao.schema_id = nmext.oid
+LEFT OUTER JOIN sys.babelfish_namespace_ext ext ON nmext.nspname = ext.nspname
+LEFT OUTER JOIN sys.babelfish_view_def bvd 
+ on (
+      ext.orig_name = bvd.schema_name AND 
+      ext.dbid = bvd.dbid AND
+      ao.name = bvd.object_name 
+   )
+LEFT JOIN pg_proc p ON ao.object_id = CAST(p.oid AS INT)
+WHERE ao.type in ('P', 'RF', 'V', 'TR', 'FN', 'IF', 'TF', 'R');
+GRANT SELECT ON sys.all_sql_modules_internal TO PUBLIC;
+
+CREATE OR REPLACE FUNCTION sys.dateadd(IN datepart PG_CATALOG.TEXT, IN num INTEGER, IN startdate ANYELEMENT) RETURNS ANYELEMENT
+AS
+$body$
+BEGIN
+    RETURN sys.dateadd_internal(datepart, num, startdate);
+END;
+$body$
+LANGUAGE plpgsql IMMUTABLE;
+
+CREATE OR REPLACE FUNCTION sys.dateadd_internal(IN datepart PG_CATALOG.TEXT, IN num INTEGER, IN startdate ANYELEMENT) RETURNS ANYELEMENT AS $$
+BEGIN
+    IF pg_typeof(startdate) = 'date'::regtype AND
+		datepart IN ('hour', 'minute', 'second', 'millisecond', 'microsecond', 'nanosecond') THEN
+		RAISE EXCEPTION 'The datepart % is not supported by date function dateadd for data type date.', datepart;
+	END IF;
+    IF pg_typeof(startdate) = 'time'::regtype AND
+		datepart IN ('year', 'quarter', 'month', 'doy', 'day', 'week', 'weekday') THEN
+		RAISE EXCEPTION 'The datepart % is not supported by date function dateadd for data type time.', datepart;
+	END IF;
+
+	CASE datepart
+	WHEN 'year' THEN
+		RETURN startdate + make_interval(years => num);
+	WHEN 'quarter' THEN
+		RETURN startdate + make_interval(months => num * 3);
+	WHEN 'month' THEN
+		RETURN startdate + make_interval(months => num);
+	WHEN 'dayofyear', 'y' THEN
+		RETURN startdate + make_interval(days => num);
+	WHEN 'day' THEN
+		RETURN startdate + make_interval(days => num);
+	WHEN 'week' THEN
+		RETURN startdate + make_interval(weeks => num);
+	WHEN 'weekday' THEN
+		RETURN startdate + make_interval(days => num);
+	WHEN 'hour' THEN
+		RETURN startdate + make_interval(hours => num);
+	WHEN 'minute' THEN
+		RETURN startdate + make_interval(mins => num);
+	WHEN 'second' THEN
+		RETURN startdate + make_interval(secs => num);
+	WHEN 'millisecond' THEN
+		RETURN startdate + make_interval(secs => (num::numeric) * 0.001);
+	WHEN 'microsecond' THEN
+        IF pg_typeof(startdate) = 'sys.datetimeoffset'::regtype THEN
+            RETURN startdate + make_interval(secs => (num::numeric) * 0.000001);
+        ELSIF pg_typeof(startdate) = 'time'::regtype THEN
+            RETURN startdate + make_interval(secs => (num::numeric) * 0.000001);
+        ELSIF pg_typeof(startdate) = 'sys.datetime2'::regtype THEN
+            RETURN startdate + make_interval(secs => (num::numeric) * 0.000001);
+        ELSIF pg_typeof(startdate) = 'sys.smalldatetime'::regtype THEN
+            RAISE EXCEPTION 'The datepart % is not supported by date function dateadd for data type smalldatetime.', datepart;
+        ELSE
+            RAISE EXCEPTION 'The datepart % is not supported by date function dateadd for data type datetime.', datepart;
+        END IF;
+	WHEN 'nanosecond' THEN
+        IF pg_typeof(startdate) = 'sys.datetimeoffset'::regtype THEN
+            RETURN startdate + make_interval(secs => TRUNC((num::numeric)* 0.000000001, 6));
+        ELSIF pg_typeof(startdate) = 'time'::regtype THEN
+            RETURN startdate + make_interval(secs => TRUNC((num::numeric)* 0.000000001, 6));
+        ELSIF pg_typeof(startdate) = 'sys.datetime2'::regtype THEN
+            RETURN startdate + make_interval(secs => TRUNC((num::numeric)* 0.000000001, 6));
+        ELSIF pg_typeof(startdate) = 'sys.smalldatetime'::regtype THEN
+            RAISE EXCEPTION 'The datepart % is not supported by date function dateadd for data type smalldatetime.', datepart;
+        ELSE
+            RAISE EXCEPTION 'The datepart % is not supported by date function dateadd for data type datetime.', datepart;
+        END IF;
+	ELSE
+		RAISE EXCEPTION '''%'' is not a recognized dateadd option.', datepart;
+	END CASE;
+END;
+$$
+STRICT
+LANGUAGE plpgsql IMMUTABLE;
+
+
 CREATE OR REPLACE FUNCTION sys.format_datetime(IN value anyelement, IN format_pattern NVARCHAR,IN culture VARCHAR,  IN data_type VARCHAR DEFAULT '') RETURNS sys.nvarchar
 AS 'babelfishpg_tsql', 'format_datetime' LANGUAGE C IMMUTABLE PARALLEL SAFE;
 GRANT EXECUTE ON FUNCTION sys.format_datetime(IN anyelement, IN NVARCHAR, IN VARCHAR, IN VARCHAR) TO PUBLIC;
@@ -1633,6 +1749,7 @@ END
 $$
 LANGUAGE 'pltsql';
 GRANT EXECUTE ON PROCEDURE sys.sp_helpdbfixedrole TO PUBLIC;
+
 
 -- BABELFISH_FUNCTION_EXT
 CREATE TABLE sys.babelfish_function_ext (

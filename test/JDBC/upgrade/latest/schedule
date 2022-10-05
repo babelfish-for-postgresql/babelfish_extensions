@@ -117,6 +117,7 @@ BABEL-2944
 BABEL-3116
 BABEL-3118
 BABEL-3249
+BABEL-3474
 BABEL-383
 BABEL-405
 BABEL-PROCID
@@ -155,6 +156,7 @@ BABEL-728
 babel_function_string
 BABEL-1566
 BABEL-3360
+BABEL-3380
 babel_isnumeric
 HAS_DBACCESS
 BABEL-1475
@@ -200,6 +202,8 @@ sys-dm_exec_connections-dep
 sys-dm_exec_sessions-dep
 sys-table_types-dep
 sys-all_sql_modules-dep
+sys-sql_modules-dep
+sys-system_sql_modules-dep
 sys-triggers-dep
 BABEL-2877
 sys-sp_pkeys
@@ -272,6 +276,7 @@ sys-syscolumns
 sys-sysforeignkeys
 sys-syslanguages
 sys-system_sql_modules
+sys-sql_modules
 sys-table_types
 sys-tables
 sys-triggers
