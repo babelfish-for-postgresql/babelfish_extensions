@@ -2139,6 +2139,9 @@ Datum update_guest_catalog(PG_FUNCTION_ARGS)
 		ListCell   		*res_item;
 		int				i = 0;
 		const char	*prev_current_user;
+		int16 		old_dbid;
+		char		*old_dbname;
+		int16		dbid;
 
 		db_name_datum = heap_getattr(tuple,
 		Anum_sysdatabaese_name,
@@ -2150,6 +2153,7 @@ Datum update_guest_catalog(PG_FUNCTION_ARGS)
 			PG_RETURN_INT32(0);
 		guest = get_guest_role_name(db_name);
 		db_owner_role = get_db_owner_name(db_name);
+		dbid = get_db_id(db_name);
 
 		if (guest)
 		{
@@ -2177,9 +2181,9 @@ Datum update_guest_catalog(PG_FUNCTION_ARGS)
 
 			bbf_set_current_user("sysadmin");
 
-			//old_dbid = get_cur_db_id();
-			//old_dbname = get_cur_db_name();
-			//set_cur_db(dbid, dbname);  /* temporarily set current dbid as the new id */
+			old_dbid = get_cur_db_id();
+			old_dbname = get_cur_db_name();
+			set_cur_db(dbid, db_name);  /* temporarily set current dbid as the new id */
 
 			PG_TRY();
 			{
@@ -2210,13 +2214,14 @@ Datum update_guest_catalog(PG_FUNCTION_ARGS)
 					/* make sure later steps can see the object created here */
 					CommandCounterIncrement();
 				}
+				set_cur_db(old_dbid, old_dbname);
 				add_to_bbf_authid_user_ext(guest, "guest", db_name, NULL, NULL, false, false);
 			}
 			PG_CATCH();
 			{
 				/* Clean up. Restore previous state. */
 				bbf_set_current_user(prev_current_user);
-				//set_cur_db(old_dbid, old_dbname);
+				set_cur_db(old_dbid, old_dbname);
 				PG_RE_THROW();
 			}
 			PG_END_TRY();
