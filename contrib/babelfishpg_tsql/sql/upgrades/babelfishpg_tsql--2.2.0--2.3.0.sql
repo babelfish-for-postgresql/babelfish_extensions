@@ -31,6 +31,21 @@ LANGUAGE plpgsql;
 
 
 -- please add your SQL here
+CREATE OR REPLACE FUNCTION sys.is_table_type(object_id oid) RETURNS bool AS
+$BODY$
+SELECT
+  EXISTS(
+    SELECT 1
+    FROM pg_catalog.pg_type pt
+    INNER JOIN pg_catalog.pg_depend dep
+    ON pt.typrelid = dep.objid AND pt.oid = dep.refobjid
+    join sys.schemas sch on pt.typnamespace = sch.schema_id
+    JOIN pg_catalog.pg_class pc ON pc.oid = dep.objid
+    WHERE pt.typtype = 'c' AND dep.deptype = 'i' AND pt.typrelid = object_id AND pc.relkind = 'r'
+    AND dep.classid = 'pg_catalog.pg_class'::regclass AND dep.refclassid = 'pg_catalog.pg_type'::regclass);
+$BODY$
+LANGUAGE SQL VOLATILE STRICT;
+
 CREATE OR REPLACE PROCEDURE sys.sp_helpsrvrolemember("@srvrolename" sys.SYSNAME = NULL) AS
 $$
 BEGIN
