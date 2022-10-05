@@ -994,13 +994,7 @@ CREATE OR REPLACE FUNCTION sys.dateadd(IN datepart PG_CATALOG.TEXT, IN num INTEG
 AS
 $body$
 BEGIN
-    IF pg_typeof(startdate) = 'sys.DATETIMEOFFSET'::regtype THEN
-        return sys.dateadd_internal_df(datepart, num,
-                     startdate);
-    ELSE
-        return sys.dateadd_internal(datepart, num,
-                     startdate);
-    END IF;
+    RETURN sys.dateadd_internal(datepart, num, startdate);
 END;
 $body$
 LANGUAGE plpgsql IMMUTABLE;
@@ -1078,44 +1072,6 @@ $$
 STRICT
 LANGUAGE plpgsql IMMUTABLE;
 
-CREATE OR REPLACE FUNCTION sys.dateadd_internal_df(IN datepart PG_CATALOG.TEXT, IN num INTEGER, IN startdate datetimeoffset) RETURNS datetimeoffset AS $$
-BEGIN
-	CASE datepart
-	WHEN 'year' THEN
-		RETURN startdate OPERATOR(sys.+) make_interval(years => num);
-	WHEN 'quarter' THEN
-		RETURN startdate OPERATOR(sys.+) make_interval(months => num * 3);
-	WHEN 'month' THEN
-		RETURN startdate OPERATOR(sys.+) make_interval(months => num);
-	WHEN 'dayofyear', 'y' THEN
-		RETURN startdate OPERATOR(sys.+) make_interval(days => num);
-	WHEN 'day' THEN
-		RETURN startdate OPERATOR(sys.+) make_interval(days => num);
-	WHEN 'week' THEN
-		RETURN startdate OPERATOR(sys.+) make_interval(weeks => num);
-	WHEN 'weekday' THEN
-		RETURN startdate OPERATOR(sys.+) make_interval(days => num);
-	WHEN 'hour' THEN
-		RETURN startdate OPERATOR(sys.+) make_interval(hours => num);
-	WHEN 'minute' THEN
-		RETURN startdate OPERATOR(sys.+) make_interval(mins => num);
-	WHEN 'second' THEN
-		RETURN startdate OPERATOR(sys.+) make_interval(secs => num);
-	WHEN 'millisecond' THEN
-		RETURN startdate OPERATOR(sys.+) make_interval(secs => (num::numeric) * 0.001);
-    WHEN 'microsecond' THEN
-        RAISE EXCEPTION 'The datepart % is not supported by date function dateadd for data type time.', datepart;
-	WHEN 'nanosecond' THEN
-		-- Best we can do - Postgres does not support nanosecond precision
-		RETURN startdate;
-	ELSE
-		RAISE EXCEPTION '"%" is not a recognized dateadd option.', datepart;
-	END CASE;
-END;
-$$
-STRICT
-LANGUAGE plpgsql IMMUTABLE;
-
 CREATE OR REPLACE FUNCTION sys.dateadd_internal(IN datepart PG_CATALOG.TEXT, IN num INTEGER, IN startdate ANYELEMENT) RETURNS ANYELEMENT AS $$
 BEGIN
     IF pg_typeof(startdate) = 'date'::regtype AND
@@ -1149,14 +1105,33 @@ BEGIN
 	WHEN 'second' THEN
 		RETURN startdate + make_interval(secs => num);
 	WHEN 'millisecond' THEN
-		RETURN startdate OPERATOR(sys.+) make_interval(secs => (num::numeric) * 0.001);
-    WHEN 'microsecond' THEN
-        RAISE EXCEPTION 'The datepart % is not supported by date function dateadd for data type time.', datepart;
+		RETURN startdate + make_interval(secs => (num::numeric) * 0.001);
+	WHEN 'microsecond' THEN
+        IF pg_typeof(startdate) = 'sys.datetimeoffset'::regtype THEN
+            RETURN startdate + make_interval(secs => (num::numeric) * 0.000001);
+        ELSIF pg_typeof(startdate) = 'time'::regtype THEN
+            RETURN startdate + make_interval(secs => (num::numeric) * 0.000001);
+        ELSIF pg_typeof(startdate) = 'sys.datetime2'::regtype THEN
+            RETURN startdate + make_interval(secs => (num::numeric) * 0.000001);
+        ELSIF pg_typeof(startdate) = 'sys.smalldatetime'::regtype THEN
+            RAISE EXCEPTION 'The datepart % is not supported by date function dateadd for data type smalldatetime.', datepart;
+        ELSE
+            RAISE EXCEPTION 'The datepart % is not supported by date function dateadd for data type datetime.', datepart;
+        END IF;
 	WHEN 'nanosecond' THEN
-		-- Best we can do - Postgres does not support nanosecond precision
-		RETURN startdate;
+        IF pg_typeof(startdate) = 'sys.datetimeoffset'::regtype THEN
+            RETURN startdate + make_interval(secs => TRUNC((num::numeric)* 0.000000001, 6));
+        ELSIF pg_typeof(startdate) = 'time'::regtype THEN
+            RETURN startdate + make_interval(secs => TRUNC((num::numeric)* 0.000000001, 6));
+        ELSIF pg_typeof(startdate) = 'sys.datetime2'::regtype THEN
+            RETURN startdate + make_interval(secs => TRUNC((num::numeric)* 0.000000001, 6));
+        ELSIF pg_typeof(startdate) = 'sys.smalldatetime'::regtype THEN
+            RAISE EXCEPTION 'The datepart % is not supported by date function dateadd for data type smalldatetime.', datepart;
+        ELSE
+            RAISE EXCEPTION 'The datepart % is not supported by date function dateadd for data type datetime.', datepart;
+        END IF;
 	ELSE
-		RAISE EXCEPTION '"%" is not a recognized dateadd option.', datepart;
+		RAISE EXCEPTION '''%'' is not a recognized dateadd option.', datepart;
 	END CASE;
 END;
 $$
