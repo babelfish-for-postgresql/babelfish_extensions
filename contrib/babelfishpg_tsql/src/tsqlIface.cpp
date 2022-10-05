@@ -24,6 +24,8 @@
 #define MERGE_QUERY_HINT 5
 #define JOIN_HINTS_INFO_VECTOR_SIZE 6
 
+#define RAISE_ERROR_PARAMS_LIMIT 20
+
 extern "C" {
 #if 0
 #include "tsqlNodes.h"
@@ -161,6 +163,7 @@ template <class T> static std::string rewrite_information_schema_to_information_
 template <class T> static std::string rewrite_column_name_with_omitted_schema_name(T ctx, GetCtxFunc<T> getSchema, GetCtxFunc<T> getTableName);
 static bool does_object_name_need_delimiter(TSqlParser::IdContext *id);
 static std::string delimit_identifier(TSqlParser::IdContext *id);
+static bool does_msg_exceeds_params_limit(const std::string& msg);
 
 /*
  * Structure / Utility function for general purpose of query string modification
@@ -3759,6 +3762,11 @@ makeRaiseErrorStmt(TSqlParser::Raiseerror_statementContext *ctx)
 	// additional arguments
 	if (ctx->argument.size() > 20)
 		throw PGErrorWrapperException(ERROR, ERRCODE_SYNTAX_ERROR, "Too many substitution parameters for RAISERROR. Cannot exceed 20 substitution parameters.", getLineAndPos(ctx));
+	
+	if(does_msg_exceeds_params_limit(ctx->msg->getText()))
+	{
+		throw PGErrorWrapperException(ERROR, ERRCODE_SYNTAX_ERROR, "Message text expects more than the maximum number of arguments (20).", getLineAndPos(ctx));
+	}
 
 	for (auto arg : ctx->argument)
 	{
@@ -6262,4 +6270,26 @@ static std::string
 delimit_identifier(TSqlParser::IdContext *id)
 {
 	return std::string("[") + ::getFullText(id) + "]";
+}
+
+/**
+ * Checks if the number of format specifiers in the message
+ * is exceeding the limit i.e 20
+ * The logic to check number of format specifier is based on 
+ * the prepare_format_string function in string.c file
+ **/
+static bool 
+does_msg_exceeds_params_limit(const std::string& msg)
+{
+	//end is at msg.length() - 1 since we dont count '%' as a param if it is the last character
+	int paramCount = 0, end = msg.length() - 1, idx = 0;
+	
+	while(idx < end)
+	{
+		if(msg[idx++] == '%'){
+			paramCount++;
+		}
+	}
+
+	return paramCount > RAISE_ERROR_PARAMS_LIMIT;
 }
