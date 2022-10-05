@@ -809,38 +809,6 @@ $BODY$
 LANGUAGE plpgsql
 IMMUTABLE;
 
-CREATE OR REPLACE FUNCTION sys.DATETIMEOFFSETFROMPARTS(IN p_year TEXT,
-                                                               IN p_month TEXT,
-                                                               IN p_day TEXT,
-                                                               IN p_hour TEXT,
-                                                               IN p_minute TEXT,
-                                                               IN p_seconds TEXT,
-                                                               IN p_fractions TEXT,
-                                                               IN p_hour_offset TEXT,
-                                                               IN p_minute_offset TEXT,
-                                                               IN p_precision TEXT)
-RETURNS sys.DATETIMEOFFSET
-AS
-$BODY$
-DECLARE
-    v_err_message SYS.VARCHAR;
-BEGIN
-    RETURN sys.DATETIMEOFFSETFROMPARTS(IN p_year INTEGER,IN p_month INTEGER,IN p_day INTEGER,IN p_hour INTEGER,IN p_minute INTEGER,
-                                        IN p_seconds INTEGER,IN p_fractions INTEGER,IN p_hour_offset INTEGER,IN p_minute_offset INTEGER,
-                                        IN p_precision NUMERIC);
-EXCEPTION
-    WHEN invalid_text_representation THEN
-        GET STACKED DIAGNOSTICS v_err_message = MESSAGE_TEXT;
-        v_err_message := substring(lower(v_err_message), 'numeric\:\s\"(.*)\"');
-
-        RAISE USING MESSAGE := format('Error while trying to convert "%s" value to NUMERIC data type.', v_err_message),
-                    DETAIL := 'Supplied string value contains illegal characters.',
-                    HINT := 'Correct supplied value, remove all illegal characters and try again.';
-END;
-$BODY$
-LANGUAGE plpgsql
-IMMUTABLE;
-
 -- Duplicate functions with arg TEXT since ANYELEMNT cannot handle type unknown.
 CREATE OR REPLACE FUNCTION sys.stuff(expr TEXT, start INTEGER, length INTEGER, replace_expr TEXT)
 RETURNS TEXT AS

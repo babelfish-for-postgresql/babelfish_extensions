@@ -171,9 +171,9 @@ GO
 
 EXEC BABEL_2449_vu_prepare_p7
 GO
-~~ERROR (Code: 33557097)~~
+~~ERROR (Code: 201)~~
 
-~~ERROR (Message: The datetimeoffsetfromparts function requires 10 arguments)~~
+~~ERROR (Message: function datetimeoffsetfromparts expects parameter "p_minute", which was not supplied.)~~
 
 DROP procedure  BABEL_2449_vu_prepare_p7
 GO
@@ -302,9 +302,9 @@ SELECT BABEL_2449_vu_prepare_f7()
 GO
 ~~START~~
 datetimeoffset
-~~ERROR (Code: 33557097)~~
+~~ERROR (Code: 201)~~
 
-~~ERROR (Message: The datetimeoffsetfromparts function requires 10 arguments)~~
+~~ERROR (Message: function datetimeoffsetfromparts expects parameter "p_minute", which was not supplied.)~~
 
 DROP FUNCTION BABEL_2449_vu_prepare_f7
 GO
