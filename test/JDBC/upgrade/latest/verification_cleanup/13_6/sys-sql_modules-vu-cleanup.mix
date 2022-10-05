@@ -1,34 +1,34 @@
 -- tsql
-USE sys_sql_modules_vu_prepare_db
+USE sys_sql_modules_vu_prepare_db1
 GO
 
 DROP LOGIN sys_sql_modules_vu_prepare_user
 GO
 
 -- Cleanup
-DROP PROC sys_sql_modules_vu_prepare_p1
+DROP PROC sys_sql_modules_vu_prepare_proc
 GO
 
 DROP TRIGGER sys_sql_modules_vu_prepare_tr1
 GO
 
-DROP TABLE sys_sql_modules_vu_prepare_t1
+DROP TABLE sys_sql_modules_vu_prepare_table1
 GO
 
-DROP TABLE sys_sql_modules_vu_prepare_t2
+DROP TABLE sys_sql_modules_vu_prepare_table2
 GO
 
-DROP VIEW sys_sql_modules_vu_prepare_v2
+DROP VIEW sys_sql_modules_vu_prepare_view
 GO
 
-DROP FUNCTION sys_sql_modules_vu_prepare_f1
+DROP FUNCTION sys_sql_modules_vu_prepare_function
 GO
 
 USE master
 GO
 
-DROP VIEW sys_sql_modules_vu_prepare_v1
+DROP VIEW sys_sql_modules_vu_prepare_master_view
 GO
 
-DROP DATABASE sys_sql_modules_vu_prepare_db
+DROP DATABASE sys_sql_modules_vu_prepare_db1
 GO
