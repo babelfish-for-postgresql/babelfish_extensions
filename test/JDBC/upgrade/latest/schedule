@@ -116,7 +116,11 @@ BABEL-2944
 BABEL-3116
 BABEL-3118
 BABEL-3249
+<<<<<<< HEAD
 BABEL-3486
+=======
+BABEL-3474
+>>>>>>> 531a1273 (Correct 'nanosecond' unit action in DATEADD() function (#594))
 BABEL-383
 BABEL-405
 BABEL-PROCID
