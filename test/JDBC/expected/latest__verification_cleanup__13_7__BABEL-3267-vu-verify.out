@@ -1,0 +1,69 @@
+USE db_babel_3267;
+go
+
+select * from [T3267#];
+go
+~~START~~
+varchar
+success
+~~END~~
+
+
+select * from [T3267 a];
+go
+~~START~~
+varchar
+success
+~~END~~
+
+
+select * from [T3267'b];
+go
+~~START~~
+varchar
+success
+~~END~~
+
+
+select * from [T3267\c];
+go
+~~START~~
+varchar
+success
+~~END~~
+
+
+select * from [T3267"d];
+go
+~~START~~
+varchar
+success
+~~END~~
+
+
+select * from [T3267\schema].[T3267.[CustomTable];
+go
+~~START~~
+varchar
+success
+~~END~~
+
+
+select relname, array_to_string(reloptions,',') reloptions from pg_class C where C.relname like 't3267%' order by relname;
+go
+~~START~~
+varchar#!#text
+t3267 a#!#bbf_original_rel_name=T3267 a
+t3267"d#!#bbf_original_rel_name=T3267"d
+t3267##!#bbf_original_rel_name=T3267#
+t3267'b#!#bbf_original_rel_name=T3267'b
+t3267.[customtable#!#<NULL>
+t3267\c#!#bbf_original_rel_name=T3267\c
+~~END~~
+
+
+USE master;
+go
+
+DROP DATABASE db_babel_3267;
+go

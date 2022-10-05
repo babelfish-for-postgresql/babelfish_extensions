@@ -1,0 +1,35 @@
+CREATE DATABASE db_babel_3190;
+go
+
+USE db_babel_3190;
+go
+
+
+CREATE TABLE babel_3190_t1(c1 datetime2(0)
+                , c2 datetime2(7)
+                , c3 datetimeoffset(0)
+                , c4 datetimeoffset(7)
+                , c5 time(0)
+                , c6 time(7))
+select name,max_length,precision,scale from sys.columns where object_id = OBJECT_ID('babel_3190_t1') order by name;
+GO
+~~START~~
+varchar#!#smallint#!#int#!#int
+c1#!#6#!#19#!#0
+c2#!#8#!#26#!#6
+c3#!#8#!#26#!#0
+c4#!#10#!#33#!#6
+c5#!#3#!#8#!#0
+c6#!#5#!#15#!#6
+~~END~~
+
+
+CREATE VIEW v1 as SELECT CAST('12-04-1999' as datetime2);
+go
+select * from v1;
+go
+~~START~~
+datetime2
+1999-12-04 00:00:00.000000
+~~END~~
+
