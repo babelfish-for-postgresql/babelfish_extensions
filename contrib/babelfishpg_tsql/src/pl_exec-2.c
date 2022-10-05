@@ -2542,7 +2542,7 @@ exec_stmt_usedb(PLtsql_execstate *estate, PLtsql_stmt_usedb *stmt)
 				(errcode(ERRCODE_UNDEFINED_DATABASE),
 				 errmsg("database \"%s\" does not exist", stmt->db_name)));
 
-	/* Throw an error if the login has access to the database */
+	/* Raise an error if the login does not have access to the database */
 	check_session_db_access(stmt->db_name);
 
 	/* Release the session-level shared lock on the old logical db */
