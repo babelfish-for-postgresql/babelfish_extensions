@@ -957,7 +957,12 @@ get_user_for_database(const char *db_name)
 		if (is_member_of_role(GetSessionUserId(), datdba) || login_is_db_owner)
 			user = get_dbo_role_name(db_name);
 		else
-			user = get_guest_role_name(db_name);
+		{
+			if (guest_has_dbaccess(db_name))
+				user = get_guest_role_name(db_name);
+			else
+				user = NULL;
+		}
 	}
 
 	if (user && !(is_member_of_role(GetSessionUserId(), get_role_oid(user, false)) 
