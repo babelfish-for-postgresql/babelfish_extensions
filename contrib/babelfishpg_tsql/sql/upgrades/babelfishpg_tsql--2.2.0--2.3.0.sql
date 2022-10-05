@@ -1751,7 +1751,7 @@ CREATE OR REPLACE PROCEDURE sys.babel_update_guest_catalog()
 LANGUAGE C
 AS 'babelfishpg_tsql', 'update_guest_catalog';
  
-CALL sys.babel_update_guest_catalog();
+--CALL sys.babel_update_guest_catalog();
 
 -- Drops the temporary procedure used by the upgrade script.
 -- Please have this be one of the last statements executed in this upgrade script.
