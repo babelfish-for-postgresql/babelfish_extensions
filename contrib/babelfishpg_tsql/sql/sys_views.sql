@@ -1091,7 +1091,8 @@ select CAST(('DF_' || tab.name || '_' || d.oid) as sys.sysname) as name
   , CAST(0 as sys.bit) as is_published
   , CAST(0 as sys.bit) as is_schema_published
   , CAST(d.adnum as int) as  parent_column_id
-  , CAST(pg_get_expr(d.adbin, d.adrelid) as sys.varchar) as definition
+  -- use a simple regex to strip the datatype and collation that pg_get_expr returns after a double-colon that is not expected in SQL Server
+  , CAST(regexp_replace(pg_get_expr(d.adbin, d.adrelid), '::"?\w+"?| COLLATE "\w+"', '', 'g') as sys.nvarchar(4000)) as definition
   , CAST(1 as sys.bit) as is_system_named
 from pg_catalog.pg_attrdef as d
 inner join pg_attribute a on a.attrelid = d.adrelid and d.adnum = a.attnum
@@ -1103,24 +1104,25 @@ GRANT SELECT ON sys.default_constraints TO PUBLIC;
 
 CREATE or replace VIEW sys.check_constraints AS
 SELECT CAST(c.conname as sys.sysname) as name
-  , oid::integer as object_id
-  , NULL::integer as principal_id 
-  , c.connamespace::integer as schema_id
-  , conrelid::integer as parent_object_id
-  , 'C'::char(2) as type
-  , 'CHECK_CONSTRAINT'::sys.nvarchar(60) as type_desc
-  , null::sys.datetime as create_date
-  , null::sys.datetime as modify_date
-  , 0::sys.bit as is_ms_shipped
-  , 0::sys.bit as is_published
-  , 0::sys.bit as is_schema_published
-  , 0::sys.bit as is_disabled
-  , 0::sys.bit as is_not_for_replication
-  , 0::sys.bit as is_not_trusted
-  , c.conkey[1]::integer AS parent_column_id
-  , substring(pg_get_constraintdef(c.oid) from 7) AS definition
-  , 1::sys.bit as uses_database_collation
-  , 0::sys.bit as is_system_named
+  , CAST(oid as integer) as object_id
+  , CAST(NULL as integer) as principal_id 
+  , CAST(c.connamespace as integer) as schema_id
+  , CAST(conrelid as integer) as parent_object_id
+  , CAST('C' as char(2)) as type
+  , CAST('CHECK_CONSTRAINT' as sys.nvarchar(60)) as type_desc
+  , CAST(null as sys.datetime) as create_date
+  , CAST(null as sys.datetime) as modify_date
+  , CAST(0 as sys.bit) as is_ms_shipped
+  , CAST(0 as sys.bit) as is_published
+  , CAST(0 as sys.bit) as is_schema_published
+  , CAST(0 as sys.bit) as is_disabled
+  , CAST(0 as sys.bit) as is_not_for_replication
+  , CAST(0 as sys.bit) as is_not_trusted
+  , CAST(c.conkey[1] as integer) AS parent_column_id
+  -- use a simple regex to strip the datatype and collation that pg_get_constraintdef returns after a double-colon that is not expected in SQL Server
+  , CAST(regexp_replace(substring(pg_get_constraintdef(c.oid) from 7), '::"?\w+"?| COLLATE "\w+"', '', 'g') as sys.nvarchar(4000)) AS definition
+  , CAST(1 as sys.bit) as uses_database_collation
+  , CAST(0 as sys.bit) as is_system_named
 FROM pg_catalog.pg_constraint as c
 INNER JOIN sys.schemas s on c.connamespace = s.schema_id
 WHERE has_schema_privilege(s.schema_id, 'USAGE')
@@ -1642,8 +1644,8 @@ CREATE OR REPLACE VIEW sys.all_sql_modules_internal AS
 SELECT
   ao.object_id AS object_id
   , CAST(
-      CASE WHEN ao.type in ('P', 'FN', 'IN', 'TF', 'RF') THEN pg_get_functiondef(ao.object_id)
-      WHEN ao.type = 'V' THEN NULL
+      CASE WHEN ao.type in ('P', 'FN', 'IN', 'TF', 'RF') THEN tsql_get_functiondef(ao.object_id)
+      WHEN ao.type = 'V' THEN COALESCE(bvd.definition, '')
       WHEN ao.type = 'TR' THEN NULL
       ELSE NULL
       END
@@ -1665,6 +1667,14 @@ SELECT
   , CAST(0 as sys.bit) as uses_native_compilation
   , CAST(ao.is_ms_shipped as INT) as is_ms_shipped
 FROM sys.all_objects ao
+LEFT OUTER JOIN sys.pg_namespace_ext nmext on ao.schema_id = nmext.oid
+LEFT OUTER JOIN sys.babelfish_namespace_ext ext ON nmext.nspname = ext.nspname
+LEFT OUTER JOIN sys.babelfish_view_def bvd 
+ on (
+      ext.orig_name = bvd.schema_name AND 
+      ext.dbid = bvd.dbid AND
+      ao.name = bvd.object_name 
+   )
 LEFT JOIN pg_proc p ON ao.object_id = CAST(p.oid AS INT)
 WHERE ao.type in ('P', 'RF', 'V', 'TR', 'FN', 'IF', 'TF', 'R');
 GRANT SELECT ON sys.all_sql_modules_internal TO PUBLIC;
