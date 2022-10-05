@@ -714,6 +714,50 @@ tsql_update_delete_stmt_with_top(Node *top_clause, RangeVar *relation, Node
 	return (Node *)link;
 }
 
+/*
+ * helper function to update relation info in
+ * tsql_update_delete_stmt_from_clause_alias
+ */
+static void
+tsql_update_delete_stmt_from_clause_alias_helper(RangeVar *relation,RangeVar *rv)
+{	
+	if (rv->alias && rv->alias->aliasname &&
+				strcmp(rv->alias->aliasname, relation->relname) == 0)
+	{
+		if (relation->schemaname)
+		{
+			ereport(ERROR,
+					(errcode(ERRCODE_SYNTAX_ERROR),
+						errmsg("The correlation name \'%s\' has the same exposed name as table \'%s.%s\'.",
+							rv->alias->aliasname, relation->schemaname,
+							relation->relname)));
+		}
+		/*
+		* Save the original alias name so that "inserted" and
+		* "deleted" tables in OUTPUT clause can be linked to it
+		*/
+		update_delete_target_alias = relation->relname;
+
+		/*
+		* Update the relation to have the real table name as
+		* relname, and the original alias name as an alias
+		*/
+		relation->catalogname = rv->catalogname;
+		relation->schemaname = rv->schemaname;
+		relation->relname = rv->relname;
+		relation->inh = rv->inh;
+		relation->relpersistence = rv->relpersistence;
+		relation->alias = rv->alias;
+
+		/*
+		* To avoid alias collision, remove the alias of the table
+		* in the FROM clause, because it will already be an alias
+		* of the target relation
+		*/
+		rv->alias = NULL;
+	}
+}
+
 static void
 tsql_update_delete_stmt_from_clause_alias(RangeVar *relation, List *from_clause)
 {
@@ -724,45 +768,19 @@ tsql_update_delete_stmt_from_clause_alias(RangeVar *relation, List *from_clause)
 		if (IsA(n, RangeVar))
 		{
 			RangeVar *rv = (RangeVar *) n;
-			if (rv->alias && rv->alias->aliasname &&
-				strcmp(rv->alias->aliasname, relation->relname) == 0)
+			tsql_update_delete_stmt_from_clause_alias_helper(relation,rv);
+		}
+		else if (IsA(n, JoinExpr))
+		{
+			JoinExpr *jexpr = (JoinExpr *) n;	
+			if(IsA(jexpr->larg, RangeVar))
 			{
-				if (relation->schemaname)
-				{
-					ereport(ERROR,
-							(errcode(ERRCODE_SYNTAX_ERROR),
-							 errmsg("The correlation name \'%s\' has the same exposed name as table \'%s.%s\'.",
-								 	rv->alias->aliasname, relation->schemaname,
-									relation->relname)));
-				}
-				else
-				{
-					/*
-					 * Save the original alias name so that "inserted" and
-					 * "deleted" tables in OUTPUT clause can be linked to it
-					 */
-					update_delete_target_alias = relation->relname;
-
-					/*
-					 * Update the relation to have the real table name as
-					 * relname, and the original alias name as an alias
-					 */
-					relation->catalogname = rv->catalogname;
-					relation->schemaname = rv->schemaname;
-					relation->relname = rv->relname;
-					relation->inh = rv->inh;
-					relation->relpersistence = rv->relpersistence;
-					relation->alias = rv->alias;
-
-					/*
-					 * To avoid alias collision, remove the alias of the table
-					 * in the FROM clause, because it will already be an alias
-					 * of the target relation
-					 */
-					rv->alias = NULL;
-					return;
-				}
+				tsql_update_delete_stmt_from_clause_alias_helper(relation,(RangeVar*)(jexpr->larg));
 			}
+			if(IsA(jexpr->rarg, RangeVar))
+			{
+				tsql_update_delete_stmt_from_clause_alias_helper(relation,(jexpr->rarg));
+			}	
 		}
 	}
 }
