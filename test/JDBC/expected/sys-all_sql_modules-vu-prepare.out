@@ -44,6 +44,3 @@ GO
 
 CREATE USER sys_all_sql_modules_vu_prepare_user FOR LOGIN sys_all_sql_modules_vu_prepare_user
 GO
-
-USE master
-GO
