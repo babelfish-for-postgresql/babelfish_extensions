@@ -2159,14 +2159,14 @@ Datum update_guest_catalog(PG_FUNCTION_ARGS)
 		{
 			initStringInfo(&query);
 			appendStringInfo(&query, "CREATE ROLE dummy INHERIT ROLE dummy; ");
-			logins = grant_guest_to_logins(&query);
+			//logins = grant_guest_to_logins(&query);
 			res = raw_parser(query.data, RAW_PARSE_DEFAULT);
 
 			/* Replace dummy elements in parsetree with real values */
 			stmt = parsetree_nth_stmt(res, i++);
 			update_CreateRoleStmt(stmt, guest, db_owner_role, NULL);
 
-			if (list_length(logins) > 0)
+			/*if (list_length(logins) > 0)
 			{
 				AccessPriv *tmp = makeNode(AccessPriv);
 				tmp->priv_name = pstrdup(guest);
@@ -2174,7 +2174,7 @@ Datum update_guest_catalog(PG_FUNCTION_ARGS)
 
 				stmt = parsetree_nth_stmt(res, i++);
 				update_GrantRoleStmt(stmt, list_make1(tmp), logins);
-			}
+			}*/
 
 			/* Set current user to session user for create permissions */
 			prev_current_user = GetUserNameFromId(GetUserId(), false);
