@@ -328,21 +328,21 @@ SELECT
       CASE
         WHEN st.is_table_type = 1 THEN -1 -- TVP case
         WHEN st.is_user_defined = 1 THEN st.max_length -- UDT case
-        ELSE sys.tsql_type_max_length_helper(type_name, t.typlen, typmod, true, true)
+        ELSE sys.tsql_type_max_length_helper(st.name, t.typlen, typmod, true, true)
       END
     AS smallint) AS max_length
   , CAST(
       CASE
         WHEN st.is_table_type = 1 THEN 0 -- TVP case
         WHEN st.is_user_defined = 1  THEN st.precision -- UDT case
-        ELSE sys.tsql_type_precision_helper(type_name, typmod)
+        ELSE sys.tsql_type_precision_helper(st.name, typmod)
       END
     AS sys.tinyint) AS precision
   , CAST(
       CASE 
         WHEN st.is_table_type = 1 THEN 0 -- TVP case
         WHEN st.is_user_defined = 1  THEN st.scale
-        ELSE sys.tsql_type_scale_helper(type_name, typmod,false)
+        ELSE sys.tsql_type_scale_helper(st.name, typmod,false)
       END
     AS sys.tinyint) AS scale
   , CAST(
@@ -387,7 +387,6 @@ FROM pg_type t
       AND (pg_has_role(p.proowner, 'USAGE') OR has_function_privilege(p.oid, 'EXECUTE'))
       AND p.probin like '{%typmod_array%}') -- Needs to have a typmod array in JSON format
   ) ss ON t.oid = (ss.x).x,
-  COALESCE(st.name, sys.translate_pg_type_to_tsql(st.system_type_id)) as type_name,
   COALESCE(pg_get_function_result(ss.p_oid), '') AS return_type,
   CAST(ss.typmod_array->>(ss.x).n-1 AS INT) AS typmod, 
   CAST(
