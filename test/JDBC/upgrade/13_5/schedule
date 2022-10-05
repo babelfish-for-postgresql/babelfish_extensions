@@ -43,13 +43,11 @@ sys-all_columns
 sys-assembly_modules
 sys-change_tracking_databases
 sys-change_tracking_tables
-sys-check_constraints
 sys-computed_columns
 sys-data_spaces
 sys-database_files
 sys-database_filestream_options
 sys-database_recovery_status
-sys-default_constraints
 sys-dm_exec_connections
 sys-dm_exec_sessions
 sys-dm_hadr_cluster
@@ -117,6 +115,7 @@ SYSTEM_USER
 Test-Default-Columns
 BABEL-1189
 BABEL-1243
+BABEL-1493
 BABEL-1963
 BABEL-2203
 BABEL-2208
@@ -126,6 +125,7 @@ BABEL-2787-2
 BABEL-2845
 BABEL-2884
 BABEL-3249
+BABEL-3474
 BABEL-PROCID
 babel_trigger
 nested_trigger_inside_proc
@@ -220,3 +220,4 @@ sys-sp_pkeys-dep
 sys-sp_statistics-dep
 BABEL-SPCOLUMNS-dep
 BABEL-3000-dep
+BABEL-3556-before-14_6

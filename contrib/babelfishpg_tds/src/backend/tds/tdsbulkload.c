@@ -824,7 +824,7 @@ ProcessBCPRequest(TDSRequest request)
 								tempFuncInfo = TdsLookupTypeFunctionsByTdsId(colMetaData[currentColumn].columnTdsType, colMetaData[currentColumn].maxLen);
 								GetPgOid(argtypes[currentColumn], tempFuncInfo);
 							}
-							values[count] = TdsTypeVarcharToDatum(temp, argtypes[currentColumn], colMetaData[currentColumn].collation);
+							values[count] = TdsTypeVarcharToDatum(temp, argtypes[count], colMetaData[currentColumn].collation, colMetaData[currentColumn].columnTdsType);
 						break;
 						case TDS_TYPE_NCHAR:
 						case TDS_TYPE_NVARCHAR:
