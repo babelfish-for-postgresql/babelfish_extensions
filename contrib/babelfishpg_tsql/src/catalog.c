@@ -2143,16 +2143,19 @@ Datum update_guest_catalog(PG_FUNCTION_ARGS)
 		char		*old_dbname;
 		int16		dbid;
 
-		db_name_datum = heap_getattr(tuple,
-		Anum_sysdatabaese_name,
-		db_rel->rd_att,
-		&is_null);
+		db_name_datum = heap_getattr(tuple, Anum_sysdatabaese_name,
+						 db_rel->rd_att, &is_null);
 
 		db_name = TextDatumGetCString(db_name_datum);
+
 		if (strcmp(db_name, "master") == 0 || strcmp(db_name, "tempdb") == 0 || strcmp(db_name, "msdb") == 0)
-			PG_RETURN_INT32(0);
-		guest = get_guest_role_name(db_name);
+		{
+			tuple = heap_getnext(scan, ForwardScanDirection);
+			continue;
+		}
+		
 		db_owner_role = get_db_owner_name(db_name);
+		guest = get_guest_role_name(db_name);
 		dbid = get_db_id(db_name);
 
 		if (guest)
@@ -2188,22 +2191,22 @@ Datum update_guest_catalog(PG_FUNCTION_ARGS)
 			PG_TRY();
 			{
 				/* Run all subcommands */
-				foreach(res_item, res)
-				{
-					Node	   *res_stmt = ((RawStmt *) lfirst(res_item))->stmt;
+				//foreach(res_item, res)
+				//{
+				//	Node	   *res_stmt = ((RawStmt *) lfirst(res_item))->stmt;
 					PlannedStmt *wrapper;
 
 					/* need to make a wrapper PlannedStmt */
 					wrapper = makeNode(PlannedStmt);
 					wrapper->commandType = CMD_UTILITY;
 					wrapper->canSetTag = false;
-					wrapper->utilityStmt = res_stmt;
+					wrapper->utilityStmt = stmt;
 					wrapper->stmt_location = 0;
-					wrapper->stmt_len = 18;
+					wrapper->stmt_len = 14;
 
 					/* do this step */
 					ProcessUtility(wrapper,
-								   "(CREATE LOGICAL DATABASE )",
+								   "(CREATE ROLE )",
 								   false,
 								   PROCESS_UTILITY_SUBCOMMAND,
 									NULL,
@@ -2213,9 +2216,9 @@ Datum update_guest_catalog(PG_FUNCTION_ARGS)
 
 					/* make sure later steps can see the object created here */
 					CommandCounterIncrement();
-				}
+				//}
 				set_cur_db(old_dbid, old_dbname);
-				add_to_bbf_authid_user_ext(guest, "guest", db_name, NULL, NULL, false, false);
+				//add_to_bbf_authid_user_ext(guest, "guest", db_name, NULL, NULL, false, false);
 			}
 			PG_CATCH();
 			{
