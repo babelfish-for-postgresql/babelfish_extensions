@@ -18,6 +18,7 @@
 static int16 current_db_id = 0;
 static char current_db_name[MAX_BBF_NAMEDATALEND+1] = {'\0'};
 static Oid current_user_id = InvalidOid;
+static void set_search_path_for_user_schema(const char* db_name, const char* user);
 void reset_cached_batch(void);
 
 int16
@@ -60,20 +61,24 @@ bbf_set_current_user(const char *user_name)
 void
 set_session_properties(const char *db_name)
 {
-	int16			db_id = get_db_id(db_name);
+	int16 db_id = get_db_id(db_name);
 
 	if (!DbidIsValid(db_id))
 			ereport(ERROR,
 					(errcode(ERRCODE_UNDEFINED_DATABASE),
 					 errmsg("database \"%s\" does not exist", db_name)));
 
-	check_db_access(db_name);
+	check_session_db_access(db_name);
 
-	set_db_user_and_path(db_name);
+	set_cur_user_db_and_path(db_name);
 }
 
+/* 
+ * Raises an error if the current session does not have access to the given database
+ * Caller responsible for checking db_name is valid 
+ */
 void
-check_db_access(const char* db_name)
+check_session_db_access(const char* db_name)
 {
 	const char		*user = NULL;
 	const char		*login;
@@ -91,8 +96,9 @@ check_db_access(const char* db_name)
 	}
 }
 
+/* Caller responsible for checking db_name is valid */
 void
-set_db_user_and_path(const char* db_name)
+set_cur_user_db_and_path(const char* db_name)
 {
 	const char		*user = get_user_for_database(db_name);
 	int16			db_id = get_db_id(db_name);
@@ -105,11 +111,11 @@ set_db_user_and_path(const char* db_name)
 	current_user_id = GetUserId();
 
 	/* set search path */
-	set_search_path(db_name, user);
+	set_search_path_for_user_schema(db_name, user);
 }
 
-void
-set_search_path(const char* db_name, const char* user)
+static void
+set_search_path_for_user_schema(const char* db_name, const char* user)
 {
 	const char		*path;
 	const char		*buffer = "%s, \"$user\", sys, pg_catalog";

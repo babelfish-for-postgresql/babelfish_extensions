@@ -27,6 +27,36 @@ master
 drop database babel_3585_sysadm_db;
 go
 
+create database babel_3585_sysadm_db;
+go
+
+-- tsql      user=babel_3585_l1      password=123
+-- Test with babelfish_showplan_all
+set babelfish_showplan_all on;
+go
+
+use babel_3585_sysadm_db;
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: The server principal "babel_3585_l1" is not able to access the database "babel_3585_sysadm_db" under the current security context)~~
+
+
+set babelfish_showplan_all off;
+go
+
+select DB_NAME();
+go
+~~START~~
+nvarchar
+master
+~~END~~
+
+
+-- tsql
+drop database babel_3585_sysadm_db;
+go
+
 -- psql
 -- Need to terminate active session before cleaning up the login
 SELECT pg_terminate_backend(pid) FROM pg_stat_get_activity(NULL) 
