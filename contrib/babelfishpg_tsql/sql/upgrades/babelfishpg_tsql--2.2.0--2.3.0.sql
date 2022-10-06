@@ -395,7 +395,7 @@ EXCEPTION
                     HINT := 'Correct supplied value, remove all illegal characters.';
 END;
 $BODY$
-LANGUAGE plpgsql 
+LANGUAGE plpgsql
 VOLATILE
 RETURNS NULL ON NULL INPUT;
 
