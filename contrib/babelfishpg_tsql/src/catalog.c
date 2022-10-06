@@ -801,10 +801,11 @@ get_authid_user_ext_physical_name(const char *db_name, const char *login)
 {
 	Relation		bbf_authid_user_ext_rel;
 	HeapTuple		tuple_user_ext;
-	ScanKeyData		key[3];
+	ScanKeyData		key[2];
 	TableScanDesc	scan;
 	char			*user_name = NULL;
 	NameData		*login_name;
+	int32			has_dbaccess = 0;
 
 	if (!db_name || !login)
 		return NULL;
@@ -822,12 +823,12 @@ get_authid_user_ext_physical_name(const char *db_name, const char *login)
 				Anum_bbf_authid_user_ext_database_name,
 				BTEqualStrategyNumber, F_TEXTEQ,
 				CStringGetTextDatum(db_name));
-	ScanKeyInit(&key[2],
+	/*ScanKeyInit(&key[2],
 				Anum_bbf_authid_user_ext_user_can_connect,
 				BTEqualStrategyNumber, F_INT4EQ,
-				Int32GetDatum(1));
+				Int32GetDatum(1));*/
 
-	scan = table_beginscan_catalog(bbf_authid_user_ext_rel, 3, key);
+	scan = table_beginscan_catalog(bbf_authid_user_ext_rel, 2, key);
 
 	tuple_user_ext = heap_getnext(scan, ForwardScanDirection);
 	if (HeapTupleIsValid(tuple_user_ext))
@@ -835,7 +836,9 @@ get_authid_user_ext_physical_name(const char *db_name, const char *login)
 		Form_authid_user_ext userform;
 
 		userform = (Form_authid_user_ext) GETSTRUCT(tuple_user_ext);
-		user_name = pstrdup(NameStr(userform->rolname));
+		has_dbaccess = userform->user_can_connect;
+		if (has_dbaccess != 0)
+			user_name = pstrdup(NameStr(userform->rolname));
 	}
 
 	table_endscan(scan);
@@ -2093,14 +2096,12 @@ guest_has_dbaccess(char *db_name)
 	scan = table_beginscan_catalog(bbf_authid_user_ext_rel, 2, key);
 
 	tuple_user_ext = heap_getnext(scan, ForwardScanDirection);
-	if (!HeapTupleIsValid(tuple_user_ext))
+	if (HeapTupleIsValid(tuple_user_ext))
 	{
-		table_endscan(scan);
-		table_close(bbf_authid_user_ext_rel, RowExclusiveLock);
-		return false;
+		Form_authid_user_ext userform;
+		userform = (Form_authid_user_ext) GETSTRUCT(tuple_user_ext);
+		has_access = userform->user_can_connect;
 	}
-	Form_authid_user_ext userform = (Form_authid_user_ext) GETSTRUCT(tuple_user_ext);
-	has_access = userform->user_can_connect;
 
 	table_endscan(scan);
 	table_close(bbf_authid_user_ext_rel, RowExclusiveLock);
