@@ -1317,7 +1317,6 @@ static bool check_must_match_rules(Rule rules[], size_t num_rules, Oid catalog_o
 static void update_report(Rule *rule, Tuplestorestate *res_tupstore, TupleDesc res_tupdesc);
 static void init_catalog_data(void);
 static void get_catalog_info(Rule *rule);
-static bool guest_role_exists_for_db(char *dbname);
 
 /*****************************************
  * 			Catalog Extra Info
@@ -2231,7 +2230,7 @@ Datum update_guest_catalog(PG_FUNCTION_ARGS)
 	PG_RETURN_INT32(0);
 }
 
-static bool
+bool
 guest_role_exists_for_db(char *dbname)
 {
 	const char *guest_role = get_guest_role_name(dbname);
