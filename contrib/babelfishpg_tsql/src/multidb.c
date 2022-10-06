@@ -97,6 +97,13 @@ rewrite_object_refs(Node *stmt)
 				
 				switch(cmd->subtype)
 				{
+				case AT_ColumnDefault:
+				{
+					ColumnDef *def = (ColumnDef *) cmd->def;
+
+					rewrite_relation_walker(def, (void *) NULL);
+					break;
+				}
 				case AT_AddColumn:
 				case AT_AlterColumnType:
 				{
