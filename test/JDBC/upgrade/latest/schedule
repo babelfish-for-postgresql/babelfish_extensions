@@ -356,3 +356,4 @@ sys_server_principals_dep
 sys_database_principals_dep
 ISC-sequences
 jira-BABEL-3504
+BABEL-3268
