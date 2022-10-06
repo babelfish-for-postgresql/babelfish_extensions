@@ -482,7 +482,9 @@ grant_guests_to_login(const char *login)
 										   &is_null);
 
 		const char *db_name = TextDatumGetCString(db_name_datum);
-		const char *guest_name = get_guest_role_name(db_name);
+		char *guest_name = NULL;
+		if(strcmp(db_name, "master") == 0 || strcmp(db_name, "tempdb") == 0 || strcmp(db_name, "msdb") == 0)
+			guest_name = get_guest_role_name(db_name);
 
 		AccessPriv *tmp = makeNode(AccessPriv);
 		if (guest_name)

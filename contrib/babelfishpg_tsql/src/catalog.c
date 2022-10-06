@@ -1317,6 +1317,7 @@ static bool check_must_match_rules(Rule rules[], size_t num_rules, Oid catalog_o
 static void update_report(Rule *rule, Tuplestorestate *res_tupstore, TupleDesc res_tupdesc);
 static void init_catalog_data(void);
 static void get_catalog_info(Rule *rule);
+static bool guest_role_exists_for_db(char *dbname);
 
 /*****************************************
  * 			Catalog Extra Info
@@ -2137,10 +2138,9 @@ Datum update_guest_catalog(PG_FUNCTION_ARGS)
 
 		db_name_datum = heap_getattr(tuple, Anum_sysdatabaese_name,
 						 db_rel->rd_att, &is_null);
-
 		db_name = TextDatumGetCString(db_name_datum);
 
-		if (strcmp(db_name, "master") == 0 || strcmp(db_name, "tempdb") == 0 || strcmp(db_name, "msdb") == 0)
+		if (guest_role_exists_for_db(db_name))
 		{
 			tuple = heap_getnext(scan, ForwardScanDirection);
 			continue;
@@ -2229,5 +2229,40 @@ Datum update_guest_catalog(PG_FUNCTION_ARGS)
 	table_endscan(scan);
 	table_close(db_rel, AccessShareLock);
 	PG_RETURN_INT32(0);
+}
+
+static bool
+guest_role_exists_for_db(char *dbname)
+{
+	const char *guest_role = get_guest_role_name(dbname);
+	bool		role_exists = false;
+	Relation	bbf_authid_user_ext_rel;
+	HeapTuple	tuple;
+	ScanKeyData	scanKey;
+	SysScanDesc	scan;
+
+	/* Fetch the relation */
+	bbf_authid_user_ext_rel = table_open(get_authid_user_ext_oid(),
+										 RowExclusiveLock);
+
+	/* Search the role if exists */
+	ScanKeyInit(&scanKey,
+				Anum_bbf_authid_user_ext_rolname,
+				BTEqualStrategyNumber, F_NAMEEQ,
+				CStringGetDatum(guest_role));
+
+	scan = systable_beginscan(bbf_authid_user_ext_rel,
+							  get_authid_user_ext_idx_oid(),
+							  true, NULL, 1, &scanKey);
+
+	tuple = systable_getnext(scan);
+
+	if (HeapTupleIsValid(tuple))
+		role_exists = true;
+
+	systable_endscan(scan);
+	table_close(bbf_authid_user_ext_rel, RowExclusiveLock);
+
+	return role_exists;
 }
 
