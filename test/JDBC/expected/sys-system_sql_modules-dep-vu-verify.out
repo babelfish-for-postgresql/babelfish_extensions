@@ -24,3 +24,6 @@ bit
 1
 ~~END~~
 
+
+USE master
+GO
