@@ -484,7 +484,7 @@ Query Text: EXEC babel_3512_proc_10
 SET babelfish_showplan_all OFF
 GO
 
--- Test conflicting hints raises error, but doesn't block creation of the proc. 
+-- Test conflicting hints raises error
 CREATE PROCEDURE babel_3512_proc_conflict_1 AS
 SELECT * FROM babel_3512_t1 inner hash join babel_3512_t2 ON babel_3512_t1.a1 = babel_3512_t2.a2 OPTION(merge join)
 GO
@@ -493,11 +493,15 @@ GO
 ~~ERROR (Message: Conflicting JOIN optimizer hints specified)~~
 
 
--- Test conflicting hints in multi-line stored proc raises error, but doesn't block creation of the proc. 
+-- Test conflicting hints in multi-line stored proc raises error
 CREATE PROCEDURE babel_3512_proc_conflict_2 AS
 SELECT * FROM babel_3512_t1 inner hash join babel_3512_t2 ON babel_3512_t1.a1 = babel_3512_t2.a2
-SELECT * FROM babel_3512_t1 inner loop join babel_3512_t2 ON babel_3512_t1.a1 = babel_3512_t2.a2 inner merge join babel_3512_t3 ON babel_3512_t2.a2 = babel_3512_t3.a3 WHERE b1 = 1 AND b2 = 1 AND b3 = 1 OPTION(merge join, loop join)
+SELECT * FROM babel_3512_t1 inner hash join babel_3512_t2 ON babel_3512_t1.a1 = babel_3512_t2.a2 OPTION(merge join)
 GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Conflicting JOIN optimizer hints specified)~~
+
 
 SET babelfish_showplan_all ON
 GO
