@@ -2078,7 +2078,7 @@ guest_has_dbaccess(char *db_name)
 	HeapTuple		tuple_user_ext;
 	ScanKeyData		key[3];
 	TableScanDesc	scan;
-	int32			has_access = 0;
+	bool			has_access = false;
 
 	bbf_authid_user_ext_rel = table_open(get_authid_user_ext_oid(),
 										 RowExclusiveLock);
@@ -2099,19 +2099,11 @@ guest_has_dbaccess(char *db_name)
 
 	tuple_user_ext = heap_getnext(scan, ForwardScanDirection);
 	if (HeapTupleIsValid(tuple_user_ext))
-	{
-		Form_authid_user_ext userform;
-		userform = (Form_authid_user_ext) GETSTRUCT(tuple_user_ext);
-		has_access = userform->user_can_connect;
-	}
+		has_access = true;
 
 	table_endscan(scan);
 	table_close(bbf_authid_user_ext_rel, RowExclusiveLock);
-
-	if (has_access == 0)
-		return false;
-	else
-		return true;
+	return has_access;
 }
 
 PG_FUNCTION_INFO_V1(update_guest_catalog);
