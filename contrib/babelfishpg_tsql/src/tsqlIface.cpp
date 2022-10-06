@@ -229,7 +229,7 @@ static void clear_query_hints();
 static void clear_tables_info();
 
 static std::string validate_and_stringify_hints();
-static int find_hint_offset(char * queryTxt);
+static int find_hint_offset(const char * queryTxt);
 
 static bool pltsql_parseonly = false;
 
@@ -614,7 +614,7 @@ validate_and_stringify_hints()
 }
 
 static int
-find_hint_offset(char *query)
+find_hint_offset(const char *query)
 {
 	std::string queryString(query);
 	size_t spaceIdx = queryString.find_first_of(" \t\n\v\f\r");
