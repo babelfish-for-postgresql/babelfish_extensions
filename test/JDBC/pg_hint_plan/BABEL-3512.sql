@@ -43,6 +43,18 @@ GO
 DROP procedure IF EXISTS babel_3512_proc_10
 GO
 
+DROP procedure IF EXISTS babel_3512_proc_conflict_1
+GO
+
+DROP procedure IF EXISTS babel_3512_proc_conflict_2
+GO
+
+DROP procedure IF EXISTS babel_3512_comment_test_1
+GO
+
+DROP procedure IF EXISTS babel_3512_comment_test_2
+GO
+
 CREATE TABLE babel_3512_t1(a1 int PRIMARY KEY, b1 int, c1 int)
 GO
 
@@ -243,12 +255,13 @@ GO
 SET babelfish_showplan_all OFF
 GO
 
--- Test conflicting hints
-CREATE PROCEDURE babel_3512_proc_conflict AS
+-- Test conflicting hints raises error, but doesn't block creation of the proc. 
+CREATE PROCEDURE babel_3512_proc_conflict_1 AS
 SELECT * FROM babel_3512_t1 inner hash join babel_3512_t2 ON babel_3512_t1.a1 = babel_3512_t2.a2 OPTION(merge join)
 GO
 
-CREATE PROCEDURE babel_3512_proc_conflict AS
+-- Test conflicting hints in multi-line stored proc raises error, but doesn't block creation of the proc. 
+CREATE PROCEDURE babel_3512_proc_conflict_2 AS
 SELECT * FROM babel_3512_t1 inner hash join babel_3512_t2 ON babel_3512_t1.a1 = babel_3512_t2.a2
 SELECT * FROM babel_3512_t1 inner loop join babel_3512_t2 ON babel_3512_t1.a1 = babel_3512_t2.a2 inner merge join babel_3512_t3 ON babel_3512_t2.a2 = babel_3512_t3.a3 WHERE b1 = 1 AND b2 = 1 AND b3 = 1 OPTION(merge join, loop join)
 GO
@@ -266,6 +279,26 @@ GO
 SELECT /* this is a comment block */ * FROM babel_3512_t1 inner loop join babel_3512_t2 ON babel_3512_t1.a1 = babel_3512_t2.a2
 GO
 
+SELECT	/* this is a comment block */ * FROM babel_3512_t1 inner loop join babel_3512_t2 ON babel_3512_t1.a1 = babel_3512_t2.a2
+GO
+
+SELECT
+*
+FROM
+babel_3512_t1
+inner
+hash
+join
+babel_3512_t2
+ON
+babel_3512_t1.a1
+=
+babel_3512_t2.a2
+GO
+
+SELECT/*test*/SUM(1)
+GO
+
 SELECT/*this is a comment block*/*FROM babel_3512_t1 inner loop join babel_3512_t2 ON babel_3512_t1.a1 = babel_3512_t2.a2
 GO
 
@@ -279,7 +312,7 @@ GO
 GO
 SELECT/*this is a comment
  multi line block */
- /*this is a comment block*/ * FROM babel_3512_t1 inner loop join babel_3512_t2 ON babel_3512_t1.a1 = babel_3512_t2.a2
+ /*this is a comment block*/	* FROM babel_3512_t1 inner loop join babel_3512_t2 ON babel_3512_t1.a1 = babel_3512_t2.a2
 GO
 
 -- Test hints with comment blocks in stored procs
@@ -358,6 +391,18 @@ GO
 DROP PROCEDURE  babel_3512_proc_10
 GO
 
+DROP procedure IF EXISTS babel_3512_proc_conflict_1
+GO
+
+DROP procedure IF EXISTS babel_3512_proc_conflict_2
+GO
+
+DROP procedure IF EXISTS babel_3512_comment_test_1
+GO
+
+DROP procedure IF EXISTS babel_3512_comment_test_2
+GO
+
 DROP TABLE babel_3512_t1
 GO
 
@@ -366,3 +411,4 @@ GO
 
 DROP TABLE babel_3512_t3
 GO
+

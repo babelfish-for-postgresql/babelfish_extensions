@@ -43,6 +43,18 @@ GO
 DROP procedure IF EXISTS babel_3512_proc_10
 GO
 
+DROP procedure IF EXISTS babel_3512_proc_conflict_1
+GO
+
+DROP procedure IF EXISTS babel_3512_proc_conflict_2
+GO
+
+DROP procedure IF EXISTS babel_3512_comment_test_1
+GO
+
+DROP procedure IF EXISTS babel_3512_comment_test_2
+GO
+
 CREATE TABLE babel_3512_t1(a1 int PRIMARY KEY, b1 int, c1 int)
 GO
 
@@ -472,8 +484,8 @@ Query Text: EXEC babel_3512_proc_10
 SET babelfish_showplan_all OFF
 GO
 
--- Test conflicting hints
-CREATE PROCEDURE babel_3512_proc_conflict AS
+-- Test conflicting hints raises error, but doesn't block creation of the proc. 
+CREATE PROCEDURE babel_3512_proc_conflict_1 AS
 SELECT * FROM babel_3512_t1 inner hash join babel_3512_t2 ON babel_3512_t1.a1 = babel_3512_t2.a2 OPTION(merge join)
 GO
 ~~ERROR (Code: 33557097)~~
@@ -481,14 +493,11 @@ GO
 ~~ERROR (Message: Conflicting JOIN optimizer hints specified)~~
 
 
-CREATE PROCEDURE babel_3512_proc_conflict AS
+-- Test conflicting hints in multi-line stored proc raises error, but doesn't block creation of the proc. 
+CREATE PROCEDURE babel_3512_proc_conflict_2 AS
 SELECT * FROM babel_3512_t1 inner hash join babel_3512_t2 ON babel_3512_t1.a1 = babel_3512_t2.a2
 SELECT * FROM babel_3512_t1 inner loop join babel_3512_t2 ON babel_3512_t1.a1 = babel_3512_t2.a2 inner merge join babel_3512_t3 ON babel_3512_t2.a2 = babel_3512_t3.a3 WHERE b1 = 1 AND b2 = 1 AND b3 = 1 OPTION(merge join, loop join)
 GO
-~~ERROR (Code: 2714)~~
-
-~~ERROR (Message: function "babel_3512_proc_conflict" already exists with same argument types)~~
-
 
 SET babelfish_showplan_all ON
 GO
@@ -511,7 +520,7 @@ SELECT/* this is a comment block */ * FROM babel_3512_t1 inner loop join babel_3
 GO
 ~~START~~
 text
-Query Text: SELECT /*+ NestLoop(babel_3512_t1 babel_3512_t2) Leading(babel_3512_t1 babel_3512_t2)*/ /* this is a comment block */ * FROM babel_3512_t1 inner      join babel_3512_t2 ON babel_3512_t1.a1 = babel_3512_t2.a2
+Query Text: SELECT/*+ NestLoop(babel_3512_t1 babel_3512_t2) Leading(babel_3512_t1 babel_3512_t2)*//* this is a comment block */ * FROM babel_3512_t1 inner      join babel_3512_t2 ON babel_3512_t1.a1 = babel_3512_t2.a2
 Nested Loop
   ->  Seq Scan on babel_3512_t1
   ->  Index Scan using babel_3512_t2_pkey on babel_3512_t2
@@ -523,7 +532,7 @@ SELECT /* this is a comment block */ * FROM babel_3512_t1 inner loop join babel_
 GO
 ~~START~~
 text
-Query Text: SELECT /*+ NestLoop(babel_3512_t1 babel_3512_t2) Leading(babel_3512_t1 babel_3512_t2)*/  /* this is a comment block */ * FROM babel_3512_t1 inner      join babel_3512_t2 ON babel_3512_t1.a1 = babel_3512_t2.a2
+Query Text: SELECT/*+ NestLoop(babel_3512_t1 babel_3512_t2) Leading(babel_3512_t1 babel_3512_t2)*/ /* this is a comment block */ * FROM babel_3512_t1 inner      join babel_3512_t2 ON babel_3512_t1.a1 = babel_3512_t2.a2
 Nested Loop
   ->  Seq Scan on babel_3512_t1
   ->  Index Scan using babel_3512_t2_pkey on babel_3512_t2
@@ -531,11 +540,68 @@ Nested Loop
 ~~END~~
 
 
+SELECT	/* this is a comment block */ * FROM babel_3512_t1 inner loop join babel_3512_t2 ON babel_3512_t1.a1 = babel_3512_t2.a2
+GO
+~~START~~
+text
+Query Text: SELECT/*+ NestLoop(babel_3512_t1 babel_3512_t2) Leading(babel_3512_t1 babel_3512_t2)*/	/* this is a comment block */ * FROM babel_3512_t1 inner      join babel_3512_t2 ON babel_3512_t1.a1 = babel_3512_t2.a2
+Nested Loop
+  ->  Seq Scan on babel_3512_t1
+  ->  Index Scan using babel_3512_t2_pkey on babel_3512_t2
+        Index Cond: (a2 = babel_3512_t1.a1)
+~~END~~
+
+
+SELECT
+*
+FROM
+babel_3512_t1
+inner
+hash
+join
+babel_3512_t2
+ON
+babel_3512_t1.a1
+=
+babel_3512_t2.a2
+GO
+~~START~~
+text
+Query Text: SELECT/*+ HashJoin(babel_3512_t1 babel_3512_t2) Leading(babel_3512_t1 babel_3512_t2)*/
+*
+FROM
+babel_3512_t1
+inner
+    
+join
+babel_3512_t2
+ON
+babel_3512_t1.a1
+=
+babel_3512_t2.a2
+Hash Join
+  Hash Cond: (babel_3512_t1.a1 = babel_3512_t2.a2)
+  ->  Seq Scan on babel_3512_t1
+  ->  Hash
+        ->  Seq Scan on babel_3512_t2
+~~END~~
+
+
+SELECT/*test*/SUM(1)
+GO
+~~START~~
+text
+Query Text: SELECT/*test*/SUM(1)
+Aggregate
+  ->  Result
+~~END~~
+
+
 SELECT/*this is a comment block*/*FROM babel_3512_t1 inner loop join babel_3512_t2 ON babel_3512_t1.a1 = babel_3512_t2.a2
 GO
 ~~START~~
 text
-Query Text: SELECT /*+ NestLoop(babel_3512_t1 babel_3512_t2) Leading(babel_3512_t1 babel_3512_t2)*/ /*this is a comment block*/*FROM babel_3512_t1 inner      join babel_3512_t2 ON babel_3512_t1.a1 = babel_3512_t2.a2
+Query Text: SELECT/*+ NestLoop(babel_3512_t1 babel_3512_t2) Leading(babel_3512_t1 babel_3512_t2)*//*this is a comment block*/*FROM babel_3512_t1 inner      join babel_3512_t2 ON babel_3512_t1.a1 = babel_3512_t2.a2
 Nested Loop
   ->  Seq Scan on babel_3512_t1
   ->  Index Scan using babel_3512_t2_pkey on babel_3512_t2
@@ -547,7 +613,7 @@ Nested Loop
 GO
 ~~START~~
 text
-Query Text: SELECT /*+ NestLoop(babel_3512_t1 babel_3512_t2) Leading(babel_3512_t1 babel_3512_t2)*/ /*this is a comment block*/* FROM babel_3512_t1 inner      join babel_3512_t2 ON babel_3512_t1.a1 = babel_3512_t2.a2
+Query Text: SELECT/*+ NestLoop(babel_3512_t1 babel_3512_t2) Leading(babel_3512_t1 babel_3512_t2)*//*this is a comment block*/* FROM babel_3512_t1 inner      join babel_3512_t2 ON babel_3512_t1.a1 = babel_3512_t2.a2
 Nested Loop
   ->  Seq Scan on babel_3512_t1
   ->  Index Scan using babel_3512_t2_pkey on babel_3512_t2
@@ -559,7 +625,7 @@ Nested Loop
 GO
 ~~START~~
 text
-Query Text: SELECT /*+ NestLoop(babel_3512_t1 babel_3512_t2) Leading(babel_3512_t1 babel_3512_t2)*/ /*this is a comment block*/ * FROM babel_3512_t1 inner      join babel_3512_t2 ON babel_3512_t1.a1 = babel_3512_t2.a2
+Query Text: SELECT/*+ NestLoop(babel_3512_t1 babel_3512_t2) Leading(babel_3512_t1 babel_3512_t2)*//*this is a comment block*/ * FROM babel_3512_t1 inner      join babel_3512_t2 ON babel_3512_t1.a1 = babel_3512_t2.a2
 Nested Loop
   ->  Seq Scan on babel_3512_t1
   ->  Index Scan using babel_3512_t2_pkey on babel_3512_t2
@@ -571,7 +637,7 @@ Nested Loop
 GO
 ~~START~~
 text
-Query Text: SELECT /*+ NestLoop(babel_3512_t1 babel_3512_t2) Leading(babel_3512_t1 babel_3512_t2)*/ /*this is a comment block1234*//*this is a comment block*/ * FROM babel_3512_t1 inner      join babel_3512_t2 ON babel_3512_t1.a1 = babel_3512_t2.a2
+Query Text: SELECT/*+ NestLoop(babel_3512_t1 babel_3512_t2) Leading(babel_3512_t1 babel_3512_t2)*//*this is a comment block1234*//*this is a comment block*/ * FROM babel_3512_t1 inner      join babel_3512_t2 ON babel_3512_t1.a1 = babel_3512_t2.a2
 Nested Loop
   ->  Seq Scan on babel_3512_t1
   ->  Index Scan using babel_3512_t2_pkey on babel_3512_t2
@@ -580,13 +646,13 @@ Nested Loop
 
 SELECT/*this is a comment
  multi line block */
- /*this is a comment block*/ * FROM babel_3512_t1 inner loop join babel_3512_t2 ON babel_3512_t1.a1 = babel_3512_t2.a2
+ /*this is a comment block*/	* FROM babel_3512_t1 inner loop join babel_3512_t2 ON babel_3512_t1.a1 = babel_3512_t2.a2
 GO
 ~~START~~
 text
-Query Text: SELECT /*+ NestLoop(babel_3512_t1 babel_3512_t2) Leading(babel_3512_t1 babel_3512_t2)*/ /*this is a comment
+Query Text: SELECT/*+ NestLoop(babel_3512_t1 babel_3512_t2) Leading(babel_3512_t1 babel_3512_t2)*//*this is a comment
  multi line block */
- /*this is a comment block*/ * FROM babel_3512_t1 inner      join babel_3512_t2 ON babel_3512_t1.a1 = babel_3512_t2.a2
+ /*this is a comment block*/	* FROM babel_3512_t1 inner      join babel_3512_t2 ON babel_3512_t1.a1 = babel_3512_t2.a2
 Nested Loop
   ->  Seq Scan on babel_3512_t1
   ->  Index Scan using babel_3512_t2_pkey on babel_3512_t2
@@ -606,16 +672,12 @@ SELECT /* this is a comment block */ * FROM
 SELECT/*this is a comment block*/*FROM babel_3512_t1 inner loop join babel_3512_t2 ON babel_3512_t1.a1 = babel_3512_t2.a2
 /* this is another comment block */SELECT/*this is a comment block*/ * FROM babel_3512_t1 inner loop join babel_3512_t2 ON babel_3512_t1.a1 = babel_3512_t2.a2
 GO
-~~ERROR (Code: 2714)~~
-
-~~ERROR (Message: function "babel_3512_comment_test_1" already exists with same argument types)~~
-
 
 SELECT prosrc FROM pg_proc WHERE proname = 'babel_3512_comment_test_1';
 GO
 ~~START~~
 text
-SELECT/* this is a comment block */ * FROM babel_3512_t1 inner join babel_3512_t2 ON babel_3512_t1.a1 = babel_3512_t2.a2<newline>SELECT/*+ NestLoop(babel_3512_t1 babel_3512_t2 babel_3512_t1 babel_3512_t2) Leading(babel_3512_t1 babel_3512_t2 babel_3512_t1 babel_3512_t2)*//* this is a comment block */ * FROM babel_3512_t1 inner      join babel_3512_t2 ON babel_3512_t1.a1 = babel_3512_t2.a2<newline>SELECT/*+ MergeJoin(babel_3512_t1 babel_3512_t2) Leading(babel_3512_t1 babel_3512_t2)*/ /* this is a comment block */ * FROM<newline> babel_3512_t1 inner       join babel_3512_t2 ON babel_3512_t1.a1 = babel_3512_t2.a2<newline>SELECT/*+ NestLoop(babel_3512_t1 babel_3512_t2) Leading(babel_3512_t1 babel_3512_t2)*//*this is a comment block*/*FROM babel_3512_t1 inner      join babel_3512_t2 ON babel_3512_t1.a1 = babel_3512_t2.a2<newline>/* this is another comment block */SELECT/*+ NestLoop(babel_3512_t1 babel_3512_t2) Leading(babel_3512_t1 babel_3512_t2)*//*this is a comment block*/ * FROM babel_3512_t1 inner      join babel_3512_t2 ON babel_3512_t1.a1 = babel_3512_t2.a2
+SELECT/* this is a comment block */ * FROM babel_3512_t1 inner join babel_3512_t2 ON babel_3512_t1.a1 = babel_3512_t2.a2<newline>SELECT/*+ NestLoop(babel_3512_t1 babel_3512_t2) Leading(babel_3512_t1 babel_3512_t2)*//* this is a comment block */ * FROM babel_3512_t1 inner      join babel_3512_t2 ON babel_3512_t1.a1 = babel_3512_t2.a2<newline>SELECT/*+ MergeJoin(babel_3512_t1 babel_3512_t2) Leading(babel_3512_t1 babel_3512_t2)*/ /* this is a comment block */ * FROM<newline> babel_3512_t1 inner       join babel_3512_t2 ON babel_3512_t1.a1 = babel_3512_t2.a2<newline>SELECT/*+ NestLoop(babel_3512_t1 babel_3512_t2) Leading(babel_3512_t1 babel_3512_t2)*//*this is a comment block*/*FROM babel_3512_t1 inner      join babel_3512_t2 ON babel_3512_t1.a1 = babel_3512_t2.a2<newline>/* this is another comment block */SELECT/*+ NestLoop(babel_3512_t1 babel_3512_t2) Leading(babel_3512_t1 babel_3512_t2)*//*this is a comment block*/ * FROM babel_3512_t1 inner      join babel_3512_t2 ON babel_3512_t1.a1 = babel_3512_t2.a2
 ~~END~~
 
 
@@ -626,10 +688,6 @@ SELECT/*this is a comment
  multi line block */
  /*this is a comment block*/ * FROM babel_3512_t1 inner loop join babel_3512_t2 ON babel_3512_t1.a1 = babel_3512_t2.a2
 GO
-~~ERROR (Code: 2714)~~
-
-~~ERROR (Message: function "babel_3512_comment_test_2" already exists with same argument types)~~
-
 
 SELECT prosrc FROM pg_proc WHERE proname = 'babel_3512_comment_test_2';
 GO
@@ -653,12 +711,11 @@ Query Text: EXEC babel_3512_comment_test_1
         ->  Seq Scan on babel_3512_t1
         ->  Hash
               ->  Seq Scan on babel_3512_t2
-  Query Text: SELECT/*+ NestLoop(babel_3512_t1 babel_3512_t2 babel_3512_t1 babel_3512_t2) Leading(babel_3512_t1 babel_3512_t2 babel_3512_t1 babel_3512_t2)*//* this is a comment block */ * FROM babel_3512_t1 inner      join babel_3512_t2 ON babel_3512_t1.a1 = babel_3512_t2.a2
-  ->  Hash Join
-        Hash Cond: (babel_3512_t1.a1 = babel_3512_t2.a2)
+  Query Text: SELECT/*+ NestLoop(babel_3512_t1 babel_3512_t2) Leading(babel_3512_t1 babel_3512_t2)*//* this is a comment block */ * FROM babel_3512_t1 inner      join babel_3512_t2 ON babel_3512_t1.a1 = babel_3512_t2.a2
+  ->  Nested Loop
         ->  Seq Scan on babel_3512_t1
-        ->  Hash
-              ->  Seq Scan on babel_3512_t2
+        ->  Index Scan using babel_3512_t2_pkey on babel_3512_t2
+              Index Cond: (a2 = babel_3512_t1.a1)
   Query Text: SELECT/*+ MergeJoin(babel_3512_t1 babel_3512_t2) Leading(babel_3512_t1 babel_3512_t2)*/ /* this is a comment block */ * FROM
  babel_3512_t1 inner       join babel_3512_t2 ON babel_3512_t1.a1 = babel_3512_t2.a2
   ->  Merge Join
@@ -753,6 +810,18 @@ GO
 DROP PROCEDURE  babel_3512_proc_10
 GO
 
+DROP procedure IF EXISTS babel_3512_proc_conflict_1
+GO
+
+DROP procedure IF EXISTS babel_3512_proc_conflict_2
+GO
+
+DROP procedure IF EXISTS babel_3512_comment_test_1
+GO
+
+DROP procedure IF EXISTS babel_3512_comment_test_2
+GO
+
 DROP TABLE babel_3512_t1
 GO
 
@@ -761,3 +830,4 @@ GO
 
 DROP TABLE babel_3512_t3
 GO
+
