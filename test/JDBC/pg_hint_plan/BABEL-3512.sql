@@ -260,10 +260,16 @@ CREATE PROCEDURE babel_3512_proc_conflict_1 AS
 SELECT * FROM babel_3512_t1 inner hash join babel_3512_t2 ON babel_3512_t1.a1 = babel_3512_t2.a2 OPTION(merge join)
 GO
 
+EXEC babel_3512_proc_conflict_1
+GO
+
 -- Test conflicting hints in multi-line stored proc raises error
 CREATE PROCEDURE babel_3512_proc_conflict_2 AS
 SELECT * FROM babel_3512_t1 inner hash join babel_3512_t2 ON babel_3512_t1.a1 = babel_3512_t2.a2
 SELECT * FROM babel_3512_t1 inner hash join babel_3512_t2 ON babel_3512_t1.a1 = babel_3512_t2.a2 OPTION(merge join)
+GO
+
+EXEC babel_3512_proc_conflict_2
 GO
 
 SET babelfish_showplan_all ON

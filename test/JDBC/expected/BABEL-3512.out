@@ -493,6 +493,13 @@ GO
 ~~ERROR (Message: Conflicting JOIN optimizer hints specified)~~
 
 
+EXEC babel_3512_proc_conflict_1
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: procedure babel_3512_proc_conflict_1() does not exist)~~
+
+
 -- Test conflicting hints in multi-line stored proc raises error
 CREATE PROCEDURE babel_3512_proc_conflict_2 AS
 SELECT * FROM babel_3512_t1 inner hash join babel_3512_t2 ON babel_3512_t1.a1 = babel_3512_t2.a2
@@ -501,6 +508,13 @@ GO
 ~~ERROR (Code: 33557097)~~
 
 ~~ERROR (Message: Conflicting JOIN optimizer hints specified)~~
+
+
+EXEC babel_3512_proc_conflict_2
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: procedure babel_3512_proc_conflict_2() does not exist)~~
 
 
 SET babelfish_showplan_all ON
