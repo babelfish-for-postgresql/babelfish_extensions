@@ -12,6 +12,7 @@
 #include "catalog/pg_attrdef_d.h"
 #include "catalog/pg_authid.h"
 #include "catalog/pg_proc.h"
+#include "catalog/pg_trigger.h"
 #include "catalog/pg_type.h"
 #include "commands/copy.h"
 #include "commands/explain.h"
@@ -56,7 +57,9 @@
 #include "session.h"
 
 #define TDS_NUMERIC_MAX_PRECISION	38
-
+#define TriggerRelationId 2620
+#define Anum_pg_trigger_tgname 4
+#define TriggerRelidNameIndexId  2701
 extern bool babelfish_dump_restore;
 extern bool pltsql_quoted_identifier;
 extern bool is_tsql_rowversion_or_timestamp_datatype(Oid oid);
@@ -86,6 +89,7 @@ static void pltsql_post_transform_column_definition(ParseState *pstate, RangeVar
 static void pltsql_post_transform_table_definition(ParseState *pstate, RangeVar* relation, char *relname, List **alist);
 static void pre_transform_target_entry(ResTarget *res, ParseState *pstate, ParseExprKind exprKind);
 static bool tle_name_comparison(const char *tlename, const char *identifier);
+static ObjectAddress get_trigger_object_address(List *object, Relation *relp, bool missing_ok);
 static void resolve_target_list_unknowns(ParseState *pstate, List *targetlist);
 static inline bool is_identifier_char(char c);
 static int find_attr_by_name_from_relation(Relation rd, const char *attname, bool sysColOK);
@@ -138,6 +142,7 @@ static pre_transform_insert_hook_type prev_pre_transform_insert_hook = NULL;
 static post_transform_insert_row_hook_type prev_post_transform_insert_row_hook = NULL;
 static pre_transform_target_entry_hook_type prev_pre_transform_target_entry_hook = NULL;
 static tle_name_comparison_hook_type prev_tle_name_comparison_hook = NULL;
+static get_trigger_object_address_hook_type prev_get_trigger_object_address_hook = NULL;
 static resolve_target_list_unknowns_hook_type prev_resolve_target_list_unknowns_hook = NULL;
 static find_attr_by_name_from_column_def_list_hook_type prev_find_attr_by_name_from_column_def_list_hook = NULL;
 static find_attr_by_name_from_relation_hook_type prev_find_attr_by_name_from_relation_hook = NULL;
@@ -191,6 +196,9 @@ InstallExtendedHooks(void)
 
 	prev_tle_name_comparison_hook = tle_name_comparison_hook;
 	tle_name_comparison_hook = tle_name_comparison;
+
+	prev_get_trigger_object_address_hook = get_trigger_object_address_hook;
+	get_trigger_object_address_hook = get_trigger_object_address;
 
 	prev_resolve_target_list_unknowns_hook = resolve_target_list_unknowns_hook;
 	resolve_target_list_unknowns_hook = resolve_target_list_unknowns;
@@ -259,6 +267,7 @@ UninstallExtendedHooks(void)
 	post_transform_table_definition_hook = NULL;
 	pre_transform_target_entry_hook = prev_pre_transform_target_entry_hook;
 	tle_name_comparison_hook = prev_tle_name_comparison_hook;
+	get_trigger_object_address_hook = prev_get_trigger_object_address_hook;
 	resolve_target_list_unknowns_hook = prev_resolve_target_list_unknowns_hook;
 	find_attr_by_name_from_column_def_list_hook = prev_find_attr_by_name_from_column_def_list_hook;
 	find_attr_by_name_from_relation_hook = prev_find_attr_by_name_from_relation_hook;
@@ -1178,6 +1187,90 @@ tle_name_comparison(const char *tlename, const char *identifier)
 		return (*prev_tle_name_comparison_hook) (tlename, identifier);
 	else
 		return (0 == strcmp(tlename, identifier));
+}
+
+/*
+* A special case of the get_object_address_relobject() function, specifically
+* for the case of triggers in tsql dialect. We add a pg_trigger lookup to search
+* for the relation that the trigger is associated with, since the relation name
+* is not supplied by the user, and thus not a part of the *object list.
+*/
+static ObjectAddress
+get_trigger_object_address(List *object, Relation *relp, bool missing_ok)
+{
+	ObjectAddress address;
+	Relation	relation = NULL;
+	const char *depname;
+	Oid			reloid;
+	Relation	tgrel;
+	ScanKeyData		key;
+	SysScanDesc tgscan;
+	HeapTuple	tuple;
+
+	/* Extract name of dependent object. */
+	depname = strVal(llast(object));
+
+	if (prev_get_trigger_object_address_hook)
+		return (*prev_get_trigger_object_address_hook)(object,relp,missing_ok);
+
+	/* 
+	* Get the table name of the trigger from pg_trigger. We know that
+	* trigger names are forced to be unique in the tsql dialect, so we
+	* can rely on searching for trigger name to find the corresponding
+	* relation name.
+	*/
+	tgrel = table_open(TriggerRelationId, AccessShareLock);
+
+	ScanKeyInit(&key,
+					Anum_pg_trigger_tgname,
+					BTEqualStrategyNumber, F_NAMEEQ,
+					CStringGetDatum(depname));
+
+	tgscan = systable_beginscan(tgrel, TriggerRelidNameIndexId, false,
+									NULL, 1, &key);
+
+	while (HeapTupleIsValid(tuple = systable_getnext(tgscan)))
+	{
+		Form_pg_trigger pg_trigger = (Form_pg_trigger) GETSTRUCT(tuple);
+		char *pg_trigger_schema_name = get_namespace_name(get_rel_namespace(pg_trigger->tgrelid));
+		char *cur_schema_name = get_dbo_schema_name(get_cur_db_name());
+		if (namestrcmp(&(pg_trigger->tgname), depname) == 0 && 
+			namestrcmp(pg_trigger_schema_name,cur_schema_name) == 0)
+		{
+			reloid = OidIsValid(pg_trigger->tgrelid) ? pg_trigger->tgrelid :
+						InvalidOid;
+			relation = RelationIdGetRelation(reloid); 
+			RelationClose(relation);
+		}
+	}
+	systable_endscan(tgscan);
+
+	table_close(tgrel, AccessShareLock);
+	address.classId = TriggerRelationId;
+	address.objectId = relation ?
+		get_trigger_oid(reloid, depname, missing_ok) : InvalidOid;
+	if (!relation && !missing_ok)
+	{
+		ereport(ERROR,
+				(errcode(ERRCODE_UNDEFINED_OBJECT),
+				errmsg("trigger \"%s\" does not exist",
+						depname)));
+	}
+	address.objectSubId = 0;
+
+	/* Avoid relcache leak when object not found. */
+	if (!OidIsValid(address.objectId))
+	{
+		if (relation != NULL)
+			table_close(relation, AccessShareLock);
+
+		relation = NULL;		/* department of accident prevention */
+		return address;
+	}
+
+	/* Done. */
+	*relp = relation;
+	return address;
 }
 
 /* Generate similar error message with SQL Server when function/procedure is not found if possible. */

@@ -80,7 +80,7 @@ void pre_check_trigger_schema(List *object, bool missing_ok){
 
 	/* Extract name of dependent object. */
 	depname = strVal(llast(object));
-	if (list_length(object) > 1){
+	if (list_length(object) >= 1){
 		trigger_schema = ((Value *)list_nth(object,0))->val.str;
 	}
 	/* 
@@ -115,12 +115,6 @@ void pre_check_trigger_schema(List *object, bool missing_ok){
 				(errcode(ERRCODE_UNDEFINED_OBJECT),
 				errmsg("trigger \"%s.%s\" does not exist",
 						trigger_schema ,depname)));
-			} else if (list_length(object) == 1 && strcasecmp(schema_name, get_dbo_schema_name(get_cur_db_name())) != 0
-			&& !missing_ok){
-				ereport(ERROR,
-					(errcode(ERRCODE_UNDEFINED_OBJECT),
-					errmsg("trigger \"%s\" does not exist",
-						depname)));
 			}
 			RelationClose(relation);
 		}
@@ -192,8 +186,8 @@ static void lookup_and_drop_triggers(ObjectAccessType access, Oid classId,
         {
             trigRelation = RelationIdGetRelation(relOid);
             trigobjlist = list_make1(makeString(NameStr(pg_trigger->tgname)));
-            trigAddress = get_object_address_trigger_tsql(trigobjlist, 
-                            &trigRelation, true);
+			if(get_trigger_object_address_hook)
+				trigAddress = (*get_trigger_object_address_hook)(trigobjlist, &trigRelation, true);
             performDeletion(&trigAddress, behavior, PERFORM_DELETION_INTERNAL);
             RelationClose(trigRelation);
         }
