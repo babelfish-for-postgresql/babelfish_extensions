@@ -68,5 +68,5 @@ EXEC babel_2877_vu_prepare_proc3 10, 'def', $10, 1.8; -- should fail, all parame
 GO
 
 -- babelfish_function_ext table should have entry for all the above functions and procedures
-SELECT * FROM sys.babelfish_function_ext WHERE funcname LIKE 'babel_2877_vu_prepare%';
+SELECT nspname, funcname, orig_name, funcsignature, default_positions FROM sys.babelfish_function_ext WHERE funcname LIKE 'babel_2877_vu_prepare%' ORDER BY funcname;
 GO

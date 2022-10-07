@@ -168,7 +168,7 @@ typedef FormData_authid_user_ext *Form_authid_user_ext;
 #define Anum_bbf_view_def_schema_name 2
 #define Anum_bbf_view_def_object_name 3
 #define Anum_bbf_view_def_definition 4
-#define BBF_VIEW_DEF_NUM_COLS 6
+#define BBF_VIEW_DEF_NUM_COLS 8
 #define BBF_VIEW_DEF_FLAG_IS_ANSI_NULLS_ON (1<<0)
 #define BBF_VIEW_DEF_FLAG_USES_QUOTED_IDENTIFIER (1<<1)
 extern Oid			bbf_view_def_oid;
@@ -189,6 +189,8 @@ typedef struct FormData_bbf_view_def
 	text		definition;
 	uint64		flag_validity;
 	uint64		flag_values;
+	Timestamp	create_date;
+	Timestamp	modify_date;
 } FormData_bbf_view_def;
 
 typedef FormData_bbf_view_def *Form_bbf_view_def;
@@ -203,7 +205,9 @@ typedef FormData_bbf_view_def *Form_bbf_view_def;
 #define Anum_bbf_function_ext_orig_name 3
 #define Anum_bbf_function_ext_funcsignature 4
 #define Anum_bbf_function_ext_default_positions 5
-#define BBF_FUNCTION_EXT_NUM_COLS 5
+#define Anum_bbf_function_ext_create_date 6
+#define Anum_bbf_function_ext_modify_date 7
+#define BBF_FUNCTION_EXT_NUM_COLS 7
 extern Oid			bbf_function_ext_oid;
 extern Oid			bbf_function_ext_idx_oid;
 
@@ -219,6 +223,8 @@ typedef struct FormData_bbf_function_ext
 	VarChar		orig_name;
 	text		function_signature;
 	text		default_positions;
+	Timestamp	create_date;
+	Timestamp	modify_date;
 } FormData_bbf_function_ext;
 
 typedef FormData_bbf_function_ext *Form_bbf_function_ext;

@@ -21,6 +21,8 @@ CREATE TABLE sys.babelfish_function_ext (
 	orig_name sys.NVARCHAR(128), -- users' original input name
 	funcsignature TEXT NOT NULL COLLATE "C",
 	default_positions TEXT COLLATE "C",
+	create_date SYS.DATETIME NOT NULL,
+	modify_date SYS.DATETIME NOT NULL,
 	PRIMARY KEY(nspname, funcsignature)
 );
 GRANT SELECT ON sys.babelfish_function_ext TO PUBLIC;

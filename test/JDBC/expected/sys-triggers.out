@@ -42,8 +42,6 @@ SELECT
     parent_class_desc,
     type,
     type_desc,
-    create_date,
-    modify_date,
     is_ms_shipped,
     is_disabled,
     is_not_for_replication,
@@ -52,8 +50,8 @@ FROM sys.triggers
 WHERE name = 'trig1'
 GO
 ~~START~~
-varchar#!#tinyint#!#nvarchar#!#char#!#nvarchar#!#datetime#!#datetime#!#bit#!#bit#!#bit#!#bit
-trig1#!#1#!#OBJECT_OR_COLUMN#!#TR#!#SQL_TRIGGER#!#<NULL>#!#<NULL>#!#0#!#0#!#0#!#1
+varchar#!#tinyint#!#nvarchar#!#char#!#nvarchar#!#bit#!#bit#!#bit#!#bit
+trig1#!#1#!#OBJECT_OR_COLUMN#!#TR#!#SQL_TRIGGER#!#0#!#0#!#0#!#1
 ~~END~~
 
 
@@ -64,8 +62,6 @@ SELECT
     parent_class_desc,
     type,
     type_desc,
-    create_date,
-    modify_date,
     is_ms_shipped,
     is_disabled,
     is_not_for_replication,
@@ -74,8 +70,8 @@ FROM sys.triggers
 WHERE name = 'trig2'
 GO
 ~~START~~
-varchar#!#tinyint#!#nvarchar#!#char#!#nvarchar#!#datetime#!#datetime#!#bit#!#bit#!#bit#!#bit
-trig2#!#1#!#OBJECT_OR_COLUMN#!#TR#!#SQL_TRIGGER#!#<NULL>#!#<NULL>#!#0#!#0#!#0#!#0
+varchar#!#tinyint#!#nvarchar#!#char#!#nvarchar#!#bit#!#bit#!#bit#!#bit
+trig2#!#1#!#OBJECT_OR_COLUMN#!#TR#!#SQL_TRIGGER#!#0#!#0#!#0#!#0
 ~~END~~
 
 
@@ -86,8 +82,6 @@ SELECT
     parent_class_desc,
     type,
     type_desc,
-    create_date,
-    modify_date,
     is_ms_shipped,
     is_disabled,
     is_not_for_replication,
@@ -96,7 +90,7 @@ FROM sys.triggers
 WHERE name = 'master_trig'
 GO
 ~~START~~
-varchar#!#tinyint#!#nvarchar#!#char#!#nvarchar#!#datetime#!#datetime#!#bit#!#bit#!#bit#!#bit
+varchar#!#tinyint#!#nvarchar#!#char#!#nvarchar#!#bit#!#bit#!#bit#!#bit
 ~~END~~
 
 

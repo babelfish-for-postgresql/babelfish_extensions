@@ -1159,9 +1159,9 @@ get_bbf_function_tuple_from_proctuple(HeapTuple proctuple)
 		return NULL;
 	}
 
-	func_signature = get_pltsql_function_signature(NameStr(form->proname),
-												   form->pronargs,
-												   form->proargtypes.values);
+	func_signature = get_pltsql_function_signature_internal(NameStr(form->proname),
+															form->pronargs,
+															form->proargtypes.values);
 
 	if (func_signature == NULL)
 	{

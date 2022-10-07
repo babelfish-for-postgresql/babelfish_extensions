@@ -260,14 +260,6 @@ int
 drop table t1;
 go
 
-select distinct checksum(create_date) from sys.objects;
-go
-~~START~~
-int
-0
-~~END~~
-
-
 select cast(cast(1 as rowversion) as text);
 go
 ~~START~~

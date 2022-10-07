@@ -1,0 +1,35 @@
+SELECT
+       CASE WHEN xtype LIKE 'TT'
+            THEN substring(name, 4, 26)
+            ELSE name
+       END,
+       xtype,
+       CASE WHEN crdate IS NOT NULL
+            THEN 'Valid create date!'
+            ELSE 'Create date found NULL!'
+       END,
+       CASE WHEN refdate IS NOT NULL
+            THEN 'Valid ref date!'
+            ELSE 'ref date found NULL!'
+       END
+FROM sys.sysobjects
+       WHERE name LIKE '%%babel_3010_vu_prepare%%' ORDER BY name;
+GO
+~~START~~
+varchar#!#char#!#text#!#text
+@tab_babel_3010_vu_prepare#!#TT#!#Valid create date!#!#Valid ref date!
+babel_3010_vu_prepare_f1#!#FN#!#Valid create date!#!#Valid ref date!
+babel_3010_vu_prepare_f1#!#FN#!#Valid create date!#!#Valid ref date!
+babel_3010_vu_prepare_f2#!#FN#!#Valid create date!#!#Valid ref date!
+babel_3010_vu_prepare_f3#!#FN#!#Valid create date!#!#Valid ref date!
+babel_3010_vu_prepare_p1#!#P #!#Valid create date!#!#Valid ref date!
+babel_3010_vu_prepare_p2#!#P #!#Valid create date!#!#Valid ref date!
+babel_3010_vu_prepare_t1#!#U #!#Valid create date!#!#Valid ref date!
+babel_3010_vu_prepare_trig1#!#TR#!#Valid create date!#!#Valid ref date!
+babel_3010_vu_prepare_trig2#!#TR#!#Valid create date!#!#Valid ref date!
+babel_3010_vu_prepare_trig3#!#TR#!#Valid create date!#!#Valid ref date!
+babel_3010_vu_prepare_trig4#!#TR#!#Valid create date!#!#Valid ref date!
+babel_3010_vu_prepare_typ1#!#TT#!#Valid create date!#!#Valid ref date!
+babel_3010_vu_prepare_v1#!#V #!#Valid create date!#!#Valid ref date!
+~~END~~
+

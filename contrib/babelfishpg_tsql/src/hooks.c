@@ -835,16 +835,22 @@ pltsql_post_transform_column_definition(ParseState *pstate, RangeVar* relation, 
 }
 
 extern const char *ATTOPTION_BBF_ORIGINAL_TABLE_NAME;
+extern const char *ATTOPTION_BBF_TABLE_CREATE_DATE;
 
 static void
 pltsql_post_transform_table_definition(ParseState *pstate, RangeVar* relation, char *relname, List **alist)
 {
-	/* add "ALTER TABLE SET (bbf_original_table_name=<original_name>)" to alist so that original_name will be stored in pg_class.reloptions */
 	AlterTableStmt *stmt;
-	AlterTableCmd *cmd;
+	AlterTableCmd *cmd_orig_name;
+	AlterTableCmd *cmd_crdate;
+	char *curr_datetime;
 
 	/* To get original column name, utilize location of relation and query string. */
 	char *table_name_start, *original_name, *temp;
+
+	/* Skip during restore since reloptions are also dumped using separate ALTER command */
+	if (babelfish_dump_restore)
+		return;
 
 	table_name_start = pstate->p_sourcetext + relation->location;
 
@@ -871,23 +877,31 @@ pltsql_post_transform_table_definition(ParseState *pstate, RangeVar* relation, c
 				(errcode(ERRCODE_INTERNAL_ERROR),
 				 errmsg("can't extract original table name")));
 
-	/* Only store if there's a difference, and if the difference is only in capitalization */
-	if (strncmp(relname, original_name, strlen(relname)) == 0 || strncasecmp(relname, original_name, strlen(relname)) != 0)
-	{
-		return;
-	}
-
-	cmd = makeNode(AlterTableCmd);
-	cmd->subtype = AT_SetRelOptions;
-	cmd->def = (Node *) list_make1(makeDefElem(pstrdup(ATTOPTION_BBF_ORIGINAL_TABLE_NAME), (Node *) makeString(pstrdup(original_name)), -1));
-	cmd->behavior = DROP_RESTRICT;
-	cmd->missing_ok = false;
-
 	stmt = makeNode(AlterTableStmt);
 	stmt->relation = relation;
 	stmt->cmds = NIL;
 	stmt->objtype = OBJECT_TABLE;
-	stmt->cmds = lappend(stmt->cmds, cmd);
+
+	/* Only store original_name if there's a difference, and if the difference is only in capitalization */
+	if (strncmp(relname, original_name, strlen(relname)) != 0 && strncasecmp(relname, original_name, strlen(relname)) == 0)
+	{
+		/* add "ALTER TABLE SET (bbf_original_table_name=<original_name>)" to alist so that original_name will be stored in pg_class.reloptions */
+		cmd_orig_name = makeNode(AlterTableCmd);
+		cmd_orig_name->subtype = AT_SetRelOptions;
+		cmd_orig_name->def = (Node *) list_make1(makeDefElem(pstrdup(ATTOPTION_BBF_ORIGINAL_TABLE_NAME), (Node *) makeString(pstrdup(original_name)), -1));
+		cmd_orig_name->behavior = DROP_RESTRICT;
+		cmd_orig_name->missing_ok = false;
+		stmt->cmds = lappend(stmt->cmds, cmd_orig_name);
+	}
+
+	/* add "ALTER TABLE SET (bbf_rel_create_date=<datetime>)" to alist so that create_date will be stored in pg_class.reloptions */
+	curr_datetime = DatumGetCString(DirectFunctionCall1(timestamp_out, TimestampGetDatum(GetSQLLocalTimestamp(3))));
+	cmd_crdate = makeNode(AlterTableCmd);
+	cmd_crdate->subtype = AT_SetRelOptions;
+	cmd_crdate->def = (Node *) list_make1(makeDefElem(pstrdup(ATTOPTION_BBF_TABLE_CREATE_DATE), (Node *) makeString(pstrdup(curr_datetime)), -1));
+	cmd_crdate->behavior = DROP_RESTRICT;
+	cmd_crdate->missing_ok = false;
+	stmt->cmds = lappend(stmt->cmds, cmd_crdate);
 
 	(*alist) = lappend(*alist, stmt);
 }
@@ -1730,6 +1744,8 @@ pltsql_store_view_definition(const char *queryString, ObjectAddress address)
 	new_record[3] = CStringGetTextDatum(queryString);
 	new_record[4] = UInt64GetDatum(flag_validity);
 	new_record[5] = UInt64GetDatum(flag_values);
+	new_record[6] = TimestampGetDatum(GetSQLLocalTimestamp(3));
+	new_record[7] = TimestampGetDatum(GetSQLLocalTimestamp(3));
 
 	tuple = heap_form_tuple(bbf_view_def_rel_dsc,
 							new_record, new_record_nulls);
@@ -1931,9 +1947,9 @@ pltsql_store_func_default_positions(ObjectAddress address, List *parameters)
 		return;
 	}
 
-	func_signature = get_pltsql_function_signature(NameStr(form_proctup->proname),
-												   form_proctup->pronargs,
-												   form_proctup->proargtypes.values);
+	func_signature = get_pltsql_function_signature_internal(NameStr(form_proctup->proname),
+															form_proctup->pronargs,
+															form_proctup->proargtypes.values);
 
 	idx = 0;
 	foreach(x, parameters)
@@ -1964,6 +1980,8 @@ pltsql_store_func_default_positions(ObjectAddress address, List *parameters)
 		new_record[Anum_bbf_function_ext_default_positions - 1] = CStringGetTextDatum(nodeToString(default_positions));
 	else
 		new_record_nulls[Anum_bbf_function_ext_default_positions - 1] = true;
+	new_record[Anum_bbf_function_ext_create_date - 1] = TimestampGetDatum(GetSQLLocalTimestamp(3));
+	new_record[Anum_bbf_function_ext_modify_date - 1] = TimestampGetDatum(GetSQLLocalTimestamp(3));
 	new_record_replaces[Anum_bbf_function_ext_default_positions - 1] = true;
 
 	oldtup = get_bbf_function_tuple_from_proctuple(proctup);
