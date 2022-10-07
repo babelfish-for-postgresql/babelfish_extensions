@@ -1,0 +1,78 @@
+-- tsql
+grant connect to guest;
+go
+
+-- Throws error
+revoke connect from guest;
+go
+
+use tempdb
+go
+
+grant connect to guest;
+go
+
+-- Throws error
+revoke connect from guest;
+go
+
+use msdb
+go
+
+-- Allowed to revoke guest user permission from msdb
+revoke connect from guest;
+go
+
+grant connect to guest;
+go
+
+create database db1;
+go
+
+create login abc with password = 'Babel123'
+go
+
+-- tsql  user=abc password=Babel123
+-- should fail because the db1 doesn't have any user. It has guest user but that's disabled.
+use db1;
+go
+
+-- tsql
+use db1
+go
+
+grant connect to guest
+go
+
+-- tsql  user=abc password=Babel123
+-- should succeed because the db1 has guest user and that's enabled.
+use db1;
+go
+
+-- should fail
+revoke connect from guest
+go
+
+use master;
+go
+
+-- tsql
+use master;
+go
+
+drop database db1;
+go
+
+-- psql
+-- Need to terminate active session before cleaning up the login
+SELECT pg_terminate_backend(pid) FROM pg_stat_get_activity(NULL)
+WHERE sys.suser_name(usesysid) = 'abc' AND backend_type = 'client backend' AND usesysid IS NOT NULL;
+GO
+-- Wait to sync with another session
+SELECT pg_sleep(1);
+GO
+
+-- tsql
+drop login abc
+go
+

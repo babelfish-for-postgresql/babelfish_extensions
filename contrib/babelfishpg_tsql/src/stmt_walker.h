@@ -85,6 +85,7 @@ typedef bool (*Stmt_throw_act) ACTION_SIGNITURE(throw);
 typedef bool (*Stmt_usedb_act) ACTION_SIGNITURE(usedb);
 typedef bool (*Stmt_insert_bulk_act) ACTION_SIGNITURE(insert_bulk);
 typedef bool (*Stmt_set_explain_mode) ACTION_SIGNITURE(set_explain_mode);
+typedef bool (*Stmt_grantdb_act) ACTION_SIGNITURE(grantdb);
 
     /* TSQL-only executable node */
 typedef bool (*Stmt_save_ctx) ACTION_SIGNITURE(save_ctx);
@@ -133,6 +134,7 @@ typedef struct Walker_context
 	Stmt_usedb_act            usedb_act;
     Stmt_insert_bulk_act      insert_bulk_act;
     Stmt_set_explain_mode     set_explain_mode_act;
+    Stmt_grantdb_act          grantdb_act;
 
     /* TSQL-only executable node */
     Stmt_save_ctx             save_ctx_act;

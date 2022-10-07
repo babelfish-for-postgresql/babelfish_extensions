@@ -476,6 +476,7 @@ free_stmt2(PLtsql_stmt *stmt)
 	    case PLTSQL_STMT_LABEL:
 		case PLTSQL_STMT_USEDB:
         case PLTSQL_STMT_INSERT_BULK:
+		case PLTSQL_STMT_GRANTDB:
 		case PLTSQL_STMT_SET_EXPLAIN_MODE:
 		{
 			/* Nothing to free */
@@ -526,6 +527,7 @@ void dump_stmt_label(PLtsql_stmt_label *stmt_label);
 void dump_stmt_raiserror(PLtsql_stmt_raiserror *stmt_raiserror);
 void dump_stmt_throw(PLtsql_stmt_throw *stmt_throw);
 void dump_stmt_usedb(PLtsql_stmt_usedb *stmt_usedb);
+void dump_stmt_grantdb(PLtsql_stmt_grantdb *stmt_grantdb);
 void dump_stmt_insert_bulk(PLtsql_stmt_insert_bulk *stmt_insert_bulk);
 void dump_stmt_try_catch(PLtsql_stmt_try_catch *stmt_try_catch);
 void dump_stmt_query_set(PLtsql_stmt_query_set *query_set);
@@ -625,6 +627,15 @@ void
 dump_stmt_usedb(PLtsql_stmt_usedb *stmt_usedb)
 {
 	printf("USE %s\n", stmt_usedb->db_name);
+}
+
+void
+dump_stmt_grantdb(PLtsql_stmt_grantdb *stmt_grantdb)
+{
+	if(stmt_grantdb->is_grant)
+		printf("GRANT CONNECT TO %s\n", stmt_grantdb->grantees);
+	else
+		printf("REVOKE CONNECT FROM %s\n", stmt_grantdb->grantees);
 }
 
 void
@@ -748,6 +759,11 @@ dump_stmt2(PLtsql_stmt *stmt)
 		case PLTSQL_STMT_USEDB:
 		{
 			dump_stmt_usedb((PLtsql_stmt_usedb *) stmt);
+			break;
+		}
+		case PLTSQL_STMT_GRANTDB:
+		{
+			dump_stmt_grantdb((PLtsql_stmt_grantdb *) stmt);
 			break;
 		}
         case PLTSQL_STMT_INSERT_BULK:

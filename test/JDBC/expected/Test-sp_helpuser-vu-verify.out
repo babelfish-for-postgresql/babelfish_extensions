@@ -14,11 +14,12 @@ GO
 
 EXEC Test_sp_helpuser_vu_prepare_check_helpuser;
 GO
-~~ROW COUNT: 1~~
+~~ROW COUNT: 2~~
 
 ~~START~~
 varchar#!#varchar#!#int#!#varchar#!#varchar#!#nvarchar#!#int
 dbo#!#db_owner#!#1#!#<NULL>#!#dbo#!#dbo#!#1
+guest#!#public#!#0#!#<NULL>#!##!#guest#!#0
 ~~END~~
 
 
