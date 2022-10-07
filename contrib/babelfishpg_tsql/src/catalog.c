@@ -1317,6 +1317,7 @@ static void update_report(Rule *rule, Tuplestorestate *res_tupstore, TupleDesc r
 static void init_catalog_data(void);
 static void get_catalog_info(Rule *rule);
 static char *get_db_owner_role_name(char *dbname);
+static void create_guest_role_for_db(char *dbname);
 
 /*****************************************
  * 			Catalog Extra Info
@@ -2120,109 +2121,16 @@ Datum update_guest_catalog(PG_FUNCTION_ARGS)
 
 	while (HeapTupleIsValid(tuple))
 	{
-		Datum           db_name_datum;
-		const char      *db_name;
-		const char      *guest;
-		const char  	*db_owner_role;
-		List		*logins = NIL;
-		List		*res;
-		StringInfoData	query;
-		Node		*stmt;
-		ListCell   	*res_item;
-		int		i = 0;
-		const char	*prev_current_user;
-		int16 		old_dbid;
-		char		*old_dbname;
-		int16		dbid;
-
-		db_name_datum = heap_getattr(tuple, Anum_sysdatabaese_name,
+		Datum 	db_name_datum = heap_getattr(tuple, Anum_sysdatabaese_name,
 						 db_rel->rd_att, &is_null);
-		db_name = TextDatumGetCString(db_name_datum);
+		const char 	*db_name = TextDatumGetCString(db_name_datum);
 
 		if (guest_role_exists_for_db(db_name))
 		{
 			tuple = heap_getnext(scan, ForwardScanDirection);
 			continue;
 		}
-
-		db_owner_role = get_db_owner_role_name(db_name);
-		guest = get_guest_role_name(db_name);
-		dbid = get_db_id(db_name);
-
-		if (guest)
-		{
-			initStringInfo(&query);
-			appendStringInfo(&query, "CREATE ROLE dummy INHERIT ROLE dummy; ");
-			logins = grant_guest_to_logins(&query);
-			res = raw_parser(query.data, RAW_PARSE_DEFAULT);
-
-			/* Replace dummy elements in parsetree with real values */
-			stmt = parsetree_nth_stmt(res, i++);
-			update_CreateRoleStmt(stmt, guest, db_owner_role, NULL);
-
-			if (list_length(logins) > 0)
-			{
-				AccessPriv *tmp = makeNode(AccessPriv);
-				tmp->priv_name = pstrdup(guest);
-				tmp->cols = NIL;
-
-				stmt = parsetree_nth_stmt(res, i++);
-				update_GrantRoleStmt(stmt, list_make1(tmp), logins);
-			}
-
-			/* Set current user to session user for create permissions */
-			prev_current_user = GetUserNameFromId(GetUserId(), false);
-
-			bbf_set_current_user("sysadmin");
-
-			old_dbid = get_cur_db_id();
-			old_dbname = get_cur_db_name();
-			set_cur_db(dbid, db_name);  /* temporarily set current dbid as the new id */
-
-			PG_TRY();
-			{
-				/* Run all subcommands */
-				foreach(res_item, res)
-				{
-					Node	   *res_stmt = ((RawStmt *) lfirst(res_item))->stmt;
-					PlannedStmt *wrapper;
-
-					/* need to make a wrapper PlannedStmt */
-					wrapper = makeNode(PlannedStmt);
-					wrapper->commandType = CMD_UTILITY;
-					wrapper->canSetTag = false;
-					wrapper->utilityStmt = res_stmt;
-					wrapper->stmt_location = 0;
-					wrapper->stmt_len = 18;
-
-					/* do this step */
-					ProcessUtility(wrapper,
-								   "(CREATE LOGICAL DATABASE )",
-								   false,
-								   PROCESS_UTILITY_SUBCOMMAND,
-									NULL,
-							   		NULL,
-							   		None_Receiver,
-						 	  		NULL);
-
-					/* make sure later steps can see the object created here */
-					CommandCounterIncrement();
-				}
-				set_cur_db(old_dbid, old_dbname);
-				add_to_bbf_authid_user_ext(guest, "guest", db_name, NULL, NULL, false, false);
-			}
-			PG_CATCH();
-			{
-				/* Clean up. Restore previous state. */
-				bbf_set_current_user(prev_current_user);
-				set_cur_db(old_dbid, old_dbname);
-				PG_RE_THROW();
-			}
-			PG_END_TRY();
-
-			/* Set current user back to previous user */
-			bbf_set_current_user(prev_current_user);
-		}
+		create_guest_role_for_db(db_name);
 		tuple = heap_getnext(scan, ForwardScanDirection);
 	}
 	table_endscan(scan);
@@ -2274,3 +2182,91 @@ static char
 	return name;
 }
 
+static void
+create_guest_role_for_db(char *dbname)
+{
+	const char      *guest = get_guest_role_name(dbname);
+	const char  	*db_owner_role = get_db_owner_role_name(dbname);
+	List			*logins = NIL;
+	List			*res;
+	StringInfoData	query;
+	Node			*stmt;
+	ListCell   		*res_item;
+	int				i = 0;
+	const char		*prev_current_user;
+	int16 			old_dbid;
+	char			*old_dbname;
+	int16			dbid = get_db_id(dbname);
+
+	initStringInfo(&query);
+	appendStringInfo(&query, "CREATE ROLE dummy INHERIT ROLE dummy; ");
+	logins = grant_guest_to_logins(&query);
+	res = raw_parser(query.data, RAW_PARSE_DEFAULT);
+
+	/* Replace dummy elements in parsetree with real values */
+	stmt = parsetree_nth_stmt(res, i++);
+	update_CreateRoleStmt(stmt, guest, db_owner_role, NULL);
+
+	if (list_length(logins) > 0)
+	{
+		AccessPriv *tmp = makeNode(AccessPriv);
+		tmp->priv_name = pstrdup(guest);
+		tmp->cols = NIL;
+
+		stmt = parsetree_nth_stmt(res, i++);
+		update_GrantRoleStmt(stmt, list_make1(tmp), logins);
+	}
+
+	/* Set current user to session user for create permissions */
+	prev_current_user = GetUserNameFromId(GetUserId(), false);
+
+	bbf_set_current_user("sysadmin");
+
+	old_dbid = get_cur_db_id();
+	old_dbname = get_cur_db_name();
+	set_cur_db(dbid, dbname);  /* temporarily set current dbid as the new id */
+
+	PG_TRY();
+	{
+		/* Run all subcommands */
+		foreach(res_item, res)
+		{
+			Node	   *res_stmt = ((RawStmt *) lfirst(res_item))->stmt;
+			PlannedStmt *wrapper;
+
+			/* need to make a wrapper PlannedStmt */
+			wrapper = makeNode(PlannedStmt);
+			wrapper->commandType = CMD_UTILITY;
+			wrapper->canSetTag = false;
+			wrapper->utilityStmt = res_stmt;
+			wrapper->stmt_location = 0;
+			wrapper->stmt_len = 18;
+
+			/* do this step */
+			ProcessUtility(wrapper,
+						   "(CREATE LOGICAL DATABASE )",
+						   false,
+							PROCESS_UTILITY_SUBCOMMAND,
+							NULL,
+							NULL,
+							None_Receiver,
+							NULL);
+
+			/* make sure later steps can see the object created here */
+			CommandCounterIncrement();
+		}
+		set_cur_db(old_dbid, old_dbname);
+		add_to_bbf_authid_user_ext(guest, "guest", dbname, NULL, NULL, false, false);
+	}
+	PG_CATCH();
+	{
+		/* Clean up. Restore previous state. */
+		bbf_set_current_user(prev_current_user);
+		set_cur_db(old_dbid, old_dbname);
+		PG_RE_THROW();
+	}
+	PG_END_TRY();
+
+	/* Set current user back to previous user */
+	bbf_set_current_user(prev_current_user);
+}
