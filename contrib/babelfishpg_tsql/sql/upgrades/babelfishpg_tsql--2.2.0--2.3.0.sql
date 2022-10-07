@@ -1527,17 +1527,6 @@ GRANT SELECT ON sys.babelfish_function_ext TO PUBLIC;
 
 SELECT pg_catalog.pg_extension_config_dump('sys.babelfish_function_ext', '');
 
--- USER extension
-ALTER TABLE sys.babelfish_authid_user_ext add COLUMN user_can_connect INT NOT NULL DEFAULT 1;
-
-GRANT SELECT ON sys.babelfish_authid_user_ext TO PUBLIC;
-
-CREATE OR REPLACE PROCEDURE sys.babel_update_guest_catalog()
-LANGUAGE C
-AS 'babelfishpg_tsql', 'update_guest_catalog';
- 
-CALL sys.babel_update_guest_catalog();
-
 ALTER VIEW sys.default_constraints RENAME TO default_constraints_deprecated_in_2_3_0;
 ALTER VIEW sys.check_constraints RENAME TO check_constraints_deprecated_in_2_3_0;
 
