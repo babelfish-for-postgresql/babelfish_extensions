@@ -9,7 +9,7 @@ class ConnectionObject {
 
   public:
 
-    ConnectionObject(string driver, string server, string port, string uid, string pwd, string dbname);
+    ConnectionObject(string driver, string server, string port, string uid, string pwd, string dbname, bool alternativeConnectionString = false);
     ~ConnectionObject();
 
     // Returns the connection string 

@@ -75,7 +75,8 @@ jobs:
           cd test/odbc
           cmake -S . -B build
           cmake --build build
-          MSSQL_BABEL_DB_SERVER=localhost \
+          MSSQL_ODBC_DRIVER_NAME="ODBC Driver 17 for SQL Server" \
+            MSSQL_BABEL_DB_SERVER=localhost \
             MSSQL_BABEL_DB_PORT=1433 \
             MSSQL_BABEL_DB_USER=jdbc_user \
             MSSQL_BABEL_DB_PASSWORD=12345678 \
