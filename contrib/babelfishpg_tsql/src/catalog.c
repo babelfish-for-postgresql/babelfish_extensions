@@ -1317,6 +1317,7 @@ static bool check_must_match_rules(Rule rules[], size_t num_rules, Oid catalog_o
 static void update_report(Rule *rule, Tuplestorestate *res_tupstore, TupleDesc res_tupdesc);
 static void init_catalog_data(void);
 static void get_catalog_info(Rule *rule);
+static char *get_db_owner_role_name(char *dbname);
 
 /*****************************************
  * 			Catalog Extra Info
@@ -2145,7 +2146,7 @@ Datum update_guest_catalog(PG_FUNCTION_ARGS)
 			continue;
 		}
 
-		db_owner_role = get_db_owner_name(db_name);
+		db_owner_role = get_db_owner_role_name(db_name);
 		guest = get_guest_role_name(db_name);
 		dbid = get_db_id(db_name);
 
@@ -2265,3 +2266,11 @@ guest_role_exists_for_db(char *dbname)
 	return role_exists;
 }
 
+static char
+*get_db_owner_role_name(char *dbname)
+{
+	char *name = palloc0(MAX_BBF_NAMEDATALEND);
+	snprintf(name, MAX_BBF_NAMEDATALEND, "%s_db_owner", dbname);
+	truncate_identifier(name, strlen(name), false);
+	return name;
+}
