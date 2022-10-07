@@ -2120,6 +2120,8 @@ Datum update_guest_catalog(PG_FUNCTION_ARGS)
 
 	while (HeapTupleIsValid(tuple))
 	{
+		Datum           db_name_datum;
+		const char      *db_name;
 		const char      *guest;
 		const char  	*db_owner_role;
 		List		*logins = NIL;
@@ -2133,9 +2135,9 @@ Datum update_guest_catalog(PG_FUNCTION_ARGS)
 		char		*old_dbname;
 		int16		dbid;
 
-		Datum db_name_datum = heap_getattr(tuple, Anum_sysdatabaese_name,
+		db_name_datum = heap_getattr(tuple, Anum_sysdatabaese_name,
 						 db_rel->rd_att, &is_null);
-		const char *db_name = TextDatumGetCString(db_name_datum);
+		db_name = TextDatumGetCString(db_name_datum);
 
 		if (guest_role_exists_for_db(db_name))
 		{
@@ -2239,7 +2241,8 @@ guest_role_exists_for_db(char *dbname)
 	SysScanDesc	scan;
 
 	/* Fetch the relation */
-	bbf_authid_user_ext_rel = table_open(get_authid_user_ext_oid, RowExclusiveLock);
+	bbf_authid_user_ext_rel = table_open(get_authid_user_ext_oid(),
+									RowExclusiveLock);
 
 	/* Search if the role exists */
 	ScanKeyInit(&scanKey,
