@@ -2254,7 +2254,6 @@ create_guest_role_for_db(char *dbname)
 
 			/* make sure later steps can see the object created here */
 			CommandCounterIncrement();
-			pfree(query.data);
 		}
 		set_cur_db(old_dbid, old_dbname);
 		add_to_bbf_authid_user_ext(guest, "guest", dbname, NULL, NULL, false, false);
