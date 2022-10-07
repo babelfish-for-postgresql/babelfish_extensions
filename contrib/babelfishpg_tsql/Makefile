@@ -41,7 +41,7 @@ OBJS += src/dynastack.o
 OBJS += src/analyzer.o
 OBJS += src/prepare.o
 OBJS += src/compile_context.o
-OBJS += src/collation.o src/string.o
+OBJS += src/collation.o src/string.o src/format.o
 OBJS += src/forxml.o
 OBJS += src/pltsql_identity.o
 OBJS += src/collationproperty.o
@@ -66,13 +66,6 @@ OBJS += antlr/libantlr_tsql.a
 OBJS += src/multidb.o
 OBJS += src/json_funcs.o
 OBJS += src/pltsql_ruleutils.o
-OBJS += src/encoding/encoding_utils.o
-OBJS += src/encoding/mb/conv.o
-OBJS += src/encoding/mb/conversion_procs/utf8_and_big5/utf8_and_big5.o
-OBJS += src/encoding/mb/conversion_procs/utf8_and_gbk/utf8_and_gbk.o
-OBJS += src/encoding/mb/conversion_procs/utf8_and_sjis/utf8_and_sjis.o
-OBJS += src/encoding/mb/conversion_procs/utf8_and_uhc/utf8_and_uhc.o
-OBJS += src/encoding/mb/conversion_procs/utf8_and_win/utf8_and_win.o
 
 export ANTLR4_JAVA_BIN=java
 export ANTLR4_RUNTIME_LIB=-lantlr4-runtime
@@ -102,9 +95,10 @@ REGRESS += test/babel_collation
 REGRESS += test/babel_ddl
 REGRESS += test/babel_delete
 REGRESS += test/babel_set_command
-# REGRESS += test/babel_datatype TODO: fix BABEL-2636 "Money datatype doesn't support any currency symbol other than Dollar" before enabling this test
+REGRESS += test/babel_datatype
 REGRESS += test/babel_function
 REGRESS += test/babel_table_type
+# REGRESS += test/babel_emoji          TODO: fix BABEL-3543
 
 # We need the previous version to test extension upgrade scripts
 ifdef PREV_EXTVERSION

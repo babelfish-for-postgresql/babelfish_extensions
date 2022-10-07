@@ -1,6 +1,3 @@
-USE sys_system_sql_modules_vu_prepare_db1
-GO
-
 -- Test for system function
 SELECT
     uses_ansi_nulls,
@@ -41,4 +38,19 @@ SELECT
     uses_native_compilation
 FROM sys.system_sql_modules
 WHERE object_id = OBJECT_ID('sys.sp_tables')
+GO
+
+-- Test for system function written in c 
+SELECT
+    definition,
+    uses_ansi_nulls,
+    uses_quoted_identifier,
+    is_schema_bound,
+    uses_database_collation,
+    is_recompiled,
+    null_on_null_input,
+    execute_as_principal_id,
+    uses_native_compilation
+FROM sys.system_sql_modules
+WHERE object_id = OBJECT_ID('sys.user_name')
 GO

@@ -168,7 +168,7 @@ typedef FormData_authid_user_ext *Form_authid_user_ext;
 #define Anum_bbf_view_def_schema_name 2
 #define Anum_bbf_view_def_object_name 3
 #define Anum_bbf_view_def_definition 4
-#define BBF_VIEW_DEF_NUM_COLS 6
+#define BBF_VIEW_DEF_NUM_COLS 8
 #define BBF_VIEW_DEF_FLAG_IS_ANSI_NULLS_ON (1<<0)
 #define BBF_VIEW_DEF_FLAG_USES_QUOTED_IDENTIFIER (1<<1)
 extern Oid			bbf_view_def_oid;
@@ -189,9 +189,45 @@ typedef struct FormData_bbf_view_def
 	text		definition;
 	uint64		flag_validity;
 	uint64		flag_values;
+	Timestamp	create_date;
+	Timestamp	modify_date;
 } FormData_bbf_view_def;
 
 typedef FormData_bbf_view_def *Form_bbf_view_def;
+
+/*****************************************
+ *			FUNCTION_EXT
+ *****************************************/
+#define BBF_FUNCTION_EXT_TABLE_NAME "babelfish_function_ext"
+#define BBF_FUNCTION_EXT_IDX_NAME "babelfish_function_ext_pkey"
+#define Anum_bbf_function_ext_nspname 1
+#define Anum_bbf_function_ext_funcname 2
+#define Anum_bbf_function_ext_orig_name 3
+#define Anum_bbf_function_ext_funcsignature 4
+#define Anum_bbf_function_ext_default_positions 5
+#define Anum_bbf_function_ext_create_date 6
+#define Anum_bbf_function_ext_modify_date 7
+#define BBF_FUNCTION_EXT_NUM_COLS 7
+extern Oid			bbf_function_ext_oid;
+extern Oid			bbf_function_ext_idx_oid;
+
+extern Oid get_bbf_function_ext_oid(void);
+extern Oid get_bbf_function_ext_idx_oid(void);
+extern HeapTuple get_bbf_function_tuple_from_proctuple(HeapTuple proctuple);
+extern void clean_up_bbf_function_ext(int16 dbid);
+
+typedef struct FormData_bbf_function_ext
+{
+	NameData	schema;
+	NameData	funcname;
+	VarChar		orig_name;
+	text		function_signature;
+	text		default_positions;
+	Timestamp	create_date;
+	Timestamp	modify_date;
+} FormData_bbf_function_ext;
+
+typedef FormData_bbf_function_ext *Form_bbf_function_ext;
 
 /*****************************************
  *			Metadata Check Rule
@@ -214,6 +250,7 @@ typedef struct RelData
 	const char		*tblname;	/* table name */
 	Oid				tbl_oid;	/* table oid */
 	Oid				idx_oid;	/* index oid */
+	bool			index_ok;	/* if false, forces a heap scan */
 	Oid				atttype;	/* index column's type oid */
 	AttrNumber		attnum;		/* index column's attribute num */
 	RegProcedure	regproc;	/* regproc used to scan through the index */

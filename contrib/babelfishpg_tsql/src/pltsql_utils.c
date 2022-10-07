@@ -11,6 +11,7 @@
 #include "storage/lock.h"
 #include "utils/builtins.h"
 #include "utils/elog.h"
+#include "utils/guc.h"
 #include "utils/lsyscache.h"
 #include "utils/syscache.h"
 #include "datatypes.h"
@@ -827,4 +828,64 @@ flatten_search_path(List *oid_list)
 	}
 	pathbuf.data[strlen(pathbuf.data) - 1] = '\0';
 	return pathbuf.data;
+}
+
+const char *
+get_pltsql_function_signature_internal(const char *funcname,
+							  int nargs, const Oid *argtypes)
+{
+	StringInfoData argbuf;
+	ListCell   *lc;
+	int			i;
+	const char *prev_quote_ident = GetConfigOption("quote_all_identifiers", true, true);
+
+	initStringInfo(&argbuf);
+
+	PG_TRY();
+	{
+		/* Temporarily set quote_all_identifiers to TRUE to generate quoted string */
+		set_config_option("quote_all_identifiers", "true",
+								(superuser() ? PGC_SUSET : PGC_USERSET),
+								PGC_S_SESSION, GUC_ACTION_SAVE, true, 0, false);
+
+		appendStringInfo(&argbuf, "%s(", funcname);
+		for (i = 0; i < nargs; i++)
+		{
+			if (i)
+				appendStringInfoString(&argbuf, ", ");
+			appendStringInfoString(&argbuf, format_type_be_qualified(argtypes[i]));
+		}
+		appendStringInfoChar(&argbuf, ')');
+	}
+	PG_FINALLY();
+	{
+		set_config_option("quote_all_identifiers", prev_quote_ident,
+								(superuser() ? PGC_SUSET : PGC_USERSET),
+								PGC_S_SESSION, GUC_ACTION_SAVE, true, 0, false);
+	}
+	PG_END_TRY();
+
+	return argbuf.data;			/* return palloc'd string buffer */
+}
+
+PG_FUNCTION_INFO_V1(get_pltsql_function_signature);
+
+Datum
+get_pltsql_function_signature(PG_FUNCTION_ARGS)
+{
+	Oid			funcoid = PG_GETARG_OID(0);
+	HeapTuple	proctup;
+	Form_pg_proc form_proctup;
+	char		*func_signature;
+
+	proctup = SearchSysCache1(PROCOID, ObjectIdGetDatum(funcoid));
+	if (!HeapTupleIsValid(proctup))
+		elog(ERROR, "cache lookup failed for function %u", funcoid);
+	form_proctup = (Form_pg_proc) GETSTRUCT(proctup);
+
+	func_signature = get_pltsql_function_signature_internal(NameStr(form_proctup->proname),
+															form_proctup->pronargs,
+															form_proctup->proargtypes.values);
+
+	PG_RETURN_TEXT_P(cstring_to_text(func_signature));
 }

@@ -1874,14 +1874,28 @@ TdsProcessLogin(Port *port, bool loadedSsl)
 		if (loadEncryption == TDS_ENCRYPT_ON ||
 			loadEncryption == TDS_ENCRYPT_OFF ||
 			loadEncryption == TDS_ENCRYPT_REQ)
-			SecureOpenServer(port);
+			rc = SecureOpenServer(port);
+	}
+	PG_CATCH();
+	{
+		PG_RE_THROW();
+	}
+	PG_END_TRY();
 
-		if (loadEncryption == TDS_ENCRYPT_ON)
-			TDSInstrumentation(INSTR_TDS_LOGIN_END_TO_END_ENCRYPT);
+	/*
+	 * If SSL handshake failure has occurred then no need to go ahead with login,
+	 * Just return from here.
+	 */
+	if (rc < 0)
+		return rc;
 
+	if (loadEncryption == TDS_ENCRYPT_ON)
+		TDSInstrumentation(INSTR_TDS_LOGIN_END_TO_END_ENCRYPT);
+
+	PG_TRY();
+	{
 		/* Login */
 		rc = ProcessLoginInternal(port);
-
 	}
 	PG_CATCH();
 	{

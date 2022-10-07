@@ -1486,6 +1486,7 @@ simple_select:
 					n->windowClause = $10;
 					$$ = (Node *)n;
 				}
+			| tsql_values_clause							{ $$ = $1; }
 			;
 
 table_ref:	relation_expr tsql_table_hint_expr
@@ -3224,12 +3225,14 @@ datepart_arg:
 			| TSQL_M								{ $$ = "month"; }
 			| TSQL_DAYOFYEAR						{ $$ = "doy"; }
 			| TSQL_DY								{ $$ = "doy"; }
+			| TSQL_Y								{ $$ = "doy"; }
 			| DAY_P									{ $$ = "day"; }
 			| TSQL_DD								{ $$ = "day"; }
 			| TSQL_D								{ $$ = "day"; }
 			| TSQL_WEEK								{ $$ = "tsql_week"; }
 			| TSQL_WK								{ $$ = "tsql_week"; }
 			| TSQL_WW								{ $$ = "tsql_week"; }
+			| TSQL_W								{ $$ = "dow"; }
 			| TSQL_WEEKDAY							{ $$ = "dow"; }
 			| TSQL_DW								{ $$ = "dow"; }
 			| HOUR_P								{ $$ = "hour"; }
@@ -3268,9 +3271,11 @@ datediff_arg:
 			| TSQL_M								{ $$ = "month"; }
 			| TSQL_DAYOFYEAR						{ $$ = "doy"; }
 			| TSQL_DY								{ $$ = "doy"; }
+			| TSQL_Y								{ $$ = "doy"; }
 			| DAY_P									{ $$ = "day"; }
 			| TSQL_DD								{ $$ = "day"; }
 			| TSQL_D								{ $$ = "day"; }
+			| TSQL_W								{ $$ = "day"; }
 			| TSQL_WEEK								{ $$ = "week"; }
 			| TSQL_WK								{ $$ = "week"; }
 			| TSQL_WW								{ $$ = "week"; }
@@ -3305,12 +3310,14 @@ dateadd_arg:
 			| TSQL_M								{ $$ = "month"; }
 			| TSQL_DAYOFYEAR						{ $$ = "dayofyear"; }
 			| TSQL_DY								{ $$ = "dayofyear"; }
+			| TSQL_Y								{ $$ = "dayofyear"; }
 			| DAY_P									{ $$ = "day"; }
 			| TSQL_DD								{ $$ = "day"; }
 			| TSQL_D								{ $$ = "day"; }
 			| TSQL_WEEK								{ $$ = "week"; }
 			| TSQL_WK								{ $$ = "week"; }
 			| TSQL_WW								{ $$ = "week"; }
+			| TSQL_W								{ $$ = "weekday"; }
 			| TSQL_WEEKDAY							{ $$ = "weekday"; }
 			| TSQL_DW								{ $$ = "weekday"; }
 			| HOUR_P								{ $$ = "hour"; }
@@ -3401,7 +3408,6 @@ tsql_CreateFunctionStmt:
 						n->replace = $2;
 						n->funcname = $4;
 						n->parameters = $5;
-						tsql_completeDefaultValues(n->parameters);
 						n->returnType = $7;
 						n->options = list_concat(list_make2(lang, body), $8);
 						$$ = (Node *)n;
@@ -3417,7 +3423,6 @@ tsql_CreateFunctionStmt:
 					n->replace = $2;
 					n->funcname = $4;
 					n->parameters = $5;
-					tsql_completeDefaultValues(n->parameters);
 					n->returnType = NULL;
 					n->options = list_concat(list_make2(lang, body), $6);
 					$$ = (Node *)n;
@@ -3470,7 +3475,6 @@ tsql_CreateFunctionStmt:
 					n2->is_procedure = false;
 					n2->replace = $2;
 					n2->funcname = $4;
-					tsql_completeDefaultValues($5);
 					n2->parameters = lappend($5, out_param);
 					n2->returnType = makeTypeNameFromNameList(tbltyp);
 					n2->returnType->setof = true;
@@ -3496,7 +3500,6 @@ tsql_CreateFunctionStmt:
 					 * pltsql_validator()
 					 */
 					n->parameters = $5;
-					tsql_completeDefaultValues(n->parameters);
 					/*
 					 * Use RECORD type here. In case of single result column,
 					 * will be changed to that column's type in
@@ -4118,12 +4121,14 @@ unreserved_keyword:
 			| TSQL_TZOFFSET
 			| TSQL_UNLOCK
 			| TSQL_UPDLOCK
+			| TSQL_W
 			| TSQL_WEEK
 			| TSQL_WEEKDAY
 			| TSQL_WINDOWS
 			| TSQL_WK
 			| TSQL_WW
 			| TSQL_XLOCK
+			| TSQL_Y
 			| TSQL_YY
 			| TSQL_YYYY
 		;
