@@ -1864,11 +1864,11 @@ ALTER TABLE sys.babelfish_authid_user_ext add COLUMN IF NOT EXISTS user_can_conn
 
 GRANT SELECT ON sys.babelfish_authid_user_ext TO PUBLIC;
 
-CREATE OR REPLACE PROCEDURE sys.babel_update_guest_catalog()
+CREATE OR REPLACE PROCEDURE sys.babel_update_user_catalog_for_guest()
 LANGUAGE C
-AS 'babelfishpg_tsql', 'update_guest_catalog';
+AS 'babelfishpg_tsql', 'update_user_catalog_for_guest';
  
-CALL sys.babel_update_guest_catalog();
+CALL sys.babel_update_user_catalog_for_guest();
 
 -- Drops the temporary procedure used by the upgrade script.
 -- Please have this be one of the last statements executed in this upgrade script.

@@ -2107,8 +2107,8 @@ guest_has_dbaccess(char *db_name)
 	return has_access;
 }
 
-PG_FUNCTION_INFO_V1(update_guest_catalog);
-Datum update_guest_catalog(PG_FUNCTION_ARGS)
+PG_FUNCTION_INFO_V1(update_user_catalog_for_guest);
+Datum update_user_catalog_for_guest(PG_FUNCTION_ARGS)
 {
 	Relation        db_rel;
 	TableScanDesc   scan;
@@ -2121,9 +2121,9 @@ Datum update_guest_catalog(PG_FUNCTION_ARGS)
 
 	while (HeapTupleIsValid(tuple))
 	{
-		Datum 	db_name_datum = heap_getattr(tuple, Anum_sysdatabaese_name,
+		Datum	db_name_datum = heap_getattr(tuple, Anum_sysdatabaese_name,
 						 db_rel->rd_att, &is_null);
-		const char 	*db_name = TextDatumGetCString(db_name_datum);
+		const char	*db_name = TextDatumGetCString(db_name_datum);
 
 		if (guest_role_exists_for_db(db_name))
 		{
@@ -2185,16 +2185,16 @@ static char
 static void
 create_guest_role_for_db(char *dbname)
 {
-	const char      *guest = get_guest_role_name(dbname);
-	const char  	*db_owner_role = get_db_owner_role_name(dbname);
+	const char		*guest = get_guest_role_name(dbname);
+	const char		*db_owner_role = get_db_owner_role_name(dbname);
 	List			*logins = NIL;
 	List			*res;
 	StringInfoData	query;
 	Node			*stmt;
-	ListCell   		*res_item;
+	ListCell		*res_item;
 	int				i = 0;
 	const char		*prev_current_user;
-	int16 			old_dbid;
+	int16			old_dbid;
 	char			*old_dbname;
 	int16			dbid = get_db_id(dbname);
 
@@ -2254,6 +2254,7 @@ create_guest_role_for_db(char *dbname)
 
 			/* make sure later steps can see the object created here */
 			CommandCounterIncrement();
+			pfree(query.data);
 		}
 		set_cur_db(old_dbid, old_dbname);
 		add_to_bbf_authid_user_ext(guest, "guest", dbname, NULL, NULL, false, false);
