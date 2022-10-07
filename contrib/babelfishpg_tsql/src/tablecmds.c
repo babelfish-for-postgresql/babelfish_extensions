@@ -80,7 +80,7 @@ void pre_check_trigger_schema(List *object, bool missing_ok){
 
 	/* Extract name of dependent object. */
 	depname = strVal(llast(object));
-	if (list_length(object) >= 1){
+	if (list_length(object) > 1){
 		trigger_schema = ((Value *)list_nth(object,0))->val.str;
 	}
 	/* 

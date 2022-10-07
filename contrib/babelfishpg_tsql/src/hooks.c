@@ -57,9 +57,9 @@
 #include "session.h"
 
 #define TDS_NUMERIC_MAX_PRECISION	38
-#define TriggerRelationId 2620
-#define Anum_pg_trigger_tgname 4
-#define TriggerRelidNameIndexId  2701
+#define TriggerRelationId	2620
+#define Anum_pg_trigger_tgname	4
+#define TriggerRelidNameIndexId	2701
 extern bool babelfish_dump_restore;
 extern bool pltsql_quoted_identifier;
 extern bool is_tsql_rowversion_or_timestamp_datatype(Oid oid);
