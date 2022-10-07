@@ -22,8 +22,6 @@ select principal_id
       , parent_object_id
       , type
       , type_desc
-      , create_date
-      , modify_date
       , is_ms_shipped
       , is_published
       , is_schema_published

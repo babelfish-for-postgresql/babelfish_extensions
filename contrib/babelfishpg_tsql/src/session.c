@@ -18,6 +18,7 @@
 static int16 current_db_id = 0;
 static char current_db_name[MAX_BBF_NAMEDATALEND+1] = {'\0'};
 static Oid current_user_id = InvalidOid;
+static void set_search_path_for_user_schema(const char* db_name, const char* user);
 void reset_cached_batch(void);
 
 int16
@@ -60,56 +61,80 @@ bbf_set_current_user(const char *user_name)
 void
 set_session_properties(const char *db_name)
 {
-	const char		*buffer = "%s, \"$user\", sys, pg_catalog";
-	const char		*path;
-	const char		*user = NULL;
-	const char		*login;
-	const char		*physical_schema;
-	int16			db_id = get_db_id(db_name);
+	int16 db_id = get_db_id(db_name);
 
 	if (!DbidIsValid(db_id))
 			ereport(ERROR,
 					(errcode(ERRCODE_UNDEFINED_DATABASE),
 					 errmsg("database \"%s\" does not exist", db_name)));
 
-	login = GetUserNameFromId(GetSessionUserId(), false);
-	user = get_user_for_database(db_name);
+	check_session_db_access(db_name);
 
-	/* set current DB */
-	set_cur_db(db_id, db_name);
+	set_cur_user_db_and_path(db_name);
+}
+
+/* 
+ * Raises an error if the current session does not have access to the given database
+ * Caller responsible for checking db_name is valid 
+ */
+void
+check_session_db_access(const char* db_name)
+{
+	const char		*user = NULL;
+	const char		*login;
+
+	user = get_user_for_database(db_name);
 
 	if (!user)
 	{
+		login = GetUserNameFromId(GetSessionUserId(), false);
 		ereport(ERROR,
 				(errcode(ERRCODE_UNDEFINED_DATABASE),
 				 errmsg("The server principal \"%s\" is not able to access "
 						"the database \"%s\" under the current security context",
 						login, db_name)));
 	}
-	else
-	{
-		char	*dbo_role_name = get_dbo_role_name(db_name);
-		char	*guest_role_name = get_guest_role_name(db_name);
+}
 
-		if ((dbo_role_name && strcmp(user, get_dbo_role_name(db_name)) == 0) ||
-			(guest_role_name && strcmp(user, get_guest_role_name(db_name)) == 0))
-		{
-			physical_schema = get_dbo_schema_name(db_name);
-		}
-		else
-		{
-			const char		*schema;
+/* Caller responsible for checking db_name is valid */
+void
+set_cur_user_db_and_path(const char* db_name)
+{
+	const char		*user = get_user_for_database(db_name);
+	int16			db_id = get_db_id(db_name);
 
-			schema = get_authid_user_ext_schema_name(db_name, user);
-			physical_schema = get_physical_schema_name(pstrdup(db_name), schema);
-		}
-	}
+	/* set current DB */
+	set_cur_db(db_id, db_name);
 
 	/* set current user */
 	bbf_set_current_user(user);
 	current_user_id = GetUserId();
 
 	/* set search path */
+	set_search_path_for_user_schema(db_name, user);
+}
+
+static void
+set_search_path_for_user_schema(const char* db_name, const char* user)
+{
+	const char		*path;
+	const char		*buffer = "%s, \"$user\", sys, pg_catalog";
+	const char		*physical_schema;
+	const char		*dbo_role_name = get_dbo_role_name(db_name);
+	const char		*guest_role_name = get_guest_role_name(db_name);
+
+	if ((dbo_role_name && strcmp(user, dbo_role_name) == 0) ||
+		(guest_role_name && strcmp(user, guest_role_name) == 0))
+	{
+		physical_schema = get_dbo_schema_name(db_name);
+	}
+	else
+	{
+		const char		*schema;
+		schema = get_authid_user_ext_schema_name(db_name, user);
+		physical_schema = get_physical_schema_name(pstrdup(db_name), schema);
+	}
+
 	path = psprintf(buffer, physical_schema);
 	SetConfigOption("search_path",
 					path,
