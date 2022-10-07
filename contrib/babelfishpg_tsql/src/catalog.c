@@ -805,7 +805,6 @@ get_authid_user_ext_physical_name(const char *db_name, const char *login)
 	TableScanDesc	scan;
 	char			*user_name = NULL;
 	NameData		*login_name;
-	int32			has_dbaccess = 0;
 
 	if (!db_name || !login)
 		return NULL;
@@ -2017,7 +2016,7 @@ alter_user_can_connect(bool is_grant, char *user_name, char *db_name)
 	ScanKeyData		key[2];
 	HeapTuple		usertuple;
 	HeapTuple		new_tuple;
-	TableScanDesc	tblscan;
+	TableScanDesc		tblscan;
 	Datum			new_record_user_ext[BBF_AUTHID_USER_EXT_NUM_COLS];
 	bool			new_record_nulls_user_ext[BBF_AUTHID_USER_EXT_NUM_COLS];
 	bool			new_record_repl_user_ext[BBF_AUTHID_USER_EXT_NUM_COLS];
@@ -2078,7 +2077,7 @@ guest_has_dbaccess(char *db_name)
 	Relation		bbf_authid_user_ext_rel;
 	HeapTuple		tuple_user_ext;
 	ScanKeyData		key[3];
-	TableScanDesc	scan;
+	TableScanDesc		scan;
 	bool			has_access = false;
 
 	bbf_authid_user_ext_rel = table_open(get_authid_user_ext_oid(),
@@ -2121,24 +2120,22 @@ Datum update_guest_catalog(PG_FUNCTION_ARGS)
 
 	while (HeapTupleIsValid(tuple))
 	{
-		Datum           db_name_datum;
-		const char      *db_name;
 		const char      *guest;
 		const char  	*db_owner_role;
-		List			*logins = NIL;
-		List			*res;
+		List		*logins = NIL;
+		List		*res;
 		StringInfoData	query;
-		Node			*stmt;
-		ListCell   		*res_item;
-		int				i = 0;
+		Node		*stmt;
+		ListCell   	*res_item;
+		int		i = 0;
 		const char	*prev_current_user;
 		int16 		old_dbid;
 		char		*old_dbname;
 		int16		dbid;
 
-		db_name_datum = heap_getattr(tuple, Anum_sysdatabaese_name,
+		Datum db_name_datum = heap_getattr(tuple, Anum_sysdatabaese_name,
 						 db_rel->rd_att, &is_null);
-		db_name = TextDatumGetCString(db_name_datum);
+		const char *db_name = TextDatumGetCString(db_name_datum);
 
 		if (guest_role_exists_for_db(db_name))
 		{
@@ -2234,7 +2231,7 @@ Datum update_guest_catalog(PG_FUNCTION_ARGS)
 bool
 guest_role_exists_for_db(char *dbname)
 {
-	const char *guest_role = get_guest_role_name(dbname);
+	const char 	*guest_role = get_guest_role_name(dbname);
 	bool		role_exists = false;
 	Relation	bbf_authid_user_ext_rel;
 	HeapTuple	tuple;
@@ -2242,10 +2239,9 @@ guest_role_exists_for_db(char *dbname)
 	SysScanDesc	scan;
 
 	/* Fetch the relation */
-	bbf_authid_user_ext_rel = table_open(get_authid_user_ext_oid(),
-										 RowExclusiveLock);
+	bbf_authid_user_ext_rel = table_open(get_authid_user_ext_oid, RowExclusiveLock);
 
-	/* Search the role if exists */
+	/* Search if the role exists */
 	ScanKeyInit(&scanKey,
 				Anum_bbf_authid_user_ext_rolname,
 				BTEqualStrategyNumber, F_NAMEEQ,
@@ -2274,3 +2270,4 @@ static char
 	truncate_identifier(name, strlen(name), false);
 	return name;
 }
+

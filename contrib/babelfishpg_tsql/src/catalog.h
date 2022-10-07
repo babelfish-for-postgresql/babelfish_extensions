@@ -126,7 +126,7 @@ extern Oid get_authid_login_ext_idx_oid(void);
 #define Anum_bbf_authid_user_ext_orig_username			11
 #define Anum_bbf_authid_user_ext_database_name			12
 #define Anum_bbf_authid_user_ext_default_schema_name	13
-#define Anum_bbf_authid_user_ext_user_can_connect			16
+#define Anum_bbf_authid_user_ext_user_can_connect		16
 extern Oid			bbf_authid_user_ext_oid;
 extern Oid			bbf_authid_user_ext_idx_oid;
 
