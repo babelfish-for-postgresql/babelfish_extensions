@@ -102,7 +102,7 @@ nvarchar
 
 ~~ERROR (Message: JSON path is not properly formatted)~~
 
-select * from babel_937_case_sensitive_3
+select * from babel_937_keyword_check
 go
 ~~START~~
 nvarchar

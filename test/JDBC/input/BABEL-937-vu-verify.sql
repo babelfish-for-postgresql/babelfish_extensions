@@ -29,7 +29,7 @@ select * from babel_937_case_sensitive_1
 go
 select * from babel_937_case_sensitive_2
 go
-select * from babel_937_case_sensitive_3
+select * from babel_937_keyword_check
 go
 
 select * from babel_937_spaces

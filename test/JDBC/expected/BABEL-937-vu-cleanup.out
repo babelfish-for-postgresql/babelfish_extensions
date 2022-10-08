@@ -29,7 +29,8 @@ drop view babel_937_case_sensitive_1
 go
 drop view babel_937_case_sensitive_2
 go
-drop view babel_937_case_sensitive_3
+
+drop view babel_937_keyword_check
 go
 
 drop view babel_937_spaces
