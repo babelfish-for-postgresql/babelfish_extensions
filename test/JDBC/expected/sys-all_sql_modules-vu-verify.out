@@ -174,7 +174,6 @@ WHERE object_id = OBJECT_ID('sys_all_sql_modules_vu_prepare_v1')
 GO
 ~~START~~
 nvarchar#!#bit#!#bit#!#bit#!#bit#!#bit#!#bit#!#int#!#bit
-<NULL>#!#1#!#1#!#0#!#0#!#0#!#0#!#<NULL>#!#0
 ~~END~~
 
 
