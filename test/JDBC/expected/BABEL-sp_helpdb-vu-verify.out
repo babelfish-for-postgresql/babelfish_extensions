@@ -1,0 +1,40 @@
+SELECT name, db_size, owner, status, compatibility_level FROM sys.babelfish_helpdb();
+GO
+~~START~~
+varchar#!#varchar#!#varchar#!#varchar#!#smallint
+master#!#<NULL>#!#jdbc_user#!#<NULL>#!#<NULL>
+tempdb#!#<NULL>#!#jdbc_user#!#<NULL>#!#<NULL>
+msdb#!#<NULL>#!#jdbc_user#!#<NULL>#!#<NULL>
+test_db1#!#<NULL>#!#jdbc_user#!#<NULL>#!#<NULL>
+~~END~~
+
+
+-- Executing sp_helpdb with already existing dbname as an input
+SELECT name, db_size, owner, status, compatibility_level FROM sys.babelfish_helpdb('master');
+GO
+~~START~~
+varchar#!#varchar#!#varchar#!#varchar#!#smallint
+master#!#<NULL>#!#jdbc_user#!#<NULL>#!#<NULL>
+~~END~~
+
+SELECT name, db_size, owner, status, compatibility_level FROM sys.babelfish_helpdb('tempdb');
+GO
+~~START~~
+varchar#!#varchar#!#varchar#!#varchar#!#smallint
+tempdb#!#<NULL>#!#jdbc_user#!#<NULL>#!#<NULL>
+~~END~~
+
+SELECT name, db_size, owner, status, compatibility_level FROM sys.babelfish_helpdb('msdb');
+GO
+~~START~~
+varchar#!#varchar#!#varchar#!#varchar#!#smallint
+msdb#!#<NULL>#!#jdbc_user#!#<NULL>#!#<NULL>
+~~END~~
+
+SELECT name, db_size, owner, status, compatibility_level FROM sys.babelfish_helpdb('test_db1');
+GO
+~~START~~
+varchar#!#varchar#!#varchar#!#varchar#!#smallint
+test_db1#!#<NULL>#!#jdbc_user#!#<NULL>#!#<NULL>
+~~END~~
+
