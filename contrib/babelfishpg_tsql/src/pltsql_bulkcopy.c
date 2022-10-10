@@ -19,7 +19,6 @@
 #include "access/xact.h"
 #include "catalog/dependency.h"
 #include "catalog/namespace.h"
-#include "commands/copy.h"
 #include "commands/sequence.h"
 #include "executor/executor.h"
 #include "executor/nodeModifyTable.h"
@@ -47,7 +46,7 @@
 /* Trim the list of buffers back down to this number after flushing */
 #define MAX_PARTITION_BUFFERS	32
 
-/* Stores multi-insert data related to a single relation in CopyFrom. */
+/* Stores multi-insert data related to a single relation. */
 typedef struct CopyMultiInsertBuffer
 {
 	TupleTableSlot *slots[MAX_BUFFERED_TUPLES]; /* Array to store tuples */
@@ -67,9 +66,9 @@ typedef struct CopyMultiInsertInfo
 {
 	List	   *multiInsertBuffers; /* List of tracked CopyMultiInsertBuffers */
 	int			bufferedTuples; /* number of tuples buffered over all buffers */
-	BulkCopyState cstate;		/* Copy state for this CopyMultiInsertInfo */
-	EState	   *estate;			/* Executor state used for COPY */
-	CommandId	mycid;			/* Command Id used for COPY */
+	BulkCopyState cstate;		/* Bulk Copy state for this CopyMultiInsertInfo */
+	EState	   *estate;			/* Executor state used for BULK COPY */
+	CommandId	mycid;			/* Command Id used for BULK COPY */
 	int			ti_options;		/* table insert options */
 } CopyMultiInsertInfo;
 
@@ -646,7 +645,7 @@ ExecuteBulkCopy(BulkCopyState cstate, int rowCount, int colCount,
 													resultRelInfo);
 
 		/*
-		 * Switch to per-tuple context before calling NextCopyFrom, which does
+		 * Switch to per-tuple context before building the TupleTableSlot, which does
 		 * evaluate default expressions etc. and requires per-tuple context.
 		 */
 		MemoryContextSwitchTo(GetPerTupleMemoryContext(estate));
@@ -855,7 +854,7 @@ BeginBulkCopy(Relation rel,
 
 	/*
 	 * We allocate everything used by a cstate in a new memory context. This
-	 * avoids memory leaks during repeated use of COPY in a query.
+	 * avoids memory leaks.
 	 */
 	cstate->copycontext = AllocSetContextCreate(CurrentMemoryContext,
 												"BULK COPY",
@@ -927,7 +926,7 @@ BeginBulkCopy(Relation rel,
 }
 
 /*
- * EndBulkCopy - Clean up storage and release resources for COPY FROM.
+ * EndBulkCopy - Clean up storage and release resources for BULK COPY.
  */
 void
 EndBulkCopy(BulkCopyState cstate)

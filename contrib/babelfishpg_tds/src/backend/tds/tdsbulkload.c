@@ -747,9 +747,6 @@ ProcessBCPRequest(TDSRequest request)
 	TDSRequestBulkLoad req = (TDSRequestBulkLoad) request;
 	BulkLoadColMetaData *colMetaData = req->colMetaData;
 	StringInfo message = req->firstMessage;
-	Oid *argtypes = NULL;
-
-	argtypes= palloc0(req->colCount * sizeof(Oid));
 
 	TdsErrorContext->err_text = "Processing Bulk Load Request";
 	pgstat_report_activity(STATE_RUNNING, "Processing Bulk Load Request");
@@ -819,12 +816,7 @@ ProcessBCPRequest(TDSRequest request)
 						case TDS_TYPE_CHAR:
 						case TDS_TYPE_VARCHAR:
 						case TDS_TYPE_TEXT:
-							if (!argtypes[currentColumn])
-							{
-								tempFuncInfo = TdsLookupTypeFunctionsByTdsId(colMetaData[currentColumn].columnTdsType, colMetaData[currentColumn].maxLen);
-								GetPgOid(argtypes[currentColumn], tempFuncInfo);
-							}
-							values[count] = TdsTypeVarcharToDatum(temp, argtypes[currentColumn], colMetaData[currentColumn].collation);
+							values[count] = TdsTypeVarcharToDatum(temp, colMetaData[currentColumn].collation, colMetaData[currentColumn].columnTdsType);
 						break;
 						case TDS_TYPE_NCHAR:
 						case TDS_TYPE_NVARCHAR:
@@ -934,9 +926,6 @@ ProcessBCPRequest(TDSRequest request)
 				pfree(nulls);
 		}
 	}
-
-	if (argtypes)
-		pfree(argtypes);
 
 	/* Send Done Token if rows processed is a positive number. Command type - execute (0xf0). */
 	if (retValue >= 0)
