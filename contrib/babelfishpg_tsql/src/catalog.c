@@ -2187,7 +2187,7 @@ static void
 create_guest_role_for_db(char *dbname)
 {
 	const char      *guest = get_guest_role_name(dbname);
-	const char  	*db_owner_role = get_db_owner_role_name(dbname);
+	const char  	*db_owner_role = get_db_owner_name(dbname);
 	List			*logins = NIL;
 	List			*res;
 	StringInfoData	query;
