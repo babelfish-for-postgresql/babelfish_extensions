@@ -2764,6 +2764,25 @@ static void bbf_ProcessUtility(PlannedStmt *pstmt,
 											(errcode(ERRCODE_CHECK_VIOLATION),
 											 errmsg("The role has members. It must be empty before it can be dropped.")));
 
+								if (drop_user && strcmp(rolspec->rolename, "guest") == 0)
+								{
+									if (guest_has_dbaccess(db_name))
+									{
+										if (strcmp(db_name, "master") == 0 || strcmp(db_name, "tempdb") == 0)
+											ereport(ERROR,
+												(errcode(ERRCODE_CHECK_VIOLATION),
+												 errmsg("Cannot disable access to the guest user in master or tempdb.")));
+										else
+											alter_user_can_connect(false, rolspec->rolename, db_name);
+										return;
+									}
+									else
+										ereport(ERROR,
+											(errcode(ERRCODE_CHECK_VIOLATION),
+											 errmsg("User 'guest' cannot be dropped, it can only be disabled. "
+											"The user is already disabled in the current database.")));
+								}
+
 								pfree(rolspec->rolename);
 								rolspec->rolename = user_name;
 							}
