@@ -250,7 +250,7 @@ EXCEPTION
                   HINT := 'Change "precision" parameter to the proper value and try again.';
 
    WHEN invalid_parameter_value THEN
-      RAISE USING MESSAGE := pg_catalog.format('Specified scale %s is invalid.', v_precision),
+      RAISE USING MESSAGE := format('Specified scale %s is invalid.', v_precision),
                   DETAIL := 'Use of incorrect "precision" parameter value during conversion process.',
                   HINT := 'Change "precision" parameter to the proper value and try again.';
 
@@ -263,9 +263,9 @@ EXCEPTION
       GET STACKED DIAGNOSTICS v_err_message = MESSAGE_TEXT;
       v_err_message := upper(split_part(v_err_message, ' ', 1));
 
-      RAISE USING MESSAGE := pg_catalog.format('Error while trying to cast to %s data type.', v_err_message),
-                  DETAIL := pg_catalog.format('Source value is out of %s data type range.', v_err_message),
-                  HINT := pg_catalog.format('Correct the source value you are trying to cast to %s data type and try again.',
+      RAISE USING MESSAGE := format('Error while trying to cast to %s data type.', v_err_message),
+                  DETAIL := format('Source value is out of %s data type range.', v_err_message),
+                  HINT := format('Correct the source value you are trying to cast to %s data type and try again.',
                                  v_err_message);
 END;
 $BODY$
@@ -295,7 +295,7 @@ EXCEPTION
         GET STACKED DIAGNOSTICS v_err_message = MESSAGE_TEXT;
         v_err_message := substring(lower(v_err_message), 'numeric\:\s\"(.*)\"');
 
-        RAISE USING MESSAGE := pg_catalog.format('Error while trying to convert "%s" value to NUMERIC data type.', v_err_message),
+        RAISE USING MESSAGE := format('Error while trying to convert "%s" value to NUMERIC data type.', v_err_message),
                     DETAIL := 'Supplied string value contains illegal characters.',
                     HINT := 'Correct supplied value, remove all illegal characters and try again.';
 END;
@@ -361,9 +361,9 @@ EXCEPTION
         GET STACKED DIAGNOSTICS v_err_message = MESSAGE_TEXT;
         v_err_message := upper(split_part(v_err_message, ' ', 1));
 
-        RAISE USING MESSAGE := pg_catalog.format('Error while trying to cast to %s data type.', v_err_message),
-                    DETAIL := pg_catalog.format('Source value is out of %s data type range.', v_err_message),
-                    HINT := pg_catalog.format('Correct the source value you are trying to cast to %s data type and try again.',
+        RAISE USING MESSAGE := format('Error while trying to cast to %s data type.', v_err_message),
+                    DETAIL := format('Source value is out of %s data type range.', v_err_message),
+                    HINT := format('Correct the source value you are trying to cast to %s data type and try again.',
                                    v_err_message);
 END;
 $BODY$
@@ -392,7 +392,7 @@ EXCEPTION
         GET STACKED DIAGNOSTICS v_err_message = MESSAGE_TEXT;
         v_err_message := substring(lower(v_err_message), 'numeric\:\s\"(.*)\"');
 
-        RAISE USING MESSAGE := pg_catalog.format('Error while trying to convert "%s" value to NUMERIC data type.', v_err_message),
+        RAISE USING MESSAGE := format('Error while trying to convert "%s" value to NUMERIC data type.', v_err_message),
                     DETAIL := 'Supplied string value contains illegal characters.',
                     HINT := 'Correct supplied value, remove all illegal characters and try again.';
 END;
@@ -516,49 +516,47 @@ BEGIN
             RETURN NULL;
         END IF;
 
-        if obj_type <> '' then
+        if object_type <> '' then
             case
                 -- Schema does not apply as much to temp objects.
-                when upper(obj_type) in ('S', 'U', 'V', 'IT', 'ET', 'SO') and is_temp_object then
-                    id := (select reloid from sys.babelfish_get_enr_list() where lower(relname) = obj_name limit 1);
+                when upper(object_type) in ('S', 'U', 'V', 'IT', 'ET', 'SO') and is_temp_object then
+	            id := (select reloid from sys.babelfish_get_enr_list() where lower(relname) = obj_name limit 1);
 
-                when upper(obj_type) in ('S', 'U', 'V', 'IT', 'ET', 'SO') and not is_temp_object then
-                    id := (select oid from pg_class where lower(relname) = obj_name 
+                when upper(object_type) in ('S', 'U', 'V', 'IT', 'ET', 'SO') and not is_temp_object then
+	            id := (select oid from pg_class where lower(relname) = obj_name 
                             and relnamespace = schema_oid limit 1);
 
-                when upper(obj_type) in ('C', 'D', 'F', 'PK', 'UQ') then
-                    id := (select oid from pg_constraint where lower(conname) = obj_name 
+                when upper(object_type) in ('C', 'D', 'F', 'PK', 'UQ') then
+	            id := (select oid from pg_constraint where lower(conname) = obj_name 
                             and connamespace = schema_oid limit 1);
 
-                when upper(obj_type) in ('AF', 'FN', 'FS', 'FT', 'IF', 'P', 'PC', 'TF', 'RF', 'X') then
-                    id := (select oid from pg_proc where lower(proname) = obj_name 
+                when upper(object_type) in ('AF', 'FN', 'FS', 'FT', 'IF', 'P', 'PC', 'TF', 'RF', 'X') then
+	            id := (select oid from pg_proc where lower(proname) = obj_name 
                             and pronamespace = schema_oid limit 1);
 
-                when upper(obj_type) in ('TR', 'TA') then
-                    id := (select oid from pg_trigger where lower(tgname) = obj_name limit 1);
+                when upper(object_type) in ('TR', 'TA') then
+	            id := (select oid from pg_trigger where lower(tgname) = obj_name limit 1);
 
                 -- Throwing exception as a reminder to add support in the future.
-                when upper(obj_type) in ('R', 'EC', 'PG', 'SN', 'SQ', 'TT') then
+                when upper(object_type) in ('R', 'EC', 'PG', 'SN', 'SQ', 'TT') then
                     RAISE EXCEPTION 'Object type currently unsupported.';
 
-                -- unsupported obj_type
+                -- unsupported object_type
                 else id := null;
             end case;
         else
-            if not is_temp_object then 
-                id := (
-                    select oid from pg_class where lower(relname) = obj_name
-                        and relnamespace = schema_oid
-                    union
-                    select oid from pg_constraint where lower(conname) = obj_name
-                        and connamespace = schema_oid
-                    union
-                    select oid from pg_proc where lower(proname) = obj_name
-                        and pronamespace = schema_oid
-                    union
-                    select oid from pg_trigger where lower(tgname) = obj_name
-                    limit 1
-                );
+            if not is_temp_object then id := (
+                                            select oid from pg_class where lower(relname) = obj_name
+                                                and relnamespace = schema_oid
+				            union
+			                select oid from pg_constraint where lower(conname) = obj_name
+				            and connamespace = schema_oid
+                                                union
+			                select oid from pg_proc where lower(proname) = obj_name
+				            and pronamespace = schema_oid
+                                                union
+			                select oid from pg_trigger where lower(tgname) = obj_name
+			                limit 1);
             else
                 -- temp object without "object_type" in-argument
                 id := (select reloid from sys.babelfish_get_enr_list() where lower(relname) = obj_name limit 1);
@@ -630,7 +628,7 @@ EXCEPTION
                     HINT := 'Change "precision" parameter to the proper value and try again.';
 
     WHEN invalid_parameter_value THEN
-        RAISE USING MESSAGE := pg_catalog.format('Specified scale %s is invalid.', v_precision),
+        RAISE USING MESSAGE := format('Specified scale %s is invalid.', v_precision),
                     DETAIL := 'Use of incorrect "precision" parameter value during conversion process.',
                     HINT := 'Change "precision" parameter to the proper value and try again.';
 
@@ -643,9 +641,9 @@ EXCEPTION
         GET STACKED DIAGNOSTICS v_err_message = MESSAGE_TEXT;
         v_err_message := upper(split_part(v_err_message, ' ', 1));
 
-        RAISE USING MESSAGE := pg_catalog.format('Error while trying to cast to %s data type.', v_err_message),
-                    DETAIL := pg_catalog.format('Source value is out of %s data type range.', v_err_message),
-                    HINT := pg_catalog.format('Correct the source value you are trying to cast to %s data type and try again.',
+        RAISE USING MESSAGE := format('Error while trying to cast to %s data type.', v_err_message),
+                    DETAIL := format('Source value is out of %s data type range.', v_err_message),
+                    HINT := format('Correct the source value you are trying to cast to %s data type and try again.',
                                    v_err_message);
 END;
 $BODY$
@@ -672,7 +670,7 @@ EXCEPTION
         GET STACKED DIAGNOSTICS v_err_message = MESSAGE_TEXT;
         v_err_message := substring(lower(v_err_message), 'numeric\:\s\"(.*)\"');
 
-        RAISE USING MESSAGE := pg_catalog.format('Error while trying to convert "%s" value to NUMERIC data type.', v_err_message),
+        RAISE USING MESSAGE := format('Error while trying to convert "%s" value to NUMERIC data type.', v_err_message),
                     DETAIL := 'Supplied string value contains illegal characters.',
                     HINT := 'Correct supplied value, remove all illegal characters and try again.';
 END;
@@ -898,7 +896,7 @@ CREATE OR REPLACE FUNCTION sys.space(IN number INTEGER, OUT result SYS.VARCHAR) 
 -- sys.varchar has default length of 1, so we have to pass in 'number' to be the
 -- type modifier.
 BEGIN
-	EXECUTE pg_catalog.format(E'SELECT repeat(\' \', %s)::SYS.VARCHAR(%s)', number, number) INTO result;
+	EXECUTE format(E'SELECT repeat(\' \', %s)::SYS.VARCHAR(%s)', number, number) INTO result;
 END;
 $$
 STRICT
@@ -1232,6 +1230,46 @@ $$
 STRICT
 LANGUAGE plpgsql IMMUTABLE;
 
+CREATE OR REPLACE FUNCTION sys.daydiff_between_dates(IN d1 INTEGER, IN m1 INTEGER, IN y1 INTEGER, IN d2 INTEGER, IN m2 INTEGER, IN y2 INTEGER) RETURNS INTEGER AS $$
+DECLARE
+	i INTEGER;
+	n1 INTEGER;
+	n2 INTEGER;
+BEGIN
+	n1 = y1 * 365 + d1;
+	FOR i in 0 .. m1-2 LOOP
+		IF (i = 0 OR i = 2 OR i = 4 OR i = 6 OR i = 7 OR i = 9 OR i = 11) THEN
+			n1 = n1 + 31;
+		ELSIF (i = 3 OR i = 5 OR i = 8 OR i = 10) THEN
+			n1 = n1 + 30;
+		ELSIF (i = 1) THEN
+			n1 = n1 + 28;
+		END IF;
+	END LOOP;
+	IF m1 <= 2 THEN
+		y1 = y1 - 1;
+	END IF;
+	n1 = n1 + (y1/4 - y1/100 + y1/400);
+
+	n2 = y2 * 365 + d2;
+	FOR i in 0 .. m2-2 LOOP
+		IF (i = 0 OR i = 2 OR i = 4 OR i = 6 OR i = 7 OR i = 9 OR i = 11) THEN
+			n2 = n2 + 31;
+		ELSIF (i = 3 OR i = 5 OR i = 8 OR i = 10) THEN
+			n2 = n2 + 30;
+		ELSIF (i = 1) THEN
+			n2 = n2 + 28;
+		END IF;
+	END LOOP;
+	IF m2 <= 2 THEN
+		y2 = y2 - 1;
+	END IF;
+	n2 = n2 + (y2/4 - y2/100 + y2/400);
+	return n1 - n2;
+END
+$$
+LANGUAGE plpgsql IMMUTABLE;
+
 CREATE OR REPLACE FUNCTION sys.datediff_internal_df(IN datepart PG_CATALOG.TEXT, IN startdate anyelement, IN enddate anyelement) RETURNS INTEGER AS $$
 DECLARE
 	result INTEGER;
@@ -1243,6 +1281,12 @@ DECLARE
 	second_diff INTEGER;
 	millisecond_diff INTEGER;
 	microsecond_diff INTEGER;
+	y1 INTEGER;
+	m1 INTEGER;
+	d1 INTEGER;
+	y2 INTEGER;
+	m2 INTEGER;
+	d2 INTEGER;
 BEGIN
 	CASE datepart
 	WHEN 'year' THEN
@@ -1260,14 +1304,19 @@ BEGIN
 		day_diff = sys.datepart('day', enddate OPERATOR(sys.-) startdate);
 		result = day_diff;
 	WHEN 'day' THEN
-		day_diff = sys.datepart('day', enddate OPERATOR(sys.-) startdate);
-		result = day_diff;
+		y1 = sys.datepart('year', enddate);
+		m1 = sys.datepart('month', enddate);
+		d1 = sys.datepart('day', enddate);
+		y2 = sys.datepart('year', startdate);
+		m2 = sys.datepart('month', startdate);
+		d2 = sys.datepart('day', startdate);
+		result = sys.daydiff_between_dates(d1, m1, y1, d2, m2, y2);
 	WHEN 'week' THEN
 		day_diff = sys.datepart('day', enddate OPERATOR(sys.-) startdate);
 		result = day_diff / 7;
 	WHEN 'hour' THEN
 		day_diff = sys.datepart('day', enddate OPERATOR(sys.-) startdate);
-		hour_diff = sys.datepart('hour', enddate OPERATOR(sys.-) startdate);
+		hour_diff = ABS(sys.datepart('hour', enddate) - sys.datepart('hour', startdate));
 		result = day_diff * 24 + hour_diff;
 	WHEN 'minute' THEN
 		day_diff = sys.datepart('day', enddate OPERATOR(sys.-) startdate);
@@ -1329,6 +1378,12 @@ DECLARE
 	second_diff INTEGER;
 	millisecond_diff INTEGER;
 	microsecond_diff INTEGER;
+	y1 INTEGER;
+	m1 INTEGER;
+	d1 INTEGER;
+	y2 INTEGER;
+	m2 INTEGER;
+	d2 INTEGER;
 BEGIN
 	CASE datepart
 	WHEN 'year' THEN
@@ -1343,17 +1398,22 @@ BEGIN
 		month_diff = date_part('month', enddate)::INTEGER - date_part('month', startdate)::INTEGER;
 		result = year_diff * 12 + month_diff;
 	WHEN 'doy', 'y' THEN
-		day_diff = date_part('day', enddate OPERATOR(sys.-) startdate)::INTEGER;
+		day_diff = sys.datepart('day', enddate OPERATOR(sys.-) startdate);
 		result = day_diff;
 	WHEN 'day' THEN
-		day_diff = date_part('day', enddate OPERATOR(sys.-) startdate)::INTEGER;
-		result = day_diff;
+		y1 = date_part('year', enddate)::INTEGER;
+		m1 = date_part('month', enddate)::INTEGER;
+		d1 = date_part('day', enddate)::INTEGER;
+		y2 = date_part('year', startdate)::INTEGER;
+		m2 = date_part('month', startdate)::INTEGER;
+		d2 = date_part('day', startdate)::INTEGER;
+		result = sys.daydiff_between_dates(d1, m1, y1, d2, m2, y2);
 	WHEN 'week' THEN
 		day_diff = date_part('day', enddate OPERATOR(sys.-) startdate)::INTEGER;
 		result = day_diff / 7;
 	WHEN 'hour' THEN
 		day_diff = date_part('day', enddate OPERATOR(sys.-) startdate)::INTEGER;
-		hour_diff = date_part('hour', enddate OPERATOR(sys.-) startdate)::INTEGER;
+		hour_diff = ABS(date_part('hour', enddate)::INTEGER - date_part('hour', startdate)::INTEGER);
 		result = day_diff * 24 + hour_diff;
 	WHEN 'minute' THEN
 		day_diff = date_part('day', enddate OPERATOR(sys.-) startdate)::INTEGER;
@@ -1537,6 +1597,9 @@ CREATE OR REPLACE FUNCTION sys.servername()
         RETURNS sys.NVARCHAR(128)  AS 'babelfishpg_tsql' LANGUAGE C;
 
 CREATE OR REPLACE FUNCTION sys.servicename()
+        RETURNS sys.NVARCHAR(128)  AS 'babelfishpg_tsql' LANGUAGE C;
+
+CREATE OR REPLACE FUNCTION sys.language()
         RETURNS sys.NVARCHAR(128)  AS 'babelfishpg_tsql' LANGUAGE C;
 
 -- In tsql @@max_precision represents max precision that server supports
@@ -1745,11 +1808,11 @@ value	sys.sql_variant
 as $$
 begin
 -- currently only support COLUMN property
-IF (((coalesce(property_name COLLATE "C", '')) = '') or
-    ((UPPER(coalesce(property_name COLLATE "C", ''))) = 'COLUMN' COLLATE "C")) THEN
-    IF (((LOWER(coalesce(level0_object_type COLLATE "C", ''))) = 'schema' COLLATE "C") and
-	 	    ((LOWER(coalesce(level1_object_type COLLATE "C", ''))) = 'table' COLLATE "C") and
-	 	    ((LOWER(coalesce(level2_object_type COLLATE "C", ''))) = 'column' COLLATE "C")) THEN
+IF (((SELECT coalesce(property_name COLLATE "C", '')) = '') or
+    ((SELECT UPPER(coalesce(property_name COLLATE "C", ''))) = 'COLUMN' COLLATE "C")) THEN
+	IF (((SELECT LOWER(coalesce(level0_object_type COLLATE "C", ''))) = 'schema' COLLATE "C") and
+	    ((SELECT LOWER(coalesce(level1_object_type COLLATE "C", ''))) = 'table' COLLATE "C") and
+	    ((SELECT LOWER(coalesce(level2_object_type COLLATE "C", ''))) = 'column' COLLATE "C")) THEN
 		RETURN query 
 		select CAST('COLUMN' AS sys.sysname) as objtype,
 		       CAST(t3.column_name AS sys.sysname) as objname,
@@ -1758,8 +1821,8 @@ IF (((coalesce(property_name COLLATE "C", '')) = '') or
 		from sys.extended_properties t1, pg_catalog.pg_class t2, information_schema.columns t3
 		where t1.major_id = t2.oid and 
 			  t2.relname = t3.table_name and 
-              t2.relname = (coalesce(level1_object_name COLLATE "C", '')) and 
-              t3.column_name = (coalesce(level2_object_name COLLATE "C", ''));
+		      t2.relname = (SELECT coalesce(level1_object_name COLLATE "C", '')) and 
+			  t3.column_name = (SELECT coalesce(level2_object_name COLLATE "C", ''));
 	END IF;
 END IF;
 RETURN;
@@ -2217,7 +2280,7 @@ DECLARE
     function_signature text;
     qualified_name text;
     return_value integer;
-    cs_as_securable text COLLATE "C" := securable;
+   	cs_as_securable text COLLATE "C" := securable;
     cs_as_securable_class text COLLATE "C" := securable_class;
     cs_as_permission text COLLATE "C" := permission;
     cs_as_sub_securable text COLLATE "C" := sub_securable;
@@ -2226,7 +2289,7 @@ BEGIN
     return_value := NULL;
 
     -- Lower-case to avoid case issues, remove trailing whitespace to match SQL SERVER behavior
-    -- Objects created in Babelfish are stored in lower-case in pg_class/pg_proc
+	-- Objects created in Babelfish are stored in lower-case in pg_class/pg_proc
     cs_as_securable = lower(rtrim(cs_as_securable));
     cs_as_securable_class = lower(rtrim(cs_as_securable_class));
     cs_as_permission = lower(rtrim(cs_as_permission));
@@ -2398,8 +2461,8 @@ BEGIN
                 AND pronamespace = namespace_id;
     END IF;
 
-    return_value := (
-        SELECT CASE
+	return_value := (
+        SELECT CASE            
             WHEN cs_as_permission = 'any' THEN babelfish_has_any_privilege(object_type, pg_schema, object_name)
 
             WHEN object_type = 'column'
@@ -2433,14 +2496,14 @@ BEGIN
                 END
 
             ELSE NULL
-        END
-    );
-
-    RETURN return_value;
+		END
+	);
+ 		  
+	RETURN return_value;
     EXCEPTION WHEN OTHERS THEN RETURN NULL;
 END;
 $$;
-
+ 		  
 GRANT EXECUTE ON FUNCTION sys.has_perms_by_name(
     securable sys.SYSNAME, 
     securable_class sys.nvarchar(60), 
@@ -2498,7 +2561,6 @@ RETURNS integer
 LANGUAGE plpgsql
 STRICT
 AS $$
-
 declare extra_bytes CONSTANT integer := 4;
 declare return_value integer;
 begin
@@ -2617,15 +2679,15 @@ RETURNS sys.NVARCHAR
 AS 'babelfishpg_tsql', 'tsql_json_query' LANGUAGE C IMMUTABLE PARALLEL SAFE;
 
 CREATE OR REPLACE FUNCTION sys.openjson_object(json_string text)
-RETURNS TABLE
+RETURNS TABLE 
 (
     key sys.NVARCHAR(4000),
     value sys.NVARCHAR,
     type INTEGER
 )
-AS
+AS 
 $BODY$
-SELECT  key,
+SELECT  key, 
         CASE json_typeof(value) WHEN 'null'     THEN NULL
                                 ELSE            TRIM (BOTH '"' FROM value::TEXT)
         END,
@@ -2641,15 +2703,15 @@ $BODY$
 LANGUAGE SQL;
 
 CREATE OR REPLACE FUNCTION sys.openjson_array(json_string text)
-RETURNS TABLE
+RETURNS TABLE 
 (
     key sys.NVARCHAR(4000),
     value sys.NVARCHAR,
     type INTEGER
 )
-AS
+AS 
 $BODY$
-SELECT  (row_number() over ())-1,
+SELECT  (row_number() over ())-1, 
         CASE json_typeof(value) WHEN 'null'     THEN NULL
                                 ELSE            TRIM (BOTH '"' FROM value::TEXT)
         END,
@@ -2665,7 +2727,7 @@ $BODY$
 LANGUAGE SQL;
 
 CREATE OR REPLACE FUNCTION sys.openjson_simple(json_string text, path text default '$')
-RETURNS TABLE
+RETURNS TABLE 
 (
     key sys.NVARCHAR(4000),
     value sys.NVARCHAR,
@@ -2918,9 +2980,6 @@ AS $$
     SELECT CAST(NULL AS SYS.VARBINARY);
 $$ 
 LANGUAGE SQL IMMUTABLE PARALLEL RESTRICTED;
-
-CREATE OR REPLACE FUNCTION sys.language()
-RETURNS sys.NVARCHAR(128)  AS 'babelfishpg_tsql' LANGUAGE C;
 
 CREATE OR REPLACE FUNCTION sys.host_name()
 RETURNS sys.NVARCHAR(128)  AS 'babelfishpg_tsql' LANGUAGE C IMMUTABLE PARALLEL SAFE;
