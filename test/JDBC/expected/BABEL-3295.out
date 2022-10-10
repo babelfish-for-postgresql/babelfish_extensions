@@ -100,7 +100,7 @@ select * from babel_3295_t1 (index(index_babel_3295_t1_b1)) where b1 = 1
 go
 ~~START~~
 text
-Query Text: /*+ IndexScan(babel_3295_t1 index_babel_3295_t1_b1babel_329f054c0439acbb57ada93af5f2888cbf7) */ select * from babel_3295_t1                                 where b1 = 1
+Query Text: select/*+ IndexScan(babel_3295_t1 index_babel_3295_t1_b1babel_329f054c0439acbb57ada93af5f2888cbf7) */ * from babel_3295_t1                                 where b1 = 1
 Index Scan using index_babel_3295_t1_b1babel_329f054c0439acbb57ada93af5f2888cbf7 on babel_3295_t1
   Index Cond: (b1 = 1)
 ~~END~~
@@ -110,7 +110,7 @@ select * from babel_3295_t1 where b1 = 1 option(table hint(babel_3295_t1, index(
 go
 ~~START~~
 text
-Query Text: /*+ IndexScan(babel_3295_t1 index_babel_3295_t1_b1babel_329f054c0439acbb57ada93af5f2888cbf7) */ select * from babel_3295_t1 where b1 = 1                                                                 
+Query Text: select/*+ IndexScan(babel_3295_t1 index_babel_3295_t1_b1babel_329f054c0439acbb57ada93af5f2888cbf7) */ * from babel_3295_t1 where b1 = 1                                                                 
 Index Scan using index_babel_3295_t1_b1babel_329f054c0439acbb57ada93af5f2888cbf7 on babel_3295_t1
   Index Cond: (b1 = 1)
 ~~END~~
@@ -120,7 +120,7 @@ select * from babel_3295_t1 inner merge join babel_3295_t2 on babel_3295_t1.a1 =
 go
 ~~START~~
 text
-Query Text: /*+ MergeJoin(babel_3295_t1 babel_3295_t2) Leading(babel_3295_t1 babel_3295_t2)*/ select * from babel_3295_t1 inner       join babel_3295_t2 on babel_3295_t1.a1 = babel_3295_t2.a2
+Query Text: select/*+ MergeJoin(babel_3295_t1 babel_3295_t2) Leading(babel_3295_t1 babel_3295_t2)*/ * from babel_3295_t1 inner       join babel_3295_t2 on babel_3295_t1.a1 = babel_3295_t2.a2
 Merge Join
   Merge Cond: (babel_3295_t1.a1 = babel_3295_t2.a2)
   ->  Index Scan using babel_3295_t1_pkey on babel_3295_t1
@@ -132,7 +132,7 @@ select * from babel_3295_t1 join babel_3295_t2 on babel_3295_t1.a1 = babel_3295_
 go
 ~~START~~
 text
-Query Text: /*+ Set(enable_nestloop off) Set(enable_hashjoin off) */ select * from babel_3295_t1 join babel_3295_t2 on babel_3295_t1.a1 = babel_3295_t2.a2                   
+Query Text: select/*+ Set(enable_nestloop off) Set(enable_hashjoin off) */ * from babel_3295_t1 join babel_3295_t2 on babel_3295_t1.a1 = babel_3295_t2.a2                   
 Merge Join
   Merge Cond: (babel_3295_t1.a1 = babel_3295_t2.a2)
   ->  Index Scan using babel_3295_t1_pkey on babel_3295_t1
