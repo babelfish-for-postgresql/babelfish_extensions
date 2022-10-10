@@ -233,7 +233,7 @@ BEGIN
       RAISE invalid_parameter_value;
    END IF;
 
-   v_calc_seconds := format('%s.%s',
+   v_calc_seconds := pg_catalog.format('%s.%s',
                             floor(p_seconds)::SMALLINT,
                             substring(rpad(lpad(v_fractions, v_precision, '0'), 7, '0'), 1, 6))::NUMERIC;
 
@@ -250,7 +250,7 @@ EXCEPTION
                   HINT := 'Change "precision" parameter to the proper value and try again.';
 
    WHEN invalid_parameter_value THEN
-      RAISE USING MESSAGE := format('Specified scale %s is invalid.', v_precision),
+      RAISE USING MESSAGE := pg_catalog.format('Specified scale %s is invalid.', v_precision),
                   DETAIL := 'Use of incorrect "precision" parameter value during conversion process.',
                   HINT := 'Change "precision" parameter to the proper value and try again.';
 
@@ -263,9 +263,9 @@ EXCEPTION
       GET STACKED DIAGNOSTICS v_err_message = MESSAGE_TEXT;
       v_err_message := upper(split_part(v_err_message, ' ', 1));
 
-      RAISE USING MESSAGE := format('Error while trying to cast to %s data type.', v_err_message),
-                  DETAIL := format('Source value is out of %s data type range.', v_err_message),
-                  HINT := format('Correct the source value you are trying to cast to %s data type and try again.',
+      RAISE USING MESSAGE := pg_catalog.format('Error while trying to cast to %s data type.', v_err_message),
+                  DETAIL := pg_catalog.format('Source value is out of %s data type range.', v_err_message),
+                  HINT := pg_catalog.format('Correct the source value you are trying to cast to %s data type and try again.',
                                  v_err_message);
 END;
 $BODY$
@@ -295,7 +295,7 @@ EXCEPTION
         GET STACKED DIAGNOSTICS v_err_message = MESSAGE_TEXT;
         v_err_message := substring(lower(v_err_message), 'numeric\:\s\"(.*)\"');
 
-        RAISE USING MESSAGE := format('Error while trying to convert "%s" value to NUMERIC data type.', v_err_message),
+        RAISE USING MESSAGE := pg_catalog.format('Error while trying to convert "%s" value to NUMERIC data type.', v_err_message),
                     DETAIL := 'Supplied string value contains illegal characters.',
                     HINT := 'Correct supplied value, remove all illegal characters and try again.';
 END;
@@ -334,7 +334,7 @@ BEGIN
 
     v_milliseconds := sys.babelfish_round_fractseconds(p_milliseconds::INTEGER);
 
-    v_calc_seconds := format('%s.%s',
+    v_calc_seconds := pg_catalog.format('%s.%s',
                              floor(p_seconds)::SMALLINT,
                              CASE v_milliseconds
                                 WHEN 1000 THEN '0'
@@ -361,9 +361,9 @@ EXCEPTION
         GET STACKED DIAGNOSTICS v_err_message = MESSAGE_TEXT;
         v_err_message := upper(split_part(v_err_message, ' ', 1));
 
-        RAISE USING MESSAGE := format('Error while trying to cast to %s data type.', v_err_message),
-                    DETAIL := format('Source value is out of %s data type range.', v_err_message),
-                    HINT := format('Correct the source value you are trying to cast to %s data type and try again.',
+        RAISE USING MESSAGE := pg_catalog.format('Error while trying to cast to %s data type.', v_err_message),
+                    DETAIL := pg_catalog.format('Source value is out of %s data type range.', v_err_message),
+                    HINT := pg_catalog.format('Correct the source value you are trying to cast to %s data type and try again.',
                                    v_err_message);
 END;
 $BODY$
@@ -392,7 +392,7 @@ EXCEPTION
         GET STACKED DIAGNOSTICS v_err_message = MESSAGE_TEXT;
         v_err_message := substring(lower(v_err_message), 'numeric\:\s\"(.*)\"');
 
-        RAISE USING MESSAGE := format('Error while trying to convert "%s" value to NUMERIC data type.', v_err_message),
+        RAISE USING MESSAGE := pg_catalog.format('Error while trying to convert "%s" value to NUMERIC data type.', v_err_message),
                     DETAIL := 'Supplied string value contains illegal characters.',
                     HINT := 'Correct supplied value, remove all illegal characters and try again.';
 END;
@@ -616,7 +616,7 @@ BEGIN
         RAISE numeric_value_out_of_range;
     END IF;
 
-    v_calc_seconds := format('%s.%s',
+    v_calc_seconds := pg_catalog.format('%s.%s',
                              floor(p_seconds)::SMALLINT,
                              substring(rpad(lpad(v_fractions, v_precision, '0'), 7, '0'), 1, 6))::NUMERIC;
 
@@ -630,7 +630,7 @@ EXCEPTION
                     HINT := 'Change "precision" parameter to the proper value and try again.';
 
     WHEN invalid_parameter_value THEN
-        RAISE USING MESSAGE := format('Specified scale %s is invalid.', v_precision),
+        RAISE USING MESSAGE := pg_catalog.format('Specified scale %s is invalid.', v_precision),
                     DETAIL := 'Use of incorrect "precision" parameter value during conversion process.',
                     HINT := 'Change "precision" parameter to the proper value and try again.';
 
@@ -643,9 +643,9 @@ EXCEPTION
         GET STACKED DIAGNOSTICS v_err_message = MESSAGE_TEXT;
         v_err_message := upper(split_part(v_err_message, ' ', 1));
 
-        RAISE USING MESSAGE := format('Error while trying to cast to %s data type.', v_err_message),
-                    DETAIL := format('Source value is out of %s data type range.', v_err_message),
-                    HINT := format('Correct the source value you are trying to cast to %s data type and try again.',
+        RAISE USING MESSAGE := pg_catalog.format('Error while trying to cast to %s data type.', v_err_message),
+                    DETAIL := pg_catalog.format('Source value is out of %s data type range.', v_err_message),
+                    HINT := pg_catalog.format('Correct the source value you are trying to cast to %s data type and try again.',
                                    v_err_message);
 END;
 $BODY$
@@ -672,7 +672,7 @@ EXCEPTION
         GET STACKED DIAGNOSTICS v_err_message = MESSAGE_TEXT;
         v_err_message := substring(lower(v_err_message), 'numeric\:\s\"(.*)\"');
 
-        RAISE USING MESSAGE := format('Error while trying to convert "%s" value to NUMERIC data type.', v_err_message),
+        RAISE USING MESSAGE := pg_catalog.format('Error while trying to convert "%s" value to NUMERIC data type.', v_err_message),
                     DETAIL := 'Supplied string value contains illegal characters.',
                     HINT := 'Correct supplied value, remove all illegal characters and try again.';
 END;
@@ -804,7 +804,7 @@ CREATE OR REPLACE FUNCTION sys.space(IN number INTEGER, OUT result SYS.VARCHAR) 
 -- sys.varchar has default length of 1, so we have to pass in 'number' to be the
 -- type modifier.
 BEGIN
-	EXECUTE format(E'SELECT repeat(\' \', %s)::SYS.VARCHAR(%s)', number, number) INTO result;
+	EXECUTE pg_catalog.format(E'SELECT repeat(\' \', %s)::SYS.VARCHAR(%s)', number, number) INTO result;
 END;
 $$
 STRICT
@@ -994,13 +994,7 @@ CREATE OR REPLACE FUNCTION sys.dateadd(IN datepart PG_CATALOG.TEXT, IN num INTEG
 AS
 $body$
 BEGIN
-    IF pg_typeof(startdate) = 'sys.DATETIMEOFFSET'::regtype THEN
-        return sys.dateadd_internal_df(datepart, num,
-                     startdate);
-    ELSE
-        return sys.dateadd_internal(datepart, num,
-                     startdate);
-    END IF;
+    RETURN sys.dateadd_internal(datepart, num, startdate);
 END;
 $body$
 LANGUAGE plpgsql IMMUTABLE;
@@ -1078,44 +1072,6 @@ $$
 STRICT
 LANGUAGE plpgsql IMMUTABLE;
 
-CREATE OR REPLACE FUNCTION sys.dateadd_internal_df(IN datepart PG_CATALOG.TEXT, IN num INTEGER, IN startdate datetimeoffset) RETURNS datetimeoffset AS $$
-BEGIN
-	CASE datepart
-	WHEN 'year' THEN
-		RETURN startdate OPERATOR(sys.+) make_interval(years => num);
-	WHEN 'quarter' THEN
-		RETURN startdate OPERATOR(sys.+) make_interval(months => num * 3);
-	WHEN 'month' THEN
-		RETURN startdate OPERATOR(sys.+) make_interval(months => num);
-	WHEN 'dayofyear', 'y' THEN
-		RETURN startdate OPERATOR(sys.+) make_interval(days => num);
-	WHEN 'day' THEN
-		RETURN startdate OPERATOR(sys.+) make_interval(days => num);
-	WHEN 'week' THEN
-		RETURN startdate OPERATOR(sys.+) make_interval(weeks => num);
-	WHEN 'weekday' THEN
-		RETURN startdate OPERATOR(sys.+) make_interval(days => num);
-	WHEN 'hour' THEN
-		RETURN startdate OPERATOR(sys.+) make_interval(hours => num);
-	WHEN 'minute' THEN
-		RETURN startdate OPERATOR(sys.+) make_interval(mins => num);
-	WHEN 'second' THEN
-		RETURN startdate OPERATOR(sys.+) make_interval(secs => num);
-	WHEN 'millisecond' THEN
-		RETURN startdate OPERATOR(sys.+) make_interval(secs => (num::numeric) * 0.001);
-    WHEN 'microsecond' THEN
-        RAISE EXCEPTION 'The datepart % is not supported by date function dateadd for data type time.', datepart;
-	WHEN 'nanosecond' THEN
-		-- Best we can do - Postgres does not support nanosecond precision
-		RETURN startdate;
-	ELSE
-		RAISE EXCEPTION '"%" is not a recognized dateadd option.', datepart;
-	END CASE;
-END;
-$$
-STRICT
-LANGUAGE plpgsql IMMUTABLE;
-
 CREATE OR REPLACE FUNCTION sys.dateadd_internal(IN datepart PG_CATALOG.TEXT, IN num INTEGER, IN startdate ANYELEMENT) RETURNS ANYELEMENT AS $$
 BEGIN
     IF pg_typeof(startdate) = 'date'::regtype AND
@@ -1149,14 +1105,33 @@ BEGIN
 	WHEN 'second' THEN
 		RETURN startdate + make_interval(secs => num);
 	WHEN 'millisecond' THEN
-		RETURN startdate OPERATOR(sys.+) make_interval(secs => (num::numeric) * 0.001);
-    WHEN 'microsecond' THEN
-        RAISE EXCEPTION 'The datepart % is not supported by date function dateadd for data type time.', datepart;
+		RETURN startdate + make_interval(secs => (num::numeric) * 0.001);
+	WHEN 'microsecond' THEN
+        IF pg_typeof(startdate) = 'sys.datetimeoffset'::regtype THEN
+            RETURN startdate + make_interval(secs => (num::numeric) * 0.000001);
+        ELSIF pg_typeof(startdate) = 'time'::regtype THEN
+            RETURN startdate + make_interval(secs => (num::numeric) * 0.000001);
+        ELSIF pg_typeof(startdate) = 'sys.datetime2'::regtype THEN
+            RETURN startdate + make_interval(secs => (num::numeric) * 0.000001);
+        ELSIF pg_typeof(startdate) = 'sys.smalldatetime'::regtype THEN
+            RAISE EXCEPTION 'The datepart % is not supported by date function dateadd for data type smalldatetime.', datepart;
+        ELSE
+            RAISE EXCEPTION 'The datepart % is not supported by date function dateadd for data type datetime.', datepart;
+        END IF;
 	WHEN 'nanosecond' THEN
-		-- Best we can do - Postgres does not support nanosecond precision
-		RETURN startdate;
+        IF pg_typeof(startdate) = 'sys.datetimeoffset'::regtype THEN
+            RETURN startdate + make_interval(secs => TRUNC((num::numeric)* 0.000000001, 6));
+        ELSIF pg_typeof(startdate) = 'time'::regtype THEN
+            RETURN startdate + make_interval(secs => TRUNC((num::numeric)* 0.000000001, 6));
+        ELSIF pg_typeof(startdate) = 'sys.datetime2'::regtype THEN
+            RETURN startdate + make_interval(secs => TRUNC((num::numeric)* 0.000000001, 6));
+        ELSIF pg_typeof(startdate) = 'sys.smalldatetime'::regtype THEN
+            RAISE EXCEPTION 'The datepart % is not supported by date function dateadd for data type smalldatetime.', datepart;
+        ELSE
+            RAISE EXCEPTION 'The datepart % is not supported by date function dateadd for data type datetime.', datepart;
+        END IF;
 	ELSE
-		RAISE EXCEPTION '"%" is not a recognized dateadd option.', datepart;
+		RAISE EXCEPTION '''%'' is not a recognized dateadd option.', datepart;
 	END CASE;
 END;
 $$
@@ -2513,6 +2488,12 @@ RETURNS SETOF RECORD
 AS 'babelfishpg_tsql', 'tsql_stat_get_activity'
 LANGUAGE C VOLATILE STRICT;
 
+/*
+ * Table type can identified by reverse dependency between table and
+ * type in pg_depend.
+ * If a table is dependent upon it's row type with dependency type
+ * as DEPENDENCY_INTERNAL (i) then it's a T-SQL table type.
+ */
 CREATE OR REPLACE FUNCTION sys.is_table_type(object_id oid) RETURNS bool AS
 $BODY$
 SELECT
@@ -2520,10 +2501,11 @@ SELECT
     SELECT 1
     FROM pg_catalog.pg_type pt
     INNER JOIN pg_catalog.pg_depend dep
-    ON pt.typrelid = dep.objid
+    ON pt.typrelid = dep.objid AND pt.oid = dep.refobjid
     join sys.schemas sch on pt.typnamespace = sch.schema_id
     JOIN pg_catalog.pg_class pc ON pc.oid = dep.objid
-    WHERE pt.typtype = 'c' AND dep.deptype = 'i' AND pt.typrelid = object_id AND pc.relkind = 'r');
+    WHERE pt.typtype = 'c' AND dep.deptype = 'i' AND pt.typrelid = object_id AND pc.relkind = 'r'
+    AND dep.classid = 'pg_catalog.pg_class'::regclass AND dep.refclassid = 'pg_catalog.pg_type'::regclass);
 $BODY$
 LANGUAGE SQL VOLATILE STRICT;
 

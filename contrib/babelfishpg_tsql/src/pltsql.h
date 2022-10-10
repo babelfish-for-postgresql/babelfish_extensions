@@ -1942,7 +1942,7 @@ extern void UnlockLogicalDatabaseForSession(int16 dbid, LOCKMODE lockmode, bool 
 extern char *bpchar_to_cstring(const BpChar *bpchar);
 extern char *varchar_to_cstring(const VarChar *varchar);
 extern char *flatten_search_path(List *oid_list);
-extern const char *get_pltsql_function_signature(const char *funcname, int nargs, const Oid *argtypes);
+extern const char *get_pltsql_function_signature_internal(const char *funcname, int nargs, const Oid *argtypes);
 
 typedef struct
 {

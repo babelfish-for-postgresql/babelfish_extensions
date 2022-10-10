@@ -23,14 +23,14 @@ create procedure  BABEL_3360_vu_prepare_p4 as (select dateadd(microsecond, 56, n
 go
 
 create function BABEL_3360_vu_prepare_f1()
-returns datetime as
+returns datetime2 as
 begin
 return (select * from dateadd(millisecond, 56, cast('2016-12-26 23:29:29' as datetime2)));
 end
 go
 
 create function BABEL_3360_vu_prepare_f2()
-returns datetime as
+returns datetime2 as
 begin
 return (select * from dateadd(microsecond, 56, cast('2016-12-26 23:29:29' as datetime2)));
 end
