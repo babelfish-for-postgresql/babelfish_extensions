@@ -1,0 +1,2 @@
+DROP DATABASE test_db1
+GO

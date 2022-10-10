@@ -1,0 +1,60 @@
+sp_helpdb
+GO
+~~START~~
+nvarchar#!#nvarchar#!#nvarchar#!#int#!#nvarchar#!#nvarchar#!#tinyint
+master#!#<NULL>#!#jdbc_user#!#1#!#2022-10-10 #!#<NULL>#!#<NULL>
+tempdb#!#<NULL>#!#jdbc_user#!#2#!#2022-10-10 #!#<NULL>#!#<NULL>
+msdb#!#<NULL>#!#jdbc_user#!#4#!#2022-10-10 #!#<NULL>#!#<NULL>
+test_db1#!#<NULL>#!#jdbc_user#!#5#!#2022-10-10 #!#<NULL>#!#<NULL>
+~~END~~
+
+
+-- Executing sp_helpdb with already existing dbname as an input
+sp_helpdb 'master'
+GO
+~~START~~
+nvarchar#!#nvarchar#!#nvarchar#!#int#!#nvarchar#!#nvarchar#!#tinyint
+master#!#<NULL>#!#jdbc_user#!#1#!#2022-10-10 #!#<NULL>#!#<NULL>
+~~END~~
+
+~~START~~
+nchar#!#smallint#!#nchar#!#nvarchar#!#nvarchar#!#nvarchar#!#nvarchar#!#varchar
+<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>
+~~END~~
+
+sp_helpdb 'tempdb'
+GO
+~~START~~
+nvarchar#!#nvarchar#!#nvarchar#!#int#!#nvarchar#!#nvarchar#!#tinyint
+tempdb#!#<NULL>#!#jdbc_user#!#2#!#2022-10-10 #!#<NULL>#!#<NULL>
+~~END~~
+
+~~START~~
+nchar#!#smallint#!#nchar#!#nvarchar#!#nvarchar#!#nvarchar#!#nvarchar#!#varchar
+<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>
+~~END~~
+
+sp_helpdb 'msdb'
+GO
+~~START~~
+nvarchar#!#nvarchar#!#nvarchar#!#int#!#nvarchar#!#nvarchar#!#tinyint
+msdb#!#<NULL>#!#jdbc_user#!#4#!#2022-10-10 #!#<NULL>#!#<NULL>
+~~END~~
+
+~~START~~
+nchar#!#smallint#!#nchar#!#nvarchar#!#nvarchar#!#nvarchar#!#nvarchar#!#varchar
+<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>
+~~END~~
+
+sp_helpdb 'test_db1'
+GO
+~~START~~
+nvarchar#!#nvarchar#!#nvarchar#!#int#!#nvarchar#!#nvarchar#!#tinyint
+test_db1#!#<NULL>#!#jdbc_user#!#5#!#2022-10-10 #!#<NULL>#!#<NULL>
+~~END~~
+
+~~START~~
+nchar#!#smallint#!#nchar#!#nvarchar#!#nvarchar#!#nvarchar#!#nvarchar#!#varchar
+<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>
+~~END~~
+
