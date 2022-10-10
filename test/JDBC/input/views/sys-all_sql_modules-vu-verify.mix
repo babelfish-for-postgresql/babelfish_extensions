@@ -61,6 +61,9 @@ FROM sys.all_sql_modules
 WHERE definition = 'CREATE PROCEDURE dbo.sys_all_sql_modules_vu_prepare_p1 AS SELECT 1'
 GO
 
+SELECT * FROM sys.all_objects where object_id = OBJECT_ID('sys_all_sql_modules_vu_prepare_p1')
+GO
+
 -- Test for system function
 SELECT
     uses_ansi_nulls,
