@@ -99,4 +99,6 @@ extern void TDSStatementExceptionCallback(PLtsql_execstate *estate, PLtsql_stmt 
 extern void SendColumnMetadata(TupleDesc typeinfo, List *targetlist, int16 *formats);
 extern bool GetTdsEstateErrorData(int *number, int *severity, int *state);
 
+extern bool tds_disable_error_log_hook;
+
 #endif	/* TDS_H */
