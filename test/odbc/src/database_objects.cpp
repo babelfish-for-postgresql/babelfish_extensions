@@ -1,15 +1,14 @@
 #include "database_objects.h"
 #include "query_generator.h"
 
-#include <iostream>
-
 using std::string;
 using std::vector;
 using std::pair;
 
-DatabaseObjects::DatabaseObjects() {
-
-  odbcHandler.Connect(true);
+DatabaseObjects::DatabaseObjects(ConnectionObject &co) 
+  : odbcHandler(co) 
+{
+    odbcHandler.Connect(true);
 }
 
 DatabaseObjects::~DatabaseObjects() {
@@ -79,4 +78,3 @@ void DatabaseObjects::DropObjects(const string &object_kind, const vector<string
     DropObject(object_kind, *it); 
   }
 }
-

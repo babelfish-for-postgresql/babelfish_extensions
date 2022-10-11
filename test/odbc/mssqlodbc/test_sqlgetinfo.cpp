@@ -1,11 +1,16 @@
-#include "odbc_handler.h"
+#include "../src/odbc_handler.h"
+#include "../src/drivers.h"
 #include <gtest/gtest.h>
 #include <sqlext.h>
 
 static const int BUFFER = 255;
 
-class SQLGetInfoTest : public testing::Test{
-  
+class MSSQL_SQLGetInfoTest : public testing::Test {
+  void SetUp() override {
+    if (!Drivers::DriverExists(ServerType::MSSQL)) {
+      GTEST_SKIP() << "MSSQL Driver not present: skipping all tests for this fixture.";
+    }
+  }
 };
 
 // Sets up SQLGetInfo test whose option returns a character string
@@ -34,7 +39,7 @@ void SqlGetInfoTestSetupInteger(OdbcHandler &odbcHandler, SQLSMALLINT info_type,
 void GetServerName(char* servername) {
 
   RETCODE rcode;
-  OdbcHandler odbcHandler;
+  OdbcHandler odbcHandler(Drivers::GetDriver(ServerType::MSSQL));
   odbcHandler.ConnectAndExecQuery("SELECT @@SERVERNAME");
   rcode = SQLFetch(odbcHandler.GetStatementHandle());
   ASSERT_EQ(rcode, SQL_SUCCESS) << odbcHandler.GetErrorMessage(SQL_HANDLE_STMT, rcode);
@@ -46,7 +51,7 @@ void GetServerName(char* servername) {
 void GetUserName(char* username) {
 
   RETCODE rcode;
-  OdbcHandler odbcHandler;
+  OdbcHandler odbcHandler(Drivers::GetDriver(ServerType::MSSQL));
   odbcHandler.ConnectAndExecQuery("SELECT CURRENT_USER");
   rcode = SQLFetch(odbcHandler.GetStatementHandle());
   ASSERT_EQ(rcode, SQL_SUCCESS) << odbcHandler.GetErrorMessage(SQL_HANDLE_STMT, rcode);
@@ -63,9 +68,9 @@ string SqlGetInfoSupportError(string sqlgetinfo_option, string supported_feature
 
 // Tests if SQLGetInfo retrieves the correct server name with SQL_SERVER_NAME option
 // DISABLED: PLEASE SEE BABELFISH-125
-TEST_F(SQLGetInfoTest, DISABLED_SQLGetInfo_SQL_SERVER_NAME) {
+TEST_F(MSSQL_SQLGetInfoTest, DISABLED_SQLGetInfo_SQL_SERVER_NAME) {
 
-  OdbcHandler odbcHandler;
+  OdbcHandler odbcHandler(Drivers::GetDriver(ServerType::MSSQL));
   char output[BUFFER];
   char expected[BUFFER];
 
@@ -76,9 +81,9 @@ TEST_F(SQLGetInfoTest, DISABLED_SQLGetInfo_SQL_SERVER_NAME) {
 
 // Tests if SQLGetInfo retrieves the correct server name with SQL_USER_NAME option
 // DISABLED: PLEASE SEE BABELFISH-126
-TEST_F(SQLGetInfoTest, DISABLED_SQLGetInfo_SQL_USER_NAME) {
+TEST_F(MSSQL_SQLGetInfoTest, DISABLED_SQLGetInfo_SQL_USER_NAME) {
 
-  OdbcHandler odbcHandler;
+  OdbcHandler odbcHandler(Drivers::GetDriver(ServerType::MSSQL));
   char output[BUFFER];
   char expected[BUFFER];
 
@@ -88,9 +93,9 @@ TEST_F(SQLGetInfoTest, DISABLED_SQLGetInfo_SQL_USER_NAME) {
 }
 
 // Tests if SQLGetInfo retrieves the correct value for SQL_DATA_SOURCE_READ_ONLY
-TEST_F(SQLGetInfoTest, SQLGetInfo_SQL_DATA_SOURCE_READ_ONLY) {
+TEST_F(MSSQL_SQLGetInfoTest, SQLGetInfo_SQL_DATA_SOURCE_READ_ONLY) {
 
-  OdbcHandler odbcHandler;
+  OdbcHandler odbcHandler(Drivers::GetDriver(ServerType::MSSQL));
   char output[BUFFER];
   string expected = "N"; //The BBF cluster used for test should not be read only
 
@@ -100,8 +105,8 @@ TEST_F(SQLGetInfoTest, SQLGetInfo_SQL_DATA_SOURCE_READ_ONLY) {
 
 // Tests if SQLGetInfo retrieves the correct values for SQL_CREATE_TABLE. 
 // NOTE: Assertions may need to be redefined based on BBF settings
-TEST_F(SQLGetInfoTest, SQLGetInfo_SQL_CREATE_TABLE) {
-  OdbcHandler odbcHandler;
+TEST_F(MSSQL_SQLGetInfoTest, SQLGetInfo_SQL_CREATE_TABLE) {
+  OdbcHandler odbcHandler(Drivers::GetDriver(ServerType::MSSQL));
   SQLUINTEGER output;
   string sqlgetinfo_option = "SQL_CREATE_TABLE";
   ASSERT_NO_FATAL_FAILURE(SqlGetInfoTestSetupInteger(odbcHandler, SQL_CREATE_TABLE, &output));
@@ -110,8 +115,8 @@ TEST_F(SQLGetInfoTest, SQLGetInfo_SQL_CREATE_TABLE) {
 
 // Tests if SQLGetInfo retrieves the correct values for SQL_DROP_TABLE. 
 // NOTE: Assertions may need to be redefined based on BBF settings
-TEST_F(SQLGetInfoTest, SQLGetInfo_SQL_DROP_TABLE) {
-  OdbcHandler odbcHandler;
+TEST_F(MSSQL_SQLGetInfoTest, SQLGetInfo_SQL_DROP_TABLE) {
+  OdbcHandler odbcHandler(Drivers::GetDriver(ServerType::MSSQL));
   SQLUINTEGER output = 0;
   string sqlgetinfo_option = "SQL_DROP_TABLE";
   ASSERT_NO_FATAL_FAILURE(SqlGetInfoTestSetupInteger(odbcHandler, SQL_DROP_TABLE, &output));
@@ -120,8 +125,8 @@ TEST_F(SQLGetInfoTest, SQLGetInfo_SQL_DROP_TABLE) {
 
 // Tests if SQLGetInfo retrieves the correct values for SQL_ALTER_TABLE. 
 // NOTE: Assertions may need to be redefined based on BBF settings
-TEST_F(SQLGetInfoTest, SQLGetInfo_SQL_ALTER_TABLE) {
-  OdbcHandler odbcHandler;
+TEST_F(MSSQL_SQLGetInfoTest, SQLGetInfo_SQL_ALTER_TABLE) {
+  OdbcHandler odbcHandler(Drivers::GetDriver(ServerType::MSSQL));
   SQLUINTEGER output = 0;
   string sqlgetinfo_option = "SQL_ALTER_TABLE";
   ASSERT_NO_FATAL_FAILURE(SqlGetInfoTestSetupInteger(odbcHandler, SQL_ALTER_TABLE, &output));
@@ -134,9 +139,9 @@ TEST_F(SQLGetInfoTest, SQLGetInfo_SQL_ALTER_TABLE) {
 
 // Tests if SQLGetInfo retrieves the correct values for SQL_INSERT_STATEMENT. 
 // NOTE: Assertions may need to be redefined based on BBF settings
-TEST_F(SQLGetInfoTest, SQLGetInfo_SQL_INSERT_STATEMENT) {
+TEST_F(MSSQL_SQLGetInfoTest, SQLGetInfo_SQL_INSERT_STATEMENT) {
 
-  OdbcHandler odbcHandler;
+  OdbcHandler odbcHandler(Drivers::GetDriver(ServerType::MSSQL));
   SQLUINTEGER output = 0;
   string sqlgetinfo_option = "SQL_INSERT_STATEMENT";
   ASSERT_NO_FATAL_FAILURE(SqlGetInfoTestSetupInteger(odbcHandler, SQL_INSERT_STATEMENT, &output));

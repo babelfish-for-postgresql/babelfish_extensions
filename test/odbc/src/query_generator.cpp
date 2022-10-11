@@ -97,6 +97,21 @@ string CreateProcedureStatement(const string &procedure_name, const string &proc
   return string {"CREATE PROCEDURE  " + procedure_name + " " + parameters + " AS \n " + procedure_definition + ";"};
 }
 
+string UpdateTableStatement(const string &table_name, const vector<pair<string, string>> &new_values, const string where_clause) {
+  string result{"UPDATE " + table_name + " SET "};
+  string comma{};
+
+  for (auto p : new_values) {
+    result += comma + p.first + " = " + p.second;
+    comma = ",";
+  }
+
+  if (where_clause != "") {
+    result += "\nWHERE " + where_clause;
+  }
+
+  return result;
+}
 
 string CreateFunctionStatement(const string &function_name, const string &function_definition) {
 

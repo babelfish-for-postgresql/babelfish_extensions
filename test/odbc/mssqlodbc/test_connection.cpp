@@ -1,17 +1,19 @@
-#include "odbc_handler.h"
+#include "../src/odbc_handler.h"
 #include <gtest/gtest.h>
-#include <sql.h>
 #include <sqlext.h>
+#include "../src/drivers.h"
 
-using std::unique_ptr;
-
-class Connection : public testing::Test{
+class MSSQL_Connection : public testing::Test {
+  void SetUp() override {
+    if (!Drivers::DriverExists(ServerType::MSSQL)) {
+      GTEST_SKIP() << "MSSQL Driver not present: skipping all tests for this fixture.";
+    }
+  }
 
 };
 
-TEST_F(Connection, SQLDriverConnect_1_SuccessfulConnectionTest) {
-
-  OdbcHandler odbcHandler;
+TEST_F(MSSQL_Connection, SQLDriverConnect_SuccessfulConnectionTest) {
+  OdbcHandler odbcHandler(Drivers::GetDriver(ServerType::MSSQL));
 
   odbcHandler.AllocateEnvironmentHandle();
   odbcHandler.AllocateConnectionHandle();

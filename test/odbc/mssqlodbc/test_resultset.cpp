@@ -1,6 +1,7 @@
-#include "odbc_handler.h"
-#include "database_objects.h"
-#include "query_generator.h"
+#include "../src/odbc_handler.h"
+#include "../src/database_objects.h"
+#include "../src/query_generator.h"
+#include "../src/drivers.h"
 #include <gtest/gtest.h>
 #include <sqlext.h>
 
@@ -27,19 +28,31 @@ static const vector<tuple<int, string, float>> RO_TABLE_VALUES = {
 
 const string SELECT_RESULT_SET_RO_TABLE1 = SelectStatement(RESULT_SET_RO_TABLE1, { "*" }, {"id"}); // order by id
 
-class Result_Set : public testing::Test {
+class MSSQL_Result_Set : public testing::Test {
+
+  void SetUp() override {
+    if (!Drivers::DriverExists(ServerType::MSSQL)) {
+      GTEST_SKIP() << "MSSQL Driver not present: skipping all tests for this fixture.";
+    }
+  }
 
   protected:
     static void SetUpTestSuite() {
-      OdbcHandler test_setup;
+      if (!Drivers::DriverExists(ServerType::MSSQL)) {
+        GTEST_SKIP() << "MSSQL Driver not present: skipping set up.";
+      }
+      OdbcHandler test_setup(Drivers::GetDriver(ServerType::MSSQL));
 
-      test_setup.ConnectAndExecQuery(DropObjectStatement("TABLE",RESULT_SET_RO_TABLE1));
+      test_setup.ConnectAndExecQuery(DropObjectStatement("TABLE", RESULT_SET_RO_TABLE1));
       test_setup.ExecQuery(CreateTableStatement(RESULT_SET_RO_TABLE1, RO_TABLE_COLUMNS));
       test_setup.ExecQuery(InsertStatement(RESULT_SET_RO_TABLE1, "(1, 'hello1', 1.1), (2, 'hello2', 2.2), (3, 'hello3', 3.3), (4, 'hello4', 4.4)"));
     }
 
     static void TearDownTestSuite() {
-      OdbcHandler test_cleanup;
+      if (!Drivers::DriverExists(ServerType::MSSQL)) {
+        GTEST_SKIP() << "MSSQL Driver not present: skipping tear down.";
+      }
+      OdbcHandler test_cleanup(Drivers::GetDriver(ServerType::MSSQL));
 
       test_cleanup.ConnectAndExecQuery(DropObjectStatement("TABLE",RESULT_SET_RO_TABLE1));
     }
@@ -50,7 +63,7 @@ class Result_Set : public testing::Test {
 // Execute query on the read only table and calls BindCol with a given col num as the argument. 
 // It will also assert the given expected rcode and output the sql state. 
 void SQLBindColTestSetup(const int col_num, const RETCODE expected_rcode, string* sql_state) {
-  OdbcHandler odbcHandler;
+  OdbcHandler odbcHandler(Drivers::GetDriver(ServerType::MSSQL));
   RETCODE rcode; 
   SQLINTEGER id;
   SQLLEN id_indicator;
@@ -84,7 +97,7 @@ void ConnectAndSetScrollableWithConcurLock(OdbcHandler* odbcHandler) {
 }
 
 // Tests SQLBindCol on a succesful state. 
-TEST_F(Result_Set, SQLBindCol_Successful) {
+TEST_F(MSSQL_Result_Set, SQLBindCol_Successful) {
   string sql_state; 
   
   SQLBindColTestSetup(1, SQL_SUCCESS, &sql_state);
@@ -92,7 +105,7 @@ TEST_F(Result_Set, SQLBindCol_Successful) {
 }
 
 // Tests SQLBindCol when ColumnNumber is 0 and it is not a bookmark column
-TEST_F(Result_Set, SQLBindCol_NotBookmark) {
+TEST_F(MSSQL_Result_Set, SQLBindCol_NotBookmark) {
   string sql_state; 
 
   // Bind column and assert that it returns error 07006
@@ -101,7 +114,7 @@ TEST_F(Result_Set, SQLBindCol_NotBookmark) {
 }
 
 // Tests SQLBindCol when ColumnNumber argument exceeds max number of columns in result set
-TEST_F(Result_Set, SQLBindCol_ExceedMaxCol) {
+TEST_F(MSSQL_Result_Set, SQLBindCol_ExceedMaxCol) {
   string sql_state; 
 
   // Bind column and assert that it returns error 07009
@@ -110,8 +123,8 @@ TEST_F(Result_Set, SQLBindCol_ExceedMaxCol) {
 }
 
 // Tests SQLFetch when it iterates through all results
-TEST_F(Result_Set, SQLFetch_SuccessfulIteration) {
-  OdbcHandler odbcHandler;
+TEST_F(MSSQL_Result_Set, SQLFetch_SuccessfulIteration) {
+  OdbcHandler odbcHandler(Drivers::GetDriver(ServerType::MSSQL));
   RETCODE rcode; 
   string sql_state; 
   SQLINTEGER id;
@@ -143,8 +156,8 @@ TEST_F(Result_Set, SQLFetch_SuccessfulIteration) {
 }
 
 // Tests SQLFetch when a varchar variable gets truncated
-TEST_F(Result_Set, SQLFetch_TruncatedVarchar) {
-  OdbcHandler odbcHandler;
+TEST_F(MSSQL_Result_Set, SQLFetch_TruncatedVarchar) {
+  OdbcHandler odbcHandler(Drivers::GetDriver(ServerType::MSSQL));
   RETCODE rcode; 
   string sql_state; 
   SQLCHAR info[2];
@@ -164,8 +177,8 @@ TEST_F(Result_Set, SQLFetch_TruncatedVarchar) {
 }
 
 // Tests SQLFetch when a numeric datatype gets truncated
-TEST_F(Result_Set, SQLFetch_TruncatedNumeric) {
-  OdbcHandler odbcHandler;
+TEST_F(MSSQL_Result_Set, SQLFetch_TruncatedNumeric) {
+  OdbcHandler odbcHandler(Drivers::GetDriver(ServerType::MSSQL));
   RETCODE rcode; 
   string sql_state; 
   SQLINTEGER decivar;
@@ -186,8 +199,8 @@ TEST_F(Result_Set, SQLFetch_TruncatedNumeric) {
 }
 
 // Tests SQLFetch when there is an invalid cast during bindcol. 
-TEST_F(Result_Set, SQLFetch_InvalidCast) {
-  OdbcHandler odbcHandler;
+TEST_F(MSSQL_Result_Set, SQLFetch_InvalidCast) {
+  OdbcHandler odbcHandler(Drivers::GetDriver(ServerType::MSSQL));
   RETCODE rcode; 
   string sql_state; 
   SQLINTEGER id;
@@ -208,8 +221,8 @@ TEST_F(Result_Set, SQLFetch_InvalidCast) {
 
 // Tests SQLSetPos when SQL_ATTR_ROW_ARRAY_SIZE is set to 1.
 // DISABLED: PLEASE SEE BABELFISH-97
-TEST_F(Result_Set, DISABLED_SQLSetPos_ResultRowSize1) {
-  OdbcHandler odbcHandler;
+TEST_F(MSSQL_Result_Set, DISABLED_SQLSetPos_ResultRowSize1) {
+  OdbcHandler odbcHandler(Drivers::GetDriver(ServerType::MSSQL));
   RETCODE rcode; 
   string sql_state; 
   int id;
@@ -236,8 +249,8 @@ TEST_F(Result_Set, DISABLED_SQLSetPos_ResultRowSize1) {
 
 // Tests SQLSetPos when SQL_ATTR_ROW_ARRAY_SIZE is set to 2.
 // DISABLED: PLEASE SEE BABELFISH-97
-TEST_F(Result_Set, DISABLED_SQLSetPos_ResultRowSize2) {
-  OdbcHandler odbcHandler;
+TEST_F(MSSQL_Result_Set, DISABLED_SQLSetPos_ResultRowSize2) {
+  OdbcHandler odbcHandler(Drivers::GetDriver(ServerType::MSSQL));
   RETCODE rcode; 
   string sql_state; 
   int id;
@@ -279,8 +292,8 @@ TEST_F(Result_Set, DISABLED_SQLSetPos_ResultRowSize2) {
 // Tests that SQL_UPDATE OR SQL_DELETE option would not work when 
 // SQL_ATTR_CONCURRENCY is set to read only (which should be the default value)
 // DISABLED: PLEASE SEE BABELFISH-97
-TEST_F(Result_Set, DISABLED_SQLSetPos_ErrorSqlAttrConcurrencyReadOnly) {
-  OdbcHandler odbcHandler;
+TEST_F(MSSQL_Result_Set, DISABLED_SQLSetPos_ErrorSqlAttrConcurrencyReadOnly) {
+  OdbcHandler odbcHandler(Drivers::GetDriver(ServerType::MSSQL));
   RETCODE rcode; 
   string sql_state; 
 
@@ -306,16 +319,16 @@ TEST_F(Result_Set, DISABLED_SQLSetPos_ErrorSqlAttrConcurrencyReadOnly) {
 
 // Tests that SQL_UPDATE option gives error 21S02
 // DISABLED: PLEASE SEE BABELFISH-97
-TEST_F(Result_Set, DISABLED_SQLSetPos_Sqlupdate21S02) {
+TEST_F(MSSQL_Result_Set, DISABLED_SQLSetPos_Sqlupdate21S02) {
 
   const string TEST_TABLE = "RESULT_SET_UPDATE21S02";
   const string TEST_SELECT = SelectStatement(TEST_TABLE, { "*" });
   
-  DatabaseObjects dbObjects;
+  DatabaseObjects dbObjects(Drivers::GetDriver(ServerType::MSSQL));
   ASSERT_NO_FATAL_FAILURE(dbObjects.CreateTable(TEST_TABLE, {{"id", "INT"}}));
   ASSERT_NO_FATAL_FAILURE(dbObjects.Insert(TEST_TABLE,"(1), (2), (3), (4)"));
 
-  OdbcHandler odbcHandler;
+  OdbcHandler odbcHandler(Drivers::GetDriver(ServerType::MSSQL));
   RETCODE rcode; 
   string sql_state; 
 
@@ -335,16 +348,16 @@ TEST_F(Result_Set, DISABLED_SQLSetPos_Sqlupdate21S02) {
 
 // Tests that SQL_UPDATE option works correctly
 // DISABLED: PLEASE SEE BABELFISH-97
-TEST_F(Result_Set, DISABLED_SQLSetPos_SqlupdateSuccessful) {
+TEST_F(MSSQL_Result_Set, DISABLED_SQLSetPos_SqlupdateSuccessful) {
   
   const string TEST_TABLE = "RESULT_SET_UPDATE";
   const string TEST_SELECT = SelectStatement(TEST_TABLE, { "*" });
   
-  DatabaseObjects dbObjects;
+  DatabaseObjects dbObjects(Drivers::GetDriver(ServerType::MSSQL));
   ASSERT_NO_FATAL_FAILURE(dbObjects.CreateTable(TEST_TABLE, {{"id", "INT"}}));
   ASSERT_NO_FATAL_FAILURE(dbObjects.Insert(TEST_TABLE,"(1), (2), (3), (4)"));
 
-  OdbcHandler odbcHandler;
+  OdbcHandler odbcHandler(Drivers::GetDriver(ServerType::MSSQL));
   RETCODE rcode; 
   SQLINTEGER id = 10;
   SQLLEN id_indicator;
@@ -374,8 +387,8 @@ TEST_F(Result_Set, DISABLED_SQLSetPos_SqlupdateSuccessful) {
 
 // Ensures that SQL_DELETE works correctly
 // DISABLED: PLEASE SEE BABELFISH-97
-TEST_F(Result_Set, DISABLED_SQLSetPos_SqldeleteSuccessful) {
-  OdbcHandler odbcHandler;
+TEST_F(MSSQL_Result_Set, DISABLED_SQLSetPos_SqldeleteSuccessful) {
+  OdbcHandler odbcHandler(Drivers::GetDriver(ServerType::MSSQL));
   RETCODE rcode; 
   SQLINTEGER id;
   SQLLEN id_indicator;
@@ -385,7 +398,7 @@ TEST_F(Result_Set, DISABLED_SQLSetPos_SqldeleteSuccessful) {
   const string TEST_TABLE = "RESULT_SET_DELETE";
   const string TEST_SELECT = SelectStatement(TEST_TABLE, { "*" });
   
-  DatabaseObjects dbObjects;
+  DatabaseObjects dbObjects(Drivers::GetDriver(ServerType::MSSQL));
   ASSERT_NO_FATAL_FAILURE(dbObjects.CreateTable(TEST_TABLE, {{"id", "INT"}}));
   ASSERT_NO_FATAL_FAILURE(dbObjects.Insert(TEST_TABLE,"(1), (2), (3), (4)"));
   
@@ -421,8 +434,8 @@ TEST_F(Result_Set, DISABLED_SQLSetPos_SqldeleteSuccessful) {
 } 
 
 // Ensures that SQLGetData works correctly
-TEST_F(Result_Set, SQLGetData_Successful) {
-  OdbcHandler odbcHandler;
+TEST_F(MSSQL_Result_Set, SQLGetData_Successful) {
+  OdbcHandler odbcHandler(Drivers::GetDriver(ServerType::MSSQL));
   RETCODE rcode; 
   SQLINTEGER id;
   SQLLEN id_indicator;
@@ -439,8 +452,8 @@ TEST_F(Result_Set, SQLGetData_Successful) {
 }
 
 // Tests SQLGetData when a varchar variable gets truncated
-TEST_F(Result_Set, SQLGetData_TruncatedVarchar) {
-  OdbcHandler odbcHandler;
+TEST_F(MSSQL_Result_Set, SQLGetData_TruncatedVarchar) {
+  OdbcHandler odbcHandler(Drivers::GetDriver(ServerType::MSSQL));
   RETCODE rcode; 
   string sql_state; 
   SQLCHAR info[2];
@@ -459,8 +472,8 @@ TEST_F(Result_Set, SQLGetData_TruncatedVarchar) {
 }
 
 // Tests SQLGetData when a numeric datatype gets truncated
-TEST_F(Result_Set, SQLGetData_TruncatedNumeric) {
-  OdbcHandler odbcHandler;
+TEST_F(MSSQL_Result_Set, SQLGetData_TruncatedNumeric) {
+  OdbcHandler odbcHandler(Drivers::GetDriver(ServerType::MSSQL));
   RETCODE rcode; 
   string sql_state; 
   SQLINTEGER decivar;
@@ -479,8 +492,8 @@ TEST_F(Result_Set, SQLGetData_TruncatedNumeric) {
 }
 
 // Tests SQLGetData when there is an invalid cast during bindcol. 
-TEST_F(Result_Set, SQLGetData_InvalidCast) {
-  OdbcHandler odbcHandler;
+TEST_F(MSSQL_Result_Set, SQLGetData_InvalidCast) {
+  OdbcHandler odbcHandler(Drivers::GetDriver(ServerType::MSSQL));
   RETCODE rcode; 
   string sql_state; 
   SQLINTEGER id;
@@ -499,8 +512,8 @@ TEST_F(Result_Set, SQLGetData_InvalidCast) {
 
 // Test SQLFetchScroll with Fetch First and Fetch Last options
 // DISABLED: PLEASE SEE BABELFISH-98
-TEST_F(Result_Set, DISABLED_SQLFetchScroll_FetchFirstAndFetchLast) {
-  OdbcHandler odbcHandler;
+TEST_F(MSSQL_Result_Set, DISABLED_SQLFetchScroll_FetchFirstAndFetchLast) {
+  OdbcHandler odbcHandler(Drivers::GetDriver(ServerType::MSSQL));
   RETCODE rcode; 
   string sql_state; 
   SQLINTEGER id;
@@ -530,8 +543,8 @@ TEST_F(Result_Set, DISABLED_SQLFetchScroll_FetchFirstAndFetchLast) {
 
 // Test SQLFetchScroll with SQL_FETCH_NEXT and SQL_FETCH_PRIOR
 // DISABLED: PLEASE SEE BABELFISH-98
-TEST_F(Result_Set, DISABLED_SQLFetchScroll_FetchNextAndFetchPrior) {
-  OdbcHandler odbcHandler;
+TEST_F(MSSQL_Result_Set, DISABLED_SQLFetchScroll_FetchNextAndFetchPrior) {
+  OdbcHandler odbcHandler(Drivers::GetDriver(ServerType::MSSQL));
   RETCODE rcode; 
   string sql_state; 
   SQLINTEGER id;
@@ -571,8 +584,8 @@ TEST_F(Result_Set, DISABLED_SQLFetchScroll_FetchNextAndFetchPrior) {
 
 // Test SQLFetchScroll with SQL_FETCH_ABSOLUTE
 // DISABLED: PLEASE SEE BABELFISH-98
-TEST_F(Result_Set, DISABLED_SQLFetchScroll_FetchAbsolute) {
-  OdbcHandler odbcHandler;
+TEST_F(MSSQL_Result_Set, DISABLED_SQLFetchScroll_FetchAbsolute) {
+  OdbcHandler odbcHandler(Drivers::GetDriver(ServerType::MSSQL));
   RETCODE rcode; 
   SQLINTEGER id;
   SQLLEN id_indicator;
@@ -601,8 +614,8 @@ TEST_F(Result_Set, DISABLED_SQLFetchScroll_FetchAbsolute) {
 
 // Test SQLFetchScroll with SQL_FETCH_RELATIVE
 // DISABLED: PLEASE SEE BABELFISH-98
-TEST_F(Result_Set, DISABLED_SQLFetchScroll_FetchRelative) {
-  OdbcHandler odbcHandler;
+TEST_F(MSSQL_Result_Set, DISABLED_SQLFetchScroll_FetchRelative) {
+  OdbcHandler odbcHandler(Drivers::GetDriver(ServerType::MSSQL));
   RETCODE rcode; 
   SQLINTEGER id;
   SQLLEN id_indicator;
@@ -634,8 +647,8 @@ TEST_F(Result_Set, DISABLED_SQLFetchScroll_FetchRelative) {
 }
 
 // Tests SQLNumResultCols
-TEST_F(Result_Set, SQLNumResultCols) {
-  OdbcHandler odbcHandler;
+TEST_F(MSSQL_Result_Set, SQLNumResultCols) {
+  OdbcHandler odbcHandler(Drivers::GetDriver(ServerType::MSSQL));
   RETCODE rcode; 
   string sql_state; 
   SQLSMALLINT num_cols;
@@ -649,8 +662,8 @@ TEST_F(Result_Set, SQLNumResultCols) {
 
 // Tests SQLCloseCursor
 // DISABLED: PLEASE SEE BABELFISH-99
-TEST_F(Result_Set, DISABLED_SQLCloseCursor) {
-  OdbcHandler odbcHandler;
+TEST_F(MSSQL_Result_Set, DISABLED_SQLCloseCursor) {
+  OdbcHandler odbcHandler(Drivers::GetDriver(ServerType::MSSQL));
   RETCODE rcode; 
   string sql_state; 
   SQLINTEGER id;
@@ -675,8 +688,8 @@ TEST_F(Result_Set, DISABLED_SQLCloseCursor) {
 
 // Test SQLDescribeCol
 // DISABLED: PLEASE SEE BABELFISH-100 
-TEST_F(Result_Set, DISABLED_SQLDescribeCol) { 
-  OdbcHandler odbcHandler;
+TEST_F(MSSQL_Result_Set, DISABLED_SQLDescribeCol) { 
+  OdbcHandler odbcHandler(Drivers::GetDriver(ServerType::MSSQL));
   SQLCHAR col_name[256];
   SQLSMALLINT name_length;
   SQLSMALLINT data_type;
@@ -720,8 +733,8 @@ TEST_F(Result_Set, DISABLED_SQLDescribeCol) {
   }
 }
 
-TEST_F(Result_Set, SQLMoreResults_BatchedQueries) {
-  OdbcHandler odbcHandler;
+TEST_F(MSSQL_Result_Set, SQLMoreResults_BatchedQueries) {
+  OdbcHandler odbcHandler(Drivers::GetDriver(ServerType::MSSQL));
   RETCODE rcode;
   SQLLEN id_indciator = 0;
   string sql_state;
