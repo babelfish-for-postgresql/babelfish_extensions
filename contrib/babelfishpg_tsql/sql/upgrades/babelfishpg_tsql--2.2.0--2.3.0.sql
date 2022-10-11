@@ -4029,13 +4029,13 @@ where s.nspname = 'sys';
 
 create or replace view sys.all_views as
 select
-    CAST(t.name as sys.SYSNAME) AS name
+    CAST(t.name as sys.SYSNAME) COLLATE sys.database_default AS name
   , CAST(t.object_id as int) AS object_id
   , CAST(t.principal_id as int) AS principal_id
   , CAST(t.schema_id as int) AS schema_id
   , CAST(t.parent_object_id as int) AS parent_object_id
-  , CAST(t.type as sys.bpchar(2)) AS type
-  , CAST(t.type_desc as sys.nvarchar(60)) AS type_desc
+  , CAST(t.type as sys.bpchar(2)) COLLATE sys.database_default AS type
+  , CAST(t.type_desc as sys.nvarchar(60)) COLLATE sys.database_default AS type_desc
   , CAST(t.create_date as sys.datetime) AS create_date
   , CAST(t.modify_date as sys.datetime) AS modify_date
   , CAST(t.is_ms_shipped as sys.BIT) AS is_ms_shipped
