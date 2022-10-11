@@ -2669,8 +2669,17 @@ exec_stmt_grantdb(PLtsql_execstate *estate, PLtsql_stmt_grantdb *stmt)
 	char 	*dbname = get_cur_db_name();
 	char	*dbowner = get_owner_of_db(dbname);
 	char	*login = GetUserNameFromId(GetSessionUserId(), false);	
+	bool	login_is_db_owner;
+	Oid	datdba;
 	ListCell *lc;
-	if (strcmp(login, dbowner) != 0)
+
+	/*
+	 * If the login is not the db owner or the login is not the member of
+	 * sysadmin, then it doesn't have the permission to GRANT/REVOKE.
+	 */
+	login_is_db_owner = 0 == strncmp(login, get_owner_of_db(dbname), NAMEDATALEN);
+	datdba = get_role_oid("sysadmin", false);
+	if (!is_member_of_role(GetSessionUserId(), datdba) && !login_is_db_owner)
 		ereport(ERROR,
 				(errcode(ERRCODE_INTERNAL_ERROR),
 				errmsg("Grantor does not have GRANT permission.")));
@@ -2683,13 +2692,12 @@ exec_stmt_grantdb(PLtsql_execstate *estate, PLtsql_stmt_grantdb *stmt)
 			ereport(ERROR,
 					(errcode(ERRCODE_INTERNAL_ERROR),
 					errmsg("Cannot grant or revoke permissions to dbo, db_owner or yourself.")));
-		else if (!stmt->is_grant && strcmp(grantee_name, "guest") == 0
+		if (!stmt->is_grant && strcmp(grantee_name, "guest") == 0
 					&& (strcmp(dbname, "master") == 0 || strcmp(dbname, "tempdb") == 0))
 			ereport(ERROR,
 					(errcode(ERRCODE_INTERNAL_ERROR),
 					errmsg("Cannot disable access to the guest user in master or tempdb.")));
-		else
-			alter_user_can_connect(stmt->is_grant, grantee_name, dbname);
+		alter_user_can_connect(stmt->is_grant, grantee_name, dbname);
 	}
 	return PLTSQL_RC_OK;
 }
