@@ -1,0 +1,180 @@
+CREATE TABLE date_testing(d DATE);
+INSERT INTO date_testing VALUES('1753-1-1');
+INSERT INTO date_testing VALUES('9999-12-31');
+INSERT INTO date_testing VALUES('1992-05-23');
+GO
+
+create table datetime_testing ( dt DATETIME );
+INSERT INTO datetime_testing VALUES('1753-1-1 00:00:00.000');
+INSERT INTO datetime_testing VALUES('9999-12-31 23:59:59.456');
+INSERT INTO datetime_testing VALUES('1992-05-23 23:40:30.000');
+INSERT INTO datetime_testing VALUES('1999-12-31 23:59:59.123');
+INSERT INTO datetime_testing VALUES('23:40:29.456');
+INSERT INTO datetime_testing VALUES('23:40:30.000');
+INSERT INTO datetime_testing VALUES('2020-03-14');
+GO
+
+create table datetime2_testing ( dt2 DATETIME2 );
+INSERT INTO datetime2_testing VALUES('0001-1-1 00:00:00');
+INSERT INTO datetime2_testing VALUES('9999-12-31 23:59:59');
+INSERT INTO datetime2_testing VALUES('1992-05-23 23:40:29');
+INSERT INTO datetime2_testing VALUES('1992-05-23 23:40:30');
+INSERT INTO datetime2_testing VALUES('1999-12-31 23:59:59');
+INSERT INTO datetime2_testing VALUES('1999-12-31 23:59:59');
+INSERT INTO datetime2_testing VALUES('23:40:29.236');
+INSERT INTO datetime2_testing VALUES('23:40:30.000');
+INSERT INTO datetime2_testing VALUES('2020-03-14');
+GO
+
+create table time_testing ( ti TIME );
+INSERT INTO time_testing VALUES('00:00:00.12345');
+INSERT INTO time_testing VALUES('3:53:59');
+INSERT INTO time_testing VALUES('15:5:45.0000');
+INSERT INTO time_testing VALUES('23:59:59.12345');
+GO
+
+CREATE TABLE tinyint_testing(ti TINYINT);
+INSERT INTO tinyint_testing VALUES(0);
+INSERT INTO tinyint_testing VALUES(31);
+INSERT INTO tinyint_testing VALUES(255);
+GO
+
+CREATE TABLE smallint_testing(si SMALLINT);
+INSERT INTO smallint_testing VALUES(-2456);
+INSERT INTO smallint_testing VALUES(-62);
+INSERT INTO smallint_testing VALUES(282);
+INSERT INTO smallint_testing VALUES(2456);
+GO
+
+CREATE TABLE int_testing(it INT);
+INSERT INTO int_testing VALUES(-2147483);
+INSERT INTO int_testing VALUES(-586);
+INSERT INTO int_testing VALUES(7869);
+INSERT INTO int_testing VALUES(2147483);
+GO
+
+CREATE TABLE bigint_testing(bi BIGINT);
+INSERT INTO bigint_testing VALUES(-9223372036854);
+INSERT INTO bigint_testing VALUES(-352);
+INSERT INTO bigint_testing VALUES(2822);
+INSERT INTO bigint_testing VALUES(9223372036854);
+GO
+
+CREATE TABLE real_testing(rt REAL);
+INSERT INTO real_testing VALUES(-3.40E+38);
+INSERT INTO real_testing VALUES(-3.312346E+38);
+INSERT INTO real_testing VALUES(-3.312341234E+38);
+INSERT INTO real_testing VALUES(-22.1234);
+INSERT INTO real_testing VALUES(22.1234);
+INSERT INTO real_testing VALUES(22.12341234);
+INSERT INTO real_testing VALUES(3.312346E+38);
+INSERT INTO real_testing VALUES(3.4E+38);
+GO
+
+CREATE TABLE float_testing(ft FLOAT);
+GO
+INSERT INTO float_testing VALUES(-1.79E+308);
+GO
+INSERT INTO float_testing VALUES(-3.4E+38);
+GO
+INSERT INTO float_testing VALUES(35.3675);
+GO
+INSERT INTO float_testing VALUES(3.4E+38);
+GO
+INSERT INTO float_testing VALUES(1.79E+308);
+GO
+
+CREATE TABLE smallmoney_testing(sm MONEY);
+GO
+INSERT INTO smallmoney_testing VALUES(-214478.3648);
+GO
+INSERT INTO smallmoney_testing VALUES(435627.1435);
+GO
+INSERT INTO smallmoney_testing VALUES(-435627.1435);
+GO
+INSERT INTO smallmoney_testing VALUES(214478.3647);
+GO
+
+CREATE TABLE money_testing(mt MONEY);
+GO
+INSERT INTO money_testing VALUES(-92233720.5808);
+GO
+INSERT INTO money_testing VALUES(-214478.3648);
+GO
+INSERT INTO money_testing VALUES(435627.1435);
+GO
+INSERT INTO money_testing VALUES(214478.3647);
+GO
+INSERT INTO money_testing VALUES(92233720.5807);
+GO
+
+CREATE TABLE real_testing2(rt REAL);
+GO
+INSERT INTO real_testing2 VALUES(-3.4E+1);
+GO
+INSERT INTO real_testing2 VALUES(-34);
+GO
+INSERT INTO real_testing2 VALUES(-3.312346789E+38);
+GO
+INSERT INTO real_testing2 VALUES(22.1234565656565E+3);
+GO
+INSERT INTO real_testing2 VALUES(22.1234123412341234);
+GO
+INSERT INTO real_testing2 VALUES(3.312346E+38);
+GO
+INSERT INTO real_testing2 VALUES(3.40E+38);
+GO
+
+CREATE TABLE float_testing2(ft FLOAT);
+GO
+INSERT INTO float_testing2 VALUES(-3.312346789123456789E+38);
+GO
+INSERT INTO float_testing2 VALUES(3.3123489656565789);
+GO
+INSERT INTO float_testing2 VALUES(3.3123489656565);
+GO
+INSERT INTO float_testing2 VALUES(3.31234896565651);
+GO
+INSERT INTO float_testing2 VALUES(3.312348965656512);
+GO
+INSERT INTO float_testing2 VALUES(3.3123489656565123);
+GO
+INSERT INTO float_testing2 VALUES(33123489656565123.34);
+GO
+INSERT INTO float_testing2 VALUES(3.312348965656512345);
+GO
+INSERT INTO float_testing2 VALUES(3.3123489656565123456);
+GO
+INSERT INTO float_testing2 VALUES(351234567891025621.1);
+GO
+
+CREATE TABLE decimal_testing(dt DECIMAL(15, 5));
+GO
+INSERT INTO decimal_testing VALUES(-8999999999.09909);
+GO
+INSERT INTO decimal_testing VALUES(-352);
+GO
+INSERT INTO decimal_testing VALUES(5478);
+GO
+INSERT INTO decimal_testing VALUES(8999999999.99999);
+GO
+
+create table smalldatetime_testing ( sdt smalldatetime );
+GO
+INSERT INTO smalldatetime_testing VALUES('1990-05-23 23:40:29');
+GO
+INSERT INTO smalldatetime_testing VALUES('2022-12-31 23:59:59');
+GO
+INSERT INTO smalldatetime_testing VALUES('2079-06-06 22:59:59');
+GO
+
+CREATE TABLE numeric_testing(nt NUMERIC(15, 4));
+GO
+INSERT INTO numeric_testing VALUES(-8999999999.0990);
+GO
+INSERT INTO numeric_testing VALUES(-352);
+GO
+INSERT INTO numeric_testing VALUES(5478);
+GO
+INSERT INTO numeric_testing VALUES(8999999999.9999);
+GO
