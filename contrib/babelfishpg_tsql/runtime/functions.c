@@ -954,6 +954,7 @@ has_dbaccess(PG_FUNCTION_ARGS)
 			user = get_dbo_role_name(lowercase_db_name);
 		else
 		{
+			/* Get the guest role name only if the guest is enabled on the current db.*/
 			if (guest_has_dbaccess(lowercase_db_name))
 				user = get_guest_role_name(lowercase_db_name);
 			else

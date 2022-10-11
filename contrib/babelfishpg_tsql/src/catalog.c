@@ -958,6 +958,7 @@ get_user_for_database(const char *db_name)
 			user = get_dbo_role_name(db_name);
 		else
 		{
+			/* Get the guest role name only if the guest is enabled on the current db.*/
 			if (guest_has_dbaccess(db_name))
 				user = get_guest_role_name(db_name);
 			else
@@ -2009,6 +2010,10 @@ get_catalog_info(Rule *rule)
 						rule->tblname)));
 }
 
+/* Modifies the user_can_connect column in the catalog table
+ * sys.babelfish_authid_user_ext based on the "GRANT/REVOKE
+ * connect TO/FROM" statements.
+ */
 void
 alter_user_can_connect(bool is_grant, char *user_name, char *db_name)
 {
@@ -2072,6 +2077,7 @@ alter_user_can_connect(bool is_grant, char *user_name, char *db_name)
 	table_close(bbf_authid_user_ext_rel, RowExclusiveLock);
 }
 
+/* Checks if the guest user is enabled on a given database. */
 bool
 guest_has_dbaccess(char *db_name)
 {
@@ -2125,6 +2131,11 @@ Datum update_user_catalog_for_guest(PG_FUNCTION_ARGS)
 						 db_rel->rd_att, &is_null);
 		const char	*db_name = TextDatumGetCString(db_name_datum);
 
+		/*
+		 * For each database, check if the guest user exists.
+		 * If exists, check the next database.
+		 * If not, create the guest user on that database.
+		 */
 		if (guest_role_exists_for_db(db_name))
 		{
 			tuple = heap_getnext(scan, ForwardScanDirection);
