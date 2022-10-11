@@ -8,7 +8,7 @@ create view BABEL_1062_vu_prepare_v3 as (select datediff(mi,cast('1956-06-27 12:
 go
 
 create view BABEL_1062_vu_prepare_v4 as (select dateadd(mi, 149, cast('2016-11-14 12:43:10' as datetime)));
-gow
+go
 
 create procedure  BABEL_1062_vu_prepare_p1 as (select datepart(mi, cast('2016-11-14 12:43:10' as datetime)));
 go
