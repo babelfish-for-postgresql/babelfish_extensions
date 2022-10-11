@@ -1619,13 +1619,13 @@ select
       when 'a' then 'AF'::varchar(2)
       else
         case 
-          when format_rettype = 'trigger'
+          when format_type(p.prorettype, null) = 'trigger'
             then 'TR'::varchar(2)
-          when func_results LIKE 'TABLE(%' then
+          when p.proretset then
             case 
-              when format_rettype = 'record'
-                then 'IF'::varchar(2)
-              else 'TF'::varchar(2)
+              when t.typtype = 'c'
+                then 'TF'::varchar(2)
+              else 'IF'::varchar(2)
             end
           else 'FN'::varchar(2)
         end
@@ -1635,13 +1635,13 @@ select
       when 'a' then 'AGGREGATE_FUNCTION'::varchar(60)
       else
         case 
-          when format_rettype = 'trigger'
+          when format_type(p.prorettype, null) = 'trigger'
             then 'SQL_TRIGGER'::varchar(60)
-          when func_results LIKE 'TABLE(%' then
+          when p.proretset then
             case 
-              when format_rettype = 'record'
-                then 'SQL_INLINE_TABLE_VALUED_FUNCTION'::varchar(60)
-              else 'SQL_TABLE_VALUED_FUNCTION'::varchar(60)
+              when t.typtype = 'c'
+                then 'SQL_TABLE_VALUED_FUNCTION'::varchar(60)
+              else 'SQL_INLINE_TABLE_VALUED_FUNCTION'::varchar(60)
             end
           else 'SQL_SCALAR_FUNCTION'::varchar(60)
         end
@@ -1653,9 +1653,8 @@ select
   , 0 as is_schema_published
 from pg_proc p
 inner join pg_namespace s on s.oid = p.pronamespace
-left join pg_trigger tr on tr.tgfoid = p.oid,
-format_type(p.prorettype, null) format_rettype,
-pg_get_function_result(p.oid) func_results
+inner join pg_catalog.pg_type t on t.oid = p.prorettype
+left join pg_trigger tr on tr.tgfoid = p.oid
 where (s.oid in (select schema_id from sys.schemas) or s.nspname = 'sys')
 and has_schema_privilege(s.oid, 'USAGE')
 and has_function_privilege(p.oid, 'EXECUTE')
