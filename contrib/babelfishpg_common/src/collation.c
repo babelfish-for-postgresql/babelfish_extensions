@@ -1065,7 +1065,6 @@ get_server_collation_oid_internal(bool missingOk)
 
 Oid BABELFISH_CLUSTER_COLLATION_OID()
 {
-
 	if (sql_dialect == SQL_DIALECT_TSQL)
 	{
 		get_server_collation_oid_internal(false); /* set and cache server_collation_oid */
@@ -1357,4 +1356,12 @@ get_collation_callbacks(void)
 		collation_callbacks_var.find_collation_internal = &find_collation;
 	}
 	return &collation_callbacks_var;
+}
+
+PG_FUNCTION_INFO_V1(get_server_collation_oid);
+
+Datum
+get_server_collation_oid(PG_FUNCTION_ARGS)
+{
+	PG_RETURN_OID(get_server_collation_oid_internal(false));
 }

@@ -1,5 +1,5 @@
 -- create babelfish collations
-
+/*
 CREATE COLLATION IF NOT EXISTS sys.Arabic_CS_AS (provider = icu, locale = 'ar_SA');
 CREATE COLLATION sys.Arabic_CI_AS (provider = icu, locale = 'ar_SA@colStrength=secondary', deterministic = false);
 CREATE COLLATION sys.Arabic_CI_AI (provider = icu, locale = 'ar_SA@colStrength=primary', deterministic = false);
@@ -139,7 +139,7 @@ CREATE COLLATION sys.Ukrainian_CI_AS (provider = icu, locale = 'uk_UA@colStrengt
 CREATE COLLATION IF NOT EXISTS sys.Vietnamese_CS_AS (provider = icu, locale = 'vi_VN');
 CREATE COLLATION sys.Vietnamese_CI_AI (provider = icu, locale = 'vi_VN@colStrength=primary', deterministic = false);
 CREATE COLLATION sys.Vietnamese_CI_AS (provider = icu, locale = 'vi_VN@colStrength=secondary', deterministic = false);
-
+*/
 -- collation catalog
 create table sys.babelfish_helpcollation(
     Name VARCHAR(128) NOT NULL,
@@ -339,6 +339,7 @@ INSERT INTO sys.babelfish_helpcollation VALUES (N'vietnamese_cs_as', N'Vietnames
 INSERT INTO sys.babelfish_helpcollation VALUES (N'vietnamese_ci_as', N'Vietnamese, case-insensitive, accent-sensitive, kanatype-insensitive, width-insensitive');
 INSERT INTO sys.babelfish_helpcollation VALUES (N'vietnamese_ci_ai', N'Vietnamese, case-insensitive, accent-insensitive, kanatype-insensitive, width-insensitive');
 
+/*
 DROP FUNCTION IF EXISTS sys.get_babel_server_collation_oid;
 CREATE OR REPLACE FUNCTION sys.get_babel_server_collation_oid() RETURNS OID
 LANGUAGE C
@@ -372,3 +373,4 @@ LANGUAGE C
 AS 'babelfishpg_tsql', 'init_like_ilike_table';
 CALL sys.babel_like_ilike_info_initializer();
 DROP PROCEDURE sys.babel_like_ilike_info_initializer;
+*/

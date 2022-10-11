@@ -3252,6 +3252,20 @@ SELECT
 WHERE FALSE; -- This condition will ensure that the view is empty
 GRANT SELECT ON sys.numbered_procedures TO PUBLIC;
 
+ALTER TABLE sys.extended_properties RENAME TO extended_properties_deprecated_in_2_3_0;
+
+create table if not exists sys.extended_properties (
+class sys.tinyint,
+class_desc sys.nvarchar(60),
+major_id int,
+minor_id int,
+name sys.sysname,
+value sys.sql_variant
+);
+GRANT SELECT ON sys.extended_properties TO PUBLIC;
+
+INSERT INTO sys.extended_properties SELECT * FROM sys.extended_properties_deprecated_in_2_3_0;
+
 CREATE OR REPLACE FUNCTION sys.fn_listextendedproperty (
 property_name varchar(128),
 level0_object_type varchar(128),

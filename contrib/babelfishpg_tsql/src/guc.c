@@ -19,8 +19,8 @@ bool   enable_ownership_structure = false;
 bool pltsql_dump_antlr_query_graph = false;
 bool pltsql_enable_antlr_detailed_log = false;
 bool pltsql_allow_antlr_to_unsupported_grammar_for_testing = false;
-char* pltsql_default_locale = NULL;
-char* pltsql_server_collation_name = NULL;
+//char* pltsql_default_locale = NULL;
+//char* pltsql_server_collation_name = NULL;
 bool  pltsql_ansi_defaults = true;
 bool  pltsql_quoted_identifier = true;
 bool  pltsql_concat_null_yields_null = true;
@@ -79,8 +79,8 @@ bool restore_tsql_tabletype = false;
 /* T-SQL Hint Mapping */
 bool enable_hint_mapping = false;
 
-static bool check_server_collation_name(char **newval, void **extra, GucSource source);
-static bool check_default_locale (char **newval, void **extra, GucSource source);
+//static bool check_server_collation_name(char **newval, void **extra, GucSource source);
+//static bool check_default_locale (char **newval, void **extra, GucSource source);
 static bool check_ansi_null_dflt_on (bool *newval, void **extra, GucSource source);
 static bool check_ansi_null_dflt_off (bool *newval, void **extra, GucSource source);
 static bool check_ansi_padding (bool *newval, void **extra, GucSource source);
@@ -121,6 +121,7 @@ static const struct config_enum_entry escape_hatch_options[] = {
 	{NULL, EH_NULL, false},
 };
 
+#if 0
 static bool check_server_collation_name(char **newval, void **extra, GucSource source)
 {
 	if (tsql_is_valid_server_collation_name(*newval))
@@ -143,6 +144,7 @@ static bool check_default_locale (char **newval, void **extra, GucSource source)
 		return true;
 	return false;
 }
+#endif
 
 static bool check_ansi_null_dflt_on (bool *newval, void **extra, GucSource source)
 {
@@ -595,7 +597,7 @@ define_custom_variables(void)
 				 PGC_SUSET,  /* only superuser can set */
 				 GUC_NO_SHOW_ALL,
 				 NULL, NULL, NULL);
-
+#if 0
 	DefineCustomStringVariable("babelfishpg_tsql.server_collation_name",
 				   gettext_noop("Name of the default server collation."),
 				   NULL,
@@ -614,7 +616,7 @@ define_custom_variables(void)
 				   PGC_SUSET,  /* only superuser can set */
 				   0,
 				   check_default_locale, NULL, NULL);
-
+#endif
 	/* ISO standard settings */
 	DefineCustomBoolVariable("babelfishpg_tsql.ansi_defaults",
 				 gettext_noop("Controls a group of settings that collectively specify some "

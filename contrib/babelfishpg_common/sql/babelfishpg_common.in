@@ -12,6 +12,7 @@ SELECT set_config('search_path', 'sys, '||current_setting('search_path'), false)
 #include "money/fixeddecimal--1.1.0_base_parallel.sql"
 #include "money/fixeddecimal--parallelaggs.sql"
 #include "money/fixeddecimal--brin.sql"
+#include "collation.sql"
 #include "bpchar.sql"
 #include "varchar.sql"
 #include "numerics.sql"

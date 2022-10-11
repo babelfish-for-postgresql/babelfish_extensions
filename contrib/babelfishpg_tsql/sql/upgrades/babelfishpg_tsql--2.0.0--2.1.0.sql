@@ -397,9 +397,9 @@ GRANT EXECUTE ON PROCEDURE sys.sp_column_privileges TO PUBLIC;
 CREATE OR REPLACE VIEW sys.sp_table_privileges_view AS
 -- Will use sp_column_priivleges_view to get information from SELECT, INSERT and REFERENCES (only need permission from 1 column in table)
 SELECT DISTINCT
-CAST(TABLE_QUALIFIER AS sys.sysname) AS TABLE_QUALIFIER,
+CAST(TABLE_QUALIFIER AS sys.sysname) COLLATE sys.database_default AS TABLE_QUALIFIER,
 CAST(TABLE_OWNER AS sys.sysname) AS TABLE_OWNER,
-CAST(TABLE_NAME AS sys.sysname) AS TABLE_NAME,
+CAST(TABLE_NAME AS sys.sysname) COLLATE sys.database_default AS TABLE_NAME,
 CAST(GRANTOR AS sys.sysname) AS GRANTOR,
 CAST(GRANTEE AS sys.sysname) AS GRANTEE,
 CAST(PRIVILEGE AS sys.sysname) AS PRIVILEGE,
@@ -409,9 +409,9 @@ FROM sys.sp_column_privileges_view
 UNION 
 -- We need these set of joins only for the DELETE privilege
 SELECT
-CAST(t2.dbname AS sys.sysname) AS TABLE_QUALIFIER,
+CAST(t2.dbname AS sys.sysname) COLLATE sys.database_default AS TABLE_QUALIFIER,
 CAST(s1.name AS sys.sysname) AS TABLE_OWNER,
-CAST(t1.relname AS sys.sysname) AS TABLE_NAME,
+CAST(t1.relname AS sys.sysname) COLLATE sys.database_default AS TABLE_NAME,
 CAST((select orig_username from sys.babelfish_authid_user_ext where rolname = t4.grantor) AS sys.sysname) AS GRANTOR,
 CAST((select orig_username from sys.babelfish_authid_user_ext where rolname = t4.grantee) AS sys.sysname) AS GRANTEE,
 CAST(t4.privilege_type AS sys.sysname) AS PRIVILEGE,
@@ -2554,9 +2554,9 @@ alter view sys.all_views rename to all_views_deprecated;
 alter view sys.spt_tablecollations_view rename to spt_tablecollations_view_deprecated;
 
 create or replace view sys.all_objects as
-select 
-    cast (name as sys.sysname) 
-  , cast (object_id as integer) 
+select
+    cast (name as sys.sysname)
+  , cast (object_id as integer)
   , cast ( principal_id as integer)
   , cast (schema_id as integer)
   , cast (parent_object_id as integer)
@@ -2564,9 +2564,9 @@ select
   , cast (type_desc as sys.nvarchar(60))
   , cast (create_date as sys.datetime)
   , cast (modify_date as sys.datetime)
-  , cast (case when (schema_id::regnamespace::text = 'sys') then 1
-          when name in (select name from sys.shipped_objects_not_in_sys nis 
-                        where nis.name = name and nis.schemaid = schema_id and nis.type = type) then 1 
+  , cast (case when (schema_id::regnamespace::text = 'sys' collate sys.database_default) then 1
+          when name in (select name from sys.shipped_objects_not_in_sys nis
+                        where nis.name = name collate sys.database_default and nis.schemaid = schema_id and nis.type = type collate sys.database_default) then 1
           else 0 end as sys.bit) as is_ms_shipped
   , cast (is_published as sys.bit)
   , cast (is_schema_published as sys.bit)
@@ -2574,7 +2574,7 @@ from
 (
 -- details of user defined and system tables
 select
-    t.relname as name
+    t.relname collate sys.database_default as name
   , t.oid as object_id
   , null::integer as principal_id
   , s.oid as schema_id
@@ -2595,7 +2595,7 @@ and has_table_privilege(t.oid, 'SELECT,INSERT,UPDATE,DELETE,TRUNCATE,TRIGGER')
 union all
 -- details of user defined and system views
 select
-    t.relname as name
+    t.relname collate sys.database_default as name
   , t.oid as object_id
   , null::integer as principal_id
   , s.oid as schema_id
@@ -2615,7 +2615,7 @@ and has_table_privilege(quote_ident(s.nspname) ||'.'||quote_ident(t.relname), 'S
 union all
 -- details of user defined and system foreign key constraints
 select
-    c.conname as name
+    c.conname collate sys.database_default as name
   , c.oid as object_id
   , null::integer as principal_id
   , s.oid as schema_id
@@ -2635,7 +2635,7 @@ and c.contype = 'f'
 union all
 -- details of user defined and system primary key constraints
 select
-    c.conname as name
+    c.conname collate sys.database_default as name
   , c.oid as object_id
   , null::integer as principal_id
   , s.oid as schema_id
@@ -2655,7 +2655,7 @@ and c.contype = 'p'
 union all
 -- details of user defined and system defined procedures
 select
-    p.proname as name
+    p.proname collate sys.database_default as name
   , p.oid as object_id
   , null::integer as principal_id
   , s.oid as schema_id
@@ -2691,7 +2691,7 @@ and has_function_privilege(p.oid, 'EXECUTE')
 union all
 -- details of all default constraints
 select
-    ('DF_' || o.relname || '_' || d.oid)::name as name
+    ('DF_' || o.relname collate sys.database_default || '_' || d.oid)::name collate sys.database_default as name
   , d.oid as object_id
   , null::int as principal_id
   , o.relnamespace as schema_id
@@ -2714,9 +2714,9 @@ and has_column_privilege(a.attrelid, a.attname, 'SELECT,INSERT,UPDATE,REFERENCES
 union all
 -- details of all check constraints
 select
-    c.conname::name
+    c.conname::name collate sys.database_default
   , c.oid::integer as object_id
-  , NULL::integer as principal_id 
+  , NULL::integer as principal_id
   , c.connamespace::integer as schema_id
   , c.conrelid::integer as parent_object_id
   , 'C'::char(2) as type
@@ -2734,7 +2734,7 @@ and c.contype = 'c' and c.conrelid != 0
 union all
 -- details of user defined and system defined sequence objects
 select
-  p.relname as name
+  p.relname collate sys.database_default as name
   , p.oid as object_id
   , null::integer as principal_id
   , s.oid as schema_id
@@ -2754,7 +2754,7 @@ and has_schema_privilege(s.oid, 'USAGE')
 union all
 -- details of user defined table types
 select
-    ('TT_' || tt.name || '_' || tt.type_table_object_id)::name as name
+    ('TT_' || tt.name collate sys.database_default || '_' || tt.type_table_object_id)::name collate sys.database_default as name
   , tt.type_table_object_id as object_id
   , tt.principal_id as principal_id
   , tt.schema_id as schema_id
@@ -2799,24 +2799,24 @@ where t.type = 'V';
 GRANT SELECT ON sys.all_views TO PUBLIC;
 
 CREATE OR REPLACE VIEW sys.spt_tablecollations_view AS
-  SELECT
-    o.object_id         AS object_id,
-    o.schema_id         AS schema_id,
-    c.column_id         AS colid,
-    CASE WHEN p.attoptions[1] LIKE 'bbf_original_name=%' THEN split_part(p.attoptions[1], '=', 2)
-      ELSE c.name END AS name,
-    CAST(CollationProperty(c.collation_name,'tdscollation') AS binary(5)) AS tds_collation_28,
-    CAST(CollationProperty(c.collation_name,'tdscollation') AS binary(5)) AS tds_collation_90,
-    CAST(CollationProperty(c.collation_name,'tdscollation') AS binary(5)) AS tds_collation_100,
-    CAST(c.collation_name AS nvarchar(128)) AS collation_28,
-    CAST(c.collation_name AS nvarchar(128)) AS collation_90,
-    CAST(c.collation_name AS nvarchar(128)) AS collation_100
-  FROM
-    sys.all_columns c INNER JOIN
-    sys.all_objects o ON (c.object_id = o.object_id) JOIN
-    pg_attribute p ON (c.name = p.attname)
-  WHERE
-    c.is_sparse = 0 AND p.attnum >= 0;
+    SELECT
+        o.object_id AS object_id,
+        o.schema_id AS schema_id,
+        c.column_id AS colid,
+        CASE WHEN p.attoptions[1] collate "C" LIKE 'bbf_original_name=%' THEN split_part(p.attoptions[1] collate "C", '=', 2)
+            ELSE c.name END AS name,
+        CAST(CollationProperty(c.collation_name,'tdscollation') AS binary(5)) AS tds_collation_28,
+        CAST(CollationProperty(c.collation_name,'tdscollation') AS binary(5)) AS tds_collation_90,
+        CAST(CollationProperty(c.collation_name,'tdscollation') AS binary(5)) AS tds_collation_100,
+        CAST(c.collation_name AS nvarchar(128)) AS collation_28,
+        CAST(c.collation_name AS nvarchar(128)) AS collation_90,
+        CAST(c.collation_name AS nvarchar(128)) AS collation_100
+    FROM
+        sys.all_columns c INNER JOIN
+        sys.all_objects o ON (c.object_id = o.object_id) JOIN
+        pg_attribute p ON (c.name = p.attname COLLATE sys.database_default)
+    WHERE
+        c.is_sparse = 0 AND p.attnum >= 0;
 GRANT SELECT ON sys.spt_tablecollations_view TO PUBLIC;
 
 call sys.babelfish_drop_deprecated_object('view', 'sys', 'spt_tablecollations_view_deprecated');
@@ -2925,7 +2925,7 @@ GRANT SELECT ON sys.default_constraints TO PUBLIC;
 
 create or replace view sys.objects as
 select
-      CAST(t.name as sys.sysname) as name 
+      CAST(t.name as sys.sysname) as name
     , CAST(t.object_id as int) as object_id
     , CAST(t.principal_id as int) as principal_id
     , CAST(t.schema_id as int) as schema_id
@@ -2937,7 +2937,7 @@ select
     , CAST(t.is_ms_shipped as sys.bit) as is_ms_shipped
     , CAST(t.is_published as sys.bit) as is_published
     , CAST(t.is_schema_published as sys.bit) as is_schema_published
-from  sys.tables t
+from sys.tables t
 union all
 select
       CAST(v.name as sys.sysname) as name
@@ -2952,7 +2952,7 @@ select
     , CAST(v.is_ms_shipped as sys.bit) as is_ms_shipped
     , CAST(v.is_published as sys.bit) as is_published
     , CAST(v.is_schema_published as sys.bit) as is_schema_published
-from  sys.views v
+from sys.views v
 union all
 select
       CAST(f.name as sys.sysname) as name
@@ -3049,7 +3049,7 @@ and p.relkind = 'S'
 and has_schema_privilege(s.schema_id, 'USAGE')
 union all
 select
-    CAST(('TT_' || tt.name || '_' || tt.type_table_object_id) as sys.sysname) as name
+    CAST(('TT_' || tt.name collate "C" || '_' || tt.type_table_object_id) as sys.sysname) as name
   , CAST(tt.type_table_object_id as int) as object_id
   , CAST(tt.principal_id as int) as principal_id
   , CAST(tt.schema_id as int) as schema_id
@@ -3732,24 +3732,24 @@ GRANT SELECT ON sys.all_columns TO PUBLIC;
 -- Rebuild dependent view
 ALTER VIEW sys.spt_tablecollations_view RENAME TO spt_tablecollations_view_deprecated;
 CREATE OR REPLACE VIEW sys.spt_tablecollations_view AS
-	SELECT
-		o.object_id         AS object_id,
-		o.schema_id         AS schema_id,
-		c.column_id         AS colid,
-		CASE WHEN p.attoptions[1] LIKE 'bbf_original_name=%' THEN split_part(p.attoptions[1], '=', 2)
-			ELSE c.name END AS name,
-		CAST(CollationProperty(c.collation_name,'tdscollation') AS binary(5)) AS tds_collation_28,
-		CAST(CollationProperty(c.collation_name,'tdscollation') AS binary(5)) AS tds_collation_90,
-		CAST(CollationProperty(c.collation_name,'tdscollation') AS binary(5)) AS tds_collation_100,
-		CAST(c.collation_name AS nvarchar(128)) AS collation_28,
-		CAST(c.collation_name AS nvarchar(128)) AS collation_90,
-		CAST(c.collation_name AS nvarchar(128)) AS collation_100
-	FROM
-		sys.all_columns c INNER JOIN
-		sys.all_objects o ON (c.object_id = o.object_id) JOIN
-		pg_attribute p ON (c.name = p.attname AND c.object_id = p.attrelid)
-	WHERE
-		c.is_sparse = 0 AND p.attnum >= 0;
+    SELECT
+        o.object_id AS object_id,
+        o.schema_id AS schema_id,
+        c.column_id AS colid,
+        CASE WHEN p.attoptions[1] collate "C" LIKE 'bbf_original_name=%' THEN split_part(p.attoptions[1] collate "C", '=', 2)
+            ELSE c.name END AS name,
+        CAST(CollationProperty(c.collation_name,'tdscollation') AS binary(5)) AS tds_collation_28,
+        CAST(CollationProperty(c.collation_name,'tdscollation') AS binary(5)) AS tds_collation_90,
+        CAST(CollationProperty(c.collation_name,'tdscollation') AS binary(5)) AS tds_collation_100,
+        CAST(c.collation_name AS nvarchar(128)) AS collation_28,
+        CAST(c.collation_name AS nvarchar(128)) AS collation_90,
+        CAST(c.collation_name AS nvarchar(128)) AS collation_100
+    FROM
+        sys.all_columns c INNER JOIN
+        sys.all_objects o ON (c.object_id = o.object_id) JOIN
+        pg_attribute p ON (c.name = p.attname COLLATE sys.database_default)
+    WHERE
+        c.is_sparse = 0 AND p.attnum >= 0;
 GRANT SELECT ON sys.spt_tablecollations_view TO PUBLIC;
 
 CALL sys.babelfish_drop_deprecated_object('view', 'sys', 'all_columns_deprecated');
