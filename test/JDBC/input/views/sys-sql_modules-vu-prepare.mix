@@ -1,32 +1,32 @@
 -- Setup
-CREATE DATABASE db1_sys_sql_modules
+CREATE DATABASE sys_sql_modules_vu_prepare_db
 GO
 
-CREATE VIEW my_master_view_sys_sql_modules AS -- This view should not be seen as we will be using a different database for the test
+CREATE VIEW sys_sql_modules_vu_prepare_v1 AS -- This view should not be seen as we will be using a different database for the test
 SELECT 1
 GO
 
-USE db1_sys_sql_modules
+USE sys_sql_modules_vu_prepare_db
 GO
 
-CREATE TABLE sql_modules_table1(a int)
+CREATE TABLE sys_sql_modules_vu_prepare_t1(a int)
 GO
 
-CREATE TABLE sql_modules_table2(a int)
+CREATE TABLE sys_sql_modules_vu_prepare_t2(a int)
 GO
 
-CREATE TRIGGER sql_mod_trig ON sql_modules_table2 INSTEAD OF INSERT
+CREATE TRIGGER sys_sql_modules_vu_prepare_tr1 ON sys_sql_modules_vu_prepare_t2 INSTEAD OF INSERT
 AS
 BEGIN
-SELECT * FROM sql_modules_table1;
+SELECT * FROM sys_sql_modules_vu_prepare_t1;
 END
 GO
 
-CREATE VIEW sql_modules_view AS
+CREATE VIEW sys_sql_modules_vu_prepare_v2 AS
 SELECT 1
 GO
 
-CREATE FUNCTION sql_modules_function() 
+CREATE FUNCTION sys_sql_modules_vu_prepare_f1() 
 RETURNS INT
 AS 
 BEGIN
@@ -34,13 +34,16 @@ BEGIN
 END
 GO
 
-CREATE PROC sql_modules_proc AS
+CREATE PROC sys_sql_modules_vu_prepare_p1 AS
 SELECT 1
 GO
 
--- Test permission for sql_modules (query should not have any results)
-CREATE LOGIN sql_modules_user WITH PASSWORD='test'
+-- Test permission for all_sql_modules (query should not have any results)
+CREATE LOGIN sys_sql_modules_vu_prepare_user WITH PASSWORD='test'
 GO
 
-CREATE USER sql_modules_user FOR LOGIN sql_modules_user
+CREATE USER sys_sql_modules_vu_prepare_user FOR LOGIN sys_sql_modules_vu_prepare_user
+GO
+
+USE master
 GO

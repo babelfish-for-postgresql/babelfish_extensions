@@ -79,9 +79,6 @@ go
 select checksum(*) from BABEL_1566_vu_prepare_4;
 go
 
-select distinct checksum(create_date) from sys.objects;
-go
-
 select cast(cast(1 as rowversion) as text);
 go
 
