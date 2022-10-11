@@ -1,13 +1,9 @@
-
 #include "odbc_handler.h"
 #include <sqlext.h>
-#include <fstream>
 #include <gtest/gtest.h>
 
-using std::pair;
-
-OdbcHandler::OdbcHandler() {
-  SetConnectionString(ServerType::Babel);
+OdbcHandler::OdbcHandler(ConnectionObject &co) {
+  SetConnectionProperties(co);
 }
 
 OdbcHandler::~OdbcHandler() {
@@ -153,39 +149,16 @@ void OdbcHandler::CloseStmt() {
   }
 }
 
-void OdbcHandler::SetConnectionString (ServerType server_type) {
+void OdbcHandler::SetConnectionProperties(ConnectionObject &co) {
 
-  map<string, string> config_file_values = ParseConfigFile();
-  db_driver_ = getenv("ODBC_DRIVER_NAME") ? string(getenv("BABEL_DB_SERVER")) : 
-      config_file_values.find("ODBC_DRIVER_NAME") != config_file_values.end() ? config_file_values["ODBC_DRIVER_NAME"] : ODBC_DRIVER_NAME;
-  switch (server_type) {
-    case ServerType::Babel:
-      db_server_ = getenv("BABEL_DB_SERVER") ? string(getenv("BABEL_DB_SERVER")) :
-          config_file_values.find("BABEL_DB_SERVER") != config_file_values.end() ? config_file_values["BABEL_DB_SERVER"] : BABEL_DB_SERVER;
-      db_port_ = getenv("BABEL_DB_PORT") ? string(getenv("BABEL_DB_PORT")) :
-          config_file_values.find("BABEL_DB_PORT") != config_file_values.end() ? config_file_values["BABEL_DB_PORT"] : BABEL_DB_PORT;
-      db_uid_ = getenv("BABEL_DB_USER") ? string(getenv("BABEL_DB_USER")) :
-          config_file_values.find("BABEL_DB_USER") != config_file_values.end() ? config_file_values["BABEL_DB_USER"] : BABEL_DB_USER;
-      db_pwd_ = getenv("BABEL_DB_PASSWORD") ? string(getenv("BABEL_DB_PASSWORD")) :
-          config_file_values.find("BABEL_DB_PASSWORD") != config_file_values.end() ? config_file_values["BABEL_DB_PASSWORD"] : BABEL_DB_PASSWORD;
-      db_dbname_ = getenv("BABEL_DB_NAME") ? string(getenv("BABEL_DB_NAME")) :
-          config_file_values.find("BABEL_DB_NAME") != config_file_values.end() ? config_file_values["BABEL_DB_NAME"] : BABEL_DB_NAME;
-      break;
-    case ServerType::SQL:
-      db_server_ = getenv("SQL_DB_SERVER") ? string(getenv("SQL_DB_SERVER")) :
-          config_file_values.find("SQL_DB_SERVER") != config_file_values.end() ? config_file_values["SQL_DB_SERVER"] : SQL_DB_SERVER;
-      db_port_ = getenv("SQL_DB_PORT") ? string(getenv("SQL_DB_PORT")) :
-          config_file_values.find("SQL_DB_PORT") != config_file_values.end() ? config_file_values["SQL_DB_PORT"] : SQL_DB_PORT;
-      db_uid_ = getenv("SQL_DB_USER") ? string(getenv("SQL_DB_USER")) :
-          config_file_values.find("SQL_DB_USER") != config_file_values.end() ? config_file_values["SQL_DB_USER"] : SQL_DB_USER;
-      db_pwd_ = getenv("SQL_DB_PASSWORD") ? string(getenv("SQL_DB_PASSWORD")) :
-          config_file_values.find("SQL_DB_PASSWORD") != config_file_values.end() ? config_file_values["SQL_DB_PASSWORD"] : SQL_DB_PASSWORD;
-      db_dbname_ = getenv("SQL_DB_NAME") ? string(getenv("SQL_DB_NAME")) :
-          config_file_values.find("SQL_DB_NAME") != config_file_values.end() ? config_file_values["SQL_DB_NAME"] : SQL_DB_NAME;
-      break;
-  }
-  connection_string_ = "DRIVER={" + db_driver_ + "};SERVER=" + db_server_ + "," + db_port_ + ";UID=" + db_uid_ + ";PWD=" + db_pwd_ + ";DATABASE=" + db_dbname_;
-  return; 
+  db_driver_ = co.GetDriver();
+  db_server_ = co.GetServer();
+  db_port_ = co.GetPort();
+  db_uid_ = co.GetUid();
+  db_pwd_ = co.GetDbname();
+  db_dbname_ = co.GetDbname();
+
+  connection_string_ = co.GetConnectionString();
 }
 
 void OdbcHandler::AssertSqlSuccess(RETCODE retcode, const string& error_msg) {
@@ -196,40 +169,6 @@ void OdbcHandler::AssertSqlSuccess(RETCODE retcode, const string& error_msg) {
 
 bool OdbcHandler::IsSqlSuccess(RETCODE retcode) {
   return retcode == SQL_SUCCESS || retcode == SQL_SUCCESS_WITH_INFO;
-}
-
-map<string, string> OdbcHandler::ParseConfigFile() {
-
-    string line{};
-    map<string, string> config_file_values{};
-    std::ifstream config_file;
-    config_file.open("config.txt");
-
-    if (!config_file.is_open()) {
-        // ERROR: Cannot open config file
-        return config_file_values;
-    }
-
-    while (std::getline(config_file, line)) {
-
-      size_t index = line.find("=");
-
-      if (index == string::npos || index == (line.length() - 1)) {
-      // an empty line
-        continue;
-      }
-
-      string key = line.substr(0,index);
-      string value = line.substr(index+1);
-
-      if (value.find_first_not_of(' ') == string::npos) {
-        // value consists of only empty spaces
-        continue;
-      }
-      config_file_values.insert(pair<string, string>(key,value));
-
-    }
-    return config_file_values;
 }
 
 void OdbcHandler::ExecQuery(const string& query) {
@@ -306,6 +245,16 @@ void OdbcHandler::BindColumns(vector<tuple<int, int, SQLPOINTER, int>> columns) 
   for (auto column : columns) {
     auto& [col_num, c_type, target, target_size] = column;
     rcode = SQLBindCol(GetStatementHandle(), col_num, c_type, target, target_size, 0);
+    ASSERT_EQ(rcode, SQL_SUCCESS) << GetErrorMessage(SQL_HANDLE_STMT, rcode);
+  }
+}
+
+void OdbcHandler::BindColumns(vector<tuple<int, int, SQLPOINTER, int, SQLLEN*>> columns) {
+  RETCODE rcode;
+
+  for (auto column : columns) {
+    auto& [col_num, c_type, target, target_size, ind] = column;
+    rcode = SQLBindCol(GetStatementHandle(), col_num, c_type, target, target_size, ind);
     ASSERT_EQ(rcode, SQL_SUCCESS) << GetErrorMessage(SQL_HANDLE_STMT, rcode);
   }
 }
