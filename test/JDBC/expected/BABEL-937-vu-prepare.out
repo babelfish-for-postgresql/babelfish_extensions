@@ -1,6 +1,6 @@
 -- Key exists, not append
 create view babel_937_not_append_kp as
-SELECT JSON_MODIFY('{"name":"John","skills":["C#","SQL"]}','$.name','Mike') AS na_kp_1, 
+SELECT JSON_MODIFY('{"name":"John","skills":["C#","SQL"]}','lax $.name','Mike') AS na_kp_1, 
        JSON_MODIFY('{"name":"John","skills":["C#","SQL"]}','strict $.name','Mike') AS na_kp_2,
        JSON_MODIFY('{"name":"Mike","skills":["C#","SQL"],"surname":"Smith"}','$.skills',NULL) AS na_kp_3,
        JSON_MODIFY('{"name":"Mike","skills":["C#","SQL"],"surname":"Smith"}','strict $.name',NULL) AS na_kp_4;
@@ -44,14 +44,15 @@ go
 create view babel_937_append_kp_arr as
 SELECT JSON_MODIFY('{"name":"John","skills":["C#","SQL"]}','append $.skills','Azure') AS a_kp_a_1,
        JSON_MODIFY('{"name":"John","skills":["C#","SQL"]}','append strict $.skills','Azure') AS a_kp_a_2,
-       JSON_MODIFY('{"name":"Mike","skills":["C#","SQL"],"surname":"Smith"}','append $.skills',NULL) AS a_kp_a_3,
+       JSON_MODIFY('{"name":"Mike","skills":["C#","SQL"],"surname":"Smith"}','append lax $.skills',NULL) AS a_kp_a_3,
        JSON_MODIFY('{"name":"Mike","skills":["C#","SQL"],"surname":"Smith"}','append strict $.skills',NULL) AS a_kp_a_4;
 go
 
 
 -- Key not exists, append
+-- The sequence of the return json string keys may be different between Babelfish and T-SQL
 create view babel_937_append_knp_notarr_1 as
-SELECT JSON_MODIFY('{"name":"Mike","skills":["C#","SQL"]}','append $.surname','Smith') AS a_knp_a_1,
+SELECT JSON_MODIFY('{"name":"Mike","skills":["C#","SQL"]}','append lax $.surname','Smith') AS a_knp_a_1,
        JSON_MODIFY('{"name":"Mike","skills":["C#","SQL"],"surname":"Smith"}','append $.k',NULL) AS a_knp_a_2;
 go
 
