@@ -13,6 +13,7 @@
 #include "catalog/pg_authid.h"
 #include "catalog/pg_proc.h"
 #include "catalog/pg_trigger.h"
+#include "catalog/pg_trigger_d.h"
 #include "catalog/pg_type.h"
 #include "commands/copy.h"
 #include "commands/explain.h"
@@ -55,11 +56,10 @@
 #include "catalog.h"
 #include "rolecmds.h"
 #include "session.h"
+#include "multidb.h"
+
 
 #define TDS_NUMERIC_MAX_PRECISION	38
-#define TriggerRelationId	2620
-#define Anum_pg_trigger_tgname	4
-#define TriggerRelidNameIndexId	2701
 extern bool babelfish_dump_restore;
 extern bool pltsql_quoted_identifier;
 extern bool is_tsql_rowversion_or_timestamp_datatype(Oid oid);
@@ -1206,9 +1206,19 @@ get_trigger_object_address(List *object, Relation *relp, bool missing_ok)
 	ScanKeyData		key;
 	SysScanDesc tgscan;
 	HeapTuple	tuple;
+	const char *cur_schema_name;
+
+	if (sql_dialect != SQL_DIALECT_TSQL)
+	{
+		address.classId = InvalidOid;
+		address.objectId = InvalidOid;
+		address.objectSubId = InvalidAttrNumber;
+		return address;
+	}
 
 	/* Extract name of dependent object. */
 	depname = strVal(llast(object));
+	cur_schema_name = get_dbo_schema_name(get_cur_db_name());
 
 	if (prev_get_trigger_object_address_hook)
 		return (*prev_get_trigger_object_address_hook)(object,relp,missing_ok);
@@ -1216,8 +1226,8 @@ get_trigger_object_address(List *object, Relation *relp, bool missing_ok)
 	/* 
 	* Get the table name of the trigger from pg_trigger. We know that
 	* trigger names are forced to be unique in the tsql dialect, so we
-	* can rely on searching for trigger name to find the corresponding
-	* relation name.
+	* can rely on searching for trigger name and schema name to find 
+	* the corresponding relation name.
 	*/
 	tgrel = table_open(TriggerRelationId, AccessShareLock);
 
@@ -1228,17 +1238,24 @@ get_trigger_object_address(List *object, Relation *relp, bool missing_ok)
 
 	tgscan = systable_beginscan(tgrel, TriggerRelidNameIndexId, false,
 									NULL, 1, &key);
-
+	
 	while (HeapTupleIsValid(tuple = systable_getnext(tgscan)))
 	{
 		Form_pg_trigger pg_trigger = (Form_pg_trigger) GETSTRUCT(tuple);
 		char *pg_trigger_schema_name = get_namespace_name(get_rel_namespace(pg_trigger->tgrelid));
-		char *cur_schema_name = get_dbo_schema_name(get_cur_db_name());
+		
 		if (namestrcmp(&(pg_trigger->tgname), depname) == 0 && 
-			namestrcmp(pg_trigger_schema_name,cur_schema_name) == 0)
+			strcmp(pg_trigger_schema_name,cur_schema_name) == 0)
 		{
-			reloid = OidIsValid(pg_trigger->tgrelid) ? pg_trigger->tgrelid :
-						InvalidOid;
+			if(OidIsValid(pg_trigger->tgrelid))
+			{
+				reloid = pg_trigger->tgrelid;
+			}
+			else
+			{
+				reloid = InvalidOid;
+				break;
+			}
 			relation = RelationIdGetRelation(reloid); 
 			RelationClose(relation);
 		}

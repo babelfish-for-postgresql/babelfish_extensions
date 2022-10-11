@@ -186,8 +186,7 @@ static void lookup_and_drop_triggers(ObjectAccessType access, Oid classId,
         {
             trigRelation = RelationIdGetRelation(relOid);
             trigobjlist = list_make1(makeString(NameStr(pg_trigger->tgname)));
-			if(get_trigger_object_address_hook)
-				trigAddress = (*get_trigger_object_address_hook)(trigobjlist, &trigRelation, true);
+			trigAddress = (*get_trigger_object_address_hook)(trigobjlist, &trigRelation, true);
             performDeletion(&trigAddress, behavior, PERFORM_DELETION_INTERNAL);
             RelationClose(trigRelation);
         }
