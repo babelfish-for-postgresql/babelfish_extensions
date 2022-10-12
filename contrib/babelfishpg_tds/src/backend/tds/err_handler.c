@@ -279,47 +279,68 @@ emit_tds_log(ErrorData *edata)
 	/* disable further entry to this function to avoid recursion */
 	tds_disable_error_log_hook = true;
 
-	if (edata->elevel < ERROR)
-	{
-		elog(DEBUG5, "suppressing informational client message < ERROR");
-
-		/* reset the flag */
-		tds_disable_error_log_hook = false;
-		return;
-	}
-
-	if (MyProc != NULL)
-	{
-		error_lineno = 1;
-		get_tsql_error_details(edata, &tsql_error_code, &tsql_error_sev, &tsql_error_state, "TDS");
-		if (pltsql_plugin_handler_ptr && pltsql_plugin_handler_ptr->pltsql_current_lineno && *(pltsql_plugin_handler_ptr->pltsql_current_lineno) > 0)
-			error_lineno = *(pltsql_plugin_handler_ptr->pltsql_current_lineno);
-	}
-	else
-	{
-		/* We are not in position to load the error mapping hash table. */
-		error_lineno = 0;
-		tsql_error_code = ERRCODE_PLTSQL_ERROR_NOT_MAPPED;
-		tsql_error_sev = 16;
-		tsql_error_state = 1;
-	}
-
-	TdsSendError(tsql_error_code, tsql_error_state, tsql_error_sev, 
-					edata->message, error_lineno);
-
 	/*
-	 * If we've not reached the main query loop yet, flush the error message
-	 * immediately.
+	 * It is possible that we fail while processing the error (for example,
+	 * because of encoding conversion failure). Therefore, we place a PG_TRY
+	 * block so that we can log the internal error and tds_disable_error_log_hook
+	 * can be set to false so that further errors can be sent client.
 	 */
-	if (!IsNormalProcessingMode())
+	PG_TRY();
 	{
+		if (edata->elevel < ERROR)
+		{
+			elog(DEBUG5, "suppressing informational client message < ERROR");
+
+			/* reset the flag */
+			tds_disable_error_log_hook = false;
+			return;
+		}
+
+		if (MyProc != NULL)
+		{
+			error_lineno = 1;
+			get_tsql_error_details(edata, &tsql_error_code, &tsql_error_sev, &tsql_error_state, "TDS");
+			if (pltsql_plugin_handler_ptr && pltsql_plugin_handler_ptr->pltsql_current_lineno && *(pltsql_plugin_handler_ptr->pltsql_current_lineno) > 0)
+				error_lineno = *(pltsql_plugin_handler_ptr->pltsql_current_lineno);
+		}
+		else
+		{
+			/* We are not in position to load the error mapping hash table. */
+			error_lineno = 0;
+			tsql_error_code = ERRCODE_PLTSQL_ERROR_NOT_MAPPED;
+			tsql_error_sev = 16;
+			tsql_error_state = 1;
+		}
+
+		TdsSendError(tsql_error_code, tsql_error_state, tsql_error_sev,
+						edata->message, error_lineno);
+
 		/*
-		 * As of now, we can only reach here if we get any error during
-		 * prelogin and login phase.
+		 * If we've not reached the main query loop yet, flush the error message
+		 * immediately.
 		 */
-		TdsSendDone(TDS_TOKEN_DONE, TDS_DONE_ERROR, 0, 0);
-		TdsFlush();
+		if (!IsNormalProcessingMode())
+		{
+			/*
+			 * As of now, we can only reach here if we get any error during
+			 * prelogin and login phase.
+			 */
+			TdsSendDone(TDS_TOKEN_DONE, TDS_DONE_ERROR, 0, 0);
+			TdsFlush();
+		}
 	}
+	PG_CATCH();
+	{
+		/* Log the internal error message */
+		ErrorData *edata;
+		char *message;
+		edata = CopyErrorData();
+		message = psprintf("internal error occurred: %s", edata->message);
+		elog(LOG, message);
+		pfree(message);
+		FreeErrorData(edata);
+	}
+	PG_END_TRY();
 
 	/* reset the flag */
 	tds_disable_error_log_hook = false;

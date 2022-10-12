@@ -2211,24 +2211,13 @@ TdsSendError(int number, int state, int class,
 	}
 	PG_CATCH();
 	{
-		/* Log the internal error message */
-		ErrorData *edata;
-		edata = CopyErrorData();
-		elog(LOG, edata->message);
-		FreeErrorData(edata);
-
 		/* Send message to client that internal error occurred */
 		TdsSendInfoOrError(TDS_TOKEN_ERROR, number, state, class,
 						  "internal error occurred",
 						  "BABELFISH",	/* TODO: where to get this? */
 						  "",		/* TODO: where to get this? */
 						  lineNo);
-
-		/*
-		 * Enable the error log hook so that further errors can be sent
-		 * to client, as we will not return to the original error handler
-		 */
-		tds_disable_error_log_hook = false;
+		PG_RE_THROW();
 	}
 	PG_END_TRY();
 
