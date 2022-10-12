@@ -1,21 +1,20 @@
-#include "odbc_handler.h"
-#include "database_objects.h"
-#include "query_generator.h"
+#include "../src/odbc_handler.h"
+#include "../src/database_objects.h"
+#include "../src/query_generator.h"
+#include "../src/drivers.h"
 #include <sqlext.h>
 #include <gtest/gtest.h>
 
-class Diagnostics : public testing::Test {
-  protected:
-
-  static void SetUpTestSuite() {
-  }
-
-  static void TearDownTestSuite() {
+class MSSQL_Diagnostics : public testing::Test {
+  void SetUp() override {
+    if (!Drivers::DriverExists(ServerType::MSSQL)) {
+      GTEST_SKIP() << "MSSQL Driver not present: skipping all tests for this fixture.";
+    }
   }
 };
 
-TEST_F(Diagnostics, SQLGetDiagRec_Connection) {
-  OdbcHandler odbcHandler;
+TEST_F(MSSQL_Diagnostics, SQLGetDiagRec_Connection) {
+  OdbcHandler odbcHandler(Drivers::GetDriver(ServerType::MSSQL));
   RETCODE rcode;
   SQLINTEGER rec_num = 0;
   SQLINTEGER   native;
@@ -36,8 +35,8 @@ TEST_F(Diagnostics, SQLGetDiagRec_Connection) {
   ASSERT_TRUE(string((const char*) state).length() > 0);
 }
 
-TEST_F(Diagnostics, SQLGetDiagRec_UnsuccessfulStatement) {
-  OdbcHandler odbcHandler;
+TEST_F(MSSQL_Diagnostics, SQLGetDiagRec_UnsuccessfulStatement) {
+  OdbcHandler odbcHandler(Drivers::GetDriver(ServerType::MSSQL));
   RETCODE rcode;
   SQLINTEGER rec_num = 0;
   SQLINTEGER   native;
@@ -58,8 +57,8 @@ TEST_F(Diagnostics, SQLGetDiagRec_UnsuccessfulStatement) {
   ASSERT_EQ(rcode, SQL_NO_DATA);
 }
 
-TEST_F(Diagnostics, SQLGetDiagRec_Error) {
-  OdbcHandler odbcHandler;
+TEST_F(MSSQL_Diagnostics, SQLGetDiagRec_Error) {
+  OdbcHandler odbcHandler(Drivers::GetDriver(ServerType::MSSQL));
   RETCODE rcode;
   SQLINTEGER   native;
   SQLCHAR      state[7];
@@ -77,8 +76,8 @@ TEST_F(Diagnostics, SQLGetDiagRec_Error) {
   ASSERT_EQ(rcode, SQL_ERROR);
 }
 
-TEST_F(Diagnostics, SQLGetDiagField_SuccessfulStatement) {
-  OdbcHandler odbcHandler;
+TEST_F(MSSQL_Diagnostics, SQLGetDiagField_SuccessfulStatement) {
+  OdbcHandler odbcHandler(Drivers::GetDriver(ServerType::MSSQL));
   RETCODE rcode;
   SQLINTEGER rec_num = 1;
   SQLLEN row_count;
@@ -86,7 +85,7 @@ TEST_F(Diagnostics, SQLGetDiagField_SuccessfulStatement) {
 
   const string DIAGNOSTICS_W_TABLE = "DIAGNOSTICS_TABLE_W_1";
 
-  DatabaseObjects dbObjects;
+  DatabaseObjects dbObjects(Drivers::GetDriver(ServerType::MSSQL));
   ASSERT_NO_FATAL_FAILURE(dbObjects.CreateTable(DIAGNOSTICS_W_TABLE, {{"id", "INT"}}));
 
   string query = InsertStatement(DIAGNOSTICS_W_TABLE, "(1)");
@@ -100,8 +99,8 @@ TEST_F(Diagnostics, SQLGetDiagField_SuccessfulStatement) {
   ASSERT_EQ(row_count, 1);
 }
 
-TEST_F(Diagnostics, SQLGetDiagField_UnsuccessfulStatement) {
-  OdbcHandler odbcHandler;
+TEST_F(MSSQL_Diagnostics, SQLGetDiagField_UnsuccessfulStatement) {
+  OdbcHandler odbcHandler(Drivers::GetDriver(ServerType::MSSQL));
   RETCODE rcode;
   SQLINTEGER rec_num = 1;
   SQLCHAR      info[256];
@@ -117,8 +116,8 @@ TEST_F(Diagnostics, SQLGetDiagField_UnsuccessfulStatement) {
   ASSERT_STREQ((const char*) info, "42000");
 }
 
-TEST_F(Diagnostics, SQLGetDiagField_Error) {
-  OdbcHandler odbcHandler;
+TEST_F(MSSQL_Diagnostics, SQLGetDiagField_Error) {
+  OdbcHandler odbcHandler(Drivers::GetDriver(ServerType::MSSQL));
   RETCODE rcode;
   SQLINTEGER rec_num = 1;
   SQLCHAR      info[256];
@@ -127,7 +126,7 @@ TEST_F(Diagnostics, SQLGetDiagField_Error) {
   const string DIAGNOSTICS_RO_TABLE = "DIAGNOSTICS_TABLE_RO_1";
   string query = SelectStatement(DIAGNOSTICS_RO_TABLE, { "*" });
   
-  DatabaseObjects dbObjects;
+  DatabaseObjects dbObjects(Drivers::GetDriver(ServerType::MSSQL));
   ASSERT_NO_FATAL_FAILURE(dbObjects.CreateTable(DIAGNOSTICS_RO_TABLE, {{"id", "INT"}}));
 
   ASSERT_NO_FATAL_FAILURE(odbcHandler.Connect(true));

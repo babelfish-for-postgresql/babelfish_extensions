@@ -1,0 +1,13 @@
+# Schedule File for ODBC Test Framework for local run
+# 1. Lines starting with '#' will be treated as comments.
+#
+# 2. Keyword "all" is equivalent to running all tests.
+#
+# 3. To add a test, add test name on a new line.
+#    Test names should be in the format <Test_Fixture.Test_Name>
+#    E.g. MSSQL_Connection.SQLDriverConnect_SuccessfulConnectionTest
+#
+# 4. If you want the framework to not run certain tests, use: ignore#!#<Test_Fixture.Test_Name>
+#    E.g. ignore#!#MSSQL_Connection.SQLDriverConnect_SuccessfulConnectionTest
+
+all

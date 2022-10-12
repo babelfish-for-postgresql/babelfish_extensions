@@ -9,6 +9,7 @@ GO
 -- check trigger's object ID in sys.all_objects and sys.events view match up
 SELECT ao.name FROM sys.all_objects ao
 JOIN sys.events e ON e.object_id = ao.object_id
+WHERE name = 'sys_events_vu_prepare_trig3'
 GO
 
 USE master
