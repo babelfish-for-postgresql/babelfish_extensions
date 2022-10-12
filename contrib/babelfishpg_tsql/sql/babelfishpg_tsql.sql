@@ -126,7 +126,7 @@ BEGIN
   CAST(created AS sys.nvarchar(11)),
   CAST(status AS sys.nvarchar(600)),
   CAST(compatibility_level AS sys.tinyint)
-  FROM sys.babelfish_helpdb("@dbname");
+  FROM sys.babelfish_helpdb(@dbname);
 
   SELECT
   CAST(NULL AS sys.nchar(128)) AS name,

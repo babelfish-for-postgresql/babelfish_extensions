@@ -2154,3 +2154,31 @@ DROP PROCEDURE sys.babelfish_drop_deprecated_view(varchar, varchar);
 
 -- Reset search_path to not affect any subsequent scripts
 SELECT set_config('search_path', trim(leading 'sys, ' from current_setting('search_path')), false);
+
+CREATE OR REPLACE PROCEDURE sys.sp_helpdb(IN "@dbname" VARCHAR(32))
+LANGUAGE 'pltsql'
+AS $$
+BEGIN
+  SELECT
+  CAST(name AS sys.nvarchar(128)),
+  CAST(db_size AS sys.nvarchar(13)),
+  CAST(owner AS sys.nvarchar(128)),
+  CAST(dbid AS sys.int),
+  CAST(created AS sys.nvarchar(11)),
+  CAST(status AS sys.nvarchar(600)),
+  CAST(compatibility_level AS sys.tinyint)
+  FROM sys.babelfish_helpdb(@dbname);
+
+  SELECT
+  CAST(NULL AS sys.nchar(128)) AS name,
+  CAST(NULL AS smallint) AS fileid,
+  CAST(NULL AS sys.nchar(260)) AS filename,
+  CAST(NULL AS sys.nvarchar(128)) AS filegroup,
+  CAST(NULL AS sys.nvarchar(18)) AS size,
+  CAST(NULL AS sys.nvarchar(18)) AS maxsize,
+  CAST(NULL AS sys.nvarchar(18)) AS growth,
+  CAST(NULL AS sys.varchar(9)) AS usage;
+
+  RETURN 0;
+END;
+$$;
