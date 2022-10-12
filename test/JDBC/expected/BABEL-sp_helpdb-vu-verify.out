@@ -17,20 +17,6 @@ varchar#!#varchar#!#varchar#!#varchar#!#smallint
 master#!#<NULL>#!#jdbc_user#!#<NULL>#!#<NULL>
 ~~END~~
 
-SELECT name, db_size, owner, status, compatibility_level FROM sys.babelfish_helpdb('tempdb');
-GO
-~~START~~
-varchar#!#varchar#!#varchar#!#varchar#!#smallint
-tempdb#!#<NULL>#!#jdbc_user#!#<NULL>#!#<NULL>
-~~END~~
-
-SELECT name, db_size, owner, status, compatibility_level FROM sys.babelfish_helpdb('msdb');
-GO
-~~START~~
-varchar#!#varchar#!#varchar#!#varchar#!#smallint
-msdb#!#<NULL>#!#jdbc_user#!#<NULL>#!#<NULL>
-~~END~~
-
 SELECT name, db_size, owner, status, compatibility_level FROM sys.babelfish_helpdb('babel_sp_helpdb_db');
 GO
 ~~START~~
