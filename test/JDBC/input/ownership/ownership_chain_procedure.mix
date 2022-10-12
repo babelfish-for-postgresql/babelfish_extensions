@@ -1,0 +1,156 @@
+-- tsql
+create database db1;
+go
+
+use db1;
+go
+
+create login l1 with password='123';
+go
+
+create user u1 for login l1;
+go
+
+create login l2 with password='123';
+go
+
+create user u2 for login l2;
+go
+
+create login invoker with password='123';
+go
+
+create user invoker for login invoker;
+go
+
+-- psql
+grant all on database jdbc_testdb to db1_u1;
+go
+
+grant all on database jdbc_testdb to db1_u2;
+go
+
+-- tsql user=l2 password=123
+use db1;
+go
+
+select db_name();
+go
+
+create schema withdiffowner;
+go
+
+create table withdiffowner.tbld(a int, b int, c int);
+go
+
+create view withdiffowner.vwd as select current_user;
+go
+
+create proc withdiffowner.procd as select current_user;
+go
+
+-- tsql user=l1 password=123
+use db1;
+go
+
+select db_name();
+go
+
+create schema withsameowner;
+go
+
+create table withsameowner.tbls(a int, b int, c int);
+go
+
+create view withsameowner.vws as select current_user;
+go
+
+create proc withsameowner.procs as select current_user;
+go
+
+-- CASE 1
+-- PROC
+-- 		SELECT/EXEC ON TABLE/VIEW/PROC
+-- END
+-- EXEC PROC
+create proc withsameowner.pa1 as select * from withsameowner.tbls;
+go
+
+grant exec on withsameowner.pa1 to invoker;
+go
+
+create proc withsameowner.pb1 as select * from withdiffowner.tbld;
+go
+
+grant exec on withsameowner.pb1 to invoker;
+go
+
+-- tsql user=invoker password=123
+use db1;
+go
+
+select * from withsameowner.tbls;
+go
+
+
+exec withsameowner.pa1;
+go
+
+select * from withdiffowner.tbld;
+go
+
+exec withsameowner.pb1;
+go
+
+-- CASE 2
+-- PROC1 with ownerB
+--		PROC2 with ownerA
+--			SELECT ON TABLE/VIEW/PROC with ownerA
+-- GRANT EXEC ON PROC1 to invoker
+-- GRANT EXEC ON PROC2 to inovker
+-- EXEC PROC1 
+
+-- tsql user=l1 password=123
+use db1;
+go
+
+create proc withsameowner.pa2 as begin select * from withsameowner.tbls end;
+go
+
+grant exec on withsameowner.pa2 to invoker;
+go
+
+-- tsql user=l2 password=123
+use db1;
+go
+
+create proc withdiffowner.pb2 as exec withsameowner.pa2;
+go
+
+grant exec on withdiffowner.pb2 to invoker;
+go
+
+-- tsql
+select objs.column1 as object,user_name(objectproperty(object_id(objs.column1),'OwnerId')) as owner
+from (values ('withdiffowner.pb2'), ('withsameowner.pa2'), ('withsameowner.tbls')) 
+as objs(object_name)
+go
+
+-- tsql user=invoker password=123
+use db1;
+go
+
+
+exec withdiffowner.pb2;
+go
+
+-- tsql
+drop db1;
+go
+
+-- psql
+revoke all on database jdbc_testdb from db1_u1;
+go
+
+revoke all on database jdbc_testdb from db1_u2;
+go

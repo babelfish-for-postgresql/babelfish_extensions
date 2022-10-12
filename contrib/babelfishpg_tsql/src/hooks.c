@@ -36,6 +36,7 @@
 #include "replication/logical.h"
 #include "rewrite/rewriteHandler.h"
 #include "tcop/utility.h"
+#include "utils/acl.h"
 #include "utils/builtins.h"
 #include "utils/fmgroids.h"
 #include "utils/lsyscache.h"
@@ -117,6 +118,7 @@ static void pltsql_ExecutorFinish(QueryDesc *queryDesc);
 static void pltsql_ExecutorEnd(QueryDesc *queryDesc);
 
 static bool plsql_TriggerRecursiveCheck(ResultRelInfo *resultRelInfo);
+static bool check_ownership_chaining_for_tsql_proc(ObjectType objtype, Oid objid);
 
 /*****************************************
  * 			Replication Hooks
@@ -150,6 +152,7 @@ static ExecutorRun_hook_type prev_ExecutorRun = NULL;
 static ExecutorFinish_hook_type prev_ExecutorFinish = NULL;
 static ExecutorEnd_hook_type prev_ExecutorEnd = NULL;
 static inherit_view_constraints_from_table_hook_type prev_inherit_view_constraints_from_table = NULL;
+static check_ownership_chaining_for_tsql_proc_hook_type prev_check_ownership_chaining_for_tsql_proc_hook = NULL;
 static detect_numeric_overflow_hook_type prev_detect_numeric_overflow_hook = NULL;
 static match_pltsql_func_call_hook_type prev_match_pltsql_func_call_hook = NULL;
 static insert_pltsql_function_defaults_hook_type prev_insert_pltsql_function_defaults_hook = NULL;
@@ -229,6 +232,9 @@ InstallExtendedHooks(void)
 	inherit_view_constraints_from_table_hook = preserve_view_constraints_from_base_table;
 	TriggerRecuresiveCheck_hook = plsql_TriggerRecursiveCheck;
 
+	prev_check_ownership_chaining_for_tsql_proc_hook = check_ownership_chaining_for_tsql_proc_hook;
+	check_ownership_chaining_for_tsql_proc_hook = check_ownership_chaining_for_tsql_proc;
+
 	prev_detect_numeric_overflow_hook = detect_numeric_overflow_hook;
 	detect_numeric_overflow_hook = pltsql_detect_numeric_overflow;
 
@@ -271,6 +277,7 @@ UninstallExtendedHooks(void)
 	ExecutorFinish_hook = prev_ExecutorFinish;
 	ExecutorEnd_hook = prev_ExecutorEnd;
 	inherit_view_constraints_from_table_hook = prev_inherit_view_constraints_from_table;
+	check_ownership_chaining_for_tsql_proc_hook = prev_check_ownership_chaining_for_tsql_proc_hook;
 	detect_numeric_overflow_hook = prev_detect_numeric_overflow_hook;
 	match_pltsql_func_call_hook = prev_match_pltsql_func_call_hook;
 	insert_pltsql_function_defaults_hook = prev_insert_pltsql_function_defaults_hook;
@@ -2670,4 +2677,47 @@ print_pltsql_function_arguments(StringInfo buf, HeapTuple proctup,
 		ReleaseSysCache(bbffunctuple);
 
 	return argsprinted;
+}
+
+static bool
+check_ownership_chaining_for_tsql_proc(ObjectType objtype, Oid objid)
+{
+	PLtsql_execstate *estate;
+	Oid procOwner;
+	bool have_same_owner = false;
+
+	if (sql_dialect != SQL_DIALECT_TSQL)
+		return false;
+
+	/*
+	 * Fetch the top procedure excution state from execution state call stack
+	 * and get the owner of that procedure. Top entry in stack won't have
+	 * fn_oid set (becuase we set fn_owner in func structure when we're still
+	 * evaluting procedure as inline_code_block), so top second entry will have
+	 * fn_owner value set.
+	 */
+	if (!exec_state_call_stack || !exec_state_call_stack->next || objid == InvalidOid)
+		return false;
+
+	estate = exec_state_call_stack->next->estate;
+
+	if (!estate || !estate->func || estate->func->fn_owner == InvalidOid)
+		return false;
+
+	procOwner = estate->func->fn_owner;
+
+	switch (objtype)
+	{
+		case OBJECT_PROCEDURE:
+		case OBJECT_FUNCTION:
+			have_same_owner = pg_proc_ownercheck(objid, procOwner);
+			break;
+		case OBJECT_TABLE:
+		case OBJECT_VIEW:
+			have_same_owner = pg_class_ownercheck(objid, procOwner);
+			break;
+		default:
+			break;
+	}
+	return have_same_owner;
 }
