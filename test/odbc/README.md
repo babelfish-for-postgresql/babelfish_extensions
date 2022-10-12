@@ -11,33 +11,35 @@ you will have to:
 There are 2 ways of providing the database command: setting environment variables or altering the config files (environment variables will take higher priority over the config.txt file). 
 
 ### Using config.txt
-The config.txt should be filled like the example below. The ```ODBC_DRIVER_NAME``` can be left blank and the default value will result in using the ```ODBC Driver 17 for SQL Server``
 
+This test framework currently supports two ODBC drivers: the SQL Server ODBC driver and the psqlODBC driver. Their connection parameters for the two drivers are differentiated in the config.txt with the prefixes 'MSSQL_' and 'PSQL_' in the key names.
+
+The config.txt should be filled like the example below.
 
 ```
-ODBC_DRIVER_NAME=
-BABEL_DB_SERVER=localhost
-BABEL_DB_PORT=1433
-BABEL_DB_USER=sa
-BABEL_DB_PASSWORD=<YourStrong@Passw0rd>
-BABEL_DB_NAME=master
-```
+MSSQL_ODBC_DRIVER_NAME=ODBC Driver 17 for SQL Server
+MSSQL_BABEL_DB_SERVER=localhost
+MSSQL_BABEL_DB_PORT=1433
+MSSQL_BABEL_DB_USER=jdbc_user
+MSSQL_BABEL_DB_PASSWORD=12345678
+MSSQL_BABEL_DB_NAME=master
 
-NOTE: There may be some fields that are pre-fixed with ```SQL_DB_```. Please ignore these for now. They were left in from the previous state of these tests but will most likely not be used and removed in the future. 
+PSQL_ODBC_DRIVER_NAME=ODBC_Driver_12_PostgreSQL
+...
+```
 
 ### Using environment variables
 
-The environment variables will have the same name as the keys in the config file (e.g. BABEL_DB_SERVER will correspond with the server name). When running the build commands, you may set the environment variable in you .zshrc file (or .bashprofile) or before executing the main file like the example below.
+The environment variables will have the same name as the keys in the config file (e.g. MSSQL_BABEL_DB_SERVER will correspond with the server name for the SQL Server connection). When running the build commands, you may set the environment variable in your .zshrc file (or .bashprofile) or before executing the main file like the example below.
 
 ```
 // In the odbc directory
-BABEL_DB_SERVER=localhost BABEL_DB_PORT=1433 ./build/main
+MSSQL_BABEL_DB_SERVER=localhost MSSQL_BABEL_DB_PORT=1433 ./build/main
 ```
 
 
 ## Build commands
 To build these run these set of commands
-
 
 ```
 // Make sure you are in the odbc directory
@@ -50,5 +52,9 @@ cmake --build build
 
 To disable a test, simply put "DISABLED_" on the second parameter of the TEST_F descriptor.
 
-For example, if I wanted to disable a test labled TEST_F(testsuite, notWorkingTest). I would change it to
-TEST_F(testsuite, DISABLED_notWorkingTest)
+For example, to disable a test labled `TEST_F(testsuite, notWorkingTest)` it would be changed to
+`TEST_F(testsuite, DISABLED_notWorkingTest)`.
+
+## Controlling which tests should run
+
+By default all the tests will run. You can run one or more individual tests by specifying test information in the `odbc_schedule` file.
