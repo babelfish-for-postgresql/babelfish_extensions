@@ -1,3 +1,4 @@
+-- sla 30000
 USE sys_procedures_vu_prepare_db1
 GO
 

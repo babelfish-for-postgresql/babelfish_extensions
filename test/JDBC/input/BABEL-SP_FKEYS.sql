@@ -1,3 +1,4 @@
+-- sla 400000
 create database db1
 go
 use db1
