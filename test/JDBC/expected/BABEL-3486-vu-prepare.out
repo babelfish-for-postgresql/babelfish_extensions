@@ -203,11 +203,7 @@ RETURN (SELECT TRY_CONVERT(bit, CAST('13:01:59' AS time)));
 END
 GO
 
-
--- Convert numeric valid operations
--- Inconsistency NOTE: These tests do not perform the same way in babelfish as when they run on sql server
---             The precision parameter is accounted for but then each number is followed by trailing zeros
--- This test returns 5.33 in sql server and 5.33000000 in babelfish
+-- Convert numeric valid
 CREATE VIEW BABEL_3486_vu_prepare_v30 as (SELECT TRY_CONVERT(numeric(3,2), 5.33));
 GO
 CREATE PROCEDURE BABEL_3486_vu_prepare_p30 as (SELECT TRY_CONVERT(numeric(3,2), 5.33));
@@ -219,7 +215,6 @@ RETURN (SELECT TRY_CONVERT(numeric(3,2), 5.33));
 END
 GO
 
--- This test returns -5.3 in sql server and -5.30000000 in babelfish
 CREATE VIEW BABEL_3486_vu_prepare_v31 as (SELECT TRY_CONVERT(numeric(2,1), -5.34));
 GO
 CREATE PROCEDURE BABEL_3486_vu_prepare_p31 as (SELECT TRY_CONVERT(numeric(2,1), -5.34));
@@ -231,7 +226,6 @@ RETURN (SELECT TRY_CONVERT(numeric(2,1), -5.34));
 END
 GO
 
--- This test returns 5.0 in sql server and 5.00000000 in babelfish
 CREATE VIEW BABEL_3486_vu_prepare_v32 as (SELECT TRY_CONVERT(numeric(2,1), CAST(5.0 AS decimal)));
 GO
 CREATE PROCEDURE BABEL_3486_vu_prepare_p32 as (SELECT TRY_CONVERT(numeric(2,1), CAST(5.0 AS decimal)));
@@ -243,7 +237,6 @@ RETURN (SELECT TRY_CONVERT(numeric(2,1), CAST(5.0 AS decimal)));
 END
 GO
 
--- This test returns 5 in sql server and 5.00000000
 CREATE VIEW BABEL_3486_vu_prepare_v33 as (SELECT TRY_CONVERT(numeric(2,1), CAST(5.0 AS decimal(2,1))));
 GO
 CREATE PROCEDURE BABEL_3486_vu_prepare_p33 as (SELECT TRY_CONVERT(numeric(2,1), CAST(5.0 AS decimal(2,1))));
@@ -300,8 +293,6 @@ END
 GO
 
 -- Convert decimal valid operations
--- Inconsistency NOTE: These tests do not perform the same way in babelfish as when they run on sql server
--- The precision parameter is accounted for but then each number is followed by trailing zeros
 CREATE VIEW BABEL_3486_vu_prepare_v37 as (SELECT TRY_CONVERT(decimal(3,2), 5.33));
 GO
 CREATE PROCEDURE BABEL_3486_vu_prepare_p37 as (SELECT TRY_CONVERT(decimal(3,2), 5.33));
@@ -313,7 +304,6 @@ RETURN (SELECT TRY_CONVERT(decimal(3,2), 5.33));
 END
 GO
 
--- Inconsistency NOTE: This test does not perform the same way in babelfish as when they run on sql server
 CREATE VIEW BABEL_3486_vu_prepare_v38 as (SELECT TRY_CONVERT(decimal(1,0), -5.34));
 GO
 CREATE PROCEDURE BABEL_3486_vu_prepare_p38 as (SELECT TRY_CONVERT(decimal(1,0), -5.34));
@@ -325,7 +315,6 @@ RETURN (SELECT TRY_CONVERT(decimal(1,0), -5.34));
 END
 GO
 
--- Inconsistency NOTE: This test does not perform the same way in babelfish as when they run on sql server
 CREATE VIEW BABEL_3486_vu_prepare_v39 as (SELECT TRY_CONVERT(decimal(1,0), CAST(5.0 AS numeric(2,1))));
 GO
 CREATE PROCEDURE BABEL_3486_vu_prepare_p39 as (SELECT TRY_CONVERT(decimal(1,0), CAST(5.0 AS numeric(2,1))));
@@ -439,7 +428,7 @@ RETURN (SELECT TRY_CONVERT(MONEY, CAST('2017-08-25' AS date)));
 END
 GO
 
--- Convert float valid operations TESTS PASS
+-- Convert float valid operations
 CREATE VIEW BABEL_3486_vu_prepare_v48 as (SELECT TRY_CONVERT(float, 5.33));
 GO
 CREATE PROCEDURE BABEL_3486_vu_prepare_p48 as (SELECT TRY_CONVERT(float, 5.33));
@@ -473,7 +462,7 @@ RETURN (SELECT TRY_CONVERT(float, CAST(5.0 AS numeric(2,0))));
 END
 GO
 
--- Convert float invalid operations TESTS PASS
+-- Convert float invalid operations
 CREATE VIEW BABEL_3486_vu_prepare_v51 as (SELECT TRY_CONVERT(float, 'a'));
 GO
 CREATE PROCEDURE BABEL_3486_vu_prepare_p51 as (SELECT TRY_CONVERT(float, 'a'));
@@ -509,7 +498,7 @@ GO
 
 
 -- Convert varchar valid operations
--- This test returns 5.00 in sql server and null in babelfish
+-- This test returns 5.00 in tsql and null in babelfish
 CREATE VIEW BABEL_3486_vu_prepare_v54 as (SELECT TRY_CONVERT(varchar(30), CAST(5 AS MONEY), 8));
 GO
 CREATE PROCEDURE BABEL_3486_vu_prepare_p54 as (SELECT TRY_CONVERT(varchar(30), CAST(5 AS MONEY), 8));
@@ -643,32 +632,7 @@ RETURN (SELECT TRY_CONVERT(varchar(30), CAST('2017-08-25' AS date), 8));
 END
 GO
 
-
--- Convert char valid operations TESTS FAILED
---  ERROR NOTE: Using char in babelfish causes a tds protocol stream error
---              In sql server these tests work as expected
--- (SELECT TRY_CONVERT(char(30), CAST(5 AS MONEY), 8))
--- GO
--- (SELECT TRY_CONVERT(char(30), CAST('13:01:59' AS time), 8))
--- GO
--- (SELECT TRY_CONVERT(char(30), CAST(5 AS bigint), 8))
--- GO
--- (SELECT TRY_CONVERT(char(30), CAST(5 AS smallint), 8))
--- GO
--- (SELECT TRY_CONVERT(char(30), CAST(5 AS int), 8))
--- GO
--- (SELECT TRY_CONVERT(char(30), CAST(5 AS numeric), 8))
--- GO
--- (SELECT TRY_CONVERT(char(30), CAST(5.0 AS decimal), 8))
--- GO
--- (SELECT TRY_CONVERT(char(30), CAST(1 AS bit), 8))
--- GO
--- (SELECT TRY_CONVERT(char(30), CAST(1 AS smallmoney), 8))
--- GO
--- -- Convert char invalid operations
--- (SELECT TRY_CONVERT(char(1), CAST('2017-08-25' AS date), 8))
--- GO
--- Convert text valid operations TESTS PASS
+-- Convert text valid operations
 CREATE VIEW BABEL_3486_vu_prepare_v66 as (SELECT TRY_CONVERT(text, CAST(5 AS MONEY), 8));
 GO
 CREATE PROCEDURE BABEL_3486_vu_prepare_p66 as (SELECT TRY_CONVERT(text, CAST(5 AS MONEY), 8));
@@ -844,7 +808,7 @@ RETURN (SELECT TRY_CONVERT(date, '5000-082-253'));
 END
 GO
 
--- Convert time valid TESTS PASS
+-- Convert time valid
 CREATE VIEW BABEL_3486_vu_prepare_v81 as (SELECT TRY_CONVERT(time, '13:01:59'));
 GO
 CREATE PROCEDURE BABEL_3486_vu_prepare_p81 as (SELECT TRY_CONVERT(time, '13:01:59'));
@@ -957,7 +921,7 @@ RETURN (SELECT TRY_CONVERT(smalldatetime, '13:01:59'));
 END
 GO
 
--- Convert smalldatetime invalid TESTS PASS
+-- Convert smalldatetime invalid
 CREATE VIEW BABEL_3486_vu_prepare_v91 as (SELECT TRY_CONVERT(smalldatetime, '2017-08-25 26:01:59'));
 GO
 CREATE PROCEDURE BABEL_3486_vu_prepare_p91 as (SELECT TRY_CONVERT(smalldatetime, '2017-08-25 26:01:59'));
@@ -991,7 +955,7 @@ RETURN (SELECT TRY_CONVERT(smalldatetime, '1'));
 END
 GO
 
--- Convert datetime valid TESTS PASS
+-- Convert datetime valid
 CREATE VIEW BABEL_3486_vu_prepare_v94 as (SELECT TRY_CONVERT(datetime, '2017-08-25 13:01:59'));
 GO
 CREATE PROCEDURE BABEL_3486_vu_prepare_p94 as (SELECT TRY_CONVERT(datetime, '2017-08-25 13:01:59'));
@@ -1025,7 +989,7 @@ RETURN (SELECT TRY_CONVERT(datetime, '1753-01-01 0:01:59'));
 END
 GO
 
--- Convert datetime invalid TESTS PASS
+-- Convert datetime invalid
 CREATE VIEW BABEL_3486_vu_prepare_v97 as (SELECT TRY_CONVERT(datetime, 'a'));
 GO
 CREATE PROCEDURE BABEL_3486_vu_prepare_p97 as (SELECT TRY_CONVERT(datetime, 'a'));
@@ -1059,10 +1023,8 @@ RETURN (SELECT TRY_CONVERT(datetime, '0001-01-01 0:01:59'));
 END
 GO
 
-
--- Convert datetime2 valid TESTS FAILED
--- Inconsistency NOTE: This test does not perform the same way in babelfish as when they run on sql server
--- This test returns 2017-08-25 13:01:59.00000 in sql server and returns null in babelfish
+-- Convert datetime2 valid
+-- TODO: Update results when BABEL-3614 is resolved
 CREATE VIEW BABEL_3486_vu_prepare_v100 as (SELECT TRY_CONVERT(datetime2(5), '2017-08-25 13:01:59'));
 GO
 CREATE PROCEDURE BABEL_3486_vu_prepare_p100 as (SELECT TRY_CONVERT(datetime2(5), '2017-08-25 13:01:59'));
@@ -1074,7 +1036,6 @@ RETURN (SELECT TRY_CONVERT(datetime2(5), '2017-08-25 13:01:59'));
 END
 GO
 
--- This test returns 2017-08-25 13:01:59.0 in sql server and returns null in babelfish
 CREATE VIEW BABEL_3486_vu_prepare_v101 as (SELECT TRY_CONVERT(datetime2(1), CAST('2017-08-25 13:01:59' AS datetime)));
 GO
 CREATE PROCEDURE BABEL_3486_vu_prepare_p101 as (SELECT TRY_CONVERT(datetime2(1), CAST('2017-08-25 13:01:59' AS datetime)));
@@ -1132,7 +1093,7 @@ RETURN (SELECT TRY_CONVERT(datetimeoffset, '13:01:59 +12:15'));
 END
 GO
 
--- Convert datetimeoffset invalid TESTS FAIL
+-- Convert datetimeoffset invalid
 CREATE VIEW BABEL_3486_vu_prepare_v106 as (SELECT TRY_CONVERT(datetimeoffset, '13:01:59 +25'));
 GO
 CREATE PROCEDURE BABEL_3486_vu_prepare_p106 as (SELECT TRY_CONVERT(datetimeoffset, '13:01:59 +25'));
@@ -1144,7 +1105,7 @@ RETURN (SELECT TRY_CONVERT(datetimeoffset, '13:01:59 +25'));
 END
 GO
 
--- Convert sql_variant valid TESTS PASS
+-- Convert sql_variant valid
 CREATE VIEW BABEL_3486_vu_prepare_v107 as (SELECT TRY_CONVERT(sql_variant, 1));
 GO
 CREATE PROCEDURE BABEL_3486_vu_prepare_p107 as (SELECT TRY_CONVERT(sql_variant, 1));
@@ -1200,10 +1161,7 @@ RETURN (SELECT TRY_CONVERT(sql_variant, CAST('2017-08-25 13:01:59 +12:15' AS dat
 END
 GO
 
--- Convert sql_variant invalid TESTS FAILED
--- Inconsistency Note: In sql server, conversion from image to sql_variant and conversion
---              from text to sql_variant are prohibited and throw an error
---              Babelfish does not perform the same way and instead supports the conversion
+-- Convert sql_variant invalid
 CREATE VIEW BABEL_3486_vu_prepare_v112 as (SELECT TRY_CONVERT(sql_variant, CAST(CAST(1111 as binary) AS image)));
 GO
 CREATE PROCEDURE BABEL_3486_vu_prepare_p112 as (SELECT TRY_CONVERT(sql_variant, CAST(CAST(1111 as binary) AS image)));
