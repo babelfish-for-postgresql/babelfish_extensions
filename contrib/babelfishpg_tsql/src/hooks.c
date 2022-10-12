@@ -1207,11 +1207,13 @@ get_trigger_object_address(List *object, Relation *relp, bool missing_ok)
 	ScanKeyData		key;
 	SysScanDesc tgscan;
 	HeapTuple	tuple;
-	char *trigger_schema = NULL;
-	const char *cur_schema_name;
-	Oid schema_oid;
-	char *schema_name = NULL;
+	char *trigger_physical_schema = NULL;
+	char *trigger_logical_schema = NULL;
+	const char *cur_dbo_physical_schema;
 	bool found_trigger = false;
+	char *pg_trigger_physical_schema;
+	char *pg_trigger_logical_schema;
+	char *cur_physical_schema;
 
 	if (sql_dialect != SQL_DIALECT_TSQL)
 	{
@@ -1220,13 +1222,19 @@ get_trigger_object_address(List *object, Relation *relp, bool missing_ok)
 		address.objectSubId = InvalidAttrNumber;
 		return address;
 	}
-
-	if (list_length(object) > 1){
-		trigger_schema = ((Value *)list_nth(object,0))->val.str;
-	}
 	/* Extract name of dependent object. */
 	depname = strVal(llast(object));
-	cur_schema_name = get_dbo_schema_name(get_cur_db_name());
+	if (list_length(object) > 1){
+		trigger_physical_schema = ((Value *)list_nth(object,0))->val.str;
+		trigger_logical_schema = get_logical_schema_name(trigger_physical_schema, true);
+	}
+	// if (list_length(object) > 2){
+	// 	trigger_db_name = ((Value *)list_nth(object,0))->val.str;
+	// }
+	
+	
+	
+	cur_dbo_physical_schema = get_dbo_schema_name(get_cur_db_name());
 
 	if (prev_get_trigger_object_address_hook)
 		return (*prev_get_trigger_object_address_hook)(object,relp,missing_ok);
@@ -1250,34 +1258,31 @@ get_trigger_object_address(List *object, Relation *relp, bool missing_ok)
 	while (HeapTupleIsValid(tuple = systable_getnext(tgscan)))
 	{
 		Form_pg_trigger pg_trigger = (Form_pg_trigger) GETSTRUCT(tuple);
-		char *pg_trigger_schema_name = get_namespace_name(get_rel_namespace(pg_trigger->tgrelid));
 		if(!OidIsValid(pg_trigger->tgrelid))
 		{
 			reloid = InvalidOid;
 			break;
 		}
+		pg_trigger_physical_schema = get_namespace_name(get_rel_namespace(pg_trigger->tgrelid));
+		pg_trigger_logical_schema = get_logical_schema_name(pg_trigger_physical_schema, true);
+		cur_physical_schema = get_physical_schema_name(get_cur_db_name(),trigger_logical_schema);
 		if(namestrcmp(&(pg_trigger->tgname), depname) == 0){
 			reloid = pg_trigger->tgrelid;
 			relation = RelationIdGetRelation(reloid);
 			if (list_length(object) == 1 && 
-				strcmp(pg_trigger_schema_name,cur_schema_name) == 0)
+				strcmp(pg_trigger_physical_schema,cur_dbo_physical_schema) == 0)
 			{	
 				found_trigger = true;
+				RelationClose(relation);
 				break;
 			}
-			else if(list_length(object) > 1)
+			else if(list_length(object) > 1 &&
+				strcasecmp(cur_physical_schema,pg_trigger_physical_schema) == 0 &&
+				strcasecmp(pg_trigger_logical_schema,trigger_logical_schema) == 0)
 			{
-				schema_oid = get_rel_namespace(reloid);
-				schema_name = get_namespace_name(schema_oid);
-				if(strcasecmp(schema_name, trigger_schema)!= 0 && 
-				strcasecmp(schema_name, get_physical_schema_name(get_cur_db_name(),trigger_schema)) != 0 
-				&& !missing_ok)
-				{
-					ereport(ERROR,
-					(errcode(ERRCODE_UNDEFINED_OBJECT),
-					errmsg("trigger \"%s.%s\" does not exist",
-							trigger_schema ,depname)));
-				}
+				found_trigger = true;
+				RelationClose(relation);
+				break;
 			}
 			RelationClose(relation);
 		}
@@ -1288,14 +1293,20 @@ get_trigger_object_address(List *object, Relation *relp, bool missing_ok)
 	address.classId = TriggerRelationId;
 	address.objectId = relation ?
 		get_trigger_oid(reloid, depname, missing_ok) : InvalidOid;
-	if (!relation && !missing_ok && list_length(object) > 1|| 
-		!relation && ((list_length(object) == 1 && !found_trigger)) && !missing_ok)
+	if (!missing_ok && !found_trigger)
 	{
-		ereport(ERROR,
-				(errcode(ERRCODE_UNDEFINED_OBJECT),
-				errmsg("trigger \"%s\" does not exist",
+		if(list_length(object) == 1){
+			ereport(ERROR,
+			(errcode(ERRCODE_UNDEFINED_OBJECT),
+			errmsg("trigger \"%s\" does not exist",
 						depname)));
-	}
+		}else{
+			ereport(ERROR,
+				(errcode(ERRCODE_UNDEFINED_OBJECT),
+				errmsg("trigger \"%s.%s\" does not exist",
+							trigger_logical_schema ,depname)));	
+		}		
+	}	
 	address.objectSubId = 0;
 
 	/* Avoid relcache leak when object not found. */

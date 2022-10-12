@@ -78,7 +78,7 @@ void pre_check_trigger_schema(List *object, bool missing_ok){
 	char *trigger_schema = NULL;
 	Oid reloid = InvalidOid;
 	bool found_trigger = false;
-	const char *cur_schema_name;
+	const char *cur_dbo_physical_schema;
 
 	/* Extract name of dependent object. */
 	depname = strVal(llast(object));
@@ -91,7 +91,7 @@ void pre_check_trigger_schema(List *object, bool missing_ok){
 	* can rely on searching for trigger name to find the corresponding
 	* relation name.
 	*/
-	cur_schema_name = get_dbo_schema_name(get_cur_db_name());
+	cur_dbo_physical_schema = get_dbo_schema_name(get_cur_db_name());
 	tgrel = table_open(TriggerRelationId, AccessShareLock);
 	ScanKeyInit(&key,
 					Anum_pg_trigger_tgname,
@@ -104,46 +104,51 @@ void pre_check_trigger_schema(List *object, bool missing_ok){
 	while (HeapTupleIsValid(tuple = systable_getnext(tgscan)))
 	{
 		Form_pg_trigger pg_trigger = (Form_pg_trigger) GETSTRUCT(tuple);
-		char *pg_trigger_schema_name = get_namespace_name(get_rel_namespace(pg_trigger->tgrelid));
 		if(!OidIsValid(pg_trigger->tgrelid))
 		{
 			reloid = InvalidOid;
 			break;
 		}
+		char *pg_trigger_physical_schema = get_namespace_name(get_rel_namespace(pg_trigger->tgrelid));
+		char *pg_trigger_relation = get_rel_name(pg_trigger->tgrelid);
+		char *pg_trigger_logical_schema = get_logical_schema_name(pg_trigger_physical_schema, true);
+		char *cur_physical_schema = get_physical_schema_name(get_cur_db_name(),trigger_schema);
 		if(namestrcmp(&(pg_trigger->tgname), depname) == 0){
 			reloid = pg_trigger->tgrelid;
 			relation = RelationIdGetRelation(reloid);
 			if (list_length(object) == 1 && 
-				strcmp(pg_trigger_schema_name,cur_schema_name) == 0)
+				strcmp(pg_trigger_physical_schema,cur_dbo_physical_schema) == 0)
 			{	
 				found_trigger = true;
+				RelationClose(relation);
 				break;
 			}
-			else if(list_length(object) > 1)
+			else if(list_length(object) > 1 &&
+					strcasecmp(cur_physical_schema,pg_trigger_physical_schema) == 0 && 
+					strcasecmp(pg_trigger_logical_schema,trigger_schema) == 0)
 			{
-				schema_oid = get_rel_namespace(reloid);
-				schema_name = get_namespace_name(schema_oid);
-				if(strcasecmp(schema_name, trigger_schema)!= 0 && 
-				strcasecmp(schema_name, get_physical_schema_name(get_cur_db_name(),trigger_schema)) != 0 
-				&& !missing_ok)
-				{
-					ereport(ERROR,
-					(errcode(ERRCODE_UNDEFINED_OBJECT),
-					errmsg("trigger \"%s.%s\" does not exist",
-							trigger_schema ,depname)));
-				}
+				found_trigger = true;
+				RelationClose(relation);
+				break;
 			}
 			RelationClose(relation);
 		}
 	}
 	systable_endscan(tgscan);
 	table_close(tgrel, AccessShareLock);
-	if (!missing_ok && ((list_length(object) == 1 && !found_trigger)))
+	if (!missing_ok && !found_trigger)
 	{
-		ereport(ERROR,
+		if(list_length(object) == 1){
+			ereport(ERROR,
 			(errcode(ERRCODE_UNDEFINED_OBJECT),
 			errmsg("trigger \"%s\" does not exist",
-				depname)));
+						depname)));
+		}else{
+			ereport(ERROR,
+				(errcode(ERRCODE_UNDEFINED_OBJECT),
+				errmsg("trigger \"%s.%s\" does not exist",
+							trigger_schema ,depname)));	
+		}		
 	}	
 	if (!OidIsValid(reloid))
 	{
@@ -166,6 +171,7 @@ static void lookup_and_drop_triggers(ObjectAccessType access, Oid classId,
 	ObjectAddress 	trigAddress;
 	Relation 	trigRelation;
 	List 		*trigobjlist;
+	char * trig_physical_schema;
 
     /* Call previous hook if exists */
     if (prev_object_access_hook)
@@ -202,8 +208,8 @@ static void lookup_and_drop_triggers(ObjectAccessType access, Oid classId,
         if (pg_trigger->tgrelid == relOid && !pg_trigger->tgisinternal)
         {
             trigRelation = RelationIdGetRelation(relOid);
-			char * trigRelationName = RelationGetRelationName(trigRelation);
-            trigobjlist = list_make2(makeString(trigRelationName),makeString(NameStr(pg_trigger->tgname)));
+			trig_physical_schema = get_namespace_name(get_rel_namespace(pg_trigger->tgrelid));
+            trigobjlist = list_make2(makeString(trig_physical_schema),makeString(NameStr(pg_trigger->tgname)));
 			trigAddress = (*get_trigger_object_address_hook)(trigobjlist, &trigRelation, true);
             performDeletion(&trigAddress, behavior, PERFORM_DELETION_INTERNAL);
             RelationClose(trigRelation);
