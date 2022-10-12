@@ -19,23 +19,15 @@ find_package(ODBC REQUIRED)
 
 enable_testing()
 
-add_executable(
+file(GLOB SRC CONFIGURE_DEPENDS src/*.cpp)
+file(GLOB MSSQL_TEST_SOURCES CONFIGURE_DEPENDS mssqlodbc/*.cpp)
+file(GLOB PSQL_TEST_SOURCES CONFIGURE_DEPENDS psqlodbc/*.cpp)
 
+add_executable(
   main
-  constants.cpp
-  database_objects.cpp
-  odbc_handler.cpp
-  query_generator.cpp
-  test_connection.cpp
-  test_data_types.cpp
-  test_diagnostics.cpp
-  test_direct_executed_statements.cpp
-  test_transactions.cpp
-  test_resultset.cpp
-  test_metadata.cpp
-  test_prepared_statements.cpp
-  test_sqlgetinfo.cpp
-  main.cpp
+  ${SRC}
+  ${MSSQL_TEST_SOURCES}
+  ${PSQL_TEST_SOURCES}
 )
 
 target_link_libraries(
