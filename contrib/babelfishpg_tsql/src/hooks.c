@@ -68,7 +68,7 @@ extern char *babelfish_dump_restore_min_oid;
 extern bool pltsql_quoted_identifier;
 extern bool pltsql_ansi_nulls;
 extern bool is_tsql_rowversion_or_timestamp_datatype(Oid oid);
-extern Node* transform_likenode(Node* node);
+extern Node* pltsql_predicate_transformer(Node *expr);
 
 /*****************************************
  * 			Catalog Hooks
@@ -313,6 +313,7 @@ UninstallExtendedHooks(void)
 	insert_pltsql_function_defaults_hook = prev_insert_pltsql_function_defaults_hook;
 	print_pltsql_function_arguments_hook = prev_print_pltsql_function_arguments_hook;
 	planner_hook = prev_planner_hook;
+	transform_check_constraint_expr_hook = prev_transform_check_constraint_expr_hook;
 }
 
 /*****************************************
@@ -2965,5 +2966,5 @@ pltsql_planner_hook(Query *parse, const char *query_string, int cursorOptions, P
 static Node* 
 transform_like_in_add_constraint (Node* node)
 {
-	return transform_likenode(node);
+	return pltsql_predicate_transformer(node);
 }

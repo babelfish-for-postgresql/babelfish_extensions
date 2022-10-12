@@ -4,3 +4,30 @@ GO
 
 ~~ERROR (Message: check constraint "check_col1alter_table_check_con0f71bca531f50db1bd071ab46c3097ea" of relation "alter_table_check_constraint" is violated by some row)~~
 
+
+ALTER TABLE check_constraint ADD CONSTRAINT [check_a] CHECK (a not like N'123%')
+GO
+
+INSERT INTO check_constraint VALUES ('1243')
+GO
+~~ROW COUNT: 1~~
+
+
+INSERT INTO check_constraint VALUES ('1234'), ('123123')
+GO
+~~ERROR (Code: 547)~~
+
+~~ERROR (Message: new row for relation "check_constraint" violates check constraint "check_acheck_constraint719599f27c48404560d418ff018273e1")~~
+
+
+INSERT INTO create_check_constraint VALUES ('abcdEFg')
+GO
+~~ROW COUNT: 1~~
+
+    
+INSERT INTO create_check_constraint VALUES ('11E')
+GO
+~~ERROR (Code: 547)~~
+
+~~ERROR (Message: new row for relation "create_check_constraint" violates check constraint "create_check_constraint_a_check")~~
+

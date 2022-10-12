@@ -248,7 +248,7 @@ transform_funcexpr(Node* node)
  * Case 3: if the pattern doesn't have a constant prefix
  *		 col LIKE PATTERN -> col ILIKE PATTERN
  */
-Node*
+static Node*
 transform_likenode(Node* node)
 {
 	if (node && IsA(node, OpExpr))
@@ -392,7 +392,7 @@ transform_likenode(Node* node)
 	return node;
 }
 
-static Node* pltsql_predicate_transformer(Node *expr)
+Node* pltsql_predicate_transformer(Node *expr)
 {
 	if(expr == NULL)
 		return expr;
