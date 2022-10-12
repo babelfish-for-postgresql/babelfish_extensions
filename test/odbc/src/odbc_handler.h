@@ -3,13 +3,12 @@
 
 #include <sql.h>
 #include <string>
-#include <map>
 #include <tuple>
 #include <vector>
 #include "constants.h"
+#include "connection_object.h"
 
 using std::string;
-using std::map;
 using std::vector;
 using std::tuple;
 using namespace constants;
@@ -19,13 +18,13 @@ class OdbcHandler {
   public:
 
     // Constructor
-    explicit OdbcHandler();
+    explicit OdbcHandler(ConnectionObject &co);
 
     // Destructor
     ~OdbcHandler();
 
     // Sets the connection string based on server type
-    void SetConnectionString(ServerType server_type);
+    void SetConnectionProperties(ConnectionObject &co);
     
     // Connects to Database
     void Connect(bool allocate_statement_handle = false);
@@ -62,6 +61,7 @@ class OdbcHandler {
 
     // Returns the database used
     string GetDbname();
+
 
     // Allocates the connection handle and sets the environment attribute
     void AllocateEnvironmentHandle();
@@ -108,13 +108,15 @@ class OdbcHandler {
 
     void BindColumns(vector<tuple<int, int, SQLPOINTER, int>> columns);
 
+    void BindColumns(vector<tuple<int, int, SQLPOINTER, int, SQLLEN*>> columns);
+
   private:
     // ODBC-defined SQL variables
     SQLHENV henv_{};
     SQLHDBC hdbc_{};
     SQLHSTMT hstmt_{};
     RETCODE retcode_{};
-    
+
     // DB Information
     string db_driver_{};
     string db_server_{};
@@ -123,16 +125,8 @@ class OdbcHandler {
     string db_pwd_{};
     string db_dbname_{};
 
-    // Build the connection string for SQLDriverConnect
     string connection_string_{};
-
-    // A map that contains values from the configuration file
-    map<string, string> config_file_values_{};
-
-    // Goes through config.txt and returns a map with values from the configuration file
-    map<string, string> ParseConfigFile();
 
 };
 
 #endif
-
