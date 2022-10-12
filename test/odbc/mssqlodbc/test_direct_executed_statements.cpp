@@ -1,34 +1,47 @@
-#include "odbc_handler.h"
-#include "database_objects.h"
-#include "query_generator.h"
+#include "../src/odbc_handler.h"
+#include "../src/database_objects.h"
+#include "../src/query_generator.h"
+#include "../src/drivers.h"
 #include <sqlext.h>
 #include <gtest/gtest.h>
 
 // Read Only table
 static const string DIR_STMT_RO_TABLE1 = "DIR_EXEC_STMT_TABLE_RO_1";
 
-class Direct_Executed_Statements : public testing::Test{
+class MSSQL_Direct_Executed_Statements : public testing::Test{
+
+  void SetUp() override {
+    if (!Drivers::DriverExists(ServerType::MSSQL)) {
+      GTEST_SKIP() << "MSSQL Driver not present: skipping all tests for this fixture.";
+    }
+  }
 
   protected:
 
-  static void SetUpTestSuite() {
-    OdbcHandler test_setup;
+    static void SetUpTestSuite() {
+      if (!Drivers::DriverExists(ServerType::MSSQL)) {
+        GTEST_SKIP() << "MSSQL Driver not present: skipping set up.";
+      }
+      OdbcHandler test_setup(Drivers::GetDriver(ServerType::MSSQL));
 
-    test_setup.ConnectAndExecQuery(DropObjectStatement("TABLE",DIR_STMT_RO_TABLE1));
-    test_setup.ExecQuery(CreateTableStatement(DIR_STMT_RO_TABLE1, {{"id", "int"}}));
-    test_setup.ExecQuery(InsertStatement(DIR_STMT_RO_TABLE1, "(1), (2), (3)"));
-  }
+      test_setup.ConnectAndExecQuery(DropObjectStatement("TABLE", DIR_STMT_RO_TABLE1));
+      test_setup.ExecQuery(CreateTableStatement(DIR_STMT_RO_TABLE1, {{"id", "int"}}));
+      test_setup.ExecQuery(InsertStatement(DIR_STMT_RO_TABLE1, "(1), (2), (3)"));
+    }
 
-  static void TearDownTestSuite() {
-    OdbcHandler test_cleanup;
+    static void TearDownTestSuite() {
+      if (!Drivers::DriverExists(ServerType::MSSQL)) {
+        GTEST_SKIP() << "MSSQL Driver not present: skipping tear down.";
+      }
+      OdbcHandler test_cleanup(Drivers::GetDriver(ServerType::MSSQL));
 
-    test_cleanup.ConnectAndExecQuery(DropObjectStatement("TABLE",DIR_STMT_RO_TABLE1));
-  }
+      test_cleanup.ConnectAndExecQuery(DropObjectStatement("TABLE", DIR_STMT_RO_TABLE1));
+    }
 };
 
 // Create statement, execute query, call with SQL_CLOSE option
-TEST_F(Direct_Executed_Statements, SQLFreeStmt_SQL_CLOSE_1) {
-  OdbcHandler odbcHandler;
+TEST_F(MSSQL_Direct_Executed_Statements, SQLFreeStmt_SQL_CLOSE_1) {
+  OdbcHandler odbcHandler(Drivers::GetDriver(ServerType::MSSQL));
   RETCODE rcode;
 
   ASSERT_NO_FATAL_FAILURE(odbcHandler.ConnectAndExecQuery(SelectStatement(DIR_STMT_RO_TABLE1, { "*" })));
@@ -38,8 +51,8 @@ TEST_F(Direct_Executed_Statements, SQLFreeStmt_SQL_CLOSE_1) {
 }
 
 // Create statement, execute query, bind column, call SQL_CLOSE option
-TEST_F(Direct_Executed_Statements, SQLFreeStmt_SQL_CLOSE_2) {
-  OdbcHandler odbcHandler;
+TEST_F(MSSQL_Direct_Executed_Statements, SQLFreeStmt_SQL_CLOSE_2) {
+  OdbcHandler odbcHandler(Drivers::GetDriver(ServerType::MSSQL));
   RETCODE rcode;
   string sql_state;
   SQLINTEGER id;
@@ -69,8 +82,8 @@ TEST_F(Direct_Executed_Statements, SQLFreeStmt_SQL_CLOSE_2) {
 }
 
 // Tests SQLFreeStmt with unbind option
-TEST_F(Direct_Executed_Statements, SQLFreeStmt_2_SQL_UNBIND) {
-  OdbcHandler odbcHandler;
+TEST_F(MSSQL_Direct_Executed_Statements, SQLFreeStmt_2_SQL_UNBIND) {
+  OdbcHandler odbcHandler(Drivers::GetDriver(ServerType::MSSQL));
   RETCODE rcode;
   string sql_state;
   SQLINTEGER id;
@@ -102,8 +115,8 @@ TEST_F(Direct_Executed_Statements, SQLFreeStmt_2_SQL_UNBIND) {
 }
 
 // Tests SQLExecDirect when refering to a non-existant table
-TEST_F(Direct_Executed_Statements,SQLExecDirect_InvalidTable ) {
-  OdbcHandler odbcHandler;
+TEST_F(MSSQL_Direct_Executed_Statements,SQLExecDirect_InvalidTable ) {
+  OdbcHandler odbcHandler(Drivers::GetDriver(ServerType::MSSQL));
   RETCODE rcode;
   string sql_state;
   string query = "SELECT * FROM NonExistantTable";
@@ -120,8 +133,8 @@ TEST_F(Direct_Executed_Statements,SQLExecDirect_InvalidTable ) {
 }
 
 // Tests SQLExecDirect when creating an already existing table
-TEST_F(Direct_Executed_Statements,SQLExecDirect_AlreadyExistingTable) {
-  OdbcHandler odbcHandler;
+TEST_F(MSSQL_Direct_Executed_Statements,SQLExecDirect_AlreadyExistingTable) {
+  OdbcHandler odbcHandler(Drivers::GetDriver(ServerType::MSSQL));
   RETCODE rcode;
   string sql_state;
   string query = "CREATE TABLE " + DIR_STMT_RO_TABLE1 + "(id int)";
@@ -136,8 +149,8 @@ TEST_F(Direct_Executed_Statements,SQLExecDirect_AlreadyExistingTable) {
 }
 
 // Tests SQLExecDirect when using a non-valid sql statement
-TEST_F(Direct_Executed_Statements, SQLExecDirect_NotValidSqlStatement) {
-  OdbcHandler odbcHandler;
+TEST_F(MSSQL_Direct_Executed_Statements, SQLExecDirect_NotValidSqlStatement) {
+  OdbcHandler odbcHandler(Drivers::GetDriver(ServerType::MSSQL));
   RETCODE rcode;
   string sql_state;
   string query = "ABC";
@@ -154,9 +167,9 @@ TEST_F(Direct_Executed_Statements, SQLExecDirect_NotValidSqlStatement) {
 }
 
 // Tests SQLExecDirect when dividing by zero
-TEST_F(Direct_Executed_Statements, SQLExecDirect_DivisionByZero) {
+TEST_F(MSSQL_Direct_Executed_Statements, SQLExecDirect_DivisionByZero) {
 
-  OdbcHandler odbcHandler;
+  OdbcHandler odbcHandler(Drivers::GetDriver(ServerType::MSSQL));
   RETCODE rcode;
   string sql_state;
   string query = "SELECT (10/0)";
@@ -173,13 +186,13 @@ TEST_F(Direct_Executed_Statements, SQLExecDirect_DivisionByZero) {
 }
 
 // Tests SQLRowCount when using an update statement
-TEST_F(Direct_Executed_Statements, SQLRowCount_UPDATE) {
-  OdbcHandler odbcHandler;
+TEST_F(MSSQL_Direct_Executed_Statements, SQLRowCount_UPDATE) {
+  OdbcHandler odbcHandler(Drivers::GetDriver(ServerType::MSSQL));
   SQLLEN row_count;
 
   const string TEST_TABLE = "DIR_EXEC_STMT_TABLE_UPDATE";
 
-  DatabaseObjects dbObjects;
+  DatabaseObjects dbObjects(Drivers::GetDriver(ServerType::MSSQL));
   ASSERT_NO_FATAL_FAILURE(dbObjects.CreateTable(TEST_TABLE, {{"id", "INT"}}));
   ASSERT_NO_FATAL_FAILURE(dbObjects.Insert(TEST_TABLE,"(0), (0), (1)"));
 
@@ -192,13 +205,13 @@ TEST_F(Direct_Executed_Statements, SQLRowCount_UPDATE) {
 }
 
 // Tests SQLRowCount when using an insert statement
-TEST_F(Direct_Executed_Statements, SQLRowCount_INSERT) {
-  OdbcHandler odbcHandler;
+TEST_F(MSSQL_Direct_Executed_Statements, SQLRowCount_INSERT) {
+  OdbcHandler odbcHandler(Drivers::GetDriver(ServerType::MSSQL));
   SQLLEN row_count;
   
   const string TEST_TABLE = "DIR_EXEC_STMT_TABLE_INSERT";
 
-  DatabaseObjects dbObjects;
+  DatabaseObjects dbObjects(Drivers::GetDriver(ServerType::MSSQL));
   ASSERT_NO_FATAL_FAILURE(dbObjects.CreateTable(TEST_TABLE, {{"id", "INT"}}));
   
   ASSERT_NO_FATAL_FAILURE(odbcHandler.Connect(true)); 
@@ -209,12 +222,12 @@ TEST_F(Direct_Executed_Statements, SQLRowCount_INSERT) {
 }
 
 // Tests SQLRowCount when using a Delete statement
-TEST_F(Direct_Executed_Statements, SQLRowCount_DELETE) {
-  OdbcHandler odbcHandler;
+TEST_F(MSSQL_Direct_Executed_Statements, SQLRowCount_DELETE) {
+  OdbcHandler odbcHandler(Drivers::GetDriver(ServerType::MSSQL));
   SQLLEN row_count;
   
   const string TEST_TABLE = "DIR_EXEC_STMT_TABLE_DELETE";
-  DatabaseObjects dbObjects;
+  DatabaseObjects dbObjects(Drivers::GetDriver(ServerType::MSSQL));
   ASSERT_NO_FATAL_FAILURE(dbObjects.CreateTable(TEST_TABLE, {{"id", "INT"}}));
   ASSERT_NO_FATAL_FAILURE(dbObjects.Insert(TEST_TABLE,"(0), (0), (1)"));
 
@@ -227,12 +240,12 @@ TEST_F(Direct_Executed_Statements, SQLRowCount_DELETE) {
 }
 
 // Tests SQLRowCount when using a select statement
-TEST_F(Direct_Executed_Statements, SQLRowCount_SELECT) {
-  OdbcHandler odbcHandler;
+TEST_F(MSSQL_Direct_Executed_Statements, SQLRowCount_SELECT) {
+  OdbcHandler odbcHandler(Drivers::GetDriver(ServerType::MSSQL));
   SQLLEN row_count;
 
   const string TEST_TABLE = "DIR_EXEC_STMT_TABLE_SELECT";
-  DatabaseObjects dbObjects;
+  DatabaseObjects dbObjects(Drivers::GetDriver(ServerType::MSSQL));
   ASSERT_NO_FATAL_FAILURE(dbObjects.CreateTable(TEST_TABLE, {{"id", "INT"}}));
   ASSERT_NO_FATAL_FAILURE(dbObjects.Insert(TEST_TABLE,"(0), (0), (1)"));
 
@@ -246,13 +259,13 @@ TEST_F(Direct_Executed_Statements, SQLRowCount_SELECT) {
 // Tests SQLRowCount when using a select statement and retrieving selected rows
 // SQLRowCount reports number of rows when all rows were 'consumed'
 // DISABLED: Investigate the expected difference.
-TEST_F(Direct_Executed_Statements, DISABLED_SQLRowCount_SELECT_CONSUME_ROWS) {
-  OdbcHandler odbcHandler;
+TEST_F(MSSQL_Direct_Executed_Statements, DISABLED_SQLRowCount_SELECT_CONSUME_ROWS) {
+  OdbcHandler odbcHandler(Drivers::GetDriver(ServerType::MSSQL));
   SQLLEN row_count;
   RETCODE rcode;
 
   const string TEST_TABLE = "DIR_EXEC_STMT_TABLE_SELECT_CONSUME_ROWS";
-  DatabaseObjects dbObjects;
+  DatabaseObjects dbObjects(Drivers::GetDriver(ServerType::MSSQL));
   ASSERT_NO_FATAL_FAILURE(dbObjects.CreateTable(TEST_TABLE, {{"id", "INT"}}));
   ASSERT_NO_FATAL_FAILURE(dbObjects.Insert(TEST_TABLE,"(0), (0), (1)"));
 

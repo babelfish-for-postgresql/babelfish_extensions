@@ -1,6 +1,7 @@
-#include "odbc_handler.h"
-#include "database_objects.h"
-#include "query_generator.h"
+#include "../src/odbc_handler.h"
+#include "../src/database_objects.h"
+#include "../src/query_generator.h"
+#include "../src/drivers.h"
 
 #include <filesystem>
 #include <fstream>
@@ -13,16 +14,12 @@ using std::pair;
 
 const string NULL_STR = "<NULL>";
 
-class Data_Types : public testing::Test {
+class MSSQL_Data_Types : public testing::Test {
 
-  protected:
-
-  // Called before the first test in this test suite.
-  static void SetUpTestSuite() {
-  }
-
-  // Called after the last test in this test suite
-  static void TearDownTestSuite() {
+  void SetUp() override {
+    if (!Drivers::DriverExists(ServerType::MSSQL)) {
+      GTEST_SKIP() << "MSSQL Driver not present: skipping all tests for this fixture.";
+    }
   }
 };
 
@@ -104,12 +101,12 @@ void DataTypesTestCommon(const string &table_name,
   const string &inserted_values,
   const vector<vector<string>> &expected_values) {
 
-  OdbcHandler odbcHandler;
+  OdbcHandler odbcHandler(Drivers::GetDriver(ServerType::MSSQL));
 
   const string ORDER_BY_COLS = "OrderOfInsertion";
   table_columns.push_back({ORDER_BY_COLS, "INT"});
 
-  DatabaseObjects dbObjects;
+  DatabaseObjects dbObjects(Drivers::GetDriver(ServerType::MSSQL));
   ASSERT_NO_FATAL_FAILURE(dbObjects.CreateTable(table_name, table_columns));
 
   ASSERT_NO_FATAL_FAILURE(odbcHandler.Connect(true));
@@ -128,7 +125,7 @@ void DataTypesTestCommon(const string &table_name,
 }
 
 // Test retrieval of type BigInt
-TEST_F(Data_Types, BigInt) {
+TEST_F(MSSQL_Data_Types, BigInt) {
 
   const string TEST_TABLE = "BIGINT_dt";
   vector<pair<string,string>> TABLE_COLUMNS = {
@@ -146,7 +143,7 @@ TEST_F(Data_Types, BigInt) {
 }
 
 // Test retrieval of type Bit
-TEST_F(Data_Types, Bit) {
+TEST_F(MSSQL_Data_Types, Bit) {
 
   const string TEST_TABLE = "BIT_dt";
   vector<pair<string,string>> TABLE_COLUMNS = {
@@ -161,7 +158,7 @@ TEST_F(Data_Types, Bit) {
 }
 
 // Test retrieval of type Char
-TEST_F(Data_Types, Char) {
+TEST_F(MSSQL_Data_Types, Char) {
 
   const string TEST_TABLE = "CHAR_dt";
   vector<pair<string,string>> TABLE_COLUMNS = {
@@ -178,7 +175,7 @@ TEST_F(Data_Types, Char) {
 }
 
 // Test retrieval of type Date
-TEST_F(Data_Types, Date) {
+TEST_F(MSSQL_Data_Types, Date) {
 
   const string TEST_TABLE = "DATE_dt";
   vector<pair<string,string>> TABLE_COLUMNS = {
@@ -193,7 +190,7 @@ TEST_F(Data_Types, Date) {
 }
 
 // Test retrieval of type DateTime
-TEST_F(Data_Types, DateTime) {
+TEST_F(MSSQL_Data_Types, DateTime) {
 
   const string TEST_TABLE = "DATETIME_dt";
   vector<pair<string,string>> TABLE_COLUMNS = {
@@ -215,7 +212,7 @@ TEST_F(Data_Types, DateTime) {
   DataTypesTestCommon(TEST_TABLE, TABLE_COLUMNS, INSERTED_VALUES, EXPECTED_VALUES);
 }
 // Test retrieval of type Float
-TEST_F(Data_Types, Float) {
+TEST_F(MSSQL_Data_Types, Float) {
 
   const string TEST_TABLE = "FLOAT_dt";
   vector<pair<string,string>> TABLE_COLUMNS = {
@@ -232,7 +229,7 @@ TEST_F(Data_Types, Float) {
 }
 
 // Test retrieval of type Int
-TEST_F(Data_Types, Int) {
+TEST_F(MSSQL_Data_Types, Int) {
   
   const string TEST_TABLE = "INT_dt";
   vector<pair<string,string>> TABLE_COLUMNS = {
@@ -254,8 +251,8 @@ TEST_F(Data_Types, Int) {
 // 2. the way the INSERTED_VALUES are inserted - loop through the 'literal' inserted values since they 'hard code' the 'order of insertions' values
 // The reason it was done this way is because in SQL Server you cannot mix & match certain different money type syntax in an insert. 
 // For example, if I had a table with 1 column of type MONEY I cannot do a single insert of the values ('$10'), (4) without getting a conversion error. 
-TEST_F(Data_Types, Money) {
-  OdbcHandler odbcHandler;
+TEST_F(MSSQL_Data_Types, Money) {
+  OdbcHandler odbcHandler(Drivers::GetDriver(ServerType::MSSQL));
 
   const string TEST_TABLE = "MONEY_dt";
   const string ORDER_BY_COLS = "OrderOfInsertion";
@@ -278,7 +275,7 @@ TEST_F(Data_Types, Money) {
      "922337203685477.5807", "922337203685477.5807"}
   };
   
-  DatabaseObjects dbObjects;
+  DatabaseObjects dbObjects(Drivers::GetDriver(ServerType::MSSQL));
   ASSERT_NO_FATAL_FAILURE(dbObjects.CreateTable(TEST_TABLE, TABLE_COLUMNS));
 
   ASSERT_NO_FATAL_FAILURE(odbcHandler.Connect(true));
@@ -297,7 +294,7 @@ TEST_F(Data_Types, Money) {
 }
 
 // Test retrieval of type Real
-TEST_F(Data_Types, Real) {
+TEST_F(MSSQL_Data_Types, Real) {
 
   const string TEST_TABLE = "REAL_dt";
   vector<pair<string,string>> TABLE_COLUMNS = {
@@ -314,7 +311,7 @@ TEST_F(Data_Types, Real) {
 }
 
 // Test retrieval of type SmallDatetime
-TEST_F(Data_Types, SmallDatetime) {
+TEST_F(MSSQL_Data_Types, SmallDatetime) {
 
   const string TEST_TABLE = "SMALLDATETIME_dt";
   vector<pair<string,string>> TABLE_COLUMNS = {
@@ -337,7 +334,7 @@ TEST_F(Data_Types, SmallDatetime) {
 }
 
 // Test retrieval of type SmallInt
-TEST_F(Data_Types, SmallInt) {
+TEST_F(MSSQL_Data_Types, SmallInt) {
   
   const string TEST_TABLE = "SMALLINT_dt";
   vector<pair<string,string>> TABLE_COLUMNS = {
@@ -354,7 +351,7 @@ TEST_F(Data_Types, SmallInt) {
 }
 
 // Test retrieval of type TableType
-TEST_F(Data_Types, TableType) {
+TEST_F(MSSQL_Data_Types, TableType) {
 
   const string TEST_TABLE = "tableType";
   vector<pair<string,string>> TABLE_COLUMNS = {
@@ -371,7 +368,7 @@ TEST_F(Data_Types, TableType) {
 }
 
 // Test retrieval of type Text
-TEST_F(Data_Types, Text) {
+TEST_F(MSSQL_Data_Types, Text) {
   
   const string TEST_TABLE = "TEXT_dt";
   vector<pair<string,string>> TABLE_COLUMNS = {
@@ -400,7 +397,7 @@ TEST_F(Data_Types, Text) {
 }
 
 // Test retrieval of type TinyInt
-TEST_F(Data_Types, TinyInt) {
+TEST_F(MSSQL_Data_Types, TinyInt) {
   
   const string TEST_TABLE = "TINYINT_dt";
   vector<pair<string,string>> TABLE_COLUMNS = {
@@ -416,7 +413,7 @@ TEST_F(Data_Types, TinyInt) {
 }
 
 // Test retrieval of type UniqueIdentifier
-TEST_F(Data_Types, UniqueIdentifier) {
+TEST_F(MSSQL_Data_Types, UniqueIdentifier) {
 
   const string TEST_TABLE = "UNIQUEIDENTIFIER_dt";
   vector<pair<string,string>> TABLE_COLUMNS = {
@@ -439,7 +436,7 @@ TEST_F(Data_Types, UniqueIdentifier) {
 }
 
 // Test retrieval of type Varchar
-TEST_F(Data_Types, Varchar) {
+TEST_F(MSSQL_Data_Types, Varchar) {
   
   const string TEST_TABLE = "VARCHAR_dt";
   vector<pair<string,string>> TABLE_COLUMNS = {

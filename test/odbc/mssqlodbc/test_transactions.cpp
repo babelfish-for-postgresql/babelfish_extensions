@@ -1,30 +1,29 @@
-#include "odbc_handler.h"
-#include "database_objects.h"
-#include "query_generator.h"
+#include "../src/odbc_handler.h"
+#include "../src/database_objects.h"
+#include "../src/query_generator.h"
+#include "../src/drivers.h"
 #include <sqlext.h>
 #include <gtest/gtest.h>
 
-class Transactions : public testing::Test {
+class MSSQL_Transactions : public testing::Test {
 
-  protected:
-
-  static void SetUpTestSuite() {
-  }
-
-  static void TearDownTestSuite() {
+  void SetUp() override {
+    if (!Drivers::DriverExists(ServerType::MSSQL)) {
+      GTEST_SKIP() << "MSSQL Driver not present: skipping all tests for this fixture.";
+    }
   }
 };
 
 // Complete a transaction and assert that the values were correctly inserted
-TEST_F(Transactions, SQLEndTran_Commit) {
-  OdbcHandler odbcHandler;
+TEST_F(MSSQL_Transactions, SQLEndTran_Commit) {
+  OdbcHandler odbcHandler(Drivers::GetDriver(ServerType::MSSQL));
   RETCODE rcode;
   string query{};
 
   const string TEST_TABLE = "TRANSACTION_TABLE_W_1";
   const string ID_COL = "id";
 
-  DatabaseObjects dbObjects;
+  DatabaseObjects dbObjects(Drivers::GetDriver(ServerType::MSSQL));
   ASSERT_NO_FATAL_FAILURE(dbObjects.CreateTable(TEST_TABLE, {{ID_COL, "INT"}}));
 
   ASSERT_NO_FATAL_FAILURE(odbcHandler.Connect());
@@ -65,13 +64,13 @@ TEST_F(Transactions, SQLEndTran_Commit) {
 }
 
 // Rollbacks back the transaction and assert that nothing was created
-TEST_F(Transactions, SQLEndTran_Rollback) {
-  OdbcHandler odbcHandler;
+TEST_F(MSSQL_Transactions, SQLEndTran_Rollback) {
+  OdbcHandler odbcHandler(Drivers::GetDriver(ServerType::MSSQL));
   RETCODE rcode;
   
   const string TEST_TABLE = "TRANSACTION_TABLE_RO_1";
   
-  DatabaseObjects dbObjects;
+  DatabaseObjects dbObjects(Drivers::GetDriver(ServerType::MSSQL));
   ASSERT_NO_FATAL_FAILURE(dbObjects.CreateTable(TEST_TABLE, {{"id", "INT"}}));
 
   ASSERT_NO_FATAL_FAILURE(odbcHandler.Connect());
@@ -98,14 +97,14 @@ TEST_F(Transactions, SQLEndTran_Rollback) {
 }
 
 // Attempt to disconnect during a transaction
-TEST_F(Transactions, SQL_DisconnectAttemptDuringTransaction) {
-  OdbcHandler odbcHandler;
+TEST_F(MSSQL_Transactions, SQL_DisconnectAttemptDuringTransaction) {
+  OdbcHandler odbcHandler(Drivers::GetDriver(ServerType::MSSQL));
   RETCODE rcode;
   string sql_state;
 
   const string TEST_TABLE = "TRANSACTION_TABLE_RO_2";
   
-  DatabaseObjects dbObjects;
+  DatabaseObjects dbObjects(Drivers::GetDriver(ServerType::MSSQL));
   ASSERT_NO_FATAL_FAILURE(dbObjects.CreateTable(TEST_TABLE, {{"id", "INT"}}));
 
   ASSERT_NO_FATAL_FAILURE(odbcHandler.Connect());
