@@ -1,10 +1,8 @@
-SELECT name, db_size, owner, status, compatibility_level FROM sys.babelfish_helpdb();
+SELECT name, db_size, owner, status, compatibility_level FROM sys.babelfish_helpdb() WHERE name IN ('master', 'babel_sp_helpdb_db');
 GO
 ~~START~~
 varchar#!#varchar#!#varchar#!#varchar#!#smallint
 master#!#<NULL>#!#jdbc_user#!#<NULL>#!#<NULL>
-tempdb#!#<NULL>#!#jdbc_user#!#<NULL>#!#<NULL>
-msdb#!#<NULL>#!#jdbc_user#!#<NULL>#!#<NULL>
 babel_sp_helpdb_db#!#<NULL>#!#jdbc_user#!#<NULL>#!#<NULL>
 ~~END~~
 
