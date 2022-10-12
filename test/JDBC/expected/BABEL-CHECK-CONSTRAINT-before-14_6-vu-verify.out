@@ -1,0 +1,5 @@
+ALTER TABLE [dbo].[alter_table_check_constraint] ADD CONSTRAINT [check_col1] CHECK ([col1] like N'%TP')
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: nondeterministic collations are not supported for LIKE)~~
