@@ -232,6 +232,7 @@
 							case TSQL_LOGIN:
 							case TSQL_M:
 							case TSQL_MCS:
+							case TSQL_MI:
 							case TSQL_MICROSECOND:
 							case TSQL_MILLISECOND:
 							case TSQL_MM:
