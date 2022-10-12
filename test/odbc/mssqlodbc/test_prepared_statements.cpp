@@ -1,6 +1,7 @@
-#include "odbc_handler.h"
-#include "database_objects.h"
-#include "query_generator.h"
+#include "../src/odbc_handler.h"
+#include "../src/database_objects.h"
+#include "../src/query_generator.h"
+#include "../src/drivers.h"
 #include <sqlext.h>
 #include <gtest/gtest.h>
 
@@ -15,23 +16,35 @@ static const  vector<pair<string,string>> RO_TABLE_COLUMNS = {
     {"decivar", "NUMERIC(38,16)"}
   };
 
-class Prepared_Statements : public testing::Test{
+class MSSQL_Prepared_Statements : public testing::Test{
+
+  void SetUp() override {
+    if (!Drivers::DriverExists(ServerType::MSSQL)) {
+      GTEST_SKIP() << "MSSQL Driver not present: skipping all tests for this fixture.";
+    }
+  }
 
   protected:
 
-  static void SetUpTestSuite() {
+    static void SetUpTestSuite() {
+      if (!Drivers::DriverExists(ServerType::MSSQL)) {
+        GTEST_SKIP() << "MSSQL Driver not present: skipping set up.";
+      }
 
-    OdbcHandler test_setup;
-    test_setup.ConnectAndExecQuery(DropObjectStatement("TABLE",SQLPREPTABLE_RO_1));
-    test_setup.ExecQuery(CreateTableStatement(SQLPREPTABLE_RO_1, RO_TABLE_COLUMNS));
-    test_setup.ExecQuery(InsertStatement(SQLPREPTABLE_RO_1, "(1, 'hello1', 1.1), (2, 'hello2', 2.2), (3, 'hello3', 3.3), (4, 'hello4', 4.4)"));
-  }
+      OdbcHandler test_setup(Drivers::GetDriver(ServerType::MSSQL));
+      test_setup.ConnectAndExecQuery(DropObjectStatement("TABLE", SQLPREPTABLE_RO_1));
+      test_setup.ExecQuery(CreateTableStatement(SQLPREPTABLE_RO_1, RO_TABLE_COLUMNS));
+      test_setup.ExecQuery(InsertStatement(SQLPREPTABLE_RO_1, "(1, 'hello1', 1.1), (2, 'hello2', 2.2), (3, 'hello3', 3.3), (4, 'hello4', 4.4)"));
+    }
 
-  static void TearDownTestSuite() {
+    static void TearDownTestSuite() {
+      if (!Drivers::DriverExists(ServerType::MSSQL)) {
+        GTEST_SKIP() << "MSSQL Driver not present: skipping tear down.";
+      }
 
-    OdbcHandler test_cleanup;
-    test_cleanup.ConnectAndExecQuery(DropObjectStatement("TABLE",SQLPREPTABLE_RO_1));
-  }
+      OdbcHandler test_cleanup(Drivers::GetDriver(ServerType::MSSQL));
+      test_cleanup.ConnectAndExecQuery(DropObjectStatement("TABLE", SQLPREPTABLE_RO_1));
+    }
 };
 
 RETCODE SetupPreparedStatements(OdbcHandler& odbcHandler, const string& query) {
@@ -42,9 +55,9 @@ RETCODE SetupPreparedStatements(OdbcHandler& odbcHandler, const string& query) {
 }
 
 // Tests SQLPrepare is successful
-TEST_F(Prepared_Statements, SQLPrepare_Success) {
+TEST_F(MSSQL_Prepared_Statements, SQLPrepare_Success) {
 
-  OdbcHandler odbcHandler;
+  OdbcHandler odbcHandler(Drivers::GetDriver(ServerType::MSSQL));
   RETCODE rcode;
   string query = "SELECT * FROM " + SQLPREPTABLE_RO_1;
 
@@ -53,9 +66,9 @@ TEST_F(Prepared_Statements, SQLPrepare_Success) {
 }
 
 // Tests SQLNumParams for an error when it is called before SQLPrepare
-TEST_F(Prepared_Statements, SQLNumParams_Error) {
+TEST_F(MSSQL_Prepared_Statements, SQLNumParams_Error) {
 
-  OdbcHandler odbcHandler;
+  OdbcHandler odbcHandler(Drivers::GetDriver(ServerType::MSSQL));
   RETCODE rcode;
   int num_params;
   string sql_state;
@@ -70,9 +83,9 @@ TEST_F(Prepared_Statements, SQLNumParams_Error) {
 }
 
 // Tests SQLNumParams succesfully for 1 paramater
-TEST_F(Prepared_Statements, SQLNumParams_Success1) {
+TEST_F(MSSQL_Prepared_Statements, SQLNumParams_Success1) {
 
-  OdbcHandler odbcHandler;
+  OdbcHandler odbcHandler(Drivers::GetDriver(ServerType::MSSQL));
   RETCODE rcode;
   SQLSMALLINT num_params;
   string query = "SELECT * FROM " + SQLPREPTABLE_RO_1 + "  WHERE id = ?";
@@ -86,9 +99,9 @@ TEST_F(Prepared_Statements, SQLNumParams_Success1) {
 }
 
 // Tests SQLNumParams succesfully for 2 parameters
-TEST_F(Prepared_Statements, SQLNumParams_Success2) {
+TEST_F(MSSQL_Prepared_Statements, SQLNumParams_Success2) {
 
-  OdbcHandler odbcHandler;
+  OdbcHandler odbcHandler(Drivers::GetDriver(ServerType::MSSQL));
   RETCODE rcode;
   SQLSMALLINT num_params;
   string query = "SELECT * FROM " + SQLPREPTABLE_RO_1 + " WHERE id = ? AND info = ?";
@@ -101,9 +114,9 @@ TEST_F(Prepared_Statements, SQLNumParams_Success2) {
 }
 
 // Tests SQLNumParams succesfully for 3 parameters
-TEST_F(Prepared_Statements, SQLNumParams_Success3) {
+TEST_F(MSSQL_Prepared_Statements, SQLNumParams_Success3) {
 
-  OdbcHandler odbcHandler;
+  OdbcHandler odbcHandler(Drivers::GetDriver(ServerType::MSSQL));
   RETCODE rcode;
   SQLSMALLINT num_params;
   string query = "SELECT * FROM " + SQLPREPTABLE_RO_1 + "  WHERE id = ? AND info = ? AND decivar = ?";
@@ -117,9 +130,9 @@ TEST_F(Prepared_Statements, SQLNumParams_Success3) {
 
 // Tests SQLDescribeParam for on success
 // DISABLED: PLEASE SEE BABELFISH-109
-TEST_F(Prepared_Statements, DISABLED_SQLDescribeParam_Success) {
+TEST_F(MSSQL_Prepared_Statements, DISABLED_SQLDescribeParam_Success) {
 
-  OdbcHandler odbcHandler;
+  OdbcHandler odbcHandler(Drivers::GetDriver(ServerType::MSSQL));
   RETCODE rcode;
   SQLSMALLINT data_type, decimal_digits, nullable;
   SQLULEN param_size;
@@ -151,9 +164,9 @@ TEST_F(Prepared_Statements, DISABLED_SQLDescribeParam_Success) {
 }
 
 // Tests SQLDescribeParam for error 21S01 (Insert values list does not match column list)
-TEST_F(Prepared_Statements, SQLDescribeParam_21S01) {
+TEST_F(MSSQL_Prepared_Statements, SQLDescribeParam_21S01) {
 
-  OdbcHandler odbcHandler;
+  OdbcHandler odbcHandler(Drivers::GetDriver(ServerType::MSSQL));
   RETCODE rcode;
   string sql_state;
   SQLSMALLINT data_type, decimal_digits, nullable;
@@ -171,9 +184,9 @@ TEST_F(Prepared_Statements, SQLDescribeParam_21S01) {
 }
 
 // Tests SQLDescribeParam for error 07009 (no parameters)
-TEST_F(Prepared_Statements, SQLDescribeParam_Noparams) {
+TEST_F(MSSQL_Prepared_Statements, SQLDescribeParam_Noparams) {
 
-  OdbcHandler odbcHandler;
+  OdbcHandler odbcHandler(Drivers::GetDriver(ServerType::MSSQL));
   RETCODE rcode;
   SQLSMALLINT data_type, decimal_digits, nullable;
   SQLULEN param_size;
@@ -189,9 +202,9 @@ TEST_F(Prepared_Statements, SQLDescribeParam_Noparams) {
 }
 
 // Tests bind parameters when parameters are binded successfully.
-TEST_F(Prepared_Statements, SQLBindParameter_Success) {
+TEST_F(MSSQL_Prepared_Statements, SQLBindParameter_Success) {
 
-  OdbcHandler odbcHandler;
+  OdbcHandler odbcHandler(Drivers::GetDriver(ServerType::MSSQL));
   RETCODE rcode;
 
   SQLUINTEGER id_input = 1;
@@ -217,9 +230,9 @@ TEST_F(Prepared_Statements, SQLBindParameter_Success) {
 }
 
 // Tests SQLExecute when it is used successfully. 
-TEST_F(Prepared_Statements, SQLExecute_Success) {
+TEST_F(MSSQL_Prepared_Statements, SQLExecute_Success) {
 
-  OdbcHandler odbcHandler;
+  OdbcHandler odbcHandler(Drivers::GetDriver(ServerType::MSSQL));
   RETCODE rcode;
   SQLUINTEGER id_input = 1;
   SQLCHAR info_input[256] = "hello1";
@@ -254,9 +267,9 @@ TEST_F(Prepared_Statements, SQLExecute_Success) {
 }
 
 // Tests SQLExecute with division by zero
-TEST_F(Prepared_Statements, SQLExecute_DivisionByZero) {
+TEST_F(MSSQL_Prepared_Statements, SQLExecute_DivisionByZero) {
 
-  OdbcHandler odbcHandler;
+  OdbcHandler odbcHandler(Drivers::GetDriver(ServerType::MSSQL));
   RETCODE rcode;
   string sql_state;
   string query = "SELECT (10/0)";
@@ -272,9 +285,9 @@ TEST_F(Prepared_Statements, SQLExecute_DivisionByZero) {
 }
 
 // Tests SQLExecute with an already existing table
-TEST_F(Prepared_Statements, SQLExecute_AlreadyExistingTable) {
+TEST_F(MSSQL_Prepared_Statements, SQLExecute_AlreadyExistingTable) {
 
-  OdbcHandler odbcHandler;
+  OdbcHandler odbcHandler(Drivers::GetDriver(ServerType::MSSQL));
   RETCODE rcode;
   string sql_state;
   string query = "CREATE TABLE " + SQLPREPTABLE_RO_1 + " (id int);";
@@ -291,9 +304,9 @@ TEST_F(Prepared_Statements, SQLExecute_AlreadyExistingTable) {
 
 // Tests SQLExecute with a not valid sql statement
 // DISABLED: PLEASE SEE: BABELFISH-111
-TEST_F(Prepared_Statements, DISABLED_SQLExecute_NotValidSqlStatement) {
+TEST_F(MSSQL_Prepared_Statements, DISABLED_SQLExecute_NotValidSqlStatement) {
 
-  OdbcHandler odbcHandler;
+  OdbcHandler odbcHandler(Drivers::GetDriver(ServerType::MSSQL));
   RETCODE rcode;
   string sql_state;
 
@@ -310,9 +323,9 @@ TEST_F(Prepared_Statements, DISABLED_SQLExecute_NotValidSqlStatement) {
 }
 
 // SQLMoreResults with an array as an input for a prepared statement
-TEST_F(Prepared_Statements, SQLMoreResults_BatchedArrayParamQueries) {
+TEST_F(MSSQL_Prepared_Statements, SQLMoreResults_BatchedArrayParamQueries) {
 
-  OdbcHandler odbcHandler;
+  OdbcHandler odbcHandler(Drivers::GetDriver(ServerType::MSSQL));
   RETCODE rcode;
   string sql_state;
   const int ARRAY_SIZE = 4;
