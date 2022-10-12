@@ -868,24 +868,6 @@ get_pltsql_function_signature_internal(const char *funcname,
 	return argbuf.data;			/* return palloc'd string buffer */
 }
 
-Oid
-get_func_owner(Oid fn_oid)
-{
-	Oid			procOwner = InvalidOid;
-	HeapTuple	proctup;
-
-	if (fn_oid == InvalidOid)
-		return procOwner;
-
-	proctup = SearchSysCache1(PROCOID, ObjectIdGetDatum(fn_oid));
-	if (!HeapTupleIsValid(proctup))
-		ereport(ERROR,
-				(errcode(ERRCODE_UNDEFINED_FUNCTION),
-				 errmsg("function with OID %u does not exist", fn_oid)));
-	procOwner = ((Form_pg_proc) GETSTRUCT(proctup))->proowner;
-	ReleaseSysCache(proctup);
-	return procOwner;
-
 PG_FUNCTION_INFO_V1(get_pltsql_function_signature);
 
 Datum
