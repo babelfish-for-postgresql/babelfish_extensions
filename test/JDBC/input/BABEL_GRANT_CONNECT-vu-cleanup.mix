@@ -2,6 +2,9 @@
 use grant_connect_db1;
 go
 
+drop user grant_connect_abc
+go
+
 drop table grant_connect_t1;
 go
 
