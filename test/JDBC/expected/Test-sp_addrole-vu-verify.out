@@ -1,0 +1,19 @@
+-- tsql
+-- Throws an error when role exists
+Exec sp_addrole 'sp_addrole_r1';
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: role "master_sp_addrole_r1" already exists)~~
+
+
+EXEC sp_addrole 'sp_addrole_r2';
+GO
+
+-- Throws an error when role exists
+EXEC sp_addrole 'sp_addrole_r2';
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: role "master_sp_addrole_r2" already exists)~~
+

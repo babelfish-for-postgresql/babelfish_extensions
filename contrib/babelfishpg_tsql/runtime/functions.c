@@ -40,6 +40,7 @@
 #include "../src/catalog.h"
 #include "../src/collation.h"
 #include "../src/rolecmds.h"
+#include "tcop/utility.h"
 
 #define TSQL_STAT_GET_ACTIVITY_COLS 25
 #define SP_DATATYPE_INFO_HELPER_COLS 23
@@ -74,6 +75,10 @@ PG_FUNCTION_INFO_V1(has_dbaccess);
 PG_FUNCTION_INFO_V1(sp_datatype_info_helper);
 PG_FUNCTION_INFO_V1(language);
 PG_FUNCTION_INFO_V1(host_name);
+PG_FUNCTION_INFO_V1(sp_addrole);
+PG_FUNCTION_INFO_V1(sp_droprole);
+PG_FUNCTION_INFO_V1(sp_addrolemember);
+PG_FUNCTION_INFO_V1(sp_droprolemember);
 
 /* Not supported -- only syntax support */
 PG_FUNCTION_INFO_V1(procid);
@@ -82,6 +87,10 @@ void* get_servername_internal(void);
 void* get_servicename_internal(void);
 void* get_language(void);
 extern bool canCommitTransaction(void);
+static List *gen_sp_addrole_subcmds(const char *user);
+static List *gen_sp_droprole_subcmds(const char *user);
+static List *gen_sp_addrolemember_subcmds(const char *user, const char *member);
+static List *gen_sp_droprolemember_subcmds(const char *user, const char *member);
 
 extern int pltsql_datefirst;
 extern bool pltsql_implicit_transactions;
@@ -1155,4 +1164,392 @@ host_name(PG_FUNCTION_ARGS)
 		PG_RETURN_VARCHAR_P(string_to_tsql_varchar((*pltsql_protocol_plugin_ptr)->get_host_name()));
 	else
 		PG_RETURN_NULL();
+}
+
+Datum sp_addrole(PG_FUNCTION_ARGS)
+{
+	List *parsetree_list;
+	ListCell *parsetree_item;
+	const char *prev_current_user;
+	const char *saved_dialect = GetConfigOption("babelfishpg_tsql.sql_dialect", true, true);
+
+	prev_current_user = GetUserNameFromId(GetUserId(), false);
+	bbf_set_current_user("sysadmin");
+
+	PG_TRY();
+	{
+		set_config_option("babelfishpg_tsql.sql_dialect", "tsql",
+							(superuser() ? PGC_SUSET : PGC_USERSET),
+							PGC_S_SESSION, GUC_ACTION_SAVE, true, 0, false);
+
+		char *rolname = text_to_cstring(PG_GETARG_TEXT_PP(0));
+
+		/* Advance cmd counter to make the delete visible */
+		CommandCounterIncrement();
+
+		parsetree_list = gen_sp_addrole_subcmds(rolname);
+
+		/* Run all subcommands */
+		foreach(parsetree_item, parsetree_list)
+		{
+			Node *stmt = ((RawStmt *) lfirst(parsetree_item))->stmt;
+			PlannedStmt *wrapper;
+
+			/* need to make a wrapper PlannedStmt */
+			wrapper = makeNode(PlannedStmt);
+			wrapper->commandType = CMD_UTILITY;
+			wrapper->canSetTag = false;
+			wrapper->utilityStmt = stmt;
+			wrapper->stmt_location = 0;
+			wrapper->stmt_len = 16;
+
+			/* do this step */
+			ProcessUtility(wrapper,
+				"(CREATE ROLE )",
+				false,
+				PROCESS_UTILITY_SUBCOMMAND,
+				NULL,
+				NULL,
+				None_Receiver,
+				NULL);
+
+			/* make sure later steps can see the object created here */
+			CommandCounterIncrement();
+		}
+	}
+	PG_CATCH();
+	{
+		/* Clean up. Restore previous state. */
+		bbf_set_current_user(prev_current_user);
+		set_config_option("babelfishpg_tsql.sql_dialect", saved_dialect,
+							(superuser() ? PGC_SUSET : PGC_USERSET),
+							PGC_S_SESSION, GUC_ACTION_SAVE, true, 0, false);
+		PG_RE_THROW();
+	}
+	PG_END_TRY();
+}
+
+static List *
+gen_sp_addrole_subcmds(const char *user)
+{
+	StringInfoData query;
+	List *res;
+	Node *stmt;
+
+	initStringInfo(&query);
+	appendStringInfo(&query, "CREATE ROLE dummy; ");
+	res = raw_parser(query.data, RAW_PARSE_DEFAULT);
+
+	if (list_length(res) != 1)
+		ereport(ERROR,
+				(errcode(ERRCODE_SYNTAX_ERROR),
+				 errmsg("Expected 1 statement but get %d statements after parsing",
+						list_length(res))));
+
+	stmt = parsetree_nth_stmt(res, 0);
+	update_CreateRoleStmt(stmt, user, NULL, NULL);
+	rewrite_object_refs(stmt);
+
+	return res;
+}
+
+Datum sp_droprole(PG_FUNCTION_ARGS)
+{
+	List *parsetree_list;
+	ListCell *parsetree_item;
+	const char *prev_current_user;
+	const char *saved_dialect = GetConfigOption("babelfishpg_tsql.sql_dialect", true, true);
+
+	prev_current_user = GetUserNameFromId(GetUserId(), false);
+	bbf_set_current_user("sysadmin");
+
+	PG_TRY();
+	{
+		set_config_option("babelfishpg_tsql.sql_dialect", "tsql",
+							(superuser() ? PGC_SUSET : PGC_USERSET),
+							PGC_S_SESSION, GUC_ACTION_SAVE, true, 0, false);
+
+		char *rolname = text_to_cstring(PG_GETARG_TEXT_PP(0));
+
+		/* Advance cmd counter to make the delete visible */
+		CommandCounterIncrement();
+
+		parsetree_list = gen_sp_droprole_subcmds(rolname);
+
+		/* Run all subcommands */
+		foreach(parsetree_item, parsetree_list)
+		{
+			Node *stmt = ((RawStmt *) lfirst(parsetree_item))->stmt;
+			PlannedStmt *wrapper;
+
+			/* need to make a wrapper PlannedStmt */
+			wrapper = makeNode(PlannedStmt);
+			wrapper->commandType = CMD_UTILITY;
+			wrapper->canSetTag = false;
+			wrapper->utilityStmt = stmt;
+			wrapper->stmt_location = 0;
+			wrapper->stmt_len = 16;
+
+			/* do this step */
+			ProcessUtility(wrapper,
+				"(DROP ROLE )",
+				false,
+				PROCESS_UTILITY_SUBCOMMAND,
+				NULL,
+				NULL,
+				None_Receiver,
+				NULL);
+
+			/* make sure later steps can see the object created here */
+			CommandCounterIncrement();
+		}
+	}
+	PG_CATCH();
+	{
+		/* Clean up. Restore previous state. */
+		bbf_set_current_user(prev_current_user);
+		set_config_option("babelfishpg_tsql.sql_dialect", saved_dialect,
+							(superuser() ? PGC_SUSET : PGC_USERSET),
+							PGC_S_SESSION, GUC_ACTION_SAVE, true, 0, false);
+		PG_RE_THROW();
+	}
+	PG_END_TRY();
+}
+
+static List *
+gen_sp_droprole_subcmds(const char *user)
+{
+	StringInfoData query;
+	List *res;
+	Node *stmt;
+
+	initStringInfo(&query);
+	appendStringInfo(&query, "DROP ROLE dummy; ");
+	res = raw_parser(query.data, RAW_PARSE_DEFAULT);
+
+	if (list_length(res) != 1)
+		ereport(ERROR,
+				(errcode(ERRCODE_SYNTAX_ERROR),
+				 errmsg("Expected 1 statement but get %d statements after parsing",
+						list_length(res))));
+
+	stmt = parsetree_nth_stmt(res, 0);
+	DropRoleStmt *dropstmt = (DropRoleStmt *) stmt;
+
+	if (!IsA(dropstmt, DropRoleStmt))
+		ereport(ERROR, (errcode(ERRCODE_SYNTAX_ERROR), errmsg("query is not a DropRoleStmt")));
+
+	if (user && dropstmt->roles)
+	{
+		RoleSpec *tmp;
+
+		/* Update the statement with given role name */
+		tmp = (RoleSpec *) llast(dropstmt->roles);
+		tmp->rolename = pstrdup(user);
+	}
+	return res;
+}
+
+Datum sp_addrolemember(PG_FUNCTION_ARGS)
+{
+	List *parsetree_list;
+	ListCell *parsetree_item;
+	const char *prev_current_user;
+	const char *saved_dialect = GetConfigOption("babelfishpg_tsql.sql_dialect", true, true);
+
+	prev_current_user = GetUserNameFromId(GetUserId(), false);
+	bbf_set_current_user("sysadmin");
+
+	PG_TRY();
+	{
+		set_config_option("babelfishpg_tsql.sql_dialect", "tsql",
+							(superuser() ? PGC_SUSET : PGC_USERSET),
+							PGC_S_SESSION, GUC_ACTION_SAVE, true, 0, false);
+
+		char *rolname = text_to_cstring(PG_GETARG_TEXT_PP(0));
+		char *membername = text_to_cstring(PG_GETARG_TEXT_PP(1));
+
+		/* Advance cmd counter to make the delete visible */
+		CommandCounterIncrement();
+
+		parsetree_list = gen_sp_addrolemember_subcmds(rolname, membername);
+
+		/* Run all subcommands */
+		foreach(parsetree_item, parsetree_list)
+		{
+			Node *stmt = ((RawStmt *) lfirst(parsetree_item))->stmt;
+			PlannedStmt *wrapper;
+
+			/* need to make a wrapper PlannedStmt */
+			wrapper = makeNode(PlannedStmt);
+			wrapper->commandType = CMD_UTILITY;
+			wrapper->canSetTag = false;
+			wrapper->utilityStmt = stmt;
+			wrapper->stmt_location = 0;
+			wrapper->stmt_len = 16;
+
+			/* do this step */
+			ProcessUtility(wrapper,
+				"(ALTER ROLE )",
+				false,
+				PROCESS_UTILITY_SUBCOMMAND,
+				NULL,
+				NULL,
+				None_Receiver,
+				NULL);
+
+			/* make sure later steps can see the object created here */
+			CommandCounterIncrement();
+		}
+	}
+	PG_CATCH();
+	{
+		/* Clean up. Restore previous state. */
+		bbf_set_current_user(prev_current_user);
+		set_config_option("babelfishpg_tsql.sql_dialect", saved_dialect,
+							(superuser() ? PGC_SUSET : PGC_USERSET),
+							PGC_S_SESSION, GUC_ACTION_SAVE, true, 0, false);
+		PG_RE_THROW();
+	}
+	PG_END_TRY();
+}
+
+static List *
+gen_sp_addrolemember_subcmds(const char *user, const char *member)
+{
+	StringInfoData query;
+	List *res;
+	Node *stmt;
+	AccessPriv		*granted;
+	RoleSpec		*grantee;
+
+	initStringInfo(&query);
+	appendStringInfo(&query, "ALTER ROLE dummy ADD MEMBER dummy; ");
+	res = raw_parser(query.data, RAW_PARSE_DEFAULT);
+
+	if (list_length(res) != 1)
+		ereport(ERROR,
+				(errcode(ERRCODE_SYNTAX_ERROR),
+				 errmsg("Expected 1 statement but get %d statements after parsing",
+						list_length(res))));
+
+	stmt = parsetree_nth_stmt(res, 0);
+	GrantRoleStmt *grant_role = (GrantRoleStmt *) stmt;
+	granted = (AccessPriv *) linitial(grant_role->granted_roles);
+
+	/* This is ALTER ROLE statement */
+	grantee = (RoleSpec *) linitial(grant_role->grantee_roles);
+
+	/* Rewrite granted and grantee roles */
+	pfree(granted->priv_name);
+	granted->priv_name = user;
+
+	pfree(grantee->rolename);
+	grantee->rolename = member;
+
+	rewrite_object_refs(stmt);
+
+	return res;
+}
+
+Datum sp_droprolemember(PG_FUNCTION_ARGS)
+{
+	List *parsetree_list;
+	ListCell *parsetree_item;
+	const char *prev_current_user;
+	const char *saved_dialect = GetConfigOption("babelfishpg_tsql.sql_dialect", true, true);
+
+	prev_current_user = GetUserNameFromId(GetUserId(), false);
+	bbf_set_current_user("sysadmin");
+
+	PG_TRY();
+	{
+		set_config_option("babelfishpg_tsql.sql_dialect", "tsql",
+							(superuser() ? PGC_SUSET : PGC_USERSET),
+							PGC_S_SESSION, GUC_ACTION_SAVE, true, 0, false);
+
+		char *rolname = text_to_cstring(PG_GETARG_TEXT_PP(0));
+		char *membername = text_to_cstring(PG_GETARG_TEXT_PP(1));
+
+		/* Advance cmd counter to make the delete visible */
+		CommandCounterIncrement();
+
+		parsetree_list = gen_sp_droprolemember_subcmds(rolname, membername);
+
+		/* Run all subcommands */
+		foreach(parsetree_item, parsetree_list)
+		{
+			Node *stmt = ((RawStmt *) lfirst(parsetree_item))->stmt;
+			PlannedStmt *wrapper;
+
+			/* need to make a wrapper PlannedStmt */
+			wrapper = makeNode(PlannedStmt);
+			wrapper->commandType = CMD_UTILITY;
+			wrapper->canSetTag = false;
+			wrapper->utilityStmt = stmt;
+			wrapper->stmt_location = 0;
+			wrapper->stmt_len = 16;
+
+			/* do this step */
+			ProcessUtility(wrapper,
+				"(ALTER ROLE )",
+				false,
+				PROCESS_UTILITY_SUBCOMMAND,
+				NULL,
+				NULL,
+				None_Receiver,
+				NULL);
+
+			/* make sure later steps can see the object created here */
+			CommandCounterIncrement();
+		}
+	}
+	PG_CATCH();
+	{
+		/* Clean up. Restore previous state. */
+		bbf_set_current_user(prev_current_user);
+		set_config_option("babelfishpg_tsql.sql_dialect", saved_dialect,
+							(superuser() ? PGC_SUSET : PGC_USERSET),
+							PGC_S_SESSION, GUC_ACTION_SAVE, true, 0, false);
+		PG_RE_THROW();
+	}
+	PG_END_TRY();
+}
+
+static List *
+gen_sp_droprolemember_subcmds(const char *user, const char *member)
+{
+	StringInfoData query;
+	List *res;
+	Node *stmt;
+	AccessPriv *granted;
+	RoleSpec *grantee;
+
+	initStringInfo(&query);
+	appendStringInfo(&query, "ALTER ROLE dummy DROP MEMBER dummy; ");
+	res = raw_parser(query.data, RAW_PARSE_DEFAULT);
+
+	if (list_length(res) != 1)
+		ereport(ERROR,
+				(errcode(ERRCODE_SYNTAX_ERROR),
+				 errmsg("Expected 1 statement but get %d statements after parsing",
+						list_length(res))));
+
+	stmt = parsetree_nth_stmt(res, 0);
+	GrantRoleStmt *grant_role = (GrantRoleStmt *) stmt;
+	granted = (AccessPriv *) linitial(grant_role->granted_roles);
+
+	/* This is ALTER ROLE statement */
+	grantee = (RoleSpec *) linitial(grant_role->grantee_roles);
+
+	/* Rewrite granted and grantee roles */
+	pfree(granted->priv_name);
+	granted->priv_name = user;
+
+	pfree(grantee->rolename);
+	grantee->rolename = member;
+
+	rewrite_object_refs(stmt);
+
+	return res;
 }

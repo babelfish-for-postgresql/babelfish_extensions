@@ -1,0 +1,30 @@
+-- tsql
+DROP ROLE sp_droprole_r1;
+GO
+
+-- Throws an error when the role doesn't exist
+EXEC sp_droprole 'sp_droprole_r1';
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: role "master_sp_droprole_r1" does not exist)~~
+
+
+EXEC sp_droprole 'sp_droprole_r2';
+GO
+
+-- Throws an error when the role doesn't exist
+EXEC sp_droprole 'sp_droprole_r2';
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: role "master_sp_droprole_r2" does not exist)~~
+
+
+-- Throws an error when the role doesn't exist
+EXEC sp_droprole 'sp_droprole_r3';
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: role "master_sp_droprole_r3" does not exist)~~
+
