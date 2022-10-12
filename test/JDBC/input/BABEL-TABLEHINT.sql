@@ -5,6 +5,8 @@ go
 
 -- Only checking the syntax. 
 -- INSERT
+insert into t1 with(invalid_hint) (a) values (1); -- syntax error
+go
 insert into t1 with() (a) values (1);             -- syntax error
 go
 insert into t1 with((nowait)) (a) values (2);      -- syntax error

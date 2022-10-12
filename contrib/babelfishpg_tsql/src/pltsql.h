@@ -1283,6 +1283,9 @@ typedef struct ExplainInfo
 
 	/* indent for the next ExplainInfo */
 	size_t next_indent;
+
+	/* used to restore session to original schema if "use db" is invoked */
+	const char *initial_database;
 } ExplainInfo;
 
 typedef struct PLtsql_execstate
@@ -1382,7 +1385,7 @@ typedef struct PLtsql_execstate
 
 	List 		*explain_infos;
 	char		*schema_name;
-	char		*db_name;
+	const char		*db_name;
 } PLtsql_execstate;
 
 /*
@@ -1607,6 +1610,10 @@ typedef struct PLtsql_protocol_plugin
 
 	int (*get_insert_bulk_kilobytes_per_batch) ();
 
+	void* (*tsql_varchar_input) (const char *s, size_t len, int32 atttypmod);
+
+	void* (*tsql_char_input) (const char *s, size_t len, int32 atttypmod);
+	
 } PLtsql_protocol_plugin;
 
 /*

@@ -755,6 +755,7 @@ tsql_stat_get_activity_deprecated_in_2_2_0(PG_FUNCTION_ARGS)
 Datum
 tsql_stat_get_activity(PG_FUNCTION_ARGS)
 {
+	Oid			sysadmin_oid = get_role_oid("sysadmin", false);
 	int			num_backends = pgstat_fetch_stat_numbackends();
 	int			curr_backend;
 	char*			view_name = text_to_cstring(PG_GETARG_TEXT_PP(0));
@@ -775,14 +776,14 @@ tsql_stat_get_activity(PG_FUNCTION_ARGS)
 	 */
 	if (strcmp(view_name, "sessions") == 0)
 	{
-		if (role_is_sa(GetSessionUserId()))
+		if (has_privs_of_role(GetSessionUserId(), sysadmin_oid))
 			pid = -1;
 		else
 			pid = MyProcPid;
 	}
 	else if (strcmp(view_name, "connections") == 0)
 	{
-		if (role_is_sa(GetSessionUserId()))
+		if (has_privs_of_role(GetSessionUserId(), sysadmin_oid))
 			pid = -1;
 		else
 			ereport(ERROR,
