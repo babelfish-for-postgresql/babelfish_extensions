@@ -1264,10 +1264,14 @@ get_trigger_object_address(List *object, Relation *relp, bool missing_ok)
 			{	
 				found_trigger = true;
 				break;
-			}else if(list_length(object) > 1){
+			}
+			else if(list_length(object) > 1)
+			{
 				schema_oid = get_rel_namespace(reloid);
 				schema_name = get_namespace_name(schema_oid);
-				if(strcasecmp(schema_name ,trigger_schema)!= 0 && !missing_ok)
+				if(strcasecmp(schema_name, trigger_schema)!= 0 && 
+				strcasecmp(schema_name, get_physical_schema_name(get_cur_db_name(),trigger_schema)) != 0 
+				&& !missing_ok)
 				{
 					ereport(ERROR,
 					(errcode(ERRCODE_UNDEFINED_OBJECT),
@@ -1284,7 +1288,8 @@ get_trigger_object_address(List *object, Relation *relp, bool missing_ok)
 	address.classId = TriggerRelationId;
 	address.objectId = relation ?
 		get_trigger_oid(reloid, depname, missing_ok) : InvalidOid;
-	if (!missing_ok && ((list_length(object) == 1 && !found_trigger)))
+	if (!relation && !missing_ok && list_length(object) > 1|| 
+		!relation && ((list_length(object) == 1 && !found_trigger)) && !missing_ok)
 	{
 		ereport(ERROR,
 				(errcode(ERRCODE_UNDEFINED_OBJECT),
