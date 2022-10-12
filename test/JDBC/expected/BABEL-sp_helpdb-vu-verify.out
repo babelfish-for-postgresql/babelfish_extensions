@@ -5,7 +5,7 @@ varchar#!#varchar#!#varchar#!#varchar#!#smallint
 master#!#<NULL>#!#jdbc_user#!#<NULL>#!#<NULL>
 tempdb#!#<NULL>#!#jdbc_user#!#<NULL>#!#<NULL>
 msdb#!#<NULL>#!#jdbc_user#!#<NULL>#!#<NULL>
-test_db1#!#<NULL>#!#jdbc_user#!#<NULL>#!#<NULL>
+babel_sp_helpdb_db#!#<NULL>#!#jdbc_user#!#<NULL>#!#<NULL>
 ~~END~~
 
 
@@ -31,10 +31,28 @@ varchar#!#varchar#!#varchar#!#varchar#!#smallint
 msdb#!#<NULL>#!#jdbc_user#!#<NULL>#!#<NULL>
 ~~END~~
 
-SELECT name, db_size, owner, status, compatibility_level FROM sys.babelfish_helpdb('test_db1');
+SELECT name, db_size, owner, status, compatibility_level FROM sys.babelfish_helpdb('babel_sp_helpdb_db');
 GO
 ~~START~~
 varchar#!#varchar#!#varchar#!#varchar#!#smallint
-test_db1#!#<NULL>#!#jdbc_user#!#<NULL>#!#<NULL>
+babel_sp_helpdb_db#!#<NULL>#!#jdbc_user#!#<NULL>#!#<NULL>
 ~~END~~
+
+
+-- Executing sp_helpdb with wrong input
+SELECT name, db_size, owner, status, compatibility_level FROM sys.babelfish_helpdb('abc');
+GO
+~~START~~
+varchar#!#varchar#!#varchar#!#varchar#!#smallint
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: The database 'abc' does not exist. Supply a valid database name. To see available databases, use sys.databases.)~~
+
+SELECT name, db_size, owner, status, compatibility_level FROM sys.babelfish_helpdb('  wrongInput');
+GO
+~~START~~
+varchar#!#varchar#!#varchar#!#varchar#!#smallint
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: The database '  wrongInput' does not exist. Supply a valid database name. To see available databases, use sys.databases.)~~
 

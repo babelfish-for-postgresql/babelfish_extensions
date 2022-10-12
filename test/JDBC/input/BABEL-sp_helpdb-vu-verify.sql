@@ -8,5 +8,11 @@ SELECT name, db_size, owner, status, compatibility_level FROM sys.babelfish_help
 GO
 SELECT name, db_size, owner, status, compatibility_level FROM sys.babelfish_helpdb('msdb');
 GO
-SELECT name, db_size, owner, status, compatibility_level FROM sys.babelfish_helpdb('test_db1');
+SELECT name, db_size, owner, status, compatibility_level FROM sys.babelfish_helpdb('babel_sp_helpdb_db');
+GO
+
+-- Executing sp_helpdb with wrong input
+SELECT name, db_size, owner, status, compatibility_level FROM sys.babelfish_helpdb('abc');
+GO
+SELECT name, db_size, owner, status, compatibility_level FROM sys.babelfish_helpdb('  wrongInput');
 GO

@@ -1,2 +1,2 @@
-DROP DATABASE test_db1
+DROP DATABASE babel_sp_helpdb_db
 GO

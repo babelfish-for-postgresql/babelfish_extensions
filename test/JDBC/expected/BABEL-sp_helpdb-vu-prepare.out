@@ -1,4 +1,4 @@
 
 USE master
-CREATE DATABASE test_db1
+CREATE DATABASE babel_sp_helpdb_db
 GO
