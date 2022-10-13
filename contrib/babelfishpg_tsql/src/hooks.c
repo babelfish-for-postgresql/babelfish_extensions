@@ -1208,11 +1208,11 @@ get_trigger_object_address(List *object, Relation *relp, bool missing_ok)
 	ScanKeyData		key;
 	SysScanDesc tgscan;
 	HeapTuple	tuple;
-	char	*trigger_physical_schema = NULL;
-	char	*trigger_logical_schema = NULL;
+	const char	*trigger_physical_schema = NULL;
+	const char	*trigger_logical_schema = NULL;
 	const char	*cur_dbo_physical_schema= NULL;
 	bool 	found_trigger = false;
-	char	*pg_trigger_physical_schema = NULL;
+	const char	*pg_trigger_physical_schema = NULL;
 	const char	*pg_trigger_logical_schema = NULL;
 	const char	*cur_physical_schema = NULL;
 
@@ -1273,7 +1273,7 @@ get_trigger_object_address(List *object, Relation *relp, bool missing_ok)
 			relation = RelationIdGetRelation(reloid);
 			ereport(LOG, (errmsg("#################29#################")));
 			if (list_length(object) == 1 && 
-				strcmp(pg_trigger_physical_schema,cur_dbo_physical_schema) == 0)
+				strcasecmp(pg_trigger_physical_schema,cur_dbo_physical_schema) == 0)
 			{	
 				found_trigger = true;
 				ereport(LOG, (errmsg("#################30#################")));

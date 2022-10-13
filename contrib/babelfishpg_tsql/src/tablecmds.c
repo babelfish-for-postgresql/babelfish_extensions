@@ -76,11 +76,11 @@ void pre_check_trigger_schema(List *object, bool missing_ok){
 	HeapTuple	tuple;
 	Oid schema_oid;
 	char *schema_name = NULL;
-	char *trigger_schema = NULL;
+	const char *trigger_schema = NULL;
 	Oid reloid = InvalidOid;
 	bool found_trigger = false;
-	const	char *cur_dbo_physical_schema = NULL;
-	char	*pg_trigger_physical_schema = NULL;
+	const char	*cur_dbo_physical_schema = NULL;
+	const char	*pg_trigger_physical_schema = NULL;
 	const char	*pg_trigger_logical_schema = NULL;
 	const char	*cur_physical_schema = NULL;
 
@@ -99,7 +99,7 @@ void pre_check_trigger_schema(List *object, bool missing_ok){
 	*/
 	cur_dbo_physical_schema = get_dbo_schema_name(get_cur_db_name());
 	tgrel = table_open(TriggerRelationId, AccessShareLock);
-	ereport(LOG, (errmsg("#################3#################")));
+	ereport(LOG, (errmsg("#################cur_dbo_physical_schema %s#################",cur_dbo_physical_schema)));
 	ScanKeyInit(&key,
 					Anum_pg_trigger_tgname,
 					BTEqualStrategyNumber, F_NAMEEQ,
@@ -118,17 +118,17 @@ void pre_check_trigger_schema(List *object, bool missing_ok){
 		}
 		ereport(LOG, (errmsg("#################5#################")));
 		pg_trigger_physical_schema = get_namespace_name(get_rel_namespace(pg_trigger->tgrelid));
-		ereport(LOG, (errmsg("#################6#################")));
+		ereport(LOG, (errmsg("#################pg_trigger_physical_schema#################",pg_trigger_physical_schema)));
 		pg_trigger_logical_schema = get_logical_schema_name(pg_trigger_physical_schema, true);
-		ereport(LOG, (errmsg("#################7#################")));
+		ereport(LOG, (errmsg("#################pg_trigger_logical_schema#################",pg_trigger_logical_schema)));
 		cur_physical_schema = get_physical_schema_name(get_cur_db_name(),trigger_schema);
-		ereport(LOG, (errmsg("#################8#################")));
+		ereport(LOG, (errmsg("#################cur_physical_schema#################",cur_physical_schema)));
 		if(namestrcmp(&(pg_trigger->tgname), depname) == 0){
 			reloid = pg_trigger->tgrelid;
 			relation = RelationIdGetRelation(reloid);
 			ereport(LOG, (errmsg("#################9#################")));
 			if (list_length(object) == 1 && 
-				strcmp(pg_trigger_physical_schema,cur_dbo_physical_schema) == 0)
+				strcasecmp(pg_trigger_physical_schema,cur_dbo_physical_schema) == 0)
 			{	
 				found_trigger = true;
 				ereport(LOG, (errmsg("#################10#################")));
