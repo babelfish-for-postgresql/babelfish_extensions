@@ -97,6 +97,7 @@ msdb-dbo-fn_syspolicy_is_automation_enabled
 objectpropertyex
 sys-column-property
 sys-datefirst
+sys-databases
 sys-lock_timeout
 sys-max_connections
 sys-objects
@@ -222,3 +223,4 @@ BABEL-SPCOLUMNS-dep
 BABEL-3000-dep
 BABEL-3556-before-14_6
 BABEL-3010-before-14_6
+BABEL-sp_helpdb

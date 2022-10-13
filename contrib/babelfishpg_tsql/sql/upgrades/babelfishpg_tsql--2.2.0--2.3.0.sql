@@ -31,6 +31,101 @@ LANGUAGE plpgsql;
 
 
 -- please add your SQL here
+CREATE OR REPLACE FUNCTION sys.DATETIMEOFFSETFROMPARTS(IN p_year INTEGER,
+                                                               IN p_month INTEGER,
+                                                               IN p_day INTEGER,
+                                                               IN p_hour INTEGER,
+                                                               IN p_minute INTEGER,
+                                                               IN p_seconds INTEGER,
+                                                               IN p_fractions INTEGER,
+                                                               IN p_hour_offset INTEGER,
+                                                               IN p_minute_offset INTEGER,
+                                                               IN p_precision NUMERIC)
+RETURNS sys.DATETIMEOFFSET
+AS
+$BODY$
+DECLARE
+    v_err_message SYS.VARCHAR;
+    v_fractions SYS.VARCHAR;
+    v_precision SMALLINT;
+    v_calc_seconds NUMERIC; 
+    v_resdatetime TIMESTAMP WITHOUT TIME ZONE;
+    v_string pg_catalog.text;
+    v_sign pg_catalog.text;
+BEGIN
+    v_fractions := p_fractions::SYS.VARCHAR;
+    IF p_precision IS NULL THEN
+        RAISE EXCEPTION 'Scale argument is not valid. Valid expressions for data type datetimeoffset scale argument are integer constants and integer constant expressions.';
+    END IF;
+    IF p_year IS NULL OR p_month is NULL OR p_day IS NULL OR p_hour IS NULL OR p_minute IS NULL OR p_seconds IS NULL OR p_fractions IS NULL
+            OR p_hour_offset IS NULL OR p_minute_offset is NULL THEN
+        RETURN NULL;
+    END IF;
+    v_precision := p_precision::SMALLINT;
+
+    IF (scale(p_precision) > 0) THEN
+        RAISE most_specific_type_mismatch;
+
+    -- Check if arguments are out of range
+    ELSIF ((p_year NOT BETWEEN 1753 AND 9999) OR
+        (p_month NOT BETWEEN 1 AND 12) OR
+        (p_day NOT BETWEEN 1 AND 31) OR
+        (p_hour NOT BETWEEN 0 AND 23) OR
+        (p_minute NOT BETWEEN 0 AND 59) OR
+        (p_seconds NOT BETWEEN 0 AND 59) OR
+        (p_hour_offset NOT BETWEEN -14 AND 14) OR
+        (p_minute_offset NOT BETWEEN -59 AND 59) OR
+        (p_hour_offset * p_minute_offset < 0) OR
+        (p_hour_offset = 14 AND p_minute_offset != 0) OR
+        (p_hour_offset = -14 AND p_minute_offset != 0) OR
+        (p_fractions != 0 AND char_length(v_fractions) > p_precision::SMALLINT))
+    THEN
+        RAISE invalid_datetime_format;
+    ELSIF (v_precision NOT BETWEEN 0 AND 7) THEN
+        RAISE numeric_value_out_of_range;
+    END IF;
+    v_calc_seconds := format('%s.%s',
+                             p_seconds,
+                             substring(rpad(lpad(v_fractions, v_precision, '0'), 7, '0'), 1, 6))::NUMERIC;
+
+    v_resdatetime := make_timestamp(p_year,
+                                    p_month,
+                                    p_day,
+                                    p_hour,
+                                    p_minute,
+                                    v_calc_seconds);
+    v_sign := (
+        SELECT CASE
+            WHEN (p_hour_offset) > 0
+                THEN '+'
+            WHEN (p_hour_offset) = 0 AND (p_minute_offset) >= 0
+                THEN '+'    
+            ELSE '-'
+        END
+    );
+    v_string := CONCAT(v_resdatetime::pg_catalog.text,v_sign,abs(p_hour_offset)::SMALLINT::text,':',
+                                                          abs(p_minute_offset)::SMALLINT::text);
+    RETURN CAST(v_string AS sys.DATETIMEOFFSET);
+EXCEPTION
+    WHEN most_specific_type_mismatch THEN
+        RAISE USING MESSAGE := 'Scale argument is not valid. Valid expressions for data type datetimeoffset scale argument are integer constants and integer constant expressions',
+                    DETAIL := 'Use of incorrect "precision" parameter value during conversion process.',
+                    HINT := 'Change "precision" parameter to the proper value and try again.';    
+    WHEN invalid_datetime_format THEN
+        RAISE USING MESSAGE := 'Cannot construct data type datetimeoffset, some of the arguments have values which are not valid.',
+                    DETAIL := 'Possible use of incorrect value of date or time part (which lies outside of valid range).',
+                    HINT := 'Check each input argument belongs to the valid range and try again.';
+
+    WHEN numeric_value_out_of_range THEN
+        RAISE USING MESSAGE := format('Specified scale % is invalid.', p_fractions),
+                    DETAIL := format('Source value is out of %s data type range.', v_err_message),
+                    HINT := format('Correct the source value you are trying to cast to %s data type and try again.',
+                                   v_err_message);
+END;
+$BODY$
+LANGUAGE plpgsql
+IMMUTABLE;
+
 CREATE OR REPLACE FUNCTION sys.is_table_type(object_id oid) RETURNS bool AS
 $BODY$
 SELECT
@@ -1528,6 +1623,104 @@ $$
 LANGUAGE 'pltsql';
 GRANT EXECUTE ON PROCEDURE sys.sp_helpdbfixedrole TO PUBLIC;
 
+create or replace view sys.databases as
+select
+  CAST(d.name as SYS.SYSNAME) as name
+  , CAST(sys.db_id(d.name) as INT) as database_id
+  , CAST(NULL as INT) as source_database_id
+  , cast(s.sid as SYS.VARBINARY(85)) as owner_sid
+  , CAST(d.crdate AS SYS.DATETIME) as create_date
+  , CAST(s.cmptlevel AS SYS.TINYINT) as compatibility_level
+  , CAST(c.collname as SYS.SYSNAME) as collation_name
+  , CAST(0 AS SYS.TINYINT)  as user_access
+  , CAST('MULTI_USER' AS SYS.NVARCHAR(60)) as user_access_desc
+  , CAST(0 AS SYS.BIT) as is_read_only
+  , CAST(0 AS SYS.BIT) as is_auto_close_on
+  , CAST(0 AS SYS.BIT) as is_auto_shrink_on
+  , CAST(0 AS SYS.TINYINT) as state
+  , CAST('ONLINE' AS SYS.NVARCHAR(60)) as state_desc
+  , CAST(
+	  	CASE 
+			WHEN pg_is_in_recovery() is false THEN 0 
+			WHEN pg_is_in_recovery() is true THEN 1 
+		END 
+	AS SYS.BIT) as is_in_standby
+  , CAST(0 AS SYS.BIT) as is_cleanly_shutdown
+  , CAST(0 AS SYS.BIT) as is_supplemental_logging_enabled
+  , CAST(1 AS SYS.TINYINT) as snapshot_isolation_state
+  , CAST('ON' AS SYS.NVARCHAR(60)) as snapshot_isolation_state_desc
+  , CAST(1 AS SYS.BIT) as is_read_committed_snapshot_on
+  , CAST(1 AS SYS.TINYINT) as recovery_model
+  , CAST('FULL' AS SYS.NVARCHAR(60)) as recovery_model_desc
+  , CAST(0 AS SYS.TINYINT) as page_verify_option
+  , CAST(NULL AS SYS.NVARCHAR(60)) as page_verify_option_desc
+  , CAST(1 AS SYS.BIT) as is_auto_create_stats_on
+  , CAST(0 AS SYS.BIT) as is_auto_create_stats_incremental_on
+  , CAST(0 AS SYS.BIT) as is_auto_update_stats_on
+  , CAST(0 AS SYS.BIT) as is_auto_update_stats_async_on
+  , CAST(0 AS SYS.BIT) as is_ansi_null_default_on
+  , CAST(0 AS SYS.BIT) as is_ansi_nulls_on
+  , CAST(0 AS SYS.BIT) as is_ansi_padding_on
+  , CAST(0 AS SYS.BIT) as is_ansi_warnings_on
+  , CAST(0 AS SYS.BIT) as is_arithabort_on
+  , CAST(0 AS SYS.BIT) as is_concat_null_yields_null_on
+  , CAST(0 AS SYS.BIT) as is_numeric_roundabort_on
+  , CAST(0 AS SYS.BIT) as is_quoted_identifier_on
+  , CAST(0 AS SYS.BIT) as is_recursive_triggers_on
+  , CAST(0 AS SYS.BIT) as is_cursor_close_on_commit_on
+  , CAST(0 AS SYS.BIT) as is_local_cursor_default
+  , CAST(0 AS SYS.BIT) as is_fulltext_enabled
+  , CAST(0 AS SYS.BIT) as is_trustworthy_on
+  , CAST(0 AS SYS.BIT) as is_db_chaining_on
+  , CAST(0 AS SYS.BIT) as is_parameterization_forced
+  , CAST(0 AS SYS.BIT) as is_master_key_encrypted_by_server
+  , CAST(0 AS SYS.BIT) as is_query_store_on
+  , CAST(0 AS SYS.BIT) as is_published
+  , CAST(0 AS SYS.BIT) as is_subscribed
+  , CAST(0 AS SYS.BIT) as is_merge_published
+  , CAST(0 AS SYS.BIT) as is_distributor
+  , CAST(0 AS SYS.BIT) as is_sync_with_backup
+  , CAST(NULL AS SYS.UNIQUEIDENTIFIER) as service_broker_guid
+  , CAST(0 AS SYS.BIT) as is_broker_enabled
+  , CAST(0 AS SYS.TINYINT) as log_reuse_wait
+  , CAST('NOTHING' AS SYS.NVARCHAR(60)) as log_reuse_wait_desc
+  , CAST(0 AS SYS.BIT) as is_date_correlation_on
+  , CAST(0 AS SYS.BIT) as is_cdc_enabled
+  , CAST(0 AS SYS.BIT) as is_encrypted
+  , CAST(0 AS SYS.BIT) as is_honor_broker_priority_on
+  , CAST(NULL AS SYS.UNIQUEIDENTIFIER) as replica_id
+  , CAST(NULL AS SYS.UNIQUEIDENTIFIER) as group_database_id
+  , CAST(NULL AS INT) as resource_pool_id
+  , CAST(NULL AS SMALLINT) as default_language_lcid
+  , CAST(NULL AS SYS.NVARCHAR(128)) as default_language_name
+  , CAST(NULL AS INT) as default_fulltext_language_lcid
+  , CAST(NULL AS SYS.NVARCHAR(128)) as default_fulltext_language_name
+  , CAST(NULL AS SYS.BIT) as is_nested_triggers_on
+  , CAST(NULL AS SYS.BIT) as is_transform_noise_words_on
+  , CAST(NULL AS SMALLINT) as two_digit_year_cutoff
+  , CAST(0 AS SYS.TINYINT) as containment
+  , CAST('NONE' AS SYS.NVARCHAR(60)) as containment_desc
+  , CAST(0 AS INT) as target_recovery_time_in_seconds
+  , CAST(0 AS INT) as delayed_durability
+  , CAST(NULL AS SYS.NVARCHAR(60)) as delayed_durability_desc
+  , CAST(0 AS SYS.BIT) as is_memory_optimized_elevate_to_snapshot_on
+  , CAST(0 AS SYS.BIT) as is_federation_member
+  , CAST(0 AS SYS.BIT) as is_remote_data_archive_enabled
+  , CAST(0 AS SYS.BIT) as is_mixed_page_allocation_on
+  , CAST(0 AS SYS.BIT) as is_temporal_history_retention_enabled
+  , CAST(0 AS INT) as catalog_collation_type
+  , CAST('Not Applicable' AS SYS.NVARCHAR(60)) as catalog_collation_type_desc
+  , CAST(NULL AS SYS.NVARCHAR(128)) as physical_database_name
+  , CAST(0 AS SYS.BIT) as is_result_set_caching_on
+  , CAST(0 AS SYS.BIT) as is_accelerated_database_recovery_on
+  , CAST(0 AS SYS.BIT) as is_tempdb_spill_to_remote_store
+  , CAST(0 AS SYS.BIT) as is_stale_page_detection_on
+  , CAST(0 AS SYS.BIT) as is_memory_optimized_enabled
+  , CAST(0 AS SYS.BIT) as is_ledger_on
+ from sys.babelfish_sysdatabases d 
+ INNER JOIN sys.sysdatabases s on d.dbid = s.dbid
+ LEFT OUTER JOIN pg_catalog.pg_collation c ON d.default_collation = c.collname;
+GRANT SELECT ON sys.databases TO PUBLIC;
 
 -- BABELFISH_FUNCTION_EXT
 CREATE TABLE sys.babelfish_function_ext (
@@ -2206,3 +2399,31 @@ EXCEPTION
 END;        
 $BODY$
 LANGUAGE plpgsql;
+
+CREATE OR REPLACE PROCEDURE sys.sp_helpdb(IN "@dbname" VARCHAR(32))
+LANGUAGE 'pltsql'
+AS $$
+BEGIN
+  SELECT
+  CAST(name AS sys.nvarchar(128)),
+  CAST(db_size AS sys.nvarchar(13)),
+  CAST(owner AS sys.nvarchar(128)),
+  CAST(dbid AS sys.int),
+  CAST(created AS sys.nvarchar(11)),
+  CAST(status AS sys.nvarchar(600)),
+  CAST(compatibility_level AS sys.tinyint)
+  FROM sys.babelfish_helpdb(@dbname);
+
+  SELECT
+  CAST(NULL AS sys.nchar(128)) AS name,
+  CAST(NULL AS smallint) AS fileid,
+  CAST(NULL AS sys.nchar(260)) AS filename,
+  CAST(NULL AS sys.nvarchar(128)) AS filegroup,
+  CAST(NULL AS sys.nvarchar(18)) AS size,
+  CAST(NULL AS sys.nvarchar(18)) AS maxsize,
+  CAST(NULL AS sys.nvarchar(18)) AS growth,
+  CAST(NULL AS sys.varchar(9)) AS usage;
+
+  RETURN 0;
+END;
+$$;

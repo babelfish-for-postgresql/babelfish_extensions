@@ -107,6 +107,7 @@ BABEL-1963
 BABEL-2203
 BABEL-2208
 BABEL-2257
+BABEL-2449
 BABEL-2535
 BABEL-2787-2
 BABEL-2787
@@ -182,6 +183,7 @@ BABEL-1953
 schema_resolution_trigger
 sys_all_objects-dep
 sys-columns-dep
+sys-databases-dep
 sys-foreign_key_columns-dep
 sys-foreign_keys-dep
 sys-identity_columns-dep
@@ -298,3 +300,4 @@ BABEL-3144
 BABEL-3556
 BABEL-3268
 BABEL-937
+BABEL-sp_helpdb
