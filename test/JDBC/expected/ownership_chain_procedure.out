@@ -88,15 +88,31 @@ go
 
 select * from withsameowner.tbls;
 go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: permission denied for table tbls)~~
+
 
 exec withsameowner.pa1;
 go
+~~START~~
+int#!#int#!#int
+~~END~~
+
 
 select * from withdiffowner.tbld;
 go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: permission denied for table tbld)~~
+
 
 exec withsameowner.pb1;
 go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: permission denied for table tbld)~~
+
 
 -- tsql
 use db1;
@@ -111,6 +127,8 @@ go
 use master;
 go
 
+
+-- tsql user=l1 password=123
 -- CASE 2
 -- PROC1 with ownerB
 --		PROC2 with ownerA
@@ -118,8 +136,6 @@ go
 -- GRANT EXEC ON PROC1 to invoker
 -- GRANT EXEC ON PROC2 to inovker
 -- EXEC PROC1 
-
--- tsql user=l1 password=123
 use db1;
 go
 
@@ -144,6 +160,10 @@ select objs.column1 as object,user_name(objectproperty(object_id(objs.column1),'
 from (values ('withdiffowner.pb2'), ('withsameowner.pa2'), ('withsameowner.tbls')) 
 as objs(object_name)
 go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: column objs.column1 does not exist)~~
+
 
 -- tsql user=invoker password=123
 use db1;
@@ -151,6 +171,10 @@ go
 
 exec withdiffowner.pb2;
 go
+~~START~~
+int#!#int#!#int
+~~END~~
+
 
 -- tsql
 use db1;
@@ -166,16 +190,28 @@ use master;
 go
 
 
--- Cleanup
 -- psql
+-- Cleanup
 -- Need to terminate active session before cleaning up the login
 SELECT pg_terminate_backend(pid) FROM pg_stat_get_activity(NULL)
 WHERE sys.suser_name(usesysid) in ('l1','l2','invoker') AND backend_type = 'client backend' AND usesysid IS NOT NULL;
 GO
+~~START~~
+bool
+t
+t
+t
+~~END~~
+
 
 -- Wait to sync with another session
 SELECT pg_sleep(1);
 GO
+~~START~~
+void
+
+~~END~~
+
 
 revoke all on database jdbc_testdb from db1_u1;
 go
