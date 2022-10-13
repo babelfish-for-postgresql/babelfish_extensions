@@ -1225,16 +1225,13 @@ get_trigger_object_address(List *object, Relation *relp, bool missing_ok)
 	}
 	/* Extract name of dependent object. */
 	depname = strVal(llast(object));
-	ereport(LOG, (errmsg("#################20#################")));
 	if (list_length(object) > 1){
-		ereport(LOG, (errmsg("#################21#################")));
 		trigger_physical_schema = ((Value *)list_nth(object,0))->val.str;
 		trigger_logical_schema = get_logical_schema_name(trigger_physical_schema, true);
-		ereport(LOG, (errmsg("#################22#################")));
 	}
 
 	cur_dbo_physical_schema = get_dbo_schema_name(get_cur_db_name());
-	ereport(LOG, (errmsg("#################22#################")));
+
 	if (prev_get_trigger_object_address_hook)
 		return (*prev_get_trigger_object_address_hook)(object,relp,missing_ok);
 
@@ -1249,34 +1246,27 @@ get_trigger_object_address(List *object, Relation *relp, bool missing_ok)
 					Anum_pg_trigger_tgname,
 					BTEqualStrategyNumber, F_NAMEEQ,
 					CStringGetDatum(depname));
-	ereport(LOG, (errmsg("#################23#################")));
+
 	tgscan = systable_beginscan(tgrel, TriggerRelidNameIndexId, false,
 									NULL, 1, &key);
 	while (HeapTupleIsValid(tuple = systable_getnext(tgscan)))
 	{
 		Form_pg_trigger pg_trigger = (Form_pg_trigger) GETSTRUCT(tuple);
-		ereport(LOG, (errmsg("#################24#################")));
 		if(!OidIsValid(pg_trigger->tgrelid))
 		{
 			reloid = InvalidOid;
 			break;
 		}
-		ereport(LOG, (errmsg("#################25#################")));
 		pg_trigger_physical_schema = get_namespace_name(get_rel_namespace(pg_trigger->tgrelid));
-		ereport(LOG, (errmsg("#################26#################")));
 		pg_trigger_logical_schema = get_logical_schema_name(pg_trigger_physical_schema, true);
-		ereport(LOG, (errmsg("#################27#################")));
 		cur_physical_schema = get_physical_schema_name(get_cur_db_name(),trigger_logical_schema);
-		ereport(LOG, (errmsg("#################28#################")));
 		if(namestrcmp(&(pg_trigger->tgname), depname) == 0){
 			reloid = pg_trigger->tgrelid;
 			relation = RelationIdGetRelation(reloid);
-			ereport(LOG, (errmsg("#################29#################")));
 			if (list_length(object) == 1 && 
 				strcasecmp(pg_trigger_physical_schema,cur_dbo_physical_schema) == 0)
 			{	
 				found_trigger = true;
-				ereport(LOG, (errmsg("#################30#################")));
 				RelationClose(relation);
 				break;
 			}
@@ -1285,20 +1275,19 @@ get_trigger_object_address(List *object, Relation *relp, bool missing_ok)
 				strcasecmp(pg_trigger_logical_schema,trigger_logical_schema) == 0)
 			{
 				found_trigger = true;
-				ereport(LOG, (errmsg("#################31#################")));
 				RelationClose(relation);
 				break;
 			}
 			RelationClose(relation);
 		}
 	}
-	ereport(LOG, (errmsg("#################32#################")));
+
 	systable_endscan(tgscan);
 	table_close(tgrel, AccessShareLock);
 	address.classId = TriggerRelationId;
 	address.objectId = relation ?
 		get_trigger_oid(reloid, depname, missing_ok) : InvalidOid;
-	ereport(LOG, (errmsg("#################33#################")));
+
 	if (!missing_ok && !found_trigger)
 	{
 		if(list_length(object) == 1){
@@ -1314,7 +1303,7 @@ get_trigger_object_address(List *object, Relation *relp, bool missing_ok)
 		}		
 	}	
 	address.objectSubId = 0;
-	ereport(LOG, (errmsg("#################34#################")));
+
 	/* Avoid relcache leak when object not found. */
 	if (!OidIsValid(address.objectId))
 	{
@@ -1325,9 +1314,7 @@ get_trigger_object_address(List *object, Relation *relp, bool missing_ok)
 		return address;
 	}
 	/* Done. */
-	ereport(LOG, (errmsg("#################35#################")));
 	*relp = relation;
-	ereport(LOG, (errmsg("#################36#################")));
 	return address;
 }
 

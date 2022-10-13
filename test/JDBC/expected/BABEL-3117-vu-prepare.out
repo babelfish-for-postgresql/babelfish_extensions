@@ -61,12 +61,100 @@ GO
 ~~ROW COUNT: 3~~
 
 
--- psql
-ALTER SYSTEM SET babelfishpg_tsql.migration_mode = 'single-db';
-SELECT pg_reload_conf();
+-- Test with database has the same schema name, same table name and same trigger name
+CREATE DATABASE BABEL_3117_prepare_db3
+CREATE DATABASE BABEL_3117_prepare_db4
+GO
+
+USE BABEL_3117_prepare_db3
+GO
+
+CREATE SCHEMA BABEL_3117_schema
+GO
+
+CREATE TABLE BABEL_3117_schema.BABEL_3117_t1 ( a int, b int );
+GO
+
+CREATE TRIGGER BABEL_3117_prepare_trigger2 on BABEL_3117_schema.BABEL_3117_t1 INSTEAD OF INSERT AS BEGIN select count(*) from inserted ;END
+GO
+
+INSERT INTO BABEL_3117_schema.BABEL_3117_t1 VALUES (1,1),(2,2),(3,3);
 GO
 ~~START~~
-bool
-t
+int
+3
 ~~END~~
+
+~~ROW COUNT: 3~~
+
+
+USE BABEL_3117_prepare_db4
+GO
+
+CREATE SCHEMA BABEL_3117_schema
+GO
+
+CREATE TABLE BABEL_3117_schema.BABEL_3117_t1 ( a int, b int );
+GO
+
+CREATE TRIGGER BABEL_3117_prepare_trigger2 on BABEL_3117_schema.BABEL_3117_t1 INSTEAD OF INSERT AS BEGIN select count(*) from inserted ;END
+GO
+
+INSERT INTO BABEL_3117_schema.BABEL_3117_t1 VALUES (1,1),(2,2),(3,3);
+GO
+~~START~~
+int
+3
+~~END~~
+
+~~ROW COUNT: 3~~
+
+
+-- Test with database has different schema name, same table name and same trigger name
+CREATE DATABASE BABEL_3117_prepare_db5
+CREATE DATABASE BABEL_3117_prepare_db6
+GO
+
+USE BABEL_3117_prepare_db5
+GO
+
+CREATE SCHEMA BABEL_3117_schemaA
+GO
+
+CREATE TABLE BABEL_3117_schemaA.BABEL_3117_t1 ( a int, b int );
+GO
+
+CREATE TRIGGER BABEL_3117_prepare_trigger3 on BABEL_3117_schemaA.BABEL_3117_t1 INSTEAD OF INSERT AS BEGIN select count(*) from inserted ;END
+GO
+
+INSERT INTO BABEL_3117_schemaA.BABEL_3117_t1 VALUES (1,1),(2,2),(3,3);
+GO
+~~START~~
+int
+3
+~~END~~
+
+~~ROW COUNT: 3~~
+
+
+USE BABEL_3117_prepare_db6
+GO
+
+CREATE SCHEMA BABEL_3117_schemaB
+GO
+
+CREATE TABLE BABEL_3117_schemaB.BABEL_3117_t1 ( a int, b int );
+GO
+
+CREATE TRIGGER BABEL_3117_prepare_trigger3 on BABEL_3117_schemaB.BABEL_3117_t1 INSTEAD OF INSERT AS BEGIN select count(*) from inserted ;END
+GO
+
+INSERT INTO BABEL_3117_schemaB.BABEL_3117_t1 VALUES (1,1),(2,2),(3,3);
+GO
+~~START~~
+int
+3
+~~END~~
+
+~~ROW COUNT: 3~~
 
