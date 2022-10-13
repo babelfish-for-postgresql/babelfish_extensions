@@ -34,6 +34,7 @@ BABEL-3166
 BABEL-3192
 sys-check_constraints
 sys-computed_columns
+sys-databases
 sys-dm_exec_connections
 sys-dm_os_host_info
 sys-endpoints
