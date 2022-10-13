@@ -183,6 +183,7 @@ BABEL-1953
 schema_resolution_trigger
 sys_all_objects-dep
 sys-columns-dep
+sys-databases-dep
 sys-foreign_key_columns-dep
 sys-foreign_keys-dep
 sys-identity_columns-dep

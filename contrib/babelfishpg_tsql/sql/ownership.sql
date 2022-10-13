@@ -359,9 +359,9 @@ select
   CAST(d.name as SYS.SYSNAME) as name
   , CAST(sys.db_id(d.name) as INT) as database_id
   , CAST(NULL as INT) as source_database_id
-  , cast(cast(r.oid as INT) as SYS.VARBINARY(85)) as owner_sid
+  , cast(s.sid as SYS.VARBINARY(85)) as owner_sid
   , CAST(d.crdate AS SYS.DATETIME) as create_date
-  , CAST(120 AS SYS.TINYINT) as compatibility_level
+  , CAST(s.cmptlevel AS SYS.TINYINT) as compatibility_level
   , CAST(c.collname as SYS.SYSNAME) as collation_name
   , CAST(0 AS SYS.TINYINT)  as user_access
   , CAST('MULTI_USER' AS SYS.NVARCHAR(60)) as user_access_desc
@@ -448,9 +448,9 @@ select
   , CAST(0 AS SYS.BIT) as is_stale_page_detection_on
   , CAST(0 AS SYS.BIT) as is_memory_optimized_enabled
   , CAST(0 AS SYS.BIT) as is_ledger_on
- from sys.babelfish_sysdatabases d LEFT OUTER JOIN pg_catalog.pg_collation c ON d.default_collation = c.collname
- LEFT OUTER JOIN pg_catalog.pg_roles r on r.rolname = d.owner;
-
+ from sys.babelfish_sysdatabases d 
+ INNER JOIN sys.sysdatabases s on d.dbid = s.dbid
+ LEFT OUTER JOIN pg_catalog.pg_collation c ON d.default_collation = c.collname;
 GRANT SELECT ON sys.databases TO PUBLIC;
 
 CREATE OR REPLACE FUNCTION sys.babelfish_inconsistent_metadata(return_consistency boolean default false)

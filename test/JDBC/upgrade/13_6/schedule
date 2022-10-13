@@ -48,6 +48,7 @@ sys-columns
 sys-computed_columns
 sys-data_spaces
 sys-database_files
+sys-databases
 sys-database_filestream_options
 sys-database_recovery_status
 sys-dm_exec_connections
