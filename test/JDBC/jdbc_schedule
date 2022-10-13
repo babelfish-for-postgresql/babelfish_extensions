@@ -8,10 +8,7 @@
 #    new line
 # 6. If you want the framework to not run certain files, use: ignore#!#<test name>
 
-#all
-BABEL-CHECK-CONSTRAINT-vu-prepare
-BABEL-CHECK-CONSTRAINT-vu-verify
-BABEL-CHECK-CONSTRAINT-vu-cleanup
+all
 
 # JDBC bulk insert API seems to call SET FMTONLY ON without calling SET FMTONLY OFF, causing some spurious test failures.
 ignore#!#insertbulk
@@ -32,6 +29,9 @@ ignore#!#Test-Prep-Statements-vu-verify
 ignore#!#Test-Prep-Statements-vu-cleanup
 ignore#!#BABEL-3117-vu-prepare
 ignore#!#BABEL-3117-vu-verify
+ignore#!#BABEL-CHECK-CONSTRAINT-vu-prepare
+ignore#!#BABEL-CHECK-CONSTRAINT-vu-verify
+ignore#!#BABEL-CHECK-CONSTRAINT-vu-cleanup
 
 # These tests are meant for upgrade scenario prior to (potential) 14_5 release
 ignore#!#BABEL-3147-before-14_5-vu-prepare
