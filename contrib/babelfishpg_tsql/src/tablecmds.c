@@ -99,7 +99,7 @@ void pre_check_trigger_schema(List *object, bool missing_ok){
 	*/
 	cur_dbo_physical_schema = get_dbo_schema_name(get_cur_db_name());
 	tgrel = table_open(TriggerRelationId, AccessShareLock);
-	ereport(LOG, (errmsg("#################cur_dbo_physical_schema %s#################",cur_dbo_physical_schema)));
+	ereport(LOG, (errmsg("#################cur_dbo_physical_schema \"%s\#################",cur_dbo_physical_schema)));
 	ScanKeyInit(&key,
 					Anum_pg_trigger_tgname,
 					BTEqualStrategyNumber, F_NAMEEQ,
@@ -118,15 +118,17 @@ void pre_check_trigger_schema(List *object, bool missing_ok){
 		}
 		ereport(LOG, (errmsg("#################5#################")));
 		pg_trigger_physical_schema = get_namespace_name(get_rel_namespace(pg_trigger->tgrelid));
-		ereport(LOG, (errmsg("#################pg_trigger_physical_schema#################",pg_trigger_physical_schema)));
+		ereport(LOG, (errmsg("#################pg_trigger_physical_schema \"%s\"#################",pg_trigger_physical_schema)));
 		pg_trigger_logical_schema = get_logical_schema_name(pg_trigger_physical_schema, true);
-		ereport(LOG, (errmsg("#################pg_trigger_logical_schema#################",pg_trigger_logical_schema)));
+		ereport(LOG, (errmsg("#################pg_trigger_logical_schema \"%s\"#################",pg_trigger_logical_schema)));
 		cur_physical_schema = get_physical_schema_name(get_cur_db_name(),trigger_schema);
-		ereport(LOG, (errmsg("#################cur_physical_schema#################",cur_physical_schema)));
+		ereport(LOG, (errmsg("#################cur_physical_schema \"%s\"#################",cur_physical_schema)));
 		if(namestrcmp(&(pg_trigger->tgname), depname) == 0){
 			reloid = pg_trigger->tgrelid;
 			relation = RelationIdGetRelation(reloid);
 			ereport(LOG, (errmsg("#################9#################")));
+			strcasecmp(pg_trigger_physical_schema,cur_dbo_physical_schema) == 0;
+			ereport(LOG, (errmsg("#################test#################")));
 			if (list_length(object) == 1 && 
 				strcasecmp(pg_trigger_physical_schema,cur_dbo_physical_schema) == 0)
 			{	
