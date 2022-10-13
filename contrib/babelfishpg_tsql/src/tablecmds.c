@@ -215,6 +215,7 @@ static void lookup_and_drop_triggers(ObjectAccessType access, Oid classId,
             RelationClose(trigRelation);
         }
     }
+	
     systable_endscan(tgscan);
     table_close(tgrel, AccessShareLock); 
 }

@@ -1287,8 +1287,8 @@ get_trigger_object_address(List *object, Relation *relp, bool missing_ok)
 			RelationClose(relation);
 		}
 	}
-	systable_endscan(tgscan);
 
+	systable_endscan(tgscan);
 	table_close(tgrel, AccessShareLock);
 	address.classId = TriggerRelationId;
 	address.objectId = relation ?

@@ -1,3 +1,14 @@
+-- psql
+ALTER SYSTEM SET babelfishpg_tsql.migration_mode = 'multi-db';
+SELECT pg_reload_conf();
+GO
+~~START~~
+bool
+t
+~~END~~
+
+
+-- tsql
 USE BABEL_3117_prepare_db1
 GO
 
@@ -28,3 +39,13 @@ GO
 DROP DATABASE BABEL_3117_prepare_db1
 DROP DATABASE BABEL_3117_prepare_db2
 GO
+
+-- psql
+ALTER SYSTEM SET babelfishpg_tsql.migration_mode = 'single-db';
+SELECT pg_reload_conf();
+GO
+~~START~~
+bool
+t
+~~END~~
+
