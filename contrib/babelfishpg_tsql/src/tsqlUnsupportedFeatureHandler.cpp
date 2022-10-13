@@ -58,6 +58,7 @@ declare_escape_hatch(escape_hatch_join_hints);
 declare_escape_hatch(escape_hatch_session_settings);
 declare_escape_hatch(escape_hatch_ignore_dup_key);
 declare_escape_hatch(escape_hatch_rowversion);
+declare_escape_hatch(escape_hatch_checkpoint);
 
 extern std::string getFullText(antlr4::ParserRuleContext *context);
 extern std::string stripQuoteFromId(TSqlParser::IdContext *context);
@@ -148,7 +149,7 @@ protected:
 		antlrcpp::Any visitDbcc_statement(TSqlParser::Dbcc_statementContext *ctx) override { handle(INSTR_UNSUPPORTED_TSQL_DBCC, "DBCC", getLineAndPos(ctx)); return visitChildren(ctx); }
 		antlrcpp::Any visitBackup_statement(TSqlParser::Backup_statementContext *ctx) override { handle(INSTR_UNSUPPORTED_TSQL_BACKUP, "BACKUP", getLineAndPos(ctx)); return visitChildren(ctx); }
 		antlrcpp::Any visitRestore_statement(TSqlParser::Restore_statementContext *ctx) override { handle(INSTR_UNSUPPORTED_TSQL_RESTORE, "RESTORE", getLineAndPos(ctx)); return visitChildren(ctx); }
-		antlrcpp::Any visitCheckpoint_statement(TSqlParser::Checkpoint_statementContext *ctx) override { handle(INSTR_UNSUPPORTED_TSQL_CHECKPOINT, "CHECKPOINT", getLineAndPos(ctx)); return visitChildren(ctx); }
+		antlrcpp::Any visitCheckpoint_statement(TSqlParser::Checkpoint_statementContext *ctx) override;
 		antlrcpp::Any visitReadtext_statement(TSqlParser::Readtext_statementContext *ctx) override { handle(INSTR_UNSUPPORTED_TSQL_READTEXT, "READTEXT", getLineAndPos(ctx)); return visitChildren(ctx); }
 		antlrcpp::Any visitWritetext_statement(TSqlParser::Writetext_statementContext *ctx) override { handle(INSTR_UNSUPPORTED_TSQL_WRITETEXT, "WRITETEXT", getLineAndPos(ctx)); return visitChildren(ctx); }
 		antlrcpp::Any visitUpdatetext_statement(TSqlParser::Updatetext_statementContext *ctx) override { handle(INSTR_UNSUPPORTED_TSQL_UPDATETEXT, "UPDATETEXT", getLineAndPos(ctx)); return visitChildren(ctx); }
@@ -1204,6 +1205,12 @@ antlrcpp::Any TsqlUnsupportedFeatureHandlerImpl::visitSecurity_statement(TSqlPar
 	else if (ctx->create_certificate())
 		handle(INSTR_UNSUPPORTED_TSQL_CREATE_CERTIFICATE, "CREATE CERTIFICATE", getLineAndPos(ctx));
 
+	return visitChildren(ctx);
+}
+
+antlrcpp::Any TsqlUnsupportedFeatureHandlerImpl::visitCheckpoint_statement(TSqlParser::Checkpoint_statementContext *ctx)
+{
+	handle(INSTR_UNSUPPORTED_TSQL_CHECKPOINT, "CHECKPOINT", &st_escape_hatch_checkpoint, getLineAndPos(ctx));
 	return visitChildren(ctx);
 }
 
