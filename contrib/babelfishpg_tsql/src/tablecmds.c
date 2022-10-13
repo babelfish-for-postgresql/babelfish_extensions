@@ -24,6 +24,7 @@
 #include "catalog/pg_trigger.h"
 #include "catalog/pg_type.h"
 #include "commands/tablecmds.h"
+#include "common/logging.h"
 #include "nodes/nodeFuncs.h"
 #include "parser/parser.h"
 #include "parser/parse_expr.h"
@@ -83,12 +84,12 @@ void pre_check_trigger_schema(List *object, bool missing_ok){
 	const char	*pg_trigger_logical_schema = NULL;
 	const char	*cur_physical_schema = NULL;
 
-	pg_log_debug("#################1#################");
-
+	ereport(LOG, (errmsg("#################1#################")));
 	/* Extract name of dependent object. */
 	depname = strVal(llast(object));
 	if (list_length(object) > 1){
 		trigger_schema = ((Value *)list_nth(object,0))->val.str;
+		ereport(LOG, (errmsg("#################2#################")));
 	}
 	/* 
 	* Get the table name of the trigger from pg_trigger. We know that
@@ -98,7 +99,7 @@ void pre_check_trigger_schema(List *object, bool missing_ok){
 	*/
 	cur_dbo_physical_schema = get_dbo_schema_name(get_cur_db_name());
 	tgrel = table_open(TriggerRelationId, AccessShareLock);
-	pg_log_debug("#################2#################");
+	ereport(LOG, (errmsg("#################3#################")));
 	ScanKeyInit(&key,
 					Anum_pg_trigger_tgname,
 					BTEqualStrategyNumber, F_NAMEEQ,
@@ -106,32 +107,31 @@ void pre_check_trigger_schema(List *object, bool missing_ok){
 
 	tgscan = systable_beginscan(tgrel, TriggerRelidNameIndexId, false,
 									NULL, 1, &key);
-	pg_log_debug("#################3#################");
 	while (HeapTupleIsValid(tuple = systable_getnext(tgscan)))
 	{
 		Form_pg_trigger pg_trigger = (Form_pg_trigger) GETSTRUCT(tuple);
-		pg_log_debug("#################4#################");
+		ereport(LOG, (errmsg("#################4#################")));
 		if(!OidIsValid(pg_trigger->tgrelid))
 		{
 			reloid = InvalidOid;
 			break;
 		}
-		pg_log_debug("#################5#################");
+		ereport(LOG, (errmsg("#################5#################")));
 		pg_trigger_physical_schema = get_namespace_name(get_rel_namespace(pg_trigger->tgrelid));
-		pg_log_debug("#################6#################");
+		ereport(LOG, (errmsg("#################6#################")));
 		pg_trigger_logical_schema = get_logical_schema_name(pg_trigger_physical_schema, true);
-		pg_log_debug("#################7#################");
+		ereport(LOG, (errmsg("#################7#################")));
 		cur_physical_schema = get_physical_schema_name(get_cur_db_name(),trigger_schema);
-		pg_log_debug("#################8#################");
+		ereport(LOG, (errmsg("#################8#################")));
 		if(namestrcmp(&(pg_trigger->tgname), depname) == 0){
 			reloid = pg_trigger->tgrelid;
 			relation = RelationIdGetRelation(reloid);
-			pg_log_debug("#################9#################");
+			ereport(LOG, (errmsg("#################9#################")));
 			if (list_length(object) == 1 && 
 				strcmp(pg_trigger_physical_schema,cur_dbo_physical_schema) == 0)
 			{	
 				found_trigger = true;
-				pg_log_debug("#################10#################");
+				ereport(LOG, (errmsg("#################10#################")));
 				RelationClose(relation);
 				break;
 			}
@@ -140,16 +140,17 @@ void pre_check_trigger_schema(List *object, bool missing_ok){
 					strcasecmp(pg_trigger_logical_schema,trigger_schema) == 0)
 			{
 				found_trigger = true;
-				pg_log_debug("#################11#################");
+				ereport(LOG, (errmsg("#################11#################")));
 				RelationClose(relation);
 				break;
 			}
 			RelationClose(relation);
 		}
 	}
+	ereport(LOG, (errmsg("#################12#################")));
 	systable_endscan(tgscan);
 	table_close(tgrel, AccessShareLock);
-	pg_log_debug("#################12#################");
+	ereport(LOG, (errmsg("#################13#################")));
 	if (!missing_ok && !found_trigger)
 	{
 		if(list_length(object) == 1){
@@ -163,8 +164,7 @@ void pre_check_trigger_schema(List *object, bool missing_ok){
 				errmsg("trigger \"%s.%s\" does not exist",
 							trigger_schema ,depname)));	
 		}		
-	}
-	pg_log_debug("#################13#################");	
+	}	
 	if (!OidIsValid(reloid))
 	{
 		if (relation != NULL)
@@ -172,7 +172,6 @@ void pre_check_trigger_schema(List *object, bool missing_ok){
 
 		relation = NULL;		/* department of accident prevention */
 	}
-	pg_log_debug("#################14#################");	
 }
 
 static void lookup_and_drop_triggers(ObjectAccessType access, Oid classId, 
