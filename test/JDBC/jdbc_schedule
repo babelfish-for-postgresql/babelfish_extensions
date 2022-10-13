@@ -8,10 +8,7 @@
 #    new line
 # 6. If you want the framework to not run certain files, use: ignore#!#<test name>
 
-#all
-BABEL-CHECK-CONSTRAINT-vu-prepare
-BABEL-CHECK-CONSTRAINT-vu-verify
-BABEL-CHECK-CONSTRAINT-vu-cleanup
+all
 
 # JDBC bulk insert API seems to call SET FMTONLY ON without calling SET FMTONLY OFF, causing some spurious test failures.
 ignore#!#insertbulk
