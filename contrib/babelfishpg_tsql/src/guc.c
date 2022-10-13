@@ -75,6 +75,7 @@ extern bool Transform_null_equals;
 /* Dump and Restore */
 bool babelfish_dump_restore = false;
 bool restore_tsql_tabletype = false;
+Oid babelfish_dump_restore_min_oid = FirstNormalObjectId;
 
 /* T-SQL Hint Mapping */
 bool enable_hint_mapping = false;
@@ -1045,6 +1046,15 @@ define_custom_variables(void)
 				 NULL,
 				 &restore_tsql_tabletype,
 				 false,
+				 PGC_USERSET,
+				 GUC_NOT_IN_SAMPLE | GUC_DISALLOW_IN_FILE | GUC_DISALLOW_IN_AUTO_FILE,
+				 NULL, NULL, NULL);
+
+	DefineCustomIntVariable("babelfishpg_tsql.dump_restore_min_oid",
+				 gettext_noop("All new OIDs should be greater than this number during dump and restore"),
+				 NULL,
+				 &babelfish_dump_restore_min_oid,
+				 FirstNormalObjectId, 0, INT_MAX,
 				 PGC_USERSET,
 				 GUC_NOT_IN_SAMPLE | GUC_DISALLOW_IN_FILE | GUC_DISALLOW_IN_AUTO_FILE,
 				 NULL, NULL, NULL);
