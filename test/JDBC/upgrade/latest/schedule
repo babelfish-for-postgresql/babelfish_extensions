@@ -53,6 +53,7 @@ sp_describe_first_result_set
 sys-host_name
 SYSTEM_USER
 indexproperty
+sys-all_parameters
 msdb-dbo-syspolicy_configuration
 sys-all_views
 datepart
@@ -297,6 +298,7 @@ babel_417
 babel_datatype_sqlvariant
 babel_sqlvariant_cast_compare
 BABEL-3144
+sys-all_parameters-dep
 BABEL-3556
 BABEL-3268
 BABEL-sp_helpdb

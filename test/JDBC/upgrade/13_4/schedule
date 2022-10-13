@@ -137,6 +137,7 @@ babel_sqlvariant_cast_compare
 tdscollation
 babel_datatype_sqlvariant
 sys-all_columns
+sys-all_parameters
 sys-default_constraints
 sys-dm_exec_sessions
 sys-foreign_key_columns
