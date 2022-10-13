@@ -121,7 +121,7 @@ void pre_check_trigger_schema(List *object, bool missing_ok){
 		ereport(LOG, (errmsg("#################5#################")));
 		pg_trigger_physical_schema = get_namespace_name(get_rel_namespace(pg_trigger->tgrelid));
 		ereport(LOG, (errmsg("#################pg_trigger_physical_schema \"%s\"#################",pg_trigger_physical_schema)));
-		pg_trigger_logical_schema = get_logical_schema_name(pg_trigger_physical_schema, false);
+		pg_trigger_logical_schema = get_logical_schema_name(pg_trigger_physical_schema, true);
 		ereport(LOG, (errmsg("#################pg_trigger_logical_schema \"%s\"#################",pg_trigger_logical_schema)));
 		cur_physical_schema = get_physical_schema_name(get_cur_db_name(),trigger_schema);
 		ereport(LOG, (errmsg("#################cur_physical_schema \"%s\"#################",cur_physical_schema)));

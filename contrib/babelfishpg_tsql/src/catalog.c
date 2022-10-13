@@ -429,7 +429,6 @@ get_logical_schema_name(const char *physical_schema_name, bool missingOk)
 
 	if (get_namespace_oid(physical_schema_name, false) == InvalidOid)
 		return NULL;
-	ereport(LOG, (errmsg("#################Point 1#################")));
 	rel = table_open(namespace_ext_oid, AccessShareLock);
 	dsc = RelationGetDescr(rel);
 
@@ -440,27 +439,21 @@ get_logical_schema_name(const char *physical_schema_name, bool missingOk)
 
 	scan = systable_beginscan(rel, namespace_ext_idx_oid_oid, true,
 							  NULL, 1, &scanKey);
-	ereport(LOG, (errmsg("#################Point 2#################")));
 	tuple = systable_getnext(scan);
 	if (!HeapTupleIsValid(tuple))
 	{	
-		ereport(LOG, (errmsg("#################Point 3#################")));
 		systable_endscan(scan);
 		table_close(rel, AccessShareLock);
 		if (!missingOk)
-			ereport(LOG, (errmsg("#################Point 4#################")));
 			ereport(ERROR,
 				(errcode(ERRCODE_INTERNAL_ERROR),
 				 errmsg("Could find logical schema name for: \"%s\"", physical_schema_name)));
 		return NULL;
 	}
-	ereport(LOG, (errmsg("#################Point 5#################")));
 	datum = heap_getattr(tuple, Anum_namespace_ext_orig_name, dsc, &isnull);
 	logical_name = pstrdup(TextDatumGetCString(datum));
-	ereport(LOG, (errmsg("#################Point 6 logical_name %s #################",logical_name)));
 	systable_endscan(scan);
 	table_close(rel, AccessShareLock);
-	ereport(LOG, (errmsg("#################Point 7#################")));
 	return logical_name;
 }
 
