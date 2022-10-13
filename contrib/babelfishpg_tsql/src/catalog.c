@@ -1317,7 +1317,6 @@ static bool check_must_match_rules(Rule rules[], size_t num_rules, Oid catalog_o
 static void update_report(Rule *rule, Tuplestorestate *res_tupstore, TupleDesc res_tupdesc);
 static void init_catalog_data(void);
 static void get_catalog_info(Rule *rule);
-static char *get_db_owner_role_name(char *dbname);
 static void create_guest_role_for_db(char *dbname);
 
 /*****************************************
@@ -2184,20 +2183,11 @@ guest_role_exists_for_db(char *dbname)
 	return role_exists;
 }
 
-static char
-*get_db_owner_role_name(char *dbname)
-{
-	char *name = palloc0(MAX_BBF_NAMEDATALEND);
-	snprintf(name, MAX_BBF_NAMEDATALEND, "%s_db_owner", dbname);
-	truncate_identifier(name, strlen(name), false);
-	return name;
-}
-
 static void
 create_guest_role_for_db(char *dbname)
 {
 	const char		*guest = get_guest_role_name(dbname);
-	const char		*db_owner_role = get_db_owner_role_name(dbname);
+	const char		*db_owner_role = get_db_owner_name(dbname);
 	List			*logins = NIL;
 	List			*res;
 	StringInfoData	query;

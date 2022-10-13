@@ -96,9 +96,6 @@ guest
 ~~END~~
 
 
-use master;
-go
-
 -- should fail because grant_connect_t1 doesn't have guest access
 select * from grant_connect_db1.dbo.grant_connect_t1
 go
@@ -132,9 +129,6 @@ go
 
 
 -- tsql
-use master;
-go
-
 alter role sysadmin add member grant_connect_abc
 go
 
