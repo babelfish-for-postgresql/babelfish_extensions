@@ -44,9 +44,7 @@ TEST_F(PSQL_Datatypes_Datetime, Table_Creation) {
   const vector<int> SCALE_EXPECTED = {0, 0};
   const vector<string> NAME_EXPECTED = {"int4", "unknown"};
 
-  OdbcHandler odbcHandler(Drivers::GetDriver(ServerType::PSQL));
-
-  testCommonColumnAttributes(odbcHandler, TABLE_NAME, TABLE_COLUMNS, COL_NAMES[0], LENGTH_EXPECTED, PRECISION_EXPECTED, SCALE_EXPECTED, NAME_EXPECTED);
+  testCommonColumnAttributes(TABLE_NAME, TABLE_COLUMNS, COL_NAMES[0], LENGTH_EXPECTED, PRECISION_EXPECTED, SCALE_EXPECTED, NAME_EXPECTED);
 }
 
 // Doesn't work in SQL Server, but does in BBF & BBF PG connection?
@@ -55,111 +53,97 @@ TEST_F(PSQL_Datatypes_Datetime, DISABLED_Table_Create_Fail) {
     {{"invalid1", DATATYPE + "(4)"}} // Cannot specify a column width on data type datetime.
   };
 
-  OdbcHandler odbcHandler(Drivers::GetDriver(ServerType::PSQL));
-
   // Assert that table creation will always fail with invalid column definitions
-  testTableCreationFailure(odbcHandler, TABLE_NAME, invalid_columns);
+  testTableCreationFailure(TABLE_NAME, invalid_columns);
 }
 
 // inserted values differ that of expected?
 TEST_F(PSQL_Datatypes_Datetime, Insertion_Success) {
-
-  OdbcHandler odbcHandler(Drivers::GetDriver(ServerType::PSQL));
-
-  vector<vector<string>> inserted_values = {
-    {"1", "NULL"}, // NULL values
-    {"2", "1753-01-01 00:00:000" }, // smallest value
-    {"3", "2011-04-15 16:44:09.000"}, // random regular values
-    {"4", "9999-12-31 23:59:59.997"}, // max value
-    {"5", ""} // blank value
+  vector<string> inserted_values = {
+    "NULL", // NULL value
+    "1753-01-01 00:00:000", // smallest value
+    "2011-04-15 16:44:09.000", // random regular values
+    "9999-12-31 23:59:59.997", // max value
+    "" // blank value
   };
 
-  vector<vector<string>> expected = {
-    {"1", "NULL"}, // NULL values
-    {"2", "1753-01-01 00:00:00" }, // smallest value
-    {"3", "2011-04-15 16:44:09"}, // random regular value
-    {"4", "9999-12-31 23:59:59.997"}, // max value
-    {"5", "1900-01-01 00:00:00"} // blank value
+  vector<string> expected = {
+    "NULL", // NULL values
+    "1753-01-01 00:00:00", // smallest value
+    "2011-04-15 16:44:09", // random regular value
+    "9999-12-31 23:59:59.997", // max value
+    "1900-01-01 00:00:00" // blank value
   };
 
-  testInsertionSuccess(odbcHandler, TABLE_NAME, TABLE_COLUMNS, COL_NAMES[0], inserted_values, expected);
+  testInsertionSuccessChar(TABLE_NAME, TABLE_COLUMNS, "pk", inserted_values, expected);
+
 }
 
 TEST_F(PSQL_Datatypes_Datetime, Insertion_Failure) {
 
-  OdbcHandler odbcHandler(Drivers::GetDriver(ServerType::PSQL));
-
-  vector<vector<string>> inserted_values = {
-    {"1", "1752-01-01 00:00:000" }, // past lowest boundary
-    {"2", "9999-12-31 23:59:59.999"} // past highest boundary
+  vector<string> inserted_values = {
+    "1752-01-01 00:00:000", // past lowest boundary
+    "9999-12-31 23:59:59.999" // past highest boundary
   };
 
-  testInsertionFailure(odbcHandler, TABLE_NAME, TABLE_COLUMNS, COL_NAMES[0], inserted_values);
+  testInsertionFailure(TABLE_NAME, TABLE_COLUMNS, COL_NAMES[0], inserted_values, false);
 }
 
 TEST_F(PSQL_Datatypes_Datetime, Update_Success) {
-  const string PK_VAL = "1";
 
-  OdbcHandler odbcHandler(Drivers::GetDriver(ServerType::PSQL));
-
-  vector<vector<string>> inserted_values = {
-    {PK_VAL, "2011-04-15 16:44:09"} 
+  vector<string> inserted_values = {
+    "2011-04-15 16:44:09"
   };
 
-  vector<vector<string>> updated_values = {
-    {PK_VAL, "1900-01-31 12:59:59.999"}, // standard value
-    {PK_VAL, "9999-12-31 23:59:59.997"}, // max value
-    {PK_VAL, "1753-01-01 00:00:00"}, // min value
-    {PK_VAL, ""} // blank value
+  vector<string> updated_values = {
+    "1900-01-31 12:59:59.999", // standard value
+    "9999-12-31 23:59:59.997", // max value
+    "1753-01-01 00:00:00", // min value
+    "" // blank value
   };
 
-  vector<vector<string>> expected_updated_values = {
-    {PK_VAL, "1900-01-31 12:59:59.999"}, // standard value
-    {PK_VAL, "9999-12-31 23:59:59.997"}, // max value
-    {PK_VAL, "1753-01-01 00:00:00"}, // min value
-    {PK_VAL, "1900-01-01 00:00:00"} // blank value
+  vector<string> expected_updated_values = {
+    "1900-01-31 12:59:59.999", // standard value
+    "9999-12-31 23:59:59.997", // max value
+    "1753-01-01 00:00:00", // min value
+    "1900-01-01 00:00:00" // blank value
   };
 
-  testUpdateSuccess(odbcHandler, TABLE_NAME, TABLE_COLUMNS, COL_NAMES, COL_NAMES[0], PK_VAL, inserted_values, inserted_values, updated_values, expected_updated_values);
+  testUpdateSuccessChar(TABLE_NAME, TABLE_COLUMNS, COL_NAMES[0], COL_NAMES[1], inserted_values, inserted_values, updated_values, expected_updated_values);
 }
 
 TEST_F(PSQL_Datatypes_Datetime, Update_Fail) {
-  const string PK_VAL = "1";
 
-  OdbcHandler odbcHandler(Drivers::GetDriver(ServerType::PSQL));
-
-  vector<vector<string>> inserted_values = {
-    {PK_VAL, "2011-04-15 16:44:09"} 
+  vector<string> inserted_values = {
+    "2011-04-15 16:44:09"
   };
 
-  vector<vector<string>> updated_values = {
-    {PK_VAL, "1752-01-01 00:00:000"}
+  vector<string> updated_values = {
+    "1752-01-01 00:00:000"
   };
 
-  testUpdateFail(odbcHandler, TABLE_NAME, TABLE_COLUMNS, COL_NAMES, COL_NAMES[0], PK_VAL, inserted_values, inserted_values, updated_values);
+  testUpdateFailChar(TABLE_NAME, TABLE_COLUMNS, COL_NAMES[0], COL_NAMES[1], inserted_values, inserted_values, updated_values);
 }
 
 TEST_F(PSQL_Datatypes_Datetime, View_creation) {
 
-  OdbcHandler odbcHandler(Drivers::GetDriver(ServerType::PSQL));
-
-  vector<vector<string>> inserted_values = {
-    {"1", "NULL"}, // NULL values
-    {"2", "1753-01-01 00:00:000" }, // smallest value
-    {"3", "2011-04-15 16:44:09.000"}, // random regular values
-    {"4", "9999-12-31 23:59:59.997"}, // max value
-    {"5", ""} // blank value
+  vector<string> inserted_values = {
+    "NULL", // NULL values
+    "1753-01-01 00:00:000", // smallest value
+    "2011-04-15 16:44:09.000", // random regular values
+    "9999-12-31 23:59:59.997", // max value
+    "" // blank value
   };
 
-  vector<vector<string>> expected = {
-    {"1", "NULL"}, // NULL values
-    {"2", "1753-01-01 00:00:00" }, // smallest value
-    {"3", "2011-04-15 16:44:09"}, // random regular value
-    {"4", "9999-12-31 23:59:59.997"}, // max value
-    {"5", "1900-01-01 00:00:00"} // blank value
+  vector<string> expected = {
+    "NULL", // NULL values
+    "1753-01-01 00:00:00", // smallest value
+    "2011-04-15 16:44:09", // random regular value
+    "9999-12-31 23:59:59.997", // max value
+    "1900-01-01 00:00:00" // blank value
   };
 
-  testViewCreation(odbcHandler, TABLE_NAME, TABLE_COLUMNS, VIEW_NAME, COL_NAMES[0], inserted_values, expected);
+  testViewCreationChar(VIEW_NAME, TABLE_NAME, TABLE_COLUMNS, COL_NAMES[0], inserted_values, expected);
 }
 
 TEST_F(PSQL_Datatypes_Datetime, Table_Single_Primary_Keys) {
@@ -176,23 +160,21 @@ TEST_F(PSQL_Datatypes_Datetime, Table_Single_Primary_Keys) {
     COL_NAMES[1]
   };
 
-  OdbcHandler odbcHandler(Drivers::GetDriver(ServerType::PSQL));
-
-  vector<vector<string>> inserted_values = {
-    {"1", "1753-01-01 00:00:000" }, // smallest value
-    {"2", "2011-04-15 16:44:09.000"}, // random regular values
-    {"3", "9999-12-31 23:59:59.997"}, // max value
-    {"4", ""} // blank value
+  vector<string> inserted_values = {
+    "1753-01-01 00:00:000", // smallest value
+    "2011-04-15 16:44:09.000", // random regular values
+    "9999-12-31 23:59:59.997", // max value
+    "" // blank value
   };
 
-  vector<vector<string>> expected = {
-    {"1", "1753-01-01 00:00:00" }, // smallest value
-    {"2", "2011-04-15 16:44:09"}, // random regular value
-    {"3", "9999-12-31 23:59:59.997"}, // max value
-    {"4", "1900-01-01 00:00:00"} // blank value
+  vector<string> expected = {
+    "1753-01-01 00:00:00", // smallest value
+    "2011-04-15 16:44:09", // random regular value
+    "9999-12-31 23:59:59.997", // max value
+    "1900-01-01 00:00:00" // blank value
   };
 
-  testPrimaryKeys(odbcHandler, TABLE_NAME, TABLE_COLUMNS, COL_NAMES[0], SCHEMA_NAME, PKTABLE_NAME, PK_COLUMNS, inserted_values, expected);
+  testPrimaryKeysChar(TABLE_NAME, TABLE_COLUMNS, COL_NAMES[0], SCHEMA_NAME, PKTABLE_NAME, PK_COLUMNS, inserted_values, expected);
 }
 
 TEST_F(PSQL_Datatypes_Datetime, Table_Composite_Primary_Keys) {
@@ -208,54 +190,50 @@ TEST_F(PSQL_Datatypes_Datetime, Table_Composite_Primary_Keys) {
     COL_NAMES[1]
   };
 
-  OdbcHandler odbcHandler(Drivers::GetDriver(ServerType::PSQL));
-
-  vector<vector<string>> inserted_values = {
-    {"1", "1753-01-01 00:00:000" }, // smallest value
-    {"2", "2011-04-15 16:44:09.000"}, // random regular values
-    {"3", "9999-12-31 23:59:59.997"}, // max value
-    {"4", ""} // blank value
+  vector<string> inserted_values = {
+    "1753-01-01 00:00:000", // smallest value
+    "2011-04-15 16:44:09.000", // random regular values
+    "9999-12-31 23:59:59.997", // max value
+    "" // blank value
   };
 
-  vector<vector<string>> expected = {
-    {"1", "1753-01-01 00:00:00" }, // smallest value
-    {"2", "2011-04-15 16:44:09"}, // random regular value
-    {"3", "9999-12-31 23:59:59.997"}, // max value
-    {"4", "1900-01-01 00:00:00"} // blank value
+  vector<string> expected = {
+    "1753-01-01 00:00:00", // smallest value
+    "2011-04-15 16:44:09", // random regular value
+    "9999-12-31 23:59:59.997", // max value
+    "1900-01-01 00:00:00" // blank value
   };
 
-  testPrimaryKeys(odbcHandler, TABLE_NAME, TABLE_COLUMNS, COL_NAMES[0], SCHEMA_NAME, PKTABLE_NAME, PK_COLUMNS, inserted_values, expected);
+  testPrimaryKeysChar(TABLE_NAME, TABLE_COLUMNS, COL_NAMES[0], SCHEMA_NAME, PKTABLE_NAME, PK_COLUMNS, inserted_values, expected);
 }
 
 TEST_F(PSQL_Datatypes_Datetime, Table_Unique_Constraint) {
+
   const vector<pair<string, string>> TABLE_COLUMNS = {
     {COL_NAMES[0], "INT"},
     {COL_NAMES[1], DATATYPE}
   };
-  const string UNIQUE_CONSTRAINT_TABLE_NAME = TABLE_NAME.substr(TABLE_NAME.find('.') + 1, TABLE_NAME.length());
 
   const vector<string> UNIQUE_COLUMNS = {
     COL_NAMES[1]
   };
 
-  OdbcHandler odbcHandler(Drivers::GetDriver(ServerType::PSQL));
-
   // Insert valid values into the table and assert affected rows
-  vector<vector<string>> inserted_values = {
-    {"1", "1753-01-01 00:00:000" }, // smallest value
-    {"2", "2011-04-15 16:44:09.000"}, // random regular values
-    {"3", "9999-12-31 23:59:59.997"}, // max value
-    {"4", ""} // blank value
+  vector<string> inserted_values = {
+    "1753-01-01 00:00:000", // smallest value
+    "2011-04-15 16:44:09.000", // random regular values
+    "9999-12-31 23:59:59.997", // max value
+    "" // blank value
   };
 
-  vector<vector<string>> expected = {
-    {"1", "1753-01-01 00:00:00" }, // smallest value
-    {"2", "2011-04-15 16:44:09"}, // random regular value
-    {"3", "9999-12-31 23:59:59.997"}, // max value
-    {"4", "1900-01-01 00:00:00"} // blank value
+  vector<string> expected = {
+    "1753-01-01 00:00:00", // smallest value
+    "2011-04-15 16:44:09", // random regular value
+    "9999-12-31 23:59:59.997", // max value
+    "1900-01-01 00:00:00" // blank value
   };
 
-  testUniqueConstraint(odbcHandler, TABLE_NAME, TABLE_COLUMNS, COL_NAMES[0], UNIQUE_CONSTRAINT_TABLE_NAME, UNIQUE_COLUMNS, inserted_values, expected);
+  testUniqueConstraintChar(TABLE_NAME, TABLE_COLUMNS, COL_NAMES[0], UNIQUE_COLUMNS, inserted_values, expected);
 }
 
 TEST_F(PSQL_Datatypes_Datetime, Comparison_Operators) {
@@ -264,8 +242,6 @@ TEST_F(PSQL_Datatypes_Datetime, Comparison_Operators) {
     {COL_NAMES[0], DATATYPE + " PRIMARY KEY"},
     {COL_NAMES[1], DATATYPE}
   };
-
-  OdbcHandler odbcHandler(Drivers::GetDriver(ServerType::PSQL));
 
   vector<string> INSERTED_PK = {
     "1753-01-01 00:00:000",
@@ -276,12 +252,36 @@ TEST_F(PSQL_Datatypes_Datetime, Comparison_Operators) {
     "1754-01-01 00:00:000",
     "9999-12-31 23:59:59.997"
   };
-  testComparisonOperators(odbcHandler, TABLE_NAME, TABLE_COLUMNS, COL_NAMES[0], COL_NAMES[1], INSERTED_PK, INSERTED_DATA);
+
+  vector<string> OPERATIONS_QUERY = {
+    COL_NAMES[0] + "=" + COL_NAMES[1],
+    COL_NAMES[0] + "<>" + COL_NAMES[1],
+    COL_NAMES[0] + "<" + COL_NAMES[1],
+    COL_NAMES[0] + "<=" + COL_NAMES[1],
+    COL_NAMES[0] + ">" + COL_NAMES[1],
+    COL_NAMES[0] + ">=" + COL_NAMES[1]
+  };
+  const int NUM_OF_DATA = INSERTED_DATA.size();
+
+  // initialization of expected_results
+  vector<vector<char>> expected_results = {};
+  for (int i = 0; i < NUM_OF_DATA; i++) {
+    expected_results.push_back({});
+    const char *date_1 = INSERTED_PK[i].data();
+    const char *date_2 = INSERTED_DATA[i].data();
+    expected_results[i].push_back(strcmp(date_1, date_2) == 0 ? '1' : '0');
+    expected_results[i].push_back(strcmp(date_1, date_2) != 0 ? '1' : '0');
+    expected_results[i].push_back(strcmp(date_1, date_2) < 0 ? '1' : '0');
+    expected_results[i].push_back(strcmp(date_1, date_2) <= 0 ? '1' : '0');
+    expected_results[i].push_back(strcmp(date_1, date_2) > 0 ? '1' : '0');
+    expected_results[i].push_back(strcmp(date_1, date_2) >= 0 ? '1' : '0');
+  }
+
+  testComparisonOperators(TABLE_NAME, TABLE_COLUMNS, COL_NAMES[0], COL_NAMES[1], INSERTED_PK, INSERTED_DATA, OPERATIONS_QUERY, expected_results);
 }
 
 // inserted values differ that of expected?
 TEST_F(PSQL_Datatypes_Datetime, Comparison_Functions) {
-  OdbcHandler odbcHandler(Drivers::GetDriver(ServerType::PSQL));
 
   const vector<string> INSERTED_DATA = {
     "1753-01-01 00:00:000",
@@ -294,5 +294,27 @@ TEST_F(PSQL_Datatypes_Datetime, Comparison_Functions) {
     "2011-04-15 16:44:09",
     "9999-12-31 23:59:59.997"
   };
-  testComparisonFunctions(odbcHandler, TABLE_NAME, TABLE_COLUMNS, COL_NAMES[1], INSERTED_DATA, EXPECTED_RESULTS);
+  const int NUM_OF_DATA = INSERTED_DATA.size();
+
+  const vector<string> OPERATIONS_QUERY = {
+    "MIN(" + COL_NAMES[1] + ")",
+    "MAX(" + COL_NAMES[1] + ")"
+  };
+  const int NUM_OF_OPERATIONS = OPERATIONS_QUERY.size();
+
+  // initialization of expected_results
+  vector<string> expected_results = {};
+  int min_expected = 0, max_expected = 0;
+  for (int i = 1; i < NUM_OF_DATA; i++) {
+    const char *currMin = EXPECTED_RESULTS[min_expected].data();
+    const char *currMax = EXPECTED_RESULTS[max_expected].data();
+    const char *curr = EXPECTED_RESULTS[i].data();
+
+    min_expected = strcmp(curr, currMin) < 0 ? i : min_expected;
+    max_expected = strcmp(curr, currMax) > 0 ? i : min_expected;
+  }
+  expected_results.push_back(EXPECTED_RESULTS[min_expected]);
+  expected_results.push_back(EXPECTED_RESULTS[max_expected]);
+
+  testComparisonFunctionsChar(TABLE_NAME, TABLE_COLUMNS, INSERTED_DATA, OPERATIONS_QUERY, expected_results);
 }
