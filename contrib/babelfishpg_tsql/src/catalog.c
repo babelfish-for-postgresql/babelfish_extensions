@@ -429,6 +429,7 @@ get_logical_schema_name(const char *physical_schema_name, bool missingOk)
 
 	if (get_namespace_oid(physical_schema_name, false) == InvalidOid)
 		return NULL;
+
 	rel = table_open(namespace_ext_oid, AccessShareLock);
 	dsc = RelationGetDescr(rel);
 
@@ -439,9 +440,10 @@ get_logical_schema_name(const char *physical_schema_name, bool missingOk)
 
 	scan = systable_beginscan(rel, namespace_ext_idx_oid_oid, true,
 							  NULL, 1, &scanKey);
+
 	tuple = systable_getnext(scan);
 	if (!HeapTupleIsValid(tuple))
-	{	
+	{
 		systable_endscan(scan);
 		table_close(rel, AccessShareLock);
 		if (!missingOk)
@@ -452,6 +454,7 @@ get_logical_schema_name(const char *physical_schema_name, bool missingOk)
 	}
 	datum = heap_getattr(tuple, Anum_namespace_ext_orig_name, dsc, &isnull);
 	logical_name = pstrdup(TextDatumGetCString(datum));
+
 	systable_endscan(scan);
 	table_close(rel, AccessShareLock);
 	return logical_name;
