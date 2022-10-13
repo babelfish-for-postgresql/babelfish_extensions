@@ -78,7 +78,12 @@ void pre_check_trigger_schema(List *object, bool missing_ok){
 	char *trigger_schema = NULL;
 	Oid reloid = InvalidOid;
 	bool found_trigger = false;
-	const char *cur_dbo_physical_schema;
+	const	char *cur_dbo_physical_schema = NULL;
+	char	*pg_trigger_physical_schema = NULL;
+	const char	*pg_trigger_logical_schema = NULL;
+	const char	*cur_physical_schema = NULL;
+
+	pg_log_debug("#################1#################");
 
 	/* Extract name of dependent object. */
 	depname = strVal(llast(object));
@@ -93,6 +98,7 @@ void pre_check_trigger_schema(List *object, bool missing_ok){
 	*/
 	cur_dbo_physical_schema = get_dbo_schema_name(get_cur_db_name());
 	tgrel = table_open(TriggerRelationId, AccessShareLock);
+	pg_log_debug("#################2#################");
 	ScanKeyInit(&key,
 					Anum_pg_trigger_tgname,
 					BTEqualStrategyNumber, F_NAMEEQ,
@@ -100,26 +106,32 @@ void pre_check_trigger_schema(List *object, bool missing_ok){
 
 	tgscan = systable_beginscan(tgrel, TriggerRelidNameIndexId, false,
 									NULL, 1, &key);
-	
+	pg_log_debug("#################3#################");
 	while (HeapTupleIsValid(tuple = systable_getnext(tgscan)))
 	{
 		Form_pg_trigger pg_trigger = (Form_pg_trigger) GETSTRUCT(tuple);
+		pg_log_debug("#################4#################");
 		if(!OidIsValid(pg_trigger->tgrelid))
 		{
 			reloid = InvalidOid;
 			break;
 		}
-		char *pg_trigger_physical_schema = get_namespace_name(get_rel_namespace(pg_trigger->tgrelid));
-		char *pg_trigger_relation = get_rel_name(pg_trigger->tgrelid);
-		char *pg_trigger_logical_schema = get_logical_schema_name(pg_trigger_physical_schema, true);
-		char *cur_physical_schema = get_physical_schema_name(get_cur_db_name(),trigger_schema);
+		pg_log_debug("#################5#################");
+		pg_trigger_physical_schema = get_namespace_name(get_rel_namespace(pg_trigger->tgrelid));
+		pg_log_debug("#################6#################");
+		pg_trigger_logical_schema = get_logical_schema_name(pg_trigger_physical_schema, true);
+		pg_log_debug("#################7#################");
+		cur_physical_schema = get_physical_schema_name(get_cur_db_name(),trigger_schema);
+		pg_log_debug("#################8#################");
 		if(namestrcmp(&(pg_trigger->tgname), depname) == 0){
 			reloid = pg_trigger->tgrelid;
 			relation = RelationIdGetRelation(reloid);
+			pg_log_debug("#################9#################");
 			if (list_length(object) == 1 && 
 				strcmp(pg_trigger_physical_schema,cur_dbo_physical_schema) == 0)
 			{	
 				found_trigger = true;
+				pg_log_debug("#################10#################");
 				RelationClose(relation);
 				break;
 			}
@@ -128,6 +140,7 @@ void pre_check_trigger_schema(List *object, bool missing_ok){
 					strcasecmp(pg_trigger_logical_schema,trigger_schema) == 0)
 			{
 				found_trigger = true;
+				pg_log_debug("#################11#################");
 				RelationClose(relation);
 				break;
 			}
@@ -136,6 +149,7 @@ void pre_check_trigger_schema(List *object, bool missing_ok){
 	}
 	systable_endscan(tgscan);
 	table_close(tgrel, AccessShareLock);
+	pg_log_debug("#################12#################");
 	if (!missing_ok && !found_trigger)
 	{
 		if(list_length(object) == 1){
@@ -149,7 +163,8 @@ void pre_check_trigger_schema(List *object, bool missing_ok){
 				errmsg("trigger \"%s.%s\" does not exist",
 							trigger_schema ,depname)));	
 		}		
-	}	
+	}
+	pg_log_debug("#################13#################");	
 	if (!OidIsValid(reloid))
 	{
 		if (relation != NULL)
@@ -157,7 +172,7 @@ void pre_check_trigger_schema(List *object, bool missing_ok){
 
 		relation = NULL;		/* department of accident prevention */
 	}
-
+	pg_log_debug("#################14#################");	
 }
 
 static void lookup_and_drop_triggers(ObjectAccessType access, Oid classId, 

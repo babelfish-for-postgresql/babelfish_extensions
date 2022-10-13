@@ -1207,14 +1207,15 @@ get_trigger_object_address(List *object, Relation *relp, bool missing_ok)
 	ScanKeyData		key;
 	SysScanDesc tgscan;
 	HeapTuple	tuple;
-	char *trigger_physical_schema = NULL;
-	char *trigger_logical_schema = NULL;
-	const char *cur_dbo_physical_schema;
-	bool found_trigger = false;
-	char *pg_trigger_physical_schema;
-	char *pg_trigger_logical_schema;
-	char *cur_physical_schema;
+	char	*trigger_physical_schema = NULL;
+	char	*trigger_logical_schema = NULL;
+	const char	*cur_dbo_physical_schema= NULL;
+	bool 	found_trigger = false;
+	char	*pg_trigger_physical_schema = NULL;
+	const char	*pg_trigger_logical_schema = NULL;
+	const char	*cur_physical_schema = NULL;
 
+	pg_log_debug("#################20#################");
 	if (sql_dialect != SQL_DIALECT_TSQL)
 	{
 		address.classId = InvalidOid;
@@ -1224,18 +1225,15 @@ get_trigger_object_address(List *object, Relation *relp, bool missing_ok)
 	}
 	/* Extract name of dependent object. */
 	depname = strVal(llast(object));
+	pg_log_debug("#################21#################");
 	if (list_length(object) > 1){
+		pg_log_debug("#################22#################");
 		trigger_physical_schema = ((Value *)list_nth(object,0))->val.str;
 		trigger_logical_schema = get_logical_schema_name(trigger_physical_schema, true);
 	}
-	// if (list_length(object) > 2){
-	// 	trigger_db_name = ((Value *)list_nth(object,0))->val.str;
-	// }
-	
-	
-	
-	cur_dbo_physical_schema = get_dbo_schema_name(get_cur_db_name());
 
+	cur_dbo_physical_schema = get_dbo_schema_name(get_cur_db_name());
+	pg_log_debug("#################23#################");
 	if (prev_get_trigger_object_address_hook)
 		return (*prev_get_trigger_object_address_hook)(object,relp,missing_ok);
 
@@ -1246,7 +1244,7 @@ get_trigger_object_address(List *object, Relation *relp, bool missing_ok)
 	* the corresponding relation name.
 	*/
 	tgrel = table_open(TriggerRelationId, AccessShareLock);
-
+	pg_log_debug("#################24#################");
 	ScanKeyInit(&key,
 					Anum_pg_trigger_tgname,
 					BTEqualStrategyNumber, F_NAMEEQ,
@@ -1254,25 +1252,32 @@ get_trigger_object_address(List *object, Relation *relp, bool missing_ok)
 
 	tgscan = systable_beginscan(tgrel, TriggerRelidNameIndexId, false,
 									NULL, 1, &key);
-	
+	pg_log_debug("#################25#################");
 	while (HeapTupleIsValid(tuple = systable_getnext(tgscan)))
 	{
 		Form_pg_trigger pg_trigger = (Form_pg_trigger) GETSTRUCT(tuple);
+		pg_log_debug("#################26#################");
 		if(!OidIsValid(pg_trigger->tgrelid))
 		{
 			reloid = InvalidOid;
 			break;
 		}
+		pg_log_debug("#################27#################");
 		pg_trigger_physical_schema = get_namespace_name(get_rel_namespace(pg_trigger->tgrelid));
+		pg_log_debug("#################28#################");
 		pg_trigger_logical_schema = get_logical_schema_name(pg_trigger_physical_schema, true);
+		pg_log_debug("#################29#################");
 		cur_physical_schema = get_physical_schema_name(get_cur_db_name(),trigger_logical_schema);
+		pg_log_debug("#################30#################");
 		if(namestrcmp(&(pg_trigger->tgname), depname) == 0){
 			reloid = pg_trigger->tgrelid;
 			relation = RelationIdGetRelation(reloid);
+			pg_log_debug("#################31#################");
 			if (list_length(object) == 1 && 
 				strcmp(pg_trigger_physical_schema,cur_dbo_physical_schema) == 0)
 			{	
 				found_trigger = true;
+				pg_log_debug("#################32#################");
 				RelationClose(relation);
 				break;
 			}
@@ -1281,15 +1286,17 @@ get_trigger_object_address(List *object, Relation *relp, bool missing_ok)
 				strcasecmp(pg_trigger_logical_schema,trigger_logical_schema) == 0)
 			{
 				found_trigger = true;
+				pg_log_debug("#################33#################");
 				RelationClose(relation);
 				break;
 			}
 			RelationClose(relation);
 		}
 	}
-
+	pg_log_debug("#################34#################");
 	systable_endscan(tgscan);
 	table_close(tgrel, AccessShareLock);
+	pg_log_debug("#################35#################");
 	address.classId = TriggerRelationId;
 	address.objectId = relation ?
 		get_trigger_oid(reloid, depname, missing_ok) : InvalidOid;
@@ -1308,7 +1315,7 @@ get_trigger_object_address(List *object, Relation *relp, bool missing_ok)
 		}		
 	}	
 	address.objectSubId = 0;
-
+	pg_log_debug("#################36#################");
 	/* Avoid relcache leak when object not found. */
 	if (!OidIsValid(address.objectId))
 	{
@@ -1318,9 +1325,10 @@ get_trigger_object_address(List *object, Relation *relp, bool missing_ok)
 		relation = NULL;		/* department of accident prevention */
 		return address;
 	}
-
+	pg_log_debug("#################37#################");
 	/* Done. */
 	*relp = relation;
+	pg_log_debug("#################38#################");
 	return address;
 }
 
