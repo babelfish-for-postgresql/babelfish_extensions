@@ -292,7 +292,7 @@ emit_tds_log(ErrorData *edata)
 	 * It is possible that we fail while processing the error (for example,
 	 * because of encoding conversion failure). Therefore, we place a PG_TRY
 	 * block so that we can log the internal error and tds_disable_error_log_hook
-	 * can be set to false so that further errors can be sent client.
+	 * can be set to false so that further errors can be sent to client.
 	 */
 
 	PG_TRY();

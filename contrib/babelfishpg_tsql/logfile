@@ -1,0 +1,10 @@
+2022-10-14 13:15:42.227 UTC [14355] LOG:  starting PostgreSQL 14.5 on x86_64-pc-linux-gnu, compiled by gcc (GCC) 7.3.1 20180712 (Red Hat 7.3.1-15), 64-bit
+2022-10-14 13:15:42.227 UTC [14355] LOG:  listening on IPv4 address "127.0.0.1", port 5432
+2022-10-14 13:15:42.231 UTC [14355] LOG:  listening on Unix socket "/tmp/.s.PGSQL.5432"
+2022-10-14 13:15:42.237 UTC [14356] LOG:  database system was shut down at 2022-10-14 13:15:42 UTC
+2022-10-14 13:15:42.241 UTC [14355] LOG:  database system is ready to accept connections
+2022-10-14 13:15:42.346 UTC [14355] LOG:  received fast shutdown request
+2022-10-14 13:15:42.349 UTC [14355] LOG:  aborting any active transactions
+2022-10-14 13:15:42.349 UTC [14355] LOG:  background worker "logical replication launcher" (PID 14362) exited with exit code 1
+2022-10-14 13:15:42.349 UTC [14357] LOG:  shutting down
+2022-10-14 13:15:42.365 UTC [14355] LOG:  database system is shut down

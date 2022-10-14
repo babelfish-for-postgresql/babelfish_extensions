@@ -2199,23 +2199,23 @@ TdsSendError(int number, int state, int class,
 	/*
 	 * It is possible that we fail while trying to send a message to client
 	 * (for example, because of encoding conversion failure). Therefore, we
-	 * place a PG_TRY block here to handle that scenarios.
+	 * place a PG_TRY block here to handle those scenario.
 	 */
 	PG_TRY();
 	{
 		TdsSendInfoOrError(TDS_TOKEN_ERROR, number, state, class,
 						  message,
-						  "BABELFISH",	/* TODO: where to get this? */
-						  "",		/* TODO: where to get this? */
+						  "BABELFISH",
+						  "",
 						  lineNo);
 	}
 	PG_CATCH();
 	{
 		/* Send message to client that internal error occurred */
-		TdsSendInfoOrError(TDS_TOKEN_ERROR, number, state, class,
+		TdsSendInfoOrError(TDS_TOKEN_ERROR, ERRCODE_PLTSQL_ERROR_NOT_MAPPED, 1, 16,
 						  "internal error occurred",
-						  "BABELFISH",	/* TODO: where to get this? */
-						  "",		/* TODO: where to get this? */
+						  "BABELFISH",
+						  "",
 						  lineNo);
 		PG_RE_THROW();
 	}
