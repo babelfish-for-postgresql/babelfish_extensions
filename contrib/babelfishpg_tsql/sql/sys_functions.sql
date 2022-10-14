@@ -2649,7 +2649,8 @@ BEGIN
     /* 
      * This if else block is added to set the create_if_missing and append_modifier flags.
      * These flags will be used to know the mode and if the optional modifier append is present in the input path_json.
-     * It is necessary as postgres functions do not directly take append and lax/strict mode in the jsonb_path.    
+     * It is necessary as postgres functions do not directly take append and lax/strict mode in the jsonb_path.
+     * comparison_string is case-sensitive comparison.    
      */
     IF word_count = 1 THEN
         json_path = path_split_array[1];
