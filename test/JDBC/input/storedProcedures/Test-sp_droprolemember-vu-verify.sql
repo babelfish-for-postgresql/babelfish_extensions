@@ -11,5 +11,5 @@ SELECT IS_ROLEMEMBER('sp_droprolemember_r1', 'sp_droprolemember_r2')
 GO
 
 -- Throw an error when member doesn't exist
-Exec sp_droprolemember 'sp_addrolemember_r1', 'sp_addrolemember_r3';
+Exec sp_droprolemember 'sp_droprolemember_r1', 'sp_droprolemember_r3';
 GO
