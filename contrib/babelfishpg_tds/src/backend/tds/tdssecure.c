@@ -76,8 +76,7 @@ SslHandShakeRead(BIO *h, char *buf, int size)
 {
 	int res = 0;
 
-	if ((res = SslRead(h, buf, size)) <= 0)
-		return res;
+	res = SslRead(h, buf, size);
 
 	/* very first packet of prelogin SSL handshake */
 	if (size > 0 && res > 0 && buf[0] == TDS_PRELOGIN)
@@ -92,24 +91,18 @@ SslHandShakeRead(BIO *h, char *buf, int size)
 					/* Read the complete remaining of the header and throw away the bytes */
 					while(res < remainingRead)
 					{
-						int tmp_res = 0;
-						if ((tmp_res = SslRead(h, tempBuf, remainingRead - res)) <= 0)
-						{
-							return tmp_res;
-						}
-						res += tmp_res;
+						res += secure_raw_read(((Port *) BIO_get_data(h)), tempBuf,
+								remainingRead - res);
 					}
 
 					/*
 					 * Read the actual data and return the res of the actual data read
 					 * Don't worry if complete read, Openssl library will take care
 					 */
-					if ((res = SslRead(h, buf, size)) <= 0)
-						return res;
+					res = secure_raw_read(((Port *) BIO_get_data(h)), buf, size);
 		}
 		else
 		{
-			int tmp_res = 0;
 			int i = TDS_PACKET_HEADER_SIZE;
 			for (i = TDS_PACKET_HEADER_SIZE; i < res; i++)
 			{
@@ -123,9 +116,8 @@ SslHandShakeRead(BIO *h, char *buf, int size)
 			 * we are returning the correct res value, so caller will take
 			 * care of reading the remaining data
 			 */
-			if ((tmp_res = SslRead(h, &buf[res], TDS_PACKET_HEADER_SIZE)) <= 0)
-				return tmp_res;
-			res += tmp_res;
+
+			res += SslRead(h, &buf[res], TDS_PACKET_HEADER_SIZE);
 		}
 	}
 
@@ -191,25 +183,10 @@ SslHandShakeWrite(BIO *h, const char *buf, int size)
 	/* Write the complete data */
 	while (res < size)
 	{
-		int tmp_res = 0;
-		if ((tmp_res = SslWrite(h, &buf[res], size - res)) <= 0)
-			return tmp_res;
-		res += tmp_res;
+		res += SslWrite(h, &buf[res], size - res);
 	}
 
-	/*
-	 * Below assertion should not be failed in ideal case. If it gets failed then
-	 * it means that we wrote TDS HEADER and buf on the wire without any error above
-	 * but number of bytes written is still less than TDS_PACKET_HEADER_SIZE which is
-	 * unexpected in any case.
-	 */
-	Assert(res >= TDS_PACKET_HEADER_SIZE);
-
-	/*
-	 * We are returning (res - TDS_PACKET_HEADER_SIZE) here because we are asked to write "size" number of bytes
-	 * and callee does not know anything about TDS packet header.
-	 */
-	return (res - TDS_PACKET_HEADER_SIZE);
+	return res;
 }
 
 /*
@@ -229,7 +206,6 @@ TdsBioSecureSocket(BIO_METHOD *my_bio_methods)
 		my_bio_index = BIO_get_new_index();
 		if (my_bio_index == -1)
 			return NULL;
-		my_bio_index |= (BIO_TYPE_DESCRIPTOR | BIO_TYPE_SOURCE_SINK);
 		my_bio_methods = BIO_meth_new(my_bio_index, "PostgreSQL backend socket");
 		if (!my_bio_methods)
 			return NULL;
@@ -247,12 +223,14 @@ TdsBioSecureSocket(BIO_METHOD *my_bio_methods)
 			return NULL;
 		}
 #else
+#ifdef USE_SSL
 		my_bio_methods = malloc(sizeof(BIO_METHOD));
 		if (!my_bio_methods)
 			return NULL;
 		memcpy(my_bio_methods, biom, sizeof(BIO_METHOD));
 		my_bio_methods->bread = SslHandShakeRead;
 		my_bio_methods->bwrite = SslHandShakeWrite;
+#endif
 #endif
 	}
 	return my_bio_methods;
