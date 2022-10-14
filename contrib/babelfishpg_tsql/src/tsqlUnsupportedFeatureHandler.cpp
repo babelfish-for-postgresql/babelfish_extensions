@@ -1407,6 +1407,12 @@ antlrcpp::Any TsqlUnsupportedFeatureHandlerImpl::visitData_type(TSqlParser::Data
 				handle(INSTR_TSQL_TIMESTAMP_DATATYPE, "TIMESTAMP datatype", &st_escape_hatch_rowversion, getLineAndPos(ctx));
 			else if (pg_strcasecmp("rowversion", name.c_str()) == 0)
 				handle(INSTR_TSQL_ROWVERSION_DATATYPE, "ROWVERSION datatype", &st_escape_hatch_rowversion, getLineAndPos(ctx));
+			else if (pg_strcasecmp("hierarchyid", name.c_str()) == 0)
+				handle(INSTR_TSQL_HIERARCHYID_DATATYPE, "HIERARCHYID datatype", &st_escape_hatch_rowversion, getLineAndPos(ctx));
+			else if (pg_strcasecmp("georgraphy", name.c_str()) == 0)
+				handle(INSTR_TSQL_GEORGRAPHY_DATATYPE, "GEORGRAPHY datatype", &st_escape_hatch_rowversion, getLineAndPos(ctx));
+			else if (pg_strcasecmp("geometry", name.c_str()) == 0)
+				handle(INSTR_TSQL_GEOMETRY_DATATYPE, "GEOMETRY datatype", &st_escape_hatch_rowversion, getLineAndPos(ctx));
 		}
 	}
 	if (ctx->NATIONAL())
