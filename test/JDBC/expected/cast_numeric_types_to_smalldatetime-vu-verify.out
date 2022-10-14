@@ -21,7 +21,7 @@ SELECT CAST(3.1215926 as SMALLDATETIME)
 GO
 ~~START~~
 smalldatetime
-1900-01-04 02:55:00:0
+1900-01-04 02:55:00.0
 ~~END~~
 
 
@@ -29,7 +29,7 @@ SELECT CAST(216.5937465072345996348935531215926 as SMALLDATETIME)
 GO
 ~~START~~
 smalldatetime
-1900-08-05 14:15:00:0
+1900-08-05 14:15:00.0
 ~~END~~
 
 
@@ -59,7 +59,7 @@ SELECT CAST(CAST (0 as BIT) as SMALLDATETIME)
 GO
 ~~START~~
 smalldatetime
-1900-01-01 00:00:00:0
+1900-01-01 00:00:00.0
 ~~END~~
 
 
@@ -67,7 +67,7 @@ SELECT CAST(CAST (1 as BIT) as SMALLDATETIME)
 GO
 ~~START~~
 smalldatetime
-1900-01-02 00:00:00:0
+1900-01-02 00:00:00.0
 ~~END~~
 
 
@@ -75,7 +75,7 @@ SELECT CAST(CAST (-1 as BIT) as SMALLDATETIME)
 GO
 ~~START~~
 smalldatetime
-1900-01-02 00:00:00:0
+1900-01-02 00:00:00.0
 ~~END~~
 
 
@@ -83,7 +83,7 @@ SELECT CAST(CAST (5 as BIT) as SMALLDATETIME)
 GO
 ~~START~~
 smalldatetime
-1900-01-02 00:00:00:0
+1900-01-02 00:00:00.0
 ~~END~~
 
 
@@ -91,7 +91,7 @@ SELECT CAST(CAST (-5 as BIT) as SMALLDATETIME)
 GO
 ~~START~~
 smalldatetime
-1900-01-02 00:00:00:0
+1900-01-02 00:00:00.0
 ~~END~~
 
 
@@ -100,7 +100,7 @@ SELECT CAST(CAST (0 as NUMERIC) as SMALLDATETIME)
 GO
 ~~START~~
 smalldatetime
-1900-01-01 00:00:00:0
+1900-01-01 00:00:00.0
 ~~END~~
 
 
@@ -108,7 +108,7 @@ SELECT CAST(CAST (10 as NUMERIC) as SMALLDATETIME)
 GO
 ~~START~~
 smalldatetime
-1900-01-11 00:00:00:0
+1900-01-11 00:00:00.0
 ~~END~~
 
 
@@ -116,7 +116,7 @@ SELECT CAST(CAST (3.1215926 as NUMERIC) as SMALLDATETIME)
 GO
 ~~START~~
 smalldatetime
-1900-01-04 00:00:00:0
+1900-01-04 00:00:00.0
 ~~END~~
 
 
@@ -124,7 +124,7 @@ SELECT CAST(CAST (216.5937465072345996348935531215926 as NUMERIC(19,7)) as SMALL
 GO
 ~~START~~
 smalldatetime
-1900-08-05 14:14:00:0
+1900-08-05 14:14:00.0
 ~~END~~
 
 
@@ -137,6 +137,8 @@ GO
 
 SELECT CAST(CAST (-46.781289 as NUMERIC(32,17)) as SMALLDATETIME)
 GO
+~~START~~
+smalldatetime
 ~~ERROR (Code: 33557097)~~
 
 ~~ERROR (Message: data out of range for smalldatetime)~~
@@ -154,7 +156,7 @@ SELECT CAST(CAST (0 as DECIMAL) as SMALLDATETIME)
 GO
 ~~START~~
 smalldatetime
-1900-01-01 00:00:00:0
+1900-01-01 00:00:00.0
 ~~END~~
 
 
@@ -353,6 +355,8 @@ smalldatetime
 
 SELECT CAST(CAST (-46.781289 as INT) as SMALLDATETIME)
 GO
+~~START~~
+smalldatetime
 ~~ERROR (Code: 33557097)~~
 
 ~~ERROR (Message: data out of range for smalldatetime)~~
@@ -393,6 +397,8 @@ smalldatetime
 
 SELECT CAST(CAST (-46.781289 as BIGINT) as SMALLDATETIME)
 GO
+~~START~~
+smalldatetime
 ~~ERROR (Code: 33557097)~~
 
 ~~ERROR (Message: data out of range for smalldatetime)~~
@@ -447,6 +453,8 @@ smalldatetime
 
 SELECT CAST(CAST (-46.781289 as SMALLINT) as SMALLDATETIME)
 GO
+~~START~~
+smalldatetime
 ~~ERROR (Code: 33557097)~~
 
 ~~ERROR (Message: data out of range for smalldatetime)~~
@@ -493,6 +501,7 @@ smalldatetime
 
 SELECT CAST(CAST (260.5937465072345996348935531215926 as TINYINT) as SMALLDATETIME)
 GO
+~~START~~
 smalldatetime
 ~~ERROR (Code: 220)~~
 
@@ -543,6 +552,8 @@ smalldatetime
 
 SELECT CAST(CAST (-46.781289 as MONEY) as SMALLDATETIME)
 GO
+~~START~~
+smalldatetime
 ~~ERROR (Code: 33557097)~~
 
 ~~ERROR (Message: data out of range for smalldatetime)~~
@@ -668,7 +679,7 @@ GO
 smalldatetime
 1900-01-11 00:00:00.0
 1900-01-02 00:00:00.0
-1900-08-05 14:14:00.0
+1900-08-05 14:15:00.0
 1900-02-24 15:14:00.0
 1900-01-04 02:55:00.0
 1900-04-09 00:00:00.0
