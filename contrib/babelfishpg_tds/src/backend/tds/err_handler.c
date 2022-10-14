@@ -279,23 +279,24 @@ emit_tds_log(ErrorData *edata)
 	/* disable further entry to this function to avoid recursion */
 	tds_disable_error_log_hook = true;
 
+	if (edata->elevel < ERROR)
+	{
+		elog(DEBUG5, "suppressing informational client message < ERROR");
+
+		/* reset the flag */
+		tds_disable_error_log_hook = false;
+		return;
+	}
+
 	/*
 	 * It is possible that we fail while processing the error (for example,
 	 * because of encoding conversion failure). Therefore, we place a PG_TRY
 	 * block so that we can log the internal error and tds_disable_error_log_hook
 	 * can be set to false so that further errors can be sent client.
 	 */
+
 	PG_TRY();
 	{
-		if (edata->elevel < ERROR)
-		{
-			elog(DEBUG5, "suppressing informational client message < ERROR");
-
-			/* reset the flag */
-			tds_disable_error_log_hook = false;
-			return;
-		}
-
 		if (MyProc != NULL)
 		{
 			error_lineno = 1;
@@ -332,13 +333,13 @@ emit_tds_log(ErrorData *edata)
 	PG_CATCH();
 	{
 		/* Log the internal error message */
-		ErrorData *edata;
+		ErrorData *next_edata;
 		char *message;
-		edata = CopyErrorData();
-		message = psprintf("internal error occurred: %s", edata->message);
+		next_edata = CopyErrorData();
+		message = psprintf("internal error occurred: %s", next_edata->message);
 		elog(LOG, message);
 		pfree(message);
-		FreeErrorData(edata);
+		FreeErrorData(next_edata);
 	}
 	PG_END_TRY();
 
