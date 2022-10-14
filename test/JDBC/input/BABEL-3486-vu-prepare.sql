@@ -55,7 +55,7 @@ RETURN (SELECT TRY_CONVERT(int, -5));
 END
 GO
 
--- Convert int invalid operations TEST PASSED
+-- Convert int invalid operations
 CREATE VIEW BABEL_3486_vu_prepare_v18 as (SELECT TRY_CONVERT(int, 'a'));
 GO
 CREATE PROCEDURE BABEL_3486_vu_prepare_p18 as (SELECT TRY_CONVERT(int, 'a'));
@@ -78,7 +78,7 @@ RETURN (SELECT TRY_CONVERT(int, 2147483648));
 END
 GO
 
--- Convert smallint valid operations TEST PASSED
+-- Convert smallint valid operations
 CREATE VIEW BABEL_3486_vu_prepare_v20 as (SELECT TRY_CONVERT(smallint, 5));
 GO
 CREATE PROCEDURE BABEL_3486_vu_prepare_p20 as (SELECT TRY_CONVERT(smallint, 5));
@@ -101,7 +101,7 @@ RETURN (SELECT TRY_CONVERT(smallint, -5));
 END
 GO
 
--- Convert smallint invalid operations TEST PASSED
+-- Convert smallint invalid operations
 CREATE VIEW BABEL_3486_vu_prepare_v22 as (SELECT TRY_CONVERT(smallint, 'a'));
 GO
 CREATE PROCEDURE BABEL_3486_vu_prepare_p22 as (SELECT TRY_CONVERT(smallint, 'a'));
@@ -497,16 +497,14 @@ END
 GO
 
 -- Convert varchar valid operations
-
--- This test returns 5.00 in tsql and null in babelfish
-CREATE VIEW BABEL_3486_vu_prepare_v54 as (SELECT TRY_CONVERT(varchar(30), CAST(5 AS MONEY), 8));
+CREATE VIEW BABEL_3486_vu_prepare_v54 as (SELECT TRY_CONVERT(varchar(30), CAST(5 AS MONEY)));
 GO
-CREATE PROCEDURE BABEL_3486_vu_prepare_p54 as (SELECT TRY_CONVERT(varchar(30), CAST(5 AS MONEY), 8));
+CREATE PROCEDURE BABEL_3486_vu_prepare_p54 as (SELECT TRY_CONVERT(varchar(30), CAST(5 AS MONEY)));
 GO
 CREATE FUNCTION BABEL_3486_vu_prepare_f54()
 RETURNS varchar AS
 BEGIN
-RETURN (SELECT TRY_CONVERT(varchar(30), CAST(5 AS MONEY), 8));
+RETURN (SELECT TRY_CONVERT(varchar(30), CAST(5 AS MONEY), 1));
 END
 GO
 

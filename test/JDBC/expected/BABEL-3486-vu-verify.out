@@ -1301,7 +1301,7 @@ SELECT * FROM BABEL_3486_vu_prepare_v54
 GO
 ~~START~~
 varchar
-<NULL>
+ 5.00                         
 ~~END~~
 
 DROP VIEW BABEL_3486_vu_prepare_v54
@@ -1311,7 +1311,7 @@ EXEC BABEL_3486_vu_prepare_p54
 GO
 ~~START~~
 varchar
-<NULL>
+ 5.00                         
 ~~END~~
 
 DROP PROCEDURE BABEL_3486_vu_prepare_p54
@@ -1321,7 +1321,7 @@ SELECT BABEL_3486_vu_prepare_f54()
 GO
 ~~START~~
 varchar
-<NULL>
+5
 ~~END~~
 
 DROP FUNCTION BABEL_3486_vu_prepare_f54()
