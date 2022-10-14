@@ -14,22 +14,6 @@ GO
 SELECT IS_ROLEMEMBER('sp_addrolemember_r1', 'sp_addrolemember_r2')
 GO
 
-
 -- Throw an error when member doesn't exist
 Exec sp_addrolemember 'sp_addrolemember_r1', 'sp_addrolemember_r3';
-GO
-
--- Check whether sp_addrolemember_u1 is rolemember of sp_addrolemember_r1
-SELECT IS_ROLEMEMBER('sp_addrolemember_r1', 'sp_addrolemember_u1')
-GO
-
-EXEC sp_addrolemember 'sp_addrolemember_r1', 'sp_addrolemember_u1';
-GO
-
--- Check whether sp_addrolemember_u1 is rolemember of sp_addrolemember_r1
-SELECT IS_ROLEMEMBER('sp_addrolemember_r1', 'sp_addrolemember_u1')
-GO
-
--- Throw an error when member doesn't exist
-Exec sp_addrolemember 'sp_addrolemember_r1', 'sp_addrolemember_u2';
 GO

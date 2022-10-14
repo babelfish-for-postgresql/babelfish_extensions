@@ -35,32 +35,3 @@ GO
 
 ~~ERROR (Message: role "master_sp_addrolemember_r3" does not exist)~~
 
-
--- Check whether sp_addrolemember_u1 is rolemember of sp_addrolemember_r1
-SELECT IS_ROLEMEMBER('sp_addrolemember_r1', 'sp_addrolemember_u1')
-GO
-~~START~~
-int
-0
-~~END~~
-
-
-EXEC sp_addrolemember 'sp_addrolemember_r1', 'sp_addrolemember_u1';
-GO
-
--- Check whether sp_addrolemember_u1 is rolemember of sp_addrolemember_r1
-SELECT IS_ROLEMEMBER('sp_addrolemember_r1', 'sp_addrolemember_u1')
-GO
-~~START~~
-int
-1
-~~END~~
-
-
--- Throw an error when member doesn't exist
-Exec sp_addrolemember 'sp_addrolemember_r1', 'sp_addrolemember_u2';
-GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: role "master_sp_addrolemember_u2" does not exist)~~
-
