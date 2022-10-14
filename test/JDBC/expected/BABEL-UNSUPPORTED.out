@@ -2728,3 +2728,84 @@ GO
 
 DROP TABLE t_unsupported_sp;
 GO
+
+--HIERARCHYID, GEORGRAPHY, GEOMETRY
+-- Should throw detailed error messages, same as TIMESTAMP and ROWVERSION cases
+CREATE TABLE test_unsupported_hierarchyid(a HIERARCHYID);
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: 'HIERARCHYID datatype' is not currently supported in Babelfish. please use babelfishpg_tsql.escape_hatch_rowversion to ignore)~~
+
+DROP TABLE test_unsupported_hierarchyid;
+GO
+~~ERROR (Code: 3701)~~
+
+~~ERROR (Message: table "test_unsupported_hierarchyid" does not exist)~~
+
+CREATE TABLE test_unsupported_georgraphy(a GEORGRAPHY);
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: 'GEORGRAPHY datatype' is not currently supported in Babelfish. please use babelfishpg_tsql.escape_hatch_rowversion to ignore)~~
+
+DROP TABLE test_unsupported_georgraphy;
+GO
+~~ERROR (Code: 3701)~~
+
+~~ERROR (Message: table "test_unsupported_georgraphy" does not exist)~~
+
+CREATE TABLE test_unsupported_geometry(a GEOMETRY);
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: 'GEOMETRY datatype' is not currently supported in Babelfish. please use babelfishpg_tsql.escape_hatch_rowversion to ignore)~~
+
+DROP TABLE test_unsupported_geometry;
+GO
+~~ERROR (Code: 3701)~~
+
+~~ERROR (Message: table "test_unsupported_geometry" does not exist)~~
+
+
+-- With escape_hatch to ignore
+-- Should throw a simple error message saying the datatype does not exist
+EXEC sp_babelfish_configure 'babelfishpg_tsql.escape_hatch_rowversion', 'ignore';
+GO
+
+CREATE TABLE test_unsupported_hierarchyid(a HIERARCHYID);
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: type "hierarchyid" does not exist)~~
+
+DROP TABLE test_unsupported_hierarchyid;
+GO
+~~ERROR (Code: 3701)~~
+
+~~ERROR (Message: table "test_unsupported_hierarchyid" does not exist)~~
+
+CREATE TABLE test_unsupported_georgraphy(a GEORGRAPHY);
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: type "georgraphy" does not exist)~~
+
+DROP TABLE test_unsupported_georgraphy;
+GO
+~~ERROR (Code: 3701)~~
+
+~~ERROR (Message: table "test_unsupported_georgraphy" does not exist)~~
+
+CREATE TABLE test_unsupported_geometry(a GEOMETRY);
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: type "geometry" does not exist)~~
+
+DROP TABLE test_unsupported_geometry;
+GO
+~~ERROR (Code: 3701)~~
+
+~~ERROR (Message: table "test_unsupported_geometry" does not exist)~~
+
