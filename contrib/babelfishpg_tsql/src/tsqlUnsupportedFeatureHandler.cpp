@@ -58,6 +58,7 @@ declare_escape_hatch(escape_hatch_join_hints);
 declare_escape_hatch(escape_hatch_session_settings);
 declare_escape_hatch(escape_hatch_ignore_dup_key);
 declare_escape_hatch(escape_hatch_rowversion);
+declare_escape_hatch(escape_hatch_checkpoint);
 
 extern std::string getFullText(antlr4::ParserRuleContext *context);
 extern std::string stripQuoteFromId(TSqlParser::IdContext *context);
@@ -148,7 +149,7 @@ protected:
 		antlrcpp::Any visitDbcc_statement(TSqlParser::Dbcc_statementContext *ctx) override { handle(INSTR_UNSUPPORTED_TSQL_DBCC, "DBCC", getLineAndPos(ctx)); return visitChildren(ctx); }
 		antlrcpp::Any visitBackup_statement(TSqlParser::Backup_statementContext *ctx) override { handle(INSTR_UNSUPPORTED_TSQL_BACKUP, "BACKUP", getLineAndPos(ctx)); return visitChildren(ctx); }
 		antlrcpp::Any visitRestore_statement(TSqlParser::Restore_statementContext *ctx) override { handle(INSTR_UNSUPPORTED_TSQL_RESTORE, "RESTORE", getLineAndPos(ctx)); return visitChildren(ctx); }
-		antlrcpp::Any visitCheckpoint_statement(TSqlParser::Checkpoint_statementContext *ctx) override { handle(INSTR_UNSUPPORTED_TSQL_CHECKPOINT, "CHECKPOINT", getLineAndPos(ctx)); return visitChildren(ctx); }
+		antlrcpp::Any visitCheckpoint_statement(TSqlParser::Checkpoint_statementContext *ctx) override;
 		antlrcpp::Any visitReadtext_statement(TSqlParser::Readtext_statementContext *ctx) override { handle(INSTR_UNSUPPORTED_TSQL_READTEXT, "READTEXT", getLineAndPos(ctx)); return visitChildren(ctx); }
 		antlrcpp::Any visitWritetext_statement(TSqlParser::Writetext_statementContext *ctx) override { handle(INSTR_UNSUPPORTED_TSQL_WRITETEXT, "WRITETEXT", getLineAndPos(ctx)); return visitChildren(ctx); }
 		antlrcpp::Any visitUpdatetext_statement(TSqlParser::Updatetext_statementContext *ctx) override { handle(INSTR_UNSUPPORTED_TSQL_UPDATETEXT, "UPDATETEXT", getLineAndPos(ctx)); return visitChildren(ctx); }
@@ -1206,6 +1207,12 @@ antlrcpp::Any TsqlUnsupportedFeatureHandlerImpl::visitSecurity_statement(TSqlPar
 	return visitChildren(ctx);
 }
 
+antlrcpp::Any TsqlUnsupportedFeatureHandlerImpl::visitCheckpoint_statement(TSqlParser::Checkpoint_statementContext *ctx)
+{
+	handle(INSTR_UNSUPPORTED_TSQL_CHECKPOINT, "CHECKPOINT", &st_escape_hatch_checkpoint, getLineAndPos(ctx));
+	return visitChildren(ctx);
+}
+
 antlrcpp::Any TsqlUnsupportedFeatureHandlerImpl::visitTable_source_item(TSqlParser::Table_source_itemContext *ctx)
 {
 	if (ctx->PIVOT())
@@ -1392,6 +1399,12 @@ antlrcpp::Any TsqlUnsupportedFeatureHandlerImpl::visitData_type(TSqlParser::Data
 				handle(INSTR_TSQL_TIMESTAMP_DATATYPE, "TIMESTAMP datatype", &st_escape_hatch_rowversion, getLineAndPos(ctx));
 			else if (pg_strcasecmp("rowversion", name.c_str()) == 0)
 				handle(INSTR_TSQL_ROWVERSION_DATATYPE, "ROWVERSION datatype", &st_escape_hatch_rowversion, getLineAndPos(ctx));
+			else if (pg_strcasecmp("hierarchyid", name.c_str()) == 0)
+				handle(INSTR_TSQL_HIERARCHYID_DATATYPE, "HIERARCHYID datatype", &st_escape_hatch_rowversion, getLineAndPos(ctx));
+			else if (pg_strcasecmp("georgraphy", name.c_str()) == 0)
+				handle(INSTR_TSQL_GEORGRAPHY_DATATYPE, "GEORGRAPHY datatype", &st_escape_hatch_rowversion, getLineAndPos(ctx));
+			else if (pg_strcasecmp("geometry", name.c_str()) == 0)
+				handle(INSTR_TSQL_GEOMETRY_DATATYPE, "GEOMETRY datatype", &st_escape_hatch_rowversion, getLineAndPos(ctx));
 		}
 	}
 	if (ctx->NATIONAL())
