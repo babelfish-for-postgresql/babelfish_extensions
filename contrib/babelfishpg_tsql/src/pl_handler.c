@@ -2365,6 +2365,7 @@ static void bbf_ProcessUtility(PlannedStmt *pstmt,
 					else if (strcmp(headel->defname, "isrole") == 0)
 					{
 						int location = -1;
+						bool orig_username_exists = false;
 
 						isrole = true;
 						stmt->options = list_delete_cell(stmt->options,
@@ -2381,6 +2382,16 @@ static void bbf_ProcessUtility(PlannedStmt *pstmt,
 								location = defel->location;
 								user_options = lappend(user_options, defel);
 							}
+
+							/*
+							 * This condition is to handle create role when using sp_addrole procedure
+							 * because there we add original_user_name before hand
+							 */
+							if(strcmp(defel->defname, "original_user_name") == 0)
+							{
+								user_options = lappend(user_options, defel);
+								orig_username_exists = true;
+							}
 						}
 
 						foreach(option, user_options)
@@ -2389,7 +2400,7 @@ static void bbf_ProcessUtility(PlannedStmt *pstmt,
 															lfirst(option));
 						}
 
-						if (location >= 0)
+						if (location >= 0 && !orig_username_exists)
 						{
 							char        *orig_user_name;
 

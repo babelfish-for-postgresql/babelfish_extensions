@@ -1098,6 +1098,8 @@ gen_sp_addrole_subcmds(const char *user)
 	StringInfoData query;
 	List *res;
 	Node *stmt;
+	CreateRoleStmt	*rolestmt;
+	List *user_options = NIL;
 
 	initStringInfo(&query);
 	appendStringInfo(&query, "CREATE ROLE dummy; ");
@@ -1112,6 +1114,18 @@ gen_sp_addrole_subcmds(const char *user)
 	stmt = parsetree_nth_stmt(res, 0);
 	update_CreateRoleStmt(stmt, user, NULL, NULL);
 	rewrite_object_refs(stmt);
+	rolestmt = (CreateRoleStmt *) stmt;
+
+	/*
+	 * Add original_user_name before hand because placeholder
+	 * query "(CREATE ROLE )" is being passed
+	 * that doesn't contain the user name.
+	 */
+	user_options = lappend(user_options,
+				makeDefElem("original_user_name",
+				(Node *) makeString(user),
+						-1));
+	rolestmt->options = list_concat(rolestmt->options, user_options);
 
 	return res;
 }

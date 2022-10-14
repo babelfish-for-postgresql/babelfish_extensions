@@ -10,8 +10,27 @@ GO
 ~~ERROR (Message: role "master_sp_droprole_r1" does not exist)~~
 
 
+SELECT rolname, type, orig_username, database_name
+FROM sys.babelfish_authid_user_ext
+WHERE orig_username = 'sp_droprole_r2'
+GO
+~~START~~
+varchar#!#char#!#nvarchar#!#nvarchar
+master_sp_droprole_r2#!#R#!#sp_droprole_r2#!#master
+~~END~~
+
+
 EXEC sp_droprole 'sp_droprole_r2';
 GO
+
+SELECT rolname, type, orig_username, database_name
+FROM sys.babelfish_authid_user_ext
+WHERE orig_username = 'sp_addrole_r2'
+GO
+~~START~~
+varchar#!#char#!#nvarchar#!#nvarchar
+~~END~~
+
 
 -- Throws an error when the role doesn't exist
 EXEC sp_droprole 'sp_droprole_r2';
@@ -21,10 +40,21 @@ GO
 ~~ERROR (Message: role "master_sp_droprole_r2" does not exist)~~
 
 
--- Throws an error when the role doesn't exist
-EXEC sp_droprole 'sp_droprole_r3';
+-- Check if catalog is cleaned up
+SELECT rolname, type, orig_username, database_name
+FROM sys.babelfish_authid_user_ext
+WHERE orig_username LIKE 'sp_droprole_r%'
 GO
-~~ERROR (Code: 33557097)~~
+~~START~~
+varchar#!#char#!#nvarchar#!#nvarchar
+~~END~~
 
-~~ERROR (Message: role "master_sp_droprole_r3" does not exist)~~
+
+SELECT rolname, type
+FROM sys.babelfish_authid_login_ext
+WHERE rolname LIKE 'sp_droprole_r%'
+GO
+~~START~~
+varchar#!#char
+~~END~~
 
