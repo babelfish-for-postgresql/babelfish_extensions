@@ -1232,6 +1232,46 @@ $$
 STRICT
 LANGUAGE plpgsql IMMUTABLE;
 
+CREATE OR REPLACE FUNCTION sys.daydiff_between_dates(IN d1 INTEGER, IN m1 INTEGER, IN y1 INTEGER, IN d2 INTEGER, IN m2 INTEGER, IN y2 INTEGER) RETURNS INTEGER AS $$
+DECLARE
+	i INTEGER;
+	n1 INTEGER;
+	n2 INTEGER;
+BEGIN
+	n1 = y1 * 365 + d1;
+	FOR i in 0 .. m1-2 LOOP
+		IF (i = 0 OR i = 2 OR i = 4 OR i = 6 OR i = 7 OR i = 9 OR i = 11) THEN
+			n1 = n1 + 31;
+		ELSIF (i = 3 OR i = 5 OR i = 8 OR i = 10) THEN
+			n1 = n1 + 30;
+		ELSIF (i = 1) THEN
+			n1 = n1 + 28;
+		END IF;
+	END LOOP;
+	IF m1 <= 2 THEN
+		y1 = y1 - 1;
+	END IF;
+	n1 = n1 + (y1/4 - y1/100 + y1/400);
+
+	n2 = y2 * 365 + d2;
+	FOR i in 0 .. m2-2 LOOP
+		IF (i = 0 OR i = 2 OR i = 4 OR i = 6 OR i = 7 OR i = 9 OR i = 11) THEN
+			n2 = n2 + 31;
+		ELSIF (i = 3 OR i = 5 OR i = 8 OR i = 10) THEN
+			n2 = n2 + 30;
+		ELSIF (i = 1) THEN
+			n2 = n2 + 28;
+		END IF;
+	END LOOP;
+	IF m2 <= 2 THEN
+		y2 = y2 - 1;
+	END IF;
+	n2 = n2 + (y2/4 - y2/100 + y2/400);
+	return n1 - n2;
+END
+$$
+LANGUAGE plpgsql IMMUTABLE;
+
 CREATE OR REPLACE FUNCTION sys.datediff_internal_df(IN datepart PG_CATALOG.TEXT, IN startdate anyelement, IN enddate anyelement) RETURNS INTEGER AS $$
 DECLARE
 	result INTEGER;
@@ -1243,6 +1283,12 @@ DECLARE
 	second_diff INTEGER;
 	millisecond_diff INTEGER;
 	microsecond_diff INTEGER;
+	y1 INTEGER;
+	m1 INTEGER;
+	d1 INTEGER;
+	y2 INTEGER;
+	m2 INTEGER;
+	d2 INTEGER;
 BEGIN
 	CASE datepart
 	WHEN 'year' THEN
@@ -1260,14 +1306,19 @@ BEGIN
 		day_diff = sys.datepart('day', enddate OPERATOR(sys.-) startdate);
 		result = day_diff;
 	WHEN 'day' THEN
-		day_diff = sys.datepart('day', enddate OPERATOR(sys.-) startdate);
-		result = day_diff;
+		y1 = sys.datepart('year', enddate);
+		m1 = sys.datepart('month', enddate);
+		d1 = sys.datepart('day', enddate);
+		y2 = sys.datepart('year', startdate);
+		m2 = sys.datepart('month', startdate);
+		d2 = sys.datepart('day', startdate);
+		result = sys.daydiff_between_dates(d1, m1, y1, d2, m2, y2);
 	WHEN 'week' THEN
 		day_diff = sys.datepart('day', enddate OPERATOR(sys.-) startdate);
 		result = day_diff / 7;
 	WHEN 'hour' THEN
 		day_diff = sys.datepart('day', enddate OPERATOR(sys.-) startdate);
-		hour_diff = sys.datepart('hour', enddate OPERATOR(sys.-) startdate);
+		hour_diff = ABS(sys.datepart('hour', enddate) - sys.datepart('hour', startdate));
 		result = day_diff * 24 + hour_diff;
 	WHEN 'minute' THEN
 		day_diff = sys.datepart('day', enddate OPERATOR(sys.-) startdate);
@@ -1329,6 +1380,12 @@ DECLARE
 	second_diff INTEGER;
 	millisecond_diff INTEGER;
 	microsecond_diff INTEGER;
+	y1 INTEGER;
+	m1 INTEGER;
+	d1 INTEGER;
+	y2 INTEGER;
+	m2 INTEGER;
+	d2 INTEGER;
 BEGIN
 	CASE datepart
 	WHEN 'year' THEN
@@ -1346,14 +1403,19 @@ BEGIN
 		day_diff = date_part('day', enddate OPERATOR(sys.-) startdate)::INTEGER;
 		result = day_diff;
 	WHEN 'day' THEN
-		day_diff = date_part('day', enddate OPERATOR(sys.-) startdate)::INTEGER;
-		result = day_diff;
+		y1 = date_part('year', enddate)::INTEGER;
+		m1 = date_part('month', enddate)::INTEGER;
+		d1 = date_part('day', enddate)::INTEGER;
+		y2 = date_part('year', startdate)::INTEGER;
+		m2 = date_part('month', startdate)::INTEGER;
+		d2 = date_part('day', startdate)::INTEGER;
+		result = sys.daydiff_between_dates(d1, m1, y1, d2, m2, y2);
 	WHEN 'week' THEN
 		day_diff = date_part('day', enddate OPERATOR(sys.-) startdate)::INTEGER;
 		result = day_diff / 7;
 	WHEN 'hour' THEN
 		day_diff = date_part('day', enddate OPERATOR(sys.-) startdate)::INTEGER;
-		hour_diff = date_part('hour', enddate OPERATOR(sys.-) startdate)::INTEGER;
+		hour_diff = ABS(date_part('hour', enddate)::INTEGER - date_part('hour', startdate)::INTEGER);
 		result = day_diff * 24 + hour_diff;
 	WHEN 'minute' THEN
 		day_diff = date_part('day', enddate OPERATOR(sys.-) startdate)::INTEGER;
