@@ -2,6 +2,20 @@
 CREATE LOGIN r1 WITH password = '123';
 GO
 
+CREATE ROLE role1;
+go
+
+-- psql
+CREATE USER test_user WITH PASSWORD '12345678' inherit;
+go
+
+-- psql user=test_user password=12345678
+DROP ROLE master_role1;
+GO
+
+ALTER ROLE master_role1 RENAME TO master_role2;
+GO
+
 -- psql
 -- Dropping login from psql port should fail
 DROP ROLE r1;
@@ -51,6 +65,12 @@ GO
 DROP ROLE r4;
 GO
 
+DROP USER test_user;
+GO
+
 -- tsql
+DROP ROLE role1;
+GO
+
 DROP LOGIN r1;
 GO

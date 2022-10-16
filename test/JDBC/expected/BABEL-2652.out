@@ -2,6 +2,30 @@
 CREATE LOGIN r1 WITH password = '123';
 GO
 
+CREATE ROLE role1;
+go
+
+-- psql
+CREATE USER test_user WITH PASSWORD '12345678' inherit;
+go
+
+-- psql user=test_user password=12345678
+DROP ROLE master_role1;
+GO
+~~ERROR (Code: 0)~~
+
+~~ERROR (Message: ERROR: Babelfish-created users/roles cannot be dropped or altered outside of a Babelfish session
+    Server SQLState: 42501)~~
+
+
+ALTER ROLE master_role1 RENAME TO master_role2;
+GO
+~~ERROR (Code: 0)~~
+
+~~ERROR (Message: ERROR: Babelfish-created users/roles cannot be dropped or altered outside of a Babelfish session
+    Server SQLState: 42501)~~
+
+
 -- psql
 -- Dropping login from psql port should fail
 DROP ROLE r1;
@@ -66,6 +90,12 @@ GO
 DROP ROLE r4;
 GO
 
+DROP USER test_user;
+GO
+
 -- tsql
+DROP ROLE role1;
+GO
+
 DROP LOGIN r1;
 GO
