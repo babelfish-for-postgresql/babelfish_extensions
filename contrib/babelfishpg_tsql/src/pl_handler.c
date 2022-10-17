@@ -1742,11 +1742,8 @@ pltsql_sequence_datatype_map(ParseState *pstate,
 	Oid tsqlSeqTypOid;
 	TypeName *type_def;
 	List* type_names;
-<<<<<<< HEAD
 	AclResult aclresult;
 	Oid base_type;
-=======
->>>>>>> ab21be9f (BABEL-3504,3452:Support UDTS for sequences and ISC-sequences view)
 	if (prev_pltsql_sequence_datatype_hook)
 		prev_pltsql_sequence_datatype_hook(pstate,
 										   newtypid,
@@ -1760,8 +1757,7 @@ pltsql_sequence_datatype_map(ParseState *pstate,
 
 	type_def = defGetTypeName(as_type);
 	type_names = type_def->names;
-	switch (list_length(type_def->names))
-<<<<<<< HEAD
+	switch (list_length(type_names))
 	{
 		case 2:
 			strVal(linitial(type_names)) = get_physical_schema_name(get_cur_db_name(),strVal(linitial(type_names)));
@@ -1770,18 +1766,6 @@ pltsql_sequence_datatype_map(ParseState *pstate,
 			strVal(lsecond(type_names)) = get_physical_schema_name(strVal(linitial(type_names)),strVal(lsecond(type_names)));
 			break;
 	}
-=======
-    {
-        case 2:
-
-            strVal(linitial(type_names)) = get_physical_schema_name(get_cur_db_name(),strVal(linitial(type_names)));
-            break;
-        case 3:
-            strVal(lsecond(type_names)) = get_physical_schema_name(strVal(linitial(type_names)),strVal(lsecond(type_names)));
-            //((Value*)(type_def->names->elements[1].ptr_value))->val.str = get_physical_schema_name(get_cur_db_name(),strVal(lsecond(type_def->names)));
-            break;
-    }
->>>>>>> ab21be9f (BABEL-3504,3452:Support UDTS for sequences and ISC-sequences view)
 	*newtypid = typenameTypeId(pstate, type_def);
 	typ = typenameType(pstate, type_def, &typmod_p);
 	typname = typeTypeName(typ);
