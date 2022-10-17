@@ -2326,7 +2326,7 @@ SELECT * FROM t1 CROSS APPLY (SELECT * FROM Employee E WHERE E.DepartmentID = D.
 GO
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: 'APPLY' is not currently supported in Babelfish)~~
+~~ERROR (Message: relation "t1" does not exist)~~
 
 
 -- alter view (BABEL-2017)
@@ -2480,7 +2480,7 @@ SELECT t.c1, tmp.t2 FROM t4101 t CROSS APPLY (SELECT SUM(c2) AS t2)tmp
 GO
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: 'APPLY' is not currently supported in Babelfish)~~
+~~ERROR (Message: aggregate functions are not allowed in FROM clause of their own query level)~~
 
 DROP FUNCTION f4101;
 GO

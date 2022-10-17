@@ -986,6 +986,34 @@ public:
 		}
 
 	}
+
+	void exitTable_source_item(TSqlParser::Table_source_itemContext *ctx) override
+	{
+		/* rewrite CROSS/OUTER APPLY to CROSS/LEFT JOIN LATERAL */
+		if (ctx->APPLY())
+		{
+			if (ctx->CROSS())
+			{
+				rewritten_query_fragment.emplace(std::make_pair(ctx->APPLY()->getSymbol()->getStartIndex(),
+																std::make_pair(ctx->APPLY()->getText(), "JOIN LATERAL")));
+			}
+			else if (ctx->OUTER())
+			{
+				/* replace OUTER with LEFT */
+				rewritten_query_fragment.emplace(std::make_pair(ctx->OUTER()->getSymbol()->getStartIndex(),
+																std::make_pair(ctx->OUTER()->getText(), "LEFT")));
+				rewritten_query_fragment.emplace(std::make_pair(ctx->APPLY()->getSymbol()->getStartIndex(),
+																std::make_pair(ctx->APPLY()->getText(), "JOIN LATERAL")));
+				/* Need to add an always true join qualifier in order to satisfy PG grammar */
+				rewritten_query_fragment.emplace(std::make_pair(ctx->getStop()->getStopIndex()+1,
+																std::make_pair("", " ON TRUE ")));
+			}
+			else
+			{
+				return; //TODO implement error message
+			}
+		}
+	}
 };
 
 ////////////////////////////////////////////////////////////////////////////////
