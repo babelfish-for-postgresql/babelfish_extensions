@@ -1,5 +1,5 @@
 -- complain if script is sourced in psql, rather than via ALTER EXTENSION
-\echo Use "ALTER EXTENSION ""babelfishpg_tsql"" UPDATE TO '2.3.0'" to load this file. \quit
+-- \echo Use "ALTER EXTENSION ""babelfishpg_tsql"" UPDATE TO '2.3.0'" to load this file. \quit
 
 -- add 'sys' to search path for the convenience
 SELECT set_config('search_path', 'sys, '||current_setting('search_path'), false);
@@ -3766,64 +3766,6 @@ WHERE has_schema_privilege(sch.schema_id, 'USAGE')
 AND c.contype IN ('p', 'u');
 GRANT SELECT ON sys.key_constraints TO PUBLIC;
 
--- BABELFISH_FUNCTION_EXT
-CREATE TABLE sys.babelfish_function_ext (
-	nspname NAME NOT NULL,
-	funcname NAME NOT NULL,
-	orig_name sys.NVARCHAR(128), -- users' original input name
-	funcsignature TEXT NOT NULL COLLATE "C",
-	default_positions TEXT COLLATE "C",
-	create_date SYS.DATETIME NOT NULL,
-	modify_date SYS.DATETIME NOT NULL,
-	PRIMARY KEY(nspname, funcsignature)
-);
-GRANT SELECT ON sys.babelfish_function_ext TO PUBLIC;
-
-SELECT pg_catalog.pg_extension_config_dump('sys.babelfish_function_ext', '');
-
-
-create or replace view sys.procedures as
-select
-  cast(p.proname as sys.sysname) as name
-  , cast(p.oid as int) as object_id
-  , cast(null as int) as principal_id
-  , cast(sch.schema_id as int) as schema_id
-  , cast (0 as int) as parent_object_id
-  , cast(case p.prokind
-      when 'p' then 'P'
-      when 'a' then 'AF'
-      else
-        case format_type(p.prorettype, null) when 'trigger'
-          then 'TR'
-          else 'FN'
-        end
-    end as sys.bpchar(2)) as type
-  , cast(case p.prokind
-      when 'p' then 'SQL_STORED_PROCEDURE'
-      when 'a' then 'AGGREGATE_FUNCTION'
-      else
-        case format_type(p.prorettype, null) when 'trigger'
-          then 'SQL_TRIGGER'
-          else 'SQL_SCALAR_FUNCTION'
-        end
-    end as sys.nvarchar(60)) as type_desc
-  , cast(f.create_date as sys.datetime) as create_date
-  , cast(f.create_date as sys.datetime) as modify_date
-  , cast(0 as sys.bit) as is_ms_shipped
-  , cast(0 as sys.bit) as is_published
-  , cast(0 as sys.bit) as is_schema_published
-  , cast(0 as sys.bit) as is_auto_executed
-  , cast(0 as sys.bit) as is_execution_replicated
-  , cast(0 as sys.bit) as is_repl_serializable_only
-  , cast(0 as sys.bit) as skips_repl_constraints
-from pg_proc p
-inner join sys.schemas sch on sch.schema_id = p.pronamespace
-left join sys.babelfish_function_ext f on p.proname = f.funcname and sch.schema_id::regnamespace::name = f.nspname
-and sys.babelfish_get_pltsql_function_signature(p.oid) = f.funcsignature collate "C"
-where has_schema_privilege(sch.schema_id, 'USAGE')
-and format_type(p.prorettype, null) <> 'trigger'
-and has_function_privilege(p.oid, 'EXECUTE');
-GRANT SELECT ON sys.procedures TO PUBLIC;
 
 create or replace view sys.sysindexes as
 select
@@ -4335,39 +4277,6 @@ INNER JOIN pg_namespace ns ON t.schema_id = ns.oid
 INNER JOIN information_schema.views v ON t.name = cast(v.table_name as sys.sysname) AND ns.nspname = v.table_schema
 where t.type = 'V';
 GRANT SELECT ON sys.all_views TO PUBLIC;
-
-CREATE OR REPLACE VIEW sys.triggers
-AS
-SELECT
-  CAST(p.proname as sys.sysname) as name,
-  CAST(p.oid as int) as object_id,
-  CAST(1 as sys.tinyint) as parent_class,
-  CAST('OBJECT_OR_COLUMN' as sys.nvarchar(60)) AS parent_class_desc,
-  CAST(tr.tgrelid as int) AS parent_id,
-  CAST('TR' as sys.bpchar(2)) AS type,
-  CAST('SQL_TRIGGER' as sys.nvarchar(60)) AS type_desc,
-  CAST(f.create_date as sys.datetime) AS create_date,
-  CAST(f.create_date as sys.datetime) AS modify_date,
-  CAST(0 as sys.bit) AS is_ms_shipped,
-  CAST(
-      CASE WHEN tr.tgenabled = 'D'
-      THEN 1
-      ELSE 0
-      END
-      AS sys.bit
-  )	AS is_disabled,
-  CAST(0 as sys.bit) AS is_not_for_replication,
-  CAST(get_bit(CAST(CAST(tr.tgtype as int) as bit(7)),0) as sys.bit) AS is_instead_of_trigger
-FROM pg_proc p
-inner join sys.schemas sch on sch.schema_id = p.pronamespace
-left join pg_trigger tr on tr.tgfoid = p.oid
-left join sys.babelfish_function_ext f on p.proname = f.funcname and sch.schema_id::regnamespace::name = f.nspname
-and sys.babelfish_get_pltsql_function_signature(p.oid) = f.funcsignature collate "C"
-where has_schema_privilege(sch.schema_id, 'USAGE')
-and has_function_privilege(p.oid, 'EXECUTE')
-and p.prokind = 'f'
-and format_type(p.prorettype, null) = 'trigger';
-GRANT SELECT ON sys.triggers TO PUBLIC;
 
 create or replace view sys.objects as
 select
@@ -5078,7 +4987,7 @@ SELECT
   si.filter_definition,
   CAST(0 as INT) AS bucket_count,
   si.auto_created
-FROM sys.indexes s
+FROM sys.indexes si
 WHERE FALSE;
 GRANT SELECT ON sys.hash_indexes TO PUBLIC;
 
@@ -7155,7 +7064,9 @@ $$
 LANGUAGE 'pltsql';
 GRANT ALL ON PROCEDURE sys.sp_sproc_columns TO PUBLIC;
 
-ALTER TABLE sys.babelfish_view_def RENAME TO babelfish_view_def_deprecated_in_2_3_0, ADD COLUMN create_date SYS.DATETIME, add COLUMN modify_date SYS.DATETIME;
+ALTER TABLE sys.babelfish_view_def ADD COLUMN create_date SYS.DATETIME, add COLUMN modify_date SYS.DATETIME;
+
+ALTER TABLE sys.babelfish_view_def RENAME TO babelfish_view_def_deprecated_in_2_3_0;
 
 -- we need to drop primary key constraint also because babelfish_view_def_pkey is being used from C code to perform some lokkup
 ALTER TABLE sys.babelfish_view_def_deprecated_in_2_3_0 DROP CONSTRAINT babelfish_view_def_pkey;
@@ -7171,7 +7082,6 @@ CREATE TABLE sys.babelfish_view_def (
 	modify_date SYS.DATETIME,
 	PRIMARY KEY(dbid, schema_name, object_name)
 );
-
 GRANT SELECT ON sys.babelfish_view_def TO PUBLIC;
 
 INSERT INTO sys.babelfish_view_def SELECT * FROM sys.babelfish_view_def_deprecated_in_2_3_0;
