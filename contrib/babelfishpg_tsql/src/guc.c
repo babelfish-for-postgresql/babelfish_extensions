@@ -1108,6 +1108,7 @@ int escape_hatch_unique_constraint = EH_STRICT;
 int escape_hatch_ignore_dup_key = EH_STRICT;
 int escape_hatch_rowversion = EH_STRICT;
 int escape_hatch_showplan_all = EH_STRICT;
+int escape_hatch_checkpoint = EH_IGNORE;
 
 void
 define_escape_hatch_variables(void)
@@ -1431,6 +1432,17 @@ define_escape_hatch_variables(void)
 							  NULL,
 							  &escape_hatch_showplan_all,
 							  EH_STRICT,
+							  escape_hatch_options,
+							  PGC_USERSET,
+							  GUC_NOT_IN_SAMPLE | GUC_DISALLOW_IN_FILE | GUC_DISALLOW_IN_AUTO_FILE,
+							  NULL, NULL, NULL);
+
+	/* CHECKPOINT */
+	DefineCustomEnumVariable("babelfishpg_tsql.escape_hatch_checkpoint",
+							  gettext_noop("escape hatch for CHECKPOINT"),
+							  NULL,
+							  &escape_hatch_checkpoint,
+							  EH_IGNORE,
 							  escape_hatch_options,
 							  PGC_USERSET,
 							  GUC_NOT_IN_SAMPLE | GUC_DISALLOW_IN_FILE | GUC_DISALLOW_IN_AUTO_FILE,
