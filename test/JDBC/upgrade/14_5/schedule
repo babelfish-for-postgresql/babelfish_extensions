@@ -277,3 +277,11 @@ babel_datatype_sqlvariant
 babel_sqlvariant_cast_compare
 BABEL-3556-before-14_6
 BABEL-3010-before-14_6
+Test-sp_addrole-dep
+Test-sp_addrolemember-dep
+Test-sp_droprole-dep
+Test-sp_droprolemember-dep
+Test-sp_addrole
+Test-sp_addrolemember
+Test-sp_droprole
+Test-sp_droprolemember
