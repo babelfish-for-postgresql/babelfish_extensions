@@ -831,7 +831,7 @@ flatten_search_path(List *oid_list)
 }
 
 const char *
-get_pltsql_function_signature(const char *funcname,
+get_pltsql_function_signature_internal(const char *funcname,
 							  int nargs, const Oid *argtypes)
 {
 	StringInfoData argbuf;
@@ -866,4 +866,26 @@ get_pltsql_function_signature(const char *funcname,
 	PG_END_TRY();
 
 	return argbuf.data;			/* return palloc'd string buffer */
+}
+
+PG_FUNCTION_INFO_V1(get_pltsql_function_signature);
+
+Datum
+get_pltsql_function_signature(PG_FUNCTION_ARGS)
+{
+	Oid			funcoid = PG_GETARG_OID(0);
+	HeapTuple	proctup;
+	Form_pg_proc form_proctup;
+	char		*func_signature;
+
+	proctup = SearchSysCache1(PROCOID, ObjectIdGetDatum(funcoid));
+	if (!HeapTupleIsValid(proctup))
+		elog(ERROR, "cache lookup failed for function %u", funcoid);
+	form_proctup = (Form_pg_proc) GETSTRUCT(proctup);
+
+	func_signature = get_pltsql_function_signature_internal(NameStr(form_proctup->proname),
+															form_proctup->pronargs,
+															form_proctup->proargtypes.values);
+
+	PG_RETURN_TEXT_P(cstring_to_text(func_signature));
 }

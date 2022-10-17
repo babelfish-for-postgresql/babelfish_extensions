@@ -1,0 +1,52 @@
+-- tsql
+USE master
+GO
+CREATE LOGIN babel_3550_login1 WITH PASSWORD='12345678';
+GO
+
+ALTER SERVER ROLE sysadmin ADD MEMBER babel_3550_login1;
+GO
+
+-- tsql  user=babel_3550_login1  password=12345678
+SELECT SUSER_NAME();
+GO
+~~START~~
+nvarchar
+babel_3550_login1
+~~END~~
+
+
+DECLARE @a INT
+SELECT @a = COUNT(*) FROM sys.dm_exec_connections;
+SELECT (CASE WHEN @a >= 0 THEN 'true' ELSE 'false' END) AS result
+GO
+~~START~~
+text
+true
+~~END~~
+
+
+-- psql
+-- Need to terminate active session before cleaning up the login
+SELECT pg_terminate_backend(pid) FROM pg_stat_get_activity(NULL) 
+WHERE sys.suser_name(usesysid) = 'babel_3550_login1' AND backend_type = 'client backend' AND usesysid IS NOT NULL;
+GO
+~~START~~
+bool
+t
+~~END~~
+
+-- Wait to sync with another session
+SELECT pg_sleep(1);
+GO
+~~START~~
+void
+
+~~END~~
+
+
+-- tsql
+ALTER SERVER ROLE sysadmin DROP MEMBER babel_3550_login1;
+GO
+DROP LOGIN babel_3550_login1;
+GO

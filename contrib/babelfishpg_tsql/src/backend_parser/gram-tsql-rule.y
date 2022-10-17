@@ -3225,6 +3225,7 @@ datepart_arg:
 			| TSQL_M								{ $$ = "month"; }
 			| TSQL_DAYOFYEAR						{ $$ = "doy"; }
 			| TSQL_DY								{ $$ = "doy"; }
+			| TSQL_Y								{ $$ = "doy"; }
 			| DAY_P									{ $$ = "day"; }
 			| TSQL_DD								{ $$ = "day"; }
 			| TSQL_D								{ $$ = "day"; }
@@ -3236,6 +3237,7 @@ datepart_arg:
 			| TSQL_DW								{ $$ = "dow"; }
 			| HOUR_P								{ $$ = "hour"; }
 			| TSQL_HH								{ $$ = "hour"; }
+			| TSQL_MI								{ $$ = "minute"; }
 			| MINUTE_P								{ $$ = "minute"; }
 			| TSQL_N								{ $$ = "minute"; }
 			| SECOND_P								{ $$ = "second"; }
@@ -3270,6 +3272,7 @@ datediff_arg:
 			| TSQL_M								{ $$ = "month"; }
 			| TSQL_DAYOFYEAR						{ $$ = "doy"; }
 			| TSQL_DY								{ $$ = "doy"; }
+			| TSQL_Y								{ $$ = "doy"; }
 			| DAY_P									{ $$ = "day"; }
 			| TSQL_DD								{ $$ = "day"; }
 			| TSQL_D								{ $$ = "day"; }
@@ -3279,6 +3282,7 @@ datediff_arg:
 			| TSQL_WW								{ $$ = "week"; }
 			| HOUR_P								{ $$ = "hour"; }
 			| TSQL_HH								{ $$ = "hour"; }
+			| TSQL_MI								{ $$ = "minute"; }
 			| MINUTE_P								{ $$ = "minute"; }
 			| TSQL_N								{ $$ = "minute"; }
 			| SECOND_P								{ $$ = "second"; }
@@ -3308,6 +3312,7 @@ dateadd_arg:
 			| TSQL_M								{ $$ = "month"; }
 			| TSQL_DAYOFYEAR						{ $$ = "dayofyear"; }
 			| TSQL_DY								{ $$ = "dayofyear"; }
+			| TSQL_Y								{ $$ = "dayofyear"; }
 			| DAY_P									{ $$ = "day"; }
 			| TSQL_DD								{ $$ = "day"; }
 			| TSQL_D								{ $$ = "day"; }
@@ -3319,6 +3324,7 @@ dateadd_arg:
 			| TSQL_DW								{ $$ = "weekday"; }
 			| HOUR_P								{ $$ = "hour"; }
 			| TSQL_HH								{ $$ = "hour"; }
+			| TSQL_MI								{ $$ = "minute"; }
 			| MINUTE_P								{ $$ = "minute"; }
 			| TSQL_N								{ $$ = "minute"; }
 			| SECOND_P								{ $$ = "second"; }
@@ -4074,6 +4080,7 @@ unreserved_keyword:
 			| TSQL_M
 			| TSQL_MCS
 			| TSQL_MEMBER
+			| TSQL_MI
 			| TSQL_MICROSECOND
 			| TSQL_MILLISECOND
 			| TSQL_MM
@@ -4125,6 +4132,7 @@ unreserved_keyword:
 			| TSQL_WK
 			| TSQL_WW
 			| TSQL_XLOCK
+			| TSQL_Y
 			| TSQL_YY
 			| TSQL_YYYY
 		;

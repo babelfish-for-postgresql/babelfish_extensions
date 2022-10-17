@@ -27,8 +27,6 @@ select principal_id
       , parent_object_id
       , type
       , type_desc
-      , create_date
-      , modify_date
       , is_ms_shipped
       , is_published
       , is_schema_published
@@ -36,8 +34,8 @@ from sys.objects
 where name like 'TT_sys_table_types_vu_prepare_tt%';
 GO
 ~~START~~
-int#!#int#!#char#!#nvarchar#!#datetime#!#datetime#!#bit#!#bit#!#bit
-<NULL>#!#0#!#TT#!#TABLE_TYPE#!#<NULL>#!#<NULL>#!#1#!#0#!#0
+int#!#int#!#char#!#nvarchar#!#bit#!#bit#!#bit
+<NULL>#!#0#!#TT#!#TABLE_TYPE#!#1#!#0#!#0
 ~~END~~
 
 
