@@ -214,7 +214,7 @@ INSERT INTO #overflow_test VALUES(1.123);
 SELECT sum(amount) from #overflow_test;
 SELECT avg(amount) from #overflow_test;
 DROP TABLE #overflow_test;
- 
+
 CREATE TABLE #overflow_test (amount decimal(5, 2));
 INSERT INTO #overflow_test VALUES(999.12);
 INSERT INTO #overflow_test VALUES(1.12);
@@ -252,3 +252,9 @@ INSERT INTO overflow_test VALUES (55555555555555555555555555555555555, 555555555
 SELECT num1 + num2 from overflow_test;
 SELECT num1 - num2 from overflow_test;
 DROP TABLE overflow_test;
+
+#BABEL-3345
+create table text_tab (int1 decimal(24,6),int2 decimal(24,6),rate decimal(24,6), type varchar(1000));
+insert into text_tab values (1879323.2222, 2383823.343, 4.5484, NULL);
+select COALESCE( int1, int2 / COALESCE( NULLIF( rate, 0 ), 1 )) * CASE WHEN type IS NULL THEN 1 ELSE -1 END AS FTD_AMOUNT_FC from text_tab;
+drop table text_tab;

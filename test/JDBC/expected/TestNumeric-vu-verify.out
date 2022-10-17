@@ -431,3 +431,11 @@ numeric#!#numeric#!#numeric#!#numeric#!#numeric#!#numeric
 109999.89#!#10999.989#!#10990.35802458#!#9999.990000#!#999.999000#!#999.12345678
 ~~END~~
 
+
+#BABEL-3345
+select COALESCE( int1, int2 / COALESCE( NULLIF( rate, 0 ), 1 )) * CASE WHEN type IS NULL THEN 1 ELSE -1 END AS FTD_AMOUNT_FC from text_tab;
+~~START~~
+numeric
+1879323.222200
+~~END~~
+

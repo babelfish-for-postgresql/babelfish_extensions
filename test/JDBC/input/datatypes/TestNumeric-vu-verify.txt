@@ -81,3 +81,6 @@ SELECT avg(amount) from testnumeric_overflow_test4;
 select sum(amount1), sum(amount2), sum(amount3), avg(amount1), avg(amount2), avg(amount3) from testnumeric_overflow_test5;
 With Top10 as (select top (10) * from testnumeric_overflow_test5) select sum(amount1), sum(amount2), sum(amount3), avg(amount1), avg(amount2), avg(amount3) from Top10;
 With Top11 as (select top (11) * from testnumeric_overflow_test5) select sum(amount1), sum(amount2), sum(amount3), avg(amount1), avg(amount2), avg(amount3) from Top11;
+
+#BABEL-3345
+select COALESCE( int1, int2 / COALESCE( NULLIF( rate, 0 ), 1 )) * CASE WHEN type IS NULL THEN 1 ELSE -1 END AS FTD_AMOUNT_FC from text_tab;
