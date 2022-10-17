@@ -1,7 +1,7 @@
 --Script #1 - Creating some temporary objects to work on...
 CREATE TABLE [Department]( 
-[DepartmentID] [int] NOT NULL PRIMARY KEY, 
-[Name] VARCHAR(250) NOT NULL, 
+    [DepartmentID] [int] NOT NULL PRIMARY KEY, 
+    [Name] VARCHAR(250) NOT NULL, 
 ) ON [PRIMARY] 
 GO
 
@@ -18,10 +18,10 @@ VALUES (5, N'Finance')
 GO
 
 CREATE TABLE [Employee]( 
-[EmployeeID] [int] NOT NULL PRIMARY KEY, 
-[FirstName] VARCHAR(250) NOT NULL, 
-[LastName] VARCHAR(250) NOT NULL, 
-[DepartmentID] [int] NOT NULL REFERENCES [Department](DepartmentID), 
+    [EmployeeID] [int] NOT NULL PRIMARY KEY, 
+    [FirstName] VARCHAR(250) NOT NULL, 
+    [LastName] VARCHAR(250) NOT NULL, 
+    [DepartmentID] [int] NOT NULL REFERENCES [Department](DepartmentID), 
 ) ON [PRIMARY] 
 GO
 
@@ -39,8 +39,8 @@ GO
 SELECT * FROM Department D 
 CROSS APPLY 
 ( 
-SELECT * FROM Employee E 
-WHERE E.DepartmentID = D.DepartmentID 
+    SELECT * FROM Employee E 
+    WHERE E.DepartmentID = D.DepartmentID 
 ) A 
 GO
 
@@ -52,8 +52,8 @@ GO
 SELECT * FROM Department D 
 OUTER APPLY 
 ( 
-SELECT * FROM Employee E 
-WHERE E.DepartmentID = D.DepartmentID 
+    SELECT * FROM Employee E 
+    WHERE E.DepartmentID = D.DepartmentID 
 ) A 
 GO
 
@@ -67,8 +67,8 @@ RETURNS TABLE
 AS 
 RETURN 
 ( 
-SELECT * FROM Employee E 
-WHERE E.DepartmentID = @DeptID 
+    SELECT * FROM Employee E 
+    WHERE E.DepartmentID = @DeptID 
 ) 
 GO
 
