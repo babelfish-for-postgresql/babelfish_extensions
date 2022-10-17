@@ -1966,6 +1966,7 @@ EXEC sp_babelfish_configure;
 GO
 ~~START~~
 text#!#text#!#text
+babelfishpg_tsql.escape_hatch_checkpoint#!#ignore#!#escape hatch for CHECKPOINT
 babelfishpg_tsql.escape_hatch_constraint_name_for_default#!#ignore#!#escape hatch for DEFAULT option in alter table add constraint
 babelfishpg_tsql.escape_hatch_database_misc_options#!#ignore#!#escape hatch for misc options in CREATE/ALTER DATABASE
 babelfishpg_tsql.escape_hatch_for_replication#!#strict#!#escape hatch for (NOT) FOR REPLICATION option
@@ -2021,6 +2022,7 @@ EXEC sp_babelfish_configure '%';
 GO
 ~~START~~
 text#!#text#!#text
+babelfishpg_tsql.escape_hatch_checkpoint#!#ignore#!#escape hatch for CHECKPOINT
 babelfishpg_tsql.escape_hatch_constraint_name_for_default#!#ignore#!#escape hatch for DEFAULT option in alter table add constraint
 babelfishpg_tsql.escape_hatch_database_misc_options#!#ignore#!#escape hatch for misc options in CREATE/ALTER DATABASE
 babelfishpg_tsql.escape_hatch_for_replication#!#strict#!#escape hatch for (NOT) FOR REPLICATION option
@@ -2057,6 +2059,7 @@ EXEC sp_babelfish_configure 'babelfishpg_tsql.%';
 GO
 ~~START~~
 text#!#text#!#text
+babelfishpg_tsql.escape_hatch_checkpoint#!#ignore#!#escape hatch for CHECKPOINT
 babelfishpg_tsql.escape_hatch_constraint_name_for_default#!#ignore#!#escape hatch for DEFAULT option in alter table add constraint
 babelfishpg_tsql.escape_hatch_database_misc_options#!#ignore#!#escape hatch for misc options in CREATE/ALTER DATABASE
 babelfishpg_tsql.escape_hatch_for_replication#!#strict#!#escape hatch for (NOT) FOR REPLICATION option

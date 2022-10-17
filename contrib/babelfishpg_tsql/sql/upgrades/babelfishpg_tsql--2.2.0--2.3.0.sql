@@ -4,9 +4,33 @@
 -- add 'sys' to search path for the convenience
 SELECT set_config('search_path', 'sys, '||current_setting('search_path'), false);
 
--- Drops a view if it does not have any dependent objects.
+-- Drops an object if it does not have any dependent objects.
 -- Is a temporary procedure for use by the upgrade script. Will be dropped at the end of the upgrade.
 -- Please have this be one of the first statements executed in this upgrade script. 
+CREATE OR REPLACE PROCEDURE babelfish_drop_deprecated_object(object_type varchar, schema_name varchar, object_name varchar) AS
+$$
+DECLARE
+    error_msg text;
+    query1 text;
+    query2 text;
+BEGIN
+
+    query1 := pg_catalog.format('alter extension babelfishpg_tsql drop %s %s.%s', object_type, schema_name, object_name);
+    query2 := pg_catalog.format('drop %s %s.%s', object_type, schema_name, object_name);
+
+    execute query1;
+    execute query2;
+EXCEPTION
+    when object_not_in_prerequisite_state then --if 'alter extension' statement fails
+        GET STACKED DIAGNOSTICS error_msg = MESSAGE_TEXT;
+        raise warning '%', error_msg;
+    when dependent_objects_still_exist then --if 'drop view' statement fails
+        GET STACKED DIAGNOSTICS error_msg = MESSAGE_TEXT;
+        raise warning '%', error_msg;
+end
+$$
+LANGUAGE plpgsql;
+
 CREATE OR REPLACE PROCEDURE babelfish_drop_deprecated_view(schema_name varchar, view_name varchar) AS
 $$
 DECLARE
@@ -28,6 +52,117 @@ EXCEPTION
 end
 $$
 LANGUAGE plpgsql;
+
+
+CREATE OR REPLACE FUNCTION sys.DATETIMEOFFSETFROMPARTS(IN p_year INTEGER,
+                                                               IN p_month INTEGER,
+                                                               IN p_day INTEGER,
+                                                               IN p_hour INTEGER,
+                                                               IN p_minute INTEGER,
+                                                               IN p_seconds INTEGER,
+                                                               IN p_fractions INTEGER,
+                                                               IN p_hour_offset INTEGER,
+                                                               IN p_minute_offset INTEGER,
+                                                               IN p_precision NUMERIC)
+RETURNS sys.DATETIMEOFFSET
+AS
+$BODY$
+DECLARE
+    v_err_message SYS.VARCHAR;
+    v_fractions SYS.VARCHAR;
+    v_precision SMALLINT;
+    v_calc_seconds NUMERIC; 
+    v_resdatetime TIMESTAMP WITHOUT TIME ZONE;
+    v_string pg_catalog.text;
+    v_sign pg_catalog.text;
+BEGIN
+    v_fractions := p_fractions::SYS.VARCHAR;
+    IF p_precision IS NULL THEN
+        RAISE EXCEPTION 'Scale argument is not valid. Valid expressions for data type datetimeoffset scale argument are integer constants and integer constant expressions.';
+    END IF;
+    IF p_year IS NULL OR p_month is NULL OR p_day IS NULL OR p_hour IS NULL OR p_minute IS NULL OR p_seconds IS NULL OR p_fractions IS NULL
+            OR p_hour_offset IS NULL OR p_minute_offset is NULL THEN
+        RETURN NULL;
+    END IF;
+    v_precision := p_precision::SMALLINT;
+
+    IF (scale(p_precision) > 0) THEN
+        RAISE most_specific_type_mismatch;
+
+    -- Check if arguments are out of range
+    ELSIF ((p_year NOT BETWEEN 1753 AND 9999) OR
+        (p_month NOT BETWEEN 1 AND 12) OR
+        (p_day NOT BETWEEN 1 AND 31) OR
+        (p_hour NOT BETWEEN 0 AND 23) OR
+        (p_minute NOT BETWEEN 0 AND 59) OR
+        (p_seconds NOT BETWEEN 0 AND 59) OR
+        (p_hour_offset NOT BETWEEN -14 AND 14) OR
+        (p_minute_offset NOT BETWEEN -59 AND 59) OR
+        (p_hour_offset * p_minute_offset < 0) OR
+        (p_hour_offset = 14 AND p_minute_offset != 0) OR
+        (p_hour_offset = -14 AND p_minute_offset != 0) OR
+        (p_fractions != 0 AND char_length(v_fractions) > p_precision::SMALLINT))
+    THEN
+        RAISE invalid_datetime_format;
+    ELSIF (v_precision NOT BETWEEN 0 AND 7) THEN
+        RAISE numeric_value_out_of_range;
+    END IF;
+    v_calc_seconds := format('%s.%s',
+                             p_seconds,
+                             substring(rpad(lpad(v_fractions, v_precision, '0'), 7, '0'), 1, 6))::NUMERIC;
+
+    v_resdatetime := make_timestamp(p_year,
+                                    p_month,
+                                    p_day,
+                                    p_hour,
+                                    p_minute,
+                                    v_calc_seconds);
+    v_sign := (
+        SELECT CASE
+            WHEN (p_hour_offset) > 0
+                THEN '+'
+            WHEN (p_hour_offset) = 0 AND (p_minute_offset) >= 0
+                THEN '+'    
+            ELSE '-'
+        END
+    );
+    v_string := CONCAT(v_resdatetime::pg_catalog.text,v_sign,abs(p_hour_offset)::SMALLINT::text,':',
+                                                          abs(p_minute_offset)::SMALLINT::text);
+    RETURN CAST(v_string AS sys.DATETIMEOFFSET);
+EXCEPTION
+    WHEN most_specific_type_mismatch THEN
+        RAISE USING MESSAGE := 'Scale argument is not valid. Valid expressions for data type datetimeoffset scale argument are integer constants and integer constant expressions',
+                    DETAIL := 'Use of incorrect "precision" parameter value during conversion process.',
+                    HINT := 'Change "precision" parameter to the proper value and try again.';    
+    WHEN invalid_datetime_format THEN
+        RAISE USING MESSAGE := 'Cannot construct data type datetimeoffset, some of the arguments have values which are not valid.',
+                    DETAIL := 'Possible use of incorrect value of date or time part (which lies outside of valid range).',
+                    HINT := 'Check each input argument belongs to the valid range and try again.';
+
+    WHEN numeric_value_out_of_range THEN
+        RAISE USING MESSAGE := format('Specified scale % is invalid.', p_fractions),
+                    DETAIL := format('Source value is out of %s data type range.', v_err_message),
+                    HINT := format('Correct the source value you are trying to cast to %s data type and try again.',
+                                   v_err_message);
+END;
+$BODY$
+LANGUAGE plpgsql
+IMMUTABLE;
+
+CREATE OR REPLACE FUNCTION sys.is_table_type(object_id oid) RETURNS bool AS
+$BODY$
+SELECT
+  EXISTS(
+    SELECT 1
+    FROM pg_catalog.pg_type pt
+    INNER JOIN pg_catalog.pg_depend dep
+    ON pt.typrelid = dep.objid AND pt.oid = dep.refobjid
+    join sys.schemas sch on pt.typnamespace = sch.schema_id
+    JOIN pg_catalog.pg_class pc ON pc.oid = dep.objid
+    WHERE pt.typtype = 'c' AND dep.deptype = 'i' AND pt.typrelid = object_id AND pc.relkind = 'r'
+    AND dep.classid = 'pg_catalog.pg_class'::regclass AND dep.refclassid = 'pg_catalog.pg_type'::regclass);
+$BODY$
+LANGUAGE SQL VOLATILE STRICT;
 
 -- Drops a function if it does not have any dependent objects.
 -- Is a temporary procedure for use by the upgrade script. Will be dropped at the end of the upgrade.
@@ -106,7 +241,6 @@ DECLARE
 BEGIN
     v_datatype := upper(trim(p_datatype));
     v_style := floor(p_style)::SMALLINT;
-
     IF (scale(p_style) > 0) THEN
         RAISE most_specific_type_mismatch;
     ELSIF (NOT ((v_style BETWEEN 0 AND 13) OR
@@ -118,53 +252,43 @@ BEGIN
     ELSIF (v_style IN (8, 24, 108)) THEN
         RAISE invalid_datetime_format;
     END IF;
-
-    IF (v_datatype ~* DATATYPE_MASK_REGEXP) THEN
+    IF (v_datatype ~* DATATYPE_MASK_REGEXP COLLATE "C") THEN
         v_res_datatype := rtrim(split_part(v_datatype, '(' COLLATE "C", 1));
-
         v_maxlength := CASE
                           WHEN (v_res_datatype IN ('CHAR', 'VARCHAR')) THEN VARCHAR_MAX
                           ELSE NVARCHAR_MAX
                        END;
-
         v_lengthexpr := substring(v_datatype, DATATYPE_MASK_REGEXP);
-
         IF (v_lengthexpr <> 'MAX' AND char_length(v_lengthexpr) > 4) THEN
             RAISE interval_field_overflow;
         END IF;
-
         v_res_length := CASE v_lengthexpr
                            WHEN 'MAX' THEN v_maxlength
                            ELSE v_lengthexpr::SMALLINT
                         END;
-    ELSIF (v_datatype ~* DATATYPE_REGEXP) THEN
+    ELSIF (v_datatype ~* DATATYPE_REGEXP COLLATE "C") THEN
         v_res_datatype := v_datatype;
     ELSE
         RAISE datatype_mismatch;
     END IF;
-
     v_dateval := CASE
                     WHEN (v_style NOT IN (130, 131)) THEN p_dateval
                     ELSE sys.babelfish_conv_greg_to_hijri(p_dateval) + 1
                  END;
-
     v_day := ltrim(to_char(v_dateval, 'DD'), '0');
     v_month := to_char(v_dateval, 'MM')::SMALLINT;
-
     v_language := CASE
                      WHEN (v_style IN (130, 131)) THEN 'HIJRI'
                      ELSE CONVERSION_LANG
                   END;
- RAISE NOTICE 'v_language=[%]', v_language;
+ RAISE NOTICE 'v_language=[%]', v_language;		  
     BEGIN
         v_lang_metadata_json := sys.babelfish_get_lang_metadata_json(v_language);
     EXCEPTION
         WHEN OTHERS THEN
         RAISE invalid_character_value_for_cast;
     END;
-
     v_monthname := (v_lang_metadata_json -> 'months_shortnames') ->> v_month - 1;
-
     v_resmask := CASE
                     WHEN (v_style IN (1, 22)) THEN 'MM/DD/YY'
                     WHEN (v_style = 101) THEN 'MM/DD/YYYY'
@@ -188,8 +312,8 @@ BEGIN
                     WHEN (v_style = 112) THEN 'YYYYMMDD'
                     WHEN (v_style IN (20, 21, 23, 25, 120, 121, 126, 127)) THEN 'YYYY-MM-DD'
                     WHEN (v_style = 130) THEN 'DD $mnme$ YYYY'
-                    WHEN (v_style = 131) THEN format('%s/MM/YYYY', lpad(v_day, 2, ' '))
-                    WHEN (v_style IN (0, 9, 100, 109)) THEN format('$mnme$ %s YYYY', lpad(v_day, 2, ' '))
+                    WHEN (v_style = 131) THEN pg_catalog.format('%s/MM/YYYY', lpad(v_day, 2, ' '))
+                    WHEN (v_style IN (0, 9, 100, 109)) THEN pg_catalog.format('$mnme$ %s YYYY', lpad(v_day, 2, ' '))
                  END;
 
     v_resstring := to_char(v_dateval, v_resmask);
@@ -211,39 +335,37 @@ EXCEPTION
                     HINT := 'Change "style" parameter to the proper value and try again.';
 
     WHEN invalid_parameter_value THEN
-        RAISE USING MESSAGE := format('%s is not a valid style number when converting from DATE to a character string.', v_style),
+    RAISE USING MESSAGE := pg_catalog.format('%s is not a valid style number when converting from DATE to a character string.', v_style),
                     DETAIL := 'Use of incorrect "style" parameter value during conversion process.',
                     HINT := 'Change "style" parameter to the proper value and try again.';
 
     WHEN invalid_datetime_format THEN
-        RAISE USING MESSAGE := format('Error converting data type DATE to %s.', trim(p_datatype)),
+    RAISE USING MESSAGE := pg_catalog.format('Error converting data type DATE to %s.', trim(p_datatype)),
                     DETAIL := 'Incorrect using of pair of input parameters values during conversion process.',
                     HINT := 'Check the input parameters values, correct them if needed, and try again.';
 
    WHEN interval_field_overflow THEN
-       RAISE USING MESSAGE := format('The size (%s) given to the convert specification ''%s'' exceeds the maximum allowed for any data type (%s).',
+   RAISE USING MESSAGE := pg_catalog.format('The size (%s) given to the convert specification ''%s'' exceeds the maximum allowed for any data type (%s).',
                                      v_lengthexpr,
                                      lower(v_res_datatype),
                                      v_maxlength),
                    DETAIL := 'Use of incorrect size value of data type parameter during conversion process.',
                    HINT := 'Change size component of data type parameter to the allowable value and try again.';
-
     WHEN datatype_mismatch THEN
         RAISE USING MESSAGE := 'Data type should be one of these values: ''CHAR(n|MAX)'', ''NCHAR(n|MAX)'', ''VARCHAR(n|MAX)'', ''NVARCHAR(n|MAX)''.',
                     DETAIL := 'Use of incorrect "datatype" parameter value during conversion process.',
                     HINT := 'Change "datatype" parameter to the proper value and try again.';
 
     WHEN invalid_character_value_for_cast THEN
-        RAISE USING MESSAGE := format('Invalid CONVERSION_LANG constant value - ''%s''. Allowed values are: ''English'', ''Deutsch'', etc.',
+    RAISE USING MESSAGE := pg_catalog.format('Invalid CONVERSION_LANG constant value - ''%s''. Allowed values are: ''English'', ''Deutsch'', etc.',
                                       CONVERSION_LANG),
                     DETAIL := 'Compiled incorrect CONVERSION_LANG constant value in function''s body.',
                     HINT := 'Correct CONVERSION_LANG constant value in function''s body, recompile it and try again.';
-
     WHEN invalid_text_representation THEN
         GET STACKED DIAGNOSTICS v_err_message = MESSAGE_TEXT;
         v_err_message := substring(lower(v_err_message), 'integer\:\s\"(.*)\"');
 
-        RAISE USING MESSAGE := format('Error while trying to convert "%s" value to SMALLINT (or INTEGER) data type.',
+		RAISE USING MESSAGE := pg_catalog.format('Error while trying to convert "%s" value to SMALLINT (or INTEGER) data type.',
                                       v_err_message),
                     DETAIL := 'Supplied value contains illegal characters.',
                     HINT := 'Correct supplied value, remove all illegal characters.';
@@ -291,24 +413,19 @@ BEGIN
     v_datatype := upper(trim(p_datatype));
     v_src_datatype := upper(trim(p_src_datatype));
     v_style := floor(p_style)::SMALLINT;
-
     IF (v_src_datatype ~* SRCDATATYPE_MASK_REGEXP COLLATE "C")
     THEN
         v_scale := substring(v_src_datatype, SRCDATATYPE_MASK_REGEXP)::SMALLINT;
-
         v_src_datatype := rtrim(split_part(v_src_datatype, '(' COLLATE "C", 1));
-
         IF (v_src_datatype <> 'DATETIME2' AND v_scale IS NOT NULL) THEN
             RAISE invalid_indicator_parameter_value;
         ELSIF (v_scale NOT BETWEEN 0 AND 7) THEN
             RAISE invalid_regular_expression;
         END IF;
-
         v_scale := coalesce(v_scale, 7);
     ELSE
         RAISE most_specific_type_mismatch;
     END IF;
-
     IF (scale(p_style) > 0) THEN
         RAISE escape_character_conflict;
     ELSIF (NOT ((v_style BETWEEN 0 AND 14) OR
@@ -318,22 +435,17 @@ BEGIN
     THEN
         RAISE invalid_parameter_value;
     END IF;
-
     IF (v_datatype ~* DATATYPE_MASK_REGEXP COLLATE "C") THEN
         v_res_datatype := rtrim(split_part(v_datatype, '(' COLLATE "C", 1));
-
         v_maxlength := CASE
                           WHEN (v_res_datatype IN ('CHAR', 'VARCHAR')) THEN VARCHAR_MAX
                           ELSE NVARCHAR_MAX
                        END;
-
         v_lengthexpr := substring(v_datatype, DATATYPE_MASK_REGEXP);
-
         IF (v_lengthexpr <> 'MAX' AND char_length(v_lengthexpr) > 4)
         THEN
             RAISE interval_field_overflow;
         END IF;
-
         v_res_length := CASE v_lengthexpr
                            WHEN 'MAX' THEN v_maxlength
                            ELSE v_lengthexpr::SMALLINT
@@ -343,16 +455,13 @@ BEGIN
     ELSE
         RAISE datatype_mismatch;
     END IF;
-
     v_datetimeval := CASE
                         WHEN (v_style NOT IN (130, 131)) THEN p_datetimeval
                         ELSE sys.babelfish_conv_greg_to_hijri(p_datetimeval) + INTERVAL '1 day'
                      END;
-
     v_day := ltrim(to_char(v_datetimeval, 'DD'), '0');
     v_hour := ltrim(to_char(v_datetimeval, 'HH12'), '0');
     v_month := to_char(v_datetimeval, 'MM')::SMALLINT;
-
     v_language := CASE
                      WHEN (v_style IN (130, 131)) THEN 'HIJRI'
                      ELSE CONVERSION_LANG
@@ -363,12 +472,9 @@ BEGIN
         WHEN OTHERS THEN
         RAISE invalid_character_value_for_cast;
     END;
-
     v_monthname := (v_lang_metadata_json -> 'months_shortnames') ->> v_month - 1;
-
     IF (v_src_datatype IN ('DATETIME', 'SMALLDATETIME')) THEN
         v_fseconds := sys.babelfish_round_fractseconds(to_char(v_datetimeval, 'MS'));
-
         IF (v_fseconds::INTEGER = 1000) THEN
             v_fseconds := '000';
             v_datetimeval := v_datetimeval + INTERVAL '1 second';
@@ -377,28 +483,25 @@ BEGIN
         END IF;
     ELSE
         v_fseconds := sys.babelfish_get_microsecs_from_fractsecs(to_char(v_datetimeval, 'US'), v_scale);
-
         IF (v_scale = 7) THEN
             v_fseconds := concat(v_fseconds, '0');
         END IF;
     END IF;
-
     v_fractsep := CASE v_src_datatype
                      WHEN 'DATETIME2' THEN '.'
                      ELSE ':'
                   END;
-
     IF ((v_style = -1 AND v_src_datatype <> 'DATETIME2') OR
         v_style IN (0, 9, 100, 109))
     THEN
-        v_resmask := format('$mnme$ %s YYYY %s:MI%s',
+    	v_resmask := pg_catalog.format('$mnme$ %s YYYY %s:MI%s',
                             lpad(v_day, 2, ' '),
                             lpad(v_hour, 2, ' '),
                             CASE
                                WHEN (v_style IN (-1, 0, 100)) THEN 'AM'
-                               ELSE format(':SS:%sAM', v_fseconds)
+                               ELSE pg_catalog.format(':SS:%sAM', v_fseconds)
                             END);
-    ELSIF (v_style = 1) THEN
+                            ELSIF (v_style = 1) THEN
         v_resmask := 'MM/DD/YY';
     ELSIF (v_style = 101) THEN
         v_resmask := 'MM/DD/YYYY';
@@ -441,36 +544,35 @@ BEGIN
     ELSIF (v_style = 112) THEN
         v_resmask := 'YYYYMMDD';
     ELSIF (v_style IN (13, 113)) THEN
-        v_resmask := format('DD $mnme$ YYYY HH24:MI:SS%s%s', v_fractsep, v_fseconds);
+	    v_resmask := pg_catalog.format('DD $mnme$ YYYY HH24:MI:SS%s%s', v_fractsep, v_fseconds);
     ELSIF (v_style IN (14, 114)) THEN
-        v_resmask := format('HH24:MI:SS%s%s', v_fractsep, v_fseconds);
+    	v_resmask := pg_catalog.format('HH24:MI:SS%s%s', v_fractsep, v_fseconds);
     ELSIF (v_style IN (20, 120)) THEN
         v_resmask := 'YYYY-MM-DD HH24:MI:SS';
     ELSIF ((v_style = -1 AND v_src_datatype = 'DATETIME2') OR
            v_style IN (21, 25, 121))
     THEN
-        v_resmask := format('YYYY-MM-DD HH24:MI:SS.%s', v_fseconds);
+    	v_resmask := pg_catalog.format('YYYY-MM-DD HH24:MI:SS.%s', v_fseconds);
     ELSIF (v_style = 22) THEN
-        v_resmask := format('MM/DD/YY %s:MI:SS AM', lpad(v_hour, 2, ' '));
+    	v_resmask := pg_catalog.format('MM/DD/YY %s:MI:SS AM', lpad(v_hour, 2, ' '));
     ELSIF (v_style = 23) THEN
         v_resmask := 'YYYY-MM-DD';
     ELSIF (v_style IN (126, 127)) THEN
         v_resmask := CASE v_src_datatype
                         WHEN 'SMALLDATETIME' THEN 'YYYY-MM-DDT$rem$HH24:MI:SS'
-                        ELSE format('YYYY-MM-DDT$rem$HH24:MI:SS.%s', v_fseconds)
-                     END;
+    					ELSE pg_catalog.format('YYYY-MM-DDT$rem$HH24:MI:SS.%s', v_fseconds)
+    				END;
     ELSIF (v_style IN (130, 131)) THEN
         v_resmask := concat(CASE p_style
-                               WHEN 131 THEN format('%s/MM/YYYY ', lpad(v_day, 2, ' '))
-                               ELSE format('%s $mnme$ YYYY ', lpad(v_day, 2, ' '))
+				        		WHEN 131 THEN pg_catalog.format('%s/MM/YYYY ', lpad(v_day, 2, ' '))
+                                ELSE pg_catalog.format('%s $mnme$ YYYY ', lpad(v_day, 2, ' '))
                             END,
-                            format('%s:MI:SS%s%sAM', lpad(v_hour, 2, ' '), v_fractsep, v_fseconds));
+                            pg_catalog.format('%s:MI:SS%s%sAM', lpad(v_hour, 2, ' '), v_fractsep, v_fseconds));
     END IF;
 
     v_resstring := to_char(v_datetimeval, v_resmask);
     v_resstring := pg_catalog.replace(v_resstring, '$mnme$', v_monthname);
     v_resstring := pg_catalog.replace(v_resstring, '$rem$', '');
-
     v_resstring := substring(v_resstring, 1, coalesce(v_res_length, char_length(v_resstring)));
     v_res_length := coalesce(v_res_length,
                              CASE v_res_datatype
@@ -482,19 +584,19 @@ BEGIN
               ELSE rpad(v_resstring, v_res_length, ' ')
            END;
 EXCEPTION
-    WHEN most_specific_type_mismatch THEN
+	WHEN most_specific_type_mismatch THEN
         RAISE USING MESSAGE := 'Source data type should be one of these values: ''DATETIME'', ''SMALLDATETIME'', ''DATETIME2'' or ''DATETIME2(n)''.',
                     DETAIL := 'Use of incorrect "src_datatype" parameter value during conversion process.',
                     HINT := 'Change "srcdatatype" parameter to the proper value and try again.';
 
-   WHEN invalid_regular_expression THEN
-       RAISE USING MESSAGE := format('The source data type scale (%s) given to the convert specification exceeds the maximum allowable value (7).',
-                                     v_scale),
+	WHEN invalid_regular_expression THEN
+		RAISE USING MESSAGE := pg_catalog.format('The source data type scale (%s) given to the convert specification exceeds the maximum allowable value (7).',
+										v_scale),
                    DETAIL := 'Use of incorrect scale value of source data type parameter during conversion process.',
                    HINT := 'Change scale component of source data type parameter to the allowable value and try again.';
 
-    WHEN invalid_indicator_parameter_value THEN
-        RAISE USING MESSAGE := format('Invalid attributes specified for data type %s.', v_src_datatype),
+	WHEN invalid_indicator_parameter_value THEN
+        RAISE USING MESSAGE := pg_catalog.format('Invalid attributes specified for data type %s.', v_src_datatype),
                     DETAIL := 'Use of incorrect scale value, which is not corresponding to specified data type.',
                     HINT := 'Change data type scale component or select different data type and try again.';
 
@@ -504,24 +606,23 @@ EXCEPTION
                     HINT := 'Change "style" parameter to the proper value and try again.';
 
     WHEN invalid_parameter_value THEN
-        RAISE USING MESSAGE := format('%s is not a valid style number when converting from %s to a character string.',
+        RAISE USING MESSAGE := pg_catalog.format('%s is not a valid style number when converting from %s to a character string.',
                                       v_style, v_src_datatype),
                     DETAIL := 'Use of incorrect "style" parameter value during conversion process.',
                     HINT := 'Change "style" parameter to the proper value and try again.';
 
     WHEN interval_field_overflow THEN
-        RAISE USING MESSAGE := format('The size (%s) given to the convert specification ''%s'' exceeds the maximum allowed for any data type (%s).',
+            RAISE USING MESSAGE := pg_catalog.format('The size (%s) given to the convert specification ''%s'' exceeds the maximum allowed for any data type (%s).',
                                       v_lengthexpr, lower(v_res_datatype), v_maxlength),
                     DETAIL := 'Use of incorrect size value of data type parameter during conversion process.',
                     HINT := 'Change size component of data type parameter to the allowable value and try again.';
-
     WHEN datatype_mismatch THEN
         RAISE USING MESSAGE := 'Data type should be one of these values: ''CHAR(n|MAX)'', ''NCHAR(n|MAX)'', ''VARCHAR(n|MAX)'', ''NVARCHAR(n|MAX)''.',
                     DETAIL := 'Use of incorrect "datatype" parameter value during conversion process.',
                     HINT := 'Change "datatype" parameter to the proper value and try again.';
 
     WHEN invalid_character_value_for_cast THEN
-        RAISE USING MESSAGE := format('Invalid CONVERSION_LANG constant value - ''%s''. Allowed values are: ''English'', ''Deutsch'', etc.',
+        RAISE USING MESSAGE := pg_catalog.format('Invalid CONVERSION_LANG constant value - ''%s''. Allowed values are: ''English'', ''Deutsch'', etc.',
                                       CONVERSION_LANG),
                     DETAIL := 'Compiled incorrect CONVERSION_LANG constant value in function''s body.',
                     HINT := 'Correct CONVERSION_LANG constant value in function''s body, recompile it and try again.';
@@ -530,7 +631,8 @@ EXCEPTION
         GET STACKED DIAGNOSTICS v_err_message = MESSAGE_TEXT;
         v_err_message := substring(lower(v_err_message), 'integer\:\s\"(.*)\"');
 
-        RAISE USING MESSAGE := format('Error while trying to convert "%s" value to SMALLINT data type.',
+        RAISE USING MESSAGE := pg_catalog.format('Error while trying to convert "%s" value to SMALLINT data type.',
+
                                       v_err_message),
                     DETAIL := 'Supplied value contains illegal characters.',
                     HINT := 'Correct supplied value, remove all illegal characters.';
@@ -540,6 +642,45 @@ LANGUAGE plpgsql
 VOLATILE
 RETURNS NULL ON NULL INPUT;
 
+CREATE OR REPLACE FUNCTION sys.babelfish_conv_greg_to_hijri(IN p_datetimeval TIMESTAMP WITHOUT TIME ZONE)
+RETURNS TIMESTAMP WITHOUT TIME ZONE
+AS
+$BODY$
+DECLARE
+    v_hijri_date DATE;
+BEGIN
+    v_hijri_date := sys.babelfish_conv_greg_to_hijri(extract(day from p_datetimeval)::SMALLINT,
+                                                         extract(month from p_datetimeval)::SMALLINT,
+                                                         extract(year from p_datetimeval)::INTEGER);
+
+    RETURN to_timestamp(pg_catalog.format('%s %s', to_char(v_hijri_date, 'DD.MM.YYYY'),
+                                        to_char(p_datetimeval, ' HH24:MI:SS.US')),
+                        'DD.MM.YYYY HH24:MI:SS.US');
+END;
+$BODY$
+LANGUAGE plpgsql
+VOLATILE
+RETURNS NULL ON NULL INPUT;
+
+CREATE OR REPLACE FUNCTION sys.babelfish_conv_hijri_to_greg(IN p_datetimeval TIMESTAMP WITHOUT TIME ZONE)
+RETURNS TIMESTAMP WITHOUT TIME ZONE
+AS
+$BODY$
+DECLARE
+    v_hijri_date DATE;
+BEGIN
+    v_hijri_date := sys.babelfish_conv_hijri_to_greg(extract(day from p_dateval)::NUMERIC,
+                                                         extract(month from p_dateval)::NUMERIC,
+                                                         extract(year from p_dateval)::NUMERIC);
+
+    RETURN to_timestamp(pg_catalog.format('%s %s', to_char(v_hijri_date, 'DD.MM.YYYY'),
+                                        to_char(p_datetimeval, ' HH24:MI:SS.US')),
+                        'DD.MM.YYYY HH24:MI:SS.US');
+END;
+$BODY$
+LANGUAGE plpgsql
+VOLATILE
+RETURNS NULL ON NULL INPUT;
 
 CREATE OR REPLACE FUNCTION sys.babelfish_conv_string_to_date(IN p_datestring TEXT,
                                                                  IN p_style NUMERIC DEFAULT 0)
@@ -1704,33 +1845,26 @@ BEGIN
     v_datatype := upper(trim(p_datatype));
     v_src_datatype := upper(trim(p_src_datatype));
     v_style := floor(p_style)::SMALLINT;
-
     IF (v_src_datatype ~* SRCDATATYPE_MASK_REGEXP)
     THEN
         v_scale := coalesce(substring(v_src_datatype, SRCDATATYPE_MASK_REGEXP)::SMALLINT, 7);
-
         IF (v_scale NOT BETWEEN 0 AND 7) THEN
             RAISE invalid_regular_expression;
         END IF;
     ELSE
         RAISE most_specific_type_mismatch;
     END IF;
-
     IF (v_datatype ~* DATATYPE_MASK_REGEXP)
     THEN
         v_res_datatype := rtrim(split_part(v_datatype, '(' COLLATE "C", 1));
-
         v_res_maxlength := CASE
                               WHEN (v_res_datatype COLLATE "C" IN ('CHAR', 'VARCHAR')) THEN VARCHAR_MAX
                               ELSE NVARCHAR_MAX
                            END;
-
         v_lengthexpr := substring(v_datatype, DATATYPE_MASK_REGEXP);
-
         IF (v_lengthexpr <> 'MAX' COLLATE "C" AND char_length(v_lengthexpr) > 4) THEN
             RAISE interval_field_overflow;
         END IF;
-
         v_res_length := CASE v_lengthexpr
                            WHEN 'MAX' COLLATE "C" THEN v_res_maxlength
                            ELSE v_lengthexpr::SMALLINT
@@ -1740,7 +1874,6 @@ BEGIN
     ELSE
         RAISE datatype_mismatch;
     END IF;
-
     IF (scale(p_style) > 0) THEN
         RAISE escape_character_conflict;
     ELSIF (NOT ((v_style BETWEEN 0 AND 14) OR
@@ -1757,14 +1890,11 @@ BEGIN
     THEN
         RAISE invalid_datetime_format;
     END IF;
-
     v_hours := ltrim(to_char(p_timeval, 'HH12'), '0');
     v_fseconds := sys.babelfish_get_microsecs_from_fractsecs(to_char(p_timeval, 'US'), v_scale);
-
     IF (v_scale = 7) THEN
         v_fseconds := concat(v_fseconds, '0');
     END IF;
-
     IF (v_style IN (0, 100))
     THEN
         v_resmask := concat(v_hours, ':MIAM');
@@ -1775,7 +1905,7 @@ BEGIN
     THEN
         v_resmask := CASE
                         WHEN (char_length(v_fseconds) = 0) THEN concat(v_hours, ':MI:SSAM')
-                        ELSE format('%s:MI:SS.%sAM', v_hours, v_fseconds)
+                        ELSE pg_catalog.format('%s:MI:SS.%sAM', v_hours, v_fseconds)
                      END;
     ELSIF (v_style IN (13, 14, 21, 25, 113, 114, 121, 126, 127))
     THEN
@@ -1785,17 +1915,16 @@ BEGIN
                      END;
     ELSIF (v_style = 22)
     THEN
-        v_resmask := format('%s:MI:SS AM', lpad(v_hours, 2, ' '));
+    	v_resmask := pg_catalog.format('%s:MI:SS AM', lpad(v_hours, 2, ' '));
     ELSIF (v_style IN (130, 131))
     THEN
         v_resmask := CASE
                         WHEN (char_length(v_fseconds) = 0) THEN concat(lpad(v_hours, 2, ' '), ':MI:SSAM')
-                        ELSE format('%s:MI:SS.%sAM', lpad(v_hours, 2, ' '), v_fseconds)
+                        ELSE pg_catalog.format('%s:MI:SS.%sAM', lpad(v_hours, 2, ' '), v_fseconds)
                      END;
     END IF;
 
     v_resstring := to_char(p_timeval, v_resmask);
-
     v_resstring := substring(v_resstring, 1, coalesce(v_res_length, char_length(v_resstring)));
     v_res_length := coalesce(v_res_length,
                              CASE v_res_datatype
@@ -1813,24 +1942,23 @@ EXCEPTION
                     HINT := 'Change "src_datatype" parameter to the proper value and try again.';
 
    WHEN invalid_regular_expression THEN
-       RAISE USING MESSAGE := format('The source data type scale (%s) given to the convert specification exceeds the maximum allowable value (7).',
+       RAISE USING MESSAGE := pg_catalog.format('The source data type scale (%s) given to the convert specification exceeds the maximum allowable value (7).',
                                      v_scale),
                    DETAIL := 'Use of incorrect scale value of source data type parameter during conversion process.',
                    HINT := 'Change scale component of source data type parameter to the allowable value and try again.';
 
    WHEN interval_field_overflow THEN
-       RAISE USING MESSAGE := format('The size (%s) given to the convert specification ''%s'' exceeds the maximum allowed for any data type (%s).',
+       RAISE USING MESSAGE := pg_catalog.format('The size (%s) given to the convert specification ''%s'' exceeds the maximum allowed for any data type (%s).',
                                      v_lengthexpr, lower(v_res_datatype), v_res_maxlength),
                    DETAIL := 'Use of incorrect size value of target data type parameter during conversion process.',
                    HINT := 'Change size component of data type parameter to the allowable value and try again.';
-
     WHEN escape_character_conflict THEN
         RAISE USING MESSAGE := 'Argument data type NUMERIC is invalid for argument 4 of convert function.',
                     DETAIL := 'Use of incorrect "style" parameter value during conversion process.',
                     HINT := 'Change "style" parameter to the proper value and try again.';
 
     WHEN invalid_parameter_value THEN
-        RAISE USING MESSAGE := format('%s is not a valid style number when converting from TIME to a character string.', v_style),
+        RAISE USING MESSAGE := pg_catalog.format('%s is not a valid style number when converting from TIME to a character string.', v_style),
                     DETAIL := 'Use of incorrect "style" parameter value during conversion process.',
                     HINT := 'Change "style" parameter to the proper value and try again.';
 
@@ -1840,7 +1968,7 @@ EXCEPTION
                     HINT := 'Change "datatype" parameter to the proper value and try again.';
 
     WHEN invalid_datetime_format THEN
-        RAISE USING MESSAGE := format('Error converting data type TIME to %s.',
+        RAISE USING MESSAGE := pg_catalog.format('Error converting data type TIME to %s.',
                                       rtrim(split_part(trim(p_datatype), '(', 1))),
                     DETAIL := 'Incorrect using of pair of input parameters values during conversion process.',
                     HINT := 'Check the input parameters values, correct them if needed, and try again.';
@@ -1966,9 +2094,6 @@ $BODY$
 LANGUAGE plpgsql
 VOLATILE;
 
--- Remove single pair of either square brackets or double-quotes from outer ends if present
--- If name begins with a delimiter but does not end with the matching delimiter return NULL
--- Otherwise, return the name unchanged
 CREATE OR REPLACE FUNCTION sys.babelfish_remove_delimiter_pair(IN name TEXT)
 RETURNS TEXT AS
 $BODY$
@@ -2092,6 +2217,7 @@ BEGIN
 END
 $BODY$
 LANGUAGE plpgsql;
+
 
 -- Return the object ID given the object name. Can specify optional type.
 CREATE OR REPLACE FUNCTION sys.object_id(IN object_name TEXT, IN object_type char(2) DEFAULT '')
@@ -2669,23 +2795,6 @@ where base.nspname not in ('information_schema', 'pg_catalog', 'pg_toast', 'sys'
 and ext.dbid = cast(sys.db_id() as oid);
 GRANT SELECT ON sys.schemas TO PUBLIC;
 
-/* -- need further discuss on this one 
-babelfish_db=> ALTER EXTENSION babelfishpg_tsql UPDATE to '2.3.0';
-ERROR:  view msdb_dbo.syspolicy_system_health_state is not a member of extension "babelfishpg_tsql"
-DETAIL:  An extension is not allowed to replace an object that it does not own.
-
-CREATE OR REPLACE VIEW msdb_dbo.syspolicy_system_health_state
-AS
-  SELECT
-    CAST(0 as BIGINT) AS health_state_id,
-    CAST(0 as INT) AS policy_id,
-    CAST(NULL AS sys.DATETIME) AS last_run_date,
-    CAST('' AS sys.NVARCHAR(400)) AS target_query_expression_with_id,
-    CAST('' AS sys.NVARCHAR) AS target_query_expression,
-    CAST(1 as sys.BIT) AS result
-  WHERE FALSE;
-  */
-
 ALTER TABLE sys.babelfish_authid_login_ext RENAME TO babelfish_authid_login_ext_deprecated_in_2_3_0;
 
 -- we need to drop primary key constraint also because babelfish_authid_login_ext_pkey is being used from C code to perform some lokkup
@@ -2808,103 +2917,104 @@ AND Ext2.orig_username != 'db_owner';
 
 GRANT SELECT ON sys.database_role_members TO PUBLIC;
 
-create or replace view sys.databases as
-select
-  CAST(d.name as SYS.SYSNAME) as name
-  , CAST(sys.db_id(d.name) as INT) as database_id
-  , CAST(NULL as INT) as source_database_id
-  , cast(cast(r.oid as INT) as SYS.VARBINARY(85)) as owner_sid
-  , CAST(d.crdate AS SYS.DATETIME) as create_date
-  , CAST(120 AS SYS.TINYINT) as compatibility_level
-  , CAST(c.collname as SYS.SYSNAME) as collation_name
-  , CAST(0 AS SYS.TINYINT) as user_access
-  , CAST('MULTI_USER' AS SYS.NVARCHAR(60)) as user_access_desc
-  , CAST(0 AS SYS.BIT) as is_read_only
-  , CAST(0 AS SYS.BIT) as is_auto_close_on
-  , CAST(0 AS SYS.BIT) as is_auto_shrink_on
-  , CAST(0 AS SYS.TINYINT) as state
-  , CAST('ONLINE' AS SYS.NVARCHAR(60)) as state_desc
-  , CAST(
-    CASE
-   WHEN pg_is_in_recovery() is false THEN 0
-   WHEN pg_is_in_recovery() is true THEN 1
-  END
- AS SYS.BIT) as is_in_standby
-  , CAST(0 AS SYS.BIT) as is_cleanly_shutdown
-  , CAST(0 AS SYS.BIT) as is_supplemental_logging_enabled
-  , CAST(1 AS SYS.TINYINT) as snapshot_isolation_state
-  , CAST('ON' AS SYS.NVARCHAR(60)) as snapshot_isolation_state_desc
-  , CAST(1 AS SYS.BIT) as is_read_committed_snapshot_on
-  , CAST(1 AS SYS.TINYINT) as recovery_model
-  , CAST('FULL' AS SYS.NVARCHAR(60)) as recovery_model_desc
-  , CAST(0 AS SYS.TINYINT) as page_verify_option
-  , CAST(NULL AS SYS.NVARCHAR(60)) as page_verify_option_desc
-  , CAST(1 AS SYS.BIT) as is_auto_create_stats_on
-  , CAST(0 AS SYS.BIT) as is_auto_create_stats_incremental_on
-  , CAST(0 AS SYS.BIT) as is_auto_update_stats_on
-  , CAST(0 AS SYS.BIT) as is_auto_update_stats_async_on
-  , CAST(0 AS SYS.BIT) as is_ansi_null_default_on
-  , CAST(0 AS SYS.BIT) as is_ansi_nulls_on
-  , CAST(0 AS SYS.BIT) as is_ansi_padding_on
-  , CAST(0 AS SYS.BIT) as is_ansi_warnings_on
-  , CAST(0 AS SYS.BIT) as is_arithabort_on
-  , CAST(0 AS SYS.BIT) as is_concat_null_yields_null_on
-  , CAST(0 AS SYS.BIT) as is_numeric_roundabort_on
-  , CAST(0 AS SYS.BIT) as is_quoted_identifier_on
-  , CAST(0 AS SYS.BIT) as is_recursive_triggers_on
-  , CAST(0 AS SYS.BIT) as is_cursor_close_on_commit_on
-  , CAST(0 AS SYS.BIT) as is_local_cursor_default
-  , CAST(0 AS SYS.BIT) as is_fulltext_enabled
-  , CAST(0 AS SYS.BIT) as is_trustworthy_on
-  , CAST(0 AS SYS.BIT) as is_db_chaining_on
-  , CAST(0 AS SYS.BIT) as is_parameterization_forced
-  , CAST(0 AS SYS.BIT) as is_master_key_encrypted_by_server
-  , CAST(0 AS SYS.BIT) as is_query_store_on
-  , CAST(0 AS SYS.BIT) as is_published
-  , CAST(0 AS SYS.BIT) as is_subscribed
-  , CAST(0 AS SYS.BIT) as is_merge_published
-  , CAST(0 AS SYS.BIT) as is_distributor
-  , CAST(0 AS SYS.BIT) as is_sync_with_backup
-  , CAST(NULL AS SYS.UNIQUEIDENTIFIER) as service_broker_guid
-  , CAST(0 AS SYS.BIT) as is_broker_enabled
-  , CAST(0 AS SYS.TINYINT) as log_reuse_wait
-  , CAST('NOTHING' AS SYS.NVARCHAR(60)) as log_reuse_wait_desc
-  , CAST(0 AS SYS.BIT) as is_date_correlation_on
-  , CAST(0 AS SYS.BIT) as is_cdc_enabled
-  , CAST(0 AS SYS.BIT) as is_encrypted
-  , CAST(0 AS SYS.BIT) as is_honor_broker_priority_on
-  , CAST(NULL AS SYS.UNIQUEIDENTIFIER) as replica_id
-  , CAST(NULL AS SYS.UNIQUEIDENTIFIER) as group_database_id
-  , CAST(NULL AS INT) as resource_pool_id
-  , CAST(NULL AS SMALLINT) as default_language_lcid
-  , CAST(NULL AS SYS.NVARCHAR(128)) as default_language_name
-  , CAST(NULL AS INT) as default_fulltext_language_lcid
-  , CAST(NULL AS SYS.NVARCHAR(128)) as default_fulltext_language_name
-  , CAST(NULL AS SYS.BIT) as is_nested_triggers_on
-  , CAST(NULL AS SYS.BIT) as is_transform_noise_words_on
-  , CAST(NULL AS SMALLINT) as two_digit_year_cutoff
-  , CAST(0 AS SYS.TINYINT) as containment
-  , CAST('NONE' AS SYS.NVARCHAR(60)) as containment_desc
-  , CAST(0 AS INT) as target_recovery_time_in_seconds
-  , CAST(0 AS INT) as delayed_durability
-  , CAST(NULL AS SYS.NVARCHAR(60)) as delayed_durability_desc
-  , CAST(0 AS SYS.BIT) as is_memory_optimized_elevate_to_snapshot_on
-  , CAST(0 AS SYS.BIT) as is_federation_member
-  , CAST(0 AS SYS.BIT) as is_remote_data_archive_enabled
-  , CAST(0 AS SYS.BIT) as is_mixed_page_allocation_on
-  , CAST(0 AS SYS.BIT) as is_temporal_history_retention_enabled
-  , CAST(0 AS INT) as catalog_collation_type
-  , CAST('Not Applicable' AS SYS.NVARCHAR(60)) as catalog_collation_type_desc
-  , CAST(NULL AS SYS.NVARCHAR(128)) as physical_database_name
-  , CAST(0 AS SYS.BIT) as is_result_set_caching_on
-  , CAST(0 AS SYS.BIT) as is_accelerated_database_recovery_on
-  , CAST(0 AS SYS.BIT) as is_tempdb_spill_to_remote_store
-  , CAST(0 AS SYS.BIT) as is_stale_page_detection_on
-  , CAST(0 AS SYS.BIT) as is_memory_optimized_enabled
-  , CAST(0 AS SYS.BIT) as is_ledger_on
- from sys.babelfish_sysdatabases d LEFT OUTER JOIN pg_catalog.pg_collation c ON d.default_collation = c.collname
- LEFT OUTER JOIN pg_catalog.pg_roles r on r.rolname = d.owner;
-
+create or replace view sys.databases as	
+select	
+  CAST(d.name as SYS.SYSNAME) as name	
+  , CAST(sys.db_id(d.name) as INT) as database_id	
+  , CAST(NULL as INT) as source_database_id	
+  , cast(s.sid as SYS.VARBINARY(85)) as owner_sid	
+  , CAST(d.crdate AS SYS.DATETIME) as create_date	
+  , CAST(s.cmptlevel AS SYS.TINYINT) as compatibility_level	
+  , CAST(c.collname as SYS.SYSNAME) as collation_name	
+  , CAST(0 AS SYS.TINYINT)  as user_access	
+  , CAST('MULTI_USER' AS SYS.NVARCHAR(60)) as user_access_desc	
+  , CAST(0 AS SYS.BIT) as is_read_only	
+  , CAST(0 AS SYS.BIT) as is_auto_close_on	
+  , CAST(0 AS SYS.BIT) as is_auto_shrink_on	
+  , CAST(0 AS SYS.TINYINT) as state	
+  , CAST('ONLINE' AS SYS.NVARCHAR(60)) as state_desc	
+  , CAST(	
+	  	CASE 	
+			WHEN pg_is_in_recovery() is false THEN 0 	
+			WHEN pg_is_in_recovery() is true THEN 1 	
+		END 	
+	AS SYS.BIT) as is_in_standby	
+  , CAST(0 AS SYS.BIT) as is_cleanly_shutdown	
+  , CAST(0 AS SYS.BIT) as is_supplemental_logging_enabled	
+  , CAST(1 AS SYS.TINYINT) as snapshot_isolation_state	
+  , CAST('ON' AS SYS.NVARCHAR(60)) as snapshot_isolation_state_desc	
+  , CAST(1 AS SYS.BIT) as is_read_committed_snapshot_on	
+  , CAST(1 AS SYS.TINYINT) as recovery_model	
+  , CAST('FULL' AS SYS.NVARCHAR(60)) as recovery_model_desc	
+  , CAST(0 AS SYS.TINYINT) as page_verify_option	
+  , CAST(NULL AS SYS.NVARCHAR(60)) as page_verify_option_desc	
+  , CAST(1 AS SYS.BIT) as is_auto_create_stats_on	
+  , CAST(0 AS SYS.BIT) as is_auto_create_stats_incremental_on	
+  , CAST(0 AS SYS.BIT) as is_auto_update_stats_on	
+  , CAST(0 AS SYS.BIT) as is_auto_update_stats_async_on	
+  , CAST(0 AS SYS.BIT) as is_ansi_null_default_on	
+  , CAST(0 AS SYS.BIT) as is_ansi_nulls_on	
+  , CAST(0 AS SYS.BIT) as is_ansi_padding_on	
+  , CAST(0 AS SYS.BIT) as is_ansi_warnings_on	
+  , CAST(0 AS SYS.BIT) as is_arithabort_on	
+  , CAST(0 AS SYS.BIT) as is_concat_null_yields_null_on	
+  , CAST(0 AS SYS.BIT) as is_numeric_roundabort_on	
+  , CAST(0 AS SYS.BIT) as is_quoted_identifier_on	
+  , CAST(0 AS SYS.BIT) as is_recursive_triggers_on	
+  , CAST(0 AS SYS.BIT) as is_cursor_close_on_commit_on	
+  , CAST(0 AS SYS.BIT) as is_local_cursor_default	
+  , CAST(0 AS SYS.BIT) as is_fulltext_enabled	
+  , CAST(0 AS SYS.BIT) as is_trustworthy_on	
+  , CAST(0 AS SYS.BIT) as is_db_chaining_on	
+  , CAST(0 AS SYS.BIT) as is_parameterization_forced	
+  , CAST(0 AS SYS.BIT) as is_master_key_encrypted_by_server	
+  , CAST(0 AS SYS.BIT) as is_query_store_on	
+  , CAST(0 AS SYS.BIT) as is_published	
+  , CAST(0 AS SYS.BIT) as is_subscribed	
+  , CAST(0 AS SYS.BIT) as is_merge_published	
+  , CAST(0 AS SYS.BIT) as is_distributor	
+  , CAST(0 AS SYS.BIT) as is_sync_with_backup	
+  , CAST(NULL AS SYS.UNIQUEIDENTIFIER) as service_broker_guid	
+  , CAST(0 AS SYS.BIT) as is_broker_enabled	
+  , CAST(0 AS SYS.TINYINT) as log_reuse_wait	
+  , CAST('NOTHING' AS SYS.NVARCHAR(60)) as log_reuse_wait_desc	
+  , CAST(0 AS SYS.BIT) as is_date_correlation_on	
+  , CAST(0 AS SYS.BIT) as is_cdc_enabled	
+  , CAST(0 AS SYS.BIT) as is_encrypted	
+  , CAST(0 AS SYS.BIT) as is_honor_broker_priority_on	
+  , CAST(NULL AS SYS.UNIQUEIDENTIFIER) as replica_id	
+  , CAST(NULL AS SYS.UNIQUEIDENTIFIER) as group_database_id	
+  , CAST(NULL AS INT) as resource_pool_id	
+  , CAST(NULL AS SMALLINT) as default_language_lcid	
+  , CAST(NULL AS SYS.NVARCHAR(128)) as default_language_name	
+  , CAST(NULL AS INT) as default_fulltext_language_lcid	
+  , CAST(NULL AS SYS.NVARCHAR(128)) as default_fulltext_language_name	
+  , CAST(NULL AS SYS.BIT) as is_nested_triggers_on	
+  , CAST(NULL AS SYS.BIT) as is_transform_noise_words_on	
+  , CAST(NULL AS SMALLINT) as two_digit_year_cutoff	
+  , CAST(0 AS SYS.TINYINT) as containment	
+  , CAST('NONE' AS SYS.NVARCHAR(60)) as containment_desc	
+  , CAST(0 AS INT) as target_recovery_time_in_seconds	
+  , CAST(0 AS INT) as delayed_durability	
+  , CAST(NULL AS SYS.NVARCHAR(60)) as delayed_durability_desc	
+  , CAST(0 AS SYS.BIT) as is_memory_optimized_elevate_to_snapshot_on	
+  , CAST(0 AS SYS.BIT) as is_federation_member	
+  , CAST(0 AS SYS.BIT) as is_remote_data_archive_enabled	
+  , CAST(0 AS SYS.BIT) as is_mixed_page_allocation_on	
+  , CAST(0 AS SYS.BIT) as is_temporal_history_retention_enabled	
+  , CAST(0 AS INT) as catalog_collation_type	
+  , CAST('Not Applicable' AS SYS.NVARCHAR(60)) as catalog_collation_type_desc	
+  , CAST(NULL AS SYS.NVARCHAR(128)) as physical_database_name	
+  , CAST(0 AS SYS.BIT) as is_result_set_caching_on	
+  , CAST(0 AS SYS.BIT) as is_accelerated_database_recovery_on	
+  , CAST(0 AS SYS.BIT) as is_tempdb_spill_to_remote_store	
+  , CAST(0 AS SYS.BIT) as is_stale_page_detection_on	
+  , CAST(0 AS SYS.BIT) as is_memory_optimized_enabled	
+  , CAST(0 AS SYS.BIT) as is_ledger_on	
+ from sys.babelfish_sysdatabases d 	
+ INNER JOIN sys.sysdatabases s on d.dbid = s.dbid	
+ LEFT OUTER JOIN pg_catalog.pg_collation c ON d.default_collation = c.collname;	
+GRANT SELECT ON sys.databases TO PUBLIC;
 
 CREATE OR REPLACE FUNCTION sys.tsql_type_scale_helper(IN type TEXT, IN typemod INT, IN return_null_for_rest bool) RETURNS sys.TINYINT
 AS $$
@@ -3072,84 +3182,251 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql IMMUTABLE STRICT;
 
-CREATE OR REPLACE FUNCTION sys.tsql_type_max_length_helper(IN type TEXT, IN typelen INT, IN typemod INT, IN for_sys_types boolean DEFAULT false)
+-- Need to add parameter for tsql_type_max_length_helper 
+ALTER FUNCTION sys.tsql_type_max_length_helper RENAME TO tsql_type_max_length_helper_deprecated_in_2_3_0;
+
+CREATE OR REPLACE FUNCTION sys.tsql_type_max_length_helper(IN type TEXT, IN typelen INT, IN typemod INT, IN for_sys_types boolean DEFAULT false, IN used_typmod_array boolean DEFAULT false)
 RETURNS SMALLINT
 AS $$
 DECLARE
- max_length SMALLINT;
- precision INT;
- v_type TEXT collate sys.database_default := type;
+	max_length SMALLINT;
+	precision INT;
+	v_type TEXT COLLATE sys.database_default := type;
 BEGIN
- -- unknown tsql type
- IF v_type IS NULL THEN
-  RETURN CAST(typelen as SMALLINT);
- END IF;
+	-- unknown tsql type
+	IF v_type IS NULL THEN
+		RETURN CAST(typelen as SMALLINT);
+	END IF;
 
- IF typelen != -1 THEN
-  CASE v_type
-  WHEN 'tinyint' THEN max_length = 1;
-  WHEN 'date' THEN max_length = 3;
-  WHEN 'smalldatetime' THEN max_length = 4;
-  WHEN 'smallmoney' THEN max_length = 4;
-  WHEN 'datetime2' THEN
-   IF typemod = -1 THEN max_length = 8;
-   ELSIF typemod <= 2 THEN max_length = 6;
-   ELSIF typemod <= 4 THEN max_length = 7;
-   ELSEIF typemod <= 7 THEN max_length = 8;
-   -- typemod = 7 is not possible for datetime2 in Babel
-   END IF;
-  WHEN 'datetimeoffset' THEN
-   IF typemod = -1 THEN max_length = 10;
-   ELSIF typemod <= 2 THEN max_length = 8;
-   ELSIF typemod <= 4 THEN max_length = 9;
-   ELSIF typemod <= 7 THEN max_length = 10;
-   -- typemod = 7 is not possible for datetimeoffset in Babel
-   END IF;
-  WHEN 'time' THEN
-   IF typemod = -1 THEN max_length = 5;
-   ELSIF typemod <= 2 THEN max_length = 3;
-   ELSIF typemod <= 4 THEN max_length = 4;
-   ELSIF typemod <= 7 THEN max_length = 5;
-   END IF;
-  WHEN 'timestamp' THEN max_length = 8;
-  ELSE max_length = typelen;
-  END CASE;
-  RETURN max_length;
- END IF;
+	-- if using typmod_array from pg_proc.probin
+	IF used_typmod_array THEN
+		IF v_type = 'sysname' THEN
+			RETURN 256;
+		ELSIF (v_type in ('char', 'bpchar', 'varchar', 'binary', 'varbinary', 'nchar', 'nvarchar'))
+		THEN
+			IF typemod < 0 THEN -- max value. 
+				RETURN -1;
+			ELSIF v_type in ('nchar', 'nvarchar') THEN
+				RETURN (2 * typemod);
+			ELSE
+				RETURN typemod;
+			END IF;
+		END IF;
+	END IF;
 
- IF typemod = -1 THEN
-  CASE
-  WHEN v_type collate sys.database_default in ('image', 'text', 'ntext') THEN max_length = 16;
-  WHEN v_type collate sys.database_default = 'sql_variant' THEN max_length = 8016;
-  WHEN v_type collate sys.database_default in ('varbinary', 'varchar', 'nvarchar') THEN
-   IF for_sys_types THEN max_length = 8000;
-   ELSE max_length = -1;
-   END IF;
-  WHEN v_type collate sys.database_default in ('binary', 'char', 'bpchar', 'nchar') THEN max_length = 8000;
-  WHEN v_type collate sys.database_default in ('decimal', 'numeric') THEN max_length = 17;
-  ELSE max_length = typemod;
-  END CASE;
-  RETURN max_length;
- END IF;
+	IF typelen != -1 THEN
+		CASE v_type 
+		WHEN 'tinyint' THEN max_length = 1;
+		WHEN 'date' THEN max_length = 3;
+		WHEN 'smalldatetime' THEN max_length = 4;
+		WHEN 'smallmoney' THEN max_length = 4;
+		WHEN 'datetime2' THEN
+			IF typemod = -1 THEN max_length = 8;
+			ELSIF typemod <= 2 THEN max_length = 6;
+			ELSIF typemod <= 4 THEN max_length = 7;
+			ELSEIF typemod <= 7 THEN max_length = 8;
+			-- typemod = 7 is not possible for datetime2 in Babel
+			END IF;
+		WHEN 'datetimeoffset' THEN
+			IF typemod = -1 THEN max_length = 10;
+			ELSIF typemod <= 2 THEN max_length = 8;
+			ELSIF typemod <= 4 THEN max_length = 9;
+			ELSIF typemod <= 7 THEN max_length = 10;
+			-- typemod = 7 is not possible for datetimeoffset in Babel
+			END IF;
+		WHEN 'time' THEN
+			IF typemod = -1 THEN max_length = 5;
+			ELSIF typemod <= 2 THEN max_length = 3;
+			ELSIF typemod <= 4 THEN max_length = 4;
+			ELSIF typemod <= 7 THEN max_length = 5;
+			END IF;
+		WHEN 'timestamp' THEN max_length = 8;
+		ELSE max_length = typelen;
+		END CASE;
+		RETURN max_length;
+	END IF;
 
- CASE
- WHEN v_type collate sys.database_default in ('char', 'bpchar', 'varchar', 'binary', 'varbinary') THEN max_length = typemod - 4;
- WHEN v_type collate sys.database_default in ('nchar', 'nvarchar') THEN max_length = (typemod - 4) * 2;
- WHEN v_type collate sys.database_default = 'sysname' THEN max_length = (typemod - 4) * 2;
- WHEN v_type collate sys.database_default in ('numeric', 'decimal') THEN
-  precision = ((typemod - 4) >> 16) & 65535;
-  IF precision >= 1 and precision <= 9 THEN max_length = 5;
-  ELSIF precision <= 19 THEN max_length = 9;
-  ELSIF precision <= 28 THEN max_length = 13;
-  ELSIF precision <= 38 THEN max_length = 17;
- ELSE max_length = typelen;
- END IF;
- ELSE
-  max_length = typemod;
- END CASE;
- RETURN max_length;
+	IF typemod = -1 THEN
+		CASE 
+		WHEN v_type COLLATE sys.database_default in ('image', 'text', 'ntext') THEN max_length = 16;
+		WHEN v_type COLLATE sys.database_default = 'sql_variant' THEN max_length = 8016;
+		WHEN v_type COLLATE sys.database_default in ('varbinary', 'varchar', 'nvarchar') THEN 
+			IF for_sys_types THEN max_length = 8000;
+			ELSE max_length = -1;
+			END IF;
+		WHEN v_type COLLATE sys.database_default in ('binary', 'char', 'bpchar', 'nchar') THEN max_length = 8000;
+		WHEN v_type COLLATE sys.database_default in ('decimal', 'numeric') THEN max_length = 17;
+		ELSE max_length = typemod;
+		END CASE;
+		RETURN max_length;
+	END IF;
+
+	CASE
+	WHEN v_type COLLATE sys.database_default in ('char', 'bpchar', 'varchar', 'binary', 'varbinary') THEN max_length = typemod - 4;
+	WHEN v_type COLLATE sys.database_default in ('nchar', 'nvarchar') THEN max_length = (typemod - 4) * 2;
+	WHEN v_type COLLATE sys.database_default = 'sysname' THEN max_length = (typemod - 4) * 2;
+	WHEN v_type COLLATE sys.database_default in ('numeric', 'decimal') THEN
+		precision = ((typemod - 4) >> 16) & 65535;
+		IF precision >= 1 and precision <= 9 THEN max_length = 5;
+		ELSIF precision <= 19 THEN max_length = 9;
+		ELSIF precision <= 28 THEN max_length = 13;
+		ELSIF precision <= 38 THEN max_length = 17;
+	ELSE max_length = typelen;
+	END IF;
+	ELSE
+		max_length = typemod;
+	END CASE;
+	RETURN max_length;
 END;
 $$ LANGUAGE plpgsql IMMUTABLE STRICT;
+
+create or replace view sys.all_columns as
+select CAST(c.oid as int) as object_id
+  , CAST(a.attname as sys.sysname) as name
+  , CAST(a.attnum as int) as column_id
+  , CAST(t.oid as int) as system_type_id
+  , CAST(t.oid as int) as user_type_id
+  , CAST(sys.tsql_type_max_length_helper(coalesce(tsql_type_name, tsql_base_type_name), a.attlen, a.atttypmod) as smallint) as max_length
+  , CAST(case
+      when a.atttypmod != -1 then 
+        sys.tsql_type_precision_helper(coalesce(tsql_type_name, tsql_base_type_name), a.atttypmod)
+      else 
+        sys.tsql_type_precision_helper(coalesce(tsql_type_name, tsql_base_type_name), t.typtypmod)
+    end as sys.tinyint) as precision
+  , CAST(case
+      when a.atttypmod != -1 THEN 
+        sys.tsql_type_scale_helper(coalesce(tsql_type_name, tsql_base_type_name), a.atttypmod, false)
+      else 
+        sys.tsql_type_scale_helper(coalesce(tsql_type_name, tsql_base_type_name), t.typtypmod, false)
+    end as sys.tinyint) as scale
+  , CAST(coll.collname as sys.sysname) as collation_name
+  , case when a.attnotnull then CAST(0 as sys.bit) else CAST(1 as sys.bit) end as is_nullable
+  , CAST(0 as sys.bit) as is_ansi_padded
+  , CAST(0 as sys.bit) as is_rowguidcol
+  , CAST(0 as sys.bit) as is_identity
+  , CAST(0 as sys.bit) as is_computed
+  , CAST(0 as sys.bit) as is_filestream
+  , CAST(0 as sys.bit) as is_replicated
+  , CAST(0 as sys.bit) as is_non_sql_subscribed
+  , CAST(0 as sys.bit) as is_merge_published
+  , CAST(0 as sys.bit) as is_dts_replicated
+  , CAST(0 as sys.bit) as is_xml_document
+  , CAST(0 as int) as xml_collection_id
+  , CAST(coalesce(d.oid, 0) as int) as default_object_id
+  , CAST(coalesce((select oid from pg_constraint where conrelid = t.oid and contype = 'c' and a.attnum = any(conkey) limit 1), 0) as int) as rule_object_id
+  , CAST(0 as sys.bit) as is_sparse
+  , CAST(0 as sys.bit) as is_column_set
+  , CAST(0 as sys.tinyint) as generated_always_type
+  , CAST('NOT_APPLICABLE' as sys.nvarchar(60)) as generated_always_type_desc
+from pg_attribute a
+inner join pg_class c on c.oid = a.attrelid
+inner join pg_type t on t.oid = a.atttypid
+inner join pg_namespace s on s.oid = c.relnamespace
+left join pg_attrdef d on c.oid = d.adrelid and a.attnum = d.adnum
+left join pg_collation coll on coll.oid = a.attcollation
+, sys.translate_pg_type_to_tsql(a.atttypid) AS tsql_type_name
+, sys.translate_pg_type_to_tsql(t.typbasetype) AS tsql_base_type_name
+where not a.attisdropped
+and (s.oid in (select schema_id from sys.schemas) or s.nspname = 'sys')
+-- r = ordinary table, i = index, S = sequence, t = TOAST table, v = view, m = materialized view, c = composite type, f = foreign table, p = partitioned table
+and c.relkind in ('r', 'v', 'm', 'f', 'p')
+and has_schema_privilege(s.oid, 'USAGE')
+and has_column_privilege(quote_ident(s.nspname) ||'.'||quote_ident(c.relname), a.attname, 'SELECT,INSERT,UPDATE,REFERENCES')
+and a.attnum > 0;
+GRANT SELECT ON sys.all_columns TO PUBLIC;
+
+CREATE OR REPLACE VIEW sys.all_parameters
+AS
+SELECT
+    CAST(ss.p_oid AS INT) AS object_id
+  , CAST(COALESCE(ss.proargnames[(ss.x).n], '') AS sys.SYSNAME) AS name
+  , CAST(
+      CASE 
+        WHEN is_out_scalar = 1 THEN 0 -- param_id = 0 for output of scalar function
+        ELSE (ss.x).n
+      END 
+    AS INT) AS parameter_id
+  -- 'system_type_id' is specified as type INT here, and not TINYINT per SQL Server documentation.
+  -- This is because the IDs of system type values generated by
+  -- Babelfish installation will exceed the size of TINYINT
+  , CAST(st.system_type_id AS INT) AS system_type_id
+  , CAST(st.user_type_id AS INT) AS user_type_id
+  , CAST( 
+      CASE
+        WHEN st.is_table_type = 1 THEN -1 -- TVP case
+        WHEN st.is_user_defined = 1 THEN st.max_length -- UDT case
+        ELSE sys.tsql_type_max_length_helper(st.name, t.typlen, typmod, true, true)
+      END
+    AS smallint) AS max_length
+  , CAST(
+      CASE
+        WHEN st.is_table_type = 1 THEN 0 -- TVP case
+        WHEN st.is_user_defined = 1  THEN st.precision -- UDT case
+        ELSE sys.tsql_type_precision_helper(st.name, typmod)
+      END
+    AS sys.tinyint) AS precision
+  , CAST(
+      CASE 
+        WHEN st.is_table_type = 1 THEN 0 -- TVP case
+        WHEN st.is_user_defined = 1  THEN st.scale
+        ELSE sys.tsql_type_scale_helper(st.name, typmod,false)
+      END
+    AS sys.tinyint) AS scale
+  , CAST(
+      CASE
+        WHEN is_out_scalar = 1 THEN 1 -- Output of a scalar function
+        WHEN ss.proargmodes[(ss.x).n] in ('o', 'b', 't') THEN 1
+        ELSE 0
+      END 
+    AS sys.bit) AS is_output
+  , CAST(0 AS sys.bit) AS is_cursor_ref
+  , CAST(0 AS sys.bit) AS has_default_value
+  , CAST(0 AS sys.bit) AS is_xml_document
+  , CAST(NULL AS sys.sql_variant) AS default_value
+  , CAST(0 AS int) AS xml_collection_id
+  , CAST(0 AS sys.bit) AS is_readonly
+  , CAST(1 AS sys.bit) AS is_nullable
+  , CAST(NULL AS int) AS encryption_type
+  , CAST(NULL AS sys.nvarchar(64)) AS encryption_type_desc
+  , CAST(NULL AS sys.sysname) AS encryption_algorithm_name
+  , CAST(NULL AS int) AS column_encryption_key_id
+  , CAST(NULL AS sys.sysname) AS column_encryption_key_database_name
+FROM pg_type t
+  INNER JOIN sys.types st ON st.user_type_id = t.oid
+  INNER JOIN 
+  (
+    SELECT
+      p.oid AS p_oid,
+      p.proargnames,
+      p.proargmodes,
+      p.prokind,
+      json_extract_path(CAST(p.probin as json), 'typmod_array') AS typmod_array,
+      information_schema._pg_expandarray(
+      COALESCE(p.proallargtypes,
+        CASE 
+          WHEN p.prokind = 'f' THEN (CAST( p.proargtypes AS oid[]) || p.prorettype) -- Adds return type if not present on proallargtypes
+          ELSE CAST(p.proargtypes AS oid[])
+        END
+      )) AS x
+    FROM pg_proc p
+    WHERE (
+      p.pronamespace in (select schema_id from sys.schemas union all select oid from pg_namespace where nspname = 'sys')
+      AND (pg_has_role(p.proowner, 'USAGE') OR has_function_privilege(p.oid, 'EXECUTE'))
+      AND p.probin like '{%typmod_array%}') -- Needs to have a typmod array in JSON format
+  ) ss ON t.oid = (ss.x).x,
+  COALESCE(pg_get_function_result(ss.p_oid), '') AS return_type,
+  CAST(ss.typmod_array->>(ss.x).n-1 AS INT) AS typmod, 
+  CAST(
+    CASE
+      WHEN ss.prokind = 'f' AND ss.proargnames[(ss.x).n] IS NULL THEN 1 -- checks if param is output of scalar function
+      ELSE 0
+    END 
+  AS INT) AS is_out_scalar
+WHERE ( -- If it's a Table function, we only want the inputs
+      return_type NOT LIKE 'TABLE(%' OR 
+      (return_type LIKE 'TABLE(%' AND ss.proargmodes[(ss.x).n] = 'i'));
+GRANT SELECT ON sys.all_parameters TO PUBLIC;
+
 
 create or replace view sys.columns AS
 select out_object_id as object_id
@@ -3190,7 +3467,6 @@ select out_object_id as object_id
   , out_graph_type_desc as graph_type_desc
 from sys.columns_internal();
 GRANT SELECT ON sys.columns TO PUBLIC;
-
 
 CREATE OR replace view sys.foreign_keys AS
 SELECT
@@ -3386,51 +3662,21 @@ from
 ) as indexes_select order by object_id, type_desc;
 GRANT SELECT ON sys.indexes TO PUBLIC;
 
-create or replace view sys.tables as
-select
-  CAST(t.relname as sys._ci_sysname) as name -- should we change datatype to sys.sysname which might fix BABEL-3110.sql test
-  , CAST(t.oid as int) as object_id
-  , CAST(NULL as int) as principal_id
-  , CAST(sch.schema_id as int) as schema_id
-  , 0 as parent_object_id
-  , CAST('U' as CHAR(2)) as type
-  , CAST('USER_TABLE' as sys.nvarchar(60)) as type_desc
-  , CAST(NULL as sys.datetime) as create_date
-  , CAST(NULL as sys.datetime) as modify_date
-  , CAST(0 as sys.bit) as is_ms_shipped
-  , CAST(0 as sys.bit) as is_published
-  , CAST(0 as sys.bit) as is_schema_published
-  , case reltoastrelid when 0 then 0 else 1 end as lob_data_space_id
-  , CAST(NULL as int) as filestream_data_space_id
-  , CAST(relnatts as int) as max_column_id_used
-  , CAST(0 as sys.bit) as lock_on_bulk_load
-  , CAST(1 as sys.bit) as uses_ansi_nulls
-  , CAST(0 as sys.bit) as is_replicated
-  , CAST(0 as sys.bit) as has_replication_filter
-  , CAST(0 as sys.bit) as is_merge_published
-  , CAST(0 as sys.bit) as is_sync_tran_subscribed
-  , CAST(0 as sys.bit) as has_unchecked_assembly_data
-  , 0 as text_in_row_limit
-  , CAST(0 as sys.bit) as large_value_types_out_of_row
-  , CAST(0 as sys.bit) as is_tracked_by_cdc
-  , CAST(0 as sys.tinyint) as lock_escalation
-  , CAST('TABLE' as sys.nvarchar(60)) as lock_escalation_desc
-  , CAST(0 as sys.bit) as is_filetable
-  , CAST(0 as sys.tinyint) as durability
-  , CAST('SCHEMA_AND_DATA' as sys.nvarchar(60)) as durability_desc
-  , CAST(0 as sys.bit) is_memory_optimized
-  , case relpersistence when 't' then CAST(2 as sys.tinyint) else CAST(0 as sys.tinyint) end as temporal_type
-  , case relpersistence when 't' then CAST('SYSTEM_VERSIONED_TEMPORAL_TABLE' as sys.nvarchar(60)) else CAST('NON_TEMPORAL_TABLE' as sys.nvarchar(60)) end as temporal_type_desc
-  , CAST(null as integer) as history_table_id
-  , CAST(0 as sys.bit) as is_remote_data_archive_enabled
-  , CAST(0 as sys.bit) as is_external
-from pg_class t inner join sys.schemas sch on t.relnamespace = sch.schema_id
-where t.relpersistence in ('p', 'u', 't')
-and t.relkind = 'r'
-and not sys.is_table_type(t.oid)
-and has_schema_privilege(sch.schema_id, 'USAGE')
-and has_table_privilege(t.oid, 'SELECT,INSERT,UPDATE,DELETE,TRUNCATE,TRIGGER');
-GRANT SELECT ON sys.tables TO PUBLIC;
+-- BABELFISH_FUNCTION_EXT
+CREATE TABLE sys.babelfish_function_ext (
+	nspname NAME NOT NULL,
+	funcname NAME NOT NULL,
+	orig_name sys.NVARCHAR(128), -- users' original input name
+	funcsignature TEXT NOT NULL COLLATE "C",
+	default_positions TEXT COLLATE "C",
+	create_date SYS.DATETIME NOT NULL,
+	modify_date SYS.DATETIME NOT NULL,
+	PRIMARY KEY(nspname, funcsignature)
+);
+GRANT SELECT ON sys.babelfish_function_ext TO PUBLIC;
+
+SELECT pg_catalog.pg_extension_config_dump('sys.babelfish_function_ext', '');
+
 
 create or replace view sys.all_columns as
 select CAST(c.oid as int) as object_id
@@ -3487,6 +3733,7 @@ and has_column_privilege(quote_ident(s.nspname) ||'.'||quote_ident(c.relname), a
 and a.attnum > 0;
 GRANT SELECT ON sys.all_columns TO PUBLIC;
 
+
 CREATE OR replace view sys.key_constraints AS
 SELECT
     CAST(c.conname AS SYSNAME) AS name
@@ -3519,16 +3766,29 @@ WHERE has_schema_privilege(sch.schema_id, 'USAGE')
 AND c.contype IN ('p', 'u');
 GRANT SELECT ON sys.key_constraints TO PUBLIC;
 
+-- BABELFISH_FUNCTION_EXT
+CREATE TABLE sys.babelfish_function_ext (
+	nspname NAME NOT NULL,
+	funcname NAME NOT NULL,
+	orig_name sys.NVARCHAR(128), -- users' original input name
+	funcsignature TEXT NOT NULL COLLATE "C",
+	default_positions TEXT COLLATE "C",
+	create_date SYS.DATETIME NOT NULL,
+	modify_date SYS.DATETIME NOT NULL,
+	PRIMARY KEY(nspname, funcsignature)
+);
+GRANT SELECT ON sys.babelfish_function_ext TO PUBLIC;
+
+SELECT pg_catalog.pg_extension_config_dump('sys.babelfish_function_ext', '');
+
+
 create or replace view sys.procedures as
 select
   cast(p.proname as sys.sysname) as name
   , cast(p.oid as int) as object_id
   , cast(null as int) as principal_id
   , cast(sch.schema_id as int) as schema_id
-  , cast (case when tr.tgrelid is not null
-      then tr.tgrelid
-      else 0 end as int)
-    as parent_object_id
+  , cast (0 as int) as parent_object_id
   , cast(case p.prokind
       when 'p' then 'P'
       when 'a' then 'AF'
@@ -3547,8 +3807,8 @@ select
           else 'SQL_SCALAR_FUNCTION'
         end
     end as sys.nvarchar(60)) as type_desc
-  , cast(null as sys.datetime) as create_date
-  , cast(null as sys.datetime) as modify_date
+  , cast(f.create_date as sys.datetime) as create_date
+  , cast(f.create_date as sys.datetime) as modify_date
   , cast(0 as sys.bit) as is_ms_shipped
   , cast(0 as sys.bit) as is_published
   , cast(0 as sys.bit) as is_schema_published
@@ -3558,9 +3818,12 @@ select
   , cast(0 as sys.bit) as skips_repl_constraints
 from pg_proc p
 inner join sys.schemas sch on sch.schema_id = p.pronamespace
-left join pg_trigger tr on tr.tgfoid = p.oid
+left join sys.babelfish_function_ext f on p.proname = f.funcname and sch.schema_id::regnamespace::name = f.nspname
+and sys.babelfish_get_pltsql_function_signature(p.oid) = f.funcsignature collate "C"
 where has_schema_privilege(sch.schema_id, 'USAGE')
+and format_type(p.prorettype, null) <> 'trigger'
 and has_function_privilege(p.oid, 'EXECUTE');
+GRANT SELECT ON sys.procedures TO PUBLIC;
 
 create or replace view sys.sysindexes as
 select
@@ -3649,9 +3912,12 @@ left join pg_catalog.pg_locks blocking_locks
 GRANT SELECT ON sys.sysprocesses TO PUBLIC;
 
 
+
+-- re-creating objects to point to new tsql_type_max_length_helper
+
 create or replace view sys.types As
 -- For System types
-select tsql_type_name collate sys.database_default as name
+select tsql_type_name COLLATE sys.database_default as name
   , t.oid as system_type_id
   , t.oid as user_type_id
   , s.oid as schema_id
@@ -3661,7 +3927,7 @@ select tsql_type_name collate sys.database_default as name
   , cast(sys.tsql_type_scale_helper(tsql_type_name, t.typtypmod, false) as int) as scale
   , CASE c.collname
     WHEN 'default' THEN cast(current_setting('babelfishpg_tsql.server_collation_name') as name)
-    ELSE c.collname collate "C"
+    ELSE  c.collname COLLATE "C"
     END as collation_name
   , case when typnotnull then 0 else 1 end as is_nullable
   , 0 as is_user_defined
@@ -3676,9 +3942,9 @@ left join pg_collation c on c.oid = t.typcollation
 where tsql_type_name IS NOT NULL
 and pg_type_is_visible(t.oid)
 and (s.nspname = 'pg_catalog' OR s.nspname = 'sys')
-union all
+union all 
 -- For User Defined Types
-select cast(t.typname as text) collate sys.database_default as name
+select cast(t.typname as text) COLLATE sys.database_default as name
   , t.typbasetype as system_type_id
   , t.oid as user_type_id
   , s.oid as schema_id
@@ -3688,7 +3954,7 @@ select cast(t.typname as text) collate sys.database_default as name
   , case when is_tbl_type then 0::smallint else cast(sys.tsql_type_scale_helper(tsql_base_type_name, t.typtypmod, false) as int) end as scale
   , CASE c.collname
     WHEN 'default' THEN cast(current_setting('babelfishpg_tsql.server_collation_name') as name)
-    ELSE c.collname
+    ELSE  c.collname 
     END as collation_name
   , case when is_tbl_type then 0
          else case when typnotnull then 0 else 1 end
@@ -3717,6 +3983,7 @@ and
     -- only for table types
     sys.is_table_type(t.typrelid)
   );
+GRANT SELECT ON sys.types TO PUBLIC;
 
 create or replace view sys.table_types as
 select st.*
@@ -3725,6 +3992,9 @@ select st.*
 from sys.types st
 inner join pg_catalog.pg_type pt on st.user_type_id = pt.oid
 where is_table_type = 1;
+
+ALTER VIEW sys.default_constraints RENAME TO default_constraints_deprecated_in_2_3_0;
+ALTER VIEW sys.check_constraints RENAME TO check_constraints_deprecated_in_2_3_0;
 
 create or replace view sys.default_constraints
 AS
@@ -3741,7 +4011,8 @@ select CAST(('DF_' || tab.name collate "C" || '_' || d.oid) as sys.sysname) as n
   , CAST(0 as sys.bit) as is_published
   , CAST(0 as sys.bit) as is_schema_published
   , CAST(d.adnum as int) as parent_column_id
-  , CAST(pg_get_expr(d.adbin, d.adrelid) as sys.varchar) as definition
+  -- use a simple regex to strip the datatype and collation that pg_get_expr returns after a double-colon that is not expected in SQL Server
+  , CAST(regexp_replace(pg_get_expr(d.adbin, d.adrelid), '::"?\w+"?| COLLATE "\w+"', '', 'g') as sys.nvarchar(4000)) as definition
   , CAST(1 as sys.bit) as is_system_named
 from pg_catalog.pg_attrdef as d
 inner join pg_attribute a on a.attrelid = d.adrelid and d.adnum = a.attnum
@@ -3749,31 +4020,34 @@ inner join sys.tables tab on d.adrelid = tab.object_id
 WHERE a.atthasdef = 't' and a.attgenerated = ''
 AND has_schema_privilege(tab.schema_id, 'USAGE')
 AND has_column_privilege(a.attrelid, a.attname, 'SELECT,INSERT,UPDATE,REFERENCES');
+GRANT SELECT ON sys.default_constraints TO PUBLIC;
 
 CREATE or replace VIEW sys.check_constraints AS
 SELECT CAST(c.conname as sys.sysname) as name
-  , oid::integer as object_id
-  , NULL::integer as principal_id
-  , c.connamespace::integer as schema_id
-  , conrelid::integer as parent_object_id
-  , 'C'::char(2) as type
-  , 'CHECK_CONSTRAINT'::sys.nvarchar(60) as type_desc
-  , null::sys.datetime as create_date
-  , null::sys.datetime as modify_date
-  , 0::sys.bit as is_ms_shipped
-  , 0::sys.bit as is_published
-  , 0::sys.bit as is_schema_published
-  , 0::sys.bit as is_disabled
-  , 0::sys.bit as is_not_for_replication
-  , 0::sys.bit as is_not_trusted
-  , c.conkey[1]::integer AS parent_column_id
-  , substring(pg_get_constraintdef(c.oid) from 7) AS definition
-  , 1::sys.bit as uses_database_collation
-  , 0::sys.bit as is_system_named
+  , CAST(oid as integer) as object_id
+  , CAST(NULL as integer) as principal_id 
+  , CAST(c.connamespace as integer) as schema_id
+  , CAST(conrelid as integer) as parent_object_id
+  , CAST('C' as char(2)) as type
+  , CAST('CHECK_CONSTRAINT' as sys.nvarchar(60)) as type_desc
+  , CAST(null as sys.datetime) as create_date
+  , CAST(null as sys.datetime) as modify_date
+  , CAST(0 as sys.bit) as is_ms_shipped
+  , CAST(0 as sys.bit) as is_published
+  , CAST(0 as sys.bit) as is_schema_published
+  , CAST(0 as sys.bit) as is_disabled
+  , CAST(0 as sys.bit) as is_not_for_replication
+  , CAST(0 as sys.bit) as is_not_trusted
+  , CAST(c.conkey[1] as integer) AS parent_column_id
+  -- use a simple regex to strip the datatype and collation that pg_get_constraintdef returns after a double-colon that is not expected in SQL Server
+  , CAST(regexp_replace(substring(pg_get_constraintdef(c.oid) from 7), '::"?\w+"?| COLLATE "\w+"', '', 'g') as sys.nvarchar(4000)) AS definition
+  , CAST(1 as sys.bit) as uses_database_collation
+  , CAST(0 as sys.bit) as is_system_named
 FROM pg_catalog.pg_constraint as c
 INNER JOIN sys.schemas s on c.connamespace = s.schema_id
 WHERE has_schema_privilege(s.schema_id, 'USAGE')
 AND c.contype = 'c' and c.conrelid != 0;
+GRANT SELECT ON sys.check_constraints TO PUBLIC;
 
 create or replace view sys.shipped_objects_not_in_sys AS
 -- This portion of view retrieves information on objects that reside in a schema in one specfic database.
@@ -3801,6 +4075,7 @@ select t.name,t.type, ns.oid as schemaid from
 ) t (name, schema_name, type)
 inner join sys.babelfish_namespace_ext b on t.schema_name=b.orig_name COLLATE sys.database_default
 inner join pg_catalog.pg_namespace ns on b.nspname = ns.nspname COLLATE sys.database_default;
+GRANT SELECT ON sys.shipped_objects_not_in_sys TO PUBLIC;
 
 create or replace view sys.all_objects as
 select
@@ -4021,11 +4296,13 @@ select
   , 0 as is_schema_published
 from sys.table_types tt
 ) ot;
+GRANT SELECT ON sys.all_objects TO PUBLIC;
 
 create or replace view sys.system_objects as
 select * from sys.all_objects o
 inner join pg_namespace s on s.oid = o.schema_id
 where s.nspname = 'sys';
+GRANT SELECT ON sys.system_objects TO PUBLIC;
 
 create or replace view sys.all_views as
 select
@@ -4057,6 +4334,7 @@ from sys.all_objects t
 INNER JOIN pg_namespace ns ON t.schema_id = ns.oid
 INNER JOIN information_schema.views v ON t.name = cast(v.table_name as sys.sysname) AND ns.nspname = v.table_schema
 where t.type = 'V';
+GRANT SELECT ON sys.all_views TO PUBLIC;
 
 CREATE OR REPLACE VIEW sys.triggers
 AS
@@ -4068,8 +4346,8 @@ SELECT
   CAST(tr.tgrelid as int) AS parent_id,
   CAST('TR' as sys.bpchar(2)) AS type,
   CAST('SQL_TRIGGER' as sys.nvarchar(60)) AS type_desc,
-  CAST(NULL as sys.datetime) AS create_date,
-  CAST(NULL as sys.datetime) AS modify_date,
+  CAST(f.create_date as sys.datetime) AS create_date,
+  CAST(f.create_date as sys.datetime) AS modify_date,
   CAST(0 as sys.bit) AS is_ms_shipped,
   CAST(
       CASE WHEN tr.tgenabled = 'D'
@@ -4077,20 +4355,23 @@ SELECT
       ELSE 0
       END
       AS sys.bit
-  ) AS is_disabled,
+  )	AS is_disabled,
   CAST(0 as sys.bit) AS is_not_for_replication,
   CAST(get_bit(CAST(CAST(tr.tgtype as int) as bit(7)),0) as sys.bit) AS is_instead_of_trigger
 FROM pg_proc p
 inner join sys.schemas sch on sch.schema_id = p.pronamespace
 left join pg_trigger tr on tr.tgfoid = p.oid
+left join sys.babelfish_function_ext f on p.proname = f.funcname and sch.schema_id::regnamespace::name = f.nspname
+and sys.babelfish_get_pltsql_function_signature(p.oid) = f.funcsignature collate "C"
 where has_schema_privilege(sch.schema_id, 'USAGE')
 and has_function_privilege(p.oid, 'EXECUTE')
 and p.prokind = 'f'
 and format_type(p.prorettype, null) = 'trigger';
+GRANT SELECT ON sys.triggers TO PUBLIC;
 
 create or replace view sys.objects as
 select
-      CAST(t.name as sys.sysname) as name
+      CAST(t.name as sys.sysname) as name 
     , CAST(t.object_id as int) as object_id
     , CAST(t.principal_id as int) as principal_id
     , CAST(t.schema_id as int) as schema_id
@@ -4102,7 +4383,7 @@ select
     , CAST(t.is_ms_shipped as sys.bit) as is_ms_shipped
     , CAST(t.is_published as sys.bit) as is_published
     , CAST(t.is_schema_published as sys.bit) as is_schema_published
-from sys.tables t
+from  sys.tables t
 union all
 select
       CAST(v.name as sys.sysname) as name
@@ -4117,7 +4398,7 @@ select
     , CAST(v.is_ms_shipped as sys.bit) as is_ms_shipped
     , CAST(v.is_published as sys.bit) as is_published
     , CAST(v.is_schema_published as sys.bit) as is_schema_published
-from sys.views v
+from  sys.views v
 union all
 select
       CAST(f.name as sys.sysname) as name
@@ -4180,7 +4461,7 @@ select
     , CAST(0 as sys.bit) as is_schema_published
   from sys.triggers tr
   inner join pg_proc p on p.oid = tr.object_id
-union all
+union all 
 select
     CAST(def.name as sys.sysname) as name
   , CAST(def.object_id as int) as object_id
@@ -4230,19 +4511,32 @@ and p.relkind = 'S'
 and has_schema_privilege(s.schema_id, 'USAGE')
 union all
 select
-    CAST(('TT_' || tt.name collate "C" || '_' || tt.type_table_object_id) as sys.sysname) as name
+    CAST(('TT_' || tt.name COLLATE "C" || '_' || tt.type_table_object_id) as sys.sysname) as name
   , CAST(tt.type_table_object_id as int) as object_id
   , CAST(tt.principal_id as int) as principal_id
   , CAST(tt.schema_id as int) as schema_id
   , CAST(0 as int) as parent_object_id
   , CAST('TT' as char(2)) as type
   , CAST('TABLE_TYPE' as sys.nvarchar(60)) as type_desc
-  , CAST(null as sys.datetime) as create_date
-  , CAST(null as sys.datetime) as modify_date
+  , CAST((select string_agg(
+                    case
+                    when option like 'bbf_rel_create_date=%%' then substring(option, 21)
+                    else NULL
+                    end, ',')
+          from unnest(c.reloptions) as option)
+     as sys.datetime) as create_date
+  , CAST((select string_agg(
+                    case
+                    when option like 'bbf_rel_create_date=%%' then substring(option, 21)
+                    else NULL
+                    end, ',')
+          from unnest(c.reloptions) as option)
+     as sys.datetime) as modify_date
   , CAST(1 as sys.bit) as is_ms_shipped
   , CAST(0 as sys.bit) as is_published
   , CAST(0 as sys.bit) as is_schema_published
-from sys.table_types tt;
+from sys.table_types tt
+inner join pg_class c on tt.type_table_object_id = c.oid;
 GRANT SELECT ON sys.objects TO PUBLIC;
 
 create or replace view sys.sysobjects as
@@ -4279,26 +4573,25 @@ select
 from sys.objects s;
 GRANT SELECT ON sys.sysobjects TO PUBLIC;
 
--- TODO: BABEL-3127
 CREATE OR REPLACE VIEW sys.all_sql_modules_internal AS
 SELECT
   ao.object_id AS object_id
   , CAST(
-      CASE WHEN ao.type in ('P', 'FN', 'IN', 'TF', 'RF') THEN pg_get_functiondef(ao.object_id)
-      WHEN ao.type = 'V' THEN NULL
+      CASE WHEN ao.type in ('P', 'FN', 'IN', 'TF', 'RF') THEN tsql_get_functiondef(ao.object_id)
+      WHEN ao.type = 'V' THEN COALESCE(bvd.definition, '')
       WHEN ao.type = 'TR' THEN NULL
       ELSE NULL
       END
-    AS sys.nvarchar(4000)) AS definition -- Object definition work in progress, will update definition with BABEL-3127 Jira.
-  , CAST(1 as sys.bit) AS uses_ansi_nulls
-  , CAST(1 as sys.bit) AS uses_quoted_identifier
-  , CAST(0 as sys.bit) AS is_schema_bound
-  , CAST(0 as sys.bit) AS uses_database_collation
-  , CAST(0 as sys.bit) AS is_recompiled
+    AS sys.nvarchar(4000)) AS definition  -- Object definition work in progress, will update definition with BABEL-3127 Jira.
+  , CAST(1 as sys.bit)  AS uses_ansi_nulls
+  , CAST(1 as sys.bit)  AS uses_quoted_identifier
+  , CAST(0 as sys.bit)  AS is_schema_bound
+  , CAST(0 as sys.bit)  AS uses_database_collation
+  , CAST(0 as sys.bit)  AS is_recompiled
   , CAST(
       CASE WHEN ao.type IN ('P', 'FN', 'IN', 'TF', 'RF') THEN
         CASE WHEN p.proisstrict THEN 1
-        ELSE 0
+        ELSE 0 
         END
       ELSE 0
       END
@@ -4307,6 +4600,14 @@ SELECT
   , CAST(0 as sys.bit) as uses_native_compilation
   , CAST(ao.is_ms_shipped as INT) as is_ms_shipped
 FROM sys.all_objects ao
+LEFT OUTER JOIN sys.pg_namespace_ext nmext on ao.schema_id = nmext.oid
+LEFT OUTER JOIN sys.babelfish_namespace_ext ext ON nmext.nspname = ext.nspname
+LEFT OUTER JOIN sys.babelfish_view_def bvd 
+ on (
+      ext.orig_name = bvd.schema_name AND 
+      ext.dbid = bvd.dbid AND
+      ao.name = bvd.object_name 
+   )
 LEFT JOIN pg_proc p ON ao.object_id = CAST(p.oid AS INT)
 WHERE ao.type in ('P', 'RF', 'V', 'TR', 'FN', 'IF', 'TF', 'R');
 GRANT SELECT ON sys.all_sql_modules_internal TO PUBLIC;
@@ -4367,6 +4668,7 @@ SELECT 1001 as type,
   NULL::nvarchar(255) as description ,
   NULL::varbinary(6000) binarydefinition ,
   NULL::image definition;
+GRANT SELECT ON sys.syscharsets TO PUBLIC;
 
 CREATE OR REPLACE VIEW sys.computed_columns
 AS
@@ -4413,6 +4715,8 @@ FROM sys.columns_internal() sc
 INNER JOIN pg_attribute a ON sc.out_name = a.attname COLLATE sys.database_default AND sc.out_column_id = a.attnum
 INNER JOIN pg_attrdef d ON d.adrelid = a.attrelid AND d.adnum = a.attnum
 WHERE a.attgenerated = 's' AND sc.out_is_computed::integer = 1;
+GRANT SELECT ON sys.computed_columns TO PUBLIC;
+
 
 CREATE OR REPLACE VIEW sys.endpoints
 AS
@@ -4426,6 +4730,7 @@ SELECT CAST('TSQL Default TCP' AS sys.sysname) AS name
   , CAST(0 AS tinyint) AS state
   , CAST('STARTED' AS sys.nvarchar(60)) AS state_desc
   , CAST(0 AS sys.bit) AS is_admin_endpoint;
+GRANT SELECT ON sys.endpoints TO PUBLIC;
 
 CREATE OR REPLACE VIEW sys.syscolumns AS
 SELECT out_name as name
@@ -4492,6 +4797,7 @@ SELECT p.name
   , 1::int as isnullable
   , p.collation
 FROM sys.proc_param_helper() as p;
+GRANT SELECT ON sys.syscolumns TO PUBLIC;
 
 create or replace view sys.dm_exec_sessions
   as
@@ -4575,7 +4881,7 @@ create or replace view sys.dm_exec_connections
    , a.pid::sys.varbinary(64) as most_recent_sql_handle
  from pg_catalog.pg_stat_activity AS a
  RIGHT JOIN sys.tsql_stat_get_activity('connections') AS d ON (a.pid = d.procid);
- GRANT SELECT ON sys.dm_exec_connections TO PUBLIC;
+GRANT SELECT ON sys.dm_exec_connections TO PUBLIC;
 
 CREATE OR REPLACE VIEW sys.configurations
 AS
@@ -4604,20 +4910,6 @@ SELECT value,
         END AS status
 FROM sys.babelfish_configurations;
 GRANT SELECT ON sys.syscurconfigs TO PUBLIC;
-
-CREATE OR REPLACE VIEW sys.sysconfigures
-AS
-SELECT value_in_use AS value,
-        configuration_id AS config,
-        comment_sysconfigures AS comment,
-        CASE
-         WHEN CAST(is_advanced as int) = 0 AND CAST(is_dynamic as int) = 0 THEN CAST(0 as smallint)
-         WHEN CAST(is_advanced as int) = 0 AND CAST(is_dynamic as int) = 1 THEN CAST(1 as smallint)
-         WHEN CAST(is_advanced as int) = 1 AND CAST(is_dynamic as int) = 0 THEN CAST(2 as smallint)
-         WHEN CAST(is_advanced as int) = 1 AND CAST(is_dynamic as int) = 1 THEN CAST(3 as smallint)
-        END AS status
-FROM sys.babelfish_configurations;
-GRANT SELECT ON sys.sysconfigures TO PUBLIC;
 
 CREATE OR REPLACE VIEW sys.data_spaces
 AS
@@ -4727,6 +5019,7 @@ SELECT
     CAST(NULL AS SMALLINT) AS msglangid
 FROM sys.babelfish_syslanguages;
 GRANT SELECT ON sys.syslanguages TO PUBLIC;
+
 CREATE OR REPLACE VIEW sys.database_files
 AS
 SELECT
@@ -4785,7 +5078,7 @@ SELECT
   si.filter_definition,
   CAST(0 as INT) AS bucket_count,
   si.auto_created
-FROM sys.indexes si
+FROM sys.indexes s
 WHERE FALSE;
 GRANT SELECT ON sys.hash_indexes TO PUBLIC;
 
@@ -5517,114 +5810,113 @@ CREATE OR REPLACE VIEW information_schema_tsql.check_constraints AS
 GRANT SELECT ON information_schema_tsql.check_constraints TO PUBLIC;
 
 
-
-
 CREATE OR REPLACE VIEW information_schema_tsql.routines AS
     SELECT CAST(nc.dbname AS sys.nvarchar(128)) AS "SPECIFIC_CATALOG",
-        CAST(ext.orig_name AS sys.nvarchar(128)) AS "SPECIFIC_SCHEMA",
-        CAST(p.proname AS sys.nvarchar(128)) AS "SPECIFIC_NAME",
-        CAST(nc.dbname AS sys.nvarchar(128)) AS "ROUTINE_CATALOG",
-        CAST(ext.orig_name AS sys.nvarchar(128)) AS "ROUTINE_SCHEMA",
-        CAST(p.proname AS sys.nvarchar(128)) AS "ROUTINE_NAME",
-        CAST(CASE p.prokind WHEN 'f' THEN 'FUNCTION' WHEN 'p' THEN 'PROCEDURE' END
-   AS sys.nvarchar(20)) AS "ROUTINE_TYPE",
-        CAST(NULL AS sys.nvarchar(128)) AS "MODULE_CATALOG",
-        CAST(NULL AS sys.nvarchar(128)) AS "MODULE_SCHEMA",
-        CAST(NULL AS sys.nvarchar(128)) AS "MODULE_NAME",
-        CAST(NULL AS sys.nvarchar(128)) AS "UDT_CATALOG",
-        CAST(NULL AS sys.nvarchar(128)) AS "UDT_SCHEMA",
-        CAST(NULL AS sys.nvarchar(128)) AS "UDT_NAME",
-  CAST(case when is_tbl_type THEN 'table' when p.prokind = 'p' THEN NULL ELSE tsql_type_name END AS sys.nvarchar(128)) AS "DATA_TYPE",
-        CAST(information_schema_tsql._pgtsql_char_max_length_for_routines(tsql_type_name, true_typmod)
-     AS int)
-   AS "CHARACTER_MAXIMUM_LENGTH",
-        CAST(information_schema_tsql._pgtsql_char_octet_length_for_routines(tsql_type_name, true_typmod)
-     AS int)
-   AS "CHARACTER_OCTET_LENGTH",
-        CAST(NULL AS sys.nvarchar(128)) AS "COLLATION_CATALOG",
-        CAST(NULL AS sys.nvarchar(128)) AS "COLLATION_SCHEMA",
-        CAST(
-             CASE co.collname
-             WHEN 'default' THEN current_setting('babelfishpg_tsql.server_collation_name')
-             ELSE co.collname
-             END
-         AS sys.nvarchar(128)) AS "COLLATION_NAME",
-        CAST(NULL AS sys.nvarchar(128)) AS "CHARACTER_SET_CATALOG",
-        CAST(NULL AS sys.nvarchar(128)) AS "CHARACTER_SET_SCHEMA",
-
-
-
-
-     CAST(case when tsql_type_name IN ('nchar','nvarchar') THEN 'UNICODE' when tsql_type_name IN ('char','varchar') THEN 'iso_1' ELSE NULL END AS sys.nvarchar(128)) AS "CHARACTER_SET_NAME",
-     CAST(information_schema_tsql._pgtsql_numeric_precision(tsql_type_name, t.oid, true_typmod)
-              AS smallint)
+           CAST(ext.orig_name AS sys.nvarchar(128)) AS "SPECIFIC_SCHEMA",
+           CAST(p.proname AS sys.nvarchar(128)) AS "SPECIFIC_NAME",
+           CAST(nc.dbname AS sys.nvarchar(128)) AS "ROUTINE_CATALOG",
+           CAST(ext.orig_name AS sys.nvarchar(128)) AS "ROUTINE_SCHEMA",
+           CAST(p.proname AS sys.nvarchar(128)) AS "ROUTINE_NAME",
+           CAST(CASE p.prokind WHEN 'f' THEN 'FUNCTION' WHEN 'p' THEN 'PROCEDURE' END
+           	 AS sys.nvarchar(20)) AS "ROUTINE_TYPE",
+           CAST(NULL AS sys.nvarchar(128)) AS "MODULE_CATALOG",
+           CAST(NULL AS sys.nvarchar(128)) AS "MODULE_SCHEMA",
+           CAST(NULL AS sys.nvarchar(128)) AS "MODULE_NAME",
+           CAST(NULL AS sys.nvarchar(128)) AS "UDT_CATALOG",
+           CAST(NULL AS sys.nvarchar(128)) AS "UDT_SCHEMA",
+           CAST(NULL AS sys.nvarchar(128)) AS "UDT_NAME",
+	   CAST(case when is_tbl_type THEN 'table' when p.prokind = 'p' THEN NULL ELSE tsql_type_name END AS sys.nvarchar(128)) AS "DATA_TYPE",
+           CAST(information_schema_tsql._pgtsql_char_max_length_for_routines(tsql_type_name, true_typmod)
+                 AS int)
+           AS "CHARACTER_MAXIMUM_LENGTH",
+           CAST(information_schema_tsql._pgtsql_char_octet_length_for_routines(tsql_type_name, true_typmod)
+                 AS int)
+           AS "CHARACTER_OCTET_LENGTH",
+           CAST(NULL AS sys.nvarchar(128)) AS "COLLATION_CATALOG",
+           CAST(NULL AS sys.nvarchar(128)) AS "COLLATION_SCHEMA",
+           CAST(
+                 CASE co.collname
+                       WHEN 'default' THEN current_setting('babelfishpg_tsql.server_collation_name')
+                       ELSE co.collname
+                 END
+            AS sys.nvarchar(128)) AS "COLLATION_NAME",
+            CAST(NULL AS sys.nvarchar(128)) AS "CHARACTER_SET_CATALOG",
+            CAST(NULL AS sys.nvarchar(128)) AS "CHARACTER_SET_SCHEMA",
+	    /*
+                 * TODO: We need to first create mapping of collation name to char-set name;
+                 * Until then return null.
+            */
+	    CAST(case when tsql_type_name IN ('nchar','nvarchar') THEN 'UNICODE' when tsql_type_name IN ('char','varchar') THEN 'iso_1' ELSE NULL END AS sys.nvarchar(128)) AS "CHARACTER_SET_NAME",
+	    CAST(information_schema_tsql._pgtsql_numeric_precision(tsql_type_name, t.oid, true_typmod)
+                        AS smallint)
             AS "NUMERIC_PRECISION",
-     CAST(information_schema_tsql._pgtsql_numeric_precision_radix(tsql_type_name, case when t.typtype = 'd' THEN t.typbasetype ELSE t.oid END, true_typmod)
-              AS smallint)
+	    CAST(information_schema_tsql._pgtsql_numeric_precision_radix(tsql_type_name, case when t.typtype = 'd' THEN t.typbasetype ELSE t.oid END, true_typmod)
+                        AS smallint)
             AS "NUMERIC_PRECISION_RADIX",
-        CAST(information_schema_tsql._pgtsql_numeric_scale(tsql_type_name, t.oid, true_typmod)
-              AS smallint)
+            CAST(information_schema_tsql._pgtsql_numeric_scale(tsql_type_name, t.oid, true_typmod)
+                        AS smallint)
             AS "NUMERIC_SCALE",
-        CAST(information_schema_tsql._pgtsql_datetime_precision(tsql_type_name, true_typmod)
-                 AS smallint)
+            CAST(information_schema_tsql._pgtsql_datetime_precision(tsql_type_name, true_typmod)
+                        AS smallint)
             AS "DATETIME_PRECISION",
-     CAST(NULL AS sys.nvarchar(30)) AS "INTERVAL_TYPE",
-        CAST(NULL AS smallint) AS "INTERVAL_PRECISION",
-        CAST(NULL AS sys.nvarchar(128)) AS "TYPE_UDT_CATALOG",
-        CAST(NULL AS sys.nvarchar(128)) AS "TYPE_UDT_SCHEMA",
-        CAST(NULL AS sys.nvarchar(128)) AS "TYPE_UDT_NAME",
-        CAST(NULL AS sys.nvarchar(128)) AS "SCOPE_CATALOG",
-        CAST(NULL AS sys.nvarchar(128)) AS "SCOPE_SCHEMA",
-        CAST(NULL AS sys.nvarchar(128)) AS "SCOPE_NAME",
-        CAST(NULL AS bigint) AS "MAXIMUM_CARDINALITY",
-        CAST(NULL AS sys.nvarchar(128)) AS "DTD_IDENTIFIER",
-        CAST(CASE WHEN l.lanname = 'sql' THEN 'SQL' WHEN l.lanname = 'pltsql' THEN 'SQL' ELSE 'EXTERNAL' END AS sys.nvarchar(30)) AS "ROUTINE_BODY",
-        CAST(sys.tsql_get_functiondef(p.oid) AS sys.nvarchar(4000)) AS "ROUTINE_DEFINITION",
-        CAST(NULL AS sys.nvarchar(128)) AS "EXTERNAL_NAME",
-        CAST(NULL AS sys.nvarchar(30)) AS "EXTERNAL_LANGUAGE",
-        CAST(NULL AS sys.nvarchar(30)) AS "PARAMETER_STYLE",
-        CAST(CASE WHEN p.provolatile = 'i' THEN 'YES' ELSE 'NO' END AS sys.nvarchar(10)) AS "IS_DETERMINISTIC",
-     CAST(CASE p.prokind WHEN 'p' THEN 'MODIFIES' ELSE 'READS' END AS sys.nvarchar(30)) AS "SQL_DATA_ACCESS",
-        CAST(CASE WHEN p.prokind <> 'p' THEN
-            CASE WHEN p.proisstrict THEN 'YES' ELSE 'NO' END END AS sys.nvarchar(10)) AS "IS_NULL_CALL",
-        CAST(NULL AS sys.nvarchar(128)) AS "SQL_PATH",
-        CAST('YES' AS sys.nvarchar(10)) AS "SCHEMA_LEVEL_ROUTINE",
- CAST(CASE p.prokind WHEN 'f' THEN 0 WHEN 'p' THEN -1 END AS smallint) AS "MAX_DYNAMIC_RESULT_SETS",
-        CAST('NO' AS sys.nvarchar(10)) AS "IS_USER_DEFINED_CAST",
-        CAST('NO' AS sys.nvarchar(10)) AS "IS_IMPLICITLY_INVOCABLE",
-        CAST(NULL AS sys.datetime) AS "CREATED",
-        CAST(NULL AS sys.datetime) AS "LAST_ALTERED"
+	    CAST(NULL AS sys.nvarchar(30)) AS "INTERVAL_TYPE",
+            CAST(NULL AS smallint) AS "INTERVAL_PRECISION",
+            CAST(NULL AS sys.nvarchar(128)) AS "TYPE_UDT_CATALOG",
+            CAST(NULL AS sys.nvarchar(128)) AS "TYPE_UDT_SCHEMA",
+            CAST(NULL AS sys.nvarchar(128)) AS "TYPE_UDT_NAME",
+            CAST(NULL AS sys.nvarchar(128)) AS "SCOPE_CATALOG",
+            CAST(NULL AS sys.nvarchar(128)) AS "SCOPE_SCHEMA",
+            CAST(NULL AS sys.nvarchar(128)) AS "SCOPE_NAME",
+            CAST(NULL AS bigint) AS "MAXIMUM_CARDINALITY",
+            CAST(NULL AS sys.nvarchar(128)) AS "DTD_IDENTIFIER",
+            CAST(CASE WHEN l.lanname = 'sql' THEN 'SQL' WHEN l.lanname = 'pltsql' THEN 'SQL' ELSE 'EXTERNAL' END AS sys.nvarchar(30)) AS "ROUTINE_BODY",
+            CAST(sys.tsql_get_functiondef(p.oid) AS sys.nvarchar(4000)) AS "ROUTINE_DEFINITION",
+            CAST(NULL AS sys.nvarchar(128)) AS "EXTERNAL_NAME",
+            CAST(NULL AS sys.nvarchar(30)) AS "EXTERNAL_LANGUAGE",
+            CAST(NULL AS sys.nvarchar(30)) AS "PARAMETER_STYLE",
+            CAST(CASE WHEN p.provolatile = 'i' THEN 'YES' ELSE 'NO' END AS sys.nvarchar(10)) AS "IS_DETERMINISTIC",
+	    CAST(CASE p.prokind WHEN 'p' THEN 'MODIFIES' ELSE 'READS' END AS sys.nvarchar(30)) AS "SQL_DATA_ACCESS",
+            CAST(CASE WHEN p.prokind <> 'p' THEN
+              CASE WHEN p.proisstrict THEN 'YES' ELSE 'NO' END END AS sys.nvarchar(10)) AS "IS_NULL_CALL",
+            CAST(NULL AS sys.nvarchar(128)) AS "SQL_PATH",
+            CAST('YES' AS sys.nvarchar(10)) AS "SCHEMA_LEVEL_ROUTINE",
+            CAST(CASE p.prokind WHEN 'f' THEN 0 WHEN 'p' THEN -1 END AS smallint) AS "MAX_DYNAMIC_RESULT_SETS",
+            CAST('NO' AS sys.nvarchar(10)) AS "IS_USER_DEFINED_CAST",
+            CAST('NO' AS sys.nvarchar(10)) AS "IS_IMPLICITLY_INVOCABLE",
+            CAST(NULL AS sys.datetime) AS "CREATED",
+            CAST(NULL AS sys.datetime) AS "LAST_ALTERED"
 
-  FROM sys.pg_namespace_ext nc LEFT JOIN sys.babelfish_namespace_ext ext ON nc.nspname = ext.nspname,
+       FROM sys.pg_namespace_ext nc LEFT JOIN sys.babelfish_namespace_ext ext ON nc.nspname = ext.nspname,
             pg_proc p inner join sys.schemas sch on sch.schema_id = p.pronamespace
-  inner join sys.all_objects ao on ao.object_id = CAST(p.oid AS INT),
+	    inner join sys.all_objects ao on ao.object_id = CAST(p.oid AS INT),
             pg_language l,
             pg_type t LEFT JOIN pg_collation co ON t.typcollation = co.oid,
             sys.translate_pg_type_to_tsql(t.oid) AS tsql_type_name,
             sys.tsql_get_returnTypmodValue(p.oid) AS true_typmod,
-     sys.is_table_type(t.typrelid) as is_tbl_type
+	    sys.is_table_type(t.typrelid) as is_tbl_type
 
-  WHERE
-            (case p.prokind
-   when 'p' then true
-   when 'a' then false
-             else
-              (case format_type(p.prorettype, null)
-          when 'trigger' then false
-       else true
-         end)
-            end)
+       WHERE
+            (case p.prokind 
+	       when 'p' then true 
+	       when 'a' then false
+               else 
+    	           (case format_type(p.prorettype, null) 
+	   	      when 'trigger' then false 
+	   	      else true 
+   		    end) 
+            end)  
             AND (NOT pg_is_other_temp_schema(nc.oid))
             AND has_function_privilege(p.oid, 'EXECUTE')
             AND (pg_has_role(t.typowner, 'USAGE')
             OR has_type_privilege(t.oid, 'USAGE'))
             AND ext.dbid = cast(sys.db_id() as oid)
-     AND p.prolang = l.oid
+	    AND p.prolang = l.oid
             AND p.prorettype = t.oid
             AND p.pronamespace = nc.oid
-  AND CAST(ao.is_ms_shipped as INT) = 0;
+	    AND CAST(ao.is_ms_shipped as INT) = 0;
 
--- BABEL-1784: support for sp_columns/sp_columns_100
+GRANT SELECT ON information_schema_tsql.routines TO PUBLIC;
+
 CREATE OR REPLACE VIEW sys.sp_columns_100_view AS
   SELECT
   CAST(t4."TABLE_CATALOG" AS sys.sysname) AS TABLE_QUALIFIER,
@@ -5836,6 +6128,7 @@ CREATE OR REPLACE VIEW sys.spt_tablecollations_view AS
         pg_attribute p ON (c.name = p.attname COLLATE sys.database_default AND c.object_id = p.attrelid)
     WHERE
         c.is_sparse = 0 AND p.attnum >= 0;
+GRANT SELECT ON sys.spt_tablecollations_view TO PUBLIC;
 
 ALTER TABLE sys.assemblies RENAME TO assemblies_deprecated_in_2_3_0;
 
@@ -6862,7 +7155,7 @@ $$
 LANGUAGE 'pltsql';
 GRANT ALL ON PROCEDURE sys.sp_sproc_columns TO PUBLIC;
 
-ALTER TABLE sys.babelfish_view_def RENAME TO babelfish_view_def_deprecated_in_2_3_0;
+ALTER TABLE sys.babelfish_view_def RENAME TO babelfish_view_def_deprecated_in_2_3_0, ADD COLUMN create_date SYS.DATETIME, add COLUMN modify_date SYS.DATETIME;
 
 -- we need to drop primary key constraint also because babelfish_view_def_pkey is being used from C code to perform some lokkup
 ALTER TABLE sys.babelfish_view_def_deprecated_in_2_3_0 DROP CONSTRAINT babelfish_view_def_pkey;
@@ -6874,6 +7167,8 @@ CREATE TABLE sys.babelfish_view_def (
 	definition sys.NTEXT,
 	flag_validity BIGINT,
 	flag_values BIGINT,
+	create_date SYS.DATETIME,
+	modify_date SYS.DATETIME,
 	PRIMARY KEY(dbid, schema_name, object_name)
 );
 
@@ -6883,6 +7178,169 @@ INSERT INTO sys.babelfish_view_def SELECT * FROM sys.babelfish_view_def_deprecat
 SELECT pg_catalog.pg_extension_config_dump('sys.babelfish_view_def', '');
 
 CALL babel_catalog_initializer();
+
+CREATE OR REPLACE FUNCTION sys.babelfish_get_pltsql_function_signature(IN funcoid OID)
+RETURNS text
+AS 'babelfishpg_tsql', 'get_pltsql_function_signature' LANGUAGE C;
+
+create or replace view sys.tables as
+select
+  CAST(t.relname as sys._ci_sysname) as name
+  , CAST(t.oid as int) as object_id
+  , CAST(NULL as int) as principal_id
+  , CAST(sch.schema_id as int) as schema_id
+  , 0 as parent_object_id
+  , CAST('U' as CHAR(2)) as type
+  , CAST('USER_TABLE' as sys.nvarchar(60)) as type_desc
+  , CAST((select string_agg(
+                  case
+                  when option like 'bbf_rel_create_date=%%' then substring(option, 21)
+                  else NULL
+                  end, ',')
+          from unnest(t.reloptions) as option)
+        as sys.datetime) as create_date
+  , CAST((select string_agg(
+                  case
+                  when option like 'bbf_rel_create_date=%%' then substring(option, 21)
+                  else NULL
+                  end, ',')
+          from unnest(t.reloptions) as option)
+        as sys.datetime) as modify_date
+  , CAST(0 as sys.bit) as is_ms_shipped
+  , CAST(0 as sys.bit) as is_published
+  , CAST(0 as sys.bit) as is_schema_published
+  , case reltoastrelid when 0 then 0 else 1 end as lob_data_space_id
+  , CAST(NULL as int) as filestream_data_space_id
+  , CAST(relnatts as int) as max_column_id_used
+  , CAST(0 as sys.bit) as lock_on_bulk_load
+  , CAST(1 as sys.bit) as uses_ansi_nulls
+  , CAST(0 as sys.bit) as is_replicated
+  , CAST(0 as sys.bit) as has_replication_filter
+  , CAST(0 as sys.bit) as is_merge_published
+  , CAST(0 as sys.bit) as is_sync_tran_subscribed
+  , CAST(0 as sys.bit) as has_unchecked_assembly_data
+  , 0 as text_in_row_limit
+  , CAST(0 as sys.bit) as large_value_types_out_of_row
+  , CAST(0 as sys.bit) as is_tracked_by_cdc
+  , CAST(0 as sys.tinyint) as lock_escalation
+  , CAST('TABLE' as sys.nvarchar(60)) as lock_escalation_desc
+  , CAST(0 as sys.bit) as is_filetable
+  , CAST(0 as sys.tinyint) as durability
+  , CAST('SCHEMA_AND_DATA' as sys.nvarchar(60)) as durability_desc
+  , CAST(0 as sys.bit) is_memory_optimized
+  , case relpersistence when 't' then CAST(2 as sys.tinyint) else CAST(0 as sys.tinyint) end as temporal_type
+  , case relpersistence when 't' then CAST('SYSTEM_VERSIONED_TEMPORAL_TABLE' as sys.nvarchar(60)) else CAST('NON_TEMPORAL_TABLE' as sys.nvarchar(60)) end as temporal_type_desc
+  , CAST(null as integer) as history_table_id
+  , CAST(0 as sys.bit) as is_remote_data_archive_enabled
+  , CAST(0 as sys.bit) as is_external
+from pg_class t inner join sys.schemas sch on t.relnamespace = sch.schema_id
+where t.relpersistence in ('p', 'u', 't')
+and t.relkind = 'r'
+and not sys.is_table_type(t.oid)
+and has_schema_privilege(sch.schema_id, 'USAGE')
+and has_table_privilege(t.oid, 'SELECT,INSERT,UPDATE,DELETE,TRUNCATE,TRIGGER');
+GRANT SELECT ON sys.tables TO PUBLIC;
+
+create or replace view sys.views as 
+select 
+  t.relname as name
+  , t.oid as object_id
+  , null::integer as principal_id
+  , sch.schema_id as schema_id
+  , 0 as parent_object_id
+  , 'V'::varchar(2) as type 
+  , 'VIEW'::varchar(60) as type_desc
+  , vd.create_date::timestamp as create_date
+  , vd.create_date::timestamp as modify_date
+  , 0 as is_ms_shipped 
+  , 0 as is_published 
+  , 0 as is_schema_published 
+  , 0 as with_check_option 
+  , 0 as is_date_correlation_view 
+  , 0 as is_tracked_by_cdc 
+from pg_class t inner join sys.schemas sch on t.relnamespace = sch.schema_id 
+left outer join sys.babelfish_view_def vd on t.relname COLLATE sys.database_default = vd.object_name and sch.name = vd.schema_name and vd.dbid = sys.db_id() 
+where t.relkind = 'v'
+and has_schema_privilege(sch.schema_id, 'USAGE')
+and has_table_privilege(t.oid, 'SELECT,INSERT,UPDATE,DELETE,TRUNCATE,TRIGGER');
+GRANT SELECT ON sys.views TO PUBLIC;
+
+create or replace view sys.procedures as
+select
+  cast(p.proname as sys.sysname) as name
+  , cast(p.oid as int) as object_id
+  , cast(null as int) as principal_id
+  , cast(sch.schema_id as int) as schema_id
+  , cast (0 as int) as parent_object_id
+  , cast(case p.prokind
+      when 'p' then 'P'
+      when 'a' then 'AF'
+      else
+        case format_type(p.prorettype, null) when 'trigger'
+          then 'TR'
+          else 'FN'
+        end
+    end as sys.bpchar(2)) as type
+  , cast(case p.prokind
+      when 'p' then 'SQL_STORED_PROCEDURE'
+      when 'a' then 'AGGREGATE_FUNCTION'
+      else
+        case format_type(p.prorettype, null) when 'trigger'
+          then 'SQL_TRIGGER'
+          else 'SQL_SCALAR_FUNCTION'
+        end
+    end as sys.nvarchar(60)) as type_desc
+  , cast(f.create_date as sys.datetime) as create_date
+  , cast(f.create_date as sys.datetime) as modify_date
+  , cast(0 as sys.bit) as is_ms_shipped
+  , cast(0 as sys.bit) as is_published
+  , cast(0 as sys.bit) as is_schema_published
+  , cast(0 as sys.bit) as is_auto_executed
+  , cast(0 as sys.bit) as is_execution_replicated
+  , cast(0 as sys.bit) as is_repl_serializable_only
+  , cast(0 as sys.bit) as skips_repl_constraints
+from pg_proc p
+inner join sys.schemas sch on sch.schema_id = p.pronamespace
+left join sys.babelfish_function_ext f on p.proname = f.funcname and sch.schema_id::regnamespace::name = f.nspname
+and sys.babelfish_get_pltsql_function_signature(p.oid) = f.funcsignature collate "C"
+where has_schema_privilege(sch.schema_id, 'USAGE')
+and format_type(p.prorettype, null) <> 'trigger'
+and has_function_privilege(p.oid, 'EXECUTE');
+GRANT SELECT ON sys.procedures TO PUBLIC;
+
+CREATE OR REPLACE VIEW sys.triggers
+AS
+SELECT
+  CAST(p.proname as sys.sysname) as name,
+  CAST(p.oid as int) as object_id,
+  CAST(1 as sys.tinyint) as parent_class,
+  CAST('OBJECT_OR_COLUMN' as sys.nvarchar(60)) AS parent_class_desc,
+  CAST(tr.tgrelid as int) AS parent_id,
+  CAST('TR' as sys.bpchar(2)) AS type,
+  CAST('SQL_TRIGGER' as sys.nvarchar(60)) AS type_desc,
+  CAST(f.create_date as sys.datetime) AS create_date,
+  CAST(f.create_date as sys.datetime) AS modify_date,
+  CAST(0 as sys.bit) AS is_ms_shipped,
+  CAST(
+      CASE WHEN tr.tgenabled = 'D'
+      THEN 1
+      ELSE 0
+      END
+      AS sys.bit
+  )	AS is_disabled,
+  CAST(0 as sys.bit) AS is_not_for_replication,
+  CAST(get_bit(CAST(CAST(tr.tgtype as int) as bit(7)),0) as sys.bit) AS is_instead_of_trigger
+FROM pg_proc p
+inner join sys.schemas sch on sch.schema_id = p.pronamespace
+left join pg_trigger tr on tr.tgfoid = p.oid
+left join sys.babelfish_function_ext f on p.proname = f.funcname and sch.schema_id::regnamespace::name = f.nspname
+and sys.babelfish_get_pltsql_function_signature(p.oid) = f.funcsignature collate "C"
+where has_schema_privilege(sch.schema_id, 'USAGE')
+and has_function_privilege(p.oid, 'EXECUTE')
+and p.prokind = 'f'
+and format_type(p.prorettype, null) = 'trigger';
+GRANT SELECT ON sys.triggers TO PUBLIC;
+
 
 CREATE OR REPLACE VIEW information_schema_tsql.views AS
  SELECT CAST(nc.dbname AS sys.nvarchar(128)) AS "TABLE_CATALOG",
@@ -6963,6 +7421,572 @@ $$
 LANGUAGE 'pltsql';
 GRANT EXECUTE ON PROCEDURE sys.sp_helpsrvrolemember TO PUBLIC;
 
+CREATE OR REPLACE FUNCTION sys.dateadd(IN datepart PG_CATALOG.TEXT, IN num INTEGER, IN startdate ANYELEMENT) RETURNS ANYELEMENT
+AS
+$body$
+BEGIN
+    RETURN sys.dateadd_internal(datepart, num, startdate);
+END;
+$body$
+LANGUAGE plpgsql IMMUTABLE;
+
+CREATE OR REPLACE FUNCTION sys.dateadd_internal(IN datepart PG_CATALOG.TEXT, IN num INTEGER, IN startdate ANYELEMENT) RETURNS ANYELEMENT AS $$
+BEGIN
+    IF pg_typeof(startdate) = 'date'::regtype AND
+		datepart IN ('hour', 'minute', 'second', 'millisecond', 'microsecond', 'nanosecond') THEN
+		RAISE EXCEPTION 'The datepart % is not supported by date function dateadd for data type date.', datepart;
+	END IF;
+    IF pg_typeof(startdate) = 'time'::regtype AND
+		datepart IN ('year', 'quarter', 'month', 'doy', 'day', 'week', 'weekday') THEN
+		RAISE EXCEPTION 'The datepart % is not supported by date function dateadd for data type time.', datepart;
+	END IF;
+
+	CASE datepart
+	WHEN 'year' THEN
+		RETURN startdate + make_interval(years => num);
+	WHEN 'quarter' THEN
+		RETURN startdate + make_interval(months => num * 3);
+	WHEN 'month' THEN
+		RETURN startdate + make_interval(months => num);
+	WHEN 'dayofyear', 'y' THEN
+		RETURN startdate + make_interval(days => num);
+	WHEN 'day' THEN
+		RETURN startdate + make_interval(days => num);
+	WHEN 'week' THEN
+		RETURN startdate + make_interval(weeks => num);
+	WHEN 'weekday' THEN
+		RETURN startdate + make_interval(days => num);
+	WHEN 'hour' THEN
+		RETURN startdate + make_interval(hours => num);
+	WHEN 'minute' THEN
+		RETURN startdate + make_interval(mins => num);
+	WHEN 'second' THEN
+		RETURN startdate + make_interval(secs => num);
+	WHEN 'millisecond' THEN
+		RETURN startdate + make_interval(secs => (num::numeric) * 0.001);
+	WHEN 'microsecond' THEN
+        IF pg_typeof(startdate) = 'sys.datetimeoffset'::regtype THEN
+            RETURN startdate + make_interval(secs => (num::numeric) * 0.000001);
+        ELSIF pg_typeof(startdate) = 'time'::regtype THEN
+            RETURN startdate + make_interval(secs => (num::numeric) * 0.000001);
+        ELSIF pg_typeof(startdate) = 'sys.datetime2'::regtype THEN
+            RETURN startdate + make_interval(secs => (num::numeric) * 0.000001);
+        ELSIF pg_typeof(startdate) = 'sys.smalldatetime'::regtype THEN
+            RAISE EXCEPTION 'The datepart % is not supported by date function dateadd for data type smalldatetime.', datepart;
+        ELSE
+            RAISE EXCEPTION 'The datepart % is not supported by date function dateadd for data type datetime.', datepart;
+        END IF;
+	WHEN 'nanosecond' THEN
+        IF pg_typeof(startdate) = 'sys.datetimeoffset'::regtype THEN
+            RETURN startdate + make_interval(secs => TRUNC((num::numeric)* 0.000000001, 6));
+        ELSIF pg_typeof(startdate) = 'time'::regtype THEN
+            RETURN startdate + make_interval(secs => TRUNC((num::numeric)* 0.000000001, 6));
+        ELSIF pg_typeof(startdate) = 'sys.datetime2'::regtype THEN
+            RETURN startdate + make_interval(secs => TRUNC((num::numeric)* 0.000000001, 6));
+        ELSIF pg_typeof(startdate) = 'sys.smalldatetime'::regtype THEN
+            RAISE EXCEPTION 'The datepart % is not supported by date function dateadd for data type smalldatetime.', datepart;
+        ELSE
+            RAISE EXCEPTION 'The datepart % is not supported by date function dateadd for data type datetime.', datepart;
+        END IF;
+	ELSE
+		RAISE EXCEPTION '''%'' is not a recognized dateadd option.', datepart;
+	END CASE;
+END;
+$$
+STRICT
+LANGUAGE plpgsql IMMUTABLE;
+
+CREATE OR REPLACE FUNCTION sys.format_datetime(IN value anyelement, IN format_pattern NVARCHAR,IN culture VARCHAR,  IN data_type VARCHAR DEFAULT '') RETURNS sys.nvarchar
+AS 'babelfishpg_tsql', 'format_datetime' LANGUAGE C IMMUTABLE PARALLEL SAFE;
+GRANT EXECUTE ON FUNCTION sys.format_datetime(IN anyelement, IN NVARCHAR, IN VARCHAR, IN VARCHAR) TO PUBLIC;
+
+CREATE OR REPLACE FUNCTION sys.format_numeric(IN value anyelement, IN format_pattern NVARCHAR,IN culture VARCHAR,  IN data_type VARCHAR DEFAULT '', IN e_position INT DEFAULT -1) RETURNS sys.nvarchar
+AS 'babelfishpg_tsql', 'format_numeric' LANGUAGE C IMMUTABLE PARALLEL SAFE;
+GRANT EXECUTE ON FUNCTION sys.format_numeric(IN anyelement, IN NVARCHAR, IN VARCHAR, IN VARCHAR, IN INT) TO PUBLIC;
+
+CREATE OR REPLACE FUNCTION sys.FORMAT(IN arg anyelement, IN p_format_pattern NVARCHAR, IN p_culture VARCHAR default 'en-us')
+RETURNS sys.NVARCHAR
+AS
+$BODY$
+DECLARE
+    arg_type regtype;
+    v_temp_integer INTEGER;
+BEGIN
+    arg_type := pg_typeof(arg);
+
+    CASE
+        WHEN arg_type IN ('time'::regtype ) THEN
+            RETURN sys.format_datetime(arg, p_format_pattern, p_culture, 'time');
+
+        WHEN arg_type IN ('date'::regtype, 'sys.datetime'::regtype, 'sys.smalldatetime'::regtype, 'sys.datetime2'::regtype ) THEN
+            RETURN sys.format_datetime(arg::timestamp, p_format_pattern, p_culture);
+
+        WHEN arg_type IN ('sys.tinyint'::regtype) THEN
+            RETURN sys.format_numeric(arg::SMALLINT, p_format_pattern, p_culture, 'tinyint');
+
+        WHEN arg_type IN ('smallint'::regtype) THEN
+            RETURN sys.format_numeric(arg::SMALLINT, p_format_pattern, p_culture, 'smallint');
+
+        WHEN arg_type IN ('integer'::regtype) THEN
+            RETURN sys.format_numeric(arg, p_format_pattern, p_culture, 'integer');
+
+         WHEN arg_type IN ('bigint'::regtype) THEN
+            RETURN sys.format_numeric(arg, p_format_pattern, p_culture, 'bigint');
+
+        WHEN arg_type IN ('numeric'::regtype) THEN
+            RETURN sys.format_numeric(arg, p_format_pattern, p_culture, 'numeric');
+
+        WHEN arg_type IN ('sys.decimal'::regtype) THEN
+            RETURN sys.format_numeric(arg::numeric, p_format_pattern, p_culture, 'numeric');
+
+        WHEN arg_type IN ('real'::regtype) THEN
+            IF(p_format_pattern LIKE 'R%') THEN
+                v_temp_integer := length(nullif((regexp_matches(arg::real::text, '(?<=\d*\.).*(?=[eE].*)')::text[])[1], ''));
+            ELSE v_temp_integer:= -1;
+            END IF;
+
+            RETURN sys.format_numeric(arg, p_format_pattern, p_culture, 'real', v_temp_integer);
+
+        WHEN arg_type IN ('float'::regtype) THEN
+            RETURN sys.format_numeric(arg, p_format_pattern, p_culture, 'float');
+
+        WHEN pg_typeof(arg) IN ('sys.smallmoney'::regtype, 'sys.money'::regtype) THEN
+            RETURN sys.format_numeric(arg::numeric, p_format_pattern, p_culture, 'numeric');
+        ELSE
+            RAISE datatype_mismatch;
+        END CASE;
+EXCEPTION
+	WHEN datatype_mismatch THEN
+		RAISE USING MESSAGE := format('Argument data type % is invalid for argument 1 of format function.', pg_typeof(arg)),
+					DETAIL := 'Invalid datatype.',
+					HINT := 'Convert it to valid datatype and try again.';
+END;
+$BODY$
+LANGUAGE plpgsql IMMUTABLE PARALLEL SAFE;
+GRANT EXECUTE ON FUNCTION sys.FORMAT(IN anyelement, IN NVARCHAR, IN VARCHAR) TO PUBLIC;
+
+CREATE OR REPLACE FUNCTION sys.babelfish_try_cast_to_any(IN arg TEXT, INOUT output ANYELEMENT, IN typmod INT)
+RETURNS ANYELEMENT
+AS $BODY$ BEGIN
+    EXECUTE pg_catalog.format('SELECT CAST(%L AS %s)', arg, format_type(pg_typeof(output), typmod)) INTO output;
+    EXCEPTION
+        WHEN OTHERS THEN
+            -- Do nothing. Output carries NULL.
+END; $BODY$
+LANGUAGE plpgsql;
+
+
+CREATE OR REPLACE FUNCTION sys.babelfish_sp_aws_add_jobschedule (
+  par_job_id integer = NULL::integer,
+  par_schedule_id integer = NULL::integer,
+  out returncode integer
+)
+AS
+$body$
+DECLARE
+  var_retval INT;
+  proc_name_mask VARCHAR(100);
+  var_owner_login_name VARCHAR(128);
+  var_xml TEXT DEFAULT '';
+  var_cron_expression VARCHAR(50);
+  var_job_cmd VARCHAR(255);
+  lambda_arn VARCHAR(255);
+  return_message text;
+  var_schedule_name VARCHAR(255);
+  var_job_name VARCHAR(128);
+  var_start_step_id INTEGER;
+  var_notify_level_email INTEGER;
+  var_notify_email_operator_id INTEGER;
+  var_notify_email_operator_name VARCHAR(128);
+  notify_email_sender VARCHAR(128);
+  var_delete_level INTEGER;
+BEGIN
+  IF (EXISTS (
+      SELECT 1
+        FROM sys.sysjobschedules
+       WHERE (schedule_id = par_schedule_id)
+         AND (job_id = par_job_id)))
+  THEN
+    SELECT cron_expression
+      FROM sys.babelfish_sp_schedule_to_cron (par_job_id, par_schedule_id)
+      INTO var_cron_expression;
+    SELECT name
+      FROM sys.sysschedules
+     WHERE schedule_id = par_schedule_id
+      INTO var_schedule_name;
+    SELECT name
+         , start_step_id
+         , COALESCE(notify_level_email,0)
+         , COALESCE(notify_email_operator_id,0)
+         , COALESCE(notify_email_operator_name,'')
+         , COALESCE(delete_level,0)
+      FROM sys.sysjobs
+     WHERE job_id = par_job_id
+      INTO var_job_name
+         , var_start_step_id
+         , var_notify_level_email
+         , var_notify_email_operator_id
+         , var_notify_email_operator_name
+         , var_delete_level;
+
+    proc_name_mask := 'sys_data.sql_agent$job_%s_step_%s';
+    var_job_cmd := pg_catalog.format(proc_name_mask, par_job_id, '1');
+    notify_email_sender := 'aws_test_email_sender@dbbest.com';
+
+
+    var_xml := CONCAT(var_xml, '{');
+    var_xml := CONCAT(var_xml, '"mode": "add_job",');
+    var_xml := CONCAT(var_xml, '"parameters": {');
+    var_xml := CONCAT(var_xml, '"vendor": "postgresql",');
+    var_xml := CONCAT(var_xml, '"job_name": "',var_schedule_name,'",');
+    var_xml := CONCAT(var_xml, '"job_frequency": "',var_cron_expression,'",');
+    var_xml := CONCAT(var_xml, '"job_cmd": "',var_job_cmd,'",');
+    var_xml := CONCAT(var_xml, '"notify_level_email": ',var_notify_level_email,',');
+    var_xml := CONCAT(var_xml, '"delete_level": ',var_delete_level,',');
+    var_xml := CONCAT(var_xml, '"uid": "',par_job_id,'",');
+    var_xml := CONCAT(var_xml, '"callback": "sys.babelfish_sp_job_log",');
+    var_xml := CONCAT(var_xml, '"notification": {');
+    var_xml := CONCAT(var_xml, '"notify_email_sender": "',notify_email_sender,'",');
+    var_xml := CONCAT(var_xml, '"notify_email_recipient": "',var_notify_email_operator_name,'"');
+    var_xml := CONCAT(var_xml, '}');
+    var_xml := CONCAT(var_xml, '}');
+    var_xml := CONCAT(var_xml, '}');
+    -- RAISE NOTICE '%', var_xml;
+    SELECT sys.babelfish_get_service_setting ('JOB', 'LAMBDA_ARN')
+      INTO lambda_arn;
+    SELECT sys.awslambda_fn (lambda_arn, var_xml) INTO return_message;
+    returncode := 0;
+  ELSE
+    returncode := 1;
+    RAISE 'Job not fount' USING ERRCODE := '50000';
+  END IF;
+END;
+$body$
+LANGUAGE 'plpgsql';
+
+CREATE OR REPLACE FUNCTION sys.babelfish_sp_schedule_to_cron (
+  par_job_id integer,
+  par_schedule_id integer,
+  out cron_expression varchar
+)
+RETURNS VARCHAR AS
+$body$
+DECLARE
+  var_enabled INTEGER;
+  var_freq_type INTEGER;
+  var_freq_interval INTEGER;
+  var_freq_subday_type INTEGER;
+  var_freq_subday_interval INTEGER;
+  var_freq_relative_interval INTEGER;
+  var_freq_recurrence_factor INTEGER;
+  var_active_start_date INTEGER;
+  var_active_end_date INTEGER;
+  var_active_start_time INTEGER;
+  var_active_end_time INTEGER;
+  var_next_run_date date;
+  var_next_run_time time;
+  var_next_run_dt timestamp;
+  var_tmp_interval varchar(50);
+  var_current_dt timestamp;
+  var_next_dt timestamp;
+BEGIN
+  SELECT enabled
+       , freq_type
+       , freq_interval
+       , freq_subday_type
+       , freq_subday_interval
+       , freq_relative_interval
+       , freq_recurrence_factor
+       , active_start_date
+       , active_end_date
+       , active_start_time
+       , active_end_time
+    FROM sys.sysschedules
+    INTO var_enabled
+       , var_freq_type
+       , var_freq_interval
+       , var_freq_subday_type
+       , var_freq_subday_interval
+       , var_freq_relative_interval
+       , var_freq_recurrence_factor
+       , var_active_start_date
+       , var_active_end_date
+       , var_active_start_time
+       , var_active_end_time
+   WHERE schedule_id = par_schedule_id;
+  /* if enabled = 0 return */
+  CASE var_freq_type
+    WHEN 1 THEN
+      NULL;
+    WHEN 4 THEN
+    BEGIN
+        cron_expression :=
+        CASE
+          /* WHEN var_freq_subday_type = 1 THEN var_freq_subday_interval::character varying || ' At the specified time'  -- start time */
+          /* WHEN var_freq_subday_type = 2 THEN var_freq_subday_interval::character varying || ' second'  -- ADD var_freq_subday_interval SECOND */
+          WHEN var_freq_subday_type = 4 THEN pg_catalog.format('cron(*/%s * * * ? *)', var_freq_subday_interval::character varying) /* ADD var_freq_subday_interval MINUTE */
+          WHEN var_freq_subday_type = 8 THEN pg_catalog.format('cron(0 */%s * * ? *)', var_freq_subday_interval::character varying) /* ADD var_freq_subday_interval HOUR */
+          ELSE ''
+        END;
+    END;
+    WHEN 8 THEN
+      NULL;
+    WHEN 16 THEN
+      NULL;
+    WHEN 32 THEN
+      NULL;
+    WHEN 64 THEN
+      NULL;
+    WHEN 128 THEN
+     NULL;
+  END CASE;
+ -- return cron_expression;
+END;
+$body$
+LANGUAGE 'plpgsql';
+
+
+CREATE OR REPLACE FUNCTION sys.datetime2fromparts(IN p_year NUMERIC,
+                                                                IN p_month NUMERIC,
+                                                                IN p_day NUMERIC,
+                                                                IN p_hour NUMERIC,
+                                                                IN p_minute NUMERIC,
+                                                                IN p_seconds NUMERIC,
+                                                                IN p_fractions NUMERIC,
+                                                                IN p_precision NUMERIC)
+RETURNS TIMESTAMP WITHOUT TIME ZONE
+AS
+$BODY$
+DECLARE
+   v_fractions VARCHAR;
+   v_precision SMALLINT;
+   v_err_message VARCHAR;
+   v_calc_seconds NUMERIC;
+BEGIN
+   v_fractions := floor(p_fractions)::INTEGER::VARCHAR;
+   v_precision := p_precision::SMALLINT;
+   IF (scale(p_precision) > 0) THEN
+      RAISE most_specific_type_mismatch;
+   ELSIF ((p_year::SMALLINT NOT BETWEEN 1 AND 9999) OR
+       (p_month::SMALLINT NOT BETWEEN 1 AND 12) OR
+       (p_day::SMALLINT NOT BETWEEN 1 AND 31) OR
+       (p_hour::SMALLINT NOT BETWEEN 0 AND 23) OR
+       (p_minute::SMALLINT NOT BETWEEN 0 AND 59) OR
+       (p_seconds::SMALLINT NOT BETWEEN 0 AND 59) OR
+       (p_fractions::SMALLINT NOT BETWEEN 0 AND 9999999) OR
+       (p_fractions::SMALLINT != 0 AND char_length(v_fractions) > p_precision))
+   THEN
+      RAISE invalid_datetime_format;
+   ELSIF (v_precision NOT BETWEEN 0 AND 7) THEN
+      RAISE invalid_parameter_value;
+   END IF;
+
+   v_calc_seconds := pg_catalog.format('%s.%s',
+                            floor(p_seconds)::SMALLINT,
+                            substring(rpad(lpad(v_fractions, v_precision, '0'), 7, '0'), 1, 6))::NUMERIC;
+
+   RETURN make_timestamp(floor(p_year)::SMALLINT,
+                         floor(p_month)::SMALLINT,
+                         floor(p_day)::SMALLINT,
+                         floor(p_hour)::SMALLINT,
+                         floor(p_minute)::SMALLINT,
+                         v_calc_seconds);
+EXCEPTION
+   WHEN most_specific_type_mismatch THEN
+      RAISE USING MESSAGE := 'Scale argument is not valid. Valid expressions for data type DATETIME2 scale argument are integer constants and integer constant expressions.',
+                  DETAIL := 'Use of incorrect "precision" parameter value during conversion process.',
+                  HINT := 'Change "precision" parameter to the proper value and try again.';
+
+   WHEN invalid_parameter_value THEN
+      RAISE USING MESSAGE := pg_catalog.format('Specified scale %s is invalid.', v_precision),
+                  DETAIL := 'Use of incorrect "precision" parameter value during conversion process.',
+                  HINT := 'Change "precision" parameter to the proper value and try again.';
+
+   WHEN invalid_datetime_format THEN
+      RAISE USING MESSAGE := 'Cannot construct data type DATETIME2, some of the arguments have values which are not valid.',
+                  DETAIL := 'Possible use of incorrect value of date or time part (which lies outside of valid range).',
+                  HINT := 'Check each input argument belongs to the valid range and try again.';
+   WHEN numeric_value_out_of_range THEN
+      GET STACKED DIAGNOSTICS v_err_message = MESSAGE_TEXT;
+      v_err_message := upper(split_part(v_err_message, ' ', 1));
+
+      RAISE USING MESSAGE := pg_catalog.format('Error while trying to cast to %s data type.', v_err_message),
+                  DETAIL := pg_catalog.format('Source value is out of %s data type range.', v_err_message),
+                  HINT := pg_catalog.format('Correct the source value you are trying to cast to %s data type and try again.',
+                                 v_err_message);
+END;
+$BODY$
+LANGUAGE plpgsql
+IMMUTABLE
+RETURNS NULL ON NULL INPUT;
+
+CREATE OR REPLACE FUNCTION sys.datetimefromparts(IN p_year NUMERIC,
+                                                               IN p_month NUMERIC,
+                                                               IN p_day NUMERIC,
+                                                               IN p_hour NUMERIC,
+                                                               IN p_minute NUMERIC,
+                                                               IN p_seconds NUMERIC,
+                                                               IN p_milliseconds NUMERIC)
+RETURNS TIMESTAMP WITHOUT TIME ZONE
+AS
+$BODY$
+DECLARE
+    v_err_message VARCHAR;
+    v_calc_seconds NUMERIC;
+    v_milliseconds SMALLINT;
+    v_resdatetime TIMESTAMP WITHOUT TIME ZONE;
+BEGIN
+    -- Check if arguments are out of range
+    IF ((floor(p_year)::SMALLINT NOT BETWEEN 1753 AND 9999) OR
+        (floor(p_month)::SMALLINT NOT BETWEEN 1 AND 12) OR
+        (floor(p_day)::SMALLINT NOT BETWEEN 1 AND 31) OR
+        (floor(p_hour)::SMALLINT NOT BETWEEN 0 AND 23) OR
+        (floor(p_minute)::SMALLINT NOT BETWEEN 0 AND 59) OR
+        (floor(p_seconds)::SMALLINT NOT BETWEEN 0 AND 59) OR
+        (floor(p_milliseconds)::SMALLINT NOT BETWEEN 0 AND 999))
+    THEN
+        RAISE invalid_datetime_format;
+    END IF;
+
+    v_milliseconds := sys.babelfish_round_fractseconds(p_milliseconds::INTEGER);
+
+    v_calc_seconds := pg_catalog.format('%s.%s',
+                             floor(p_seconds)::SMALLINT,
+                             CASE v_milliseconds
+                                WHEN 1000 THEN '0'
+                                ELSE lpad(v_milliseconds::VARCHAR, 3, '0')
+                             END)::NUMERIC;
+    v_resdatetime := make_timestamp(floor(p_year)::SMALLINT,
+                                    floor(p_month)::SMALLINT,
+                                    floor(p_day)::SMALLINT,
+                                    floor(p_hour)::SMALLINT,
+                                    floor(p_minute)::SMALLINT,
+                                    v_calc_seconds);
+    RETURN CASE
+              WHEN (v_milliseconds != 1000) THEN v_resdatetime
+              ELSE v_resdatetime + INTERVAL '1 second'
+           END;
+EXCEPTION
+    WHEN invalid_datetime_format THEN
+        RAISE USING MESSAGE := 'Cannot construct data type datetime, some of the arguments have values which are not valid.',
+                    DETAIL := 'Possible use of incorrect value of date or time part (which lies outside of valid range).',
+                    HINT := 'Check each input argument belongs to the valid range and try again.';
+    WHEN numeric_value_out_of_range THEN
+        GET STACKED DIAGNOSTICS v_err_message = MESSAGE_TEXT;
+        v_err_message := upper(split_part(v_err_message, ' ', 1));
+
+        RAISE USING MESSAGE := pg_catalog.format('Error while trying to cast to %s data type.', v_err_message),
+                    DETAIL := pg_catalog.format('Source value is out of %s data type range.', v_err_message),
+                    HINT := pg_catalog.format('Correct the source value you are trying to cast to %s data type and try again.',
+                                   v_err_message);
+END;
+$BODY$
+LANGUAGE plpgsql
+IMMUTABLE
+RETURNS NULL ON NULL INPUT;
+
+CREATE OR REPLACE FUNCTION sys.timefromparts(IN p_hour NUMERIC,
+                                                           IN p_minute NUMERIC,
+                                                           IN p_seconds NUMERIC,
+                                                           IN p_fractions NUMERIC,
+                                                           IN p_precision NUMERIC)
+RETURNS TIME WITHOUT TIME ZONE
+AS
+$BODY$
+DECLARE
+    v_fractions VARCHAR;
+    v_precision SMALLINT;
+    v_err_message VARCHAR;
+    v_calc_seconds NUMERIC;
+BEGIN
+    v_fractions := floor(p_fractions)::INTEGER::VARCHAR;
+    v_precision := p_precision::SMALLINT;
+    IF (scale(p_precision) > 0) THEN
+        RAISE most_specific_type_mismatch;
+    ELSIF ((p_hour::SMALLINT NOT BETWEEN 0 AND 23) OR
+           (p_minute::SMALLINT NOT BETWEEN 0 AND 59) OR
+           (p_seconds::SMALLINT NOT BETWEEN 0 AND 59) OR
+           (p_fractions::SMALLINT NOT BETWEEN 0 AND 9999999) OR
+           (p_fractions::SMALLINT != 0 AND char_length(v_fractions) > p_precision))
+    THEN
+        RAISE invalid_datetime_format;
+    ELSIF (v_precision NOT BETWEEN 0 AND 7) THEN
+        RAISE numeric_value_out_of_range;
+    END IF;
+
+    v_calc_seconds := pg_catalog.format('%s.%s',
+                             floor(p_seconds)::SMALLINT,
+                             substring(rpad(lpad(v_fractions, v_precision, '0'), 7, '0'), 1, 6))::NUMERIC;
+
+    RETURN make_time(floor(p_hour)::SMALLINT,
+                     floor(p_minute)::SMALLINT,
+                     v_calc_seconds);
+EXCEPTION
+    WHEN most_specific_type_mismatch THEN
+        RAISE USING MESSAGE := 'Scale argument is not valid. Valid expressions for data type DATETIME2 scale argument are integer constants and integer constant expressions.',
+                    DETAIL := 'Use of incorrect "precision" parameter value during conversion process.',
+                    HINT := 'Change "precision" parameter to the proper value and try again.';
+
+    WHEN invalid_parameter_value THEN
+        RAISE USING MESSAGE := pg_catalog.format('Specified scale %s is invalid.', v_precision),
+                    DETAIL := 'Use of incorrect "precision" parameter value during conversion process.',
+                    HINT := 'Change "precision" parameter to the proper value and try again.';
+
+    WHEN invalid_datetime_format THEN
+        RAISE USING MESSAGE := 'Cannot construct data type time, some of the arguments have values which are not valid.',
+                    DETAIL := 'Possible use of incorrect value of time part (which lies outside of valid range).',
+                    HINT := 'Check each input argument belongs to the valid range and try again.';
+    WHEN numeric_value_out_of_range THEN
+        GET STACKED DIAGNOSTICS v_err_message = MESSAGE_TEXT;
+        v_err_message := upper(split_part(v_err_message, ' ', 1));
+
+        RAISE USING MESSAGE := pg_catalog.format('Error while trying to cast to %s data type.', v_err_message),
+                    DETAIL := pg_catalog.format('Source value is out of %s data type range.', v_err_message),
+                    HINT := pg_catalog.format('Correct the source value you are trying to cast to %s data type and try again.',
+                                   v_err_message);
+END;
+$BODY$
+LANGUAGE plpgsql
+VOLATILE
+RETURNS NULL ON NULL INPUT;
+CREATE OR REPLACE FUNCTION sys.timefromparts(IN p_hour TEXT,
+                                                           IN p_minute TEXT,
+                                                           IN p_seconds TEXT,
+                                                           IN p_fractions TEXT,
+                                                           IN p_precision TEXT)
+RETURNS TIME WITHOUT TIME ZONE
+AS
+$BODY$
+DECLARE
+    v_err_message VARCHAR;
+BEGIN
+    RETURN sys.timefromparts(p_hour::NUMERIC, p_minute::NUMERIC,
+                                           p_seconds::NUMERIC, p_fractions::NUMERIC,
+                                           p_precision::NUMERIC);
+EXCEPTION
+    WHEN invalid_text_representation THEN
+        GET STACKED DIAGNOSTICS v_err_message = MESSAGE_TEXT;
+        v_err_message := substring(lower(v_err_message), 'numeric\:\s\"(.*)\"');
+
+        RAISE USING MESSAGE := pg_catalog.format('Error while trying to convert "%s" value to NUMERIC data type.', v_err_message),
+                    DETAIL := 'Supplied string value contains illegal characters.',
+                    HINT := 'Correct supplied value, remove all illegal characters and try again.';
+END;
+$BODY$
+LANGUAGE plpgsql
+VOLATILE
+RETURNS NULL ON NULL INPUT;
+
+CREATE OR REPLACE FUNCTION sys.space(IN number INTEGER, OUT result SYS.VARCHAR) AS $$
+-- sys.varchar has default length of 1, so we have to pass in 'number' to be the
+-- type modifier.
+BEGIN
+	EXECUTE pg_catalog.format(E'SELECT repeat(\' \', %s)::SYS.VARCHAR(%s)', number, number) INTO result;
+END;
+$$
+STRICT
+LANGUAGE plpgsql;
+
 CREATE OR REPLACE FUNCTION sys.babelfish_get_full_year(IN p_short_year TEXT,
                                                            IN p_base_century TEXT DEFAULT '',
                                                            IN p_year_cutoff NUMERIC DEFAULT 49)
@@ -7029,11 +8053,11 @@ BEGIN
 
     RETURN v_full_year;
 EXCEPTION
-    WHEN invalid_text_representation THEN
+	WHEN invalid_text_representation THEN
         GET STACKED DIAGNOSTICS v_err_message = MESSAGE_TEXT;
         v_err_message := substring(lower(v_err_message), 'integer\:\s\"(.*)\"');
 
-        RAISE USING MESSAGE := format('Error while trying to convert "%s" value to SMALLINT data type.',
+        RAISE USING MESSAGE := pg_catalog.format('Error while trying to convert "%s" value to SMALLINT data type.',
                                       v_err_message),
                     DETAIL := 'Supplied value contains illegal characters.',
                     HINT := 'Correct supplied value, remove all illegal characters.';
@@ -7042,6 +8066,7 @@ $BODY$
 LANGUAGE plpgsql
 STABLE
 RETURNS NULL ON NULL INPUT;
+
 
 CREATE OR REPLACE PROCEDURE sys.sp_helpdbfixedrole("@rolename" sys.SYSNAME = NULL) AS
 $$
@@ -7067,23 +8092,156 @@ $$
 LANGUAGE 'pltsql';
 GRANT EXECUTE ON PROCEDURE sys.sp_helpdbfixedrole TO PUBLIC;
 
--- BABELFISH_FUNCTION_EXT
-CREATE TABLE sys.babelfish_function_ext (
-	nspname NAME NOT NULL,
-	funcname NAME NOT NULL,
-	orig_name sys.NVARCHAR(128), -- users' original input name
-	funcsignature TEXT NOT NULL COLLATE "C",
-	default_positions TEXT COLLATE "C",
-	PRIMARY KEY(nspname, funcsignature)
-);
-GRANT SELECT ON sys.babelfish_function_ext TO PUBLIC;
+CREATE OR REPLACE FUNCTION objectproperty(
+    id INT,
+    property SYS.VARCHAR
+    )
+RETURNS INT
+AS $$
+BEGIN
 
-SELECT pg_catalog.pg_extension_config_dump('sys.babelfish_function_ext', '');
+    IF NOT EXISTS(SELECT ao.object_id FROM sys.all_objects ao WHERE object_id = id)
+    THEN
+        RETURN NULL;
+    END IF;
+
+    property := RTRIM(LOWER(COALESCE(property, '')));
+
+    IF property = 'ownerid' -- OwnerId
+    THEN
+        RETURN (
+                SELECT CAST(COALESCE(t1.principal_id, pn.nspowner) AS INT)
+                FROM sys.all_objects t1
+                INNER JOIN pg_catalog.pg_namespace pn ON pn.oid = t1.schema_id
+                WHERE t1.object_id = id);
+
+    ELSEIF property = 'isdefaultcnst' -- IsDefaultCnst
+    THEN
+        RETURN (SELECT count(distinct dc.object_id) FROM sys.default_constraints dc WHERE dc.object_id = id);
+
+    ELSEIF property = 'execisquotedidenton' -- ExecIsQuotedIdentOn
+    THEN
+        RETURN (SELECT CAST(sm.uses_quoted_identifier as int) FROM sys.all_sql_modules sm WHERE sm.object_id = id);
+
+    ELSEIF property = 'tablefulltextpopulatestatus' -- TableFullTextPopulateStatus
+    THEN
+        IF NOT EXISTS (SELECT object_id FROM sys.tables t WHERE t.object_id = id) THEN
+            RETURN NULL;
+        END IF;
+        RETURN 0;
+
+    ELSEIF property = 'tablehasvardecimalstorageformat' -- TableHasVarDecimalStorageFormat
+    THEN
+        IF NOT EXISTS (SELECT object_id FROM sys.tables t WHERE t.object_id = id) THEN
+            RETURN NULL;
+        END IF;
+        RETURN 0;
+
+    ELSEIF property = 'ismsshipped' -- IsMSShipped
+    THEN
+        RETURN (SELECT CAST(ao.is_ms_shipped AS int) FROM sys.all_objects ao WHERE ao.object_id = id);
+
+    ELSEIF property = 'isschemabound' -- IsSchemaBound
+    THEN
+        RETURN (SELECT CAST(sm.is_schema_bound AS int) FROM sys.all_sql_modules sm WHERE sm.object_id = id);
+
+    ELSEIF property = 'execisansinullson' -- ExecIsAnsiNullsOn
+    THEN
+        RETURN (SELECT CAST(sm.uses_ansi_nulls AS int) FROM sys.all_sql_modules sm WHERE sm.object_id = id);
+
+    ELSEIF property = 'isdeterministic' -- IsDeterministic
+    THEN
+        RETURN 0;
+
+    ELSEIF property = 'isprocedure' -- IsProcedure
+    THEN
+        RETURN (SELECT count(distinct object_id) from sys.all_objects WHERE object_id = id and type = 'P');
+
+    ELSEIF property = 'istable' -- IsTable
+    THEN
+        RETURN (SELECT count(distinct object_id) from sys.all_objects WHERE object_id = id and type in ('IT', 'TT', 'U', 'S'));
+
+    ELSEIF property = 'isview' -- IsView
+    THEN
+        RETURN (SELECT count(distinct object_id) from sys.all_objects WHERE object_id = id and type = 'V');
+
+    ELSEIF property = 'isusertable' -- IsUserTable
+    THEN
+        RETURN (SELECT count(distinct object_id) from sys.all_objects WHERE object_id = id and type = 'U' and is_ms_shipped = 0);
+
+    ELSEIF property = 'istablefunction' -- IsTableFunction
+    THEN
+        RETURN (SELECT count(distinct object_id) from sys.all_objects WHERE object_id = id and type in ('IF', 'TF', 'FT'));
+
+    ELSEIF property = 'isinlinefunction' -- IsInlineFunction
+    THEN
+        RETURN 0;
+
+    ELSEIF property = 'isscalarfunction' -- IsScalarFunction
+    THEN
+        RETURN (SELECT count(distinct object_id) from sys.all_objects WHERE object_id = id and type in ('FN', 'FS'));
+
+    ELSEIF property = 'isprimarykey' -- IsPrimaryKey
+    THEN
+        RETURN (SELECT count(distinct object_id) from sys.all_objects WHERE object_id = id and type = 'PK');
+
+    ELSEIF property = 'isindexed' -- IsIndexed
+    THEN
+        RETURN (SELECT count(distinct object_id) from sys.indexes WHERE object_id = id and index_id > 0);
+
+    ELSEIF property = 'isdefault' -- IsDefault
+    THEN
+        RETURN 0;
+
+    ELSEIF property = 'isrule' -- IsRule
+    THEN
+        RETURN 0;
+
+    ELSEIF property = 'istrigger' -- IsTrigger
+    THEN
+        RETURN (SELECT count(distinct object_id) from sys.all_objects WHERE object_id = id and type in ('TA', 'TR'));
+    END IF;
+
+    RETURN NULL;
+END;
+$$
+LANGUAGE plpgsql;
+
+CALL sys.babelfish_drop_deprecated_object('view', 'sys', 'check_constraints_deprecated_in_2_3_0');
+CALL sys.babelfish_drop_deprecated_object('view', 'sys', 'default_constraints_deprecated_in_2_3_0');
 
 -- Drops the temporary procedure used by the upgrade script.
 -- Please have this be one of the last statements executed in this upgrade script.
-DROP PROCEDURE sys.babelfish_drop_deprecated_view(varchar, varchar);
-DROP PROCEDURE babelfish_drop_deprecated_function(varchar, varchar);
+DROP PROCEDURE sys.babelfish_drop_deprecated_object(varchar, varchar, varchar);
 
 -- Reset search_path to not affect any subsequent scripts
 SELECT set_config('search_path', trim(leading 'sys, ' from current_setting('search_path')), false);
+
+CREATE OR REPLACE PROCEDURE sys.sp_helpdb(IN "@dbname" VARCHAR(32))
+LANGUAGE 'pltsql'
+AS $$
+BEGIN
+  SELECT
+  CAST(name AS sys.nvarchar(128)),
+  CAST(db_size AS sys.nvarchar(13)),
+  CAST(owner AS sys.nvarchar(128)),
+  CAST(dbid AS sys.int),
+  CAST(created AS sys.nvarchar(11)),
+  CAST(status AS sys.nvarchar(600)),
+  CAST(compatibility_level AS sys.tinyint)
+  FROM sys.babelfish_helpdb(@dbname);
+
+  SELECT
+  CAST(NULL AS sys.nchar(128)) AS name,
+  CAST(NULL AS smallint) AS fileid,
+  CAST(NULL AS sys.nchar(260)) AS filename,
+  CAST(NULL AS sys.nvarchar(128)) AS filegroup,
+  CAST(NULL AS sys.nvarchar(18)) AS size,
+  CAST(NULL AS sys.nvarchar(18)) AS maxsize,
+  CAST(NULL AS sys.nvarchar(18)) AS growth,
+  CAST(NULL AS sys.varchar(9)) AS usage;
+
+  RETURN 0;
+END;
+$$;
+
