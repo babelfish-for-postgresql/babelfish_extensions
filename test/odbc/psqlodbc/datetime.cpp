@@ -1,20 +1,14 @@
-#include "../src/drivers.h"
-#include "../src/odbc_handler.h"
 #include "psqlodbc_tests_common.h"
 
-#include <gtest/gtest.h>
-#include <sqlext.h>
-
-using std::pair;
-
 const string TABLE_NAME = "master_dbo.datetime_table_odbc_test";
-const string VIEW_NAME = "master_dbo.datetime_view_odbc_test";
+const string COL1_NAME = "pk";
+const string COL2_NAME = "datetime_1";
 const string DATATYPE = "sys.datetime";
-vector<string> COL_NAMES = {"pk", "datetime_1"};
+const string VIEW_NAME = "master_dbo.datetime_view_odbc_test";
 
-static vector<pair<string, string>> TABLE_COLUMNS = {
-    {COL_NAMES[0], " int PRIMARY KEY"},
-    {COL_NAMES[1], DATATYPE}
+const vector<pair<string, string>> TABLE_COLUMNS = {
+    {COL1_NAME, " int PRIMARY KEY"},
+    {COL2_NAME, DATATYPE}
 };
 
 class PSQL_Datatypes_Datetime: public testing::Test {
@@ -44,7 +38,10 @@ TEST_F(PSQL_Datatypes_Datetime, Table_Creation) {
   const vector<int> SCALE_EXPECTED = {0, 0};
   const vector<string> NAME_EXPECTED = {"int4", "unknown"};
 
-  testCommonColumnAttributes(TABLE_NAME, TABLE_COLUMNS, COL_NAMES[0], LENGTH_EXPECTED, PRECISION_EXPECTED, SCALE_EXPECTED, NAME_EXPECTED);
+  createTable(ServerType::PSQL, TABLE_NAME, TABLE_COLUMNS);
+  testCommonColumnAttributes(ServerType::PSQL, TABLE_NAME, TABLE_COLUMNS.size(), COL1_NAME, LENGTH_EXPECTED, 
+    PRECISION_EXPECTED, SCALE_EXPECTED, NAME_EXPECTED);
+  dropObject(ServerType::PSQL, "TABLE", TABLE_NAME);
 }
 
 // Doesn't work in SQL Server, but does in BBF & BBF PG connection?
@@ -54,12 +51,13 @@ TEST_F(PSQL_Datatypes_Datetime, DISABLED_Table_Create_Fail) {
   };
 
   // Assert that table creation will always fail with invalid column definitions
-  testTableCreationFailure(TABLE_NAME, invalid_columns);
+  testTableCreationFailure(ServerType::PSQL, TABLE_NAME, invalid_columns);
+  dropObject(ServerType::PSQL, "TABLE", TABLE_NAME);
 }
 
 // inserted values differ that of expected?
 TEST_F(PSQL_Datatypes_Datetime, Insertion_Success) {
-  vector<string> inserted_values = {
+  const vector<string> inserted_values = {
     "NULL", // NULL value
     "1753-01-01 00:00:000", // smallest value
     "2011-04-15 16:44:09.000", // random regular values
@@ -67,7 +65,7 @@ TEST_F(PSQL_Datatypes_Datetime, Insertion_Success) {
     "" // blank value
   };
 
-  vector<string> expected = {
+  const vector<string> expected = {
     "NULL", // NULL values
     "1753-01-01 00:00:00", // smallest value
     "2011-04-15 16:44:09", // random regular value
@@ -75,59 +73,64 @@ TEST_F(PSQL_Datatypes_Datetime, Insertion_Success) {
     "1900-01-01 00:00:00" // blank value
   };
 
-  testInsertionSuccessChar(TABLE_NAME, TABLE_COLUMNS, "pk", inserted_values, expected);
-
+  createTable(ServerType::PSQL, TABLE_NAME, TABLE_COLUMNS);
+  testInsertionSuccess(ServerType::PSQL, TABLE_NAME, COL1_NAME, inserted_values, expected);
+  dropObject(ServerType::PSQL, "TABLE", TABLE_NAME);
 }
 
 TEST_F(PSQL_Datatypes_Datetime, Insertion_Failure) {
-
-  vector<string> inserted_values = {
+  const vector<string> inserted_values = {
     "1752-01-01 00:00:000", // past lowest boundary
     "9999-12-31 23:59:59.999" // past highest boundary
   };
 
-  testInsertionFailure(TABLE_NAME, TABLE_COLUMNS, COL_NAMES[0], inserted_values, false);
+  createTable(ServerType::PSQL, TABLE_NAME, TABLE_COLUMNS);
+  testInsertionFailure(ServerType::PSQL, TABLE_NAME, COL1_NAME, inserted_values, false);
+  dropObject(ServerType::PSQL, "TABLE", TABLE_NAME);
 }
 
 TEST_F(PSQL_Datatypes_Datetime, Update_Success) {
-
-  vector<string> inserted_values = {
+  const vector<string> inserted_values = {
     "2011-04-15 16:44:09"
   };
 
-  vector<string> updated_values = {
+  const vector<string> updated_values = {
     "1900-01-31 12:59:59.999", // standard value
     "9999-12-31 23:59:59.997", // max value
     "1753-01-01 00:00:00", // min value
     "" // blank value
   };
 
-  vector<string> expected_updated_values = {
+  const vector<string> expected_updated_values = {
     "1900-01-31 12:59:59.999", // standard value
     "9999-12-31 23:59:59.997", // max value
     "1753-01-01 00:00:00", // min value
     "1900-01-01 00:00:00" // blank value
   };
 
-  testUpdateSuccessChar(TABLE_NAME, TABLE_COLUMNS, COL_NAMES[0], COL_NAMES[1], inserted_values, inserted_values, updated_values, expected_updated_values);
+  createTable(ServerType::PSQL, TABLE_NAME, TABLE_COLUMNS);
+  testInsertionSuccess(ServerType::PSQL, TABLE_NAME, COL1_NAME, inserted_values, inserted_values);
+  testUpdateSuccess(ServerType::PSQL, TABLE_NAME, COL1_NAME, COL2_NAME, updated_values, expected_updated_values);
+  dropObject(ServerType::PSQL, "TABLE", TABLE_NAME);
 }
 
 TEST_F(PSQL_Datatypes_Datetime, Update_Fail) {
-
-  vector<string> inserted_values = {
+  const vector<string> inserted_values = {
     "2011-04-15 16:44:09"
   };
 
-  vector<string> updated_values = {
+  const vector<string> updated_values = {
     "1752-01-01 00:00:000"
   };
 
-  testUpdateFailChar(TABLE_NAME, TABLE_COLUMNS, COL_NAMES[0], COL_NAMES[1], inserted_values, inserted_values, updated_values);
+  createTable(ServerType::PSQL, TABLE_NAME, TABLE_COLUMNS);
+  testInsertionSuccess(ServerType::PSQL, TABLE_NAME, COL1_NAME, inserted_values, inserted_values);
+  testUpdateFail(ServerType::PSQL, TABLE_NAME, COL1_NAME, COL2_NAME, inserted_values, updated_values);
+  dropObject(ServerType::PSQL, "TABLE", TABLE_NAME);
 }
 
 TEST_F(PSQL_Datatypes_Datetime, View_creation) {
-
-  vector<string> inserted_values = {
+  const vector<string> inserted_values = {
     "NULL", // NULL values
     "1753-01-01 00:00:000", // smallest value
     "2011-04-15 16:44:09.000", // random regular values
@@ -135,7 +138,7 @@ TEST_F(PSQL_Datatypes_Datetime, View_creation) {
     "" // blank value
   };
 
-  vector<string> expected = {
+  const vector<string> expected = {
     "NULL", // NULL values
     "1753-01-01 00:00:00", // smallest value
     "2011-04-15 16:44:09", // random regular value
@@ -143,128 +146,159 @@ TEST_F(PSQL_Datatypes_Datetime, View_creation) {
     "1900-01-01 00:00:00" // blank value
   };
 
-  testViewCreationChar(VIEW_NAME, TABLE_NAME, TABLE_COLUMNS, COL_NAMES[0], inserted_values, expected);
+  const string VIEW_QUERY = "SELECT * FROM " + TABLE_NAME;
+
+  createTable(ServerType::PSQL, TABLE_NAME, TABLE_COLUMNS);
+  testInsertionSuccess(ServerType::PSQL, TABLE_NAME, COL1_NAME, inserted_values, expected);
+
+  createView(ServerType::PSQL, VIEW_NAME, VIEW_QUERY);
+  verifyValuesInObject(ServerType::PSQL, VIEW_NAME, COL1_NAME, inserted_values, expected);
+
+  dropObject(ServerType::PSQL, "VIEW", VIEW_NAME);
+  dropObject(ServerType::PSQL, "TABLE", TABLE_NAME);
 }
 
 TEST_F(PSQL_Datatypes_Datetime, Table_Single_Primary_Keys) {
-
   const vector<pair<string, string>> TABLE_COLUMNS = {
-    {COL_NAMES[0], "INT"},
-    {COL_NAMES[1], DATATYPE}
+    {COL1_NAME, "INT"},
+    {COL2_NAME, DATATYPE}
   };
 
   const string PKTABLE_NAME = TABLE_NAME.substr(TABLE_NAME.find('.') + 1, TABLE_NAME.length());
   const string SCHEMA_NAME = TABLE_NAME.substr(0, TABLE_NAME.find('.'));
 
   const vector<string> PK_COLUMNS = {
-    COL_NAMES[1]
+    COL2_NAME
   };
 
-  vector<string> inserted_values = {
+  string tableConstraints = createTableConstraint("PRIMARY KEY ", PK_COLUMNS);
+
+  const vector<string> inserted_values = {
     "1753-01-01 00:00:000", // smallest value
     "2011-04-15 16:44:09.000", // random regular values
     "9999-12-31 23:59:59.997", // max value
     "" // blank value
   };
 
-  vector<string> expected = {
+  const vector<string> expected = {
     "1753-01-01 00:00:00", // smallest value
     "2011-04-15 16:44:09", // random regular value
     "9999-12-31 23:59:59.997", // max value
     "1900-01-01 00:00:00" // blank value
   };
 
-  testPrimaryKeysChar(TABLE_NAME, TABLE_COLUMNS, COL_NAMES[0], SCHEMA_NAME, PKTABLE_NAME, PK_COLUMNS, inserted_values, expected);
+  createTable(ServerType::PSQL, TABLE_NAME, TABLE_COLUMNS, tableConstraints);
+  testPrimaryKeys(ServerType::PSQL, SCHEMA_NAME, PKTABLE_NAME, PK_COLUMNS);
+  testInsertionSuccess(ServerType::PSQL, TABLE_NAME, COL1_NAME, inserted_values, expected);
+  dropObject(ServerType::PSQL, "TABLE", TABLE_NAME);
 }
 
 TEST_F(PSQL_Datatypes_Datetime, Table_Composite_Primary_Keys) {
   const vector<pair<string, string>> TABLE_COLUMNS = {
-    {COL_NAMES[0], "INT"},
-    {COL_NAMES[1], DATATYPE}
+    {COL1_NAME, "INT"},
+    {COL2_NAME, DATATYPE}
   };
   const string PKTABLE_NAME = TABLE_NAME.substr(TABLE_NAME.find('.') + 1, TABLE_NAME.length());
   const string SCHEMA_NAME = TABLE_NAME.substr(0, TABLE_NAME.find('.'));
 
   const vector<string> PK_COLUMNS = {
-    COL_NAMES[0], 
-    COL_NAMES[1]
+    COL1_NAME, 
+    COL2_NAME
   };
 
-  vector<string> inserted_values = {
+  string tableConstraints = createTableConstraint("PRIMARY KEY ", PK_COLUMNS);
+
+  const vector<string> inserted_values = {
     "1753-01-01 00:00:000", // smallest value
     "2011-04-15 16:44:09.000", // random regular values
     "9999-12-31 23:59:59.997", // max value
     "" // blank value
   };
 
-  vector<string> expected = {
+  const vector<string> expected = {
     "1753-01-01 00:00:00", // smallest value
     "2011-04-15 16:44:09", // random regular value
     "9999-12-31 23:59:59.997", // max value
     "1900-01-01 00:00:00" // blank value
   };
 
-  testPrimaryKeysChar(TABLE_NAME, TABLE_COLUMNS, COL_NAMES[0], SCHEMA_NAME, PKTABLE_NAME, PK_COLUMNS, inserted_values, expected);
+  createTable(ServerType::PSQL, TABLE_NAME, TABLE_COLUMNS, tableConstraints);
+  testPrimaryKeys(ServerType::PSQL, SCHEMA_NAME, PKTABLE_NAME, PK_COLUMNS);
+  testInsertionSuccess(ServerType::PSQL, TABLE_NAME, COL1_NAME, inserted_values, expected);
+  dropObject(ServerType::PSQL, "TABLE", TABLE_NAME);
 }
 
 TEST_F(PSQL_Datatypes_Datetime, Table_Unique_Constraint) {
 
   const vector<pair<string, string>> TABLE_COLUMNS = {
-    {COL_NAMES[0], "INT"},
-    {COL_NAMES[1], DATATYPE}
+    {COL1_NAME, "INT"},
+    {COL2_NAME, DATATYPE}
   };
 
   const vector<string> UNIQUE_COLUMNS = {
-    COL_NAMES[1]
+    COL2_NAME
   };
 
+  string tableConstraints = createTableConstraint("UNIQUE", UNIQUE_COLUMNS);
+
   // Insert valid values into the table and assert affected rows
-  vector<string> inserted_values = {
+  const vector<string> inserted_values = {
     "1753-01-01 00:00:000", // smallest value
     "2011-04-15 16:44:09.000", // random regular values
     "9999-12-31 23:59:59.997", // max value
     "" // blank value
   };
 
-  vector<string> expected = {
+  const vector<string> expected = {
     "1753-01-01 00:00:00", // smallest value
     "2011-04-15 16:44:09", // random regular value
     "9999-12-31 23:59:59.997", // max value
     "1900-01-01 00:00:00" // blank value
   };
 
-  testUniqueConstraintChar(TABLE_NAME, TABLE_COLUMNS, COL_NAMES[0], UNIQUE_COLUMNS, inserted_values, expected);
+  createTable(ServerType::PSQL, TABLE_NAME, TABLE_COLUMNS, tableConstraints);
+  testUniqueConstraint(ServerType::PSQL, TABLE_NAME, UNIQUE_COLUMNS);
+  testInsertionSuccess(ServerType::PSQL, TABLE_NAME, COL1_NAME, inserted_values, expected);
+  dropObject(ServerType::PSQL, "TABLE", TABLE_NAME);
 }
 
 TEST_F(PSQL_Datatypes_Datetime, Comparison_Operators) {
-  
   const vector<pair<string, string>> TABLE_COLUMNS = {
-    {COL_NAMES[0], DATATYPE + " PRIMARY KEY"},
-    {COL_NAMES[1], DATATYPE}
+    {COL1_NAME, DATATYPE + " PRIMARY KEY"},
+    {COL2_NAME, DATATYPE}
   };
 
-  vector<string> INSERTED_PK = {
+  const vector<string> INSERTED_PK = {
     "1753-01-01 00:00:000",
     "9999-12-31 23:59:59.997"
   };
 
-  vector<string> INSERTED_DATA = {
+  const vector<string> INSERTED_DATA = {
     "1754-01-01 00:00:000",
     "9999-12-31 23:59:59.997"
   };
-
-  vector<string> OPERATIONS_QUERY = {
-    COL_NAMES[0] + "=" + COL_NAMES[1],
-    COL_NAMES[0] + "<>" + COL_NAMES[1],
-    COL_NAMES[0] + "<" + COL_NAMES[1],
-    COL_NAMES[0] + "<=" + COL_NAMES[1],
-    COL_NAMES[0] + ">" + COL_NAMES[1],
-    COL_NAMES[0] + ">=" + COL_NAMES[1]
-  };
   const int NUM_OF_DATA = INSERTED_DATA.size();
+
+  // insertString initialization
+  string insertString{};
+  string comma{};
+  for (int i = 0; i < NUM_OF_DATA; i++) {
+    insertString += comma + "(\'" + INSERTED_PK[i] + "\',\'" + INSERTED_DATA[i] + "\')";
+    comma = ",";
+  }
+
+  const vector<string> OPERATIONS_QUERY = {
+    COL1_NAME + "=" + COL2_NAME,
+    COL1_NAME + "<>" + COL2_NAME,
+    COL1_NAME + "<" + COL2_NAME,
+    COL1_NAME + "<=" + COL2_NAME,
+    COL1_NAME + ">" + COL2_NAME,
+    COL1_NAME + ">=" + COL2_NAME
+  };
 
   // initialization of expected_results
   vector<vector<char>> expected_results = {};
+
   for (int i = 0; i < NUM_OF_DATA; i++) {
     expected_results.push_back({});
     const char *date_1 = INSERTED_PK[i].data();
@@ -277,12 +311,15 @@ TEST_F(PSQL_Datatypes_Datetime, Comparison_Operators) {
     expected_results[i].push_back(strcmp(date_1, date_2) >= 0 ? '1' : '0');
   }
 
-  testComparisonOperators(TABLE_NAME, TABLE_COLUMNS, COL_NAMES[0], COL_NAMES[1], INSERTED_PK, INSERTED_DATA, OPERATIONS_QUERY, expected_results);
+  createTable(ServerType::PSQL, TABLE_NAME, TABLE_COLUMNS);
+  insertValuesInTable(ServerType::PSQL, TABLE_NAME, insertString, NUM_OF_DATA);
+  testComparisonOperators(ServerType::PSQL, TABLE_NAME, COL1_NAME, COL2_NAME, INSERTED_PK, INSERTED_DATA, 
+    OPERATIONS_QUERY, expected_results);
+  dropObject(ServerType::PSQL, "TABLE", TABLE_NAME);
 }
 
 // inserted values differ that of expected?
 TEST_F(PSQL_Datatypes_Datetime, Comparison_Functions) {
-
   const vector<string> INSERTED_DATA = {
     "1753-01-01 00:00:000",
     "2011-04-15 16:44:09.000",
@@ -295,16 +332,25 @@ TEST_F(PSQL_Datatypes_Datetime, Comparison_Functions) {
     "9999-12-31 23:59:59.997"
   };
   const int NUM_OF_DATA = INSERTED_DATA.size();
+  
+  // insertString initialization
+  string insertString{};
+  string comma{};
+  for (int i = 0; i < NUM_OF_DATA; i++) {
+    insertString += comma + "(" + std::to_string(i) + ",\'" + INSERTED_DATA[i] + "\')";
+    comma = ",";
+  }
 
   const vector<string> OPERATIONS_QUERY = {
-    "MIN(" + COL_NAMES[1] + ")",
-    "MAX(" + COL_NAMES[1] + ")"
+    "MIN(" + COL2_NAME + ")",
+    "MAX(" + COL2_NAME + ")"
   };
   const int NUM_OF_OPERATIONS = OPERATIONS_QUERY.size();
 
   // initialization of expected_results
   vector<string> expected_results = {};
   int min_expected = 0, max_expected = 0;
+
   for (int i = 1; i < NUM_OF_DATA; i++) {
     const char *currMin = EXPECTED_RESULTS[min_expected].data();
     const char *currMax = EXPECTED_RESULTS[max_expected].data();
@@ -316,5 +362,8 @@ TEST_F(PSQL_Datatypes_Datetime, Comparison_Functions) {
   expected_results.push_back(EXPECTED_RESULTS[min_expected]);
   expected_results.push_back(EXPECTED_RESULTS[max_expected]);
 
-  testComparisonFunctionsChar(TABLE_NAME, TABLE_COLUMNS, INSERTED_DATA, OPERATIONS_QUERY, expected_results);
+  createTable(ServerType::PSQL, TABLE_NAME, TABLE_COLUMNS);
+  insertValuesInTable(ServerType::PSQL, TABLE_NAME, insertString, NUM_OF_DATA);
+  testComparisonFunctions(ServerType::PSQL, TABLE_NAME, OPERATIONS_QUERY, expected_results);
+  dropObject(ServerType::PSQL, "TABLE", TABLE_NAME);
 }
