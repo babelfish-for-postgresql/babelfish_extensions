@@ -24,7 +24,6 @@
 #include "catalog/pg_trigger.h"
 #include "catalog/pg_type.h"
 #include "commands/tablecmds.h"
-#include "common/logging.h"
 #include "nodes/nodeFuncs.h"
 #include "parser/parser.h"
 #include "parser/parse_expr.h"
@@ -39,6 +38,7 @@
 #include "../src/session.h"
 
 #include "catalog.h"
+#include "hooks.h"
 
 const char* ATTOPTION_BBF_ORIGINAL_NAME = "bbf_original_name";
 const char* ATTOPTION_BBF_ORIGINAL_TABLE_NAME = "bbf_original_rel_name";
@@ -61,7 +61,6 @@ void assign_tablecmds_hook(void);
 static void pltsql_PreDropColumnHook(Relation rel, AttrNumber attnum);
 static void pltsql_PreAddConstraintsHook(Relation rel, ParseState *pstate, List *newColDefaults);
 static bool checkAllowedTsqlAttoptions(Node *options);
-
 /* Hook to tablecmds.c in the engine */
 static object_access_hook_type prev_object_access_hook = NULL;
 static InvokePreDropColumnHook_type prev_InvokePreDropColumnHook = NULL;
@@ -70,80 +69,19 @@ static InvokePreAddConstraintsHook_type prev_InvokePreAddConstraintsHook = NULL;
 void pre_check_trigger_schema(List *object, bool missing_ok);
 
 void pre_check_trigger_schema(List *object, bool missing_ok){
-	Relation	relation = NULL;
-	const char *depname;
-	Relation	tgrel;
-	ScanKeyData		key;
-	SysScanDesc tgscan;
-	HeapTuple	tuple;
-	Oid schema_oid;
-	char *schema_name = NULL;
-	const char *trigger_schema = NULL;
-	Oid reloid = InvalidOid;
-	bool found_trigger = false;
-	const char	*cur_dbo_physical_schema = NULL;
-	const char	*pg_trigger_physical_schema = NULL;
-	const char	*pg_trigger_logical_schema = NULL;
-	const char	*cur_physical_schema = NULL;
+	const char 		*depname;
+	Oid 			trigger_rel_oid = InvalidOid;
+	const char 		*tsql_trigger_logical_schema = NULL;
 
 	/* Extract name of dependent object. */
 	depname = strVal(llast(object));
 	if (list_length(object) > 1){
-		trigger_schema = ((Value *)list_nth(object,0))->val.str;
-	}
-	/* 
-	* Get the table name of the trigger from pg_trigger. We know that
-	* trigger names are forced to be unique in the tsql dialect, so we
-	* can rely on searching for trigger name to find the corresponding
-	* relation name.
-	*/
-	cur_dbo_physical_schema = get_dbo_schema_name(get_cur_db_name());
-	tgrel = table_open(TriggerRelationId, AccessShareLock);
-	ScanKeyInit(&key,
-					Anum_pg_trigger_tgname,
-					BTEqualStrategyNumber, F_NAMEEQ,
-					CStringGetDatum(depname));
-
-	tgscan = systable_beginscan(tgrel, TriggerRelidNameIndexId, false,
-									NULL, 1, &key);
-	while (HeapTupleIsValid(tuple = systable_getnext(tgscan)))
-	{
-		Form_pg_trigger pg_trigger = (Form_pg_trigger) GETSTRUCT(tuple);
-		if(!OidIsValid(pg_trigger->tgrelid))
-		{
-			reloid = InvalidOid;
-			break;
-		}
-		pg_trigger_physical_schema = get_namespace_name(get_rel_namespace(pg_trigger->tgrelid));
-		pg_trigger_logical_schema = get_logical_schema_name(pg_trigger_physical_schema, true);
-		cur_physical_schema = get_physical_schema_name(get_cur_db_name(),trigger_schema);
-		if(namestrcmp(&(pg_trigger->tgname), depname) == 0){
-			reloid = pg_trigger->tgrelid;
-			relation = RelationIdGetRelation(reloid);
-			strcasecmp(pg_trigger_physical_schema,cur_dbo_physical_schema) == 0;
-			if (list_length(object) == 1 && 
-				strcasecmp(pg_trigger_physical_schema,cur_dbo_physical_schema) == 0)
-			{	
-				found_trigger = true;
-				RelationClose(relation);
-				break;
-			}
-			else if(list_length(object) > 1 &&
-					strcasecmp(cur_physical_schema,pg_trigger_physical_schema) == 0 && 
-					strcasecmp(pg_trigger_logical_schema,trigger_schema) == 0)
-			{
-				found_trigger = true;
-				RelationClose(relation);
-				break;
-			}
-			RelationClose(relation);
-		}
+		tsql_trigger_logical_schema = ((Value *)linitial(object))->val.str;
 	}
 
-	systable_endscan(tgscan);
-	table_close(tgrel, AccessShareLock);
-
-	if (!missing_ok && !found_trigger)
+	trigger_rel_oid = get_tsql_trigger_oid(object,depname,true);
+	
+	if (!missing_ok && !OidIsValid(trigger_rel_oid))
 	{
 		if(list_length(object) == 1){
 			ereport(ERROR,
@@ -154,15 +92,8 @@ void pre_check_trigger_schema(List *object, bool missing_ok){
 			ereport(ERROR,
 				(errcode(ERRCODE_UNDEFINED_OBJECT),
 				errmsg("trigger \"%s.%s\" does not exist",
-							trigger_schema ,depname)));	
+							tsql_trigger_logical_schema ,depname)));	
 		}		
-	}	
-	if (!OidIsValid(reloid))
-	{
-		if (relation != NULL)
-			table_close(relation, AccessShareLock);
-
-		relation = NULL;		/* department of accident prevention */
 	}
 }
 
@@ -216,7 +147,7 @@ static void lookup_and_drop_triggers(ObjectAccessType access, Oid classId,
             trigRelation = RelationIdGetRelation(relOid);
 			trig_physical_schema = get_namespace_name(get_rel_namespace(pg_trigger->tgrelid));
             trigobjlist = list_make2(makeString(trig_physical_schema),makeString(NameStr(pg_trigger->tgname)));
-			trigAddress = (*get_trigger_object_address_hook)(trigobjlist, &trigRelation, true);
+			trigAddress = (*get_trigger_object_address_hook)(trigobjlist, &trigRelation, true, false);
             performDeletion(&trigAddress, behavior, PERFORM_DELETION_INTERNAL);
             RelationClose(trigRelation);
         }

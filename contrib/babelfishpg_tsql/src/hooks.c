@@ -78,6 +78,8 @@ static bool match_pltsql_func_call(HeapTuple proctup, int nargs, List *argnames,
 								   List **defaults, bool expand_defaults, bool expand_variadic,
 								   bool *use_defaults, bool *any_special,
 								   bool *variadic, Oid *va_elem_type);
+static ObjectAddress get_trigger_object_address(List *object, Relation *relp, bool missing_ok,bool object_from_input);
+Oid get_tsql_trigger_oid(List *object, const char *tsql_trigger_name,bool object_from_input);
 
 /*****************************************
  * 			Analyzer Hooks
@@ -91,7 +93,6 @@ static void pltsql_post_transform_column_definition(ParseState *pstate, RangeVar
 static void pltsql_post_transform_table_definition(ParseState *pstate, RangeVar* relation, char *relname, List **alist);
 static void pre_transform_target_entry(ResTarget *res, ParseState *pstate, ParseExprKind exprKind);
 static bool tle_name_comparison(const char *tlename, const char *identifier);
-static ObjectAddress get_trigger_object_address(List *object, Relation *relp, bool missing_ok);
 static void resolve_target_list_unknowns(ParseState *pstate, List *targetlist);
 static inline bool is_identifier_char(char c);
 static int find_attr_by_name_from_relation(Relation rd, const char *attname, bool sysColOK);
@@ -1191,49 +1192,32 @@ tle_name_comparison(const char *tlename, const char *identifier)
 		return (0 == strcmp(tlename, identifier));
 }
 
-/*
-* A special case of the get_object_address_relobject() function, specifically
-* for the case of triggers in tsql dialect. We add a pg_trigger lookup to search
-* for the relation that the trigger is associated with, since the relation name
-* is not supplied by the user, and thus not a part of the *object list.
-*/
-static ObjectAddress
-get_trigger_object_address(List *object, Relation *relp, bool missing_ok)
-{
-	ObjectAddress address;
-	Relation	relation = NULL;
-	const char *depname;
-	Oid			reloid;
-	Relation	tgrel;
+Oid
+get_tsql_trigger_oid(List *object, const char *tsql_trigger_name, bool object_from_input){
+	Oid				trigger_rel_oid = InvalidOid;
+	Relation		tgrel;
 	ScanKeyData		key;
-	SysScanDesc tgscan;
-	HeapTuple	tuple;
-	const char	*trigger_physical_schema = NULL;
-	const char	*trigger_logical_schema = NULL;
-	const char	*cur_dbo_physical_schema= NULL;
-	bool 	found_trigger = false;
-	const char	*pg_trigger_physical_schema = NULL;
-	const char	*pg_trigger_logical_schema = NULL;
-	const char	*cur_physical_schema = NULL;
+	SysScanDesc 	tgscan;
+	HeapTuple		tuple;
+	Oid				reloid;
+	Relation		relation = NULL;
+	const char		*pg_trigger_physical_schema = NULL;
+	const char		*pg_trigger_logical_schema = NULL;
+	const char 		*cur_dbo_physical_schema = NULL;
+	const char 		*cur_physical_schema = NULL;
+	const char		*tsql_trigger_physical_schema = NULL;
+	const char		*tsql_trigger_logical_schema = NULL;
 
-	if (sql_dialect != SQL_DIALECT_TSQL)
-	{
-		address.classId = InvalidOid;
-		address.objectId = InvalidOid;
-		address.objectSubId = InvalidAttrNumber;
-		return address;
+	if (list_length(object) > 1 && object_from_input){
+		tsql_trigger_logical_schema = ((Value *)linitial(object))->val.str;
 	}
-	/* Extract name of dependent object. */
-	depname = strVal(llast(object));
-	if (list_length(object) > 1){
-		trigger_physical_schema = ((Value *)list_nth(object,0))->val.str;
-		trigger_logical_schema = get_logical_schema_name(trigger_physical_schema, true);
+	if(list_length(object) > 1 && !object_from_input){
+		tsql_trigger_physical_schema = ((Value *)linitial(object))->val.str;
+		tsql_trigger_logical_schema = get_logical_schema_name(tsql_trigger_physical_schema, true);
 	}
 
 	cur_dbo_physical_schema = get_dbo_schema_name(get_cur_db_name());
-
-	if (prev_get_trigger_object_address_hook)
-		return (*prev_get_trigger_object_address_hook)(object,relp,missing_ok);
+	cur_physical_schema = get_physical_schema_name(get_cur_db_name(),tsql_trigger_logical_schema);
 
 	/* 
 	* Get the table name of the trigger from pg_trigger. We know that
@@ -1245,7 +1229,7 @@ get_trigger_object_address(List *object, Relation *relp, bool missing_ok)
 	ScanKeyInit(&key,
 					Anum_pg_trigger_tgname,
 					BTEqualStrategyNumber, F_NAMEEQ,
-					CStringGetDatum(depname));
+					CStringGetDatum(tsql_trigger_name));
 
 	tgscan = systable_beginscan(tgrel, TriggerRelidNameIndexId, false,
 									NULL, 1, &key);
@@ -1254,27 +1238,26 @@ get_trigger_object_address(List *object, Relation *relp, bool missing_ok)
 		Form_pg_trigger pg_trigger = (Form_pg_trigger) GETSTRUCT(tuple);
 		if(!OidIsValid(pg_trigger->tgrelid))
 		{
-			reloid = InvalidOid;
 			break;
 		}
-		pg_trigger_physical_schema = get_namespace_name(get_rel_namespace(pg_trigger->tgrelid));
-		pg_trigger_logical_schema = get_logical_schema_name(pg_trigger_physical_schema, true);
-		cur_physical_schema = get_physical_schema_name(get_cur_db_name(),trigger_logical_schema);
-		if(namestrcmp(&(pg_trigger->tgname), depname) == 0){
+		
+		if(namestrcmp(&(pg_trigger->tgname), tsql_trigger_name) == 0){
 			reloid = pg_trigger->tgrelid;
 			relation = RelationIdGetRelation(reloid);
+			pg_trigger_physical_schema = get_namespace_name(get_rel_namespace(pg_trigger->tgrelid));
+			pg_trigger_logical_schema = get_logical_schema_name(pg_trigger_physical_schema, true);
 			if (list_length(object) == 1 && 
 				strcasecmp(pg_trigger_physical_schema,cur_dbo_physical_schema) == 0)
 			{	
-				found_trigger = true;
+				trigger_rel_oid = reloid;
 				RelationClose(relation);
 				break;
 			}
 			else if(list_length(object) > 1 &&
 				strcasecmp(cur_physical_schema,pg_trigger_physical_schema) == 0 &&
-				strcasecmp(pg_trigger_logical_schema,trigger_logical_schema) == 0)
+				strcasecmp(pg_trigger_logical_schema,tsql_trigger_logical_schema) == 0)
 			{
-				found_trigger = true;
+				trigger_rel_oid = reloid;
 				RelationClose(relation);
 				break;
 			}
@@ -1284,37 +1267,55 @@ get_trigger_object_address(List *object, Relation *relp, bool missing_ok)
 
 	systable_endscan(tgscan);
 	table_close(tgrel, AccessShareLock);
-	address.classId = TriggerRelationId;
-	address.objectId = relation ?
-		get_trigger_oid(reloid, depname, missing_ok) : InvalidOid;
 
-	if (!missing_ok && !found_trigger)
+	if (!OidIsValid(trigger_rel_oid))
 	{
-		if(list_length(object) == 1){
-			ereport(ERROR,
-			(errcode(ERRCODE_UNDEFINED_OBJECT),
-			errmsg("trigger \"%s\" does not exist",
-						depname)));
-		}else{
-			ereport(ERROR,
-				(errcode(ERRCODE_UNDEFINED_OBJECT),
-				errmsg("trigger \"%s.%s\" does not exist",
-							trigger_logical_schema ,depname)));	
-		}		
-	}	
-	address.objectSubId = 0;
-
-	/* Avoid relcache leak when object not found. */
-	if (!OidIsValid(address.objectId))
-	{
-		if (relation != NULL)
-			table_close(relation, AccessShareLock);
-
 		relation = NULL;		/* department of accident prevention */
+		return InvalidOid;
+	}
+	return trigger_rel_oid;
+}
+
+/*
+* A special case of the get_object_address_relobject() function, specifically
+* for the case of triggers in tsql dialect. We add a pg_trigger lookup to search
+* for the relation that the trigger is associated with, since the relation name
+* is not supplied by the user, and thus not a part of the *object list.
+*/
+static ObjectAddress
+get_trigger_object_address(List *object, Relation *relp, bool missing_ok, bool object_from_input)
+{
+	ObjectAddress 	address;
+	Relation		relation = NULL;
+	const char 		*depname;
+	Oid 			trigger_rel_oid = InvalidOid;
+
+
+	address.classId = InvalidOid;
+	address.objectId = InvalidOid;
+	address.objectSubId = InvalidAttrNumber;
+		
+	if (sql_dialect != SQL_DIALECT_TSQL)
+	{
 		return address;
 	}
-	/* Done. */
-	*relp = relation;
+	/* Extract name of dependent object. */
+	depname = strVal(llast(object));
+
+	if (prev_get_trigger_object_address_hook)
+		return (*prev_get_trigger_object_address_hook)(object,relp,missing_ok,object_from_input);
+
+	trigger_rel_oid = get_tsql_trigger_oid(object,depname,object_from_input);
+
+	if(!OidIsValid(trigger_rel_oid))
+		return address;
+
+	address.classId = TriggerRelationId;
+	address.objectId = get_trigger_oid(trigger_rel_oid, depname, missing_ok);
+	address.objectSubId = 0;
+
+	*relp = RelationIdGetRelation(trigger_rel_oid);
+	RelationClose(*relp);
 	return address;
 }
 
