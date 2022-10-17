@@ -8,13 +8,13 @@ go
 create login l1 with password='123';
 go
 
-create user u1 for login l1;
+create user ownera for login l1;
 go
 
 create login l2 with password='123';
 go
 
-create user u2 for login l2;
+create user ownerb for login l2;
 go
 
 create login invoker with password='123';
@@ -27,42 +27,42 @@ use master
 go
 
 -- psql
-grant all on database jdbc_testdb to db1_u1;
+grant all on database jdbc_testdb to db1_ownera;
 go
 
-grant all on database jdbc_testdb to db1_u2;
+grant all on database jdbc_testdb to db1_ownerb;
 go
 
 -- tsql user=l2 password=123
 use db1;
 go
 
-create schema withdiffowner;
+create schema hasownerb;
 go
 
-create table withdiffowner.tbld(a int, b int, c int);
+create table hasownerb.tbld(a int, b int, c int);
 go
 
-create view withdiffowner.vwd as select current_user;
+create view hasownerb.vwd as select current_user;
 go
 
-create proc withdiffowner.procd as select current_user;
+create proc hasownerb.procd as select current_user;
 go
 
 -- tsql user=l1 password=123
 use db1;
 go
 
-create schema withsameowner;
+create schema hasownera;
 go
 
-create table withsameowner.tbls(a int, b int, c int);
+create table hasownera.tbls(a int, b int, c int);
 go
 
-create view withsameowner.vws as select current_user;
+create view hasownera.vws as select current_user;
 go
 
-create proc withsameowner.procs as select current_user;
+create proc hasownera.procs as select current_user;
 go
 
 -- CASE 1
@@ -70,58 +70,113 @@ go
 -- 		SELECT/EXEC ON TABLE/VIEW/PROC
 -- END
 -- EXEC PROC
-create proc withsameowner.pa1 as select * from withsameowner.tbls;
+create proc hasownera.pa1 as
+	select * from hasownera.tbls;
+	select * from hasownera.vws;
+	exec hasownera.procs;
 go
 
-grant exec on withsameowner.pa1 to invoker;
+grant exec on hasownera.pa1 to invoker;
 go
 
-create proc withsameowner.pb1 as select * from withdiffowner.tbld;
+-- Negative test for table
+create proc hasownera.pb1 as select * from hasownerb.tbld;
 go
 
-grant exec on withsameowner.pb1 to invoker;
+grant exec on hasownera.pb1 to invoker;
+go
+
+-- Negative test for view
+create proc hasownera.pc1 as select * from hasownerb.vwd;
+go
+
+grant exec on hasownera.pc1 to invoker;
+go
+
+-- Negative test for proc
+create proc hasownera.pd1 as exec hasownerb.procd;
+go
+
+grant exec on hasownera.pd1 to invoker;
 go
 
 -- tsql user=invoker password=123
 use db1;
 go
 
-select * from withsameowner.tbls;
+select * from hasownera.tbls;
 go
 ~~ERROR (Code: 33557097)~~
 
 ~~ERROR (Message: permission denied for table tbls)~~
 
 
-exec withsameowner.pa1;
+select * from hasownera.vws;
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: permission denied for view vws)~~
+
+
+exec hasownera.procs;
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: permission denied for procedure procs)~~
+
+
+exec hasownera.pa1;
 go
 ~~START~~
 int#!#int#!#int
 ~~END~~
 
+~~START~~
+varchar
+invoker
+~~END~~
 
-select * from withdiffowner.tbld;
+~~START~~
+varchar
+invoker
+~~END~~
+
+
+exec hasownera.pb1;
 go
 ~~ERROR (Code: 33557097)~~
 
 ~~ERROR (Message: permission denied for table tbld)~~
 
 
-exec withsameowner.pb1;
+exec hasownera.pc1;
 go
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: permission denied for table tbld)~~
+~~ERROR (Message: permission denied for view vwd)~~
+
+
+exec hasownera.pd1;
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: permission denied for procedure procd)~~
 
 
 -- tsql
 use db1;
 go
 
-drop proc withsameowner.pb1;
+drop proc hasownera.pd1;
 go
 
-drop proc withsameowner.pa1;
+drop proc hasownera.pc1;
+go
+
+drop proc hasownera.pb1;
+go
+
+drop proc hasownera.pa1;
 go
 
 use master;
@@ -139,25 +194,29 @@ go
 use db1;
 go
 
-create proc withsameowner.pa2 as begin select * from withsameowner.tbls end;
+create proc hasownera.pa2 as begin
+	select * from hasownera.tbls;
+	select * from hasownera.vws;
+	exec hasownera.procs;
+end;
 go
 
-grant exec on withsameowner.pa2 to invoker;
+grant exec on hasownera.pa2 to invoker;
 go
 
 -- tsql user=l2 password=123
 use db1;
 go
 
-create proc withdiffowner.pb2 as exec withsameowner.pa2;
+create proc hasownerb.pb2 as exec hasownera.pa2;
 go
 
-grant exec on withdiffowner.pb2 to invoker;
+grant exec on hasownerb.pb2 to invoker;
 go
 
 -- tsql
 select objs.column1 as object,user_name(objectproperty(object_id(objs.column1),'OwnerId')) as owner
-from (values ('withdiffowner.pb2'), ('withsameowner.pa2'), ('withsameowner.tbls')) 
+from (values ('hasownerb.pb2'), ('hasownera.pa2'), ('hasownera.tbls')) 
 as objs(object_name)
 go
 ~~ERROR (Code: 33557097)~~
@@ -169,10 +228,20 @@ go
 use db1;
 go
 
-exec withdiffowner.pb2;
+exec hasownerb.pb2;
 go
 ~~START~~
 int#!#int#!#int
+~~END~~
+
+~~START~~
+varchar
+invoker
+~~END~~
+
+~~START~~
+varchar
+invoker
 ~~END~~
 
 
@@ -180,10 +249,10 @@ int#!#int#!#int
 use db1;
 go
 
-drop proc withdiffowner.pb2;
+drop proc hasownerb.pb2;
 go
 
-drop proc withsameowner.pa2;
+drop proc hasownera.pa2;
 go
 
 use master;
@@ -213,44 +282,44 @@ void
 ~~END~~
 
 
-revoke all on database jdbc_testdb from db1_u1;
+revoke all on database jdbc_testdb from db1_ownera;
 go
 
-revoke all on database jdbc_testdb from db1_u2;
+revoke all on database jdbc_testdb from db1_ownerb;
 go
 
 -- tsql
 use db1;
 go
 
-drop table withsameowner.tbls;
+drop table hasownera.tbls;
 go
 
-drop view withsameowner.vws;
+drop view hasownera.vws;
 go
 
-drop proc withsameowner.procs;
+drop proc hasownera.procs;
 go
 
-drop table withdiffowner.tbld;
+drop table hasownerb.tbld;
 go
 
-drop view withdiffowner.vwd;
+drop view hasownerb.vwd;
 go
 
-drop proc withdiffowner.procd;
+drop proc hasownerb.procd;
 go
 
-drop schema withdiffowner;
+drop schema hasownerb;
 go
 
-drop schema withsameowner;
+drop schema hasownera;
 go
 
-drop user u1;
+drop user ownera;
 go
 
-drop user u2;
+drop user ownerb;
 go
 
 drop user invoker;
