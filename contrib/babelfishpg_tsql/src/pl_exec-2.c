@@ -11,6 +11,7 @@
 #include "nodes/parsenodes.h"
 
 #include "catalog.h"
+#include "dbcmds.h"
 #include "pl_explain.h"
 #include "session.h"
 
@@ -43,6 +44,7 @@ static int exec_run_dml_with_output(PLtsql_execstate *estate, PLtsql_stmt_push_r
 									Portal portal, PLtsql_expr *expr, CmdType cmd, ParamListInfo paramLI);
 static int exec_stmt_usedb(PLtsql_execstate *estate, PLtsql_stmt_usedb *stmt);
 static int exec_stmt_usedb_explain(PLtsql_execstate *estate, PLtsql_stmt_usedb *stmt, bool shouldRestoreDb);
+static int exec_stmt_grantdb(PLtsql_execstate *estate, PLtsql_stmt_grantdb *stmt);
 static int exec_stmt_insert_execute_select(PLtsql_execstate *estate, PLtsql_expr *expr);
 static int exec_stmt_insert_bulk(PLtsql_execstate *estate, PLtsql_stmt_insert_bulk *expr);
 extern Datum pltsql_inline_handler(PG_FUNCTION_ARGS);
@@ -668,8 +670,18 @@ exec_stmt_exec(PLtsql_execstate *estate, PLtsql_stmt_exec *stmt)
 
 	if (stmt->is_cross_db)
 	{
+		char *login = GetUserNameFromId(GetSessionUserId(), false);
+		char *user = get_user_for_database(stmt->db_name);
+
 	 	estate->db_name = stmt->db_name;
-		SetCurrentRoleId(GetSessionUserId(), false);
+		if(user)
+			SetCurrentRoleId(GetSessionUserId(), false);
+		else
+			ereport(ERROR,
+							(errcode(ERRCODE_UNDEFINED_DATABASE),
+							errmsg("The server principal \"%s\" is not able to access "
+								"the database \"%s\" under the current security context",
+								login, stmt->db_name)));
 	}
 
  	/* 
@@ -2648,6 +2660,45 @@ exec_stmt_usedb_explain(PLtsql_execstate *estate, PLtsql_stmt_usedb *stmt, bool 
 
 	set_cur_user_db_and_path(stmt->db_name);
 	
+	return PLTSQL_RC_OK;
+}
+
+static int
+exec_stmt_grantdb(PLtsql_execstate *estate, PLtsql_stmt_grantdb *stmt)
+{
+	char 	*dbname = get_cur_db_name();
+	char	*dbowner = get_owner_of_db(dbname);
+	char	*login = GetUserNameFromId(GetSessionUserId(), false);	
+	bool	login_is_db_owner;
+	Oid	datdba;
+	ListCell *lc;
+
+	/*
+	 * If the login is not the db owner or the login is not the member of
+	 * sysadmin, then it doesn't have the permission to GRANT/REVOKE.
+	 */
+	login_is_db_owner = 0 == strncmp(login, get_owner_of_db(dbname), NAMEDATALEN);
+	datdba = get_role_oid("sysadmin", false);
+	if (!is_member_of_role(GetSessionUserId(), datdba) && !login_is_db_owner)
+		ereport(ERROR,
+				(errcode(ERRCODE_INTERNAL_ERROR),
+				errmsg("Grantor does not have GRANT permission.")));
+	
+	foreach(lc, stmt->grantees)
+	{
+		char *grantee_name = (char *) lfirst(lc);
+		if (strcmp(grantee_name, "dbo") == 0 || strcmp(grantee_name, "db_owner") == 0
+					|| strcmp(grantee_name, login) == 0)
+			ereport(ERROR,
+					(errcode(ERRCODE_INTERNAL_ERROR),
+					errmsg("Cannot grant or revoke permissions to dbo, db_owner or yourself.")));
+		if (!stmt->is_grant && strcmp(grantee_name, "guest") == 0
+					&& (strcmp(dbname, "master") == 0 || strcmp(dbname, "tempdb") == 0))
+			ereport(ERROR,
+					(errcode(ERRCODE_INTERNAL_ERROR),
+					errmsg("Cannot disable access to the guest user in master or tempdb.")));
+		alter_user_can_connect(stmt->is_grant, grantee_name, dbname);
+	}
 	return PLTSQL_RC_OK;
 }
 
