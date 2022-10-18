@@ -4640,6 +4640,7 @@ SELECT
     ,CAST(t1.uses_native_compilation as sys.bit)
 FROM sys.all_sql_modules_internal t1
 WHERE t1.is_ms_shipped = 1;
+GRANT SELECT ON sys.system_sql_modules TO PUBLIC;
 
 ALTER VIEW sys.sql_modules RENAME TO sql_modules_deprecated_in_2_3_0;
 
@@ -5605,6 +5606,7 @@ SELECT
   , CAST(0 as smallint) AS procedure_number
   , CAST('' as sys.nvarchar(4000)) AS definition
 WHERE FALSE; -- This condition will ensure that the view is empty
+GRANT SELECT ON sys.numbered_procedures TO PUBLIC;
 
 ALTER VIEW sys.events RENAME TO events_deprecated_in_2_3_0;
 
@@ -6606,6 +6608,7 @@ FROM pg_catalog.pg_class t1
  JOIN sys.schemas s1 ON s1.schema_id = t1.relnamespace
  JOIN information_schema.table_privileges t4 ON t1.relname = t4.table_name
 WHERE t4.privilege_type = 'DELETE' collate sys.database_default;
+GRANT SELECT ON sys.sp_table_privileges_view TO PUBLIC;
 
 CREATE OR REPLACE PROCEDURE sys.sp_table_privileges(
  "@table_name" sys.nvarchar(384),
@@ -6736,6 +6739,7 @@ FROM pg_catalog.pg_class t1
  , sys.translate_pg_type_to_tsql(t8.user_type_id) AS tsql_type_name
  , sys.translate_pg_type_to_tsql(t8.system_type_id) AS tsql_base_type_name
  WHERE has_schema_privilege(s1.schema_id, 'USAGE');
+GRANT SELECT ON sys.sp_special_columns_view TO PUBLIC;
 
 ALTER VIEW sys.sp_fkeys_view RENAME TO sp_fkeys_view_deprecated_in_2_3_0;
 
@@ -6809,6 +6813,7 @@ JOIN pg_catalog.pg_attribute pkname_table
 WHERE t5.contype = 'f'
 AND CAST(t4.dtd_identifier AS smallint) = ANY (t5.conkey)
 AND CAST(t4.dtd_identifier AS smallint) = t5.conkey[seq];
+GRANT SELECT ON sys.sp_fkeys_view TO PUBLIC;
 
 ALTER VIEW sys.sp_stored_procedures_view RENAME TO sp_stored_procedures_view_deprecated_in_2_3_0;
 
@@ -6825,7 +6830,7 @@ END AS PROCEDURE_NAME,
 -1 AS NUM_INPUT_PARAMS,
 -1 AS NUM_OUTPUT_PARAMS,
 -1 AS NUM_RESULT_SETS,
-CAST(NULL AS varchar(254)) AS REMARKS,
+CAST(NULL AS varchar(254)) COLLATE sys.database_default AS REMARKS,
 cast(2 AS smallint) AS PROCEDURE_TYPE
 
 FROM pg_catalog.pg_proc p 
@@ -6847,13 +6852,14 @@ END AS PROCEDURE_NAME,
 -1 AS NUM_INPUT_PARAMS,
 -1 AS NUM_OUTPUT_PARAMS,
 -1 AS NUM_RESULT_SETS,
-CAST(NULL AS varchar(254)) AS REMARKS,
+CAST(NULL AS varchar(254)) COLLATE sys.database_default AS REMARKS,
 cast(2 AS smallint) AS PROCEDURE_TYPE
 
 FROM    pg_catalog.pg_namespace n 
 JOIN    pg_catalog.pg_proc p 
 ON      pronamespace = n.oid   
 WHERE nspname = 'sys' AND (proname LIKE 'sp\_%' OR proname LIKE 'xp\_%' OR proname LIKE 'dm\_%' OR proname LIKE 'fn\_%');
+GRANT SELECT ON sys.sp_stored_procedures_view TO PUBLIC;
 
 CREATE OR REPLACE PROCEDURE sys.sp_stored_procedures(
     "@sp_name" sys.nvarchar(390) = '',
@@ -7309,6 +7315,7 @@ SELECT
    OR cast(proc.specific_name as sys.sysname) LIKE 'fn\_%' )
   AND has_schema_privilege(proc.specific_schema, 'USAGE')
  );
+GRANT SELECT ON sys.sp_sproc_columns_view TO PUBLIC;
 
 CREATE OR REPLACE PROCEDURE sys.sp_sproc_columns(
 	"@procedure_name" sys.nvarchar(390) = '%',

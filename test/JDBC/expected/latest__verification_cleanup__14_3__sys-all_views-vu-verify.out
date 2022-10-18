@@ -10,18 +10,16 @@ EXEC sys_all_views_dep_proc_vu_prepare
 GO
 ~~START~~
 varchar#!#char#!#bit
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: could not determine which collation to use for string comparison)~~
+sys_all_views_select_vu_prepare#!#V #!#0
+~~END~~
 
 
 SELECT * FROM sys_all_views_dep_func_vu_prepare()
 GO
 ~~START~~
 int
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: could not determine which collation to use for string comparison)~~
+1
+~~END~~
 
 
 -- query a view with no options
@@ -46,9 +44,8 @@ WHERE name = 'sys_all_views_select_vu_prepare'
 GO
 ~~START~~
 varchar#!#int#!#char#!#nvarchar#!#datetime#!#datetime#!#bit#!#bit#!#bit#!#bit#!#bit#!#bit#!#bit#!#bit#!#bit
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: could not determine which collation to use for string comparison)~~
+sys_all_views_select_vu_prepare#!#<NULL>#!#V #!#VIEW#!#<NULL>#!#<NULL>#!#0#!#0#!#0#!#0#!#0#!#0#!#0#!#0#!#0
+~~END~~
 
 
 -- query a view with check option enabled
@@ -73,9 +70,8 @@ WHERE name = 'sys_all_views_select_chk_option_vu_prepare'
 GO
 ~~START~~
 varchar#!#int#!#char#!#nvarchar#!#datetime#!#datetime#!#bit#!#bit#!#bit#!#bit#!#bit#!#bit#!#bit#!#bit#!#bit
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: could not determine which collation to use for string comparison)~~
+sys_all_views_select_chk_option_vu_prepare#!#<NULL>#!#V #!#VIEW#!#<NULL>#!#<NULL>#!#0#!#0#!#0#!#0#!#0#!#0#!#0#!#1#!#0
+~~END~~
 
 
 SELECT COUNT(*) FROM sys.all_columns WHERE object_id = object_id('sys.all_views');
@@ -84,4 +80,3 @@ GO
 int
 18
 ~~END~~
-
