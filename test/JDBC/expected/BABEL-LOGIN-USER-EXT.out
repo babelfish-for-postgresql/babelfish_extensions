@@ -677,6 +677,7 @@ ORDER BY rolname;
 GO
 ~~START~~
 varchar#!#nvarchar#!#varchar#!#nvarchar#!#nvarchar
+db1_guest#!#guest#!##!#db1#!#
 db_owner#!#db_owner#!##!#db1#!#
 dbo#!#dbo#!##!#db1#!#dbo
 master_db_owner#!#db_owner#!##!#master#!#
@@ -921,8 +922,10 @@ GO
 varchar#!#varchar#!#nvarchar#!#nvarchar#!#nvarchar
 db1_db_owner#!##!#db_owner#!#db1#!#
 db1_dbo#!##!#dbo#!#db1#!#dbo
+db1_guest#!##!#guest#!#db1#!#
 db2_db_owner#!##!#db_owner#!#db2#!#
 db2_dbo#!##!#dbo#!#db2#!#dbo
+db2_guest#!##!#guest#!#db2#!#
 master_db_owner#!##!#db_owner#!#master#!#
 master_dbo#!##!#dbo#!#master#!#dbo
 master_guest#!##!#guest#!#master#!#
@@ -972,6 +975,7 @@ GO
 varchar#!#varchar
 dbo#!#dbo
 db_owner#!#
+guest#!#
 ~~END~~
 
 
@@ -987,7 +991,7 @@ SELECT user_name(user_id('guest'));
 GO
 ~~START~~
 nvarchar
-dbo
+guest
 ~~END~~
 
 
@@ -1003,6 +1007,7 @@ SELECT rolname FROM pg_roles WHERE oid = user_id('guest');
 GO
 ~~START~~
 varchar
+db1_guest
 ~~END~~
 
 
@@ -1029,7 +1034,7 @@ SELECT user_name(user_id('guest'));
 GO
 ~~START~~
 nvarchar
-dbo
+guest
 ~~END~~
 
 
@@ -1037,7 +1042,7 @@ SELECT user_name(user_id('GUEST'));
 GO
 ~~START~~
 nvarchar
-dbo
+guest
 ~~END~~
 
 
@@ -1053,6 +1058,7 @@ SELECT rolname FROM pg_roles WHERE oid = user_id('guest');
 GO
 ~~START~~
 varchar
+db2_guest
 ~~END~~
 
 
@@ -1102,6 +1108,7 @@ GO
 varchar#!#nvarchar#!#varchar#!#nvarchar#!#nvarchar
 db2_db_owner#!#db_owner#!##!#db2#!#
 db2_dbo#!#dbo#!##!#db2#!#dbo
+db2_guest#!#guest#!##!#db2#!#
 master_db_owner#!#db_owner#!##!#master#!#
 master_dbo#!#dbo#!##!#master#!#dbo
 master_guest#!#guest#!##!#master#!#

@@ -133,14 +133,14 @@ GRANT ALL TO alogin;  -- database permission
 GO
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: 'GRANT Database' is not currently supported in Babelfish)~~
+~~ERROR (Message: 'GRANT ALL on Database' is not currently supported in Babelfish)~~
 
 
 REVOKE ALL TO alogin; -- database permission
 GO
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: 'REVOKE Database' is not currently supported in Babelfish)~~
+~~ERROR (Message: 'REVOKE ALL on Database' is not currently supported in Babelfish)~~
 
 
 GRANT SHOWPLAN ON OBJECT::t1 TO guest;  -- unsupported permission

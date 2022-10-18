@@ -1,0 +1,38 @@
+-- tsql
+use grant_connect_db1;
+go
+
+drop user grant_connect_abc
+go
+
+drop table grant_connect_t1;
+go
+
+use master;
+go
+
+drop database grant_connect_db1;
+go
+
+-- psql
+-- Need to terminate active session before cleaning up the login
+SELECT pg_terminate_backend(pid) FROM pg_stat_get_activity(NULL)
+WHERE sys.suser_name(usesysid) = 'grant_connect_abc' AND backend_type = 'client backend' AND usesysid IS NOT NULL;
+GO
+~~START~~
+bool
+~~END~~
+
+-- Wait to sync with another session
+SELECT pg_sleep(1);
+GO
+~~START~~
+void
+
+~~END~~
+
+
+-- tsql
+drop login grant_connect_abc
+go
+

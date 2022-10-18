@@ -1125,9 +1125,13 @@ const char *get_guest_role_name(const char *dbname)
 		return "tempdb_guest";
 	if (0 == strcmp(dbname , "msdb"))
 		return "msdb_guest";
-	/* BABEL-2430: Disable guest user for DB other than master/tempdb/msdb */
 	else
-		return NULL;
+	{
+		char *name = palloc0(MAX_BBF_NAMEDATALEND);
+		snprintf(name, MAX_BBF_NAMEDATALEND, "%s_guest", dbname);
+		truncate_identifier(name, strlen(name), false);
+		return name;
+	}
 }
 
 /*************************************************************
