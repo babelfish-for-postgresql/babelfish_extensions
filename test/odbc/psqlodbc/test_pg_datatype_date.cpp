@@ -616,6 +616,7 @@ TEST_F(PSQL_DataTypes_Date, Update_Fail) {
 
   // Try with PG
   PG_odbcHandler.Connect(true);
+  ASSERT_NO_FATAL_FAILURE(PG_odbcHandler.BindColumns(BIND_COLUMNS));
 
   // Assert that value is inserted properly
   PG_odbcHandler.ExecQuery(SelectStatement(PG_TABLE_NAME, {"*"}, vector<string>{COL1_NAME}));
