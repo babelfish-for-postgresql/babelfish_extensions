@@ -202,6 +202,71 @@ go
 use master;
 go
 
+-- CASE 3
+-- PROC->VIEW->VIEW->TABLE
+-- PROCA
+--	SELECT FROM VIEWB
+-- VIEWB
+-- 	SELECT FROM VIEWA
+-- VIEWA
+-- SELECT FROM TABLEA
+
+-- tsql user=l1 password=123
+use db1;
+go
+
+create view hasownera.vwa3 as select * from hasownera.tbls;
+go
+
+create view hasownera.vwb3 as select * from hasownera.vwa3;
+go
+
+create proc hasownera.pa3 as begin
+	select * from hasownera.vwb3;
+end;
+go
+
+grant exec on hasownera.pa3 to invoker;
+go
+
+-- tsql
+select objs.column1 as object,user_name(objectproperty(object_id(objs.column1),'OwnerId')) as owner
+from (values ('hasownerb.pb2'), ('hasownera.pa2'), ('hasownera.tbls')) 
+as objs(object_name)
+go
+
+-- tsql user=invoker password=123
+use db1;
+go
+
+exec hasownera.pa3;
+go
+
+select * from hasownera.tbls;
+go
+
+select * from hasownera.vwa3;
+go
+
+select * from hasownera.vwb3;
+go
+
+-- tsql
+use db1;
+go
+
+drop proc hasownera.pa3;
+go
+
+drop view hasownera.vwb3;
+go
+
+drop view hasownera.vwa3;
+go
+
+use master;
+go
+
 
 -- Cleanup
 -- psql
