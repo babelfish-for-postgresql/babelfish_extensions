@@ -482,7 +482,9 @@ grant_guests_to_login(const char *login)
 										   &is_null);
 
 		const char *db_name = TextDatumGetCString(db_name_datum);
-		const char *guest_name = get_guest_role_name(db_name);
+		char *guest_name = NULL;
+		if (guest_role_exists_for_db(db_name))
+			guest_name = get_guest_role_name(db_name);
 
 		AccessPriv *tmp = makeNode(AccessPriv);
 		if (guest_name)
@@ -881,7 +883,8 @@ add_to_bbf_authid_user_ext(const char *user_name,
 						   const char *db_name,
 						   const char *schema_name,
 						   const char *login_name,
-						   bool is_role)
+						   bool	is_role,
+						   bool has_dbaccess)
 {
 	Relation		bbf_authid_user_ext_rel;
 	TupleDesc		bbf_authid_user_ext_dsc;
@@ -930,6 +933,10 @@ add_to_bbf_authid_user_ext(const char *user_name,
 		new_record_user_ext[USER_EXT_DEFAULT_SCHEMA_NAME] = CStringGetTextDatum("");
 	new_record_user_ext[USER_EXT_DEFAULT_LANGUAGE_NAME] = CStringGetTextDatum("English");
 	new_record_user_ext[USER_EXT_AUTHENTICATION_TYPE_DESC] = CStringGetTextDatum(""); /* placeholder */
+	if (has_dbaccess)
+		new_record_user_ext[USER_EXT_USER_CAN_CONNECT] = Int32GetDatum(1);
+	else
+		new_record_user_ext[USER_EXT_USER_CAN_CONNECT] = Int32GetDatum(0);
 
 	tuple_user_ext = heap_form_tuple(bbf_authid_user_ext_dsc,
 									 new_record_user_ext,
@@ -1026,7 +1033,7 @@ create_bbf_authid_user_ext(CreateRoleStmt *stmt, bool has_schema, bool has_login
 	}
 
 	/* Add to the catalog table. Adds current database name by default */
-	add_to_bbf_authid_user_ext(stmt->role, original_user_name, NULL, default_schema, login_name_str, !has_login);
+	add_to_bbf_authid_user_ext(stmt->role, original_user_name, NULL, default_schema, login_name_str, !has_login, true);
 }
 
 PG_FUNCTION_INFO_V1(add_existing_users_to_catalog);
@@ -1076,12 +1083,18 @@ add_existing_users_to_catalog(PG_FUNCTION_ARGS)
 			rolspec->location = -1;
 			rolspec->rolename = pstrdup(dbo_role);
 			dbo_list = lappend(dbo_list, rolspec);
-			add_to_bbf_authid_user_ext(dbo_role, "dbo", db_name, "dbo", NULL, false);
+			add_to_bbf_authid_user_ext(dbo_role, "dbo", db_name, "dbo", NULL, false, true);
 		}
 		if (db_owner_role)
-			add_to_bbf_authid_user_ext(db_owner_role, "db_owner", db_name, NULL, NULL, true);
+			add_to_bbf_authid_user_ext(db_owner_role, "db_owner", db_name, NULL, NULL, true, true);
 		if (guest)
-			add_to_bbf_authid_user_ext(guest, "guest", db_name, NULL, NULL, false);
+		{
+			/* For master, tempdb and msdb databases, the guest user will be enabled by default */
+			if (strcmp(db_name, "master") == 0 || strcmp(db_name, "tempdb") == 0 || strcmp(db_name, "msdb") == 0)
+				add_to_bbf_authid_user_ext(guest, "guest", db_name, NULL, NULL, false, true);
+			else
+				add_to_bbf_authid_user_ext(guest, "guest", db_name, NULL, NULL, false, false);
+		}
 
 		tuple = heap_getnext(scan, ForwardScanDirection);
 	}

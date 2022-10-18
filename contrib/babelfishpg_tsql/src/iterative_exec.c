@@ -753,6 +753,15 @@ static inline int dispatch_stmt(PLtsql_execstate *estate, PLtsql_stmt *stmt)
 		case PLTSQL_STMT_USEDB:
 			exec_stmt_usedb(estate, (PLtsql_stmt_usedb *) stmt);
 			break;
+		case PLTSQL_STMT_GRANTDB:
+			if (pltsql_explain_only)
+			{
+				ereport(ERROR,
+						(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+						errmsg("Showing Estimated Execution Plan for GRANT DB statment is not yet supported")));
+			}
+			exec_stmt_grantdb(estate, (PLtsql_stmt_grantdb *) stmt);
+			break;
         case PLTSQL_STMT_INSERT_BULK:
 			if (pltsql_explain_only)
 			{

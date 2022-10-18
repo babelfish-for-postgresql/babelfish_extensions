@@ -1052,6 +1052,7 @@ public:
 
 	bool is_cross_db = false;
 	std::string schema_name;
+	std::string db_name;
 	bool is_function = false;
 	bool is_schema_specified = false;
 
@@ -1469,6 +1470,9 @@ public:
 
 		if (!schema_name.empty())
 			stmt->schema_name = pstrdup(downcase_truncate_identifier(schema_name.c_str(), schema_name.length(), true));
+		// record db name for the cross db query
+		if (!db_name.empty())
+			stmt->db_name = pstrdup(downcase_truncate_identifier(db_name.c_str(), db_name.length(), true));
 		// record if the SQL object is schema qualified
 		if (is_schema_specified)
 			stmt->is_schema_specified = true;
@@ -1591,6 +1595,32 @@ public:
 
 	void exitSecurity_statement(TSqlParser::Security_statementContext *ctx) override
 	{
+		if (ctx->grant_statement() && ctx->grant_statement()->TO() && !ctx->grant_statement()->permission_object()
+								&& ctx->grant_statement()->permissions())
+		{
+			for (auto perm : ctx->grant_statement()->permissions()->permission())
+			{
+				auto single_perm = perm->single_permission();
+				if (single_perm->CONNECT())
+				{
+					clear_rewritten_query_fragment();
+					return;
+				}
+			}
+		}
+		else if (ctx->revoke_statement() && ctx->revoke_statement()->FROM() && !ctx->revoke_statement()->permission_object()
+										&& ctx->revoke_statement()->permissions())
+		{
+			for (auto perm : ctx->revoke_statement()->permissions()->permission())
+			{
+				auto single_perm = perm->single_permission();
+				if (single_perm->CONNECT())
+				{
+					clear_rewritten_query_fragment();
+					return;
+				}
+			}
+		}
 		PLtsql_stmt_execsql *stmt = (PLtsql_stmt_execsql *) getPLtsql_fragment(ctx);
 		Assert(stmt);
 
@@ -1683,7 +1713,7 @@ public:
 		tsqlCommonMutator::exitFull_object_name(ctx);
 		if (ctx && ctx->database)
 		{
-			std::string db_name = stripQuoteFromId(ctx->database);
+			db_name = stripQuoteFromId(ctx->database);
 
 			if (!string_matches(db_name.c_str(), get_cur_db_name()))
 				is_cross_db = true;
@@ -1695,7 +1725,7 @@ public:
 		tsqlCommonMutator::exitTable_name(ctx);
 		if (ctx && ctx->database)
 		{
-			std::string db_name = stripQuoteFromId(ctx->database);
+			db_name = stripQuoteFromId(ctx->database);
 
 			if (!string_matches(db_name.c_str(), get_cur_db_name()))
 				is_cross_db = true;
@@ -4022,7 +4052,6 @@ PLtsql_stmt *
 makeSQL(ParserRuleContext *ctx)
 {
 	PLtsql_stmt *result;
-
 	result = makeExecSql(ctx);
 
 	attachPLtsql_fragment(ctx, result);
@@ -4778,6 +4807,70 @@ makeUseStatement(TSqlParser::Use_statementContext *ctx)
 }
 
 PLtsql_stmt *
+makeGrantdbStatement(TSqlParser::Security_statementContext *ctx)
+{
+	if (ctx->grant_statement() && ctx->grant_statement()->TO() && !ctx->grant_statement()->permission_object()
+								&& ctx->grant_statement()->permissions())
+	{
+		for (auto perm : ctx->grant_statement()->permissions()->permission())
+		{
+			auto single_perm = perm->single_permission();
+			if (single_perm->CONNECT())
+			{
+				PLtsql_stmt_grantdb *result = (PLtsql_stmt_grantdb *) palloc0(sizeof(PLtsql_stmt_grantdb));
+				result->cmd_type = PLTSQL_STMT_GRANTDB;
+				result->lineno = getLineNo(ctx->grant_statement());
+				result->is_grant = true;
+				List *grantee_list = NIL;
+				for (auto prin : ctx->grant_statement()->principals()->principal_id())
+				{
+					if (prin->id())
+					{
+						std::string id_str = ::getFullText(prin->id());
+						char *grantee_name = pstrdup(downcase_truncate_identifier(id_str.c_str(), id_str.length(), true));
+						grantee_list = lappend(grantee_list, grantee_name);
+					}
+				}
+				result->grantees = grantee_list;
+				return (PLtsql_stmt *) result;
+			}
+		}
+	}
+	if (ctx->revoke_statement() && ctx->revoke_statement()->FROM() && !ctx->revoke_statement()->permission_object()
+								&& ctx->revoke_statement()->permissions())
+	{
+		for (auto perm : ctx->revoke_statement()->permissions()->permission())
+		{
+			auto single_perm = perm->single_permission();
+			if (single_perm->CONNECT())
+			{
+				PLtsql_stmt_grantdb *result = (PLtsql_stmt_grantdb *) palloc0(sizeof(PLtsql_stmt_grantdb));
+				result->cmd_type = PLTSQL_STMT_GRANTDB;
+				result->lineno = getLineNo(ctx->revoke_statement());
+				result->is_grant = false;
+				List *grantee_list = NIL;
+
+				for (auto prin : ctx->revoke_statement()->principals()->principal_id())
+				{
+					if (prin->id())
+					{
+						std::string id_str = ::getFullText(prin->id());
+						char *grantee_name = pstrdup(downcase_truncate_identifier(id_str.c_str(), id_str.length(), true));
+						grantee_list = lappend(grantee_list, grantee_name);
+					}
+				}
+				result->grantees = grantee_list;
+				return (PLtsql_stmt *) result;
+			}
+		}
+	}
+	PLtsql_stmt *result;
+	result = makeExecSql(ctx);
+	attachPLtsql_fragment(ctx, result);
+	return result;
+}
+
+PLtsql_stmt *
 makeTransactionStatement(TSqlParser::Transaction_statementContext *ctx)
 {
 	PLtsql_stmt *result;
@@ -4817,6 +4910,8 @@ makeAnother(TSqlParser::Another_statementContext *ctx, tsqlBuilder &builder)
 		result.push_back(makeExecuteStatement(ctx->execute_statement()));
 	else if (ctx->cursor_statement())
 		result.push_back(makeCursorStatement(ctx->cursor_statement()));
+	else if (ctx->security_statement() && (ctx->security_statement()->grant_statement() || ctx->security_statement()->revoke_statement()))
+		result.push_back(makeGrantdbStatement(ctx->security_statement()));
 	else if (ctx->security_statement())
 		result.push_back(makeSQL(ctx->security_statement())); /* relaying security statement to main parser */
 	else if (ctx->transaction_statement())

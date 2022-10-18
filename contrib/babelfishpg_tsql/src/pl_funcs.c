@@ -335,6 +335,9 @@ pltsql_stmt_typename(PLtsql_stmt *stmt)
             return "INSERT BULK";
 		case PLTSQL_STMT_SET_EXPLAIN_MODE:
 			return "SET EXPLAIN MODE";
+		case PLTSQL_STMT_GRANTDB:
+			return ((PLtsql_stmt_grantdb *) stmt)->is_grant ?
+				"GRANT CONNECT TO" : "REVOKE CONNECT FROM";
         /* TSQL-only executable node */
         case PLTSQL_STMT_SAVE_CTX:
             return "SAVE_CONTEXT";

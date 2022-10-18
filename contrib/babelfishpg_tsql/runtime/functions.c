@@ -953,7 +953,13 @@ has_dbaccess(PG_FUNCTION_ARGS)
 		if (is_member_of_role(GetSessionUserId(), datdba))
 			user = get_dbo_role_name(lowercase_db_name);
 		else
-			user = get_guest_role_name(lowercase_db_name);
+		{
+			/* Get the guest role name only if the guest is enabled on the current db.*/
+			if (guest_has_dbaccess(lowercase_db_name))
+				user = get_guest_role_name(lowercase_db_name);
+			else
+				user = NULL;
+		}
 	}
 
 	if (!user)

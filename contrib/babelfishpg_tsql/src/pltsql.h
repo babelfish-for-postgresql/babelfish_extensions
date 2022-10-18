@@ -179,7 +179,8 @@ typedef enum PLtsql_stmt_type
     PLTSQL_STMT_SAVE_CTX,
     PLTSQL_STMT_RESTORE_CTX_FULL,
     PLTSQL_STMT_RESTORE_CTX_PARTIAL,
-    PLTSQL_STMT_INSERT_BULK
+    PLTSQL_STMT_INSERT_BULK,
+    PLTSQL_STMT_GRANTDB
 } PLtsql_stmt_type;
 
 /*
@@ -981,6 +982,17 @@ typedef struct PLtsql_raise_option
 } PLtsql_raise_option;
 
 /*
+ *	Grant Connect stmt
+ */
+typedef struct PLtsql_stmt_grantdb
+{
+	PLtsql_stmt_type    cmd_type;
+	int 				lineno;
+	bool				is_grant;
+	List	   			*grantees;		/* list of users */
+} PLtsql_stmt_grantdb;
+
+/*
  * ASSERT statement
  */
 typedef struct PLtsql_stmt_assert
@@ -1023,6 +1035,7 @@ typedef struct PLtsql_stmt_execsql
 	bool		is_ddl;			/* DDL statement? */
 	bool		func_call;		/* Function call? */
 	char		*schema_name;	/* Schema specified */
+	char		*db_name;		/* db_name: only for cross db query */
 	bool            is_schema_specified;    /*is schema name specified? */
 	bool		is_create_view;		/* CREATE VIEW? */
 } PLtsql_stmt_execsql;

@@ -280,6 +280,7 @@ database_name SYS.NVARCHAR(128) NOT NULL,
 default_schema_name SYS.NVARCHAR(128) NOT NULL,
 default_language_name SYS.NVARCHAR(128),
 authentication_type_desc SYS.NVARCHAR(60),
+user_can_connect INT NOT NULL DEFAULT 1,
 PRIMARY KEY (rolname));
 
 CREATE INDEX babelfish_authid_user_ext_login_db_idx ON sys.babelfish_authid_user_ext (login_name, database_name);

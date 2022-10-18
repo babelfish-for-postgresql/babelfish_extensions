@@ -17,7 +17,7 @@
 #define LOGIN_EXT_DEFAULT_LANGUAGE_NAME 9
 #define LOGIN_EXT_PROPERTIES			10
 
-#define BBF_AUTHID_USER_EXT_NUM_COLS					15
+#define BBF_AUTHID_USER_EXT_NUM_COLS					16
 #define USER_EXT_ROLNAME								0
 #define USER_EXT_LOGIN_NAME								1
 #define USER_EXT_TYPE									2
@@ -33,6 +33,7 @@
 #define USER_EXT_DEFAULT_SCHEMA_NAME					12
 #define USER_EXT_DEFAULT_LANGUAGE_NAME					13
 #define USER_EXT_AUTHENTICATION_TYPE_DESC				14
+#define USER_EXT_USER_CAN_CONNECT					15
 
 extern void drop_bbf_roles(ObjectAccessType access,
 										Oid classId,
@@ -54,7 +55,8 @@ extern void add_to_bbf_authid_user_ext(const char *user_name,
 									   const char *db_name,
 									   const char *schema_name,
 									   const char *login_name,
-									   bool is_role);
+									   bool is_role,
+									   bool has_dbaccess);
 extern void drop_related_bbf_users(List *db_users);
 extern void alter_bbf_authid_user_ext(AlterRoleStmt *stmt);
 extern bool is_active_login(Oid role_oid);

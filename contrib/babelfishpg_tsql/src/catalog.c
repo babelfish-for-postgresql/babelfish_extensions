@@ -14,6 +14,7 @@
 #include "catalog/namespace.h"
 #include "parser/parse_relation.h"
 #include "parser/scansup.h"
+#include "tcop/utility.h"
 #include "utils/builtins.h"
 #include "utils/fmgroids.h"
 #include "utils/lsyscache.h"
@@ -28,6 +29,7 @@
 #include "hooks.h"
 #include "multidb.h"
 #include "rolecmds.h"
+#include "session.h"
 #include "pltsql.h"
 
 /*****************************************
@@ -799,7 +801,7 @@ get_authid_user_ext_physical_name(const char *db_name, const char *login)
 {
 	Relation		bbf_authid_user_ext_rel;
 	HeapTuple		tuple_user_ext;
-	ScanKeyData		key[2];
+	ScanKeyData		key[3];
 	TableScanDesc	scan;
 	char			*user_name = NULL;
 	NameData		*login_name;
@@ -820,8 +822,12 @@ get_authid_user_ext_physical_name(const char *db_name, const char *login)
 				Anum_bbf_authid_user_ext_database_name,
 				BTEqualStrategyNumber, F_TEXTEQ,
 				CStringGetTextDatum(db_name));
+	ScanKeyInit(&key[2],
+				Anum_bbf_authid_user_ext_user_can_connect,
+				BTEqualStrategyNumber, F_INT4EQ,
+				Int32GetDatum(1));
 
-	scan = table_beginscan_catalog(bbf_authid_user_ext_rel, 2, key);
+	scan = table_beginscan_catalog(bbf_authid_user_ext_rel, 3, key);
 
 	tuple_user_ext = heap_getnext(scan, ForwardScanDirection);
 	if (HeapTupleIsValid(tuple_user_ext))
@@ -951,7 +957,13 @@ get_user_for_database(const char *db_name)
 		if (is_member_of_role(GetSessionUserId(), datdba) || login_is_db_owner)
 			user = get_dbo_role_name(db_name);
 		else
-			user = get_guest_role_name(db_name);
+		{
+			/* Get the guest role name only if the guest is enabled on the current db.*/
+			if (guest_has_dbaccess(db_name))
+				user = get_guest_role_name(db_name);
+			else
+				user = NULL;
+		}
 	}
 
 	if (user && !(is_member_of_role(GetSessionUserId(), get_role_oid(user, false)) 
@@ -1305,6 +1317,7 @@ static bool check_must_match_rules(Rule rules[], size_t num_rules, Oid catalog_o
 static void update_report(Rule *rule, Tuplestorestate *res_tupstore, TupleDesc res_tupdesc);
 static void init_catalog_data(void);
 static void get_catalog_info(Rule *rule);
+static void create_guest_role_for_db(char *dbname);
 
 /*****************************************
  * 			Catalog Extra Info
@@ -1994,4 +2007,267 @@ get_catalog_info(Rule *rule)
 				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
 				 errmsg("Failed to find \"%s\" in the pre-defined catalog data array", 
 						rule->tblname)));
+}
+
+/* Modifies the user_can_connect column in the catalog table
+ * sys.babelfish_authid_user_ext based on the "GRANT/REVOKE
+ * connect TO/FROM" statements.
+ */
+void
+alter_user_can_connect(bool is_grant, char *user_name, char *db_name)
+{
+	Relation		bbf_authid_user_ext_rel;
+	TupleDesc		bbf_authid_user_ext_dsc;
+	ScanKeyData		key[2];
+	HeapTuple		usertuple;
+	HeapTuple		new_tuple;
+	TableScanDesc		tblscan;
+	Datum			new_record_user_ext[BBF_AUTHID_USER_EXT_NUM_COLS];
+	bool			new_record_nulls_user_ext[BBF_AUTHID_USER_EXT_NUM_COLS];
+	bool			new_record_repl_user_ext[BBF_AUTHID_USER_EXT_NUM_COLS];
+
+	bbf_authid_user_ext_rel = table_open(get_authid_user_ext_oid(),
+										 RowExclusiveLock);
+	bbf_authid_user_ext_dsc = RelationGetDescr(bbf_authid_user_ext_rel);
+
+	/* Search and obtain the tuple based on the user name and db name */	
+	ScanKeyInit(&key[0],
+				Anum_bbf_authid_user_ext_orig_username,
+				BTEqualStrategyNumber, F_TEXTEQ,
+				CStringGetTextDatum(user_name));
+	ScanKeyInit(&key[1],
+				Anum_bbf_authid_user_ext_database_name,
+				BTEqualStrategyNumber, F_TEXTEQ,
+				CStringGetTextDatum(db_name));
+
+	tblscan = table_beginscan_catalog(bbf_authid_user_ext_rel, 2, key);
+
+	/* Build a tuple to insert */
+	MemSet(new_record_user_ext, 0, sizeof(new_record_user_ext));
+	MemSet(new_record_nulls_user_ext, false, sizeof(new_record_nulls_user_ext));
+	MemSet(new_record_repl_user_ext, false, sizeof(new_record_repl_user_ext));
+
+	usertuple = heap_getnext(tblscan, ForwardScanDirection);
+
+	if (!HeapTupleIsValid(usertuple))
+		ereport(ERROR,
+				(errcode(ERRCODE_UNDEFINED_OBJECT),
+				errmsg("Cannot find the user \"%s\", because it does not exist or you do not have permission.", user_name)));
+
+	/* Update the column user_can_connect to 1 in case of GRANT and to 0 in case of REVOKE */
+	if (is_grant)
+		new_record_user_ext[USER_EXT_USER_CAN_CONNECT] = Int32GetDatum(1);
+	else
+		new_record_user_ext[USER_EXT_USER_CAN_CONNECT] = Int32GetDatum(0);
+
+	new_record_repl_user_ext[USER_EXT_USER_CAN_CONNECT] = true;
+
+	new_tuple = heap_modify_tuple(usertuple,
+								  bbf_authid_user_ext_dsc,
+								  new_record_user_ext,
+								  new_record_nulls_user_ext,
+								  new_record_repl_user_ext);
+
+	CatalogTupleUpdate(bbf_authid_user_ext_rel, &new_tuple->t_self, new_tuple);
+
+	heap_freetuple(new_tuple);
+
+	table_endscan(tblscan);
+	table_close(bbf_authid_user_ext_rel, RowExclusiveLock);
+}
+
+/* Checks if the guest user is enabled on a given database. */
+bool
+guest_has_dbaccess(char *db_name)
+{
+	Relation		bbf_authid_user_ext_rel;
+	HeapTuple		tuple_user_ext;
+	ScanKeyData		key[3];
+	TableScanDesc		scan;
+	bool			has_access = false;
+
+	bbf_authid_user_ext_rel = table_open(get_authid_user_ext_oid(),
+										 RowExclusiveLock);
+	ScanKeyInit(&key[0],
+				Anum_bbf_authid_user_ext_orig_username,
+				BTEqualStrategyNumber, F_TEXTEQ,
+				CStringGetTextDatum("guest"));
+	ScanKeyInit(&key[1],
+				Anum_bbf_authid_user_ext_database_name,
+				BTEqualStrategyNumber, F_TEXTEQ,
+				CStringGetTextDatum(db_name));
+	ScanKeyInit(&key[2],
+				Anum_bbf_authid_user_ext_user_can_connect,
+				BTEqualStrategyNumber, F_INT4EQ,
+				Int32GetDatum(1));
+
+	scan = table_beginscan_catalog(bbf_authid_user_ext_rel, 3, key);
+
+	tuple_user_ext = heap_getnext(scan, ForwardScanDirection);
+	if (HeapTupleIsValid(tuple_user_ext))
+		has_access = true;
+
+	table_endscan(scan);
+	table_close(bbf_authid_user_ext_rel, RowExclusiveLock);
+	return has_access;
+}
+
+PG_FUNCTION_INFO_V1(update_user_catalog_for_guest);
+Datum update_user_catalog_for_guest(PG_FUNCTION_ARGS)
+{
+	Relation        db_rel;
+	TableScanDesc   scan;
+	HeapTuple       tuple;
+	bool            is_null;
+
+	db_rel = table_open(sysdatabases_oid, AccessShareLock);
+	scan = table_beginscan_catalog(db_rel, 0, NULL);
+	tuple = heap_getnext(scan, ForwardScanDirection);
+
+	while (HeapTupleIsValid(tuple))
+	{
+		Datum	db_name_datum = heap_getattr(tuple, Anum_sysdatabaese_name,
+						 db_rel->rd_att, &is_null);
+		const char	*db_name = TextDatumGetCString(db_name_datum);
+
+		/*
+		 * For each database, check if the guest user exists.
+		 * If exists, check the next database.
+		 * If not, create the guest user on that database.
+		 */
+		if (guest_role_exists_for_db(db_name))
+		{
+			tuple = heap_getnext(scan, ForwardScanDirection);
+			continue;
+		}
+		create_guest_role_for_db(db_name);
+		tuple = heap_getnext(scan, ForwardScanDirection);
+	}
+	table_endscan(scan);
+	table_close(db_rel, AccessShareLock);
+	PG_RETURN_INT32(0);
+}
+
+bool
+guest_role_exists_for_db(char *dbname)
+{
+	const char 	*guest_role = get_guest_role_name(dbname);
+	bool		role_exists = false;
+	Relation	bbf_authid_user_ext_rel;
+	HeapTuple	tuple;
+	ScanKeyData	scanKey;
+	SysScanDesc	scan;
+
+	/* Fetch the relation */
+	bbf_authid_user_ext_rel = table_open(get_authid_user_ext_oid(),
+									RowExclusiveLock);
+
+	/* Search if the role exists */
+	ScanKeyInit(&scanKey,
+				Anum_bbf_authid_user_ext_rolname,
+				BTEqualStrategyNumber, F_NAMEEQ,
+				CStringGetDatum(guest_role));
+
+	scan = systable_beginscan(bbf_authid_user_ext_rel,
+							  get_authid_user_ext_idx_oid(),
+							  true, NULL, 1, &scanKey);
+
+	tuple = systable_getnext(scan);
+
+	if (HeapTupleIsValid(tuple))
+		role_exists = true;
+
+	systable_endscan(scan);
+	table_close(bbf_authid_user_ext_rel, RowExclusiveLock);
+
+	return role_exists;
+}
+
+static void
+create_guest_role_for_db(char *dbname)
+{
+	const char		*guest = get_guest_role_name(dbname);
+	const char		*db_owner_role = get_db_owner_name(dbname);
+	List			*logins = NIL;
+	List			*res;
+	StringInfoData	query;
+	Node			*stmt;
+	ListCell		*res_item;
+	int				i = 0;
+	const char		*prev_current_user;
+	int16			old_dbid;
+	char			*old_dbname;
+	int16			dbid = get_db_id(dbname);
+
+	initStringInfo(&query);
+	appendStringInfo(&query, "CREATE ROLE dummy INHERIT ROLE dummy; ");
+	logins = grant_guest_to_logins(&query);
+	res = raw_parser(query.data, RAW_PARSE_DEFAULT);
+
+	/* Replace dummy elements in parsetree with real values */
+	stmt = parsetree_nth_stmt(res, i++);
+	update_CreateRoleStmt(stmt, guest, db_owner_role, NULL);
+
+	if (list_length(logins) > 0)
+	{
+		AccessPriv *tmp = makeNode(AccessPriv);
+		tmp->priv_name = pstrdup(guest);
+		tmp->cols = NIL;
+
+		stmt = parsetree_nth_stmt(res, i++);
+		update_GrantRoleStmt(stmt, list_make1(tmp), logins);
+	}
+
+	/* Set current user to session user for create permissions */
+	prev_current_user = GetUserNameFromId(GetUserId(), false);
+
+	bbf_set_current_user("sysadmin");
+
+	old_dbid = get_cur_db_id();
+	old_dbname = get_cur_db_name();
+	set_cur_db(dbid, dbname);  /* temporarily set current dbid as the new id */
+
+	PG_TRY();
+	{
+		/* Run all subcommands */
+		foreach(res_item, res)
+		{
+			Node	   *res_stmt = ((RawStmt *) lfirst(res_item))->stmt;
+			PlannedStmt *wrapper;
+
+			/* need to make a wrapper PlannedStmt */
+			wrapper = makeNode(PlannedStmt);
+			wrapper->commandType = CMD_UTILITY;
+			wrapper->canSetTag = false;
+			wrapper->utilityStmt = res_stmt;
+			wrapper->stmt_location = 0;
+			wrapper->stmt_len = 18;
+
+			/* do this step */
+			ProcessUtility(wrapper,
+						   "(CREATE LOGICAL DATABASE )",
+						   false,
+							PROCESS_UTILITY_SUBCOMMAND,
+							NULL,
+							NULL,
+							None_Receiver,
+							NULL);
+
+			/* make sure later steps can see the object created here */
+			CommandCounterIncrement();
+		}
+		set_cur_db(old_dbid, old_dbname);
+		add_to_bbf_authid_user_ext(guest, "guest", dbname, NULL, NULL, false, false);
+	}
+	PG_CATCH();
+	{
+		/* Clean up. Restore previous state. */
+		bbf_set_current_user(prev_current_user);
+		set_cur_db(old_dbid, old_dbname);
+		PG_RE_THROW();
+	}
+	PG_END_TRY();
+
+	/* Set current user back to previous user */
+	bbf_set_current_user(prev_current_user);
 }
