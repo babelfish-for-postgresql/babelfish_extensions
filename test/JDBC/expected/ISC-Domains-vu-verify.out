@@ -1,191 +1,44 @@
-SELECT pg_get_functiondef(cast('babel_2877_vu_prepare_func1' as regproc));
-GO
+
+select * from information_schema.domains where DOMAIN_SCHEMA = 'isc_domains_vu_prepare_s' ORDER BY DOMAIN_NAME
+go
 ~~START~~
-text
-CREATE OR REPLACE FUNCTION master_dbo.babel_2877_vu_prepare_func1("@a" integer, "@b" "varchar" DEFAULT 'abc'::"varchar", "@c" money, "@d" double precision DEFAULT 1.2)<newline> RETURNS "varchar"<newline> LANGUAGE pltsql<newline>AS '{"version_num": "1", "typmod_array": ["-1", "10", "-1", "-1", "100"], "original_probin": ""}', $function$BEGIN<newline>	RETURN CAST(@a AS varchar(10)) + @b + CAST(@c AS varchar(10)) + CAST(@d AS varchar(10));<newline>END$function$<newline>
+nvarchar#!#nvarchar#!#varchar#!#varchar#!#int#!#int#!#nvarchar#!#nvarchar#!#nvarchar#!#varchar#!#varchar#!#nvarchar#!#tinyint#!#smallint#!#int#!#smallint#!#nvarchar
+master#!#isc_domains_vu_prepare_s#!#bigint_t#!#bigint#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#19#!#10#!#0#!#<NULL>#!#<NULL>
+master#!#isc_domains_vu_prepare_s#!#binary_t#!#binary#!#8#!#8#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>
+master#!#isc_domains_vu_prepare_s#!#bit_t#!#bit#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>
+master#!#isc_domains_vu_prepare_s#!#char_t#!#char#!#10#!#10#!#<NULL>#!#<NULL>#!#sql_latin1_general_cp1_ci_as#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>
+master#!#isc_domains_vu_prepare_s#!#date_t#!#date#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#0#!#<NULL>
+master#!#isc_domains_vu_prepare_s#!#datetime2_t#!#datetime2#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#5#!#<NULL>
+master#!#isc_domains_vu_prepare_s#!#datetime_t#!#datetime#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#3#!#<NULL>
+master#!#isc_domains_vu_prepare_s#!#datetimeoffset_t#!#datetimeoffset#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#5#!#<NULL>
+master#!#isc_domains_vu_prepare_s#!#image_t#!#image#!#2147483647#!#2147483647#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>
+master#!#isc_domains_vu_prepare_s#!#int_t#!#int#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#10#!#10#!#0#!#<NULL>#!#<NULL>
+master#!#isc_domains_vu_prepare_s#!#money_t#!#money#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#19#!#10#!#4#!#<NULL>#!#<NULL>
+master#!#isc_domains_vu_prepare_s#!#my_tbl_type#!#table type#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>
+master#!#isc_domains_vu_prepare_s#!#nchar_t#!#char#!#9#!#9#!#<NULL>#!#<NULL>#!#sql_latin1_general_cp1_ci_as#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>
+master#!#isc_domains_vu_prepare_s#!#ntext_t#!#ntext#!#1073741823#!#2147483646#!#<NULL>#!#<NULL>#!#sql_latin1_general_cp1_ci_as#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>
+master#!#isc_domains_vu_prepare_s#!#numeric_t#!#numeric#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#5#!#10#!#3#!#<NULL>#!#<NULL>
+master#!#isc_domains_vu_prepare_s#!#nvarchar_t#!#nvarchar#!#8#!#16#!#<NULL>#!#<NULL>#!#sql_latin1_general_cp1_ci_as#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>
+master#!#isc_domains_vu_prepare_s#!#real_t#!#real#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#24#!#2#!#<NULL>#!#<NULL>#!#<NULL>
+master#!#isc_domains_vu_prepare_s#!#smalldatetime_t#!#smalldatetime#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#0#!#<NULL>
+master#!#isc_domains_vu_prepare_s#!#smallint_t#!#smallint#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#5#!#10#!#0#!#<NULL>#!#<NULL>
+master#!#isc_domains_vu_prepare_s#!#smallmoney_t#!#smallmoney#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#10#!#10#!#4#!#<NULL>#!#<NULL>
+master#!#isc_domains_vu_prepare_s#!#sql_variant_t#!#sql_variant#!#0#!#0#!#<NULL>#!#<NULL>#!#sql_latin1_general_cp1_ci_as#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>
+master#!#isc_domains_vu_prepare_s#!#text_t#!#text#!#2147483647#!#2147483647#!#<NULL>#!#<NULL>#!#sql_latin1_general_cp1_ci_as#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>
+master#!#isc_domains_vu_prepare_s#!#time_t#!#time#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#5#!#<NULL>
+master#!#isc_domains_vu_prepare_s#!#tinyint_t#!#tinyint#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#3#!#10#!#0#!#<NULL>#!#<NULL>
+master#!#isc_domains_vu_prepare_s#!#varbinary_t#!#varbinary#!#10#!#10#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>
+master#!#isc_domains_vu_prepare_s#!#varchar_t#!#nvarchar#!#8#!#16#!#<NULL>#!#<NULL>#!#sql_latin1_general_cp1_ci_as#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>
 ~~END~~
 
 
-SELECT pg_get_functiondef(cast('babel_2877_vu_prepare_func2' as regproc));
-GO
+-- Test cross db references
+use isc_domains_vu_prepare_db
+go
+
+select COUNT(*) from information_schema.domains
+go
 ~~START~~
-text
-CREATE OR REPLACE FUNCTION master_dbo.babel_2877_vu_prepare_func2("@a" integer DEFAULT 10, "@b" "varchar" DEFAULT 'abc'::"varchar", "@c" money DEFAULT 5, "@d" double precision DEFAULT 1.2)<newline> RETURNS "varchar"<newline> LANGUAGE pltsql<newline>AS '{"version_num": "1", "typmod_array": ["-1", "10", "-1", "-1", "100"], "original_probin": ""}', $function$BEGIN<newline>	RETURN CAST(@a AS varchar(10)) + @b + CAST(@c AS varchar(10)) + CAST(@d AS varchar(10));<newline>END$function$<newline>
+int
+0
 ~~END~~
-
-
-SELECT pg_get_functiondef(cast('babel_2877_vu_prepare_func3' as regproc));
-GO
-~~START~~
-text
-CREATE OR REPLACE FUNCTION master_dbo.babel_2877_vu_prepare_func3("@a" integer, "@b" "varchar", "@c" money, "@d" double precision)<newline> RETURNS "varchar"<newline> LANGUAGE pltsql<newline>AS '{"version_num": "1", "typmod_array": ["-1", "10", "-1", "-1", "100"], "original_probin": ""}', $function$BEGIN<newline>	RETURN CAST(@a AS varchar(10)) + @b + CAST(@c AS varchar(10)) + CAST(@d AS varchar(10));<newline>END$function$<newline>
-~~END~~
-
-
-SELECT pg_get_functiondef(cast('babel_2877_vu_prepare_proc1' as regproc));
-GO
-~~START~~
-text
-CREATE OR REPLACE PROCEDURE master_dbo.babel_2877_vu_prepare_proc1(IN "@a" integer, IN "@b" "varchar" DEFAULT 'abc'::"varchar", IN "@c" money DEFAULT 5, IN "@d" double precision)<newline> LANGUAGE pltsql<newline>AS '{"version_num": "1", "typmod_array": ["-1", "10", "-1", "-1"], "original_probin": ""}', $procedure$BEGIN<newline>	SELECT @a, @b, @c, @d;<newline>END$procedure$<newline>
-~~END~~
-
-
-SELECT pg_get_functiondef(cast('babel_2877_vu_prepare_proc2' as regproc));
-GO
-~~START~~
-text
-CREATE OR REPLACE PROCEDURE master_dbo.babel_2877_vu_prepare_proc2(IN "@a" integer DEFAULT 10, IN "@b" "varchar" DEFAULT 'abc'::"varchar", IN "@c" money DEFAULT 5, IN "@d" double precision DEFAULT 1.2)<newline> LANGUAGE pltsql<newline>AS '{"version_num": "1", "typmod_array": ["-1", "10", "-1", "-1"], "original_probin": ""}', $procedure$BEGIN<newline>	SELECT @a, @b, @c, @d;<newline>END$procedure$<newline>
-~~END~~
-
-
-SELECT pg_get_functiondef(cast('babel_2877_vu_prepare_proc3' as regproc));
-GO
-~~START~~
-text
-CREATE OR REPLACE PROCEDURE master_dbo.babel_2877_vu_prepare_proc3(IN "@a" integer, IN "@b" "varchar", IN "@c" money, IN "@d" double precision)<newline> LANGUAGE pltsql<newline>AS '{"version_num": "1", "typmod_array": ["-1", "10", "-1", "-1"], "original_probin": ""}', $procedure$BEGIN<newline>	SELECT @a, @b, @c, @d;<newline>END$procedure$<newline>
-~~END~~
-
-
-SELECT * FROM babel_2877_vu_prepare_func1(10); -- should fail, required argument @c not supplied
-GO
-~~ERROR (Code: 201)~~
-
-~~ERROR (Message: function babel_2877_vu_prepare_func1 expects parameter "@c", which was not supplied.)~~
-
-
-SELECT * FROM babel_2877_vu_prepare_func1(10, 'abc', $5);
-GO
-~~START~~
-varchar
-10abc5.00001.2
-~~END~~
-
-
-SELECT * FROM babel_2877_vu_prepare_func2();
-GO
-~~START~~
-varchar
-10abc5.00001.2
-~~END~~
-
-
-SELECT * FROM babel_2877_vu_prepare_func3(); -- should fail, all parameters are required
-GO
-~~ERROR (Code: 201)~~
-
-~~ERROR (Message: function babel_2877_vu_prepare_func3 expects parameter "@a", which was not supplied.)~~
-
-
-SELECT * FROM babel_2877_vu_prepare_func3(10, 'abc', $5, 1.2);
-GO
-~~START~~
-varchar
-10abc5.00001.2
-~~END~~
-
-
-SELECT * FROM babel_2877_vu_prepare_view1;
-GO
-~~START~~
-varchar
-20def5.00001.2
-~~END~~
-
-
-SELECT * FROM babel_2877_vu_prepare_view2;
-GO
-~~START~~
-varchar
-10abc5.00001.2
-~~END~~
-
-
-SELECT * FROM babel_2877_vu_prepare_view3;
-GO
-~~START~~
-varchar
-20def10.00001.8
-~~END~~
-
-
-EXEC babel_2877_vu_prepare_proc1; -- should fail, required arguments @a and @d not supplied
-GO
-~~ERROR (Code: 201)~~
-
-~~ERROR (Message: procedure babel_2877_vu_prepare_proc1 expects parameter "@a", which was not supplied.)~~
-
-
-EXEC babel_2877_vu_prepare_proc1 10; -- should fail, required argument @d not supplied
-GO
-~~ERROR (Code: 201)~~
-
-~~ERROR (Message: procedure babel_2877_vu_prepare_proc1 expects parameter "@d", which was not supplied.)~~
-
-
-EXEC babel_2877_vu_prepare_proc1 @d=40; -- should fail, required argument @a not supplied
-GO
-~~ERROR (Code: 201)~~
-
-~~ERROR (Message: procedure babel_2877_vu_prepare_proc1 expects parameter "@a", which was not supplied.)~~
-
-
-EXEC babel_2877_vu_prepare_proc1 @a = 10, @d = 1.8;
-GO
-~~START~~
-int#!#varchar#!#money#!#float
-10#!#abc#!#5.0000#!#1.8
-~~END~~
-
-
-EXEC babel_2877_vu_prepare_proc1 @a = 10, @b = 20, @c = 30, @d = 40;
-GO
-~~START~~
-int#!#varchar#!#money#!#float
-10#!#20#!#30.0000#!#40.0
-~~END~~
-
-
-EXEC babel_2877_vu_prepare_proc2;
-GO
-~~START~~
-int#!#varchar#!#money#!#float
-10#!#abc#!#5.0000#!#1.2
-~~END~~
-
-
-EXEC babel_2877_vu_prepare_proc2 @d = 1.5;
-GO
-~~START~~
-int#!#varchar#!#money#!#float
-10#!#abc#!#5.0000#!#1.5
-~~END~~
-
-
-EXEC babel_2877_vu_prepare_proc3; -- should fail, all parameters are required
-GO
-~~ERROR (Code: 201)~~
-
-~~ERROR (Message: procedure babel_2877_vu_prepare_proc3 expects parameter "@a", which was not supplied.)~~
-
-
-EXEC babel_2877_vu_prepare_proc3 10, 'def', $10, 1.8; -- should fail, all parameters are required
-GO
-~~START~~
-int#!#varchar#!#money#!#float
-10#!#def#!#10.0000#!#1.8
-~~END~~
-
-
--- babelfish_function_ext table should have entry for all the above functions and procedures
-SELECT * FROM sys.babelfish_function_ext WHERE funcname LIKE 'babel_2877_vu_prepare%';
-GO
-~~START~~
-varchar#!#varchar#!#nvarchar#!#text#!#text
-master_dbo#!#babel_2877_vu_prepare_func1#!#<NULL>#!#babel_2877_vu_prepare_func1(integer, "sys"."varchar", "sys"."money", double precision)#!#(1 3)
-master_dbo#!#babel_2877_vu_prepare_func2#!#<NULL>#!#babel_2877_vu_prepare_func2(integer, "sys"."varchar", "sys"."money", double precision)#!#(0 1 2 3)
-master_dbo#!#babel_2877_vu_prepare_func3#!#<NULL>#!#babel_2877_vu_prepare_func3(integer, "sys"."varchar", "sys"."money", double precision)#!#<NULL>
-master_dbo#!#babel_2877_vu_prepare_proc1#!#<NULL>#!#babel_2877_vu_prepare_proc1(integer, "sys"."varchar", "sys"."money", double precision)#!#(1 2)
-master_dbo#!#babel_2877_vu_prepare_proc2#!#<NULL>#!#babel_2877_vu_prepare_proc2(integer, "sys"."varchar", "sys"."money", double precision)#!#(0 1 2 3)
-master_dbo#!#babel_2877_vu_prepare_proc3#!#<NULL>#!#babel_2877_vu_prepare_proc3(integer, "sys"."varchar", "sys"."money", double precision)#!#<NULL>
-~~END~~
-
