@@ -32,7 +32,7 @@ go
 create sequence jira_babel_3504_sch1.jira_babel_3504_seq7 as numeric start with 3 increment by 3 minvalue 3 maxvalue 12 cycle;
 go
 
---sequence of UDT with basetype varchar can't be created
+--sequence of datatype varchar can't be created
 create sequence jira_babel_3504_sch1.jira_babel_3504_seq8 as varchar(10) start with 3 increment by 3 minvalue 3 maxvalue 12 cycle;
 go
 

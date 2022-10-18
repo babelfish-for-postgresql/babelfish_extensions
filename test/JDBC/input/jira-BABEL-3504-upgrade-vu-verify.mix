@@ -38,5 +38,5 @@ go
 use jira_babel_3504_dbone;
 go
 
-create sequence jira_babel_3504_seq1 as jira_babel_3504_dbone_dbo.jira_babel_3504_bigint2 start with 1;
+create sequence jira_babel_3504_seq1 as jira_babel_3504_bigint2 start with 1;
 go
