@@ -486,6 +486,302 @@ sp_describe_first_result_set_internal(PG_FUNCTION_ARGS)
 	}
 }
 
+/*
+ * Recurse down the BoolExpr if needed, and append all relevant ColumnRef->fields
+ * to the list.
+ */
+List *handle_bool_expr_rec(BoolExpr *expr, List *list)
+{
+	List *args = expr->args;
+	ListCell *lc;
+	A_Expr *xpr;
+	ColumnRef *ref;
+	foreach(lc, args)
+	{
+		Expr *arg = (Expr *) lfirst(lc);
+		switch(arg->type)
+		{
+			case T_A_Expr:
+				xpr = (A_Expr *)arg;
+
+				if (nodeTag(xpr->rexpr) != T_ColumnRef)
+				{
+					ereport(WARNING,
+							(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+							 errmsg("Unsupported use case in sp_describe_undeclared_parameters")));
+				}
+				ref = (ColumnRef *) xpr->rexpr;
+				list = list_concat(list, ref->fields);
+				break;
+			case T_BoolExpr:
+				list = handle_bool_expr_rec((BoolExpr *)arg, list);
+				break;
+			default:
+				break;
+		}
+	}
+	return list;
+}
+
+/*
+ * Returns a list of attnums constructed from the where clause provided, using
+ * the column names given on the left hand side of the assignments
+ */
+List *handle_where_clause_attnums(ParseState *pstate, Node *w_clause, List *target_attnums)
+{
+	/*
+	 * Append attnos from WHERE clause into target_attnums
+	 */
+	if (nodeTag(w_clause) == T_A_Expr)
+	{
+		A_Expr *where_clause = (A_Expr *)w_clause;
+		if (nodeTag(where_clause->lexpr) != T_ColumnRef)
+		{
+			ereport(ERROR,
+					(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+					 errmsg("Unsupported use case in sp_describe_undeclared_parameters")));
+		}
+		ColumnRef *ref = where_clause->lexpr;
+		Value *field = linitial(ref->fields);
+		char *name = field->val.str;
+		int attrno = attnameAttNum(pstate->p_target_relation, name, false);
+		if (attrno == InvalidAttrNumber)
+		{
+			ereport(ERROR,
+				(errcode(ERRCODE_UNDEFINED_COLUMN),
+				 errmsg("column \"%s\" of relation \"%s\" does not exist",
+						name,
+						RelationGetRelationName(pstate->p_target_relation))));
+		}
+
+		return lappend_int(target_attnums, attrno);
+	}
+	else if (nodeTag(w_clause) == T_BoolExpr)
+	{
+		BoolExpr *where_clause = (BoolExpr *)w_clause;
+		ListCell *lc;
+		foreach(lc, where_clause->args)
+		{
+			Expr *arg = (Expr *) lfirst(lc);
+			A_Expr *xpr;
+			switch(arg->type)
+			{
+				case T_A_Expr:
+					xpr = (A_Expr *)arg;
+
+					if (nodeTag(xpr->lexpr) != T_ColumnRef)
+					{
+						ereport(WARNING,
+								(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+								 errmsg("Unsupported use case in sp_describe_undeclared_parameters")));
+					}
+					ColumnRef *ref = (ColumnRef *) xpr->lexpr;
+					Value *field = linitial(ref->fields);
+					char *name = field->val.str;
+					int attrno = attnameAttNum(pstate->p_target_relation, name, false);
+					if (attrno == InvalidAttrNumber)
+					{
+						ereport(ERROR,
+						(errcode(ERRCODE_UNDEFINED_COLUMN),
+						 errmsg("column \"%s\" of relation \"%s\" does not exist",
+								name,
+								RelationGetRelationName(pstate->p_target_relation))));
+					}
+					target_attnums = lappend_int(target_attnums, attrno);
+					break;
+				case T_BoolExpr:
+					target_attnums = handle_where_clause_attnums(pstate, (BoolExpr *)arg, target_attnums);
+					break;
+				default:
+					break;
+			}
+		}
+		return target_attnums;
+	}
+	else
+	{
+		ereport(ERROR,
+				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+				 errmsg("Unsupported use case in sp_describe_undeclared_parameters")));
+	}
+	return target_attnums;
+}
+
+/*
+ * Returns a list of ResTargets constructed from the where clause provided, using
+ * the left hand side of the assignment (assumed to be intended as column names).
+ */
+List *handle_where_clause_restargets_left(ParseState *pstate, Node *w_clause, List *extra_restargets)
+{
+	/*
+	 * Construct a ResTarget and append it to the list.
+	 */
+	if (nodeTag(w_clause) == T_A_Expr)
+	{
+		A_Expr *where_clause = (A_Expr *)w_clause;
+		if (nodeTag(where_clause->lexpr) != T_ColumnRef)
+		{
+			ereport(ERROR,
+					(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+					 errmsg("Unsupported use case in sp_describe_undeclared_parameters")));
+		}
+		ColumnRef *ref = where_clause->lexpr;
+		Value *field = linitial(ref->fields);
+		char *name = field->val.str;
+		int attrno = attnameAttNum(pstate->p_target_relation, name, false);
+		if (attrno == InvalidAttrNumber)
+		{
+			ereport(ERROR,
+			(errcode(ERRCODE_UNDEFINED_COLUMN),
+			 errmsg("column \"%s\" of relation \"%s\" does not exist",
+					name,
+					RelationGetRelationName(pstate->p_target_relation))));
+		}
+		ResTarget *res = (ResTarget *) palloc(sizeof(ResTarget));
+		res->type = ref->type;
+		res->name = field->val.str;
+		res->indirection = NIL; /* Unused for now */
+		res->val = ref; /* Store the ColumnRef here if needed */
+		res->location = ref->location;
+
+		return lappend(extra_restargets, res);
+	}
+	else if (nodeTag(w_clause) == T_BoolExpr)
+	{
+		BoolExpr *where_clause = (BoolExpr *)w_clause;
+		ListCell *lc;
+		foreach(lc, where_clause->args)
+		{
+			Expr *arg = (Expr *) lfirst(lc);
+			A_Expr *xpr;
+			switch(arg->type)
+			{
+				case T_A_Expr:
+					xpr = (A_Expr *)arg;
+
+					if (nodeTag(xpr->lexpr) != T_ColumnRef)
+					{
+						ereport(WARNING,
+								(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+								 errmsg("Unsupported use case in sp_describe_undeclared_parameters")));
+					}
+					ColumnRef *ref = (ColumnRef *) xpr->lexpr;
+					Value *field = linitial(ref->fields);
+					char *name = field->val.str;
+					int attrno = attnameAttNum(pstate->p_target_relation, name, false);
+					if (attrno == InvalidAttrNumber)
+					{
+						ereport(ERROR,
+						(errcode(ERRCODE_UNDEFINED_COLUMN),
+						 errmsg("column \"%s\" of relation \"%s\" does not exist",
+								name,
+								RelationGetRelationName(pstate->p_target_relation))));
+					}
+					ResTarget *res = (ResTarget *) palloc(sizeof(ResTarget));
+					res->type = ref->type;
+					res->name = field->val.str;
+					res->indirection = NIL; /* Unused for now */
+					res->val = ref; /* Store the ColumnRef here if needed */
+					res->location = ref->location;
+
+					extra_restargets = lappend(extra_restargets, res);
+					break;
+				case T_BoolExpr:
+					extra_restargets = handle_where_clause_restargets_left(pstate, (BoolExpr *)arg, extra_restargets);
+					break;
+				default:
+					break;
+			}
+		}
+		return extra_restargets;
+	}
+	else
+	{
+		ereport(ERROR,
+				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+				 errmsg("Unsupported use case in sp_describe_undeclared_parameters")));
+	}
+	return extra_restargets;
+}
+
+/*
+ * Returns a list of ResTargets constructed from the where clause provided, using
+ * the right hand side of the assignment (assumed to be values/parameters).
+ */
+List *handle_where_clause_restargets_right(ParseState *pstate, Node *w_clause, List *extra_restargets)
+{
+	/*
+	 * Construct a ResTarget and append it to the list.
+	 */
+	if (nodeTag(w_clause) == T_A_Expr)
+	{
+		A_Expr *where_clause = (A_Expr *)w_clause;
+		if (nodeTag(where_clause->rexpr) != T_ColumnRef)
+		{
+			ereport(ERROR,
+					(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+					 errmsg("Unsupported use case in sp_describe_undeclared_parameters")));
+		}
+		ColumnRef *ref = where_clause->rexpr;
+		Value *field = linitial(ref->fields);
+		char *name = field->val.str;
+		ResTarget *res = (ResTarget *) palloc(sizeof(ResTarget));
+		res->type = ref->type;
+		res->name = field->val.str;
+		res->indirection = NIL; /* Unused for now */
+		res->val = ref; /* Store the ColumnRef here if needed */
+		res->location = ref->location;
+
+		return lappend(extra_restargets, res);
+	}
+	else if (nodeTag(w_clause) == T_BoolExpr)
+	{
+		BoolExpr *where_clause = (BoolExpr *)w_clause;
+		ListCell *lc;
+		foreach(lc, where_clause->args)
+		{
+			Expr *arg = (Expr *) lfirst(lc);
+			A_Expr *xpr;
+			switch(arg->type)
+			{
+				case T_A_Expr:
+					xpr = (A_Expr *)arg;
+
+					if (nodeTag(xpr->rexpr) != T_ColumnRef)
+					{
+						ereport(WARNING,
+								(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+								 errmsg("Unsupported use case in sp_describe_undeclared_parameters")));
+					}
+					ColumnRef *ref = (ColumnRef *) xpr->rexpr;
+					Value *field = linitial(ref->fields);
+					char *name = field->val.str;
+					ResTarget *res = (ResTarget *) palloc(sizeof(ResTarget));
+					res->type = ref->type;
+					res->name = field->val.str;
+					res->indirection = NIL; /* Unused for now */
+					res->val = ref; /* Store the ColumnRef here if needed */
+					res->location = ref->location;
+
+					extra_restargets = lappend(extra_restargets, res);
+					break;
+				case T_BoolExpr:
+					extra_restargets = handle_where_clause_restargets_right(pstate, (BoolExpr *)arg, extra_restargets);
+					break;
+				default:
+					break;
+			}
+		}
+		return extra_restargets;
+	}
+	else
+	{
+		ereport(ERROR,
+				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+				 errmsg("Unsupported use case in sp_describe_undeclared_parameters")));
+	}
+	return extra_restargets;
+}
 
 /*
  * Internal function used by procedure sys.sp_describe_undeclared_parameters
@@ -527,10 +823,13 @@ sp_describe_undeclared_parameters_internal(PG_FUNCTION_ARGS)
 		int num_target_attnums = 0;
 		RawStmt    *parsetree;
 		InsertStmt *insert_stmt;
+		UpdateStmt *update_stmt;
+		DeleteStmt *delete_stmt;
 		RangeVar *relation;
 		Oid relid;
 		Relation r;
 		List *target_attnums = NIL;
+		List *extra_restargets = NIL;
 		ParseState *pstate;
 		int relname_len;
 		List *cols;
@@ -585,26 +884,102 @@ sp_describe_undeclared_parameters_internal(PG_FUNCTION_ARGS)
 		}
 		list_item = list_head(raw_parsetree_list);
 		parsetree = lfirst_node(RawStmt, list_item);
-		if (nodeTag(parsetree->stmt) != T_InsertStmt)
-		{
-			ereport(ERROR,
-					(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-					 errmsg("Unsupported use case in sp_describe_undeclared_parameters")));
-		}
 
 		/*
-		 * Analyze the parsed InsertStmt to suggest types for undeclared
+		 * Analyze the parsed statement to suggest types for undeclared
 		 * parameters
 		 */
-		rewrite_object_refs(parsetree->stmt);
-		sql_dialect = sql_dialect_value_old;
-		insert_stmt = (InsertStmt *)parsetree->stmt;
-		relation = insert_stmt->relation;
-		relid = RangeVarGetRelid(relation, NoLock, false);
-		r = relation_open(relid, AccessShareLock);
-		pstate = (ParseState *) palloc(sizeof(ParseState));
-		pstate->p_target_relation = r;
-		cols = checkInsertTargets(pstate, insert_stmt->cols, &target_attnums);
+		switch(nodeTag(parsetree->stmt))
+		{
+			case T_InsertStmt:
+				rewrite_object_refs(parsetree->stmt);
+				sql_dialect = sql_dialect_value_old;
+				insert_stmt = (InsertStmt *)parsetree->stmt;
+				relation = insert_stmt->relation;
+				relid = RangeVarGetRelid(relation, NoLock, false);
+				r = relation_open(relid, AccessShareLock);
+				pstate = (ParseState *) palloc(sizeof(ParseState));
+				pstate->p_target_relation = r;
+				cols = checkInsertTargets(pstate, insert_stmt->cols, &target_attnums);
+				break;
+			case T_UpdateStmt:
+				rewrite_object_refs(parsetree->stmt);
+				sql_dialect = sql_dialect_value_old;
+				update_stmt = (UpdateStmt *)parsetree->stmt;
+				relation = update_stmt->relation;
+				relid = RangeVarGetRelid(relation, NoLock, false);
+				r = relation_open(relid, AccessShareLock);
+				pstate = (ParseState *) palloc(sizeof(ParseState));
+				pstate->p_target_relation = r;
+				cols = list_copy(update_stmt->targetList);
+
+				/*
+				 * Add attnums to cols based on targetList
+				 */
+				foreach(lc, cols)
+				{
+					ResTarget  *col = (ResTarget *) lfirst(lc);
+					char	   *name = col->name;
+					int			attrno;
+
+					attrno = attnameAttNum(pstate->p_target_relation, name, false);
+					if (attrno == InvalidAttrNumber)
+					{
+						ereport(ERROR,
+						(errcode(ERRCODE_UNDEFINED_COLUMN),
+						 errmsg("column \"%s\" of relation \"%s\" does not exist",
+								name,
+								RelationGetRelationName(pstate->p_target_relation))));
+					}
+					target_attnums = lappend_int(target_attnums, attrno);
+				}
+				target_attnums = handle_where_clause_attnums(pstate, update_stmt->whereClause, target_attnums);
+				extra_restargets = handle_where_clause_restargets_left(pstate, update_stmt->whereClause, extra_restargets);
+
+				cols = list_concat_copy(cols, extra_restargets);
+				break;
+			case T_DeleteStmt:
+				rewrite_object_refs(parsetree->stmt);
+				sql_dialect = sql_dialect_value_old;
+				delete_stmt = (DeleteStmt *)parsetree->stmt;
+				relation = delete_stmt->relation;
+				relid = RangeVarGetRelid(relation, NoLock, false);
+				r = relation_open(relid, AccessShareLock);
+				pstate = (ParseState *) palloc(sizeof(ParseState));
+				pstate->p_target_relation = r;
+				cols = NIL;
+
+				/*
+				 * Add attnums to cols based on targetList
+				 */
+				foreach(lc, cols)
+				{
+					ResTarget  *col = (ResTarget *) lfirst(lc);
+					char	   *name = col->name;
+					int			attrno;
+
+					attrno = attnameAttNum(pstate->p_target_relation, name, false);
+					if (attrno == InvalidAttrNumber)
+					{
+						ereport(ERROR,
+						(errcode(ERRCODE_UNDEFINED_COLUMN),
+						 errmsg("column \"%s\" of relation \"%s\" does not exist",
+								name,
+								RelationGetRelationName(pstate->p_target_relation))));
+					}
+					target_attnums = lappend_int(target_attnums, attrno);
+				}
+				target_attnums = handle_where_clause_attnums(pstate, delete_stmt->whereClause, target_attnums);
+				extra_restargets = handle_where_clause_restargets_left(pstate, delete_stmt->whereClause, extra_restargets);
+
+				cols = list_concat_copy(cols, extra_restargets);
+				break;
+			default:
+				ereport(ERROR,
+					(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+					 errmsg("Unsupported use case in sp_describe_undeclared_parameters")));
+				break;
+		}
 
 		undeclaredparams->tablename = (char *) palloc(sizeof(char) * 64);
 		relname_len = strlen(relation->relname);
@@ -640,8 +1015,29 @@ sp_describe_undeclared_parameters_internal(PG_FUNCTION_ARGS)
 		pfree(pstate);
 
 		/* Parse the list of parameters, and determine which and how many are undeclared. */
-		select_stmt = (SelectStmt *)insert_stmt->selectStmt;
-		values_list = select_stmt->valuesLists;
+		switch(nodeTag(parsetree->stmt))
+		{
+			case T_InsertStmt:
+				select_stmt = (SelectStmt *)insert_stmt->selectStmt;
+				values_list = select_stmt->valuesLists;
+				break;
+			case T_UpdateStmt:
+				/* 
+				 * In an UPDATE statement, we could have both SET and WHERE with undeclared parameters. 
+				 * That's targetList (SET ...) and whereClause (WHERE ...)
+				 */
+				values_list = list_make1(handle_where_clause_restargets_right(pstate, update_stmt->whereClause, update_stmt->targetList));
+				break;
+			case T_DeleteStmt:
+				values_list = list_make1(handle_where_clause_restargets_right(pstate, delete_stmt->whereClause, NIL));
+				break;
+			default:
+				ereport(ERROR,
+					(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+					 errmsg("Unsupported use case in sp_describe_undeclared_parameters")));
+				break;
+		}
+
 		if (list_length(values_list) > 1) {
 			ereport(ERROR,
 				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
@@ -662,15 +1058,41 @@ sp_describe_undeclared_parameters_internal(PG_FUNCTION_ARGS)
 			}
 			foreach(sublc, sublist)
 			{
-				ColumnRef *columnref = lfirst(sublc);
-				ListCell *fieldcell;
-				if (nodeTag(columnref) != T_ColumnRef)
+				ColumnRef *columnref;
+				ResTarget *res;
+				List *fields;
+				/*
+				 * Tack on WHERE clause for the same as above, for
+				 * UPDATE and DELETE statements.
+				 */
+				switch(nodeTag(parsetree->stmt))
+				{
+					case T_InsertStmt:
+						columnref = lfirst(sublc);
+						break;
+					case T_UpdateStmt:
+					case T_DeleteStmt:
+						res = lfirst(sublc);
+						if (nodeTag(res->val) != T_ColumnRef)
+						{
+							ereport(ERROR,
+									(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+									 errmsg("Unsupported use case in sp_describe_undeclared_parameters")));
+						}
+						columnref = (ColumnRef *)res->val;
+						break;
+					default:
+						break;
+				}
+				fields = columnref->fields;
+				if (nodeTag(columnref) != T_ColumnRef && nodeTag(parsetree->stmt) != T_DeleteStmt)
 				{
 					ereport(ERROR,
 							(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
 							 errmsg("Unsupported use case in sp_describe_undeclared_parameters")));
 				}
-				foreach(fieldcell, columnref->fields)
+				ListCell *fieldcell;
+				foreach(fieldcell, fields)
 				{
 					Value *field = lfirst(fieldcell);
 					/* Make sure it's a parameter reference */
@@ -846,6 +1268,7 @@ sp_describe_undeclared_parameters_internal(PG_FUNCTION_ARGS)
 "AND O.name = \'%s\'  " /*  -- INPUT table name */
 "AND O.schema_id = %d " /*  -- INPUT schema Oid */
 "AND O.type = \'U\'"; /* -- User tables only for the time being */
+
 		char *query = psprintf(tempq,
 				undeclaredparams->targetcolnames[undeclaredparams->paramindexes[call_cntr]],
 				undeclaredparams->tablename,
