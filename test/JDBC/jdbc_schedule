@@ -10,6 +10,25 @@
 
 all
 
+ignore#!#Test-sp_addrole-vu-prepare
+ignore#!#Test-sp_addrole-vu-verify
+ignore#!#Test-sp_addrole-vu-cleanup
+ignore#!#Test-sp_addrolemember-vu-prepare
+ignore#!#Test-sp_addrolemember-vu-verify
+ignore#!#Test-sp_addrolemember-vu-cleanup
+ignore#!#Test-sp_droprolemember-vu-prepare
+ignore#!#Test-sp_droprolemember-vu-verify
+ignore#!#Test-sp_droprolemember-vu-cleanup
+ignore#!#Test-sp_addrole-dep-vu-prepare
+ignore#!#Test-sp_addrole-dep-vu-verify
+ignore#!#Test-sp_addrole-dep-vu-cleanup
+ignore#!#Test-sp_addrolemember-dep-vu-prepare
+ignore#!#Test-sp_addrolemember-dep-vu-verify
+ignore#!#Test-sp_addrolemember-dep-vu-cleanup
+ignore#!#Test-sp_droprolemember-dep-vu-prepare
+ignore#!#Test-sp_droprolemember-dep-vu-verify
+ignore#!#Test-sp_droprolemember-dep-vu-cleanup
+
 # JDBC bulk insert API seems to call SET FMTONLY ON without calling SET FMTONLY OFF, causing some spurious test failures.
 ignore#!#insertbulk
 ignore#!#BABEL-SQLvariant
