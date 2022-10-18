@@ -65,15 +65,31 @@ go
 create proc hasownera.procs as select current_user;
 go
 
+create function hasownera.funcs() returns varchar as
+begin
+	return 'inside function funcs';
+end;
+go
+
+-- create trigger hasownera.trigs
+-- on hasownera.tbls
+-- after insert
+-- as select 'inside trigger trigs';
+-- go
+
 -- CASE 1
 -- PROC
--- 		SELECT/EXEC ON TABLE/VIEW/PROC
+-- 		SELECT/EXEC ON TABLE/VIEW/PROC/FUNC/TRIGGER
 -- END
 -- EXEC PROC
+
 create proc hasownera.pa1 as
 	select * from hasownera.tbls;
 	select * from hasownera.vws;
 	exec hasownera.procs;
+	select hasownera.funcs();
+	-- For trigger execution
+	-- insert into hasownera.tbls values(1,1,1);
 go
 
 grant exec on hasownera.pa1 to invoker;
@@ -289,22 +305,28 @@ go
 use db1;
 go
 
-drop table hasownera.tbls;
-go
+-- drop trigger hasownera.trigs;
+-- go
 
-drop view hasownera.vws;
+drop function hasownera.funcs;
 go
 
 drop proc hasownera.procs;
 go
 
-drop table hasownerb.tbld;
+drop view hasownera.vws;
+go
+
+drop table hasownera.tbls;
+go
+
+drop proc hasownerb.procd;
 go
 
 drop view hasownerb.vwd;
 go
 
-drop proc hasownerb.procd;
+drop table hasownerb.tbld;
 go
 
 drop schema hasownerb;
