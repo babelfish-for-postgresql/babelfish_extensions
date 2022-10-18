@@ -390,8 +390,7 @@ TEST_F(PSQL_DataTypes_Date, Insertion_Fail) {
   PG_odbcHandler.ExecQuery(DropObjectStatement("TABLE", PG_TABLE_NAME));
 }
 
-// Disabled as it cannot select updated values in PG Connection
-TEST_F(PSQL_DataTypes_Date, DISABLED_Update_Success) {
+TEST_F(PSQL_DataTypes_Date, Update_Success) {
   const string PK_INSERTED = "0";
   const string DATA_INSERTED = "2000-01-19";
 
@@ -484,6 +483,7 @@ TEST_F(PSQL_DataTypes_Date, DISABLED_Update_Success) {
   
   // Try on PG Connection
   PG_odbcHandler.Connect(true);
+  ASSERT_NO_FATAL_FAILURE(PG_odbcHandler.BindColumns(BIND_COLUMNS));
 
   PG_odbcHandler.ExecQuery(SelectStatement(PG_TABLE_NAME, {"*"}, vector<string>{COL1_NAME}));
   rcode = SQLFetch(PG_odbcHandler.GetStatementHandle());
