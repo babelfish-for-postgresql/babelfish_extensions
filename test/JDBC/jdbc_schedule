@@ -43,3 +43,6 @@ ignore#!#BABEL-3010-before-14_6-vu-cleanup
 ignore#!#Test-sp_addrole-vu-prepare
 ignore#!#Test-sp_addrole-vu-verify
 ignore#!#Test-sp_addrole-vu-cleanup
+ignore#!#Test-sp_addrole-dep-vu-prepare
+ignore#!#Test-sp_addrole-dep-vu-verify
+ignore#!#Test-sp_addrole-dep-vu-cleanup
