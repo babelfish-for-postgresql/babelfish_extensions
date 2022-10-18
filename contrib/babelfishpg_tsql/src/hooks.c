@@ -1207,17 +1207,24 @@ get_tsql_trigger_oid(List *object, const char *tsql_trigger_name, bool object_fr
 	const char 		*cur_physical_schema = NULL;
 	const char		*tsql_trigger_physical_schema = NULL;
 	const char		*tsql_trigger_logical_schema = NULL;
+	List	   		*search_path = fetch_search_path(false);
 
-	if (list_length(object) > 1 && object_from_input){
-		tsql_trigger_logical_schema = ((Value *)linitial(object))->val.str;
+	if(list_length(object) == 1)
+	{
+		cur_physical_schema = get_namespace_name(linitial_oid(search_path));
+		list_free(search_path);
 	}
-	if(list_length(object) > 1 && !object_from_input){
-		tsql_trigger_physical_schema = ((Value *)linitial(object))->val.str;
-		tsql_trigger_logical_schema = get_logical_schema_name(tsql_trigger_physical_schema, true);
+	else
+	{
+		if(object_from_input)
+			tsql_trigger_logical_schema = ((Value *)linitial(object))->val.str;
+		else
+		{
+			tsql_trigger_physical_schema = ((Value *)linitial(object))->val.str;
+			tsql_trigger_logical_schema = get_logical_schema_name(tsql_trigger_physical_schema, true);
+		}
+		cur_physical_schema = get_physical_schema_name(get_cur_db_name(),tsql_trigger_logical_schema);
 	}
-
-	cur_dbo_physical_schema = get_dbo_schema_name(get_cur_db_name());
-	cur_physical_schema = get_physical_schema_name(get_cur_db_name(),tsql_trigger_logical_schema);
 
 	/* 
 	* Get the table name of the trigger from pg_trigger. We know that
@@ -1246,16 +1253,7 @@ get_tsql_trigger_oid(List *object, const char *tsql_trigger_name, bool object_fr
 			relation = RelationIdGetRelation(reloid);
 			pg_trigger_physical_schema = get_namespace_name(get_rel_namespace(pg_trigger->tgrelid));
 			pg_trigger_logical_schema = get_logical_schema_name(pg_trigger_physical_schema, true);
-			if (list_length(object) == 1 && 
-				strcasecmp(pg_trigger_physical_schema,cur_dbo_physical_schema) == 0)
-			{	
-				trigger_rel_oid = reloid;
-				RelationClose(relation);
-				break;
-			}
-			else if(list_length(object) > 1 &&
-				strcasecmp(cur_physical_schema,pg_trigger_physical_schema) == 0 &&
-				strcasecmp(pg_trigger_logical_schema,tsql_trigger_logical_schema) == 0)
+			if(strcasecmp(pg_trigger_physical_schema,cur_physical_schema) == 0)
 			{
 				trigger_rel_oid = reloid;
 				RelationClose(relation);
