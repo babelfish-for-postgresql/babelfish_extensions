@@ -38,6 +38,7 @@
 #include <openssl/ec.h>
 #endif
 
+#include "common/openssl.h"
 #include "libpq/libpq.h"
 #include "miscadmin.h"
 #include "pgstat.h"
@@ -75,12 +76,8 @@ static bool dummy_ssl_passwd_cb_called = false;
 static bool ssl_is_server_start;
 static BIO_METHOD *my_bio_methods = NULL;
 
-static int ssl_protocol_version_to_openssl(int v, const char *guc_name,
-										   int loglevel);
-#ifndef SSL_CTX_set_min_proto_version
-static int SSL_CTX_set_min_proto_version(SSL_CTX *ctx, int version);
-static int SSL_CTX_set_max_proto_version(SSL_CTX *ctx, int version);
-#endif
+static int ssl_protocol_version_to_openssl(int v);
+static const char *ssl_protocol_version_to_string(int v);
 
 /* ------------------------------------------------------------ */
 /*						 Public interface						*/
@@ -107,6 +104,10 @@ Tds_be_tls_init(bool isServerStart)
 	}
 
 	/*
+	 * Create a new SSL context into which we'll load all the configuration
+	 * settings.  If we fail partway through, we can avoid memory leakage by
+	 * freeing this context; we don't install it as active until the end.
+	 *
 	 * We use SSLv23_method() because it can negotiate use of the highest
 	 * mutually supported protocol version, while alternatives like
 	 * TLSv1_2_method() permit only one specific version.  Note that we don't
@@ -200,19 +201,19 @@ Tds_be_tls_init(bool isServerStart)
 
 	if (tds_ssl_min_protocol_version)
 	{
-		int ssl_ver_min = ssl_protocol_version_to_openssl(tds_ssl_min_protocol_version,
-													  "ssl_min_protocol_version",
-													  isServerStart ? FATAL : LOG);
+		int ssl_ver_min = ssl_protocol_version_to_openssl(tds_ssl_min_protocol_version);
+
 		if (ssl_ver_min == -1)
 		{
-			ereport(isServerStart ? FATAL : LOG,
 			/*- translator: first %s is a GUC option name, second %s is its value */
+			ereport(isServerStart ? FATAL : LOG,
 				(errmsg("\"%s\" setting \"%s\" not supported by this build",
-						"tds_ssl_min_protocol_version",
+						"babelfishpg_tds.tds_ssl_min_protocol_version",
 						GetConfigOption("babelfishpg_tds.tds_ssl_min_protocol_version",
 										false, false))));
 			goto error;
 		}
+
 		if (!SSL_CTX_set_min_proto_version(context, ssl_ver_min))
 		{
 			ereport(isServerStart ? FATAL : LOG,
@@ -223,15 +224,14 @@ Tds_be_tls_init(bool isServerStart)
 
 	if (tds_ssl_max_protocol_version)
 	{
-		int ssl_ver_max = ssl_protocol_version_to_openssl(tds_ssl_max_protocol_version,
-													  "tds_ssl_max_protocol_version",
-													  isServerStart ? FATAL : LOG);
+		int ssl_ver_max = ssl_protocol_version_to_openssl(tds_ssl_max_protocol_version);
+
 		if (ssl_ver_max == -1)
 		{
-			ereport(isServerStart ? FATAL : LOG,
 			/*- translator: first %s is a GUC option name, second %s is its value */
+			ereport(isServerStart ? FATAL : LOG,
 				(errmsg("\"%s\" setting \"%s\" not supported by this build",
-						"tds_ssl_max_protocol_version",
+						"babelfishpg_tds.tds_ssl_max_protocol_version",
 						GetConfigOption("babelfishpg_tds.tds_ssl_max_protocol_version",
 										false, false))));
 			goto error;
@@ -268,6 +268,9 @@ Tds_be_tls_init(bool isServerStart)
 
 	/* disallow SSL session caching, too */
 	SSL_CTX_set_session_cache_mode(context, SSL_SESS_CACHE_OFF);
+
+	/* disallow SSL compression */
+	SSL_CTX_set_options(context, SSL_OP_NO_COMPRESSION);
 
 #ifdef SSL_OP_NO_RENEGOTIATION
 
@@ -319,33 +322,44 @@ Tds_be_tls_init(bool isServerStart)
 	 * http://searchsecurity.techtarget.com/sDefinition/0,,sid14_gci803160,00.html
 	 *----------
 	 */
-	if (ssl_crl_file[0])
+	if (ssl_crl_file[0] || ssl_crl_dir[0])
 	{
 		X509_STORE *cvstore = SSL_CTX_get_cert_store(context);
 
 		if (cvstore)
 		{
 			/* Set the flags to check against the complete CRL chain */
-			if (X509_STORE_load_locations(cvstore, ssl_crl_file, NULL) == 1)
+			if (X509_STORE_load_locations(cvstore,
+										  ssl_crl_file[0] ? ssl_crl_file : NULL,
+										  ssl_crl_dir[0] ? ssl_crl_dir : NULL)
+				== 1)
 			{
-				/* OpenSSL 0.96 does not support X509_V_FLAG_CRL_CHECK */
-#ifdef X509_V_FLAG_CRL_CHECK
 				X509_STORE_set_flags(cvstore,
 									 X509_V_FLAG_CRL_CHECK | X509_V_FLAG_CRL_CHECK_ALL);
-#else
-				ereport(LOG,
-						(errcode(ERRCODE_CONFIG_FILE_ERROR),
-						 errmsg("SSL certificate revocation list file \"%s\" ignored",
-								ssl_crl_file),
-						 errdetail("SSL library does not support certificate revocation lists.")));
-#endif
 			}
-			else
+			else if (ssl_crl_dir[0] == 0)
 			{
 				ereport(isServerStart ? FATAL : LOG,
 						(errcode(ERRCODE_CONFIG_FILE_ERROR),
 						 errmsg("could not load SSL certificate revocation list file \"%s\": %s",
 								ssl_crl_file, SSLerrmessage(ERR_get_error()))));
+				goto error;
+			}
+			else if (ssl_crl_file[0] == 0)
+			{
+				ereport(isServerStart ? FATAL : LOG,
+						(errcode(ERRCODE_CONFIG_FILE_ERROR),
+						 errmsg("could not load SSL certificate revocation list directory \"%s\": %s",
+								ssl_crl_dir, SSLerrmessage(ERR_get_error()))));
+				goto error;
+			}
+			else
+			{
+				ereport(isServerStart ? FATAL : LOG,
+						(errcode(ERRCODE_CONFIG_FILE_ERROR),
+						 errmsg("could not load SSL certificate revocation list file \"%s\" or directory \"%s\": %s",
+								ssl_crl_file, ssl_crl_dir,
+								SSLerrmessage(ERR_get_error()))));
 				goto error;
 			}
 		}
@@ -392,6 +406,7 @@ Tds_be_tls_init(bool isServerStart)
 #endif
 	return 0;
 
+	/* Clean up by releasing working context. */
 error:
 	if (context)
 		SSL_CTX_free(context);
@@ -414,6 +429,7 @@ Tds_be_tls_open_server(Port *port)
 	int			err;
 	int			waitfor;
 	unsigned long ecode;
+	bool		give_proto_hint;
 
 	Assert(!port->ssl);
 	Assert(!port->peer);
@@ -503,10 +519,52 @@ aloop:
 							 errmsg("could not accept SSL connection: EOF detected")));
 				break;
 			case SSL_ERROR_SSL:
+				switch (ERR_GET_REASON(ecode))
+				{
+					/*
+					 * UNSUPPORTED_PROTOCOL, WRONG_VERSION_NUMBER, and
+					 * TLSV1_ALERT_PROTOCOL_VERSION have been observed
+					 * when trying to communicate with an old OpenSSL
+					 * library, or when the client and server specify
+					 * disjoint protocol ranges.  NO_PROTOCOLS_AVAILABLE
+					 * occurs if there's a local misconfiguration (which
+					 * can happen despite our checks, if openssl.cnf
+					 * injects a limit we didn't account for).  It's not
+					 * very clear what would make OpenSSL return the other
+					 * codes listed here, but a hint about protocol
+					 * versions seems like it's appropriate for all.
+					 */
+					case SSL_R_NO_PROTOCOLS_AVAILABLE:
+					case SSL_R_UNSUPPORTED_PROTOCOL:
+					case SSL_R_BAD_PROTOCOL_VERSION_NUMBER:
+					case SSL_R_UNKNOWN_PROTOCOL:
+					case SSL_R_UNKNOWN_SSL_VERSION:
+					case SSL_R_UNSUPPORTED_SSL_VERSION:
+					case SSL_R_WRONG_SSL_VERSION:
+					case SSL_R_WRONG_VERSION_NUMBER:
+					case SSL_R_TLSV1_ALERT_PROTOCOL_VERSION:
+#ifdef SSL_R_VERSION_TOO_HIGH
+					case SSL_R_VERSION_TOO_HIGH:
+					case SSL_R_VERSION_TOO_LOW:
+#endif
+						give_proto_hint = true;
+						break;
+					default:
+						give_proto_hint = false;
+						break;
+				}
 				ereport(COMMERROR,
 						(errcode(ERRCODE_PROTOCOL_VIOLATION),
 						 errmsg("could not accept SSL connection: %s",
-								SSLerrmessage(ecode))));
+								SSLerrmessage(ecode)),
+						 give_proto_hint ?
+						 errhint("This may indicate that the client does not support any SSL protocol version between %s and %s.",
+								 tds_ssl_min_protocol_version ?
+								 ssl_protocol_version_to_string(tds_ssl_min_protocol_version) :
+								 MIN_OPENSSL_TLS_VERSION,
+								 tds_ssl_max_protocol_version ?
+								 ssl_protocol_version_to_string(tds_ssl_max_protocol_version) :
+								 MAX_OPENSSL_TLS_VERSION) : 0));
 				break;
 			case SSL_ERROR_ZERO_RETURN:
 				ereport(COMMERROR,
@@ -533,25 +591,26 @@ aloop:
 #endif
 
 
-	/* Get client certificate, if available. */
-	port->peer = SSL_get_peer_certificate(port->ssl);
-
-	/* and extract the Common Name from it. */
+	/* and extract the Common Name and Distinguished Name from it. */
 	port->peer_cn = NULL;
+	port->peer_dn = NULL;
 	port->peer_cert_valid = false;
 	if (port->peer != NULL)
 	{
 		int			len;
+		X509_NAME  *x509name = X509_get_subject_name(port->peer);
+		char	   *peer_dn;
+		BIO		   *bio = NULL;
+		BUF_MEM    *bio_buf = NULL;
 
-		len = X509_NAME_get_text_by_NID(X509_get_subject_name(port->peer),
-										NID_commonName, NULL, 0);
+		len = X509_NAME_get_text_by_NID(x509name, NID_commonName, NULL, 0);
 		if (len != -1)
 		{
 			char	   *peer_cn;
 
 			peer_cn = MemoryContextAlloc(TopMemoryContext, len + 1);
-			r = X509_NAME_get_text_by_NID(X509_get_subject_name(port->peer),
-										  NID_commonName, peer_cn, len + 1);
+			r = X509_NAME_get_text_by_NID(x509name, NID_commonName, peer_cn,
+										  len + 1);
 			peer_cn[len] = '\0';
 			if (r != len)
 			{
@@ -575,6 +634,48 @@ aloop:
 
 			port->peer_cn = peer_cn;
 		}
+
+		bio = BIO_new(BIO_s_mem());
+		if (!bio)
+		{
+			pfree(port->peer_cn);
+			port->peer_cn = NULL;
+			return -1;
+		}
+
+		/*
+		 * RFC2253 is the closest thing to an accepted standard format for
+		 * DNs. We have documented how to produce this format from a
+		 * certificate. It uses commas instead of slashes for delimiters,
+		 * which make regular expression matching a bit easier. Also note that
+		 * it prints the Subject fields in reverse order.
+		 */
+		X509_NAME_print_ex(bio, x509name, 0, XN_FLAG_RFC2253);
+		if (BIO_get_mem_ptr(bio, &bio_buf) <= 0)
+		{
+			BIO_free(bio);
+			pfree(port->peer_cn);
+			port->peer_cn = NULL;
+			return -1;
+		}
+		peer_dn = MemoryContextAlloc(TopMemoryContext, bio_buf->length + 1);
+		memcpy(peer_dn, bio_buf->data, bio_buf->length);
+		len = bio_buf->length;
+		BIO_free(bio);
+		peer_dn[len] = '\0';
+		if (len != strlen(peer_dn))
+		{
+			ereport(COMMERROR,
+					(errcode(ERRCODE_PROTOCOL_VIOLATION),
+					 errmsg("SSL certificate's distinguished name contains embedded null")));
+			pfree(peer_dn);
+			pfree(port->peer_cn);
+			port->peer_cn = NULL;
+			return -1;
+		}
+
+		port->peer_dn = peer_dn;
+
 		port->peer_cert_valid = true;
 	}
 
@@ -602,6 +703,12 @@ Tds_be_tls_close(Port *port)
 	{
 		pfree(port->peer_cn);
 		port->peer_cn = NULL;
+	}
+
+	if (port->peer_dn)
+	{
+		pfree(port->peer_dn);
+		port->peer_dn = NULL;
 	}
 }
 
@@ -910,6 +1017,7 @@ load_dh_file(char *filename, bool isServerStart)
 				(errcode(ERRCODE_CONFIG_FILE_ERROR),
 				 errmsg("invalid DH parameters: %s",
 						SSLerrmessage(ERR_get_error()))));
+		DH_free(dh);
 		return NULL;
 	}
 	if (codes & DH_CHECK_P_NOT_PRIME)
@@ -917,6 +1025,7 @@ load_dh_file(char *filename, bool isServerStart)
 		ereport(isServerStart ? FATAL : LOG,
 				(errcode(ERRCODE_CONFIG_FILE_ERROR),
 				 errmsg("invalid DH parameters: p is not prime")));
+		DH_free(dh);
 		return NULL;
 	}
 	if ((codes & DH_NOT_SUITABLE_GENERATOR) &&
@@ -925,6 +1034,7 @@ load_dh_file(char *filename, bool isServerStart)
 		ereport(isServerStart ? FATAL : LOG,
 				(errcode(ERRCODE_CONFIG_FILE_ERROR),
 				 errmsg("invalid DH parameters: neither suitable generator or safe prime")));
+		DH_free(dh);
 		return NULL;
 	}
 
@@ -934,8 +1044,9 @@ load_dh_file(char *filename, bool isServerStart)
 /*
  *	Load hardcoded DH parameters.
  *
- *	To prevent problems if the DH parameters files don't even
- *	exist, we can load DH parameters hardcoded into this file.
+ *	If DH parameters cannot be loaded from a specified file, we can load
+ *	the	hardcoded DH parameters supplied with the backend to prevent
+ *	problems.
  */
 static DH  *
 load_dh_buffer(const char *buffer, size_t len)
@@ -1086,7 +1197,7 @@ initialize_dh(SSL_CTX *context, bool isServerStart)
 	{
 		ereport(isServerStart ? FATAL : LOG,
 				(errcode(ERRCODE_CONFIG_FILE_ERROR),
-				 (errmsg("DH: could not load DH parameters"))));
+				 errmsg("DH: could not load DH parameters")));
 		return false;
 	}
 
@@ -1094,10 +1205,13 @@ initialize_dh(SSL_CTX *context, bool isServerStart)
 	{
 		ereport(isServerStart ? FATAL : LOG,
 				(errcode(ERRCODE_CONFIG_FILE_ERROR),
-				 (errmsg("DH: could not set DH parameters: %s",
-						 SSLerrmessage(ERR_get_error())))));
+				 errmsg("DH: could not set DH parameters: %s",
+						 SSLerrmessage(ERR_get_error()))));
+		DH_free(dh);
 		return false;
 	}
+
+	DH_free(dh);
 	return true;
 }
 
@@ -1163,193 +1277,6 @@ SSLerrmessage(unsigned long ecode)
 	return errbuf;
 }
 
-#if 0
-int
-be_tls_get_cipher_bits(Port *port)
-{
-	int			bits;
-
-	if (port->ssl)
-	{
-		SSL_get_cipher_bits(port->ssl, &bits);
-		return bits;
-	}
-	else
-		return 0;
-}
-
-bool
-be_tls_get_compression(Port *port)
-{
-	if (port->ssl)
-		return (SSL_get_current_compression(port->ssl) != NULL);
-	else
-		return false;
-}
-
-const char *
-be_tls_get_version(Port *port)
-{
-	if (port->ssl)
-		return SSL_get_version(port->ssl);
-	else
-		return NULL;
-}
-
-const char *
-be_tls_get_cipher(Port *port)
-{
-	if (port->ssl)
-		return SSL_get_cipher(port->ssl);
-	else
-		return NULL;
-}
-
-void
-be_tls_get_peer_subject_name(Port *port, char *ptr, size_t len)
-{
-	if (port->peer)
-		strlcpy(ptr, X509_NAME_to_cstring(X509_get_subject_name(port->peer)), len);
-	else
-		ptr[0] = '\0';
-}
-
-void
-be_tls_get_peer_issuer_name(Port *port, char *ptr, size_t len)
-{
-	if (port->peer)
-		strlcpy(ptr, X509_NAME_to_cstring(X509_get_issuer_name(port->peer)), len);
-	else
-		ptr[0] = '\0';
-}
-
-void
-be_tls_get_peer_serial(Port *port, char *ptr, size_t len)
-{
-	if (port->peer)
-	{
-		ASN1_INTEGER *serial;
-		BIGNUM	   *b;
-		char	   *decimal;
-
-		serial = X509_get_serialNumber(port->peer);
-		b = ASN1_INTEGER_to_BN(serial, NULL);
-		decimal = BN_bn2dec(b);
-
-		BN_free(b);
-		strlcpy(ptr, decimal, len);
-		OPENSSL_free(decimal);
-	}
-	else
-		ptr[0] = '\0';
-}
-
-#ifdef HAVE_X509_GET_SIGNATURE_NID
-char *
-be_tls_get_certificate_hash(Port *port, size_t *len)
-{
-	X509	   *server_cert;
-	char	   *cert_hash;
-	const EVP_MD *algo_type = NULL;
-	unsigned char hash[EVP_MAX_MD_SIZE];	/* size for SHA-512 */
-	unsigned int hash_size;
-	int			algo_nid;
-
-	*len = 0;
-	server_cert = SSL_get_certificate(port->ssl);
-	if (server_cert == NULL)
-		return NULL;
-
-	/*
-	 * Get the signature algorithm of the certificate to determine the hash
-	 * algorithm to use for the result.
-	 */
-	if (!OBJ_find_sigid_algs(X509_get_signature_nid(server_cert),
-							 &algo_nid, NULL))
-		elog(ERROR, "could not determine server certificate signature algorithm");
-
-	/*
-	 * The TLS server's certificate bytes need to be hashed with SHA-256 if
-	 * its signature algorithm is MD5 or SHA-1 as per RFC 5929
-	 * (https://tools.ietf.org/html/rfc5929#section-4.1).  If something else
-	 * is used, the same hash as the signature algorithm is used.
-	 */
-	switch (algo_nid)
-	{
-		case NID_md5:
-		case NID_sha1:
-			algo_type = EVP_sha256();
-			break;
-		default:
-			algo_type = EVP_get_digestbynid(algo_nid);
-			if (algo_type == NULL)
-				elog(ERROR, "could not find digest for NID %s",
-					 OBJ_nid2sn(algo_nid));
-			break;
-	}
-
-	/* generate and save the certificate hash */
-	if (!X509_digest(server_cert, algo_type, hash, &hash_size))
-		elog(ERROR, "could not generate server certificate hash");
-
-	cert_hash = palloc(hash_size);
-	memcpy(cert_hash, hash, hash_size);
-	*len = hash_size;
-
-	return cert_hash;
-}
-#endif
-
-/*
- * Convert an X509 subject name to a cstring.
- *
- */
-static char *
-X509_NAME_to_cstring(X509_NAME *name)
-{
-	BIO		   *membuf = BIO_new(BIO_s_mem());
-	int			i,
-				nid,
-				count = X509_NAME_entry_count(name);
-	X509_NAME_ENTRY *e;
-	ASN1_STRING *v;
-	const char *field_name;
-	size_t		size;
-	char		nullterm;
-	char	   *sp;
-	char	   *dp;
-	char	   *result;
-
-	(void) BIO_set_close(membuf, BIO_CLOSE);
-	for (i = 0; i < count; i++)
-	{
-		e = X509_NAME_get_entry(name, i);
-		nid = OBJ_obj2nid(X509_NAME_ENTRY_get_object(e));
-		v = X509_NAME_ENTRY_get_data(e);
-		field_name = OBJ_nid2sn(nid);
-		if (!field_name)
-			field_name = OBJ_nid2ln(nid);
-		BIO_printf(membuf, "/%s=", field_name);
-		ASN1_STRING_print_ex(membuf, v,
-							 ((ASN1_STRFLGS_RFC2253 & ~ASN1_STRFLGS_ESC_MSB)
-							  | ASN1_STRFLGS_UTF8_CONVERT));
-	}
-
-	/* ensure null termination of the BIO's content */
-	nullterm = '\0';
-	BIO_write(membuf, &nullterm, 1);
-	size = BIO_get_mem_data(membuf, &sp);
-	dp = pg_any_to_server(sp, size - 1, PG_UTF8);
-
-	result = pstrdup(dp);
-	if (dp != sp)
-		pfree(dp);
-	BIO_free(membuf);
-
-	return result;
-}
-#endif
-
 /*
  * Convert TLS protocol version GUC enum to OpenSSL values
  *
@@ -1357,12 +1284,11 @@ X509_NAME_to_cstring(X509_NAME *name)
  * guc.c independent of OpenSSL availability and version.
  *
  * If a version is passed that is not supported by the current OpenSSL
- * version, then we log with the given loglevel and return (if we return) -1.
- * If a nonnegative value is returned, subsequent code can assume it's working
- * with a supported version.
+ * version, then we return -1.  If a nonnegative value is returned,
+ * subsequent code can assume it's working with a supported version.
  */
 static int
-ssl_protocol_version_to_openssl(int v, const char *guc_name, int loglevel)
+ssl_protocol_version_to_openssl(int v)
 {
 	switch (v)
 	{
@@ -1390,103 +1316,30 @@ ssl_protocol_version_to_openssl(int v, const char *guc_name, int loglevel)
 #endif
 	}
 
-	ereport(loglevel,
-			(errmsg("%s setting %s not supported by this build",
-					guc_name,
-					GetConfigOption(guc_name, false, false))));
 	return -1;
 }
 
 /*
- * Replacements for APIs present in newer versions of OpenSSL
+ * Likewise provide a mapping to strings.
  */
-#ifndef SSL_CTX_set_min_proto_version
-
-/*
- * OpenSSL versions that support TLS 1.3 shouldn't get here because they
- * already have these functions.  So we don't have to keep updating the below
- * code for every new TLS version, and eventually it can go away.  But let's
- * just check this to make sure ...
- */
-#ifdef TLS1_3_VERSION
-#error OpenSSL version mismatch
-#endif
-
-static int
-SSL_CTX_set_min_proto_version(SSL_CTX *ctx, int version)
+static const char *
+ssl_protocol_version_to_string(int v)
 {
-	int			ssl_options = SSL_OP_NO_SSLv2 | SSL_OP_NO_SSLv3;
-
-	if (version > TLS1_VERSION)
-		ssl_options |= SSL_OP_NO_TLSv1;
-	/*
-	 * Some OpenSSL versions define TLS*_VERSION macros but not the
-	 * corresponding SSL_OP_NO_* macro, so in those cases we have to return
-	 * unsuccessfully here.
-	 */
-#ifdef TLS1_1_VERSION
-	if (version > TLS1_1_VERSION)
+	switch (v)
 	{
-#ifdef SSL_OP_NO_TLSv1_1
-		ssl_options |= SSL_OP_NO_TLSv1_1;
-#else
-		return 0;
-#endif
+		case PG_TLS_ANY:
+			return "any";
+		case PG_TLS1_VERSION:
+			return "TLSv1";
+		case PG_TLS1_1_VERSION:
+			return "TLSv1.1";
+		case PG_TLS1_2_VERSION:
+			return "TLSv1.2";
+		case PG_TLS1_3_VERSION:
+			return "TLSv1.3";
 	}
-#endif
-#ifdef TLS1_2_VERSION
-	if (version > TLS1_2_VERSION)
-	{
-#ifdef SSL_OP_NO_TLSv1_2
-		ssl_options |= SSL_OP_NO_TLSv1_2;
-#else
-		return 0;
-#endif
-	}
-#endif
 
-	SSL_CTX_set_options(ctx, ssl_options);
-
-	return 1;					/* success */
+	return "(unrecognized)";
 }
 
-static int
-SSL_CTX_set_max_proto_version(SSL_CTX *ctx, int version)
-{
-	int			ssl_options = 0;
-
-	AssertArg(version != 0);
-
-	/*
-	 * Some OpenSSL versions define TLS*_VERSION macros but not the
-	 * corresponding SSL_OP_NO_* macro, so in those cases we have to return
-	 * unsuccessfully here.
-	 */
-#ifdef TLS1_1_VERSION
-	if (version < TLS1_1_VERSION)
-	{
-#ifdef SSL_OP_NO_TLSv1_1
-		ssl_options |= SSL_OP_NO_TLSv1_1;
-#else
-		return 0;
-#endif
-	}
-#endif
-#ifdef TLS1_2_VERSION
-	if (version < TLS1_2_VERSION)
-	{
-#ifdef SSL_OP_NO_TLSv1_2
-		ssl_options |= SSL_OP_NO_TLSv1_2;
-#else
-		return 0;
-#endif
-	}
-#endif
-
-	SSL_CTX_set_options(ctx, ssl_options);
-
-	return 1;					/* success */
-}
-
-#endif							/* !SSL_CTX_set_min_proto_version */
 #endif
