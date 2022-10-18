@@ -3,14 +3,33 @@
 
 SELECT set_config('search_path', 'sys, '||current_setting('search_path'), false);
 
-/* Caution: Be careful while dropping an object in a minor version upgrade
- *          script as the object might be getting used in some user defined
- *          objects and dropping it here might result in upgrade failure or
- *          even user defined objects getting dropped.
- * The following sys.sysindexes view was not working previously, so dropping
- * it here is ok.
- */
-DROP VIEW IF EXISTS sys.sysindexes;
+-- Drops a view if it does not have any dependent objects.
+-- Is a temporary procedure for use by the upgrade script. Will be dropped at the end of the upgrade.
+-- Please have this be one of the first statements executed in this upgrade script. 
+CREATE OR REPLACE PROCEDURE babelfish_drop_deprecated_view(schema_name varchar, view_name varchar) AS
+$$
+DECLARE
+    error_msg text;
+    query1 text;
+    query2 text;
+BEGIN
+    query1 := format('alter extension babelfishpg_tsql drop view %s.%s', schema_name, view_name);
+    query2 := format('drop view %s.%s', schema_name, view_name);
+    execute query1;
+    execute query2;
+EXCEPTION
+    when object_not_in_prerequisite_state then --if 'alter extension' statement fails
+        GET STACKED DIAGNOSTICS error_msg = MESSAGE_TEXT;
+        raise warning '%', error_msg;
+    when dependent_objects_still_exist then --if 'drop view' statement fails
+        GET STACKED DIAGNOSTICS error_msg = MESSAGE_TEXT;
+        raise warning '%', error_msg;
+end
+$$
+LANGUAGE plpgsql;
+
+ALTER VIEW sys.sysindexes RENAME TO sysindexes_deprecated_in_1_1_0;
+CALL babelfish_drop_deprecated_view('sys', 'sysindexes_deprecated_in_1_1_0');
 
 CREATE FUNCTION sys.columns_internal()
 RETURNS TABLE (
@@ -1277,6 +1296,10 @@ SELECT p.name
   , p.collation
 FROM sys.proc_param_helper() as p;
 GRANT SELECT ON sys.syscolumns TO PUBLIC;
+
+-- Drops the temporary procedure used by the upgrade script.
+-- Please have this be one of the last statements executed in this upgrade script.
+DROP PROCEDURE sys.babelfish_drop_deprecated_view(varchar, varchar);
 
 -- Reset search_path to not affect any subsequent scripts
 SELECT set_config('search_path', trim(leading 'sys, ' from current_setting('search_path')), false);
