@@ -902,7 +902,7 @@ ProcessBCPRequest(TDSRequest request)
 
 				RESUME_CANCEL_INTERRUPTS();
 
-				/* Using Same callback function to fo the clean-up. */
+				/* Using Same callback function to do the clean-up. */
 				pltsql_plugin_handler_ptr->bulk_load_callback(0, 0, NULL, NULL);
 
 				if (ret < 0)
