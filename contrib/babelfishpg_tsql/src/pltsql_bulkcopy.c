@@ -2,6 +2,11 @@
  *
  * pltsql_bulkcopy.c		- Bulk Copy for PL/tsql
  *
+ * Portions Copyright (c) 2020, AWS
+ * Portions Copyright (c) 1996-2018, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1994, Regents of the University of California
+ *
+ *
  * IDENTIFICATION
  *	  contrib/babelfishpg_tsql/src/pltsql_bulkcopy.c
  *
@@ -74,11 +79,6 @@ typedef struct CopyMultiInsertInfo
 static BulkCopyState
 BeginBulkCopy(Relation rel,
 			  List *attnamelist);
-
-void BulkCopy(BulkCopyStmt *stmt,
-			uint64 *processed);
-
-void EndBulkCopy(BulkCopyState cstate);
 
 static uint64
 ExecuteBulkCopy(BulkCopyState cstate, int rowCount, int colCount,
@@ -264,6 +264,7 @@ CopyMultiInsertBufferInit(ResultRelInfo *rri)
 
 /*
  * Make a new buffer for this ResultRelInfo.
+ * Code is copied from src/backend/commands/copyfrom.c
  */
 static inline void
 CopyMultiInsertInfoSetupBuffer(CopyMultiInsertInfo *miinfo,
@@ -308,6 +309,7 @@ CopyMultiInsertInfoInit(CopyMultiInsertInfo *miinfo, ResultRelInfo *rri,
 
 /*
  * Returns true if the buffers are full.
+ * Code is copied from src/backend/commands/copyfrom.c
  */
 static inline bool
 CopyMultiInsertInfoIsFull(CopyMultiInsertInfo *miinfo)
@@ -319,6 +321,7 @@ CopyMultiInsertInfoIsFull(CopyMultiInsertInfo *miinfo)
 
 /*
  * Returns true if we have no buffered tuples.
+ * Code is copied from src/backend/commands/copyfrom.c
  */
 static inline bool
 CopyMultiInsertInfoIsEmpty(CopyMultiInsertInfo *miinfo)
@@ -394,6 +397,7 @@ CopyMultiInsertBufferFlush(CopyMultiInsertInfo *miinfo,
  * Drop used slots and free member for this buffer.
  *
  * The buffer must be flushed before cleanup.
+ * Code is copied from src/backend/commands/copyfrom.c
  */
 static inline void
 CopyMultiInsertBufferCleanup(CopyMultiInsertInfo *miinfo,
@@ -428,6 +432,7 @@ CopyMultiInsertBufferCleanup(CopyMultiInsertInfo *miinfo,
  * Callers should pass 'curr_rri' as the ResultRelInfo that's currently being
  * used.  When cleaning up old buffers we'll never remove the one for
  * 'curr_rri'.
+ * Code is copied from src/backend/commands/copyfrom.c
  */
 static inline void
 CopyMultiInsertInfoFlush(CopyMultiInsertInfo *miinfo, ResultRelInfo *curr_rri)
@@ -492,6 +497,7 @@ CopyMultiInsertInfoCleanup(CopyMultiInsertInfo *miinfo)
  *
  * Note: 'miinfo' is unused but has been included for consistency with the
  * other functions in this area.
+ * Code is copied from src/backend/commands/copyfrom.c
  */
 static inline TupleTableSlot *
 CopyMultiInsertInfoNextFreeSlot(CopyMultiInsertInfo *miinfo,
@@ -511,6 +517,7 @@ CopyMultiInsertInfoNextFreeSlot(CopyMultiInsertInfo *miinfo,
 /*
  * Record the previously reserved TupleTableSlot that was reserved by
  * CopyMultiInsertInfoNextFreeSlot as being consumed.
+ * Code is copied from src/backend/commands/copyfrom.c
  */
 static inline void
 CopyMultiInsertInfoStore(CopyMultiInsertInfo *miinfo, ResultRelInfo *rri,
