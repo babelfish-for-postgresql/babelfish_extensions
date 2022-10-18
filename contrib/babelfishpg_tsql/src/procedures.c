@@ -1090,6 +1090,9 @@ Datum sp_addrole(PG_FUNCTION_ARGS)
 		PG_RE_THROW();
 	}
 	PG_END_TRY();
+	set_config_option("babelfishpg_tsql.sql_dialect", saved_dialect,
+							(superuser() ? PGC_SUSET : PGC_USERSET),
+							PGC_S_SESSION, GUC_ACTION_SAVE, true, 0, false);
 }
 
 static List *
@@ -1186,6 +1189,9 @@ Datum sp_droprole(PG_FUNCTION_ARGS)
 		PG_RE_THROW();
 	}
 	PG_END_TRY();
+	set_config_option("babelfishpg_tsql.sql_dialect", saved_dialect,
+							(superuser() ? PGC_SUSET : PGC_USERSET),
+							PGC_S_SESSION, GUC_ACTION_SAVE, true, 0, false);
 }
 
 static List *
@@ -1281,6 +1287,9 @@ Datum sp_addrolemember(PG_FUNCTION_ARGS)
 		PG_RE_THROW();
 	}
 	PG_END_TRY();
+	set_config_option("babelfishpg_tsql.sql_dialect", saved_dialect,
+							(superuser() ? PGC_SUSET : PGC_USERSET),
+							PGC_S_SESSION, GUC_ACTION_SAVE, true, 0, false);
 }
 
 static List *
@@ -1380,6 +1389,9 @@ Datum sp_droprolemember(PG_FUNCTION_ARGS)
 		PG_RE_THROW();
 	}
 	PG_END_TRY();
+	set_config_option("babelfishpg_tsql.sql_dialect", saved_dialect,
+							(superuser() ? PGC_SUSET : PGC_USERSET),
+							PGC_S_SESSION, GUC_ACTION_SAVE, true, 0, false);
 }
 
 static List *
