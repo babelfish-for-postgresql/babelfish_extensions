@@ -24,7 +24,7 @@ LANGUAGE plpgsql;
 CALL sys.init_server_collation_oid_common();
 
 update pg_catalog.pg_type set typcollation = sys.get_babel_server_collation_oid()
-where typname in ('varchar', 'bpchar', 'nvarchar', 'nchar', 'sql_variant', '_ci_sysname', 'sysname') and typnamespace = (select oid from pg_namespace where nspname = 'sys');
+where typname in ('varchar', 'bpchar', 'nvarchar', 'nchar', 'sql_variant', '_ci_sysname', 'sysname', '_varchar', '_bpchar', '_nvarchar', '_nchar', '_sql_variant', '__ci_sysname', '_sysname') and typnamespace = (select oid from pg_namespace where nspname = 'sys');
 
 CREATE OR REPLACE FUNCTION sys.bigint_sum(INTERNAL)
 RETURNS BIGINT
