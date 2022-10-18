@@ -215,7 +215,6 @@ protected:
 
 		// built-in functions
 		antlrcpp::Any visitBif_cast_parse(TSqlParser::Bif_cast_parseContext *ctx) override;
-		antlrcpp::Any visitBif_convert(TSqlParser::Bif_convertContext *ctx) override;
 		antlrcpp::Any visitSql_option(TSqlParser::Sql_optionContext *ctx) override;
 
 		// datatype
@@ -1381,13 +1380,6 @@ antlrcpp::Any TsqlUnsupportedFeatureHandlerImpl::visitBif_cast_parse(TSqlParser:
 {
 	if (ctx->PARSE())
 		handle(INSTR_TSQL_PARSE, ctx->PARSE());
-	return visitChildren(ctx);
-}
-
-antlrcpp::Any TsqlUnsupportedFeatureHandlerImpl::visitBif_convert(TSqlParser::Bif_convertContext *ctx)
-{
-	if (ctx->TRY_CONVERT())
-		handle(INSTR_TSQL_TRY_CONVERT, ctx->TRY_CONVERT());
 	return visitChildren(ctx);
 }
 

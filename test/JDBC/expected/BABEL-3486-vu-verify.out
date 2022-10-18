@@ -1,0 +1,3164 @@
+SELECT * FROM BABEL_3486_vu_prepare_v13
+GO
+~~START~~
+bigint
+5
+~~END~~
+
+DROP VIEW BABEL_3486_vu_prepare_v13
+GO
+
+EXEC BABEL_3486_vu_prepare_p13
+GO
+~~START~~
+bigint
+5
+~~END~~
+
+DROP PROCEDURE BABEL_3486_vu_prepare_p13
+GO
+
+SELECT BABEL_3486_vu_prepare_f13()
+GO
+~~START~~
+bigint
+5
+~~END~~
+
+DROP FUNCTION BABEL_3486_vu_prepare_f13()
+GO
+
+SELECT * FROM BABEL_3486_vu_prepare_v14
+GO
+~~START~~
+bigint
+-5
+~~END~~
+
+DROP VIEW BABEL_3486_vu_prepare_v14
+GO
+
+EXEC BABEL_3486_vu_prepare_p14
+GO
+~~START~~
+bigint
+-5
+~~END~~
+
+DROP PROCEDURE BABEL_3486_vu_prepare_p14
+GO
+
+SELECT BABEL_3486_vu_prepare_f14()
+GO
+~~START~~
+bigint
+-5
+~~END~~
+
+DROP FUNCTION BABEL_3486_vu_prepare_f14()
+GO
+
+SELECT * FROM BABEL_3486_vu_prepare_v15
+GO
+~~START~~
+bigint
+<NULL>
+~~END~~
+
+DROP VIEW BABEL_3486_vu_prepare_v15
+GO
+
+EXEC BABEL_3486_vu_prepare_p15
+GO
+~~START~~
+bigint
+<NULL>
+~~END~~
+
+DROP PROCEDURE BABEL_3486_vu_prepare_p15
+GO
+
+SELECT BABEL_3486_vu_prepare_f15()
+GO
+~~START~~
+bigint
+<NULL>
+~~END~~
+
+DROP FUNCTION BABEL_3486_vu_prepare_f15()
+GO
+
+SELECT * FROM BABEL_3486_vu_prepare_v16
+GO
+~~START~~
+int
+5
+~~END~~
+
+DROP VIEW BABEL_3486_vu_prepare_v16
+GO
+
+EXEC BABEL_3486_vu_prepare_p16
+GO
+~~START~~
+int
+5
+~~END~~
+
+DROP PROCEDURE BABEL_3486_vu_prepare_p16
+GO
+
+SELECT BABEL_3486_vu_prepare_f16()
+GO
+~~START~~
+int
+5
+~~END~~
+
+DROP FUNCTION BABEL_3486_vu_prepare_f16()
+GO
+
+SELECT * FROM BABEL_3486_vu_prepare_v17
+GO
+~~START~~
+int
+-5
+~~END~~
+
+DROP VIEW BABEL_3486_vu_prepare_v17
+GO
+
+EXEC BABEL_3486_vu_prepare_p17
+GO
+~~START~~
+int
+-5
+~~END~~
+
+DROP PROCEDURE BABEL_3486_vu_prepare_p17
+GO
+
+SELECT BABEL_3486_vu_prepare_f17()
+GO
+~~START~~
+int
+-5
+~~END~~
+
+DROP FUNCTION BABEL_3486_vu_prepare_f17()
+GO
+
+SELECT * FROM BABEL_3486_vu_prepare_v18
+GO
+~~START~~
+int
+<NULL>
+~~END~~
+
+DROP VIEW BABEL_3486_vu_prepare_v18
+GO
+
+EXEC BABEL_3486_vu_prepare_p18
+GO
+~~START~~
+int
+<NULL>
+~~END~~
+
+DROP PROCEDURE BABEL_3486_vu_prepare_p18
+GO
+
+SELECT BABEL_3486_vu_prepare_f18()
+GO
+~~START~~
+int
+<NULL>
+~~END~~
+
+DROP FUNCTION BABEL_3486_vu_prepare_f18()
+GO
+
+SELECT * FROM BABEL_3486_vu_prepare_v19
+GO
+~~START~~
+int
+<NULL>
+~~END~~
+
+DROP VIEW BABEL_3486_vu_prepare_v19
+GO
+
+EXEC BABEL_3486_vu_prepare_p19
+GO
+~~START~~
+int
+<NULL>
+~~END~~
+
+DROP PROCEDURE BABEL_3486_vu_prepare_p19
+GO
+
+SELECT BABEL_3486_vu_prepare_f19()
+GO
+~~START~~
+int
+<NULL>
+~~END~~
+
+DROP FUNCTION BABEL_3486_vu_prepare_f19()
+GO
+
+SELECT * FROM BABEL_3486_vu_prepare_v20
+GO
+~~START~~
+smallint
+5
+~~END~~
+
+DROP VIEW BABEL_3486_vu_prepare_v20
+GO
+
+EXEC BABEL_3486_vu_prepare_p20
+GO
+~~START~~
+smallint
+5
+~~END~~
+
+DROP PROCEDURE BABEL_3486_vu_prepare_p20
+GO
+
+SELECT BABEL_3486_vu_prepare_f20()
+GO
+~~START~~
+smallint
+5
+~~END~~
+
+DROP FUNCTION BABEL_3486_vu_prepare_f20()
+GO
+
+SELECT * FROM BABEL_3486_vu_prepare_v21
+GO
+~~START~~
+smallint
+-5
+~~END~~
+
+DROP VIEW BABEL_3486_vu_prepare_v21
+GO
+
+EXEC BABEL_3486_vu_prepare_p21
+GO
+~~START~~
+smallint
+-5
+~~END~~
+
+DROP PROCEDURE BABEL_3486_vu_prepare_p21
+GO
+
+SELECT BABEL_3486_vu_prepare_f21()
+GO
+~~START~~
+smallint
+-5
+~~END~~
+
+DROP FUNCTION BABEL_3486_vu_prepare_f21()
+GO
+
+SELECT * FROM BABEL_3486_vu_prepare_v22
+GO
+~~START~~
+smallint
+<NULL>
+~~END~~
+
+DROP VIEW BABEL_3486_vu_prepare_v22
+GO
+
+EXEC BABEL_3486_vu_prepare_p22
+GO
+~~START~~
+smallint
+<NULL>
+~~END~~
+
+DROP PROCEDURE BABEL_3486_vu_prepare_p22
+GO
+
+SELECT BABEL_3486_vu_prepare_f22()
+GO
+~~START~~
+smallint
+<NULL>
+~~END~~
+
+DROP FUNCTION BABEL_3486_vu_prepare_f22()
+GO
+
+SELECT * FROM BABEL_3486_vu_prepare_v23
+GO
+~~START~~
+smallint
+<NULL>
+~~END~~
+
+DROP VIEW BABEL_3486_vu_prepare_v23
+GO
+
+EXEC BABEL_3486_vu_prepare_p23
+GO
+~~START~~
+smallint
+<NULL>
+~~END~~
+
+DROP PROCEDURE BABEL_3486_vu_prepare_p23
+GO
+
+SELECT BABEL_3486_vu_prepare_f23()
+GO
+~~START~~
+smallint
+<NULL>
+~~END~~
+
+DROP FUNCTION BABEL_3486_vu_prepare_f23()
+GO
+
+SELECT * FROM BABEL_3486_vu_prepare_v24
+GO
+~~START~~
+bit
+1
+~~END~~
+
+DROP VIEW BABEL_3486_vu_prepare_v24
+GO
+
+EXEC BABEL_3486_vu_prepare_p24
+GO
+~~START~~
+bit
+1
+~~END~~
+
+DROP PROCEDURE BABEL_3486_vu_prepare_p24
+GO
+
+SELECT BABEL_3486_vu_prepare_f24()
+GO
+~~START~~
+bit
+1
+~~END~~
+
+DROP FUNCTION BABEL_3486_vu_prepare_f24()
+GO
+
+SELECT * FROM BABEL_3486_vu_prepare_v25
+GO
+~~START~~
+bit
+0
+~~END~~
+
+DROP VIEW BABEL_3486_vu_prepare_v25
+GO
+
+EXEC BABEL_3486_vu_prepare_p25
+GO
+~~START~~
+bit
+0
+~~END~~
+
+DROP PROCEDURE BABEL_3486_vu_prepare_p25
+GO
+
+SELECT BABEL_3486_vu_prepare_f25()
+GO
+~~START~~
+bit
+0
+~~END~~
+
+DROP FUNCTION BABEL_3486_vu_prepare_f25()
+GO
+
+SELECT * FROM BABEL_3486_vu_prepare_v26
+GO
+~~START~~
+bit
+1
+~~END~~
+
+DROP VIEW BABEL_3486_vu_prepare_v26
+GO
+
+EXEC BABEL_3486_vu_prepare_p26
+GO
+~~START~~
+bit
+1
+~~END~~
+
+DROP PROCEDURE BABEL_3486_vu_prepare_p26
+GO
+
+SELECT BABEL_3486_vu_prepare_f26()
+GO
+~~START~~
+bit
+1
+~~END~~
+
+DROP FUNCTION BABEL_3486_vu_prepare_f26()
+GO
+
+SELECT * FROM BABEL_3486_vu_prepare_v27
+GO
+~~START~~
+bit
+1
+~~END~~
+
+DROP VIEW BABEL_3486_vu_prepare_v27
+GO
+
+EXEC BABEL_3486_vu_prepare_p27
+GO
+~~START~~
+bit
+1
+~~END~~
+
+DROP PROCEDURE BABEL_3486_vu_prepare_p27
+GO
+
+SELECT BABEL_3486_vu_prepare_f27()
+GO
+~~START~~
+bit
+1
+~~END~~
+
+DROP FUNCTION BABEL_3486_vu_prepare_f27()
+GO
+
+SELECT * FROM BABEL_3486_vu_prepare_v28
+GO
+~~START~~
+bit
+<NULL>
+~~END~~
+
+DROP VIEW BABEL_3486_vu_prepare_v28
+GO
+
+EXEC BABEL_3486_vu_prepare_p28
+GO
+~~START~~
+bit
+<NULL>
+~~END~~
+
+DROP PROCEDURE BABEL_3486_vu_prepare_p28
+GO
+
+SELECT BABEL_3486_vu_prepare_f28()
+GO
+~~START~~
+bit
+<NULL>
+~~END~~
+
+DROP FUNCTION BABEL_3486_vu_prepare_f28()
+GO
+
+SELECT * FROM BABEL_3486_vu_prepare_v29
+GO
+~~START~~
+bit
+<NULL>
+~~END~~
+
+DROP VIEW BABEL_3486_vu_prepare_v29
+GO
+
+EXEC BABEL_3486_vu_prepare_p29
+GO
+~~START~~
+bit
+<NULL>
+~~END~~
+
+DROP PROCEDURE BABEL_3486_vu_prepare_p29
+GO
+
+SELECT BABEL_3486_vu_prepare_f29()
+GO
+~~START~~
+bit
+<NULL>
+~~END~~
+
+DROP FUNCTION BABEL_3486_vu_prepare_f29()
+GO
+
+SELECT * FROM BABEL_3486_vu_prepare_v29_2
+GO
+~~START~~
+bit
+<NULL>
+~~END~~
+
+DROP VIEW BABEL_3486_vu_prepare_v29_2
+GO
+
+EXEC BABEL_3486_vu_prepare_p29_2
+GO
+~~START~~
+bit
+<NULL>
+~~END~~
+
+DROP PROCEDURE BABEL_3486_vu_prepare_p29_2
+GO
+
+SELECT BABEL_3486_vu_prepare_f29_2()
+GO
+~~START~~
+bit
+<NULL>
+~~END~~
+
+DROP FUNCTION BABEL_3486_vu_prepare_f29_2()
+GO
+
+SELECT * FROM BABEL_3486_vu_prepare_v30
+GO
+~~START~~
+numeric
+5.33000000
+~~END~~
+
+DROP VIEW BABEL_3486_vu_prepare_v30
+GO
+
+EXEC BABEL_3486_vu_prepare_p30
+GO
+~~START~~
+numeric
+5.33000000
+~~END~~
+
+DROP PROCEDURE BABEL_3486_vu_prepare_p30
+GO
+
+SELECT BABEL_3486_vu_prepare_f30()
+GO
+~~START~~
+numeric
+5
+~~END~~
+
+DROP FUNCTION BABEL_3486_vu_prepare_f30()
+GO
+
+SELECT * FROM BABEL_3486_vu_prepare_v31
+GO
+~~START~~
+numeric
+-5.30000000
+~~END~~
+
+DROP VIEW BABEL_3486_vu_prepare_v31
+GO
+
+EXEC BABEL_3486_vu_prepare_p31
+GO
+~~START~~
+numeric
+-5.30000000
+~~END~~
+
+DROP PROCEDURE BABEL_3486_vu_prepare_p31
+GO
+
+SELECT BABEL_3486_vu_prepare_f31()
+GO
+~~START~~
+numeric
+-5
+~~END~~
+
+DROP FUNCTION BABEL_3486_vu_prepare_f31()
+GO
+
+SELECT * FROM BABEL_3486_vu_prepare_v32
+GO
+~~START~~
+numeric
+5.00000000
+~~END~~
+
+DROP VIEW BABEL_3486_vu_prepare_v32
+GO
+
+EXEC BABEL_3486_vu_prepare_p32
+GO
+~~START~~
+numeric
+5.00000000
+~~END~~
+
+DROP PROCEDURE BABEL_3486_vu_prepare_p32
+GO
+
+SELECT BABEL_3486_vu_prepare_f32()
+GO
+~~START~~
+numeric
+5
+~~END~~
+
+DROP FUNCTION BABEL_3486_vu_prepare_f32()
+GO
+
+SELECT * FROM BABEL_3486_vu_prepare_v33
+GO
+~~START~~
+numeric
+5.00000000
+~~END~~
+
+DROP VIEW BABEL_3486_vu_prepare_v33
+GO
+
+EXEC BABEL_3486_vu_prepare_p33
+GO
+~~START~~
+numeric
+5.00000000
+~~END~~
+
+DROP PROCEDURE BABEL_3486_vu_prepare_p33
+GO
+
+SELECT BABEL_3486_vu_prepare_f33()
+GO
+~~START~~
+numeric
+5
+~~END~~
+
+DROP FUNCTION BABEL_3486_vu_prepare_f33()
+GO
+
+SELECT * FROM BABEL_3486_vu_prepare_v34
+GO
+~~START~~
+numeric
+<NULL>
+~~END~~
+
+DROP VIEW BABEL_3486_vu_prepare_v34
+GO
+
+EXEC BABEL_3486_vu_prepare_p34
+GO
+~~START~~
+numeric
+<NULL>
+~~END~~
+
+DROP PROCEDURE BABEL_3486_vu_prepare_p34
+GO
+
+SELECT BABEL_3486_vu_prepare_f34()
+GO
+~~START~~
+numeric
+<NULL>
+~~END~~
+
+DROP FUNCTION BABEL_3486_vu_prepare_f34()
+GO
+
+SELECT * FROM BABEL_3486_vu_prepare_v35
+GO
+~~START~~
+numeric
+<NULL>
+~~END~~
+
+DROP VIEW BABEL_3486_vu_prepare_v35
+GO
+
+EXEC BABEL_3486_vu_prepare_p35
+GO
+~~START~~
+numeric
+<NULL>
+~~END~~
+
+DROP PROCEDURE BABEL_3486_vu_prepare_p35
+GO
+
+SELECT BABEL_3486_vu_prepare_f35()
+GO
+~~START~~
+numeric
+<NULL>
+~~END~~
+
+DROP FUNCTION BABEL_3486_vu_prepare_f35()
+GO
+
+EXEC BABEL_3486_vu_prepare_p35_2
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: NUMERIC scale 2 must be between 0 and precision 1)~~
+
+DROP PROCEDURE BABEL_3486_vu_prepare_p35_2
+GO
+
+SELECT BABEL_3486_vu_prepare_f35_2()
+GO
+~~START~~
+numeric
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: NUMERIC scale 2 must be between 0 and precision 1)~~
+
+
+DROP FUNCTION BABEL_3486_vu_prepare_f35_2()
+SELECT * FROM BABEL_3486_vu_prepare_v36
+GO
+~~START~~
+numeric
+<NULL>
+~~END~~
+
+DROP VIEW BABEL_3486_vu_prepare_v36
+GO
+
+EXEC BABEL_3486_vu_prepare_p36
+GO
+~~START~~
+numeric
+<NULL>
+~~END~~
+
+DROP PROCEDURE BABEL_3486_vu_prepare_p36
+GO
+
+SELECT BABEL_3486_vu_prepare_f36()
+GO
+~~START~~
+numeric
+<NULL>
+~~END~~
+
+DROP FUNCTION BABEL_3486_vu_prepare_f36()
+GO
+
+SELECT * FROM BABEL_3486_vu_prepare_v37
+GO
+~~START~~
+numeric
+5.33000000
+~~END~~
+
+DROP VIEW BABEL_3486_vu_prepare_v37
+GO
+
+EXEC BABEL_3486_vu_prepare_p37
+GO
+~~START~~
+numeric
+5.33000000
+~~END~~
+
+DROP PROCEDURE BABEL_3486_vu_prepare_p37
+GO
+
+SELECT BABEL_3486_vu_prepare_f37()
+GO
+~~START~~
+numeric
+5
+~~END~~
+
+DROP FUNCTION BABEL_3486_vu_prepare_f37()
+GO
+
+SELECT * FROM BABEL_3486_vu_prepare_v38
+GO
+~~START~~
+numeric
+-5.00000000
+~~END~~
+
+DROP VIEW BABEL_3486_vu_prepare_v38
+GO
+
+EXEC BABEL_3486_vu_prepare_p38
+GO
+~~START~~
+numeric
+-5.00000000
+~~END~~
+
+DROP PROCEDURE BABEL_3486_vu_prepare_p38
+GO
+
+SELECT BABEL_3486_vu_prepare_f38()
+GO
+~~START~~
+numeric
+-5
+~~END~~
+
+DROP FUNCTION BABEL_3486_vu_prepare_f38()
+GO
+
+SELECT * FROM BABEL_3486_vu_prepare_v39
+GO
+~~START~~
+numeric
+5.00000000
+~~END~~
+
+DROP VIEW BABEL_3486_vu_prepare_v39
+GO
+
+EXEC BABEL_3486_vu_prepare_p39
+GO
+~~START~~
+numeric
+5.00000000
+~~END~~
+
+DROP PROCEDURE BABEL_3486_vu_prepare_p39
+GO
+
+SELECT BABEL_3486_vu_prepare_f39()
+GO
+~~START~~
+numeric
+5
+~~END~~
+
+DROP FUNCTION BABEL_3486_vu_prepare_f39()
+GO
+
+SELECT * FROM BABEL_3486_vu_prepare_v40
+GO
+~~START~~
+numeric
+<NULL>
+~~END~~
+
+DROP VIEW BABEL_3486_vu_prepare_v40
+GO
+
+EXEC BABEL_3486_vu_prepare_p40
+GO
+~~START~~
+numeric
+<NULL>
+~~END~~
+
+DROP PROCEDURE BABEL_3486_vu_prepare_p40
+GO
+
+SELECT BABEL_3486_vu_prepare_f40()
+GO
+~~START~~
+numeric
+<NULL>
+~~END~~
+
+DROP FUNCTION BABEL_3486_vu_prepare_f40()
+GO
+
+SELECT * FROM BABEL_3486_vu_prepare_v41
+GO
+~~START~~
+numeric
+<NULL>
+~~END~~
+
+DROP VIEW BABEL_3486_vu_prepare_v41
+GO
+
+EXEC BABEL_3486_vu_prepare_p41
+GO
+~~START~~
+numeric
+<NULL>
+~~END~~
+
+DROP PROCEDURE BABEL_3486_vu_prepare_p41
+GO
+
+SELECT BABEL_3486_vu_prepare_f41()
+GO
+~~START~~
+numeric
+<NULL>
+~~END~~
+
+DROP FUNCTION BABEL_3486_vu_prepare_f41()
+GO
+
+EXEC BABEL_3486_vu_prepare_p42
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: NUMERIC scale 2 must be between 0 and precision 1)~~
+
+DROP PROCEDURE BABEL_3486_vu_prepare_p42
+GO
+
+SELECT BABEL_3486_vu_prepare_f42()
+GO
+~~START~~
+numeric
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: NUMERIC scale 2 must be between 0 and precision 1)~~
+
+DROP FUNCTION BABEL_3486_vu_prepare_f42()
+GO
+
+SELECT * FROM BABEL_3486_vu_prepare_v43
+GO
+~~START~~
+money
+5.3300
+~~END~~
+
+DROP VIEW BABEL_3486_vu_prepare_v43
+GO
+
+EXEC BABEL_3486_vu_prepare_p43
+GO
+~~START~~
+money
+5.3300
+~~END~~
+
+DROP PROCEDURE BABEL_3486_vu_prepare_p43
+GO
+
+SELECT BABEL_3486_vu_prepare_f43()
+GO
+~~START~~
+money
+5.3300
+~~END~~
+
+DROP FUNCTION BABEL_3486_vu_prepare_f43()
+GO
+
+SELECT * FROM BABEL_3486_vu_prepare_v44
+GO
+~~START~~
+money
+5.3354
+~~END~~
+
+DROP VIEW BABEL_3486_vu_prepare_v44
+GO
+
+EXEC BABEL_3486_vu_prepare_p44
+GO
+~~START~~
+money
+5.3354
+~~END~~
+
+DROP PROCEDURE BABEL_3486_vu_prepare_p44
+GO
+
+SELECT BABEL_3486_vu_prepare_f44()
+GO
+~~START~~
+money
+5.3354
+~~END~~
+
+DROP FUNCTION BABEL_3486_vu_prepare_f44()
+GO
+
+SELECT * FROM BABEL_3486_vu_prepare_v45
+GO
+~~START~~
+money
+-5.3300
+~~END~~
+
+DROP VIEW BABEL_3486_vu_prepare_v45
+GO
+
+EXEC BABEL_3486_vu_prepare_p45
+GO
+~~START~~
+money
+-5.3300
+~~END~~
+
+DROP PROCEDURE BABEL_3486_vu_prepare_p45
+GO
+
+SELECT BABEL_3486_vu_prepare_f45()
+GO
+~~START~~
+money
+-5.3300
+~~END~~
+
+DROP FUNCTION BABEL_3486_vu_prepare_f45()
+GO
+
+SELECT * FROM BABEL_3486_vu_prepare_v46
+GO
+~~START~~
+money
+-5.3300
+~~END~~
+
+DROP VIEW BABEL_3486_vu_prepare_v46
+GO
+
+EXEC BABEL_3486_vu_prepare_p46
+GO
+~~START~~
+money
+-5.3300
+~~END~~
+
+DROP PROCEDURE BABEL_3486_vu_prepare_p46
+GO
+
+SELECT BABEL_3486_vu_prepare_f46()
+GO
+~~START~~
+money
+-5.3300
+~~END~~
+
+DROP FUNCTION BABEL_3486_vu_prepare_f46()
+GO
+
+SELECT * FROM BABEL_3486_vu_prepare_v47
+GO
+~~START~~
+money
+<NULL>
+~~END~~
+
+DROP VIEW BABEL_3486_vu_prepare_v47
+GO
+
+EXEC BABEL_3486_vu_prepare_p47
+GO
+~~START~~
+money
+<NULL>
+~~END~~
+
+DROP PROCEDURE BABEL_3486_vu_prepare_p47
+GO
+
+SELECT BABEL_3486_vu_prepare_f47()
+GO
+~~START~~
+money
+<NULL>
+~~END~~
+
+DROP FUNCTION BABEL_3486_vu_prepare_f47()
+GO
+
+SELECT * FROM BABEL_3486_vu_prepare_v47_2
+GO
+~~START~~
+money
+<NULL>
+~~END~~
+
+DROP VIEW BABEL_3486_vu_prepare_v47_2
+GO
+
+EXEC BABEL_3486_vu_prepare_p47_2
+GO
+~~START~~
+money
+<NULL>
+~~END~~
+
+DROP PROCEDURE BABEL_3486_vu_prepare_p47_2
+GO
+
+SELECT BABEL_3486_vu_prepare_f47_2()
+GO
+~~START~~
+money
+<NULL>
+~~END~~
+
+DROP FUNCTION BABEL_3486_vu_prepare_f47_2()
+GO
+
+SELECT * FROM BABEL_3486_vu_prepare_v48
+GO
+~~START~~
+float
+5.33
+~~END~~
+
+DROP VIEW BABEL_3486_vu_prepare_v48
+GO
+
+EXEC BABEL_3486_vu_prepare_p48
+GO
+~~START~~
+float
+5.33
+~~END~~
+
+DROP PROCEDURE BABEL_3486_vu_prepare_p48
+GO
+
+SELECT BABEL_3486_vu_prepare_f48()
+GO
+~~START~~
+float
+5.33
+~~END~~
+
+DROP FUNCTION BABEL_3486_vu_prepare_f48()
+GO
+
+SELECT * FROM BABEL_3486_vu_prepare_v49
+GO
+~~START~~
+float
+-5.335432
+~~END~~
+
+DROP VIEW BABEL_3486_vu_prepare_v49
+GO
+
+EXEC BABEL_3486_vu_prepare_p49
+GO
+~~START~~
+float
+-5.335432
+~~END~~
+
+DROP PROCEDURE BABEL_3486_vu_prepare_p49
+GO
+
+SELECT BABEL_3486_vu_prepare_f49()
+GO
+~~START~~
+float
+-5.335432
+~~END~~
+
+DROP FUNCTION BABEL_3486_vu_prepare_f49()
+GO
+
+SELECT * FROM BABEL_3486_vu_prepare_v50
+GO
+~~START~~
+float
+5.0
+~~END~~
+
+DROP VIEW BABEL_3486_vu_prepare_v50
+GO
+
+EXEC BABEL_3486_vu_prepare_p50
+GO
+~~START~~
+float
+5.0
+~~END~~
+
+DROP PROCEDURE BABEL_3486_vu_prepare_p50
+GO
+
+SELECT BABEL_3486_vu_prepare_f50()
+GO
+~~START~~
+float
+5.0
+~~END~~
+
+DROP FUNCTION BABEL_3486_vu_prepare_f50()
+GO
+
+SELECT * FROM BABEL_3486_vu_prepare_v51
+GO
+~~START~~
+float
+<NULL>
+~~END~~
+
+DROP VIEW BABEL_3486_vu_prepare_v51
+GO
+
+EXEC BABEL_3486_vu_prepare_p51
+GO
+~~START~~
+float
+<NULL>
+~~END~~
+
+DROP PROCEDURE BABEL_3486_vu_prepare_p51
+GO
+
+SELECT BABEL_3486_vu_prepare_f51()
+GO
+~~START~~
+float
+<NULL>
+~~END~~
+
+DROP FUNCTION BABEL_3486_vu_prepare_f51()
+GO
+
+SELECT * FROM BABEL_3486_vu_prepare_v52
+GO
+~~START~~
+float
+<NULL>
+~~END~~
+
+DROP VIEW BABEL_3486_vu_prepare_v52
+GO
+
+EXEC BABEL_3486_vu_prepare_p52
+GO
+~~START~~
+float
+<NULL>
+~~END~~
+
+DROP PROCEDURE BABEL_3486_vu_prepare_p52
+GO
+
+SELECT BABEL_3486_vu_prepare_f52()
+GO
+~~START~~
+float
+<NULL>
+~~END~~
+
+DROP FUNCTION BABEL_3486_vu_prepare_f52()
+GO
+
+SELECT * FROM BABEL_3486_vu_prepare_v53
+GO
+~~START~~
+float
+<NULL>
+~~END~~
+
+DROP VIEW BABEL_3486_vu_prepare_v53
+GO
+
+EXEC BABEL_3486_vu_prepare_p53
+GO
+~~START~~
+float
+<NULL>
+~~END~~
+
+DROP PROCEDURE BABEL_3486_vu_prepare_p53
+GO
+
+SELECT BABEL_3486_vu_prepare_f53()
+GO
+~~START~~
+float
+<NULL>
+~~END~~
+
+DROP FUNCTION BABEL_3486_vu_prepare_f53()
+GO
+
+SELECT * FROM BABEL_3486_vu_prepare_v54
+GO
+~~START~~
+varchar
+ 5.00                         
+~~END~~
+
+DROP VIEW BABEL_3486_vu_prepare_v54
+GO
+
+EXEC BABEL_3486_vu_prepare_p54
+GO
+~~START~~
+varchar
+ 5.00                         
+~~END~~
+
+DROP PROCEDURE BABEL_3486_vu_prepare_p54
+GO
+
+SELECT BABEL_3486_vu_prepare_f54()
+GO
+~~START~~
+varchar
+5
+~~END~~
+
+DROP FUNCTION BABEL_3486_vu_prepare_f54()
+GO
+
+SELECT * FROM BABEL_3486_vu_prepare_v55
+GO
+~~START~~
+varchar
+13:01:59
+~~END~~
+
+DROP VIEW BABEL_3486_vu_prepare_v55
+GO
+
+EXEC BABEL_3486_vu_prepare_p55
+GO
+~~START~~
+varchar
+13:01:59
+~~END~~
+
+DROP PROCEDURE BABEL_3486_vu_prepare_p55
+GO
+
+SELECT BABEL_3486_vu_prepare_f55()
+GO
+~~START~~
+varchar
+1
+~~END~~
+
+DROP FUNCTION BABEL_3486_vu_prepare_f55()
+GO
+
+SELECT * FROM BABEL_3486_vu_prepare_v56
+GO
+~~START~~
+varchar
+13
+~~END~~
+
+DROP VIEW BABEL_3486_vu_prepare_v56
+GO
+
+EXEC BABEL_3486_vu_prepare_p56
+GO
+~~START~~
+varchar
+13
+~~END~~
+
+DROP PROCEDURE BABEL_3486_vu_prepare_p56
+GO
+
+SELECT BABEL_3486_vu_prepare_f56()
+GO
+~~START~~
+varchar
+1
+~~END~~
+
+DROP FUNCTION BABEL_3486_vu_prepare_f56()
+GO
+
+SELECT * FROM BABEL_3486_vu_prepare_v57
+GO
+~~START~~
+varchar
+5
+~~END~~
+
+DROP VIEW BABEL_3486_vu_prepare_v57
+GO
+
+EXEC BABEL_3486_vu_prepare_p57
+GO
+~~START~~
+varchar
+5
+~~END~~
+
+DROP PROCEDURE BABEL_3486_vu_prepare_p57
+GO
+
+SELECT BABEL_3486_vu_prepare_f57()
+GO
+~~START~~
+varchar
+5
+~~END~~
+
+DROP FUNCTION BABEL_3486_vu_prepare_f57()
+GO
+
+SELECT * FROM BABEL_3486_vu_prepare_v58
+GO
+~~START~~
+varchar
+5
+~~END~~
+
+DROP VIEW BABEL_3486_vu_prepare_v58
+GO
+
+EXEC BABEL_3486_vu_prepare_p58
+GO
+~~START~~
+varchar
+5
+~~END~~
+
+DROP PROCEDURE BABEL_3486_vu_prepare_p58
+GO
+
+SELECT BABEL_3486_vu_prepare_f58()
+GO
+~~START~~
+varchar
+5
+~~END~~
+
+DROP FUNCTION BABEL_3486_vu_prepare_f58()
+GO
+
+SELECT * FROM BABEL_3486_vu_prepare_v59
+GO
+~~START~~
+varchar
+5
+~~END~~
+
+DROP VIEW BABEL_3486_vu_prepare_v59
+GO
+
+EXEC BABEL_3486_vu_prepare_p59
+GO
+~~START~~
+varchar
+5
+~~END~~
+
+DROP PROCEDURE BABEL_3486_vu_prepare_p59
+GO
+
+SELECT BABEL_3486_vu_prepare_f59()
+GO
+~~START~~
+varchar
+5
+~~END~~
+
+DROP FUNCTION BABEL_3486_vu_prepare_f59()
+GO
+
+SELECT * FROM BABEL_3486_vu_prepare_v60
+GO
+~~START~~
+varchar
+5
+~~END~~
+
+DROP VIEW BABEL_3486_vu_prepare_v60
+GO
+
+EXEC BABEL_3486_vu_prepare_p60
+GO
+~~START~~
+varchar
+5
+~~END~~
+
+DROP PROCEDURE BABEL_3486_vu_prepare_p60
+GO
+
+SELECT BABEL_3486_vu_prepare_f60()
+GO
+~~START~~
+varchar
+5
+~~END~~
+
+DROP FUNCTION BABEL_3486_vu_prepare_f60()
+GO
+
+SELECT * FROM BABEL_3486_vu_prepare_v61
+GO
+~~START~~
+varchar
+5
+~~END~~
+
+DROP VIEW BABEL_3486_vu_prepare_v61
+GO
+
+EXEC BABEL_3486_vu_prepare_p61
+GO
+~~START~~
+varchar
+5
+~~END~~
+
+DROP PROCEDURE BABEL_3486_vu_prepare_p61
+GO
+
+SELECT BABEL_3486_vu_prepare_f61()
+GO
+~~START~~
+varchar
+5
+~~END~~
+
+DROP FUNCTION BABEL_3486_vu_prepare_f61()
+GO
+
+SELECT * FROM BABEL_3486_vu_prepare_v62
+GO
+~~START~~
+varchar
+1
+~~END~~
+
+DROP VIEW BABEL_3486_vu_prepare_v62
+GO
+
+EXEC BABEL_3486_vu_prepare_p62
+GO
+~~START~~
+varchar
+1
+~~END~~
+
+DROP PROCEDURE BABEL_3486_vu_prepare_p62
+GO
+
+SELECT BABEL_3486_vu_prepare_f62()
+GO
+~~START~~
+varchar
+1
+~~END~~
+
+DROP FUNCTION BABEL_3486_vu_prepare_f62()
+GO
+
+SELECT * FROM BABEL_3486_vu_prepare_v63
+GO
+~~START~~
+varchar
+1.0000
+~~END~~
+
+DROP VIEW BABEL_3486_vu_prepare_v63
+GO
+
+EXEC BABEL_3486_vu_prepare_p63
+GO
+~~START~~
+varchar
+1.0000
+~~END~~
+
+DROP PROCEDURE BABEL_3486_vu_prepare_p63
+GO
+
+SELECT BABEL_3486_vu_prepare_f63()
+GO
+~~START~~
+varchar
+1
+~~END~~
+
+DROP FUNCTION BABEL_3486_vu_prepare_f63()
+GO
+
+SELECT * FROM BABEL_3486_vu_prepare_v64
+GO
+~~START~~
+varchar
+test
+~~END~~
+
+DROP VIEW BABEL_3486_vu_prepare_v64
+GO
+
+EXEC BABEL_3486_vu_prepare_p64
+GO
+~~START~~
+varchar
+test
+~~END~~
+
+DROP PROCEDURE BABEL_3486_vu_prepare_p64
+GO
+
+SELECT BABEL_3486_vu_prepare_f64()
+GO
+~~START~~
+varchar
+t
+~~END~~
+
+DROP FUNCTION BABEL_3486_vu_prepare_f64()
+GO
+
+SELECT * FROM BABEL_3486_vu_prepare_v65
+GO
+~~START~~
+varchar
+<NULL>
+~~END~~
+
+DROP VIEW BABEL_3486_vu_prepare_v65
+GO
+
+EXEC BABEL_3486_vu_prepare_p65
+GO
+~~START~~
+varchar
+<NULL>
+~~END~~
+
+DROP PROCEDURE BABEL_3486_vu_prepare_p65
+GO
+
+SELECT BABEL_3486_vu_prepare_f65()
+GO
+~~START~~
+varchar
+<NULL>
+~~END~~
+
+DROP FUNCTION BABEL_3486_vu_prepare_f65()
+GO
+
+SELECT * FROM BABEL_3486_vu_prepare_v66
+GO
+~~START~~
+text
+5.0000
+~~END~~
+
+DROP VIEW BABEL_3486_vu_prepare_v66
+GO
+
+EXEC BABEL_3486_vu_prepare_p66
+GO
+~~START~~
+text
+5.0000
+~~END~~
+
+DROP PROCEDURE BABEL_3486_vu_prepare_p66
+GO
+
+SELECT BABEL_3486_vu_prepare_f66()
+GO
+~~START~~
+varchar
+5
+~~END~~
+
+DROP FUNCTION BABEL_3486_vu_prepare_f66()
+GO
+
+SELECT * FROM BABEL_3486_vu_prepare_v67
+GO
+~~START~~
+text
+2017-08-25
+~~END~~
+
+DROP VIEW BABEL_3486_vu_prepare_v67
+GO
+
+EXEC BABEL_3486_vu_prepare_p67
+GO
+~~START~~
+text
+2017-08-25
+~~END~~
+
+DROP PROCEDURE BABEL_3486_vu_prepare_p67
+GO
+
+SELECT BABEL_3486_vu_prepare_f67()
+GO
+~~START~~
+varchar
+2
+~~END~~
+
+DROP FUNCTION BABEL_3486_vu_prepare_f67()
+GO
+
+SELECT * FROM BABEL_3486_vu_prepare_v68
+GO
+~~START~~
+text
+5
+~~END~~
+
+DROP VIEW BABEL_3486_vu_prepare_v68
+GO
+
+EXEC BABEL_3486_vu_prepare_p68
+GO
+~~START~~
+text
+5
+~~END~~
+
+DROP PROCEDURE BABEL_3486_vu_prepare_p68
+GO
+
+SELECT BABEL_3486_vu_prepare_f68()
+GO
+~~START~~
+varchar
+5
+~~END~~
+
+DROP FUNCTION BABEL_3486_vu_prepare_f68()
+GO
+
+SELECT * FROM BABEL_3486_vu_prepare_v69
+GO
+~~START~~
+text
+5
+~~END~~
+
+DROP VIEW BABEL_3486_vu_prepare_v69
+GO
+
+EXEC BABEL_3486_vu_prepare_p69
+GO
+~~START~~
+text
+5
+~~END~~
+
+DROP PROCEDURE BABEL_3486_vu_prepare_p69
+GO
+
+SELECT BABEL_3486_vu_prepare_f69()
+GO
+~~START~~
+varchar
+5
+~~END~~
+
+DROP FUNCTION BABEL_3486_vu_prepare_f69()
+GO
+
+SELECT * FROM BABEL_3486_vu_prepare_v70
+GO
+~~START~~
+text
+5
+~~END~~
+
+DROP VIEW BABEL_3486_vu_prepare_v70
+GO
+
+EXEC BABEL_3486_vu_prepare_p70
+GO
+~~START~~
+text
+5
+~~END~~
+
+DROP PROCEDURE BABEL_3486_vu_prepare_p70
+GO
+
+SELECT BABEL_3486_vu_prepare_f70()
+GO
+~~START~~
+varchar
+5
+~~END~~
+
+DROP FUNCTION BABEL_3486_vu_prepare_f70()
+GO
+
+SELECT * FROM BABEL_3486_vu_prepare_v71
+GO
+~~START~~
+text
+5
+~~END~~
+
+DROP VIEW BABEL_3486_vu_prepare_v71
+GO
+
+EXEC BABEL_3486_vu_prepare_p71
+GO
+~~START~~
+text
+5
+~~END~~
+
+DROP PROCEDURE BABEL_3486_vu_prepare_p71
+GO
+
+SELECT BABEL_3486_vu_prepare_f71()
+GO
+~~START~~
+varchar
+5
+~~END~~
+
+DROP FUNCTION BABEL_3486_vu_prepare_f71()
+GO
+
+SELECT * FROM BABEL_3486_vu_prepare_v72
+GO
+~~START~~
+text
+5
+~~END~~
+
+DROP VIEW BABEL_3486_vu_prepare_v72
+GO
+
+EXEC BABEL_3486_vu_prepare_p72
+GO
+~~START~~
+text
+5
+~~END~~
+
+DROP PROCEDURE BABEL_3486_vu_prepare_p72
+GO
+
+SELECT BABEL_3486_vu_prepare_f72()
+GO
+~~START~~
+varchar
+5
+~~END~~
+
+DROP FUNCTION BABEL_3486_vu_prepare_f72()
+GO
+
+SELECT * FROM BABEL_3486_vu_prepare_v73
+GO
+~~START~~
+text
+1
+~~END~~
+
+DROP VIEW BABEL_3486_vu_prepare_v73
+GO
+
+EXEC BABEL_3486_vu_prepare_p73
+GO
+~~START~~
+text
+1
+~~END~~
+
+DROP PROCEDURE BABEL_3486_vu_prepare_p73
+GO
+
+SELECT BABEL_3486_vu_prepare_f73()
+GO
+~~START~~
+varchar
+1
+~~END~~
+
+DROP FUNCTION BABEL_3486_vu_prepare_f73()
+GO
+
+SELECT * FROM BABEL_3486_vu_prepare_v74
+GO
+~~START~~
+text
+1.0000
+~~END~~
+
+DROP VIEW BABEL_3486_vu_prepare_v74
+GO
+
+EXEC BABEL_3486_vu_prepare_p74
+GO
+~~START~~
+text
+1.0000
+~~END~~
+
+DROP PROCEDURE BABEL_3486_vu_prepare_p74
+GO
+
+SELECT BABEL_3486_vu_prepare_f74()
+GO
+~~START~~
+varchar
+1
+~~END~~
+
+DROP FUNCTION BABEL_3486_vu_prepare_f74()
+GO
+
+SELECT * FROM BABEL_3486_vu_prepare_v75
+GO
+~~START~~
+text
+~~ERROR (Code: 512)~~
+
+~~ERROR (Message: more than one row returned by a subquery used as an expression)~~
+
+DROP VIEW BABEL_3486_vu_prepare_v75
+GO
+
+EXEC BABEL_3486_vu_prepare_p75
+GO
+~~START~~
+text
+~~ERROR (Code: 512)~~
+
+~~ERROR (Message: more than one row returned by a subquery used as an expression)~~
+
+DROP PROCEDURE BABEL_3486_vu_prepare_p75
+GO
+
+SELECT BABEL_3486_vu_prepare_f75()
+GO
+~~START~~
+varchar
+~~ERROR (Code: 512)~~
+
+~~ERROR (Message: more than one row returned by a subquery used as an expression)~~
+
+DROP FUNCTION BABEL_3486_vu_prepare_f75()
+GO
+
+drop table test
+GO
+
+SELECT * FROM BABEL_3486_vu_prepare_v76
+GO
+~~START~~
+date
+2017-08-25
+~~END~~
+
+DROP VIEW BABEL_3486_vu_prepare_v76
+GO
+
+EXEC BABEL_3486_vu_prepare_p76
+GO
+~~START~~
+date
+2017-08-25
+~~END~~
+
+DROP PROCEDURE BABEL_3486_vu_prepare_p76
+GO
+
+SELECT BABEL_3486_vu_prepare_f76()
+GO
+~~START~~
+date
+2017-08-25
+~~END~~
+
+DROP FUNCTION BABEL_3486_vu_prepare_f76()
+GO
+
+SELECT * FROM BABEL_3486_vu_prepare_v77
+GO
+~~START~~
+date
+9999-08-25
+~~END~~
+
+DROP VIEW BABEL_3486_vu_prepare_v77
+GO
+
+EXEC BABEL_3486_vu_prepare_p77
+GO
+~~START~~
+date
+9999-08-25
+~~END~~
+
+DROP PROCEDURE BABEL_3486_vu_prepare_p77
+GO
+
+SELECT BABEL_3486_vu_prepare_f77()
+GO
+~~START~~
+date
+9999-08-25
+~~END~~
+
+DROP FUNCTION BABEL_3486_vu_prepare_f77()
+GO
+
+SELECT * FROM BABEL_3486_vu_prepare_v78
+GO
+~~START~~
+date
+1900-01-01
+~~END~~
+
+DROP VIEW BABEL_3486_vu_prepare_v78
+GO
+
+EXEC BABEL_3486_vu_prepare_p78
+GO
+~~START~~
+date
+1900-01-01
+~~END~~
+
+DROP PROCEDURE BABEL_3486_vu_prepare_p78
+GO
+
+SELECT BABEL_3486_vu_prepare_f78()
+GO
+~~START~~
+date
+1900-01-01
+~~END~~
+
+DROP FUNCTION BABEL_3486_vu_prepare_f78()
+GO
+
+SELECT * FROM BABEL_3486_vu_prepare_v79
+GO
+~~START~~
+date
+<NULL>
+~~END~~
+
+DROP VIEW BABEL_3486_vu_prepare_v79
+GO
+
+EXEC BABEL_3486_vu_prepare_p79
+GO
+~~START~~
+date
+<NULL>
+~~END~~
+
+DROP PROCEDURE BABEL_3486_vu_prepare_p79
+GO
+
+SELECT BABEL_3486_vu_prepare_f79()
+GO
+~~START~~
+date
+<NULL>
+~~END~~
+
+DROP FUNCTION BABEL_3486_vu_prepare_f79()
+GO
+
+SELECT * FROM BABEL_3486_vu_prepare_v80
+GO
+~~START~~
+date
+<NULL>
+~~END~~
+
+DROP VIEW BABEL_3486_vu_prepare_v80
+GO
+
+EXEC BABEL_3486_vu_prepare_p80
+GO
+~~START~~
+date
+<NULL>
+~~END~~
+
+DROP PROCEDURE BABEL_3486_vu_prepare_p80
+GO
+
+SELECT BABEL_3486_vu_prepare_f80()
+GO
+~~START~~
+date
+<NULL>
+~~END~~
+
+DROP FUNCTION BABEL_3486_vu_prepare_f80()
+GO
+
+SELECT * FROM BABEL_3486_vu_prepare_v81
+GO
+~~START~~
+time
+13:01:59.0000000
+~~END~~
+
+DROP VIEW BABEL_3486_vu_prepare_v81
+GO
+
+EXEC BABEL_3486_vu_prepare_p81
+GO
+~~START~~
+time
+13:01:59.0000000
+~~END~~
+
+DROP PROCEDURE BABEL_3486_vu_prepare_p81
+GO
+
+SELECT BABEL_3486_vu_prepare_f81()
+GO
+~~START~~
+time
+13:01:59.0000000
+~~END~~
+
+DROP FUNCTION BABEL_3486_vu_prepare_f81()
+GO
+
+SELECT * FROM BABEL_3486_vu_prepare_v82
+GO
+~~START~~
+time
+00:00:00.0000000
+~~END~~
+
+DROP VIEW BABEL_3486_vu_prepare_v82
+GO
+
+EXEC BABEL_3486_vu_prepare_p82
+GO
+~~START~~
+time
+00:00:00.0000000
+~~END~~
+
+DROP PROCEDURE BABEL_3486_vu_prepare_p82
+GO
+
+SELECT BABEL_3486_vu_prepare_f82()
+GO
+~~START~~
+time
+00:00:00.0000000
+~~END~~
+
+DROP FUNCTION BABEL_3486_vu_prepare_f82()
+GO
+
+SELECT * FROM BABEL_3486_vu_prepare_v83
+GO
+~~START~~
+time
+01:01:01.0000000
+~~END~~
+
+DROP VIEW BABEL_3486_vu_prepare_v83
+GO
+
+EXEC BABEL_3486_vu_prepare_p83
+GO
+~~START~~
+time
+01:01:01.0000000
+~~END~~
+
+DROP PROCEDURE BABEL_3486_vu_prepare_p83
+GO
+
+SELECT BABEL_3486_vu_prepare_f83()
+GO
+~~START~~
+time
+01:01:01.0000000
+~~END~~
+
+DROP FUNCTION BABEL_3486_vu_prepare_f83()
+GO
+
+SELECT * FROM BABEL_3486_vu_prepare_v84
+GO
+~~START~~
+time
+<NULL>
+~~END~~
+
+DROP VIEW BABEL_3486_vu_prepare_v84
+GO
+
+EXEC BABEL_3486_vu_prepare_p84
+GO
+~~START~~
+time
+<NULL>
+~~END~~
+
+DROP PROCEDURE BABEL_3486_vu_prepare_p84
+GO
+
+SELECT BABEL_3486_vu_prepare_f84()
+GO
+~~START~~
+time
+<NULL>
+~~END~~
+
+DROP FUNCTION BABEL_3486_vu_prepare_f84()
+GO
+
+SELECT * FROM BABEL_3486_vu_prepare_v85
+GO
+~~START~~
+time
+<NULL>
+~~END~~
+
+DROP VIEW BABEL_3486_vu_prepare_v85
+GO
+
+EXEC BABEL_3486_vu_prepare_p85
+GO
+~~START~~
+time
+<NULL>
+~~END~~
+
+DROP PROCEDURE BABEL_3486_vu_prepare_p85
+GO
+
+SELECT BABEL_3486_vu_prepare_f85()
+GO
+~~START~~
+time
+<NULL>
+~~END~~
+
+DROP FUNCTION BABEL_3486_vu_prepare_f85()
+GO
+
+SELECT * FROM BABEL_3486_vu_prepare_v86
+GO
+~~START~~
+time
+<NULL>
+~~END~~
+
+DROP VIEW BABEL_3486_vu_prepare_v86
+GO
+
+EXEC BABEL_3486_vu_prepare_p86
+GO
+~~START~~
+time
+<NULL>
+~~END~~
+
+DROP PROCEDURE BABEL_3486_vu_prepare_p86
+GO
+
+SELECT BABEL_3486_vu_prepare_f86()
+GO
+~~START~~
+time
+<NULL>
+~~END~~
+
+DROP FUNCTION BABEL_3486_vu_prepare_f86()
+GO
+
+SELECT * FROM BABEL_3486_vu_prepare_v87
+GO
+~~START~~
+time
+<NULL>
+~~END~~
+
+DROP VIEW BABEL_3486_vu_prepare_v87
+GO
+
+EXEC BABEL_3486_vu_prepare_p87
+GO
+~~START~~
+time
+<NULL>
+~~END~~
+
+DROP PROCEDURE BABEL_3486_vu_prepare_p87
+GO
+
+SELECT BABEL_3486_vu_prepare_f87()
+GO
+~~START~~
+time
+<NULL>
+~~END~~
+
+DROP FUNCTION BABEL_3486_vu_prepare_f87()
+GO
+
+SELECT * FROM BABEL_3486_vu_prepare_v88
+GO
+~~START~~
+time
+<NULL>
+~~END~~
+
+DROP VIEW BABEL_3486_vu_prepare_v88
+GO
+
+EXEC BABEL_3486_vu_prepare_p88
+GO
+~~START~~
+time
+<NULL>
+~~END~~
+
+DROP PROCEDURE BABEL_3486_vu_prepare_p88
+GO
+
+SELECT BABEL_3486_vu_prepare_f88()
+GO
+~~START~~
+time
+<NULL>
+~~END~~
+
+DROP FUNCTION BABEL_3486_vu_prepare_f88()
+GO
+
+SELECT * FROM BABEL_3486_vu_prepare_v89
+GO
+~~START~~
+smalldatetime
+2017-08-25 13:02:00.0
+~~END~~
+
+DROP VIEW BABEL_3486_vu_prepare_v89
+GO
+
+EXEC BABEL_3486_vu_prepare_p89
+GO
+~~START~~
+smalldatetime
+2017-08-25 13:02:00.0
+~~END~~
+
+DROP PROCEDURE BABEL_3486_vu_prepare_p89
+GO
+
+SELECT BABEL_3486_vu_prepare_f89()
+GO
+~~START~~
+smalldatetime
+2017-08-25 13:02:00.0
+~~END~~
+
+DROP FUNCTION BABEL_3486_vu_prepare_f89()
+GO
+
+SELECT * FROM BABEL_3486_vu_prepare_v90
+GO
+~~START~~
+smalldatetime
+1900-01-01 13:02:00.0
+~~END~~
+
+DROP VIEW BABEL_3486_vu_prepare_v90
+GO
+
+EXEC BABEL_3486_vu_prepare_p90
+GO
+~~START~~
+smalldatetime
+1900-01-01 13:02:00.0
+~~END~~
+
+DROP PROCEDURE BABEL_3486_vu_prepare_p90
+GO
+
+SELECT BABEL_3486_vu_prepare_f90()
+GO
+~~START~~
+smalldatetime
+1900-01-01 13:02:00.0
+~~END~~
+
+DROP FUNCTION BABEL_3486_vu_prepare_f90()
+GO
+
+SELECT * FROM BABEL_3486_vu_prepare_v91
+GO
+~~START~~
+smalldatetime
+<NULL>
+~~END~~
+
+DROP VIEW BABEL_3486_vu_prepare_v91
+GO
+
+EXEC BABEL_3486_vu_prepare_p91
+GO
+~~START~~
+smalldatetime
+<NULL>
+~~END~~
+
+DROP PROCEDURE BABEL_3486_vu_prepare_p91
+GO
+
+SELECT BABEL_3486_vu_prepare_f91()
+GO
+~~START~~
+smalldatetime
+<NULL>
+~~END~~
+
+DROP FUNCTION BABEL_3486_vu_prepare_f91()
+GO
+
+SELECT * FROM BABEL_3486_vu_prepare_v92
+GO
+~~START~~
+smalldatetime
+<NULL>
+~~END~~
+
+DROP VIEW BABEL_3486_vu_prepare_v92
+GO
+
+EXEC BABEL_3486_vu_prepare_p92
+GO
+~~START~~
+smalldatetime
+<NULL>
+~~END~~
+
+DROP PROCEDURE BABEL_3486_vu_prepare_p92
+GO
+
+SELECT BABEL_3486_vu_prepare_f92()
+GO
+~~START~~
+smalldatetime
+<NULL>
+~~END~~
+
+DROP FUNCTION BABEL_3486_vu_prepare_f92()
+GO
+
+SELECT * FROM BABEL_3486_vu_prepare_v93
+GO
+~~START~~
+smalldatetime
+<NULL>
+~~END~~
+
+DROP VIEW BABEL_3486_vu_prepare_v93
+GO
+
+EXEC BABEL_3486_vu_prepare_p93
+GO
+~~START~~
+smalldatetime
+<NULL>
+~~END~~
+
+DROP PROCEDURE BABEL_3486_vu_prepare_p93
+GO
+
+SELECT BABEL_3486_vu_prepare_f93()
+GO
+~~START~~
+smalldatetime
+<NULL>
+~~END~~
+
+DROP FUNCTION BABEL_3486_vu_prepare_f93()
+GO
+
+SELECT * FROM BABEL_3486_vu_prepare_v94
+GO
+~~START~~
+datetime
+2017-08-25 13:01:59.0
+~~END~~
+
+DROP VIEW BABEL_3486_vu_prepare_v94
+GO
+
+EXEC BABEL_3486_vu_prepare_p94
+GO
+~~START~~
+datetime
+2017-08-25 13:01:59.0
+~~END~~
+
+DROP PROCEDURE BABEL_3486_vu_prepare_p94
+GO
+
+SELECT BABEL_3486_vu_prepare_f94()
+GO
+~~START~~
+datetime
+2017-08-25 13:01:59.0
+~~END~~
+
+DROP FUNCTION BABEL_3486_vu_prepare_f94()
+GO
+
+SELECT * FROM BABEL_3486_vu_prepare_v95
+GO
+~~START~~
+datetime
+1900-01-01 13:01:59.0
+~~END~~
+
+DROP VIEW BABEL_3486_vu_prepare_v95
+GO
+
+EXEC BABEL_3486_vu_prepare_p95
+GO
+~~START~~
+datetime
+1900-01-01 13:01:59.0
+~~END~~
+
+DROP PROCEDURE BABEL_3486_vu_prepare_p95
+GO
+
+SELECT BABEL_3486_vu_prepare_f95()
+GO
+~~START~~
+datetime
+1900-01-01 13:01:59.0
+~~END~~
+
+DROP FUNCTION BABEL_3486_vu_prepare_f95()
+GO
+
+SELECT * FROM BABEL_3486_vu_prepare_v96
+GO
+~~START~~
+datetime
+1753-01-01 00:01:59.0
+~~END~~
+
+DROP VIEW BABEL_3486_vu_prepare_v96
+GO
+
+EXEC BABEL_3486_vu_prepare_p96
+GO
+~~START~~
+datetime
+1753-01-01 00:01:59.0
+~~END~~
+
+DROP PROCEDURE BABEL_3486_vu_prepare_p96
+GO
+
+SELECT BABEL_3486_vu_prepare_f96()
+GO
+~~START~~
+datetime
+1753-01-01 00:01:59.0
+~~END~~
+
+DROP FUNCTION BABEL_3486_vu_prepare_f96()
+GO
+
+SELECT * FROM BABEL_3486_vu_prepare_v97
+GO
+~~START~~
+datetime
+<NULL>
+~~END~~
+
+DROP VIEW BABEL_3486_vu_prepare_v97
+GO
+
+EXEC BABEL_3486_vu_prepare_p97
+GO
+~~START~~
+datetime
+<NULL>
+~~END~~
+
+DROP PROCEDURE BABEL_3486_vu_prepare_p97
+GO
+
+SELECT BABEL_3486_vu_prepare_f97()
+GO
+~~START~~
+datetime
+<NULL>
+~~END~~
+
+DROP FUNCTION BABEL_3486_vu_prepare_f97()
+GO
+
+SELECT * FROM BABEL_3486_vu_prepare_v98
+GO
+~~START~~
+datetime
+<NULL>
+~~END~~
+
+DROP VIEW BABEL_3486_vu_prepare_v98
+GO
+
+EXEC BABEL_3486_vu_prepare_p98
+GO
+~~START~~
+datetime
+<NULL>
+~~END~~
+
+DROP PROCEDURE BABEL_3486_vu_prepare_p98
+GO
+
+SELECT BABEL_3486_vu_prepare_f98()
+GO
+~~START~~
+datetime
+<NULL>
+~~END~~
+
+DROP FUNCTION BABEL_3486_vu_prepare_f98()
+GO
+
+SELECT * FROM BABEL_3486_vu_prepare_v99
+GO
+~~START~~
+datetime
+<NULL>
+~~END~~
+
+DROP VIEW BABEL_3486_vu_prepare_v99
+GO
+
+EXEC BABEL_3486_vu_prepare_p99
+GO
+~~START~~
+datetime
+<NULL>
+~~END~~
+
+DROP PROCEDURE BABEL_3486_vu_prepare_p99
+GO
+
+SELECT BABEL_3486_vu_prepare_f99()
+GO
+~~START~~
+datetime
+<NULL>
+~~END~~
+
+DROP FUNCTION BABEL_3486_vu_prepare_f99()
+GO
+
+SELECT * FROM BABEL_3486_vu_prepare_v100
+GO
+~~START~~
+datetime2
+<NULL>
+~~END~~
+
+DROP VIEW BABEL_3486_vu_prepare_v100
+GO
+
+EXEC BABEL_3486_vu_prepare_p100
+GO
+~~START~~
+datetime2
+<NULL>
+~~END~~
+
+DROP PROCEDURE BABEL_3486_vu_prepare_p100
+GO
+
+SELECT BABEL_3486_vu_prepare_f100()
+GO
+~~START~~
+datetime2
+<NULL>
+~~END~~
+
+DROP FUNCTION BABEL_3486_vu_prepare_f100()
+GO
+
+SELECT * FROM BABEL_3486_vu_prepare_v101
+GO
+~~START~~
+datetime2
+<NULL>
+~~END~~
+
+DROP VIEW BABEL_3486_vu_prepare_v101
+GO
+
+EXEC BABEL_3486_vu_prepare_p101
+GO
+~~START~~
+datetime2
+<NULL>
+~~END~~
+
+DROP PROCEDURE BABEL_3486_vu_prepare_p101
+GO
+
+SELECT BABEL_3486_vu_prepare_f101()
+GO
+~~START~~
+datetime2
+<NULL>
+~~END~~
+
+DROP FUNCTION BABEL_3486_vu_prepare_f101()
+GO
+
+SELECT * FROM BABEL_3486_vu_prepare_v102
+GO
+~~START~~
+datetime2
+1900-01-01 13:01:59.0000000
+~~END~~
+
+DROP VIEW BABEL_3486_vu_prepare_v102
+GO
+
+EXEC BABEL_3486_vu_prepare_p102
+GO
+~~START~~
+datetime2
+1900-01-01 13:01:59.0000000
+~~END~~
+
+DROP PROCEDURE BABEL_3486_vu_prepare_p102
+GO
+
+SELECT BABEL_3486_vu_prepare_f102()
+GO
+~~START~~
+datetime2
+1900-01-01 13:01:59.0000000
+~~END~~
+
+DROP FUNCTION BABEL_3486_vu_prepare_f102()
+GO
+
+SELECT * FROM BABEL_3486_vu_prepare_v103
+GO
+~~START~~
+datetime2
+<NULL>
+~~END~~
+
+DROP VIEW BABEL_3486_vu_prepare_v103
+GO
+
+EXEC BABEL_3486_vu_prepare_p103
+GO
+~~START~~
+datetime2
+<NULL>
+~~END~~
+
+DROP PROCEDURE BABEL_3486_vu_prepare_p103
+GO
+
+SELECT BABEL_3486_vu_prepare_f103()
+GO
+~~START~~
+datetime2
+<NULL>
+~~END~~
+
+DROP FUNCTION BABEL_3486_vu_prepare_f103()
+GO
+
+SELECT * FROM BABEL_3486_vu_prepare_v104
+GO
+~~START~~
+datetimeoffset
+2017-08-25 13:01:59.0000000 +12:15
+~~END~~
+
+DROP VIEW BABEL_3486_vu_prepare_v104
+GO
+
+EXEC BABEL_3486_vu_prepare_p104
+GO
+~~START~~
+datetimeoffset
+2017-08-25 13:01:59.0000000 +12:15
+~~END~~
+
+DROP PROCEDURE BABEL_3486_vu_prepare_p104
+GO
+
+SELECT BABEL_3486_vu_prepare_f104()
+GO
+~~START~~
+datetimeoffset
+2017-08-25 13:01:59.0000000 +12:15
+~~END~~
+
+DROP FUNCTION BABEL_3486_vu_prepare_f104()
+GO
+
+SELECT * FROM BABEL_3486_vu_prepare_v105
+GO
+~~START~~
+datetimeoffset
+1900-01-01 13:01:59.0000000 +12:15
+~~END~~
+
+DROP VIEW BABEL_3486_vu_prepare_v105
+GO
+
+EXEC BABEL_3486_vu_prepare_p105
+GO
+~~START~~
+datetimeoffset
+1900-01-01 13:01:59.0000000 +12:15
+~~END~~
+
+DROP PROCEDURE BABEL_3486_vu_prepare_p105
+GO
+
+SELECT BABEL_3486_vu_prepare_f105()
+GO
+~~START~~
+datetimeoffset
+1900-01-01 13:01:59.0000000 +12:15
+~~END~~
+
+DROP FUNCTION BABEL_3486_vu_prepare_f105()
+GO
+
+SELECT * FROM BABEL_3486_vu_prepare_v106
+GO
+~~START~~
+datetimeoffset
+<NULL>
+~~END~~
+
+DROP VIEW BABEL_3486_vu_prepare_v106
+GO
+
+EXEC BABEL_3486_vu_prepare_p106
+GO
+~~START~~
+datetimeoffset
+<NULL>
+~~END~~
+
+DROP PROCEDURE BABEL_3486_vu_prepare_p106
+GO
+
+SELECT BABEL_3486_vu_prepare_f106()
+GO
+~~START~~
+datetimeoffset
+<NULL>
+~~END~~
+
+DROP FUNCTION BABEL_3486_vu_prepare_f106()
+GO
+
+SELECT * FROM BABEL_3486_vu_prepare_v107
+GO
+~~START~~
+sql_variant
+1
+~~END~~
+
+DROP VIEW BABEL_3486_vu_prepare_v107
+GO
+
+EXEC BABEL_3486_vu_prepare_p107
+GO
+~~START~~
+sql_variant
+1
+~~END~~
+
+DROP PROCEDURE BABEL_3486_vu_prepare_p107
+GO
+
+SELECT BABEL_3486_vu_prepare_f107()
+GO
+~~START~~
+sql_variant
+1
+~~END~~
+
+DROP FUNCTION BABEL_3486_vu_prepare_f107()
+GO
+
+SELECT * FROM BABEL_3486_vu_prepare_v108
+GO
+~~START~~
+sql_variant
+test
+~~END~~
+
+DROP VIEW BABEL_3486_vu_prepare_v108
+GO
+
+EXEC BABEL_3486_vu_prepare_p108
+GO
+~~START~~
+sql_variant
+test
+~~END~~
+
+DROP PROCEDURE BABEL_3486_vu_prepare_p108
+GO
+
+SELECT BABEL_3486_vu_prepare_f108()
+GO
+~~START~~
+sql_variant
+test
+~~END~~
+
+DROP FUNCTION BABEL_3486_vu_prepare_f108()
+GO
+
+SELECT * FROM BABEL_3486_vu_prepare_v109
+GO
+~~START~~
+sql_variant
+1.0000
+~~END~~
+
+DROP VIEW BABEL_3486_vu_prepare_v109
+GO
+
+EXEC BABEL_3486_vu_prepare_p109
+GO
+~~START~~
+sql_variant
+1.0000
+~~END~~
+
+DROP PROCEDURE BABEL_3486_vu_prepare_p109
+GO
+
+SELECT BABEL_3486_vu_prepare_f109()
+GO
+~~START~~
+sql_variant
+1.0000
+~~END~~
+
+DROP FUNCTION BABEL_3486_vu_prepare_f109()
+GO
+
+SELECT * FROM BABEL_3486_vu_prepare_v110
+GO
+~~START~~
+sql_variant
+2017-08-25 13:01:59
+~~END~~
+
+DROP VIEW BABEL_3486_vu_prepare_v110
+GO
+
+EXEC BABEL_3486_vu_prepare_p110
+GO
+~~START~~
+sql_variant
+2017-08-25 13:01:59
+~~END~~
+
+DROP PROCEDURE BABEL_3486_vu_prepare_p110
+GO
+
+SELECT BABEL_3486_vu_prepare_f110()
+GO
+~~START~~
+sql_variant
+2017-08-25 13:01:59
+~~END~~
+
+DROP FUNCTION BABEL_3486_vu_prepare_f110()
+GO
+
+SELECT * FROM BABEL_3486_vu_prepare_v111
+GO
+~~START~~
+sql_variant
+2017-08-25 13:01:59 +12:15
+~~END~~
+
+DROP VIEW BABEL_3486_vu_prepare_v111
+GO
+
+EXEC BABEL_3486_vu_prepare_p111
+GO
+~~START~~
+sql_variant
+2017-08-25 13:01:59 +12:15
+~~END~~
+
+DROP PROCEDURE BABEL_3486_vu_prepare_p111
+GO
+
+SELECT BABEL_3486_vu_prepare_f111()
+GO
+~~START~~
+sql_variant
+2017-08-25 13:01:59 +12:15
+~~END~~
+
+DROP FUNCTION BABEL_3486_vu_prepare_f111()
+GO
+
+SELECT * FROM BABEL_3486_vu_prepare_v112
+GO
+~~START~~
+sql_variant
+0x000000000000000000000000000000000000000000000000000000000457
+~~END~~
+
+DROP VIEW BABEL_3486_vu_prepare_v112
+GO
+
+EXEC BABEL_3486_vu_prepare_p112
+GO
+~~START~~
+sql_variant
+0x000000000000000000000000000000000000000000000000000000000457
+~~END~~
+
+DROP PROCEDURE BABEL_3486_vu_prepare_p112
+GO
+
+SELECT BABEL_3486_vu_prepare_f112()
+GO
+~~START~~
+sql_variant
+0x000000000000000000000000000000000000000000000000000000000457
+~~END~~
+
+DROP FUNCTION BABEL_3486_vu_prepare_f112()
+GO
+
+SELECT * FROM BABEL_3486_vu_prepare_v113
+GO
+~~START~~
+sql_variant
+test
+~~END~~
+
+DROP VIEW BABEL_3486_vu_prepare_v113
+GO
+
+EXEC BABEL_3486_vu_prepare_p113
+GO
+~~START~~
+sql_variant
+test
+~~END~~
+
+DROP PROCEDURE BABEL_3486_vu_prepare_p113
+GO
+
+SELECT BABEL_3486_vu_prepare_f113()
+GO
+~~START~~
+sql_variant
+test
+~~END~~
+
+DROP FUNCTION BABEL_3486_vu_prepare_f113()
+GO
+
+SELECT * FROM BABEL_3486_vu_prepare_v114
+GO
+~~START~~
+uniqueidentifier
+6F9619FF-8B86-D011-B42D-00C04FC964FF
+~~END~~
+
+DROP VIEW BABEL_3486_vu_prepare_v114
+GO
+
+EXEC BABEL_3486_vu_prepare_p114
+GO
+~~START~~
+uniqueidentifier
+6F9619FF-8B86-D011-B42D-00C04FC964FF
+~~END~~
+
+DROP PROCEDURE BABEL_3486_vu_prepare_p114
+GO
+
+SELECT BABEL_3486_vu_prepare_f114()
+GO
+~~START~~
+sql_variant
+6F9619FF-8B86-D011-B42D-00C04FC964FF
+~~END~~
+
+DROP FUNCTION BABEL_3486_vu_prepare_f114()
+GO
+
+SELECT * FROM BABEL_3486_vu_prepare_v116
+GO
+~~START~~
+uniqueidentifier
+<NULL>
+~~END~~
+
+DROP VIEW BABEL_3486_vu_prepare_v116
+GO
+
+EXEC BABEL_3486_vu_prepare_p116
+GO
+~~START~~
+uniqueidentifier
+<NULL>
+~~END~~
+
+DROP PROCEDURE BABEL_3486_vu_prepare_p116
+GO
+
+SELECT BABEL_3486_vu_prepare_f116()
+GO
+~~START~~
+sql_variant
+<NULL>
+~~END~~
+
+DROP FUNCTION BABEL_3486_vu_prepare_f116()
+GO
