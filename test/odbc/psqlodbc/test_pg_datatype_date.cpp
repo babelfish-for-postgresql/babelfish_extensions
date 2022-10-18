@@ -823,7 +823,7 @@ TEST_F(PSQL_DataTypes_Date, Comparison_Functions) {
     const char *curr = INSERTED_DATA[i].data();
 
     min_expected = strcmp(curr, currMin) < 0 ? i : min_expected;
-    max_expected = strcmp(curr, currMax) > 0 ? i : min_expected;
+    max_expected = strcmp(curr, currMax) > 0 ? i : max_expected;
   }
   expected_results.push_back(INSERTED_DATA[min_expected]);
   expected_results.push_back(INSERTED_DATA[max_expected]);
