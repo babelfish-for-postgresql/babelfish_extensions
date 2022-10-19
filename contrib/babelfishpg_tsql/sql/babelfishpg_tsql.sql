@@ -2542,78 +2542,164 @@ GRANT EXECUTE ON PROCEDURE sys.sp_helpdbfixedrole TO PUBLIC;
 
 CREATE OR REPLACE VIEW sys.sp_sproc_columns_view
 AS
--- Selects all parameters (input and output), but NOT return values
 SELECT
-    CAST(ss.name AS sys.sysname) AS PROCEDURE_QUALIFIER
-  , CAST(ss.orig_name AS sys.sysname) AS PROCEDURE_OWNER
+    CAST(d.name AS sys.sysname) AS PROCEDURE_QUALIFIER
+  , CAST(bne.orig_name AS sys.sysname) AS PROCEDURE_OWNER
   , CAST(
       CASE
         WHEN ss.prokind = 'p' THEN CONCAT(ss.proname, ';1')
         ELSE CONCAT(ss.proname, ';0')
       END
     AS sys.nvarchar(134)) AS PROCEDURE_NAME
-  , CAST(COALESCE(ss.proargnames[(ss.x).n], '') AS sys.SYSNAME) AS COLUMN_NAME
+  , CAST(
+  	  CASE 
+  	  	WHEN ss.x IS NULL THEN
+  	  	  CASE
+  	  	    WHEN ss.proretset THEN '@TABLE_RETURN_VALUE'
+ 	        ELSE '@RETURN_VALUE'
+ 	      END 
+ 	    ELSE COALESCE(ss.proargnames[(ss.x).n], '')
+ 	  END
+ 	AS sys.SYSNAME) AS COLUMN_NAME
   , CAST(
  	  CASE
+ 	    WHEN ss.x IS NULL THEN
+ 	      CASE 
+ 	        WHEN ss.proretset THEN 3
+ 	        ELSE 5
+ 	      END
  	  	WHEN ss.proargmodes[(ss.x).n] in ('o', 'b') THEN 2
  	  	ELSE 1
  	  END
   	AS smallint) AS COLUMN_TYPE
   , CAST(
   	  CASE
+  	    WHEN ss.x IS NULL THEN
+  	      CASE
+  	        WHEN ss.prokind = 'p' THEN (SELECT data_type FROM sys.spt_datatype_info_table  WHERE type_name = 'int')
+  	    	WHEN ss.proretset THEN NULL
+  	    	ELSE sdit.data_type 
+  	      END
   	    WHEN st.is_table_type = 1 THEN -153
   	    ELSE sdit.data_type 
   	  END
   	AS smallint) AS DATA_TYPE
-  , CAST(st.name AS sys.sysname) AS TYPE_NAME
+  , CAST(
+      CASE 
+        WHEN ss.x IS NULL THEN
+          CASE 
+            WHEN ss.proretset THEN 'table' 
+            WHEN ss.prokind = 'p' THEN 'int'
+            ELSE st.name
+          END
+        ELSE st.name
+      END
+    AS sys.sysname) AS TYPE_NAME
   , CAST(
   	  CASE
+  	    WHEN ss.x IS NULL THEN
+  	      CASE 
+  	        WHEN ss.proretset THEN 0 
+	        WHEN ss.prokind = 'p' THEN (SELECT precision FROM sys.types WHERE name = 'int')
+	        ELSE st.precision
+	      END
   	    WHEN st.is_table_type = 1 THEN 0
   	    ELSE st.precision 
   	  END 
   	AS sys.int) AS PRECISION
   , CAST(
       CASE
+        WHEN ss.x IS NULL THEN
+          CASE
+            WHEN ss.proretset THEN 0
+	        WHEN ss.prokind = 'p' THEN (SELECT max_length FROM sys.types WHERE name = 'int')
+	        ELSE st.max_length
+	      END
   	    WHEN st.is_table_type = 1 THEN 2147483647
   	    ELSE st.max_length 
   	  END
   	AS sys.int) AS LENGTH
   , CAST(
       CASE
+        WHEN ss.x IS NULL THEN 
+          CASE
+            WHEN ss.proretset THEN 0 
+            WHEN ss.prokind = 'p' THEN (SELECT scale FROM sys.types WHERE name = 'int')
+            ELSE st.scale
+          END
   	    WHEN st.is_table_type = 1 THEN NULL
   	    ELSE st.scale
   	  END
   	AS smallint) AS SCALE
   , CAST(
       CASE
+        WHEN ss.x IS NULL THEN
+          CASE
+            WHEN ss.proretset THEN 0
+	        WHEN ss.prokind = 'p' THEN (SELECT num_prec_radix FROM sys.spt_datatype_info_table WHERE type_name = 'int')
+	        ELSE sdit.num_prec_radix
+	      END
   	    WHEN st.is_table_type = 1 THEN NULL
   	    ELSE sdit.num_prec_radix
       END
   	AS smallint) AS RADIX
   , CAST(
       CASE
+        WHEN ss.x IS NULL THEN
+          CASE 
+            WHEN ss.proretset THEN 0
+            WHEN ss.prokind = 'p' THEN (SELECT nullable FROM sys.spt_datatype_info_table WHERE type_name = 'int')
+            ELSE sdit.nullable 
+          END
   	    WHEN st.is_table_type = 1 THEN 1
   	    ELSE sdit.nullable 
   	  END
   	AS smallint) AS NULLABLE
-  , CAST(NULL AS sys.varchar(254)) AS REMARKS
+  , CAST(
+      CASE 
+        WHEN ss.x IS NULL AND ss.proretset THEN 'Result table returned by table valued function'
+        ELSE NULL
+      END
+    AS sys.varchar(254)) AS REMARKS
   , CAST(NULL AS sys.nvarchar(4000)) AS COLUMN_DEF
   , CAST(
       CASE
+        WHEN ss.x IS NULL THEN
+          CASE
+            WHEN ss.proretset THEN NULL
+            WHEN ss.prokind = 'p' THEN (SELECT sql_data_type FROM sys.spt_datatype_info_table WHERE type_name = 'int')
+            ELSE sdit.sql_data_type
+          END
   	    WHEN st.is_table_type = 1 THEN -153
   	    ELSE sdit.sql_data_type 
   	  END
   	AS smallint) AS SQL_DATA_TYPE
-  , CAST(sdit.sql_datetime_sub AS smallint) AS SQL_DATETIME_SUB
   , CAST(
       CASE
-  	    WHEN st.is_table_type = 1 THEN 2147483647
+        WHEN ss.x IS NULL THEN
+          CASE 
+            WHEN ss.proretset THEN 0
+            WHEN ss.prokind = 'p' THEN (SELECT sql_datetime_sub FROM sys.spt_datatype_info_table WHERE type_name = 'int')
+            ELSE sdit.sql_datetime_sub
+          END
+        ELSE sdit.sql_datetime_sub 
+      END 
+    AS smallint) AS SQL_DATETIME_SUB
+  , CAST(
+      CASE
+  	    WHEN ss.x IS NOT NULL AND st.is_table_type = 1 THEN 2147483647
   	    ELSE NULL
   	  END
   	AS int) AS CHAR_OCTET_LENGTH
-  , CAST((ss.x).n AS INT) AS ORDINAL_POSITION
+  , CAST(
+  	  CASE
+  	    WHEN ss.x IS NULL THEN 0
+  	    ELSE (ss.x).n 
+  	  END 
+  	AS INT) AS ORDINAL_POSITION
   , CAST(
       CASE
+        WHEN ss.x IS NULL AND ss.proretset THEN 'NO'
         WHEN st.is_table_type = 1 THEN 'YES'
         WHEN sdit.nullable = 1 THEN 'YES'
         ELSE 'NO'
@@ -2621,172 +2707,79 @@ SELECT
     AS sys.varchar(254)) AS IS_NULLABLE
   , CAST(
   	  CASE
+  	    WHEN ss.x IS NULL THEN
+  	      CASE
+  	        WHEN ss.proretset THEN 0
+  	        WHEN ss.prokind = 'p' THEN 56
+  	        ELSE sdit.ss_data_type
+  	      END
   	    WHEN st.is_table_type = 1 THEN 0
   	    ELSE sdit.ss_data_type
   	  END
   	AS sys.tinyint) AS SS_DATA_TYPE
   , CAST(ss.proname AS sys.sysname) AS original_procedure_name
-  FROM pg_type t
-  INNER JOIN sys.types st ON st.user_type_id = t.oid
+  FROM 
+  ( 
+    -- CTE to query procedures related to bbf
+     WITH bbf_proc AS (
+   	   SELECT
+         p.proname as proname,
+         p.proargnames as proargnames,
+         p.proargmodes as proargmodes,
+         p.prokind as prokind,
+         p.proretset as proretset,
+         p.prorettype as prorettype,
+         p.pronamespace as pronamespace,
+         p.proallargtypes as proallargtypes,
+         p.proargtypes as proargtypes
+       FROM 
+         pg_proc p
+       WHERE (
+	     p.pronamespace in (select schema_id from sys.schemas union all select oid from pg_namespace where nspname = 'sys')
+	     AND (pg_has_role(p.proowner, 'USAGE') OR has_function_privilege(p.oid, 'EXECUTE'))
+	     AND (p.probin like '{%typmod_array%}'-- typmod array exists for those that are user-defined
+	       OR p.proname like 'sp\_%' -- filter out internal babelfish-specific procs
+	       OR p.proname like 'xp\_%'
+	       OR p.proname like 'dm\_%'
+	       OR p.proname like 'fn\_%'))
+	)
+	       
+     SELECT -- Selects all parameters (input and output), but NOT return values
+       p.proname as proname,
+       p.proargnames as proargnames,
+       p.proargmodes as proargmodes,
+       p.prokind as prokind,
+       p.proretset as proretset,
+       p.prorettype as prorettype,
+       p.pronamespace as pronamespace,
+       information_schema._pg_expandarray(
+       COALESCE(p.proallargtypes,
+         CASE 
+           WHEN p.prokind = 'f' THEN (CAST(p.proargtypes AS oid[]))
+           ELSE CAST(p.proargtypes AS oid[])
+         END
+       )) AS x
+    FROM bbf_proc p
+      
+    UNION ALL
+      
+    SELECT -- Selects all return values
+      p.proname as proname,
+      p.proargnames as proargnames,
+      p.proargmodes as proargmodes,
+      p.prokind as prokind,
+      p.proretset as proretset,
+      p.prorettype as prorettype,
+      p.pronamespace as pronamespace,
+      NULL AS x -- null value indicates that we are retrieving the return values of the proc/func
+    FROM bbf_proc p
+  ) ss
+  INNER JOIN pg_catalog.pg_namespace ns ON ns.oid = ss.pronamespace
+  LEFT JOIN sys.babelfish_namespace_ext bne ON ns.nspname = bne.nspname 
+  LEFT JOIN sys.databases d ON d.database_id = bne.dbid
+  LEFT JOIN sys.types st ON ((ss.x IS NOT NULL AND st.user_type_id = (ss.x).x) OR (ss.x IS NULL AND st.user_type_id = ss.prorettype))
   LEFT JOIN sys.spt_datatype_info_table sdit ON sdit.type_name = (SELECT name FROM sys.types WHERE user_type_id = st.system_type_id)
-  INNER JOIN
-  (
-    SELECT
-      p.oid AS p_oid,
-      p.proname,
-      p.proargnames,
-      p.proargmodes,
-      p.prokind,
-      p.proretset,
-      COALESCE(d.name, sys.db_name()) as name,
-      COALESCE(bne.orig_name, CAST(ns.nspname AS sys.sysname)) as orig_name,
-      information_schema._pg_expandarray(
-      COALESCE(p.proallargtypes,
-        CASE 
-          WHEN p.prokind = 'f' THEN (CAST(p.proargtypes AS oid[]))
-          ELSE CAST(p.proargtypes AS oid[])
-        END
-      )) AS x
-    FROM pg_proc p
-    INNER JOIN pg_catalog.pg_namespace ns ON ns.oid = p.pronamespace
-    LEFT JOIN sys.babelfish_namespace_ext bne ON ns.nspname = bne.nspname 
-    LEFT JOIN sys.databases d ON d.database_id = bne.dbid
-    WHERE (
-      p.pronamespace in (select schema_id from sys.schemas union all select oid from pg_namespace where nspname = 'sys')
-      AND (pg_has_role(p.proowner, 'USAGE') OR has_function_privilege(p.oid, 'EXECUTE'))
-      AND ( p.probin like '{%typmod_array%}'-- typmod array exists for those that are user-defined
-      		OR p.proname like 'sp\_%' -- filter out internal babelfish-specific procs
-      		OR p.proname like 'xp\_%'
-      		OR p.proname like 'dm\_%'
-      		OR p.proname like 'fn\_%')) 
-  ) ss ON t.oid = (ss.x).x
-WHERE ( ss.proargmodes[(ss.x).n] in ('i', 'o', 'b')  OR ss.proargmodes[(ss.x).n] is NULL)
-
-UNION
--- Select return types. This needs to be unionized because inline-table functions may
--- end up with 2 't' outputs which causes previous query to miss these items
-SELECT
-    CAST(COALESCE(d.name, sys.db_name()) AS sys.sysname) AS PROCEDURE_QUALIFIER
-  , CAST(COALESCE(bne.orig_name, CAST(ns.nspname AS sys.sysname)) AS sys.sysname) AS PROCEDURE_OWNER
-  , CAST(
-      CASE
-        WHEN p.prokind = 'p' THEN CONCAT(p.proname, ';1')
-        ELSE CONCAT(p.proname, ';0')
-      END
-    AS sys.nvarchar(134)) AS PROCEDURE_NAME
-  , CAST(
-      CASE
-        WHEN p.proretset THEN '@TABLE_RETURN_VALUE'
-        ELSE '@RETURN_VALUE'
-      END
-    AS sys.SYSNAME) AS COLUMN_NAME
-  , CAST(
- 	  CASE
- 	  	WHEN p.proretset THEN 3
- 	  	ELSE 5
- 	  END
-  	AS smallint) AS COLUMN_TYPE
-  , CAST(
-  	  CASE
-  	    WHEN p.prokind = 'p' THEN (SELECT data_type FROM sys.spt_datatype_info_table  WHERE type_name = 'int')
-  	    WHEN p.proretset THEN NULL
-  	    ELSE sdit.data_type 
-  	  END
-  	AS smallint) AS DATA_TYPE
-  , CAST(
-      CASE 
-        WHEN p.proretset THEN 'table' 
-        WHEN p.prokind = 'p' THEN 'int'
-        ELSE st.name
-      END
-    AS sys.sysname) AS TYPE_NAME
-  , CAST(
-  	  CASE 
-        WHEN p.proretset THEN 0 
-        WHEN p.prokind = 'p' THEN (SELECT precision FROM sys.types WHERE name = 'int')
-        ELSE st.precision 
-  	  END 
-  	AS sys.int) AS PRECISION
-  , CAST(
-      CASE 
-        WHEN p.proretset THEN 0
-        WHEN p.prokind = 'p' THEN (SELECT max_length FROM sys.types WHERE name = 'int')
-        ELSE st.max_length 
-  	  END
-  	AS sys.int) AS LENGTH
-  , CAST(
-      CASE 
-        WHEN p.proretset THEN 0 
-        WHEN p.prokind = 'p' THEN (SELECT scale FROM sys.types WHERE name = 'int')
-        ELSE st.scale
-  	  END
-  	AS smallint) AS SCALE
-  , CAST(
-      CASE 
-        WHEN p.proretset THEN 0
-        WHEN p.prokind = 'p' THEN (SELECT num_prec_radix FROM sys.spt_datatype_info_table WHERE type_name = 'int')
-        ELSE sdit.num_prec_radix
-      END
-  	AS smallint) AS RADIX
-  , CAST(
-      CASE
-        WHEN p.proretset THEN 0
-        WHEN p.prokind = 'p' THEN (SELECT nullable FROM sys.spt_datatype_info_table WHERE type_name = 'int')
-        ELSE sdit.nullable 
-  	  END
-  	AS smallint) AS NULLABLE
-  , CAST(
-      CASE 
-        WHEN p.proretset THEN 'Result table returned by table valued function' 
-        ELSE NULL 
-      END
-    AS sys.varchar(254)) AS REMARKS
-  , CAST(NULL AS sys.nvarchar(4000)) AS COLUMN_DEF
-  , CAST(
-      CASE
-        WHEN p.proretset THEN NULL
-        WHEN p.prokind = 'p' THEN (SELECT sql_data_type FROM sys.spt_datatype_info_table WHERE type_name = 'int')
-        ELSE sdit.sql_data_type 
-  	  END
-  	AS smallint) AS SQL_DATA_TYPE
-  , CAST(
-      CASE
-        WHEN p.proretset THEN 0
-        WHEN p.prokind = 'p' THEN (SELECT sql_datetime_sub FROM sys.spt_datatype_info_table WHERE type_name = 'int')
-        ELSE sdit.sql_datetime_sub
-      END
-    AS smallint) AS SQL_DATETIME_SUB
-  , CAST(NULL AS int) AS CHAR_OCTET_LENGTH
-  , CAST(0 AS INT) AS ORDINAL_POSITION
-  , CAST(
-      CASE
-        WHEN p.proretset THEN 'NO'
-        WHEN sdit.nullable = 1 THEN 'YES'
-        ELSE 'NO'
-      END
-    AS sys.varchar(254)) AS IS_NULLABLE
-  , CAST(
-  	  CASE
-  	    WHEN p.proretset THEN 0
-  	    WHEN p.prokind = 'p' THEN 56
-  	    ELSE sdit.ss_data_type
-  	  END
-  	AS sys.tinyint) AS SS_DATA_TYPE
-  , CAST(p.proname AS sys.sysname) AS original_procedure_name
-  FROM pg_proc p
-    INNER JOIN pg_catalog.pg_namespace ns ON ns.oid = p.pronamespace
-    LEFT JOIN sys.babelfish_namespace_ext bne ON ns.nspname = bne.nspname 
-    LEFT JOIN sys.databases d ON d.database_id = bne.dbid
-    LEFT JOIN sys.types st ON st.user_type_id = p.prorettype
-    LEFT JOIN sys.spt_datatype_info_table sdit ON sdit.type_name = (SELECT name FROM sys.types WHERE user_type_id = st.system_type_id)
-    WHERE (
-      p.pronamespace in (select schema_id from sys.schemas union all select oid from pg_namespace where nspname = 'sys')
-      AND (pg_has_role(p.proowner, 'USAGE') OR has_function_privilege(p.oid, 'EXECUTE'))
-      AND ( p.probin like '{%typmod_array%}'-- typmod array exists for those that are user-defined
-      		OR p.proname like 'sp\_%' -- filter out internal babelfish-specific procs
-      		OR p.proname like 'xp\_%'
-      		OR p.proname like 'dm\_%'
-      		OR p.proname like 'fn\_%'));
+WHERE ( ss.proargmodes[(ss.x).n] in ('i', 'o', 'b')  OR ss.proargmodes[(ss.x).n] is NULL);
 GRANT SELECT ON sys.sp_sproc_columns_view TO PUBLIC;
 
 CREATE OR REPLACE PROCEDURE sys.sp_sproc_columns(
