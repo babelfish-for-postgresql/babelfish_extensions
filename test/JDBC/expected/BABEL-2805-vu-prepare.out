@@ -27,3 +27,25 @@ RETURN
 		) AS d (MaxDate)
 );
 GO
+
+create table babel_2805_vu_t1 (a int, b int)
+create table babel_2805_vu_t2 (c int, d int)
+insert into babel_2805_vu_t1 values (1, 1),(2, 2)
+insert into babel_2805_vu_t2 values (3, 3),(4, 4)
+go
+~~ROW COUNT: 2~~
+
+~~ROW COUNT: 2~~
+
+
+create view babel_2805_vu_v2 as
+select * from babel_2805_vu_t1 cross join (values (3, 3),(4,4)) babel_2805_vu_t2(c1, c2);
+go
+
+create procedure babel_2805_vu_p1 as
+select * from babel_2805_vu_t1 cross join babel_2805_vu_t2;
+go
+
+create procedure babel_2805_vu_p2 as
+select * from babel_2805_vu_t1 cross join (select * from babel_2805_vu_t2) t2(c1, c2);
+go

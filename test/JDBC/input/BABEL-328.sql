@@ -89,6 +89,7 @@ SELECT * FROM Department D
 CROSS Employee E
 GO
 
+-- chaining apply calls
 SELECT * FROM Department D
 OUTER Employee E
 GO
@@ -97,3 +98,22 @@ DROP TABLE [Employee]
 GO
 DROP TABLE [Department]
 GO
+
+create table t1 (a int, b int)
+create table t2 (c int, d int)
+insert into t1 values (1, 1),(2, 2)
+insert into t2 values (3, 3),(4, 4)
+go
+
+select * from t1 outer apply t2 outer apply (values (5,5),(6,6)) t3 (e, f)
+go
+
+select * from t1 cross apply t2 cross apply (values (5,5),(6,6)) t3 (e, f)
+go
+
+drop table t1
+go
+
+drop table t2
+go
+
