@@ -821,9 +821,6 @@ exec_stmt_exec(PLtsql_execstate *estate, PLtsql_stmt_exec *stmt)
 			get_func_arg_info(func_tuple, &argtypes, &argnames, &argmodes);
 			get_param_mode(stmt->params, stmt->paramno, &parammodes);
 
-			/* Cache the owner id */
-			estate->func->fn_owner = ((Form_pg_proc) GETSTRUCT(func_tuple))->proowner;
-
 			ReleaseSysCache(func_tuple);
 
 			/*

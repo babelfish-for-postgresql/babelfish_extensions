@@ -2700,7 +2700,7 @@ print_pltsql_function_arguments(StringInfo buf, HeapTuple proctup,
 static bool
 check_ownership_chaining_for_tsql_proc(ObjectType objtype, Oid objid)
 {
-	PLtsql_execstate *estate;
+	PLtsql_execstate *top_estate;
 	Oid procOwner;
 	bool have_same_owner = false;
 
@@ -2709,20 +2709,23 @@ check_ownership_chaining_for_tsql_proc(ObjectType objtype, Oid objid)
 
 	/*
 	 * Fetch the top procedure excution state from execution state call stack
-	 * and get the owner of that procedure. Top entry in stack won't have
-	 * fn_oid set (becuase we set fn_owner in func structure when we're still
-	 * evaluting procedure as inline_code_block), so top second entry will have
-	 * fn_owner value set.
+	 * and get the owner of that procedure. Top entry in stack will have
+	 * fn_oid and fn_owner value set.
 	 */
-	if (!exec_state_call_stack || !exec_state_call_stack->next || objid == InvalidOid)
+	if (!exec_state_call_stack ||
+		!exec_state_call_stack->estate ||
+		objid == InvalidOid)
 		return false;
 
-	estate = exec_state_call_stack->next->estate;
+	top_estate = exec_state_call_stack->estate;
 
-	if (!estate || !estate->func || estate->func->fn_owner == InvalidOid)
+	if (!top_estate ||
+		!top_estate->func ||
+		top_estate->func->fn_oid == InvalidOid ||
+		!top_estate->func->fn_owner == InvalidOid)
 		return false;
 
-	procOwner = estate->func->fn_owner;
+	procOwner = top_estate->func->fn_owner;
 
 	switch (objtype)
 	{

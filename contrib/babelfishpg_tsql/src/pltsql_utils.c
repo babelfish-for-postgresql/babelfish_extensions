@@ -889,3 +889,22 @@ get_pltsql_function_signature(PG_FUNCTION_ARGS)
 
 	PG_RETURN_TEXT_P(cstring_to_text(func_signature));
 }
+
+Oid
+get_func_owner(Oid fn_oid)
+{
+	HeapTuple	tuple;
+	Oid			funcOwnerId;
+
+	if (fn_oid == InvalidOid)
+		return InvalidOid;
+
+	tuple = SearchSysCache1(PROCOID, ObjectIdGetDatum(fn_oid));
+	if (!HeapTupleIsValid(tuple))
+	ereport(ERROR,
+			(errcode(ERRCODE_UNDEFINED_TABLE),
+			 errmsg("relation with OID %u does not exist", fn_oid)));
+	funcOwnerId = ((Form_pg_proc) GETSTRUCT(tuple))->proowner;
+	ReleaseSysCache(tuple);
+	return funcOwnerId;
+}

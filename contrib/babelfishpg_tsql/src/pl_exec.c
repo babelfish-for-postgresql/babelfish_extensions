@@ -659,6 +659,9 @@ pltsql_exec_function(PLtsql_function *func, FunctionCallInfo fcinfo,
 	if (pltsql_trace_exec_time)
 		config.trace_mode |= TRACE_EXEC_TIME;
 
+	/* Cache func owner id*/
+	estate.func->fn_owner = get_func_owner(estate.func->fn_oid);
+
 	rc = exec_stmt_iterative(&estate, func->exec_codes, &config);
 
 	if (rc != PLTSQL_RC_RETURN)

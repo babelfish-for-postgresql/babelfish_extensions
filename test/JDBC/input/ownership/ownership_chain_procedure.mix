@@ -95,6 +95,13 @@ go
 grant exec on hasownera.pa1 to invoker;
 go
 
+create function hasownera.fa1() returns table as
+return (select * from hasownera.tbls);
+go
+
+grant exec on hasownera.fa1 to invoker;
+go
+
 -- Negative test for table
 create proc hasownera.pb1 as select * from hasownerb.tbld;
 go
@@ -129,6 +136,9 @@ go
 exec hasownera.procs;
 go
 
+select * from hasownera.fa1();
+go
+
 exec hasownera.pa1;
 go
 
@@ -155,6 +165,9 @@ drop proc hasownera.pb1;
 go
 
 drop proc hasownera.pa1;
+go
+
+drop function hasownera.fa1;
 go
 
 use master;
@@ -282,7 +295,6 @@ go
 
 use master;
 go
-
 
 -- Cleanup
 -- psql
