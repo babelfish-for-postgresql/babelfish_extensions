@@ -710,8 +710,8 @@ CREATE OR REPLACE VIEW sys.spt_tablecollations_view AS
         o.object_id         AS object_id,
         o.schema_id         AS schema_id,
         c.column_id         AS colid,
-        CASE WHEN p.attoptions[1] collate "C" LIKE 'bbf_original_name=%' THEN split_part(p.attoptions[1] collate "C", '=', 2)
-            ELSE c.name END AS name,
+        CAST(CASE WHEN p.attoptions[1] collate "C" LIKE 'bbf_original_name=%' THEN split_part(p.attoptions[1] collate "C", '=', 2)
+		ELSE c.name END as sys.sysname) AS name,
         CAST(CollationProperty(c.collation_name,'tdscollation') AS binary(5)) AS tds_collation_28,
         CAST(CollationProperty(c.collation_name,'tdscollation') AS binary(5)) AS tds_collation_90,
         CAST(CollationProperty(c.collation_name,'tdscollation') AS binary(5)) AS tds_collation_100,
@@ -1417,8 +1417,8 @@ CAST(t1.relname AS sys.sysname) AS TABLE_NAME,
 CAST(COALESCE(SPLIT_PART(t6.attoptions[1] collate "C", '=', 2), t5.column_name collate "C") AS sys.sysname) AS COLUMN_NAME,
 CAST((select orig_username from sys.babelfish_authid_user_ext where rolname = t5.grantor::name) AS sys.sysname) AS GRANTOR,
 CAST((select orig_username from sys.babelfish_authid_user_ext where rolname = t5.grantee::name) AS sys.sysname) AS GRANTEE,
-CAST(t5.privilege_type AS sys.varchar(32)) AS PRIVILEGE,
-CAST(t5.is_grantable AS sys.varchar(3)) AS IS_GRANTABLE
+CAST(t5.privilege_type AS sys.varchar(32)) COLLATE sys.database_default AS PRIVILEGE,
+CAST(t5.is_grantable AS sys.varchar(3)) COLLATE sys.database_default AS IS_GRANTABLE
 FROM pg_catalog.pg_class t1 
 	JOIN sys.pg_namespace_ext t2 ON t1.relnamespace = t2.oid
 	JOIN sys.schemas s1 ON s1.schema_id = t1.relnamespace
@@ -1522,7 +1522,7 @@ UNION
 SELECT
 CAST(t2.dbname AS sys.sysname) AS TABLE_QUALIFIER,
 CAST(s1.name AS sys.sysname) AS TABLE_OWNER,
-CAST(t1.relname AS sys.sysname) AS TABLE_NAME,
+CAST(t1.relname AS sys.sysname) COLLATE sys.database_default AS TABLE_NAME,
 CAST((select orig_username from sys.babelfish_authid_user_ext where rolname = t4.grantor) AS sys.sysname) AS GRANTOR,
 CAST((select orig_username from sys.babelfish_authid_user_ext where rolname = t4.grantee) AS sys.sysname) AS GRANTEE,
 CAST(t4.privilege_type AS sys.sysname) AS PRIVILEGE,
@@ -2009,7 +2009,7 @@ GRANT EXECUTE ON PROCEDURE sys.sp_fkeys TO PUBLIC;
 
 CREATE OR REPLACE VIEW sys.sp_stored_procedures_view AS
 SELECT 
-CAST(d.name AS sys.sysname) AS PROCEDURE_QUALIFIER,
+CAST(d.name AS sys.sysname) COLLATE sys.database_default AS PROCEDURE_QUALIFIER,
 CAST(s1.name AS sys.sysname) AS PROCEDURE_OWNER, 
 
 CASE 
@@ -2020,7 +2020,7 @@ END AS PROCEDURE_NAME,
 -1 AS NUM_INPUT_PARAMS,
 -1 AS NUM_OUTPUT_PARAMS,
 -1 AS NUM_RESULT_SETS,
-CAST(NULL AS varchar(254)) AS REMARKS,
+CAST(NULL AS varchar(254)) COLLATE sys.database_default AS REMARKS,
 cast(2 AS smallint) AS PROCEDURE_TYPE
 
 FROM pg_catalog.pg_proc p 
@@ -2031,7 +2031,7 @@ WHERE has_schema_privilege(s1.schema_id, 'USAGE')
 
 UNION 
 
-SELECT CAST((SELECT sys.db_name()) AS sys.sysname) AS PROCEDURE_QUALIFIER,
+SELECT CAST((SELECT sys.db_name()) AS sys.sysname) COLLATE sys.database_default AS PROCEDURE_QUALIFIER,
 CAST(nspname AS sys.sysname) AS PROCEDURE_OWNER,
 
 CASE 
@@ -2042,7 +2042,7 @@ END AS PROCEDURE_NAME,
 -1 AS NUM_INPUT_PARAMS,
 -1 AS NUM_OUTPUT_PARAMS,
 -1 AS NUM_RESULT_SETS,
-CAST(NULL AS varchar(254)) AS REMARKS,
+CAST(NULL AS varchar(254)) COLLATE sys.database_default AS REMARKS,
 cast(2 AS smallint) AS PROCEDURE_TYPE
 
 FROM    pg_catalog.pg_namespace n 

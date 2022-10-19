@@ -1035,10 +1035,9 @@ select tsql_type_name collate sys.database_default as name
   , sys.tsql_type_max_length_helper(tsql_type_name, t.typlen, t.typtypmod, true) as max_length
   , cast(sys.tsql_type_precision_helper(tsql_type_name, t.typtypmod) as int) as precision
   , cast(sys.tsql_type_scale_helper(tsql_type_name, t.typtypmod, false) as int) as scale
-  , CASE c.collname
-    WHEN 'default' THEN cast(current_setting('babelfishpg_tsql.server_collation_name') as name)
-    ELSE  c.collname collate "C"
-    END as collation_name
+  , CAST(CASE c.collname
+    WHEN 'default' THEN current_setting('babelfishpg_tsql.server_collation_name')
+    ELSE  c.collname COLLATE "C" END as sys.sysname) collate sys.database_default as collation_name
   , case when typnotnull then 0 else 1 end as is_nullable
   , 0 as is_user_defined
   , 0 as is_assembly_type
@@ -1062,10 +1061,9 @@ select cast(t.typname as text) collate sys.database_default as name
   , case when is_tbl_type then -1::smallint else sys.tsql_type_max_length_helper(tsql_base_type_name, t.typlen, t.typtypmod) end as max_length
   , case when is_tbl_type then 0::smallint else cast(sys.tsql_type_precision_helper(tsql_base_type_name, t.typtypmod) as int) end as precision
   , case when is_tbl_type then 0::smallint else cast(sys.tsql_type_scale_helper(tsql_base_type_name, t.typtypmod, false) as int) end as scale
-  , CASE c.collname
-    WHEN 'default' THEN cast(current_setting('babelfishpg_tsql.server_collation_name') as name)
-    ELSE  c.collname 
-    END as collation_name
+  , CAST(CASE c.collname
+    WHEN 'default' THEN current_setting('babelfishpg_tsql.server_collation_name')
+    ELSE  c.collname COLLATE "C" END as sys.sysname) collate sys.database_default as collation_name
   , case when is_tbl_type then 0
          else case when typnotnull then 0 else 1 end
     end
@@ -1136,7 +1134,7 @@ SELECT CAST(c.conname as sys.sysname) as name
   , CAST(NULL as integer) as principal_id 
   , CAST(c.connamespace as integer) as schema_id
   , CAST(conrelid as integer) as parent_object_id
-  , CAST('C' as char(2)) as type
+  , CAST('C' as sys.bpchar(2)) as type
   , CAST('CHECK_CONSTRAINT' as sys.nvarchar(60)) as type_desc
   , CAST(null as sys.datetime) as create_date
   , CAST(null as sys.datetime) as modify_date
@@ -1187,12 +1185,12 @@ GRANT SELECT ON sys.shipped_objects_not_in_sys TO PUBLIC;
 
 create or replace view sys.all_objects as
 select 
-    cast (name as sys.sysname) 
+    cast (name as sys.sysname) collate sys.database_default
   , cast (object_id as integer) 
   , cast ( principal_id as integer)
   , cast (schema_id as integer)
   , cast (parent_object_id as integer)
-  , cast (type as char(2))
+  , cast (type as sys.bpchar(2)) collate sys.database_default
   , cast (type_desc as sys.nvarchar(60))
   , cast (create_date as sys.datetime)
   , cast (modify_date as sys.datetime)
@@ -1414,7 +1412,7 @@ GRANT SELECT ON sys.system_objects TO PUBLIC;
 
 create or replace view sys.all_views as
 select
-    CAST(t.name as sys.SYSNAME) AS name
+    CAST(t.name as sys.SYSNAME) COLLATE sys.database_default AS name
   , CAST(t.object_id as int) AS object_id
   , CAST(t.principal_id as int) AS principal_id
   , CAST(t.schema_id as int) AS schema_id
@@ -2171,7 +2169,7 @@ AS
 SELECT 
   CAST('PRIMARY' as SYSNAME) AS name,
   CAST(1 as INT) AS data_space_id,
-  CAST('FG' as CHAR(2)) AS type,
+  CAST('FG' as sys.BPCHAR(2)) AS type,
   CAST('ROWS_FILEGROUP' as NVARCHAR(60)) AS type_desc,
   CAST(1 as sys.BIT) AS is_default,
   CAST(0 as sys.BIT) AS is_system;

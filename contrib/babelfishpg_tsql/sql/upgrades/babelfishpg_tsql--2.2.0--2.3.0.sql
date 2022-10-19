@@ -3801,6 +3801,51 @@ WHERE has_schema_privilege(sch.schema_id, 'USAGE')
 AND c.contype IN ('p', 'u');
 GRANT SELECT ON sys.key_constraints TO PUBLIC;
 
+ALTER VIEW sys.procedures RENAME TO procedures_deprecated_in_2_3_0;
+
+create or replace view sys.procedures as
+select
+  cast(p.proname as sys.sysname) as name
+  , cast(p.oid as int) as object_id
+  , cast(null as int) as principal_id
+  , cast(sch.schema_id as int) as schema_id
+  , cast (0 as int) as parent_object_id
+  , cast(case p.prokind
+      when 'p' then 'P'
+      when 'a' then 'AF'
+      else
+        case format_type(p.prorettype, null) when 'trigger'
+          then 'TR'
+          else 'FN'
+        end
+    end as sys.bpchar(2)) COLLATE sys.database_default as type
+  , cast(case p.prokind
+      when 'p' then 'SQL_STORED_PROCEDURE'
+      when 'a' then 'AGGREGATE_FUNCTION'
+      else
+        case format_type(p.prorettype, null) when 'trigger'
+          then 'SQL_TRIGGER'
+          else 'SQL_SCALAR_FUNCTION'
+        end
+    end as sys.nvarchar(60)) as type_desc
+  , cast(f.create_date as sys.datetime) as create_date
+  , cast(f.create_date as sys.datetime) as modify_date
+  , cast(0 as sys.bit) as is_ms_shipped
+  , cast(0 as sys.bit) as is_published
+  , cast(0 as sys.bit) as is_schema_published
+  , cast(0 as sys.bit) as is_auto_executed
+  , cast(0 as sys.bit) as is_execution_replicated
+  , cast(0 as sys.bit) as is_repl_serializable_only
+  , cast(0 as sys.bit) as skips_repl_constraints
+from pg_proc p
+inner join sys.schemas sch on sch.schema_id = p.pronamespace
+left join sys.babelfish_function_ext f on p.proname = f.funcname and sch.schema_id::regnamespace::name = f.nspname
+and sys.babelfish_get_pltsql_function_signature(p.oid) = f.funcsignature collate "C"
+where has_schema_privilege(sch.schema_id, 'USAGE')
+and format_type(p.prorettype, null) <> 'trigger'
+and has_function_privilege(p.oid, 'EXECUTE');
+GRANT SELECT ON sys.procedures TO PUBLIC;
+
 ALTER VIEW sys.sysindexes RENAME TO sysindexes_deprecated_in_2_3_0; 
 
 create or replace view sys.sysindexes as
@@ -7397,51 +7442,6 @@ END;
 $$
 LANGUAGE 'pltsql';
 GRANT ALL ON PROCEDURE sys.sp_sproc_columns TO PUBLIC;
-
-ALTER VIEW sys.procedures RENAME TO procedures_deprecated_in_2_3_0;
-
-create or replace view sys.procedures as
-select
-  cast(p.proname as sys.sysname) as name
-  , cast(p.oid as int) as object_id
-  , cast(null as int) as principal_id
-  , cast(sch.schema_id as int) as schema_id
-  , cast (0 as int) as parent_object_id
-  , cast(case p.prokind
-      when 'p' then 'P'
-      when 'a' then 'AF'
-      else
-        case format_type(p.prorettype, null) when 'trigger'
-          then 'TR'
-          else 'FN'
-        end
-    end as sys.bpchar(2)) COLLATE sys.database_default as type
-  , cast(case p.prokind
-      when 'p' then 'SQL_STORED_PROCEDURE'
-      when 'a' then 'AGGREGATE_FUNCTION'
-      else
-        case format_type(p.prorettype, null) when 'trigger'
-          then 'SQL_TRIGGER'
-          else 'SQL_SCALAR_FUNCTION'
-        end
-    end as sys.nvarchar(60)) as type_desc
-  , cast(f.create_date as sys.datetime) as create_date
-  , cast(f.create_date as sys.datetime) as modify_date
-  , cast(0 as sys.bit) as is_ms_shipped
-  , cast(0 as sys.bit) as is_published
-  , cast(0 as sys.bit) as is_schema_published
-  , cast(0 as sys.bit) as is_auto_executed
-  , cast(0 as sys.bit) as is_execution_replicated
-  , cast(0 as sys.bit) as is_repl_serializable_only
-  , cast(0 as sys.bit) as skips_repl_constraints
-from pg_proc p
-inner join sys.schemas sch on sch.schema_id = p.pronamespace
-left join sys.babelfish_function_ext f on p.proname = f.funcname and sch.schema_id::regnamespace::name = f.nspname
-and sys.babelfish_get_pltsql_function_signature(p.oid) = f.funcsignature collate "C"
-where has_schema_privilege(sch.schema_id, 'USAGE')
-and format_type(p.prorettype, null) <> 'trigger'
-and has_function_privilege(p.oid, 'EXECUTE');
-GRANT SELECT ON sys.procedures TO PUBLIC;
 
 ALTER VIEW information_schema_tsql.views RENAME TO information_schema_tsql_views_deprecated_in_2_3_0;
 
