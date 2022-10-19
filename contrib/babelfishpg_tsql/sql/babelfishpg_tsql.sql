@@ -2778,8 +2778,10 @@ SELECT
   LEFT JOIN sys.babelfish_namespace_ext bne ON ns.nspname = bne.nspname 
   LEFT JOIN sys.databases d ON d.database_id = bne.dbid
   LEFT JOIN sys.types st ON ((ss.x IS NOT NULL AND st.user_type_id = (ss.x).x) OR (ss.x IS NULL AND st.user_type_id = ss.prorettype))
+  -- Because spt_datatype_info_table does contain user-defind types and their names,
+  -- the join below allows us to retrieve the system type name on what the user-defined type was based on.
   LEFT JOIN sys.spt_datatype_info_table sdit ON sdit.type_name = (SELECT name FROM sys.types WHERE user_type_id = st.system_type_id)
-WHERE ( ss.proargmodes[(ss.x).n] in ('i', 'o', 'b')  OR ss.proargmodes[(ss.x).n] is NULL);
+WHERE (ss.proargmodes[(ss.x).n] in ('i', 'o', 'b')  OR ss.proargmodes[(ss.x).n] is NULL);
 GRANT SELECT ON sys.sp_sproc_columns_view TO PUBLIC;
 
 CREATE OR REPLACE PROCEDURE sys.sp_sproc_columns(
