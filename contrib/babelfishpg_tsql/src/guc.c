@@ -558,6 +558,7 @@ define_custom_variables(void)
 							  GUC_NO_RESET_ALL,
 							  NULL, NULL, NULL);
 
+
 	/* ANTLR parser */
 	DefineCustomBoolVariable("babelfishpg_tsql.dump_antlr_query_graph",
 				 gettext_noop("dump query graph parsed by ANTLR parser to local disk"),
@@ -591,7 +592,7 @@ define_custom_variables(void)
 				   gettext_noop("Name of the default server collation."),
 				   NULL,
 				   &pltsql_server_collation_name,
-				   "sql_latin1_general_cp1_ci_as",	
+				   "sql_latin1_general_cp1_ci_as",
 				   PGC_SIGHUP,
 				   GUC_NO_RESET_ALL,
 				   check_server_collation_name, NULL, NULL);
