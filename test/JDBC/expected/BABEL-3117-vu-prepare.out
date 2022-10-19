@@ -147,3 +147,20 @@ int
 
 ~~ROW COUNT: 3~~
 
+
+-- Test if user default schema is not dbo schema
+CREATE LOGIN BABEL_3117_login WITH PASSWORD = '123'
+GO
+
+USE master
+GO
+
+CREATE SCHEMA BABEL_3117_schemaC
+GO
+
+CREATE USER BABEL_3117_user for LOGIN BABEL_3117_login WITH DEFAULT_SCHEMA = BABEL_3117_schemaC
+GO
+
+-- psql
+GRANT ALL ON SCHEMA master_BABEL_3117_schemaC to master_BABEL_3117_user;
+GO
