@@ -9668,7 +9668,7 @@ VOLATILE;
 CREATE OR REPLACE FUNCTION sys.babelfish_conv_helper_to_datetime2(IN typename TEXT,
                                                             IN arg TEXT,
                                                             IN try BOOL,
-													        IN p_style NUMERIC DEFAULT 0)
+                                                            IN p_style NUMERIC DEFAULT 0)
 RETURNS DATETIME2
 AS
 $BODY$
@@ -9686,7 +9686,7 @@ VOLATILE;
 CREATE OR REPLACE FUNCTION sys.babelfish_conv_helper_to_datetime2(IN typename TEXT,
                                                             IN arg anyelement,
                                                             IN try BOOL,
-													        IN p_style NUMERIC DEFAULT 0)
+                                                            IN p_style NUMERIC DEFAULT 0)
 RETURNS DATETIME2
 AS
 $BODY$
