@@ -256,9 +256,13 @@ TEST_F(PSQL_Datatypes_Datetime, Table_Unique_Constraint) {
     "1900-01-01 00:00:00" // blank value
   };
 
+  // table name without the schema
+  const string tableName = TABLE_NAME.substr(TABLE_NAME.find('.') + 1, TABLE_NAME.length());
+
   createTable(ServerType::PSQL, TABLE_NAME, TABLE_COLUMNS, tableConstraints);
-  testUniqueConstraint(ServerType::PSQL, TABLE_NAME, UNIQUE_COLUMNS);
+  testUniqueConstraint(ServerType::PSQL, tableName, UNIQUE_COLUMNS);
   testInsertionSuccess(ServerType::PSQL, TABLE_NAME, COL1_NAME, inserted_values, expected);
+  testInsertionFailure(ServerType::PSQL, TABLE_NAME, COL1_NAME, inserted_values, false, inserted_values.size(), false);
   dropObject(ServerType::PSQL, "TABLE", TABLE_NAME);
 }
 
@@ -357,7 +361,7 @@ TEST_F(PSQL_Datatypes_Datetime, Comparison_Functions) {
     const char *curr = EXPECTED_RESULTS[i].data();
 
     min_expected = strcmp(curr, currMin) < 0 ? i : min_expected;
-    max_expected = strcmp(curr, currMax) > 0 ? i : min_expected;
+    max_expected = strcmp(curr, currMax) > 0 ? i : max_expected;
   }
   expected_results.push_back(EXPECTED_RESULTS[min_expected]);
   expected_results.push_back(EXPECTED_RESULTS[max_expected]);

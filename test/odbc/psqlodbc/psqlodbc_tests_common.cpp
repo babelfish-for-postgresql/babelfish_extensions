@@ -1,32 +1,35 @@
 #include "psqlodbc_tests_common.h"
 
 // helper function to initialize insert string (1, "", "", ""), etc.
-string InitializeInsertString(const vector<string>& insertedValues, bool isNumericInsert) {
+string InitializeInsertString(const vector<string>& insertedValues, bool isNumericInsert, int pkStartingValue) {
 
   string insertString{};
   string comma{};
   if (isNumericInsert) {
     for (int i = 0; i < insertedValues.size(); i++) {
-      insertString += comma + "(" + std::to_string(i) + "," + insertedValues[i] + ")";
+      insertString += comma + "(" + std::to_string(pkStartingValue) + "," + insertedValues[i] + ")";
       comma = ",";
+      pkStartingValue = pkStartingValue + 1;
     }
     return insertString;
   }
 
   for (int i = 0; i < insertedValues.size(); i++) {
     if (insertedValues[i] == "NULL") {
-      insertString += comma + "(" + std::to_string(i) + "," + insertedValues[i] + ")";
+      insertString += comma + "(" + std::to_string(pkStartingValue) + "," + insertedValues[i] + ")";
       comma = ",";
     }
     else {
-      insertString += comma + "(" + std::to_string(i) + "," + "'" + insertedValues[i] + "'" + ")";
+      insertString += comma + "(" + std::to_string(pkStartingValue) + ",\'" + insertedValues[i] + "\')";
       comma = ",";
     }
+    pkStartingValue = pkStartingValue + 1;
   }
   return insertString;
 }
 
 string createTableConstraint(const string &constraintType, const vector<string> &constrainCols) {
+  
   string tableConstraints{constraintType + "("};
   string comma{};
   for (int i = 0; i < constrainCols.size(); i++) {
@@ -39,29 +42,33 @@ string createTableConstraint(const string &constraintType, const vector<string> 
 }
 
 void createTable(ServerType serverType, const string &tableName, const vector<pair <string, string>> &tableColumns, const string &constraints) {
+  
   OdbcHandler odbcHandler(Drivers::GetDriver(serverType));
   odbcHandler.ConnectAndExecQuery(CreateTableStatement(tableName, tableColumns, constraints));
   odbcHandler.CloseStmt();
 }
 
 void createView(ServerType serverType, const string &viewName, const string &viewQuery) {
+  
   OdbcHandler odbcHandler(Drivers::GetDriver(serverType));
   odbcHandler.ConnectAndExecQuery(CreateViewStatement(viewName, viewQuery));
   odbcHandler.CloseStmt();
 }
 
 void dropObject(ServerType serverType, const string &objectType, const string &objectName) {
+  
   OdbcHandler odbcHandler(Drivers::GetDriver(serverType));
   odbcHandler.ConnectAndExecQuery(DropObjectStatement(objectType, objectName));
 }
 
-void insertValuesInTable(ServerType serverType, const string &tableName, const vector<string> &insertedValues, bool isNumericInsert) {
+void insertValuesInTable(ServerType serverType, const string &tableName, const vector<string> &insertedValues, bool isNumericInsert, int pkStartingValue) {
+  
   OdbcHandler odbcHandler(Drivers::GetDriver(serverType));
 
   RETCODE rcode;
   SQLLEN affectedRows;
 
-  const string insertString = InitializeInsertString(insertedValues, isNumericInsert);
+  const string insertString = InitializeInsertString(insertedValues, isNumericInsert, pkStartingValue);
 
   // Insert valid values into the table and assert affected rows
   odbcHandler.ConnectAndExecQuery(InsertStatement(tableName, insertString));
@@ -73,6 +80,7 @@ void insertValuesInTable(ServerType serverType, const string &tableName, const v
 }
 
 void insertValuesInTable(ServerType serverType, const string &tableName, const string &insertString, int numRows) {
+  
   OdbcHandler odbcHandler(Drivers::GetDriver(serverType));
 
   RETCODE rcode;
@@ -88,7 +96,7 @@ void insertValuesInTable(ServerType serverType, const string &tableName, const s
 }
 
 void verifyValuesInObject(ServerType serverType, const string &objectName, const string &orderByColumnName, 
-  const vector<string> &insertedValues, const vector<string> &expectedInsertedValues) {
+  const vector<string> &insertedValues, const vector<string> &expectedInsertedValues, int pkStartingValue) {
     
   OdbcHandler odbcHandler(Drivers::GetDriver(serverType));
 
@@ -113,7 +121,7 @@ void verifyValuesInObject(ServerType serverType, const string &objectName, const
     rcode = SQLFetch(odbcHandler.GetStatementHandle()); // retrieve row-by-row
     EXPECT_EQ(rcode, SQL_SUCCESS);
     EXPECT_EQ(pk_len, INT_BYTES_EXPECTED);
-    EXPECT_EQ(pk, i);
+    EXPECT_EQ(pk, pkStartingValue);
     if (insertedValues[i] != "NULL") {
       EXPECT_EQ(data_len, expectedInsertedValues[i].size());
       EXPECT_EQ(data, expectedInsertedValues[i]);
@@ -121,6 +129,7 @@ void verifyValuesInObject(ServerType serverType, const string &objectName, const
     else {
       EXPECT_EQ(data_len, SQL_NULL_DATA);
     }
+    pkStartingValue = pkStartingValue + 1;
   }
 
   // Assert that there is no more data
@@ -153,7 +162,7 @@ void testCommonColumnAttributes(ServerType serverType, const string &tableName, 
                             NULL,
                             (SQLLEN*) &length);
     EXPECT_EQ(rcode, SQL_SUCCESS);
-    EXPECT_EQ(length, lengthExpected[i-1]);
+    EXPECT_EQ(length, lengthExpected[i - 1]);
     
     rcode = SQLColAttribute(odbcHandler.GetStatementHandle(),
                             i,
@@ -163,7 +172,7 @@ void testCommonColumnAttributes(ServerType serverType, const string &tableName, 
                             NULL,
                             (SQLLEN*) &precision); 
     EXPECT_EQ(rcode, SQL_SUCCESS);
-    EXPECT_EQ(precision, precisionExpected[i-1]);
+    EXPECT_EQ(precision, precisionExpected[i - 1]);
 
     rcode = SQLColAttribute(odbcHandler.GetStatementHandle(),
                             i,
@@ -173,7 +182,7 @@ void testCommonColumnAttributes(ServerType serverType, const string &tableName, 
                             NULL,
                             (SQLLEN*) &scale); 
     EXPECT_EQ(rcode, SQL_SUCCESS);
-    EXPECT_EQ(scale, scaleExpected[i-1]);
+    EXPECT_EQ(scale, scaleExpected[i - 1]);
 
     rcode = SQLColAttribute(odbcHandler.GetStatementHandle(),
                             i,
@@ -183,7 +192,7 @@ void testCommonColumnAttributes(ServerType serverType, const string &tableName, 
                             NULL,
                             NULL);
     EXPECT_EQ(rcode, SQL_SUCCESS);
-    EXPECT_EQ(string(name), nameExpected[i-1]);
+    EXPECT_EQ(string(name), nameExpected[i - 1]);
   }
 
   rcode = SQLFetch(odbcHandler.GetStatementHandle());
@@ -217,7 +226,7 @@ void testCommonCharColumnAttributes(ServerType serverType, const string &tableNa
                             NULL,
                             (SQLLEN*) &length);
     EXPECT_EQ(rcode, SQL_SUCCESS);
-    EXPECT_EQ(length, lengthExpected[i-1]);
+    EXPECT_EQ(length, lengthExpected[i - 1]);
     
     rcode = SQLColAttribute(odbcHandler.GetStatementHandle(),
                             i,
@@ -227,7 +236,7 @@ void testCommonCharColumnAttributes(ServerType serverType, const string &tableNa
                             NULL,
                             (SQLLEN*) &precision); 
     EXPECT_EQ(rcode, SQL_SUCCESS);
-    EXPECT_EQ(precision, precisionExpected[i-1]);
+    EXPECT_EQ(precision, precisionExpected[i - 1]);
 
     rcode = SQLColAttribute(odbcHandler.GetStatementHandle(),
                             i,
@@ -237,7 +246,7 @@ void testCommonCharColumnAttributes(ServerType serverType, const string &tableNa
                             NULL,
                             (SQLLEN*) &scale); 
     EXPECT_EQ(rcode, SQL_SUCCESS);
-    EXPECT_EQ(scale, scaleExpected[i-1]);
+    EXPECT_EQ(scale, scaleExpected[i - 1]);
 
     rcode = SQLColAttribute(odbcHandler.GetStatementHandle(),
                             i,
@@ -247,7 +256,7 @@ void testCommonCharColumnAttributes(ServerType serverType, const string &tableNa
                             NULL,
                             NULL);
     EXPECT_EQ(rcode, SQL_SUCCESS);
-    EXPECT_EQ(string(name), nameExpected[i-1]);
+    EXPECT_EQ(string(name), nameExpected[i - 1]);
 
     rcode = SQLColAttribute(odbcHandler.GetStatementHandle(),
                             i,
@@ -257,7 +266,7 @@ void testCommonCharColumnAttributes(ServerType serverType, const string &tableNa
                             NULL,
                             (SQLLEN*) &isCaseSensitive); 
     EXPECT_EQ(rcode, SQL_SUCCESS);
-    EXPECT_EQ(isCaseSensitive, caseSensitivityExpected[i-1]);
+    EXPECT_EQ(isCaseSensitive, caseSensitivityExpected[i - 1]);
 
     rcode = SQLColAttribute(odbcHandler.GetStatementHandle(),
                             i,
@@ -267,7 +276,7 @@ void testCommonCharColumnAttributes(ServerType serverType, const string &tableNa
                             NULL,
                             NULL); 
     EXPECT_EQ(rcode, SQL_SUCCESS);
-    EXPECT_EQ(string(name), prefixExpected[i-1]);
+    EXPECT_EQ(string(name), prefixExpected[i - 1]);
 
     rcode = SQLColAttribute(odbcHandler.GetStatementHandle(),
                             i,
@@ -277,7 +286,7 @@ void testCommonCharColumnAttributes(ServerType serverType, const string &tableNa
                             NULL,
                             NULL);
     EXPECT_EQ(rcode, SQL_SUCCESS); 
-    EXPECT_EQ(string(name), suffixExpected[i-1]);
+    EXPECT_EQ(string(name), suffixExpected[i - 1]);
   }
 
   rcode = SQLFetch(odbcHandler.GetStatementHandle());
@@ -285,6 +294,7 @@ void testCommonCharColumnAttributes(ServerType serverType, const string &tableNa
 }
 
 void testTableCreationFailure(ServerType serverType, const string &tableName, const vector<vector<pair<string, string>>> &invalidColumns) {
+  
   OdbcHandler odbcHandler(Drivers::GetDriver(serverType));
   RETCODE rcode;
 
@@ -301,38 +311,40 @@ void testTableCreationFailure(ServerType serverType, const string &tableName, co
 }
 
 void testInsertionSuccess(ServerType serverType, const string &tableName, const string &orderByColumnName, 
-  const vector<string> &insertedValues, const vector<string> &expectedInsertedValues) {
+  const vector<string> &insertedValues, const vector<string> &expectedInsertedValues, int pkStartingValue) {
 
-  insertValuesInTable(serverType, tableName, insertedValues, false);
-  verifyValuesInObject(serverType, tableName, orderByColumnName, insertedValues, expectedInsertedValues);
+  insertValuesInTable(serverType, tableName, insertedValues, false, pkStartingValue);
+  verifyValuesInObject(serverType, tableName, orderByColumnName, insertedValues, expectedInsertedValues, pkStartingValue);
 }
 
 void testInsertionFailure(ServerType serverType, const string &tableName, const string &orderByColumnName, 
-  const vector<string> &invalidInsertedValues, bool isNumericInsert) {
+  const vector<string> &invalidInsertedValues, bool isNumericInsert, int pkStartingValue, bool tableRemainsEmpty) {
 
   OdbcHandler odbcHandler(Drivers::GetDriver(serverType));
   odbcHandler.Connect(true);
 
   RETCODE rcode;
 
-   for (int i = 0; i < invalidInsertedValues.size(); i++) {
+  for (int i = 0; i < invalidInsertedValues.size(); i++) {
     string insertString{};
 
     if (isNumericInsert) {
-      insertString = "(" + std::to_string(i) + "," + invalidInsertedValues[i] + ")";
+      insertString = "(" + std::to_string(pkStartingValue) + "," + invalidInsertedValues[i] + ")";
     }
     else {
-      insertString = "(" + std::to_string(i) + "," + "'" + invalidInsertedValues[i] + "'" + ")";
+      insertString = "(" + std::to_string(pkStartingValue) + ",\'" + invalidInsertedValues[i] + "\')";
     }
-
     rcode = SQLExecDirect(odbcHandler.GetStatementHandle(), (SQLCHAR *)InsertStatement(tableName, insertString).c_str(), SQL_NTS);
     EXPECT_EQ(rcode, SQL_ERROR);
+    pkStartingValue = pkStartingValue + 1;
   }
 
   // Select all from the table to make sure nothing was inserted
-  odbcHandler.ExecQuery(SelectStatement(tableName, {"*"}, vector<string> {orderByColumnName}));
-  rcode = SQLFetch(odbcHandler.GetStatementHandle());
-  EXPECT_EQ(rcode, SQL_NO_DATA);
+  if (tableRemainsEmpty) {
+    odbcHandler.ExecQuery(SelectStatement(tableName, {"*"}, vector<string> {orderByColumnName}));
+    rcode = SQLFetch(odbcHandler.GetStatementHandle());
+    EXPECT_EQ(rcode, SQL_NO_DATA);
+  }
   odbcHandler.CloseStmt();
 }
 
@@ -449,6 +461,7 @@ void testUpdateFail(ServerType serverType, const string &tableName, const string
 }
 
 void testPrimaryKeys(ServerType serverType, const string &schemaName, const string &pkTableName, const vector<string> &primaryKeyColumns) {
+  
   OdbcHandler odbcHandler(Drivers::GetDriver(serverType));
   odbcHandler.Connect(true);
 
@@ -486,6 +499,7 @@ void testPrimaryKeys(ServerType serverType, const string &schemaName, const stri
 }
 
 void testUniqueConstraint(ServerType serverType, const string &tableName, const vector<string> &uniqueConstraintColumns) {
+  
   OdbcHandler odbcHandler(Drivers::GetDriver(serverType));
   odbcHandler.Connect(true);
 
@@ -503,7 +517,7 @@ void testUniqueConstraint(ServerType serverType, const string &tableName, const 
     "JOIN INFORMATION_SCHEMA.CONSTRAINT_COLUMN_USAGE C "
     "ON C.CONSTRAINT_NAME=T.CONSTRAINT_NAME "
     "WHERE "
-    "C.TABLE_NAME='" + tableName.substr(tableName.find('.') + 1, tableName.length()) + "' "
+    "C.TABLE_NAME='" + tableName + "' "
     "AND T.CONSTRAINT_TYPE='UNIQUE'";
   
   odbcHandler.ExecQuery(UNIQUE_QUERY);
@@ -560,6 +574,7 @@ void testComparisonOperators(ServerType serverType, const string &tableName, con
 }
 
 void testComparisonFunctions(ServerType serverType, const string &tableName, const vector<string> &operationsQuery, const vector<string> &expectedResults) {
+  
   OdbcHandler odbcHandler(Drivers::GetDriver(serverType));
   odbcHandler.Connect(true);
 

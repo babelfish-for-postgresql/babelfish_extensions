@@ -327,11 +327,7 @@ TEST_F(PSQL_DataTypes_BigInt, View_Creation) {
     "-9223372036854775808"
   };
   
-  const vector<long long int> EXPECTED_DATA = {
-    StringToBigInt("9223372036854775807"),
-    StringToBigInt("123456789"),
-    StringToBigInt("-9223372036854775808")
-  };
+  const vector<long long int> EXPECTED_DATA = getExpectedResults(INSERTED_DATA);
 
   const vector<long> expectedLen(EXPECTED_DATA.size(), BIGINT_BYTES_EXPECTED);
 
@@ -348,7 +344,7 @@ TEST_F(PSQL_DataTypes_BigInt, View_Creation) {
 TEST_F(PSQL_DataTypes_BigInt, Table_Unique_Constraints) {
   const vector<pair<string, string>> TABLE_COLUMNS = {
     {COL1_NAME, "INT PRIMARY KEY"},
-    {COL2_NAME, DATATYPE_NAME + " UNIQUE"}
+    {COL2_NAME, DATATYPE_NAME}
   };
 
   const vector<string> UNIQUE_COLUMNS = {COL2_NAME};
@@ -362,17 +358,18 @@ TEST_F(PSQL_DataTypes_BigInt, Table_Unique_Constraints) {
     "9223372036854775807",
     "123456789"
   };
-  const vector<long long int> EXPECTED_DATA = {
-    StringToBigInt("9223372036854775807"),
-    StringToBigInt("123456789")
-  };
+  const vector<long long int> EXPECTED_DATA = getExpectedResults(INSERTED_DATA);
 
   const vector<long> expectedLen(EXPECTED_DATA.size(), BIGINT_BYTES_EXPECTED);
 
+  // table name without the schema
+  const string tableName = TABLE_NAME.substr(TABLE_NAME.find('.') + 1, TABLE_NAME.length());
+
   createTable(ServerType::PSQL, TABLE_NAME, TABLE_COLUMNS, tableConstraints);
-  testUniqueConstraint(ServerType::PSQL, TABLE_NAME, UNIQUE_COLUMNS);
+  testUniqueConstraint(ServerType::PSQL, tableName, UNIQUE_COLUMNS);
   testInsertionSuccess(ServerType::PSQL, TABLE_NAME, COL1_NAME, SQL_C_SBIGINT, data, bufferLen, INSERTED_DATA, 
     EXPECTED_DATA, expectedLen);
+  testInsertionFailure(ServerType::PSQL, TABLE_NAME, COL1_NAME, INSERTED_DATA, true, INSERTED_DATA.size(), false);
   dropObject(ServerType::PSQL, "TABLE", TABLE_NAME);
 }
 

@@ -21,7 +21,7 @@ const int BUFFER_SIZE = 256;
 const int CHARSIZE = 255;
 const int INT_BYTES_EXPECTED = 4;
 
-string InitializeInsertString(const vector<string>& insertedValues, bool isNumericInsert);
+string InitializeInsertString(const vector<string>& insertedValues, bool isNumericInsert, int pkStartingValue = 0);
 
 string createTableConstraint(const string &constraintType, const vector<string> &constrainCols);
 
@@ -31,12 +31,17 @@ void createView(ServerType serverType, const string &viewName, const string &vie
 
 void dropObject(ServerType serverType, const string &objectType, const string &objectName);
 
-void insertValuesInTable(ServerType serverType, const string &table_name, const vector<string> &insertedValues, bool isNumericInsert);
+void insertValuesInTable(ServerType serverType, const string &table_name, const vector<string> &insertedValues, 
+  bool isNumericInsert, int pkStartingValue = 0);
 
 void insertValuesInTable(ServerType serverType, const string &tableName, const string &insertString, int numRows);
 
 void verifyValuesInObject(ServerType serverType, const string &objectName, const string &orderByColumnName, 
-  const vector<string> &insertedValues, const vector<string> &expectedInsertedValues);
+  const vector<string> &insertedValues, const vector<string> &expectedInsertedValues, int pkStartingValue = 0);
+
+template <typename T>
+void verifyValuesInObject(ServerType serverType, string objectName, string orderByColumnName, int type, T data, 
+  int bufferLen, vector<string> insertedValues, vector<T> expectedInsertedValues, vector<long> expectedLen, int pkStartingValue = 0);
 
 void testCommonColumnAttributes(ServerType serverType, const string &tableName, int numCols, const string &orderByColumnName, 
   const vector<int> &lengthExpected, const vector<int> &precisionExpected, const vector<int> &scaleExpected, const vector<string> &nameExpected);
@@ -48,16 +53,28 @@ void testCommonCharColumnAttributes(ServerType serverType, const string &tableNa
 void testTableCreationFailure(ServerType serverType, const string &tableName, const vector<vector<pair<string, string>>> &invalidColumns);
 
 void testInsertionSuccess(ServerType serverType, const string &tableName, const string &orderByColumnName, 
-  const vector<string> &insertedValues, const vector<string> &expectedInsertedValues);
+  const vector<string> &insertedValues, const vector<string> &expectedInsertedValues, int pkStartingValue = 0);
+
+template <typename T>
+void testInsertionSuccess(ServerType serverType, const string &tableName, const string &orderByColumnName, int type, T data, int bufferLen, 
+  const vector<string> &insertedValues, const vector<T> &expectedInsertedValues, const vector<long> &expectedLen, int pkStartingValue = 0);
 
 void testInsertionFailure(ServerType serverType, const string &tableName, const string &orderByColumnName, 
-  const vector<string> &invalidInsertedValues, bool isNumericInsert);
+  const vector<string> &invalidInsertedValues, bool isNumericInsert, int pkStartingValue = 0, bool tableRemainsEmpty = true);
 
 void testUpdateSuccess(ServerType serverType, const string &tableName, const string &orderByColumnName, 
   const string &colNameToUpdate, const vector<string> &updatedValues, const vector<string> &expectedUpdatedValues);
 
+template <typename T>
+void testUpdateSuccess(ServerType serverType, const string &tableName, const string &orderByColumnName, const string &colNameToUpdate, int type, 
+  T data, int bufferLen, const vector<string> &updatedValues, const vector<T> &expectedUpdatedValues, const vector<long> &expectedUpdatedLen);
+
 void testUpdateFail(ServerType serverType, const string &tableName, const string &orderByColumnName, 
   const string &colNameToUpdate, const vector<string> &expectedInsertedValues, const vector<string> &updatedValues);
+
+template <typename T>
+void testUpdateFail(ServerType serverType, const string &tableName, const string &orderByColumnName, const string &colNameToUpdate, int type, 
+  T data, int bufferLen, const vector<T> &expectedInsertedValues, const vector<long> &expectedInsertedLen, const vector<string> &updatedValues);
 
 void testPrimaryKeys(ServerType serverType, const string &schemaName, const string &pkTableName, const vector<string> &primaryKeyColumns);
 
@@ -69,8 +86,16 @@ void testComparisonOperators(ServerType serverType, const string &tableName, con
 void testComparisonFunctions(ServerType serverType, const string &tableName, const vector<string> &operationsQuery, const vector<string> &expectedResults);
 
 template <typename T>
+void testComparisonFunctions(ServerType serverType, const string &tableName, int type, const vector<T> &colResults, 
+  int bufferLen, vector<string> operationsQuery, const vector<T> &expectedResults, const vector<long> &expectedLen);
+
+template <typename T>
+void testArithmeticOperators(ServerType serverType, const string &tableName, const string &orderByColumnName, int numOfData, int type, 
+  const vector<T> &colResults, int bufferLen, const vector<string> &operationsQuery, const vector<vector<T>> &expectedResults, const vector<long> &expectedLen);
+
+template <typename T>
 void verifyValuesInObject(ServerType serverType, string objectName, string orderByColumnName, int type, T data, 
-  int bufferLen, vector<string> insertedValues, vector<T> expectedInsertedValues, vector<long> expectedLen) {
+  int bufferLen, vector<string> insertedValues, vector<T> expectedInsertedValues, vector<long> expectedLen, int pkStartingValue) {
 
   OdbcHandler odbcHandler(Drivers::GetDriver(serverType));
   
@@ -112,11 +137,12 @@ void verifyValuesInObject(ServerType serverType, string objectName, string order
 }
 
 template <typename T>
-void testInsertionSuccess(ServerType serverType, const string &tableName, const string &orderByColumnName, int type, T data, 
-  int bufferLen, const vector<string> &insertedValues, const vector<T> &expectedInsertedValues, const vector<long> &expectedLen) {
+void testInsertionSuccess(ServerType serverType, const string &tableName, const string &orderByColumnName, int type, T data, int bufferLen, 
+  const vector<string> &insertedValues, const vector<T> &expectedInsertedValues, const vector<long> &expectedLen, int pkStartingValue) {
 
-  insertValuesInTable(serverType, tableName, insertedValues, true);
-  verifyValuesInObject(serverType, tableName, orderByColumnName, type, data, bufferLen, insertedValues, expectedInsertedValues, expectedLen);
+  insertValuesInTable(serverType, tableName, insertedValues, true, pkStartingValue);
+  verifyValuesInObject(serverType, tableName, orderByColumnName, type, data, bufferLen, 
+    insertedValues, expectedInsertedValues, expectedLen, pkStartingValue);
 }
 
 template <typename T>
