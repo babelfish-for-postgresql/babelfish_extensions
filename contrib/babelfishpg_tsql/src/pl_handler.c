@@ -285,7 +285,7 @@ assign_identity_insert(const char *newval, void *extra)
                 {
                         schema_name = (char *) lthird(elemlist);
 
-						if (ownership_structure_enabled() && cur_db_name)
+						if (cur_db_name)
 							schema_name = get_physical_schema_name(cur_db_name,
 																   schema_name);
 
@@ -2279,8 +2279,7 @@ static void bbf_ProcessUtility(PlannedStmt *pstmt,
 		}
 		case T_CreateRoleStmt:
 		{
-			if (sql_dialect == SQL_DIALECT_TSQL
-				&& ownership_structure_enabled())
+			if (sql_dialect == SQL_DIALECT_TSQL)
 			{
 				const char      *prev_current_user;
 				CreateRoleStmt	*stmt = (CreateRoleStmt *) parsetree;
@@ -2488,8 +2487,7 @@ static void bbf_ProcessUtility(PlannedStmt *pstmt,
 		}
 		case T_AlterRoleStmt:
 		{
-			if (sql_dialect == SQL_DIALECT_TSQL
-				&& ownership_structure_enabled())
+			if (sql_dialect == SQL_DIALECT_TSQL)
 			{
 				AlterRoleStmt	*stmt = (AlterRoleStmt *) parsetree;
 				List			*login_options = NIL;
@@ -2712,8 +2710,7 @@ static void bbf_ProcessUtility(PlannedStmt *pstmt,
 		}
 		case T_DropRoleStmt:
 		{
-			if (sql_dialect == SQL_DIALECT_TSQL
-				&& ownership_structure_enabled())
+			if (sql_dialect == SQL_DIALECT_TSQL)
 			{
 				const char      *prev_current_user;
 				DropRoleStmt	*stmt = (DropRoleStmt *) parsetree;
@@ -2888,8 +2885,7 @@ static void bbf_ProcessUtility(PlannedStmt *pstmt,
 		}
 		case T_CreateSchemaStmt:
 		{
-            if (sql_dialect == SQL_DIALECT_TSQL
-				&& ownership_structure_enabled())
+            if (sql_dialect == SQL_DIALECT_TSQL)
             {
 				CreateSchemaStmt	*create_schema = (CreateSchemaStmt *) parsetree;
 				const char			*orig_schema = NULL;
@@ -2952,8 +2948,7 @@ static void bbf_ProcessUtility(PlannedStmt *pstmt,
 			if (drop_stmt->removeType != OBJECT_SCHEMA)
 				break;
 
-            if (sql_dialect == SQL_DIALECT_TSQL
-				&& ownership_structure_enabled())
+            if (sql_dialect == SQL_DIALECT_TSQL)
 			{
 				del_ns_ext_info(strVal(lfirst(list_head(drop_stmt->objects))), drop_stmt->missing_ok);
 
@@ -2978,16 +2973,14 @@ static void bbf_ProcessUtility(PlannedStmt *pstmt,
 			}
 		}
 		case T_CreatedbStmt:
-            if (sql_dialect == SQL_DIALECT_TSQL
-				&& ownership_structure_enabled())
+            if (sql_dialect == SQL_DIALECT_TSQL)
             {
 				create_bbf_db(pstate, (CreatedbStmt *) parsetree);
 				return;
 			}
 			break;
         case T_DropdbStmt:
-            if (sql_dialect == SQL_DIALECT_TSQL
-				&& ownership_structure_enabled())
+            if (sql_dialect == SQL_DIALECT_TSQL)
             {
                 DropdbStmt *stmt = (DropdbStmt *) parsetree;
                 drop_bbf_db(stmt->dbname, stmt->missing_ok, false);
@@ -2995,8 +2988,7 @@ static void bbf_ProcessUtility(PlannedStmt *pstmt,
             }
             break;
 		case T_GrantRoleStmt:
-            if (sql_dialect == SQL_DIALECT_TSQL
-				&& ownership_structure_enabled())
+            if (sql_dialect == SQL_DIALECT_TSQL)
             {
 				GrantRoleStmt *grant_role = (GrantRoleStmt *) parsetree;
 				if (is_alter_server_stmt(grant_role))

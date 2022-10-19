@@ -103,7 +103,7 @@ del_ns_ext_info(const char *schemaname, bool missing_ok)
 void
 check_extra_schema_restrictions(Node *stmt)
 {
-	if (sql_dialect == SQL_DIALECT_PG && ownership_structure_enabled())
+	if (sql_dialect == SQL_DIALECT_PG)
 	{
 		switch(nodeTag(stmt))
 		{
