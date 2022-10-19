@@ -660,7 +660,7 @@ pltsql_exec_function(PLtsql_function *func, FunctionCallInfo fcinfo,
 		config.trace_mode |= TRACE_EXEC_TIME;
 
 	/* Cache func owner id*/
-	estate.func->fn_owner = get_func_owner(estate.func->fn_oid);
+	estate.func->fn_owner = get_func_owner(fcinfo->flinfo->fn_oid);
 
 	rc = exec_stmt_iterative(&estate, func->exec_codes, &config);
 

@@ -2721,8 +2721,7 @@ check_ownership_chaining_for_tsql_proc(ObjectType objtype, Oid objid)
 
 	if (!top_estate ||
 		!top_estate->func ||
-		top_estate->func->fn_oid == InvalidOid ||
-		!top_estate->func->fn_owner == InvalidOid)
+		top_estate->func->fn_owner == InvalidOid)
 		return false;
 
 	procOwner = top_estate->func->fn_owner;
