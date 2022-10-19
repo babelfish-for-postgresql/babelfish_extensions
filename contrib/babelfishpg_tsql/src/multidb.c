@@ -44,9 +44,6 @@ static void truncate_tsql_identifier(char *ident);
 bool
 enable_schema_mapping(void)
 {
-	if (!ownership_structure_enabled())
-		return false;
-
 	if (!DbidIsValid(get_cur_db_id()))  /* TODO: remove it after cur_db_oid() is enforeced */
 		return false;
 

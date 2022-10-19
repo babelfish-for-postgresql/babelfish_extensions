@@ -558,14 +558,6 @@ define_custom_variables(void)
 							  GUC_NO_RESET_ALL,
 							  NULL, NULL, NULL);
 
-	DefineCustomBoolVariable("babelfishpg_tsql.enable_ownership_structure",
-				 gettext_noop("Enable Babelfish Ownership Structure"),
-				 NULL,
-				 &enable_ownership_structure,
-				 false,
-				 PGC_SUSET,  /* only superuser can set */
-				 GUC_NO_SHOW_ALL | GUC_NOT_IN_SAMPLE | GUC_DISALLOW_IN_FILE | GUC_DISALLOW_IN_AUTO_FILE,
-				 NULL, NULL, NULL);
 
 	/* ANTLR parser */
 	DefineCustomBoolVariable("babelfishpg_tsql.dump_antlr_query_graph",
@@ -1472,8 +1464,4 @@ get_migration_mode(void)
 	return (MigrationMode) migration_mode;
 }
 
-bool
-ownership_structure_enabled(void)
-{
-	return enable_ownership_structure;
-}
+
