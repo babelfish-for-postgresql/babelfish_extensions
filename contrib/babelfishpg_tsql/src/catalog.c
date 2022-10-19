@@ -1297,6 +1297,7 @@ static Datum get_msdb_guest(HeapTuple tuple, TupleDesc dsc);
 static Datum get_owner(HeapTuple tuple, TupleDesc dsc);
 static Datum get_name_db_owner(HeapTuple tuple, TupleDesc dsc);
 static Datum get_name_dbo(HeapTuple tuple, TupleDesc dsc);
+static Datum get_name_guest(HeapTuple tuple, TupleDesc dsc);
 static Datum get_nspname(HeapTuple tuple, TupleDesc dsc);
 static Datum get_login_rolname(HeapTuple tuple, TupleDesc dsc);
 static Datum get_default_database_name(HeapTuple tuple, TupleDesc dsc);
@@ -1369,7 +1370,7 @@ Rule must_have_rules[] =
 	 "babelfish_authid_user_ext", "rolname", NULL, get_db_owner, is_singledb_exists_userdb, check_exist, NULL},
 	{"In single-db mode, if user db exists, dbo must exist in babelfish_authid_user_ext",
 	 "babelfish_authid_user_ext", "rolname", NULL, get_dbo, is_singledb_exists_userdb, check_exist, NULL},
-	{"master_db_owner must exist in babelfish_authid_user_ext", 
+	{"master_db_owner must exist in babelfish_authid_user_ext",
 	 "babelfish_authid_user_ext", "rolname", NULL, get_master_db_owner, NULL, check_exist, NULL},
 	{"master_dbo must exist in babelfish_authid_user_ext",
 	 "babelfish_authid_user_ext", "rolname", NULL, get_master_dbo, NULL, check_exist, NULL},
@@ -1400,7 +1401,9 @@ Rule must_match_rules_sysdb[] =
 	{"In multi-db mode, for each <name> in babelfish_sysdatabases, <name>_dbo must also exist in pg_authid",
 	 "pg_authid", "rolname", NULL, get_name_dbo, is_multidb, check_exist, NULL},
 	{"In multi-db mode, for each <name> in babelfish_sysdatabases, <name>_dbo must also exist in babelfish_namespace_ext",
-	 "babelfish_namespace_ext", "nspname", NULL, get_name_dbo, is_multidb, check_exist, NULL}
+	 "babelfish_namespace_ext", "nspname", NULL, get_name_dbo, is_multidb, check_exist, NULL},
+	{"In multi-db mode, for each <name> in babelfish_sysdatabases, <name>_guest must also exist in babelfish_authid_user_ext",
+	 "babelfish_authid_user_ext", "rolname", NULL, get_name_guest, is_multidb, check_exist, NULL}
 };
 
 /* babelfish_namespace_ext */
@@ -1777,6 +1780,20 @@ get_name_dbo(HeapTuple tuple, TupleDesc dsc)
 
 	truncate_identifier(name_str, strlen(name_str), false);
 	snprintf(name_dbo, MAX_BBF_NAMEDATALEND, "%s_dbo", name_str);
+	truncate_identifier(name_dbo, strlen(name_dbo), false);
+	return CStringGetDatum(name_dbo);
+}
+
+static Datum
+get_name_guest(HeapTuple tuple, TupleDesc dsc)
+{
+	Form_sysdatabases sysdb = ((Form_sysdatabases) GETSTRUCT(tuple));
+	const text *name = &(sysdb->name);
+	char *name_str = text_to_cstring(name);
+	char *name_dbo = palloc0(MAX_BBF_NAMEDATALEND);
+
+	truncate_identifier(name_str, strlen(name_str), false);
+	snprintf(name_dbo, MAX_BBF_NAMEDATALEND, "%s_guest", name_str);
 	truncate_identifier(name_dbo, strlen(name_dbo), false);
 	return CStringGetDatum(name_dbo);
 }
