@@ -3525,7 +3525,7 @@ and has_column_privilege(quote_ident(s.nspname) ||'.'||quote_ident(c.relname), a
 and a.attnum > 0;
 GRANT SELECT ON sys.all_columns TO PUBLIC;
 
-ALTER VIEW sys.columns RENAME TO columns_deprecated_in_2_3_0; 
+ALTER VIEW sys.columns RENAME TO columns_deprecated_in_2_3_0;
 
 create or replace view sys.columns AS
 select out_object_id as object_id
@@ -3567,7 +3567,23 @@ select out_object_id as object_id
 from sys.columns_internal();
 GRANT SELECT ON sys.columns TO PUBLIC;
 
-ALTER VIEW sys.foreign_keys RENAME TO foreign_keys_deprecated_in_2_3_0; 
+ALTER VIEW sys.foreign_key_columns RENAME TO foreign_key_columns_deprecated_in_2_3_0;
+
+CREATE OR replace view sys.foreign_key_columns as
+SELECT DISTINCT
+  CAST(c.oid AS INT) AS constraint_object_id
+  ,CAST((generate_series(1,ARRAY_LENGTH(c.conkey,1))) AS INT) AS constraint_column_id
+  ,CAST(c.conrelid AS INT) AS parent_object_id
+  ,CAST((UNNEST (c.conkey)) AS INT) AS parent_column_id
+  ,CAST(c.confrelid AS INT) AS referenced_object_id
+  ,CAST((UNNEST(c.confkey)) AS INT) AS referenced_column_id
+FROM pg_constraint c
+WHERE c.contype = 'f'
+AND (c.connamespace IN (SELECT schema_id FROM sys.schemas))
+AND has_schema_privilege(c.connamespace, 'USAGE');
+GRANT SELECT ON sys.foreign_key_columns TO PUBLIC;
+
+ALTER VIEW sys.foreign_keys RENAME TO foreign_keys_deprecated_in_2_3_0;
 
 CREATE OR replace view sys.foreign_keys AS
 SELECT
@@ -3631,7 +3647,7 @@ WHERE has_schema_privilege(sch.schema_id, 'USAGE')
 AND c.contype = 'f';
 GRANT SELECT ON sys.foreign_keys TO PUBLIC;
 
-ALTER VIEW sys.identity_columns RENAME TO identity_columns_deprecated_in_2_3_0; 
+ALTER VIEW sys.identity_columns RENAME TO identity_columns_deprecated_in_2_3_0;
 
 CREATE OR replace view sys.identity_columns AS
 SELECT 
@@ -3683,7 +3699,7 @@ AND pg_get_serial_sequence(quote_ident(ext.nspname)||'.'||quote_ident(c.relname)
 AND has_sequence_privilege(pg_get_serial_sequence(quote_ident(ext.nspname)||'.'||quote_ident(c.relname), a.attname), 'USAGE,SELECT,UPDATE');
 GRANT SELECT ON sys.identity_columns TO PUBLIC;
 
-ALTER VIEW sys.indexes RENAME TO indexes_deprecated_in_2_3_0; 
+ALTER VIEW sys.indexes RENAME TO indexes_deprecated_in_2_3_0;
 
 create or replace view sys.indexes as
 select
@@ -3767,7 +3783,7 @@ from
 ) as indexes_select order by object_id, type_desc;
 GRANT SELECT ON sys.indexes TO PUBLIC;
 
-ALTER VIEW sys.key_constraints RENAME TO key_constraints_deprecated_in_2_3_0; 
+ALTER VIEW sys.key_constraints RENAME TO key_constraints_deprecated_in_2_3_0;
 
 CREATE OR replace view sys.key_constraints AS
 SELECT
@@ -3846,7 +3862,26 @@ and format_type(p.prorettype, null) <> 'trigger'
 and has_function_privilege(p.oid, 'EXECUTE');
 GRANT SELECT ON sys.procedures TO PUBLIC;
 
-ALTER VIEW sys.sysindexes RENAME TO sysindexes_deprecated_in_2_3_0; 
+ALTER VIEW sys.sysforeignkeys RENAME TO sysforeignkeys_deprecated_in_2_3_0;
+
+create or replace view sys.sysforeignkeys as
+select
+  c.conname as name
+  , c.oid as object_id
+  , c.conrelid as fkeyid
+  , c.confrelid as rkeyid
+  , a_con.attnum as fkey
+  , a_conf.attnum as rkey
+  , a_conf.attnum as keyno
+from pg_constraint c
+inner join pg_attribute a_con on a_con.attrelid = c.conrelid and a_con.attnum = any(c.conkey)
+inner join pg_attribute a_conf on a_conf.attrelid = c.confrelid and a_conf.attnum = any(c.confkey)
+where c.contype = 'f'
+and (c.connamespace in (select schema_id from sys.schemas))
+and has_schema_privilege(c.connamespace, 'USAGE');
+GRANT SELECT ON sys.sysforeignkeys TO PUBLIC;
+
+ALTER VIEW sys.sysindexes RENAME TO sysindexes_deprecated_in_2_3_0;
 
 create or replace view sys.sysindexes as
 select
@@ -3882,7 +3917,7 @@ select
 from sys.indexes i;
 GRANT SELECT ON sys.sysindexes TO PUBLIC;
 
-ALTER VIEW sys.sysprocesses RENAME TO sysprocesses_deprecated_in_2_3_0; 
+ALTER VIEW sys.sysprocesses RENAME TO sysprocesses_deprecated_in_2_3_0;
 
 create or replace view sys.sysprocesses as
 select
@@ -3937,7 +3972,7 @@ left join pg_catalog.pg_locks blocking_locks
  where a.datname = current_database();
 GRANT SELECT ON sys.sysprocesses TO PUBLIC;
 
-ALTER VIEW sys.types RENAME TO types_deprecated_in_2_3_0; 
+ALTER VIEW sys.types RENAME TO types_deprecated_in_2_3_0;
 
 create or replace view sys.types As
 -- For System types
@@ -4007,7 +4042,7 @@ and
   );
 GRANT SELECT ON sys.types TO PUBLIC;
 
-ALTER VIEW sys.table_types RENAME TO table_types_deprecated_in_2_3_0; 
+ALTER VIEW sys.table_types RENAME TO table_types_deprecated_in_2_3_0;
 
 create or replace view sys.table_types as
 select st.*
@@ -4783,6 +4818,26 @@ SELECT CAST('TSQL Default TCP' AS sys.sysname) AS name
   , CAST('STARTED' AS sys.nvarchar(60)) AS state_desc
   , CAST(0 AS sys.bit) AS is_admin_endpoint;
 GRANT SELECT ON sys.endpoints TO PUBLIC;
+
+ALTER VIEW sys.index_columns RENAME TO index_columns_deprecated_in_2_3_0;
+
+create or replace view sys.index_columns
+as
+select i.indrelid::integer as object_id
+  , i.indexrelid::integer as index_id
+  , a.attrelid::integer as index_column_id
+  , a.attnum::integer as column_id
+  , a.attnum::sys.tinyint as key_ordinal
+  , 0::sys.tinyint as partition_ordinal
+  , 0::sys.bit as is_descending_key
+  , 1::sys.bit as is_included_column
+from pg_index as i
+inner join pg_catalog.pg_attribute a on i.indexrelid = a.attrelid
+inner join pg_class c on i.indrelid = c.oid
+inner join sys.schemas sch on sch.schema_id = c.relnamespace
+where has_schema_privilege(sch.schema_id, 'USAGE')
+and has_table_privilege(c.oid, 'SELECT,INSERT,UPDATE,DELETE,TRUNCATE,TRIGGER');
+GRANT SELECT ON sys.index_columns TO PUBLIC;
 
 ALTER VIEW sys.syscolumns RENAME TO syscolumns_deprecated_in_2_3_0;
 
@@ -6403,6 +6458,27 @@ FROM
         )
     WHERE CAST("COLUMN_NAME" AS sys.nvarchar(128)) NOT IN ('cmin', 'cmax', 'xmin', 'xmax', 'ctid', 'tableoid');
 GRANT SELECT ON sys.spt_columns_view_managed TO PUBLIC;
+
+ALTER VIEW sys.sp_tables_view RENAME TO sp_tables_view_deprecated_in_2_3_0;
+
+CREATE OR REPLACE VIEW sys.sp_tables_view AS
+SELECT
+t2.dbname AS TABLE_QUALIFIER,
+CAST(t3.name AS name) AS TABLE_OWNER,
+t1.relname AS TABLE_NAME,
+
+CASE 
+WHEN t1.relkind = 'v' 
+	THEN 'VIEW'
+ELSE 'TABLE'
+END AS TABLE_TYPE,
+
+CAST(NULL AS varchar(254)) AS remarks
+FROM pg_catalog.pg_class AS t1, sys.pg_namespace_ext AS t2, sys.schemas AS t3
+WHERE t1.relnamespace = t3.schema_id AND t1.relnamespace = t2.oid AND t1.relkind IN ('r','v','m') 
+AND has_schema_privilege(t1.relnamespace, 'USAGE')
+AND has_table_privilege(t1.oid, 'SELECT,INSERT,UPDATE,DELETE,TRUNCATE,TRIGGER');
+GRANT SELECT ON sys.sp_tables_view TO PUBLIC;
 
 ALTER VIEW sys.assembly_types RENAME TO assembly_types_deprecated_in_2_3_0;
 
@@ -8339,7 +8415,7 @@ BEGIN
 END;
 $$;
 
-CALL sys.babelfish_drop_deprecated_object('view', 'sys', 'procedures_deprecated_in_2_3_0');
+CALL sys.babelfish_drop_deprecated_object('view', 'sys', 'sp_sproc_columns_view_deprecated_in_2_3_0');
 CALL sys.babelfish_drop_deprecated_object('view', 'sys', 'sp_stored_procedures_view_deprecated_in_2_3_0');
 CALL sys.babelfish_drop_deprecated_object('view', 'sys', 'sp_fkeys_view_deprecated_in_2_3_0');
 CALL sys.babelfish_drop_deprecated_object('view', 'sys', 'sp_special_columns_view_deprecated_in_2_3_0');
@@ -8350,6 +8426,7 @@ CALL sys.babelfish_drop_deprecated_object('view', 'sys', 'sp_statistics_view_dep
 CALL sys.babelfish_drop_deprecated_object('view', 'sys', 'sp_pkeys_view_deprecated_in_2_3_0');
 CALL sys.babelfish_drop_deprecated_object('view', 'sys', 'sp_databases_view_deprecated_in_2_3_0');
 CALL sys.babelfish_drop_deprecated_object('view', 'sys', 'assembly_types_deprecated_in_2_3_0');
+CALL sys.babelfish_drop_deprecated_object('view', 'sys', 'sp_tables_view_deprecated_in_2_3_0');
 CALL sys.babelfish_drop_deprecated_object('view', 'sys', 'spt_columns_view_managed_deprecated_in_2_3_0');
 CALL sys.babelfish_drop_deprecated_object('view', 'sys', 'spt_tablecollations_view_deprecated_in_2_3_0');
 CALL sys.babelfish_drop_deprecated_object('view', 'sys', 'sp_columns_100_view_deprecated_in_2_3_0');
@@ -8388,6 +8465,7 @@ CALL sys.babelfish_drop_deprecated_object('view', 'sys', 'configurations_depreca
 CALL sys.babelfish_drop_deprecated_object('view', 'sys', 'dm_exec_connections_deprecated_in_2_3_0');
 CALL sys.babelfish_drop_deprecated_object('view', 'sys', 'dm_exec_sessions_deprecated_in_2_3_0');
 CALL sys.babelfish_drop_deprecated_object('view', 'sys', 'syscolumns_deprecated_in_2_3_0');
+CALL sys.babelfish_drop_deprecated_object('view', 'sys', 'index_columns_deprecated_in_2_3_0');
 CALL sys.babelfish_drop_deprecated_object('view', 'sys', 'endpoints_deprecated_in_2_3_0');
 CALL sys.babelfish_drop_deprecated_object('view', 'sys', 'computed_columns_deprecated_in_2_3_0');
 CALL sys.babelfish_drop_deprecated_object('view', 'sys', 'syscharsets_deprecated_in_2_3_0');
@@ -8403,6 +8481,18 @@ CALL sys.babelfish_drop_deprecated_object('view', 'sys', 'system_objects_depreca
 CALL sys.babelfish_drop_deprecated_object('view', 'sys', 'all_objects_deprecated_in_2_3_0');
 CALL sys.babelfish_drop_deprecated_object('view', 'sys', 'check_constraints_deprecated_in_2_3_0');
 CALL sys.babelfish_drop_deprecated_object('view', 'sys', 'default_constraints_deprecated_in_2_3_0');
+CALL sys.babelfish_drop_deprecated_object('view', 'sys', 'table_types_deprecated_in_2_3_0');
+CALL sys.babelfish_drop_deprecated_object('view', 'sys', 'types_deprecated_in_2_3_0');
+CALL sys.babelfish_drop_deprecated_object('view', 'sys', 'sysprocesses_deprecated_in_2_3_0');
+CALL sys.babelfish_drop_deprecated_object('view', 'sys', 'sysindexes_deprecated_in_2_3_0');
+CALL sys.babelfish_drop_deprecated_object('view', 'sys', 'sysforeignkeys_deprecated_in_2_3_0');
+CALL sys.babelfish_drop_deprecated_object('view', 'sys', 'procedures_deprecated_in_2_3_0');
+CALL sys.babelfish_drop_deprecated_object('view', 'sys', 'key_constraints_deprecated_in_2_3_0');
+CALL sys.babelfish_drop_deprecated_object('view', 'sys', 'indexes_deprecated_in_2_3_0');
+CALL sys.babelfish_drop_deprecated_object('view', 'sys', 'identity_columns_deprecated_in_2_3_0');
+CALL sys.babelfish_drop_deprecated_object('view', 'sys', 'foreign_keys_deprecated_in_2_3_0');
+CALL sys.babelfish_drop_deprecated_object('view', 'sys', 'foreign_key_columns_deprecated_in_2_3_0');
+CALL sys.babelfish_drop_deprecated_object('view', 'sys', 'columns_deprecated_in_2_3_0');
 CALL sys.babelfish_drop_deprecated_object('view', 'sys', 'all_columns_deprecated_in_2_3_0');
 CALL sys.babelfish_drop_deprecated_object('view', 'sys', 'views_deprecated_in_2_3_0');
 CALL sys.babelfish_drop_deprecated_object('view', 'sys', 'tables_deprecated_in_2_3_0');
