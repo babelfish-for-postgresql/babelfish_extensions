@@ -2577,12 +2577,9 @@ AS 'babelfishpg_tsql', 'update_user_catalog_for_guest';
  
 CALL sys.babelfish_update_user_catalog_for_guest();
 
--- Drops the temporary procedure used by the upgrade script.
--- Please have this be one of the last statements executed in this upgrade script.
-DROP PROCEDURE sys.babelfish_drop_deprecated_object(varchar, varchar, varchar);
-
--- Reset search_path to not affect any subsequent scripts
-SELECT set_config('search_path', trim(leading 'sys, ' from current_setting('search_path')), false);
+CREATE OR REPLACE FUNCTION sys.babelfish_datatype_hash_tables_initialised()
+RETURNS BOOL
+AS 'babelfishpg_tsql', 'datatype_hash_tables_initialised' LANGUAGE C;
 
 CREATE OR REPLACE FUNCTION sys.babelfish_conv_string_to_time(IN p_datatype TEXT,
                                                                  IN p_timestring TEXT,
@@ -2761,3 +2758,10 @@ BEGIN
   RETURN 0;
 END;
 $$;
+
+-- Drops the temporary procedure used by the upgrade script.
+-- Please have this be one of the last statements executed in this upgrade script.
+DROP PROCEDURE sys.babelfish_drop_deprecated_object(varchar, varchar, varchar);
+
+-- Reset search_path to not affect any subsequent scripts
+SELECT set_config('search_path', trim(leading 'sys, ' from current_setting('search_path')), false);

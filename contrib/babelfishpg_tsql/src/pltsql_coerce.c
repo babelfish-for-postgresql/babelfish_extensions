@@ -45,6 +45,7 @@ extern coerce_string_literal_hook_type coerce_string_literal_hook;
 
 PG_FUNCTION_INFO_V1(init_tsql_coerce_hash_tab);
 PG_FUNCTION_INFO_V1(init_tsql_datatype_precedence_hash_tab);
+PG_FUNCTION_INFO_V1(datatype_hash_tables_initialised);
 
 extern bool is_tsql_binary_datatype(Oid oid);
 extern bool is_tsql_varbinary_datatype(Oid oid);
@@ -103,21 +104,13 @@ tsql_cast_raw_info_t tsql_cast_raw_infos[] =
     {PG_CAST_ENTRY, "sys", "bbf_varbinary", "pg_catalog", "int8", NULL, 'i', 'f'},
     {PG_CAST_ENTRY, "sys", "bbf_varbinary", "pg_catalog", "int4", NULL, 'i', 'f'},
     {PG_CAST_ENTRY, "sys", "bbf_varbinary", "pg_catalog", "int2", NULL, 'i', 'f'},
-    {PG_CAST_ENTRY, "sys", "varbinary", "pg_catalog", "int8", NULL, 'i', 'f'},
-    {PG_CAST_ENTRY, "sys", "varbinary", "pg_catalog", "int4", NULL, 'i', 'f'},
-    {PG_CAST_ENTRY, "sys", "varbinary", "pg_catalog", "int2", NULL, 'i', 'f'},
     {TSQL_CAST_ENTRY, "sys", "bbf_varbinary", "sys", "rowversion", "varbinaryrowversion", 'i', 'f'},
-    {TSQL_CAST_ENTRY, "sys", "varbinary", "sys", "rowversion", "varbinaryrowversion", 'i', 'f'},
     {TSQL_CAST_WITHOUT_FUNC_ENTRY, "sys", "bbf_varbinary", "sys", "bbf_binary", NULL, 'i', 'b'},
 // binary     {only allow to cast to integral data type)
     {PG_CAST_ENTRY, "sys", "bbf_binary", "pg_catalog", "int8", NULL, 'i', 'f'},
     {PG_CAST_ENTRY, "sys", "bbf_binary", "pg_catalog", "int4", NULL, 'i', 'f'},
     {PG_CAST_ENTRY, "sys", "bbf_binary", "pg_catalog", "int2", NULL, 'i', 'f'},
-    {PG_CAST_ENTRY, "sys", "binary", "pg_catalog", "int8", NULL, 'i', 'f'},
-    {PG_CAST_ENTRY, "sys", "binary", "pg_catalog", "int4", NULL, 'i', 'f'},
-    {PG_CAST_ENTRY, "sys", "binary", "pg_catalog", "int2", NULL, 'i', 'f'},
-    {TSQL_CAST_ENTRY, "sys", "bbf_binary", "sys", "rowversion", "varbinaryrowversion", 'i', 'f'},
-    {TSQL_CAST_ENTRY, "sys", "binary", "sys", "rowversion", "varbinaryrowversion", 'i', 'f'},
+    {TSQL_CAST_ENTRY, "sys", "bbf_binary", "sys", "rowversion", "binaryrowversion", 'i', 'f'},
     {TSQL_CAST_WITHOUT_FUNC_ENTRY, "sys", "bbf_binary", "sys", "bbf_varbinary", NULL, 'i', 'b'},
 // rowversion
     {PG_CAST_ENTRY, "sys", "rowversion", "pg_catalog", "int8", NULL, 'i', 'f'},
@@ -139,20 +132,20 @@ tsql_cast_raw_info_t tsql_cast_raw_infos[] =
     {PG_CAST_ENTRY, "sys", "smalldatetime", "sys", "datetime2", NULL, 'i', 'b'},
 	{PG_CAST_ENTRY, "sys", "smalldatetime", "pg_catalog", "varchar", NULL, 'i', 'f'},
 	{PG_CAST_ENTRY, "sys", "smalldatetime", "sys", "varchar", NULL, 'i', 'f'},
-	{PG_CAST_ENTRY, "sys", "smalldatetime", "pg_catalog", "char", NULL, 'i', 'f'},
+	{PG_CAST_ENTRY, "sys", "smalldatetime", "pg_catalog", "bpchar", NULL, 'i', 'f'},
 	{PG_CAST_ENTRY, "pg_catalog", "varchar", "sys", "smalldatetime", NULL, 'i', 'f'},
 	{PG_CAST_ENTRY, "sys", "varchar", "sys", "smalldatetime", NULL, 'i', 'f'},
-	{PG_CAST_ENTRY, "pg_catalog", "char", "sys", "smalldatetime", NULL, 'i', 'f'},
+	{PG_CAST_ENTRY, "pg_catalog", "bpchar", "sys", "smalldatetime", NULL, 'i', 'f'},
 // datetime
     {PG_CAST_ENTRY, "sys", "datetime", "pg_catalog", "date", NULL, 'i', 'f'},
     {PG_CAST_ENTRY, "sys", "datetime", "pg_catalog", "time", NULL, 'i', 'f'},
     {PG_CAST_ENTRY, "sys", "datetime", "sys", "smalldatetime", NULL, 'i', 'f'},
 	{PG_CAST_ENTRY, "sys", "datetime", "pg_catalog", "varchar", NULL, 'i', 'f'},
 	{PG_CAST_ENTRY, "sys", "datetime", "sys", "varchar", NULL, 'i', 'f'},
-	{PG_CAST_ENTRY, "sys", "datetime", "pg_catalog", "char", NULL, 'i', 'f'},
+	{PG_CAST_ENTRY, "sys", "datetime", "pg_catalog", "bpchar", NULL, 'i', 'f'},
 	{PG_CAST_ENTRY, "pg_catalog", "varchar", "sys", "datetime", NULL, 'i', 'f'},
 	{PG_CAST_ENTRY, "sys", "varchar", "sys", "datetime", NULL, 'i', 'f'},
-	{PG_CAST_ENTRY, "pg_catalog", "char", "sys", "datetime", NULL, 'i', 'f'},
+	{PG_CAST_ENTRY, "pg_catalog", "bpchar", "sys", "datetime", NULL, 'i', 'f'},
 // datetime2
     {PG_CAST_ENTRY, "sys", "datetime2", "pg_catalog", "date", NULL, 'i', 'f'},
     {PG_CAST_ENTRY, "sys", "datetime2", "pg_catalog", "time", NULL, 'i', 'f'},
@@ -160,21 +153,21 @@ tsql_cast_raw_info_t tsql_cast_raw_infos[] =
     {PG_CAST_ENTRY, "sys", "datetime2", "sys", "datetime", NULL, 'i', 'f'},
 	{PG_CAST_ENTRY, "sys", "datetime2", "pg_catalog", "varchar", NULL, 'i', 'f'},
 	{PG_CAST_ENTRY, "sys", "datetime2", "sys", "varchar", NULL, 'i', 'f'},
-	{PG_CAST_ENTRY, "sys", "datetime2", "pg_catalog", "char", NULL, 'i', 'f'},
+	{PG_CAST_ENTRY, "sys", "datetime2", "pg_catalog", "bpchar", NULL, 'i', 'f'},
 	{PG_CAST_ENTRY, "pg_catalog", "varchar", "sys", "datetime2", NULL, 'i', 'f'},
 	{PG_CAST_ENTRY, "sys", "varchar", "sys", "datetime2", NULL, 'i', 'f'},
-	{PG_CAST_ENTRY, "pg_catalog", "char", "sys", "datetime2", NULL, 'i', 'f'},
+	{PG_CAST_ENTRY, "pg_catalog", "bpchar", "sys", "datetime2", NULL, 'i', 'f'},
 // datetimeoffset
-    {TSQL_CAST_ENTRY, "sys", "datetimeoffset", "pg_catalog", "time", "datetimeoffset_time", 'i', 'f'},
-    {TSQL_CAST_ENTRY, "sys", "datetimeoffset", "pg_catalog", "date", "datetimeoffset_date", 'i', 'f'},
-    {TSQL_CAST_ENTRY, "sys", "datetimeoffset", "sys", "datetime", "datetimeoffset_datetime", 'i', 'f'},
-    {TSQL_CAST_ENTRY, "sys", "datetimeoffset", "sys", "datetime2", "datetimeoffset_datetime2", 'i', 'f'},
-    {TSQL_CAST_ENTRY, "sys", "datetimeoffset", "sys", "smalldatetime", "datetimeoffset_smalldatetime", 'i', 'f'},
-    {TSQL_CAST_ENTRY, "pg_catalog", "time", "sys", "datetimeoffset", "time_datetimeoffset", 'i', 'f'},
-    {TSQL_CAST_ENTRY, "pg_catalog", "date", "sys", "datetimeoffset", "date_datetimeoffset", 'i', 'f'},
-    {TSQL_CAST_ENTRY, "sys", "datetime", "sys", "datetimeoffset", "datetime_datetimeoffset", 'i', 'f'},
-    {TSQL_CAST_ENTRY, "sys", "datetime2", "sys", "datetimeoffset", "datetime2_datetimeoffset", 'i', 'f'},
-    {TSQL_CAST_ENTRY, "sys", "smalldatetime", "sys", "datetimeoffset", "smalldatetime_datetimeoffset", 'i', 'f'},
+    {TSQL_CAST_ENTRY, "sys", "datetimeoffset", "pg_catalog", "time", "datetimeoffset2time", 'i', 'f'},
+    {TSQL_CAST_ENTRY, "sys", "datetimeoffset", "pg_catalog", "date", "datetimeoffset2date", 'i', 'f'},
+    {TSQL_CAST_ENTRY, "sys", "datetimeoffset", "sys", "datetime", "datetimeoffset2datetime", 'i', 'f'},
+    {TSQL_CAST_ENTRY, "sys", "datetimeoffset", "sys", "datetime2", "datetimeoffset2datetime2", 'i', 'f'},
+    {TSQL_CAST_ENTRY, "sys", "datetimeoffset", "sys", "smalldatetime", "datetimeoffset2smalldatetime", 'i', 'f'},
+    {TSQL_CAST_ENTRY, "pg_catalog", "time", "sys", "datetimeoffset", "time2datetimeoffset", 'i', 'f'},
+    {TSQL_CAST_ENTRY, "pg_catalog", "date", "sys", "datetimeoffset", "date2datetimeoffset", 'i', 'f'},
+    {TSQL_CAST_ENTRY, "sys", "datetime", "sys", "datetimeoffset", "datetime2datetimeoffset", 'i', 'f'},
+    {TSQL_CAST_ENTRY, "sys", "datetime2", "sys", "datetimeoffset", "datetime22datetimeoffset", 'i', 'f'},
+    {TSQL_CAST_ENTRY, "sys", "smalldatetime", "sys", "datetimeoffset", "smalldatetime2datetimeoffset", 'i', 'f'},
 // uniqueidentifier
     {PG_CAST_ENTRY, "sys", "bbf_binary", "sys", "uniqueidentifier", NULL, 'i', 'f'},
     {PG_CAST_ENTRY, "sys", "bbf_varbinary", "sys", "uniqueidentifier", NULL, 'i', 'f'},
@@ -497,6 +490,7 @@ init_tsql_coerce_hash_tab(PG_FUNCTION_ARGS)
     tsql_cast_info_key_t    *key;
     tsql_cast_info_entry_t  *entry;
     Oid                     sys_nspoid = get_namespace_oid("sys", true);
+    Oid                     *argTypes;
 
     TSQLInstrumentation(INSTR_TSQL_INIT_TSQL_COERCE_HASH_TAB);
 
@@ -537,6 +531,10 @@ init_tsql_coerce_hash_tab(PG_FUNCTION_ARGS)
 
 	/* mark the hash table initialised */
 	inited_ht_tsql_cast_info = true;
+
+    argTypes = (Oid *) palloc(3 * sizeof(Oid));
+    argTypes[1] = INT4OID;
+    argTypes[2] = BOOLOID;
 
     for (int i=0;i<TOTAL_TSQL_CAST_COUNT;i++)
     {
@@ -586,6 +584,14 @@ init_tsql_coerce_hash_tab(PG_FUNCTION_ARGS)
                                 CStringGetDatum(tsql_cast_raw_infos[i].castfunc),
                                 PointerGetDatum(buildoidvector(&castsource, 1)),
                                 ObjectIdGetDatum(sys_nspoid));
+                    if (!OidIsValid(entry->castfunc))
+                    {
+                        argTypes[0] = castsource;
+                        entry->castfunc = GetSysCacheOid3(PROCNAMEARGSNSP, Anum_pg_proc_oid,
+                                    CStringGetDatum(tsql_cast_raw_infos[i].castfunc),
+                                    PointerGetDatum(buildoidvector(argTypes, 3)),
+                                    ObjectIdGetDatum(sys_nspoid));
+                    }
                     if (!OidIsValid(entry->castfunc))
                     {
                         /* function is not loaded. wait for next scan */
@@ -1085,6 +1091,13 @@ init_tsql_datatype_precedence_hash_tab(PG_FUNCTION_ARGS)
 	}
 
 	PG_RETURN_INT32(0);
+}
+
+Datum
+datatype_hash_tables_initialised(PG_FUNCTION_ARGS)
+{
+	bool inited = inited_ht_tsql_cast_info & inited_ht_tsql_datatype_precedence_info;
+	PG_RETURN_BOOL(inited);
 }
 
 /*
