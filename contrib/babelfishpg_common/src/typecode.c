@@ -17,6 +17,12 @@
 /*  Memory context  */
 MemoryContext TransMemoryContext = NULL;
 
+/* 
+   Note: For performance optimization there is a view sys.type_info_internal 
+   defined in contrib/babelfishpg_tsql/sql/sys_views.sql file.
+   That view contains a 'map' of the psql to sql server names specified here.
+   If changes are made here, the corresponding change needs to be made to the sys.type_info_internal view.
+*/
 type_info_t type_infos[TOTAL_TYPECODE_COUNT] =
 {
     {0, 1, "sql_variant"     , "sql_variant"     , 1,  1, 1},
