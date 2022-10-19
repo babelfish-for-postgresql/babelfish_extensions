@@ -237,7 +237,6 @@ BABEL-SP_SPROC_COLUMNS
 BABEL-3000
 sys-foreign_key_columns-dep
 sys-foreign_keys-dep
-sys-identity_columns-dep
 sys-indexes-dep
 sys-key_constraints-dep
 sys-schemas-dep
@@ -247,7 +246,6 @@ sys-tables-dep
 sys-types-dep
 sys-views-dep
 sys-check_constraints-dep
-sys-computed_columns-dep
 sys-index_columns-dep
 sys-sp_databases-dep
 sys-syscolumns-dep

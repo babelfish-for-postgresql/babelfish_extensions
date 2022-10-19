@@ -6680,33 +6680,6 @@ AND has_schema_privilege(t1.relnamespace, 'USAGE')
 AND has_table_privilege(t1.oid, 'SELECT,INSERT,UPDATE,DELETE,TRUNCATE,TRIGGER');
 GRANT SELECT ON sys.sp_tables_view TO PUBLIC;
 
-CREATE OR REPLACE PROCEDURE sys.sp_tables (
-    "@table_name" sys.nvarchar(384) = '',
-    "@table_owner" sys.nvarchar(384) = '', 
-    "@table_qualifier" sys.sysname = '',
-    "@table_type" sys.nvarchar(100) = '',
-    "@fusepattern" sys.bit = '1')
-AS $$
-	DECLARE @opt_table sys.varchar(16) = '';
-	DECLARE @opt_view sys.varchar(16) = ''; 
-BEGIN
-	IF (@table_qualifier != '') AND (LOWER(@table_qualifier) != LOWER(sys.db_name()))
-	BEGIN
-		THROW 33557097, N'The database name component of the object qualifier must be the name of the current database.', 1;
-	END
-	
-	SELECT
-	CAST(out_table_qualifier AS sys.sysname) AS TABLE_QUALIFIER,
-	CAST(out_table_owner AS sys.sysname) AS TABLE_OWNER,
-	CAST(out_table_name AS sys.sysname) AS TABLE_NAME,
-	CAST(out_table_type AS sys.varchar(32)) AS TABLE_TYPE,
-	CAST(out_remarks AS sys.varchar(254)) AS REMARKS
-	FROM sys.sp_tables_internal(@table_name, @table_owner, @table_qualifier, CAST(@table_type AS varchar(100)), @fusepattern);
-END;
-$$
-LANGUAGE 'pltsql';
-GRANT EXECUTE ON PROCEDURE sys.sp_tables TO PUBLIC;
-
 ALTER VIEW sys.assembly_types RENAME TO assembly_types_deprecated_in_2_3_0;
 
 CREATE OR REPLACE VIEW sys.assembly_types
