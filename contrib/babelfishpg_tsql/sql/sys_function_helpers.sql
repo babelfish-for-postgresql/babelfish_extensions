@@ -9664,6 +9664,58 @@ $BODY$
 LANGUAGE plpgsql
 VOLATILE;
 
+-- convertion to datetime2
+CREATE OR REPLACE FUNCTION sys.babelfish_conv_helper_to_datetime2(IN typename TEXT,
+                                                            IN arg TEXT,
+                                                            IN try BOOL,
+													        IN p_style NUMERIC DEFAULT 0)
+RETURNS DATETIME2
+AS
+$BODY$
+BEGIN
+    IF try THEN
+	    RETURN sys.babelfish_try_conv_string_to_datetime(typename, arg, p_style);
+    ELSE
+        RETURN sys.babelfish_conv_string_to_datetime(typename, arg, p_style);
+    END IF;
+END;
+$BODY$
+LANGUAGE plpgsql
+VOLATILE;
+
+CREATE OR REPLACE FUNCTION sys.babelfish_conv_helper_to_datetime2(IN typename TEXT,
+                                                            IN arg anyelement,
+                                                            IN try BOOL,
+													        IN p_style NUMERIC DEFAULT 0)
+RETURNS DATETIME2
+AS
+$BODY$
+BEGIN
+    IF try THEN
+        RETURN sys.babelfish_try_conv_to_datetime2(arg);
+    ELSE
+        RETURN CAST(arg AS DATETIME2);
+    END IF;
+END;
+$BODY$
+LANGUAGE plpgsql
+VOLATILE;
+
+
+CREATE OR REPLACE FUNCTION sys.babelfish_try_conv_to_datetime2(IN arg anyelement)
+RETURNS DATETIME2
+AS
+$BODY$
+BEGIN
+    RETURN CAST(arg AS DATETIME2);
+    EXCEPTION
+        WHEN OTHERS THEN
+            RETURN NULL;
+END;
+$BODY$
+LANGUAGE plpgsql
+VOLATILE;
+
 -- convertion to varchar
 CREATE OR REPLACE FUNCTION sys.babelfish_conv_helper_to_varchar(IN typename TEXT,
                                                         IN arg TEXT,
