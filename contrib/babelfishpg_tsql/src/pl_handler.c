@@ -2372,6 +2372,7 @@ static void bbf_ProcessUtility(PlannedStmt *pstmt,
 														 list_head(stmt->options));
 														 pfree(headel);
 
+						elog(WARNING, "Trying to handle original_user name in pl_handler by manually replacing the user name ");
 						/* Filter TSQL role options from default role options */
 						foreach(option, stmt->options)
 						{
@@ -2382,7 +2383,6 @@ static void bbf_ProcessUtility(PlannedStmt *pstmt,
 								location = defel->location;
 								user_options = lappend(user_options, defel);
 							}
-
 							/*
 							 * This condition is to handle create role when using sp_addrole procedure
 							 * because there we add original_user_name before hand
@@ -2391,8 +2391,11 @@ static void bbf_ProcessUtility(PlannedStmt *pstmt,
 							{
 								user_options = lappend(user_options, defel);
 								orig_username_exists = true;
+								elog(WARNING, "sp-addrole: Filter tsql role option from default for original_user_name in pl_handler");
 							}
+							
 						}
+						
 
 						foreach(option, user_options)
 						{
