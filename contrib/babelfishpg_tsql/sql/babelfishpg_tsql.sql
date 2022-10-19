@@ -2690,13 +2690,13 @@ SELECT
   	    WHEN ss.x IS NOT NULL AND st.is_table_type = 1 THEN 2147483647
   	    ELSE NULL
   	  END
-  	AS int) AS CHAR_OCTET_LENGTH
+  	AS sys.int) AS CHAR_OCTET_LENGTH
   , CAST(
   	  CASE
   	    WHEN ss.x IS NULL THEN 0
   	    ELSE (ss.x).n 
   	  END 
-  	AS INT) AS ORDINAL_POSITION
+  	AS sys.int) AS ORDINAL_POSITION
   , CAST(
       CASE
         WHEN ss.x IS NULL AND ss.proretset THEN 'NO'

@@ -2729,13 +2729,13 @@ SELECT
   	    WHEN ss.x IS NOT NULL AND st.is_table_type = 1 THEN 2147483647
   	    ELSE NULL
   	  END
-  	AS int) AS CHAR_OCTET_LENGTH
+  	AS sys.int) AS CHAR_OCTET_LENGTH
   , CAST(
   	  CASE
   	    WHEN ss.x IS NULL THEN 0
   	    ELSE (ss.x).n 
   	  END 
-  	AS INT) AS ORDINAL_POSITION
+  	AS sys.int) AS ORDINAL_POSITION
   , CAST(
       CASE
         WHEN ss.x IS NULL AND ss.proretset THEN 'NO'
@@ -2781,7 +2781,7 @@ SELECT
 	       OR p.proname like 'xp\_%'
 	       OR p.proname like 'dm\_%'
 	       OR p.proname like 'fn\_%'))
-      )
+	)
 	       
      SELECT -- Selects all parameters (input and output), but NOT return values
        p.proname as proname,
@@ -2817,8 +2817,10 @@ SELECT
   LEFT JOIN sys.babelfish_namespace_ext bne ON ns.nspname = bne.nspname 
   LEFT JOIN sys.databases d ON d.database_id = bne.dbid
   LEFT JOIN sys.types st ON ((ss.x IS NOT NULL AND st.user_type_id = (ss.x).x) OR (ss.x IS NULL AND st.user_type_id = ss.prorettype))
+  -- Because spt_datatype_info_table does contain user-defind types and their names,
+  -- the join below allows us to retrieve the system type name on what the user-defined type was based on.
   LEFT JOIN sys.spt_datatype_info_table sdit ON sdit.type_name = (SELECT name FROM sys.types WHERE user_type_id = st.system_type_id)
-WHERE ( ss.proargmodes[(ss.x).n] in ('i', 'o', 'b')  OR ss.proargmodes[(ss.x).n] is NULL);
+WHERE (ss.proargmodes[(ss.x).n] in ('i', 'o', 'b')  OR ss.proargmodes[(ss.x).n] is NULL);
 GRANT SELECT ON sys.sp_sproc_columns_view TO PUBLIC;
 
 CALL sys.babelfish_drop_deprecated_object('view', 'sys', 'sp_sproc_columns_view_deprecated_in_2_3_0');
