@@ -2686,8 +2686,7 @@ SELECT
       CASE
         WHEN ss.n IS NULL THEN
           CASE 
-            WHEN ss.proretset THEN 0
-            WHEN ss.prokind = 'p' THEN (SELECT nullable FROM sys.spt_datatype_info_table WHERE type_name = 'int')
+            WHEN ss.proretset OR ss.prokind = 'p' THEN 0
             ELSE sdit.nullable 
           END
   	    WHEN st.is_table_type = 1 THEN 1
