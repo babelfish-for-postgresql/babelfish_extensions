@@ -2372,7 +2372,6 @@ static void bbf_ProcessUtility(PlannedStmt *pstmt,
 														 list_head(stmt->options));
 														 pfree(headel);
 
-						elog(WARNING, "Trying to handle original_user name in pl_handler by manually replacing the user name ");
 						/* Filter TSQL role options from default role options */
 						foreach(option, stmt->options)
 						{
@@ -2391,7 +2390,6 @@ static void bbf_ProcessUtility(PlannedStmt *pstmt,
 							{
 								user_options = lappend(user_options, defel);
 								orig_username_exists = true;
-								elog(WARNING, "sp-addrole: Filter tsql role option from default for original_user_name in pl_handler");
 							}
 							
 						}

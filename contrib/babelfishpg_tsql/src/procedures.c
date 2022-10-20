@@ -1115,11 +1115,13 @@ gen_sp_addrole_subcmds(const char *user)
 						list_length(res))));
 
 	stmt = parsetree_nth_stmt(res, 0);
-	update_CreateRoleStmt(stmt, user, NULL, NULL);
-	rewrite_object_refs(stmt);
 	rolestmt = (CreateRoleStmt *) stmt;
+	if (!IsA(createrole_stmt, CreateRoleStmt))
+		ereport(ERROR, (errcode(ERRCODE_SYNTAX_ERROR), errmsg("query is not a CreateRoleStmt")));
+	
+	rolestmt->role = pstrdup(user);
+	rewrite_object_refs(stmt);
 
-	elog(WARNING, "sp_addrole - Trying to handle original_user name in procedures by manually replacing the user name");
 	/*
 	 * Add original_user_name before hand because placeholder
 	 * query "(CREATE ROLE )" is being passed
@@ -1130,7 +1132,6 @@ gen_sp_addrole_subcmds(const char *user)
 				(Node *) makeString(user),
 						-1));
 	rolestmt->options = list_concat(rolestmt->options, user_options);
-	elog(WARNING, "sp_addrole - Replaced the user name manually in procedures");
 
 	return res;
 }
