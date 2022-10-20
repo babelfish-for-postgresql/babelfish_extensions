@@ -115,7 +115,6 @@ Could not find upgrade tests for function sessionproperty
 Could not find upgrade tests for function sys.babelfish_cast_floor_bigint
 Could not find upgrade tests for function sys.babelfish_cast_floor_int
 Could not find upgrade tests for function sys.babelfish_cast_floor_smallint
-Could not find upgrade tests for function sys.babelfish_helpdb
 Could not find upgrade tests for function sys.babelfish_runtime_error
 Could not find upgrade tests for function sys.babelfish_try_cast_floor_bigint
 Could not find upgrade tests for function sys.babelfish_try_cast_floor_int

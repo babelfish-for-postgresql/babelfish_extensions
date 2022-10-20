@@ -80,6 +80,7 @@ extern int16 get_db_id(const char *dbname);
 extern char *get_db_name(int16 dbid);
 extern void initTsqlSyscache(void);
 extern const char *get_one_user_db_name(void);
+extern bool guest_has_dbaccess(char *db_name);
 
 #define DEFAULT_DATABASE_COMPATIBILITY_LEVEL 80
 
@@ -125,6 +126,7 @@ extern Oid get_authid_login_ext_idx_oid(void);
 #define Anum_bbf_authid_user_ext_orig_username			11
 #define Anum_bbf_authid_user_ext_database_name			12
 #define Anum_bbf_authid_user_ext_default_schema_name	13
+#define Anum_bbf_authid_user_ext_user_can_connect		16
 extern Oid			bbf_authid_user_ext_oid;
 extern Oid			bbf_authid_user_ext_idx_oid;
 
@@ -136,6 +138,8 @@ extern char *get_authid_user_ext_physical_name(const char *db_name, const char *
 extern char *get_authid_user_ext_schema_name(const char *db_name, const char *user_name);
 extern List *get_authid_user_ext_db_users(const char *db_name);
 extern char *get_user_for_database(const char *db_name);
+extern void alter_user_can_connect(bool is_grant, char *user_name, char *db_name);
+extern bool guest_role_exists_for_db(char *dbname);
 
 /* MUST comply with babelfish_authid_user_ext table */
 typedef struct FormData_authid_user_ext
@@ -155,6 +159,7 @@ typedef struct FormData_authid_user_ext
 	VarChar		default_schema_name;
 	VarChar		default_language_name;
 	VarChar		authentication_type_desc;
+	int32		user_can_connect;
 } FormData_authid_user_ext;
 
 typedef FormData_authid_user_ext *Form_authid_user_ext;

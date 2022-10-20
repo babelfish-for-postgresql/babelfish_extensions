@@ -1,0 +1,23 @@
+SELECT * FROM sys_all_parameters_dep_vu_prepare_upgrade_view
+GO
+~~START~~
+varchar#!#int#!#smallint#!#tinyint#!#tinyint#!#bit#!#bit#!#bit#!#sql_variant#!#int#!#bit#!#bit#!#int#!#nvarchar#!#varchar#!#int#!#varchar
+@num1#!#1#!#4#!#10#!#0#!#0#!#0#!#0#!#<NULL>#!#0#!#0#!#1#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>
+~~END~~
+
+
+EXEC sys_all_parameters_dep_vu_prepare_upgrade_proc
+GO
+~~START~~
+varchar#!#int#!#smallint#!#tinyint#!#tinyint#!#bit#!#bit#!#bit#!#sql_variant#!#int#!#bit#!#bit#!#int#!#nvarchar#!#varchar#!#int#!#varchar
+@num1#!#1#!#4#!#10#!#0#!#0#!#0#!#0#!#<NULL>#!#0#!#0#!#1#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>
+~~END~~
+
+
+SELECT sys_all_parameters_dep_vu_prepare_upgrade_func()
+GO
+~~START~~
+int
+1
+~~END~~
+
