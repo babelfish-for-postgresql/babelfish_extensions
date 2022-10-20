@@ -1387,7 +1387,9 @@ Rule must_have_rules[] =
 	{"msdb_dbo must exist in babelfish_authid_user_ext",
 	 "babelfish_authid_user_ext", "rolname", NULL, get_msdb_dbo, NULL, check_exist, NULL},
 	{"msdb_guest must exist in babelfish_authid_user_ext",
-	 "babelfish_authid_user_ext", "rolname", NULL, get_msdb_guest, NULL, check_exist, NULL}
+	 "babelfish_authid_user_ext", "rolname", NULL, get_msdb_guest, NULL, check_exist, NULL},
+	{"In single-db mode, if user db exists, <name>_guest must also exist in babelfish_authid_user_ext",
+	 "babelfish_authid_user_ext", "rolname", NULL, get_name_guest, is_singledb_exists_userdb, check_exist, NULL}
 };
 
 /* Must match rules, MUST comply with metadata_inconsistency_check() */
