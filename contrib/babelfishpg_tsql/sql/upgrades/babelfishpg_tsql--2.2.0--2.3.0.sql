@@ -2592,28 +2592,28 @@ SELECT
     AS sys.nvarchar(134)) AS PROCEDURE_NAME
   , CAST(
   	  CASE 
-  	  	WHEN ss.x IS NULL THEN
+  	  	WHEN ss.n IS NULL THEN
   	  	  CASE
   	  	    WHEN ss.proretset THEN '@TABLE_RETURN_VALUE'
  	        ELSE '@RETURN_VALUE'
  	      END 
- 	    ELSE COALESCE(ss.proargnames[(ss.x).n], '')
+ 	    ELSE COALESCE(ss.proargnames[n], '')
  	  END
  	AS sys.SYSNAME) AS COLUMN_NAME
   , CAST(
  	  CASE
- 	    WHEN ss.x IS NULL THEN
+ 	    WHEN ss.n IS NULL THEN
  	      CASE 
  	        WHEN ss.proretset THEN 3
  	        ELSE 5
  	      END
- 	  	WHEN ss.proargmodes[(ss.x).n] in ('o', 'b') THEN 2
+ 	  	WHEN ss.proargmodes[n] in ('o', 'b') THEN 2
  	  	ELSE 1
  	  END
   	AS smallint) AS COLUMN_TYPE
   , CAST(
   	  CASE
-  	    WHEN ss.x IS NULL THEN
+  	    WHEN ss.n IS NULL THEN
   	      CASE
   	        WHEN ss.prokind = 'p' THEN (SELECT data_type FROM sys.spt_datatype_info_table  WHERE type_name = 'int')
   	    	WHEN ss.proretset THEN NULL
@@ -2625,7 +2625,7 @@ SELECT
   	AS smallint) AS DATA_TYPE
   , CAST(
       CASE 
-        WHEN ss.x IS NULL THEN
+        WHEN ss.n IS NULL THEN
           CASE 
             WHEN ss.proretset THEN 'table' 
             WHEN ss.prokind = 'p' THEN 'int'
@@ -2636,7 +2636,7 @@ SELECT
     AS sys.sysname) AS TYPE_NAME
   , CAST(
   	  CASE
-  	    WHEN ss.x IS NULL THEN
+  	    WHEN ss.n IS NULL THEN
   	      CASE 
   	        WHEN ss.proretset THEN 0 
 	        WHEN ss.prokind = 'p' THEN (SELECT precision FROM sys.types WHERE name = 'int')
@@ -2648,7 +2648,7 @@ SELECT
   	AS sys.int) AS PRECISION
   , CAST(
       CASE
-        WHEN ss.x IS NULL THEN
+        WHEN ss.n IS NULL THEN
           CASE
             WHEN ss.proretset THEN 0
 	        WHEN ss.prokind = 'p' THEN (SELECT max_length FROM sys.types WHERE name = 'int')
@@ -2660,7 +2660,7 @@ SELECT
   	AS sys.int) AS LENGTH
   , CAST(
       CASE
-        WHEN ss.x IS NULL THEN 
+        WHEN ss.n IS NULL THEN 
           CASE
             WHEN ss.proretset THEN 0 
             WHEN ss.prokind = 'p' THEN (SELECT scale FROM sys.types WHERE name = 'int')
@@ -2672,7 +2672,7 @@ SELECT
   	AS smallint) AS SCALE
   , CAST(
       CASE
-        WHEN ss.x IS NULL THEN
+        WHEN ss.n IS NULL THEN
           CASE
             WHEN ss.proretset THEN 0
 	        WHEN ss.prokind = 'p' THEN (SELECT num_prec_radix FROM sys.spt_datatype_info_table WHERE type_name = 'int')
@@ -2684,7 +2684,7 @@ SELECT
   	AS smallint) AS RADIX
   , CAST(
       CASE
-        WHEN ss.x IS NULL THEN
+        WHEN ss.n IS NULL THEN
           CASE 
             WHEN ss.proretset THEN 0
             WHEN ss.prokind = 'p' THEN (SELECT nullable FROM sys.spt_datatype_info_table WHERE type_name = 'int')
@@ -2696,14 +2696,14 @@ SELECT
   	AS smallint) AS NULLABLE
   , CAST(
       CASE 
-        WHEN ss.x IS NULL AND ss.proretset THEN 'Result table returned by table valued function'
+        WHEN ss.n IS NULL AND ss.proretset THEN 'Result table returned by table valued function'
         ELSE NULL
       END
     AS sys.varchar(254)) AS REMARKS
   , CAST(NULL AS sys.nvarchar(4000)) AS COLUMN_DEF
   , CAST(
       CASE
-        WHEN ss.x IS NULL THEN
+        WHEN ss.n IS NULL THEN
           CASE
             WHEN ss.proretset THEN NULL
             WHEN ss.prokind = 'p' THEN (SELECT sql_data_type FROM sys.spt_datatype_info_table WHERE type_name = 'int')
@@ -2715,7 +2715,7 @@ SELECT
   	AS smallint) AS SQL_DATA_TYPE
   , CAST(
       CASE
-        WHEN ss.x IS NULL THEN
+        WHEN ss.n IS NULL THEN
           CASE 
             WHEN ss.proretset THEN 0
             WHEN ss.prokind = 'p' THEN (SELECT sql_datetime_sub FROM sys.spt_datatype_info_table WHERE type_name = 'int')
@@ -2726,19 +2726,19 @@ SELECT
     AS smallint) AS SQL_DATETIME_SUB
   , CAST(
       CASE
-  	    WHEN ss.x IS NOT NULL AND st.is_table_type = 1 THEN 2147483647
+  	    WHEN ss.n IS NOT NULL AND st.is_table_type = 1 THEN 2147483647
   	    ELSE NULL
   	  END
   	AS sys.int) AS CHAR_OCTET_LENGTH
   , CAST(
   	  CASE
-  	    WHEN ss.x IS NULL THEN 0
-  	    ELSE (ss.x).n 
+  	    WHEN ss.n IS NULL THEN 0
+  	    ELSE n 
   	  END 
   	AS sys.int) AS ORDINAL_POSITION
   , CAST(
       CASE
-        WHEN ss.x IS NULL AND ss.proretset THEN 'NO'
+        WHEN ss.n IS NULL AND ss.proretset THEN 'NO'
         WHEN st.is_table_type = 1 THEN 'YES'
         WHEN sdit.nullable = 1 THEN 'YES'
         ELSE 'NO'
@@ -2746,7 +2746,7 @@ SELECT
     AS sys.varchar(254)) AS IS_NULLABLE
   , CAST(
   	  CASE
-  	    WHEN ss.x IS NULL THEN
+  	    WHEN ss.n IS NULL THEN
   	      CASE
   	        WHEN ss.proretset THEN 0
   	        WHEN ss.prokind = 'p' THEN 56
@@ -2791,18 +2791,25 @@ SELECT
        p.proretset as proretset,
        p.prorettype as prorettype,
        p.pronamespace as pronamespace,
-       information_schema._pg_expandarray(
+       (information_schema._pg_expandarray(
        COALESCE(p.proallargtypes,
          CASE 
            WHEN p.prokind = 'f' THEN (CAST(p.proargtypes AS oid[]))
            ELSE CAST(p.proargtypes AS oid[])
          END
-       )) AS x
+       ))).x AS x,
+       (information_schema._pg_expandarray(
+       COALESCE(p.proallargtypes,
+         CASE 
+           WHEN p.prokind = 'f' THEN (CAST(p.proargtypes AS oid[]))
+           ELSE CAST(p.proargtypes AS oid[])
+         END
+       ))).n AS n
     FROM bbf_proc p
       
     UNION ALL
       
-    SELECT -- Selects all return values
+    SELECT -- Selects all return values (this is because inline-table functions could cause duplicate outputs)
       p.proname as proname,
       p.proargnames as proargnames,
       p.proargmodes as proargmodes,
@@ -2810,19 +2817,24 @@ SELECT
       p.proretset as proretset,
       p.prorettype as prorettype,
       p.pronamespace as pronamespace,
-      NULL AS x -- null value indicates that we are retrieving the return values of the proc/func
+      p.prorettype AS x, 
+      NULL AS n -- null value indicates that we are retrieving the return values of the proc/func
     FROM bbf_proc p
+    
   ) ss
   INNER JOIN pg_catalog.pg_namespace ns ON ns.oid = ss.pronamespace
   LEFT JOIN sys.babelfish_namespace_ext bne ON ns.nspname = bne.nspname 
   LEFT JOIN sys.databases d ON d.database_id = bne.dbid
-  LEFT JOIN sys.types st ON ((ss.x IS NOT NULL AND st.user_type_id = (ss.x).x) OR (ss.x IS NULL AND st.user_type_id = ss.prorettype))
+  LEFT JOIN sys.types st ON ss.x = st.user_type_id 
   -- Because spt_datatype_info_table does contain user-defind types and their names,
   -- the join below allows us to retrieve the system type name on what the user-defined type was based on.
   LEFT JOIN sys.spt_datatype_info_table sdit ON sdit.type_name = (SELECT name FROM sys.types WHERE user_type_id = st.system_type_id)
-WHERE (ss.proargmodes[(ss.x).n] in ('i', 'o', 'b')  OR ss.proargmodes is NULL OR ss.x is NULL);
+WHERE (
+		ss.proargmodes[ss.n] in ('i', 'o', 'b') -- From first half of ss, only get inputs of parameters or output of procedure (no return values)
+		OR ss.proargmodes is NULL -- In case of proc with only inputs, ss.proargmodes is NULL
+		OR ss.n is NULL -- In case of return values
+	  );
 GRANT SELECT ON sys.sp_sproc_columns_view TO PUBLIC;
-
 
 CALL sys.babelfish_drop_deprecated_object('view', 'sys', 'sp_sproc_columns_view_deprecated_in_2_3_0');
 
