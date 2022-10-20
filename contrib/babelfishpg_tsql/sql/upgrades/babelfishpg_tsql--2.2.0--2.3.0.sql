@@ -2582,8 +2582,8 @@ ALTER VIEW sys.sp_sproc_columns_view RENAME TO sp_sproc_columns_view_deprecated_
 CREATE OR REPLACE VIEW sys.sp_sproc_columns_view
 AS
 SELECT
-    CAST(d.name AS sys.sysname) AS PROCEDURE_QUALIFIER
-  , CAST(bne.orig_name AS sys.sysname) AS PROCEDURE_OWNER
+    CAST(COALESCE(d.name, sys.db_name()) AS sys.sysname) AS PROCEDURE_QUALIFIER
+  , CAST(COALESCE(bne.orig_name, 'sys') AS sys.sysname) AS PROCEDURE_OWNER
   , CAST(
       CASE
         WHEN ss.prokind = 'p' THEN CONCAT(ss.proname, ';1')
@@ -2820,8 +2820,9 @@ SELECT
   -- Because spt_datatype_info_table does contain user-defind types and their names,
   -- the join below allows us to retrieve the system type name on what the user-defined type was based on.
   LEFT JOIN sys.spt_datatype_info_table sdit ON sdit.type_name = (SELECT name FROM sys.types WHERE user_type_id = st.system_type_id)
-WHERE (ss.proargmodes[(ss.x).n] in ('i', 'o', 'b')  OR ss.proargmodes[(ss.x).n] is NULL);
+WHERE (ss.proargmodes[(ss.x).n] in ('i', 'o', 'b')  OR ss.proargmodes is NULL OR ss.x is NULL);
 GRANT SELECT ON sys.sp_sproc_columns_view TO PUBLIC;
+
 
 CALL sys.babelfish_drop_deprecated_object('view', 'sys', 'sp_sproc_columns_view_deprecated_in_2_3_0');
 
