@@ -533,10 +533,10 @@ init_tsql_coerce_hash_tab(PG_FUNCTION_ARGS)
 	inited_ht_tsql_cast_info = true;
 
     /*
-     * Below array will be used to provide argument types buildoidvector function.
+     * Below array will be used to provide argument types to buildoidvector function.
      * A cast function can have 3 arguments: source datatype, typmod (int4) and
      * cast context (bool), so we prepare the array here with last two values
-     * prefilled and source datatype oid will be filled below.
+     * prefilled and source datatype oid will be filled when required.
      */
     argTypes = (Oid *) palloc(3 * sizeof(Oid));
     argTypes[1] = INT4OID;
