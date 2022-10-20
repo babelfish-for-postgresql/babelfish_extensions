@@ -28,16 +28,16 @@ string InitializeInsertString(const vector<string>& insertedValues, bool isNumer
   return insertString;
 }
 
-string createTableConstraint(const string &constraintType, const vector<string> &constrainCols) {
+string createTableConstraint(const string &constraintType, const vector<string> &constraintCols) {
   
   string tableConstraints{constraintType + "("};
   string comma{};
-  for (int i = 0; i < constrainCols.size(); i++) {
-    tableConstraints += comma + constrainCols[i];
+  for (int i = 0; i < constraintCols.size(); i++) {
+    tableConstraints += comma + constraintCols[i];
     comma = ",";
   }
   tableConstraints += ")";
-  
+
   return tableConstraints;
 }
 
@@ -104,11 +104,11 @@ void verifyValuesInObject(ServerType serverType, const string &objectName, const
   int pk;
   SQLLEN pk_len;
   SQLLEN data_len;
-  char data[BUFFER_LENGTH];
+  char data[BUFFER_SIZE];
 
   const vector<tuple<int, int, SQLPOINTER, int, SQLLEN *>> bind_columns = {
     {1, SQL_C_LONG, &pk, 0, &pk_len},
-    {2, SQL_C_CHAR, &data, BUFFER_LENGTH, &data_len}
+    {2, SQL_C_CHAR, &data, BUFFER_SIZE, &data_len}
   };
 
   // Select all from the tables and assert that the following attributes of the type is correct:
@@ -362,11 +362,11 @@ void testUpdateSuccess(ServerType serverType, const string &tableName, const str
   int pk;
   SQLLEN pk_len;
   SQLLEN data_len;
-  char data[BUFFER_LENGTH];
+  char data[BUFFER_SIZE];
 
   const vector<tuple<int, int, SQLPOINTER, int, SQLLEN *>> bind_columns = {
     {1, SQL_C_LONG, &pk, 0, &pk_len},
-    {2, SQL_C_CHAR, &data, BUFFER_LENGTH, &data_len}
+    {2, SQL_C_CHAR, &data, BUFFER_SIZE, &data_len}
   };
 
   ASSERT_NO_FATAL_FAILURE(odbcHandler.BindColumns(bind_columns));
@@ -418,11 +418,11 @@ void testUpdateFail(ServerType serverType, const string &tableName, const string
   int pk;
   SQLLEN pk_len;
   SQLLEN data_len;
-  char data[BUFFER_LENGTH];
+  char data[BUFFER_SIZE];
 
   const vector<tuple<int, int, SQLPOINTER, int, SQLLEN *>> bind_columns = {
     {1, SQL_C_LONG, &pk, 0, &pk_len},
-    {2, SQL_C_CHAR, &data, BUFFER_LENGTH, &data_len}
+    {2, SQL_C_CHAR, &data, BUFFER_SIZE, &data_len}
   };
 
   ASSERT_NO_FATAL_FAILURE(odbcHandler.BindColumns(bind_columns));
@@ -503,6 +503,7 @@ void testUniqueConstraint(ServerType serverType, const string &tableName, const 
   OdbcHandler odbcHandler(Drivers::GetDriver(serverType));
   odbcHandler.Connect(true);
 
+  const int CHARSIZE = 255;
   char columnName[CHARSIZE];
   RETCODE rcode;
 
@@ -550,7 +551,7 @@ void testComparisonOperators(ServerType serverType, const string &tableName, con
     bind_columns.push_back(tuple_to_insert);
   }
 
-  // Make sure inserted values are correct and operations
+  // Make sure values with operations performed on them output correct result
   ASSERT_NO_FATAL_FAILURE(odbcHandler.BindColumns(bind_columns));
 
   for (int i = 0; i < NUM_OF_DATA; i++) {
