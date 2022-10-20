@@ -1,6 +1,10 @@
 use master;
 go
 
+-- Check if datatype related hash tables are pre-initialised
+SELECT sys.babelfish_datatype_hash_tables_initialised();
+GO
+
 CREATE FUNCTION babel_637_int_multiply (@a int, @b int)
 RETURNS int AS
 BEGIN

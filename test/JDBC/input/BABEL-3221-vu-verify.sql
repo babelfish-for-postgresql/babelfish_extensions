@@ -7,16 +7,10 @@ go
 SELECT * FROM babel_3221_view_2;
 go
 
-SELECT * FROM babel_3221_view_3;
-go
-
 DROP VIEW babel_3221_view;
 go
 
 DROP VIEW babel_3221_view_2;
-go
-
-DROP VIEW babel_3221_view_3;
 go
 
 DROP TABLE babel_3221_table_1;

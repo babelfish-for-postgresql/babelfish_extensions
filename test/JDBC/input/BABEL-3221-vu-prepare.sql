@@ -35,8 +35,3 @@ go
 
 SELECT * FROM babel_3221_view_2;
 go
-
--- BABEL-3632, check if datatype related hash tables are pre-initialised
-CREATE VIEW babel_3221_view_3
-AS SELECT sys.babelfish_datatype_hash_tables_initialised();
-go
