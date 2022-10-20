@@ -36,6 +36,7 @@ BABEL-3369
 BABEL-3370
 sys-check_constraints
 sys-computed_columns
+sys-databases
 sys-dm_exec_connections
 sys-dm_os_host_info
 sys-endpoints
@@ -138,6 +139,7 @@ babel_sqlvariant_cast_compare
 tdscollation
 babel_datatype_sqlvariant
 sys-all_columns
+sys-all_parameters
 sys-default_constraints
 sys-dm_exec_sessions
 sys-foreign_key_columns
@@ -174,3 +176,5 @@ BABEL-SPCOLUMNS-dep
 BABEL-3000-dep
 BABEL-3556-before-14_6
 BABEL-3010-before-14_6
+BABEL_GRANT_CONNECT
+BABEL-sp_helpdb

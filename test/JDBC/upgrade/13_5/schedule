@@ -41,6 +41,7 @@ BABEL-3369
 BABEL-3370
 msdb-dbo-syspolicy_system_health_state
 sys-all_columns
+sys-all_parameters
 sys-assembly_modules
 sys-change_tracking_databases
 sys-change_tracking_tables
@@ -98,6 +99,7 @@ msdb-dbo-fn_syspolicy_is_automation_enabled
 objectpropertyex
 sys-column-property
 sys-datefirst
+sys-databases
 sys-lock_timeout
 sys-max_connections
 sys-objects
@@ -223,3 +225,5 @@ BABEL-SPCOLUMNS-dep
 BABEL-3000-dep
 BABEL-3556-before-14_6
 BABEL-3010-before-14_6
+BABEL_GRANT_CONNECT
+BABEL-sp_helpdb

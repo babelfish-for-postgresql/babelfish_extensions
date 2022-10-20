@@ -41,6 +41,7 @@ BABEL-3234
 BABEL-3402
 msdb-dbo-syspolicy_system_health_state
 sys-all_columns
+sys-all_parameters
 sys-assembly_modules
 sys-change_tracking_databases
 sys-change_tracking_tables
@@ -264,3 +265,5 @@ BABEL-SP_STORED_PROCEDURES-dep
 BABEL-3000-dep
 BABEL-3556-before-14_6
 BABEL-3010-before-14_6
+BABEL_GRANT_CONNECT
+BABEL-sp_helpdb
