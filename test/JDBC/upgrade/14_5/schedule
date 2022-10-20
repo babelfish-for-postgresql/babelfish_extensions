@@ -263,7 +263,6 @@ sys-syslanguages
 sys-table_types
 sys-tables
 sys-triggers
-sys-types
 sys-views
 sys-xml_indexes
 sys-xml_schema_collections
