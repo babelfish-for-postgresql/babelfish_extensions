@@ -4,7 +4,6 @@
 
 #include "fmgr.h"
 #include "instr.h"
-#include "access/transam.h"
 #include "optimizer/planner.h"
 #include "parser/parse_collate.h"
 #include "parser/parse_target.h"
@@ -26,23 +25,6 @@ BabelfishTranslateCollation(
 CLUSTER_COLLATION_OID_hook_type prev_CLUSTER_COLLATION_OID_hook = NULL;
 TranslateCollation_hook_type prev_TranslateCollation_hook = NULL;
 PreCreateCollation_hook_type prev_PreCreateCollation_hook = NULL;
-
-/* ----------
- * BabelfishSetNextOid
- *
- * This function can be used to avoid duplicated OIDs.
- * ----------
- */
-PG_FUNCTION_INFO_V1(BabelfishSetNextOid);
-
-Datum
-BabelfishSetNextOid(PG_FUNCTION_ARGS)
-{
-	Oid next_oid = PG_GETARG_OID(0);
-	XLogPutNextOid(next_oid);
-	ShmemVariableCache->nextOid = next_oid;
-	ShmemVariableCache->oidCount = 0;
-}
 
 /* Module callbacks */
 void	_PG_init(void);
