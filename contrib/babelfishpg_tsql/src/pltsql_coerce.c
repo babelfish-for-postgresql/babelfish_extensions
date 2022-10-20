@@ -1107,8 +1107,8 @@ init_tsql_datatype_precedence_hash_tab(PG_FUNCTION_ARGS)
 Datum
 datatype_hash_tables_initialised(PG_FUNCTION_ARGS)
 {
-	bool inited = inited_ht_tsql_cast_info & inited_ht_tsql_datatype_precedence_info;
-	PG_RETURN_BOOL(inited);
+    bool inited = inited_ht_tsql_cast_info & inited_ht_tsql_datatype_precedence_info;
+    PG_RETURN_BOOL(inited);
 }
 
 /*
