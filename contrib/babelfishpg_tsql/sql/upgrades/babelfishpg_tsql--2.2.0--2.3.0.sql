@@ -2577,10 +2577,6 @@ AS 'babelfishpg_tsql', 'update_user_catalog_for_guest';
  
 CALL sys.babelfish_update_user_catalog_for_guest();
 
-CREATE OR REPLACE FUNCTION sys.babelfish_datatype_hash_tables_initialised()
-RETURNS BOOL
-AS 'babelfishpg_tsql', 'datatype_hash_tables_initialised' LANGUAGE C;
-
 CREATE OR REPLACE FUNCTION sys.babelfish_conv_string_to_time(IN p_datatype TEXT,
                                                                  IN p_timestring TEXT,
                                                                  IN p_style NUMERIC DEFAULT 0)
@@ -2758,6 +2754,10 @@ BEGIN
   RETURN 0;
 END;
 $$;
+
+CREATE OR REPLACE FUNCTION sys.babelfish_datatype_hash_tables_initialised()
+RETURNS BOOL
+AS 'babelfishpg_tsql', 'datatype_hash_tables_initialised' LANGUAGE C;
 
 -- Drops the temporary procedure used by the upgrade script.
 -- Please have this be one of the last statements executed in this upgrade script.

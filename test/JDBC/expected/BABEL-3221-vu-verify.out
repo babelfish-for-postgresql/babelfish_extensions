@@ -17,10 +17,21 @@ Y
 ~~END~~
 
 
+SELECT * FROM babel_3221_view_3;
+go
+~~START~~
+bit
+1
+~~END~~
+
+
 DROP VIEW babel_3221_view;
 go
 
 DROP VIEW babel_3221_view_2;
+go
+
+DROP VIEW babel_3221_view_3;
 go
 
 DROP TABLE babel_3221_table_1;
