@@ -4624,7 +4624,7 @@ exec_stmt_execsql(PLtsql_execstate *estate,
 		 * When there is cross db reference to sys or information_schema schemas,
 		 * Change the session property.
 		 */
-		if (strcmp(stmt->schema_name, "sys") == 0 || strcmp(stmt->schema_name, "information_schema") == 0)
+		if (stmt->schema_name != NULL && (strcmp(stmt->schema_name, "sys") == 0 || strcmp(stmt->schema_name, "information_schema") == 0))
 			set_session_properties(stmt->db_name);
 	}
 	if(stmt->is_dml || stmt->is_ddl || stmt->is_create_view)
@@ -5021,7 +5021,7 @@ exec_stmt_execsql(PLtsql_execstate *estate,
 		}
 		if (stmt->is_cross_db)
 		{
-			if (strcmp(stmt->schema_name, "sys") == 0 || strcmp(stmt->schema_name, "information_schema") == 0)
+			if (stmt->schema_name != NULL && (strcmp(stmt->schema_name, "sys") == 0 || strcmp(stmt->schema_name, "information_schema") == 0))
 				set_session_properties(cur_dbname);
 			SetCurrentRoleId(current_user_id, false);
 		}
@@ -5041,7 +5041,7 @@ exec_stmt_execsql(PLtsql_execstate *estate,
 	}
 	if (stmt->is_cross_db)
 	{
-		if (strcmp(stmt->schema_name, "sys") == 0 || strcmp(stmt->schema_name, "information_schema") == 0)
+		if (stmt->schema_name != NULL && (strcmp(stmt->schema_name, "sys") == 0 || strcmp(stmt->schema_name, "information_schema") == 0))
 			set_session_properties(cur_dbname);
 		SetCurrentRoleId(current_user_id, false);
 	}
