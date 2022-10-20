@@ -532,6 +532,12 @@ init_tsql_coerce_hash_tab(PG_FUNCTION_ARGS)
 	/* mark the hash table initialised */
 	inited_ht_tsql_cast_info = true;
 
+    /*
+     * Below array will be used to provide argument types buildoidvector function.
+     * A cast function can have 3 arguments: source datatype, typmod (int4) and
+     * cast context (bool), so we prepare the array here with last two values
+     * prefilled and source datatype oid will be filled below.
+     */
     argTypes = (Oid *) palloc(3 * sizeof(Oid));
     argTypes[1] = INT4OID;
     argTypes[2] = BOOLOID;
@@ -586,6 +592,7 @@ init_tsql_coerce_hash_tab(PG_FUNCTION_ARGS)
                                 ObjectIdGetDatum(sys_nspoid));
                     if (!OidIsValid(entry->castfunc))
                     {
+                        /* also search cast function with 3 input arguments */
                         argTypes[0] = castsource;
                         entry->castfunc = GetSysCacheOid3(PROCNAMEARGSNSP, Anum_pg_proc_oid,
                                     CStringGetDatum(tsql_cast_raw_infos[i].castfunc),
@@ -1093,6 +1100,10 @@ init_tsql_datatype_precedence_hash_tab(PG_FUNCTION_ARGS)
 	PG_RETURN_INT32(0);
 }
 
+/*
+ * Returns true if both the datatype related hash tables
+ * are fully initialised, false otherwise.
+ */
 Datum
 datatype_hash_tables_initialised(PG_FUNCTION_ARGS)
 {
