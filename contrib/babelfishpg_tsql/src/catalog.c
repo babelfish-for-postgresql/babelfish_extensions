@@ -1289,11 +1289,8 @@ static Datum get_msdb_dbo(HeapTuple tuple, TupleDesc dsc);
 static Datum get_dbo(HeapTuple tuple, TupleDesc dsc);
 static Datum get_db_owner(HeapTuple tuple, TupleDesc dsc);
 static Datum get_master_db_owner(HeapTuple tuple, TupleDesc dsc);
-static Datum get_master_guest(HeapTuple tuple, TupleDesc dsc);
 static Datum get_tempdb_db_owner(HeapTuple tuple, TupleDesc dsc);
-static Datum get_tempdb_guest(HeapTuple tuple, TupleDesc dsc);
 static Datum get_msdb_db_owner(HeapTuple tuple, TupleDesc dsc);
-static Datum get_msdb_guest(HeapTuple tuple, TupleDesc dsc);
 static Datum get_owner(HeapTuple tuple, TupleDesc dsc);
 static Datum get_name_db_owner(HeapTuple tuple, TupleDesc dsc);
 static Datum get_name_dbo(HeapTuple tuple, TupleDesc dsc);
@@ -1374,22 +1371,14 @@ Rule must_have_rules[] =
 	 "babelfish_authid_user_ext", "rolname", NULL, get_master_db_owner, NULL, check_exist, NULL},
 	{"master_dbo must exist in babelfish_authid_user_ext",
 	 "babelfish_authid_user_ext", "rolname", NULL, get_master_dbo, NULL, check_exist, NULL},
-	{"master_guest must exist in babelfish_authid_user_ext",
-	 "babelfish_authid_user_ext", "rolname", NULL, get_master_guest, NULL, check_exist, NULL},
 	{"tempdb_db_owner must exist in babelfish_authid_user_ext",
 	 "babelfish_authid_user_ext", "rolname", NULL, get_tempdb_db_owner, NULL, check_exist, NULL},
 	{"tempdb_dbo must exist in babelfish_authid_user_ext",
 	 "babelfish_authid_user_ext", "rolname", NULL, get_tempdb_dbo, NULL, check_exist, NULL},
-	{"tempdb_guest must exist in babelfish_authid_user_ext",
-	 "babelfish_authid_user_ext", "rolname", NULL, get_tempdb_guest, NULL, check_exist, NULL},
 	{"msdb_db_owner must exist in babelfish_authid_user_ext",
 	 "babelfish_authid_user_ext", "rolname", NULL, get_msdb_db_owner, NULL, check_exist, NULL},
 	{"msdb_dbo must exist in babelfish_authid_user_ext",
-	 "babelfish_authid_user_ext", "rolname", NULL, get_msdb_dbo, NULL, check_exist, NULL},
-	{"msdb_guest must exist in babelfish_authid_user_ext",
-	 "babelfish_authid_user_ext", "rolname", NULL, get_msdb_guest, NULL, check_exist, NULL},
-	{"In single-db mode, if user db exists, <name>_guest must also exist in babelfish_authid_user_ext",
-	 "babelfish_authid_user_ext", "rolname", NULL, get_name_guest, is_singledb_exists_userdb, check_exist, NULL}
+	 "babelfish_authid_user_ext", "rolname", NULL, get_msdb_dbo, NULL, check_exist, NULL}
 };
 
 /* Must match rules, MUST comply with metadata_inconsistency_check() */
@@ -1405,7 +1394,9 @@ Rule must_match_rules_sysdb[] =
 	{"In multi-db mode, for each <name> in babelfish_sysdatabases, <name>_dbo must also exist in babelfish_namespace_ext",
 	 "babelfish_namespace_ext", "nspname", NULL, get_name_dbo, is_multidb, check_exist, NULL},
 	{"In multi-db mode, for each <name> in babelfish_sysdatabases, <name>_guest must also exist in babelfish_authid_user_ext",
-	 "babelfish_authid_user_ext", "rolname", NULL, get_name_guest, is_multidb, check_exist, NULL}
+	 "babelfish_authid_user_ext", "rolname", NULL, get_name_guest, is_multidb, check_exist, NULL},
+	{"In single-db mode, for each <name> in babelfish_sysdatabases, <name>_guest must also exist in babelfish_authid_user_ext",
+         "babelfish_authid_user_ext", "rolname", NULL, get_name_guest, !is_multidb, check_exist, NULL}
 };
 
 /* babelfish_namespace_ext */
@@ -1722,33 +1713,15 @@ get_master_db_owner(HeapTuple tuple, TupleDesc dsc)
 }
 
 static Datum
-get_master_guest(HeapTuple tuple, TupleDesc dsc)
-{
-	return CStringGetDatum("master_guest");
-}
-
-static Datum
 get_tempdb_db_owner(HeapTuple tuple, TupleDesc dsc)
 {
 	return CStringGetDatum("tempdb_db_owner");
 }
 
 static Datum
-get_tempdb_guest(HeapTuple tuple, TupleDesc dsc)
-{
-	return CStringGetDatum("tempdb_guest");
-}
-
-static Datum
 get_msdb_db_owner(HeapTuple tuple, TupleDesc dsc)
 {
 	return CStringGetDatum("msdb_db_owner");
-}
-
-static Datum
-get_msdb_guest(HeapTuple tuple, TupleDesc dsc)
-{
-	return CStringGetDatum("msdb_guest");
 }
 
 static Datum
