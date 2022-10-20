@@ -17,6 +17,7 @@
 #include "postgres.h"
 
 #include "access/genam.h"
+#include "access/table.h"
 #include "catalog/pg_authid.h"
 #include "catalog/pg_db_role_setting.h"
 #include "commands/dbcommands.h"
