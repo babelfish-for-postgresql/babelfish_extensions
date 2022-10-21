@@ -1,0 +1,67 @@
+-- table variable
+SELECT * FROM babel_3347_before_14_6_vu1
+GO
+~~START~~
+varchar
+ell
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Argument data type NULL is invalid for argument 1 of substring function)~~
+
+
+-- null constant
+SELECT * FROM babel_3347_before_14_6_vu2
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Argument data type NULL is invalid for argument 1 of substring function)~~
+
+
+-- function that returns null
+SELECT * FROM babel_3347_before_14_6_vu3
+GO
+~~START~~
+nvarchar
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Argument data type NULL is invalid for argument 1 of substring function)~~
+
+
+-- table for substring start index
+SELECT * FROM babel_3347_before_14_6_vu4
+GO
+~~START~~
+varchar
+34567890
+<NULL>
+567890
+~~END~~
+
+
+-- table for substring end index
+SELECT * FROM babel_3347_before_14_6_vu5
+GO
+~~START~~
+varchar
+234
+<NULL>
+23456
+~~END~~
+
+
+-- cast BABEL-3599
+SELECT * FROM babel_3347_before_14_6_vu6
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Argument data type NULL is invalid for argument 1 of substring function)~~
+
+
+-- varibles BABEL-3599
+DECLARE @babel_3347_before_14_6_vu7_var NVARCHAR(MAX) = NULL
+SELECT SUBSTRING(@babel_3347_before_14_6_vu7_var, 2,3)
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Argument data type NULL is invalid for argument 1 of substring function)~~
+
