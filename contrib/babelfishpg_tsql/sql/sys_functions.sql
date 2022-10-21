@@ -2787,7 +2787,7 @@ BEGIN
     IF property = 'ownerid' -- OwnerId
     THEN
         RETURN (
-                SELECT distinct CAST(COALESCE(t1.principal_id, pn.nspowner) AS INT)
+                SELECT CAST(COALESCE(t1.principal_id, pn.nspowner) AS INT)
                 FROM sys.all_objects t1
                 INNER JOIN pg_catalog.pg_namespace pn ON pn.oid = t1.schema_id
                 WHERE t1.object_id = id);
@@ -2798,33 +2798,33 @@ BEGIN
 
     ELSEIF property = 'execisquotedidenton' -- ExecIsQuotedIdentOn
     THEN
-        RETURN (SELECT CAST(sm.uses_quoted_identifier as int) FROM sys.all_sql_modules sm WHERE sm.object_id = id limit 1);
+        RETURN (SELECT CAST(sm.uses_quoted_identifier as int) FROM sys.all_sql_modules sm WHERE sm.object_id = id);
 
     ELSEIF property = 'tablefulltextpopulatestatus' -- TableFullTextPopulateStatus
     THEN
-        IF NOT EXISTS (SELECT distinct object_id FROM sys.tables t WHERE t.object_id = id) THEN
+        IF NOT EXISTS (SELECT object_id FROM sys.tables t WHERE t.object_id = id) THEN
             RETURN NULL;
         END IF;
         RETURN 0;
 
     ELSEIF property = 'tablehasvardecimalstorageformat' -- TableHasVarDecimalStorageFormat
     THEN
-        IF NOT EXISTS (SELECT distinct object_id FROM sys.tables t WHERE t.object_id = id) THEN
+        IF NOT EXISTS (SELECT object_id FROM sys.tables t WHERE t.object_id = id) THEN
             RETURN NULL;
         END IF;
         RETURN 0;
 
     ELSEIF property = 'ismsshipped' -- IsMSShipped
     THEN
-        RETURN (SELECT CAST(ao.is_ms_shipped AS int) FROM sys.all_objects ao WHERE ao.object_id = id limit 1);
+        RETURN (SELECT CAST(ao.is_ms_shipped AS int) FROM sys.all_objects ao WHERE ao.object_id = id);
 
     ELSEIF property = 'isschemabound' -- IsSchemaBound
     THEN
-        RETURN (SELECT CAST(sm.is_schema_bound AS int) FROM sys.all_sql_modules sm WHERE sm.object_id = id limit 1);
+        RETURN (SELECT CAST(sm.is_schema_bound AS int) FROM sys.all_sql_modules sm WHERE sm.object_id = id);
 
     ELSEIF property = 'execisansinullson' -- ExecIsAnsiNullsOn
     THEN
-        RETURN (SELECT CAST(sm.uses_ansi_nulls AS int) FROM sys.all_sql_modules sm WHERE sm.object_id = id limit 1);
+        RETURN (SELECT CAST(sm.uses_ansi_nulls AS int) FROM sys.all_sql_modules sm WHERE sm.object_id = id);
 
     ELSEIF property = 'isdeterministic' -- IsDeterministic
     THEN
