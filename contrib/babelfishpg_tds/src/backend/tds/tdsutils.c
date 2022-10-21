@@ -17,6 +17,7 @@
 #include "postgres.h"
 
 #include "access/genam.h"
+#include "access/htup_details.h"
 #include "access/table.h"
 #include "catalog/pg_authid.h"
 #include "catalog/pg_db_role_setting.h"
@@ -26,6 +27,7 @@
 #include "nodes/parsenodes.h"
 #include "parser/parser.h"
 #include "parser/parse_node.h"
+#include "utils/acl.h"
 #include "utils/elog.h"
 #include "utils/fmgroids.h"
 #include "utils/rel.h"
