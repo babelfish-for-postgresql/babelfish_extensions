@@ -2737,16 +2737,15 @@ FROM
       SELECT name as name, schema_id as id  FROM sys.schemas 
       UNION ALL 
       SELECT CAST(nspname as sys.sysname) as name, CAST(oid as int) as id 
-        from pg_namespace WHERE nspname in ('sys', 'information_schema_tsql')
+        from pg_namespace WHERE nspname in ('sys', 'information_schema')
     ) as s ON p.pronamespace = s.id
     WHERE (
-    p.pronamespace in (select schema_id from sys.schemas union all select oid from pg_namespace where nspname in ('sys', 'information_schema'))
-    AND (pg_has_role(p.proowner, 'USAGE') OR has_function_privilege(p.oid, 'EXECUTE'))
-    AND (s.name != 'sys' 
-      OR p.proname like 'sp\_%' -- filter out internal babelfish-specific procs in sys schema
-      OR p.proname like 'xp\_%'
-      OR p.proname like 'dm\_%'
-      OR p.proname like 'fn\_%'))
+      (pg_has_role(p.proowner, 'USAGE') OR has_function_privilege(p.oid, 'EXECUTE'))
+      AND (s.name != 'sys' 
+        OR p.proname like 'sp\_%' -- filter out internal babelfish-specific procs in sys schema
+        OR p.proname like 'xp\_%'
+        OR p.proname like 'dm\_%'
+        OR p.proname like 'fn\_%'))
   )
 
   SELECT *
