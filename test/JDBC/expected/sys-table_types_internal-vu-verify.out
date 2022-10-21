@@ -1,19 +1,4 @@
 
-DROP TYPE IF EXISTS table_types_internal_test1;
-DROP TYPE IF EXISTS table_types_internal_test2;
-GO
-
-SELECT COUNT (typrelid) FROM sys.table_types_internal 
-WHERE typrelid IN (SELECT object_id FROM sys.all_objects WHERE name LIKE 'TT_table_types_internal_test1%' );
-GO
-~~START~~
-int
-0
-~~END~~
-
-
-CREATE TYPE table_types_internal_test1 AS TABLE (Id INT, Name VARCHAR(100));
-GO
 
 SELECT COUNT (typrelid) FROM sys.table_types_internal 
 WHERE typrelid IN (SELECT object_id FROM sys.all_objects WHERE name LIKE 'TT_table_types_internal_test1%' );
@@ -23,9 +8,6 @@ int
 1
 ~~END~~
 
-
-CREATE TYPE table_types_internal_test2 AS TABLE (Id INT, Name VARCHAR(100), floatNum float, someDate date);
-GO
 
 SELECT COUNT (typrelid) FROM sys.table_types_internal 
 WHERE typrelid IN (SELECT object_id FROM sys.all_objects WHERE name LIKE 'TT_table_types_internal_test2%');
