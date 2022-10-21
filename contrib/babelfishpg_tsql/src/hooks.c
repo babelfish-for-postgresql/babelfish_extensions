@@ -58,7 +58,7 @@
 #define TDS_NUMERIC_MAX_PRECISION	38
 
 extern bool babelfish_dump_restore;
-extern Oid babelfish_dump_restore_min_oid;
+extern char *babelfish_dump_restore_min_oid;
 extern bool pltsql_quoted_identifier;
 extern bool is_tsql_rowversion_or_timestamp_datatype(Oid oid);
 
