@@ -1,8 +1,8 @@
 SELECT * FROM BABEL_3614_vu_prepare_v1
 GO
 ~~START~~
-datetime2
-2017-08-25 13:01:10.1234600
+datetime
+2017-08-25 13:01:10.123
 ~~END~~
 
 DROP VIEW BABEL_3614_vu_prepare_v1
@@ -11,8 +11,8 @@ GO
 EXEC BABEL_3614_vu_prepare_p1
 GO
 ~~START~~
-datetime2
-2017-08-25 13:01:10.1234600
+datetime
+2017-08-25 13:01:10.123
 ~~END~~
 
 DROP PROCEDURE BABEL_3614_vu_prepare_p1
@@ -31,8 +31,8 @@ GO
 SELECT * FROM BABEL_3614_vu_prepare_v2
 GO
 ~~START~~
-datetime2
-2017-08-25 13:01:10.1230000
+datetime
+2017-08-25 13:01:10.123
 ~~END~~
 
 DROP VIEW BABEL_3614_vu_prepare_v2
@@ -41,8 +41,8 @@ GO
 EXEC BABEL_3614_vu_prepare_p2
 GO
 ~~START~~
-datetime2
-2017-08-25 13:01:10.1230000
+datetime
+2017-08-25 13:01:10.123
 ~~END~~
 
 DROP PROCEDURE BABEL_3614_vu_prepare_p2
@@ -61,8 +61,8 @@ GO
 SELECT * FROM BABEL_3614_vu_prepare_v3
 GO
 ~~START~~
-datetime2
-2017-08-25 13:01:10.1000000
+datetime
+2017-08-25 13:01:10.1
 ~~END~~
 
 DROP VIEW BABEL_3614_vu_prepare_v3
@@ -71,8 +71,8 @@ GO
 EXEC BABEL_3614_vu_prepare_p3
 GO
 ~~START~~
-datetime2
-2017-08-25 13:01:10.1000000
+datetime
+2017-08-25 13:01:10.1
 ~~END~~
 
 DROP PROCEDURE BABEL_3614_vu_prepare_p3
@@ -91,8 +91,8 @@ GO
 SELECT * FROM BABEL_3614_vu_prepare_v4
 GO
 ~~START~~
-datetime2
-2017-08-25 13:01:10.1234570
+datetime
+2017-08-25 13:01:10.123
 ~~END~~
 
 DROP VIEW BABEL_3614_vu_prepare_v4
@@ -101,8 +101,8 @@ GO
 EXEC BABEL_3614_vu_prepare_p4
 GO
 ~~START~~
-datetime2
-2017-08-25 13:01:10.1234570
+datetime
+2017-08-25 13:01:10.123
 ~~END~~
 
 DROP PROCEDURE BABEL_3614_vu_prepare_p4
@@ -121,8 +121,8 @@ GO
 SELECT * FROM BABEL_3614_vu_prepare_v5
 GO
 ~~START~~
-datetime2
-2017-08-25 13:01:10.1234570
+datetime
+2017-08-25 13:01:10.123
 ~~END~~
 
 DROP VIEW BABEL_3614_vu_prepare_v5
@@ -131,8 +131,8 @@ GO
 EXEC BABEL_3614_vu_prepare_p5
 GO
 ~~START~~
-datetime2
-2017-08-25 13:01:10.1234570
+datetime
+2017-08-25 13:01:10.123
 ~~END~~
 
 DROP PROCEDURE BABEL_3614_vu_prepare_p5
@@ -151,8 +151,8 @@ GO
 SELECT * FROM BABEL_3614_vu_prepare_v6
 GO
 ~~START~~
-datetime2
-2017-08-25 13:01:10.1234560
+datetime
+2017-08-25 13:01:10.123
 ~~END~~
 
 DROP VIEW BABEL_3614_vu_prepare_v6
@@ -161,8 +161,8 @@ GO
 EXEC BABEL_3614_vu_prepare_p6
 GO
 ~~START~~
-datetime2
-2017-08-25 13:01:10.1234560
+datetime
+2017-08-25 13:01:10.123
 ~~END~~
 
 DROP PROCEDURE BABEL_3614_vu_prepare_p6
