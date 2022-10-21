@@ -821,6 +821,10 @@
 },
 
 {
+	"idle_session_timeout", ERRCODE_IDLE_SESSION_TIMEOUT
+},
+
+{
 	"system_error", ERRCODE_SYSTEM_ERROR
 },
 
