@@ -4620,6 +4620,12 @@ exec_stmt_execsql(PLtsql_execstate *estate,
 							errmsg("The server principal \"%s\" is not able to access "
 								"the database \"%s\" under the current security context",
 								login, stmt->db_name)));
+		/*
+		 * When there is cross db reference to sys or information_schema schemas,
+		 * Change the session property.
+		 */
+		if (stmt->schema_name != NULL && (strcmp(stmt->schema_name, "sys") == 0 || strcmp(stmt->schema_name, "information_schema") == 0))
+			set_session_properties(stmt->db_name);
 	}
 	if(stmt->is_dml || stmt->is_ddl || stmt->is_create_view)
 	{
@@ -5014,7 +5020,11 @@ exec_stmt_execsql(PLtsql_execstate *estate,
 			SetCurrentRoleId(current_user_id, false);
 		}
 		if (stmt->is_cross_db)
+		{
+			if (stmt->schema_name != NULL && (strcmp(stmt->schema_name, "sys") == 0 || strcmp(stmt->schema_name, "information_schema") == 0))
+				set_session_properties(cur_dbname);
 			SetCurrentRoleId(current_user_id, false);
+		}
 		list_free(path_oids);
 		PG_RE_THROW();
 	}
@@ -5030,7 +5040,11 @@ exec_stmt_execsql(PLtsql_execstate *estate,
 		SetCurrentRoleId(current_user_id, false);
 	}
 	if (stmt->is_cross_db)
+	{
+		if (stmt->schema_name != NULL && (strcmp(stmt->schema_name, "sys") == 0 || strcmp(stmt->schema_name, "information_schema") == 0))
+			set_session_properties(cur_dbname);
 		SetCurrentRoleId(current_user_id, false);
+	}
 	list_free(path_oids);
 
 	return PLTSQL_RC_OK;

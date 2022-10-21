@@ -19,6 +19,18 @@ db_routines_vu_prepare#!#dbo#!#routines_vu_prepare_test_nvar#!#db_routines_vu_pr
 ~~END~~
 
 
+-- Test cross DB reference to ISC view routines
+select ROUTINE_NAME from db_routines_vu_prepare.information_schema.routines ORDER BY ROUTINE_NAME;
+go
+~~START~~
+nvarchar
+routines_vu_prepare_fc1
+routines_vu_prepare_test_dec
+routines_vu_prepare_test_func_opt
+routines_vu_prepare_test_nvar
+~~END~~
+
+
 use master;
 go
 
@@ -26,6 +38,18 @@ select SPECIFIC_CATALOG, SPECIFIC_SCHEMA, SPECIFIC_NAME, ROUTINE_CATALOG, ROUTIN
 go
 ~~START~~
 nvarchar#!#nvarchar#!#nvarchar#!#nvarchar#!#nvarchar#!#nvarchar#!#nvarchar#!#nvarchar#!#int#!#int#!#nvarchar#!#nvarchar#!#smallint#!#smallint#!#smallint#!#smallint#!#nvarchar#!#nvarchar#!#nvarchar#!#nvarchar#!#nvarchar#!#nvarchar#!#smallint#!#nvarchar#!#nvarchar
+~~END~~
+
+
+-- Verify cross DB reference to ISC view routines
+select ROUTINE_NAME from db_routines_vu_prepare.information_schema.routines ORDER BY ROUTINE_NAME;
+go
+~~START~~
+nvarchar
+routines_vu_prepare_fc1
+routines_vu_prepare_test_dec
+routines_vu_prepare_test_func_opt
+routines_vu_prepare_test_nvar
 ~~END~~
 
 
