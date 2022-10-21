@@ -1,0 +1,147 @@
+-- Key exists, not append
+select * from babel_937_not_append_kp
+go
+~~START~~
+nvarchar#!#nvarchar#!#nvarchar#!#nvarchar
+{"name": "Mike", "skills": ["C#", "SQL"]}#!#{"name": "Mike", "skills": ["C#", "SQL"]}#!#{"name": "Mike", "surname": "Smith"}#!#{"name": null, "skills": ["C#", "SQL"], "surname": "Smith"}
+~~END~~
+
+
+-- Key not exists, not append
+select * from babel_937_not_append_knp_1
+go
+~~START~~
+nvarchar#!#nvarchar
+{"name": "Mike", "skills": ["C#", "SQL"], "surname": "Smith"}#!#{"name": "Mike", "skills": ["C#", "SQL"], "surname": "Smith"}
+~~END~~
+
+select * from babel_937_not_append_knp_2
+go
+~~START~~
+nvarchar
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: property cannot be found on the specified JSON path)~~
+
+select * from babel_937_not_append_knp_3
+go
+~~START~~
+nvarchar
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: property cannot be found on the specified JSON path)~~
+
+
+-- Key exists, append
+select * from babel_937_append_kp_notarr_1
+go
+~~START~~
+nvarchar#!#nvarchar
+{"name": "John", "skills": ["C#", "SQL"]}#!#{"name": "John", "skills": ["C#", "SQL"]}
+~~END~~
+
+select * from babel_937_append_kp_notarr_2
+go
+~~START~~
+nvarchar
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: array cannot be found in the specified JSON path)~~
+
+select * from babel_937_append_kp_notarr_3
+go
+~~START~~
+nvarchar
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: array cannot be found in the specified JSON path)~~
+
+
+select * from babel_937_append_kp_arr
+go
+~~START~~
+nvarchar#!#nvarchar#!#nvarchar#!#nvarchar
+{"name": "John", "skills": ["C#", "SQL", "Azure"]}#!#{"name": "John", "skills": ["C#", "SQL", "Azure"]}#!#{"name": "Mike", "skills": ["C#", "SQL", null], "surname": "Smith"}#!#{"name": "Mike", "skills": ["C#", "SQL", null], "surname": "Smith"}
+~~END~~
+
+
+-- Key not exists, append
+-- The sequence of the return json string keys may be different between Babelfish and T-SQL
+select * from babel_937_append_knp_notarr_1
+go
+~~START~~
+nvarchar#!#nvarchar
+{"name": "Mike", "skills": ["C#", "SQL"], "surname": ["Smith"]}#!#{"k": [null], "name": "Mike", "skills": ["C#", "SQL"], "surname": "Smith"}
+~~END~~
+
+select * from babel_937_append_knp_notarr_2
+go
+~~START~~
+nvarchar
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: property cannot be found on the specified JSON path)~~
+
+select * from babel_937_append_knp_notarr_3
+go
+~~START~~
+nvarchar
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: property cannot be found on the specified JSON path)~~
+
+
+-- Tests to check if the function works for case-sensitive cases
+select * from babel_937_case_sensitive_1
+go
+~~START~~
+nvarchar
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: JSON path is not properly formatted)~~
+
+select * from babel_937_case_sensitive_2
+go
+~~START~~
+nvarchar
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: JSON path is not properly formatted)~~
+
+
+--Test to check wrong keyword in the path argument
+select * from babel_937_keyword_check
+go
+~~START~~
+nvarchar
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: JSON path is not properly formatted)~~
+
+
+-- Test to check when there are spaces in path argument
+select * from babel_937_spaces
+go
+~~START~~
+nvarchar
+{"id": 1, "tags": ["sint", "sit", "nisi", "ullamco", "consectetur", "eu", "voluptate"], "friends": [{"id": 0, "name": "Kasey Oneil"}, {"id": 1, "name": "Guerrero Leon"}, {"id": 2, "name": "Meadows Schneider"}, null]}
+~~END~~
+
+
+-- To check multi function call query
+select * from babel_937_multi_function
+go
+~~START~~
+nvarchar#!#nvarchar
+{"name": "Mike", "skills": ["C#", "SQL", "Azure"], "surname": "Smith"}#!#{"Price": "49.99"}
+~~END~~
+
+
+-- To check when expression is array type
+select * from babel_937_test_array
+go
+~~START~~
+nvarchar#!#nvarchar
+[{"name": "John", "skills": ["C#", null]}, "b", "temp"]#!#{"name": "John", "skills": ["Azure", "SQL"]}
+~~END~~
+
