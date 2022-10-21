@@ -291,13 +291,17 @@ UninstallExtendedHooks(void)
 static void
 pltsql_GetNewObjectId(VariableCache variableCache)
 {
-	if (!babelfish_dump_restore)
+	Oid minOid;
+
+	if (!babelfish_dump_restore || !babelfish_dump_restore_min_oid)
 		return;
 
-	if (ShmemVariableCache->nextOid >= babelfish_dump_restore_min_oid)
+	minOid = atooid(babelfish_dump_restore_min_oid);
+	Assert(OidIsValid(minOid));
+	if (ShmemVariableCache->nextOid >= minOid + 1)
 		return;
 
-	ShmemVariableCache->nextOid = babelfish_dump_restore_min_oid;
+	ShmemVariableCache->nextOid = minOid + 1;
 	ShmemVariableCache->oidCount = 0;
 }
 

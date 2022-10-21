@@ -75,7 +75,7 @@ extern bool Transform_null_equals;
 /* Dump and Restore */
 bool babelfish_dump_restore = false;
 bool restore_tsql_tabletype = false;
-Oid babelfish_dump_restore_min_oid = FirstNormalObjectId;
+char *babelfish_dump_restore_min_oid = NULL;
 
 /* T-SQL Hint Mapping */
 bool enable_hint_mapping = false;
@@ -88,6 +88,7 @@ static bool check_ansi_padding (bool *newval, void **extra, GucSource source);
 static bool check_ansi_warnings (bool *newval, void **extra, GucSource source);
 static bool check_arithignore (bool *newval, void **extra, GucSource source);
 static bool check_arithabort (bool *newval, void **extra, GucSource source);
+static bool check_babelfish_dump_restore_min_oid (char **newval, void **extra, GucSource source);
 static bool check_numeric_roundabort (bool *newval, void **extra, GucSource source);
 static bool check_cursor_close_on_commit (bool *newval, void **extra, GucSource source);
 static bool check_rowcount (int *newval, void **extra, GucSource source);
@@ -242,6 +243,11 @@ static bool check_arithabort (bool *newval, void **extra, GucSource source)
 		*newval = true; /* overwrite to a default value */
 	}
     return true;
+}
+
+static bool check_babelfish_dump_restore_min_oid (char **newval, void **extra, GucSource source)
+{
+	return *newval == NULL || OidIsValid(atooid(*newval));
 }
 
 static bool check_numeric_roundabort (bool *newval, void **extra, GucSource source)
@@ -1050,14 +1056,14 @@ define_custom_variables(void)
 				 GUC_NOT_IN_SAMPLE | GUC_DISALLOW_IN_FILE | GUC_DISALLOW_IN_AUTO_FILE,
 				 NULL, NULL, NULL);
 
-	DefineCustomIntVariable("babelfishpg_tsql.dump_restore_min_oid",
+	DefineCustomStringVariable("babelfishpg_tsql.dump_restore_min_oid",
 				 gettext_noop("All new OIDs should be greater than this number during dump and restore"),
 				 NULL,
 				 &babelfish_dump_restore_min_oid,
-				 FirstNormalObjectId, 0, INT_MAX,
+				 NULL,
 				 PGC_USERSET,
 				 GUC_NOT_IN_SAMPLE | GUC_DISALLOW_IN_FILE | GUC_DISALLOW_IN_AUTO_FILE,
-				 NULL, NULL, NULL);
+				 check_babelfish_dump_restore_min_oid, NULL, NULL);
 
 	/* T-SQL Hint Mapping */
 	DefineCustomBoolVariable("babelfishpg_tsql.enable_hint_mapping",
