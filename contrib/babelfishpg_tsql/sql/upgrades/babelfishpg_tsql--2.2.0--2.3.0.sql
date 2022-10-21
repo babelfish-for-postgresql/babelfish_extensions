@@ -2755,10 +2755,6 @@ BEGIN
 END;
 $$;
 
-CREATE OR REPLACE FUNCTION sys.babelfish_datatype_hash_tables_initialised()
-RETURNS BOOL
-AS 'babelfishpg_tsql', 'datatype_hash_tables_initialised' LANGUAGE C;
-
 -- Drops the temporary procedure used by the upgrade script.
 -- Please have this be one of the last statements executed in this upgrade script.
 DROP PROCEDURE sys.babelfish_drop_deprecated_object(varchar, varchar, varchar);

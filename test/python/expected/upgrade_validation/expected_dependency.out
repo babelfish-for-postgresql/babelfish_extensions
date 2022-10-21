@@ -123,7 +123,6 @@ Function sys.babelfish_conv_time_to_string(text,text,time without time zone,nume
 Function sys.babelfish_conv_to_varchar(text,anyelement,numeric)
 Function sys.babelfish_conv_to_varchar(text,text,numeric)
 Function sys.babelfish_cursor_list(integer)
-Function sys.babelfish_datatype_hash_tables_initialised()
 Function sys.babelfish_dbts()
 Function sys.babelfish_get_datetimeoffset_tzoffset(sys.datetimeoffset)
 Function sys.babelfish_get_enr_list()

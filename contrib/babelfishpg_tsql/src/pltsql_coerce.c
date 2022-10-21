@@ -45,7 +45,6 @@ extern coerce_string_literal_hook_type coerce_string_literal_hook;
 
 PG_FUNCTION_INFO_V1(init_tsql_coerce_hash_tab);
 PG_FUNCTION_INFO_V1(init_tsql_datatype_precedence_hash_tab);
-PG_FUNCTION_INFO_V1(datatype_hash_tables_initialised);
 
 extern bool is_tsql_binary_datatype(Oid oid);
 extern bool is_tsql_varbinary_datatype(Oid oid);
@@ -362,7 +361,7 @@ typedef struct tsql_cast_info_entry
 static tsql_cast_info_key_t *tsql_cast_info_keys = NULL;
 static tsql_cast_info_entry_t *tsql_cast_info_entries = NULL;
 static HTAB *ht_tsql_cast_info = NULL;
-static bool inited_ht_tsql_cast_info = false;
+bool inited_ht_tsql_cast_info = false;
 
 static CoercionPathType tsql_find_coercion_pathway(Oid sourceTypeId, Oid targetTypeId, CoercionContext ccontext, Oid *funcid)
 {
@@ -598,12 +597,13 @@ init_tsql_coerce_hash_tab(PG_FUNCTION_ARGS)
                                     CStringGetDatum(tsql_cast_raw_infos[i].castfunc),
                                     PointerGetDatum(buildoidvector(argTypes, 3)),
                                     ObjectIdGetDatum(sys_nspoid));
-                    }
-                    if (!OidIsValid(entry->castfunc))
-                    {
-                        /* function is not loaded. wait for next scan */
-                        inited_ht_tsql_cast_info = false;
-                        continue;
+
+                        if (!OidIsValid(entry->castfunc))
+                        {
+                            /* function is not loaded. wait for next scan */
+                            inited_ht_tsql_cast_info = false;
+                            continue;
+                        }
                     }
                     break;
                 case TSQL_CAST_WITHOUT_FUNC_ENTRY:
@@ -636,7 +636,7 @@ typedef struct tsql_datatype_precedence_info_entry
 
 static tsql_datatype_precedence_info_entry_t *tsql_datatype_precedence_info_entries = NULL;
 static HTAB *ht_tsql_datatype_precedence_info = NULL;
-static bool inited_ht_tsql_datatype_precedence_info = false;
+bool inited_ht_tsql_datatype_precedence_info = false;
 
 /*
  * smaller value has higher precedence
@@ -1098,17 +1098,6 @@ init_tsql_datatype_precedence_hash_tab(PG_FUNCTION_ARGS)
 	}
 
 	PG_RETURN_INT32(0);
-}
-
-/*
- * Returns true if both the datatype related hash tables
- * are fully initialised, false otherwise.
- */
-Datum
-datatype_hash_tables_initialised(PG_FUNCTION_ARGS)
-{
-    bool inited = inited_ht_tsql_cast_info & inited_ht_tsql_datatype_precedence_info;
-    PG_RETURN_BOOL(inited);
 }
 
 /*

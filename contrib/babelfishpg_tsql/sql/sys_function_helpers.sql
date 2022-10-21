@@ -10310,7 +10310,3 @@ AS 'babelfishpg_tsql', 'get_server_collation_oid';
 CREATE OR REPLACE FUNCTION sys.babelfish_get_pltsql_function_signature(IN funcoid OID)
 RETURNS text
 AS 'babelfishpg_tsql', 'get_pltsql_function_signature' LANGUAGE C;
-
-CREATE OR REPLACE FUNCTION sys.babelfish_datatype_hash_tables_initialised()
-RETURNS BOOL
-AS 'babelfishpg_tsql', 'datatype_hash_tables_initialised' LANGUAGE C;
