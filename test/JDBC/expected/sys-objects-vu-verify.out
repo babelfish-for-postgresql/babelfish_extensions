@@ -33,8 +33,62 @@ int
 ~~END~~
 
 
+-- Test cross db reference to sys schemas
+select name from master.sys.objects order by name;
+GO
+~~START~~
+varchar
+sys_objects_vu_prepare_func
+sys_objects_vu_prepare_proc
+sys_objects_vu_prepare_proc2
+sys_objects_vu_prepare_view
+sysdatabases
+xp_instance_regread
+xp_instance_regread
+xp_qv
+~~END~~
+
+
+select name from sys_objects_vu_prepare_db1.sys.objects order by name;
+GO
+~~START~~
+varchar
+sys_objects_vu_prepare_proc1
+sys_objects_vu_prepare_table1
+sys_objects_vu_prepare_trig1
+sysdatabases
+~~END~~
+
+
 USE master
 GO
+
+-- Verify cross db reference, it should show the same rows as displayed by the cross db query above.
+select name from master.sys.objects order by name;
+GO
+~~START~~
+varchar
+sys_objects_vu_prepare_func
+sys_objects_vu_prepare_proc
+sys_objects_vu_prepare_proc2
+sys_objects_vu_prepare_view
+sysdatabases
+xp_instance_regread
+xp_instance_regread
+xp_qv
+~~END~~
+
+
+select name from sys_objects_vu_prepare_db1.sys.objects order by name;
+GO
+~~START~~
+varchar
+sys_objects_vu_prepare_proc1
+sys_objects_vu_prepare_table1
+sys_objects_vu_prepare_trig1
+sysdatabases
+~~END~~
+
 
 select count(*) from sys.objects where type = 'P' and name = 'sys_objects_vu_prepare_proc1';
 GO
