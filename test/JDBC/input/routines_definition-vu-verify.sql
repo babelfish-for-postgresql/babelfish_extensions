@@ -11,9 +11,6 @@ go
 select ROUTINE_NAME from db_routines_vu_prepare.information_schema.routines ORDER BY ROUTINE_NAME;
 go
 
-select ROUTINE_NAME from master.information_schema.routines ORDER BY ROUTINE_NAME;
-go
-
 use master;
 go
 
@@ -22,9 +19,6 @@ go
 
 -- Verify cross DB reference to ISC view routines
 select ROUTINE_NAME from db_routines_vu_prepare.information_schema.routines ORDER BY ROUTINE_NAME;
-go
-
-select ROUTINE_NAME from master.information_schema.routines ORDER BY ROUTINE_NAME;
 go
 
 use db_routines_vu_prepare;

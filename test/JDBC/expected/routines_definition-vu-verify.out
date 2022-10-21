@@ -31,13 +31,6 @@ routines_vu_prepare_test_nvar
 ~~END~~
 
 
-select ROUTINE_NAME from master.information_schema.routines ORDER BY ROUTINE_NAME;
-go
-~~START~~
-nvarchar
-~~END~~
-
-
 use master;
 go
 
@@ -57,13 +50,6 @@ routines_vu_prepare_fc1
 routines_vu_prepare_test_dec
 routines_vu_prepare_test_func_opt
 routines_vu_prepare_test_nvar
-~~END~~
-
-
-select ROUTINE_NAME from master.information_schema.routines ORDER BY ROUTINE_NAME;
-go
-~~START~~
-nvarchar
 ~~END~~
 
 
