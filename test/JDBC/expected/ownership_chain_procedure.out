@@ -153,11 +153,11 @@ go
 grant exec on hasownera.pc1 to invoker;
 go
 
-create function hasownera.fd1() returns table as
+create function hasownera.fe1() returns table as
 return (select * from hasownerb.tbld, hasownerb.vwd);
 go
 
-grant exec on hasownera.fd1 to invoker;
+grant exec on hasownera.fe1 to invoker;
 go
 
 -- Negative test for proc inside proc/func
@@ -167,16 +167,16 @@ go
 grant exec on hasownera.pd1 to invoker;
 go
 
-create function hasownera.fe1() returns int
+create function hasownera.ff1() returns int
 as
 begin
-	declare @temp_fb1 table(cur_user sys.sysname);
-	insert into @temp_fb1 (cur_user) exec hasownerb.procd;
-	return (select count(*) from @temp_fb1);
+	declare @temp_ff1 table(cur_user sys.sysname);
+	insert into @temp_ff1 (cur_user) exec hasownerb.procd;
+	return (select count(*) from @temp_ff1);
 end
 go
 
-grant exec on hasownera.fe1 to invoker;
+grant exec on hasownera.ff1 to invoker;
 go
 
 -- Negative test for function inside proc/func
@@ -186,11 +186,11 @@ go
 grant exec on hasownera.pe1 to invoker;
 go
 
-create function hasownera.ff1() returns table as
+create function hasownera.fg1() returns table as
 return (select hasownerb.funcd());
 go
 
-grant exec on hasownera.ff1 to invoker;
+grant exec on hasownera.fg1 to invoker;
 go
 
 -- tsql user=invoker password=123
@@ -265,6 +265,102 @@ inside function funcs
 ~~END~~
 
 
+-- Execution using SP_PREPARE
+DECLARE @handle int;
+EXEC SP_PREPARE @handle OUT, NULL, 'EXEC hasownera.pa1;'
+EXEC SP_EXECUTE @handle
+EXEC SP_EXECUTE @handle
+EXEC SP_EXECUTE @handle
+EXEC SP_UNPREPARE @handle
+GO
+~~START~~
+int#!#int#!#int
+1#!#1#!#1
+~~END~~
+
+~~START~~
+varchar
+invoker
+~~END~~
+
+~~START~~
+varchar
+invoker
+~~END~~
+
+~~START~~
+nvarchar
+inside function funcs
+~~END~~
+
+~~START~~
+int#!#int#!#int
+1#!#1#!#1
+~~END~~
+
+~~START~~
+varchar
+invoker
+~~END~~
+
+~~START~~
+varchar
+invoker
+~~END~~
+
+~~START~~
+nvarchar
+inside function funcs
+~~END~~
+
+~~START~~
+int#!#int#!#int
+1#!#1#!#1
+~~END~~
+
+~~START~~
+varchar
+invoker
+~~END~~
+
+~~START~~
+varchar
+invoker
+~~END~~
+
+~~START~~
+nvarchar
+inside function funcs
+~~END~~
+
+
+DECLARE @handle int;
+EXEC SP_PREPARE @handle OUT, NULL, 'SELECT * from hasownera.fa1();'
+EXEC SP_EXECUTE @handle
+EXEC SP_EXECUTE @handle
+EXEC SP_EXECUTE @handle
+EXEC SP_UNPREPARE @handle
+GO
+~~START~~
+int#!#int#!#int#!#varchar
+~~END~~
+
+~~START~~
+int#!#int#!#int#!#varchar
+1#!#1#!#1#!#invoker
+~~END~~
+
+~~START~~
+int#!#int#!#int#!#varchar
+1#!#1#!#1#!#invoker
+~~END~~
+
+~~START~~
+int#!#int#!#int#!#varchar
+1#!#1#!#1#!#invoker
+~~END~~
+
+
 -- Execution for negative tests
 exec hasownera.pb1;
 go
@@ -294,7 +390,7 @@ go
 ~~ERROR (Message: permission denied for function funcd)~~
 
 
-select * from hasownera.fd1();
+select * from hasownera.fe1();
 go
 ~~START~~
 int#!#int#!#int#!#varchar
@@ -303,7 +399,7 @@ int#!#int#!#int#!#varchar
 ~~ERROR (Message: permission denied for table tbld)~~
 
 
-select hasownera.fe1();
+select hasownera.ff1();
 go
 ~~START~~
 int
@@ -312,7 +408,7 @@ int
 ~~ERROR (Message: permission denied for procedure procd)~~
 
 
-select * from hasownera.ff1();
+select * from hasownera.fg1();
 go
 ~~START~~
 nvarchar
@@ -328,7 +424,7 @@ go
 drop proc hasownera.pa1, hasownera.pb1, hasownera.pc1, hasownera.pd1, hasownera.pe1;
 go
 
-drop function hasownera.fa1, hasownera.fb1, hasownera.fc1, hasownera.fd1, hasownera.fe1, hasownera.ff1;
+drop function hasownera.fa1, hasownera.fb1, hasownera.fc1, hasownera.fe1, hasownera.ff1, hasownera.fg1;
 go
 
 use master;
@@ -491,6 +587,43 @@ drop view hasownera.vwb3;
 go
 
 drop view hasownera.vwa3;
+go
+
+use master;
+go
+
+-- tsql user=l1 password=123
+-- CASE 4
+-- PROC/FUNC
+--	EXEC(SELECT FROM TABLE)
+-- ownership chain shouldn't work for this case
+use db1;
+go
+
+create proc hasownera.pa4 as begin
+	exec('select * from hasownera.tbls');
+end;
+go
+
+grant exec on hasownera.pa4 to invoker;
+go
+
+-- tsql user=invoker password=123
+use db1;
+go
+
+exec hasownera.pa4;
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: permission denied for table tbls)~~
+
+
+-- tsql
+use db1;
+go
+
+drop proc hasownera.pa4;
 go
 
 use master;
