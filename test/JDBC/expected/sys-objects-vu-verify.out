@@ -60,6 +60,17 @@ sysdatabases
 ~~END~~
 
 
+use tempdb
+GO
+
+select * from tempdb.sys.objects order by name;
+GO
+~~START~~
+varchar#!#int#!#int#!#int#!#int#!#char#!#nvarchar#!#datetime#!#datetime#!#bit#!#bit#!#bit
+sysdatabases#!#19099#!#<NULL>#!#19098#!#0#!#V #!#VIEW#!#<NULL>#!#<NULL>#!#0#!#0#!#0
+~~END~~
+
+
 USE master
 GO
 
@@ -87,6 +98,14 @@ sys_objects_vu_prepare_proc1
 sys_objects_vu_prepare_table1
 sys_objects_vu_prepare_trig1
 sysdatabases
+~~END~~
+
+
+select * from tempdb.sys.objects order by name;
+GO
+~~START~~
+varchar#!#int#!#int#!#int#!#int#!#char#!#nvarchar#!#datetime#!#datetime#!#bit#!#bit#!#bit
+sysdatabases#!#19099#!#<NULL>#!#19098#!#0#!#V #!#VIEW#!#<NULL>#!#<NULL>#!#0#!#0#!#0
 ~~END~~
 
 

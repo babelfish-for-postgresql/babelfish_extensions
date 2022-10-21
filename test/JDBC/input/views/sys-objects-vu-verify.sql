@@ -20,6 +20,12 @@ GO
 select name from sys_objects_vu_prepare_db1.sys.objects order by name;
 GO
 
+use tempdb
+GO
+
+select * from tempdb.sys.objects order by name;
+GO
+
 USE master
 GO
 
@@ -28,6 +34,9 @@ select name from master.sys.objects order by name;
 GO
 
 select name from sys_objects_vu_prepare_db1.sys.objects order by name;
+GO
+
+select * from tempdb.sys.objects order by name;
 GO
 
 select count(*) from sys.objects where type = 'P' and name = 'sys_objects_vu_prepare_proc1';
