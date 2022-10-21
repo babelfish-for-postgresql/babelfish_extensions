@@ -4,18 +4,20 @@
 -- add 'sys' to search path for the convenience
 SELECT set_config('search_path', 'sys, '||current_setting('search_path'), false);
 
--- Drops a view if it does not have any dependent objects.
+-- Drops an object if it does not have any dependent objects.
 -- Is a temporary procedure for use by the upgrade script. Will be dropped at the end of the upgrade.
 -- Please have this be one of the first statements executed in this upgrade script. 
-CREATE OR REPLACE PROCEDURE babelfish_drop_deprecated_view(schema_name varchar, view_name varchar) AS
+CREATE OR REPLACE PROCEDURE babelfish_drop_deprecated_object(object_type varchar, schema_name varchar, object_name varchar) AS
 $$
 DECLARE
     error_msg text;
     query1 text;
     query2 text;
 BEGIN
-    query1 := pg_catalog.format('alter extension babelfishpg_tsql drop view %s.%s', schema_name, view_name);
-    query2 := pg_catalog.format('drop view %s.%s', schema_name, view_name);
+
+    query1 := pg_catalog.format('alter extension babelfishpg_tsql drop %s %s.%s', object_type, schema_name, object_name);
+    query2 := pg_catalog.format('drop %s %s.%s', object_type, schema_name, object_name);
+
     execute query1;
     execute query2;
 EXCEPTION
@@ -29,8 +31,117 @@ end
 $$
 LANGUAGE plpgsql;
 
-
 -- please add your SQL here
+CREATE OR REPLACE FUNCTION sys.DATETIMEOFFSETFROMPARTS(IN p_year INTEGER,
+                                                               IN p_month INTEGER,
+                                                               IN p_day INTEGER,
+                                                               IN p_hour INTEGER,
+                                                               IN p_minute INTEGER,
+                                                               IN p_seconds INTEGER,
+                                                               IN p_fractions INTEGER,
+                                                               IN p_hour_offset INTEGER,
+                                                               IN p_minute_offset INTEGER,
+                                                               IN p_precision NUMERIC)
+RETURNS sys.DATETIMEOFFSET
+AS
+$BODY$
+DECLARE
+    v_err_message SYS.VARCHAR;
+    v_fractions SYS.VARCHAR;
+    v_precision SMALLINT;
+    v_calc_seconds NUMERIC; 
+    v_resdatetime TIMESTAMP WITHOUT TIME ZONE;
+    v_string pg_catalog.text;
+    v_sign pg_catalog.text;
+BEGIN
+    v_fractions := p_fractions::SYS.VARCHAR;
+    IF p_precision IS NULL THEN
+        RAISE EXCEPTION 'Scale argument is not valid. Valid expressions for data type datetimeoffset scale argument are integer constants and integer constant expressions.';
+    END IF;
+    IF p_year IS NULL OR p_month is NULL OR p_day IS NULL OR p_hour IS NULL OR p_minute IS NULL OR p_seconds IS NULL OR p_fractions IS NULL
+            OR p_hour_offset IS NULL OR p_minute_offset is NULL THEN
+        RETURN NULL;
+    END IF;
+    v_precision := p_precision::SMALLINT;
+
+    IF (scale(p_precision) > 0) THEN
+        RAISE most_specific_type_mismatch;
+
+    -- Check if arguments are out of range
+    ELSIF ((p_year NOT BETWEEN 1753 AND 9999) OR
+        (p_month NOT BETWEEN 1 AND 12) OR
+        (p_day NOT BETWEEN 1 AND 31) OR
+        (p_hour NOT BETWEEN 0 AND 23) OR
+        (p_minute NOT BETWEEN 0 AND 59) OR
+        (p_seconds NOT BETWEEN 0 AND 59) OR
+        (p_hour_offset NOT BETWEEN -14 AND 14) OR
+        (p_minute_offset NOT BETWEEN -59 AND 59) OR
+        (p_hour_offset * p_minute_offset < 0) OR
+        (p_hour_offset = 14 AND p_minute_offset != 0) OR
+        (p_hour_offset = -14 AND p_minute_offset != 0) OR
+        (p_fractions != 0 AND char_length(v_fractions) > p_precision::SMALLINT))
+    THEN
+        RAISE invalid_datetime_format;
+    ELSIF (v_precision NOT BETWEEN 0 AND 7) THEN
+        RAISE numeric_value_out_of_range;
+    END IF;
+    v_calc_seconds := format('%s.%s',
+                             p_seconds,
+                             substring(rpad(lpad(v_fractions, v_precision, '0'), 7, '0'), 1, 6))::NUMERIC;
+
+    v_resdatetime := make_timestamp(p_year,
+                                    p_month,
+                                    p_day,
+                                    p_hour,
+                                    p_minute,
+                                    v_calc_seconds);
+    v_sign := (
+        SELECT CASE
+            WHEN (p_hour_offset) > 0
+                THEN '+'
+            WHEN (p_hour_offset) = 0 AND (p_minute_offset) >= 0
+                THEN '+'    
+            ELSE '-'
+        END
+    );
+    v_string := CONCAT(v_resdatetime::pg_catalog.text,v_sign,abs(p_hour_offset)::SMALLINT::text,':',
+                                                          abs(p_minute_offset)::SMALLINT::text);
+    RETURN CAST(v_string AS sys.DATETIMEOFFSET);
+EXCEPTION
+    WHEN most_specific_type_mismatch THEN
+        RAISE USING MESSAGE := 'Scale argument is not valid. Valid expressions for data type datetimeoffset scale argument are integer constants and integer constant expressions',
+                    DETAIL := 'Use of incorrect "precision" parameter value during conversion process.',
+                    HINT := 'Change "precision" parameter to the proper value and try again.';    
+    WHEN invalid_datetime_format THEN
+        RAISE USING MESSAGE := 'Cannot construct data type datetimeoffset, some of the arguments have values which are not valid.',
+                    DETAIL := 'Possible use of incorrect value of date or time part (which lies outside of valid range).',
+                    HINT := 'Check each input argument belongs to the valid range and try again.';
+
+    WHEN numeric_value_out_of_range THEN
+        RAISE USING MESSAGE := format('Specified scale % is invalid.', p_fractions),
+                    DETAIL := format('Source value is out of %s data type range.', v_err_message),
+                    HINT := format('Correct the source value you are trying to cast to %s data type and try again.',
+                                   v_err_message);
+END;
+$BODY$
+LANGUAGE plpgsql
+IMMUTABLE;
+
+CREATE OR REPLACE FUNCTION sys.is_table_type(object_id oid) RETURNS bool AS
+$BODY$
+SELECT
+  EXISTS(
+    SELECT 1
+    FROM pg_catalog.pg_type pt
+    INNER JOIN pg_catalog.pg_depend dep
+    ON pt.typrelid = dep.objid AND pt.oid = dep.refobjid
+    join sys.schemas sch on pt.typnamespace = sch.schema_id
+    JOIN pg_catalog.pg_class pc ON pc.oid = dep.objid
+    WHERE pt.typtype = 'c' AND dep.deptype = 'i' AND pt.typrelid = object_id AND pc.relkind = 'r'
+    AND dep.classid = 'pg_catalog.pg_class'::regclass AND dep.refclassid = 'pg_catalog.pg_type'::regclass);
+$BODY$
+LANGUAGE SQL VOLATILE STRICT;
+
 CREATE OR REPLACE PROCEDURE sys.sp_helpsrvrolemember("@srvrolename" sys.SYSNAME = NULL) AS
 $$
 BEGIN
@@ -80,6 +191,364 @@ $$
 LANGUAGE 'pltsql';
 GRANT EXECUTE ON PROCEDURE sys.sp_helpsrvrolemember TO PUBLIC;
 
+-- Need to add parameter for tsql_type_max_length_helper 
+ALTER FUNCTION sys.tsql_type_max_length_helper RENAME TO tsql_type_max_length_helper_deprecated_in_2_3_0;
+
+CREATE OR REPLACE FUNCTION sys.tsql_type_max_length_helper(IN type TEXT, IN typelen INT, IN typemod INT, IN for_sys_types boolean DEFAULT false, IN used_typmod_array boolean DEFAULT false)
+RETURNS SMALLINT
+AS $$
+DECLARE
+	max_length SMALLINT;
+	precision INT;
+	v_type TEXT COLLATE sys.database_default := type;
+BEGIN
+	-- unknown tsql type
+	IF v_type IS NULL THEN
+		RETURN CAST(typelen as SMALLINT);
+	END IF;
+
+	-- if using typmod_array from pg_proc.probin
+	IF used_typmod_array THEN
+		IF v_type = 'sysname' THEN
+			RETURN 256;
+		ELSIF (v_type in ('char', 'bpchar', 'varchar', 'binary', 'varbinary', 'nchar', 'nvarchar'))
+		THEN
+			IF typemod < 0 THEN -- max value. 
+				RETURN -1;
+			ELSIF v_type in ('nchar', 'nvarchar') THEN
+				RETURN (2 * typemod);
+			ELSE
+				RETURN typemod;
+			END IF;
+		END IF;
+	END IF;
+ 
+	IF typelen != -1 THEN
+		CASE v_type 
+		WHEN 'tinyint' THEN max_length = 1;
+		WHEN 'date' THEN max_length = 3;
+		WHEN 'smalldatetime' THEN max_length = 4;
+		WHEN 'smallmoney' THEN max_length = 4;
+		WHEN 'datetime2' THEN
+			IF typemod = -1 THEN max_length = 8;
+			ELSIF typemod <= 2 THEN max_length = 6;
+			ELSIF typemod <= 4 THEN max_length = 7;
+			ELSEIF typemod <= 7 THEN max_length = 8;
+			-- typemod = 7 is not possible for datetime2 in Babel
+			END IF;
+		WHEN 'datetimeoffset' THEN
+			IF typemod = -1 THEN max_length = 10;
+			ELSIF typemod <= 2 THEN max_length = 8;
+			ELSIF typemod <= 4 THEN max_length = 9;
+			ELSIF typemod <= 7 THEN max_length = 10;
+			-- typemod = 7 is not possible for datetimeoffset in Babel
+			END IF;
+		WHEN 'time' THEN
+			IF typemod = -1 THEN max_length = 5;
+			ELSIF typemod <= 2 THEN max_length = 3;
+			ELSIF typemod <= 4 THEN max_length = 4;
+			ELSIF typemod <= 7 THEN max_length = 5;
+			END IF;
+		WHEN 'timestamp' THEN max_length = 8;
+		ELSE max_length = typelen;
+		END CASE;
+		RETURN max_length;
+	END IF;
+
+	IF typemod = -1 THEN
+		CASE 
+		WHEN v_type in ('image', 'text', 'ntext') THEN max_length = 16;
+		WHEN v_type = 'sql_variant' THEN max_length = 8016;
+		WHEN v_type in ('varbinary', 'varchar', 'nvarchar') THEN 
+			IF for_sys_types THEN max_length = 8000;
+			ELSE max_length = -1;
+			END IF;
+		WHEN v_type in ('binary', 'char', 'bpchar', 'nchar') THEN max_length = 8000;
+		WHEN v_type in ('decimal', 'numeric') THEN max_length = 17;
+		ELSE max_length = typemod;
+		END CASE;
+		RETURN max_length;
+	END IF;
+
+	CASE
+	WHEN v_type in ('char', 'bpchar', 'varchar', 'binary', 'varbinary') THEN max_length = typemod - 4;
+	WHEN v_type in ('nchar', 'nvarchar') THEN max_length = (typemod - 4) * 2;
+	WHEN v_type = 'sysname' THEN max_length = (typemod - 4) * 2;
+	WHEN v_type in ('numeric', 'decimal') THEN
+		precision = ((typemod - 4) >> 16) & 65535;
+		IF precision >= 1 and precision <= 9 THEN max_length = 5;
+		ELSIF precision <= 19 THEN max_length = 9;
+		ELSIF precision <= 28 THEN max_length = 13;
+		ELSIF precision <= 38 THEN max_length = 17;
+	ELSE max_length = typelen;
+	END IF;
+	ELSE
+		max_length = typemod;
+	END CASE;
+	RETURN max_length;
+END;
+$$ LANGUAGE plpgsql IMMUTABLE STRICT;
+
+-- re-creating objects to point to new tsql_type_max_length_helper
+
+create or replace view sys.types As
+-- For System types
+select tsql_type_name as name
+  , t.oid as system_type_id
+  , t.oid as user_type_id
+  , s.oid as schema_id
+  , cast(NULL as INT) as principal_id
+  , sys.tsql_type_max_length_helper(tsql_type_name, t.typlen, t.typtypmod, true) as max_length
+  , cast(sys.tsql_type_precision_helper(tsql_type_name, t.typtypmod) as int) as precision
+  , cast(sys.tsql_type_scale_helper(tsql_type_name, t.typtypmod, false) as int) as scale
+  , CASE c.collname
+    WHEN 'default' THEN cast(current_setting('babelfishpg_tsql.server_collation_name') as name)
+    ELSE  c.collname
+    END as collation_name
+  , case when typnotnull then 0 else 1 end as is_nullable
+  , 0 as is_user_defined
+  , 0 as is_assembly_type
+  , 0 as default_object_id
+  , 0 as rule_object_id
+  , 0 as is_table_type
+from pg_type t
+inner join pg_namespace s on s.oid = t.typnamespace
+left join pg_collation c on c.oid = t.typcollation
+, sys.translate_pg_type_to_tsql(t.oid) AS tsql_type_name
+where tsql_type_name IS NOT NULL
+and pg_type_is_visible(t.oid)
+and (s.nspname = 'pg_catalog' OR s.nspname = 'sys')
+union all 
+-- For User Defined Types
+select cast(t.typname as text) as name
+  , t.typbasetype as system_type_id
+  , t.oid as user_type_id
+  , s.oid as schema_id
+  , null::integer as principal_id
+  , case when is_tbl_type then -1::smallint else sys.tsql_type_max_length_helper(tsql_base_type_name, t.typlen, t.typtypmod) end as max_length
+  , case when is_tbl_type then 0::smallint else cast(sys.tsql_type_precision_helper(tsql_base_type_name, t.typtypmod) as int) end as precision
+  , case when is_tbl_type then 0::smallint else cast(sys.tsql_type_scale_helper(tsql_base_type_name, t.typtypmod, false) as int) end as scale
+  , CASE c.collname
+    WHEN 'default' THEN cast(current_setting('babelfishpg_tsql.server_collation_name') as name)
+    ELSE  c.collname 
+    END as collation_name
+  , case when is_tbl_type then 0
+         else case when typnotnull then 0 else 1 end
+    end
+    as is_nullable
+  -- CREATE TYPE ... FROM is implemented as CREATE DOMAIN in babel
+  , 1 as is_user_defined
+  , 0 as is_assembly_type
+  , 0 as default_object_id
+  , 0 as rule_object_id
+  , case when is_tbl_type then 1 else 0 end as is_table_type
+from pg_type t
+inner join pg_namespace s on s.oid = t.typnamespace
+join sys.schemas sch on t.typnamespace = sch.schema_id
+left join pg_collation c on c.oid = t.typcollation
+, sys.translate_pg_type_to_tsql(t.oid) AS tsql_type_name
+, sys.translate_pg_type_to_tsql(t.typbasetype) AS tsql_base_type_name
+, sys.is_table_type(t.typrelid) as is_tbl_type
+-- we want to show details of user defined datatypes created under babelfish database
+where tsql_type_name IS NULL
+and
+  (
+    -- show all user defined datatypes created under babelfish database except table types
+    t.typtype = 'd'
+    or
+    -- only for table types
+    sys.is_table_type(t.typrelid)
+  );
+GRANT SELECT ON sys.types TO PUBLIC;
+
+create or replace view sys.all_columns as
+select CAST(c.oid as int) as object_id
+  , CAST(a.attname as sys.sysname) as name
+  , CAST(a.attnum as int) as column_id
+  , CAST(t.oid as int) as system_type_id
+  , CAST(t.oid as int) as user_type_id
+  , CAST(sys.tsql_type_max_length_helper(coalesce(tsql_type_name, tsql_base_type_name), a.attlen, a.atttypmod) as smallint) as max_length
+  , CAST(case
+      when a.atttypmod != -1 then 
+        sys.tsql_type_precision_helper(coalesce(tsql_type_name, tsql_base_type_name), a.atttypmod)
+      else 
+        sys.tsql_type_precision_helper(coalesce(tsql_type_name, tsql_base_type_name), t.typtypmod)
+    end as sys.tinyint) as precision
+  , CAST(case
+      when a.atttypmod != -1 THEN 
+        sys.tsql_type_scale_helper(coalesce(tsql_type_name, tsql_base_type_name), a.atttypmod, false)
+      else 
+        sys.tsql_type_scale_helper(coalesce(tsql_type_name, tsql_base_type_name), t.typtypmod, false)
+    end as sys.tinyint) as scale
+  , CAST(coll.collname as sys.sysname) as collation_name
+  , case when a.attnotnull then CAST(0 as sys.bit) else CAST(1 as sys.bit) end as is_nullable
+  , CAST(0 as sys.bit) as is_ansi_padded
+  , CAST(0 as sys.bit) as is_rowguidcol
+  , CAST(0 as sys.bit) as is_identity
+  , CAST(0 as sys.bit) as is_computed
+  , CAST(0 as sys.bit) as is_filestream
+  , CAST(0 as sys.bit) as is_replicated
+  , CAST(0 as sys.bit) as is_non_sql_subscribed
+  , CAST(0 as sys.bit) as is_merge_published
+  , CAST(0 as sys.bit) as is_dts_replicated
+  , CAST(0 as sys.bit) as is_xml_document
+  , CAST(0 as int) as xml_collection_id
+  , CAST(coalesce(d.oid, 0) as int) as default_object_id
+  , CAST(coalesce((select oid from pg_constraint where conrelid = t.oid and contype = 'c' and a.attnum = any(conkey) limit 1), 0) as int) as rule_object_id
+  , CAST(0 as sys.bit) as is_sparse
+  , CAST(0 as sys.bit) as is_column_set
+  , CAST(0 as sys.tinyint) as generated_always_type
+  , CAST('NOT_APPLICABLE' as sys.nvarchar(60)) as generated_always_type_desc
+from pg_attribute a
+inner join pg_class c on c.oid = a.attrelid
+inner join pg_type t on t.oid = a.atttypid
+inner join pg_namespace s on s.oid = c.relnamespace
+left join pg_attrdef d on c.oid = d.adrelid and a.attnum = d.adnum
+left join pg_collation coll on coll.oid = a.attcollation
+, sys.translate_pg_type_to_tsql(a.atttypid) AS tsql_type_name
+, sys.translate_pg_type_to_tsql(t.typbasetype) AS tsql_base_type_name
+where not a.attisdropped
+and (s.oid in (select schema_id from sys.schemas) or s.nspname = 'sys')
+-- r = ordinary table, i = index, S = sequence, t = TOAST table, v = view, m = materialized view, c = composite type, f = foreign table, p = partitioned table
+and c.relkind in ('r', 'v', 'm', 'f', 'p')
+and has_schema_privilege(s.oid, 'USAGE')
+and has_column_privilege(quote_ident(s.nspname) ||'.'||quote_ident(c.relname), a.attname, 'SELECT,INSERT,UPDATE,REFERENCES')
+and a.attnum > 0;
+GRANT SELECT ON sys.all_columns TO PUBLIC;
+
+CALL babelfish_drop_deprecated_object('function', 'sys', 'tsql_type_max_length_helper_deprecated_in_2_3_0');
+
+CREATE OR REPLACE VIEW sys.all_parameters
+AS
+SELECT
+    CAST(ss.p_oid AS INT) AS object_id
+  , CAST(COALESCE(ss.proargnames[(ss.x).n], '') AS sys.SYSNAME) AS name
+  , CAST(
+      CASE 
+        WHEN is_out_scalar = 1 THEN 0 -- param_id = 0 for output of scalar function
+        ELSE (ss.x).n
+      END 
+    AS INT) AS parameter_id
+  -- 'system_type_id' is specified as type INT here, and not TINYINT per SQL Server documentation.
+  -- This is because the IDs of system type values generated by
+  -- Babelfish installation will exceed the size of TINYINT
+  , CAST(st.system_type_id AS INT) AS system_type_id
+  , CAST(st.user_type_id AS INT) AS user_type_id
+  , CAST( 
+      CASE
+        WHEN st.is_table_type = 1 THEN -1 -- TVP case
+        WHEN st.is_user_defined = 1 THEN st.max_length -- UDT case
+        ELSE sys.tsql_type_max_length_helper(st.name, t.typlen, typmod, true, true)
+      END
+    AS smallint) AS max_length
+  , CAST(
+      CASE
+        WHEN st.is_table_type = 1 THEN 0 -- TVP case
+        WHEN st.is_user_defined = 1  THEN st.precision -- UDT case
+        ELSE sys.tsql_type_precision_helper(st.name, typmod)
+      END
+    AS sys.tinyint) AS precision
+  , CAST(
+      CASE 
+        WHEN st.is_table_type = 1 THEN 0 -- TVP case
+        WHEN st.is_user_defined = 1  THEN st.scale
+        ELSE sys.tsql_type_scale_helper(st.name, typmod,false)
+      END
+    AS sys.tinyint) AS scale
+  , CAST(
+      CASE
+        WHEN is_out_scalar = 1 THEN 1 -- Output of a scalar function
+        WHEN ss.proargmodes[(ss.x).n] in ('o', 'b', 't') THEN 1
+        ELSE 0
+      END 
+    AS sys.bit) AS is_output
+  , CAST(0 AS sys.bit) AS is_cursor_ref
+  , CAST(0 AS sys.bit) AS has_default_value
+  , CAST(0 AS sys.bit) AS is_xml_document
+  , CAST(NULL AS sys.sql_variant) AS default_value
+  , CAST(0 AS int) AS xml_collection_id
+  , CAST(0 AS sys.bit) AS is_readonly
+  , CAST(1 AS sys.bit) AS is_nullable
+  , CAST(NULL AS int) AS encryption_type
+  , CAST(NULL AS sys.nvarchar(64)) AS encryption_type_desc
+  , CAST(NULL AS sys.sysname) AS encryption_algorithm_name
+  , CAST(NULL AS int) AS column_encryption_key_id
+  , CAST(NULL AS sys.sysname) AS column_encryption_key_database_name
+FROM pg_type t
+  INNER JOIN sys.types st ON st.user_type_id = t.oid
+  INNER JOIN 
+  (
+    SELECT
+      p.oid AS p_oid,
+      p.proargnames,
+      p.proargmodes,
+      p.prokind,
+      json_extract_path(CAST(p.probin as json), 'typmod_array') AS typmod_array,
+      information_schema._pg_expandarray(
+      COALESCE(p.proallargtypes,
+        CASE 
+          WHEN p.prokind = 'f' THEN (CAST( p.proargtypes AS oid[]) || p.prorettype) -- Adds return type if not present on proallargtypes
+          ELSE CAST(p.proargtypes AS oid[])
+        END
+      )) AS x
+    FROM pg_proc p
+    WHERE (
+      p.pronamespace in (select schema_id from sys.schemas union all select oid from pg_namespace where nspname = 'sys')
+      AND (pg_has_role(p.proowner, 'USAGE') OR has_function_privilege(p.oid, 'EXECUTE'))
+      AND p.probin like '{%typmod_array%}') -- Needs to have a typmod array in JSON format
+  ) ss ON t.oid = (ss.x).x,
+  COALESCE(pg_get_function_result(ss.p_oid), '') AS return_type,
+  CAST(ss.typmod_array->>(ss.x).n-1 AS INT) AS typmod, 
+  CAST(
+    CASE
+      WHEN ss.prokind = 'f' AND ss.proargnames[(ss.x).n] IS NULL THEN 1 -- checks if param is output of scalar function
+      ELSE 0
+    END 
+  AS INT) AS is_out_scalar
+WHERE ( -- If it's a Table function, we only want the inputs
+      return_type NOT LIKE 'TABLE(%' OR 
+      (return_type LIKE 'TABLE(%' AND ss.proargmodes[(ss.x).n] = 'i'));
+GRANT SELECT ON sys.all_parameters TO PUBLIC;
+
+-- TODO: BABEL-3127
+CREATE OR REPLACE VIEW sys.all_sql_modules_internal AS
+SELECT
+  ao.object_id AS object_id
+  , CAST(
+      CASE WHEN ao.type in ('P', 'FN', 'IN', 'TF', 'RF') THEN tsql_get_functiondef(ao.object_id)
+      WHEN ao.type = 'V' THEN COALESCE(bvd.definition, '')
+      WHEN ao.type = 'TR' THEN NULL
+      ELSE NULL
+      END
+    AS sys.nvarchar(4000)) AS definition  -- Object definition work in progress, will update definition with BABEL-3127 Jira.
+  , CAST(1 as sys.bit)  AS uses_ansi_nulls
+  , CAST(1 as sys.bit)  AS uses_quoted_identifier
+  , CAST(0 as sys.bit)  AS is_schema_bound
+  , CAST(0 as sys.bit)  AS uses_database_collation
+  , CAST(0 as sys.bit)  AS is_recompiled
+  , CAST(
+      CASE WHEN ao.type IN ('P', 'FN', 'IN', 'TF', 'RF') THEN
+        CASE WHEN p.proisstrict THEN 1
+        ELSE 0 
+        END
+      ELSE 0
+      END
+    AS sys.bit) as null_on_null_input
+  , null::integer as execute_as_principal_id
+  , CAST(0 as sys.bit) as uses_native_compilation
+  , CAST(ao.is_ms_shipped as INT) as is_ms_shipped
+FROM sys.all_objects ao
+LEFT OUTER JOIN sys.pg_namespace_ext nmext on ao.schema_id = nmext.oid
+LEFT OUTER JOIN sys.babelfish_namespace_ext ext ON nmext.nspname = ext.nspname
+LEFT OUTER JOIN sys.babelfish_view_def bvd 
+ on (
+      ext.orig_name = bvd.schema_name AND 
+      ext.dbid = bvd.dbid AND
+      ao.name = bvd.object_name 
+   )
+LEFT JOIN pg_proc p ON ao.object_id = CAST(p.oid AS INT)
+WHERE ao.type in ('P', 'RF', 'V', 'TR', 'FN', 'IF', 'TF', 'R');
+GRANT SELECT ON sys.all_sql_modules_internal TO PUBLIC;
 
 CREATE OR REPLACE FUNCTION sys.dateadd(IN datepart PG_CATALOG.TEXT, IN num INTEGER, IN startdate ANYELEMENT) RETURNS ANYELEMENT
 AS
@@ -155,6 +624,7 @@ END;
 $$
 STRICT
 LANGUAGE plpgsql IMMUTABLE;
+
 
 CREATE OR REPLACE FUNCTION sys.format_datetime(IN value anyelement, IN format_pattern NVARCHAR,IN culture VARCHAR,  IN data_type VARCHAR DEFAULT '') RETURNS sys.nvarchar
 AS 'babelfishpg_tsql', 'format_datetime' LANGUAGE C IMMUTABLE PARALLEL SAFE;
@@ -1473,6 +1943,104 @@ $$
 LANGUAGE 'pltsql';
 GRANT EXECUTE ON PROCEDURE sys.sp_helpdbfixedrole TO PUBLIC;
 
+create or replace view sys.databases as
+select
+  CAST(d.name as SYS.SYSNAME) as name
+  , CAST(sys.db_id(d.name) as INT) as database_id
+  , CAST(NULL as INT) as source_database_id
+  , cast(s.sid as SYS.VARBINARY(85)) as owner_sid
+  , CAST(d.crdate AS SYS.DATETIME) as create_date
+  , CAST(s.cmptlevel AS SYS.TINYINT) as compatibility_level
+  , CAST(c.collname as SYS.SYSNAME) as collation_name
+  , CAST(0 AS SYS.TINYINT)  as user_access
+  , CAST('MULTI_USER' AS SYS.NVARCHAR(60)) as user_access_desc
+  , CAST(0 AS SYS.BIT) as is_read_only
+  , CAST(0 AS SYS.BIT) as is_auto_close_on
+  , CAST(0 AS SYS.BIT) as is_auto_shrink_on
+  , CAST(0 AS SYS.TINYINT) as state
+  , CAST('ONLINE' AS SYS.NVARCHAR(60)) as state_desc
+  , CAST(
+	  	CASE 
+			WHEN pg_is_in_recovery() is false THEN 0 
+			WHEN pg_is_in_recovery() is true THEN 1 
+		END 
+	AS SYS.BIT) as is_in_standby
+  , CAST(0 AS SYS.BIT) as is_cleanly_shutdown
+  , CAST(0 AS SYS.BIT) as is_supplemental_logging_enabled
+  , CAST(1 AS SYS.TINYINT) as snapshot_isolation_state
+  , CAST('ON' AS SYS.NVARCHAR(60)) as snapshot_isolation_state_desc
+  , CAST(1 AS SYS.BIT) as is_read_committed_snapshot_on
+  , CAST(1 AS SYS.TINYINT) as recovery_model
+  , CAST('FULL' AS SYS.NVARCHAR(60)) as recovery_model_desc
+  , CAST(0 AS SYS.TINYINT) as page_verify_option
+  , CAST(NULL AS SYS.NVARCHAR(60)) as page_verify_option_desc
+  , CAST(1 AS SYS.BIT) as is_auto_create_stats_on
+  , CAST(0 AS SYS.BIT) as is_auto_create_stats_incremental_on
+  , CAST(0 AS SYS.BIT) as is_auto_update_stats_on
+  , CAST(0 AS SYS.BIT) as is_auto_update_stats_async_on
+  , CAST(0 AS SYS.BIT) as is_ansi_null_default_on
+  , CAST(0 AS SYS.BIT) as is_ansi_nulls_on
+  , CAST(0 AS SYS.BIT) as is_ansi_padding_on
+  , CAST(0 AS SYS.BIT) as is_ansi_warnings_on
+  , CAST(0 AS SYS.BIT) as is_arithabort_on
+  , CAST(0 AS SYS.BIT) as is_concat_null_yields_null_on
+  , CAST(0 AS SYS.BIT) as is_numeric_roundabort_on
+  , CAST(0 AS SYS.BIT) as is_quoted_identifier_on
+  , CAST(0 AS SYS.BIT) as is_recursive_triggers_on
+  , CAST(0 AS SYS.BIT) as is_cursor_close_on_commit_on
+  , CAST(0 AS SYS.BIT) as is_local_cursor_default
+  , CAST(0 AS SYS.BIT) as is_fulltext_enabled
+  , CAST(0 AS SYS.BIT) as is_trustworthy_on
+  , CAST(0 AS SYS.BIT) as is_db_chaining_on
+  , CAST(0 AS SYS.BIT) as is_parameterization_forced
+  , CAST(0 AS SYS.BIT) as is_master_key_encrypted_by_server
+  , CAST(0 AS SYS.BIT) as is_query_store_on
+  , CAST(0 AS SYS.BIT) as is_published
+  , CAST(0 AS SYS.BIT) as is_subscribed
+  , CAST(0 AS SYS.BIT) as is_merge_published
+  , CAST(0 AS SYS.BIT) as is_distributor
+  , CAST(0 AS SYS.BIT) as is_sync_with_backup
+  , CAST(NULL AS SYS.UNIQUEIDENTIFIER) as service_broker_guid
+  , CAST(0 AS SYS.BIT) as is_broker_enabled
+  , CAST(0 AS SYS.TINYINT) as log_reuse_wait
+  , CAST('NOTHING' AS SYS.NVARCHAR(60)) as log_reuse_wait_desc
+  , CAST(0 AS SYS.BIT) as is_date_correlation_on
+  , CAST(0 AS SYS.BIT) as is_cdc_enabled
+  , CAST(0 AS SYS.BIT) as is_encrypted
+  , CAST(0 AS SYS.BIT) as is_honor_broker_priority_on
+  , CAST(NULL AS SYS.UNIQUEIDENTIFIER) as replica_id
+  , CAST(NULL AS SYS.UNIQUEIDENTIFIER) as group_database_id
+  , CAST(NULL AS INT) as resource_pool_id
+  , CAST(NULL AS SMALLINT) as default_language_lcid
+  , CAST(NULL AS SYS.NVARCHAR(128)) as default_language_name
+  , CAST(NULL AS INT) as default_fulltext_language_lcid
+  , CAST(NULL AS SYS.NVARCHAR(128)) as default_fulltext_language_name
+  , CAST(NULL AS SYS.BIT) as is_nested_triggers_on
+  , CAST(NULL AS SYS.BIT) as is_transform_noise_words_on
+  , CAST(NULL AS SMALLINT) as two_digit_year_cutoff
+  , CAST(0 AS SYS.TINYINT) as containment
+  , CAST('NONE' AS SYS.NVARCHAR(60)) as containment_desc
+  , CAST(0 AS INT) as target_recovery_time_in_seconds
+  , CAST(0 AS INT) as delayed_durability
+  , CAST(NULL AS SYS.NVARCHAR(60)) as delayed_durability_desc
+  , CAST(0 AS SYS.BIT) as is_memory_optimized_elevate_to_snapshot_on
+  , CAST(0 AS SYS.BIT) as is_federation_member
+  , CAST(0 AS SYS.BIT) as is_remote_data_archive_enabled
+  , CAST(0 AS SYS.BIT) as is_mixed_page_allocation_on
+  , CAST(0 AS SYS.BIT) as is_temporal_history_retention_enabled
+  , CAST(0 AS INT) as catalog_collation_type
+  , CAST('Not Applicable' AS SYS.NVARCHAR(60)) as catalog_collation_type_desc
+  , CAST(NULL AS SYS.NVARCHAR(128)) as physical_database_name
+  , CAST(0 AS SYS.BIT) as is_result_set_caching_on
+  , CAST(0 AS SYS.BIT) as is_accelerated_database_recovery_on
+  , CAST(0 AS SYS.BIT) as is_tempdb_spill_to_remote_store
+  , CAST(0 AS SYS.BIT) as is_stale_page_detection_on
+  , CAST(0 AS SYS.BIT) as is_memory_optimized_enabled
+  , CAST(0 AS SYS.BIT) as is_ledger_on
+ from sys.babelfish_sysdatabases d 
+ INNER JOIN sys.sysdatabases s on d.dbid = s.dbid
+ LEFT OUTER JOIN pg_catalog.pg_collation c ON d.default_collation = c.collname;
+GRANT SELECT ON sys.databases TO PUBLIC;
 
 -- BABELFISH_FUNCTION_EXT
 CREATE TABLE sys.babelfish_function_ext (
@@ -1481,11 +2049,177 @@ CREATE TABLE sys.babelfish_function_ext (
 	orig_name sys.NVARCHAR(128), -- users' original input name
 	funcsignature TEXT NOT NULL COLLATE "C",
 	default_positions TEXT COLLATE "C",
+	create_date SYS.DATETIME NOT NULL,
+	modify_date SYS.DATETIME NOT NULL,
 	PRIMARY KEY(nspname, funcsignature)
 );
 GRANT SELECT ON sys.babelfish_function_ext TO PUBLIC;
 
 SELECT pg_catalog.pg_extension_config_dump('sys.babelfish_function_ext', '');
+
+ALTER TABLE sys.babelfish_view_def ADD COLUMN create_date SYS.DATETIME, add COLUMN modify_date SYS.DATETIME;
+
+CREATE OR REPLACE FUNCTION sys.babelfish_get_pltsql_function_signature(IN funcoid OID)
+RETURNS text
+AS 'babelfishpg_tsql', 'get_pltsql_function_signature' LANGUAGE C;
+
+create or replace view sys.tables as
+select
+  CAST(t.relname as sys._ci_sysname) as name
+  , CAST(t.oid as int) as object_id
+  , CAST(NULL as int) as principal_id
+  , CAST(sch.schema_id as int) as schema_id
+  , 0 as parent_object_id
+  , CAST('U' as CHAR(2)) as type
+  , CAST('USER_TABLE' as sys.nvarchar(60)) as type_desc
+  , CAST((select string_agg(
+                  case
+                  when option like 'bbf_rel_create_date=%%' then substring(option, 21)
+                  else NULL
+                  end, ',')
+          from unnest(t.reloptions) as option)
+        as sys.datetime) as create_date
+  , CAST((select string_agg(
+                  case
+                  when option like 'bbf_rel_create_date=%%' then substring(option, 21)
+                  else NULL
+                  end, ',')
+          from unnest(t.reloptions) as option)
+        as sys.datetime) as modify_date
+  , CAST(0 as sys.bit) as is_ms_shipped
+  , CAST(0 as sys.bit) as is_published
+  , CAST(0 as sys.bit) as is_schema_published
+  , case reltoastrelid when 0 then 0 else 1 end as lob_data_space_id
+  , CAST(NULL as int) as filestream_data_space_id
+  , CAST(relnatts as int) as max_column_id_used
+  , CAST(0 as sys.bit) as lock_on_bulk_load
+  , CAST(1 as sys.bit) as uses_ansi_nulls
+  , CAST(0 as sys.bit) as is_replicated
+  , CAST(0 as sys.bit) as has_replication_filter
+  , CAST(0 as sys.bit) as is_merge_published
+  , CAST(0 as sys.bit) as is_sync_tran_subscribed
+  , CAST(0 as sys.bit) as has_unchecked_assembly_data
+  , 0 as text_in_row_limit
+  , CAST(0 as sys.bit) as large_value_types_out_of_row
+  , CAST(0 as sys.bit) as is_tracked_by_cdc
+  , CAST(0 as sys.tinyint) as lock_escalation
+  , CAST('TABLE' as sys.nvarchar(60)) as lock_escalation_desc
+  , CAST(0 as sys.bit) as is_filetable
+  , CAST(0 as sys.tinyint) as durability
+  , CAST('SCHEMA_AND_DATA' as sys.nvarchar(60)) as durability_desc
+  , CAST(0 as sys.bit) is_memory_optimized
+  , case relpersistence when 't' then CAST(2 as sys.tinyint) else CAST(0 as sys.tinyint) end as temporal_type
+  , case relpersistence when 't' then CAST('SYSTEM_VERSIONED_TEMPORAL_TABLE' as sys.nvarchar(60)) else CAST('NON_TEMPORAL_TABLE' as sys.nvarchar(60)) end as temporal_type_desc
+  , CAST(null as integer) as history_table_id
+  , CAST(0 as sys.bit) as is_remote_data_archive_enabled
+  , CAST(0 as sys.bit) as is_external
+from pg_class t inner join sys.schemas sch on t.relnamespace = sch.schema_id
+where t.relpersistence in ('p', 'u', 't')
+and t.relkind = 'r'
+and not sys.is_table_type(t.oid)
+and has_schema_privilege(sch.schema_id, 'USAGE')
+and has_table_privilege(t.oid, 'SELECT,INSERT,UPDATE,DELETE,TRUNCATE,TRIGGER');
+GRANT SELECT ON sys.tables TO PUBLIC;
+
+create or replace view sys.views as 
+select 
+  t.relname as name
+  , t.oid as object_id
+  , null::integer as principal_id
+  , sch.schema_id as schema_id
+  , 0 as parent_object_id
+  , 'V'::varchar(2) as type 
+  , 'VIEW'::varchar(60) as type_desc
+  , vd.create_date::timestamp as create_date
+  , vd.create_date::timestamp as modify_date
+  , 0 as is_ms_shipped 
+  , 0 as is_published 
+  , 0 as is_schema_published 
+  , 0 as with_check_option 
+  , 0 as is_date_correlation_view 
+  , 0 as is_tracked_by_cdc 
+from pg_class t inner join sys.schemas sch on t.relnamespace = sch.schema_id 
+left outer join sys.babelfish_view_def vd on t.relname = vd.object_name and sch.name = vd.schema_name and vd.dbid = sys.db_id() 
+where t.relkind = 'v'
+and has_schema_privilege(sch.schema_id, 'USAGE')
+and has_table_privilege(t.oid, 'SELECT,INSERT,UPDATE,DELETE,TRUNCATE,TRIGGER');
+GRANT SELECT ON sys.views TO PUBLIC;
+
+create or replace view sys.procedures as
+select
+  cast(p.proname as sys.sysname) as name
+  , cast(p.oid as int) as object_id
+  , cast(null as int) as principal_id
+  , cast(sch.schema_id as int) as schema_id
+  , cast (0 as int) as parent_object_id
+  , cast(case p.prokind
+      when 'p' then 'P'
+      when 'a' then 'AF'
+      else
+        case format_type(p.prorettype, null) when 'trigger'
+          then 'TR'
+          else 'FN'
+        end
+    end as sys.bpchar(2)) as type
+  , cast(case p.prokind
+      when 'p' then 'SQL_STORED_PROCEDURE'
+      when 'a' then 'AGGREGATE_FUNCTION'
+      else
+        case format_type(p.prorettype, null) when 'trigger'
+          then 'SQL_TRIGGER'
+          else 'SQL_SCALAR_FUNCTION'
+        end
+    end as sys.nvarchar(60)) as type_desc
+  , cast(f.create_date as sys.datetime) as create_date
+  , cast(f.create_date as sys.datetime) as modify_date
+  , cast(0 as sys.bit) as is_ms_shipped
+  , cast(0 as sys.bit) as is_published
+  , cast(0 as sys.bit) as is_schema_published
+  , cast(0 as sys.bit) as is_auto_executed
+  , cast(0 as sys.bit) as is_execution_replicated
+  , cast(0 as sys.bit) as is_repl_serializable_only
+  , cast(0 as sys.bit) as skips_repl_constraints
+from pg_proc p
+inner join sys.schemas sch on sch.schema_id = p.pronamespace
+left join sys.babelfish_function_ext f on p.proname = f.funcname and sch.schema_id::regnamespace::name = f.nspname
+and sys.babelfish_get_pltsql_function_signature(p.oid) = f.funcsignature collate "C"
+where has_schema_privilege(sch.schema_id, 'USAGE')
+and format_type(p.prorettype, null) <> 'trigger'
+and has_function_privilege(p.oid, 'EXECUTE');
+GRANT SELECT ON sys.procedures TO PUBLIC;
+
+CREATE OR REPLACE VIEW sys.triggers
+AS
+SELECT
+  CAST(p.proname as sys.sysname) as name,
+  CAST(p.oid as int) as object_id,
+  CAST(1 as sys.tinyint) as parent_class,
+  CAST('OBJECT_OR_COLUMN' as sys.nvarchar(60)) AS parent_class_desc,
+  CAST(tr.tgrelid as int) AS parent_id,
+  CAST('TR' as sys.bpchar(2)) AS type,
+  CAST('SQL_TRIGGER' as sys.nvarchar(60)) AS type_desc,
+  CAST(f.create_date as sys.datetime) AS create_date,
+  CAST(f.create_date as sys.datetime) AS modify_date,
+  CAST(0 as sys.bit) AS is_ms_shipped,
+  CAST(
+      CASE WHEN tr.tgenabled = 'D'
+      THEN 1
+      ELSE 0
+      END
+      AS sys.bit
+  )	AS is_disabled,
+  CAST(0 as sys.bit) AS is_not_for_replication,
+  CAST(get_bit(CAST(CAST(tr.tgtype as int) as bit(7)),0) as sys.bit) AS is_instead_of_trigger
+FROM pg_proc p
+inner join sys.schemas sch on sch.schema_id = p.pronamespace
+left join pg_trigger tr on tr.tgfoid = p.oid
+left join sys.babelfish_function_ext f on p.proname = f.funcname and sch.schema_id::regnamespace::name = f.nspname
+and sys.babelfish_get_pltsql_function_signature(p.oid) = f.funcsignature collate "C"
+where has_schema_privilege(sch.schema_id, 'USAGE')
+and has_function_privilege(p.oid, 'EXECUTE')
+and p.prokind = 'f'
+and format_type(p.prorettype, null) = 'trigger';
+GRANT SELECT ON sys.triggers TO PUBLIC;
 
 ALTER VIEW sys.default_constraints RENAME TO default_constraints_deprecated_in_2_3_0;
 ALTER VIEW sys.check_constraints RENAME TO check_constraints_deprecated_in_2_3_0;
@@ -1693,12 +2427,25 @@ select
   , CAST(0 as int) as parent_object_id
   , CAST('TT' as char(2)) as type
   , CAST('TABLE_TYPE' as sys.nvarchar(60)) as type_desc
-  , CAST(null as sys.datetime) as create_date
-  , CAST(null as sys.datetime) as modify_date
+  , CAST((select string_agg(
+                    case
+                    when option like 'bbf_rel_create_date=%%' then substring(option, 21)
+                    else NULL
+                    end, ',')
+          from unnest(c.reloptions) as option)
+     as sys.datetime) as create_date
+  , CAST((select string_agg(
+                    case
+                    when option like 'bbf_rel_create_date=%%' then substring(option, 21)
+                    else NULL
+                    end, ',')
+          from unnest(c.reloptions) as option)
+     as sys.datetime) as modify_date
   , CAST(1 as sys.bit) as is_ms_shipped
   , CAST(0 as sys.bit) as is_published
   , CAST(0 as sys.bit) as is_schema_published
-from sys.table_types tt;
+from sys.table_types tt
+inner join pg_class c on tt.type_table_object_id = c.oid;
 GRANT SELECT ON sys.objects TO PUBLIC;
 
 CREATE OR REPLACE FUNCTION objectproperty(
@@ -1816,12 +2563,201 @@ END;
 $$
 LANGUAGE plpgsql;
 
-CALL sys.babelfish_drop_deprecated_view('sys', 'check_constraints_deprecated_in_2_3_0');
-CALL sys.babelfish_drop_deprecated_view('sys', 'default_constraints_deprecated_in_2_3_0');
+CALL sys.babelfish_drop_deprecated_object('view', 'sys', 'check_constraints_deprecated_in_2_3_0');
+CALL sys.babelfish_drop_deprecated_object('view', 'sys', 'default_constraints_deprecated_in_2_3_0');
+
+-- USER extension
+ALTER TABLE sys.babelfish_authid_user_ext add COLUMN IF NOT EXISTS user_can_connect INT NOT NULL DEFAULT 1;
+
+GRANT SELECT ON sys.babelfish_authid_user_ext TO PUBLIC;
+
+CREATE OR REPLACE PROCEDURE sys.babelfish_update_user_catalog_for_guest()
+LANGUAGE C
+AS 'babelfishpg_tsql', 'update_user_catalog_for_guest';
+ 
+CALL sys.babelfish_update_user_catalog_for_guest();
 
 -- Drops the temporary procedure used by the upgrade script.
 -- Please have this be one of the last statements executed in this upgrade script.
-DROP PROCEDURE sys.babelfish_drop_deprecated_view(varchar, varchar);
+DROP PROCEDURE sys.babelfish_drop_deprecated_object(varchar, varchar, varchar);
 
 -- Reset search_path to not affect any subsequent scripts
 SELECT set_config('search_path', trim(leading 'sys, ' from current_setting('search_path')), false);
+
+CREATE OR REPLACE FUNCTION sys.babelfish_conv_string_to_time(IN p_datatype TEXT,
+                                                                 IN p_timestring TEXT,
+                                                                 IN p_style NUMERIC DEFAULT 0)
+RETURNS TIME WITHOUT TIME ZONE
+AS
+$BODY$
+DECLARE
+    v_hours SMALLINT;
+    v_style SMALLINT;
+    v_scale SMALLINT;
+    v_daypart VARCHAR COLLATE "C";
+    v_seconds VARCHAR COLLATE "C";
+    v_minutes SMALLINT;
+    v_fseconds VARCHAR COLLATE "C";
+    v_datatype VARCHAR COLLATE "C";
+    v_timestring VARCHAR COLLATE "C";
+    v_err_message VARCHAR COLLATE "C";
+    v_src_datatype VARCHAR COLLATE "C";
+    v_timeunit_mask VARCHAR COLLATE "C";
+    v_datatype_groups TEXT[];
+    v_regmatch_groups TEXT[];
+    AMPM_REGEXP CONSTANT VARCHAR COLLATE "C" := '\s*([AP]M)';
+    TIMEUNIT_REGEXP CONSTANT VARCHAR COLLATE "C" := '\s*(\d{1,2})\s*';
+    FRACTSECS_REGEXP CONSTANT VARCHAR COLLATE "C" := '\s*(\d{1,9})';
+    HHMMSSFS_REGEXP CONSTANT VARCHAR COLLATE "C" := concat('^', TIMEUNIT_REGEXP,
+                                               '\:', TIMEUNIT_REGEXP,
+                                               '\:', TIMEUNIT_REGEXP,
+                                               '(?:\.|\:)', FRACTSECS_REGEXP, '$');
+    HHMMSS_REGEXP CONSTANT VARCHAR COLLATE "C" := concat('^', TIMEUNIT_REGEXP, '\:', TIMEUNIT_REGEXP, '\:', TIMEUNIT_REGEXP, '$');
+    HHMMFS_REGEXP CONSTANT VARCHAR COLLATE "C" := concat('^', TIMEUNIT_REGEXP, '\:', TIMEUNIT_REGEXP, '\.', FRACTSECS_REGEXP, '$');
+    HHMM_REGEXP CONSTANT VARCHAR COLLATE "C" := concat('^', TIMEUNIT_REGEXP, '\:', TIMEUNIT_REGEXP, '$');
+    HH_REGEXP CONSTANT VARCHAR COLLATE "C" := concat('^', TIMEUNIT_REGEXP, '$');
+    DATATYPE_REGEXP CONSTANT VARCHAR COLLATE "C" := '^(TIME)\s*(?:\()?\s*((?:-)?\d+)?\s*(?:\))?$';
+BEGIN
+    v_datatype := trim(regexp_replace(p_datatype, 'DATETIME', 'TIME', 'gi'));
+    v_timestring := upper(trim(p_timestring));
+    v_style := floor(p_style)::SMALLINT;
+
+    v_datatype_groups := regexp_matches(v_datatype, DATATYPE_REGEXP, 'gi');
+
+    v_src_datatype := upper(v_datatype_groups[1]);
+    v_scale := v_datatype_groups[2]::SMALLINT;
+
+    IF (v_src_datatype IS NULL) THEN
+        RAISE datatype_mismatch;
+    ELSIF (coalesce(v_scale, 0) NOT BETWEEN 0 AND 7)
+    THEN
+        RAISE interval_field_overflow;
+    ELSIF (v_scale IS NULL) THEN
+        v_scale := 7;
+    END IF;
+
+    IF (scale(p_style) > 0) THEN
+        RAISE most_specific_type_mismatch;
+    ELSIF (NOT ((v_style BETWEEN 0 AND 14) OR
+             (v_style BETWEEN 20 AND 25) OR
+             (v_style BETWEEN 100 AND 114) OR
+             v_style IN (120, 121, 126, 127, 130, 131)))
+    THEN
+        RAISE invalid_parameter_value;
+    END IF;
+
+    v_daypart := substring(v_timestring, 'AM|PM');
+    v_timestring := trim(regexp_replace(v_timestring, coalesce(v_daypart, ''), ''));
+
+    v_timeunit_mask :=
+        CASE
+           WHEN (v_timestring ~* HHMMSSFS_REGEXP) THEN HHMMSSFS_REGEXP
+           WHEN (v_timestring ~* HHMMSS_REGEXP) THEN HHMMSS_REGEXP
+           WHEN (v_timestring ~* HHMMFS_REGEXP) THEN HHMMFS_REGEXP
+           WHEN (v_timestring ~* HHMM_REGEXP) THEN HHMM_REGEXP
+           WHEN (v_timestring ~* HH_REGEXP) THEN HH_REGEXP
+        END;
+
+    IF (v_timeunit_mask IS NULL) THEN
+        RAISE invalid_datetime_format;
+    END IF;
+
+    v_regmatch_groups := regexp_matches(v_timestring, v_timeunit_mask, 'gi');
+
+    v_hours := v_regmatch_groups[1]::SMALLINT;
+    v_minutes := v_regmatch_groups[2]::SMALLINT;
+
+    IF (v_timestring ~* HHMMFS_REGEXP) THEN
+        v_fseconds := v_regmatch_groups[3];
+    ELSE
+        v_seconds := v_regmatch_groups[3];
+        v_fseconds := v_regmatch_groups[4];
+    END IF;
+
+   IF (v_daypart IS NOT NULL) THEN
+      IF ((v_daypart = 'AM' AND v_hours NOT BETWEEN 0 AND 12) OR
+          (v_daypart = 'PM' AND v_hours NOT BETWEEN 1 AND 23))
+      THEN
+          RAISE numeric_value_out_of_range;
+      ELSIF (v_daypart = 'PM' AND v_hours < 12) THEN
+          v_hours := v_hours + 12;
+      ELSIF (v_daypart = 'AM' AND v_hours = 12) THEN
+          v_hours := v_hours - 12;
+      END IF;
+   END IF;
+
+    v_fseconds := sys.babelfish_get_microsecs_from_fractsecs(v_fseconds, v_scale);
+    v_seconds := concat_ws('.', v_seconds, v_fseconds);
+
+    RETURN make_time(v_hours, v_minutes, v_seconds::NUMERIC);
+EXCEPTION
+    WHEN most_specific_type_mismatch THEN
+        RAISE USING MESSAGE := 'Argument data type NUMERIC is invalid for argument 3 of conv_string_to_time function.',
+                    DETAIL := 'Use of incorrect "style" parameter value during conversion process.',
+                    HINT := 'Change "style" parameter to the proper value and try again.';
+
+    WHEN invalid_parameter_value THEN
+        RAISE USING MESSAGE := format('The style %s is not supported for conversions from VARCHAR to TIME.', v_style),
+                    DETAIL := 'Use of incorrect "style" parameter value during conversion process.',
+                    HINT := 'Change "style" parameter to the proper value and try again.';
+
+    WHEN datatype_mismatch THEN
+        RAISE USING MESSAGE := 'Source data type should be ''TIME'' or ''TIME(n)''.',
+                    DETAIL := 'Use of incorrect "datatype" parameter value during conversion process.',
+                    HINT := 'Change "datatype" parameter to the proper value and try again.';
+
+    WHEN interval_field_overflow THEN
+        RAISE USING MESSAGE := format('Specified scale %s is invalid.', v_scale),
+                    DETAIL := 'Use of incorrect data type scale value during conversion process.',
+                    HINT := 'Change scale component of data type parameter to be in range [0..7] and try again.';
+
+    WHEN numeric_value_out_of_range THEN
+        RAISE USING MESSAGE := 'Could not extract correct hour value due to it''s inconsistency with AM|PM day part mark.',
+                    DETAIL := 'Extracted hour value doesn''t fall in correct day part mark range: 0..12 for "AM" or 1..23 for "PM".',
+                    HINT := 'Correct a hour value in the source string or remove AM|PM day part mark out of it.';
+
+    WHEN invalid_datetime_format THEN
+        RAISE USING MESSAGE := 'Conversion failed when converting time from character string.',
+                    DETAIL := 'Incorrect using of pair of input parameters values during conversion process.',
+                    HINT := 'Check the input parameters values, correct them if needed, and try again.';
+
+    WHEN invalid_text_representation THEN
+        GET STACKED DIAGNOSTICS v_err_message = MESSAGE_TEXT;
+        v_err_message := substring(lower(v_err_message), 'integer\:\s\"(.*)\"');
+
+        RAISE USING MESSAGE := format('Error while trying to convert "%s" value to SMALLINT data type.',
+                                      v_err_message),
+                    DETAIL := 'Supplied value contains illegal characters.',
+                    HINT := 'Correct supplied value, remove all illegal characters.';
+END;
+$BODY$
+LANGUAGE plpgsql
+VOLATILE
+RETURNS NULL ON NULL INPUT;
+CREATE OR REPLACE PROCEDURE sys.sp_helpdb(IN "@dbname" VARCHAR(32))
+LANGUAGE 'pltsql'
+AS $$
+BEGIN
+  SELECT
+  CAST(name AS sys.nvarchar(128)),
+  CAST(db_size AS sys.nvarchar(13)),
+  CAST(owner AS sys.nvarchar(128)),
+  CAST(dbid AS sys.int),
+  CAST(created AS sys.nvarchar(11)),
+  CAST(status AS sys.nvarchar(600)),
+  CAST(compatibility_level AS sys.tinyint)
+  FROM sys.babelfish_helpdb(@dbname);
+
+  SELECT
+  CAST(NULL AS sys.nchar(128)) AS name,
+  CAST(NULL AS smallint) AS fileid,
+  CAST(NULL AS sys.nchar(260)) AS filename,
+  CAST(NULL AS sys.nvarchar(128)) AS filegroup,
+  CAST(NULL AS sys.nvarchar(18)) AS size,
+  CAST(NULL AS sys.nvarchar(18)) AS maxsize,
+  CAST(NULL AS sys.nvarchar(18)) AS growth,
+  CAST(NULL AS sys.varchar(9)) AS usage;
+
+  RETURN 0;
+END;
+$$;

@@ -8,8 +8,20 @@ select
   , 0 as parent_object_id
   , CAST('U' as CHAR(2)) as type
   , CAST('USER_TABLE' as sys.nvarchar(60)) as type_desc
-  , CAST(NULL as sys.datetime) as create_date
-  , CAST(NULL as sys.datetime) as modify_date
+  , CAST((select string_agg(
+                  case
+                  when option like 'bbf_rel_create_date=%%' then substring(option, 21)
+                  else NULL
+                  end, ',')
+          from unnest(t.reloptions) as option)
+        as sys.datetime) as create_date
+  , CAST((select string_agg(
+                  case
+                  when option like 'bbf_rel_create_date=%%' then substring(option, 21)
+                  else NULL
+                  end, ',')
+          from unnest(t.reloptions) as option)
+        as sys.datetime) as modify_date
   , CAST(0 as sys.bit) as is_ms_shipped
   , CAST(0 as sys.bit) as is_published
   , CAST(0 as sys.bit) as is_schema_published
@@ -54,8 +66,8 @@ select
   , 0 as parent_object_id
   , 'V'::varchar(2) as type 
   , 'VIEW'::varchar(60) as type_desc
-  , null::timestamp as create_date
-  , null::timestamp as modify_date
+  , vd.create_date::timestamp as create_date
+  , vd.create_date::timestamp as modify_date
   , 0 as is_ms_shipped 
   , 0 as is_published 
   , 0 as is_schema_published 
@@ -63,6 +75,7 @@ select
   , 0 as is_date_correlation_view 
   , 0 as is_tracked_by_cdc 
 from pg_class t inner join sys.schemas sch on t.relnamespace = sch.schema_id 
+left outer join sys.babelfish_view_def vd on t.relname = vd.object_name and sch.name = vd.schema_name and vd.dbid = sys.db_id() 
 where t.relkind = 'v'
 and has_schema_privilege(sch.schema_id, 'USAGE')
 and has_table_privilege(t.oid, 'SELECT,INSERT,UPDATE,DELETE,TRUNCATE,TRIGGER');
@@ -235,17 +248,33 @@ END;
 $$ LANGUAGE plpgsql IMMUTABLE STRICT;
 
 
-CREATE OR REPLACE FUNCTION sys.tsql_type_max_length_helper(IN type TEXT, IN typelen INT, IN typemod INT, IN for_sys_types boolean DEFAULT false)
+CREATE OR REPLACE FUNCTION sys.tsql_type_max_length_helper(IN type TEXT, IN typelen INT, IN typemod INT, IN for_sys_types boolean DEFAULT false, IN used_typmod_array boolean DEFAULT false)
 RETURNS SMALLINT
 AS $$
 DECLARE
 	max_length SMALLINT;
 	precision INT;
-	v_type TEXT COLLATE "C" := type;
+	v_type TEXT COLLATE sys.database_default := type;
 BEGIN
 	-- unknown tsql type
 	IF v_type IS NULL THEN
 		RETURN CAST(typelen as SMALLINT);
+	END IF;
+
+	-- if using typmod_array from pg_proc.probin
+	IF used_typmod_array THEN
+		IF v_type = 'sysname' THEN
+			RETURN 256;
+		ELSIF (v_type in ('char', 'bpchar', 'varchar', 'binary', 'varbinary', 'nchar', 'nvarchar'))
+		THEN
+			IF typemod < 0 THEN -- max value. 
+				RETURN -1;
+			ELSIF v_type in ('nchar', 'nvarchar') THEN
+				RETURN (2 * typemod);
+			ELSE
+				RETURN typemod;
+			END IF;
+		END IF;
 	END IF;
 
 	IF typelen != -1 THEN
@@ -855,10 +884,7 @@ select
   , cast(p.oid as int) as object_id
   , cast(null as int) as principal_id
   , cast(sch.schema_id as int) as schema_id
-  , cast (case when tr.tgrelid is not null 
-      then tr.tgrelid 
-      else 0 end as int) 
-    as parent_object_id
+  , cast (0 as int) as parent_object_id
   , cast(case p.prokind
       when 'p' then 'P'
       when 'a' then 'AF'
@@ -877,8 +903,8 @@ select
           else 'SQL_SCALAR_FUNCTION'
         end
     end as sys.nvarchar(60)) as type_desc
-  , cast(null as sys.datetime) as create_date
-  , cast(null as sys.datetime) as modify_date
+  , cast(f.create_date as sys.datetime) as create_date
+  , cast(f.create_date as sys.datetime) as modify_date
   , cast(0 as sys.bit) as is_ms_shipped
   , cast(0 as sys.bit) as is_published
   , cast(0 as sys.bit) as is_schema_published
@@ -888,8 +914,10 @@ select
   , cast(0 as sys.bit) as skips_repl_constraints
 from pg_proc p
 inner join sys.schemas sch on sch.schema_id = p.pronamespace
-left join pg_trigger tr on tr.tgfoid = p.oid
+left join sys.babelfish_function_ext f on p.proname = f.funcname and sch.schema_id::regnamespace::name = f.nspname
+and sys.babelfish_get_pltsql_function_signature(p.oid) = f.funcsignature collate "C"
 where has_schema_privilege(sch.schema_id, 'USAGE')
+and format_type(p.prorettype, null) <> 'trigger'
 and has_function_privilege(p.oid, 'EXECUTE');
 GRANT SELECT ON sys.procedures TO PUBLIC;
 
@@ -1427,8 +1455,8 @@ SELECT
   CAST(tr.tgrelid as int) AS parent_id,
   CAST('TR' as sys.bpchar(2)) AS type,
   CAST('SQL_TRIGGER' as sys.nvarchar(60)) AS type_desc,
-  CAST(NULL as sys.datetime) AS create_date,
-  CAST(NULL as sys.datetime) AS modify_date,
+  CAST(f.create_date as sys.datetime) AS create_date,
+  CAST(f.create_date as sys.datetime) AS modify_date,
   CAST(0 as sys.bit) AS is_ms_shipped,
   CAST(
       CASE WHEN tr.tgenabled = 'D'
@@ -1442,6 +1470,8 @@ SELECT
 FROM pg_proc p
 inner join sys.schemas sch on sch.schema_id = p.pronamespace
 left join pg_trigger tr on tr.tgfoid = p.oid
+left join sys.babelfish_function_ext f on p.proname = f.funcname and sch.schema_id::regnamespace::name = f.nspname
+and sys.babelfish_get_pltsql_function_signature(p.oid) = f.funcsignature collate "C"
 where has_schema_privilege(sch.schema_id, 'USAGE')
 and has_function_privilege(p.oid, 'EXECUTE')
 and p.prokind = 'f'
@@ -1597,12 +1627,25 @@ select
   , CAST(0 as int) as parent_object_id
   , CAST('TT' as char(2)) as type
   , CAST('TABLE_TYPE' as sys.nvarchar(60)) as type_desc
-  , CAST(null as sys.datetime) as create_date
-  , CAST(null as sys.datetime) as modify_date
+  , CAST((select string_agg(
+                    case
+                    when option like 'bbf_rel_create_date=%%' then substring(option, 21)
+                    else NULL
+                    end, ',')
+          from unnest(c.reloptions) as option)
+     as sys.datetime) as create_date
+  , CAST((select string_agg(
+                    case
+                    when option like 'bbf_rel_create_date=%%' then substring(option, 21)
+                    else NULL
+                    end, ',')
+          from unnest(c.reloptions) as option)
+     as sys.datetime) as modify_date
   , CAST(1 as sys.bit) as is_ms_shipped
   , CAST(0 as sys.bit) as is_published
   , CAST(0 as sys.bit) as is_schema_published
-from sys.table_types tt;
+from sys.table_types tt
+inner join pg_class c on tt.type_table_object_id = c.oid;
 GRANT SELECT ON sys.objects TO PUBLIC;
 
 create or replace view sys.sysobjects as
@@ -1644,8 +1687,8 @@ CREATE OR REPLACE VIEW sys.all_sql_modules_internal AS
 SELECT
   ao.object_id AS object_id
   , CAST(
-      CASE WHEN ao.type in ('P', 'FN', 'IN', 'TF', 'RF') THEN pg_get_functiondef(ao.object_id)
-      WHEN ao.type = 'V' THEN NULL
+      CASE WHEN ao.type in ('P', 'FN', 'IN', 'TF', 'RF') THEN tsql_get_functiondef(ao.object_id)
+      WHEN ao.type = 'V' THEN COALESCE(bvd.definition, '')
       WHEN ao.type = 'TR' THEN NULL
       ELSE NULL
       END
@@ -1667,6 +1710,14 @@ SELECT
   , CAST(0 as sys.bit) as uses_native_compilation
   , CAST(ao.is_ms_shipped as INT) as is_ms_shipped
 FROM sys.all_objects ao
+LEFT OUTER JOIN sys.pg_namespace_ext nmext on ao.schema_id = nmext.oid
+LEFT OUTER JOIN sys.babelfish_namespace_ext ext ON nmext.nspname = ext.nspname
+LEFT OUTER JOIN sys.babelfish_view_def bvd 
+ on (
+      ext.orig_name = bvd.schema_name AND 
+      ext.dbid = bvd.dbid AND
+      ao.name = bvd.object_name 
+   )
 LEFT JOIN pg_proc p ON ao.object_id = CAST(p.oid AS INT)
 WHERE ao.type in ('P', 'RF', 'V', 'TR', 'FN', 'IF', 'TF', 'R');
 GRANT SELECT ON sys.all_sql_modules_internal TO PUBLIC;
@@ -2597,6 +2648,98 @@ SELECT
   , CAST(0 as int) as cells_per_object
 WHERE FALSE;
 GRANT SELECT ON sys.spatial_index_tessellations TO PUBLIC;
+
+CREATE OR REPLACE VIEW sys.all_parameters
+AS
+SELECT
+    CAST(ss.p_oid AS INT) AS object_id
+  , CAST(COALESCE(ss.proargnames[(ss.x).n], '') AS sys.SYSNAME) AS name
+  , CAST(
+      CASE 
+        WHEN is_out_scalar = 1 THEN 0 -- param_id = 0 for output of scalar function
+        ELSE (ss.x).n
+      END 
+    AS INT) AS parameter_id
+  -- 'system_type_id' is specified as type INT here, and not TINYINT per SQL Server documentation.
+  -- This is because the IDs of system type values generated by
+  -- Babelfish installation will exceed the size of TINYINT
+  , CAST(st.system_type_id AS INT) AS system_type_id
+  , CAST(st.user_type_id AS INT) AS user_type_id
+  , CAST( 
+      CASE
+        WHEN st.is_table_type = 1 THEN -1 -- TVP case
+        WHEN st.is_user_defined = 1 THEN st.max_length -- UDT case
+        ELSE sys.tsql_type_max_length_helper(st.name, t.typlen, typmod, true, true)
+      END
+    AS smallint) AS max_length
+  , CAST(
+      CASE
+        WHEN st.is_table_type = 1 THEN 0 -- TVP case
+        WHEN st.is_user_defined = 1  THEN st.precision -- UDT case
+        ELSE sys.tsql_type_precision_helper(st.name, typmod)
+      END
+    AS sys.tinyint) AS precision
+  , CAST(
+      CASE 
+        WHEN st.is_table_type = 1 THEN 0 -- TVP case
+        WHEN st.is_user_defined = 1  THEN st.scale
+        ELSE sys.tsql_type_scale_helper(st.name, typmod,false)
+      END
+    AS sys.tinyint) AS scale
+  , CAST(
+      CASE
+        WHEN is_out_scalar = 1 THEN 1 -- Output of a scalar function
+        WHEN ss.proargmodes[(ss.x).n] in ('o', 'b', 't') THEN 1
+        ELSE 0
+      END 
+    AS sys.bit) AS is_output
+  , CAST(0 AS sys.bit) AS is_cursor_ref
+  , CAST(0 AS sys.bit) AS has_default_value
+  , CAST(0 AS sys.bit) AS is_xml_document
+  , CAST(NULL AS sys.sql_variant) AS default_value
+  , CAST(0 AS int) AS xml_collection_id
+  , CAST(0 AS sys.bit) AS is_readonly
+  , CAST(1 AS sys.bit) AS is_nullable
+  , CAST(NULL AS int) AS encryption_type
+  , CAST(NULL AS sys.nvarchar(64)) AS encryption_type_desc
+  , CAST(NULL AS sys.sysname) AS encryption_algorithm_name
+  , CAST(NULL AS int) AS column_encryption_key_id
+  , CAST(NULL AS sys.sysname) AS column_encryption_key_database_name
+FROM pg_type t
+  INNER JOIN sys.types st ON st.user_type_id = t.oid
+  INNER JOIN 
+  (
+    SELECT
+      p.oid AS p_oid,
+      p.proargnames,
+      p.proargmodes,
+      p.prokind,
+      json_extract_path(CAST(p.probin as json), 'typmod_array') AS typmod_array,
+      information_schema._pg_expandarray(
+      COALESCE(p.proallargtypes,
+        CASE 
+          WHEN p.prokind = 'f' THEN (CAST( p.proargtypes AS oid[]) || p.prorettype) -- Adds return type if not present on proallargtypes
+          ELSE CAST(p.proargtypes AS oid[])
+        END
+      )) AS x
+    FROM pg_proc p
+    WHERE (
+      p.pronamespace in (select schema_id from sys.schemas union all select oid from pg_namespace where nspname = 'sys')
+      AND (pg_has_role(p.proowner, 'USAGE') OR has_function_privilege(p.oid, 'EXECUTE'))
+      AND p.probin like '{%typmod_array%}') -- Needs to have a typmod array in JSON format
+  ) ss ON t.oid = (ss.x).x,
+  COALESCE(pg_get_function_result(ss.p_oid), '') AS return_type,
+  CAST(ss.typmod_array->>(ss.x).n-1 AS INT) AS typmod, 
+  CAST(
+    CASE
+      WHEN ss.prokind = 'f' AND ss.proargnames[(ss.x).n] IS NULL THEN 1 -- checks if param is output of scalar function
+      ELSE 0
+    END 
+  AS INT) AS is_out_scalar
+WHERE ( -- If it's a Table function, we only want the inputs
+      return_type NOT LIKE 'TABLE(%' OR 
+      (return_type LIKE 'TABLE(%' AND ss.proargmodes[(ss.x).n] = 'i'));
+GRANT SELECT ON sys.all_parameters TO PUBLIC;
 
 CREATE OR REPLACE VIEW sys.numbered_procedures
 AS

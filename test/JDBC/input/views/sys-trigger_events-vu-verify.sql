@@ -9,6 +9,7 @@ GO
 -- check trigger's object ID in sys.all_objects and sys.trigger_events view match up
 SELECT ao.name FROM sys.all_objects ao
 JOIN sys.trigger_events e ON e.object_id = ao.object_id
+AND ao.type = 'TR'
 GO
 
 USE master

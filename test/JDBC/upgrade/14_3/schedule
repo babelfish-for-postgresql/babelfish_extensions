@@ -42,7 +42,7 @@ BABEL-3402
 sys-server_principals
 msdb-dbo-syspolicy_system_health_state
 sys-all_columns
-sys-all_sql_modules
+sys-all_parameters
 sys-assembly_modules
 sys-change_tracking_databases
 sys-change_tracking_tables
@@ -86,6 +86,7 @@ sys-syscolumns
 sys-sysforeignkeys
 sys-syslanguages
 sys-system_sql_modules
+sys-system_sql_modules-dep
 sys-table_types
 sys-tables
 sys-triggers
@@ -255,6 +256,7 @@ sys-dm_exec_connections-dep
 sys-dm_exec_sessions-dep
 sys-table_types-dep
 sys-all_sql_modules-dep
+sys-sql_modules-dep
 sys-sp_pkeys-dep
 sys-sp_statistics-dep
 BABEL-1756-dep
@@ -263,3 +265,6 @@ BABEL-SP_STORED_PROCEDURES-dep
 BABEL-SP_SPROC_COLUMNS-dep
 BABEL-3000-dep
 BABEL-3556-before-14_6
+BABEL-3010-before-14_6
+BABEL_GRANT_CONNECT
+BABEL-sp_helpdb

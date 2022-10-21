@@ -53,6 +53,7 @@ sp_describe_first_result_set
 sys-host_name
 SYSTEM_USER
 indexproperty
+sys-all_parameters
 msdb-dbo-syspolicy_configuration
 sys-all_views
 datepart
@@ -100,12 +101,14 @@ TestNotNull
 Test-Identity
 Test-Computed-Columns
 BABEL-1189
+BABEL-1062
 BABEL-1243
 BABEL-1493
 BABEL-1963
 BABEL-2203
 BABEL-2208
 BABEL-2257
+BABEL-2449
 BABEL-2535
 BABEL-2787-2
 BABEL-2787
@@ -116,6 +119,7 @@ BABEL-2944
 BABEL-3116
 BABEL-3118
 BABEL-3249
+BABEL-3486
 BABEL-3474
 BABEL-383
 BABEL-405
@@ -161,6 +165,7 @@ HAS_DBACCESS
 BABEL-1475
 BABEL-1510
 BABEL-3213
+BABEL-3010
 BABEL-RAND
 BABEL-741
 BABEL-ROLE-MEMBER
@@ -180,6 +185,7 @@ BABEL-1953
 schema_resolution_trigger
 sys_all_objects-dep
 sys-columns-dep
+sys-databases-dep
 sys-foreign_key_columns-dep
 sys-foreign_keys-dep
 sys-identity_columns-dep
@@ -201,6 +207,8 @@ sys-dm_exec_connections-dep
 sys-dm_exec_sessions-dep
 sys-table_types-dep
 sys-all_sql_modules-dep
+sys-sql_modules-dep
+sys-system_sql_modules-dep
 sys-triggers-dep
 BABEL-2877
 sys-sp_pkeys
@@ -273,6 +281,7 @@ sys-syscolumns
 sys-sysforeignkeys
 sys-syslanguages
 sys-system_sql_modules
+sys-sql_modules
 sys-table_types
 sys-tables
 sys-triggers
@@ -290,5 +299,8 @@ babel_417
 babel_datatype_sqlvariant
 babel_sqlvariant_cast_compare
 BABEL-3144
+sys-all_parameters-dep
 BABEL-3556
 BABEL-3268
+BABEL_GRANT_CONNECT
+BABEL-sp_helpdb
