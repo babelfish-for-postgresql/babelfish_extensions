@@ -2543,8 +2543,8 @@ GRANT EXECUTE ON PROCEDURE sys.sp_helpdbfixedrole TO PUBLIC;
 CREATE OR REPLACE VIEW sys.sp_sproc_columns_view
 AS
 SELECT
-    CAST(COALESCE(d.name, sys.db_name()) AS sys.sysname) AS PROCEDURE_QUALIFIER
-  , CAST(COALESCE(bne.orig_name, 'sys') AS sys.sysname) AS PROCEDURE_OWNER
+    CAST(sys.db_name() AS sys.sysname) AS PROCEDURE_QUALIFIER -- This will always be objects in current database
+  , CAST(ss.schema_name AS sys.sysname) AS PROCEDURE_OWNER
   , CAST(
       CASE
         WHEN ss.prokind = 'p' THEN CONCAT(ss.proname, ';1')
@@ -2728,29 +2728,37 @@ SELECT
          p.prokind as prokind,
          p.proretset as proretset,
          p.prorettype as prorettype,
-         p.pronamespace as pronamespace,
          p.proallargtypes as proallargtypes,
-         p.proargtypes as proargtypes
+         p.proargtypes as proargtypes,
+         s.name as schema_name
        FROM 
          pg_proc p
+       INNER JOIN (
+       		SELECT name as name, schema_id as id  FROM sys.schemas 
+       		UNION ALL 
+       		SELECT CAST(nspname as sys.sysname) as name, CAST(oid as int) as id 
+       			from pg_namespace WHERE nspname in ('sys', 'information_schema_tsql')
+   			) as s ON p.pronamespace = s.id
        WHERE (
-	     p.pronamespace in (select schema_id from sys.schemas union all select oid from pg_namespace where nspname = 'sys')
+	     p.pronamespace in (select schema_id from sys.schemas union all select oid from pg_namespace where nspname in ('sys', 'information_schema'))
 	     AND (pg_has_role(p.proowner, 'USAGE') OR has_function_privilege(p.oid, 'EXECUTE'))
-	     AND (p.probin like '{%typmod_array%}'-- typmod array exists for those that are user-defined
-	       OR p.proname like 'sp\_%' -- filter out internal babelfish-specific procs
+	     AND (s.name != 'sys' 
+	       OR p.proname like 'sp\_%' -- filter out internal babelfish-specific procs in sys schema
 	       OR p.proname like 'xp\_%'
 	       OR p.proname like 'dm\_%'
 	       OR p.proname like 'fn\_%'))
 	)
-	       
-     SELECT -- Selects all parameters (input and output), but NOT return values
+	
+	 SELECT *
+	 FROM ( 
+       SELECT -- Selects all parameters (input and output), but NOT return values
        p.proname as proname,
        p.proargnames as proargnames,
        p.proargmodes as proargmodes,
        p.prokind as prokind,
        p.proretset as proretset,
        p.prorettype as prorettype,
-       p.pronamespace as pronamespace,
+       p.schema_name as schema_name,
        (information_schema._pg_expandarray(
        COALESCE(p.proallargtypes,
          CASE 
@@ -2765,7 +2773,8 @@ SELECT
            ELSE CAST(p.proargtypes AS oid[])
          END
        ))).n AS n
-    FROM bbf_proc p
+       FROM bbf_proc p) AS t
+    WHERE (t.proargmodes[t.n] in ('i', 'o', 'b') OR t.proargmodes is NULL)
       
     UNION ALL
       
@@ -2776,25 +2785,18 @@ SELECT
       p.prokind as prokind,
       p.proretset as proretset,
       p.prorettype as prorettype,
-      p.pronamespace as pronamespace,
+      p.schema_name as schema_name,
       p.prorettype AS x, 
       NULL AS n -- null value indicates that we are retrieving the return values of the proc/func
     FROM bbf_proc p
     
   ) ss
-  INNER JOIN pg_catalog.pg_namespace ns ON ns.oid = ss.pronamespace
-  LEFT JOIN sys.babelfish_namespace_ext bne ON ns.nspname = bne.nspname 
-  LEFT JOIN sys.databases d ON d.database_id = bne.dbid
-  LEFT JOIN sys.types st ON ss.x = st.user_type_id 
+  LEFT JOIN sys.types st ON ss.x = st.user_type_id -- left join'd because return type of table-valued functions may not have an entry in sys.types
   -- Because spt_datatype_info_table does contain user-defind types and their names,
-  -- the join below allows us to retrieve the system type name on what the user-defined type was based on.
-  LEFT JOIN sys.spt_datatype_info_table sdit ON sdit.type_name = (SELECT name FROM sys.types WHERE user_type_id = st.system_type_id)
-WHERE (
-		ss.proargmodes[ss.n] in ('i', 'o', 'b') -- From first half of ss, only get inputs of parameters or output of procedure (no return values)
-		OR ss.proargmodes is NULL -- In case of proc with only inputs, ss.proargmodes is NULL
-		OR ss.n is NULL -- In case of return values
-	  );
+  -- the join below allows us to retrieve the name of the base type of the user-defined type
+  LEFT JOIN sys.spt_datatype_info_table sdit ON sdit.type_name = sys.translate_pg_type_to_tsql(st.system_type_id);
 GRANT SELECT ON sys.sp_sproc_columns_view TO PUBLIC;
+
 
 CREATE OR REPLACE PROCEDURE sys.sp_sproc_columns(
 	"@procedure_name" sys.nvarchar(390) = '%',
