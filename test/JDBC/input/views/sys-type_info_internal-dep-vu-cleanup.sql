@@ -1,0 +1,8 @@
+DROP VIEW sys_type_info_internal_test_dep_view
+GO
+
+DROP PROCEDURE sys_type_info_internal_test_dep_proc
+GO
+
+DROP FUNCTION sys_type_info_internal_test_dep_func
+GO

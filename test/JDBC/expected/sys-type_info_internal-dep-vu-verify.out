@@ -1,0 +1,31 @@
+EXEC sys_type_info_internal_test_dep_proc
+GO
+~~START~~
+int#!#int
+32#!#32
+~~END~~
+
+
+SELECT * FROM sys_type_info_internal_test_dep_view
+GO
+~~START~~
+int#!#int
+32#!#32
+~~END~~
+
+
+SELECT sys_type_info_internal_test_dep_func()
+GO
+~~START~~
+int
+64
+~~END~~
+
+
+SELECT * FROM sys_type_info_internal_test_dep_func()
+GO
+~~START~~
+int
+64
+~~END~~
+

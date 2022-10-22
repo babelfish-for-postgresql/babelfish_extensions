@@ -330,3 +330,4 @@ BABEL-2795
 babelfish_integrity_checker
 BABEL-PG-SYSTEM-FUNCTIONS
 sys-table_types_internal
+sys-table_types_internal-dep
