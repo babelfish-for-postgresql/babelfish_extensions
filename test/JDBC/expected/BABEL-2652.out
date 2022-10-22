@@ -1,0 +1,101 @@
+-- tsql
+CREATE LOGIN r1 WITH password = '123';
+GO
+
+CREATE ROLE role1;
+go
+
+-- psql
+CREATE USER test_user WITH PASSWORD '12345678' inherit;
+go
+
+-- psql user=test_user password=12345678
+DROP ROLE master_role1;
+GO
+~~ERROR (Code: 0)~~
+
+~~ERROR (Message: ERROR: Babelfish-created users/roles cannot be dropped or altered outside of a Babelfish session
+    Server SQLState: 42501)~~
+
+
+ALTER ROLE master_role1 RENAME TO master_role2;
+GO
+~~ERROR (Code: 0)~~
+
+~~ERROR (Message: ERROR: Babelfish-created users/roles cannot be dropped or altered outside of a Babelfish session
+    Server SQLState: 42501)~~
+
+
+-- psql
+-- Dropping login from psql port should fail
+DROP ROLE r1;
+GO
+~~ERROR (Code: 0)~~
+
+~~ERROR (Message: ERROR: Babelfish-created login cannot be dropped or altered outside of a Babelfish session
+    Server SQLState: 55006)~~
+
+
+-- Create a non babelfish role that is a member of master_guest
+-- and enable dropping
+CREATE ROLE r2 IN ROLE master_guest, tempdb_guest, msdb_guest;
+GO
+
+DROP ROLE r2;
+GO
+~~ERROR (Code: 0)~~
+
+~~ERROR (Message: ERROR: Babelfish-created login cannot be dropped or altered outside of a Babelfish session
+    Server SQLState: 55006)~~
+
+
+SET enable_drop_babelfish_role = true;
+GO
+
+DROP ROLE r2;
+GO
+
+SET enable_drop_babelfish_role = false;
+GO
+
+CREATE ROLE r3;
+GO
+
+GRANT master_guest TO r3;
+GRANT tempdb_guest TO r3;
+GRANT msdb_guest TO r3;
+GO
+
+DROP ROLE r3;
+GO
+~~ERROR (Code: 0)~~
+
+~~ERROR (Message: ERROR: Babelfish-created login cannot be dropped or altered outside of a Babelfish session
+    Server SQLState: 55006)~~
+
+
+SET enable_drop_babelfish_role = true;
+GO
+
+DROP ROLE r3;
+GO
+
+SET enable_drop_babelfish_role = false;
+GO
+
+-- Test a regular role
+CREATE ROLE r4;
+GO
+
+DROP ROLE r4;
+GO
+
+DROP USER test_user;
+GO
+
+-- tsql
+DROP ROLE role1;
+GO
+
+DROP LOGIN r1;
+GO
