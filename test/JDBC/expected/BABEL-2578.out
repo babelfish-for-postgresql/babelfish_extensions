@@ -25,5 +25,9 @@ drop database db1
 go
 
 -- psql
+SET enable_drop_babelfish_role = true;
+go
 DROP USER IF EXISTS su_user;
+go
+SET enable_drop_babelfish_role = false;
 go

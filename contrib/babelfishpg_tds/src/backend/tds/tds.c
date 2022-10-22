@@ -219,6 +219,14 @@ _PG_init(void)
 	next_shmem_startup_hook = shmem_startup_hook;
 	shmem_startup_hook = tds_status_shmem_startup;
 
+	/* Install our object_access_hook into the chain */
+	next_object_access_hook = object_access_hook;
+	object_access_hook = babelfish_object_access;
+
+	/* Install our process utility hook into the chain */
+	next_ProcessUtility = ProcessUtility_hook;
+	ProcessUtility_hook = tdsutils_ProcessUtility;
+
 	inited = true;
 }
 
@@ -230,6 +238,8 @@ _PG_fini(void)
 {
 	pe_fin();
 	relname_lookup_hook = prev_relname_lookup_hook;
+	object_access_hook = next_object_access_hook;
+	ProcessUtility_hook = next_ProcessUtility;
 }
 
 static Size
