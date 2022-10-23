@@ -1457,7 +1457,8 @@ create_xp_instance_regread_in_master_dbo_internal(PG_FUNCTION_ARGS)
 	PG_RETURN_INT32(0);
 }
 
-Datum sp_addrole(PG_FUNCTION_ARGS)
+Datum 
+sp_addrole(PG_FUNCTION_ARGS)
 {
 	char *rolname;
 	List *parsetree_list;
@@ -1516,6 +1517,8 @@ Datum sp_addrole(PG_FUNCTION_ARGS)
 	set_config_option("babelfishpg_tsql.sql_dialect", saved_dialect,
 							(superuser() ? PGC_SUSET : PGC_USERSET),
 							PGC_S_SESSION, GUC_ACTION_SAVE, true, 0, false);
+
+	PG_RETURN_VOID();
 }
 
 static List *
@@ -1559,7 +1562,8 @@ gen_sp_addrole_subcmds(const char *user)
 	return res;
 }
 
-Datum sp_droprole(PG_FUNCTION_ARGS)
+Datum 
+sp_droprole(PG_FUNCTION_ARGS)
 {
 	char *rolname;
 	List *parsetree_list;
@@ -1618,6 +1622,8 @@ Datum sp_droprole(PG_FUNCTION_ARGS)
 	set_config_option("babelfishpg_tsql.sql_dialect", saved_dialect,
 							(superuser() ? PGC_SUSET : PGC_USERSET),
 							PGC_S_SESSION, GUC_ACTION_SAVE, true, 0, false);
+
+	PG_RETURN_VOID();
 }
 
 static List *
@@ -1655,7 +1661,8 @@ gen_sp_droprole_subcmds(const char *user)
 	return res;
 }
 
-Datum sp_addrolemember(PG_FUNCTION_ARGS)
+Datum 
+sp_addrolemember(PG_FUNCTION_ARGS)
 {
 	char *rolname;
 	char *membername;
@@ -1716,6 +1723,8 @@ Datum sp_addrolemember(PG_FUNCTION_ARGS)
 	set_config_option("babelfishpg_tsql.sql_dialect", saved_dialect,
 							(superuser() ? PGC_SUSET : PGC_USERSET),
 							PGC_S_SESSION, GUC_ACTION_SAVE, true, 0, false);
+
+	PG_RETURN_VOID();
 }
 
 static List *
@@ -1757,7 +1766,8 @@ gen_sp_addrolemember_subcmds(const char *user, const char *member)
 	return res;
 }
 
-Datum sp_droprolemember(PG_FUNCTION_ARGS)
+Datum 
+sp_droprolemember(PG_FUNCTION_ARGS)
 {
 	char *rolname;
 	char *membername;
@@ -1818,6 +1828,8 @@ Datum sp_droprolemember(PG_FUNCTION_ARGS)
 	set_config_option("babelfishpg_tsql.sql_dialect", saved_dialect,
 							(superuser() ? PGC_SUSET : PGC_USERSET),
 							PGC_S_SESSION, GUC_ACTION_SAVE, true, 0, false);
+
+	PG_RETURN_VOID();
 }
 
 static List *
