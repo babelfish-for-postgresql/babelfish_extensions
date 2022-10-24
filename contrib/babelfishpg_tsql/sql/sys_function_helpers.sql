@@ -23,30 +23,6 @@ $BODY$
 $BODY$
 LANGUAGE SQL STABLE;
 
-CREATE OR REPLACE FUNCTION sys.get_min_id_from_table(IN id_colname TEXT,
-													 IN schemaname TEXT,
-													 IN tablename TEXT,
-													 OUT result INT8)
-AS
-$BODY$
-BEGIN
-	EXECUTE FORMAT('SELECT MIN(%I) FROM %I.%I', id_colname, schemaname, tablename) INTO result;
-END
-$BODY$
-LANGUAGE plpgsql;
-
-CREATE OR REPLACE FUNCTION sys.get_max_id_from_table(IN id_colname TEXT,
-													 IN schemaname TEXT,
-													 IN tablename TEXT,
-													 OUT result INT8)
-AS
-$BODY$
-BEGIN
-	EXECUTE FORMAT('SELECT MAX(%I) FROM %I.%I', id_colname, schemaname, tablename) INTO result;
-END
-$BODY$
-LANGUAGE plpgsql;
-
 CREATE OR REPLACE FUNCTION sys.user_name_sysname()
 RETURNS sys.SYSNAME AS
 $BODY$
