@@ -19,6 +19,8 @@
 #include "funcapi.h"
 #include "hooks.h"
 #include "miscadmin.h"
+#include "nodes/makeDefElem.h"
+#include "nodes/value.h"
 #include "utils/builtins.h"
 #include "utils/guc.h"
 #include "utils/rel.h"
