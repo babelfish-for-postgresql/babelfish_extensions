@@ -46,6 +46,7 @@ BABEL-3204
 BABEL-3234
 BABEL-3402
 cast_numeric_types_to_datetime
+cast_numeric_types_to_smalldatetime
 routines_definition
 column_domain_usage
 constraint_column_usage
@@ -123,6 +124,7 @@ BABEL-3486
 BABEL-3474
 BABEL-383
 BABEL-405
+BABEL-937
 BABEL-PROCID
 babel_trigger
 insteadoftriggers_with_transaction
@@ -302,5 +304,6 @@ BABEL-3144
 sys-all_parameters-dep
 BABEL-3556
 BABEL-3268
+BABEL_GRANT_CONNECT
 BABEL-sp_helpdb
 BABEL-2795

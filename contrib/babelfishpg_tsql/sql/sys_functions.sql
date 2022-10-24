@@ -1232,46 +1232,6 @@ $$
 STRICT
 LANGUAGE plpgsql IMMUTABLE;
 
-CREATE OR REPLACE FUNCTION sys.daydiff_between_dates(IN d1 INTEGER, IN m1 INTEGER, IN y1 INTEGER, IN d2 INTEGER, IN m2 INTEGER, IN y2 INTEGER) RETURNS INTEGER AS $$
-DECLARE
-	i INTEGER;
-	n1 INTEGER;
-	n2 INTEGER;
-BEGIN
-	n1 = y1 * 365 + d1;
-	FOR i in 0 .. m1-2 LOOP
-		IF (i = 0 OR i = 2 OR i = 4 OR i = 6 OR i = 7 OR i = 9 OR i = 11) THEN
-			n1 = n1 + 31;
-		ELSIF (i = 3 OR i = 5 OR i = 8 OR i = 10) THEN
-			n1 = n1 + 30;
-		ELSIF (i = 1) THEN
-			n1 = n1 + 28;
-		END IF;
-	END LOOP;
-	IF m1 <= 2 THEN
-		y1 = y1 - 1;
-	END IF;
-	n1 = n1 + (y1/4 - y1/100 + y1/400);
-
-	n2 = y2 * 365 + d2;
-	FOR i in 0 .. m2-2 LOOP
-		IF (i = 0 OR i = 2 OR i = 4 OR i = 6 OR i = 7 OR i = 9 OR i = 11) THEN
-			n2 = n2 + 31;
-		ELSIF (i = 3 OR i = 5 OR i = 8 OR i = 10) THEN
-			n2 = n2 + 30;
-		ELSIF (i = 1) THEN
-			n2 = n2 + 28;
-		END IF;
-	END LOOP;
-	IF m2 <= 2 THEN
-		y2 = y2 - 1;
-	END IF;
-	n2 = n2 + (y2/4 - y2/100 + y2/400);
-	return n1 - n2;
-END
-$$
-LANGUAGE plpgsql IMMUTABLE;
-
 CREATE OR REPLACE FUNCTION sys.datediff_internal_df(IN datepart PG_CATALOG.TEXT, IN startdate anyelement, IN enddate anyelement) RETURNS INTEGER AS $$
 DECLARE
 	result INTEGER;
@@ -1312,13 +1272,19 @@ BEGIN
 		y2 = sys.datepart('year', startdate);
 		m2 = sys.datepart('month', startdate);
 		d2 = sys.datepart('day', startdate);
-		result = sys.daydiff_between_dates(d1, m1, y1, d2, m2, y2);
+		result = sys.num_days_in_date(d1, m1, y1) - sys.num_days_in_date(d2, m2, y2);
 	WHEN 'week' THEN
 		day_diff = sys.datepart('day', enddate OPERATOR(sys.-) startdate);
 		result = day_diff / 7;
 	WHEN 'hour' THEN
-		day_diff = sys.datepart('day', enddate OPERATOR(sys.-) startdate);
-		hour_diff = ABS(sys.datepart('hour', enddate) - sys.datepart('hour', startdate));
+		y1 = sys.datepart('year', enddate);
+		m1 = sys.datepart('month', enddate);
+		d1 = sys.datepart('day', enddate);
+		y2 = sys.datepart('year', startdate);
+		m2 = sys.datepart('month', startdate);
+		d2 = sys.datepart('day', startdate);
+		day_diff = sys.num_days_in_date(d1, m1, y1) - sys.num_days_in_date(d2, m2, y2);
+		hour_diff = sys.datepart('hour', enddate) - sys.datepart('hour', startdate);
 		result = day_diff * 24 + hour_diff;
 	WHEN 'minute' THEN
 		day_diff = sys.datepart('day', enddate OPERATOR(sys.-) startdate);
@@ -1409,13 +1375,19 @@ BEGIN
 		y2 = date_part('year', startdate)::INTEGER;
 		m2 = date_part('month', startdate)::INTEGER;
 		d2 = date_part('day', startdate)::INTEGER;
-		result = sys.daydiff_between_dates(d1, m1, y1, d2, m2, y2);
+		result = sys.num_days_in_date(d1, m1, y1) - sys.num_days_in_date(d2, m2, y2);
 	WHEN 'week' THEN
 		day_diff = date_part('day', enddate OPERATOR(sys.-) startdate)::INTEGER;
 		result = day_diff / 7;
 	WHEN 'hour' THEN
-		day_diff = date_part('day', enddate OPERATOR(sys.-) startdate)::INTEGER;
-		hour_diff = ABS(date_part('hour', enddate)::INTEGER - date_part('hour', startdate)::INTEGER);
+		y1 = date_part('year', enddate)::INTEGER;
+		m1 = date_part('month', enddate)::INTEGER;
+		d1 = date_part('day', enddate)::INTEGER;
+		y2 = date_part('year', startdate)::INTEGER;
+		m2 = date_part('month', startdate)::INTEGER;
+		d2 = date_part('day', startdate)::INTEGER;
+		day_diff = sys.num_days_in_date(d1, m1, y1) - sys.num_days_in_date(d2, m2, y2);
+		hour_diff = date_part('hour', enddate)::INTEGER - date_part('hour', startdate)::INTEGER;
 		result = day_diff * 24 + hour_diff;
 	WHEN 'minute' THEN
 		day_diff = date_part('day', enddate OPERATOR(sys.-) startdate)::INTEGER;
@@ -2677,6 +2649,155 @@ AS 'babelfishpg_tsql', 'tsql_json_value' LANGUAGE C IMMUTABLE PARALLEL SAFE;
 CREATE OR REPLACE FUNCTION sys.json_query(json_string text, path text default '$')
 RETURNS sys.NVARCHAR
 AS 'babelfishpg_tsql', 'tsql_json_query' LANGUAGE C IMMUTABLE PARALLEL SAFE;
+
+/*
+ * JSON MODIFY
+ * This function is used to update the value of a property in a JSON string and returns the updated JSON string.
+ * It has been implemented in three parts:
+ *  1) Set the append and create_if_missing flag as postgres functions do not directly take append and lax/strict mode in the jsonb_path.
+ *  2) To convert the input path into the expected jsonb_path.
+ *  3) To implement the main logic of the JSON_MODIFY function by dividing it into 8 different cases.
+ */
+CREATE OR REPLACE FUNCTION sys.json_modify(in expression sys.NVARCHAR,in path_json TEXT, in new_value TEXT)
+RETURNS sys.NVARCHAR
+AS
+$BODY$
+DECLARE
+    json_path TEXT;
+    json_path_convert TEXT;
+    new_jsonb_path TEXT[];
+    key_value_type TEXT;
+    path_split_array TEXT[];
+    comparison_string TEXT COLLATE "C";
+    len_array INTEGER;
+    word_count INTEGER;
+    create_if_missing BOOL = TRUE;
+    append_modifier BOOL = FALSE;
+    key_exists BOOL;
+    key_value JSONB;
+    json_expression JSONB = expression::JSONB;
+    result_json sys.NVARCHAR;
+BEGIN
+    path_split_array = regexp_split_to_array(TRIM(path_json) COLLATE "C",'\s+');
+    word_count = array_length(path_split_array,1);
+    /* 
+     * This if else block is added to set the create_if_missing and append_modifier flags.
+     * These flags will be used to know the mode and if the optional modifier append is present in the input path_json.
+     * It is necessary as postgres functions do not directly take append and lax/strict mode in the jsonb_path.
+     * Comparisons for comparison_string are case-sensitive.    
+     */
+    IF word_count = 1 THEN
+        json_path = path_split_array[1];
+        create_if_missing = TRUE;
+        append_modifier = FALSE;
+    ELSIF word_count = 2 THEN 
+        json_path = path_split_array[2];
+        comparison_string = path_split_array[1]; -- append or lax/strict mode
+        IF comparison_string = 'append' THEN
+            append_modifier = TRUE;
+        ELSIF comparison_string = 'strict' THEN
+            create_if_missing = FALSE;
+        ELSIF comparison_string = 'lax' THEN
+            create_if_missing = TRUE;
+        ELSE
+            RAISE invalid_json_text;
+        END IF;
+    ELSIF word_count = 3 THEN
+        json_path = path_split_array[3];
+        comparison_string = path_split_array[1]; -- append mode 
+        IF comparison_string = 'append' THEN
+            append_modifier = TRUE;
+        ELSE
+            RAISE invalid_json_text;
+        END IF;
+        comparison_string = path_split_array[2]; -- lax/strict mode
+        IF comparison_string = 'strict' THEN
+            create_if_missing = FALSE;
+        ELSIF comparison_string = 'lax' THEN
+            create_if_missing = TRUE;
+        ELSE
+            RAISE invalid_json_text;
+        END IF;
+    ELSE
+        RAISE invalid_json_text;
+    END IF;
+
+    -- To convert input jsonpath to the required jsonb_path format
+    json_path_convert = regexp_replace(json_path, '\$\.|]|\$\[' , '' , 'ig'); -- To remove "$." and "]" sign from the string 
+    json_path_convert = regexp_replace(json_path_convert, '\.|\[' , ',' , 'ig'); -- To replace "." and "[" with "," to change into required format
+    new_jsonb_path = CONCAT('{',json_path_convert,'}'); -- Final required format of path by jsonb_set
+
+    key_exists = jsonb_path_exists(json_expression,json_path::jsonpath); -- To check if key exist in the given path
+    
+    --This if else block is to call the jsonb_set function based on the create_if_missing and append_modifier flags
+    IF append_modifier THEN 
+        IF key_exists THEN
+            key_value = jsonb_path_query_first(json_expression,json_path::jsonpath); -- To get the value of the key
+            key_value_type = jsonb_typeof(key_value);
+            IF key_value_type = 'array' THEN
+                len_array = jsonb_array_length(key_value);
+                /*
+                 * As jsonb_insert requires the index of the value to be inserted, so the below FORMAT function changes the path format into the required jsonb_insert path format.
+                 * Eg: JSON_MODIFY('{"name":"John","skills":["C#","SQL"]}','append $.skills','Azure'); -> converts the path from '$.skills' to '{skills,2}' instead of '{skills}'
+                 */
+                new_jsonb_path = FORMAT('%s,%s}',TRIM('}' FROM new_jsonb_path::TEXT),len_array);
+                IF new_value IS NULL THEN
+                    result_json = jsonb_insert(json_expression,new_jsonb_path,'null'); -- This needs to be done because "to_jsonb(coalesce(new_value, 'null'))" does not result in a JSON NULL
+                ELSE
+                    result_json = jsonb_insert(json_expression,new_jsonb_path,to_jsonb(new_value));
+                END IF;
+            ELSE
+                IF NOT create_if_missing THEN
+                    RAISE sql_json_array_not_found;
+                ELSE
+                    result_json = json_expression;
+                END IF;
+            END IF;
+        ELSE
+            IF NOT create_if_missing THEN
+                RAISE sql_json_object_not_found;
+            ELSE
+                result_json = jsonb_insert(json_expression,new_jsonb_path,to_jsonb(array_agg(new_value))); -- array_agg is used to convert the new_value text into array format as we append functionality is being used
+            END IF;
+        END IF;
+    ELSE --When no append modifier is present
+        IF new_value IS NOT NULL THEN
+            IF key_exists OR create_if_missing THEN
+                result_json = jsonb_set_lax(json_expression,new_jsonb_path,to_jsonb(new_value),create_if_missing);
+            ELSE
+                RAISE sql_json_object_not_found;
+            END IF;
+        ELSE
+            IF key_exists THEN
+                IF NOT create_if_missing THEN
+                    result_json = jsonb_set_lax(json_expression,new_jsonb_path,to_jsonb(new_value));
+                ELSE
+                    result_json = jsonb_set_lax(json_expression,new_jsonb_path,to_jsonb(new_value),create_if_missing,'delete_key');
+                END IF;
+            ELSE
+                IF NOT create_if_missing THEN
+                    RAISE sql_json_object_not_found;
+                ELSE
+                    result_json = jsonb_set_lax(json_expression,new_jsonb_path,to_jsonb(new_value),FALSE);
+                END IF;
+            END IF;
+        END IF;
+    END IF;  -- If append_modifier block ends here
+    RETURN result_json;
+EXCEPTION
+    WHEN invalid_json_text THEN
+            RAISE USING MESSAGE = 'JSON path is not properly formatted',
+                        DETAIL = FORMAT('Unexpected keyword "%s" is found.',comparison_string),
+                        HINT = 'Change "modifier/mode" parameter to the proper value and try again.';
+    WHEN sql_json_array_not_found THEN
+            RAISE USING MESSAGE = 'array cannot be found in the specified JSON path',
+                        HINT = 'Change JSON path to target array property and try again.';
+    WHEN sql_json_object_not_found THEN
+            RAISE USING MESSAGE = 'property cannot be found on the specified JSON path';
+END;        
+$BODY$
+LANGUAGE plpgsql;
+
 
 CREATE OR REPLACE FUNCTION sys.openjson_object(json_string text)
 RETURNS TABLE

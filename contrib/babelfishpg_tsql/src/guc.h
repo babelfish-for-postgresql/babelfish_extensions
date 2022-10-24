@@ -14,6 +14,6 @@ extern void pltsql_validate_set_config_function(char *name, char *value);
  * 				Getters
  ************************************/
 extern MigrationMode get_migration_mode(void);
-extern bool ownership_structure_enabled(void);
+
 
 #endif
