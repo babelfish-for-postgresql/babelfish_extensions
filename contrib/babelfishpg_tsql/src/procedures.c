@@ -1542,7 +1542,7 @@ gen_sp_addrole_subcmds(const char *user)
 
 	stmt = parsetree_nth_stmt(res, 0);
 	rolestmt = (CreateRoleStmt *) stmt;
-	if (!IsA(createrole_stmt, CreateRoleStmt))
+	if (!IsA(rolestmt, CreateRoleStmt))
 		ereport(ERROR, (errcode(ERRCODE_SYNTAX_ERROR), errmsg("query is not a CreateRoleStmt")));
 	
 	rolestmt->role = pstrdup(user);
