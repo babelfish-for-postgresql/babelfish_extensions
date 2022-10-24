@@ -1,5 +1,12 @@
 #include "psqlodbc_tests_common.h"
 
+vector<string> duplicateElements(vector<string> input) {
+  typedef std::move_iterator<decltype(input)::iterator> VecMoveIter;
+  std::vector<string> duplicated(input);
+  std::copy(VecMoveIter(input.begin()), VecMoveIter(input.end()), std::back_inserter(duplicated));
+  return duplicated;
+}
+
 // helper function to initialize insert string (1, "", "", ""), etc.
 string InitializeInsertString(const vector<string>& insertedValues, bool isNumericInsert, int pkStartingValue) {
 

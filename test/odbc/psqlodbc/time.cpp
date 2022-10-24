@@ -84,13 +84,6 @@ vector<string> getExpectedResults_Time(const vector<string> &input) {
   return ret;
 }
 
-vector<string> duplicateElements(vector<string> input) {
-  typedef std::move_iterator<decltype(input)::iterator> VecMoveIter;
-  std::vector<string> duplicated(input);
-  std::copy(VecMoveIter(input.begin()), VecMoveIter(input.end()), std::back_inserter(duplicated));
-  return duplicated;
-}
-
 TEST_F(PSQL_DataTypes_Time, Table_Creation) {
   createTable(ServerType::MSSQL, BBF_TABLE_NAME, TABLE_COLUMNS);
 
