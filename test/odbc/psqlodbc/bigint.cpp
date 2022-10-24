@@ -39,7 +39,7 @@ long long int StringToBigInt(const string &value) {
   return strtoll(value.c_str(), NULL, 10);
 }
 
-vector<long long int> getExpectedResults(vector<string> data) {
+vector<long long int> getExpectedBigIntResults(vector<string> data) {
   vector<long long int> expectedResults{};
 
   for (int i = 0; i < data.size(); i++) {
@@ -50,7 +50,7 @@ vector<long long int> getExpectedResults(vector<string> data) {
 }
 
 TEST_F(PSQL_DataTypes_BigInt, Table_Creation) {
-  const vector<int> LENGTH_EXPECTED = {4, 19};
+  const vector<int> LENGTH_EXPECTED = {4, 20};
   const vector<int> PRECISION_EXPECTED = {0, 0};
   const vector<int> SCALE_EXPECTED = {0, 0};
   const vector<string> NAME_EXPECTED = {"int4", "int8"};
@@ -71,7 +71,7 @@ TEST_F(PSQL_DataTypes_BigInt, Insertion_Success) {
     "9223372036854775807",
     "123456789"
   };
-  const vector<long long int> expected = getExpectedResults(INSERTED_DATA);
+  const vector<long long int> expected = getExpectedBigIntResults(INSERTED_DATA);
 
   const vector<long> expectedLen(expected.size(), BIGINT_BYTES_EXPECTED);
 
@@ -97,7 +97,7 @@ TEST_F(PSQL_DataTypes_BigInt, Update_Success) {
   const int bufferLen = 0;
 
   const vector<string> DATA_INSERTED = {"1"};
-  const vector<long long int> data_expected = getExpectedResults(DATA_INSERTED);
+  const vector<long long int> data_expected = getExpectedBigIntResults(DATA_INSERTED);
   const vector<long> expectedInsertLen(DATA_INSERTED.size(), BIGINT_BYTES_EXPECTED);
 
   const vector<string> DATA_UPDATED_VALUES = {
@@ -105,7 +105,7 @@ TEST_F(PSQL_DataTypes_BigInt, Update_Success) {
     "9223372036854775807",
     "123456789"
   };
-  const vector<long long int> DATA_UPDATED_EXPECTED = getExpectedResults(DATA_UPDATED_VALUES);
+  const vector<long long int> DATA_UPDATED_EXPECTED = getExpectedBigIntResults(DATA_UPDATED_VALUES);
 
   const vector<long> expectedLen(DATA_UPDATED_EXPECTED.size(), BIGINT_BYTES_EXPECTED);
   
@@ -121,7 +121,7 @@ TEST_F(PSQL_DataTypes_BigInt, Update_Fail) {
   const int bufferLen = 0;
 
   const vector<string> DATA_INSERTED = {"12345"};
-  const vector<long long int> EXPECTED_DATA_INSERTED = getExpectedResults(DATA_INSERTED);
+  const vector<long long int> EXPECTED_DATA_INSERTED = getExpectedBigIntResults(DATA_INSERTED);
   const vector<long> expectedInsertLen(DATA_INSERTED.size(), BIGINT_BYTES_EXPECTED);
 
   const vector<string> DATA_UPDATED_VALUE = {"9223372036854775808"}; // Over max
@@ -327,7 +327,7 @@ TEST_F(PSQL_DataTypes_BigInt, View_Creation) {
     "-9223372036854775808"
   };
   
-  const vector<long long int> EXPECTED_DATA = getExpectedResults(INSERTED_DATA);
+  const vector<long long int> EXPECTED_DATA = getExpectedBigIntResults(INSERTED_DATA);
 
   const vector<long> expectedLen(EXPECTED_DATA.size(), BIGINT_BYTES_EXPECTED);
 
@@ -358,7 +358,7 @@ TEST_F(PSQL_DataTypes_BigInt, Table_Unique_Constraints) {
     "9223372036854775807",
     "123456789"
   };
-  const vector<long long int> EXPECTED_DATA = getExpectedResults(INSERTED_DATA);
+  const vector<long long int> EXPECTED_DATA = getExpectedBigIntResults(INSERTED_DATA);
 
   const vector<long> expectedLen(EXPECTED_DATA.size(), BIGINT_BYTES_EXPECTED);
 
@@ -396,7 +396,7 @@ TEST_F(PSQL_DataTypes_BigInt, Table_Composite_Keys) {
     "9223372036854775807",
     "123456789"
   };
-  const vector<long long int> EXPECTED_DATA = getExpectedResults(INSERTED_DATA);
+  const vector<long long int> EXPECTED_DATA = getExpectedBigIntResults(INSERTED_DATA);
 
   const vector<long> expectedLen(EXPECTED_DATA.size(), BIGINT_BYTES_EXPECTED);
 
@@ -404,5 +404,6 @@ TEST_F(PSQL_DataTypes_BigInt, Table_Composite_Keys) {
   testPrimaryKeys(ServerType::PSQL, SCHEMA_NAME, PKTABLE_NAME, PK_COLUMNS);
   testInsertionSuccess(ServerType::PSQL, TABLE_NAME, COL1_NAME, SQL_C_SBIGINT, data, bufferLen, INSERTED_DATA, 
     EXPECTED_DATA, expectedLen);
+  testInsertionFailure(ServerType::PSQL, TABLE_NAME, COL1_NAME, INSERTED_DATA, false, 0, false);
   dropObject(ServerType::PSQL, "TABLE", TABLE_NAME);
 }
