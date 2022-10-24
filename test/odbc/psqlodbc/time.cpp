@@ -59,7 +59,7 @@ class PSQL_DataTypes_Time : public testing::Test {
   }
 };
 
-string getExpectedData(const string &input) {
+string stringToTime(const string &input) {
   string ret = string(input);
   if (strcmp(input.data(), "NULL") == 0) {
     return ret;
@@ -74,11 +74,11 @@ string getExpectedData(const string &input) {
   return ret;
 }
 
-vector<string> getExpectedResults(const vector<string> &input) {
+vector<string> getExpectedResults_Time(const vector<string> &input) {
   vector<string> ret = {};
 
   for (int i = 0; i < input.size(); i++) {
-    ret.push_back(getExpectedData(input[i]));
+    ret.push_back(stringToTime(input[i]));
   }
 
   return ret;
@@ -143,7 +143,7 @@ TEST_F(PSQL_DataTypes_Time, Insertion_Success) {
   };
   const int NUM_OF_DATA = inserted_values.size();
 
-  vector<string> expected_values = getExpectedResults(inserted_values);
+  vector<string> expected_values = getExpectedResults_Time(inserted_values);
 
   createTable(ServerType::MSSQL, BBF_TABLE_NAME, TABLE_COLUMNS);
 
@@ -181,7 +181,7 @@ TEST_F(PSQL_DataTypes_Time, Insertion_Fail) {
   createTable(ServerType::MSSQL, BBF_TABLE_NAME, TABLE_COLUMNS);
 
   testInsertionFailure(ServerType::MSSQL, BBF_TABLE_NAME, COL1_NAME, INVALID_INSERTED_VALUES, false);
-  // testInsertionFailure(ServerType::PSQL, PG_TABLE_NAME, COL1_NAME, INVALID_INSERTED_VALUES, false);
+  testInsertionFailure(ServerType::PSQL, PG_TABLE_NAME, COL1_NAME, INVALID_INSERTED_VALUES, false);
 
   dropObject(ServerType::MSSQL, "TABLE", BBF_TABLE_NAME);
   dropObject(ServerType::PSQL, "TABLE", PG_TABLE_NAME);
@@ -191,9 +191,10 @@ TEST_F(PSQL_DataTypes_Time, Update_Success) {
   const vector<string> INSERTED_VALUES = {
     "00:00:00"
   };
-  const vector<string> EXPECTED_VALUES = getExpectedResults(INSERTED_VALUES);
+  const vector<string> EXPECTED_VALUES = getExpectedResults_Time(INSERTED_VALUES);
 
   const vector<string> UPDATED_VALUES = {
+    "NULL",
     "12:34:56",
     // "23:59:59.1",
     // "23:59:59.22",
@@ -203,7 +204,7 @@ TEST_F(PSQL_DataTypes_Time, Update_Success) {
     // "23:59:59.666666",
     "00:00:00"
   };
-  const vector<string> EXPECTED_UPDATED_VALUES = getExpectedResults(UPDATED_VALUES);
+  const vector<string> EXPECTED_UPDATED_VALUES = getExpectedResults_Time(UPDATED_VALUES);
 
   createTable(ServerType::MSSQL, BBF_TABLE_NAME, TABLE_COLUMNS);
 
@@ -217,11 +218,12 @@ TEST_F(PSQL_DataTypes_Time, Update_Success) {
   dropObject(ServerType::PSQL, "TABLE", PG_TABLE_NAME);
   dropObject(ServerType::MSSQL, "TABLE", BBF_TABLE_NAME);
 }
+
 TEST_F(PSQL_DataTypes_Time, Update_Fail) {
   const vector<string> INSERTED_VALUES = {
     "00:00:00"
   };
-  const vector<string> DATA_EXPECTED = getExpectedResults(INSERTED_VALUES);
+  const vector<string> DATA_EXPECTED = getExpectedResults_Time(INSERTED_VALUES);
 
   const vector<string> UPDATED_VALUES = {
     "24:60:60"
@@ -249,7 +251,7 @@ TEST_F(PSQL_DataTypes_Time, View_Creation) {
   };
   const int NUM_OF_INSERTS = INSERTED_VALUES.size();
 
-  const vector<string> EXPECTED_VALUES = getExpectedResults(INSERTED_VALUES);
+  const vector<string> EXPECTED_VALUES = getExpectedResults_Time(INSERTED_VALUES);
 
   const string BBF_VIEW_QUERY = "SELECT * FROM " + BBF_TABLE_NAME;
   const string PG_VIEW_QUERY = "SELECT * FROM " + PG_TABLE_NAME;
@@ -291,7 +293,7 @@ TEST_F(PSQL_DataTypes_Time, Table_Single_Primary_Keys) {
   };
   const int NUM_OF_DATA = INSERTED_VALUES.size();
 
-  const vector<string> EXPECTED_VALUES = getExpectedResults(INSERTED_VALUES);
+  const vector<string> EXPECTED_VALUES = getExpectedResults_Time(INSERTED_VALUES);
 
   createTable(ServerType::MSSQL, BBF_TABLE_NAME, TABLE_COLUMNS, tableConstraints);
 
@@ -330,7 +332,7 @@ TEST_F(PSQL_DataTypes_Time, Table_Composite_Keys) {
   };
   const int NUM_OF_DATA = INSERTED_VALUES.size();
 
-  const vector<string> EXPECTED_VALUES = getExpectedResults(INSERTED_VALUES);
+  const vector<string> EXPECTED_VALUES = getExpectedResults_Time(INSERTED_VALUES);
 
   createTable(ServerType::MSSQL, BBF_TABLE_NAME, TABLE_COLUMNS, tableConstraints);
 
@@ -368,7 +370,7 @@ TEST_F(PSQL_DataTypes_Time, Table_Unique_Constraint) {
   };
   const int NUM_OF_DATA = INSERTED_VALUES.size();
 
-  const vector<string> EXPECTED_VALUES = getExpectedResults(INSERTED_VALUES);
+  const vector<string> EXPECTED_VALUES = getExpectedResults_Time(INSERTED_VALUES);
 
   createTable(ServerType::MSSQL, BBF_TABLE_NAME, TABLE_COLUMNS, tableConstraints);
 
@@ -465,19 +467,21 @@ TEST_F(PSQL_DataTypes_Time, Comparison_Operators) {
 }
 
 TEST_F(PSQL_DataTypes_Time, Comparison_Functions) {
-  SQLLEN affected_rows;
-
-  RETCODE rcode;
-  OdbcHandler BBF_odbcHandler(Drivers::GetDriver(ServerType::MSSQL));
-  OdbcHandler PG_odbcHandler(Drivers::GetDriver(ServerType::PSQL));
-
   const vector<string> INSERTED_DATA = {
     "00:00:00",
     "23:59:59",
     "12:34:56",
     // "23:59:59.999999"
   };
-  const int NUM_OF_DATA = INSERTED_DATA.size();
+  const size_t NUM_OF_DATA = INSERTED_DATA.size();
+
+  // insertString initialization
+  string insertString{};
+  string comma{};
+  for (int i = 0; i < NUM_OF_DATA; i++) {
+    insertString += comma + "(" + std::to_string(i) + ",\'" + INSERTED_DATA[i] + "\')";
+    comma = ",";
+  }
 
   const vector<string> OPERATIONS_QUERY = {
     "MIN(" + COL2_NAME + ")",
@@ -486,8 +490,10 @@ TEST_F(PSQL_DataTypes_Time, Comparison_Functions) {
   const int NUM_OF_OPERATIONS = OPERATIONS_QUERY.size();
 
   // initialization of expected_results
-  vector<string> expected_results = {};
+  vector<string> bbf_expected_results = {};
+  vector<string> pg_expected_results = {};
   int min_expected = 0, max_expected = 0;
+
   for (int i = 1; i < NUM_OF_DATA; i++) {
     const char *currMin = INSERTED_DATA[min_expected].data();
     const char *currMax = INSERTED_DATA[max_expected].data();
@@ -496,80 +502,18 @@ TEST_F(PSQL_DataTypes_Time, Comparison_Functions) {
     min_expected = strcmp(curr, currMin) < 0 ? i : min_expected;
     max_expected = strcmp(curr, currMax) > 0 ? i : max_expected;
   }
-  expected_results.push_back(INSERTED_DATA[min_expected]);
-  expected_results.push_back(INSERTED_DATA[max_expected]);
+  bbf_expected_results.push_back(stringToTime(INSERTED_DATA[min_expected]));
+  bbf_expected_results.push_back(stringToTime(INSERTED_DATA[max_expected]));
+  pg_expected_results.push_back(INSERTED_DATA[min_expected]);
+  pg_expected_results.push_back(INSERTED_DATA[max_expected]);
 
-  char col_results[NUM_OF_OPERATIONS][BUFFER_SIZE];
-  SQLLEN col_len[NUM_OF_OPERATIONS];
-  vector<tuple<int, int, SQLPOINTER, int, SQLLEN *>> BIND_COLUMNS = {};
+  createTable(ServerType::MSSQL, BBF_TABLE_NAME, TABLE_COLUMNS);
 
-  // initialization for bind_columns
-  for (int i = 0; i < NUM_OF_OPERATIONS; i++) {
-    tuple<int, int, SQLPOINTER, int, SQLLEN *> tuple_to_insert(i + 1, SQL_C_CHAR, (SQLPOINTER)&col_results[i], BUFFER_SIZE, &col_len[i]);
-    BIND_COLUMNS.push_back(tuple_to_insert);
-  }
+  insertValuesInTable(ServerType::MSSQL, BBF_TABLE_NAME, insertString, NUM_OF_DATA);
 
-  string insert_string{};
-  string comma{};
+  testComparisonFunctions(ServerType::MSSQL, BBF_TABLE_NAME, OPERATIONS_QUERY, bbf_expected_results);
+  testComparisonFunctions(ServerType::PSQL, PG_TABLE_NAME, OPERATIONS_QUERY, pg_expected_results);
 
-  // insert_string initialization
-  for (int i = 0; i < NUM_OF_DATA; i++) {
-    insert_string += comma + "(" + std::to_string(i) + ",\'" + INSERTED_DATA[i] + "\')";
-    comma = ",";
-  }
-
-  // Create table
-  BBF_odbcHandler.ConnectAndExecQuery(CreateTableStatement(BBF_TABLE_NAME, TABLE_COLUMNS));
-  BBF_odbcHandler.CloseStmt();
-
-  // Insert valid values into the table and assert affected rows
-  BBF_odbcHandler.ExecQuery(InsertStatement(BBF_TABLE_NAME, insert_string));
-
-  rcode = SQLRowCount(BBF_odbcHandler.GetStatementHandle(), &affected_rows);
-  ASSERT_EQ(rcode, SQL_SUCCESS);
-  ASSERT_EQ(affected_rows, NUM_OF_DATA);
-
-  // Make sure inserted values are correct and operations
-  ASSERT_NO_FATAL_FAILURE(BBF_odbcHandler.BindColumns(BIND_COLUMNS));
-
-  BBF_odbcHandler.CloseStmt();
-  BBF_odbcHandler.ExecQuery(SelectStatement(BBF_TABLE_NAME, OPERATIONS_QUERY, vector<string>{}));
-  ASSERT_NO_FATAL_FAILURE(BBF_odbcHandler.BindColumns(BIND_COLUMNS));
-
-  rcode = SQLFetch(BBF_odbcHandler.GetStatementHandle());
-  ASSERT_EQ(rcode, SQL_SUCCESS);
-  for (int i = 0; i < NUM_OF_OPERATIONS; i++) {
-    ASSERT_EQ(col_len[i], TIME_BYTES_EXPECTED);
-    ASSERT_EQ(string(col_results[i]), getExpectedData(expected_results[i]));
-  }
-
-  // Assert that there is no more data
-  rcode = SQLFetch(BBF_odbcHandler.GetStatementHandle());
-  ASSERT_EQ(rcode, SQL_NO_DATA);
-  BBF_odbcHandler.CloseStmt();
-
-  // Try with PG Connection
-  PG_odbcHandler.Connect(true);
-
-  // Make sure inserted values are correct and operations
-  ASSERT_NO_FATAL_FAILURE(PG_odbcHandler.BindColumns(BIND_COLUMNS));
-
-  PG_odbcHandler.CloseStmt();
-  PG_odbcHandler.ExecQuery(SelectStatement(PG_TABLE_NAME, OPERATIONS_QUERY, vector<string>{}));
-  ASSERT_NO_FATAL_FAILURE(PG_odbcHandler.BindColumns(BIND_COLUMNS));
-
-  rcode = SQLFetch(PG_odbcHandler.GetStatementHandle());
-  ASSERT_EQ(rcode, SQL_SUCCESS);
-  for (int i = 0; i < NUM_OF_OPERATIONS; i++) {
-    ASSERT_EQ(col_len[i], expected_results[i].length());
-    ASSERT_EQ(string(col_results[i]), expected_results[i]);
-  }
-
-  // Assert that there is no more data
-  rcode = SQLFetch(PG_odbcHandler.GetStatementHandle());
-  ASSERT_EQ(rcode, SQL_NO_DATA);
-  PG_odbcHandler.CloseStmt();
-
-  PG_odbcHandler.ExecQuery(DropObjectStatement("TABLE", PG_TABLE_NAME));
-  BBF_odbcHandler.ExecQuery(DropObjectStatement("TABLE", BBF_TABLE_NAME));
+  dropObject(ServerType::MSSQL, "TABLE", BBF_TABLE_NAME);
+  dropObject(ServerType::PSQL, "TABLE", PG_TABLE_NAME);
 }
