@@ -54,8 +54,12 @@ class PSQL_DataTypes_ByteA : public testing::Test {
 string stringToHex(string input) {
     std::ostringstream result;
     result << std::setw(2) << std::setfill('0') << std::hex << std::uppercase;
-    std::copy(input.begin(), input.end(), std::ostream_iterator<unsigned int>(result, ""));
-    return result.str();   
+    string::iterator start = input.begin();
+    if (input.find('\\') != string::npos) {
+      start = std::next(start, 1);
+    }
+    std::copy(start, input.end(), std::ostream_iterator<unsigned int>(result, ""));
+    return result.str();
 }
 
 vector<string> getExpectedResults(const vector<string> &input) {
@@ -107,7 +111,10 @@ TEST_F(PSQL_DataTypes_ByteA, Insertion_Success) {
     "NULL",
     "",
     "A",
-    "123"
+    "123",
+    // Outside normal printable range of 32-126
+    "\\\\01f",  // 31
+    "\\\\07f"   // 127
   };
   const int NUM_OF_DATA = inserted_values.size();
 
@@ -121,8 +128,8 @@ TEST_F(PSQL_DataTypes_ByteA, Insertion_Success) {
   inserted_values = duplicateElements(inserted_values);
   expected_values = duplicateElements(expected_values);
 
-  verifyValuesInObject(ServerType::PSQL, PG_TABLE_NAME, COL1_NAME, inserted_values, expected_values);
-  verifyValuesInObject(ServerType::MSSQL, BBF_TABLE_NAME, COL1_NAME, inserted_values, expected_values);
+  verifyValuesInObject(ServerType::PSQL, PG_TABLE_NAME, COL1_NAME, inserted_values, expected_values, 0, true);
+  verifyValuesInObject(ServerType::MSSQL, BBF_TABLE_NAME, COL1_NAME, inserted_values, expected_values, 0, true);
 
   dropObject(ServerType::PSQL, "TABLE", PG_TABLE_NAME);
   dropObject(ServerType::MSSQL, "TABLE", BBF_TABLE_NAME);
@@ -135,8 +142,13 @@ TEST_F(PSQL_DataTypes_ByteA, Update_Success) {
   const vector<string> EXPECTED_VALUES = getExpectedResults(INSERTED_VALUES);
 
   const vector<string> UPDATED_VALUES = {
+    "NULL",
     "",
     "A",
+    // Outside normal printable range of 32-126
+    "\\\\01f",  // 31
+    "\\\\07f",  // 127
+    // Normal range
     "123"
   };
   const vector<string> EXPECTED_UPDATED_VALUES = getExpectedResults(UPDATED_VALUES);
@@ -145,8 +157,8 @@ TEST_F(PSQL_DataTypes_ByteA, Update_Success) {
 
   testInsertionSuccess(ServerType::MSSQL, BBF_TABLE_NAME, COL1_NAME, INSERTED_VALUES, EXPECTED_VALUES);
 
-  testUpdateSuccess(ServerType::MSSQL, BBF_TABLE_NAME, COL1_NAME, COL2_NAME, UPDATED_VALUES, EXPECTED_UPDATED_VALUES);
-  testUpdateSuccess(ServerType::PSQL, PG_TABLE_NAME, COL1_NAME, COL2_NAME, UPDATED_VALUES, EXPECTED_UPDATED_VALUES);
+  testUpdateSuccess(ServerType::MSSQL, BBF_TABLE_NAME, COL1_NAME, COL2_NAME, UPDATED_VALUES, EXPECTED_UPDATED_VALUES, true);
+  testUpdateSuccess(ServerType::PSQL, PG_TABLE_NAME, COL1_NAME, COL2_NAME, UPDATED_VALUES, EXPECTED_UPDATED_VALUES, true);
 
   verifyValuesInObject(ServerType::MSSQL, BBF_TABLE_NAME, COL1_NAME, INSERTED_VALUES, EXPECTED_VALUES);
 
@@ -159,7 +171,10 @@ TEST_F(PSQL_DataTypes_ByteA, View_creation) {
     "NULL",
     "",
     "A",
-    "123"
+    "123",
+    // Outside normal printable range of 32-126
+    "\\\\01f",  // 31
+    "\\\\07f"   // 127
   };
   const int NUM_OF_DATA = INSERTED_VALUES.size();
 
@@ -174,8 +189,8 @@ TEST_F(PSQL_DataTypes_ByteA, View_creation) {
 
   createView(ServerType::MSSQL, BBF_VIEW_NAME, BBF_VIEW_QUERY);
 
-  verifyValuesInObject(ServerType::MSSQL, BBF_VIEW_NAME, COL1_NAME, INSERTED_VALUES, EXPECTED_VALUES);
-  verifyValuesInObject(ServerType::PSQL, PG_VIEW_NAME, COL1_NAME, INSERTED_VALUES, EXPECTED_VALUES);
+  verifyValuesInObject(ServerType::MSSQL, BBF_VIEW_NAME, COL1_NAME, INSERTED_VALUES, EXPECTED_VALUES, 0, true);
+  verifyValuesInObject(ServerType::PSQL, PG_VIEW_NAME, COL1_NAME, INSERTED_VALUES, EXPECTED_VALUES, 0, true);
 
   dropObject(ServerType::MSSQL, "VIEW", BBF_VIEW_NAME);
   dropObject(ServerType::PSQL, "VIEW", PG_VIEW_NAME);
@@ -202,7 +217,10 @@ TEST_F(PSQL_DataTypes_ByteA, Table_Single_Primary_Keys) {
   const vector<string> INSERTED_VALUES = {
     "",
     "A",
-    "123"
+    "123",
+    // Outside normal printable range of 32-126
+    "\\\\01f",  // 31
+    "\\\\07f"   // 127
   };
   const int NUM_OF_DATA = INSERTED_VALUES.size();
 
@@ -213,7 +231,7 @@ TEST_F(PSQL_DataTypes_ByteA, Table_Single_Primary_Keys) {
   testPrimaryKeys(ServerType::MSSQL, BBF_SCHEMA_NAME, TABLE_NAME, PK_COLUMNS);
   testPrimaryKeys(ServerType::PSQL, SCHEMA_NAME, TABLE_NAME, PK_COLUMNS);
 
-  testInsertionSuccess(ServerType::MSSQL, BBF_TABLE_NAME, COL1_NAME, INSERTED_VALUES, EXPECTED_VALUES);
+  testInsertionSuccess(ServerType::MSSQL, BBF_TABLE_NAME, COL1_NAME, INSERTED_VALUES, EXPECTED_VALUES, 0, true);
 
   testInsertionFailure(ServerType::MSSQL, BBF_TABLE_NAME, COL1_NAME, INSERTED_VALUES, false, NUM_OF_DATA, false);
   testInsertionFailure(ServerType::PSQL, PG_TABLE_NAME, COL1_NAME, INSERTED_VALUES, false, NUM_OF_DATA, false);
@@ -242,7 +260,10 @@ TEST_F(PSQL_DataTypes_ByteA, Table_Composite_Keys) {
   const vector<string> INSERTED_VALUES = {
     "",
     "A",
-    "123"
+    "123",
+    // Outside normal printable range of 32-126
+    "\\\\01f",  // 31
+    "\\\\07f"   // 127
   };
   const int NUM_OF_DATA = INSERTED_VALUES.size();
 
@@ -253,7 +274,7 @@ TEST_F(PSQL_DataTypes_ByteA, Table_Composite_Keys) {
   testPrimaryKeys(ServerType::MSSQL, BBF_SCHEMA_NAME, TABLE_NAME, PK_COLUMNS);
   testPrimaryKeys(ServerType::PSQL, SCHEMA_NAME, TABLE_NAME, PK_COLUMNS);
 
-  testInsertionSuccess(ServerType::MSSQL, BBF_TABLE_NAME, COL1_NAME, INSERTED_VALUES, EXPECTED_VALUES);
+  testInsertionSuccess(ServerType::MSSQL, BBF_TABLE_NAME, COL1_NAME, INSERTED_VALUES, EXPECTED_VALUES, 0, true);
 
   testInsertionFailure(ServerType::MSSQL, BBF_TABLE_NAME, COL1_NAME, INSERTED_VALUES, false, 0, false);
   testInsertionFailure(ServerType::PSQL, PG_TABLE_NAME, COL1_NAME, INSERTED_VALUES, false, 0, false);
@@ -263,7 +284,6 @@ TEST_F(PSQL_DataTypes_ByteA, Table_Composite_Keys) {
 }
 
 TEST_F(PSQL_DataTypes_ByteA, Table_Unique_Constraint) {
-
   const vector<pair<string, string>> TABLE_COLUMNS = {
     {COL1_NAME, "INT"},
     {COL2_NAME, DATATYPE_NAME}
@@ -282,7 +302,10 @@ TEST_F(PSQL_DataTypes_ByteA, Table_Unique_Constraint) {
   const vector<string> INSERTED_VALUES = {
     "",
     "A",
-    "123"
+    "123",
+    // Outside normal printable range of 32-126
+    "\\\\01f",  // 31
+    "\\\\07f"   // 127
   };
   const int NUM_OF_DATA = INSERTED_VALUES.size();
 
@@ -293,7 +316,7 @@ TEST_F(PSQL_DataTypes_ByteA, Table_Unique_Constraint) {
   testUniqueConstraint(ServerType::MSSQL, TABLE_NAME, UNIQUE_COLUMNS);
   testUniqueConstraint(ServerType::PSQL, TABLE_NAME, UNIQUE_COLUMNS);
 
-  testInsertionSuccess(ServerType::MSSQL, BBF_TABLE_NAME, COL1_NAME, INSERTED_VALUES, EXPECTED_VALUES);
+  testInsertionSuccess(ServerType::MSSQL, BBF_TABLE_NAME, COL1_NAME, INSERTED_VALUES, EXPECTED_VALUES, 0, true);
 
   testInsertionFailure(ServerType::MSSQL, BBF_TABLE_NAME, COL1_NAME, INSERTED_VALUES, false, NUM_OF_DATA, false);
   testInsertionFailure(ServerType::PSQL, PG_TABLE_NAME, COL1_NAME, INSERTED_VALUES, false, NUM_OF_DATA, false);

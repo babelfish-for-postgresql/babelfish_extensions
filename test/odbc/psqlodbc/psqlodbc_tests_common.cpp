@@ -96,7 +96,7 @@ void insertValuesInTable(ServerType serverType, const string &tableName, const s
 }
 
 void verifyValuesInObject(ServerType serverType, const string &objectName, const string &orderByColumnName, 
-  const vector<string> &insertedValues, const vector<string> &expectedInsertedValues, int pkStartingValue) {
+  const vector<string> &insertedValues, const vector<string> &expectedInsertedValues, int pkStartingValue, bool caseInsensitive) {
     
   OdbcHandler odbcHandler(Drivers::GetDriver(serverType));
 
@@ -124,7 +124,12 @@ void verifyValuesInObject(ServerType serverType, const string &objectName, const
     EXPECT_EQ(pk, pkStartingValue);
     if (insertedValues[i] != "NULL") {
       EXPECT_EQ(data_len, expectedInsertedValues[i].size());
-      EXPECT_EQ(data, expectedInsertedValues[i]);
+      string expected = expectedInsertedValues[i];
+      if (caseInsensitive) {
+        for (auto & c: data) c = tolower(c);
+        for (auto & c: expected) c = tolower(c);
+      }
+      EXPECT_EQ(data, expected);
     }
     else {
       EXPECT_EQ(data_len, SQL_NULL_DATA);
@@ -311,10 +316,10 @@ void testTableCreationFailure(ServerType serverType, const string &tableName, co
 }
 
 void testInsertionSuccess(ServerType serverType, const string &tableName, const string &orderByColumnName, 
-  const vector<string> &insertedValues, const vector<string> &expectedInsertedValues, int pkStartingValue) {
+  const vector<string> &insertedValues, const vector<string> &expectedInsertedValues, int pkStartingValue, bool caseInsensitive) {
 
   insertValuesInTable(serverType, tableName, insertedValues, false, pkStartingValue);
-  verifyValuesInObject(serverType, tableName, orderByColumnName, insertedValues, expectedInsertedValues, pkStartingValue);
+  verifyValuesInObject(serverType, tableName, orderByColumnName, insertedValues, expectedInsertedValues, pkStartingValue, caseInsensitive);
 }
 
 void testInsertionFailure(ServerType serverType, const string &tableName, const string &orderByColumnName, 
@@ -349,7 +354,7 @@ void testInsertionFailure(ServerType serverType, const string &tableName, const 
 }
 
 void testUpdateSuccess(ServerType serverType, const string &tableName, const string &orderByColumnName, 
-  const string &colNameToUpdate, const vector<string> &updatedValues, const vector<string> &expectedUpdatedValues) {
+  const string &colNameToUpdate, const vector<string> &updatedValues, const vector<string> &expectedUpdatedValues, bool caseInsensitive) {
 
   OdbcHandler odbcHandler(Drivers::GetDriver(serverType));
   odbcHandler.Connect(true);
@@ -376,7 +381,7 @@ void testUpdateSuccess(ServerType serverType, const string &tableName, const str
   
   vector<pair<string, string>> update_col{};
   for (int i = 0; i < updatedValues.size(); i++) {
-    string valueToUpdate = "'" + updatedValues[i] + "'";
+    string valueToUpdate = updatedValues[i] != "NULL" ? "\'" + updatedValues[i] + "\'" : updatedValues[i];
     update_col.push_back(pair<string, string>(colNameToUpdate, valueToUpdate));
   }
 
@@ -397,8 +402,19 @@ void testUpdateSuccess(ServerType serverType, const string &tableName, const str
     EXPECT_EQ(rcode, SQL_SUCCESS);
     EXPECT_EQ(pk_len, INT_BYTES_EXPECTED);
     EXPECT_EQ(pk, pkValue);
-    EXPECT_EQ(data_len, expectedUpdatedValues[i].size());
-    EXPECT_EQ(data, expectedUpdatedValues[i]);
+
+    if (updatedValues[i] != "NULL") {
+      EXPECT_EQ(data_len, expectedUpdatedValues[i].size());
+      string expected = expectedUpdatedValues[i];
+      if (caseInsensitive) {
+        for (auto & c: data) c = tolower(c);
+        for (auto & c: expected) c = tolower(c);
+      }
+      EXPECT_EQ(data, expected);
+    }
+    else {
+      EXPECT_EQ(data_len, SQL_NULL_DATA);
+    }
 
     rcode = SQLFetch(odbcHandler.GetStatementHandle());
     EXPECT_EQ(rcode, SQL_NO_DATA);
