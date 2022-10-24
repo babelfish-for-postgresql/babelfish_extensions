@@ -19,6 +19,8 @@
 #include "funcapi.h"
 #include "hooks.h"
 #include "miscadmin.h"
+#include "nodes/makefuncs.h"
+#include "nodes/value.h"
 #include "utils/builtins.h"
 #include "utils/guc.h"
 #include "utils/rel.h"
@@ -1093,6 +1095,7 @@ Datum sp_addrole(PG_FUNCTION_ARGS)
 	set_config_option("babelfishpg_tsql.sql_dialect", saved_dialect,
 							(superuser() ? PGC_SUSET : PGC_USERSET),
 							PGC_S_SESSION, GUC_ACTION_SAVE, true, 0, false);
+	PG_RETURN_VOID();
 }
 
 static List *
@@ -1115,11 +1118,14 @@ gen_sp_addrole_subcmds(const char *user)
 						list_length(res))));
 
 	stmt = parsetree_nth_stmt(res, 0);
-	update_CreateRoleStmt(stmt, user, NULL, NULL);
-	rewrite_object_refs(stmt);
-	rolestmt = (CreateRoleStmt *) stmt;
 
-	elog(WARNING, "sp_addrole - Trying to handle original_user name in procedures by manually replacing the user name");
+	rolestmt = (CreateRoleStmt *) stmt;
+	if (!IsA(rolestmt, CreateRoleStmt))
+		ereport(ERROR, (errcode(ERRCODE_SYNTAX_ERROR), errmsg("query is not a CreateRoleStmt")));
+
+	rolestmt->role = pstrdup(user);
+	rewrite_object_refs(stmt);
+
 	/*
 	 * Add original_user_name before hand because placeholder
 	 * query "(CREATE ROLE )" is being passed
@@ -1130,7 +1136,6 @@ gen_sp_addrole_subcmds(const char *user)
 				(Node *) makeString(user),
 						-1));
 	rolestmt->options = list_concat(rolestmt->options, user_options);
-	elog(WARNING, "sp_addrole - Replaced the user name manually in procedures");
 
 	return res;
 }
@@ -1194,6 +1199,7 @@ Datum sp_droprole(PG_FUNCTION_ARGS)
 	set_config_option("babelfishpg_tsql.sql_dialect", saved_dialect,
 							(superuser() ? PGC_SUSET : PGC_USERSET),
 							PGC_S_SESSION, GUC_ACTION_SAVE, true, 0, false);
+	PG_RETURN_VOID();
 }
 
 static List *
@@ -1292,6 +1298,7 @@ Datum sp_addrolemember(PG_FUNCTION_ARGS)
 	set_config_option("babelfishpg_tsql.sql_dialect", saved_dialect,
 							(superuser() ? PGC_SUSET : PGC_USERSET),
 							PGC_S_SESSION, GUC_ACTION_SAVE, true, 0, false);
+	PG_RETURN_VOID();
 }
 
 static List *
@@ -1394,6 +1401,7 @@ Datum sp_droprolemember(PG_FUNCTION_ARGS)
 	set_config_option("babelfishpg_tsql.sql_dialect", saved_dialect,
 							(superuser() ? PGC_SUSET : PGC_USERSET),
 							PGC_S_SESSION, GUC_ACTION_SAVE, true, 0, false);
+	PG_RETURN_VOID();
 }
 
 static List *
