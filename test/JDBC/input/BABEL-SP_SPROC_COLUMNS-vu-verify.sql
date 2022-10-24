@@ -45,10 +45,10 @@ GO
 exec sp_sproc_columns 'babel_sp_sproc_columns_vu_prepare_mp_select_all', 'dbo', 'babel_sp_sproc_columns_vu_prepare_db1'
 GO
 
-exec sp_sproc_columns 'babel_sp_sproc_columns_vu_prepare_mp_select_all', 'dbo', 'babel_sp_sproc_columns_vu_prepare_db1', '@myid'
+exec sp_sproc_columns 'babel_sp_sproc_columns_vu_prepare_mp_select_all', 'dbo', 'babel_sp_sproc_columns_vu_prepare_db1', '@id'
 GO
 
-exec sp_sproc_columns 'babel_sp_sproc_columns_vu_prepare_mp_select_all', 'dbo', 'babel_sp_sproc_columns_vu_prepare_db1', '@MYID'
+exec sp_sproc_columns 'babel_sp_sproc_columns_vu_prepare_mp_select_all', 'dbo', 'babel_sp_sproc_columns_vu_prepare_db1', '@ID'
 GO
 
 exec sp_sproc_columns 'babel_sp_sproc_columns_vu_prepare_mp_select_all', 'dbo', 'babel_sp_sproc_columns_vu_prepare_db1', '@myvarchar'
@@ -77,4 +77,26 @@ GO
 EXEC sp_sproc_columns @procedure_name = 'babel_sp_sproc_columns_vu_prepare_PhoneNum_func'
 GO
 EXEC sp_sproc_columns @procedure_name = 'babel_sp_sproc_columns_vu_prepare_Phone_num_proc'
+GO
+
+-- Test with a variety of datatypes
+EXEC sp_sproc_columns @procedure_name = 'babel_sp_sproc_columns_vu_prepare_addTwo'
+GO
+EXEC sp_sproc_columns @procedure_name = 'babel_sp_sproc_columns_vu_prepare_complexProc'
+GO
+EXEC sp_sproc_columns @procedure_name = 'babel_sp_sproc_columns_vu_prepare_tableFunc'
+GO
+EXEC sp_sproc_columns @procedure_name = 'babel_sp_sproc_columns_vu_prepare_InlineTableFunc'
+GO
+EXEC sp_sproc_columns @procedure_name = 'babel_sp_sproc_columns_vu_prepare_tableFunc2'
+GO
+EXEC sp_sproc_columns @procedure_name = 'babel_sp_sproc_columns_vu_prepare_InlineTableFunc2'
+GO
+EXEC sp_sproc_columns @procedure_name = 'babel_sp_sproc_columns_vu_prepare_tvpProc'
+GO
+EXEC sp_sproc_columns @procedure_name = 'babel_sp_sproc_columns_vu_prepare_myDecFunc'
+GO
+EXEC sp_sproc_columns @procedure_name = 'babel_sp_sproc_columns_vu_prepare_typeModifier'
+GO
+EXEC sp_sproc_columns @procedure_name = 'babel_sp_sproc_columns_vu_prepare_DataTypeExamples'
 GO

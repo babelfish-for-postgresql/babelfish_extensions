@@ -23,6 +23,7 @@ GO
 ~~START~~
 varchar#!#varchar#!#nvarchar#!#varchar#!#smallint#!#smallint#!#varchar#!#int#!#int#!#smallint#!#smallint#!#smallint#!#varchar#!#nvarchar#!#smallint#!#smallint#!#int#!#int#!#varchar#!#tinyint
 babel_sp_sproc_columns_vu_prepare_db1#!#dbo#!#babel_sp_sproc_columns_vu_prepare_select_all;1#!#@RETURN_VALUE#!#5#!#4#!#int#!#10#!#4#!#0#!#10#!#0#!#<NULL>#!#<NULL>#!#4#!#<NULL>#!#<NULL>#!#0#!#NO#!#56
+babel_sp_sproc_columns_vu_prepare_db1#!#dbo#!#babel_sp_sproc_columns_vu_prepare_select_all_with_parameter;1#!#@RETURN_VALUE#!#5#!#4#!#int#!#10#!#4#!#0#!#10#!#0#!#<NULL>#!#<NULL>#!#4#!#<NULL>#!#<NULL>#!#0#!#NO#!#56
 babel_sp_sproc_columns_vu_prepare_db1#!#dbo#!#babel_sp_sproc_columns_vu_prepare_select_all_with_parameter;1#!#@id#!#1#!#4#!#int#!#10#!#4#!#0#!#10#!#1#!#<NULL>#!#<NULL>#!#4#!#<NULL>#!#<NULL>#!#1#!#YES#!#38
 ~~END~~
 
@@ -48,6 +49,7 @@ EXEC sp_sproc_columns 'babel_sp_sproc_columns_vu_prepare_select_all_with_paramet
 GO
 ~~START~~
 varchar#!#varchar#!#nvarchar#!#varchar#!#smallint#!#smallint#!#varchar#!#int#!#int#!#smallint#!#smallint#!#smallint#!#varchar#!#nvarchar#!#smallint#!#smallint#!#int#!#int#!#varchar#!#tinyint
+babel_sp_sproc_columns_vu_prepare_db1#!#dbo#!#babel_sp_sproc_columns_vu_prepare_select_all_with_parameter;1#!#@RETURN_VALUE#!#5#!#4#!#int#!#10#!#4#!#0#!#10#!#0#!#<NULL>#!#<NULL>#!#4#!#<NULL>#!#<NULL>#!#0#!#NO#!#56
 babel_sp_sproc_columns_vu_prepare_db1#!#dbo#!#babel_sp_sproc_columns_vu_prepare_select_all_with_parameter;1#!#@id#!#1#!#4#!#int#!#10#!#4#!#0#!#10#!#1#!#<NULL>#!#<NULL>#!#4#!#<NULL>#!#<NULL>#!#1#!#YES#!#38
 ~~END~~
 
@@ -57,7 +59,7 @@ EXEC SP_SPROC_COLUMNS @PROCEDURE_NAME = 'positive_or_negative', @PROCEDURE_OWNER
 GO
 ~~START~~
 varchar#!#varchar#!#nvarchar#!#varchar#!#smallint#!#smallint#!#varchar#!#int#!#int#!#smallint#!#smallint#!#smallint#!#varchar#!#nvarchar#!#smallint#!#smallint#!#int#!#int#!#varchar#!#tinyint
-babel_sp_sproc_columns_vu_prepare_db1#!#babel_sp_sproc_columns_vu_prepare_s1#!#positive_or_negative;0#!#@RETURN_VALUE#!#5#!#<NULL>#!##!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#0#!#YES#!#<NULL>
+babel_sp_sproc_columns_vu_prepare_db1#!#babel_sp_sproc_columns_vu_prepare_s1#!#positive_or_negative;0#!#@RETURN_VALUE#!#5#!#1#!#char#!#0#!#8000#!#0#!#<NULL>#!#1#!#<NULL>#!#<NULL>#!#1#!#<NULL>#!#<NULL>#!#0#!#YES#!#39
 babel_sp_sproc_columns_vu_prepare_db1#!#babel_sp_sproc_columns_vu_prepare_s1#!#positive_or_negative;0#!#@long#!#1#!#3#!#decimal#!#38#!#17#!#38#!#10#!#1#!#<NULL>#!#<NULL>#!#3#!#<NULL>#!#<NULL>#!#1#!#YES#!#106
 ~~END~~
 
@@ -67,6 +69,7 @@ exec [sys].[sp_sproc_columns] 'babel_sp_sproc_columns_vu_prepare_select_all_with
 GO
 ~~START~~
 varchar#!#varchar#!#nvarchar#!#varchar#!#smallint#!#smallint#!#varchar#!#int#!#int#!#smallint#!#smallint#!#smallint#!#varchar#!#nvarchar#!#smallint#!#smallint#!#int#!#int#!#varchar#!#tinyint
+babel_sp_sproc_columns_vu_prepare_db1#!#dbo#!#babel_sp_sproc_columns_vu_prepare_select_all_with_parameter;1#!#@RETURN_VALUE#!#5#!#4#!#int#!#10#!#4#!#0#!#10#!#0#!#<NULL>#!#<NULL>#!#4#!#<NULL>#!#<NULL>#!#0#!#NO#!#56
 babel_sp_sproc_columns_vu_prepare_db1#!#dbo#!#babel_sp_sproc_columns_vu_prepare_select_all_with_parameter;1#!#@id#!#1#!#4#!#int#!#10#!#4#!#0#!#10#!#1#!#<NULL>#!#<NULL>#!#4#!#<NULL>#!#<NULL>#!#1#!#YES#!#38
 ~~END~~
 
@@ -75,6 +78,7 @@ exec [sp_sproc_columns] 'babel_sp_sproc_columns_vu_prepare_select_all_with_param
 GO
 ~~START~~
 varchar#!#varchar#!#nvarchar#!#varchar#!#smallint#!#smallint#!#varchar#!#int#!#int#!#smallint#!#smallint#!#smallint#!#varchar#!#nvarchar#!#smallint#!#smallint#!#int#!#int#!#varchar#!#tinyint
+babel_sp_sproc_columns_vu_prepare_db1#!#dbo#!#babel_sp_sproc_columns_vu_prepare_select_all_with_parameter;1#!#@RETURN_VALUE#!#5#!#4#!#int#!#10#!#4#!#0#!#10#!#0#!#<NULL>#!#<NULL>#!#4#!#<NULL>#!#<NULL>#!#0#!#NO#!#56
 babel_sp_sproc_columns_vu_prepare_db1#!#dbo#!#babel_sp_sproc_columns_vu_prepare_select_all_with_parameter;1#!#@id#!#1#!#4#!#int#!#10#!#4#!#0#!#10#!#1#!#<NULL>#!#<NULL>#!#4#!#<NULL>#!#<NULL>#!#1#!#YES#!#38
 ~~END~~
 
@@ -84,6 +88,7 @@ EXEC SP_SPROC_COLUMNS 'babel_sp_sproc_columns_vu_prepare_select_all_WITH_PARAMET
 GO
 ~~START~~
 varchar#!#varchar#!#nvarchar#!#varchar#!#smallint#!#smallint#!#varchar#!#int#!#int#!#smallint#!#smallint#!#smallint#!#varchar#!#nvarchar#!#smallint#!#smallint#!#int#!#int#!#varchar#!#tinyint
+babel_sp_sproc_columns_vu_prepare_db1#!#dbo#!#babel_sp_sproc_columns_vu_prepare_select_all_with_parameter;1#!#@RETURN_VALUE#!#5#!#4#!#int#!#10#!#4#!#0#!#10#!#0#!#<NULL>#!#<NULL>#!#4#!#<NULL>#!#<NULL>#!#0#!#NO#!#56
 babel_sp_sproc_columns_vu_prepare_db1#!#dbo#!#babel_sp_sproc_columns_vu_prepare_select_all_with_parameter;1#!#@id#!#1#!#4#!#int#!#10#!#4#!#0#!#10#!#1#!#<NULL>#!#<NULL>#!#4#!#<NULL>#!#<NULL>#!#1#!#YES#!#38
 ~~END~~
 
@@ -94,7 +99,7 @@ GO
 ~~START~~
 varchar#!#varchar#!#nvarchar#!#varchar#!#smallint#!#smallint#!#varchar#!#int#!#int#!#smallint#!#smallint#!#smallint#!#varchar#!#nvarchar#!#smallint#!#smallint#!#int#!#int#!#varchar#!#tinyint
 babel_sp_sproc_columns_vu_prepare_db1#!#dbo#!#babel_sp_sproc_columns_vu_prepare_mp_select_all;1#!#@RETURN_VALUE#!#5#!#4#!#int#!#10#!#4#!#0#!#10#!#0#!#<NULL>#!#<NULL>#!#4#!#<NULL>#!#<NULL>#!#0#!#NO#!#56
-babel_sp_sproc_columns_vu_prepare_db1#!#dbo#!#babel_sp_sproc_columns_vu_prepare_mp_select_all;1#!#@myid#!#1#!#4#!#int#!#10#!#4#!#0#!#10#!#1#!#<NULL>#!#<NULL>#!#4#!#<NULL>#!#<NULL>#!#1#!#YES#!#38
+babel_sp_sproc_columns_vu_prepare_db1#!#dbo#!#babel_sp_sproc_columns_vu_prepare_mp_select_all;1#!#@id#!#1#!#4#!#int#!#10#!#4#!#0#!#10#!#1#!#<NULL>#!#<NULL>#!#4#!#<NULL>#!#<NULL>#!#1#!#YES#!#38
 babel_sp_sproc_columns_vu_prepare_db1#!#dbo#!#babel_sp_sproc_columns_vu_prepare_mp_select_all;1#!#@myvarchar#!#1#!#12#!#varchar#!#0#!#8000#!#0#!#<NULL>#!#1#!#<NULL>#!#<NULL>#!#12#!#<NULL>#!#<NULL>#!#2#!#YES#!#39
 ~~END~~
 
@@ -104,24 +109,24 @@ GO
 ~~START~~
 varchar#!#varchar#!#nvarchar#!#varchar#!#smallint#!#smallint#!#varchar#!#int#!#int#!#smallint#!#smallint#!#smallint#!#varchar#!#nvarchar#!#smallint#!#smallint#!#int#!#int#!#varchar#!#tinyint
 babel_sp_sproc_columns_vu_prepare_db1#!#dbo#!#babel_sp_sproc_columns_vu_prepare_mp_select_all;1#!#@RETURN_VALUE#!#5#!#4#!#int#!#10#!#4#!#0#!#10#!#0#!#<NULL>#!#<NULL>#!#4#!#<NULL>#!#<NULL>#!#0#!#NO#!#56
-babel_sp_sproc_columns_vu_prepare_db1#!#dbo#!#babel_sp_sproc_columns_vu_prepare_mp_select_all;1#!#@myid#!#1#!#4#!#int#!#10#!#4#!#0#!#10#!#1#!#<NULL>#!#<NULL>#!#4#!#<NULL>#!#<NULL>#!#1#!#YES#!#38
+babel_sp_sproc_columns_vu_prepare_db1#!#dbo#!#babel_sp_sproc_columns_vu_prepare_mp_select_all;1#!#@id#!#1#!#4#!#int#!#10#!#4#!#0#!#10#!#1#!#<NULL>#!#<NULL>#!#4#!#<NULL>#!#<NULL>#!#1#!#YES#!#38
 babel_sp_sproc_columns_vu_prepare_db1#!#dbo#!#babel_sp_sproc_columns_vu_prepare_mp_select_all;1#!#@myvarchar#!#1#!#12#!#varchar#!#0#!#8000#!#0#!#<NULL>#!#1#!#<NULL>#!#<NULL>#!#12#!#<NULL>#!#<NULL>#!#2#!#YES#!#39
 ~~END~~
 
 
-exec sp_sproc_columns 'babel_sp_sproc_columns_vu_prepare_mp_select_all', 'dbo', 'babel_sp_sproc_columns_vu_prepare_db1', '@myid'
+exec sp_sproc_columns 'babel_sp_sproc_columns_vu_prepare_mp_select_all', 'dbo', 'babel_sp_sproc_columns_vu_prepare_db1', '@id'
 GO
 ~~START~~
 varchar#!#varchar#!#nvarchar#!#varchar#!#smallint#!#smallint#!#varchar#!#int#!#int#!#smallint#!#smallint#!#smallint#!#varchar#!#nvarchar#!#smallint#!#smallint#!#int#!#int#!#varchar#!#tinyint
-babel_sp_sproc_columns_vu_prepare_db1#!#dbo#!#babel_sp_sproc_columns_vu_prepare_mp_select_all;1#!#@myid#!#1#!#4#!#int#!#10#!#4#!#0#!#10#!#1#!#<NULL>#!#<NULL>#!#4#!#<NULL>#!#<NULL>#!#1#!#YES#!#38
+babel_sp_sproc_columns_vu_prepare_db1#!#dbo#!#babel_sp_sproc_columns_vu_prepare_mp_select_all;1#!#@id#!#1#!#4#!#int#!#10#!#4#!#0#!#10#!#1#!#<NULL>#!#<NULL>#!#4#!#<NULL>#!#<NULL>#!#1#!#YES#!#38
 ~~END~~
 
 
-exec sp_sproc_columns 'babel_sp_sproc_columns_vu_prepare_mp_select_all', 'dbo', 'babel_sp_sproc_columns_vu_prepare_db1', '@MYID'
+exec sp_sproc_columns 'babel_sp_sproc_columns_vu_prepare_mp_select_all', 'dbo', 'babel_sp_sproc_columns_vu_prepare_db1', '@ID'
 GO
 ~~START~~
 varchar#!#varchar#!#nvarchar#!#varchar#!#smallint#!#smallint#!#varchar#!#int#!#int#!#smallint#!#smallint#!#smallint#!#varchar#!#nvarchar#!#smallint#!#smallint#!#int#!#int#!#varchar#!#tinyint
-babel_sp_sproc_columns_vu_prepare_db1#!#dbo#!#babel_sp_sproc_columns_vu_prepare_mp_select_all;1#!#@myid#!#1#!#4#!#int#!#10#!#4#!#0#!#10#!#1#!#<NULL>#!#<NULL>#!#4#!#<NULL>#!#<NULL>#!#1#!#YES#!#38
+babel_sp_sproc_columns_vu_prepare_db1#!#dbo#!#babel_sp_sproc_columns_vu_prepare_mp_select_all;1#!#@id#!#1#!#4#!#int#!#10#!#4#!#0#!#10#!#1#!#<NULL>#!#<NULL>#!#4#!#<NULL>#!#<NULL>#!#1#!#YES#!#38
 ~~END~~
 
 
@@ -156,7 +161,7 @@ exec sp_sproc_columns 'babel_sp_sproc_columns_vu_prepare_table_value_func'
 GO
 ~~START~~
 varchar#!#varchar#!#nvarchar#!#varchar#!#smallint#!#smallint#!#varchar#!#int#!#int#!#smallint#!#smallint#!#smallint#!#varchar#!#nvarchar#!#smallint#!#smallint#!#int#!#int#!#varchar#!#tinyint
-babel_sp_sproc_columns_vu_prepare_db1#!#dbo#!#babel_sp_sproc_columns_vu_prepare_table_value_func;0#!#@TABLE_RETURN_VALUE#!#3#!#<NULL>#!#table#!#0#!#0#!#0#!#0#!#0#!#Result table returned by table valued function#!#<NULL>#!#<NULL>#!#<NULL>#!#<NULL>#!#0#!#NO#!#0
+babel_sp_sproc_columns_vu_prepare_db1#!#dbo#!#babel_sp_sproc_columns_vu_prepare_table_value_func;0#!#@TABLE_RETURN_VALUE#!#3#!#<NULL>#!#table#!#0#!#0#!#0#!#0#!#0#!#Result table returned by table valued function#!#<NULL>#!#<NULL>#!#0#!#<NULL>#!#0#!#NO#!#0
 babel_sp_sproc_columns_vu_prepare_db1#!#dbo#!#babel_sp_sproc_columns_vu_prepare_table_value_func;0#!#@num#!#1#!#4#!#int#!#10#!#4#!#0#!#10#!#1#!#<NULL>#!#<NULL>#!#4#!#<NULL>#!#<NULL>#!#1#!#YES#!#38
 ~~END~~
 
@@ -179,23 +184,23 @@ GO
 ~~START~~
 varchar#!#varchar#!#nvarchar#!#varchar#!#smallint#!#smallint#!#varchar#!#int#!#int#!#smallint#!#smallint#!#smallint#!#varchar#!#nvarchar#!#smallint#!#smallint#!#int#!#int#!#varchar#!#tinyint
 babel_sp_sproc_columns_vu_prepare_db1#!#dbo#!#babel_sp_sproc_columns_vu_prepare_eyedees_proc;1#!#@RETURN_VALUE#!#5#!#4#!#int#!#10#!#4#!#0#!#10#!#0#!#<NULL>#!#<NULL>#!#4#!#<NULL>#!#<NULL>#!#0#!#NO#!#56
-babel_sp_sproc_columns_vu_prepare_db1#!#dbo#!#babel_sp_sproc_columns_vu_prepare_eyedees_proc;1#!#@id#!#1#!#4#!#babel_sp_sproc_columns_vu_prepare_eyedees#!#10#!#4#!#0#!#10#!#0#!#<NULL>#!#<NULL>#!#4#!#<NULL>#!#<NULL>#!#1#!#YES#!#38
+babel_sp_sproc_columns_vu_prepare_db1#!#dbo#!#babel_sp_sproc_columns_vu_prepare_eyedees_proc;1#!#@id#!#1#!#4#!#babel_sp_sproc_columns_vu_prepare_eyedees#!#10#!#4#!#0#!#10#!#1#!#<NULL>#!#<NULL>#!#4#!#<NULL>#!#<NULL>#!#1#!#YES#!#38
 ~~END~~
 
 EXEC sp_sproc_columns @procedure_name = 'babel_sp_sproc_columns_vu_prepare_eyedees_func'
 GO
 ~~START~~
 varchar#!#varchar#!#nvarchar#!#varchar#!#smallint#!#smallint#!#varchar#!#int#!#int#!#smallint#!#smallint#!#smallint#!#varchar#!#nvarchar#!#smallint#!#smallint#!#int#!#int#!#varchar#!#tinyint
-babel_sp_sproc_columns_vu_prepare_db1#!#dbo#!#babel_sp_sproc_columns_vu_prepare_eyedees_func;0#!#@RETURN_VALUE#!#5#!#4#!#babel_sp_sproc_columns_vu_prepare_eyedees#!#10#!#4#!#0#!#10#!#0#!#<NULL>#!#<NULL>#!#4#!#<NULL>#!#<NULL>#!#0#!#YES#!#38
-babel_sp_sproc_columns_vu_prepare_db1#!#dbo#!#babel_sp_sproc_columns_vu_prepare_eyedees_func;0#!#@id#!#1#!#4#!#babel_sp_sproc_columns_vu_prepare_eyedees#!#10#!#4#!#0#!#10#!#0#!#<NULL>#!#<NULL>#!#4#!#<NULL>#!#<NULL>#!#1#!#YES#!#38
+babel_sp_sproc_columns_vu_prepare_db1#!#dbo#!#babel_sp_sproc_columns_vu_prepare_eyedees_func;0#!#@RETURN_VALUE#!#5#!#4#!#babel_sp_sproc_columns_vu_prepare_eyedees#!#10#!#4#!#0#!#10#!#1#!#<NULL>#!#<NULL>#!#4#!#<NULL>#!#<NULL>#!#0#!#YES#!#38
+babel_sp_sproc_columns_vu_prepare_db1#!#dbo#!#babel_sp_sproc_columns_vu_prepare_eyedees_func;0#!#@id#!#1#!#4#!#babel_sp_sproc_columns_vu_prepare_eyedees#!#10#!#4#!#0#!#10#!#1#!#<NULL>#!#<NULL>#!#4#!#<NULL>#!#<NULL>#!#1#!#YES#!#38
 ~~END~~
 
 EXEC sp_sproc_columns @procedure_name = 'babel_sp_sproc_columns_vu_prepare_PhoneNum_func'
 GO
 ~~START~~
 varchar#!#varchar#!#nvarchar#!#varchar#!#smallint#!#smallint#!#varchar#!#int#!#int#!#smallint#!#smallint#!#smallint#!#varchar#!#nvarchar#!#smallint#!#smallint#!#int#!#int#!#varchar#!#tinyint
-babel_sp_sproc_columns_vu_prepare_db1#!#dbo#!#babel_sp_sproc_columns_vu_prepare_phonenum_func;0#!#@RETURN_VALUE#!#5#!#12#!#babel_sp_sproc_columns_vu_prepare_phone_num#!#0#!#11#!#0#!#<NULL>#!#0#!#<NULL>#!#<NULL>#!#12#!#<NULL>#!#<NULL>#!#0#!#YES#!#39
-babel_sp_sproc_columns_vu_prepare_db1#!#dbo#!#babel_sp_sproc_columns_vu_prepare_phonenum_func;0#!#@pn#!#1#!#12#!#babel_sp_sproc_columns_vu_prepare_phone_num#!#0#!#11#!#0#!#<NULL>#!#0#!#<NULL>#!#<NULL>#!#12#!#<NULL>#!#<NULL>#!#1#!#YES#!#39
+babel_sp_sproc_columns_vu_prepare_db1#!#dbo#!#babel_sp_sproc_columns_vu_prepare_phonenum_func;0#!#@RETURN_VALUE#!#5#!#12#!#babel_sp_sproc_columns_vu_prepare_phone_num#!#0#!#11#!#0#!#<NULL>#!#1#!#<NULL>#!#<NULL>#!#12#!#<NULL>#!#<NULL>#!#0#!#YES#!#39
+babel_sp_sproc_columns_vu_prepare_db1#!#dbo#!#babel_sp_sproc_columns_vu_prepare_phonenum_func;0#!#@pn#!#1#!#12#!#babel_sp_sproc_columns_vu_prepare_phone_num#!#0#!#11#!#0#!#<NULL>#!#1#!#<NULL>#!#<NULL>#!#12#!#<NULL>#!#<NULL>#!#1#!#YES#!#39
 ~~END~~
 
 EXEC sp_sproc_columns @procedure_name = 'babel_sp_sproc_columns_vu_prepare_Phone_num_proc'
@@ -203,6 +208,131 @@ GO
 ~~START~~
 varchar#!#varchar#!#nvarchar#!#varchar#!#smallint#!#smallint#!#varchar#!#int#!#int#!#smallint#!#smallint#!#smallint#!#varchar#!#nvarchar#!#smallint#!#smallint#!#int#!#int#!#varchar#!#tinyint
 babel_sp_sproc_columns_vu_prepare_db1#!#dbo#!#babel_sp_sproc_columns_vu_prepare_phone_num_proc;1#!#@RETURN_VALUE#!#5#!#4#!#int#!#10#!#4#!#0#!#10#!#0#!#<NULL>#!#<NULL>#!#4#!#<NULL>#!#<NULL>#!#0#!#NO#!#56
-babel_sp_sproc_columns_vu_prepare_db1#!#dbo#!#babel_sp_sproc_columns_vu_prepare_phone_num_proc;1#!#@num#!#1#!#12#!#babel_sp_sproc_columns_vu_prepare_phone_num#!#0#!#11#!#0#!#<NULL>#!#0#!#<NULL>#!#<NULL>#!#12#!#<NULL>#!#<NULL>#!#1#!#YES#!#39
+babel_sp_sproc_columns_vu_prepare_db1#!#dbo#!#babel_sp_sproc_columns_vu_prepare_phone_num_proc;1#!#@num#!#1#!#12#!#babel_sp_sproc_columns_vu_prepare_phone_num#!#0#!#11#!#0#!#<NULL>#!#1#!#<NULL>#!#<NULL>#!#12#!#<NULL>#!#<NULL>#!#1#!#YES#!#39
+~~END~~
+
+
+-- Test with a variety of datatypes
+EXEC sp_sproc_columns @procedure_name = 'babel_sp_sproc_columns_vu_prepare_addTwo'
+GO
+~~START~~
+varchar#!#varchar#!#nvarchar#!#varchar#!#smallint#!#smallint#!#varchar#!#int#!#int#!#smallint#!#smallint#!#smallint#!#varchar#!#nvarchar#!#smallint#!#smallint#!#int#!#int#!#varchar#!#tinyint
+babel_sp_sproc_columns_vu_prepare_db1#!#dbo#!#babel_sp_sproc_columns_vu_prepare_addtwo;1#!#@RETURN_VALUE#!#5#!#4#!#int#!#10#!#4#!#0#!#10#!#0#!#<NULL>#!#<NULL>#!#4#!#<NULL>#!#<NULL>#!#0#!#NO#!#56
+babel_sp_sproc_columns_vu_prepare_db1#!#dbo#!#babel_sp_sproc_columns_vu_prepare_addtwo;1#!#@num1#!#1#!#4#!#int#!#10#!#4#!#0#!#10#!#1#!#<NULL>#!#<NULL>#!#4#!#<NULL>#!#<NULL>#!#1#!#YES#!#38
+babel_sp_sproc_columns_vu_prepare_db1#!#dbo#!#babel_sp_sproc_columns_vu_prepare_addtwo;1#!#@num2#!#1#!#4#!#int#!#10#!#4#!#0#!#10#!#1#!#<NULL>#!#<NULL>#!#4#!#<NULL>#!#<NULL>#!#2#!#YES#!#38
+~~END~~
+
+EXEC sp_sproc_columns @procedure_name = 'babel_sp_sproc_columns_vu_prepare_complexProc'
+GO
+~~START~~
+varchar#!#varchar#!#nvarchar#!#varchar#!#smallint#!#smallint#!#varchar#!#int#!#int#!#smallint#!#smallint#!#smallint#!#varchar#!#nvarchar#!#smallint#!#smallint#!#int#!#int#!#varchar#!#tinyint
+babel_sp_sproc_columns_vu_prepare_db1#!#dbo#!#babel_sp_sproc_columns_vu_prepare_complexproc;1#!#@RETURN_VALUE#!#5#!#4#!#int#!#10#!#4#!#0#!#10#!#0#!#<NULL>#!#<NULL>#!#4#!#<NULL>#!#<NULL>#!#0#!#NO#!#56
+babel_sp_sproc_columns_vu_prepare_db1#!#dbo#!#babel_sp_sproc_columns_vu_prepare_complexproc;1#!#@dec#!#1#!#3#!#decimal#!#38#!#17#!#38#!#10#!#1#!#<NULL>#!#<NULL>#!#3#!#<NULL>#!#<NULL>#!#1#!#YES#!#106
+babel_sp_sproc_columns_vu_prepare_db1#!#dbo#!#babel_sp_sproc_columns_vu_prepare_complexproc;1#!#@num#!#1#!#2#!#numeric#!#38#!#17#!#38#!#10#!#1#!#<NULL>#!#<NULL>#!#2#!#<NULL>#!#<NULL>#!#2#!#YES#!#108
+babel_sp_sproc_columns_vu_prepare_db1#!#dbo#!#babel_sp_sproc_columns_vu_prepare_complexproc;1#!#@var#!#1#!#12#!#varchar#!#0#!#8000#!#0#!#<NULL>#!#1#!#<NULL>#!#<NULL>#!#12#!#<NULL>#!#<NULL>#!#3#!#YES#!#39
+babel_sp_sproc_columns_vu_prepare_db1#!#dbo#!#babel_sp_sproc_columns_vu_prepare_complexproc;1#!#@nvar#!#1#!#-9#!#nvarchar#!#0#!#8000#!#0#!#<NULL>#!#1#!#<NULL>#!#<NULL>#!#-9#!#<NULL>#!#<NULL>#!#4#!#YES#!#39
+babel_sp_sproc_columns_vu_prepare_db1#!#dbo#!#babel_sp_sproc_columns_vu_prepare_complexproc;1#!#@varmax#!#1#!#12#!#varchar#!#0#!#8000#!#0#!#<NULL>#!#1#!#<NULL>#!#<NULL>#!#12#!#<NULL>#!#<NULL>#!#5#!#YES#!#39
+babel_sp_sproc_columns_vu_prepare_db1#!#dbo#!#babel_sp_sproc_columns_vu_prepare_complexproc;1#!#@nvarmax#!#1#!#-9#!#nvarchar#!#0#!#8000#!#0#!#<NULL>#!#1#!#<NULL>#!#<NULL>#!#-9#!#<NULL>#!#<NULL>#!#6#!#YES#!#39
+~~END~~
+
+EXEC sp_sproc_columns @procedure_name = 'babel_sp_sproc_columns_vu_prepare_tableFunc'
+GO
+~~START~~
+varchar#!#varchar#!#nvarchar#!#varchar#!#smallint#!#smallint#!#varchar#!#int#!#int#!#smallint#!#smallint#!#smallint#!#varchar#!#nvarchar#!#smallint#!#smallint#!#int#!#int#!#varchar#!#tinyint
+babel_sp_sproc_columns_vu_prepare_db1#!#dbo#!#babel_sp_sproc_columns_vu_prepare_tablefunc;0#!#@TABLE_RETURN_VALUE#!#3#!#<NULL>#!#table#!#0#!#0#!#0#!#0#!#0#!#Result table returned by table valued function#!#<NULL>#!#<NULL>#!#0#!#<NULL>#!#0#!#NO#!#0
+babel_sp_sproc_columns_vu_prepare_db1#!#dbo#!#babel_sp_sproc_columns_vu_prepare_tablefunc;0#!#@c1#!#1#!#4#!#int#!#10#!#4#!#0#!#10#!#1#!#<NULL>#!#<NULL>#!#4#!#<NULL>#!#<NULL>#!#1#!#YES#!#38
+babel_sp_sproc_columns_vu_prepare_db1#!#dbo#!#babel_sp_sproc_columns_vu_prepare_tablefunc;0#!#@c2#!#1#!#4#!#int#!#10#!#4#!#0#!#10#!#1#!#<NULL>#!#<NULL>#!#4#!#<NULL>#!#<NULL>#!#2#!#YES#!#38
+~~END~~
+
+EXEC sp_sproc_columns @procedure_name = 'babel_sp_sproc_columns_vu_prepare_InlineTableFunc'
+GO
+~~START~~
+varchar#!#varchar#!#nvarchar#!#varchar#!#smallint#!#smallint#!#varchar#!#int#!#int#!#smallint#!#smallint#!#smallint#!#varchar#!#nvarchar#!#smallint#!#smallint#!#int#!#int#!#varchar#!#tinyint
+babel_sp_sproc_columns_vu_prepare_db1#!#dbo#!#babel_sp_sproc_columns_vu_prepare_inlinetablefunc;0#!#@TABLE_RETURN_VALUE#!#3#!#<NULL>#!#table#!#0#!#0#!#0#!#0#!#0#!#Result table returned by table valued function#!#<NULL>#!#<NULL>#!#0#!#<NULL>#!#0#!#NO#!#0
+babel_sp_sproc_columns_vu_prepare_db1#!#dbo#!#babel_sp_sproc_columns_vu_prepare_inlinetablefunc;0#!#@t1#!#1#!#4#!#int#!#10#!#4#!#0#!#10#!#1#!#<NULL>#!#<NULL>#!#4#!#<NULL>#!#<NULL>#!#1#!#YES#!#38
+babel_sp_sproc_columns_vu_prepare_db1#!#dbo#!#babel_sp_sproc_columns_vu_prepare_inlinetablefunc;0#!#@t2#!#1#!#4#!#int#!#10#!#4#!#0#!#10#!#1#!#<NULL>#!#<NULL>#!#4#!#<NULL>#!#<NULL>#!#2#!#YES#!#38
+~~END~~
+
+EXEC sp_sproc_columns @procedure_name = 'babel_sp_sproc_columns_vu_prepare_tableFunc2'
+GO
+~~START~~
+varchar#!#varchar#!#nvarchar#!#varchar#!#smallint#!#smallint#!#varchar#!#int#!#int#!#smallint#!#smallint#!#smallint#!#varchar#!#nvarchar#!#smallint#!#smallint#!#int#!#int#!#varchar#!#tinyint
+babel_sp_sproc_columns_vu_prepare_db1#!#dbo#!#babel_sp_sproc_columns_vu_prepare_tablefunc2;0#!#@TABLE_RETURN_VALUE#!#3#!#<NULL>#!#table#!#0#!#0#!#0#!#0#!#0#!#Result table returned by table valued function#!#<NULL>#!#<NULL>#!#0#!#<NULL>#!#0#!#NO#!#0
+babel_sp_sproc_columns_vu_prepare_db1#!#dbo#!#babel_sp_sproc_columns_vu_prepare_tablefunc2;0#!#@c1#!#1#!#-153#!#babel_sp_sproc_columns_vu_prepare_mytableparam#!#0#!#2147483647#!#<NULL>#!#<NULL>#!#1#!#<NULL>#!#<NULL>#!#-153#!#<NULL>#!#2147483647#!#1#!#YES#!#0
+babel_sp_sproc_columns_vu_prepare_db1#!#dbo#!#babel_sp_sproc_columns_vu_prepare_tablefunc2;0#!#@c2#!#1#!#-153#!#babel_sp_sproc_columns_vu_prepare_mytableparam#!#0#!#2147483647#!#<NULL>#!#<NULL>#!#1#!#<NULL>#!#<NULL>#!#-153#!#<NULL>#!#2147483647#!#2#!#YES#!#0
+~~END~~
+
+EXEC sp_sproc_columns @procedure_name = 'babel_sp_sproc_columns_vu_prepare_InlineTableFunc2'
+GO
+~~START~~
+varchar#!#varchar#!#nvarchar#!#varchar#!#smallint#!#smallint#!#varchar#!#int#!#int#!#smallint#!#smallint#!#smallint#!#varchar#!#nvarchar#!#smallint#!#smallint#!#int#!#int#!#varchar#!#tinyint
+babel_sp_sproc_columns_vu_prepare_db1#!#dbo#!#babel_sp_sproc_columns_vu_prepare_inlinetablefunc2;0#!#@TABLE_RETURN_VALUE#!#3#!#<NULL>#!#table#!#0#!#0#!#0#!#0#!#0#!#Result table returned by table valued function#!#<NULL>#!#<NULL>#!#0#!#<NULL>#!#0#!#NO#!#0
+babel_sp_sproc_columns_vu_prepare_db1#!#dbo#!#babel_sp_sproc_columns_vu_prepare_inlinetablefunc2;0#!#@t1#!#1#!#-153#!#babel_sp_sproc_columns_vu_prepare_mytableparam#!#0#!#2147483647#!#<NULL>#!#<NULL>#!#1#!#<NULL>#!#<NULL>#!#-153#!#<NULL>#!#2147483647#!#1#!#YES#!#0
+babel_sp_sproc_columns_vu_prepare_db1#!#dbo#!#babel_sp_sproc_columns_vu_prepare_inlinetablefunc2;0#!#@t2#!#1#!#-153#!#babel_sp_sproc_columns_vu_prepare_mytableparam#!#0#!#2147483647#!#<NULL>#!#<NULL>#!#1#!#<NULL>#!#<NULL>#!#-153#!#<NULL>#!#2147483647#!#2#!#YES#!#0
+~~END~~
+
+EXEC sp_sproc_columns @procedure_name = 'babel_sp_sproc_columns_vu_prepare_tvpProc'
+GO
+~~START~~
+varchar#!#varchar#!#nvarchar#!#varchar#!#smallint#!#smallint#!#varchar#!#int#!#int#!#smallint#!#smallint#!#smallint#!#varchar#!#nvarchar#!#smallint#!#smallint#!#int#!#int#!#varchar#!#tinyint
+babel_sp_sproc_columns_vu_prepare_db1#!#dbo#!#babel_sp_sproc_columns_vu_prepare_tvpproc;1#!#@RETURN_VALUE#!#5#!#4#!#int#!#10#!#4#!#0#!#10#!#0#!#<NULL>#!#<NULL>#!#4#!#<NULL>#!#<NULL>#!#0#!#NO#!#56
+babel_sp_sproc_columns_vu_prepare_db1#!#dbo#!#babel_sp_sproc_columns_vu_prepare_tvpproc;1#!#@tvp#!#1#!#-153#!#babel_sp_sproc_columns_vu_prepare_mytableparam#!#0#!#2147483647#!#<NULL>#!#<NULL>#!#1#!#<NULL>#!#<NULL>#!#-153#!#<NULL>#!#2147483647#!#1#!#YES#!#0
+~~END~~
+
+EXEC sp_sproc_columns @procedure_name = 'babel_sp_sproc_columns_vu_prepare_myDecFunc'
+GO
+~~START~~
+varchar#!#varchar#!#nvarchar#!#varchar#!#smallint#!#smallint#!#varchar#!#int#!#int#!#smallint#!#smallint#!#smallint#!#varchar#!#nvarchar#!#smallint#!#smallint#!#int#!#int#!#varchar#!#tinyint
+babel_sp_sproc_columns_vu_prepare_db1#!#dbo#!#babel_sp_sproc_columns_vu_prepare_mydecfunc;0#!#@RETURN_VALUE#!#5#!#3#!#babel_sp_sproc_columns_vu_prepare_mydec#!#23#!#13#!#5#!#10#!#1#!#<NULL>#!#<NULL>#!#3#!#<NULL>#!#<NULL>#!#0#!#YES#!#106
+babel_sp_sproc_columns_vu_prepare_db1#!#dbo#!#babel_sp_sproc_columns_vu_prepare_mydecfunc;0#!#@a#!#1#!#3#!#babel_sp_sproc_columns_vu_prepare_mydec#!#23#!#13#!#5#!#10#!#1#!#<NULL>#!#<NULL>#!#3#!#<NULL>#!#<NULL>#!#1#!#YES#!#106
+~~END~~
+
+EXEC sp_sproc_columns @procedure_name = 'babel_sp_sproc_columns_vu_prepare_typeModifier'
+GO
+~~START~~
+varchar#!#varchar#!#nvarchar#!#varchar#!#smallint#!#smallint#!#varchar#!#int#!#int#!#smallint#!#smallint#!#smallint#!#varchar#!#nvarchar#!#smallint#!#smallint#!#int#!#int#!#varchar#!#tinyint
+babel_sp_sproc_columns_vu_prepare_db1#!#dbo#!#babel_sp_sproc_columns_vu_prepare_typemodifier;1#!#@RETURN_VALUE#!#5#!#4#!#int#!#10#!#4#!#0#!#10#!#0#!#<NULL>#!#<NULL>#!#4#!#<NULL>#!#<NULL>#!#0#!#NO#!#56
+babel_sp_sproc_columns_vu_prepare_db1#!#dbo#!#babel_sp_sproc_columns_vu_prepare_typemodifier;1#!#@var4000#!#1#!#12#!#varchar#!#0#!#8000#!#0#!#<NULL>#!#1#!#<NULL>#!#<NULL>#!#12#!#<NULL>#!#<NULL>#!#1#!#YES#!#39
+babel_sp_sproc_columns_vu_prepare_db1#!#dbo#!#babel_sp_sproc_columns_vu_prepare_typemodifier;1#!#@varmax#!#1#!#12#!#varchar#!#0#!#8000#!#0#!#<NULL>#!#1#!#<NULL>#!#<NULL>#!#12#!#<NULL>#!#<NULL>#!#2#!#YES#!#39
+babel_sp_sproc_columns_vu_prepare_db1#!#dbo#!#babel_sp_sproc_columns_vu_prepare_typemodifier;1#!#@nvar4000#!#1#!#-9#!#nvarchar#!#0#!#8000#!#0#!#<NULL>#!#1#!#<NULL>#!#<NULL>#!#-9#!#<NULL>#!#<NULL>#!#3#!#YES#!#39
+babel_sp_sproc_columns_vu_prepare_db1#!#dbo#!#babel_sp_sproc_columns_vu_prepare_typemodifier;1#!#@nvarmax#!#1#!#-9#!#nvarchar#!#0#!#8000#!#0#!#<NULL>#!#1#!#<NULL>#!#<NULL>#!#-9#!#<NULL>#!#<NULL>#!#4#!#YES#!#39
+babel_sp_sproc_columns_vu_prepare_db1#!#dbo#!#babel_sp_sproc_columns_vu_prepare_typemodifier;1#!#@char#!#1#!#1#!#char#!#0#!#8000#!#0#!#<NULL>#!#1#!#<NULL>#!#<NULL>#!#1#!#<NULL>#!#<NULL>#!#5#!#YES#!#39
+babel_sp_sproc_columns_vu_prepare_db1#!#dbo#!#babel_sp_sproc_columns_vu_prepare_typemodifier;1#!#@nchar#!#1#!#-8#!#nchar#!#0#!#8000#!#0#!#<NULL>#!#1#!#<NULL>#!#<NULL>#!#-8#!#<NULL>#!#<NULL>#!#6#!#YES#!#39
+babel_sp_sproc_columns_vu_prepare_db1#!#dbo#!#babel_sp_sproc_columns_vu_prepare_typemodifier;1#!#@binary#!#1#!#-2#!#binary#!#0#!#8000#!#0#!#<NULL>#!#1#!#<NULL>#!#<NULL>#!#-2#!#<NULL>#!#<NULL>#!#7#!#YES#!#37
+babel_sp_sproc_columns_vu_prepare_db1#!#dbo#!#babel_sp_sproc_columns_vu_prepare_typemodifier;1#!#@varbinary#!#1#!#-3#!#varbinary#!#0#!#8000#!#0#!#<NULL>#!#1#!#<NULL>#!#<NULL>#!#-3#!#<NULL>#!#<NULL>#!#8#!#YES#!#37
+babel_sp_sproc_columns_vu_prepare_db1#!#dbo#!#babel_sp_sproc_columns_vu_prepare_typemodifier;1#!#@varbinarymax#!#1#!#-3#!#varbinary#!#0#!#8000#!#0#!#<NULL>#!#1#!#<NULL>#!#<NULL>#!#-3#!#<NULL>#!#<NULL>#!#9#!#YES#!#37
+babel_sp_sproc_columns_vu_prepare_db1#!#dbo#!#babel_sp_sproc_columns_vu_prepare_typemodifier;1#!#@sysname#!#1#!#-9#!#sysname#!#0#!#256#!#0#!#<NULL>#!#0#!#<NULL>#!#<NULL>#!#-9#!#<NULL>#!#<NULL>#!#10#!#NO#!#39
+~~END~~
+
+EXEC sp_sproc_columns @procedure_name = 'babel_sp_sproc_columns_vu_prepare_DataTypeExamples'
+GO
+~~START~~
+varchar#!#varchar#!#nvarchar#!#varchar#!#smallint#!#smallint#!#varchar#!#int#!#int#!#smallint#!#smallint#!#smallint#!#varchar#!#nvarchar#!#smallint#!#smallint#!#int#!#int#!#varchar#!#tinyint
+babel_sp_sproc_columns_vu_prepare_db1#!#dbo#!#babel_sp_sproc_columns_vu_prepare_datatypeexamples;1#!#@RETURN_VALUE#!#5#!#4#!#int#!#10#!#4#!#0#!#10#!#0#!#<NULL>#!#<NULL>#!#4#!#<NULL>#!#<NULL>#!#0#!#NO#!#56
+babel_sp_sproc_columns_vu_prepare_db1#!#dbo#!#babel_sp_sproc_columns_vu_prepare_datatypeexamples;1#!#@dt_bigint#!#1#!#-5#!#bigint#!#19#!#8#!#0#!#10#!#1#!#<NULL>#!#<NULL>#!#-5#!#<NULL>#!#<NULL>#!#1#!#YES#!#108
+babel_sp_sproc_columns_vu_prepare_db1#!#dbo#!#babel_sp_sproc_columns_vu_prepare_datatypeexamples;1#!#@dt_binary_9#!#1#!#-2#!#binary#!#0#!#8000#!#0#!#<NULL>#!#1#!#<NULL>#!#<NULL>#!#-2#!#<NULL>#!#<NULL>#!#2#!#YES#!#37
+babel_sp_sproc_columns_vu_prepare_db1#!#dbo#!#babel_sp_sproc_columns_vu_prepare_datatypeexamples;1#!#@dt_bit#!#1#!#-7#!#bit#!#1#!#1#!#0#!#<NULL>#!#1#!#<NULL>#!#<NULL>#!#-7#!#<NULL>#!#<NULL>#!#3#!#YES#!#50
+babel_sp_sproc_columns_vu_prepare_db1#!#dbo#!#babel_sp_sproc_columns_vu_prepare_datatypeexamples;1#!#@dt_char_42#!#1#!#1#!#char#!#0#!#8000#!#0#!#<NULL>#!#1#!#<NULL>#!#<NULL>#!#1#!#<NULL>#!#<NULL>#!#4#!#YES#!#39
+babel_sp_sproc_columns_vu_prepare_db1#!#dbo#!#babel_sp_sproc_columns_vu_prepare_datatypeexamples;1#!#@dt_date#!#2#!#91#!#date#!#10#!#3#!#0#!#<NULL>#!#1#!#<NULL>#!#<NULL>#!#9#!#1#!#<NULL>#!#5#!#YES#!#0
+babel_sp_sproc_columns_vu_prepare_db1#!#dbo#!#babel_sp_sproc_columns_vu_prepare_datatypeexamples;1#!#@dt_datetime#!#1#!#93#!#datetime#!#23#!#8#!#3#!#<NULL>#!#1#!#<NULL>#!#<NULL>#!#9#!#3#!#<NULL>#!#6#!#YES#!#111
+babel_sp_sproc_columns_vu_prepare_db1#!#dbo#!#babel_sp_sproc_columns_vu_prepare_datatypeexamples;1#!#@dt_datetime2_5#!#1#!#93#!#datetime2#!#26#!#8#!#6#!#<NULL>#!#1#!#<NULL>#!#<NULL>#!#9#!#3#!#<NULL>#!#7#!#YES#!#0
+babel_sp_sproc_columns_vu_prepare_db1#!#dbo#!#babel_sp_sproc_columns_vu_prepare_datatypeexamples;1#!#@dt_datetimeoffset_3#!#1#!#-155#!#datetimeoffset#!#33#!#10#!#6#!#<NULL>#!#1#!#<NULL>#!#<NULL>#!#-155#!#0#!#<NULL>#!#8#!#YES#!#0
+babel_sp_sproc_columns_vu_prepare_db1#!#dbo#!#babel_sp_sproc_columns_vu_prepare_datatypeexamples;1#!#@dt_decimal10_3#!#1#!#3#!#decimal#!#38#!#17#!#38#!#10#!#1#!#<NULL>#!#<NULL>#!#3#!#<NULL>#!#<NULL>#!#9#!#YES#!#106
+babel_sp_sproc_columns_vu_prepare_db1#!#dbo#!#babel_sp_sproc_columns_vu_prepare_datatypeexamples;1#!#@dt_float#!#1#!#6#!#float#!#53#!#8#!#0#!#2#!#1#!#<NULL>#!#<NULL>#!#6#!#<NULL>#!#<NULL>#!#10#!#YES#!#109
+babel_sp_sproc_columns_vu_prepare_db1#!#dbo#!#babel_sp_sproc_columns_vu_prepare_datatypeexamples;1#!#@dt_image#!#1#!#-4#!#image#!#0#!#16#!#0#!#<NULL>#!#1#!#<NULL>#!#<NULL>#!#-4#!#<NULL>#!#<NULL>#!#11#!#YES#!#34
+babel_sp_sproc_columns_vu_prepare_db1#!#dbo#!#babel_sp_sproc_columns_vu_prepare_datatypeexamples;1#!#@dt_int#!#1#!#4#!#int#!#10#!#4#!#0#!#10#!#1#!#<NULL>#!#<NULL>#!#4#!#<NULL>#!#<NULL>#!#12#!#YES#!#38
+babel_sp_sproc_columns_vu_prepare_db1#!#dbo#!#babel_sp_sproc_columns_vu_prepare_datatypeexamples;1#!#@dt_money#!#1#!#3#!#money#!#19#!#8#!#4#!#10#!#1#!#<NULL>#!#<NULL>#!#3#!#<NULL>#!#<NULL>#!#13#!#YES#!#110
+babel_sp_sproc_columns_vu_prepare_db1#!#dbo#!#babel_sp_sproc_columns_vu_prepare_datatypeexamples;1#!#@dt_nchar_10#!#1#!#-8#!#nchar#!#0#!#8000#!#0#!#<NULL>#!#1#!#<NULL>#!#<NULL>#!#-8#!#<NULL>#!#<NULL>#!#14#!#YES#!#39
+babel_sp_sproc_columns_vu_prepare_db1#!#dbo#!#babel_sp_sproc_columns_vu_prepare_datatypeexamples;1#!#@dt_ntext#!#1#!#-10#!#ntext#!#0#!#16#!#0#!#<NULL>#!#1#!#<NULL>#!#<NULL>#!#-10#!#<NULL>#!#<NULL>#!#15#!#YES#!#35
+babel_sp_sproc_columns_vu_prepare_db1#!#dbo#!#babel_sp_sproc_columns_vu_prepare_datatypeexamples;1#!#@dt_time_4#!#1#!#-154#!#time#!#15#!#5#!#6#!#<NULL>#!#1#!#<NULL>#!#<NULL>#!#-154#!#0#!#<NULL>#!#16#!#YES#!#0
+babel_sp_sproc_columns_vu_prepare_db1#!#dbo#!#babel_sp_sproc_columns_vu_prepare_datatypeexamples;1#!#@dt_tinyint#!#1#!#-6#!#tinyint#!#3#!#1#!#0#!#10#!#1#!#<NULL>#!#<NULL>#!#-6#!#<NULL>#!#<NULL>#!#17#!#YES#!#38
+babel_sp_sproc_columns_vu_prepare_db1#!#dbo#!#babel_sp_sproc_columns_vu_prepare_datatypeexamples;1#!#@dt_uniqueidentifier#!#1#!#-11#!#uniqueidentifier#!#0#!#16#!#0#!#<NULL>#!#1#!#<NULL>#!#<NULL>#!#-11#!#<NULL>#!#<NULL>#!#18#!#YES#!#37
+babel_sp_sproc_columns_vu_prepare_db1#!#dbo#!#babel_sp_sproc_columns_vu_prepare_datatypeexamples;1#!#@dt_varbinary_max#!#1#!#-3#!#varbinary#!#0#!#8000#!#0#!#<NULL>#!#1#!#<NULL>#!#<NULL>#!#-3#!#<NULL>#!#<NULL>#!#19#!#YES#!#37
+babel_sp_sproc_columns_vu_prepare_db1#!#dbo#!#babel_sp_sproc_columns_vu_prepare_datatypeexamples;1#!#@dt_varchar_128#!#1#!#12#!#varchar#!#0#!#8000#!#0#!#<NULL>#!#1#!#<NULL>#!#<NULL>#!#12#!#<NULL>#!#<NULL>#!#20#!#YES#!#39
+babel_sp_sproc_columns_vu_prepare_db1#!#dbo#!#babel_sp_sproc_columns_vu_prepare_datatypeexamples;1#!#@dt_smalldatetime#!#1#!#93#!#smalldatetime#!#16#!#4#!#0#!#<NULL>#!#1#!#<NULL>#!#<NULL>#!#9#!#3#!#<NULL>#!#21#!#YES#!#111
+babel_sp_sproc_columns_vu_prepare_db1#!#dbo#!#babel_sp_sproc_columns_vu_prepare_datatypeexamples;1#!#@dt_smallint#!#1#!#5#!#smallint#!#5#!#2#!#0#!#10#!#1#!#<NULL>#!#<NULL>#!#5#!#<NULL>#!#<NULL>#!#22#!#YES#!#38
+babel_sp_sproc_columns_vu_prepare_db1#!#dbo#!#babel_sp_sproc_columns_vu_prepare_datatypeexamples;1#!#@dt_smallmoney#!#1#!#3#!#smallmoney#!#10#!#4#!#4#!#10#!#1#!#<NULL>#!#<NULL>#!#3#!#<NULL>#!#<NULL>#!#23#!#YES#!#110
+babel_sp_sproc_columns_vu_prepare_db1#!#dbo#!#babel_sp_sproc_columns_vu_prepare_datatypeexamples;1#!#@dt_sql_variant#!#1#!#-150#!#sql_variant#!#0#!#8016#!#0#!#10#!#1#!#<NULL>#!#<NULL>#!#-150#!#<NULL>#!#<NULL>#!#24#!#YES#!#39
+babel_sp_sproc_columns_vu_prepare_db1#!#dbo#!#babel_sp_sproc_columns_vu_prepare_datatypeexamples;1#!#@dt_xml#!#1#!#-152#!#xml#!#0#!#-1#!#0#!#<NULL>#!#1#!#<NULL>#!#<NULL>#!#-152#!#<NULL>#!#<NULL>#!#25#!#YES#!#0
 ~~END~~
 
