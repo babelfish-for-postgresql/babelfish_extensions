@@ -1455,6 +1455,11 @@ babelfish_inconsistent_metadata(PG_FUNCTION_ARGS)
 
 	return_consistency = PG_GETARG_BOOL(0);
 
+
+	if(!metadata_inconsistency_check_enabled())
+			return true;
+
+
     /* check to see if caller supports us returning a tuplestore */
     if (rsinfo == NULL || !IsA(rsinfo, ReturnSetInfo))
         ereport(ERROR,
@@ -1491,9 +1496,11 @@ babelfish_inconsistent_metadata(PG_FUNCTION_ARGS)
 
 	PG_TRY();
 	{
-		/* Check metadata inconsistency */
-		metadata_inconsistency_check(tupstore, tupdesc);
-
+		if(metadata_inconsistency_check_enabled())		
+		{
+			/* Check metadata inconsistency */
+			metadata_inconsistency_check(tupstore, tupdesc);
+		}
 		/* clean up and return the tuplestore */
 		tuplestore_donestoring(tupstore);
 
