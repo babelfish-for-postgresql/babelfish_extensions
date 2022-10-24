@@ -9669,7 +9669,7 @@ CREATE OR REPLACE FUNCTION sys.babelfish_conv_helper_to_datetime2(IN typename TE
                                                             IN arg TEXT,
                                                             IN try BOOL,
                                                             IN p_style NUMERIC DEFAULT 0)
-RETURNS TIMESTAMP
+RETURNS sys.DATETIME2
 AS
 $BODY$
 BEGIN
@@ -9687,14 +9687,14 @@ CREATE OR REPLACE FUNCTION sys.babelfish_conv_helper_to_datetime2(IN typename TE
                                                             IN arg anyelement,
                                                             IN try BOOL,
                                                             IN p_style NUMERIC DEFAULT 0)
-RETURNS TIMESTAMP
+RETURNS sys.DATETIME2
 AS
 $BODY$
 BEGIN
     IF try THEN
         RETURN sys.babelfish_try_conv_to_datetime2(arg);
     ELSE
-        RETURN CAST(arg AS TIMESTAMP);
+        RETURN CAST(arg AS sys.DATETIME2);
     END IF;
 END;
 $BODY$
@@ -9703,11 +9703,11 @@ VOLATILE;
 
 
 CREATE OR REPLACE FUNCTION sys.babelfish_try_conv_to_datetime2(IN arg anyelement)
-RETURNS TIMESTAMP
+RETURNS sys.DATETIME2
 AS
 $BODY$
 BEGIN
-    RETURN CAST(arg AS TIMESTAMP);
+    RETURN CAST(arg AS sys.DATETIME2);
     EXCEPTION
         WHEN OTHERS THEN
             RETURN NULL;

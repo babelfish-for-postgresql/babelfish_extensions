@@ -2686,8 +2686,8 @@ GO
 SELECT * FROM BABEL_3486_vu_prepare_v100
 GO
 ~~START~~
-datetime
-2017-08-25 13:01:59.123
+datetime2
+2017-08-25 13:01:59.1234600
 ~~END~~
 
 DROP VIEW BABEL_3486_vu_prepare_v100
@@ -2696,8 +2696,8 @@ GO
 EXEC BABEL_3486_vu_prepare_p100
 GO
 ~~START~~
-datetime
-2017-08-25 13:01:59.123
+datetime2
+2017-08-25 13:01:59.1234600
 ~~END~~
 
 DROP PROCEDURE BABEL_3486_vu_prepare_p100
@@ -2716,8 +2716,8 @@ GO
 SELECT * FROM BABEL_3486_vu_prepare_v101
 GO
 ~~START~~
-datetime
-2017-08-25 13:01:59.0
+datetime2
+2017-08-25 13:01:59.0000000
 ~~END~~
 
 DROP VIEW BABEL_3486_vu_prepare_v101
@@ -2726,8 +2726,8 @@ GO
 EXEC BABEL_3486_vu_prepare_p101
 GO
 ~~START~~
-datetime
-2017-08-25 13:01:59.0
+datetime2
+2017-08-25 13:01:59.0000000
 ~~END~~
 
 DROP PROCEDURE BABEL_3486_vu_prepare_p101
@@ -2746,8 +2746,8 @@ GO
 SELECT * FROM BABEL_3486_vu_prepare_v102
 GO
 ~~START~~
-datetime
-2017-08-25 13:01:59.123
+datetime2
+2017-08-25 13:01:59.1234560
 ~~END~~
 
 DROP VIEW BABEL_3486_vu_prepare_v102
@@ -2756,8 +2756,8 @@ GO
 EXEC BABEL_3486_vu_prepare_p102
 GO
 ~~START~~
-datetime
-2017-08-25 13:01:59.123
+datetime2
+2017-08-25 13:01:59.1234560
 ~~END~~
 
 DROP PROCEDURE BABEL_3486_vu_prepare_p102
@@ -2776,8 +2776,8 @@ GO
 SELECT * FROM BABEL_3486_vu_prepare_v102_2
 GO
 ~~START~~
-datetime
-2017-08-25 13:01:59.123
+datetime2
+2017-08-25 13:01:59.1234570
 ~~END~~
 
 DROP VIEW BABEL_3486_vu_prepare_v102_2
@@ -2786,8 +2786,8 @@ GO
 EXEC BABEL_3486_vu_prepare_p102_2
 GO
 ~~START~~
-datetime
-2017-08-25 13:01:59.123
+datetime2
+2017-08-25 13:01:59.1234570
 ~~END~~
 
 DROP PROCEDURE BABEL_3486_vu_prepare_p102_2
@@ -2806,7 +2806,7 @@ GO
 SELECT * FROM BABEL_3486_vu_prepare_v103
 GO
 ~~START~~
-datetime
+datetime2
 <NULL>
 ~~END~~
 
@@ -2816,7 +2816,7 @@ GO
 EXEC BABEL_3486_vu_prepare_p103
 GO
 ~~START~~
-datetime
+datetime2
 <NULL>
 ~~END~~
 
