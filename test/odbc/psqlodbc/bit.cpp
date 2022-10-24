@@ -308,5 +308,6 @@ TEST_F(PSQL_DataTypes_Bit, Table_Composite_Keys) {
   testPrimaryKeys(ServerType::PSQL, SCHEMA_NAME, PKTABLE_NAME, PK_COLUMNS);
   testInsertionSuccess(ServerType::PSQL, TABLE_NAME, COL1_NAME, SQL_C_BIT, data, bufferLen, INSERTED_DATA, 
     EXPECTED_DATA, expectedLen);
+  testInsertionFailure(ServerType::PSQL, TABLE_NAME, COL1_NAME, INSERTED_DATA, true, 0, false);
   dropObject(ServerType::PSQL, "TABLE", TABLE_NAME);
 }
