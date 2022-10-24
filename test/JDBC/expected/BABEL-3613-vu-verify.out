@@ -1,0 +1,63 @@
+USE MASTER
+GO
+
+select current_setting('babelfishpg_tsql.dump_restore_min_oid');
+go
+~~START~~
+text
+
+~~END~~
+
+
+-- wrong value
+select set_config('babelfishpg_tsql.dump_restore_min_oid', 'wrong value', false);
+go
+~~START~~
+text
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: invalid value for parameter "babelfishpg_tsql.dump_restore_min_oid": "wrong value")~~
+
+
+-- invalid OID
+select set_config('babelfishpg_tsql.dump_restore_min_oid', 0, false);
+go
+~~START~~
+text
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: invalid value for parameter "babelfishpg_tsql.dump_restore_min_oid": "0")~~
+
+
+-- uint32 max should be allowed
+select set_config('babelfishpg_tsql.dump_restore_min_oid', 4294967295, false);
+go
+~~START~~
+text
+4294967295
+~~END~~
+
+
+-- out of range
+select set_config('babelfishpg_tsql.dump_restore_min_oid', 4294967296, false);
+go
+~~START~~
+text
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: invalid value for parameter "babelfishpg_tsql.dump_restore_min_oid": "4294967296")~~
+
+
+
+-- There should not have any duplicated object_ids
+select object_id, name, schema_id, type_desc from sys.all_objects
+where 
+      object_id in (select object_id from sys.all_objects group by object_id having count(object_id) > 1)
+      -- should be removed after fixing duplicated object_ids for Table Type and Table Valued Functions
+      and type not in ('U', 'TT')
+order by object_id, name;
+GO
+~~START~~
+int#!#varchar#!#int#!#nvarchar
+~~END~~
+

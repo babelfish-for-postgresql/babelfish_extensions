@@ -27,7 +27,7 @@ runs:
         export PATH="$HOME/${{ inputs.pg_new_dir }}/bin:$HOME/${{ inputs.pg_old_dir }}/bin:$PATH"
         export LD_LIBRARY_PATH="$HOME/${{ inputs.pg_new_dir }}/lib:$HOME/${{ inputs.pg_old_dir }}/lib:$LD_LIBRARY_PATH"
         ~/${{ inputs.pg_new_dir }}/bin/pg_upgrade -U runner -b ~/${{ inputs.pg_old_dir }}/bin -B ~/${{ inputs.pg_new_dir }}/bin \
-        -d ~/${{ inputs.pg_old_dir }}/data -D ~/${{ inputs.pg_new_dir }}/data -p 5432 -P 5433 -j 4 --link --verbose
+        -d ~/${{ inputs.pg_old_dir }}/data -D ~/${{ inputs.pg_new_dir }}/data -p 5432 -P 5433 -j 4 --link --verbose --retain
         echo 'pg_upgrade completed!'
         echo 'Updating babelfish extensions...'
         cd ~/work/babelfish_extensions/babelfish_extensions/

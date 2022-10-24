@@ -5,6 +5,9 @@
 # 4. Keyword "all" is equivalent to running all test files in input folder
 # 5. To add a test, add test name (without extension, ,  and . For example if test file name is TestBigInt.txt write TestBigInt) on a new line
 
+# This should be the first test to check there are no duplicated object_ids
+BABEL-3613
+
 TestBigInt
 TestBinary
 TestBIT
