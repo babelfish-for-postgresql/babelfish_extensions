@@ -1,4 +1,6 @@
--- tsql
+USE master
+GO
+
 DROP ROLE sp_addrole_r1;
 GO
 

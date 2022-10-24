@@ -1,3 +1,5 @@
--- tsql
+USE master
+GO
+
 CREATE ROLE sp_addrole_r1;
 GO

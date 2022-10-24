@@ -1,4 +1,6 @@
--- tsql
+USE master
+GO
+
 -- Throws an error when role exists
 Exec sp_addrole 'sp_addrole_r1';
 GO
