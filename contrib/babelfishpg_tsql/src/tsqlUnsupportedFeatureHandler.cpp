@@ -1531,7 +1531,6 @@ const char *unsupported_sp_procedures[] = {
 	"sp_addlinkedsrvlogin",
 	"sp_addlogin",
 	"sp_addremotelogin",
-	"sp_addrole",
 	"sp_addrolemember",
 	"sp_addserver",
 	"sp_addsrvrolemember",

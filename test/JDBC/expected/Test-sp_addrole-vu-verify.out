@@ -4,7 +4,7 @@ Exec sp_addrole 'sp_addrole_r1';
 GO
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: 'sp_addrole' is not currently supported in Babelfish)~~
+~~ERROR (Message: role "master_sp_addrole_r1" already exists)~~
 
 
 CREATE ROLE sp_addrole_r1;

@@ -27,6 +27,7 @@
 #include "parser/parse_target.h"
 #include "tcop/pquery.h"
 #include "tcop/tcopprot.h"
+#include "tcop/utility.h"
 
 #include "multidb.h"
 
@@ -39,12 +40,14 @@ PG_FUNCTION_INFO_V1(xp_qv_internal);
 PG_FUNCTION_INFO_V1(create_xp_qv_in_master_dbo_internal);
 PG_FUNCTION_INFO_V1(xp_instance_regread_internal);
 PG_FUNCTION_INFO_V1(create_xp_instance_regread_in_master_dbo_internal);
+PG_FUNCTION_INFO_V1(sp_addrole);
 
 extern void delete_cached_batch(int handle);
 extern InlineCodeBlockArgs *create_args(int numargs);
 extern void read_param_def(InlineCodeBlockArgs * args, const char *paramdefstr);
 extern int execute_batch(PLtsql_execstate *estate, char *batch, InlineCodeBlockArgs *args, List *params);
 extern PLtsql_execstate *get_current_tsql_estate(void);
+static List *gen_sp_addrole_subcmds(const char *user);
 
 char *sp_describe_first_result_set_view_name = NULL;
 
@@ -1447,3 +1450,109 @@ create_xp_instance_regread_in_master_dbo_internal(PG_FUNCTION_ARGS)
 
 	PG_RETURN_INT32(0);
 }
+
+Datum
+sp_addrole(PG_FUNCTION_ARGS)
+{
+	char *rolname;
+	List *parsetree_list;
+	ListCell *parsetree_item;
+	const char *saved_dialect = GetConfigOption("babelfishpg_tsql.sql_dialect", true, true);
+
+	PG_TRY();
+	{
+		set_config_option("babelfishpg_tsql.sql_dialect", "tsql",
+							(superuser() ? PGC_SUSET : PGC_USERSET),
+							PGC_S_SESSION, GUC_ACTION_SAVE, true, 0, false);
+
+		rolname = text_to_cstring(PG_GETARG_TEXT_PP(0));
+
+		/* Advance cmd counter to make the delete visible */
+		CommandCounterIncrement();
+
+		parsetree_list = gen_sp_addrole_subcmds(rolname);
+
+		/* Run all subcommands */
+		foreach(parsetree_item, parsetree_list)
+		{
+			Node *stmt = ((RawStmt *) lfirst(parsetree_item))->stmt;
+			PlannedStmt *wrapper;
+
+			/* need to make a wrapper PlannedStmt */
+			wrapper = makeNode(PlannedStmt);
+			wrapper->commandType = CMD_UTILITY;
+			wrapper->canSetTag = false;
+			wrapper->utilityStmt = stmt;
+			wrapper->stmt_location = 0;
+			wrapper->stmt_len = 16;
+
+			/* do this step */
+			ProcessUtility(wrapper,
+				"(CREATE ROLE )",
+				false,
+				PROCESS_UTILITY_SUBCOMMAND,
+				NULL,
+				NULL,
+				None_Receiver,
+				NULL);
+
+			/* make sure later steps can see the object created here */
+			CommandCounterIncrement();
+		}
+	}
+	PG_CATCH();
+	{
+		set_config_option("babelfishpg_tsql.sql_dialect", saved_dialect,
+							(superuser() ? PGC_SUSET : PGC_USERSET),
+							PGC_S_SESSION, GUC_ACTION_SAVE, true, 0, false);
+		PG_RE_THROW();
+	}
+	PG_END_TRY();
+	set_config_option("babelfishpg_tsql.sql_dialect", saved_dialect,
+							(superuser() ? PGC_SUSET : PGC_USERSET),
+							PGC_S_SESSION, GUC_ACTION_SAVE, true, 0, false);
+
+	PG_RETURN_VOID();
+}
+
+static List *
+gen_sp_addrole_subcmds(const char *user)
+{
+	StringInfoData query;
+	List *res;
+	Node *stmt;
+	CreateRoleStmt	*rolestmt;
+	List *user_options = NIL;
+
+	initStringInfo(&query);
+	appendStringInfo(&query, "CREATE ROLE dummy; ");
+	res = raw_parser(query.data, RAW_PARSE_DEFAULT);
+
+	if (list_length(res) != 1)
+		ereport(ERROR,
+				(errcode(ERRCODE_SYNTAX_ERROR),
+				 errmsg("Expected 1 statement but get %d statements after parsing",
+						list_length(res))));
+
+	stmt = parsetree_nth_stmt(res, 0);
+	rolestmt = (CreateRoleStmt *) stmt;
+	if (!IsA(rolestmt, CreateRoleStmt))
+		ereport(ERROR, (errcode(ERRCODE_SYNTAX_ERROR), errmsg("query is not a CreateRoleStmt")));
+
+	rolestmt->role = pstrdup(user);
+	rewrite_object_refs(stmt);
+
+	/*
+ * 	 * Add original_user_name before hand because placeholder
+ * 	 	 * query "(CREATE ROLE )" is being passed
+ * 	 	 	 * that doesn't contain the user name.
+ * 	 	 	 	 */
+	user_options = lappend(user_options,
+				makeDefElem("original_user_name",
+				(Node *) makeString(user),
+						-1));
+	rolestmt->options = list_concat(rolestmt->options, user_options);
+
+	return res;
+}
+

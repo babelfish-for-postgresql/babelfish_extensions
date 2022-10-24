@@ -2577,6 +2577,10 @@ AS 'babelfishpg_tsql', 'update_user_catalog_for_guest';
  
 CALL sys.babelfish_update_user_catalog_for_guest();
 
+CREATE OR REPLACE PROCEDURE sys.sp_addrole(IN "@rolname" sys.SYSNAME)
+AS 'babelfishpg_tsql', 'sp_addrole' LANGUAGE C;
+GRANT EXECUTE on PROCEDURE sys.sp_addrole(IN sys.SYSNAME) TO PUBLIC;
+
 -- Drops the temporary procedure used by the upgrade script.
 -- Please have this be one of the last statements executed in this upgrade script.
 DROP PROCEDURE sys.babelfish_drop_deprecated_object(varchar, varchar, varchar);

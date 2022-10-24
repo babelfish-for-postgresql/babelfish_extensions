@@ -164,3 +164,7 @@ $$ LANGUAGE plpgsql;
 GRANT EXECUTE ON PROCEDURE sys.sp_babelfish_configure(
 	IN varchar(128), IN varchar(128), IN varchar(128)
 ) TO PUBLIC;
+
+CREATE OR REPLACE PROCEDURE sys.sp_addrole(IN "@rolname" sys.SYSNAME)
+AS 'babelfishpg_tsql', 'sp_addrole' LANGUAGE C;
+GRANT EXECUTE on PROCEDURE sys.sp_addrole(IN sys.SYSNAME) TO PUBLIC;
