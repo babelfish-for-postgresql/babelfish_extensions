@@ -1,0 +1,7 @@
+-- tsql
+CREATE ROLE alterrole_test_role;
+GO
+
+-- psql
+CREATE USER test_user WITH PASSWORD '12345678' INHERIT;
+GO
