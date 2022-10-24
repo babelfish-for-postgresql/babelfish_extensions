@@ -62,7 +62,7 @@ string stringToHex(string input) {
     return result.str();
 }
 
-vector<string> getExpectedResults(const vector<string> &input) {
+vector<string> getExpectedResults_Bytea(const vector<string> &input) {
   vector<string> ret = {};
 
   for (int i = 0; i < input.size(); i++) {
@@ -118,7 +118,7 @@ TEST_F(PSQL_DataTypes_ByteA, Insertion_Success) {
   };
   const int NUM_OF_DATA = inserted_values.size();
 
-  vector<string> expected_values = getExpectedResults(inserted_values);
+  vector<string> expected_values = getExpectedResults_Bytea(inserted_values);
 
   createTable(ServerType::MSSQL, BBF_TABLE_NAME, TABLE_COLUMNS);
 
@@ -139,7 +139,7 @@ TEST_F(PSQL_DataTypes_ByteA, Update_Success) {
   const vector<string> INSERTED_VALUES = {
     "123"
   };
-  const vector<string> EXPECTED_VALUES = getExpectedResults(INSERTED_VALUES);
+  const vector<string> EXPECTED_VALUES = getExpectedResults_Bytea(INSERTED_VALUES);
 
   const vector<string> UPDATED_VALUES = {
     "NULL",
@@ -151,7 +151,7 @@ TEST_F(PSQL_DataTypes_ByteA, Update_Success) {
     // Normal range
     "123"
   };
-  const vector<string> EXPECTED_UPDATED_VALUES = getExpectedResults(UPDATED_VALUES);
+  const vector<string> EXPECTED_UPDATED_VALUES = getExpectedResults_Bytea(UPDATED_VALUES);
 
   createTable(ServerType::MSSQL, BBF_TABLE_NAME, TABLE_COLUMNS);
 
@@ -178,7 +178,7 @@ TEST_F(PSQL_DataTypes_ByteA, View_creation) {
   };
   const int NUM_OF_DATA = INSERTED_VALUES.size();
 
-  const vector<string> EXPECTED_VALUES = getExpectedResults(INSERTED_VALUES);
+  const vector<string> EXPECTED_VALUES = getExpectedResults_Bytea(INSERTED_VALUES);
 
   const string BBF_VIEW_QUERY = "SELECT * FROM " + BBF_TABLE_NAME;
   const string PG_VIEW_QUERY = "SELECT * FROM " + PG_TABLE_NAME;
@@ -224,7 +224,7 @@ TEST_F(PSQL_DataTypes_ByteA, Table_Single_Primary_Keys) {
   };
   const int NUM_OF_DATA = INSERTED_VALUES.size();
 
-  const vector<string> EXPECTED_VALUES = getExpectedResults(INSERTED_VALUES);
+  const vector<string> EXPECTED_VALUES = getExpectedResults_Bytea(INSERTED_VALUES);
 
   createTable(ServerType::MSSQL, BBF_TABLE_NAME, TABLE_COLUMNS, tableConstraints);
 
@@ -267,7 +267,7 @@ TEST_F(PSQL_DataTypes_ByteA, Table_Composite_Keys) {
   };
   const int NUM_OF_DATA = INSERTED_VALUES.size();
 
-  const vector<string> EXPECTED_VALUES = getExpectedResults(INSERTED_VALUES);
+  const vector<string> EXPECTED_VALUES = getExpectedResults_Bytea(INSERTED_VALUES);
 
   createTable(ServerType::MSSQL, BBF_TABLE_NAME, TABLE_COLUMNS, tableConstraints);
 
@@ -309,7 +309,7 @@ TEST_F(PSQL_DataTypes_ByteA, Table_Unique_Constraint) {
   };
   const int NUM_OF_DATA = INSERTED_VALUES.size();
 
-  const vector<string> EXPECTED_VALUES = getExpectedResults(INSERTED_VALUES);
+  const vector<string> EXPECTED_VALUES = getExpectedResults_Bytea(INSERTED_VALUES);
 
   createTable(ServerType::MSSQL, BBF_TABLE_NAME, TABLE_COLUMNS, tableConstraints);
 
