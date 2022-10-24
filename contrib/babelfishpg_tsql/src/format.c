@@ -1031,7 +1031,7 @@ process_format_pattern(StringInfo buf, char *msg_string, char *data_type)
 							}
 							else
 							{
-								appendStringInfo(str, "FMyyyy");
+								appendStringInfo(str, "yyy");
 								bc = bc + 2;
 							}
 						}
@@ -1150,10 +1150,17 @@ process_format_pattern(StringInfo buf, char *msg_string, char *data_type)
 					}
 					else
 					{
-						appendStringInfo(str, "AM");
-						i = bc + 2;
-						bc = bc + 1;
+						if (msg_string[bc + 1] == 't')
+						{
+							appendStringInfo(str, "AM");
+						}
+						else
+						{
+							appendStringInfo(str, "A");
+						}
+						i = bc + 1;
 
+						// Anything longer than 'tt' is skipped.
 						while (msg_string[i] == 't')
 						{
 							i++;
