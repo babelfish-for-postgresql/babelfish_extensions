@@ -356,9 +356,10 @@ void testUniqueConstraint(ServerType serverType, const string &tableName, const 
  * @param col2Data Vector containing data in within the second column.
  * @param operationsQuery Vector containing the operators to test the two columns against.
  * @param expectedResults Vector containing the expected results for each operation.
+ * @param explicitCast Optional. Explicit cast to use `OPERATOR(sys.=)`. The default value is false.
 */
 void testComparisonOperators(ServerType serverType, const string &tableName, const string &col1Name, const string &col2Name, 
-  const vector<string> &col1Data, const vector<string> &col2Data, const vector<string> &operationsQuery, const vector<vector<char>> &expectedResults);
+  const vector<string> &col1Data, const vector<string> &col2Data, const vector<string> &operationsQuery, const vector<vector<char>> &expectedResults, bool explicitCast = false);
 
 /**
  * Verify the expected results for various comparison functions (MIN, MAX, SUM, etc.).
