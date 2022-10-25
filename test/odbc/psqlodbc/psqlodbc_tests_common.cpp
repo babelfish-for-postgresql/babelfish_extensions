@@ -552,7 +552,8 @@ void testUniqueConstraint(ServerType serverType, const string &tableName, const 
 }
 
 void testComparisonOperators(ServerType serverType, const string &tableName, const string &col1Name, const string &col2Name, 
-  const vector<string> &col1Data, const vector<string> &col2Data, const vector<string> &operationsQuery, const vector<vector<char>> &expectedResults, bool explicitCast) {
+  const vector<string> &col1Data, const vector<string> &col2Data, const vector<string> &operationsQuery, const vector<vector<char>> &expectedResults, 
+  bool explicitCast, bool explicitQuotes) {
 
   OdbcHandler odbcHandler(Drivers::GetDriver(serverType));
   odbcHandler.Connect(true);
@@ -579,7 +580,9 @@ void testComparisonOperators(ServerType serverType, const string &tableName, con
 
   for (int i = 0; i < NUM_OF_DATA; i++) {
     odbcHandler.CloseStmt();
-    const string WHERE_STATEMENT = explicitCast ? col1Name + " OPERATOR(sys.=) " + col1Data[i] + "" : col1Name + "=\'" + col1Data[i] + "\'";
+    const string WHERE_STATEMENT = explicitCast ? 
+      col1Name + " OPERATOR(sys.=) " + (explicitQuotes ? "\'" + col1Data[i] + "\'" : col1Data[i]) :
+      col1Name + "=" + (explicitQuotes ? "\'" + col1Data[i] + "\'" : col1Data[i]);
     odbcHandler.ExecQuery(SelectStatement(tableName, operationsQuery, vector<string>{}, WHERE_STATEMENT));
     ASSERT_NO_FATAL_FAILURE(odbcHandler.BindColumns(bind_columns));
 
