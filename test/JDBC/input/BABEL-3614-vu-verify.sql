@@ -87,3 +87,48 @@ SELECT BABEL_3614_vu_prepare_f6()
 GO
 DROP FUNCTION BABEL_3614_vu_prepare_f6()
 GO
+
+SELECT * FROM BABEL_3614_vu_prepare_v7
+GO
+DROP VIEW BABEL_3614_vu_prepare_v7
+GO
+
+EXEC BABEL_3614_vu_prepare_p7
+GO
+DROP PROCEDURE BABEL_3614_vu_prepare_p7
+GO
+
+SELECT BABEL_3614_vu_prepare_f7()
+GO
+DROP FUNCTION BABEL_3614_vu_prepare_f7()
+GO
+
+SELECT * FROM BABEL_3614_vu_prepare_v8
+GO
+DROP VIEW BABEL_3614_vu_prepare_v8
+GO
+
+EXEC BABEL_3614_vu_prepare_p8
+GO
+DROP PROCEDURE BABEL_3614_vu_prepare_p8
+GO
+
+SELECT BABEL_3614_vu_prepare_f8()
+GO
+DROP FUNCTION BABEL_3614_vu_prepare_f8()
+GO
+
+SELECT * FROM BABEL_3614_vu_prepare_v9
+GO
+DROP VIEW BABEL_3614_vu_prepare_v9
+GO
+
+EXEC BABEL_3614_vu_prepare_p9
+GO
+DROP PROCEDURE BABEL_3614_vu_prepare_p9
+GO
+
+SELECT BABEL_3614_vu_prepare_f9()
+GO
+DROP FUNCTION BABEL_3614_vu_prepare_f9()
+GO
