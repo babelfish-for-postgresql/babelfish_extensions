@@ -132,3 +132,18 @@ SELECT BABEL_3614_vu_prepare_f9()
 GO
 DROP FUNCTION BABEL_3614_vu_prepare_f9()
 GO
+
+SELECT * FROM BABEL_3614_vu_prepare_v10
+GO
+DROP VIEW BABEL_3614_vu_prepare_v10
+GO
+
+EXEC BABEL_3614_vu_prepare_p10
+GO
+DROP PROCEDURE BABEL_3614_vu_prepare_p10
+GO
+
+SELECT BABEL_3614_vu_prepare_f10()
+GO
+DROP FUNCTION BABEL_3614_vu_prepare_f10()
+GO

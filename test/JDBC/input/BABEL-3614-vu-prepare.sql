@@ -97,3 +97,13 @@ RETURN (SELECT sys.datetime2scale(CAST('2017-08-25 13:01:10.1234567' AS DATETIME
 END
 GO
 
+CREATE VIEW BABEL_3614_vu_prepare_v10 as (SELECT sys.babelfish_try_conv_to_datetime2(CAST(5.0 AS decimal)));
+GO
+CREATE PROCEDURE BABEL_3614_vu_prepare_p10 as (SELECT sys.babelfish_try_conv_to_datetime2(CAST(5.0 AS decimal)));
+GO
+CREATE FUNCTION BABEL_3614_vu_prepare_f10()
+RETURNS DATETIME2 AS
+BEGIN
+RETURN (SELECT sys.babelfish_try_conv_to_datetime2(CAST(5.0 AS decimal)));
+END
+GO
