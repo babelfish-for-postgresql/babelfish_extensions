@@ -58,6 +58,9 @@ nvarchar
 ~~END~~
 
 
+USE master
+GO
+
 
 -- Test master.dbo.xp_instance_regread --
 -- Test string parameters with int return type

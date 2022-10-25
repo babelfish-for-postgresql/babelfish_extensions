@@ -38,6 +38,9 @@ EXECUTE xp_instance_regread @param1, @param2, @param3, @retVal OUT
 SELECT @retVal;
 GO
 
+USE master
+GO
+
 -- Test master.dbo.xp_instance_regread --
 
 -- Test string parameters with int return type
