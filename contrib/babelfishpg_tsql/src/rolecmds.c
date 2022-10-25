@@ -51,6 +51,7 @@
 #include "rolecmds.h"
 #include "session.h"
 #include "pltsql.h"
+#include "dbcmds.h"
 
 #include <ctype.h>
 
@@ -954,6 +955,7 @@ create_bbf_authid_user_ext(CreateRoleStmt *stmt, bool has_schema, bool has_login
 	RoleSpec		*login = NULL;
 	NameData		*login_name;
 	char			*login_name_str = NULL;
+	// char			*cur_db_owner = NULL;
 
 	/* Extract options from the statement node tree */
 	foreach(option, stmt->options)
@@ -1023,8 +1025,14 @@ create_bbf_authid_user_ext(CreateRoleStmt *stmt, bool has_schema, bool has_login
 		table_close(bbf_authid_user_ext_rel, RowExclusiveLock);
 
 		login_name_str = login->rolename;
-	}
+		char *cur_db_owner = get_owner_of_db(get_cur_db_name());
 
+		if (strcmp(login_name_str, cur_db_owner) == 0)
+			ereport(ERROR,
+					(errcode(ERRCODE_INVALID_ROLE_SPECIFICATION),
+					 errmsg("The login already has an account under a different user name.")));
+	}
+	
 	/* Add to the catalog table. Adds current database name by default */
 	add_to_bbf_authid_user_ext(stmt->role, original_user_name, NULL, default_schema, login_name_str, !has_login);
 }
