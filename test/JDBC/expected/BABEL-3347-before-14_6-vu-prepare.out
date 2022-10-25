@@ -32,10 +32,6 @@ GO
 CREATE VIEW babel_3347_before_14_6_vu2 AS
 SELECT SUBSTRING(NULL, 2,3)
 GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: Argument data type NULL is invalid for argument 1 of substring function)~~
-
 
 CREATE VIEW babel_3347_before_14_6_vu3 AS
 SELECT SUBSTRING(dbo.babel_3347_before_14_6_func(), 1, 2)
@@ -58,5 +54,5 @@ SELECT sys.SUBSTRING(NULL, 1,2)
 GO
 ~~ERROR (Code: 33557097)~~
 
-~~ERROR (Message: Argument data type NULL is invalid for argument 1 of substring function)~~
+~~ERROR (Message: function sys.substring(unknown, integer, integer) does not exist)~~
 
