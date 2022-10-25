@@ -29,3 +29,11 @@ text
 off
 ~~END~~
 
+
+SELECT SET_CONFIG('babelfishpg_tsql.enable_metadata_inconsistency_check','true',false)
+GO
+~~START~~
+text
+on
+~~END~~
+

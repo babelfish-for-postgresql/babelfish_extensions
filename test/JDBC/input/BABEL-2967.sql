@@ -9,3 +9,6 @@ GO
 
 SELECT SET_CONFIG('babelfishpg_tsql.enable_metadata_inconsistency_check','false',true)
 GO
+
+SELECT SET_CONFIG('babelfishpg_tsql.enable_metadata_inconsistency_check','true',false)
+GO
