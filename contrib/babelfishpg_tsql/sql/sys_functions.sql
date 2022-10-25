@@ -3001,7 +3001,7 @@ BEGIN
     
     ELSEIF property = 'isinlinefunction' -- IsInlineFunction
     THEN
-        RETURN 0;
+        RETURN (SELECT count(distinct object_id) from sys.all_objects WHERE object_id = id and type in ('IF'));
     
     ELSEIF property = 'isscalarfunction' -- IsScalarFunction
     THEN

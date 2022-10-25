@@ -42,7 +42,7 @@ SELECT type, type_desc from sys.all_objects  where name like 'babel_2747%' order
 GO
 ~~START~~
 char#!#nvarchar
-FN#!#SQL_SCALAR_FUNCTION
+IF#!#SQL_INLINE_TABLE_VALUED_FUNCTION
 P #!#SQL_STORED_PROCEDURE
 P #!#SQL_STORED_PROCEDURE
 TR#!#SQL_TRIGGER

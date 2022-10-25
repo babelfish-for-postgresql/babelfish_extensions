@@ -1,0 +1,23 @@
+SELECT * FROM objectproperty_vu_prepare_dep_view
+GO
+~~START~~
+int
+1
+~~END~~
+
+
+EXEC objectproperty_vu_prepare_dep_proc
+GO
+~~START~~
+int
+1
+~~END~~
+
+
+SELECT * FROM objectproperty_vu_prepare_dep_func()
+GO
+~~START~~
+int
+1
+~~END~~
+

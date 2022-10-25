@@ -10,7 +10,7 @@ EXEC sys_all_objects_dep_vu_prepare_proc1;
 GO
 ~~START~~
 char#!#nvarchar
-FN#!#SQL_SCALAR_FUNCTION
+IF#!#SQL_INLINE_TABLE_VALUED_FUNCTION
 ~~END~~
 
 
