@@ -36,6 +36,9 @@ class PSQL_DataTypes_Bit : public testing::Test {
 // Helper to convert string into a bit
 // Any non-zero values are converted to 1
 unsigned char StringToBit(const string &value) {
+  if (value == "NULL") {
+    return 0;
+  }
   return strtol(value.c_str(), NULL, 10) != 0 ? 1 : 0;
 }
 
@@ -106,6 +109,7 @@ TEST_F(PSQL_DataTypes_Bit, Update_Success) {
   const vector<long> expectedInsertLen(DATA_INSERTED.size(), BIT_BYTES_EXPECTED);
 
   const vector <string> DATA_UPDATED_VALUES = {
+    "NULL",
     "1",
     "0",
     "-100",
