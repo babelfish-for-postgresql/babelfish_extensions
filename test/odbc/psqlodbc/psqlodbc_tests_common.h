@@ -20,6 +20,14 @@ const int BUFFER_SIZE = 8192;
 const int INT_BYTES_EXPECTED = 4;
 
 /**
+ * Duplicates the values in the input vector
+ *
+ * @param input Vector of data to be duplicated
+ * @return vector which has the elements duplicated and appended
+ */ 
+vector<string> duplicateElements(vector<string> input);
+
+/**
  * Create a string that can be used in an insert statement. Assumes there is a column associated with
  * primary key values in the table, so it will automatically include a value for primary key in the string.
  *
