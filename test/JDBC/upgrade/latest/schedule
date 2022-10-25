@@ -6,6 +6,9 @@
 #    input folder
 # 5. To add a test, add test name (without extension, -vu-prepare, -vu-verify and -vu-cleanup. For example if test file name is TestBigInt-vu-prepare.txt write TestBigInt) on a new line
 
+# This should be the first test to check there are no duplicated object_ids
+BABEL-3613
+
 TestBigInt
 TestBinary
 TestBIT
@@ -46,6 +49,7 @@ BABEL-3204
 BABEL-3234
 BABEL-3402
 cast_numeric_types_to_datetime
+cast_numeric_types_to_smalldatetime
 routines_definition
 column_domain_usage
 constraint_column_usage
@@ -124,6 +128,7 @@ BABEL-3486
 BABEL-3474
 BABEL-383
 BABEL-405
+BABEL-937
 BABEL-PROCID
 babel_trigger
 insteadoftriggers_with_transaction

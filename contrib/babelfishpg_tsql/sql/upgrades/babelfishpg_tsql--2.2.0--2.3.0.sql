@@ -2813,12 +2813,419 @@ AS 'babelfishpg_tsql', 'update_user_catalog_for_guest';
  
 CALL sys.babelfish_update_user_catalog_for_guest();
 
+ALTER VIEW sys.sp_sproc_columns_view RENAME TO sp_sproc_columns_view_deprecated_in_2_3_0;
+
+CREATE OR REPLACE VIEW sys.sp_sproc_columns_view
+AS
+SELECT
+CAST(sys.db_name() AS sys.sysname) AS PROCEDURE_QUALIFIER -- This will always be objects in current database
+, CAST(ss.schema_name AS sys.sysname) AS PROCEDURE_OWNER
+, CAST(
+CASE
+  WHEN ss.prokind = 'p' THEN CONCAT(ss.proname, ';1')
+  ELSE CONCAT(ss.proname, ';0')
+END
+AS sys.nvarchar(134)) AS PROCEDURE_NAME
+, CAST(
+CASE 
+  WHEN ss.n IS NULL THEN
+    CASE
+      WHEN ss.proretset THEN '@TABLE_RETURN_VALUE'
+    ELSE '@RETURN_VALUE'
+  END 
+ELSE COALESCE(ss.proargnames[n], '')
+END
+AS sys.SYSNAME) AS COLUMN_NAME
+, CAST(
+CASE
+WHEN ss.n IS NULL THEN
+  CASE 
+    WHEN ss.proretset THEN 3
+    ELSE 5
+  END
+WHEN ss.proargmodes[n] in ('o', 'b') THEN 2
+ELSE 1
+END
+AS smallint) AS COLUMN_TYPE
+, CAST(
+CASE
+  WHEN ss.n IS NULL THEN
+    CASE
+      WHEN ss.prokind = 'p' THEN (SELECT data_type FROM sys.spt_datatype_info_table  WHERE type_name = 'int')
+    WHEN ss.proretset THEN NULL
+    ELSE sdit.data_type 
+    END
+  WHEN st.is_table_type = 1 THEN -153
+  ELSE sdit.data_type 
+END
+AS smallint) AS DATA_TYPE
+, CAST(
+CASE 
+  WHEN ss.n IS NULL THEN
+    CASE 
+      WHEN ss.proretset THEN 'table' 
+      WHEN ss.prokind = 'p' THEN 'int'
+      ELSE st.name
+    END
+  ELSE st.name
+END
+AS sys.sysname) AS TYPE_NAME
+, CAST(
+CASE
+  WHEN ss.n IS NULL THEN
+    CASE 
+      WHEN ss.proretset THEN 0 
+    WHEN ss.prokind = 'p' THEN (SELECT precision FROM sys.types WHERE name = 'int')
+    ELSE st.precision
+  END
+  WHEN st.is_table_type = 1 THEN 0
+  ELSE st.precision 
+END 
+AS sys.int) AS PRECISION
+, CAST(
+CASE
+  WHEN ss.n IS NULL THEN
+    CASE
+      WHEN ss.proretset THEN 0
+    WHEN ss.prokind = 'p' THEN (SELECT max_length FROM sys.types WHERE name = 'int')
+    ELSE st.max_length
+  END
+  WHEN st.is_table_type = 1 THEN 2147483647
+  ELSE st.max_length 
+END
+AS sys.int) AS LENGTH
+, CAST(
+CASE
+  WHEN ss.n IS NULL THEN 
+    CASE
+      WHEN ss.proretset THEN 0 
+      WHEN ss.prokind = 'p' THEN (SELECT scale FROM sys.types WHERE name = 'int')
+      ELSE st.scale
+    END
+  WHEN st.is_table_type = 1 THEN NULL
+  ELSE st.scale
+END
+AS smallint) AS SCALE
+, CAST(
+CASE
+  WHEN ss.n IS NULL THEN
+    CASE
+      WHEN ss.proretset THEN 0
+    WHEN ss.prokind = 'p' THEN (SELECT num_prec_radix FROM sys.spt_datatype_info_table WHERE type_name = 'int')
+    ELSE sdit.num_prec_radix
+  END
+  WHEN st.is_table_type = 1 THEN NULL
+  ELSE sdit.num_prec_radix
+END
+AS smallint) AS RADIX
+, CAST(
+CASE
+  WHEN ss.n IS NULL THEN
+    CASE 
+      WHEN ss.proretset OR ss.prokind = 'p' THEN 0
+      ELSE sdit.nullable 
+    END
+  WHEN st.is_table_type = 1 THEN 1
+  ELSE sdit.nullable 
+END
+AS smallint) AS NULLABLE
+, CAST(
+CASE 
+  WHEN ss.n IS NULL AND ss.proretset THEN 'Result table returned by table valued function'
+  ELSE NULL
+END
+AS sys.varchar(254)) AS REMARKS
+, CAST(NULL AS sys.nvarchar(4000)) AS COLUMN_DEF
+, CAST(
+CASE
+  WHEN ss.n IS NULL THEN
+    CASE
+      WHEN ss.proretset THEN NULL
+      WHEN ss.prokind = 'p' THEN (SELECT sql_data_type FROM sys.spt_datatype_info_table WHERE type_name = 'int')
+      ELSE sdit.sql_data_type
+    END
+  WHEN st.is_table_type = 1 THEN -153
+  ELSE sdit.sql_data_type 
+END
+AS smallint) AS SQL_DATA_TYPE
+, CAST(
+CASE
+  WHEN ss.n IS NULL THEN
+    CASE 
+      WHEN ss.proretset THEN 0
+      WHEN ss.prokind = 'p' THEN (SELECT sql_datetime_sub FROM sys.spt_datatype_info_table WHERE type_name = 'int')
+      ELSE sdit.sql_datetime_sub
+    END
+  ELSE sdit.sql_datetime_sub 
+END 
+AS smallint) AS SQL_DATETIME_SUB
+, CAST(
+CASE
+  WHEN ss.n IS NOT NULL AND st.is_table_type = 1 THEN 2147483647
+  ELSE NULL
+END
+AS sys.int) AS CHAR_OCTET_LENGTH
+, CAST(
+CASE
+  WHEN ss.n IS NULL THEN 0
+  ELSE n 
+END 
+AS sys.int) AS ORDINAL_POSITION
+, CAST(
+CASE
+  WHEN ss.n IS NULL AND ss.proretset THEN 'NO'
+  WHEN st.is_table_type = 1 THEN 'YES'
+  WHEN sdit.nullable = 1 THEN 'YES'
+  ELSE 'NO'
+END
+AS sys.varchar(254)) AS IS_NULLABLE
+, CAST(
+CASE
+  WHEN ss.n IS NULL THEN
+    CASE
+      WHEN ss.proretset THEN 0
+      WHEN ss.prokind = 'p' THEN 56
+      ELSE sdit.ss_data_type
+    END
+  WHEN st.is_table_type = 1 THEN 0
+  ELSE sdit.ss_data_type
+END
+AS sys.tinyint) AS SS_DATA_TYPE
+, CAST(ss.proname AS sys.sysname) AS original_procedure_name
+FROM 
+( 
+  -- CTE to query procedures related to bbf
+  WITH bbf_proc AS (
+    SELECT
+      p.proname as proname,
+      p.proargnames as proargnames,
+      p.proargmodes as proargmodes,
+      p.prokind as prokind,
+      p.proretset as proretset,
+      p.prorettype as prorettype,
+      p.proallargtypes as proallargtypes,
+      p.proargtypes as proargtypes,
+      s.name as schema_name
+    FROM 
+      pg_proc p
+    INNER JOIN (
+      SELECT name as name, schema_id as id  FROM sys.schemas 
+      UNION ALL 
+      SELECT CAST(nspname as sys.sysname) as name, CAST(oid as int) as id 
+        from pg_namespace WHERE nspname in ('sys', 'information_schema')
+    ) as s ON p.pronamespace = s.id
+    WHERE (
+      (pg_has_role(p.proowner, 'USAGE') OR has_function_privilege(p.oid, 'EXECUTE'))
+      AND (s.name != 'sys' 
+        OR p.proname like 'sp\_%' -- filter out internal babelfish-specific procs in sys schema
+        OR p.proname like 'xp\_%'
+        OR p.proname like 'dm\_%'
+        OR p.proname like 'fn\_%'))
+  )
+
+  SELECT *
+  FROM ( 
+    SELECT -- Selects all parameters (input and output), but NOT return values
+    p.proname as proname,
+    p.proargnames as proargnames,
+    p.proargmodes as proargmodes,
+    p.prokind as prokind,
+    p.proretset as proretset,
+    p.prorettype as prorettype,
+    p.schema_name as schema_name,
+    (information_schema._pg_expandarray(
+    COALESCE(p.proallargtypes,
+      CASE 
+        WHEN p.prokind = 'f' THEN (CAST(p.proargtypes AS oid[]))
+        ELSE CAST(p.proargtypes AS oid[])
+      END
+    ))).x AS x,
+    (information_schema._pg_expandarray(
+    COALESCE(p.proallargtypes,
+      CASE 
+        WHEN p.prokind = 'f' THEN (CAST(p.proargtypes AS oid[]))
+        ELSE CAST(p.proargtypes AS oid[])
+      END
+    ))).n AS n
+    FROM bbf_proc p) AS t
+  WHERE (t.proargmodes[t.n] in ('i', 'o', 'b') OR t.proargmodes is NULL)
+
+  UNION ALL
+
+  SELECT -- Selects all return values (this is because inline-table functions could cause duplicate outputs)
+  p.proname as proname,
+  p.proargnames as proargnames,
+  p.proargmodes as proargmodes,
+  p.prokind as prokind,
+  p.proretset as proretset,
+  p.prorettype as prorettype,
+  p.schema_name as schema_name,
+  p.prorettype AS x, 
+  NULL AS n -- null value indicates that we are retrieving the return values of the proc/func
+  FROM bbf_proc p
+) ss
+LEFT JOIN sys.types st ON ss.x = st.user_type_id -- left join'd because return type of table-valued functions may not have an entry in sys.types
+-- Because spt_datatype_info_table does contain user-defind types and their names,
+-- the join below allows us to retrieve the name of the base type of the user-defined type
+LEFT JOIN sys.spt_datatype_info_table sdit ON sdit.type_name = sys.translate_pg_type_to_tsql(st.system_type_id);
+GRANT SELECT ON sys.sp_sproc_columns_view TO PUBLIC;
+
+CALL sys.babelfish_drop_deprecated_object('view', 'sys', 'sp_sproc_columns_view_deprecated_in_2_3_0');
+
 -- Drops the temporary procedure used by the upgrade script.
 -- Please have this be one of the last statements executed in this upgrade script.
 DROP PROCEDURE sys.babelfish_drop_deprecated_object(varchar, varchar, varchar);
 
 -- Reset search_path to not affect any subsequent scripts
 SELECT set_config('search_path', trim(leading 'sys, ' from current_setting('search_path')), false);
+
+/*
+ * JSON MODIFY
+ * This function is used to update the value of a property in a JSON string and returns the updated JSON string.
+ * It has been implemented in three parts:
+ *  1) Set the append and create_if_missing flag as postgres functions do not directly take append and lax/strict mode in the jsonb_path.
+ *  2) To convert the input path into the expected jsonb_path.
+ *  3) To implement the main logic of the JSON_MODIFY function by dividing it into 8 different cases.
+ */
+CREATE OR REPLACE FUNCTION sys.json_modify(in expression sys.NVARCHAR,in path_json TEXT, in new_value TEXT)
+RETURNS sys.NVARCHAR
+AS
+$BODY$
+DECLARE
+    json_path TEXT;
+    json_path_convert TEXT;
+    new_jsonb_path TEXT[];
+    key_value_type TEXT;
+    path_split_array TEXT[];
+    comparison_string TEXT COLLATE "C";
+    len_array INTEGER;
+    word_count INTEGER;
+    create_if_missing BOOL = TRUE;
+    append_modifier BOOL = FALSE;
+    key_exists BOOL;
+    key_value JSONB;
+    json_expression JSONB = expression::JSONB;
+    result_json sys.NVARCHAR;
+BEGIN
+    path_split_array = regexp_split_to_array(TRIM(path_json) COLLATE "C",'\s+');
+    word_count = array_length(path_split_array,1);
+    /* 
+     * This if else block is added to set the create_if_missing and append_modifier flags.
+     * These flags will be used to know the mode and if the optional modifier append is present in the input path_json.
+     * It is necessary as postgres functions do not directly take append and lax/strict mode in the jsonb_path.    
+     */
+    IF word_count = 1 THEN
+        json_path = path_split_array[1];
+        create_if_missing = TRUE;
+        append_modifier = FALSE;
+    ELSIF word_count = 2 THEN 
+        json_path = path_split_array[2];
+        comparison_string = path_split_array[1]; -- append or lax/strict mode
+        IF comparison_string = 'append' THEN
+            append_modifier = TRUE;
+        ELSIF comparison_string = 'strict' THEN
+            create_if_missing = FALSE;
+        ELSIF comparison_string = 'lax' THEN
+            create_if_missing = TRUE;
+        ELSE
+            RAISE invalid_json_text;
+        END IF;
+    ELSIF word_count = 3 THEN
+        json_path = path_split_array[3];
+        comparison_string = path_split_array[1]; -- append mode 
+        IF comparison_string = 'append' THEN
+            append_modifier = TRUE;
+        ELSE
+            RAISE invalid_json_text;
+        END IF;
+        comparison_string = path_split_array[2]; -- lax/strict mode
+        IF comparison_string = 'strict' THEN
+            create_if_missing = FALSE;
+        ELSIF comparison_string = 'lax' THEN
+            create_if_missing = TRUE;
+        ELSE
+            RAISE invalid_json_text;
+        END IF;
+    ELSE
+        RAISE invalid_json_text;
+    END IF;
+
+    -- To convert input jsonpath to the required jsonb_path format
+    json_path_convert = regexp_replace(json_path, '\$\.|]|\$\[' , '' , 'ig'); -- To remove "$." and "]" sign from the string 
+    json_path_convert = regexp_replace(json_path_convert, '\.|\[' , ',' , 'ig'); -- To replace "." and "[" with "," to change into required format
+    new_jsonb_path = CONCAT('{',json_path_convert,'}'); -- Final required format of path by jsonb_set
+
+    key_exists = jsonb_path_exists(json_expression,json_path::jsonpath); -- To check if key exist in the given path
+    
+    --This if else block is to call the jsonb_set function based on the create_if_missing and append_modifier flags
+    IF append_modifier THEN 
+        IF key_exists THEN
+            key_value = jsonb_path_query_first(json_expression,json_path::jsonpath); -- To get the value of the key
+            key_value_type = jsonb_typeof(key_value);
+            IF key_value_type = 'array' THEN
+                len_array = jsonb_array_length(key_value);
+                /*
+                 * As jsonb_insert requires the index of the value to be inserted, so the below FORMAT function changes the path format into the required jsonb_insert path format.
+                 * Eg: JSON_MODIFY('{"name":"John","skills":["C#","SQL"]}','append $.skills','Azure'); -> converts the path from '$.skills' to '{skills,2}' instead of '{skills}'
+                 */
+                new_jsonb_path = FORMAT('%s,%s}',TRIM('}' FROM new_jsonb_path::TEXT),len_array);
+                IF new_value IS NULL THEN
+                    result_json = jsonb_insert(json_expression,new_jsonb_path,'null'); -- This needs to be done because "to_jsonb(coalesce(new_value, 'null'))" does not result in a JSON NULL
+                ELSE
+                    result_json = jsonb_insert(json_expression,new_jsonb_path,to_jsonb(new_value));
+                END IF;
+            ELSE
+                IF NOT create_if_missing THEN
+                    RAISE sql_json_array_not_found;
+                ELSE
+                    result_json = json_expression;
+                END IF;
+            END IF;
+        ELSE
+            IF NOT create_if_missing THEN
+                RAISE sql_json_object_not_found;
+            ELSE
+                result_json = jsonb_insert(json_expression,new_jsonb_path,to_jsonb(array_agg(new_value))); -- array_agg is used to convert the new_value text into array format as we append functionality is being used
+            END IF;
+        END IF;
+    ELSE --When no append modifier is present
+        IF new_value IS NOT NULL THEN
+            IF key_exists OR create_if_missing THEN
+                result_json = jsonb_set_lax(json_expression,new_jsonb_path,to_jsonb(new_value),create_if_missing);
+            ELSE
+                RAISE sql_json_object_not_found;
+            END IF;
+        ELSE
+            IF key_exists THEN
+                IF NOT create_if_missing THEN
+                    result_json = jsonb_set_lax(json_expression,new_jsonb_path,to_jsonb(new_value));
+                ELSE
+                    result_json = jsonb_set_lax(json_expression,new_jsonb_path,to_jsonb(new_value),create_if_missing,'delete_key');
+                END IF;
+            ELSE
+                IF NOT create_if_missing THEN
+                    RAISE sql_json_object_not_found;
+                ELSE
+                    result_json = jsonb_set_lax(json_expression,new_jsonb_path,to_jsonb(new_value),FALSE);
+                END IF;
+            END IF;
+        END IF;
+    END IF;  -- If append_modifier block ends here
+    RETURN result_json;
+EXCEPTION
+    WHEN invalid_json_text THEN
+            RAISE USING MESSAGE = 'JSON path is not properly formatted',
+                        DETAIL = FORMAT('Unexpected keyword "%s" is found.',comparison_string),
+                        HINT = 'Change "modifier/mode" parameter to the proper value and try again.';
+    WHEN sql_json_array_not_found THEN
+            RAISE USING MESSAGE = 'array cannot be found in the specified JSON path',
+                        HINT = 'Change JSON path to target array property and try again.';
+    WHEN sql_json_object_not_found THEN
+            RAISE USING MESSAGE = 'property cannot be found on the specified JSON path';
+END;        
+$BODY$
+LANGUAGE plpgsql;
+
 
 CREATE OR REPLACE FUNCTION sys.babelfish_conv_string_to_time(IN p_datatype TEXT,
                                                                  IN p_timestring TEXT,
@@ -2970,6 +3377,8 @@ $BODY$
 LANGUAGE plpgsql
 VOLATILE
 RETURNS NULL ON NULL INPUT;
+
+
 CREATE OR REPLACE PROCEDURE sys.sp_helpdb(IN "@dbname" VARCHAR(32))
 LANGUAGE 'pltsql'
 AS $$

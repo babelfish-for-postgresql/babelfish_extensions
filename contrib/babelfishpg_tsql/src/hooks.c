@@ -58,6 +58,7 @@
 #define TDS_NUMERIC_MAX_PRECISION	38
 
 extern bool babelfish_dump_restore;
+extern char *babelfish_dump_restore_min_oid;
 extern bool pltsql_quoted_identifier;
 extern bool is_tsql_rowversion_or_timestamp_datatype(Oid oid);
 
@@ -108,6 +109,7 @@ static void preserve_view_constraints_from_base_table(ColumnDef  *col, Oid table
 static bool pltsql_detect_numeric_overflow(int weight, int dscale, int first_block, int numeric_base);
 static void insert_pltsql_function_defaults(HeapTuple func_tuple, List *defaults, Node **argarray);
 static int print_pltsql_function_arguments(StringInfo buf, HeapTuple proctup, bool print_table_args, bool print_defaults);
+static void pltsql_GetNewObjectId(VariableCache variableCache);
 /*****************************************
  * 			Executor Hooks
  *****************************************/
@@ -149,6 +151,7 @@ static ExecutorStart_hook_type prev_ExecutorStart = NULL;
 static ExecutorRun_hook_type prev_ExecutorRun = NULL;
 static ExecutorFinish_hook_type prev_ExecutorFinish = NULL;
 static ExecutorEnd_hook_type prev_ExecutorEnd = NULL;
+static GetNewObjectId_hook_type prev_GetNewObjectId_hook = NULL;
 static inherit_view_constraints_from_table_hook_type prev_inherit_view_constraints_from_table = NULL;
 static detect_numeric_overflow_hook_type prev_detect_numeric_overflow_hook = NULL;
 static match_pltsql_func_call_hook_type prev_match_pltsql_func_call_hook = NULL;
@@ -225,6 +228,9 @@ InstallExtendedHooks(void)
 	prev_ExecutorEnd = ExecutorEnd_hook;
 	ExecutorEnd_hook = pltsql_ExecutorEnd;
 
+	prev_GetNewObjectId_hook = GetNewObjectId_hook;
+	GetNewObjectId_hook = pltsql_GetNewObjectId;
+
 	prev_inherit_view_constraints_from_table = inherit_view_constraints_from_table_hook;
 	inherit_view_constraints_from_table_hook = preserve_view_constraints_from_base_table;
 	TriggerRecuresiveCheck_hook = plsql_TriggerRecursiveCheck;
@@ -270,6 +276,7 @@ UninstallExtendedHooks(void)
 	ExecutorRun_hook = prev_ExecutorRun;
 	ExecutorFinish_hook = prev_ExecutorFinish;
 	ExecutorEnd_hook = prev_ExecutorEnd;
+	GetNewObjectId_hook = prev_GetNewObjectId_hook;
 	inherit_view_constraints_from_table_hook = prev_inherit_view_constraints_from_table;
 	detect_numeric_overflow_hook = prev_detect_numeric_overflow_hook;
 	match_pltsql_func_call_hook = prev_match_pltsql_func_call_hook;
@@ -280,6 +287,23 @@ UninstallExtendedHooks(void)
 /*****************************************
  * 			Hook Functions
  *****************************************/
+
+static void
+pltsql_GetNewObjectId(VariableCache variableCache)
+{
+	Oid minOid;
+
+	if (!babelfish_dump_restore || !babelfish_dump_restore_min_oid)
+		return;
+
+	minOid = atooid(babelfish_dump_restore_min_oid);
+	Assert(OidIsValid(minOid));
+	if (ShmemVariableCache->nextOid >= minOid + 1)
+		return;
+
+	ShmemVariableCache->nextOid = minOid + 1;
+	ShmemVariableCache->oidCount = 0;
+}
 
 static void
 pltsql_ExecutorStart(QueryDesc *queryDesc, int eflags)

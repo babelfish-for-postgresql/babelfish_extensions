@@ -125,7 +125,7 @@ static void *makeBatch(TSqlParser::Tsql_fileContext *ctx, tsqlBuilder &builder);
 //static void *makeBatch(TSqlParser::Block_statementContext *ctx, tsqlBuilder &builder);
 
 static void process_execsql_destination(TSqlParser::Dml_statementContext *ctx, PLtsql_stmt_execsql *stmt);
-static void process_execsql_remove_unsupported_tokens(TSqlParser::Dml_statementContext *ctx, PLtsql_stmt_execsql *stmt);
+static void process_execsql_remove_unsupported_tokens(TSqlParser::Dml_statementContext *ctx, PLtsql_expr_query_mutator *exprMutator);
 static bool post_process_create_table(TSqlParser::Create_tableContext *ctx, PLtsql_stmt_execsql *stmt, TSqlParser::Ddl_statementContext *baseCtx);
 static bool post_process_alter_table(TSqlParser::Alter_tableContext *ctx, PLtsql_stmt_execsql *stmt, TSqlParser::Ddl_statementContext *baseCtx);
 static bool post_process_create_index(TSqlParser::Create_indexContext *ctx, PLtsql_stmt_execsql *stmt, TSqlParser::Ddl_statementContext *baseCtx);
@@ -1018,6 +1018,7 @@ public:
 
 	void exitDml_statement(TSqlParser::Dml_statementContext *ctx) override
 	{
+		process_execsql_remove_unsupported_tokens(ctx, mutator);
 		if (mutator && query_hints.size() && enable_hint_mapping)
 		{
 			add_query_hints(mutator, ctx->start->getStartIndex());
@@ -1451,7 +1452,7 @@ public:
 
 		process_execsql_destination(ctx, stmt);
 
-		process_execsql_remove_unsupported_tokens(ctx, stmt); // in-place query string modification. no mutator necessary
+		process_execsql_remove_unsupported_tokens(ctx, statementMutator.get());
 
 		// record whether the stmt is an INSERT-EXEC stmt
 		stmt->insert_exec =
@@ -5278,8 +5279,9 @@ static void post_process_table_source(TSqlParser::Table_source_itemContext *ctx,
 	}
 }
 
-void process_execsql_remove_unsupported_tokens(TSqlParser::Dml_statementContext *ctx, PLtsql_stmt_execsql *stmt)
+void process_execsql_remove_unsupported_tokens(TSqlParser::Dml_statementContext *ctx, PLtsql_expr_query_mutator *exprMutator)
 {
+	PLtsql_expr * sqlstmt = exprMutator->expr;
 	if (ctx->insert_statement())
 	{
 		auto ictx = ctx->insert_statement();
@@ -5290,11 +5292,11 @@ void process_execsql_remove_unsupported_tokens(TSqlParser::Dml_statementContext 
 				std::string table_name = extractTableName(ictx->ddl_object(), nullptr);
 				extractTableHints(ictx->with_table_hints(), table_name);
 			}
-			removeCtxStringFromQuery(stmt->sqlstmt, ictx->with_table_hints(), ctx);
+			removeCtxStringFromQuery(sqlstmt, ictx->with_table_hints(), exprMutator->ctx);
 		}
 		if (ictx->option_clause()) // query hints
 		{
-			removeCtxStringFromQuery(stmt->sqlstmt, ictx->option_clause(), ctx);
+			removeCtxStringFromQuery(sqlstmt, ictx->option_clause(), exprMutator->ctx);
 			extractQueryHintsFromOptionClause(ictx->option_clause());
 		}
 	}
@@ -5303,7 +5305,7 @@ void process_execsql_remove_unsupported_tokens(TSqlParser::Dml_statementContext 
 		auto uctx = ctx->update_statement();
 		if (uctx->table_sources())
 			for (auto tctx : uctx->table_sources()->table_source_item()) // from-clause (to remove hints)
-				post_process_table_source(tctx, stmt->sqlstmt, ctx);
+				post_process_table_source(tctx, sqlstmt, exprMutator->ctx);
 		if (uctx->with_table_hints()) // table hints
 		{
 			if (!uctx->with_table_hints()->sample_clause() && uctx->ddl_object())
@@ -5311,11 +5313,11 @@ void process_execsql_remove_unsupported_tokens(TSqlParser::Dml_statementContext 
 				std::string table_name = extractTableName(uctx->ddl_object(), nullptr);
 				extractTableHints(uctx->with_table_hints(), table_name);
 			}
-			removeCtxStringFromQuery(stmt->sqlstmt, uctx->with_table_hints(), ctx);
+			removeCtxStringFromQuery(sqlstmt, uctx->with_table_hints(), exprMutator->ctx);
 		}
 		if (uctx->option_clause()) // query hints
 		{
-			removeCtxStringFromQuery(stmt->sqlstmt, uctx->option_clause(), ctx);
+			removeCtxStringFromQuery(sqlstmt, uctx->option_clause(), exprMutator->ctx);
 			extractQueryHintsFromOptionClause(uctx->option_clause());
 		}
 	}
@@ -5325,7 +5327,7 @@ void process_execsql_remove_unsupported_tokens(TSqlParser::Dml_statementContext 
 		if (dctx->table_sources())
 		{
 			for (auto tctx : dctx->table_sources()->table_source_item()) // from-clause (to remove hints)
-				post_process_table_source(tctx, stmt->sqlstmt, ctx);
+				post_process_table_source(tctx, sqlstmt, exprMutator->ctx);
 		}
 		if (dctx->delete_statement_from()->table_alias() && dctx->delete_statement_from()->table_alias()->with_table_hints())
 		{
@@ -5334,7 +5336,7 @@ void process_execsql_remove_unsupported_tokens(TSqlParser::Dml_statementContext 
 				std::string table_name = ::getFullText(dctx->delete_statement_from()->table_alias()->id());
 				extractTableHints(dctx->delete_statement_from()->table_alias()->with_table_hints(), table_name);
 			}
-			removeCtxStringFromQuery(stmt->sqlstmt, dctx->delete_statement_from()->table_alias()->with_table_hints(), ctx);
+			removeCtxStringFromQuery(sqlstmt, dctx->delete_statement_from()->table_alias()->with_table_hints(), exprMutator->ctx);
 		}
 		if (dctx->with_table_hints()) // table hints
 		{
@@ -5343,11 +5345,11 @@ void process_execsql_remove_unsupported_tokens(TSqlParser::Dml_statementContext 
 				std::string table_name = extractTableName(dctx->delete_statement_from()->ddl_object(), nullptr);
 				extractTableHints(dctx->with_table_hints(), table_name);
 			}
-			removeCtxStringFromQuery(stmt->sqlstmt, dctx->with_table_hints(), ctx);
+			removeCtxStringFromQuery(sqlstmt, dctx->with_table_hints(), exprMutator->ctx);
 		}
 		if (dctx->option_clause()) // query hints
 		{
-			removeCtxStringFromQuery(stmt->sqlstmt, dctx->option_clause(), ctx);
+			removeCtxStringFromQuery(sqlstmt, dctx->option_clause(), exprMutator->ctx);
 			extractQueryHintsFromOptionClause(dctx->option_clause());
 		}
 	}

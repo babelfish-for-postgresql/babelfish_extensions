@@ -1,5 +1,11 @@
 name: Python Tests
-on: [push, pull_request]
+on:
+  pull_request:
+  push:
+    branches: [ 'BABEL_*' ]
+concurrency: # Cancel previous runs in the same branch
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
 
 jobs:
   run-babelfish-python-tests:
