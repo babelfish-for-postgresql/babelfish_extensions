@@ -1,7 +1,0 @@
--- psql
-DROP USER test_user;
-GO
-
--- tsql
-DROP ROLE alterrole_test_role;
-GO

@@ -593,6 +593,7 @@ babelfish_object_access(ObjectAccessType access,
 
 	switch (access)
 	{
+		case OAT_POST_ALTER:
 		case OAT_DROP:
 			{
 				switch (classId)
