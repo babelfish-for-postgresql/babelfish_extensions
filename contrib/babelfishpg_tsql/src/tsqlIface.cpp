@@ -2102,6 +2102,16 @@ public:
 	}
     }
 
+	void enterSubstring_function_call(TSqlParser::Substring_function_callContext *ctx) override
+	{
+	if (ctx->function_arg_list() && !ctx->function_arg_list()->expression().empty())
+		{
+			auto first_arg = ctx->function_arg_list()->expression().front();
+			if (dynamic_cast<TSqlParser::Constant_exprContext*>(first_arg) && static_cast<TSqlParser::Constant_exprContext*>(first_arg)->constant()->NULL_P())
+				ereport(ERROR, (errcode(ERRCODE_SUBSTRING_ERROR), errmsg("Argument data type NULL is invalid for argument 1 of substring function")));
+		}
+	}
+
     // When a user exports an MSSQL application using a tool such as SSMS,
     // all type names are delimited by square brackets ([INT]). That forces
     // Postgres to compare the type name in a case-sensitive manner. Since

@@ -24,3 +24,6 @@ GO
 
 DROP TABLE babel_3347_before_14_6_table_2
 GO
+
+DROP TABLE IF EXISTS babel_3347_vu_before_14_6_tbl
+GO

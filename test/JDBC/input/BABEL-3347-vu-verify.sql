@@ -18,11 +18,24 @@ GO
 SELECT * FROM babel_3347_vu5
 GO
 
--- cast BABEL-3599
+-- cast
 SELECT * FROM babel_3347_vu6
 GO
 
--- varibles BABEL-3599
+-- null constant function qualified with 'sys'
+SELECT * FROM babel_3347_vu7
+GO
+
+-- variables
 DECLARE @babel_3347_vu7_var NVARCHAR(MAX) = NULL
 SELECT SUBSTRING(@babel_3347_vu7_var, 2,3)
+GO
+
+-- ensure null literal aborts batch statements
+CREATE table babel_3347_vu_tbl (a INT)
+SELECT substring(null, 2,3)
+PRINT 'this should not print'
+GO
+
+SELECT * FROM babel_3347_vu_tbl
 GO
