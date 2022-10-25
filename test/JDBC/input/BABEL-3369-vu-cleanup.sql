@@ -1,0 +1,2 @@
+DROP FUNCTION babel_3369_tf_function_vu_prepare
+GO

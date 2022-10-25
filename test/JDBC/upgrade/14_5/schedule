@@ -63,6 +63,7 @@ sys-server_principals
 fulltextserviceproperty
 is_srvrolemember
 msdb-dbo-fn_syspolicy_is_automation_enabled
+objectproperty
 objectpropertyex
 sys-column-property
 sys-configurations
@@ -116,6 +117,8 @@ BABEL-3116
 BABEL-3118
 BABEL-3249
 BABEL-3474
+BABEL-3369
+BABEL-3370
 BABEL-383
 BABEL-405
 BABEL-PROCID

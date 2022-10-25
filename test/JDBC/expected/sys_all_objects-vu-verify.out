@@ -1,10 +1,13 @@
-SELECT type, type_desc from sys.all_objects  where name like 'sys_all_objects_vu_prepare_1%' order by type;
+SELECT name, type, type_desc from sys.all_objects  where name like 'sys_all_objects_vu_prepare_1%' order by name;
 GO
 ~~START~~
-char#!#nvarchar
-FN#!#SQL_SCALAR_FUNCTION
-P #!#SQL_STORED_PROCEDURE
-P #!#SQL_STORED_PROCEDURE
-TR#!#SQL_TRIGGER
+varchar#!#char#!#nvarchar
+sys_all_objects_vu_prepare_1#!#P #!#SQL_STORED_PROCEDURE
+sys_all_objects_vu_prepare_1_2#!#P #!#SQL_STORED_PROCEDURE
+sys_all_objects_vu_prepare_1_3#!#TR#!#SQL_TRIGGER
+sys_all_objects_vu_prepare_1_4_fn#!#FN#!#SQL_SCALAR_FUNCTION
+sys_all_objects_vu_prepare_1_5_tf#!#TF#!#SQL_TABLE_VALUED_FUNCTION
+sys_all_objects_vu_prepare_1_6_if_1#!#IF#!#SQL_INLINE_TABLE_VALUED_FUNCTION
+sys_all_objects_vu_prepare_1_7_if_2#!#IF#!#SQL_INLINE_TABLE_VALUED_FUNCTION
 ~~END~~
 
