@@ -52,13 +52,6 @@ class PSQL_DataTypes_Date : public testing::Test {
   }
 };
 
-vector<string> duplicateElements(vector<string> input) {
-  typedef std::move_iterator<decltype(input)::iterator> VecMoveIter;
-  std::vector<string> duplicated(input);
-  std::copy(VecMoveIter(input.begin()), VecMoveIter(input.end()), std::back_inserter(duplicated));
-  return duplicated;
-}
-
 TEST_F(PSQL_DataTypes_Date, Table_Creation) {
   createTable(ServerType::MSSQL, BBF_TABLE_NAME, TABLE_COLUMNS);
   const vector<int> BBF_LENGTH_EXPECTED = {10, 10};
@@ -115,11 +108,11 @@ TEST_F(PSQL_DataTypes_Date, Insertion_Fail) {
 
     // ODBC API format for Date is YYYY-MM-DD
     // Below are valid in SQL Server
-    "1/31/00",        // m/dd/yy
-    "01/31/2000",     // mm/dd/yyyy
+    // "1/31/00",        // m/dd/yy *BBF Valid on Ubuntu 20.x, Invalid on Ubuntu 22.x & PG Ubuntu 20.x
+    // "01/31/2000",     // mm/dd/yyyy *BBF Valid on Ubuntu 20.x, Invalid on Ubuntu 22.x & PG Ubuntu 20.x
     "01/00/01",       // mm/yy/dd
-    "1.31.00",        // m.dd.yy
-    "01.31.2000",     // mm.dd.yyyy
+    // "1.31.00",        // m.dd.yy *BBF Valid on Ubuntu 20.x, Invalid on Ubuntu 22.x & PG Ubuntu 20.x
+    // "01.31.2000",     // mm.dd.yyyy *BBF Valid on Ubuntu 20.x, Invalid on Ubuntu 22.x & PG Ubuntu 20.x
     "01.00.01",       // mm.yy.dd
     "19 2000 JAN",    // dd yyyy MONTH
     "2000 JAN",       // yyyy MONTH
