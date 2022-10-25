@@ -4608,7 +4608,25 @@ exec_stmt_execsql(PLtsql_execstate *estate,
 	char 		*old_search_path = flatten_search_path(path_oids);
 
 	if (stmt->is_cross_db)
-		SetCurrentRoleId(GetSessionUserId(), false);
+	{
+		char *login = GetUserNameFromId(GetSessionUserId(), false);
+		char *user = get_user_for_database(stmt->db_name);
+
+		if (user)
+			SetCurrentRoleId(GetSessionUserId(), false);
+		else
+			ereport(ERROR,
+							(errcode(ERRCODE_UNDEFINED_DATABASE),
+							errmsg("The server principal \"%s\" is not able to access "
+								"the database \"%s\" under the current security context",
+								login, stmt->db_name)));
+		/*
+		 * When there is cross db reference to sys or information_schema schemas,
+		 * Change the session property.
+		 */
+		if (stmt->schema_name != NULL && (strcmp(stmt->schema_name, "sys") == 0 || strcmp(stmt->schema_name, "information_schema") == 0))
+			set_session_properties(stmt->db_name);
+	}
 	if(stmt->is_dml || stmt->is_ddl || stmt->is_create_view)
 	{
 		if (stmt->is_schema_specified)
@@ -5002,7 +5020,11 @@ exec_stmt_execsql(PLtsql_execstate *estate,
 			SetCurrentRoleId(current_user_id, false);
 		}
 		if (stmt->is_cross_db)
+		{
+			if (stmt->schema_name != NULL && (strcmp(stmt->schema_name, "sys") == 0 || strcmp(stmt->schema_name, "information_schema") == 0))
+				set_session_properties(cur_dbname);
 			SetCurrentRoleId(current_user_id, false);
+		}
 		list_free(path_oids);
 		PG_RE_THROW();
 	}
@@ -5018,7 +5040,11 @@ exec_stmt_execsql(PLtsql_execstate *estate,
 		SetCurrentRoleId(current_user_id, false);
 	}
 	if (stmt->is_cross_db)
+	{
+		if (stmt->schema_name != NULL && (strcmp(stmt->schema_name, "sys") == 0 || strcmp(stmt->schema_name, "information_schema") == 0))
+			set_session_properties(cur_dbname);
 		SetCurrentRoleId(current_user_id, false);
+	}
 	list_free(path_oids);
 
 	return PLTSQL_RC_OK;

@@ -49,6 +49,7 @@ ORDER BY rolname;
 GO
 ~~START~~
 varchar#!#varchar#!#nvarchar#!#nvarchar#!#nvarchar
+db1_guest#!##!#guest#!#db1#!#
 db_owner#!##!#db_owner#!#db1#!#
 dbo#!##!#dbo#!#db1#!#dbo
 master_db_owner#!##!#db_owner#!#master#!#

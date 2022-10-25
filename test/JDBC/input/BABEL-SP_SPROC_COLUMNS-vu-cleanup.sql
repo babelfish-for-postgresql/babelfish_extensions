@@ -31,6 +31,32 @@ DROP TABLE babel_sp_sproc_columns_vu_prepare_t1
 GO
 DROP SCHEMA babel_sp_sproc_columns_vu_prepare_s1
 GO
+DROP PROCEDURE babel_sp_sproc_columns_vu_prepare_addTwo
+GO
+DROP PROCEDURE babel_sp_sproc_columns_vu_prepare_complexProc
+GO
+DROP FUNCTION babel_sp_sproc_columns_vu_prepare_scalFunc
+GO
+DROP FUNCTION babel_sp_sproc_columns_vu_prepare_tableFunc
+GO
+DROP FUNCTION babel_sp_sproc_columns_vu_prepare_InlineTableFunc
+GO
+DROP FUNCTION babel_sp_sproc_columns_vu_prepare_tableFunc2
+GO
+DROP FUNCTION babel_sp_sproc_columns_vu_prepare_InlineTableFunc2
+GO
+DROP PROCEDURE babel_sp_sproc_columns_vu_prepare_tvpProc
+GO
+DROP FUNCTION babel_sp_sproc_columns_vu_prepare_myDecFunc
+GO
+DROP PROCEDURE babel_sp_sproc_columns_vu_prepare_typeModifier
+GO
+DROP PROCEDURE babel_sp_sproc_columns_vu_prepare_DataTypeExamples
+GO
+DROP TYPE babel_sp_sproc_columns_vu_prepare_myDec
+GO
+DROP TYPE babel_sp_sproc_columns_vu_prepare_myTableParam
+GO
 USE master
 GO
 DROP FUNCTION babel_sp_sproc_columns_vu_prepare_net

@@ -7340,304 +7340,6 @@ $$
 LANGUAGE 'pltsql';
 GRANT EXECUTE on PROCEDURE sys.sp_stored_procedures TO PUBLIC;
 
-ALTER VIEW sys.sp_sproc_columns_view RENAME TO sp_sproc_columns_view_deprecated_in_2_3_0;
-
-CREATE OR REPLACE VIEW sys.sp_sproc_columns_view AS
--- Get parameters (if any) for a user-defined stored procedure/function
-(SELECT
- CAST(d.name AS sys.sysname) COLLATE sys.database_default AS PROCEDURE_QUALIFIER,
- CAST(ext.orig_name AS sys.sysname) AS PROCEDURE_OWNER,
- CASE
-  WHEN proc.routine_type='PROCEDURE' COLLATE sys.database_default THEN CAST(CONCAT(proc.routine_name, ';1') AS sys.nvarchar(134))
-  ELSE CAST(CONCAT(proc.routine_name, ';0') AS sys.nvarchar(134))
- END AS PROCEDURE_NAME,
-
- CAST(coalesce(args.parameter_name, '') AS sys.sysname) AS COLUMN_NAME,
- CAST(1 AS smallint) AS COLUMN_TYPE,
- CAST(t5.data_type AS smallint) AS DATA_TYPE,
- CAST(coalesce(t6.name, '') AS sys.sysname) COLLATE sys.database_default AS TYPE_NAME,
- CAST(t6.precision AS int) AS PRECISION,
- CAST(t6.max_length AS int) AS LENGTH,
- CAST(t6.scale AS smallint) AS SCALE,
- CAST(t5.num_prec_radix AS smallint) AS RADIX,
- CAST(t6.is_nullable AS smallint) AS NULLABLE,
- CAST(NULL AS varchar(254)) AS REMARKS,
- CAST(NULL AS sys.nvarchar(4000)) AS COLUMN_DEF,
- CAST(t5.sql_data_type AS smallint) AS SQL_DATA_TYPE,
- CAST(t5.sql_datetime_sub AS smallint) AS SQL_DATETIME_SUB,
- CAST(NULL AS int) AS CHAR_OCTET_LENGTH,
- CAST(args.ordinal_position AS int) AS ORDINAL_POSITION,
- CAST('YES' AS varchar(254)) AS IS_NULLABLE,
- CAST(t5.ss_data_type AS sys.tinyint) AS SS_DATA_TYPE,
- CAST(proc.routine_name AS sys.nvarchar(134)) AS original_procedure_name
-
- FROM information_schema.routines proc
- JOIN information_schema.parameters args
-  ON proc.specific_schema = args.specific_schema COLLATE sys.database_default AND proc.specific_name = args.specific_name COLLATE sys.database_default
- INNER JOIN sys.babelfish_namespace_ext ext ON proc.specific_schema = cast(ext.nspname as sys.sysname) COLLATE sys.database_default
- INNER JOIN sys.databases d ON d.database_id =ext.dbid
- INNER JOIN sys.spt_datatype_info_table AS t5
-  JOIN sys.types t6
-  JOIN sys.types t7 ON t6.system_type_id = t7.user_type_id
-   ON t7.name = t5.type_name COLLATE sys.database_default
-  ON (args.data_type != 'USER-DEFINED' COLLATE sys.database_default AND args.udt_name = t5.pg_type_name COLLATE sys.database_default AND t6.name = t7.name COLLATE sys.database_default)
-  OR (args.data_type='USER-DEFINED' COLLATE sys.database_default AND args.udt_name = t6.name COLLATE sys.database_default)
- WHERE coalesce(args.parameter_name, '') LIKE '@%'
-  AND ext.dbid = sys.db_id()
-  AND has_schema_privilege(proc.specific_schema, 'USAGE')
-
-UNION ALL
-
--- Create row describing return type for a user-defined stored procedure/function
-SELECT
- CAST(d.name AS sys.sysname) COLLATE sys.database_default AS PROCEDURE_QUALIFIER,
- CAST(ext.orig_name AS sys.sysname) AS PROCEDURE_OWNER,
- CASE
-  WHEN proc.routine_type='PROCEDURE' COLLATE sys.database_default THEN CAST(CONCAT(proc.routine_name, ';1') AS sys.nvarchar(134))
-  ELSE CAST(CONCAT(proc.routine_name, ';0') AS sys.nvarchar(134))
- END AS PROCEDURE_NAME,
-
- CASE
-  WHEN pg_function_result_type LIKE '%TABLE%' THEN cast('@TABLE_RETURN_VALUE' AS sys.sysname)
-  ELSE cast('@RETURN_VALUE' AS sys.sysname)
-  END AS COLUMN_NAME,
-
- CASE
-  WHEN pg_function_result_type LIKE '%TABLE%' THEN CAST(3 AS smallint)
-  ELSE CAST(5 as smallint)
- END AS COLUMN_TYPE,
-
- CASE
-  WHEN proc.routine_type='PROCEDURE' COLLATE sys.database_default THEN cast((SELECT data_type FROM sys.spt_datatype_info_table WHERE type_name = 'int') AS smallint)
-  WHEN pg_function_result_type LIKE '%TABLE%' THEN cast(null AS smallint)
-  ELSE CAST(t5.data_type AS smallint)
- END AS DATA_TYPE,
-
- CASE
-  WHEN proc.routine_type='PROCEDURE' COLLATE sys.database_default THEN CAST('int' AS sys.sysname) COLLATE sys.database_default
-  WHEN pg_function_result_type like '%TABLE%' then CAST('table' AS sys.sysname) COLLATE sys.database_default
-  ELSE CAST(coalesce(t6.name, '') AS sys.sysname) COLLATE sys.database_default
- END AS TYPE_NAME,
-
- CASE
-  WHEN proc.routine_type='PROCEDURE' COLLATE sys.database_default THEN CAST(10 AS int)
-  WHEN pg_function_result_type LIKE '%TABLE%' THEN CAST(0 AS int)
-  ELSE CAST(t6.precision AS int)
- END AS PRECISION,
-
- CASE
-  WHEN proc.routine_type='PROCEDURE' COLLATE sys.database_default THEN CAST(4 AS int)
-  WHEN pg_function_result_type LIKE '%TABLE%' THEN CAST(0 AS int)
-  ELSE CAST(t6.max_length AS int)
- END AS LENGTH,
- CASE
-  WHEN proc.routine_type='PROCEDURE' COLLATE sys.database_default THEN CAST(0 AS smallint)
-  WHEN pg_function_result_type LIKE '%TABLE%' THEN CAST(0 AS smallint)
-  ELSE CAST(t6.scale AS smallint)
- END AS SCALE,
- CASE
-  WHEN proc.routine_type='PROCEDURE' COLLATE sys.database_default THEN CAST(10 AS smallint)
-  WHEN pg_function_result_type LIKE '%TABLE%' THEN CAST(0 AS smallint)
-  ELSE CAST(t5.num_prec_radix AS smallint)
- END AS RADIX,
- CASE
-  WHEN proc.routine_type='PROCEDURE' COLLATE sys.database_default THEN CAST(0 AS smallint)
-  WHEN pg_function_result_type LIKE '%TABLE%' THEN CAST(0 AS smallint)
-  ELSE CAST(t6.is_nullable AS smallint)
- END AS NULLABLE,
- CASE
-  WHEN pg_function_result_type LIKE '%TABLE%' THEN CAST('Result table returned by table valued function' AS varchar(254))
-  ELSE CAST(NULL AS varchar(254))
- END AS REMARKS,
-
- CAST(NULL AS sys.nvarchar(4000)) AS COLUMN_DEF,
- CASE
-  WHEN proc.routine_type='PROCEDURE' COLLATE sys.database_default THEN CAST((SELECT sql_data_type FROM sys.spt_datatype_info_table WHERE type_name = 'int') AS smallint)
-  WHEN pg_function_result_type LIKE '%TABLE%' THEN CAST(null AS smallint)
-  ELSE CAST(t5.sql_data_type AS smallint)
- END AS SQL_DATA_TYPE,
-
- CAST(null AS smallint) AS SQL_DATETIME_SUB,
- CAST(null AS int) AS CHAR_OCTET_LENGTH,
- CAST(0 AS int) AS ORDINAL_POSITION,
- CASE
-  WHEN proc.routine_type='PROCEDURE' COLLATE sys.database_default THEN CAST('NO' AS varchar(254))
-  WHEN pg_function_result_type LIKE '%TABLE%' THEN CAST('NO' AS varchar(254))
-  ELSE CAST('YES' AS varchar(254))
- END AS IS_NULLABLE,
-
- CASE
-  WHEN proc.routine_type='PROCEDURE' COLLATE sys.database_default THEN CAST(56 AS sys.tinyint)
-  WHEN pg_function_result_type LIKE '%TABLE%' THEN CAST(0 AS sys.tinyint)
-  ELSE CAST(t5.ss_data_type AS sys.tinyint)
- END AS SS_DATA_TYPE,
- CAST(proc.routine_name AS sys.nvarchar(134)) AS original_procedure_name
-
- FROM information_schema.routines proc
-    INNER JOIN sys.babelfish_namespace_ext ext ON proc.specific_schema = ext.nspname COLLATE sys.database_default
-    INNER JOIN sys.databases d ON d.database_id = ext.dbid and ext.dbid = sys.db_id()
-    INNER JOIN pg_catalog.pg_proc p ON cast(proc.specific_name as sys.sysname) = (p.proname || '_' || p.oid) COLLATE sys.database_default
-    LEFT JOIN sys.spt_datatype_info_table AS t5
-        JOIN sys.types t6
-        JOIN sys.types t7 ON t6.system_type_id = t7.user_type_id
-        ON t7.name = t5.type_name COLLATE sys.database_default
-    ON (proc.data_type != 'USER-DEFINED' COLLATE sys.database_default
-            AND proc.type_udt_name = t5.pg_type_name COLLATE sys.database_default
-            AND t6.name = t7.name COLLATE sys.database_default)
-        OR (proc.data_type = 'USER-DEFINED' COLLATE sys.database_default
-            AND proc.type_udt_name = t6.name COLLATE sys.database_default),
-    pg_get_function_result(p.oid) AS pg_function_result_type
- WHERE has_schema_privilege(proc.specific_schema, 'USAGE'))
-
-UNION ALL
-
--- Get parameters (if any) for a system stored procedure/function
-(SELECT
- CAST((SELECT sys.db_name()) AS sys.sysname) COLLATE sys.database_default AS PROCEDURE_QUALIFIER,
- CAST(args.specific_schema AS sys.sysname) AS PROCEDURE_OWNER,
- CASE
-  WHEN proc.routine_type='PROCEDURE' COLLATE sys.database_default then CAST(CONCAT(proc.routine_name, ';1') AS sys.nvarchar(134))
-  ELSE CAST(CONCAT(proc.routine_name, ';0') AS sys.nvarchar(134))
- END AS PROCEDURE_NAME,
-
- CAST(coalesce(args.parameter_name, '') AS sys.sysname) AS COLUMN_NAME,
- CAST(1 as smallint) AS COLUMN_TYPE,
- CAST(t5.data_type AS smallint) AS DATA_TYPE,
- CAST(coalesce(t6.name, '') as sys.sysname) COLLATE sys.database_default as TYPE_NAME,
- CAST(t6.precision as int) as PRECISION,
- CAST(t6.max_length as int) as LENGTH,
- CAST(t6.scale AS smallint) AS SCALE,
- CAST(t5.num_prec_radix AS smallint) AS RADIX,
- CAST(t6.is_nullable as smallint) AS NULLABLE,
- CAST(NULL AS varchar(254)) AS REMARKS,
- CAST(NULL AS sys.nvarchar(4000)) AS COLUMN_DEF,
- CAST(t5.sql_data_type AS smallint) AS SQL_DATA_TYPE,
- CAST(t5.sql_datetime_sub AS smallint) AS SQL_DATETIME_SUB,
- CAST(NULL AS int) AS CHAR_OCTET_LENGTH,
- CAST(args.ordinal_position AS int) AS ORDINAL_POSITION,
- CAST('YES' AS varchar(254)) AS IS_NULLABLE,
- CAST(t5.ss_data_type AS sys.tinyint) AS SS_DATA_TYPE,
- CAST(proc.routine_name AS sys.nvarchar(134)) AS original_procedure_name
-
- FROM information_schema.routines proc
- JOIN information_schema.parameters args
-  on proc.specific_schema = args.specific_schema COLLATE sys.database_default
-  and proc.specific_name = args.specific_name COLLATE sys.database_default
- LEFT JOIN sys.spt_datatype_info_table AS t5
-  LEFT JOIN sys.types t6 ON t6.name = t5.type_name COLLATE sys.database_default
-  ON args.udt_name = t5.pg_type_name COLLATE sys.database_default OR args.udt_name = t5.type_name COLLATE sys.database_default
- WHERE args.specific_schema ='sys' COLLATE sys.database_default
-  AND coalesce(args.parameter_name, '') LIKE '@%'
-  AND (args.specific_name LIKE 'sp\_%'
-   OR args.specific_name LIKE 'xp\_%'
-   OR args.specific_name LIKE 'dm\_%'
-   OR args.specific_name LIKE 'fn\_%')
-  AND has_schema_privilege(proc.specific_schema, 'USAGE')
-
-UNION ALL
-
--- Create row describing return type for a system stored procedure/function
-SELECT
- CAST((SELECT sys.db_name()) AS sys.sysname) COLLATE sys.database_default AS PROCEDURE_QUALIFIER,
- CAST(proc.specific_schema AS sys.sysname) AS PROCEDURE_OWNER,
- CASE
-  WHEN proc.routine_type='PROCEDURE' COLLATE sys.database_default then CAST(CONCAT(proc.routine_name, ';1') AS sys.nvarchar(134))
-  ELSE CAST(CONCAT(proc.routine_name, ';0') AS sys.nvarchar(134))
- END AS PROCEDURE_NAME,
-
- CASE
-  WHEN pg_function_result_type LIKE '%TABLE%' THEN cast('@TABLE_RETURN_VALUE' AS sys.sysname)
-  ELSE cast('@RETURN_VALUE' AS sys.sysname)
-  END AS COLUMN_NAME,
-
- CASE
-  WHEN pg_function_result_type LIKE '%TABLE%' THEN CAST(3 AS smallint)
-  ELSE CAST(5 AS smallint)
- END AS COLUMN_TYPE,
-
- CASE
-  WHEN proc.routine_type='PROCEDURE' COLLATE sys.database_default THEN cast((SELECT sql_data_type FROM sys.spt_datatype_info_table WHERE type_name = 'int') AS smallint)
-  WHEN pg_function_result_type LIKE '%TABLE%' THEN cast(null AS smallint)
-  ELSE CAST(t5.data_type AS smallint)
- END AS DATA_TYPE,
-
- CASE
-  WHEN proc.routine_type='PROCEDURE' COLLATE sys.database_default THEN CAST('int' AS sys.sysname) COLLATE sys.database_default
-  WHEN pg_function_result_type LIKE '%TABLE%' THEN CAST('table' AS sys.sysname) COLLATE sys.database_default
-  ELSE CAST(coalesce(t6.name, '') AS sys.sysname) COLLATE sys.database_default
- END AS TYPE_NAME,
-
- CASE
-  WHEN proc.routine_type='PROCEDURE' COLLATE sys.database_default THEN CAST(10 AS int)
-  WHEN pg_function_result_type LIKE '%TABLE%' THEN CAST(0 AS int)
-  ELSE CAST(t6.precision AS int)
- END AS PRECISION,
-
- CASE
-  WHEN proc.routine_type='PROCEDURE' COLLATE sys.database_default THEN CAST(4 AS int)
-  WHEN pg_function_result_type LIKE '%TABLE%' THEN CAST(0 AS int)
-  ELSE CAST(t6.max_length AS int)
- END AS LENGTH,
- CASE
-  WHEN proc.routine_type='PROCEDURE' COLLATE sys.database_default THEN CAST(0 AS smallint)
-  WHEN pg_function_result_type LIKE '%TABLE%' THEN CAST(0 AS smallint)
-  ELSE CAST(t6.scale AS smallint)
- END AS SCALE,
- CASE
-  WHEN proc.routine_type='PROCEDURE' COLLATE sys.database_default THEN CAST(10 AS smallint)
-  WHEN pg_function_result_type LIKE '%TABLE%' THEN CAST(0 AS smallint)
-  ELSE CAST(t5.num_prec_radix AS smallint)
- END AS RADIX,
- CASE
-  WHEN proc.routine_type='PROCEDURE' COLLATE sys.database_default THEN CAST(0 AS smallint)
-  WHEN pg_function_result_type LIKE '%TABLE%' THEN CAST(0 AS smallint)
-  ELSE CAST(t6.is_nullable AS smallint)
- END AS NULLABLE,
-
- CASE
-  WHEN pg_function_result_type LIKE '%TABLE%' THEN CAST('Result table returned by table valued function' AS varchar(254))
-  ELSE CAST(NULL AS varchar(254))
- END AS REMARKS,
-
- CAST(NULL AS sys.nvarchar(4000)) AS COLUMN_DEF,
- CASE
-  WHEN proc.routine_type='PROCEDURE' COLLATE sys.database_default THEN CAST((SELECT sql_data_type FROM sys.spt_datatype_info_table WHERE type_name = 'int') AS smallint)
-  WHEN pg_function_result_type LIKE '%TABLE%' THEN CAST(null AS smallint)
-  ELSE CAST(t5.sql_data_type AS smallint)
- END AS SQL_DATA_TYPE,
-
- CAST(null AS smallint) AS SQL_DATETIME_SUB,
- CAST(null AS int) AS CHAR_OCTET_LENGTH,
- CAST(0 AS int) AS ORDINAL_POSITION,
- CASE
-  WHEN proc.routine_type='PROCEDURE' COLLATE sys.database_default THEN CAST('NO' AS varchar(254))
-  WHEN pg_function_result_type LIKE '%TABLE%' THEN CAST('NO' AS varchar(254))
-  ELSE CAST('YES' AS varchar(254))
- END AS IS_NULLABLE,
-
- CASE
-  WHEN proc.routine_type='PROCEDURE' COLLATE sys.database_default THEN CAST(56 AS sys.tinyint)
-  WHEN pg_function_result_type LIKE '%TABLE%' THEN CAST(0 AS sys.tinyint)
-  ELSE CAST(t5.ss_data_type AS sys.tinyint)
- END AS SS_DATA_TYPE,
- CAST(proc.routine_name AS sys.nvarchar(134)) AS original_procedure_name
-
- FROM information_schema.routines proc
- INNER JOIN pg_catalog.pg_proc p ON cast(proc.specific_name as sys.sysname) = (p.proname || '_' || p.oid) collate sys.database_default
- LEFT JOIN sys.spt_datatype_info_table AS t5
-  LEFT JOIN sys.types t6 ON t6.name = t5.type_name collate sys.database_default
- ON proc.type_udt_name = t5.pg_type_name COLLATE sys.database_default
-  OR proc.type_udt_name = t5.type_name COLLATE sys.database_default,
- pg_get_function_result(p.oid) AS pg_function_result_type
- WHERE cast(proc.specific_schema as sys.sysname) = 'sys' 
-  AND (cast(proc.specific_name as sys.sysname) LIKE 'sp\_%' 
-   OR cast(proc.specific_name as sys.sysname) LIKE 'xp\_%' 
-   OR cast(proc.specific_name as sys.sysname) LIKE 'dm\_%' 
-   OR cast(proc.specific_name as sys.sysname) LIKE 'fn\_%' )
-  AND has_schema_privilege(proc.specific_schema, 'USAGE')
- );
-GRANT SELECT ON sys.sp_sproc_columns_view TO PUBLIC;
-
 CREATE OR REPLACE PROCEDURE sys.sp_sproc_columns(
 	"@procedure_name" sys.nvarchar(390) = '%',
 	"@procedure_owner" sys.nvarchar(384) = NULL,
@@ -8585,6 +8287,576 @@ BEGIN
 END;
 $$
 LANGUAGE plpgsql;
+
+-- USER extension
+ALTER TABLE sys.babelfish_authid_user_ext add COLUMN IF NOT EXISTS user_can_connect INT NOT NULL DEFAULT 1;
+
+GRANT SELECT ON sys.babelfish_authid_user_ext TO PUBLIC;
+
+CREATE OR REPLACE PROCEDURE sys.babelfish_update_user_catalog_for_guest()
+LANGUAGE C
+AS 'babelfishpg_tsql', 'update_user_catalog_for_guest';
+ 
+CALL sys.babelfish_update_user_catalog_for_guest();
+
+ALTER VIEW sys.sp_sproc_columns_view RENAME TO sp_sproc_columns_view_deprecated_in_2_3_0;
+
+CREATE OR REPLACE VIEW sys.sp_sproc_columns_view
+AS
+SELECT
+CAST(sys.db_name() AS sys.sysname) AS PROCEDURE_QUALIFIER -- This will always be objects in current database
+, CAST(ss.schema_name AS sys.sysname) AS PROCEDURE_OWNER
+, CAST(
+CASE
+  WHEN ss.prokind = 'p' THEN CONCAT(ss.proname, ';1')
+  ELSE CONCAT(ss.proname, ';0')
+END
+AS sys.nvarchar(134)) AS PROCEDURE_NAME
+, CAST(
+CASE 
+  WHEN ss.n IS NULL THEN
+    CASE
+      WHEN ss.proretset THEN '@TABLE_RETURN_VALUE'
+    ELSE '@RETURN_VALUE'
+  END 
+ELSE COALESCE(ss.proargnames[n], '')
+END
+AS sys.SYSNAME) AS COLUMN_NAME
+, CAST(
+CASE
+WHEN ss.n IS NULL THEN
+  CASE 
+    WHEN ss.proretset THEN 3
+    ELSE 5
+  END
+WHEN ss.proargmodes[n] in ('o', 'b') THEN 2
+ELSE 1
+END
+AS smallint) AS COLUMN_TYPE
+, CAST(
+CASE
+  WHEN ss.n IS NULL THEN
+    CASE
+      WHEN ss.prokind = 'p' THEN (SELECT data_type FROM sys.spt_datatype_info_table  WHERE type_name = 'int')
+    WHEN ss.proretset THEN NULL
+    ELSE sdit.data_type 
+    END
+  WHEN st.is_table_type = 1 THEN -153
+  ELSE sdit.data_type 
+END
+AS smallint) AS DATA_TYPE
+, CAST(
+CASE 
+  WHEN ss.n IS NULL THEN
+    CASE 
+      WHEN ss.proretset THEN 'table' 
+      WHEN ss.prokind = 'p' THEN 'int'
+      ELSE st.name
+    END
+  ELSE st.name
+END
+AS sys.sysname) AS TYPE_NAME
+, CAST(
+CASE
+  WHEN ss.n IS NULL THEN
+    CASE 
+      WHEN ss.proretset THEN 0 
+    WHEN ss.prokind = 'p' THEN (SELECT precision FROM sys.types WHERE name = 'int')
+    ELSE st.precision
+  END
+  WHEN st.is_table_type = 1 THEN 0
+  ELSE st.precision 
+END 
+AS sys.int) AS PRECISION
+, CAST(
+CASE
+  WHEN ss.n IS NULL THEN
+    CASE
+      WHEN ss.proretset THEN 0
+    WHEN ss.prokind = 'p' THEN (SELECT max_length FROM sys.types WHERE name = 'int')
+    ELSE st.max_length
+  END
+  WHEN st.is_table_type = 1 THEN 2147483647
+  ELSE st.max_length 
+END
+AS sys.int) AS LENGTH
+, CAST(
+CASE
+  WHEN ss.n IS NULL THEN 
+    CASE
+      WHEN ss.proretset THEN 0 
+      WHEN ss.prokind = 'p' THEN (SELECT scale FROM sys.types WHERE name = 'int')
+      ELSE st.scale
+    END
+  WHEN st.is_table_type = 1 THEN NULL
+  ELSE st.scale
+END
+AS smallint) AS SCALE
+, CAST(
+CASE
+  WHEN ss.n IS NULL THEN
+    CASE
+      WHEN ss.proretset THEN 0
+    WHEN ss.prokind = 'p' THEN (SELECT num_prec_radix FROM sys.spt_datatype_info_table WHERE type_name = 'int')
+    ELSE sdit.num_prec_radix
+  END
+  WHEN st.is_table_type = 1 THEN NULL
+  ELSE sdit.num_prec_radix
+END
+AS smallint) AS RADIX
+, CAST(
+CASE
+  WHEN ss.n IS NULL THEN
+    CASE 
+      WHEN ss.proretset OR ss.prokind = 'p' THEN 0
+      ELSE sdit.nullable 
+    END
+  WHEN st.is_table_type = 1 THEN 1
+  ELSE sdit.nullable 
+END
+AS smallint) AS NULLABLE
+, CAST(
+CASE 
+  WHEN ss.n IS NULL AND ss.proretset THEN 'Result table returned by table valued function'
+  ELSE NULL
+END
+AS sys.varchar(254)) AS REMARKS
+, CAST(NULL AS sys.nvarchar(4000)) AS COLUMN_DEF
+, CAST(
+CASE
+  WHEN ss.n IS NULL THEN
+    CASE
+      WHEN ss.proretset THEN NULL
+      WHEN ss.prokind = 'p' THEN (SELECT sql_data_type FROM sys.spt_datatype_info_table WHERE type_name = 'int')
+      ELSE sdit.sql_data_type
+    END
+  WHEN st.is_table_type = 1 THEN -153
+  ELSE sdit.sql_data_type 
+END
+AS smallint) AS SQL_DATA_TYPE
+, CAST(
+CASE
+  WHEN ss.n IS NULL THEN
+    CASE 
+      WHEN ss.proretset THEN 0
+      WHEN ss.prokind = 'p' THEN (SELECT sql_datetime_sub FROM sys.spt_datatype_info_table WHERE type_name = 'int')
+      ELSE sdit.sql_datetime_sub
+    END
+  ELSE sdit.sql_datetime_sub 
+END 
+AS smallint) AS SQL_DATETIME_SUB
+, CAST(
+CASE
+  WHEN ss.n IS NOT NULL AND st.is_table_type = 1 THEN 2147483647
+  ELSE NULL
+END
+AS sys.int) AS CHAR_OCTET_LENGTH
+, CAST(
+CASE
+  WHEN ss.n IS NULL THEN 0
+  ELSE n 
+END 
+AS sys.int) AS ORDINAL_POSITION
+, CAST(
+CASE
+  WHEN ss.n IS NULL AND ss.proretset THEN 'NO'
+  WHEN st.is_table_type = 1 THEN 'YES'
+  WHEN sdit.nullable = 1 THEN 'YES'
+  ELSE 'NO'
+END
+AS sys.varchar(254)) AS IS_NULLABLE
+, CAST(
+CASE
+  WHEN ss.n IS NULL THEN
+    CASE
+      WHEN ss.proretset THEN 0
+      WHEN ss.prokind = 'p' THEN 56
+      ELSE sdit.ss_data_type
+    END
+  WHEN st.is_table_type = 1 THEN 0
+  ELSE sdit.ss_data_type
+END
+AS sys.tinyint) AS SS_DATA_TYPE
+, CAST(ss.proname AS sys.sysname) AS original_procedure_name
+FROM 
+( 
+  -- CTE to query procedures related to bbf
+  WITH bbf_proc AS (
+    SELECT
+      p.proname as proname,
+      p.proargnames as proargnames,
+      p.proargmodes as proargmodes,
+      p.prokind as prokind,
+      p.proretset as proretset,
+      p.prorettype as prorettype,
+      p.proallargtypes as proallargtypes,
+      p.proargtypes as proargtypes,
+      s.name as schema_name
+    FROM 
+      pg_proc p
+    INNER JOIN (
+      SELECT name as name, schema_id as id  FROM sys.schemas 
+      UNION ALL 
+      SELECT CAST(nspname as sys.sysname) as name, CAST(oid as int) as id 
+        from pg_namespace WHERE nspname in ('sys', 'information_schema')
+    ) as s ON p.pronamespace = s.id
+    WHERE (
+      (pg_has_role(p.proowner, 'USAGE') OR has_function_privilege(p.oid, 'EXECUTE'))
+      AND (s.name != 'sys' 
+        OR p.proname like 'sp\_%' -- filter out internal babelfish-specific procs in sys schema
+        OR p.proname like 'xp\_%'
+        OR p.proname like 'dm\_%'
+        OR p.proname like 'fn\_%'))
+  )
+
+  SELECT *
+  FROM ( 
+    SELECT -- Selects all parameters (input and output), but NOT return values
+    p.proname as proname,
+    p.proargnames as proargnames,
+    p.proargmodes as proargmodes,
+    p.prokind as prokind,
+    p.proretset as proretset,
+    p.prorettype as prorettype,
+    p.schema_name as schema_name,
+    (information_schema._pg_expandarray(
+    COALESCE(p.proallargtypes,
+      CASE 
+        WHEN p.prokind = 'f' THEN (CAST(p.proargtypes AS oid[]))
+        ELSE CAST(p.proargtypes AS oid[])
+      END
+    ))).x AS x,
+    (information_schema._pg_expandarray(
+    COALESCE(p.proallargtypes,
+      CASE 
+        WHEN p.prokind = 'f' THEN (CAST(p.proargtypes AS oid[]))
+        ELSE CAST(p.proargtypes AS oid[])
+      END
+    ))).n AS n
+    FROM bbf_proc p) AS t
+  WHERE (t.proargmodes[t.n] in ('i', 'o', 'b') OR t.proargmodes is NULL)
+
+  UNION ALL
+
+  SELECT -- Selects all return values (this is because inline-table functions could cause duplicate outputs)
+  p.proname as proname,
+  p.proargnames as proargnames,
+  p.proargmodes as proargmodes,
+  p.prokind as prokind,
+  p.proretset as proretset,
+  p.prorettype as prorettype,
+  p.schema_name as schema_name,
+  p.prorettype AS x, 
+  NULL AS n -- null value indicates that we are retrieving the return values of the proc/func
+  FROM bbf_proc p
+) ss
+LEFT JOIN sys.types st ON ss.x = st.user_type_id -- left join'd because return type of table-valued functions may not have an entry in sys.types
+-- Because spt_datatype_info_table does contain user-defind types and their names,
+-- the join below allows us to retrieve the name of the base type of the user-defined type
+LEFT JOIN sys.spt_datatype_info_table sdit ON sdit.type_name = sys.translate_pg_type_to_tsql(st.system_type_id);
+GRANT SELECT ON sys.sp_sproc_columns_view TO PUBLIC;
+
+CALL sys.babelfish_drop_deprecated_object('view', 'sys', 'sp_sproc_columns_view_deprecated_in_2_3_0');
+
+
+/*
+ * JSON MODIFY
+ * This function is used to update the value of a property in a JSON string and returns the updated JSON string.
+ * It has been implemented in three parts:
+ *  1) Set the append and create_if_missing flag as postgres functions do not directly take append and lax/strict mode in the jsonb_path.
+ *  2) To convert the input path into the expected jsonb_path.
+ *  3) To implement the main logic of the JSON_MODIFY function by dividing it into 8 different cases.
+ */
+CREATE OR REPLACE FUNCTION sys.json_modify(in expression sys.NVARCHAR,in path_json TEXT, in new_value TEXT)
+RETURNS sys.NVARCHAR
+AS
+$BODY$
+DECLARE
+    json_path TEXT;
+    json_path_convert TEXT;
+    new_jsonb_path TEXT[];
+    key_value_type TEXT;
+    path_split_array TEXT[];
+    comparison_string TEXT COLLATE "C";
+    len_array INTEGER;
+    word_count INTEGER;
+    create_if_missing BOOL = TRUE;
+    append_modifier BOOL = FALSE;
+    key_exists BOOL;
+    key_value JSONB;
+    json_expression JSONB = expression::JSONB;
+    result_json sys.NVARCHAR;
+BEGIN
+    path_split_array = regexp_split_to_array(TRIM(path_json) COLLATE "C",'\s+');
+    word_count = array_length(path_split_array,1);
+    /* 
+     * This if else block is added to set the create_if_missing and append_modifier flags.
+     * These flags will be used to know the mode and if the optional modifier append is present in the input path_json.
+     * It is necessary as postgres functions do not directly take append and lax/strict mode in the jsonb_path.    
+     */
+    IF word_count = 1 THEN
+        json_path = path_split_array[1];
+        create_if_missing = TRUE;
+        append_modifier = FALSE;
+    ELSIF word_count = 2 THEN 
+        json_path = path_split_array[2];
+        comparison_string = path_split_array[1]; -- append or lax/strict mode
+        IF comparison_string = 'append' THEN
+            append_modifier = TRUE;
+        ELSIF comparison_string = 'strict' THEN
+            create_if_missing = FALSE;
+        ELSIF comparison_string = 'lax' THEN
+            create_if_missing = TRUE;
+        ELSE
+            RAISE invalid_json_text;
+        END IF;
+    ELSIF word_count = 3 THEN
+        json_path = path_split_array[3];
+        comparison_string = path_split_array[1]; -- append mode 
+        IF comparison_string = 'append' THEN
+            append_modifier = TRUE;
+        ELSE
+            RAISE invalid_json_text;
+        END IF;
+        comparison_string = path_split_array[2]; -- lax/strict mode
+        IF comparison_string = 'strict' THEN
+            create_if_missing = FALSE;
+        ELSIF comparison_string = 'lax' THEN
+            create_if_missing = TRUE;
+        ELSE
+            RAISE invalid_json_text;
+        END IF;
+    ELSE
+        RAISE invalid_json_text;
+    END IF;
+
+    -- To convert input jsonpath to the required jsonb_path format
+    json_path_convert = regexp_replace(json_path, '\$\.|]|\$\[' , '' , 'ig'); -- To remove "$." and "]" sign from the string 
+    json_path_convert = regexp_replace(json_path_convert, '\.|\[' , ',' , 'ig'); -- To replace "." and "[" with "," to change into required format
+    new_jsonb_path = CONCAT('{',json_path_convert,'}'); -- Final required format of path by jsonb_set
+
+    key_exists = jsonb_path_exists(json_expression,json_path::jsonpath); -- To check if key exist in the given path
+    
+    --This if else block is to call the jsonb_set function based on the create_if_missing and append_modifier flags
+    IF append_modifier THEN 
+        IF key_exists THEN
+            key_value = jsonb_path_query_first(json_expression,json_path::jsonpath); -- To get the value of the key
+            key_value_type = jsonb_typeof(key_value);
+            IF key_value_type = 'array' THEN
+                len_array = jsonb_array_length(key_value);
+                /*
+                 * As jsonb_insert requires the index of the value to be inserted, so the below FORMAT function changes the path format into the required jsonb_insert path format.
+                 * Eg: JSON_MODIFY('{"name":"John","skills":["C#","SQL"]}','append $.skills','Azure'); -> converts the path from '$.skills' to '{skills,2}' instead of '{skills}'
+                 */
+                new_jsonb_path = FORMAT('%s,%s}',TRIM('}' FROM new_jsonb_path::TEXT),len_array);
+                IF new_value IS NULL THEN
+                    result_json = jsonb_insert(json_expression,new_jsonb_path,'null'); -- This needs to be done because "to_jsonb(coalesce(new_value, 'null'))" does not result in a JSON NULL
+                ELSE
+                    result_json = jsonb_insert(json_expression,new_jsonb_path,to_jsonb(new_value));
+                END IF;
+            ELSE
+                IF NOT create_if_missing THEN
+                    RAISE sql_json_array_not_found;
+                ELSE
+                    result_json = json_expression;
+                END IF;
+            END IF;
+        ELSE
+            IF NOT create_if_missing THEN
+                RAISE sql_json_object_not_found;
+            ELSE
+                result_json = jsonb_insert(json_expression,new_jsonb_path,to_jsonb(array_agg(new_value))); -- array_agg is used to convert the new_value text into array format as we append functionality is being used
+            END IF;
+        END IF;
+    ELSE --When no append modifier is present
+        IF new_value IS NOT NULL THEN
+            IF key_exists OR create_if_missing THEN
+                result_json = jsonb_set_lax(json_expression,new_jsonb_path,to_jsonb(new_value),create_if_missing);
+            ELSE
+                RAISE sql_json_object_not_found;
+            END IF;
+        ELSE
+            IF key_exists THEN
+                IF NOT create_if_missing THEN
+                    result_json = jsonb_set_lax(json_expression,new_jsonb_path,to_jsonb(new_value));
+                ELSE
+                    result_json = jsonb_set_lax(json_expression,new_jsonb_path,to_jsonb(new_value),create_if_missing,'delete_key');
+                END IF;
+            ELSE
+                IF NOT create_if_missing THEN
+                    RAISE sql_json_object_not_found;
+                ELSE
+                    result_json = jsonb_set_lax(json_expression,new_jsonb_path,to_jsonb(new_value),FALSE);
+                END IF;
+            END IF;
+        END IF;
+    END IF;  -- If append_modifier block ends here
+    RETURN result_json;
+EXCEPTION
+    WHEN invalid_json_text THEN
+            RAISE USING MESSAGE = 'JSON path is not properly formatted',
+                        DETAIL = FORMAT('Unexpected keyword "%s" is found.',comparison_string),
+                        HINT = 'Change "modifier/mode" parameter to the proper value and try again.';
+    WHEN sql_json_array_not_found THEN
+            RAISE USING MESSAGE = 'array cannot be found in the specified JSON path',
+                        HINT = 'Change JSON path to target array property and try again.';
+    WHEN sql_json_object_not_found THEN
+            RAISE USING MESSAGE = 'property cannot be found on the specified JSON path';
+END;        
+$BODY$
+LANGUAGE plpgsql;
+
+
+CREATE OR REPLACE FUNCTION sys.babelfish_conv_string_to_time(IN p_datatype TEXT,
+                                                                 IN p_timestring TEXT,
+                                                                 IN p_style NUMERIC DEFAULT 0)
+RETURNS TIME WITHOUT TIME ZONE
+AS
+$BODY$
+DECLARE
+    v_hours SMALLINT;
+    v_style SMALLINT;
+    v_scale SMALLINT;
+    v_daypart VARCHAR COLLATE "C";
+    v_seconds VARCHAR COLLATE "C";
+    v_minutes SMALLINT;
+    v_fseconds VARCHAR COLLATE "C";
+    v_datatype VARCHAR COLLATE "C";
+    v_timestring VARCHAR COLLATE "C";
+    v_err_message VARCHAR COLLATE "C";
+    v_src_datatype VARCHAR COLLATE "C";
+    v_timeunit_mask VARCHAR COLLATE "C";
+    v_datatype_groups TEXT[];
+    v_regmatch_groups TEXT[];
+    AMPM_REGEXP CONSTANT VARCHAR COLLATE "C" := '\s*([AP]M)';
+    TIMEUNIT_REGEXP CONSTANT VARCHAR COLLATE "C" := '\s*(\d{1,2})\s*';
+    FRACTSECS_REGEXP CONSTANT VARCHAR COLLATE "C" := '\s*(\d{1,9})';
+    HHMMSSFS_REGEXP CONSTANT VARCHAR COLLATE "C" := concat('^', TIMEUNIT_REGEXP,
+                                               '\:', TIMEUNIT_REGEXP,
+                                               '\:', TIMEUNIT_REGEXP,
+                                               '(?:\.|\:)', FRACTSECS_REGEXP, '$');
+    HHMMSS_REGEXP CONSTANT VARCHAR COLLATE "C" := concat('^', TIMEUNIT_REGEXP, '\:', TIMEUNIT_REGEXP, '\:', TIMEUNIT_REGEXP, '$');
+    HHMMFS_REGEXP CONSTANT VARCHAR COLLATE "C" := concat('^', TIMEUNIT_REGEXP, '\:', TIMEUNIT_REGEXP, '\.', FRACTSECS_REGEXP, '$');
+    HHMM_REGEXP CONSTANT VARCHAR COLLATE "C" := concat('^', TIMEUNIT_REGEXP, '\:', TIMEUNIT_REGEXP, '$');
+    HH_REGEXP CONSTANT VARCHAR COLLATE "C" := concat('^', TIMEUNIT_REGEXP, '$');
+    DATATYPE_REGEXP CONSTANT VARCHAR COLLATE "C" := '^(TIME)\s*(?:\()?\s*((?:-)?\d+)?\s*(?:\))?$';
+BEGIN
+    v_datatype := trim(regexp_replace(p_datatype, 'DATETIME', 'TIME', 'gi'));
+    v_timestring := upper(trim(p_timestring));
+    v_style := floor(p_style)::SMALLINT;
+
+    v_datatype_groups := regexp_matches(v_datatype, DATATYPE_REGEXP, 'gi');
+
+    v_src_datatype := upper(v_datatype_groups[1]);
+    v_scale := v_datatype_groups[2]::SMALLINT;
+
+    IF (v_src_datatype IS NULL) THEN
+        RAISE datatype_mismatch;
+    ELSIF (coalesce(v_scale, 0) NOT BETWEEN 0 AND 7)
+    THEN
+        RAISE interval_field_overflow;
+    ELSIF (v_scale IS NULL) THEN
+        v_scale := 7;
+    END IF;
+
+    IF (scale(p_style) > 0) THEN
+        RAISE most_specific_type_mismatch;
+    ELSIF (NOT ((v_style BETWEEN 0 AND 14) OR
+             (v_style BETWEEN 20 AND 25) OR
+             (v_style BETWEEN 100 AND 114) OR
+             v_style IN (120, 121, 126, 127, 130, 131)))
+    THEN
+        RAISE invalid_parameter_value;
+    END IF;
+
+    v_daypart := substring(v_timestring, 'AM|PM');
+    v_timestring := trim(regexp_replace(v_timestring, coalesce(v_daypart, ''), ''));
+
+    v_timeunit_mask :=
+        CASE
+           WHEN (v_timestring ~* HHMMSSFS_REGEXP) THEN HHMMSSFS_REGEXP
+           WHEN (v_timestring ~* HHMMSS_REGEXP) THEN HHMMSS_REGEXP
+           WHEN (v_timestring ~* HHMMFS_REGEXP) THEN HHMMFS_REGEXP
+           WHEN (v_timestring ~* HHMM_REGEXP) THEN HHMM_REGEXP
+           WHEN (v_timestring ~* HH_REGEXP) THEN HH_REGEXP
+        END;
+
+    IF (v_timeunit_mask IS NULL) THEN
+        RAISE invalid_datetime_format;
+    END IF;
+
+    v_regmatch_groups := regexp_matches(v_timestring, v_timeunit_mask, 'gi');
+
+    v_hours := v_regmatch_groups[1]::SMALLINT;
+    v_minutes := v_regmatch_groups[2]::SMALLINT;
+
+    IF (v_timestring ~* HHMMFS_REGEXP) THEN
+        v_fseconds := v_regmatch_groups[3];
+    ELSE
+        v_seconds := v_regmatch_groups[3];
+        v_fseconds := v_regmatch_groups[4];
+    END IF;
+
+   IF (v_daypart IS NOT NULL) THEN
+      IF ((v_daypart = 'AM' AND v_hours NOT BETWEEN 0 AND 12) OR
+          (v_daypart = 'PM' AND v_hours NOT BETWEEN 1 AND 23))
+      THEN
+          RAISE numeric_value_out_of_range;
+      ELSIF (v_daypart = 'PM' AND v_hours < 12) THEN
+          v_hours := v_hours + 12;
+      ELSIF (v_daypart = 'AM' AND v_hours = 12) THEN
+          v_hours := v_hours - 12;
+      END IF;
+   END IF;
+
+    v_fseconds := sys.babelfish_get_microsecs_from_fractsecs(v_fseconds, v_scale);
+    v_seconds := concat_ws('.', v_seconds, v_fseconds);
+
+    RETURN make_time(v_hours, v_minutes, v_seconds::NUMERIC);
+EXCEPTION
+    WHEN most_specific_type_mismatch THEN
+        RAISE USING MESSAGE := 'Argument data type NUMERIC is invalid for argument 3 of conv_string_to_time function.',
+                    DETAIL := 'Use of incorrect "style" parameter value during conversion process.',
+                    HINT := 'Change "style" parameter to the proper value and try again.';
+
+    WHEN invalid_parameter_value THEN
+        RAISE USING MESSAGE := format('The style %s is not supported for conversions from VARCHAR to TIME.', v_style),
+                    DETAIL := 'Use of incorrect "style" parameter value during conversion process.',
+                    HINT := 'Change "style" parameter to the proper value and try again.';
+
+    WHEN datatype_mismatch THEN
+        RAISE USING MESSAGE := 'Source data type should be ''TIME'' or ''TIME(n)''.',
+                    DETAIL := 'Use of incorrect "datatype" parameter value during conversion process.',
+                    HINT := 'Change "datatype" parameter to the proper value and try again.';
+
+    WHEN interval_field_overflow THEN
+        RAISE USING MESSAGE := format('Specified scale %s is invalid.', v_scale),
+                    DETAIL := 'Use of incorrect data type scale value during conversion process.',
+                    HINT := 'Change scale component of data type parameter to be in range [0..7] and try again.';
+
+    WHEN numeric_value_out_of_range THEN
+        RAISE USING MESSAGE := 'Could not extract correct hour value due to it''s inconsistency with AM|PM day part mark.',
+                    DETAIL := 'Extracted hour value doesn''t fall in correct day part mark range: 0..12 for "AM" or 1..23 for "PM".',
+                    HINT := 'Correct a hour value in the source string or remove AM|PM day part mark out of it.';
+
+    WHEN invalid_datetime_format THEN
+        RAISE USING MESSAGE := 'Conversion failed when converting time from character string.',
+                    DETAIL := 'Incorrect using of pair of input parameters values during conversion process.',
+                    HINT := 'Check the input parameters values, correct them if needed, and try again.';
+
+    WHEN invalid_text_representation THEN
+        GET STACKED DIAGNOSTICS v_err_message = MESSAGE_TEXT;
+        v_err_message := substring(lower(v_err_message), 'integer\:\s\"(.*)\"');
+
+        RAISE USING MESSAGE := format('Error while trying to convert "%s" value to SMALLINT data type.',
+                                      v_err_message),
+                    DETAIL := 'Supplied value contains illegal characters.',
+                    HINT := 'Correct supplied value, remove all illegal characters.';
+END;
+$BODY$
+LANGUAGE plpgsql
+VOLATILE
+RETURNS NULL ON NULL INPUT;
 
 
 CREATE OR REPLACE PROCEDURE sys.sp_helpdb(IN "@dbname" VARCHAR(32))

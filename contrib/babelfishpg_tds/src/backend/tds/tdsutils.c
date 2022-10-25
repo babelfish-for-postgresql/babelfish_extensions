@@ -16,17 +16,54 @@
 
 #include "postgres.h"
 
+#include "access/genam.h"
+#include "access/htup_details.h"
+#include "access/table.h"
+#include "catalog/pg_authid.h"
+#include "catalog/pg_db_role_setting.h"
+#include "commands/dbcommands.h"
 #include "src/include/tds_int.h"
 #include "nodes/nodes.h"
 #include "nodes/parsenodes.h"
 #include "parser/parser.h"
 #include "parser/parse_node.h"
+#include "utils/acl.h"
 #include "utils/elog.h"
+#include "utils/fmgroids.h"
+#include "utils/rel.h"
+#include "utils/syscache.h"
+#include "miscadmin.h"
+#include "utils/builtins.h"
 
 static int FindMatchingParam(List *params, const char *name);
 static Node * TransformParamRef(ParseState *pstate, ParamRef *pref);
 Node * TdsFindParam(ParseState *pstate, ColumnRef *cref);
 void TdsErrorContextCallback(void *arg);
+
+/* Create an object_access_hook */
+object_access_hook_type next_object_access_hook = NULL;
+void babelfish_object_access(ObjectAccessType access, Oid classId, Oid objectId, int subId, void *arg);
+
+void tdsutils_ProcessUtility (PlannedStmt *pstmt, const char *queryString, bool readOnlyTree, ProcessUtilityContext context, ParamListInfo params, QueryEnvironment *queryEnv, DestReceiver *dest, QueryCompletion *completionTag);
+ProcessUtility_hook_type next_ProcessUtility = NULL;
+static void call_next_ProcessUtility (PlannedStmt *pstmt, const char *queryString, bool readOnlyTree, ProcessUtilityContext context, ParamListInfo params, QueryEnvironment *queryEnv, DestReceiver *dest, QueryCompletion *completionTag);
+static void check_babelfish_droprole_restrictions(char *role);
+static void check_babelfish_renamerole_restrictions(char *role);
+static void check_babelfish_renamedb_restrictions(Oid target_db_id);
+static void check_babelfish_dropdb_restrictions(Oid target_db_id);
+static bool is_babelfish_ownership_enabled(ArrayType *array);
+static bool is_babelfish_role(const char *role);
+
+/* Role specific handlers */
+static bool handle_drop_role (DropRoleStmt* drop_role_stmt);
+static bool handle_rename(RenameStmt* rename_stmt);
+
+/* Drop database handler */
+static bool handle_dropdb(DropdbStmt *dropdb_stmt);
+
+static char *get_role_name(RoleSpec *role);
+static bool have_createdb_privilege(void);
+char * get_rolespec_name_internal(const RoleSpec *role, bool missing_ok);
 
 /*
  * GetUTF8CodePoint - extract the next Unicode code point from 1..4
@@ -540,4 +577,572 @@ TdsErrorContextCallback(void *arg)
 			errcontext("TDS Protocol: %s",
 					tdsErrorContext->err_text);
 	}
+}
+
+void
+babelfish_object_access(ObjectAccessType access,
+		Oid classId,
+		Oid objectId,
+		int subId,
+		void *arg)
+{
+	if (next_object_access_hook)
+		(* next_object_access_hook) (access, classId, objectId, subId, arg);
+
+	switch (access)
+	{
+		case OAT_DROP:
+			{
+				switch (classId)
+				{
+					case AuthIdRelationId:
+						{
+							/*
+							 * Prevent the user from dropping a babelfish role
+							 * when not in babelfish mode by checking for
+							 * dependency on the master_guest, tempdb_guest, and
+							 * msdb_guest roles. User can override if needed.
+							 */
+							if (sql_dialect != SQL_DIALECT_TSQL)
+							{
+								Oid bbf_master_guest_oid;
+								Oid bbf_tempdb_guest_oid;
+								Oid bbf_msdb_guest_oid;
+
+								bbf_master_guest_oid = get_role_oid("master_guest", true);
+								bbf_tempdb_guest_oid = get_role_oid("tempdb_guest", true);
+								bbf_msdb_guest_oid = get_role_oid("msdb_guest", true);
+								if (OidIsValid(bbf_master_guest_oid)
+									&& OidIsValid(bbf_tempdb_guest_oid)
+									&& OidIsValid(bbf_msdb_guest_oid)
+									&& is_member_of_role(objectId, bbf_master_guest_oid)
+									&& is_member_of_role(objectId, bbf_tempdb_guest_oid)
+									&& is_member_of_role(objectId, bbf_msdb_guest_oid)
+									&& !enable_drop_babelfish_role)
+									ereport(ERROR,
+											(errcode(ERRCODE_OBJECT_IN_USE),
+											 errmsg("Babelfish-created login cannot be dropped or altered outside of a Babelfish session")));
+							}
+						}
+						break;
+					default:
+						break;
+				}
+			}
+			break;
+		default:
+			break;
+	}
+}
+
+/*
+ * tdsutils_ProcessUtility
+ *
+ * Description: The entry point function into the module (for the most part).  Responsible
+ * 	for additional validation for certain statements, and for elevating to real
+ * 	superuser for certain commands where we require it.
+ *
+ * Returns: Nothing
+ */
+void tdsutils_ProcessUtility(PlannedStmt *pstmt,
+		const char *queryString,
+		bool readOnlyTree,
+		ProcessUtilityContext context,
+		ParamListInfo params,
+		QueryEnvironment *queryEnv,
+		DestReceiver *dest,
+		QueryCompletion *completionTag)
+{
+	Node *parsetree;
+	bool handle_result = true;
+	/*
+	 * If the given node tree is read-only, make a copy to ensure that parse
+	 * transformations don't damage the original tree.  This might cause us to
+	 * create unnecessary copies, but in theory the impact of the unnecessary
+	 * copies is negligible.
+	 */
+	if (readOnlyTree)
+		pstmt = copyObject(pstmt);
+	parsetree = pstmt->utilityStmt;
+
+	/*
+	 * Explicitly skip TransactionStmt commands prior to calling the superuser()
+	 * function.
+	 *
+	 * If we are in an aborted transaction, some TransactionStmts (e.g.
+	 * ROLLBACK) will be allowed to pass through to the process utility hooks.
+	 * In this aborted state, the syscache lookup that superuser() does is not
+	 * safe.  However, we do not do any kind of handling for TransactionStmts in
+	 * this hook anyway, so we can easily avoid this issue by skipping it.
+	 */
+	if (parsetree && IsA(parsetree, TransactionStmt))
+	{
+		call_next_ProcessUtility(pstmt, queryString, readOnlyTree, context, params, queryEnv, dest, completionTag);
+		return;
+	}
+
+	/* Ignore any of this for real superusers */
+	if (superuser())
+	{
+		call_next_ProcessUtility(pstmt, queryString, readOnlyTree, context, params, queryEnv, dest, completionTag);
+		return;
+	}
+	switch (nodeTag(parsetree))
+	{
+		/* Role lock down. */
+		case T_DropRoleStmt:
+			handle_result = handle_drop_role((DropRoleStmt *)parsetree);
+			break;
+		case T_RenameStmt:
+			handle_result = handle_rename((RenameStmt *)parsetree);
+			break;
+		/* Case that deal with Drop Database */
+		case T_DropdbStmt:
+			handle_result = handle_dropdb((DropdbStmt *)parsetree);
+			break;
+	}
+
+	/*
+	 * handle_result:
+	 * 	true - If this is a command that we're not going to handle, allow it to
+	 * 		processed in the normal way.
+	 * 	false - Do nothing else.  We've most likely reported an error, and most likely
+	 * 		won't end up hitting this.
+	 */
+	if(handle_result)
+		call_next_ProcessUtility(pstmt, queryString, readOnlyTree, context, params, queryEnv, dest, completionTag);
+}
+
+/*
+ * call_next_ProcessUtility
+ *
+ * Description: Helper function which calls the next ProcessUtility function in
+ * 	the chain if one exists, or calls the standard Postgres one if
+ * 	we're the only one.
+ *
+ * Returns: nothing
+ */
+static void
+call_next_ProcessUtility (PlannedStmt *pstmt,
+        const char *queryString,
+        bool readOnlyTree,
+        ProcessUtilityContext context,
+        ParamListInfo params,
+        QueryEnvironment *queryEnv,
+        DestReceiver *dest,
+        QueryCompletion *completionTag)
+{
+    if (next_ProcessUtility)
+        next_ProcessUtility (pstmt, queryString, readOnlyTree, context, params, queryEnv, dest, completionTag);
+    else
+        standard_ProcessUtility (pstmt, queryString, readOnlyTree, context, params, queryEnv, dest, completionTag);
+}
+
+/*
+ * handle_drop_role
+ *
+ * Description: This function deals with DROP ROLE.
+ *
+ * Returns: true - should allow statement to continue
+ * 	false - otherwise
+ */
+static bool
+handle_drop_role (DropRoleStmt* drop_role_stmt)
+{
+    ListCell* item = NULL;
+
+    /* We should not be handling superusers */
+    Assert(!superuser());
+    Assert(NULL != drop_role_stmt);
+
+    /*
+     * Postgres allows you to drop multiple roles at the same time, which means
+     * we get to parse out the roles by hand.  We could theoretically allow for skipping
+     * this role if it's specified in a list; however, blocking the statement seems less error
+     * prone at this point.
+     */
+    foreach(item, drop_role_stmt->roles)
+    {
+        char *role = NULL;
+
+        /* Roles is a list of RoleSpecs now */
+        RoleSpec *node = lfirst(item);
+
+        /* If the role does not exist, the role name will be NULL */
+        role = get_role_name(node);
+        if (NULL == role)
+            continue;
+
+        check_babelfish_droprole_restrictions(role);
+        pfree(role);
+        role = NULL;
+    }
+    return true;
+}
+
+/*
+ * get_role_name
+ *
+ * Description: This function is used to get the role name
+ *
+ * Returns: The (palloc'd) role name (or NULL if the role does not exist)
+ */
+static char *
+get_role_name(RoleSpec *role)
+{
+    Assert(NULL != role);
+
+    /*
+     * get_rolespec_name_internal will return NULL if called for ROLESPEC_PUBLIC.
+     * Postgres will return a different error if the user tries to modify the public role.
+     * It will be a better user experience to return that instead of tdsutils returning an error
+     * here by calling get_rolespec_name_internal. So return the public role name from here
+     * instead of calling get_rolespec_name_internal.
+     */
+    if(ROLESPEC_PUBLIC == role->roletype)
+    {
+        /* Callers are expecting the return value to be palloc'd */
+        return pstrdup(PUBLIC_ROLE_NAME);
+    }
+    return (char *) get_rolespec_name_internal(role, true);
+}
+
+/*
+ * Given a RoleSpec, returns a palloc'ed copy of the corresponding role's name.
+ * If missing_ok is true and the role does not exist, NULL is returned.  If
+ * missing_ok if false and the role does not exists, this function errors out.
+ */
+char *
+get_rolespec_name_internal(const RoleSpec *role, bool missing_ok)
+{
+	HeapTuple	tp;
+	Form_pg_authid authForm;
+	char	   *rolename;
+
+	switch (role->roletype)
+	{
+		case ROLESPEC_CSTRING:
+			Assert(role->rolename);
+			tp = SearchSysCache1(AUTHNAME, CStringGetDatum(role->rolename));
+			if (!HeapTupleIsValid(tp) && !missing_ok)
+				ereport(ERROR,
+						(errcode(ERRCODE_UNDEFINED_OBJECT),
+						 errmsg("role \"%s\" does not exist", role->rolename)));
+			break;
+
+		case ROLESPEC_CURRENT_ROLE:
+		case ROLESPEC_CURRENT_USER:
+			tp = SearchSysCache1(AUTHOID, GetUserId());
+			if (!HeapTupleIsValid(tp))
+				elog(ERROR, "cache lookup failed for role %u", GetUserId());
+			break;
+
+		case ROLESPEC_SESSION_USER:
+			tp = SearchSysCache1(AUTHOID, GetSessionUserId());
+			if (!HeapTupleIsValid(tp))
+				elog(ERROR, "cache lookup failed for role %u", GetSessionUserId());
+			break;
+
+		case ROLESPEC_PUBLIC:
+			if (!missing_ok)
+				ereport(ERROR,
+						(errcode(ERRCODE_UNDEFINED_OBJECT),
+						 errmsg("role \"%s\" does not exist", "public")));
+			tp = NULL;
+			break;
+
+		default:
+			elog(ERROR, "unexpected role type %d", role->roletype);
+	}
+
+	if (!HeapTupleIsValid(tp))
+		return NULL;
+
+	authForm = (Form_pg_authid) GETSTRUCT(tp);
+	rolename = pstrdup(NameStr(authForm->rolname));
+	ReleaseSysCache(tp);
+
+	return rolename;
+}
+
+/*
+ *  check_babelfish_droprole_restrictions
+ *
+ *  Implements following one additional limitation to drop role stmt
+ *  block dropping an active babelfish role/user
+ */
+static void
+check_babelfish_droprole_restrictions(char *role)
+{
+	if (sql_dialect == SQL_DIALECT_TSQL)
+		return;
+	if (is_babelfish_role(role))
+	{
+		pfree(role);	/* avoid mem leak */
+		ereport(ERROR,
+			(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
+				errmsg("Babelfish-created users/roles cannot be dropped or altered outside of a Babelfish session")));
+	}
+}
+
+/*
+ * is_babelfish_role
+ *
+ * Helper function to check if a given role is babelfish user or role
+ *
+ * Notes:
+ * 	Direct evidence of babelfish membership is stored in babelfish catalog,
+ * 	that is only accessible in babelfish_db.
+ * 	Since role related DDLs could be executed in any PG databases,
+ * 	This function check the underlying assumption on the membership chain instead
+ * 	sysadmin <-- dbo* <--- db_owner* <--- users/roles
+ *
+ * actual dbo and db_owner name varies across different babelfish logical databases
+ */
+static bool
+is_babelfish_role(const char *role)
+{
+	Oid         sysadmin_oid;
+	Oid         role_oid;
+
+	sysadmin_oid = get_role_oid(BABELFISH_SYSADMIN, true);  /* missing OK */
+	role_oid = get_role_oid(role, true); /* missing OK */
+
+	if (sysadmin_oid == InvalidOid || role_oid == InvalidOid)
+		return false;
+
+	if (is_member_of_role(sysadmin_oid, role_oid))
+		return true;
+
+	return false;
+}
+
+/*
+ * handle_rename
+ *
+ * Description: This function handles all potential rename operations that don't go through
+ * 	the event trigger infrastructure.
+ *
+ * Returns: true - If it passes through all the basic checks.
+ */
+static bool
+handle_rename(RenameStmt* rename_stmt)
+{
+    Assert(NULL != rename_stmt);
+
+    /*
+     * The majority of potential renames should not be coming through
+     * here as they're handled by the event trigger infrastructure. We
+     * will; however, intercept calls for databases, table spaces, and
+     * (obviously) event triggers, so we need to ignore those.
+     */
+    if (OBJECT_ROLE == rename_stmt->renameType)
+        check_babelfish_renamerole_restrictions(rename_stmt->subname);
+
+    else if (OBJECT_DATABASE == rename_stmt->renameType)
+    {
+	    Oid target_db_id = InvalidOid;
+	    
+	    /*
+	     * Basic checks to avoid non-privileged user to access metadata.
+	     * Always let backend to handle error.
+	     */
+	    target_db_id = get_database_oid(rename_stmt->subname, true);
+	    if (target_db_id == InvalidOid)
+		    return true;
+
+	    /* must be owner */
+	    if (!pg_database_ownercheck(target_db_id, GetUserId()))
+		    return true;
+
+	    /* must have createdb rights */
+	    if (!have_createdb_privilege())
+		    return true;
+
+	    check_babelfish_renamedb_restrictions(target_db_id);
+    }
+    return true;
+}
+
+/*
+ * check_babelfish_renamerole_restrictions
+ *
+ * Implements following one additional limitation to drop role stmt
+ * block renaming an active babelfish role/user
+ */
+static void
+check_babelfish_renamerole_restrictions(char *role)
+{
+	if (sql_dialect == SQL_DIALECT_TSQL)
+		return;
+	if (is_babelfish_role(role))
+	{
+		pfree(role);	/* avoid mem leak */
+		ereport(ERROR,
+				(errcode(ERRCODE_INSUFFICIENT_PRIVILEGE),
+				 errmsg("Babelfish-created users/roles cannot be dropped or altered outside of a Babelfish session")));
+	}
+}
+
+/*
+ * Check if current user has create db privileges
+ */
+static bool
+have_createdb_privilege(void)
+{
+	bool		result = false;
+	HeapTuple	utup;
+
+	/* Superusers can always do everything */
+	if (superuser())
+		return true;
+
+	utup = SearchSysCache1(AUTHOID, ObjectIdGetDatum(GetUserId()));
+	if (HeapTupleIsValid(utup))
+	{
+		result = ((Form_pg_authid) GETSTRUCT(utup))->rolcreatedb;
+		ReleaseSysCache(utup);
+	}
+	return result;
+}
+
+/*
+ *  check_babelfish_renamedb_restrictions
+ *
+ *  Implements following one additional limitation to rename database stmt
+ *  1. block renaming an active babelfish database (indicated by babelfishpg_tsql.database_name)
+ */
+static void
+check_babelfish_renamedb_restrictions(Oid target_db_id)
+{
+	const char  *babelfish_db_name = NULL;
+	Oid			babelfish_db_id = InvalidOid;
+	babelfish_db_name = GetConfigOption("babelfishpg_tsql.database_name", true, false);
+
+	if (!babelfish_db_name) /* not defined */
+		return;
+
+	babelfish_db_id = get_database_oid(babelfish_db_name, true);
+	if (babelfish_db_id == target_db_id) /* rename active babelfish database */
+		ereport(ERROR,
+				(errcode(ERRCODE_OBJECT_IN_USE),
+				 errmsg("cannot rename active babelfish database")));
+}
+
+/*
+ *  handle_dropdb
+ *
+ *  Implements following two additional limitation to drop database stmt
+ *  1. block dropping an active babelfish database (indicated by babelfishpg_tsql.database_name)
+ *  2. block dropping an inactive babelfish database containing babelfish metadata (indicated by babelfishpg_tsql.enable_ownership_structure)
+ */
+static bool
+handle_dropdb(DropdbStmt *dropdb_stmt)
+{
+	Oid	        target_db_id = InvalidOid;
+	/*
+	 * Basic checkings to avoid non-privileged user to access metadata
+	 * allways let backend to handle error
+	 */
+	target_db_id = get_database_oid(dropdb_stmt->dbname, true);
+	if (target_db_id == InvalidOid)
+		return true;
+
+	/* Permission checks */
+	if (!pg_database_ownercheck(target_db_id, GetUserId()))
+		return true;
+
+	check_babelfish_dropdb_restrictions(target_db_id);
+	return true;
+}
+
+static void
+check_babelfish_dropdb_restrictions(Oid target_db_id)
+{
+	Relation    relsetting;
+	HeapTuple   tuple;
+	ScanKeyData scankey[2];
+	SysScanDesc scan;
+	const char  *babelfish_db_name = NULL;
+	Oid			babelfish_db_id = InvalidOid;
+	bool        has_bbf_md = false;
+
+	babelfish_db_name = GetConfigOption("babelfishpg_tsql.database_name", true, false);
+	if (!babelfish_db_name) /* not define */
+		return;
+	babelfish_db_id = get_database_oid(babelfish_db_name, true);
+	if (babelfish_db_id == target_db_id) /* drop active babelfish database */
+		ereport(ERROR,
+				(errcode(ERRCODE_OBJECT_IN_USE),
+				 errmsg("cannot drop active babelfish database")));
+
+	/*
+	 * check if it's an inactive babelfish database.
+	 * get db configs
+	 */
+	relsetting = table_open(DbRoleSettingRelationId, AccessShareLock);
+	ScanKeyInit(&scankey[0],
+				Anum_pg_db_role_setting_setdatabase,
+				BTEqualStrategyNumber, F_OIDEQ,
+				ObjectIdGetDatum(target_db_id));
+	ScanKeyInit(&scankey[1],
+				Anum_pg_db_role_setting_setrole,
+				BTEqualStrategyNumber, F_OIDEQ,
+				ObjectIdGetDatum(InvalidOid));
+	scan = systable_beginscan(relsetting, DbRoleSettingDatidRolidIndexId, true,
+							NULL, 2, scankey);
+	tuple = systable_getnext(scan);
+	if (HeapTupleIsValid(tuple))
+	{
+		bool        isnull;
+		Datum       datum;
+		ArrayType  	*configs = NULL;
+
+		datum = heap_getattr(tuple, Anum_pg_db_role_setting_setconfig,
+							RelationGetDescr(relsetting), &isnull);
+		if (!isnull)
+			configs = DatumGetArrayTypeP(datum);
+
+		if (configs && is_babelfish_ownership_enabled(configs))
+			has_bbf_md = true;
+	}
+	systable_endscan(scan);
+	table_close(relsetting, AccessShareLock);
+	if (has_bbf_md)
+		ereport(ERROR,
+				(errcode(ERRCODE_OBJECT_IN_USE),
+				 errmsg("babelfish metadata not removed, please run remove_babelfish before dropping database")));
+}
+
+/*
+ *  is_babelfish_ownership_enabled
+ *
+ *  helper function to test value of babelfishpg_tsql.enable_ownership_structure
+ */
+static bool
+is_babelfish_ownership_enabled(ArrayType *array)
+{
+	int i;
+	for (i = 1; i <= ARR_DIMS(array)[0]; i++)
+	{
+		Datum		d;
+		bool		isnull;
+		char	   *s;
+		char	   *name;
+		char	   *value;
+		d = array_ref(array, 1, &i,
+					  -1 /* varlenarray */ ,
+					  -1 /* TEXT's typlen */ ,
+					  false /* TEXT's typbyval */ ,
+					  TYPALIGN_INT /* TEXT's typalign */ ,
+					  &isnull);
+		if (isnull)
+			continue;
+		s = TextDatumGetCString(d);
+		ParseLongOption(s, &name, &value);
+		if ((0 == strncmp(name, "babelfishpg_tsql.enable_ownership_structure", 44))
+			&& (0 == strncmp(value, "true", 4)))
+			return true;
+	}
+	return false;
 }
