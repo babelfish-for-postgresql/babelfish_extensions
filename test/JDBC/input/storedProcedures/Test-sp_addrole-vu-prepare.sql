@@ -1,3 +1,3 @@
--- tsql
-CREATE ROLE sp_addrole_r1;
+-- create a temporary table
+CREATE TABLE tmp_sp_addrole(addRole sys.SYSNAME);
 GO

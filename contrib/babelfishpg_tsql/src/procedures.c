@@ -14,6 +14,7 @@
 #include "access/xact.h"
 #include "catalog/pg_type.h"
 #include "commands/prepare.h"
+#include "common/string.h"
 #include "executor/spi.h"
 #include "fmgr.h"
 #include "funcapi.h"
@@ -56,6 +57,7 @@ static List *gen_sp_addrole_subcmds(const char *user);
 static List *gen_sp_droprole_subcmds(const char *user);
 static List *gen_sp_addrolemember_subcmds(const char *user, const char *member);
 static List *gen_sp_droprolemember_subcmds(const char *user, const char *member);
+static char* rolname_check(char* rolname);
 
 char *sp_describe_first_result_set_view_name = NULL;
 
@@ -1036,6 +1038,31 @@ create_xp_instance_regread_in_master_dbo_internal(PG_FUNCTION_ARGS)
 	PG_RETURN_INT32(0);
 }
 
+static char* rolname_check(char* rolname){
+	size_t		len;
+	/*
+	 * Skip leading and trailing whitespace
+	 */
+	while (isspace((unsigned char) *rolname))
+		rolname++;
+
+	len = strlen(rolname);
+	while (len > 0 && isspace((unsigned char) rolname[len - 1]))
+		rolname[--len] = '\0';
+
+	if (!len)
+		ereport(ERROR, (errcode(ERRCODE_NULL_VALUE_NOT_ALLOWED),
+			errmsg("query argument of procedure is null")));
+
+	/* Role name cannot contain '\' */
+	if(strchr(rolname, ' ') != NULL)
+		ereport(ERROR, (errcode(ERRCODE_SYNTAX_ERROR),errmsg("query argument of procedure contains whitespace")));
+
+	/* Role name cannot contain '\' */
+	if(strchr(rolname, '\\') != NULL)
+		ereport(ERROR, (errcode(ERRCODE_SYNTAX_ERROR),errmsg("query argument of procedure contains \\")));
+	return rolname;
+}
 Datum sp_addrole(PG_FUNCTION_ARGS)
 {
 	char *rolname;
@@ -1049,7 +1076,9 @@ Datum sp_addrole(PG_FUNCTION_ARGS)
 							(superuser() ? PGC_SUSET : PGC_USERSET),
 							PGC_S_SESSION, GUC_ACTION_SAVE, true, 0, false);
 
-		rolname = text_to_cstring(PG_GETARG_TEXT_PP(0));
+		rolname = PG_ARGISNULL(0) ? NULL : TextDatumGetCString(PG_GETARG_TEXT_PP(0));
+
+		rolname = rolname_check(rolname);
 
 		/* Advance cmd counter to make the delete visible */
 		CommandCounterIncrement();
@@ -1133,7 +1162,7 @@ gen_sp_addrole_subcmds(const char *user)
 	 */
 	user_options = lappend(user_options,
 				makeDefElem("original_user_name",
-				(Node *) makeString(user),
+				(Node *) makeString((char *)user),
 						-1));
 	rolestmt->options = list_concat(rolestmt->options, user_options);
 
@@ -1153,7 +1182,9 @@ Datum sp_droprole(PG_FUNCTION_ARGS)
 							(superuser() ? PGC_SUSET : PGC_USERSET),
 							PGC_S_SESSION, GUC_ACTION_SAVE, true, 0, false);
 
-		rolname = text_to_cstring(PG_GETARG_TEXT_PP(0));
+		rolname = PG_ARGISNULL(0) ? NULL : TextDatumGetCString(PG_GETARG_TEXT_PP(0));
+
+		rolname = rolname_check(rolname);
 
 		/* Advance cmd counter to make the delete visible */
 		CommandCounterIncrement();

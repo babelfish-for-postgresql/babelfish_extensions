@@ -1,4 +1,10 @@
 -- tsql
+CREATE ROLE sp_addrolemember_r1;
+GO
+
+CREATE ROLE sp_addrolemember_r2;
+GO
+
 -- Throw an error when same roles are passed
 Exec sp_addrolemember 'sp_addrolemember_r1', 'sp_addrolemember_r1';
 GO

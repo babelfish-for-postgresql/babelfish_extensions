@@ -1,6 +1,3 @@
--- tsql
-CREATE ROLE sp_droprole_r1;
-GO
-
-CREATE ROLE sp_droprole_r2;
+-- create a temporary table
+CREATE TABLE tmp_sp_droprole(addRole sys.SYSNAME);
 GO

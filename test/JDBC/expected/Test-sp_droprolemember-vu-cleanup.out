@@ -4,3 +4,6 @@ GO
 
 DROP ROLE sp_droprolemember_r1;
 GO
+
+DROP TABLE tmp_sp_droprolemember;
+GO
