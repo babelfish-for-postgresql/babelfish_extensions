@@ -16,6 +16,8 @@
 static int migration_mode = SINGLE_DB;
 bool   enable_ownership_structure = false;
 
+bool enable_metadata_inconsistency_check = true;
+
 bool pltsql_dump_antlr_query_graph = false;
 bool pltsql_enable_antlr_detailed_log = false;
 bool pltsql_allow_antlr_to_unsupported_grammar_for_testing = false;
@@ -1084,6 +1086,16 @@ define_custom_variables(void)
 				PGC_USERSET,
 				GUC_NOT_IN_SAMPLE,
 				NULL, NULL, NULL);
+
+
+	DefineCustomBoolVariable("babelfishpg_tsql.enable_metadata_inconsistency_check",
+				 gettext_noop("Enables babelfish_inconsistent_metadata"),
+				 NULL,
+				 &enable_metadata_inconsistency_check,
+				 true,
+				 PGC_USERSET,
+				 GUC_NOT_IN_SAMPLE | GUC_DISALLOW_IN_FILE | GUC_DISALLOW_IN_AUTO_FILE,
+				 NULL, NULL, NULL);
 }
 
 int escape_hatch_storage_options = EH_IGNORE;
@@ -1481,3 +1493,8 @@ get_migration_mode(void)
 }
 
 
+bool
+metadata_inconsistency_check_enabled(void)
+{
+	return enable_metadata_inconsistency_check;
+}
