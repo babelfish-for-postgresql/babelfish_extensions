@@ -1177,7 +1177,6 @@ handle_alter_role(AlterRoleStmt* alter_role_stmt)
 
     /* We don't need "name" anymore */
     pfree(name);
-    name = NULL;
     return true;
 }
 
@@ -1221,6 +1220,5 @@ handle_alter_role_set (AlterRoleSetStmt* alter_role_set_stmt)
      * Those permissions checks are done through normal handling.
      */
     pfree(name);
-    name = NULL;
     return true;
 }
