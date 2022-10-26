@@ -247,7 +247,6 @@ TEST_F(PSQL_DataTypes_Money, Comparison_Operators) {
     const double data_1 = StringToDouble(INSERTED_PK[i]);
     const double data_2 = StringToDouble(INSERTED_DATA[i]);
 
-
     expected_results[i].push_back(data_1 == data_2 ? '1' : '0');
     expected_results[i].push_back(data_1 != data_2 ? '1' : '0');
     expected_results[i].push_back(data_1 < data_2 ? '1' : '0');
@@ -384,6 +383,40 @@ TEST_F(PSQL_DataTypes_Money, Table_Unique_Constraints) {
   dropObject(ServerType::PSQL, "TABLE", TABLE_NAME);
 }
 
+TEST_F(PSQL_DataTypes_Money, Table_Single_Primary_Keys) {
+  double data;
+
+  const vector<pair<string, string>> TABLE_COLUMNS = {
+    {COL1_NAME, "INT"},
+    {COL2_NAME, DATATYPE_NAME}
+  };
+  const string PKTABLE_NAME = TABLE_NAME.substr(TABLE_NAME.find('.') + 1, TABLE_NAME.length());
+  const string SCHEMA_NAME = TABLE_NAME.substr(0, TABLE_NAME.find('.'));
+
+  const vector<string> PK_COLUMNS = {
+    COL2_NAME
+  };
+
+  string tableConstraints = createTableConstraint("PRIMARY KEY ", PK_COLUMNS);
+
+  const int bufferLen = 0;
+
+  const vector<string> INSERTED_DATA = {
+    "1000.01",
+    "-100.0001"
+  };
+  const vector<double> EXPECTED_DATA = getExpectedResults_Money(INSERTED_DATA);
+
+  const vector<long> expectedLen(EXPECTED_DATA.size(), DOUBLE_BYTES_EXPECTED);
+
+  createTable(ServerType::PSQL, TABLE_NAME, TABLE_COLUMNS, tableConstraints);
+  testPrimaryKeys(ServerType::PSQL, SCHEMA_NAME, PKTABLE_NAME, PK_COLUMNS);
+  testInsertionSuccess(ServerType::PSQL, TABLE_NAME, COL1_NAME, SQL_C_DOUBLE, data, bufferLen, INSERTED_DATA, 
+    EXPECTED_DATA, expectedLen);
+  testInsertionFailure(ServerType::PSQL, TABLE_NAME, COL1_NAME, INSERTED_DATA, true, INSERTED_DATA.size(), false);
+  dropObject(ServerType::PSQL, "TABLE", TABLE_NAME);
+}
+
 TEST_F(PSQL_DataTypes_Money, Table_Composite_Keys) {
   double data;
 
@@ -415,5 +448,6 @@ TEST_F(PSQL_DataTypes_Money, Table_Composite_Keys) {
   testPrimaryKeys(ServerType::PSQL, SCHEMA_NAME, PKTABLE_NAME, PK_COLUMNS);
   testInsertionSuccess(ServerType::PSQL, TABLE_NAME, COL1_NAME, SQL_C_DOUBLE, data, bufferLen, INSERTED_DATA, 
     EXPECTED_DATA, expectedLen);
+  testInsertionFailure(ServerType::PSQL, TABLE_NAME, COL1_NAME, INSERTED_DATA, true, 0, false);
   dropObject(ServerType::PSQL, "TABLE", TABLE_NAME);
 }
