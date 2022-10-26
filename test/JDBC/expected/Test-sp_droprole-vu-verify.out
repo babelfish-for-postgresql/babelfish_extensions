@@ -1,0 +1,54 @@
+-- tsql
+CREATE ROLE sp_droprole_r1;
+GO
+
+CREATE ROLE sp_droprole_r2;
+GO
+
+DROP ROLE sp_droprole_r1;
+GO
+
+-- Throw an error if rolname contains whitespaces or \ in it
+Exec sp_droprole 'sp_droprole_\r1';
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: query argument of procedure contains \)~~
+
+
+-- Throw an error if rolname contains whitespaces or \ in it
+Exec sp_droprole 'sp_droprole_ r1';
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: query argument of procedure contains whitespace)~~
+
+
+-- Throws an error when the role doesn't exist
+EXEC sp_droprole 'sp_droprole_r1';
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: role "master_sp_droprole_r1" does not exist)~~
+
+
+-- Drops role by removing leading and trailing whitespaces
+EXEC sp_droprole '   sp_droprole_r2   ';
+GO
+
+SELECT rolname, type, orig_username, database_name
+FROM sys.babelfish_authid_user_ext
+WHERE orig_username = 'sp_droprole_r2'
+GO
+~~START~~
+varchar#!#char#!#nvarchar#!#nvarchar
+~~END~~
+
+
+-- Throws an error when the role doesn't exist
+EXEC sp_droprole 'sp_droprole_r2';
+GO
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: role "master_sp_droprole_r2" does not exist)~~
+
