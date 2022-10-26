@@ -72,7 +72,7 @@ DECLARE @babel_3347_before_14_6_vu7_var NVARCHAR(MAX) = NULL
 SELECT SUBSTRING(@babel_3347_before_14_6_vu7_var, 2,3)
 GO
 ~~START~~
-varchar
+nvarchar
 <NULL>
 ~~END~~
 
