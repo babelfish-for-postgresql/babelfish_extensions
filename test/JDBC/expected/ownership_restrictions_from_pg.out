@@ -1,16 +1,16 @@
 -- tsql
-CREATE LOGIN r1 WITH password = '123';
+CREATE LOGIN ownership_restrictions_from_pg_login1 WITH password = '123';
 GO
 
-CREATE ROLE role1;
+CREATE ROLE ownership_restrictions_from_pg_role1;
 go
 
 -- psql
-CREATE USER test_user WITH PASSWORD '12345678' inherit;
+CREATE USER ownership_restrictions_from_pg_test_user WITH PASSWORD '12345678' inherit;
 go
 
--- psql user=test_user password=12345678
-DROP ROLE master_role1;
+-- psql user=ownership_restrictions_from_pg_test_user password=12345678
+DROP ROLE master_ownership_restrictions_from_pg_role1;
 GO
 ~~ERROR (Code: 0)~~
 
@@ -18,7 +18,7 @@ GO
     Server SQLState: 42501)~~
 
 
-ALTER ROLE master_role1 RENAME TO master_role2;
+ALTER ROLE master_ownership_restrictions_from_pg_role1 RENAME TO master_ownership_restrictions_from_pg_role2;
 GO
 ~~ERROR (Code: 0)~~
 
@@ -27,7 +27,7 @@ GO
 
 
 -- Give a bbf role the ability to create other roles, login, nologin and new databases should fail
-ALTER ROLE master_role1 LOGIN;
+ALTER ROLE master_ownership_restrictions_from_pg_role1 LOGIN;
 GO
 ~~ERROR (Code: 0)~~
 
@@ -35,7 +35,7 @@ GO
     Server SQLState: 42501)~~
 
 
-ALTER ROLE master_role1 NOLOGIN;
+ALTER ROLE master_ownership_restrictions_from_pg_role1 NOLOGIN;
 GO
 ~~ERROR (Code: 0)~~
 
@@ -43,7 +43,7 @@ GO
     Server SQLState: 42501)~~
 
 
-ALTER ROLE master_role1 CREATEDB;
+ALTER ROLE master_ownership_restrictions_from_pg_role1 CREATEDB;
 GO
 ~~ERROR (Code: 0)~~
 
@@ -51,7 +51,7 @@ GO
     Server SQLState: 42501)~~
 
 
-ALTER ROLE master_role1 CREATEROLE CREATEDB;
+ALTER ROLE master_ownership_restrictions_from_pg_role1 CREATEROLE CREATEDB;
 GO
 ~~ERROR (Code: 0)~~
 
@@ -60,7 +60,7 @@ GO
 
 
 -- Change bbf role's password should fail
-ALTER ROLE master_role1 PASSWORD '123';
+ALTER ROLE master_ownership_restrictions_from_pg_role1 PASSWORD '123';
 GO
 ~~ERROR (Code: 0)~~
 
@@ -68,7 +68,7 @@ GO
     Server SQLState: 42501)~~
 
 
-ALTER ROLE master_role1 WITH PASSWORD '123';
+ALTER ROLE master_ownership_restrictions_from_pg_role1 WITH PASSWORD '123';
 GO
 ~~ERROR (Code: 0)~~
 
@@ -76,7 +76,7 @@ GO
     Server SQLState: 42501)~~
 
 
-ALTER ROLE master_role1 WITH PASSWORD NULL;
+ALTER ROLE master_ownership_restrictions_from_pg_role1 WITH PASSWORD NULL;
 GO
 ~~ERROR (Code: 0)~~
 
@@ -85,7 +85,7 @@ GO
 
 
 -- Make a password valid until a particular period for bbf role should fail
-ALTER ROLE master_role1 VALID UNTIL 'NOV 4 12:00:00 2022 +1';
+ALTER ROLE master_ownership_restrictions_from_pg_role1 VALID UNTIL 'NOV 4 12:00:00 2022 +1';
 GO
 ~~ERROR (Code: 0)~~
 
@@ -93,7 +93,7 @@ GO
     Server SQLState: 42501)~~
 
 
-ALTER ROLE master_role1 VALID UNTIL 'infinity';
+ALTER ROLE master_ownership_restrictions_from_pg_role1 VALID UNTIL 'infinity';
 GO
 ~~ERROR (Code: 0)~~
 
@@ -102,7 +102,7 @@ GO
 
 
 -- Give a bbf role a non-default setting of the x parameter should fail
-ALTER ROLE master_role1 SET x =false;
+ALTER ROLE master_ownership_restrictions_from_pg_role1 SET x =false;
 GO
 ~~ERROR (Code: 0)~~
 
@@ -111,7 +111,7 @@ GO
 
 
 -- Give a bbf role a non-default, database-specific setting of the x parameter should fail
-ALTER ROLE master_role1 IN DATABASE postgres set x=false;
+ALTER ROLE master_ownership_restrictions_from_pg_role1 IN DATABASE postgres set x=false;
 GO
 ~~ERROR (Code: 0)~~
 
@@ -121,7 +121,7 @@ GO
 
 -- psql
 -- Dropping login from psql port should fail
-DROP ROLE r1;
+DROP ROLE ownership_restrictions_from_pg_login1;
 GO
 ~~ERROR (Code: 0)~~
 
@@ -129,7 +129,7 @@ GO
     Server SQLState: 55006)~~
 
 
-ALTER ROLE r1 RENAME TO r2;
+ALTER ROLE ownership_restrictions_from_pg_login1 RENAME TO ownership_restrictions_from_pg_login2;
 GO
 ~~ERROR (Code: 0)~~
 
@@ -137,7 +137,7 @@ GO
     Server SQLState: 55006)~~
 
 
-ALTER ROLE r1 CREATEDB;
+ALTER ROLE ownership_restrictions_from_pg_login1 CREATEDB;
 GO
 ~~ERROR (Code: 0)~~
 
@@ -147,10 +147,10 @@ GO
 
 -- Create a non babelfish role that is a member of master_guest
 -- and enable dropping
-CREATE ROLE r2 IN ROLE master_guest, tempdb_guest, msdb_guest;
+CREATE ROLE ownership_restrictions_from_pg_role2 IN ROLE master_guest, tempdb_guest, msdb_guest;
 GO
 
-DROP ROLE r2;
+DROP ROLE ownership_restrictions_from_pg_role2;
 GO
 ~~ERROR (Code: 0)~~
 
@@ -158,7 +158,7 @@ GO
     Server SQLState: 55006)~~
 
 
-ALTER ROLE r2 RENAME TO r3;
+ALTER ROLE ownership_restrictions_from_pg_role2 RENAME TO ownership_restrictions_from_pg_role3;
 GO
 ~~ERROR (Code: 0)~~
 
@@ -169,7 +169,7 @@ GO
 SET enable_drop_babelfish_role = true;
 GO
 
-ALTER ROLE r2 RENAME TO r3;
+ALTER ROLE ownership_restrictions_from_pg_role2 RENAME TO ownership_restrictions_from_pg_role3;
 GO
 
 SET enable_drop_babelfish_role = false;
@@ -178,22 +178,22 @@ GO
 SET enable_drop_babelfish_role = true;
 GO
 
-DROP ROLE r3;
+DROP ROLE ownership_restrictions_from_pg_role3;
 GO
 
 SET enable_drop_babelfish_role = false;
 GO
 
 
-CREATE ROLE r4;
+CREATE ROLE ownership_restrictions_from_pg_role4;
 GO
 
-GRANT master_guest TO r4;
-GRANT tempdb_guest TO r4;
-GRANT msdb_guest TO r4;
+GRANT master_guest TO ownership_restrictions_from_pg_role4;
+GRANT tempdb_guest TO ownership_restrictions_from_pg_role4;
+GRANT msdb_guest TO ownership_restrictions_from_pg_role4;
 GO
 
-DROP ROLE r4;
+DROP ROLE ownership_restrictions_from_pg_role4;
 GO
 ~~ERROR (Code: 0)~~
 
@@ -201,7 +201,7 @@ GO
     Server SQLState: 55006)~~
 
 
-ALTER ROLE r4 RENAME TO r5;
+ALTER ROLE ownership_restrictions_from_pg_role4 RENAME TO ownership_restrictions_from_pg_role5;
 GO
 ~~ERROR (Code: 0)~~
 
@@ -212,7 +212,7 @@ GO
 SET enable_drop_babelfish_role = true;
 GO
 
-ALTER ROLE r4 RENAME TO r5;
+ALTER ROLE ownership_restrictions_from_pg_role4 RENAME TO ownership_restrictions_from_pg_role5;
 GO
 
 SET enable_drop_babelfish_role = false;
@@ -221,25 +221,25 @@ GO
 SET enable_drop_babelfish_role = true;
 GO
 
-DROP ROLE r5;
+DROP ROLE ownership_restrictions_from_pg_role5;
 GO
 
 SET enable_drop_babelfish_role = false;
 GO
 
 -- Test a regular role
-CREATE ROLE r6;
+CREATE ROLE ownership_restrictions_from_pg_role6;
 GO
 
-DROP ROLE r6;
+DROP ROLE ownership_restrictions_from_pg_role6;
 GO
 
-DROP USER test_user;
+DROP USER ownership_restrictions_from_pg_test_user;
 GO
 
 -- tsql
-DROP ROLE role1;
+DROP ROLE ownership_restrictions_from_pg_role1;
 GO
 
-DROP LOGIN r1;
+DROP LOGIN ownership_restrictions_from_pg_login1;
 GO
