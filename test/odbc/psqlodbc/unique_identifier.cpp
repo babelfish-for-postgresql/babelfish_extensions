@@ -262,8 +262,7 @@ TEST_F(PSQL_DataTypes_UniqueIdentifier, Table_Composite_Keys) {
 }
 
 // Explicit casting is used, ie OPERATOR(sys.=)
-// Needs rework in common function for explicit casting for WHERE
-TEST_F(PSQL_DataTypes_UniqueIdentifier, DISABLED_Comparison_Operators) {
+TEST_F(PSQL_DataTypes_UniqueIdentifier, Comparison_Operators) {
   const vector<pair<string, string>> TABLE_COLUMNS = {
     {COL1_NAME, DATATYPE_NAME + " PRIMARY KEY"},
     {COL2_NAME, DATATYPE_NAME}
@@ -322,6 +321,6 @@ TEST_F(PSQL_DataTypes_UniqueIdentifier, DISABLED_Comparison_Operators) {
   createTable(ServerType::PSQL, TABLE_NAME, TABLE_COLUMNS);
   insertValuesInTable(ServerType::PSQL, TABLE_NAME, insertString, NUM_OF_DATA);
   testComparisonOperators(ServerType::PSQL, TABLE_NAME, COL1_NAME, COL2_NAME, INSERTED_PK, INSERTED_DATA, 
-    OPERATIONS_QUERY, expected_results);
+    OPERATIONS_QUERY, expected_results, true, true);
   dropObject(ServerType::PSQL, "TABLE", TABLE_NAME);
 }
