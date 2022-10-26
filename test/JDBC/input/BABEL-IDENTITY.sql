@@ -249,17 +249,17 @@ go
 
 -- Test that identity counters shouldn't rolled back even if the transaction
 -- is rolled back.
-CREATE TABLE dbo.t1_identity_1(a int identity primary key, b int);
+CREATE TABLE dbo.t1_identity_1(a int identity primary key, b int unique not null);
 SET IDENTITY_INSERT dbo.t1_identity_1 ON;
 INSERT INTO dbo.t1_identity_1 (a,b) VALUES (1,1);
 go
 
--- Check transaction rollback should increase/decrease identity
+-- Check transaction rollback should increase identity
 BEGIN TRAN t1; INSERT INTO dbo.t1_identity_1 (a,b) VALUES (300,2); ROLLBACK TRAN t1;
 SELECT @@IDENTITY; SELECT IDENT_CURRENT('dbo.t1_identity_1'); SELECT SCOPE_IDENTITY();
 go
 
--- Check Statement error shouldn't increase/decrease identity
+-- Check Statement error shouldn't increase identity
 BEGIN TRAN t1; INSERT INTO dbo.t1_identity_1 (a,b) VALUES (400,2); ROLLBACK TRAN t1;
 SELECT @@IDENTITY; SELECT IDENT_CURRENT('dbo.t1_identity_1'); SELECT SCOPE_IDENTITY();
 go
@@ -267,17 +267,17 @@ go
 SET IDENTITY_INSERT dbo.t1_identity_1 OFF;
 go
 
-CREATE TABLE dbo.t1_identity_2(a int identity(1, -1) primary key, b int);
+CREATE TABLE dbo.t1_identity_2(a int identity(1, -1) primary key, b int unique not null);
 SET IDENTITY_INSERT dbo.t1_identity_2 ON;
 INSERT INTO dbo.t1_identity_2 (a,b) VALUES (1,1);
 go
 
--- Check transaction rollback should increase/decrease identity
+-- Check transaction rollback should decrease identity
 BEGIN TRAN t1; INSERT INTO dbo.t1_identity_2 (a,b) VALUES (-300,2); ROLLBACK TRAN t1;
 SELECT @@IDENTITY; SELECT IDENT_CURRENT('dbo.t1_identity_2'); SELECT SCOPE_IDENTITY();
 go
 
--- Check Statement error shouldn't increase/decrease identity
+-- Check Statement error shouldn't decrease identity
 BEGIN TRAN t1; INSERT INTO dbo.t1_identity_2 (a,b) VALUES (-400,2); ROLLBACK TRAN t1;
 SELECT @@IDENTITY; SELECT IDENT_CURRENT('dbo.t1_identity_2'); SELECT SCOPE_IDENTITY();
 go
