@@ -1,6 +1,10 @@
 #include "psqlodbc_tests_common.h"
 
 std::string GetHexRepresentation(std::string inserted_int, size_t table_size) {
+  if (inserted_int == "NULL") {
+    return "NULL";
+  }
+
   std::stringstream stream;
   stream << std::hex << strtoul(inserted_int.c_str(), nullptr, 10);
   string expected_hex = stream.str();
@@ -23,8 +27,14 @@ std::string GetHexRepresentation(std::string inserted_int, size_t table_size) {
   expected_length = expected_length % 2 == 0 ? expected_length : expected_length + 1;
 
   // Prepend string with '0x'
-  size_t extra_padding = expected_length - expected_hex.length();
-  return "0x" + std::string(extra_padding, '0') + expected_hex;
+  int extra_padding = expected_length - expected_hex.length();
+  if (extra_padding < 0) {
+    return "0x" + expected_hex.substr(expected_hex.length() - expected_length, expected_length);
+  } 
+  else if (extra_padding > 0){
+    return "0x" + string(extra_padding, '0') + expected_hex;
+  }
+  return "0x" + expected_hex;
 }
 
 vector<string> duplicateElements(vector<string> input) {
