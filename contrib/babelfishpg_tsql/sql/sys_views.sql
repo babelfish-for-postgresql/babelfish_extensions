@@ -1299,8 +1299,15 @@ select
       when 'p' then 'P'::varchar(2)
       when 'a' then 'AF'::varchar(2)
       else
-        case format_type(p.prorettype, null) when 'trigger'
-          then 'TR'::varchar(2)
+        case 
+          when pg_catalog.format_type(p.prorettype, null) = 'trigger'
+            then 'TR'::varchar(2)
+          when p.proretset then
+            case 
+              when t.typtype = 'c'
+                then 'TF'::varchar(2)
+              else 'IF'::varchar(2)
+            end
           else 'FN'::varchar(2)
         end
     end as type
@@ -1308,8 +1315,15 @@ select
       when 'p' then 'SQL_STORED_PROCEDURE'::varchar(60)
       when 'a' then 'AGGREGATE_FUNCTION'::varchar(60)
       else
-        case format_type(p.prorettype, null) when 'trigger'
-          then 'SQL_TRIGGER'::varchar(60)
+        case 
+          when pg_catalog.format_type(p.prorettype, null) = 'trigger'
+            then 'SQL_TRIGGER'::varchar(60)
+          when p.proretset then
+            case 
+              when t.typtype = 'c'
+                then 'SQL_TABLE_VALUED_FUNCTION'::varchar(60)
+              else 'SQL_INLINE_TABLE_VALUED_FUNCTION'::varchar(60)
+            end
           else 'SQL_SCALAR_FUNCTION'::varchar(60)
         end
     end as type_desc
@@ -1320,6 +1334,7 @@ select
   , 0 as is_schema_published
 from pg_proc p
 inner join pg_namespace s on s.oid = p.pronamespace
+inner join pg_catalog.pg_type t on t.oid = p.prorettype
 left join pg_trigger tr on tr.tgfoid = p.oid
 where (s.oid in (select schema_id from sys.schemas) or s.nspname = 'sys')
 and has_schema_privilege(s.oid, 'USAGE')

@@ -20,6 +20,14 @@ const int BUFFER_SIZE = 8192;
 const int INT_BYTES_EXPECTED = 4;
 
 /**
+ * Duplicates the values in the input vector
+ *
+ * @param input Vector of data to be duplicated
+ * @return vector which has the elements duplicated and appended
+ */ 
+vector<string> duplicateElements(vector<string> input);
+
+/**
  * Create a string that can be used in an insert statement. Assumes there is a column associated with
  * primary key values in the table, so it will automatically include a value for primary key in the string.
  *
@@ -114,7 +122,7 @@ void insertValuesInTable(ServerType serverType, const string &tableName, const s
  * @param pkStartingValue Optional. The primary key value the object starts incrementing at. The default value is 0.
 */
 void verifyValuesInObject(ServerType serverType, const string &objectName, const string &orderByColumnName, 
-  const vector<string> &insertedValues, const vector<string> &expectedInsertedValues, int pkStartingValue = 0);
+  const vector<string> &insertedValues, const vector<string> &expectedInsertedValues, int pkStartingValue = 0, bool caseInsensitive = false);
 
 /**
  * Verify that all data in an object (like table or view) are of expected values.
@@ -200,9 +208,10 @@ void testTableCreationFailure(ServerType serverType, const string &tableName, co
  * @param insertedValues Vector of data to be inserted. e.g. {"NULL", "5", "9568546", "-1"}
  * @param expectedInsertedValues The values expected from the table when selecting all from it.
  * @param pkStartingValue Optional. The primary key value the object starts incrementing at. The default value is 0.
+ * @param caseInsensitive Optional. String comparision for data and expected can be case-insensitive. The default value is false.
 */
 void testInsertionSuccess(ServerType serverType, const string &tableName, const string &orderByColumnName, 
-  const vector<string> &insertedValues, const vector<string> &expectedInsertedValues, int pkStartingValue = 0);
+  const vector<string> &insertedValues, const vector<string> &expectedInsertedValues, int pkStartingValue = 0, bool caseInsensitive = false);
 
 /**
  * Insert values in a table given a vector of values to insert, and validate that all data in the table are of expected values.
@@ -254,9 +263,10 @@ void testInsertionFailure(ServerType serverType, const string &tableName, const 
  * @param colNameToUpdate The name of the column to update.
  * @param updatedValues A vector of values to update some data in the table with one by one.
  * @param expectedUpdatedValues A vector containing expected values after a successful update.
+ * @param caseInsensitive Optional. String comparision for data and expected can be case-insensitive. The default value is false.
 */
 void testUpdateSuccess(ServerType serverType, const string &tableName, const string &orderByColumnName, 
-  const string &colNameToUpdate, const vector<string> &updatedValues, const vector<string> &expectedUpdatedValues);
+  const string &colNameToUpdate, const vector<string> &updatedValues, const vector<string> &expectedUpdatedValues, bool caseInsensitive = false);
 
 /**
  * Given a vector of values, test that some data in the table can be updated successfully with each value.
