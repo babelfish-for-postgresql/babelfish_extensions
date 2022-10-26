@@ -1150,14 +1150,7 @@ process_format_pattern(StringInfo buf, char *msg_string, char *data_type)
 					}
 					else
 					{
-						if (msg_string[bc + 1] == 't')
-						{
-							appendStringInfo(str, "AM");
-						}
-						else
-						{
-							appendStringInfo(str, "A");
-						}
+						appendStringInfo(str, "AM");
 						i = bc + 1;
 
 						// Anything longer than 'tt' is skipped.

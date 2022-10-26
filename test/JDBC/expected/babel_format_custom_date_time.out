@@ -35,7 +35,7 @@ SELECT FORMAT(@curr_date4, 'dd, MM, y yy yyy yyyy yyyyy, ffffff  gg h hh H HH m 
 GO
 ~~START~~
 nvarchar
-08, 12, 22 22 022 2022 02022, 000000  A.D. 12 12 0 00 0 00 0 00 A AM
+08, 12, 22 22 022 2022 02022, 000000  A.D. 12 12 0 00 0 00 0 00 AM AM
 ~~END~~
 
 
@@ -85,7 +85,7 @@ SELECT FORMAT(@curr_datetime4, 'dd, MM, y yy yyy yyyy yyyyy, ffffff  gg h hh H H
 GO
 ~~START~~
 nvarchar
-01, 01, 53 53 753 1753 01753, 456000  A.D. 12 12 0 00 0 00 0 00 A AM
+01, 01, 53 53 753 1753 01753, 456000  A.D. 12 12 0 00 0 00 0 00 AM AM
 ~~END~~
 
 
@@ -135,7 +135,7 @@ SELECT FORMAT(@curr_datetime4_2, 'dd, MM, y yy yyy yyyy yyyyy, ffffff  gg h hh H
 GO
 ~~START~~
 nvarchar
-01, 01, 1 01 001 0001 00001, 123000  A.D. 12 12 0 00 0 00 0 00 A AM 1
+01, 01, 1 01 001 0001 00001, 123000  A.D. 12 12 0 00 0 00 0 00 AM AM 1
 ~~END~~
 
 
@@ -242,7 +242,7 @@ select FORMAT(CAST('2018-01-01 01:00' AS datetime2), N'hh:mm t')  ;
 GO
 ~~START~~
 nvarchar
-01:00 A
+01:00 AM
 ~~END~~
 
 
@@ -257,7 +257,7 @@ select FORMAT(CAST('2018-01-01 14:00' AS datetime2), N'hh:mm t') ;
 GO
 ~~START~~
 nvarchar
-02:00 A
+02:00 PM
 ~~END~~
 
 
