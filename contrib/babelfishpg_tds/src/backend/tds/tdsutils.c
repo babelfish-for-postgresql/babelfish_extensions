@@ -709,6 +709,8 @@ void tdsutils_ProcessUtility(PlannedStmt *pstmt,
 		case T_DropdbStmt:
 			handle_result = handle_dropdb((DropdbStmt *)parsetree);
 			break;
+		default:
+			break;
 	}
 
 	/*
