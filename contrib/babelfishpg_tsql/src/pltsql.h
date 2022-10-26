@@ -1946,6 +1946,7 @@ extern char *varchar_to_cstring(const VarChar *varchar);
 extern char *flatten_search_path(List *oid_list);
 extern const char *get_pltsql_function_signature_internal(const char *funcname, int nargs, const Oid *argtypes);
 extern Oid	get_func_owner(Oid fn_oid);
+extern Oid get_function_owner_for_top_estate();
 
 typedef struct
 {

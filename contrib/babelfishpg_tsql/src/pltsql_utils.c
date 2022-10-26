@@ -908,3 +908,32 @@ get_func_owner(Oid fn_oid)
 	ReleaseSysCache(tuple);
 	return funcOwnerId;
 }
+
+Oid
+get_function_owner_for_top_estate()
+{
+	PLtsql_execstate *top_estate;
+
+	if (sql_dialect != SQL_DIALECT_TSQL)
+		return InvalidOid;
+
+	/*
+	 * Fetch the top procedure excution state from execution state call stack
+	 * and get the owner of that procedure. Top entry in stack will have
+	 * fn_oid and fn_owner value set.
+	 */
+	if (!exec_state_call_stack ||
+		!exec_state_call_stack->estate)
+		return InvalidOid;
+
+	top_estate = exec_state_call_stack->estate;
+
+	if (!top_estate ||
+		!top_estate->func ||
+		top_estate->func->fn_oid == InvalidOid ||
+		top_estate->func->fn_owner == InvalidOid)
+		return InvalidOid;
+
+	return top_estate->func->fn_owner;
+}
+

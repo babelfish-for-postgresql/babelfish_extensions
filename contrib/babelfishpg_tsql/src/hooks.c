@@ -118,7 +118,9 @@ static void pltsql_ExecutorFinish(QueryDesc *queryDesc);
 static void pltsql_ExecutorEnd(QueryDesc *queryDesc);
 
 static bool plsql_TriggerRecursiveCheck(ResultRelInfo *resultRelInfo);
-static bool check_ownership_chaining_for_tsql_proc(ObjectType objtype, Oid objid);
+static void pltsql_pg_proc_aclchk(Oid proc_oid, Oid roleid, AclMode mode, bool *has_access);
+static void pltsql_pg_class_aclmask_hook(Form_pg_class classForm, Oid table_oid, Oid roleid, bool *has_permission_via_hook, bool *read_write_all_data_safe);
+
 
 /*****************************************
  * 			Replication Hooks
@@ -152,7 +154,8 @@ static ExecutorRun_hook_type prev_ExecutorRun = NULL;
 static ExecutorFinish_hook_type prev_ExecutorFinish = NULL;
 static ExecutorEnd_hook_type prev_ExecutorEnd = NULL;
 static inherit_view_constraints_from_table_hook_type prev_inherit_view_constraints_from_table = NULL;
-static check_ownership_chaining_for_tsql_proc_hook_type prev_check_ownership_chaining_for_tsql_proc_hook = NULL;
+static pg_proc_aclchk_hook_type prev_pg_proc_aclchk_hook = NULL;
+static pg_class_aclmask_hook_type prev_pg_class_aclmask_hook = NULL;
 static detect_numeric_overflow_hook_type prev_detect_numeric_overflow_hook = NULL;
 static match_pltsql_func_call_hook_type prev_match_pltsql_func_call_hook = NULL;
 static insert_pltsql_function_defaults_hook_type prev_insert_pltsql_function_defaults_hook = NULL;
@@ -232,8 +235,11 @@ InstallExtendedHooks(void)
 	inherit_view_constraints_from_table_hook = preserve_view_constraints_from_base_table;
 	TriggerRecuresiveCheck_hook = plsql_TriggerRecursiveCheck;
 
-	prev_check_ownership_chaining_for_tsql_proc_hook = check_ownership_chaining_for_tsql_proc_hook;
-	check_ownership_chaining_for_tsql_proc_hook = check_ownership_chaining_for_tsql_proc;
+	prev_pg_proc_aclchk_hook = pg_proc_aclchk_hook;
+	pg_proc_aclchk_hook = pltsql_pg_proc_aclchk;
+
+	prev_pg_class_aclmask_hook = pg_class_aclmask_hook;
+	pg_class_aclmask_hook = pltsql_pg_class_aclmask_hook;
 
 	prev_detect_numeric_overflow_hook = detect_numeric_overflow_hook;
 	detect_numeric_overflow_hook = pltsql_detect_numeric_overflow;
@@ -277,7 +283,8 @@ UninstallExtendedHooks(void)
 	ExecutorFinish_hook = prev_ExecutorFinish;
 	ExecutorEnd_hook = prev_ExecutorEnd;
 	inherit_view_constraints_from_table_hook = prev_inherit_view_constraints_from_table;
-	check_ownership_chaining_for_tsql_proc_hook = prev_check_ownership_chaining_for_tsql_proc_hook;
+	pg_proc_aclchk_hook = prev_pg_proc_aclchk_hook;
+	pg_class_aclmask_hook = prev_pg_class_aclmask_hook;
 	detect_numeric_overflow_hook = prev_detect_numeric_overflow_hook;
 	match_pltsql_func_call_hook = prev_match_pltsql_func_call_hook;
 	insert_pltsql_function_defaults_hook = prev_insert_pltsql_function_defaults_hook;
@@ -2697,48 +2704,28 @@ print_pltsql_function_arguments(StringInfo buf, HeapTuple proctup,
 	return argsprinted;
 }
 
-static bool
-check_ownership_chaining_for_tsql_proc(ObjectType objtype, Oid objid)
+static void
+pltsql_pg_proc_aclchk(Oid proc_oid, Oid roleid, AclMode mode, bool *has_access)
 {
-	PLtsql_execstate *top_estate;
-	Oid procOwner;
-	bool have_same_owner = false;
+	Oid procOwner = get_function_owner_for_top_estate();
+	if (*has_access == false &&
+		OidIsValid(procOwner) &&
+		OidIsValid(proc_oid))
+		*has_access = pg_proc_ownercheck(proc_oid, procOwner);
 
-	if (sql_dialect != SQL_DIALECT_TSQL)
-		return false;
+	if (prev_pg_proc_aclchk_hook)
+		prev_pg_proc_aclchk_hook(proc_oid, roleid, mode, has_access);
+}
 
-	/*
-	 * Fetch the top procedure excution state from execution state call stack
-	 * and get the owner of that procedure. Top entry in stack will have
-	 * fn_oid and fn_owner value set.
-	 */
-	if (!exec_state_call_stack ||
-		!exec_state_call_stack->estate ||
-		objid == InvalidOid)
-		return false;
+static void
+pltsql_pg_class_aclmask_hook(Form_pg_class classForm, Oid class_oid, Oid roleid, bool *has_permission_via_hook, bool *read_write_all_data_safe)
+{
+	Oid procOwner = get_function_owner_for_top_estate();
+	if (*has_permission_via_hook == false &&
+		OidIsValid(procOwner) &&
+		OidIsValid(class_oid))
+		*has_permission_via_hook = pg_class_ownercheck(class_oid, procOwner);
 
-	top_estate = exec_state_call_stack->estate;
-
-	if (!top_estate ||
-		!top_estate->func ||
-		top_estate->func->fn_oid == InvalidOid ||
-		top_estate->func->fn_owner == InvalidOid)
-		return false;
-
-	procOwner = top_estate->func->fn_owner;
-
-	switch (objtype)
-	{
-		case OBJECT_PROCEDURE:
-		case OBJECT_FUNCTION:
-			have_same_owner = pg_proc_ownercheck(objid, procOwner);
-			break;
-		case OBJECT_TABLE:
-		case OBJECT_VIEW:
-			have_same_owner = pg_class_ownercheck(objid, procOwner);
-			break;
-		default:
-			break;
-	}
-	return have_same_owner;
+    if (prev_pg_class_aclmask_hook)
+        prev_pg_class_aclmask_hook(classForm, class_oid, roleid, has_permission_via_hook, read_write_all_data_safe);
 }
