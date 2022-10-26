@@ -49,7 +49,7 @@ string getTimeZone(const string& date_time) {
   if (ret.length() == 2) {
     ret.insert(1, "0");
   }
-  return " +0" + ret + ":00";
+  return " " + ret + ":00";
 }
 
 // Helper to generate the expected fully qualified datetimeoffset
