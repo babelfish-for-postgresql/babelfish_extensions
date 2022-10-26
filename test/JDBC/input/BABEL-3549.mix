@@ -1,0 +1,62 @@
+-- tsql
+USE master
+GO
+CREATE LOGIN babel_3549_login1 WITH PASSWORD='12345678';
+GO
+CREATE LOGIN babel_3549_login2 WITH PASSWORD='12345678';
+GO
+
+ALTER SERVER ROLE sysadmin ADD MEMBER babel_3549_login1;
+GO
+ALTER SERVER ROLE sysadmin ADD MEMBER babel_3549_login2;
+GO
+
+-- tsql user=babel_3549_login1 password=12345678
+SELECT SUSER_NAME()
+GO
+
+CREATE DATABASE babel_3549_db1
+GO
+USE babel_3549_db1
+GO
+
+SELECT name, db_size, owner, status, compatibility_level FROM sys.babelfish_helpdb() WHERE name IN ('master', 'babel_3549_db1');
+GO
+
+CREATE USER babel_3549_login1
+GO
+USE master
+GO
+
+-- tsql user=babel_3549_login2 password=12345678
+SELECT SUSER_NAME()
+GO
+
+USE babel_3549_db1
+GO
+CREATE USER babel_3549_login2
+GO
+
+USE master
+GO
+
+-- psql
+-- Need to terminate active session before cleaning up the login
+SELECT pg_terminate_backend(pid) FROM pg_stat_get_activity(NULL)
+WHERE sys.suser_name(usesysid) in ('babel_3549_login1','babel_3549_login2') AND backend_type = 'client backend' AND usesysid IS NOT NULL;
+GO
+-- Wait to sync with another session
+SELECT pg_sleep(1);
+GO
+
+-- tsql
+DROP DATABASE babel_3549_db1
+GO
+ALTER SERVER ROLE sysadmin DROP MEMBER babel_3549_login1;
+GO
+DROP LOGIN babel_3549_login1;
+GO
+ALTER SERVER ROLE sysadmin DROP MEMBER babel_3549_login2;
+GO
+DROP LOGIN babel_3549_login2;
+GO
