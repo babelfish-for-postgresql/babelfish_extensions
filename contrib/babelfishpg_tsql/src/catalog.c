@@ -1454,7 +1454,7 @@ babelfish_inconsistent_metadata(PG_FUNCTION_ARGS)
     Tuplestorestate 	*tupstore;
 
 	return_consistency = PG_GETARG_BOOL(0);
-	
+
     /* check to see if caller supports us returning a tuplestore */
     if (rsinfo == NULL || !IsA(rsinfo, ReturnSetInfo))
         ereport(ERROR,
