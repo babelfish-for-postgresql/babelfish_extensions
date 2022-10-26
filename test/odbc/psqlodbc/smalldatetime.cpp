@@ -5,7 +5,7 @@ const string COL1_NAME = "pk";
 const string COL2_NAME = "data";
 const string DATATYPE_NAME = "sys.smalldatetime";
 const string VIEW_NAME = "master_dbo.smalldatetime_view_odbc_test";
-vector<pair<string, string>> TABLE_COLUMNS = {
+const vector<pair<string, string>> TABLE_COLUMNS = {
   {COL1_NAME, "INT PRIMARY KEY"},
   {COL2_NAME, DATATYPE_NAME}
 };
@@ -197,7 +197,7 @@ TEST_F(PSQL_DataTypes_SmallDateTime, Comparison_Operators) {
   createTable(ServerType::PSQL, TABLE_NAME, TABLE_COLUMNS);
   insertValuesInTable(ServerType::PSQL, TABLE_NAME, insertString, NUM_OF_DATA);
   testComparisonOperators(ServerType::PSQL, TABLE_NAME, COL1_NAME, COL2_NAME, INSERTED_PK, INSERTED_DATA, 
-    OPERATIONS_QUERY, expected_results);
+    OPERATIONS_QUERY, expected_results, false, true);
   dropObject(ServerType::PSQL, "TABLE", TABLE_NAME);
 }
 

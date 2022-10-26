@@ -31,7 +31,7 @@ class PSQL_DataTypes_Real : public testing::Test {
 };
 
 // Helper to convert string to float
-float StringToFloat(const string &value) {
+float StringToReal(const string &value) {
   return stof(value);
 }
 
@@ -40,11 +40,11 @@ vector<float> getExpectedFloatResults(vector<string> data) {
 
   for (int i = 0; i < data.size(); i++) {
     if (data[i] != "NULL") {
-      expectedResults.push_back(StringToFloat(data[i]));
+      expectedResults.push_back(StringToReal(data[i]));
     }
     else {
       // dummy value
-      expectedResults.push_back(StringToFloat("-1"));
+      expectedResults.push_back(StringToReal("-1"));
     }
   }
 
@@ -199,8 +199,8 @@ TEST_F(PSQL_DataTypes_Real, Arithmetic_Operators) {
   // initialization of expected_results
   for (int i = 0; i < INSERTED_DATA.size(); i++) {
     expected_results.push_back({});
-    const float data_1 = StringToFloat(INSERTED_PK[i]);    
-    const float data_2 = StringToFloat(INSERTED_DATA[i]);    
+    const float data_1 = StringToReal(INSERTED_PK[i]);    
+    const float data_2 = StringToReal(INSERTED_DATA[i]);    
 
     expected_results[i].push_back(data_1 + data_2);
     expected_results[i].push_back(data_1 - data_2);
@@ -263,10 +263,10 @@ TEST_F(PSQL_DataTypes_Real, Arithmetic_Functions) {
 
   // initialization of expected_results
   vector<float> expected_results = {};
-  float curr = StringToFloat(INSERTED_PK[0]);
+  float curr = StringToReal(INSERTED_PK[0]);
   float min_expected = curr, max_expected = curr, sum_expected = curr, avg_expected = 0;
   for (int i = 1; i < NUM_OF_DATA; i++) {
-    curr = StringToFloat(INSERTED_PK[i]);
+    curr = StringToReal(INSERTED_PK[i]);
     sum_expected += curr;
     min_expected = std::min(min_expected, curr);
     max_expected = std::max(max_expected, curr);

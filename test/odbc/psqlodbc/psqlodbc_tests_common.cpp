@@ -554,12 +554,8 @@ void testUniqueConstraint(ServerType serverType, const string &tableName, const 
 }
 
 void testComparisonOperators(ServerType serverType, const string &tableName, const string &col1Name, const string &col2Name, 
-<<<<<<< HEAD
   const vector<string> &col1Data, const vector<string> &col2Data, const vector<string> &operationsQuery, const vector<vector<char>> &expectedResults, 
   bool explicitCast, bool explicitQuotes) {
-=======
-  const vector<string> &col1Data, const vector<string> &col2Data, const vector<string> &operationsQuery, const vector<vector<char>> &expectedResults, bool explicitCast) {
->>>>>>> 49b1ad5f (Rebase)
 
   OdbcHandler odbcHandler(Drivers::GetDriver(serverType));
   odbcHandler.Connect(true);
