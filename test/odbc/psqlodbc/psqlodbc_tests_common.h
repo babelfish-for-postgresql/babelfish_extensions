@@ -431,6 +431,10 @@ void testComparisonFunctions(ServerType serverType, const string &tableName, int
  * @param expectedResults 2D vector containing the expected results for each operation.
  * @param expectedLen A vector containing the expected length of all results from each operation. 
 */
+
+void testStringFunctions(ServerType serverType, const string &tableName, const vector<string> &operationsQuery, 
+vector<vector<string>> &expectedResults, const vector<string> &pk, const string &Col_NAME);
+
 template <typename T>
 void testArithmeticOperators(ServerType serverType, const string &tableName, const string &orderByColumnName, int numOfData, int type, 
   const vector<T> &colResults, int bufferLen, const vector<string> &operationsQuery, const vector<vector<T>> &expectedResults, const vector<long> &expectedLen);
