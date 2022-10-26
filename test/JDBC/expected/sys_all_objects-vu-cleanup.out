@@ -4,8 +4,20 @@ GO
 DROP PROCEDURE sys_all_objects_vu_prepare_1_2
 GO
 
-DROP FUNCTION sys_all_objects_vu_prepare_1_3
+DROP TRIGGER sys_all_objects_vu_prepare_1_3
 GO
 
 DROP TABLE sys_all_objects_vu_prepare_t1
+GO
+
+DROP FUNCTION sys_all_objects_vu_prepare_1_4_FN
+GO
+
+DROP FUNCTION sys_all_objects_vu_prepare_1_5_TF
+GO
+
+DROP FUNCTION sys_all_objects_vu_prepare_1_6_IF_1
+GO
+
+DROP FUNCTION sys_all_objects_vu_prepare_1_7_IF_2
 GO

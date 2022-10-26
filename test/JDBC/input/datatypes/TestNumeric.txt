@@ -301,7 +301,21 @@ SELECT num1 - num2 from overflow_test;
 DROP TABLE overflow_test;
 
 #BABEL-3345
-create table text_tab (int1 numeric(24,6),int2 numeric(24,6),rate numeric(24,6), type varchar(1000));
-insert into text_tab values (1879323.2222, 2383823.343, 4.5484, NULL);
-select COALESCE( int1, int2 / COALESCE( NULLIF( rate, 0 ), 1 )) * CASE WHEN type IS NULL THEN 1 ELSE -1 END AS FTD_AMOUNT_FC from text_tab;
-drop table text_tab;
+create table testnumeric_tab (int1 numeric(24,6),int2 numeric(24,6),rate numeric(24,6), type varchar(1000));
+insert into testnumeric_tab values (1879323.2222, 2383823.343, 4.5484, NULL);
+select COALESCE( int1, int2 / COALESCE( NULLIF( rate, 0 ), 1 )) * CASE WHEN type IS NULL THEN 1 ELSE -1 END AS FTD_AMOUNT_FC from testnumeric_tab;
+drop table testnumeric_tab;
+
+create table testnumeric_tab (in1 numeric(24, 6), in2 numeric(24, 6), in3 numeric(24, 1), in4 numeric(24, 2), in5 numeric(15, 3));
+insert into testnumeric_tab values (1879323.2222, 2383823.343, 4.5484, 232.79, 345.2345);
+
+#resultant precision = 49 > 38, scale = 12 > 6, precision - scale = 37 > 32; o/p precision set to 38, o/p scale set to 6
+select in1 * in2 from testnumeric_tab;
+
+#resultant precision = 40 > 38, scale = 5, precision - scale = 35 <= 38; delta = precision - 38 = 2,  o/p scale = scale - delta = 3(scale adjustment), o/p precision = 38
+select in4 * in5 from testnumeric_tab;
+
+#resultant precision = 49 > 38, scale = 3 < 6, precision - scale = 46 > 38; will cause arithmetic overflow
+select in3 * in4 from testnumeric_tab;
+
+drop table testnumeric_tab;

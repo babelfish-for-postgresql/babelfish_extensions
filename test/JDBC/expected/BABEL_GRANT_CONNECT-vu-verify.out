@@ -1,0 +1,193 @@
+-- tsql
+grant connect to guest;
+go
+
+-- Throws error
+revoke connect from guest;
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Cannot disable access to the guest user in master or tempdb.)~~
+
+
+-- Throws error because guest user should not be dropped
+drop user guest;
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Cannot disable access to the guest user in master or tempdb.)~~
+
+
+use tempdb
+go
+
+-- Throws error
+revoke connect from guest;
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Cannot disable access to the guest user in master or tempdb.)~~
+
+
+-- Throws error because guest user should not be dropped
+drop user guest;
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Cannot disable access to the guest user in master or tempdb.)~~
+
+
+use msdb
+go
+
+-- Allowed to revoke guest user permission from msdb
+revoke connect from guest;
+go
+
+grant connect to guest;
+go
+
+-- It will disable the guest user.
+drop user guest;
+go
+
+-- Throws error because guest user is already disabled
+drop user guest;
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: User 'guest' cannot be dropped, it can only be disabled. The user is already disabled in the current database.)~~
+
+
+-- tsql  user=grant_connect_abc password=Babel123
+-- should fail because the grant_connect_db1 doesn't have any user. It has guest user but that's disabled.
+use grant_connect_db1;
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: The server principal "grant_connect_abc" is not able to access the database "grant_connect_db1" under the current security context)~~
+
+
+-- should fail because grant_connect_db1 doesn't have guest enabled
+select * from grant_connect_db1.dbo.grant_connect_t1
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: The server principal "grant_connect_abc" is not able to access the database "grant_connect_db1" under the current security context)~~
+
+
+-- tsql
+use grant_connect_db1
+go
+
+grant connect to guest
+go
+
+-- tsql  user=grant_connect_abc password=Babel123
+-- should succeed because the grant_connect_db1 has guest user and that's enabled.
+use grant_connect_db1;
+go
+
+select user_name();
+go
+~~START~~
+nvarchar
+guest
+~~END~~
+
+
+-- should fail because grant_connect_t1 doesn't have guest access
+select * from grant_connect_db1.dbo.grant_connect_t1
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: permission denied for table grant_connect_t1)~~
+
+
+-- tsql
+use grant_connect_db1
+go
+
+grant select on grant_connect_t1 to guest
+go
+
+-- tsql  user=grant_connect_abc password=Babel123
+-- should succeed
+select * from grant_connect_db1.dbo.grant_connect_t1
+go
+~~START~~
+int
+~~END~~
+
+
+-- should fail because the login is not the db owner and it is not the member of sysadmin.
+revoke connect from guest
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: Grantor does not have GRANT permission.)~~
+
+
+-- tsql
+alter role sysadmin add member grant_connect_abc
+go
+
+-- tsql  user=grant_connect_abc password=Babel123
+-- should succeed because the login is a member of sysadmin
+use grant_connect_db1
+go
+
+select user_name();
+go
+~~START~~
+nvarchar
+dbo
+~~END~~
+
+
+-- Should pass because the login is a member of sysadmin
+revoke connect from guest
+go
+
+-- tsql
+use grant_connect_db1
+go
+
+alter role sysadmin drop member grant_connect_abc
+go
+
+create user grant_connect_abc
+go
+
+revoke connect from grant_connect_abc
+go
+
+-- tsql  user=grant_connect_abc password=Babel123
+-- should not succeed because login has a user for grant_connect_db1 but it's disabled
+use grant_connect_db1
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: The server principal "grant_connect_abc" is not able to access the database "grant_connect_db1" under the current security context)~~
+
+
+-- tsql
+use grant_connect_db1
+go
+
+grant connect to grant_connect_abc
+go
+
+-- tsql  user=grant_connect_abc password=Babel123
+-- should succeed because login has a user for grant_connect_db1 and it is enabled
+use grant_connect_db1
+go
+
+select user_name();
+go
+~~START~~
+nvarchar
+grant_connect_abc
+~~END~~
+
+

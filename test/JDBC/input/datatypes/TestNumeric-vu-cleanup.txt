@@ -34,4 +34,6 @@ DROP TABLE testnumeric_overflow_test4;
 DROP TABLE testnumeric_overflow_test5;
 
 #BABEL-3345
-drop table text_tab;
+drop table testnumeric_vu_prepare_tab1;
+
+drop table testnumeric_vu_prepare_tab2;
