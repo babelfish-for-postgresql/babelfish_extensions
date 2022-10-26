@@ -56,7 +56,3 @@ GO
 CREATE VIEW babel_3347_vu7 AS
 SELECT sys.SUBSTRING(NULL, 1,2)
 GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: Argument data type NULL is invalid for argument 1 of substring function)~~
-

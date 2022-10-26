@@ -16,6 +16,9 @@ GO
 DROP VIEW IF EXISTS babel_3347_before_14_6_vu6
 GO
 
+DROP VIEW IF EXISTS babel_3347_before_14_6_vu7
+GO
+
 DROP FUNCTION babel_3347_before_14_6_func
 GO
 

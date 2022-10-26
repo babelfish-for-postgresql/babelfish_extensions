@@ -3718,7 +3718,6 @@ function_call
     : ranking_windowed_function                         
     | aggregate_windowed_function                      
     | analytic_windowed_function                       
-    | substring_function_call
     | func_proc_name_server_database_schema LR_BRACKET allOrDistinct=(DISTINCT|ALL)? function_arg_list? RR_BRACKET 
     | built_in_functions                               
     | freetext_function                                
@@ -3729,10 +3728,6 @@ function_call
 
 partition_function_call
     : (db_name=id DOT)? DOLLAR_PARTITION DOT func_name=id LR_BRACKET function_arg_list RR_BRACKET
-    ;
-
-substring_function_call
-    : (db_name=id DOT)? SUBSTRING LR_BRACKET function_arg_list RR_BRACKET
     ;
 
 freetext_function

@@ -22,6 +22,10 @@ GO
 SELECT * FROM babel_3347_before_14_6_vu6
 GO
 
+-- null constant function qualified with 'sys'
+SELECT * FROM babel_3347_vu7
+GO
+
 -- variables
 DECLARE @babel_3347_before_14_6_vu7_var NVARCHAR(MAX) = NULL
 SELECT SUBSTRING(@babel_3347_before_14_6_vu7_var, 2,3)

@@ -4,17 +4,18 @@ GO
 ~~START~~
 varchar
 ell
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: Argument data type NULL is invalid for argument 1 of substring function)~~
+<NULL>
+ore
+~~END~~
 
 
 -- null constant
 SELECT * FROM babel_3347_before_14_6_vu2
 GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: Argument data type NULL is invalid for argument 1 of substring function)~~
+~~START~~
+varchar
+<NULL>
+~~END~~
 
 
 -- function that returns null
@@ -22,9 +23,8 @@ SELECT * FROM babel_3347_before_14_6_vu3
 GO
 ~~START~~
 nvarchar
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: Argument data type NULL is invalid for argument 1 of substring function)~~
+<NULL>
+~~END~~
 
 
 -- table for substring start index
@@ -52,18 +52,29 @@ varchar
 -- cast
 SELECT * FROM babel_3347_before_14_6_vu6
 GO
-~~ERROR (Code: 33557097)~~
+~~START~~
+varchar
+<NULL>
+~~END~~
 
-~~ERROR (Message: Argument data type NULL is invalid for argument 1 of substring function)~~
+
+-- null constant function qualified with 'sys'
+SELECT * FROM babel_3347_vu7
+GO
+~~START~~
+varchar
+<NULL>
+~~END~~
 
 
 -- variables
 DECLARE @babel_3347_before_14_6_vu7_var NVARCHAR(MAX) = NULL
 SELECT SUBSTRING(@babel_3347_before_14_6_vu7_var, 2,3)
 GO
-~~ERROR (Code: 33557097)~~
-
-~~ERROR (Message: Argument data type NULL is invalid for argument 1 of substring function)~~
+~~START~~
+varchar
+<NULL>
+~~END~~
 
 
 -- ensure null literal aborts batch statements
