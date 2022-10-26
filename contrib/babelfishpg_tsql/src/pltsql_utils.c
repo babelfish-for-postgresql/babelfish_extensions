@@ -891,25 +891,6 @@ get_pltsql_function_signature(PG_FUNCTION_ARGS)
 }
 
 Oid
-get_func_owner(Oid fn_oid)
-{
-	HeapTuple	tuple;
-	Oid			funcOwnerId;
-
-	if (fn_oid == InvalidOid)
-		return InvalidOid;
-
-	tuple = SearchSysCache1(PROCOID, ObjectIdGetDatum(fn_oid));
-	if (!HeapTupleIsValid(tuple))
-	ereport(ERROR,
-			(errcode(ERRCODE_UNDEFINED_TABLE),
-			 errmsg("relation with OID %u does not exist", fn_oid)));
-	funcOwnerId = ((Form_pg_proc) GETSTRUCT(tuple))->proowner;
-	ReleaseSysCache(tuple);
-	return funcOwnerId;
-}
-
-Oid
 get_function_owner_for_top_estate()
 {
 	PLtsql_execstate *top_estate;
@@ -931,7 +912,8 @@ get_function_owner_for_top_estate()
 	if (!top_estate ||
 		!top_estate->func ||
 		top_estate->func->fn_oid == InvalidOid ||
-		top_estate->func->fn_owner == InvalidOid)
+		top_estate->func->fn_owner == InvalidOid ||
+		top_estate->func->exists_in_shared_schema)
 		return InvalidOid;
 
 	return top_estate->func->fn_owner;
