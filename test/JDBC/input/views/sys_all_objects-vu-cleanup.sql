@@ -21,9 +21,3 @@ GO
 
 DROP FUNCTION sys_all_objects_vu_prepare_1_7_IF_2
 GO
-DROP TYPE sys_all_objects_vu_prepare_MyTableType
-GO
-
-DROP FUNCTION dbo.sampleFunc
-GO
-
