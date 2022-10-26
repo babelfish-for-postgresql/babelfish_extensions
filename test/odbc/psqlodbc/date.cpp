@@ -135,6 +135,7 @@ TEST_F(PSQL_DataTypes_Date, Update_Success) {
   };
 
   const vector <string> DATA_UPDATED_VALUES = {
+    "NULL",
     "0001-01-01",  // Min
     "9999-12-31",  // Max
     "2000-01-19"   // Rand
@@ -377,10 +378,12 @@ TEST_F(PSQL_DataTypes_Date, Comparison_Operators) {
   insertValuesInTable(ServerType::MSSQL, BBF_TABLE_NAME, insertString, NUM_OF_DATA);
 
   testComparisonOperators(ServerType::MSSQL, BBF_TABLE_NAME, COL1_NAME, COL2_NAME, 
-                          INSERTED_PK, INSERTED_DATA, BBF_OPERATIONS_QUERY, expected_results);
+                          INSERTED_PK, INSERTED_DATA, BBF_OPERATIONS_QUERY, expected_results,
+                          false, true);
 
   testComparisonOperators(ServerType::PSQL, PG_TABLE_NAME, COL1_NAME, COL2_NAME, 
-                          INSERTED_PK, INSERTED_DATA, PG_OPERATIONS_QUERY, expected_results);
+                          INSERTED_PK, INSERTED_DATA, PG_OPERATIONS_QUERY, expected_results,
+                          false, true);
 
   dropObject(ServerType::PSQL, "TABLE", PG_TABLE_NAME);
   dropObject(ServerType::MSSQL, "TABLE", BBF_TABLE_NAME);
