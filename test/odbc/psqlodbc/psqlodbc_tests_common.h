@@ -283,10 +283,11 @@ void testUpdateSuccess(ServerType serverType, const string &tableName, const str
  * @param updatedValues A vector of values to update some data in the table with one by one.
  * @param expectedUpdatedValues A vector containing expected values to test against when a successful update occurs.
  * @param expectedUpdatedLen A vector containing the expected length of successfully updated data in the table. 
+ * @param caseInsensitive Optional. String comparision for data and expected can be case-insensitive. The default value is false.
 */
 template <typename T>
 void testUpdateSuccess(ServerType serverType, const string &tableName, const string &orderByColumnName, const string &colNameToUpdate, int type, 
-  T data, int bufferLen, const vector<string> &updatedValues, const vector<T> &expectedUpdatedValues, const vector<long> &expectedUpdatedLen);
+  T data, int bufferLen, const vector<string> &updatedValues, const vector<T> &expectedUpdatedValues, const vector<long> &expectedUpdatedLen, bool caseInsensitive = false);
 
 /**
  * Given a vector of invalid values, test that updating a table fails using these values.
@@ -356,9 +357,12 @@ void testUniqueConstraint(ServerType serverType, const string &tableName, const 
  * @param col2Data Vector containing data in within the second column.
  * @param operationsQuery Vector containing the operators to test the two columns against.
  * @param expectedResults Vector containing the expected results for each operation.
+ * @param explicitCast Optional. Explicit cast to use `OPERATOR(sys.=)`. The default value is false.
+ * @param explicitQuotes Optional. Explicit quotes around col2Name. The default value is false.
 */
 void testComparisonOperators(ServerType serverType, const string &tableName, const string &col1Name, const string &col2Name, 
-  const vector<string> &col1Data, const vector<string> &col2Data, const vector<string> &operationsQuery, const vector<vector<char>> &expectedResults);
+  const vector<string> &col1Data, const vector<string> &col2Data, const vector<string> &operationsQuery, const vector<vector<char>> &expectedResults, 
+  bool explicitCast = false, bool explicitQuotes = false);
 
 /**
  * Verify the expected results for various comparison functions (MIN, MAX, SUM, etc.).
@@ -472,7 +476,7 @@ void testInsertionSuccess(ServerType serverType, const string &tableName, const 
 
 template <typename T>
 void testUpdateSuccess(ServerType serverType, const string &tableName, const string &orderByColumnName, const string &colNameToUpdate, int type, 
-  T data, int bufferLen, const vector<string> &updatedValues, const vector<T> &expectedUpdatedValues, const vector<long> &expectedUpdatedLen) {
+  T data, int bufferLen, const vector<string> &updatedValues, const vector<T> &expectedUpdatedValues, const vector<long> &expectedUpdatedLen, bool caseInsensitive) {
     
   OdbcHandler odbcHandler(Drivers::GetDriver(serverType));
   odbcHandler.Connect(true);
@@ -514,12 +518,17 @@ void testUpdateSuccess(ServerType serverType, const string &tableName, const str
     // Assert that updated value is present
     odbcHandler.ExecQuery(SelectStatement(tableName, {"*"}, vector<string>{orderByColumnName}));
     rcode = SQLFetch(odbcHandler.GetStatementHandle());
-
     EXPECT_EQ(rcode, SQL_SUCCESS);
     EXPECT_EQ(pk_len, INT_BYTES_EXPECTED);
     EXPECT_EQ(pk, pkValue);
-    EXPECT_EQ(data_len, expectedUpdatedLen[i]);
-    EXPECT_EQ(data, expectedUpdatedValues[i]);
+    
+    if (updatedValues[i] != "NULL") {
+      EXPECT_EQ(data_len, expectedUpdatedLen[i]);
+      EXPECT_EQ(data, expectedUpdatedValues[i]);
+    }
+    else {
+      EXPECT_EQ(data_len, SQL_NULL_DATA);
+    }
 
     rcode = SQLFetch(odbcHandler.GetStatementHandle());
     EXPECT_EQ(rcode, SQL_NO_DATA);

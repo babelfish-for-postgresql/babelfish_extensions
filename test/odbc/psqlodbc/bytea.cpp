@@ -383,10 +383,12 @@ TEST_F(PSQL_DataTypes_ByteA, Comparison_Operators) {
   insertValuesInTable(ServerType::MSSQL, BBF_TABLE_NAME, insertString, NUM_OF_DATA);
 
   testComparisonOperators(ServerType::MSSQL, BBF_TABLE_NAME, COL1_NAME, COL2_NAME, 
-                          INSERTED_PK, INSERTED_DATA, BBF_OPERATIONS_QUERY, expected_results);
+                          INSERTED_PK, INSERTED_DATA, BBF_OPERATIONS_QUERY, expected_results,
+                          false, true);
 
   testComparisonOperators(ServerType::PSQL, PG_TABLE_NAME, COL1_NAME, COL2_NAME, 
-                          INSERTED_PK, INSERTED_DATA, PG_OPERATIONS_QUERY, expected_results);
+                          INSERTED_PK, INSERTED_DATA, PG_OPERATIONS_QUERY, expected_results,
+                          false, true);
 
   dropObject(ServerType::PSQL, "TABLE", PG_TABLE_NAME);
   dropObject(ServerType::MSSQL, "TABLE", BBF_TABLE_NAME);

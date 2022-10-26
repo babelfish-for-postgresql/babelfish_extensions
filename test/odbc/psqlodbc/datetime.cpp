@@ -318,7 +318,7 @@ TEST_F(PSQL_Datatypes_Datetime, Comparison_Operators) {
   createTable(ServerType::PSQL, TABLE_NAME, TABLE_COLUMNS);
   insertValuesInTable(ServerType::PSQL, TABLE_NAME, insertString, NUM_OF_DATA);
   testComparisonOperators(ServerType::PSQL, TABLE_NAME, COL1_NAME, COL2_NAME, INSERTED_PK, INSERTED_DATA, 
-    OPERATIONS_QUERY, expected_results);
+    OPERATIONS_QUERY, expected_results, false, true);
   dropObject(ServerType::PSQL, "TABLE", TABLE_NAME);
 }
 
