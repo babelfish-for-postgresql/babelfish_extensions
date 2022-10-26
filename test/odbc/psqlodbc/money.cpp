@@ -5,7 +5,7 @@ const string COL1_NAME = "pk";
 const string COL2_NAME = "data";
 const string DATATYPE_NAME = "sys.money";
 const string VIEW_NAME = "master_dbo.money_view_odbc_test";
-vector<pair<string, string>> TABLE_COLUMNS = {
+const vector<pair<string, string>> TABLE_COLUMNS = {
   {COL1_NAME, "INT PRIMARY KEY"},
   {COL2_NAME, DATATYPE_NAME}
 };
@@ -107,6 +107,7 @@ TEST_F(PSQL_DataTypes_Money, Update_Success) {
   const vector<long> expectedInsertLen(DATA_INSERTED.size(), DOUBLE_BYTES_EXPECTED);
 
   const vector <string> DATA_UPDATED_VALUES = {
+    "NULL",
     "-922337203685477.5808",
     "922337203685477.5807",
     "0"
