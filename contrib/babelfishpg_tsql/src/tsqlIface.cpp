@@ -986,6 +986,39 @@ public:
 		}
 
 	}
+
+    void exitTable_source_item(TSqlParser::Table_source_itemContext *ctx) override
+    {
+        /* rewrite CROSS/OUTER APPLY to CROSS/LEFT JOIN LATERAL */
+        if (ctx->APPLY())
+        {
+            /* In PG, LATERAL joins can only be applied to table_refs and not bare table calls, so check for that case.
+             * Luckily, in PG all LATERAL joins (cross and left) require that the joined table_ref has an alias, so just
+             * check for any alias clause to determine whether to use a lateral join or just regular join. The only other
+             * caveat is with with function calls (which don't need an alias in either SQL Server or PG), so also check for that case.
+             */
+            bool lateral = (ctx->table_source_item(1) && (ctx->table_source_item(1)->function_call() || ctx->table_source_item(1)->as_table_alias(0)));
+            
+            if (ctx->CROSS())
+            {
+                rewritten_query_fragment.emplace(std::make_pair(ctx->APPLY()->getSymbol()->getStartIndex(),
+                                                                std::make_pair(ctx->APPLY()->getText(), lateral ? "JOIN LATERAL" : "JOIN")));
+            }
+            else if (ctx->OUTER())
+            {
+                /* replace OUTER with LEFT */
+                rewritten_query_fragment.emplace(std::make_pair(ctx->OUTER()->getSymbol()->getStartIndex(),
+                                                                std::make_pair(ctx->OUTER()->getText(), "LEFT")));
+
+                rewritten_query_fragment.emplace(std::make_pair(ctx->APPLY()->getSymbol()->getStartIndex(),
+                                                                    std::make_pair(ctx->APPLY()->getText(), lateral ? "JOIN LATERAL" : "JOIN")));
+                
+                /* Need to add an always true join qualifier in order to satisfy PG grammar for left joins */
+                rewritten_query_fragment.emplace(std::make_pair(ctx->getStop()->getStopIndex() + 1,
+                                                                std::make_pair("", " ON TRUE ")));
+            }
+        }
+    }
 };
 
 ////////////////////////////////////////////////////////////////////////////////

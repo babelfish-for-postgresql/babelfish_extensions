@@ -80,7 +80,6 @@ const char *pg_reserved_keywords_to_be_delimited[] = {
   "window",
 
   /* reserved keywords listed in Babelfish backend parser extension */
-  "apply",
   "choose",
   "dateadd",
   "datediff",

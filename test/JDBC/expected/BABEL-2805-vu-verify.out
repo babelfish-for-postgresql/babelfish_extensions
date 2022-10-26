@@ -10,10 +10,62 @@ int#!#int
 ~~END~~
 
 
+select * from babel_2805_vu_v2
+go
+~~START~~
+int#!#text#!#nvarchar
+1#!#col1#!#name
+2#!#col2#!#42
+~~END~~
+
+
+select * from babel_2805_vu_v3
+go
+~~START~~
+int#!#varchar#!#varchar
+1#!#Recommendation#!#Other
+2#!#Advertisement#!#Not Applicable
+3#!#<NULL>#!#Promotion
+~~END~~
+
+
 select * from babel_2805_vu_f1('2021-12-31','2001-09-11',NULL,NULL,NULL)
 GO
 ~~START~~
 datetime2
 2021-12-31 00:00:00.0000000
+~~END~~
+
+
+select * from babel_2805_vu_v4
+go
+~~START~~
+int#!#int#!#int#!#int
+1#!#1#!#3#!#3
+1#!#1#!#4#!#4
+2#!#2#!#3#!#3
+2#!#2#!#4#!#4
+~~END~~
+
+
+exec babel_2805_vu_p1
+go
+~~START~~
+int#!#int#!#int#!#int
+1#!#1#!#3#!#3
+1#!#1#!#4#!#4
+2#!#2#!#3#!#3
+2#!#2#!#4#!#4
+~~END~~
+
+
+exec babel_2805_vu_p2
+go
+~~START~~
+int#!#int#!#int#!#int
+1#!#1#!#3#!#3
+1#!#1#!#4#!#4
+2#!#2#!#3#!#3
+2#!#2#!#4#!#4
 ~~END~~
 
