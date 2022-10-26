@@ -1,5 +1,32 @@
 #include "psqlodbc_tests_common.h"
 
+std::string GetHexRepresentation(std::string inserted_int, size_t table_size) {
+  std::stringstream stream;
+  stream << std::hex << strtoul(inserted_int.c_str(), nullptr, 10);
+  string expected_hex = stream.str();
+
+  size_t expected_length = expected_hex.length();
+  if (table_size == -1 || table_size >= 8) {
+    if (((expected_length + 7) & (-8)) - expected_length == 0) {
+      // Pad with extra 8 characters
+      expected_length += 8;
+    }
+
+    // Round to nearest multiple of 8
+    expected_length = ((expected_length + 7) & (-8));
+  }
+  else {
+    expected_length = table_size * 2;
+  }
+
+  // Padding extra one `0` if not in multiple of 2s
+  expected_length = expected_length % 2 == 0 ? expected_length : expected_length + 1;
+
+  // Prepend string with '0x'
+  size_t extra_padding = expected_length - expected_hex.length();
+  return "0x" + std::string(extra_padding, '0') + expected_hex;
+}
+
 vector<string> duplicateElements(vector<string> input) {
   typedef std::move_iterator<decltype(input)::iterator> VecMoveIter;
   std::vector<string> duplicated(input);
@@ -325,9 +352,10 @@ void testTableCreationFailure(ServerType serverType, const string &tableName, co
 }
 
 void testInsertionSuccess(ServerType serverType, const string &tableName, const string &orderByColumnName, 
-  const vector<string> &insertedValues, const vector<string> &expectedInsertedValues, int pkStartingValue, bool caseInsensitive) {
+  const vector<string> &insertedValues, const vector<string> &expectedInsertedValues, int pkStartingValue, 
+  bool caseInsensitive, bool numericInsert) {
 
-  insertValuesInTable(serverType, tableName, insertedValues, false, pkStartingValue);
+  insertValuesInTable(serverType, tableName, insertedValues, numericInsert, pkStartingValue);
   verifyValuesInObject(serverType, tableName, orderByColumnName, insertedValues, expectedInsertedValues, pkStartingValue, caseInsensitive);
 }
 
@@ -363,7 +391,8 @@ void testInsertionFailure(ServerType serverType, const string &tableName, const 
 }
 
 void testUpdateSuccess(ServerType serverType, const string &tableName, const string &orderByColumnName, 
-  const string &colNameToUpdate, const vector<string> &updatedValues, const vector<string> &expectedUpdatedValues, bool caseInsensitive) {
+  const string &colNameToUpdate, const vector<string> &updatedValues, const vector<string> &expectedUpdatedValues, 
+  bool caseInsensitive, bool numericUpdate) {
 
   OdbcHandler odbcHandler(Drivers::GetDriver(serverType));
   odbcHandler.Connect(true);
@@ -390,7 +419,8 @@ void testUpdateSuccess(ServerType serverType, const string &tableName, const str
   
   vector<pair<string, string>> update_col{};
   for (int i = 0; i < updatedValues.size(); i++) {
-    string valueToUpdate = updatedValues[i] != "NULL" ? "\'" + updatedValues[i] + "\'" : updatedValues[i];
+    string valueToUpdate = (numericUpdate || updatedValues[i] == "NULL") ? 
+                            updatedValues[i] :  "\'" + updatedValues[i] + "\'";
     update_col.push_back(pair<string, string>(colNameToUpdate, valueToUpdate));
   }
 
