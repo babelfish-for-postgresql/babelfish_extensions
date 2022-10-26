@@ -3072,6 +3072,22 @@ GRANT SELECT ON sys.sp_sproc_columns_view TO PUBLIC;
 
 CALL sys.babelfish_drop_deprecated_object('view', 'sys', 'sp_sproc_columns_view_deprecated_in_2_3_0');
 
+CREATE OR REPLACE PROCEDURE sys.sp_addrole(IN "@rolname" sys.SYSNAME)
+AS 'babelfishpg_tsql', 'sp_addrole' LANGUAGE C;
+GRANT EXECUTE on PROCEDURE sys.sp_addrole(IN sys.SYSNAME) TO PUBLIC;
+
+CREATE OR REPLACE PROCEDURE sys.sp_droprole(IN "@rolname" sys.SYSNAME)
+AS 'babelfishpg_tsql', 'sp_droprole' LANGUAGE C;
+GRANT EXECUTE on PROCEDURE sys.sp_droprole(IN sys.SYSNAME) TO PUBLIC;
+
+CREATE OR REPLACE PROCEDURE sys.sp_addrolemember(IN "@rolname" sys.SYSNAME, IN "@membername" sys.SYSNAME)
+AS 'babelfishpg_tsql', 'sp_addrolemember' LANGUAGE C;
+GRANT EXECUTE on PROCEDURE sys.sp_addrolemember(IN sys.SYSNAME, IN sys.SYSNAME) TO PUBLIC;
+
+CREATE OR REPLACE PROCEDURE sys.sp_droprolemember(IN "@rolname" sys.SYSNAME, IN "@membername" sys.SYSNAME)
+AS 'babelfishpg_tsql', 'sp_droprolemember' LANGUAGE C;
+GRANT EXECUTE on PROCEDURE sys.sp_droprolemember(IN sys.SYSNAME, IN sys.SYSNAME) TO PUBLIC;
+
 -- Drops the temporary procedure used by the upgrade script.
 -- Please have this be one of the last statements executed in this upgrade script.
 DROP PROCEDURE sys.babelfish_drop_deprecated_object(varchar, varchar, varchar);
