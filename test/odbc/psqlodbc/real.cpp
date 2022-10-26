@@ -357,7 +357,7 @@ TEST_F(PSQL_DataTypes_Real, Table_Single_Primary_Keys) {
   const string SCHEMA_NAME = TABLE_NAME.substr(0, TABLE_NAME.find('.'));
 
   const vector<string> PK_COLUMNS = {
-    COL1_NAME
+    COL2_NAME
   };
 
   string tableConstraints = createTableConstraint("PRIMARY KEY ", PK_COLUMNS);
