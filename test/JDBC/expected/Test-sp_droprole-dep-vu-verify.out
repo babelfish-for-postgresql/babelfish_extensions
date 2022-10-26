@@ -1,0 +1,21 @@
+EXEC test_sp_droprole_proc 'sp_droprole_role1'
+GO
+
+SELECT dbo.test_sp_droprole_func('sp_droprole_role2')
+GO
+~~START~~
+int
+0
+~~END~~
+
+
+SELECT * FROM test_sp_droprole_view
+GO
+~~START~~
+int
+0
+~~END~~
+
+
+EXEC test_sp_droprole_proc 'sp_droprole_role3'
+GO
