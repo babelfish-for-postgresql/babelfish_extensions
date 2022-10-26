@@ -343,7 +343,7 @@ TEST_F(PSQL_DataTypes_BigInt, View_Creation) {
 
 TEST_F(PSQL_DataTypes_BigInt, Table_Unique_Constraints) {
   const vector<pair<string, string>> TABLE_COLUMNS = {
-    {COL1_NAME, "INT PRIMARY KEY"},
+    {COL1_NAME, "INT"},
     {COL2_NAME, DATATYPE_NAME}
   };
 
@@ -373,7 +373,34 @@ TEST_F(PSQL_DataTypes_BigInt, Table_Unique_Constraints) {
   dropObject(ServerType::PSQL, "TABLE", TABLE_NAME);
 }
 
-TEST_F(PSQL_DataTypes_BigInt, Table_Composite_Keys) {
+TEST_F(PSQL_DataTypes_BigInt, Table_Single_Primary_Keys) {
+  const vector<pair<string, string>> TABLE_COLUMNS = {
+    {COL1_NAME, "INT"},
+    {COL2_NAME, DATATYPE_NAME}
+  };
+
+  const string PKTABLE_NAME = TABLE_NAME.substr(TABLE_NAME.find('.') + 1, TABLE_NAME.length());
+  const string SCHEMA_NAME = TABLE_NAME.substr(0, TABLE_NAME.find('.'));
+
+  const vector<string> PK_COLUMNS = {
+    COL2_NAME
+  };
+
+  string tableConstraints = createTableConstraint("PRIMARY KEY ", PK_COLUMNS);
+
+  const vector<string> INSERTED_VALUES = {
+    "9223372036854775807",
+    "123456789"
+  };
+
+  createTable(ServerType::PSQL, TABLE_NAME, TABLE_COLUMNS, tableConstraints);
+  testPrimaryKeys(ServerType::PSQL, SCHEMA_NAME, PKTABLE_NAME, PK_COLUMNS);
+  testInsertionSuccess(ServerType::PSQL, TABLE_NAME, COL1_NAME, INSERTED_VALUES, INSERTED_VALUES);
+  testInsertionFailure(ServerType::PSQL, TABLE_NAME, COL1_NAME, INSERTED_VALUES, false, INSERTED_VALUES.size(), false);
+  dropObject(ServerType::PSQL, "TABLE", TABLE_NAME);
+}
+
+TEST_F(PSQL_DataTypes_BigInt, Table_Composite_Primary_Keys) {
   long long int data;
 
   const vector<pair<string, string>> TABLE_COLUMNS = {
