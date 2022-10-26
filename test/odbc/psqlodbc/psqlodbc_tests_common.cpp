@@ -195,7 +195,9 @@ void testCommonColumnAttributes(ServerType serverType, const string &tableName, 
                             (SQLLEN*) &scale); 
     EXPECT_EQ(rcode, SQL_SUCCESS);
     EXPECT_EQ(scale, scaleExpected[i - 1]);
+  }
 
+  for (int i = 1; i <= numCols; i++) {
     rcode = SQLColAttribute(odbcHandler.GetStatementHandle(),
                             i,
                             SQL_DESC_TYPE_NAME, // Get the type name of the column
