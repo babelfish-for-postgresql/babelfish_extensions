@@ -363,7 +363,7 @@ void testInsertionFailure(ServerType serverType, const string &tableName, const 
 }
 
 void testUpdateSuccess(ServerType serverType, const string &tableName, const string &orderByColumnName, 
-  const string &colNameToUpdate, const vector<string> &updatedValues, const vector<string> &expectedUpdatedValues, bool caseInsensitive) {
+  const string &colNameToUpdate, const vector<string> &updatedValues, const vector<string> &expectedUpdatedValues, bool caseInsensitive, const bool &useSingleQuotes) {
 
   OdbcHandler odbcHandler(Drivers::GetDriver(serverType));
   odbcHandler.Connect(true);
@@ -390,7 +390,7 @@ void testUpdateSuccess(ServerType serverType, const string &tableName, const str
   
   vector<pair<string, string>> update_col{};
   for (int i = 0; i < updatedValues.size(); i++) {
-    string valueToUpdate = updatedValues[i] != "NULL" ? "\'" + updatedValues[i] + "\'" : updatedValues[i];
+    string valueToUpdate = updatedValues[i] != "NULL" && useSingleQuotes ? "\'" + updatedValues[i] + "\'" : updatedValues[i];
     update_col.push_back(pair<string, string>(colNameToUpdate, valueToUpdate));
   }
 

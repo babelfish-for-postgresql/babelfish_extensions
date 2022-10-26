@@ -265,9 +265,11 @@ void testInsertionFailure(ServerType serverType, const string &tableName, const 
  * @param updatedValues A vector of values to update some data in the table with one by one.
  * @param expectedUpdatedValues A vector containing expected values after a successful update.
  * @param caseInsensitive Optional. String comparision for data and expected can be case-insensitive. The default value is false.
+ * @param useSingleQuotes Optional. A flag to decide whether or not the new data to set should be encapsulated in single-quotes
 */
 void testUpdateSuccess(ServerType serverType, const string &tableName, const string &orderByColumnName, 
-  const string &colNameToUpdate, const vector<string> &updatedValues, const vector<string> &expectedUpdatedValues, bool caseInsensitive = false);
+  const string &colNameToUpdate, const vector<string> &updatedValues, const vector<string> &expectedUpdatedValues, 
+  bool caseInsensitive = false, const bool &useSingleQuotes = true);
 
 /**
  * Given a vector of values, test that some data in the table can be updated successfully with each value.
