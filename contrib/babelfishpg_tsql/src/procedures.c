@@ -57,7 +57,7 @@ static List *gen_sp_addrole_subcmds(const char *user);
 static List *gen_sp_droprole_subcmds(const char *user);
 static List *gen_sp_addrolemember_subcmds(const char *user, const char *member);
 static List *gen_sp_droprolemember_subcmds(const char *user, const char *member);
-static char* rolname_check(char* rolname);
+static void rolname_check(char* rolname);
 
 char *sp_describe_first_result_set_view_name = NULL;
 
@@ -1038,17 +1038,20 @@ create_xp_instance_regread_in_master_dbo_internal(PG_FUNCTION_ARGS)
 	PG_RETURN_INT32(0);
 }
 
-static char* rolname_check(char* rolname){
-	size_t		len;
-	/*
-	 * Skip leading and trailing whitespace
-	 */
-	while (isspace((unsigned char) *rolname))
-		rolname++;
+/*
+ * Internal function to tim leading/trailing whitespaces and check rolname
+ * doesn't contain whitespace or backslah
+ */
+static void rolname_check(char* rolname)
+{
+	size_t len;
+	char * str = rolname;
+	len = strlen(str);
 
-	len = strlen(rolname);
-	while (len > 0 && isspace((unsigned char) rolname[len - 1]))
-		rolname[--len] = '\0';
+	while(isspace(str[len - 1])) str[--len] = 0;
+	while(* str && isspace(* str)) ++str, --len;
+
+	memmove(rolname, str, len + 1);
 
 	if (!len)
 		ereport(ERROR, (errcode(ERRCODE_NULL_VALUE_NOT_ALLOWED),
@@ -1061,8 +1064,8 @@ static char* rolname_check(char* rolname){
 	/* Role name cannot contain '\' */
 	if(strchr(rolname, '\\') != NULL)
 		ereport(ERROR, (errcode(ERRCODE_SYNTAX_ERROR),errmsg("query argument of procedure contains \\")));
-	return rolname;
 }
+
 Datum sp_addrole(PG_FUNCTION_ARGS)
 {
 	char *rolname;
@@ -1078,7 +1081,11 @@ Datum sp_addrole(PG_FUNCTION_ARGS)
 
 		rolname = PG_ARGISNULL(0) ? NULL : TextDatumGetCString(PG_GETARG_TEXT_PP(0));
 
-		rolname = rolname_check(rolname);
+		/*
+		 * Trim leading/trailing whitespaces and check rolname
+		 * doesn't contain whitespace or backslah
+		 */
+		rolname_check(rolname);
 
 		/* Advance cmd counter to make the delete visible */
 		CommandCounterIncrement();
@@ -1184,7 +1191,11 @@ Datum sp_droprole(PG_FUNCTION_ARGS)
 
 		rolname = PG_ARGISNULL(0) ? NULL : TextDatumGetCString(PG_GETARG_TEXT_PP(0));
 
-		rolname = rolname_check(rolname);
+		/*
+		 * Trim leading/trailing whitespaces and check rolname
+		 * doesn't contain whitespace or backslah
+		 */
+		rolname_check(rolname);
 
 		/* Advance cmd counter to make the delete visible */
 		CommandCounterIncrement();
@@ -1282,8 +1293,15 @@ Datum sp_addrolemember(PG_FUNCTION_ARGS)
 							(superuser() ? PGC_SUSET : PGC_USERSET),
 							PGC_S_SESSION, GUC_ACTION_SAVE, true, 0, false);
 
-		rolname = text_to_cstring(PG_GETARG_TEXT_PP(0));
-		membername = text_to_cstring(PG_GETARG_TEXT_PP(1));
+		rolname = PG_ARGISNULL(0) ? NULL : TextDatumGetCString(PG_GETARG_TEXT_PP(0));
+		membername = PG_ARGISNULL(1) ? NULL : TextDatumGetCString(PG_GETARG_TEXT_PP(1));
+
+		/*
+		 * Trim leading/trailing whitespaces and check rolname,
+		 * membername doesn't contain whitespace or backslah
+		 */
+		rolname_check(rolname);
+		rolname_check(membername);
 
 		/* Advance cmd counter to make the delete visible */
 		CommandCounterIncrement();
@@ -1385,8 +1403,15 @@ Datum sp_droprolemember(PG_FUNCTION_ARGS)
 							(superuser() ? PGC_SUSET : PGC_USERSET),
 							PGC_S_SESSION, GUC_ACTION_SAVE, true, 0, false);
 
-		rolname = text_to_cstring(PG_GETARG_TEXT_PP(0));
-		membername = text_to_cstring(PG_GETARG_TEXT_PP(1));
+		rolname = PG_ARGISNULL(0) ? NULL : TextDatumGetCString(PG_GETARG_TEXT_PP(0));
+		membername = PG_ARGISNULL(1) ? NULL : TextDatumGetCString(PG_GETARG_TEXT_PP(1));
+
+		/*
+		 * Trim leading/trailing whitespaces and check rolname,
+		 * membername doesn't contain whitespace or backslah
+		 */
+		rolname_check(rolname);
+		rolname_check(membername);
 
 		/* Advance cmd counter to make the delete visible */
 		CommandCounterIncrement();
