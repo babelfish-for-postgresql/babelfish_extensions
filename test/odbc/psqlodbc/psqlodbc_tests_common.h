@@ -1,6 +1,7 @@
 #ifndef PSQLODBC_TESTS_COMMON_H
 #define PSQLODBC_TESTS_COMMON_H
 
+#include <algorithm>
 #include <cmath>
 #include <gtest/gtest.h>
 #include <sqlext.h>

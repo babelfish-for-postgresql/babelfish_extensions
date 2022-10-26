@@ -190,6 +190,7 @@ TEST_F(PSQL_Datatypes_Datetime, Table_Single_Primary_Keys) {
   createTable(ServerType::PSQL, TABLE_NAME, TABLE_COLUMNS, tableConstraints);
   testPrimaryKeys(ServerType::PSQL, SCHEMA_NAME, PKTABLE_NAME, PK_COLUMNS);
   testInsertionSuccess(ServerType::PSQL, TABLE_NAME, COL1_NAME, inserted_values, expected);
+  testInsertionFailure(ServerType::PSQL, TABLE_NAME, COL1_NAME, inserted_values, false, inserted_values.size(), false);
   dropObject(ServerType::PSQL, "TABLE", TABLE_NAME);
 }
 
@@ -225,6 +226,7 @@ TEST_F(PSQL_Datatypes_Datetime, Table_Composite_Primary_Keys) {
   createTable(ServerType::PSQL, TABLE_NAME, TABLE_COLUMNS, tableConstraints);
   testPrimaryKeys(ServerType::PSQL, SCHEMA_NAME, PKTABLE_NAME, PK_COLUMNS);
   testInsertionSuccess(ServerType::PSQL, TABLE_NAME, COL1_NAME, inserted_values, expected);
+  testInsertionFailure(ServerType::PSQL, TABLE_NAME, COL1_NAME, inserted_values, false, 0, false);
   dropObject(ServerType::PSQL, "TABLE", TABLE_NAME);
 }
 
@@ -349,7 +351,6 @@ TEST_F(PSQL_Datatypes_Datetime, Comparison_Functions) {
     "MIN(" + COL2_NAME + ")",
     "MAX(" + COL2_NAME + ")"
   };
-  const int NUM_OF_OPERATIONS = OPERATIONS_QUERY.size();
 
   // initialization of expected_results
   vector<string> expected_results = {};
