@@ -46,6 +46,7 @@
 #include "utils/builtins.h"
 #include "utils/datum.h"
 #include "utils/fmgroids.h"
+#include "utils/fmgrprotos.h"
 #include "utils/lsyscache.h"
 #include "utils/memutils.h"
 #include "utils/rel.h"
@@ -5455,9 +5456,10 @@ pltsql_update_identity_insert_sequence(PLtsql_expr *expr)
 					if (strcmp(NameStr(attr->attname), id_attname) == 0)
 					{
 						int tup_idx;
+						int64 seq_incr = 0;
 						int64 last_identity;
-						int64 min_identity = INT_MAX;
-						int64 max_identity = INT_MIN;
+						int64 min_identity = LONG_MAX;
+						int64 max_identity = LONG_MIN;
 						ListCell *seq_lc;
 						List *seq_options;
 
@@ -5470,6 +5472,8 @@ pltsql_update_identity_insert_sequence(PLtsql_expr *expr)
 																		tupdesc_ret,
 																		attnum+1,
 																		&isnull));
+
+							Assert(!isnull);
 
 							if (last_identity < min_identity)
 								min_identity = last_identity;
@@ -5493,10 +5497,21 @@ pltsql_update_identity_insert_sequence(PLtsql_expr *expr)
 							DefElem *defel = (DefElem *) lfirst(seq_lc);
 
 							if (strcmp(defel->defname, "increment") == 0)
-								do_setval_tsql(seqid, max_identity, true);
-							else
-								do_setval_tsql(seqid, min_identity, true);
+								seq_incr = defGetInt64(defel);
 
+						}
+
+						if (seq_incr > 0)
+							DirectFunctionCall2(setval_oid,
+												ObjectIdGetDatum(seqid),
+												Int64GetDatum(max_identity));
+						else if (seq_incr < 0)
+							DirectFunctionCall2(setval_oid,
+												ObjectIdGetDatum(seqid),
+												Int64GetDatum(min_identity));
+						else {
+							/* increment can't be zero */
+							Assert(0);
 						}
 
 						/* more than one identity column isn't allowed */
