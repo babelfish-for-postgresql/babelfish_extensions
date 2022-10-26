@@ -50,8 +50,6 @@ TEST_F(PSQL_DataTypes_UniqueIdentifier, Table_Creation) {
 }
 
 TEST_F(PSQL_DataTypes_UniqueIdentifier, Insertion_Success) {
-  char data[BUFFER_SIZE];
-
   const vector<string> INSERTED_DATA = {
     "NULL",
     "00000000-0000-0000-0000-000000000000", // Min
@@ -231,6 +229,7 @@ TEST_F(PSQL_DataTypes_UniqueIdentifier, Table_Single_Primary_Keys) {
   createTable(ServerType::PSQL, TABLE_NAME, TABLE_COLUMNS, tableConstraints);
   testPrimaryKeys(ServerType::PSQL, SCHEMA_NAME, PKTABLE_NAME, PK_COLUMNS);
   testInsertionSuccess(ServerType::PSQL, TABLE_NAME, COL1_NAME, INSERTED_VALUES, INSERTED_VALUES);
+  testInsertionFailure(ServerType::PSQL, TABLE_NAME, COL1_NAME, INSERTED_VALUES, false, INSERTED_VALUES.size(), false);
   dropObject(ServerType::PSQL, "TABLE", TABLE_NAME);
 }
 
@@ -258,6 +257,7 @@ TEST_F(PSQL_DataTypes_UniqueIdentifier, Table_Composite_Keys) {
   createTable(ServerType::PSQL, TABLE_NAME, TABLE_COLUMNS, tableConstraints);
   testPrimaryKeys(ServerType::PSQL, SCHEMA_NAME, PKTABLE_NAME, PK_COLUMNS);
   testInsertionSuccess(ServerType::PSQL, TABLE_NAME, COL1_NAME, INSERTED_VALUES, INSERTED_VALUES);
+  testInsertionFailure(ServerType::PSQL, TABLE_NAME, COL1_NAME, INSERTED_VALUES, false, 0, false);
   dropObject(ServerType::PSQL, "TABLE", TABLE_NAME);
 }
 
