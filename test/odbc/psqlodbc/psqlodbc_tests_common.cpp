@@ -1,5 +1,12 @@
 #include "psqlodbc_tests_common.h"
 
+vector<string> duplicateElements(vector<string> input) {
+  typedef std::move_iterator<decltype(input)::iterator> VecMoveIter;
+  std::vector<string> duplicated(input);
+  std::copy(VecMoveIter(input.begin()), VecMoveIter(input.end()), std::back_inserter(duplicated));
+  return duplicated;
+}
+
 // helper function to initialize insert string (1, "", "", ""), etc.
 string InitializeInsertString(const vector<string>& insertedValues, bool isNumericInsert, int pkStartingValue) {
 
@@ -96,7 +103,7 @@ void insertValuesInTable(ServerType serverType, const string &tableName, const s
 }
 
 void verifyValuesInObject(ServerType serverType, const string &objectName, const string &orderByColumnName, 
-  const vector<string> &insertedValues, const vector<string> &expectedInsertedValues, int pkStartingValue) {
+  const vector<string> &insertedValues, const vector<string> &expectedInsertedValues, int pkStartingValue, bool caseInsensitive) {
     
   OdbcHandler odbcHandler(Drivers::GetDriver(serverType));
 
@@ -124,7 +131,12 @@ void verifyValuesInObject(ServerType serverType, const string &objectName, const
     EXPECT_EQ(pk, pkStartingValue);
     if (insertedValues[i] != "NULL") {
       EXPECT_EQ(data_len, expectedInsertedValues[i].size());
-      EXPECT_EQ(data, expectedInsertedValues[i]);
+      string expected = expectedInsertedValues[i];
+      if (caseInsensitive) {
+        for (auto & c: data) c = tolower(c);
+        for (auto & c: expected) c = tolower(c);
+      }
+      EXPECT_EQ(data, expected);
     }
     else {
       EXPECT_EQ(data_len, SQL_NULL_DATA);
@@ -183,7 +195,9 @@ void testCommonColumnAttributes(ServerType serverType, const string &tableName, 
                             (SQLLEN*) &scale); 
     EXPECT_EQ(rcode, SQL_SUCCESS);
     EXPECT_EQ(scale, scaleExpected[i - 1]);
+  }
 
+  for (int i = 1; i <= numCols; i++) {
     rcode = SQLColAttribute(odbcHandler.GetStatementHandle(),
                             i,
                             SQL_DESC_TYPE_NAME, // Get the type name of the column
@@ -311,10 +325,10 @@ void testTableCreationFailure(ServerType serverType, const string &tableName, co
 }
 
 void testInsertionSuccess(ServerType serverType, const string &tableName, const string &orderByColumnName, 
-  const vector<string> &insertedValues, const vector<string> &expectedInsertedValues, int pkStartingValue) {
+  const vector<string> &insertedValues, const vector<string> &expectedInsertedValues, int pkStartingValue, bool caseInsensitive) {
 
   insertValuesInTable(serverType, tableName, insertedValues, false, pkStartingValue);
-  verifyValuesInObject(serverType, tableName, orderByColumnName, insertedValues, expectedInsertedValues, pkStartingValue);
+  verifyValuesInObject(serverType, tableName, orderByColumnName, insertedValues, expectedInsertedValues, pkStartingValue, caseInsensitive);
 }
 
 void testInsertionFailure(ServerType serverType, const string &tableName, const string &orderByColumnName, 
@@ -349,7 +363,7 @@ void testInsertionFailure(ServerType serverType, const string &tableName, const 
 }
 
 void testUpdateSuccess(ServerType serverType, const string &tableName, const string &orderByColumnName, 
-  const string &colNameToUpdate, const vector<string> &updatedValues, const vector<string> &expectedUpdatedValues) {
+  const string &colNameToUpdate, const vector<string> &updatedValues, const vector<string> &expectedUpdatedValues, bool caseInsensitive) {
 
   OdbcHandler odbcHandler(Drivers::GetDriver(serverType));
   odbcHandler.Connect(true);
@@ -376,7 +390,7 @@ void testUpdateSuccess(ServerType serverType, const string &tableName, const str
   
   vector<pair<string, string>> update_col{};
   for (int i = 0; i < updatedValues.size(); i++) {
-    string valueToUpdate = "'" + updatedValues[i] + "'";
+    string valueToUpdate = updatedValues[i] != "NULL" ? "\'" + updatedValues[i] + "\'" : updatedValues[i];
     update_col.push_back(pair<string, string>(colNameToUpdate, valueToUpdate));
   }
 
@@ -397,8 +411,19 @@ void testUpdateSuccess(ServerType serverType, const string &tableName, const str
     EXPECT_EQ(rcode, SQL_SUCCESS);
     EXPECT_EQ(pk_len, INT_BYTES_EXPECTED);
     EXPECT_EQ(pk, pkValue);
-    EXPECT_EQ(data_len, expectedUpdatedValues[i].size());
-    EXPECT_EQ(data, expectedUpdatedValues[i]);
+
+    if (updatedValues[i] != "NULL") {
+      EXPECT_EQ(data_len, expectedUpdatedValues[i].size());
+      string expected = expectedUpdatedValues[i];
+      if (caseInsensitive) {
+        for (auto & c: data) c = tolower(c);
+        for (auto & c: expected) c = tolower(c);
+      }
+      EXPECT_EQ(data, expected);
+    }
+    else {
+      EXPECT_EQ(data_len, SQL_NULL_DATA);
+    }
 
     rcode = SQLFetch(odbcHandler.GetStatementHandle());
     EXPECT_EQ(rcode, SQL_NO_DATA);
@@ -529,11 +554,12 @@ void testUniqueConstraint(ServerType serverType, const string &tableName, const 
 }
 
 void testComparisonOperators(ServerType serverType, const string &tableName, const string &col1Name, const string &col2Name, 
-  const vector<string> &col1Data, const vector<string> &col2Data, const vector<string> &operationsQuery, const vector<vector<char>> &expectedResults) {
+  const vector<string> &col1Data, const vector<string> &col2Data, const vector<string> &operationsQuery, const vector<vector<char>> &expectedResults, 
+  bool explicitCast, bool explicitQuotes) {
 
   OdbcHandler odbcHandler(Drivers::GetDriver(serverType));
   odbcHandler.Connect(true);
-  
+
   const int BYTES_EXPECTED = 1;
   const int NUM_OF_DATA = col2Data.size();
   const int NUM_OF_OPERATIONS = operationsQuery.size();
@@ -556,7 +582,10 @@ void testComparisonOperators(ServerType serverType, const string &tableName, con
 
   for (int i = 0; i < NUM_OF_DATA; i++) {
     odbcHandler.CloseStmt();
-    odbcHandler.ExecQuery(SelectStatement(tableName, operationsQuery, vector<string>{}, col1Name + "=\'" + col1Data[i] + "\'"));
+    const string WHERE_STATEMENT = explicitCast ? 
+      col1Name + " OPERATOR(sys.=) " + (explicitQuotes ? "\'" + col1Data[i] + "\'" : col1Data[i]) :
+      col1Name + "=" + (explicitQuotes ? "\'" + col1Data[i] + "\'" : col1Data[i]);
+    odbcHandler.ExecQuery(SelectStatement(tableName, operationsQuery, vector<string>{}, WHERE_STATEMENT));
     ASSERT_NO_FATAL_FAILURE(odbcHandler.BindColumns(bind_columns));
 
     rcode = SQLFetch(odbcHandler.GetStatementHandle());
