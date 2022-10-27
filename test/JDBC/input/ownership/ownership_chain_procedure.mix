@@ -1,90 +1,90 @@
 -- tsql
-create database db1;
+create database db3014;
 go
 
-use db1;
+use db3014;
 go
 
-create login l1 with password='123';
+create login la_3014 with password='123';
 go
 
-create user ownera for login l1;
+create user ownera_3014 for login la_3014;
 go
 
-create login l2 with password='123';
+create login lb_3014 with password='123';
 go
 
-create user ownerb for login l2;
+create user ownerb_3014 for login lb_3014;
 go
 
-create login invoker with password='123';
+create login invoker_3014 with password='123';
 go
 
-create user invoker for login invoker;
+create user invoker_3014 for login invoker_3014;
 go
 
 use master
 go
 
 -- psql
-grant all on database jdbc_testdb to db1_ownera;
+grant all on database jdbc_testdb to db3014_ownera_3014;
 go
 
-grant all on database jdbc_testdb to db1_ownerb;
+grant all on database jdbc_testdb to db3014_ownerb_3014;
 go
 
--- tsql user=l2 password=123
-use db1;
+-- tsql user=lb_3014 password=123
+use db3014;
 go
 
-create schema hasownerb;
+create schema hasownerb_3014;
 go
 
-create table hasownerb.tbld(a int, b int, c int);
+create table hasownerb_3014.tbld_3014(a int, b int, c int);
 go
 
-insert into hasownerb.tbld values(1, 1, 1);
+insert into hasownerb_3014.tbld_3014 values(1, 1, 1);
 go
 
-create view hasownerb.vwd as select current_user;
+create view hasownerb_3014.vwd_3014 as select current_user;
 go
 
-create proc hasownerb.procd as select current_user;
+create proc hasownerb_3014.procd_3014 as select current_user;
 go
 
-create function hasownerb.funcd() returns sys.nvarchar(30) as
+create function hasownerb_3014.funcd_3014() returns sys.nvarchar(30) as
 begin
-	return 'inside function funcd';
+	return 'inside function funcd_3014';
 end;
 go
 
--- tsql user=l1 password=123
-use db1;
+-- tsql user=la_3014 password=123
+use db3014;
 go
 
-create schema hasownera;
+create schema hasownera_3014;
 go
 
-create table hasownera.tbls(a int, b int, c int);
+create table hasownera_3014.tbls_3014(a int, b int, c int);
 go
 
-insert into hasownera.tbls values(1, 1, 1);
+insert into hasownera_3014.tbls_3014 values(1, 1, 1);
 go
 
-create view hasownera.vws as select current_user;
+create view hasownera_3014.vws_3014 as select current_user;
 go
 
-create proc hasownera.procs as select current_user;
+create proc hasownera_3014.procs_3014 as select current_user;
 go
 
-create function hasownera.funcs() returns sys.nvarchar(30) as
+create function hasownera_3014.funcs_3014() returns sys.nvarchar(30) as
 begin
-	return 'inside function funcs';
+	return 'inside function funcs_3014';
 end;
 go
 
--- create trigger hasownera.trigs
--- on hasownera.tbls
+-- create trigger hasownera_3014.trigs
+-- on hasownera.tbls_3014
 -- after insert
 -- as select 'inside trigger trigs';
 -- go
@@ -96,127 +96,127 @@ go
 -- EXEC PROC/FUNC
 
 -- Positive test for procedure
-create proc hasownera.pa1 as
-	select * from hasownera.tbls;
-	select * from hasownera.vws;
-	exec hasownera.procs;
-	select hasownera.funcs();
+create proc hasownera_3014.pa1_3014 as
+	select * from hasownera_3014.tbls_3014;
+	select * from hasownera_3014.vws_3014;
+	exec hasownera_3014.procs_3014;
+	select hasownera_3014.funcs_3014();
 	-- For trigger execution
-	-- insert into hasownera.tbls values(1,1,1);
+	-- insert into hasownera_3014.tbls_3014 values(1,1,1);
 go
 
-grant exec on hasownera.pa1 to invoker;
+grant exec on hasownera_3014.pa1_3014 to invoker_3014;
 go
 
 -- Positive test for function
-create function hasownera.fa1() returns table as
-return (select * from hasownera.tbls, hasownera.vws);
+create function hasownera_3014.fa1_3014() returns table as
+return (select * from hasownera_3014.tbls_3014, hasownera_3014.vws_3014);
 go
 
-grant exec on hasownera.fa1 to invoker;
+grant exec on hasownera_3014.fa1_3014 to invoker_3014;
 go
 
-create function hasownera.fb1() returns table as
-return (select hasownera.funcs());
+create function hasownera_3014.fb1_3014() returns table as
+return (select hasownera_3014.funcs_3014());
 go
 
-grant exec on hasownera.fb1 to invoker;
+grant exec on hasownera_3014.fb1_3014 to invoker_3014;
 go
 
-create function hasownera.fc1() returns int
+create function hasownera_3014.fc1_3014() returns int
 as
 begin
 	declare @temp_fb1 table(cur_user sys.sysname);
-	insert into @temp_fb1 (cur_user) exec hasownera.procs;
+	insert into @temp_fb1 (cur_user) exec hasownera_3014.procs_3014;
 	return (select count(*) from @temp_fb1);
 end
 go
 
-grant exec on hasownera.fc1 to invoker;
+grant exec on hasownera_3014.fc1_3014 to invoker_3014;
 go
 
 -- Negative test for table inside proc/func
-create proc hasownera.pb1 as select * from hasownerb.tbld;
+create proc hasownera_3014.pb1_3014 as select * from hasownerb_3014.tbld_3014;
 go
 
-grant exec on hasownera.pb1 to invoker;
+grant exec on hasownera_3014.pb1_3014 to invoker_3014;
 go
 
 -- Negative test for view inside proc/func
-create proc hasownera.pc1 as select * from hasownerb.vwd;
+create proc hasownera_3014.pc1_3014 as select * from hasownerb_3014.vwd_3014;
 go
 
-grant exec on hasownera.pc1 to invoker;
+grant exec on hasownera_3014.pc1_3014 to invoker_3014;
 go
 
-create function hasownera.fe1() returns table as
-return (select * from hasownerb.tbld, hasownerb.vwd);
+create function hasownera_3014.fe1_3014() returns table as
+return (select * from hasownerb_3014.tbld_3014, hasownerb_3014.vwd_3014);
 go
 
-grant exec on hasownera.fe1 to invoker;
+grant exec on hasownera_3014.fe1_3014 to invoker_3014;
 go
 
 -- Negative test for proc inside proc/func
-create proc hasownera.pd1 as exec hasownerb.procd;
+create proc hasownera_3014.pd1_3014 as exec hasownerb_3014.procd_3014;
 go
 
-grant exec on hasownera.pd1 to invoker;
+grant exec on hasownera_3014.pd1_3014 to invoker_3014;
 go
 
-create function hasownera.ff1() returns int
+create function hasownera_3014.ff1_3014() returns int
 as
 begin
 	declare @temp_ff1 table(cur_user sys.sysname);
-	insert into @temp_ff1 (cur_user) exec hasownerb.procd;
+	insert into @temp_ff1 (cur_user) exec hasownerb_3014.procd_3014;
 	return (select count(*) from @temp_ff1);
 end
 go
 
-grant exec on hasownera.ff1 to invoker;
+grant exec on hasownera_3014.ff1_3014 to invoker_3014;
 go
 
 -- Negative test for function inside proc/func
-create proc hasownera.pe1 as select hasownerb.funcd();
+create proc hasownera_3014.pe1_3014 as select hasownerb_3014.funcd_3014();
 go
 
-grant exec on hasownera.pe1 to invoker;
+grant exec on hasownera_3014.pe1_3014 to invoker_3014;
 go
 
-create function hasownera.fg1() returns table as
-return (select hasownerb.funcd());
+create function hasownera_3014.fg1_3014() returns table as
+return (select hasownerb_3014.funcd_3014());
 go
 
-grant exec on hasownera.fg1 to invoker;
+grant exec on hasownera_3014.fg1_3014 to invoker_3014;
 go
 
--- tsql user=invoker password=123
-use db1;
+-- tsql user=invoker_3014 password=123
+use db3014;
 go
 
-select * from hasownera.tbls;
+select * from hasownera_3014.tbls_3014;
 go
 
-select * from hasownera.vws;
+select * from hasownera_3014.vws_3014;
 go
 
-exec hasownera.procs;
+exec hasownera_3014.procs_3014;
 go
 
-select * from hasownera.fa1();
+select * from hasownera_3014.fa1_3014();
 go
 
-select * from hasownera.fb1();
+select * from hasownera_3014.fb1_3014();
 go
 
-select hasownera.fc1();
+select hasownera_3014.fc1_3014();
 go
 
-exec hasownera.pa1;
+exec hasownera_3014.pa1_3014;
 go
 
 -- Execution using SP_PREPARE
 DECLARE @handle int;
-EXEC SP_PREPARE @handle OUT, NULL, 'EXEC hasownera.pa1;'
+EXEC SP_PREPARE @handle OUT, NULL, 'EXEC hasownera_3014.pa1_3014;'
 EXEC SP_EXECUTE @handle
 EXEC SP_EXECUTE @handle
 EXEC SP_EXECUTE @handle
@@ -224,7 +224,7 @@ EXEC SP_UNPREPARE @handle
 GO
 
 DECLARE @handle int;
-EXEC SP_PREPARE @handle OUT, NULL, 'SELECT * from hasownera.fa1();'
+EXEC SP_PREPARE @handle OUT, NULL, 'SELECT * from hasownera_3014.fa1_3014();'
 EXEC SP_EXECUTE @handle
 EXEC SP_EXECUTE @handle
 EXEC SP_EXECUTE @handle
@@ -232,35 +232,35 @@ EXEC SP_UNPREPARE @handle
 GO
 
 -- Execution for negative tests
-exec hasownera.pb1;
+exec hasownera_3014.pb1_3014;
 go
 
-exec hasownera.pc1;
+exec hasownera_3014.pc1_3014;
 go
 
-exec hasownera.pd1;
+exec hasownera_3014.pd1_3014;
 go
 
-exec hasownera.pe1;
+exec hasownera_3014.pe1_3014;
 go
 
-select * from hasownera.fe1();
+select * from hasownera_3014.fe1_3014();
 go
 
-select hasownera.ff1();
+select hasownera_3014.ff1_3014();
 go
 
-select * from hasownera.fg1();
+select * from hasownera_3014.fg1_3014();
 go
 
 -- tsql
-use db1;
+use db3014;
 go
 
-drop proc hasownera.pa1, hasownera.pb1, hasownera.pc1, hasownera.pd1, hasownera.pe1;
+drop proc hasownera_3014.pa1_3014, hasownera_3014.pb1_3014, hasownera_3014.pc1_3014, hasownera_3014.pd1_3014, hasownera_3014.pe1_3014;
 go
 
-drop function hasownera.fa1, hasownera.fb1, hasownera.fc1, hasownera.fe1, hasownera.ff1, hasownera.fg1;
+drop function hasownera_3014.fa1_3014, hasownera_3014.fb1_3014, hasownera_3014.fc1_3014, hasownera_3014.fe1_3014, hasownera_3014.ff1_3014, hasownera_3014.fg1_3014;
 go
 
 use master;
@@ -274,50 +274,45 @@ go
 -- GRANT EXEC ON PROC2 to inovker
 -- EXEC PROC1 
 
--- tsql user=l1 password=123
-use db1;
+-- tsql user=la_3014 password=123
+use db3014;
 go
 
-create proc hasownera.pa2 as begin
-	select * from hasownera.tbls;
-	select * from hasownera.vws;
-	exec hasownera.procs;
+create proc hasownera_3014.pa2_3014 as begin
+	select * from hasownera_3014.tbls_3014;
+	select * from hasownera_3014.vws_3014;
+	exec hasownera_3014.procs_3014;
 end;
 go
 
-grant exec on hasownera.pa2 to invoker;
+grant exec on hasownera_3014.pa2_3014 to invoker_3014;
 go
 
--- tsql user=l2 password=123
-use db1;
+-- tsql user=lb_3014 password=123
+use db3014;
 go
 
-create proc hasownerb.pb2 as exec hasownera.pa2;
+create proc hasownerb_3014.pb2_3014 as exec hasownera_3014.pa2_3014;
 go
 
-grant exec on hasownerb.pb2 to invoker;
+grant exec on hasownerb_3014.pb2_3014 to invoker_3014;
 go
 
-select objs.column1 as object,user_name(objectproperty(object_id(objs.column1),'OwnerId')) as owner
-from (values ('hasownerb.pb2'), ('hasownera.pa2'), ('hasownera.tbls')) 
-as objs(object_name)
+-- tsql user=invoker_3014 password=123
+use db3014;
 go
 
--- tsql user=invoker password=123
-use db1;
-go
-
-exec hasownerb.pb2;
+exec hasownerb_3014.pb2_3014;
 go
 
 -- tsql
-use db1;
+use db3014;
 go
 
-drop proc hasownerb.pb2;
+drop proc hasownerb_3014.pb2_3014;
 go
 
-drop proc hasownera.pa2;
+drop proc hasownera_3014.pa2_3014;
 go
 
 use master;
@@ -332,57 +327,51 @@ go
 -- VIEWA
 -- SELECT FROM TABLEA
 
--- tsql user=l1 password=123
-use db1;
+-- tsql user=la_3014 password=123
+use db3014;
 go
 
-create view hasownera.vwa3 as select * from hasownera.tbls;
+create view hasownera_3014.vwa3_3014 as select * from hasownera_3014.tbls_3014;
 go
 
-create view hasownera.vwb3 as select * from hasownera.vwa3;
+create view hasownera_3014.vwb3_3014 as select * from hasownera_3014.vwa3_3014;
 go
 
-create proc hasownera.pa3 as begin
-	select * from hasownera.vwb3;
+create proc hasownera_3014.pa3_3014 as begin
+	select * from hasownera_3014.vwb3_3014;
 end;
 go
 
-grant exec on hasownera.pa3 to invoker;
+grant exec on hasownera_3014.pa3_3014 to invoker_3014;
+go
+
+-- tsql user=invoker_3014 password=123
+use db3014;
+go
+
+exec hasownera_3014.pa3_3014;
+go
+
+select * from hasownera_3014.tbls_3014;
+go
+
+select * from hasownera_3014.vwa3_3014;
+go
+
+select * from hasownera_3014.vwb3_3014;
 go
 
 -- tsql
-select objs.column1 as object,user_name(objectproperty(object_id(objs.column1),'OwnerId')) as owner
-from (values ('hasownerb.pb2'), ('hasownera.pa2'), ('hasownera.tbls')) 
-as objs(object_name)
+use db3014;
 go
 
--- tsql user=invoker password=123
-use db1;
+drop proc hasownera_3014.pa3_3014;
 go
 
-exec hasownera.pa3;
+drop view hasownera_3014.vwb3_3014;
 go
 
-select * from hasownera.tbls;
-go
-
-select * from hasownera.vwa3;
-go
-
-select * from hasownera.vwb3;
-go
-
--- tsql
-use db1;
-go
-
-drop proc hasownera.pa3;
-go
-
-drop view hasownera.vwb3;
-go
-
-drop view hasownera.vwa3;
+drop view hasownera_3014.vwa3_3014;
 go
 
 use master;
@@ -392,30 +381,30 @@ go
 -- PROC/FUNC
 --	EXEC(SELECT FROM TABLE)
 -- ownership chain shouldn't work for this case
--- tsql user=l1 password=123
-use db1;
+-- tsql user=la_3014 password=123
+use db3014;
 go
 
-create proc hasownera.pa4 as begin
-	exec('select * from hasownera.tbls');
+create proc hasownera_3014.pa4_3014 as begin
+	exec('select * from hasownera_3014.tbls_3014');
 end;
 go
 
-grant exec on hasownera.pa4 to invoker;
+grant exec on hasownera_3014.pa4_3014 to invoker_3014;
 go
 
--- tsql user=invoker password=123
-use db1;
+-- tsql user=invoker_3014 password=123
+use db3014;
 go
 
-exec hasownera.pa4;
+exec hasownera_3014.pa4_3014;
 go
 
 -- tsql
-use db1;
+use db3014;
 go
 
-drop proc hasownera.pa4;
+drop proc hasownera_3014.pa4_3014;
 go
 
 use master;
@@ -425,75 +414,74 @@ go
 -- PROC/FUNC
 --	DDLs
 -- ownership chain shouldn't work for this case
--- tsql user=l1 password=123
-use db1;
+-- tsql user=la_3014 password=123
+use db3014;
 go
 
-create proc hasownera.pa5 as begin
-	alter table hasownera.tbls add e int;
+create proc hasownera_3014.pa5_3014 as begin
+	alter table hasownera_3014.tbls_3014 add e int;
 end;
 go
 
-grant exec on hasownera.pa5 to invoker;
+grant exec on hasownera_3014.pa5_3014 to invoker_3014;
 go
 
--- tsql user=invoker password=123
-use db1;
+-- tsql user=invoker_3014 password=123
+use db3014;
 go
 
-exec hasownera.pa5;
+exec hasownera_3014.pa5_3014;
 go
 
 -- tsql
-use db1;
+use db3014;
 go
 
-drop proc hasownera.pa5;
+drop proc hasownera_3014.pa5_3014;
 go
 
 use master;
 go
 
 -- CASE 6
--- Checking table attributes
 -- PROC/FUNC
 --	 UPDATE/INSERT on specific columns
--- tsql user=l1 password=123
-use db1;
+-- tsql user=la_3014 password=123
+use db3014;
 go
 
-create table hasownera.ta6(a int, b int, c int);
+create table hasownera_3014.ta6_3014(a int, b int, c int);
 go
 
-grant update(a) on hasownera.ta6 to invoker;
+grant update(a) on hasownera_3014.ta6_3014 to invoker_3014;
 go
 
-create proc hasownera.pa6 as begin
-	update hasownera.ta6 set b = 0;
+create proc hasownera_3014.pa6_3014 as begin
+	update hasownera_3014.ta6_3014 set b = 0;
 end;
 go
 
-grant exec on hasownera.pa6 to invoker;
+grant exec on hasownera_3014.pa6_3014 to invoker_3014;
 go
 
--- tsql user=invoker password=123
-use db1;
+-- tsql user=invoker_3014 password=123
+use db3014;
 go
 
-exec hasownera.pa6;
+exec hasownera_3014.pa6_3014;
 go
 
-update hasownera.ta6 set b = 0;
+update hasownera_3014.ta6_3014 set b = 0;
 go
 
 -- tsql
-use db1;
+use db3014;
 go
 
-drop proc hasownera.pa6;
+drop proc hasownera_3014.pa6_3014;
 go
 
-drop table hasownera.ta6;
+drop table hasownera_3014.ta6_3014;
 go
 
 use master;
@@ -503,33 +491,33 @@ go
 -- PROC/FUNC
 --	TRUNCATE table
 -- ownership chain shouldn't work for this case
--- tsql user=l1 password=123
-use db1;
+-- tsql user=la_3014 password=123
+use db3014;
 go
 
-create proc hasownera.pa7 as begin
-	truncate table hasownera.tbls;
+create proc hasownera_3014.pa7_3014 as begin
+	truncate table hasownera_3014.tbls_3014;
 end;
 go
 
-grant exec on hasownera.pa7 to invoker;
+grant exec on hasownera_3014.pa7_3014 to invoker_3014;
 go
 
--- tsql user=invoker password=123
-use db1;
+-- tsql user=invoker_3014 password=123
+use db3014;
 go
 
-exec hasownera.pa7;
+exec hasownera_3014.pa7_3014;
 go
 
-truncate table hasownera.tbls;
+truncate table hasownera_3014.tbls_3014;
 go
 
 -- tsql
-use db1;
+use db3014;
 go
 
-drop proc hasownera.pa7;
+drop proc hasownera_3014.pa7_3014;
 go
 
 use master;
@@ -540,77 +528,77 @@ go
 -- psql
 -- Need to terminate active session before cleaning up the login
 SELECT pg_terminate_backend(pid) FROM pg_stat_get_activity(NULL)
-WHERE sys.suser_name(usesysid) in ('l1','l2','invoker') AND backend_type = 'client backend' AND usesysid IS NOT NULL;
+WHERE sys.suser_name(usesysid) in ('la_3014','lb_3014','invoker_3014') AND backend_type = 'client backend' AND usesysid IS NOT NULL;
 GO
 
 -- Wait to sync with another session
 SELECT pg_sleep(1);
 GO
 
-revoke all on database jdbc_testdb from db1_ownera;
+revoke all on database jdbc_testdb from db3014_ownera_3014;
 go
 
-revoke all on database jdbc_testdb from db1_ownerb;
+revoke all on database jdbc_testdb from db3014_ownerb_3014;
 go
 
 -- tsql
-use db1;
+use db3014;
 go
 
--- drop trigger hasownera.trigs;
+-- drop trigger hasownera_3014.trigs;
 -- go
 
-drop function hasownera.funcs;
+drop function hasownera_3014.funcs_3014;
 go
 
-drop proc hasownera.procs;
+drop proc hasownera_3014.procs_3014;
 go
 
-drop view hasownera.vws;
+drop view hasownera_3014.vws_3014;
 go
 
-drop table hasownera.tbls;
+drop table hasownera_3014.tbls_3014;
 go
 
-drop function hasownerb.funcd;
+drop function hasownerb_3014.funcd_3014;
 go
 
-drop proc hasownerb.procd;
+drop proc hasownerb_3014.procd_3014;
 go
 
-drop view hasownerb.vwd;
+drop view hasownerb_3014.vwd_3014;
 go
 
-drop table hasownerb.tbld;
+drop table hasownerb_3014.tbld_3014;
 go
 
-drop schema hasownerb;
+drop schema hasownerb_3014;
 go
 
-drop schema hasownera;
+drop schema hasownera_3014;
 go
 
-drop user ownera;
+drop user ownera_3014;
 go
 
-drop user ownerb;
+drop user ownerb_3014;
 go
 
-drop user invoker;
+drop user invoker_3014;
 go
 
 use master;
 go
 
-drop database db1;
+drop database db3014;
 go
 
-drop login l1;
+drop login la_3014;
 go
 
-drop login l2;
+drop login lb_3014;
 go
 
-drop login invoker;
+drop login invoker_3014;
 go
 
