@@ -1,0 +1,177 @@
+USE BABEL_3117_prepare_db1
+GO
+
+SELECT count(*) FROM BABEL_3117_prepare_db1_employeeData;
+GO
+
+DROP TRIGGER BABEL_3117_prepare_trigger1
+GO
+
+USE BABEL_3117_prepare_db2
+GO
+SELECT count(*) FROM BABEL_3117_prepare_db2_employeeData;
+GO
+
+-- Test with database has the same schema name, same table name and same trigger name
+USE BABEL_3117_prepare_db3
+GO
+
+-- Should return 0 since trigger exits
+SELECT count(*) FROM BABEL_3117_schema.BABEL_3117_t1;
+GO
+
+
+DROP TRIGGER BABEL_3117_schema.BABEL_3117_prepare_trigger2
+GO
+
+-- Should return error since trigger is dropped 
+DROP TRIGGER BABEL_3117_schema.BABEL_3117_prepare_trigger2
+GO
+
+USE BABEL_3117_prepare_db4
+
+-- Should return 0 since trigger exits
+SELECT count(*) FROM BABEL_3117_schema.BABEL_3117_t1;
+GO
+
+DROP TRIGGER BABEL_3117_schema.BABEL_3117_prepare_trigger2
+GO
+
+-- Should return error since trigger is dropped 
+DROP TRIGGER BABEL_3117_schema.BABEL_3117_prepare_trigger2
+GO
+
+DROP TABLE BABEL_3117_schema.BABEL_3117_t1
+DROP SCHEMA BABEL_3117_schema
+GO
+
+USE BABEL_3117_prepare_db3
+GO
+
+DROP TABLE BABEL_3117_schema.BABEL_3117_t1
+DROP SCHEMA BABEL_3117_schema
+GO
+
+-- Test with database has different schema name, same table name and same trigger name
+USE BABEL_3117_prepare_db5
+GO
+
+-- Should return 0 since trigger exits
+SELECT count(*) FROM BABEL_3117_schemaA.BABEL_3117_t1;
+GO
+
+
+DROP TRIGGER BABEL_3117_schemaA.BABEL_3117_prepare_trigger3
+GO
+
+-- Should return error since trigger is dropped 
+DROP TRIGGER BABEL_3117_schemaA.BABEL_3117_prepare_trigger3
+GO
+
+-- Should return error since don't have permission
+DROP TRIGGER BABEL_3117_schemaB.BABEL_3117_prepare_trigger3
+GO
+
+USE BABEL_3117_prepare_db6
+
+-- Should return 0 since trigger exits
+SELECT count(*) FROM BABEL_3117_schemaB.BABEL_3117_t1;
+GO
+
+DROP TRIGGER BABEL_3117_schemaB.BABEL_3117_prepare_trigger3
+GO
+
+-- Should return error since trigger is dropped 
+DROP TRIGGER BABEL_3117_schemaB.BABEL_3117_prepare_trigger3
+GO
+
+-- Should return error since don't have permission
+DROP TRIGGER BABEL_3117_schemaA.BABEL_3117_prepare_trigger3
+GO
+
+DROP TABLE BABEL_3117_schemaB.BABEL_3117_t1
+DROP SCHEMA BABEL_3117_schemaB
+GO
+
+USE BABEL_3117_prepare_db5
+GO
+
+DROP TABLE BABEL_3117_schemaA.BABEL_3117_t1
+DROP SCHEMA BABEL_3117_schemaA
+GO
+
+USE master
+GO
+
+-- Test if user default schema is not dbo schema
+-- tsql      user=BABEL_3117_login      password=123
+USE master
+GO
+
+SELECT current_user;
+GO
+
+SELECT schema_name();
+GO
+
+CREATE TABLE BABEL_3117_master_t1( a int, b int );
+GO
+
+CREATE TRIGGER BABEL_3117_prepare_trigger4 on BABEL_3117_master_t1 INSTEAD OF INSERT AS BEGIN select count(*) from inserted ;END
+GO
+
+INSERT INTO BABEL_3117_master_t1 VALUES (1,1),(2,2),(3,3);
+GO
+
+-- should return 0
+SELECT count(*) FROM BABEL_3117_master_t1;
+GO
+
+-- should return error
+DROP TRIGGER trig
+GO
+
+DROP TRIGGER BABEL_3117_prepare_trigger4
+GO
+
+INSERT INTO BABEL_3117_master_t1 VALUES (1,1),(2,2),(3,3);
+GO
+
+-- should return 3
+SELECT count(*) FROM BABEL_3117_master_t1;
+GO
+
+DROP TABLE BABEL_3117_master_t1
+GO
+
+-- psql
+REVOKE ALL ON SCHEMA master_BABEL_3117_schemaC FROM master_BABEL_3117_user;
+GO
+-- tsql
+DROP user BABEL_3117_user
+GO
+
+-- psql
+-- Need to terminate active session before cleaning up the login
+SELECT pg_terminate_backend(pid) FROM pg_stat_get_activity(NULL) 
+WHERE sys.suser_name(usesysid) = 'babel_3117_login' AND backend_type = 'client backend' AND usesysid IS NOT NULL;
+GO
+
+-- Wait to sync with another session
+SELECT pg_sleep(1);
+GO
+
+-- tsql
+DROP LOGIN BABEL_3117_login;
+GO
+
+-- tsql
+USE master
+go
+DROP DATABASE BABEL_3117_prepare_db1
+DROP DATABASE BABEL_3117_prepare_db2
+DROP DATABASE BABEL_3117_prepare_db3
+DROP DATABASE BABEL_3117_prepare_db4
+DROP DATABASE BABEL_3117_prepare_db5
+DROP DATABASE BABEL_3117_prepare_db6
+GO
