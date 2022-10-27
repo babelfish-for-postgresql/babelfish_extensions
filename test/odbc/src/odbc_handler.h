@@ -106,6 +106,8 @@ class OdbcHandler {
     // Creates and returns an error message containing diagnostic information
     string GetErrorMessage(SQLSMALLINT HandleType, const RETCODE& retcode);
 
+    // Helper function used to bind columns using SQLBindCol
+    // The StrLen_or_IndPtr field will be hardcoded to 0 in this example
     void BindColumns(vector<tuple<int, int, SQLPOINTER, int>> columns);
 
     void BindColumns(vector<tuple<int, int, SQLPOINTER, int, SQLLEN*>> columns);
