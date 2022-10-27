@@ -53,6 +53,20 @@ end
 $$
 LANGUAGE plpgsql;
 
+-- Set the collation of given schema_name.table_name.column_name column to default collation
+CREATE OR REPLACE PROCEDURE babelfish_update_collation_to_default(schema_name varchar, table_name varchar, column_name varchar) AS
+$$
+DECLARE
+    sys_schema oid;
+    table_oid oid;
+BEGIN
+    select oid into sys_schema from pg_namespace where nspname = 'sys' collate sys.database_default;
+    select oid into table_oid from pg_class where relname = table_name collate sys.database_default and relnamespace = sys_schema;
+    update pg_attribute set attcollation = sys.get_babel_server_collation_oid() where attname = column_name collate sys.database_default and attrelid = table_oid;
+END
+$$
+LANGUAGE plpgsql;
+
 
 CREATE OR REPLACE FUNCTION sys.DATETIMEOFFSETFROMPARTS(IN p_year INTEGER,
                                                                IN p_month INTEGER,
@@ -2723,165 +2737,35 @@ $BODY$
 LANGUAGE plpgsql;
 GRANT EXECUTE ON FUNCTION sys.INDEXPROPERTY(IN object_id INT, IN index_or_statistics_name sys.nvarchar(128), IN property sys.varchar(128)) TO PUBLIC;
 
-ALTER TABLE sys.extended_properties RENAME TO extended_properties_deprecated_in_2_3_0;
+CALL sys.babelfish_update_collation_to_default('sys', 'extended_properties', 'class_desc');
 
-create table if not exists sys.extended_properties (
-class sys.tinyint,
-class_desc sys.nvarchar(60),
-major_id int,
-minor_id int,
-name sys.sysname,
-value sys.sql_variant
-);
-GRANT SELECT ON sys.extended_properties TO PUBLIC;
-INSERT INTO sys.extended_properties SELECT * FROM extended_properties_deprecated_in_2_3_0;
-SELECT pg_catalog.pg_extension_config_dump('sys.extended_properties', '');
+CALL sys.babelfish_update_collation_to_default('sys', 'babelfish_namespace_ext', 'orig_name');
 
-ALTER TABLE sys.babelfish_namespace_ext RENAME TO babelfish_namespace_ext_deprecated_in_2_3_0;
+CALL sys.babelfish_update_collation_to_default('sys', 'babelfish_configurations', 'name');
+CALL sys.babelfish_update_collation_to_default('sys', 'babelfish_configurations', 'description');
+CALL sys.babelfish_update_collation_to_default('sys', 'babelfish_configurations', 'comment_syscurconfigs');
+CALL sys.babelfish_update_collation_to_default('sys', 'babelfish_configurations', 'comment_sysconfigures');
 
--- we need to drop primary key constraint also because babelfish_namespace_ext_pkey is being used from C code to perform some lokkup
-ALTER TABLE sys.babelfish_namespace_ext_deprecated_in_2_3_0 DROP CONSTRAINT babelfish_namespace_ext_pkey;
+CALL sys.babelfish_update_collation_to_default('sys', 'babelfish_authid_login_ext', 'default_database_name');
+CALL sys.babelfish_update_collation_to_default('sys', 'babelfish_authid_login_ext', 'default_language_name');
 
--- BABELFISH_NAMESPACE_EXT
-CREATE TABLE sys.babelfish_namespace_ext (
-    nspname NAME NOT NULL,
-    dbid SMALLINT NOT NULL,
-    orig_name sys.NVARCHAR(128) NOT NULL,
- properties TEXT NOT NULL COLLATE "C",
-    PRIMARY KEY (nspname)
-);
-GRANT SELECT ON sys.babelfish_namespace_ext TO PUBLIC;
+CALL sys.babelfish_update_collation_to_default('sys', 'babelfish_authid_user_ext', 'orig_username');
+CALL sys.babelfish_update_collation_to_default('sys', 'babelfish_authid_user_ext', 'database_name');
+CALL sys.babelfish_update_collation_to_default('sys', 'babelfish_authid_user_ext', 'default_schema_name');
+CALL sys.babelfish_update_collation_to_default('sys', 'babelfish_authid_user_ext', 'default_language_name');
+CALL sys.babelfish_update_collation_to_default('sys', 'babelfish_authid_user_ext', 'authentication_type_desc');
 
-INSERT INTO sys.babelfish_namespace_ext SELECT * FROM babelfish_namespace_ext_deprecated_in_2_3_0;
-SELECT pg_catalog.pg_extension_config_dump('sys.babelfish_namespace_ext', '');
-
-CALL babel_catalog_initializer();
-
-ALTER TABLE sys.babelfish_configurations RENAME TO babelfish_configurations_deprecated_in_2_3_0;
-
-CREATE TABLE sys.babelfish_configurations (
-    configuration_id INT,
-    name sys.nvarchar(35),
-    value sys.sql_variant,
-    minimum sys.sql_variant,
-    maximum sys.sql_variant,
-    value_in_use sys.sql_variant,
-    description sys.nvarchar(255),
-    is_dynamic sys.BIT,
-    is_advanced sys.BIT,
-    comment_syscurconfigs sys.nvarchar(255),
-    comment_sysconfigures sys.nvarchar(255)
-) WITH (OIDS = FALSE);
-
-INSERT INTO sys.babelfish_configurations SELECT * FROM sys.babelfish_configurations_deprecated_in_2_3_0;
-SELECT pg_catalog.pg_extension_config_dump('sys.babelfish_configurations', '');
-
-
-ALTER TABLE sys.babelfish_authid_login_ext RENAME TO babelfish_authid_login_ext_deprecated_in_2_3_0;
-
--- we need to drop primary key constraint also because babelfish_authid_login_ext_pkey is being used from C code to perform some lokkup
-ALTER TABLE sys.babelfish_authid_login_ext_deprecated_in_2_3_0 DROP CONSTRAINT babelfish_authid_login_ext_pkey;
-
--- LOGIN EXT
--- Note: change here requires change in FormData_authid_login_ext too
-CREATE TABLE sys.babelfish_authid_login_ext (
-rolname NAME NOT NULL, -- pg_authid.rolname
-is_disabled INT NOT NULL DEFAULT 0, -- to support enable/disable login
-type CHAR(1) NOT NULL DEFAULT 'S',
-credential_id INT NOT NULL,
-owning_principal_id INT NOT NULL,
-is_fixed_role INT NOT NULL DEFAULT 0,
-create_date timestamptz NOT NULL,
-modify_date timestamptz NOT NULL,
-default_database_name SYS.NVARCHAR(128) NOT NULL,
-default_language_name SYS.NVARCHAR(128) NOT NULL,
-properties JSONB,
-PRIMARY KEY (rolname));
-GRANT SELECT ON sys.babelfish_authid_login_ext TO PUBLIC;
-
-INSERT INTO sys.babelfish_authid_login_ext SELECT * FROM sys.babelfish_authid_login_ext_deprecated_in_2_3_0;
-SELECT pg_catalog.pg_extension_config_dump('sys.babelfish_authid_login_ext', '');
-
-CALL babel_catalog_initializer();
-
-ALTER TABLE sys.babelfish_authid_user_ext RENAME TO babelfish_authid_user_ext_deprecated_in_2_3_0;
-
--- we need to drop primary key constraint also because babelfish_authid_user_ext_pkey is being used from C code to perform some lokkup
-ALTER TABLE sys.babelfish_authid_user_ext_deprecated_in_2_3_0 DROP CONSTRAINT babelfish_authid_user_ext_pkey;
-
-ALTER INDEX babelfish_authid_user_ext_login_db_idx RENAME TO babelfish_authid_user_ext_login_db_idx_deprecated_in_2_3_0;
-
--- USER extension
-CREATE TABLE sys.babelfish_authid_user_ext (
-rolname NAME NOT NULL,
-login_name NAME NOT NULL,
-type CHAR(1) NOT NULL DEFAULT 'S',
-owning_principal_id INT,
-is_fixed_role INT NOT NULL DEFAULT 0,
-authentication_type INT,
-default_language_lcid INT,
-allow_encrypted_value_modifications INT NOT NULL DEFAULT 0,
-create_date timestamptz NOT NULL,
-modify_date timestamptz NOT NULL,
-orig_username SYS.NVARCHAR(128) NOT NULL,
-database_name SYS.NVARCHAR(128) NOT NULL,
-default_schema_name SYS.NVARCHAR(128) NOT NULL,
-default_language_name SYS.NVARCHAR(128),
-authentication_type_desc SYS.NVARCHAR(60),
-PRIMARY KEY (rolname));
-
-CREATE INDEX babelfish_authid_user_ext_login_db_idx ON sys.babelfish_authid_user_ext (login_name, database_name);
-GRANT SELECT ON sys.babelfish_authid_user_ext TO PUBLIC;
-
-INSERT INTO sys.babelfish_authid_user_ext SELECT * FROM sys.babelfish_authid_user_ext_deprecated_in_2_3_0;
-
-CALL babel_catalog_initializer();
+-- we have to reindex babelfish_authid_user_ext_login_db_idx because given index includes database_name and we have to change its collation
+REINDEX INDEX sys.babelfish_authid_user_ext_login_db_idx;
 
 ALTER TABLE sys.babelfish_view_def ADD COLUMN create_date SYS.DATETIME, add COLUMN modify_date SYS.DATETIME;
 
-ALTER TABLE sys.babelfish_view_def RENAME TO babelfish_view_def_deprecated_in_2_3_0;
+CALL sys.babelfish_update_collation_to_default('sys', 'babelfish_view_def', 'schema_name');
+CALL sys.babelfish_update_collation_to_default('sys', 'babelfish_view_def', 'clr_name');
 
--- we need to drop primary key constraint also because babelfish_view_def_pkey is being used from C code to perform some lokkup
-ALTER TABLE sys.babelfish_view_def_deprecated_in_2_3_0 DROP CONSTRAINT babelfish_view_def_pkey;
-
-CREATE TABLE sys.babelfish_view_def (
-	dbid SMALLINT NOT NULL,
-	schema_name sys.SYSNAME NOT NULL,
-	object_name sys.SYSNAME NOT NULL,
-	definition sys.NTEXT,
-	flag_validity BIGINT,
-	flag_values BIGINT,
-	create_date SYS.DATETIME,
-	modify_date SYS.DATETIME,
-	PRIMARY KEY(dbid, schema_name, object_name)
-);
-GRANT SELECT ON sys.babelfish_view_def TO PUBLIC;
-
-INSERT INTO sys.babelfish_view_def SELECT * FROM sys.babelfish_view_def_deprecated_in_2_3_0;
-SELECT pg_catalog.pg_extension_config_dump('sys.babelfish_view_def', '');
-
-CALL babel_catalog_initializer();
-
-
-ALTER TABLE sys.assemblies RENAME TO assemblies_deprecated_in_2_3_0;
-
-CREATE TABLE sys.assemblies(
- name sys.sysname,
- principal_id int,
- assembly_id int,
- clr_name nvarchar(4000),
- permission_set tinyint,
- permission_set_desc nvarchar(60),
- is_visible bit,
- create_date datetime,
- modify_date datetime,
- is_user_defined bit
-);
-GRANT SELECT ON sys.assemblies TO PUBLIC;
-
-INSERT INTO sys.assemblies SELECT * FROM sys.assemblies_deprecated_in_2_3_0;
-SELECT pg_catalog.pg_extension_config_dump('sys.assemblies', '');
-
+CALL sys.babelfish_update_collation_to_default('sys', 'assemblies', 'name');
+CALL sys.babelfish_update_collation_to_default('sys', 'assemblies', 'clr_name');
+CALL sys.babelfish_update_collation_to_default('sys', 'assemblies', 'permission_set_desc');
 
 -- BABELFISH_FUNCTION_EXT
 CREATE TABLE sys.babelfish_function_ext (
@@ -9007,6 +8891,8 @@ CALL sys.babelfish_drop_deprecated_object('view', 'sys', 'sysdatabases_deprecate
 -- Drops the temporary procedure used by the upgrade script.
 -- Please have this be one of the last statements executed in this upgrade script.
 DROP PROCEDURE sys.babelfish_drop_deprecated_object(varchar, varchar, varchar);
+
+DROP PROCEDURE sys.babelfish_update_collation_to_default(varchar, varchar, varchar);
 
 -- Reset search_path to not affect any subsequent scripts
 SELECT set_config('search_path', trim(leading 'sys, ' from current_setting('search_path')), false);
