@@ -454,6 +454,51 @@ go
 use master;
 go
 
+-- CASE 6
+-- Checking table attributes
+-- PROC/FUNC
+--	 UPDATE/INSERT on specific columns
+-- tsql user=l1 password=123
+use db1;
+go
+
+create table hasownera.ta6(a int, b int, c int);
+go
+
+grant update(a) on hasownera.ta6 to invoker;
+go
+
+create proc hasownera.pa6 as begin
+	update hasownera.ta6 set b = 0;
+end;
+go
+
+grant exec on hasownera.pa6 to invoker;
+go
+
+-- tsql user=invoker password=123
+use db1;
+go
+
+exec hasownera.pa6;
+go
+
+update hasownera.ta6 set b = 0;
+go
+
+-- tsql
+use db1;
+go
+
+drop proc hasownera.pa6;
+go
+
+drop table hasownera.ta6;
+go
+
+use master;
+go
+
 
 -- Cleanup
 -- psql

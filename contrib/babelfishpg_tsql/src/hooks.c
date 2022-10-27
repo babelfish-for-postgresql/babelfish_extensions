@@ -122,6 +122,8 @@ static void pltsql_ExecutorEnd(QueryDesc *queryDesc);
 static bool plsql_TriggerRecursiveCheck(ResultRelInfo *resultRelInfo);
 static void pltsql_pg_proc_aclchk(Oid proc_oid, Oid roleid, AclMode mode, bool *has_access);
 static void pltsql_pg_class_aclmask_hook(Form_pg_class classForm, Oid table_oid, Oid roleid, bool *has_permission_via_hook, bool *read_write_all_data_safe);
+static void pltsql_pg_attribute_aclchk(Oid table_oid, AttrNumber attnum, Oid roleid, AclMode mode, bool *has_access);
+static void pltsql_pg_attribute_aclchk_all(Oid table_oid, Oid roleid, AclMode mode, AclMaskHow how, bool *has_access);
 
 
 /*****************************************
@@ -159,6 +161,8 @@ static GetNewObjectId_hook_type prev_GetNewObjectId_hook = NULL;
 static inherit_view_constraints_from_table_hook_type prev_inherit_view_constraints_from_table = NULL;
 static pg_proc_aclchk_hook_type prev_pg_proc_aclchk_hook = NULL;
 static pg_class_aclmask_hook_type prev_pg_class_aclmask_hook = NULL;
+static pg_attribute_aclchk_hook_type prev_pg_attribute_aclchk_hook = NULL;
+static pg_attribute_aclchk_all_hook_type prev_pg_attribute_aclchk_all_hook = NULL;
 static detect_numeric_overflow_hook_type prev_detect_numeric_overflow_hook = NULL;
 static match_pltsql_func_call_hook_type prev_match_pltsql_func_call_hook = NULL;
 static insert_pltsql_function_defaults_hook_type prev_insert_pltsql_function_defaults_hook = NULL;
@@ -247,6 +251,11 @@ InstallExtendedHooks(void)
 	prev_pg_class_aclmask_hook = pg_class_aclmask_hook;
 	pg_class_aclmask_hook = pltsql_pg_class_aclmask_hook;
 
+	prev_pg_attribute_aclchk_hook = pg_attribute_aclchk_hook;
+	pg_attribute_aclchk_hook = pltsql_pg_attribute_aclchk;
+	prev_pg_attribute_aclchk_all_hook = pg_attribute_aclchk_all_hook;
+	pg_attribute_aclchk_all_hook = pltsql_pg_attribute_aclchk_all;
+
 	prev_detect_numeric_overflow_hook = detect_numeric_overflow_hook;
 	detect_numeric_overflow_hook = pltsql_detect_numeric_overflow;
 
@@ -292,6 +301,8 @@ UninstallExtendedHooks(void)
 	inherit_view_constraints_from_table_hook = prev_inherit_view_constraints_from_table;
 	pg_proc_aclchk_hook = prev_pg_proc_aclchk_hook;
 	pg_class_aclmask_hook = prev_pg_class_aclmask_hook;
+	pg_attribute_aclchk_hook = prev_pg_attribute_aclchk_hook;
+	pg_attribute_aclchk_all_hook = prev_pg_attribute_aclchk_all_hook;
 	detect_numeric_overflow_hook = prev_detect_numeric_overflow_hook;
 	match_pltsql_func_call_hook = prev_match_pltsql_func_call_hook;
 	insert_pltsql_function_defaults_hook = prev_insert_pltsql_function_defaults_hook;
@@ -2742,7 +2753,8 @@ pltsql_pg_proc_aclchk(Oid proc_oid, Oid roleid, AclMode mode, bool *has_access)
 }
 
 static void
-pltsql_pg_class_aclmask_hook(Form_pg_class classForm, Oid class_oid, Oid roleid, bool *has_permission_via_hook, bool *read_write_all_data_safe)
+pltsql_pg_class_aclmask_hook(Form_pg_class classForm, Oid class_oid, Oid roleid,
+							 bool *has_permission_via_hook, bool *read_write_all_data_safe)
 {
 	Oid procOwner = get_function_owner_for_top_estate();
 	if (*has_permission_via_hook == false &&
@@ -2751,5 +2763,36 @@ pltsql_pg_class_aclmask_hook(Form_pg_class classForm, Oid class_oid, Oid roleid,
 		*has_permission_via_hook = pg_class_ownercheck(class_oid, procOwner);
 
     if (prev_pg_class_aclmask_hook)
-        prev_pg_class_aclmask_hook(classForm, class_oid, roleid, has_permission_via_hook, read_write_all_data_safe);
+        prev_pg_class_aclmask_hook(classForm, class_oid, roleid,
+								   has_permission_via_hook, read_write_all_data_safe);
+}
+
+static
+void
+pltsql_pg_attribute_aclchk(Oid table_oid, AttrNumber attnum, Oid roleid,
+						   AclMode mode, bool *has_access)
+{
+	Oid procOwner = get_function_owner_for_top_estate();
+	if (*has_access == false &&
+		OidIsValid(procOwner) &&
+		OidIsValid(table_oid))
+		*has_access = pg_class_ownercheck(table_oid, procOwner);
+
+	if (prev_pg_attribute_aclchk_hook)
+		prev_pg_attribute_aclchk_hook(table_oid, attnum, roleid, mode, has_access);
+}
+
+static
+void
+pltsql_pg_attribute_aclchk_all(Oid table_oid, Oid roleid, AclMode mode,
+							   AclMaskHow how, bool *has_access)
+{
+	Oid procOwner = get_function_owner_for_top_estate();
+	if (*has_access == false &&
+		OidIsValid(procOwner) &&
+		OidIsValid(table_oid))
+		*has_access = pg_class_ownercheck(table_oid, procOwner);
+
+	if (prev_pg_attribute_aclchk_all_hook)
+		prev_pg_attribute_aclchk_all_hook(table_oid, roleid, mode, how, has_access);
 }
