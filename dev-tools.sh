@@ -12,7 +12,7 @@ if [ ! $1 ]; then
     echo "  (if TARGET_WS is not provided, the current workspace will be used)"
     echo ""
     echo "  initpg [TARGET_WS]"
-    echo "      init postgres directory + build pg and contrib + copy ANTLR lib"
+    echo "      init postgres directory + build pg and contrib + copy ANTLR lib + build pg_hint_plan"
     echo ""
     echo "  initdb [TARGET_WS]"
     echo "      init data directory + modify postgresql.conf + restart db"
