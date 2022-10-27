@@ -151,6 +151,20 @@ void verifyValuesInObject(ServerType serverType, const string &objectName, const
  * @param expectedLen A vector containing the expected length of all data in the object. 
  * @param pkStartingValue Optional. The primary key value the object starts incrementing at. The default value is 0.
 */
+
+void testStringFunctions(ServerType serverType, const string &tableName, const vector<string> &operationsQuery, 
+vector<vector<string>> &expectedResults, const vector<string> &pk, const string &colName);
+/**
+ * Verify if the operators in query could work for the data in table
+ * 
+ * @param serverType The ODBC driver type to create the connection against. 
+ * @param tableName The table stored the data
+ * @param operationQuery the query that stored all the operators need to be tested
+ * @param expectResults the expect result after applied the string operators
+ * @param pk  the primary key of the table
+ * @param colName  the column name of the table
+ */
+
 template <typename T>
 void verifyValuesInObject(ServerType serverType, string objectName, string orderByColumnName, int type, T data, 
   int bufferLen, vector<string> insertedValues, vector<T> expectedInsertedValues, vector<long> expectedLen, int pkStartingValue = 0);
@@ -431,9 +445,6 @@ void testComparisonFunctions(ServerType serverType, const string &tableName, int
  * @param expectedResults 2D vector containing the expected results for each operation.
  * @param expectedLen A vector containing the expected length of all results from each operation. 
 */
-
-void testStringFunctions(ServerType serverType, const string &tableName, const vector<string> &operationsQuery, 
-vector<vector<string>> &expectedResults, const vector<string> &pk, const string &Col_NAME);
 
 template <typename T>
 void testArithmeticOperators(ServerType serverType, const string &tableName, const string &orderByColumnName, int numOfData, int type, 

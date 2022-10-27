@@ -683,7 +683,7 @@ void testComparisonFunctions(ServerType serverType, const string &tableName, con
 }
 
 void testStringFunctions(ServerType serverType, const string &tableName, const vector<string> &operationsQuery, 
- vector<vector<string>> &expectedResults, const vector<string> &pk, const string &Col_NAME) {
+ vector<vector<string>> &expectedResults, const vector<string> &pk, const string &colName) {
   
   OdbcHandler odbcHandler(Drivers::GetDriver(serverType));
   odbcHandler.Connect(true);
@@ -708,7 +708,7 @@ void testStringFunctions(ServerType serverType, const string &tableName, const v
   for (int i = 0; i < pk.size(); i++)
   {
     odbcHandler.CloseStmt();
-    odbcHandler.ExecQuery(SelectStatement(tableName, operationsQuery, vector<string>{}, Col_NAME + "=" + "'" + pk[i] + "'"));
+    odbcHandler.ExecQuery(SelectStatement(tableName, operationsQuery, vector<string>{}, colName + "=" + "'" + pk[i] + "'"));
     ASSERT_NO_FATAL_FAILURE(odbcHandler.BindColumns(bind_columns));
 
     rcode = SQLFetch(odbcHandler.GetStatementHandle());
