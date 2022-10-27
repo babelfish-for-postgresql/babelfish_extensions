@@ -428,13 +428,13 @@ GO
 
 -- SMALLMONEY format testing
 
-CREATE TABLE smallmoney_testing(sm MONEY);
+CREATE TABLE smallmoney_testing(sm SMALLMONEY);
 GO
 INSERT INTO smallmoney_testing VALUES(-214478.3648);
 GO
-INSERT INTO smallmoney_testing VALUES(435627.1435);
+INSERT INTO smallmoney_testing VALUES(0.1435);
 GO
-INSERT INTO smallmoney_testing VALUES(-435627.1435);
+INSERT INTO smallmoney_testing VALUES(-0.1435);
 GO
 INSERT INTO smallmoney_testing VALUES(214478.3647);
 GO
