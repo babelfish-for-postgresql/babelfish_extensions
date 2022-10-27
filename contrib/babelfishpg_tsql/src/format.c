@@ -1031,7 +1031,7 @@ process_format_pattern(StringInfo buf, char *msg_string, char *data_type)
 							}
 							else
 							{
-								appendStringInfo(str, "FMyyyy");
+								appendStringInfo(str, "yyy");
 								bc = bc + 2;
 							}
 						}
@@ -1150,10 +1150,13 @@ process_format_pattern(StringInfo buf, char *msg_string, char *data_type)
 					}
 					else
 					{
+						// Case for one letter meridian - A, P instead of AM/PM
+						// is not supported by to_char in postgres, so we'll
+						// return the 2 letter case until an efficient workaround
 						appendStringInfo(str, "AM");
-						i = bc + 2;
-						bc = bc + 1;
+						i = bc + 1;
 
+						// Anything longer than 'tt' is skipped.
 						while (msg_string[i] == 't')
 						{
 							i++;
