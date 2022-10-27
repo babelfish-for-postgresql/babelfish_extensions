@@ -1,4 +1,4 @@
--- Show all BABELFISH Gucs
+ -- Show all BABELFISH Gucs
 EXEC sp_babelfish_configure '%'
 GO
 
@@ -51,7 +51,17 @@ EXEC sp_babelfish_configure '%','ignore'
 GO
 
 -- All Gucs that vartype is enum and enumvals has ignore option is 'ignore'
-SELECT name, setting  FROM pg_catalog.pg_settings WHERE name collate "C" like 'babelfishpg_tsql.%' AND vartype = 'enum'
+SELECT CURRENT_SETTING('babelfishpg_tsql.escape_hatch_showplan_all');
+GO
+SELECT CURRENT_SETTING('babelfishpg_tsql.escape_hatch_login_misc_options');
+GO
+SELECT CURRENT_SETTING('babelfishpg_tsql.escape_hatch_schemabinding_trigger');
+GO
+SELECT CURRENT_SETTING('babelfishpg_tsql.escape_hatch_schemabinding_view');
+GO
+SELECT CURRENT_SETTING('babelfishpg_tsql.escape_hatch_session_settings');
+GO
+SELECT CURRENT_SETTING('babelfishpg_tsql.escape_hatch_showplan_all');
 GO
 
 -- Set all Gucs back to default value

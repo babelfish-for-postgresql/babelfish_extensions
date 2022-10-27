@@ -3,25 +3,6 @@ EXEC sp_babelfish_configure '%'
 GO
 ~~START~~
 text#!#text#!#text
-babelfishpg_tsql.ansi_defaults#!#on#!#Controls a group of settings that collectively specify some ISO standard behavior. 
-babelfishpg_tsql.ansi_null_dflt_off#!#off#!#Modifies the behavior of the session to override default nullability of new columns when the ANSI null default option for the database is on.
-babelfishpg_tsql.ansi_null_dflt_on#!#on#!#Modifies the behavior of the session to override default nullability of new columns when the ANSI null default option for the database is false.
-babelfishpg_tsql.ansi_nulls#!#on#!#Specifies ISO compliant behavior of the Equals (=) and Not Equal To (<>) comparison operators when they are used with null values.
-babelfishpg_tsql.ansi_padding#!#on#!#Controls the way the column stores values shorter than the defined size of the column, and the way the column stores values that have trailing blanks in char, varchar, binary, and varbinary data.
-babelfishpg_tsql.ansi_warnings#!#on#!#Specifies ISO standard behavior for several error conditions
-babelfishpg_tsql.arithabort#!#on#!#Ends a query when an overflow or divide-by-zero error occurs during query execution.
-babelfishpg_tsql.arithignore#!#off#!#Controls whether error messages are returned from overflow or divide-by-zero errors during a query.
-babelfishpg_tsql.concat_null_yields_null#!#on#!#If enabled, concatenating a NULL value produces a NULL result
-babelfishpg_tsql.cursor_close_on_commit#!#off#!#Controls the behavior of the cursor during COMMIT TRANSACTION statement.
-babelfishpg_tsql.database_name#!#jdbc_testdb#!#Predefined Babelfish database name
-babelfishpg_tsql.datefirst#!#7#!#Sets the first day of the week to a number from 1 through 7.
-babelfishpg_tsql.default_locale#!#en_US#!#The default locale to use when creating a new collation.
-babelfishpg_tsql.dump_restore#!#off#!#Enable special handlings during dump and restore
-babelfishpg_tsql.dump_restore_min_oid#!##!#All new OIDs should be greater than this number during dump and restore
-babelfishpg_tsql.enable_create_alter_view_from_pg#!#off#!#Enables blocked DDL statements from PG endpoint
-babelfishpg_tsql.enable_hint_mapping#!#off#!#Enables T-SQL hint mapping
-babelfishpg_tsql.enable_metadata_inconsistency_check#!#on#!#Enables babelfish_inconsistent_metadata
-babelfishpg_tsql.enable_tsql_information_schema#!#on#!#toggles between the information_schema for postgres and tsql
 babelfishpg_tsql.escape_hatch_checkpoint#!#ignore#!#escape hatch for CHECKPOINT
 babelfishpg_tsql.escape_hatch_constraint_name_for_default#!#ignore#!#escape hatch for DEFAULT option in alter table add constraint
 babelfishpg_tsql.escape_hatch_database_misc_options#!#ignore#!#escape hatch for misc options in CREATE/ALTER DATABASE
@@ -60,31 +41,6 @@ babelfishpg_tsql.explain_summary#!#off#!#Include summary information (e.g., tota
 babelfishpg_tsql.explain_timing#!#off#!#Include actual startup time and time spent in each node in the output
 babelfishpg_tsql.explain_verbose#!#off#!#Display additional information regarding the plan
 babelfishpg_tsql.explain_wal#!#off#!#Include information on WAL record generation
-babelfishpg_tsql.fmtonly#!#off#!#SQL-Server compatibility FMTONLY option.
-babelfishpg_tsql.host_distribution#!##!#Sets host distribution
-babelfishpg_tsql.host_release#!##!#Sets host release
-babelfishpg_tsql.host_service_pack_level#!##!#Sets host service pack level
-babelfishpg_tsql.identity_insert#!##!#Enable inserts into identity columns.
-babelfishpg_tsql.implicit_transactions#!#off#!#enable implicit transactions
-babelfishpg_tsql.insert_bulk_kilobytes_per_batch#!#8#!#Sets the number of bytes per batch to be processed for Insert Bulk
-babelfishpg_tsql.insert_bulk_rows_per_batch#!#1000#!#Sets the number of rows per batch to be processed for Insert Bulk
-babelfishpg_tsql.language#!#us_english#!#T-SQL compatibility LANGUAGE option.
-babelfishpg_tsql.lock_timeout#!#-1#!#Specifies the number of milliseconds a statement waits for a lock to be released.
-babelfishpg_tsql.migration_mode#!#single-db#!#Defines if multiple user databases are supported
-babelfishpg_tsql.no_browsetable#!#on#!#SQL-Server compatibility NO_BROWSETABLE option.
-babelfishpg_tsql.nocount#!#off#!#Tsql compatibility NOCOUNT option.
-babelfishpg_tsql.noexec#!#off#!#SQL-Server compatibility NOEXEC option.
-babelfishpg_tsql.numeric_roundabort#!#off#!#Ends a query when an overflow or divide-by-zero error occurs during query execution.
-babelfishpg_tsql.recursive_triggers#!#off#!#SQL-Server compatibility recursive_triggers option
-babelfishpg_tsql.restore_tsql_tabletype#!#off#!#Shows that if a table is creating a T-SQL table type during restore
-babelfishpg_tsql.rowcount#!#0#!#Causes the DB engine to stop processing the query after the specified number of rows are returned.
-babelfishpg_tsql.server_collation_name#!#sql_latin1_general_cp1_ci_as#!#Name of the default server collation.
-babelfishpg_tsql.showplan_all#!#off#!#SQL-Server compatibility SHOWPLAN_ALL option.
-babelfishpg_tsql.showplan_text#!#off#!#SQL-Server compatibility SHOWPLAN_TEXT option.
-babelfishpg_tsql.showplan_xml#!#off#!#SQL-Server compatibility SHOWPLAN_XML option.
-babelfishpg_tsql.variable_conflict#!#error#!#Sets handling of conflicts between PL/tsql variable names and table column names.
-babelfishpg_tsql.version#!#default#!#Sets the output of @@VERSION variable
-babelfishpg_tsql.xact_abort#!#off#!#enable xact abort
 ~~END~~
 
 
@@ -224,43 +180,46 @@ EXEC sp_babelfish_configure '%','ignore'
 GO
 
 -- All Gucs that vartype is enum and enumvals has ignore option is 'ignore'
-SELECT name, setting  FROM pg_catalog.pg_settings WHERE name collate "C" like 'babelfishpg_tsql.%' AND vartype = 'enum'
+SELECT CURRENT_SETTING('babelfishpg_tsql.escape_hatch_showplan_all');
 GO
 ~~START~~
-text#!#text
-babelfishpg_tsql.escape_hatch_checkpoint#!#ignore
-babelfishpg_tsql.escape_hatch_constraint_name_for_default#!#ignore
-babelfishpg_tsql.escape_hatch_database_misc_options#!#ignore
-babelfishpg_tsql.escape_hatch_for_replication#!#ignore
-babelfishpg_tsql.escape_hatch_fulltext#!#ignore
-babelfishpg_tsql.escape_hatch_ignore_dup_key#!#ignore
-babelfishpg_tsql.escape_hatch_index_clustering#!#ignore
-babelfishpg_tsql.escape_hatch_index_columnstore#!#ignore
-babelfishpg_tsql.escape_hatch_join_hints#!#ignore
-babelfishpg_tsql.escape_hatch_language_non_english#!#ignore
-babelfishpg_tsql.escape_hatch_login_hashed_password#!#ignore
-babelfishpg_tsql.escape_hatch_login_misc_options#!#ignore
-babelfishpg_tsql.escape_hatch_login_old_password#!#ignore
-babelfishpg_tsql.escape_hatch_login_password_must_change#!#ignore
-babelfishpg_tsql.escape_hatch_login_password_unlock#!#ignore
-babelfishpg_tsql.escape_hatch_nocheck_add_constraint#!#ignore
-babelfishpg_tsql.escape_hatch_nocheck_existing_constraint#!#ignore
-babelfishpg_tsql.escape_hatch_query_hints#!#ignore
-babelfishpg_tsql.escape_hatch_rowguidcol_column#!#ignore
-babelfishpg_tsql.escape_hatch_rowversion#!#ignore
-babelfishpg_tsql.escape_hatch_schemabinding_function#!#ignore
-babelfishpg_tsql.escape_hatch_schemabinding_procedure#!#ignore
-babelfishpg_tsql.escape_hatch_schemabinding_trigger#!#ignore
-babelfishpg_tsql.escape_hatch_schemabinding_view#!#ignore
-babelfishpg_tsql.escape_hatch_session_settings#!#ignore
-babelfishpg_tsql.escape_hatch_showplan_all#!#ignore
-babelfishpg_tsql.escape_hatch_storage_on_partition#!#ignore
-babelfishpg_tsql.escape_hatch_storage_options#!#ignore
-babelfishpg_tsql.escape_hatch_table_hints#!#ignore
-babelfishpg_tsql.escape_hatch_unique_constraint#!#ignore
-babelfishpg_tsql.explain_format#!#text
-babelfishpg_tsql.migration_mode#!#single-db
-babelfishpg_tsql.variable_conflict#!#error
+text
+ignore
+~~END~~
+
+SELECT CURRENT_SETTING('babelfishpg_tsql.escape_hatch_login_misc_options');
+GO
+~~START~~
+text
+ignore
+~~END~~
+
+SELECT CURRENT_SETTING('babelfishpg_tsql.escape_hatch_schemabinding_trigger');
+GO
+~~START~~
+text
+ignore
+~~END~~
+
+SELECT CURRENT_SETTING('babelfishpg_tsql.escape_hatch_schemabinding_view');
+GO
+~~START~~
+text
+ignore
+~~END~~
+
+SELECT CURRENT_SETTING('babelfishpg_tsql.escape_hatch_session_settings');
+GO
+~~START~~
+text
+ignore
+~~END~~
+
+SELECT CURRENT_SETTING('babelfishpg_tsql.escape_hatch_showplan_all');
+GO
+~~START~~
+text
+ignore
 ~~END~~
 
 

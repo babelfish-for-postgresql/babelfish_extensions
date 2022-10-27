@@ -127,7 +127,9 @@ BEGIN
   END IF;
 
   SELECT COUNT(*) INTO cnt FROM pg_catalog.pg_settings WHERE name collate "C" like normalized_name and 
-                                                             name collate "C" like 'babelfishpg_tsql.%' and 
+                                                             (name collate "C" like 'babelfishpg_tsql.explain_%' OR
+                                                              name collate "C" like 'babelfishpg_tsql.escape_hatch_%' OR
+                                                              name collate "C" like 'babelfishpg_tsql.enable_pg_hint')and
                                                              context collate "C" not like 'superuser' and 
                                                              context collate "C" not like 'sighup';
   IF cnt = 0 THEN
@@ -135,7 +137,9 @@ BEGIN
   END IF;
 
   OPEN cur FOR SELECT name FROM pg_catalog.pg_settings WHERE name collate "C" like normalized_name and 
-                                                             name collate "C" like 'babelfishpg_tsql.%' and 
+                                                             (name collate "C" like 'babelfishpg_tsql.explain_%' OR
+                                                              name collate "C" like 'babelfishpg_tsql.escape_hatch_%' OR
+                                                              name collate "C" like 'babelfishpg_tsql.enable_pg_hint')and 
                                                              context collate "C" not like 'superuser' and 
                                                              context collate "C" not like 'sighup';
 
