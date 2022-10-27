@@ -195,7 +195,9 @@ void testCommonColumnAttributes(ServerType serverType, const string &tableName, 
                             (SQLLEN*) &scale); 
     EXPECT_EQ(rcode, SQL_SUCCESS);
     EXPECT_EQ(scale, scaleExpected[i - 1]);
+  }
 
+  for (int i = 1; i <= numCols; i++) {
     rcode = SQLColAttribute(odbcHandler.GetStatementHandle(),
                             i,
                             SQL_DESC_TYPE_NAME, // Get the type name of the column
@@ -552,11 +554,12 @@ void testUniqueConstraint(ServerType serverType, const string &tableName, const 
 }
 
 void testComparisonOperators(ServerType serverType, const string &tableName, const string &col1Name, const string &col2Name, 
-  const vector<string> &col1Data, const vector<string> &col2Data, const vector<string> &operationsQuery, const vector<vector<char>> &expectedResults) {
+  const vector<string> &col1Data, const vector<string> &col2Data, const vector<string> &operationsQuery, const vector<vector<char>> &expectedResults, 
+  bool explicitCast, bool explicitQuotes) {
 
   OdbcHandler odbcHandler(Drivers::GetDriver(serverType));
   odbcHandler.Connect(true);
-  
+
   const int BYTES_EXPECTED = 1;
   const int NUM_OF_DATA = col2Data.size();
   const int NUM_OF_OPERATIONS = operationsQuery.size();
@@ -579,7 +582,10 @@ void testComparisonOperators(ServerType serverType, const string &tableName, con
 
   for (int i = 0; i < NUM_OF_DATA; i++) {
     odbcHandler.CloseStmt();
-    odbcHandler.ExecQuery(SelectStatement(tableName, operationsQuery, vector<string>{}, col1Name + "=\'" + col1Data[i] + "\'"));
+    const string WHERE_STATEMENT = explicitCast ? 
+      col1Name + " OPERATOR(sys.=) " + (explicitQuotes ? "\'" + col1Data[i] + "\'" : col1Data[i]) :
+      col1Name + "=" + (explicitQuotes ? "\'" + col1Data[i] + "\'" : col1Data[i]);
+    odbcHandler.ExecQuery(SelectStatement(tableName, operationsQuery, vector<string>{}, WHERE_STATEMENT));
     ASSERT_NO_FATAL_FAILURE(odbcHandler.BindColumns(bind_columns));
 
     rcode = SQLFetch(odbcHandler.GetStatementHandle());
