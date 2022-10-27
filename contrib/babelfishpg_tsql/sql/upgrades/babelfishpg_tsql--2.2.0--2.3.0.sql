@@ -1430,6 +1430,89 @@ END;
 $body$
 LANGUAGE 'plpgsql';
 
+CREATE OR REPLACE PROCEDURE sys.sp_babelfish_configure(IN "@option_name" varchar(128),  IN "@option_value" varchar(128), IN "@option_scope" varchar(128))
+AS $$
+DECLARE
+  normalized_name varchar(256);
+  default_value text;
+  value_type text;
+  enum_value text[];
+  cnt int;
+  cur refcursor;
+  eh_name varchar(256);
+  server boolean := false;
+  prev_user text;
+BEGIN
+  IF lower("@option_name") like 'babelfishpg_tsql.%' collate "C" THEN
+    SELECT "@option_name" INTO normalized_name;
+  ELSE
+    SELECT concat('babelfishpg_tsql.',"@option_name") INTO normalized_name;
+  END IF;
+
+  IF lower("@option_scope") = 'server' THEN
+    server := true;
+  ELSIF btrim("@option_scope") != '' THEN
+    RAISE EXCEPTION 'invalid option: %', "@option_scope";
+  END IF;
+
+  SELECT COUNT(*) INTO cnt FROM pg_catalog.pg_settings WHERE name collate "C" like normalized_name and 
+                                                             name collate "C" like 'babelfishpg_tsql.%' and 
+                                                             context collate "C" not like 'superuser' and 
+                                                             context collate "C" not like 'sighup';
+  IF cnt = 0 THEN
+    RAISE EXCEPTION 'unknown configuration: %', normalized_name;
+  END IF;
+
+  OPEN cur FOR SELECT name FROM pg_catalog.pg_settings WHERE name collate "C" like normalized_name and 
+                                                             name collate "C" like 'babelfishpg_tsql.%' and 
+                                                             context collate "C" not like 'superuser' and 
+                                                             context collate "C" not like 'sighup';
+
+  LOOP
+    FETCH NEXT FROM cur into eh_name;
+    exit when not found;
+
+    -- Each setting has a boot_val which is the wired-in default value
+    -- Assuming that escape hatches cannot be modified using ALTER SYTEM/config file
+    -- we are setting the boot_val as the default value for the escape hatches
+    SELECT boot_val INTO default_value FROM pg_catalog.pg_settings WHERE name = eh_name;
+    SELECT vartype INTO value_type FROM pg_catalog.pg_settings WHERE name = eh_name;
+    SELECT enumvals INTO enum_value FROM pg_catalog.pg_settings WHERE name = eh_name;
+    IF lower("@option_value") = 'default' THEN
+        PERFORM pg_catalog.set_config(eh_name, default_value, 'false');
+    ELSIF lower("@option_value") = 'ignore' THEN
+      IF value_type = 'enum' AND enum_value && '{"ignore"}' THEN
+        PERFORM pg_catalog.set_config(eh_name, 'ignore', 'false');
+      ELSE
+        CONTINUE;
+      END IF;
+    ELSIF lower("@option_value") = 'strict' THEN
+      IF value_type = 'enum' AND enum_value && '{"strict"}' THEN
+        PERFORM pg_catalog.set_config(eh_name, 'strict', 'false');
+      ELSE
+        CONTINUE;
+      END IF;
+    ELSE
+        PERFORM pg_catalog.set_config(eh_name, "@option_value", 'false');
+    END IF;
+    IF server THEN
+      SELECT current_user INTO prev_user;
+      PERFORM sys.babelfish_set_role(session_user);
+      IF lower("@option_value") = 'default' AND default_value != NULL THEN
+        EXECUTE format('ALTER DATABASE %s SET %s = %s', CURRENT_DATABASE(), eh_name, default_value);
+      ELSE
+        -- store the setting in PG master database so that it can be applied to all bbf databases
+        EXECUTE format('ALTER DATABASE %s SET %s = %s', CURRENT_DATABASE(), eh_name, "@option_value");
+      END IF;
+      PERFORM sys.babelfish_set_role(prev_user);
+    END IF;
+  END LOOP;
+
+  CLOSE cur;
+
+END;
+$$ LANGUAGE plpgsql;
+
 CREATE OR REPLACE FUNCTION sys.babelfish_sp_aws_add_jobschedule (
   par_job_id integer = NULL::integer,
   par_schedule_id integer = NULL::integer,
