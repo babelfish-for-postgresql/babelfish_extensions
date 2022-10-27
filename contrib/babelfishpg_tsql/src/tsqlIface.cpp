@@ -2164,7 +2164,7 @@ public:
 			{
 				auto id = fpnsds->id().back();
 
-				if (id->keyword()->SUBSTRING()) /* NULLIF */
+				if (id->keyword()->SUBSTRING()) /* SUBSTRING */
 				{
 					if (ctx->function_arg_list() && !ctx->function_arg_list()->expression().empty())
 					{
