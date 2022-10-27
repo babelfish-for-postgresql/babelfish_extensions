@@ -1134,7 +1134,7 @@ bool collation_is_CI_AS(Oid colloid)
 	return false;
 }
 
-bool expr_has_ilike_node_and_ci_as_coll(Node *expr)
+bool expr_has_ilike_node_and_ci_as_coll(Node *expr, bool check_for_ci_as_collation)
 {
 	int i = 0;
 	bool ilike_node_found = false;
@@ -1151,6 +1151,9 @@ bool expr_has_ilike_node_and_ci_as_coll(Node *expr)
 			break;
 		}
 	}
+	if (!check_for_ci_as_collation)
+		return ilike_node_found;
+	
 	return (ilike_node_found & collation_is_CI_AS(op->inputcollid));
 }
 

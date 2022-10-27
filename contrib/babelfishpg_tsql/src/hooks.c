@@ -3059,7 +3059,7 @@ transform_like_in_add_constraint (Node* node)
 	bool create_tbl_stmt_is_invalid = false;
 
 	if (current_query_is_create_tbl_check_constraint)
-		create_tbl_stmt_is_invalid = expr_contains_ilike_and_ci_collation_wrapper(node);
+		create_tbl_stmt_is_invalid = expr_contains_ilike_and_ci_collation_wrapper(node, true);
 
 	if (current_query_is_create_tbl_check_constraint && create_tbl_stmt_is_invalid)
 	{
