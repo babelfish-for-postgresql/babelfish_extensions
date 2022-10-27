@@ -380,7 +380,7 @@ TEST_F(PSQL_DataTypes_Varchar, Table_Single_Primary_Keys) {
   createTable(ServerType::PSQL, TABLE_NAME, TABLE_COLUMNS_1, tableConstraints);
   testPrimaryKeys(ServerType::PSQL, SCHEMA_NAME, PKTABLE_NAME, PK_COLUMNS);
   testInsertionSuccess(ServerType::PSQL, TABLE_NAME, COL1_NAME, INSERTED_VALUES, INSERTED_VALUES);
-  testInsertionFailure(ServerType::PSQL, TABLE_NAME, COL1_NAME, INSERTED_VALUES, false, INSERTED_VALUES.size(), false);
+  testInsertionFailure(ServerType::PSQL, TABLE_NAME, COL1_NAME, INSERTED_VALUES, false, 0, false);
   dropObject(ServerType::PSQL, "TABLE", TABLE_NAME);
 
   const vector<pair<string, string>> TABLE_COLUMNS_8000 = {
@@ -402,7 +402,7 @@ TEST_F(PSQL_DataTypes_Varchar, Table_Single_Primary_Keys) {
   createTable(ServerType::PSQL, TABLE_NAME, TABLE_COLUMNS_8000, tableConstraints);
   testPrimaryKeys(ServerType::PSQL, SCHEMA_NAME, PKTABLE_NAME, PK_COLUMNS_8000);
   testInsertionSuccess(ServerType::PSQL, TABLE_NAME, COL1_NAME, INSERTED_VALUES_8000, INSERTED_VALUES_8000);
-  testInsertionFailure(ServerType::PSQL, TABLE_NAME, COL1_NAME, INSERTED_VALUES_8000, false, INSERTED_VALUES_8000.size(), false);
+  testInsertionFailure(ServerType::PSQL, TABLE_NAME, COL1_NAME, INSERTED_VALUES_8000, false, 0, false);
   dropObject(ServerType::PSQL, "TABLE", TABLE_NAME);
 
   const vector<pair<string, string>> TABLE_COLUMNS_20 = {
@@ -423,7 +423,7 @@ TEST_F(PSQL_DataTypes_Varchar, Table_Single_Primary_Keys) {
   createTable(ServerType::PSQL, TABLE_NAME, TABLE_COLUMNS_20, tableConstraints);
   testPrimaryKeys(ServerType::PSQL, SCHEMA_NAME, PKTABLE_NAME, PK_COLUMNS_20);
   testInsertionSuccess(ServerType::PSQL, TABLE_NAME, COL1_NAME, INSERTED_VALUES_20, INSERTED_VALUES_20);
-  testInsertionFailure(ServerType::PSQL, TABLE_NAME, COL1_NAME, INSERTED_VALUES_20, false, INSERTED_VALUES_20.size(), false);
+  testInsertionFailure(ServerType::PSQL, TABLE_NAME, COL1_NAME, INSERTED_VALUES_20, false, 0, false);
   dropObject(ServerType::PSQL, "TABLE", TABLE_NAME);
 }
 
@@ -451,7 +451,7 @@ TEST_F(PSQL_DataTypes_Varchar, Table_Composite_Primary_Keys){
   createTable(ServerType::PSQL, TABLE_NAME, TABLE_COLUMNS_1, tableConstraints);
   testPrimaryKeys(ServerType::PSQL, SCHEMA_NAME, PKTABLE_NAME, PK_COLUMNS);
   testInsertionSuccess(ServerType::PSQL, TABLE_NAME, COL1_NAME, INSERTED_VALUES, INSERTED_VALUES);
-  // testInsertionFailure(ServerType::PSQL, TABLE_NAME, COL1_NAME, INSERTED_VALUES, false, INSERTED_VALUES.size(), false);
+  testInsertionFailure(ServerType::PSQL, TABLE_NAME, COL1_NAME, INSERTED_VALUES, false, 0, false);
   dropObject(ServerType::PSQL, "TABLE", TABLE_NAME);
 
   const vector<pair<string, string>> TABLE_COLUMNS_8000 = {
@@ -474,7 +474,7 @@ TEST_F(PSQL_DataTypes_Varchar, Table_Composite_Primary_Keys){
   createTable(ServerType::PSQL, TABLE_NAME, TABLE_COLUMNS_8000, tableConstraints);
   testPrimaryKeys(ServerType::PSQL, SCHEMA_NAME, PKTABLE_NAME, PK_COLUMNS_8000);
   testInsertionSuccess(ServerType::PSQL, TABLE_NAME, COL1_NAME, INSERTED_VALUES_8000, INSERTED_VALUES_8000);
-  // testInsertionFailure(ServerType::PSQL, TABLE_NAME, COL1_NAME, INSERTED_VALUES_20, false, INSERTED_VALUES_20.size(), false);
+  testInsertionFailure(ServerType::PSQL, TABLE_NAME, COL1_NAME, INSERTED_VALUES_8000, false, 0, false);
   dropObject(ServerType::PSQL, "TABLE", TABLE_NAME);
 
   const vector<pair<string, string>> TABLE_COLUMNS_20 = {
@@ -496,7 +496,7 @@ TEST_F(PSQL_DataTypes_Varchar, Table_Composite_Primary_Keys){
   createTable(ServerType::PSQL, TABLE_NAME, TABLE_COLUMNS_20, tableConstraints);
   testPrimaryKeys(ServerType::PSQL, SCHEMA_NAME, PKTABLE_NAME, PK_COLUMNS_20);
   testInsertionSuccess(ServerType::PSQL, TABLE_NAME, COL1_NAME, INSERTED_VALUES_20, INSERTED_VALUES_20);
-  // testInsertionFailure(ServerType::PSQL, TABLE_NAME, COL1_NAME, INSERTED_VALUES_20, false, INSERTED_VALUES_20.size(), false);
+  testInsertionFailure(ServerType::PSQL, TABLE_NAME, COL1_NAME, INSERTED_VALUES_20, false, 0, false);
   dropObject(ServerType::PSQL, "TABLE", TABLE_NAME);
 }
 
