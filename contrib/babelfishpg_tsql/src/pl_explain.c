@@ -144,6 +144,13 @@ void append_explain_info(QueryDesc *queryDesc, const char *queryString)
 			ExplainPrintTriggers(es, queryDesc);
 		if (es->costs)
 			ExplainPrintJITSummary(es, queryDesc);
+		if (es->analyze) {
+			ExplainPropertyFloat("Planning Time", "ms", 1000.0 * INSTR_TIME_GET_DOUBLE(pltsql_estate->planning_end), 3, es);
+			INSTR_TIME_SET_CURRENT(pltsql_estate->execution_end);
+			INSTR_TIME_SUBTRACT(pltsql_estate->execution_end, pltsql_estate->execution_start);
+			ExplainPropertyFloat("Execution Time", "ms", 1000.0 * INSTR_TIME_GET_DOUBLE(pltsql_estate->execution_end), 3, es);
+		}
+
 	}
 	else if (queryString)
 	{

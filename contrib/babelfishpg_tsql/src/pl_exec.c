@@ -4678,7 +4678,8 @@ exec_stmt_execsql(PLtsql_execstate *estate,
 		return ret;
 	}
 
-	if (expr->plan == NULL)
+	INSTR_TIME_SET_CURRENT(estate->planning_start);
+	if (expr->plan == NULL || pltsql_explain_analyze)
     {
         /*
          * If the set_fmtonly guc is set, we need to rewrite any statements as exec
@@ -4705,6 +4706,9 @@ exec_stmt_execsql(PLtsql_execstate *estate,
 	 * Check whether the statement is an INSERT/DELETE with RETURNING
 	 */
 	cp = SPI_plan_get_cached_plan(expr->plan);
+	INSTR_TIME_SET_CURRENT(estate->planning_end);
+	INSTR_TIME_SUBTRACT(estate->planning_end, estate->planning_start);
+
 	if (cp)
 	{
 		int i;
@@ -7233,10 +7237,8 @@ exec_run_select(PLtsql_execstate *estate,
 	 * portal, the caller might do cursor operations, which parallel query
 	 * can't support.
 	 */
-	if (expr->plan == NULL)
-		exec_prepare_plan(estate, expr,
-						  portalP == NULL ? CURSOR_OPT_PARALLEL_OK : 0, true);
-
+	if (expr->plan == NULL || pltsql_explain_analyze)
+		exec_prepare_plan(estate, expr, portalP == NULL ? CURSOR_OPT_PARALLEL_OK : 0, true);
 	/*
 	 * If we started an implicit_transaction for this statement but
 	 * the statement has a simple expression associated with them,

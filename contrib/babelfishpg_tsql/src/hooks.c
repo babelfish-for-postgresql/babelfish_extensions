@@ -345,6 +345,14 @@ pltsql_GetNewObjectId(VariableCache variableCache)
 static void
 pltsql_ExecutorStart(QueryDesc *queryDesc, int eflags)
 {
+	if (pltsql_explain_analyze) {
+		PLtsql_execstate *estate;
+		PLExecStateCallStack * cur;
+		cur = exec_state_call_stack;
+		estate = cur->estate;
+		Assert(estate != NULL);
+		INSTR_TIME_SET_CURRENT(estate->execution_start);
+	}
 	int ef = pltsql_explain_only ? EXEC_FLAG_EXPLAIN_ONLY : eflags;
 	if (is_explain_analyze_mode())
 	{

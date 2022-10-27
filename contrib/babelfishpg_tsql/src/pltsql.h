@@ -1400,6 +1400,10 @@ typedef struct PLtsql_execstate
 	List 		*explain_infos;
 	char		*schema_name;
 	const char		*db_name;
+	instr_time	planning_start;
+	instr_time	planning_end;
+	instr_time execution_start;
+	instr_time execution_end;
 } PLtsql_execstate;
 
 /*
