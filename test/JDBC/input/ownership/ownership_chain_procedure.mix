@@ -421,6 +421,40 @@ go
 use master;
 go
 
+-- CASE 5
+-- PROC/FUNC
+--	DDLs
+-- ownership chain shouldn't work for this case
+-- tsql user=l1 password=123
+use db1;
+go
+
+create proc hasownera.pa5 as begin
+	alter table hasownera.tbls add e int;
+end;
+go
+
+grant exec on hasownera.pa5 to invoker;
+go
+
+-- tsql user=invoker password=123
+use db1;
+go
+
+exec hasownera.pa5;
+go
+
+-- tsql
+use db1;
+go
+
+drop proc hasownera.pa5;
+go
+
+use master;
+go
+
+
 -- Cleanup
 -- psql
 -- Need to terminate active session before cleaning up the login

@@ -629,6 +629,44 @@ go
 use master;
 go
 
+-- tsql user=l1 password=123
+-- CASE 5
+-- PROC/FUNC
+--	DDLs
+-- ownership chain shouldn't work for this case
+use db1;
+go
+
+create proc hasownera.pa5 as begin
+	alter table hasownera.tbls add e int;
+end;
+go
+
+grant exec on hasownera.pa5 to invoker;
+go
+
+-- tsql user=invoker password=123
+use db1;
+go
+
+exec hasownera.pa5;
+go
+~~ERROR (Code: 33557097)~~
+
+~~ERROR (Message: must be owner of table tbls)~~
+
+
+-- tsql
+use db1;
+go
+
+drop proc hasownera.pa5;
+go
+
+use master;
+go
+
+
 -- psql
 -- Cleanup
 -- Need to terminate active session before cleaning up the login
