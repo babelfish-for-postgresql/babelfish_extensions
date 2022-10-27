@@ -1150,6 +1150,9 @@ process_format_pattern(StringInfo buf, char *msg_string, char *data_type)
 					}
 					else
 					{
+						// Case for one letter meridian - A, P instead of AM/PM
+						// is not supported by to_char in postgres, so we'll
+						// return the 2 letter case until an efficient workaround
 						appendStringInfo(str, "AM");
 						i = bc + 1;
 
