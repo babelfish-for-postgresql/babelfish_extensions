@@ -279,6 +279,62 @@ TEST_F(PSQL_Datatypes_Ntext, Table_Unique_Constraint) {
 }
 
 TEST_F(PSQL_Datatypes_Ntext, Comparison_Operators) {
+  const vector<pair<string, string>> TABLE_COLUMNS = {
+    {COL1_NAME, DATATYPE + " PRIMARY KEY"},
+    {COL2_NAME, DATATYPE}
+  };
+
+  const vector<string> INSERTED_PK = {
+    "one Two",
+    "three Four"
+  };
+
+  const vector<string> INSERTED_DATA = {
+    "Five Six",
+    "Seven Eight"
+  };
+  const int NUM_OF_DATA = INSERTED_DATA.size();
+
+  // insertString initialization
+  string insertString{};
+  string comma{};
+  for (int i = 0; i < NUM_OF_DATA; i++) {
+    insertString += comma + "(\'" + INSERTED_PK[i] + "\',\'" + INSERTED_DATA[i] + "\')";
+    comma = ",";
+  }
+
+  const vector<string> OPERATIONS_QUERY = {
+    COL1_NAME + "=" + COL2_NAME,
+    COL1_NAME + "<>" + COL2_NAME,
+    COL1_NAME + "<" + COL2_NAME,
+    COL1_NAME + "<=" + COL2_NAME,
+    COL1_NAME + ">" + COL2_NAME,
+    COL1_NAME + ">=" + COL2_NAME
+  };
+
+  // initialization of expected_results
+  vector<vector<char>> expected_results = {};
+
+  for (int i = 0; i < NUM_OF_DATA; i++) {
+    expected_results.push_back({});
+    const char *date_1 = INSERTED_PK[i].data();
+    const char *date_2 = INSERTED_DATA[i].data();
+    expected_results[i].push_back(strcmp(date_1, date_2) == 0 ? '1' : '0');
+    expected_results[i].push_back(strcmp(date_1, date_2) != 0 ? '1' : '0');
+    expected_results[i].push_back(strcmp(date_1, date_2) < 0 ? '1' : '0');
+    expected_results[i].push_back(strcmp(date_1, date_2) <= 0 ? '1' : '0');
+    expected_results[i].push_back(strcmp(date_1, date_2) > 0 ? '1' : '0');
+    expected_results[i].push_back(strcmp(date_1, date_2) >= 0 ? '1' : '0');
+  }
+
+  createTable(ServerType::PSQL, TABLE_NAME, TABLE_COLUMNS);
+  insertValuesInTable(ServerType::PSQL, TABLE_NAME, insertString, NUM_OF_DATA);
+  testComparisonOperators(ServerType::PSQL, TABLE_NAME, COL1_NAME, COL2_NAME, INSERTED_PK, INSERTED_DATA, 
+    OPERATIONS_QUERY, expected_results);
+  dropObject(ServerType::PSQL, "TABLE", TABLE_NAME);
+}
+
+TEST_F(PSQL_Datatypes_Ntext, String_Operators) {
   const int BUFFER_LENGTH = 8192;
   const int BYTES_EXPECTED = 4;
   const int DOUBLE_BYTES_EXPECTE = 8;
