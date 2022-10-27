@@ -1,0 +1,20 @@
+-- psql
+-- create function to perform integrity checks which depends upon
+-- C language implementation.
+CREATE OR REPLACE FUNCTION master_dbo.babelfish_integrity_checker_vu_prepare_func()
+RETURNS BOOL
+AS 'babelfishpg_tsql', 'babelfish_integrity_checker' LANGUAGE C;
+GO
+
+-- tsql
+-- create dependency on view
+CREATE VIEW babelfish_integrity_checker_vu_prepare_view
+AS
+SELECT babelfish_integrity_checker_vu_prepare_func()
+GO
+
+-- call integrity checker function from a procedure 
+CREATE PROC babelfish_integrity_checker_vu_prepare_proc
+AS
+SELECT babelfish_integrity_checker_vu_prepare_func()
+GO
