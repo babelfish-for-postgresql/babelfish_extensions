@@ -17,8 +17,17 @@ using std::vector;
 using std::string;
 using std::pair;
 
-const int BUFFER_SIZE = 8192;
+const int BUFFER_SIZE = 16384;
 const int INT_BYTES_EXPECTED = 4;
+
+/**
+ * Convert integer string into hex string with proper padding
+ *
+ * @param inserted_int string of an integer to be converted to hex
+ * @param table_size size of the 
+ * @return string of the integer in hexadecimal values
+ */ 
+std::string GetHexRepresentation(std::string inserted_int, size_t table_size = -1);
 
 /**
  * Duplicates the values in the input vector
@@ -106,7 +115,7 @@ void insertValuesInTable(ServerType serverType, const string &tableName, const v
  * @param serverType The ODBC driver type to create the connection against. 
  * @param tableName The table to insert values into. Can include the database and/or schema name. e.g. "master_dbo.SampleTable"
  * @param insertString The valid insert string to execute against the table.
- * @param The number of rows inserted in the table.
+ * @param numRows The number of rows inserted in the table.
 */
 void insertValuesInTable(ServerType serverType, const string &tableName, const string &insertString, int numRows);
 
@@ -121,6 +130,7 @@ void insertValuesInTable(ServerType serverType, const string &tableName, const s
  * @param insertedValues The values that were inserted into the object.
  * @param expectedInsertedValues The values expected from the object when selecting all from it.
  * @param pkStartingValue Optional. The primary key value the object starts incrementing at. The default value is 0.
+ * @param caseInsensitive Optional. String comparision for data and expected can be case-insensitive. The default value is false.
 */
 void verifyValuesInObject(ServerType serverType, const string &objectName, const string &orderByColumnName, 
   const vector<string> &insertedValues, const vector<string> &expectedInsertedValues, int pkStartingValue = 0, bool caseInsensitive = false);
@@ -210,9 +220,11 @@ void testTableCreationFailure(ServerType serverType, const string &tableName, co
  * @param expectedInsertedValues The values expected from the table when selecting all from it.
  * @param pkStartingValue Optional. The primary key value the object starts incrementing at. The default value is 0.
  * @param caseInsensitive Optional. String comparision for data and expected can be case-insensitive. The default value is false.
+ * @param numericInsert Optional. Allow inserts without quotes. e.g. inserting using integers. The default value is false.
 */
 void testInsertionSuccess(ServerType serverType, const string &tableName, const string &orderByColumnName, 
-  const vector<string> &insertedValues, const vector<string> &expectedInsertedValues, int pkStartingValue = 0, bool caseInsensitive = false);
+  const vector<string> &insertedValues, const vector<string> &expectedInsertedValues, int pkStartingValue = 0,
+  bool caseInsensitive = false, bool numericInsert = false);
 
 /**
  * Insert values in a table given a vector of values to insert, and validate that all data in the table are of expected values.
@@ -265,9 +277,11 @@ void testInsertionFailure(ServerType serverType, const string &tableName, const 
  * @param updatedValues A vector of values to update some data in the table with one by one.
  * @param expectedUpdatedValues A vector containing expected values after a successful update.
  * @param caseInsensitive Optional. String comparision for data and expected can be case-insensitive. The default value is false.
+ * @param numericUpdate Optional. Allow updates without quotes. e.g. updating using integers. The default value is false.
 */
 void testUpdateSuccess(ServerType serverType, const string &tableName, const string &orderByColumnName, 
-  const string &colNameToUpdate, const vector<string> &updatedValues, const vector<string> &expectedUpdatedValues, bool caseInsensitive = false);
+  const string &colNameToUpdate, const vector<string> &updatedValues, const vector<string> &expectedUpdatedValues,
+  bool caseInsensitive = false, bool numericUpdate = false);
 
 /**
  * Given a vector of values, test that some data in the table can be updated successfully with each value.

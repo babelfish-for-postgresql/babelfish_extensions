@@ -23,6 +23,10 @@ class PSQL_DataTypes_Real : public testing::Test {
   }
 
   void TearDown() override {
+    if (!Drivers::DriverExists(ServerType::PSQL)) {
+      GTEST_SKIP() << "PSQL Driver not present: skipping all tests for this fixture.";
+    }
+
     OdbcHandler test_teardown(Drivers::GetDriver(ServerType::PSQL));
     test_teardown.ConnectAndExecQuery(DropObjectStatement("VIEW", VIEW_NAME));
     test_teardown.CloseStmt();
