@@ -12,6 +12,14 @@ off
 ~~END~~
 
 
+select set_config('babelfishpg_tsql.enable_pg_hint', 'on', false);
+go
+~~START~~
+text
+on
+~~END~~
+
+
 set babelfish_showplan_all on
 go
 
@@ -49,13 +57,5 @@ set babelfish_showplan_all off
 go
 
 -- cleanup
-select set_config('babelfishpg_tsql.explain_costs', 'on', false)
-go
-~~START~~
-text
-on
-~~END~~
-
-
 drop table babel_3291_t1
 go

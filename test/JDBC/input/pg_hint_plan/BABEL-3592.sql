@@ -28,7 +28,7 @@ go
 select set_config('babelfishpg_tsql.explain_costs', 'off', false)
 go
 
-select set_config('babelfishpg_tsql.enable_hint_mapping', 'on', false)
+select set_config('babelfishpg_tsql.enable_pg_hint', 'on', false);
 go
 
 -- TEST INSERT queries 
@@ -211,10 +211,4 @@ DROP TABLE babel_3592_t2
 GO
 
 DROP TABLE babel_3592_t3
-GO
-
-SELECT set_config('babelfishpg_tsql.explain_costs', 'on', false)
-GO
-
-SELECT set_config('babelfishpg_tsql.enable_hint_mapping', 'off', false)
 GO

@@ -21,7 +21,7 @@ go
 
 /*
  * Run multiple queries and give different hints
- * The hints should not be applied as the GUC for hint mapping has not ben enabled
+ * The hints should not be applied as the GUC babelfishpg_tsql.enable_pg_hint has not been enabled
  */
 select * from babel_3295_t1 (index(index_babel_3295_t1_b1)) where b1 = 1
 go
@@ -38,7 +38,7 @@ go
 set babelfish_showplan_all off
 go
 
-select set_config('babelfishpg_tsql.enable_hint_mapping', 'on', false)
+select set_config('babelfishpg_tsql.enable_pg_hint', 'on', false);
 go
 
 set babelfish_showplan_all on
@@ -64,12 +64,6 @@ set babelfish_showplan_all off
 go
 
 -- cleanup
-select set_config('babelfishpg_tsql.explain_costs', 'on', false)
-go
-
-select set_config('babelfishpg_tsql.enable_hint_mapping', 'off', false);
-go
-
 drop table babel_3295_t1
 go
 

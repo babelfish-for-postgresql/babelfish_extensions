@@ -26,13 +26,13 @@ go
 
 /*
  * Run multiple queries and give different hints
- * The hints should not be applied as the GUC for hint mapping has not ben enabled
+ * The hints should not be applied as the GUC babelfishpg_tsql.enable_pg_hint has not been enabled
  */
 select * from babel_3295_t1 (index(index_babel_3295_t1_b1)) where b1 = 1
 go
 ~~START~~
 text
-Query Text: select * from babel_3295_t1                                 where b1 = 1
+Query Text: select/*+ IndexScan(babel_3295_t1 index_babel_3295_t1_b1babel_329f054c0439acbb57ada93af5f2888cbf7) */ * from babel_3295_t1                                 where b1 = 1
 Bitmap Heap Scan on babel_3295_t1
   Recheck Cond: (b1 = 1)
   ->  Bitmap Index Scan on index_babel_3295_t1_b1babel_329f054c0439acbb57ada93af5f2888cbf7
@@ -44,7 +44,7 @@ select * from babel_3295_t1 where b1 = 1 option(table hint(babel_3295_t1, index(
 go
 ~~START~~
 text
-Query Text: select * from babel_3295_t1 where b1 = 1                                                                 
+Query Text: select/*+ IndexScan(babel_3295_t1 index_babel_3295_t1_b1babel_329f054c0439acbb57ada93af5f2888cbf7) */ * from babel_3295_t1 where b1 = 1                                                                 
 Bitmap Heap Scan on babel_3295_t1
   Recheck Cond: (b1 = 1)
   ->  Bitmap Index Scan on index_babel_3295_t1_b1babel_329f054c0439acbb57ada93af5f2888cbf7
@@ -56,7 +56,7 @@ select * from babel_3295_t1 inner merge join babel_3295_t2 on babel_3295_t1.a1 =
 go
 ~~START~~
 text
-Query Text: select * from babel_3295_t1 inner       join babel_3295_t2 on babel_3295_t1.a1 = babel_3295_t2.a2
+Query Text: select/*+ MergeJoin(babel_3295_t1 babel_3295_t2) Leading(babel_3295_t1 babel_3295_t2)*/ * from babel_3295_t1 inner       join babel_3295_t2 on babel_3295_t1.a1 = babel_3295_t2.a2
 Hash Join
   Hash Cond: (babel_3295_t1.a1 = babel_3295_t2.a2)
   ->  Seq Scan on babel_3295_t1
@@ -69,7 +69,7 @@ select * from babel_3295_t1 join babel_3295_t2 on babel_3295_t1.a1 = babel_3295_
 go
 ~~START~~
 text
-Query Text: select * from babel_3295_t1 join babel_3295_t2 on babel_3295_t1.a1 = babel_3295_t2.a2                   
+Query Text: select/*+ Set(enable_nestloop off) Set(enable_hashjoin off) */ * from babel_3295_t1 join babel_3295_t2 on babel_3295_t1.a1 = babel_3295_t2.a2                   
 Hash Join
   Hash Cond: (babel_3295_t1.a1 = babel_3295_t2.a2)
   ->  Seq Scan on babel_3295_t1
@@ -81,7 +81,7 @@ Hash Join
 set babelfish_showplan_all off
 go
 
-select set_config('babelfishpg_tsql.enable_hint_mapping', 'on', false)
+select set_config('babelfishpg_tsql.enable_pg_hint', 'on', false);
 go
 ~~START~~
 text
@@ -144,22 +144,6 @@ set babelfish_showplan_all off
 go
 
 -- cleanup
-select set_config('babelfishpg_tsql.explain_costs', 'on', false)
-go
-~~START~~
-text
-on
-~~END~~
-
-
-select set_config('babelfishpg_tsql.enable_hint_mapping', 'off', false);
-go
-~~START~~
-text
-off
-~~END~~
-
-
 drop table babel_3295_t1
 go
 
