@@ -190,12 +190,10 @@ TsqlFunctionConvert(TypeName *typename, Node *arg, Node *style, bool try, int lo
 	    result = (Node *) makeFuncCall(TsqlSystemFuncName("babelfish_conv_helper_to_time"), args, COERCE_EXPLICIT_CALL, location);
 	else if (type_oid == typenameTypeId(NULL, makeTypeName("datetime")))
 	    result = (Node *) makeFuncCall(TsqlSystemFuncName("babelfish_conv_helper_to_datetime"), args, COERCE_EXPLICIT_CALL, location);
-	else if (strcmp(typename_string, "datetime2") == 0)
+	else if (type_oid == typenameTypeId(NULL, makeTypeName("datetime2")))
 	{
-		if(typmod == NULL || typmod < 0)
-			typmod = 7;
-
-		typename_string = psprintf("%s(%d)", typename_string, (int) typmod);
+		if(typmod >= 0)
+			typename_string = psprintf("%s(%d)", typename_string, typmod);
 		args = lcons(makeStringConst(typename_string, location), args);
 		result = (Node *) makeFuncCall(TsqlSystemFuncName("babelfish_conv_helper_to_datetime2"), args, COERCE_EXPLICIT_CALL, location);
 	}

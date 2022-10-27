@@ -3171,7 +3171,7 @@ BEGIN
 END;
 $$;
 
--- convertion to datetime2
+-- conversion to datetime2
 CREATE OR REPLACE FUNCTION sys.babelfish_conv_helper_to_datetime2(IN typename TEXT,
                                                             IN arg TEXT,
                                                             IN try BOOL,

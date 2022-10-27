@@ -1663,6 +1663,10 @@ BEGIN
             v_day := substr(v_datestring, 7, 2);
             v_month := substr(v_datestring, 5, 2);
             v_year := substr(v_datestring, 1, 4);
+        ELSE
+            v_day := '01';
+            v_month := '01';
+            v_year := '1900';
         END IF;
     ELSIF (v_datetimestring ~* HHMMSSFS_REGEXP)
     THEN
@@ -1689,9 +1693,7 @@ BEGIN
     v_seconds := coalesce(sys.babelfish_get_timeunit_from_string(v_timepart, 'SECONDS'), '0');
     v_fseconds := coalesce(sys.babelfish_get_timeunit_from_string(v_timepart, 'FRACTSECONDS'), '0');
 
-    IF ((v_res_datatype IN ('DATETIME', 'SMALLDATETIME') OR
-         (v_res_datatype = 'DATETIME2' AND v_timepart !~* HHMMSSFS_DOT_PART_REGEXP)) AND
-        char_length(v_fseconds) > 3)
+    IF (v_res_datatype IN ('DATETIME', 'SMALLDATETIME') AND char_length(v_fseconds) > 3)
     THEN
         RAISE invalid_datetime_format;
     END IF;
@@ -1713,9 +1715,11 @@ BEGIN
             END IF;
         ELSIF (v_res_datatype = 'DATETIME2')
         THEN
-            v_fseconds := sys.babelfish_get_microsecs_from_fractsecs(v_fseconds, v_scale);
-            v_seconds := concat_ws('.', v_seconds, v_fseconds);
-
+            IF (v_scale <> 0)
+            THEN
+                v_fseconds := sys.babelfish_get_microsecs_from_fractsecs(v_fseconds, v_scale);
+                v_seconds := concat_ws('.', v_seconds, v_fseconds);
+            END IF;
             v_resdatetime := make_timestamp(v_year::SMALLINT, v_month::SMALLINT, v_day::SMALLINT,
                                             v_hours::SMALLINT, v_minutes::SMALLINT, v_seconds::NUMERIC);
         END IF;
@@ -2415,7 +2419,7 @@ BEGIN
     v_fractsecs := concat(pg_catalog.replace(rpad('', v_decplaces), ' ', '0'), v_rnd_fractsecs);
 
     RETURN substring(v_fractsecs, 1, CASE
-                                        WHEN (v_scale >= 7) THEN 6
+                                        WHEN (v_scale > 7) THEN 7
                                         ELSE v_scale
                                      END);
 EXCEPTION
@@ -9664,7 +9668,7 @@ $BODY$
 LANGUAGE plpgsql
 VOLATILE;
 
--- convertion to datetime2
+-- conversion to datetime2
 CREATE OR REPLACE FUNCTION sys.babelfish_conv_helper_to_datetime2(IN typename TEXT,
                                                             IN arg TEXT,
                                                             IN try BOOL,
