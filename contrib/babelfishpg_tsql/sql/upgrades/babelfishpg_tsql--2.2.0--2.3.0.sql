@@ -1919,6 +1919,242 @@ LANGUAGE plpgsql
 STABLE
 RETURNS NULL ON NULL INPUT;
 
+create or replace view sys.all_objects as
+select 
+    cast (name as sys.sysname) 
+  , cast (object_id as integer) 
+  , cast ( principal_id as integer)
+  , cast (schema_id as integer)
+  , cast (parent_object_id as integer)
+  , cast (type as char(2))
+  , cast (type_desc as sys.nvarchar(60))
+  , cast (create_date as sys.datetime)
+  , cast (modify_date as sys.datetime)
+  , cast (case when (schema_id::regnamespace::text = 'sys') then 1
+          when name in (select name from sys.shipped_objects_not_in_sys nis 
+                        where nis.name = name and nis.schemaid = schema_id and nis.type = type) then 1 
+          else 0 end as sys.bit) as is_ms_shipped
+  , cast (is_published as sys.bit)
+  , cast (is_schema_published as sys.bit)
+from
+(
+-- details of user defined and system tables
+select
+    t.relname as name
+  , t.oid as object_id
+  , null::integer as principal_id
+  , s.oid as schema_id
+  , 0 as parent_object_id
+  , 'U' as type
+  , 'USER_TABLE' as type_desc
+  , null::timestamp as create_date
+  , null::timestamp as modify_date
+  , 0 as is_ms_shipped
+  , 0 as is_published
+  , 0 as is_schema_published
+from pg_class t inner join pg_namespace s on s.oid = t.relnamespace
+where t.relpersistence in ('p', 'u', 't')
+and t.relkind = 'r'
+and (s.oid in (select schema_id from sys.schemas) or s.nspname = 'sys')
+and has_schema_privilege(s.oid, 'USAGE')
+and has_table_privilege(t.oid, 'SELECT,INSERT,UPDATE,DELETE,TRUNCATE,TRIGGER')
+union all
+-- details of user defined and system views
+select
+    t.relname as name
+  , t.oid as object_id
+  , null::integer as principal_id
+  , s.oid as schema_id
+  , 0 as parent_object_id
+  , 'V'::varchar(2) as type
+  , 'VIEW'::varchar(60) as type_desc
+  , null::timestamp as create_date
+  , null::timestamp as modify_date
+  , 0 as is_ms_shipped
+  , 0 as is_published
+  , 0 as is_schema_published
+from pg_class t inner join pg_namespace s on s.oid = t.relnamespace
+where t.relkind = 'v'
+and (s.oid in (select schema_id from sys.schemas) or s.nspname = 'sys')
+and has_schema_privilege(s.oid, 'USAGE')
+and has_table_privilege(quote_ident(s.nspname) ||'.'||quote_ident(t.relname), 'SELECT,INSERT,UPDATE,DELETE,TRUNCATE,TRIGGER')
+union all
+-- details of user defined and system foreign key constraints
+select
+    c.conname as name
+  , c.oid as object_id
+  , null::integer as principal_id
+  , s.oid as schema_id
+  , c.conrelid as parent_object_id
+  , 'F' as type
+  , 'FOREIGN_KEY_CONSTRAINT'
+  , null::timestamp as create_date
+  , null::timestamp as modify_date
+  , 0 as is_ms_shipped
+  , 0 as is_published
+  , 0 as is_schema_published
+from pg_constraint c
+inner join pg_namespace s on s.oid = c.connamespace
+where (s.oid in (select schema_id from sys.schemas) or s.nspname = 'sys')
+and has_schema_privilege(s.oid, 'USAGE')
+and c.contype = 'f'
+union all
+-- details of user defined and system primary key constraints
+select
+    c.conname as name
+  , c.oid as object_id
+  , null::integer as principal_id
+  , s.oid as schema_id
+  , c.conrelid as parent_object_id
+  , 'PK' as type
+  , 'PRIMARY_KEY_CONSTRAINT' as type_desc
+  , null::timestamp as create_date
+  , null::timestamp as modify_date
+  , 0 as is_ms_shipped
+  , 0 as is_published
+  , 0 as is_schema_published
+from pg_constraint c
+inner join pg_namespace s on s.oid = c.connamespace
+where (s.oid in (select schema_id from sys.schemas) or s.nspname = 'sys')
+and has_schema_privilege(s.oid, 'USAGE')
+and c.contype = 'p'
+union all
+-- details of user defined and system defined procedures
+select
+    p.proname as name
+  , p.oid as object_id
+  , null::integer as principal_id
+  , s.oid as schema_id
+  , cast (case when tr.tgrelid is not null 
+  		       then tr.tgrelid 
+  		       else 0 end as int) 
+    as parent_object_id
+  , case p.prokind
+      when 'p' then 'P'::varchar(2)
+      when 'a' then 'AF'::varchar(2)
+      else
+        case 
+          when format_type(p.prorettype, null) = 'trigger'
+            then 'TR'::varchar(2)
+          when p.proretset then
+            case 
+              when t.typtype = 'c'
+                then 'TF'::varchar(2)
+              else 'IF'::varchar(2)
+            end
+          else 'FN'::varchar(2)
+        end
+    end as type
+  , case p.prokind
+      when 'p' then 'SQL_STORED_PROCEDURE'::varchar(60)
+      when 'a' then 'AGGREGATE_FUNCTION'::varchar(60)
+      else
+        case 
+          when format_type(p.prorettype, null) = 'trigger'
+            then 'SQL_TRIGGER'::varchar(60)
+          when p.proretset then
+            case 
+              when t.typtype = 'c'
+                then 'SQL_TABLE_VALUED_FUNCTION'::varchar(60)
+              else 'SQL_INLINE_TABLE_VALUED_FUNCTION'::varchar(60)
+            end
+          else 'SQL_SCALAR_FUNCTION'::varchar(60)
+        end
+    end as type_desc
+  , null::timestamp as create_date
+  , null::timestamp as modify_date
+  , 0 as is_ms_shipped
+  , 0 as is_published
+  , 0 as is_schema_published
+from pg_proc p
+inner join pg_namespace s on s.oid = p.pronamespace
+inner join pg_catalog.pg_type t on t.oid = p.prorettype
+left join pg_trigger tr on tr.tgfoid = p.oid
+where (s.oid in (select schema_id from sys.schemas) or s.nspname = 'sys')
+and has_schema_privilege(s.oid, 'USAGE')
+and has_function_privilege(p.oid, 'EXECUTE')
+union all
+-- details of all default constraints
+select
+    ('DF_' || o.relname || '_' || d.oid)::name as name
+  , d.oid as object_id
+  , null::int as principal_id
+  , o.relnamespace as schema_id
+  , d.adrelid as parent_object_id
+  , 'D'::char(2) as type
+  , 'DEFAULT_CONSTRAINT'::sys.nvarchar(60) AS type_desc
+  , null::timestamp as create_date
+  , null::timestamp as modify_date
+  , 0 as is_ms_shipped
+  , 0 as is_published
+  , 0 as is_schema_published
+from pg_catalog.pg_attrdef d
+inner join pg_attribute a on a.attrelid = d.adrelid and d.adnum = a.attnum
+inner join pg_class o on d.adrelid = o.oid
+inner join pg_namespace s on s.oid = o.relnamespace
+where a.atthasdef = 't' and a.attgenerated = ''
+and (s.oid in (select schema_id from sys.schemas) or s.nspname = 'sys')
+and has_schema_privilege(s.oid, 'USAGE')
+and has_column_privilege(a.attrelid, a.attname, 'SELECT,INSERT,UPDATE,REFERENCES')
+union all
+-- details of all check constraints
+select
+    c.conname::name
+  , c.oid::integer as object_id
+  , NULL::integer as principal_id 
+  , c.connamespace::integer as schema_id
+  , c.conrelid::integer as parent_object_id
+  , 'C'::char(2) as type
+  , 'CHECK_CONSTRAINT'::sys.nvarchar(60) as type_desc
+  , null::sys.datetime as create_date
+  , null::sys.datetime as modify_date
+  , 0 as is_ms_shipped
+  , 0 as is_published
+  , 0 as is_schema_published
+from pg_catalog.pg_constraint as c
+inner join pg_namespace s on s.oid = c.connamespace
+where (s.oid in (select schema_id from sys.schemas) or s.nspname = 'sys')
+and has_schema_privilege(s.oid, 'USAGE')
+and c.contype = 'c' and c.conrelid != 0
+union all
+-- details of user defined and system defined sequence objects
+select
+  p.relname as name
+  , p.oid as object_id
+  , null::integer as principal_id
+  , s.oid as schema_id
+  , 0 as parent_object_id
+  , 'SO'::varchar(2) as type
+  , 'SEQUENCE_OBJECT'::varchar(60) as type_desc
+  , null::timestamp as create_date
+  , null::timestamp as modify_date
+  , 0 as is_ms_shipped
+  , 0 as is_published
+  , 0 as is_schema_published
+from pg_class p
+inner join pg_namespace s on s.oid = p.relnamespace
+where p.relkind = 'S'
+and (s.oid in (select schema_id from sys.schemas) or s.nspname = 'sys')
+and has_schema_privilege(s.oid, 'USAGE')
+union all
+-- details of user defined table types
+select
+    ('TT_' || tt.name || '_' || tt.type_table_object_id)::name as name
+  , tt.type_table_object_id as object_id
+  , tt.principal_id as principal_id
+  , tt.schema_id as schema_id
+  , 0 as parent_object_id
+  , 'TT'::varchar(2) as type
+  , 'TABLE_TYPE'::varchar(60) as type_desc
+  , null::timestamp as create_date
+  , null::timestamp as modify_date
+  , 1 as is_ms_shipped
+  , 0 as is_published
+  , 0 as is_schema_published
+from sys.table_types tt
+) ot;
+GRANT SELECT ON sys.all_objects TO PUBLIC;
+
 CREATE OR REPLACE PROCEDURE sys.sp_helpdbfixedrole("@rolename" sys.SYSNAME = NULL) AS
 $$
 BEGIN
@@ -2508,7 +2744,7 @@ BEGIN
     ELSEIF property = 'isdeterministic' -- IsDeterministic
     THEN
         RETURN 0;
-
+    
     ELSEIF property = 'isprocedure' -- IsProcedure
     THEN
         RETURN (SELECT count(distinct object_id) from sys.all_objects WHERE object_id = id and type = 'P');
@@ -2520,19 +2756,19 @@ BEGIN
     ELSEIF property = 'isview' -- IsView
     THEN
         RETURN (SELECT count(distinct object_id) from sys.all_objects WHERE object_id = id and type = 'V');
-
+    
     ELSEIF property = 'isusertable' -- IsUserTable
     THEN
         RETURN (SELECT count(distinct object_id) from sys.all_objects WHERE object_id = id and type = 'U' and is_ms_shipped = 0);
-
+    
     ELSEIF property = 'istablefunction' -- IsTableFunction
     THEN
         RETURN (SELECT count(distinct object_id) from sys.all_objects WHERE object_id = id and type in ('IF', 'TF', 'FT'));
-
+    
     ELSEIF property = 'isinlinefunction' -- IsInlineFunction
     THEN
-        RETURN 0;
-
+        RETURN (SELECT count(distinct object_id) from sys.all_objects WHERE object_id = id and type in ('IF'));
+    
     ELSEIF property = 'isscalarfunction' -- IsScalarFunction
     THEN
         RETURN (SELECT count(distinct object_id) from sys.all_objects WHERE object_id = id and type in ('FN', 'FS'));
@@ -2540,7 +2776,7 @@ BEGIN
     ELSEIF property = 'isprimarykey' -- IsPrimaryKey
     THEN
         RETURN (SELECT count(distinct object_id) from sys.all_objects WHERE object_id = id and type = 'PK');
-
+    
     ELSEIF property = 'isindexed' -- IsIndexed
     THEN
         RETURN (SELECT count(distinct object_id) from sys.indexes WHERE object_id = id and index_id > 0);
@@ -2552,7 +2788,7 @@ BEGIN
     ELSEIF property = 'isrule' -- IsRule
     THEN
         RETURN 0;
-
+    
     ELSEIF property = 'istrigger' -- IsTrigger
     THEN
         RETURN (SELECT count(distinct object_id) from sys.all_objects WHERE object_id = id and type in ('TA', 'TR'));
@@ -2576,6 +2812,429 @@ LANGUAGE C
 AS 'babelfishpg_tsql', 'update_user_catalog_for_guest';
  
 CALL sys.babelfish_update_user_catalog_for_guest();
+
+ALTER VIEW sys.sp_sproc_columns_view RENAME TO sp_sproc_columns_view_deprecated_in_2_3_0;
+
+CREATE OR REPLACE VIEW sys.sp_sproc_columns_view
+AS
+SELECT
+CAST(sys.db_name() AS sys.sysname) AS PROCEDURE_QUALIFIER -- This will always be objects in current database
+, CAST(ss.schema_name AS sys.sysname) AS PROCEDURE_OWNER
+, CAST(
+CASE
+  WHEN ss.prokind = 'p' THEN CONCAT(ss.proname, ';1')
+  ELSE CONCAT(ss.proname, ';0')
+END
+AS sys.nvarchar(134)) AS PROCEDURE_NAME
+, CAST(
+CASE 
+  WHEN ss.n IS NULL THEN
+    CASE
+      WHEN ss.proretset THEN '@TABLE_RETURN_VALUE'
+    ELSE '@RETURN_VALUE'
+  END 
+ELSE COALESCE(ss.proargnames[n], '')
+END
+AS sys.SYSNAME) AS COLUMN_NAME
+, CAST(
+CASE
+WHEN ss.n IS NULL THEN
+  CASE 
+    WHEN ss.proretset THEN 3
+    ELSE 5
+  END
+WHEN ss.proargmodes[n] in ('o', 'b') THEN 2
+ELSE 1
+END
+AS smallint) AS COLUMN_TYPE
+, CAST(
+CASE
+  WHEN ss.n IS NULL THEN
+    CASE
+      WHEN ss.prokind = 'p' THEN (SELECT data_type FROM sys.spt_datatype_info_table  WHERE type_name = 'int')
+    WHEN ss.proretset THEN NULL
+    ELSE sdit.data_type 
+    END
+  WHEN st.is_table_type = 1 THEN -153
+  ELSE sdit.data_type 
+END
+AS smallint) AS DATA_TYPE
+, CAST(
+CASE 
+  WHEN ss.n IS NULL THEN
+    CASE 
+      WHEN ss.proretset THEN 'table' 
+      WHEN ss.prokind = 'p' THEN 'int'
+      ELSE st.name
+    END
+  ELSE st.name
+END
+AS sys.sysname) AS TYPE_NAME
+, CAST(
+CASE
+  WHEN ss.n IS NULL THEN
+    CASE 
+      WHEN ss.proretset THEN 0 
+    WHEN ss.prokind = 'p' THEN (SELECT precision FROM sys.types WHERE name = 'int')
+    ELSE st.precision
+  END
+  WHEN st.is_table_type = 1 THEN 0
+  ELSE st.precision 
+END 
+AS sys.int) AS PRECISION
+, CAST(
+CASE
+  WHEN ss.n IS NULL THEN
+    CASE
+      WHEN ss.proretset THEN 0
+    WHEN ss.prokind = 'p' THEN (SELECT max_length FROM sys.types WHERE name = 'int')
+    ELSE st.max_length
+  END
+  WHEN st.is_table_type = 1 THEN 2147483647
+  ELSE st.max_length 
+END
+AS sys.int) AS LENGTH
+, CAST(
+CASE
+  WHEN ss.n IS NULL THEN 
+    CASE
+      WHEN ss.proretset THEN 0 
+      WHEN ss.prokind = 'p' THEN (SELECT scale FROM sys.types WHERE name = 'int')
+      ELSE st.scale
+    END
+  WHEN st.is_table_type = 1 THEN NULL
+  ELSE st.scale
+END
+AS smallint) AS SCALE
+, CAST(
+CASE
+  WHEN ss.n IS NULL THEN
+    CASE
+      WHEN ss.proretset THEN 0
+    WHEN ss.prokind = 'p' THEN (SELECT num_prec_radix FROM sys.spt_datatype_info_table WHERE type_name = 'int')
+    ELSE sdit.num_prec_radix
+  END
+  WHEN st.is_table_type = 1 THEN NULL
+  ELSE sdit.num_prec_radix
+END
+AS smallint) AS RADIX
+, CAST(
+CASE
+  WHEN ss.n IS NULL THEN
+    CASE 
+      WHEN ss.proretset OR ss.prokind = 'p' THEN 0
+      ELSE sdit.nullable 
+    END
+  WHEN st.is_table_type = 1 THEN 1
+  ELSE sdit.nullable 
+END
+AS smallint) AS NULLABLE
+, CAST(
+CASE 
+  WHEN ss.n IS NULL AND ss.proretset THEN 'Result table returned by table valued function'
+  ELSE NULL
+END
+AS sys.varchar(254)) AS REMARKS
+, CAST(NULL AS sys.nvarchar(4000)) AS COLUMN_DEF
+, CAST(
+CASE
+  WHEN ss.n IS NULL THEN
+    CASE
+      WHEN ss.proretset THEN NULL
+      WHEN ss.prokind = 'p' THEN (SELECT sql_data_type FROM sys.spt_datatype_info_table WHERE type_name = 'int')
+      ELSE sdit.sql_data_type
+    END
+  WHEN st.is_table_type = 1 THEN -153
+  ELSE sdit.sql_data_type 
+END
+AS smallint) AS SQL_DATA_TYPE
+, CAST(
+CASE
+  WHEN ss.n IS NULL THEN
+    CASE 
+      WHEN ss.proretset THEN 0
+      WHEN ss.prokind = 'p' THEN (SELECT sql_datetime_sub FROM sys.spt_datatype_info_table WHERE type_name = 'int')
+      ELSE sdit.sql_datetime_sub
+    END
+  ELSE sdit.sql_datetime_sub 
+END 
+AS smallint) AS SQL_DATETIME_SUB
+, CAST(
+CASE
+  WHEN ss.n IS NOT NULL AND st.is_table_type = 1 THEN 2147483647
+  ELSE NULL
+END
+AS sys.int) AS CHAR_OCTET_LENGTH
+, CAST(
+CASE
+  WHEN ss.n IS NULL THEN 0
+  ELSE n 
+END 
+AS sys.int) AS ORDINAL_POSITION
+, CAST(
+CASE
+  WHEN ss.n IS NULL AND ss.proretset THEN 'NO'
+  WHEN st.is_table_type = 1 THEN 'YES'
+  WHEN sdit.nullable = 1 THEN 'YES'
+  ELSE 'NO'
+END
+AS sys.varchar(254)) AS IS_NULLABLE
+, CAST(
+CASE
+  WHEN ss.n IS NULL THEN
+    CASE
+      WHEN ss.proretset THEN 0
+      WHEN ss.prokind = 'p' THEN 56
+      ELSE sdit.ss_data_type
+    END
+  WHEN st.is_table_type = 1 THEN 0
+  ELSE sdit.ss_data_type
+END
+AS sys.tinyint) AS SS_DATA_TYPE
+, CAST(ss.proname AS sys.sysname) AS original_procedure_name
+FROM 
+( 
+  -- CTE to query procedures related to bbf
+  WITH bbf_proc AS (
+    SELECT
+      p.proname as proname,
+      p.proargnames as proargnames,
+      p.proargmodes as proargmodes,
+      p.prokind as prokind,
+      p.proretset as proretset,
+      p.prorettype as prorettype,
+      p.proallargtypes as proallargtypes,
+      p.proargtypes as proargtypes,
+      s.name as schema_name
+    FROM 
+      pg_proc p
+    INNER JOIN (
+      SELECT name as name, schema_id as id  FROM sys.schemas 
+      UNION ALL 
+      SELECT CAST(nspname as sys.sysname) as name, CAST(oid as int) as id 
+        from pg_namespace WHERE nspname in ('sys', 'information_schema')
+    ) as s ON p.pronamespace = s.id
+    WHERE (
+      (pg_has_role(p.proowner, 'USAGE') OR has_function_privilege(p.oid, 'EXECUTE'))
+      AND (s.name != 'sys' 
+        OR p.proname like 'sp\_%' -- filter out internal babelfish-specific procs in sys schema
+        OR p.proname like 'xp\_%'
+        OR p.proname like 'dm\_%'
+        OR p.proname like 'fn\_%'))
+  )
+
+  SELECT *
+  FROM ( 
+    SELECT -- Selects all parameters (input and output), but NOT return values
+    p.proname as proname,
+    p.proargnames as proargnames,
+    p.proargmodes as proargmodes,
+    p.prokind as prokind,
+    p.proretset as proretset,
+    p.prorettype as prorettype,
+    p.schema_name as schema_name,
+    (information_schema._pg_expandarray(
+    COALESCE(p.proallargtypes,
+      CASE 
+        WHEN p.prokind = 'f' THEN (CAST(p.proargtypes AS oid[]))
+        ELSE CAST(p.proargtypes AS oid[])
+      END
+    ))).x AS x,
+    (information_schema._pg_expandarray(
+    COALESCE(p.proallargtypes,
+      CASE 
+        WHEN p.prokind = 'f' THEN (CAST(p.proargtypes AS oid[]))
+        ELSE CAST(p.proargtypes AS oid[])
+      END
+    ))).n AS n
+    FROM bbf_proc p) AS t
+  WHERE (t.proargmodes[t.n] in ('i', 'o', 'b') OR t.proargmodes is NULL)
+
+  UNION ALL
+
+  SELECT -- Selects all return values (this is because inline-table functions could cause duplicate outputs)
+  p.proname as proname,
+  p.proargnames as proargnames,
+  p.proargmodes as proargmodes,
+  p.prokind as prokind,
+  p.proretset as proretset,
+  p.prorettype as prorettype,
+  p.schema_name as schema_name,
+  p.prorettype AS x, 
+  NULL AS n -- null value indicates that we are retrieving the return values of the proc/func
+  FROM bbf_proc p
+) ss
+LEFT JOIN sys.types st ON ss.x = st.user_type_id -- left join'd because return type of table-valued functions may not have an entry in sys.types
+-- Because spt_datatype_info_table does contain user-defind types and their names,
+-- the join below allows us to retrieve the name of the base type of the user-defined type
+LEFT JOIN sys.spt_datatype_info_table sdit ON sdit.type_name = sys.translate_pg_type_to_tsql(st.system_type_id);
+GRANT SELECT ON sys.sp_sproc_columns_view TO PUBLIC;
+
+CALL sys.babelfish_drop_deprecated_object('view', 'sys', 'sp_sproc_columns_view_deprecated_in_2_3_0');
+
+CREATE OR REPLACE PROCEDURE sys.sp_addrole(IN "@rolname" sys.SYSNAME)
+AS 'babelfishpg_tsql', 'sp_addrole' LANGUAGE C;
+GRANT EXECUTE on PROCEDURE sys.sp_addrole(IN sys.SYSNAME) TO PUBLIC;
+
+CREATE OR REPLACE PROCEDURE sys.sp_droprole(IN "@rolname" sys.SYSNAME)
+AS 'babelfishpg_tsql', 'sp_droprole' LANGUAGE C;
+GRANT EXECUTE on PROCEDURE sys.sp_droprole(IN sys.SYSNAME) TO PUBLIC;
+
+CREATE OR REPLACE PROCEDURE sys.sp_addrolemember(IN "@rolname" sys.SYSNAME, IN "@membername" sys.SYSNAME)
+AS 'babelfishpg_tsql', 'sp_addrolemember' LANGUAGE C;
+GRANT EXECUTE on PROCEDURE sys.sp_addrolemember(IN sys.SYSNAME, IN sys.SYSNAME) TO PUBLIC;
+
+CREATE OR REPLACE PROCEDURE sys.sp_droprolemember(IN "@rolname" sys.SYSNAME, IN "@membername" sys.SYSNAME)
+AS 'babelfishpg_tsql', 'sp_droprolemember' LANGUAGE C;
+GRANT EXECUTE on PROCEDURE sys.sp_droprolemember(IN sys.SYSNAME, IN sys.SYSNAME) TO PUBLIC;
+
+/*
+ * JSON MODIFY
+ * This function is used to update the value of a property in a JSON string and returns the updated JSON string.
+ * It has been implemented in three parts:
+ *  1) Set the append and create_if_missing flag as postgres functions do not directly take append and lax/strict mode in the jsonb_path.
+ *  2) To convert the input path into the expected jsonb_path.
+ *  3) To implement the main logic of the JSON_MODIFY function by dividing it into 8 different cases.
+ */
+CREATE OR REPLACE FUNCTION sys.json_modify(in expression sys.NVARCHAR,in path_json TEXT, in new_value TEXT)
+RETURNS sys.NVARCHAR
+AS
+$BODY$
+DECLARE
+    json_path TEXT;
+    json_path_convert TEXT;
+    new_jsonb_path TEXT[];
+    key_value_type TEXT;
+    path_split_array TEXT[];
+    comparison_string TEXT COLLATE "C";
+    len_array INTEGER;
+    word_count INTEGER;
+    create_if_missing BOOL = TRUE;
+    append_modifier BOOL = FALSE;
+    key_exists BOOL;
+    key_value JSONB;
+    json_expression JSONB = expression::JSONB;
+    result_json sys.NVARCHAR;
+BEGIN
+    path_split_array = regexp_split_to_array(TRIM(path_json) COLLATE "C",'\s+');
+    word_count = array_length(path_split_array,1);
+    /* 
+     * This if else block is added to set the create_if_missing and append_modifier flags.
+     * These flags will be used to know the mode and if the optional modifier append is present in the input path_json.
+     * It is necessary as postgres functions do not directly take append and lax/strict mode in the jsonb_path.    
+     */
+    IF word_count = 1 THEN
+        json_path = path_split_array[1];
+        create_if_missing = TRUE;
+        append_modifier = FALSE;
+    ELSIF word_count = 2 THEN 
+        json_path = path_split_array[2];
+        comparison_string = path_split_array[1]; -- append or lax/strict mode
+        IF comparison_string = 'append' THEN
+            append_modifier = TRUE;
+        ELSIF comparison_string = 'strict' THEN
+            create_if_missing = FALSE;
+        ELSIF comparison_string = 'lax' THEN
+            create_if_missing = TRUE;
+        ELSE
+            RAISE invalid_json_text;
+        END IF;
+    ELSIF word_count = 3 THEN
+        json_path = path_split_array[3];
+        comparison_string = path_split_array[1]; -- append mode 
+        IF comparison_string = 'append' THEN
+            append_modifier = TRUE;
+        ELSE
+            RAISE invalid_json_text;
+        END IF;
+        comparison_string = path_split_array[2]; -- lax/strict mode
+        IF comparison_string = 'strict' THEN
+            create_if_missing = FALSE;
+        ELSIF comparison_string = 'lax' THEN
+            create_if_missing = TRUE;
+        ELSE
+            RAISE invalid_json_text;
+        END IF;
+    ELSE
+        RAISE invalid_json_text;
+    END IF;
+
+    -- To convert input jsonpath to the required jsonb_path format
+    json_path_convert = regexp_replace(json_path, '\$\.|]|\$\[' , '' , 'ig'); -- To remove "$." and "]" sign from the string 
+    json_path_convert = regexp_replace(json_path_convert, '\.|\[' , ',' , 'ig'); -- To replace "." and "[" with "," to change into required format
+    new_jsonb_path = CONCAT('{',json_path_convert,'}'); -- Final required format of path by jsonb_set
+
+    key_exists = jsonb_path_exists(json_expression,json_path::jsonpath); -- To check if key exist in the given path
+    
+    --This if else block is to call the jsonb_set function based on the create_if_missing and append_modifier flags
+    IF append_modifier THEN 
+        IF key_exists THEN
+            key_value = jsonb_path_query_first(json_expression,json_path::jsonpath); -- To get the value of the key
+            key_value_type = jsonb_typeof(key_value);
+            IF key_value_type = 'array' THEN
+                len_array = jsonb_array_length(key_value);
+                /*
+                 * As jsonb_insert requires the index of the value to be inserted, so the below FORMAT function changes the path format into the required jsonb_insert path format.
+                 * Eg: JSON_MODIFY('{"name":"John","skills":["C#","SQL"]}','append $.skills','Azure'); -> converts the path from '$.skills' to '{skills,2}' instead of '{skills}'
+                 */
+                new_jsonb_path = FORMAT('%s,%s}',TRIM('}' FROM new_jsonb_path::TEXT),len_array);
+                IF new_value IS NULL THEN
+                    result_json = jsonb_insert(json_expression,new_jsonb_path,'null'); -- This needs to be done because "to_jsonb(coalesce(new_value, 'null'))" does not result in a JSON NULL
+                ELSE
+                    result_json = jsonb_insert(json_expression,new_jsonb_path,to_jsonb(new_value));
+                END IF;
+            ELSE
+                IF NOT create_if_missing THEN
+                    RAISE sql_json_array_not_found;
+                ELSE
+                    result_json = json_expression;
+                END IF;
+            END IF;
+        ELSE
+            IF NOT create_if_missing THEN
+                RAISE sql_json_object_not_found;
+            ELSE
+                result_json = jsonb_insert(json_expression,new_jsonb_path,to_jsonb(array_agg(new_value))); -- array_agg is used to convert the new_value text into array format as we append functionality is being used
+            END IF;
+        END IF;
+    ELSE --When no append modifier is present
+        IF new_value IS NOT NULL THEN
+            IF key_exists OR create_if_missing THEN
+                result_json = jsonb_set_lax(json_expression,new_jsonb_path,to_jsonb(new_value),create_if_missing);
+            ELSE
+                RAISE sql_json_object_not_found;
+            END IF;
+        ELSE
+            IF key_exists THEN
+                IF NOT create_if_missing THEN
+                    result_json = jsonb_set_lax(json_expression,new_jsonb_path,to_jsonb(new_value));
+                ELSE
+                    result_json = jsonb_set_lax(json_expression,new_jsonb_path,to_jsonb(new_value),create_if_missing,'delete_key');
+                END IF;
+            ELSE
+                IF NOT create_if_missing THEN
+                    RAISE sql_json_object_not_found;
+                ELSE
+                    result_json = jsonb_set_lax(json_expression,new_jsonb_path,to_jsonb(new_value),FALSE);
+                END IF;
+            END IF;
+        END IF;
+    END IF;  -- If append_modifier block ends here
+    RETURN result_json;
+EXCEPTION
+    WHEN invalid_json_text THEN
+            RAISE USING MESSAGE = 'JSON path is not properly formatted',
+                        DETAIL = FORMAT('Unexpected keyword "%s" is found.',comparison_string),
+                        HINT = 'Change "modifier/mode" parameter to the proper value and try again.';
+    WHEN sql_json_array_not_found THEN
+            RAISE USING MESSAGE = 'array cannot be found in the specified JSON path',
+                        HINT = 'Change JSON path to target array property and try again.';
+    WHEN sql_json_object_not_found THEN
+            RAISE USING MESSAGE = 'property cannot be found on the specified JSON path';
+END;        
+$BODY$
+LANGUAGE plpgsql;
+
 
 CREATE OR REPLACE FUNCTION sys.babelfish_conv_string_to_time(IN p_datatype TEXT,
                                                                  IN p_timestring TEXT,
@@ -2727,6 +3386,8 @@ $BODY$
 LANGUAGE plpgsql
 VOLATILE
 RETURNS NULL ON NULL INPUT;
+
+
 CREATE OR REPLACE PROCEDURE sys.sp_helpdb(IN "@dbname" VARCHAR(32))
 LANGUAGE 'pltsql'
 AS $$

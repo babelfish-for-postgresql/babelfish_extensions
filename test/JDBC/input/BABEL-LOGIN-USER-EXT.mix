@@ -16,7 +16,13 @@ go
 
 -- psql
 DROP USER IF EXISTS foo;
+go
+
+SET enable_drop_babelfish_role = true;
+go
 DROP USER IF EXISTS su_user;
+go
+SET enable_drop_babelfish_role = false;
 go
 
 -- Create Login through tsql

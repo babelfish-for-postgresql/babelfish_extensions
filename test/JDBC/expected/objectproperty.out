@@ -754,7 +754,7 @@ SELECT OBJECTPROPERTY(OBJECT_ID('IsTableFunction_tablefunction'), 'IsTableFuncti
 GO
 ~~START~~
 int
-0
+1
 ~~END~~
 
 
@@ -763,7 +763,7 @@ SELECT OBJECTPROPERTY(OBJECT_ID('IsTableFunction_inlinetablefunction'), 'IsTable
 GO
 ~~START~~
 int
-0
+1
 ~~END~~
 
 
