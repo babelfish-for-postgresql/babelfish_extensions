@@ -2419,7 +2419,7 @@ BEGIN
     v_fractsecs := concat(pg_catalog.replace(rpad('', v_decplaces), ' ', '0'), v_rnd_fractsecs);
 
     RETURN substring(v_fractsecs, 1, CASE
-                                        WHEN (v_scale > 7) THEN 7
+                                        WHEN (v_scale >= 7) THEN 6
                                         ELSE v_scale
                                      END);
 EXCEPTION
