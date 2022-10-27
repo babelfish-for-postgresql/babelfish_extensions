@@ -121,7 +121,7 @@ static void pltsql_ExecutorEnd(QueryDesc *queryDesc);
 
 static bool plsql_TriggerRecursiveCheck(ResultRelInfo *resultRelInfo);
 static void pltsql_pg_proc_aclchk(Oid proc_oid, Oid roleid, AclMode mode, bool *has_access);
-static void pltsql_pg_class_aclmask_hook(Form_pg_class classForm, Oid table_oid, Oid roleid, bool *has_permission_via_hook, bool *read_write_all_data_safe);
+static void pltsql_pg_class_aclmask_hook(Form_pg_class classForm, Oid table_oid, Oid roleid, AclMode mask, bool *has_permission_via_hook, bool *read_write_all_data_safe);
 static void pltsql_pg_attribute_aclchk(Oid table_oid, AttrNumber attnum, Oid roleid, AclMode mode, bool *has_access);
 static void pltsql_pg_attribute_aclchk_all(Oid table_oid, Oid roleid, AclMode mode, AclMaskHow how, bool *has_access);
 
@@ -2739,6 +2739,10 @@ print_pltsql_function_arguments(StringInfo buf, HeapTuple proctup,
 	return argsprinted;
 }
 
+/*
+ * Following pltsql_pg_*_aclchk hooks are implemented to support ownership
+ * chaining during procedure/function execution
+ */
 static void
 pltsql_pg_proc_aclchk(Oid proc_oid, Oid roleid, AclMode mode, bool *has_access)
 {
@@ -2754,17 +2758,24 @@ pltsql_pg_proc_aclchk(Oid proc_oid, Oid roleid, AclMode mode, bool *has_access)
 
 static void
 pltsql_pg_class_aclmask_hook(Form_pg_class classForm, Oid class_oid, Oid roleid,
-							 bool *has_permission_via_hook, bool *read_write_all_data_safe)
+							 AclMode mask, bool *has_permission_via_hook,
+							 bool *read_write_all_data_safe)
 {
 	Oid procOwner = get_function_owner_for_top_estate();
+	/*
+	 * Ownership chain will be denied if TRUNCATE permission is required since
+	 * ownership chain won't be formed if it is TRUNCATE TABLE statement
+	 */
 	if (*has_permission_via_hook == false &&
+		!(mask & ACL_TRUNCATE) &&
 		OidIsValid(procOwner) &&
 		OidIsValid(class_oid))
 		*has_permission_via_hook = pg_class_ownercheck(class_oid, procOwner);
 
     if (prev_pg_class_aclmask_hook)
         prev_pg_class_aclmask_hook(classForm, class_oid, roleid,
-								   has_permission_via_hook, read_write_all_data_safe);
+								   mask, has_permission_via_hook,
+								   read_write_all_data_safe);
 }
 
 static

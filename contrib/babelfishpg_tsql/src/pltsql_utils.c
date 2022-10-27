@@ -890,6 +890,10 @@ get_pltsql_function_signature(PG_FUNCTION_ARGS)
 	PG_RETURN_TEXT_P(cstring_to_text(func_signature));
 }
 
+/*
+ * Retuns function owner which is cached at the start of every function/proc call
+ * only if we are currently in function/proc execution
+ */
 Oid
 get_function_owner_for_top_estate()
 {
@@ -909,6 +913,10 @@ get_function_owner_for_top_estate()
 
 	top_estate = exec_state_call_stack->estate;
 
+	/*
+	 * Returns InvalidOid if function/proc is in shared schemas because
+	 * ownership chain is disabled for system objects
+	 */
 	if (!top_estate ||
 		!top_estate->func ||
 		top_estate->func->fn_oid == InvalidOid ||
