@@ -65,6 +65,7 @@ sys-server_principals
 fulltextserviceproperty
 is_srvrolemember
 msdb-dbo-fn_syspolicy_is_automation_enabled
+objectproperty
 objectpropertyex
 sys-column-property
 sys-configurations
@@ -136,6 +137,10 @@ insteadof_nested_trigger_with_dml
 nested_trigger_inside_proc
 nested_trigger_with_dml
 triggers_with_transaction
+Test-sp_addrole
+Test-sp_addrolemember
+Test-sp_droprole
+Test-sp_droprolemember
 Test-sp_helpdbfixedrole
 Test-sp_helpsrvrolemember
 Test-sp_helpuser
@@ -171,6 +176,8 @@ BABEL-1475
 BABEL-1510
 BABEL-3213
 BABEL-3010
+BABEL-3369
+BABEL-3370
 BABEL-RAND
 BABEL-741
 BABEL-ROLE-MEMBER

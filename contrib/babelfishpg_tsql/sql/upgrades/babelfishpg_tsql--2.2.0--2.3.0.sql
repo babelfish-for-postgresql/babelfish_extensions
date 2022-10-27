@@ -4341,19 +4341,19 @@ GRANT SELECT ON sys.shipped_objects_not_in_sys TO PUBLIC;
 ALTER VIEW sys.all_objects RENAME TO all_objects_deprecated_in_2_3_0;
 
 create or replace view sys.all_objects as
-select
-    cast (name as sys.sysname) collate sys.database_default
-  , cast (object_id as integer)
+select 
+    cast (name as sys.sysname) 
+  , cast (object_id as integer) 
   , cast ( principal_id as integer)
   , cast (schema_id as integer)
   , cast (parent_object_id as integer)
-  , cast (type as sys.bpchar(2)) collate sys.database_default
+  , cast (type as char(2))
   , cast (type_desc as sys.nvarchar(60))
   , cast (create_date as sys.datetime)
   , cast (modify_date as sys.datetime)
-  , cast (case when (schema_id::regnamespace::text = 'sys' collate sys.database_default) then 1
-          when name in (select name from sys.shipped_objects_not_in_sys nis
-                        where nis.name = name collate sys.database_default and nis.schemaid = schema_id and nis.type = type collate sys.database_default) then 1
+  , cast (case when (schema_id::regnamespace::text = 'sys') then 1
+          when name in (select name from sys.shipped_objects_not_in_sys nis 
+                        where nis.name = name and nis.schemaid = schema_id and nis.type = type) then 1 
           else 0 end as sys.bit) as is_ms_shipped
   , cast (is_published as sys.bit)
   , cast (is_schema_published as sys.bit)
@@ -4446,16 +4446,23 @@ select
   , p.oid as object_id
   , null::integer as principal_id
   , s.oid as schema_id
-  , cast (case when tr.tgrelid is not null
-           then tr.tgrelid
-           else 0 end as int)
+  , cast (case when tr.tgrelid is not null 
+  		       then tr.tgrelid 
+  		       else 0 end as int) 
     as parent_object_id
   , case p.prokind
       when 'p' then 'P'::varchar(2)
       when 'a' then 'AF'::varchar(2)
       else
-        case format_type(p.prorettype, null) when 'trigger'
-          then 'TR'::varchar(2)
+        case 
+          when format_type(p.prorettype, null) = 'trigger'
+            then 'TR'::varchar(2)
+          when p.proretset then
+            case 
+              when t.typtype = 'c'
+                then 'TF'::varchar(2)
+              else 'IF'::varchar(2)
+            end
           else 'FN'::varchar(2)
         end
     end as type
@@ -4463,8 +4470,15 @@ select
       when 'p' then 'SQL_STORED_PROCEDURE'::varchar(60)
       when 'a' then 'AGGREGATE_FUNCTION'::varchar(60)
       else
-        case format_type(p.prorettype, null) when 'trigger'
-          then 'SQL_TRIGGER'::varchar(60)
+        case 
+          when format_type(p.prorettype, null) = 'trigger'
+            then 'SQL_TRIGGER'::varchar(60)
+          when p.proretset then
+            case 
+              when t.typtype = 'c'
+                then 'SQL_TABLE_VALUED_FUNCTION'::varchar(60)
+              else 'SQL_INLINE_TABLE_VALUED_FUNCTION'::varchar(60)
+            end
           else 'SQL_SCALAR_FUNCTION'::varchar(60)
         end
     end as type_desc
@@ -4475,6 +4489,7 @@ select
   , 0 as is_schema_published
 from pg_proc p
 inner join pg_namespace s on s.oid = p.pronamespace
+inner join pg_catalog.pg_type t on t.oid = p.prorettype
 left join pg_trigger tr on tr.tgfoid = p.oid
 where (s.oid in (select schema_id from sys.schemas) or s.nspname = 'sys')
 and has_schema_privilege(s.oid, 'USAGE')
@@ -4482,7 +4497,7 @@ and has_function_privilege(p.oid, 'EXECUTE')
 union all
 -- details of all default constraints
 select
-    ('DF_' || o.relname  || '_' || d.oid)::name  as name
+    ('DF_' || o.relname || '_' || d.oid)::name as name
   , d.oid as object_id
   , null::int as principal_id
   , o.relnamespace as schema_id
@@ -4505,9 +4520,9 @@ and has_column_privilege(a.attrelid, a.attname, 'SELECT,INSERT,UPDATE,REFERENCES
 union all
 -- details of all check constraints
 select
-    c.conname::name as name
+    c.conname::name
   , c.oid::integer as object_id
-  , NULL::integer as principal_id
+  , NULL::integer as principal_id 
   , c.connamespace::integer as schema_id
   , c.conrelid::integer as parent_object_id
   , 'C'::char(2) as type
@@ -8233,7 +8248,7 @@ BEGIN
     ELSEIF property = 'isdeterministic' -- IsDeterministic
     THEN
         RETURN 0;
-
+    
     ELSEIF property = 'isprocedure' -- IsProcedure
     THEN
         RETURN (SELECT count(distinct object_id) from sys.all_objects WHERE object_id = id and type = 'P');
@@ -8245,19 +8260,19 @@ BEGIN
     ELSEIF property = 'isview' -- IsView
     THEN
         RETURN (SELECT count(distinct object_id) from sys.all_objects WHERE object_id = id and type = 'V');
-
+    
     ELSEIF property = 'isusertable' -- IsUserTable
     THEN
         RETURN (SELECT count(distinct object_id) from sys.all_objects WHERE object_id = id and type = 'U' and is_ms_shipped = 0);
-
+    
     ELSEIF property = 'istablefunction' -- IsTableFunction
     THEN
         RETURN (SELECT count(distinct object_id) from sys.all_objects WHERE object_id = id and type in ('IF', 'TF', 'FT'));
-
+    
     ELSEIF property = 'isinlinefunction' -- IsInlineFunction
     THEN
-        RETURN 0;
-
+        RETURN (SELECT count(distinct object_id) from sys.all_objects WHERE object_id = id and type in ('IF'));
+    
     ELSEIF property = 'isscalarfunction' -- IsScalarFunction
     THEN
         RETURN (SELECT count(distinct object_id) from sys.all_objects WHERE object_id = id and type in ('FN', 'FS'));
@@ -8265,7 +8280,7 @@ BEGIN
     ELSEIF property = 'isprimarykey' -- IsPrimaryKey
     THEN
         RETURN (SELECT count(distinct object_id) from sys.all_objects WHERE object_id = id and type = 'PK');
-
+    
     ELSEIF property = 'isindexed' -- IsIndexed
     THEN
         RETURN (SELECT count(distinct object_id) from sys.indexes WHERE object_id = id and index_id > 0);
@@ -8277,7 +8292,7 @@ BEGIN
     ELSEIF property = 'isrule' -- IsRule
     THEN
         RETURN 0;
-
+    
     ELSEIF property = 'istrigger' -- IsTrigger
     THEN
         RETURN (SELECT count(distinct object_id) from sys.all_objects WHERE object_id = id and type in ('TA', 'TR'));
@@ -8558,6 +8573,21 @@ GRANT SELECT ON sys.sp_sproc_columns_view TO PUBLIC;
 
 CALL sys.babelfish_drop_deprecated_object('view', 'sys', 'sp_sproc_columns_view_deprecated_in_2_3_0');
 
+CREATE OR REPLACE PROCEDURE sys.sp_addrole(IN "@rolname" sys.SYSNAME)
+AS 'babelfishpg_tsql', 'sp_addrole' LANGUAGE C;
+GRANT EXECUTE on PROCEDURE sys.sp_addrole(IN sys.SYSNAME) TO PUBLIC;
+
+CREATE OR REPLACE PROCEDURE sys.sp_droprole(IN "@rolname" sys.SYSNAME)
+AS 'babelfishpg_tsql', 'sp_droprole' LANGUAGE C;
+GRANT EXECUTE on PROCEDURE sys.sp_droprole(IN sys.SYSNAME) TO PUBLIC;
+
+CREATE OR REPLACE PROCEDURE sys.sp_addrolemember(IN "@rolname" sys.SYSNAME, IN "@membername" sys.SYSNAME)
+AS 'babelfishpg_tsql', 'sp_addrolemember' LANGUAGE C;
+GRANT EXECUTE on PROCEDURE sys.sp_addrolemember(IN sys.SYSNAME, IN sys.SYSNAME) TO PUBLIC;
+
+CREATE OR REPLACE PROCEDURE sys.sp_droprolemember(IN "@rolname" sys.SYSNAME, IN "@membername" sys.SYSNAME)
+AS 'babelfishpg_tsql', 'sp_droprolemember' LANGUAGE C;
+GRANT EXECUTE on PROCEDURE sys.sp_droprolemember(IN sys.SYSNAME, IN sys.SYSNAME) TO PUBLIC;
 
 /*
  * JSON MODIFY

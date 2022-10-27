@@ -141,6 +141,8 @@ BABEL-3116
 BABEL-3118
 BABEL-3249
 BABEL-3474
+BABEL-3369
+BABEL-3370
 BABEL-383
 BABEL-405
 BABEL-PROCID
@@ -151,6 +153,10 @@ insteadof_nested_trigger_with_dml
 nested_trigger_inside_proc
 nested_trigger_with_dml
 triggers_with_transaction
+Test-sp_addrole
+Test-sp_addrolemember
+Test-sp_droprole
+Test-sp_droprolemember
 Test-sp_helpdbfixedrole
 Test-sp_helpsrvrolemember
 BABEL-404

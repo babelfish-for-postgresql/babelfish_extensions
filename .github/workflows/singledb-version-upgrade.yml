@@ -1,11 +1,5 @@
 name: Major Version Upgrade Tests for singledb mode
-on:
-  pull_request:
-  push:
-    branches: [ 'BABEL_*' ]
-concurrency: # Cancel previous runs in the same branch
-  group: ${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: true
+on: [push, pull_request]
 
 jobs:
   run-babelfish-mvu-tests-singledb:

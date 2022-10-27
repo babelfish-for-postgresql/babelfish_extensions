@@ -40,7 +40,8 @@ BABEL-3166
 BABEL-3192
 BABEL-3221
 BABEL-3204
-
+BABEL-3369
+BABEL-3370
 msdb-dbo-syspolicy_system_health_state
 sys-all_columns
 sys-all_parameters
@@ -136,6 +137,10 @@ babel_trigger
 nested_trigger_inside_proc
 nested_trigger_with_dml
 triggers_with_transaction
+Test-sp_addrole
+Test-sp_addrolemember
+Test-sp_droprole
+Test-sp_droprolemember
 Test-sp_helpdbfixedrole
 Test-sp_helpsrvrolemember
 BABEL-404
