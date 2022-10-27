@@ -2738,6 +2738,7 @@ LANGUAGE plpgsql;
 GRANT EXECUTE ON FUNCTION sys.INDEXPROPERTY(IN object_id INT, IN index_or_statistics_name sys.nvarchar(128), IN property sys.varchar(128)) TO PUBLIC;
 
 CALL sys.babelfish_update_collation_to_default('sys', 'extended_properties', 'class_desc');
+CALL sys.babelfish_update_collation_to_default('sys', 'extended_properties', 'name');
 
 CALL sys.babelfish_update_collation_to_default('sys', 'babelfish_namespace_ext', 'orig_name');
 
@@ -2755,13 +2756,18 @@ CALL sys.babelfish_update_collation_to_default('sys', 'babelfish_authid_user_ext
 CALL sys.babelfish_update_collation_to_default('sys', 'babelfish_authid_user_ext', 'default_language_name');
 CALL sys.babelfish_update_collation_to_default('sys', 'babelfish_authid_user_ext', 'authentication_type_desc');
 
+CALL sys.babelfish_update_collation_to_default('sys', 'babelfish_authid_user_ext_login_db_idx', 'database_name');
 -- we have to reindex babelfish_authid_user_ext_login_db_idx because given index includes database_name and we have to change its collation
 REINDEX INDEX sys.babelfish_authid_user_ext_login_db_idx;
 
 ALTER TABLE sys.babelfish_view_def ADD COLUMN create_date SYS.DATETIME, add COLUMN modify_date SYS.DATETIME;
 
 CALL sys.babelfish_update_collation_to_default('sys', 'babelfish_view_def', 'schema_name');
-CALL sys.babelfish_update_collation_to_default('sys', 'babelfish_view_def', 'clr_name');
+CALL sys.babelfish_update_collation_to_default('sys', 'babelfish_view_def', 'object_name');
+
+-- primary key babelfish_view_def_pkey is based on sys.babelfish_view_def.schema_name and sys.babelfish_view_def.object_name
+CALL sys.babelfish_update_collation_to_default('sys', 'babelfish_view_def_pkey', 'schema_name');
+CALL sys.babelfish_update_collation_to_default('sys', 'babelfish_view_def_pkey', 'object_name');
 
 CALL sys.babelfish_update_collation_to_default('sys', 'assemblies', 'name');
 CALL sys.babelfish_update_collation_to_default('sys', 'assemblies', 'clr_name');
