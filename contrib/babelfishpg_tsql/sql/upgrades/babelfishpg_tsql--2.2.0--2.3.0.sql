@@ -3088,13 +3088,6 @@ CREATE OR REPLACE PROCEDURE sys.sp_droprolemember(IN "@rolname" sys.SYSNAME, IN 
 AS 'babelfishpg_tsql', 'sp_droprolemember' LANGUAGE C;
 GRANT EXECUTE on PROCEDURE sys.sp_droprolemember(IN sys.SYSNAME, IN sys.SYSNAME) TO PUBLIC;
 
--- Drops the temporary procedure used by the upgrade script.
--- Please have this be one of the last statements executed in this upgrade script.
-DROP PROCEDURE sys.babelfish_drop_deprecated_object(varchar, varchar, varchar);
-
--- Reset search_path to not affect any subsequent scripts
-SELECT set_config('search_path', trim(leading 'sys, ' from current_setting('search_path')), false);
-
 /*
  * JSON MODIFY
  * This function is used to update the value of a property in a JSON string and returns the updated JSON string.
@@ -3422,3 +3415,10 @@ BEGIN
   RETURN 0;
 END;
 $$;
+
+-- Drops the temporary procedure used by the upgrade script.
+-- Please have this be one of the last statements executed in this upgrade script.
+DROP PROCEDURE sys.babelfish_drop_deprecated_object(varchar, varchar, varchar);
+
+-- Reset search_path to not affect any subsequent scripts
+SELECT set_config('search_path', trim(leading 'sys, ' from current_setting('search_path')), false);

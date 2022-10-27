@@ -1,0 +1,23 @@
+SELECT babelfish_integrity_checker_vu_prepare_func();
+GO
+~~START~~
+bit
+1
+~~END~~
+
+
+SELECT * FROM babelfish_integrity_checker_vu_prepare_view;
+GO
+~~START~~
+bit
+1
+~~END~~
+
+
+EXEC babelfish_integrity_checker_vu_prepare_proc;
+GO
+~~START~~
+bit
+1
+~~END~~
+
